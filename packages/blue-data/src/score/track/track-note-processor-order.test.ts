@@ -23,9 +23,15 @@ class ThrowingProcessor extends NoteProcessor {
     throw new Error('Track failure');
   }
 
-  getDisplayName(): string { return 'Throwing Processor'; }
-  deepCopy(): NoteProcessor { return new ThrowingProcessor(); }
-  saveAsXML(): Element { return new Element('noteProcessor'); }
+  getDisplayName(): string {
+    return 'Throwing Processor';
+  }
+  deepCopy(): NoteProcessor {
+    return new ThrowingProcessor();
+  }
+  saveAsXML(): Element {
+    return new Element('noteProcessor');
+  }
 }
 
 function createTrackProject(): { data: BlueData; track: Track } {
@@ -89,9 +95,11 @@ describe('Track note processor scope order', () => {
     failing.addProcessor(new ThrowingProcessor());
     track.setNoteProcessorChain(failing);
 
-    expect(() => data.getScore().generateForCSD(new CompileData(), 0, -1))
-      .toThrow('Error in Throwing Processor: Track failure');
-    await expect(data.getScore().generateForCSDAsync(new CompileData(), 0, -1))
-      .rejects.toThrow('Error in Throwing Processor: Track failure');
+    expect(() => data.getScore().generateForCSD(new CompileData(), 0, -1)).toThrow(
+      'Error in Throwing Processor: Track failure',
+    );
+    await expect(data.getScore().generateForCSDAsync(new CompileData(), 0, -1)).rejects.toThrow(
+      'Error in Throwing Processor: Track failure',
+    );
   });
 });

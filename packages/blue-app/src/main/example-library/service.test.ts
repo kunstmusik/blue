@@ -3,15 +3,9 @@ import * as crypto from 'node:crypto';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as nodePath from 'node:path';
-import {
-  createExampleLibraryService,
-  ExampleLibraryInspection,
-} from './service';
+import { createExampleLibraryService, ExampleLibraryInspection } from './service';
 import { buildFactoryManifest, createFactoryManifestProvider } from './manifest';
-import {
-  parseUserLibraryStateText,
-  serializeOperationJournal,
-} from './state-store';
+import { parseUserLibraryStateText, serializeOperationJournal } from './state-store';
 import { ServiceFsSeams } from './service';
 
 let tempRoot = '';
@@ -41,8 +35,10 @@ function readTree(root: string): Record<string, string> {
       if (entry.isDirectory()) {
         visit(child);
       } else if (entry.isFile()) {
-        out[nodePath.relative(root, child).split(nodePath.sep).join('/')] =
-          fs.readFileSync(child, 'utf8');
+        out[nodePath.relative(root, child).split(nodePath.sep).join('/')] = fs.readFileSync(
+          child,
+          'utf8',
+        );
       }
     }
   };
@@ -185,12 +181,8 @@ describe('example-library service · first use', () => {
     expect(committed.ok).toBe(true);
     if (!committed.ok) return;
 
-    expect(committed.value.contentPath).toBe(
-      nodePath.join(h.libraryRoot, 'current', 'content'),
-    );
-    expect(readTree(nodePath.join(h.libraryRoot, 'current', 'content'))).toEqual(
-      h.factoryFiles,
-    );
+    expect(committed.value.contentPath).toBe(nodePath.join(h.libraryRoot, 'current', 'content'));
+    expect(readTree(nodePath.join(h.libraryRoot, 'current', 'content'))).toEqual(h.factoryFiles);
 
     const stateText = fs.readFileSync(
       nodePath.join(h.libraryRoot, 'current', 'state.json'),
@@ -227,13 +219,7 @@ describe('example-library service · first use', () => {
     expect(committed.ok).toBe(true);
 
     // Edit the user copy aggressively.
-    const userProject = nodePath.join(
-      h.libraryRoot,
-      'current',
-      'content',
-      'demos',
-      'sine.blue',
-    );
+    const userProject = nodePath.join(h.libraryRoot, 'current', 'content', 'demos', 'sine.blue');
     fs.writeFileSync(userProject, '<project>user-edited</project>', 'utf8');
 
     expect(digestTree(h.factoryRoot)).toBe(beforeDigest);
@@ -267,7 +253,9 @@ describe('example-library service · first use', () => {
         createReadStream(filePath: string) {
           copyCalls += 1;
           if (copyCalls === 2) {
-            const err = new Error(`EACCES: permission denied, open ${filePath}`) as NodeJS.ErrnoException;
+            const err = new Error(
+              `EACCES: permission denied, open ${filePath}`,
+            ) as NodeJS.ErrnoException;
             err.code = 'EACCES';
             throw err;
           }
@@ -355,9 +343,7 @@ describe('example-library service · first use', () => {
     // Either shape is contract-valid, but the disk must converge to exactly one
     // usable generation.
     if (result.ok) {
-      expect(
-        fs.existsSync(nodePath.join(h.libraryRoot, 'current', 'content')),
-      ).toBe(true);
+      expect(fs.existsSync(nodePath.join(h.libraryRoot, 'current', 'content'))).toBe(true);
     } else {
       expect(fs.existsSync(nodePath.join(h.libraryRoot, 'current'))).toBe(false);
     }
@@ -429,8 +415,9 @@ describe('example-library service · inspections beyond first use', () => {
     const blocked = await h.inspectStatus();
 
     expect(blocked.status).toBe('invalid-user-library');
-    expect(fs.readFileSync(nodePath.join(ambiguousStage, 'content', 'user-note.txt'), 'utf8'))
-      .toBe('preserve me');
+    expect(fs.readFileSync(nodePath.join(ambiguousStage, 'content', 'user-note.txt'), 'utf8')).toBe(
+      'preserve me',
+    );
   });
 });
 
@@ -452,17 +439,13 @@ describe('example-library service · persistent library preference (US2)', () =>
 
     expect(h.factoryManifestBuilds()).toBe(1);
 
-    expect(
-      fs.readdirSync(h.libraryRoot).filter((name) => name.startsWith('staging-')),
-    ).toEqual([]);
+    expect(fs.readdirSync(h.libraryRoot).filter((name) => name.startsWith('staging-'))).toEqual([]);
     expect(fs.existsSync(nodePath.join(h.libraryRoot, 'operation.json'))).toBe(false);
 
     // Sanity: ready inspection hands back the validated state without rebuilds
     const final = await h.inspectStatus();
     if (final.status !== 'ready') throw new Error(final.status);
-    expect(final.current.contentPath).toBe(
-      nodePath.join(h.libraryRoot, 'current', 'content'),
-    );
+    expect(final.current.contentPath).toBe(nodePath.join(h.libraryRoot, 'current', 'content'));
     expect(digestTree(h.factoryRoot)).toBe(digestTree(h.factoryRoot));
   });
 });
@@ -507,7 +490,6 @@ describe('example-library service · keep-current decision', () => {
     expect(quiet.status).toBe('declined-current');
   });
 });
-
 
 describe('example-library service · safe updates (US3)', () => {
   async function seedLibraryAtRevisionA() {
@@ -572,237 +554,215 @@ describe('example-library service · safe updates (US3)', () => {
         return outcome.value;
       },
       assertNoStagingLeft: () => {
-        expect(
-          fs.readdirSync(libraryRoot).filter((name) => name.startsWith('staging-')),
-        ).toEqual([]);
+        expect(fs.readdirSync(libraryRoot).filter((name) => name.startsWith('staging-'))).toEqual(
+          [],
+        );
       },
     };
   }
 
-  it(
-    'applies only new+untouched bytes and preserves every kind of user state (SC-005)',
-    async () => {
-      const env = await seedLibraryAtRevisionA();
+  it('applies only new+untouched bytes and preserves every kind of user state (SC-005)', async () => {
+    const env = await seedLibraryAtRevisionA();
 
-      // User state before the update: an edit, a deletion, and a sandbox file.
-      fs.writeFileSync(nodePath.join(env.contentRoot, 'user-editable', 'readme.md'), 'MY-NOTES', 'utf8');
-      fs.rmSync(nodePath.join(env.contentRoot, 'still-shipped', 'deleted-by-user.txt'));
-      writeTree(env.contentRoot, { 'my-sandbox/idea.csd': '<Csound>SAND</Csound>' });
+    // User state before the update: an edit, a deletion, and a sandbox file.
+    fs.writeFileSync(
+      nodePath.join(env.contentRoot, 'user-editable', 'readme.md'),
+      'MY-NOTES',
+      'utf8',
+    );
+    fs.rmSync(nodePath.join(env.contentRoot, 'still-shipped', 'deleted-by-user.txt'));
+    writeTree(env.contentRoot, { 'my-sandbox/idea.csd': '<Csound>SAND</Csound>' });
 
-      env.writeFactoryV2();
-      const candidate = await env.prepareUpdateCandidate();
+    env.writeFactoryV2();
+    const candidate = await env.prepareUpdateCandidate();
 
-      // Only the genuinely-changed pair reports: readme (factory R2 vs user
-      // edit). The deletion ships UNCHANGED upstream, so it stays quiet.
-      expect(candidate.summary?.totalConflicts).toBe(1);
-      expect(candidate.summary?.conflicts).toEqual([
-        'user-editable/readme.md',
-      ]);
+    // Only the genuinely-changed pair reports: readme (factory R2 vs user
+    // edit). The deletion ships UNCHANGED upstream, so it stays quiet.
+    expect(candidate.summary?.totalConflicts).toBe(1);
+    expect(candidate.summary?.conflicts).toEqual(['user-editable/readme.md']);
 
-      const committed = await env.service.commit(candidate);
-      expect(committed.ok).toBe(true);
+    const committed = await env.service.commit(candidate);
+    expect(committed.ok).toBe(true);
 
-      const readAt = (relative: string): string | null => {
-        try {
-          return fs.readFileSync(nodePath.join(env.contentRoot, relative), 'utf8');
-        } catch {
-          return null;
-        }
-      };
-
-      expect(readAt('changing/example.blue')).toBe('<project>C2</project>');
-      expect(readAt('brand-new/welcome.blue')).toBe('<project>WELCOME</project>');
-      expect(readAt('kept/same.txt')).toBe('KEEP-ME');
-      expect(readAt('user-editable/readme.md')).toBe('MY-NOTES');
-      expect(readAt('still-shipped/deleted-by-user.txt')).toBeNull();
-      expect(readAt('doomed/removed-upstream.txt')).toBe('REMOVED-LATER');
-      expect(readAt('my-sandbox/idea.csd')).toBe('<Csound>SAND</Csound>');
-
-      const state = parseUserLibraryStateText(
-        fs.readFileSync(nodePath.join(env.libraryRoot, 'current', 'state.json'), 'utf8'),
-      );
-      expect(state.kind).toBe('loaded');
-      if (state.kind === 'loaded') {
-        expect(
-          state.value.baselines.find((b) => b.relativePath === 'doomed/removed-upstream.txt')
-            ?.factoryPresent,
-        ).toBe(false);
+    const readAt = (relative: string): string | null => {
+      try {
+        return fs.readFileSync(nodePath.join(env.contentRoot, relative), 'utf8');
+      } catch {
+        return null;
       }
+    };
 
-      const quiet = await env.service.inspect();
-      expect(quiet.ok && quiet.value.status === 'ready').toBe(true);
-      env.assertNoStagingLeft();
-    },
-    20000,
-  );
+    expect(readAt('changing/example.blue')).toBe('<project>C2</project>');
+    expect(readAt('brand-new/welcome.blue')).toBe('<project>WELCOME</project>');
+    expect(readAt('kept/same.txt')).toBe('KEEP-ME');
+    expect(readAt('user-editable/readme.md')).toBe('MY-NOTES');
+    expect(readAt('still-shipped/deleted-by-user.txt')).toBeNull();
+    expect(readAt('doomed/removed-upstream.txt')).toBe('REMOVED-LATER');
+    expect(readAt('my-sandbox/idea.csd')).toBe('<Csound>SAND</Csound>');
 
-  it(
-    'aborts activation when the live tree drifted after preparation (contract step 6)',
-    async () => {
-      const env = await seedLibraryAtRevisionA();
-      env.writeFactoryV2();
-      const candidate = await env.prepareUpdateCandidate();
-
-      // An external save lands after preparation, before commit.
-      fs.mkdirSync(nodePath.join(env.contentRoot, 'external'), { recursive: true });
-      fs.writeFileSync(nodePath.join(env.contentRoot, 'external', 'late.txt'), 'LATE-SAVE');
-
-      const result = await env.service.commit(candidate);
-      expect(result.ok).toBe(false);
-      if (result.ok) return;
-      expect(result.code).toBe('source-changed');
-      expect(result.retryable).toBe(true);
-
-      // The live library stays authoritative and untouched by the abort.
+    const state = parseUserLibraryStateText(
+      fs.readFileSync(nodePath.join(env.libraryRoot, 'current', 'state.json'), 'utf8'),
+    );
+    expect(state.kind).toBe('loaded');
+    if (state.kind === 'loaded') {
       expect(
-        fs.readFileSync(nodePath.join(env.contentRoot, 'kept', 'same.txt'), 'utf8'),
-      ).toBe('KEEP-ME');
-      env.assertNoStagingLeft();
-    },
-    20000,
-  );
+        state.value.baselines.find((b) => b.relativePath === 'doomed/removed-upstream.txt')
+          ?.factoryPresent,
+      ).toBe(false);
+    }
 
-  it(
-    'keeps valid current and removes the matched stage for a prepared update journal',
-    async () => {
-      const env = await seedLibraryAtRevisionA();
-      env.writeFactoryV2();
-      const candidate = await env.prepareUpdateCandidate();
-      fs.writeFileSync(
-        nodePath.join(env.libraryRoot, 'operation.json'),
-        serializeOperationJournal({
-          schemaVersion: 1,
-          operationId: candidate.operationId,
-          kind: 'update',
-          phase: 'prepared',
-          stagingDirectoryName: nodePath.basename(candidate.rootPath),
-          backupDirectoryName: null,
-          sourceUserRevision: candidate.sourceUserRevision,
-          targetFactoryRevision: candidate.state.acceptedFactoryRevision,
-          startedAt: FIXED_NOW,
-        }),
-        'utf8',
-      );
+    const quiet = await env.service.inspect();
+    expect(quiet.ok && quiet.value.status === 'ready').toBe(true);
+    env.assertNoStagingLeft();
+  }, 20000);
 
-      const recovered = await env.service.inspect();
-      expect(recovered.ok && recovered.value.status === 'update-available').toBe(true);
-      expect(fs.existsSync(candidate.rootPath)).toBe(false);
-      expect(fs.existsSync(nodePath.join(env.libraryRoot, 'operation.json'))).toBe(false);
-      expect(
-        fs.readFileSync(nodePath.join(env.contentRoot, 'changing', 'example.blue'), 'utf8'),
-      ).toBe('<project>C1</project>');
-    },
-    20000,
-  );
+  it('aborts activation when the live tree drifted after preparation (contract step 6)', async () => {
+    const env = await seedLibraryAtRevisionA();
+    env.writeFactoryV2();
+    const candidate = await env.prepareUpdateCandidate();
 
-  it(
-    'recovers a backup-created journal written before the backup rename',
-    async () => {
-      const env = await seedLibraryAtRevisionA();
-      env.writeFactoryV2();
-      const candidate = await env.prepareUpdateCandidate();
-      const backupName = `backup-${candidate.operationId}`;
-      fs.writeFileSync(
-        nodePath.join(env.libraryRoot, 'operation.json'),
-        serializeOperationJournal({
-          schemaVersion: 1,
-          operationId: candidate.operationId,
-          kind: 'update',
-          phase: 'backup-created',
-          stagingDirectoryName: nodePath.basename(candidate.rootPath),
-          backupDirectoryName: backupName,
-          sourceUserRevision: candidate.sourceUserRevision,
-          targetFactoryRevision: candidate.state.acceptedFactoryRevision,
-          startedAt: FIXED_NOW,
-        }),
-        'utf8',
-      );
+    // An external save lands after preparation, before commit.
+    fs.mkdirSync(nodePath.join(env.contentRoot, 'external'), { recursive: true });
+    fs.writeFileSync(nodePath.join(env.contentRoot, 'external', 'late.txt'), 'LATE-SAVE');
 
-      const recovered = await env.service.inspect();
-      expect(recovered.ok && recovered.value.status === 'update-available').toBe(true);
-      expect(fs.existsSync(candidate.rootPath)).toBe(false);
-      expect(fs.existsSync(nodePath.join(env.libraryRoot, backupName))).toBe(false);
-      expect(fs.existsSync(nodePath.join(env.libraryRoot, 'operation.json'))).toBe(false);
-    },
-    20000,
-  );
+    const result = await env.service.commit(candidate);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.code).toBe('source-changed');
+    expect(result.retryable).toBe(true);
 
-  it(
-    'finishes activation when current moved to backup before the phase advancement',
-    async () => {
-      const env = await seedLibraryAtRevisionA();
-      env.writeFactoryV2();
-      const candidate = await env.prepareUpdateCandidate();
-      const backupName = `backup-${candidate.operationId}`;
-      renameDirectorySync(
-        nodePath.join(env.libraryRoot, 'current'),
-        nodePath.join(env.libraryRoot, backupName),
-      );
-      fs.writeFileSync(
-        nodePath.join(env.libraryRoot, 'operation.json'),
-        serializeOperationJournal({
-          schemaVersion: 1,
-          operationId: candidate.operationId,
-          kind: 'update',
-          phase: 'prepared',
-          stagingDirectoryName: nodePath.basename(candidate.rootPath),
-          backupDirectoryName: backupName,
-          sourceUserRevision: candidate.sourceUserRevision,
-          targetFactoryRevision: candidate.state.acceptedFactoryRevision,
-          startedAt: FIXED_NOW,
-        }),
-        'utf8',
-      );
+    // The live library stays authoritative and untouched by the abort.
+    expect(fs.readFileSync(nodePath.join(env.contentRoot, 'kept', 'same.txt'), 'utf8')).toBe(
+      'KEEP-ME',
+    );
+    env.assertNoStagingLeft();
+  }, 20000);
 
-      const recovered = await env.service.inspect();
-      expect(recovered.ok && recovered.value.status === 'ready').toBe(true);
-      expect(fs.existsSync(nodePath.join(env.libraryRoot, backupName))).toBe(false);
-      expect(fs.existsSync(nodePath.join(env.libraryRoot, 'operation.json'))).toBe(false);
-    },
-    20000,
-  );
+  it('keeps valid current and removes the matched stage for a prepared update journal', async () => {
+    const env = await seedLibraryAtRevisionA();
+    env.writeFactoryV2();
+    const candidate = await env.prepareUpdateCandidate();
+    fs.writeFileSync(
+      nodePath.join(env.libraryRoot, 'operation.json'),
+      serializeOperationJournal({
+        schemaVersion: 1,
+        operationId: candidate.operationId,
+        kind: 'update',
+        phase: 'prepared',
+        stagingDirectoryName: nodePath.basename(candidate.rootPath),
+        backupDirectoryName: null,
+        sourceUserRevision: candidate.sourceUserRevision,
+        targetFactoryRevision: candidate.state.acceptedFactoryRevision,
+        startedAt: FIXED_NOW,
+      }),
+      'utf8',
+    );
 
-  it(
-    'finishes a verified staged activation after a crash gap at backup-created',
-    async () => {
-      const env = await seedLibraryAtRevisionA();
-      env.writeFactoryV2();
-      const candidate = await env.prepareUpdateCandidate();
+    const recovered = await env.service.inspect();
+    expect(recovered.ok && recovered.value.status === 'update-available').toBe(true);
+    expect(fs.existsSync(candidate.rootPath)).toBe(false);
+    expect(fs.existsSync(nodePath.join(env.libraryRoot, 'operation.json'))).toBe(false);
+    expect(
+      fs.readFileSync(nodePath.join(env.contentRoot, 'changing', 'example.blue'), 'utf8'),
+    ).toBe('<project>C1</project>');
+  }, 20000);
 
-      // Simulate the crash window between renames: current → backup moved,
-      // journal recorded at `backup-created`, staging still in place.
-      const backupName = `backup-${candidate.operationId}`;
-      const stagingName = nodePath.basename(candidate.rootPath);
-      renameDirectorySync(
-        nodePath.join(env.libraryRoot, 'current'),
-        nodePath.join(env.libraryRoot, backupName),
-      );
-      fs.writeFileSync(
-        nodePath.join(env.libraryRoot, 'operation.json'),
-        serializeOperationJournal({
-          schemaVersion: 1,
-          operationId: candidate.operationId,
-          kind: 'update',
-          phase: 'backup-created',
-          stagingDirectoryName: stagingName,
-          backupDirectoryName: backupName,
-          sourceUserRevision: candidate.sourceUserRevision,
-          targetFactoryRevision: candidate.state.acceptedFactoryRevision,
-          startedAt: FIXED_NOW,
-        }),
-        'utf8',
-      );
+  it('recovers a backup-created journal written before the backup rename', async () => {
+    const env = await seedLibraryAtRevisionA();
+    env.writeFactoryV2();
+    const candidate = await env.prepareUpdateCandidate();
+    const backupName = `backup-${candidate.operationId}`;
+    fs.writeFileSync(
+      nodePath.join(env.libraryRoot, 'operation.json'),
+      serializeOperationJournal({
+        schemaVersion: 1,
+        operationId: candidate.operationId,
+        kind: 'update',
+        phase: 'backup-created',
+        stagingDirectoryName: nodePath.basename(candidate.rootPath),
+        backupDirectoryName: backupName,
+        sourceUserRevision: candidate.sourceUserRevision,
+        targetFactoryRevision: candidate.state.acceptedFactoryRevision,
+        startedAt: FIXED_NOW,
+      }),
+      'utf8',
+    );
 
-      const recovered = await env.service.inspect();
-      expect(recovered.ok && recovered.value.status === 'ready').toBe(true);
-      expect(
-        fs.readFileSync(nodePath.join(env.contentRoot, 'changing', 'example.blue'), 'utf8'),
-      ).toBe('<project>C2</project>');
-      expect(fs.existsSync(nodePath.join(env.libraryRoot, backupName))).toBe(false);
-      expect(fs.existsSync(nodePath.join(env.libraryRoot, 'operation.json'))).toBe(false);
-    },
-    20000,
-  );
+    const recovered = await env.service.inspect();
+    expect(recovered.ok && recovered.value.status === 'update-available').toBe(true);
+    expect(fs.existsSync(candidate.rootPath)).toBe(false);
+    expect(fs.existsSync(nodePath.join(env.libraryRoot, backupName))).toBe(false);
+    expect(fs.existsSync(nodePath.join(env.libraryRoot, 'operation.json'))).toBe(false);
+  }, 20000);
+
+  it('finishes activation when current moved to backup before the phase advancement', async () => {
+    const env = await seedLibraryAtRevisionA();
+    env.writeFactoryV2();
+    const candidate = await env.prepareUpdateCandidate();
+    const backupName = `backup-${candidate.operationId}`;
+    renameDirectorySync(
+      nodePath.join(env.libraryRoot, 'current'),
+      nodePath.join(env.libraryRoot, backupName),
+    );
+    fs.writeFileSync(
+      nodePath.join(env.libraryRoot, 'operation.json'),
+      serializeOperationJournal({
+        schemaVersion: 1,
+        operationId: candidate.operationId,
+        kind: 'update',
+        phase: 'prepared',
+        stagingDirectoryName: nodePath.basename(candidate.rootPath),
+        backupDirectoryName: backupName,
+        sourceUserRevision: candidate.sourceUserRevision,
+        targetFactoryRevision: candidate.state.acceptedFactoryRevision,
+        startedAt: FIXED_NOW,
+      }),
+      'utf8',
+    );
+
+    const recovered = await env.service.inspect();
+    expect(recovered.ok && recovered.value.status === 'ready').toBe(true);
+    expect(fs.existsSync(nodePath.join(env.libraryRoot, backupName))).toBe(false);
+    expect(fs.existsSync(nodePath.join(env.libraryRoot, 'operation.json'))).toBe(false);
+  }, 20000);
+
+  it('finishes a verified staged activation after a crash gap at backup-created', async () => {
+    const env = await seedLibraryAtRevisionA();
+    env.writeFactoryV2();
+    const candidate = await env.prepareUpdateCandidate();
+
+    // Simulate the crash window between renames: current → backup moved,
+    // journal recorded at `backup-created`, staging still in place.
+    const backupName = `backup-${candidate.operationId}`;
+    const stagingName = nodePath.basename(candidate.rootPath);
+    renameDirectorySync(
+      nodePath.join(env.libraryRoot, 'current'),
+      nodePath.join(env.libraryRoot, backupName),
+    );
+    fs.writeFileSync(
+      nodePath.join(env.libraryRoot, 'operation.json'),
+      serializeOperationJournal({
+        schemaVersion: 1,
+        operationId: candidate.operationId,
+        kind: 'update',
+        phase: 'backup-created',
+        stagingDirectoryName: stagingName,
+        backupDirectoryName: backupName,
+        sourceUserRevision: candidate.sourceUserRevision,
+        targetFactoryRevision: candidate.state.acceptedFactoryRevision,
+        startedAt: FIXED_NOW,
+      }),
+      'utf8',
+    );
+
+    const recovered = await env.service.inspect();
+    expect(recovered.ok && recovered.value.status === 'ready').toBe(true);
+    expect(
+      fs.readFileSync(nodePath.join(env.contentRoot, 'changing', 'example.blue'), 'utf8'),
+    ).toBe('<project>C2</project>');
+    expect(fs.existsSync(nodePath.join(env.libraryRoot, backupName))).toBe(false);
+    expect(fs.existsSync(nodePath.join(env.libraryRoot, 'operation.json'))).toBe(false);
+  }, 20000);
 
   it.each(['backup-created', 'activated'] as const)(
     'keeps an activated target and removes its recorded backup and %s journal',
@@ -840,95 +800,91 @@ describe('example-library service · safe updates (US3)', () => {
     20000,
   );
 
-  it(
-    'restores the verified backup when the staging generation vanished mid-crash',
-    async () => {
-      const env = await seedLibraryAtRevisionA();
-      env.writeFactoryV2();
-      const candidate = await env.prepareUpdateCandidate();
+  it('restores the verified backup when the staging generation vanished mid-crash', async () => {
+    const env = await seedLibraryAtRevisionA();
+    env.writeFactoryV2();
+    const candidate = await env.prepareUpdateCandidate();
 
-      const backupName = `backup-${candidate.operationId}`;
-      const stagingName = nodePath.basename(candidate.rootPath);
-      renameDirectorySync(
-        nodePath.join(env.libraryRoot, 'current'),
-        nodePath.join(env.libraryRoot, backupName),
-      );
-      fs.rmSync(candidate.rootPath, { recursive: true });
-      fs.writeFileSync(
-        nodePath.join(env.libraryRoot, 'operation.json'),
-        serializeOperationJournal({
-          schemaVersion: 1,
-          operationId: candidate.operationId,
-          kind: 'update',
-          phase: 'backup-created',
-          stagingDirectoryName: stagingName,
-          backupDirectoryName: backupName,
-          sourceUserRevision: candidate.sourceUserRevision,
-          targetFactoryRevision: candidate.state.acceptedFactoryRevision,
-          startedAt: FIXED_NOW,
-        }),
-        'utf8',
-      );
+    const backupName = `backup-${candidate.operationId}`;
+    const stagingName = nodePath.basename(candidate.rootPath);
+    renameDirectorySync(
+      nodePath.join(env.libraryRoot, 'current'),
+      nodePath.join(env.libraryRoot, backupName),
+    );
+    fs.rmSync(candidate.rootPath, { recursive: true });
+    fs.writeFileSync(
+      nodePath.join(env.libraryRoot, 'operation.json'),
+      serializeOperationJournal({
+        schemaVersion: 1,
+        operationId: candidate.operationId,
+        kind: 'update',
+        phase: 'backup-created',
+        stagingDirectoryName: stagingName,
+        backupDirectoryName: backupName,
+        sourceUserRevision: candidate.sourceUserRevision,
+        targetFactoryRevision: candidate.state.acceptedFactoryRevision,
+        startedAt: FIXED_NOW,
+      }),
+      'utf8',
+    );
 
-      const restored = await env.service.inspect();
-      expect(restored.ok && restored.value.status === 'update-available').toBe(true);
-      // Back to the exact revision-A content, byte for byte.
-      expect(
-        fs.readFileSync(nodePath.join(env.contentRoot, 'changing', 'example.blue'), 'utf8'),
-      ).toBe('<project>C1</project>');
-      expect(fs.existsSync(nodePath.join(env.libraryRoot, backupName))).toBe(false);
-      expect(fs.existsSync(nodePath.join(env.libraryRoot, 'operation.json'))).toBe(false);
-    },
-    20000,
-  );
+    const restored = await env.service.inspect();
+    expect(restored.ok && restored.value.status === 'update-available').toBe(true);
+    // Back to the exact revision-A content, byte for byte.
+    expect(
+      fs.readFileSync(nodePath.join(env.contentRoot, 'changing', 'example.blue'), 'utf8'),
+    ).toBe('<project>C1</project>');
+    expect(fs.existsSync(nodePath.join(env.libraryRoot, backupName))).toBe(false);
+    expect(fs.existsSync(nodePath.join(env.libraryRoot, 'operation.json'))).toBe(false);
+  }, 20000);
 
-  it(
-    'keeps prior content and reports retryable failure when the backup rename fails',
-    async () => {
-      let failNextCurrentRename = true;
-      const seeded = await seedLibraryAtRevisionA();
-      seeded.writeFactoryV2();
+  it('keeps prior content and reports retryable failure when the backup rename fails', async () => {
+    let failNextCurrentRename = true;
+    const seeded = await seedLibraryAtRevisionA();
+    seeded.writeFactoryV2();
 
-      const instrumented = createExampleLibraryService({
-        libraryRoot: seeded.libraryRoot,
-        getFactoryRoot: async () => seeded.factoryRoot,
-        nowIso: () => FIXED_NOW,
-        manifestProvider: createFactoryManifestProvider(),
-        fsSeams: {
-          rename: async (fromPath, toPath) => {
-            void fromPath;
-            if (
-              failNextCurrentRename
-              && toPath.endsWith(nodePath.join('examples', 'current').split(nodePath.sep).pop() as string)
-              && !toPath.includes('staging-')
-            ) {
-              failNextCurrentRename = false;
-              throw Object.assign(new Error('injected current→backup rename failure'), { code: 'EIO' });
-            }
-            return fs.promises.rename(fromPath, toPath);
-          },
+    const instrumented = createExampleLibraryService({
+      libraryRoot: seeded.libraryRoot,
+      getFactoryRoot: async () => seeded.factoryRoot,
+      nowIso: () => FIXED_NOW,
+      manifestProvider: createFactoryManifestProvider(),
+      fsSeams: {
+        rename: async (fromPath, toPath) => {
+          void fromPath;
+          if (
+            failNextCurrentRename &&
+            toPath.endsWith(
+              nodePath.join('examples', 'current').split(nodePath.sep).pop() as string,
+            ) &&
+            !toPath.includes('staging-')
+          ) {
+            failNextCurrentRename = false;
+            throw Object.assign(new Error('injected current→backup rename failure'), {
+              code: 'EIO',
+            });
+          }
+          return fs.promises.rename(fromPath, toPath);
         },
-      });
+      },
+    });
 
-      const offered = await instrumented.inspect();
-      expect(offered.ok && offered.value.status === 'update-available').toBe(true);
-      if (!offered.ok || offered.value.status !== 'update-available') return;
+    const offered = await instrumented.inspect();
+    expect(offered.ok && offered.value.status === 'update-available').toBe(true);
+    if (!offered.ok || offered.value.status !== 'update-available') return;
 
-      const outcome = await instrumented.prepareUpdate();
-      expect(outcome.ok).toBe(true);
-      if (!outcome.ok) return;
+    const outcome = await instrumented.prepareUpdate();
+    expect(outcome.ok).toBe(true);
+    if (!outcome.ok) return;
 
-      const failedCommit = await instrumented.commit(outcome.value);
-      expect(failedCommit.ok).toBe(false);
-      if (!failedCommit.ok && failedCommit.retryable !== undefined) {
-        expect(failedCommit.retryable).toBe(true);
-      }
+    const failedCommit = await instrumented.commit(outcome.value);
+    expect(failedCommit.ok).toBe(false);
+    if (!failedCommit.ok && failedCommit.retryable !== undefined) {
+      expect(failedCommit.retryable).toBe(true);
+    }
 
-      // Revision-A generation fully intact.
-      expect(
-        fs.readFileSync(nodePath.join(seeded.contentRoot, 'changing', 'example.blue'), 'utf8'),
-      ).toBe('<project>C1</project>');
-    },
-    20000,
-  );
+    // Revision-A generation fully intact.
+    expect(
+      fs.readFileSync(nodePath.join(seeded.contentRoot, 'changing', 'example.blue'), 'utf8'),
+    ).toBe('<project>C1</project>');
+  }, 20000);
 });

@@ -98,10 +98,7 @@ export function parseRawXmlDocument(source: string): RawXmlDocument {
   return { source, root: convertElement(source, root) };
 }
 
-export function findRawXmlElements(
-  document: RawXmlDocument,
-  name: string,
-): RawXmlElement[] {
+export function findRawXmlElements(document: RawXmlDocument, name: string): RawXmlElement[] {
   const matches: RawXmlElement[] = [];
   const visit = (node: RawXmlElement): void => {
     if (node.name === name) matches.push(node);

@@ -19,7 +19,10 @@ import {
   type LayerRemovalPlan,
   type SelectedLayerRange,
 } from './layer-selection-utils';
-import { PopoutDropdownMenuPortal, portalEventIsolationProps } from '../../../../hooks/host-portals';
+import {
+  PopoutDropdownMenuPortal,
+  portalEventIsolationProps,
+} from '../../../../hooks/host-portals';
 import { cn } from '../../../../lib/cn';
 
 interface Props {
@@ -77,12 +80,15 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
     selectedLayerRange ? [selectedLayerRange] : [],
   );
 
-  const handleAddLayerGroup = useCallback((groupType: ScoreLayerGroupType) => {
-    const insertAtIndex = selectedGroup ? selectedGroupIndex + 1 : groups.length;
-    applyPatch({ score: { type: 'addLayerGroup', groupType, insertAtIndex } });
-    setSelectedGroupIndex(insertAtIndex);
-    setSelectedLayerIndex(-1);
-  }, [selectedGroup, selectedGroupIndex, groups.length, applyPatch]);
+  const handleAddLayerGroup = useCallback(
+    (groupType: ScoreLayerGroupType) => {
+      const insertAtIndex = selectedGroup ? selectedGroupIndex + 1 : groups.length;
+      applyPatch({ score: { type: 'addLayerGroup', groupType, insertAtIndex } });
+      setSelectedGroupIndex(insertAtIndex);
+      setSelectedLayerIndex(-1);
+    },
+    [selectedGroup, selectedGroupIndex, groups.length, applyPatch],
+  );
 
   const handleRemoveLayerGroup = useCallback(() => {
     if (!selectedGroup) return;
@@ -95,13 +101,25 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
 
   const handlePushGroupUp = useCallback(() => {
     if (selectedGroupIndex <= 0) return;
-    applyPatch({ score: { type: 'moveLayerGroup', groupId: groups[selectedGroupIndex]!.groupId, targetIndex: selectedGroupIndex - 1 } });
+    applyPatch({
+      score: {
+        type: 'moveLayerGroup',
+        groupId: groups[selectedGroupIndex]!.groupId,
+        targetIndex: selectedGroupIndex - 1,
+      },
+    });
     setSelectedGroupIndex(selectedGroupIndex - 1);
   }, [selectedGroupIndex, groups, applyPatch]);
 
   const handlePushGroupDown = useCallback(() => {
     if (selectedGroupIndex >= groups.length - 1) return;
-    applyPatch({ score: { type: 'moveLayerGroup', groupId: groups[selectedGroupIndex]!.groupId, targetIndex: selectedGroupIndex + 1 } });
+    applyPatch({
+      score: {
+        type: 'moveLayerGroup',
+        groupId: groups[selectedGroupIndex]!.groupId,
+        targetIndex: selectedGroupIndex + 1,
+      },
+    });
     setSelectedGroupIndex(selectedGroupIndex + 1);
   }, [selectedGroupIndex, groups, applyPatch]);
 
@@ -120,12 +138,15 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
     }
   }, [editingGroupRow, groups, editGroupName, applyPatch]);
 
-  const handleGroupDoubleClick = useCallback((index: number) => {
-    const g = groups[index];
-    if (!g) return;
-    setEditGroupName(g.name || g.groupId);
-    setEditingGroupRow(index);
-  }, [groups]);
+  const handleGroupDoubleClick = useCallback(
+    (index: number) => {
+      const g = groups[index];
+      if (!g) return;
+      setEditGroupName(g.name || g.groupId);
+      setEditingGroupRow(index);
+    },
+    [groups],
+  );
 
   const handleAddLayer = useCallback(() => {
     if (!selectedGroup) return;
@@ -139,14 +160,17 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
     setPendingRemovalPlan(buildLayerRemovalPlan(score.layerGroups, [selectedLayerRange]));
   }, [layerAvailability.canRemove, score.layerGroups, selectedLayerRange]);
 
-  const handleRemovalConfirm = useCallback((deleteEmptyLayerGroups: boolean) => {
-    if (!pendingRemovalPlan) return;
-    void applyPatch({
-      score: createRemoveLayerRangesPatch(pendingRemovalPlan, deleteEmptyLayerGroups),
-    });
-    setPendingRemovalPlan(null);
-    setSelectedLayerIndex(-1);
-  }, [applyPatch, pendingRemovalPlan]);
+  const handleRemovalConfirm = useCallback(
+    (deleteEmptyLayerGroups: boolean) => {
+      if (!pendingRemovalPlan) return;
+      void applyPatch({
+        score: createRemoveLayerRangesPatch(pendingRemovalPlan, deleteEmptyLayerGroups),
+      });
+      setPendingRemovalPlan(null);
+      setSelectedLayerIndex(-1);
+    },
+    [applyPatch, pendingRemovalPlan],
+  );
 
   const handlePushLayerUp = useCallback(() => {
     if (!selectedLayerRange || !layerAvailability.canPushUp) return;
@@ -181,19 +205,26 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
     }
   }, [editLayerName, selectedLayerIndex, selectedGroup, layers, applyPatch]);
 
-  const handleLayerDoubleClick = useCallback((index: number) => {
-    if (!selectedGroup) return;
-    const layer = layers[index];
-    if (!layer) return;
-    setEditLayerName(layer.name);
-    setEditingLayerRow(index);
-    setSelectedLayerIndex(index);
-  }, [selectedGroup, layers]);
+  const handleLayerDoubleClick = useCallback(
+    (index: number) => {
+      if (!selectedGroup) return;
+      const layer = layers[index];
+      if (!layer) return;
+      setEditLayerName(layer.name);
+      setEditingLayerRow(index);
+      setSelectedLayerIndex(index);
+    },
+    [selectedGroup, layers],
+  );
 
-  const btnClass = 'min-w-[28px] rounded border border-app-border/40 bg-app-surface px-1.5 py-0.5 text-role-body text-app-text hover:bg-app-hover disabled:opacity-40';
+  const btnClass =
+    'min-w-[28px] rounded border border-app-border/40 bg-app-surface px-1.5 py-0.5 text-role-body text-app-text hover:bg-app-hover disabled:opacity-40';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      onClick={onClose}
+    >
       <div
         className="flex flex-col rounded-lg border border-app-border/50 bg-app-bg shadow-2xl"
         style={{ width: 760, height: 400 }}
@@ -201,7 +232,11 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
       >
         <div className="flex items-center justify-between border-b border-app-border/30 px-4 py-3">
           <span className="text-role-title-2 font-bold text-app-text">Score Manager</span>
-          <button className="text-app-text-muted hover:text-app-text" onClick={onClose} aria-label="Close">
+          <button
+            className="text-app-text-muted hover:text-app-text"
+            onClick={onClose}
+            aria-label="Close"
+          >
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -209,11 +244,27 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
         <div className="flex flex-1 min-h-0">
           <div className="flex flex-col border-r border-app-border/30" style={{ width: 200 }}>
             <div className="flex items-center gap-1 border-b border-app-border/20 px-2 py-1">
-              <button className={btnClass} onClick={handlePushGroupUp} disabled={selectedGroupIndex <= 0} title="Push Up">&#9650;</button>
-              <button className={btnClass} onClick={handlePushGroupDown} disabled={selectedGroupIndex >= groups.length - 1} title="Push Down">&#9660;</button>
+              <button
+                className={btnClass}
+                onClick={handlePushGroupUp}
+                disabled={selectedGroupIndex <= 0}
+                title="Push Up"
+              >
+                &#9650;
+              </button>
+              <button
+                className={btnClass}
+                onClick={handlePushGroupDown}
+                disabled={selectedGroupIndex >= groups.length - 1}
+                title="Push Down"
+              >
+                &#9660;
+              </button>
               <DropdownMenu.Root>
                 <DropdownMenu.Trigger asChild>
-                  <button className={btnClass} title="Add Layer Group" aria-label="Add Layer Group">+</button>
+                  <button className={btnClass} title="Add Layer Group" aria-label="Add Layer Group">
+                    +
+                  </button>
                 </DropdownMenu.Trigger>
                 <PopoutDropdownMenuPortal>
                   <DropdownMenu.Content
@@ -234,7 +285,14 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
                   </DropdownMenu.Content>
                 </PopoutDropdownMenuPortal>
               </DropdownMenu.Root>
-              <button className={btnClass} onClick={handleRemoveLayerGroup} disabled={!selectedGroup} title="Remove Layer Group">-</button>
+              <button
+                className={btnClass}
+                onClick={handleRemoveLayerGroup}
+                disabled={!selectedGroup}
+                title="Remove Layer Group"
+              >
+                -
+              </button>
             </div>
             <div className="flex-1 min-h-0 overflow-y-auto bg-black">
               {groups.map((g, i) => (
@@ -248,7 +306,12 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
                   onEditValueChange={setEditGroupName}
                   onCommitEdit={commitGroupRename}
                   onCancelEdit={() => setEditingGroupRow(-1)}
-                  onSelect={() => { setSelectedGroupIndex(i); setSelectedLayerIndex(-1); setEditingGroupRow(-1); setEditingLayerRow(-1); }}
+                  onSelect={() => {
+                    setSelectedGroupIndex(i);
+                    setSelectedLayerIndex(-1);
+                    setEditingGroupRow(-1);
+                    setEditingLayerRow(-1);
+                  }}
                   onDoubleClick={() => handleGroupDoubleClick(i)}
                 />
               ))}
@@ -257,16 +320,46 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
 
           <div className="flex-1 flex flex-col">
             <div className="flex items-center gap-1 border-b border-app-border/20 px-2 py-1">
-              <button className={btnClass} onClick={handlePushLayerUp} disabled={!layerAvailability.canPushUp} title="Push Up">&#9650;</button>
-              <button className={btnClass} onClick={handlePushLayerDown} disabled={!layerAvailability.canPushDown} title="Push Down">&#9660;</button>
-              <button className={btnClass} onClick={handleAddLayer} disabled={!selectedGroup} title="Add Layer">+</button>
-              <button className={btnClass} onClick={handleRemoveLayer} disabled={!layerAvailability.canRemove} title="Remove Layer">-</button>
+              <button
+                className={btnClass}
+                onClick={handlePushLayerUp}
+                disabled={!layerAvailability.canPushUp}
+                title="Push Up"
+              >
+                &#9650;
+              </button>
+              <button
+                className={btnClass}
+                onClick={handlePushLayerDown}
+                disabled={!layerAvailability.canPushDown}
+                title="Push Down"
+              >
+                &#9660;
+              </button>
+              <button
+                className={btnClass}
+                onClick={handleAddLayer}
+                disabled={!selectedGroup}
+                title="Add Layer"
+              >
+                +
+              </button>
+              <button
+                className={btnClass}
+                onClick={handleRemoveLayer}
+                disabled={!layerAvailability.canRemove}
+                title="Remove Layer"
+              >
+                -
+              </button>
             </div>
             <div className="flex-1 min-h-0 overflow-y-auto bg-black">
               <table className="w-full border-collapse text-role-body">
                 <thead>
                   <tr className="border-b border-app-border/20 text-left text-app-text-muted">
-                    <th className="px-2 py-1 font-normal" style={{ width: 50 }}>#</th>
+                    <th className="px-2 py-1 font-normal" style={{ width: 50 }}>
+                      #
+                    </th>
                     <th className="px-2 py-1 font-normal">Name</th>
                   </tr>
                 </thead>
@@ -282,7 +375,10 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
                       onEditValueChange={setEditLayerName}
                       onCommitEdit={commitLayerRename}
                       onCancelEdit={() => setEditingLayerRow(-1)}
-                      onSelect={() => { setSelectedLayerIndex(i); setEditingLayerRow(-1); }}
+                      onSelect={() => {
+                        setSelectedLayerIndex(i);
+                        setEditingLayerRow(-1);
+                      }}
                       onDoubleClick={() => handleLayerDoubleClick(i)}
                     />
                   ))}
@@ -311,14 +407,19 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
           cancelActionId="cancel"
           onDecision={(actionId) => {
             if (actionId === 'remove') {
-              const currentGroup = score.layerGroups.find((group) => group.groupId === pendingRemoveGroup.group.groupId);
-              const selectionStillMatches = score.layerGroups[selectedGroupIndex]?.groupId === pendingRemoveGroup.group.groupId;
+              const currentGroup = score.layerGroups.find(
+                (group) => group.groupId === pendingRemoveGroup.group.groupId,
+              );
+              const selectionStillMatches =
+                score.layerGroups[selectedGroupIndex]?.groupId === pendingRemoveGroup.group.groupId;
               if (
-                currentGroup
-                && selectionStillMatches
-                && getProjectDocumentRevision() === pendingRemoveGroup.projectRevision
+                currentGroup &&
+                selectionStillMatches &&
+                getProjectDocumentRevision() === pendingRemoveGroup.projectRevision
               ) {
-                applyPatch({ score: { type: 'removeLayerGroup', groupId: pendingRemoveGroup.group.groupId } });
+                applyPatch({
+                  score: { type: 'removeLayerGroup', groupId: pendingRemoveGroup.group.groupId },
+                });
                 setSelectedGroupIndex(Math.max(0, pendingRemoveGroup.selectedGroupIndex - 1));
                 setSelectedLayerIndex(-1);
               }
@@ -331,7 +432,18 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
   );
 }
 
-function GroupRow({ group, index, selected, editing, editValue, onEditValueChange, onCommitEdit, onCancelEdit, onSelect, onDoubleClick }: {
+function GroupRow({
+  group,
+  index,
+  selected,
+  editing,
+  editValue,
+  onEditValueChange,
+  onCommitEdit,
+  onCancelEdit,
+  onSelect,
+  onDoubleClick,
+}: {
   group: ScoreLayerGroupSnapshot;
   index: number;
   selected: boolean;
@@ -367,7 +479,10 @@ function GroupRow({ group, index, selected, editing, editValue, onEditValueChang
           className="w-full rounded-sm border border-app-accent/40 bg-app-surface/60 px-1 text-role-body text-app-text outline-none"
           value={editValue}
           onChange={(e) => onEditValueChange(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') onCommitEdit(); if (e.key === 'Escape') onCancelEdit(); }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') onCommitEdit();
+            if (e.key === 'Escape') onCancelEdit();
+          }}
           onBlur={onCommitEdit}
         />
       ) : (
@@ -377,7 +492,18 @@ function GroupRow({ group, index, selected, editing, editValue, onEditValueChang
   );
 }
 
-function LayerRow({ layer, index, selected, editing, editValue, onEditValueChange, onCommitEdit, onCancelEdit, onSelect, onDoubleClick }: {
+function LayerRow({
+  layer,
+  index,
+  selected,
+  editing,
+  editValue,
+  onEditValueChange,
+  onCommitEdit,
+  onCancelEdit,
+  onSelect,
+  onDoubleClick,
+}: {
   layer: ScoreLayerSnapshot;
   index: number;
   selected: boolean;
@@ -419,7 +545,10 @@ function LayerRow({ layer, index, selected, editing, editValue, onEditValueChang
             className="w-full rounded-sm border border-app-accent/40 bg-app-surface/60 px-1 text-role-body text-app-text outline-none"
             value={editValue}
             onChange={(e) => onEditValueChange(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') onCommitEdit(); if (e.key === 'Escape') onCancelEdit(); }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') onCommitEdit();
+              if (e.key === 'Escape') onCancelEdit();
+            }}
             onBlur={onCommitEdit}
           />
         ) : (

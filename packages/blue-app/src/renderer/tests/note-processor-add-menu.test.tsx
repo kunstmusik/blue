@@ -10,7 +10,9 @@ import NoteProcessorChainEditor from '../components/workbench/panels/score-objec
 import { HostDocumentContext } from '../hooks/use-host-document';
 import { getNoteProcessorCatalog } from '@blue/data';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const CATALOG = getNoteProcessorCatalog();
 
@@ -60,7 +62,8 @@ describe('NoteProcessorChainEditor Add menu (host-surface, spec 090)', () => {
     });
   };
 
-  const menuIn = (doc: Document): HTMLElement | null => doc.body.querySelector('[data-host-surface]');
+  const menuIn = (doc: Document): HTMLElement | null =>
+    doc.body.querySelector('[data-host-surface]');
 
   beforeEach(() => {
     Object.defineProperty(popout.window, 'innerWidth', { configurable: true, value: 800 });
@@ -105,8 +108,9 @@ describe('NoteProcessorChainEditor Add menu (host-surface, spec 090)', () => {
     click(findButton('+ Add'));
     await flushFrame();
 
-    const item = [...menuIn(popoutDoc)!.querySelectorAll('button')]
-      .find((b) => b.textContent === 'MultiplyProcessor')!;
+    const item = [...menuIn(popoutDoc)!.querySelectorAll('button')].find(
+      (b) => b.textContent === 'MultiplyProcessor',
+    )!;
     click(item);
     await flushFrame();
 

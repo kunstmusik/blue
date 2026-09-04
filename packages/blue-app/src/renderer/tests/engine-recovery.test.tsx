@@ -8,7 +8,9 @@ import { toast } from 'sonner';
 import { useIPCListeners } from '../hooks/use-ipc-listeners';
 import type { EngineRecoveryStatus } from '../../shared/engine-recovery';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 vi.mock('sonner', () => ({
   toast: {

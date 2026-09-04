@@ -22,13 +22,13 @@ than copied formulas:
 Generation reads these from the checkout rooted at `$JAVA_BLUE_ROOT`
 (default recorded in `fixtures/java-blue-automation-parity/v1/manifest.json`):
 
-| Variable | Value |
-|---|---|
-| Repository | `https://github.com/kunstmusik/blue.git` |
-| Pinned commit | `3ca3f40579c48a023299a68130d8ab6b9e950974` |
-| Java release | 25 (validated before execution) |
+| Variable              | Value                                                                 |
+| --------------------- | --------------------------------------------------------------------- |
+| Repository            | `https://github.com/kunstmusik/blue.git`                              |
+| Pinned commit         | `3ca3f40579c48a023299a68130d8ab6b9e950974`                            |
+| Java release          | 25 (validated before execution)                                       |
 | Expected source files | recorded with SHA-256 in `manifest.json` under `javaBlue.sourceFiles` |
-| Maven modules built | `blue-core`, `blue-ui-core` (with `-am`) |
+| Maven modules built   | `blue-core`, `blue-ui-core` (with `-am`)                              |
 
 The wrapper verifies the checkout commit and each recorded source-file SHA-256
 before running, and fails on any mismatch.

@@ -140,7 +140,9 @@ describe('BlueSynthBuilder', () => {
     </instrument>`;
 
     const instrument = BlueSynthBuilder.loadFromXML(Element.parse(xml));
-    expect(instrument.getGraphicInterface().getRootGroup().getChildren()[0]?.id).toBe('legacy-knob-id');
+    expect(instrument.getGraphicInterface().getRootGroup().getChildren()[0]?.id).toBe(
+      'legacy-knob-id',
+    );
 
     const savedXml = instrument.saveAsXML().toXml();
     expect(savedXml).toContain('uniqueId="legacy-knob-id"');
@@ -374,7 +376,9 @@ describe('BlueSynthBuilder', () => {
     const widget = rootGroup.getChildren()[0]!;
     expect(widget).toBeDefined();
 
-    expect(instrument.updateWidgetProperties(widget.id, { objectName: 'volume', x: 50 })).toBe(true);
+    expect(instrument.updateWidgetProperties(widget.id, { objectName: 'volume', x: 50 })).toBe(
+      true,
+    );
     expect(widget.objectName).toBe('volume');
     expect(widget.x).toBe(50);
   });
@@ -432,8 +436,12 @@ describe('BlueSynthBuilder', () => {
     const textField = widgets[0]!;
     const fileSelector = widgets[1]!;
 
-    expect(instrument.updateWidgetProperties(textField.id, { textValue: 'updated text' })).toBe(true);
-    expect(instrument.updateWidgetProperties(fileSelector.id, { fileName: 'samples/new.wav' })).toBe(true);
+    expect(instrument.updateWidgetProperties(textField.id, { textValue: 'updated text' })).toBe(
+      true,
+    );
+    expect(
+      instrument.updateWidgetProperties(fileSelector.id, { fileName: 'samples/new.wav' }),
+    ).toBe(true);
 
     const savedXml = instrument.saveAsXML().toXml();
     expect(savedXml).toContain('<value>updated text</value>');
@@ -574,8 +582,22 @@ describe('BlueSynthBuilder', () => {
 
   it('normalizes patched BSB LineObject lines with unique Java-style names and linked endpoints', () => {
     const lines = normalizeBsbLinePatch([
-      { varName: 'line0', color: '#808080', points: [{ x: 0, y: 0.25 }, { x: 1, y: 0.75 }] },
-      { varName: 'line0', endPointsLinked: true, points: [{ x: 0, y: 0.2 }, { x: 1, y: 0.8 }] },
+      {
+        varName: 'line0',
+        color: '#808080',
+        points: [
+          { x: 0, y: 0.25 },
+          { x: 1, y: 0.75 },
+        ],
+      },
+      {
+        varName: 'line0',
+        endPointsLinked: true,
+        points: [
+          { x: 0, y: 0.2 },
+          { x: 1, y: 0.8 },
+        ],
+      },
       { points: [] },
     ]);
 
@@ -827,7 +849,9 @@ xout aOut</codeBody>
 
     expect(instrument.updateWidgetProperties(widget.id, { maximum: 10 })).toBe(true);
 
-    const parameter = instrument.getParameters().find((candidate) => candidate.getName() === 'gain');
+    const parameter = instrument
+      .getParameters()
+      .find((candidate) => candidate.getName() === 'gain');
     expect(widget.value).toBe(5);
     expect(parameter?.getMaximum()).toBe(10);
     expect(parameter?.getFixedValue()).toBe(5);

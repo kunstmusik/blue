@@ -16,7 +16,9 @@ function run(command, args, options = {}) {
     ...options,
   });
   if (result.status !== 0) {
-    throw new Error(`BLUE_ENGINE_BUILD_FAILED: ${command} exited with ${result.status ?? 'no status'}`);
+    throw new Error(
+      `BLUE_ENGINE_BUILD_FAILED: ${command} exited with ${result.status ?? 'no status'}`,
+    );
   }
 }
 
@@ -31,7 +33,9 @@ const suffix = tracking ? '-profiling' : '';
 const buildDir = join(packageRoot, `build-${target.key}-${buildType.toLowerCase()}${suffix}`);
 const toolchainFile = join(vcpkgRoot, 'scripts', 'buildsystems', 'vcpkg.cmake');
 if (await resetBuildDirectoryForToolchainChange(buildDir, toolchainFile)) {
-  process.stdout.write('Blue Engine: removed stale CMake build cache after vcpkg toolchain changed\n');
+  process.stdout.write(
+    'Blue Engine: removed stale CMake build cache after vcpkg toolchain changed\n',
+  );
 }
 const configureArgs = [
   '-S',

@@ -17,12 +17,12 @@ export const TIME_BASE_OPTIONS: Array<{ value: string; label: string }> = [
 
 export function beatsToSeconds(beats: number, ctx: TimeConversionContext): number {
   if (!ctx.tempoEnabled) return beats;
-  return beats * 60.0 / ctx.initialTempo;
+  return (beats * 60.0) / ctx.initialTempo;
 }
 
 export function secondsToBeats(seconds: number, ctx: TimeConversionContext): number {
   if (!ctx.tempoEnabled) return seconds;
-  return seconds * ctx.initialTempo / 60.0;
+  return (seconds * ctx.initialTempo) / 60.0;
 }
 
 function beatsPerMeasure(entry: { numBeats: number; beatLength: number }): number {
@@ -85,14 +85,20 @@ export function measureStartBeats(ctx: TimeConversionContext): number[] {
   return starts;
 }
 
-export function beatsToBBTInternal(beats: number, ctx: TimeConversionContext): { bar: number; beat: number; ticks: number } {
+export function beatsToBBTInternal(
+  beats: number,
+  ctx: TimeConversionContext,
+): { bar: number; beat: number; ticks: number } {
   const entries = ctx.meterEntries;
   if (entries.length === 0 || beats < 0) return { bar: 1, beat: 1, ticks: 0 };
 
   const starts = measureStartBeats(ctx);
   let idx = 0;
   for (let i = entries.length - 1; i >= 0; i--) {
-    if (beats >= starts[i]) { idx = i; break; }
+    if (beats >= starts[i]) {
+      idx = i;
+      break;
+    }
   }
 
   const entry = entries[idx];
@@ -103,7 +109,7 @@ export function beatsToBBTInternal(beats: number, ctx: TimeConversionContext): {
   const remaining = beatsFromEntry - measuresFromEntry * bpm;
   const fullBeats = Math.floor(remaining / bs);
   const fractional = remaining - fullBeats * bs;
-  let ticks = Math.round(fractional * DEFAULT_PPQ / bs);
+  let ticks = Math.round((fractional * DEFAULT_PPQ) / bs);
   let beat = fullBeats + 1;
   let bar = entry.measure + measuresFromEntry;
 
@@ -123,7 +129,10 @@ export function beatsToBBTInternal(beats: number, ctx: TimeConversionContext): {
   };
 }
 
-function beatsToBBFInternal(beats: number, ctx: TimeConversionContext): { bar: number; beat: number; fraction: number } {
+function beatsToBBFInternal(
+  beats: number,
+  ctx: TimeConversionContext,
+): { bar: number; beat: number; fraction: number } {
   const info = meterEntryInfoForBeats(beats, ctx);
   if (!info) return { bar: 1, beat: 1, fraction: 0 };
 
@@ -151,7 +160,10 @@ function beatsToBBFInternal(beats: number, ctx: TimeConversionContext): { bar: n
   return { bar, beat, fraction };
 }
 
-function durationBeatsToBBF(beats: number, ctx: TimeConversionContext): { bar: number; beat: number; fraction: number } {
+function durationBeatsToBBF(
+  beats: number,
+  ctx: TimeConversionContext,
+): { bar: number; beat: number; fraction: number } {
   const entry = ctx.meterEntries[0];
   if (!entry || beats < 0) return { bar: 0, beat: 0, fraction: 0 };
 
@@ -175,14 +187,22 @@ function durationBeatsToBBF(beats: number, ctx: TimeConversionContext): { bar: n
   return { bar, beat, fraction };
 }
 
-export function bbtToBeats(bar: number, beat: number, ticks: number, ctx: TimeConversionContext): number {
+export function bbtToBeats(
+  bar: number,
+  beat: number,
+  ticks: number,
+  ctx: TimeConversionContext,
+): number {
   const entries = ctx.meterEntries;
   if (entries.length === 0) return 0;
 
   const starts = measureStartBeats(ctx);
   let idx = 0;
   for (let i = entries.length - 1; i >= 0; i--) {
-    if (bar >= entries[i].measure) { idx = i; break; }
+    if (bar >= entries[i].measure) {
+      idx = i;
+      break;
+    }
   }
 
   const entry = entries[idx];
@@ -190,7 +210,7 @@ export function bbtToBeats(bar: number, beat: number, ticks: number, ctx: TimeCo
   const bs = beatScale(entry);
   const measuresFrom = bar - entry.measure;
 
-  return starts[idx] + measuresFrom * bpm + (beat - 1) * bs + ticks / DEFAULT_PPQ * bs;
+  return starts[idx] + measuresFrom * bpm + (beat - 1) * bs + (ticks / DEFAULT_PPQ) * bs;
 }
 
 export function formatBeatsValue(beats: number): string {
@@ -229,7 +249,12 @@ export function formatSMPTE(secs: number, frameRate: number): string {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}:${String(frames).padStart(2, '0')}`;
 }
 
-export function totalSecondsToTime(secs: number): { hours: number; minutes: number; seconds: number; ms: number } {
+export function totalSecondsToTime(secs: number): {
+  hours: number;
+  minutes: number;
+  seconds: number;
+  ms: number;
+} {
   const totalMs = Math.round(secs * 1000);
   const hours = Math.floor(totalMs / 3600000);
   const remaining = totalMs - hours * 3600000;
@@ -240,7 +265,12 @@ export function totalSecondsToTime(secs: number): { hours: number; minutes: numb
   return { hours, minutes, seconds, ms };
 }
 
-export function formatForBase(beats: number, base: string, ctx: TimeConversionContext, durationMode: boolean): string {
+export function formatForBase(
+  beats: number,
+  base: string,
+  ctx: TimeConversionContext,
+  durationMode: boolean,
+): string {
   switch (base) {
     case 'BEATS':
       return formatBeatsValue(beats);
@@ -302,7 +332,12 @@ export function formatForBase(beats: number, base: string, ctx: TimeConversionCo
   }
 }
 
-export function parseForBase(text: string, base: string, ctx: TimeConversionContext, durationMode: boolean): number | null {
+export function parseForBase(
+  text: string,
+  base: string,
+  ctx: TimeConversionContext,
+  durationMode: boolean,
+): number | null {
   try {
     switch (base) {
       case 'BEATS': {
@@ -332,7 +367,7 @@ export function parseForBase(text: string, base: string, ctx: TimeConversionCont
         const sixteenth = parseInt(parts[2], 10);
         const ticks = parts.length > 3 ? parseInt(parts[3], 10) : 0;
         if (isNaN(bar) || isNaN(beat) || isNaN(sixteenth) || isNaN(ticks)) return null;
-        const totalTicks = ((durationMode ? sixteenth : sixteenth - 1) * (DEFAULT_PPQ / 4)) + ticks;
+        const totalTicks = (durationMode ? sixteenth : sixteenth - 1) * (DEFAULT_PPQ / 4) + ticks;
         if (durationMode) {
           return bbtToBeats(bar + 1, beat + 1, totalTicks, ctx);
         }
@@ -352,23 +387,28 @@ export function parseForBase(text: string, base: string, ctx: TimeConversionCont
           const entry = ctx.meterEntries[0];
           if (!entry || bar < 0 || beat < 0) return null;
           const bs = beatScale(entry);
-          return (bar * beatsPerMeasure(entry)) + (beat * bs) + (fraction / 100) * bs;
+          return bar * beatsPerMeasure(entry) + beat * bs + (fraction / 100) * bs;
         }
 
         const info = meterEntryInfoForBar(bar, ctx);
         if (!info || beat < 1) return null;
         const bs = beatScale(info.entry);
-        return info.startBeat
-          + (bar - info.entry.measure) * beatsPerMeasure(info.entry)
-          + (beat - 1) * bs
-          + (fraction / 100) * bs;
+        return (
+          info.startBeat +
+          (bar - info.entry.measure) * beatsPerMeasure(info.entry) +
+          (beat - 1) * bs +
+          (fraction / 100) * bs
+        );
       }
 
       case 'TIME': {
         const colonParts = text.split(':');
         const lastPart = colonParts[colonParts.length - 1];
         const dotParts = lastPart.split('.');
-        let hours = 0, minutes = 0, seconds = 0, ms = 0;
+        let hours = 0,
+          minutes = 0,
+          seconds = 0,
+          ms = 0;
 
         if (colonParts.length === 3) {
           hours = parseInt(colonParts[0], 10);

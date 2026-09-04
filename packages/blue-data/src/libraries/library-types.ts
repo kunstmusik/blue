@@ -1,9 +1,4 @@
-export const LIBRARY_TYPES = [
-  'instrument',
-  'udo',
-  'soundObject',
-  'effect',
-] as const;
+export const LIBRARY_TYPES = ['instrument', 'udo', 'soundObject', 'effect'] as const;
 
 export type LibraryType = (typeof LIBRARY_TYPES)[number];
 export type LibrarySupportStatus = 'supported' | 'unsupported';
@@ -17,40 +12,41 @@ export interface LegacyLibraryFormatDescriptor {
   readonly ordering: 'categoriesFirst' | 'mixed';
 }
 
-export const LEGACY_LIBRARY_FORMATS: Readonly<Record<LibraryType, LegacyLibraryFormatDescriptor>> = {
-  instrument: {
-    libraryType: 'instrument',
-    fileName: 'userInstrumentLibrary.xml',
-    rootElement: 'instrumentLibrary',
-    categoryElement: 'instrumentCategory',
-    leafElement: 'instrument',
-    ordering: 'categoriesFirst',
-  },
-  udo: {
-    libraryType: 'udo',
-    fileName: 'udoLibrary.xml',
-    rootElement: 'udoLibrary',
-    categoryElement: 'udoCategory',
-    leafElement: 'udo',
-    ordering: 'categoriesFirst',
-  },
-  soundObject: {
-    libraryType: 'soundObject',
-    fileName: 'soundObjectLibrary.xml',
-    rootElement: 'soundObjectLibrary',
-    categoryElement: 'category',
-    leafElement: 'soundObject',
-    ordering: 'mixed',
-  },
-  effect: {
-    libraryType: 'effect',
-    fileName: 'effectsLibrary.xml',
-    rootElement: 'effectsLibrary',
-    categoryElement: 'effectCategory',
-    leafElement: 'effect',
-    ordering: 'categoriesFirst',
-  },
-};
+export const LEGACY_LIBRARY_FORMATS: Readonly<Record<LibraryType, LegacyLibraryFormatDescriptor>> =
+  {
+    instrument: {
+      libraryType: 'instrument',
+      fileName: 'userInstrumentLibrary.xml',
+      rootElement: 'instrumentLibrary',
+      categoryElement: 'instrumentCategory',
+      leafElement: 'instrument',
+      ordering: 'categoriesFirst',
+    },
+    udo: {
+      libraryType: 'udo',
+      fileName: 'udoLibrary.xml',
+      rootElement: 'udoLibrary',
+      categoryElement: 'udoCategory',
+      leafElement: 'udo',
+      ordering: 'categoriesFirst',
+    },
+    soundObject: {
+      libraryType: 'soundObject',
+      fileName: 'soundObjectLibrary.xml',
+      rootElement: 'soundObjectLibrary',
+      categoryElement: 'category',
+      leafElement: 'soundObject',
+      ordering: 'mixed',
+    },
+    effect: {
+      libraryType: 'effect',
+      fileName: 'effectsLibrary.xml',
+      rootElement: 'effectsLibrary',
+      categoryElement: 'effectCategory',
+      leafElement: 'effect',
+      ordering: 'categoriesFirst',
+    },
+  };
 
 export interface RawXmlElement {
   readonly name: string;

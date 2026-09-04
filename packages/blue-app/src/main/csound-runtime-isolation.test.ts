@@ -37,14 +37,17 @@ describe('Csound runtime operation isolation', () => {
     const bytes = Buffer.from('workspace engine');
     await writeFile(enginePath, bytes);
     await chmod(enginePath, 0o755);
-    await writeFile(path.join(path.dirname(enginePath), 'artifact.json'), JSON.stringify({
-      schemaVersion: 1,
-      protocolVersion: 2,
-      platform: 'darwin',
-      arch: 'arm64',
-      executableName: 'blue-engine',
-      sha256: createHash('sha256').update(bytes).digest('hex'),
-    }));
+    await writeFile(
+      path.join(path.dirname(enginePath), 'artifact.json'),
+      JSON.stringify({
+        schemaVersion: 1,
+        protocolVersion: 2,
+        platform: 'darwin',
+        arch: 'arm64',
+        executableName: 'blue-engine',
+        sha256: createHash('sha256').update(bytes).digest('hex'),
+      }),
+    );
 
     const signals: AbortSignal[] = [];
     const runtime = new EngineRuntimeService({
@@ -55,7 +58,12 @@ describe('Csound runtime operation isolation', () => {
       arch: 'arm64',
       environment: { PATH: '/empty' },
       getSettingsEnginePath: () => 'blue-engine',
-      runProbeProcess: async () => ({ exitCode: 0, stdout: readyReport, stderr: '', timedOut: false }),
+      runProbeProcess: async () => ({
+        exitCode: 0,
+        stdout: readyReport,
+        stderr: '',
+        timedOut: false,
+      }),
       runExecutionProcess: async (_path, _args, _cwd, signal) => {
         signals.push(signal!);
         await new Promise((resolve) => setTimeout(resolve, 0));
@@ -63,11 +71,20 @@ describe('Csound runtime operation isolation', () => {
       },
     });
     const controller = new AbortController();
-    const cancelled = runtime.executeCsound({
-      kind: 'performance', operationId: 'offline-cancelled', cwd: repoRoot, args: [],
-    }, { signal: controller.signal });
+    const cancelled = runtime.executeCsound(
+      {
+        kind: 'performance',
+        operationId: 'offline-cancelled',
+        cwd: repoRoot,
+        args: [],
+      },
+      { signal: controller.signal },
+    );
     const independent = runtime.executeCsound({
-      kind: 'performance', operationId: 'offline-independent', cwd: repoRoot, args: [],
+      kind: 'performance',
+      operationId: 'offline-independent',
+      cwd: repoRoot,
+      args: [],
     });
     controller.abort();
     const [cancelledResult, independentResult] = await Promise.all([cancelled, independent]);

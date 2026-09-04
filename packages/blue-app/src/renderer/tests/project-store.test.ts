@@ -18,30 +18,36 @@ function createFocusSnapshot(sessionId: number) {
   const snapshot = createEmptyProjectEditorSnapshot();
   snapshot.loaded = true;
   snapshot.sessionId = sessionId;
-  snapshot.orchestra.arrangement.rows = [{
-    assignmentId: '1',
-    enabled: true,
-    instrumentName: 'Orchestra Name',
-    instrumentType: 'generic',
-    instrumentSummary: 'GenericInstrument',
-    editable: true,
-  }];
-  snapshot.score!.layerGroups = [{
-    groupId: 'root-group',
-    groupType: 'track',
-    name: 'Tracks',
-    defaultHeightIndex: 1,
-    layerCount: 1,
-    isOpenableContainer: true,
-    layers: [{
-      layerId: 'track-1',
-      layerKind: 'track',
-      name: 'Track Name',
-      height: 22,
-      items: [],
-      instrument: null,
-    }],
-  }];
+  snapshot.orchestra.arrangement.rows = [
+    {
+      assignmentId: '1',
+      enabled: true,
+      instrumentName: 'Orchestra Name',
+      instrumentType: 'generic',
+      instrumentSummary: 'GenericInstrument',
+      editable: true,
+    },
+  ];
+  snapshot.score!.layerGroups = [
+    {
+      groupId: 'root-group',
+      groupType: 'track',
+      name: 'Tracks',
+      defaultHeightIndex: 1,
+      layerCount: 1,
+      isOpenableContainer: true,
+      layers: [
+        {
+          layerId: 'track-1',
+          layerKind: 'track',
+          name: 'Track Name',
+          height: 22,
+          items: [],
+          instrument: null,
+        },
+      ],
+    },
+  ];
   return snapshot;
 }
 
@@ -166,15 +172,18 @@ describe('project-store — canonical acknowledgement barrier', () => {
       },
     });
 
-    await expect(useProjectStore.getState().flushPendingPatches())
-      .rejects.toThrow('Track instrument change was not applied');
+    await expect(useProjectStore.getState().flushPendingPatches()).rejects.toThrow(
+      'Track instrument change was not applied',
+    );
   });
 
   it('drains edits queued while another commit is in flight', async () => {
     let resolveFirst!: (value: { revision: number; sessionId: number; changed: boolean }) => void;
-    const firstCommit = new Promise<{ revision: number; sessionId: number; changed: boolean }>((resolve) => {
-      resolveFirst = resolve;
-    });
+    const firstCommit = new Promise<{ revision: number; sessionId: number; changed: boolean }>(
+      (resolve) => {
+        resolveFirst = resolve;
+      },
+    );
     commitProjectDocumentPatches
       .mockReturnValueOnce(firstCommit)
       .mockResolvedValueOnce({ revision: 2, sessionId: 1, changed: true });
@@ -251,9 +260,11 @@ describe('project-store — canonical acknowledgement barrier', () => {
 
   it('rejects a stale in-flight receipt after a project reset', async () => {
     let resolveCommit!: (value: { revision: number; sessionId: number; changed: boolean }) => void;
-    commitProjectDocumentPatches.mockReturnValueOnce(new Promise((resolve) => {
-      resolveCommit = resolve;
-    }));
+    commitProjectDocumentPatches.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveCommit = resolve;
+      }),
+    );
 
     await useProjectStore.getState().updateGlobalOrc('instr 1\nendin');
     const barrier = useProjectStore.getState().flushPendingPatches();
@@ -345,7 +356,11 @@ describe('project-store — stable façade contract', () => {
     await useProjectStore.getState().flushPendingPatches();
     expect(getProjectDocument).not.toHaveBeenCalled();
 
-    commitProjectDocumentPatches.mockResolvedValueOnce({ revision: 2, sessionId: 11, changed: true });
+    commitProjectDocumentPatches.mockResolvedValueOnce({
+      revision: 2,
+      sessionId: 11,
+      changed: true,
+    });
     getProjectDocument.mockResolvedValueOnce({
       ...createFocusSnapshot(11),
       filePath: '/tmp/facade.blue',
@@ -387,10 +402,12 @@ describe('project-store — MIDI focus reconciliation', () => {
       orchestra: {
         ...snapshot.orchestra,
         arrangement: {
-          rows: [{
-            ...snapshot.orchestra.arrangement.rows[0]!,
-            instrumentName: 'Renamed Orchestra',
-          }],
+          rows: [
+            {
+              ...snapshot.orchestra.arrangement.rows[0]!,
+              instrumentName: 'Renamed Orchestra',
+            },
+          ],
         },
       },
     };
@@ -437,33 +454,40 @@ describe('project-store — pattern layer optimistic projection', () => {
       isOpenableContainer: false as const,
       patternBeatsLength: 4,
       effectivePatternBeatsLength: 4,
-      layers: [{
-        layerId: 'pl-1',
-        name: 'Row A',
-        height: 44,
-        muted: false,
-        solo: false,
-        items: [],
-        sourceObject: {
-          objectId: 'src-1',
-          objectType: 'GenericScore',
-          name: 'Source',
-          backgroundColor: 0x404040,
-          editorTarget: {
-            selectionId: 'src-1',
-            selectedObjectType: 'GenericScore',
-            editorObjectType: 'GenericScore',
-            ownerKind: 'timeline' as const,
-            displayContext: 'timeline' as const,
-            patternSource: { groupId: 'grp', layerId: 'pl-1', sourceObjectId: 'src-1' },
-            supportsTimeBehavior: true,
-            supportsRepeatPoint: true,
-            supportsNoteProcessorChain: true,
+      layers: [
+        {
+          layerId: 'pl-1',
+          name: 'Row A',
+          height: 44,
+          muted: false,
+          solo: false,
+          items: [],
+          sourceObject: {
+            objectId: 'src-1',
+            objectType: 'GenericScore',
+            name: 'Source',
+            backgroundColor: 0x404040,
+            editorTarget: {
+              selectionId: 'src-1',
+              selectedObjectType: 'GenericScore',
+              editorObjectType: 'GenericScore',
+              ownerKind: 'timeline' as const,
+              displayContext: 'timeline' as const,
+              patternSource: { groupId: 'grp', layerId: 'pl-1', sourceObjectId: 'src-1' },
+              supportsTimeBehavior: true,
+              supportsRepeatPoint: true,
+              supportsNoteProcessorChain: true,
+            },
+            barRenderer: {
+              kind: 'generic' as const,
+              labelLines: ['Source'],
+              timeBehavior: 'NONE',
+              repeatPointBeats: null,
+            },
           },
-          barRenderer: { kind: 'generic' as const, labelLines: ['Source'], timeBehavior: 'NONE', repeatPointBeats: null },
+          activeCellIndices: [0],
         },
-        activeCellIndices: [0],
-      }],
+      ],
     };
     const snapshot = createEmptyProjectEditorSnapshot();
     snapshot.loaded = true;
@@ -518,7 +542,13 @@ describe('project-store — pattern layer optimistic projection', () => {
 
     // Optimistically move [1, 2] to 0 -> order should be L1, L2, L0, L3
     await useProjectStore.getState().applyProjectDocumentPatch({
-      score: { type: 'moveLayerRange', groupId: 'sound-grp', startIndex: 1, endIndex: 2, targetIndex: 0 },
+      score: {
+        type: 'moveLayerRange',
+        groupId: 'sound-grp',
+        startIndex: 1,
+        endIndex: 2,
+        targetIndex: 0,
+      },
     });
 
     let currentGroup = useProjectStore.getState().score.layerGroups[0]!;
@@ -550,7 +580,16 @@ describe('project-store — pattern layer optimistic projection', () => {
         name: 'Selected',
         layerCount: 1,
         isOpenableContainer: true,
-        layers: [{ layerId: 'selected-layer', name: 'Selected Layer', height: 44, muted: false, solo: false, items: [] }],
+        layers: [
+          {
+            layerId: 'selected-layer',
+            name: 'Selected Layer',
+            height: 44,
+            muted: false,
+            solo: false,
+            items: [],
+          },
+        ],
       },
       {
         groupId: 'unrelated-empty-group',
@@ -581,17 +620,19 @@ describe('project-store — pattern layer optimistic projection', () => {
   it('rejects an invalid optimistic move target without changing layer order', async () => {
     const snapshot = createEmptyProjectEditorSnapshot();
     snapshot.loaded = true;
-    snapshot.score!.layerGroups = [{
-      groupId: 'move-group',
-      groupType: 'polyObject',
-      name: 'Move Group',
-      layerCount: 2,
-      isOpenableContainer: true,
-      layers: [
-        { layerId: 'move-0', name: 'L0', height: 44, muted: false, solo: false, items: [] },
-        { layerId: 'move-1', name: 'L1', height: 44, muted: false, solo: false, items: [] },
-      ],
-    }];
+    snapshot.score!.layerGroups = [
+      {
+        groupId: 'move-group',
+        groupType: 'polyObject',
+        name: 'Move Group',
+        layerCount: 2,
+        isOpenableContainer: true,
+        layers: [
+          { layerId: 'move-0', name: 'L0', height: 44, muted: false, solo: false, items: [] },
+          { layerId: 'move-1', name: 'L1', height: 44, muted: false, solo: false, items: [] },
+        ],
+      },
+    ];
     useProjectStore.getState().applyMissingAudioResolvedSnapshot(snapshot);
 
     await useProjectStore.getState().applyProjectDocumentPatch({
@@ -604,8 +645,9 @@ describe('project-store — pattern layer optimistic projection', () => {
       },
     });
 
-    expect(useProjectStore.getState().score.layerGroups[0]!.layers.map((layer) => layer.name))
-      .toEqual(['L0', 'L1']);
+    expect(
+      useProjectStore.getState().score.layerGroups[0]!.layers.map((layer) => layer.name),
+    ).toEqual(['L0', 'L1']);
     await useProjectStore.getState().flushPendingPatches();
   });
 });

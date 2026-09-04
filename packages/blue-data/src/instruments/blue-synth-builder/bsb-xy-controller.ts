@@ -34,8 +34,8 @@ export class BSBXYController extends BSBWidget {
       const relativeX = parseFloat(parts[0]);
       const relativeY = parseFloat(parts[1]);
       if (Number.isFinite(relativeX) && Number.isFinite(relativeY)) {
-        nextX = (relativeX * (this.xMax - this.xMin)) + this.xMin;
-        nextY = (relativeY * (this.yMax - this.yMin)) + this.yMin;
+        nextX = relativeX * (this.xMax - this.xMin) + this.xMin;
+        nextY = relativeY * (this.yMax - this.yMin) + this.yMin;
       }
     } else if (parts.length >= 3) {
       nextX = parseFloat(parts[1]);
@@ -48,10 +48,7 @@ export class BSBXYController extends BSBWidget {
     }
   }
 
-  override collectReplacements(
-    unit: BSBCompilationUnit,
-    parameters?: Parameter[],
-  ): void {
+  override collectReplacements(unit: BSBCompilationUnit, parameters?: Parameter[]): void {
     const xName = `${this.objectName}X`;
     const yName = `${this.objectName}Y`;
     this.addCompilationReplacement(unit, xName, formatBlueNumber(this.xValue), parameters);
@@ -83,8 +80,8 @@ export class BSBXYController extends BSBWidget {
     if (rand) this.randomizable = rand.getTextString() === 'true';
 
     if (versionAttribute === '1') {
-      this.xValue = ((this.xMax - this.xMin) * this.xValue) + this.xMin;
-      this.yValue = ((this.yMax - this.yMin) * this.yValue) + this.yMin;
+      this.xValue = (this.xMax - this.xMin) * this.xValue + this.xMin;
+      this.yValue = (this.yMax - this.yMin) * this.yValue + this.yMin;
     }
   }
 

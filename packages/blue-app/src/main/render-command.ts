@@ -67,14 +67,15 @@ export function buildRenderCommandString(
   csdPath: string | null,
   executablePath?: string | null,
 ): string {
-  const normalizedOptions = options
-    .map((opt) => opt.trim())
-    .filter((opt) => opt.length > 0);
+  const normalizedOptions = options.map((opt) => opt.trim()).filter((opt) => opt.length > 0);
 
   const hasExecutable = normalizedOptions.length > 0 && !normalizedOptions[0]!.startsWith('-');
   const commandParts = hasExecutable
     ? [...normalizedOptions]
-    : [executablePath && executablePath.trim().length > 0 ? executablePath : 'csound', ...normalizedOptions];
+    : [
+        executablePath && executablePath.trim().length > 0 ? executablePath : 'csound',
+        ...normalizedOptions,
+      ];
 
   if (csdPath) {
     commandParts.push(csdPath);

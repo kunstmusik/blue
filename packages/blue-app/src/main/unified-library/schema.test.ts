@@ -21,7 +21,9 @@ describe('Unified Library schema', () => {
     initializeUnifiedLibrarySchema(database, { fileBacked: false });
 
     const roots = database
-      .prepare("SELECT library_type, node_kind, parent_id FROM library_nodes WHERE node_kind = 'root' ORDER BY library_type")
+      .prepare(
+        "SELECT library_type, node_kind, parent_id FROM library_nodes WHERE node_kind = 'root' ORDER BY library_type",
+      )
       .all();
     expect(roots).toEqual([
       { library_type: 'effect', node_kind: 'root', parent_id: null },
@@ -46,10 +48,14 @@ describe('Unified Library schema', () => {
     );
 
     expect(
-      database.prepare('SELECT content_revision FROM library_store_state WHERE singleton_id = 1').get(),
+      database
+        .prepare('SELECT content_revision FROM library_store_state WHERE singleton_id = 1')
+        .get(),
     ).toEqual({ content_revision: 0 });
     const indexes = database
-      .prepare("SELECT name FROM sqlite_master WHERE type = 'index' AND name NOT LIKE 'sqlite_%' ORDER BY name")
+      .prepare(
+        "SELECT name FROM sqlite_master WHERE type = 'index' AND name NOT LIKE 'sqlite_%' ORDER BY name",
+      )
       .all()
       .map((row) => String(row.name));
     expect(indexes).toEqual(
@@ -64,7 +70,9 @@ describe('Unified Library schema', () => {
       ]),
     );
     expect(() =>
-      database.exec("INSERT INTO library_nodes (id, library_type, node_kind, parent_id, display_name, search_name, sort_index, revision, created_at, updated_at) VALUES ('bad', 'instrument', 'item', 'missing', 'Bad', 'bad', 0, 1, 'now', 'now')"),
+      database.exec(
+        "INSERT INTO library_nodes (id, library_type, node_kind, parent_id, display_name, search_name, sort_index, revision, created_at, updated_at) VALUES ('bad', 'instrument', 'item', 'missing', 'Bad', 'bad', 0, 1, 'now', 'now')",
+      ),
     ).toThrow();
   });
 

@@ -5,7 +5,8 @@ import { describe, expect, it } from 'vitest';
 import { UnifiedLibraryRepositoryClient } from './repository-client';
 import { UnifiedLibraryImportExportService } from './import-export-service';
 
-const XML = '<udoLibrary><udoCategory categoryName="UDO Library" isRoot="true"><udo><opcodeName>tone</opcodeName><outTypes>a</outTypes><inTypes>ak</inTypes><codeBody>aout tone ain,k</codeBody><comments/></udo></udoCategory></udoLibrary>';
+const XML =
+  '<udoLibrary><udoCategory categoryName="UDO Library" isRoot="true"><udo><opcodeName>tone</opcodeName><outTypes>a</outTypes><inTypes>ak</inTypes><codeBody>aout tone ain,k</codeBody><comments/></udo></udoCategory></udoLibrary>';
 
 describe('manual import execution', () => {
   it('skips exact duplicates, records lineage, and conditionally undoes additive batches', async () => {
@@ -15,9 +16,13 @@ describe('manual import execution', () => {
     const client = UnifiedLibraryRepositoryClient.openForTesting(':memory:');
     try {
       const service = new UnifiedLibraryImportExportService(client);
-      const first = await service.executeManualImport((await service.previewManualImport([sourcePath])).previewToken);
+      const first = await service.executeManualImport(
+        (await service.previewManualImport([sourcePath])).previewToken,
+      );
       expect(first.status).toBe('completed');
-      const second = await service.executeManualImport((await service.previewManualImport([sourcePath])).previewToken);
+      const second = await service.executeManualImport(
+        (await service.previewManualImport([sourcePath])).previewToken,
+      );
       expect(second.exactDuplicateCount).toBe(1);
       expect((await client.getSnapshot()).itemCounts.udo).toBe(1);
       await service.undoManualImport(first.batchId);

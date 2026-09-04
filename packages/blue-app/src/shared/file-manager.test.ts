@@ -94,16 +94,35 @@ describe('file-manager shared contract', () => {
 
   describe('drag payload', () => {
     it('round-trips a versioned regular-file payload', () => {
-      const payload = { version: 1 as const, kind: 'file' as const, path: '/tmp/a.wav', name: 'a.wav' };
-      expect(parseFileManagerDragPayload(serializeFileManagerDragPayload(payload))).toEqual(payload);
+      const payload = {
+        version: 1 as const,
+        kind: 'file' as const,
+        path: '/tmp/a.wav',
+        name: 'a.wav',
+      };
+      expect(parseFileManagerDragPayload(serializeFileManagerDragPayload(payload))).toEqual(
+        payload,
+      );
     });
 
     it('rejects malformed payloads', () => {
       expect(parseFileManagerDragPayload(null)).toBeNull();
       expect(parseFileManagerDragPayload('not json')).toBeNull();
-      expect(parseFileManagerDragPayload(JSON.stringify({ version: 2, kind: 'file', path: '/a', name: 'a' }))).toBeNull();
-      expect(parseFileManagerDragPayload(JSON.stringify({ version: 1, kind: 'directory', path: '/a', name: 'a' }))).toBeNull();
-      expect(parseFileManagerDragPayload(JSON.stringify({ version: 1, kind: 'file', path: '', name: 'a' }))).toBeNull();
+      expect(
+        parseFileManagerDragPayload(
+          JSON.stringify({ version: 2, kind: 'file', path: '/a', name: 'a' }),
+        ),
+      ).toBeNull();
+      expect(
+        parseFileManagerDragPayload(
+          JSON.stringify({ version: 1, kind: 'directory', path: '/a', name: 'a' }),
+        ),
+      ).toBeNull();
+      expect(
+        parseFileManagerDragPayload(
+          JSON.stringify({ version: 1, kind: 'file', path: '', name: 'a' }),
+        ),
+      ).toBeNull();
     });
 
     it('uses the documented custom MIME type', () => {
@@ -142,15 +161,17 @@ describe('file-manager shared contract', () => {
 
   describe('external OS drop parsing', () => {
     it('accepts a single resolved file path', () => {
-      expect(
-        parseExternalOsFileDrop({ fileCount: 1, firstFilePath: '/Users/a/one.wav' }),
-      ).toEqual({ status: 'ok', path: '/Users/a/one.wav' });
+      expect(parseExternalOsFileDrop({ fileCount: 1, firstFilePath: '/Users/a/one.wav' })).toEqual({
+        status: 'ok',
+        path: '/Users/a/one.wav',
+      });
     });
 
     it('rejects multiple files even when one is supported', () => {
-      expect(
-        parseExternalOsFileDrop({ fileCount: 2, firstFilePath: '/Users/a/one.wav' }),
-      ).toEqual({ status: 'rejected', reason: 'multiple-files' });
+      expect(parseExternalOsFileDrop({ fileCount: 2, firstFilePath: '/Users/a/one.wav' })).toEqual({
+        status: 'rejected',
+        reason: 'multiple-files',
+      });
     });
 
     it('accepts one file:// URI from uri-list, ignoring comments', () => {

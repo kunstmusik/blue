@@ -24,8 +24,18 @@ describe('Tempo map snapshot contract', () => {
     expect(transport.tempoMap.enabled).toBe(true);
     expect(transport.tempoMap.visible).toBe(true);
     expect(transport.tempoMap.points).toHaveLength(2);
-    expect(transport.tempoMap.points[0]).toEqual({ beat: 0, tempo: 60, curveType: 'constant', timeBase: TimeBase.BEATS });
-    expect(transport.tempoMap.points[1]).toEqual({ beat: 4, tempo: 120, curveType: 'linear', timeBase: TimeBase.BEATS });
+    expect(transport.tempoMap.points[0]).toEqual({
+      beat: 0,
+      tempo: 60,
+      curveType: 'constant',
+      timeBase: TimeBase.BEATS,
+    });
+    expect(transport.tempoMap.points[1]).toEqual({
+      beat: 4,
+      tempo: 120,
+      curveType: 'linear',
+      timeBase: TimeBase.BEATS,
+    });
   });
 
   it('snapshots a disabled invisible map correctly', () => {
@@ -77,7 +87,10 @@ describe('Tempo map patch validation and application', () => {
 
     applyProjectDocumentPatch(data, {
       transport: {
-        tempoMapPatch: { type: 'addTempoPoint', point: { beat: 4, tempo: 120, curveType: 'constant' } },
+        tempoMapPatch: {
+          type: 'addTempoPoint',
+          point: { beat: 4, tempo: 120, curveType: 'constant' },
+        },
       },
     });
 
@@ -92,7 +105,10 @@ describe('Tempo map patch validation and application', () => {
 
     const changed = applyProjectDocumentPatch(data, {
       transport: {
-        tempoMapPatch: { type: 'addTempoPoint', point: { beat: 0, tempo: 100, curveType: 'constant' } },
+        tempoMapPatch: {
+          type: 'addTempoPoint',
+          point: { beat: 0, tempo: 100, curveType: 'constant' },
+        },
       },
     });
 
@@ -107,7 +123,11 @@ describe('Tempo map patch validation and application', () => {
 
     applyProjectDocumentPatch(data, {
       transport: {
-        tempoMapPatch: { type: 'updateTempoPoint', index: 1, patch: { beat: 8, tempo: 90, curveType: 'linear' } },
+        tempoMapPatch: {
+          type: 'updateTempoPoint',
+          index: 1,
+          patch: { beat: 8, tempo: 90, curveType: 'linear' },
+        },
       },
     });
 

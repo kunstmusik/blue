@@ -2,7 +2,10 @@
 
 import { describe, expect, it } from 'vitest';
 import { BlueData, PolyObject, Channel, TrackLayer, TrackLayerGroup } from '@blue/data';
-import { applyProjectDocumentPatch, createScoreDocumentSnapshot } from '../../shared/project-editor';
+import {
+  applyProjectDocumentPatch,
+  createScoreDocumentSnapshot,
+} from '../../shared/project-editor';
 import type { ScoreAutomationLayerRef } from '../../shared/project-editor';
 
 function soundLayerProject() {
@@ -62,7 +65,12 @@ describe('automation assignment survives snapshot refresh', () => {
     const { data, paramId, layerRef } = soundLayerProject();
 
     applyProjectDocumentPatch(data, {
-      score: { type: 'assignAutomationToLayer', layer: layerRef, parameterId: paramId, enableAutomation: true },
+      score: {
+        type: 'assignAutomationToLayer',
+        layer: layerRef,
+        parameterId: paramId,
+        enableAutomation: true,
+      },
     });
 
     const first = createScoreDocumentSnapshot(data);
@@ -82,7 +90,12 @@ describe('automation assignment survives snapshot refresh', () => {
     const { data, paramId, layerRef } = trackProject();
 
     applyProjectDocumentPatch(data, {
-      score: { type: 'assignAutomationToLayer', layer: layerRef, parameterId: paramId, enableAutomation: true },
+      score: {
+        type: 'assignAutomationToLayer',
+        layer: layerRef,
+        parameterId: paramId,
+        enableAutomation: true,
+      },
     });
 
     const first = createScoreDocumentSnapshot(data);
@@ -94,21 +107,33 @@ describe('automation assignment survives snapshot refresh', () => {
   it('persists an edited line color across refresh', () => {
     const { data, paramId, layerRef } = soundLayerProject();
     applyProjectDocumentPatch(data, {
-      score: { type: 'assignAutomationToLayer', layer: layerRef, parameterId: paramId, enableAutomation: true },
+      score: {
+        type: 'assignAutomationToLayer',
+        layer: layerRef,
+        parameterId: paramId,
+        enableAutomation: true,
+      },
     });
     applyProjectDocumentPatch(data, {
       score: { type: 'setAutomationLineColor', parameterId: paramId, lineColor: 0xff0000 },
     });
 
     const snap = createScoreDocumentSnapshot(data);
-    const param = snap.layerGroups[0]!.layers[0]!.automation!.parameters.find((p) => p.parameterId === paramId)!;
+    const param = snap.layerGroups[0]!.layers[0]!.automation!.parameters.find(
+      (p) => p.parameterId === paramId,
+    )!;
     expect(param.lineColor).toBe(0xff0000);
   });
 
   it('reports stale assignments as missing and clears them without crashing the snapshot', () => {
     const { data, paramId, layerRef } = soundLayerProject();
     applyProjectDocumentPatch(data, {
-      score: { type: 'assignAutomationToLayer', layer: layerRef, parameterId: paramId, enableAutomation: true },
+      score: {
+        type: 'assignAutomationToLayer',
+        layer: layerRef,
+        parameterId: paramId,
+        enableAutomation: true,
+      },
     });
 
     // Simulate a stale id left behind by a removed target.
@@ -126,7 +151,9 @@ describe('automation assignment survives snapshot refresh', () => {
     });
 
     const cleaned = createScoreDocumentSnapshot(data);
-    expect(cleaned.layerGroups[0]!.layers[0]!.automation!.missingParameterIds).not.toContain('does-not-exist');
+    expect(cleaned.layerGroups[0]!.layers[0]!.automation!.missingParameterIds).not.toContain(
+      'does-not-exist',
+    );
     expect(cleaned.layerGroups[0]!.layers[0]!.automation!.parameterIds).toContain(paramId);
   });
 });

@@ -36,14 +36,26 @@ export class JMask extends AbstractSoundObject {
     }
   }
 
-  isSeedUsed(): boolean { return this._seedUsed; }
-  setSeedUsed(val: boolean): void { this._seedUsed = val; }
+  isSeedUsed(): boolean {
+    return this._seedUsed;
+  }
+  setSeedUsed(val: boolean): void {
+    this._seedUsed = val;
+  }
 
-  getSeed(): number { return this._seed; }
-  setSeed(val: number): void { this._seed = val; }
+  getSeed(): number {
+    return this._seed;
+  }
+  setSeed(val: number): void {
+    this._seed = val;
+  }
 
-  getField(): Field { return this._field; }
-  setField(field: Field): void { this._field = field; }
+  getField(): Field {
+    return this._field;
+  }
+  setField(field: Field): void {
+    this._field = field;
+  }
 
   private generateRawNotes(context: TimeContext): { notes: NoteList; duration: number } {
     const field = new Field(this._field);
@@ -83,7 +95,11 @@ export class JMask extends AbstractSoundObject {
     _endTime: number,
   ): Promise<NoteList> {
     const { notes, duration } = this.generateRawNotes(context);
-    const processed = await applyNoteProcessorChainAsync(notes, this.getNoteProcessorChain(), compileData);
+    const processed = await applyNoteProcessorChainAsync(
+      notes,
+      this.getNoteProcessorChain(),
+      compileData,
+    );
     this.applyTimeAndOffset(processed, duration, context);
     return processed;
   }

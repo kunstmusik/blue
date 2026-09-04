@@ -21,10 +21,13 @@ vi.mock('../components/workbench/panels/editors/SelectedCodeEditor', () => ({
   ),
 }));
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 function setInputValue(input: HTMLElement, value: string) {
-  const tracker = (input as unknown as { _valueTracker?: { setValue: (v: string) => void } })._valueTracker;
+  const tracker = (input as unknown as { _valueTracker?: { setValue: (v: string) => void } })
+    ._valueTracker;
   if (tracker) {
     tracker.setValue('');
   }
@@ -49,7 +52,10 @@ function clickElement(element: HTMLElement) {
   element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
 }
 
-const singleSysExPath = path.join(__dirname, '../../../../blue-data/src/instruments/blue-x7/test-fixtures/single-voice.syx');
+const singleSysExPath = path.join(
+  __dirname,
+  '../../../../blue-data/src/instruments/blue-x7/test-fixtures/single-voice.syx',
+);
 const singleSysExBytes = new Uint8Array(readFileSync(singleSysExPath));
 
 describe('BlueX7 — Editor-Local Undo / Redo History', () => {
@@ -109,8 +115,12 @@ describe('BlueX7 — Editor-Local Undo / Redo History', () => {
 
     renderEditor(instrument);
 
-    const undoBtn = container?.querySelector('button[aria-label="Undo BlueX7 edit"]') as HTMLButtonElement;
-    const redoBtn = container?.querySelector('button[aria-label="Redo BlueX7 edit"]') as HTMLButtonElement;
+    const undoBtn = container?.querySelector(
+      'button[aria-label="Undo BlueX7 edit"]',
+    ) as HTMLButtonElement;
+    const redoBtn = container?.querySelector(
+      'button[aria-label="Redo BlueX7 edit"]',
+    ) as HTMLButtonElement;
 
     expect(undoBtn.disabled).toBe(true);
     expect(redoBtn.disabled).toBe(true);
@@ -133,8 +143,12 @@ describe('BlueX7 — Editor-Local Undo / Redo History', () => {
     const algSelect = container?.querySelector('#bluex7-algorithm') as HTMLButtonElement;
     await chooseAppSelectOption(algSelect, 'Algorithm 5');
 
-    const undoBtn = container?.querySelector('button[aria-label="Undo BlueX7 edit"]') as HTMLButtonElement;
-    const redoBtn = container?.querySelector('button[aria-label="Redo BlueX7 edit"]') as HTMLButtonElement;
+    const undoBtn = container?.querySelector(
+      'button[aria-label="Undo BlueX7 edit"]',
+    ) as HTMLButtonElement;
+    const redoBtn = container?.querySelector(
+      'button[aria-label="Redo BlueX7 edit"]',
+    ) as HTMLButtonElement;
 
     expect(undoBtn.disabled).toBe(false);
     expect(redoBtn.disabled).toBe(true);
@@ -182,7 +196,9 @@ describe('BlueX7 — Editor-Local Undo / Redo History', () => {
       setInputValue(feedbackInput, '2');
     });
 
-    let undoBtn = container?.querySelector('button[aria-label="Undo BlueX7 edit"]') as HTMLButtonElement;
+    let undoBtn = container?.querySelector(
+      'button[aria-label="Undo BlueX7 edit"]',
+    ) as HTMLButtonElement;
     expect(undoBtn.disabled).toBe(false);
 
     // Switch to instrument #2 (assignmentId: 'x7-2')
@@ -198,8 +214,12 @@ describe('BlueX7 — Editor-Local Undo / Redo History', () => {
 
     renderEditor(instrument2);
 
-    undoBtn = container?.querySelector('button[aria-label="Undo BlueX7 edit"]') as HTMLButtonElement;
-    const redoBtn = container?.querySelector('button[aria-label="Redo BlueX7 edit"]') as HTMLButtonElement;
+    undoBtn = container?.querySelector(
+      'button[aria-label="Undo BlueX7 edit"]',
+    ) as HTMLButtonElement;
+    const redoBtn = container?.querySelector(
+      'button[aria-label="Redo BlueX7 edit"]',
+    ) as HTMLButtonElement;
 
     expect(undoBtn.disabled).toBe(true);
     expect(redoBtn.disabled).toBe(true);
@@ -220,14 +240,23 @@ describe('BlueX7 — Editor-Local Undo / Redo History', () => {
     act(() => {
       setInputValue(feedbackInput, '2');
     });
-    expect((container?.querySelector('button[aria-label="Undo BlueX7 edit"]') as HTMLButtonElement).disabled).toBe(false);
+    expect(
+      (container?.querySelector('button[aria-label="Undo BlueX7 edit"]') as HTMLButtonElement)
+        .disabled,
+    ).toBe(false);
 
     const replacement = createDefaultBlueX7Voice();
     replacement.common.algorithm = 4;
     renderEditor({ ...instrument1, voice: replacement });
 
-    expect((container?.querySelector('button[aria-label="Undo BlueX7 edit"]') as HTMLButtonElement).disabled).toBe(true);
-    expect((container?.querySelector('button[aria-label="Redo BlueX7 edit"]') as HTMLButtonElement).disabled).toBe(true);
+    expect(
+      (container?.querySelector('button[aria-label="Undo BlueX7 edit"]') as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    expect(
+      (container?.querySelector('button[aria-label="Redo BlueX7 edit"]') as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
   });
 
   it('does not add Csound post-code edits to BlueX7 undo history', () => {
@@ -243,18 +272,28 @@ describe('BlueX7 — Editor-Local Undo / Redo History', () => {
     renderEditor(instrument);
 
     // Switch to Csound tab
-    const csoundTab = container?.querySelector('[role="tab"][data-testid="tab-csound"]') as HTMLButtonElement;
+    const csoundTab = container?.querySelector(
+      '[role="tab"][data-testid="tab-csound"]',
+    ) as HTMLButtonElement;
     act(() => {
       clickElement(csoundTab);
     });
 
-    const postCodeArea = container?.querySelector('textarea[aria-label="Csound Post Code"]') as HTMLTextAreaElement;
+    const postCodeArea = container?.querySelector(
+      'textarea[aria-label="Csound Post Code"]',
+    ) as HTMLTextAreaElement;
     act(() => {
       setInputValue(postCodeArea, 'outs aout, aout');
     });
 
-    expect((container?.querySelector('button[aria-label="Undo BlueX7 edit"]') as HTMLButtonElement).disabled).toBe(true);
-    expect((container?.querySelector('button[aria-label="Redo BlueX7 edit"]') as HTMLButtonElement).disabled).toBe(true);
+    expect(
+      (container?.querySelector('button[aria-label="Undo BlueX7 edit"]') as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    expect(
+      (container?.querySelector('button[aria-label="Redo BlueX7 edit"]') as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
   });
 
   it('preserves undo/redo history across top-level and nested operator tab transitions', () => {
@@ -276,15 +315,21 @@ describe('BlueX7 — Editor-Local Undo / Redo History', () => {
       setInputValue(feedbackInput, '3');
     });
 
-    const undoBtn = container?.querySelector('button[aria-label="Undo BlueX7 edit"]') as HTMLButtonElement;
+    const undoBtn = container?.querySelector(
+      'button[aria-label="Undo BlueX7 edit"]',
+    ) as HTMLButtonElement;
     expect(undoBtn.disabled).toBe(false);
 
     // Switch to Operators tab -> Op 3
-    const operatorsTab = container?.querySelector('[role="tab"][data-testid="tab-operators"]') as HTMLButtonElement;
+    const operatorsTab = container?.querySelector(
+      '[role="tab"][data-testid="tab-operators"]',
+    ) as HTMLButtonElement;
     act(() => {
       clickElement(operatorsTab);
     });
-    const op3Tab = container?.querySelector('[role="tab"][data-testid="operator-tab-3"]') as HTMLButtonElement;
+    const op3Tab = container?.querySelector(
+      '[role="tab"][data-testid="operator-tab-3"]',
+    ) as HTMLButtonElement;
     act(() => {
       clickElement(op3Tab);
     });
@@ -293,7 +338,9 @@ describe('BlueX7 — Editor-Local Undo / Redo History', () => {
     expect(undoBtn.disabled).toBe(false);
 
     // Switch to Pitch Envelope tab
-    const pitchTab = container?.querySelector('[role="tab"][data-testid="tab-pitch"]') as HTMLButtonElement;
+    const pitchTab = container?.querySelector(
+      '[role="tab"][data-testid="tab-pitch"]',
+    ) as HTMLButtonElement;
     act(() => {
       clickElement(pitchTab);
     });
@@ -305,7 +352,9 @@ describe('BlueX7 — Editor-Local Undo / Redo History', () => {
     });
 
     // Redo is now available
-    const redoBtn = container?.querySelector('button[aria-label="Redo BlueX7 edit"]') as HTMLButtonElement;
+    const redoBtn = container?.querySelector(
+      'button[aria-label="Redo BlueX7 edit"]',
+    ) as HTMLButtonElement;
     expect(redoBtn.disabled).toBe(false);
     expect(undoBtn.disabled).toBe(true);
   });
@@ -339,12 +388,16 @@ describe('BlueX7 — Editor-Local Undo / Redo History', () => {
       );
     });
 
-    const importBtn = container?.querySelector('button[aria-label="Import DX7 SysEx File"]') as HTMLButtonElement;
+    const importBtn = container?.querySelector(
+      'button[aria-label="Import DX7 SysEx File"]',
+    ) as HTMLButtonElement;
     await act(async () => {
       clickElement(importBtn);
     });
 
-    const confirmBtn = container?.querySelector('button[aria-label="Confirm SysEx Import"]') as HTMLButtonElement;
+    const confirmBtn = container?.querySelector(
+      'button[aria-label="Confirm SysEx Import"]',
+    ) as HTMLButtonElement;
     act(() => {
       clickElement(confirmBtn);
     });
@@ -354,7 +407,9 @@ describe('BlueX7 — Editor-Local Undo / Redo History', () => {
     expect(dispatchedPatches[0].blueX7).toEqual({ type: 'replaceVoice', voice: importedVoice });
 
     // One undo step fully restores the prior voice
-    const undoBtn = container?.querySelector('button[aria-label="Undo BlueX7 edit"]') as HTMLButtonElement;
+    const undoBtn = container?.querySelector(
+      'button[aria-label="Undo BlueX7 edit"]',
+    ) as HTMLButtonElement;
     expect(undoBtn.disabled).toBe(false);
     act(() => {
       clickElement(undoBtn);
@@ -363,10 +418,15 @@ describe('BlueX7 — Editor-Local Undo / Redo History', () => {
     expect(dispatchedPatches).toHaveLength(2);
     expect(dispatchedPatches[1].blueX7).toEqual({ type: 'replaceVoice', voice });
     // A second undo must be impossible: the import was one step
-    expect((container?.querySelector('button[aria-label="Undo BlueX7 edit"]') as HTMLButtonElement).disabled).toBe(true);
+    expect(
+      (container?.querySelector('button[aria-label="Undo BlueX7 edit"]') as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
 
     // Redo reapplies the same complete imported voice as one patch.
-    const redoBtn = container?.querySelector('button[aria-label="Redo BlueX7 edit"]') as HTMLButtonElement;
+    const redoBtn = container?.querySelector(
+      'button[aria-label="Redo BlueX7 edit"]',
+    ) as HTMLButtonElement;
     expect(redoBtn.disabled).toBe(false);
     act(() => {
       clickElement(redoBtn);

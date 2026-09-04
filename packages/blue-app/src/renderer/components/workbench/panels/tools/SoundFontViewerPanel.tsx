@@ -1,10 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  Copy,
-  FolderOpen,
-  ListMusic,
-  Music2,
-} from 'lucide-react';
+import { Copy, FolderOpen, ListMusic, Music2 } from 'lucide-react';
 import { DEFAULT_SPLIT_SIZE_PX } from '../../../../../shared/window-layout-settings';
 import type { SoundFontInfo } from '../../../../../shared/soundfont-viewer';
 import { subscribePendingSoundFontFile } from './soundfont-viewer-bus';
@@ -28,9 +23,7 @@ function isSoundFontPath(filePath: string): boolean {
 
 function getDroppedFilePath(event: React.DragEvent<HTMLElement>): string | null {
   const droppedFile = event.dataTransfer.files[0];
-  const nativePath = droppedFile
-    ? (droppedFile as File & { path?: string }).path
-    : undefined;
+  const nativePath = droppedFile ? (droppedFile as File & { path?: string }).path : undefined;
   if (nativePath?.trim()) {
     return nativePath.trim();
   }
@@ -46,8 +39,8 @@ function getDroppedFilePath(event: React.DragEvent<HTMLElement>): string | null 
     }
   }
 
-  const uriList = event.dataTransfer.getData('text/uri-list')
-    || event.dataTransfer.getData('text/plain');
+  const uriList =
+    event.dataTransfer.getData('text/uri-list') || event.dataTransfer.getData('text/plain');
   const firstUri = uriList
     .split(/\r?\n/u)
     .map((value) => value.trim())
@@ -63,9 +56,7 @@ function getDroppedFilePath(event: React.DragEvent<HTMLElement>): string | null 
   try {
     const fileUrl = new URL(firstUri);
     const decodedPath = decodeURIComponent(fileUrl.pathname);
-    return /^\/[A-Za-z]:\//u.test(decodedPath)
-      ? decodedPath.slice(1)
-      : decodedPath;
+    return /^\/[A-Za-z]:\//u.test(decodedPath) ? decodedPath.slice(1) : decodedPath;
   } catch {
     return decodeURI(firstUri.substring('file://'.length));
   }
@@ -90,9 +81,7 @@ export default function SoundFontViewerPanel(): React.ReactElement {
     };
 
     updateWidth();
-    const observer = typeof ResizeObserver === 'undefined'
-      ? null
-      : new ResizeObserver(updateWidth);
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(updateWidth);
     observer?.observe(panel);
     window.addEventListener('resize', updateWidth);
 
@@ -145,19 +134,22 @@ export default function SoundFontViewerPanel(): React.ReactElement {
     }
   }, [inspectFile]);
 
-  const handleDrop = useCallback((event: React.DragEvent<HTMLElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setIsDragging(false);
+  const handleDrop = useCallback(
+    (event: React.DragEvent<HTMLElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setIsDragging(false);
 
-    const droppedPath = getDroppedFilePath(event);
-    if (!droppedPath) {
-      setError('Could not read the dropped file path. Try Choose file instead.');
-      return;
-    }
+      const droppedPath = getDroppedFilePath(event);
+      if (!droppedPath) {
+        setError('Could not read the dropped file path. Try Choose file instead.');
+        return;
+      }
 
-    void inspectFile(droppedPath);
-  }, [inspectFile]);
+      void inspectFile(droppedPath);
+    },
+    [inspectFile],
+  );
 
   const handleDragEnter = useCallback((event: React.DragEvent<HTMLElement>) => {
     event.preventDefault();
@@ -179,19 +171,22 @@ export default function SoundFontViewerPanel(): React.ReactElement {
     }
   }, []);
 
-  const instrumentRows = info?.instruments.map((instrument) => [
-    String(instrument.number),
-    instrument.name,
-  ]) ?? [];
-  const presetRows = info?.presets.map((preset) => [
-    String(preset.number),
-    preset.name,
-    String(preset.bank),
-    String(preset.presetNumber),
-  ]) ?? [];
+  const instrumentRows =
+    info?.instruments.map((instrument) => [String(instrument.number), instrument.name]) ?? [];
+  const presetRows =
+    info?.presets.map((preset) => [
+      String(preset.number),
+      preset.name,
+      String(preset.bank),
+      String(preset.presetNumber),
+    ]) ?? [];
 
   return (
-    <div ref={panelRef} data-soundfont-panel="true" className="relative flex h-full min-h-0 flex-col overflow-hidden bg-app-bg/15 text-app-text">
+    <div
+      ref={panelRef}
+      data-soundfont-panel="true"
+      className="relative flex h-full min-h-0 flex-col overflow-hidden bg-app-bg/15 text-app-text"
+    >
       <section
         data-soundfont-drop-target="true"
         className={cn(
@@ -207,11 +202,19 @@ export default function SoundFontViewerPanel(): React.ReactElement {
       >
         <div className="flex min-w-0 items-center gap-2.5">
           <div className="min-w-0 flex-1">
-            <div className="text-role-headline font-bold uppercase tracking-[0.14em] text-app-text-muted">SoundFont file</div>
-            <div className="truncate text-role-body text-app-text-bright" title={filePath ?? undefined}>
+            <div className="text-role-headline font-bold uppercase tracking-[0.14em] text-app-text-muted">
+              SoundFont file
+            </div>
+            <div
+              className="truncate text-role-body text-app-text-bright"
+              title={filePath ?? undefined}
+            >
               {filePath ? basename(filePath) : 'No SoundFont selected'}
             </div>
-            <div className="truncate text-role-body text-app-text-muted" title={filePath ?? undefined}>
+            <div
+              className="truncate text-role-body text-app-text-muted"
+              title={filePath ?? undefined}
+            >
               {filePath ?? 'Choose or drop an .sf2 file to inspect'}
             </div>
           </div>
@@ -219,7 +222,9 @@ export default function SoundFontViewerPanel(): React.ReactElement {
             <button
               type="button"
               className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-app-border/40 bg-app-surface text-app-text-muted transition-colors hover:bg-app-hover hover:text-app-text-bright"
-              onClick={() => { void window.blueAPI.writeClipboardText(filePath); }}
+              onClick={() => {
+                void window.blueAPI.writeClipboardText(filePath);
+              }}
               title="Copy full path"
               aria-label="Copy full path"
             >
@@ -229,7 +234,9 @@ export default function SoundFontViewerPanel(): React.ReactElement {
           <button
             type="button"
             className={SECONDARY_BUTTON_CLASS}
-            onClick={() => { void chooseFile(); }}
+            onClick={() => {
+              void chooseFile();
+            }}
             disabled={isChoosing || isInspecting}
             title="Choose SoundFont file"
           >
@@ -246,7 +253,9 @@ export default function SoundFontViewerPanel(): React.ReactElement {
       )}
 
       {isInspecting && (
-        <div className="mx-3 mt-3 shrink-0 text-role-callout text-app-accent">Reading SoundFont metadata…</div>
+        <div className="mx-3 mt-3 shrink-0 text-role-callout text-app-accent">
+          Reading SoundFont metadata…
+        </div>
       )}
 
       <div className="flex min-h-0 flex-1 p-2">
@@ -261,9 +270,11 @@ export default function SoundFontViewerPanel(): React.ReactElement {
           className="h-full w-full"
           firstClassName="min-h-0 min-w-0"
           secondClassName="min-h-0 min-w-0"
-          separatorProps={{
-            'data-soundfont-splitter': 'true',
-          } as React.ButtonHTMLAttributes<HTMLButtonElement>}
+          separatorProps={
+            {
+              'data-soundfont-splitter': 'true',
+            } as React.ButtonHTMLAttributes<HTMLButtonElement>
+          }
           first={
             <SoundFontTable
               title="Instruments"
@@ -286,7 +297,6 @@ export default function SoundFontViewerPanel(): React.ReactElement {
           }
         />
       </div>
-
     </div>
   );
 }
@@ -313,7 +323,9 @@ function SoundFontTable({
           <span className="text-app-accent">{icon}</span>
           {title}
         </div>
-        <span className="rounded-full bg-app-accent/10 px-1.5 py-0.5 text-role-callout tabular-nums text-app-accent">{count}</span>
+        <span className="rounded-full bg-app-accent/10 px-1.5 py-0.5 text-role-callout tabular-nums text-app-accent">
+          {count}
+        </span>
       </div>
       <div className="min-h-0 flex-1 overflow-auto bg-black">
         <table className="w-full border-collapse text-left text-role-body">
@@ -328,7 +340,10 @@ function SoundFontTable({
           </thead>
           <tbody>
             {rows.map((row, rowIndex) => (
-              <tr key={`${row[0]}-${rowIndex}`} className="border-b border-app-border/15 last:border-0 hover:bg-app-hover/50">
+              <tr
+                key={`${row[0]}-${rowIndex}`}
+                className="border-b border-app-border/15 last:border-0 hover:bg-app-hover/50"
+              >
                 {row.map((value, columnIndex) => (
                   <td
                     key={`${columnIndex}-${value}`}
@@ -345,7 +360,9 @@ function SoundFontTable({
           </tbody>
         </table>
         {rows.length === 0 && (
-          <div className="px-3 py-8 text-center text-role-callout text-app-text-muted">{emptyMessage}</div>
+          <div className="px-3 py-8 text-center text-role-callout text-app-text-muted">
+            {emptyMessage}
+          </div>
         )}
       </div>
     </section>

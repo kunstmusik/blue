@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { getNoteProcessorCatalog, getNoteProcessorDefinition, isAddableProcessor } from './note-processor-catalog';
+import {
+  getNoteProcessorCatalog,
+  getNoteProcessorDefinition,
+  isAddableProcessor,
+} from './note-processor-catalog';
 import { AddProcessor } from './add-processor';
 import { MultiplyProcessor } from './multiply-processor';
 import { PythonProcessor } from './python-processor';
@@ -48,11 +52,17 @@ describe('Note processor catalog', () => {
     expect(getNoteProcessorDefinition('RetrogradeProcessor')!.parameters).toHaveLength(0);
     expect(getNoteProcessorDefinition('RandomAddProcessor')!.parameters).toHaveLength(5);
     expect(getNoteProcessorDefinition('TuningProcessor')!.parameters).toHaveLength(3);
-    expect(getNoteProcessorDefinition('TuningProcessor')!.parameters[2]!.valueType).toBe('multilineText');
+    expect(getNoteProcessorDefinition('TuningProcessor')!.parameters[2]!.valueType).toBe(
+      'multilineText',
+    );
     expect(getNoteProcessorDefinition('PythonProcessor')!.parameters).toHaveLength(1);
     expect(getNoteProcessorDefinition('PythonProcessor')!.parameters[0]!.valueType).toBe('code');
-    expect(getNoteProcessorDefinition('PythonProcessor')!.parameters[0]!.defaultValue).toContain('for note in noteList:');
-    const pyInstance = getNoteProcessorDefinition('PythonProcessor')!.createDefault() as PythonProcessor;
+    expect(getNoteProcessorDefinition('PythonProcessor')!.parameters[0]!.defaultValue).toContain(
+      'for note in noteList:',
+    );
+    const pyInstance = getNoteProcessorDefinition(
+      'PythonProcessor',
+    )!.createDefault() as PythonProcessor;
     expect(pyInstance.getCode()).toContain('note.setPField(str(p3 * 0.95), 3)');
   });
 });

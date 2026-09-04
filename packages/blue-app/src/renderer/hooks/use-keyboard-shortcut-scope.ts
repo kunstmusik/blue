@@ -30,31 +30,43 @@ export function useKeyboardShortcutScope<T extends HTMLElement>({
   onKeyDown,
   shouldIgnoreFocusTarget = isTextEditingTarget,
 }: UseKeyboardShortcutScopeOptions<T>): KeyboardShortcutScopeProps<T> {
-  const focusSurface = useCallback((target: EventTarget | null) => {
-    if (!enabled || shouldIgnoreFocusTarget(target)) {
-      return;
-    }
+  const focusSurface = useCallback(
+    (target: EventTarget | null) => {
+      if (!enabled || shouldIgnoreFocusTarget(target)) {
+        return;
+      }
 
-    // Keep a partly visible editing surface in place until its mouse handler
-    // finishes hit-testing the original pointer coordinates.
-    ref.current?.focus({ preventScroll: true });
-  }, [enabled, ref, shouldIgnoreFocusTarget]);
+      // Keep a partly visible editing surface in place until its mouse handler
+      // finishes hit-testing the original pointer coordinates.
+      ref.current?.focus({ preventScroll: true });
+    },
+    [enabled, ref, shouldIgnoreFocusTarget],
+  );
 
-  const handleKeyDown = useCallback((event: ReactKeyboardEvent<T>) => {
-    if (!enabled) {
-      return;
-    }
+  const handleKeyDown = useCallback(
+    (event: ReactKeyboardEvent<T>) => {
+      if (!enabled) {
+        return;
+      }
 
-    onKeyDown?.(event);
-  }, [enabled, onKeyDown]);
+      onKeyDown?.(event);
+    },
+    [enabled, onKeyDown],
+  );
 
-  const handleMouseDownCapture = useCallback((event: ReactMouseEvent<T>) => {
-    focusSurface(event.target);
-  }, [focusSurface]);
+  const handleMouseDownCapture = useCallback(
+    (event: ReactMouseEvent<T>) => {
+      focusSurface(event.target);
+    },
+    [focusSurface],
+  );
 
-  const handleContextMenuCapture = useCallback((event: ReactMouseEvent<T>) => {
-    focusSurface(event.target);
-  }, [focusSurface]);
+  const handleContextMenuCapture = useCallback(
+    (event: ReactMouseEvent<T>) => {
+      focusSurface(event.target);
+    },
+    [focusSurface],
+  );
 
   return {
     tabIndex: enabled ? tabIndex : disabledTabIndex,

@@ -19,11 +19,19 @@ export class SwitchProcessor extends NoteProcessor {
     }
   }
 
-  getPfield1(): string { return this._pfield1.toString(); }
-  setPfield1(pfield1: string): void { this._pfield1 = parseInt(pfield1, 10); }
+  getPfield1(): string {
+    return this._pfield1.toString();
+  }
+  setPfield1(pfield1: string): void {
+    this._pfield1 = parseInt(pfield1, 10);
+  }
 
-  getPfield2(): string { return this._pfield2.toString(); }
-  setPfield2(pfield2: string): void { this._pfield2 = parseInt(pfield2, 10); }
+  getPfield2(): string {
+    return this._pfield2.toString();
+  }
+  setPfield2(pfield2: string): void {
+    this._pfield2 = parseInt(pfield2, 10);
+  }
 
   override process(notes: NoteList): NoteList {
     for (const note of notes) {
@@ -42,7 +50,9 @@ export class SwitchProcessor extends NoteProcessor {
     return notes;
   }
 
-  override getDisplayName(): string { return 'SwitchProcessor'; }
+  override getDisplayName(): string {
+    return 'SwitchProcessor';
+  }
 
   override deepCopy(): SwitchProcessor {
     return new SwitchProcessor(this);

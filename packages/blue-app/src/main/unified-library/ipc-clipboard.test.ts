@@ -26,12 +26,22 @@ describe('Unified Library clipboard IPC', () => {
     const clipboard = {
       originX: 10,
       originY: 20,
-      widgets: [{
-        id: 'slider-1', type: 'BSBHSlider', objectName: 'amp',
-        x: 10, y: 20, width: 120, height: 24,
-        value: 0.5, minimum: 0, maximum: 1, editable: true,
-        properties: {},
-      }],
+      widgets: [
+        {
+          id: 'slider-1',
+          type: 'BSBHSlider',
+          objectName: 'amp',
+          x: 10,
+          y: 20,
+          width: 120,
+          height: 24,
+          value: 0.5,
+          minimum: 0,
+          maximum: 1,
+          editable: true,
+          properties: {},
+        },
+      ],
     };
 
     expect(handler({}, clipboard)).toBe(true);

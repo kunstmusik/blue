@@ -16,11 +16,9 @@ export class BSBLabel extends BSBWidget {
     return null;
   }
 
-  override setPresetValue(_val: string): void {
-  }
+  override setPresetValue(_val: string): void {}
 
-  override collectReplacements(_unit: BSBCompilationUnit): void {
-  }
+  override collectReplacements(_unit: BSBCompilationUnit): void {}
 
   loadFromXML(data: Element): void {
     this.loadFromXMLCommon(data);

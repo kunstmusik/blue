@@ -76,7 +76,8 @@ describe('Score Color History Store', () => {
   });
 
   it('undo submits inverse patch and adjusts cursor, redo submits forward patch', async () => {
-    const applyPatchSpy = vi.spyOn(useProjectStore.getState(), 'applyProjectDocumentPatch')
+    const applyPatchSpy = vi
+      .spyOn(useProjectStore.getState(), 'applyProjectDocumentPatch')
       .mockResolvedValue(true as any);
 
     const entry: ScoreColorHistoryEntry = {
@@ -122,7 +123,8 @@ describe('Score Color History Store', () => {
   });
 
   it('does not advance cursor if patch application fails', async () => {
-    const applyPatchSpy = vi.spyOn(useProjectStore.getState(), 'applyProjectDocumentPatch')
+    const applyPatchSpy = vi
+      .spyOn(useProjectStore.getState(), 'applyProjectDocumentPatch')
       .mockResolvedValue(false as any);
 
     const entry: ScoreColorHistoryEntry = {
@@ -157,9 +159,11 @@ describe('Score Color History Store', () => {
   });
 
   it('does not advance cursor if flushPendingPatches rejects during undo or redo', async () => {
-    const applyPatchSpy = vi.spyOn(useProjectStore.getState(), 'applyProjectDocumentPatch')
+    const applyPatchSpy = vi
+      .spyOn(useProjectStore.getState(), 'applyProjectDocumentPatch')
       .mockResolvedValue(undefined as any);
-    const flushSpy = vi.spyOn(useProjectStore.getState(), 'flushPendingPatches')
+    const flushSpy = vi
+      .spyOn(useProjectStore.getState(), 'flushPendingPatches')
       .mockRejectedValue(new Error('Rejected by canonical backend'));
 
     const entry: ScoreColorHistoryEntry = {
@@ -196,9 +200,11 @@ describe('Score Color History Store', () => {
   });
 
   it('does not move the cursor when the inverse acknowledgement fails after a successful flush', async () => {
-    const applyPatchSpy = vi.spyOn(useProjectStore.getState(), 'applyProjectDocumentPatch')
+    const applyPatchSpy = vi
+      .spyOn(useProjectStore.getState(), 'applyProjectDocumentPatch')
       .mockResolvedValue(undefined as any);
-    const flushSpy = vi.spyOn(useProjectStore.getState(), 'flushPendingPatches')
+    const flushSpy = vi
+      .spyOn(useProjectStore.getState(), 'flushPendingPatches')
       .mockResolvedValueOnce(undefined)
       .mockRejectedValueOnce(new Error('inverse was rejected'));
 
@@ -236,9 +242,11 @@ describe('Score Color History Store', () => {
   });
 
   it('aborts redo before submitting when its prerequisite flush fails', async () => {
-    const applyPatchSpy = vi.spyOn(useProjectStore.getState(), 'applyProjectDocumentPatch')
+    const applyPatchSpy = vi
+      .spyOn(useProjectStore.getState(), 'applyProjectDocumentPatch')
       .mockResolvedValue(undefined as any);
-    const flushSpy = vi.spyOn(useProjectStore.getState(), 'flushPendingPatches')
+    const flushSpy = vi
+      .spyOn(useProjectStore.getState(), 'flushPendingPatches')
       .mockResolvedValue(undefined);
 
     const entry: ScoreColorHistoryEntry = {

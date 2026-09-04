@@ -17,7 +17,13 @@ import { TuningProcessor } from './tuning-processor';
 import { PythonProcessor, DEFAULT_PYTHON_PROCESSOR_CODE } from './python-processor';
 import { NoteProcessor } from './note-processor';
 
-export type ParameterValueType = 'string' | 'number' | 'integer' | 'boolean' | 'multilineText' | 'code';
+export type ParameterValueType =
+  | 'string'
+  | 'number'
+  | 'integer'
+  | 'boolean'
+  | 'multilineText'
+  | 'code';
 
 export interface NoteProcessorParameterDefinition {
   name: string;
@@ -35,7 +41,9 @@ export interface NoteProcessorDefinition {
   createDefault: () => NoteProcessor;
 }
 
-const DEFAULT_TWELVE_TET_RATIOS = Array.from({ length: 12 }, (_unused, i) => Math.pow(2, i / 12).toString()).join('\n');
+const DEFAULT_TWELVE_TET_RATIOS = Array.from({ length: 12 }, (_unused, i) =>
+  Math.pow(2, i / 12).toString(),
+).join('\n');
 
 const CATALOG: NoteProcessorDefinition[] = [
   {
@@ -76,7 +84,13 @@ const CATALOG: NoteProcessorDefinition[] = [
       { name: 'pfield', label: 'P Field', valueType: 'integer', defaultValue: '4', required: true },
       { name: 'min', label: 'Min', valueType: 'number', defaultValue: '0', required: true },
       { name: 'max', label: 'Max', valueType: 'number', defaultValue: '1', required: true },
-      { name: 'seedUsed', label: 'Use Seed', valueType: 'boolean', defaultValue: false, required: true },
+      {
+        name: 'seedUsed',
+        label: 'Use Seed',
+        valueType: 'boolean',
+        defaultValue: false,
+        required: true,
+      },
       { name: 'seed', label: 'Seed', valueType: 'integer', defaultValue: '0', required: false },
     ],
     createDefault: () => new RandomAddProcessor(),
@@ -89,7 +103,13 @@ const CATALOG: NoteProcessorDefinition[] = [
       { name: 'pfield', label: 'P Field', valueType: 'integer', defaultValue: '4', required: true },
       { name: 'min', label: 'Min', valueType: 'number', defaultValue: '0', required: true },
       { name: 'max', label: 'Max', valueType: 'number', defaultValue: '1', required: true },
-      { name: 'seedUsed', label: 'Use Seed', valueType: 'boolean', defaultValue: false, required: true },
+      {
+        name: 'seedUsed',
+        label: 'Use Seed',
+        valueType: 'boolean',
+        defaultValue: false,
+        required: true,
+      },
       { name: 'seed', label: 'Seed', valueType: 'integer', defaultValue: '0', required: false },
     ],
     createDefault: () => new RandomMultiplyProcessor(),
@@ -109,7 +129,13 @@ const CATALOG: NoteProcessorDefinition[] = [
     displayName: 'RotateProcessor',
     position: 70,
     parameters: [
-      { name: 'noteIndex', label: 'Note Index', valueType: 'integer', defaultValue: '1', required: true },
+      {
+        name: 'noteIndex',
+        label: 'Note Index',
+        valueType: 'integer',
+        defaultValue: '1',
+        required: true,
+      },
     ],
     createDefault: () => new RotateProcessor(),
   },
@@ -155,8 +181,20 @@ const CATALOG: NoteProcessorDefinition[] = [
     displayName: 'SwitchProcessor',
     position: 120,
     parameters: [
-      { name: 'pfield1', label: 'P Field 1', valueType: 'integer', defaultValue: '4', required: true },
-      { name: 'pfield2', label: 'P Field 2', valueType: 'integer', defaultValue: '5', required: true },
+      {
+        name: 'pfield1',
+        label: 'P Field 1',
+        valueType: 'integer',
+        defaultValue: '4',
+        required: true,
+      },
+      {
+        name: 'pfield2',
+        label: 'P Field 2',
+        valueType: 'integer',
+        defaultValue: '5',
+        required: true,
+      },
     ],
     createDefault: () => new SwitchProcessor(),
   },
@@ -165,7 +203,13 @@ const CATALOG: NoteProcessorDefinition[] = [
     displayName: 'TimeWarpProcessor',
     position: 130,
     parameters: [
-      { name: 'timeWarpString', label: 'Time Warp', valueType: 'string', defaultValue: '0 60', required: true },
+      {
+        name: 'timeWarpString',
+        label: 'Time Warp',
+        valueType: 'string',
+        defaultValue: '0 60',
+        required: true,
+      },
     ],
     createDefault: () => new TimeWarpProcessor(),
   },
@@ -175,7 +219,13 @@ const CATALOG: NoteProcessorDefinition[] = [
     position: 140,
     parameters: [
       { name: 'pfield', label: 'P Field', valueType: 'integer', defaultValue: '4', required: true },
-      { name: 'lineAddString', label: 'Line', valueType: 'string', defaultValue: '0 0', required: true },
+      {
+        name: 'lineAddString',
+        label: 'Line',
+        valueType: 'string',
+        defaultValue: '0 0',
+        required: true,
+      },
     ],
     createDefault: () => new LineAddProcessor(),
   },
@@ -185,7 +235,13 @@ const CATALOG: NoteProcessorDefinition[] = [
     position: 150,
     parameters: [
       { name: 'pfield', label: 'P Field', valueType: 'integer', defaultValue: '4', required: true },
-      { name: 'lineMultiplyString', label: 'Line', valueType: 'string', defaultValue: '0 1', required: true },
+      {
+        name: 'lineMultiplyString',
+        label: 'Line',
+        valueType: 'string',
+        defaultValue: '0 1',
+        required: true,
+      },
     ],
     createDefault: () => new LineMultiplyProcessor(),
   },
@@ -195,8 +251,20 @@ const CATALOG: NoteProcessorDefinition[] = [
     position: 160,
     parameters: [
       { name: 'pfield', label: 'P Field', valueType: 'integer', defaultValue: '4', required: true },
-      { name: 'baseFrequency', label: 'Base Frequency', valueType: 'number', defaultValue: '261.626', required: true },
-      { name: 'ratios', label: 'Scale Ratios', valueType: 'multilineText', defaultValue: DEFAULT_TWELVE_TET_RATIOS, required: true },
+      {
+        name: 'baseFrequency',
+        label: 'Base Frequency',
+        valueType: 'number',
+        defaultValue: '261.626',
+        required: true,
+      },
+      {
+        name: 'ratios',
+        label: 'Scale Ratios',
+        valueType: 'multilineText',
+        defaultValue: DEFAULT_TWELVE_TET_RATIOS,
+        required: true,
+      },
     ],
     createDefault: () => new TuningProcessor(),
   },
@@ -205,7 +273,13 @@ const CATALOG: NoteProcessorDefinition[] = [
     displayName: 'PythonProcessor',
     position: 170,
     parameters: [
-      { name: 'code', label: 'Code', valueType: 'code', defaultValue: DEFAULT_PYTHON_PROCESSOR_CODE, required: false },
+      {
+        name: 'code',
+        label: 'Code',
+        valueType: 'code',
+        defaultValue: DEFAULT_PYTHON_PROCESSOR_CODE,
+        required: false,
+      },
     ],
     createDefault: () => {
       const proc = new PythonProcessor();

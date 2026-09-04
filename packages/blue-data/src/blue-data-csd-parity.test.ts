@@ -10,11 +10,7 @@ import { UDOStyle } from './opcodes/udo-style';
 import { Tables } from './tables';
 import { CurveType } from './time/curve-type';
 import { TempoMap } from './time/tempo-map';
-import {
-  getTempoScore,
-  preprocessSco,
-  processCommandBlocks,
-} from './utilities/csd-render';
+import { getTempoScore, preprocessSco, processCommandBlocks } from './utilities/csd-render';
 import {
   DEMO2026_BLUE_PATH,
   DEMO2026_CSD_PATH,
@@ -53,16 +49,11 @@ class FtgenAllocationInstrument extends GenericInstrument {
   }
 }
 
-function createBsbInstrumentWithUdo(
-  name: string,
-  gain: number,
-): BlueSynthBuilder {
+function createBsbInstrumentWithUdo(name: string, gain: number): BlueSynthBuilder {
   const instrument = new BlueSynthBuilder();
   instrument.setName(name);
   instrument.setInstrumentText(
-    `ain oscili 0.1, 440\n` +
-      `aout fx ain\n` +
-      `blueMixerOut aout, aout`,
+    `ain oscili 0.1, 440\n` + `aout fx ain\n` + `blueMixerOut aout, aout`,
   );
 
   const opcode = new OpcodeDefinition();
@@ -82,11 +73,7 @@ function createBsbInstrumentWithUdo(
 function createGenericInstrumentWithUdo(name: string): GenericInstrument {
   const instrument = new GenericInstrument();
   instrument.setName(name);
-  instrument.setText(
-    'ain oscili 0.1, 440\n'
-      + 'aout declick ain\n'
-      + 'blueMixerOut aout, aout',
-  );
+  instrument.setText('ain oscili 0.1, 440\n' + 'aout declick ain\n' + 'blueMixerOut aout, aout');
 
   const opcode = new OpcodeDefinition();
   opcode.setName('declick');
@@ -104,19 +91,21 @@ function createGenericInstrumentWithUdo(name: string): GenericInstrument {
 
 describe('CSD render helpers', () => {
   it('processes pre and once command blocks like Java', () => {
-    const output = processCommandBlocks([
-      'alpha',
-      ';[pre]{',
-      'beta',
-      ';}',
-      'gamma',
-      ';[once]{',
-      'delta',
-      ';}',
-      ';[once]{',
-      'delta',
-      ';}',
-    ].join('\n'));
+    const output = processCommandBlocks(
+      [
+        'alpha',
+        ';[pre]{',
+        'beta',
+        ';}',
+        'gamma',
+        ';[once]{',
+        'delta',
+        ';}',
+        ';[once]{',
+        'delta',
+        ';}',
+      ].join('\n'),
+    );
 
     expect(output).toBe(['beta', 'alpha', 'gamma', 'delta', ''].join('\n'));
   });

@@ -4,9 +4,18 @@
  */
 import { registerSoundObjectType, registerSoundObjectFactory } from './sound-object-registry';
 
-const ASSIGNABLE = { trackPlacement: 'compatible' as const, instrumentTargetBehavior: 'assignable' as const };
-const PROPAGATED = { trackPlacement: 'compatible' as const, instrumentTargetBehavior: 'propagated' as const };
-const PRESERVE = { trackPlacement: 'compatible' as const, instrumentTargetBehavior: 'preserve' as const };
+const ASSIGNABLE = {
+  trackPlacement: 'compatible' as const,
+  instrumentTargetBehavior: 'assignable' as const,
+};
+const PROPAGATED = {
+  trackPlacement: 'compatible' as const,
+  instrumentTargetBehavior: 'propagated' as const,
+};
+const PRESERVE = {
+  trackPlacement: 'compatible' as const,
+  instrumentTargetBehavior: 'preserve' as const,
+};
 const NONE = { trackPlacement: 'compatible' as const, instrumentTargetBehavior: 'none' as const };
 const AUDIO_FILE = {
   trackPlacement: 'incompatible' as const,
@@ -15,7 +24,8 @@ const AUDIO_FILE = {
 };
 const POLY_OBJECT = {
   trackPlacement: 'incompatible' as const,
-  trackPlacementReason: 'PolyObject is not valid in a Track; use a SoundObject Layer Group for nested timelines',
+  trackPlacementReason:
+    'PolyObject is not valid in a Track; use a SoundObject Layer Group for nested timelines',
   instrumentTargetBehavior: 'none' as const,
 };
 import { GenericScore } from './generic-score';

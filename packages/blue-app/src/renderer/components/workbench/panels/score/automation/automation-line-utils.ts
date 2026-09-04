@@ -10,12 +10,7 @@ export function xToBeat(x: number, pixelsPerBeat: number): number {
   return x / pixelsPerBeat;
 }
 
-export function valueToY(
-  value: number,
-  minimum: number,
-  maximum: number,
-  height: number,
-): number {
+export function valueToY(value: number, minimum: number, maximum: number, height: number): number {
   if (maximum === minimum) return height / 2;
   const normalized = (value - minimum) / (maximum - minimum);
   const drawableHeight = Math.max(0, height - AUTOMATION_LINE_EDGE_INSET * 2);
@@ -32,7 +27,7 @@ export function yToValue(
 ): number {
   const drawableHeight = Math.max(0, height - AUTOMATION_LINE_EDGE_INSET * 2);
   if (drawableHeight === 0) return minimum;
-  const normalized = 1 - ((y - AUTOMATION_LINE_EDGE_INSET) / drawableHeight);
+  const normalized = 1 - (y - AUTOMATION_LINE_EDGE_INSET) / drawableHeight;
   let value = minimum + normalized * (maximum - minimum);
   return clampAndSnap(value, minimum, maximum, resolution);
 }
@@ -133,7 +128,11 @@ export function scaleRange(
 
 // The anchored range transform functions (moveRangeWithAnchors, scaleRangeWithAnchors,
 // lineValueAt) live in the shared module so both renderer and main process can use them.
-export { lineValueAt, moveRangeWithAnchors, scaleRangeWithAnchors } from '../../../../../../shared/automation-range-math';
+export {
+  lineValueAt,
+  moveRangeWithAnchors,
+  scaleRangeWithAnchors,
+} from '../../../../../../shared/automation-range-math';
 
 /**
  * Vertically shift the values of points within [startBeat, endBeat] by `delta`,
@@ -199,10 +198,7 @@ export function formatAutomationDouble(value: number): string {
  * same time, so the result is the count of points with time <= `time`.
  * Used so an insert-then-drag gesture can track the freshly inserted point.
  */
-export function insertionIndexForTime(
-  points: AutomationPointSnapshot[],
-  time: number,
-): number {
+export function insertionIndexForTime(points: AutomationPointSnapshot[], time: number): number {
   let idx = 0;
   for (let i = 0; i < points.length; i++) {
     if (points[i]!.time <= time) {

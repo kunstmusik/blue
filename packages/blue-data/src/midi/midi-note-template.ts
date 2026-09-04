@@ -24,7 +24,7 @@ function getTemplateValues(
     '<DUR>': formatJavaDouble(durationBeats),
     '<KEY>': String(key),
     '<KEY_PCH>': `${octave}.${String(scaleDegree).padStart(2, '0')}`,
-    '<KEY_OCT>': formatJavaDouble((key / 12.0) + 3.0),
+    '<KEY_OCT>': formatJavaDouble(key / 12.0 + 3.0),
     '<KEY_CPS>': formatJavaDouble(440.0 * Math.exp(Math.log(2) * ((key - 69) / 12))),
     '<VELOCITY>': String(velocity),
     '<VELOCITY_AMP>': formatJavaDouble(((velocity * velocity) / 16239.0) * 32768.0),

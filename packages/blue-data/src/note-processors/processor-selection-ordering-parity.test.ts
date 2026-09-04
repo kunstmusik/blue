@@ -76,11 +76,7 @@ describe('RotateProcessor parity', () => {
   it('rotates notes by index', () => {
     const proc = new RotateProcessor();
     proc.setNoteIndex('2');
-    const nl = new NoteList([
-      makeNote('A', 0, 1),
-      makeNote('B', 1, 1),
-      makeNote('C', 2, 1),
-    ]);
+    const nl = new NoteList([makeNote('A', 0, 1), makeNote('B', 1, 1), makeNote('C', 2, 1)]);
     proc.process(nl);
     expect(nl.getNote(0).getPField(4)).toBe('B');
     expect(nl.getNote(1).getPField(4)).toBe('C');
@@ -91,11 +87,7 @@ describe('RotateProcessor parity', () => {
 describe('RetrogradeProcessor parity', () => {
   it('mirrors note start times in time (Java does not reverse list order)', () => {
     const proc = new RetrogradeProcessor();
-    const nl = new NoteList([
-      makeNote('A', 0, 2),
-      makeNote('B', 2, 2),
-      makeNote('C', 4, 2),
-    ]);
+    const nl = new NoteList([makeNote('A', 0, 2), makeNote('B', 2, 2), makeNote('C', 4, 2)]);
     proc.process(nl);
     expect(nl.getNote(0).getStartTime()).toBeCloseTo(4, 5);
     expect(nl.getNote(1).getStartTime()).toBeCloseTo(2, 5);

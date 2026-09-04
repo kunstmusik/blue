@@ -9,7 +9,11 @@ import {
   verifyPackagedRuntime,
 } from './packaged-runtime-verification';
 import { EngineSession } from './engine-session';
-import { FakeChildProcess, FakeEngineClient, FakeProcessRegistry } from './engine-session.test-support';
+import {
+  FakeChildProcess,
+  FakeEngineClient,
+  FakeProcessRegistry,
+} from './engine-session.test-support';
 import { sanitizeEngineDiagnostics } from './engine-recovery';
 
 const RESOURCES = '/Applications/Blue.app/Contents/Resources';
@@ -27,14 +31,17 @@ function createEngineResources(
   const bytes = Buffer.from('engine');
   writeFileSync(path.join(root, executableName), bytes);
   chmodSync(path.join(root, executableName), 0o755);
-  writeFileSync(path.join(root, 'artifact.json'), JSON.stringify({
-    schemaVersion: 1,
-    protocolVersion: 2,
-    platform,
-    arch,
-    executableName,
-    sha256: createHash('sha256').update(bytes).digest('hex'),
-  }));
+  writeFileSync(
+    path.join(root, 'artifact.json'),
+    JSON.stringify({
+      schemaVersion: 1,
+      protocolVersion: 2,
+      platform,
+      arch,
+      executableName,
+      sha256: createHash('sha256').update(bytes).digest('hex'),
+    }),
+  );
   return resources;
 }
 
@@ -61,12 +68,13 @@ describe('packaged-runtime-verification', () => {
         chromium: '134.0.6998.179',
         node: '22.14.0',
       },
-      readFile: () => JSON.stringify({
-        appVersion: '2.10.0',
-        sourceRevision: 'a'.repeat(40),
-        generatedAt: '2026-05-04T12:00:00.000Z',
-        channel: 'stable',
-      }),
+      readFile: () =>
+        JSON.stringify({
+          appVersion: '2.10.0',
+          sourceRevision: 'a'.repeat(40),
+          generatedAt: '2026-05-04T12:00:00.000Z',
+          channel: 'stable',
+        }),
     });
 
     expect(result).toEqual({
@@ -86,12 +94,13 @@ describe('packaged-runtime-verification', () => {
         chromium: '134.0.6998.179',
         node: '22.14.0',
       },
-      readFile: () => JSON.stringify({
-        appVersion: '2.10.0',
-        sourceRevision: 'abc1234',
-        generatedAt: '2026-05-04T12:00:00.000Z',
-        channel: 'development',
-      }),
+      readFile: () =>
+        JSON.stringify({
+          appVersion: '2.10.0',
+          sourceRevision: 'abc1234',
+          generatedAt: '2026-05-04T12:00:00.000Z',
+          channel: 'development',
+        }),
     });
 
     expect(result).toEqual({
@@ -111,12 +120,13 @@ describe('packaged-runtime-verification', () => {
         chromium: '134.0.6998.179',
         node: '22.14.0',
       },
-      readFile: () => JSON.stringify({
-        appVersion: '2.9.0',
-        sourceRevision: 'a'.repeat(40),
-        generatedAt: '2026-05-04T12:00:00.000Z',
-        channel: 'stable',
-      }),
+      readFile: () =>
+        JSON.stringify({
+          appVersion: '2.9.0',
+          sourceRevision: 'a'.repeat(40),
+          generatedAt: '2026-05-04T12:00:00.000Z',
+          channel: 'stable',
+        }),
     });
 
     expect(result).toEqual({
@@ -134,8 +144,8 @@ describe('packaged-runtime-verification', () => {
       resourcesPath: resources,
       userDataPath: '/Users/test/Library/Application Support/Blue',
       existsSync: (candidate) =>
-        candidate.endsWith(path.join('assets', 'java', 'blue-java.jar'))
-        || candidate.endsWith(path.join('assets', 'java', 'pythonLib')),
+        candidate.endsWith(path.join('assets', 'java', 'blue-java.jar')) ||
+        candidate.endsWith(path.join('assets', 'java', 'pythonLib')),
       resolveExternalModule: (name) => `/resolved/${name}/index.js`,
       resolveZeromqNative: () => '/resolved/zeromq/lib/index.js',
       resolveNodeSqlite: () => '/resolved/node:sqlite',
@@ -185,8 +195,8 @@ describe('packaged-runtime-verification', () => {
       resourcesPath: RESOURCES,
       userDataPath: '/Users/test/Library/Application Support/Blue',
       existsSync: (candidate) =>
-        candidate.endsWith(path.join('assets', 'java', 'blue-java.jar'))
-        || candidate.endsWith(path.join('assets', 'java', 'pythonLib')),
+        candidate.endsWith(path.join('assets', 'java', 'blue-java.jar')) ||
+        candidate.endsWith(path.join('assets', 'java', 'pythonLib')),
       resolveExternalModule: () => null,
       resolveZeromqNative: () => null,
       resolveNodeSqlite: () => null,
@@ -236,16 +246,20 @@ describe('packaged-runtime-verification', () => {
       resolveZeromqNative: () => '/resolved/zeromq/lib/index.js',
       resolveNodeSqlite: () => '/resolved/node:sqlite',
     };
-    expect(verifyPackagedRuntime({
-      ...base,
-      arch: HOST_ARCH === 'arm64' ? 'x64' : 'arm64',
-      runBlueEngineProbe: recoverableMissingCsoundProbe,
-    }).results.at(-1)?.code).toBe('BLUE_ENGINE_RESOURCE_MISMATCH');
+    expect(
+      verifyPackagedRuntime({
+        ...base,
+        arch: HOST_ARCH === 'arm64' ? 'x64' : 'arm64',
+        runBlueEngineProbe: recoverableMissingCsoundProbe,
+      }).results.at(-1)?.code,
+    ).toBe('BLUE_ENGINE_RESOURCE_MISMATCH');
 
-    expect(verifyPackagedRuntime({
-      ...base,
-      runBlueEngineProbe: () => ({ status: 1, stdout: '{}', stderr: 'failed' }),
-    }).results.at(-1)?.code).toBe('BLUE_ENGINE_NO_CSOUND_PROBE_FAILED');
+    expect(
+      verifyPackagedRuntime({
+        ...base,
+        runBlueEngineProbe: () => ({ status: 1, stdout: '{}', stderr: 'failed' }),
+      }).results.at(-1)?.code,
+    ).toBe('BLUE_ENGINE_NO_CSOUND_PROBE_FAILED');
   });
 
   it('passes --owner-pid only when owner-liveness is requested (bridge negotiates the flag; legacy engines never receive it)', async () => {
@@ -297,7 +311,8 @@ describe('packaged-runtime-verification', () => {
   });
 
   it('sanitizes diagnostic strings in packaged execution reports', () => {
-    const errorReport = 'Csound error in /Users/username/Library/Blue/project.csd: table not found\nTOKEN=secret_12345';
+    const errorReport =
+      'Csound error in /Users/username/Library/Blue/project.csd: table not found\nTOKEN=secret_12345';
     const sanitized = sanitizeEngineDiagnostics(errorReport);
 
     expect(sanitized).not.toContain('/Users/username');
@@ -331,37 +346,45 @@ describe('packaged-runtime-verification', () => {
   it('rejects missing, failed, and mismatched packaged project loads', async () => {
     const projectPath = path.resolve('/fixtures/smoke-test.blue');
 
-    await expect(verifyPackagedProject({
-      isPackaged: true,
-      projectPath: null,
-      loadProject: async () => true,
-      getLoadedProject: () => null,
-    })).resolves.toMatchObject({ ok: false, code: 'PROJECT_PATH_MISSING' });
-
-    await expect(verifyPackagedProject({
-      isPackaged: true,
-      projectPath,
-      loadProject: async () => false,
-      getLoadedProject: () => null,
-    })).resolves.toMatchObject({ ok: false, code: 'PROJECT_LOAD_FAILED' });
-
-    await expect(verifyPackagedProject({
-      isPackaged: true,
-      projectPath,
-      loadProject: async () => true,
-      getLoadedProject: () => ({
-        filePath: path.resolve('/fixtures/other.blue'),
-        title: 'Other',
+    await expect(
+      verifyPackagedProject({
+        isPackaged: true,
+        projectPath: null,
+        loadProject: async () => true,
+        getLoadedProject: () => null,
       }),
-    })).resolves.toMatchObject({ ok: false, code: 'PROJECT_PATH_MISMATCH' });
+    ).resolves.toMatchObject({ ok: false, code: 'PROJECT_PATH_MISSING' });
 
-    await expect(verifyPackagedProject({
-      isPackaged: true,
-      projectPath,
-      projectSavePath: path.resolve('/tmp/save.blue'),
-      loadProject: async () => true,
-      getLoadedProject: () => ({ filePath: projectPath, title: 'Smoke Test' }),
-      saveProjectCopy: async () => false,
-    })).resolves.toMatchObject({ ok: false, code: 'PROJECT_SAVE_FAILED' });
+    await expect(
+      verifyPackagedProject({
+        isPackaged: true,
+        projectPath,
+        loadProject: async () => false,
+        getLoadedProject: () => null,
+      }),
+    ).resolves.toMatchObject({ ok: false, code: 'PROJECT_LOAD_FAILED' });
+
+    await expect(
+      verifyPackagedProject({
+        isPackaged: true,
+        projectPath,
+        loadProject: async () => true,
+        getLoadedProject: () => ({
+          filePath: path.resolve('/fixtures/other.blue'),
+          title: 'Other',
+        }),
+      }),
+    ).resolves.toMatchObject({ ok: false, code: 'PROJECT_PATH_MISMATCH' });
+
+    await expect(
+      verifyPackagedProject({
+        isPackaged: true,
+        projectPath,
+        projectSavePath: path.resolve('/tmp/save.blue'),
+        loadProject: async () => true,
+        getLoadedProject: () => ({ filePath: projectPath, title: 'Smoke Test' }),
+        saveProjectCopy: async () => false,
+      }),
+    ).resolves.toMatchObject({ ok: false, code: 'PROJECT_SAVE_FAILED' });
   });
 });

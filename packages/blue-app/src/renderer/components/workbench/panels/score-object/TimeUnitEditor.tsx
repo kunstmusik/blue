@@ -18,8 +18,17 @@ interface TimeUnitEditorProps {
   onCommit: (beats: number, timeBase: string) => void;
 }
 
-export default function TimeUnitEditor({ valueBeats, timeBase, timeContext, durationMode, disabled, onCommit }: TimeUnitEditorProps): React.ReactElement {
-  const [draft, setDraft] = useState(() => formatForBase(valueBeats, timeBase, timeContext, durationMode));
+export default function TimeUnitEditor({
+  valueBeats,
+  timeBase,
+  timeContext,
+  durationMode,
+  disabled,
+  onCommit,
+}: TimeUnitEditorProps): React.ReactElement {
+  const [draft, setDraft] = useState(() =>
+    formatForBase(valueBeats, timeBase, timeContext, durationMode),
+  );
   const [activeBase, setActiveBase] = useState(timeBase);
   const lastCommitted = useRef(valueBeats);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -50,15 +59,18 @@ export default function TimeUnitEditor({ valueBeats, timeBase, timeContext, dura
     setDraft(formatForBase(parsed, activeBase, timeContext, durationMode));
   }, [draft, activeBase, timeContext, durationMode, onCommit]);
 
-  const handleBaseChange = useCallback((newBase: string) => {
-    const currentBeats = lastCommitted.current;
-    setDraft(formatForBase(currentBeats, newBase, timeContext, durationMode));
-    setActiveBase(newBase);
-    if (newBase !== timeBase) {
-      lastCommitted.current = currentBeats;
-      onCommit(currentBeats, newBase);
-    }
-  }, [timeBase, timeContext, durationMode, onCommit]);
+  const handleBaseChange = useCallback(
+    (newBase: string) => {
+      const currentBeats = lastCommitted.current;
+      setDraft(formatForBase(currentBeats, newBase, timeContext, durationMode));
+      setActiveBase(newBase);
+      if (newBase !== timeBase) {
+        lastCommitted.current = currentBeats;
+        onCommit(currentBeats, newBase);
+      }
+    },
+    [timeBase, timeContext, durationMode, onCommit],
+  );
 
   return (
     <div className="flex flex-col gap-0.5">

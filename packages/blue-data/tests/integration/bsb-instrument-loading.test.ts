@@ -47,15 +47,15 @@ describe.skipIf(!fs.existsSync(DEMO2022_PATH))('BSB Integration: demo2022.blue',
     if (orcMatch) {
       const orcContent = orcMatch[1];
       // Strip comment lines (lines starting with ; or //) before checking
-      const activeCode = orcContent.split('\n')
-        .filter(line => !line.trimStart().startsWith(';') && !line.trimStart().startsWith('//'))
+      const activeCode = orcContent
+        .split('\n')
+        .filter((line) => !line.trimStart().startsWith(';') && !line.trimStart().startsWith('//'))
         .join('\n');
       // Should not have unresolved <token> patterns in active code
       const unresolved = activeCode.match(/<[a-zA-Z_][a-zA-Z0-9_]*>/g);
       // Filter out known legitimate patterns like <INSTR_ID> which should be replaced
-      const remaining = unresolved?.filter(t =>
-        t !== '<INSTR_ID>' && t !== '<INSTR_NAME>' &&
-        !t.startsWith('<INSTR_')
+      const remaining = unresolved?.filter(
+        (t) => t !== '<INSTR_ID>' && t !== '<INSTR_NAME>' && !t.startsWith('<INSTR_'),
       );
       expect(remaining).toBeUndefined();
     }
@@ -172,8 +172,8 @@ describe.skipIf(!fs.existsSync(DEMO2022_PATH))('BSB Integration: demo2022.blue',
       ...mixer.getSubChannels(),
       mixer.getMaster(),
     ]
-      .map(channel => channel.getLevelParameter())
-      .filter(param => param.isAutomationEnabled());
+      .map((channel) => channel.getLevelParameter())
+      .filter((param) => param.isAutomationEnabled());
 
     expect(automatedMixerVolumes).toHaveLength(2);
     expect(automatedMixerVolumes[0].getPoints().length).toBeGreaterThan(2);
@@ -182,26 +182,26 @@ describe.skipIf(!fs.existsSync(DEMO2022_PATH))('BSB Integration: demo2022.blue',
 
   it('T522: mixer send parameters are loaded from post-effects chains', () => {
     const mixer = data.getMixer();
-    const sends = mixer.getAllSourceChannels().flatMap(channel => channel.getSends());
+    const sends = mixer.getAllSourceChannels().flatMap((channel) => channel.getSends());
 
     expect(sends).toHaveLength(3);
-    expect(sends.map(send => send.getLevelParameter().getName())).toEqual([
+    expect(sends.map((send) => send.getLevelParameter().getName())).toEqual([
       'Send Amount',
       'Send Amount',
       'Send Amount',
     ]);
-    expect(sends.map(send => Number(send.getLevelParameter().getFixedValue().toFixed(3))).sort())
-      .toEqual([0.25, 0.28, 0.5]);
+    expect(
+      sends.map((send) => Number(send.getLevelParameter().getFixedValue().toFixed(3))).sort(),
+    ).toEqual([0.25, 0.28, 0.5]);
   });
 
   it('T523: ParameterHelper includes mixer send and volume parameters like Java blue', () => {
     const parameters = ParameterHelper.getAllParameters(data.getArrangement(), data.getMixer());
 
-    const sendAmounts = parameters.filter(param => param.getName() === 'Send Amount');
+    const sendAmounts = parameters.filter((param) => param.getName() === 'Send Amount');
     const mixerVolumes = parameters.filter(
-      param => param.getName() === 'Volume'
-        && param.getMinimum() === -96
-        && param.getMaximum() === 12,
+      (param) =>
+        param.getName() === 'Volume' && param.getMinimum() === -96 && param.getMaximum() === 12,
     );
 
     expect(sendAmounts).toHaveLength(3);

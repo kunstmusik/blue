@@ -9,8 +9,9 @@ import { acquireTreeDndManager, hasActiveTreeDrag } from '../components/tree/tre
 import { NativeTypes } from 'react-dnd-html5-backend';
 import { BlueTree } from '../components/tree/BlueTree';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
-  true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 interface TestNode {
   id: string;
@@ -169,9 +170,8 @@ describe('tree drag ownership domain', () => {
     const after = acquireTreeDndManager(document);
     expect(after).toBe(before);
 
-    const marker = (
-      document as Document & { __isReactDndBackendSetUp?: unknown }
-    ).__isReactDndBackendSetUp;
+    const marker = (document as Document & { __isReactDndBackendSetUp?: unknown })
+      .__isReactDndBackendSetUp;
     expect(marker).not.toBe(true);
   });
 

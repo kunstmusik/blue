@@ -31,7 +31,16 @@ function createManifestV2(): EngineProcessManifestV2 {
     pid: 4321,
     ownerPid: 1234,
     enginePath: '/opt/homebrew/bin/blue-engine',
-    spawnArgs: ['--port', '5555', '--pub-port', '5556', '--shm', 'blue-engine-123', '--session-id', 'sess-abc-123'],
+    spawnArgs: [
+      '--port',
+      '5555',
+      '--pub-port',
+      '5556',
+      '--shm',
+      'blue-engine-123',
+      '--session-id',
+      'sess-abc-123',
+    ],
     controlEndpoint: 'tcp://localhost:5555',
     pubEndpoint: 'tcp://localhost:5556',
     shmName: 'blue-engine-123',
@@ -62,7 +71,8 @@ describe('engine-process-registry', () => {
 
   it('matches a tracked engine command line for version-2 with session tokens', () => {
     const manifest = createManifestV2();
-    const commandLine = '/opt/homebrew/bin/blue-engine --port 5555 --pub-port 5556 --shm blue-engine-123 --session-id sess-abc-123';
+    const commandLine =
+      '/opt/homebrew/bin/blue-engine --port 5555 --pub-port 5556 --shm blue-engine-123 --session-id sess-abc-123';
 
     expect(matchesTrackedEngineCommandLine(commandLine, manifest)).toBe(true);
   });
@@ -82,7 +92,8 @@ describe('engine-process-registry', () => {
       startedAt: 1700000000000,
     };
 
-    const winCommandLine = '"C:\\Program Files\\Blue\\blue-engine.exe" --port 6000 --pub-port 6001 --shm be-l-1111-shm';
+    const winCommandLine =
+      '"C:\\Program Files\\Blue\\blue-engine.exe" --port 6000 --pub-port 6001 --shm be-l-1111-shm';
     expect(matchesTrackedEngineCommandLine(winCommandLine, manifest)).toBe(true);
   });
 
@@ -91,7 +102,8 @@ describe('engine-process-registry', () => {
     const plan = planEngineProcessSweep(manifest, {
       ownerAlive: true,
       engineAlive: true,
-      commandLine: '/opt/homebrew/bin/blue-engine --port 5555 --pub-port 5556 --shm blue-engine-123',
+      commandLine:
+        '/opt/homebrew/bin/blue-engine --port 5555 --pub-port 5556 --shm blue-engine-123',
     });
 
     expect(plan.action).toBe('keep');
@@ -102,7 +114,8 @@ describe('engine-process-registry', () => {
     const plan = planEngineProcessSweep(manifest, {
       ownerAlive: false,
       engineAlive: true,
-      commandLine: '/opt/homebrew/bin/blue-engine --port 5555 --pub-port 5556 --shm blue-engine-123 --session-id sess-abc-123',
+      commandLine:
+        '/opt/homebrew/bin/blue-engine --port 5555 --pub-port 5556 --shm blue-engine-123 --session-id sess-abc-123',
       engineIdentityMatch: true,
     });
 
@@ -151,7 +164,8 @@ describe('engine-process-registry', () => {
     const plan = planEngineProcessSweep(manifest, {
       ownerAlive: false,
       engineAlive: true,
-      commandLine: '/opt/homebrew/bin/blue-engine --port 5555 --pub-port 5556 --shm blue-engine-123 --session-id sess-abc-123',
+      commandLine:
+        '/opt/homebrew/bin/blue-engine --port 5555 --pub-port 5556 --shm blue-engine-123 --session-id sess-abc-123',
       engineIdentityMatch: false,
     });
 
@@ -164,7 +178,8 @@ describe('engine-process-registry', () => {
     const plan = planEngineProcessSweep(manifest, {
       ownerAlive: false,
       engineAlive: true,
-      commandLine: '/opt/homebrew/bin/blue-engine --port 5555 --pub-port 5556 --shm blue-engine-123 --session-id sess-abc-123',
+      commandLine:
+        '/opt/homebrew/bin/blue-engine --port 5555 --pub-port 5556 --shm blue-engine-123 --session-id sess-abc-123',
     });
 
     expect(plan.action).toBe('keep');

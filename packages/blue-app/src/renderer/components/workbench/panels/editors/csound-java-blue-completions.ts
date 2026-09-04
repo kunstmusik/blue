@@ -269,7 +269,9 @@ function collectDocumentCandidates(documentText: string): UdoCompletionCandidate
  * (context > project > document) and within-source duplicates. Same-name
  * definitions with different normalized signatures remain separate candidates.
  */
-function dedupeUdoCandidates(candidates: readonly UdoCompletionCandidate[]): UdoCompletionCandidate[] {
+function dedupeUdoCandidates(
+  candidates: readonly UdoCompletionCandidate[],
+): UdoCompletionCandidate[] {
   const byIdentity = new Map<string, UdoCompletionCandidate>();
   for (const candidate of candidates) {
     const existing = byIdentity.get(candidate.signature.identityKey);
@@ -378,9 +380,11 @@ function dedupeCompletions(completions: Completion[]): Completion[] {
 function completionKey(completion: Completion): string {
   // UDO overloads share a label but differ by displayLabel/detail; use both so
   // polymorphic UDO overloads survive while identical rows collapse.
-  if (completion.detail === 'context UDO'
-    || completion.detail === 'project UDO'
-    || completion.detail === 'document UDO') {
+  if (
+    completion.detail === 'context UDO' ||
+    completion.detail === 'project UDO' ||
+    completion.detail === 'document UDO'
+  ) {
     return `${completion.label}\u0000${completion.displayLabel ?? ''}`;
   }
   return completion.label;

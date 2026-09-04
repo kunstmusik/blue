@@ -36,7 +36,8 @@ describe.each(INSTRUMENT_FACTORIES)('%s portable copy', (_name, createInstrument
     expect(copy?.getName()).toBe(source.getName());
     expect(copy?.getComment()).toBe(source.getComment());
     expect(copy?.isEnabled()).toBe(false);
-    expect(normalizeEmptyElements(copy?.saveAsXML().toXml() ?? ''))
-      .toBe(normalizeEmptyElements(payloadXml));
+    expect(normalizeEmptyElements(copy?.saveAsXML().toXml() ?? '')).toBe(
+      normalizeEmptyElements(payloadXml),
+    );
   });
 });

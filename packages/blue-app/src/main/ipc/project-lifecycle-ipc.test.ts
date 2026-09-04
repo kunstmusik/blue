@@ -37,20 +37,25 @@ describe('project lifecycle IPC registrar', () => {
     handlers['set-recent-files'] = vi.fn((_event, paths) => paths);
     registerProjectLifecycleIpc({ ipcMain, handlers });
 
-    await expect(ipcMain.handlers.get('open-file')?.({ sender: 'main' }, { source: 'menu' }))
-      .resolves.toEqual({ ok: true, request: { source: 'menu' } });
-    expect(ipcMain.handlers.get('open-file-path')?.({}, 'C:\\Users\\Blue\\work.blue'))
-      .toBe('C:\\Users\\Blue\\work.blue');
+    await expect(
+      ipcMain.handlers.get('open-file')?.({ sender: 'main' }, { source: 'menu' }),
+    ).resolves.toEqual({ ok: true, request: { source: 'menu' } });
+    expect(ipcMain.handlers.get('open-file-path')?.({}, 'C:\\Users\\Blue\\work.blue')).toBe(
+      'C:\\Users\\Blue\\work.blue',
+    );
     expect(ipcMain.handlers.get('cancel-midi-import')?.({})).toBe(false);
-    expect(ipcMain.handlers.get('missing-audio-assets:resolve')?.({}, [{ from: 'a', to: 'b' }]))
-      .toEqual({ changed: true, mappings: [{ from: 'a', to: 'b' }], broadcast: 'project-loaded' });
+    expect(
+      ipcMain.handlers.get('missing-audio-assets:resolve')?.({}, [{ from: 'a', to: 'b' }]),
+    ).toEqual({ changed: true, mappings: [{ from: 'a', to: 'b' }], broadcast: 'project-loaded' });
     expect(ipcMain.handlers.get('set-recent-files')?.({}, ['/a.blue'])).toEqual(['/a.blue']);
   });
 
   it('preserves thrown handler errors', () => {
     const ipcMain = new FakeRegistrarIpcMain();
     const handlers = createHandlerRecord(PROJECT_LIFECYCLE_IPC_CHANNELS);
-    handlers['save-file'] = vi.fn(() => { throw new Error('save failed'); });
+    handlers['save-file'] = vi.fn(() => {
+      throw new Error('save failed');
+    });
     registerProjectLifecycleIpc({ ipcMain, handlers });
     expect(() => ipcMain.handlers.get('save-file')?.({})).toThrow('save failed');
   });

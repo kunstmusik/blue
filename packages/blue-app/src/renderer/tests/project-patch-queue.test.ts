@@ -4,7 +4,10 @@ import type {
   ProjectDocumentPatch,
   ProjectEditorSnapshot,
 } from '../../shared/project-editor';
-import { createProjectPatchQueue, type ProjectPatchQueueDependencies } from '../stores/project-store/project-patch-queue';
+import {
+  createProjectPatchQueue,
+  type ProjectPatchQueueDependencies,
+} from '../stores/project-store/project-patch-queue';
 
 function makePatch(tempo: number): ProjectDocumentPatch {
   return { blueLive: { type: 'updateTempoRepeat', patch: { tempo } } };
@@ -43,7 +46,9 @@ function makeItemColorPatch(): ProjectDocumentPatch {
   };
 }
 
-function makeReceipt(overrides: Partial<ProjectDocumentCommitReceipt> = {}): ProjectDocumentCommitReceipt {
+function makeReceipt(
+  overrides: Partial<ProjectDocumentCommitReceipt> = {},
+): ProjectDocumentCommitReceipt {
   return { changed: true, revision: 1, sessionId: 1, ...overrides };
 }
 
@@ -99,7 +104,8 @@ describe('ProjectPatchQueue', () => {
       resolveFirst = resolve;
     });
     const dependencies = makeDependencies({
-      commit: vi.fn()
+      commit: vi
+        .fn()
         .mockReturnValueOnce(firstCommit)
         .mockResolvedValueOnce(makeReceipt({ revision: 2 })),
     });
@@ -144,15 +150,21 @@ describe('ProjectPatchQueue', () => {
     });
     const queue = createProjectPatchQueue(dependencies);
 
-    queue.enqueue({
-      score: { type: 'renameLayerGroup', groupId: 'g1', name: 'Renamed' },
-    } as ProjectDocumentPatch, false);
+    queue.enqueue(
+      {
+        score: { type: 'renameLayerGroup', groupId: 'g1', name: 'Renamed' },
+      } as ProjectDocumentPatch,
+      false,
+    );
     await queue.flush();
     expect(dependencies.fetchCanonicalSnapshot).toHaveBeenCalledTimes(1);
     expect(dependencies.applyCanonicalSnapshot).toHaveBeenCalledWith(snapshot, true);
 
     dependencies.fetchCanonicalSnapshot.mockRejectedValueOnce(new Error('refresh failed'));
-    queue.enqueue({ clojureProject: { type: 'updateText', text: '(+ 1 2)' } } as ProjectDocumentPatch, false);
+    queue.enqueue(
+      { clojureProject: { type: 'updateText', text: '(+ 1 2)' } } as ProjectDocumentPatch,
+      false,
+    );
     await queue.flush();
     expect(dependencies.logRefreshError).toHaveBeenCalledWith(expect.any(Error));
   });
@@ -178,11 +190,13 @@ describe('ProjectPatchQueue', () => {
 
   it('rejects stale layer and item color patches even when unrelated patches changed', async () => {
     const dependencies = makeDependencies({
-      commit: vi.fn().mockResolvedValue(makeReceipt({
-        changed: true,
-        patchChanged: [true, false, false],
-        patchAccepted: [true, false, false],
-      })),
+      commit: vi.fn().mockResolvedValue(
+        makeReceipt({
+          changed: true,
+          patchChanged: [true, false, false],
+          patchAccepted: [true, false, false],
+        }),
+      ),
     });
     const queue = createProjectPatchQueue(dependencies);
 
@@ -196,11 +210,13 @@ describe('ProjectPatchQueue', () => {
 
   it('accepts valid no-op color patches when acceptance is true despite no mutation', async () => {
     const dependencies = makeDependencies({
-      commit: vi.fn().mockResolvedValue(makeReceipt({
-        changed: true,
-        patchChanged: [true, false, false],
-        patchAccepted: [true, true, true],
-      })),
+      commit: vi.fn().mockResolvedValue(
+        makeReceipt({
+          changed: true,
+          patchChanged: [true, false, false],
+          patchAccepted: [true, true, true],
+        }),
+      ),
     });
     const queue = createProjectPatchQueue(dependencies);
 
@@ -214,11 +230,13 @@ describe('ProjectPatchQueue', () => {
 
   it('rejects a genuinely rejected color patch even when the batch reports no mutation', async () => {
     const dependencies = makeDependencies({
-      commit: vi.fn().mockResolvedValue(makeReceipt({
-        changed: false,
-        patchChanged: [false],
-        patchAccepted: [false],
-      })),
+      commit: vi.fn().mockResolvedValue(
+        makeReceipt({
+          changed: false,
+          patchChanged: [false],
+          patchAccepted: [false],
+        }),
+      ),
     });
     const queue = createProjectPatchQueue(dependencies);
 
@@ -252,9 +270,11 @@ describe('ProjectPatchQueue', () => {
   it('ignores stale receipts and resets timers, queues, and revisions', async () => {
     let resolveCommit!: (receipt: ProjectDocumentCommitReceipt) => void;
     const dependencies = makeDependencies({
-      commit: vi.fn().mockReturnValue(new Promise<ProjectDocumentCommitReceipt>((resolve) => {
-        resolveCommit = resolve;
-      })),
+      commit: vi.fn().mockReturnValue(
+        new Promise<ProjectDocumentCommitReceipt>((resolve) => {
+          resolveCommit = resolve;
+        }),
+      ),
     });
     const queue = createProjectPatchQueue(dependencies);
     queue.acceptRevision(7, 4);

@@ -106,9 +106,9 @@ describe('Blue Live note target shared contract', () => {
         source: 'hardware',
         target: { kind: 'channel', channel: 5 },
       };
-      expect(
-        request.target?.kind === 'channel' && request.target.channel === request.channel,
-      ).toBe(true);
+      expect(request.target?.kind === 'channel' && request.target.channel === request.channel).toBe(
+        true,
+      );
     });
 
     it('a channel target that disagrees with the request channel is malformed', () => {

@@ -6,7 +6,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConfirmationDialog } from '../components/dialogs/ConfirmationDialog';
 import type { InAppConfirmationAction } from '../../shared/confirmation-dialog';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 describe('ConfirmationDialog component', () => {
   let container: HTMLDivElement;
@@ -117,7 +119,12 @@ describe('ConfirmationDialog component', () => {
 
     // Press Shift+Tab on cancelButton (first control) -> wraps to saveButton (last)
     cancelButton.focus();
-    const shiftTabEvent = new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true });
+    const shiftTabEvent = new KeyboardEvent('keydown', {
+      key: 'Tab',
+      shiftKey: true,
+      bubbles: true,
+      cancelable: true,
+    });
     dialogElement()?.dispatchEvent(shiftTabEvent);
     expect(document.activeElement).toBe(saveButton);
   });
@@ -138,7 +145,9 @@ describe('ConfirmationDialog component', () => {
 
     const dialog = dialogElement()!;
     act(() => {
-      dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+      dialog.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+      );
     });
 
     expect(onDecision).toHaveBeenCalledTimes(1);
@@ -233,7 +242,9 @@ describe('ConfirmationDialog component', () => {
     act(() => {
       deleteButton.click();
       cancelButton.click();
-      dialogElement()?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+      dialogElement()?.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+      );
     });
 
     expect(onDecision).toHaveBeenCalledTimes(1);
@@ -257,7 +268,9 @@ describe('ConfirmationDialog component', () => {
       );
     });
 
-    const disabledBtn = container.querySelector<HTMLButtonElement>('[data-action-id="disabled-action"]')!;
+    const disabledBtn = container.querySelector<HTMLButtonElement>(
+      '[data-action-id="disabled-action"]',
+    )!;
     expect(disabledBtn.disabled).toBe(true);
 
     act(() => {

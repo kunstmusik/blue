@@ -56,7 +56,12 @@ function snapshotJMaskValue(value: unknown): unknown {
   return snapshot;
 }
 
-function xmlRoundTrip<T>(obj: T, save: (o: T) => Element, load: (e: Element) => T, assertExtra?: (restored: T) => void): void {
+function xmlRoundTrip<T>(
+  obj: T,
+  save: (o: T) => Element,
+  load: (e: Element) => T,
+  assertExtra?: (restored: T) => void,
+): void {
   const xml = save(obj).toXml();
   const restored = load(Element.parse(xml));
   const xmlAgain = save(restored).toXml();
@@ -68,33 +73,48 @@ describe('JMask XML save/load round-trips', () => {
   describe('TablePoint', () => {
     it('round-trips default point', () => {
       const point = new TablePoint();
-      xmlRoundTrip(point, (p) => p.saveAsXML(), TablePoint.loadFromXML, (r) => {
-        expect(r.time).toBe(0);
-        expect(r.value).toBeCloseTo(0.5, 10);
-      });
+      xmlRoundTrip(
+        point,
+        (p) => p.saveAsXML(),
+        TablePoint.loadFromXML,
+        (r) => {
+          expect(r.time).toBe(0);
+          expect(r.value).toBeCloseTo(0.5, 10);
+        },
+      );
     });
 
     it('round-trips custom point', () => {
       const point = new TablePoint();
       point.time = 0.75;
       point.value = 0.25;
-      xmlRoundTrip(point, (p) => p.saveAsXML(), TablePoint.loadFromXML, (r) => {
-        expect(r.time).toBeCloseTo(0.75, 10);
-        expect(r.value).toBeCloseTo(0.25, 10);
-      });
+      xmlRoundTrip(
+        point,
+        (p) => p.saveAsXML(),
+        TablePoint.loadFromXML,
+        (r) => {
+          expect(r.time).toBeCloseTo(0.75, 10);
+          expect(r.value).toBeCloseTo(0.25, 10);
+        },
+      );
     });
   });
 
   describe('Table', () => {
     it('round-trips default table with two points', () => {
       const table = new Table();
-      xmlRoundTrip(table, (t) => t.saveAsXML(), Table.loadFromXML, (r) => {
-        expect(r.points.length).toBe(2);
-        expect(r.points[0]).toBeInstanceOf(TablePoint);
-        expect(typeof r.points[0]!.saveAsXML).toBe('function');
-        expect(r.min).toBe(0);
-        expect(r.max).toBe(1);
-      });
+      xmlRoundTrip(
+        table,
+        (t) => t.saveAsXML(),
+        Table.loadFromXML,
+        (r) => {
+          expect(r.points.length).toBe(2);
+          expect(r.points[0]).toBeInstanceOf(TablePoint);
+          expect(typeof r.points[0]!.saveAsXML).toBe('function');
+          expect(r.min).toBe(0);
+          expect(r.max).toBe(1);
+        },
+      );
     });
 
     it('round-trips table with extra points and cosine interpolation', () => {
@@ -107,16 +127,21 @@ describe('JMask XML save/load round-trips', () => {
       mid.time = 0.5;
       mid.value = 1.5;
       table.addPoint(1, mid);
-      xmlRoundTrip(table, (t) => t.saveAsXML(), Table.loadFromXML, (r) => {
-        expect(r.points.length).toBe(3);
-        expect(r.interpolationType).toBe(Table.COS);
-        expect(r.min).toBe(-1);
-        expect(r.max).toBe(2);
-        expect(r.interpolation).toBeCloseTo(0.5, 10);
-        expect(r.points[1]).toBeInstanceOf(TablePoint);
-        expect(r.points[1]!.time).toBeCloseTo(0.5, 10);
-        expect(r.points[1]!.value).toBeCloseTo(1.5, 10);
-      });
+      xmlRoundTrip(
+        table,
+        (t) => t.saveAsXML(),
+        Table.loadFromXML,
+        (r) => {
+          expect(r.points.length).toBe(3);
+          expect(r.interpolationType).toBe(Table.COS);
+          expect(r.min).toBe(-1);
+          expect(r.max).toBe(2);
+          expect(r.interpolation).toBeCloseTo(0.5, 10);
+          expect(r.points[1]).toBeInstanceOf(TablePoint);
+          expect(r.points[1]!.time).toBeCloseTo(0.5, 10);
+          expect(r.points[1]!.value).toBeCloseTo(1.5, 10);
+        },
+      );
     });
 
     it('snapshot round-trip produces TablePoint instances with saveAsXML', () => {
@@ -152,9 +177,14 @@ describe('JMask XML save/load round-trips', () => {
     it('round-trips via XML', () => {
       const c = new Constant();
       c.value = 2.5;
-      xmlRoundTrip(c, (o) => o.saveAsXML(), Constant.loadFromXML, (r) => {
-        expect(r.value).toBeCloseTo(2.5, 10);
-      });
+      xmlRoundTrip(
+        c,
+        (o) => o.saveAsXML(),
+        Constant.loadFromXML,
+        (r) => {
+          expect(r.value).toBeCloseTo(2.5, 10);
+        },
+      );
     });
 
     it('round-trips via snapshot and loadFieldFromSnapshot', () => {
@@ -179,10 +209,15 @@ describe('JMask XML save/load round-trips', () => {
       const r = new Random();
       r.min = 0.3;
       r.max = 0.7;
-      xmlRoundTrip(r, (o) => o.saveAsXML(), Random.loadFromXML, (restored) => {
-        expect(restored.min).toBeCloseTo(0.3, 10);
-        expect(restored.max).toBeCloseTo(0.7, 10);
-      });
+      xmlRoundTrip(
+        r,
+        (o) => o.saveAsXML(),
+        Random.loadFromXML,
+        (restored) => {
+          expect(restored.min).toBeCloseTo(0.3, 10);
+          expect(restored.max).toBeCloseTo(0.7, 10);
+        },
+      );
     });
   });
 
@@ -196,15 +231,20 @@ describe('JMask XML save/load round-trips', () => {
       osc.freqTableEnabled = true;
       osc.freqTable.getPoint(0).setValue(0.5);
       osc.freqTable.getPoint(1).setValue(1.5);
-      xmlRoundTrip(osc, (o) => o.saveAsXML(), Oscillator.loadFromXML, (r) => {
-        expect(r.oscillatorType).toBe(Oscillator.SAW_UP);
-        expect(r.phaseInit).toBeCloseTo(0.25, 10);
-        expect(r.frequency).toBeCloseTo(2.0, 10);
-        expect(r.exponent).toBeCloseTo(1.5, 10);
-        expect(r.freqTableEnabled).toBe(true);
-        expect(r.freqTable.points[0]).toBeInstanceOf(TablePoint);
-        expect(typeof r.freqTable.points[0]!.saveAsXML).toBe('function');
-      });
+      xmlRoundTrip(
+        osc,
+        (o) => o.saveAsXML(),
+        Oscillator.loadFromXML,
+        (r) => {
+          expect(r.oscillatorType).toBe(Oscillator.SAW_UP);
+          expect(r.phaseInit).toBeCloseTo(0.25, 10);
+          expect(r.frequency).toBeCloseTo(2.0, 10);
+          expect(r.exponent).toBeCloseTo(1.5, 10);
+          expect(r.freqTableEnabled).toBe(true);
+          expect(r.freqTable.points[0]).toBeInstanceOf(TablePoint);
+          expect(typeof r.freqTable.points[0]!.saveAsXML).toBe('function');
+        },
+      );
     });
   });
 
@@ -215,12 +255,17 @@ describe('JMask XML save/load round-trips', () => {
       p.time = 0.33;
       p.value = 0.77;
       seg.table.addPoint(1, p);
-      xmlRoundTrip(seg, (o) => o.saveAsXML(), Segment.loadFromXML, (r) => {
-        expect(r.table.points.length).toBe(3);
-        expect(r.table.points[1]).toBeInstanceOf(TablePoint);
-        expect(r.table.points[1]!.time).toBeCloseTo(0.33, 10);
-        expect(r.table.points[1]!.value).toBeCloseTo(0.77, 10);
-      });
+      xmlRoundTrip(
+        seg,
+        (o) => o.saveAsXML(),
+        Segment.loadFromXML,
+        (r) => {
+          expect(r.table.points.length).toBe(3);
+          expect(r.table.points[1]).toBeInstanceOf(TablePoint);
+          expect(r.table.points[1]!.time).toBeCloseTo(0.33, 10);
+          expect(r.table.points[1]!.value).toBeCloseTo(0.77, 10);
+        },
+      );
     });
   });
 
@@ -230,19 +275,29 @@ describe('JMask XML save/load round-trips', () => {
       il.listType = ItemList.HEAP;
       il.listItems = [1.1, 2.2, 3.3];
       il.direction = 0;
-      xmlRoundTrip(il, (o) => o.saveAsXML(), ItemList.loadFromXML, (r) => {
-        expect(r.listType).toBe(ItemList.HEAP);
-        expect(r.listItems).toEqual([1.1, 2.2, 3.3]);
-      });
+      xmlRoundTrip(
+        il,
+        (o) => o.saveAsXML(),
+        ItemList.loadFromXML,
+        (r) => {
+          expect(r.listType).toBe(ItemList.HEAP);
+          expect(r.listItems).toEqual([1.1, 2.2, 3.3]);
+        },
+      );
     });
 
     it('round-trips via XML with Swing mode', () => {
       const il = new ItemList();
       il.listType = ItemList.SWING;
       il.listItems = [10, 20, 30];
-      xmlRoundTrip(il, (o) => o.saveAsXML(), ItemList.loadFromXML, (r) => {
-        expect(r.listType).toBe(ItemList.SWING);
-      });
+      xmlRoundTrip(
+        il,
+        (o) => o.saveAsXML(),
+        ItemList.loadFromXML,
+        (r) => {
+          expect(r.listType).toBe(ItemList.SWING);
+        },
+      );
     });
   });
 
@@ -257,15 +312,20 @@ describe('JMask XML save/load round-trips', () => {
       mask.lowTableEnabled = true;
       mask.highTable.getPoint(0).setValue(0.8);
       mask.lowTable.getPoint(1).setValue(0.2);
-      xmlRoundTrip(mask, (o) => o.saveAsXML(), Mask.loadFromXML, (r) => {
-        expect(r.enabled).toBe(true);
-        expect(r.mapValue).toBeCloseTo(0.5, 10);
-        expect(r.highTableEnabled).toBe(true);
-        expect(r.lowTableEnabled).toBe(true);
-        expect(r.highTable.points[0]).toBeInstanceOf(TablePoint);
-        expect(typeof r.highTable.points[0]!.saveAsXML).toBe('function');
-        expect(r.lowTable.points[1]).toBeInstanceOf(TablePoint);
-      });
+      xmlRoundTrip(
+        mask,
+        (o) => o.saveAsXML(),
+        Mask.loadFromXML,
+        (r) => {
+          expect(r.enabled).toBe(true);
+          expect(r.mapValue).toBeCloseTo(0.5, 10);
+          expect(r.highTableEnabled).toBe(true);
+          expect(r.lowTableEnabled).toBe(true);
+          expect(r.highTable.points[0]).toBeInstanceOf(TablePoint);
+          expect(typeof r.highTable.points[0]!.saveAsXML).toBe('function');
+          expect(r.lowTable.points[1]).toBeInstanceOf(TablePoint);
+        },
+      );
     });
   });
 
@@ -279,15 +339,20 @@ describe('JMask XML save/load round-trips', () => {
       q.gridSizeTableEnabled = true;
       q.strengthTableEnabled = true;
       q.offsetTableEnabled = true;
-      xmlRoundTrip(q, (o) => o.saveAsXML(), Quantizer.loadFromXML, (r) => {
-        expect(r.enabled).toBe(true);
-        expect(r.gridSize).toBeCloseTo(0.25, 10);
-        expect(r.strength).toBeCloseTo(0.75, 10);
-        expect(r.offset).toBeCloseTo(0.1, 10);
-        expect(r.gridSizeTableEnabled).toBe(true);
-        expect(r.gridSizeTable.points[0]).toBeInstanceOf(TablePoint);
-        expect(typeof r.gridSizeTable.points[0]!.saveAsXML).toBe('function');
-      });
+      xmlRoundTrip(
+        q,
+        (o) => o.saveAsXML(),
+        Quantizer.loadFromXML,
+        (r) => {
+          expect(r.enabled).toBe(true);
+          expect(r.gridSize).toBeCloseTo(0.25, 10);
+          expect(r.strength).toBeCloseTo(0.75, 10);
+          expect(r.offset).toBeCloseTo(0.1, 10);
+          expect(r.gridSizeTableEnabled).toBe(true);
+          expect(r.gridSizeTable.points[0]).toBeInstanceOf(TablePoint);
+          expect(typeof r.gridSizeTable.points[0]!.saveAsXML).toBe('function');
+        },
+      );
     });
   });
 
@@ -301,15 +366,20 @@ describe('JMask XML save/load round-trips', () => {
       acc.initialValue = 0.5;
       acc.highTableEnabled = true;
       acc.lowTableEnabled = true;
-      xmlRoundTrip(acc, (o) => o.saveAsXML(), Accumulator.loadFromXML, (r) => {
-        expect(r.enabled).toBe(true);
-        expect(r.mode).toBe(Accumulator.MIRROR);
-        expect(r.low).toBeCloseTo(-1, 10);
-        expect(r.high).toBeCloseTo(2, 10);
-        expect(r.initialValue).toBeCloseTo(0.5, 10);
-        expect(r.highTable.points[0]).toBeInstanceOf(TablePoint);
-        expect(typeof r.highTable.points[0]!.saveAsXML).toBe('function');
-      });
+      xmlRoundTrip(
+        acc,
+        (o) => o.saveAsXML(),
+        Accumulator.loadFromXML,
+        (r) => {
+          expect(r.enabled).toBe(true);
+          expect(r.mode).toBe(Accumulator.MIRROR);
+          expect(r.low).toBeCloseTo(-1, 10);
+          expect(r.high).toBeCloseTo(2, 10);
+          expect(r.initialValue).toBeCloseTo(0.5, 10);
+          expect(r.highTable.points[0]).toBeInstanceOf(TablePoint);
+          expect(typeof r.highTable.points[0]!.saveAsXML).toBe('function');
+        },
+      );
     });
   });
 
@@ -325,9 +395,14 @@ describe('JMask XML save/load round-trips', () => {
     it('round-trips Linear with direction', () => {
       const l = new Linear();
       l.direction = Linear.DECREASING;
-      xmlRoundTrip(l, (o) => o.saveAsXML(), Linear.loadFromXML, (r) => {
-        expect(r.direction).toBe(Linear.DECREASING);
-      });
+      xmlRoundTrip(
+        l,
+        (o) => o.saveAsXML(),
+        Linear.loadFromXML,
+        (r) => {
+          expect(r.direction).toBe(Linear.DECREASING);
+        },
+      );
     });
 
     it('round-trips Exponential with table', () => {
@@ -336,11 +411,16 @@ describe('JMask XML save/load round-trips', () => {
       e.lambda = 0.7;
       e.lambdaTableEnabled = true;
       e.lambdaTable.getPoint(0).setValue(0.3);
-      xmlRoundTrip(e, (o) => o.saveAsXML(), Exponential.loadFromXML, (r) => {
-        expect(r.lambda).toBeCloseTo(0.7, 10);
-        expect(r.lambdaTableEnabled).toBe(true);
-        expect(r.lambdaTable.points[0]).toBeInstanceOf(TablePoint);
-      });
+      xmlRoundTrip(
+        e,
+        (o) => o.saveAsXML(),
+        Exponential.loadFromXML,
+        (r) => {
+          expect(r.lambda).toBeCloseTo(0.7, 10);
+          expect(r.lambdaTableEnabled).toBe(true);
+          expect(r.lambdaTable.points[0]).toBeInstanceOf(TablePoint);
+        },
+      );
     });
 
     it('round-trips Gaussian with sigma and mu tables', () => {
@@ -349,14 +429,19 @@ describe('JMask XML save/load round-trips', () => {
       g.mu = 0.6;
       g.sigmaTableEnabled = true;
       g.muTableEnabled = true;
-      xmlRoundTrip(g, (o) => o.saveAsXML(), Gaussian.loadFromXML, (r) => {
-        expect(r.sigma).toBeCloseTo(0.2, 10);
-        expect(r.mu).toBeCloseTo(0.6, 10);
-        expect(r.sigmaTableEnabled).toBe(true);
-        expect(r.muTableEnabled).toBe(true);
-        expect(r.sigmaTable.points[0]).toBeInstanceOf(TablePoint);
-        expect(r.muTable.points[0]).toBeInstanceOf(TablePoint);
-      });
+      xmlRoundTrip(
+        g,
+        (o) => o.saveAsXML(),
+        Gaussian.loadFromXML,
+        (r) => {
+          expect(r.sigma).toBeCloseTo(0.2, 10);
+          expect(r.mu).toBeCloseTo(0.6, 10);
+          expect(r.sigmaTableEnabled).toBe(true);
+          expect(r.muTableEnabled).toBe(true);
+          expect(r.sigmaTable.points[0]).toBeInstanceOf(TablePoint);
+          expect(r.muTable.points[0]).toBeInstanceOf(TablePoint);
+        },
+      );
     });
 
     it('round-trips Cauchy with alpha and mu tables', () => {
@@ -365,10 +450,15 @@ describe('JMask XML save/load round-trips', () => {
       c.mu = 0.55;
       c.alphaTableEnabled = true;
       c.muTableEnabled = true;
-      xmlRoundTrip(c, (o) => o.saveAsXML(), Cauchy.loadFromXML, (r) => {
-        expect(r.alphaTable.points[0]).toBeInstanceOf(TablePoint);
-        expect(r.muTable.points[0]).toBeInstanceOf(TablePoint);
-      });
+      xmlRoundTrip(
+        c,
+        (o) => o.saveAsXML(),
+        Cauchy.loadFromXML,
+        (r) => {
+          expect(r.alphaTable.points[0]).toBeInstanceOf(TablePoint);
+          expect(r.muTable.points[0]).toBeInstanceOf(TablePoint);
+        },
+      );
     });
 
     it('round-trips Beta with a and b tables', () => {
@@ -377,10 +467,15 @@ describe('JMask XML save/load round-trips', () => {
       b.b = 0.3;
       b.aTableEnabled = true;
       b.bTableEnabled = true;
-      xmlRoundTrip(b, (o) => o.saveAsXML(), Beta.loadFromXML, (r) => {
-        expect(r.aTable.points[0]).toBeInstanceOf(TablePoint);
-        expect(r.bTable.points[0]).toBeInstanceOf(TablePoint);
-      });
+      xmlRoundTrip(
+        b,
+        (o) => o.saveAsXML(),
+        Beta.loadFromXML,
+        (r) => {
+          expect(r.aTable.points[0]).toBeInstanceOf(TablePoint);
+          expect(r.bTable.points[0]).toBeInstanceOf(TablePoint);
+        },
+      );
     });
 
     it('round-trips Weibull with s and t tables', () => {
@@ -389,10 +484,15 @@ describe('JMask XML save/load round-trips', () => {
       w.t = 2.5;
       w.sTableEnabled = true;
       w.tTableEnabled = true;
-      xmlRoundTrip(w, (o) => o.saveAsXML(), Weibull.loadFromXML, (r) => {
-        expect(r.sTable.points[0]).toBeInstanceOf(TablePoint);
-        expect(r.tTable.points[0]).toBeInstanceOf(TablePoint);
-      });
+      xmlRoundTrip(
+        w,
+        (o) => o.saveAsXML(),
+        Weibull.loadFromXML,
+        (r) => {
+          expect(r.sTable.points[0]).toBeInstanceOf(TablePoint);
+          expect(r.tTable.points[0]).toBeInstanceOf(TablePoint);
+        },
+      );
     });
   });
 
@@ -400,11 +500,16 @@ describe('JMask XML save/load round-trips', () => {
     it('round-trips with selected index', () => {
       const prob = new Probability();
       prob.setSelectedIndex(3);
-      xmlRoundTrip(prob, (o) => o.saveAsXML(), Probability.loadFromXML, (r) => {
-        expect(r.getSelectedIndex()).toBe(3);
-        expect(r.getGenerators().length).toBe(8);
-        expect(r.getGenerators()[3]).toBeInstanceOf(Exponential);
-      });
+      xmlRoundTrip(
+        prob,
+        (o) => o.saveAsXML(),
+        Probability.loadFromXML,
+        (r) => {
+          expect(r.getSelectedIndex()).toBe(3);
+          expect(r.getGenerators().length).toBe(8);
+          expect(r.getGenerators()[3]).toBeInstanceOf(Exponential);
+        },
+      );
     });
   });
 
@@ -423,37 +528,47 @@ describe('JMask XML save/load round-trips', () => {
       param.name = 'test-param';
       param.visible = false;
 
-      xmlRoundTrip(param, (o) => o.saveAsXML(), Parameter.loadFromXML, (r) => {
-        expect(r.name).toBe('test-param');
-        expect(r.visible).toBe(false);
-        expect(r.getGenerator()).toBeInstanceOf(Oscillator);
-        expect(r.getMask()).not.toBeNull();
-        expect(r.getMask()!.enabled).toBe(true);
-        expect(r.getMask()!.high).toBeCloseTo(0.8, 10);
-        expect(r.getMask()!.highTable.points[0]).toBeInstanceOf(TablePoint);
-        expect(r.getQuantizer()).not.toBeNull();
-        expect(r.getQuantizer()!.enabled).toBe(true);
-        expect(r.getAccumulator()).not.toBeNull();
-        expect(r.getAccumulator()!.mode).toBe(Accumulator.WRAP);
-      });
+      xmlRoundTrip(
+        param,
+        (o) => o.saveAsXML(),
+        Parameter.loadFromXML,
+        (r) => {
+          expect(r.name).toBe('test-param');
+          expect(r.visible).toBe(false);
+          expect(r.getGenerator()).toBeInstanceOf(Oscillator);
+          expect(r.getMask()).not.toBeNull();
+          expect(r.getMask()!.enabled).toBe(true);
+          expect(r.getMask()!.high).toBeCloseTo(0.8, 10);
+          expect(r.getMask()!.highTable.points[0]).toBeInstanceOf(TablePoint);
+          expect(r.getQuantizer()).not.toBeNull();
+          expect(r.getQuantizer()!.enabled).toBe(true);
+          expect(r.getAccumulator()).not.toBeNull();
+          expect(r.getAccumulator()!.mode).toBe(Accumulator.WRAP);
+        },
+      );
     });
   });
 
   describe('Field', () => {
     it('round-trips default field with 3 parameters', () => {
       const field = new Field();
-      xmlRoundTrip(field, (o) => o.saveAsXML(), Field.loadFromXML, (r) => {
-        expect(r.parameters.length).toBe(3);
-        expect(r.parameters[0]!.name).toBe('Instrument ID');
-        expect(r.parameters[1]!.name).toBe('Start');
-        expect(r.parameters[2]!.name).toBe('Duration');
-        for (const param of r.parameters) {
-          expect(param).toBeInstanceOf(Parameter);
-          const gen = param.getGenerator();
-          expect(gen).toBeInstanceOf(Constant);
-          expect(typeof gen!.saveAsXML).toBe('function');
-        }
-      });
+      xmlRoundTrip(
+        field,
+        (o) => o.saveAsXML(),
+        Field.loadFromXML,
+        (r) => {
+          expect(r.parameters.length).toBe(3);
+          expect(r.parameters[0]!.name).toBe('Instrument ID');
+          expect(r.parameters[1]!.name).toBe('Start');
+          expect(r.parameters[2]!.name).toBe('Duration');
+          for (const param of r.parameters) {
+            expect(param).toBeInstanceOf(Parameter);
+            const gen = param.getGenerator();
+            expect(gen).toBeInstanceOf(Constant);
+            expect(typeof gen!.saveAsXML).toBe('function');
+          }
+        },
+      );
     });
 
     it('round-trips field with mixed generator types', () => {
@@ -479,17 +594,22 @@ describe('JMask XML save/load round-trips', () => {
 
       field.parameters.push(p1, p2, p3, p4);
 
-      xmlRoundTrip(field, (o) => o.saveAsXML(), Field.loadFromXML, (r) => {
-        expect(r.parameters.length).toBe(4);
-        expect(r.parameters[0]!.getGenerator()).toBeInstanceOf(Constant);
-        expect(r.parameters[1]!.getGenerator()).toBeInstanceOf(Random);
-        expect(r.parameters[2]!.getGenerator()).toBeInstanceOf(Segment);
-        expect(r.parameters[3]!.getGenerator()).toBeInstanceOf(Probability);
+      xmlRoundTrip(
+        field,
+        (o) => o.saveAsXML(),
+        Field.loadFromXML,
+        (r) => {
+          expect(r.parameters.length).toBe(4);
+          expect(r.parameters[0]!.getGenerator()).toBeInstanceOf(Constant);
+          expect(r.parameters[1]!.getGenerator()).toBeInstanceOf(Random);
+          expect(r.parameters[2]!.getGenerator()).toBeInstanceOf(Segment);
+          expect(r.parameters[3]!.getGenerator()).toBeInstanceOf(Probability);
 
-        const seg = r.parameters[2]!.getGenerator() as Segment;
-        expect(seg.table.points[0]).toBeInstanceOf(TablePoint);
-        expect(typeof seg.table.points[0]!.saveAsXML).toBe('function');
-      });
+          const seg = r.parameters[2]!.getGenerator() as Segment;
+          expect(seg.table.points[0]).toBeInstanceOf(TablePoint);
+          expect(typeof seg.table.points[0]!.saveAsXML).toBe('function');
+        },
+      );
     });
   });
 
@@ -660,7 +780,11 @@ describe('JMask XML save/load round-trips', () => {
 
       const field = jmask.getField();
       const seg = new Segment();
-      for (const [t, v] of [[0.25, 0.4], [0.5, 0.6], [0.75, 0.3]]) {
+      for (const [t, v] of [
+        [0.25, 0.4],
+        [0.5, 0.6],
+        [0.75, 0.3],
+      ]) {
         const p = new TablePoint();
         p.time = t;
         p.value = v;

@@ -44,13 +44,19 @@ describe('Track instrument project patches', () => {
     const context = { projectSessionId: 4, projectRevision: 2 };
     const track = data.getScore()[0]![0]!;
 
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'createTrackInstrument',
-        track: ref,
-        instrumentType: 'blueX7',
-      },
-    }, context)).toBe(true);
+    expect(
+      applyProjectDocumentPatch(
+        data,
+        {
+          score: {
+            type: 'createTrackInstrument',
+            track: ref,
+            instrumentType: 'blueX7',
+          },
+        },
+        context,
+      ),
+    ).toBe(true);
 
     const instrument = track.getInstrument();
     expect(instrument).toBeInstanceOf(BlueX7);
@@ -65,13 +71,19 @@ describe('Track instrument project patches', () => {
     const context = { projectSessionId: 4, projectRevision: 2 };
     const track = data.getScore()[0]![0]!;
 
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'createTrackInstrument',
-        track: { ...ref, ...context },
-        instrumentType: 'generic',
-      },
-    }, context)).toBe(true);
+    expect(
+      applyProjectDocumentPatch(
+        data,
+        {
+          score: {
+            type: 'createTrackInstrument',
+            track: { ...ref, ...context },
+            instrumentType: 'generic',
+          },
+        },
+        context,
+      ),
+    ).toBe(true);
     const created = track.getInstrument();
     expect(created).toBeInstanceOf(GenericInstrument);
 
@@ -79,38 +91,62 @@ describe('Track instrument project patches', () => {
     source.setName('Replacement');
     source.setText('outs a1, a1');
     const snapshot = createInstrumentSnapshot('source', source);
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'replaceTrackInstrument',
-        track: { ...ref, ...context },
-        instrument: snapshot,
-      },
-    }, context)).toBe(true);
+    expect(
+      applyProjectDocumentPatch(
+        data,
+        {
+          score: {
+            type: 'replaceTrackInstrument',
+            track: { ...ref, ...context },
+            instrument: snapshot,
+          },
+        },
+        context,
+      ),
+    ).toBe(true);
     expect(track.getInstrument()).not.toBe(source);
     expect(track.getInstrument()?.getName()).toBe('Replacement');
 
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'updateTrackInstrument',
-        track: ref,
-        patch: { name: 'Updated', text: 'out a1' },
-      },
-    }, context)).toBe(true);
+    expect(
+      applyProjectDocumentPatch(
+        data,
+        {
+          score: {
+            type: 'updateTrackInstrument',
+            track: ref,
+            patch: { name: 'Updated', text: 'out a1' },
+          },
+        },
+        context,
+      ),
+    ).toBe(true);
     expect(track.getInstrument()?.getName()).toBe('Updated');
     expect((track.getInstrument() as GenericInstrument).getText()).toBe('out a1');
 
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'replaceTrackInstrument',
-        track: { ...ref, rootGroupId: 'wrong-group' },
-        instrument: snapshot,
-      },
-    }, context)).toBe(false);
+    expect(
+      applyProjectDocumentPatch(
+        data,
+        {
+          score: {
+            type: 'replaceTrackInstrument',
+            track: { ...ref, rootGroupId: 'wrong-group' },
+            instrument: snapshot,
+          },
+        },
+        context,
+      ),
+    ).toBe(false);
     expect(track.getInstrument()?.getName()).toBe('Updated');
 
-    expect(applyProjectDocumentPatch(data, {
-      score: { type: 'clearTrackInstrument', track: ref },
-    }, context)).toBe(true);
+    expect(
+      applyProjectDocumentPatch(
+        data,
+        {
+          score: { type: 'clearTrackInstrument', track: ref },
+        },
+        context,
+      ),
+    ).toBe(true);
     expect(track.getInstrument()).toBeNull();
   });
 
@@ -130,7 +166,10 @@ describe('Track instrument project patches', () => {
     sourceParameter.setLabel('Gain automation');
     sourceParameter.setAutomationEnabled(true);
     sourceParameter.setCurve(AutomationCurve.STEP);
-    sourceParameter.setPoints([{ time: 0, value: 0.25 }, { time: 1, value: 0.75 }]);
+    sourceParameter.setPoints([
+      { time: 0, value: 0.25 },
+      { time: 1, value: 0.75 },
+    ]);
 
     const preset = new Preset();
     preset.setPresetName('Loud');
@@ -149,20 +188,28 @@ describe('Track instrument project patches', () => {
     source.getOpcodeList().addOpcode(udo);
 
     const snapshot = createInstrumentSnapshot('source', source);
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'replaceTrackInstrument',
-        track: ref,
-        instrument: snapshot,
-      },
-    }, context)).toBe(true);
+    expect(
+      applyProjectDocumentPatch(
+        data,
+        {
+          score: {
+            type: 'replaceTrackInstrument',
+            track: ref,
+            instrument: snapshot,
+          },
+        },
+        context,
+      ),
+    ).toBe(true);
 
     const copied = data.getScore()[0]![0]!.getInstrument();
     expect(copied).toBeInstanceOf(BlueSynthBuilder);
     const copiedBsb = copied as BlueSynthBuilder;
     const copiedWidget = copiedBsb.getGraphicInterface().getRootGroup().getChildren()[0]!;
     expect(copiedWidget.id).not.toBe(gain.id);
-    const copiedParameter = copiedBsb.getParameters().find((parameter) => parameter.getName() === 'gain')!;
+    const copiedParameter = copiedBsb
+      .getParameters()
+      .find((parameter) => parameter.getName() === 'gain')!;
     expect(copiedParameter.getUniqueId()).not.toBe(sourceParameter.getUniqueId());
     expect(copiedParameter.getLabel()).toBe('Gain automation');
     expect(copiedParameter.isAutomationEnabled()).toBe(true);
@@ -181,9 +228,15 @@ describe('Track instrument project patches', () => {
   it('editor-open reads leave the canonical document and its .blue serialization untouched', () => {
     const { data, ref } = createInstrumentProject();
     const context = { projectSessionId: 4, projectRevision: 2 };
-    expect(applyProjectDocumentPatch(data, {
-      score: { type: 'createTrackInstrument', track: ref, instrumentType: 'blueX7' },
-    }, context)).toBe(true);
+    expect(
+      applyProjectDocumentPatch(
+        data,
+        {
+          score: { type: 'createTrackInstrument', track: ref, instrumentType: 'blueX7' },
+        },
+        context,
+      ),
+    ).toBe(true);
 
     const beforeXml = data.saveToString();
     const beforeCsd = data.toCSD();

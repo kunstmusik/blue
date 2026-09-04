@@ -66,8 +66,14 @@ function makeSnapshot(overrides: Partial<MidiInputServiceSnapshot> = {}): MidiIn
 let primaryContents: FakeWebContents;
 let settingsContents: FakeWebContents;
 let coordinator: MidiInputCoordinator;
-let ipcHandlers = new Map<string, (event: { sender: FakeWebContents }, ...args: unknown[]) => unknown>();
-let ipcListeners = new Map<string, (event: { sender: FakeWebContents }, ...args: unknown[]) => void>();
+let ipcHandlers = new Map<
+  string,
+  (event: { sender: FakeWebContents }, ...args: unknown[]) => unknown
+>();
+let ipcListeners = new Map<
+  string,
+  (event: { sender: FakeWebContents }, ...args: unknown[]) => void
+>();
 
 beforeEach(() => {
   webContentsSend.mockClear();
@@ -75,12 +81,22 @@ beforeEach(() => {
   ipcHandlers.clear();
   ipcListeners.clear();
 
-  ipcHandle.mockImplementation((channel: string, handler: (event: { sender: FakeWebContents }, ...args: unknown[]) => unknown) => {
-    ipcHandlers.set(channel, handler);
-  });
-  ipcOn.mockImplementation((channel: string, handler: (event: { sender: FakeWebContents }, ...args: unknown[]) => void) => {
-    ipcListeners.set(channel, handler);
-  });
+  ipcHandle.mockImplementation(
+    (
+      channel: string,
+      handler: (event: { sender: FakeWebContents }, ...args: unknown[]) => unknown,
+    ) => {
+      ipcHandlers.set(channel, handler);
+    },
+  );
+  ipcOn.mockImplementation(
+    (
+      channel: string,
+      handler: (event: { sender: FakeWebContents }, ...args: unknown[]) => void,
+    ) => {
+      ipcListeners.set(channel, handler);
+    },
+  );
 
   primaryContents = makeWebContents(1);
   settingsContents = makeWebContents(2);
@@ -118,7 +134,9 @@ describe('MidiInputCoordinator', () => {
     const resultForSettings = await init({ sender: settingsContents });
     expect(resultForSettings).toBeNull();
 
-    const result = await init({ sender: primaryContents }) as { preferences: { devices: unknown[] } };
+    const result = (await init({ sender: primaryContents })) as {
+      preferences: { devices: unknown[] };
+    };
     expect(result.preferences.devices).toEqual([]);
   });
 
@@ -176,7 +194,10 @@ describe('MidiInputCoordinator', () => {
     expect(reconcileCall).toBeTruthy();
     const [, command] = reconcileCall!;
     expect((command as MidiInputServiceCommand).type).toBe('reconcile');
-    expect((command as MidiInputServiceCommand & { preferences: { devices: { id: string }[] } }).preferences.devices[0]?.id).toBe('d');
+    expect(
+      (command as MidiInputServiceCommand & { preferences: { devices: { id: string }[] } })
+        .preferences.devices[0]?.id,
+    ).toBe('d');
   });
 
   it('queues rescan and coalesces repeated rescan requests', async () => {
@@ -245,10 +266,9 @@ describe('MidiInputCoordinator', () => {
       completed = true;
     });
     const command = webContentsSend.mock.calls.find(
-      ([channel, payload]) => (
-        channel === MIDI_INPUT_SERVICE_COMMAND_CHANNEL
-        && (payload as MidiInputServiceCommand).type === 'shutdown'
-      ),
+      ([channel, payload]) =>
+        channel === MIDI_INPUT_SERVICE_COMMAND_CHANNEL &&
+        (payload as MidiInputServiceCommand).type === 'shutdown',
     )?.[1] as MidiInputServiceCommand;
     expect(command.type).toBe('shutdown');
     await Promise.resolve();

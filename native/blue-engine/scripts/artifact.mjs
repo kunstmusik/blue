@@ -29,8 +29,8 @@ export function sourceRevision() {
     'git',
     ['status', '--porcelain', '--', 'native/blue-engine', 'packages/blue-engine-client'],
     {
-    cwd: repoRoot,
-    encoding: 'utf8',
+      cwd: repoRoot,
+      encoding: 'utf8',
     },
   ).trim();
   return dirty ? `dirty:${revision}` : revision;

@@ -45,12 +45,23 @@ export class TimeDuration {
 
   // ─── Private constructor ───
 
-  private constructor(timeBase: TimeBase, props: Partial<{
-    csoundBeats: number;
-    bar: number; beat: number; ticks: number; sixteenth: number; fraction: number;
-    hours: number; minutes: number; seconds: number; milliseconds: number;
-    totalSeconds: number; frameCount: number;
-  }> = {}) {
+  private constructor(
+    timeBase: TimeBase,
+    props: Partial<{
+      csoundBeats: number;
+      bar: number;
+      beat: number;
+      ticks: number;
+      sixteenth: number;
+      fraction: number;
+      hours: number;
+      minutes: number;
+      seconds: number;
+      milliseconds: number;
+      totalSeconds: number;
+      frameCount: number;
+    }> = {},
+  ) {
     this._timeBase = timeBase;
     this._csoundBeats = props.csoundBeats ?? 0;
     this._bar = props.bar ?? 0;
@@ -87,7 +98,8 @@ export class TimeDuration {
   static bbst(bar: number, beat: number, sixteenth: number, ticks: number): TimeDuration {
     if (bar < 0) throw new Error(`Invalid bar: ${bar} (must be >= 0)`);
     if (beat < 0) throw new Error(`Invalid beat: ${beat} (must be >= 0)`);
-    if (sixteenth < 0 || sixteenth > 3) throw new Error(`Invalid sixteenth: ${sixteenth} (must be 0-3)`);
+    if (sixteenth < 0 || sixteenth > 3)
+      throw new Error(`Invalid sixteenth: ${sixteenth} (must be 0-3)`);
     if (ticks < 0) throw new Error(`Invalid ticks: ${ticks} (must be >= 0)`);
     return new TimeDuration(TimeBase.BBST, { bar, beat, sixteenth, ticks });
   }
@@ -95,15 +107,22 @@ export class TimeDuration {
   static bbf(bar: number, beat: number, fraction: number): TimeDuration {
     if (bar < 0) throw new Error(`Invalid bar: ${bar} (must be >= 0)`);
     if (beat < 0) throw new Error(`Invalid beat: ${beat} (must be >= 0)`);
-    if (fraction < 0 || fraction >= 100) throw new Error(`Invalid fraction: ${fraction} (must be 0-99)`);
+    if (fraction < 0 || fraction >= 100)
+      throw new Error(`Invalid fraction: ${fraction} (must be 0-99)`);
     return new TimeDuration(TimeBase.BBF, { bar, beat, fraction });
   }
 
-  static timeValue(hours: number, minutes: number, seconds: number, milliseconds: number): TimeDuration {
+  static timeValue(
+    hours: number,
+    minutes: number,
+    seconds: number,
+    milliseconds: number,
+  ): TimeDuration {
     if (hours < 0) throw new Error(`Invalid hours: ${hours}`);
     if (minutes < 0 || minutes >= 60) throw new Error(`Invalid minutes: ${minutes}`);
     if (seconds < 0 || seconds >= 60) throw new Error(`Invalid seconds: ${seconds}`);
-    if (milliseconds < 0 || milliseconds >= 1000) throw new Error(`Invalid milliseconds: ${milliseconds}`);
+    if (milliseconds < 0 || milliseconds >= 1000)
+      throw new Error(`Invalid milliseconds: ${milliseconds}`);
     return new TimeDuration(TimeBase.TIME, { hours, minutes, seconds, milliseconds });
   }
 
@@ -114,7 +133,8 @@ export class TimeDuration {
 
   static seconds(totalSeconds: number): TimeDuration {
     if (totalSeconds < 0) throw new Error(`Invalid totalSeconds: ${totalSeconds} (must be >= 0)`);
-    if (!isFinite(totalSeconds)) throw new Error(`Invalid totalSeconds: ${totalSeconds} (must be finite)`);
+    if (!isFinite(totalSeconds))
+      throw new Error(`Invalid totalSeconds: ${totalSeconds} (must be finite)`);
     return new TimeDuration(TimeBase.SECONDS, { totalSeconds });
   }
 
@@ -140,7 +160,9 @@ export class TimeDuration {
 
   // ─── Accessors ───
 
-  getTimeBase(): TimeBase { return this._timeBase; }
+  getTimeBase(): TimeBase {
+    return this._timeBase;
+  }
 
   getValue(): number {
     if (this._timeBase === TimeBase.BEATS) return this._csoundBeats;
@@ -149,22 +171,46 @@ export class TimeDuration {
     return this._csoundBeats;
   }
 
-  getCsoundBeats(): number { return this._csoundBeats; }
-  getBar(): number { return this._bar; }
-  getBeat(): number { return this._beat; }
-  getTicks(): number { return this._ticks; }
-  getSixteenth(): number { return this._sixteenth; }
-  getFraction(): number { return this._fraction; }
-  getHours(): number { return this._hours; }
-  getMinutes(): number { return this._minutes; }
-  getSeconds(): number { return this._seconds; }
-  getMilliseconds(): number { return this._milliseconds; }
-  getTotalSeconds(): number { return this._totalSeconds; }
-  getFrameCount(): number { return this._frameCount; }
+  getCsoundBeats(): number {
+    return this._csoundBeats;
+  }
+  getBar(): number {
+    return this._bar;
+  }
+  getBeat(): number {
+    return this._beat;
+  }
+  getTicks(): number {
+    return this._ticks;
+  }
+  getSixteenth(): number {
+    return this._sixteenth;
+  }
+  getFraction(): number {
+    return this._fraction;
+  }
+  getHours(): number {
+    return this._hours;
+  }
+  getMinutes(): number {
+    return this._minutes;
+  }
+  getSeconds(): number {
+    return this._seconds;
+  }
+  getMilliseconds(): number {
+    return this._milliseconds;
+  }
+  getTotalSeconds(): number {
+    return this._totalSeconds;
+  }
+  getFrameCount(): number {
+    return this._frameCount;
+  }
 
   /** Get total ticks for BBST durations. */
   toTotalTicks(ppq: number): number {
-    return ((this._sixteenth) * (ppq / 4)) + this._ticks;
+    return this._sixteenth * (ppq / 4) + this._ticks;
   }
 
   /** Get total seconds for DurationTime. */
@@ -183,24 +229,30 @@ export class TimeDuration {
       case TimeBase.BBT: {
         // Duration uses first meter entry (not MeterMap.barBeatToBeats)
         const meter = context.getMeterMap().get(0).meter;
-        return (this._bar * meter.getBeatsPerMeasure()) +
-               (this._beat * meter.getBeatScale()) +
-               (this._ticks / DEFAULT_PPQ) * meter.getBeatScale();
+        return (
+          this._bar * meter.getBeatsPerMeasure() +
+          this._beat * meter.getBeatScale() +
+          (this._ticks / DEFAULT_PPQ) * meter.getBeatScale()
+        );
       }
 
       case TimeBase.BBST: {
         const meter = context.getMeterMap().get(0).meter;
         const beatScale = meter.getBeatScale();
-        return (this._bar * meter.getBeatsPerMeasure()) +
-               (this._beat * beatScale) +
-               (this.toTotalTicks(DEFAULT_PPQ) / DEFAULT_PPQ) * beatScale;
+        return (
+          this._bar * meter.getBeatsPerMeasure() +
+          this._beat * beatScale +
+          (this.toTotalTicks(DEFAULT_PPQ) / DEFAULT_PPQ) * beatScale
+        );
       }
 
       case TimeBase.BBF: {
         const meter = context.getMeterMap().get(0).meter;
-        return (this._bar * meter.getBeatsPerMeasure()) +
-               (this._beat * meter.getBeatScale()) +
-               (this._fraction / 100.0) * meter.getBeatScale();
+        return (
+          this._bar * meter.getBeatsPerMeasure() +
+          this._beat * meter.getBeatScale() +
+          (this._fraction / 100.0) * meter.getBeatScale()
+        );
       }
 
       case TimeBase.TIME: {
@@ -249,8 +301,12 @@ export class TimeDuration {
   }
 
   // Aliases matching Java naming (plural forms for duration 0-based)
-  getBars(): number { return this._bar; }
-  getBeats(): number { return this._beat; }
+  getBars(): number {
+    return this._bar;
+  }
+  getBeats(): number {
+    return this._beat;
+  }
 
   // ─── Equality ───
 
@@ -260,15 +316,29 @@ export class TimeDuration {
       case TimeBase.BEATS:
         return this._csoundBeats === other._csoundBeats;
       case TimeBase.BBT:
-        return this._bar === other._bar && this._beat === other._beat && this._ticks === other._ticks;
+        return (
+          this._bar === other._bar && this._beat === other._beat && this._ticks === other._ticks
+        );
       case TimeBase.BBST:
-        return this._bar === other._bar && this._beat === other._beat
-          && this._sixteenth === other._sixteenth && this._ticks === other._ticks;
+        return (
+          this._bar === other._bar &&
+          this._beat === other._beat &&
+          this._sixteenth === other._sixteenth &&
+          this._ticks === other._ticks
+        );
       case TimeBase.BBF:
-        return this._bar === other._bar && this._beat === other._beat && this._fraction === other._fraction;
+        return (
+          this._bar === other._bar &&
+          this._beat === other._beat &&
+          this._fraction === other._fraction
+        );
       case TimeBase.TIME:
-        return this._hours === other._hours && this._minutes === other._minutes
-          && this._seconds === other._seconds && this._milliseconds === other._milliseconds;
+        return (
+          this._hours === other._hours &&
+          this._minutes === other._minutes &&
+          this._seconds === other._seconds &&
+          this._milliseconds === other._milliseconds
+        );
       case TimeBase.SECONDS:
         return this._totalSeconds === other._totalSeconds;
       case TimeBase.FRAME:
@@ -281,14 +351,24 @@ export class TimeDuration {
   hashCode(): number {
     const h = (n: number) => ((n >>> 0) * 2654435761) | 0;
     switch (this._timeBase) {
-      case TimeBase.BEATS: return h(this._csoundBeats);
-      case TimeBase.BBT: return h(this._bar * 31 + this._beat * 7 + this._ticks);
-      case TimeBase.BBST: return h(this._bar * 31 + this._beat * 7 + this._sixteenth * 3 + this._ticks);
-      case TimeBase.BBF: return h(this._bar * 31 + this._beat * 7 + this._fraction);
-      case TimeBase.TIME: return h(this._hours * 3600 + this._minutes * 60 + this._seconds * 1000 + this._milliseconds);
-      case TimeBase.SECONDS: return h(this._totalSeconds);
-      case TimeBase.FRAME: return h(this._frameCount);
-      default: return 0;
+      case TimeBase.BEATS:
+        return h(this._csoundBeats);
+      case TimeBase.BBT:
+        return h(this._bar * 31 + this._beat * 7 + this._ticks);
+      case TimeBase.BBST:
+        return h(this._bar * 31 + this._beat * 7 + this._sixteenth * 3 + this._ticks);
+      case TimeBase.BBF:
+        return h(this._bar * 31 + this._beat * 7 + this._fraction);
+      case TimeBase.TIME:
+        return h(
+          this._hours * 3600 + this._minutes * 60 + this._seconds * 1000 + this._milliseconds,
+        );
+      case TimeBase.SECONDS:
+        return h(this._totalSeconds);
+      case TimeBase.FRAME:
+        return h(this._frameCount);
+      default:
+        return 0;
     }
   }
 
@@ -351,7 +431,9 @@ export class TimeDuration {
       case 'BEATS':
       case 'CSOUND_BEATS':
       case 'DurationBeats': {
-        const csoundBeats = parseFloat(data.getTextString('csoundBeats') ?? data.getTextString() ?? '0');
+        const csoundBeats = parseFloat(
+          data.getTextString('csoundBeats') ?? data.getTextString() ?? '0',
+        );
         return TimeDuration.beats(csoundBeats);
       }
 
@@ -391,13 +473,23 @@ export class TimeDuration {
 
       case 'SECONDS':
       case 'DurationSeconds': {
-        const totalSeconds = parseFloat(data.getTextString('totalSeconds') ?? data.getTextString('seconds') ?? data.getTextString() ?? '0');
+        const totalSeconds = parseFloat(
+          data.getTextString('totalSeconds') ??
+            data.getTextString('seconds') ??
+            data.getTextString() ??
+            '0',
+        );
         return TimeDuration.seconds(totalSeconds);
       }
 
       case 'FRAME':
       case 'DurationFrames': {
-        const frameCount = parseFloat(data.getTextString('frameCount') ?? data.getTextString('frameNumber') ?? data.getTextString() ?? '0');
+        const frameCount = parseFloat(
+          data.getTextString('frameCount') ??
+            data.getTextString('frameNumber') ??
+            data.getTextString() ??
+            '0',
+        );
         return TimeDuration.frames(frameCount);
       }
 

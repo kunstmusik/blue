@@ -27,13 +27,16 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('../stores/project-store', () => ({
   getProjectDocumentRevision: mocks.getProjectDocumentRevision,
-  useProjectStore: (selector: (state: {
-    applyProjectDocumentPatch: typeof mocks.applyProjectDocumentPatch;
-    flushPendingPatches: typeof mocks.flushPendingPatches;
-  }) => unknown) => selector({
-    applyProjectDocumentPatch: mocks.applyProjectDocumentPatch,
-    flushPendingPatches: mocks.flushPendingPatches,
-  }),
+  useProjectStore: (
+    selector: (state: {
+      applyProjectDocumentPatch: typeof mocks.applyProjectDocumentPatch;
+      flushPendingPatches: typeof mocks.flushPendingPatches;
+    }) => unknown,
+  ) =>
+    selector({
+      applyProjectDocumentPatch: mocks.applyProjectDocumentPatch,
+      flushPendingPatches: mocks.flushPendingPatches,
+    }),
 }));
 
 vi.mock('sonner', () => ({
@@ -41,9 +44,12 @@ vi.mock('sonner', () => ({
 }));
 
 vi.mock('../stores/library-store', () => ({
-  useLibraryStore: (selector: (state: { captureTrackInstrument: typeof mocks.captureTrackInstrument }) => unknown) => selector({
-    captureTrackInstrument: mocks.captureTrackInstrument,
-  }),
+  useLibraryStore: (
+    selector: (state: { captureTrackInstrument: typeof mocks.captureTrackInstrument }) => unknown,
+  ) =>
+    selector({
+      captureTrackInstrument: mocks.captureTrackInstrument,
+    }),
 }));
 
 vi.mock('../stores/midi-routing-store', () => ({
@@ -56,7 +62,9 @@ vi.mock('../components/libraries/use-library-drop-target', () => ({
   useLibraryDropTarget: () => mocks.libraryDrop,
 }));
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 function makeInstrument(): TrackInstrumentSummary {
   return {
@@ -122,7 +130,9 @@ describe('TrackInstrumentControl', () => {
       );
     });
 
-    const instrumentButton = container.querySelector('button[title="Track Instrument: Lead Instrument"]') as HTMLButtonElement;
+    const instrumentButton = container.querySelector(
+      'button[title="Track Instrument: Lead Instrument"]',
+    ) as HTMLButtonElement;
     act(() => instrumentButton.click());
     expect(mocks.openTrackInstrumentEditor).not.toHaveBeenCalled();
 
@@ -169,8 +179,11 @@ describe('TrackInstrumentControl', () => {
     });
 
     await act(async () => {
-      (container.querySelector('button[title="Track Instrument: Lead Instrument"]') as HTMLButtonElement)
-        .dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+      (
+        container.querySelector(
+          'button[title="Track Instrument: Lead Instrument"]',
+        ) as HTMLButtonElement
+      ).dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
       await Promise.resolve();
     });
 
@@ -187,7 +200,9 @@ describe('TrackInstrumentControl', () => {
   });
 
   it('reports an editor-open failure to the user', async () => {
-    mocks.openTrackInstrumentEditor.mockRejectedValue(new Error('Track instrument is not available'));
+    mocks.openTrackInstrumentEditor.mockRejectedValue(
+      new Error('Track instrument is not available'),
+    );
 
     const container = document.createElement('div');
     document.body.appendChild(container);
@@ -210,8 +225,11 @@ describe('TrackInstrumentControl', () => {
     });
 
     await act(async () => {
-      (container.querySelector('button[title="Track Instrument: Lead Instrument"]') as HTMLButtonElement)
-        .dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+      (
+        container.querySelector(
+          'button[title="Track Instrument: Lead Instrument"]',
+        ) as HTMLButtonElement
+      ).dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
       await Promise.resolve();
     });
 
@@ -240,7 +258,9 @@ describe('TrackInstrumentControl', () => {
       );
     });
 
-    const instrumentButton = container.querySelector('button[aria-label="Assign Track Instrument"]');
+    const instrumentButton = container.querySelector(
+      'button[aria-label="Assign Track Instrument"]',
+    );
     expect(instrumentButton).not.toBeNull();
     expect(container.textContent).not.toContain('No Instrument');
 
@@ -265,23 +285,33 @@ describe('TrackInstrumentControl', () => {
       );
     });
 
-    const control = container.querySelector('[data-track-instrument-control="control-track"]') as HTMLElement;
+    const control = container.querySelector(
+      '[data-track-instrument-control="control-track"]',
+    ) as HTMLElement;
     await act(async () => {
-      control.dispatchEvent(new MouseEvent('contextmenu', {
-        bubbles: true,
-        cancelable: true,
-        button: 2,
-        clientX: 20,
-        clientY: 20,
-      }));
+      control.dispatchEvent(
+        new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          button: 2,
+          clientX: 20,
+          clientY: 20,
+        }),
+      );
       await Promise.resolve();
     });
 
     const menuItems = Array.from(document.body.querySelectorAll('[role="menuitem"]'));
     const instrumentSubmenu = menuItems.find((item) => item.textContent === 'Use New Instrument');
     expect(instrumentSubmenu?.getAttribute('aria-haspopup')).toBe('menu');
-    expect(menuItems.some((item) => item.textContent?.includes('Use New Instrument ·'))).toBe(false);
-    expect(menuItems.find((item) => item.textContent === 'Edit Instrument')?.getAttribute('data-disabled')).not.toBeNull();
+    expect(menuItems.some((item) => item.textContent?.includes('Use New Instrument ·'))).toBe(
+      false,
+    );
+    expect(
+      menuItems
+        .find((item) => item.textContent === 'Edit Instrument')
+        ?.getAttribute('data-disabled'),
+    ).not.toBeNull();
 
     act(() => root.unmount());
   });
@@ -309,12 +339,19 @@ describe('TrackInstrumentControl', () => {
       );
     });
 
-    const control = container.querySelector('[data-track-instrument-control="control-track"]') as HTMLElement;
-    act(() => control.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
-    await act(async () => { await Promise.resolve(); });
+    const control = container.querySelector(
+      '[data-track-instrument-control="control-track"]',
+    ) as HTMLElement;
+    act(() =>
+      control.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })),
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
 
-    const submenuTrigger = Array.from(document.body.querySelectorAll('[role="menuitem"]'))
-      .find((item) => item.textContent === 'Use New Instrument') as HTMLElement;
+    const submenuTrigger = Array.from(document.body.querySelectorAll('[role="menuitem"]')).find(
+      (item) => item.textContent === 'Use New Instrument',
+    ) as HTMLElement;
     const pointerMove = new Event('pointermove', { bubbles: true });
     Object.defineProperty(pointerMove, 'pointerType', { value: 'mouse' });
     act(() => submenuTrigger.dispatchEvent(pointerMove));
@@ -322,8 +359,9 @@ describe('TrackInstrumentControl', () => {
       await new Promise((resolve) => setTimeout(resolve, 120));
     });
 
-    const blueX7Item = Array.from(document.body.querySelectorAll('[role="menuitem"]'))
-      .find((item) => item.textContent === 'BlueX7 Instrument') as HTMLElement;
+    const blueX7Item = Array.from(document.body.querySelectorAll('[role="menuitem"]')).find(
+      (item) => item.textContent === 'BlueX7 Instrument',
+    ) as HTMLElement;
     expect(blueX7Item).toBeDefined();
 
     await act(async () => {
@@ -389,13 +427,20 @@ describe('TrackInstrumentControl', () => {
       );
     });
 
-    const control = container.querySelector('[data-track-instrument-control="control-track"]') as HTMLElement;
-    act(() => control.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
-    await act(async () => { await Promise.resolve(); });
+    const control = container.querySelector(
+      '[data-track-instrument-control="control-track"]',
+    ) as HTMLElement;
+    act(() =>
+      control.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })),
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
     expect(parentContextMenu).not.toHaveBeenCalled();
 
-    const submenuTrigger = Array.from(document.body.querySelectorAll('[role="menuitem"]'))
-      .find((item) => item.textContent === 'Use New Instrument') as HTMLElement;
+    const submenuTrigger = Array.from(document.body.querySelectorAll('[role="menuitem"]')).find(
+      (item) => item.textContent === 'Use New Instrument',
+    ) as HTMLElement;
     const pointerMove = new Event('pointermove', { bubbles: true });
     Object.defineProperty(pointerMove, 'pointerType', { value: 'mouse' });
     act(() => submenuTrigger.dispatchEvent(pointerMove));
@@ -403,8 +448,9 @@ describe('TrackInstrumentControl', () => {
       await new Promise((resolve) => setTimeout(resolve, 120));
     });
 
-    const blueX7Item = Array.from(document.body.querySelectorAll('[role="menuitem"]'))
-      .find((item) => item.textContent === 'BlueX7 Instrument') as HTMLElement;
+    const blueX7Item = Array.from(document.body.querySelectorAll('[role="menuitem"]')).find(
+      (item) => item.textContent === 'BlueX7 Instrument',
+    ) as HTMLElement;
     await act(async () => {
       blueX7Item.dispatchEvent(new Event('pointerdown', { bubbles: true }));
       blueX7Item.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
@@ -417,12 +463,14 @@ describe('TrackInstrumentControl', () => {
     expect(parentPointerDown).not.toHaveBeenCalled();
     expect(parentMouseDown).not.toHaveBeenCalled();
 
-    expect(mocks.applyProjectDocumentPatch).toHaveBeenCalledWith(expect.objectContaining({
-      score: expect.objectContaining({
-        type: 'createTrackInstrument',
-        instrumentType: 'blueX7',
+    expect(mocks.applyProjectDocumentPatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        score: expect.objectContaining({
+          type: 'createTrackInstrument',
+          instrumentType: 'blueX7',
+        }),
       }),
-    }));
+    );
 
     act(() => root.unmount());
   });
@@ -451,10 +499,18 @@ describe('TrackInstrumentControl', () => {
       );
     });
 
-    const control = container.querySelector('[data-track-instrument-control="control-track"]') as HTMLElement;
-    act(() => control.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
-    await act(async () => { await Promise.resolve(); });
-    let menuItems = Array.from(document.body.querySelectorAll('[role="menuitem"]')) as HTMLElement[];
+    const control = container.querySelector(
+      '[data-track-instrument-control="control-track"]',
+    ) as HTMLElement;
+    act(() =>
+      control.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })),
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+    let menuItems = Array.from(
+      document.body.querySelectorAll('[role="menuitem"]'),
+    ) as HTMLElement[];
     expect(menuItems.map((item) => item.textContent)).toEqual([
       'Edit Instrument',
       'Use New Instrument',
@@ -474,8 +530,12 @@ describe('TrackInstrumentControl', () => {
       trackId: 'control-track',
     });
 
-    act(() => control.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
-    await act(async () => { await Promise.resolve(); });
+    act(() =>
+      control.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })),
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
     menuItems = Array.from(document.body.querySelectorAll('[role="menuitem"]')) as HTMLElement[];
     await act(async () => {
       menuItems.find((item) => item.textContent === 'Cut')!.click();
@@ -499,8 +559,12 @@ describe('TrackInstrumentControl', () => {
       },
     });
 
-    act(() => control.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
-    await act(async () => { await Promise.resolve(); });
+    act(() =>
+      control.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })),
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
     menuItems = Array.from(document.body.querySelectorAll('[role="menuitem"]')) as HTMLElement[];
     act(() => menuItems.find((item) => item.textContent === 'Paste')!.click());
     expect(mocks.pasteLibraryInstrument).toHaveBeenCalledTimes(1);
@@ -532,13 +596,21 @@ describe('TrackInstrumentControl', () => {
       );
     });
 
-    const control = container.querySelector('[data-track-instrument-control="control-track"]') as HTMLElement;
+    const control = container.querySelector(
+      '[data-track-instrument-control="control-track"]',
+    ) as HTMLElement;
     expect(control.title).toBe('Compatible Library insertion point.');
     expect(control.getAttribute('data-drop-probe')).toBe('active');
-    act(() => control.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
-    await act(async () => { await Promise.resolve(); });
-    const byLabel = (label: string) => Array.from(document.body.querySelectorAll('[role="menuitem"]'))
-      .find((item) => item.textContent === label) as HTMLElement;
+    act(() =>
+      control.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })),
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+    const byLabel = (label: string) =>
+      Array.from(document.body.querySelectorAll('[role="menuitem"]')).find(
+        (item) => item.textContent === label,
+      ) as HTMLElement;
     expect(byLabel('Cut').getAttribute('data-disabled')).not.toBeNull();
     expect(byLabel('Copy').getAttribute('data-disabled')).not.toBeNull();
     expect(byLabel('Paste').getAttribute('data-disabled')).not.toBeNull();
@@ -565,7 +637,9 @@ describe('TrackInstrumentControl', () => {
       );
     });
 
-    const instrumentButton = container.querySelector('button[title="Track Instrument: Lead Instrument"]') as HTMLButtonElement;
+    const instrumentButton = container.querySelector(
+      'button[title="Track Instrument: Lead Instrument"]',
+    ) as HTMLButtonElement;
     act(() => instrumentButton.click());
     expect(mocks.focusTrack).toHaveBeenCalledWith({
       projectSessionId: 1,

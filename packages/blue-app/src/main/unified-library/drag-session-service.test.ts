@@ -7,7 +7,11 @@ describe('opaque Library drag sessions', () => {
   it('returns only an opaque descriptor and validates the source revision', () => {
     const service = new LibraryDragSessionService(() => 1_000);
     const descriptor = service.begin(key, 4);
-    expect(descriptor).toEqual({ dragSessionId: expect.any(String), libraryType: 'instrument', sourceScope: 'user' });
+    expect(descriptor).toEqual({
+      dragSessionId: expect.any(String),
+      libraryType: 'instrument',
+      sourceScope: 'user',
+    });
     expect(JSON.stringify(descriptor)).not.toContain('xml');
     expect(service.resolve(descriptor.dragSessionId, 4)).toMatchObject({ key, revision: 4 });
     expect(() => service.resolve(descriptor.dragSessionId, 5)).toThrow(/changed/i);

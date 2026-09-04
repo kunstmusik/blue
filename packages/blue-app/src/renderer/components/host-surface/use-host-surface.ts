@@ -91,9 +91,8 @@ export function useHostSurface(
   const contextHostDocument = useHostDocument();
   // An explicit hostDocument (even null) overrides the panel context for
   // components that resolve their host from an anchor element's realm.
-  const hostDocument = options.hostDocument !== undefined
-    ? options.hostDocument
-    : contextHostDocument;
+  const hostDocument =
+    options.hostDocument !== undefined ? options.hostDocument : contextHostDocument;
   const hostWindow = hostDocument?.defaultView ?? null;
   const optionsRef = useRef(options);
   optionsRef.current = options;
@@ -161,21 +160,24 @@ export function useHostSurface(
           },
         }),
       ],
-    }).then((result) => {
-      if (generation !== generationRef.current || dismissedRef.current) {
-        return;
-      }
-      setPlacement({
-        left: result.x,
-        top: result.y,
-        placement: result.placement.split('-')[0] as HostSurfaceSide,
-        maxHeight: availableHeight != null && Number.isFinite(availableHeight) ? availableHeight : null,
+    })
+      .then((result) => {
+        if (generation !== generationRef.current || dismissedRef.current) {
+          return;
+        }
+        setPlacement({
+          left: result.x,
+          top: result.y,
+          placement: result.placement.split('-')[0] as HostSurfaceSide,
+          maxHeight:
+            availableHeight != null && Number.isFinite(availableHeight) ? availableHeight : null,
+        });
+        setPhase((prev) => (prev === 'closed' ? prev : 'open'));
+      })
+      .catch(() => {
+        // Measurement can throw in degenerate no-layout environments; the
+        // surface simply never becomes visible rather than crashing the panel.
       });
-      setPhase((prev) => (prev === 'closed' ? prev : 'open'));
-    }).catch(() => {
-      // Measurement can throw in degenerate no-layout environments; the
-      // surface simply never becomes visible rather than crashing the panel.
-    });
   }, []);
 
   const scheduleUpdate = useCallback(() => {
@@ -210,16 +212,19 @@ export function useHostSurface(
     }
   }, [compute]);
 
-  const dismiss = useCallback((reason: HostSurfaceDismissReason) => {
-    if (dismissedRef.current) {
-      return;
-    }
-    dismissedRef.current = true;
-    cancelScheduledUpdate();
-    generationRef.current += 1;
-    setPhase('closed');
-    optionsRef.current.onDismiss?.(reason);
-  }, [cancelScheduledUpdate]);
+  const dismiss = useCallback(
+    (reason: HostSurfaceDismissReason) => {
+      if (dismissedRef.current) {
+        return;
+      }
+      dismissedRef.current = true;
+      cancelScheduledUpdate();
+      generationRef.current += 1;
+      setPhase('closed');
+      optionsRef.current.onDismiss?.(reason);
+    },
+    [cancelScheduledUpdate],
+  );
 
   const close = useCallback(() => {
     dismiss('caller');
@@ -266,12 +271,15 @@ export function useHostSurface(
   }, [anchorKey, hostWindow, cancelScheduledUpdate, scheduleUpdate]);
 
   // True unmount only (empty deps): notify once, never on re-anchoring.
-  useEffect(() => () => {
-    if (!dismissedRef.current) {
-      dismissedRef.current = true;
-      optionsRef.current.onDismiss?.('host-unmount');
-    }
-  }, []);
+  useEffect(
+    () => () => {
+      if (!dismissedRef.current) {
+        dismissedRef.current = true;
+        optionsRef.current.onDismiss?.('host-unmount');
+      }
+    },
+    [],
+  );
 
   // Dismissal + follow listeners bind to the HOST window only; equivalent
   // input from unrelated documents never reaches them (FR-006).
@@ -307,7 +315,12 @@ export function useHostSurface(
       if (isInsideSurface(event.target)) {
         return;
       }
-      if (surfaceCloseOnHostScrollByKind(optionsRef.current.kind, optionsRef.current.closeOnHostScroll)) {
+      if (
+        surfaceCloseOnHostScrollByKind(
+          optionsRef.current.kind,
+          optionsRef.current.closeOnHostScroll,
+        )
+      ) {
         dismiss('host-scroll');
       } else {
         scheduleUpdate();
@@ -335,12 +348,15 @@ export function useHostSurface(
     };
   }, [phase, hostDocument, hostWindow, dismiss, scheduleUpdate]);
 
-  const setSurfaceElement = useCallback((element: HTMLElement | null) => {
-    surfaceElRef.current = element;
-    if (element && !dismissedRef.current && anchorRef.current) {
-      scheduleUpdate();
-    }
-  }, [scheduleUpdate]);
+  const setSurfaceElement = useCallback(
+    (element: HTMLElement | null) => {
+      surfaceElRef.current = element;
+      if (element && !dismissedRef.current && anchorRef.current) {
+        scheduleUpdate();
+      }
+    },
+    [scheduleUpdate],
+  );
 
   return { hostDocument, phase, placement, setSurfaceElement, close };
 }

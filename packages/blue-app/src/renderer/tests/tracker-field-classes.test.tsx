@@ -11,7 +11,9 @@ import {
 } from '../components/workbench/panels/score-object/editors/TrackerScoreObjectEditor';
 import { cn } from '../lib/cn';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 describe('Tracker editor field conflict resolution (US2)', () => {
   let container: HTMLDivElement;
@@ -40,7 +42,7 @@ describe('Tracker editor field conflict resolution (US2)', () => {
           }}
           onClose={() => {}}
           onSave={() => {}}
-        />
+        />,
       );
     });
 

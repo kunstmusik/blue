@@ -18,10 +18,7 @@ describe('captureDockingOrigin', () => {
     });
     expect(origin.originMode).toBe('editor');
     expect(origin.presentation).toBe('docked');
-    expect(origin.originPanelOrder).toEqual([
-      'ScoreTopComponent',
-      'OrchestraTopComponent',
-    ]);
+    expect(origin.originPanelOrder).toEqual(['ScoreTopComponent', 'OrchestraTopComponent']);
     expect(origin.originGroupId).toBe('group-1');
     expect(origin.originActivePanelId).toBe('ScoreTopComponent');
   });
@@ -96,11 +93,7 @@ describe('resolveDockTarget', () => {
       'popout-1',
       captureDockingOrigin({
         groupId: 'group-1',
-        panelIds: [
-          'ScoreTopComponent',
-          'OrchestraTopComponent',
-          'GoneTopComponent',
-        ],
+        panelIds: ['ScoreTopComponent', 'OrchestraTopComponent', 'GoneTopComponent'],
         activePanelId: 'ScoreTopComponent',
         mode: 'editor',
         presentation: 'docked',
@@ -114,19 +107,12 @@ describe('resolveDockTarget', () => {
     );
 
     expect(resolution.origin?.originGroupId).toBe('group-1');
-    expect(resolution.validPanelIds).toEqual([
-      'ScoreTopComponent',
-      'OrchestraTopComponent',
-    ]);
+    expect(resolution.validPanelIds).toEqual(['ScoreTopComponent', 'OrchestraTopComponent']);
     expect(resolution.fallbackMode).toBe('editor');
   });
 
   it('falls back to editor mode and empty panels when the origin is missing', () => {
-    const resolution = resolveDockTarget(
-      {},
-      'popout-missing',
-      new Set(['ScoreTopComponent']),
-    );
+    const resolution = resolveDockTarget({}, 'popout-missing', new Set(['ScoreTopComponent']));
     expect(resolution.origin).toBeUndefined();
     expect(resolution.fallbackMode).toBe('editor');
     expect(resolution.validPanelIds).toEqual([]);
@@ -134,11 +120,7 @@ describe('resolveDockTarget', () => {
 
   it('falls back when the stored origin is structurally invalid', () => {
     const origins = { 'popout-bad': { originMode: 'editor' } } as never;
-    const resolution = resolveDockTarget(
-      origins,
-      'popout-bad',
-      new Set(['ScoreTopComponent']),
-    );
+    const resolution = resolveDockTarget(origins, 'popout-bad', new Set(['ScoreTopComponent']));
     expect(resolution.origin).toBeUndefined();
     expect(resolution.fallbackMode).toBe('editor');
   });
@@ -154,11 +136,7 @@ describe('resolveDockTarget', () => {
         edge: 'bottom',
       }),
     );
-    const resolution = resolveDockTarget(
-      origins,
-      'popout-1',
-      new Set(['MixerTopComponent']),
-    );
+    const resolution = resolveDockTarget(origins, 'popout-1', new Set(['MixerTopComponent']));
     expect(resolution.fallbackMode).toBe('output');
   });
 });

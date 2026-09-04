@@ -3,7 +3,11 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { resolveTypographyRoleFont, TYPOGRAPHY_ROLES, type TypographyRoleId } from '../lib/typography';
+import {
+  resolveTypographyRoleFont,
+  TYPOGRAPHY_ROLES,
+  type TypographyRoleId,
+} from '../lib/typography';
 
 const RENDERER_DIR = resolve(__dirname, '..');
 const INDEX_CSS_PATH = resolve(RENDERER_DIR, 'styles/index.css');
@@ -72,10 +76,25 @@ describe('Typography Tokens and System Contracts', () => {
   });
 
   it('keeps dense SVG labels, tooltip CSS, and score-bar labels on approved delivery paths', () => {
-    const envelopeSource = readFileSync(resolve(RENDERER_DIR, 'components/instruments/blue-x7/envelope-editor.tsx'), 'utf8');
-    const lineCanvasSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/shared/line-editor/EditableLineCanvas.tsx'), 'utf8');
-    const selectedEditorSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/editors/SelectedCodeEditor.tsx'), 'utf8');
-    const scoreBarSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/score/bar-renderers/ScoreObjectBar.tsx'), 'utf8');
+    const envelopeSource = readFileSync(
+      resolve(RENDERER_DIR, 'components/instruments/blue-x7/envelope-editor.tsx'),
+      'utf8',
+    );
+    const lineCanvasSource = readFileSync(
+      resolve(
+        RENDERER_DIR,
+        'components/workbench/panels/shared/line-editor/EditableLineCanvas.tsx',
+      ),
+      'utf8',
+    );
+    const selectedEditorSource = readFileSync(
+      resolve(RENDERER_DIR, 'components/workbench/panels/editors/SelectedCodeEditor.tsx'),
+      'utf8',
+    );
+    const scoreBarSource = readFileSync(
+      resolve(RENDERER_DIR, 'components/workbench/panels/score/bar-renderers/ScoreObjectBar.tsx'),
+      'utf8',
+    );
 
     expect(envelopeSource).toContain('text-role-subheadline');
     expect(envelopeSource).not.toMatch(/fontSize\s*=/);
@@ -88,15 +107,48 @@ describe('Typography Tokens and System Contracts', () => {
   });
 
   it('keeps ordinary controls and BSB application chrome on semantic roles', () => {
-    const addToRepositorySource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/code-repository/AddToCodeRepositoryDialog.tsx'), 'utf8');
-    const colorPickerSource = readFileSync(resolve(RENDERER_DIR, 'components/ColorPicker.tsx'), 'utf8');
-    const fontChooserSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/orchestra/bsb/FontChooserDialog.tsx'), 'utf8');
-    const gridSettingsSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/orchestra/bsb/BSBGridSettingsPanel.tsx'), 'utf8');
-    const propertySheetSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/orchestra/bsb/BSBPropertySheet.tsx'), 'utf8');
-    const bsbInterfaceEditorSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/orchestra/bsb/BSBInterfaceEditor.tsx'), 'utf8');
-    const udoEditorSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/udo/UdoEditor.tsx'), 'utf8');
-    const noteProcessorSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/score-object/note-processors/NoteProcessorChainEditor.tsx'), 'utf8');
-    const aboutSource = readFileSync(resolve(RENDERER_DIR, 'components/about/AboutApp.tsx'), 'utf8');
+    const addToRepositorySource = readFileSync(
+      resolve(
+        RENDERER_DIR,
+        'components/workbench/panels/code-repository/AddToCodeRepositoryDialog.tsx',
+      ),
+      'utf8',
+    );
+    const colorPickerSource = readFileSync(
+      resolve(RENDERER_DIR, 'components/ColorPicker.tsx'),
+      'utf8',
+    );
+    const fontChooserSource = readFileSync(
+      resolve(RENDERER_DIR, 'components/workbench/panels/orchestra/bsb/FontChooserDialog.tsx'),
+      'utf8',
+    );
+    const gridSettingsSource = readFileSync(
+      resolve(RENDERER_DIR, 'components/workbench/panels/orchestra/bsb/BSBGridSettingsPanel.tsx'),
+      'utf8',
+    );
+    const propertySheetSource = readFileSync(
+      resolve(RENDERER_DIR, 'components/workbench/panels/orchestra/bsb/BSBPropertySheet.tsx'),
+      'utf8',
+    );
+    const bsbInterfaceEditorSource = readFileSync(
+      resolve(RENDERER_DIR, 'components/workbench/panels/orchestra/bsb/BSBInterfaceEditor.tsx'),
+      'utf8',
+    );
+    const udoEditorSource = readFileSync(
+      resolve(RENDERER_DIR, 'components/workbench/panels/udo/UdoEditor.tsx'),
+      'utf8',
+    );
+    const noteProcessorSource = readFileSync(
+      resolve(
+        RENDERER_DIR,
+        'components/workbench/panels/score-object/note-processors/NoteProcessorChainEditor.tsx',
+      ),
+      'utf8',
+    );
+    const aboutSource = readFileSync(
+      resolve(RENDERER_DIR, 'components/about/AboutApp.tsx'),
+      'utf8',
+    );
 
     expect(addToRepositorySource).toContain('text-role-body text-app-text-muted');
     expect(addToRepositorySource).toContain('text-role-callout text-red-400');
@@ -115,13 +167,37 @@ describe('Typography Tokens and System Contracts', () => {
   });
 
   it('delivers explicit role line heights for direct React/CSS typography callsites', () => {
-    const blueLivePanelSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/BlueLivePanel.tsx'), 'utf8');
-    const liveCodeSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/blue-live/LiveCodeTab.tsx'), 'utf8');
-    const optionsSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/blue-live/OptionsTab.tsx'), 'utf8');
-    const checkboxSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/orchestra/bsb/widgets/BSBCheckBoxWidget.tsx'), 'utf8');
-    const knobSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/orchestra/bsb/widgets/BSBKnobWidget.tsx'), 'utf8');
-    const valuePanelSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/orchestra/bsb/widgets/ValuePanel.tsx'), 'utf8');
-    const automationSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/score/automation/AutomationLineView.tsx'), 'utf8');
+    const blueLivePanelSource = readFileSync(
+      resolve(RENDERER_DIR, 'components/workbench/panels/BlueLivePanel.tsx'),
+      'utf8',
+    );
+    const liveCodeSource = readFileSync(
+      resolve(RENDERER_DIR, 'components/workbench/panels/blue-live/LiveCodeTab.tsx'),
+      'utf8',
+    );
+    const optionsSource = readFileSync(
+      resolve(RENDERER_DIR, 'components/workbench/panels/blue-live/OptionsTab.tsx'),
+      'utf8',
+    );
+    const checkboxSource = readFileSync(
+      resolve(
+        RENDERER_DIR,
+        'components/workbench/panels/orchestra/bsb/widgets/BSBCheckBoxWidget.tsx',
+      ),
+      'utf8',
+    );
+    const knobSource = readFileSync(
+      resolve(RENDERER_DIR, 'components/workbench/panels/orchestra/bsb/widgets/BSBKnobWidget.tsx'),
+      'utf8',
+    );
+    const valuePanelSource = readFileSync(
+      resolve(RENDERER_DIR, 'components/workbench/panels/orchestra/bsb/widgets/ValuePanel.tsx'),
+      'utf8',
+    );
+    const automationSource = readFileSync(
+      resolve(RENDERER_DIR, 'components/workbench/panels/score/automation/AutomationLineView.tsx'),
+      'utf8',
+    );
 
     expect(blueLivePanelSource).toContain("lineHeight: 'var(--text-role-body--line-height)'");
     expect(liveCodeSource).toContain("lineHeight: 'var(--text-role-callout--line-height)'");
@@ -148,7 +224,9 @@ describe('Typography Tokens and System Contracts', () => {
       expect(bodyFont).toContain('13px');
 
       // Monospaced subheadline
-      const subheadlineMono = resolveTypographyRoleFont(mockElement, 'subheadline', { family: 'monospace' });
+      const subheadlineMono = resolveTypographyRoleFont(mockElement, 'subheadline', {
+        family: 'monospace',
+      });
       expect(subheadlineMono).toContain('11px');
       expect(subheadlineMono).toContain('monospace');
 
@@ -164,7 +242,10 @@ describe('Typography Tokens and System Contracts', () => {
         expect(fontProp).toContain('12px');
         expect(fontProp).toContain('sans-serif');
 
-        const fontMono = resolveTypographyRoleFont(mockElement, role, { family: 'monospace', weight: 600 });
+        const fontMono = resolveTypographyRoleFont(mockElement, role, {
+          family: 'monospace',
+          weight: 600,
+        });
         expect(fontMono).toContain('12px');
         expect(fontMono).toContain('600');
         expect(fontMono).toContain('monospace');

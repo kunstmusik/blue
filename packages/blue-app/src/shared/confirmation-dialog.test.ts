@@ -78,16 +78,20 @@ describe('confirmation-dialog shared contracts', () => {
     const invalidDefault = { ...validSampleRequest, defaultActionId: 'non-existent' };
     const defaultRes = validateNativeConfirmationRequest(invalidDefault);
     expect(defaultRes.valid).toBe(false);
-    expect(defaultRes.errors.some((e) => e.includes('defaultActionId "non-existent" is not in declared actions'))).toBe(
-      true,
-    );
+    expect(
+      defaultRes.errors.some((e) =>
+        e.includes('defaultActionId "non-existent" is not in declared actions'),
+      ),
+    ).toBe(true);
 
     const invalidCancel = { ...validSampleRequest, cancelActionId: 'non-existent' };
     const cancelRes = validateNativeConfirmationRequest(invalidCancel);
     expect(cancelRes.valid).toBe(false);
-    expect(cancelRes.errors.some((e) => e.includes('cancelActionId "non-existent" is not in declared actions'))).toBe(
-      true,
-    );
+    expect(
+      cancelRes.errors.some((e) =>
+        e.includes('cancelActionId "non-existent" is not in declared actions'),
+      ),
+    ).toBe(true);
   });
 
   it('validates optional checkbox and bounds', () => {

@@ -1,21 +1,10 @@
-import {
-  useCallback,
-  useMemo,
-  type KeyboardEvent,
-  type ReactElement,
-} from 'react';
+import { useCallback, useMemo, type KeyboardEvent, type ReactElement } from 'react';
 import { useProjectStore } from '../../../stores/project-store';
 import { useBlueLiveStore } from '../../../stores/blue-live-store';
 import { useMidiRoutingStore } from '../../../stores/midi-routing-store';
-import {
-  getMidiNoteFromComputerKey,
-} from './virtual-keyboard/keyboard-mapping';
+import { getMidiNoteFromComputerKey } from './virtual-keyboard/keyboard-mapping';
 import { useVirtualKeyboardState } from './virtual-keyboard/useVirtualKeyboardState';
-import {
-  PianoCanvas,
-  KEY_OFFSET,
-  isWhiteKey,
-} from './virtual-keyboard/PianoCanvas';
+import { PianoCanvas, KEY_OFFSET, isWhiteKey } from './virtual-keyboard/PianoCanvas';
 import {
   releaseAllVirtualKeyboardSources,
   routeVirtualKeyboardNote,
@@ -199,7 +188,10 @@ export default function VirtualKeyboardPanel(): ReactElement {
   return (
     <div className="flex h-full flex-col bg-blue-bg text-app-text">
       <div className="flex flex-none items-center gap-2 border-b border-blue-border bg-app-surface-strong/90 px-3 py-2 text-role-body">
-        <label className="flex items-center gap-1.5 text-app-text" title="Routing mode applies to hardware MIDI and the Virtual Keyboard">
+        <label
+          className="flex items-center gap-1.5 text-app-text"
+          title="Routing mode applies to hardware MIDI and the Virtual Keyboard"
+        >
           <span className="text-role-body text-blue-muted">Routing</span>
           <AppSelect
             className="rounded border border-blue-border bg-blue-bg px-1.5 py-1 text-role-body text-app-text outline-none focus:border-blue-accent"
@@ -251,7 +243,7 @@ export default function VirtualKeyboardPanel(): ReactElement {
             disabled={!velocityOverride}
             className={cn(
               'w-14 rounded border border-blue-border bg-blue-bg px-1.5 py-1 text-center text-role-body outline-none focus:border-blue-accent',
-              velocityOverride ? 'text-gray-100' : 'text-blue-muted opacity-50'
+              velocityOverride ? 'text-gray-100' : 'text-blue-muted opacity-50',
             )}
             value={velocity}
             onChange={(e) => setVelocity(Number.parseInt(e.target.value, 10))}

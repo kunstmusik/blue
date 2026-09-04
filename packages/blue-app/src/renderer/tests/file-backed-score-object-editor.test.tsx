@@ -7,14 +7,22 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import FileBackedScoreObjectEditor, {
   formatAudioDuration,
 } from '../components/workbench/panels/score-object/editors/FileBackedScoreObjectEditor';
-import type {
-  ScoreObjectEditorDocumentSnapshot,
-} from '../../shared/project-editor';
+import type { ScoreObjectEditorDocumentSnapshot } from '../../shared/project-editor';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 vi.mock('../components/workbench/panels/editors/SelectedCodeEditor', () => ({
-  default: ({ value, onChange, ariaLabel }: { value: string; onChange?: (text: string) => void; ariaLabel?: string }) => (
+  default: ({
+    value,
+    onChange,
+    ariaLabel,
+  }: {
+    value: string;
+    onChange?: (text: string) => void;
+    ariaLabel?: string;
+  }) => (
     <textarea
       aria-label={ariaLabel ?? 'Csound Post Code Editor'}
       value={value}
@@ -161,7 +169,9 @@ describe('FileBackedScoreObjectEditor — AudioFile', () => {
       root!.render(<FileBackedScoreObjectEditor document={doc} onPatch={onPatch} />);
     });
 
-    const browseBtn = container!.querySelector('button[aria-label="Browse Audio File"]') as HTMLButtonElement;
+    const browseBtn = container!.querySelector(
+      'button[aria-label="Browse Audio File"]',
+    ) as HTMLButtonElement;
     await act(async () => {
       browseBtn.click();
     });
@@ -254,21 +264,24 @@ describe('FileBackedScoreObjectEditor — AudioFile', () => {
   });
 
   it('renders explicit unavailable values for partially readable metadata', () => {
-    const doc = createAudioDoc({
-      status: 'available',
-      path: 'partial.wav',
-      formatType: 'WAV',
-      byteLength: 44,
-      encodingType: 'PCM',
-      sampleRate: 44100,
-      sampleSizeInBits: 16,
-      channels: 0,
-      isBigEndian: false,
-      durationSeconds: 0,
-      frameCount: 0,
-      channelVariables: '',
-      unavailableFields: ['channels', 'durationSeconds', 'frameCount'],
-    }, 'partial.wav');
+    const doc = createAudioDoc(
+      {
+        status: 'available',
+        path: 'partial.wav',
+        formatType: 'WAV',
+        byteLength: 44,
+        encodingType: 'PCM',
+        sampleRate: 44100,
+        sampleSizeInBits: 16,
+        channels: 0,
+        isBigEndian: false,
+        durationSeconds: 0,
+        frameCount: 0,
+        channelVariables: '',
+        unavailableFields: ['channels', 'durationSeconds', 'frameCount'],
+      },
+      'partial.wav',
+    );
 
     act(() => {
       root!.render(<FileBackedScoreObjectEditor document={doc} onPatch={vi.fn()} />);
@@ -280,8 +293,9 @@ describe('FileBackedScoreObjectEditor — AudioFile', () => {
     act(() => {
       (container!.querySelector('[data-audio-file-tab="csound"]') as HTMLButtonElement).click();
     });
-    expect(container!.querySelector('[data-testid="channel-variables-info"]')!.textContent)
-      .toBe('Channel variables unavailable');
+    expect(container!.querySelector('[data-testid="channel-variables-info"]')!.textContent).toBe(
+      'Channel variables unavailable',
+    );
   });
 
   it('does not retain selected-file metadata after the stored path changes', async () => {
@@ -312,15 +326,20 @@ describe('FileBackedScoreObjectEditor — AudioFile', () => {
       root!.render(<FileBackedScoreObjectEditor document={original} onPatch={onPatch} />);
     });
     await act(async () => {
-      (container!.querySelector('button[aria-label="Browse Audio File"]') as HTMLButtonElement).click();
+      (
+        container!.querySelector('button[aria-label="Browse Audio File"]') as HTMLButtonElement
+      ).click();
     });
     expect(container!.textContent).toContain('176400');
 
-    const changed = createAudioDoc({
-      status: 'missing',
-      path: 'missing.wav',
-      message: 'Could not find file: missing.wav',
-    }, 'missing.wav');
+    const changed = createAudioDoc(
+      {
+        status: 'missing',
+        path: 'missing.wav',
+        message: 'Could not find file: missing.wav',
+      },
+      'missing.wav',
+    );
     act(() => {
       root!.render(<FileBackedScoreObjectEditor document={changed} onPatch={onPatch} />);
     });
@@ -355,7 +374,9 @@ describe('FileBackedScoreObjectEditor — AudioFile', () => {
       root!.render(<FileBackedScoreObjectEditor document={doc} onPatch={onPatch} />);
     });
 
-    const csoundTabBtn = container!.querySelector('[data-audio-file-tab="csound"]') as HTMLButtonElement;
+    const csoundTabBtn = container!.querySelector(
+      '[data-audio-file-tab="csound"]',
+    ) as HTMLButtonElement;
     act(() => {
       csoundTabBtn.click();
     });
@@ -364,7 +385,9 @@ describe('FileBackedScoreObjectEditor — AudioFile', () => {
     const info = container!.querySelector('[data-testid="channel-variables-info"]');
     expect(info!.textContent).toBe('Channels mapped to: aChannel1, aChannel2');
 
-    const textarea = container!.querySelector('textarea[aria-label="Csound Post Code Editor"]') as HTMLTextAreaElement;
+    const textarea = container!.querySelector(
+      'textarea[aria-label="Csound Post Code Editor"]',
+    ) as HTMLTextAreaElement;
     expect(textarea).not.toBeNull();
     expect(textarea.value).toBe('aChannel1 = aChannel1 * 0.5');
 

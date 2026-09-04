@@ -34,20 +34,29 @@ describe('project artifacts IPC registrar', () => {
     }));
     registerProjectArtifactsIpc({ ipcMain, handlers });
 
-    await expect(ipcMain.handlers.get('select-soundfont-file')?.({ sender: 'owner' }))
-      .resolves.toBeNull();
-    expect(ipcMain.handlers.get('inspect-soundfont')?.({}, '\\\\server\\share\\bank.sf2'))
-      .toEqual({ filePath: '\\\\server\\share\\bank.sf2', presets: [] });
-    expect(ipcMain.handlers.get('read-csoundrc')?.({}, 'C:\\Blue\\.csoundrc'))
-      .toEqual({ filePath: 'C:\\Blue\\.csoundrc', text: '-odac' });
-    expect(ipcMain.handlers.get('export-score-object')?.({}, { ownerId: 7 }))
-      .toEqual({ ok: true, ownerId: 7 });
+    await expect(
+      ipcMain.handlers.get('select-soundfont-file')?.({ sender: 'owner' }),
+    ).resolves.toBeNull();
+    expect(ipcMain.handlers.get('inspect-soundfont')?.({}, '\\\\server\\share\\bank.sf2')).toEqual({
+      filePath: '\\\\server\\share\\bank.sf2',
+      presets: [],
+    });
+    expect(ipcMain.handlers.get('read-csoundrc')?.({}, 'C:\\Blue\\.csoundrc')).toEqual({
+      filePath: 'C:\\Blue\\.csoundrc',
+      text: '-odac',
+    });
+    expect(ipcMain.handlers.get('export-score-object')?.({}, { ownerId: 7 })).toEqual({
+      ok: true,
+      ownerId: 7,
+    });
   });
 
   it('preserves validation errors', () => {
     const ipcMain = new FakeRegistrarIpcMain();
     const handlers = createHandlerRecord(PROJECT_ARTIFACTS_IPC_CHANNELS);
-    handlers['write-csoundrc'] = vi.fn(() => { throw new Error('invalid csoundrc'); });
+    handlers['write-csoundrc'] = vi.fn(() => {
+      throw new Error('invalid csoundrc');
+    });
     registerProjectArtifactsIpc({ ipcMain, handlers });
     expect(() => ipcMain.handlers.get('write-csoundrc')?.({}, null)).toThrow('invalid csoundrc');
   });

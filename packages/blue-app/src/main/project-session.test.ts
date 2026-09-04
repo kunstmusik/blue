@@ -17,10 +17,19 @@ describe('ProjectSession', () => {
 
     const changed = session.recordMutation({ changed: true });
     expect(changed).toEqual({ changed: true, revision: 1, sessionId: 1 });
-    expect(session.recordMutation({ changed: false })).toEqual({ changed: false, revision: 1, sessionId: 1 });
+    expect(session.recordMutation({ changed: false })).toEqual({
+      changed: false,
+      revision: 1,
+      sessionId: 1,
+    });
 
     const replaced = session.replace(data, 'C:\\Projects\\next.blue');
-    expect(replaced).toMatchObject({ data, filePath: 'C:\\Projects\\next.blue', revision: 0, sessionId: 2 });
+    expect(replaced).toMatchObject({
+      data,
+      filePath: 'C:\\Projects\\next.blue',
+      revision: 0,
+      sessionId: 2,
+    });
 
     const closed = session.close();
     expect(closed).toMatchObject({ data: null, filePath: null, revision: 0, sessionId: 3 });

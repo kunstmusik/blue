@@ -20,9 +20,7 @@ const EXPECTED_GROUP_ORDER = [
   'Operator 6',
 ] as const;
 
-function voiceWithOverrides(
-  mutate: (voice: BlueX7Voice) => void,
-): BlueX7Voice {
+function voiceWithOverrides(mutate: (voice: BlueX7Voice) => void): BlueX7Voice {
   const voice = createDefaultBlueX7Voice();
   mutate(voice);
   return voice;
@@ -36,30 +34,25 @@ describe('BlueX7 parameter catalog cardinality', () => {
   });
 
   it('has exactly 145 voice-slot and 6 operator-enable descriptors', () => {
-    const voice = BLUE_X7_PARAMETER_DESCRIPTORS.filter(
-      (d) => d.transport.kind === 'voice',
-    );
+    const voice = BLUE_X7_PARAMETER_DESCRIPTORS.filter((d) => d.transport.kind === 'voice');
     const enables = BLUE_X7_PARAMETER_DESCRIPTORS.filter(
       (d) => d.transport.kind === 'operator-enable',
     );
     expect(voice).toHaveLength(145);
     expect(enables).toHaveLength(6);
 
-    const slots = voice.map((d) =>
-      d.transport.kind === 'voice' ? d.transport.slot : -1,
-    );
+    const slots = voice.map((d) => (d.transport.kind === 'voice' ? d.transport.slot : -1));
     expect(new Set(slots).size).toBe(145);
-    expect([...slots].sort((a, b) => a - b)).toEqual(
-      Array.from({ length: 145 }, (_, i) => i),
-    );
+    expect([...slots].sort((a, b) => a - b)).toEqual(Array.from({ length: 145 }, (_, i) => i));
   });
 
   it('operator-enable descriptors cover operators 1..6 with matching mask bits', () => {
     const enables = BLUE_X7_PARAMETER_DESCRIPTORS.filter(
       (d) => d.transport.kind === 'operator-enable',
     );
-    expect(enables.map((d) => (d.transport.kind === 'operator-enable' ? d.transport.operator : -1)))
-      .toEqual([1, 2, 3, 4, 5, 6]);
+    expect(
+      enables.map((d) => (d.transport.kind === 'operator-enable' ? d.transport.operator : -1)),
+    ).toEqual([1, 2, 3, 4, 5, 6]);
   });
 });
 
@@ -147,16 +140,16 @@ describe('BlueX7 parameter catalog update classes', () => {
         `operator.${operator}.enabled`,
       ]),
     ].sort();
-    const nextNote = BLUE_X7_PARAMETER_DESCRIPTORS.filter(
-      (d) => d.updateClass === 'next-note',
-    );
-    expect(BLUE_X7_PARAMETER_DESCRIPTORS
-      .filter((d) => d.updateClass === 'active-note')
-      .map((d) => d.key)
-      .sort()).toEqual(live);
+    const nextNote = BLUE_X7_PARAMETER_DESCRIPTORS.filter((d) => d.updateClass === 'next-note');
+    expect(
+      BLUE_X7_PARAMETER_DESCRIPTORS.filter((d) => d.updateClass === 'active-note')
+        .map((d) => d.key)
+        .sort(),
+    ).toEqual(live);
     expect(nextNote).toHaveLength(136);
-    expect(BLUE_X7_PARAMETER_DESCRIPTORS.filter((d) => d.updateClass === 'active-note'))
-      .toHaveLength(15);
+    expect(
+      BLUE_X7_PARAMETER_DESCRIPTORS.filter((d) => d.updateClass === 'active-note'),
+    ).toHaveLength(15);
   });
 });
 
@@ -198,9 +191,9 @@ describe('BlueX7 value validation', () => {
   it('rejects non-finite values without mutation', () => {
     const voice = createDefaultBlueX7Voice();
     for (const value of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
-      expect(quantizeBlueX7DescriptorValue(
-        getBlueX7Descriptor('common.feedback')!, value,
-      )).toBeNull();
+      expect(
+        quantizeBlueX7DescriptorValue(getBlueX7Descriptor('common.feedback')!, value),
+      ).toBeNull();
       expect(writeBlueX7VoiceValue(voice, 'common.feedback', value)).toBe(false);
     }
     expect(voice.common.feedback).toBe(6);
@@ -246,31 +239,41 @@ describe('BlueX7 voice read/write accessors', () => {
     }> = [
       {
         key: 'common.algorithm',
-        voice: voiceWithOverrides((v) => { v.common.algorithm = 17; }),
+        voice: voiceWithOverrides((v) => {
+          v.common.algorithm = 17;
+        }),
         value: 17,
         expectRead: 17,
       },
       {
         key: 'pitchEnvelope.3.level',
-        voice: voiceWithOverrides((v) => { v.pitchEnvelope[2].level = 66; }),
+        voice: voiceWithOverrides((v) => {
+          v.pitchEnvelope[2].level = 66;
+        }),
         value: 66,
         expectRead: 66,
       },
       {
         key: 'operator.4.envelope.2.rate',
-        voice: voiceWithOverrides((v) => { v.operators[3].envelope[1].rate = 44; }),
+        voice: voiceWithOverrides((v) => {
+          v.operators[3].envelope[1].rate = 44;
+        }),
         value: 44,
         expectRead: 44,
       },
       {
         key: 'operator.6.outputLevel',
-        voice: voiceWithOverrides((v) => { v.operators[5].outputLevel = 12; }),
+        voice: voiceWithOverrides((v) => {
+          v.operators[5].outputLevel = 12;
+        }),
         value: 12,
         expectRead: 12,
       },
       {
         key: 'operator.2.oscillatorMode',
-        voice: voiceWithOverrides((v) => { v.operators[1].mode = 1; }),
+        voice: voiceWithOverrides((v) => {
+          v.operators[1].mode = 1;
+        }),
         value: 1,
         expectRead: 1,
       },

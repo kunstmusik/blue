@@ -21,7 +21,10 @@ describe('Unified Library Track instrument transfer', () => {
       data,
       sessionId: 7,
       revision,
-      commit: () => { revision += 1; return revision; },
+      commit: () => {
+        revision += 1;
+        return revision;
+      },
     }));
     const key = adapter.list('instrument')[0]!.key;
     const target = {
@@ -69,7 +72,9 @@ describe('Unified Library Track instrument transfer', () => {
       track: { rootGroupId: 'track-group', trackId: 'track-1' },
     };
 
-    expect(adapter.validateTransferTarget({ ...target, projectRevision: 3 }, 'soundObject')).toMatch(/type/i);
+    expect(
+      adapter.validateTransferTarget({ ...target, projectRevision: 3 }, 'soundObject'),
+    ).toMatch(/type/i);
     expect(adapter.validateTransferTarget(target, 'instrument')).toMatch(/changed/i);
     expect(track.getInstrument()).toBeNull();
   });
@@ -89,7 +94,10 @@ describe('Unified Library Track instrument transfer', () => {
       data,
       sessionId: 7,
       revision,
-      commit: () => { revision += 1; return revision; },
+      commit: () => {
+        revision += 1;
+        return revision;
+      },
     }));
     const trackOwner = { rootGroupId: 'track-group', trackId: 'track-1' };
     const trackTarget = {
@@ -99,7 +107,8 @@ describe('Unified Library Track instrument transfer', () => {
       track: trackOwner,
       insertIndex: 0,
     };
-    const payloadXml = '<udo><style>CLASSIC</style><opcodeName>trackTone</opcodeName><outTypes>a</outTypes><inTypes>a</inTypes><codeBody>aout = ain</codeBody><comments/></udo>';
+    const payloadXml =
+      '<udo><style>CLASSIC</style><opcodeName>trackTone</opcodeName><outTypes>a</outTypes><inTypes>a</inTypes><codeBody>aout = ain</codeBody><comments/></udo>';
 
     expect(adapter.validateTransferTarget(trackTarget, 'udo')).toBeNull();
     adapter.applyInsertion({
@@ -117,11 +126,14 @@ describe('Unified Library Track instrument transfer', () => {
       mode: 'independent',
     });
 
-    const trackUdo = adapter.list('udo').find((entry) => (
-      entry.key.scope === 'projectOwned'
-      && entry.key.locator.kind === 'udo'
-      && entry.key.locator.track?.trackId === 'track-1'
-    ));
+    const trackUdo = adapter
+      .list('udo')
+      .find(
+        (entry) =>
+          entry.key.scope === 'projectOwned' &&
+          entry.key.locator.kind === 'udo' &&
+          entry.key.locator.track?.trackId === 'track-1',
+      );
     expect(trackUdo).toMatchObject({
       displayName: 'trackTone',
       breadcrumb: ['Tracks', 'Lead Track', 'UDOs'],

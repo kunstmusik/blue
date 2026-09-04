@@ -10,7 +10,9 @@ import { useLibraryEditorStore } from '../stores/library-editor-store';
 import { useLibraryStore } from '../stores/library-store';
 import { useProjectStore } from '../stores/project-store';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const originalProjectState = useProjectStore.getState();
 
@@ -82,7 +84,12 @@ beforeEach(() => {
       ok: true as const,
       value: {
         contentRevision: 1,
-        parent: { ...sharedNode, key: null, nodeId: 'project-sound-root', nodeKind: 'root' as const },
+        parent: {
+          ...sharedNode,
+          key: null,
+          nodeId: 'project-sound-root',
+          nodeKind: 'root' as const,
+        },
         children: request.parent.scope === 'projectShared' ? [sharedNode] : [],
         nextCursor: null,
       },
@@ -131,21 +138,32 @@ afterEach(() => {
 describe('Project SoundObject Library panel', () => {
   it('lists canonical project-shared entries and routes selection and drag by stable key', async () => {
     act(() => root.render(<SoundObjectLibraryPanel />));
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
 
     expect(container.textContent).toContain('Shared Motif');
     const row = container.querySelector('#library-node-project-sound-shared-1') as HTMLElement;
-    const name = [...row.querySelectorAll('button')].find((button) => button.textContent === 'Shared Motif') as HTMLButtonElement;
+    const name = [...row.querySelectorAll('button')].find(
+      (button) => button.textContent === 'Shared Motif',
+    ) as HTMLButtonElement;
     act(() => name.click());
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+    });
     expect(openLibraryItemEditor).toHaveBeenCalledWith({ key: sharedNode.key, pinned: false });
 
     act(() => row.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true })));
-    await act(async () => { await Promise.resolve(); });
-    expect(beginLibraryDrag).toHaveBeenCalledWith(expect.objectContaining({
-      key: sharedNode.key,
-      revision: 'shared-hash',
-    }));
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(beginLibraryDrag).toHaveBeenCalledWith(
+      expect.objectContaining({
+        key: sharedNode.key,
+        revision: 'shared-hash',
+      }),
+    );
 
     await useLibraryStore.getState().captureClipboard(sharedNode, 'copy');
     expect(useLibraryStore.getState().clipboard).toMatchObject({
@@ -161,29 +179,45 @@ describe('Project SoundObject Library panel', () => {
   it('shows a compact project-only empty state when no project is loaded', async () => {
     useProjectStore.setState({ loaded: false, sessionId: 0 });
     act(() => root.render(<SoundObjectLibraryPanel />));
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+    });
     expect(container.textContent).toContain('No project loaded');
     expect(container.textContent).not.toContain('User Libraries');
   });
 
   it('uses the shared Copy/Cut buffer for project-shared SoundObjects', async () => {
     act(() => root.render(<SoundObjectLibraryPanel />));
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
     const row = container.querySelector('#library-node-project-sound-shared-1') as HTMLElement;
-    act(() => row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
-    await act(async () => { await Promise.resolve(); });
+    act(() =>
+      row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })),
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
     expect(document.body.textContent).not.toContain('Copy to User Library');
-    const copy = [...document.body.querySelectorAll('[role="menuitem"]')]
-      .find((candidate) => candidate.textContent === 'Copy') as HTMLElement;
+    const copy = [...document.body.querySelectorAll('[role="menuitem"]')].find(
+      (candidate) => candidate.textContent === 'Copy',
+    ) as HTMLElement;
     act(() => copy.click());
     expect(useLibraryStore.getState().clipboard).toMatchObject({
-      operation: 'copy', source: { kind: 'library', key: sharedNode.key },
+      operation: 'copy',
+      source: { kind: 'library', key: sharedNode.key },
     });
 
-    act(() => row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
-    await act(async () => { await Promise.resolve(); });
-    const cut = [...document.body.querySelectorAll('[role="menuitem"]')]
-      .find((candidate) => candidate.textContent === 'Cut') as HTMLElement;
+    act(() =>
+      row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })),
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+    const cut = [...document.body.querySelectorAll('[role="menuitem"]')].find(
+      (candidate) => candidate.textContent === 'Cut',
+    ) as HTMLElement;
     await act(async () => {
       cut.click();
       await Promise.resolve();
@@ -196,35 +230,50 @@ describe('Project SoundObject Library panel', () => {
   });
 
   it('drains every project SoundObject page without truncating the panel', async () => {
-    const allNodes = Array.from({ length: 501 }, (_, index): LibraryBrowseNode => ({
-      ...sharedNode,
-      key: {
-        ...sharedNode.key!,
-        locator: {
-          kind: 'soundObject',
-          libraryId: `shared-${index}`,
-          persistedFingerprint: {
-            canonicalHash: `hash-${index}`,
-            displayName: `Shared ${index}`,
-            objectType: 'GenericScore',
+    const allNodes = Array.from(
+      { length: 501 },
+      (_, index): LibraryBrowseNode => ({
+        ...sharedNode,
+        key: {
+          ...sharedNode.key!,
+          locator: {
+            kind: 'soundObject',
+            libraryId: `shared-${index}`,
+            persistedFingerprint: {
+              canonicalHash: `hash-${index}`,
+              displayName: `Shared ${index}`,
+              objectType: 'GenericScore',
+            },
           },
         },
-      },
-      nodeId: `project-sound-${index}`,
-      displayName: `Shared ${index}`,
-      revision: `hash-${index}`,
-    }));
+        nodeId: `project-sound-${index}`,
+        displayName: `Shared ${index}`,
+        revision: `hash-${index}`,
+      }),
+    );
     vi.mocked(window.blueAPI.browseLibraries).mockImplementation(async (request) => {
       const offset = request.cursor ? 500 : 0;
-      return { ok: true as const, value: {
-        contentRevision: 1,
-        parent: { ...sharedNode, key: null, nodeId: 'project-sound-root', nodeKind: 'root' as const },
-        children: allNodes.slice(offset, offset + 500),
-        nextCursor: offset === 0 ? 'page-500' : null,
-      } };
+      return {
+        ok: true as const,
+        value: {
+          contentRevision: 1,
+          parent: {
+            ...sharedNode,
+            key: null,
+            nodeId: 'project-sound-root',
+            nodeKind: 'root' as const,
+          },
+          children: allNodes.slice(offset, offset + 500),
+          nextCursor: offset === 0 ? 'page-500' : null,
+        },
+      };
     });
     act(() => root.render(<SoundObjectLibraryPanel />));
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
     expect(container.textContent).toContain('Shared 500');
     expect(window.blueAPI.browseLibraries).toHaveBeenCalledTimes(2);
   });
@@ -248,14 +297,22 @@ describe('Project SoundObject Library panel', () => {
     });
 
     act(() => root.render(<SoundObjectLibraryPanel />));
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
 
     const row = container.querySelector('#library-node-project-sound-shared-1') as HTMLElement;
-    act(() => row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
-    await act(async () => { await Promise.resolve(); });
+    act(() =>
+      row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })),
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
 
-    const deleteMenuItem = [...document.body.querySelectorAll('[role="menuitem"]')]
-      .find((candidate) => candidate.textContent?.startsWith('Delete')) as HTMLElement;
+    const deleteMenuItem = [...document.body.querySelectorAll('[role="menuitem"]')].find(
+      (candidate) => candidate.textContent?.startsWith('Delete'),
+    ) as HTMLElement;
     expect(deleteMenuItem).toBeTruthy();
 
     await act(async () => {
@@ -279,10 +336,15 @@ describe('Project SoundObject Library panel', () => {
     expect(window.blueAPI.deleteProjectLibraryItem).not.toHaveBeenCalled();
 
     // Trigger delete again and confirm
-    act(() => row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
-    await act(async () => { await Promise.resolve(); });
-    const deleteAgain = [...document.body.querySelectorAll('[role="menuitem"]')]
-      .find((candidate) => candidate.textContent?.startsWith('Delete')) as HTMLElement;
+    act(() =>
+      row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })),
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+    const deleteAgain = [...document.body.querySelectorAll('[role="menuitem"]')].find((candidate) =>
+      candidate.textContent?.startsWith('Delete'),
+    ) as HTMLElement;
     await act(async () => {
       deleteAgain.click();
       await Promise.resolve();
@@ -326,19 +388,30 @@ describe('Project SoundObject Library panel', () => {
       });
 
     act(() => root.render(<SoundObjectLibraryPanel />));
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
     const row = container.querySelector('#library-node-project-sound-shared-1') as HTMLElement;
-    act(() => row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
-    const deleteMenuItem = [...document.body.querySelectorAll('[role="menuitem"]')]
-      .find((candidate) => candidate.textContent?.startsWith('Delete')) as HTMLElement;
+    act(() =>
+      row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })),
+    );
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    const deleteMenuItem = [...document.body.querySelectorAll('[role="menuitem"]')].find(
+      (candidate) => candidate.textContent?.startsWith('Delete'),
+    ) as HTMLElement;
     await act(async () => {
       deleteMenuItem.click();
       await Promise.resolve();
       await Promise.resolve();
     });
 
-    const deleteButton = document.body.querySelector<HTMLButtonElement>('[data-action-id="delete"]');
+    const deleteButton = document.body.querySelector<HTMLButtonElement>(
+      '[data-action-id="delete"]',
+    );
     expect(deleteButton).toBeTruthy();
     await act(async () => {
       deleteButton?.click();

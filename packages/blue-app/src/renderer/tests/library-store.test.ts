@@ -63,33 +63,46 @@ const defaultSearchLibraries = async (request: SearchLibrariesRequest) => ({
   value: {
     contentRevision: 3,
     normalizedQuery: request.query.toLowerCase(),
-    results: request.query ? [{
-      key: item.key!,
-      parentId: item.parentId,
-      libraryType: 'instrument' as const,
-      scope: 'user' as const,
-      displayName: item.displayName,
-      breadcrumb: item.breadcrumb,
-      supportStatus: 'supported' as const,
-      objectType: item.objectType!,
-      revision: item.revision,
-    }] : [],
+    results: request.query
+      ? [
+          {
+            key: item.key!,
+            parentId: item.parentId,
+            libraryType: 'instrument' as const,
+            scope: 'user' as const,
+            displayName: item.displayName,
+            breadcrumb: item.breadcrumb,
+            supportStatus: 'supported' as const,
+            objectType: item.objectType!,
+            revision: item.revision,
+          },
+        ]
+      : [],
     nextCursor: request.cursor ? null : 'page-2',
   },
 });
 const searchLibraries = vi.fn(defaultSearchLibraries);
-const openLibraryItemEditor = vi.fn(async () => ({ ok: true as const, value: {
-  sessionId: 'session-1',
-  key: item.key!,
-  displayName: item.displayName,
-  objectType: item.objectType!,
-  breadcrumb: item.breadcrumb,
-  baseRevision: item.revision,
-  document: { kind: 'unsupported' as const, libraryType: 'instrument' as const, objectType: item.objectType!, message: 'fixture', rawXml: '<instrument />' },
-  dirty: false,
-  pinned: false,
-  status: 'ready' as const,
-} }));
+const openLibraryItemEditor = vi.fn(async () => ({
+  ok: true as const,
+  value: {
+    sessionId: 'session-1',
+    key: item.key!,
+    displayName: item.displayName,
+    objectType: item.objectType!,
+    breadcrumb: item.breadcrumb,
+    baseRevision: item.revision,
+    document: {
+      kind: 'unsupported' as const,
+      libraryType: 'instrument' as const,
+      objectType: item.objectType!,
+      message: 'fixture',
+      rawXml: '<instrument />',
+    },
+    dirty: false,
+    pinned: false,
+    status: 'ready' as const,
+  },
+}));
 const previewLibraryTransfer = vi.fn(async () => ({
   ok: true as const,
   value: {
@@ -131,35 +144,43 @@ const copyLibraryTransferToUser = vi.fn(async () => ({
   ok: true as const,
   value: { contentRevision: 4, affectedNodes: [] },
 }));
-const cutLibraryToClipboard = vi.fn(async (request: {
-  readonly source: CapturableLibraryTransferSource;
-  readonly confirmationToken: string;
-}) => ({
-  ok: true as const,
-  value: {
-    clipboard: {
-      operation: 'cut' as const,
-      source: {
-        kind: 'buffer' as const,
-        clipboardId: `buffer-${getLibraryTransferSourceType(request.source)}`,
-        libraryType: getLibraryTransferSourceType(request.source),
+const cutLibraryToClipboard = vi.fn(
+  async (request: {
+    readonly source: CapturableLibraryTransferSource;
+    readonly confirmationToken: string;
+  }) => ({
+    ok: true as const,
+    value: {
+      clipboard: {
+        operation: 'cut' as const,
+        source: {
+          kind: 'buffer' as const,
+          clipboardId: `buffer-${getLibraryTransferSourceType(request.source)}`,
+          libraryType: getLibraryTransferSourceType(request.source),
+        },
+        capturedAt: 100,
       },
-      capturedAt: 100,
+      closedEditorSessionIds: [],
     },
-    closedEditorSessionIds: [],
-  },
-}));
+  }),
+);
 const previewProjectLibraryDelete = vi.fn(async () => ({
   ok: true as const,
   value: {
-    confirmationToken: 'project-delete', linkedInstanceCount: 0, locations: [], requiresConfirmation: true,
+    confirmationToken: 'project-delete',
+    linkedInstanceCount: 0,
+    locations: [],
+    requiresConfirmation: true,
   },
 }));
 const deleteProjectLibraryItem = vi.fn(async () => ({
   ok: true as const,
   value: {
-    projectSessionId: 7, projectRevision: 4, libraryType: 'udo' as const,
-    insertedIdentity: 'udo:501', message: 'Removed.',
+    projectSessionId: 7,
+    projectRevision: 4,
+    libraryType: 'udo' as const,
+    insertedIdentity: 'udo:501',
+    message: 'Removed.',
   },
 }));
 const setLibraryClipboard = vi.fn(async () => true);
@@ -216,11 +237,15 @@ beforeEach(() => {
     })),
     onLibraryServiceSnapshot: vi.fn((listener) => {
       snapshotListener = listener;
-      return () => { snapshotListener = null; };
+      return () => {
+        snapshotListener = null;
+      };
     }),
     onLibraryChanged: vi.fn((listener) => {
       changedListener = listener;
-      return () => { changedListener = null; };
+      return () => {
+        changedListener = null;
+      };
     }),
   };
   useLibraryStore.getState().reset();
@@ -252,12 +277,22 @@ describe('library store', () => {
     const bsbClipboard = {
       originX: 10,
       originY: 20,
-      widgets: [{
-        id: 'slider-1', type: 'BSBHSlider', objectName: 'amp',
-        x: 10, y: 20, width: 120, height: 24,
-        value: 0.5, minimum: 0, maximum: 1, editable: true,
-        properties: {},
-      }],
+      widgets: [
+        {
+          id: 'slider-1',
+          type: 'BSBHSlider',
+          objectName: 'amp',
+          x: 10,
+          y: 20,
+          width: 120,
+          height: 24,
+          value: 0.5,
+          minimum: 0,
+          maximum: 1,
+          editable: true,
+          properties: {},
+        },
+      ],
     };
     window.blueAPI.getLibraryServiceSnapshot = vi.fn(async () => ({
       ...snapshot,
@@ -293,11 +328,16 @@ describe('library store', () => {
     });
 
     await useLibraryEditorStore.getState().open({
-      scope: 'user', libraryType: 'instrument', nodeId: 'item-2',
+      scope: 'user',
+      libraryType: 'instrument',
+      nodeId: 'item-2',
     });
 
-    expect(Object.keys(useLibraryEditorStore.getState().sessions).sort())
-      .toEqual(['dirty', 'pinned', 'session-2']);
+    expect(Object.keys(useLibraryEditorStore.getState().sessions).sort()).toEqual([
+      'dirty',
+      'pinned',
+      'session-2',
+    ]);
   });
 
   it('loads only user roots without a project and applies the type filter', async () => {
@@ -369,25 +409,32 @@ describe('library store', () => {
   it('ignores a slower search response after the query changes', async () => {
     await useLibraryStore.getState().initialize();
     let releaseOld: (() => void) | undefined;
-    const oldGate = new Promise<void>((resolve) => { releaseOld = resolve; });
+    const oldGate = new Promise<void>((resolve) => {
+      releaseOld = resolve;
+    });
     searchLibraries.mockImplementation(async (request) => {
       if (request.query === 'Old') await oldGate;
-      return { ok: true as const, value: {
-        contentRevision: 3,
-        normalizedQuery: request.query.toLowerCase(),
-        results: [{
-          key: item.key!,
-          parentId: item.parentId,
-          libraryType: 'instrument' as const,
-          scope: 'user' as const,
-          displayName: request.query,
-          breadcrumb: item.breadcrumb,
-          supportStatus: 'supported' as const,
-          objectType: item.objectType!,
-          revision: item.revision,
-        }],
-        nextCursor: null,
-      } };
+      return {
+        ok: true as const,
+        value: {
+          contentRevision: 3,
+          normalizedQuery: request.query.toLowerCase(),
+          results: [
+            {
+              key: item.key!,
+              parentId: item.parentId,
+              libraryType: 'instrument' as const,
+              scope: 'user' as const,
+              displayName: request.query,
+              breadcrumb: item.breadcrumb,
+              supportStatus: 'supported' as const,
+              objectType: item.objectType!,
+              revision: item.revision,
+            },
+          ],
+          nextCursor: null,
+        },
+      };
     });
     useLibraryStore.getState().setQuery('Old');
     await vi.advanceTimersByTimeAsync(160);
@@ -513,7 +560,11 @@ describe('library store', () => {
         locator: {
           kind: 'udo',
           sessionObjectId: 'udo:501',
-          persistedFingerprint: { canonicalHash: 'hash-501', opcodeName: 'udo501', style: 'CLASSIC' },
+          persistedFingerprint: {
+            canonicalHash: 'hash-501',
+            opcodeName: 'udo501',
+            style: 'CLASSIC',
+          },
         },
       },
       nodeId: 'project-udo-501',
@@ -545,7 +596,10 @@ describe('library store', () => {
       userRootType: 'udo',
     });
     expect(copyLibraryTransferToUser).toHaveBeenCalledWith(
-      { kind: 'clipboard', source: { kind: 'buffer', clipboardId: 'buffer-udo', libraryType: 'udo' } },
+      {
+        kind: 'clipboard',
+        source: { kind: 'buffer', clipboardId: 'buffer-udo', libraryType: 'udo' },
+      },
       'root-udo',
     );
     expect(previewProjectLibraryDelete).toHaveBeenCalledWith(projectUdo.key);
@@ -559,13 +613,19 @@ describe('library store', () => {
   it('moves a user item into a project panel through the same Cut buffer', async () => {
     await useLibraryStore.getState().captureClipboard(item, 'cut');
 
-    expect(await useLibraryStore.getState().transferToProject(
-      { kind: 'clipboard', source: useLibraryStore.getState().clipboard!.source },
-      { kind: 'orchestra', projectSessionId: 7, projectRevision: 2, insertIndex: 0 },
-    )).toBe(true);
+    expect(
+      await useLibraryStore
+        .getState()
+        .transferToProject(
+          { kind: 'clipboard', source: useLibraryStore.getState().clipboard!.source },
+          { kind: 'orchestra', projectSessionId: 7, projectRevision: 2, insertIndex: 0 },
+        ),
+    ).toBe(true);
 
     expect(window.blueAPI.prepareLibraryMutation).toHaveBeenCalledWith({
-      type: 'deleteNode', nodeId: 'item-1', expectedRevision: 1,
+      type: 'deleteNode',
+      nodeId: 'item-1',
+      expectedRevision: 1,
     });
     expect(cutLibraryToClipboard).toHaveBeenCalledWith({
       source: { kind: 'userNode', libraryType: 'instrument', nodeId: 'item-1', revision: 1 },
@@ -585,27 +645,54 @@ describe('library store', () => {
   it('does not remove a shared SoundObject when its Cut consequence is declined', async () => {
     const projectSoundObject: LibraryBrowseNode = {
       key: {
-        scope: 'projectShared', libraryType: 'soundObject', projectSessionId: 7,
+        scope: 'projectShared',
+        libraryType: 'soundObject',
+        projectSessionId: 7,
         locator: {
-          kind: 'soundObject', libraryId: 'shared-1',
-          persistedFingerprint: { canonicalHash: 'hash', displayName: 'Shared', objectType: 'GenericScore' },
+          kind: 'soundObject',
+          libraryId: 'shared-1',
+          persistedFingerprint: {
+            canonicalHash: 'hash',
+            displayName: 'Shared',
+            objectType: 'GenericScore',
+          },
         },
       },
-      nodeId: 'project-sound-shared-1', parentId: null, libraryType: 'soundObject',
-      scope: 'projectShared', nodeKind: 'item', displayName: 'Shared', breadcrumb: ['Project SoundObjects'],
-      supportStatus: 'supported', objectType: 'GenericScore', revision: 'hash', hasChildren: false,
+      nodeId: 'project-sound-shared-1',
+      parentId: null,
+      libraryType: 'soundObject',
+      scope: 'projectShared',
+      nodeKind: 'item',
+      displayName: 'Shared',
+      breadcrumb: ['Project SoundObjects'],
+      supportStatus: 'supported',
+      objectType: 'GenericScore',
+      revision: 'hash',
+      hasChildren: false,
     };
     previewProjectLibraryDelete.mockResolvedValueOnce({
       ok: true,
-      value: { confirmationToken: 'linked-delete', linkedInstanceCount: 2, locations: ['Score'], requiresConfirmation: true },
+      value: {
+        confirmationToken: 'linked-delete',
+        linkedInstanceCount: 2,
+        locations: ['Score'],
+        requiresConfirmation: true,
+      },
     });
-    window.blueAPI.showNativeConfirmation = vi.fn(async () => ({ actionId: 'cancel', outcome: 'dismissed' as const }));
-    expect(await useLibraryStore.getState().captureClipboard(projectSoundObject, 'cut')).toBe(false);
-    expect(window.blueAPI.showNativeConfirmation).toHaveBeenCalledWith(expect.objectContaining({
-      id: 'library-cut-linked-sound-object',
-      defaultActionId: 'cancel',
-      cancelActionId: 'cancel',
+    window.blueAPI.showNativeConfirmation = vi.fn(async () => ({
+      actionId: 'cancel',
+      outcome: 'dismissed' as const,
     }));
+    expect(await useLibraryStore.getState().captureClipboard(projectSoundObject, 'cut')).toBe(
+      false,
+    );
+    expect(window.blueAPI.showNativeConfirmation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'library-cut-linked-sound-object',
+        defaultActionId: 'cancel',
+        cancelActionId: 'cancel',
+      }),
+    );
     expect(cutLibraryToClipboard).not.toHaveBeenCalled();
     expect(copyLibraryTransferToUser).not.toHaveBeenCalled();
     expect(deleteProjectLibraryItem).not.toHaveBeenCalled();
@@ -615,28 +702,60 @@ describe('library store', () => {
   it('cuts a linked SoundObject when confirmation is accepted', async () => {
     const projectSoundObject: LibraryBrowseNode = {
       key: {
-        scope: 'projectShared', libraryType: 'soundObject', projectSessionId: 7,
+        scope: 'projectShared',
+        libraryType: 'soundObject',
+        projectSessionId: 7,
         locator: {
-          kind: 'soundObject', libraryId: 'shared-1',
-          persistedFingerprint: { canonicalHash: 'hash', displayName: 'Shared', objectType: 'GenericScore' },
+          kind: 'soundObject',
+          libraryId: 'shared-1',
+          persistedFingerprint: {
+            canonicalHash: 'hash',
+            displayName: 'Shared',
+            objectType: 'GenericScore',
+          },
         },
       },
-      nodeId: 'project-sound-shared-1', parentId: null, libraryType: 'soundObject',
-      scope: 'projectShared', nodeKind: 'item', displayName: 'Shared', breadcrumb: ['Project SoundObjects'],
-      supportStatus: 'supported', objectType: 'GenericScore', revision: 'hash', hasChildren: false,
+      nodeId: 'project-sound-shared-1',
+      parentId: null,
+      libraryType: 'soundObject',
+      scope: 'projectShared',
+      nodeKind: 'item',
+      displayName: 'Shared',
+      breadcrumb: ['Project SoundObjects'],
+      supportStatus: 'supported',
+      objectType: 'GenericScore',
+      revision: 'hash',
+      hasChildren: false,
     };
-    previewProjectLibraryDelete.mockResolvedValueOnce({
-      ok: true,
-      value: { confirmationToken: 'linked-delete-token', linkedInstanceCount: 2, locations: ['Score'], requiresConfirmation: true },
-    }).mockResolvedValueOnce({
-      ok: true,
-      value: { confirmationToken: 'linked-delete-token-revalidated', linkedInstanceCount: 2, locations: ['Score'], requiresConfirmation: true },
-    });
-    window.blueAPI.showNativeConfirmation = vi.fn(async () => ({ actionId: 'cut', outcome: 'selected' as const }));
-    expect(await useLibraryStore.getState().captureClipboard(projectSoundObject, 'cut')).toBe(true);
-    expect(window.blueAPI.showNativeConfirmation).toHaveBeenCalledWith(expect.objectContaining({
-      id: 'library-cut-linked-sound-object',
+    previewProjectLibraryDelete
+      .mockResolvedValueOnce({
+        ok: true,
+        value: {
+          confirmationToken: 'linked-delete-token',
+          linkedInstanceCount: 2,
+          locations: ['Score'],
+          requiresConfirmation: true,
+        },
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        value: {
+          confirmationToken: 'linked-delete-token-revalidated',
+          linkedInstanceCount: 2,
+          locations: ['Score'],
+          requiresConfirmation: true,
+        },
+      });
+    window.blueAPI.showNativeConfirmation = vi.fn(async () => ({
+      actionId: 'cut',
+      outcome: 'selected' as const,
     }));
+    expect(await useLibraryStore.getState().captureClipboard(projectSoundObject, 'cut')).toBe(true);
+    expect(window.blueAPI.showNativeConfirmation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'library-cut-linked-sound-object',
+      }),
+    );
     expect(cutLibraryToClipboard).toHaveBeenCalledWith({
       source: { kind: 'library', key: projectSoundObject.key, revision: 'hash' },
       confirmationToken: 'linked-delete-token-revalidated',
@@ -646,60 +765,110 @@ describe('library store', () => {
   it('fails closed when the selected library key changes during confirmation', async () => {
     const projectSoundObject: LibraryBrowseNode = {
       key: {
-        scope: 'projectShared', libraryType: 'soundObject', projectSessionId: 7,
+        scope: 'projectShared',
+        libraryType: 'soundObject',
+        projectSessionId: 7,
         locator: {
-          kind: 'soundObject', libraryId: 'shared-1',
-          persistedFingerprint: { canonicalHash: 'hash', displayName: 'Shared', objectType: 'GenericScore' },
+          kind: 'soundObject',
+          libraryId: 'shared-1',
+          persistedFingerprint: {
+            canonicalHash: 'hash',
+            displayName: 'Shared',
+            objectType: 'GenericScore',
+          },
         },
       },
-      nodeId: 'project-sound-shared-1', parentId: null, libraryType: 'soundObject',
-      scope: 'projectShared', nodeKind: 'item', displayName: 'Shared', breadcrumb: ['Project SoundObjects'],
-      supportStatus: 'supported', objectType: 'GenericScore', revision: 'hash', hasChildren: false,
+      nodeId: 'project-sound-shared-1',
+      parentId: null,
+      libraryType: 'soundObject',
+      scope: 'projectShared',
+      nodeKind: 'item',
+      displayName: 'Shared',
+      breadcrumb: ['Project SoundObjects'],
+      supportStatus: 'supported',
+      objectType: 'GenericScore',
+      revision: 'hash',
+      hasChildren: false,
     };
     previewProjectLibraryDelete.mockResolvedValue({
       ok: true,
-      value: { confirmationToken: 'linked-delete', linkedInstanceCount: 1, locations: ['Score'], requiresConfirmation: true },
+      value: {
+        confirmationToken: 'linked-delete',
+        linkedInstanceCount: 1,
+        locations: ['Score'],
+        requiresConfirmation: true,
+      },
     });
     window.blueAPI.showNativeConfirmation = vi.fn(async () => {
       useLibraryStore.setState({ selectedKey: projectSoundObject.key });
       return { actionId: 'cut', outcome: 'selected' as const };
     });
 
-    expect(await useLibraryStore.getState().captureClipboard(projectSoundObject, 'cut')).toBe(false);
+    expect(await useLibraryStore.getState().captureClipboard(projectSoundObject, 'cut')).toBe(
+      false,
+    );
     expect(cutLibraryToClipboard).not.toHaveBeenCalled();
   });
 
   it('fails closed when linked SoundObject confirmation IPC rejects', async () => {
     const projectSoundObject: LibraryBrowseNode = {
       key: {
-        scope: 'projectShared', libraryType: 'soundObject', projectSessionId: 7,
+        scope: 'projectShared',
+        libraryType: 'soundObject',
+        projectSessionId: 7,
         locator: {
-          kind: 'soundObject', libraryId: 'shared-1',
-          persistedFingerprint: { canonicalHash: 'hash', displayName: 'Shared', objectType: 'GenericScore' },
+          kind: 'soundObject',
+          libraryId: 'shared-1',
+          persistedFingerprint: {
+            canonicalHash: 'hash',
+            displayName: 'Shared',
+            objectType: 'GenericScore',
+          },
         },
       },
-      nodeId: 'project-sound-shared-1', parentId: null, libraryType: 'soundObject',
-      scope: 'projectShared', nodeKind: 'item', displayName: 'Shared', breadcrumb: ['Project SoundObjects'],
-      supportStatus: 'supported', objectType: 'GenericScore', revision: 'hash', hasChildren: false,
+      nodeId: 'project-sound-shared-1',
+      parentId: null,
+      libraryType: 'soundObject',
+      scope: 'projectShared',
+      nodeKind: 'item',
+      displayName: 'Shared',
+      breadcrumb: ['Project SoundObjects'],
+      supportStatus: 'supported',
+      objectType: 'GenericScore',
+      revision: 'hash',
+      hasChildren: false,
     };
     previewProjectLibraryDelete.mockResolvedValueOnce({
       ok: true,
-      value: { confirmationToken: 'linked-delete', linkedInstanceCount: 1, locations: ['Score'], requiresConfirmation: true },
+      value: {
+        confirmationToken: 'linked-delete',
+        linkedInstanceCount: 1,
+        locations: ['Score'],
+        requiresConfirmation: true,
+      },
     });
     window.blueAPI.showNativeConfirmation = vi.fn().mockRejectedValue(new Error('IPC unavailable'));
 
-    expect(await useLibraryStore.getState().captureClipboard(projectSoundObject, 'cut')).toBe(false);
+    expect(await useLibraryStore.getState().captureClipboard(projectSoundObject, 'cut')).toBe(
+      false,
+    );
     expect(cutLibraryToClipboard).not.toHaveBeenCalled();
   });
 
   it('creates fresh database on acceptance and ignores on cancellation', async () => {
     // Declined
-    window.blueAPI.showNativeConfirmation = vi.fn(async () => ({ actionId: 'cancel', outcome: 'dismissed' as const }));
+    window.blueAPI.showNativeConfirmation = vi.fn(async () => ({
+      actionId: 'cancel',
+      outcome: 'dismissed' as const,
+    }));
     await useLibraryStore.getState().createFreshDatabase();
     expect(window.blueAPI.createFreshLibraryDatabase).not.toHaveBeenCalled();
 
     // Accepted
-    window.blueAPI.showNativeConfirmation = vi.fn(async () => ({ actionId: 'create', outcome: 'selected' as const }));
+    window.blueAPI.showNativeConfirmation = vi.fn(async () => ({
+      actionId: 'create',
+      outcome: 'selected' as const,
+    }));
     await useLibraryStore.getState().createFreshDatabase();
     expect(window.blueAPI.createFreshLibraryDatabase).toHaveBeenCalledTimes(1);
   });
@@ -715,20 +884,40 @@ describe('library store', () => {
   it('pastes a detached project Effect Cut buffer into another project chain', async () => {
     const projectEffect: LibraryBrowseNode = {
       key: {
-        scope: 'projectOwned', libraryType: 'effect', projectSessionId: 7,
+        scope: 'projectOwned',
+        libraryType: 'effect',
+        projectSessionId: 7,
         locator: { kind: 'effect', channelId: 'channel-1', chain: 'pre', entryId: 'effect-1' },
       },
-      nodeId: 'project-effect-1', parentId: null, libraryType: 'effect', scope: 'projectOwned',
-      nodeKind: 'item', displayName: 'Delay', breadcrumb: ['Channel 1', 'Pre Effects'],
-      supportStatus: 'supported', objectType: 'Effect', revision: 'effect-hash', hasChildren: false,
+      nodeId: 'project-effect-1',
+      parentId: null,
+      libraryType: 'effect',
+      scope: 'projectOwned',
+      nodeKind: 'item',
+      displayName: 'Delay',
+      breadcrumb: ['Channel 1', 'Pre Effects'],
+      supportStatus: 'supported',
+      objectType: 'Effect',
+      revision: 'effect-hash',
+      hasChildren: false,
     };
     await useLibraryStore.getState().captureClipboard(projectEffect, 'cut');
-    const source = { kind: 'clipboard' as const, source: useLibraryStore.getState().clipboard!.source };
+    const source = {
+      kind: 'clipboard' as const,
+      source: useLibraryStore.getState().clipboard!.source,
+    };
 
-    expect(await useLibraryStore.getState().transferToProject(source, {
-      kind: 'effectChain', projectSessionId: 7, projectRevision: 2,
-      channelId: 'channel-2', chain: 'post', insertIndex: 0, chainRevision: '',
-    })).toBe(true);
+    expect(
+      await useLibraryStore.getState().transferToProject(source, {
+        kind: 'effectChain',
+        projectSessionId: 7,
+        projectRevision: 2,
+        channelId: 'channel-2',
+        chain: 'post',
+        insertIndex: 0,
+        chainRevision: '',
+      }),
+    ).toBe(true);
 
     expect(previewLibraryTransfer).toHaveBeenCalledWith({
       source: {
@@ -736,13 +925,19 @@ describe('library store', () => {
         source: { kind: 'buffer', clipboardId: 'buffer-effect', libraryType: 'effect' },
       },
       target: {
-        kind: 'effectChain', projectSessionId: 7, projectRevision: 2,
-        channelId: 'channel-2', chain: 'post', insertIndex: 0, chainRevision: '',
+        kind: 'effectChain',
+        projectSessionId: 7,
+        projectRevision: 2,
+        channelId: 'channel-2',
+        chain: 'post',
+        insertIndex: 0,
+        chainRevision: '',
       },
       mode: 'independent',
     });
     expect(useLibraryStore.getState().clipboard).toMatchObject({
-      operation: 'cut', source: { kind: 'buffer', libraryType: 'effect' },
+      operation: 'cut',
+      source: { kind: 'buffer', libraryType: 'effect' },
     });
   });
 
@@ -790,7 +985,10 @@ describe('library store', () => {
     expect(useLibraryStore.getState().deletePreview).toMatchObject({ affectedCount: 2 });
     expect(await useLibraryStore.getState().confirmDelete('discard')).toBe(true);
     expect(window.blueAPI.applyLibraryMutation).toHaveBeenCalledWith({
-      type: 'deleteNode', nodeId: 'item-1', expectedRevision: 1, confirmation: 'delete-preview',
+      type: 'deleteNode',
+      nodeId: 'item-1',
+      expectedRevision: 1,
+      confirmation: 'delete-preview',
     });
     expect(useLibraryStore.getState().clipboard).toBeNull();
     expect(useLibraryStore.getState().selectedKey).toBeNull();
@@ -846,7 +1044,10 @@ describe('library store', () => {
     });
 
     const applied = await useLibraryStore.getState().transferToProject(
-      { kind: 'clipboard', source: { kind: 'userNode', libraryType: 'instrument', nodeId: 'item-1', revision: 1 } },
+      {
+        kind: 'clipboard',
+        source: { kind: 'userNode', libraryType: 'instrument', nodeId: 'item-1', revision: 1 },
+      },
       { kind: 'orchestra', projectSessionId: 7, projectRevision: 2, insertIndex: 0 },
     );
 
@@ -870,7 +1071,11 @@ describe('library store', () => {
             locator: {
               kind: 'soundObject' as const,
               libraryId: 'shared-1',
-              persistedFingerprint: { canonicalHash: 'hash', displayName: 'Shared', objectType: 'GenericScore' },
+              persistedFingerprint: {
+                canonicalHash: 'hash',
+                displayName: 'Shared',
+                objectType: 'GenericScore',
+              },
             },
           },
           libraryType: 'soundObject' as const,
@@ -899,7 +1104,11 @@ describe('library store', () => {
             locator: {
               kind: 'soundObject',
               libraryId: 'shared-1',
-              persistedFingerprint: { canonicalHash: 'hash', displayName: 'Shared', objectType: 'GenericScore' },
+              persistedFingerprint: {
+                canonicalHash: 'hash',
+                displayName: 'Shared',
+                objectType: 'GenericScore',
+              },
             },
           },
           revision: 'hash',
@@ -915,7 +1124,10 @@ describe('library store', () => {
     );
 
     expect(applied).toBe(true);
-    expect(useLibraryStore.getState().transferPreview?.allowedModes).toEqual(['independent', 'sharedInstance']);
+    expect(useLibraryStore.getState().transferPreview?.allowedModes).toEqual([
+      'independent',
+      'sharedInstance',
+    ]);
     expect(applyLibraryTransfer).not.toHaveBeenCalled();
   });
 });

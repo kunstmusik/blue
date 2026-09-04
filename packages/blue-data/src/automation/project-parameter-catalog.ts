@@ -23,10 +23,7 @@ import { Score } from '../score/score';
 import { TrackLayerGroup } from '../score/track/track-layer-group';
 import type { BlueData } from '../blue-data';
 
-export type ProjectParameterOwnerKind =
-  | 'arrangement-instrument'
-  | 'track-instrument'
-  | 'mixer';
+export type ProjectParameterOwnerKind = 'arrangement-instrument' | 'track-instrument' | 'mixer';
 
 export interface ProjectParameterEntry {
   ownerKind: ProjectParameterOwnerKind;
@@ -39,13 +36,8 @@ export interface ProjectParameterEntry {
   path: readonly string[];
 }
 
-function collectInstrumentParameters(
-  instr: unknown,
-): Parameter[] | null {
-  if (
-    instr &&
-    typeof (instr as { getParameters?: unknown }).getParameters === 'function'
-  ) {
+function collectInstrumentParameters(instr: unknown): Parameter[] | null {
+  if (instr && typeof (instr as { getParameters?: unknown }).getParameters === 'function') {
     const params = (instr as { getParameters: () => unknown }).getParameters();
     if (params && Array.isArray(params)) {
       return params as Parameter[];
@@ -87,9 +79,7 @@ export function getMixerOwnerParameters(mixer: Mixer): Parameter[] {
 /**
  * Enumerate arrangement instrument parameters with owner attribution.
  */
-export function getArrangementOwnerParameters(
-  arrangement: Arrangement,
-): ProjectParameterEntry[] {
+export function getArrangementOwnerParameters(arrangement: Arrangement): ProjectParameterEntry[] {
   const entries: ProjectParameterEntry[] = [];
   for (const ia of arrangement.getArrangement()) {
     if (!ia.enabled || !ia.instr) continue;

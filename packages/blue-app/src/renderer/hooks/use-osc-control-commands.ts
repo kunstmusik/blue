@@ -19,7 +19,9 @@ export function useOscControlCommands(): void {
         sendBlueLiveAllNotesOff: () => window.blueAPI.sendBlueLiveAllNotesOff(),
       },
       onError: (error) => {
-        toast.error(`OSC command failed: ${error instanceof Error ? error.message : String(error)}`);
+        toast.error(
+          `OSC command failed: ${error instanceof Error ? error.message : String(error)}`,
+        );
       },
     });
   }

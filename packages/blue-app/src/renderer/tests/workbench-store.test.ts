@@ -6,10 +6,7 @@ import {
   createDefaultAuxiliaryLayoutState,
 } from '../components/workbench/auxiliary-layout';
 import { acquireTreeDndManager } from '../components/tree/tree-dnd-domain';
-import {
-  hasRestoredStartupEditorPanel,
-  useWorkbenchStore,
-} from '../stores/workbench-store';
+import { hasRestoredStartupEditorPanel, useWorkbenchStore } from '../stores/workbench-store';
 import { useLibraryStore } from '../stores/library-store';
 import { usePlaybackStore } from '../stores/playback-store';
 import { useProjectStore } from '../stores/project-store';
@@ -28,8 +25,7 @@ const dockviewSnapshot = {
 } as any;
 
 const dockviewApiStub = {
-  getPanel: (panelId: string) =>
-    panelId === 'ScoreTopComponent' ? ({} as never) : undefined,
+  getPanel: (panelId: string) => (panelId === 'ScoreTopComponent' ? ({} as never) : undefined),
   toJSON: () => dockviewSnapshot,
 } as any;
 
@@ -134,10 +130,7 @@ function createCloseRestoreApiStub() {
     },
   };
 
-  function addPanel(
-    id: string,
-    position?: { referenceGroup?: any; index?: number },
-  ) {
+  function addPanel(id: string, position?: { referenceGroup?: any; index?: number }) {
     const target = position?.referenceGroup ?? group;
     const panel = {
       id,
@@ -170,19 +163,12 @@ function createCloseRestoreApiStub() {
       getPanel: vi.fn((id: string) => panels.get(id)),
       getGroup: vi.fn((id: string) => (id === group.id ? group : undefined)),
       addPanel: vi.fn(
-        ({
-          id,
-          position,
-        }: {
-          id: string;
-          position?: { referenceGroup?: any; index?: number };
-        }) => addPanel(id, position),
+        ({ id, position }: { id: string; position?: { referenceGroup?: any; index?: number } }) =>
+          addPanel(id, position),
       ),
       removePanel: vi.fn((panel: any) => {
         panels.delete(panel.id);
-        panel.group.panels = panel.group.panels.filter(
-          (entry: any) => entry !== panel,
-        );
+        panel.group.panels = panel.group.panels.filter((entry: any) => entry !== panel);
         panel.group.activePanel = panel.group.panels[0];
       }),
       toJSON: () => dockviewSnapshot,
@@ -230,17 +216,13 @@ function createFloatingDockApiStub() {
       setActive: vi.fn(() => {
         panel.group.activePanel = panel;
       }),
-      moveTo: vi.fn(
-        ({ group, index }: { group: typeof targetGroup; index: number }) => {
-          panel.group.panels = panel.group.panels.filter(
-            (entry) => entry.id !== panel.id,
-          );
-          const nextIndex = Math.max(0, Math.min(index, group.panels.length));
-          group.panels.splice(nextIndex, 0, panel);
-          panel.group = group;
-          group.activePanel = panel;
-        },
-      ),
+      moveTo: vi.fn(({ group, index }: { group: typeof targetGroup; index: number }) => {
+        panel.group.panels = panel.group.panels.filter((entry) => entry.id !== panel.id);
+        const nextIndex = Math.max(0, Math.min(index, group.panels.length));
+        group.panels.splice(nextIndex, 0, panel);
+        panel.group = group;
+        group.activePanel = panel;
+      }),
     },
   };
 
@@ -262,10 +244,7 @@ function createFloatingDockApiStub() {
         const source = groups.find((entry) => entry.id === from.groupId)!;
         const moved = source.panels.find((entry) => entry.id === from.panelId)!;
         source.panels = source.panels.filter((entry) => entry !== moved);
-        const nextIndex = Math.max(
-          0,
-          Math.min(to.index ?? 0, to.group.panels.length),
-        );
+        const nextIndex = Math.max(0, Math.min(to.index ?? 0, to.group.panels.length));
         to.group.panels.splice(nextIndex, 0, moved);
         moved.group = to.group;
         to.group.activePanel = moved;
@@ -312,11 +291,7 @@ function createAuxiliaryFloatingDockApiStub() {
     }),
   };
 
-  function createGroup(
-    id: string,
-    location: 'grid' | 'popout',
-    visible = true,
-  ) {
+  function createGroup(id: string, location: 'grid' | 'popout', visible = true) {
     const group = {
       id,
       panels: [] as any[],
@@ -341,11 +316,9 @@ function createAuxiliaryFloatingDockApiStub() {
         isMaximized: () => false,
         isVisible: visible,
         setHeaderPosition: vi.fn(),
-        setSize: vi.fn(
-          ({ width, height }: { width?: number; height?: number }) => {
-            group.size = width ?? height ?? group.size;
-          },
-        ),
+        setSize: vi.fn(({ width, height }: { width?: number; height?: number }) => {
+          group.size = width ?? height ?? group.size;
+        }),
       },
     };
     return group;
@@ -377,17 +350,10 @@ function createAuxiliaryFloatingDockApiStub() {
   }
 
   const editorGroup = createGroup('main-editor', 'grid');
-  const hiddenReferenceGroup = createGroup(
-    'blue-aux-edge-right',
-    'grid',
-    false,
-  );
+  const hiddenReferenceGroup = createGroup('blue-aux-edge-right', 'grid', false);
   const popoutGroup = createGroup('popout-properties', 'popout');
   const scorePanel = createPanel('ScoreTopComponent', editorGroup);
-  const propertiesPanel = createPanel(
-    'SoundObjectPropertiesTopComponent',
-    popoutGroup,
-  );
+  const propertiesPanel = createPanel('SoundObjectPropertiesTopComponent', popoutGroup);
   const panels = new Map([
     [scorePanel.id, scorePanel],
     [propertiesPanel.id, propertiesPanel],
@@ -397,23 +363,19 @@ function createAuxiliaryFloatingDockApiStub() {
   const component = {
     removePanel: vi.fn((panel: typeof propertiesPanel) => {
       panels.delete(panel.id);
-      panel.group.panels = panel.group.panels.filter(
-        (entry) => entry !== panel,
-      );
+      panel.group.panels = panel.group.panels.filter((entry) => entry !== panel);
       panel.group.activePanel = panel.group.panels[0];
     }),
-    removeGroup: vi.fn(
-      (group: typeof popoutGroup, options: Record<string, unknown>) => {
-        groups = groups.filter((entry) => entry !== group);
-        if (
-          group === popoutGroup &&
-          options.skipPopoutAssociated !== true &&
-          hiddenReferenceGroup.panels.length === 0
-        ) {
-          groups = groups.filter((entry) => entry !== hiddenReferenceGroup);
-        }
-      },
-    ),
+    removeGroup: vi.fn((group: typeof popoutGroup, options: Record<string, unknown>) => {
+      groups = groups.filter((entry) => entry !== group);
+      if (
+        group === popoutGroup &&
+        options.skipPopoutAssociated !== true &&
+        hiddenReferenceGroup.panels.length === 0
+      ) {
+        groups = groups.filter((entry) => entry !== hiddenReferenceGroup);
+      }
+    }),
   };
 
   const api = {
@@ -437,10 +399,7 @@ function createAuxiliaryFloatingDockApiStub() {
       panel.api.title = title;
       const index = Math.max(
         0,
-        Math.min(
-          position.index ?? group.panels.length - 1,
-          group.panels.length - 1,
-        ),
+        Math.min(position.index ?? group.panels.length - 1, group.panels.length - 1),
       );
       group.panels = group.panels.filter((entry) => entry !== panel);
       group.panels.splice(index, 0, panel);
@@ -515,13 +474,8 @@ function createFloatPanelApiStub() {
             group: ReturnType<typeof createGroup>;
             index: number;
           }) => {
-            panel.group.panels = panel.group.panels.filter(
-              (entry) => entry.id !== panel.id,
-            );
-            const nextIndex = Math.max(
-              0,
-              Math.min(index, targetGroup.panels.length),
-            );
+            panel.group.panels = panel.group.panels.filter((entry) => entry.id !== panel.id);
+            const nextIndex = Math.max(0, Math.min(index, targetGroup.panels.length));
             targetGroup.panels.splice(nextIndex, 0, panel);
             panel.group = targetGroup;
             targetGroup.activePanel = panel;
@@ -559,9 +513,7 @@ function createFloatPanelApiStub() {
     addPopoutGroup: vi.fn((item: typeof scorePanel | typeof sourceGroup) => {
       const source = 'panels' in item ? item : item.group;
       const panelsToMove = 'panels' in item ? [...item.panels] : [item];
-      source.panels = source.panels.filter(
-        (entry) => !panelsToMove.includes(entry),
-      );
+      source.panels = source.panels.filter((entry) => !panelsToMove.includes(entry));
       for (const moved of panelsToMove) {
         popoutGroup.panels.push(moved);
         moved.group = popoutGroup;
@@ -601,10 +553,7 @@ function createFailedFloatPanelApiStub() {
   };
 
   stub.api.addPopoutGroup.mockImplementation(
-    (
-      _item: unknown,
-      options?: { onDidOpen?: (event: { window: Window }) => void },
-    ) => {
+    (_item: unknown, options?: { onDidOpen?: (event: { window: Window }) => void }) => {
       options?.onDidOpen?.({ window: popoutWindow as unknown as Window });
       return Promise.resolve(false);
     },
@@ -739,9 +688,7 @@ describe('workbench panel close/reopen restoration', () => {
 
     useWorkbenchStore.getState().closePanel('ScoreTopComponent');
 
-    expect(
-      useWorkbenchStore.getState().closedPanelOrigins.ScoreTopComponent,
-    ).toMatchObject({
+    expect(useWorkbenchStore.getState().closedPanelOrigins.ScoreTopComponent).toMatchObject({
       originGroupId: group.id,
       originIndex: 0,
       originPanelOrder: ['ScoreTopComponent'],
@@ -766,9 +713,7 @@ describe('workbench panel close/reopen restoration', () => {
         }),
       }),
     );
-    expect(
-      useWorkbenchStore.getState().closedPanelOrigins.ScoreTopComponent,
-    ).toBeUndefined();
+    expect(useWorkbenchStore.getState().closedPanelOrigins.ScoreTopComponent).toBeUndefined();
   });
 
   it('replaces the visible Library Item tab when another session opens', () => {
@@ -779,12 +724,12 @@ describe('workbench panel close/reopen restoration', () => {
       closedPanelOrigins: {},
     });
 
-    useWorkbenchStore.getState().openLibraryEditorPanel(
-      createLibraryEditorSession(undefined, { sessionId: 'session-1' }),
-    );
-    useWorkbenchStore.getState().openLibraryEditorPanel(
-      createLibraryEditorSession(undefined, { sessionId: 'session-2' }),
-    );
+    useWorkbenchStore
+      .getState()
+      .openLibraryEditorPanel(createLibraryEditorSession(undefined, { sessionId: 'session-1' }));
+    useWorkbenchStore
+      .getState()
+      .openLibraryEditorPanel(createLibraryEditorSession(undefined, { sessionId: 'session-2' }));
 
     expect(group.panels.map((panel: { id: string }) => panel.id)).toEqual([
       'ScoreTopComponent',
@@ -803,9 +748,9 @@ describe('workbench store move and reset actions', () => {
     });
     useWorkbenchStore
       .getState()
-      .auxiliary.groups.find(
-        (group) => group.seedGroupId === 'properties-main',
-      )!.panelIds = ['SoundObjectPropertiesTopComponent'];
+      .auxiliary.groups.find((group) => group.seedGroupId === 'properties-main')!.panelIds = [
+      'SoundObjectPropertiesTopComponent',
+    ];
 
     const groupInstanceId = useWorkbenchStore
       .getState()
@@ -830,8 +775,7 @@ describe('workbench store move and reset actions', () => {
 
 describe('workbench store float/dock actions', () => {
   it('floats one tab from a multi-tab group without creating a temporary split group', async () => {
-    const { api, popoutGroup, scorePanel, sourceGroup } =
-      createFloatPanelApiStub();
+    const { api, popoutGroup, scorePanel, sourceGroup } = createFloatPanelApiStub();
 
     useWorkbenchStore.setState({
       api,
@@ -850,12 +794,8 @@ describe('workbench store float/dock actions', () => {
       }),
     );
     expect(scorePanel.group).toBe(popoutGroup);
-    expect(sourceGroup.panels.map((entry) => entry.id)).toEqual([
-      'OrchestraTopComponent',
-    ]);
-    expect(
-      useWorkbenchStore.getState().floatingOrigins[popoutGroup.id],
-    ).toMatchObject({
+    expect(sourceGroup.panels.map((entry) => entry.id)).toEqual(['OrchestraTopComponent']);
+    expect(useWorkbenchStore.getState().floatingOrigins[popoutGroup.id]).toMatchObject({
       originGroupId: sourceGroup.id,
       originPanelOrder: [scorePanel.id],
       originIndex: 0,
@@ -863,8 +803,7 @@ describe('workbench store float/dock actions', () => {
   });
 
   it('floats a group into a distinct popout while retaining the original group as its dock target', async () => {
-    const { api, popoutGroup, popoutWindow, scorePanel, sourceGroup } =
-      createFloatPanelApiStub();
+    const { api, popoutGroup, popoutWindow, scorePanel, sourceGroup } = createFloatPanelApiStub();
 
     useWorkbenchStore.setState({
       api,
@@ -879,18 +818,14 @@ describe('workbench store float/dock actions', () => {
       sourceGroup,
       expect.objectContaining({ popoutUrl: 'popout.html' }),
     );
-    expect(api.addPopoutGroup.mock.calls[0][1]).not.toHaveProperty(
-      'overridePopoutGroup',
-    );
+    expect(api.addPopoutGroup.mock.calls[0][1]).not.toHaveProperty('overridePopoutGroup');
     expect(sourceGroup.panels).toEqual([]);
     expect(api.removeGroup).not.toHaveBeenCalled();
     expect(popoutGroup.panels.map((entry) => entry.id)).toEqual([
       'ScoreTopComponent',
       'OrchestraTopComponent',
     ]);
-    expect(
-      useWorkbenchStore.getState().floatingOrigins[popoutGroup.id],
-    ).toMatchObject({
+    expect(useWorkbenchStore.getState().floatingOrigins[popoutGroup.id]).toMatchObject({
       originGroupId: sourceGroup.id,
       originPanelOrder: ['ScoreTopComponent', 'OrchestraTopComponent'],
     });
@@ -899,8 +834,7 @@ describe('workbench store float/dock actions', () => {
   });
 
   it('closes a blank popout window when Dockview fails to attach the floated panel', async () => {
-    const { api, popoutGroup, popoutWindow, scorePanel } =
-      createFailedFloatPanelApiStub();
+    const { api, popoutGroup, popoutWindow, scorePanel } = createFailedFloatPanelApiStub();
 
     useWorkbenchStore.setState({
       api,
@@ -913,14 +847,11 @@ describe('workbench store float/dock actions', () => {
 
     expect(popoutWindow.close).toHaveBeenCalledTimes(1);
     expect(popoutWindow.closed).toBe(true);
-    expect(
-      useWorkbenchStore.getState().floatingOrigins[popoutGroup.id],
-    ).toBeUndefined();
+    expect(useWorkbenchStore.getState().floatingOrigins[popoutGroup.id]).toBeUndefined();
   });
 
   it('docks a single floated editor tab back and closes the empty popout window', () => {
-    const { api, panel, popoutWindow, sourceGroup, targetGroup } =
-      createFloatingDockApiStub();
+    const { api, panel, popoutWindow, sourceGroup, targetGroup } = createFloatingDockApiStub();
 
     useWorkbenchStore.setState({
       api,
@@ -958,18 +889,14 @@ describe('workbench store float/dock actions', () => {
     );
     expect(popoutWindow.close).toHaveBeenCalledTimes(1);
     expect(popoutWindow.closed).toBe(true);
-    expect(
-      useWorkbenchStore.getState().floatingOrigins[sourceGroup.id],
-    ).toBeUndefined();
+    expect(useWorkbenchStore.getState().floatingOrigins[sourceGroup.id]).toBeUndefined();
   });
 
   it('removes the hidden right-edge reference before rebuilding a docked auxiliary panel', () => {
     const { api, hiddenReferenceGroup, popoutGroup, propertiesPanel } =
       createAuxiliaryFloatingDockApiStub();
     const auxiliary = createDefaultAuxiliaryLayoutState();
-    const properties = auxiliary.groups.find(
-      (group) => group.seedGroupId === 'properties-main',
-    )!;
+    const properties = auxiliary.groups.find((group) => group.seedGroupId === 'properties-main')!;
     properties.panelIds = [propertiesPanel.id];
     properties.dockedPanelIds = [propertiesPanel.id];
     properties.activePanelId = propertiesPanel.id;
@@ -1005,9 +932,7 @@ describe('workbench store float/dock actions', () => {
         skipPopoutReturn: true,
       }),
     );
-    expect(api.component.removeGroup.mock.calls[0][1]).not.toHaveProperty(
-      'skipPopoutAssociated',
-    );
+    expect(api.component.removeGroup.mock.calls[0][1]).not.toHaveProperty('skipPopoutAssociated');
     expect(api.groups).not.toContain(hiddenReferenceGroup);
     expect(api.getGroup('blue-aux-edge-right')).toMatchObject({
       panels: [expect.objectContaining({ id: propertiesPanel.id })],
@@ -1016,9 +941,7 @@ describe('workbench store float/dock actions', () => {
     expect(
       useWorkbenchStore
         .getState()
-        .auxiliary.groups.find(
-          (group) => group.seedGroupId === 'properties-main',
-        )!.dockedSize,
+        .auxiliary.groups.find((group) => group.seedGroupId === 'properties-main')!.dockedSize,
     ).toBe(360);
     expect(
       api.groups.filter(
@@ -1213,10 +1136,12 @@ describe('workbench store native menu commands', () => {
     try {
       useScoreSelectionStore.getState().clearSelection();
       useWorkbenchStore.getState().handleNativeMenuCommand({ type: 'audition-score-objects' });
-      useScoreSelectionStore.getState().setSelection([{
-        objectId: 'live-1',
-        editorTarget: { ownerKind: 'blueLive' } as never,
-      }]);
+      useScoreSelectionStore.getState().setSelection([
+        {
+          objectId: 'live-1',
+          editorTarget: { ownerKind: 'blueLive' } as never,
+        },
+      ]);
       useWorkbenchStore.getState().handleNativeMenuCommand({ type: 'audition-score-objects' });
       expect(auditionScoreObjects).not.toHaveBeenCalled();
     } finally {
@@ -1228,10 +1153,7 @@ describe('workbench store native menu commands', () => {
 
 describe('workbench-store reset-windows command', () => {
   it('routes the reset-windows native menu command to resetLayout', () => {
-    const resetLayoutSpy = vi.spyOn(
-      useWorkbenchStore.getState(),
-      'resetLayout',
-    );
+    const resetLayoutSpy = vi.spyOn(useWorkbenchStore.getState(), 'resetLayout');
     useWorkbenchStore.getState().handleNativeMenuCommand({
       type: 'reset-windows',
     });
@@ -1317,7 +1239,10 @@ function createTransitionApiStub() {
           moveTo: vi.fn(({ group: targetGroup, index }: { group: any; index?: number }) => {
             panel.group.panels = panel.group.panels.filter((entry: any) => entry.id !== id);
             panel.group = targetGroup;
-            const at = Math.max(0, Math.min(index ?? targetGroup.panels.length, targetGroup.panels.length));
+            const at = Math.max(
+              0,
+              Math.min(index ?? targetGroup.panels.length, targetGroup.panels.length),
+            );
             targetGroup.panels.splice(at, 0, panel);
           }),
         },
@@ -1388,7 +1313,9 @@ describe('workbench store deferred and failed transitions', () => {
 
     const persisted = serializedAuxiliary();
     expect(
-      persisted.groups.filter((group: any) => group.panelIds.length > 0).map((group: any) => group.edge),
+      persisted.groups
+        .filter((group: any) => group.panelIds.length > 0)
+        .map((group: any) => group.edge),
     ).not.toContain('left');
 
     manager.getActions().endDrag();
@@ -1466,7 +1393,9 @@ describe('workbench store deferred and failed transitions', () => {
 
     const persisted = serializedAuxiliary();
     expect(
-      persisted.groups.filter((group: any) => group.panelIds.length > 0).map((group: any) => group.edge),
+      persisted.groups
+        .filter((group: any) => group.panelIds.length > 0)
+        .map((group: any) => group.edge),
     ).not.toContain('left');
   });
 });

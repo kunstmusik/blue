@@ -45,10 +45,7 @@ export class BSBFileSelector extends BSBWidget {
     this.syncStringChannels();
   }
 
-  override collectReplacements(
-    unit: BSBCompilationUnit,
-    _parameters?: Parameter[],
-  ): void {
+  override collectReplacements(unit: BSBCompilationUnit, _parameters?: Parameter[]): void {
     const fileNameValue = this.fileName.replace(/\\/g, '/');
 
     if (this.stringChannelEnabled && this.stringChannel.channelName) {

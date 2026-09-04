@@ -8,20 +8,11 @@ import { PLAYBACK_RUNTIME_IPC_CHANNELS } from './playback-runtime-ipc';
 import { PROJECT_ARTIFACTS_IPC_CHANNELS } from './project-artifacts-ipc';
 import { PROJECT_DOCUMENT_IPC_CHANNELS } from './project-document-ipc';
 import { PROJECT_LIFECYCLE_IPC_CHANNELS } from './project-lifecycle-ipc';
-import {
-  CODE_REPOSITORY_IPC_CHANNELS,
-  registerCodeRepositoryIpc,
-} from '../code-repository/ipc';
+import { CODE_REPOSITORY_IPC_CHANNELS, registerCodeRepositoryIpc } from '../code-repository/ipc';
 import type { CodeRepositoryService } from '../code-repository/service';
-import {
-  MIDI_INPUT_IPC_CHANNELS,
-  MidiInputCoordinator,
-} from '../midi-input-coordinator';
+import { MIDI_INPUT_IPC_CHANNELS, MidiInputCoordinator } from '../midi-input-coordinator';
 import { createDefaultProgramSettings } from '../../shared/program-settings';
-import {
-  UNIFIED_LIBRARY_IPC_CHANNELS,
-  registerUnifiedLibraryIpc,
-} from '../unified-library/ipc';
+import { UNIFIED_LIBRARY_IPC_CHANNELS, registerUnifiedLibraryIpc } from '../unified-library/ipc';
 import type { UnifiedLibraryService } from '../unified-library/service';
 import {
   disposeWorkbenchWindowHost,
@@ -41,11 +32,7 @@ vi.mock('electron', () => ({
   ipcMain: {},
 }));
 
-import type {
-  IpcMainEventListener,
-  IpcMainInvokeHandler,
-  IpcMainLike,
-} from './ipc-registration';
+import type { IpcMainEventListener, IpcMainInvokeHandler, IpcMainLike } from './ipc-registration';
 
 interface RegistrationRecord {
   mode: 'handle' | 'on';
@@ -79,14 +66,16 @@ class CapturingIpcMain implements IpcMainLike {
 
   handle(channel: string, listener: IpcMainInvokeHandler): void {
     if (channel === this.failOnChannel) throw new Error(`failed:${channel}`);
-    if (this.handlers.has(channel) || this.listeners.has(channel)) throw new Error(`duplicate:${channel}`);
+    if (this.handlers.has(channel) || this.listeners.has(channel))
+      throw new Error(`duplicate:${channel}`);
     this.handlers.set(channel, listener);
     this.registrations.push(`handle:${channel}`);
   }
 
   on(channel: string, listener: IpcMainEventListener): void {
     if (channel === this.failOnChannel) throw new Error(`failed:${channel}`);
-    if (this.handlers.has(channel) || this.listeners.has(channel)) throw new Error(`duplicate:${channel}`);
+    if (this.handlers.has(channel) || this.listeners.has(channel))
+      throw new Error(`duplicate:${channel}`);
     this.listeners.set(channel, listener);
     this.registrations.push(`on:${channel}`);
   }
@@ -127,17 +116,19 @@ const DOMAIN_CHANNELS = [
   ...PROJECT_DOCUMENT_IPC_CHANNELS,
 ] as const;
 
-function expectedProcessWideRegistrations(collected: ReturnType<typeof collectedDomainHandlers>): string[] {
+function expectedProcessWideRegistrations(
+  collected: ReturnType<typeof collectedDomainHandlers>,
+): string[] {
   return [
-    ...DOMAIN_CHANNELS.map((channel) => (
-      collected.listeners.has(channel) ? `on:${channel}` : `handle:${channel}`
-    )),
-    ...WORKBENCH_WINDOW_IPC_CHANNELS.map((channel, index) => (
-      index === 1 ? `on:${channel}` : `handle:${channel}`
-    )),
-    ...MIDI_INPUT_IPC_CHANNELS.map((channel, index) => (
-      index === 1 || index === 2 ? `on:${channel}` : `handle:${channel}`
-    )),
+    ...DOMAIN_CHANNELS.map((channel) =>
+      collected.listeners.has(channel) ? `on:${channel}` : `handle:${channel}`,
+    ),
+    ...WORKBENCH_WINDOW_IPC_CHANNELS.map((channel, index) =>
+      index === 1 ? `on:${channel}` : `handle:${channel}`,
+    ),
+    ...MIDI_INPUT_IPC_CHANNELS.map((channel, index) =>
+      index === 1 || index === 2 ? `on:${channel}` : `handle:${channel}`,
+    ),
     ...UNIFIED_LIBRARY_IPC_CHANNELS.map((channel) => `handle:${channel}`),
     ...CODE_REPOSITORY_IPC_CHANNELS.map((channel) => `handle:${channel}`),
   ];
@@ -160,16 +151,20 @@ function registerProcessWideIpc(ipcMain: CapturingIpcMain): () => void {
     midi.registerIpcHandlers();
     disposers.push(() => midi.disposeIpcHandlers());
 
-    disposers.push(registerUnifiedLibraryIpc({
-      ipcMain: ipcMain as unknown as IpcMain,
-      service: createUnifiedLibraryService(),
-      getWindows: () => [],
-    }));
-    disposers.push(registerCodeRepositoryIpc({
-      ipcMain: ipcMain as unknown as IpcMain,
-      service: createCodeRepositoryService(),
-      getWindows: () => [],
-    }));
+    disposers.push(
+      registerUnifiedLibraryIpc({
+        ipcMain: ipcMain as unknown as IpcMain,
+        service: createUnifiedLibraryService(),
+        getWindows: () => [],
+      }),
+    );
+    disposers.push(
+      registerCodeRepositoryIpc({
+        ipcMain: ipcMain as unknown as IpcMain,
+        service: createCodeRepositoryService(),
+        getWindows: () => [],
+      }),
+    );
   } catch (error) {
     for (const dispose of disposers.slice().reverse()) {
       try {
@@ -197,9 +192,9 @@ function collectedDomainHandlers(): {
   const handlers = new Map<string, IpcMainInvokeHandler>();
   for (const channel of DOMAIN_CHANNELS) {
     if (
-      channel === 'sync-audition-score-object-availability'
-      || channel === 'sync-follow-playback-state'
-      || channel === 'settings:close-response'
+      channel === 'sync-audition-score-object-availability' ||
+      channel === 'sync-follow-playback-state' ||
+      channel === 'settings:close-response'
     ) {
       listeners.set(channel, () => undefined);
     } else {
@@ -227,10 +222,18 @@ describe('main-process IPC inventory oracle', () => {
         channel: 'open-file',
         args: [{ sender: {} }],
       });
-      expect(ipcMain.handlers.get(WORKBENCH_WINDOW_IPC_CHANNELS[4])?.({}, {})).toEqual({ docked: false });
-      await expect(ipcMain.handlers.get(MIDI_INPUT_IPC_CHANNELS[3])?.({ sender: {} })).resolves.toBeNull();
-      expect(ipcMain.handlers.get(UNIFIED_LIBRARY_IPC_CHANNELS[0])?.({})).toEqual({ owner: 'unified-library' });
-      await expect(ipcMain.handlers.get(CODE_REPOSITORY_IPC_CHANNELS[1])?.({})).resolves.toEqual({ owner: 'code-repository' });
+      expect(ipcMain.handlers.get(WORKBENCH_WINDOW_IPC_CHANNELS[4])?.({}, {})).toEqual({
+        docked: false,
+      });
+      await expect(
+        ipcMain.handlers.get(MIDI_INPUT_IPC_CHANNELS[3])?.({ sender: {} }),
+      ).resolves.toBeNull();
+      expect(ipcMain.handlers.get(UNIFIED_LIBRARY_IPC_CHANNELS[0])?.({})).toEqual({
+        owner: 'unified-library',
+      });
+      await expect(ipcMain.handlers.get(CODE_REPOSITORY_IPC_CHANNELS[1])?.({})).resolves.toEqual({
+        owner: 'code-repository',
+      });
     } finally {
       dispose();
     }
@@ -244,7 +247,9 @@ describe('main-process IPC inventory oracle', () => {
     const ipcMain = new CapturingIpcMain();
     ipcMain.failOnChannel = UNIFIED_LIBRARY_IPC_CHANNELS[8];
 
-    expect(() => registerProcessWideIpc(ipcMain)).toThrow(`failed:${UNIFIED_LIBRARY_IPC_CHANNELS[8]}`);
+    expect(() => registerProcessWideIpc(ipcMain)).toThrow(
+      `failed:${UNIFIED_LIBRARY_IPC_CHANNELS[8]}`,
+    );
     expect(ipcMain.removals).toEqual(ipcMain.registrations.slice().reverse());
     expect(ipcMain.handlers.size).toBe(0);
     expect(ipcMain.listeners.size).toBe(0);
@@ -255,9 +260,11 @@ describe('main-process IPC inventory oracle', () => {
     const collected = collectedDomainHandlers();
     const dispose = registerMainProcessDomainIpc({ ipcMain, ...collected });
 
-    expect(ipcMain.registrations).toEqual(DOMAIN_CHANNELS.map((channel) => (
-      collected.listeners.has(channel) ? `on:${channel}` : `handle:${channel}`
-    )));
+    expect(ipcMain.registrations).toEqual(
+      DOMAIN_CHANNELS.map((channel) =>
+        collected.listeners.has(channel) ? `on:${channel}` : `handle:${channel}`,
+      ),
+    );
     expect(ipcMain.handlers.size).toBe(113);
     expect(ipcMain.listeners.size).toBe(3);
 
@@ -273,8 +280,9 @@ describe('main-process IPC inventory oracle', () => {
     const collected = collectedDomainHandlers();
     ipcMain.failOnChannel = 'blue-live:toggle';
 
-    expect(() => registerMainProcessDomainIpc({ ipcMain, ...collected }))
-      .toThrow('failed:blue-live:toggle');
+    expect(() => registerMainProcessDomainIpc({ ipcMain, ...collected })).toThrow(
+      'failed:blue-live:toggle',
+    );
     expect(ipcMain.removals).toEqual(ipcMain.registrations.slice().reverse());
     expect(ipcMain.handlers.size).toBe(0);
     expect(ipcMain.listeners.size).toBe(0);
@@ -290,10 +298,11 @@ describe('main-process IPC inventory oracle', () => {
 
     const collectedInvoke = collected.filter((entry) => entry.mode === 'handle');
     const collectedListeners = collected.filter((entry) => entry.mode === 'on');
-    const collectedExpandedCount = collectedInvoke.reduce(
-      (count, entry) => count + (entry.channelExpression === 'channel' ? 3 : 1),
-      0,
-    ) + collectedListeners.length;
+    const collectedExpandedCount =
+      collectedInvoke.reduce(
+        (count, entry) => count + (entry.channelExpression === 'channel' ? 3 : 1),
+        0,
+      ) + collectedListeners.length;
     const existing = [...unified, ...code, ...workbench, ...midi];
     const domainChannels = DOMAIN_CHANNELS;
 
@@ -328,7 +337,9 @@ describe('main-process IPC inventory oracle', () => {
     // by the first oracle.
     expect(new Set(keys).size).toBe(keys.length);
     expect(records.filter((entry) => entry.mode === 'on')).toHaveLength(6);
-    expect(records.filter((entry) => entry.mode === 'on').every((entry) => entry.source.includes('('))).toBe(true);
+    expect(
+      records.filter((entry) => entry.mode === 'on').every((entry) => entry.source.includes('(')),
+    ).toBe(true);
   });
 
   it('keeps the direct main-process registrations in the pre-ready source region', async () => {
@@ -336,7 +347,11 @@ describe('main-process IPC inventory oracle', () => {
     const firstWhenReady = source.indexOf('const applicationReadyPromise');
     expect(firstWhenReady).toBeGreaterThan(0);
     expect([...source.matchAll(/ipcMain\.(handle|on)\(/g)]).toHaveLength(0);
-    expect([...source.matchAll(/ipcRegistration\.(handle|on)\(/g)].every((match) => match.index! < firstWhenReady)).toBe(true);
+    expect(
+      [...source.matchAll(/ipcRegistration\.(handle|on)\(/g)].every(
+        (match) => match.index! < firstWhenReady,
+      ),
+    ).toBe(true);
     expect(source).not.toContain('ipcMain.removeAllListeners');
   });
 });

@@ -1,7 +1,4 @@
-import {
-  type BlueX7Voice,
-  createDefaultBlueX7Voice,
-} from './blue-x7';
+import { type BlueX7Voice, createDefaultBlueX7Voice } from './blue-x7';
 
 export const SINGLE_SYSEX_SIZE = 163;
 export const BANK_SYSEX_SIZE = 4104;
@@ -54,8 +51,14 @@ function validateDecodedVoice(voice: BlueX7Voice): void {
   assertIntegerRange('Algorithm', voice.common.algorithm, 1, 32);
   assertIntegerRange('Feedback', voice.common.feedback, 0, 7);
   assertIntegerRange('Key transpose', voice.common.keyTranspose, 0, 48);
-  if (voice.common.operatorEnabled.length !== 6 || voice.common.operatorEnabled.some((enabled) => typeof enabled !== 'boolean')) {
-    throw new BlueX7SysexValidationError('invalid-data', 'Operator enabled flags must contain six booleans');
+  if (
+    voice.common.operatorEnabled.length !== 6 ||
+    voice.common.operatorEnabled.some((enabled) => typeof enabled !== 'boolean')
+  ) {
+    throw new BlueX7SysexValidationError(
+      'invalid-data',
+      'Operator enabled flags must contain six booleans',
+    );
   }
 
   assertIntegerRange('LFO speed', voice.lfo.speed, 0, 99);
@@ -77,21 +80,54 @@ function validateDecodedVoice(voice: BlueX7Voice): void {
     assertIntegerRange(`Operator ${index + 1} right curve`, operator.curveRight, 0, 3);
     assertIntegerRange(`Operator ${index + 1} left depth`, operator.depthLeft, 0, 99);
     assertIntegerRange(`Operator ${index + 1} right depth`, operator.depthRight, 0, 99);
-    assertIntegerRange(`Operator ${index + 1} keyboard rate scaling`, operator.keyboardRateScaling, 0, 7);
+    assertIntegerRange(
+      `Operator ${index + 1} keyboard rate scaling`,
+      operator.keyboardRateScaling,
+      0,
+      7,
+    );
     assertIntegerRange(`Operator ${index + 1} output level`, operator.outputLevel, 0, 99);
     // Bank decoding preserves Blue's historical packed-bit parity, which can
     // yield values through 14 even though the editor control is 0..7.
-    assertIntegerRange(`Operator ${index + 1} velocity sensitivity`, operator.velocitySensitivity, 0, 14);
-    assertIntegerRange(`Operator ${index + 1} amplitude modulation sensitivity`, operator.modulationAmplitude, 0, 3);
-    assertIntegerRange(`Operator ${index + 1} pitch modulation sensitivity`, operator.modulationPitch, 0, 7);
+    assertIntegerRange(
+      `Operator ${index + 1} velocity sensitivity`,
+      operator.velocitySensitivity,
+      0,
+      14,
+    );
+    assertIntegerRange(
+      `Operator ${index + 1} amplitude modulation sensitivity`,
+      operator.modulationAmplitude,
+      0,
+      3,
+    );
+    assertIntegerRange(
+      `Operator ${index + 1} pitch modulation sensitivity`,
+      operator.modulationPitch,
+      0,
+      7,
+    );
 
     if (operator.envelope.length !== 4) {
-      throw new BlueX7SysexValidationError('invalid-data', `Operator ${index + 1} envelope must contain four points`);
+      throw new BlueX7SysexValidationError(
+        'invalid-data',
+        `Operator ${index + 1} envelope must contain four points`,
+      );
     }
     for (let pointIndex = 0; pointIndex < operator.envelope.length; pointIndex += 1) {
       const point = operator.envelope[pointIndex];
-      assertIntegerRange(`Operator ${index + 1} envelope point ${pointIndex + 1} rate`, point.rate, 0, 99);
-      assertIntegerRange(`Operator ${index + 1} envelope point ${pointIndex + 1} level`, point.level, 0, 99);
+      assertIntegerRange(
+        `Operator ${index + 1} envelope point ${pointIndex + 1} rate`,
+        point.rate,
+        0,
+        99,
+      );
+      assertIntegerRange(
+        `Operator ${index + 1} envelope point ${pointIndex + 1} level`,
+        point.level,
+        0,
+        99,
+      );
     }
   }
 
@@ -137,13 +173,22 @@ export function validateBlueX7Sysex(
   }
 
   if (data[0] !== 0xf0 || data[data.length - 1] !== 0xf7) {
-    throw new BlueX7SysexValidationError('invalid-framing', 'Invalid SysEx framing: payload must start with F0 and end with F7');
+    throw new BlueX7SysexValidationError(
+      'invalid-framing',
+      'Invalid SysEx framing: payload must start with F0 and end with F7',
+    );
   }
   if (data[1] !== 0x43) {
-    throw new BlueX7SysexValidationError('invalid-framing', `Expected Yamaha manufacturer byte 0x43, got 0x${data[1].toString(16)}`);
+    throw new BlueX7SysexValidationError(
+      'invalid-framing',
+      `Expected Yamaha manufacturer byte 0x43, got 0x${data[1].toString(16)}`,
+    );
   }
   if ((data[2] & 0xf0) !== 0) {
-    throw new BlueX7SysexValidationError('invalid-header', `Invalid device/channel byte 0x${data[2].toString(16)}`);
+    throw new BlueX7SysexValidationError(
+      'invalid-header',
+      `Invalid device/channel byte 0x${data[2].toString(16)}`,
+    );
   }
 
   const expectedFormat = type === 'single' ? 0 : 9;
@@ -157,7 +202,10 @@ export function validateBlueX7Sysex(
 
   for (let index = SYSEX_START_OFFSET; index < data.length - 2; index += 1) {
     if (data[index] > 0x7f) {
-      throw new BlueX7SysexValidationError('invalid-payload', `SysEx payload byte ${index} is not 7-bit: ${data[index]}`);
+      throw new BlueX7SysexValidationError(
+        'invalid-payload',
+        `SysEx payload byte ${index} is not 7-bit: ${data[index]}`,
+      );
     }
   }
 

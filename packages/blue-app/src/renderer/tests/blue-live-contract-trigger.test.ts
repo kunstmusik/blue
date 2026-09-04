@@ -142,7 +142,10 @@ describe('Blue Live patch no-op semantics', () => {
     data.getLiveData().setCommandLine('-d -odac');
     data.getLiveData().setCommandLineEnabled(true);
     const changed = applyProjectDocumentPatch(data, {
-      blueLive: { type: 'updateOptions', patch: { commandLine: '-d -odac', commandLineEnabled: true } },
+      blueLive: {
+        type: 'updateOptions',
+        patch: { commandLine: '-d -odac', commandLineEnabled: true },
+      },
     });
     expect(changed).toBe(false);
   });

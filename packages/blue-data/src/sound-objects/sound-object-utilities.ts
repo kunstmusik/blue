@@ -132,11 +132,21 @@ export function initBasicFromXML(sObj: BasicSoundObject, data: Element): void {
       // Legacy numeric format
       const tbNum = parseInt(tbStr, 10);
       switch (tbNum) {
-        case -1: sObj.setTimeBehavior(TimeBehavior.NOT_SUPPORTED); break;
-        case 0: sObj.setTimeBehavior(TimeBehavior.SCALE); break;
-        case 1: sObj.setTimeBehavior(TimeBehavior.REPEAT_CLASSIC); break;
-        case 3: sObj.setTimeBehavior(TimeBehavior.REPEAT); break;
-        case 2: sObj.setTimeBehavior(TimeBehavior.NONE); break;
+        case -1:
+          sObj.setTimeBehavior(TimeBehavior.NOT_SUPPORTED);
+          break;
+        case 0:
+          sObj.setTimeBehavior(TimeBehavior.SCALE);
+          break;
+        case 1:
+          sObj.setTimeBehavior(TimeBehavior.REPEAT_CLASSIC);
+          break;
+        case 3:
+          sObj.setTimeBehavior(TimeBehavior.REPEAT);
+          break;
+        case 2:
+          sObj.setTimeBehavior(TimeBehavior.NONE);
+          break;
       }
     }
   }
@@ -176,12 +186,18 @@ export function initBasicFromXML(sObj: BasicSoundObject, data: Element): void {
 
 function timeBehaviorToType(tb: TimeBehavior): number {
   switch (tb) {
-    case TimeBehavior.SCALE: return 0;
-    case TimeBehavior.REPEAT_CLASSIC: return 1;
-    case TimeBehavior.NONE: return 2;
-    case TimeBehavior.REPEAT: return 3;
-    case TimeBehavior.NOT_SUPPORTED: return -1;
-    default: return 0;
+    case TimeBehavior.SCALE:
+      return 0;
+    case TimeBehavior.REPEAT_CLASSIC:
+      return 1;
+    case TimeBehavior.NONE:
+      return 2;
+    case TimeBehavior.REPEAT:
+      return 3;
+    case TimeBehavior.NOT_SUPPORTED:
+      return -1;
+    default:
+      return 0;
   }
 }
 

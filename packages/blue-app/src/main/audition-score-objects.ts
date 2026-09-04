@@ -1,8 +1,4 @@
-import {
-  createAuditionProjectCopy,
-  type BlueData,
-  type ScoreObject,
-} from '@blue/data';
+import { createAuditionProjectCopy, type BlueData, type ScoreObject } from '@blue/data';
 
 export interface AuditionEngineHandoff {
   /** Disk render/freeze operations are exclusive with realtime audition. */

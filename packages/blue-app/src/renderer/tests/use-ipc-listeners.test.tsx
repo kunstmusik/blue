@@ -32,7 +32,9 @@ import {
   type WindowLayoutUpdateRequest,
 } from '../../shared/window-layout-settings';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 type ListenerMap = Map<string, Set<(...args: unknown[]) => void>>;
 
@@ -40,7 +42,11 @@ function createListenerBucket(): ListenerMap {
   return new Map();
 }
 
-function addListener(listeners: ListenerMap, channel: string, handler: (...args: unknown[]) => void): () => void {
+function addListener(
+  listeners: ListenerMap,
+  channel: string,
+  handler: (...args: unknown[]) => void,
+): () => void {
   let set = listeners.get(channel);
   if (!set) {
     set = new Set();
@@ -93,23 +99,49 @@ describe('useIPCListeners', () => {
   let root: Root;
   const listeners = createListenerBucket();
   const blueAPI = {
-    onProjectLoaded: vi.fn((cb: (info: unknown) => void) => addListener(listeners, 'project-loaded', cb)),
+    onProjectLoaded: vi.fn((cb: (info: unknown) => void) =>
+      addListener(listeners, 'project-loaded', cb),
+    ),
     onProjectClosed: vi.fn((cb: () => void) => addListener(listeners, 'project-closed', cb)),
-    onPlaybackStatus: vi.fn((cb: (status: unknown) => void) => addListener(listeners, 'playback-status', cb)),
-    onPlaybackClock: vi.fn((cb: (clock: unknown) => void) => addListener(listeners, 'playback-clock', cb)),
-    onPlaybackError: vi.fn((cb: (error: unknown) => void) => addListener(listeners, 'playback-error', cb)),
-    onNativeMenuCommand: vi.fn((cb: (command: unknown) => void) => addListener(listeners, 'native-menu-command', cb)),
+    onPlaybackStatus: vi.fn((cb: (status: unknown) => void) =>
+      addListener(listeners, 'playback-status', cb),
+    ),
+    onPlaybackClock: vi.fn((cb: (clock: unknown) => void) =>
+      addListener(listeners, 'playback-clock', cb),
+    ),
+    onPlaybackError: vi.fn((cb: (error: unknown) => void) =>
+      addListener(listeners, 'playback-error', cb),
+    ),
+    onNativeMenuCommand: vi.fn((cb: (command: unknown) => void) =>
+      addListener(listeners, 'native-menu-command', cb),
+    ),
     syncAuditionScoreObjectAvailability: vi.fn(),
     onSaveComplete: vi.fn((cb: () => void) => addListener(listeners, 'save-complete', cb)),
     onSaveError: vi.fn((cb: (error: unknown) => void) => addListener(listeners, 'save-error', cb)),
-    onEngineOutput: vi.fn((cb: (...args: unknown[]) => void) => addListener(listeners, 'engine-output', cb)),
-    onEngineOutputSelect: vi.fn((cb: (...args: unknown[]) => void) => addListener(listeners, 'engine-output-select', cb)),
-    onEngineOutputReset: vi.fn((cb: (...args: unknown[]) => void) => addListener(listeners, 'engine-output-reset', cb)),
-    onGeneratedCsd: vi.fn((cb: (...args: unknown[]) => void) => addListener(listeners, 'generated-csd', cb)),
-    onGeneratedCsdError: vi.fn((cb: (...args: unknown[]) => void) => addListener(listeners, 'generated-csd-error', cb)),
-    onBlueLiveStatus: vi.fn((cb: (...args: unknown[]) => void) => addListener(listeners, 'blue-live-status', cb)),
-    onRenderOperationStatus: vi.fn((cb: (...args: unknown[]) => void) => addListener(listeners, 'render-operation-status', cb)),
-    onProjectDocumentUpdated: vi.fn((cb: (...args: unknown[]) => void) => addListener(listeners, 'project-document-updated', cb)),
+    onEngineOutput: vi.fn((cb: (...args: unknown[]) => void) =>
+      addListener(listeners, 'engine-output', cb),
+    ),
+    onEngineOutputSelect: vi.fn((cb: (...args: unknown[]) => void) =>
+      addListener(listeners, 'engine-output-select', cb),
+    ),
+    onEngineOutputReset: vi.fn((cb: (...args: unknown[]) => void) =>
+      addListener(listeners, 'engine-output-reset', cb),
+    ),
+    onGeneratedCsd: vi.fn((cb: (...args: unknown[]) => void) =>
+      addListener(listeners, 'generated-csd', cb),
+    ),
+    onGeneratedCsdError: vi.fn((cb: (...args: unknown[]) => void) =>
+      addListener(listeners, 'generated-csd-error', cb),
+    ),
+    onBlueLiveStatus: vi.fn((cb: (...args: unknown[]) => void) =>
+      addListener(listeners, 'blue-live-status', cb),
+    ),
+    onRenderOperationStatus: vi.fn((cb: (...args: unknown[]) => void) =>
+      addListener(listeners, 'render-operation-status', cb),
+    ),
+    onProjectDocumentUpdated: vi.fn((cb: (...args: unknown[]) => void) =>
+      addListener(listeners, 'project-document-updated', cb),
+    ),
     getProgramSettings: vi.fn(),
     updateWindowLayout: vi.fn(),
   };
@@ -345,9 +377,8 @@ describe('useIPCListeners', () => {
       root.render(<Harness />);
     });
 
-    const projectUpdatedHandler = listeners.get('project-document-updated')!.values().next().value as (
-      ...args: unknown[]
-    ) => void;
+    const projectUpdatedHandler = listeners.get('project-document-updated')!.values().next()
+      .value as (...args: unknown[]) => void;
     act(() => {
       projectUpdatedHandler({
         sessionId: 7,
@@ -366,9 +397,8 @@ describe('useIPCListeners', () => {
       root.render(<Harness />);
     });
 
-    const projectUpdatedHandler = listeners.get('project-document-updated')!.values().next().value as (
-      ...args: unknown[]
-    ) => void;
+    const projectUpdatedHandler = listeners.get('project-document-updated')!.values().next()
+      .value as (...args: unknown[]) => void;
     act(() => {
       projectUpdatedHandler({
         sessionId: 6,
@@ -420,7 +450,9 @@ describe('useIPCListeners', () => {
     });
     expect(persistedLayout.windows.main?.normalBounds).toEqual(legacyBounds);
     expect(persistedLayout.workbench?.serializedLayout).toEqual(legacyWorkbench);
-    expect(useLayoutSettingsStore.getState().layout?.windows.main?.normalBounds).toEqual(legacyBounds);
+    expect(useLayoutSettingsStore.getState().layout?.windows.main?.normalBounds).toEqual(
+      legacyBounds,
+    );
   });
 
   it('hydrates saved follow preferences from program settings at startup (SPEC 079)', async () => {
@@ -471,7 +503,8 @@ describe('useIPCListeners', () => {
     });
     expect(usePlaybackStore.getState().followPlayback).toBe(false);
 
-    const projectClosedHandler = listeners.get('project-closed')!.values().next().value as () => void;
+    const projectClosedHandler = listeners.get('project-closed')!.values().next()
+      .value as () => void;
     act(() => {
       projectClosedHandler();
     });

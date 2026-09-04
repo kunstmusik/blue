@@ -1,9 +1,4 @@
-import {
-  OpcodeDefinition,
-  UDOStyle,
-  convertToClassic,
-  convertToModern,
-} from '@blue/data';
+import { OpcodeDefinition, UDOStyle, convertToClassic, convertToModern } from '@blue/data';
 
 import type { UdoDefinitionSnapshot } from '../../../../../shared/project-editor';
 

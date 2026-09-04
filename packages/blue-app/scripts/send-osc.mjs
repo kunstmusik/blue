@@ -1,10 +1,7 @@
 #!/usr/bin/env node
 
 import { Client } from 'node-osc';
-import {
-  OSC_COMMAND_REGISTRY,
-  OSC_DEFAULT_PREFERRED_PORT,
-} from '../src/shared/osc-control.ts';
+import { OSC_COMMAND_REGISTRY, OSC_DEFAULT_PREFERRED_PORT } from '../src/shared/osc-control.ts';
 
 const HELP = `
 Send one OSC control message to Blue.

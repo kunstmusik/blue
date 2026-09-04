@@ -44,7 +44,9 @@ describe('bsb identity helpers', () => {
       'slider-b',
     ]);
 
-    expect(findBsbWidgetById(root, 'slider-b')).toBe((root.getChildren()[1] as BSBHSliderBank).sliders[1]);
+    expect(findBsbWidgetById(root, 'slider-b')).toBe(
+      (root.getChildren()[1] as BSBHSliderBank).sliders[1],
+    );
   });
 
   it('repairs missing and duplicate widget ids deterministically', () => {

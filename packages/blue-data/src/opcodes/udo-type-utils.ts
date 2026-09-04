@@ -45,8 +45,9 @@ export function getModernOutputSignature(outTypes: string): string {
 // ─── Type Token Parsing ───
 
 function isTypeTokenStart(ch: string): boolean {
-  return ch === 'a' || ch === 'k' || ch === 'i'
-    || ch === 'S' || ch === 'f' || ch === 'o' || ch === 'j';
+  return (
+    ch === 'a' || ch === 'k' || ch === 'i' || ch === 'S' || ch === 'f' || ch === 'o' || ch === 'j'
+  );
 }
 
 function normalizeTypeToken(typeToken: string): string {
@@ -78,15 +79,22 @@ export function parseTypeTokens(typeSpec: string | null): string[] {
   let index = 0;
   while (index < trimmedSpec.length) {
     const currentChar = trimmedSpec[index];
-    if (/\s/.test(currentChar) || currentChar === ',' || currentChar === '(' || currentChar === ')') {
+    if (
+      /\s/.test(currentChar) ||
+      currentChar === ',' ||
+      currentChar === '(' ||
+      currentChar === ')'
+    ) {
       index++;
       continue;
     }
 
     if (isTypeTokenStart(currentChar)) {
-      if ((index + 2) < trimmedSpec.length
-          && trimmedSpec[index + 1] === '['
-          && trimmedSpec[index + 2] === ']') {
+      if (
+        index + 2 < trimmedSpec.length &&
+        trimmedSpec[index + 1] === '[' &&
+        trimmedSpec[index + 2] === ']'
+      ) {
         typeTokens.push(currentChar + '[]');
         index += 3;
       } else {
@@ -156,8 +164,7 @@ export function commaSeparatedOutTypesToJoined(commaSeparated: string): string {
 // ─── Input Argument Utilities ───
 
 function isVariableRatePrefix(prefix: string): boolean {
-  return prefix === 'a' || prefix === 'k' || prefix === 'i'
-    || prefix === 'S' || prefix === 'f';
+  return prefix === 'a' || prefix === 'k' || prefix === 'i' || prefix === 'S' || prefix === 'f';
 }
 
 function mapClassicInputTypeToVariablePrefix(inputType: string): string {

@@ -35,7 +35,10 @@ import {
   useBsbClipboardStore,
   type BsbCanvasClipboard,
 } from '../../../../../stores/bsb-clipboard-store';
-import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../../hooks/host-portals';
+import {
+  PopoutContextMenuPortal,
+  portalEventIsolationProps,
+} from '../../../../../hooks/host-portals';
 
 const BSB_ADDABLE_WIDGETS = [
   { type: 'BSBGroup', label: 'Group' },
@@ -77,7 +80,9 @@ interface MarqueeState {
   active: boolean;
 }
 
-export function isGridSnapEnabled(gridSettings: Pick<GridSettingsSnapshot, 'snapEnabled'> | null | undefined): boolean {
+export function isGridSnapEnabled(
+  gridSettings: Pick<GridSettingsSnapshot, 'snapEnabled'> | null | undefined,
+): boolean {
   return gridSettings?.snapEnabled === true;
 }
 
@@ -101,13 +106,17 @@ export function getNextMarqueeSelection(
   return next;
 }
 
-export function createCanvasClipboard(selectedWidgets: BsbWidgetNodeSnapshot[]): BsbCanvasClipboard | null {
+export function createCanvasClipboard(
+  selectedWidgets: BsbWidgetNodeSnapshot[],
+): BsbCanvasClipboard | null {
   if (selectedWidgets.length === 0) {
     return null;
   }
 
   return {
-    widgets: selectedWidgets.map((widget) => JSON.parse(JSON.stringify(widget)) as BsbWidgetNodeSnapshot),
+    widgets: selectedWidgets.map(
+      (widget) => JSON.parse(JSON.stringify(widget)) as BsbWidgetNodeSnapshot,
+    ),
     originX: Math.min(...selectedWidgets.map((widget) => widget.x)),
     originY: Math.min(...selectedWidgets.map((widget) => widget.y)),
   };
@@ -189,9 +198,11 @@ function BSBInterfaceCanvas({
     onWidgetSelect(null);
   }, [selectedWidgetIds, onBsbInterfacePatch, onWidgetSelect]);
 
-  const getSelectedCurrentWidgets = useCallback((): BsbWidgetNodeSnapshot[] => (
-    currentChildren.filter((child) => selectedWidgetIds.has(child.id))
-  ), [currentChildren, selectedWidgetIds]);
+  const getSelectedCurrentWidgets = useCallback(
+    (): BsbWidgetNodeSnapshot[] =>
+      currentChildren.filter((child) => selectedWidgetIds.has(child.id)),
+    [currentChildren, selectedWidgetIds],
+  );
 
   const copySelectedWidgets = useCallback((): boolean => {
     const selected = getSelectedCurrentWidgets();
@@ -212,23 +223,30 @@ function BSBInterfaceCanvas({
     return true;
   }, [getSelectedCurrentWidgets, removeSelectedWidgets, setClipboard]);
 
-  const pasteAt = useCallback((x: number, y: number): boolean => {
-    if (!clipboard) return false;
-    const gs = instrument.gridSettings;
-    const widgets = buildPastedWidgets(
-      clipboard,
-      x,
-      y,
-      isGridSnapEnabled(gs),
-      gs?.width,
-      gs?.height,
-    );
-    if (widgets.length === 0) return false;
+  const pasteAt = useCallback(
+    (x: number, y: number): boolean => {
+      if (!clipboard) return false;
+      const gs = instrument.gridSettings;
+      const widgets = buildPastedWidgets(
+        clipboard,
+        x,
+        y,
+        isGridSnapEnabled(gs),
+        gs?.width,
+        gs?.height,
+      );
+      if (widgets.length === 0) return false;
 
-    const pgId = groupStack.length > 0 ? groupStack[groupStack.length - 1].id : undefined;
-    onBsbInterfacePatch({ type: 'pasteWidgets', widgetData: JSON.stringify(widgets), parentGroupId: pgId });
-    return true;
-  }, [clipboard, groupStack, onBsbInterfacePatch, instrument.gridSettings]);
+      const pgId = groupStack.length > 0 ? groupStack[groupStack.length - 1].id : undefined;
+      onBsbInterfacePatch({
+        type: 'pasteWidgets',
+        widgetData: JSON.stringify(widgets),
+        parentGroupId: pgId,
+      });
+      return true;
+    },
+    [clipboard, groupStack, onBsbInterfacePatch, instrument.gridSettings],
+  );
 
   useEffect(() => {
     const element = canvasRef.current;
@@ -237,11 +255,9 @@ function BSBInterfaceCanvas({
     const measure = () => {
       const width = Math.ceil(element.clientWidth);
       const height = Math.ceil(element.clientHeight);
-      setViewportSize((previous) => (
-        previous.width === width && previous.height === height
-          ? previous
-          : { width, height }
-      ));
+      setViewportSize((previous) =>
+        previous.width === width && previous.height === height ? previous : { width, height },
+      );
     };
 
     measure();
@@ -256,187 +272,243 @@ function BSBInterfaceCanvas({
     return () => observer.disconnect();
   }, []);
 
-  const handleWidgetAction = useCallback((action: string) => {
-    const selIds = selectedWidgetIds;
-    if (selIds.size === 0) return;
-    const selected = getSelectedCurrentWidgets();
-    if (selected.length === 0) return;
-    const ww = (s: BsbWidgetNodeSnapshot) => getWidgetDisplaySize(s).width;
-    const wh = (s: BsbWidgetNodeSnapshot) => getWidgetDisplaySize(s).height;
+  const handleWidgetAction = useCallback(
+    (action: string) => {
+      const selIds = selectedWidgetIds;
+      if (selIds.size === 0) return;
+      const selected = getSelectedCurrentWidgets();
+      if (selected.length === 0) return;
+      const ww = (s: BsbWidgetNodeSnapshot) => getWidgetDisplaySize(s).width;
+      const wh = (s: BsbWidgetNodeSnapshot) => getWidgetDisplaySize(s).height;
 
-    switch (action) {
-      case 'copy': {
-        copySelectedWidgets();
-        break;
-      }
-      case 'cut': {
-        cutSelectedWidgets();
-        break;
-      }
-      case 'make-group': {
-        onBsbInterfacePatch({ type: 'makeGroup', widgetIds: [...selIds], parentGroupId });
-        break;
-      }
-      case 'break-group': {
-        const groupId = [...selIds][0];
-        if (groupId) onBsbInterfacePatch({ type: 'breakGroup', widgetId: groupId });
-        break;
-      }
-      case 'align-left': {
-        const target = Math.min(...selected.map(s => s.x));
-        for (const s of selected) {
-          if (s.x !== target) onBsbInterfacePatch({ type: 'updateWidgetProperties', widgetId: s.id, properties: { x: target } });
+      switch (action) {
+        case 'copy': {
+          copySelectedWidgets();
+          break;
         }
-        break;
-      }
-      case 'align-right': {
-        const target = Math.max(...selected.map(s => s.x + ww(s)));
-        for (const s of selected) {
-          const nx = target - ww(s);
-          if (s.x !== nx) onBsbInterfacePatch({ type: 'updateWidgetProperties', widgetId: s.id, properties: { x: nx } });
+        case 'cut': {
+          cutSelectedWidgets();
+          break;
         }
-        break;
-      }
-      case 'align-top': {
-        const target = Math.min(...selected.map(s => s.y));
-        for (const s of selected) {
-          if (s.y !== target) onBsbInterfacePatch({ type: 'updateWidgetProperties', widgetId: s.id, properties: { y: target } });
+        case 'make-group': {
+          onBsbInterfacePatch({ type: 'makeGroup', widgetIds: [...selIds], parentGroupId });
+          break;
         }
-        break;
-      }
-      case 'align-bottom': {
-        const target = Math.max(...selected.map(s => s.y + wh(s)));
-        for (const s of selected) {
-          const ny = target - wh(s);
-          if (s.y !== ny) onBsbInterfacePatch({ type: 'updateWidgetProperties', widgetId: s.id, properties: { y: ny } });
+        case 'break-group': {
+          const groupId = [...selIds][0];
+          if (groupId) onBsbInterfacePatch({ type: 'breakGroup', widgetId: groupId });
+          break;
         }
-        break;
-      }
-      case 'align-center-h': {
-        const left = Math.min(...selected.map(s => s.x));
-        const right = Math.max(...selected.map(s => s.x + ww(s)));
-        const center = (left + right) / 2;
-        for (const s of selected) {
-          onBsbInterfacePatch({ type: 'updateWidgetProperties', widgetId: s.id, properties: { x: Math.round(center - ww(s) / 2) } });
+        case 'align-left': {
+          const target = Math.min(...selected.map((s) => s.x));
+          for (const s of selected) {
+            if (s.x !== target)
+              onBsbInterfacePatch({
+                type: 'updateWidgetProperties',
+                widgetId: s.id,
+                properties: { x: target },
+              });
+          }
+          break;
         }
-        break;
-      }
-      case 'align-center-v': {
-        const top = Math.min(...selected.map(s => s.y));
-        const bottom = Math.max(...selected.map(s => s.y + wh(s)));
-        const center = (top + bottom) / 2;
-        for (const s of selected) {
-          onBsbInterfacePatch({ type: 'updateWidgetProperties', widgetId: s.id, properties: { y: Math.round(center - wh(s) / 2) } });
+        case 'align-right': {
+          const target = Math.max(...selected.map((s) => s.x + ww(s)));
+          for (const s of selected) {
+            const nx = target - ww(s);
+            if (s.x !== nx)
+              onBsbInterfacePatch({
+                type: 'updateWidgetProperties',
+                widgetId: s.id,
+                properties: { x: nx },
+              });
+          }
+          break;
         }
-        break;
-      }
-      case 'distribute-h': {
-        if (selected.length < 3) break;
-        const sorted = [...selected].sort((a, b) => (a.x + ww(a) / 2) - (b.x + ww(b) / 2));
-        const firstC = sorted[0].x + ww(sorted[0]) / 2;
-        const lastC = sorted[sorted.length - 1].x + ww(sorted[sorted.length - 1]) / 2;
-        const spacing = (lastC - firstC) / (sorted.length - 1);
-        for (let i = 1; i < sorted.length - 1; i++) {
-          const target = Math.round(firstC + spacing * i - ww(sorted[i]) / 2);
-          onBsbInterfacePatch({ type: 'updateWidgetProperties', widgetId: sorted[i].id, properties: { x: Math.max(0, target) } });
+        case 'align-top': {
+          const target = Math.min(...selected.map((s) => s.y));
+          for (const s of selected) {
+            if (s.y !== target)
+              onBsbInterfacePatch({
+                type: 'updateWidgetProperties',
+                widgetId: s.id,
+                properties: { y: target },
+              });
+          }
+          break;
         }
-        break;
-      }
-      case 'distribute-v': {
-        if (selected.length < 3) break;
-        const sorted = [...selected].sort((a, b) => (a.y + wh(a) / 2) - (b.y + wh(b) / 2));
-        const firstC = sorted[0].y + wh(sorted[0]) / 2;
-        const lastC = sorted[sorted.length - 1].y + wh(sorted[sorted.length - 1]) / 2;
-        const spacing = (lastC - firstC) / (sorted.length - 1);
-        for (let i = 1; i < sorted.length - 1; i++) {
-          const target = Math.round(firstC + spacing * i - wh(sorted[i]) / 2);
-          onBsbInterfacePatch({ type: 'updateWidgetProperties', widgetId: sorted[i].id, properties: { y: Math.max(0, target) } });
+        case 'align-bottom': {
+          const target = Math.max(...selected.map((s) => s.y + wh(s)));
+          for (const s of selected) {
+            const ny = target - wh(s);
+            if (s.y !== ny)
+              onBsbInterfacePatch({
+                type: 'updateWidgetProperties',
+                widgetId: s.id,
+                properties: { y: ny },
+              });
+          }
+          break;
         }
-        break;
+        case 'align-center-h': {
+          const left = Math.min(...selected.map((s) => s.x));
+          const right = Math.max(...selected.map((s) => s.x + ww(s)));
+          const center = (left + right) / 2;
+          for (const s of selected) {
+            onBsbInterfacePatch({
+              type: 'updateWidgetProperties',
+              widgetId: s.id,
+              properties: { x: Math.round(center - ww(s) / 2) },
+            });
+          }
+          break;
+        }
+        case 'align-center-v': {
+          const top = Math.min(...selected.map((s) => s.y));
+          const bottom = Math.max(...selected.map((s) => s.y + wh(s)));
+          const center = (top + bottom) / 2;
+          for (const s of selected) {
+            onBsbInterfacePatch({
+              type: 'updateWidgetProperties',
+              widgetId: s.id,
+              properties: { y: Math.round(center - wh(s) / 2) },
+            });
+          }
+          break;
+        }
+        case 'distribute-h': {
+          if (selected.length < 3) break;
+          const sorted = [...selected].sort((a, b) => a.x + ww(a) / 2 - (b.x + ww(b) / 2));
+          const firstC = sorted[0].x + ww(sorted[0]) / 2;
+          const lastC = sorted[sorted.length - 1].x + ww(sorted[sorted.length - 1]) / 2;
+          const spacing = (lastC - firstC) / (sorted.length - 1);
+          for (let i = 1; i < sorted.length - 1; i++) {
+            const target = Math.round(firstC + spacing * i - ww(sorted[i]) / 2);
+            onBsbInterfacePatch({
+              type: 'updateWidgetProperties',
+              widgetId: sorted[i].id,
+              properties: { x: Math.max(0, target) },
+            });
+          }
+          break;
+        }
+        case 'distribute-v': {
+          if (selected.length < 3) break;
+          const sorted = [...selected].sort((a, b) => a.y + wh(a) / 2 - (b.y + wh(b) / 2));
+          const firstC = sorted[0].y + wh(sorted[0]) / 2;
+          const lastC = sorted[sorted.length - 1].y + wh(sorted[sorted.length - 1]) / 2;
+          const spacing = (lastC - firstC) / (sorted.length - 1);
+          for (let i = 1; i < sorted.length - 1; i++) {
+            const target = Math.round(firstC + spacing * i - wh(sorted[i]) / 2);
+            onBsbInterfacePatch({
+              type: 'updateWidgetProperties',
+              widgetId: sorted[i].id,
+              properties: { y: Math.max(0, target) },
+            });
+          }
+          break;
+        }
       }
-    }
-  }, [copySelectedWidgets, cutSelectedWidgets, getSelectedCurrentWidgets, selectedWidgetIds, onBsbInterfacePatch, parentGroupId]);
+    },
+    [
+      copySelectedWidgets,
+      cutSelectedWidgets,
+      getSelectedCurrentWidgets,
+      selectedWidgetIds,
+      onBsbInterfacePatch,
+      parentGroupId,
+    ],
+  );
 
-  const getWidgetPosition = useCallback((id: string) => {
-    const find = (nodes: BsbWidgetNodeSnapshot[]): { x: number; y: number } | undefined => {
-      for (const n of nodes) {
-        if (n.id === id) return { x: n.x, y: n.y };
-        if (n.children) {
-          const found = find(n.children);
-          if (found) return found;
+  const getWidgetPosition = useCallback(
+    (id: string) => {
+      const find = (nodes: BsbWidgetNodeSnapshot[]): { x: number; y: number } | undefined => {
+        for (const n of nodes) {
+          if (n.id === id) return { x: n.x, y: n.y };
+          if (n.children) {
+            const found = find(n.children);
+            if (found) return found;
+          }
         }
+        return undefined;
+      };
+      return find(currentChildren);
+    },
+    [currentChildren],
+  );
+
+  const handleCanvasKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (!editEnabled || isTextEditingTarget(e.target)) return;
+
+      const commandKey = e.metaKey || e.ctrlKey;
+      const key = e.key.toLowerCase();
+      if (commandKey && !e.altKey && key === 'c') {
+        if (copySelectedWidgets()) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        return;
       }
-      return undefined;
-    };
-    return find(currentChildren);
-  }, [currentChildren]);
+      if (commandKey && !e.altKey && key === 'x') {
+        if (cutSelectedWidgets()) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        return;
+      }
+      if (commandKey && !e.altKey && key === 'v') {
+        if (pasteAt(contextMenuPos.current.x, contextMenuPos.current.y)) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        return;
+      }
 
-  const handleCanvasKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (!editEnabled || isTextEditingTarget(e.target)) return;
-
-    const commandKey = e.metaKey || e.ctrlKey;
-    const key = e.key.toLowerCase();
-    if (commandKey && !e.altKey && key === 'c') {
-      if (copySelectedWidgets()) {
+      if (!e.metaKey && !e.ctrlKey && !e.altKey && (e.key === 'Delete' || e.key === 'Backspace')) {
+        if (selectedWidgetIds.size === 0) return;
         e.preventDefault();
         e.stopPropagation();
+        removeSelectedWidgets();
+        return;
       }
-      return;
-    }
-    if (commandKey && !e.altKey && key === 'x') {
-      if (cutSelectedWidgets()) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-      return;
-    }
-    if (commandKey && !e.altKey && key === 'v') {
-      if (pasteAt(contextMenuPos.current.x, contextMenuPos.current.y)) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-      return;
-    }
 
-    if (!e.metaKey && !e.ctrlKey && !e.altKey && (e.key === 'Delete' || e.key === 'Backspace')) {
+      if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
       if (selectedWidgetIds.size === 0) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
       e.preventDefault();
       e.stopPropagation();
-      removeSelectedWidgets();
-      return;
-    }
 
-    if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
-    if (selectedWidgetIds.size === 0) return;
-    if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const stepX = snapToGrid ? (gridSettings?.width ?? 1) : 1;
+      const stepY = snapToGrid ? (gridSettings?.height ?? 1) : 1;
+      const dx = e.key === 'ArrowLeft' ? -stepX : e.key === 'ArrowRight' ? stepX : 0;
+      const dy = e.key === 'ArrowUp' ? -stepY : e.key === 'ArrowDown' ? stepY : 0;
 
-    e.preventDefault();
-    e.stopPropagation();
-
-    const stepX = snapToGrid ? (gridSettings?.width ?? 1) : 1;
-    const stepY = snapToGrid ? (gridSettings?.height ?? 1) : 1;
-    const dx = e.key === 'ArrowLeft' ? -stepX : e.key === 'ArrowRight' ? stepX : 0;
-    const dy = e.key === 'ArrowUp' ? -stepY : e.key === 'ArrowDown' ? stepY : 0;
-
-    for (const widgetId of selectedWidgetIds) {
-      const pos = getWidgetPosition(widgetId);
-      if (!pos) continue;
-      const nx = Math.max(0, pos.x + dx);
-      const ny = Math.max(0, pos.y + dy);
-      onBsbInterfacePatch({ type: 'updateWidgetProperties', widgetId, properties: { x: nx, y: ny } });
-    }
-  }, [
-    copySelectedWidgets,
-    cutSelectedWidgets,
-    editEnabled,
-    getWidgetPosition,
-    gridSettings,
-    onBsbInterfacePatch,
-    pasteAt,
-    removeSelectedWidgets,
-    selectedWidgetIds,
-    snapToGrid,
-  ]);
+      for (const widgetId of selectedWidgetIds) {
+        const pos = getWidgetPosition(widgetId);
+        if (!pos) continue;
+        const nx = Math.max(0, pos.x + dx);
+        const ny = Math.max(0, pos.y + dy);
+        onBsbInterfacePatch({
+          type: 'updateWidgetProperties',
+          widgetId,
+          properties: { x: nx, y: ny },
+        });
+      }
+    },
+    [
+      copySelectedWidgets,
+      cutSelectedWidgets,
+      editEnabled,
+      getWidgetPosition,
+      gridSettings,
+      onBsbInterfacePatch,
+      pasteAt,
+      removeSelectedWidgets,
+      selectedWidgetIds,
+      snapToGrid,
+    ],
+  );
 
   const canvasShortcutScope = useKeyboardShortcutScope({
     ref: canvasRef,
@@ -446,10 +518,14 @@ function BSBInterfaceCanvas({
 
   const enterGroup = (node: BsbWidgetNodeSnapshot) => {
     if (canvasRef.current) {
-      const key = groupStack.map(e => e.id).join('/');
-      scrollMemory.current.set(key, { scrollLeft: canvasRef.current.scrollLeft, scrollTop: canvasRef.current.scrollTop });
+      const key = groupStack.map((e) => e.id).join('/');
+      scrollMemory.current.set(key, {
+        scrollLeft: canvasRef.current.scrollLeft,
+        scrollTop: canvasRef.current.scrollTop,
+      });
     }
-    const groupName = typeof node.properties.groupName === 'string' ? node.properties.groupName : node.type;
+    const groupName =
+      typeof node.properties.groupName === 'string' ? node.properties.groupName : node.type;
     setGroupStack((prev) => [...prev, { id: node.id, name: groupName }]);
     onWidgetSelect(null);
     requestAnimationFrame(() => {
@@ -462,10 +538,16 @@ function BSBInterfaceCanvas({
 
   const navigateTo = (index: number) => {
     if (canvasRef.current) {
-      const currentKey = groupStack.map(e => e.id).join('/');
-      scrollMemory.current.set(currentKey, { scrollLeft: canvasRef.current.scrollLeft, scrollTop: canvasRef.current.scrollTop });
+      const currentKey = groupStack.map((e) => e.id).join('/');
+      scrollMemory.current.set(currentKey, {
+        scrollLeft: canvasRef.current.scrollLeft,
+        scrollTop: canvasRef.current.scrollTop,
+      });
     }
-    const targetKey = groupStack.slice(0, index).map(e => e.id).join('/');
+    const targetKey = groupStack
+      .slice(0, index)
+      .map((e) => e.id)
+      .join('/');
     setGroupStack((prev) => prev.slice(0, index));
     onWidgetSelect(null);
     requestAnimationFrame(() => {
@@ -557,17 +639,21 @@ function BSBInterfaceCanvas({
     }
   };
 
-  const handleAddWidget = useCallback((widgetType: string, x: number, y: number) => {
-    const gs = instrument.gridSettings;
-    let snapX = x;
-    let snapY = y;
-    if (isGridSnapEnabled(gs)) {
-      snapX = Math.floor(x / gs.width) * gs.width;
-      snapY = Math.floor(y / gs.height) * gs.height;
-    }
-    const parentGroupId = groupStack.length > 0 ? groupStack[groupStack.length - 1].id : undefined;
-    onBsbInterfacePatch({ type: 'addWidget', widgetType, x: snapX, y: snapY, parentGroupId });
-  }, [instrument.gridSettings, groupStack, onBsbInterfacePatch]);
+  const handleAddWidget = useCallback(
+    (widgetType: string, x: number, y: number) => {
+      const gs = instrument.gridSettings;
+      let snapX = x;
+      let snapY = y;
+      if (isGridSnapEnabled(gs)) {
+        snapX = Math.floor(x / gs.width) * gs.width;
+        snapY = Math.floor(y / gs.height) * gs.height;
+      }
+      const parentGroupId =
+        groupStack.length > 0 ? groupStack[groupStack.length - 1].id : undefined;
+      onBsbInterfacePatch({ type: 'addWidget', widgetType, x: snapX, y: snapY, parentGroupId });
+    },
+    [instrument.gridSettings, groupStack, onBsbInterfacePatch],
+  );
 
   const canPaste = clipboard !== null && clipboard.widgets.length > 0;
 
@@ -627,10 +713,7 @@ function BSBInterfaceCanvas({
         const cw = childSize.width;
         const ch = childSize.height;
         const intersects =
-          child.x < maxX &&
-          child.x + cw > minX &&
-          child.y < maxY &&
-          child.y + ch > minY;
+          child.x < maxX && child.x + cw > minX && child.y < maxY && child.y + ch > minY;
         if (intersects) {
           ids.add(child.id);
         }
@@ -670,7 +753,8 @@ function BSBInterfaceCanvas({
         top: Math.min(marquee.startY, marquee.currentY),
         width: Math.abs(marquee.currentX - marquee.startX),
         height: Math.abs(marquee.currentY - marquee.startY),
-        border: '1px dashed color-mix(in srgb, var(--color-app-accent) 80%, var(--color-app-clear))',
+        border:
+          '1px dashed color-mix(in srgb, var(--color-app-accent) 80%, var(--color-app-clear))',
         background: 'var(--color-app-accent-soft)',
         zIndex: 50,
         pointerEvents: 'none',
@@ -687,25 +771,35 @@ function BSBInterfaceCanvas({
       onContextMenu={(e) => {
         if (editEnabled && canvasRef.current) {
           const rect = canvasRef.current.getBoundingClientRect();
-          contextMenuPos.current = { x: e.clientX - rect.left + canvasRef.current.scrollLeft, y: e.clientY - rect.top + canvasRef.current.scrollTop };
+          contextMenuPos.current = {
+            x: e.clientX - rect.left + canvasRef.current.scrollLeft,
+            y: e.clientY - rect.top + canvasRef.current.scrollTop,
+          };
         }
       }}
     >
       <div
         ref={canvasInnerRef}
         className="relative"
-        style={{ minHeight: editEnabled ? 400 : canvasSize.height, minWidth: editEnabled ? 600 : canvasSize.width, width: canvasSize.width, height: canvasSize.height }}
+        style={{
+          minHeight: editEnabled ? 400 : canvasSize.height,
+          minWidth: editEnabled ? 600 : canvasSize.width,
+          width: canvasSize.width,
+          height: canvasSize.height,
+        }}
         onMouseDown={onCanvasMouseDown}
         onMouseMove={onCanvasMouseMove}
         onMouseUp={onCanvasMouseUp}
       >
         {editEnabled && gridSettings?.gridStyle && gridSettings.gridStyle !== 'NONE' && (
-          <GridOverlay gridSettings={gridSettings} canvasWidth={canvasSize.width} canvasHeight={canvasSize.height} />
+          <GridOverlay
+            gridSettings={gridSettings}
+            canvasWidth={canvasSize.width}
+            canvasHeight={canvasSize.height}
+          />
         )}
         {currentChildren.map((child) => renderWidget(child))}
-        {marquee && marquee.active && (
-          <div style={marqueeStyle} />
-        )}
+        {marquee && marquee.active && <div style={marqueeStyle} />}
       </div>
     </div>
   );
@@ -715,7 +809,11 @@ function BSBInterfaceCanvas({
       <div className="flex h-full flex-col">
         {editEnabled && groupStack.length > 0 && (
           <div className="flex items-center gap-1 border-b border-blue-border bg-app-bsb-control px-2 py-1">
-            <BreadcrumbItem label="Root" onClick={() => navigateTo(0)} active={groupStack.length === 0} />
+            <BreadcrumbItem
+              label="Root"
+              onClick={() => navigateTo(0)}
+              active={groupStack.length === 0}
+            />
             {groupStack.map((entry, i) => (
               <React.Fragment key={entry.id}>
                 <ChevronIcon />
@@ -733,7 +831,11 @@ function BSBInterfaceCanvas({
             <ContextMenu.Trigger asChild>{canvasContent}</ContextMenu.Trigger>
             <PopoutContextMenuPortal>
               <ContextMenu.Content className="editor-context-menu" {...portalEventIsolationProps}>
-                <ContextMenu.Item className="editor-context-menu__item" onSelect={handlePaste} disabled={!canPaste}>
+                <ContextMenu.Item
+                  className="editor-context-menu__item"
+                  onSelect={handlePaste}
+                  disabled={!canPaste}
+                >
                   Paste
                 </ContextMenu.Item>
                 <ContextMenu.Separator className="editor-context-menu__separator" />
@@ -773,7 +875,10 @@ function BSBInterfaceCanvas({
 
 export default React.memo(BSBInterfaceCanvas);
 
-function resolveCurrentChildren(root: BsbWidgetNodeSnapshot, stack: GroupStackEntry[]): BsbWidgetNodeSnapshot[] {
+function resolveCurrentChildren(
+  root: BsbWidgetNodeSnapshot,
+  stack: GroupStackEntry[],
+): BsbWidgetNodeSnapshot[] {
   if (stack.length === 0) return root.children ?? [];
 
   let current: BsbWidgetNodeSnapshot = root;
@@ -785,16 +890,25 @@ function resolveCurrentChildren(root: BsbWidgetNodeSnapshot, stack: GroupStackEn
   return current.children ?? [];
 }
 
-function BreadcrumbItem({ label, onClick, active }: { label: string; onClick: () => void; active: boolean }) {
+function BreadcrumbItem({
+  label,
+  onClick,
+  active,
+}: {
+  label: string;
+  onClick: () => void;
+  active: boolean;
+}) {
   return (
     <button
       className={cn(
         'rounded px-1.5 py-0.5 text-role-body',
-        active
-          ? 'text-gray-300'
-          : 'text-blue-muted hover:bg-blue-border hover:text-gray-200'
+        active ? 'text-gray-300' : 'text-blue-muted hover:bg-blue-border hover:text-gray-200',
       )}
-      onClick={(e) => { e.stopPropagation(); if (!active) onClick(); }}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (!active) onClick();
+      }}
     >
       {label}
     </button>
@@ -822,38 +936,41 @@ function GridOverlay({
   const h = Math.max(1, gridSettings.height);
   const style = gridSettings.gridStyle;
 
-  const drawGrid = useCallback((canvas: HTMLCanvasElement) => {
-    const cw = Math.max(canvasWidth, 2000);
-    const ch = Math.max(canvasHeight, 2000);
-    canvas.width = cw;
-    canvas.height = ch;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    ctx.clearRect(0, 0, cw, ch);
-    ctx.fillStyle = 'rgba(80,110,160,0.3)';
-    ctx.strokeStyle = 'rgba(80,110,160,0.3)';
-    ctx.lineWidth = 1;
-    if (style === 'DOT') {
-      for (let x = 0; x < cw; x += w) {
-        for (let y = 0; y < ch; y += h) {
-          ctx.beginPath();
-          ctx.arc(x, y, 1, 0, Math.PI * 2);
-          ctx.fill();
+  const drawGrid = useCallback(
+    (canvas: HTMLCanvasElement) => {
+      const cw = Math.max(canvasWidth, 2000);
+      const ch = Math.max(canvasHeight, 2000);
+      canvas.width = cw;
+      canvas.height = ch;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      ctx.clearRect(0, 0, cw, ch);
+      ctx.fillStyle = 'rgba(80,110,160,0.3)';
+      ctx.strokeStyle = 'rgba(80,110,160,0.3)';
+      ctx.lineWidth = 1;
+      if (style === 'DOT') {
+        for (let x = 0; x < cw; x += w) {
+          for (let y = 0; y < ch; y += h) {
+            ctx.beginPath();
+            ctx.arc(x, y, 1, 0, Math.PI * 2);
+            ctx.fill();
+          }
         }
+      } else if (style === 'LINE') {
+        ctx.beginPath();
+        for (let x = 0; x < cw; x += w) {
+          ctx.moveTo(x + 0.5, 0);
+          ctx.lineTo(x + 0.5, ch);
+        }
+        for (let y = 0; y < ch; y += h) {
+          ctx.moveTo(0, y + 0.5);
+          ctx.lineTo(cw, y + 0.5);
+        }
+        ctx.stroke();
       }
-    } else if (style === 'LINE') {
-      ctx.beginPath();
-      for (let x = 0; x < cw; x += w) {
-        ctx.moveTo(x + 0.5, 0);
-        ctx.lineTo(x + 0.5, ch);
-      }
-      for (let y = 0; y < ch; y += h) {
-        ctx.moveTo(0, y + 0.5);
-        ctx.lineTo(cw, y + 0.5);
-      }
-      ctx.stroke();
-    }
-  }, [w, h, style, canvasWidth, canvasHeight]);
+    },
+    [w, h, style, canvasWidth, canvasHeight],
+  );
 
   const canvasElRef = useRef<HTMLCanvasElement | null>(null);
 

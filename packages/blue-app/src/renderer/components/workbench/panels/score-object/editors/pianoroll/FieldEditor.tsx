@@ -80,37 +80,46 @@ export default function FieldEditor({
     };
   }, [fieldDef]);
 
-  const valueToY = useCallback((value: number, height: number): number => {
-    if (yScale.range <= 0) return height / 2;
-    const usableHeight = Math.max(1, height - (VERTICAL_PADDING * 2));
-    const ratio = (value - yScale.min) / yScale.range;
-    return VERTICAL_PADDING + ((1 - ratio) * usableHeight);
-  }, [yScale]);
+  const valueToY = useCallback(
+    (value: number, height: number): number => {
+      if (yScale.range <= 0) return height / 2;
+      const usableHeight = Math.max(1, height - VERTICAL_PADDING * 2);
+      const ratio = (value - yScale.min) / yScale.range;
+      return VERTICAL_PADDING + (1 - ratio) * usableHeight;
+    },
+    [yScale],
+  );
 
-  const yToValue = useCallback((y: number, height: number): number => {
-    if (yScale.range <= 0) return yScale.min;
-    const bottomPad = height - VERTICAL_PADDING;
-    // Pointer positions land on pixel boundaries, so without a snap zone the
-    // extremes are only reachable at exactly one sub-pixel row (e.g. AMP
-    // topping out at 0.997 instead of 1).
-    if (y <= VERTICAL_PADDING + EDGE_SNAP_PX) return yScale.max;
-    if (y >= bottomPad - EDGE_SNAP_PX) return yScale.min;
-    const usableHeight = Math.max(1, height - (VERTICAL_PADDING * 2));
-    const clampedY = Math.max(VERTICAL_PADDING, Math.min(bottomPad, y));
-    const ratio = 1 - ((clampedY - VERTICAL_PADDING) / usableHeight);
-    return yScale.min + (ratio * yScale.range);
-  }, [yScale]);
+  const yToValue = useCallback(
+    (y: number, height: number): number => {
+      if (yScale.range <= 0) return yScale.min;
+      const bottomPad = height - VERTICAL_PADDING;
+      // Pointer positions land on pixel boundaries, so without a snap zone the
+      // extremes are only reachable at exactly one sub-pixel row (e.g. AMP
+      // topping out at 0.997 instead of 1).
+      if (y <= VERTICAL_PADDING + EDGE_SNAP_PX) return yScale.max;
+      if (y >= bottomPad - EDGE_SNAP_PX) return yScale.min;
+      const usableHeight = Math.max(1, height - VERTICAL_PADDING * 2);
+      const clampedY = Math.max(VERTICAL_PADDING, Math.min(bottomPad, y));
+      const ratio = 1 - (clampedY - VERTICAL_PADDING) / usableHeight;
+      return yScale.min + ratio * yScale.range;
+    },
+    [yScale],
+  );
 
-  const normalizeValue = useCallback((value: number): number => {
-    if (!fieldDef) return value;
-    const clamped = Math.max(fieldDef.minValue, Math.min(fieldDef.maxValue, value));
-    return fieldDef.fieldType === 'DISCRETE' ? Math.round(clamped) : clamped;
-  }, [fieldDef]);
+  const normalizeValue = useCallback(
+    (value: number): number => {
+      if (!fieldDef) return value;
+      const clamped = Math.max(fieldDef.minValue, Math.min(fieldDef.maxValue, value));
+      return fieldDef.fieldType === 'DISCRETE' ? Math.round(clamped) : clamped;
+    },
+    [fieldDef],
+  );
 
   const pins: PinInfo[] = useMemo(() => {
     if (!fieldDef || fieldIndex < 0) return [];
     return notes.map((n, i) => {
-      const x = (n.start * pixelSecond) + HORIZONTAL_PADDING;
+      const x = n.start * pixelSecond + HORIZONTAL_PADDING;
       const value = draftValues?.get(i) ?? n.fieldValues[fieldIndex] ?? fieldDef.defaultValue;
       return {
         noteIndex: i,
@@ -123,7 +132,7 @@ export default function FieldEditor({
 
   const laneGridLines = useMemo(() => {
     if (!fieldDef || fieldIndex < 0 || yScale.range <= 0) return [];
-    const usable = Math.max(1, editorHeight - (VERTICAL_PADDING * 2));
+    const usable = Math.max(1, editorHeight - VERTICAL_PADDING * 2);
     let cells = GRID_QUARTERS;
     for (let doubling = 0; doubling < GRID_MAX_DOUBLINGS; doubling += 1) {
       if (usable / (cells * 2) < GRID_MIN_CELL_PX) break;
@@ -131,7 +140,7 @@ export default function FieldEditor({
     }
     const quarterStep = cells / GRID_QUARTERS;
     return Array.from({ length: cells + 1 }, (_, row) => ({
-      y: valueToY(yScale.min + ((row / cells) * yScale.range), editorHeight),
+      y: valueToY(yScale.min + (row / cells) * yScale.range, editorHeight),
       major: row % quarterStep === 0,
     }));
   }, [fieldDef, fieldIndex, yScale, editorHeight, valueToY]);
@@ -159,77 +168,93 @@ export default function FieldEditor({
     return () => observer.disconnect();
   }, []);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (!fieldDef || fieldIndex < 0) return;
-    const rect = rootRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (!fieldDef || fieldIndex < 0) return;
+      const rect = rootRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
 
-    let hitPin = -1;
-    for (let i = pins.length - 1; i >= 0; i--) {
-      const pin = pins[i]!;
-      const pinY = valueToY(pin.value, editorHeight);
-      const dx = x - pin.x;
-      const dy = y - pinY;
-      if (dx * dx + dy * dy < 64) {
-        hitPin = i;
-        break;
+      let hitPin = -1;
+      for (let i = pins.length - 1; i >= 0; i--) {
+        const pin = pins[i]!;
+        const pinY = valueToY(pin.value, editorHeight);
+        const dx = x - pin.x;
+        const dy = y - pinY;
+        if (dx * dx + dy * dy < 64) {
+          hitPin = i;
+          break;
+        }
       }
-    }
-    if (hitPin < 0) return;
+      if (hitPin < 0) return;
 
-    const pin = pins[hitPin]!;
-    let noteIndices = [...selectedIndices];
+      const pin = pins[hitPin]!;
+      let noteIndices = [...selectedIndices];
 
-    if (e.shiftKey) {
-      const next = new Set(selectedIndices);
-      if (next.has(pin.noteIndex)) {
-        next.delete(pin.noteIndex);
+      if (e.shiftKey) {
+        const next = new Set(selectedIndices);
+        if (next.has(pin.noteIndex)) {
+          next.delete(pin.noteIndex);
+          onSelectionChange(next);
+          return;
+        }
+        next.add(pin.noteIndex);
+        noteIndices = [...next];
         onSelectionChange(next);
-        return;
+      } else if (!selectedIndices.has(pin.noteIndex)) {
+        noteIndices = [pin.noteIndex];
+        onSelectionChange(new Set(noteIndices));
+      } else if (noteIndices.length === 0) {
+        noteIndices = [pin.noteIndex];
+        onSelectionChange(new Set(noteIndices));
       }
-      next.add(pin.noteIndex);
-      noteIndices = [...next];
-      onSelectionChange(next);
-    } else if (!selectedIndices.has(pin.noteIndex)) {
-      noteIndices = [pin.noteIndex];
-      onSelectionChange(new Set(noteIndices));
-    } else if (noteIndices.length === 0) {
-      noteIndices = [pin.noteIndex];
-      onSelectionChange(new Set(noteIndices));
-    }
 
-    const originalValues = noteIndices.map((noteIndex) => (
-      notes[noteIndex]!.fieldValues[fieldIndex] ?? fieldDef.defaultValue
-    ));
-    dragRef.current = {
-      noteIndices,
+      const originalValues = noteIndices.map(
+        (noteIndex) => notes[noteIndex]!.fieldValues[fieldIndex] ?? fieldDef.defaultValue,
+      );
+      dragRef.current = {
+        noteIndices,
+        fieldIndex,
+        startValue: yToValue(y, editorHeight),
+        originalValues,
+        currentValues: originalValues,
+      };
+      setGrabbedNoteIndex(pin.noteIndex);
+      e.preventDefault();
+    },
+    [
+      fieldDef,
       fieldIndex,
-      startValue: yToValue(y, editorHeight),
-      originalValues,
-      currentValues: originalValues,
-    };
-    setGrabbedNoteIndex(pin.noteIndex);
-    e.preventDefault();
-  }, [fieldDef, fieldIndex, editorHeight, pins, selectedIndices, onSelectionChange, notes, valueToY, yToValue]);
+      editorHeight,
+      pins,
+      selectedIndices,
+      onSelectionChange,
+      notes,
+      valueToY,
+      yToValue,
+    ],
+  );
 
-  const applyPointerPosition = useCallback((clientY: number) => {
-    const drag = dragRef.current;
-    if (!drag) return;
-    const rect = rootRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const mouseValue = yToValue(clientY - rect.top, editorHeight);
-    const valueDelta = mouseValue - drag.startValue;
-    const draft = new Map<number, number>();
-    const currentValues = drag.noteIndices.map((noteIndex, i) => {
-      const nextValue = normalizeValue(drag.originalValues[i]! + valueDelta);
-      draft.set(noteIndex, nextValue);
-      return nextValue;
-    });
-    drag.currentValues = currentValues;
-    setDraftValues(draft);
-  }, [editorHeight, normalizeValue, yToValue]);
+  const applyPointerPosition = useCallback(
+    (clientY: number) => {
+      const drag = dragRef.current;
+      if (!drag) return;
+      const rect = rootRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const mouseValue = yToValue(clientY - rect.top, editorHeight);
+      const valueDelta = mouseValue - drag.startValue;
+      const draft = new Map<number, number>();
+      const currentValues = drag.noteIndices.map((noteIndex, i) => {
+        const nextValue = normalizeValue(drag.originalValues[i]! + valueDelta);
+        draft.set(noteIndex, nextValue);
+        return nextValue;
+      });
+      drag.currentValues = currentValues;
+      setDraftValues(draft);
+    },
+    [editorHeight, normalizeValue, yToValue],
+  );
 
   const endDrag = useCallback(() => {
     const drag = dragRef.current;
@@ -256,12 +281,7 @@ export default function FieldEditor({
   }, [grabbedNoteIndex, applyPointerPosition, endDrag]);
 
   if (!fieldDef) {
-    return (
-      <div
-        className="h-full bg-app-canvas"
-        style={{ width }}
-      />
-    );
+    return <div className="h-full bg-app-canvas" style={{ width }} />;
   }
 
   const bottomY = editorHeight - VERTICAL_PADDING;
@@ -315,7 +335,9 @@ export default function FieldEditor({
                   top: pinY,
                   width: 1,
                   height: Math.max(0, bottomY - pinY),
-                  backgroundColor: pin.selected ? 'rgba(200,200,200,0.45)' : 'rgba(136,136,136,0.45)',
+                  backgroundColor: pin.selected
+                    ? 'rgba(200,200,200,0.45)'
+                    : 'rgba(136,136,136,0.45)',
                 }}
               />
               <Tooltip.Trigger asChild>
@@ -326,14 +348,21 @@ export default function FieldEditor({
                     top: pinY - PIN_RADIUS,
                     width: PIN_SIZE,
                     height: PIN_SIZE,
-                    backgroundColor: pin.selected ? 'var(--color-app-text-strong)' : 'var(--color-app-canvas)',
+                    backgroundColor: pin.selected
+                      ? 'var(--color-app-text-strong)'
+                      : 'var(--color-app-canvas)',
                     border: `1px solid ${pin.selected ? 'var(--color-app-text-strong)' : 'var(--color-app-text-muted)'}`,
                     cursor: 'ns-resize',
                   }}
                 />
               </Tooltip.Trigger>
               <PopoutTooltipPortal>
-                <Tooltip.Content className="bsb-tooltip-content" side="top" sideOffset={4} align="center">
+                <Tooltip.Content
+                  className="bsb-tooltip-content"
+                  side="top"
+                  sideOffset={4}
+                  align="center"
+                >
                   {fieldDef.fieldName}: {formatFieldValue(pin.value, fieldDef.fieldType)}
                   <Tooltip.Arrow className="bsb-tooltip-arrow" width={10} height={5} />
                 </Tooltip.Content>

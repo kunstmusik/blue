@@ -1,5 +1,5 @@
 export function argbToRGB(argb: number): number {
-  return argb & 0x00FFFFFF;
+  return argb & 0x00ffffff;
 }
 
 export function rgbToCSS(rgb: number): string {
@@ -15,9 +15,9 @@ export function colorToCSS(argb: number): string {
 const JAVA_COLOR_FACTOR = 0.7;
 
 export function javaAwtBrighter(rgb: number): number {
-  let r = (rgb >> 16) & 0xFF;
-  let g = (rgb >> 8) & 0xFF;
-  let b = rgb & 0xFF;
+  let r = (rgb >> 16) & 0xff;
+  let g = (rgb >> 8) & 0xff;
+  let b = rgb & 0xff;
 
   const i = Math.trunc(1.0 / (1.0 - JAVA_COLOR_FACTOR));
   if (r === 0 && g === 0 && b === 0) {
@@ -36,31 +36,31 @@ export function javaAwtBrighter(rgb: number): number {
 }
 
 export function javaAwtDarker(rgb: number): number {
-  const r = Math.max(Math.trunc(((rgb >> 16) & 0xFF) * JAVA_COLOR_FACTOR), 0);
-  const g = Math.max(Math.trunc(((rgb >> 8) & 0xFF) * JAVA_COLOR_FACTOR), 0);
-  const b = Math.max(Math.trunc((rgb & 0xFF) * JAVA_COLOR_FACTOR), 0);
+  const r = Math.max(Math.trunc(((rgb >> 16) & 0xff) * JAVA_COLOR_FACTOR), 0);
+  const g = Math.max(Math.trunc(((rgb >> 8) & 0xff) * JAVA_COLOR_FACTOR), 0);
+  const b = Math.max(Math.trunc((rgb & 0xff) * JAVA_COLOR_FACTOR), 0);
   return (r << 16) | (g << 8) | b;
 }
 
 export function brighten(rgb: number, factor: number): number {
-  const r = Math.min(255, Math.round(((rgb >> 16) & 0xFF) * factor));
-  const g = Math.min(255, Math.round(((rgb >> 8) & 0xFF) * factor));
-  const b = Math.min(255, Math.round((rgb & 0xFF) * factor));
+  const r = Math.min(255, Math.round(((rgb >> 16) & 0xff) * factor));
+  const g = Math.min(255, Math.round(((rgb >> 8) & 0xff) * factor));
+  const b = Math.min(255, Math.round((rgb & 0xff) * factor));
   return (r << 16) | (g << 8) | b;
 }
 
 export function darken(rgb: number, factor: number): number {
-  const r = Math.max(0, Math.round(((rgb >> 16) & 0xFF) * factor));
-  const g = Math.max(0, Math.round(((rgb >> 8) & 0xFF) * factor));
-  const b = Math.max(0, Math.round((rgb & 0xFF) * factor));
+  const r = Math.max(0, Math.round(((rgb >> 16) & 0xff) * factor));
+  const g = Math.max(0, Math.round(((rgb >> 8) & 0xff) * factor));
+  const b = Math.max(0, Math.round((rgb & 0xff) * factor));
   return (r << 16) | (g << 8) | b;
 }
 
 export function isBright(rgb: number): boolean {
-  const r = (rgb >> 16) & 0xFF;
-  const g = (rgb >> 8) & 0xFF;
-  const b = rgb & 0xFF;
-  return (r + g + b) > 384;
+  const r = (rgb >> 16) & 0xff;
+  const g = (rgb >> 8) & 0xff;
+  const b = rgb & 0xff;
+  return r + g + b > 384;
 }
 
 export function textColorForBackground(argb: number): string {
@@ -68,15 +68,11 @@ export function textColorForBackground(argb: number): string {
 }
 
 export function waveColorForBackground(rgb: number): string {
-  return isBright(rgb)
-    ? rgbToCSS(darken(rgb, 0.5))
-    : rgbToCSS(brighten(rgb, 1.4));
+  return isBright(rgb) ? rgbToCSS(darken(rgb, 0.5)) : rgbToCSS(brighten(rgb, 1.4));
 }
 
 export function fadeColorForBackground(rgb: number): string {
-  return isBright(rgb)
-    ? `rgba(0,0,0,${JAVA_FADE_ALPHA})`
-    : `rgba(255,255,255,${JAVA_FADE_ALPHA})`;
+  return isBright(rgb) ? `rgba(0,0,0,${JAVA_FADE_ALPHA})` : `rgba(255,255,255,${JAVA_FADE_ALPHA})`;
 }
 
 export function selectedBaseColor(argb: number): number {

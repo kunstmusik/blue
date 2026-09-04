@@ -2,11 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
 
-import type {
-  AppBuildChannel,
-  AppMetadata,
-  AppRuntimeVersions,
-} from '../shared/app-metadata';
+import type { AppBuildChannel, AppMetadata, AppRuntimeVersions } from '../shared/app-metadata';
 
 export const UNKNOWN_APP_METADATA_VALUE = 'unknown';
 
@@ -41,9 +37,7 @@ function resolveBuildDate(value: unknown): string {
   return text && !Number.isNaN(Date.parse(text)) ? text : UNKNOWN_APP_METADATA_VALUE;
 }
 
-function readReleaseMetadata(
-  options: AppMetadataResolverOptions,
-): ReleaseMetadataDocument | null {
+function readReleaseMetadata(options: AppMetadataResolverOptions): ReleaseMetadataDocument | null {
   const readFile = options.readFile ?? ((filePath: string) => readFileSync(filePath, 'utf8'));
   const candidatePaths = [
     options.appPath && path.join(options.appPath, 'release-metadata.json'),
@@ -76,20 +70,18 @@ function readGitRevision(): string | null {
   }
 }
 
-export function resolveAppMetadata(
-  options: AppMetadataResolverOptions = {},
-): AppMetadata {
+export function resolveAppMetadata(options: AppMetadataResolverOptions = {}): AppMetadata {
   const isPackaged = options.isPackaged ?? false;
   const releaseMetadata = isPackaged ? readReleaseMetadata(options) : null;
   const processVersions = options.processVersions ?? {};
   const metadataVersion = nonEmptyString(releaseMetadata?.appVersion);
   const version = isPackaged
-    ? metadataVersion ?? UNKNOWN_APP_METADATA_VALUE
-    : nonEmptyString(options.appVersion) ?? metadataVersion ?? UNKNOWN_APP_METADATA_VALUE;
+    ? (metadataVersion ?? UNKNOWN_APP_METADATA_VALUE)
+    : (nonEmptyString(options.appVersion) ?? metadataVersion ?? UNKNOWN_APP_METADATA_VALUE);
   const sourceRevision =
-    nonEmptyString(releaseMetadata?.sourceRevision)
-    ?? (!isPackaged ? (options.getSourceRevision ?? readGitRevision)() : null)
-    ?? UNKNOWN_APP_METADATA_VALUE;
+    nonEmptyString(releaseMetadata?.sourceRevision) ??
+    (!isPackaged ? (options.getSourceRevision ?? readGitRevision)() : null) ??
+    UNKNOWN_APP_METADATA_VALUE;
   const channel =
     resolveChannel(releaseMetadata?.channel) !== 'unknown'
       ? resolveChannel(releaseMetadata?.channel)

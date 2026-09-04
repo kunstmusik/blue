@@ -55,12 +55,8 @@ export function getJavaScriptSession(compileData: CompileData): JavaScriptSessio
   return val instanceof JavaScriptSession ? val : undefined;
 }
 
-function getStoredCompileState(
-  compileData: CompileData,
-): JavaScriptCompileState | undefined {
-  const state = compileData.getCompilationVariable(
-    JAVASCRIPT_COMPILE_STATE_KEY,
-  );
+function getStoredCompileState(compileData: CompileData): JavaScriptCompileState | undefined {
+  const state = compileData.getCompilationVariable(JAVASCRIPT_COMPILE_STATE_KEY);
 
   if (
     state &&
@@ -88,9 +84,7 @@ export function isJavaScriptRuntimeInitialized(): boolean {
   }
 }
 
-export function getJavaScriptCompileContext(
-  compileData: CompileData,
-): QuickJSContext {
+export function getJavaScriptCompileContext(compileData: CompileData): QuickJSContext {
   const session = getJavaScriptSession(compileData);
   if (session) {
     return session.getContext();

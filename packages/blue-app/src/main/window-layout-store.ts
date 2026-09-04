@@ -17,10 +17,7 @@ import {
   type WindowLayoutSettingsSnapshot,
   type WindowLayoutUpdateRequest,
 } from '../shared/window-layout-settings';
-import {
-  loadProgramSettings,
-  saveProgramSettings,
-} from './program-settings-store';
+import { loadProgramSettings, saveProgramSettings } from './program-settings-store';
 
 export { WINDOW_LAYOUT_RESET_CHANNEL };
 
@@ -32,10 +29,7 @@ export function setCurrentSessionWindowResetHandler(handler: (() => void) | null
 
 export function loadWindowLayoutSettings(): WindowLayoutSettingsSnapshot {
   const settings = loadProgramSettings();
-  return (
-    settings.appSpecific.windowLayout ??
-    createDefaultWindowLayoutSettings()
-  );
+  return settings.appSpecific.windowLayout ?? createDefaultWindowLayoutSettings();
 }
 
 export function saveWindowLayoutSettings(

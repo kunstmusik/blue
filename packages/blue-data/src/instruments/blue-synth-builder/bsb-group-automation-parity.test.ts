@@ -110,7 +110,9 @@ describe('BSB group/ungroup preserves timeline automation (Java 8cfbcea1 parity)
     xy.automationAllowed = true;
     root.addChild(xy);
 
-    expect(builder.getParameters().filter((p) => p.getName() === 'xyX' || p.getName() === 'xyY')).toHaveLength(2);
+    expect(
+      builder.getParameters().filter((p) => p.getName() === 'xyX' || p.getName() === 'xyY'),
+    ).toHaveLength(2);
 
     const xParameter = findParamByName(builder, 'xyX')!;
     const yParameter = findParamByName(builder, 'xyY')!;

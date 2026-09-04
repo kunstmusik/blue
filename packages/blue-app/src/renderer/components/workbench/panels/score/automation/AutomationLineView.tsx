@@ -1,10 +1,6 @@
 import { useMemo, useRef, useEffect, useState, type MouseEvent } from 'react';
 import type { AutomationParameterSnapshot } from '../../../../../../shared/project-editor';
-import {
-  beatToX,
-  valueToY,
-  formatAutomationDouble,
-} from './automation-line-utils';
+import { beatToX, valueToY, formatAutomationDouble } from './automation-line-utils';
 import { HostSurfacePortal } from '../../../../host-surface/HostSurfacePortal';
 import { useHostSurface } from '../../../../host-surface/use-host-surface';
 
@@ -63,23 +59,28 @@ export default function AutomationLineView({
   const showReadout = mode === 'singleLine' && active;
   const readoutPointIndex = hoveredPointIndex ?? selectedPointIndex;
   const readoutPoint = showReadout
-    ? (readoutPointIndex == null ? null : points[readoutPointIndex] ?? null)
+    ? readoutPointIndex == null
+      ? null
+      : (points[readoutPointIndex] ?? null)
     : null;
-  const readoutXText = readoutPoint != null ? `x: ${formatAutomationDouble(readoutPoint.time)}` : '';
-  const readoutYText = readoutPoint != null
-    ? `y: ${formatAutomationDouble(readoutPoint.value)}${parameter.label.length > 0 ? ` ${parameter.label}` : ''}`
-    : '';
-  const readoutAnchor = readoutPoint != null
-    ? {
-        type: 'rect' as const,
-        getRect: () => {
-          const rect = svgRef.current?.getBoundingClientRect();
-          const px = (rect?.left ?? 0) + beatToX(readoutPoint.time, pixelsPerBeat);
-          const py = (rect?.top ?? 0) + valueToY(readoutPoint.value, minimum, maximum, height);
-          return { left: px, right: px, top: py, bottom: py };
-        },
-      }
-    : null;
+  const readoutXText =
+    readoutPoint != null ? `x: ${formatAutomationDouble(readoutPoint.time)}` : '';
+  const readoutYText =
+    readoutPoint != null
+      ? `y: ${formatAutomationDouble(readoutPoint.value)}${parameter.label.length > 0 ? ` ${parameter.label}` : ''}`
+      : '';
+  const readoutAnchor =
+    readoutPoint != null
+      ? {
+          type: 'rect' as const,
+          getRect: () => {
+            const rect = svgRef.current?.getBoundingClientRect();
+            const px = (rect?.left ?? 0) + beatToX(readoutPoint.time, pixelsPerBeat);
+            const py = (rect?.top ?? 0) + valueToY(readoutPoint.value, minimum, maximum, height);
+            return { left: px, right: px, top: py, bottom: py };
+          },
+        }
+      : null;
   const readoutSurface = useHostSurface(readoutAnchor, {
     kind: 'readout',
     gap: 7, // Java's pointRadius(4) + offset(3) clearance beside the point
@@ -91,50 +92,46 @@ export default function AutomationLineView({
 
   if (points.length === 0) return null;
 
-  const rangeStart = selectionRange ? Math.min(selectionRange.startBeat, selectionRange.endBeat) : 0;
+  const rangeStart = selectionRange
+    ? Math.min(selectionRange.startBeat, selectionRange.endBeat)
+    : 0;
   const rangeEnd = selectionRange ? Math.max(selectionRange.startBeat, selectionRange.endBeat) : 0;
 
   return (
     <div ref={containerRef} className="absolute inset-0 pointer-events-none">
       {height > 0 && (
-        <svg
-          ref={svgRef}
-          style={{ width: '100%', height, overflow: 'visible' }}
-        >
-          <path
-            d={pathD}
-            fill="none"
-            stroke={lineColor}
-            strokeWidth={2}
-          />
-          {showPoints && points.map((pt, i) => {
-            const cx = beatToX(pt.time, pixelsPerBeat);
-            const cy = valueToY(pt.value, minimum, maximum, height);
-            const directlySelected = selectedPointIndex === i;
-            const hovered = hoveredPointIndex === i;
-            const highlighted = directlySelected || hovered;
-            const rangeSelected =
-              selectionRange != null && pt.time >= rangeStart && pt.time <= rangeEnd;
-            const fill = rangeSelected
-              ? baseColor
-              : '#05070d';
-            const stroke = highlighted ? '#ef4444' : lineColor;
-            return (
-              <circle
-                key={i}
-                cx={cx}
-                cy={cy}
-                r={3.25}
-                fill={fill}
-                stroke={stroke}
-                strokeWidth={1.5}
-                className={interactive ? 'pointer-events-auto' : 'pointer-events-none'}
-                style={{ cursor: interactive ? 'pointer' : 'default', pointerEvents: interactive ? 'auto' : 'none' }}
-                onMouseDown={(event) => onPointMouseDown?.(i, event)}
-                onContextMenu={(event) => onPointContextMenu?.(i, event)}
-              />
-            );
-          })}
+        <svg ref={svgRef} style={{ width: '100%', height, overflow: 'visible' }}>
+          <path d={pathD} fill="none" stroke={lineColor} strokeWidth={2} />
+          {showPoints &&
+            points.map((pt, i) => {
+              const cx = beatToX(pt.time, pixelsPerBeat);
+              const cy = valueToY(pt.value, minimum, maximum, height);
+              const directlySelected = selectedPointIndex === i;
+              const hovered = hoveredPointIndex === i;
+              const highlighted = directlySelected || hovered;
+              const rangeSelected =
+                selectionRange != null && pt.time >= rangeStart && pt.time <= rangeEnd;
+              const fill = rangeSelected ? baseColor : '#05070d';
+              const stroke = highlighted ? '#ef4444' : lineColor;
+              return (
+                <circle
+                  key={i}
+                  cx={cx}
+                  cy={cy}
+                  r={3.25}
+                  fill={fill}
+                  stroke={stroke}
+                  strokeWidth={1.5}
+                  className={interactive ? 'pointer-events-auto' : 'pointer-events-none'}
+                  style={{
+                    cursor: interactive ? 'pointer' : 'default',
+                    pointerEvents: interactive ? 'auto' : 'none',
+                  }}
+                  onMouseDown={(event) => onPointMouseDown?.(i, event)}
+                  onContextMenu={(event) => onPointContextMenu?.(i, event)}
+                />
+              );
+            })}
         </svg>
       )}
       {mode === 'singleLine' && active && readoutPoint != null && (
@@ -157,14 +154,20 @@ export default function AutomationLineView({
 }
 
 function colorFromLineColor(lineColor: number): string {
-  return `#${((lineColor >>> 0) & 0x00FFFFFF).toString(16).padStart(6, '0')}`;
+  return `#${((lineColor >>> 0) & 0x00ffffff).toString(16).padStart(6, '0')}`;
 }
 
 function darkenColor(color: string, factor: number): string {
   const hex = color.replace('#', '');
   const red = Math.max(0, Math.min(255, Math.round(Number.parseInt(hex.slice(0, 2), 16) * factor)));
-  const green = Math.max(0, Math.min(255, Math.round(Number.parseInt(hex.slice(2, 4), 16) * factor)));
-  const blue = Math.max(0, Math.min(255, Math.round(Number.parseInt(hex.slice(4, 6), 16) * factor)));
+  const green = Math.max(
+    0,
+    Math.min(255, Math.round(Number.parseInt(hex.slice(2, 4), 16) * factor)),
+  );
+  const blue = Math.max(
+    0,
+    Math.min(255, Math.round(Number.parseInt(hex.slice(4, 6), 16) * factor)),
+  );
   return `#${red.toString(16).padStart(2, '0')}${green
     .toString(16)
     .padStart(2, '0')}${blue.toString(16).padStart(2, '0')}`;

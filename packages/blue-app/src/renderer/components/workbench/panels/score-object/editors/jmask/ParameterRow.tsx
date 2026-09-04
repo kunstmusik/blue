@@ -1,6 +1,13 @@
 import React, { useCallback, useState } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
-import type { FieldSnapshot, ParameterSnapshot, GeneratorSnapshot, MaskSnapshot, QuantizerSnapshot, AccumulatorSnapshot } from './jmask-utils';
+import type {
+  FieldSnapshot,
+  ParameterSnapshot,
+  GeneratorSnapshot,
+  MaskSnapshot,
+  QuantizerSnapshot,
+  AccumulatorSnapshot,
+} from './jmask-utils';
 import {
   supportsMask,
   supportsQuantizer,
@@ -16,7 +23,10 @@ import {
 } from './jmask-utils';
 import { renderGeneratorEditor } from './generator-editors';
 import { MaskEditor, QuantizerEditor, AccumulatorEditor } from './modifier-editors';
-import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../../../hooks/host-portals';
+import {
+  PopoutContextMenuPortal,
+  portalEventIsolationProps,
+} from '../../../../../../hooks/host-portals';
 
 interface ParameterRowProps {
   parameter: ParameterSnapshot;
@@ -37,7 +47,9 @@ export default function ParameterRow({
 }: ParameterRowProps): React.ReactElement {
   const [renaming, setRenaming] = useState(false);
   const [renameDraft, setRenameDraft] = useState('');
-  const [generatorPickerMode, setGeneratorPickerMode] = useState<'addBefore' | 'addAfter' | 'changeType' | null>(null);
+  const [generatorPickerMode, setGeneratorPickerMode] = useState<
+    'addBefore' | 'addAfter' | 'changeType' | null
+  >(null);
 
   const visible = parameter.visible !== false;
   const name = typeof parameter.name === 'string' ? parameter.name : '';
@@ -58,34 +70,49 @@ export default function ParameterRow({
   const label = name ? `p${parameterNum} - ${name}` : `p${parameterNum}`;
   const isCustom = parameterNum > 3;
 
-  const updateParameter = useCallback((updater: (p: ParameterSnapshot) => ParameterSnapshot) => {
-    const next = cloneField(field);
-    const params = getParameters(next);
-    if (fieldIndex >= 0 && fieldIndex < params.length) {
-      params[fieldIndex] = updater(params[fieldIndex]!);
-    }
-    onFieldChange(next);
-  }, [field, fieldIndex, onFieldChange]);
+  const updateParameter = useCallback(
+    (updater: (p: ParameterSnapshot) => ParameterSnapshot) => {
+      const next = cloneField(field);
+      const params = getParameters(next);
+      if (fieldIndex >= 0 && fieldIndex < params.length) {
+        params[fieldIndex] = updater(params[fieldIndex]!);
+      }
+      onFieldChange(next);
+    },
+    [field, fieldIndex, onFieldChange],
+  );
 
-  const handleGeneratorChange = useCallback((newGen: GeneratorSnapshot) => {
-    updateParameter(p => ({ ...p, generator: newGen }));
-  }, [updateParameter]);
+  const handleGeneratorChange = useCallback(
+    (newGen: GeneratorSnapshot) => {
+      updateParameter((p) => ({ ...p, generator: newGen }));
+    },
+    [updateParameter],
+  );
 
-  const handleMaskChange = useCallback((newMask: MaskSnapshot) => {
-    updateParameter(p => ({ ...p, mask: newMask }));
-  }, [updateParameter]);
+  const handleMaskChange = useCallback(
+    (newMask: MaskSnapshot) => {
+      updateParameter((p) => ({ ...p, mask: newMask }));
+    },
+    [updateParameter],
+  );
 
-  const handleQuantizerChange = useCallback((newQuantizer: QuantizerSnapshot) => {
-    updateParameter(p => ({ ...p, quantizer: newQuantizer }));
-  }, [updateParameter]);
+  const handleQuantizerChange = useCallback(
+    (newQuantizer: QuantizerSnapshot) => {
+      updateParameter((p) => ({ ...p, quantizer: newQuantizer }));
+    },
+    [updateParameter],
+  );
 
-  const handleAccumulatorChange = useCallback((newAccumulator: AccumulatorSnapshot) => {
-    updateParameter(p => ({ ...p, accumulator: newAccumulator }));
-  }, [updateParameter]);
+  const handleAccumulatorChange = useCallback(
+    (newAccumulator: AccumulatorSnapshot) => {
+      updateParameter((p) => ({ ...p, accumulator: newAccumulator }));
+    },
+    [updateParameter],
+  );
 
   const toggleMask = useCallback(() => {
     const enabled = !maskEnabled;
-    updateParameter(p => ({
+    updateParameter((p) => ({
       ...p,
       mask: mask
         ? { ...structuredClone(mask), enabled }
@@ -95,7 +122,7 @@ export default function ParameterRow({
 
   const toggleQuantizer = useCallback(() => {
     const enabled = !quantizerEnabled;
-    updateParameter(p => ({
+    updateParameter((p) => ({
       ...p,
       quantizer: quantizer
         ? { ...structuredClone(quantizer), enabled }
@@ -105,7 +132,7 @@ export default function ParameterRow({
 
   const toggleAccumulator = useCallback(() => {
     const enabled = !accumulatorEnabled;
-    updateParameter(p => ({
+    updateParameter((p) => ({
       ...p,
       accumulator: accumulator
         ? { ...structuredClone(accumulator), enabled }
@@ -113,21 +140,27 @@ export default function ParameterRow({
     }));
   }, [accumulatorEnabled, accumulator, updateParameter]);
 
-  const addParameterBefore = useCallback((registryName: string) => {
-    const newParam = createDefaultParameterSnapshot(registryName);
-    const next = cloneField(field);
-    const params = getParameters(next);
-    params.splice(fieldIndex, 0, newParam);
-    onFieldChange(next);
-  }, [field, fieldIndex, onFieldChange]);
+  const addParameterBefore = useCallback(
+    (registryName: string) => {
+      const newParam = createDefaultParameterSnapshot(registryName);
+      const next = cloneField(field);
+      const params = getParameters(next);
+      params.splice(fieldIndex, 0, newParam);
+      onFieldChange(next);
+    },
+    [field, fieldIndex, onFieldChange],
+  );
 
-  const addParameterAfter = useCallback((registryName: string) => {
-    const newParam = createDefaultParameterSnapshot(registryName);
-    const next = cloneField(field);
-    const params = getParameters(next);
-    params.splice(fieldIndex + 1, 0, newParam);
-    onFieldChange(next);
-  }, [field, fieldIndex, onFieldChange]);
+  const addParameterAfter = useCallback(
+    (registryName: string) => {
+      const newParam = createDefaultParameterSnapshot(registryName);
+      const next = cloneField(field);
+      const params = getParameters(next);
+      params.splice(fieldIndex + 1, 0, newParam);
+      onFieldChange(next);
+    },
+    [field, fieldIndex, onFieldChange],
+  );
 
   const removeParameter = useCallback(() => {
     const next = cloneField(field);
@@ -136,14 +169,17 @@ export default function ParameterRow({
     onFieldChange(next);
   }, [field, fieldIndex, onFieldChange]);
 
-  const changeParameterType = useCallback((registryName: string) => {
-    const nextParam = createDefaultParameterSnapshot(registryName);
-    updateParameter(p => ({
-      ...nextParam,
-      name: typeof p.name === 'string' ? p.name : '',
-      visible: p.visible !== false,
-    }));
-  }, [updateParameter]);
+  const changeParameterType = useCallback(
+    (registryName: string) => {
+      const nextParam = createDefaultParameterSnapshot(registryName);
+      updateParameter((p) => ({
+        ...nextParam,
+        name: typeof p.name === 'string' ? p.name : '',
+        visible: p.visible !== false,
+      }));
+    },
+    [updateParameter],
+  );
 
   const pushUp = useCallback(() => {
     if (fieldIndex <= 0) return;
@@ -170,16 +206,19 @@ export default function ParameterRow({
   }, [name]);
 
   const commitRename = useCallback(() => {
-    updateParameter(p => ({ ...p, name: renameDraft }));
+    updateParameter((p) => ({ ...p, name: renameDraft }));
     setRenaming(false);
   }, [renameDraft, updateParameter]);
 
-  const handleGeneratorPick = useCallback((registryName: string) => {
-    if (generatorPickerMode === 'addBefore') addParameterBefore(registryName);
-    else if (generatorPickerMode === 'addAfter') addParameterAfter(registryName);
-    else if (generatorPickerMode === 'changeType') changeParameterType(registryName);
-    setGeneratorPickerMode(null);
-  }, [generatorPickerMode, addParameterBefore, addParameterAfter, changeParameterType]);
+  const handleGeneratorPick = useCallback(
+    (registryName: string) => {
+      if (generatorPickerMode === 'addBefore') addParameterBefore(registryName);
+      else if (generatorPickerMode === 'addAfter') addParameterAfter(registryName);
+      else if (generatorPickerMode === 'changeType') changeParameterType(registryName);
+      setGeneratorPickerMode(null);
+    },
+    [generatorPickerMode, addParameterBefore, addParameterAfter, changeParameterType],
+  );
 
   if (!visible) return <></>;
 
@@ -193,9 +232,12 @@ export default function ParameterRow({
                 className="w-40 border border-app-accent bg-app-bg px-1 py-0 text-role-body text-app-text-strong focus:outline-none"
                 value={renameDraft}
                 autoFocus
-                onChange={e => setRenameDraft(e.target.value)}
+                onChange={(e) => setRenameDraft(e.target.value)}
                 onBlur={commitRename}
-                onKeyDown={e => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setRenaming(false); }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') commitRename();
+                  if (e.key === 'Escape') setRenaming(false);
+                }}
               />
             ) : (
               <span
@@ -218,12 +260,20 @@ export default function ParameterRow({
             )}
             {canQuantize && quantizerEnabled && quantizer && (
               <div className="rounded-sm border border-app-border/40 bg-app-bg">
-                <QuantizerEditor quantizer={quantizer} duration={duration} onChange={handleQuantizerChange} />
+                <QuantizerEditor
+                  quantizer={quantizer}
+                  duration={duration}
+                  onChange={handleQuantizerChange}
+                />
               </div>
             )}
             {canAccumulate && accumulatorEnabled && accumulator && (
               <div className="rounded-sm border border-app-border/40 bg-app-bg">
-                <AccumulatorEditor accumulator={accumulator} duration={duration} onChange={handleAccumulatorChange} />
+                <AccumulatorEditor
+                  accumulator={accumulator}
+                  duration={duration}
+                  onChange={handleAccumulatorChange}
+                />
               </div>
             )}
           </div>
@@ -231,7 +281,10 @@ export default function ParameterRow({
       </ContextMenu.Trigger>
 
       <PopoutContextMenuPortal>
-        <ContextMenu.Content className="z-50 min-w-[160px] rounded border border-app-border bg-app-menu p-1 text-role-body text-app-text shadow-md" {...portalEventIsolationProps}>
+        <ContextMenu.Content
+          className="z-50 min-w-[160px] rounded border border-app-border bg-app-menu p-1 text-role-body text-app-text shadow-md"
+          {...portalEventIsolationProps}
+        >
           <ContextMenu.Item
             className="cursor-pointer px-2 py-1 outline-none hover:bg-app-accent hover:text-app-text-strong"
             onSelect={() => setGeneratorPickerMode('changeType')}
@@ -299,14 +352,20 @@ export default function ParameterRow({
       </PopoutContextMenuPortal>
 
       {generatorPickerMode !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setGeneratorPickerMode(null)}>
-          <div className="min-w-[200px] rounded border border-app-border bg-app-hover py-2 shadow-xl" onClick={e => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          onClick={() => setGeneratorPickerMode(null)}
+        >
+          <div
+            className="min-w-[200px] rounded border border-app-border bg-app-hover py-2 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="px-3 pb-1 text-role-headline font-bold text-app-text">
               {generatorPickerMode === 'addBefore' && 'Add Parameter Before'}
               {generatorPickerMode === 'addAfter' && 'Add Parameter After'}
               {generatorPickerMode === 'changeType' && 'Change Generator Type'}
             </div>
-            {GENERATOR_REGISTRY.map(name => (
+            {GENERATOR_REGISTRY.map((name) => (
               <button
                 key={name}
                 type="button"

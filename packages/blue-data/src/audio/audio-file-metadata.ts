@@ -47,7 +47,7 @@ function readUint32LE(data: Uint8Array, offset: number): number {
     data[offset] +
     data[offset + 1] * 0x100 +
     data[offset + 2] * 0x10000 +
-    (data[offset + 3] * 0x1000000)
+    data[offset + 3] * 0x1000000
   );
 }
 
@@ -106,12 +106,7 @@ function fourCCBE(data: Uint8Array, offset: number): number {
 }
 
 function fourCCStringBE(data: Uint8Array, offset: number): string {
-  return String.fromCharCode(
-    data[offset],
-    data[offset + 1],
-    data[offset + 2],
-    data[offset + 3],
-  );
+  return String.fromCharCode(data[offset], data[offset + 1], data[offset + 2], data[offset + 3]);
 }
 
 /**
@@ -168,12 +163,9 @@ function parseWav(data: Uint8Array): AudioFileMetadata {
   }
 
   const frameSize = (bitsPerSample / 8) * channels;
-  const frameCount = dataByteLength > 0 && frameSize > 0
-    ? Math.floor(dataByteLength / frameSize)
-    : 0;
-  const durationSeconds = frameCount > 0 && sampleRate > 0
-    ? frameCount / sampleRate
-    : 0;
+  const frameCount =
+    dataByteLength > 0 && frameSize > 0 ? Math.floor(dataByteLength / frameSize) : 0;
+  const durationSeconds = frameCount > 0 && sampleRate > 0 ? frameCount / sampleRate : 0;
   const unavailableFields = hasDataChunk ? [] : ['frameCount', 'durationSeconds'];
 
   let encodingType = 'UNKNOWN';
@@ -254,9 +246,7 @@ function parseAiff(data: Uint8Array): AudioFileMetadata {
     throw new AudioFileMetadataError('AIFF COMM chunk not found or incomplete');
   }
 
-  const durationSeconds = frameCount > 0 && sampleRate > 0
-    ? frameCount / sampleRate
-    : 0;
+  const durationSeconds = frameCount > 0 && sampleRate > 0 ? frameCount / sampleRate : 0;
 
   let encodingType = 'PCM';
   let isBigEndian = true;
@@ -317,9 +307,7 @@ export function parseAudioFileMetadata(data: Uint8Array): AudioFileMetadata {
     return parseAiff(data);
   }
 
-  throw new AudioFileMetadataError(
-    `Unsupported audio format (magic=0x${magic.toString(16)})`,
-  );
+  throw new AudioFileMetadataError(`Unsupported audio format (magic=0x${magic.toString(16)})`);
 }
 
 // ─── Deterministic byte fixture builders (for tests) ───

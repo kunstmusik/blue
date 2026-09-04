@@ -8,9 +8,15 @@ import ScoreTimeCanvas from '../components/workbench/panels/score/layer-groups/S
 import { BLUE_LIBRARY_DRAG_MIME } from '../components/libraries/library-drag-drop';
 import { useLibraryStore } from '../stores/library-store';
 import type { PolyObjectLayerGroupSnapshot } from '../../shared/project-editor';
-import { createTestDataTransfer, dispatchDragEvent, setElementRect } from './library-interaction-test-helpers';
+import {
+  createTestDataTransfer,
+  dispatchDragEvent,
+  setElementRect,
+} from './library-interaction-test-helpers';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const group: PolyObjectLayerGroupSnapshot = {
   groupId: 'nested-group',
@@ -18,7 +24,16 @@ const group: PolyObjectLayerGroupSnapshot = {
   name: 'Nested',
   layerCount: 1,
   isOpenableContainer: true,
-  layers: [{ layerId: 'nested-group-layer-0', name: 'Layer 1', height: 44, muted: false, solo: false, items: [] }],
+  layers: [
+    {
+      layerId: 'nested-group-layer-0',
+      name: 'Layer 1',
+      height: 44,
+      muted: false,
+      solo: false,
+      items: [],
+    },
+  ],
 };
 
 const previewLibraryTransfer = vi.fn(async (request) => ({
@@ -27,17 +42,31 @@ const previewLibraryTransfer = vi.fn(async (request) => ({
     previewToken: 'score-preview',
     item: {
       key: { scope: 'user' as const, libraryType: 'soundObject' as const, nodeId: 'sound-1' },
-      displayName: 'Phrase', libraryType: 'soundObject' as const, scope: 'user' as const,
-      objectType: 'GenericScore', supportStatus: 'supported' as const, supportMessage: null,
-      fields: {}, dependencies: { itemOwned: [], unresolvedExternal: [] },
+      displayName: 'Phrase',
+      libraryType: 'soundObject' as const,
+      scope: 'user' as const,
+      objectType: 'GenericScore',
+      supportStatus: 'supported' as const,
+      supportMessage: null,
+      fields: {},
+      dependencies: { itemOwned: [], unresolvedExternal: [] },
     },
-    target: request.target, requestedMode: 'independent' as const,
-    allowedModes: ['independent'] as const, canApply: true, blockingReasons: [],
+    target: request.target,
+    requestedMode: 'independent' as const,
+    allowedModes: ['independent'] as const,
+    canApply: true,
+    blockingReasons: [],
   },
 }));
 const applyLibraryTransfer = vi.fn(async () => ({
   ok: true as const,
-  value: { projectSessionId: 8, projectRevision: 22, libraryType: 'soundObject' as const, insertedIdentity: 'score-1', message: 'SoundObject added.' },
+  value: {
+    projectSessionId: 8,
+    projectRevision: 22,
+    libraryType: 'soundObject' as const,
+    insertedIdentity: 'score-1',
+    message: 'SoundObject added.',
+  },
 }));
 
 let root: Root;
@@ -48,7 +77,12 @@ beforeEach(() => {
   previewLibraryTransfer.mockClear();
   applyLibraryTransfer.mockClear();
   window.blueAPI = { ...window.blueAPI, previewLibraryTransfer, applyLibraryTransfer };
-  useLibraryStore.setState({ clipboard: null, transferPreview: null, transferSource: null, error: null });
+  useLibraryStore.setState({
+    clipboard: null,
+    transferPreview: null,
+    transferSource: null,
+    error: null,
+  });
   container = document.createElement('div');
   document.body.appendChild(container);
   root = createRoot(container);
@@ -75,38 +109,53 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  act(() => { root.unmount(); });
+  act(() => {
+    root.unmount();
+  });
   document.body.replaceChildren();
 });
 
 describe('Score Library drop targets', () => {
   it('converts pointer geometry to an exact stable path/layer/snapped time', async () => {
     const transfer = createTestDataTransfer();
-    transfer.setData(BLUE_LIBRARY_DRAG_MIME, JSON.stringify({ dragSessionId: 'drag-score', libraryType: 'soundObject' }));
+    transfer.setData(
+      BLUE_LIBRARY_DRAG_MIME,
+      JSON.stringify({ dragSessionId: 'drag-score', libraryType: 'soundObject' }),
+    );
     dispatchDragEvent(surface, 'dragover', transfer, { clientX: 230, clientY: 10 });
     expect(container.querySelector('[class*="bg-app-accent/10"]')).toBeTruthy();
     dispatchDragEvent(surface, 'drop', transfer, { clientX: 230, clientY: 10 });
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
 
-    expect(previewLibraryTransfer).toHaveBeenCalledWith(expect.objectContaining({
-      source: { kind: 'drag', dragSessionId: 'drag-score' },
-      target: {
-        kind: 'score', projectSessionId: 8, projectRevision: 21,
-        location: {
-          rootGroupId: 'root-stable',
-          containerPath: [{ layerId: 'root-layer-2', objectIdentity: 'container-7' }],
-          layerId: 'nested-group-layer-0',
-          startTime: 4,
+    expect(previewLibraryTransfer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: { kind: 'drag', dragSessionId: 'drag-score' },
+        target: {
+          kind: 'score',
+          projectSessionId: 8,
+          projectRevision: 21,
+          location: {
+            rootGroupId: 'root-stable',
+            containerPath: [{ layerId: 'root-layer-2', objectIdentity: 'container-7' }],
+            layerId: 'nested-group-layer-0',
+            startTime: 4,
+          },
+          timeContextRevision: '21',
         },
-        timeContextRevision: '21',
-      },
-    }));
+      }),
+    );
     expect(applyLibraryTransfer).toHaveBeenCalledWith('score-preview');
   });
 
   it('accepts protected drag hover when custom descriptor data is readable only at drop', async () => {
     const transfer = createTestDataTransfer();
-    transfer.setData(BLUE_LIBRARY_DRAG_MIME, JSON.stringify({ dragSessionId: 'drag-protected', libraryType: 'soundObject' }));
+    transfer.setData(
+      BLUE_LIBRARY_DRAG_MIME,
+      JSON.stringify({ dragSessionId: 'drag-protected', libraryType: 'soundObject' }),
+    );
     const readableGetData = transfer.getData.bind(transfer);
     transfer.getData = vi.fn(() => '');
 
@@ -116,15 +165,20 @@ describe('Score Library drop targets', () => {
 
     transfer.getData = readableGetData;
     dispatchDragEvent(surface, 'drop', transfer, { clientX: 130, clientY: 10 });
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
 
-    expect(previewLibraryTransfer).toHaveBeenCalledWith(expect.objectContaining({
-      source: { kind: 'drag', dragSessionId: 'drag-protected' },
-      target: expect.objectContaining({
-        kind: 'score',
-        location: expect.objectContaining({ layerId: 'nested-group-layer-0', startTime: 2 }),
+    expect(previewLibraryTransfer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: { kind: 'drag', dragSessionId: 'drag-protected' },
+        target: expect.objectContaining({
+          kind: 'score',
+          location: expect.objectContaining({ layerId: 'nested-group-layer-0', startTime: 2 }),
+        }),
       }),
-    }));
+    );
     expect(applyLibraryTransfer).toHaveBeenCalledWith('score-preview');
   });
 
@@ -135,8 +189,18 @@ describe('Score Library drop targets', () => {
         source: {
           kind: 'library',
           key: {
-            scope: 'projectShared', libraryType: 'soundObject', projectSessionId: 8,
-            locator: { kind: 'soundObject', libraryId: 'shared-1', persistedFingerprint: { canonicalHash: 'h', displayName: 'Shared Phrase', objectType: 'GenericScore' } },
+            scope: 'projectShared',
+            libraryType: 'soundObject',
+            projectSessionId: 8,
+            locator: {
+              kind: 'soundObject',
+              libraryId: 'shared-1',
+              persistedFingerprint: {
+                canonicalHash: 'h',
+                displayName: 'Shared Phrase',
+                objectType: 'GenericScore',
+              },
+            },
           },
           revision: 'h',
         },
@@ -148,27 +212,47 @@ describe('Score Library drop targets', () => {
       value: {
         previewToken: 'shared-preview',
         item: {
-          key: request.source.kind === 'clipboard' && request.source.source.kind === 'library'
-            ? request.source.source.key
-            : { scope: 'user' as const, libraryType: 'soundObject' as const, nodeId: 'fallback' },
-          displayName: 'Shared Phrase', libraryType: 'soundObject' as const, scope: 'projectShared' as const,
-          objectType: 'GenericScore', supportStatus: 'supported' as const, supportMessage: null,
-          fields: {}, dependencies: { itemOwned: [], unresolvedExternal: [] },
+          key:
+            request.source.kind === 'clipboard' && request.source.source.kind === 'library'
+              ? request.source.source.key
+              : { scope: 'user' as const, libraryType: 'soundObject' as const, nodeId: 'fallback' },
+          displayName: 'Shared Phrase',
+          libraryType: 'soundObject' as const,
+          scope: 'projectShared' as const,
+          objectType: 'GenericScore',
+          supportStatus: 'supported' as const,
+          supportMessage: null,
+          fields: {},
+          dependencies: { itemOwned: [], unresolvedExternal: [] },
         },
-        target: request.target, requestedMode: 'independent' as const,
-        allowedModes: ['independent', 'sharedInstance'] as const, canApply: true, blockingReasons: [],
+        target: request.target,
+        requestedMode: 'independent' as const,
+        allowedModes: ['independent', 'sharedInstance'] as const,
+        canApply: true,
+        blockingReasons: [],
       },
     }));
 
-    act(() => { surface.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 360, clientY: 10 })); });
+    act(() => {
+      surface.dispatchEvent(
+        new MouseEvent('mousemove', { bubbles: true, clientX: 360, clientY: 10 }),
+      );
+    });
     await act(async () => {
-      surface.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'v', ctrlKey: true }));
+      surface.dispatchEvent(
+        new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'v', ctrlKey: true }),
+      );
       await Promise.resolve();
     });
-    expect(previewLibraryTransfer).toHaveBeenLastCalledWith(expect.objectContaining({
-      target: expect.objectContaining({ location: expect.objectContaining({ startTime: 7 }) }),
-    }));
-    expect(useLibraryStore.getState().transferPreview?.allowedModes).toEqual(['independent', 'sharedInstance']);
+    expect(previewLibraryTransfer).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        target: expect.objectContaining({ location: expect.objectContaining({ startTime: 7 }) }),
+      }),
+    );
+    expect(useLibraryStore.getState().transferPreview?.allowedModes).toEqual([
+      'independent',
+      'sharedInstance',
+    ]);
     expect(applyLibraryTransfer).not.toHaveBeenCalled();
   });
 
@@ -193,17 +277,20 @@ describe('Score Library drop targets', () => {
       });
     });
     await act(async () => {
-      surface.dispatchEvent(new MouseEvent('contextmenu', {
-        bubbles: true,
-        cancelable: true,
-        button: 2,
-        clientX: 230,
-        clientY: 10,
-      }));
+      surface.dispatchEvent(
+        new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          button: 2,
+          clientX: 230,
+          clientY: 10,
+        }),
+      );
       await Promise.resolve();
     });
-    const item = Array.from(document.body.querySelectorAll('[role="menuitem"]'))
-      .find((candidate) => candidate.textContent?.includes('Paste BSB As Sound')) as HTMLElement;
+    const item = Array.from(document.body.querySelectorAll('[role="menuitem"]')).find((candidate) =>
+      candidate.textContent?.includes('Paste BSB As Sound'),
+    ) as HTMLElement;
     expect(item).toBeTruthy();
     expect(item.hasAttribute('data-disabled')).toBe(false);
 
@@ -217,23 +304,25 @@ describe('Score Library drop targets', () => {
       await Promise.resolve();
     });
 
-    expect(previewLibraryTransfer).toHaveBeenCalledWith(expect.objectContaining({
-      source: {
-        kind: 'clipboard',
-        source: expect.objectContaining({ kind: 'library' }),
-      },
-      target: {
-        kind: 'scoreBsbSound',
-        projectSessionId: 8,
-        projectRevision: 21,
-        location: {
-          rootGroupId: 'root-stable',
-          containerPath: [{ layerId: 'root-layer-2', objectIdentity: 'container-7' }],
-          layerId: 'nested-group-layer-0',
-          startTime: 4,
+    expect(previewLibraryTransfer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: {
+          kind: 'clipboard',
+          source: expect.objectContaining({ kind: 'library' }),
         },
-        timeContextRevision: '21',
-      },
-    }));
+        target: {
+          kind: 'scoreBsbSound',
+          projectSessionId: 8,
+          projectRevision: 21,
+          location: {
+            rootGroupId: 'root-stable',
+            containerPath: [{ layerId: 'root-layer-2', objectIdentity: 'container-7' }],
+            layerId: 'nested-group-layer-0',
+            startTime: 4,
+          },
+          timeContextRevision: '21',
+        },
+      }),
+    );
   });
 });

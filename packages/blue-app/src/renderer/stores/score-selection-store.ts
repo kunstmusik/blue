@@ -1,5 +1,8 @@
 import { create } from 'zustand';
-import type { ScoreObjectEditorTargetSnapshot, ScoreRowObjectSnapshot } from '../../shared/project-editor';
+import type {
+  ScoreObjectEditorTargetSnapshot,
+  ScoreRowObjectSnapshot,
+} from '../../shared/project-editor';
 
 export interface ScoreObjectClipboardEntry {
   objectId: string;
@@ -127,7 +130,10 @@ export const useScoreSelectionStore = create<ScoreSelectionState>((set) => ({
         selectedObjectTarget = nextTargets[onlyId] ?? null;
       }
 
-      const nextLiveSharedProperties: Record<string, { startBeats?: number; durationBeats?: number }> = {};
+      const nextLiveSharedProperties: Record<
+        string,
+        { startBeats?: number; durationBeats?: number }
+      > = {};
       for (const objectId of next) {
         const live = state.liveSharedProperties[objectId];
         if (live) {
@@ -146,7 +152,10 @@ export const useScoreSelectionStore = create<ScoreSelectionState>((set) => ({
 
   selectAll(allIds) {
     set((state) => {
-      const nextLiveSharedProperties: Record<string, { startBeats?: number; durationBeats?: number }> = {};
+      const nextLiveSharedProperties: Record<
+        string,
+        { startBeats?: number; durationBeats?: number }
+      > = {};
       for (const objectId of allIds) {
         const live = state.liveSharedProperties[objectId];
         if (live) {
@@ -186,7 +195,10 @@ export const useScoreSelectionStore = create<ScoreSelectionState>((set) => ({
       selectedObjectTarget = selectedObjectTargets[onlyId] ?? null;
     }
     set((state) => {
-      const nextLiveSharedProperties: Record<string, { startBeats?: number; durationBeats?: number }> = {};
+      const nextLiveSharedProperties: Record<
+        string,
+        { startBeats?: number; durationBeats?: number }
+      > = {};
       for (const objectId of selectedObjectIds) {
         const live = state.liveSharedProperties[objectId];
         if (live) {
@@ -225,7 +237,10 @@ export const useScoreSelectionStore = create<ScoreSelectionState>((set) => ({
       } else {
         selectedObjectTarget = state.selectedObjectTarget;
       }
-      const nextLiveSharedProperties: Record<string, { startBeats?: number; durationBeats?: number }> = {};
+      const nextLiveSharedProperties: Record<
+        string,
+        { startBeats?: number; durationBeats?: number }
+      > = {};
       for (const objectId of selectedObjectIds) {
         const live = state.liveSharedProperties[objectId];
         if (live) {
@@ -294,5 +309,4 @@ export const useScoreSelectionStore = create<ScoreSelectionState>((set) => ({
   setAudioDropGuideBeat(beat) {
     set({ audioDropGuideBeat: beat });
   },
-
 }));

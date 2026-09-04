@@ -4,11 +4,16 @@ import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createDefaultRealtimeRenderSettings, type RealtimeRenderSettingsSnapshot } from '../../shared/program-settings';
+import {
+  createDefaultRealtimeRenderSettings,
+  type RealtimeRenderSettingsSnapshot,
+} from '../../shared/program-settings';
 import RealtimeRenderSettings from '../components/settings/RealtimeRenderSettings';
 import { getAppSelectOptionLabels } from './app-select-test-utils';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 let container: HTMLDivElement;
 let root: Root;
@@ -103,11 +108,14 @@ describe('RealtimeRenderSettings engine controls', () => {
   it('labels the legacy sentinel as bundled and resets an override', () => {
     const onEnginePathChange = render('blue-engine');
     expect(container.textContent).toContain('Bundled Blue Engine');
-    const input = container.querySelector('input[placeholder*="bundled engine"]') as HTMLInputElement;
+    const input = container.querySelector(
+      'input[placeholder*="bundled engine"]',
+    ) as HTMLInputElement;
     expect(input.value).toBe('');
 
-    const reset = Array.from(container.querySelectorAll('button'))
-      .find((button) => button.textContent === 'Use Bundled Blue Engine');
+    const reset = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.textContent === 'Use Bundled Blue Engine',
+    );
     act(() => reset?.click());
     expect(onEnginePathChange).toHaveBeenCalledWith('blue-engine');
   });
@@ -122,8 +130,9 @@ describe('RealtimeRenderSettings engine controls', () => {
       durationMs: 10,
     });
     render('/external/blue-engine');
-    const check = Array.from(container.querySelectorAll('button'))
-      .find((button) => button.textContent === 'Check Engine and Csound');
+    const check = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.textContent === 'Check Engine and Csound',
+    );
     await act(async () => check?.click());
 
     expect(probeEngineRuntime).toHaveBeenCalledWith({
@@ -168,8 +177,9 @@ describe('RealtimeRenderSettings engine controls', () => {
       durationMs: 10,
     });
     render('blue-engine');
-    const check = Array.from(container.querySelectorAll('button'))
-      .find((button) => button.textContent === 'Check Engine and Csound');
+    const check = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.textContent === 'Check Engine and Csound',
+    );
     await act(async () => check?.click());
     expect(container.textContent).toContain('No supported Csound library was found');
     expect(container.textContent).toContain('Csound unavailable');
@@ -219,8 +229,9 @@ describe('RealtimeRenderSettings engine controls', () => {
         durationMs: 12,
       });
     render('blue-engine');
-    const check = Array.from(container.querySelectorAll('button'))
-      .find((button) => button.textContent === 'Check Engine and Csound');
+    const check = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.textContent === 'Check Engine and Csound',
+    );
     await act(async () => check?.click());
     expect(container.textContent).toContain('Probe timed out');
     await act(async () => check?.click());
@@ -237,21 +248,29 @@ describe('RealtimeRenderSettings engine controls', () => {
       message: 'Csound 7 is ready',
       durationMs: 10,
     });
-    queryCsoundIo.mockImplementation(async (request: any) => (
+    queryCsoundIo.mockImplementation(async (request: any) =>
       request.audioModule
         ? ioResult({
             selectedAudioModule: request.audioModule,
-            audioOutputs: [{
-              kind: 'audio', direction: 'output', module: request.audioModule,
-              deviceId: 'hw:exact-output', displayName: 'Exact Output',
-              interfaceName: null, maxChannels: 2,
-            }],
+            audioOutputs: [
+              {
+                kind: 'audio',
+                direction: 'output',
+                module: request.audioModule,
+                deviceId: 'hw:exact-output',
+                displayName: 'Exact Output',
+                interfaceName: null,
+                maxChannels: 2,
+              },
+            ],
           })
-        : ioResult()
-    ));
+        : ioResult(),
+    );
     const onChange = vi.fn();
     render('blue-engine', vi.fn(), onChange);
-    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)); });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
     expect(queryCsoundIo).toHaveBeenCalledWith({
       enginePathOverride: null,
       csoundLibraryPath: null,
@@ -263,30 +282,47 @@ describe('RealtimeRenderSettings engine controls', () => {
       midiModule: 'portmidi',
     });
     const moduleTriggers = container.querySelectorAll<HTMLElement>('[role="combobox"]');
-    expect(await getAppSelectOptionLabels(moduleTriggers[0]!)).toContain('PortAudio - Blocking (pa_bl)');
-    expect(Array.from(container.querySelectorAll('button')).some((button) => button.textContent === 'Rescan Audio Devices')).toBe(true);
-    expect(Array.from(container.querySelectorAll('button')).some((button) => button.textContent === 'Rescan MIDI Devices')).toBe(true);
-    const audioInput = container.querySelector<HTMLInputElement>('input[aria-controls="runtime-devices-audio-out"]');
+    expect(await getAppSelectOptionLabels(moduleTriggers[0]!)).toContain(
+      'PortAudio - Blocking (pa_bl)',
+    );
+    expect(
+      Array.from(container.querySelectorAll('button')).some(
+        (button) => button.textContent === 'Rescan Audio Devices',
+      ),
+    ).toBe(true);
+    expect(
+      Array.from(container.querySelectorAll('button')).some(
+        (button) => button.textContent === 'Rescan MIDI Devices',
+      ),
+    ).toBe(true);
+    const audioInput = container.querySelector<HTMLInputElement>(
+      'input[aria-controls="runtime-devices-audio-out"]',
+    );
     act(() => audioInput?.click());
-    expect(document.body.querySelector('[role="listbox"][aria-label="Audio Out devices"]')?.textContent)
-      .toContain('Exact Output');
+    expect(
+      document.body.querySelector('[role="listbox"][aria-label="Audio Out devices"]')?.textContent,
+    ).toContain('Exact Output');
     expect(onChange).not.toHaveBeenCalled();
   });
 
   it('shows friendly labels while preserving exact discovered module values', async () => {
-    queryCsoundIo.mockResolvedValue(ioResult({
-      audioModules: [
-        { name: 'pa_bl', kind: 'audio' },
-        { name: 'auhal', kind: 'audio' },
-        { name: 'third-party-backend', kind: 'audio' },
-      ],
-      midiModules: [
-        { name: 'portmidi', kind: 'midi' },
-        { name: 'coremidi', kind: 'midi' },
-      ],
-    }));
+    queryCsoundIo.mockResolvedValue(
+      ioResult({
+        audioModules: [
+          { name: 'pa_bl', kind: 'audio' },
+          { name: 'auhal', kind: 'audio' },
+          { name: 'third-party-backend', kind: 'audio' },
+        ],
+        midiModules: [
+          { name: 'portmidi', kind: 'midi' },
+          { name: 'coremidi', kind: 'midi' },
+        ],
+      }),
+    );
     render('blue-engine', vi.fn(), vi.fn(), { audioDriver: 'auhal', midiDriver: 'coremidi' });
-    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)); });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
 
     const selects = container.querySelectorAll<HTMLElement>('[role="combobox"]');
     expect(await getAppSelectOptionLabels(selects[0]!)).toEqual([
@@ -303,9 +339,12 @@ describe('RealtimeRenderSettings engine controls', () => {
   it('manually rescans the selected device list without rescanning the other side', async () => {
     queryCsoundIo.mockResolvedValue(ioResult());
     render('blue-engine');
-    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)); });
-    const audioRescan = Array.from(container.querySelectorAll('button'))
-      .find((button) => button.textContent === 'Rescan Audio Devices');
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    const audioRescan = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.textContent === 'Rescan Audio Devices',
+    );
     await act(async () => {
       audioRescan?.click();
       await new Promise((resolve) => setTimeout(resolve, 0));
@@ -316,7 +355,10 @@ describe('RealtimeRenderSettings engine controls', () => {
 
   it('refreshes only the device list for a changed module', async () => {
     queryCsoundIo.mockResolvedValue(ioResult());
-    const initialSettings = { ...createDefaultRealtimeRenderSettings('darwin'), audioDriver: 'pa_bl' };
+    const initialSettings = {
+      ...createDefaultRealtimeRenderSettings('darwin'),
+      audioDriver: 'pa_bl',
+    };
     const onEnginePathChange = vi.fn();
     const onChange = vi.fn();
     const renderSettings = (settings: RealtimeRenderSettingsSnapshot) => {
@@ -332,11 +374,15 @@ describe('RealtimeRenderSettings engine controls', () => {
       });
     };
     renderSettings(initialSettings);
-    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)); });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
     expect(queryCsoundIo).toHaveBeenCalledTimes(2);
 
     renderSettings({ ...initialSettings, audioDriver: 'auhal' });
-    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)); });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
     expect(queryCsoundIo).toHaveBeenCalledWith({
       enginePathOverride: null,
       csoundLibraryPath: null,
@@ -361,10 +407,14 @@ describe('RealtimeRenderSettings engine controls', () => {
       message: 'Audio module is unavailable: auhal',
     });
     render('blue-engine');
-    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)); });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
     expect(container.textContent).toContain('saved audio module is currently unavailable');
     expect(container.textContent).toContain('Audio module is unavailable');
-    expect(container.querySelector<HTMLElement>('[role="combobox"]')?.textContent).toContain('CoreAudio (auhal)');
+    expect(container.querySelector<HTMLElement>('[role="combobox"]')?.textContent).toContain(
+      'CoreAudio (auhal)',
+    );
   });
 
   it('keeps device fields editable when defaults are disabled and exposes default entries', () => {
@@ -376,45 +426,90 @@ describe('RealtimeRenderSettings engine controls', () => {
       audioDriverEnabled: false,
       midiDriverEnabled: false,
     });
-    expect(container.querySelector<HTMLInputElement>('input[aria-controls="runtime-devices-audio-out"]')?.disabled).toBe(false);
-    expect(container.querySelector<HTMLInputElement>('input[aria-controls="runtime-devices-audio-in"]')?.disabled).toBe(false);
-    expect(container.querySelector<HTMLInputElement>('input[aria-controls="runtime-devices-midi-out"]')?.disabled).toBe(false);
-    expect(container.querySelector<HTMLInputElement>('input[aria-controls="runtime-devices-midi-in"]')?.disabled).toBe(false);
+    expect(
+      container.querySelector<HTMLInputElement>('input[aria-controls="runtime-devices-audio-out"]')
+        ?.disabled,
+    ).toBe(false);
+    expect(
+      container.querySelector<HTMLInputElement>('input[aria-controls="runtime-devices-audio-in"]')
+        ?.disabled,
+    ).toBe(false);
+    expect(
+      container.querySelector<HTMLInputElement>('input[aria-controls="runtime-devices-midi-out"]')
+        ?.disabled,
+    ).toBe(false);
+    expect(
+      container.querySelector<HTMLInputElement>('input[aria-controls="runtime-devices-midi-in"]')
+        ?.disabled,
+    ).toBe(false);
     expect(container.querySelector<HTMLButtonElement>('[role="combobox"]')?.disabled).toBe(false);
-    expect(container.querySelectorAll<HTMLButtonElement>('[role="combobox"]')[1]?.disabled).toBe(false);
-    const audioOutInput = container.querySelector<HTMLInputElement>('input[aria-controls="runtime-devices-audio-out"]');
-    const audioInInput = container.querySelector<HTMLInputElement>('input[aria-controls="runtime-devices-audio-in"]');
+    expect(container.querySelectorAll<HTMLButtonElement>('[role="combobox"]')[1]?.disabled).toBe(
+      false,
+    );
+    const audioOutInput = container.querySelector<HTMLInputElement>(
+      'input[aria-controls="runtime-devices-audio-out"]',
+    );
+    const audioInInput = container.querySelector<HTMLInputElement>(
+      'input[aria-controls="runtime-devices-audio-in"]',
+    );
     act(() => audioOutInput?.click());
-    expect(document.body.querySelector('[role="listbox"][aria-label="Audio Out devices"]')?.textContent)
-      .toContain('Default (dac) - 2 channels');
+    expect(
+      document.body.querySelector('[role="listbox"][aria-label="Audio Out devices"]')?.textContent,
+    ).toContain('Default (dac) - 2 channels');
     act(() => audioInInput?.click());
-    expect(document.body.querySelector('[role="listbox"][aria-label="Audio In devices"]')?.textContent)
-      .toContain('Default (adc) - 2 channels');
+    expect(
+      document.body.querySelector('[role="listbox"][aria-label="Audio In devices"]')?.textContent,
+    ).toContain('Default (adc) - 2 channels');
     expect(container.querySelector('button[aria-label*="Choose"]')).toBeNull();
   });
 
   it('shows runtime device names and audio channel capacity in the full option list', async () => {
-    queryCsoundIo.mockResolvedValue(ioResult({
-      audioOutputs: [{
-        kind: 'audio', direction: 'output', module: 'pa_bl', deviceId: 'hw:exact-output',
-        displayName: 'Headphones', interfaceName: 'Built-in Output', maxChannels: 2,
-      }],
-      midiInputs: [{
-        kind: 'midi', direction: 'input', module: 'coremidi', deviceId: 'midi:controller',
-        displayName: 'Controller', interfaceName: 'CoreMIDI', maxChannels: null,
-      }],
-    }));
+    queryCsoundIo.mockResolvedValue(
+      ioResult({
+        audioOutputs: [
+          {
+            kind: 'audio',
+            direction: 'output',
+            module: 'pa_bl',
+            deviceId: 'hw:exact-output',
+            displayName: 'Headphones',
+            interfaceName: 'Built-in Output',
+            maxChannels: 2,
+          },
+        ],
+        midiInputs: [
+          {
+            kind: 'midi',
+            direction: 'input',
+            module: 'coremidi',
+            deviceId: 'midi:controller',
+            displayName: 'Controller',
+            interfaceName: 'CoreMIDI',
+            maxChannels: null,
+          },
+        ],
+      }),
+    );
     render('blue-engine', vi.fn(), vi.fn(), { audioOutText: 'dac1' });
-    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)); });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
     expect(queryCsoundIo).toHaveBeenCalledWith({
       enginePathOverride: null,
       csoundLibraryPath: null,
       audioModule: 'auhal',
     });
-    const audioOutInput = container.querySelector<HTMLInputElement>('input[aria-controls="runtime-devices-audio-out"]');
+    const audioOutInput = container.querySelector<HTMLInputElement>(
+      'input[aria-controls="runtime-devices-audio-out"]',
+    );
     act(() => audioOutInput?.click());
-    const audioOption = Array.from(document.body.querySelectorAll('[role="listbox"][aria-label="Audio Out devices"] button[role="option"]'))
-      .find((option) => option.textContent?.includes('Headphones'));
-    expect(audioOption?.textContent).toBe('Headphones — Built-in Output (hw:exact-output) - 2 channels');
+    const audioOption = Array.from(
+      document.body.querySelectorAll(
+        '[role="listbox"][aria-label="Audio Out devices"] button[role="option"]',
+      ),
+    ).find((option) => option.textContent?.includes('Headphones'));
+    expect(audioOption?.textContent).toBe(
+      'Headphones — Built-in Output (hw:exact-output) - 2 channels',
+    );
   });
 });

@@ -11,7 +11,9 @@ import { createDefaultBsbWidgetSnapshot } from '../../shared/project-editor';
 import BSBInterfaceCanvas from '../components/workbench/panels/orchestra/bsb/BSBInterfaceCanvas';
 import { getWidgetDisplaySize } from '../components/workbench/panels/orchestra/bsb/widgets/utils';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 type WidgetSummary = BlueSynthBuilderInstrumentSnapshot['widgets'][number];
 
@@ -280,7 +282,10 @@ function applyPatchToInstrument(
               break;
           }
         }
-        if (patch.properties.sliderWidth !== undefined || patch.properties.sliderHeight !== undefined) {
+        if (
+          patch.properties.sliderWidth !== undefined ||
+          patch.properties.sliderHeight !== undefined
+        ) {
           const size = getWidgetDisplaySize(node);
           node.width = size.width;
           node.height = size.height;
@@ -340,7 +345,11 @@ function makeHarness(initialInstrument: BlueSynthBuilderInstrumentSnapshot): Rea
   return <Harness />;
 }
 
-function mount(element: React.ReactElement): { container: HTMLDivElement; root: Root; unmount: () => void } {
+function mount(element: React.ReactElement): {
+  container: HTMLDivElement;
+  root: Root;
+  unmount: () => void;
+} {
   const container = document.createElement('div');
   container.style.width = '1280px';
   container.style.height = '960px';
@@ -385,14 +394,16 @@ function getWidgetElement(container: HTMLDivElement, widgetId: string): HTMLDivE
 }
 
 function dispatchMouse(target: EventTarget, type: string, init: MouseEventInit = {}): void {
-  target.dispatchEvent(new MouseEvent(type, {
-    bubbles: true,
-    cancelable: true,
-    composed: true,
-    button: 0,
-    buttons: type === 'mouseup' ? 0 : 1,
-    ...init,
-  }));
+  target.dispatchEvent(
+    new MouseEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      button: 0,
+      buttons: type === 'mouseup' ? 0 : 1,
+      ...init,
+    }),
+  );
 }
 
 async function flushFrame(): Promise<void> {
@@ -464,8 +475,20 @@ describe('BSB browser geometry', () => {
 
   it('shows resize handles for the representative editable widget types', async () => {
     const widgets = [
-      makeWidgetNode('BSBKnob', { id: 'knob', objectName: 'gain', x: 20, y: 24, properties: { labelEnabled: true } }),
-      makeWidgetNode('BSBXYController', { id: 'xy', objectName: 'pad', x: 180, y: 24, properties: { valueDisplayEnabled: true } }),
+      makeWidgetNode('BSBKnob', {
+        id: 'knob',
+        objectName: 'gain',
+        x: 20,
+        y: 24,
+        properties: { labelEnabled: true },
+      }),
+      makeWidgetNode('BSBXYController', {
+        id: 'xy',
+        objectName: 'pad',
+        x: 180,
+        y: 24,
+        properties: { valueDisplayEnabled: true },
+      }),
       makeWidgetNode('BSBLineObject', {
         id: 'line',
         objectName: 'curve',
@@ -480,7 +503,10 @@ describe('BSB browser geometry', () => {
               min: 0,
               max: 1,
               color: '#ff0000',
-              points: [{ x: 0, y: 0.2 }, { x: 1, y: 0.8 }],
+              points: [
+                { x: 0, y: 0.2 },
+                { x: 1, y: 0.8 },
+              ],
             },
           ],
         },
@@ -496,14 +522,18 @@ describe('BSB browser geometry', () => {
       for (const widgetId of ['knob', 'xy', 'line']) {
         const widget = getWidgetElement(rendered.container, widgetId);
         await act(async () => {
-          widget.dispatchEvent(new MouseEvent('click', {
-            bubbles: true,
-            cancelable: true,
-            button: 0,
-          }));
+          widget.dispatchEvent(
+            new MouseEvent('click', {
+              bubbles: true,
+              cancelable: true,
+              button: 0,
+            }),
+          );
         });
 
-        const handles = Array.from(rendered.container.querySelectorAll('[data-resize-edge]')) as HTMLDivElement[];
+        const handles = Array.from(
+          rendered.container.querySelectorAll('[data-resize-edge]'),
+        ) as HTMLDivElement[];
         expect(handles.length).toBeGreaterThan(0);
         const edges = handles.map((handle) => handle.getAttribute('data-resize-edge'));
         expect(edges).toEqual(expect.arrayContaining(['right', 'bottom']));
@@ -615,7 +645,10 @@ describe('BSB browser geometry', () => {
                 min: 0,
                 max: 1,
                 color: '#ff0000',
-                points: [{ x: 0, y: 0.2 }, { x: 1, y: 0.8 }],
+                points: [
+                  { x: 0, y: 0.2 },
+                  { x: 1, y: 0.8 },
+                ],
               },
             ],
           },
@@ -640,11 +673,13 @@ describe('BSB browser geometry', () => {
         const before = widget.getBoundingClientRect();
 
         await act(async () => {
-          widget.dispatchEvent(new MouseEvent('click', {
-            bubbles: true,
-            cancelable: true,
-            button: 0,
-          }));
+          widget.dispatchEvent(
+            new MouseEvent('click', {
+              bubbles: true,
+              cancelable: true,
+              button: 0,
+            }),
+          );
           await flushFrame();
         });
 
@@ -656,24 +691,29 @@ describe('BSB browser geometry', () => {
 
         await act(async () => {
           dispatchMouse(handle, 'mousedown', {
-            clientX: handleRect.left + (handleRect.width / 2),
-            clientY: handleRect.top + (handleRect.height / 2),
+            clientX: handleRect.left + handleRect.width / 2,
+            clientY: handleRect.top + handleRect.height / 2,
           });
           dispatchMouse(window, 'mousemove', {
-            clientX: handleRect.left + (handleRect.width / 2) + testCase.deltaX,
-            clientY: handleRect.top + (handleRect.height / 2) + testCase.deltaY,
+            clientX: handleRect.left + handleRect.width / 2 + testCase.deltaX,
+            clientY: handleRect.top + handleRect.height / 2 + testCase.deltaY,
           });
           await flushFrame();
           dispatchMouse(window, 'mouseup', {
-            clientX: handleRect.left + (handleRect.width / 2) + testCase.deltaX,
-            clientY: handleRect.top + (handleRect.height / 2) + testCase.deltaY,
+            clientX: handleRect.left + handleRect.width / 2 + testCase.deltaX,
+            clientY: handleRect.top + handleRect.height / 2 + testCase.deltaY,
           });
           await flushFrame();
         });
 
-        const after = getWidgetElement(rendered.container, testCase.widget.id).getBoundingClientRect();
-        const widthIncrease = 'expectedWidthIncrease' in testCase ? testCase.expectedWidthIncrease : undefined;
-        const heightIncrease = 'expectedHeightIncrease' in testCase ? testCase.expectedHeightIncrease : undefined;
+        const after = getWidgetElement(
+          rendered.container,
+          testCase.widget.id,
+        ).getBoundingClientRect();
+        const widthIncrease =
+          'expectedWidthIncrease' in testCase ? testCase.expectedWidthIncrease : undefined;
+        const heightIncrease =
+          'expectedHeightIncrease' in testCase ? testCase.expectedHeightIncrease : undefined;
 
         if (widthIncrease !== undefined) {
           expect(Math.round(after.width - before.width)).toBe(widthIncrease);

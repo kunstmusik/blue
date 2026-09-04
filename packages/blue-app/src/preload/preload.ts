@@ -42,10 +42,7 @@ import {
   TRACK_INSTRUMENT_RUNTIME_STATUS_UNSUBSCRIBE_CHANNEL,
   type TrackInstrumentRuntimeStatus,
 } from '../shared/track-instrument-editor-contract';
-import type {
-  ScoreObjectExportResult,
-  ScoreObjectImportResult,
-} from '../shared/score-object-file';
+import type { ScoreObjectExportResult, ScoreObjectImportResult } from '../shared/score-object-file';
 import type { NativeMenuCommand } from '../shared/workbench-menu';
 import {
   JAVASCRIPT_RUNTIME_REINITIALIZE_CHANNEL,
@@ -131,14 +128,8 @@ import type {
   CurrentAppSettingsSnapshot,
   UsageParityMatrixEntry,
 } from '../shared/program-settings';
-import type {
-  EngineProbeRequest,
-  EngineProbeResult,
-} from '../shared/engine-runtime';
-import type {
-  CsoundIoQueryRequest,
-  CsoundIoQueryResult,
-} from '../shared/csound-runtime';
+import type { EngineProbeRequest, EngineProbeResult } from '../shared/engine-runtime';
+import type { CsoundIoQueryRequest, CsoundIoQueryResult } from '../shared/csound-runtime';
 import {
   SETTINGS_CLOSE_REQUEST_CHANNEL,
   SETTINGS_CLOSE_RESPONSE_CHANNEL,
@@ -374,118 +365,209 @@ contextBridge.exposeInMainWorld('blueAPI', {
   getLibraryServiceSnapshot: () =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_GET_SNAPSHOT_CHANNEL) as Promise<LibraryServiceSnapshot>,
   browseLibraries: (request: BrowseLibraryRequest) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_BROWSE_CHANNEL, request) as Promise<LibraryResult<BrowseLibraryResult>>,
+    ipcRenderer.invoke(UNIFIED_LIBRARY_BROWSE_CHANNEL, request) as Promise<
+      LibraryResult<BrowseLibraryResult>
+    >,
   searchLibraries: (request: SearchLibrariesRequest) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_SEARCH_CHANNEL, request) as Promise<LibraryResult<SearchLibrariesResult>>,
+    ipcRenderer.invoke(UNIFIED_LIBRARY_SEARCH_CHANNEL, request) as Promise<
+      LibraryResult<SearchLibrariesResult>
+    >,
   getLibraryItemPreview: (key: LibraryItemKey) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_PREVIEW_CHANNEL, key) as Promise<LibraryResult<LibraryItemPreview>>,
+    ipcRenderer.invoke(UNIFIED_LIBRARY_PREVIEW_CHANNEL, key) as Promise<
+      LibraryResult<LibraryItemPreview>
+    >,
   beginLibraryDrag: (request: BeginLibraryDragRequest) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_BEGIN_DRAG_CHANNEL, request) as Promise<LibraryResult<LibraryDragDescriptor>>,
+    ipcRenderer.invoke(UNIFIED_LIBRARY_BEGIN_DRAG_CHANNEL, request) as Promise<
+      LibraryResult<LibraryDragDescriptor>
+    >,
   cancelLibraryDrag: (dragSessionId: string) =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_CANCEL_DRAG_CHANNEL, dragSessionId) as Promise<void>,
   previewLibraryTransfer: (request: LibraryTransferPreviewRequest) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_PREVIEW_TRANSFER_CHANNEL, request) as Promise<LibraryResult<LibraryTransferPreview>>,
+    ipcRenderer.invoke(UNIFIED_LIBRARY_PREVIEW_TRANSFER_CHANNEL, request) as Promise<
+      LibraryResult<LibraryTransferPreview>
+    >,
   applyLibraryTransfer: (previewToken: string) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_APPLY_TRANSFER_CHANNEL, previewToken) as Promise<LibraryResult<ProjectMutationReceipt>>,
+    ipcRenderer.invoke(UNIFIED_LIBRARY_APPLY_TRANSFER_CHANNEL, previewToken) as Promise<
+      LibraryResult<ProjectMutationReceipt>
+    >,
   setLibraryContext: (request: LibraryContextRequest) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_SET_CONTEXT_CHANNEL, request) as Promise<LibraryResult<LibraryContextSnapshot>>,
+    ipcRenderer.invoke(UNIFIED_LIBRARY_SET_CONTEXT_CHANNEL, request) as Promise<
+      LibraryResult<LibraryContextSnapshot>
+    >,
   clearLibraryInsertionTarget: () =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_CLEAR_TARGET_CHANNEL) as Promise<LibraryContextSnapshot>,
   previewLibraryInsertion: (request: LibraryInsertionRequest) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_PREVIEW_INSERTION_CHANNEL, request) as Promise<LibraryResult<LibraryInsertionPreview>>,
+    ipcRenderer.invoke(UNIFIED_LIBRARY_PREVIEW_INSERTION_CHANNEL, request) as Promise<
+      LibraryResult<LibraryInsertionPreview>
+    >,
   applyLibraryInsertion: (previewToken: string) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_APPLY_INSERTION_CHANNEL, { previewToken }) as Promise<LibraryResult<ProjectMutationReceipt>>,
+    ipcRenderer.invoke(UNIFIED_LIBRARY_APPLY_INSERTION_CHANNEL, { previewToken }) as Promise<
+      LibraryResult<ProjectMutationReceipt>
+    >,
   applyLibraryMutation: (request: UserLibraryMutation) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_MUTATE_CHANNEL, request) as Promise<LibraryResult<LibraryMutationReceipt>>,
+    ipcRenderer.invoke(UNIFIED_LIBRARY_MUTATE_CHANNEL, request) as Promise<
+      LibraryResult<LibraryMutationReceipt>
+    >,
   prepareLibraryMutation: (request: PrepareLibraryMutationRequest) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_PREPARE_MUTATION_CHANNEL, request) as Promise<LibraryResult<LibraryMutationPreview>>,
+    ipcRenderer.invoke(UNIFIED_LIBRARY_PREPARE_MUTATION_CHANNEL, request) as Promise<
+      LibraryResult<LibraryMutationPreview>
+    >,
   cutLibraryToClipboard: (request: CutLibraryToClipboardRequest) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_CUT_TO_CLIPBOARD_CHANNEL, request) as Promise<LibraryResult<CutLibraryToClipboardResult>>,
+    ipcRenderer.invoke(UNIFIED_LIBRARY_CUT_TO_CLIPBOARD_CHANNEL, request) as Promise<
+      LibraryResult<CutLibraryToClipboardResult>
+    >,
   setLibraryClipboard: (clipboard: LibraryInteractionClipboard | null) =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_SET_CLIPBOARD_CHANNEL, clipboard) as Promise<boolean>,
   setBsbClipboard: (clipboard: BsbCanvasClipboard | null) =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_SET_BSB_CLIPBOARD_CHANNEL, clipboard) as Promise<boolean>,
   captureScoreSoundObjectClipboard: (request: ScoreTimelineSoundObjectRequest) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_CAPTURE_SCORE_SOUND_OBJECT_CHANNEL, request) as Promise<LibraryResult<LibraryInteractionClipboard>>,
+    ipcRenderer.invoke(UNIFIED_LIBRARY_CAPTURE_SCORE_SOUND_OBJECT_CHANNEL, request) as Promise<
+      LibraryResult<LibraryInteractionClipboard>
+    >,
   captureTrackInstrumentClipboard: (request: TrackInstrumentClipboardRequest) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_CAPTURE_TRACK_INSTRUMENT_CHANNEL, request) as Promise<LibraryResult<LibraryInteractionClipboard>>,
+    ipcRenderer.invoke(UNIFIED_LIBRARY_CAPTURE_TRACK_INSTRUMENT_CHANNEL, request) as Promise<
+      LibraryResult<LibraryInteractionClipboard>
+    >,
   captureBlueLiveSoundObjectClipboard: (request: BlueLiveSoundObjectClipboardRequest) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_CAPTURE_BLUE_LIVE_SOUND_OBJECT_CHANNEL, request) as Promise<LibraryResult<LibraryInteractionClipboard>>,
+    ipcRenderer.invoke(UNIFIED_LIBRARY_CAPTURE_BLUE_LIVE_SOUND_OBJECT_CHANNEL, request) as Promise<
+      LibraryResult<LibraryInteractionClipboard>
+    >,
   addScoreSoundObjectToProjectLibrary: (request: ScoreTimelineSoundObjectRequest) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_ADD_SCORE_SOUND_OBJECT_CHANNEL, request) as Promise<LibraryResult<ProjectMutationReceipt>>,
+    ipcRenderer.invoke(UNIFIED_LIBRARY_ADD_SCORE_SOUND_OBJECT_CHANNEL, request) as Promise<
+      LibraryResult<ProjectMutationReceipt>
+    >,
   showNativeConfirmation: (request: NativeConfirmationRequest) =>
     ipcRenderer.invoke(NATIVE_CONFIRMATION_CHANNEL, request) as Promise<NativeConfirmationResult>,
   openLibraryItemEditor: (request: OpenLibraryEditorRequest) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_EDITOR_OPEN_CHANNEL, request) as Promise<LibraryResult<LibraryEditorSessionSnapshot>>,
+    ipcRenderer.invoke(UNIFIED_LIBRARY_EDITOR_OPEN_CHANNEL, request) as Promise<
+      LibraryResult<LibraryEditorSessionSnapshot>
+    >,
   getLibraryEditorSession: (sessionId: string) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_EDITOR_GET_CHANNEL, sessionId) as Promise<LibraryResult<LibraryEditorSessionSnapshot>>,
+    ipcRenderer.invoke(UNIFIED_LIBRARY_EDITOR_GET_CHANNEL, sessionId) as Promise<
+      LibraryResult<LibraryEditorSessionSnapshot>
+    >,
   patchLibraryEditorSession: (request: LibraryEditorPatchRequest) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_EDITOR_PATCH_CHANNEL, request) as Promise<LibraryResult<LibraryEditorSessionSnapshot>>,
+    ipcRenderer.invoke(UNIFIED_LIBRARY_EDITOR_PATCH_CHANNEL, request) as Promise<
+      LibraryResult<LibraryEditorSessionSnapshot>
+    >,
   saveLibraryEditorSession: (sessionId: string) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_EDITOR_SAVE_CHANNEL, sessionId) as Promise<LibraryResult<LibraryEditorSaveResult>>,
+    ipcRenderer.invoke(UNIFIED_LIBRARY_EDITOR_SAVE_CHANNEL, sessionId) as Promise<
+      LibraryResult<LibraryEditorSaveResult>
+    >,
   revertLibraryEditorSession: (sessionId: string) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_EDITOR_REVERT_CHANNEL, sessionId) as Promise<LibraryResult<LibraryEditorSessionSnapshot>>,
+    ipcRenderer.invoke(UNIFIED_LIBRARY_EDITOR_REVERT_CHANNEL, sessionId) as Promise<
+      LibraryResult<LibraryEditorSessionSnapshot>
+    >,
   resolveLibraryEditorConflict: (sessionId: string, decision: LibraryEditorConflictDecision) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_EDITOR_RESOLVE_CONFLICT_CHANNEL, { sessionId, decision }) as Promise<LibraryResult<LibraryEditorSessionSnapshot>>,
+    ipcRenderer.invoke(UNIFIED_LIBRARY_EDITOR_RESOLVE_CONFLICT_CHANNEL, {
+      sessionId,
+      decision,
+    }) as Promise<LibraryResult<LibraryEditorSessionSnapshot>>,
   closeLibraryEditorSession: (sessionId: string, decision?: 'discard' | 'cancel') =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_EDITOR_CLOSE_CHANNEL, { sessionId, decision }) as Promise<LibraryResult<boolean>>,
+    ipcRenderer.invoke(UNIFIED_LIBRARY_EDITOR_CLOSE_CHANNEL, { sessionId, decision }) as Promise<
+      LibraryResult<boolean>
+    >,
   prepareLibraryDraftShutdown: (reason: LibraryDraftShutdownPreview['reason']) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_DRAFT_SHUTDOWN_CHANNEL, reason) as Promise<LibraryDraftShutdownPreview>,
+    ipcRenderer.invoke(
+      UNIFIED_LIBRARY_DRAFT_SHUTDOWN_CHANNEL,
+      reason,
+    ) as Promise<LibraryDraftShutdownPreview>,
   resolveLibraryDraftShutdown: (decision: 'save' | 'discard' | 'cancel') =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_DRAFT_RESOLVE_CHANNEL, decision) as Promise<{ mayContinue: boolean }>,
+    ipcRenderer.invoke(UNIFIED_LIBRARY_DRAFT_RESOLVE_CHANNEL, decision) as Promise<{
+      mayContinue: boolean;
+    }>,
   getProjectLibraryUsage: (key: LibraryItemKey) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_PROJECT_USAGE_CHANNEL, key) as Promise<LibraryResult<ProjectLibraryUsage>>,
+    ipcRenderer.invoke(UNIFIED_LIBRARY_PROJECT_USAGE_CHANNEL, key) as Promise<
+      LibraryResult<ProjectLibraryUsage>
+    >,
   previewProjectLibraryDelete: (key: LibraryItemKey) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_PROJECT_DELETE_PREVIEW_CHANNEL, key) as Promise<LibraryResult<ProjectLibraryDeletePreview>>,
+    ipcRenderer.invoke(UNIFIED_LIBRARY_PROJECT_DELETE_PREVIEW_CHANNEL, key) as Promise<
+      LibraryResult<ProjectLibraryDeletePreview>
+    >,
   deleteProjectLibraryItem: (key: LibraryItemKey, confirmationToken: string) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_PROJECT_DELETE_CHANNEL, { key, confirmationToken }) as Promise<LibraryResult<ProjectMutationReceipt>>,
+    ipcRenderer.invoke(UNIFIED_LIBRARY_PROJECT_DELETE_CHANNEL, {
+      key,
+      confirmationToken,
+    }) as Promise<LibraryResult<ProjectMutationReceipt>>,
   copyLibraryTransferToUser: (source: LibraryTransferSourceReference, parentId: string) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_TRANSFER_TO_USER_CHANNEL, { source, parentId }) as Promise<LibraryResult<LibraryMutationReceipt>>,
+    ipcRenderer.invoke(UNIFIED_LIBRARY_TRANSFER_TO_USER_CHANNEL, { source, parentId }) as Promise<
+      LibraryResult<LibraryMutationReceipt>
+    >,
   importLibraryInstrument: (parentId: string) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_IMPORT_INSTRUMENT_CHANNEL, parentId) as Promise<LibraryResult<LibraryMutationReceipt> | null>,
+    ipcRenderer.invoke(
+      UNIFIED_LIBRARY_IMPORT_INSTRUMENT_CHANNEL,
+      parentId,
+    ) as Promise<LibraryResult<LibraryMutationReceipt> | null>,
   exportLibraryInstrument: (key: LibraryItemKey) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_EXPORT_INSTRUMENT_CHANNEL, key) as Promise<LibraryResult<true> | null>,
+    ipcRenderer.invoke(
+      UNIFIED_LIBRARY_EXPORT_INSTRUMENT_CHANNEL,
+      key,
+    ) as Promise<LibraryResult<true> | null>,
   selectLibraryImportFiles: () =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_IMPORT_SELECT_CHANNEL) as Promise<LibraryResult<ManualLibraryImportPreview> | null>,
+    ipcRenderer.invoke(
+      UNIFIED_LIBRARY_IMPORT_SELECT_CHANNEL,
+    ) as Promise<LibraryResult<ManualLibraryImportPreview> | null>,
   selectLibraryImportDirectory: () =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_IMPORT_DIRECTORY_CHANNEL) as Promise<LibraryResult<ManualLibraryImportPreview> | null>,
+    ipcRenderer.invoke(
+      UNIFIED_LIBRARY_IMPORT_DIRECTORY_CHANNEL,
+    ) as Promise<LibraryResult<ManualLibraryImportPreview> | null>,
   executeLibraryImport: (request: ManualLibraryImportExecutionRequest) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_IMPORT_EXECUTE_CHANNEL, request) as Promise<LibraryResult<ManualLibraryImportResult>>,
+    ipcRenderer.invoke(UNIFIED_LIBRARY_IMPORT_EXECUTE_CHANNEL, request) as Promise<
+      LibraryResult<ManualLibraryImportResult>
+    >,
   exportCurrentLibrary: (libraryType: LibraryType) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_EXPORT_CURRENT_CHANNEL, libraryType) as Promise<LibraryResult<true> | null>,
+    ipcRenderer.invoke(
+      UNIFIED_LIBRARY_EXPORT_CURRENT_CHANNEL,
+      libraryType,
+    ) as Promise<LibraryResult<true> | null>,
   exportAllLibraries: () =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_EXPORT_ALL_CHANNEL) as Promise<LibraryResult<true> | null>,
   retryLibraryRecovery: () =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_RECOVERY_RETRY_CHANNEL) as Promise<LibraryResult<LibraryServiceSnapshot>>,
+    ipcRenderer.invoke(UNIFIED_LIBRARY_RECOVERY_RETRY_CHANNEL) as Promise<
+      LibraryResult<LibraryServiceSnapshot>
+    >,
   restoreLibraryBackup: () =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_RECOVERY_RESTORE_CHANNEL) as Promise<LibraryResult<LibraryServiceSnapshot> | null>,
+    ipcRenderer.invoke(
+      UNIFIED_LIBRARY_RECOVERY_RESTORE_CHANNEL,
+    ) as Promise<LibraryResult<LibraryServiceSnapshot> | null>,
   createFreshLibraryDatabase: () =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_RECOVERY_FRESH_CHANNEL) as Promise<LibraryResult<LibraryServiceSnapshot>>,
+    ipcRenderer.invoke(UNIFIED_LIBRARY_RECOVERY_FRESH_CHANNEL) as Promise<
+      LibraryResult<LibraryServiceSnapshot>
+    >,
   onLibraryEditorSessionChanged: (callback: (session: LibraryEditorSessionSnapshot) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, payload: unknown) => {
       if (isLibraryEditorSessionSnapshot(payload)) callback(payload);
     };
     ipcRenderer.on(UNIFIED_LIBRARY_EDITOR_CHANGED_CHANNEL, handler);
-    return () => { ipcRenderer.removeListener(UNIFIED_LIBRARY_EDITOR_CHANGED_CHANNEL, handler); };
+    return () => {
+      ipcRenderer.removeListener(UNIFIED_LIBRARY_EDITOR_CHANGED_CHANNEL, handler);
+    };
   },
   onLibraryContextChanged: (callback: (context: LibraryContextSnapshot) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, context: LibraryContextSnapshot) => callback(context);
+    const handler = (_event: Electron.IpcRendererEvent, context: LibraryContextSnapshot) =>
+      callback(context);
     ipcRenderer.on(UNIFIED_LIBRARY_CONTEXT_CHANGED_CHANNEL, handler);
-    return () => { ipcRenderer.removeListener(UNIFIED_LIBRARY_CONTEXT_CHANGED_CHANNEL, handler); };
+    return () => {
+      ipcRenderer.removeListener(UNIFIED_LIBRARY_CONTEXT_CHANGED_CHANNEL, handler);
+    };
   },
   onLibraryServiceSnapshot: (callback: (snapshot: LibraryServiceSnapshot) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, snapshot: unknown) => {
       if (isLibraryServiceSnapshot(snapshot)) callback(snapshot);
     };
     ipcRenderer.on(UNIFIED_LIBRARY_SNAPSHOT_CHANGED_CHANNEL, handler);
-    return () => { ipcRenderer.removeListener(UNIFIED_LIBRARY_SNAPSHOT_CHANGED_CHANNEL, handler); };
+    return () => {
+      ipcRenderer.removeListener(UNIFIED_LIBRARY_SNAPSHOT_CHANGED_CHANNEL, handler);
+    };
   },
   onLibraryChanged: (callback: (event: LibraryChangedEvent) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, payload: unknown) => {
       if (isLibraryChangedEvent(payload)) callback(payload);
     };
     ipcRenderer.on(UNIFIED_LIBRARY_CHANGED_CHANNEL, handler);
-    return () => { ipcRenderer.removeListener(UNIFIED_LIBRARY_CHANGED_CHANNEL, handler); };
+    return () => {
+      ipcRenderer.removeListener(UNIFIED_LIBRARY_CHANGED_CHANNEL, handler);
+    };
   },
 
   // Code Repository
@@ -514,9 +596,10 @@ contextBridge.exposeInMainWorld('blueAPI', {
               'Invalid response from the Code Repository service.',
             );
       },
-      () => invalidCodeRepositoryResponse<CodeRepositoryImportResult>(
-        'Unable to reach the Code Repository service.',
-      ),
+      () =>
+        invalidCodeRepositoryResponse<CodeRepositoryImportResult>(
+          'Unable to reach the Code Repository service.',
+        ),
     ),
   exportCodeRepositoryXml: () =>
     ipcRenderer.invoke(CODE_REPOSITORY_EXPORT_XML_CHANNEL).then(
@@ -528,9 +611,10 @@ contextBridge.exposeInMainWorld('blueAPI', {
               'Invalid response from the Code Repository service.',
             );
       },
-      () => invalidCodeRepositoryResponse<CodeRepositoryExportFileResult>(
-        'Unable to reach the Code Repository service.',
-      ),
+      () =>
+        invalidCodeRepositoryResponse<CodeRepositoryExportFileResult>(
+          'Unable to reach the Code Repository service.',
+        ),
     ),
   retryCodeRepository: () =>
     invokeCodeRepository(CODE_REPOSITORY_RETRY_CHANNEL, isCodeRepositoryStatus),
@@ -548,16 +632,21 @@ contextBridge.exposeInMainWorld('blueAPI', {
   openFile: () => ipcRenderer.invoke('open-file'),
   openFilePath: (filePath: string) => ipcRenderer.invoke('open-file-path', filePath),
   newFile: () => ipcRenderer.invoke('new-file'),
-  openBsbFileSelector: (currentValue?: string) => ipcRenderer.invoke('open-bsb-file-selector', currentValue),
-  setBsbFileSelectorPath: (filePath: string) => ipcRenderer.invoke('set-bsb-file-selector-path', filePath),
-  copyBsbFileSelectorToMediaFolder: (currentValue?: string) => ipcRenderer.invoke('copy-bsb-file-selector-to-media-folder', currentValue),
-  setRecentFiles: (files: string[]) => ipcRenderer.invoke('set-recent-files', files) as Promise<string[]>,
+  openBsbFileSelector: (currentValue?: string) =>
+    ipcRenderer.invoke('open-bsb-file-selector', currentValue),
+  setBsbFileSelectorPath: (filePath: string) =>
+    ipcRenderer.invoke('set-bsb-file-selector-path', filePath),
+  copyBsbFileSelectorToMediaFolder: (currentValue?: string) =>
+    ipcRenderer.invoke('copy-bsb-file-selector-to-media-folder', currentValue),
+  setRecentFiles: (files: string[]) =>
+    ipcRenderer.invoke('set-recent-files', files) as Promise<string[]>,
   saveFile: () => ipcRenderer.invoke('save-file'),
   saveFileAs: () => ipcRenderer.invoke('save-file-as'),
   startMidiImport: () => ipcRenderer.invoke('start-midi-import') as Promise<MidiImportStartResult>,
   commitMidiImport: (token: string, settings: MidiImportSettings[]) =>
     ipcRenderer.invoke('commit-midi-import', token, settings) as Promise<MidiImportCommitResult>,
-  cancelMidiImport: (token: string) => ipcRenderer.invoke('cancel-midi-import', token) as Promise<void>,
+  cancelMidiImport: (token: string) =>
+    ipcRenderer.invoke('cancel-midi-import', token) as Promise<void>,
 
   // Project document
   getProjectDocument: () =>
@@ -575,9 +664,15 @@ contextBridge.exposeInMainWorld('blueAPI', {
   focusTrackInstrumentEditor: (request: TrackInstrumentEditorRequest) =>
     ipcRenderer.invoke('focus-track-instrument-editor', request) as Promise<boolean>,
   getTrackInstrumentEditorDocument: (request: TrackInstrumentEditorRequest) =>
-    ipcRenderer.invoke('get-track-instrument-editor-document', request) as Promise<TrackInstrumentEditorSnapshot | null>,
+    ipcRenderer.invoke(
+      'get-track-instrument-editor-document',
+      request,
+    ) as Promise<TrackInstrumentEditorSnapshot | null>,
   updateTrackInstrumentEditorDocument: (request: TrackInstrumentEditorPatchRequest) =>
-    ipcRenderer.invoke('update-track-instrument-editor-document', request) as Promise<TrackInstrumentEditorPatchResult>,
+    ipcRenderer.invoke(
+      'update-track-instrument-editor-document',
+      request,
+    ) as Promise<TrackInstrumentEditorPatchResult>,
   getTrackInstrumentRuntimeStatus: async (
     request: TrackInstrumentEditorRequest,
   ): Promise<TrackInstrumentRuntimeStatus | null> => {
@@ -618,10 +713,7 @@ contextBridge.exposeInMainWorld('blueAPI', {
       active = false;
       ipcRenderer.removeListener(TRACK_INSTRUMENT_RUNTIME_STATUS_CHANGED_CHANNEL, handler);
       try {
-        await ipcRenderer.invoke(
-          TRACK_INSTRUMENT_RUNTIME_STATUS_UNSUBSCRIBE_CHANNEL,
-          request,
-        );
+        await ipcRenderer.invoke(TRACK_INSTRUMENT_RUNTIME_STATUS_UNSUBSCRIBE_CHANNEL, request);
       } catch {
         // The renderer listener is already removed when the host is closing.
       }
@@ -629,32 +721,49 @@ contextBridge.exposeInMainWorld('blueAPI', {
     return { status, unsubscribe };
   },
   getEffectEditorDocument: (request: EffectEditorRequest) =>
-    ipcRenderer.invoke('get-effect-editor-document', request) as Promise<EffectEditorSnapshot | null>,
+    ipcRenderer.invoke(
+      'get-effect-editor-document',
+      request,
+    ) as Promise<EffectEditorSnapshot | null>,
   updateEffectEditorDocument: (request: EffectEditorPatchRequest) =>
-    ipcRenderer.invoke('update-effect-editor-document', request) as Promise<EffectEditorSnapshot | null>,
+    ipcRenderer.invoke(
+      'update-effect-editor-document',
+      request,
+    ) as Promise<EffectEditorSnapshot | null>,
   commitProjectDocumentPatches: (patches: ProjectDocumentPatch[]) =>
-    ipcRenderer.invoke('commit-project-document-patches', patches) as Promise<ProjectDocumentCommitReceipt>,
+    ipcRenderer.invoke(
+      'commit-project-document-patches',
+      patches,
+    ) as Promise<ProjectDocumentCommitReceipt>,
 
-    // Spec 092: visible-only BlueX7 effective-value readback. The main
-    // process fails closed for stale sessions, stopped playback, and missing
-    // owners; results are disposable display state and never mutate project
-    // snapshots.
-    getBlueX7EffectiveValues: (
-      request: BlueX7EffectiveValuesRequest,
-    ): Promise<BlueX7EffectiveValuesResult> =>
-      ipcRenderer.invoke('blue-x7-effective-values', request) as Promise<BlueX7EffectiveValuesResult>,
+  // Spec 092: visible-only BlueX7 effective-value readback. The main
+  // process fails closed for stale sessions, stopped playback, and missing
+  // owners; results are disposable display state and never mutate project
+  // snapshots.
+  getBlueX7EffectiveValues: (
+    request: BlueX7EffectiveValuesRequest,
+  ): Promise<BlueX7EffectiveValuesResult> =>
+    ipcRenderer.invoke('blue-x7-effective-values', request) as Promise<BlueX7EffectiveValuesResult>,
   readAudioFileBytes: (filePath: string) =>
     ipcRenderer.invoke('read-audio-file-bytes', filePath) as Promise<ArrayBuffer | null>,
   readAuthorizedAudioFileBytes: (filePath: string) =>
     ipcRenderer.invoke('read-authorized-audio-file-bytes', filePath) as Promise<ArrayBuffer | null>,
   getScoreObjectEditorDocument: (request: ScoreObjectEditorRequest) =>
-    ipcRenderer.invoke('get-score-object-editor-document', request) as Promise<ScoreObjectEditorDocumentSnapshot | null>,
+    ipcRenderer.invoke(
+      'get-score-object-editor-document',
+      request,
+    ) as Promise<ScoreObjectEditorDocumentSnapshot | null>,
   selectScoreObjectAudioFile: (request?: { currentPath?: string }) =>
-    ipcRenderer.invoke('select-score-object-audio-file', request) as Promise<AudioFileSelectionResult>,
+    ipcRenderer.invoke(
+      'select-score-object-audio-file',
+      request,
+    ) as Promise<AudioFileSelectionResult>,
   saveFrozenSoundObjectCopy: (request: { frozenWaveFileName: string }) =>
-    ipcRenderer.invoke('save-frozen-sound-object-copy', request) as Promise<FrozenSoundObjectSaveCopyResult>,
-  getNamedChainNames: () =>
-    ipcRenderer.invoke('get-named-chain-names') as Promise<string[]>,
+    ipcRenderer.invoke(
+      'save-frozen-sound-object-copy',
+      request,
+    ) as Promise<FrozenSoundObjectSaveCopyResult>,
+  getNamedChainNames: () => ipcRenderer.invoke('get-named-chain-names') as Promise<string[]>,
   getNamedChain: (name: string) =>
     ipcRenderer.invoke('get-named-chain', name) as Promise<NoteProcessorChainSnapshot | null>,
   testScoreObject: (request: ScoreObjectEditorRequest) =>
@@ -664,27 +773,46 @@ contextBridge.exposeInMainWorld('blueAPI', {
   testJavascriptSoundObject: (request: ScoreObjectEditorRequest) =>
     ipcRenderer.invoke('test-javascript-sound-object', request) as Promise<ScoreObjectTestResult>,
   testPythonInstrument: (request: { code: string; assignmentId?: string }) =>
-    ipcRenderer.invoke('test-python-instrument', request) as Promise<{ ok: boolean; output: string; error?: string }>,
+    ipcRenderer.invoke('test-python-instrument', request) as Promise<{
+      ok: boolean;
+      output: string;
+      error?: string;
+    }>,
   openReplConsole: (request: ReplConsoleOpenRequest) =>
     ipcRenderer.invoke(REPL_CONSOLE_OPEN_CHANNEL, request) as Promise<ReplConsoleOpenResult>,
   evaluateReplConsole: (request: ReplConsoleEvaluateRequest) =>
-    ipcRenderer.invoke(REPL_CONSOLE_EVALUATE_CHANNEL, request) as Promise<ReplConsoleEvaluateResult>,
+    ipcRenderer.invoke(
+      REPL_CONSOLE_EVALUATE_CHANNEL,
+      request,
+    ) as Promise<ReplConsoleEvaluateResult>,
   reinitializeReplConsole: (request: ReplConsoleReinitializeRequest) =>
-    ipcRenderer.invoke(REPL_CONSOLE_REINITIALIZE_CHANNEL, request) as Promise<ReplConsoleReinitializeResult>,
+    ipcRenderer.invoke(
+      REPL_CONSOLE_REINITIALIZE_CHANNEL,
+      request,
+    ) as Promise<ReplConsoleReinitializeResult>,
   closeReplConsole: (request: ReplConsoleCloseRequest) =>
     ipcRenderer.invoke(REPL_CONSOLE_CLOSE_CHANNEL, request) as Promise<ReplConsoleCloseResult>,
   reinitializeClojureRuntime: () =>
     ipcRenderer.invoke('java-runtime:reinitialize') as Promise<{ ok: boolean; error?: string }>,
   reinitializeJythonRuntime: () =>
-    ipcRenderer.invoke('java-runtime:reinitialize-jython') as Promise<{ ok: boolean; error?: string }>,
+    ipcRenderer.invoke('java-runtime:reinitialize-jython') as Promise<{
+      ok: boolean;
+      error?: string;
+    }>,
   reinitializeJavaScriptRuntime: () =>
-    ipcRenderer.invoke(JAVASCRIPT_RUNTIME_REINITIALIZE_CHANNEL) as Promise<ScriptRuntimeReinitializeResult>,
+    ipcRenderer.invoke(
+      JAVASCRIPT_RUNTIME_REINITIALIZE_CHANNEL,
+    ) as Promise<ScriptRuntimeReinitializeResult>,
   getNestedPolyObjectSnapshot: (location: ScoreObjectLocationRef) =>
-    ipcRenderer.invoke('get-nested-poly-object-snapshot', location) as Promise<PolyObjectLayerGroupSnapshot | null>,
+    ipcRenderer.invoke(
+      'get-nested-poly-object-snapshot',
+      location,
+    ) as Promise<PolyObjectLayerGroupSnapshot | null>,
   sendBsbRealtimeControlUpdate: (update: BsbRealtimeControlUpdate) =>
     ipcRenderer.invoke('send-bsb-realtime-control-update', update) as Promise<void>,
-  sendMixerRealtimeLevelUpdate: (update: import('../shared/project-editor').MixerRealtimeLevelUpdate) =>
-    ipcRenderer.invoke('send-mixer-realtime-level-update', update) as Promise<void>,
+  sendMixerRealtimeLevelUpdate: (
+    update: import('../shared/project-editor').MixerRealtimeLevelUpdate,
+  ) => ipcRenderer.invoke('send-mixer-realtime-level-update', update) as Promise<void>,
   sendEffectRealtimeUpdate: (update: import('../shared/project-editor').EffectRealtimeUpdate) =>
     ipcRenderer.invoke('send-effect-realtime-update', update) as Promise<void>,
 
@@ -700,7 +828,8 @@ contextBridge.exposeInMainWorld('blueAPI', {
   togglePlay: () => ipcRenderer.invoke('toggle-play'),
   restartPlayback: () => ipcRenderer.invoke('restart-playback') as Promise<boolean>,
   stopPlayback: () => ipcRenderer.invoke('stop-playback'),
-  syncFollowPlaybackState: (enabled: boolean) => ipcRenderer.send('sync-follow-playback-state', enabled),
+  syncFollowPlaybackState: (enabled: boolean) =>
+    ipcRenderer.send('sync-follow-playback-state', enabled),
   syncAuditionScoreObjectAvailability: (canAudition: boolean) =>
     ipcRenderer.send('sync-audition-score-object-availability', canAudition),
   auditionScoreObjects: (objectIds: string[]) =>
@@ -720,11 +849,20 @@ contextBridge.exposeInMainWorld('blueAPI', {
   getFileManagerRoots: () =>
     ipcRenderer.invoke(FILE_MANAGER_GET_ROOTS_CHANNEL) as Promise<FileManagerRootSnapshot[]>,
   listFileManagerDirectory: (request: { path: string }) =>
-    ipcRenderer.invoke(FILE_MANAGER_LIST_DIRECTORY_CHANNEL, request) as Promise<FileManagerDirectoryResult>,
+    ipcRenderer.invoke(
+      FILE_MANAGER_LIST_DIRECTORY_CHANNEL,
+      request,
+    ) as Promise<FileManagerDirectoryResult>,
   validateFileManagerDirectory: (request: { path: string }) =>
-    ipcRenderer.invoke(FILE_MANAGER_VALIDATE_DIRECTORY_CHANNEL, request) as Promise<FileManagerValidateDirectoryResult>,
+    ipcRenderer.invoke(
+      FILE_MANAGER_VALIDATE_DIRECTORY_CHANNEL,
+      request,
+    ) as Promise<FileManagerValidateDirectoryResult>,
   commitAudioFileDrop: (request: CommitAudioFileDropRequest) =>
-    ipcRenderer.invoke(COMMIT_AUDIO_FILE_DROP_CHANNEL, request) as Promise<CommitAudioFileDropResult>,
+    ipcRenderer.invoke(
+      COMMIT_AUDIO_FILE_DROP_CHANNEL,
+      request,
+    ) as Promise<CommitAudioFileDropResult>,
 
   // About
   getAppMetadata: () => ipcRenderer.invoke(APP_METADATA_GET_CHANNEL) as Promise<AppMetadata>,
@@ -739,7 +877,8 @@ contextBridge.exposeInMainWorld('blueAPI', {
   importBlueUdo: () => ipcRenderer.invoke('import-blue-udo'),
   importCsoundUdo: () => ipcRenderer.invoke('import-csound-udo'),
   exportBlueUdo: (xmlText: string) => ipcRenderer.invoke('export-blue-udo', xmlText),
-  exportCsoundUdo: (codeText: string, udoName: string) => ipcRenderer.invoke('export-csound-udo', codeText, udoName),
+  exportCsoundUdo: (codeText: string, udoName: string) =>
+    ipcRenderer.invoke('export-csound-udo', codeText, udoName),
   importArrangementInstrument: () =>
     ipcRenderer.invoke('import-arrangement-instrument') as Promise<string | null>,
   exportArrangementInstrument: (assignmentId: string) =>
@@ -748,7 +887,11 @@ contextBridge.exposeInMainWorld('blueAPI', {
   exportPresetFile: (xmlText: string, presetName: string) =>
     ipcRenderer.invoke('export-preset-file', xmlText, presetName) as Promise<void>,
   exportScoreObject: (xmlText: string, objectName: string) =>
-    ipcRenderer.invoke('export-score-object', xmlText, objectName) as Promise<ScoreObjectExportResult>,
+    ipcRenderer.invoke(
+      'export-score-object',
+      xmlText,
+      objectName,
+    ) as Promise<ScoreObjectExportResult>,
   importScoreObject: () =>
     ipcRenderer.invoke('import-score-object') as Promise<ScoreObjectImportResult | null>,
 
@@ -760,70 +903,106 @@ contextBridge.exposeInMainWorld('blueAPI', {
 
   // Event listeners
   onProjectLoaded: (callback: (info: ProjectLoadedPayload) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, info: unknown) => callback(info as ProjectLoadedPayload);
+    const handler = (_event: Electron.IpcRendererEvent, info: unknown) =>
+      callback(info as ProjectLoadedPayload);
     ipcRenderer.on('project-loaded', handler);
-    return () => { ipcRenderer.removeListener('project-loaded', handler); };
+    return () => {
+      ipcRenderer.removeListener('project-loaded', handler);
+    };
   },
   onProjectClosed: (callback: () => void) => {
     const handler = () => callback();
     ipcRenderer.on('project-closed', handler);
-    return () => { ipcRenderer.removeListener('project-closed', handler); };
+    return () => {
+      ipcRenderer.removeListener('project-closed', handler);
+    };
   },
   onPlaybackStatus: (callback: (status: unknown) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, status: unknown) => callback(status);
     ipcRenderer.on('playback-status', handler);
-    return () => { ipcRenderer.removeListener('playback-status', handler); };
+    return () => {
+      ipcRenderer.removeListener('playback-status', handler);
+    };
   },
   onPlaybackClock: (callback: (clock: PlaybackClockSnapshot) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, clock: unknown) => callback(clock as PlaybackClockSnapshot);
+    const handler = (_event: Electron.IpcRendererEvent, clock: unknown) =>
+      callback(clock as PlaybackClockSnapshot);
     ipcRenderer.on('playback-clock', handler);
-    return () => { ipcRenderer.removeListener('playback-clock', handler); };
+    return () => {
+      ipcRenderer.removeListener('playback-clock', handler);
+    };
   },
   onPlaybackError: (callback: (error: string) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, error: unknown) => callback(error as string);
+    const handler = (_event: Electron.IpcRendererEvent, error: unknown) =>
+      callback(error as string);
     ipcRenderer.on('playback-error', handler);
-    return () => { ipcRenderer.removeListener('playback-error', handler); };
+    return () => {
+      ipcRenderer.removeListener('playback-error', handler);
+    };
   },
   onNativeMenuCommand: (callback: (command: NativeMenuCommand) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, command: unknown) => callback(command as NativeMenuCommand);
+    const handler = (_event: Electron.IpcRendererEvent, command: unknown) =>
+      callback(command as NativeMenuCommand);
     ipcRenderer.on('native-menu-command', handler);
-    return () => { ipcRenderer.removeListener('native-menu-command', handler); };
+    return () => {
+      ipcRenderer.removeListener('native-menu-command', handler);
+    };
   },
   onSaveComplete: (callback: (info: unknown) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, info: unknown) => callback(info);
     ipcRenderer.on('save-complete', handler);
-    return () => { ipcRenderer.removeListener('save-complete', handler); };
+    return () => {
+      ipcRenderer.removeListener('save-complete', handler);
+    };
   },
   onSaveError: (callback: (error: string) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, error: unknown) => callback(error as string);
+    const handler = (_event: Electron.IpcRendererEvent, error: unknown) =>
+      callback(error as string);
     ipcRenderer.on('save-error', handler);
-    return () => { ipcRenderer.removeListener('save-error', handler); };
+    return () => {
+      ipcRenderer.removeListener('save-error', handler);
+    };
   },
 
   onEngineOutput: (callback: (payload: EngineOutputPayload) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, payload: unknown) => callback(payload as EngineOutputPayload);
+    const handler = (_event: Electron.IpcRendererEvent, payload: unknown) =>
+      callback(payload as EngineOutputPayload);
     ipcRenderer.on('engine-output', handler);
-    return () => { ipcRenderer.removeListener('engine-output', handler); };
+    return () => {
+      ipcRenderer.removeListener('engine-output', handler);
+    };
   },
   onEngineOutputSelect: (callback: (payload: { tabName: string }) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, payload: unknown) => callback(payload as { tabName: string });
+    const handler = (_event: Electron.IpcRendererEvent, payload: unknown) =>
+      callback(payload as { tabName: string });
     ipcRenderer.on('engine-output-select', handler);
-    return () => { ipcRenderer.removeListener('engine-output-select', handler); };
+    return () => {
+      ipcRenderer.removeListener('engine-output-select', handler);
+    };
   },
   onEngineOutputReset: (callback: (payload: { tabName: string }) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, payload: unknown) => callback(payload as { tabName: string });
+    const handler = (_event: Electron.IpcRendererEvent, payload: unknown) =>
+      callback(payload as { tabName: string });
     ipcRenderer.on('engine-output-reset', handler);
-    return () => { ipcRenderer.removeListener('engine-output-reset', handler); };
+    return () => {
+      ipcRenderer.removeListener('engine-output-reset', handler);
+    };
   },
   onGeneratedCsd: (callback: (csdText: string) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, csdText: unknown) => callback(csdText as string);
+    const handler = (_event: Electron.IpcRendererEvent, csdText: unknown) =>
+      callback(csdText as string);
     ipcRenderer.on('generated-csd', handler);
-    return () => { ipcRenderer.removeListener('generated-csd', handler); };
+    return () => {
+      ipcRenderer.removeListener('generated-csd', handler);
+    };
   },
   onGeneratedCsdError: (callback: (error: string) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, error: unknown) => callback(error as string);
+    const handler = (_event: Electron.IpcRendererEvent, error: unknown) =>
+      callback(error as string);
     ipcRenderer.on('generated-csd-error', handler);
-    return () => { ipcRenderer.removeListener('generated-csd-error', handler); };
+    return () => {
+      ipcRenderer.removeListener('generated-csd-error', handler);
+    };
   },
   onEngineRecoveryStatus: (callback: (status: EngineRecoveryStatus) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, raw: unknown) => {
@@ -833,7 +1012,9 @@ contextBridge.exposeInMainWorld('blueAPI', {
       }
     };
     ipcRenderer.on(ENGINE_RECOVERY_STATUS_CHANNEL, handler);
-    return () => { ipcRenderer.removeListener(ENGINE_RECOVERY_STATUS_CHANNEL, handler); };
+    return () => {
+      ipcRenderer.removeListener(ENGINE_RECOVERY_STATUS_CHANNEL, handler);
+    };
   },
 
   // Blue Live
@@ -844,12 +1025,17 @@ contextBridge.exposeInMainWorld('blueAPI', {
   triggerBlueLiveNote: (request: BlueLiveNoteTriggerRequest) =>
     ipcRenderer.invoke('blue-live:trigger-note', request) as Promise<BlueLiveNoteTriggerResult>,
   triggerBlueLiveObjects: (request: LegacyBlueLiveTriggerRequest) =>
-    ipcRenderer.invoke('blue-live:trigger-objects', request) as Promise<LegacyBlueLiveTriggerResult>,
+    ipcRenderer.invoke(
+      'blue-live:trigger-objects',
+      request,
+    ) as Promise<LegacyBlueLiveTriggerResult>,
   getBlueLiveStatus: () => ipcRenderer.invoke('blue-live:get-status'),
   onBlueLiveStatus: (callback: (snapshot: unknown) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, snapshot: unknown) => callback(snapshot);
     ipcRenderer.on('blue-live-status', handler);
-    return () => { ipcRenderer.removeListener('blue-live-status', handler); };
+    return () => {
+      ipcRenderer.removeListener('blue-live-status', handler);
+    };
   },
 
   // Settings
@@ -857,7 +1043,9 @@ contextBridge.exposeInMainWorld('blueAPI', {
   onSettingsCloseRequest: (callback: () => void) => {
     const handler = () => callback();
     ipcRenderer.on(SETTINGS_CLOSE_REQUEST_CHANNEL, handler);
-    return () => { ipcRenderer.removeListener(SETTINGS_CLOSE_REQUEST_CHANNEL, handler); };
+    return () => {
+      ipcRenderer.removeListener(SETTINGS_CLOSE_REQUEST_CHANNEL, handler);
+    };
   },
   confirmSettingsClose: () =>
     ipcRenderer.invoke(SETTINGS_CONFIRM_CLOSE_CHANNEL) as Promise<SettingsClosePromptResponse>,
@@ -873,9 +1061,15 @@ contextBridge.exposeInMainWorld('blueAPI', {
   getProgramSettingsUsageMatrix: () =>
     ipcRenderer.invoke('program-settings:usage-matrix') as Promise<UsageParityMatrixEntry[]>,
   syncLegacyRendererSettings: (snapshot: CurrentAppSettingsSnapshot) =>
-    ipcRenderer.invoke('program-settings:sync-legacy-renderer-settings', snapshot) as Promise<ProgramSettingsSnapshot>,
+    ipcRenderer.invoke(
+      'program-settings:sync-legacy-renderer-settings',
+      snapshot,
+    ) as Promise<ProgramSettingsSnapshot>,
   updatePlaybackPreferences: (patch: PlaybackPreferencePatch) =>
-    ipcRenderer.invoke('program-settings:update-playback-preferences', patch) as Promise<ProgramSettingsSaveResult>,
+    ipcRenderer.invoke(
+      'program-settings:update-playback-preferences',
+      patch,
+    ) as Promise<ProgramSettingsSaveResult>,
   probeEngineRuntime: (request?: EngineProbeRequest) =>
     ipcRenderer.invoke('engine-runtime:probe', request) as Promise<EngineProbeResult>,
   queryCsoundIo: (request?: CsoundIoQueryRequest) =>
@@ -889,14 +1083,18 @@ contextBridge.exposeInMainWorld('blueAPI', {
       if (isOscServerRuntimeSnapshot(snapshot)) callback(snapshot);
     };
     ipcRenderer.on(OSC_CONTROL_SNAPSHOT_CHANGED_CHANNEL, handler);
-    return () => { ipcRenderer.removeListener(OSC_CONTROL_SNAPSHOT_CHANGED_CHANNEL, handler); };
+    return () => {
+      ipcRenderer.removeListener(OSC_CONTROL_SNAPSHOT_CHANGED_CHANNEL, handler);
+    };
   },
   onOscCommand: (callback: (event: OscCommandEvent) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, event: unknown) => {
       if (isOscCommandEvent(event)) callback(event);
     };
     ipcRenderer.on(OSC_CONTROL_COMMAND_CHANNEL, handler);
-    return () => { ipcRenderer.removeListener(OSC_CONTROL_COMMAND_CHANNEL, handler); };
+    return () => {
+      ipcRenderer.removeListener(OSC_CONTROL_COMMAND_CHANNEL, handler);
+    };
   },
 
   // Window Layout
@@ -911,25 +1109,41 @@ contextBridge.exposeInMainWorld('blueAPI', {
   onWindowLayoutReset: (callback: () => void) => {
     const handler = () => callback();
     ipcRenderer.on(WINDOW_LAYOUT_RESET_CHANNEL, handler);
-    return () => { ipcRenderer.removeListener(WINDOW_LAYOUT_RESET_CHANNEL, handler); };
+    return () => {
+      ipcRenderer.removeListener(WINDOW_LAYOUT_RESET_CHANNEL, handler);
+    };
   },
 
   // Workbench windows (Float/Dock parity, SPEC 055)
   registerWorkbenchWindow: (request: WorkbenchWindowRegisterRequest) =>
-    ipcRenderer.invoke(WORKBENCH_WINDOW_REGISTER_CHANNEL, request) as Promise<WorkbenchWindowRegisterResponse>,
+    ipcRenderer.invoke(
+      WORKBENCH_WINDOW_REGISTER_CHANNEL,
+      request,
+    ) as Promise<WorkbenchWindowRegisterResponse>,
   updateWorkbenchOwnership: (update: WorkbenchWindowOwnershipUpdate) =>
     ipcRenderer.send(WORKBENCH_WINDOW_UPDATE_OWNERSHIP_CHANNEL, update),
   revealWorkbenchPanel: (request: WorkbenchRevealPanelRequest) =>
-    ipcRenderer.invoke(WORKBENCH_WINDOW_REVEAL_PANEL_CHANNEL, request) as Promise<WorkbenchRevealPanelResult>,
+    ipcRenderer.invoke(
+      WORKBENCH_WINDOW_REVEAL_PANEL_CHANNEL,
+      request,
+    ) as Promise<WorkbenchRevealPanelResult>,
   requestWorkbenchWindowClose: (request: WorkbenchWindowCloseRequest) =>
-    ipcRenderer.invoke(WORKBENCH_WINDOW_REQUEST_CLOSE_CHANNEL, request) as Promise<WorkbenchWindowCloseResult>,
+    ipcRenderer.invoke(
+      WORKBENCH_WINDOW_REQUEST_CLOSE_CHANNEL,
+      request,
+    ) as Promise<WorkbenchWindowCloseResult>,
   dockFloatingGroup: (request: DockFloatingGroupRequest) =>
-    ipcRenderer.invoke(WORKBENCH_WINDOW_DOCK_GROUP_CHANNEL, request) as Promise<DockFloatingGroupResult>,
+    ipcRenderer.invoke(
+      WORKBENCH_WINDOW_DOCK_GROUP_CHANNEL,
+      request,
+    ) as Promise<DockFloatingGroupResult>,
   onProjectDocumentUpdated: (callback: (event: ProjectDocumentUpdatedEvent) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, payload: unknown) =>
       callback(payload as ProjectDocumentUpdatedEvent);
     ipcRenderer.on(PROJECT_DOCUMENT_UPDATED_CHANNEL, handler);
-    return () => { ipcRenderer.removeListener(PROJECT_DOCUMENT_UPDATED_CHANNEL, handler); };
+    return () => {
+      ipcRenderer.removeListener(PROJECT_DOCUMENT_UPDATED_CHANNEL, handler);
+    };
   },
   // Evaluate Code
   evaluateCode: (request: { editorKind: string; text: string; sourcePanelId: string }) =>
@@ -937,9 +1151,14 @@ contextBridge.exposeInMainWorld('blueAPI', {
 
   // Missing Audio Assets
   chooseMissingAudioReplacement: (request: MissingAudioAssetsChooseRequest) =>
-    ipcRenderer.invoke('missing-audio-assets:choose-replacement', request) as Promise<string | null>,
+    ipcRenderer.invoke('missing-audio-assets:choose-replacement', request) as Promise<
+      string | null
+    >,
   resolveMissingAudioAssets: (request: MissingAudioAssetsResolveRequest) =>
-    ipcRenderer.invoke('missing-audio-assets:resolve', request) as Promise<MissingAudioAssetsResolveResult>,
+    ipcRenderer.invoke(
+      'missing-audio-assets:resolve',
+      request,
+    ) as Promise<MissingAudioAssetsResolveResult>,
   dismissMissingAudioAssets: (request: MissingAudioAssetsDismissRequest) =>
     ipcRenderer.invoke('missing-audio-assets:dismiss', request) as Promise<{ ok: boolean }>,
 
@@ -955,27 +1174,35 @@ contextBridge.exposeInMainWorld('blueAPI', {
       if (isRenderOperationStatus(status)) callback(status);
     };
     ipcRenderer.on(RENDER_OPERATION_STATUS_CHANNEL, handler);
-    return () => { ipcRenderer.removeListener(RENDER_OPERATION_STATUS_CHANNEL, handler); };
+    return () => {
+      ipcRenderer.removeListener(RENDER_OPERATION_STATUS_CHANNEL, handler);
+    };
   },
   onFreezeItemStatus: (callback: (item: FreezeItemStatus) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, item: unknown) => {
       if (isFreezeItemStatus(item)) callback(item);
     };
     ipcRenderer.on(FREEZE_ITEM_STATUS_CHANNEL, handler);
-    return () => { ipcRenderer.removeListener(FREEZE_ITEM_STATUS_CHANNEL, handler); };
+    return () => {
+      ipcRenderer.removeListener(FREEZE_ITEM_STATUS_CHANNEL, handler);
+    };
   },
 
   // Audio File Player
-  openAudioFile: () =>
-    ipcRenderer.invoke('open-audio-file') as Promise<string | null>,
+  openAudioFile: () => ipcRenderer.invoke('open-audio-file') as Promise<string | null>,
   authorizeAudioFile: (filePath: string) =>
     ipcRenderer.invoke('authorize-audio-file', filePath) as Promise<boolean>,
   getAudioFileStat: (filePath: string) =>
-    ipcRenderer.invoke('get-audio-file-stat', filePath) as Promise<{ size: number; mtime: number } | null>,
+    ipcRenderer.invoke('get-audio-file-stat', filePath) as Promise<{
+      size: number;
+      mtime: number;
+    } | null>,
 
   // MIDI Input (SPEC 058)
   initializeMidiInputService: () =>
-    ipcRenderer.invoke(MIDI_INPUT_INITIALIZE_CHANNEL) as Promise<MidiInputServiceInitialization | null>,
+    ipcRenderer.invoke(
+      MIDI_INPUT_INITIALIZE_CHANNEL,
+    ) as Promise<MidiInputServiceInitialization | null>,
   reportMidiInputServiceSnapshot: (snapshot: MidiInputServiceSnapshot) =>
     ipcRenderer.send(MIDI_INPUT_REPORT_SNAPSHOT_CHANNEL, snapshot),
   acknowledgeMidiInputCommand: (ack: MidiInputCommandAck) =>
@@ -984,17 +1211,24 @@ contextBridge.exposeInMainWorld('blueAPI', {
     const handler = (_event: Electron.IpcRendererEvent, command: unknown) =>
       callback(command as MidiInputServiceCommand);
     ipcRenderer.on(MIDI_INPUT_SERVICE_COMMAND_CHANNEL, handler);
-    return () => { ipcRenderer.removeListener(MIDI_INPUT_SERVICE_COMMAND_CHANNEL, handler); };
+    return () => {
+      ipcRenderer.removeListener(MIDI_INPUT_SERVICE_COMMAND_CHANNEL, handler);
+    };
   },
   getMidiInputServiceSnapshot: () =>
     ipcRenderer.invoke(MIDI_INPUT_GET_SNAPSHOT_CHANNEL) as Promise<MidiInputServiceSnapshot | null>,
   requestMidiInputRescan: () =>
-    ipcRenderer.invoke(MIDI_INPUT_REQUEST_RESCAN_CHANNEL) as Promise<{ accepted: boolean; message?: string }>,
+    ipcRenderer.invoke(MIDI_INPUT_REQUEST_RESCAN_CHANNEL) as Promise<{
+      accepted: boolean;
+      message?: string;
+    }>,
   onMidiInputServiceSnapshot: (callback: (snapshot: MidiInputServiceSnapshot) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, snapshot: unknown) =>
       callback(snapshot as MidiInputServiceSnapshot);
     ipcRenderer.on(MIDI_INPUT_SNAPSHOT_CHANGED_CHANNEL, handler);
-    return () => { ipcRenderer.removeListener(MIDI_INPUT_SNAPSHOT_CHANGED_CHANNEL, handler); };
+    return () => {
+      ipcRenderer.removeListener(MIDI_INPUT_SNAPSHOT_CHANGED_CHANNEL, handler);
+    };
   },
 
   // BlueX7 Yamaha SysEx Import (SPEC 081)

@@ -130,7 +130,9 @@ describe('JMask support model', () => {
     const probabilityXml = probability.saveAsXML().toXml();
     const loadedProbability = Probability.loadFromXML(Element.parse(probabilityXml));
     expect(loadedProbability.getSelectedIndex()).toBe(1);
-    expect((loadedProbability.getSelectedProbabilityGenerator() as Linear).direction).toBe(Linear.INCREASING);
+    expect((loadedProbability.getSelectedProbabilityGenerator() as Linear).direction).toBe(
+      Linear.INCREASING,
+    );
   });
 
   it('rebuilds a field snapshot into live JMask generators', () => {
@@ -143,7 +145,9 @@ describe('JMask support model', () => {
 
     expect(restored.getField().getParameter(0).getGenerator()).toBeInstanceOf(Constant);
     expect(restored.getField().getParameter(1).getGenerator()).toBeInstanceOf(Random);
-    expect(restored.generateNotes(context).toScoreText()).toBe(original.generateNotes(context).toScoreText());
+    expect(restored.generateNotes(context).toScoreText()).toBe(
+      original.generateNotes(context).toScoreText(),
+    );
   });
 
   it('generates deterministic JavaRandom sequences', () => {

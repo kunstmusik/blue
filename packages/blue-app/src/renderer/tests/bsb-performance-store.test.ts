@@ -79,7 +79,18 @@ function makeBsbInstrument(assignmentId: string): BlueSynthBuilderInstrumentSnap
           properties: {},
           children: [
             makeWidgetNode({ id: 'w1', objectName: 'amp', x: 10, y: 10 }),
-            makeWidgetNode({ id: 'w2', objectName: 'freq', type: 'BSBValue', value: 440, minimum: 20, maximum: 20000, width: 80, height: 24, x: 90, y: 10 }),
+            makeWidgetNode({
+              id: 'w2',
+              objectName: 'freq',
+              type: 'BSBValue',
+              value: 440,
+              minimum: 20,
+              maximum: 20000,
+              width: 80,
+              height: 24,
+              x: 90,
+              y: 10,
+            }),
           ],
         },
         makeWidgetNode({ id: 'w3', objectName: 'gain', x: 240, y: 10 }),
@@ -88,7 +99,16 @@ function makeBsbInstrument(assignmentId: string): BlueSynthBuilderInstrumentSnap
   };
 }
 
-function makeGenericInstrument(assignmentId: string): { assignmentId: string; type: 'generic'; name: string; enabled: boolean; comment: string; text: string; globalOrc: string; globalSco: string } {
+function makeGenericInstrument(assignmentId: string): {
+  assignmentId: string;
+  type: 'generic';
+  name: string;
+  enabled: boolean;
+  comment: string;
+  text: string;
+  globalOrc: string;
+  globalSco: string;
+} {
   return {
     assignmentId,
     type: 'generic',
@@ -201,7 +221,9 @@ describe('BSB performance store', () => {
     expect(afterInstrument.widgetTree?.children?.[0]).not.toBe(beforeGroup);
     expect(afterInstrument.widgetTree?.children?.[1]).toBe(beforeSibling);
     expect(afterInstrument.widgetTree?.children?.[0]?.children?.[0]).not.toBe(beforeTarget);
-    expect(afterInstrument.widgetTree?.children?.[0]?.children?.[1]).toBe(beforeGroup?.children?.[1]);
+    expect(afterInstrument.widgetTree?.children?.[0]?.children?.[1]).toBe(
+      beforeGroup?.children?.[1],
+    );
   });
 
   it('rebuilds only the edited widget branch when renaming a widget', async () => {

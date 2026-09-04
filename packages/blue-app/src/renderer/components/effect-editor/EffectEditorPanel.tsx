@@ -13,7 +13,10 @@ import SelectedCodeEditor from '../workbench/panels/editors/SelectedCodeEditor';
 import { toUdoCompletionDefinitions } from '../workbench/panels/editors/udo-completion-scope';
 import UdoWorkspacePanel from '../workbench/panels/udo/UdoWorkspacePanel';
 import { useUdoCallbacks } from '../../hooks/use-udo-callbacks';
-import { cloneUdoSnapshot, formatUdoListAsOpcodeText } from '../workbench/panels/udo/udo-snapshot-utils';
+import {
+  cloneUdoSnapshot,
+  formatUdoListAsOpcodeText,
+} from '../workbench/panels/udo/udo-snapshot-utils';
 import { AppSelect } from '../AppSelect';
 import { cn } from '../../lib/cn';
 
@@ -76,30 +79,15 @@ export default function EffectEditorPanel({
     [onPatch],
   );
 
-  const handleCodeChange = useCallback(
-    (code: string) => onPatch({ code }),
-    [onPatch],
-  );
+  const handleCodeChange = useCallback((code: string) => onPatch({ code }), [onPatch]);
 
-  const handleCommentsChange = useCallback(
-    (comments: string) => onPatch({ comments }),
-    [onPatch],
-  );
+  const handleCommentsChange = useCallback((comments: string) => onPatch({ comments }), [onPatch]);
 
-  const handleNameChange = useCallback(
-    (name: string) => onPatch({ name }),
-    [onPatch],
-  );
+  const handleNameChange = useCallback((name: string) => onPatch({ name }), [onPatch]);
 
-  const handleNumInsChange = useCallback(
-    (numIns: number) => onPatch({ numIns }),
-    [onPatch],
-  );
+  const handleNumInsChange = useCallback((numIns: number) => onPatch({ numIns }), [onPatch]);
 
-  const handleNumOutsChange = useCallback(
-    (numOuts: number) => onPatch({ numOuts }),
-    [onPatch],
-  );
+  const handleNumOutsChange = useCallback((numOuts: number) => onPatch({ numOuts }), [onPatch]);
 
   const handleStyleChange = useCallback(
     (style: 'CLASSIC' | 'MODERN') => onPatch({ style }),
@@ -115,10 +103,7 @@ export default function EffectEditorPanel({
 
   const udoCallbacks = useUdoCallbacks('embedded', udoDispatch);
 
-  const fakeInstrument = useMemo(
-    () => buildFakeInstrumentSnapshot(snapshot),
-    [snapshot],
-  );
+  const fakeInstrument = useMemo(() => buildFakeInstrumentSnapshot(snapshot), [snapshot]);
 
   const replacementKeys = useMemo(
     () => createBsbReplacementKeys(snapshot.objectNames),
@@ -215,12 +200,14 @@ export default function EffectEditorPanel({
 
       <div className="flex-none border-b border-app-border bg-app-surface-strong px-2">
         <div className="flex items-end gap-1">
-          {([
-            ['interface', 'Interface'],
-            ['code', 'Code'],
-            ['udo', 'UDO'],
-            ['comments', 'Comments'],
-          ] as const).map(([tab, label]) => (
+          {(
+            [
+              ['interface', 'Interface'],
+              ['code', 'Code'],
+              ['udo', 'UDO'],
+              ['comments', 'Comments'],
+            ] as const
+          ).map(([tab, label]) => (
             <button
               key={tab}
               type="button"
@@ -228,7 +215,7 @@ export default function EffectEditorPanel({
                 'border-b-2 px-3 py-2 text-role-body',
                 activeTab === tab
                   ? 'border-app-accent text-app-text-strong'
-                  : 'border-transparent text-app-text-muted hover:text-app-text-strong'
+                  : 'border-transparent text-app-text-muted hover:text-app-text-strong',
               )}
               onClick={() => setActiveTab(tab)}
             >

@@ -6,8 +6,17 @@ import { Element } from '../serialization/xml-reader';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
 import { initBasicFromXML, getBasicXML } from './sound-object-utilities';
-import { getJavaRuntimeClient, type JavaRuntimeClientContract, type JavaRuntimeError } from '../java-runtime';
-import { applyNoteProcessorChainAsync, applyTimeBehavior, getNotes, setScoreStart } from '../utilities/score';
+import {
+  getJavaRuntimeClient,
+  type JavaRuntimeClientContract,
+  type JavaRuntimeError,
+} from '../java-runtime';
+import {
+  applyNoteProcessorChainAsync,
+  applyTimeBehavior,
+  getNotes,
+  setScoreStart,
+} from '../utilities/score';
 
 function formatRuntimeError(message: string, error?: JavaRuntimeError): string {
   const baseMessage = error?.message?.trim().length ? error.message : message;
@@ -30,8 +39,7 @@ export class ClojureObject extends AbstractSoundObject {
     super();
     this.setName('(clojure-object)');
     this._clojureCode =
-      ';use symbol blueDuration for duration from blue\n' +
-      '(def score "i1 0 2 3 4 5")';
+      ';use symbol blueDuration for duration from blue\n' + '(def score "i1 0 2 3 4 5")';
     this._backgroundColor = 0x404040;
   }
 
@@ -76,7 +84,9 @@ export class ClojureObject extends AbstractSoundObject {
     });
 
     if (!response.ok) {
-      throw new Error(formatRuntimeError('Failed to evaluate Clojure on-load code', response.error));
+      throw new Error(
+        formatRuntimeError('Failed to evaluate Clojure on-load code', response.error),
+      );
     }
   }
 
@@ -107,22 +117,23 @@ export class ClojureObject extends AbstractSoundObject {
     });
 
     if (!response.ok) {
-      throw new Error(formatRuntimeError('Failed to evaluate Clojure score object', response.error));
+      throw new Error(
+        formatRuntimeError('Failed to evaluate Clojure score object', response.error),
+      );
     }
 
     const noteList = getNotes(response.result?.scoreText ?? '');
-    const processed = await applyNoteProcessorChainAsync(noteList, this.getNoteProcessorChain(), compileData);
+    const processed = await applyNoteProcessorChainAsync(
+      noteList,
+      this.getNoteProcessorChain(),
+      compileData,
+    );
     const duration = this.getSubjectiveDuration().toBeats(context);
     const startTime = this.getStartTime().toBeats(context);
     const repeatPoint = this.getRepeatPoint();
     const repeatPointBeats = repeatPoint ? repeatPoint.toBeats(context) : -1;
 
-    applyTimeBehavior(
-      processed,
-      this.getTimeBehavior(),
-      duration,
-      repeatPointBeats,
-    );
+    applyTimeBehavior(processed, this.getTimeBehavior(), duration, repeatPointBeats);
     setScoreStart(processed, startTime);
 
     return processed;

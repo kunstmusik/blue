@@ -8,7 +8,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppSelect } from '../components/AppSelect';
 import { HostDocumentContext } from '../hooks/use-host-document';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const popout = new JSDOM('<!doctype html><html><body></body></html>');
 const popoutDoc = popout.window.document;
@@ -85,7 +87,9 @@ describe('AppSelect', () => {
     const squareOption = popoutDoc.querySelectorAll<HTMLElement>('[role="option"]')[1];
     expect(squareOption?.textContent).toContain('Square');
     await act(async () => {
-      squareOption!.dispatchEvent(new popout.window.MouseEvent('click', { bubbles: true, button: 0 }));
+      squareOption!.dispatchEvent(
+        new popout.window.MouseEvent('click', { bubbles: true, button: 0 }),
+      );
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
 

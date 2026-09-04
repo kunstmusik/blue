@@ -18,11 +18,15 @@ describe('prepareCommandLine', () => {
   });
 
   it('replaces $outfile when provided', () => {
-    expect(prepareCommandLine('python $infile -o $outfile', 'in.txt', 'out.txt')).toBe('python in.txt -o out.txt');
+    expect(prepareCommandLine('python $infile -o $outfile', 'in.txt', 'out.txt')).toBe(
+      'python in.txt -o out.txt',
+    );
   });
 
   it('appends infile and replaces $outfile', () => {
-    expect(prepareCommandLine('tool -o $outfile', 'in.txt', 'out.sco')).toBe('tool -o out.sco in.txt');
+    expect(prepareCommandLine('tool -o $outfile', 'in.txt', 'out.sco')).toBe(
+      'tool -o out.sco in.txt',
+    );
   });
 
   it('trims trailing whitespace', () => {
@@ -57,56 +61,78 @@ describe('executeExternalTest', () => {
     expect(result.error).toContain('No command line or text');
   });
 
-  it('executes a command and returns stdout', async () => {
-    const result = await executeExternalTest({
-      commandLine: 'node -e "process.stdout.write(\'i1 0 1\')"',
-      text: '',
-      projectDir: null,
-    });
-    expect(result.ok).toBe(true);
-    expect(result.output).toContain('i1 0 1');
-  }, EXTERNAL_PROCESS_TEST_TIMEOUT);
+  it(
+    'executes a command and returns stdout',
+    async () => {
+      const result = await executeExternalTest({
+        commandLine: 'node -e "process.stdout.write(\'i1 0 1\')"',
+        text: '',
+        projectDir: null,
+      });
+      expect(result.ok).toBe(true);
+      expect(result.output).toContain('i1 0 1');
+    },
+    EXTERNAL_PROCESS_TEST_TIMEOUT,
+  );
 
-  it('writes text to temp file and passes it to command', async () => {
-    const result = await executeExternalTest({
-      commandLine: 'node -e "process.stdout.write(require(\'fs\').readFileSync(process.argv[1],\'utf8\'))"',
-      text: 'i1 0 2\ni2 1 1\n',
-      projectDir: null,
-    });
-    expect(result.ok).toBe(true);
-    expect(result.output).toContain('i1 0 2');
-    expect(result.output).toContain('i2 1 1');
-  }, EXTERNAL_PROCESS_TEST_TIMEOUT);
+  it(
+    'writes text to temp file and passes it to command',
+    async () => {
+      const result = await executeExternalTest({
+        commandLine:
+          "node -e \"process.stdout.write(require('fs').readFileSync(process.argv[1],'utf8'))\"",
+        text: 'i1 0 2\ni2 1 1\n',
+        projectDir: null,
+      });
+      expect(result.ok).toBe(true);
+      expect(result.output).toContain('i1 0 2');
+      expect(result.output).toContain('i2 1 1');
+    },
+    EXTERNAL_PROCESS_TEST_TIMEOUT,
+  );
 
-  it('returns error for failing command', async () => {
-    const result = await executeExternalTest({
-      commandLine: 'false',
-      text: '',
-      projectDir: null,
-    });
-    expect(result.ok).toBe(false);
-    expect(result.error).toBeTruthy();
-  }, EXTERNAL_PROCESS_TEST_TIMEOUT);
+  it(
+    'returns error for failing command',
+    async () => {
+      const result = await executeExternalTest({
+        commandLine: 'false',
+        text: '',
+        projectDir: null,
+      });
+      expect(result.ok).toBe(false);
+      expect(result.error).toBeTruthy();
+    },
+    EXTERNAL_PROCESS_TEST_TIMEOUT,
+  );
 
-  it('returns error for nonexistent command', async () => {
-    const result = await executeExternalTest({
-      commandLine: 'nonexistent_command_xyz_12345',
-      text: '',
-      projectDir: null,
-    });
-    expect(result.ok).toBe(false);
-    expect(result.error).toBeTruthy();
-  }, EXTERNAL_PROCESS_TEST_TIMEOUT);
+  it(
+    'returns error for nonexistent command',
+    async () => {
+      const result = await executeExternalTest({
+        commandLine: 'nonexistent_command_xyz_12345',
+        text: '',
+        projectDir: null,
+      });
+      expect(result.ok).toBe(false);
+      expect(result.error).toBeTruthy();
+    },
+    EXTERNAL_PROCESS_TEST_TIMEOUT,
+  );
 
-  it('handles $outfile mode', async () => {
-    const result = await executeExternalTest({
-      commandLine: 'node -e "require(\'fs\').copyFileSync(process.argv[1],process.argv[2])" $infile $outfile',
-      text: 'i1 0 1\n',
-      projectDir: null,
-    });
-    expect(result.ok).toBe(true);
-    expect(result.output).toContain('i1 0 1');
-  }, EXTERNAL_PROCESS_TEST_TIMEOUT);
+  it(
+    'handles $outfile mode',
+    async () => {
+      const result = await executeExternalTest({
+        commandLine:
+          'node -e "require(\'fs\').copyFileSync(process.argv[1],process.argv[2])" $infile $outfile',
+        text: 'i1 0 1\n',
+        projectDir: null,
+      });
+      expect(result.ok).toBe(true);
+      expect(result.output).toContain('i1 0 1');
+    },
+    EXTERNAL_PROCESS_TEST_TIMEOUT,
+  );
 });
 
 describe('createMainExternalExecutor', () => {

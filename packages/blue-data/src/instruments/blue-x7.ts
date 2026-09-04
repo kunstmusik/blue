@@ -85,12 +85,7 @@ export interface BlueX7Voice {
     BlueX7Operator,
     BlueX7Operator,
   ];
-  pitchEnvelope: [
-    EnvelopePoint,
-    EnvelopePoint,
-    EnvelopePoint,
-    EnvelopePoint,
-  ];
+  pitchEnvelope: [EnvelopePoint, EnvelopePoint, EnvelopePoint, EnvelopePoint];
   csoundPostCode: string;
 }
 
@@ -478,8 +473,7 @@ export function replaceBlueX7VoiceFixedValues(
 
 export function getBlueX7BindingReport(): { emitted: string[]; notEmitted: string[] } {
   const emitted = BLUE_X7_PARAMETER_DESCRIPTORS.map((descriptor) => {
-    const updateClass =
-      descriptor.updateClass === 'next-note' ? 'next-note' : 'active-note';
+    const updateClass = descriptor.updateClass === 'next-note' ? 'next-note' : 'active-note';
     const target =
       descriptor.transport.kind === 'voice'
         ? `direct global voice slot ${descriptor.transport.slot}`
@@ -489,16 +483,11 @@ export function getBlueX7BindingReport(): { emitted: string[]; notEmitted: strin
   emitted.push('csoundPostCode (appended verbatim after the module aout)');
   return {
     emitted,
-    notEmitted: [
-      'voice-name bytes 145..154 (deterministic, nonsynthesized; not Parameters)',
-    ],
+    notEmitted: ['voice-name bytes 145..154 (deterministic, nonsynthesized; not Parameters)'],
   };
 }
 
-export function generateBlueX7Preview(
-  voice: BlueX7Voice,
-  name = 'BlueX7',
-): BlueX7PreviewResult {
+export function generateBlueX7Preview(voice: BlueX7Voice, name = 'BlueX7'): BlueX7PreviewResult {
   const instr = new BlueX7();
   instr.setName(name);
   instr.setVoice(voice);
@@ -535,10 +524,7 @@ export class BlueX7 extends Instrument {
       this._comment = other._comment;
       this._voice = cloneBlueX7Voice(other._voice);
       // A new ownership boundary regenerates all Parameter identities.
-      this._parameters = reconcileBlueX7Parameters(
-        this._voice,
-        other._parameters.deepCopy(),
-      );
+      this._parameters = reconcileBlueX7Parameters(this._voice, other._parameters.deepCopy());
       if (other._sourceXmlTemplate) {
         this._sourceXmlTemplate = Element.parse(other._sourceXmlTemplate.toXml());
       }
@@ -588,9 +574,7 @@ export class BlueX7 extends Instrument {
     if (field === 'operatorEnabled') {
       const operatorEnabled = value as BlueX7Common['operatorEnabled'];
       this._voice.common.operatorEnabled = [...operatorEnabled] as BlueX7Common['operatorEnabled'];
-      this.syncFixedValues(
-        operatorEnabled.map((_, index) => `operator.${index + 1}.enabled`),
-      );
+      this.syncFixedValues(operatorEnabled.map((_, index) => `operator.${index + 1}.enabled`));
       return;
     }
     this._voice.common[field] = value;
@@ -647,11 +631,7 @@ export class BlueX7 extends Instrument {
     this.syncFixedValues(['lfo.pitchModulationSensitivity']);
   }
 
-  setOperatorEnvelopePoint(
-    operatorIndex: number,
-    stageIndex: number,
-    point: EnvelopePoint,
-  ): void {
+  setOperatorEnvelopePoint(operatorIndex: number, stageIndex: number, point: EnvelopePoint): void {
     if (operatorIndex >= 0 && operatorIndex < 6 && stageIndex >= 0 && stageIndex < 4) {
       this._voice.operators[operatorIndex].envelope[stageIndex] = { ...point };
       this.syncFixedValues([
@@ -761,10 +741,7 @@ export class BlueX7 extends Instrument {
           parameter.getCompilationVarName(),
       );
 
-    const transport = buildBlueX7VoiceTransport(
-      this._voice,
-      this._voice.common.operatorEnabled,
-    );
+    const transport = buildBlueX7VoiceTransport(this._voice, this._voice.common.operatorEnabled);
     const targetParameters: BlueX7TargetParameter[] | undefined = liveParameters
       ? BLUE_X7_PARAMETER_DESCRIPTORS.map((descriptor, index) => ({
           key: descriptor.key,
@@ -779,9 +756,8 @@ export class BlueX7 extends Instrument {
       operatorMask: transport.operatorMask,
       parameters: targetParameters,
       changeStrategy: targetParameters && hasActiveParameters ? 'epoch' : undefined,
-      epochSymbol: targetParameters && hasActiveParameters
-        ? this.getBlueX7EpochSymbol()
-        : undefined,
+      epochSymbol:
+        targetParameters && hasActiveParameters ? this.getBlueX7EpochSymbol() : undefined,
     });
     return `${target}${this._voice.csoundPostCode ?? ''}\n`;
   }

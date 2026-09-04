@@ -13,10 +13,7 @@ import {
   RepositorySnapshot,
   UnifiedLibraryRepository,
 } from './repository';
-import type {
-  RepositoryWorkerRequest,
-  RepositoryWorkerResponse,
-} from './repository-worker';
+import type { RepositoryWorkerRequest, RepositoryWorkerResponse } from './repository-worker';
 
 interface PendingRequest {
   readonly resolve: (value: unknown) => void;
@@ -127,7 +124,10 @@ export class UnifiedLibraryRepositoryClient {
     expectedNodeIds: readonly string[],
   ): Promise<RepositoryCutClipboardResult> {
     return this.request<RepositoryCutClipboardResult>(
-      'cutClipboardSubtree', nodeId, expectedRevision, expectedNodeIds,
+      'cutClipboardSubtree',
+      nodeId,
+      expectedRevision,
+      expectedNodeIds,
     );
   }
 
@@ -145,19 +145,55 @@ export class UnifiedLibraryRepositoryClient {
     displayName: string,
     payload: RepositoryItemPayloadInput,
   ): Promise<RepositoryNode> {
-    return this.request<RepositoryNode>('updateItem', nodeId, expectedRevision, displayName, payload);
+    return this.request<RepositoryNode>(
+      'updateItem',
+      nodeId,
+      expectedRevision,
+      displayName,
+      payload,
+    );
   }
 
-  moveNode(nodeId: string, expectedRevision: number, parentId: string, targetIndex: number, expectedParentRevision?: number): Promise<RepositoryNode> {
-    return this.request<RepositoryNode>('moveNode', nodeId, expectedRevision, parentId, targetIndex, expectedParentRevision);
+  moveNode(
+    nodeId: string,
+    expectedRevision: number,
+    parentId: string,
+    targetIndex: number,
+    expectedParentRevision?: number,
+  ): Promise<RepositoryNode> {
+    return this.request<RepositoryNode>(
+      'moveNode',
+      nodeId,
+      expectedRevision,
+      parentId,
+      targetIndex,
+      expectedParentRevision,
+    );
   }
 
-  reorderNode(nodeId: string, expectedRevision: number, targetIndex: number): Promise<RepositoryNode> {
+  reorderNode(
+    nodeId: string,
+    expectedRevision: number,
+    targetIndex: number,
+  ): Promise<RepositoryNode> {
     return this.request<RepositoryNode>('reorderNode', nodeId, expectedRevision, targetIndex);
   }
 
-  duplicateNode(nodeId: string, expectedRevision: number, parentId?: string, targetIndex?: number, expectedParentRevision?: number): Promise<RepositoryNode> {
-    return this.request<RepositoryNode>('duplicateNode', nodeId, expectedRevision, parentId, targetIndex, expectedParentRevision);
+  duplicateNode(
+    nodeId: string,
+    expectedRevision: number,
+    parentId?: string,
+    targetIndex?: number,
+    expectedParentRevision?: number,
+  ): Promise<RepositoryNode> {
+    return this.request<RepositoryNode>(
+      'duplicateNode',
+      nodeId,
+      expectedRevision,
+      parentId,
+      targetIndex,
+      expectedParentRevision,
+    );
   }
 
   listDescendantNodeIds(nodeId: string): Promise<string[]> {
@@ -168,43 +204,68 @@ export class UnifiedLibraryRepositoryClient {
     return this.request<string[]>('deleteNode', nodeId, expectedRevision);
   }
 
-  createFolder(input: Parameters<UnifiedLibraryRepository['createFolder']>[0]): Promise<RepositoryNode> {
+  createFolder(
+    input: Parameters<UnifiedLibraryRepository['createFolder']>[0],
+  ): Promise<RepositoryNode> {
     return this.request<RepositoryNode>('createFolder', input);
   }
 
-  createItem(input: Parameters<UnifiedLibraryRepository['createItem']>[0]): Promise<RepositoryNode> {
+  createItem(
+    input: Parameters<UnifiedLibraryRepository['createItem']>[0],
+  ): Promise<RepositoryNode> {
     return this.request<RepositoryNode>('createItem', input);
   }
 
-  renameNode(nodeId: string, expectedRevision: number, displayName: string): Promise<RepositoryNode> {
+  renameNode(
+    nodeId: string,
+    expectedRevision: number,
+    displayName: string,
+  ): Promise<RepositoryNode> {
     return this.request<RepositoryNode>('renameNode', nodeId, expectedRevision, displayName);
   }
 
-  startImportBatch(input: Parameters<UnifiedLibraryRepository['startImportBatch']>[0]): Promise<void> {
+  startImportBatch(
+    input: Parameters<UnifiedLibraryRepository['startImportBatch']>[0],
+  ): Promise<void> {
     return this.request<void>('startImportBatch', input);
   }
 
   importLegacyDocument(input: Parameters<UnifiedLibraryRepository['importLegacyDocument']>[0]) {
-    return this.request<ReturnType<UnifiedLibraryRepository['importLegacyDocument']>>('importLegacyDocument', input);
+    return this.request<ReturnType<UnifiedLibraryRepository['importLegacyDocument']>>(
+      'importLegacyDocument',
+      input,
+    );
   }
 
-  recordImportSourceFailure(input: Parameters<UnifiedLibraryRepository['recordImportSourceFailure']>[0]): Promise<void> {
+  recordImportSourceFailure(
+    input: Parameters<UnifiedLibraryRepository['recordImportSourceFailure']>[0],
+  ): Promise<void> {
     return this.request<void>('recordImportSourceFailure', input);
   }
 
-  finishImportBatch(input: Parameters<UnifiedLibraryRepository['finishImportBatch']>[0]): Promise<void> {
+  finishImportBatch(
+    input: Parameters<UnifiedLibraryRepository['finishImportBatch']>[0],
+  ): Promise<void> {
     return this.request<void>('finishImportBatch', input);
   }
 
   listImportHistory(limit = 100) {
-    return this.request<ReturnType<UnifiedLibraryRepository['listImportHistory']>>('listImportHistory', limit);
+    return this.request<ReturnType<UnifiedLibraryRepository['listImportHistory']>>(
+      'listImportHistory',
+      limit,
+    );
   }
 
   undoImportBatch(batchId: string) {
-    return this.request<ReturnType<UnifiedLibraryRepository['undoImportBatch']>>('undoImportBatch', batchId);
+    return this.request<ReturnType<UnifiedLibraryRepository['undoImportBatch']>>(
+      'undoImportBatch',
+      batchId,
+    );
   }
 
-  runForTesting<T>(operation: (repository: UnifiedLibraryRepository) => T | Promise<T>): Promise<T> {
+  runForTesting<T>(
+    operation: (repository: UnifiedLibraryRepository) => T | Promise<T>,
+  ): Promise<T> {
     if (!this.repository) return Promise.reject(new Error('In-process repository is unavailable'));
     return this.enqueue(() => operation(this.repository as UnifiedLibraryRepository));
   }
@@ -228,66 +289,124 @@ export class UnifiedLibraryRepositoryClient {
     return this.enqueue(async () => {
       if (this.repository) {
         switch (operation) {
-          case 'getSnapshot': return this.repository.getSnapshot() as T;
-          case 'getNode': return this.repository.getNode(String(args[0])) as T;
-          case 'getRoot': return this.repository.getRoot(args[0] as LibraryType) as T;
-          case 'listChildren': return this.repository.listChildren(String(args[0])) as T;
+          case 'getSnapshot':
+            return this.repository.getSnapshot() as T;
+          case 'getNode':
+            return this.repository.getNode(String(args[0])) as T;
+          case 'getRoot':
+            return this.repository.getRoot(args[0] as LibraryType) as T;
+          case 'listChildren':
+            return this.repository.listChildren(String(args[0])) as T;
           case 'listChildrenPage':
             return this.repository.listChildrenPage(
-              String(args[0]), Number(args[1]), Number(args[2]),
+              String(args[0]),
+              Number(args[1]),
+              Number(args[2]),
             ) as T;
-          case 'hasChildren': return this.repository.hasChildren(String(args[0])) as T;
-          case 'getBreadcrumb': return this.repository.getBreadcrumb(String(args[0])) as T;
+          case 'hasChildren':
+            return this.repository.hasChildren(String(args[0])) as T;
+          case 'getBreadcrumb':
+            return this.repository.getBreadcrumb(String(args[0])) as T;
           case 'searchItems':
             return this.repository.searchItems(
-              String(args[0]), args[1] as LibraryType | 'all', Number(args[2]), Number(args[3]),
+              String(args[0]),
+              args[1] as LibraryType | 'all',
+              Number(args[2]),
+              Number(args[3]),
             ) as T;
-          case 'getItemPayload': return this.repository.getItemPayload(String(args[0])) as T;
-          case 'getItemSummary': return this.repository.getItemSummary(String(args[0])) as T;
-          case 'getClipboardSubtree': return this.repository.getClipboardSubtree(String(args[0])) as T;
+          case 'getItemPayload':
+            return this.repository.getItemPayload(String(args[0])) as T;
+          case 'getItemSummary':
+            return this.repository.getItemSummary(String(args[0])) as T;
+          case 'getClipboardSubtree':
+            return this.repository.getClipboardSubtree(String(args[0])) as T;
           case 'createClipboardSubtree':
             return this.repository.createClipboardSubtree(
-              String(args[0]), args[1] as RepositoryClipboardNode,
+              String(args[0]),
+              args[1] as RepositoryClipboardNode,
             ) as T;
           case 'cutClipboardSubtree':
             return this.repository.cutClipboardSubtree(
-              String(args[0]), Number(args[1]), args[2] as readonly string[],
+              String(args[0]),
+              Number(args[1]),
+              args[2] as readonly string[],
             ) as T;
           case 'updateItemPayload':
             return this.repository.updateItemPayload(
-              String(args[0]), Number(args[1]), args[2] as RepositoryItemPayloadInput,
+              String(args[0]),
+              Number(args[1]),
+              args[2] as RepositoryItemPayloadInput,
             ) as T;
           case 'updateItem':
             return this.repository.updateItem(
-              String(args[0]), Number(args[1]), String(args[2]),
+              String(args[0]),
+              Number(args[1]),
+              String(args[2]),
               args[3] as RepositoryItemPayloadInput,
             ) as T;
           case 'moveNode':
             return this.repository.moveNode(
-              String(args[0]), Number(args[1]), String(args[2]), Number(args[3]),
+              String(args[0]),
+              Number(args[1]),
+              String(args[2]),
+              Number(args[3]),
               args[4] === undefined ? undefined : Number(args[4]),
             ) as T;
           case 'reorderNode':
-            return this.repository.reorderNode(String(args[0]), Number(args[1]), Number(args[2])) as T;
+            return this.repository.reorderNode(
+              String(args[0]),
+              Number(args[1]),
+              Number(args[2]),
+            ) as T;
           case 'duplicateNode':
             return this.repository.duplicateNode(
-              String(args[0]), Number(args[1]), args[2] === undefined ? undefined : String(args[2]),
+              String(args[0]),
+              Number(args[1]),
+              args[2] === undefined ? undefined : String(args[2]),
               args[3] === undefined ? undefined : Number(args[3]),
               args[4] === undefined ? undefined : Number(args[4]),
             ) as T;
           case 'listDescendantNodeIds':
             return this.repository.listDescendantNodeIds(String(args[0])) as T;
-          case 'deleteNode': return this.repository.deleteNode(String(args[0]), Number(args[1])) as T;
-          case 'createFolder': return this.repository.createFolder(args[0] as Parameters<UnifiedLibraryRepository['createFolder']>[0]) as T;
-          case 'createItem': return this.repository.createItem(args[0] as Parameters<UnifiedLibraryRepository['createItem']>[0]) as T;
-          case 'renameNode': return this.repository.renameNode(String(args[0]), Number(args[1]), String(args[2])) as T;
-          case 'startImportBatch': return this.repository.startImportBatch(args[0] as Parameters<UnifiedLibraryRepository['startImportBatch']>[0]) as T;
-          case 'importLegacyDocument': return this.repository.importLegacyDocument(args[0] as Parameters<UnifiedLibraryRepository['importLegacyDocument']>[0]) as T;
-          case 'recordImportSourceFailure': return this.repository.recordImportSourceFailure(args[0] as Parameters<UnifiedLibraryRepository['recordImportSourceFailure']>[0]) as T;
-          case 'finishImportBatch': return this.repository.finishImportBatch(args[0] as Parameters<UnifiedLibraryRepository['finishImportBatch']>[0]) as T;
-          case 'listImportHistory': return this.repository.listImportHistory(Number(args[0] ?? 100)) as T;
-          case 'undoImportBatch': return this.repository.undoImportBatch(String(args[0])) as T;
-          case 'close': this.repository.close(); return undefined as T;
+          case 'deleteNode':
+            return this.repository.deleteNode(String(args[0]), Number(args[1])) as T;
+          case 'createFolder':
+            return this.repository.createFolder(
+              args[0] as Parameters<UnifiedLibraryRepository['createFolder']>[0],
+            ) as T;
+          case 'createItem':
+            return this.repository.createItem(
+              args[0] as Parameters<UnifiedLibraryRepository['createItem']>[0],
+            ) as T;
+          case 'renameNode':
+            return this.repository.renameNode(
+              String(args[0]),
+              Number(args[1]),
+              String(args[2]),
+            ) as T;
+          case 'startImportBatch':
+            return this.repository.startImportBatch(
+              args[0] as Parameters<UnifiedLibraryRepository['startImportBatch']>[0],
+            ) as T;
+          case 'importLegacyDocument':
+            return this.repository.importLegacyDocument(
+              args[0] as Parameters<UnifiedLibraryRepository['importLegacyDocument']>[0],
+            ) as T;
+          case 'recordImportSourceFailure':
+            return this.repository.recordImportSourceFailure(
+              args[0] as Parameters<UnifiedLibraryRepository['recordImportSourceFailure']>[0],
+            ) as T;
+          case 'finishImportBatch':
+            return this.repository.finishImportBatch(
+              args[0] as Parameters<UnifiedLibraryRepository['finishImportBatch']>[0],
+            ) as T;
+          case 'listImportHistory':
+            return this.repository.listImportHistory(Number(args[0] ?? 100)) as T;
+          case 'undoImportBatch':
+            return this.repository.undoImportBatch(String(args[0])) as T;
+          case 'close':
+            this.repository.close();
+            return undefined as T;
         }
       }
       if (!this.worker) throw new Error('Unified Library repository client has no transport');
@@ -297,14 +416,18 @@ export class UnifiedLibraryRepositoryClient {
       });
       const request: RepositoryWorkerRequest = { id, operation, args };
       this.worker.postMessage(request);
-      return await response as T;
+      return (await response) as T;
     });
   }
 
   private enqueue<T>(operation: () => T | Promise<T>): Promise<T> {
-    if (this.closed) return Promise.reject(new Error('Unified Library repository client is closed'));
+    if (this.closed)
+      return Promise.reject(new Error('Unified Library repository client is closed'));
     const result = this.queue.then(operation, operation);
-    this.queue = result.then(() => undefined, () => undefined);
+    this.queue = result.then(
+      () => undefined,
+      () => undefined,
+    );
     return result;
   }
 

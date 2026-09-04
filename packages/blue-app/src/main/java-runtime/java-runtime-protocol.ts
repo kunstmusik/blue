@@ -14,8 +14,7 @@ export const JAVA_RUNTIME_METHODS = {
   SHUTDOWN: 'runtime.shutdown',
 } as const;
 
-export type JavaRuntimeMethod =
-  (typeof JAVA_RUNTIME_METHODS)[keyof typeof JAVA_RUNTIME_METHODS];
+export type JavaRuntimeMethod = (typeof JAVA_RUNTIME_METHODS)[keyof typeof JAVA_RUNTIME_METHODS];
 
 export interface JavaRuntimeDependencySpec {
   coordinates: string;
@@ -204,8 +203,9 @@ export function encodeJavaRuntimeRequest<TParams extends Record<string, unknown>
 export function decodeJavaRuntimeResponse<TResult>(
   raw: Buffer | string,
 ): JavaRuntimeResponseEnvelope<TResult> {
-  const parsed = JSON.parse(Buffer.isBuffer(raw) ? raw.toString('utf-8') : raw) as
-    Partial<JavaRuntimeResponseEnvelope<TResult>>;
+  const parsed = JSON.parse(Buffer.isBuffer(raw) ? raw.toString('utf-8') : raw) as Partial<
+    JavaRuntimeResponseEnvelope<TResult>
+  >;
 
   if (typeof parsed !== 'object' || parsed === null || typeof parsed.ok !== 'boolean') {
     throw new Error('Invalid Java runtime response payload');
@@ -228,7 +228,11 @@ export function decodeJavaRuntimeResponse<TResult>(
 
   const parsedFailure = parsed as Partial<JavaRuntimeFailureResponseEnvelope>;
 
-  if (!parsedFailure.error || typeof parsedFailure.error.code !== 'string' || typeof parsedFailure.error.message !== 'string') {
+  if (
+    !parsedFailure.error ||
+    typeof parsedFailure.error.code !== 'string' ||
+    typeof parsedFailure.error.message !== 'string'
+  ) {
     throw new Error('Java runtime failure response is missing error details');
   }
 

@@ -1,8 +1,5 @@
 import { PanelBottomOpen, PanelLeftOpen, PanelRightOpen } from 'lucide-react';
-import type {
-  AuxiliaryEdge,
-  MinimizedTabState,
-} from './auxiliary-layout';
+import type { AuxiliaryEdge, MinimizedTabState } from './auxiliary-layout';
 import { getAuxiliaryRailLabel } from './auxiliary-layout';
 import { cn } from '../../lib/cn';
 
@@ -43,7 +40,7 @@ export default function AuxiliaryRail({
           type="button"
           className={cn(
             'workbench-edge-rail__group-action',
-            `workbench-edge-rail__group-action--${edge}`
+            `workbench-edge-rail__group-action--${edge}`,
           )}
           title="Restore minimized tool windows on this edge"
           aria-label="Restore minimized tool windows on this edge"
@@ -60,15 +57,13 @@ export default function AuxiliaryRail({
           className={cn(
             'workbench-edge-rail__button',
             `workbench-edge-rail__button--${edge}`,
-            tab.isActivePanel && 'is-active'
+            tab.isActivePanel && 'is-active',
           )}
           onClick={() => onSelect(tab.panelId)}
           title={getAuxiliaryRailLabel(tab.panelId)}
           aria-pressed={tab.isActivePanel}
         >
-          <span className="workbench-edge-rail__label">
-            {getAuxiliaryRailLabel(tab.panelId)}
-          </span>
+          <span className="workbench-edge-rail__label">{getAuxiliaryRailLabel(tab.panelId)}</span>
         </button>
       ))}
     </nav>

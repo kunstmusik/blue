@@ -86,7 +86,9 @@ export const useSettingsStore = create<SettingsState & SettingsActions>()(
         try {
           await window.blueAPI.newFile();
         } catch (err: unknown) {
-          toast.error(`Failed to create project: ${err instanceof Error ? err.message : String(err)}`);
+          toast.error(
+            `Failed to create project: ${err instanceof Error ? err.message : String(err)}`,
+          );
         }
       },
 

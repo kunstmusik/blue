@@ -8,7 +8,10 @@ import type {
 } from '../../../../../../shared/project-editor';
 import PresetsManagerDialog from './PresetsManagerDialog';
 import { ConfirmationDialog } from '../../../../dialogs/ConfirmationDialog';
-import { PopoutDropdownMenuPortal, portalEventIsolationProps } from '../../../../../hooks/host-portals';
+import {
+  PopoutDropdownMenuPortal,
+  portalEventIsolationProps,
+} from '../../../../../hooks/host-portals';
 
 interface BSBPresetBarProps {
   instrument: BlueSynthBuilderInstrumentSnapshot;
@@ -33,7 +36,10 @@ export default function BSBPresetBar({
 
   const handleUpdatePreset = useCallback(() => {
     if (!presetGroup?.currentPresetUniqueId) return;
-    onBsbInterfacePatch({ type: 'updatePreset', presetUniqueId: presetGroup.currentPresetUniqueId });
+    onBsbInterfacePatch({
+      type: 'updatePreset',
+      presetUniqueId: presetGroup.currentPresetUniqueId,
+    });
   }, [presetGroup, onBsbInterfacePatch]);
 
   const handleAddPreset = useCallback(() => {
@@ -67,10 +73,7 @@ export default function BSBPresetBar({
       return 'No Preset Selected';
     }
 
-    const findPath = (
-      group: PresetGroupSnapshot,
-      path: string,
-    ): string | null => {
+    const findPath = (group: PresetGroupSnapshot, path: string): string | null => {
       const currentPath = path ? `${path} / ${group.name}` : '';
 
       for (const preset of group.presets) {
@@ -104,7 +107,10 @@ export default function BSBPresetBar({
                 <span>{subGroup.name}</span>
                 <ChevronRight className="w-3.5 h-3.5 opacity-60 ml-2" />
               </DropdownMenu.SubTrigger>
-              <DropdownMenu.SubContent className="min-w-[150px] rounded-md border border-app-border bg-app-surface-strong p-1 shadow-lg" {...portalEventIsolationProps}>
+              <DropdownMenu.SubContent
+                className="min-w-[150px] rounded-md border border-app-border bg-app-surface-strong p-1 shadow-lg"
+                {...portalEventIsolationProps}
+              >
                 {renderPresetMenu(subGroup, depth + 1)}
               </DropdownMenu.SubContent>
             </DropdownMenu.Sub>
@@ -159,11 +165,18 @@ export default function BSBPresetBar({
         </>
       );
     },
-    [handleAddFolder, handleAddPreset, handleManagePresets, handleSynchronizePresets, onBsbInterfacePatch],
+    [
+      handleAddFolder,
+      handleAddPreset,
+      handleManagePresets,
+      handleSynchronizePresets,
+      onBsbInterfacePatch,
+    ],
   );
 
   const currentPresetPath = getCurrentPresetPath();
-  const hasCurrentPreset = presetGroup?.currentPresetUniqueId !== null && presetGroup?.currentPresetUniqueId !== '';
+  const hasCurrentPreset =
+    presetGroup?.currentPresetUniqueId !== null && presetGroup?.currentPresetUniqueId !== '';
   const canUpdate = hasCurrentPreset && presetGroup?.currentPresetModified;
 
   return (
@@ -180,8 +193,15 @@ export default function BSBPresetBar({
             </button>
           </DropdownMenu.Trigger>
           <PopoutDropdownMenuPortal>
-            <DropdownMenu.Content className="min-w-[150px] rounded-md border border-app-border bg-app-surface-strong p-1 shadow-lg" {...portalEventIsolationProps}>
-              {presetGroup ? renderPresetMenu(presetGroup) : <div className="px-2 py-1 text-role-body text-app-text-muted">No presets</div>}
+            <DropdownMenu.Content
+              className="min-w-[150px] rounded-md border border-app-border bg-app-surface-strong p-1 shadow-lg"
+              {...portalEventIsolationProps}
+            >
+              {presetGroup ? (
+                renderPresetMenu(presetGroup)
+              ) : (
+                <div className="px-2 py-1 text-role-body text-app-text-muted">No presets</div>
+              )}
             </DropdownMenu.Content>
           </PopoutDropdownMenuPortal>
         </DropdownMenu.Root>

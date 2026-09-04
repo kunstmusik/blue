@@ -111,7 +111,7 @@ export default function UdoWorkspacePanel({
     }
 
     const [selectedIndex] = selectedIndices;
-    return selectedIndex !== undefined ? udos[selectedIndex] ?? null : null;
+    return selectedIndex !== undefined ? (udos[selectedIndex] ?? null) : null;
   }, [selectedIndices, udos]);
 
   const udoCompletionOptions = useMemo(
@@ -127,42 +127,36 @@ export default function UdoWorkspacePanel({
     anchorIndexRef.current = index;
   }, []);
 
-  const handleSelectIndex = useCallback(
-    (index: number, gesture?: UdoSelectionGesture) => {
-      setSelectedIndices((current) => {
-        if (gesture?.range) {
-          const anchor = anchorIndexRef.current ?? current[0] ?? index;
-          return createRange(anchor, index);
-        }
+  const handleSelectIndex = useCallback((index: number, gesture?: UdoSelectionGesture) => {
+    setSelectedIndices((current) => {
+      if (gesture?.range) {
+        const anchor = anchorIndexRef.current ?? current[0] ?? index;
+        return createRange(anchor, index);
+      }
 
-        if (gesture?.toggle) {
-          const next = current.includes(index)
-            ? current.filter((value) => value !== index)
-            : normalizeIndices([...current, index]);
-          anchorIndexRef.current = index;
-          return next;
-        }
-
+      if (gesture?.toggle) {
+        const next = current.includes(index)
+          ? current.filter((value) => value !== index)
+          : normalizeIndices([...current, index]);
         anchorIndexRef.current = index;
-        return [index];
-      });
-    },
-    [],
-  );
+        return next;
+      }
 
-  const handleContextSelectIndex = useCallback(
-    (index: number) => {
-      setSelectedIndices((current) => {
-        if (current.includes(index)) {
-          return current;
-        }
+      anchorIndexRef.current = index;
+      return [index];
+    });
+  }, []);
 
-        anchorIndexRef.current = index;
-        return [index];
-      });
-    },
-    [],
-  );
+  const handleContextSelectIndex = useCallback((index: number) => {
+    setSelectedIndices((current) => {
+      if (current.includes(index)) {
+        return current;
+      }
+
+      anchorIndexRef.current = index;
+      return [index];
+    });
+  }, []);
 
   const handleAdd = useCallback(() => {
     void (async () => {
@@ -184,7 +178,10 @@ export default function UdoWorkspacePanel({
       }
 
       const insertIndex = udos.length;
-      onInsertUdos(imported.map((snapshot) => cloneUdoSnapshot(snapshot)), insertIndex);
+      onInsertUdos(
+        imported.map((snapshot) => cloneUdoSnapshot(snapshot)),
+        insertIndex,
+      );
       const nextSelection = imported.map((_unused, offset) => insertIndex + offset);
       setSelectedIndices(nextSelection);
       anchorIndexRef.current = nextSelection[0] ?? null;
@@ -192,17 +189,21 @@ export default function UdoWorkspacePanel({
     [onInsertUdos, udos.length],
   );
 
-  const handleCopySelection = useCallback((operation: 'copy' | 'cut') => {
-    const selectedIndex = selectedIndices.length === 1 ? selectedIndices[0] : undefined;
-    if (selectedIndex === undefined) return;
-    const node = projectNodes.find((candidate) => (
-      candidate.key?.scope === 'projectOwned'
-      && candidate.key.locator.kind === 'udo'
-      && candidate.key.locator.sessionObjectId
-        === getProjectUdoSessionObjectId(libraryDropTarget, selectedIndex)
-    ));
-    if (node) void captureClipboard(node, operation);
-  }, [captureClipboard, libraryDropTarget, projectNodes, selectedIndices]);
+  const handleCopySelection = useCallback(
+    (operation: 'copy' | 'cut') => {
+      const selectedIndex = selectedIndices.length === 1 ? selectedIndices[0] : undefined;
+      if (selectedIndex === undefined) return;
+      const node = projectNodes.find(
+        (candidate) =>
+          candidate.key?.scope === 'projectOwned' &&
+          candidate.key.locator.kind === 'udo' &&
+          candidate.key.locator.sessionObjectId ===
+            getProjectUdoSessionObjectId(libraryDropTarget, selectedIndex),
+      );
+      if (node) void captureClipboard(node, operation);
+    },
+    [captureClipboard, libraryDropTarget, projectNodes, selectedIndices],
+  );
 
   const handleRemoveSelection = useCallback(() => {
     if (selectedIndices.length === 0) {

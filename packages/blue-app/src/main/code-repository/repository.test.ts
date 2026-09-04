@@ -59,9 +59,9 @@ describe('CodeRepositoryRepository', () => {
       const snapshot = repo.createGroup(CODE_REPOSITORY_ROOT_ID, 'valid', 0);
       const groupId = snapshot.root.children?.[0].id!;
       expect(() => repo.updateNode(groupId, { name: '' }, 1)).toThrow(/empty-name/);
-      expect(() =>
-        repo.commitDraft(1, { ...snapshot.root, id: 'another-root' }),
-      ).toThrow(/root-id/);
+      expect(() => repo.commitDraft(1, { ...snapshot.root, id: 'another-root' })).toThrow(
+        /root-id/,
+      );
     } finally {
       repo.close();
     }
@@ -135,12 +135,7 @@ describe('CodeRepositoryRepository', () => {
     try {
       let repo = CodeRepositoryRepository.open(dir.databasePath);
       let snapshot = repo.createGroup(CODE_REPOSITORY_ROOT_ID, 'envelopes', 0);
-      snapshot = repo.createSnippet(
-        snapshot.root.children?.[0].id!,
-        'pan',
-        'aout pan2 a',
-        1,
-      );
+      snapshot = repo.createSnippet(snapshot.root.children?.[0].id!, 'pan', 'aout pan2 a', 1);
       const beforeRestart = snapshot.contentRevision;
       repo.close();
 
@@ -151,9 +146,9 @@ describe('CodeRepositoryRepository', () => {
       expect(afterRestart.root.children?.[0].children?.[0].code).toBe('aout pan2 a');
 
       // A stale expected revision is rejected with revision-conflict.
-      expect(() =>
-        repo.createGroup(CODE_REPOSITORY_ROOT_ID, 'stale', 0),
-      ).toThrow(/revision-conflict/);
+      expect(() => repo.createGroup(CODE_REPOSITORY_ROOT_ID, 'stale', 0)).toThrow(
+        /revision-conflict/,
+      );
       repo.close();
     } finally {
       dir.cleanup();

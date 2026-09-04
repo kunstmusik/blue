@@ -7,7 +7,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MarkerSnapshot } from '../../shared/project-editor';
 import MarkersBar from '../components/workbench/panels/score/MarkersBar';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 interface MockProjectState {
   applyProjectDocumentPatch: (patch: unknown) => void;
@@ -46,24 +48,27 @@ function renderMarkersBar(options?: {
     writable: true,
     configurable: true,
   });
-  scrollContainer.getBoundingClientRect = () => ({
-    x: options?.containerLeft ?? 0,
-    y: 0,
-    left: options?.containerLeft ?? 0,
-    top: 0,
-    right: options?.containerRight ?? 120,
-    bottom: 20,
-    width: (options?.containerRight ?? 120) - (options?.containerLeft ?? 0),
-    height: 20,
-    toJSON: () => ({}),
-  }) as DOMRect;
+  scrollContainer.getBoundingClientRect = () =>
+    ({
+      x: options?.containerLeft ?? 0,
+      y: 0,
+      left: options?.containerLeft ?? 0,
+      top: 0,
+      right: options?.containerRight ?? 120,
+      bottom: 20,
+      width: (options?.containerRight ?? 120) - (options?.containerLeft ?? 0),
+      height: 20,
+      toJSON: () => ({}),
+    }) as DOMRect;
 
   const root = createRoot(container);
 
   act(() => {
     root.render(
       <MarkersBar
-        markers={options?.markers ?? [{ name: 'Intro', time: 2, timeBase: 'BEATS', sourceIndex: 0 }]}
+        markers={
+          options?.markers ?? [{ name: 'Intro', time: 2, timeBase: 'BEATS', sourceIndex: 0 }]
+        }
         totalBeats={128}
         pixelsPerBeat={10}
         rowVisible
@@ -79,17 +84,18 @@ function renderMarkersBar(options?: {
   });
 
   const row = container.firstElementChild as HTMLDivElement;
-  row.getBoundingClientRect = () => ({
-    x: options?.rowLeft ?? 0,
-    y: 0,
-    left: options?.rowLeft ?? 0,
-    top: 0,
-    right: (options?.rowLeft ?? 0) + 120,
-    bottom: 20,
-    width: 120,
-    height: 20,
-    toJSON: () => ({}),
-  }) as DOMRect;
+  row.getBoundingClientRect = () =>
+    ({
+      x: options?.rowLeft ?? 0,
+      y: 0,
+      left: options?.rowLeft ?? 0,
+      top: 0,
+      right: (options?.rowLeft ?? 0) + 120,
+      bottom: 20,
+      width: 120,
+      height: 20,
+      toJSON: () => ({}),
+    }) as DOMRect;
 
   return { container, root, scrollContainer };
 }
@@ -105,25 +111,31 @@ afterEach(() => {
 describe('MarkersBar', () => {
   it('stops dragging after mouseup outside the bar and autoscrolls while dragging near the edge', () => {
     const { container, root, scrollContainer } = renderMarkersBar();
-    const label = Array.from(container.querySelectorAll('span')).find((node) => node.textContent === 'Intro');
+    const label = Array.from(container.querySelectorAll('span')).find(
+      (node) => node.textContent === 'Intro',
+    );
 
     expect(label).toBeTruthy();
 
     act(() => {
-      label!.dispatchEvent(new MouseEvent('mousedown', {
-        bubbles: true,
-        button: 0,
-        clientX: 24,
-        clientY: 10,
-      }));
+      label!.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          button: 0,
+          clientX: 24,
+          clientY: 10,
+        }),
+      );
     });
 
     act(() => {
-      window.dispatchEvent(new MouseEvent('mousemove', {
-        bubbles: true,
-        clientX: 160,
-        clientY: 10,
-      }));
+      window.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          clientX: 160,
+          clientY: 10,
+        }),
+      );
     });
 
     expect(scrollContainer.scrollLeft).toBeGreaterThan(0);
@@ -138,19 +150,23 @@ describe('MarkersBar', () => {
     const callCountAfterDrag = mockProjectState.applyProjectDocumentPatch.mock.calls.length;
 
     act(() => {
-      window.dispatchEvent(new MouseEvent('mouseup', {
-        bubbles: true,
-        clientX: 160,
-        clientY: 10,
-      }));
+      window.dispatchEvent(
+        new MouseEvent('mouseup', {
+          bubbles: true,
+          clientX: 160,
+          clientY: 10,
+        }),
+      );
     });
 
     act(() => {
-      window.dispatchEvent(new MouseEvent('mousemove', {
-        bubbles: true,
-        clientX: 80,
-        clientY: 10,
-      }));
+      window.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          clientX: 80,
+          clientY: 10,
+        }),
+      );
     });
 
     expect(mockProjectState.applyProjectDocumentPatch).toHaveBeenCalledTimes(callCountAfterDrag);
@@ -169,12 +185,14 @@ describe('MarkersBar', () => {
     const row = container.firstElementChild as HTMLDivElement;
 
     act(() => {
-      row.dispatchEvent(new MouseEvent('mousedown', {
-        bubbles: true,
-        button: 0,
-        clientX: 60,
-        clientY: 10,
-      }));
+      row.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          button: 0,
+          clientX: 60,
+          clientY: 10,
+        }),
+      );
     });
 
     expect(mockProjectState.applyProjectDocumentPatch).toHaveBeenLastCalledWith({
@@ -193,25 +211,31 @@ describe('MarkersBar', () => {
       tempo: 120,
       containerRight: 300,
     });
-    const label = Array.from(container.querySelectorAll('span')).find((node) => node.textContent === 'Intro');
+    const label = Array.from(container.querySelectorAll('span')).find(
+      (node) => node.textContent === 'Intro',
+    );
 
     expect(label).toBeTruthy();
 
     act(() => {
-      label!.dispatchEvent(new MouseEvent('mousedown', {
-        bubbles: true,
-        button: 0,
-        clientX: 24,
-        clientY: 10,
-      }));
+      label!.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          button: 0,
+          clientX: 24,
+          clientY: 10,
+        }),
+      );
     });
 
     act(() => {
-      window.dispatchEvent(new MouseEvent('mousemove', {
-        bubbles: true,
-        clientX: 39,
-        clientY: 10,
-      }));
+      window.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          clientX: 39,
+          clientY: 10,
+        }),
+      );
     });
 
     expect(mockProjectState.applyProjectDocumentPatch).toHaveBeenLastCalledWith({
@@ -233,25 +257,31 @@ describe('MarkersBar', () => {
       snapValue: 'BEAT',
       containerRight: 300,
     });
-    const label = Array.from(container.querySelectorAll('span')).find((node) => node.textContent === 'Intro');
+    const label = Array.from(container.querySelectorAll('span')).find(
+      (node) => node.textContent === 'Intro',
+    );
 
     expect(label).toBeTruthy();
 
     act(() => {
-      label!.dispatchEvent(new MouseEvent('mousedown', {
-        bubbles: true,
-        button: 0,
-        clientX: 35,
-        clientY: 10,
-      }));
+      label!.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          button: 0,
+          clientX: 35,
+          clientY: 10,
+        }),
+      );
     });
 
     act(() => {
-      window.dispatchEvent(new MouseEvent('mousemove', {
-        bubbles: true,
-        clientX: 46,
-        clientY: 10,
-      }));
+      window.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          clientX: 46,
+          clientY: 10,
+        }),
+      );
     });
 
     expect(mockProjectState.applyProjectDocumentPatch).toHaveBeenLastCalledWith({

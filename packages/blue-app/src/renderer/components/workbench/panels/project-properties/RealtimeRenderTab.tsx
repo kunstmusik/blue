@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  CheckboxBase,
-  FieldRow,
-  InputBase,
-  TextAreaBase,
-} from './ProjectPropertyFields';
+import { CheckboxBase, FieldRow, InputBase, TextAreaBase } from './ProjectPropertyFields';
 import type { ProjectPropertiesTabProps } from './types';
 
 export default function RealtimeRenderTab({
@@ -68,36 +63,28 @@ export default function RealtimeRenderTab({
         <CheckboxBase
           disabled={disabled}
           checked={properties.noteAmpsEnabled}
-          onChange={(noteAmpsEnabled) =>
-            updateProjectProperties({ noteAmpsEnabled })
-          }
+          onChange={(noteAmpsEnabled) => updateProjectProperties({ noteAmpsEnabled })}
         />
       </FieldRow>
       <FieldRow label="Out Of Range">
         <CheckboxBase
           disabled={disabled}
           checked={properties.outOfRangeEnabled}
-          onChange={(outOfRangeEnabled) =>
-            updateProjectProperties({ outOfRangeEnabled })
-          }
+          onChange={(outOfRangeEnabled) => updateProjectProperties({ outOfRangeEnabled })}
         />
       </FieldRow>
       <FieldRow label="Warnings">
         <CheckboxBase
           disabled={disabled}
           checked={properties.warningsEnabled}
-          onChange={(warningsEnabled) =>
-            updateProjectProperties({ warningsEnabled })
-          }
+          onChange={(warningsEnabled) => updateProjectProperties({ warningsEnabled })}
         />
       </FieldRow>
       <FieldRow label="Benchmark">
         <CheckboxBase
           disabled={disabled}
           checked={properties.benchmarkEnabled}
-          onChange={(benchmarkEnabled) =>
-            updateProjectProperties({ benchmarkEnabled })
-          }
+          onChange={(benchmarkEnabled) => updateProjectProperties({ benchmarkEnabled })}
         />
       </FieldRow>
       <div className="h-px bg-blue-border/70" />
@@ -119,9 +106,7 @@ export default function RealtimeRenderTab({
         <TextAreaBase
           disabled={disabled}
           value={properties.advancedSettings}
-          onChange={(advancedSettings) =>
-            updateProjectProperties({ advancedSettings })
-          }
+          onChange={(advancedSettings) => updateProjectProperties({ advancedSettings })}
           placeholder="Csound command line flags"
         />
       </FieldRow>
@@ -129,9 +114,7 @@ export default function RealtimeRenderTab({
         <CheckboxBase
           disabled={disabled}
           checked={properties.completeOverride}
-          onChange={(completeOverride) =>
-            updateProjectProperties({ completeOverride })
-          }
+          onChange={(completeOverride) => updateProjectProperties({ completeOverride })}
         />
       </FieldRow>
     </div>

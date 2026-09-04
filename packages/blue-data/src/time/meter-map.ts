@@ -52,7 +52,7 @@ export class MeterMap {
   /** Add a new meter entry at the given measure. */
   add(entry: MeasureMeterPair): void {
     // Remove existing entry at same measure
-    this.entries = this.entries.filter(e => e.measure !== entry.measure);
+    this.entries = this.entries.filter((e) => e.measure !== entry.measure);
     this.entries.push(entry);
     this.entries.sort((a, b) => a.measure - b.measure);
     this.updateMeasureStartBeats();
@@ -75,7 +75,9 @@ export class MeterMap {
 
   /** Replace all entries from a source MeterMap. */
   replaceAll(source: MeterMap): void {
-    this.entries = source.entries.map(e => new MeasureMeterPair(e.measure, new Meter(e.meter.numBeats, e.meter.beatLength)));
+    this.entries = source.entries.map(
+      (e) => new MeasureMeterPair(e.measure, new Meter(e.meter.numBeats, e.meter.beatLength)),
+    );
     this.updateMeasureStartBeats();
     this.fireListeners();
   }
@@ -153,7 +155,10 @@ export class MeterMap {
    * Convert absolute beats to a BBT position {bar, beat, ticks}.
    * Ticks are in the range [0, ppq).
    */
-  beatsToBBT(beats: number, ppq: number = DEFAULT_PPQ): { bar: number; beat: number; ticks: number } {
+  beatsToBBT(
+    beats: number,
+    ppq: number = DEFAULT_PPQ,
+  ): { bar: number; beat: number; ticks: number } {
     if (this.entries.length === 0) {
       throw new Error('MeterMap is empty');
     }
@@ -183,7 +188,7 @@ export class MeterMap {
     // beat is 1-based, compute fractional part as ticks
     const fullBeats = Math.floor(remainingBeats / beatScale);
     const fractionalBeat = remainingBeats - fullBeats * beatScale;
-    let ticks = Math.round(fractionalBeat * ppq / beatScale);
+    let ticks = Math.round((fractionalBeat * ppq) / beatScale);
 
     let bar = entry.measure + measuresFromEntry;
     let beat = fullBeats + 1;
@@ -204,7 +209,10 @@ export class MeterMap {
    * Convert absolute beats to a BBST position.
    * Returns {bar, beat, sixteenth, ticks} where beat is 1-based, sixteenth is 1-4.
    */
-  beatsToBBST(beats: number, ppq: number = DEFAULT_PPQ): { bar: number; beat: number; sixteenth: number; ticks: number } {
+  beatsToBBST(
+    beats: number,
+    ppq: number = DEFAULT_PPQ,
+  ): { bar: number; beat: number; sixteenth: number; ticks: number } {
     const bbt = this.beatsToBBT(beats, ppq);
     const sixteenthTicks = ppq / 4;
     const sixteenth = Math.floor(bbt.ticks / sixteenthTicks) + 1;
@@ -243,7 +251,7 @@ export class MeterMap {
     const measuresFromEntry = Math.floor(beatsFromEntry / beatsPerMeasure);
     const remainingBeats = beatsFromEntry - measuresFromEntry * beatsPerMeasure;
 
-    const beatWithFraction = 1 + (remainingBeats / beatScale);
+    const beatWithFraction = 1 + remainingBeats / beatScale;
     let beat = Math.floor(beatWithFraction);
     let fraction = Math.round((beatWithFraction - beat) * 100);
     let bar = entry.measure + measuresFromEntry;

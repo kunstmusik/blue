@@ -1,9 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import {
-  removeLegacyWelcomePanel,
-  reportOwnership,
-  selectWorkbenchLayout,
-} from './WorkbenchShell';
+import { removeLegacyWelcomePanel, reportOwnership, selectWorkbenchLayout } from './WorkbenchShell';
 
 function createMockGroup(
   id: string,
@@ -63,9 +59,7 @@ describe('reportOwnership', () => {
   });
 
   it('uses the stored windowId when provided', () => {
-    const api = createMockApi([
-      createMockGroup('g1', ['panel-a'], 'panel-a'),
-    ]);
+    const api = createMockApi([createMockGroup('g1', ['panel-a'], 'panel-a')]);
 
     reportOwnership(api, 'wbw-1');
 
@@ -124,9 +118,7 @@ describe('reportOwnership', () => {
 
   it('is silent when blueAPI is absent', () => {
     vi.stubGlobal('window', {});
-    const api = createMockApi([
-      createMockGroup('g1', ['p1'], 'p1'),
-    ]);
+    const api = createMockApi([createMockGroup('g1', ['p1'], 'p1')]);
 
     expect(() => reportOwnership(api)).not.toThrow();
     expect(updateWorkbenchOwnership).not.toHaveBeenCalled();
@@ -136,9 +128,7 @@ describe('reportOwnership', () => {
     updateWorkbenchOwnership.mockImplementation(() => {
       throw new Error('IPC failure');
     });
-    const api = createMockApi([
-      createMockGroup('g1', ['p1'], 'p1'),
-    ]);
+    const api = createMockApi([createMockGroup('g1', ['p1'], 'p1')]);
 
     expect(() => reportOwnership(api)).not.toThrow();
   });
@@ -146,12 +136,9 @@ describe('reportOwnership', () => {
 
 describe('selectWorkbenchLayout', () => {
   it('prefers the canonical app-wide layout', () => {
-    expect(
-      selectWorkbenchLayout(
-        { workbench: { serializedLayout: 'canonical' } },
-        'legacy',
-      ),
-    ).toBe('canonical');
+    expect(selectWorkbenchLayout({ workbench: { serializedLayout: 'canonical' } }, 'legacy')).toBe(
+      'canonical',
+    );
   });
 
   it('does not restore legacy layout after Reset Windows', () => {

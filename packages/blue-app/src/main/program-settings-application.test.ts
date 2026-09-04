@@ -11,7 +11,10 @@ import {
   clearSettingsCache,
   setSettingsFilePathForTesting,
 } from './program-settings-store';
-import { createDefaultProgramSettings, type ProgramSettingsSnapshot } from '../shared/program-settings';
+import {
+  createDefaultProgramSettings,
+  type ProgramSettingsSnapshot,
+} from '../shared/program-settings';
 
 describe('program-settings-application', () => {
   function makeSettings(overrides?: Partial<ProgramSettingsSnapshot>): ProgramSettingsSnapshot {

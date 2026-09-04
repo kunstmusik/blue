@@ -118,9 +118,7 @@ describe('JavaScriptObject', () => {
     first.setJavaScriptCode('globalThis.sharedSeed = 41; score = "";');
 
     const second = new JavaScriptObject();
-    second.setJavaScriptCode(
-      'score = "i1 0 1 " + (globalThis.sharedSeed + 1);',
-    );
+    second.setJavaScriptCode('score = "i1 0 1 " + (globalThis.sharedSeed + 1);');
 
     const context = new TimeContext();
     const compileData = new CompileData();
@@ -143,9 +141,9 @@ describe('JavaScriptObject', () => {
     const compileData = new CompileData();
 
     try {
-      expect(() =>
-        obj.generateForCSD(new TimeContext(), compileData, 0, -1),
-      ).toThrow('JavaScript execution error: boom');
+      expect(() => obj.generateForCSD(new TimeContext(), compileData, 0, -1)).toThrow(
+        'JavaScript execution error: boom',
+      );
     } finally {
       disposeJavaScriptCompileState(compileData);
     }

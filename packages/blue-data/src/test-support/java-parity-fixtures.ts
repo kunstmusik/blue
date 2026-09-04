@@ -7,8 +7,8 @@
  * maintain a separate expected-result table.
  */
 
-import fs from "node:fs";
-import path from "node:path";
+import fs from 'node:fs';
+import path from 'node:path';
 
 export interface JavaParityManifest {
   schemaVersion: number;
@@ -30,9 +30,9 @@ export interface JavaParityManifest {
   };
 }
 
-export type FixtureOrigin = "curated" | "seeded";
+export type FixtureOrigin = 'curated' | 'seeded';
 
-export type ExpectedKind = "bits" | "exception";
+export type ExpectedKind = 'bits' | 'exception';
 
 export interface RealtimeFixtureCase {
   caseId: string;
@@ -49,11 +49,7 @@ export interface RealtimeFixtureCase {
   sampleNumber: number | null;
 }
 
-export type ResolutionOperation =
-  | "parse"
-  | "legacy-normalize"
-  | "parameter-load-save"
-  | "snap";
+export type ResolutionOperation = 'parse' | 'legacy-normalize' | 'parameter-load-save' | 'snap';
 
 export interface ResolutionFixtureCase {
   caseId: string;
@@ -97,25 +93,25 @@ export interface OfflineFixtureCase {
 }
 
 function resolveCorpusDirectory(): string {
-  const relativeCorpusPath = path.join("fixtures", "java-blue-automation-parity", "v1");
+  const relativeCorpusPath = path.join('fixtures', 'java-blue-automation-parity', 'v1');
   const candidates = [
     path.resolve(process.cwd(), relativeCorpusPath),
-    path.resolve(process.cwd(), "..", "..", relativeCorpusPath),
-    ...(typeof __dirname === "string"
+    path.resolve(process.cwd(), '..', '..', relativeCorpusPath),
+    ...(typeof __dirname === 'string'
       ? [
-          path.resolve(__dirname, "..", "..", "..", "..", relativeCorpusPath),
-          path.resolve(__dirname, "..", "..", "..", "..", "..", relativeCorpusPath),
+          path.resolve(__dirname, '..', '..', '..', '..', relativeCorpusPath),
+          path.resolve(__dirname, '..', '..', '..', '..', '..', relativeCorpusPath),
         ]
       : []),
   ];
 
   for (const candidate of candidates) {
-    if (fs.existsSync(path.join(candidate, "manifest.json"))) {
+    if (fs.existsSync(path.join(candidate, 'manifest.json'))) {
       return candidate;
     }
   }
 
-  throw new Error(`Java automation parity corpus not found; searched: ${candidates.join(", ")}`);
+  throw new Error(`Java automation parity corpus not found; searched: ${candidates.join(', ')}`);
 }
 
 const CORPUS_DIR = resolveCorpusDirectory();
@@ -134,23 +130,25 @@ export function bitsToDouble(hex: string): number {
 /** Encodes a double as 16 lowercase hexadecimal raw bits. */
 export function doubleToBits(value: number): string {
   bitsView.setFloat64(0, value);
-  return bitsView.getBigUint64(0).toString(16).padStart(16, "0");
+  return bitsView.getBigUint64(0).toString(16).padStart(16, '0');
 }
 
 export function parseTsvText(name: string, text: string): string[][] {
   if (text.charCodeAt(0) === 0xfeff) {
     throw new Error(`${name} must not contain a BOM`);
   }
-  const lines = text.replace(/\r\n?/g, "\n").split("\n");
-  if (lines[lines.length - 1] !== "") {
+  const lines = text.replace(/\r\n?/g, '\n').split('\n');
+  if (lines[lines.length - 1] !== '') {
     throw new Error(`${name} must end with a newline`);
   }
-  const header = lines[0].split("\t");
+  const header = lines[0].split('\t');
   const rows: string[][] = [];
   for (let i = 1; i < lines.length - 1; i++) {
-    const fields = lines[i].split("\t");
+    const fields = lines[i].split('\t');
     if (fields.length !== header.length) {
-      throw new Error(`${name} line ${i + 1}: expected ${header.length} fields, found ${fields.length}`);
+      throw new Error(
+        `${name} line ${i + 1}: expected ${header.length} fields, found ${fields.length}`,
+      );
     }
     rows.push(fields);
   }
@@ -159,7 +157,7 @@ export function parseTsvText(name: string, text: string): string[][] {
 
 function readTsv(name: string): string[][] {
   const filePath = path.join(CORPUS_DIR, name);
-  const text = fs.readFileSync(filePath, "utf8");
+  const text = fs.readFileSync(filePath, 'utf8');
   return parseTsvText(name, text);
 }
 
@@ -168,50 +166,56 @@ function indexMap(header: string[]): Map<string, number> {
 }
 
 function parsePointsBits(pointsBits: string): Array<{ time: number; value: number }> {
-  if (pointsBits === "") return [];
-  return pointsBits.split(";").map((entry) => {
-    const [timeBits, valueBits] = entry.split(":");
+  if (pointsBits === '') return [];
+  return pointsBits.split(';').map((entry) => {
+    const [timeBits, valueBits] = entry.split(':');
     return { time: bitsToDouble(timeBits), value: bitsToDouble(valueBits) };
   });
 }
 
 function decodeBase64(text: string): string {
-  return Buffer.from(text, "base64").toString("utf8");
+  return Buffer.from(text, 'base64').toString('utf8');
 }
 
 export function loadJavaParityManifest(): JavaParityManifest {
-  const manifestPath = path.join(CORPUS_DIR, "manifest.json");
-  return JSON.parse(fs.readFileSync(manifestPath, "utf8")) as JavaParityManifest;
+  const manifestPath = path.join(CORPUS_DIR, 'manifest.json');
+  return JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as JavaParityManifest;
 }
 
 export function loadRealtimeFixtureCases(): RealtimeFixtureCase[] {
-  const rows = readTsv("realtime.tsv");
+  const rows = readTsv('realtime.tsv');
   const columns = indexMap(
-    "caseId,origin,category,resolutionText,curve,pointsBits,evaluationTimeBits,expectedKind,expectedBits,expectedCategory,sampleRateBits,sampleNumberBits".split(
-      ",",
+    'caseId,origin,category,resolutionText,curve,pointsBits,evaluationTimeBits,expectedKind,expectedBits,expectedCategory,sampleRateBits,sampleNumberBits'.split(
+      ',',
     ),
   );
   return rows.map((fields) => ({
-    caseId: fields[columns.get("caseId")!],
-    origin: fields[columns.get("origin")!] as FixtureOrigin,
-    category: fields[columns.get("category")!],
-    resolutionText: fields[columns.get("resolutionText")!],
-    curve: fields[columns.get("curve")!],
-    points: parsePointsBits(fields[columns.get("pointsBits")!]),
-    evaluationTime: bitsToDouble(fields[columns.get("evaluationTimeBits")!]),
-    expectedKind: fields[columns.get("expectedKind")!] as ExpectedKind,
-    expectedBits: fields[columns.get("expectedBits")!],
-    expectedCategory: fields[columns.get("expectedCategory")!],
-    sampleRate: fields[columns.get("sampleRateBits")!] === "" ? null : bitsToDouble(fields[columns.get("sampleRateBits")!]),
-    sampleNumber: fields[columns.get("sampleNumberBits")!] === "" ? null : bitsToDouble(fields[columns.get("sampleNumberBits")!]),
+    caseId: fields[columns.get('caseId')!],
+    origin: fields[columns.get('origin')!] as FixtureOrigin,
+    category: fields[columns.get('category')!],
+    resolutionText: fields[columns.get('resolutionText')!],
+    curve: fields[columns.get('curve')!],
+    points: parsePointsBits(fields[columns.get('pointsBits')!]),
+    evaluationTime: bitsToDouble(fields[columns.get('evaluationTimeBits')!]),
+    expectedKind: fields[columns.get('expectedKind')!] as ExpectedKind,
+    expectedBits: fields[columns.get('expectedBits')!],
+    expectedCategory: fields[columns.get('expectedCategory')!],
+    sampleRate:
+      fields[columns.get('sampleRateBits')!] === ''
+        ? null
+        : bitsToDouble(fields[columns.get('sampleRateBits')!]),
+    sampleNumber:
+      fields[columns.get('sampleNumberBits')!] === ''
+        ? null
+        : bitsToDouble(fields[columns.get('sampleNumberBits')!]),
   }));
 }
 
 export function loadResolutionFixtureCases(): ResolutionFixtureCase[] {
-  const rows = readTsv("resolution.tsv");
+  const rows = readTsv('resolution.tsv');
   const header =
-    "caseId,origin,category,operation,parameterBdText,parameterLegacyText,lineBdText,lineLegacyText,snapValueBits,snapMinBits,snapMaxBits,expectedCoefficient,expectedScale,expectedCanonicalText,expectedDoubleBits,expectedActivation,expectedParameterSaveBase64,expectedLineSaveBase64,expectedSnapBits,expectedLinePointsBits,expectedKind,expectedCategory".split(
-      ",",
+    'caseId,origin,category,operation,parameterBdText,parameterLegacyText,lineBdText,lineLegacyText,snapValueBits,snapMinBits,snapMaxBits,expectedCoefficient,expectedScale,expectedCanonicalText,expectedDoubleBits,expectedActivation,expectedParameterSaveBase64,expectedLineSaveBase64,expectedSnapBits,expectedLinePointsBits,expectedKind,expectedCategory'.split(
+      ',',
     );
   const columns = indexMap(header);
   return rows.map((row) => {
@@ -222,40 +226,48 @@ export function loadResolutionFixtureCases(): ResolutionFixtureCase[] {
     };
     const optBits = (name: string): number | null => {
       const text = get(name);
-      return text === "" ? null : bitsToDouble(text);
+      return text === '' ? null : bitsToDouble(text);
     };
     return {
-      caseId: get("caseId"),
-      origin: get("origin") as FixtureOrigin,
-      category: get("category"),
-      operation: get("operation") as ResolutionOperation,
-      parameterBdText: get("parameterBdText"),
-      parameterLegacyText: get("parameterLegacyText"),
-      lineBdText: get("lineBdText"),
-      lineLegacyText: get("lineLegacyText"),
-      snapValue: optBits("snapValueBits"),
-      snapMin: optBits("snapMinBits"),
-      snapMax: optBits("snapMaxBits"),
-      expectedCoefficient: get("expectedCoefficient"),
-      expectedScale: get("expectedScale") === "" ? null : Number(get("expectedScale")),
-      expectedCanonicalText: get("expectedCanonicalText"),
-      expectedDouble: optBits("expectedDoubleBits"),
-      expectedActivation: get("expectedActivation") === "" ? null : get("expectedActivation") === "1",
-      expectedParameterSave: get("expectedParameterSaveBase64") === "" ? null : decodeBase64(get("expectedParameterSaveBase64")),
-      expectedLineSave: get("expectedLineSaveBase64") === "" ? null : decodeBase64(get("expectedLineSaveBase64")),
-      expectedSnap: optBits("expectedSnapBits"),
-      expectedLinePoints: get("expectedLinePointsBits") === "" ? null : parsePointsBits(get("expectedLinePointsBits")),
-      expectedKind: get("expectedKind") as ExpectedKind,
-      expectedCategory: get("expectedCategory"),
+      caseId: get('caseId'),
+      origin: get('origin') as FixtureOrigin,
+      category: get('category'),
+      operation: get('operation') as ResolutionOperation,
+      parameterBdText: get('parameterBdText'),
+      parameterLegacyText: get('parameterLegacyText'),
+      lineBdText: get('lineBdText'),
+      lineLegacyText: get('lineLegacyText'),
+      snapValue: optBits('snapValueBits'),
+      snapMin: optBits('snapMinBits'),
+      snapMax: optBits('snapMaxBits'),
+      expectedCoefficient: get('expectedCoefficient'),
+      expectedScale: get('expectedScale') === '' ? null : Number(get('expectedScale')),
+      expectedCanonicalText: get('expectedCanonicalText'),
+      expectedDouble: optBits('expectedDoubleBits'),
+      expectedActivation:
+        get('expectedActivation') === '' ? null : get('expectedActivation') === '1',
+      expectedParameterSave:
+        get('expectedParameterSaveBase64') === ''
+          ? null
+          : decodeBase64(get('expectedParameterSaveBase64')),
+      expectedLineSave:
+        get('expectedLineSaveBase64') === '' ? null : decodeBase64(get('expectedLineSaveBase64')),
+      expectedSnap: optBits('expectedSnapBits'),
+      expectedLinePoints:
+        get('expectedLinePointsBits') === ''
+          ? null
+          : parsePointsBits(get('expectedLinePointsBits')),
+      expectedKind: get('expectedKind') as ExpectedKind,
+      expectedCategory: get('expectedCategory'),
     };
   });
 }
 
 export function loadOfflineFixtureCases(): OfflineFixtureCase[] {
-  const rows = readTsv("offline.tsv");
+  const rows = readTsv('offline.tsv');
   const header =
-    "caseId,origin,category,resolutionText,pointsBits,renderStartBits,renderEndBits,instrumentId,expectedInitialBits,expectedInitializationBase64,expectedScoreBase64,expectedKind,expectedCategory".split(
-      ",",
+    'caseId,origin,category,resolutionText,pointsBits,renderStartBits,renderEndBits,instrumentId,expectedInitialBits,expectedInitializationBase64,expectedScoreBase64,expectedKind,expectedCategory'.split(
+      ',',
     );
   const columns = indexMap(header);
   return rows.map((row) => {
@@ -265,19 +277,19 @@ export function loadOfflineFixtureCases(): OfflineFixtureCase[] {
       return row[index];
     };
     return {
-      caseId: get("caseId"),
-      origin: get("origin") as FixtureOrigin,
-      category: get("category"),
-      resolutionText: get("resolutionText"),
-      points: parsePointsBits(get("pointsBits")),
-      renderStart: bitsToDouble(get("renderStartBits")),
-      renderEnd: bitsToDouble(get("renderEndBits")),
-      instrumentId: Number(get("instrumentId")),
-      expectedInitialBits: get("expectedInitialBits"),
-      expectedInitialization: decodeBase64(get("expectedInitializationBase64")),
-      expectedScore: decodeBase64(get("expectedScoreBase64")),
-      expectedKind: get("expectedKind") as ExpectedKind,
-      expectedCategory: get("expectedCategory"),
+      caseId: get('caseId'),
+      origin: get('origin') as FixtureOrigin,
+      category: get('category'),
+      resolutionText: get('resolutionText'),
+      points: parsePointsBits(get('pointsBits')),
+      renderStart: bitsToDouble(get('renderStartBits')),
+      renderEnd: bitsToDouble(get('renderEndBits')),
+      instrumentId: Number(get('instrumentId')),
+      expectedInitialBits: get('expectedInitialBits'),
+      expectedInitialization: decodeBase64(get('expectedInitializationBase64')),
+      expectedScore: decodeBase64(get('expectedScoreBase64')),
+      expectedKind: get('expectedKind') as ExpectedKind,
+      expectedCategory: get('expectedCategory'),
     };
   });
 }
@@ -298,13 +310,16 @@ export function assertManifestInvariants(
   if (manifest.schemaVersion !== 1) {
     throw new Error(`unsupported fixture schema version: ${manifest.schemaVersion}`);
   }
-  if (manifest.seed.algorithm !== "SplitMix64") {
+  if (manifest.seed.algorithm !== 'SplitMix64') {
     throw new Error(`unexpected seed algorithm: ${manifest.seed.algorithm}`);
   }
   const categoryCounts = new Map<string, number>();
   const originCounts = new Map<string, number>();
   let total = 0;
-  const tally = (cases: Array<{ caseId: string; origin: string; category: string }>, section: string) => {
+  const tally = (
+    cases: Array<{ caseId: string; origin: string; category: string }>,
+    section: string,
+  ) => {
     if (manifest.counts.bySection[section] !== cases.length) {
       throw new Error(
         `section count mismatch for ${section}: manifest ${manifest.counts.bySection[section]}, actual ${cases.length}`,
@@ -316,9 +331,9 @@ export function assertManifestInvariants(
       originCounts.set(fixtureCase.origin, (originCounts.get(fixtureCase.origin) ?? 0) + 1);
     }
   };
-  if (sections.realtime) tally(sections.realtime, "realtime");
-  if (sections.resolution) tally(sections.resolution, "resolution");
-  if (sections.offline) tally(sections.offline, "offline");
+  if (sections.realtime) tally(sections.realtime, 'realtime');
+  if (sections.resolution) tally(sections.resolution, 'resolution');
+  if (sections.offline) tally(sections.offline, 'offline');
   if (total !== manifest.counts.total) {
     throw new Error(`total count mismatch: manifest ${manifest.counts.total}, actual ${total}`);
   }

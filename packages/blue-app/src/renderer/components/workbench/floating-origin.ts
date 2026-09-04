@@ -39,26 +39,18 @@ export interface CaptureDockingOriginInput {
  * {@link DockingOrigin} (required fields are `originMode`, `presentation`, and a
  * non-empty `originPanelOrder`).
  */
-export function captureDockingOrigin(
-  input: CaptureDockingOriginInput,
-): DockingOrigin {
+export function captureDockingOrigin(input: CaptureDockingOriginInput): DockingOrigin {
   const origin: DockingOrigin = {
     originMode: input.mode,
     presentation: input.presentation,
     originPanelOrder: [...input.panelIds],
     ...(input.groupId !== undefined ? { originGroupId: input.groupId } : {}),
-    ...(input.activePanelId !== undefined
-      ? { originActivePanelId: input.activePanelId }
-      : {}),
-    ...(input.originIndex !== undefined
-      ? { originIndex: input.originIndex }
-      : {}),
+    ...(input.activePanelId !== undefined ? { originActivePanelId: input.activePanelId } : {}),
+    ...(input.originIndex !== undefined ? { originIndex: input.originIndex } : {}),
     ...(input.restoreReferenceGroupId !== undefined
       ? { restoreReferenceGroupId: input.restoreReferenceGroupId }
       : {}),
-    ...(input.restoreDirection !== undefined
-      ? { restoreDirection: input.restoreDirection }
-      : {}),
+    ...(input.restoreDirection !== undefined ? { restoreDirection: input.restoreDirection } : {}),
     ...(input.auxiliarySeedGroupId !== undefined
       ? { auxiliarySeedGroupId: input.auxiliarySeedGroupId }
       : {}),
@@ -67,9 +59,7 @@ export function captureDockingOrigin(
       : {}),
     ...(input.edge !== undefined ? { edge: input.edge } : {}),
     ...(input.dockedSize !== undefined ? { dockedSize: input.dockedSize } : {}),
-    ...(input.slideoutSize !== undefined
-      ? { slideoutSize: input.slideoutSize }
-      : {}),
+    ...(input.slideoutSize !== undefined ? { slideoutSize: input.slideoutSize } : {}),
     ...(input.capturedAt !== undefined ? { capturedAt: input.capturedAt } : {}),
   };
   return origin;
@@ -125,12 +115,9 @@ export function resolveDockTarget(
   knownPanelIds: ReadonlySet<string>,
 ): DockTargetResolution {
   const rawOrigin = origins[popoutGroupId];
-  const origin =
-    rawOrigin && isValidDockingOrigin(rawOrigin) ? rawOrigin : undefined;
+  const origin = rawOrigin && isValidDockingOrigin(rawOrigin) ? rawOrigin : undefined;
   const fallbackMode: WorkbenchPanelMode = origin?.originMode ?? 'editor';
-  const validPanelIds = origin
-    ? origin.originPanelOrder.filter((id) => knownPanelIds.has(id))
-    : [];
+  const validPanelIds = origin ? origin.originPanelOrder.filter((id) => knownPanelIds.has(id)) : [];
   return { popoutGroupId, origin, fallbackMode, validPanelIds };
 }
 
@@ -147,8 +134,7 @@ export function clampPopoutBounds<T extends Record<string, unknown>>(
   workAreas: readonly WorkAreaRect[],
 ): T {
   if (!dockviewJson || typeof dockviewJson !== 'object') return dockviewJson;
-  const popoutGroups = (dockviewJson as { popoutGroups?: unknown })
-    .popoutGroups;
+  const popoutGroups = (dockviewJson as { popoutGroups?: unknown }).popoutGroups;
   if (!Array.isArray(popoutGroups)) return dockviewJson;
 
   const correctedGroups = popoutGroups.map((entry) => {

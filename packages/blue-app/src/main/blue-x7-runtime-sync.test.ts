@@ -65,9 +65,14 @@ function createEnvironment(options: {
         const ia = data
           .getArrangement()
           .getArrangement()
-          .find((entry) => entry.arrangementId === target.assignmentId && entry.enabled && entry.instr);
+          .find(
+            (entry) => entry.arrangementId === target.assignmentId && entry.enabled && entry.instr,
+          );
         if (!ia || !(ia.instr instanceof BlueX7)) return null;
-        return { ownerIdentity: `arrangement:${target.assignmentId}`, getParameters: () => instrParameters(ia.instr) };
+        return {
+          ownerIdentity: `arrangement:${target.assignmentId}`,
+          getParameters: () => instrParameters(ia.instr),
+        };
       }
       const group = data
         .getScore()
@@ -117,10 +122,14 @@ function liveParameterId(fixtureData: BlueData, semanticKey: string, assignmentI
     .getArrangement()
     .getArrangement()
     .find((entry) => entry.arrangementId === assignmentId)!;
-  return instrParameters(ia.instr).find((parameter) => parameter.getName() === semanticKey)!.getUniqueId();
+  return instrParameters(ia.instr)
+    .find((parameter) => parameter.getName() === semanticKey)!
+    .getUniqueId();
 }
 
-function liveUpdate(overrides: Partial<BlueX7RealtimeControlUpdate> & { target: BlueX7RuntimeTarget }): BlueX7RealtimeControlUpdate {
+function liveUpdate(
+  overrides: Partial<BlueX7RealtimeControlUpdate> & { target: BlueX7RuntimeTarget },
+): BlueX7RealtimeControlUpdate {
   return {
     projectSessionId: 7,
     parameterId: 'param-unused',
@@ -136,21 +145,26 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
   const bindings = fixture.bindings;
 
   it('invalidates delete/disable/replacement owners without disturbing peers and replaces on rebuild', () => {
-    const fourOwner = compileBlueX7ProjectFixtures({ arrangementInstruments: 2, trackInstruments: 2 });
+    const fourOwner = compileBlueX7ProjectFixtures({
+      arrangementInstruments: 2,
+      trackInstruments: 2,
+    });
     setActiveBlueX7Bindings([...fourOwner.bindings.values()]);
     invalidateActiveBlueX7Binding('arrangement:1');
     expect(getActiveBlueX7Binding('arrangement:1')).toBeUndefined();
     expect(getActiveBlueX7Binding('arrangement:2')).toBeDefined();
-    expect(getActiveBlueX7Binding(
-      `track:${fourOwner.rootGroupIds[0]}:${fourOwner.trackIds[0]}`,
-    )).toBeDefined();
+    expect(
+      getActiveBlueX7Binding(`track:${fourOwner.rootGroupIds[0]}:${fourOwner.trackIds[0]}`),
+    ).toBeDefined();
 
     setActiveBlueX7Bindings([...fourOwner.bindings.values()]);
     expect(getActiveBlueX7Binding('arrangement:1')).toBeDefined();
     clearActiveBlueX7Bindings();
-    expect([...fourOwner.bindings.keys()].every(
-      (ownerIdentity) => getActiveBlueX7Binding(ownerIdentity) === undefined,
-    )).toBe(true);
+    expect(
+      [...fourOwner.bindings.keys()].every(
+        (ownerIdentity) => getActiveBlueX7Binding(ownerIdentity) === undefined,
+      ),
+    ).toBe(true);
   });
 
   it('resolves arrangement and Track owners by identity even with duplicate names', () => {
@@ -166,7 +180,10 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
     const env = createEnvironment({ data, bindings, sessionId: 7 });
     const plan = planBlueX7LiveWrite(
       env,
-      liveUpdate({ target: assignmentTarget('1'), parameterId: liveParameterId(data, 'common.feedback') }),
+      liveUpdate({
+        target: assignmentTarget('1'),
+        parameterId: liveParameterId(data, 'common.feedback'),
+      }),
     );
     expect(plan.status).toBe('ok');
     if (plan.status !== 'ok') return;
@@ -175,7 +192,10 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
     expect(env.writeLog).toHaveLength(0); // planning performs no IO
     const applied = await applyBlueX7LiveUpdate(
       env,
-      liveUpdate({ target: assignmentTarget('1'), parameterId: liveParameterId(data, 'common.feedback') }),
+      liveUpdate({
+        target: assignmentTarget('1'),
+        parameterId: liveParameterId(data, 'common.feedback'),
+      }),
     );
     expect(applied.status).toBe('ok');
     expect(env.writeLog).toHaveLength(1);
@@ -183,15 +203,32 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
 
   it('fails closed on stale session, stale revision, removed owner, malformed target, and ID/key mismatch', async () => {
     const env = createEnvironment({ data, bindings, sessionId: 7 });
-    expect((await applyBlueX7LiveUpdate(env, liveUpdate({ target: assignmentTarget('1'), projectSessionId: 6 }))).status).toBe('skip');
     expect(
-      (await applyBlueX7LiveUpdate(env, liveUpdate({ target: assignmentTarget('1'), expectedProjectRevision: 3 })))
-        .status,
+      (
+        await applyBlueX7LiveUpdate(
+          env,
+          liveUpdate({ target: assignmentTarget('1'), projectSessionId: 6 }),
+        )
+      ).status,
     ).toBe('skip');
-    expect((await applyBlueX7LiveUpdate(env, liveUpdate({ target: assignmentTarget('99') }))).status).toBe('skip');
     expect(
-      (await applyBlueX7LiveUpdate(env, liveUpdate({ target: { assignmentId: '1', track: undefined } as never })))
-        .status,
+      (
+        await applyBlueX7LiveUpdate(
+          env,
+          liveUpdate({ target: assignmentTarget('1'), expectedProjectRevision: 3 }),
+        )
+      ).status,
+    ).toBe('skip');
+    expect(
+      (await applyBlueX7LiveUpdate(env, liveUpdate({ target: assignmentTarget('99') }))).status,
+    ).toBe('skip');
+    expect(
+      (
+        await applyBlueX7LiveUpdate(
+          env,
+          liveUpdate({ target: { assignmentId: '1', track: undefined } as never }),
+        )
+      ).status,
     ).toBe('error');
     const mismatch = await applyBlueX7LiveUpdate(
       env,
@@ -210,7 +247,10 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
 
     const live = await applyBlueX7LiveUpdate(
       env,
-      liveUpdate({ target: assignmentTarget('1'), parameterId: liveParameterId(data, 'common.feedback') }),
+      liveUpdate({
+        target: assignmentTarget('1'),
+        parameterId: liveParameterId(data, 'common.feedback'),
+      }),
     );
     expect(live.status).toBe('error');
     if (live.status === 'error') {
@@ -251,15 +291,18 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
   });
 
   it('keeps automation authoritative during playback and skips engine writes while stopped', async () => {
-    const feedbackParam = instrParameters(
-      data.getArrangement().getArrangement()[0].instr,
-    ).find((parameter) => parameter.getName() === 'common.feedback')!;
+    const feedbackParam = instrParameters(data.getArrangement().getArrangement()[0].instr).find(
+      (parameter) => parameter.getName() === 'common.feedback',
+    )!;
     feedbackParam.setAutomationEnabled(true);
 
     const env = createEnvironment({ data, bindings, sessionId: 7, playing: true });
     const automated = await applyBlueX7LiveUpdate(
       env,
-      liveUpdate({ target: assignmentTarget('1'), parameterId: liveParameterId(data, 'common.feedback') }),
+      liveUpdate({
+        target: assignmentTarget('1'),
+        parameterId: liveParameterId(data, 'common.feedback'),
+      }),
     );
     expect(automated.status).toBe('skip');
     expect((automated as { reason: string }).reason).toBe('automation-authority');
@@ -269,7 +312,10 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
     const stopped = createEnvironment({ data, bindings, sessionId: 7, playing: false });
     const stoppedPlan = await applyBlueX7LiveUpdate(
       stopped,
-      liveUpdate({ target: assignmentTarget('1'), parameterId: liveParameterId(data, 'common.feedback') }),
+      liveUpdate({
+        target: assignmentTarget('1'),
+        parameterId: liveParameterId(data, 'common.feedback'),
+      }),
     );
     expect(stoppedPlan.status).toBe('skip');
     expect((stoppedPlan as { reason: string }).reason).toBe('not-playing');
@@ -310,16 +356,20 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
     );
     const oldSnapshot = parameters.map((parameter) => parameter.getFixedValue());
     const newSnapshot = [...oldSnapshot];
-    const feedbackIndex = parameters.findIndex((parameter) => parameter.getName() === 'common.feedback');
+    const feedbackIndex = parameters.findIndex(
+      (parameter) => parameter.getName() === 'common.feedback',
+    );
     newSnapshot[feedbackIndex] = oldSnapshot[feedbackIndex] === 7 ? 0 : 7;
     const observations: number[][] = [oldSnapshot];
     env.writeChannels = async (entries) => {
       for (const entry of entries) {
         channelState.set(entry.name, entry.value);
       }
-      observations.push(parameters.map((parameter) => (
-        channelState.get(binding.parameterChannels.get(parameter.getName())!)!
-      )));
+      observations.push(
+        parameters.map(
+          (parameter) => channelState.get(binding.parameterChannels.get(parameter.getName())!)!,
+        ),
+      );
       return { ok: true, message: '' };
     };
 
@@ -399,9 +449,11 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
     // expose a hybrid snapshot after the request is rejected.
     expect(env.writeLog).toHaveLength(1);
     expect(env.writeLog[0]).toHaveLength(151);
-    expect(env.writeLog[0]).toEqual(expect.arrayContaining([
-      expect.objectContaining({ name: binding.parameterChannels.get('common.algorithm') }),
-    ]));
+    expect(env.writeLog[0]).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: binding.parameterChannels.get('common.algorithm') }),
+      ]),
+    );
   });
 
   it('returns explicit unavailable readback results and never crosses owners', async () => {
@@ -432,35 +484,35 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
 
     const notPlaying = createEnvironment({ data, bindings, sessionId: 7, playing: false });
     expect(
-      (await requestBlueX7EffectiveValues(notPlaying, {
+      await requestBlueX7EffectiveValues(notPlaying, {
         target: assignmentTarget('1'),
         projectSessionId: 7,
         parameterIds: [parameterId],
-      })),
+      }),
     ).toEqual({ ok: false, reason: 'not-playing' });
 
     expect(
-      (await requestBlueX7EffectiveValues(env, {
+      await requestBlueX7EffectiveValues(env, {
         target: assignmentTarget('1'),
         projectSessionId: 9,
         parameterIds: [parameterId],
-      })),
+      }),
     ).toEqual({ ok: false, reason: 'stale-session' });
 
     expect(
-      (await requestBlueX7EffectiveValues(env, {
+      await requestBlueX7EffectiveValues(env, {
         target: assignmentTarget('404'),
         projectSessionId: 7,
         parameterIds: [parameterId],
-      })),
+      }),
     ).toEqual({ ok: false, reason: 'owner-not-found' });
 
     expect(
-      (await requestBlueX7EffectiveValues(env, {
+      await requestBlueX7EffectiveValues(env, {
         target: assignmentTarget('1'),
         projectSessionId: 7,
         parameterIds: ['missing-parameter'],
-      })),
+      }),
     ).toEqual({ ok: false, reason: 'channel-unavailable' });
   });
 
@@ -472,22 +524,29 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
     ];
 
     env.readChannels = async () => ({ ok: true, values: [42] });
-    await expect(requestBlueX7EffectiveValues(env, {
-      target: assignmentTarget('1'),
-      projectSessionId: 7,
-      parameterIds,
-    })).resolves.toEqual({ ok: false, reason: 'channel-unavailable' });
+    await expect(
+      requestBlueX7EffectiveValues(env, {
+        target: assignmentTarget('1'),
+        projectSessionId: 7,
+        parameterIds,
+      }),
+    ).resolves.toEqual({ ok: false, reason: 'channel-unavailable' });
 
     env.readChannels = async () => ({ ok: true, values: [Number.NaN, 12] });
-    await expect(requestBlueX7EffectiveValues(env, {
-      target: assignmentTarget('1'),
-      projectSessionId: 7,
-      parameterIds,
-    })).resolves.toEqual({ ok: false, reason: 'channel-unavailable' });
+    await expect(
+      requestBlueX7EffectiveValues(env, {
+        target: assignmentTarget('1'),
+        projectSessionId: 7,
+        parameterIds,
+      }),
+    ).resolves.toEqual({ ok: false, reason: 'channel-unavailable' });
   });
 
   it('routes four owners through disjoint channel sets with no cross-writes', async () => {
-    const fourOwner = compileBlueX7ProjectFixtures({ arrangementInstruments: 2, trackInstruments: 2 });
+    const fourOwner = compileBlueX7ProjectFixtures({
+      arrangementInstruments: 2,
+      trackInstruments: 2,
+    });
     const env = createEnvironment({
       data: fourOwner.data,
       bindings: fourOwner.bindings,
@@ -538,7 +597,9 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
     ];
     const resolvedOwners = ownerTargets.map((target) => env2.resolveOwner(target)!);
     for (const owner of resolvedOwners) {
-      owner.getParameters().find((parameter) => parameter.getName() === 'common.feedback')!
+      owner
+        .getParameters()
+        .find((parameter) => parameter.getName() === 'common.feedback')!
         .setAutomationEnabled(true);
     }
     env2.writeLog.length = 0;
@@ -547,17 +608,23 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
       const owner = resolvedOwners[ownerIndex]!;
       const automated = index % 10 === 0;
       const semanticKey = automated ? 'common.feedback' : 'lfo.speed';
-      const parameter = owner.getParameters().find((candidate) => candidate.getName() === semanticKey)!;
-      const result = await applyBlueX7LiveUpdate(env2, liveUpdate({
-        target: ownerTargets[ownerIndex]!,
-        projectSessionId: 3,
-        parameterId: parameter.getUniqueId(),
-        semanticKey,
-        value: index % 100,
-      }));
+      const parameter = owner
+        .getParameters()
+        .find((candidate) => candidate.getName() === semanticKey)!;
+      const result = await applyBlueX7LiveUpdate(
+        env2,
+        liveUpdate({
+          target: ownerTargets[ownerIndex]!,
+          projectSessionId: 3,
+          parameterId: parameter.getUniqueId(),
+          semanticKey,
+          value: index % 100,
+        }),
+      );
       expect(result.status).toBe(automated ? 'skip' : 'ok');
       if (!automated) {
-        const expectedChannel = fourOwner.bindings.get(owner.ownerIdentity)!
+        const expectedChannel = fourOwner.bindings
+          .get(owner.ownerIdentity)!
           .parameterChannels.get(semanticKey)!;
         expect(env2.writeLog.at(-1)).toEqual([{ name: expectedChannel, value: index % 100 }]);
       }
@@ -566,7 +633,9 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
 
     const readValues = new Map<string, number>();
     resolvedOwners.forEach((owner, index) => {
-      const channel = fourOwner.bindings.get(owner.ownerIdentity)!.parameterChannels.get('common.feedback')!;
+      const channel = fourOwner.bindings
+        .get(owner.ownerIdentity)!
+        .parameterChannels.get('common.feedback')!;
       readValues.set(channel, 20 + index);
     });
     const readEnv = createEnvironment({

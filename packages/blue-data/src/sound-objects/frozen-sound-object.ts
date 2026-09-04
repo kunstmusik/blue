@@ -38,14 +38,26 @@ export class FrozenSoundObject extends AbstractSoundObject {
     }
   }
 
-  getFrozenSoundObject(): SoundObject | null { return this._frozenSoundObject; }
-  setFrozenSoundObject(sObj: SoundObject | null): void { this._frozenSoundObject = sObj; }
+  getFrozenSoundObject(): SoundObject | null {
+    return this._frozenSoundObject;
+  }
+  setFrozenSoundObject(sObj: SoundObject | null): void {
+    this._frozenSoundObject = sObj;
+  }
 
-  getFrozenWaveFileName(): string { return this._frozenWaveFileName; }
-  setFrozenWaveFileName(name: string): void { this._frozenWaveFileName = name; }
+  getFrozenWaveFileName(): string {
+    return this._frozenWaveFileName;
+  }
+  setFrozenWaveFileName(name: string): void {
+    this._frozenWaveFileName = name;
+  }
 
-  getNumChannels(): number { return this._numChannels; }
-  setNumChannels(n: number): void { this._numChannels = n; }
+  getNumChannels(): number {
+    return this._numChannels;
+  }
+  setNumChannels(n: number): void {
+    this._numChannels = n;
+  }
 
   override getTimeBehavior(): TimeBehavior {
     return TimeBehavior.NOT_SUPPORTED;

@@ -13,11 +13,17 @@ import { useProjectStore } from '../stores/project-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { useLayerSelectionStore } from '../stores/layer-selection-store';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const originalProjectState = useProjectStore.getState();
 
-function soundItem(objectId: string, layerIndex: number, objectIndex: number): ScoreRowObjectSnapshot {
+function soundItem(
+  objectId: string,
+  layerIndex: number,
+  objectIndex: number,
+): ScoreRowObjectSnapshot {
   return {
     objectId,
     objectType: 'GenericScore',
@@ -67,15 +73,22 @@ function makeGroup(): PolyObjectLayerGroupSnapshot {
   };
 }
 
-function dispatchMouseDown(target: EventTarget, shiftKey: boolean, clientX: number, clientY: number): void {
-  target.dispatchEvent(new MouseEvent('mousedown', {
-    bubbles: true,
-    cancelable: true,
-    button: 0,
-    shiftKey,
-    clientX,
-    clientY,
-  }));
+function dispatchMouseDown(
+  target: EventTarget,
+  shiftKey: boolean,
+  clientX: number,
+  clientY: number,
+): void {
+  target.dispatchEvent(
+    new MouseEvent('mousedown', {
+      bubbles: true,
+      cancelable: true,
+      button: 0,
+      shiftKey,
+      clientX,
+      clientY,
+    }),
+  );
 }
 
 describe('ScoreTimeCanvas marquee initiation on background', () => {
@@ -124,14 +137,23 @@ describe('ScoreTimeCanvas marquee initiation on background', () => {
     // the background area outside any layer row.
     Object.defineProperty(surface, 'getBoundingClientRect', {
       value: () => ({
-        left: 0, top: 0, right: 800, bottom: 120, width: 800, height: 120, x: 0, y: 0,
+        left: 0,
+        top: 0,
+        right: 800,
+        bottom: 120,
+        width: 800,
+        height: 120,
+        x: 0,
+        y: 0,
         toJSON: () => undefined,
       }),
     });
   });
 
   afterEach(() => {
-    act(() => { root.unmount(); });
+    act(() => {
+      root.unmount();
+    });
     useProjectStore.setState({
       score: originalProjectState.score,
       applyProjectDocumentPatch: originalProjectState.applyProjectDocumentPatch,
@@ -145,9 +167,9 @@ describe('ScoreTimeCanvas marquee initiation on background', () => {
   });
 
   it('clears the selection on a plain background click outside layer rows', () => {
-    useScoreSelectionStore.getState().setSelection([
-      { objectId: 'a', editorTarget: soundItem('a', 0, 0).editorTarget },
-    ]);
+    useScoreSelectionStore
+      .getState()
+      .setSelection([{ objectId: 'a', editorTarget: soundItem('a', 0, 0).editorTarget }]);
     expect(useScoreSelectionStore.getState().selectedObjectIds.size).toBe(1);
 
     dispatchMouseDown(surface, false, 10, 80);
@@ -155,9 +177,9 @@ describe('ScoreTimeCanvas marquee initiation on background', () => {
   });
 
   it('preserves the selection on a shift background click outside layer rows (additive marquee)', () => {
-    useScoreSelectionStore.getState().setSelection([
-      { objectId: 'a', editorTarget: soundItem('a', 0, 0).editorTarget },
-    ]);
+    useScoreSelectionStore
+      .getState()
+      .setSelection([{ objectId: 'a', editorTarget: soundItem('a', 0, 0).editorTarget }]);
 
     dispatchMouseDown(surface, true, 10, 80);
     expect([...useScoreSelectionStore.getState().selectedObjectIds]).toEqual(['a']);
@@ -171,16 +193,18 @@ describe('ScoreTimeCanvas marquee initiation on background', () => {
     act(() => {
       useLayerSelectionStore.getState().selectSingle(
         'g1:g1-layer-0',
-        [{
-          scopeKey: 'test',
-          groupId: 'g1',
-          groupType: 'polyObject',
-          layerSelectionId: 'g1-layer-0',
-          layerId: 'g1-layer-0',
-          localIndex: 0,
-          globalIndex: 0,
-          layer: makeGroup().layers[0]!,
-        }],
+        [
+          {
+            scopeKey: 'test',
+            groupId: 'g1',
+            groupType: 'polyObject',
+            layerSelectionId: 'g1-layer-0',
+            layerId: 'g1-layer-0',
+            localIndex: 0,
+            globalIndex: 0,
+            layer: makeGroup().layers[0]!,
+          },
+        ],
         'test',
       );
     });

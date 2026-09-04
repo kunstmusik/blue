@@ -46,16 +46,30 @@ export class TrackerObject extends AbstractSoundObject {
     }
   }
 
-  getStepsPerBeat(): number { return this._stepsPerBeat; }
-  setStepsPerBeat(s: number): void { this._stepsPerBeat = s; }
+  getStepsPerBeat(): number {
+    return this._stepsPerBeat;
+  }
+  setStepsPerBeat(s: number): void {
+    this._stepsPerBeat = s;
+  }
 
-  getTracks(): TrackList { return this._tracks; }
-  setTracks(tracks: TrackList): void { this._tracks = tracks; }
+  getTracks(): TrackList {
+    return this._tracks;
+  }
+  setTracks(tracks: TrackList): void {
+    this._tracks = tracks;
+  }
 
-  isKeyboardNotesEnabled(): boolean { return this._keyboardNotesEnabled; }
-  setKeyboardNotesEnabled(enabled: boolean): void { this._keyboardNotesEnabled = enabled; }
+  isKeyboardNotesEnabled(): boolean {
+    return this._keyboardNotesEnabled;
+  }
+  setKeyboardNotesEnabled(enabled: boolean): void {
+    this._keyboardNotesEnabled = enabled;
+  }
 
-  getKeyboardOctave(): number { return this._keyboardOctave; }
+  getKeyboardOctave(): number {
+    return this._keyboardOctave;
+  }
   setKeyboardOctave(octave: number): void {
     if (!Number.isFinite(octave)) return;
     this._keyboardOctave = Math.max(-8, Math.min(8, Math.trunc(octave)));
@@ -137,7 +151,7 @@ export class TrackerObject extends AbstractSoundObject {
         case 'tracks': {
           const tNodes = node.getElements('track');
           while (tNodes.hasMoreElements()) {
-            // This is old blue-electron specific string[][] format, 
+            // This is old blue-electron specific string[][] format,
             // we should probably keep it for a while but it's not Java-compatible.
             // Java Blue doesn't have 'tracks' element at root of TrackerObject, it has 'trackList'.
           }

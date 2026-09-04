@@ -64,9 +64,7 @@ function getLineVarNamesFromSnapshot(node: BsbWidgetSnapshotLike): string[] {
   for (const line of lines) {
     if (!line || typeof line !== 'object') continue;
     const record = line as Record<string, unknown>;
-    const varName = typeof record.varName === 'string'
-      ? record.varName.trim()
-      : '';
+    const varName = typeof record.varName === 'string' ? record.varName.trim() : '';
     if (varName) {
       keys.push(varName);
     }

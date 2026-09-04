@@ -51,16 +51,16 @@ describe('Track automation', () => {
     source.setEnabled(true);
     layer.setInstrument(source);
     const instrument = layer.getInstrument() as BlueX7;
-    const parameter = instrument.getParameters().find(
-      (candidate) => candidate.getName() === 'common.algorithm',
-    )!;
+    const parameter = instrument
+      .getParameters()
+      .find((candidate) => candidate.getName() === 'common.algorithm')!;
     layer.getAutomationParameters().addParameterId(parameter.getUniqueId());
 
     const reopened = Track.loadFromXML(Element.parse(layer.saveAsXML().toXml()));
     const reopenedInstrument = reopened.getInstrument() as BlueX7;
-    const reopenedParameter = reopenedInstrument.getParameters().find(
-      (candidate) => candidate.getName() === 'common.algorithm',
-    )!;
+    const reopenedParameter = reopenedInstrument
+      .getParameters()
+      .find((candidate) => candidate.getName() === 'common.algorithm')!;
 
     expect(reopenedParameter.getUniqueId()).toBe(parameter.getUniqueId());
     expect(reopened.getAutomationParameters().getIds()).toEqual([reopenedParameter.getUniqueId()]);
@@ -70,26 +70,33 @@ describe('Track automation', () => {
     const sourceTrack = new Track();
     sourceTrack.setInstrument(new BlueX7());
     const sourceInstrument = sourceTrack.getInstrument() as BlueX7;
-    const sourceParameter = sourceInstrument.getParameters().find(
-      (candidate) => candidate.getName() === 'common.feedback',
-    )!;
+    const sourceParameter = sourceInstrument
+      .getParameters()
+      .find((candidate) => candidate.getName() === 'common.feedback')!;
     sourceParameter.setAutomationEnabled(true);
-    sourceParameter.setPoints([{ time: 0, value: 1 }, { time: 4, value: 7 }]);
+    sourceParameter.setPoints([
+      { time: 0, value: 1 },
+      { time: 4, value: 7 },
+    ]);
     sourceTrack.getAutomationParameters().addParameterId(sourceParameter.getUniqueId());
     sourceTrack.getAutomationParameters().addParameterId('unrelated-project-parameter');
     sourceTrack.getAutomationParameters().setSelectedParameter(sourceParameter.getUniqueId());
 
     const copiedTrack = sourceTrack.deepCopy();
     const copiedInstrument = copiedTrack.getInstrument() as BlueX7;
-    const copiedParameter = copiedInstrument.getParameters().find(
-      (candidate) => candidate.getName() === 'common.feedback',
-    )!;
+    const copiedParameter = copiedInstrument
+      .getParameters()
+      .find((candidate) => candidate.getName() === 'common.feedback')!;
 
     expect(copiedParameter.getUniqueId()).not.toBe(sourceParameter.getUniqueId());
     expect(copiedParameter.getPoints()).toEqual(sourceParameter.getPoints());
     expect(copiedTrack.getAutomationParameters().getIds()).toContain(copiedParameter.getUniqueId());
-    expect(copiedTrack.getAutomationParameters().getIds()).not.toContain(sourceParameter.getUniqueId());
+    expect(copiedTrack.getAutomationParameters().getIds()).not.toContain(
+      sourceParameter.getUniqueId(),
+    );
     expect(copiedTrack.getAutomationParameters().getIds()).toContain('unrelated-project-parameter');
-    expect(copiedTrack.getAutomationParameters().getSelectedId()).toBe(copiedParameter.getUniqueId());
+    expect(copiedTrack.getAutomationParameters().getSelectedId()).toBe(
+      copiedParameter.getUniqueId(),
+    );
   });
 });

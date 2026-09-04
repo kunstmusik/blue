@@ -64,7 +64,11 @@ describe('Mixer arrangement synchronization', () => {
     expect(data.getMixer().getChannels()).toHaveLength(1);
 
     applyProjectDocumentPatch(data, {
-      orchestra: { type: 'addInstrument', instrument: { type: 'generic', name: 'Synth' }, assignmentId: '3' },
+      orchestra: {
+        type: 'addInstrument',
+        instrument: { type: 'generic', name: 'Synth' },
+        assignmentId: '3',
+      },
     });
 
     const snapshot = createMixerSnapshot(data.getMixer());
@@ -95,7 +99,10 @@ describe('Instrument ID change preserves mixer channel', () => {
 
   it('preserves channel effects when assignment ID changes', () => {
     const data = createArrangementProject();
-    const channel = data.getMixer().getChannels().find((ch) => ch.getAssociation() === '1')!;
+    const channel = data
+      .getMixer()
+      .getChannels()
+      .find((ch) => ch.getAssociation() === '1')!;
     const effect = new Effect();
     effect.setName('Reverb');
     effect.setCode('aout = ain');
@@ -113,14 +120,15 @@ describe('Instrument ID change preserves mixer channel', () => {
     const ch = snapshot.channels.find((c) => c.association === '10');
     expect(ch).toBeDefined();
     expect(ch?.preChain).toHaveLength(1);
-    expect(ch?.preChain[0]).toEqual(
-      expect.objectContaining({ kind: 'effect', name: 'Reverb' }),
-    );
+    expect(ch?.preChain[0]).toEqual(expect.objectContaining({ kind: 'effect', name: 'Reverb' }));
   });
 
   it('preserves sends when assignment ID changes', () => {
     const data = createArrangementProject();
-    const channel = data.getMixer().getChannels().find((ch) => ch.getAssociation() === '1')!;
+    const channel = data
+      .getMixer()
+      .getChannels()
+      .find((ch) => ch.getAssociation() === '1')!;
     const send = new Send();
     send.setSendChannel('Master');
     channel.getPostEffects().push(send);
@@ -144,7 +152,10 @@ describe('Instrument ID change preserves mixer channel', () => {
 
   it('preserves channel level and pan when assignment ID changes', () => {
     const data = createArrangementProject();
-    const channel = data.getMixer().getChannels().find((ch) => ch.getAssociation() === '1')!;
+    const channel = data
+      .getMixer()
+      .getChannels()
+      .find((ch) => ch.getAssociation() === '1')!;
     channel.setLevel(-6);
     channel.setPan(0.75);
 

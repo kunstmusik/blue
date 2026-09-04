@@ -57,8 +57,12 @@ describe('Track instrument target policy', () => {
     expect(polyObject && track.accepts(polyObject)).toBe(false);
     expect(instance && track.accepts(instance)).toBe(true);
     expect(getTrackPlacementForSoundObject(polyObject!).reason).toContain('PolyObject');
-    expect(getTrackPlacementForSoundObject(instance!).descriptor?.instrumentTargetBehavior).toBe('propagated');
-    expect(getTrackPlacementForSoundObject(frozen!).descriptor?.instrumentTargetBehavior).toBe('preserve');
+    expect(getTrackPlacementForSoundObject(instance!).descriptor?.instrumentTargetBehavior).toBe(
+      'propagated',
+    );
+    expect(getTrackPlacementForSoundObject(frozen!).descriptor?.instrumentTargetBehavior).toBe(
+      'preserve',
+    );
     expect(audioFile && track.accepts(audioFile)).toBe(false);
   });
 

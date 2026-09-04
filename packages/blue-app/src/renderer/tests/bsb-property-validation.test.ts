@@ -2,7 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { validateNumericProperty } from '../components/workbench/panels/orchestra/bsb/BSBPropertySheet';
 import type { BsbWidgetNodeSnapshot } from '../../shared/project-editor';
 
-function makeWidget(overrides: Partial<BsbWidgetNodeSnapshot> & { type: string }): BsbWidgetNodeSnapshot {
+function makeWidget(
+  overrides: Partial<BsbWidgetNodeSnapshot> & { type: string },
+): BsbWidgetNodeSnapshot {
   return {
     id: overrides.id ?? 'w1',
     type: overrides.type,
@@ -40,7 +42,15 @@ describe('validateNumericProperty', () => {
   });
 
   describe('dimension properties', () => {
-    const dimProps = ['width', 'height', 'sliderWidth', 'sliderHeight', 'knobWidth', 'canvasWidth', 'canvasHeight'];
+    const dimProps = [
+      'width',
+      'height',
+      'sliderWidth',
+      'sliderHeight',
+      'knobWidth',
+      'canvasWidth',
+      'canvasHeight',
+    ];
 
     for (const prop of dimProps) {
       describe(prop, () => {
@@ -53,7 +63,9 @@ describe('validateNumericProperty', () => {
         });
 
         it('clamps 0.5 to 1 (rounded)', () => {
-          expect(validateNumericProperty(prop, '0.5', makeWidget({ type: 'BSBHSlider' }))).toBe('1');
+          expect(validateNumericProperty(prop, '0.5', makeWidget({ type: 'BSBHSlider' }))).toBe(
+            '1',
+          );
         });
 
         it('accepts 1', () => {
@@ -61,7 +73,9 @@ describe('validateNumericProperty', () => {
         });
 
         it('accepts and rounds 100.7', () => {
-          expect(validateNumericProperty(prop, '100.7', makeWidget({ type: 'BSBHSlider' }))).toBe('101');
+          expect(validateNumericProperty(prop, '100.7', makeWidget({ type: 'BSBHSlider' }))).toBe(
+            '101',
+          );
         });
       });
     }
@@ -69,69 +83,99 @@ describe('validateNumericProperty', () => {
 
   describe('textFieldWidth', () => {
     it('clamps negative to 5', () => {
-      expect(validateNumericProperty('textFieldWidth', '-1', makeWidget({ type: 'BSBTextField' }))).toBe('5');
+      expect(
+        validateNumericProperty('textFieldWidth', '-1', makeWidget({ type: 'BSBTextField' })),
+      ).toBe('5');
     });
 
     it('clamps 0 to 5', () => {
-      expect(validateNumericProperty('textFieldWidth', '0', makeWidget({ type: 'BSBTextField' }))).toBe('5');
+      expect(
+        validateNumericProperty('textFieldWidth', '0', makeWidget({ type: 'BSBTextField' })),
+      ).toBe('5');
     });
 
     it('clamps 4 to 5', () => {
-      expect(validateNumericProperty('textFieldWidth', '4', makeWidget({ type: 'BSBTextField' }))).toBe('5');
+      expect(
+        validateNumericProperty('textFieldWidth', '4', makeWidget({ type: 'BSBTextField' })),
+      ).toBe('5');
     });
 
     it('accepts 5', () => {
-      expect(validateNumericProperty('textFieldWidth', '5', makeWidget({ type: 'BSBTextField' }))).toBe('5');
+      expect(
+        validateNumericProperty('textFieldWidth', '5', makeWidget({ type: 'BSBTextField' })),
+      ).toBe('5');
     });
 
     it('accepts 100', () => {
-      expect(validateNumericProperty('textFieldWidth', '100', makeWidget({ type: 'BSBTextField' }))).toBe('100');
+      expect(
+        validateNumericProperty('textFieldWidth', '100', makeWidget({ type: 'BSBTextField' })),
+      ).toBe('100');
     });
   });
 
   describe('numberOfSliders', () => {
     it('clamps negative to 1', () => {
-      expect(validateNumericProperty('numberOfSliders', '-3', makeWidget({ type: 'BSBHSliderBank' }))).toBe('1');
+      expect(
+        validateNumericProperty('numberOfSliders', '-3', makeWidget({ type: 'BSBHSliderBank' })),
+      ).toBe('1');
     });
 
     it('clamps 0 to 1', () => {
-      expect(validateNumericProperty('numberOfSliders', '0', makeWidget({ type: 'BSBHSliderBank' }))).toBe('1');
+      expect(
+        validateNumericProperty('numberOfSliders', '0', makeWidget({ type: 'BSBHSliderBank' })),
+      ).toBe('1');
     });
 
     it('accepts 1', () => {
-      expect(validateNumericProperty('numberOfSliders', '1', makeWidget({ type: 'BSBHSliderBank' }))).toBe('1');
+      expect(
+        validateNumericProperty('numberOfSliders', '1', makeWidget({ type: 'BSBHSliderBank' })),
+      ).toBe('1');
     });
 
     it('rounds 3.7 to 4', () => {
-      expect(validateNumericProperty('numberOfSliders', '3.7', makeWidget({ type: 'BSBHSliderBank' }))).toBe('4');
+      expect(
+        validateNumericProperty('numberOfSliders', '3.7', makeWidget({ type: 'BSBHSliderBank' })),
+      ).toBe('4');
     });
   });
 
   describe('fontSize', () => {
     it('clamps below 8 to 8', () => {
-      expect(validateNumericProperty('fontSize', '3', makeWidget({ type: 'BSBDropdown' }))).toBe('8');
+      expect(validateNumericProperty('fontSize', '3', makeWidget({ type: 'BSBDropdown' }))).toBe(
+        '8',
+      );
     });
 
     it('clamps above 36 to 36', () => {
-      expect(validateNumericProperty('fontSize', '50', makeWidget({ type: 'BSBDropdown' }))).toBe('36');
+      expect(validateNumericProperty('fontSize', '50', makeWidget({ type: 'BSBDropdown' }))).toBe(
+        '36',
+      );
     });
 
     it('accepts 8', () => {
-      expect(validateNumericProperty('fontSize', '8', makeWidget({ type: 'BSBDropdown' }))).toBe('8');
+      expect(validateNumericProperty('fontSize', '8', makeWidget({ type: 'BSBDropdown' }))).toBe(
+        '8',
+      );
     });
 
     it('accepts 36', () => {
-      expect(validateNumericProperty('fontSize', '36', makeWidget({ type: 'BSBDropdown' }))).toBe('36');
+      expect(validateNumericProperty('fontSize', '36', makeWidget({ type: 'BSBDropdown' }))).toBe(
+        '36',
+      );
     });
 
     it('rounds 12.5 to 13', () => {
-      expect(validateNumericProperty('fontSize', '12.5', makeWidget({ type: 'BSBDropdown' }))).toBe('13');
+      expect(validateNumericProperty('fontSize', '12.5', makeWidget({ type: 'BSBDropdown' }))).toBe(
+        '13',
+      );
     });
   });
 
   describe('gap / resolution / selectedIndex', () => {
     it('clamps negative gap to 0', () => {
-      expect(validateNumericProperty('gap', '-5', makeWidget({ type: 'BSBHSliderBank' }))).toBe('0');
+      expect(validateNumericProperty('gap', '-5', makeWidget({ type: 'BSBHSliderBank' }))).toBe(
+        '0',
+      );
     });
 
     it('accepts zero gap', () => {
@@ -139,11 +183,15 @@ describe('validateNumericProperty', () => {
     });
 
     it('clamps negative resolution to 0', () => {
-      expect(validateNumericProperty('resolution', '-0.1', makeWidget({ type: 'BSBHSlider' }))).toBe('0');
+      expect(
+        validateNumericProperty('resolution', '-0.1', makeWidget({ type: 'BSBHSlider' })),
+      ).toBe('0');
     });
 
     it('clamps negative selectedIndex to 0', () => {
-      expect(validateNumericProperty('selectedIndex', '-1', makeWidget({ type: 'BSBDropdown' }))).toBe('0');
+      expect(
+        validateNumericProperty('selectedIndex', '-1', makeWidget({ type: 'BSBDropdown' })),
+      ).toBe('0');
     });
   });
 
@@ -225,16 +273,24 @@ describe('validateNumericProperty', () => {
     });
 
     it('passes through unknown numeric properties', () => {
-      expect(validateNumericProperty('value', '0.5', makeWidget({ type: 'BSBHSlider' }))).toBe('0.5');
+      expect(validateNumericProperty('value', '0.5', makeWidget({ type: 'BSBHSlider' }))).toBe(
+        '0.5',
+      );
     });
 
     it('passes through defaultValue without constraint', () => {
-      expect(validateNumericProperty('defaultValue', '-100', makeWidget({ type: 'BSBValue' }))).toBe('-100');
+      expect(
+        validateNumericProperty('defaultValue', '-100', makeWidget({ type: 'BSBValue' })),
+      ).toBe('-100');
     });
 
     it('passes through font editor numeric fields without clamping', () => {
-      expect(validateNumericProperty('font.size', '7.25', makeWidget({ type: 'BSBKnob' }))).toBe('7.25');
-      expect(validateNumericProperty('labelFont.style', '2', makeWidget({ type: 'BSBKnob' }))).toBe('2');
+      expect(validateNumericProperty('font.size', '7.25', makeWidget({ type: 'BSBKnob' }))).toBe(
+        '7.25',
+      );
+      expect(validateNumericProperty('labelFont.style', '2', makeWidget({ type: 'BSBKnob' }))).toBe(
+        '2',
+      );
     });
   });
 });

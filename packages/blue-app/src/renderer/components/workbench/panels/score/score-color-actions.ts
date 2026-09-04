@@ -35,8 +35,14 @@ export function buildSetSelectionToLayerColorPatch(args: {
     }
   }
 
-  const forwardUpdates: Array<{ target: ScoreObjectEditorTargetSnapshot; backgroundColor: number }> = [];
-  const inverseUpdates: Array<{ target: ScoreObjectEditorTargetSnapshot; backgroundColor: number }> = [];
+  const forwardUpdates: Array<{
+    target: ScoreObjectEditorTargetSnapshot;
+    backgroundColor: number;
+  }> = [];
+  const inverseUpdates: Array<{
+    target: ScoreObjectEditorTargetSnapshot;
+    backgroundColor: number;
+  }> = [];
 
   for (const item of selection) {
     if (!item || !item.editorTarget) continue;
@@ -109,8 +115,14 @@ export function buildApplyLayerColorToAllClipsPatch(args: {
   if (!layer || layer.backgroundColor === undefined) return null;
 
   const layerColor = layer.backgroundColor;
-  const forwardUpdates: Array<{ target: ScoreObjectEditorTargetSnapshot; backgroundColor: number }> = [];
-  const inverseUpdates: Array<{ target: ScoreObjectEditorTargetSnapshot; backgroundColor: number }> = [];
+  const forwardUpdates: Array<{
+    target: ScoreObjectEditorTargetSnapshot;
+    backgroundColor: number;
+  }> = [];
+  const inverseUpdates: Array<{
+    target: ScoreObjectEditorTargetSnapshot;
+    backgroundColor: number;
+  }> = [];
 
   // If pattern layer with sourceObject
   if (group.groupType === 'patterns') {

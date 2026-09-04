@@ -66,68 +66,105 @@ describe('Track item project patches', () => {
     const track = data.getScore()[0]![0]!;
     const secondTrack = data.getScore()[0]![1]!;
 
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'addTrackItem',
-        track: firstRef,
-        item: { objectType: 'GenericScore', name: 'Added Score', durationBeats: 2 },
-        startBeats: 4,
-      },
-    }, context)).toBe(true);
+    expect(
+      applyProjectDocumentPatch(
+        data,
+        {
+          score: {
+            type: 'addTrackItem',
+            track: firstRef,
+            item: { objectType: 'GenericScore', name: 'Added Score', durationBeats: 2 },
+            startBeats: 4,
+          },
+        },
+        context,
+      ),
+    ).toBe(true);
     expect(track).toHaveLength(3);
 
     const snapshot = createProjectEditorSnapshot(data, null, 5, 8);
-    const sourceItem = snapshot.score?.layerGroups[0]?.groupType === 'track'
-      ? snapshot.score.layerGroups[0].layers[0]?.items[0]
-      : undefined;
+    const sourceItem =
+      snapshot.score?.layerGroups[0]?.groupType === 'track'
+        ? snapshot.score.layerGroups[0].layers[0]?.items[0]
+        : undefined;
     expect(sourceItem?.serializedXml).toBeDefined();
 
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'addTrackItem',
-        track: secondRef,
-        item: {
-          serializedXml: sourceItem!.serializedXml,
-          name: 'Pasted Score',
-          durationBeats: 3,
+    expect(
+      applyProjectDocumentPatch(
+        data,
+        {
+          score: {
+            type: 'addTrackItem',
+            track: secondRef,
+            item: {
+              serializedXml: sourceItem!.serializedXml,
+              name: 'Pasted Score',
+              durationBeats: 3,
+            },
+            startBeats: 6,
+          },
         },
-        startBeats: 6,
-      },
-    }, context)).toBe(true);
+        context,
+      ),
+    ).toBe(true);
     expect(secondTrack).toHaveLength(1);
 
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'moveTrackItems',
-        moves: [{
-          source: { track: firstRef, objectIndex: 1 },
-          destination: secondRef,
-          targetStartBeats: 8,
-        }],
-      },
-    }, context)).toBe(true);
+    expect(
+      applyProjectDocumentPatch(
+        data,
+        {
+          score: {
+            type: 'moveTrackItems',
+            moves: [
+              {
+                source: { track: firstRef, objectIndex: 1 },
+                destination: secondRef,
+                targetStartBeats: 8,
+              },
+            ],
+          },
+        },
+        context,
+      ),
+    ).toBe(true);
     expect(track).toHaveLength(2);
     expect(secondTrack).toHaveLength(2);
     expect(secondTrack[1]!.getStartTime().toBeats(data.getScore().getTimeContext())).toBe(8);
 
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'resizeTrackItems',
-        resizes: [{
-          target: { track: secondRef, objectIndex: 1 },
-          targetStartBeats: 9,
-          targetDurationBeats: 4,
-        }],
-      },
-    }, context)).toBe(true);
-    expect(secondTrack[1]!.getSubjectiveDuration().toBeats(data.getScore().getTimeContext())).toBe(4);
+    expect(
+      applyProjectDocumentPatch(
+        data,
+        {
+          score: {
+            type: 'resizeTrackItems',
+            resizes: [
+              {
+                target: { track: secondRef, objectIndex: 1 },
+                targetStartBeats: 9,
+                targetDurationBeats: 4,
+              },
+            ],
+          },
+        },
+        context,
+      ),
+    ).toBe(true);
+    expect(secondTrack[1]!.getSubjectiveDuration().toBeats(data.getScore().getTimeContext())).toBe(
+      4,
+    );
 
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'removeTrackItems',
-        targets: [{ track: secondRef, objectIndex: 0 }],
-      },
-    }, context)).toBe(true);
+    expect(
+      applyProjectDocumentPatch(
+        data,
+        {
+          score: {
+            type: 'removeTrackItems',
+            targets: [{ track: secondRef, objectIndex: 0 }],
+          },
+        },
+        context,
+      ),
+    ).toBe(true);
     expect(secondTrack).toHaveLength(1);
   });
 
@@ -138,14 +175,20 @@ describe('Track item project patches', () => {
     const before = track.length;
     expect(track.accepts(new AudioFile())).toBe(false);
 
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'addTrackItem',
-        track: { ...first, ...context },
-        item: { objectType: 'AudioFile', name: 'Rejected' },
-        startBeats: 0,
-      },
-    }, context)).toBe(false);
+    expect(
+      applyProjectDocumentPatch(
+        data,
+        {
+          score: {
+            type: 'addTrackItem',
+            track: { ...first, ...context },
+            item: { objectType: 'AudioFile', name: 'Rejected' },
+            startBeats: 0,
+          },
+        },
+        context,
+      ),
+    ).toBe(false);
     expect(track).toHaveLength(before);
   });
 
@@ -160,35 +203,55 @@ describe('Track item project patches', () => {
     polyObject.newLayerAt(0);
 
     expect(firstTrack.accepts(polyObject)).toBe(false);
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'addTrackItem',
-        track: secondRef,
-        item: { objectType: 'PolyObject', name: 'Rejected creation' },
-        startBeats: 0,
-      },
-    }, context)).toBe(false);
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'addTrackItem',
-        track: secondRef,
-        item: { serializedXml: polyObject.saveAsXML().toXml(), name: 'Rejected paste' },
-        startBeats: 0,
-      },
-    }, context)).toBe(false);
+    expect(
+      applyProjectDocumentPatch(
+        data,
+        {
+          score: {
+            type: 'addTrackItem',
+            track: secondRef,
+            item: { objectType: 'PolyObject', name: 'Rejected creation' },
+            startBeats: 0,
+          },
+        },
+        context,
+      ),
+    ).toBe(false);
+    expect(
+      applyProjectDocumentPatch(
+        data,
+        {
+          score: {
+            type: 'addTrackItem',
+            track: secondRef,
+            item: { serializedXml: polyObject.saveAsXML().toXml(), name: 'Rejected paste' },
+            startBeats: 0,
+          },
+        },
+        context,
+      ),
+    ).toBe(false);
 
     firstTrack.push(polyObject);
     const sourceIndex = firstTrack.indexOf(polyObject);
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'moveTrackItems',
-        moves: [{
-          source: { track: firstRef, objectIndex: sourceIndex },
-          destination: secondRef,
-          targetStartBeats: 2,
-        }],
-      },
-    }, context)).toBe(false);
+    expect(
+      applyProjectDocumentPatch(
+        data,
+        {
+          score: {
+            type: 'moveTrackItems',
+            moves: [
+              {
+                source: { track: firstRef, objectIndex: sourceIndex },
+                destination: secondRef,
+                targetStartBeats: 2,
+              },
+            ],
+          },
+        },
+        context,
+      ),
+    ).toBe(false);
     expect(firstTrack[sourceIndex]).toBe(polyObject);
     expect(secondTrack).toHaveLength(0);
   });
@@ -198,14 +261,20 @@ describe('Track item project patches', () => {
     const context = { projectSessionId: 3, projectRevision: 2 };
     const secondTrack = data.getScore()[0]![1]!;
 
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'addTrackItem',
-        track: { ...second, ...context },
-        item: { objectType: 'PianoRoll' },
-        startBeats: 1,
-      },
-    }, context)).toBe(true);
+    expect(
+      applyProjectDocumentPatch(
+        data,
+        {
+          score: {
+            type: 'addTrackItem',
+            track: { ...second, ...context },
+            item: { objectType: 'PianoRoll' },
+            startBeats: 1,
+          },
+        },
+        context,
+      ),
+    ).toBe(true);
 
     expect(secondTrack[0]).toBeInstanceOf(PianoRoll);
     expect(secondTrack[0]!.getName()).toBe('PianoRoll');
@@ -221,9 +290,11 @@ describe('Track item project patches', () => {
     if (!group || group.groupType !== 'track') throw new Error('missing Track snapshot');
     const target = group.layers[0]!.items[0]!.editorTarget;
 
-    expect(applyProjectDocumentPatch(data, {
-      score: { type: 'setSubjectiveDurationToObjective', targets: [target] },
-    })).toBe(true);
+    expect(
+      applyProjectDocumentPatch(data, {
+        score: { type: 'setSubjectiveDurationToObjective', targets: [target] },
+      }),
+    ).toBe(true);
     expect(scoreObject.getSubjectiveDuration().toBeats(data.getScore().getTimeContext())).toBe(5);
   });
 });

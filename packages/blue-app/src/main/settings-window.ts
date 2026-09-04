@@ -1,9 +1,6 @@
 import { BrowserWindow } from 'electron';
 import * as path from 'path';
-import {
-  attachWindowStateHandlers,
-  restoreWindowState,
-} from './window-state-manager';
+import { attachWindowStateHandlers, restoreWindowState } from './window-state-manager';
 import {
   SETTINGS_CLOSE_REQUEST_CHANNEL,
   type SettingsCloseResolution,
@@ -57,9 +54,7 @@ export function openSettingsWindow(
       preload: path.join(__dirname, '..', 'preload', 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      ...(options.initialZoomFactor !== undefined
-        ? { zoomFactor: options.initialZoomFactor }
-        : {}),
+      ...(options.initialZoomFactor !== undefined ? { zoomFactor: options.initialZoomFactor } : {}),
     },
   });
 

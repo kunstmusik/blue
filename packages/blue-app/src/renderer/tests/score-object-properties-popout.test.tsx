@@ -13,13 +13,12 @@ import type {
 } from '../../shared/project-editor';
 import ScoreObjectPropertiesPanel from '../components/workbench/panels/ScoreObjectPropertiesPanel';
 import { HostDocumentContext } from '../hooks/use-host-document';
-import {
-  __testClearPendingPatches,
-  useProjectStore,
-} from '../stores/project-store';
+import { __testClearPendingPatches, useProjectStore } from '../stores/project-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const originalProjectState = useProjectStore.getState();
 const originalBlueAPI = window.blueAPI;
@@ -54,7 +53,9 @@ function item(editorTarget: ScoreObjectEditorTargetSnapshot): ScoreRowObjectSnap
   };
 }
 
-function editorDocument(editorTarget: ScoreObjectEditorTargetSnapshot): ScoreObjectEditorDocumentSnapshot {
+function editorDocument(
+  editorTarget: ScoreObjectEditorTargetSnapshot,
+): ScoreObjectEditorDocumentSnapshot {
   return {
     target: editorTarget,
     shared: {
@@ -91,14 +92,16 @@ describe('ScoreObjectPropertiesPanel color picker in a popout', () => {
       name: 'Root',
       layerCount: 1,
       isOpenableContainer: true,
-      layers: [{
-        layerId: 'layer-1',
-        name: 'Layer 1',
-        height: 44,
-        muted: false,
-        solo: false,
-        items: [item(editorTarget)],
-      }],
+      layers: [
+        {
+          layerId: 'layer-1',
+          name: 'Layer 1',
+          height: 44,
+          muted: false,
+          solo: false,
+          items: [item(editorTarget)],
+        },
+      ],
     };
 
     useProjectStore.setState({
@@ -114,11 +117,15 @@ describe('ScoreObjectPropertiesPanel color picker in a popout', () => {
       ...originalBlueAPI,
       getNamedChainNames: vi.fn().mockResolvedValue([]),
       getScoreObjectEditorDocument: vi.fn().mockResolvedValue(editorDocument(editorTarget)),
-      commitProjectDocumentPatches: vi.fn().mockResolvedValue({ changed: true, sessionId: 0, revision: 1 }),
+      commitProjectDocumentPatches: vi
+        .fn()
+        .mockResolvedValue({ changed: true, sessionId: 0, revision: 1 }),
       getProjectDocument: vi.fn().mockResolvedValue(null),
     } as typeof window.blueAPI;
 
-    popout = new JSDOM('<!doctype html><html><body></body></html>', { url: 'https://properties-popout.test' });
+    popout = new JSDOM('<!doctype html><html><body></body></html>', {
+      url: 'https://properties-popout.test',
+    });
     host = popout.window.document.createElement('div');
     popout.window.document.body.appendChild(host);
     root = createRoot(host);
@@ -151,25 +158,32 @@ describe('ScoreObjectPropertiesPanel color picker in a popout', () => {
     expect(pickerButton).toBeTruthy();
 
     act(() => pickerButton!.click());
-    expect(popout.window.document.querySelector('[role="dialog"][aria-label="Color picker"]')).toBeTruthy();
+    expect(
+      popout.window.document.querySelector('[role="dialog"][aria-label="Color picker"]'),
+    ).toBeTruthy();
 
     // A score refresh can recreate the selection target object while it still
     // refers to the same timeline location. The properties form must remain
     // mounted during that refresh so an active picker is not dismissed.
-    const refreshedTarget = useProjectStore.getState().score.layerGroups[0]!.layers[0]!.items[0]!.editorTarget!;
+    const refreshedTarget =
+      useProjectStore.getState().score.layerGroups[0]!.layers[0]!.items[0]!.editorTarget!;
     act(() => {
-      useScoreSelectionStore.getState().setSelection([{
-        objectId: 'object-1',
-        editorTarget: {
-          ...refreshedTarget,
-          location: { ...refreshedTarget.location, rootGroupId: 'root' },
+      useScoreSelectionStore.getState().setSelection([
+        {
+          objectId: 'object-1',
+          editorTarget: {
+            ...refreshedTarget,
+            location: { ...refreshedTarget.location, rootGroupId: 'root' },
+          },
         },
-      }]);
+      ]);
     });
     await act(async () => {
       await Promise.resolve();
     });
-    expect(popout.window.document.querySelector('[role="dialog"][aria-label="Color picker"]')).toBeTruthy();
+    expect(
+      popout.window.document.querySelector('[role="dialog"][aria-label="Color picker"]'),
+    ).toBeTruthy();
 
     const hex = popout.window.document.querySelector<HTMLInputElement>('[aria-label="Hex color"]')!;
     act(() => {
@@ -177,12 +191,18 @@ describe('ScoreObjectPropertiesPanel color picker in a popout', () => {
       hex.dispatchEvent(new popout.window.Event('input', { bubbles: true }));
     });
 
-    expect(popout.window.document.querySelector('[role="dialog"][aria-label="Color picker"]')).toBeTruthy();
+    expect(
+      popout.window.document.querySelector('[role="dialog"][aria-label="Color picker"]'),
+    ).toBeTruthy();
 
     act(() => {
-      popout.window.document.querySelector<HTMLButtonElement>('[aria-label="Set color #ef4444"]')!.click();
+      popout.window.document
+        .querySelector<HTMLButtonElement>('[aria-label="Set color #ef4444"]')!
+        .click();
     });
-    expect(popout.window.document.querySelector('[role="dialog"][aria-label="Color picker"]')).toBeTruthy();
+    expect(
+      popout.window.document.querySelector('[role="dialog"][aria-label="Color picker"]'),
+    ).toBeTruthy();
 
     const hue = popout.window.document.querySelector<HTMLInputElement>('[aria-label="Hue"]')!;
     act(() => {
@@ -194,6 +214,8 @@ describe('ScoreObjectPropertiesPanel color picker in a popout', () => {
       hue.dispatchEvent(new popout.window.MouseEvent('click', { bubbles: true }));
     });
 
-    expect(popout.window.document.querySelector('[role="dialog"][aria-label="Color picker"]')).toBeTruthy();
+    expect(
+      popout.window.document.querySelector('[role="dialog"][aria-label="Color picker"]'),
+    ).toBeTruthy();
   });
 });

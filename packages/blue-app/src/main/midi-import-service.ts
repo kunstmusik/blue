@@ -1,9 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { validateMidiImportSettings, type MidiImportSettings } from '@blue/data';
-import type {
-  MidiImportStartResult,
-  PendingMidiImport,
-} from '../shared/midi-import';
+import type { MidiImportStartResult, PendingMidiImport } from '../shared/midi-import';
 import { isMidiImportSettingsList } from '../shared/midi-import';
 import type { ParsedMidiImport } from './midi-import-parser';
 
@@ -57,7 +54,10 @@ export class MidiImportService {
     }
     if (pending.projectSessionId !== this.dependencies.getProjectSessionId()) {
       this.pending = null;
-      return { ok: false, message: 'The project changed while the MIDI file was being configured.' };
+      return {
+        ok: false,
+        message: 'The project changed while the MIDI file was being configured.',
+      };
     }
     if (!isMidiImportSettingsList(settings)) {
       return { ok: false, message: 'Invalid MIDI import settings.' };

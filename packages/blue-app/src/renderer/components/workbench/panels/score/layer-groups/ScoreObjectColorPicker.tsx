@@ -1,8 +1,5 @@
 import { forwardRef, useCallback, useImperativeHandle, useState } from 'react';
-import {
-  ColorPickerPopover,
-  type ColorPickerAnchorRect,
-} from '../../../../ColorPicker';
+import { ColorPickerPopover, type ColorPickerAnchorRect } from '../../../../ColorPicker';
 
 export interface ScoreObjectColorPickerHandle {
   /**
@@ -10,7 +7,11 @@ export interface ScoreObjectColorPickerHandle {
    * Floating workbench panels live in a popout document, so the popover needs
    * that element to render and dismiss inside the correct window.
    */
-  open(initialColor: number, anchor: ColorPickerAnchorRect, anchorElement?: HTMLElement | null): void;
+  open(
+    initialColor: number,
+    anchor: ColorPickerAnchorRect,
+    anchorElement?: HTMLElement | null,
+  ): void;
 }
 
 interface Props {
@@ -25,14 +26,18 @@ const ScoreObjectColorPicker = forwardRef<ScoreObjectColorPickerHandle, Props>(
     const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
     const close = useCallback(() => setOpen(false), []);
 
-    useImperativeHandle(ref, () => ({
-      open(initialColor, nextAnchor, nextAnchorElement) {
-        setValue(`#${(initialColor & 0x00ffffff).toString(16).padStart(6, '0')}`);
-        setAnchor(nextAnchor);
-        setAnchorElement(nextAnchorElement ?? null);
-        setOpen(true);
-      },
-    }), []);
+    useImperativeHandle(
+      ref,
+      () => ({
+        open(initialColor, nextAnchor, nextAnchorElement) {
+          setValue(`#${(initialColor & 0x00ffffff).toString(16).padStart(6, '0')}`);
+          setAnchor(nextAnchor);
+          setAnchorElement(nextAnchorElement ?? null);
+          setOpen(true);
+        },
+      }),
+      [],
+    );
 
     return (
       <ColorPickerPopover

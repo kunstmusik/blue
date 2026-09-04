@@ -132,7 +132,11 @@ async function main() {
   try {
     const { env, secretValues } = sanitizedPositiveEnv();
     const result = await runScript([], env);
-    assert.equal(result.code, 0, `Positive case should exit 0, got ${result.code}\n${result.stderr}`);
+    assert.equal(
+      result.code,
+      0,
+      `Positive case should exit 0, got ${result.code}\n${result.stderr}`,
+    );
     assertNoSecretValues(result, secretValues);
     assert(/Credential preflight passed/.test(result.stderr), 'Positive case should report pass');
     console.log('PASS positive case');
@@ -176,14 +180,8 @@ async function main() {
     const baseEnv = sanitizedMissingEnv({ ...process.env });
     const result = await runScript(['--scope', 'windows'], baseEnv);
     assert.notEqual(result.code, 0, 'Windows-only negative case should exit non-zero');
-    assert(
-      !result.stderr.includes('CSC_LINK'),
-      'Windows scope should not check macOS CSC_LINK',
-    );
-    assert(
-      result.stderr.includes('AZURE_CLIENT_ID'),
-      'Windows scope should check AZURE_CLIENT_ID',
-    );
+    assert(!result.stderr.includes('CSC_LINK'), 'Windows scope should not check macOS CSC_LINK');
+    assert(result.stderr.includes('AZURE_CLIENT_ID'), 'Windows scope should check AZURE_CLIENT_ID');
     console.log('PASS scope filtering');
   } catch (error) {
     failures += 1;
@@ -209,7 +207,10 @@ async function main() {
     console.log('PASS malformed diagnostic does not echo secret value');
   } catch (error) {
     failures += 1;
-    console.error('FAIL malformed diagnostic:', error instanceof Error ? error.message : String(error));
+    console.error(
+      'FAIL malformed diagnostic:',
+      error instanceof Error ? error.message : String(error),
+    );
   }
 
   if (failures > 0) {
@@ -221,6 +222,9 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error('Preflight test harness crashed:', error instanceof Error ? error.message : String(error));
+  console.error(
+    'Preflight test harness crashed:',
+    error instanceof Error ? error.message : String(error),
+  );
   process.exit(1);
 });

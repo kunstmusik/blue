@@ -18,7 +18,9 @@ declare global {
   interface Window {
     blueAPI: {
       getEffectEditorDocument: (request: unknown) => Promise<EffectEditorSnapshot | null>;
-      updateEffectEditorDocument: (request: EffectEditorPatchRequest) => Promise<EffectEditorSnapshot | null>;
+      updateEffectEditorDocument: (
+        request: EffectEditorPatchRequest,
+      ) => Promise<EffectEditorSnapshot | null>;
       openEffectEditor: (request: unknown) => Promise<unknown> | unknown;
       onProjectDocumentUpdated: (
         callback: (event: ProjectDocumentUpdatedEvent) => void,
@@ -27,7 +29,9 @@ declare global {
   }
 }
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 vi.mock('../components/workbench/panels/orchestra/bsb/BSBInterfaceEditor', () => ({
   default: ({
@@ -35,7 +39,9 @@ vi.mock('../components/workbench/panels/orchestra/bsb/BSBInterfaceEditor', () =>
     onInstrumentPatch,
   }: {
     instrument: { name: string };
-    onInstrumentPatch: (patch: { bsbInterface: { type: 'setEditEnabled'; value: boolean } }) => void;
+    onInstrumentPatch: (patch: {
+      bsbInterface: { type: 'setEditEnabled'; value: boolean };
+    }) => void;
   }) =>
     React.createElement(
       'div',
@@ -45,7 +51,8 @@ vi.mock('../components/workbench/panels/orchestra/bsb/BSBInterfaceEditor', () =>
         'button',
         {
           type: 'button',
-          onClick: () => onInstrumentPatch({ bsbInterface: { type: 'setEditEnabled', value: false } }),
+          onClick: () =>
+            onInstrumentPatch({ bsbInterface: { type: 'setEditEnabled', value: false } }),
         },
         'Toggle edit mode',
       ),
@@ -73,8 +80,10 @@ vi.mock('../components/workbench/panels/editors/SelectedCodeEditor', () => ({
         'data-selected-code-editor': true,
         'data-aria-label': ariaLabel,
         'data-udo-scope': `${javaBlueCompletionOptions?.contextUdos?.length ?? 0}:${javaBlueCompletionOptions?.projectUdos?.length ?? 0}`,
-        'data-context-udo-names': javaBlueCompletionOptions?.contextUdos?.map((udo) => udo.name).join(',') ?? '',
-        'data-project-udo-names': javaBlueCompletionOptions?.projectUdos?.map((udo) => udo.name).join(',') ?? '',
+        'data-context-udo-names':
+          javaBlueCompletionOptions?.contextUdos?.map((udo) => udo.name).join(',') ?? '',
+        'data-project-udo-names':
+          javaBlueCompletionOptions?.projectUdos?.map((udo) => udo.name).join(',') ?? '',
       },
       React.createElement(
         'label',
@@ -97,12 +106,13 @@ vi.mock('../components/workbench/panels/udo/UdoWorkspacePanel', () => ({
   }: {
     udos: UdoDefinitionSnapshot[];
     projectUdos?: readonly UdoDefinitionSnapshot[];
-  }) => React.createElement('div', {
-    'data-testid': 'udo-workspace-panel',
-    'data-udo-scope': `${udos.length}:${projectUdos?.length ?? 0}`,
-    'data-context-udo-names': udos.map((udo) => udo.name).join(','),
-    'data-project-udo-names': projectUdos?.map((udo) => udo.name).join(',') ?? '',
-  }),
+  }) =>
+    React.createElement('div', {
+      'data-testid': 'udo-workspace-panel',
+      'data-udo-scope': `${udos.length}:${projectUdos?.length ?? 0}`,
+      'data-context-udo-names': udos.map((udo) => udo.name).join(','),
+      'data-project-udo-names': projectUdos?.map((udo) => udo.name).join(',') ?? '',
+    }),
 }));
 
 vi.mock('../hooks/use-udo-callbacks', () => ({
@@ -140,9 +150,7 @@ function createLoadedSnapshot(code = 'aout = ain'): EffectEditorSnapshot {
     }),
     // A project effect snapshot carries the project-global UDO projection so
     // the editor (inline or separate window) can offer project UDO completion.
-    projectUdos: [
-      udoSnapshot('ProjectUDO'),
-    ],
+    projectUdos: [udoSnapshot('ProjectUDO')],
     udos: [udoSnapshot('EffectOwnerUDO')],
   };
 }
@@ -176,13 +184,15 @@ beforeEach(() => {
 
   window.blueAPI = {
     getEffectEditorDocument: vi.fn().mockImplementation(async () => currentSnapshot),
-    updateEffectEditorDocument: vi.fn().mockImplementation(async (request: EffectEditorPatchRequest) => {
-      currentSnapshot = {
-        ...currentSnapshot,
-        ...request.patch,
-      } as EffectEditorSnapshot;
-      return currentSnapshot;
-    }),
+    updateEffectEditorDocument: vi
+      .fn()
+      .mockImplementation(async (request: EffectEditorPatchRequest) => {
+        currentSnapshot = {
+          ...currentSnapshot,
+          ...request.patch,
+        } as EffectEditorSnapshot;
+        return currentSnapshot;
+      }),
     openEffectEditor: vi.fn().mockResolvedValue(undefined),
     onProjectDocumentUpdated: vi.fn(() => () => undefined),
   };

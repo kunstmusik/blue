@@ -14,7 +14,9 @@ import {
 } from './automation/csd-parameter-automation';
 
 function blueX7Parameter(instrument: BlueX7, semanticKey: string): Parameter {
-  const parameter = instrument.getParameters().find((candidate) => candidate.getName() === semanticKey);
+  const parameter = instrument
+    .getParameters()
+    .find((candidate) => candidate.getName() === semanticKey);
   if (!parameter) throw new Error(`Missing BlueX7 parameter: ${semanticKey}`);
   return parameter;
 }
@@ -108,7 +110,9 @@ describe('BlueData automation render parity', () => {
     feedback.setFixedValue(6);
 
     const render = data.toRealtimePlaybackCSD();
-    const binding = render.blueX7Bindings.find((candidate) => candidate.ownerIdentity === 'arrangement:7');
+    const binding = render.blueX7Bindings.find(
+      (candidate) => candidate.ownerIdentity === 'arrangement:7',
+    );
     expect(binding).toBeDefined();
     const algorithmChannel = binding!.parameterChannels.get('common.algorithm');
     const feedbackChannel = binding!.parameterChannels.get('common.feedback');
@@ -125,8 +129,9 @@ describe('BlueData automation render parity', () => {
       renderStart: 4,
       renderEnd: -1,
     });
-    const automatedValues = [...score.matchAll(/i\d+\s+[\d.]+\s+\.0001\s+([\d.-]+)/g)]
-      .map((match) => Number(match[1]));
+    const automatedValues = [...score.matchAll(/i\d+\s+[\d.]+\s+\.0001\s+([\d.-]+)/g)].map(
+      (match) => Number(match[1]),
+    );
     expect(automatedValues.length).toBeGreaterThan(0);
     expect(automatedValues.every(Number.isInteger)).toBe(true);
     expect(score).toContain('i99\t1\t.0001\t6');

@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-import { getLibraryTransferSourceType, type LibraryBrowseNode, type LibraryItemKey } from '../../../../shared/unified-library';
+import {
+  getLibraryTransferSourceType,
+  type LibraryBrowseNode,
+  type LibraryItemKey,
+} from '../../../../shared/unified-library';
 import { LibraryTree } from '../../libraries/LibraryTree';
 import { LibraryBlockDropMarker } from '../../libraries/LibraryDropMarker';
 import { ConfirmationDialog } from '../../dialogs/ConfirmationDialog';
@@ -130,17 +134,19 @@ export default function SoundObjectLibraryPanel(): React.ReactElement {
     const { node } = pendingDelete;
     setPendingDelete(null);
     const currentSelectedKey = useLibraryStore.getState().selectedKey;
-    const currentNode = nodes.find((candidate) => (
-      candidate.nodeId === node.nodeId
-      && candidate.revision === node.revision
-      && JSON.stringify(candidate.key) === JSON.stringify(node.key)
-    ));
+    const currentNode = nodes.find(
+      (candidate) =>
+        candidate.nodeId === node.nodeId &&
+        candidate.revision === node.revision &&
+        JSON.stringify(candidate.key) === JSON.stringify(node.key),
+    );
     if (
-      !currentNode
-      || useProjectStore.getState().sessionId !== pendingDelete.projectSessionId
-      || getProjectDocumentRevision() !== pendingDelete.projectRevision
-      || JSON.stringify(currentSelectedKey) !== JSON.stringify(pendingDelete.selectedKey)
-      || (currentSelectedKey !== null && JSON.stringify(currentSelectedKey) !== JSON.stringify(node.key))
+      !currentNode ||
+      useProjectStore.getState().sessionId !== pendingDelete.projectSessionId ||
+      getProjectDocumentRevision() !== pendingDelete.projectRevision ||
+      JSON.stringify(currentSelectedKey) !== JSON.stringify(pendingDelete.selectedKey) ||
+      (currentSelectedKey !== null &&
+        JSON.stringify(currentSelectedKey) !== JSON.stringify(node.key))
     ) {
       setError('Project SoundObject changed before deletion; try again.');
       return;
@@ -158,10 +164,11 @@ export default function SoundObjectLibraryPanel(): React.ReactElement {
       return;
     }
     if (
-      revalidatedPreview.value.linkedInstanceCount !== pendingDelete.linkedInstances
-      || JSON.stringify(revalidatedPreview.value.locations) !== JSON.stringify(pendingDelete.locations)
-      || revalidatedPreview.value.requiresConfirmation !== pendingDelete.requiresConfirmation
-      || revalidatedPreview.value.confirmationToken.length === 0
+      revalidatedPreview.value.linkedInstanceCount !== pendingDelete.linkedInstances ||
+      JSON.stringify(revalidatedPreview.value.locations) !==
+        JSON.stringify(pendingDelete.locations) ||
+      revalidatedPreview.value.requiresConfirmation !== pendingDelete.requiresConfirmation ||
+      revalidatedPreview.value.confirmationToken.length === 0
     ) {
       setError('Project SoundObject changed before deletion; try again.');
       return;
@@ -198,12 +205,12 @@ export default function SoundObjectLibraryPanel(): React.ReactElement {
     );
   };
   const canPaste = Boolean(
-    clipboard
-    && getLibraryTransferSourceType(clipboard.source) === 'soundObject'
-    && !(
-      clipboard.operation === 'cut'
-      && clipboard.source.kind === 'library'
-      && clipboard.source.key.scope === 'projectShared'
+    clipboard &&
+    getLibraryTransferSourceType(clipboard.source) === 'soundObject' &&
+    !(
+      clipboard.operation === 'cut' &&
+      clipboard.source.kind === 'library' &&
+      clipboard.source.key.scope === 'projectShared'
     ),
   );
 
@@ -217,14 +224,26 @@ export default function SoundObjectLibraryPanel(): React.ReactElement {
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-auto bg-black p-1 text-app-text">
-      {error && <p role="alert" className="px-2 py-1 text-role-callout text-red-400">{error}</p>}
+      {error && (
+        <p role="alert" className="px-2 py-1 text-role-callout text-red-400">
+          {error}
+        </p>
+      )}
       <LibraryTree
         label="Project SoundObjects"
         nodes={nodes}
-        onSelect={(key) => { void openEditor(key, false); }}
-        onOpen={(key) => { void openEditor(key, true); }}
-        onCopy={(node) => { void captureClipboard(node, 'copy'); }}
-        onCut={(node) => { void captureClipboard(node, 'cut'); }}
+        onSelect={(key) => {
+          void openEditor(key, false);
+        }}
+        onOpen={(key) => {
+          void openEditor(key, true);
+        }}
+        onCopy={(node) => {
+          void captureClipboard(node, 'copy');
+        }}
+        onCut={(node) => {
+          void captureClipboard(node, 'cut');
+        }}
         onPaste={canPaste ? pasteIntoProjectLibrary : undefined}
         clipboard={clipboard}
         onDelete={deleteNode}

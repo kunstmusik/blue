@@ -3,7 +3,10 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { getSnapValue, type SnapValueName, type SnapCategory } from '@blue/data';
 import type { ScorePathSegment } from './types';
 import type { NoteProcessorChainSnapshot } from '../../../../../shared/project-editor';
-import { PopoutDropdownMenuPortal, portalEventIsolationProps } from '../../../../hooks/host-portals';
+import {
+  PopoutDropdownMenuPortal,
+  portalEventIsolationProps,
+} from '../../../../hooks/host-portals';
 import { useScoreColorHistoryStore } from '../../../../stores/score-color-history-store';
 import { cn } from '../../../../lib/cn';
 
@@ -31,8 +34,16 @@ const MODE_OPTIONS: { value: ScoreMode; label: string }[] = [
 ];
 
 const SNAP_GROUPS: { label: string; category: SnapCategory; values: SnapValueName[] }[] = [
-  { label: 'Musical', category: 'MUSICAL', values: ['BAR', 'HALF', 'BEAT', 'EIGHTH', 'SIXTEENTH', 'THIRTY_SECOND', 'SIXTY_FOURTH'] },
-  { label: 'Triplets', category: 'TRIPLET', values: ['QUARTER_TRIPLET', 'EIGHTH_TRIPLET', 'SIXTEENTH_TRIPLET'] },
+  {
+    label: 'Musical',
+    category: 'MUSICAL',
+    values: ['BAR', 'HALF', 'BEAT', 'EIGHTH', 'SIXTEENTH', 'THIRTY_SECOND', 'SIXTY_FOURTH'],
+  },
+  {
+    label: 'Triplets',
+    category: 'TRIPLET',
+    values: ['QUARTER_TRIPLET', 'EIGHTH_TRIPLET', 'SIXTEENTH_TRIPLET'],
+  },
   { label: 'Time', category: 'TIME', values: ['ONE_SECOND', 'HUNDRED_MS', 'TEN_MS', 'ONE_MS'] },
   { label: 'SMPTE', category: 'SMPTE', values: ['FRAME'] },
   { label: 'Samples', category: 'SAMPLE', values: ['SAMPLE'] },
@@ -86,7 +97,10 @@ export default function ScoreToolbar({
           const hasChain = npcChain && npcChain.processors.length > 0;
 
           return (
-            <span key={segment.groupId ?? 'root'} className="flex items-center gap-0 whitespace-nowrap">
+            <span
+              key={segment.groupId ?? 'root'}
+              className="flex items-center gap-0 whitespace-nowrap"
+            >
               {i > 0 && <span className="mr-1 text-app-text-muted">/</span>}
               <button
                 className={cn(
@@ -128,7 +142,9 @@ export default function ScoreToolbar({
                       >
                         Edit Note Processors
                         {hasChain && (
-                          <span className="text-red-400 text-role-callout">({npcChain.processors.length})</span>
+                          <span className="text-red-400 text-role-callout">
+                            ({npcChain.processors.length})
+                          </span>
                         )}
                       </DropdownMenu.Item>
                     </DropdownMenu.Content>
@@ -259,7 +275,6 @@ export default function ScoreToolbar({
           Redo Color
         </button>
       </div>
-
     </div>
   );
 }

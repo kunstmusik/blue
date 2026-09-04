@@ -110,7 +110,8 @@ async function checkGitHubRelease(repository, tag) {
   if (!tag) {
     return {
       ok: false,
-      message: 'Cannot check GitHub release: no tag resolved. Pass --tag or run from a tagged commit.',
+      message:
+        'Cannot check GitHub release: no tag resolved. Pass --tag or run from a tagged commit.',
     };
   }
 
@@ -195,7 +196,8 @@ async function main() {
   if (!detectedTag) {
     diagnostics.push({
       ok: false,
-      message: 'HEAD is not at an exact vX.Y.Z tag. Stable releases must be triggered by an immutable tag.',
+      message:
+        'HEAD is not at an exact vX.Y.Z tag. Stable releases must be triggered by an immutable tag.',
     });
   } else {
     const match = VERSION_PATTERN.exec(detectedTag);
@@ -214,7 +216,10 @@ async function main() {
             'Update package.json, or create a tag that matches it.',
         });
       } else {
-        diagnostics.push({ ok: true, message: `Tag/version agreement: ${detectedTag} <-> ${expectedVersion}` });
+        diagnostics.push({
+          ok: true,
+          message: `Tag/version agreement: ${detectedTag} <-> ${expectedVersion}`,
+        });
       }
     }
   }

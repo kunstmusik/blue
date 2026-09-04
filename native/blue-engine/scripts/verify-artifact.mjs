@@ -3,7 +3,13 @@ import { constants } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import process from 'node:process';
-import { packageRoot, protocolVersion, sha256File, sourceRevision, vcpkgBaseline } from './artifact.mjs';
+import {
+  packageRoot,
+  protocolVersion,
+  sha256File,
+  sourceRevision,
+  vcpkgBaseline,
+} from './artifact.mjs';
 import { parseTargetArgs, resolveTarget } from './target.mjs';
 
 const allowedExternalDependencies = {
@@ -17,12 +23,15 @@ function fail(code, detail = '') {
 }
 
 export function validateManifest(manifest, target, options = {}) {
-  if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) fail('BLUE_ENGINE_MANIFEST_INVALID');
+  if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest))
+    fail('BLUE_ENGINE_MANIFEST_INVALID');
   if (manifest.schemaVersion !== 1) fail('BLUE_ENGINE_MANIFEST_SCHEMA');
   if (manifest.engineVersion !== '0.1.0') fail('BLUE_ENGINE_VERSION_MISMATCH');
   if (manifest.protocolVersion !== protocolVersion) fail('BLUE_ENGINE_PROTOCOL_MISMATCH');
-  if (manifest.platform !== target.platform || manifest.arch !== target.arch) fail('BLUE_ENGINE_TARGET_MISMATCH');
-  if (manifest.executableName !== target.executableName) fail('BLUE_ENGINE_EXECUTABLE_NAME_MISMATCH');
+  if (manifest.platform !== target.platform || manifest.arch !== target.arch)
+    fail('BLUE_ENGINE_TARGET_MISMATCH');
+  if (manifest.executableName !== target.executableName)
+    fail('BLUE_ENGINE_EXECUTABLE_NAME_MISMATCH');
   if (manifest.buildType !== 'Release') fail('BLUE_ENGINE_BUILD_TYPE_INVALID');
   if (manifest.vcpkgBaseline !== vcpkgBaseline) fail('BLUE_ENGINE_VCPKG_BASELINE_MISMATCH');
   if (manifest.vcpkgTriplet !== target.triplet) fail('BLUE_ENGINE_VCPKG_TRIPLET_MISMATCH');
@@ -32,7 +41,11 @@ export function validateManifest(manifest, target, options = {}) {
   }
   const allowlist = manifest.allowedExternalDependencies;
   const expected = allowedExternalDependencies[target.platform];
-  if (!Array.isArray(allowlist) || allowlist.some((value) => !expected.has(value)) || allowlist.length !== expected.size) {
+  if (
+    !Array.isArray(allowlist) ||
+    allowlist.some((value) => !expected.has(value)) ||
+    allowlist.length !== expected.size
+  ) {
     fail('BLUE_ENGINE_EXTERNAL_ALLOWLIST_INVALID');
   }
   if (options.ci) {
@@ -57,8 +70,7 @@ export function inspectDependencyReport(platform, report) {
       .filter(Boolean);
     const invalid = dependencies.find(
       (dependency) =>
-        !dependency.startsWith('/System/Library/') &&
-        !dependency.startsWith('/usr/lib/'),
+        !dependency.startsWith('/System/Library/') && !dependency.startsWith('/usr/lib/'),
     );
     if (invalid) fail('BLUE_ENGINE_UNEXPECTED_SHARED_DEPENDENCY', invalid);
   }
@@ -66,19 +78,21 @@ export function inspectDependencyReport(platform, report) {
     if (/=>\s+not found/.test(lower)) {
       fail('BLUE_ENGINE_SHARED_DEPENDENCY_MISSING');
     }
-    const allowed = /^(linux-vdso|lib(c|m|pthread|dl|rt|stdc\+\+|gcc_s)\.so|ld-linux|\/lib|\/usr\/lib)/;
+    const allowed =
+      /^(linux-vdso|lib(c|m|pthread|dl|rt|stdc\+\+|gcc_s)\.so|ld-linux|\/lib|\/usr\/lib)/;
     const dependencies = report.includes('(NEEDED)')
       ? [...report.matchAll(/\(NEEDED\).*\[([^\]]+)\]/g)].map((match) => match[1])
       : report
-        .split(/\r?\n/)
-        .map((line) => line.trim())
-        .filter(Boolean)
-        .map((line) => line.split(/\s+=>|\s+\(/)[0].trim());
+          .split(/\r?\n/)
+          .map((line) => line.trim())
+          .filter(Boolean)
+          .map((line) => line.split(/\s+=>|\s+\(/)[0].trim());
     const invalid = dependencies.find((dependency) => dependency && !allowed.test(dependency));
     if (invalid) fail('BLUE_ENGINE_UNEXPECTED_SHARED_DEPENDENCY', invalid);
   }
   if (platform === 'win32') {
-    const allowed = /^(api-ms-win-[a-z0-9-]+|ext-ms-win-[a-z0-9-]+|kernel32|user32|advapi32|ws2_32|iphlpapi|shell32|ole32|oleaut32|bcrypt|ntdll|msvcp1\d\d|vcruntime1\d\d(?:_\d+)?|ucrtbase)\.dll$/i;
+    const allowed =
+      /^(api-ms-win-[a-z0-9-]+|ext-ms-win-[a-z0-9-]+|kernel32|user32|advapi32|ws2_32|iphlpapi|shell32|ole32|oleaut32|bcrypt|ntdll|msvcp1\d\d|vcruntime1\d\d(?:_\d+)?|ucrtbase)\.dll$/i;
     const invalid = report
       .split(/\r?\n/)
       .map((line) => line.trim())
@@ -90,7 +104,8 @@ export function inspectDependencyReport(platform, report) {
 }
 
 export function inspectArchitectureReport(report, target) {
-  const expected = target.arch === 'x64' ? /(x86_64|x86-64|amd64|machine \(x64\))/i : /arm64|aarch64/i;
+  const expected =
+    target.arch === 'x64' ? /(x86_64|x86-64|amd64|machine \(x64\))/i : /arm64|aarch64/i;
   if (!expected.test(report)) fail('BLUE_ENGINE_ARCHITECTURE_MISMATCH', report.trim());
   return true;
 }
@@ -122,7 +137,10 @@ function inspectArchitecture(executablePath, target) {
 
 function inspectDependencies(executablePath, target) {
   if (target.platform === 'darwin') {
-    inspectDependencyReport('darwin', execFileSync('otool', ['-L', executablePath], { encoding: 'utf8' }));
+    inspectDependencyReport(
+      'darwin',
+      execFileSync('otool', ['-L', executablePath], { encoding: 'utf8' }),
+    );
     return;
   }
   if (target.platform === 'linux') {
@@ -138,7 +156,10 @@ function inspectDependencies(executablePath, target) {
     return;
   }
   try {
-    inspectDependencyReport('win32', execFileSync('dumpbin', ['/dependents', executablePath], { encoding: 'utf8' }));
+    inspectDependencyReport(
+      'win32',
+      execFileSync('dumpbin', ['/dependents', executablePath], { encoding: 'utf8' }),
+    );
   } catch (error) {
     if (process.env.CI) throw error;
     process.stderr.write('[blue-engine] dumpbin unavailable; skipped PE dependency inspection\n');

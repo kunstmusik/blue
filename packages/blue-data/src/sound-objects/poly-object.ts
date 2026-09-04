@@ -35,7 +35,10 @@ import { JavaScriptObject } from './javascript-object';
 import { Instance } from './instance';
 import type { JavaScriptSession } from '../javascript-runtime';
 import type { JavaRuntimeClientContract } from '../java-runtime';
-import { normalizeScoreGenerationOptions, type ScoreGenerationOptionsOrSolo } from '../score/score-generation-options';
+import {
+  normalizeScoreGenerationOptions,
+  type ScoreGenerationOptionsOrSolo,
+} from '../score/score-generation-options';
 
 type OnLoadTarget = PolyObject | JavaScriptObject | ClojureObject | PythonObject;
 
@@ -57,11 +60,7 @@ function resolveOnLoadTarget(sObj: SoundObject): OnLoadTarget | null {
   return null;
 }
 
-
-
-export class PolyObject extends Array<SoundLayer>
-  implements SoundObject, LayerGroup<SoundLayer> {
-
+export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerGroup<SoundLayer> {
   // ScoreObject properties
   protected _name = 'polyObject';
   protected _startTime = TimePosition.beats(0);
@@ -99,35 +98,69 @@ export class PolyObject extends Array<SoundLayer>
 
   // ─── ScoreObject ───
 
-  getName(): string { return this._name; }
-  setName(value: string): void { this._name = value; }
+  getName(): string {
+    return this._name;
+  }
+  setName(value: string): void {
+    this._name = value;
+  }
 
-  getStartTime(): TimePosition { return this._startTime; }
-  setStartTime(value: TimePosition): void { this._startTime = value; }
+  getStartTime(): TimePosition {
+    return this._startTime;
+  }
+  setStartTime(value: TimePosition): void {
+    this._startTime = value;
+  }
 
-  getSubjectiveDuration(): TimeDuration { return this._subjectiveDuration; }
-  setSubjectiveDuration(value: TimeDuration): void { this._subjectiveDuration = value; }
+  getSubjectiveDuration(): TimeDuration {
+    return this._subjectiveDuration;
+  }
+  setSubjectiveDuration(value: TimeDuration): void {
+    this._subjectiveDuration = value;
+  }
 
-  getBackgroundColor(): number { return this._backgroundColor; }
-  setBackgroundColor(color: number): void { this._backgroundColor = color; }
+  getBackgroundColor(): number {
+    return this._backgroundColor;
+  }
+  setBackgroundColor(color: number): void {
+    this._backgroundColor = color;
+  }
 
-  getResizeLeftLimits(_ctx: TimeContext): number[] { return [-Infinity, 0]; }
-  getResizeRightLimits(_ctx: TimeContext): number[] { return [0, Infinity]; }
+  getResizeLeftLimits(_ctx: TimeContext): number[] {
+    return [-Infinity, 0];
+  }
+  getResizeRightLimits(_ctx: TimeContext): number[] {
+    return [0, Infinity];
+  }
   resizeLeft(_ctx: TimeContext, _newStart: number): void {}
   resizeRight(_ctx: TimeContext, _newEnd: number): void {}
 
-  getCloneSourceHashCode(): number { return this._cloneSourceHashCode; }
+  getCloneSourceHashCode(): number {
+    return this._cloneSourceHashCode;
+  }
 
   // ─── SoundObject ───
 
-  getNoteProcessorChain(): NoteProcessorChain { return this._npc; }
-  setNoteProcessorChain(chain: NoteProcessorChain): void { this._npc = chain; }
+  getNoteProcessorChain(): NoteProcessorChain {
+    return this._npc;
+  }
+  setNoteProcessorChain(chain: NoteProcessorChain): void {
+    this._npc = chain;
+  }
 
-  getTimeBehavior(): TimeBehavior { return this._timeBehavior; }
-  setTimeBehavior(behavior: TimeBehavior): void { this._timeBehavior = behavior; }
+  getTimeBehavior(): TimeBehavior {
+    return this._timeBehavior;
+  }
+  setTimeBehavior(behavior: TimeBehavior): void {
+    this._timeBehavior = behavior;
+  }
 
-  getRepeatPoint(): TimeDuration | null { return this._repeatPoint; }
-  setRepeatPoint(rp: TimeDuration | null): void { this._repeatPoint = rp; }
+  getRepeatPoint(): TimeDuration | null {
+    return this._repeatPoint;
+  }
+  setRepeatPoint(rp: TimeDuration | null): void {
+    this._repeatPoint = rp;
+  }
 
   getSoundObjects(grabMutedSoundObjects = false): SoundObject[] {
     const sObjects: SoundObject[] = [];
@@ -196,7 +229,8 @@ export class PolyObject extends Array<SoundLayer>
     options?: ScoreGenerationOptionsOrSolo,
   ): NoteList {
     const noteList = new NoteList();
-    const processWithSolo = normalizeScoreGenerationOptions(options).processWithSolo ?? this.hasSoloLayers();
+    const processWithSolo =
+      normalizeScoreGenerationOptions(options).processWithSolo ?? this.hasSoloLayers();
     const shouldProcessWithSolo = processWithSolo ?? this.hasSoloLayers();
 
     if (shouldProcessWithSolo) {
@@ -230,7 +264,8 @@ export class PolyObject extends Array<SoundLayer>
     options?: ScoreGenerationOptionsOrSolo,
   ): Promise<NoteList> {
     const noteList = new NoteList();
-    const processWithSolo = normalizeScoreGenerationOptions(options).processWithSolo ?? this.hasSoloLayers();
+    const processWithSolo =
+      normalizeScoreGenerationOptions(options).processWithSolo ?? this.hasSoloLayers();
     const shouldProcessWithSolo = processWithSolo ?? this.hasSoloLayers();
 
     if (shouldProcessWithSolo) {
@@ -266,12 +301,7 @@ export class PolyObject extends Array<SoundLayer>
     const duration = this._subjectiveDuration.toBeats(context);
     const repeatPointBeats = this._repeatPoint ? this._repeatPoint.toBeats(context) : -1;
 
-    applyTimeBehavior(
-      processed,
-      this._timeBehavior,
-      duration,
-      repeatPointBeats,
-    );
+    applyTimeBehavior(processed, this._timeBehavior, duration, repeatPointBeats);
 
     setScoreStart(processed, this._startTime.toBeats(context));
 
@@ -301,12 +331,7 @@ export class PolyObject extends Array<SoundLayer>
     const duration = this._subjectiveDuration.toBeats(context);
     const repeatPointBeats = this._repeatPoint ? this._repeatPoint.toBeats(context) : -1;
 
-    applyTimeBehavior(
-      processed,
-      this._timeBehavior,
-      duration,
-      repeatPointBeats,
-    );
+    applyTimeBehavior(processed, this._timeBehavior, duration, repeatPointBeats);
 
     setScoreStart(processed, this._startTime.toBeats(context));
 
@@ -424,7 +449,10 @@ export class PolyObject extends Array<SoundLayer>
       layerElem.setAttribute('muted', layer.isMuted().toString());
       layerElem.setAttribute('solo', layer.isSolo().toString());
       layerElem.setAttribute('heightIndex', layer.getHeightIndex().toString());
-      layerElem.setAttribute('automationSelectedIndex', layer.getAutomationParameters().getSelectedIndex().toString());
+      layerElem.setAttribute(
+        'automationSelectedIndex',
+        layer.getAutomationParameters().getSelectedIndex().toString(),
+      );
       layerElem.addElement('backgroundColor').setText(String(layer.getBackgroundColor()));
       layerElem.addElement(layer.getNoteProcessorChain().saveAsXML());
 
@@ -483,7 +511,13 @@ export class PolyObject extends Array<SoundLayer>
 
       if (nodeName === 'soundLayer') {
         const layer = new SoundLayer();
-        const knownAttrs = new Set(['name', 'muted', 'solo', 'heightIndex', 'automationSelectedIndex']);
+        const knownAttrs = new Set([
+          'name',
+          'muted',
+          'solo',
+          'heightIndex',
+          'automationSelectedIndex',
+        ]);
         for (const attrName of node.getAttributeNames()) {
           if (!knownAttrs.has(attrName)) {
             layer.setUnknownAttribute(attrName, node.getAttribute(attrName) ?? '');

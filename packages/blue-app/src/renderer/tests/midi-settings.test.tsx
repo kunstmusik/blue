@@ -7,7 +7,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import MidiSettings from '../components/settings/MidiSettings';
 import { useMidiInputStore } from '../stores/midi-input-store';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 declare global {
   interface Window {
@@ -46,7 +48,9 @@ describe('MidiSettings', () => {
     const buttons = Array.from(container.querySelectorAll('button'));
     const rescanButton = buttons.find((b) => b.textContent === 'Rescan');
     expect(rescanButton).toBeTruthy();
-    act(() => { root.unmount(); });
+    act(() => {
+      root.unmount();
+    });
     container.remove();
   });
 
@@ -62,8 +66,26 @@ describe('MidiSettings', () => {
       revision: 1,
       phase: 'partial',
       devices: [
-        { id: 'a', name: 'Alpha', manufacturer: 'M', version: '1', enabled: true, availability: 'available', connection: 'connected', lastError: null },
-        { id: 'b', name: 'Bravo', manufacturer: '', version: '', enabled: false, availability: 'unavailable', connection: 'closed', lastError: null },
+        {
+          id: 'a',
+          name: 'Alpha',
+          manufacturer: 'M',
+          version: '1',
+          enabled: true,
+          availability: 'available',
+          connection: 'connected',
+          lastError: null,
+        },
+        {
+          id: 'b',
+          name: 'Bravo',
+          manufacturer: '',
+          version: '',
+          enabled: false,
+          availability: 'unavailable',
+          connection: 'closed',
+          lastError: null,
+        },
       ],
       message: null,
       updatedAt: 0,
@@ -76,7 +98,9 @@ describe('MidiSettings', () => {
     expect(table?.querySelector('thead')?.classList).toContain('text-role-headline');
     expect(table?.querySelector('thead')?.classList).toContain('font-bold');
 
-    const checkboxes = Array.from(container.querySelectorAll('input[type="checkbox"]')) as HTMLInputElement[];
+    const checkboxes = Array.from(
+      container.querySelectorAll('input[type="checkbox"]'),
+    ) as HTMLInputElement[];
     expect(checkboxes).toHaveLength(2);
     const enabledValues = checkboxes.map((c) => c.checked).sort();
     expect(enabledValues).toContain(true);
@@ -85,7 +109,9 @@ describe('MidiSettings', () => {
     // phase badge visible
     expect(container.textContent).toContain('partial');
 
-    act(() => { root.unmount(); });
+    act(() => {
+      root.unmount();
+    });
     container.remove();
   });
 
@@ -99,7 +125,16 @@ describe('MidiSettings', () => {
       revision: 1,
       phase: 'ready',
       devices: [
-        { id: 'live-1', name: 'Live Controller', manufacturer: 'Acme', version: '1.0', enabled: true, availability: 'available', connection: 'connected', lastError: null },
+        {
+          id: 'live-1',
+          name: 'Live Controller',
+          manufacturer: 'Acme',
+          version: '1.0',
+          enabled: true,
+          availability: 'available',
+          connection: 'connected',
+          lastError: null,
+        },
       ],
       message: null,
       updatedAt: 0,
@@ -112,7 +147,9 @@ describe('MidiSettings', () => {
     const checkbox = container.querySelector('input[type="checkbox"]') as HTMLInputElement;
     expect(checkbox.checked).toBe(true);
 
-    act(() => { root.unmount(); });
+    act(() => {
+      root.unmount();
+    });
     container.remove();
   });
 
@@ -123,7 +160,16 @@ describe('MidiSettings', () => {
       revision: 1,
       phase: 'ready',
       devices: [
-        { id: 'live-1', name: 'Live Controller', manufacturer: 'Acme', version: '1.0', enabled: true, availability: 'available', connection: 'connected', lastError: null },
+        {
+          id: 'live-1',
+          name: 'Live Controller',
+          manufacturer: 'Acme',
+          version: '1.0',
+          enabled: true,
+          availability: 'available',
+          connection: 'connected',
+          lastError: null,
+        },
       ],
       message: null,
       updatedAt: 0,
@@ -147,7 +193,9 @@ describe('MidiSettings', () => {
     });
     expect(useMidiInputStore.getState().draftDirty).toBe(true);
 
-    act(() => { root.unmount(); });
+    act(() => {
+      root.unmount();
+    });
     container.remove();
   });
 
@@ -165,15 +213,15 @@ describe('MidiSettings', () => {
     const { container, root } = renderPanel();
     expect(container.textContent).toContain('MIDI permission was denied');
 
-    act(() => { root.unmount(); });
+    act(() => {
+      root.unmount();
+    });
     container.remove();
   });
 
   it('toggling an enabled checkbox updates the store draft dirty state', () => {
     useMidiInputStore.getState().setSavedPreferences({
-      devices: [
-        { id: 'a', name: 'Alpha', manufacturer: '', version: '', enabled: true },
-      ],
+      devices: [{ id: 'a', name: 'Alpha', manufacturer: '', version: '', enabled: true }],
     });
     // Surface the saved device through a snapshot so the merge logic doesn't
     // treat it as newly discovered.
@@ -182,7 +230,16 @@ describe('MidiSettings', () => {
       revision: 1,
       phase: 'ready',
       devices: [
-        { id: 'a', name: 'Alpha', manufacturer: '', version: '', enabled: true, availability: 'available', connection: 'closed', lastError: null },
+        {
+          id: 'a',
+          name: 'Alpha',
+          manufacturer: '',
+          version: '',
+          enabled: true,
+          availability: 'available',
+          connection: 'closed',
+          lastError: null,
+        },
       ],
       message: null,
       updatedAt: 0,
@@ -200,7 +257,9 @@ describe('MidiSettings', () => {
     expect(useMidiInputStore.getState().draftMidiInput.devices[0]?.enabled).toBe(false);
     expect(useMidiInputStore.getState().draftDirty).toBe(true);
 
-    act(() => { root.unmount(); });
+    act(() => {
+      root.unmount();
+    });
     container.remove();
   });
 
@@ -213,14 +272,25 @@ describe('MidiSettings', () => {
       revision: 1,
       phase: 'ready',
       devices: [
-        { id: 'a', name: 'Alpha', manufacturer: '', version: '', enabled: true, availability: 'available', connection: 'closed', lastError: null },
+        {
+          id: 'a',
+          name: 'Alpha',
+          manufacturer: '',
+          version: '',
+          enabled: true,
+          availability: 'available',
+          connection: 'closed',
+          lastError: null,
+        },
       ],
       message: null,
       updatedAt: 0,
     });
 
     const { container, root } = renderPanel();
-    const rescanButton = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Rescan') as HTMLButtonElement;
+    const rescanButton = Array.from(container.querySelectorAll('button')).find(
+      (b) => b.textContent === 'Rescan',
+    ) as HTMLButtonElement;
 
     act(() => {
       rescanButton.click();
@@ -228,7 +298,9 @@ describe('MidiSettings', () => {
 
     expect(window.blueAPI?.requestMidiInputRescan).toHaveBeenCalledTimes(1);
 
-    act(() => { root.unmount(); });
+    act(() => {
+      root.unmount();
+    });
     container.remove();
   });
 });

@@ -5,12 +5,7 @@ import { blueX7WidgetDomain } from './catalog-domains';
 const ENVELOPE_LEVEL_DOMAIN = blueX7WidgetDomain('operator.1.envelope.1.level');
 
 export interface EnvelopeEditorProps {
-  envelope: [
-    BlueX7EnvelopePoint,
-    BlueX7EnvelopePoint,
-    BlueX7EnvelopePoint,
-    BlueX7EnvelopePoint,
-  ];
+  envelope: [BlueX7EnvelopePoint, BlueX7EnvelopePoint, BlueX7EnvelopePoint, BlueX7EnvelopePoint];
   title?: string;
   isPitchEnvelope?: boolean;
   active?: boolean;
@@ -53,9 +48,9 @@ export const EnvelopeEditor: React.FC<EnvelopeEditorProps> = ({
   const releaseCapturedPointer = useCallback(() => {
     if (capturedElementRef.current && capturedPointerIdRef.current !== null) {
       try {
-        (capturedElementRef.current as Element & { releasePointerCapture?: (id: number) => void }).releasePointerCapture?.(
-          capturedPointerIdRef.current,
-        );
+        (
+          capturedElementRef.current as Element & { releasePointerCapture?: (id: number) => void }
+        ).releasePointerCapture?.(capturedPointerIdRef.current);
       } catch {
         // Ignore
       }
@@ -179,9 +174,9 @@ export const EnvelopeEditor: React.FC<EnvelopeEditorProps> = ({
       dragStageRef.current = null;
       if (capturedElementRef.current && capturedPointerIdRef.current !== null) {
         try {
-          (capturedElementRef.current as Element & { releasePointerCapture?: (id: number) => void }).releasePointerCapture?.(
-            capturedPointerIdRef.current,
-          );
+          (
+            capturedElementRef.current as Element & { releasePointerCapture?: (id: number) => void }
+          ).releasePointerCapture?.(capturedPointerIdRef.current);
         } catch {
           // Ignore
         }
@@ -199,9 +194,9 @@ export const EnvelopeEditor: React.FC<EnvelopeEditorProps> = ({
       dragStageRef.current = null;
       if (capturedElementRef.current && capturedPointerIdRef.current !== null) {
         try {
-          (capturedElementRef.current as Element & { releasePointerCapture?: (id: number) => void }).releasePointerCapture?.(
-            capturedPointerIdRef.current,
-          );
+          (
+            capturedElementRef.current as Element & { releasePointerCapture?: (id: number) => void }
+          ).releasePointerCapture?.(capturedPointerIdRef.current);
         } catch {
           // Ignore
         }
@@ -247,7 +242,9 @@ export const EnvelopeEditor: React.FC<EnvelopeEditorProps> = ({
     <div className="space-y-1" data-testid="bluex7-envelope-editor">
       <div className="flex items-center justify-between text-role-headline font-bold text-gray-300">
         <span>{title}</span>
-        <span className="text-role-subheadline text-blue-muted">Drag handles or use Arrow Keys</span>
+        <span className="text-role-subheadline text-blue-muted">
+          Drag handles or use Arrow Keys
+        </span>
       </div>
 
       <div className="relative rounded-lg border border-blue-border/70 bg-black p-2.5 shadow-inner overflow-hidden">
@@ -311,12 +308,7 @@ export const EnvelopeEditor: React.FC<EnvelopeEditorProps> = ({
           />
 
           {/* Filled Envelope Area */}
-          <path
-            d={areaD}
-            fill="#5a85c3"
-            fillOpacity="0.12"
-            className="pointer-events-none"
-          />
+          <path d={areaD} fill="#5a85c3" fillOpacity="0.12" className="pointer-events-none" />
 
           {/* Envelope line */}
           <path
@@ -366,41 +358,42 @@ export const EnvelopeEditor: React.FC<EnvelopeEditorProps> = ({
           })}
 
           {/* Single Floating Tooltip for Active/Hovered Stage Handle (rendered on top of all handles) */}
-          {currentActiveStage !== null && (() => {
-            const pt = points[currentActiveStage];
-            const current = envelope[currentActiveStage];
-            if (!pt || !current) return null;
+          {currentActiveStage !== null &&
+            (() => {
+              const pt = points[currentActiveStage];
+              const current = envelope[currentActiveStage];
+              if (!pt || !current) return null;
 
-            const isFlippedBelow = pt.y < PADDING_TOP + 22;
-            const badgeY = isFlippedBelow ? pt.y + 12 : pt.y - 28;
-            const textY = isFlippedBelow ? pt.y + 22 : pt.y - 18;
-            const badgeX = Math.max(PADDING_X + 42, Math.min(WIDTH - PADDING_X - 42, pt.x));
+              const isFlippedBelow = pt.y < PADDING_TOP + 22;
+              const badgeY = isFlippedBelow ? pt.y + 12 : pt.y - 28;
+              const textY = isFlippedBelow ? pt.y + 22 : pt.y - 18;
+              const badgeX = Math.max(PADDING_X + 42, Math.min(WIDTH - PADDING_X - 42, pt.x));
 
-            return (
-              <g className="pointer-events-none" data-testid="envelope-active-tooltip">
-                <rect
-                  x={badgeX - 42}
-                  y={badgeY}
-                  width="84"
-                  height="20"
-                  rx="4"
-                  fill="#0d1524"
-                  stroke="#6fa6e6"
-                  strokeWidth="1.5"
-                />
-                <text
-                  x={badgeX}
-                  y={textY}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  fill="#ffffff"
-                  className="text-role-subheadline font-mono font-medium"
-                >
-                  R{currentActiveStage + 1}:{current.rate}  L{currentActiveStage + 1}:{current.level}
-                </text>
-              </g>
-            );
-          })()}
+              return (
+                <g className="pointer-events-none" data-testid="envelope-active-tooltip">
+                  <rect
+                    x={badgeX - 42}
+                    y={badgeY}
+                    width="84"
+                    height="20"
+                    rx="4"
+                    fill="#0d1524"
+                    stroke="#6fa6e6"
+                    strokeWidth="1.5"
+                  />
+                  <text
+                    x={badgeX}
+                    y={textY}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fill="#ffffff"
+                    className="text-role-subheadline font-mono font-medium"
+                  >
+                    {`R${currentActiveStage + 1}:${current.rate}  L${currentActiveStage + 1}:${current.level}`}
+                  </text>
+                </g>
+              );
+            })()}
         </svg>
       </div>
     </div>

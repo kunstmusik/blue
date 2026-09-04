@@ -117,8 +117,7 @@ describe('Element', () => {
     });
 
     it('parses nested elements', () => {
-      const xml =
-        '<root><parent><child>value</child></parent></root>';
+      const xml = '<root><parent><child>value</child></parent></root>';
       const elem = Element.parse(xml);
       const parent = elem.getElement('parent');
       expect(parent).not.toBeNull();
@@ -128,8 +127,7 @@ describe('Element', () => {
     });
 
     it('parses attributes on nested elements', () => {
-      const xml =
-        '<blueData><audioLayer name="Layer1" muted="true"></audioLayer></blueData>';
+      const xml = '<blueData><audioLayer name="Layer1" muted="true"></audioLayer></blueData>';
       const elem = Element.parse(xml);
       const layer = elem.getElement('audioLayer');
       expect(layer!.getAttribute('name')).toBe('Layer1');

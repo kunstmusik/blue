@@ -95,18 +95,29 @@ import {
   createNoteProcessorChainSnapshot as createNoteProcessorChainSnapshotFromData,
   reifyChainFromSnapshot,
 } from '@blue/data';
-import type { NoteProcessorChainSnapshot as DataNoteProcessorChainSnapshot, Parameter as BlueDataParameter, ScoreObject as BlueDataScoreObject, AutomatableLayer as BlueDataAutomatableLayer, Arrangement as BlueDataArrangement, Mixer as BlueDataMixer } from '@blue/data';
+import type {
+  NoteProcessorChainSnapshot as DataNoteProcessorChainSnapshot,
+  Parameter as BlueDataParameter,
+  ScoreObject as BlueDataScoreObject,
+  AutomatableLayer as BlueDataAutomatableLayer,
+  Arrangement as BlueDataArrangement,
+  Mixer as BlueDataMixer,
+} from '@blue/data';
 import { AutomationCurve as BlueDataAutomationCurve, LineColors } from '@blue/data';
 import { ParameterHelper } from '@blue/data';
-import type { SnapValueName, BlueX7Voice, BlueX7Common, BlueX7Lfo, BlueX7Operator, BlueX7EnvelopePoint } from '@blue/data';
+import type {
+  SnapValueName,
+  BlueX7Voice,
+  BlueX7Common,
+  BlueX7Lfo,
+  BlueX7Operator,
+  BlueX7EnvelopePoint,
+} from '@blue/data';
 import type { MissingAudioAssetsSession } from '../missing-audio-assets';
 import type { ScoreInsertionLocation } from '../unified-library';
 
 import { moveRangeWithAnchors, scaleRangeWithAnchors } from '../automation-range-math';
-import {
-  BSB_LINE_SELECTOR_HEIGHT,
-  getBsbWidgetDisplaySize,
-} from '../bsb-widget-layout';
+import { BSB_LINE_SELECTOR_HEIGHT, getBsbWidgetDisplaySize } from '../bsb-widget-layout';
 import {
   collectBsbReplacementKeysFromSnapshotTree,
   collectBsbReplacementKeysFromWidgetTree,
@@ -332,9 +343,7 @@ import {
   scorePatchTouchesMixerAudioChannels,
   isNonEmptyScorePatch,
 } from './patch-score';
-import {
-  snapshotToUdo,
-} from './bsb-widgets';
+import { snapshotToUdo } from './bsb-widgets';
 
 export function applyProjectDocumentPatch(
   data: BlueData,
@@ -360,13 +369,16 @@ export function applyProjectDocumentPatch(
 
   if (patch.scratchPad) {
     const scratchPad = data.getScratchPadData();
-    if (patch.scratchPad.text !== undefined && scratchPad.getScratchText() !== patch.scratchPad.text) {
+    if (
+      patch.scratchPad.text !== undefined &&
+      scratchPad.getScratchText() !== patch.scratchPad.text
+    ) {
       scratchPad.setScratchText(patch.scratchPad.text);
       changed = true;
     }
     if (
-      patch.scratchPad.wordWrapEnabled !== undefined
-      && scratchPad.isWordWrapEnabled() !== patch.scratchPad.wordWrapEnabled
+      patch.scratchPad.wordWrapEnabled !== undefined &&
+      scratchPad.isWordWrapEnabled() !== patch.scratchPad.wordWrapEnabled
     ) {
       scratchPad.setWordWrapEnabled(patch.scratchPad.wordWrapEnabled);
       changed = true;
@@ -379,10 +391,7 @@ export function applyProjectDocumentPatch(
 
   if (patch.projectProperties) {
     changed =
-      applyProjectPropertiesPatch(
-        data.getProjectProperties(),
-        patch.projectProperties,
-      ) || changed;
+      applyProjectPropertiesPatch(data.getProjectProperties(), patch.projectProperties) || changed;
   }
 
   if (patch.clojureProject) {
@@ -415,9 +424,11 @@ export function applyProjectDocumentPatch(
       case 'pasteInstrument': {
         const instrument = createInstrumentFromSnapshot(orchestraPatch.instrument);
         const insertAfterIndex = orchestraPatch.insertAfterAssignmentId
-          ? arrangement.getArrangement().findIndex(
-              (assignment) => assignment.arrangementId === orchestraPatch.insertAfterAssignmentId,
-            )
+          ? arrangement
+              .getArrangement()
+              .findIndex(
+                (assignment) => assignment.arrangementId === orchestraPatch.insertAfterAssignmentId,
+              )
           : -1;
         if (insertAfterIndex >= 0) {
           arrangement.addInstrumentAtIndex(instrument, insertAfterIndex + 1);
@@ -436,9 +447,10 @@ export function applyProjectDocumentPatch(
             nextArrangementId: newId,
           }) || changed;
         if (newId && newId !== oldId) {
-          const channel = data.getMixer().getAllSourceChannels().find(
-            (ch) => ch.getAssociation().trim() === oldId,
-          );
+          const channel = data
+            .getMixer()
+            .getAllSourceChannels()
+            .find((ch) => ch.getAssociation().trim() === oldId);
           if (channel) {
             channel.setAssociation(newId);
             channel.setName(newId);
@@ -487,17 +499,26 @@ export function applyProjectDocumentPatch(
   }
 
   if (patch.transport) {
-    if (patch.transport.renderStartTime !== undefined && data.getRenderStartTime() !== patch.transport.renderStartTime) {
+    if (
+      patch.transport.renderStartTime !== undefined &&
+      data.getRenderStartTime() !== patch.transport.renderStartTime
+    ) {
       data.setRenderStartTime(patch.transport.renderStartTime);
       changed = true;
     }
 
-    if (patch.transport.renderEndTime !== undefined && data.getRenderEndTime() !== patch.transport.renderEndTime) {
+    if (
+      patch.transport.renderEndTime !== undefined &&
+      data.getRenderEndTime() !== patch.transport.renderEndTime
+    ) {
       data.setRenderEndTime(patch.transport.renderEndTime);
       changed = true;
     }
 
-    if (patch.transport.loopRendering !== undefined && data.isLoopRendering() !== patch.transport.loopRendering) {
+    if (
+      patch.transport.loopRendering !== undefined &&
+      data.isLoopRendering() !== patch.transport.loopRendering
+    ) {
       data.setLoopRendering(patch.transport.loopRendering);
       changed = true;
     }
@@ -533,7 +554,11 @@ export function applyProjectDocumentPatch(
     changed = applyScoreObjectPatch(data, patch.score, context) || changed;
   }
 
-  if (patch.orchestra || patch.mixer || (patch.score && scorePatchTouchesMixerAudioChannels(patch.score))) {
+  if (
+    patch.orchestra ||
+    patch.mixer ||
+    (patch.score && scorePatchTouchesMixerAudioChannels(patch.score))
+  ) {
     changed = reconcileMixerWithArrangement(data) || changed;
   }
 
@@ -545,9 +570,7 @@ function applyProjectUdoPatch(data: BlueData, patch: ProjectUdoPatch): boolean {
 
   switch (patch.type) {
     case 'add': {
-      const udo = patch.definition
-        ? snapshotToUdo(patch.definition)
-        : new OpcodeDefinition();
+      const udo = patch.definition ? snapshotToUdo(patch.definition) : new OpcodeDefinition();
       const index = patch.index ?? opcodeList.size();
       opcodeList.addOpcodeAt(index, udo);
       return true;
@@ -562,7 +585,8 @@ function applyProjectUdoPatch(data: BlueData, patch: ProjectUdoPatch): boolean {
       if (patch.patch.style !== undefined) existing.setStyle(patch.patch.style as UDOStyle);
       if (patch.patch.outTypes !== undefined) existing.setOutTypes(patch.patch.outTypes);
       if (patch.patch.inTypes !== undefined) existing.setInTypes(patch.patch.inTypes);
-      if (patch.patch.inputArguments !== undefined) existing.setInputArguments(patch.patch.inputArguments);
+      if (patch.patch.inputArguments !== undefined)
+        existing.setInputArguments(patch.patch.inputArguments);
       if (patch.patch.code !== undefined) existing.setCode(patch.patch.code);
       if (patch.patch.comments !== undefined) existing.setComments(patch.patch.comments);
       return true;
@@ -583,28 +607,15 @@ function applyProjectUdoPatch(data: BlueData, patch: ProjectUdoPatch): boolean {
   }
 }
 
-
-
 export function isEmptyProjectDocumentPatch(patch: ProjectDocumentPatch): boolean {
   const hasProjectProperties =
-    patch.projectProperties !== undefined &&
-    Object.keys(patch.projectProperties).length > 0;
-  const hasTransport =
-    patch.transport !== undefined &&
-    Object.keys(patch.transport).length > 0;
-  const hasOrchestra =
-    patch.orchestra !== undefined &&
-    Object.keys(patch.orchestra).length > 0;
-  const hasProjectUdo =
-    patch.projectUdo !== undefined &&
-    Object.keys(patch.projectUdo).length > 0;
-  const hasBlueLive =
-    patch.blueLive !== undefined &&
-    Object.keys(patch.blueLive).length > 0;
+    patch.projectProperties !== undefined && Object.keys(patch.projectProperties).length > 0;
+  const hasTransport = patch.transport !== undefined && Object.keys(patch.transport).length > 0;
+  const hasOrchestra = patch.orchestra !== undefined && Object.keys(patch.orchestra).length > 0;
+  const hasProjectUdo = patch.projectUdo !== undefined && Object.keys(patch.projectUdo).length > 0;
+  const hasBlueLive = patch.blueLive !== undefined && Object.keys(patch.blueLive).length > 0;
   const hasMidiInput = patch.midiInput !== undefined;
-  const hasScratchPad =
-    patch.scratchPad !== undefined &&
-    Object.keys(patch.scratchPad).length > 0;
+  const hasScratchPad = patch.scratchPad !== undefined && Object.keys(patch.scratchPad).length > 0;
   const hasMixer = patch.mixer !== undefined;
   const hasScore = patch.score !== undefined && isNonEmptyScorePatch(patch.score);
 

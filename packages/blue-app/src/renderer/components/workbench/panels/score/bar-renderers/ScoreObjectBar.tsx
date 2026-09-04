@@ -164,11 +164,28 @@ export function RepeatMarkers({
   const triH = 5;
 
   return (
-    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+    <div
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        overflow: 'hidden',
+        pointerEvents: 'none',
+      }}
+    >
       {markers.map((marker, i) => (
         <svg
           key={i}
-          style={{ position: 'absolute', left: marker.x - triW, top: 0, width: triW, height: markerHeight, pointerEvents: 'none' }}
+          style={{
+            position: 'absolute',
+            left: marker.x - triW,
+            top: 0,
+            width: triW,
+            height: markerHeight,
+            pointerEvents: 'none',
+          }}
           width={triW}
           height={markerHeight}
         >

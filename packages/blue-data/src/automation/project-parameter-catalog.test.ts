@@ -10,7 +10,10 @@ import { GenericInstrument } from '../instruments/generic-instrument';
 import { TrackLayerGroup } from '../score/track/track-layer-group';
 import { Track } from '../score/track/track';
 
-function addArrangementBlueX7(blueData: BlueData, name: string): { instr: BlueX7; arrangementId: string } {
+function addArrangementBlueX7(
+  blueData: BlueData,
+  name: string,
+): { instr: BlueX7; arrangementId: string } {
   const instr = new BlueX7();
   instr.setName(name);
   blueData.getArrangement().addInstrumentAtEnd(instr);
@@ -21,11 +24,7 @@ function addArrangementBlueX7(blueData: BlueData, name: string): { instr: BlueX7
   return { instr, arrangementId: ia.arrangementId };
 }
 
-function addTrackBlueX7(
-  blueData: BlueData,
-  name: string,
-  trackName: string,
-): TrackLayerGroup {
+function addTrackBlueX7(blueData: BlueData, name: string, trackName: string): TrackLayerGroup {
   const group = new TrackLayerGroup();
   const track = new Track();
   track.setName(trackName);
@@ -68,7 +67,9 @@ describe('project parameter catalog', () => {
     const bassEntry = catalog.find((e) => e.ownerKind === 'track-instrument')!;
     expect(bassEntry.ownerLabel).toBe('Track Layer Group / Track Bass');
     expect(bassEntry.path).toEqual(['Track Layer Group', 'Track Bass']);
-    expect(catalog.find((e) => e.ownerIdentity === `arrangement:${lead.arrangementId}`)!.ownerLabel).toBe(`${lead.arrangementId}) Lead`);
+    expect(
+      catalog.find((e) => e.ownerIdentity === `arrangement:${lead.arrangementId}`)!.ownerLabel,
+    ).toBe(`${lead.arrangementId}) Lead`);
   });
 
   it('keeps same-named instruments identity-distinct', () => {

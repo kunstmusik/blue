@@ -10,9 +10,11 @@
 
 /** Structural Node check that works across JS realms (windows). */
 export function isNodeLike(target: EventTarget | null): target is Node {
-  return target != null
-    && typeof (target as Node).nodeType === 'number'
-    && typeof (target as Node).contains === 'function';
+  return (
+    target != null &&
+    typeof (target as Node).nodeType === 'number' &&
+    typeof (target as Node).contains === 'function'
+  );
 }
 
 /** True when `target` is a node inside `container`'s subtree (inclusive). */
@@ -39,8 +41,13 @@ export function isEventInsidePortalPopup(target: EventTarget | null): boolean {
   while (node) {
     if (node.nodeType === 1) {
       const name = (node as Element).getAttribute?.('role');
-      if (name === 'menu' || name === 'menuitem' || name === 'dialog'
-        || name === 'listbox' || name === 'tooltip') {
+      if (
+        name === 'menu' ||
+        name === 'menuitem' ||
+        name === 'dialog' ||
+        name === 'listbox' ||
+        name === 'tooltip'
+      ) {
         return true;
       }
     }

@@ -1,7 +1,5 @@
 import type { BlueData } from '@blue/data';
-import type {
-  ProjectDocumentCommitReceipt,
-} from '../shared/project-editor';
+import type { ProjectDocumentCommitReceipt } from '../shared/project-editor';
 
 export interface ProjectSessionSnapshot {
   readonly data: BlueData | null;

@@ -19,17 +19,18 @@ export function verifyBlueX7Resources(root = repoRoot) {
   } else {
     const orcContent = fs.readFileSync(orcPath, 'utf-8');
     for (let i = 1; i <= 32; i++) {
-      if (!orcContent.includes(`  ${i}: `) && !orcContent.includes(`"${i}":`) && !orcContent.includes(`${i}: "`)) {
+      if (
+        !orcContent.includes(`  ${i}: `) &&
+        !orcContent.includes(`"${i}":`) &&
+        !orcContent.includes(`${i}: "`)
+      ) {
         errors.push(`Missing algorithm ${i} ORC definition in algorithm-orchestra.ts`);
       }
     }
   }
 
   // 2. Verify 32 algorithm GIF diagrams
-  const assetDir = path.join(
-    root,
-    'packages/blue-app/src/renderer/assets/blue-x7',
-  );
+  const assetDir = path.join(root, 'packages/blue-app/src/renderer/assets/blue-x7');
   for (let i = 1; i <= 32; i++) {
     const num = i < 10 ? `0${i}` : `${i}`;
     const gifPath = path.join(assetDir, `algo${num}.gif`);
@@ -39,10 +40,7 @@ export function verifyBlueX7Resources(root = repoRoot) {
   }
 
   // 3. Verify SysEx test fixtures
-  const fixtureDir = path.join(
-    root,
-    'packages/blue-data/src/instruments/blue-x7/test-fixtures',
-  );
+  const fixtureDir = path.join(root, 'packages/blue-data/src/instruments/blue-x7/test-fixtures');
   const requiredFixtures = [
     'java-default.blue.xml',
     'boundary-and-unknown.blue.xml',

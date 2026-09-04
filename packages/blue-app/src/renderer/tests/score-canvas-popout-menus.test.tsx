@@ -5,8 +5,14 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
-import type { PatternLayerSnapshot, PatternsLayerGroupSnapshot } from '../components/workbench/panels/score/types';
-import type { PolyObjectLayerGroupSnapshot, ScoreRowObjectSnapshot } from '../components/workbench/panels/score/types';
+import type {
+  PatternLayerSnapshot,
+  PatternsLayerGroupSnapshot,
+} from '../components/workbench/panels/score/types';
+import type {
+  PolyObjectLayerGroupSnapshot,
+  ScoreRowObjectSnapshot,
+} from '../components/workbench/panels/score/types';
 import PatternsLayerGroupCanvas from '../components/workbench/panels/score/layer-groups/PatternsLayerGroupCanvas';
 import TrackLayerGroupCanvas from '../components/workbench/panels/score/layer-groups/TrackLayerGroupCanvas';
 import ScoreTimeCanvas from '../components/workbench/panels/score/layer-groups/ScoreTimeCanvas';
@@ -15,7 +21,9 @@ import { useProjectStore } from '../stores/project-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { useLibraryStore } from '../stores/library-store';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 // The "popout window": a second JSDOM realm whose document hosts a floated
 // panel's content, mirroring the Dockview popout mechanism.
@@ -24,26 +32,28 @@ const popoutDoc = popout.window.document;
 const PopoutMouseEvent = popout.window.MouseEvent;
 const PopoutKeyboardEvent = popout.window.KeyboardEvent;
 
-  function menusIn(doc: Document): number {
-    return doc.querySelectorAll('[role="menu"]').length;
-  }
+function menusIn(doc: Document): number {
+  return doc.querySelectorAll('[role="menu"]').length;
+}
 
-  /** Radix DismissableLayer attaches its outside-pointerdown listener after a 0ms timeout. */
-  async function flushDismissalListener(): Promise<void> {
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    });
-  }
+/** Radix DismissableLayer attaches its outside-pointerdown listener after a 0ms timeout. */
+async function flushDismissalListener(): Promise<void> {
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+}
 
 function rightClick(target: EventTarget, x = 30, y = 15): void {
   act(() => {
-    target.dispatchEvent(new MouseEvent('contextmenu', {
-      bubbles: true,
-      cancelable: true,
-      button: 2,
-      clientX: x,
-      clientY: y,
-    }));
+    target.dispatchEvent(
+      new MouseEvent('contextmenu', {
+        bubbles: true,
+        cancelable: true,
+        button: 2,
+        clientX: x,
+        clientY: y,
+      }),
+    );
   });
 }
 
@@ -51,25 +61,46 @@ function rightClick(target: EventTarget, x = 30, y = 15): void {
  * Cut/Copy/Delete items are enabled at right-click (10, 10). */
 function makePatternGroup(): PatternsLayerGroupSnapshot {
   const layer: PatternLayerSnapshot = {
-    layerId: 'pl-1', name: 'A', height: 44, muted: false, solo: false,
+    layerId: 'pl-1',
+    name: 'A',
+    height: 44,
+    muted: false,
+    solo: false,
     items: [],
     sourceObject: {
-      objectId: 'src-pl-1', objectType: 'GenericScore', name: 'Source A',
+      objectId: 'src-pl-1',
+      objectType: 'GenericScore',
+      name: 'Source A',
       backgroundColor: 0xff204020,
       editorTarget: {
-        selectionId: 'src-pl-1', selectedObjectType: 'GenericScore',
-        editorObjectType: 'GenericScore', ownerKind: 'timeline',
+        selectionId: 'src-pl-1',
+        selectedObjectType: 'GenericScore',
+        editorObjectType: 'GenericScore',
+        ownerKind: 'timeline',
         displayContext: 'timeline',
         patternSource: { groupId: 'grp', layerId: 'pl-1', sourceObjectId: 'src-pl-1' },
-        supportsTimeBehavior: true, supportsRepeatPoint: true, supportsNoteProcessorChain: true,
+        supportsTimeBehavior: true,
+        supportsRepeatPoint: true,
+        supportsNoteProcessorChain: true,
       },
-      barRenderer: { kind: 'generic', labelLines: ['Source A'], timeBehavior: 'NONE', repeatPointBeats: null },
+      barRenderer: {
+        kind: 'generic',
+        labelLines: ['Source A'],
+        timeBehavior: 'NONE',
+        repeatPointBeats: null,
+      },
     },
     activeCellIndices: [0],
   };
   return {
-    groupId: 'grp', groupType: 'patterns', name: 'Patterns', layerCount: 1,
-    isOpenableContainer: false, patternBeatsLength: 4, effectivePatternBeatsLength: 4, layers: [layer],
+    groupId: 'grp',
+    groupType: 'patterns',
+    name: 'Patterns',
+    layerCount: 1,
+    isOpenableContainer: false,
+    patternBeatsLength: 4,
+    effectivePatternBeatsLength: 4,
+    layers: [layer],
   };
 }
 
@@ -93,20 +124,28 @@ describe('score canvas context menus in a floated (popout) panel', () => {
     useScoreSelectionStore.getState().clearSelection();
   });
 
-  function renderUnderPopout(node: React.ReactElement, rect?: { width: number; height: number }): void {
+  function renderUnderPopout(
+    node: React.ReactElement,
+    rect?: { width: number; height: number },
+  ): void {
     act(() => {
       root.render(
-        <HostDocumentContext.Provider value={popoutDoc}>
-          {node}
-        </HostDocumentContext.Provider>,
+        <HostDocumentContext.Provider value={popoutDoc}>{node}</HostDocumentContext.Provider>,
       );
     });
     if (rect) {
       const surface = container.firstElementChild as HTMLElement;
       Object.defineProperty(surface, 'getBoundingClientRect', {
         value: () => ({
-          left: 0, top: 0, right: rect.width, bottom: rect.height,
-          width: rect.width, height: rect.height, x: 0, y: 0, toJSON: () => undefined,
+          left: 0,
+          top: 0,
+          right: rect.width,
+          bottom: rect.height,
+          width: rect.width,
+          height: rect.height,
+          x: 0,
+          y: 0,
+          toJSON: () => undefined,
         }),
         configurable: true,
       });
@@ -121,25 +160,46 @@ describe('score canvas context menus in a floated (popout) panel', () => {
   it('PatternsLayerGroupCanvas: cell menu renders, retains inside clicks, and dismisses via the popout document', async () => {
     const ancestorMouseDown = vi.fn();
     const layer: PatternLayerSnapshot = {
-      layerId: 'pl-1', name: 'A', height: 44, muted: false, solo: false,
+      layerId: 'pl-1',
+      name: 'A',
+      height: 44,
+      muted: false,
+      solo: false,
       items: [],
       sourceObject: {
-        objectId: 'src-pl-1', objectType: 'GenericScore', name: 'Source A',
+        objectId: 'src-pl-1',
+        objectType: 'GenericScore',
+        name: 'Source A',
         backgroundColor: 0xff204020,
         editorTarget: {
-          selectionId: 'src-pl-1', selectedObjectType: 'GenericScore',
-          editorObjectType: 'GenericScore', ownerKind: 'timeline',
+          selectionId: 'src-pl-1',
+          selectedObjectType: 'GenericScore',
+          editorObjectType: 'GenericScore',
+          ownerKind: 'timeline',
           displayContext: 'timeline',
           patternSource: { groupId: 'grp', layerId: 'pl-1', sourceObjectId: 'src-pl-1' },
-          supportsTimeBehavior: true, supportsRepeatPoint: true, supportsNoteProcessorChain: true,
+          supportsTimeBehavior: true,
+          supportsRepeatPoint: true,
+          supportsNoteProcessorChain: true,
         },
-        barRenderer: { kind: 'generic', labelLines: ['Source A'], timeBehavior: 'NONE', repeatPointBeats: null },
+        barRenderer: {
+          kind: 'generic',
+          labelLines: ['Source A'],
+          timeBehavior: 'NONE',
+          repeatPointBeats: null,
+        },
       },
       activeCellIndices: [0],
     };
     const group: PatternsLayerGroupSnapshot = {
-      groupId: 'grp', groupType: 'patterns', name: 'Patterns', layerCount: 1,
-      isOpenableContainer: false, patternBeatsLength: 4, effectivePatternBeatsLength: 4, layers: [layer],
+      groupId: 'grp',
+      groupType: 'patterns',
+      name: 'Patterns',
+      layerCount: 1,
+      isOpenableContainer: false,
+      patternBeatsLength: 4,
+      effectivePatternBeatsLength: 4,
+      layers: [layer],
     };
 
     renderUnderPopout(
@@ -203,24 +263,52 @@ describe('score canvas context menus in a floated (popout) panel', () => {
 
   it('TrackLayerGroupCanvas: background menu is hosted and dismissed entirely by the popout document', async () => {
     const item: ScoreRowObjectSnapshot = {
-      objectId: 'track-object', objectType: 'GenericScore', name: 'track-object',
-      startBeats: 1, durationBeats: 2, startTimeBase: 'BEATS', durationTimeBase: 'BEATS',
-      backgroundColor: 0, isContainer: false,
+      objectId: 'track-object',
+      objectType: 'GenericScore',
+      name: 'track-object',
+      startBeats: 1,
+      durationBeats: 2,
+      startTimeBase: 'BEATS',
+      durationTimeBase: 'BEATS',
+      backgroundColor: 0,
+      isContainer: false,
       editorTarget: {
-        selectionId: 'track-object', selectedObjectType: 'GenericScore',
-        editorObjectType: 'GenericScore', ownerKind: 'timeline', displayContext: 'timeline',
+        selectionId: 'track-object',
+        selectedObjectType: 'GenericScore',
+        editorObjectType: 'GenericScore',
+        ownerKind: 'timeline',
+        displayContext: 'timeline',
         location: { rootGroupIndex: 1, containerPath: [], layerIndex: 0, objectIndex: 0 },
-        supportsTimeBehavior: true, supportsRepeatPoint: true, supportsNoteProcessorChain: true,
+        supportsTimeBehavior: true,
+        supportsRepeatPoint: true,
+        supportsNoteProcessorChain: true,
       },
-      barRenderer: { kind: 'generic', labelLines: ['track-object'], timeBehavior: 'NONE', repeatPointBeats: null },
+      barRenderer: {
+        kind: 'generic',
+        labelLines: ['track-object'],
+        timeBehavior: 'NONE',
+        repeatPointBeats: null,
+      },
     };
     const group = {
-      groupId: 'track-group', groupType: 'track', name: 'Tracks', defaultHeightIndex: 0,
-      layerCount: 1, isOpenableContainer: false,
-      layers: [{
-        layerId: 'track-row', name: 'Track Row', height: 44, muted: false, solo: false,
-        items: [item], layerKind: 'track', instrument: null,
-      }],
+      groupId: 'track-group',
+      groupType: 'track',
+      name: 'Tracks',
+      defaultHeightIndex: 0,
+      layerCount: 1,
+      isOpenableContainer: false,
+      layers: [
+        {
+          layerId: 'track-row',
+          name: 'Track Row',
+          height: 44,
+          muted: false,
+          solo: false,
+          items: [item],
+          layerKind: 'track',
+          instrument: null,
+        },
+      ],
     } as React.ComponentProps<typeof TrackLayerGroupCanvas>['group'];
 
     renderUnderPopout(
@@ -241,7 +329,10 @@ describe('score canvas context menus in a floated (popout) panel', () => {
       />,
     );
 
-    const surface = container.querySelector<HTMLElement>('[data-timeline-layer-row], [data-track-canvas], [data-group-id]') ?? (container.firstElementChild as HTMLElement);
+    const surface =
+      container.querySelector<HTMLElement>(
+        '[data-timeline-layer-row], [data-track-canvas], [data-group-id]',
+      ) ?? (container.firstElementChild as HTMLElement);
     rightClick(surface, 200, 15);
     assertMenuLivesInPopout();
     await flushDismissalListener();
@@ -258,21 +349,45 @@ describe('score canvas context menus in a floated (popout) panel', () => {
 
   it('ScoreTimeCanvas: object menu is hosted and dismissed entirely by the popout document', async () => {
     const target = {
-      selectionId: 'score-1', selectedObjectType: 'GenericScore', editorObjectType: 'GenericScore',
-      ownerKind: 'timeline' as const, displayContext: 'timeline' as const,
+      selectionId: 'score-1',
+      selectedObjectType: 'GenericScore',
+      editorObjectType: 'GenericScore',
+      ownerKind: 'timeline' as const,
+      displayContext: 'timeline' as const,
       location: { rootGroupIndex: 0, containerPath: [], layerIndex: 0, objectIndex: 0 },
-      supportsTimeBehavior: true, supportsRepeatPoint: true, supportsNoteProcessorChain: true,
+      supportsTimeBehavior: true,
+      supportsRepeatPoint: true,
+      supportsNoteProcessorChain: true,
     };
     const item: ScoreRowObjectSnapshot = {
-      objectId: 'score-1', objectType: 'GenericScore', name: 'Popout me', startBeats: 0,
-      durationBeats: 2, startTimeBase: 'BEATS', durationTimeBase: 'BEATS', backgroundColor: 0x336699,
-      isContainer: false, editorTarget: target,
+      objectId: 'score-1',
+      objectType: 'GenericScore',
+      name: 'Popout me',
+      startBeats: 0,
+      durationBeats: 2,
+      startTimeBase: 'BEATS',
+      durationTimeBase: 'BEATS',
+      backgroundColor: 0x336699,
+      isContainer: false,
+      editorTarget: target,
       barRenderer: { kind: 'fallback', labelLines: ['Popout me'], reason: 'unknown-type' },
     };
     const group: PolyObjectLayerGroupSnapshot = {
-      groupId: 'root', groupType: 'polyObject', name: 'Root', layerCount: 1,
+      groupId: 'root',
+      groupType: 'polyObject',
+      name: 'Root',
+      layerCount: 1,
       isOpenableContainer: true,
-      layers: [{ layerId: 'root-layer-0', name: 'Layer 1', height: 44, muted: false, solo: false, items: [item] }],
+      layers: [
+        {
+          layerId: 'root-layer-0',
+          name: 'Layer 1',
+          height: 44,
+          muted: false,
+          solo: false,
+          items: [item],
+        },
+      ],
     };
     useProjectStore.setState({
       score: { ...useProjectStore.getState().score, layerGroups: [group] },
@@ -301,7 +416,8 @@ describe('score canvas context menus in a floated (popout) panel', () => {
       { width: 800, height: 80 },
     );
 
-    const surface = (container.querySelector('[data-group-id="root"]') ?? container.firstElementChild) as HTMLElement;
+    const surface = (container.querySelector('[data-group-id="root"]') ??
+      container.firstElementChild) as HTMLElement;
     rightClick(surface, 60, 20);
     assertMenuLivesInPopout();
     await flushDismissalListener();
@@ -403,7 +519,9 @@ describe('score canvas context menus in a floated (popout) panel', () => {
 
     // Enter activates the highlighted command and closes the menu.
     act(() => {
-      highlighted!.dispatchEvent(new PopoutKeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      highlighted!.dispatchEvent(
+        new PopoutKeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
+      );
     });
     await flushDismissalListener();
     expect(menusIn(popoutDoc)).toBe(0);

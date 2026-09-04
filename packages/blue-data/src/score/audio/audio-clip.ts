@@ -71,22 +71,30 @@ export class AudioClip implements ScoreObject {
 
   // ─── ScoreObject ───
 
-  getName(): string { return this._name; }
+  getName(): string {
+    return this._name;
+  }
   setName(value: string): void {
     this._name = value;
   }
 
-  getStartTime(): TimePosition { return this._startTimePosition; }
+  getStartTime(): TimePosition {
+    return this._startTimePosition;
+  }
   setStartTime(value: TimePosition): void {
     this._startTimePosition = value;
   }
 
-  getSubjectiveDuration(): TimeDuration { return this._durationUnit; }
+  getSubjectiveDuration(): TimeDuration {
+    return this._durationUnit;
+  }
   setSubjectiveDuration(value: TimeDuration): void {
     this._durationUnit = value;
   }
 
-  getBackgroundColor(): number { return this._color; }
+  getBackgroundColor(): number {
+    return this._color;
+  }
   setBackgroundColor(color: number): void {
     this._color = color;
   }
@@ -94,9 +102,7 @@ export class AudioClip implements ScoreObject {
   getResizeLeftLimits(context: TimeContext): number[] {
     const startBeats = this._startTimePosition.toBeats(context);
     const durBeats = this._durationUnit.toBeats(context);
-    const leftLimit = this._looping
-      ? -startBeats
-      : Math.max(-startBeats, -this._fileStartTime);
+    const leftLimit = this._looping ? -startBeats : Math.max(-startBeats, -this._fileStartTime);
     return [leftLimit, durBeats];
   }
 
@@ -119,7 +125,11 @@ export class AudioClip implements ScoreObject {
       while (fileStart > audioDur) fileStart -= audioDur;
     }
 
-    this._startTimePosition = beatsToTimePosition(newStartTime, this._startTimePosition.getTimeBase(), context);
+    this._startTimePosition = beatsToTimePosition(
+      newStartTime,
+      this._startTimePosition.getTimeBase(),
+      context,
+    );
     this._fileStartTime = fileStart;
     this._durationUnit = TimeDuration.beats(currentDuration + diff);
   }
@@ -129,39 +139,73 @@ export class AudioClip implements ScoreObject {
     this._durationUnit = TimeDuration.beats(newEndTime - currentStart);
   }
 
-  getCloneSourceHashCode(): number { return this._cloneSourceHashCode; }
+  getCloneSourceHashCode(): number {
+    return this._cloneSourceHashCode;
+  }
 
   // ─── AudioClip-specific ───
 
-  getAudioFile(): string { return this._audioFile; }
+  getAudioFile(): string {
+    return this._audioFile;
+  }
   setAudioFile(path: string): void {
     this._audioFile = path;
     // In Java, this reads the file to get numChannels/audioDuration.
     // In TS, caller must set these manually or we leave them at 0.
   }
 
-  getNumChannels(): number { return this._numChannels; }
-  setNumChannels(n: number): void { this._numChannels = n; }
+  getNumChannels(): number {
+    return this._numChannels;
+  }
+  setNumChannels(n: number): void {
+    this._numChannels = n;
+  }
 
-  getAudioDuration(): number { return this._audioDuration; }
-  setAudioDuration(d: number): void { this._audioDuration = d; }
+  getAudioDuration(): number {
+    return this._audioDuration;
+  }
+  setAudioDuration(d: number): void {
+    this._audioDuration = d;
+  }
 
-  getFileStartTime(): number { return this._fileStartTime; }
-  setFileStartTime(t: number): void { this._fileStartTime = t; }
+  getFileStartTime(): number {
+    return this._fileStartTime;
+  }
+  setFileStartTime(t: number): void {
+    this._fileStartTime = t;
+  }
 
-  getFadeIn(): number { return this._fadeIn; }
-  setFadeIn(t: number): void { this._fadeIn = t; }
+  getFadeIn(): number {
+    return this._fadeIn;
+  }
+  setFadeIn(t: number): void {
+    this._fadeIn = t;
+  }
 
-  getFadeInType(): FadeType { return this._fadeInType; }
-  setFadeInType(ft: FadeType): void { this._fadeInType = ft; }
+  getFadeInType(): FadeType {
+    return this._fadeInType;
+  }
+  setFadeInType(ft: FadeType): void {
+    this._fadeInType = ft;
+  }
 
-  getFadeOut(): number { return this._fadeOut; }
-  setFadeOut(t: number): void { this._fadeOut = t; }
+  getFadeOut(): number {
+    return this._fadeOut;
+  }
+  setFadeOut(t: number): void {
+    this._fadeOut = t;
+  }
 
-  getFadeOutType(): FadeType { return this._fadeOutType; }
-  setFadeOutType(ft: FadeType): void { this._fadeOutType = ft; }
+  getFadeOutType(): FadeType {
+    return this._fadeOutType;
+  }
+  setFadeOutType(ft: FadeType): void {
+    this._fadeOutType = ft;
+  }
 
-  isLooping(): boolean { return this._looping; }
+  isLooping(): boolean {
+    return this._looping;
+  }
   setLooping(context: TimeContext | null, looping: boolean): void {
     this._looping = looping;
     if (!looping && context && this._audioDuration > 0) {

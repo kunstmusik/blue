@@ -6,7 +6,10 @@ import ScoreObjectEditorPanel from '../components/workbench/panels/ScoreObjectEd
 
 vi.mock('../stores/project-store', () => ({
   useProjectStore: vi.fn((selector) => {
-    const state = { loaded: false, score: { timeState: { primaryTimeDisplay: 'BEATS' }, layerGroups: [] } };
+    const state = {
+      loaded: false,
+      score: { timeState: { primaryTimeDisplay: 'BEATS' }, layerGroups: [] },
+    };
     return selector(state);
   }),
 }));

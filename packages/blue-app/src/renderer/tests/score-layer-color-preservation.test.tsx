@@ -13,7 +13,11 @@ describe('Score Layer Color Preservation Journey (US2)', () => {
   beforeEach(() => {
     vi.stubGlobal('window', {
       blueAPI: {
-        commitProjectDocumentPatches: vi.fn(async () => ({ revision: 1, sessionId: 0, changed: true })),
+        commitProjectDocumentPatches: vi.fn(async () => ({
+          revision: 1,
+          sessionId: 0,
+          changed: true,
+        })),
         getProjectDocument: vi.fn(),
       },
     });
@@ -113,29 +117,33 @@ describe('Score Layer Color Preservation Journey (US2)', () => {
     const serializedSource = new GenericScore();
     serializedSource.setBackgroundColor(-256); // Yellow
 
-    snapshot.score.layerGroups = [{
-      groupId: 'sound-group',
-      groupType: 'polyObject',
-      name: 'SoundObjects',
-      layerCount: 2,
-      isOpenableContainer: true,
-      layers: [
-        createMockScoreLayerSnapshot({
-          layerId: 'layer-0',
-          backgroundColor: -65536, // Red
-          items: [createMockScoreRowObjectSnapshot({
-            objectId: 'source-item',
-            backgroundColor: -16711936, // Green
-            editorTarget: sourceTarget,
-          })],
-        }),
-        createMockScoreLayerSnapshot({
-          layerId: 'layer-1',
-          backgroundColor: -16776961, // Blue
-          items: [],
-        }),
-      ],
-    }];
+    snapshot.score.layerGroups = [
+      {
+        groupId: 'sound-group',
+        groupType: 'polyObject',
+        name: 'SoundObjects',
+        layerCount: 2,
+        isOpenableContainer: true,
+        layers: [
+          createMockScoreLayerSnapshot({
+            layerId: 'layer-0',
+            backgroundColor: -65536, // Red
+            items: [
+              createMockScoreRowObjectSnapshot({
+                objectId: 'source-item',
+                backgroundColor: -16711936, // Green
+                editorTarget: sourceTarget,
+              }),
+            ],
+          }),
+          createMockScoreLayerSnapshot({
+            layerId: 'layer-1',
+            backgroundColor: -16776961, // Blue
+            items: [],
+          }),
+        ],
+      },
+    ];
 
     useProjectStore.getState().setProjectInfo({
       title: 'Test',
@@ -188,11 +196,13 @@ describe('Score Layer Color Preservation Journey (US2)', () => {
         name: 'SoundObjects',
         layerCount: 1,
         isOpenableContainer: true,
-        layers: [createMockScoreLayerSnapshot({
-          layerId: 'destination-layer',
-          backgroundColor: -16776961, // Blue
-          items: [],
-        })],
+        layers: [
+          createMockScoreLayerSnapshot({
+            layerId: 'destination-layer',
+            backgroundColor: -16776961, // Blue
+            items: [],
+          }),
+        ],
       },
       {
         groupId: 'pattern-group-2',
@@ -216,16 +226,18 @@ describe('Score Layer Color Preservation Journey (US2)', () => {
       transport: snapshot.transport,
     } as any);
 
-    useProjectStore.getState().addScoreObjects([{
-      groupId: 'sound-group',
-      layerIndex: 0,
-      name: 'Pattern source transfer',
-      startBeats: 4,
-      durationBeats: 2,
-      objectType: 'GenericScore',
-      isContainer: false,
-      editorTarget: patternSourceTarget,
-    }]);
+    useProjectStore.getState().addScoreObjects([
+      {
+        groupId: 'sound-group',
+        layerIndex: 0,
+        name: 'Pattern source transfer',
+        startBeats: 4,
+        durationBeats: 2,
+        objectType: 'GenericScore',
+        isContainer: false,
+        editorTarget: patternSourceTarget,
+      },
+    ]);
 
     const item = useProjectStore.getState().score.layerGroups[0].layers[0].items[0];
     expect(item?.backgroundColor).toBe(-256);

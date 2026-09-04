@@ -31,7 +31,15 @@ export function getJavaRuntimeArtifactCandidates(context: JavaRuntimePathContext
   return [
     path.join(resourcesPath, 'assets', 'java', 'blue-java.jar'),
     path.join(resourcesPath, 'app.asar.unpacked', 'assets', 'java', 'blue-java.jar'),
-    path.join(resourcesPath, 'app.asar.unpacked', 'packages', 'blue-app', 'assets', 'java', 'blue-java.jar'),
+    path.join(
+      resourcesPath,
+      'app.asar.unpacked',
+      'packages',
+      'blue-app',
+      'assets',
+      'java',
+      'blue-java.jar',
+    ),
   ];
 }
 
@@ -40,7 +48,8 @@ export function resolveJavaRuntimeArtifactPath(
 ): JavaRuntimeArtifactResolution {
   const existsSync = context.existsSync ?? fs.existsSync;
   const candidatePaths = getJavaRuntimeArtifactCandidates(context);
-  const artifactPath = candidatePaths.find((candidate) => existsSync(candidate)) ?? candidatePaths[0];
+  const artifactPath =
+    candidatePaths.find((candidate) => existsSync(candidate)) ?? candidatePaths[0];
 
   return {
     artifactPath,
@@ -49,9 +58,7 @@ export function resolveJavaRuntimeArtifactPath(
   };
 }
 
-export function getJavaRuntimePythonLibraryCandidates(
-  context: JavaRuntimePathContext,
-): string[] {
+export function getJavaRuntimePythonLibraryCandidates(context: JavaRuntimePathContext): string[] {
   if (!context.isPackaged) {
     return [path.resolve(context.mainModuleDir, '../../assets/java/pythonLib')];
   }
@@ -60,7 +67,15 @@ export function getJavaRuntimePythonLibraryCandidates(
   return [
     path.join(resourcesPath, 'assets', 'java', 'pythonLib'),
     path.join(resourcesPath, 'app.asar.unpacked', 'assets', 'java', 'pythonLib'),
-    path.join(resourcesPath, 'app.asar.unpacked', 'packages', 'blue-app', 'assets', 'java', 'pythonLib'),
+    path.join(
+      resourcesPath,
+      'app.asar.unpacked',
+      'packages',
+      'blue-app',
+      'assets',
+      'java',
+      'pythonLib',
+    ),
   ];
 }
 

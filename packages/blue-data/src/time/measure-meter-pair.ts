@@ -17,8 +17,12 @@ export class MeasureMeterPair {
     this.meter = meter;
   }
 
-  getMeasureNumber(): number { return this.measure; }
-  getMeter(): Meter { return this.meter; }
+  getMeasureNumber(): number {
+    return this.measure;
+  }
+  getMeter(): Meter {
+    return this.meter;
+  }
 
   withMeasureNumber(measure: number): MeasureMeterPair {
     return new MeasureMeterPair(measure, this.meter);

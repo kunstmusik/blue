@@ -44,10 +44,12 @@ describe('Library drag transfer lifecycle', () => {
       if (!captured.ok) throw new Error(captured.error.message);
 
       const userRoot = await client!.getRoot('soundObject');
-      await expect(service.copyLibraryTransferToUser(
-        { kind: 'clipboard', source: captured.value.source },
-        userRoot.id,
-      )).resolves.toMatchObject({
+      await expect(
+        service.copyLibraryTransferToUser(
+          { kind: 'clipboard', source: captured.value.source },
+          userRoot.id,
+        ),
+      ).resolves.toMatchObject({
         ok: true,
         value: { affectedNodes: [{ displayName: 'Copied From Timeline' }] },
       });
@@ -58,21 +60,22 @@ describe('Library drag transfer lifecycle', () => {
 
   it('cuts a user folder immediately and pastes reusable deep copies from a detached buffer', async () => {
     let client: UnifiedLibraryRepositoryClient;
-    const service = new UnifiedLibraryService(
-      ':memory:',
-      (path) => {
-        client = UnifiedLibraryRepositoryClient.openForTesting(path);
-        return client;
-      },
-    );
+    const service = new UnifiedLibraryService(':memory:', (path) => {
+      client = UnifiedLibraryRepositoryClient.openForTesting(path);
+      return client;
+    });
     await service.start();
     try {
       const root = await client!.getRoot('instrument');
       const folder = await client!.createFolder({
-        libraryType: 'instrument', parentId: root.id, displayName: 'Cut Folder',
+        libraryType: 'instrument',
+        parentId: root.id,
+        displayName: 'Cut Folder',
       });
       const nested = await client!.createFolder({
-        libraryType: 'instrument', parentId: folder.id, displayName: 'Nested',
+        libraryType: 'instrument',
+        parentId: folder.id,
+        displayName: 'Nested',
       });
       const instrument = new GenericInstrument();
       instrument.setName('Nested Lead');
@@ -97,13 +100,18 @@ describe('Library drag transfer lifecycle', () => {
       });
 
       const prepared = await service.prepareLibraryMutation({
-        type: 'deleteNode', nodeId: folder.id, expectedRevision: folder.revision,
+        type: 'deleteNode',
+        nodeId: folder.id,
+        expectedRevision: folder.revision,
       });
       expect(prepared).toMatchObject({ ok: true, value: { affectedCount: 3 } });
       if (!prepared.ok) throw new Error(prepared.error.message);
       const cut = await service.cutLibraryToClipboard({
         source: {
-          kind: 'userNode', libraryType: 'instrument', nodeId: folder.id, revision: folder.revision,
+          kind: 'userNode',
+          libraryType: 'instrument',
+          nodeId: folder.id,
+          revision: folder.revision,
         },
         confirmationToken: prepared.value.confirmationToken,
       });
@@ -120,10 +128,15 @@ describe('Library drag transfer lifecycle', () => {
       await expect(client!.getNode(folder.id)).rejects.toThrow(/not found/i);
 
       const reference = { kind: 'clipboard' as const, source: cut.value.clipboard.source };
-      await expect(service.copyLibraryTransferToUser(reference, root.id)).resolves.toMatchObject({ ok: true });
-      await expect(service.copyLibraryTransferToUser(reference, root.id)).resolves.toMatchObject({ ok: true });
-      const pastedFolders = (await client!.listChildren(root.id))
-        .filter((node) => node.displayName === 'Cut Folder');
+      await expect(service.copyLibraryTransferToUser(reference, root.id)).resolves.toMatchObject({
+        ok: true,
+      });
+      await expect(service.copyLibraryTransferToUser(reference, root.id)).resolves.toMatchObject({
+        ok: true,
+      });
+      const pastedFolders = (await client!.listChildren(root.id)).filter(
+        (node) => node.displayName === 'Cut Folder',
+      );
       expect(pastedFolders).toHaveLength(2);
       for (const pastedFolder of pastedFolders) {
         const nestedCopy = (await client!.listChildren(pastedFolder.id))[0]!;
@@ -184,10 +197,12 @@ describe('Library drag transfer lifecycle', () => {
       const preview = service.previewProjectLibraryDelete(source.key);
       expect(preview).toMatchObject({ ok: true });
       if (!preview.ok) throw new Error(preview.error.message);
-      await expect(service.cutLibraryToClipboard({
-        source: { kind: 'library', key: source.key, revision: source.revision },
-        confirmationToken: preview.value.confirmationToken,
-      })).resolves.toMatchObject({ ok: false, error: { code: 'validation-failed' } });
+      await expect(
+        service.cutLibraryToClipboard({
+          source: { kind: 'library', key: source.key, revision: source.revision },
+          confirmationToken: preview.value.confirmationToken,
+        }),
+      ).resolves.toMatchObject({ ok: false, error: { code: 'validation-failed' } });
       expect(data.getArrangement().size()).toBe(1);
       await service.revertLibraryEditorSession(opened.value.sessionId);
       const confirmedPreview = service.previewProjectLibraryDelete(source.key);
@@ -207,10 +222,12 @@ describe('Library drag transfer lifecycle', () => {
       expect(data.getArrangement().size()).toBe(0);
 
       const root = await client!.getRoot('instrument');
-      await expect(service.copyLibraryTransferToUser(
-        { kind: 'clipboard', source: cut.value.clipboard.source },
-        root.id,
-      )).resolves.toMatchObject({
+      await expect(
+        service.copyLibraryTransferToUser(
+          { kind: 'clipboard', source: cut.value.clipboard.source },
+          root.id,
+        ),
+      ).resolves.toMatchObject({
         ok: true,
         value: { affectedNodes: [{ displayName: 'Project Cut' }] },
       });
@@ -243,31 +260,35 @@ describe('Library drag transfer lifecycle', () => {
       const instrument = new GenericInstrument();
       instrument.setName('Drop Me');
       const payloadXml = instrument.saveAsXML().toXml();
-      const item = await client!.runForTesting((repository) => repository.createItem({
-        libraryType: 'instrument',
-        parentId: repository.getRoot('instrument').id,
-        displayName: 'Drop Me',
-        payload: {
-          embeddedName: 'Drop Me',
-          objectType: 'blue.orchestra.GenericInstrument',
-          supportStatus: 'supported',
-          supportReasonCode: null,
-          supportMessage: null,
-          payloadXml,
-          rawHash: 'raw',
-          canonicalContentHash: 'canonical',
-          serializerRevision: null,
-          preview: {},
-          dependencies: { itemOwned: [], unresolvedExternal: [] },
-          metadataRevision: 1,
-        },
-      }));
+      const item = await client!.runForTesting((repository) =>
+        repository.createItem({
+          libraryType: 'instrument',
+          parentId: repository.getRoot('instrument').id,
+          displayName: 'Drop Me',
+          payload: {
+            embeddedName: 'Drop Me',
+            objectType: 'blue.orchestra.GenericInstrument',
+            supportStatus: 'supported',
+            supportReasonCode: null,
+            supportMessage: null,
+            payloadXml,
+            rawHash: 'raw',
+            canonicalContentHash: 'canonical',
+            serializerRevision: null,
+            preview: {},
+            dependencies: { itemOwned: [], unresolvedExternal: [] },
+            metadataRevision: 1,
+          },
+        }),
+      );
       const dragSessionId = 'orchestra-drop-race';
-      await expect(service.beginLibraryDrag({
-        dragSessionId,
-        key: { scope: 'user', libraryType: 'instrument', nodeId: item.id },
-        revision: item.revision,
-      })).resolves.toMatchObject({ ok: true });
+      await expect(
+        service.beginLibraryDrag({
+          dragSessionId,
+          key: { scope: 'user', libraryType: 'instrument', nodeId: item.id },
+          revision: item.revision,
+        }),
+      ).resolves.toMatchObject({ ok: true });
 
       const previewPromise = service.previewLibraryTransfer({
         source: { kind: 'drag', dragSessionId },
@@ -284,10 +305,12 @@ describe('Library drag transfer lifecycle', () => {
       expect(preview).toMatchObject({ ok: true, value: { canApply: true } });
       if (!preview.ok) throw new Error(preview.error.message);
 
-      await expect(service.applyLibraryTransfer(preview.value.previewToken)).resolves.toMatchObject({
-        ok: true,
-        value: { libraryType: 'instrument', projectRevision: 1 },
-      });
+      await expect(service.applyLibraryTransfer(preview.value.previewToken)).resolves.toMatchObject(
+        {
+          ok: true,
+          value: { libraryType: 'instrument', projectRevision: 1 },
+        },
+      );
       expect(data.getArrangement().size()).toBe(1);
       expect(data.getArrangement().getArrangement()[0]?.instr?.getName()).toBe('Drop Me');
     } finally {
@@ -319,11 +342,13 @@ describe('Library drag transfer lifecycle', () => {
     try {
       const source = projectAdapter.list('instrument')[0]!;
       const dragSessionId = 'project-to-user-drag';
-      await expect(service.beginLibraryDrag({
-        dragSessionId,
-        key: source.key,
-        revision: source.revision,
-      })).resolves.toMatchObject({
+      await expect(
+        service.beginLibraryDrag({
+          dragSessionId,
+          key: source.key,
+          revision: source.revision,
+        }),
+      ).resolves.toMatchObject({
         ok: true,
         value: { libraryType: 'instrument', sourceScope: 'projectOwned' },
       });
@@ -367,26 +392,29 @@ describe('Library drag transfer lifecycle', () => {
     );
     await service.start();
     try {
-      const payloadXml = '<udo><style>CLASSIC</style><opcodeName>embeddedTone</opcodeName><outTypes>a</outTypes><inTypes>a</inTypes><codeBody>aout = ain</codeBody><comments/></udo>';
-      const item = await client!.runForTesting((repository) => repository.createItem({
-        libraryType: 'udo',
-        parentId: repository.getRoot('udo').id,
-        displayName: 'embeddedTone',
-        payload: {
-          embeddedName: 'embeddedTone',
-          objectType: 'blue.udo.UserDefinedOpcode',
-          supportStatus: 'supported',
-          supportReasonCode: null,
-          supportMessage: null,
-          payloadXml,
-          rawHash: 'raw-udo',
-          canonicalContentHash: 'canonical-udo',
-          serializerRevision: null,
-          preview: {},
-          dependencies: { itemOwned: [], unresolvedExternal: [] },
-          metadataRevision: 1,
-        },
-      }));
+      const payloadXml =
+        '<udo><style>CLASSIC</style><opcodeName>embeddedTone</opcodeName><outTypes>a</outTypes><inTypes>a</inTypes><codeBody>aout = ain</codeBody><comments/></udo>';
+      const item = await client!.runForTesting((repository) =>
+        repository.createItem({
+          libraryType: 'udo',
+          parentId: repository.getRoot('udo').id,
+          displayName: 'embeddedTone',
+          payload: {
+            embeddedName: 'embeddedTone',
+            objectType: 'blue.udo.UserDefinedOpcode',
+            supportStatus: 'supported',
+            supportReasonCode: null,
+            supportMessage: null,
+            payloadXml,
+            rawHash: 'raw-udo',
+            canonicalContentHash: 'canonical-udo',
+            serializerRevision: null,
+            preview: {},
+            dependencies: { itemOwned: [], unresolvedExternal: [] },
+            metadataRevision: 1,
+          },
+        }),
+      );
 
       const preview = await service.previewLibraryTransfer({
         source: {
@@ -408,10 +436,12 @@ describe('Library drag transfer lifecycle', () => {
       });
       expect(preview).toMatchObject({ ok: true, value: { canApply: true } });
       if (!preview.ok) throw new Error(preview.error.message);
-      await expect(service.applyLibraryTransfer(preview.value.previewToken)).resolves.toMatchObject({
-        ok: true,
-        value: { libraryType: 'udo', projectRevision: 1 },
-      });
+      await expect(service.applyLibraryTransfer(preview.value.previewToken)).resolves.toMatchObject(
+        {
+          ok: true,
+          value: { libraryType: 'udo', projectRevision: 1 },
+        },
+      );
 
       expect(data.getOpcodeList().size()).toBe(0);
       expect(instrument.getOpcodeList().getOpcode(0)?.getName()).toBe('embeddedTone');

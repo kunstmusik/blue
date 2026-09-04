@@ -11,7 +11,9 @@ import { useLibraryStore } from '../stores/library-store';
 import { BLUE_LIBRARY_DRAG_MIME } from '../components/libraries/library-drag-drop';
 import { createTestDataTransfer, dispatchDragEvent } from './library-interaction-test-helpers';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const previewLibraryTransfer = vi.fn(async (request) => ({
   ok: true as const,
@@ -19,9 +21,14 @@ const previewLibraryTransfer = vi.fn(async (request) => ({
     previewToken: 'udo-preview',
     item: {
       key: { scope: 'user' as const, libraryType: 'udo' as const, nodeId: 'udo-source' },
-      displayName: 'tone', libraryType: 'udo' as const, scope: 'user' as const,
-      objectType: 'OpcodeDefinition', supportStatus: 'supported' as const, supportMessage: null,
-      fields: {}, dependencies: { itemOwned: [], unresolvedExternal: [] },
+      displayName: 'tone',
+      libraryType: 'udo' as const,
+      scope: 'user' as const,
+      objectType: 'OpcodeDefinition',
+      supportStatus: 'supported' as const,
+      supportMessage: null,
+      fields: {},
+      dependencies: { itemOwned: [], unresolvedExternal: [] },
     },
     target: request.target,
     requestedMode: 'independent' as const,
@@ -32,7 +39,13 @@ const previewLibraryTransfer = vi.fn(async (request) => ({
 }));
 const applyLibraryTransfer = vi.fn(async () => ({
   ok: true as const,
-  value: { projectSessionId: 2, projectRevision: 6, libraryType: 'udo' as const, insertedIdentity: 'hash', message: 'UDO added.' },
+  value: {
+    projectSessionId: 2,
+    projectRevision: 6,
+    libraryType: 'udo' as const,
+    insertedIdentity: 'hash',
+    message: 'UDO added.',
+  },
 }));
 const captureSelection = vi.fn();
 const projectNode = {
@@ -43,12 +56,22 @@ const projectNode = {
     locator: {
       kind: 'udo' as const,
       sessionObjectId: 'udo:0',
-      persistedFingerprint: { canonicalHash: 'udo-hash', opcodeName: 'tone', style: 'CLASSIC' as const },
+      persistedFingerprint: {
+        canonicalHash: 'udo-hash',
+        opcodeName: 'tone',
+        style: 'CLASSIC' as const,
+      },
     },
   },
-  nodeId: 'project-udo-0', parentId: 'project-udos', libraryType: 'udo' as const,
-  scope: 'projectOwned' as const, nodeKind: 'item' as const, displayName: 'tone',
-  breadcrumb: ['Project UDOs', 'tone'], revision: 'udo-hash', hasChildren: false,
+  nodeId: 'project-udo-0',
+  parentId: 'project-udos',
+  libraryType: 'udo' as const,
+  scope: 'projectOwned' as const,
+  nodeKind: 'item' as const,
+  displayName: 'tone',
+  breadcrumb: ['Project UDOs', 'tone'],
+  revision: 'udo-hash',
+  hasChildren: false,
 };
 const embeddedProjectNode = {
   ...projectNode,
@@ -73,7 +96,11 @@ beforeEach(() => {
   captureSelection.mockClear();
   window.blueAPI = { ...window.blueAPI, previewLibraryTransfer, applyLibraryTransfer };
   useLibraryStore.setState({
-    clipboard: { operation: 'copy', source: { kind: 'userNode', libraryType: 'udo', nodeId: 'udo-source', revision: 3 }, capturedAt: 1 },
+    clipboard: {
+      operation: 'copy',
+      source: { kind: 'userNode', libraryType: 'udo', nodeId: 'udo-source', revision: 3 },
+      capturedAt: 1,
+    },
     transferPreview: null,
     transferSource: null,
     error: null,
@@ -85,8 +112,24 @@ beforeEach(() => {
     root.render(
       <UdoTable
         udolist={[
-          { name: 'tone', style: 'CLASSIC', outTypes: 'a', inTypes: 'a', inputArguments: '', code: 'aout = ain', comments: '' },
-          { name: 'tone', style: 'MODERN', outTypes: 'a', inTypes: '', inputArguments: 'ain:a', code: 'return ain', comments: '' },
+          {
+            name: 'tone',
+            style: 'CLASSIC',
+            outTypes: 'a',
+            inTypes: 'a',
+            inputArguments: '',
+            code: 'aout = ain',
+            comments: '',
+          },
+          {
+            name: 'tone',
+            style: 'MODERN',
+            outTypes: 'a',
+            inTypes: '',
+            inputArguments: 'ain:a',
+            code: 'return ain',
+            comments: '',
+          },
         ]}
         selectedIndices={[0]}
         onSelectIndex={vi.fn()}
@@ -108,7 +151,9 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  act(() => { root.unmount(); });
+  act(() => {
+    root.unmount();
+  });
   document.body.replaceChildren();
 });
 
@@ -118,59 +163,92 @@ describe('project UDO Library drop targets', () => {
     const markers = container.querySelectorAll('[aria-label*="Insert UDO"]');
     expect(markers).toHaveLength(3);
     await act(async () => {
-      markers[1]!.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'v', metaKey: true }));
+      markers[1]!.dispatchEvent(
+        new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'v', metaKey: true }),
+      );
       await Promise.resolve();
       await Promise.resolve();
     });
-    expect(previewLibraryTransfer).toHaveBeenCalledWith(expect.objectContaining({
-      target: { kind: 'projectUdo', projectSessionId: 2, projectRevision: 5, insertIndex: 1 },
-    }));
+    expect(previewLibraryTransfer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        target: { kind: 'projectUdo', projectSessionId: 2, projectRevision: 5, insertIndex: 1 },
+      }),
+    );
     expect(applyLibraryTransfer).toHaveBeenCalledWith('udo-preview');
   });
 
   it('accepts direct row drop and Library paste from the UDO row menu', async () => {
     const row = container.querySelector('[data-library-drop-target="udo-row"]') as HTMLElement;
     const transfer = createTestDataTransfer();
-    transfer.setData(BLUE_LIBRARY_DRAG_MIME, JSON.stringify({
-      dragSessionId: 'drag-udo', libraryType: 'udo',
-    }));
+    transfer.setData(
+      BLUE_LIBRARY_DRAG_MIME,
+      JSON.stringify({
+        dragSessionId: 'drag-udo',
+        libraryType: 'udo',
+      }),
+    );
     dispatchDragEvent(row, 'dragover', transfer);
     dispatchDragEvent(row, 'drop', transfer);
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
-    expect(previewLibraryTransfer).toHaveBeenLastCalledWith(expect.objectContaining({
-      source: { kind: 'drag', dragSessionId: 'drag-udo' },
-      target: { kind: 'projectUdo', projectSessionId: 2, projectRevision: 5, insertIndex: 1 },
-    }));
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(previewLibraryTransfer).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        source: { kind: 'drag', dragSessionId: 'drag-udo' },
+        target: { kind: 'projectUdo', projectSessionId: 2, projectRevision: 5, insertIndex: 1 },
+      }),
+    );
 
     previewLibraryTransfer.mockClear();
-    act(() => row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
-    await act(async () => { await Promise.resolve(); });
-    const paste = [...document.body.querySelectorAll('[role="menuitem"]')]
-      .find((item) => item.textContent === 'Paste') as HTMLElement;
+    act(() =>
+      row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })),
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+    const paste = [...document.body.querySelectorAll('[role="menuitem"]')].find(
+      (item) => item.textContent === 'Paste',
+    ) as HTMLElement;
     expect(paste?.getAttribute('aria-disabled')).not.toBe('true');
     expect(document.body.textContent).not.toContain('Paste Library UDO');
     act(() => paste.click());
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
-    expect(previewLibraryTransfer).toHaveBeenCalledWith(expect.objectContaining({
-      source: expect.objectContaining({ kind: 'clipboard' }),
-      target: { kind: 'projectUdo', projectSessionId: 2, projectRevision: 5, insertIndex: 1 },
-    }));
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(previewLibraryTransfer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: expect.objectContaining({ kind: 'clipboard' }),
+        target: { kind: 'projectUdo', projectSessionId: 2, projectRevision: 5, insertIndex: 1 },
+      }),
+    );
   });
 
   it('captures project UDO Copy and Cut in the shared Library buffer', async () => {
     const row = container.querySelector('[data-library-drop-target="udo-row"]') as HTMLElement;
-    act(() => row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
-    await act(async () => { await Promise.resolve(); });
+    act(() =>
+      row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })),
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
     expect(document.body.textContent).not.toContain('Copy to User Library');
-    const copy = [...document.body.querySelectorAll('[role="menuitem"]')]
-      .find((candidate) => candidate.textContent === 'Copy') as HTMLElement;
+    const copy = [...document.body.querySelectorAll('[role="menuitem"]')].find(
+      (candidate) => candidate.textContent === 'Copy',
+    ) as HTMLElement;
     act(() => copy.click());
     expect(captureSelection).toHaveBeenCalledWith('copy');
 
-    act(() => row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
-    await act(async () => { await Promise.resolve(); });
-    const cut = [...document.body.querySelectorAll('[role="menuitem"]')]
-      .find((candidate) => candidate.textContent === 'Cut') as HTMLElement;
+    act(() =>
+      row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })),
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+    const cut = [...document.body.querySelectorAll('[role="menuitem"]')].find(
+      (candidate) => candidate.textContent === 'Cut',
+    ) as HTMLElement;
     act(() => cut.click());
     expect(captureSelection).toHaveBeenCalledWith('cut');
   });
@@ -211,21 +289,33 @@ describe('project UDO Library drop targets', () => {
       '[aria-label="Insert UDO at end; paste a Library item here"]',
     ) as HTMLElement;
     const transfer = createTestDataTransfer();
-    transfer.setData(BLUE_LIBRARY_DRAG_MIME, JSON.stringify({
-      dragSessionId: 'drag-udo-remainder', libraryType: 'udo',
-    }));
+    transfer.setData(
+      BLUE_LIBRARY_DRAG_MIME,
+      JSON.stringify({
+        dragSessionId: 'drag-udo-remainder',
+        libraryType: 'udo',
+      }),
+    );
 
     dispatchDragEvent(emptyRemainder, 'dragover', transfer);
     expect(emptyRemainder.className).toContain('ring-app-accent');
     dispatchDragEvent(emptyRemainder, 'drop', transfer);
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
 
-    expect(previewLibraryTransfer).toHaveBeenCalledWith(expect.objectContaining({
-      source: { kind: 'drag', dragSessionId: 'drag-udo-remainder' },
-      target: {
-        kind: 'projectUdo', projectSessionId: 2, projectRevision: 5, insertIndex: 2,
-      },
-    }));
+    expect(previewLibraryTransfer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: { kind: 'drag', dragSessionId: 'drag-udo-remainder' },
+        target: {
+          kind: 'projectUdo',
+          projectSessionId: 2,
+          projectRevision: 5,
+          insertIndex: 2,
+        },
+      }),
+    );
   });
 
   it('uses the shared transfer buffer and exact Instrument UDO destination', async () => {
@@ -233,7 +323,15 @@ describe('project UDO Library drop targets', () => {
       root.render(
         <UdoTable
           udolist={[
-            { name: 'tone', style: 'CLASSIC', outTypes: 'a', inTypes: 'a', inputArguments: '', code: 'aout = ain', comments: '' },
+            {
+              name: 'tone',
+              style: 'CLASSIC',
+              outTypes: 'a',
+              inTypes: 'a',
+              inputArguments: '',
+              code: 'aout = ain',
+              comments: '',
+            },
           ]}
           selectedIndices={[0]}
           onSelectIndex={vi.fn()}
@@ -259,32 +357,42 @@ describe('project UDO Library drop targets', () => {
 
     const marker = container.querySelector('[aria-label^="Insert UDO before"]') as HTMLElement;
     await act(async () => {
-      marker.dispatchEvent(new KeyboardEvent('keydown', {
-        bubbles: true,
-        cancelable: true,
-        key: 'v',
-        metaKey: true,
-      }));
+      marker.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          bubbles: true,
+          cancelable: true,
+          key: 'v',
+          metaKey: true,
+        }),
+      );
       await Promise.resolve();
       await Promise.resolve();
     });
-    expect(previewLibraryTransfer).toHaveBeenCalledWith(expect.objectContaining({
-      target: {
-        kind: 'projectUdo',
-        projectSessionId: 2,
-        projectRevision: 5,
-        instrumentAssignmentId: '7',
-        insertIndex: 0,
-      },
-    }));
+    expect(previewLibraryTransfer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        target: {
+          kind: 'projectUdo',
+          projectSessionId: 2,
+          projectRevision: 5,
+          instrumentAssignmentId: '7',
+          insertIndex: 0,
+        },
+      }),
+    );
 
     const row = container.querySelector('[data-library-drop-target="udo-row"]') as HTMLElement;
-    act(() => row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
-    await act(async () => { await Promise.resolve(); });
-    const copy = [...document.body.querySelectorAll('[role="menuitem"]')]
-      .find((candidate) => candidate.textContent === 'Copy') as HTMLElement;
-    const cut = [...document.body.querySelectorAll('[role="menuitem"]')]
-      .find((candidate) => candidate.textContent === 'Cut') as HTMLElement;
+    act(() =>
+      row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })),
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+    const copy = [...document.body.querySelectorAll('[role="menuitem"]')].find(
+      (candidate) => candidate.textContent === 'Copy',
+    ) as HTMLElement;
+    const cut = [...document.body.querySelectorAll('[role="menuitem"]')].find(
+      (candidate) => candidate.textContent === 'Cut',
+    ) as HTMLElement;
     expect(copy.getAttribute('aria-disabled')).not.toBe('true');
     expect(cut.getAttribute('aria-disabled')).not.toBe('true');
     act(() => copy.click());
@@ -293,17 +401,30 @@ describe('project UDO Library drop targets', () => {
 
   it('uses a distinct shared-buffer identity and exact destination for Track UDOs', async () => {
     const track = { rootGroupId: 'track-group', trackId: 'track-1' };
-    expect(getProjectUdoSessionObjectId({
-      projectSessionId: 2,
-      projectRevision: 5,
-      track,
-    }, 0)).toBe('track:track-group:track-1:udo:0');
+    expect(
+      getProjectUdoSessionObjectId(
+        {
+          projectSessionId: 2,
+          projectRevision: 5,
+          track,
+        },
+        0,
+      ),
+    ).toBe('track:track-group:track-1:udo:0');
 
     act(() => {
       root.render(
         <UdoTable
           udolist={[
-            { name: 'trackTone', style: 'CLASSIC', outTypes: 'a', inTypes: 'a', inputArguments: '', code: 'aout = ain', comments: '' },
+            {
+              name: 'trackTone',
+              style: 'CLASSIC',
+              outTypes: 'a',
+              inTypes: 'a',
+              inputArguments: '',
+              code: 'aout = ain',
+              comments: '',
+            },
           ]}
           selectedIndices={[0]}
           onSelectIndex={vi.fn()}
@@ -324,23 +445,27 @@ describe('project UDO Library drop targets', () => {
 
     const marker = container.querySelector('[aria-label^="Insert UDO before"]') as HTMLElement;
     await act(async () => {
-      marker.dispatchEvent(new KeyboardEvent('keydown', {
-        bubbles: true,
-        cancelable: true,
-        key: 'v',
-        metaKey: true,
-      }));
+      marker.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          bubbles: true,
+          cancelable: true,
+          key: 'v',
+          metaKey: true,
+        }),
+      );
       await Promise.resolve();
       await Promise.resolve();
     });
-    expect(previewLibraryTransfer).toHaveBeenCalledWith(expect.objectContaining({
-      target: {
-        kind: 'projectUdo',
-        projectSessionId: 2,
-        projectRevision: 5,
-        track,
-        insertIndex: 0,
-      },
-    }));
+    expect(previewLibraryTransfer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        target: {
+          kind: 'projectUdo',
+          projectSessionId: 2,
+          projectRevision: 5,
+          track,
+          insertIndex: 0,
+        },
+      }),
+    );
   });
 });

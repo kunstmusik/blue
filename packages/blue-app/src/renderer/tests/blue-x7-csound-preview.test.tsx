@@ -16,7 +16,9 @@ vi.mock('../components/workbench/panels/editors/SelectedCodeEditor', () => ({
   ),
 }));
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 function setInputValue(input: HTMLElement, value: string) {
   const descriptor = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value');
@@ -55,18 +57,15 @@ describe('CsoundPanel', () => {
     voice.csoundPostCode = 'blueMixerOut aout, aout';
 
     act(() => {
-      root?.render(
-        <CsoundPanel
-          voice={voice}
-          onApplyPatch={onApplyPatch}
-        />,
-      );
+      root?.render(<CsoundPanel voice={voice} onApplyPatch={onApplyPatch} />);
     });
 
     const header = container?.querySelector('span.text-role-headline');
     expect(header?.textContent).toBe('Post Code');
 
-    const textarea = container?.querySelector('textarea[aria-label="Csound Post Code"]') as HTMLTextAreaElement;
+    const textarea = container?.querySelector(
+      'textarea[aria-label="Csound Post Code"]',
+    ) as HTMLTextAreaElement;
     expect(textarea).not.toBeNull();
     expect(textarea.value).toBe('blueMixerOut aout, aout');
 
@@ -84,12 +83,7 @@ describe('CsoundPanel', () => {
     const voice = createDefaultBlueX7Voice();
 
     act(() => {
-      root?.render(
-        <CsoundPanel
-          voice={voice}
-          onApplyPatch={onApplyPatch}
-        />,
-      );
+      root?.render(<CsoundPanel voice={voice} onApplyPatch={onApplyPatch} />);
     });
 
     expect(container?.querySelector('[role="tablist"]')).toBeNull();

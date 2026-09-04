@@ -5,10 +5,7 @@ interface PlaceholderPanelProps {
   showHeader?: boolean;
 }
 
-export default function PlaceholderPanel({
-  descriptor,
-  showHeader = true,
-}: PlaceholderPanelProps) {
+export default function PlaceholderPanel({ descriptor, showHeader = true }: PlaceholderPanelProps) {
   return (
     <div className="flex flex-col h-full bg-blue-bg">
       {showHeader ? (

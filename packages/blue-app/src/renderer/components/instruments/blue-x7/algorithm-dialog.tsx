@@ -30,7 +30,10 @@ export const AlgorithmDialog: React.FC<AlgorithmDialogProps> = ({
       aria-label="Select DX7 Algorithm"
       aria-labelledby="algorithm-dialog-title"
     >
-      <div ref={dialogRef} className="flex flex-col max-h-[90vh] w-full max-w-4xl rounded-lg border border-blue-border bg-blue-bg shadow-xl overflow-hidden">
+      <div
+        ref={dialogRef}
+        className="flex flex-col max-h-[90vh] w-full max-w-4xl rounded-lg border border-blue-border bg-blue-bg shadow-xl overflow-hidden"
+      >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-blue-border px-4 py-3 bg-blue-surface/40">
           <h2 id="algorithm-dialog-title" className="text-role-title-2 font-bold text-gray-100">
@@ -69,14 +72,9 @@ export const AlgorithmDialog: React.FC<AlgorithmDialogProps> = ({
                 )}
               >
                 <div className="flex items-center justify-center bg-blue-surface/40 border border-blue-border/40 rounded p-1 w-full aspect-square">
-                  <AlgorithmSvg
-                    algorithm={alg}
-                    className="max-h-full max-w-full object-contain"
-                  />
+                  <AlgorithmSvg algorithm={alg} className="max-h-full max-w-full object-contain" />
                 </div>
-                <span className="mt-1 text-role-callout text-gray-200">
-                  Alg {alg}
-                </span>
+                <span className="mt-1 text-role-callout text-gray-200">Alg {alg}</span>
               </button>
             );
           })}

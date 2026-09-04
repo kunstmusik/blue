@@ -17,9 +17,9 @@ const AUDIO_CLIP_FILL_ALPHA = Number((194 / 255).toFixed(3));
 const AUDIO_CLIP_SELECTED_ALPHA = Number((128 / 255).toFixed(3));
 
 function rgbaCss(rgb: number, alpha: number): string {
-  const r = (rgb >> 16) & 0xFF;
-  const g = (rgb >> 8) & 0xFF;
-  const b = rgb & 0xFF;
+  const r = (rgb >> 16) & 0xff;
+  const g = (rgb >> 8) & 0xff;
+  const b = rgb & 0xff;
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
@@ -51,12 +51,12 @@ export default function AudioClipBar({
   let bd: string;
 
   if (selected) {
-    barFill = alphaGradientStyle(0xFFFFFF, AUDIO_CLIP_SELECTED_ALPHA);
+    barFill = alphaGradientStyle(0xffffff, AUDIO_CLIP_SELECTED_ALPHA);
     headerBg = '#000000';
     fg = '#ffffff';
     bl = '#ffffff';
     bd = '#ffffff';
-    waveColor = rgbaCss(0xFFFFFF, AUDIO_CLIP_SELECTED_ALPHA);
+    waveColor = rgbaCss(0xffffff, AUDIO_CLIP_SELECTED_ALPHA);
     fadeColor = `rgba(0,0,0,${JAVA_FADE_ALPHA})`;
   } else {
     barFill = alphaGradientStyle(rgb, AUDIO_CLIP_FILL_ALPHA);
@@ -75,14 +75,23 @@ export default function AudioClipBar({
   const fadeOverlayLeft = 1;
   const fadeOverlayHeight = Math.max(h, 1);
 
-  const fadeInPoly = br.fadeInBeats > 0
-    ? buildFadePolygon(br.fadeInBeats, pixelsPerBeat, barHeight, br.fadeInType, true, 0)
-    : null;
+  const fadeInPoly =
+    br.fadeInBeats > 0
+      ? buildFadePolygon(br.fadeInBeats, pixelsPerBeat, barHeight, br.fadeInType, true, 0)
+      : null;
 
   const fadeOutOffset = width - Math.round(br.fadeOutBeats * pixelsPerBeat);
-  const fadeOutPoly = br.fadeOutBeats > 0
-    ? buildFadePolygon(br.fadeOutBeats, pixelsPerBeat, barHeight, br.fadeOutType, false, Math.max(0, fadeOutOffset))
-    : null;
+  const fadeOutPoly =
+    br.fadeOutBeats > 0
+      ? buildFadePolygon(
+          br.fadeOutBeats,
+          pixelsPerBeat,
+          barHeight,
+          br.fadeOutType,
+          false,
+          Math.max(0, fadeOutOffset),
+        )
+      : null;
 
   return (
     <div
@@ -147,7 +156,16 @@ export default function AudioClipBar({
         </svg>
       )}
       {headerBg && (
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 18, backgroundColor: headerBg }} />
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 18,
+            backgroundColor: headerBg,
+          }}
+        />
       )}
       {showText && (
         <span

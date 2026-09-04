@@ -19,7 +19,9 @@ vi.mock('../components/workbench/panels/editors/SelectedCodeEditor', () => ({
 
 import { BlueX7TabList, type BlueX7TabItem } from '../components/instruments/blue-x7/tab-list';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 describe('BlueX7 A11y, Keyboard Navigation & Responsive Layout', () => {
   let container: HTMLDivElement | null = null;
@@ -60,12 +62,7 @@ describe('BlueX7 A11y, Keyboard Navigation & Responsive Layout', () => {
     const snapshot = createSnapshot();
 
     act(() => {
-      root?.render(
-        <BlueX7Editor
-          instrument={snapshot}
-          onInstrumentPatch={onInstrumentPatch}
-        />,
-      );
+      root?.render(<BlueX7Editor instrument={snapshot} onInstrumentPatch={onInstrumentPatch} />);
     });
 
     // Inputs with accessible names
@@ -92,15 +89,12 @@ describe('BlueX7 A11y, Keyboard Navigation & Responsive Layout', () => {
     const snapshot = createSnapshot();
 
     act(() => {
-      root?.render(
-        <BlueX7Editor
-          instrument={snapshot}
-          onInstrumentPatch={onInstrumentPatch}
-        />,
-      );
+      root?.render(<BlueX7Editor instrument={snapshot} onInstrumentPatch={onInstrumentPatch} />);
     });
 
-    const openModalBtn = container?.querySelector('button[aria-label="Choose Algorithm Dialog"]') as HTMLButtonElement;
+    const openModalBtn = container?.querySelector(
+      'button[aria-label="Choose Algorithm Dialog"]',
+    ) as HTMLButtonElement;
     expect(openModalBtn).not.toBeNull();
 
     act(() => {
@@ -108,13 +102,19 @@ describe('BlueX7 A11y, Keyboard Navigation & Responsive Layout', () => {
       openModalBtn.click();
     });
 
-    const dialog = document.body.querySelector('[role="dialog"][aria-label="Select DX7 Algorithm"]');
+    const dialog = document.body.querySelector(
+      '[role="dialog"][aria-label="Select DX7 Algorithm"]',
+    );
     expect(dialog).not.toBeNull();
-    const closeButton = dialog?.querySelector('button[aria-label="Close Algorithm Dialog"]') as HTMLButtonElement;
+    const closeButton = dialog?.querySelector(
+      'button[aria-label="Close Algorithm Dialog"]',
+    ) as HTMLButtonElement;
     expect(document.activeElement).toBe(closeButton);
 
     const dialogPanel = dialog?.querySelector('.flex.flex-col') as HTMLElement;
-    const footerCloseButton = dialog?.querySelector('button:not([aria-label])') as HTMLButtonElement;
+    const footerCloseButton = dialog?.querySelector(
+      'button:not([aria-label])',
+    ) as HTMLButtonElement;
     footerCloseButton.focus();
     act(() => {
       dialogPanel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
@@ -126,7 +126,9 @@ describe('BlueX7 A11y, Keyboard Navigation & Responsive Layout', () => {
       dialogPanel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     });
 
-    const closedDialog = document.body.querySelector('[role="dialog"][aria-label="Select DX7 Algorithm"]');
+    const closedDialog = document.body.querySelector(
+      '[role="dialog"][aria-label="Select DX7 Algorithm"]',
+    );
     expect(closedDialog).toBeNull();
     expect(document.activeElement).toBe(openModalBtn);
   });
@@ -141,10 +143,7 @@ describe('BlueX7 A11y, Keyboard Navigation & Responsive Layout', () => {
     act(() => {
       root?.render(
         <div style={{ width: '360px', height: '600px', overflow: 'hidden' }}>
-          <BlueX7Editor
-            instrument={snapshot}
-            onInstrumentPatch={onInstrumentPatch}
-          />
+          <BlueX7Editor instrument={snapshot} onInstrumentPatch={onInstrumentPatch} />
         </div>,
       );
     });
@@ -374,12 +373,7 @@ describe('BlueX7Editor — US1 Top-Level Tab/Panel ARIA & Layout Integration', (
     const snapshot = createSnapshot();
 
     act(() => {
-      root?.render(
-        <BlueX7Editor
-          instrument={snapshot}
-          onInstrumentPatch={onInstrumentPatch}
-        />,
-      );
+      root?.render(<BlueX7Editor instrument={snapshot} onInstrumentPatch={onInstrumentPatch} />);
     });
 
     const tabKeys = ['global', 'operators', 'pitch', 'csound'];
@@ -402,16 +396,15 @@ describe('BlueX7Editor — US1 Top-Level Tab/Panel ARIA & Layout Integration', (
     const snapshot = createSnapshot();
 
     act(() => {
-      root?.render(
-        <BlueX7Editor
-          instrument={snapshot}
-          onInstrumentPatch={onInstrumentPatch}
-        />,
-      );
+      root?.render(<BlueX7Editor instrument={snapshot} onInstrumentPatch={onInstrumentPatch} />);
     });
 
-    const globalPanel = container?.querySelector('[data-testid="bluex7-panel-global"]') as HTMLElement;
-    const operatorsPanel = container?.querySelector('[data-testid="bluex7-panel-operators"]') as HTMLElement;
+    const globalPanel = container?.querySelector(
+      '[data-testid="bluex7-panel-global"]',
+    ) as HTMLElement;
+    const operatorsPanel = container?.querySelector(
+      '[data-testid="bluex7-panel-operators"]',
+    ) as HTMLElement;
 
     // Active panel
     expect(globalPanel.getAttribute('aria-hidden')).toBe('false');
@@ -423,12 +416,16 @@ describe('BlueX7Editor — US1 Top-Level Tab/Panel ARIA & Layout Integration', (
     expect(operatorsPanel.style.visibility).toBe('hidden');
     expect(operatorsPanel.classList.contains('pointer-events-none')).toBe(true);
 
-    const pitchPanel = container?.querySelector('[data-testid="bluex7-panel-pitch"]') as HTMLElement;
+    const pitchPanel = container?.querySelector(
+      '[data-testid="bluex7-panel-pitch"]',
+    ) as HTMLElement;
     expect(pitchPanel.getAttribute('aria-hidden')).toBe('true');
     expect(pitchPanel.style.visibility).toBe('hidden');
     expect(pitchPanel.classList.contains('pointer-events-none')).toBe(true);
 
-    const csoundPanel = container?.querySelector('[data-testid="bluex7-panel-csound"]') as HTMLElement;
+    const csoundPanel = container?.querySelector(
+      '[data-testid="bluex7-panel-csound"]',
+    ) as HTMLElement;
     expect(csoundPanel.getAttribute('aria-hidden')).toBe('true');
     expect(csoundPanel.style.visibility).toBe('hidden');
     expect(csoundPanel.classList.contains('pointer-events-none')).toBe(true);
@@ -440,10 +437,7 @@ describe('BlueX7Editor — US1 Top-Level Tab/Panel ARIA & Layout Integration', (
     act(() => {
       root?.render(
         <div style={{ width: '360px', height: '600px' }}>
-          <BlueX7Editor
-            instrument={snapshot}
-            onInstrumentPatch={onInstrumentPatch}
-          />
+          <BlueX7Editor instrument={snapshot} onInstrumentPatch={onInstrumentPatch} />
         </div>,
       );
     });
@@ -458,16 +452,13 @@ describe('BlueX7Editor — US1 Top-Level Tab/Panel ARIA & Layout Integration', (
     const snapshot = createSnapshot();
 
     act(() => {
-      root?.render(
-        <BlueX7Editor
-          instrument={snapshot}
-          onInstrumentPatch={onInstrumentPatch}
-        />,
-      );
+      root?.render(<BlueX7Editor instrument={snapshot} onInstrumentPatch={onInstrumentPatch} />);
     });
 
     // Switch to Operators tab
-    const operatorsTab = container?.querySelector('[role="tab"][data-testid="tab-operators"]') as HTMLButtonElement;
+    const operatorsTab = container?.querySelector(
+      '[role="tab"][data-testid="tab-operators"]',
+    ) as HTMLButtonElement;
     act(() => {
       operatorsTab.click();
     });

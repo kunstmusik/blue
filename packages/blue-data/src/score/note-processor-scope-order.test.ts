@@ -8,7 +8,10 @@ import { TimeDuration } from '../time/time-duration';
 import { NoteProcessorChain } from '../note-processors/note-processor-chain';
 import { AddProcessor } from '../note-processors/add-processor';
 
-function makeScoreWithNote(objectChain?: NoteProcessorChain, rootChain?: NoteProcessorChain): Score {
+function makeScoreWithNote(
+  objectChain?: NoteProcessorChain,
+  rootChain?: NoteProcessorChain,
+): Score {
   const score = new Score();
   score.length = 0;
 

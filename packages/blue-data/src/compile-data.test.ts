@@ -20,7 +20,9 @@ class CompileDataInstrument extends Instrument {
     this.parameters = parameters;
   }
 
-  setStringChannels(channels: Array<{ objectName: string; value: string; channelName: string }>): void {
+  setStringChannels(
+    channels: Array<{ objectName: string; value: string; channelName: string }>,
+  ): void {
     this.stringChannels = channels;
   }
 

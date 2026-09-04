@@ -16,7 +16,11 @@ describe('Score Layer Color Actions UI & History (US3)', () => {
   beforeEach(() => {
     vi.stubGlobal('window', {
       blueAPI: {
-        commitProjectDocumentPatches: vi.fn(async () => ({ revision: 1, sessionId: 0, changed: true })),
+        commitProjectDocumentPatches: vi.fn(async () => ({
+          revision: 1,
+          sessionId: 0,
+          changed: true,
+        })),
         getProjectDocument: vi.fn(),
       },
     });
@@ -84,12 +88,16 @@ describe('Score Layer Color Actions UI & History (US3)', () => {
     });
 
     expect(useScoreColorHistoryStore.getState().canUndo).toBe(true);
-    expect(useProjectStore.getState().score.layerGroups[0].layers[0].items[0].backgroundColor).toBe(-65536);
+    expect(useProjectStore.getState().score.layerGroups[0].layers[0].items[0].backgroundColor).toBe(
+      -65536,
+    );
 
     // Undo action
     const undone = await useScoreColorHistoryStore.getState().undo();
     expect(undone).toBe(true);
-    expect(useProjectStore.getState().score.layerGroups[0].layers[0].items[0].backgroundColor).toBe(-16711936);
+    expect(useProjectStore.getState().score.layerGroups[0].layers[0].items[0].backgroundColor).toBe(
+      -16711936,
+    );
   });
 
   it('does not record history entry if patch commit is rejected by backend', async () => {

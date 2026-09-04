@@ -13,10 +13,7 @@ import {
 } from '../../../shared/track-instrument-editor-contract';
 import InstrumentEditorPanel from '../workbench/panels/orchestra/InstrumentEditorPanel';
 import { useLibraryStore } from '../../stores/library-store';
-import {
-  mergePendingInstrumentPatch,
-  toInstrumentPatch,
-} from './track-instrument-patch-queue';
+import { mergePendingInstrumentPatch, toInstrumentPatch } from './track-instrument-patch-queue';
 
 function closeWindow(): void {
   window.close();
@@ -39,8 +36,12 @@ function parseRequestFromLocation(): TrackInstrumentEditorRequest | null {
   if (sessionText === null || revisionText === null) return null;
   const projectSessionId = Number(sessionText);
   const projectRevision = Number(revisionText);
-  if (!Number.isInteger(projectSessionId) || projectSessionId < 0
-    || !Number.isInteger(projectRevision) || projectRevision < 0) {
+  if (
+    !Number.isInteger(projectSessionId) ||
+    projectSessionId < 0 ||
+    !Number.isInteger(projectRevision) ||
+    projectRevision < 0
+  ) {
     return null;
   }
 
@@ -60,7 +61,8 @@ function projectSnapshotToTrackInstrument(
 ): TrackInstrumentEditorSnapshot | null {
   if (event.sessionId !== request.track.projectSessionId) return null;
   const group = event.snapshot.score?.layerGroups.find(
-    (candidate) => candidate.groupType === 'track' && candidate.groupId === request.track.rootGroupId,
+    (candidate) =>
+      candidate.groupType === 'track' && candidate.groupId === request.track.rootGroupId,
   );
   if (!group || group.groupType !== 'track') return null;
   const layer = group.layers.find((candidate) => candidate.layerId === request.track.trackId);
@@ -82,8 +84,11 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
   const parsedRequest = useMemo(parseRequestFromLocation, []);
   const [snapshot, setSnapshot] = useState<TrackInstrumentEditorSnapshot | null>(null);
   const [editorUsable, setEditorUsable] = useState(false);
-  const [runtimeStatus, setRuntimeStatus] = useState<TrackInstrumentRuntimeStatus>(INACTIVE_RUNTIME_STATUS);
-  const [error, setError] = useState<string | null>(parsedRequest ? null : 'Missing Track instrument editor request');
+  const [runtimeStatus, setRuntimeStatus] =
+    useState<TrackInstrumentRuntimeStatus>(INACTIVE_RUNTIME_STATUS);
+  const [error, setError] = useState<string | null>(
+    parsedRequest ? null : 'Missing Track instrument editor request',
+  );
   const requestRef = useRef<TrackInstrumentEditorRequest | null>(parsedRequest);
   const runtimeStatusSequenceRef = useRef<number | null>(null);
   const runtimeUnsubscribeRef = useRef<(() => Promise<void>) | null>(null);
@@ -110,9 +115,11 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
       setEditorUsable(false);
     }
     const current = requestRef.current;
-    if (current
-      && current.track.projectSessionId === next.track.projectSessionId
-      && current.track.projectRevision > next.track.projectRevision) {
+    if (
+      current &&
+      current.track.projectSessionId === next.track.projectSessionId &&
+      current.track.projectRevision > next.track.projectRevision
+    ) {
       return;
     }
     requestRef.current = { track: next.track };
@@ -123,9 +130,10 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
   }, []);
 
   const acceptRuntimeStatus = useCallback((next: TrackInstrumentRuntimeStatus) => {
-    const previous = runtimeStatusSequenceRef.current === null
-      ? null
-      : { ...INACTIVE_RUNTIME_STATUS, sequence: runtimeStatusSequenceRef.current };
+    const previous =
+      runtimeStatusSequenceRef.current === null
+        ? null
+        : { ...INACTIVE_RUNTIME_STATUS, sequence: runtimeStatusSequenceRef.current };
     if (!isNewerTrackInstrumentRuntimeStatus(next, previous)) return;
     runtimeStatusSequenceRef.current = next.sequence;
     if (mountedRef.current) setRuntimeStatus(next);
@@ -155,20 +163,22 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
 
     void subscribe(parsedRequest, (next) => {
       if (!cancelled) acceptRuntimeStatus(next);
-    }).then((subscription) => {
-      if (cancelled) {
-        if (subscription) void subscription.unsubscribe();
-        return;
-      }
-      if (!subscription) {
-        setRuntimeStatus(INACTIVE_RUNTIME_STATUS);
-        return;
-      }
-      runtimeUnsubscribeRef.current = subscription.unsubscribe;
-      acceptRuntimeStatus(subscription.status);
-    }).catch(() => {
-      if (!cancelled) setRuntimeStatus(INACTIVE_RUNTIME_STATUS);
-    });
+    })
+      .then((subscription) => {
+        if (cancelled) {
+          if (subscription) void subscription.unsubscribe();
+          return;
+        }
+        if (!subscription) {
+          setRuntimeStatus(INACTIVE_RUNTIME_STATUS);
+          return;
+        }
+        runtimeUnsubscribeRef.current = subscription.unsubscribe;
+        acceptRuntimeStatus(subscription.status);
+      })
+      .catch(() => {
+        if (!cancelled) setRuntimeStatus(INACTIVE_RUNTIME_STATUS);
+      });
 
     return () => {
       cancelled = true;
@@ -208,22 +218,25 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
     });
   }, [acceptSnapshot, parsedRequest]);
 
-  const persistPatch = useCallback(async (patch: InstrumentPatch): Promise<boolean> => {
-    while (requestRef.current) {
-      const result = await window.blueAPI.updateTrackInstrumentEditorDocument({
-        ...requestRef.current,
-        patch,
-      });
-      if (!result.snapshot || result.status === 'unavailable') {
-        if (mountedRef.current) setError('The Track instrument is no longer available.');
-        return false;
-      }
+  const persistPatch = useCallback(
+    async (patch: InstrumentPatch): Promise<boolean> => {
+      while (requestRef.current) {
+        const result = await window.blueAPI.updateTrackInstrumentEditorDocument({
+          ...requestRef.current,
+          patch,
+        });
+        if (!result.snapshot || result.status === 'unavailable') {
+          if (mountedRef.current) setError('The Track instrument is no longer available.');
+          return false;
+        }
 
-      acceptSnapshot(result.snapshot);
-      if (result.status !== 'stale') return true;
-    }
-    return false;
-  }, [acceptSnapshot]);
+        acceptSnapshot(result.snapshot);
+        if (result.status !== 'stale') return true;
+      }
+      return false;
+    },
+    [acceptSnapshot],
+  );
 
   const drainPatchQueue = useCallback(async () => {
     if (drainingPatchesRef.current) return;
@@ -248,39 +261,47 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
     }
   }, [persistPatch]);
 
-  const applyPatch = useCallback((patch: OrchestraPatch) => {
-    const instrumentPatch = toInstrumentPatch(patch);
-    if (!instrumentPatch) return;
+  const applyPatch = useCallback(
+    (patch: OrchestraPatch) => {
+      const instrumentPatch = toInstrumentPatch(patch);
+      if (!instrumentPatch) return;
 
-    const request = requestRef.current;
-    if (request && instrumentPatch.bsbInterface) {
-      const realtimeUpdate = createBsbRealtimeControlUpdate(
-        {
-          track: {
-            projectSessionId: request.track.projectSessionId,
-            rootGroupId: request.track.rootGroupId,
-            trackId: request.track.trackId,
+      const request = requestRef.current;
+      if (request && instrumentPatch.bsbInterface) {
+        const realtimeUpdate = createBsbRealtimeControlUpdate(
+          {
+            track: {
+              projectSessionId: request.track.projectSessionId,
+              rootGroupId: request.track.rootGroupId,
+              trackId: request.track.trackId,
+            },
           },
-        },
-        instrumentPatch.bsbInterface,
-      );
-      if (realtimeUpdate) {
-        void window.blueAPI.sendBsbRealtimeControlUpdate(realtimeUpdate).catch((realtimeError) => {
-          console.error('[track-instrument-editor] Failed to send realtime control update:', realtimeError);
-        });
+          instrumentPatch.bsbInterface,
+        );
+        if (realtimeUpdate) {
+          void window.blueAPI
+            .sendBsbRealtimeControlUpdate(realtimeUpdate)
+            .catch((realtimeError) => {
+              console.error(
+                '[track-instrument-editor] Failed to send realtime control update:',
+                realtimeError,
+              );
+            });
+        }
       }
-    }
 
-    const pending = pendingPatchesRef.current;
-    const previous = pending[pending.length - 1];
-    const merged = previous ? mergePendingInstrumentPatch(previous, instrumentPatch) : null;
-    if (merged) {
-      pending[pending.length - 1] = merged;
-    } else {
-      pending.push(instrumentPatch);
-    }
-    void drainPatchQueue();
-  }, [drainPatchQueue]);
+      const pending = pendingPatchesRef.current;
+      const previous = pending[pending.length - 1];
+      const merged = previous ? mergePendingInstrumentPatch(previous, instrumentPatch) : null;
+      if (merged) {
+        pending[pending.length - 1] = merged;
+      } else {
+        pending.push(instrumentPatch);
+      }
+      void drainPatchQueue();
+    },
+    [drainPatchQueue],
+  );
 
   if (error) {
     return (
@@ -309,18 +330,22 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
         instrument={snapshot.instrument}
         projectUdos={snapshot.projectUdos}
         onOrchestraPatch={applyPatch}
-        blueX7Runtime={snapshot.instrument.type === 'blueX7' ? {
-          target: {
-            track: {
-              projectSessionId: snapshot.track.projectSessionId,
-              rootGroupId: snapshot.track.rootGroupId,
-              trackId: snapshot.track.trackId,
-            },
-          },
-          projectSessionId: snapshot.track.projectSessionId,
-          enabled: editorUsable
-            && (runtimeStatus.playbackRunning || runtimeStatus.blueLiveRunning),
-        } : undefined}
+        blueX7Runtime={
+          snapshot.instrument.type === 'blueX7'
+            ? {
+                target: {
+                  track: {
+                    projectSessionId: snapshot.track.projectSessionId,
+                    rootGroupId: snapshot.track.rootGroupId,
+                    trackId: snapshot.track.trackId,
+                  },
+                },
+                projectSessionId: snapshot.track.projectSessionId,
+                enabled:
+                  editorUsable && (runtimeStatus.playbackRunning || runtimeStatus.blueLiveRunning),
+              }
+            : undefined
+        }
         onEditorUsable={handleEditorUsable}
         embeddedUdoTarget={{
           projectSessionId: snapshot.track.projectSessionId,

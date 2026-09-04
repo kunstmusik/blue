@@ -92,7 +92,9 @@ export default function PythonInstrumentEditor({
           <button
             type="button"
             className="rounded border border-blue-border px-2.5 py-1 text-role-body text-gray-300 transition-colors hover:border-blue-accent hover:text-gray-100 disabled:opacity-50"
-            onClick={() => { void handleTest(); }}
+            onClick={() => {
+              void handleTest();
+            }}
             disabled={testing}
             title="Test (Cmd/Ctrl+T)"
           >
@@ -125,7 +127,7 @@ export default function PythonInstrumentEditor({
               'border-b-2 px-3 py-2 text-role-body',
               activeTab === tab.key
                 ? 'border-blue-accent text-app-text-strong'
-                : 'border-transparent text-blue-muted hover:text-app-text-strong'
+                : 'border-transparent text-blue-muted hover:text-app-text-strong',
             )}
             onClick={() => setActiveTab(tab.key)}
           >
@@ -141,7 +143,9 @@ export default function PythonInstrumentEditor({
           return (
             <div
               key={tab.key}
-              className={isActive ? 'relative h-full p-3' : 'pointer-events-none absolute inset-0 p-3'}
+              className={
+                isActive ? 'relative h-full p-3' : 'pointer-events-none absolute inset-0 p-3'
+              }
               aria-hidden={!isActive}
               style={{ visibility: isActive ? 'visible' : 'hidden' }}
             >
@@ -174,9 +178,7 @@ export default function PythonInstrumentEditor({
                   }
                   onChange={(nextValue) =>
                     void onInstrumentPatch(
-                      tab.key === 'globalOrc'
-                        ? { globalOrc: nextValue }
-                        : { globalSco: nextValue },
+                      tab.key === 'globalOrc' ? { globalOrc: nextValue } : { globalSco: nextValue },
                     )
                   }
                 />
@@ -188,10 +190,7 @@ export default function PythonInstrumentEditor({
 
       {/* Test output modal */}
       {testOutput !== null && (
-        <GeneratedInstrumentModal
-          text={testOutput}
-          onClose={() => setTestOutput(null)}
-        />
+        <GeneratedInstrumentModal text={testOutput} onClose={() => setTestOutput(null)} />
       )}
     </div>
   );

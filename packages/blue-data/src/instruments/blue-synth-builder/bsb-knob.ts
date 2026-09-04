@@ -51,7 +51,7 @@ export class BSBKnob extends BSBWidget {
     if (val.indexOf(':') < 0) {
       const relative = parseFloat(val);
       if (Number.isFinite(relative)) {
-        nextValue = (relative * (this.maximum - this.minimum)) + this.minimum;
+        nextValue = relative * (this.maximum - this.minimum) + this.minimum;
       }
     } else {
       nextValue = parseFloat(val.substring(val.indexOf(':') + 1));
@@ -80,7 +80,7 @@ export class BSBKnob extends BSBWidget {
 
     if (versionAttribute === '1') {
       const range = this.maximum - this.minimum;
-      this.value = (this.value * range) + this.minimum;
+      this.value = this.value * range + this.minimum;
     }
   }
 

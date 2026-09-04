@@ -83,56 +83,120 @@ export class PianoRoll extends AbstractSoundObject {
     }
   }
 
-  getScale(): Scale { return this._scale; }
-  setScale(s: Scale): void { this._scale = s; }
+  getScale(): Scale {
+    return this._scale;
+  }
+  setScale(s: Scale): void {
+    this._scale = s;
+  }
 
-  getNotes(): PianoNote[] { return [...this._notes]; }
-  setNotes(notes: PianoNote[]): void { this._notes = notes; }
-  addNote(note: PianoNote): void { this._notes.push(note); }
-  removeNote(index: number): void { this._notes.splice(index, 1); }
+  getNotes(): PianoNote[] {
+    return [...this._notes];
+  }
+  setNotes(notes: PianoNote[]): void {
+    this._notes = notes;
+  }
+  addNote(note: PianoNote): void {
+    this._notes.push(note);
+  }
+  removeNote(index: number): void {
+    this._notes.splice(index, 1);
+  }
 
-  getNoteTemplate(): string { return this._noteTemplate; }
-  setNoteTemplate(t: string): void { this._noteTemplate = t; }
+  getNoteTemplate(): string {
+    return this._noteTemplate;
+  }
+  setNoteTemplate(t: string): void {
+    this._noteTemplate = t;
+  }
 
-  getInstrumentId(): string { return this._instrumentId; }
-  setInstrumentId(id: string): void { this._instrumentId = id; }
+  getInstrumentId(): string {
+    return this._instrumentId;
+  }
+  setInstrumentId(id: string): void {
+    this._instrumentId = id;
+  }
 
-  getPchGenerationMethod(): number { return this._pchGenerationMethod; }
-  setPchGenerationMethod(m: number): void { this._pchGenerationMethod = m; }
+  getPchGenerationMethod(): number {
+    return this._pchGenerationMethod;
+  }
+  setPchGenerationMethod(m: number): void {
+    this._pchGenerationMethod = m;
+  }
 
-  getTransposition(): number { return this._transposition; }
-  setTransposition(t: number): void { this._transposition = t; }
+  getTransposition(): number {
+    return this._transposition;
+  }
+  setTransposition(t: number): void {
+    this._transposition = t;
+  }
 
-  getFieldDefinitions(): FieldDef[] { return [...this._fieldDefinitions]; }
+  getFieldDefinitions(): FieldDef[] {
+    return [...this._fieldDefinitions];
+  }
   setFieldDefinitions(fieldDefs: FieldDef[]): void {
     this._fieldDefinitions = fieldDefs.map(cloneFieldDef);
     this._notes = this._notes.map((note) => rebuildPianoNoteFields(note, this._fieldDefinitions));
   }
-  addFieldDef(fd: FieldDef): void { this._fieldDefinitions.push(fd); }
+  addFieldDef(fd: FieldDef): void {
+    this._fieldDefinitions.push(fd);
+  }
 
-  getPixelSecond(): number { return this._pixelSecond; }
-  setPixelSecond(v: number): void { this._pixelSecond = v; }
+  getPixelSecond(): number {
+    return this._pixelSecond;
+  }
+  setPixelSecond(v: number): void {
+    this._pixelSecond = v;
+  }
 
-  getNoteHeight(): number { return this._noteHeight; }
-  setNoteHeight(v: number): void { this._noteHeight = v; }
+  getNoteHeight(): number {
+    return this._noteHeight;
+  }
+  setNoteHeight(v: number): void {
+    this._noteHeight = v;
+  }
 
-  isSnapEnabled(): boolean { return this._snapEnabled; }
-  setSnapEnabled(v: boolean): void { this._snapEnabled = v; }
+  isSnapEnabled(): boolean {
+    return this._snapEnabled;
+  }
+  setSnapEnabled(v: boolean): void {
+    this._snapEnabled = v;
+  }
 
-  getSnapValueEnum(): SnapValueName { return this._snapValueEnum; }
-  setSnapValueEnum(v: SnapValueName): void { this._snapValueEnum = v; }
+  getSnapValueEnum(): SnapValueName {
+    return this._snapValueEnum;
+  }
+  setSnapValueEnum(v: SnapValueName): void {
+    this._snapValueEnum = v;
+  }
 
-  isUseGlobalRuler(): boolean { return this._useGlobalRuler; }
-  setUseGlobalRuler(v: boolean): void { this._useGlobalRuler = v; }
+  isUseGlobalRuler(): boolean {
+    return this._useGlobalRuler;
+  }
+  setUseGlobalRuler(v: boolean): void {
+    this._useGlobalRuler = v;
+  }
 
-  getPrimaryTimeDisplay(): TimeBase { return this._primaryTimeDisplay; }
-  setPrimaryTimeDisplay(v: TimeBase): void { this._primaryTimeDisplay = v; }
+  getPrimaryTimeDisplay(): TimeBase {
+    return this._primaryTimeDisplay;
+  }
+  setPrimaryTimeDisplay(v: TimeBase): void {
+    this._primaryTimeDisplay = v;
+  }
 
-  getSecondaryTimeDisplay(): TimeBase { return this._secondaryTimeDisplay; }
-  setSecondaryTimeDisplay(v: TimeBase): void { this._secondaryTimeDisplay = v; }
+  getSecondaryTimeDisplay(): TimeBase {
+    return this._secondaryTimeDisplay;
+  }
+  setSecondaryTimeDisplay(v: TimeBase): void {
+    this._secondaryTimeDisplay = v;
+  }
 
-  isSecondaryRulerEnabled(): boolean { return this._secondaryRulerEnabled; }
-  setSecondaryRulerEnabled(v: boolean): void { this._secondaryRulerEnabled = v; }
+  isSecondaryRulerEnabled(): boolean {
+    return this._secondaryRulerEnabled;
+  }
+  setSecondaryRulerEnabled(v: boolean): void {
+    this._secondaryRulerEnabled = v;
+  }
 
   override getTimeBehavior(): TimeBehavior {
     return this._timeBehavior;
@@ -151,9 +215,8 @@ export class PianoRoll extends AbstractSoundObject {
       let freq = '';
       let octave = note.octave;
       let scaleDegree = note.scaleDegree + this._transposition;
-      const numScaleDegrees = this._pchGenerationMethod === GENERATE_MIDI
-        ? 12
-        : this._scale.getNumScaleDegrees();
+      const numScaleDegrees =
+        this._pchGenerationMethod === GENERATE_MIDI ? 12 : this._scale.getNumScaleDegrees();
 
       // Normalize scale degree
       if (scaleDegree >= numScaleDegrees) {
@@ -176,7 +239,7 @@ export class PianoRoll extends AbstractSoundObject {
           freq = `${octave}.${scaleDegree}`;
           break;
         case GENERATE_MIDI:
-          freq = ((octave * 12) + scaleDegree).toString();
+          freq = (octave * 12 + scaleDegree).toString();
           break;
       }
 
@@ -191,9 +254,10 @@ export class PianoRoll extends AbstractSoundObject {
       for (const field of note.getFields()) {
         const fieldDef = field.getFieldDef();
         const key = `<${fieldDef.getFieldName()}>`;
-        const val = fieldDef.getFieldType() === 'DISCRETE'
-          ? Math.round(field.getValue()).toString()
-          : field.getValue().toString();
+        const val =
+          fieldDef.getFieldType() === 'DISCRETE'
+            ? Math.round(field.getValue()).toString()
+            : field.getValue().toString();
         template = replaceAll(template, key, val);
       }
 
@@ -358,7 +422,7 @@ export class PianoRoll extends AbstractSoundObject {
 }
 
 function parseTimeBase(value: string, fallback: TimeBase): TimeBase {
-  return Object.values(TimeBase).includes(value as TimeBase) ? value as TimeBase : fallback;
+  return Object.values(TimeBase).includes(value as TimeBase) ? (value as TimeBase) : fallback;
 }
 
 function cloneFieldDef(fieldDef: FieldDef): FieldDef {
@@ -391,7 +455,7 @@ function rebuildPianoNoteFields(note: PianoNote, fieldDefs: FieldDef[]): PianoNo
     const nextFieldDef = fieldDefs[index];
     const previousField = previousFields[index];
     const nextValue = nextFieldDef
-      ? previousValuesByFieldName.get(nextFieldDef.getFieldName()) ?? previousField?.getValue()
+      ? (previousValuesByFieldName.get(nextFieldDef.getFieldName()) ?? previousField?.getValue())
       : previousField?.getValue();
 
     if (nextValue !== undefined) {

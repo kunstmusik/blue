@@ -79,22 +79,32 @@ test('rejects shared ZeroMQ, sodium, and Csound dependencies', () => {
 test('enforces platform runtime allowlists from dependency fixtures', async () => {
   const fixtureRoot = join(import.meta.dirname, '..', 'tests', 'fixtures', 'dependency-reports');
   assert.equal(
-    inspectDependencyReport('darwin', await readFile(join(fixtureRoot, 'macos-allowed.txt'), 'utf8')),
+    inspectDependencyReport(
+      'darwin',
+      await readFile(join(fixtureRoot, 'macos-allowed.txt'), 'utf8'),
+    ),
     true,
   );
   assert.equal(
-    inspectDependencyReport('win32', await readFile(join(fixtureRoot, 'windows-allowed.txt'), 'utf8')),
+    inspectDependencyReport(
+      'win32',
+      await readFile(join(fixtureRoot, 'windows-allowed.txt'), 'utf8'),
+    ),
     true,
   );
   assert.equal(
-    inspectDependencyReport('linux', await readFile(join(fixtureRoot, 'linux-allowed.txt'), 'utf8')),
+    inspectDependencyReport(
+      'linux',
+      await readFile(join(fixtureRoot, 'linux-allowed.txt'), 'utf8'),
+    ),
     true,
   );
   assert.throws(
-    () => inspectDependencyReport(
-      'darwin',
-      '/tmp/blue-engine:\n/opt/homebrew/lib/libcustom.dylib (compatibility version 1.0.0)',
-    ),
+    () =>
+      inspectDependencyReport(
+        'darwin',
+        '/tmp/blue-engine:\n/opt/homebrew/lib/libcustom.dylib (compatibility version 1.0.0)',
+      ),
     /BLUE_ENGINE_UNEXPECTED_SHARED_DEPENDENCY/,
   );
   assert.throws(
@@ -110,7 +120,11 @@ test('validates executable architecture reports and glibc symbol floors', () => 
     true,
   );
   assert.throws(
-    () => inspectArchitectureReport('ELF 64-bit LSB pie executable, ARM aarch64', resolveTarget('linux', 'x64')),
+    () =>
+      inspectArchitectureReport(
+        'ELF 64-bit LSB pie executable, ARM aarch64',
+        resolveTarget('linux', 'x64'),
+      ),
     /BLUE_ENGINE_ARCHITECTURE_MISMATCH/,
   );
   assert.equal(inspectGlibcVersionReport('Name: GLIBC_2.17\nName: GLIBC_2.34'), '2.34');

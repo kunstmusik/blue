@@ -1,10 +1,7 @@
 import React from 'react';
 import type { GeneralSettingsSnapshot } from '../../../shared/program-settings';
 import SettingsSection from './SettingsSection';
-import SettingsField, {
-  SettingsCheckboxField,
-  SETTINGS_NARROW_FIELD_CLASS,
-} from './SettingsField';
+import SettingsField, { SettingsCheckboxField, SETTINGS_NARROW_FIELD_CLASS } from './SettingsField';
 
 interface GeneralSettingsProps {
   settings: GeneralSettingsSnapshot;

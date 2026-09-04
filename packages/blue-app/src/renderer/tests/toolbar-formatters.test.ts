@@ -26,10 +26,7 @@ function createSelectionTransport(
 
 describe('toolbar selection formatter', () => {
   it('treats the Java no-selection sentinel as an empty selection', () => {
-    expect(buildSelectionDisplayState(
-      createSelectionTransport(8, -1),
-      TimeBase.BEATS,
-    )).toEqual({
+    expect(buildSelectionDisplayState(createSelectionTransport(8, -1), TimeBase.BEATS)).toEqual({
       startText: '—',
       endText: '—',
       durationText: '—',
@@ -38,10 +35,7 @@ describe('toolbar selection formatter', () => {
   });
 
   it('does not display a stale end value when a point click clears the range', () => {
-    expect(buildSelectionDisplayState(
-      createSelectionTransport(8, 0),
-      TimeBase.BEATS,
-    )).toEqual({
+    expect(buildSelectionDisplayState(createSelectionTransport(8, 0), TimeBase.BEATS)).toEqual({
       startText: '—',
       endText: '—',
       durationText: '—',
@@ -50,10 +44,7 @@ describe('toolbar selection formatter', () => {
   });
 
   it('formats ordered render ranges with duration', () => {
-    expect(buildSelectionDisplayState(
-      createSelectionTransport(8, 12),
-      TimeBase.BEATS,
-    )).toEqual({
+    expect(buildSelectionDisplayState(createSelectionTransport(8, 12), TimeBase.BEATS)).toEqual({
       startText: '8.00',
       endText: '12.00',
       durationText: '4.00',

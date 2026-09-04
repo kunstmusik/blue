@@ -58,7 +58,9 @@ function buildTestProject(): BlueData {
   const arr = new Arrangement();
   const instr = new GenericInstrument();
   instr.setName('TestInstrument');
-  instr.setText('; Test instrument\ninstr 1\n  aout oscils 0.5, 440, 0\n  outc aout, aout\nendin\n');
+  instr.setText(
+    '; Test instrument\ninstr 1\n  aout oscils 0.5, 440, 0\n  outc aout, aout\nendin\n',
+  );
   arr.addInstrument(instr, '1');
   data.setArrangement(arr);
 
@@ -137,7 +139,9 @@ describe('Round-trip: simple project', () => {
     // Arrangement should match
     const a1 = elem1.getElement('arrangement');
     const a2 = elem2.getElement('arrangement');
-    expect(a1!.getElements('instrumentAssignment').size).toBe(a2!.getElements('instrumentAssignment').size);
+    expect(a1!.getElements('instrumentAssignment').size).toBe(
+      a2!.getElements('instrumentAssignment').size,
+    );
   });
 });
 
@@ -175,7 +179,9 @@ describe('Round-trip: individual types', () => {
     const xml = tables.saveAsXML();
     const reloaded = Tables.loadFromXML(xml);
 
-    expect(reloaded.getTables()).toBe('f 1 0 1024 10 1\nf 2 0 2048 10 1 0.5 0.25\nf 3 0 512 -7 0 256 1 256 0');
+    expect(reloaded.getTables()).toBe(
+      'f 1 0 1024 10 1\nf 2 0 2048 10 1 0.5 0.25\nf 3 0 512 -7 0 256 1 256 0',
+    );
   });
 
   it('GlobalOrcSco round-trips', () => {

@@ -10,16 +10,18 @@ describe('moveChildElements', () => {
     moveChildElements(source, destination);
 
     expect(source.getElements().size).toBe(0);
-    expect(destination.getElements().toArray().map((child) => child.getName())).toEqual([
-      'existing',
-      'first',
-      'second',
-      'first',
-    ]);
-    expect(destination.getElements('first').toArray().map((child) => child.getTextString())).toEqual([
-      '1',
-      '2',
-    ]);
+    expect(
+      destination
+        .getElements()
+        .toArray()
+        .map((child) => child.getName()),
+    ).toEqual(['existing', 'first', 'second', 'first']);
+    expect(
+      destination
+        .getElements('first')
+        .toArray()
+        .map((child) => child.getTextString()),
+    ).toEqual(['1', '2']);
   });
 
   it('is a no-op for an empty source', () => {
@@ -39,10 +41,17 @@ describe('moveChildElements', () => {
 
     moveChildElements(source, destination, 'move');
 
-    expect(source.getElements().toArray().map((child) => child.getName())).toEqual([
-      'keep',
-      'keep',
-    ]);
-    expect(destination.getElements().toArray().map((child) => child.getName())).toEqual(['move']);
+    expect(
+      source
+        .getElements()
+        .toArray()
+        .map((child) => child.getName()),
+    ).toEqual(['keep', 'keep']);
+    expect(
+      destination
+        .getElements()
+        .toArray()
+        .map((child) => child.getName()),
+    ).toEqual(['move']);
   });
 });

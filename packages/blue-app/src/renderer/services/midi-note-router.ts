@@ -45,22 +45,20 @@ interface HeldNote {
   liveSessionId: number;
 }
 
-export type BlueLiveTriggerFn = (
-  request: {
-    type: 'noteOn' | 'noteOff';
-    midiNote: number;
-    velocity: number;
-    channel: number;
-    source: 'mouse' | 'computer' | 'hardware';
-    sourceId?: string;
-    deviceId?: string;
-    timestamp?: number;
-    /** Spec 067 optional focus-routing target. */
-    target?: BlueLiveNoteTarget;
-    /** Spec 067 optional Blue Live session fence. */
-    liveSessionId?: number;
-  },
-) => Promise<{ ok: boolean; message?: string }>;
+export type BlueLiveTriggerFn = (request: {
+  type: 'noteOn' | 'noteOff';
+  midiNote: number;
+  velocity: number;
+  channel: number;
+  source: 'mouse' | 'computer' | 'hardware';
+  sourceId?: string;
+  deviceId?: string;
+  timestamp?: number;
+  /** Spec 067 optional focus-routing target. */
+  target?: BlueLiveNoteTarget;
+  /** Spec 067 optional Blue Live session fence. */
+  liveSessionId?: number;
+}) => Promise<{ ok: boolean; message?: string }>;
 
 export type BlueLiveAllNotesOffFn = () => Promise<{ ok: boolean; message?: string }>;
 
@@ -121,9 +119,10 @@ export class MidiNoteRouter {
     // Normalize note-on velocity-zero to note-off.
     const event: MidiNoteEvent = {
       ...input,
-      type: input.type === 'noteOn' && input.velocity === 0 && input.sourceKind === 'hardware'
-        ? 'noteOff'
-        : input.type,
+      type:
+        input.type === 'noteOn' && input.velocity === 0 && input.sourceKind === 'hardware'
+          ? 'noteOff'
+          : input.type,
     };
 
     if (!this.deps.isLiveActive()) {
@@ -294,7 +293,9 @@ export class MidiNoteRouter {
       try {
         await this.deps.allNotesOff();
         sentAllNotesOff = true;
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
     return sentAllNotesOff;
   }

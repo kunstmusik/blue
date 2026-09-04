@@ -14,9 +14,7 @@ type SoundFontFileListener = (filePath: string) => void;
 const listeners = new Set<SoundFontFileListener>();
 let pendingFilePath: string | null = null;
 
-export function subscribePendingSoundFontFile(
-  listener: SoundFontFileListener,
-): () => void {
+export function subscribePendingSoundFontFile(listener: SoundFontFileListener): () => void {
   listeners.add(listener);
   if (pendingFilePath !== null) {
     const filePath = pendingFilePath;

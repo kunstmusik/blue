@@ -19,25 +19,47 @@ export class InstrumentCategory {
     this._isRoot = isRoot;
   }
 
-  getCategoryName(): string { return this._categoryName; }
-  setCategoryName(name: string): void { this._categoryName = name; }
+  getCategoryName(): string {
+    return this._categoryName;
+  }
+  setCategoryName(name: string): void {
+    this._categoryName = name;
+  }
 
-  isRoot(): boolean { return this._isRoot; }
-  setRoot(root: boolean): void { this._isRoot = root; }
+  isRoot(): boolean {
+    return this._isRoot;
+  }
+  setRoot(root: boolean): void {
+    this._isRoot = root;
+  }
 
-  getSubCategories(): InstrumentCategory[] { return this._subCategories; }
-  addSubCategory(cat: InstrumentCategory): void { this._subCategories.push(cat); }
+  getSubCategories(): InstrumentCategory[] {
+    return this._subCategories;
+  }
+  addSubCategory(cat: InstrumentCategory): void {
+    this._subCategories.push(cat);
+  }
   removeSubCategory(cat: InstrumentCategory): boolean {
     const idx = this._subCategories.indexOf(cat);
-    if (idx !== -1) { this._subCategories.splice(idx, 1); return true; }
+    if (idx !== -1) {
+      this._subCategories.splice(idx, 1);
+      return true;
+    }
     return false;
   }
 
-  getInstruments(): Instrument[] { return this._instruments; }
-  addInstrument(instr: Instrument): void { this._instruments.push(instr); }
+  getInstruments(): Instrument[] {
+    return this._instruments;
+  }
+  addInstrument(instr: Instrument): void {
+    this._instruments.push(instr);
+  }
   removeInstrument(instr: Instrument): boolean {
     const idx = this._instruments.indexOf(instr);
-    if (idx !== -1) { this._instruments.splice(idx, 1); return true; }
+    if (idx !== -1) {
+      this._instruments.splice(idx, 1);
+      return true;
+    }
     return false;
   }
 
@@ -45,7 +67,7 @@ export class InstrumentCategory {
    * Get an instrument by colon-delimited path (e.g., "2:0:3").
    */
   getInstrumentById(path: string): Instrument | undefined {
-    const indices = path.split(':').map(s => parseInt(s, 10));
+    const indices = path.split(':').map((s) => parseInt(s, 10));
     return this.getInstrumentByIndices(indices, 0);
   }
 

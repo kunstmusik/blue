@@ -13,7 +13,9 @@ import type {
   ScoreTimeStateSnapshot,
 } from '../../shared/project-editor';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 // The "popout window": a second JSDOM realm hosting a floated panel.
 const popout = new JSDOM('<!doctype html><html><body></body></html>');
@@ -59,20 +61,17 @@ describe('panel dialogs and inline menus in a floated (popout) panel', () => {
   function renderUnderPopout(node: React.ReactElement): void {
     act(() => {
       root.render(
-        <HostDocumentContext.Provider value={popoutDoc}>
-          {node}
-        </HostDocumentContext.Provider>,
+        <HostDocumentContext.Provider value={popoutDoc}>{node}</HostDocumentContext.Provider>,
       );
     });
   }
 
   it('NoteProcessorChainEditor: add menu dismisses on popout mousedown, ignores main-window input', async () => {
-    renderUnderPopout(
-      <NoteProcessorChainEditor chain={EMPTY_CHAIN} onCommit={vi.fn()} />,
-    );
+    renderUnderPopout(<NoteProcessorChainEditor chain={EMPTY_CHAIN} onCommit={vi.fn()} />);
 
-    const addButton = [...host.querySelectorAll<HTMLElement>('button')]
-      .find((node) => node.textContent?.trim() === '+ Add')!;
+    const addButton = [...host.querySelectorAll<HTMLElement>('button')].find(
+      (node) => node.textContent?.trim() === '+ Add',
+    )!;
     expect(addButton).toBeTruthy();
 
     act(() => {

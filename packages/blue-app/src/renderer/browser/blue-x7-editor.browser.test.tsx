@@ -8,7 +8,11 @@ import type { BlueX7InstrumentSnapshot } from '../../shared/project-editor';
 import { BlueX7Editor } from '../components/instruments/blue-x7-editor';
 
 vi.mock('../components/workbench/panels/editors/SelectedCodeEditor', () => ({
-  default: ({ ariaLabel, value, onChange }: {
+  default: ({
+    ariaLabel,
+    value,
+    onChange,
+  }: {
     ariaLabel?: string;
     value: string;
     onChange?: (text: string) => void;
@@ -86,15 +90,21 @@ describe('BlueX7 editor browser layout', () => {
         await flushFrame();
       });
 
-      const editor = rendered.container.querySelector('[data-testid="blue-x7-editor"]') as HTMLDivElement;
+      const editor = rendered.container.querySelector(
+        '[data-testid="blue-x7-editor"]',
+      ) as HTMLDivElement;
       expect(editor.getBoundingClientRect().width).toBeGreaterThan(0);
 
       // Header is visible and pinned
-      const nameInput = rendered.container.querySelector('input[aria-label="Instrument Name"]') as HTMLElement;
+      const nameInput = rendered.container.querySelector(
+        'input[aria-label="Instrument Name"]',
+      ) as HTMLElement;
       expect(nameInput.getBoundingClientRect().height).toBeGreaterThan(0);
 
       // Voice & Global is active on mount
-      const globalPanel = rendered.container.querySelector('[data-testid="bluex7-panel-global"]') as HTMLElement;
+      const globalPanel = rendered.container.querySelector(
+        '[data-testid="bluex7-panel-global"]',
+      ) as HTMLElement;
       expect(globalPanel.style.visibility).toBe('visible');
 
       for (const testId of ['bluex7-common-panel', 'bluex7-lfo-panel']) {
@@ -110,13 +120,17 @@ describe('BlueX7 editor browser layout', () => {
       expect(editor.scrollTop).toBe(0);
 
       // Switch to Csound tab
-      const csoundTab = rendered.container.querySelector('[role="tab"][data-testid="tab-csound"]') as HTMLButtonElement;
+      const csoundTab = rendered.container.querySelector(
+        '[role="tab"][data-testid="tab-csound"]',
+      ) as HTMLButtonElement;
       await act(async () => {
         csoundTab.click();
         await flushFrame();
       });
 
-      const csoundPanel = rendered.container.querySelector('[data-testid="bluex7-panel-csound"]') as HTMLElement;
+      const csoundPanel = rendered.container.querySelector(
+        '[data-testid="bluex7-panel-csound"]',
+      ) as HTMLElement;
       expect(csoundPanel.style.visibility).toBe('visible');
       const csoundRect = csoundPanel.getBoundingClientRect();
       expect(csoundRect.width).toBeGreaterThan(0);
@@ -134,10 +148,14 @@ describe('BlueX7 editor browser layout', () => {
         await flushFrame();
       });
 
-      const editor = rendered.container.querySelector('[data-testid="blue-x7-editor"]') as HTMLDivElement;
+      const editor = rendered.container.querySelector(
+        '[data-testid="blue-x7-editor"]',
+      ) as HTMLDivElement;
       expect(editor.scrollWidth).toBeLessThanOrEqual(editor.clientWidth + 1);
 
-      const tablist = rendered.container.querySelector('[role="tablist"][aria-label="Instrument Sections"]') as HTMLElement;
+      const tablist = rendered.container.querySelector(
+        '[role="tablist"][aria-label="Instrument Sections"]',
+      ) as HTMLElement;
       expect(tablist).not.toBeNull();
       expect(tablist.classList.contains('flex-nowrap')).toBe(true);
       expect(tablist.classList.contains('overflow-x-auto')).toBe(true);
@@ -154,15 +172,21 @@ describe('BlueX7 editor browser layout', () => {
         await flushFrame();
       });
 
-      const opener = rendered.container.querySelector('button[aria-label="Choose Algorithm Dialog"]') as HTMLButtonElement;
+      const opener = rendered.container.querySelector(
+        'button[aria-label="Choose Algorithm Dialog"]',
+      ) as HTMLButtonElement;
       opener.focus();
       await act(async () => {
         opener.click();
         await flushFrame();
       });
 
-      const dialog = rendered.container.querySelector('[aria-label="Select DX7 Algorithm"]') as HTMLElement;
-      expect(document.activeElement).toBe(dialog.querySelector('button[aria-label="Close Algorithm Dialog"]'));
+      const dialog = rendered.container.querySelector(
+        '[aria-label="Select DX7 Algorithm"]',
+      ) as HTMLElement;
+      expect(document.activeElement).toBe(
+        dialog.querySelector('button[aria-label="Close Algorithm Dialog"]'),
+      );
 
       await act(async () => {
         const dialogPanel = dialog.querySelector('.flex.flex-col') as HTMLElement;
@@ -185,34 +209,48 @@ describe('BlueX7 editor browser layout', () => {
       });
 
       // Switch to Csound tab
-      const csoundTab = rendered.container.querySelector('[role="tab"][data-testid="tab-csound"]') as HTMLButtonElement;
+      const csoundTab = rendered.container.querySelector(
+        '[role="tab"][data-testid="tab-csound"]',
+      ) as HTMLButtonElement;
       expect(csoundTab.textContent).toBe('Csound');
       await act(async () => {
         csoundTab.click();
         await flushFrame();
       });
 
-      const csoundPanel = rendered.container.querySelector('[data-testid="bluex7-panel-csound"]') as HTMLElement;
+      const csoundPanel = rendered.container.querySelector(
+        '[data-testid="bluex7-panel-csound"]',
+      ) as HTMLElement;
       expect(csoundPanel.style.visibility).toBe('visible');
 
       const header = csoundPanel.querySelector('span.text-role-headline');
       expect(header?.textContent).toBe('Post Code');
 
-      const postCodePanel = rendered.container.querySelector('[data-testid="bluex7-post-code-tab"]') as HTMLElement;
+      const postCodePanel = rendered.container.querySelector(
+        '[data-testid="bluex7-post-code-tab"]',
+      ) as HTMLElement;
       expect(postCodePanel).not.toBeNull();
 
-      const editor = rendered.container.querySelector('textarea[aria-label="Csound Post Code"]') as HTMLTextAreaElement;
+      const editor = rendered.container.querySelector(
+        'textarea[aria-label="Csound Post Code"]',
+      ) as HTMLTextAreaElement;
       expect(editor).not.toBeNull();
 
-      const editorSurface = csoundPanel.querySelector('.selected-code-editor[aria-label="Csound Post Code"]') as HTMLElement;
+      const editorSurface = csoundPanel.querySelector(
+        '.selected-code-editor[aria-label="Csound Post Code"]',
+      ) as HTMLElement;
       expect(editorSurface).not.toBeNull();
       const editorRect = editorSurface.getBoundingClientRect();
       expect(editorRect.height).toBeGreaterThan(csoundPanel.getBoundingClientRect().height / 2);
       expect(editorRect.bottom).toBeLessThanOrEqual(csoundPanel.getBoundingClientRect().bottom + 1);
 
       // Sub-tabs are not present
-      expect(rendered.container.querySelector('[role="tab"][data-testid="csound-tab-preview"]')).toBeNull();
-      expect(rendered.container.querySelector('[role="tab"][data-testid="csound-tab-bindings"]')).toBeNull();
+      expect(
+        rendered.container.querySelector('[role="tab"][data-testid="csound-tab-preview"]'),
+      ).toBeNull();
+      expect(
+        rendered.container.querySelector('[role="tab"][data-testid="csound-tab-bindings"]'),
+      ).toBeNull();
     } finally {
       rendered.unmount();
     }

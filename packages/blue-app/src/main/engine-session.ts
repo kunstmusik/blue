@@ -143,7 +143,11 @@ export function isSessionActive(
   if (!candidate || !activeSession) {
     return false;
   }
-  return candidate.sessionId === activeSession.sessionId && candidate.getState() !== 'exited' && candidate.getState() !== 'cleanup-failed';
+  return (
+    candidate.sessionId === activeSession.sessionId &&
+    candidate.getState() !== 'exited' &&
+    candidate.getState() !== 'cleanup-failed'
+  );
 }
 
 export function validateSessionAuthority(
@@ -162,7 +166,8 @@ export function classifyProcessError(
   exitCode: number | null = null,
   signalCode: string | null = null,
 ): EngineRecoveryFailureCategory {
-  const message = `${error instanceof Error ? error.message : (error ?? '')} ${stderr}`.toLowerCase();
+  const message =
+    `${error instanceof Error ? error.message : (error ?? '')} ${stderr}`.toLowerCase();
 
   if (
     message.includes('address already in use') ||
@@ -249,7 +254,9 @@ export function formatLifecycleDiagnosticReport(report: EngineDiagnosticReport):
   ];
 
   if (report.exitedAt) {
-    lines.push(`Exited At: ${new Date(report.exitedAt).toISOString()} (Duration: ${report.exitedAt - report.createdAt}ms)`);
+    lines.push(
+      `Exited At: ${new Date(report.exitedAt).toISOString()} (Duration: ${report.exitedAt - report.createdAt}ms)`,
+    );
   }
 
   if (report.exitCode !== undefined && report.exitCode !== null) {
@@ -320,7 +327,11 @@ export class EngineSession {
   private stateListeners = new Set<EngineStateListener>();
   private outputCallbacks = new Set<(text: string, type: 'stdout' | 'stderr') => void>();
 
-  private readonly spawnFn: (command: string, args: string[], options: SpawnOptions) => ChildProcess;
+  private readonly spawnFn: (
+    command: string,
+    args: string[],
+    options: SpawnOptions,
+  ) => ChildProcess;
   private readonly createClientFn: (options: EngineClientOptions) => EngineClient;
   private readonly registerManifestFn: (manifest: EngineProcessManifest) => Promise<string>;
   private readonly removeManifestFn: (path: string | null | undefined) => Promise<void>;
@@ -328,10 +339,7 @@ export class EngineSession {
   private readonly gracefulShutdownTimeoutMs: number;
   private readonly forceShutdownTimeoutMs: number;
 
-  constructor(
-    request: EngineSessionCreationRequest,
-    dependencies: EngineSessionDependencies = {},
-  ) {
+  constructor(request: EngineSessionCreationRequest, dependencies: EngineSessionDependencies = {}) {
     this.sessionId = randomUUID();
     this.generation = request.generation ?? 1;
     this.kind = request.kind;
@@ -346,9 +354,17 @@ export class EngineSession {
     const pubPort = request.pubPort ?? port + 1;
     this.endpoints = buildSessionEndpoints(this.transport, port, pubPort, this.shmName);
 
-    const spawnArgs = this.transport === 'ipc'
-      ? ['--control-endpoint', this.endpoints.controlEndpoint, '--pub-endpoint', this.endpoints.pubEndpoint, '--shm', this.shmName]
-      : ['--port', `${port}`, '--pub-port', `${pubPort}`, '--shm', this.shmName];
+    const spawnArgs =
+      this.transport === 'ipc'
+        ? [
+            '--control-endpoint',
+            this.endpoints.controlEndpoint,
+            '--pub-endpoint',
+            this.endpoints.pubEndpoint,
+            '--shm',
+            this.shmName,
+          ]
+        : ['--port', `${port}`, '--pub-port', `${pubPort}`, '--shm', this.shmName];
 
     if (request.ownerLivenessCapability) {
       spawnArgs.push('--owner-pid', `${this.ownerPid}`);
@@ -436,13 +452,19 @@ export class EngineSession {
       sessionState: this.state,
       clientConnected: this.client !== null,
       createdAt: this.createdAt,
-      exitedAt: this.state === 'exited' || this.state === 'failed' || this.state === 'cleanup-failed' ? this.clock.now() : undefined,
+      exitedAt:
+        this.state === 'exited' || this.state === 'failed' || this.state === 'cleanup-failed'
+          ? this.clock.now()
+          : undefined,
       exitCode: this.exitCode,
       signalCode: this.signalCode,
       failureCategory: this.failureCategory,
       actionsPerformed: [...this.actionsPerformed],
       rawStderrSummary: this.stderrBuffer.slice(-1000),
-      outcomeMessage: outcomeOverride ?? (this.outcomeMessage || (this.state === 'ready' || this.state === 'running' ? 'Active' : 'Stopped')),
+      outcomeMessage:
+        outcomeOverride ??
+        (this.outcomeMessage ||
+          (this.state === 'ready' || this.state === 'running' ? 'Active' : 'Stopped')),
     };
   }
 
@@ -520,18 +542,16 @@ export class EngineSession {
           return recordPath;
         })
         .catch((error) => {
-          console.warn(`[EngineSession] Manifest registration failed: ${error instanceof Error ? error.message : String(error)}`);
+          console.warn(
+            `[EngineSession] Manifest registration failed: ${error instanceof Error ? error.message : String(error)}`,
+          );
           return null;
         });
     }
   }
 
   async awaitReady(): Promise<EngineSessionLifecycleResult> {
-    if (
-      this.state === 'exited' ||
-      this.state === 'failed' ||
-      this.state === 'cleanup-failed'
-    ) {
+    if (this.state === 'exited' || this.state === 'failed' || this.state === 'cleanup-failed') {
       // The process died between spawn and this readiness wait (for example
       // a legacy engine rejecting an unknown argument). Fail fast with the
       // captured evidence instead of throwing a state-machine guard error.

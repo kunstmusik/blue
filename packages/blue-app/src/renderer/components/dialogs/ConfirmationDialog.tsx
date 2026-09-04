@@ -52,7 +52,8 @@ export function ConfirmationDialog({
   };
 
   const hasDestructiveAction = actions.some((a) => a.intent === 'destructive');
-  const effectiveInitialActionId = initialFocusActionId ?? (hasDestructiveAction ? cancelActionId : undefined);
+  const effectiveInitialActionId =
+    initialFocusActionId ?? (hasDestructiveAction ? cancelActionId : undefined);
   const initialFocusSelector = effectiveInitialActionId
     ? `[data-action-id="${effectiveInitialActionId}"]`
     : undefined;
@@ -66,7 +67,8 @@ export function ConfirmationDialog({
   const dialogRole = role ?? (hasDestructiveAction ? 'alertdialog' : 'dialog');
 
   const getActionButtonClass = (action: InAppConfirmationAction) => {
-    const base = 'rounded px-3 py-1 text-role-body transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-app-accent';
+    const base =
+      'rounded px-3 py-1 text-role-body transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-app-accent';
     switch (action.intent) {
       case 'destructive':
         return `${base} bg-red-600 text-white hover:bg-red-700`;

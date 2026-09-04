@@ -69,12 +69,18 @@ describe('user library state validation', () => {
   });
 
   it.each([
-    ['malformed accepted revision', (doc: Record<string, unknown>) => {
-      doc.acceptedFactoryRevision = 'not-a-hash';
-    }],
-    ['non-array baselines', (doc: Record<string, unknown>) => {
-      doc.baselines = {};
-    }],
+    [
+      'malformed accepted revision',
+      (doc: Record<string, unknown>) => {
+        doc.acceptedFactoryRevision = 'not-a-hash';
+      },
+    ],
+    [
+      'non-array baselines',
+      (doc: Record<string, unknown>) => {
+        doc.baselines = {};
+      },
+    ],
     ['unsorted baselines', () => undefined],
   ])('flags %s', (_label, mutate) => {
     const doc: Record<string, unknown> = JSON.parse(serializeUserLibraryState(makeValidState()));

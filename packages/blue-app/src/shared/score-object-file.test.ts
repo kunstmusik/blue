@@ -8,10 +8,7 @@ import {
   PolyObject,
   TimeContext,
 } from '@blue/data';
-import {
-  prepareScoreObjectImport,
-  validateScoreObjectExport,
-} from './score-object-file';
+import { prepareScoreObjectImport, validateScoreObjectExport } from './score-object-file';
 
 function soundObjectXML(durationXml: string): string {
   return `<soundObject type="blue.soundObject.GenericScore">
@@ -38,11 +35,7 @@ function contextWithMeter(numBeats: number, beatLength: number): TimeContext {
 
 describe('Sound Object file import/export', () => {
   it('converts imported BBF duration with the destination project context', () => {
-    const result = prepareScoreObjectImport(
-      BBF_SOUND_OBJECT_XML,
-      contextWithMeter(3, 4),
-      'BBF',
-    );
+    const result = prepareScoreObjectImport(BBF_SOUND_OBJECT_XML, contextWithMeter(3, 4), 'BBF');
 
     expect(result).toEqual({
       ok: true,
@@ -65,12 +58,16 @@ describe('Sound Object file import/export', () => {
     context.setSampleRate(48000);
 
     const secondsResult = prepareScoreObjectImport(
-      soundObjectXML('<subjectiveDuration type="SECONDS"><totalSeconds>2</totalSeconds></subjectiveDuration>'),
+      soundObjectXML(
+        '<subjectiveDuration type="SECONDS"><totalSeconds>2</totalSeconds></subjectiveDuration>',
+      ),
       context,
       'BEATS',
     );
     const framesResult = prepareScoreObjectImport(
-      soundObjectXML('<subjectiveDuration type="FRAME"><frameCount>48000</frameCount></subjectiveDuration>'),
+      soundObjectXML(
+        '<subjectiveDuration type="FRAME"><frameCount>48000</frameCount></subjectiveDuration>',
+      ),
       context,
       'BEATS',
     );
@@ -95,14 +92,16 @@ describe('Sound Object file import/export', () => {
     const instance = new Instance();
     expect(validateScoreObjectExport(instance.saveAsXML().toXml())).toEqual({
       ok: false,
-      error: 'Export of Instance objects or PolyObjects containing Instance objects is not allowed.',
+      error:
+        'Export of Instance objects or PolyObjects containing Instance objects is not allowed.',
     });
 
     const polyObject = new PolyObject();
     polyObject.newLayerAt(0).push(instance);
     expect(validateScoreObjectExport(polyObject.saveAsXML().toXml())).toEqual({
       ok: false,
-      error: 'Export of Instance objects or PolyObjects containing Instance objects is not allowed.',
+      error:
+        'Export of Instance objects or PolyObjects containing Instance objects is not allowed.',
     });
   });
 

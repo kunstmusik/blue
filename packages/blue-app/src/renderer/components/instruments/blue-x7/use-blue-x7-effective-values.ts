@@ -49,9 +49,10 @@ function requestIdentity(
   projectSessionId: number | null,
 ): string {
   if (!target || projectSessionId === null) return 'none';
-  const owner = target.assignmentId !== undefined
-    ? `arrangement:${target.assignmentId}`
-    : `track:${target.track.rootGroupId}:${target.track.trackId}`;
+  const owner =
+    target.assignmentId !== undefined
+      ? `arrangement:${target.assignmentId}`
+      : `track:${target.track.rootGroupId}:${target.track.trackId}`;
   return `${projectSessionId}:${owner}`;
 }
 
@@ -107,10 +108,11 @@ export function useBlueX7EffectiveValues(
 
     const poll = async (): Promise<void> => {
       if (
-        disposed
-        || inFlightGenerationRef.current !== null
-        || generation !== currentGenerationRef.current
-      ) return;
+        disposed ||
+        inFlightGenerationRef.current !== null ||
+        generation !== currentGenerationRef.current
+      )
+        return;
       inFlightGenerationRef.current = generation;
       try {
         const result: BlueX7EffectiveValuesResult = await window.blueAPI.getBlueX7EffectiveValues({
@@ -133,9 +135,9 @@ export function useBlueX7EffectiveValues(
         const seenParameterIds = new Set<string>();
         const hasInvalidValue = result.values.some((entry) => {
           if (
-            !activeParameterIds.has(entry.parameterId)
-            || seenParameterIds.has(entry.parameterId)
-            || !Number.isFinite(entry.value)
+            !activeParameterIds.has(entry.parameterId) ||
+            seenParameterIds.has(entry.parameterId) ||
+            !Number.isFinite(entry.value)
           ) {
             return true;
           }
@@ -143,9 +145,9 @@ export function useBlueX7EffectiveValues(
           return false;
         });
         if (
-          result.projectSessionId !== projectSessionId
-          || result.ownerIdentity !== expectedOwnerIdentity
-          || hasInvalidValue
+          result.projectSessionId !== projectSessionId ||
+          result.ownerIdentity !== expectedOwnerIdentity ||
+          hasInvalidValue
         ) {
           setState({
             values: new Map(),

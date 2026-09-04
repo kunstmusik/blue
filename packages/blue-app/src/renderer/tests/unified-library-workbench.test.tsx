@@ -28,32 +28,38 @@ describe('Unified Libraries workbench integration', () => {
   });
 
   it('preserves separate Libraries and Project SoundObject Library layout IDs', () => {
-    const stored = createStoredWorkbenchLayout({
-      grid: { root: { type: 'branch' }, height: 900, width: 1400, orientation: 'horizontal' },
-      panels: {
-        LibrariesTopComponent: {
-          id: 'LibrariesTopComponent',
-          contentComponent: 'default',
-          tabComponent: 'default',
-          title: 'Libraries',
+    const stored = createStoredWorkbenchLayout(
+      {
+        grid: { root: { type: 'branch' }, height: 900, width: 1400, orientation: 'horizontal' },
+        panels: {
+          LibrariesTopComponent: {
+            id: 'LibrariesTopComponent',
+            contentComponent: 'default',
+            tabComponent: 'default',
+            title: 'Libraries',
+          },
+          SoundObjectLibraryTopComponent: {
+            id: 'SoundObjectLibraryTopComponent',
+            contentComponent: 'default',
+            tabComponent: 'default',
+            title: 'Sound Object Library',
+          },
         },
-        SoundObjectLibraryTopComponent: {
-          id: 'SoundObjectLibraryTopComponent',
-          contentComponent: 'default',
-          tabComponent: 'default',
-          title: 'Sound Object Library',
+        activeGroup: 'properties-main',
+      } as never,
+      createDefaultAuxiliaryLayoutState(),
+      {
+        floatingOrigins: {
+          legacyPopout: {
+            kind: 'auxiliary',
+            edge: 'right',
+            groupInstanceId: 'properties-main',
+            panelId: 'SoundObjectLibraryTopComponent',
+            index: 0,
+          },
         },
       },
-      activeGroup: 'properties-main',
-    } as never, createDefaultAuxiliaryLayoutState(), {
-      floatingOrigins: { legacyPopout: {
-        kind: 'auxiliary',
-        edge: 'right',
-        groupInstanceId: 'properties-main',
-        panelId: 'SoundObjectLibraryTopComponent',
-        index: 0,
-      } },
-    });
+    );
     const parsed = parseStoredWorkbenchLayout(JSON.stringify(stored));
     expect(JSON.stringify(parsed)).toContain('SoundObjectLibraryTopComponent');
     expect(JSON.stringify(parsed)).toContain('LibrariesTopComponent');

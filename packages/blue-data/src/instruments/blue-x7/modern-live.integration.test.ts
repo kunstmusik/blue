@@ -8,10 +8,7 @@ import { createDefaultBlueX7Voice } from '../blue-x7';
 import { BLUE_X7_MODERN_ORCHESTRA } from './modern-orchestra.generated';
 import { buildBlueX7VoiceTransport } from './voice-transport';
 import { generateBlueX7Target } from './csound-target-generator';
-import {
-  BLUE_X7_PARAMETER_DESCRIPTORS,
-  readBlueX7VoiceValue,
-} from './parameter-catalog';
+import { BLUE_X7_PARAMETER_DESCRIPTORS, readBlueX7VoiceValue } from './parameter-catalog';
 
 const hasCsound = (() => {
   try {
@@ -37,10 +34,24 @@ function render(orc: string, score: string): RenderResult {
   const wavPath = path.join(dir, 'live.wav');
   fs.writeFileSync(orcPath, `sr = ${SR}\nksmps = 64\nnchnls = 1\n${orc}`);
   fs.writeFileSync(scoPath, score);
-  execFileSync('csound', [
-    '-nd', '-W', '-r', String(SR), '-k', String(KR), '--0dbfs=1',
-    '--format=double', '-o', wavPath, orcPath, scoPath,
-  ], { cwd: dir, stdio: 'ignore' });
+  execFileSync(
+    'csound',
+    [
+      '-nd',
+      '-W',
+      '-r',
+      String(SR),
+      '-k',
+      String(KR),
+      '--0dbfs=1',
+      '--format=double',
+      '-o',
+      wavPath,
+      orcPath,
+      scoPath,
+    ],
+    { cwd: dir, stdio: 'ignore' },
+  );
   const wav = fs.readFileSync(wavPath);
   let offset = 12;
   while (offset + 8 <= wav.length) {
@@ -79,7 +90,8 @@ function targetParts(
   // These tests intentionally exercise the maintained shared-UDO fallback;
   // the production live target uses generated inline scalar adaptation.
   const target = generateBlueX7Target({ voice: values, operatorMask: mask });
-  const call = 'aout = bluex7_voice(iBlueX7MidiNote, i(p5), iBlueX7Voice, iBlueX7OperatorMask, iBlueX7GateSeconds, kBlueX7LiveVoice, kBlueX7LiveMask, kBlueX7Dirty)';
+  const call =
+    'aout = bluex7_voice(iBlueX7MidiNote, i(p5), iBlueX7Voice, iBlueX7OperatorMask, iBlueX7GateSeconds, kBlueX7LiveVoice, kBlueX7LiveMask, kBlueX7Dirty)';
   return { setup: target.replace(`${call}\n`, ''), call };
 }
 
@@ -94,10 +106,14 @@ endin`;
 
 describe.skipIf(!hasCsound)('modern BlueX7 live control semantics', () => {
   it('keeps shared-UDO compatibility edits audible for an active note', () => {
-    const transport = buildBlueX7VoiceTransport(
-      createDefaultBlueX7Voice(),
-      [true, true, true, true, true, true],
-    );
+    const transport = buildBlueX7VoiceTransport(createDefaultBlueX7Voice(), [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+    ]);
     const { setup, call } = targetParts(transport.voice, transport.operatorMask);
     const orc = `${BLUE_X7_MODERN_ORCHESTRA}
 instr 1
@@ -157,15 +173,17 @@ ${dynamic.setup}
 endin`,
       'i1 0 1.2 60 127',
     );
-    expect(createHash('sha256').update(changedDuringNote.bytes).digest('hex'))
-      .toBe(createHash('sha256').update(baseline.bytes).digest('hex'));
+    expect(createHash('sha256').update(changedDuringNote.bytes).digest('hex')).toBe(
+      createHash('sha256').update(baseline.bytes).digest('hex'),
+    );
 
     const nextNote = render(
       staticWrapper(changedValues, transport.operatorMask),
       'i1 0 1.2 60 127',
     );
-    expect(createHash('sha256').update(nextNote.bytes).digest('hex'))
-      .not.toBe(createHash('sha256').update(baseline.bytes).digest('hex'));
+    expect(createHash('sha256').update(nextNote.bytes).digest('hex')).not.toBe(
+      createHash('sha256').update(baseline.bytes).digest('hex'),
+    );
   }, 60_000);
 
   it('applies a runtime algorithm channel edit to the next note on the live inline target', () => {
@@ -207,8 +225,10 @@ ${editInstrument}`;
     // Two notes; the edit instrument switches the algorithm channel between
     // them. The second note must match a render that started on algorithm 31
     // (dispatcher fallback) and differ from the generation-time algorithm 19.
-    const switched = render(orc(19, 'instr 2\n  gk_blue_auto0 = 31\nendin'),
-      'i1 0 0.25 60 127\ni2 0.3 0.05\ni1 0.45 0.25 60 127');
+    const switched = render(
+      orc(19, 'instr 2\n  gk_blue_auto0 = 31\nendin'),
+      'i1 0 0.25 60 127\ni2 0.3 0.05\ni1 0.45 0.25 60 127',
+    );
     const alwaysNew = render(orc(31, ''), 'i1 0 0.25 60 127\ni1 0.45 0.25 60 127');
     const alwaysOld = render(orc(19, ''), 'i1 0 0.25 60 127\ni1 0.45 0.25 60 127');
 
@@ -279,9 +299,10 @@ endin`;
       key: descriptor.key,
       symbol: `gk_blue_auto${index}`,
     }));
-    const globals = BLUE_X7_PARAMETER_DESCRIPTORS.map((descriptor, index) => (
-      `gk_blue_auto${index} init ${readBlueX7VoiceValue(voice, descriptor.key)}`
-    )).join('\n');
+    const globals = BLUE_X7_PARAMETER_DESCRIPTORS.map(
+      (descriptor, index) =>
+        `gk_blue_auto${index} init ${readBlueX7VoiceValue(voice, descriptor.key)}`,
+    ).join('\n');
     const outputIndex = BLUE_X7_PARAMETER_DESCRIPTORS.findIndex(
       (descriptor) => descriptor.key === 'operator.1.outputLevel',
     );
@@ -360,10 +381,14 @@ endin`;
   }, 60_000);
 
   it('publishes a complete mask edit at the next control block', () => {
-    const transport = buildBlueX7VoiceTransport(
-      createDefaultBlueX7Voice(),
-      [true, true, true, true, true, true],
-    );
+    const transport = buildBlueX7VoiceTransport(createDefaultBlueX7Voice(), [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+    ]);
     const { setup, call } = targetParts(transport.voice, transport.operatorMask);
     const orc = `${BLUE_X7_MODERN_ORCHESTRA}
 instr 1

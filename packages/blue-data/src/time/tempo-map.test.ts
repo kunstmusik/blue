@@ -37,7 +37,9 @@ describe('TempoMap visible listener', () => {
   it('fires listeners when visible changes', () => {
     const tempoMap = new TempoMap();
     let callCount = 0;
-    tempoMap.addListener(() => { callCount++; });
+    tempoMap.addListener(() => {
+      callCount++;
+    });
 
     tempoMap.setVisible(true);
     expect(tempoMap.isVisible()).toBe(true);
@@ -51,7 +53,9 @@ describe('TempoMap visible listener', () => {
   it('does not fire listeners when visible is set to the same value', () => {
     const tempoMap = new TempoMap();
     let callCount = 0;
-    tempoMap.addListener(() => { callCount++; });
+    tempoMap.addListener(() => {
+      callCount++;
+    });
 
     tempoMap.setVisible(false);
     expect(callCount).toBe(0);
@@ -114,7 +118,9 @@ describe('TempoMap point mutations', () => {
     expect(map.size()).toBe(2);
 
     let callCount = 0;
-    map.addListener(() => { callCount++; });
+    map.addListener(() => {
+      callCount++;
+    });
 
     map.removeTempoPoint(1);
     expect(map.size()).toBe(1);

@@ -58,7 +58,9 @@ describe('migrateAudioLayersToTracks', () => {
     const tracks = group.getElement('tracks')!;
     const migratedTracks = tracks.getElements('track').toArray();
     expect(migratedTracks).toHaveLength(2);
-    expect(new Set(migratedTracks.map((track) => track.getAttributeValue('uniqueId'))).size).toBe(2);
+    expect(new Set(migratedTracks.map((track) => track.getAttributeValue('uniqueId'))).size).toBe(
+      2,
+    );
     expect(migratedTracks.every((track) => track.hasElement('noteProcessorChain'))).toBe(true);
     expect(group.hasElement('unknownSibling')).toBe(true);
   });

@@ -11,6 +11,8 @@ describe('Csound runtime IPC boundary', () => {
     const source = sources.join('\n');
     expect(source).toContain("'engine-runtime:query-csound-io'");
     expect(source).toContain('engineRuntimeService.queryCsoundIo');
-    expect(source).not.toMatch(/(?:ipcMain|ipcRegistration)\.handle\(\s*['"]engine-runtime:(?:run|execute)/u);
+    expect(source).not.toMatch(
+      /(?:ipcMain|ipcRegistration)\.handle\(\s*['"]engine-runtime:(?:run|execute)/u,
+    );
   });
 });

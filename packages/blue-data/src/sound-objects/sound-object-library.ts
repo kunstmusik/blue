@@ -133,9 +133,11 @@ export class SoundObjectLibrary implements BlueDataObject {
   findUniqueByFingerprint(fingerprint: SoundObjectFingerprint): SoundObject | undefined {
     const matches = this._objects.filter((object) => {
       const candidate = this.createFingerprint(object);
-      return candidate.canonicalHash === fingerprint.canonicalHash
-        && candidate.displayName === fingerprint.displayName
-        && candidate.objectType === fingerprint.objectType;
+      return (
+        candidate.canonicalHash === fingerprint.canonicalHash &&
+        candidate.displayName === fingerprint.displayName &&
+        candidate.objectType === fingerprint.objectType
+      );
     });
     return matches.length === 1 ? matches[0] : undefined;
   }

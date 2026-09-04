@@ -8,7 +8,9 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 const execFileAsync = promisify(execFile);
-const distBinaryPath = path.resolve(fileURLToPath(new URL('../dist/blue-cli.cjs', import.meta.url)));
+const distBinaryPath = path.resolve(
+  fileURLToPath(new URL('../dist/blue-cli.cjs', import.meta.url)),
+);
 
 describe('blue-cli binary smoke test', () => {
   it('compiles a minimal project through the built binary', async () => {
@@ -21,14 +23,7 @@ describe('blue-cli binary smoke test', () => {
       'utf8',
     );
 
-    await execFileAsync('node', [
-      distBinaryPath,
-      'compile',
-      '-p',
-      projectPath,
-      '-o',
-      outputPath,
-    ]);
+    await execFileAsync('node', [distBinaryPath, 'compile', '-p', projectPath, '-o', outputPath]);
 
     const output = fs.readFileSync(outputPath, 'utf8');
 

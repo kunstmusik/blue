@@ -9,7 +9,12 @@ import { AudioClip } from '../audio/audio-clip';
 import { ScoreObject } from '../score-object';
 import { AutomatableLayer } from '../layers/automatable-layer';
 import { LAYER_HEIGHT } from '../layers/layer';
-import { DEFAULT_LAYER_COLOR, isValidLayerColorInput, normalizeLayerColor, normalizeXmlLayerColor } from '../layers/layer-color';
+import {
+  DEFAULT_LAYER_COLOR,
+  isValidLayerColorInput,
+  normalizeLayerColor,
+  normalizeXmlLayerColor,
+} from '../layers/layer-color';
 import { NoteProcessorChain } from '../../note-processors/note-processor-chain';
 import { TimeContext } from '../../time/time-context';
 import { Element } from '../../serialization/xml-reader';
@@ -75,7 +80,9 @@ function remapCopiedInstrumentParameterIds(
 
 export class Track extends Array<TrackItem> implements AutomatableLayer {
   static readonly HEIGHT_MAX_INDEX = 9;
-  static get [Symbol.species](): ArrayConstructor { return Array; }
+  static get [Symbol.species](): ArrayConstructor {
+    return Array;
+  }
 
   private _name = '';
   private _muted = false;
@@ -113,26 +120,58 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
     }
   }
 
-  getName(): string { return this._name; }
-  setName(name: string): void { this._name = name; }
-  getLayerHeight(): number { return LAYER_HEIGHT * (this._heightIndex + 1); }
-  getBackgroundColor(): number { return this._backgroundColor; }
-  setBackgroundColor(color: number): void { this._backgroundColor = normalizeLayerColor(color); }
-  getHeightIndex(): number { return this._heightIndex; }
-  setHeightIndex(index: number): void { this._heightIndex = Math.max(0, Math.min(Track.HEIGHT_MAX_INDEX, index)); }
-  getUniqueId(): string { return this._uniqueId; }
+  getName(): string {
+    return this._name;
+  }
+  setName(name: string): void {
+    this._name = name;
+  }
+  getLayerHeight(): number {
+    return LAYER_HEIGHT * (this._heightIndex + 1);
+  }
+  getBackgroundColor(): number {
+    return this._backgroundColor;
+  }
+  setBackgroundColor(color: number): void {
+    this._backgroundColor = normalizeLayerColor(color);
+  }
+  getHeightIndex(): number {
+    return this._heightIndex;
+  }
+  setHeightIndex(index: number): void {
+    this._heightIndex = Math.max(0, Math.min(Track.HEIGHT_MAX_INDEX, index));
+  }
+  getUniqueId(): string {
+    return this._uniqueId;
+  }
   setUniqueId(uniqueId: string): void {
     if (uniqueId.trim()) this._uniqueId = uniqueId.trim();
   }
-  isMuted(): boolean { return this._muted; }
-  setMuted(muted: boolean): void { this._muted = muted; }
-  isSolo(): boolean { return this._solo; }
-  setSolo(solo: boolean): void { this._solo = solo; }
-  getAutomationParameters(): ParameterIdList { return this._automationParameters; }
-  getNoteProcessorChain(): NoteProcessorChain { return this._npc; }
-  setNoteProcessorChain(chain: NoteProcessorChain): void { this._npc = chain; }
+  isMuted(): boolean {
+    return this._muted;
+  }
+  setMuted(muted: boolean): void {
+    this._muted = muted;
+  }
+  isSolo(): boolean {
+    return this._solo;
+  }
+  setSolo(solo: boolean): void {
+    this._solo = solo;
+  }
+  getAutomationParameters(): ParameterIdList {
+    return this._automationParameters;
+  }
+  getNoteProcessorChain(): NoteProcessorChain {
+    return this._npc;
+  }
+  setNoteProcessorChain(chain: NoteProcessorChain): void {
+    this._npc = chain;
+  }
 
-  getInstrument(): Instrument | null { return this._instrument; }
+  getInstrument(): Instrument | null {
+    return this._instrument;
+  }
 
   /** Assigns a deep copy so callers cannot accidentally share ownership. */
   setInstrument(instrument: Instrument | null): void {
@@ -167,8 +206,12 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
     return true;
   }
 
-  clearScoreObjects(): void { this.length = 0; }
-  deepCopy(): Track { return new Track(this); }
+  clearScoreObjects(): void {
+    this.length = 0;
+  }
+  deepCopy(): Track {
+    return new Track(this);
+  }
 
   generateForCSD(
     context: TimeContext,
@@ -284,16 +327,19 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
   ): NoteList {
     rebaseScoreToRenderStart(notes, startTime);
 
-    notes.merge(generateTrackAudioPlaybackNotes(
-      this._uniqueId,
-      plan.clips,
-      context,
-      compileData,
-      startTime,
-      endTime,
-    ));
-    const trackInstrumentId = plan.generationOptions.instrumentOverrideId
-      ?? getTrackInstrumentId(compileData, this._uniqueId);
+    notes.merge(
+      generateTrackAudioPlaybackNotes(
+        this._uniqueId,
+        plan.clips,
+        context,
+        compileData,
+        startTime,
+        endTime,
+      ),
+    );
+    const trackInstrumentId =
+      plan.generationOptions.instrumentOverrideId ??
+      getTrackInstrumentId(compileData, this._uniqueId);
     if (trackInstrumentId === undefined) return notes;
     for (const note of notes) {
       if (note.getTrackInstrumentTarget() === undefined) note.setTrackInstrumentTarget('preserve');
@@ -314,12 +360,16 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
     root.setAttribute('solo', String(this._solo));
     root.setAttribute('heightIndex', String(this._heightIndex));
     root.setAttribute('uniqueId', this._uniqueId);
-    root.setAttribute('automationSelectedIndex', String(this._automationParameters.getSelectedIndex()));
+    root.setAttribute(
+      'automationSelectedIndex',
+      String(this._automationParameters.getSelectedIndex()),
+    );
     root.addElement('backgroundColor').setText(String(this._backgroundColor));
     root.addElement(this._npc.saveAsXML().setName('noteProcessorChain'));
     if (this._instrument) root.addElement(this._instrument.saveAsXML());
     for (const item of this) root.addElement(item.saveAsXML(objRefMap));
-    for (const id of this._automationParameters.getIds()) root.addElement('parameterId').setText(id);
+    for (const id of this._automationParameters.getIds())
+      root.addElement('parameterId').setText(id);
     for (const child of this._unknownChildren) root.addElement(child.clone());
     return root;
   }
@@ -361,7 +411,9 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
           break;
         case 'instrument': {
           if (track._instrument) {
-            console.warn(`Track '${track._uniqueId}' contains multiple instruments; retaining the first`);
+            console.warn(
+              `Track '${track._uniqueId}' contains multiple instruments; retaining the first`,
+            );
             break;
           }
           track._instrument = loadInstrumentFromXML(child);

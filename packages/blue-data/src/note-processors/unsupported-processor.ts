@@ -6,7 +6,9 @@ export class UnsupportedProcessor extends NoteProcessor {
   private _originalType = '';
   private _xml: Element | null = null;
 
-  getOriginalType(): string { return this._originalType; }
+  getOriginalType(): string {
+    return this._originalType;
+  }
 
   override process(notes: NoteList): NoteList {
     return notes;

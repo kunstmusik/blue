@@ -45,10 +45,7 @@ let EngineClient;
 let AutomationCurveCode;
 
 function loadModules() {
-  const blueData = requireWithFallback(
-    '@blue/data',
-    '../packages/blue-data/dist/cjs/index.js',
-  );
+  const blueData = requireWithFallback('@blue/data', '../packages/blue-data/dist/cjs/index.js');
   BlueData = blueData.BlueData;
   AutomationCurve = blueData.AutomationCurve;
   getEngineAutomationPoints = blueData.getEngineAutomationPoints;
@@ -137,7 +134,9 @@ function parseArgs(argv) {
 }
 
 function printHelp() {
-  console.log('Usage: node scripts/engine-realtime-automation-benchmark.mjs --blue <project.blue> --engine <blue-engine-path> [options]');
+  console.log(
+    'Usage: node scripts/engine-realtime-automation-benchmark.mjs --blue <project.blue> --engine <blue-engine-path> [options]',
+  );
   console.log('');
   console.log('Options:');
   console.log('  --runs <n>             Number of runs per mode (default: 1)');
@@ -149,7 +148,9 @@ function printHelp() {
   console.log('  --json-out <path>      Write full results JSON to this path');
   console.log('');
   console.log('Examples:');
-  console.log('  node scripts/engine-realtime-automation-benchmark.mjs --blue smoke-test.blue --engine ~/work/csound/blue-engine/build/blue-engine --runs 3 --mode both');
+  console.log(
+    '  node scripts/engine-realtime-automation-benchmark.mjs --blue smoke-test.blue --engine ~/work/csound/blue-engine/build/blue-engine --runs 3 --mode both',
+  );
 }
 
 function parseCSD(csd) {
@@ -286,7 +287,8 @@ async function waitForCompletion(client, timeoutMs) {
     const resp = await client.getEngineState();
     if (resp.ok && resp.state) {
       lastState = resp.state;
-      const done = !resp.state.running && (resp.state.state === 'stopped' || resp.state.stopReason !== 'none');
+      const done =
+        !resp.state.running && (resp.state.state === 'stopped' || resp.state.stopReason !== 'none');
       if (done) {
         return resp.state;
       }
@@ -294,15 +296,12 @@ async function waitForCompletion(client, timeoutMs) {
     await delay(25);
   }
 
-  throw new Error(`Timed out waiting for engine completion. Last state: ${JSON.stringify(lastState)}`);
+  throw new Error(
+    `Timed out waiting for engine completion. Last state: ${JSON.stringify(lastState)}`,
+  );
 }
 
-async function runOne({
-  runIndex,
-  mode,
-  args,
-  prepared,
-}) {
+async function runOne({ runIndex, mode, args, prepared }) {
   const reqPort = args.portBase + runIndex * 10;
   const pubPort = reqPort + 1;
   const shmName = `be${process.pid}_${runIndex}`;
@@ -386,7 +385,9 @@ async function runOne({
     const startResp = await client.start();
     if (!startResp.ok) {
       const stderrTail = stderrLines.slice(-12).join(' | ');
-      throw new Error(`start failed: ${startResp.message}${stderrTail ? ` | stderr=${stderrTail}` : ''}`);
+      throw new Error(
+        `start failed: ${startResp.message}${stderrTail ? ` | stderr=${stderrTail}` : ''}`,
+      );
     }
 
     const finalState = await waitForCompletion(client, args.timeoutMs);
@@ -399,7 +400,8 @@ async function runOne({
     await client.disconnect(true);
 
     const durationMs = Date.now() - runStart;
-    const counterLine = [...stderrLines].reverse().find((line) => line.startsWith('[Counters]')) ?? '';
+    const counterLine =
+      [...stderrLines].reverse().find((line) => line.startsWith('[Counters]')) ?? '';
 
     return {
       mode,
@@ -463,7 +465,9 @@ async function main() {
       console.log(`[benchmark] run=${runIndex} mode=${mode} starting`);
       const result = await runOne({ runIndex, mode, args, prepared });
       results.push(result);
-      console.log(`[benchmark] run=${runIndex} mode=${mode} complete durationMs=${result.durationMs}`);
+      console.log(
+        `[benchmark] run=${runIndex} mode=${mode} complete durationMs=${result.durationMs}`,
+      );
       if (result.counterLine) {
         console.log(result.counterLine);
       }
@@ -477,7 +481,9 @@ async function main() {
     if (!summary) {
       continue;
     }
-    console.log(`  mode=${mode} runs=${summary.runs} avgHostUs=${summary.avgHostUs} avgPerformUs=${summary.avgPerformUs} avgAutomationUs=${summary.avgAutomationUs} avgHostMaxUs=${summary.avgHostMaxUs} avgPerformMaxUs=${summary.avgPerformMaxUs}`);
+    console.log(
+      `  mode=${mode} runs=${summary.runs} avgHostUs=${summary.avgHostUs} avgPerformUs=${summary.avgPerformUs} avgAutomationUs=${summary.avgAutomationUs} avgHostMaxUs=${summary.avgHostMaxUs} avgPerformMaxUs=${summary.avgPerformMaxUs}`,
+    );
   }
 
   if (args.jsonOut) {
@@ -496,6 +502,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error(error instanceof Error ? error.stack ?? error.message : String(error));
+  console.error(error instanceof Error ? (error.stack ?? error.message) : String(error));
   process.exit(1);
 });

@@ -48,10 +48,14 @@ describe('Processor error parity', () => {
   it('chain wraps unknown errors in NoteProcessorException', () => {
     const chain = new NoteProcessorChain();
     const throwingProc = {
-      process: () => { throw new Error('custom error'); },
+      process: () => {
+        throw new Error('custom error');
+      },
       getDisplayName: () => 'ThrowingProcessor',
       deepCopy: () => throwingProc,
-      saveAsXML: () => { throw new Error('no xml'); },
+      saveAsXML: () => {
+        throw new Error('no xml');
+      },
     } as any;
     chain.addProcessor(throwingProc);
     const nl = new NoteList([makeNote('1')]);

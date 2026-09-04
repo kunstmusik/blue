@@ -3,10 +3,7 @@ import { createHash } from 'node:crypto';
 import { constants } from 'node:fs';
 import { access, readFile, stat } from 'node:fs/promises';
 import * as path from 'node:path';
-import {
-  BLUE_ENGINE_PROTOCOL_VERSION,
-  hasEngineFeature,
-} from '@blue/engine-client/capabilities';
+import { BLUE_ENGINE_PROTOCOL_VERSION, hasEngineFeature } from '@blue/engine-client/capabilities';
 import {
   boundedDiagnostic,
   decodeEngineCompatibilityReportJson,
@@ -131,10 +128,12 @@ async function defaultProbeProcess(
         windowsHide: true,
       },
       (error, stdout, stderr) => {
-        const processError = error as NodeJS.ErrnoException & {
-          code?: string | number;
-          killed?: boolean;
-        } | null;
+        const processError = error as
+          | (NodeJS.ErrnoException & {
+              code?: string | number;
+              killed?: boolean;
+            })
+          | null;
         resolve({
           exitCode: typeof processError?.code === 'number' ? processError.code : error ? null : 0,
           stdout,
@@ -205,7 +204,9 @@ async function defaultExecutionProcess(
       stderr = retain(stderr, text, 'stderr');
       onOutput(text, 'stderr');
     });
-    child.once('spawn', () => { started = true; });
+    child.once('spawn', () => {
+      started = true;
+    });
     child.once('error', (error) => {
       finish({
         exitCode: null,
@@ -385,12 +386,13 @@ export class EngineRuntimeService {
       this.probeCache.set(cacheKey, result);
       return result;
     } catch (error) {
-      const runtimeError = error instanceof EngineRuntimeError
-        ? error
-        : new EngineRuntimeError(
-            'ENGINE_PROBE_FAILED',
-            error instanceof Error ? error.message : String(error),
-          );
+      const runtimeError =
+        error instanceof EngineRuntimeError
+          ? error
+          : new EngineRuntimeError(
+              'ENGINE_PROBE_FAILED',
+              error instanceof Error ? error.message : String(error),
+            );
       return {
         ok: false,
         selection,
@@ -410,12 +412,15 @@ export class EngineRuntimeService {
     let request: CsoundIoQueryRequest;
     try {
       request = normalizeCsoundIoQueryRequest(rawRequest);
-      const csoundLibraryPath = request.csoundLibraryPath
-        ?? (this.options.getCsoundLibraryPath?.().trim() || null);
-      const probe = await this.probe({
-        enginePathOverride: request.enginePathOverride,
-        csoundLibraryPath,
-      }, { retry: options.retry });
+      const csoundLibraryPath =
+        request.csoundLibraryPath ?? (this.options.getCsoundLibraryPath?.().trim() || null);
+      const probe = await this.probe(
+        {
+          enginePathOverride: request.enginePathOverride,
+          csoundLibraryPath,
+        },
+        { retry: options.retry },
+      );
       if (!probe.ok || !probe.report || !probe.selection) {
         return {
           ok: false,
@@ -462,7 +467,9 @@ export class EngineRuntimeService {
           selection: probe.selection,
           report: null,
           errorCode: 'CSOUND_IO_QUERY_FAILED',
-          message: boundedDiagnostic(processResult.stderr || 'Blue Engine returned no Csound I/O report'),
+          message: boundedDiagnostic(
+            processResult.stderr || 'Blue Engine returned no Csound I/O report',
+          ),
           durationMs: Date.now() - startedAt,
         };
       }
@@ -480,16 +487,15 @@ export class EngineRuntimeService {
         };
       }
       const diagnostic = report.diagnostics[0];
-      const hasScopedFailure = processResult.exitCode !== 0
-        || !report.ready;
+      const hasScopedFailure = processResult.exitCode !== 0 || !report.ready;
       return {
         ok: !hasScopedFailure && report.ready,
         selection: probe.selection,
         report,
         errorCode: hasScopedFailure
-          ? (request.audioModule || request.midiModule
+          ? request.audioModule || request.midiModule
             ? 'CSOUND_MODULE_UNAVAILABLE'
-            : 'CSOUND_IO_QUERY_FAILED')
+            : 'CSOUND_IO_QUERY_FAILED'
           : null,
         message: hasScopedFailure
           ? boundedDiagnostic(diagnostic || processResult.stderr || 'Csound I/O discovery failed')
@@ -516,7 +522,11 @@ export class EngineRuntimeService {
     } = {},
   ): Promise<CsoundExecutionResult> {
     const request = normalizeCsoundExecutionRequest(rawRequest);
-    const failed = (message: string, errorCode: string, operationId = request.operationId): CsoundExecutionResult => ({
+    const failed = (
+      message: string,
+      errorCode: string,
+      operationId = request.operationId,
+    ): CsoundExecutionResult => ({
       operationId,
       state: 'failed',
       exitCode: null,
@@ -539,8 +549,8 @@ export class EngineRuntimeService {
       };
     }
 
-    const csoundLibraryPath = request.csoundLibraryPath
-      ?? (this.options.getCsoundLibraryPath?.().trim() || null);
+    const csoundLibraryPath =
+      request.csoundLibraryPath ?? (this.options.getCsoundLibraryPath?.().trim() || null);
     const probe = await this.probe({ csoundLibraryPath }, { retry: true });
     if (!probe.ok || !probe.selection || !probe.report) {
       return failed(probe.message, probe.errorCode ?? 'CSOUND_UNAVAILABLE');
@@ -550,20 +560,28 @@ export class EngineRuntimeService {
       return failed(`Blue Engine does not advertise ${feature}`, 'ENGINE_CAPABILITY_MISSING');
     }
     if (!path.isAbsolute(request.cwd)) {
-      return failed('Csound execution working directory must be absolute', 'CSOUND_EXECUTION_INVALID_CWD');
+      return failed(
+        'Csound execution working directory must be absolute',
+        'CSOUND_EXECUTION_INVALID_CWD',
+      );
     }
     try {
       const cwdStat = await stat(request.cwd);
       if (!cwdStat.isDirectory()) {
-        return failed(`Csound execution working directory is not a directory: ${request.cwd}`, 'CSOUND_EXECUTION_INVALID_CWD');
+        return failed(
+          `Csound execution working directory is not a directory: ${request.cwd}`,
+          'CSOUND_EXECUTION_INVALID_CWD',
+        );
       }
     } catch {
-      return failed(`Csound execution working directory was not found: ${request.cwd}`, 'CSOUND_EXECUTION_INVALID_CWD');
+      return failed(
+        `Csound execution working directory was not found: ${request.cwd}`,
+        'CSOUND_EXECUTION_INVALID_CWD',
+      );
     }
 
-    const args = request.kind === 'utility'
-      ? ['--run-utility', request.utilityName]
-      : ['--run-csound'];
+    const args =
+      request.kind === 'utility' ? ['--run-utility', request.utilityName] : ['--run-csound'];
     if (csoundLibraryPath) args.push('--csound-library', csoundLibraryPath);
     args.push('--', ...request.args);
     let processResult: ExecutionProcessResult;
@@ -576,7 +594,10 @@ export class EngineRuntimeService {
         hooks.onOutput ?? (() => undefined),
       );
     } catch (error) {
-      return failed(error instanceof Error ? error.message : String(error), 'CSOUND_PROCESS_FAILED');
+      return failed(
+        error instanceof Error ? error.message : String(error),
+        'CSOUND_PROCESS_FAILED',
+      );
     }
 
     const cancelled = hooks.signal?.aborted ?? false;
@@ -589,8 +610,10 @@ export class EngineRuntimeService {
       ? 'Csound operation cancelled'
       : processResult.exitCode === 0
         ? 'Csound operation completed'
-        : processResult.errorMessage
-          ?? (processResult.signal ? `Csound terminated by ${processResult.signal}` : `Csound exited with code ${processResult.exitCode ?? 'unknown'}`);
+        : (processResult.errorMessage ??
+          (processResult.signal
+            ? `Csound terminated by ${processResult.signal}`
+            : `Csound exited with code ${processResult.exitCode ?? 'unknown'}`));
     return {
       operationId: request.operationId,
       state,
@@ -606,7 +629,9 @@ export class EngineRuntimeService {
       ),
       errorCode: cancelled
         ? 'CSOUND_EXECUTION_CANCELLED'
-        : state === 'failed' ? 'CSOUND_EXECUTION_FAILED' : null,
+        : state === 'failed'
+          ? 'CSOUND_EXECUTION_FAILED'
+          : null,
       message: boundedDiagnostic(message),
     };
   }
@@ -671,8 +696,10 @@ export class EngineRuntimeService {
         'Blue Engine artifact metadata does not match this application',
       );
     }
-    if (!/^[a-f0-9]{64}$/.test(manifest.sha256) ||
-        await fileSha256(enginePath) !== manifest.sha256) {
+    if (
+      !/^[a-f0-9]{64}$/.test(manifest.sha256) ||
+      (await fileSha256(enginePath)) !== manifest.sha256
+    ) {
       throw new EngineRuntimeError(
         'ENGINE_PROBE_FAILED',
         'Blue Engine artifact hash does not match its manifest',
@@ -695,7 +722,10 @@ export class EngineRuntimeService {
       throw new EngineRuntimeError('ENGINE_NOT_FOUND', `Blue Engine was not found: ${enginePath}`);
     }
     if (!engineStat.isFile()) {
-      throw new EngineRuntimeError('ENGINE_NOT_EXECUTABLE', `Blue Engine is not a file: ${enginePath}`);
+      throw new EngineRuntimeError(
+        'ENGINE_NOT_EXECUTABLE',
+        `Blue Engine is not a file: ${enginePath}`,
+      );
     }
     try {
       await access(enginePath, this.platform === 'win32' ? constants.R_OK : constants.X_OK);

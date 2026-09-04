@@ -34,27 +34,19 @@
   "blueModifications": [
     {
       "summary": "Blue-maintained header: replaced the precursor generator banner with Blue ownership, provenance pointers, the calibration and release-safety documentation, and the applicable msfa attribution notices.",
-      "files": [
-        "packages/blue-data/resources/blue-x7-modern/bluex7.orc"
-      ]
+      "files": ["packages/blue-data/resources/blue-x7-modern/bluex7.orc"]
     },
     {
       "summary": "Added the corpus-wide output calibration giBlueX7OutputCalibration = 0.75, applied at the module output after the per-carrier scale. Established by rendering the default and loudest-voice corpus across all 32 algorithms at velocity 127 (uncalibrated worst peak 1.1892); keeps all corpus renders below the 0dbfs ceiling without per-voice gain.",
-      "files": [
-        "packages/blue-data/resources/blue-x7-modern/bluex7.orc"
-      ]
+      "files": ["packages/blue-data/resources/blue-x7-modern/bluex7.orc"]
     },
     {
       "summary": "Live-capable active-note adaptation (Spec 092 US2): the maintained bluex7_voice UDO retains a compact compatibility interface for static/shared-UDO targets, while generated live inline targets bind chnexport globals directly. The current catalog captures 136 next-note fields with i(gk_...) at note start and keeps only eight PEG index/rate snapshots plus six output-level baselines; a dirty epoch reads the 15 live controls (feedback, LFO depths, output levels, and enables) directly. There is no live ftable, tabw, Parameter chnget, or 155-slot k-rate transport copy.",
-      "files": [
-        "packages/blue-data/resources/blue-x7-modern/bluex7.orc"
-      ]
+      "files": ["packages/blue-data/resources/blue-x7-modern/bluex7.orc"]
     },
     {
       "summary": "Extended the public-interface documentation for direct-global live inputs, compact dirty-domain state, and performance-thread whole-voice batch application.",
-      "files": [
-        "packages/blue-data/resources/blue-x7-modern/bluex7.orc"
-      ]
+      "files": ["packages/blue-data/resources/blue-x7-modern/bluex7.orc"]
     },
     {
       "summary": "Bit-exact interpreter-cost optimizations (Spec 092 performance follow-up): the six k-rate lookup-table mirrors are copied once per note instead of every k-cycle; each algorithm UDO reads its kGain/kDph elements into scalar locals once per k-cycle so the feedback sample loop and a-rate expressions avoid per-sample array opcodes; the per-k-cycle amplitude-modulation scale and pitch-envelope/LFO exponent are hoisted out of the six-operator control loop with identical left-to-right factor association. Generated inline targets call the statically selected dx7_algo_NN UDO directly behind a note-time iAlgo guard, keeping the 32-way dx7_render_algorithm dispatcher as the fallback branch so a runtime algorithm channel edit (a next-note parameter) still re-topologizes subsequent notes. Verified output-identical (maximum sample difference 0.0) against the prior orchestra on the dense 59-note benchmark.",
@@ -65,15 +57,11 @@
     },
     {
       "summary": "Inaudible-release fast-path fix (Spec 092 performance follow-up): the carrier-audible bound was 1e-5, below the composed envelope floor 2^(16*65536/2^24 - 14) = 2^-13.9375 ~= 6.4e-5, so enabled carriers never fell below the bound and every release-tail note ran the full six-operator topology until turnoff (up to the 15 s capped tail; measured 15.57 s instance lifetime for one 0.5 s note). The bound is now 1e-4, above the floor; FM carrier amplitude is bounded by carrier gain, so skipped output is at most ncar * 1e-4 * (0.5/ncar) * 0.75 ~= -88 dBFS per voice. Reviewed divergence: reference-render difference confined to the release tail, max 2.5e-5 (~-88.5 dBFS) at t=2.345 s; stress render with ~45 accumulated tails max difference 2.66e-4 with identical audible peaks. Accumulation stress CPU: 21.8 s -> 11.7 s (-46%); dense fixture benchmark 3.21x -> 5.01x realtime. Note lifetime and live-edit topology resumption semantics are unchanged.",
-      "files": [
-        "packages/blue-data/resources/blue-x7-modern/bluex7.orc"
-      ]
+      "files": ["packages/blue-data/resources/blue-x7-modern/bluex7.orc"]
     },
     {
       "summary": "Release-tail follow-up: parked voices now skip phase-increment and pitch-exponent derivation together with the already-skipped audio topology, recomputing current increments on the same control block that a live carrier edit resumes audio; the all-frozen count is folded into the existing envelope loop. Best-of-three natural-fixture CPU fell from 3.63 s to 3.40 s (-6.3%) with unchanged 20.139 s lifetime, reference render, and live-edit resurrection. Carrier-frozen termination and carrier-only xtratim were benchmarked and rejected because they either did not improve the representative workload or truncated legal nonzero-L4/modulator output and active-note resurrection; details and synthetic measurements are recorded in Spec 092 validation.",
-      "files": [
-        "packages/blue-data/resources/blue-x7-modern/bluex7.orc"
-      ]
+      "files": ["packages/blue-data/resources/blue-x7-modern/bluex7.orc"]
     },
     {
       "summary": "Shared-UDO live-state safety: clamp active output-level shifts to the renderer's established envelope accumulator ceiling as well as its floor. Repeatedly parking and restoring a carrier during a long release can otherwise accumulate an out-of-domain envelope level and eventually emit non-finite samples; the generated inline layout applies the same bound for behavioral equivalence.",
@@ -124,8 +112,6 @@
   "license": {
     "projectLicense": "GPL-2.0-or-later",
     "blueModificationOwnership": "Blue-maintained modifications to the imported orchestra are Copyright (C) Steven Yi and licensed with the blue-electron repository under GPL-2.0-or-later.",
-    "thirdPartyLicenseFiles": [
-      "LICENSES/Apache-2.0.txt"
-    ]
+    "thirdPartyLicenseFiles": ["LICENSES/Apache-2.0.txt"]
   }
 }

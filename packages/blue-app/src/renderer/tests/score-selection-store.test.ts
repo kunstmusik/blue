@@ -1,7 +1,10 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
-import { hasAuditionEligibleSelection, useScoreSelectionStore } from '../stores/score-selection-store';
+import {
+  hasAuditionEligibleSelection,
+  useScoreSelectionStore,
+} from '../stores/score-selection-store';
 import type { ScoreObjectEditorTargetSnapshot } from '../../shared/project-editor';
 
 function target(objectId: string): ScoreObjectEditorTargetSnapshot {
@@ -30,15 +33,17 @@ describe('useScoreSelectionStore', () => {
   });
 
   it('unions additive selections and preserves each target', () => {
-    useScoreSelectionStore.getState().setSelection([
-      { objectId: 'A', editorTarget: target('A') },
-    ]);
+    useScoreSelectionStore.getState().setSelection([{ objectId: 'A', editorTarget: target('A') }]);
     useScoreSelectionStore.getState().addToSelection([
       { objectId: 'B', editorTarget: target('B') },
       { objectId: 'C', editorTarget: target('C') },
     ]);
 
-    expect([...useScoreSelectionStore.getState().selectedObjectIds].sort()).toEqual(['A', 'B', 'C']);
+    expect([...useScoreSelectionStore.getState().selectedObjectIds].sort()).toEqual([
+      'A',
+      'B',
+      'C',
+    ]);
     expect(useScoreSelectionStore.getState().selectedObjectTargets.A).toBeDefined();
     expect(useScoreSelectionStore.getState().selectedObjectTargets.B).toBeDefined();
   });
@@ -61,12 +66,14 @@ describe('useScoreSelectionStore', () => {
       ...target('source-1'),
       patternSource: { groupId: 'grp', layerId: 'pl-1', sourceObjectId: 'source-1' },
     };
-    useScoreSelectionStore.getState().setSelection([
-      { objectId: 'source-1', editorTarget: patternTarget },
-    ]);
+    useScoreSelectionStore
+      .getState()
+      .setSelection([{ objectId: 'source-1', editorTarget: patternTarget }]);
     expect(hasAuditionEligibleSelection(useScoreSelectionStore.getState())).toBe(false);
 
-    useScoreSelectionStore.getState().setSelection([{ objectId: 'sobj-1', editorTarget: target('sobj-1') }]);
+    useScoreSelectionStore
+      .getState()
+      .setSelection([{ objectId: 'sobj-1', editorTarget: target('sobj-1') }]);
     expect(hasAuditionEligibleSelection(useScoreSelectionStore.getState())).toBe(true);
   });
 });

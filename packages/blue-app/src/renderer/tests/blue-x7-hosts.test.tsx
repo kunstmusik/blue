@@ -17,11 +17,14 @@ vi.mock('../components/workbench/panels/editors/SelectedCodeEditor', () => ({
   ),
 }));
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 function setInputValue(input: HTMLInputElement, value: string): void {
-  const tracker = (input as HTMLInputElement & { _valueTracker?: { setValue: (next: string) => void } })
-    ._valueTracker;
+  const tracker = (
+    input as HTMLInputElement & { _valueTracker?: { setValue: (next: string) => void } }
+  )._valueTracker;
   tracker?.setValue('');
   const descriptor = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value');
   descriptor?.set?.call(input, value);
@@ -46,7 +49,9 @@ describe('BlueX7 Multi-Host Parity (Orchestra, Track Window, Library)', () => {
       attempt < 50 && container?.querySelector('[data-instrument-editor-loading]');
       attempt += 1
     ) {
-      await new Promise((resolve) => { setTimeout(resolve, 0); });
+      await new Promise((resolve) => {
+        setTimeout(resolve, 0);
+      });
     }
   }
 
@@ -124,7 +129,9 @@ describe('BlueX7 Multi-Host Parity (Orchestra, Track Window, Library)', () => {
     expect(nameInput.value).toBe('Track BlueX7');
 
     // Toggle enabled checkbox
-    const enabledToggle = container?.querySelector('#bluex7-instrument-enabled') as HTMLInputElement;
+    const enabledToggle = container?.querySelector(
+      '#bluex7-instrument-enabled',
+    ) as HTMLInputElement;
     act(() => {
       enabledToggle.click();
     });
@@ -197,8 +204,14 @@ describe('BlueX7 Multi-Host Parity (Orchestra, Track Window, Library)', () => {
 
     act(() => {
       for (let index = 0; index < 20; index += 1) {
-        setInputValue(editorA.querySelector('[aria-label="Feedback"]') as HTMLInputElement, String(index % 8));
-        setInputValue(editorB.querySelector('[aria-label="Feedback"]') as HTMLInputElement, String(7 - (index % 8)));
+        setInputValue(
+          editorA.querySelector('[aria-label="Feedback"]') as HTMLInputElement,
+          String(index % 8),
+        );
+        setInputValue(
+          editorB.querySelector('[aria-label="Feedback"]') as HTMLInputElement,
+          String(7 - (index % 8)),
+        );
       }
     });
     expect(patches).toHaveLength(40);
@@ -213,8 +226,10 @@ describe('BlueX7 Multi-Host Parity (Orchestra, Track Window, Library)', () => {
       owner: 'owner-a',
       patch: { blueX7: { type: 'replaceVoice' } },
     });
-    expect((editorB.querySelector('button[aria-label="Undo BlueX7 edit"]') as HTMLButtonElement).disabled)
-      .toBe(false);
+    expect(
+      (editorB.querySelector('button[aria-label="Undo BlueX7 edit"]') as HTMLButtonElement)
+        .disabled,
+    ).toBe(false);
   });
 
   it('keeps ARIA tab and panel IDs unique for two mounts of the same assignment', async () => {
@@ -243,11 +258,15 @@ describe('BlueX7 Multi-Host Parity (Orchestra, Track Window, Library)', () => {
       await flushLazyEditor();
     });
 
-    const topLevelTablist = container!.querySelector('[role="tablist"][aria-label="Instrument Sections"]')!;
+    const topLevelTablist = container!.querySelector(
+      '[role="tablist"][aria-label="Instrument Sections"]',
+    )!;
     const tabs = [...topLevelTablist.querySelectorAll<HTMLElement>('[role="tab"]')];
-    const panels = [...container!.querySelectorAll<HTMLElement>(
-      '[data-testid="bluex7-panel-global"], [data-testid="bluex7-panel-operators"], [data-testid="bluex7-panel-pitch"], [data-testid="bluex7-panel-csound"]',
-    )];
+    const panels = [
+      ...container!.querySelectorAll<HTMLElement>(
+        '[data-testid="bluex7-panel-global"], [data-testid="bluex7-panel-operators"], [data-testid="bluex7-panel-pitch"], [data-testid="bluex7-panel-csound"]',
+      ),
+    ];
     const tabIds = tabs.map((tab) => tab.id);
     const panelIds = panels.map((panel) => panel.id);
 
@@ -263,37 +282,45 @@ describe('BlueX7 Multi-Host Parity (Orchestra, Track Window, Library)', () => {
 
   it('routes arrangement and track runtime snapshots to active controls without patches', async () => {
     const arrangement = createSnapshot('Runtime Arrangement BlueX7');
-    arrangement.parameters = [{
-      parameterId: 'arrangement-feedback',
-      semanticKey: 'common.feedback',
-      fixedValue: 0,
-      automationEnabled: true,
-    }];
+    arrangement.parameters = [
+      {
+        parameterId: 'arrangement-feedback',
+        semanticKey: 'common.feedback',
+        fixedValue: 0,
+        automationEnabled: true,
+      },
+    ];
     const track = createSnapshot('Runtime Track BlueX7');
-    track.parameters = [{
-      parameterId: 'track-feedback',
-      semanticKey: 'common.feedback',
-      fixedValue: 0,
-      automationEnabled: true,
-    }];
+    track.parameters = [
+      {
+        parameterId: 'track-feedback',
+        semanticKey: 'common.feedback',
+        fixedValue: 0,
+        automationEnabled: true,
+      },
+    ];
     track.assignmentId = 'track-assignment';
 
-    const getBlueX7EffectiveValues = vi.fn().mockImplementation(async (request: {
-      target: {
-        assignmentId?: string;
-        track?: { rootGroupId: string; trackId: string };
-      };
-      projectSessionId: number;
-      parameterIds: string[];
-    }) => ({
-      ok: true as const,
-      projectSessionId: request.projectSessionId,
-      ownerIdentity: request.target.assignmentId
-        ? `arrangement:${request.target.assignmentId}`
-        : `track:${request.target.track!.rootGroupId}:${request.target.track!.trackId}`,
-      engineSequence: 1,
-      values: [{ parameterId: request.parameterIds[0]!, value: request.target.assignmentId ? 6 : 7 }],
-    }));
+    const getBlueX7EffectiveValues = vi.fn().mockImplementation(
+      async (request: {
+        target: {
+          assignmentId?: string;
+          track?: { rootGroupId: string; trackId: string };
+        };
+        projectSessionId: number;
+        parameterIds: string[];
+      }) => ({
+        ok: true as const,
+        projectSessionId: request.projectSessionId,
+        ownerIdentity: request.target.assignmentId
+          ? `arrangement:${request.target.assignmentId}`
+          : `track:${request.target.track!.rootGroupId}:${request.target.track!.trackId}`,
+        engineSequence: 1,
+        values: [
+          { parameterId: request.parameterIds[0]!, value: request.target.assignmentId ? 6 : 7 },
+        ],
+      }),
+    );
     (window as unknown as { blueAPI: unknown }).blueAPI = { getBlueX7EffectiveValues };
 
     await act(async () => {
@@ -356,10 +383,20 @@ describe('BlueX7 Multi-Host Parity (Orchestra, Track Window, Library)', () => {
         }),
       ]),
     );
-    expect((container!.querySelector('[data-testid="runtime-arrangement-host"] [aria-label="Feedback"]') as HTMLInputElement).value)
-      .toBe('6');
-    expect((container!.querySelector('[data-testid="runtime-track-host"] [aria-label="Feedback"]') as HTMLInputElement).value)
-      .toBe('7');
+    expect(
+      (
+        container!.querySelector(
+          '[data-testid="runtime-arrangement-host"] [aria-label="Feedback"]',
+        ) as HTMLInputElement
+      ).value,
+    ).toBe('6');
+    expect(
+      (
+        container!.querySelector(
+          '[data-testid="runtime-track-host"] [aria-label="Feedback"]',
+        ) as HTMLInputElement
+      ).value,
+    ).toBe('7');
     expect(onOrchestraPatch).not.toHaveBeenCalled();
   });
 });

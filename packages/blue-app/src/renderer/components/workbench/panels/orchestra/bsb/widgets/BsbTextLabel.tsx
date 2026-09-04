@@ -14,7 +14,12 @@ export default function BsbTextLabel({
 }: BsbTextLabelProps): React.ReactElement {
   const html = getSanitizedBsbSwingHtml(text);
   if (html) {
-    return <span className={htmlClassName ?? plainClassName} dangerouslySetInnerHTML={{ __html: html }} />;
+    return (
+      <span
+        className={htmlClassName ?? plainClassName}
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    );
   }
 
   return <span className={plainClassName}>{text}</span>;

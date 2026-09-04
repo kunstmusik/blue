@@ -43,7 +43,7 @@ describe('AudioFile CSD generation', () => {
     af.setStartTime(TimePosition.beats(0));
     af.setSubjectiveDuration(TimeDuration.beats(8));
 
-    ((data.getScore()[0] as PolyObject)[0]).push(af);
+    (data.getScore()[0] as PolyObject)[0].push(af);
 
     const csd = data.toCSD();
 
@@ -69,8 +69,6 @@ describe('AudioFile CSD generation', () => {
 
     const instrument = af.generateInstrument();
 
-    expect(instrument?.getText()).toContain(
-      '"C:/Users/artist/audio files/snare.wav", 1, p4',
-    );
+    expect(instrument?.getText()).toContain('"C:/Users/artist/audio files/snare.wav", 1, p4');
   });
 });

@@ -130,10 +130,12 @@ export function parseUDODeclaration(line: string): OpcodeDefinition | null {
 }
 
 function isInstrOrUDODeclarationBoundary(trimmedLine: string): boolean {
-  return trimmedLine.startsWith('opcode')
-    || trimmedLine.startsWith('instr')
-    || trimmedLine.startsWith('endop')
-    || trimmedLine.startsWith('endin');
+  return (
+    trimmedLine.startsWith('opcode') ||
+    trimmedLine.startsWith('instr') ||
+    trimmedLine.startsWith('endop') ||
+    trimmedLine.startsWith('endin')
+  );
 }
 
 function stripMultiLineComments(text: string): string {
@@ -155,8 +157,7 @@ export function convertToModern(udo: OpcodeDefinition): void {
   if (convertedInputArguments.trim().length === 0) {
     convertedInputArguments = getInputArgumentsFromTypeString(udo.getInTypes());
   } else {
-    convertedInputArguments = applyLegacyTypeAnnotations(
-      convertedInputArguments, udo.getInTypes());
+    convertedInputArguments = applyLegacyTypeAnnotations(convertedInputArguments, udo.getInTypes());
   }
 
   udo.setInputArguments(convertedInputArguments);
@@ -180,8 +181,7 @@ export function convertToClassic(udo: OpcodeDefinition): void {
   if (udo.getInputArguments().trim().length === 0) {
     udo.setCode(cleanedCodeBody);
   } else {
-    udo.setCode(stripTypeAnnotations(udo.getInputArguments()) + '\txin\n'
-      + cleanedCodeBody);
+    udo.setCode(stripTypeAnnotations(udo.getInputArguments()) + '\txin\n' + cleanedCodeBody);
   }
 
   udo.setInputArguments('');

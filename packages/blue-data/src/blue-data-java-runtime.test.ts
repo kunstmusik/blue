@@ -10,7 +10,10 @@ import { ClojureObject } from './sound-objects/clojure-object';
 import { GenericScore } from './sound-objects/generic-score';
 import { TrackLayerGroup } from './score/track/track-layer-group';
 
-function createTrackProject(): { data: BlueData; track: ReturnType<TrackLayerGroup['newLayerAt']> } {
+function createTrackProject(): {
+  data: BlueData;
+  track: ReturnType<TrackLayerGroup['newLayerAt']>;
+} {
   const data = new BlueData();
   data.getScore().length = 0;
   const group = new TrackLayerGroup();

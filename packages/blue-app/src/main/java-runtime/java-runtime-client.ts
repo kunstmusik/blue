@@ -46,11 +46,7 @@ class JavaRuntimeRequestError extends Error {
   readonly code: string;
   readonly details?: Record<string, unknown>;
 
-  constructor(
-    code: string,
-    message: string,
-    details?: Record<string, unknown>,
-  ) {
+  constructor(code: string, message: string, details?: Record<string, unknown>) {
     super(message);
     this.name = 'JavaRuntimeRequestError';
     this.code = code;
@@ -195,7 +191,7 @@ export class JavaRuntimeClient {
 
       let response: Buffer;
       try {
-        [response] = await socket.receive() as [Buffer];
+        [response] = (await socket.receive()) as [Buffer];
       } catch (error) {
         throw new JavaRuntimeRequestError(
           'TRANSPORT_ERROR',
@@ -227,7 +223,10 @@ export class JavaRuntimeClient {
       return decoded;
     });
 
-    this.requestQueue = operation.then(() => undefined, () => undefined);
+    this.requestQueue = operation.then(
+      () => undefined,
+      () => undefined,
+    );
 
     try {
       return await operation;

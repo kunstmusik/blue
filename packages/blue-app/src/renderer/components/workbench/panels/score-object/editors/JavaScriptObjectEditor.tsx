@@ -5,36 +5,42 @@ import GeneratedScoreModal from './GeneratedScoreModal';
 import JavaScriptRuntimeStatusIndicator from './JavaScriptRuntimeStatusIndicator';
 import { useScoreObjectTest } from './useScoreObjectTest';
 
-export default function JavaScriptObjectEditor({ document, onPatch }: ScoreObjectEditorComponentProps): React.ReactElement {
+export default function JavaScriptObjectEditor({
+  document,
+  onPatch,
+}: ScoreObjectEditorComponentProps): React.ReactElement {
   const editor = document.editor;
   if (editor.kind !== 'code') return <></>;
 
   const onLoadProcessable = editor.auxiliaryFlags?.onLoadProcessable === true;
 
-  const {
-    testing,
-    testOutput,
-    testError,
-    runTest,
-    clearTestOutput,
-    clearTestError,
-  } = useScoreObjectTest(document.target);
+  const { testing, testOutput, testError, runTest, clearTestOutput, clearTestError } =
+    useScoreObjectTest(document.target);
 
-  const patch = useCallback((p: Record<string, unknown>) => {
-    onPatch({
-      type: 'updateTypeSpecificEditor',
-      target: document.target,
-      patch: p,
-    });
-  }, [document.target, onPatch]);
+  const patch = useCallback(
+    (p: Record<string, unknown>) => {
+      onPatch({
+        type: 'updateTypeSpecificEditor',
+        target: document.target,
+        patch: p,
+      });
+    },
+    [document.target, onPatch],
+  );
 
-  const handleChange = useCallback((text: string) => {
-    patch({ text });
-  }, [patch]);
+  const handleChange = useCallback(
+    (text: string) => {
+      patch({ text });
+    },
+    [patch],
+  );
 
-  const handleProcessOnLoadChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    patch({ onLoadProcessable: e.target.checked });
-  }, [patch]);
+  const handleProcessOnLoadChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      patch({ onLoadProcessable: e.target.checked });
+    },
+    [patch],
+  );
 
   const handleTest = useCallback(async () => {
     await runTest();
@@ -50,7 +56,9 @@ export default function JavaScriptObjectEditor({ document, onPatch }: ScoreObjec
     };
     const el = containerRef.current;
     el?.addEventListener('keydown', handler);
-    return () => { el?.removeEventListener('keydown', handler); };
+    return () => {
+      el?.removeEventListener('keydown', handler);
+    };
   }, [handleTest]);
 
   return (
@@ -80,7 +88,12 @@ export default function JavaScriptObjectEditor({ document, onPatch }: ScoreObjec
       {testError && (
         <div className="px-3 py-1.5 text-role-body border-b shrink-0 bg-red-900/20 text-red-300 flex items-center gap-2">
           <span>Error: {testError}</span>
-          <button className="underline text-blue-muted hover:text-gray-200" onClick={clearTestError}>dismiss</button>
+          <button
+            className="underline text-blue-muted hover:text-gray-200"
+            onClick={clearTestError}
+          >
+            dismiss
+          </button>
         </div>
       )}
       <div className="flex-1 overflow-hidden">
@@ -93,9 +106,7 @@ export default function JavaScriptObjectEditor({ document, onPatch }: ScoreObjec
           onChange={handleChange}
         />
       </div>
-      {testOutput !== null && (
-        <GeneratedScoreModal text={testOutput} onClose={clearTestOutput} />
-      )}
+      {testOutput !== null && <GeneratedScoreModal text={testOutput} onClose={clearTestOutput} />}
     </div>
   );
 }

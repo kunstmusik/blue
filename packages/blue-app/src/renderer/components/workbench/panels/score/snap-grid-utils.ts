@@ -77,12 +77,17 @@ function deriveMeterAnchoredAutoSnapLineBeats(
   while (currentBeat <= maxBeat + EPSILON) {
     const nextMeasure = currentMeasure + 1;
     const nextEntry = entries[entryIndex + 1];
-    const nextBeat = nextEntry && nextMeasure >= nextEntry.measure
-      ? nextEntry.startBeat
-      : currentBeat + getBeatsPerMeasure(entries[entryIndex]!);
+    const nextBeat =
+      nextEntry && nextMeasure >= nextEntry.measure
+        ? nextEntry.startBeat
+        : currentBeat + getBeatsPerMeasure(entries[entryIndex]!);
 
     pushUnique(lines, currentBeat);
-    for (let beat = currentBeat + snapBeats; beat <= maxBeat + EPSILON && beat < nextBeat - EPSILON; beat += snapBeats) {
+    for (
+      let beat = currentBeat + snapBeats;
+      beat <= maxBeat + EPSILON && beat < nextBeat - EPSILON;
+      beat += snapBeats
+    ) {
       pushUnique(lines, beat);
     }
 
@@ -131,7 +136,10 @@ export function snapBeatToGrid(
   snapBeats: number,
   meterMap: MeterMapSnapshot | null | undefined,
 ): number {
-  if (!usesMeterBoundarySnap(snapValue, snapBeats) && !usesMeterAnchoredAutoSnap(snapValue, snapBeats)) {
+  if (
+    !usesMeterBoundarySnap(snapValue, snapBeats) &&
+    !usesMeterAnchoredAutoSnap(snapValue, snapBeats)
+  ) {
     if (snapBeats <= 0) return beat;
     return mode === 'floor'
       ? Math.floor(beat / snapBeats) * snapBeats

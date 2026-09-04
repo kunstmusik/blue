@@ -140,7 +140,7 @@ export default function OutputPanel() {
               onClick={() => selectTab(tab.id)}
               className={cn(
                 'output-panel__tab',
-                tab.id === activeTabId && 'output-panel__tab--active'
+                tab.id === activeTabId && 'output-panel__tab--active',
               )}
             >
               {tab.name}
@@ -148,11 +148,7 @@ export default function OutputPanel() {
           ))}
         </div>
         {activeTabId && (
-          <button
-            onClick={handleClear}
-            className="output-panel__toolbar-btn"
-            title="Clear output"
-          >
+          <button onClick={handleClear} className="output-panel__toolbar-btn" title="Clear output">
             Clear
           </button>
         )}
@@ -173,8 +169,7 @@ export default function OutputPanel() {
                 <div key={line.id} className="output-panel__line">
                   <span
                     style={{
-                      color:
-                        line.type === 'stderr' ? errorColor : outputColor,
+                      color: line.type === 'stderr' ? errorColor : outputColor,
                     }}
                   >
                     {line.text}
@@ -186,11 +181,7 @@ export default function OutputPanel() {
         </ContextMenu.Trigger>
 
         <PopoutContextMenuPortal>
-          <ContextMenu.Content
-            className="workbench-context-menu"
-            sideOffset={6}
-            align="start"
-          >
+          <ContextMenu.Content className="workbench-context-menu" sideOffset={6} align="start">
             <ContextMenu.Item
               className="workbench-context-menu__item"
               disabled={!hasSelection}
@@ -200,20 +191,14 @@ export default function OutputPanel() {
               Copy
             </ContextMenu.Item>
 
-            <ContextMenu.Item
-              className="workbench-context-menu__item"
-              onSelect={handleSelectAll}
-            >
+            <ContextMenu.Item className="workbench-context-menu__item" onSelect={handleSelectAll}>
               <MousePointerClick size={14} strokeWidth={1.9} />
               Select All
             </ContextMenu.Item>
 
             <ContextMenu.Separator className="workbench-context-menu__separator" />
 
-            <ContextMenu.Item
-              className="workbench-context-menu__item"
-              onSelect={handleClear}
-            >
+            <ContextMenu.Item className="workbench-context-menu__item" onSelect={handleClear}>
               <Trash2 size={14} strokeWidth={1.9} />
               Clear
             </ContextMenu.Item>

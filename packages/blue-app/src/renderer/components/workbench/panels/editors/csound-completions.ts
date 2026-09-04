@@ -16,7 +16,9 @@ function isPromiseLike<T>(value: T | Promise<T>): value is Promise<T> {
 export function createDynamicCsoundCompletionSource(
   providers: DynamicCsoundCompletionProvider[],
 ): CompletionSource {
-  return (context: CompletionContext): CompletionResult | Promise<CompletionResult | null> | null => {
+  return (
+    context: CompletionContext,
+  ): CompletionResult | Promise<CompletionResult | null> | null => {
     if (providers.length === 0) {
       return null;
     }

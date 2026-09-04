@@ -58,7 +58,10 @@ function createRichInstrument(name: string): BlueSynthBuilder {
   parameter.setResolution(0.125);
   parameter.setCurve(AutomationCurve.STEP);
   parameter.setFixedValue(0.375);
-  parameter.setPoints([{ time: 0, value: 0.375 }, { time: 2, value: 1.25 }]);
+  parameter.setPoints([
+    { time: 0, value: 0.375 },
+    { time: 2, value: 1.25 },
+  ]);
   parameter.setAutomationEnabled(true);
 
   const preset = new Preset();
@@ -284,9 +287,9 @@ describe.each<InstrumentSource>(['track', 'arrangement', 'library'])(
         if (!arrangementReceipt.ok) throw new Error(arrangementReceipt.error.message);
         expectCompleteIndependentCopy(
           source,
-          data.getArrangement().getInstrumentById(
-            arrangementReceipt.value.insertedIdentity,
-          ) as BlueSynthBuilder,
+          data
+            .getArrangement()
+            .getInstrumentById(arrangementReceipt.value.insertedIdentity) as BlueSynthBuilder,
         );
 
         let libraryCopyNodeId: string;

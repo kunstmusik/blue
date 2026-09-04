@@ -7,9 +7,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ArrangementPanel from '../components/workbench/panels/orchestra/ArrangementPanel';
 import { BLUE_LIBRARY_DRAG_MIME } from '../components/libraries/library-drag-drop';
 import { useLibraryStore } from '../stores/library-store';
-import { createTestDataTransfer, dispatchDragEvent, setElementRect } from './library-interaction-test-helpers';
+import {
+  createTestDataTransfer,
+  dispatchDragEvent,
+  setElementRect,
+} from './library-interaction-test-helpers';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const previewLibraryTransfer = vi.fn(async (request) => ({
   ok: true as const,
@@ -35,7 +41,13 @@ const previewLibraryTransfer = vi.fn(async (request) => ({
 }));
 const applyLibraryTransfer = vi.fn(async () => ({
   ok: true as const,
-  value: { projectSessionId: 7, projectRevision: 13, libraryType: 'instrument' as const, insertedIdentity: '9', message: 'Instrument added.' },
+  value: {
+    projectSessionId: 7,
+    projectRevision: 13,
+    libraryType: 'instrument' as const,
+    insertedIdentity: '9',
+    message: 'Instrument added.',
+  },
 }));
 const onOrchestraPatch = vi.fn();
 const projectInstrumentNodes = ['1', '2'].map((assignmentId) => ({
@@ -45,11 +57,17 @@ const projectInstrumentNodes = ['1', '2'].map((assignmentId) => ({
     projectSessionId: 7,
     locator: { kind: 'instrument' as const, assignmentId },
   },
-  nodeId: `project-instrument-${assignmentId}`, parentId: 'project-instruments',
-  libraryType: 'instrument' as const, scope: 'projectOwned' as const, nodeKind: 'item' as const,
-  displayName: assignmentId === '1' ? 'Lead' : 'Bass', breadcrumb: ['Project Orchestra'],
-  supportStatus: 'supported' as const, objectType: 'GenericInstrument',
-  revision: `hash-${assignmentId}`, hasChildren: false,
+  nodeId: `project-instrument-${assignmentId}`,
+  parentId: 'project-instruments',
+  libraryType: 'instrument' as const,
+  scope: 'projectOwned' as const,
+  nodeKind: 'item' as const,
+  displayName: assignmentId === '1' ? 'Lead' : 'Bass',
+  breadcrumb: ['Project Orchestra'],
+  supportStatus: 'supported' as const,
+  objectType: 'GenericInstrument',
+  revision: `hash-${assignmentId}`,
+  hasChildren: false,
 }));
 
 let root: Root;
@@ -77,7 +95,11 @@ beforeEach(() => {
       value: {
         clipboard: {
           operation: 'cut' as const,
-          source: { kind: 'buffer' as const, clipboardId: 'instrument-buffer', libraryType: 'instrument' as const },
+          source: {
+            kind: 'buffer' as const,
+            clipboardId: 'instrument-buffer',
+            libraryType: 'instrument' as const,
+          },
           capturedAt: 100,
         },
         closedEditorSessionIds: [],
@@ -122,8 +144,22 @@ beforeEach(() => {
     root.render(
       <ArrangementPanel
         rows={[
-          { assignmentId: '1', enabled: true, instrumentName: 'Lead', instrumentType: 'generic', instrumentSummary: 'GenericInstrument', editable: true },
-          { assignmentId: '2', enabled: true, instrumentName: 'Bass', instrumentType: 'generic', instrumentSummary: 'GenericInstrument', editable: true },
+          {
+            assignmentId: '1',
+            enabled: true,
+            instrumentName: 'Lead',
+            instrumentType: 'generic',
+            instrumentSummary: 'GenericInstrument',
+            editable: true,
+          },
+          {
+            assignmentId: '2',
+            enabled: true,
+            instrumentName: 'Bass',
+            instrumentType: 'generic',
+            instrumentSummary: 'GenericInstrument',
+            editable: true,
+          },
         ]}
         selectedAssignmentId={null}
         onSelectAssignment={vi.fn()}
@@ -136,7 +172,9 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  act(() => { root.unmount(); });
+  act(() => {
+    root.unmount();
+  });
   document.body.replaceChildren();
 });
 
@@ -144,79 +182,127 @@ describe('Orchestra Library drop targets', () => {
   it('renders only numerically valid boundaries and pastes at the exact focused boundary', async () => {
     const markers = container.querySelectorAll('[aria-label*="Insert Instrument"]');
     expect(markers).toHaveLength(1);
-    expect(container.querySelectorAll('[data-library-drop-target="orchestra-row"]')).toHaveLength(1);
+    expect(container.querySelectorAll('[data-library-drop-target="orchestra-row"]')).toHaveLength(
+      1,
+    );
     const end = markers[0] as HTMLElement;
     await act(async () => {
-      end.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'v', ctrlKey: true }));
+      end.dispatchEvent(
+        new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'v', ctrlKey: true }),
+      );
       await Promise.resolve();
       await Promise.resolve();
     });
-    expect(previewLibraryTransfer).toHaveBeenCalledWith(expect.objectContaining({
-      source: expect.objectContaining({ kind: 'clipboard' }),
-      target: { kind: 'orchestra', projectSessionId: 7, projectRevision: 12, insertIndex: 2 },
-    }));
+    expect(previewLibraryTransfer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: expect.objectContaining({ kind: 'clipboard' }),
+        target: { kind: 'orchestra', projectSessionId: 7, projectRevision: 12, insertIndex: 2 },
+      }),
+    );
     expect(applyLibraryTransfer).toHaveBeenCalledWith('preview-1');
   });
 
   it('auto-scrolls during drag hover and clears its marker on Escape', () => {
-    const marker = container.querySelector('[aria-label="Insert Instrument at end; paste a Library item here"]') as HTMLElement;
+    const marker = container.querySelector(
+      '[aria-label="Insert Instrument at end; paste a Library item here"]',
+    ) as HTMLElement;
     const scroller = marker.closest('[data-library-autoscroll]') as HTMLElement;
     setElementRect(scroller, { left: 0, top: 0, width: 300, height: 100 });
     scroller.scrollTop = 40;
     const transfer = createTestDataTransfer();
-    transfer.setData(BLUE_LIBRARY_DRAG_MIME, JSON.stringify({ dragSessionId: 'drag-1', libraryType: 'instrument' }));
+    transfer.setData(
+      BLUE_LIBRARY_DRAG_MIME,
+      JSON.stringify({ dragSessionId: 'drag-1', libraryType: 'instrument' }),
+    );
     dispatchDragEvent(marker, 'dragover', transfer, { clientY: 98 });
     expect(scroller.scrollTop).toBeGreaterThan(40);
-    act(() => { marker.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); });
+    act(() => {
+      marker.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
     expect(marker.className).not.toContain('bg-app-accent ');
   });
 
   it('accepts a direct row drop and Library paste from the row context menu', async () => {
-    const row = container.querySelector('[data-library-drop-target="orchestra-row"]') as HTMLElement;
+    const row = container.querySelector(
+      '[data-library-drop-target="orchestra-row"]',
+    ) as HTMLElement;
     const transfer = createTestDataTransfer();
-    transfer.setData(BLUE_LIBRARY_DRAG_MIME, JSON.stringify({
-      dragSessionId: 'drag-instrument', libraryType: 'instrument',
-    }));
+    transfer.setData(
+      BLUE_LIBRARY_DRAG_MIME,
+      JSON.stringify({
+        dragSessionId: 'drag-instrument',
+        libraryType: 'instrument',
+      }),
+    );
     dispatchDragEvent(row, 'dragover', transfer);
     dispatchDragEvent(row, 'drop', transfer);
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
-    expect(previewLibraryTransfer).toHaveBeenLastCalledWith(expect.objectContaining({
-      source: { kind: 'drag', dragSessionId: 'drag-instrument' },
-      target: { kind: 'orchestra', projectSessionId: 7, projectRevision: 12, insertIndex: 2 },
-    }));
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(previewLibraryTransfer).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        source: { kind: 'drag', dragSessionId: 'drag-instrument' },
+        target: { kind: 'orchestra', projectSessionId: 7, projectRevision: 12, insertIndex: 2 },
+      }),
+    );
 
     previewLibraryTransfer.mockClear();
-    act(() => row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
-    await act(async () => { await Promise.resolve(); });
-    const paste = [...document.body.querySelectorAll('[role="menuitem"]')]
-      .find((item) => item.textContent === 'Paste') as HTMLElement;
+    act(() =>
+      row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })),
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+    const paste = [...document.body.querySelectorAll('[role="menuitem"]')].find(
+      (item) => item.textContent === 'Paste',
+    ) as HTMLElement;
     expect(paste?.getAttribute('aria-disabled')).not.toBe('true');
     expect(document.body.textContent).not.toContain('Paste Library Instrument');
     act(() => paste.click());
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
-    expect(previewLibraryTransfer).toHaveBeenCalledWith(expect.objectContaining({
-      source: expect.objectContaining({ kind: 'clipboard' }),
-      target: { kind: 'orchestra', projectSessionId: 7, projectRevision: 12, insertIndex: 2 },
-    }));
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(previewLibraryTransfer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: expect.objectContaining({ kind: 'clipboard' }),
+        target: { kind: 'orchestra', projectSessionId: 7, projectRevision: 12, insertIndex: 2 },
+      }),
+    );
   });
 
   it('captures project Instrument Copy and Cut in the shared Library buffer', async () => {
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
     const row = container.querySelector('[data-assignment-id="1"]') as HTMLElement;
-    act(() => row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
-    await act(async () => { await Promise.resolve(); });
+    act(() =>
+      row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })),
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
     expect(document.body.textContent).not.toContain('Copy to User Library');
-    const copy = [...document.body.querySelectorAll('[role="menuitem"]')]
-      .find((candidate) => candidate.textContent === 'Copy') as HTMLElement;
+    const copy = [...document.body.querySelectorAll('[role="menuitem"]')].find(
+      (candidate) => candidate.textContent === 'Copy',
+    ) as HTMLElement;
     act(() => copy.click());
     expect(useLibraryStore.getState().clipboard).toMatchObject({
-      operation: 'copy', source: { kind: 'library', key: projectInstrumentNodes[0]!.key },
+      operation: 'copy',
+      source: { kind: 'library', key: projectInstrumentNodes[0]!.key },
     });
 
-    act(() => row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
-    await act(async () => { await Promise.resolve(); });
-    const cut = [...document.body.querySelectorAll('[role="menuitem"]')]
-      .find((candidate) => candidate.textContent === 'Cut') as HTMLElement;
+    act(() =>
+      row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })),
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+    const cut = [...document.body.querySelectorAll('[role="menuitem"]')].find(
+      (candidate) => candidate.textContent === 'Cut',
+    ) as HTMLElement;
     await act(async () => {
       cut.click();
       await Promise.resolve();
@@ -226,6 +312,8 @@ describe('Orchestra Library drop targets', () => {
       operation: 'cut',
       source: { kind: 'buffer', clipboardId: 'instrument-buffer', libraryType: 'instrument' },
     });
-    expect(onOrchestraPatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'removeAssignment' }));
+    expect(onOrchestraPatch).not.toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'removeAssignment' }),
+    );
   });
 });

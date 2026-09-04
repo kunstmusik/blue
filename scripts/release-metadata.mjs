@@ -126,7 +126,10 @@ function buildReleaseVersion(appVersion, sha, timestamp, channel) {
   const utcDate = new Date(timestamp * 1000);
   // YYYYMMDD-HHMM in UTC keeps generated prerelease versions sortable and
   // avoids local-timezone drift between runners.
-  const stamp = utcDate.toISOString().slice(0, 10).replace(/-/g, '') + '-' + utcDate.toISOString().slice(11, 16).replace(':', '');
+  const stamp =
+    utcDate.toISOString().slice(0, 10).replace(/-/g, '') +
+    '-' +
+    utcDate.toISOString().slice(11, 16).replace(':', '');
   return `${base}-dev.${stamp}.${short}`;
 }
 
@@ -158,13 +161,17 @@ function buildReleaseNameAndNotes(channel, releaseVersion, sha) {
 function main() {
   const flags = parseFlags(process.argv.slice(2));
   if (!flags.out) {
-    process.stderr.write('Usage: release-metadata.mjs --out <release-metadata.json> [--channel development|stable] [--app-version <ver>] [--source-revision <sha>] [--prerelease-timestamp <unix-seconds>]\n');
+    process.stderr.write(
+      'Usage: release-metadata.mjs --out <release-metadata.json> [--channel development|stable] [--app-version <ver>] [--source-revision <sha>] [--prerelease-timestamp <unix-seconds>]\n',
+    );
     process.exit(2);
   }
 
   const requestedChannel = flags.channel ?? (process.env.BLUE_RELEASE_CHANNEL || 'development');
   if (requestedChannel !== 'development' && requestedChannel !== 'stable') {
-    process.stderr.write(`--channel or BLUE_RELEASE_CHANNEL must be development or stable, got "${requestedChannel}".\n`);
+    process.stderr.write(
+      `--channel or BLUE_RELEASE_CHANNEL must be development or stable, got "${requestedChannel}".\n`,
+    );
     process.exit(2);
   }
   const channel = requestedChannel;
@@ -175,7 +182,9 @@ function main() {
     : Math.floor(Date.now() / 1000);
 
   if (Number.isNaN(timestamp) || timestamp <= 0) {
-    process.stderr.write(`--prerelease-timestamp must be a positive Unix seconds value, got "${flags['prerelease-timestamp']}".\n`);
+    process.stderr.write(
+      `--prerelease-timestamp must be a positive Unix seconds value, got "${flags['prerelease-timestamp']}".\n`,
+    );
     process.exit(2);
   }
 

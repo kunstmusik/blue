@@ -86,9 +86,9 @@ export function useMidiInputService(): void {
       }
       const access = await navigatorWithMidi.requestMIDIAccess({ sysex: false });
       if (
-        access
-        && typeof access === 'object'
-        && (access as { sysexEnabled?: unknown }).sysexEnabled === true
+        access &&
+        typeof access === 'object' &&
+        (access as { sysexEnabled?: unknown }).sysexEnabled === true
       ) {
         throw new Error('Web MIDI unexpectedly enabled SysEx access');
       }
@@ -108,17 +108,14 @@ export function useMidiInputService(): void {
     };
     const unsubscribeBlueLive = useBlueLiveStore.subscribe((state, previous) => {
       if (
-        (previous.running && !state.running)
-        || (previous.initialized && state.sessionId !== previous.sessionId)
+        (previous.running && !state.running) ||
+        (previous.initialized && state.sessionId !== previous.sessionId)
       ) {
         releaseAtSessionBoundary();
       }
     });
     const unsubscribeProject = useProjectStore.subscribe((state, previous) => {
-      if (
-        state.sessionId !== previous.sessionId
-        || (previous.loaded && !state.loaded)
-      ) {
+      if (state.sessionId !== previous.sessionId || (previous.loaded && !state.loaded)) {
         releaseAtSessionBoundary();
         // Spec 067: project replacement clears focus before the new session can
         // route notes. Blue Live restart does not clear focus.
@@ -126,32 +123,36 @@ export function useMidiInputService(): void {
       }
     });
 
-    const acknowledge = (
-      commandId: string,
-      accepted: boolean,
-      message?: string,
-    ): void => {
+    const acknowledge = (commandId: string, accepted: boolean, message?: string): void => {
       if (disposed) return;
       try {
         blueAPI.acknowledgeMidiInputCommand?.({ commandId, accepted, message });
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     };
 
     const handleCommand = (command: MidiInputServiceCommand): void => {
       if (disposed) return;
       if (command.type === 'reconcile') {
-        void service.reconcile(command.preferences).then(() => {
-          acknowledge(command.commandId, true);
-          if (!disposed) setSavedPreferences(command.preferences);
-        }).catch(() => {
-          acknowledge(command.commandId, false, 'reconcile failed');
-        });
+        void service
+          .reconcile(command.preferences)
+          .then(() => {
+            acknowledge(command.commandId, true);
+            if (!disposed) setSavedPreferences(command.preferences);
+          })
+          .catch(() => {
+            acknowledge(command.commandId, false, 'reconcile failed');
+          });
       } else if (command.type === 'rescan') {
-        void service.rescan().then(() => {
-          acknowledge(command.commandId, true);
-        }).catch(() => {
-          acknowledge(command.commandId, false, 'rescan failed');
-        });
+        void service
+          .rescan()
+          .then(() => {
+            acknowledge(command.commandId, true);
+          })
+          .catch(() => {
+            acknowledge(command.commandId, false, 'rescan failed');
+          });
       } else if (command.type === 'shutdown') {
         void (async () => {
           try {
@@ -192,11 +193,23 @@ export function useMidiInputService(): void {
       if (globalVirtualKeyboardRouter === router) {
         _installVirtualKeyboardRouter(null);
       }
-      try { unsubscribeCommand?.(); } catch { /* ignore */ }
+      try {
+        unsubscribeCommand?.();
+      } catch {
+        /* ignore */
+      }
       unsubscribeCommand = null;
       void (async () => {
-        try { await router.releaseAll(); } catch { /* ignore */ }
-        try { await service.stop(); } catch { /* ignore */ }
+        try {
+          await router.releaseAll();
+        } catch {
+          /* ignore */
+        }
+        try {
+          await service.stop();
+        } catch {
+          /* ignore */
+        }
       })();
     };
   }, [setSnapshot, setSavedPreferences]);
@@ -231,9 +244,7 @@ export async function routeVirtualKeyboardNote(
   });
 }
 
-export async function releaseVirtualKeyboardSource(
-  source: 'mouse' | 'computer',
-): Promise<void> {
+export async function releaseVirtualKeyboardSource(source: 'mouse' | 'computer'): Promise<void> {
   const router = globalVirtualKeyboardRouter;
   if (!router) return;
   await router.releaseSource(`${PRIMARY_VIRTUAL_SOURCE}:${source}`);

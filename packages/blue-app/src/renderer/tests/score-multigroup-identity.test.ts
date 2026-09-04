@@ -31,7 +31,11 @@ function createLayer(name: string, startBeats: number): SoundLayer {
   return layer;
 }
 
-function createAudioClipForTest(name: string, filePath: string, durationSeconds: number): AudioClip {
+function createAudioClipForTest(
+  name: string,
+  filePath: string,
+  durationSeconds: number,
+): AudioClip {
   const clip = new AudioClip();
   clip.setName(name);
   clip.setAudioFile(filePath);
@@ -65,7 +69,8 @@ function createMultiGroupSnapshot() {
 
 function getAllItems(snapshot: ReturnType<typeof createMultiGroupSnapshot>) {
   return snapshot.score.layerGroups.flatMap((group) =>
-    group.layers.flatMap((layer) => layer.items));
+    group.layers.flatMap((layer) => layer.items),
+  );
 }
 
 beforeEach(() => {
@@ -85,12 +90,13 @@ describe('score multigroup object identity', () => {
     const snapshot = createMultiGroupSnapshot();
     const groupBItem = snapshot.score.layerGroups[1]!.layers[0]!.items[0]!;
 
-    useScoreSelectionStore.getState().setSelection([
-      { objectId: groupBItem.objectId, editorTarget: groupBItem.editorTarget },
-    ]);
+    useScoreSelectionStore
+      .getState()
+      .setSelection([{ objectId: groupBItem.objectId, editorTarget: groupBItem.editorTarget }]);
 
     const selectedItems = getAllItems(snapshot).filter((item) =>
-      useScoreSelectionStore.getState().selectedObjectIds.has(item.objectId));
+      useScoreSelectionStore.getState().selectedObjectIds.has(item.objectId),
+    );
 
     expect(selectedItems).toHaveLength(1);
     expect(selectedItems[0]!.name).toBe('B Layer 0');
@@ -138,7 +144,8 @@ describe('score multigroup object identity', () => {
 
     const snapshot = createProjectEditorSnapshot(data, null);
     useProjectStore.getState().setProjectInfo(snapshot);
-    const before = useProjectStore.getState().score.layerGroups[0]!.layers[0]!.items[0]!.editorTarget;
+    const before =
+      useProjectStore.getState().score.layerGroups[0]!.layers[0]!.items[0]!.editorTarget;
 
     await useProjectStore.getState().applyProjectDocumentPatch({
       score: {
@@ -148,7 +155,8 @@ describe('score multigroup object identity', () => {
       },
     });
 
-    const after = useProjectStore.getState().score.layerGroups[0]!.layers[0]!.items[0]!.editorTarget;
+    const after =
+      useProjectStore.getState().score.layerGroups[0]!.layers[0]!.items[0]!.editorTarget;
     expect(after).toEqual(before);
   });
 
@@ -193,8 +201,9 @@ describe('score multigroup object identity', () => {
     });
 
     expect((data.getScore()[0] as PolyObject)[0]!.getName()).toBe('Renamed Layer');
-    expect(createProjectEditorSnapshot(data, null).score.layerGroups[0]!.layers[0]!.name)
-      .toBe('Renamed Layer');
+    expect(createProjectEditorSnapshot(data, null).score.layerGroups[0]!.layers[0]!.name).toBe(
+      'Renamed Layer',
+    );
   });
 
   it('includes mute/solo state in root and nested PolyObject snapshots', () => {
@@ -440,7 +449,9 @@ describe('score multigroup object identity', () => {
 
     useProjectStore.getState().setProjectInfo(initialSnapshot);
     const applyPatchSpy = vi.fn().mockResolvedValue(undefined);
-    useProjectStore.setState({ applyProjectDocumentPatch: applyPatchSpy } as Partial<ReturnType<typeof useProjectStore.getState>>);
+    useProjectStore.setState({ applyProjectDocumentPatch: applyPatchSpy } as Partial<
+      ReturnType<typeof useProjectStore.getState>
+    >);
 
     useProjectStore.getState().addScoreObjects([
       {
@@ -453,7 +464,9 @@ describe('score multigroup object identity', () => {
         backgroundColor: 0x669966,
         objectType: 'AudioClip',
         isContainer: false,
-        serializedXml: createAudioClipForTest('Optimistic Clip', '/tmp/optimistic.wav', 2).saveAsXML().toXml(),
+        serializedXml: createAudioClipForTest('Optimistic Clip', '/tmp/optimistic.wav', 2)
+          .saveAsXML()
+          .toXml(),
         barRenderer: {
           kind: 'audioClip',
           labelLines: ['Optimistic Clip'],
@@ -518,7 +531,9 @@ describe('score multigroup object identity', () => {
             durationBeats: 2,
             durationTimeBase: 'TIME',
             backgroundColor: 0x669966,
-            serializedXml: createAudioClipForTest('Canonical Clip', '/tmp/canonical.wav', 1).saveAsXML().toXml(),
+            serializedXml: createAudioClipForTest('Canonical Clip', '/tmp/canonical.wav', 1)
+              .saveAsXML()
+              .toXml(),
           },
         ],
       },
@@ -526,7 +541,9 @@ describe('score multigroup object identity', () => {
 
     const after = createProjectEditorSnapshot(data, null);
     expect(after.score.layerGroups[0]!.layers[0]!.items[0]!.objectId).toBe('local-aclp-42');
-    expect(after.score.layerGroups[0]!.layers[0]!.items[0]!.editorTarget?.selectionId).toBe('local-aclp-42');
+    expect(after.score.layerGroups[0]!.layers[0]!.items[0]!.editorTarget?.selectionId).toBe(
+      'local-aclp-42',
+    );
   });
 
   it('moves audio clips canonically within audio groups and snapshots beat-based waveform timings', () => {

@@ -22,7 +22,10 @@ import {
 } from './freeze-score-objects';
 import type { ScoreObjectEditorTargetSnapshot } from '../shared/project-editor';
 import type { FreezeItemStatus } from '../shared/render-freeze-contract';
-import { createProjectEditorSnapshot, createScoreObjectEditorDocument } from '../shared/project-editor';
+import {
+  createProjectEditorSnapshot,
+  createScoreObjectEditorDocument,
+} from '../shared/project-editor';
 
 function createWavFile(channels = 1): Buffer {
   return Buffer.from(buildWavBytes(channels, 100, 16, 100));
@@ -93,7 +96,9 @@ describe('allocateFreezeFileName', () => {
   });
 
   it('only resolves artifact filenames directly inside the project directory', () => {
-    expect(resolveFreezeArtifactPath(tempDir, 'freeze0.wav')).toBe(path.join(tempDir, 'freeze0.wav'));
+    expect(resolveFreezeArtifactPath(tempDir, 'freeze0.wav')).toBe(
+      path.join(tempDir, 'freeze0.wav'),
+    );
     expect(resolveFreezeArtifactPath(tempDir, '../outside.wav')).toBeNull();
     expect(resolveFreezeArtifactPath(tempDir, path.join(tempDir, 'outside.wav'))).toBeNull();
   });
@@ -176,7 +181,11 @@ describe('isFreezeEligible', () => {
 });
 
 describe('resolveFreezeTargets', () => {
-  function createTarget(objectIndex: number, layerIndex = 0, rootGroupIndex = 0): ScoreObjectEditorTargetSnapshot {
+  function createTarget(
+    objectIndex: number,
+    layerIndex = 0,
+    rootGroupIndex = 0,
+  ): ScoreObjectEditorTargetSnapshot {
     return {
       selectionId: `sel-${objectIndex}`,
       selectedObjectType: 'GenericScore',
@@ -367,7 +376,9 @@ describe('resolveFreezeTargets', () => {
       expect(operation.ok).toBe(false);
       expect(layer[0]).toBe(regular);
       expect(layer[1]).toBe(missing);
-      expect(fs.readdirSync(projectDirectory).filter((name) => name.startsWith('freeze'))).toHaveLength(0);
+      expect(
+        fs.readdirSync(projectDirectory).filter((name) => name.startsWith('freeze')),
+      ).toHaveLength(0);
     } finally {
       fs.rmSync(projectDirectory, { recursive: true, force: true });
     }
@@ -405,7 +416,9 @@ describe('resolveFreezeTargets', () => {
       expect(operation.ok).toBe(false);
       expect(operation.error).toMatch(/unsupported audio format|too short/i);
       expect(layer[0]).toBe(source);
-      expect(fs.readdirSync(projectDirectory).filter((name) => name.startsWith('freeze'))).toEqual([]);
+      expect(fs.readdirSync(projectDirectory).filter((name) => name.startsWith('freeze'))).toEqual(
+        [],
+      );
     } finally {
       fs.rmSync(projectDirectory, { recursive: true, force: true });
     }
@@ -442,7 +455,9 @@ describe('resolveFreezeTargets', () => {
       expect(operation.ok).toBe(false);
       expect(operation.error).toMatch(/format AIFF does not match expected WAV/i);
       expect(layer[0]).toBe(source);
-      expect(fs.readdirSync(projectDirectory).filter((name) => name.startsWith('freeze'))).toEqual([]);
+      expect(fs.readdirSync(projectDirectory).filter((name) => name.startsWith('freeze'))).toEqual(
+        [],
+      );
     } finally {
       fs.rmSync(projectDirectory, { recursive: true, force: true });
     }
@@ -481,7 +496,9 @@ describe('resolveFreezeTargets', () => {
 
       expect(operation.cancelled).toBe(true);
       expect(layer[0]).toBe(source);
-      expect(fs.readdirSync(projectDirectory).filter((name) => name.startsWith('freeze'))).toEqual([]);
+      expect(fs.readdirSync(projectDirectory).filter((name) => name.startsWith('freeze'))).toEqual(
+        [],
+      );
     } finally {
       fs.rmSync(projectDirectory, { recursive: true, force: true });
     }
@@ -528,7 +545,11 @@ describe('resolveFreezeTargets', () => {
         expect.any(Function),
       );
 
-      const snapshot = createProjectEditorSnapshot(data, path.join(projectDirectory, 'test.blue'), 1);
+      const snapshot = createProjectEditorSnapshot(
+        data,
+        path.join(projectDirectory, 'test.blue'),
+        1,
+      );
       const row = snapshot.score!.layerGroups[0]!.layers[0]!.items[0]!;
       expect(row.objectType).toBe('FrozenSoundObject');
       expect(row.barRenderer).toMatchObject({
@@ -588,7 +609,10 @@ describe('resolveFreezeTargets', () => {
 });
 
 describe('executeFreezeUnfreeze item events', () => {
-  function createTarget(objectIndex: number, selectionId = `sel-${objectIndex}`): ScoreObjectEditorTargetSnapshot {
+  function createTarget(
+    objectIndex: number,
+    selectionId = `sel-${objectIndex}`,
+  ): ScoreObjectEditorTargetSnapshot {
     return {
       selectionId,
       selectedObjectType: 'GenericScore',
@@ -629,14 +653,22 @@ describe('executeFreezeUnfreeze item events', () => {
         'freeze-item-events',
         vi.fn(),
         {
-          runCsound: async (args: string[], _cwd: string, _onProgress, _totalDuration, onOutput) => {
+          runCsound: async (
+            args: string[],
+            _cwd: string,
+            _onProgress,
+            _totalDuration,
+            onOutput,
+          ) => {
             onOutput?.('chunk-a', 'stdout');
             onOutput?.('chunk-b\n', 'stderr');
             fs.writeFileSync(args[1]!, createWavFile());
             return { exitCode: 0, stderr: '' };
           },
         },
-        (event) => { events.push(event); },
+        (event) => {
+          events.push(event);
+        },
       );
 
       expect(operation.ok).toBe(true);
@@ -651,10 +683,20 @@ describe('executeFreezeUnfreeze item events', () => {
       ]);
 
       const running = events.filter((event) => event.phase === 'running');
-      expect(running[0]).toMatchObject({ selectionId: 'sel-0', freezeFile: null, outputAppend: null });
-      expect(running).toContainEqual(expect.objectContaining({ freezeFile: 'freeze0.wav', outputAppend: null }));
-      expect(running).toContainEqual(expect.objectContaining({ outputAppend: 'chunk-a', outputType: 'stdout' }));
-      expect(running).toContainEqual(expect.objectContaining({ outputAppend: 'chunk-b\n', outputType: 'stderr' }));
+      expect(running[0]).toMatchObject({
+        selectionId: 'sel-0',
+        freezeFile: null,
+        outputAppend: null,
+      });
+      expect(running).toContainEqual(
+        expect.objectContaining({ freezeFile: 'freeze0.wav', outputAppend: null }),
+      );
+      expect(running).toContainEqual(
+        expect.objectContaining({ outputAppend: 'chunk-a', outputType: 'stdout' }),
+      );
+      expect(running).toContainEqual(
+        expect.objectContaining({ outputAppend: 'chunk-b\n', outputType: 'stderr' }),
+      );
 
       expect(events.filter((event) => event.phase === 'rendered')).toEqual([
         expect.objectContaining({
@@ -701,7 +743,9 @@ describe('executeFreezeUnfreeze item events', () => {
         'freeze-item-unfreeze',
         vi.fn(),
         { runCsound: vi.fn() },
-        (event) => { events.push(event); },
+        (event) => {
+          events.push(event);
+        },
       );
 
       expect(operation.ok).toBe(true);
@@ -740,7 +784,9 @@ describe('executeFreezeUnfreeze item events', () => {
         {
           runCsound: async () => ({ exitCode: 1, stderr: 'csound blew up' }),
         },
-        (event) => { events.push(event); },
+        (event) => {
+          events.push(event);
+        },
       );
 
       expect(operation.ok).toBe(false);
@@ -791,17 +837,21 @@ describe('executeFreezeUnfreeze item events', () => {
             return { exitCode: 1, stderr: 'second object failed' };
           },
         },
-        (event) => { events.push(event); },
+        (event) => {
+          events.push(event);
+        },
       );
 
       expect(operation.ok).toBe(false);
       expect(layer[0]).toBe(first);
       expect(layer[1]).toBe(second);
       expect(events.filter((event) => event.phase === 'complete')).toEqual([]);
-      expect(events).toContainEqual(expect.objectContaining({
-        selectionId: 'sel-1',
-        phase: 'failed',
-      }));
+      expect(events).toContainEqual(
+        expect.objectContaining({
+          selectionId: 'sel-1',
+          phase: 'failed',
+        }),
+      );
     } finally {
       fs.rmSync(projectDirectory, { recursive: true, force: true });
     }
@@ -823,7 +873,9 @@ describe('executeFreezeUnfreeze item events', () => {
         'freeze-item-reject',
         vi.fn(),
         { runCsound: vi.fn() },
-        (event) => { events.push(event); },
+        (event) => {
+          events.push(event);
+        },
       );
 
       expect(operation.ok).toBe(false);
@@ -873,7 +925,11 @@ describe('executeFreezeUnfreeze parallel execution (SPEC 085)', () => {
     return source;
   }
 
-  async function waitFor(predicate: () => boolean, label: string, deadlineMs = 3000): Promise<void> {
+  async function waitFor(
+    predicate: () => boolean,
+    label: string,
+    deadlineMs = 3000,
+  ): Promise<void> {
     const startedAt = Date.now();
     while (!predicate()) {
       if (Date.now() - startedAt > deadlineMs) {
@@ -893,7 +949,9 @@ describe('executeFreezeUnfreeze parallel execution (SPEC 085)', () => {
       let active = 0;
       let peak = 0;
       let releaseBarrier: () => void = () => undefined;
-      const barrier = new Promise<void>((resolve) => { releaseBarrier = resolve; });
+      const barrier = new Promise<void>((resolve) => {
+        releaseBarrier = resolve;
+      });
 
       const operation = await executeFreezeUnfreeze(
         createContext(data, projectDirectory, 4),
@@ -930,7 +988,13 @@ describe('executeFreezeUnfreeze parallel execution (SPEC 085)', () => {
       for (let index = 0; index < 6; index++) addSource(layer, index);
 
       const gates: Array<() => void> = [];
-      const gatePromises = Array.from({ length: 6 }, () => new Promise<void>((resolve) => { gates.push(resolve); }));
+      const gatePromises = Array.from(
+        { length: 6 },
+        () =>
+          new Promise<void>((resolve) => {
+            gates.push(resolve);
+          }),
+      );
       let dispatchIndex = 0;
       let active = 0;
       let peak = 0;
@@ -955,7 +1019,10 @@ describe('executeFreezeUnfreeze parallel execution (SPEC 085)', () => {
         },
       );
 
-      await waitFor(() => dispatchIndex === 4 && active === 4, 'first four jobs running concurrently');
+      await waitFor(
+        () => dispatchIndex === 4 && active === 4,
+        'first four jobs running concurrently',
+      );
       expect(dispatchIndex).toBe(4);
 
       // Complete jobs in reverse order to prove results are order-independent.
@@ -972,7 +1039,14 @@ describe('executeFreezeUnfreeze parallel execution (SPEC 085)', () => {
         .filter((sObj): sObj is FrozenSoundObject => sObj instanceof FrozenSoundObject)
         .map((sObj) => sObj.getFrozenWaveFileName())
         .sort();
-      expect(freezeFiles).toEqual(['freeze0.wav', 'freeze1.wav', 'freeze2.wav', 'freeze3.wav', 'freeze4.wav', 'freeze5.wav']);
+      expect(freezeFiles).toEqual([
+        'freeze0.wav',
+        'freeze1.wav',
+        'freeze2.wav',
+        'freeze3.wav',
+        'freeze4.wav',
+        'freeze5.wav',
+      ]);
       expect(new Set(outputPaths).size).toBe(6);
       for (let index = 0; index < 6; index++) {
         const frozen = layer[index] as FrozenSoundObject;
@@ -991,7 +1065,13 @@ describe('executeFreezeUnfreeze parallel execution (SPEC 085)', () => {
       for (let index = 0; index < 5; index++) addSource(layer, index);
 
       const gates: Array<() => void> = [];
-      const gatePromises = Array.from({ length: 5 }, () => new Promise<void>((resolve) => { gates.push(resolve); }));
+      const gatePromises = Array.from(
+        { length: 5 },
+        () =>
+          new Promise<void>((resolve) => {
+            gates.push(resolve);
+          }),
+      );
       let dispatchIndex = 0;
       const outputPaths: string[] = [];
 
@@ -1019,7 +1099,13 @@ describe('executeFreezeUnfreeze parallel execution (SPEC 085)', () => {
       expect(outputPaths).toHaveLength(5);
       expect(new Set(outputPaths).size).toBe(5);
       const names = outputPaths.map((outputPath) => path.basename(outputPath)).sort();
-      expect(names).toEqual(['freeze0.wav', 'freeze1.wav', 'freeze2.wav', 'freeze3.wav', 'freeze4.wav']);
+      expect(names).toEqual([
+        'freeze0.wav',
+        'freeze1.wav',
+        'freeze2.wav',
+        'freeze3.wav',
+        'freeze4.wav',
+      ]);
       for (const outputPath of outputPaths) {
         expect(fs.existsSync(outputPath)).toBe(true);
       }
@@ -1151,7 +1237,11 @@ describe('executeFreezeUnfreeze hybrid failure handling (SPEC 085)', () => {
     return source;
   }
 
-  async function waitFor(predicate: () => boolean, label: string, deadlineMs = 3000): Promise<void> {
+  async function waitFor(
+    predicate: () => boolean,
+    label: string,
+    deadlineMs = 3000,
+  ): Promise<void> {
     const startedAt = Date.now();
     while (!predicate()) {
       if (Date.now() - startedAt > deadlineMs) {
@@ -1169,7 +1259,13 @@ describe('executeFreezeUnfreeze hybrid failure handling (SPEC 085)', () => {
       for (let index = 0; index < 3; index++) addSource(layer, index);
 
       const gates: Array<() => void> = [];
-      const gatePromises = Array.from({ length: 3 }, () => new Promise<void>((resolve) => { gates.push(resolve); }));
+      const gatePromises = Array.from(
+        { length: 3 },
+        () =>
+          new Promise<void>((resolve) => {
+            gates.push(resolve);
+          }),
+      );
       let dispatchIndex = 0;
       const dispatched: number[] = [];
       const jobReturned = new Set<number>();
@@ -1214,7 +1310,9 @@ describe('executeFreezeUnfreeze hybrid failure handling (SPEC 085)', () => {
       for (const source of layer) {
         expect(source).toBeInstanceOf(GenericScore);
       }
-      const leftovers = fs.readdirSync(projectDirectory).filter((name) => name.startsWith('freeze') || name.startsWith('tempCsd'));
+      const leftovers = fs
+        .readdirSync(projectDirectory)
+        .filter((name) => name.startsWith('freeze') || name.startsWith('tempCsd'));
       expect(leftovers).toEqual([]);
     } finally {
       fs.rmSync(projectDirectory, { recursive: true, force: true });
@@ -1222,7 +1320,9 @@ describe('executeFreezeUnfreeze hybrid failure handling (SPEC 085)', () => {
   });
 
   it('removes an artifact when staging fails after the render succeeds', async () => {
-    const projectDirectory = fs.mkdtempSync(path.join(process.cwd(), 'freeze-post-render-failure-'));
+    const projectDirectory = fs.mkdtempSync(
+      path.join(process.cwd(), 'freeze-post-render-failure-'),
+    );
     try {
       const data = new BlueData();
       const layer = (data.getScore()[0] as PolyObject)[0];
@@ -1256,7 +1356,11 @@ describe('executeFreezeUnfreeze hybrid failure handling (SPEC 085)', () => {
       expect(outputPath).toBeDefined();
       expect(fs.existsSync(outputPath!)).toBe(false);
       expect(layer[0]).toBe(source);
-      expect(fs.readdirSync(projectDirectory).filter((name) => name.startsWith('freeze') || name.startsWith('tempCsd'))).toEqual([]);
+      expect(
+        fs
+          .readdirSync(projectDirectory)
+          .filter((name) => name.startsWith('freeze') || name.startsWith('tempCsd')),
+      ).toEqual([]);
     } finally {
       fs.rmSync(projectDirectory, { recursive: true, force: true });
     }
@@ -1270,9 +1374,17 @@ describe('executeFreezeUnfreeze hybrid failure handling (SPEC 085)', () => {
       for (let index = 0; index < 3; index++) addSource(layer, index);
 
       const gates: Array<() => void> = [];
-      const gatePromises = Array.from({ length: 3 }, () => new Promise<void>((resolve) => { gates.push(resolve); }));
+      const gatePromises = Array.from(
+        { length: 3 },
+        () =>
+          new Promise<void>((resolve) => {
+            gates.push(resolve);
+          }),
+      );
       let cancelInflight: () => void = () => undefined;
-      const cancelPromise = new Promise<void>((resolve) => { cancelInflight = resolve; });
+      const cancelPromise = new Promise<void>((resolve) => {
+        cancelInflight = resolve;
+      });
       const cancelledJobs: number[] = [];
       let dispatchIndex = 0;
       let abortRequested = false;
@@ -1295,7 +1407,11 @@ describe('executeFreezeUnfreeze hybrid failure handling (SPEC 085)', () => {
           runCsound: async (args: string[]) => {
             const myIndex = dispatchIndex++;
             if (myIndex === 0) {
-              return { exitCode: -1, stderr: 'Blue Engine unavailable', errorCode: 'CSOUND_UNAVAILABLE' };
+              return {
+                exitCode: -1,
+                stderr: 'Blue Engine unavailable',
+                errorCode: 'CSOUND_UNAVAILABLE',
+              };
             }
             const winner = await Promise.race([
               gatePromises[myIndex].then(() => 'gate' as const),
@@ -1322,7 +1438,9 @@ describe('executeFreezeUnfreeze hybrid failure handling (SPEC 085)', () => {
       for (const source of layer) {
         expect(source).toBeInstanceOf(GenericScore);
       }
-      const leftovers = fs.readdirSync(projectDirectory).filter((name) => name.startsWith('freeze') || name.startsWith('tempCsd'));
+      const leftovers = fs
+        .readdirSync(projectDirectory)
+        .filter((name) => name.startsWith('freeze') || name.startsWith('tempCsd'));
       expect(leftovers).toEqual([]);
     } finally {
       fs.rmSync(projectDirectory, { recursive: true, force: true });
@@ -1337,7 +1455,13 @@ describe('executeFreezeUnfreeze hybrid failure handling (SPEC 085)', () => {
       for (let index = 0; index < 3; index++) addSource(layer, index);
 
       const gates: Array<() => void> = [];
-      const gatePromises = Array.from({ length: 3 }, () => new Promise<void>((resolve) => { gates.push(resolve); }));
+      const gatePromises = Array.from(
+        { length: 3 },
+        () =>
+          new Promise<void>((resolve) => {
+            gates.push(resolve);
+          }),
+      );
       let cancelled = false;
       let dispatchIndex = 0;
 
@@ -1372,7 +1496,9 @@ describe('executeFreezeUnfreeze hybrid failure handling (SPEC 085)', () => {
       for (const source of layer) {
         expect(source).toBeInstanceOf(GenericScore);
       }
-      const leftovers = fs.readdirSync(projectDirectory).filter((name) => name.startsWith('freeze') || name.startsWith('tempCsd'));
+      const leftovers = fs
+        .readdirSync(projectDirectory)
+        .filter((name) => name.startsWith('freeze') || name.startsWith('tempCsd'));
       expect(leftovers).toEqual([]);
     } finally {
       fs.rmSync(projectDirectory, { recursive: true, force: true });
@@ -1395,7 +1521,11 @@ describe('executeFreezeUnfreeze aggregate progress (SPEC 085)', () => {
     };
   }
 
-  async function waitFor(predicate: () => boolean, label: string, deadlineMs = 3000): Promise<void> {
+  async function waitFor(
+    predicate: () => boolean,
+    label: string,
+    deadlineMs = 3000,
+  ): Promise<void> {
     const startedAt = Date.now();
     while (!predicate()) {
       if (Date.now() - startedAt > deadlineMs) {
@@ -1420,7 +1550,13 @@ describe('executeFreezeUnfreeze aggregate progress (SPEC 085)', () => {
 
       const statuses: Array<{ phase: string; progress: number | null }> = [];
       const gates: Array<() => void> = [];
-      const gatePromises = Array.from({ length: 2 }, () => new Promise<void>((resolve) => { gates.push(resolve); }));
+      const gatePromises = Array.from(
+        { length: 2 },
+        () =>
+          new Promise<void>((resolve) => {
+            gates.push(resolve);
+          }),
+      );
       let dispatchIndex = 0;
 
       const operationPromise = executeFreezeUnfreeze(
@@ -1432,9 +1568,15 @@ describe('executeFreezeUnfreeze aggregate progress (SPEC 085)', () => {
         },
         [0, 1].map((index) => createTarget(index)),
         'freeze-progress',
-        (status) => { statuses.push({ phase: status.phase, progress: status.progress }); },
+        (status) => {
+          statuses.push({ phase: status.phase, progress: status.progress });
+        },
         {
-          runCsound: async (args: string[], _cwd: string, onProgress?: (progress: number) => void) => {
+          runCsound: async (
+            args: string[],
+            _cwd: string,
+            onProgress?: (progress: number) => void,
+          ) => {
             const myIndex = dispatchIndex++;
             await gatePromises[myIndex];
             onProgress?.(myIndex === 0 ? 50 : 100);

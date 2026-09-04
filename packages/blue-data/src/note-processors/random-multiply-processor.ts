@@ -26,20 +26,40 @@ export class RandomMultiplyProcessor extends NoteProcessor {
     }
   }
 
-  getPfield(): string { return this._pfield.toString(); }
-  setPfield(pfield: string): void { this._pfield = parseInt(pfield, 10); }
+  getPfield(): string {
+    return this._pfield.toString();
+  }
+  setPfield(pfield: string): void {
+    this._pfield = parseInt(pfield, 10);
+  }
 
-  getMin(): string { return this._min.toString(); }
-  setMin(value: string): void { this._min = parseFloat(value); }
+  getMin(): string {
+    return this._min.toString();
+  }
+  setMin(value: string): void {
+    this._min = parseFloat(value);
+  }
 
-  getMax(): string { return this._max.toString(); }
-  setMax(value: string): void { this._max = parseFloat(value); }
+  getMax(): string {
+    return this._max.toString();
+  }
+  setMax(value: string): void {
+    this._max = parseFloat(value);
+  }
 
-  isSeedUsed(): boolean { return this._seedUsed; }
-  setSeedUsed(seedUsed: boolean): void { this._seedUsed = seedUsed; }
+  isSeedUsed(): boolean {
+    return this._seedUsed;
+  }
+  setSeedUsed(seedUsed: boolean): void {
+    this._seedUsed = seedUsed;
+  }
 
-  getSeed(): string { return this._seed.toString(); }
-  setSeed(seed: string): void { this._seed = parseInt(seed, 10); }
+  getSeed(): string {
+    return this._seed.toString();
+  }
+  setSeed(seed: string): void {
+    this._seed = parseInt(seed, 10);
+  }
 
   override process(notes: NoteList): NoteList {
     const range = this._max - this._min;
@@ -55,13 +75,15 @@ export class RandomMultiplyProcessor extends NoteProcessor {
       if (isNaN(fieldVal)) {
         throw new NoteProcessorException('Pfield is not a double', this._pfield);
       }
-      const randVal = ((r ? r.nextDouble() : Math.random()) * range) + this._min;
+      const randVal = (r ? r.nextDouble() : Math.random()) * range + this._min;
       note.setPField((fieldVal * randVal).toString(), this._pfield);
     }
     return notes;
   }
 
-  override getDisplayName(): string { return 'RandomMultiplyProcessor'; }
+  override getDisplayName(): string {
+    return 'RandomMultiplyProcessor';
+  }
 
   override deepCopy(): RandomMultiplyProcessor {
     return new RandomMultiplyProcessor(this);

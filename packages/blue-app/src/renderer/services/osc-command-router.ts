@@ -1,7 +1,4 @@
-import {
-  findOscCommandById,
-  type OscCommandEvent,
-} from '../../shared/osc-control';
+import { findOscCommandById, type OscCommandEvent } from '../../shared/osc-control';
 
 export interface OscProjectActions {
   loaded: boolean;

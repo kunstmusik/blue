@@ -6,9 +6,14 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import MidiInputPanel from '../components/workbench/panels/MidiInputPanel';
 import { useProjectStore } from '../stores/project-store';
-import { createEmptyProjectEditorSnapshot, type MidiInputProcessorSnapshot } from '../../shared/project-editor';
+import {
+  createEmptyProjectEditorSnapshot,
+  type MidiInputProcessorSnapshot,
+} from '../../shared/project-editor';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 function seedLoadedProject(midiInput: MidiInputProcessorSnapshot): void {
   const snapshot = createEmptyProjectEditorSnapshot();
@@ -75,9 +80,7 @@ describe('MidiInputPanel', () => {
     expect(selects[1]?.textContent).toContain('Amp (0dbfs = 1)');
 
     const inputs = container.querySelectorAll('input[type="text"], input:not([type])');
-    const constantInputs = Array.from(inputs).filter(
-      (el) => !(el as HTMLInputElement).readOnly,
-    );
+    const constantInputs = Array.from(inputs).filter((el) => !(el as HTMLInputElement).readOnly);
     expect(constantInputs.length).toBeGreaterThanOrEqual(2);
 
     const scaleInput = container.querySelector('input[readonly]') as HTMLInputElement | null;
@@ -121,8 +124,10 @@ describe('MidiInputPanel', () => {
     expect(scaleInput).toBeTruthy();
     expect(scaleInput?.value).toBe('12TET');
 
-    const dotButton = [...container.querySelectorAll('button')]
-      .find((button) => button.textContent?.trim() === '...') ?? null;
+    const dotButton =
+      [...container.querySelectorAll('button')].find(
+        (button) => button.textContent?.trim() === '...',
+      ) ?? null;
     expect(dotButton).toBeTruthy();
     expect(dotButton?.textContent?.trim()).toBe('...');
 

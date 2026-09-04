@@ -58,7 +58,15 @@ interface VisibleRow {
  * preferences for absent devices remain visible as `unavailable`.
  */
 function mergeVisibleDevices(
-  draft: { devices: Array<{ id: string; name: string; manufacturer: string; version: string; enabled: boolean }> },
+  draft: {
+    devices: Array<{
+      id: string;
+      name: string;
+      manufacturer: string;
+      version: string;
+      enabled: boolean;
+    }>;
+  },
   snapshot: { devices: MidiInputDeviceRuntime[] } | null,
 ): VisibleRow[] {
   const runtimeById = new Map<string, MidiInputDeviceRuntime>();
@@ -154,12 +162,17 @@ export default function MidiSettings(): React.ReactElement {
     <SettingsSection title="MIDI">
       <div className="mb-3 flex items-center gap-3">
         <span
-          className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-role-callout', phaseBadgeClass(phase))}
+          className={cn(
+            'inline-flex items-center rounded-full px-2 py-0.5 text-role-callout',
+            phaseBadgeClass(phase),
+          )}
         >
           {phase}
         </span>
         {(aggregateMessage || phaseHelp) && (
-          <span className="text-role-body text-app-text-muted">{aggregateMessage ?? phaseHelp}</span>
+          <span className="text-role-body text-app-text-muted">
+            {aggregateMessage ?? phaseHelp}
+          </span>
         )}
         <button
           type="button"
@@ -210,14 +223,15 @@ export default function MidiSettings(): React.ReactElement {
                   </td>
                   <td className="px-3 py-2">
                     <span
-                      className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-role-callout', connectionBadgeClass(row.connection, row.availability))}
+                      className={cn(
+                        'inline-flex items-center rounded-full px-2 py-0.5 text-role-callout',
+                        connectionBadgeClass(row.connection, row.availability),
+                      )}
                     >
                       {row.availability === 'unavailable' ? 'unavailable' : row.connection}
                     </span>
                   </td>
-                  <td className="px-3 py-2 text-app-text-muted">
-                    {row.lastError || '—'}
-                  </td>
+                  <td className="px-3 py-2 text-app-text-muted">{row.lastError || '—'}</td>
                 </tr>
               ))}
             </tbody>

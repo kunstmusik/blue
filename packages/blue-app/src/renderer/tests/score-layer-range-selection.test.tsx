@@ -10,7 +10,9 @@ import { useLayerSelectionStore } from '../stores/layer-selection-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 class MockResizeObserver {
   observe(): void {}
@@ -18,7 +20,8 @@ class MockResizeObserver {
   disconnect(): void {}
 }
 
-(globalThis as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver = MockResizeObserver;
+(globalThis as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver =
+  MockResizeObserver;
 
 const { mockScorePathState } = vi.hoisted(() => ({
   mockScorePathState: {
@@ -193,7 +196,9 @@ describe('Score layer range selection (US2)', () => {
 
     // Shift-click Sound 1
     act(() => {
-      sound1.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0, shiftKey: true }));
+      sound1.dispatchEvent(
+        new MouseEvent('mousedown', { bubbles: true, button: 0, shiftKey: true }),
+      );
     });
 
     expect(sound0.getAttribute('aria-selected')).toBe('true');
@@ -217,7 +222,9 @@ describe('Score layer range selection (US2)', () => {
 
     // Shift-click Track 1 (span Sound 0, Sound 1, Track 0, Track 1)
     act(() => {
-      track1.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0, shiftKey: true }));
+      track1.dispatchEvent(
+        new MouseEvent('mousedown', { bubbles: true, button: 0, shiftKey: true }),
+      );
     });
 
     const sound1 = container.querySelector<HTMLElement>('[data-layer-id="sound-layer-1"]')!;
@@ -246,7 +253,9 @@ describe('Score layer range selection (US2)', () => {
       sound0.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
     });
     act(() => {
-      track1.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0, shiftKey: true }));
+      track1.dispatchEvent(
+        new MouseEvent('mousedown', { bubbles: true, button: 0, shiftKey: true }),
+      );
     });
     expect(useLayerSelectionStore.getState().selectedKeys.size).toBe(4);
 
@@ -271,7 +280,9 @@ describe('Score layer range selection (US2)', () => {
     expect(useLayerSelectionStore.getState().anchorKey).toBeNull();
 
     act(() => {
-      track0.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0, shiftKey: true }));
+      track0.dispatchEvent(
+        new MouseEvent('mousedown', { bubbles: true, button: 0, shiftKey: true }),
+      );
     });
 
     expect(useLayerSelectionStore.getState().anchorKey).toBe('track-group:lsel-track-0');

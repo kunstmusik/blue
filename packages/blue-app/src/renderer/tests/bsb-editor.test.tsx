@@ -42,15 +42,49 @@ const BSB_INSTRUMENT: BlueSynthBuilderInstrumentSnapshot = {
     { objectName: 'freq', widgetType: 'BSBValue', value: 440, minimum: 20, maximum: 20000 },
   ],
   editEnabled: false,
-    gridSettings: { enabled: false, snapEnabled: false, width: 10, height: 10, gridStyle: 'NONE' },
+  gridSettings: { enabled: false, snapEnabled: false, width: 10, height: 10, gridStyle: 'NONE' },
   widgetTree: {
-    id: 'root', type: 'BSBRootGroup', objectName: '',
-    x: 0, y: 0, width: 0, height: 0,
-    value: 0, minimum: 0, maximum: 0,
-    editable: true, properties: {},
+    id: 'root',
+    type: 'BSBRootGroup',
+    objectName: '',
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+    value: 0,
+    minimum: 0,
+    maximum: 0,
+    editable: true,
+    properties: {},
     children: [
-      { id: 'w1', type: 'BSBKnob', objectName: 'amp', x: 0, y: 0, width: 60, height: 60, value: 0.5, minimum: 0, maximum: 1, editable: true, properties: {} },
-      { id: 'w2', type: 'BSBValue', objectName: 'freq', x: 70, y: 0, width: 60, height: 24, value: 440, minimum: 20, maximum: 20000, editable: true, properties: {} },
+      {
+        id: 'w1',
+        type: 'BSBKnob',
+        objectName: 'amp',
+        x: 0,
+        y: 0,
+        width: 60,
+        height: 60,
+        value: 0.5,
+        minimum: 0,
+        maximum: 1,
+        editable: true,
+        properties: {},
+      },
+      {
+        id: 'w2',
+        type: 'BSBValue',
+        objectName: 'freq',
+        x: 70,
+        y: 0,
+        width: 60,
+        height: 24,
+        value: 440,
+        minimum: 20,
+        maximum: 20000,
+        editable: true,
+        properties: {},
+      },
     ],
   },
 };
@@ -74,9 +108,7 @@ describe('BlueSynthBuilder editor', () => {
   });
 
   it('maps BSB object names into Java Blue replacement completion keys', () => {
-    expect(createBsbReplacementKeys(['amp'])).toEqual([
-      { key: 'amp', objectType: 'BSB object' },
-    ]);
+    expect(createBsbReplacementKeys(['amp'])).toEqual([{ key: 'amp', objectType: 'BSB object' }]);
   });
 
   it('renders BSB code editor tabs', () => {
@@ -116,10 +148,7 @@ describe('BlueSynthBuilder editor', () => {
     const line = createDefaultBsbWidgetSnapshot('BSBLineObject')!;
     line.id = 'line-1';
     line.objectName = 'curve';
-    line.properties.lines = [
-      { varName: 'freq' },
-      { varName: 'amp' },
-    ];
+    line.properties.lines = [{ varName: 'freq' }, { varName: 'amp' }];
 
     const tree: BsbWidgetNodeSnapshot = {
       id: 'root',

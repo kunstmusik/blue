@@ -11,7 +11,9 @@ import { useMidiRoutingStore } from '../stores/midi-routing-store';
 import { useLayerSelectionStore } from '../stores/layer-selection-store';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 class MockResizeObserver {
   observe(): void {}
@@ -19,7 +21,8 @@ class MockResizeObserver {
   disconnect(): void {}
 }
 
-(globalThis as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver = MockResizeObserver;
+(globalThis as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver =
+  MockResizeObserver;
 
 const { mockResetSession, mockScorePathState } = vi.hoisted(() => {
   const mockResetSession = vi.fn();
@@ -185,13 +188,15 @@ describe('ScorePanel session resets', () => {
     const timeline = container.querySelector('.score-timeline-scroll') as HTMLDivElement;
 
     act(() => {
-      timeline.dispatchEvent(new MouseEvent('mousedown', {
-        bubbles: true,
-        cancelable: true,
-        button: 0,
-        clientX: 20,
-        clientY: 20,
-      }));
+      timeline.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          cancelable: true,
+          button: 0,
+          clientX: 20,
+          clientY: 20,
+        }),
+      );
     });
 
     expect(stopAuditioning).toHaveBeenCalledOnce();
@@ -298,7 +303,8 @@ describe('ScorePanel session resets', () => {
       ],
     };
 
-    const getNestedPolyObjectSnapshot = vi.fn()
+    const getNestedPolyObjectSnapshot = vi
+      .fn()
       .mockResolvedValueOnce(nestedSnapshot)
       .mockResolvedValueOnce(nestedSnapshot);
 
@@ -350,7 +356,9 @@ describe('ScorePanel session resets', () => {
 
     const noteProcessorButtons = container.querySelectorAll('button[title="Note Processors"]');
     const automationButtons = container.querySelectorAll('button[title="Automation"]');
-    const trackInstrumentControl = container.querySelector('[data-track-instrument-control="audio-layer-0"]');
+    const trackInstrumentControl = container.querySelector(
+      '[data-track-instrument-control="audio-layer-0"]',
+    );
 
     expect(noteProcessorButtons).toHaveLength(2);
     expect(automationButtons).toHaveLength(2);
@@ -393,10 +401,12 @@ describe('ScorePanel session resets', () => {
     const trackHeader = instrumentControl.parentElement as HTMLElement;
 
     act(() => {
-      trackHeader.dispatchEvent(new MouseEvent('pointerdown', {
-        bubbles: true,
-        button: 0,
-      }));
+      trackHeader.dispatchEvent(
+        new MouseEvent('pointerdown', {
+          bubbles: true,
+          button: 0,
+        }),
+      );
     });
     expect(useMidiRoutingStore.getState().focusedTarget).toMatchObject({
       kind: 'track',
@@ -409,10 +419,12 @@ describe('ScorePanel session resets', () => {
     act(() => {
       useMidiRoutingStore.getState().clearFocusForProjectSession();
       const muteButton = trackHeader.querySelector('button[title="Mute"]') as HTMLButtonElement;
-      muteButton.dispatchEvent(new MouseEvent('pointerdown', {
-        bubbles: true,
-        button: 0,
-      }));
+      muteButton.dispatchEvent(
+        new MouseEvent('pointerdown', {
+          bubbles: true,
+          button: 0,
+        }),
+      );
     });
     expect(useMidiRoutingStore.getState().focusedTarget).toBeNull();
 
@@ -433,7 +445,9 @@ describe('ScorePanel session resets', () => {
       audioHeader.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
     });
     act(() => {
-      polyHeader.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0, shiftKey: true }));
+      polyHeader.dispatchEvent(
+        new MouseEvent('mousedown', { bubbles: true, button: 0, shiftKey: true }),
+      );
     });
 
     expect(useLayerSelectionStore.getState().selectedKeys.size).toBe(2);

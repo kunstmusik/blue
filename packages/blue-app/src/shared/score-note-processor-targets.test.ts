@@ -16,10 +16,7 @@ import {
   PatternsLayerGroup,
   Element,
 } from '@blue/data';
-import {
-  createScoreDocumentSnapshot,
-  createProjectEditorSnapshot,
-} from './project-editor';
+import { createScoreDocumentSnapshot, createProjectEditorSnapshot } from './project-editor';
 
 function makePolyObjectWithChains(): BlueData {
   const data = new BlueData();
@@ -102,7 +99,9 @@ describe('score-note-processor-targets', () => {
 
     expect(group.layers[1]!.noteProcessorChain).toBeDefined();
     expect(group.layers[1]!.noteProcessorChain!.processors).toHaveLength(1);
-    expect(group.layers[1]!.noteProcessorChain!.processors[0].processorType).toBe('MultiplyProcessor');
+    expect(group.layers[1]!.noteProcessorChain!.processors[0].processorType).toBe(
+      'MultiplyProcessor',
+    );
   });
 
   it('omits rootNoteProcessorChain when root chain is empty', () => {
@@ -192,8 +191,12 @@ describe('score-note-processor-targets', () => {
     const snap = createScoreDocumentSnapshot(data);
 
     expect(snap.rootNoteProcessorChain!.processors[0].processorType).toBe('AddProcessor');
-    expect(snap.layerGroups[0]!.noteProcessorChain!.processors[0].processorType).toBe('RotateProcessor');
-    expect(snap.layerGroups[0]!.layers[1]!.noteProcessorChain!.processors[0].processorType).toBe('MultiplyProcessor');
+    expect(snap.layerGroups[0]!.noteProcessorChain!.processors[0].processorType).toBe(
+      'RotateProcessor',
+    );
+    expect(snap.layerGroups[0]!.layers[1]!.noteProcessorChain!.processors[0].processorType).toBe(
+      'MultiplyProcessor',
+    );
   });
 
   it('populates hasUnsupportedProcessors and hasDeferredProcessors flags', () => {

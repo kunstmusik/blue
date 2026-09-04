@@ -2,7 +2,12 @@ export const NATIVE_CONFIRMATION_CHANNEL = 'blue:native-confirmation:show';
 
 export type NativeConfirmationType = 'none' | 'info' | 'error' | 'question' | 'warning';
 
-export type NativeConfirmationActionRole = 'accept' | 'cancel' | 'destructive' | 'secondary' | string;
+export type NativeConfirmationActionRole =
+  | 'accept'
+  | 'cancel'
+  | 'destructive'
+  | 'secondary'
+  | string;
 
 export interface NativeConfirmationAction {
   id: string;
@@ -52,8 +57,19 @@ const MAX_MESSAGE_LENGTH = 4000;
 const MAX_DETAIL_LENGTH = 8000;
 const MAX_LABEL_LENGTH = 200;
 
-const VALID_TYPES = new Set<NativeConfirmationType>(['none', 'info', 'error', 'question', 'warning']);
-const VALID_OUTCOMES = new Set<NativeConfirmationOutcome>(['selected', 'dismissed', 'owner-unavailable', 'failed']);
+const VALID_TYPES = new Set<NativeConfirmationType>([
+  'none',
+  'info',
+  'error',
+  'question',
+  'warning',
+]);
+const VALID_OUTCOMES = new Set<NativeConfirmationOutcome>([
+  'selected',
+  'dismissed',
+  'owner-unavailable',
+  'failed',
+]);
 
 export interface ValidationResult<T> {
   valid: boolean;
@@ -61,7 +77,9 @@ export interface ValidationResult<T> {
   errors: string[];
 }
 
-export function validateNativeConfirmationRequest(raw: unknown): ValidationResult<NativeConfirmationRequest> {
+export function validateNativeConfirmationRequest(
+  raw: unknown,
+): ValidationResult<NativeConfirmationRequest> {
   const errors: string[] = [];
 
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {

@@ -140,9 +140,7 @@ export const useMidiRoutingStore = create<MidiRoutingState>((set, get) => ({
       }
       if (current.kind === 'track') {
         const match = reconciliation.tracks.find(
-          (entry) =>
-            entry.rootGroupId === current.rootGroupId &&
-            entry.trackId === current.trackId,
+          (entry) => entry.rootGroupId === current.rootGroupId && entry.trackId === current.trackId,
         );
         if (!match) {
           return { focusedTarget: null, focusRevision: state.focusRevision + 1 };

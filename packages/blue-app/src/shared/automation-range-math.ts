@@ -169,7 +169,7 @@ export function moveRangeWithAnchors<T extends RangePoint>(
   const transStartOuterVal = lineValueAt(points, transStartTime, true);
   const transEndOuterVal = lineValueAt(points, transEndTime, false);
 
-  const intersects = Math.abs(transTime) <= (selectionEnd - selectionStart);
+  const intersects = Math.abs(transTime) <= selectionEnd - selectionStart;
 
   // Collect in-range points (skip first point — Java's isFirstLinePoint).
   const collected: RangePoint[] = [];

@@ -1,10 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { isMidiImportInstrumentIdZero } from '@blue/data';
-import type {
-  MidiImportPreview,
-  MidiImportSettings,
-} from '../../../../shared/midi-import';
+import type { MidiImportPreview, MidiImportSettings } from '../../../../shared/midi-import';
 import MidiImportStreamTable from './MidiImportStreamTable';
 
 const PRIMARY_BUTTON_CLASS =
@@ -58,7 +55,9 @@ export default function MidiImportDialog(): React.ReactElement | null {
   }, []);
 
   useEffect(() => {
-    const handleOpen = () => { void beginImport(); };
+    const handleOpen = () => {
+      void beginImport();
+    };
     window.addEventListener('blue-open-midi-import', handleOpen);
     return () => window.removeEventListener('blue-open-midi-import', handleOpen);
   }, [beginImport]);
@@ -78,18 +77,19 @@ export default function MidiImportDialog(): React.ReactElement | null {
   }, [token]);
 
   const updateRow = useCallback((streamKey: string, patch: Partial<MidiImportSettings>) => {
-    setRows((currentRows) => currentRows.map((row) => (
-      row.streamKey === streamKey ? { ...row, ...patch } : row
-    )));
+    setRows((currentRows) =>
+      currentRows.map((row) => (row.streamKey === streamKey ? { ...row, ...patch } : row)),
+    );
   }, []);
 
   const submit = useCallback(async () => {
     if (!token || !window.blueAPI?.commitMidiImport) return;
-    const invalidRow = rows.find((row) => (
-      row.instrumentId.trim().length === 0 ||
-      isMidiImportInstrumentIdZero(row.instrumentId) ||
-      row.noteTemplate.trim().length === 0
-    ));
+    const invalidRow = rows.find(
+      (row) =>
+        row.instrumentId.trim().length === 0 ||
+        isMidiImportInstrumentIdZero(row.instrumentId) ||
+        row.noteTemplate.trim().length === 0,
+    );
     if (invalidRow) {
       setError(
         isMidiImportInstrumentIdZero(invalidRow.instrumentId)
@@ -120,12 +120,15 @@ export default function MidiImportDialog(): React.ReactElement | null {
     setIsSubmitting(false);
   }, [rows, token]);
 
-  const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
-    if (event.key === 'Escape' && !isSubmitting) {
-      event.preventDefault();
-      close();
-    }
-  }, [close, isSubmitting]);
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      if (event.key === 'Escape' && !isSubmitting) {
+        event.preventDefault();
+        close();
+      }
+    },
+    [close, isSubmitting],
+  );
 
   if (!isOpen) return null;
 
@@ -140,7 +143,9 @@ export default function MidiImportDialog(): React.ReactElement | null {
       <div className="flex max-h-[85vh] w-[960px] max-w-[94vw] flex-col rounded-lg border border-app-border/40 bg-app-menu p-4 shadow-2xl">
         <div className="mb-3 flex items-center justify-between">
           <div>
-            <h2 className="text-role-title-2 font-bold text-app-text-bright">MIDI Import Settings</h2>
+            <h2 className="text-role-title-2 font-bold text-app-text-bright">
+              MIDI Import Settings
+            </h2>
             {preview ? (
               <p className="mt-1 text-role-callout text-app-text-muted">
                 {preview.fileName} · format {preview.format} · {preview.ticksPerBeat} PPQ
@@ -163,20 +168,41 @@ export default function MidiImportDialog(): React.ReactElement | null {
           </div>
         ) : (
           <>
-            {error ? <div className="mb-3 rounded border border-red-400/40 bg-red-400/10 px-3 py-2 text-role-callout text-red-200" role="alert">{error}</div> : null}
-            {preview ? <MidiImportStreamTable preview={preview} rows={rows} onUpdate={updateRow} /> : null}
+            {error ? (
+              <div
+                className="mb-3 rounded border border-red-400/40 bg-red-400/10 px-3 py-2 text-role-callout text-red-200"
+                role="alert"
+              >
+                {error}
+              </div>
+            ) : null}
+            {preview ? (
+              <MidiImportStreamTable preview={preview} rows={rows} onUpdate={updateRow} />
+            ) : null}
             <p className="mt-2 text-role-callout text-app-text-muted">
-              Trim removes leading silence for that stream: its layer starts at the first note, while the first note is written at beat 0.
+              Trim removes leading silence for that stream: its layer starts at the first note,
+              while the first note is written at beat 0.
             </p>
 
             <details className="mt-3 text-role-callout text-app-text-muted">
               <summary className="cursor-pointer text-app-text">Template placeholders</summary>
-              <p className="mt-1">Use &lt;INSTR_ID&gt;, &lt;START&gt;, &lt;DUR&gt;, &lt;KEY&gt;, &lt;KEY_PCH&gt;, &lt;KEY_OCT&gt;, &lt;KEY_CPS&gt;, &lt;VELOCITY&gt;, or &lt;VELOCITY_AMP&gt;.</p>
+              <p className="mt-1">
+                Use &lt;INSTR_ID&gt;, &lt;START&gt;, &lt;DUR&gt;, &lt;KEY&gt;, &lt;KEY_PCH&gt;,
+                &lt;KEY_OCT&gt;, &lt;KEY_CPS&gt;, &lt;VELOCITY&gt;, or &lt;VELOCITY_AMP&gt;.
+              </p>
             </details>
 
             <div className="mt-4 flex justify-end gap-2">
-              <button className={SECONDARY_BUTTON_CLASS} onClick={close} disabled={isSubmitting}>Cancel</button>
-              <button className={PRIMARY_BUTTON_CLASS} onClick={() => { void submit(); }} disabled={isSubmitting || rows.length === 0}>
+              <button className={SECONDARY_BUTTON_CLASS} onClick={close} disabled={isSubmitting}>
+                Cancel
+              </button>
+              <button
+                className={PRIMARY_BUTTON_CLASS}
+                onClick={() => {
+                  void submit();
+                }}
+                disabled={isSubmitting || rows.length === 0}
+              >
                 {isSubmitting ? 'Importing…' : 'Import'}
               </button>
             </div>

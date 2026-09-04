@@ -26,7 +26,9 @@ export class TuningProcessor extends NoteProcessor {
     }
   }
 
-  getPfield(): string { return this._pfield.toString(); }
+  getPfield(): string {
+    return this._pfield.toString();
+  }
   setPfield(pfield: string): void {
     const p = parseInt(pfield, 10);
     if (p > 3) {
@@ -34,11 +36,19 @@ export class TuningProcessor extends NoteProcessor {
     }
   }
 
-  getBaseFrequency(): string { return this._baseFrequency.toString(); }
-  setBaseFrequency(baseFrequency: string): void { this._baseFrequency = parseFloat(baseFrequency); }
+  getBaseFrequency(): string {
+    return this._baseFrequency.toString();
+  }
+  setBaseFrequency(baseFrequency: string): void {
+    this._baseFrequency = parseFloat(baseFrequency);
+  }
 
-  getRatios(): number[] { return this._ratios; }
-  setRatios(ratios: number[]): void { this._ratios = ratios; }
+  getRatios(): number[] {
+    return this._ratios;
+  }
+  setRatios(ratios: number[]): void {
+    this._ratios = ratios;
+  }
 
   private convert(val: string): number {
     const index = val.indexOf('.');
@@ -84,7 +94,9 @@ export class TuningProcessor extends NoteProcessor {
     return notes;
   }
 
-  override getDisplayName(): string { return 'TuningProcessor'; }
+  override getDisplayName(): string {
+    return 'TuningProcessor';
+  }
 
   override deepCopy(): TuningProcessor {
     return new TuningProcessor(this);
@@ -96,7 +108,7 @@ export class TuningProcessor extends NoteProcessor {
     elem.addElement('pfield').setText(this._pfield.toString());
     const scaleElem = elem.addElement('scale');
     scaleElem.addElement('baseFrequency').setText(this._baseFrequency.toString());
-    const ratiosStr = this._ratios.map(r => r.toString()).join('\n');
+    const ratiosStr = this._ratios.map((r) => r.toString()).join('\n');
     scaleElem.addElement('ratios').setText(ratiosStr);
     return elem;
   }
@@ -122,7 +134,7 @@ export class TuningProcessor extends NoteProcessor {
       if (ratiosText !== null) {
         const tokens = ratiosText.trim().split(/\s+/);
         if (tokens.length > 0 && tokens[0].length > 0) {
-          proc._ratios = tokens.map(t => parseFloat(t));
+          proc._ratios = tokens.map((t) => parseFloat(t));
         }
       }
     }

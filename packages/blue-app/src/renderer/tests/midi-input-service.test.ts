@@ -21,7 +21,12 @@ interface Deps {
   publishSnapshot: (snapshot: MidiInputServiceSnapshot) => void;
 }
 
-function makeDeps(access: FakeMidiAccess): { deps: Deps; published: MidiInputServiceSnapshot[]; routed: MidiNoteEvent[]; released: string[] } {
+function makeDeps(access: FakeMidiAccess): {
+  deps: Deps;
+  published: MidiInputServiceSnapshot[];
+  routed: MidiNoteEvent[];
+  released: string[];
+} {
   const published: MidiInputServiceSnapshot[] = [];
   const routed: MidiNoteEvent[] = [];
   const released: string[] = [];
@@ -78,9 +83,11 @@ describe('MidiInputService', () => {
       deviceId: 'a',
       midiNote: 60,
     });
-    expect(published.some((snapshot) => (
-      snapshot.devices.some((device) => device.id === 'a' && device.connection === 'connecting')
-    ))).toBe(true);
+    expect(
+      published.some((snapshot) =>
+        snapshot.devices.some((device) => device.id === 'a' && device.connection === 'connecting'),
+      ),
+    ).toBe(true);
   });
 
   it('keeps duplicate display names distinct by port ID', async () => {
@@ -92,10 +99,12 @@ describe('MidiInputService', () => {
 
     await service.start();
 
-    expect(published.at(-1)?.devices.map((device) => device.id).sort()).toEqual([
-      'first',
-      'second',
-    ]);
+    expect(
+      published
+        .at(-1)
+        ?.devices.map((device) => device.id)
+        .sort(),
+    ).toEqual(['first', 'second']);
     expect(first.connection).toBe('open');
     expect(second.connection).toBe('open');
   });
@@ -122,7 +131,9 @@ describe('MidiInputService', () => {
       name: 'NotAllowedError',
     });
     service = new MidiInputService({
-      requestAccess: async () => { throw denied; },
+      requestAccess: async () => {
+        throw denied;
+      },
       now: () => 1,
       routeNote: async () => ({ accepted: false }),
       releaseSource: async () => {},
@@ -133,7 +144,9 @@ describe('MidiInputService', () => {
 
     await service.stop();
     service = new MidiInputService({
-      requestAccess: async () => { throw new Error('MIDI subsystem failed'); },
+      requestAccess: async () => {
+        throw new Error('MIDI subsystem failed');
+      },
       now: () => 1,
       routeNote: async () => ({ accepted: false }),
       releaseSource: async () => {},
@@ -234,9 +247,13 @@ describe('MidiInputService', () => {
 
     expect(input.connection).toBe('open');
     expect(open).toHaveBeenCalledTimes(2);
-    expect(published.some((snapshot) => (
-      snapshot.devices.some((device) => device.id === 'a' && device.connection === 'disconnecting')
-    ))).toBe(true);
+    expect(
+      published.some((snapshot) =>
+        snapshot.devices.some(
+          (device) => device.id === 'a' && device.connection === 'disconnecting',
+        ),
+      ),
+    ).toBe(true);
   });
 
   it('coalesces repeated rescan calls', async () => {
@@ -294,7 +311,12 @@ describe('MidiInputService', () => {
     await Promise.resolve();
     await Promise.resolve();
 
-    const types = routed.map((r) => ({ type: r.type, channel: r.channel, midiNote: r.midiNote, sourceId: r.sourceId }));
+    const types = routed.map((r) => ({
+      type: r.type,
+      channel: r.channel,
+      midiNote: r.midiNote,
+      sourceId: r.sourceId,
+    }));
     expect(types).toEqual([
       { type: 'noteOn', channel: 0, midiNote: 60, sourceId: 'midi:a' },
       { type: 'noteOff', channel: 0, midiNote: 60, sourceId: 'midi:a' },
@@ -369,7 +391,9 @@ describe('MidiInputService', () => {
 
   it('isolates one device failure from another', async () => {
     const a = new FakeMidiInput({ id: 'a', name: 'A' });
-    a.open = async () => { throw new Error('open failed'); };
+    a.open = async () => {
+      throw new Error('open failed');
+    };
     const b = new FakeMidiInput({ id: 'b', name: 'B' });
     const access = new FakeMidiAccess({ inputs: [a, b] });
     const { deps, published } = makeDeps(access);

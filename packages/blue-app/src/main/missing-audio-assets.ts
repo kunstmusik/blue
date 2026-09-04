@@ -87,10 +87,7 @@ export function findAudioFile(
  * checkAudioFiles/reconcileAudioFiles traversal which iterates
  * pObj.getSoundObjects(true) and recurses into nested PolyObjects.
  */
-export function forEachAudioFile(
-  score: Score,
-  visitor: (audioFile: AudioFile) => void,
-): void {
+export function forEachAudioFile(score: Score, visitor: (audioFile: AudioFile) => void): void {
   for (const layerGroup of score) {
     if (!(layerGroup instanceof PolyObject)) {
       continue;
@@ -235,10 +232,7 @@ export function buildReplacementMappings(
  * matches a mapped original path. Mirrors Java reconcileAudioFiles. Returns
  * true when at least one AudioFile path changed.
  */
-export function applyReplacementMappings(
-  data: BlueData,
-  mappings: Map<string, string>,
-): boolean {
+export function applyReplacementMappings(data: BlueData, mappings: Map<string, string>): boolean {
   if (mappings.size === 0) {
     return false;
   }

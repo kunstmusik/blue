@@ -9,8 +9,10 @@ import { cn } from '../../../lib/cn';
 const ALGORITHM_DOMAIN = blueX7WidgetDomain('common.algorithm');
 const TRANSPOSE_DOMAIN = blueX7WidgetDomain('common.transpose');
 // The widget shows transpose as centered semitones (stored 0..48 → −24..+24).
-const TRANSPOSE_SEMITONE_MIN = TRANSPOSE_DOMAIN.min - (TRANSPOSE_DOMAIN.min + TRANSPOSE_DOMAIN.max) / 2;
-const TRANSPOSE_SEMITONE_MAX = TRANSPOSE_DOMAIN.max - (TRANSPOSE_DOMAIN.min + TRANSPOSE_DOMAIN.max) / 2;
+const TRANSPOSE_SEMITONE_MIN =
+  TRANSPOSE_DOMAIN.min - (TRANSPOSE_DOMAIN.min + TRANSPOSE_DOMAIN.max) / 2;
+const TRANSPOSE_SEMITONE_MAX =
+  TRANSPOSE_DOMAIN.max - (TRANSPOSE_DOMAIN.min + TRANSPOSE_DOMAIN.max) / 2;
 const TRANSPOSE_CENTER_OFFSET = (TRANSPOSE_DOMAIN.min + TRANSPOSE_DOMAIN.max) / 2;
 const FEEDBACK_DOMAIN = blueX7WidgetDomain('common.feedback');
 const SHARED_PMS_DOMAIN = blueX7WidgetDomain('lfo.pitchModulationSensitivity');
@@ -32,7 +34,8 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
   onApplyPatch,
   onOpenAlgorithmModal,
 }) => {
-  const effective = (key: string, fallback: number): number => effectiveValues?.get(key) ?? fallback;
+  const effective = (key: string, fallback: number): number =>
+    effectiveValues?.get(key) ?? fallback;
   const displayedAlgorithm = effective('common.algorithm', common.algorithm);
   const displayTranspose = effective('common.transpose', common.keyTranspose) - 24;
   const displayedFeedback = effective('common.feedback', common.feedback);
@@ -44,9 +47,9 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
     'lfo.pitchModulationSensitivity',
     typeof sharedPms === 'number' ? sharedPms : 0,
   );
-  const displayedOperatorEnabled = common.operatorEnabled.map((enabled, index) => (
-    effective(`operator.${index + 1}.enabled`, enabled ? 1 : 0) >= 0.5
-  ));
+  const displayedOperatorEnabled = common.operatorEnabled.map(
+    (enabled, index) => effective(`operator.${index + 1}.enabled`, enabled ? 1 : 0) >= 0.5,
+  );
 
   const handleAlgorithmChange = (value: string) => {
     const val = parseInt(value, 10);
@@ -110,9 +113,14 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
   };
 
   return (
-    <div className="rounded border border-blue-border bg-blue-surface/40 p-3 space-y-3" data-testid="bluex7-common-panel">
+    <div
+      className="rounded border border-blue-border bg-blue-surface/40 p-3 space-y-3"
+      data-testid="bluex7-common-panel"
+    >
       <div className="flex items-center justify-between border-b border-blue-border pb-1">
-        <span className="text-role-headline font-bold text-gray-200 uppercase tracking-wider">Common & Algorithms</span>
+        <span className="text-role-headline font-bold text-gray-200 uppercase tracking-wider">
+          Common & Algorithms
+        </span>
       </div>
 
       <div className="flex min-w-0 flex-col sm:flex-row gap-4 items-start">
@@ -136,10 +144,13 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
                   aria-label="Algorithm"
                   value={displayedAlgorithm}
                   onValueChange={handleAlgorithmChange}
-                  options={Array.from({ length: ALGORITHM_DOMAIN.max - ALGORITHM_DOMAIN.min + 1 }, (_, index) => ({
-                    value: ALGORITHM_DOMAIN.min + index,
-                    label: `Algorithm ${ALGORITHM_DOMAIN.min + index}`,
-                  }))}
+                  options={Array.from(
+                    { length: ALGORITHM_DOMAIN.max - ALGORITHM_DOMAIN.min + 1 },
+                    (_, index) => ({
+                      value: ALGORITHM_DOMAIN.min + index,
+                      label: `Algorithm ${ALGORITHM_DOMAIN.min + index}`,
+                    }),
+                  )}
                   className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
                 />
                 {onOpenAlgorithmModal && (
@@ -159,7 +170,8 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
             {/* Key Transpose */}
             <div className="flex flex-col gap-1">
               <label htmlFor="bluex7-key-transpose" className="text-role-body text-blue-muted">
-                Key Transpose ({displayTranspose >= 0 ? `+${displayTranspose}` : displayTranspose} st)
+                Key Transpose ({displayTranspose >= 0 ? `+${displayTranspose}` : displayTranspose}{' '}
+                st)
               </label>
               <input
                 id="bluex7-key-transpose"
@@ -217,8 +229,18 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
                     type="number"
                     min={SHARED_PMS_DOMAIN.min}
                     max={SHARED_PMS_DOMAIN.max}
-                    placeholder={sharedPms === 'mixed' && !effectiveValues?.has('lfo.pitchModulationSensitivity') ? 'mixed' : undefined}
-                    value={effectiveValues?.has('lfo.pitchModulationSensitivity') || typeof sharedPms === 'number' ? displayedPms : ''}
+                    placeholder={
+                      sharedPms === 'mixed' &&
+                      !effectiveValues?.has('lfo.pitchModulationSensitivity')
+                        ? 'mixed'
+                        : undefined
+                    }
+                    value={
+                      effectiveValues?.has('lfo.pitchModulationSensitivity') ||
+                      typeof sharedPms === 'number'
+                        ? displayedPms
+                        : ''
+                    }
                     onChange={handleSharedPmsChange}
                     className="w-14 rounded border border-blue-border bg-blue-bg px-1 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
                   />

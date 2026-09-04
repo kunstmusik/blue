@@ -58,13 +58,21 @@ describe('Track mixer routing', () => {
     const master = new Channel();
     master.setName(Mixer.MASTER_CHANNEL);
     withMaster.getChannelIdAssignments().set(master, 3);
-    const masterInstrument = ensureTrackAudioPlaybackInstrument('missing-track', new TimeContext(), withMaster);
+    const masterInstrument = ensureTrackAudioPlaybackInstrument(
+      'missing-track',
+      new TimeContext(),
+      withMaster,
+    );
     const masterText = instrumentText(withMaster, String(masterInstrument));
     expect(masterText).toContain(Mixer.getSubChannelVar(Mixer.MASTER_CHANNEL, 0));
     expect(masterText).not.toContain('ga_bluemix_');
 
     const withoutMixer = new CompileData();
-    const directInstrument = ensureTrackAudioPlaybackInstrument('no-mixer', new TimeContext(), withoutMixer);
+    const directInstrument = ensureTrackAudioPlaybackInstrument(
+      'no-mixer',
+      new TimeContext(),
+      withoutMixer,
+    );
     const directText = instrumentText(withoutMixer, String(directInstrument));
     expect(directText).toContain('outc a1, a2');
     expect(directText).not.toContain('ga_bluemix_');
@@ -78,7 +86,11 @@ describe('Track mixer routing', () => {
     compileData.getChannelIdAssignments().set(channel, 7);
     compileData.setMixerEnabled(false);
 
-    const instrumentId = ensureTrackAudioPlaybackInstrument('routed-track', new TimeContext(), compileData);
+    const instrumentId = ensureTrackAudioPlaybackInstrument(
+      'routed-track',
+      new TimeContext(),
+      compileData,
+    );
     const text = instrumentText(compileData, String(instrumentId));
     expect(text).toContain('outc a1, a2');
     expect(text).not.toContain('ga_bluemix_');

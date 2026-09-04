@@ -14,7 +14,9 @@ import type {
   HostSurfaceKind,
 } from '../components/host-surface/host-surface-options';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const popout = new JSDOM('<!doctype html><html><body></body></html>');
 const popoutDoc = popout.window.document;
@@ -28,14 +30,22 @@ const secondPopout = new JSDOM('<!doctype html><html><body></body></html>');
 const secondPopoutDoc = secondPopout.window.document;
 const SecondPopoutKeyboardEvent = secondPopout.window.KeyboardEvent;
 
-function SurfaceHarness({ anchor, kind, onDismiss }: {
+function SurfaceHarness({
+  anchor,
+  kind,
+  onDismiss,
+}: {
   anchor: HostSurfaceAnchor | null;
   kind: HostSurfaceKind;
   onDismiss?: (reason: HostSurfaceDismissReason) => void;
 }) {
   const session = useHostSurface(anchor, { kind, onDismiss });
   return (
-    <HostSurfacePortal session={session} role={kind === 'menu' ? 'menu' : 'tooltip'} className="test-surface">
+    <HostSurfacePortal
+      session={session}
+      role={kind === 'menu' ? 'menu' : 'tooltip'}
+      className="test-surface"
+    >
       <div style={{ width: 120, height: 40 }}>Surface</div>
     </HostSurfacePortal>
   );
@@ -54,7 +64,11 @@ describe('host-surface lifecycle', () => {
     act(() => {
       root.render(
         <HostDocumentContext.Provider value={providerDocument}>
-          <SurfaceHarness anchor={anchor} kind={kind} onDismiss={(reason) => dismissals.push(reason)} />
+          <SurfaceHarness
+            anchor={anchor}
+            kind={kind}
+            onDismiss={(reason) => dismissals.push(reason)}
+          />
         </HostDocumentContext.Provider>,
       );
     });
@@ -77,7 +91,12 @@ describe('host-surface lifecycle', () => {
     return surface!;
   };
 
-  const setViewport = (win: Window & typeof globalThis, doc: Document, width: number, height: number) => {
+  const setViewport = (
+    win: Window & typeof globalThis,
+    doc: Document,
+    width: number,
+    height: number,
+  ) => {
     Object.defineProperty(win, 'innerWidth', { configurable: true, value: width });
     Object.defineProperty(win, 'innerHeight', { configurable: true, value: height });
     // Floating UI derives the viewport from documentElement/body client
@@ -88,9 +107,8 @@ describe('host-surface lifecycle', () => {
     }
   };
 
-  const surfaceCount = (...docs: Document[]) => docs.reduce(
-    (sum, doc) => sum + doc.querySelectorAll('[data-host-surface]').length, 0,
-  );
+  const surfaceCount = (...docs: Document[]) =>
+    docs.reduce((sum, doc) => sum + doc.querySelectorAll('[data-host-surface]').length, 0);
 
   beforeEach(() => {
     setViewport(popout.window, popoutDoc, 600, 400);
@@ -284,7 +302,9 @@ describe('host-surface lifecycle', () => {
     });
     expect(surfaceCount(secondPopoutDoc)).toBe(1);
     act(() => {
-      secondPopout.window.dispatchEvent(new SecondPopoutKeyboardEvent('keydown', { key: 'Escape' }));
+      secondPopout.window.dispatchEvent(
+        new SecondPopoutKeyboardEvent('keydown', { key: 'Escape' }),
+      );
     });
     expect(dismissals).toContain('escape');
     expect(surfaceCount(secondPopoutDoc, popoutDoc, document)).toBe(0);
@@ -310,7 +330,9 @@ describe('host-surface lifecycle', () => {
     // Dismissal input follows the CURRENT host only: the floated window's
     // Escape is now foreign input; the original window's Escape dismisses.
     act(() => {
-      secondPopout.window.dispatchEvent(new SecondPopoutKeyboardEvent('keydown', { key: 'Escape' }));
+      secondPopout.window.dispatchEvent(
+        new SecondPopoutKeyboardEvent('keydown', { key: 'Escape' }),
+      );
     });
     expect(surfaceCount(popoutDoc)).toBe(1);
     act(() => {

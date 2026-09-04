@@ -1,6 +1,16 @@
 import type { BarRendererProps } from './renderer-registry';
 import { LabelText } from './ScoreObjectBar';
-import { argbToRGB, brighten, darken, javaAwtDarker, rgbToCSS, selectedBaseColor, selectedHeaderColor, textColorForBackground, waveColorForBackground } from './color-utils';
+import {
+  argbToRGB,
+  brighten,
+  darken,
+  javaAwtDarker,
+  rgbToCSS,
+  selectedBaseColor,
+  selectedHeaderColor,
+  textColorForBackground,
+  waveColorForBackground,
+} from './color-utils';
 import WaveformBody from './WaveformBody';
 
 export default function AudioFileScoreObjectBar({
@@ -56,7 +66,16 @@ export default function AudioFileScoreObjectBar({
       }}
     >
       {headerBg && (
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 16, backgroundColor: headerBg }} />
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 16,
+            backgroundColor: headerBg,
+          }}
+        />
       )}
       {br.waveformKey && (
         <WaveformBody
@@ -69,11 +88,7 @@ export default function AudioFileScoreObjectBar({
           color={waveColor}
         />
       )}
-      <LabelText
-        labelLines={br.labelLines}
-        color={fg}
-        show={showText}
-      />
+      <LabelText labelLines={br.labelLines} color={fg} show={showText} />
     </div>
   );
 }

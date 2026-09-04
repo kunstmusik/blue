@@ -8,17 +8,24 @@ import { JSDOM } from 'jsdom';
 import { EditableLineCanvas } from '../components/workbench/panels/shared/line-editor/EditableLineCanvas';
 import { HostDocumentContext } from '../hooks/use-host-document';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
-const initialLines = [{
-  varName: 'line0',
-  min: 0,
-  max: 1,
-  color: 0x20dd00,
-  rightBound: true,
-  endPointsLinked: false,
-  points: [{ x: 0, y: 0.15 }, { x: 1, y: 0.15 }],
-}];
+const initialLines = [
+  {
+    varName: 'line0',
+    min: 0,
+    max: 1,
+    color: 0x20dd00,
+    rightBound: true,
+    endPointsLinked: false,
+    points: [
+      { x: 0, y: 0.15 },
+      { x: 1, y: 0.15 },
+    ],
+  },
+];
 
 // The "popout window": a second JSDOM realm hosting the floated panel content.
 const popout = new JSDOM('<!doctype html><html><body></body></html>');
@@ -65,7 +72,17 @@ describe('EditableLineCanvas popups in a floated (popout) panel', () => {
     expect(svg).toBeTruthy();
     Object.defineProperty(svg, 'getBoundingClientRect', {
       configurable: true,
-      value: () => ({ left: 0, top: 0, right: 200, bottom: 120, width: 200, height: 120, x: 0, y: 0, toJSON: () => undefined }),
+      value: () => ({
+        left: 0,
+        top: 0,
+        right: 200,
+        bottom: 120,
+        width: 200,
+        height: 120,
+        x: 0,
+        y: 0,
+        toJSON: () => undefined,
+      }),
     });
   });
 
@@ -78,12 +95,18 @@ describe('EditableLineCanvas popups in a floated (popout) panel', () => {
 
   function openContextMenu(): HTMLElement {
     act(() => {
-      svg.dispatchEvent(new MouseEvent('contextmenu', {
-        bubbles: true, cancelable: true, clientX: 100, clientY: 60,
-      }));
+      svg.dispatchEvent(
+        new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 100,
+          clientY: 60,
+        }),
+      );
     });
-    const menu = [...popoutDoc.querySelectorAll<HTMLElement>('[role="menu"], .fixed.z-50')]
-      .find((node) => node.textContent?.includes('Edit Points'));
+    const menu = [...popoutDoc.querySelectorAll<HTMLElement>('[role="menu"], .fixed.z-50')].find(
+      (node) => node.textContent?.includes('Edit Points'),
+    );
     expect(menu).toBeTruthy();
     return menu!;
   }
@@ -127,8 +150,9 @@ describe('EditableLineCanvas popups in a floated (popout) panel', () => {
 
   it('routes Escape through the hosting window for the point editor', () => {
     const menu = openContextMenu();
-    const editButton = [...menu.querySelectorAll<HTMLElement>('button')]
-      .find((node) => node.textContent?.trim() === 'Edit Points')!;
+    const editButton = [...menu.querySelectorAll<HTMLElement>('button')].find(
+      (node) => node.textContent?.trim() === 'Edit Points',
+    )!;
     expect(editButton).toBeTruthy();
     act(() => {
       editButton.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
@@ -151,12 +175,18 @@ describe('EditableLineCanvas popups in a floated (popout) panel', () => {
     // Hover on the right-bound point: px = 5 + 190 = 195, near the 200px
     // host viewport's right edge; the tooltip measures 176x44.
     act(() => {
-      svg.dispatchEvent(new MouseEvent('mousemove', {
-        bubbles: true, cancelable: true, clientX: 194, clientY: 98,
-      }));
+      svg.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 194,
+          clientY: 98,
+        }),
+      );
     });
-    const tooltip = [...popoutDoc.querySelectorAll<HTMLElement>('.pointer-events-none, [data-host-surface]')]
-      .find((node) => node.textContent?.includes('x:'));
+    const tooltip = [
+      ...popoutDoc.querySelectorAll<HTMLElement>('.pointer-events-none, [data-host-surface]'),
+    ].find((node) => node.textContent?.includes('x:'));
     expect(tooltip).toBeTruthy();
     Object.defineProperty(tooltip!, 'offsetWidth', { configurable: true, get: () => 176 });
     Object.defineProperty(tooltip!, 'offsetHeight', { configurable: true, get: () => 44 });
@@ -192,12 +222,20 @@ describe('EditableLineCanvas popups in a floated (popout) panel', () => {
 
     async function openMenuAt(x: number, y: number): Promise<HTMLElement> {
       act(() => {
-        svg.dispatchEvent(new MouseEvent('contextmenu', {
-          bubbles: true, cancelable: true, clientX: x, clientY: y,
-        }));
+        svg.dispatchEvent(
+          new MouseEvent('contextmenu', {
+            bubbles: true,
+            cancelable: true,
+            clientX: x,
+            clientY: y,
+          }),
+        );
       });
-      const menu = [...popoutDoc.querySelectorAll<HTMLElement>('[role="menu"], [data-host-surface], [data-auxiliary-portal]')]
-        .find((node) => node.textContent?.includes('Edit Points'));
+      const menu = [
+        ...popoutDoc.querySelectorAll<HTMLElement>(
+          '[role="menu"], [data-host-surface], [data-auxiliary-portal]',
+        ),
+      ].find((node) => node.textContent?.includes('Edit Points'));
       expect(menu).toBeTruthy();
       Object.defineProperty(menu!, 'offsetWidth', { configurable: true, get: () => MENU_WIDTH });
       Object.defineProperty(menu!, 'offsetHeight', { configurable: true, get: () => MENU_HEIGHT });
@@ -234,8 +272,13 @@ describe('EditableLineCanvas popups in a floated (popout) panel', () => {
       await act(async () => {
         await new Promise((resolve) => setTimeout(resolve, 0));
       });
-      expect([...popoutDoc.querySelectorAll('[role="menu"], [data-host-surface], [data-auxiliary-portal]')]
-        .filter((node) => node.textContent?.includes('Edit Points'))).toHaveLength(0);
+      expect(
+        [
+          ...popoutDoc.querySelectorAll(
+            '[role="menu"], [data-host-surface], [data-auxiliary-portal]',
+          ),
+        ].filter((node) => node.textContent?.includes('Edit Points')),
+      ).toHaveLength(0);
     });
 
     it('keeps a MEASURED tooltip with long content inside the host viewport', async () => {
@@ -243,12 +286,18 @@ describe('EditableLineCanvas popups in a floated (popout) panel', () => {
       // Long formatted values make the real tooltip wider than the legacy
       // hard-coded 176px assumption; only a measured size can clamp it.
       act(() => {
-        svg.dispatchEvent(new MouseEvent('mousemove', {
-          bubbles: true, cancelable: true, clientX: 194, clientY: 98,
-        }));
+        svg.dispatchEvent(
+          new MouseEvent('mousemove', {
+            bubbles: true,
+            cancelable: true,
+            clientX: 194,
+            clientY: 98,
+          }),
+        );
       });
-      const tooltip = [...popoutDoc.querySelectorAll<HTMLElement>('.pointer-events-none, [data-host-surface]')]
-        .find((node) => node.textContent?.includes('x:'));
+      const tooltip = [
+        ...popoutDoc.querySelectorAll<HTMLElement>('.pointer-events-none, [data-host-surface]'),
+      ].find((node) => node.textContent?.includes('x:'));
       expect(tooltip).toBeTruthy();
       Object.defineProperty(tooltip!, 'offsetWidth', { configurable: true, get: () => 200 });
       Object.defineProperty(tooltip!, 'offsetHeight', { configurable: true, get: () => 44 });
@@ -263,19 +312,27 @@ describe('EditableLineCanvas popups in a floated (popout) panel', () => {
   });
 
   it('moves an open menu when the panel floats and leaves no remnants on unmount (SC-003)', async () => {
-    const menusEverywhere = () => [...popoutDoc.querySelectorAll('[data-host-surface], [role="menu"]')]
-      .concat([...secondPopoutDoc.querySelectorAll('[data-host-surface], [role="menu"]')])
-      .concat([...document.querySelectorAll('[data-host-surface], [role="menu"]')]);
+    const menusEverywhere = () =>
+      [...popoutDoc.querySelectorAll('[data-host-surface], [role="menu"]')]
+        .concat([...secondPopoutDoc.querySelectorAll('[data-host-surface], [role="menu"]')])
+        .concat([...document.querySelectorAll('[data-host-surface], [role="menu"]')]);
 
     act(() => {
-      svg.dispatchEvent(new MouseEvent('contextmenu', {
-        bubbles: true, cancelable: true, clientX: 100, clientY: 60,
-      }));
+      svg.dispatchEvent(
+        new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 100,
+          clientY: 60,
+        }),
+      );
     });
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
-    expect(menusEverywhere().filter((node) => node.textContent?.includes('Edit Points'))).toHaveLength(1);
+    expect(
+      menusEverywhere().filter((node) => node.textContent?.includes('Edit Points')),
+    ).toHaveLength(1);
 
     // Float: Dockview adopts the mounted DOM into a new window's document
     // without a React remount; the provider value swaps instead.
@@ -290,7 +347,9 @@ describe('EditableLineCanvas popups in a floated (popout) panel', () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
     // Exactly one menu, now hosted by the NEW document; no copy left behind.
-    const menuAfterFloat = menusEverywhere().filter((node) => node.textContent?.includes('Edit Points'));
+    const menuAfterFloat = menusEverywhere().filter((node) =>
+      node.textContent?.includes('Edit Points'),
+    );
     expect(menuAfterFloat).toHaveLength(1);
     expect(secondPopoutDoc.contains(menuAfterFloat[0])).toBe(true);
 
@@ -298,17 +357,28 @@ describe('EditableLineCanvas popups in a floated (popout) panel', () => {
     act(() => {
       popout.window.dispatchEvent(new PopoutKeyboardEvent('keydown', { key: 'Escape' }));
     });
-    expect(menusEverywhere().filter((node) => node.textContent?.includes('Edit Points'))).toHaveLength(1);
+    expect(
+      menusEverywhere().filter((node) => node.textContent?.includes('Edit Points')),
+    ).toHaveLength(1);
     act(() => {
-      secondPopout.window.dispatchEvent(new SecondPopoutKeyboardEvent('keydown', { key: 'Escape' }));
+      secondPopout.window.dispatchEvent(
+        new SecondPopoutKeyboardEvent('keydown', { key: 'Escape' }),
+      );
     });
-    expect(menusEverywhere().filter((node) => node.textContent?.includes('Edit Points'))).toHaveLength(0);
+    expect(
+      menusEverywhere().filter((node) => node.textContent?.includes('Edit Points')),
+    ).toHaveLength(0);
 
     // Unmounting the panel with a tooltip open leaves nothing anywhere.
     act(() => {
-      svg.dispatchEvent(new MouseEvent('mousemove', {
-        bubbles: true, cancelable: true, clientX: 194, clientY: 98,
-      }));
+      svg.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 194,
+          clientY: 98,
+        }),
+      );
     });
     act(() => root.unmount());
     expect(popoutDoc.querySelectorAll('[data-host-surface], [role="menu"]')).toHaveLength(0);

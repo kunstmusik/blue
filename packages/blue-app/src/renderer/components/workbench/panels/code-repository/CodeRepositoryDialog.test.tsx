@@ -39,14 +39,18 @@ async function openContextMenuForLabel(container: HTMLElement, label: string): P
   );
   expect(target).toBeTruthy();
   await act(async () => {
-    target!.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2 }));
+    target!.dispatchEvent(
+      new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2 }),
+    );
     await Promise.resolve();
   });
 }
 
 function findMenuItem(label: string): HTMLElement | undefined {
   return [...document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')]
-    .filter((item) => item.closest('.editor-context-menu')?.getAttribute('style')?.includes('pointer-events: auto'))
+    .filter((item) =>
+      item.closest('.editor-context-menu')?.getAttribute('style')?.includes('pointer-events: auto'),
+    )
     .reverse()
     .find((item) => item.textContent?.trim() === label);
 }
@@ -71,16 +75,24 @@ describe('CodeRepositoryDialog', () => {
     const onSave = vi.fn(async () => ({ ok: true as const }));
     act(() =>
       root.render(
-        <CodeRepositoryDialog snapshot={{ root: makeRoot(), contentRevision: 1 }} onClose={vi.fn()} onSave={onSave} />,
+        <CodeRepositoryDialog
+          snapshot={{ root: makeRoot(), contentRevision: 1 }}
+          onClose={vi.fn()}
+          onSave={onSave}
+        />,
       ),
     );
 
-    const label = [...container.querySelectorAll('span')].find((element) => element.textContent === 'Group');
+    const label = [...container.querySelectorAll('span')].find(
+      (element) => element.textContent === 'Group',
+    );
     expect(label).toBeTruthy();
     await act(async () => {
       label!.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
     });
-    const input = container.querySelector<HTMLInputElement>('input[aria-label="Rename code repository item"]');
+    const input = container.querySelector<HTMLInputElement>(
+      'input[aria-label="Rename code repository item"]',
+    );
     expect(input).toBeTruthy();
 
     await act(async () => {
@@ -100,19 +112,29 @@ describe('CodeRepositoryDialog', () => {
 
     act(() =>
       root.render(
-        <CodeRepositoryDialog snapshot={{ root: makeRoot(), contentRevision: 1 }} onClose={vi.fn()} onSave={onSave} />,
+        <CodeRepositoryDialog
+          snapshot={{ root: makeRoot(), contentRevision: 1 }}
+          onClose={vi.fn()}
+          onSave={onSave}
+        />,
       ),
     );
-    const secondLabel = [...container.querySelectorAll('span')].find((element) => element.textContent === 'Group');
+    const secondLabel = [...container.querySelectorAll('span')].find(
+      (element) => element.textContent === 'Group',
+    );
     await act(async () => {
       secondLabel!.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
     });
-    const blankInput = container.querySelector<HTMLInputElement>('input[aria-label="Rename code repository item"]')!;
+    const blankInput = container.querySelector<HTMLInputElement>(
+      'input[aria-label="Rename code repository item"]',
+    )!;
     await act(async () => {
       blankInput.value = '   ';
       blankInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
     });
-    expect(container.querySelector<HTMLInputElement>('input[aria-label="Rename code repository item"]')).toBeTruthy();
+    expect(
+      container.querySelector<HTMLInputElement>('input[aria-label="Rename code repository item"]'),
+    ).toBeTruthy();
   });
 
   it('resets an active draft when an import explicitly requests replacement', async () => {
@@ -136,7 +158,9 @@ describe('CodeRepositoryDialog', () => {
     await act(async () => {
       beforeLabel!.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
     });
-    const dirtyName = container.querySelector<HTMLInputElement>('input[aria-label="Rename code repository item"]')!;
+    const dirtyName = container.querySelector<HTMLInputElement>(
+      'input[aria-label="Rename code repository item"]',
+    )!;
     await act(async () => {
       dirtyName.value = 'Unsaved stale draft';
       dirtyName.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
@@ -262,17 +286,25 @@ describe('CodeRepositoryDialog', () => {
     expect(findMenuItem('Add Code Snippet')).toBeTruthy();
     expect(findMenuItem('Remove Group')).toBeTruthy();
     await act(async () => findMenuItem('Add Group')?.click());
-    expect([...container.querySelectorAll('span')].some((element) => element.textContent === 'New Group')).toBe(true);
+    expect(
+      [...container.querySelectorAll('span')].some(
+        (element) => element.textContent === 'New Group',
+      ),
+    ).toBe(true);
 
     await openContextMenuForLabel(container, 'Snippet');
     expect(findMenuItem('Remove Code Snippet')).toBeTruthy();
     expect(findMenuItem('Add Group')).toBeUndefined();
     await act(async () => findMenuItem('Remove Code Snippet')?.click());
-    expect([...container.querySelectorAll('span')].some((element) => element.textContent === 'Snippet')).toBe(false);
+    expect(
+      [...container.querySelectorAll('span')].some((element) => element.textContent === 'Snippet'),
+    ).toBe(false);
 
     await openContextMenuForLabel(container, 'Group');
     await act(async () => findMenuItem('Remove Group')?.click());
-    expect([...container.querySelectorAll('span')].some((element) => element.textContent === 'Group')).toBe(false);
+    expect(
+      [...container.querySelectorAll('span')].some((element) => element.textContent === 'Group'),
+    ).toBe(false);
     expect(container.textContent).not.toContain('+ Group');
     expect(container.textContent).not.toContain('+ Snippet');
   });
@@ -294,8 +326,9 @@ describe('CodeRepositoryDialog', () => {
       ),
     );
 
-    const retryButton = [...container.querySelectorAll<HTMLButtonElement>('button')]
-      .find((button) => button.textContent === 'Retry Migration');
+    const retryButton = [...container.querySelectorAll<HTMLButtonElement>('button')].find(
+      (button) => button.textContent === 'Retry Migration',
+    );
     expect(retryButton).toBeTruthy();
     await act(async () => retryButton!.click());
     expect(onRetry).toHaveBeenCalledOnce();
@@ -322,11 +355,15 @@ describe('CodeRepositoryDialog', () => {
         />,
       ),
     );
-    const label = [...container.querySelectorAll('span')].find((element) => element.textContent === 'Saved elsewhere')!;
+    const label = [...container.querySelectorAll('span')].find(
+      (element) => element.textContent === 'Saved elsewhere',
+    )!;
     await act(async () => {
       label.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
     });
-    const input = container.querySelector<HTMLInputElement>('input[aria-label="Rename code repository item"]')!;
+    const input = container.querySelector<HTMLInputElement>(
+      'input[aria-label="Rename code repository item"]',
+    )!;
     await act(async () => {
       input.value = 'Stale draft';
       input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));

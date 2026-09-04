@@ -19,18 +19,9 @@ import type { ProjectEditorSnapshot } from './project-editor';
 
 export type WorkbenchWindowRole = 'main' | 'floating';
 export type WorkbenchAuxiliaryEdge = 'left' | 'right' | 'bottom';
-export type WorkbenchPresentation =
-  | 'docked'
-  | 'floating'
-  | 'minimized'
-  | 'slideout'
-  | 'maximized';
+export type WorkbenchPresentation = 'docked' | 'floating' | 'minimized' | 'slideout' | 'maximized';
 export type WorkbenchRevealSource = 'window-menu' | 'shortcut' | 'programmatic';
-export type WorkbenchCloseSource =
-  | 'window-close'
-  | 'tab-close'
-  | 'reset-windows'
-  | 'dock';
+export type WorkbenchCloseSource = 'window-close' | 'tab-close' | 'reset-windows' | 'dock';
 export type WorkbenchPanelMode = 'editor' | 'properties' | 'output' | 'repl';
 export type WorkbenchRestoreDirection = 'left' | 'right' | 'above' | 'below';
 export type WorkbenchWindowDisplayState = 'normal' | 'maximized' | 'fullscreen';
@@ -96,14 +87,10 @@ export interface FloatingWorkbenchWindow {
 /* -------------------------------------------------------------------------- */
 
 export const WORKBENCH_WINDOW_REGISTER_CHANNEL = 'workbench-window:register';
-export const WORKBENCH_WINDOW_UPDATE_OWNERSHIP_CHANNEL =
-  'workbench-window:update-ownership';
-export const WORKBENCH_WINDOW_REVEAL_PANEL_CHANNEL =
-  'workbench-window:reveal-panel';
-export const WORKBENCH_WINDOW_REQUEST_CLOSE_CHANNEL =
-  'workbench-window:request-close';
-export const WORKBENCH_WINDOW_DOCK_GROUP_CHANNEL =
-  'workbench-window:dock-group';
+export const WORKBENCH_WINDOW_UPDATE_OWNERSHIP_CHANNEL = 'workbench-window:update-ownership';
+export const WORKBENCH_WINDOW_REVEAL_PANEL_CHANNEL = 'workbench-window:reveal-panel';
+export const WORKBENCH_WINDOW_REQUEST_CLOSE_CHANNEL = 'workbench-window:request-close';
+export const WORKBENCH_WINDOW_DOCK_GROUP_CHANNEL = 'workbench-window:dock-group';
 export const PROJECT_DOCUMENT_UPDATED_CHANNEL = 'project-document-updated';
 
 /* -------------------------------------------------------------------------- */
@@ -175,11 +162,7 @@ export interface ProjectDocumentUpdatedEvent {
 /* Validation helpers (browser-safe, pure)                                    */
 /* -------------------------------------------------------------------------- */
 
-const EDGE_VALUES: readonly WorkbenchAuxiliaryEdge[] = [
-  'left',
-  'right',
-  'bottom',
-];
+const EDGE_VALUES: readonly WorkbenchAuxiliaryEdge[] = ['left', 'right', 'bottom'];
 const PRESENTATION_VALUES: readonly WorkbenchPresentation[] = [
   'docked',
   'floating',
@@ -187,12 +170,7 @@ const PRESENTATION_VALUES: readonly WorkbenchPresentation[] = [
   'slideout',
   'maximized',
 ];
-const MODE_VALUES: readonly WorkbenchPanelMode[] = [
-  'editor',
-  'properties',
-  'output',
-  'repl',
-];
+const MODE_VALUES: readonly WorkbenchPanelMode[] = ['editor', 'properties', 'output', 'repl'];
 const RESTORE_DIRECTION_VALUES: readonly WorkbenchRestoreDirection[] = [
   'left',
   'right',
@@ -210,13 +188,8 @@ function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((v) => typeof v === 'string');
 }
 
-function isOneOf<T extends string>(
-  value: unknown,
-  allowed: readonly T[],
-): value is T {
-  return (
-    typeof value === 'string' && (allowed as readonly string[]).includes(value)
-  );
+function isOneOf<T extends string>(value: unknown, allowed: readonly T[]): value is T {
+  return typeof value === 'string' && (allowed as readonly string[]).includes(value);
 }
 
 /**
@@ -224,9 +197,7 @@ function isOneOf<T extends string>(
  * Required fields are `originMode`, `presentation`, and a string-array
  * `originPanelOrder`; all optional fields are type-checked when present.
  */
-export function isValidDockingOrigin(
-  candidate: unknown,
-): candidate is DockingOrigin {
+export function isValidDockingOrigin(candidate: unknown): candidate is DockingOrigin {
   if (!candidate || typeof candidate !== 'object') return false;
   const c = candidate as Partial<DockingOrigin>;
   if (!isOneOf(c.originMode, MODE_VALUES)) return false;
@@ -235,24 +206,14 @@ export function isValidDockingOrigin(
   if (c.originGroupId !== undefined && typeof c.originGroupId !== 'string') {
     return false;
   }
-  if (
-    c.originActivePanelId !== undefined &&
-    typeof c.originActivePanelId !== 'string'
-  ) {
+  if (c.originActivePanelId !== undefined && typeof c.originActivePanelId !== 'string') {
     return false;
   }
-  if (c.originIndex !== undefined && !isFiniteNumber(c.originIndex))
-    return false;
-  if (
-    c.restoreReferenceGroupId !== undefined &&
-    typeof c.restoreReferenceGroupId !== 'string'
-  ) {
+  if (c.originIndex !== undefined && !isFiniteNumber(c.originIndex)) return false;
+  if (c.restoreReferenceGroupId !== undefined && typeof c.restoreReferenceGroupId !== 'string') {
     return false;
   }
-  if (
-    c.restoreDirection !== undefined &&
-    !isOneOf(c.restoreDirection, RESTORE_DIRECTION_VALUES)
-  ) {
+  if (c.restoreDirection !== undefined && !isOneOf(c.restoreDirection, RESTORE_DIRECTION_VALUES)) {
     return false;
   }
   if (
@@ -262,10 +223,7 @@ export function isValidDockingOrigin(
   ) {
     return false;
   }
-  if (
-    c.auxiliaryGroupInstanceId !== undefined &&
-    typeof c.auxiliaryGroupInstanceId !== 'string'
-  ) {
+  if (c.auxiliaryGroupInstanceId !== undefined && typeof c.auxiliaryGroupInstanceId !== 'string') {
     return false;
   }
   if (c.edge !== undefined && !isOneOf(c.edge, EDGE_VALUES)) return false;
@@ -273,8 +231,7 @@ export function isValidDockingOrigin(
   if (c.slideoutSize !== undefined && !isFiniteNumber(c.slideoutSize)) {
     return false;
   }
-  if (c.capturedAt !== undefined && typeof c.capturedAt !== 'string')
-    return false;
+  if (c.capturedAt !== undefined && typeof c.capturedAt !== 'string') return false;
   return true;
 }
 
@@ -282,14 +239,10 @@ export function isValidDockingOrigin(
  * Normalizes an unknown persisted value into a clean `popoutGroupId -> DockingOrigin`
  * map, dropping any entries that fail {@link isValidDockingOrigin}.
  */
-export function normalizeFloatingOriginMap(
-  candidate: unknown,
-): Record<string, DockingOrigin> {
+export function normalizeFloatingOriginMap(candidate: unknown): Record<string, DockingOrigin> {
   const result: Record<string, DockingOrigin> = {};
   if (!candidate || typeof candidate !== 'object') return result;
-  for (const [key, value] of Object.entries(
-    candidate as Record<string, unknown>,
-  )) {
+  for (const [key, value] of Object.entries(candidate as Record<string, unknown>)) {
     if (isValidDockingOrigin(value)) {
       result[key] = value;
     }
@@ -312,12 +265,7 @@ export function isOnScreenBounds(
 }
 
 function rectanglesIntersect(a: WorkAreaRect, b: WorkAreaRect): boolean {
-  return (
-    a.x < b.x + b.width &&
-    a.x + a.width > b.x &&
-    a.y < b.y + b.height &&
-    a.y + a.height > b.y
-  );
+  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
 }
 
 /**
@@ -332,14 +280,8 @@ export function correctOffscreenBounds(
   options: { minimumSize?: number } = {},
 ): FloatingWindowBounds {
   const minimum = options.minimumSize ?? DEFAULT_FLOATING_WINDOW_MINIMUM_SIZE;
-  const width = Math.max(
-    isFiniteNumber(bounds.width) ? bounds.width : minimum,
-    minimum,
-  );
-  const height = Math.max(
-    isFiniteNumber(bounds.height) ? bounds.height : minimum,
-    minimum,
-  );
+  const width = Math.max(isFiniteNumber(bounds.width) ? bounds.width : minimum, minimum);
+  const height = Math.max(isFiniteNumber(bounds.height) ? bounds.height : minimum, minimum);
 
   if (!Array.isArray(workAreas) || workAreas.length === 0) {
     return {
@@ -353,11 +295,7 @@ export function correctOffscreenBounds(
   const baseX = isFiniteNumber(bounds.x) ? bounds.x : workAreas[0].x;
   const baseY = isFiniteNumber(bounds.y) ? bounds.y : workAreas[0].y;
 
-  if (
-    workAreas.some((area) =>
-      rectanglesIntersect({ x: baseX, y: baseY, width, height }, area),
-    )
-  ) {
+  if (workAreas.some((area) => rectanglesIntersect({ x: baseX, y: baseY, width, height }, area))) {
     return { x: baseX, y: baseY, width, height };
   }
 

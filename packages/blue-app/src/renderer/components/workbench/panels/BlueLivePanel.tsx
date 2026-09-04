@@ -16,11 +16,13 @@ export default function BlueLivePanel(): React.ReactElement {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <div style={{
-        display: 'flex',
-        borderBottom: '1px solid var(--color-app-border)',
-        background: 'var(--color-app-bg)',
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          borderBottom: '1px solid var(--color-app-border)',
+          background: 'var(--color-app-bg)',
+        }}
+      >
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -30,12 +32,18 @@ export default function BlueLivePanel(): React.ReactElement {
               padding: '6px 14px',
               border: 'none',
               background: activeTab === tab.id ? 'var(--color-app-surface-raised)' : undefined,
-              color: activeTab === tab.id ? 'var(--color-app-text-strong)' : 'var(--color-app-text-muted)',
+              color:
+                activeTab === tab.id
+                  ? 'var(--color-app-text-strong)'
+                  : 'var(--color-app-text-muted)',
               cursor: 'pointer',
               fontSize: 'var(--text-role-body)',
               lineHeight: 'var(--text-role-body--line-height)',
               fontWeight: activeTab === tab.id ? 600 : 400,
-              borderBottom: activeTab === tab.id ? '2px solid var(--color-app-focus)' : '2px solid var(--color-app-bg)',
+              borderBottom:
+                activeTab === tab.id
+                  ? '2px solid var(--color-app-focus)'
+                  : '2px solid var(--color-app-bg)',
             }}
           >
             {tab.label}

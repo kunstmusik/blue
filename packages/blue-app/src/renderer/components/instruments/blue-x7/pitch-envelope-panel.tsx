@@ -45,7 +45,12 @@ export const PitchEnvelopePanel: React.FC<PitchEnvelopePanelProps> = ({
     }
   }, [active]);
 
-  const handlePointChange = (stage: number, rateOrLevel: 'rate' | 'level', min: number, max: number) => {
+  const handlePointChange = (
+    stage: number,
+    rateOrLevel: 'rate' | 'level',
+    min: number,
+    max: number,
+  ) => {
     return (e: React.ChangeEvent<HTMLInputElement>) => {
       const val = parseInt(e.target.value, 10);
       if (!Number.isNaN(val)) {
@@ -55,7 +60,9 @@ export const PitchEnvelopePanel: React.FC<PitchEnvelopePanelProps> = ({
           ...currentPt,
           [rateOrLevel]: clamped,
         };
-        const nextEnvelope = localEnvelope.map((pt, i) => (i === stage ? nextPt : pt)) as typeof pitchEnvelope;
+        const nextEnvelope = localEnvelope.map((pt, i) =>
+          i === stage ? nextPt : pt,
+        ) as typeof pitchEnvelope;
         setLocalEnvelope(nextEnvelope);
         onApplyPatch(`Change Pitch Env ${rateOrLevel.toUpperCase()}${stage + 1} to ${clamped}`, {
           type: 'setPitchEnvelopePoint',
@@ -68,8 +75,8 @@ export const PitchEnvelopePanel: React.FC<PitchEnvelopePanelProps> = ({
 
   const handleStagePointChange = (stageIndex: number, point: BlueX7EnvelopePoint) => {
     activeDragRef.current = { stageIndex, point };
-    setLocalEnvelope((prev) =>
-      prev.map((pt, i) => (i === stageIndex ? point : pt)) as typeof pitchEnvelope,
+    setLocalEnvelope(
+      (prev) => prev.map((pt, i) => (i === stageIndex ? point : pt)) as typeof pitchEnvelope,
     );
   };
 
@@ -94,9 +101,14 @@ export const PitchEnvelopePanel: React.FC<PitchEnvelopePanelProps> = ({
   };
 
   return (
-    <div className="rounded border border-blue-border bg-blue-surface/40 p-3 space-y-4" data-testid="bluex7-peg-panel">
+    <div
+      className="rounded border border-blue-border bg-blue-surface/40 p-3 space-y-4"
+      data-testid="bluex7-peg-panel"
+    >
       <div className="flex items-center justify-between border-b border-blue-border pb-1">
-        <span className="text-role-headline font-bold text-gray-200 uppercase tracking-wider">Pitch Envelope Generator (PEG)</span>
+        <span className="text-role-headline font-bold text-gray-200 uppercase tracking-wider">
+          Pitch Envelope Generator (PEG)
+        </span>
       </div>
 
       {/* SVG Pitch Envelope Graph */}
@@ -119,18 +131,28 @@ export const PitchEnvelopePanel: React.FC<PitchEnvelopePanelProps> = ({
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[0, 1, 2, 3].map((stage) => {
             const pt = localEnvelope[stage] ?? { rate: 0, level: 0 };
-            const displayRate = gestureActiveRef.current && activeDragRef.current?.stageIndex === stage
-              ? pt.rate
-              : effectiveValues?.get(`pitchEnvelope.${stage + 1}.rate`) ?? pt.rate;
-            const displayLevel = gestureActiveRef.current && activeDragRef.current?.stageIndex === stage
-              ? pt.level
-              : effectiveValues?.get(`pitchEnvelope.${stage + 1}.level`) ?? pt.level;
+            const displayRate =
+              gestureActiveRef.current && activeDragRef.current?.stageIndex === stage
+                ? pt.rate
+                : (effectiveValues?.get(`pitchEnvelope.${stage + 1}.rate`) ?? pt.rate);
+            const displayLevel =
+              gestureActiveRef.current && activeDragRef.current?.stageIndex === stage
+                ? pt.level
+                : (effectiveValues?.get(`pitchEnvelope.${stage + 1}.level`) ?? pt.level);
             return (
-              <div key={stage} className="flex flex-col gap-1 rounded border border-blue-border/30 p-2 bg-blue-surface/20">
-                <span className="text-role-callout font-medium text-gray-400">Stage {stage + 1}</span>
+              <div
+                key={stage}
+                className="flex flex-col gap-1 rounded border border-blue-border/30 p-2 bg-blue-surface/20"
+              >
+                <span className="text-role-callout font-medium text-gray-400">
+                  Stage {stage + 1}
+                </span>
                 <div className="flex gap-2">
                   <div className="flex-1 flex flex-col gap-0.5">
-                    <label htmlFor={`bluex7-peg-r${stage + 1}`} className="text-role-callout text-blue-muted">
+                    <label
+                      htmlFor={`bluex7-peg-r${stage + 1}`}
+                      className="text-role-callout text-blue-muted"
+                    >
                       R{stage + 1}
                     </label>
                     <input
@@ -145,7 +167,10 @@ export const PitchEnvelopePanel: React.FC<PitchEnvelopePanelProps> = ({
                     />
                   </div>
                   <div className="flex-1 flex flex-col gap-0.5">
-                    <label htmlFor={`bluex7-peg-l${stage + 1}`} className="text-role-callout text-blue-muted">
+                    <label
+                      htmlFor={`bluex7-peg-l${stage + 1}`}
+                      className="text-role-callout text-blue-muted"
+                    >
                       L{stage + 1}
                     </label>
                     <input

@@ -6,11 +6,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import MixerPanel from '../components/workbench/panels/MixerPanel';
-import type {
-  EffectEditorRequest,
-  MixerPatch,
-  MixerSnapshot,
-} from '../../shared/project-editor';
+import type { EffectEditorRequest, MixerPatch, MixerSnapshot } from '../../shared/project-editor';
 
 declare global {
   interface Window {
@@ -22,7 +18,9 @@ declare global {
   }
 }
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 interface MockProjectState {
   loaded: boolean;

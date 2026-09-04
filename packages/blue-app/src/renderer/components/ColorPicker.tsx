@@ -22,8 +22,18 @@ import {
 export type { ColorPickerAnchorRect } from './color-picker-utils';
 
 const PRESET_COLORS = [
-  '#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#3b82f6',
-  '#8b5cf6', '#ec4899', '#ffffff', '#94a3b8', '#475569', '#111827',
+  '#ef4444',
+  '#f97316',
+  '#eab308',
+  '#22c55e',
+  '#06b6d4',
+  '#3b82f6',
+  '#8b5cf6',
+  '#ec4899',
+  '#ffffff',
+  '#94a3b8',
+  '#475569',
+  '#111827',
 ];
 
 function PresetPalette({ onChange }: { onChange: (value: string) => void }): ReactElement {
@@ -57,7 +67,9 @@ function ColorSlider({
   last?: boolean;
 }): ReactElement {
   return (
-    <label className={cn(last ? 'mb-3' : 'mb-2', 'grid grid-cols-[54px_1fr_34px] items-center gap-2')}>
+    <label
+      className={cn(last ? 'mb-3' : 'mb-2', 'grid grid-cols-[54px_1fr_34px] items-center gap-2')}
+    >
       <span>{label}</span>
       <input
         aria-label={label}
@@ -108,8 +120,7 @@ export function ColorPickerPopover({
   // anchor's own document is authoritative; the panel-provided host document
   // is the fallback. Node/SSR environments have no document: render nothing.
   const contextHostDocument = useHostDocument({ fallbackToGlobal: true });
-  const popoverDocument: Document | null = anchorElement?.ownerDocument
-    ?? contextHostDocument;
+  const popoverDocument: Document | null = anchorElement?.ownerDocument ?? contextHostDocument;
 
   // Canvas callers pass `anchorHitTarget === null`: the whole timeline must
   // NOT count as inside the picker, so a plain rect anchor positions the
@@ -119,14 +130,20 @@ export function ColorPickerPopover({
   const rectAnchor = anchor
     ? {
         type: 'rect' as const,
-        getRect: () => ({ left: anchor.left, top: anchor.top, right: anchor.right, bottom: anchor.bottom }),
+        getRect: () => ({
+          left: anchor.left,
+          top: anchor.top,
+          right: anchor.right,
+          bottom: anchor.bottom,
+        }),
       }
     : null;
-  const surfaceAnchor = open && anchorHitTarget !== null && anchorElement
-    ? { type: 'element' as const, element: anchorElement }
-    : open && rectAnchor
-      ? rectAnchor
-      : null;
+  const surfaceAnchor =
+    open && anchorHitTarget !== null && anchorElement
+      ? { type: 'element' as const, element: anchorElement }
+      : open && rectAnchor
+        ? rectAnchor
+        : null;
   const surface = useHostSurface(surfaceAnchor, {
     kind: 'popover',
     gap: COLOR_PICKER_MARGIN,
@@ -150,11 +167,25 @@ export function ColorPickerPopover({
       ariaLabel="Color picker"
       className="z-[10000] w-60 rounded-md border border-app-border bg-app-menu p-3 text-role-body text-app-text shadow-xl"
     >
-      <div className="mb-3 h-9 rounded border border-app-border" style={{ backgroundColor: normalizedValue }} />
+      <div
+        className="mb-3 h-9 rounded border border-app-border"
+        style={{ backgroundColor: normalizedValue }}
+      />
       <PresetPalette onChange={onChange} />
       <ColorSlider label="Hue" value={hsl.h} maximum={359} onChange={(h) => updateHsl({ h })} />
-      <ColorSlider label="Saturation" value={hsl.s} maximum={100} onChange={(s) => updateHsl({ s })} />
-      <ColorSlider label="Lightness" value={hsl.l} maximum={100} onChange={(l) => updateHsl({ l })} last />
+      <ColorSlider
+        label="Saturation"
+        value={hsl.s}
+        maximum={100}
+        onChange={(s) => updateHsl({ s })}
+      />
+      <ColorSlider
+        label="Lightness"
+        value={hsl.l}
+        maximum={100}
+        onChange={(l) => updateHsl({ l })}
+        last
+      />
       <label className="flex items-center gap-2">
         <span>Hex</span>
         <input
@@ -200,16 +231,24 @@ export default function ColorPickerButton({
   const initialValueRef = useRef<string | null>(null);
   const latestValueRef = useRef<string | null>(null);
 
-  const handleChange = useCallback((nextValue: string) => {
-    latestValueRef.current = nextValue;
-    onChange(nextValue);
-  }, [onChange]);
+  const handleChange = useCallback(
+    (nextValue: string) => {
+      latestValueRef.current = nextValue;
+      onChange(nextValue);
+    },
+    [onChange],
+  );
 
   const close = useCallback(() => {
     setOpen(false);
     const initial = initialValueRef.current;
     const final = latestValueRef.current ?? value;
-    if (onGestureComplete && initial !== null && final !== null && normalizeHex(initial) !== normalizeHex(final)) {
+    if (
+      onGestureComplete &&
+      initial !== null &&
+      final !== null &&
+      normalizeHex(initial) !== normalizeHex(final)
+    ) {
       onGestureComplete({ initialValue: initial, finalValue: final });
     }
   }, [onGestureComplete, value]);

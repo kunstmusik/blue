@@ -106,12 +106,12 @@ describe('PatternObject', () => {
       starts.push(nl.getNote(i).getStartTime());
     }
     starts.sort((a, b) => a - b);
-    expect(starts[0]).toBeCloseTo(0.0, 4);    // step 0
-    expect(starts[1]).toBeCloseTo(0.5, 4);    // step 2
-    expect(starts[2]).toBeCloseTo(1.25, 4);   // step 5
-    expect(starts[3]).toBeCloseTo(2.0, 4);    // step 8
-    expect(starts[4]).toBeCloseTo(2.5, 4);    // step 10
-    expect(starts[5]).toBeCloseTo(3.25, 4);   // step 13
+    expect(starts[0]).toBeCloseTo(0.0, 4); // step 0
+    expect(starts[1]).toBeCloseTo(0.5, 4); // step 2
+    expect(starts[2]).toBeCloseTo(1.25, 4); // step 5
+    expect(starts[3]).toBeCloseTo(2.0, 4); // step 8
+    expect(starts[4]).toBeCloseTo(2.5, 4); // step 10
+    expect(starts[5]).toBeCloseTo(3.25, 4); // step 13
   });
 
   it('testGenerateForCSDDualPattern', () => {

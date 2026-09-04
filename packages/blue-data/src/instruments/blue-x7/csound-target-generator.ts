@@ -13,10 +13,7 @@
  * This module is browser-safe. It accepts resolved symbols/literals and does
  * not know about Electron, Csound hosts, or project ownership.
  */
-import {
-  BLUE_X7_PARAMETER_DESCRIPTORS,
-  type BlueX7ParameterDescriptor,
-} from './parameter-catalog';
+import { BLUE_X7_PARAMETER_DESCRIPTORS, type BlueX7ParameterDescriptor } from './parameter-catalog';
 import { BLUE_X7_MODERN_ORCHESTRA } from './modern-orchestra.generated';
 
 export type BlueX7TargetLayout = 'udo' | 'inline';
@@ -153,11 +150,13 @@ function groupedActiveDescriptors(
 }
 
 function isInlineScalarLiveDescriptor(descriptor: BlueX7ParameterDescriptor): boolean {
-  return descriptor.key === 'common.feedback'
-    || descriptor.key === 'lfo.pitchModulationDepth'
-    || descriptor.key === 'lfo.amplitudeModulationDepth'
-    || /^operator\.[1-6]\.outputLevel$/.test(descriptor.key)
-    || /^operator\.[1-6]\.enabled$/.test(descriptor.key);
+  return (
+    descriptor.key === 'common.feedback' ||
+    descriptor.key === 'lfo.pitchModulationDepth' ||
+    descriptor.key === 'lfo.amplitudeModulationDepth' ||
+    /^operator\.[1-6]\.outputLevel$/.test(descriptor.key) ||
+    /^operator\.[1-6]\.enabled$/.test(descriptor.key)
+  );
 }
 
 function replaceInlineLiveAdaptation(body: string, replacement: string): string {
@@ -209,9 +208,7 @@ function inlineScalarLiveAdaptation(
     lines.push(`    kPmd = ${pmd}`);
   }
   if (amd) {
-    lines.push(
-      `    kAmdPeak = 52.75 * (exp(0.0429 * ${amd}) - 1) / (exp(0.0429 * 99) - 1)`,
-    );
+    lines.push(`    kAmdPeak = 52.75 * (exp(0.0429 * ${amd}) - 1) / (exp(0.0429 * 99) - 1)`);
   }
 
   for (let operator = 1; operator <= 6; operator += 1) {
@@ -255,9 +252,7 @@ function inlineScalarLiveAdaptation(
     lines.push(`    ${liveMaskLocalName} = ${liveMask}`);
     for (let operator = 1; operator <= 6; operator += 1) {
       const index = operator - 1;
-      lines.push(
-        `    kEnabled[${index}] = int(${liveMaskLocalName} / (2 ^ ${index})) % 2`,
-      );
+      lines.push(`    kEnabled[${index}] = int(${liveMaskLocalName} / (2 ^ ${index})) % 2`);
     }
   }
 
@@ -474,18 +469,16 @@ export function generateBlueX7Target(options: BlueX7TargetOptions): string {
     // a fallback branch: `common.algorithm` is a next-note parameter, so a
     // runtime channel edit must re-topologize notes that start after the
     // edit even though they run inside this generated instance.
-    const algorithmIndex = Number.isInteger(options.voice[134])
-      ? options.voice[134]
-      : Number.NaN;
+    const algorithmIndex = Number.isInteger(options.voice[134]) ? options.voice[134] : Number.NaN;
     if (algorithmIndex >= 0 && algorithmIndex <= 31) {
       const algorithmOpcode = `dx7_algo_${String(algorithmIndex + 1).padStart(2, '0')}`;
       inline = inline.replace(
         'aOut = dx7_render_algorithm(iAlgo, kGain, kDph, iPh0A, kFbAmt)',
-        `if iAlgo == ${algorithmIndex} then\n`
-          + `      aOut = ${algorithmOpcode}(kGain, kDph, iPh0A, kFbAmt)\n`
-          + '    else\n'
-          + '      aOut = dx7_render_algorithm(iAlgo, kGain, kDph, iPh0A, kFbAmt)\n'
-          + '    endif',
+        `if iAlgo == ${algorithmIndex} then\n` +
+          `      aOut = ${algorithmOpcode}(kGain, kDph, iPh0A, kFbAmt)\n` +
+          '    else\n' +
+          '      aOut = dx7_render_algorithm(iAlgo, kGain, kDph, iPh0A, kFbAmt)\n' +
+          '    endif',
       );
       if (!inline.includes('dx7_render_algorithm(iAlgo')) {
         throw new Error('BlueX7 inline body lost the algorithm dispatcher fallback');
@@ -494,35 +487,29 @@ export function generateBlueX7Target(options: BlueX7TargetOptions): string {
     if (inlineScalarState && map) {
       inline = replaceInlineLiveAdaptation(
         inline,
-        inlineScalarLiveAdaptation(
-          map,
-          active,
-          dirtyName,
-          liveOutputSeenName,
-          staticMask,
-          prefix,
-        ),
+        inlineScalarLiveAdaptation(map, active, dirtyName, liveOutputSeenName, staticMask, prefix),
       );
     }
     inline = inline
-      .replace(/\bkLiveVoice\[(\d+)\]/g, (_match, slotText: string) => (
-        inlineLiveVoiceExpression(Number(slotText), map, voiceName)
-      ))
-      .replace(/\bkLiveVoice\[kio \+ (\d+)\]/g, (_match, offsetText: string) => (
-        map
-          ? `${liveOperatorStateName}[kio + ${offsetText}]`
-          : `${voiceName}[kio + ${offsetText}]`
-      ))
-      .replace(/\bkLiveVoice\[130 \+ kPegIx\]/g, map
-        ? `${livePegLevelName}[kPegIx]`
-        : `${voiceName}[130 + kPegIx]`)
-      .replace(/\bkLiveVoice\[126 \+ kPegIx\]/g, map
-        ? `${livePegRateName}[kPegIx]`
-        : `${voiceName}[126 + kPegIx]`)
+      .replace(/\bkLiveVoice\[(\d+)\]/g, (_match, slotText: string) =>
+        inlineLiveVoiceExpression(Number(slotText), map, voiceName),
+      )
+      .replace(/\bkLiveVoice\[kio \+ (\d+)\]/g, (_match, offsetText: string) =>
+        map ? `${liveOperatorStateName}[kio + ${offsetText}]` : `${voiceName}[kio + ${offsetText}]`,
+      )
+      .replace(
+        /\bkLiveVoice\[130 \+ kPegIx\]/g,
+        map ? `${livePegLevelName}[kPegIx]` : `${voiceName}[130 + kPegIx]`,
+      )
+      .replace(
+        /\bkLiveVoice\[126 \+ kPegIx\]/g,
+        map ? `${livePegRateName}[kPegIx]` : `${voiceName}[126 + kPegIx]`,
+      )
       .replace(/\bkLiveMask\b/g, liveMaskExpression)
-      .replace(/\bkLiveVoice\b/g, map
-        ? (needsInlineLiveState ? liveOperatorStateName : voiceName)
-        : voiceName)
+      .replace(
+        /\bkLiveVoice\b/g,
+        map ? (needsInlineLiveState ? liveOperatorStateName : voiceName) : voiceName,
+      )
       .replace(/\biMidiNote\b/g, midiName)
       .replace(/\biVelocity\b/g, 'i(p5)')
       .replace(/\biVoice\b/g, voiceName)

@@ -6,7 +6,7 @@ export default function TablesPanel(): React.ReactElement {
   const tablesText = useProjectStore((s) => s.tablesText);
   const loaded = useProjectStore((s) => s.loaded);
   const updateTablesText = useProjectStore((s) => s.updateTablesText);
-  const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>( null);
+  const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleChange = useCallback(
     (value: string) => {

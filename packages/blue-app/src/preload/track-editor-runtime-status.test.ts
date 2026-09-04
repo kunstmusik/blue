@@ -53,17 +53,17 @@ async function loadBridge(): Promise<RuntimeStatusBridge> {
   vi.resetModules();
   electronMock.contextBridge.exposeInMainWorld.mockClear();
   await import('./preload');
-  const bridge = electronMock.contextBridge.exposeInMainWorld.mock.calls
-    .find(([name]) => name === 'blueAPI')?.[1] as RuntimeStatusBridge | undefined;
+  const bridge = electronMock.contextBridge.exposeInMainWorld.mock.calls.find(
+    ([name]) => name === 'blueAPI',
+  )?.[1] as RuntimeStatusBridge | undefined;
   if (!bridge) throw new Error('blueAPI bridge was not exposed');
   return bridge;
 }
 
 function getEventHandler(): ((event: unknown, payload: unknown) => void) | undefined {
-  return electronMock.ipcRenderer.on.mock.calls
-    .find(([channel]) => channel === TRACK_INSTRUMENT_RUNTIME_STATUS_CHANGED_CHANNEL)?.[1] as
-    | ((event: unknown, payload: unknown) => void)
-    | undefined;
+  return electronMock.ipcRenderer.on.mock.calls.find(
+    ([channel]) => channel === TRACK_INSTRUMENT_RUNTIME_STATUS_CHANGED_CHANNEL,
+  )?.[1] as ((event: unknown, payload: unknown) => void) | undefined;
 }
 
 describe('Track editor runtime status preload surface', () => {
@@ -122,11 +122,13 @@ describe('Track editor runtime status preload surface', () => {
 
     handler?.({}, { sequence: 2, playbackRunning: true, blueLiveRunning: 'yes' });
     handler?.({}, { sequence: 2, playbackRunning: true, blueLiveRunning: true });
-    expect(observed).toEqual([{
-      sequence: 2,
-      playbackRunning: true,
-      blueLiveRunning: true,
-    }]);
+    expect(observed).toEqual([
+      {
+        sequence: 2,
+        playbackRunning: true,
+        blueLiveRunning: true,
+      },
+    ]);
 
     await subscription?.unsubscribe();
     await subscription?.unsubscribe();
@@ -146,12 +148,16 @@ describe('Track editor runtime status preload surface', () => {
     const bridge = await loadBridge();
     electronMock.ipcRenderer.invoke.mockRejectedValueOnce(new Error('host closed'));
 
-    await expect(bridge.subscribeTrackInstrumentRuntimeStatus(request, () => undefined))
-      .rejects.toThrow('host closed');
+    await expect(
+      bridge.subscribeTrackInstrumentRuntimeStatus(request, () => undefined),
+    ).rejects.toThrow('host closed');
     expect(electronMock.ipcRenderer.removeListener).toHaveBeenCalledTimes(1);
 
     electronMock.ipcRenderer.invoke.mockResolvedValueOnce(inactiveStatus);
-    const subscription = await bridge.subscribeTrackInstrumentRuntimeStatus(request, () => undefined);
+    const subscription = await bridge.subscribeTrackInstrumentRuntimeStatus(
+      request,
+      () => undefined,
+    );
     electronMock.ipcRenderer.invoke.mockRejectedValueOnce(new Error('sender gone'));
     await expect(subscription?.unsubscribe()).resolves.toBeUndefined();
     expect(electronMock.ipcRenderer.removeListener).toHaveBeenCalledTimes(2);

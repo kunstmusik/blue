@@ -19,7 +19,7 @@ export default function FrozenSoundObjectBar({
   const barHeight = rowHeight;
   const showText = barHeight >= 20;
   const rgb = FROZEN_NORMAL_RGB;
-  const selectedRgb = selectedBaseColor((0xFF << 24) | rgb);
+  const selectedRgb = selectedBaseColor((0xff << 24) | rgb);
   const fg = selected ? '#ffffff' : '#000000';
   const waveColor = rgbToCSS(darken(rgb, 0.5));
 
@@ -27,7 +27,7 @@ export default function FrozenSoundObjectBar({
   let headerBg: string | null = null;
   if (selected) {
     barBg = rgbToCSS(selectedRgb);
-    headerBg = selectedHeaderColor((0xFF << 24) | rgb);
+    headerBg = selectedHeaderColor((0xff << 24) | rgb);
   } else {
     barBg = rgbToCSS(rgb);
   }
@@ -81,7 +81,16 @@ export default function FrozenSoundObjectBar({
         />
       )}
       {headerBg && (
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 16, backgroundColor: headerBg }} />
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 16,
+            backgroundColor: headerBg,
+          }}
+        />
       )}
       {br.waveformKey && (
         <WaveformBody
@@ -94,11 +103,7 @@ export default function FrozenSoundObjectBar({
           color={waveColor}
         />
       )}
-      <LabelText
-        labelLines={br.labelLines}
-        color={fg}
-        show={showText}
-      />
+      <LabelText labelLines={br.labelLines} color={fg} show={showText} />
     </div>
   );
 }

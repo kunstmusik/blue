@@ -63,7 +63,11 @@ test('the app has a build edge but no runtime JavaScript import of the native pa
   const offenders = [];
   for (const file of files) {
     const text = await readFile(file, 'utf8');
-    if (/from\s+['"]@blue\/engine-native|import\s*\(\s*['"]@blue\/engine-native|require\s*\(\s*['"]@blue\/engine-native/.test(text)) {
+    if (
+      /from\s+['"]@blue\/engine-native|import\s*\(\s*['"]@blue\/engine-native|require\s*\(\s*['"]@blue\/engine-native/.test(
+        text,
+      )
+    ) {
       offenders.push(file);
     }
   }

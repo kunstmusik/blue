@@ -7,8 +7,7 @@ import {
   terminateJavaRuntimeProcess,
 } from './java-runtime-process';
 
-class MockStream extends EventEmitter {
-}
+class MockStream extends EventEmitter {}
 
 class MockChildProcess extends EventEmitter {
   stdout = new MockStream();
@@ -48,12 +47,10 @@ describe('java-runtime-process', () => {
       'java',
       {
         spawnProcess: spawnProcess as any,
-        reservePort: vi.fn()
-          .mockResolvedValueOnce(5555)
-          .mockResolvedValueOnce(5556),
+        reservePort: vi.fn().mockResolvedValueOnce(5555).mockResolvedValueOnce(5556),
         createAuthToken: () => 'secret',
         existsSync: () => true,
-        statSync: () => ({ isDirectory: () => true } as any),
+        statSync: () => ({ isDirectory: () => true }) as any,
       },
     );
 
@@ -81,18 +78,11 @@ describe('java-runtime-process', () => {
 
   it('caps retained helper stdout and stderr text', async () => {
     const child = new MockChildProcess();
-    const handle = await createJavaRuntimeProcess(
-      '/helper.jar',
-      null,
-      'java',
-      {
-        spawnProcess: vi.fn(() => child as any) as any,
-        reservePort: vi.fn()
-          .mockResolvedValueOnce(5555)
-          .mockResolvedValueOnce(5556),
-        createAuthToken: () => 'secret',
-      },
-    );
+    const handle = await createJavaRuntimeProcess('/helper.jar', null, 'java', {
+      spawnProcess: vi.fn(() => child as any) as any,
+      reservePort: vi.fn().mockResolvedValueOnce(5555).mockResolvedValueOnce(5556),
+      createAuthToken: () => 'secret',
+    });
 
     child.stdout.emit('data', 'a'.repeat(1024 * 1024 + 100));
     child.stderr.emit('data', 'b'.repeat(1024 * 1024 + 100));

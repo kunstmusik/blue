@@ -1,10 +1,5 @@
 import type { PointerEvent as ReactPointerEvent } from 'react';
-import {
-  PanelBottomOpen,
-  PanelLeftOpen,
-  PanelRightOpen,
-  X,
-} from 'lucide-react';
+import { PanelBottomOpen, PanelLeftOpen, PanelRightOpen, X } from 'lucide-react';
 import type { AuxiliarySlideoutView } from './auxiliary-layout';
 import { getAuxiliaryRailLabel } from './auxiliary-layout';
 import { getPanel } from './panel-registry';
@@ -47,9 +42,7 @@ export default function AuxiliarySlideout({
   const title = descriptor?.title ?? getAuxiliaryRailLabel(slideout.panelId);
 
   const style =
-    slideout.edge === 'bottom'
-      ? { height: `${slideout.size}px` }
-      : { width: `${slideout.size}px` };
+    slideout.edge === 'bottom' ? { height: `${slideout.size}px` } : { width: `${slideout.size}px` };
 
   function handleResizeStart(event: ReactPointerEvent<HTMLDivElement>) {
     event.preventDefault();
@@ -84,10 +77,7 @@ export default function AuxiliarySlideout({
 
   return (
     <section
-      className={cn(
-        'workbench-aux-slideout',
-        `workbench-aux-slideout--${slideout.edge}`
-      )}
+      className={cn('workbench-aux-slideout', `workbench-aux-slideout--${slideout.edge}`)}
       style={style}
       data-auxiliary-slideout="true"
       aria-label={`${title} slideout`}
@@ -95,7 +85,7 @@ export default function AuxiliarySlideout({
       <div
         className={cn(
           'workbench-aux-slideout__resize-handle',
-          `workbench-aux-slideout__resize-handle--${slideout.edge}`
+          `workbench-aux-slideout__resize-handle--${slideout.edge}`,
         )}
         onPointerDown={handleResizeStart}
       />
@@ -141,4 +131,3 @@ export default function AuxiliarySlideout({
     </section>
   );
 }
-

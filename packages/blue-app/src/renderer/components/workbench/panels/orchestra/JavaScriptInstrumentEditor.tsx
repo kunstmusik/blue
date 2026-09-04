@@ -44,7 +44,7 @@ export default function JavaScriptInstrumentEditor({
               'border-b-2 px-3 py-2 text-role-body',
               activeTab === tab.key
                 ? 'border-blue-accent text-app-text-strong'
-                : 'border-transparent text-blue-muted hover:text-app-text-strong'
+                : 'border-transparent text-blue-muted hover:text-app-text-strong',
             )}
             onClick={() => setActiveTab(tab.key)}
           >
@@ -58,7 +58,9 @@ export default function JavaScriptInstrumentEditor({
           return (
             <div
               key={tab.key}
-              className={isActive ? 'relative h-full p-3' : 'pointer-events-none absolute inset-0 p-3'}
+              className={
+                isActive ? 'relative h-full p-3' : 'pointer-events-none absolute inset-0 p-3'
+              }
               aria-hidden={!isActive}
               style={{ visibility: isActive ? 'visible' : 'hidden' }}
             >
@@ -88,9 +90,7 @@ export default function JavaScriptInstrumentEditor({
                   }
                   onChange={(nextValue) =>
                     void onInstrumentPatch(
-                      tab.key === 'globalOrc'
-                        ? { globalOrc: nextValue }
-                        : { globalSco: nextValue },
+                      tab.key === 'globalOrc' ? { globalOrc: nextValue } : { globalSco: nextValue },
                     )
                   }
                 />

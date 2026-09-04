@@ -8,48 +8,45 @@
  *
  * Loading/saving is done via XML strings compatible with the Java .blue file format.
  */
-import { Element } from "./serialization/xml-reader";
-import { ObjRefSaveMap, ObjRefLoadMap } from "./serialization/obj-ref-map";
-import { UpgradeManager } from "./migration/upgrade-manager";
-import { BLUE_VERSION } from "./blue-constants";
-import { Arrangement } from "./arrangement";
-import { ProjectProperties } from "./project-properties";
-import { SoundObjectLibrary } from "./sound-objects/sound-object-library";
-import { GlobalOrcSco } from "./global-orc-sco";
-import { Tables } from "./tables";
-import { LiveData } from "./live-data";
-import { Score } from "./score/score";
-import { ScratchPadData } from "./scratch-pad-data";
-import { NoteProcessorChainMap } from "./note-processors/note-processor-chain-map";
-import { MarkersList } from "./markers-list";
-import { MidiInputProcessor } from "./midi/midi-input-processor";
-import { InstrumentLibrary } from "./instruments/instrument-library";
-import { Instrument } from "./instruments/instrument";
-import { GenericInstrument } from "./instruments/generic-instrument";
-import { CompileData } from "./compile-data";
-import type { CompiledMidiInstrumentTarget } from "./compile-data";
-import { BlueDataObject } from "./blue-data-object";
-import { NoteList } from "./sound-objects/note-list";
-import { Note } from "./sound-objects/note";
-import { Mixer } from "./mixer/mixer";
-import { OpcodeList } from "./opcodes/opcode-list";
-import { OpcodeDefinition } from "./opcodes/opcode-definition";
-import {
-  getAllParameters,
-  assignParameterNames,
-} from "./automation/parameter-helper";
-import { Parameter } from "./automation/parameter";
+import { Element } from './serialization/xml-reader';
+import { ObjRefSaveMap, ObjRefLoadMap } from './serialization/obj-ref-map';
+import { UpgradeManager } from './migration/upgrade-manager';
+import { BLUE_VERSION } from './blue-constants';
+import { Arrangement } from './arrangement';
+import { ProjectProperties } from './project-properties';
+import { SoundObjectLibrary } from './sound-objects/sound-object-library';
+import { GlobalOrcSco } from './global-orc-sco';
+import { Tables } from './tables';
+import { LiveData } from './live-data';
+import { Score } from './score/score';
+import { ScratchPadData } from './scratch-pad-data';
+import { NoteProcessorChainMap } from './note-processors/note-processor-chain-map';
+import { MarkersList } from './markers-list';
+import { MidiInputProcessor } from './midi/midi-input-processor';
+import { InstrumentLibrary } from './instruments/instrument-library';
+import { Instrument } from './instruments/instrument';
+import { GenericInstrument } from './instruments/generic-instrument';
+import { CompileData } from './compile-data';
+import type { CompiledMidiInstrumentTarget } from './compile-data';
+import { BlueDataObject } from './blue-data-object';
+import { NoteList } from './sound-objects/note-list';
+import { Note } from './sound-objects/note';
+import { Mixer } from './mixer/mixer';
+import { OpcodeList } from './opcodes/opcode-list';
+import { OpcodeDefinition } from './opcodes/opcode-definition';
+import { getAllParameters, assignParameterNames } from './automation/parameter-helper';
+import { Parameter } from './automation/parameter';
 import {
   appendParameterScoreJava,
   getParameterInstrumentTextJava,
 } from './automation/csd-parameter-automation';
-import { BSBCompilationUnit } from "./instruments/blue-synth-builder/bsb-compilation-unit";
-import { Effect } from "./mixer/effect";
-import { EffectsChain } from "./mixer/effects-chain";
-import { Channel } from "./mixer/channel";
-import { Send } from "./mixer/send";
-import { UDOStyle } from "./opcodes/udo-style";
-import { formatBlueNumber, formatJavaDouble } from "./utilities/number-format";
+import { BSBCompilationUnit } from './instruments/blue-synth-builder/bsb-compilation-unit';
+import { Effect } from './mixer/effect';
+import { EffectsChain } from './mixer/effects-chain';
+import { Channel } from './mixer/channel';
+import { Send } from './mixer/send';
+import { UDOStyle } from './opcodes/udo-style';
+import { formatBlueNumber, formatJavaDouble } from './utilities/number-format';
 import { disposeJavaScriptCompileState, setJavaScriptSession } from './javascript-runtime';
 import type { JavaScriptSession } from './javascript-runtime';
 import { setJavaRuntimeClient, type JavaRuntimeClientContract } from './java-runtime';
@@ -58,9 +55,9 @@ import {
   loadClojureProjectDataFromPluginData,
   replaceClojureProjectDataInPluginData,
 } from './plugins/clojure-project-data';
-import { parseUDOText } from "./opcodes/udo-utilities";
-import { TimeContext } from "./time/time-context";
-import { TempoMap } from "./time/tempo-map";
+import { parseUDOText } from './opcodes/udo-utilities';
+import { TimeContext } from './time/time-context';
+import { TempoMap } from './time/tempo-map';
 import { ClojureObject } from './sound-objects/clojure-object';
 import { Instance } from './sound-objects/instance';
 import { JavaScriptObject } from './sound-objects/javascript-object';
@@ -77,24 +74,19 @@ import {
   preprocessSco,
   getTempoScore,
   getTempoMapFromScoreText,
-} from "./utilities/csd-render";
-import { getNotes } from "./utilities/score";
-import "./sound-objects/register-sound-object-types";
+} from './utilities/csd-render';
+import { getNotes } from './utilities/score';
+import './sound-objects/register-sound-object-types';
 
-import { loadFromString, saveAsXML, saveToString } from "./blue-data/xml-policy";
+import { loadFromString, saveAsXML, saveToString } from './blue-data/xml-policy';
 import {
   buildStandardCSD,
   buildStandardCSDAsync,
   buildScoreText,
   toBlueLiveCSD,
-} from "./blue-data/csd-policy";
-import type { RenderCsdResult } from "./blue-data/csd-policy";
-import {
-  processOnLoad,
-  processOnLoadAsync,
-  usesJavaRuntime,
-} from "./blue-data/runtime-policy";
-
+} from './blue-data/csd-policy';
+import type { RenderCsdResult } from './blue-data/csd-policy';
+import { processOnLoad, processOnLoadAsync, usesJavaRuntime } from './blue-data/runtime-policy';
 
 export class BlueData implements BlueDataObject {
   // Version
@@ -126,9 +118,9 @@ export class BlueData implements BlueDataObject {
 
   constructor() {
     // Wire projectProperties into score.timeContext (Java parity)
-    this.score.getTimeContext().setSampleRate(
-      parseInt(this.projectProperties.sampleRate, 10) || 44100
-    );
+    this.score
+      .getTimeContext()
+      .setSampleRate(parseInt(this.projectProperties.sampleRate, 10) || 44100);
   }
 
   // ─── Accessors ───
@@ -271,14 +263,10 @@ export class BlueData implements BlueDataObject {
   }
 
   setClojureProjectData(projectData: ClojureProjectData | null): void {
-    this.pluginDataXml = replaceClojureProjectDataInPluginData(
-      this.pluginDataXml,
-      projectData,
-    );
+    this.pluginDataXml = replaceClojureProjectDataInPluginData(this.pluginDataXml, projectData);
   }
 
   // ─── Loading ───
-
 
   static loadFromString(xmlString: string): BlueData {
     return loadFromString(xmlString, () => new BlueData());
@@ -297,36 +285,36 @@ export class BlueData implements BlueDataObject {
   // ─── CSD Generation ───
 
   toCSD(session?: JavaScriptSession): string {
-    return buildStandardCSD(this, "realtime", session).csdText;
+    return buildStandardCSD(this, 'realtime', session).csdText;
   }
 
   async toCSDAsync(
     session?: JavaScriptSession,
     runtimeClient?: JavaRuntimeClientContract | null,
   ): Promise<string> {
-    return (await buildStandardCSDAsync(this, "realtime", session, runtimeClient)).csdText;
+    return (await buildStandardCSDAsync(this, 'realtime', session, runtimeClient)).csdText;
   }
 
   toDiskCSD(session?: JavaScriptSession): string {
-    return buildStandardCSD(this, "disk", session).csdText;
+    return buildStandardCSD(this, 'disk', session).csdText;
   }
 
   async toDiskCSDAsync(
     session?: JavaScriptSession,
     runtimeClient?: JavaRuntimeClientContract | null,
   ): Promise<string> {
-    return (await buildStandardCSDAsync(this, "disk", session, runtimeClient)).csdText;
+    return (await buildStandardCSDAsync(this, 'disk', session, runtimeClient)).csdText;
   }
 
   toRealtimePlaybackCSD(session?: JavaScriptSession): RenderCsdResult {
-    return buildStandardCSD(this, "realtime", session);
+    return buildStandardCSD(this, 'realtime', session);
   }
 
   async toRealtimePlaybackCSDAsync(
     session?: JavaScriptSession,
     runtimeClient?: JavaRuntimeClientContract | null,
   ): Promise<RenderCsdResult> {
-    return buildStandardCSDAsync(this, "realtime", session, runtimeClient);
+    return buildStandardCSDAsync(this, 'realtime', session, runtimeClient);
   }
 
   toBlueLiveCSD(session?: JavaScriptSession): RenderCsdResult {
@@ -348,11 +336,7 @@ export class BlueData implements BlueDataObject {
     return usesJavaRuntime(this);
   }
 
-  private buildScoreText(
-    ftables: string,
-    globalSco: string,
-    notes: NoteList,
-  ): string {
+  private buildScoreText(ftables: string, globalSco: string, notes: NoteList): string {
     return buildScoreText(this, ftables, globalSco, notes);
   }
 
@@ -375,9 +359,7 @@ export class BlueData implements BlueDataObject {
     }
 
     // Deep-copy instrument library (was previously aliased by reference).
-    copy.instrumentLibrary = this.instrumentLibrary
-      ? this.instrumentLibrary.deepCopy()
-      : null;
+    copy.instrumentLibrary = this.instrumentLibrary ? this.instrumentLibrary.deepCopy() : null;
 
     copy.globalOrcSco = new GlobalOrcSco(this.globalOrcSco);
     copy.tableSet = new Tables(this.tableSet);
@@ -398,7 +380,7 @@ export class BlueData implements BlueDataObject {
     copy.renderStartTime = this.renderStartTime;
     copy.renderEndTime = this.renderEndTime;
     copy.loopRendering = this.loopRendering;
-    copy.pluginDataXml = this.pluginDataXml.map(e => e.clone());
+    copy.pluginDataXml = this.pluginDataXml.map((e) => e.clone());
 
     // Remap any copied Instance that still references an original library
     // object to point at the corresponding copied library object. This keeps
@@ -414,9 +396,9 @@ export class BlueData implements BlueDataObject {
     }
 
     // Wire projectProperties into score.timeContext (Java parity)
-    copy.score.getTimeContext().setSampleRate(
-      parseInt(copy.projectProperties.sampleRate, 10) || 44100
-    );
+    copy.score
+      .getTimeContext()
+      .setSampleRate(parseInt(copy.projectProperties.sampleRate, 10) || 44100);
 
     return copy;
   }

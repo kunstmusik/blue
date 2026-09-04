@@ -2,11 +2,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import {
-  buildSoundFontProbeCsd,
-  inspectSoundFont,
-  parseSoundFontOutput,
-} from './soundfont-viewer';
+import { buildSoundFontProbeCsd, inspectSoundFont, parseSoundFontOutput } from './soundfont-viewer';
 
 const temporaryDirectories: string[] = [];
 
@@ -63,7 +59,8 @@ Preset list of "piano.sf2"
       expect(csd).toContain(`sfload "${normalizedFilePath}"`);
       return {
         exitCode: 0,
-        stdout: 'Instrument list of "test.sf2"\n  0) Piano\nPreset list of "test.sf2"\n  0) Piano prog:0 bank:0\n',
+        stdout:
+          'Instrument list of "test.sf2"\n  0) Piano\nPreset list of "test.sf2"\n  0) Piano prog:0 bank:0\n',
         stderr: '',
       };
     });
@@ -73,7 +70,10 @@ Preset list of "piano.sf2"
       instruments: [{ number: 0, name: 'Piano' }],
       presets: [{ number: 0, name: 'Piano', presetNumber: 0, bank: 0 }],
     });
-    expect(runCsound).toHaveBeenCalledWith(expect.any(Array), expect.stringContaining('blue-soundfont-'));
+    expect(runCsound).toHaveBeenCalledWith(
+      expect.any(Array),
+      expect.stringContaining('blue-soundfont-'),
+    );
     expect(fs.readdirSync(root)).toEqual(['test.sf2']);
   });
 });

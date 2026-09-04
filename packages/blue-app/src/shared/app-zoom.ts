@@ -42,13 +42,8 @@ export function normalizeAppZoomPercent(value: unknown): number {
  * supported value and clamps at the documented bounds. A command at its
  * effective target (e.g. zoom-in at 300, actual-size at 100) is a no-op.
  */
-export function resolveAppZoomCommand(
-  current: number,
-  command: AppZoomCommand,
-): number {
-  const base = isSupportedAppZoomPercent(current)
-    ? current
-    : APP_ZOOM_DEFAULT_PERCENT;
+export function resolveAppZoomCommand(current: number, command: AppZoomCommand): number {
+  const base = isSupportedAppZoomPercent(current) ? current : APP_ZOOM_DEFAULT_PERCENT;
 
   switch (command) {
     case 'zoom-in': {

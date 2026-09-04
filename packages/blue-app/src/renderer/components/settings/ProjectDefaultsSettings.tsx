@@ -61,7 +61,9 @@ export default function ProjectDefaultsSettings({
         onChange={(value) => set('layerHeightDefault', Number.parseInt(value, 10))}
       >
         {LAYER_HEIGHT_CHOICES.map((height, index) => (
-          <option key={height} value={index}>{height}</option>
+          <option key={height} value={index}>
+            {height}
+          </option>
         ))}
       </SettingsSelectField>
 
@@ -71,7 +73,9 @@ export default function ProjectDefaultsSettings({
         onChange={(value) => set('defaultUdoStyle', value as 'CLASSIC' | 'MODERN')}
       >
         {UDO_STYLE_CHOICES.map((style) => (
-          <option key={style} value={style}>{style}</option>
+          <option key={style} value={style}>
+            {style}
+          </option>
         ))}
       </SettingsSelectField>
 
@@ -81,7 +85,9 @@ export default function ProjectDefaultsSettings({
         onChange={(value) => set('defaultPrimaryTimeBase', value)}
       >
         {TIME_BASE_CHOICES.map((timeBase) => (
-          <option key={timeBase} value={timeBase}>{timeBase}</option>
+          <option key={timeBase} value={timeBase}>
+            {timeBase}
+          </option>
         ))}
       </SettingsSelectField>
 
@@ -99,7 +105,9 @@ export default function ProjectDefaultsSettings({
         containerClassName={SETTINGS_INDENT_CLASS}
       >
         {TIME_BASE_CHOICES.map((timeBase) => (
-          <option key={timeBase} value={timeBase}>{timeBase}</option>
+          <option key={timeBase} value={timeBase}>
+            {timeBase}
+          </option>
         ))}
       </SettingsSelectField>
 
@@ -117,7 +125,9 @@ export default function ProjectDefaultsSettings({
         containerClassName={SETTINGS_INDENT_CLASS}
       >
         {SNAP_VALUE_CHOICES.map((snapValue) => (
-          <option key={snapValue} value={snapValue}>{snapValue}</option>
+          <option key={snapValue} value={snapValue}>
+            {snapValue}
+          </option>
         ))}
       </SettingsSelectField>
 
@@ -127,7 +137,9 @@ export default function ProjectDefaultsSettings({
         onChange={(value) => set('defaultSmpteFrameRate', Number.parseFloat(value))}
       >
         {SMPTE_FRAME_RATES.map((frameRate) => (
-          <option key={frameRate} value={frameRate}>{frameRate}</option>
+          <option key={frameRate} value={frameRate}>
+            {frameRate}
+          </option>
         ))}
       </SettingsSelectField>
     </SettingsSection>

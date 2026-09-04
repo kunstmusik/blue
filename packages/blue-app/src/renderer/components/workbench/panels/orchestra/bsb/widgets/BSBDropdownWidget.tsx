@@ -5,7 +5,10 @@ import { getWidgetDisplaySize } from './utils';
 import BsbTextLabel from './BsbTextLabel';
 import WidgetWrapper from './WidgetWrapper';
 import type { BSBWidgetComponentProps } from './widget-component-props';
-import { PopoutDropdownMenuPortal, portalEventIsolationProps } from '../../../../../../hooks/host-portals';
+import {
+  PopoutDropdownMenuPortal,
+  portalEventIsolationProps,
+} from '../../../../../../hooks/host-portals';
 
 type BSBDropdownWidgetProps = BSBWidgetComponentProps;
 
@@ -23,12 +26,15 @@ function BSBDropdownWidget({
   getWidgetPosition,
   onWidgetAction,
 }: BSBDropdownWidgetProps): React.ReactElement {
-  const selectedIndex = typeof node.properties.selectedIndex === 'number' ? node.properties.selectedIndex : 0;
+  const selectedIndex =
+    typeof node.properties.selectedIndex === 'number' ? node.properties.selectedIndex : 0;
   const fontSize = typeof node.properties.fontSize === 'number' ? node.properties.fontSize : 12;
   const itemsRaw = node.properties.dropdownItems;
   const displaySize = getWidgetDisplaySize(node);
 
-  const items: Array<{ name?: string; value?: string }> = Array.isArray(itemsRaw) ? itemsRaw as Array<{ name?: string; value?: string }> : [];
+  const items: Array<{ name?: string; value?: string }> = Array.isArray(itemsRaw)
+    ? (itemsRaw as Array<{ name?: string; value?: string }>)
+    : [];
 
   let displayText = node.objectName || 'Dropdown';
   if (items.length > 0) {
@@ -47,20 +53,47 @@ function BSBDropdownWidget({
   };
 
   return (
-    <WidgetWrapper node={node} isSelected={isSelected} editEnabled={editEnabled} onWidgetSelect={onWidgetSelect} displayWidth={displaySize.width} displayHeight={displaySize.height} resizeMeta={resizeMeta} gridSnapEnabled={gridSnapEnabled} gridSnapWidth={gridSnapWidth} gridSnapHeight={gridSnapHeight} onBsbInterfacePatch={onBsbInterfacePatch} selectedWidgetIds={selectedWidgetIds} getWidgetPosition={getWidgetPosition} onWidgetAction={onWidgetAction}>
+    <WidgetWrapper
+      node={node}
+      isSelected={isSelected}
+      editEnabled={editEnabled}
+      onWidgetSelect={onWidgetSelect}
+      displayWidth={displaySize.width}
+      displayHeight={displaySize.height}
+      resizeMeta={resizeMeta}
+      gridSnapEnabled={gridSnapEnabled}
+      gridSnapWidth={gridSnapWidth}
+      gridSnapHeight={gridSnapHeight}
+      onBsbInterfacePatch={onBsbInterfacePatch}
+      selectedWidgetIds={selectedWidgetIds}
+      getWidgetPosition={getWidgetPosition}
+      onWidgetAction={onWidgetAction}
+    >
       <DropdownMenu.Root>
         <DropdownMenu.Trigger asChild disabled={items.length === 0}>
           <button
             type="button"
             className="flex h-full w-full items-center justify-between gap-1 rounded border border-blue-border bg-app-bsb-control px-2 py-1 text-role-body text-app-text-strong outline-none hover:bg-blue-accent/20 disabled:cursor-default disabled:hover:bg-app-bsb-control"
-            style={{ fontFamily: 'Roboto, sans-serif', fontSize, lineHeight: 'normal', pointerEvents: editEnabled ? 'none' : undefined }}
+            style={{
+              fontFamily: 'Roboto, sans-serif',
+              fontSize,
+              lineHeight: 'normal',
+              pointerEvents: editEnabled ? 'none' : undefined,
+            }}
           >
-            <BsbTextLabel text={displayText} plainClassName="truncate" htmlClassName="inline-block max-w-full" />
+            <BsbTextLabel
+              text={displayText}
+              plainClassName="truncate"
+              htmlClassName="inline-block max-w-full"
+            />
             <ChevronDown size={12} className="shrink-0" />
           </button>
         </DropdownMenu.Trigger>
         <PopoutDropdownMenuPortal>
-          <DropdownMenu.Content className="z-50 min-w-37.5 rounded-md border border-blue-border bg-app-surface-strong p-1 shadow-lg" {...portalEventIsolationProps}>
+          <DropdownMenu.Content
+            className="z-50 min-w-37.5 rounded-md border border-blue-border bg-app-surface-strong p-1 shadow-lg"
+            {...portalEventIsolationProps}
+          >
             {items.map((item, i) => (
               <DropdownMenu.Item
                 key={i}
@@ -68,7 +101,11 @@ function BSBDropdownWidget({
                 onClick={() => handleItemSelect(i)}
                 style={{ fontFamily: 'Roboto, sans-serif', fontSize, lineHeight: 'normal' }}
               >
-                <BsbTextLabel text={item.name || item.value || `Item ${i}`} plainClassName="block" htmlClassName="inline-block max-w-full" />
+                <BsbTextLabel
+                  text={item.name || item.value || `Item ${i}`}
+                  plainClassName="block"
+                  htmlClassName="inline-block max-w-full"
+                />
               </DropdownMenu.Item>
             ))}
           </DropdownMenu.Content>

@@ -13,7 +13,8 @@ describe('ClojureObject', () => {
   });
 
   it('loads Java XML fields', () => {
-    const xml = Element.parse(`<soundObject type="blue.clojure.soundObject.ClojureObject" onLoadProcessable="true">
+    const xml =
+      Element.parse(`<soundObject type="blue.clojure.soundObject.ClojureObject" onLoadProcessable="true">
       <subjectiveDuration>12.0</subjectiveDuration>
       <startTime>0.0</startTime>
       <name>(Clojure Setup Code)</name>

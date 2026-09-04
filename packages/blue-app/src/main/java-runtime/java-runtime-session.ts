@@ -44,7 +44,8 @@ function extractClojureDependencies(data: BlueData): JavaRuntimeDependencySpec[]
     return [];
   }
 
-  return projectData.getLibraryEntries()
+  return projectData
+    .getLibraryEntries()
     .map((entry) => ({
       coordinates: entry.getDependencyCoordinates().trim(),
       version: entry.getVersion().trim(),
@@ -136,7 +137,9 @@ export class JavaRuntimeSessionManager {
     });
 
     if (!response.ok) {
-      throw new Error(formatJavaRuntimeProtocolError('Failed to initialize Java runtime session', response.error));
+      throw new Error(
+        formatJavaRuntimeProtocolError('Failed to initialize Java runtime session', response.error),
+      );
     }
 
     if (this.lifecycleEpoch !== epoch) {
@@ -165,7 +168,9 @@ export class JavaRuntimeSessionManager {
     const client = await this.ensureReady(data, projectSessionId, currentFilePath);
     const response = await client.reinitializeClojure();
     if (!response.ok) {
-      throw new Error(formatJavaRuntimeProtocolError('Failed to reinitialize Clojure runtime', response.error));
+      throw new Error(
+        formatJavaRuntimeProtocolError('Failed to reinitialize Clojure runtime', response.error),
+      );
     }
     return client;
   }
@@ -178,7 +183,9 @@ export class JavaRuntimeSessionManager {
     const client = await this.ensureReady(data, projectSessionId, currentFilePath);
     const response = await client.reinitializeJython();
     if (!response.ok) {
-      throw new Error(formatJavaRuntimeProtocolError('Failed to reinitialize Jython runtime', response.error));
+      throw new Error(
+        formatJavaRuntimeProtocolError('Failed to reinitialize Jython runtime', response.error),
+      );
     }
     this.jythonStateRevision += 1;
     return client;
@@ -234,7 +241,10 @@ export class JavaRuntimeSessionManager {
     return null;
   }
 
-  private async ensureProcess(projectDir: string | null, epoch: number): Promise<JavaRuntimeClient> {
+  private async ensureProcess(
+    projectDir: string | null,
+    epoch: number,
+  ): Promise<JavaRuntimeClient> {
     if (
       this.client &&
       this.processHandle &&
@@ -246,12 +256,16 @@ export class JavaRuntimeSessionManager {
 
     await this.disposeCurrent();
 
-    const artifactResolution = (this.dependencies.resolveArtifactPath ?? resolveJavaRuntimeArtifactPath)(this.options);
+    const artifactResolution = (
+      this.dependencies.resolveArtifactPath ?? resolveJavaRuntimeArtifactPath
+    )(this.options);
     if (!artifactResolution.exists) {
       throw new Error(`Java runtime helper not found at ${artifactResolution.artifactPath}`);
     }
 
-    const javaProbe = await (this.dependencies.probeJavaExecutable ?? probeJavaExecutable)(this.javaExecutable);
+    const javaProbe = await (this.dependencies.probeJavaExecutable ?? probeJavaExecutable)(
+      this.javaExecutable,
+    );
     if (!javaProbe.available) {
       throw new Error(javaProbe.error ?? 'Java runtime is unavailable');
     }
@@ -260,12 +274,12 @@ export class JavaRuntimeSessionManager {
       throw new Error(`Java 17 or newer is required, found ${javaProbe.versionMajor}`);
     }
 
-    const processHandle = await (this.dependencies.createJavaRuntimeProcess ?? createJavaRuntimeProcess)(
-      artifactResolution.artifactPath,
-      projectDir,
-      this.javaExecutable,
-    );
-    const client = (this.dependencies.createClient ?? ((options) => new JavaRuntimeClient(options)))({
+    const processHandle = await (
+      this.dependencies.createJavaRuntimeProcess ?? createJavaRuntimeProcess
+    )(artifactResolution.artifactPath, projectDir, this.javaExecutable);
+    const client = (
+      this.dependencies.createClient ?? ((options) => new JavaRuntimeClient(options))
+    )({
       endpoint: processHandle.controlEndpoint,
       eventEndpoint: processHandle.eventEndpoint,
       authToken: processHandle.authToken,
@@ -280,7 +294,9 @@ export class JavaRuntimeSessionManager {
     if (!health.ok) {
       await client.disconnect();
       (this.dependencies.terminateProcess ?? terminateJavaRuntimeProcess)(processHandle);
-      throw new Error(formatJavaRuntimeProtocolError('Failed to health-check Java runtime', health.error));
+      throw new Error(
+        formatJavaRuntimeProtocolError('Failed to health-check Java runtime', health.error),
+      );
     }
 
     if (this.lifecycleEpoch !== epoch) {

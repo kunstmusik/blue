@@ -12,11 +12,21 @@ describe('ProjectLifecycle', () => {
     session.replace(data, '/tmp/old.blue');
     const lifecycle = createProjectLifecycle({
       session,
-      stopProjectRuntimes: () => { events.push('stop'); },
-      closeProjectEditors: () => { events.push('editors'); },
-      clearProjectServices: () => { events.push('clear'); },
-      publishProjectChanged: () => { events.push('changed'); },
-      publishProjectLoaded: () => { events.push('loaded'); },
+      stopProjectRuntimes: () => {
+        events.push('stop');
+      },
+      closeProjectEditors: () => {
+        events.push('editors');
+      },
+      clearProjectServices: () => {
+        events.push('clear');
+      },
+      publishProjectChanged: () => {
+        events.push('changed');
+      },
+      publishProjectLoaded: () => {
+        events.push('loaded');
+      },
     });
 
     const snapshot = await lifecycle.replace({ data, filePath: '/tmp/new.blue' });
@@ -32,21 +42,31 @@ describe('ProjectLifecycle', () => {
     session.replace(data, '/tmp/active.blue');
     const lifecycle = createProjectLifecycle({
       session,
-      stopProjectRuntimes: () => { events.push('stop'); },
+      stopProjectRuntimes: () => {
+        events.push('stop');
+      },
     });
 
-    await expect(lifecycle.open(() => { throw new Error('parse failed'); })).rejects.toThrow('parse failed');
+    await expect(
+      lifecycle.open(() => {
+        throw new Error('parse failed');
+      }),
+    ).rejects.toThrow('parse failed');
     expect(session.read().filePath).toBe('/tmp/active.blue');
     expect(events).toEqual([]);
   });
 
   it('keeps save and save-as writes ahead of publication and preserves cancellation status', async () => {
     const events: string[] = [];
-    const writes = vi.fn(async (_value: BlueData, path: string) => { events.push(`write:${path}`); });
+    const writes = vi.fn(async (_value: BlueData, path: string) => {
+      events.push(`write:${path}`);
+    });
     const session = new ProjectSession();
     const lifecycle = createProjectLifecycle({
       session,
-      publishProjectChanged: (snapshot) => { events.push(`changed:${snapshot.filePath}`); },
+      publishProjectChanged: (snapshot) => {
+        events.push(`changed:${snapshot.filePath}`);
+      },
     });
 
     expect(await lifecycle.save(writes)).toBe(false);
@@ -68,10 +88,18 @@ describe('ProjectLifecycle', () => {
     session.replace(data, '/tmp/project.blue');
     const lifecycle = createProjectLifecycle({
       session,
-      stopProjectRuntimes: () => { events.push('stop'); },
-      closeProjectEditors: () => { events.push('editors'); },
-      clearProjectServices: () => { events.push('clear'); },
-      publishProjectClosed: (snapshot) => { events.push(`closed:${snapshot.data}`); },
+      stopProjectRuntimes: () => {
+        events.push('stop');
+      },
+      closeProjectEditors: () => {
+        events.push('editors');
+      },
+      clearProjectServices: () => {
+        events.push('clear');
+      },
+      publishProjectClosed: (snapshot) => {
+        events.push(`closed:${snapshot.data}`);
+      },
     });
 
     const snapshot = await lifecycle.close();

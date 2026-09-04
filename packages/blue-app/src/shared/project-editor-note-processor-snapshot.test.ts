@@ -7,13 +7,8 @@ import {
   MultiplyProcessor,
   NoteProcessorChain,
 } from '@blue/data';
-import {
-  createProjectEditorSnapshot,
-  createScoreObjectEditorDocument,
-} from './project-editor';
-import type {
-  ScoreObjectEditorRequest,
-} from './project-editor';
+import { createProjectEditorSnapshot, createScoreObjectEditorDocument } from './project-editor';
+import type { ScoreObjectEditorRequest } from './project-editor';
 
 function createProjectWithChain(...processors: import('@blue/data').NoteProcessor[]): BlueData {
   const data = new BlueData();

@@ -57,7 +57,9 @@ describe('layer-selection-utils', () => {
     const visible = flattenVisibleLayers(groups, 'scope-1');
 
     expect(visible).toHaveLength(7);
-    expect(visible.map((v) => ({ gid: v.groupId, lidx: v.localIndex, gidx: v.globalIndex }))).toEqual([
+    expect(
+      visible.map((v) => ({ gid: v.groupId, lidx: v.localIndex, gidx: v.globalIndex })),
+    ).toEqual([
       { gid: 'grp-sound', lidx: 0, gidx: 0 },
       { gid: 'grp-sound', lidx: 1, gidx: 1 },
       { gid: 'grp-track', lidx: 0, gidx: 2 },
@@ -163,7 +165,9 @@ describe('layer-selection-utils', () => {
         new Set(['grp-track:sel-t-0', 'grp-track:sel-t-2']),
       );
 
-      expect(ranges.map(({ startIndex, endIndex, count }) => ({ startIndex, endIndex, count }))).toEqual([
+      expect(
+        ranges.map(({ startIndex, endIndex, count }) => ({ startIndex, endIndex, count })),
+      ).toEqual([
         { startIndex: 0, endIndex: 0, count: 1 },
         { startIndex: 2, endIndex: 2, count: 1 },
       ]);
@@ -187,14 +191,16 @@ describe('layer-selection-utils', () => {
     });
 
     it('handles single layer at top boundary', () => {
-      const ranges = [{
-        groupId: 'grp-track',
-        groupType: 'track' as const,
-        startIndex: 0,
-        endIndex: 0,
-        layerSelectionIds: ['sel-t-0'],
-        count: 1,
-      }];
+      const ranges = [
+        {
+          groupId: 'grp-track',
+          groupType: 'track' as const,
+          startIndex: 0,
+          endIndex: 0,
+          layerSelectionIds: ['sel-t-0'],
+          count: 1,
+        },
+      ];
       const availability = getLayerOperationAvailability(groups, ranges);
       expect(availability).toEqual({
         canAdd: true,
@@ -207,14 +213,16 @@ describe('layer-selection-utils', () => {
     });
 
     it('handles single layer in middle', () => {
-      const ranges = [{
-        groupId: 'grp-track',
-        groupType: 'track' as const,
-        startIndex: 1,
-        endIndex: 1,
-        layerSelectionIds: ['sel-t-1'],
-        count: 1,
-      }];
+      const ranges = [
+        {
+          groupId: 'grp-track',
+          groupType: 'track' as const,
+          startIndex: 1,
+          endIndex: 1,
+          layerSelectionIds: ['sel-t-1'],
+          count: 1,
+        },
+      ];
       const availability = getLayerOperationAvailability(groups, ranges);
       expect(availability).toEqual({
         canAdd: true,
@@ -227,14 +235,16 @@ describe('layer-selection-utils', () => {
     });
 
     it('handles single layer at bottom boundary', () => {
-      const ranges = [{
-        groupId: 'grp-track',
-        groupType: 'track' as const,
-        startIndex: 2,
-        endIndex: 2,
-        layerSelectionIds: ['sel-t-2'],
-        count: 1,
-      }];
+      const ranges = [
+        {
+          groupId: 'grp-track',
+          groupType: 'track' as const,
+          startIndex: 2,
+          endIndex: 2,
+          layerSelectionIds: ['sel-t-2'],
+          count: 1,
+        },
+      ];
       const availability = getLayerOperationAvailability(groups, ranges);
       expect(availability).toEqual({
         canAdd: true,
@@ -247,14 +257,16 @@ describe('layer-selection-utils', () => {
     });
 
     it('disables Add and enables range Push for multi-selection within one group', () => {
-      const ranges = [{
-        groupId: 'grp-track',
-        groupType: 'track' as const,
-        startIndex: 0,
-        endIndex: 1,
-        layerSelectionIds: ['sel-t-0', 'sel-t-1'],
-        count: 2,
-      }];
+      const ranges = [
+        {
+          groupId: 'grp-track',
+          groupType: 'track' as const,
+          startIndex: 0,
+          endIndex: 1,
+          layerSelectionIds: ['sel-t-0', 'sel-t-1'],
+          count: 2,
+        },
+      ];
       const availability = getLayerOperationAvailability(groups, ranges);
       expect(availability.canAdd).toBe(false);
       expect(availability.canPushUp).toBe(false);
@@ -316,7 +328,9 @@ describe('layer-selection-utils', () => {
 
       expect(availability.canPushUp).toBe(false);
       expect(availability.pushUpDisabledReason).toBe('selection-is-not-contiguous');
-      expect(getPushDisabledReasonLabel(availability.pushUpDisabledReason)).toBe('Push requires one contiguous block');
+      expect(getPushDisabledReasonLabel(availability.pushUpDisabledReason)).toBe(
+        'Push requires one contiguous block',
+      );
     });
   });
 
@@ -367,14 +381,24 @@ describe('layer-selection-utils', () => {
     });
 
     it('flags a group emptied by multiple disjoint ranges', () => {
-      const groupsWithThreeLayers = makeMockGroups().map((group) => (
+      const groupsWithThreeLayers = makeMockGroups().map((group) =>
         group.groupId === 'grp-sound'
-          ? { ...group, layerCount: 3, layers: [
-            ...group.layers,
-            { layerId: 's-2', layerSelectionId: 'sel-s-2', name: 'Sound 2', height: 44, items: [] },
-          ] }
-          : group
-      ));
+          ? {
+              ...group,
+              layerCount: 3,
+              layers: [
+                ...group.layers,
+                {
+                  layerId: 's-2',
+                  layerSelectionId: 'sel-s-2',
+                  name: 'Sound 2',
+                  height: 44,
+                  items: [],
+                },
+              ],
+            }
+          : group,
+      );
       const plan = buildLayerRemovalPlan(groupsWithThreeLayers, [
         {
           groupId: 'grp-sound',

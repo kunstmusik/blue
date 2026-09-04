@@ -108,7 +108,9 @@ describe('BlueX7', () => {
     expect(savedElem.getElement('parameterList')).not.toBeNull();
     const reloaded = BlueX7.loadFromXML(savedElem);
     expect(reloaded.getVoice()).toEqual(instr.getVoice());
-    expect(reloaded.getParameters().map((parameter) => parameter.getUniqueId())).toEqual(firstSaveIds);
+    expect(reloaded.getParameters().map((parameter) => parameter.getUniqueId())).toEqual(
+      firstSaveIds,
+    );
   });
 
   it('preserves unknown root/nested attributes and extra elements in boundary fixture', () => {
@@ -121,12 +123,21 @@ describe('BlueX7', () => {
     expect(instr.getVoice().common.algorithm).toBe(32);
     expect(instr.getVoice().common.keyTranspose).toBe(48);
     expect(instr.getVoice().common.feedback).toBe(7);
-    expect(instr.getVoice().common.operatorEnabled).toEqual([true, false, true, false, true, false]);
+    expect(instr.getVoice().common.operatorEnabled).toEqual([
+      true,
+      false,
+      true,
+      false,
+      true,
+      false,
+    ]);
     expect(instr.getVoice().lfo.wave).toBe(5);
     expect(instr.getVoice().lfo.sync).toBe(1);
     expect(instr.getVoice().operators[0].detune).toBe(7);
     expect(instr.getVoice().operators.map((operator) => operator.sync)).toEqual([0, 1, 0, 1, 0, 1]);
-    expect(instr.getVoice().operators.map((operator) => operator.modulationPitch)).toEqual([7, 0, 3, 0, 0, 0]);
+    expect(instr.getVoice().operators.map((operator) => operator.modulationPitch)).toEqual([
+      7, 0, 3, 0, 0, 0,
+    ]);
 
     // Modify a known field and save
     instr.setCommonField('algorithm', 10);
@@ -152,9 +163,15 @@ describe('BlueX7', () => {
 
     const firstSaveIds = instr.getParameters().map((parameter) => parameter.getUniqueId());
     const reopened = BlueX7.loadFromXML(Element.parse(savedXml));
-    expect(reopened.getParameters().map((parameter) => parameter.getUniqueId())).toEqual(firstSaveIds);
-    expect(reopened.getVoice().operators.map((operator) => operator.sync)).toEqual([0, 1, 0, 1, 0, 1]);
-    expect(reopened.saveAsXML().toXml()).toContain('<unknownOperatorNode>custom op data</unknownOperatorNode>');
+    expect(reopened.getParameters().map((parameter) => parameter.getUniqueId())).toEqual(
+      firstSaveIds,
+    );
+    expect(reopened.getVoice().operators.map((operator) => operator.sync)).toEqual([
+      0, 1, 0, 1, 0, 1,
+    ]);
+    expect(reopened.saveAsXML().toXml()).toContain(
+      '<unknownOperatorNode>custom op data</unknownOperatorNode>',
+    );
   });
 
   it('supports shared sync and PMS propagation across all 6 operators', () => {
@@ -292,7 +309,10 @@ describe('BlueX7', () => {
     expect(loaded.getVoice().common.algorithm).toBe(7);
     expect(loaded.getVoice().operators[2].outputLevel).toBe(42);
     expect(
-      loaded.getParameters().find((p) => p.getName() === 'operator.3.outputLevel')!.getFixedValue(),
+      loaded
+        .getParameters()
+        .find((p) => p.getName() === 'operator.3.outputLevel')!
+        .getFixedValue(),
     ).toBe(42);
   });
 
@@ -300,14 +320,20 @@ describe('BlueX7', () => {
     const instr = new BlueX7();
     const param = instr.getParameters().find((p) => p.getName() === 'common.feedback')!;
     param.setAutomationEnabled(true);
-    param.setPoints([{ time: 0, value: 2 }, { time: 4, value: 5 }]);
+    param.setPoints([
+      { time: 0, value: 2 },
+      { time: 4, value: 5 },
+    ]);
     param.setLineColor(-12345);
 
     const reloaded = BlueX7.loadFromXML(Element.parse(instr.saveAsXML().toXml()));
     const retained = reloaded.getParameters().find((p) => p.getName() === 'common.feedback')!;
     expect(retained.getUniqueId()).toBe(param.getUniqueId());
     expect(retained.isAutomationEnabled()).toBe(true);
-    expect(retained.getPoints()).toEqual([{ time: 0, value: 2 }, { time: 4, value: 5 }]);
+    expect(retained.getPoints()).toEqual([
+      { time: 0, value: 2 },
+      { time: 4, value: 5 },
+    ]);
     expect(retained.getLineColor()).toBe(-12345);
     // identities are stable for every parameter on reopen
     const before = new Map(instr.getParameters().map((p) => [p.getName(), p.getUniqueId()]));
@@ -335,7 +361,10 @@ describe('BlueX7', () => {
     const feedbacks = params.filter((p) => p.getName() === 'common.feedback');
     expect(feedbacks).toHaveLength(1);
     expect(feedbacks[0].getUniqueId()).toBe(
-      instr.getParameters().find((p) => p.getName() === 'common.feedback')!.getUniqueId(),
+      instr
+        .getParameters()
+        .find((p) => p.getName() === 'common.feedback')!
+        .getUniqueId(),
     );
   });
 
@@ -371,7 +400,8 @@ describe('BlueX7', () => {
     track.setInstrument(source);
     const assigned = track.getInstrument() as BlueX7;
     const ownerIdSets = [source, pasted, assigned].map(
-      (instrument) => new Set(instrument.getParameters().map((parameter) => parameter.getUniqueId())),
+      (instrument) =>
+        new Set(instrument.getParameters().map((parameter) => parameter.getUniqueId())),
     );
     expect(ownerIdSets.every((ids) => ids.size === 151)).toBe(true);
     for (let left = 0; left < ownerIdSets.length; left += 1) {
@@ -390,10 +420,16 @@ describe('BlueX7', () => {
 
     const reloaded = BlueX7.loadFromXML(Element.parse(instr.saveAsXML().toXml()));
     expect(
-      reloaded.getParameters().find((p) => p.getName() === 'common.oscillatorKeySync')!.getFixedValue(),
+      reloaded
+        .getParameters()
+        .find((p) => p.getName() === 'common.oscillatorKeySync')!
+        .getFixedValue(),
     ).toBe(1);
     expect(
-      reloaded.getParameters().find((p) => p.getName() === 'lfo.pitchModulationSensitivity')!.getFixedValue(),
+      reloaded
+        .getParameters()
+        .find((p) => p.getName() === 'lfo.pitchModulationSensitivity')!
+        .getFixedValue(),
     ).toBe(5);
     // legacy mixed voice values remain unnormalized in XML
     const saved = Element.parse(reloaded.saveAsXML().toXml());
@@ -409,7 +445,10 @@ describe('BlueX7', () => {
     const feedbackParam = instr.getParameters().find((p) => p.getName() === 'common.feedback')!;
     const speedParam = instr.getParameters().find((p) => p.getName() === 'lfo.speed')!;
     feedbackParam.setAutomationEnabled(true);
-    feedbackParam.setPoints([{ time: 0, value: 1 }, { time: 2, value: 7 }]);
+    feedbackParam.setPoints([
+      { time: 0, value: 1 },
+      { time: 2, value: 7 },
+    ]);
     const beforeIds = instr.getParameters().map((p) => p.getUniqueId());
 
     const replacement = createDefaultBlueX7Voice();
@@ -423,39 +462,63 @@ describe('BlueX7', () => {
     expect(feedbackParam.getFixedValue()).toBe(3);
     expect(speedParam.getFixedValue()).toBe(77);
     expect(
-      instr.getParameters().find((p) => p.getName() === 'common.algorithm')!.getFixedValue(),
+      instr
+        .getParameters()
+        .find((p) => p.getName() === 'common.algorithm')!
+        .getFixedValue(),
     ).toBe(5);
     // identities and automation content retained
     expect(instr.getParameters().map((p) => p.getUniqueId())).toEqual(beforeIds);
     expect(feedbackParam.isAutomationEnabled()).toBe(true);
-    expect(feedbackParam.getPoints()).toEqual([{ time: 0, value: 1 }, { time: 2, value: 7 }]);
+    expect(feedbackParam.getPoints()).toEqual([
+      { time: 0, value: 1 },
+      { time: 2, value: 7 },
+    ]);
   });
 
   it('updates voice and fixed value together on widget edits', () => {
     const instr = new BlueX7();
     instr.setOperatorField(2, 'outputLevel', 55);
     expect(
-      instr.getParameters().find((p) => p.getName() === 'operator.3.outputLevel')!.getFixedValue(),
+      instr
+        .getParameters()
+        .find((p) => p.getName() === 'operator.3.outputLevel')!
+        .getFixedValue(),
     ).toBe(55);
     instr.setCommonField('algorithm', 9);
     expect(
-      instr.getParameters().find((p) => p.getName() === 'common.algorithm')!.getFixedValue(),
+      instr
+        .getParameters()
+        .find((p) => p.getName() === 'common.algorithm')!
+        .getFixedValue(),
     ).toBe(9);
     instr.setSharedOscillatorSync(0);
     expect(
-      instr.getParameters().find((p) => p.getName() === 'common.oscillatorKeySync')!.getFixedValue(),
+      instr
+        .getParameters()
+        .find((p) => p.getName() === 'common.oscillatorKeySync')!
+        .getFixedValue(),
     ).toBe(0);
     expect(instr.getVoice().operators.every((op) => op.sync === 0)).toBe(true);
     instr.setOperatorEnvelopePoint(4, 1, { rate: 33, level: 44 });
     expect(
-      instr.getParameters().find((p) => p.getName() === 'operator.5.envelope.2.rate')!.getFixedValue(),
+      instr
+        .getParameters()
+        .find((p) => p.getName() === 'operator.5.envelope.2.rate')!
+        .getFixedValue(),
     ).toBe(33);
     expect(
-      instr.getParameters().find((p) => p.getName() === 'operator.5.envelope.2.level')!.getFixedValue(),
+      instr
+        .getParameters()
+        .find((p) => p.getName() === 'operator.5.envelope.2.level')!
+        .getFixedValue(),
     ).toBe(44);
     instr.setOperatorEnabled(0, false);
     expect(
-      instr.getParameters().find((p) => p.getName() === 'operator.1.enabled')!.getFixedValue(),
+      instr
+        .getParameters()
+        .find((p) => p.getName() === 'operator.1.enabled')!
+        .getFixedValue(),
     ).toBe(0);
   });
 

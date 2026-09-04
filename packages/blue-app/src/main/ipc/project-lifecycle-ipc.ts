@@ -24,7 +24,7 @@ export const PROJECT_LIFECYCLE_IPC_CHANNELS = [
   'get-recent-files',
 ] as const;
 
-export type ProjectLifecycleIpcChannel = typeof PROJECT_LIFECYCLE_IPC_CHANNELS[number];
+export type ProjectLifecycleIpcChannel = (typeof PROJECT_LIFECYCLE_IPC_CHANNELS)[number];
 
 export interface ProjectLifecycleIpcOptions {
   readonly ipcMain: IpcMainLike;

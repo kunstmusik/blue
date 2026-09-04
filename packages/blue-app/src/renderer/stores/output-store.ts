@@ -18,16 +18,18 @@ export interface OutputWindowState {
 }
 
 function ensureTab(state: OutputWindowState, name: string): OutputTab {
-  return state.tabs[name] ?? {
-    id: name,
-    name,
-    lines: [],
-    lineCounter: 0,
-    colorOverrides: {},
-    isClosed: false,
-    pendingText: '',
-    pendingType: null,
-  };
+  return (
+    state.tabs[name] ?? {
+      id: name,
+      name,
+      lines: [],
+      lineCounter: 0,
+      colorOverrides: {},
+      isClosed: false,
+      pendingText: '',
+      pendingType: null,
+    }
+  );
 }
 
 export const useOutputStore = create<OutputWindowState>((set) => ({
@@ -53,9 +55,7 @@ export const useOutputStore = create<OutputWindowState>((set) => ({
         pendingText: '',
         pendingType: null,
       };
-      const tabOrder = state.tabOrder.includes(name)
-        ? state.tabOrder
-        : [...state.tabOrder, name];
+      const tabOrder = state.tabOrder.includes(name) ? state.tabOrder : [...state.tabOrder, name];
       return {
         tabs: { ...state.tabs, [name]: tab },
         tabOrder,
@@ -71,9 +71,10 @@ export const useOutputStore = create<OutputWindowState>((set) => ({
       return {
         tabs: rest,
         tabOrder: state.tabOrder.filter((t) => t !== name),
-        activeTabId: state.activeTabId === name
-          ? (state.tabOrder.find((t) => t !== name) ?? null)
-          : state.activeTabId,
+        activeTabId:
+          state.activeTabId === name
+            ? (state.tabOrder.find((t) => t !== name) ?? null)
+            : state.activeTabId,
       };
     });
   },
@@ -116,9 +117,7 @@ export const useOutputStore = create<OutputWindowState>((set) => ({
         pendingText,
         pendingType: pendingText.length > 0 ? type : null,
       };
-      const tabOrder = state.tabOrder.includes(name)
-        ? state.tabOrder
-        : [...state.tabOrder, name];
+      const tabOrder = state.tabOrder.includes(name) ? state.tabOrder : [...state.tabOrder, name];
       return {
         tabs: { ...state.tabs, [name]: updated },
         tabOrder,

@@ -23,8 +23,7 @@ const GENERATED_PATH = path.join(
   'modern-orchestra.generated.ts',
 );
 
-const PINNED_BASELINE_SHA256 =
-  '2523caebbae4d28cba134a14b3a9f59d6647ebfaf3728d3dfba87de0f4732dda';
+const PINNED_BASELINE_SHA256 = '2523caebbae4d28cba134a14b3a9f59d6647ebfaf3728d3dfba87de0f4732dda';
 
 /** The only files allowed under resources/blue-x7-modern/. */
 const ALLOWED_RESOURCE_FILES = new Set([
@@ -67,11 +66,7 @@ describe('modern BlueX7 orchestra artifact', () => {
   });
 
   it('generation and artifacts never reference the transient precursor checkout', () => {
-    const scriptPath = path.join(
-      PACKAGE_ROOT,
-      'scripts',
-      'generate-blue-x7-modern-orchestra.mjs',
-    );
+    const scriptPath = path.join(PACKAGE_ROOT, 'scripts', 'generate-blue-x7-modern-orchestra.mjs');
     const script = fs.readFileSync(scriptPath, 'utf8');
     const generated = fs.readFileSync(GENERATED_PATH, 'utf8');
     const orc = fs.readFileSync(ORC_PATH, 'utf8');
@@ -117,14 +112,15 @@ describe('modern BlueX7 orchestra artifact', () => {
     expect(provenance.attribution.reconstructed.length).toBeGreaterThan(0);
     expect(provenance.attribution.referenceOnly.length).toBeGreaterThan(0);
     expect(provenance.blueModifications.length).toBeGreaterThanOrEqual(4);
-    expect(provenance.blueModifications.every(
-      (modification: { summary?: unknown; files?: unknown[] }) => (
-        typeof modification.summary === 'string'
-        && modification.summary.length > 0
-        && Array.isArray(modification.files)
-        && modification.files.length > 0
+    expect(
+      provenance.blueModifications.every(
+        (modification: { summary?: unknown; files?: unknown[] }) =>
+          typeof modification.summary === 'string' &&
+          modification.summary.length > 0 &&
+          Array.isArray(modification.files) &&
+          modification.files.length > 0,
       ),
-    )).toBe(true);
+    ).toBe(true);
     const attribution = fs.readFileSync(path.join(RESOURCE_DIR, 'ATTRIBUTION.md'), 'utf8');
     expect(attribution).toContain('msfa');
     expect(attribution).toContain(PINNED_BASELINE_SHA256);
@@ -163,9 +159,7 @@ describe('generated CSD modern-module hygiene (Spec 092 FR-001)', () => {
     expect(csdText).not.toContain('tabw');
     expect(csdText).not.toContain('chnget');
     expect(csdText).toContain('kBlueX7CoordinatorChanged changed');
-    const coordinator = csdText.match(
-      /kBlueX7CoordinatorChanged changed ([^\n]+)/,
-    );
+    const coordinator = csdText.match(/kBlueX7CoordinatorChanged changed ([^\n]+)/);
     expect(coordinator).not.toBeNull();
     expect(coordinator![1].split(', ')).toHaveLength(15);
     expect(coordinator![1]).toContain('gk_blue_auto1');

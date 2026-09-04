@@ -8,7 +8,12 @@ import { TimeDuration } from '../../time/time-duration';
 import { TimePosition } from '../../time/time-position';
 
 export function createTrackFixture(
-  options: { groupId?: string; trackId?: string; includeClip?: boolean; includeSoundObject?: boolean } = {},
+  options: {
+    groupId?: string;
+    trackId?: string;
+    includeClip?: boolean;
+    includeSoundObject?: boolean;
+  } = {},
 ): { data: BlueData; group: TrackLayerGroup; track: Track } {
   const data = new BlueData();
   const group = new TrackLayerGroup();

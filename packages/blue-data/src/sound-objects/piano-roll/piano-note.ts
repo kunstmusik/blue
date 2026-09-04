@@ -29,22 +29,44 @@ export class PianoNote {
     }
   }
 
-  getDuration(): number { return this.duration; }
-  setDuration(v: number): void { this.duration = v; }
+  getDuration(): number {
+    return this.duration;
+  }
+  setDuration(v: number): void {
+    this.duration = v;
+  }
 
-  getOctave(): number { return this.octave; }
-  setOctave(v: number): void { this.octave = v; }
+  getOctave(): number {
+    return this.octave;
+  }
+  setOctave(v: number): void {
+    this.octave = v;
+  }
 
-  getScaleDegree(): number { return this.scaleDegree; }
-  setScaleDegree(v: number): void { this.scaleDegree = v; }
+  getScaleDegree(): number {
+    return this.scaleDegree;
+  }
+  setScaleDegree(v: number): void {
+    this.scaleDegree = v;
+  }
 
-  getStart(): number { return this.start; }
-  setStart(v: number): void { this.start = v; }
+  getStart(): number {
+    return this.start;
+  }
+  setStart(v: number): void {
+    this.start = v;
+  }
 
-  getNoteTemplate(): string | null { return this.noteTemplate; }
-  setNoteTemplate(t: string | null): void { this.noteTemplate = t; }
+  getNoteTemplate(): string | null {
+    return this.noteTemplate;
+  }
+  setNoteTemplate(t: string | null): void {
+    this.noteTemplate = t;
+  }
 
-  getFields(): Field[] { return [...this._fields]; }
+  getFields(): Field[] {
+    return [...this._fields];
+  }
 
   initFields(fieldDefs: FieldDef[]): void {
     this._fields = fieldDefs.map((fd) => {

@@ -15,11 +15,29 @@ export const GENERATOR_REGISTRY = [
   'Oscillator',
 ] as const;
 
-export type GeneratorKind = 'Constant' | 'ItemList' | 'Segment' | 'Random' | 'Probability' | 'Oscillator';
+export type GeneratorKind =
+  | 'Constant'
+  | 'ItemList'
+  | 'Segment'
+  | 'Random'
+  | 'Probability'
+  | 'Oscillator';
 
 const MASKABLE_GENERATORS: ReadonlySet<string> = new Set(['Oscillator', 'Probability']);
-const QUANTIZABLE_GENERATORS: ReadonlySet<string> = new Set(['Random', 'Oscillator', 'Segment', 'Probability']);
-const ACCUMULATABLE_GENERATORS: ReadonlySet<string> = new Set(['Constant', 'Random', 'Oscillator', 'Segment', 'ItemList', 'Probability']);
+const QUANTIZABLE_GENERATORS: ReadonlySet<string> = new Set([
+  'Random',
+  'Oscillator',
+  'Segment',
+  'Probability',
+]);
+const ACCUMULATABLE_GENERATORS: ReadonlySet<string> = new Set([
+  'Constant',
+  'Random',
+  'Oscillator',
+  'Segment',
+  'ItemList',
+  'Probability',
+]);
 
 export function getGeneratorKind(gen: GeneratorSnapshot | null | undefined): string {
   if (!gen) return '';
@@ -62,57 +80,192 @@ export function mapParameterInField(
 export function createDefaultGeneratorSnapshot(registryName: string): GeneratorSnapshot {
   const kind = registryNameToKind(registryName);
   switch (kind) {
-    case 'Constant': return { kind: 'Constant', value: 1.0 };
-    case 'ItemList': return { kind: 'ItemList', listType: 0, listItems: [], index: 0, direction: 0 };
-    case 'Segment': return {
-      kind: 'Segment',
-      table: {
-        kind: 'Table',
-        points: [
-          { kind: 'TablePoint', time: 0, value: 0.5 },
-          { kind: 'TablePoint', time: 1, value: 0.5 },
+    case 'Constant':
+      return { kind: 'Constant', value: 1.0 };
+    case 'ItemList':
+      return { kind: 'ItemList', listType: 0, listItems: [], index: 0, direction: 0 };
+    case 'Segment':
+      return {
+        kind: 'Segment',
+        table: {
+          kind: 'Table',
+          points: [
+            { kind: 'TablePoint', time: 0, value: 0.5 },
+            { kind: 'TablePoint', time: 1, value: 0.5 },
+          ],
+          min: 0,
+          max: 1,
+          interpolationType: 1,
+          interpolation: 0,
+        },
+      };
+    case 'Random':
+      return { kind: 'Random', min: 0, max: 1 };
+    case 'Probability':
+      return {
+        kind: 'Probability',
+        selectedIndex: 0,
+        generators: [
+          { kind: 'Uniform' },
+          { kind: 'Linear', direction: 0 },
+          { kind: 'Triangle' },
+          {
+            kind: 'Exponential',
+            direction: 0,
+            lambda: 0.5,
+            lambdaTableEnabled: false,
+            lambdaTable: {
+              kind: 'Table',
+              points: [
+                { kind: 'TablePoint', time: 0, value: 0.0001 },
+                { kind: 'TablePoint', time: 1, value: 0.0001 },
+              ],
+              min: 0.0001,
+              max: 1,
+              interpolationType: 1,
+              interpolation: 0,
+            },
+          },
+          {
+            kind: 'Gaussian',
+            sigma: 0.1,
+            mu: 0.5,
+            sigmaTableEnabled: false,
+            muTableEnabled: false,
+            sigmaTable: {
+              kind: 'Table',
+              points: [
+                { kind: 'TablePoint', time: 0, value: 0.1 },
+                { kind: 'TablePoint', time: 1, value: 0.1 },
+              ],
+              min: 0,
+              max: 1,
+              interpolationType: 1,
+              interpolation: 0,
+            },
+            muTable: {
+              kind: 'Table',
+              points: [
+                { kind: 'TablePoint', time: 0, value: 0.5 },
+                { kind: 'TablePoint', time: 1, value: 0.5 },
+              ],
+              min: 0,
+              max: 1,
+              interpolationType: 1,
+              interpolation: 0,
+            },
+          },
+          {
+            kind: 'Cauchy',
+            alpha: 0.1,
+            mu: 0.5,
+            alphaTableEnabled: false,
+            muTableEnabled: false,
+            alphaTable: {
+              kind: 'Table',
+              points: [
+                { kind: 'TablePoint', time: 0, value: 0.1 },
+                { kind: 'TablePoint', time: 1, value: 0.1 },
+              ],
+              min: 0,
+              max: 1,
+              interpolationType: 1,
+              interpolation: 0,
+            },
+            muTable: {
+              kind: 'Table',
+              points: [
+                { kind: 'TablePoint', time: 0, value: 0.5 },
+                { kind: 'TablePoint', time: 1, value: 0.5 },
+              ],
+              min: 0,
+              max: 1,
+              interpolationType: 1,
+              interpolation: 0,
+            },
+          },
+          {
+            kind: 'Beta',
+            a: 0.1,
+            b: 0.1,
+            aTableEnabled: false,
+            bTableEnabled: false,
+            aTable: {
+              kind: 'Table',
+              points: [
+                { kind: 'TablePoint', time: 0, value: 0.1 },
+                { kind: 'TablePoint', time: 1, value: 0.1 },
+              ],
+              min: 0,
+              max: 1,
+              interpolationType: 1,
+              interpolation: 0,
+            },
+            bTable: {
+              kind: 'Table',
+              points: [
+                { kind: 'TablePoint', time: 0, value: 0.1 },
+                { kind: 'TablePoint', time: 1, value: 0.1 },
+              ],
+              min: 0,
+              max: 1,
+              interpolationType: 1,
+              interpolation: 0,
+            },
+          },
+          {
+            kind: 'Weibull',
+            s: 0.5,
+            t: 2.0,
+            sTableEnabled: false,
+            tTableEnabled: false,
+            sTable: {
+              kind: 'Table',
+              points: [
+                { kind: 'TablePoint', time: 0, value: 0.5 },
+                { kind: 'TablePoint', time: 1, value: 0.5 },
+              ],
+              min: 0,
+              max: 1,
+              interpolationType: 1,
+              interpolation: 0,
+            },
+            tTable: {
+              kind: 'Table',
+              points: [
+                { kind: 'TablePoint', time: 0, value: 2.0 },
+                { kind: 'TablePoint', time: 1, value: 2.0 },
+              ],
+              min: 0.001,
+              max: 4,
+              interpolationType: 1,
+              interpolation: 0,
+            },
+          },
         ],
-        min: 0,
-        max: 1,
-        interpolationType: 1,
-        interpolation: 0,
-      },
-    };
-    case 'Random': return { kind: 'Random', min: 0, max: 1 };
-    case 'Probability': return {
-      kind: 'Probability',
-      selectedIndex: 0,
-      generators: [
-        { kind: 'Uniform' },
-        { kind: 'Linear', direction: 0 },
-        { kind: 'Triangle' },
-        { kind: 'Exponential', direction: 0, lambda: 0.5, lambdaTableEnabled: false, lambdaTable: { kind: 'Table', points: [{ kind: 'TablePoint', time: 0, value: 0.0001 }, { kind: 'TablePoint', time: 1, value: 0.0001 }], min: 0.0001, max: 1, interpolationType: 1, interpolation: 0 } },
-        { kind: 'Gaussian', sigma: 0.1, mu: 0.5, sigmaTableEnabled: false, muTableEnabled: false, sigmaTable: { kind: 'Table', points: [{ kind: 'TablePoint', time: 0, value: 0.1 }, { kind: 'TablePoint', time: 1, value: 0.1 }], min: 0, max: 1, interpolationType: 1, interpolation: 0 }, muTable: { kind: 'Table', points: [{ kind: 'TablePoint', time: 0, value: 0.5 }, { kind: 'TablePoint', time: 1, value: 0.5 }], min: 0, max: 1, interpolationType: 1, interpolation: 0 } },
-        { kind: 'Cauchy', alpha: 0.1, mu: 0.5, alphaTableEnabled: false, muTableEnabled: false, alphaTable: { kind: 'Table', points: [{ kind: 'TablePoint', time: 0, value: 0.1 }, { kind: 'TablePoint', time: 1, value: 0.1 }], min: 0, max: 1, interpolationType: 1, interpolation: 0 }, muTable: { kind: 'Table', points: [{ kind: 'TablePoint', time: 0, value: 0.5 }, { kind: 'TablePoint', time: 1, value: 0.5 }], min: 0, max: 1, interpolationType: 1, interpolation: 0 } },
-        { kind: 'Beta', a: 0.1, b: 0.1, aTableEnabled: false, bTableEnabled: false, aTable: { kind: 'Table', points: [{ kind: 'TablePoint', time: 0, value: 0.1 }, { kind: 'TablePoint', time: 1, value: 0.1 }], min: 0, max: 1, interpolationType: 1, interpolation: 0 }, bTable: { kind: 'Table', points: [{ kind: 'TablePoint', time: 0, value: 0.1 }, { kind: 'TablePoint', time: 1, value: 0.1 }], min: 0, max: 1, interpolationType: 1, interpolation: 0 } },
-        { kind: 'Weibull', s: 0.5, t: 2.0, sTableEnabled: false, tTableEnabled: false, sTable: { kind: 'Table', points: [{ kind: 'TablePoint', time: 0, value: 0.5 }, { kind: 'TablePoint', time: 1, value: 0.5 }], min: 0, max: 1, interpolationType: 1, interpolation: 0 }, tTable: { kind: 'Table', points: [{ kind: 'TablePoint', time: 0, value: 2.0 }, { kind: 'TablePoint', time: 1, value: 2.0 }], min: 0.001, max: 4, interpolationType: 1, interpolation: 0 } },
-      ],
-    };
-    case 'Oscillator': return {
-      kind: 'Oscillator',
-      oscillatorType: 0,
-      phaseInit: 0,
-      frequency: 1,
-      freqTableEnabled: false,
-      exponent: 1,
-      freqTable: {
-        kind: 'Table',
-        points: [
-          { kind: 'TablePoint', time: 0, value: 1 },
-          { kind: 'TablePoint', time: 1, value: 1 },
-        ],
-        min: 0.001,
-        max: 10,
-        interpolationType: 1,
-        interpolation: 0,
-      },
-    };
-    default: return { kind: 'Constant', value: 1.0 };
+      };
+    case 'Oscillator':
+      return {
+        kind: 'Oscillator',
+        oscillatorType: 0,
+        phaseInit: 0,
+        frequency: 1,
+        freqTableEnabled: false,
+        exponent: 1,
+        freqTable: {
+          kind: 'Table',
+          points: [
+            { kind: 'TablePoint', time: 0, value: 1 },
+            { kind: 'TablePoint', time: 1, value: 1 },
+          ],
+          min: 0.001,
+          max: 10,
+          interpolationType: 1,
+          interpolation: 0,
+        },
+      };
+    default:
+      return { kind: 'Constant', value: 1.0 };
   }
 }
 
@@ -124,8 +277,28 @@ export function createDefaultMaskSnapshot(): MaskSnapshot {
     mapValue: 0,
     highTableEnabled: false,
     lowTableEnabled: false,
-    highTable: { kind: 'Table', points: [{ kind: 'TablePoint', time: 0, value: 1 }, { kind: 'TablePoint', time: 1, value: 1 }], min: 0, max: 1, interpolationType: 1, interpolation: 0 },
-    lowTable: { kind: 'Table', points: [{ kind: 'TablePoint', time: 0, value: 0 }, { kind: 'TablePoint', time: 1, value: 0 }], min: 0, max: 1, interpolationType: 1, interpolation: 0 },
+    highTable: {
+      kind: 'Table',
+      points: [
+        { kind: 'TablePoint', time: 0, value: 1 },
+        { kind: 'TablePoint', time: 1, value: 1 },
+      ],
+      min: 0,
+      max: 1,
+      interpolationType: 1,
+      interpolation: 0,
+    },
+    lowTable: {
+      kind: 'Table',
+      points: [
+        { kind: 'TablePoint', time: 0, value: 0 },
+        { kind: 'TablePoint', time: 1, value: 0 },
+      ],
+      min: 0,
+      max: 1,
+      interpolationType: 1,
+      interpolation: 0,
+    },
     enabled: false,
   };
 }
@@ -139,9 +312,39 @@ export function createDefaultQuantizerSnapshot(): QuantizerSnapshot {
     gridSizeTableEnabled: false,
     strengthTableEnabled: false,
     offsetTableEnabled: false,
-    gridSizeTable: { kind: 'Table', points: [{ kind: 'TablePoint', time: 0, value: 1 }, { kind: 'TablePoint', time: 1, value: 1 }], min: Number.MIN_VALUE, max: 1, interpolationType: 1, interpolation: 0 },
-    strengthTable: { kind: 'Table', points: [{ kind: 'TablePoint', time: 0, value: 1 }, { kind: 'TablePoint', time: 1, value: 1 }], min: 0, max: 1, interpolationType: 1, interpolation: 0 },
-    offsetTable: { kind: 'Table', points: [{ kind: 'TablePoint', time: 0, value: 0 }, { kind: 'TablePoint', time: 1, value: 0 }], min: 0, max: 1, interpolationType: 1, interpolation: 0 },
+    gridSizeTable: {
+      kind: 'Table',
+      points: [
+        { kind: 'TablePoint', time: 0, value: 1 },
+        { kind: 'TablePoint', time: 1, value: 1 },
+      ],
+      min: Number.MIN_VALUE,
+      max: 1,
+      interpolationType: 1,
+      interpolation: 0,
+    },
+    strengthTable: {
+      kind: 'Table',
+      points: [
+        { kind: 'TablePoint', time: 0, value: 1 },
+        { kind: 'TablePoint', time: 1, value: 1 },
+      ],
+      min: 0,
+      max: 1,
+      interpolationType: 1,
+      interpolation: 0,
+    },
+    offsetTable: {
+      kind: 'Table',
+      points: [
+        { kind: 'TablePoint', time: 0, value: 0 },
+        { kind: 'TablePoint', time: 1, value: 0 },
+      ],
+      min: 0,
+      max: 1,
+      interpolationType: 1,
+      interpolation: 0,
+    },
     enabled: false,
   };
 }
@@ -149,8 +352,28 @@ export function createDefaultQuantizerSnapshot(): QuantizerSnapshot {
 export function createDefaultAccumulatorSnapshot(): AccumulatorSnapshot {
   return {
     kind: 'Accumulator',
-    highTable: { kind: 'Table', points: [{ kind: 'TablePoint', time: 0, value: 1 }, { kind: 'TablePoint', time: 1, value: 1 }], min: 0, max: 1, interpolationType: 1, interpolation: 0 },
-    lowTable: { kind: 'Table', points: [{ kind: 'TablePoint', time: 0, value: 0 }, { kind: 'TablePoint', time: 1, value: 0 }], min: 0, max: 1, interpolationType: 1, interpolation: 0 },
+    highTable: {
+      kind: 'Table',
+      points: [
+        { kind: 'TablePoint', time: 0, value: 1 },
+        { kind: 'TablePoint', time: 1, value: 1 },
+      ],
+      min: 0,
+      max: 1,
+      interpolationType: 1,
+      interpolation: 0,
+    },
+    lowTable: {
+      kind: 'Table',
+      points: [
+        { kind: 'TablePoint', time: 0, value: 0 },
+        { kind: 'TablePoint', time: 1, value: 0 },
+      ],
+      min: 0,
+      max: 1,
+      interpolationType: 1,
+      interpolation: 0,
+    },
     highTableEnabled: false,
     lowTableEnabled: false,
     mode: 0,
@@ -163,26 +386,41 @@ export function createDefaultAccumulatorSnapshot(): AccumulatorSnapshot {
 
 export function registryNameToKind(name: string): GeneratorKind {
   switch (name) {
-    case 'Constant': return 'Constant';
-    case 'Item List': return 'ItemList';
-    case 'ItemList': return 'ItemList';
-    case 'Segment': return 'Segment';
-    case 'Random': return 'Random';
-    case 'Probability': return 'Probability';
-    case 'Oscillator': return 'Oscillator';
-    default: return 'Constant';
+    case 'Constant':
+      return 'Constant';
+    case 'Item List':
+      return 'ItemList';
+    case 'ItemList':
+      return 'ItemList';
+    case 'Segment':
+      return 'Segment';
+    case 'Random':
+      return 'Random';
+    case 'Probability':
+      return 'Probability';
+    case 'Oscillator':
+      return 'Oscillator';
+    default:
+      return 'Constant';
   }
 }
 
 export function kindToRegistryName(kind: string): string {
   switch (kind) {
-    case 'Constant': return 'Constant';
-    case 'ItemList': return 'Item List';
-    case 'Segment': return 'Segment';
-    case 'Random': return 'Random';
-    case 'Probability': return 'Probability';
-    case 'Oscillator': return 'Oscillator';
-    default: return 'Constant';
+    case 'Constant':
+      return 'Constant';
+    case 'ItemList':
+      return 'Item List';
+    case 'Segment':
+      return 'Segment';
+    case 'Random':
+      return 'Random';
+    case 'Probability':
+      return 'Probability';
+    case 'Oscillator':
+      return 'Oscillator';
+    default:
+      return 'Constant';
   }
 }
 

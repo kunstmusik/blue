@@ -32,10 +32,7 @@ import { TimeBehavior } from '../sound-objects/time-behavior';
 import { TimePosition } from '../time/time-position';
 import { TimeDuration } from '../time/time-duration';
 import { setScoreStart } from '../utilities/score';
-import {
-  disposeJavaScriptCompileState,
-  setJavaScriptSession,
-} from '../javascript-runtime';
+import { disposeJavaScriptCompileState, setJavaScriptSession } from '../javascript-runtime';
 import type { JavaScriptSession } from '../javascript-runtime';
 import { setJavaRuntimeClient } from '../java-runtime';
 import type { JavaRuntimeClientContract } from '../java-runtime';
@@ -115,14 +112,28 @@ export function resolveTriggerTargets(
 ): { targets: LiveObject[] } | { failure: TriggerPreparationFailure } {
   if (mode === 'selected') {
     if (!liveObjectId || liveObjectId.trim() === '') {
-      return { failure: { code: 'invalid-request', message: 'Missing liveObjectId for selected trigger' } };
+      return {
+        failure: { code: 'invalid-request', message: 'Missing liveObjectId for selected trigger' },
+      };
     }
     const obj = bins.getLiveObjectByUniqueId(liveObjectId);
     if (!obj) {
-      return { failure: { code: 'target-not-found', message: `No LiveObject with id ${liveObjectId}`, targetId: liveObjectId } };
+      return {
+        failure: {
+          code: 'target-not-found',
+          message: `No LiveObject with id ${liveObjectId}`,
+          targetId: liveObjectId,
+        },
+      };
     }
     if (!obj.getSoundObject()) {
-      return { failure: { code: 'target-not-found', message: `LiveObject ${liveObjectId} has no SoundObject`, targetId: liveObjectId } };
+      return {
+        failure: {
+          code: 'target-not-found',
+          message: `LiveObject ${liveObjectId} has no SoundObject`,
+          targetId: liveObjectId,
+        },
+      };
     }
     return { targets: [obj] };
   }

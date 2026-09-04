@@ -41,17 +41,33 @@ export class AudioFile extends AbstractSoundObject {
     }
   }
 
-  getSoundFileName(): string { return this._soundFileName; }
-  setSoundFileName(name: string): void { this._soundFileName = name; }
+  getSoundFileName(): string {
+    return this._soundFileName;
+  }
+  setSoundFileName(name: string): void {
+    this._soundFileName = name;
+  }
 
-  getCsoundPostCode(): string { return this._csoundPostCode; }
-  setCsoundPostCode(code: string): void { this._csoundPostCode = code; }
+  getCsoundPostCode(): string {
+    return this._csoundPostCode;
+  }
+  setCsoundPostCode(code: string): void {
+    this._csoundPostCode = code;
+  }
 
-  useCustomWindowSize(): boolean { return this._useCustomWindowSize; }
-  setUseCustomWindowSize(val: boolean): void { this._useCustomWindowSize = val; }
+  useCustomWindowSize(): boolean {
+    return this._useCustomWindowSize;
+  }
+  setUseCustomWindowSize(val: boolean): void {
+    this._useCustomWindowSize = val;
+  }
 
-  getWindowSize(): number { return this._windowSize; }
-  setWindowSize(size: number): void { this._windowSize = size; }
+  getWindowSize(): number {
+    return this._windowSize;
+  }
+  setWindowSize(size: number): void {
+    this._windowSize = size;
+  }
 
   override getTimeBehavior(): TimeBehavior {
     return TimeBehavior.NOT_SUPPORTED;

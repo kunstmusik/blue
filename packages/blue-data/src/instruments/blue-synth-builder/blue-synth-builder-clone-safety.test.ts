@@ -4,10 +4,7 @@ import { Element } from '../../serialization/xml-reader';
 import { BlueSynthBuilder } from '../blue-synth-builder';
 import { BSBDropdown } from './bsb-dropdown';
 import { BSBKnob } from './bsb-knob';
-import {
-  collectBsbWidgetIds,
-  collectBsbWidgets,
-} from './bsb-identity';
+import { collectBsbWidgetIds, collectBsbWidgets } from './bsb-identity';
 
 function buildInstrumentXml({
   graphicInterface,
@@ -41,8 +38,9 @@ function loadBuilder(xml: string): BlueSynthBuilder {
 }
 
 function createExplicitIdBuilder(): BlueSynthBuilder {
-  return loadBuilder(buildInstrumentXml({
-    graphicInterface: `
+  return loadBuilder(
+    buildInstrumentXml({
+      graphicInterface: `
       <bsbObject type="blue.orchestra.blueSynthBuilder.BSBGroup" uniqueId="root-group">
         <groupName>Root</groupName>
         <x>0</x>
@@ -102,7 +100,7 @@ function createExplicitIdBuilder(): BlueSynthBuilder {
           </bsbObject>
         </bsbObject>
       </bsbObject>`,
-    parameterList: `<parameterList>
+      parameterList: `<parameterList>
       <parameter uniqueId="gain-param" name="gain" label="Gain" min="0.0" max="1.0" automationEnabled="true" value="0.5">
         <line>
           <linePoint x="0.0" y="0.5"/>
@@ -125,13 +123,13 @@ function createExplicitIdBuilder(): BlueSynthBuilder {
         </line>
       </parameter>
     </parameterList>`,
-    presetGroup: `<presetGroup name="Presets" currentPresetUniqueId="preset-1">
+      presetGroup: `<presetGroup name="Presets" currentPresetUniqueId="preset-1">
       <preset name="Default" uniqueId="preset-1">
         <setting name="gain">ver2:0.5</setting>
         <setting name="choice">id:item-b</setting>
       </preset>
     </presetGroup>`,
-    opcodeList: `<opcodeList>
+      opcodeList: `<opcodeList>
       <udo>
         <style>MODERN</style>
         <opcodeName>clipper</opcodeName>
@@ -141,8 +139,9 @@ function createExplicitIdBuilder(): BlueSynthBuilder {
         <comments></comments>
       </udo>
     </opcodeList>`,
-    instrumentText: 'instr 1\n  outc &lt;gain&gt;, &lt;gain&gt;\nendin',
-  }));
+      instrumentText: 'instr 1\n  outc &lt;gain&gt;, &lt;gain&gt;\nendin',
+    }),
+  );
 }
 
 function getWidgetIds(builder: BlueSynthBuilder): string[] {
@@ -165,8 +164,9 @@ function getFirstDropdown(builder: BlueSynthBuilder): BSBDropdown {
 
 describe('BlueSynthBuilder clone safety', () => {
   it('creates new widgets with ids that do not collide with explicit loaded ids', () => {
-    const builder = loadBuilder(buildInstrumentXml({
-      graphicInterface: `
+    const builder = loadBuilder(
+      buildInstrumentXml({
+        graphicInterface: `
         <bsbObject type="blue.orchestra.blueSynthBuilder.BSBKnob" version="2">
           <id>w1</id>
           <objectName>gain</objectName>
@@ -176,7 +176,8 @@ describe('BlueSynthBuilder clone safety', () => {
           <minimum>0</minimum>
           <maximum>1</maximum>
         </bsbObject>`,
-    }));
+      }),
+    );
 
     const graphicInterface = builder.getGraphicInterface();
     const widget = graphicInterface.createWidgetByType('BSBLabel');
@@ -192,8 +193,9 @@ describe('BlueSynthBuilder clone safety', () => {
   });
 
   it('assigns unique editing ids to legacy widgets that load without ids', () => {
-    const builder = loadBuilder(buildInstrumentXml({
-      graphicInterface: `
+    const builder = loadBuilder(
+      buildInstrumentXml({
+        graphicInterface: `
         <bsbObject type="blue.orchestra.blueSynthBuilder.BSBKnob" version="2">
           <objectName>gain</objectName>
           <x>10</x>
@@ -220,7 +222,8 @@ describe('BlueSynthBuilder clone safety', () => {
             <value>0.1</value>
           </bsbObject>
         </bsbObject>`,
-    }));
+      }),
+    );
 
     const ids = getWidgetIds(builder);
 
@@ -229,8 +232,9 @@ describe('BlueSynthBuilder clone safety', () => {
   });
 
   it('repairs duplicate loaded widget ids before exposing the interface for editing', () => {
-    const builder = loadBuilder(buildInstrumentXml({
-      graphicInterface: `
+    const builder = loadBuilder(
+      buildInstrumentXml({
+        graphicInterface: `
         <bsbObject type="blue.orchestra.blueSynthBuilder.BSBKnob" version="2">
           <id>dup</id>
           <objectName>gain</objectName>
@@ -249,7 +253,8 @@ describe('BlueSynthBuilder clone safety', () => {
           <minimum>0</minimum>
           <maximum>1</maximum>
         </bsbObject>`,
-    }));
+      }),
+    );
 
     const widgets = collectBsbWidgets(builder.getGraphicInterface().getRootGroup()) as BSBKnob[];
     const ids = getWidgetIds(builder);
@@ -261,8 +266,9 @@ describe('BlueSynthBuilder clone safety', () => {
   });
 
   it('keeps widget-targeted edits isolated after duplicate-id repair', () => {
-    const builder = loadBuilder(buildInstrumentXml({
-      graphicInterface: `
+    const builder = loadBuilder(
+      buildInstrumentXml({
+        graphicInterface: `
         <bsbObject type="blue.orchestra.blueSynthBuilder.BSBKnob" version="2">
           <id>dup</id>
           <objectName>gain</objectName>
@@ -281,11 +287,16 @@ describe('BlueSynthBuilder clone safety', () => {
           <minimum>0</minimum>
           <maximum>1</maximum>
         </bsbObject>`,
-    }));
+      }),
+    );
 
-    const [first, second] = collectBsbWidgets(builder.getGraphicInterface().getRootGroup()) as BSBKnob[];
+    const [first, second] = collectBsbWidgets(
+      builder.getGraphicInterface().getRootGroup(),
+    ) as BSBKnob[];
 
-    expect(builder.updateWidgetProperties(first.id, { objectName: 'lead', value: 0.75 })).toBe(true);
+    expect(builder.updateWidgetProperties(first.id, { objectName: 'lead', value: 0.75 })).toBe(
+      true,
+    );
     expect(first.objectName).toBe('lead');
     expect(first.value).toBe(0.75);
     expect(second.objectName).toBe('gain2');
@@ -299,7 +310,9 @@ describe('BlueSynthBuilder clone safety', () => {
   it('rekeys all duplicated BSB identities while preserving musical content', () => {
     const original = createExplicitIdBuilder();
     const duplicate = original.deepCopy() as BlueSynthBuilder;
-    const duplicateDropdownIds = getFirstDropdown(duplicate).dropdownItems.map((item) => item.uniqueId);
+    const duplicateDropdownIds = getFirstDropdown(duplicate).dropdownItems.map(
+      (item) => item.uniqueId,
+    );
     const duplicatePreset = duplicate.getPresetGroup()?.getPresets()[0];
 
     expect(getWidgetIds(duplicate)).not.toEqual(getWidgetIds(original));
@@ -307,8 +320,14 @@ describe('BlueSynthBuilder clone safety', () => {
     expect(new Set(getWidgetIds(duplicate)).size).toBe(getWidgetIds(duplicate).length);
     expect(new Set(getParameterIds(duplicate)).size).toBe(getParameterIds(duplicate).length);
 
-    expect(collectBsbWidgets(duplicate.getGraphicInterface().getRootGroup()).map((widget) => widget.objectName)).toEqual(
-      collectBsbWidgets(original.getGraphicInterface().getRootGroup()).map((widget) => widget.objectName),
+    expect(
+      collectBsbWidgets(duplicate.getGraphicInterface().getRootGroup()).map(
+        (widget) => widget.objectName,
+      ),
+    ).toEqual(
+      collectBsbWidgets(original.getGraphicInterface().getRootGroup()).map(
+        (widget) => widget.objectName,
+      ),
     );
     expect(duplicate.getParameters().map((parameter) => parameter.getName())).toEqual(
       original.getParameters().map((parameter) => parameter.getName()),
@@ -321,7 +340,9 @@ describe('BlueSynthBuilder clone safety', () => {
     expect(new Set(duplicateDropdownIds).size).toBe(duplicateDropdownIds.length);
     expect(duplicatePreset?.getUniqueId()).toBeTruthy();
     expect(duplicatePreset?.getUniqueId()).not.toBe('preset-1');
-    expect(duplicate.getPresetGroup()?.getCurrentPresetUniqueId()).toBe(duplicatePreset?.getUniqueId());
+    expect(duplicate.getPresetGroup()?.getCurrentPresetUniqueId()).toBe(
+      duplicatePreset?.getUniqueId(),
+    );
     expect(duplicatePreset?.getValue('choice')).toBe(`id:${duplicateDropdownIds[1]}`);
     expect(original.getPresetGroup()?.getPresets()[0]?.getValue('choice')).toBe('id:item-b');
   });
@@ -341,7 +362,9 @@ describe('BlueSynthBuilder clone safety', () => {
       throw new Error('Expected both builder trees to contain a gain knob');
     }
 
-    expect(duplicate.updateWidgetProperties(duplicateKnob.id, { objectName: 'gain_copy', value: 0.9 })).toBe(true);
+    expect(
+      duplicate.updateWidgetProperties(duplicateKnob.id, { objectName: 'gain_copy', value: 0.9 }),
+    ).toBe(true);
 
     expect(duplicateKnob.objectName).toBe('gain_copy');
     expect(duplicateKnob.value).toBe(0.9);
@@ -364,8 +387,10 @@ describe('BlueSynthBuilder clone safety', () => {
 
     expect(getWidgetIds(reloaded)).toEqual(getWidgetIds(original));
     expect(getParameterIds(reloaded)).toEqual(getParameterIds(original));
-    expect(getFirstDropdown(reloaded).dropdownItems.map((item) => item.uniqueId)).toEqual(['item-a', 'item-b']);
+    expect(getFirstDropdown(reloaded).dropdownItems.map((item) => item.uniqueId)).toEqual([
+      'item-a',
+      'item-b',
+    ]);
     expect(reloaded.getPresetGroup()?.getCurrentPresetUniqueId()).toBe('preset-1');
   });
-
 });

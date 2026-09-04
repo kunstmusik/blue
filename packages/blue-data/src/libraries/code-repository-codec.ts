@@ -77,7 +77,10 @@ function getChildElements(node: XmlElement, name: string): XmlElement[] {
 function assertOnlyAttributes(node: XmlElement, allowed: readonly string[]): void {
   for (const attribute of Object.keys(node.attributes)) {
     if (!allowed.includes(attribute)) {
-      throw new CodeRepositoryXmlError(`Unsupported attribute ${attribute} on <${node.name}>`, 'invalid-legacy-xml');
+      throw new CodeRepositoryXmlError(
+        `Unsupported attribute ${attribute} on <${node.name}>`,
+        'invalid-legacy-xml',
+      );
     }
   }
 }
@@ -85,7 +88,10 @@ function assertOnlyAttributes(node: XmlElement, allowed: readonly string[]): voi
 function assertContainerTextIsWhitespace(node: XmlElement): void {
   for (const child of node.children) {
     if (child.type === XmlNode.TYPE_TEXT && readText(child).trim().length > 0) {
-      throw new CodeRepositoryXmlError(`Unexpected text inside <${node.name}>`, 'invalid-legacy-xml');
+      throw new CodeRepositoryXmlError(
+        `Unexpected text inside <${node.name}>`,
+        'invalid-legacy-xml',
+      );
     }
   }
 }
@@ -93,13 +99,19 @@ function assertContainerTextIsWhitespace(node: XmlElement): void {
 function getRequiredTextElement(parent: XmlElement, name: string): string {
   const matches = getChildElements(parent, name);
   if (matches.length !== 1) {
-    throw new CodeRepositoryXmlError(`customAccelerator must contain exactly one <${name}>`, 'invalid-legacy-xml');
+    throw new CodeRepositoryXmlError(
+      `customAccelerator must contain exactly one <${name}>`,
+      'invalid-legacy-xml',
+    );
   }
   const element = matches[0];
   assertOnlyAttributes(element, []);
   for (const child of element.children) {
     if (child.type === XmlNode.TYPE_ELEMENT) {
-      throw new CodeRepositoryXmlError(`<${name}> cannot contain child elements`, 'invalid-legacy-xml');
+      throw new CodeRepositoryXmlError(
+        `<${name}> cannot contain child elements`,
+        'invalid-legacy-xml',
+      );
     }
   }
   return element.children.map(readText).join('');
@@ -114,16 +126,24 @@ function buildNode(
   depth = 0,
 ): CodeRepositoryNode {
   if (depth > CODE_REPOSITORY_MAX_DEPTH) {
-    throw new CodeRepositoryXmlError('Code Repository XML exceeds the maximum group depth', 'invalid-legacy-xml');
+    throw new CodeRepositoryXmlError(
+      'Code Repository XML exceeds the maximum group depth',
+      'invalid-legacy-xml',
+    );
   }
   const id = kind === 'root' ? CODE_REPOSITORY_ROOT_ID : generateId('grp', idCounter);
   assertOnlyAttributes(node, kind === 'group' ? ['name'] : []);
   if (kind === 'group' && typeof node.attributes.name !== 'string') {
-    throw new CodeRepositoryXmlError('customGroup is missing its name attribute', 'invalid-legacy-xml');
+    throw new CodeRepositoryXmlError(
+      'customGroup is missing its name attribute',
+      'invalid-legacy-xml',
+    );
   }
   assertContainerTextIsWhitespace(node);
   const name = kind === 'root' ? CODE_REPOSITORY_ROOT_NAME : node.attributes.name!;
-  const childElements = node.children.filter((child): child is XmlElement => child.type === XmlNode.TYPE_ELEMENT);
+  const childElements = node.children.filter(
+    (child): child is XmlElement => child.type === XmlNode.TYPE_ELEMENT,
+  );
   const children: CodeRepositoryNode[] = [];
   let childOrder = 0;
   for (const child of childElements) {
@@ -151,7 +171,9 @@ function buildSnippetNode(
 ): CodeRepositoryNode {
   assertOnlyAttributes(node, []);
   assertContainerTextIsWhitespace(node);
-  const childElements = node.children.filter((child): child is XmlElement => child.type === XmlNode.TYPE_ELEMENT);
+  const childElements = node.children.filter(
+    (child): child is XmlElement => child.type === XmlNode.TYPE_ELEMENT,
+  );
   if (
     childElements.length !== 2 ||
     childElements.some((child) => child.name !== 'name' && child.name !== 'signature')
@@ -191,9 +213,14 @@ export function parseCodeRepositoryXml(source: string): CodeRepositoryParseResul
       'invalid-legacy-xml',
     );
   }
-  const rootElements = document.children.filter((child): child is XmlElement => child.type === XmlNode.TYPE_ELEMENT);
+  const rootElements = document.children.filter(
+    (child): child is XmlElement => child.type === XmlNode.TYPE_ELEMENT,
+  );
   if (rootElements.length !== 1 || rootElements[0].name !== CODE_REPOSITORY_ROOT_ELEMENT) {
-    throw new CodeRepositoryXmlError(`Root element must be <${CODE_REPOSITORY_ROOT_ELEMENT}>`, 'invalid-legacy-xml');
+    throw new CodeRepositoryXmlError(
+      `Root element must be <${CODE_REPOSITORY_ROOT_ELEMENT}>`,
+      'invalid-legacy-xml',
+    );
   }
 
   const idCounter = { value: 0 };

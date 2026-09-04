@@ -16,7 +16,9 @@ import { useWorkbenchStore } from '../stores/workbench-store';
 import { useLibraryStore } from '../stores/library-store';
 import { HostDocumentContext } from '../hooks/use-host-document';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 function makeBlueLiveSnapshot(): BlueLiveProjectSnapshot {
   const scoreXml = new GenericScore().saveAsXML().toXml();
@@ -33,15 +35,51 @@ function makeBlueLiveSnapshot(): BlueLiveProjectSnapshot {
       columns: 3,
       cells: [
         [
-          { uniqueId: 'obj1', displayName: 'OSC1', enabled: true, keyTrigger: 0, midiTrigger: 0, soundObjectType: 'GenericScore', hasSoundObject: true, serializedXml: scoreXml },
-          { uniqueId: 'obj2', displayName: 'OSC2', enabled: false, keyTrigger: 0, midiTrigger: 0, soundObjectType: 'GenericScore', hasSoundObject: true, serializedXml: scoreXml },
+          {
+            uniqueId: 'obj1',
+            displayName: 'OSC1',
+            enabled: true,
+            keyTrigger: 0,
+            midiTrigger: 0,
+            soundObjectType: 'GenericScore',
+            hasSoundObject: true,
+            serializedXml: scoreXml,
+          },
+          {
+            uniqueId: 'obj2',
+            displayName: 'OSC2',
+            enabled: false,
+            keyTrigger: 0,
+            midiTrigger: 0,
+            soundObjectType: 'GenericScore',
+            hasSoundObject: true,
+            serializedXml: scoreXml,
+          },
         ],
         [
           null,
-          { uniqueId: 'obj3', displayName: 'FX1', enabled: false, keyTrigger: 0, midiTrigger: 0, soundObjectType: 'GenericScore', hasSoundObject: true, serializedXml: scoreXml },
+          {
+            uniqueId: 'obj3',
+            displayName: 'FX1',
+            enabled: false,
+            keyTrigger: 0,
+            midiTrigger: 0,
+            soundObjectType: 'GenericScore',
+            hasSoundObject: true,
+            serializedXml: scoreXml,
+          },
         ],
         [
-          { uniqueId: 'obj4', displayName: 'SUB1', enabled: true, keyTrigger: 0, midiTrigger: 0, soundObjectType: 'GenericScore', hasSoundObject: true, serializedXml: scoreXml },
+          {
+            uniqueId: 'obj4',
+            displayName: 'SUB1',
+            enabled: true,
+            keyTrigger: 0,
+            midiTrigger: 0,
+            soundObjectType: 'GenericScore',
+            hasSoundObject: true,
+            serializedXml: scoreXml,
+          },
           null,
         ],
       ],
@@ -89,21 +127,24 @@ async function openCellMenu(column: number, row: number): Promise<HTMLElement> {
     `[data-blue-live-cell][data-column="${column}"][data-row="${row}"]`,
   ) as HTMLElement;
   await act(async () => {
-    cell.dispatchEvent(new MouseEvent('contextmenu', {
-      bubbles: true,
-      cancelable: true,
-      button: 2,
-      clientX: 20,
-      clientY: 20,
-    }));
+    cell.dispatchEvent(
+      new MouseEvent('contextmenu', {
+        bubbles: true,
+        cancelable: true,
+        button: 2,
+        clientX: 20,
+        clientY: 20,
+      }),
+    );
     await Promise.resolve();
   });
   return document.body.querySelector('[data-blue-live-cell-menu]') as HTMLElement;
 }
 
 async function selectMenuItem(label: string): Promise<void> {
-  const item = Array.from(document.body.querySelectorAll('[role="menuitem"]'))
-    .find((candidate) => candidate.textContent?.trim() === label) as HTMLElement;
+  const item = Array.from(document.body.querySelectorAll('[role="menuitem"]')).find(
+    (candidate) => candidate.textContent?.trim() === label,
+  ) as HTMLElement;
   const PointerEventCtor = window.PointerEvent ?? MouseEvent;
   await act(async () => {
     item.dispatchEvent(new PointerEventCtor('pointermove', { bubbles: true }));
@@ -134,14 +175,20 @@ beforeEach(() => {
 afterEach(() => {
   useWorkbenchStore.setState({ openPanel: originalOpenPanel });
   useLibraryStore.setState({ ...originalLibraryActions, clipboard: null });
-  act(() => { root.unmount(); });
+  act(() => {
+    root.unmount();
+  });
   container.remove();
 });
 
 describe('Blue Live panel tab render tests (T045)', () => {
   it('LiveSpaceTab renders no-project message without project', () => {
     act(() => {
-      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
+      root.render(
+        <HostDocumentContext.Provider value={document}>
+          <LiveSpaceTab />
+        </HostDocumentContext.Provider>,
+      );
     });
     expect(container.textContent).toContain('No project loaded');
   });
@@ -149,7 +196,11 @@ describe('Blue Live panel tab render tests (T045)', () => {
   it('LiveSpaceTab renders grid with project loaded', () => {
     seedProject(makeBlueLiveSnapshot());
     act(() => {
-      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
+      root.render(
+        <HostDocumentContext.Provider value={document}>
+          <LiveSpaceTab />
+        </HostDocumentContext.Provider>,
+      );
     });
     expect(container.textContent).toContain('Saved Sets');
     expect(container.textContent).toContain('OSC1');
@@ -190,7 +241,11 @@ describe('Blue Live panel tab render tests (T045)', () => {
   it('LiveSpaceTab renders toolbar buttons', () => {
     seedProject(makeBlueLiveSnapshot());
     act(() => {
-      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
+      root.render(
+        <HostDocumentContext.Provider value={document}>
+          <LiveSpaceTab />
+        </HostDocumentContext.Provider>,
+      );
     });
     const buttons = container.querySelectorAll('button');
     const texts = Array.from(buttons).map((b) => b.textContent);
@@ -201,7 +256,11 @@ describe('Blue Live panel tab render tests (T045)', () => {
   it('LiveSpaceTab renders saved sets', () => {
     seedProject(makeBlueLiveSnapshot());
     act(() => {
-      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
+      root.render(
+        <HostDocumentContext.Provider value={document}>
+          <LiveSpaceTab />
+        </HostDocumentContext.Provider>,
+      );
     });
     expect(container.textContent).toContain('Set A');
     expect(container.textContent).toContain('Set B');
@@ -210,15 +269,23 @@ describe('Blue Live panel tab render tests (T045)', () => {
   it('LiveSpaceTab uses semantic roles for headings, annotations, and cell values', () => {
     seedProject(makeBlueLiveSnapshot());
     act(() => {
-      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
+      root.render(
+        <HostDocumentContext.Provider value={document}>
+          <LiveSpaceTab />
+        </HostDocumentContext.Provider>,
+      );
     });
 
-    const savedSetsHeading = container.querySelector('[data-blue-live-saved-sets-heading]') as HTMLElement;
+    const savedSetsHeading = container.querySelector(
+      '[data-blue-live-saved-sets-heading]',
+    ) as HTMLElement;
     expect(savedSetsHeading.style.fontSize).toBe('var(--text-role-headline)');
     expect(savedSetsHeading.style.lineHeight).toBe('var(--text-role-headline--line-height)');
     expect(savedSetsHeading.style.fontWeight).toBe('700');
 
-    const columnHeaders = Array.from(container.querySelectorAll('[data-blue-live-column-header]')) as HTMLElement[];
+    const columnHeaders = Array.from(
+      container.querySelectorAll('[data-blue-live-column-header]'),
+    ) as HTMLElement[];
     expect(columnHeaders).toHaveLength(3);
     for (const header of columnHeaders) {
       expect(header.style.fontSize).toBe('var(--text-role-headline)');
@@ -226,7 +293,9 @@ describe('Blue Live panel tab render tests (T045)', () => {
       expect(header.style.fontWeight).toBe('700');
     }
 
-    const rowLabels = Array.from(container.querySelectorAll('[data-blue-live-row-label]')) as HTMLElement[];
+    const rowLabels = Array.from(
+      container.querySelectorAll('[data-blue-live-row-label]'),
+    ) as HTMLElement[];
     expect(rowLabels).toHaveLength(2);
     for (const label of rowLabels) {
       expect(label.style.fontSize).toBe('var(--text-role-subheadline)');
@@ -245,7 +314,11 @@ describe('Blue Live panel tab render tests (T045)', () => {
     useWorkbenchStore.setState({ openPanel });
     seedProject(makeBlueLiveSnapshot());
     act(() => {
-      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
+      root.render(
+        <HostDocumentContext.Provider value={document}>
+          <LiveSpaceTab />
+        </HostDocumentContext.Provider>,
+      );
     });
 
     const cell = container.querySelector(
@@ -278,7 +351,11 @@ describe('Blue Live panel tab render tests (T045)', () => {
     seedProject(makeBlueLiveSnapshot());
     useScoreSelectionStore.getState().select('prior-score-object', false);
     act(() => {
-      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
+      root.render(
+        <HostDocumentContext.Provider value={document}>
+          <LiveSpaceTab />
+        </HostDocumentContext.Provider>,
+      );
     });
 
     const emptyCell = container.querySelector(
@@ -296,7 +373,11 @@ describe('Blue Live panel tab render tests (T045)', () => {
   it('LiveSpaceTab omits the non-Java row/column button strip', () => {
     seedProject(makeBlueLiveSnapshot());
     act(() => {
-      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
+      root.render(
+        <HostDocumentContext.Provider value={document}>
+          <LiveSpaceTab />
+        </HostDocumentContext.Provider>,
+      );
     });
     expect(container.textContent).not.toContain('+Row Top');
     expect(container.textContent).not.toContain('+Row Bottom');
@@ -309,12 +390,17 @@ describe('Blue Live panel tab render tests (T045)', () => {
   it('opens the Java-ordered cell context menu on the right-clicked cell', async () => {
     seedProject(makeBlueLiveSnapshot());
     act(() => {
-      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
+      root.render(
+        <HostDocumentContext.Provider value={document}>
+          <LiveSpaceTab />
+        </HostDocumentContext.Provider>,
+      );
     });
     const menu = await openCellMenu(1, 0);
     expect(menu).not.toBeNull();
-    const labels = Array.from(menu.querySelectorAll('[role="menuitem"]'))
-      .map((item) => item.textContent?.trim());
+    const labels = Array.from(menu.querySelectorAll('[role="menuitem"]')).map((item) =>
+      item.textContent?.trim(),
+    );
     expect(labels).toEqual([
       'Add SoundObject',
       'Remove',
@@ -330,8 +416,10 @@ describe('Blue Live panel tab render tests (T045)', () => {
     ]);
     expect(menu.querySelectorAll('[role="separator"]')).toHaveLength(3);
     expect(menu.textContent).not.toContain('+Row Top');
-    const byLabel = (label: string) => Array.from(menu.querySelectorAll('[role="menuitem"]'))
-      .find((item) => item.textContent?.trim() === label);
+    const byLabel = (label: string) =>
+      Array.from(menu.querySelectorAll('[role="menuitem"]')).find(
+        (item) => item.textContent?.trim() === label,
+      );
     expect(byLabel('Remove')?.hasAttribute('data-disabled')).toBe(true);
     expect(byLabel('Cut')?.hasAttribute('data-disabled')).toBe(true);
     expect(byLabel('Copy')?.hasAttribute('data-disabled')).toBe(true);
@@ -345,35 +433,48 @@ describe('Blue Live panel tab render tests (T045)', () => {
     snapshot.bins = { rows: 1, columns: 1, cells: [[null]] };
     seedProject(snapshot);
     act(() => {
-      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
+      root.render(
+        <HostDocumentContext.Provider value={document}>
+          <LiveSpaceTab />
+        </HostDocumentContext.Provider>,
+      );
     });
     const menu = await openCellMenu(0, 0);
-    const byLabel = (label: string) => Array.from(menu.querySelectorAll('[role="menuitem"]'))
-      .find((item) => item.textContent?.trim() === label);
+    const byLabel = (label: string) =>
+      Array.from(menu.querySelectorAll('[role="menuitem"]')).find(
+        (item) => item.textContent?.trim() === label,
+      );
     expect(byLabel('Remove Row')?.hasAttribute('data-disabled')).toBe(true);
     expect(byLabel('Remove Column')?.hasAttribute('data-disabled')).toBe(true);
   });
 
   it('uses the shared ScoreObject clipboard for Live Space copy and paste eligibility', async () => {
     seedProject(makeBlueLiveSnapshot());
-    useScoreSelectionStore.getState().copySelected([{
-      objectId: 'score-copy',
-      objectType: 'GenericScore',
-      name: 'Score phrase',
-      startBeats: 4,
-      durationBeats: 2,
-      backgroundColor: -1,
-      isContainer: false,
-      layerIndex: 0,
-      groupId: 'score-root',
-      serializedXml: new GenericScore().saveAsXML().toXml(),
-    }]);
+    useScoreSelectionStore.getState().copySelected([
+      {
+        objectId: 'score-copy',
+        objectType: 'GenericScore',
+        name: 'Score phrase',
+        startBeats: 4,
+        durationBeats: 2,
+        backgroundColor: -1,
+        isContainer: false,
+        layerIndex: 0,
+        groupId: 'score-root',
+        serializedXml: new GenericScore().saveAsXML().toXml(),
+      },
+    ]);
     act(() => {
-      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
+      root.render(
+        <HostDocumentContext.Provider value={document}>
+          <LiveSpaceTab />
+        </HostDocumentContext.Provider>,
+      );
     });
     await openCellMenu(1, 0);
-    const paste = Array.from(document.body.querySelectorAll('[role="menuitem"]'))
-      .find((item) => item.textContent?.trim() === 'Paste');
+    const paste = Array.from(document.body.querySelectorAll('[role="menuitem"]')).find(
+      (item) => item.textContent?.trim() === 'Paste',
+    );
     expect(paste?.hasAttribute('data-disabled')).toBe(false);
     await selectMenuItem('Paste');
 
@@ -398,38 +499,49 @@ describe('Blue Live panel tab render tests (T045)', () => {
       groupId: 'score-root',
       serializedXml: new GenericScore().saveAsXML().toXml(),
     };
-    useScoreSelectionStore.getState().copySelected([
-      compatible,
-      { ...compatible, objectId: 'score-copy-2' },
-    ]);
+    useScoreSelectionStore
+      .getState()
+      .copySelected([compatible, { ...compatible, objectId: 'score-copy-2' }]);
     act(() => {
-      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
+      root.render(
+        <HostDocumentContext.Provider value={document}>
+          <LiveSpaceTab />
+        </HostDocumentContext.Provider>,
+      );
     });
 
     let menu = await openCellMenu(1, 0);
-    let paste = Array.from(menu.querySelectorAll('[role="menuitem"]'))
-      .find((item) => item.textContent?.trim() === 'Paste');
+    let paste = Array.from(menu.querySelectorAll('[role="menuitem"]')).find(
+      (item) => item.textContent?.trim() === 'Paste',
+    );
     expect(paste?.hasAttribute('data-disabled')).toBe(true);
 
-    useScoreSelectionStore.getState().copySelected([{
-      ...compatible,
-      objectId: 'unsupported',
-      objectType: 'Sound',
-    }]);
+    useScoreSelectionStore.getState().copySelected([
+      {
+        ...compatible,
+        objectId: 'unsupported',
+        objectType: 'Sound',
+      },
+    ]);
     await act(async () => {
       document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
       await Promise.resolve();
     });
     menu = await openCellMenu(1, 0);
-    paste = Array.from(menu.querySelectorAll('[role="menuitem"]'))
-      .find((item) => item.textContent?.trim() === 'Paste');
+    paste = Array.from(menu.querySelectorAll('[role="menuitem"]')).find(
+      (item) => item.textContent?.trim() === 'Paste',
+    );
     expect(paste?.hasAttribute('data-disabled')).toBe(true);
   });
 
   it('applies row and column commands relative to the right-clicked cell', async () => {
     seedProject(makeBlueLiveSnapshot());
     act(() => {
-      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
+      root.render(
+        <HostDocumentContext.Provider value={document}>
+          <LiveSpaceTab />
+        </HostDocumentContext.Provider>,
+      );
     });
 
     await openCellMenu(1, 1);
@@ -450,7 +562,11 @@ describe('Blue Live panel tab render tests (T045)', () => {
   it('copies a Live Space SoundObject into the shared Score and Library buffers', async () => {
     seedProject(makeBlueLiveSnapshot());
     act(() => {
-      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
+      root.render(
+        <HostDocumentContext.Provider value={document}>
+          <LiveSpaceTab />
+        </HostDocumentContext.Provider>,
+      );
     });
 
     await openCellMenu(0, 0);
@@ -475,7 +591,11 @@ describe('Blue Live panel tab render tests (T045)', () => {
     seedProject(makeBlueLiveSnapshot());
     captureBlueLiveSoundObject.mockResolvedValueOnce(false);
     act(() => {
-      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
+      root.render(
+        <HostDocumentContext.Provider value={document}>
+          <LiveSpaceTab />
+        </HostDocumentContext.Provider>,
+      );
     });
 
     await openCellMenu(0, 0);
@@ -521,7 +641,9 @@ describe('Live Space grid action tests (T046)', () => {
     const before = useProjectStore.getState().blueLive!;
     expect(before.bins.cells[0][0]!.enabled).toBe(true);
 
-    useProjectStore.getState().applyBlueLivePatch({ type: 'setCellEnabled', column: 0, row: 0, enabled: false });
+    useProjectStore
+      .getState()
+      .applyBlueLivePatch({ type: 'setCellEnabled', column: 0, row: 0, enabled: false });
 
     const after = useProjectStore.getState().blueLive!;
     expect(after.bins.cells[0][0]!.enabled).toBe(false);
@@ -588,7 +710,9 @@ describe('Live Space grid action tests (T046)', () => {
 describe('Live Code editor persistence tests (T047)', () => {
   it('updateLiveCodeText patch persists to store', () => {
     seedProject(makeBlueLiveSnapshot());
-    useProjectStore.getState().applyBlueLivePatch({ type: 'updateLiveCodeText', text: 'instr 1\n  out aSignal\nendin' });
+    useProjectStore
+      .getState()
+      .applyBlueLivePatch({ type: 'updateLiveCodeText', text: 'instr 1\n  out aSignal\nendin' });
 
     const after = useProjectStore.getState().blueLive!;
     expect(after.liveCodeText).toBe('instr 1\n  out aSignal\nendin');
@@ -606,7 +730,9 @@ describe('Live Code editor persistence tests (T047)', () => {
 describe('Options tab patch tests (T048)', () => {
   it('updateOptions patch for commandLine', () => {
     seedProject(makeBlueLiveSnapshot());
-    useProjectStore.getState().applyBlueLivePatch({ type: 'updateOptions', patch: { commandLine: '-b512' } });
+    useProjectStore
+      .getState()
+      .applyBlueLivePatch({ type: 'updateOptions', patch: { commandLine: '-b512' } });
 
     const after = useProjectStore.getState().blueLive!;
     expect(after.commandLine).toBe('-b512');
@@ -614,7 +740,9 @@ describe('Options tab patch tests (T048)', () => {
 
   it('updateOptions patch for commandLineEnabled', () => {
     seedProject(makeBlueLiveSnapshot());
-    useProjectStore.getState().applyBlueLivePatch({ type: 'updateOptions', patch: { commandLineEnabled: true } });
+    useProjectStore
+      .getState()
+      .applyBlueLivePatch({ type: 'updateOptions', patch: { commandLineEnabled: true } });
 
     const after = useProjectStore.getState().blueLive!;
     expect(after.commandLineEnabled).toBe(true);
@@ -622,7 +750,9 @@ describe('Options tab patch tests (T048)', () => {
 
   it('updateOptions patch for commandLineOverride', () => {
     seedProject(makeBlueLiveSnapshot());
-    useProjectStore.getState().applyBlueLivePatch({ type: 'updateOptions', patch: { commandLineOverride: true } });
+    useProjectStore
+      .getState()
+      .applyBlueLivePatch({ type: 'updateOptions', patch: { commandLineOverride: true } });
 
     const after = useProjectStore.getState().blueLive!;
     expect(after.commandLineOverride).toBe(true);
@@ -630,7 +760,9 @@ describe('Options tab patch tests (T048)', () => {
 
   it('updateTempoRepeat patch for tempo', () => {
     seedProject(makeBlueLiveSnapshot());
-    useProjectStore.getState().applyBlueLivePatch({ type: 'updateTempoRepeat', patch: { tempo: 140 } });
+    useProjectStore
+      .getState()
+      .applyBlueLivePatch({ type: 'updateTempoRepeat', patch: { tempo: 140 } });
 
     const after = useProjectStore.getState().blueLive!;
     expect(after.tempo).toBe(140);
@@ -638,7 +770,9 @@ describe('Options tab patch tests (T048)', () => {
 
   it('updateTempoRepeat patch for repeat', () => {
     seedProject(makeBlueLiveSnapshot());
-    useProjectStore.getState().applyBlueLivePatch({ type: 'updateTempoRepeat', patch: { repeat: 8 } });
+    useProjectStore
+      .getState()
+      .applyBlueLivePatch({ type: 'updateTempoRepeat', patch: { repeat: 8 } });
 
     const after = useProjectStore.getState().blueLive!;
     expect(after.repeat).toBe(8);
@@ -646,7 +780,9 @@ describe('Options tab patch tests (T048)', () => {
 
   it('updateTempoRepeat patch for repeatEnabled', () => {
     seedProject(makeBlueLiveSnapshot());
-    useProjectStore.getState().applyBlueLivePatch({ type: 'updateTempoRepeat', patch: { repeatEnabled: true } });
+    useProjectStore
+      .getState()
+      .applyBlueLivePatch({ type: 'updateTempoRepeat', patch: { repeatEnabled: true } });
 
     const after = useProjectStore.getState().blueLive!;
     expect(after.repeatEnabled).toBe(true);
@@ -668,9 +804,12 @@ describe('Blue Live trigger routing tests (T049)', () => {
     };
     seedProject(makeBlueLiveSnapshot());
     let acknowledge = (): void => {};
-    const flushPendingPatches = vi.fn(() => new Promise<void>((resolve) => {
-      acknowledge = resolve;
-    }));
+    const flushPendingPatches = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          acknowledge = resolve;
+        }),
+    );
     useProjectStore.setState({
       flushPendingPatches,
     } as unknown as Partial<ReturnType<typeof useProjectStore.getState>>);
@@ -678,10 +817,15 @@ describe('Blue Live trigger routing tests (T049)', () => {
     useBlueLiveStore.setState({ running: true, status: 'running' });
 
     act(() => {
-      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
+      root.render(
+        <HostDocumentContext.Provider value={document}>
+          <LiveSpaceTab />
+        </HostDocumentContext.Provider>,
+      );
     });
-    const triggerButton = Array.from(container.querySelectorAll('button'))
-      .find((button) => button.textContent === 'Trigger');
+    const triggerButton = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.textContent === 'Trigger',
+    );
 
     act(() => {
       triggerButton?.click();
@@ -726,7 +870,11 @@ describe('Blue Live trigger routing tests (T049)', () => {
     useBlueLiveStore.setState({ running: true, status: 'running' });
 
     act(() => {
-      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
+      root.render(
+        <HostDocumentContext.Provider value={document}>
+          <LiveSpaceTab />
+        </HostDocumentContext.Provider>,
+      );
     });
 
     const buttons = container.querySelectorAll('button');
@@ -749,7 +897,11 @@ describe('Blue Live trigger routing tests (T049)', () => {
     // Blue Live is not running by default (status idle).
 
     act(() => {
-      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
+      root.render(
+        <HostDocumentContext.Provider value={document}>
+          <LiveSpaceTab />
+        </HostDocumentContext.Provider>,
+      );
     });
 
     const buttons = container.querySelectorAll('button');
@@ -764,7 +916,11 @@ describe('Blue Live trigger routing tests (T049)', () => {
     seedProject(makeBlueLiveSnapshot());
 
     act(() => {
-      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
+      root.render(
+        <HostDocumentContext.Provider value={document}>
+          <LiveSpaceTab />
+        </HostDocumentContext.Provider>,
+      );
     });
 
     const buttons = container.querySelectorAll('button');
@@ -794,20 +950,27 @@ describe('Blue Live trigger routing tests (T049)', () => {
     useBlueLiveStore.setState({ running: true, status: 'running' });
 
     act(() => {
-      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
+      root.render(
+        <HostDocumentContext.Provider value={document}>
+          <LiveSpaceTab />
+        </HostDocumentContext.Provider>,
+      );
     });
 
     act(() => {
-      window.dispatchEvent(new KeyboardEvent('keydown', {
-        key: 't',
-        ctrlKey: true,
-        bubbles: true,
-      }));
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 't',
+          ctrlKey: true,
+          bubbles: true,
+        }),
+      );
     });
     expect(triggerSpy).not.toHaveBeenCalled();
 
-    const selectedCell = Array.from(container.querySelectorAll('div'))
-      .find((element) => element.textContent === 'OSC1');
+    const selectedCell = Array.from(container.querySelectorAll('div')).find(
+      (element) => element.textContent === 'OSC1',
+    );
     expect(selectedCell).toBeTruthy();
     act(() => {
       selectedCell!.click();
@@ -815,11 +978,13 @@ describe('Blue Live trigger routing tests (T049)', () => {
     expect(document.activeElement).toBe(container.querySelector('[data-blue-live-space-root]'));
 
     await act(async () => {
-      window.dispatchEvent(new KeyboardEvent('keydown', {
-        key: 't',
-        ctrlKey: true,
-        bubbles: true,
-      }));
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 't',
+          ctrlKey: true,
+          bubbles: true,
+        }),
+      );
     });
     await vi.waitFor(() => {
       expect(triggerSpy).toHaveBeenCalledWith({ mode: 'selected', liveObjectId: 'obj1' });
@@ -829,11 +994,13 @@ describe('Blue Live trigger routing tests (T049)', () => {
     const tempoInput = container.querySelector('input[type="number"]') as HTMLInputElement;
     tempoInput.focus();
     act(() => {
-      tempoInput.dispatchEvent(new KeyboardEvent('keydown', {
-        key: 't',
-        ctrlKey: true,
-        bubbles: true,
-      }));
+      tempoInput.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 't',
+          ctrlKey: true,
+          bubbles: true,
+        }),
+      );
     });
     expect(triggerSpy).not.toHaveBeenCalled();
   });
@@ -861,7 +1028,11 @@ describe('Blue Live trigger routing tests (T049)', () => {
     useBlueLiveStore.setState({ running: true, status: 'running' });
 
     act(() => {
-      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
+      root.render(
+        <HostDocumentContext.Provider value={document}>
+          <LiveSpaceTab />
+        </HostDocumentContext.Provider>,
+      );
     });
 
     const buttons = container.querySelectorAll('button');

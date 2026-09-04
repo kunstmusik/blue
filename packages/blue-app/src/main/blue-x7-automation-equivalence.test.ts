@@ -1,9 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import {
-  appendParameterScoreJava,
-  buildParameterInitStatementJava,
-  Parameter,
-} from '@blue/data';
+import { appendParameterScoreJava, buildParameterInitStatementJava, Parameter } from '@blue/data';
 import { EngineBridge } from './engine-bridge';
 
 vi.mock('electron', () => ({
@@ -46,11 +42,15 @@ describe('BlueX7 realtime/disk automation equivalence', () => {
     };
 
     const renderStart = 4;
-    await bridge.syncAutomationParameter(parameter, {
-      renderStartTime: renderStart,
-      sampleRate: 44100,
-      ksmps: 64,
-    }, { coalesce: false });
+    await bridge.syncAutomationParameter(
+      parameter,
+      {
+        renderStartTime: renderStart,
+        sampleRate: 44100,
+        ksmps: 64,
+      },
+      { coalesce: false },
+    );
 
     const realtimePoints = (updateAutomation.mock.calls as unknown[][])[0]![4] as Array<{
       time: number;
@@ -62,12 +62,14 @@ describe('BlueX7 realtime/disk automation equivalence', () => {
     ]);
     expect(buildParameterInitStatementJava(parameter, renderStart).initialVal).toBe(5);
 
-    const diskTransitions = parseDiskTransitions(appendParameterScoreJava({
-      parameter,
-      instrumentId: 99,
-      renderStart,
-      renderEnd: -1,
-    }));
+    const diskTransitions = parseDiskTransitions(
+      appendParameterScoreJava({
+        parameter,
+        instrumentId: 99,
+        renderStart,
+        renderEnd: -1,
+      }),
+    );
     expect(diskTransitions.map((event) => event.value)).toEqual([6, 7, 8, 9]);
 
     const kPeriod = 64 / 44100;
@@ -86,7 +88,9 @@ describe('BlueX7 realtime/disk automation equivalence', () => {
     expect(observed).toHaveLength(diskTransitions.length);
     for (let index = 0; index < diskTransitions.length; index += 1) {
       expect(observed[index]!.value).toBe(diskTransitions[index]!.value);
-      expect(Math.abs(observed[index]!.time - diskTransitions[index]!.time)).toBeLessThanOrEqual(tolerance);
+      expect(Math.abs(observed[index]!.time - diskTransitions[index]!.time)).toBeLessThanOrEqual(
+        tolerance,
+      );
     }
   });
 });

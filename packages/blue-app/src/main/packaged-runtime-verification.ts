@@ -134,11 +134,11 @@ export function verifyPackagedMetadata(
   }
   const runtimeValues = Object.values(metadata.runtime);
   const hasCompleteMetadata =
-    metadata.version !== 'unknown'
-    && /^[0-9a-f]{40}$/i.test(metadata.sourceRevision)
-    && metadata.buildDate !== 'unknown'
-    && metadata.channel !== 'unknown'
-    && runtimeValues.every((value) => value !== 'unknown');
+    metadata.version !== 'unknown' &&
+    /^[0-9a-f]{40}$/i.test(metadata.sourceRevision) &&
+    metadata.buildDate !== 'unknown' &&
+    metadata.channel !== 'unknown' &&
+    runtimeValues.every((value) => value !== 'unknown');
   if (!hasCompleteMetadata) {
     return {
       ok: false,
@@ -147,8 +147,8 @@ export function verifyPackagedMetadata(
     };
   }
   if (
-    (context.releaseChannel === 'development' || context.releaseChannel === 'stable')
-    && metadata.channel !== context.releaseChannel
+    (context.releaseChannel === 'development' || context.releaseChannel === 'stable') &&
+    metadata.channel !== context.releaseChannel
   ) {
     return {
       ok: false,
@@ -344,8 +344,10 @@ export function verifyBundledEngine(
   try {
     entries = fs.readdirSync(engineRoot).sort();
     const expected = ['artifact.json', executableName].sort();
-    if (entries.length !== expected.length ||
-        entries.some((entry, index) => entry !== expected[index])) {
+    if (
+      entries.length !== expected.length ||
+      entries.some((entry, index) => entry !== expected[index])
+    ) {
       return {
         aspect: 'bundled-engine',
         ok: false,
@@ -368,11 +370,13 @@ export function verifyBundledEngine(
       detail: [error instanceof Error ? error.message : String(error)],
     };
   }
-  if (manifest.schemaVersion !== 1 ||
-      manifest.protocolVersion !== BLUE_ENGINE_PROTOCOL_VERSION ||
-      manifest.platform !== platform ||
-      manifest.arch !== arch ||
-      manifest.executableName !== executableName) {
+  if (
+    manifest.schemaVersion !== 1 ||
+    manifest.protocolVersion !== BLUE_ENGINE_PROTOCOL_VERSION ||
+    manifest.platform !== platform ||
+    manifest.arch !== arch ||
+    manifest.executableName !== executableName
+  ) {
     return {
       aspect: 'bundled-engine',
       ok: false,
@@ -380,9 +384,7 @@ export function verifyBundledEngine(
       message: `Bundled Blue Engine metadata does not match ${platform}-${arch} protocol ${BLUE_ENGINE_PROTOCOL_VERSION}`,
     };
   }
-  const hash = createHash('sha256')
-    .update(fs.readFileSync(executablePath))
-    .digest('hex');
+  const hash = createHash('sha256').update(fs.readFileSync(executablePath)).digest('hex');
   if (hash !== manifest.sha256) {
     return {
       aspect: 'bundled-engine',
@@ -410,11 +412,13 @@ export function verifyBundledEngine(
       engine?: { protocolVersion?: number };
       csound?: { status?: string };
     };
-    if (probe.status !== 2 ||
-        report.schemaVersion !== 1 ||
-        report.ready !== false ||
-        report.engine?.protocolVersion !== BLUE_ENGINE_PROTOCOL_VERSION ||
-        report.csound?.status === 'ready') {
+    if (
+      probe.status !== 2 ||
+      report.schemaVersion !== 1 ||
+      report.ready !== false ||
+      report.engine?.protocolVersion !== BLUE_ENGINE_PROTOCOL_VERSION ||
+      report.csound?.status === 'ready'
+    ) {
       throw new Error(`unexpected probe status ${probe.status}`);
     }
   } catch (error) {
@@ -423,10 +427,7 @@ export function verifyBundledEngine(
       ok: false,
       code: 'BLUE_ENGINE_NO_CSOUND_PROBE_FAILED',
       message: 'Bundled Blue Engine did not report missing Csound recoverably',
-      detail: [
-        error instanceof Error ? error.message : String(error),
-        probe.stderr.slice(0, 4096),
-      ],
+      detail: [error instanceof Error ? error.message : String(error), probe.stderr.slice(0, 4096)],
     };
   }
   return {
@@ -437,12 +438,17 @@ export function verifyBundledEngine(
   };
 }
 
-function safeResolveExternal(context: RuntimeVerificationContext, packageName: string): string | null {
+function safeResolveExternal(
+  context: RuntimeVerificationContext,
+  packageName: string,
+): string | null {
   try {
     // Dynamic require resolution: this code runs in the Electron main
     // process where CommonJS require is available.
     const Module = require('module') as typeof import('module');
-    const resolved = Module.createRequire(path.join(context.mainModuleDir, '__verify__.js')).resolve(packageName);
+    const resolved = Module.createRequire(
+      path.join(context.mainModuleDir, '__verify__.js'),
+    ).resolve(packageName);
     return resolved;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

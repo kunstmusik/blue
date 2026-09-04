@@ -32,14 +32,18 @@ export default function BSBGroupWidget({
   const borderColor = parseBsbColor(node.properties.borderColor, 'rgb(63,102,150)');
   const labelTextColor = parseBsbColor(node.properties.labelTextColor, 'rgb(255,255,255)');
 
-  const fontName = typeof node.properties['font.name'] === 'string' ? node.properties['font.name'] : 'Roboto';
-  const fontSize = typeof node.properties['font.size'] === 'number' ? node.properties['font.size'] : 12;
-  const fontStyle = typeof node.properties['font.style'] === 'number' ? node.properties['font.style'] : 0;
+  const fontName =
+    typeof node.properties['font.name'] === 'string' ? node.properties['font.name'] : 'Roboto';
+  const fontSize =
+    typeof node.properties['font.size'] === 'number' ? node.properties['font.size'] : 12;
+  const fontStyle =
+    typeof node.properties['font.style'] === 'number' ? node.properties['font.style'] : 0;
   const fontWeight = (fontStyle & 1) !== 0 ? 'bold' : 'normal';
   const fontItalic = (fontStyle & 2) !== 0 ? 'italic' : 'normal';
-  const titleMetrics = titleEnabled && groupName
-    ? measureTextContent(groupName, getFontString(fontName, fontSize, fontStyle))
-    : { width: 0, height: 0 };
+  const titleMetrics =
+    titleEnabled && groupName
+      ? measureTextContent(groupName, getFontString(fontName, fontSize, fontStyle))
+      : { width: 0, height: 0 };
   const titleHeight = titleEnabled && groupName ? Math.max(20, Math.ceil(titleMetrics.height)) : 0;
 
   const displaySize = getWidgetDisplaySize(node);
@@ -59,8 +63,8 @@ export default function BSBGroupWidget({
       gridSnapHeight={gridSnapHeight}
       onBsbInterfacePatch={onBsbInterfacePatch}
       selectedWidgetIds={selectedWidgetIds}
-      getWidgetPosition={getWidgetPosition} onWidgetAction={onWidgetAction}
-     
+      getWidgetPosition={getWidgetPosition}
+      onWidgetAction={onWidgetAction}
     >
       <div
         className="flex h-full w-full flex-col"
@@ -80,7 +84,11 @@ export default function BSBGroupWidget({
               minHeight: titleHeight,
             }}
           >
-            <BsbTextLabel text={groupName} plainClassName="block truncate text-center" htmlClassName="inline-block max-w-full text-center" />
+            <BsbTextLabel
+              text={groupName}
+              plainClassName="block truncate text-center"
+              htmlClassName="inline-block max-w-full text-center"
+            />
           </div>
         )}
         <div
@@ -93,10 +101,7 @@ export default function BSBGroupWidget({
         >
           {node.children?.map((child) => renderWidget(child))}
           {editEnabled && (
-            <div
-              className="absolute inset-0"
-              style={{ zIndex: 10, cursor: 'default' }}
-            />
+            <div className="absolute inset-0" style={{ zIndex: 10, cursor: 'default' }} />
           )}
         </div>
       </div>

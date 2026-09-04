@@ -31,12 +31,14 @@ export const APPLICATION_IPC_CHANNELS = [
   'window-layout:reset',
 ] as const;
 
-export type ApplicationIpcChannel = typeof APPLICATION_IPC_CHANNELS[number];
+export type ApplicationIpcChannel = (typeof APPLICATION_IPC_CHANNELS)[number];
 export type ApplicationListenerChannel = 'settings:close-response';
 
 export interface ApplicationIpcOptions {
   readonly ipcMain: IpcMainLike;
-  readonly handlers: Readonly<Record<Exclude<ApplicationIpcChannel, ApplicationListenerChannel>, IpcMainInvokeHandler>>;
+  readonly handlers: Readonly<
+    Record<Exclude<ApplicationIpcChannel, ApplicationListenerChannel>, IpcMainInvokeHandler>
+  >;
   readonly listeners: Readonly<Record<ApplicationListenerChannel, IpcMainEventListener>>;
 }
 

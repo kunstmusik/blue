@@ -169,9 +169,7 @@ export function registerFloatingWindow(
   options: { popoutGroupId?: string; projectSessionId?: number } = {},
 ): string {
   const m = getManager();
-  const existing = m.getAll().find(
-    (entry) => entry.browserWindowId === browserWindow.id,
-  );
+  const existing = m.getAll().find((entry) => entry.browserWindowId === browserWindow.id);
   if (existing) {
     if (options.popoutGroupId !== undefined) {
       m.updateOwnership({
@@ -230,10 +228,7 @@ export function getWorkbenchWindowManager(): WorkbenchWindowManager {
  * Used to broadcast project, playback, and layout-reset events so floating
  * windows stay in sync with the main workbench session.
  */
-export function broadcastToWorkbenchWindows(
-  channel: string,
-  payload: unknown,
-): void {
+export function broadcastToWorkbenchWindows(channel: string, payload: unknown): void {
   const m = getManager();
   m.pruneDestroyed();
   for (const entry of m.getAll()) {
@@ -267,152 +262,150 @@ export function initWorkbenchWindowHost(registrationTarget: IpcMainLike = ipcMai
     throw new Error('Workbench window IPC is already initialized.');
   }
   const m = getManager();
-  unregisterWorkbenchIpc = registerIpcTransaction(registrationTarget, 'workbench-window', (scope) => {
+  unregisterWorkbenchIpc = registerIpcTransaction(
+    registrationTarget,
+    'workbench-window',
+    (scope) => {
+      scope.handle(
+        WORKBENCH_WINDOW_REGISTER_CHANNEL,
+        (event, request: WorkbenchWindowRegisterRequest): WorkbenchWindowRegisterResponse => {
+          const senderContents = event.sender;
+          const browserWindow = BrowserWindow.fromWebContents(senderContents);
+          // If this sender is already the main window, keep the existing id.
+          const existingMain = m.getMainWindowId();
+          if (existingMain && webContentsByWindowId.get(existingMain) === senderContents) {
+            return { windowId: existingMain };
+          }
 
-  scope.handle(
-    WORKBENCH_WINDOW_REGISTER_CHANNEL,
-    (
-      event,
-      request: WorkbenchWindowRegisterRequest,
-    ): WorkbenchWindowRegisterResponse => {
-      const senderContents = event.sender;
-      const browserWindow = BrowserWindow.fromWebContents(senderContents);
-      // If this sender is already the main window, keep the existing id.
-      const existingMain = m.getMainWindowId();
-      if (existingMain && webContentsByWindowId.get(existingMain) === senderContents) {
-        return { windowId: existingMain };
-      }
+          // The browser-window-created hook registers a floating BrowserWindow as
+          // soon as its popout page loads. The popout preload then reports the
+          // actual Dockview group id; bind that report to the existing OS window
+          // instead of creating a duplicate registry entry.
+          const existingWindow = browserWindow
+            ? m.getAll().find((entry) => entry.browserWindowId === browserWindow.id)
+            : undefined;
+          if (existingWindow) {
+            m.updateOwnership({
+              windowId: existingWindow.windowId,
+              role: request.role,
+              ...(request.popoutGroupId !== undefined
+                ? { popoutGroupId: request.popoutGroupId }
+                : {}),
+              ...(request.projectSessionId !== undefined
+                ? { projectSessionId: request.projectSessionId }
+                : {}),
+            });
+            return { windowId: existingWindow.windowId };
+          }
 
-      // The browser-window-created hook registers a floating BrowserWindow as
-      // soon as its popout page loads. The popout preload then reports the
-      // actual Dockview group id; bind that report to the existing OS window
-      // instead of creating a duplicate registry entry.
-      const existingWindow = browserWindow
-        ? m.getAll().find((entry) => entry.browserWindowId === browserWindow.id)
-        : undefined;
-      if (existingWindow) {
-        m.updateOwnership({
-          windowId: existingWindow.windowId,
-          role: request.role,
-          ...(request.popoutGroupId !== undefined
-            ? { popoutGroupId: request.popoutGroupId }
-            : {}),
-          ...(request.projectSessionId !== undefined
-            ? { projectSessionId: request.projectSessionId }
-            : {}),
-        });
-        return { windowId: existingWindow.windowId };
-      }
-
-      const windowId = m.register({
-        role: request.role,
-        popoutGroupId: request.popoutGroupId,
-        projectSessionId: request.projectSessionId,
-        browserWindowId: browserWindow?.id,
-        handle: browserWindow
-          ? {
-              focus: () => {
-                if (!browserWindow.isDestroyed()) {
-                  if (browserWindow.isMinimized()) browserWindow.restore();
-                  browserWindow.focus();
+          const windowId = m.register({
+            role: request.role,
+            popoutGroupId: request.popoutGroupId,
+            projectSessionId: request.projectSessionId,
+            browserWindowId: browserWindow?.id,
+            handle: browserWindow
+              ? {
+                  focus: () => {
+                    if (!browserWindow.isDestroyed()) {
+                      if (browserWindow.isMinimized()) browserWindow.restore();
+                      browserWindow.focus();
+                    }
+                  },
+                  isDestroyed: () => browserWindow.isDestroyed(),
                 }
-              },
-              isDestroyed: () => browserWindow.isDestroyed(),
+              : undefined,
+          });
+          webContentsByWindowId.set(windowId, senderContents);
+          if (browserWindow && request.role === 'floating') {
+            attachFloatingWindowCloseHandler(browserWindow, windowId, m);
+          }
+          senderContents.once('destroyed', () => {
+            pendingFloatingWindowCloses.delete(windowId);
+            m.dispose(windowId);
+            webContentsByWindowId.delete(windowId);
+          });
+          return { windowId };
+        },
+      );
+
+      scope.on(
+        WORKBENCH_WINDOW_UPDATE_OWNERSHIP_CHANNEL,
+        (_event, update: WorkbenchWindowOwnershipUpdate) => {
+          // Floating ownership is reported by the main renderer because Dockview
+          // popouts share that JS context. Resolve those updates by popout id so the
+          // main window entry is not accidentally overwritten as a floating window.
+          const entry =
+            update.role === 'floating' && update.popoutGroupId
+              ? m.getByPopoutGroup(update.popoutGroupId)
+              : m.getEntry(update.windowId);
+          if (entry) {
+            m.updateOwnership({
+              windowId: entry.windowId,
+              role: update.role,
+              popoutGroupId: update.popoutGroupId,
+              panelIds: update.panelIds,
+              activePanelId: update.activePanelId,
+            });
+            if (update.projectSessionId !== undefined) {
+              entry.projectSessionId = update.projectSessionId;
             }
-          : undefined,
-      });
-      webContentsByWindowId.set(windowId, senderContents);
-      if (browserWindow && request.role === 'floating') {
-        attachFloatingWindowCloseHandler(browserWindow, windowId, m);
-      }
-      senderContents.once('destroyed', () => {
-        pendingFloatingWindowCloses.delete(windowId);
-        m.dispose(windowId);
-        webContentsByWindowId.delete(windowId);
-      });
-      return { windowId };
-    },
-  );
+          }
+        },
+      );
 
-  scope.on(
-    WORKBENCH_WINDOW_UPDATE_OWNERSHIP_CHANNEL,
-    (_event, update: WorkbenchWindowOwnershipUpdate) => {
-      // Floating ownership is reported by the main renderer because Dockview
-      // popouts share that JS context. Resolve those updates by popout id so the
-      // main window entry is not accidentally overwritten as a floating window.
-      const entry =
-        update.role === 'floating' && update.popoutGroupId
-          ? m.getByPopoutGroup(update.popoutGroupId)
-          : m.getEntry(update.windowId);
-      if (entry) {
-        m.updateOwnership({
-          windowId: entry.windowId,
-          role: update.role,
-          popoutGroupId: update.popoutGroupId,
-          panelIds: update.panelIds,
-          activePanelId: update.activePanelId,
-        });
-        if (update.projectSessionId !== undefined) {
-          entry.projectSessionId = update.projectSessionId;
-        }
-      }
-    },
-  );
+      scope.handle(
+        WORKBENCH_WINDOW_REVEAL_PANEL_CHANNEL,
+        (_event, request: WorkbenchRevealPanelRequest): WorkbenchRevealPanelResult => {
+          const result = m.resolveReveal(request.panelId);
+          if (!result.handled) {
+            sendToMainWindow('native-menu-command', {
+              type: 'focus-panel',
+              panelId: request.panelId,
+            });
+            return { handled: true, openedInDefaultMode: true };
+          }
+          return result;
+        },
+      );
 
-  scope.handle(
-    WORKBENCH_WINDOW_REVEAL_PANEL_CHANNEL,
-    (
-      _event,
-      request: WorkbenchRevealPanelRequest,
-    ): WorkbenchRevealPanelResult => {
-      const result = m.resolveReveal(request.panelId);
-      if (!result.handled) {
-        sendToMainWindow('native-menu-command', { type: 'focus-panel', panelId: request.panelId });
-        return { handled: true, openedInDefaultMode: true };
-      }
-      return result;
-    },
-  );
+      scope.handle(
+        WORKBENCH_WINDOW_REQUEST_CLOSE_CHANNEL,
+        (_event, request: WorkbenchWindowCloseRequest): WorkbenchWindowCloseResult => {
+          // Enforce the same panel close eligibility for floating window closes
+          // that renderer tab-close commands use.
+          const result = m.requestClose({
+            windowId: request.windowId,
+            panelIds: request.panelIds,
+            source: request.source,
+            policy: panelClosePolicy,
+          });
+          if (result.allowed && request.source === 'dock') {
+            const entry = m.getEntry(request.windowId);
+            if (entry?.role === 'floating') {
+              // Renderer-side Dock/Dock Group is about to call window.close(). The
+              // BrowserWindow close handler must distinguish that from an OS close
+              // button so it does not route the operation back into the renderer.
+              pendingFloatingWindowCloses.add(entry.windowId);
+            }
+          }
+          return {
+            allowed: result.allowed,
+            blockedPanelIds: result.blockedPanelIds,
+            requiresPrompt: result.requiresPrompt,
+          };
+        },
+      );
 
-  scope.handle(
-    WORKBENCH_WINDOW_REQUEST_CLOSE_CHANNEL,
-    (
-      _event,
-      request: WorkbenchWindowCloseRequest,
-    ): WorkbenchWindowCloseResult => {
-      // Enforce the same panel close eligibility for floating window closes
-      // that renderer tab-close commands use.
-      const result = m.requestClose({
-        windowId: request.windowId,
-        panelIds: request.panelIds,
-        source: request.source,
-        policy: panelClosePolicy,
-      });
-      if (result.allowed && request.source === 'dock') {
-        const entry = m.getEntry(request.windowId);
-        if (entry?.role === 'floating') {
-          // Renderer-side Dock/Dock Group is about to call window.close(). The
-          // BrowserWindow close handler must distinguish that from an OS close
-          // button so it does not route the operation back into the renderer.
-          pendingFloatingWindowCloses.add(entry.windowId);
-        }
-      }
-      return { allowed: result.allowed, blockedPanelIds: result.blockedPanelIds, requiresPrompt: result.requiresPrompt };
+      scope.handle(
+        WORKBENCH_WINDOW_DOCK_GROUP_CHANNEL,
+        (_event, _request: DockFloatingGroupRequest): DockFloatingGroupResult => {
+          // Dock is resolved renderer-side (the owning popout renderer performs the
+          // layout move using its Dockview instance). Main acknowledges here.
+          return { docked: false };
+        },
+      );
     },
   );
-
-  scope.handle(
-    WORKBENCH_WINDOW_DOCK_GROUP_CHANNEL,
-    (
-      _event,
-      _request: DockFloatingGroupRequest,
-    ): DockFloatingGroupResult => {
-      // Dock is resolved renderer-side (the owning popout renderer performs the
-      // layout move using its Dockview instance). Main acknowledges here.
-      return { docked: false };
-    },
-  );
-  });
   initialized = true;
 }
 

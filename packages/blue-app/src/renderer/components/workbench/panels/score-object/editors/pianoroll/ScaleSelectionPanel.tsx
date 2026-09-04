@@ -67,7 +67,9 @@ export default function ScaleSelectionPanel({
     input.accept = '.scl';
     input.click();
 
-    await new Promise<void>((resolve) => { input.onchange = () => resolve(); });
+    await new Promise<void>((resolve) => {
+      input.onchange = () => resolve();
+    });
 
     const file = input.files?.[0];
     if (!file) return;
@@ -79,15 +81,20 @@ export default function ScaleSelectionPanel({
         setScaleName(parsed.scaleName);
         onScaleChange(parsed);
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, [onScaleChange]);
 
-  const handleContextMenu = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    const twelve = default12TET();
-    setScaleName(twelve.scaleName);
-    onScaleChange(twelve);
-  }, [onScaleChange]);
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      const twelve = default12TET();
+      setScaleName(twelve.scaleName);
+      onScaleChange(twelve);
+    },
+    [onScaleChange],
+  );
 
   return (
     <div className="flex items-center gap-1">

@@ -7,13 +7,8 @@ import {
   TimePosition,
   TimeDuration,
 } from '@blue/data';
-import {
-  applyProjectDocumentPatch,
-  createScoreDocumentSnapshot,
-} from './project-editor';
-import type {
-  ScoreAutomationLayerRef,
-} from './project-editor';
+import { applyProjectDocumentPatch, createScoreDocumentSnapshot } from './project-editor';
+import type { ScoreAutomationLayerRef } from './project-editor';
 
 function createProjectWithParameter(): {
   data: BlueData;
@@ -172,7 +167,12 @@ describe('assignAutomationToLayer patch', () => {
     const { data, paramId, layerRef } = createProjectWithParameter();
 
     applyProjectDocumentPatch(data, {
-      score: { type: 'assignAutomationToLayer', layer: layerRef, parameterId: paramId, enableAutomation: true },
+      score: {
+        type: 'assignAutomationToLayer',
+        layer: layerRef,
+        parameterId: paramId,
+        enableAutomation: true,
+      },
     });
 
     const channel = data.getMixer().getChannels()[0]!;
@@ -185,7 +185,12 @@ describe('assignAutomationToLayer patch', () => {
     expect(channel.getLevelParameter().getPoints()).toEqual([]);
 
     applyProjectDocumentPatch(data, {
-      score: { type: 'assignAutomationToLayer', layer: layerRef, parameterId: paramId, enableAutomation: true },
+      score: {
+        type: 'assignAutomationToLayer',
+        layer: layerRef,
+        parameterId: paramId,
+        enableAutomation: true,
+      },
     });
 
     const snap = createScoreDocumentSnapshot(data);
@@ -473,7 +478,7 @@ describe('deleteAutomationPoint patch', () => {
 
     const pts = channel.getLevelParameter().getPoints();
     expect(pts).toHaveLength(2);
-    expect(pts.map(p => p.time)).toEqual([0, 4]);
+    expect(pts.map((p) => p.time)).toEqual([0, 4]);
   });
 
   it('does not delete the first line point', () => {
@@ -541,7 +546,12 @@ describe('moveAutomationRange patch', () => {
     // Anchored transform inserts boundary points at 1 (selection start), 3
     // (translated start), and a discontinuity pair at 6 (translated end = 4+2).
     // Moved point at 2→4 is also present.
-    expect(channel.getLevelParameter().getPoints().map((point) => point.time)).toEqual([0, 1, 3, 4, 6, 6]);
+    expect(
+      channel
+        .getLevelParameter()
+        .getPoints()
+        .map((point) => point.time),
+    ).toEqual([0, 1, 3, 4, 6, 6]);
   });
 });
 
@@ -570,7 +580,12 @@ describe('scaleAutomationRange patch', () => {
 
     // Anchored transform inserts boundary points at 1 (domain start), 3 (scaled
     // point: 2→3), and a discontinuity pair at 7 (scaled end: 4→7).
-    expect(channel.getLevelParameter().getPoints().map((point) => point.time)).toEqual([0, 1, 3, 7, 7]);
+    expect(
+      channel
+        .getLevelParameter()
+        .getPoints()
+        .map((point) => point.time),
+    ).toEqual([0, 1, 3, 7, 7]);
   });
 
   it('aborts before line edits when a selected object partially overlaps the scale range', () => {
@@ -605,7 +620,12 @@ describe('scaleAutomationRange patch', () => {
     });
 
     expect(changed).toBe(false);
-    expect(channel.getLevelParameter().getPoints().map((point) => point.time)).toEqual([0, 2, 6]);
+    expect(
+      channel
+        .getLevelParameter()
+        .getPoints()
+        .map((point) => point.time),
+    ).toEqual([0, 2, 6]);
     expect(object.getStartTime().toBeats(data.getScore().getTimeContext())).toBe(0);
     expect(object.getSubjectiveDuration().toBeats(data.getScore().getTimeContext())).toBe(2);
   });

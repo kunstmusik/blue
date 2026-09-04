@@ -4,7 +4,10 @@ import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { PatternLayerSnapshot, PatternsLayerGroupSnapshot } from '../components/workbench/panels/score/types';
+import type {
+  PatternLayerSnapshot,
+  PatternsLayerGroupSnapshot,
+} from '../components/workbench/panels/score/types';
 import PatternsLayerGroupCanvas from '../components/workbench/panels/score/layer-groups/PatternsLayerGroupCanvas';
 import {
   beatToPixelX,
@@ -20,7 +23,9 @@ import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { useLayerSelectionStore } from '../stores/layer-selection-store';
 import ScoreOverlayLines from '../components/workbench/panels/score/ScoreOverlayLines';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const { mockProjectState } = vi.hoisted(() => ({
   mockProjectState: {
@@ -30,7 +35,8 @@ const { mockProjectState } = vi.hoisted(() => ({
 }));
 
 vi.mock('../stores/project-store', () => ({
-  useProjectStore: (selector: (state: typeof mockProjectState) => unknown) => selector(mockProjectState),
+  useProjectStore: (selector: (state: typeof mockProjectState) => unknown) =>
+    selector(mockProjectState),
 }));
 
 const ROW_HEIGHT = 44;
@@ -181,13 +187,15 @@ describe('PatternsLayerGroupCanvas', () => {
 
   function mouse(target: EventTarget, type: string, x: number, y: number): void {
     act(() => {
-      target.dispatchEvent(new MouseEvent(type, {
-        bubbles: true,
-        cancelable: true,
-        button: 0,
-        clientX: x,
-        clientY: y,
-      }));
+      target.dispatchEvent(
+        new MouseEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          button: 0,
+          clientX: x,
+          clientY: y,
+        }),
+      );
     });
   }
 
@@ -213,7 +221,9 @@ describe('PatternsLayerGroupCanvas', () => {
     const cell = canvasEl().querySelector<HTMLElement>('[data-pattern-cell-index="1"]')!;
     expect(cell.style.left).toBe('160px');
     expect(cell.style.width).toBe('160px');
-    expect(canvasEl().querySelector<HTMLElement>('[data-pattern-grid]')!.dataset.patternStepWidth).toBe('160');
+    expect(
+      canvasEl().querySelector<HTMLElement>('[data-pattern-grid]')!.dataset.patternStepWidth,
+    ).toBe('160');
   });
 
   it('keeps selection state accessible without highlighting pattern timeline rows', () => {
@@ -291,19 +301,23 @@ describe('PatternsLayerGroupCanvas', () => {
   it('opens cell-targeted context commands without creating an occurrence selection', () => {
     render(makeGroup(4, [makeLayer('pl-1', 'A', [0])]));
     act(() => {
-      canvasEl().dispatchEvent(new MouseEvent('contextmenu', {
-        bubbles: true,
-        cancelable: true,
-        button: 2,
-        clientX: 10,
-        clientY: 10,
-      }));
+      canvasEl().dispatchEvent(
+        new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          button: 2,
+          clientX: 10,
+          clientY: 10,
+        }),
+      );
     });
 
     const menu = document.querySelector<HTMLElement>('[data-pattern-context-menu]');
     expect(menu).not.toBeNull();
-    const item = (label: string) => [...menu!.querySelectorAll<HTMLElement>('[role="menuitem"]')]
-      .find((candidate) => candidate.textContent?.trim() === label);
+    const item = (label: string) =>
+      [...menu!.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(
+        (candidate) => candidate.textContent?.trim() === label,
+      );
     expect(item('Cut')?.getAttribute('aria-disabled')).toBeNull();
     expect(item('Copy')?.getAttribute('aria-disabled')).toBeNull();
     expect(item('Properties')?.getAttribute('aria-disabled')).toBeNull();
@@ -341,8 +355,9 @@ describe('PatternsLayerGroupCanvas', () => {
         </div>,
       );
     });
-    const pointer = [...container.querySelectorAll<HTMLElement>('[data-score-overlay-content] > div')]
-      .find((element) => element.style.left === '120px');
+    const pointer = [
+      ...container.querySelectorAll<HTMLElement>('[data-score-overlay-content] > div'),
+    ].find((element) => element.style.left === '120px');
     expect(pointer).toBeDefined();
   });
 });

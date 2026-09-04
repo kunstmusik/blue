@@ -9,7 +9,9 @@ import { useBlueLiveStore } from '../stores/blue-live-store';
 import { useProjectStore } from '../stores/project-store';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 // The workbench-store is no longer imported by ToolbarBlueLive (SPEC 058 removed
 // the MIDI Input toolbar button). This mock remains so any unrelated consumer
@@ -111,7 +113,9 @@ describe('Blue Live toolbar behavior', () => {
       toggleBlueLive: toggle,
     };
 
-    const blueLiveButton = Array.from(container.querySelectorAll('button')).find((button) => button.textContent === 'Blue Live');
+    const blueLiveButton = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.textContent === 'Blue Live',
+    );
     expect(blueLiveButton).toBeTruthy();
     expect((blueLiveButton as HTMLButtonElement).disabled).toBe(false);
 
@@ -130,9 +134,12 @@ describe('Blue Live toolbar behavior', () => {
   it('waits for pending edits before Start and aborts when acknowledgement fails', async () => {
     seedLoadedProject();
     let acknowledge = (): void => {};
-    const flushPendingPatches = vi.fn(() => new Promise<void>((resolve) => {
-      acknowledge = resolve;
-    }));
+    const flushPendingPatches = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          acknowledge = resolve;
+        }),
+    );
     useProjectStore.setState({
       flushPendingPatches,
     } as unknown as Partial<ReturnType<typeof useProjectStore.getState>>);
@@ -142,8 +149,9 @@ describe('Blue Live toolbar behavior', () => {
       ...window.blueAPI,
       toggleBlueLive: toggle,
     };
-    const blueLiveButton = Array.from(container.querySelectorAll('button'))
-      .find((button) => button.textContent === 'Blue Live');
+    const blueLiveButton = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.textContent === 'Blue Live',
+    );
 
     act(() => {
       blueLiveButton?.click();
@@ -187,8 +195,9 @@ describe('Blue Live toolbar behavior', () => {
       ...window.blueAPI,
       toggleBlueLive: toggle,
     };
-    const blueLiveButton = Array.from(container.querySelectorAll('button'))
-      .find((button) => button.textContent === 'Blue Live');
+    const blueLiveButton = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.textContent === 'Blue Live',
+    );
 
     await act(async () => {
       blueLiveButton?.click();
@@ -211,9 +220,12 @@ describe('Blue Live toolbar behavior', () => {
       sessionId: 1,
     });
     let acknowledge = (): void => {};
-    const flushPendingPatches = vi.fn(() => new Promise<void>((resolve) => {
-      acknowledge = resolve;
-    }));
+    const flushPendingPatches = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          acknowledge = resolve;
+        }),
+    );
     useProjectStore.setState({
       flushPendingPatches,
     } as unknown as Partial<ReturnType<typeof useProjectStore.getState>>);
@@ -223,8 +235,9 @@ describe('Blue Live toolbar behavior', () => {
       ...window.blueAPI,
       recompileBlueLive: recompile,
     };
-    const recompileButton = Array.from(container.querySelectorAll('button'))
-      .find((button) => button.textContent === 'Recompile');
+    const recompileButton = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.textContent === 'Recompile',
+    );
 
     act(() => {
       recompileButton?.click();

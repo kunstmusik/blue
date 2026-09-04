@@ -1,6 +1,12 @@
 import type { BarRendererProps } from './renderer-registry';
 import ScoreObjectBar, { LabelText, RepeatMarkers, activeRepeatPointBeats } from './ScoreObjectBar';
-import { argbToRGB, javaAwtBrighter, javaAwtDarker, rgbToCSS, textColorForBackground } from './color-utils';
+import {
+  argbToRGB,
+  javaAwtBrighter,
+  javaAwtDarker,
+  rgbToCSS,
+  textColorForBackground,
+} from './color-utils';
 import { computeThumbnailCache, computeNoteRects } from './piano-roll-thumbnail-utils';
 import { SOUND_LAYER_HEIGHT } from '../types';
 
@@ -50,11 +56,7 @@ export default function PianoRollScoreObjectBar({
       selected={selected}
       backgroundColor={item.backgroundColor}
     >
-      <LabelText
-        labelLines={br.labelLines}
-        color={fg}
-        show={showText}
-      />
+      <LabelText labelLines={br.labelLines} color={fg} show={showText} />
       <RepeatMarkers
         repeatPointBeats={repeatPointBeats}
         durationBeats={durationBeats}
@@ -64,7 +66,17 @@ export default function PianoRollScoreObjectBar({
         backgroundColor={item.backgroundColor}
       />
       {noteRects.length > 0 && (
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            overflow: 'hidden',
+            pointerEvents: 'none',
+          }}
+        >
           {noteRects.map((rect, i) => (
             <div
               key={i}

@@ -17,20 +17,28 @@ export function isTerminalOperationPhase(phase: RenderOperationStatus['phase'] |
   return phase === 'completed' || phase === 'cancelled' || phase === 'failed';
 }
 
-export function operationDialogTitle(verb: string, phase: RenderOperationStatus['phase'] | null): string {
-  const state = phase === 'completed'
-    ? 'Complete'
-    : phase === 'cancelled'
-      ? 'Cancelled'
-      : phase === 'failed'
-        ? 'Failed'
-        : 'Running';
+export function operationDialogTitle(
+  verb: string,
+  phase: RenderOperationStatus['phase'] | null,
+): string {
+  const state =
+    phase === 'completed'
+      ? 'Complete'
+      : phase === 'cancelled'
+        ? 'Cancelled'
+        : phase === 'failed'
+          ? 'Failed'
+          : 'Running';
   return `${verb} - ${state}`;
 }
 
 /** Indefinite spinner while running, dimmed check once rendered, checkmark
  *  after commit, X on failure. */
-export function OperationStatusCell({ status }: { status: OperationRowStatus }): React.ReactElement {
+export function OperationStatusCell({
+  status,
+}: {
+  status: OperationRowStatus;
+}): React.ReactElement {
   if (status === 'running') {
     return (
       <span className="inline-flex items-center gap-1.5 text-app-text">
@@ -63,6 +71,7 @@ export function OperationStatusCell({ status }: { status: OperationRowStatus }):
       </span>
     );
   }
-  const label = status === 'pending' ? 'Waiting' : status === 'cancelled' ? 'Cancelled' : 'Not applied';
+  const label =
+    status === 'pending' ? 'Waiting' : status === 'cancelled' ? 'Cancelled' : 'Not applied';
   return <span className="text-app-text-muted">{label}</span>;
 }

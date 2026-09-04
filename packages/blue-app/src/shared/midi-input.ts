@@ -31,12 +31,7 @@ export interface MidiInputPreferences {
 
 export type MidiInputAvailability = 'available' | 'unavailable';
 
-export type MidiInputConnection =
-  | 'closed'
-  | 'connecting'
-  | 'connected'
-  | 'disconnecting'
-  | 'error';
+export type MidiInputConnection = 'closed' | 'connecting' | 'connected' | 'disconnecting' | 'error';
 
 export interface MidiInputDeviceRuntime {
   id: string;
@@ -173,9 +168,7 @@ export function compareMidiInputDevicePreference(
  * Normalize and deduplicate raw device preferences by ID. The last valid enabled
  * choice wins; freshest non-empty metadata wins. Empty IDs are dropped.
  */
-export function normalizeMidiInputPreferences(
-  raw: unknown,
-): MidiInputPreferences {
+export function normalizeMidiInputPreferences(raw: unknown): MidiInputPreferences {
   if (!raw || typeof raw !== 'object') {
     return createDefaultMidiInputPreferences();
   }
@@ -194,21 +187,13 @@ export function normalizeMidiInputPreferences(
       id,
       name: typeof r.name === 'string' ? r.name : (existing?.name ?? ''),
       manufacturer:
-        typeof r.manufacturer === 'string'
-          ? r.manufacturer
-          : (existing?.manufacturer ?? ''),
-      version:
-        typeof r.version === 'string' ? r.version : (existing?.version ?? ''),
-      enabled:
-        typeof r.enabled === 'boolean'
-          ? r.enabled
-          : (existing?.enabled ?? false),
+        typeof r.manufacturer === 'string' ? r.manufacturer : (existing?.manufacturer ?? ''),
+      version: typeof r.version === 'string' ? r.version : (existing?.version ?? ''),
+      enabled: typeof r.enabled === 'boolean' ? r.enabled : (existing?.enabled ?? false),
     };
     byId.set(id, candidate);
   }
-  const devices = Array.from(byId.values()).sort(
-    compareMidiInputDevicePreference,
-  );
+  const devices = Array.from(byId.values()).sort(compareMidiInputDevicePreference);
   return { devices };
 }
 
@@ -251,9 +236,7 @@ export const MAX_BLUE_LIVE_TARGET_ID_LENGTH = 256;
  */
 export function isBoundedTargetIdentity(value: unknown): value is string {
   return (
-    typeof value === 'string' &&
-    value.length > 0 &&
-    value.length <= MAX_BLUE_LIVE_TARGET_ID_LENGTH
+    typeof value === 'string' && value.length > 0 && value.length <= MAX_BLUE_LIVE_TARGET_ID_LENGTH
   );
 }
 
@@ -272,7 +255,8 @@ export function isNonnegativeInteger(value: unknown): value is number {
  * identity rather than position, so ordering is not significant.
  */
 export function blueLiveTargetKey(
-  target: { kind: 'track'; trackId: string }
+  target:
+    | { kind: 'track'; trackId: string }
     | { kind: 'orchestra'; assignmentId: string }
     | { kind: 'channel'; channel: number },
   midiNote: number,
@@ -293,7 +277,8 @@ export function blueLiveTargetKey(
  * notes with the same identity key and pitch share one aggregate engine note.
  */
 export function blueLiveTargetIdentityKey(
-  target: { kind: 'track'; trackId: string }
+  target:
+    | { kind: 'track'; trackId: string }
     | { kind: 'orchestra'; assignmentId: string }
     | { kind: 'channel'; channel: number },
 ): string {

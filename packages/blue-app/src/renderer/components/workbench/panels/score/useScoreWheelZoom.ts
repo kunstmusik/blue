@@ -1,8 +1,11 @@
-import { useEffect, useRef } from "react";
-import type { RefObject, Dispatch, SetStateAction } from "react";
-import { useProjectStore } from "../../../../stores/project-store";
-import type { ScoreTimeStateSnapshot, ScoreLayerGroupSnapshot } from "../../../../../shared/project-editor";
-import { DEFAULT_ROW_HEIGHT, GROUP_SPACER } from "./types";
+import { useEffect, useRef } from 'react';
+import type { RefObject, Dispatch, SetStateAction } from 'react';
+import { useProjectStore } from '../../../../stores/project-store';
+import type {
+  ScoreTimeStateSnapshot,
+  ScoreLayerGroupSnapshot,
+} from '../../../../../shared/project-editor';
+import { DEFAULT_ROW_HEIGHT, GROUP_SPACER } from './types';
 
 /**
  * Pixel-per-beat zoom formula matching Java Blue's TimeState:
@@ -54,8 +57,7 @@ export function normalizeWheelDeltaY(e: WheelEvent): number {
  */
 export function computeZoomDelta(e: WheelEvent): number {
   const normalizedDelta = normalizeWheelDeltaY(e);
-  const sensitivity =
-    e.ctrlKey && !e.altKey ? PINCH_ZOOM_SENSITIVITY : WHEEL_ZOOM_SENSITIVITY;
+  const sensitivity = e.ctrlKey && !e.altKey ? PINCH_ZOOM_SENSITIVITY : WHEEL_ZOOM_SENSITIVITY;
   return -normalizedDelta * sensitivity;
 }
 
@@ -122,12 +124,17 @@ export function useScoreWheelZoom(
 
     const handleWheel = (e: WheelEvent) => {
       // Determine platform-specific modifier for layer height adjustment (Cmd on Mac, Ctrl on Win/Linux)
-      const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
-      const isHeightModifier = isMac ? e.metaKey : (e.ctrlKey && !e.altKey);
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      const isHeightModifier = isMac ? e.metaKey : e.ctrlKey && !e.altKey;
 
       // ── 1. Layer Height Adjustment (Cmd + Scroll on Mac, Ctrl + Scroll on Win/Linux) ──
       // Note: On Mac, pinch-to-zoom sets e.ctrlKey = true and e.metaKey = false, so it won't trigger this.
-      if (isHeightModifier && !e.altKey && !e.shiftKey && (isMac || e.deltaMode !== 0 || Math.abs(e.deltaY) >= 50)) {
+      if (
+        isHeightModifier &&
+        !e.altKey &&
+        !e.shiftKey &&
+        (isMac || e.deltaMode !== 0 || Math.abs(e.deltaY) >= 50)
+      ) {
         e.preventDefault();
         e.stopPropagation();
 
@@ -167,7 +174,9 @@ export function useScoreWheelZoom(
           const direction = e.deltaY > 0 ? 1 : -1;
           const newHeightIndex = Math.max(0, Math.min(targetLayer.heightIndex + direction, 8));
           if (newHeightIndex !== targetLayer.heightIndex && !isNaN(newHeightIndex)) {
-            useProjectStore.getState().setLayerHeight(targetLayer.groupId, targetLayer.layerIndex, newHeightIndex);
+            useProjectStore
+              .getState()
+              .setLayerHeight(targetLayer.groupId, targetLayer.layerIndex, newHeightIndex);
           }
         }
         return;
@@ -210,7 +219,7 @@ export function useScoreWheelZoom(
         }));
 
         void useProjectStore.getState().applyProjectDocumentPatch({
-          score: { type: "updateTimeState", patch: { zoomIterations: newZoom } },
+          score: { type: 'updateTimeState', patch: { zoomIterations: newZoom } },
         });
         return;
       }
@@ -228,14 +237,15 @@ export function useScoreWheelZoom(
       }
     };
 
-    container.addEventListener("wheel", handleWheel, { passive: false });
+    container.addEventListener('wheel', handleWheel, { passive: false });
 
     const headerCleanup = header
-      ? (header.addEventListener("wheel", handleWheel, { passive: false }), () => header.removeEventListener("wheel", handleWheel))
+      ? (header.addEventListener('wheel', handleWheel, { passive: false }),
+        () => header.removeEventListener('wheel', handleWheel))
       : undefined;
 
     return () => {
-      container.removeEventListener("wheel", handleWheel);
+      container.removeEventListener('wheel', handleWheel);
       headerCleanup?.();
     };
   }, [scrollContainerRef.current, timelineHeaderRef.current, loaded]);

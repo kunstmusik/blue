@@ -1,8 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { TrackInstrumentEditorRequest } from '../shared/project-editor';
-import {
-  TRACK_INSTRUMENT_RUNTIME_STATUS_CHANGED_CHANNEL,
-} from '../shared/track-instrument-editor-contract';
+import { TRACK_INSTRUMENT_RUNTIME_STATUS_CHANGED_CHANNEL } from '../shared/track-instrument-editor-contract';
 import { createTrackEditorRuntimeStatusCoordinator } from './track-editor-runtime-status';
 
 const request: TrackInstrumentEditorRequest = {

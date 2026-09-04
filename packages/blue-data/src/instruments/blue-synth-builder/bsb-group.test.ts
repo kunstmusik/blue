@@ -11,14 +11,16 @@ describe('BSBGroup', () => {
     staleChild.objectName = 'oldGain';
     group.addChild(staleChild);
 
-    group.loadFromXML(Element.parse(`
+    group.loadFromXML(
+      Element.parse(`
       <bsbObject type="blue.orchestra.blueSynthBuilder.BSBGroup">
         <groupName>Loaded</groupName>
         <bsbObject type="blue.orchestra.blueSynthBuilder.BSBKnob" version="2" uniqueId="fresh-knob">
           <objectName>newGain</objectName>
           <value>0.75</value>
         </bsbObject>
-      </bsbObject>`));
+      </bsbObject>`),
+    );
 
     const children = group.getChildren();
 

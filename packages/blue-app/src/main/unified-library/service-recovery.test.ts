@@ -13,12 +13,17 @@ describe('library service recovery', () => {
     const database = new DatabaseSync(databasePath);
     database.exec('PRAGMA user_version = 99');
     database.close();
-    const service = new UnifiedLibraryService(databasePath, UnifiedLibraryRepositoryClient.openForTesting);
+    const service = new UnifiedLibraryService(
+      databasePath,
+      UnifiedLibraryRepositoryClient.openForTesting,
+    );
     try {
       expect((await service.start()).phase).toBe('readOnlyFailure');
       const recovered = await service.createFreshRecoveryDatabase();
       expect(recovered).toMatchObject({ ok: true, value: { phase: 'ready', writable: true } });
-      expect(fs.readdirSync(directory).some((name) => name.startsWith('blue_libraries.sqlite.failed-'))).toBe(true);
+      expect(
+        fs.readdirSync(directory).some((name) => name.startsWith('blue_libraries.sqlite.failed-')),
+      ).toBe(true);
     } finally {
       await service.stop();
       fs.rmSync(directory, { recursive: true, force: true });

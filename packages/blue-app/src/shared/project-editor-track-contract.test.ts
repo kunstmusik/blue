@@ -69,48 +69,72 @@ describe('Track project editor contract', () => {
     const track = data.getScore()[0]![0]!;
     const originalLength = track.length;
 
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'addTrackItem',
-        track: validRef,
-        item: { objectType: 'AudioFile', name: 'wrong type' },
-        startBeats: 0,
-      },
-    }, context)).toBe(false);
+    expect(
+      applyProjectDocumentPatch(
+        data,
+        {
+          score: {
+            type: 'addTrackItem',
+            track: validRef,
+            item: { objectType: 'AudioFile', name: 'wrong type' },
+            startBeats: 0,
+          },
+        },
+        context,
+      ),
+    ).toBe(false);
     expect(track).toHaveLength(originalLength);
 
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'addTrackItem',
-        track: { ...validRef, rootGroupId: 'wrong-group' },
-        item: { objectType: 'GenericScore', name: 'not added' },
-        startBeats: 0,
-      },
-    }, context)).toBe(false);
+    expect(
+      applyProjectDocumentPatch(
+        data,
+        {
+          score: {
+            type: 'addTrackItem',
+            track: { ...validRef, rootGroupId: 'wrong-group' },
+            item: { objectType: 'GenericScore', name: 'not added' },
+            startBeats: 0,
+          },
+        },
+        context,
+      ),
+    ).toBe(false);
     expect(track).toHaveLength(originalLength);
 
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'addTrackItem',
-        track: { ...validRef, projectSessionId: 8 },
-        item: { objectType: 'GenericScore', name: 'stale' },
-        startBeats: 0,
-      },
-    }, context)).toBe(false);
+    expect(
+      applyProjectDocumentPatch(
+        data,
+        {
+          score: {
+            type: 'addTrackItem',
+            track: { ...validRef, projectSessionId: 8 },
+            item: { objectType: 'GenericScore', name: 'stale' },
+            startBeats: 0,
+          },
+        },
+        context,
+      ),
+    ).toBe(false);
     expect(track).toHaveLength(originalLength);
 
     const missingFence = {
       rootGroupId: ref.rootGroupId,
       trackId: ref.trackId,
     } as TrackRef;
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'addTrackItem',
-        track: missingFence,
-        item: { objectType: 'GenericScore', name: 'unfenced' },
-        startBeats: 0,
-      },
-    }, context)).toBe(false);
+    expect(
+      applyProjectDocumentPatch(
+        data,
+        {
+          score: {
+            type: 'addTrackItem',
+            track: missingFence,
+            item: { objectType: 'GenericScore', name: 'unfenced' },
+            startBeats: 0,
+          },
+        },
+        context,
+      ),
+    ).toBe(false);
     expect(track).toHaveLength(originalLength);
   });
 
@@ -119,32 +143,50 @@ describe('Track project editor contract', () => {
     const context: ProjectDocumentPatchContext = { projectSessionId: 2, projectRevision: 0 };
     const track = data.getScore()[0]![0]!;
 
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'addTrackItem',
-        track: { ...ref, projectSessionId: 2, projectRevision: 0 },
-        item: { objectType: 'GenericScore', name: 'Added', durationBeats: 2 },
-        startBeats: 2,
-      },
-    }, context)).toBe(true);
+    expect(
+      applyProjectDocumentPatch(
+        data,
+        {
+          score: {
+            type: 'addTrackItem',
+            track: { ...ref, projectSessionId: 2, projectRevision: 0 },
+            item: { objectType: 'GenericScore', name: 'Added', durationBeats: 2 },
+            startBeats: 2,
+          },
+        },
+        context,
+      ),
+    ).toBe(true);
     expect(track).toHaveLength(2);
     expect(track[1]?.getName()).toBe('Added');
 
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'createTrackInstrument',
-        track: ref,
-        instrumentType: 'generic',
-      },
-    }, context)).toBe(true);
+    expect(
+      applyProjectDocumentPatch(
+        data,
+        {
+          score: {
+            type: 'createTrackInstrument',
+            track: ref,
+            instrumentType: 'generic',
+          },
+        },
+        context,
+      ),
+    ).toBe(true);
     expect(track.getInstrument()).not.toBeNull();
 
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'clearTrackInstrument',
-        track: ref,
-      },
-    }, context)).toBe(true);
+    expect(
+      applyProjectDocumentPatch(
+        data,
+        {
+          score: {
+            type: 'clearTrackInstrument',
+            track: ref,
+          },
+        },
+        context,
+      ),
+    ).toBe(true);
     expect(track.getInstrument()).toBeNull();
   });
 });

@@ -54,7 +54,7 @@ const VALIDATORS = {
   uuid: (v) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v),
   appleTeamId: (v) => /^[0-9A-Z]{10}$/.test(v),
   httpsUrl: (v) => /^https:\/\/[^\s]+$/.test(v),
-};/**
+}; /**
  * @param {{ name: string, validator?: (value: string) => boolean, requiredFor: string, guidance: string }} requirement
  * @returns {CredentialDiagnostic}
  */
@@ -99,21 +99,48 @@ function runScope(scope) {
   /** @type {Array<{ name: string, validator?: (value: string) => boolean, for: string, guidance: string }>} */
   let requirements = [];
   if (scope === 'macos') {
-    const guidance = 'Set this only when preparing a future signed macOS release; current unsigned releases do not require it.';
+    const guidance =
+      'Set this only when preparing a future signed macOS release; current unsigned releases do not require it.';
     requirements = [
       { name: 'CSC_LINK', for: 'macOS signing', guidance },
       { name: 'CSC_KEY_PASSWORD', for: 'macOS signing', guidance },
       { name: 'APPLE_ID', for: 'macOS notarization', guidance },
       { name: 'APPLE_APP_SPECIFIC_PASSWORD', for: 'macOS notarization', guidance },
-      { name: 'APPLE_TEAM_ID', validator: VALIDATORS.appleTeamId, for: 'macOS notarization', guidance },
+      {
+        name: 'APPLE_TEAM_ID',
+        validator: VALIDATORS.appleTeamId,
+        for: 'macOS notarization',
+        guidance,
+      },
     ];
   } else if (scope === 'windows') {
-    const guidance = 'Set this only when preparing a future signed Windows release; current unsigned releases do not require it.';
+    const guidance =
+      'Set this only when preparing a future signed Windows release; current unsigned releases do not require it.';
     requirements = [
-      { name: 'AZURE_CLIENT_ID', validator: VALIDATORS.uuid, for: 'Windows Azure OIDC signing', guidance },
-      { name: 'AZURE_TENANT_ID', validator: VALIDATORS.uuid, for: 'Windows Azure OIDC signing', guidance },
-      { name: 'AZURE_SUBSCRIPTION_ID', validator: VALIDATORS.uuid, for: 'Windows Azure OIDC signing', guidance },
-      { name: 'AZURE_TRUSTED_SIGNING_ENDPOINT', validator: VALIDATORS.httpsUrl, for: 'Windows signing', guidance },
+      {
+        name: 'AZURE_CLIENT_ID',
+        validator: VALIDATORS.uuid,
+        for: 'Windows Azure OIDC signing',
+        guidance,
+      },
+      {
+        name: 'AZURE_TENANT_ID',
+        validator: VALIDATORS.uuid,
+        for: 'Windows Azure OIDC signing',
+        guidance,
+      },
+      {
+        name: 'AZURE_SUBSCRIPTION_ID',
+        validator: VALIDATORS.uuid,
+        for: 'Windows Azure OIDC signing',
+        guidance,
+      },
+      {
+        name: 'AZURE_TRUSTED_SIGNING_ENDPOINT',
+        validator: VALIDATORS.httpsUrl,
+        for: 'Windows signing',
+        guidance,
+      },
       { name: 'AZURE_TRUSTED_SIGNING_ACCOUNT', for: 'Windows signing', guidance },
       { name: 'AZURE_TRUSTED_SIGNING_CERTIFICATE_PROFILE', for: 'Windows signing', guidance },
     ];
@@ -122,12 +149,18 @@ function runScope(scope) {
       {
         name: 'GH_TOKEN',
         for: 'GitHub release publication from local tooling',
-        guidance: 'Set this only for local publication or duplicate-release checks; GitHub Actions provides GITHUB_TOKEN automatically.',
+        guidance:
+          'Set this only for local publication or duplicate-release checks; GitHub Actions provides GITHUB_TOKEN automatically.',
       },
     ];
   }
   return requirements.map((req) =>
-    checkVariable({ name: req.name, validator: req.validator, requiredFor: req.for, guidance: req.guidance }),
+    checkVariable({
+      name: req.name,
+      validator: req.validator,
+      requiredFor: req.for,
+      guidance: req.guidance,
+    }),
   );
 }
 
@@ -160,9 +193,10 @@ function main() {
   const advisory = flags.advisory === 'true';
   const emitAvailability = flags['emit-availability'] === 'true';
   /** @type {PreflightScope[]} */
-  const scopes = scopeFlag && scopeFlag !== 'true'
-    ? /** @type {PreflightScope[]} */ ([scopeFlag])
-    : ['macos', 'windows', 'publish'];
+  const scopes =
+    scopeFlag && scopeFlag !== 'true'
+      ? /** @type {PreflightScope[]} */ ([scopeFlag])
+      : ['macos', 'windows', 'publish'];
 
   /** @type {CredentialDiagnostic[]} */
   const diagnostics = [];
@@ -172,9 +206,7 @@ function main() {
     process.stderr.write(`\n== ${scope.toUpperCase()} ==\n`);
     const results = runScope(scope);
     for (const result of results) {
-      process.stderr.write(
-        `${result.ok ? '[ok]' : '[FAIL]'} (${result.code}) ${result.message}\n`,
-      );
+      process.stderr.write(`${result.ok ? '[ok]' : '[FAIL]'} (${result.code}) ${result.message}\n`);
       diagnostics.push(result);
       if (!result.ok) {
         scopeAvailability[scope] = false;
@@ -218,7 +250,9 @@ function main() {
       );
       process.exit(0);
     }
-    process.stderr.write('\nCredential preflight failed. See the named variables above; do NOT log their values.\n');
+    process.stderr.write(
+      '\nCredential preflight failed. See the named variables above; do NOT log their values.\n',
+    );
     process.exit(1);
   }
   process.stderr.write('\nCredential preflight passed.\n');

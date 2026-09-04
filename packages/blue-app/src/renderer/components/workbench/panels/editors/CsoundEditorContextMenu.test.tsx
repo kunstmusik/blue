@@ -9,11 +9,14 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import CsoundEditorContextMenu from './CsoundEditorContextMenu';
 import { createOpcodesSubmenu } from './csound-opcode-menu';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 function findMenuItem(label: string): HTMLElement | undefined {
-  return Array.from(document.body.querySelectorAll<HTMLElement>('[role="menuitem"]'))
-    .find((item) => item.textContent?.trim() === label);
+  return Array.from(document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')).find(
+    (item) => item.textContent?.trim() === label,
+  );
 }
 
 describe('CsoundEditorContextMenu opcode insertion', () => {
@@ -55,10 +58,7 @@ describe('CsoundEditorContextMenu opcode insertion', () => {
     const editorViewRef = { current: view };
     act(() => {
       root.render(
-        <CsoundEditorContextMenu
-          editorViewRef={editorViewRef}
-          menuItems={[createOpcodesSubmenu()]}
-        >
+        <CsoundEditorContextMenu editorViewRef={editorViewRef} menuItems={[createOpcodesSubmenu()]}>
           <button type="button">Editor</button>
         </CsoundEditorContextMenu>,
       );
@@ -69,13 +69,15 @@ describe('CsoundEditorContextMenu opcode insertion', () => {
     expect(trigger).not.toBeNull();
 
     await act(async () => {
-      trigger!.dispatchEvent(new MouseEvent('contextmenu', {
-        bubbles: true,
-        cancelable: true,
-        button: 2,
-        clientX: 10,
-        clientY: 10,
-      }));
+      trigger!.dispatchEvent(
+        new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          button: 2,
+          clientX: 10,
+          clientY: 10,
+        }),
+      );
       await Promise.resolve();
     });
     const opcodes = findMenuItem('Opcodes');

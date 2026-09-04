@@ -66,16 +66,24 @@ function migrateGroup(group: Element, state: MigrationState): void {
   // A few historical writers emitted audioLayer children directly under the
   // group. Move those nodes into the canonical container while retaining the
   // order of the legacy layer nodes and leaving unrelated siblings alone.
-  const directLegacyLayers = group.getElements().toArray().filter((child) => (
-    child !== tracks && (child.getName() === 'audioLayer' || child.getName() === 'layer')
-  ));
+  const directLegacyLayers = group
+    .getElements()
+    .toArray()
+    .filter(
+      (child) =>
+        child !== tracks && (child.getName() === 'audioLayer' || child.getName() === 'layer'),
+    );
   for (const layer of directLegacyLayers) {
     group.removeElement(layer.getName());
     tracks.addElement(layer);
   }
 
   for (const child of tracks.getElements().toArray()) {
-    if (child.getName() !== 'audioLayer' && child.getName() !== 'layer' && child.getName() !== 'track') {
+    if (
+      child.getName() !== 'audioLayer' &&
+      child.getName() !== 'layer' &&
+      child.getName() !== 'track'
+    ) {
       continue;
     }
     child.setName('track');
@@ -97,7 +105,8 @@ function createMigrationState(root: Element): MigrationState {
 }
 
 function collectCanonicalIds(element: Element, usedIds: Set<string>, insideLegacy: boolean): void {
-  const legacy = insideLegacy || element.getName() === 'audioLayerGroup' || element.getName() === 'audioLayer';
+  const legacy =
+    insideLegacy || element.getName() === 'audioLayerGroup' || element.getName() === 'audioLayer';
   if (!legacy) {
     const id = element.getAttributeValue('uniqueId')?.trim();
     if (id) usedIds.add(id);

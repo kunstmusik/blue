@@ -22,7 +22,8 @@ describe('testPythonInstrument', () => {
     }));
 
     const mockClient: Partial<JavaRuntimeClientContract> = {
-      evaluateJythonInstrument: evaluateJythonInstrument as unknown as JavaRuntimeClientContract['evaluateJythonInstrument'],
+      evaluateJythonInstrument:
+        evaluateJythonInstrument as unknown as JavaRuntimeClientContract['evaluateJythonInstrument'],
     };
 
     const result = await testPythonInstrument(
@@ -46,7 +47,8 @@ describe('testPythonInstrument', () => {
     }));
 
     const mockClient: Partial<JavaRuntimeClientContract> = {
-      evaluateJythonInstrument: evaluateJythonInstrument as unknown as JavaRuntimeClientContract['evaluateJythonInstrument'],
+      evaluateJythonInstrument:
+        evaluateJythonInstrument as unknown as JavaRuntimeClientContract['evaluateJythonInstrument'],
     };
 
     const result = await testPythonInstrument(
@@ -64,7 +66,8 @@ describe('testPythonInstrument', () => {
     });
 
     const mockClient: Partial<JavaRuntimeClientContract> = {
-      evaluateJythonInstrument: evaluateJythonInstrument as unknown as JavaRuntimeClientContract['evaluateJythonInstrument'],
+      evaluateJythonInstrument:
+        evaluateJythonInstrument as unknown as JavaRuntimeClientContract['evaluateJythonInstrument'],
     };
 
     const result = await testPythonInstrument(

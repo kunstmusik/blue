@@ -2,10 +2,7 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import {
-  LibraryMigrationStateStore,
-  shouldRunAutomaticMigration,
-} from './migration-state-store';
+import { LibraryMigrationStateStore, shouldRunAutomaticMigration } from './migration-state-store';
 
 const directories: string[] = [];
 function fixture(): LibraryMigrationStateStore {
@@ -14,7 +11,8 @@ function fixture(): LibraryMigrationStateStore {
   return new LibraryMigrationStateStore(path.join(directory, 'blue-libraries-state.json'));
 }
 afterEach(() => {
-  for (const directory of directories.splice(0)) fs.rmSync(directory, { recursive: true, force: true });
+  for (const directory of directories.splice(0))
+    fs.rmSync(directory, { recursive: true, force: true });
 });
 
 describe('library migration state store', () => {
@@ -24,12 +22,20 @@ describe('library migration state store', () => {
     store.beginAttempt('2026-07-15T00:00:00.000Z');
     expect(JSON.parse(fs.readFileSync(store.filePath, 'utf8')).attemptStatus).toBe('inProgress');
     expect(store.load().attemptStatus).toBe('interrupted');
-    expect(store.finishAttempt({ state: 'completed', resultKind: 'partial', batchId: 'batch-1' }))
-      .toMatchObject({ legacyMigrationState: 'completed', lastResultKind: 'partial' });
-    expect(store.finishAttempt({ state: 'skipped', resultKind: 'noSources', batchId: null }))
-      .toMatchObject({ legacyMigrationState: 'skipped' });
-    expect(store.finishAttempt({ state: 'failed', resultKind: 'pipelineFailure', batchId: null, error: 'disk' }))
-      .toMatchObject({ legacyMigrationState: 'failed', lastError: 'disk' });
+    expect(
+      store.finishAttempt({ state: 'completed', resultKind: 'partial', batchId: 'batch-1' }),
+    ).toMatchObject({ legacyMigrationState: 'completed', lastResultKind: 'partial' });
+    expect(
+      store.finishAttempt({ state: 'skipped', resultKind: 'noSources', batchId: null }),
+    ).toMatchObject({ legacyMigrationState: 'skipped' });
+    expect(
+      store.finishAttempt({
+        state: 'failed',
+        resultKind: 'pipelineFailure',
+        batchId: null,
+        error: 'disk',
+      }),
+    ).toMatchObject({ legacyMigrationState: 'failed', lastError: 'disk' });
     expect(fs.existsSync(`${store.filePath}.tmp`)).toBe(false);
   });
 

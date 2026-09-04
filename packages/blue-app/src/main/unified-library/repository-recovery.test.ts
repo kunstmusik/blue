@@ -8,10 +8,17 @@ import { UnifiedLibraryRepository } from './repository';
 
 describe('repository open recovery classification', () => {
   it('classifies newer versions, integrity failures, locks, and worker exits', () => {
-    expect(classifyRepositoryFailure(new Error('Unsupported newer Unified Library schema version: 99')).kind).toBe('version');
-    expect(classifyRepositoryFailure(new Error('database disk image is malformed')).kind).toBe('integrity');
+    expect(
+      classifyRepositoryFailure(new Error('Unsupported newer Unified Library schema version: 99'))
+        .kind,
+    ).toBe('version');
+    expect(classifyRepositoryFailure(new Error('database disk image is malformed')).kind).toBe(
+      'integrity',
+    );
     expect(classifyRepositoryFailure(new Error('database is locked')).kind).toBe('lock');
-    expect(classifyRepositoryFailure(new Error('repository worker exited with 1')).kind).toBe('worker');
+    expect(classifyRepositoryFailure(new Error('repository worker exited with 1')).kind).toBe(
+      'worker',
+    );
   });
 
   it('rejects a newer user_version without modifying it', () => {

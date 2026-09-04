@@ -13,15 +13,19 @@ export class Field {
     this._value = fieldDef.convertToFieldType(fieldDef.getDefaultValue());
   }
 
-  getFieldDef(): FieldDef { return this._fieldDef; }
+  getFieldDef(): FieldDef {
+    return this._fieldDef;
+  }
 
   getValue(): number {
     return this._fieldDef.convertToFieldType(this._value);
   }
 
   setValue(value: number): void {
-    const clamped = Math.max(this._fieldDef.getMinValue(),
-      Math.min(value, this._fieldDef.getMaxValue()));
+    const clamped = Math.max(
+      this._fieldDef.getMinValue(),
+      Math.min(value, this._fieldDef.getMaxValue()),
+    );
     this._value = this._fieldDef.convertToFieldType(clamped);
   }
 

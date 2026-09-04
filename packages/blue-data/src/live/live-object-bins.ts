@@ -206,7 +206,7 @@ export class LiveObjectBins implements BlueDataObject {
     for (const col of this._cells) {
       const newCol: Array<LiveObject | null> = [];
       for (const obj of col) {
-        newCol.push(obj ? obj.deepCopy() as LiveObject : null);
+        newCol.push(obj ? (obj.deepCopy() as LiveObject) : null);
       }
       grid.push(newCol);
     }

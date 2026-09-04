@@ -29,11 +29,7 @@ function MenuItem({
   onSelect: () => void;
 }): React.ReactElement {
   return (
-    <ContextMenu.Item
-      className="editor-context-menu__item"
-      disabled={disabled}
-      onSelect={onSelect}
-    >
+    <ContextMenu.Item className="editor-context-menu__item" disabled={disabled} onSelect={onSelect}>
       {children}
     </ContextMenu.Item>
   );
@@ -60,9 +56,7 @@ function AddInstrumentSubmenu({
           <MenuItem onSelect={() => onAdd('python')}>Python Instrument</MenuItem>
           <MenuItem onSelect={() => onAdd('javascript')}>JavaScript Instrument</MenuItem>
           <MenuItem onSelect={() => onAdd('blueX7')}>BlueX7</MenuItem>
-          <MenuItem onSelect={() => onAdd('blueSynthBuilder')}>
-            BlueSynthBuilder
-          </MenuItem>
+          <MenuItem onSelect={() => onAdd('blueSynthBuilder')}>BlueSynthBuilder</MenuItem>
         </ContextMenu.SubContent>
       </PopoutContextMenuPortal>
     </ContextMenu.Sub>
@@ -112,12 +106,8 @@ export default function ArrangementContextMenu({
             Paste
           </MenuItem>
           <ContextMenu.Separator className="editor-context-menu__separator" />
-          <MenuItem onSelect={() => void onImport()}>
-            Import…
-          </MenuItem>
-          <MenuItem onSelect={() => void onExport()}>
-            Export…
-          </MenuItem>
+          <MenuItem onSelect={() => void onImport()}>Import…</MenuItem>
+          <MenuItem onSelect={() => void onExport()}>Export…</MenuItem>
           <ContextMenu.Separator className="editor-context-menu__separator" />
           <MenuItem
             onSelect={() =>

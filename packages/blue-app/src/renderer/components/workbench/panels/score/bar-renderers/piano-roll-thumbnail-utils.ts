@@ -68,7 +68,10 @@ export function computeNoteRects(
   const drawMaxHeight = barHeightPx - headerHeight - 6;
   if (drawMaxHeight <= 0) return [];
 
-  const noteHeight = Math.max(MIN_NOTE_HEIGHT, Math.min(MAX_NOTE_HEIGHT, Math.floor(drawMaxHeight / cache.range)));
+  const noteHeight = Math.max(
+    MIN_NOTE_HEIGHT,
+    Math.min(MAX_NOTE_HEIGHT, Math.floor(drawMaxHeight / cache.range)),
+  );
   const drawHeight = Math.min(drawMaxHeight, noteHeight * cache.range - 6);
 
   let transY = headerHeight + 2;
@@ -102,9 +105,10 @@ export function computeNoteRects(
       break;
     }
     case 'REPEAT': {
-      const repeat = repeatPointBeats != null && repeatPointBeats > 0
-        ? repeatPointBeats
-        : cache.notesDurationBeats;
+      const repeat =
+        repeatPointBeats != null && repeatPointBeats > 0
+          ? repeatPointBeats
+          : cache.notesDurationBeats;
       const windowWidth = repeat * pixelsPerBeat;
       const xScale = (t: number): number => {
         if (repeat <= 0) return 0;
@@ -139,9 +143,10 @@ export function computeNoteRects(
       break;
     }
     case 'REPEAT_CLASSIC': {
-      const repeat = repeatPointBeats != null && repeatPointBeats > 0
-        ? repeatPointBeats
-        : cache.notesDurationBeats;
+      const repeat =
+        repeatPointBeats != null && repeatPointBeats > 0
+          ? repeatPointBeats
+          : cache.notesDurationBeats;
       const windowWidth = repeat * pixelsPerBeat;
       const rawPixPerBeat = pixelsPerBeat;
       let curTime = 0;

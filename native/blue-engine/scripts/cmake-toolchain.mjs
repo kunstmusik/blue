@@ -15,7 +15,11 @@ function cachedToolchain(cache) {
 }
 
 function includedToolchain(system) {
-  return system.match(/include\(["']?([^"')\r\n]*scripts[\\/]buildsystems[\\/]vcpkg\.cmake)/)?.[1]?.trim() ?? null;
+  return (
+    system
+      .match(/include\(["']?([^"')\r\n]*scripts[\\/]buildsystems[\\/]vcpkg\.cmake)/)?.[1]
+      ?.trim() ?? null
+  );
 }
 
 export async function resetBuildDirectoryForToolchainChange(buildDir, desiredToolchain) {
@@ -29,8 +33,9 @@ export async function resetBuildDirectoryForToolchainChange(buildDir, desiredToo
   const cmakeFilesDir = join(buildDir, 'CMakeFiles');
   let versionDirectories = [];
   try {
-    versionDirectories = (await readdir(cmakeFilesDir, { withFileTypes: true }))
-      .filter((entry) => entry.isDirectory());
+    versionDirectories = (await readdir(cmakeFilesDir, { withFileTypes: true })).filter((entry) =>
+      entry.isDirectory(),
+    );
   } catch (error) {
     if (error?.code !== 'ENOENT') throw error;
   }

@@ -43,27 +43,60 @@ describe('OSC preload API', () => {
 
   it('forwards only valid runtime snapshots and cleans up subscriptions', () => {
     let handler: ((event: unknown, payload: unknown) => void) | null = null;
-    mocks.on.mockImplementation((_channel: string, listener: typeof handler) => { handler = listener; });
+    mocks.on.mockImplementation((_channel: string, listener: typeof handler) => {
+      handler = listener;
+    });
     const callback = vi.fn();
     const unsubscribe = mocks.exposedApi!.onOscServerSnapshot(callback);
 
-    handler!({}, { phase: 'listening', preferredPort: 8000, activePort: 8000, fallbackFrom: null, lastBindError: null, lastPacketError: null, revision: 2, updatedAt: 'now' });
+    handler!(
+      {},
+      {
+        phase: 'listening',
+        preferredPort: 8000,
+        activePort: 8000,
+        fallbackFrom: null,
+        lastBindError: null,
+        lastPacketError: null,
+        revision: 2,
+        updatedAt: 'now',
+      },
+    );
     handler!({}, { phase: 'not-a-phase' });
 
     expect(callback).toHaveBeenCalledTimes(1);
-    expect(mocks.on).toHaveBeenCalledWith(OSC_CONTROL_SNAPSHOT_CHANGED_CHANNEL, expect.any(Function));
+    expect(mocks.on).toHaveBeenCalledWith(
+      OSC_CONTROL_SNAPSHOT_CHANGED_CHANNEL,
+      expect.any(Function),
+    );
     unsubscribe();
-    expect(mocks.removeListener).toHaveBeenCalledWith(OSC_CONTROL_SNAPSHOT_CHANGED_CHANNEL, expect.any(Function));
+    expect(mocks.removeListener).toHaveBeenCalledWith(
+      OSC_CONTROL_SNAPSHOT_CHANGED_CHANNEL,
+      expect.any(Function),
+    );
   });
 
   it('forwards only registered OSC command events', () => {
     let handler: ((event: unknown, payload: unknown) => void) | null = null;
-    mocks.on.mockImplementation((_channel: string, listener: typeof handler) => { handler = listener; });
+    mocks.on.mockImplementation((_channel: string, listener: typeof handler) => {
+      handler = listener;
+    });
     const callback = vi.fn();
     mocks.exposedApi!.onOscCommand(callback);
 
-    handler!({}, { sequence: 1, commandId: 'score.play', receivedAddress: '/score/play', receivedAt: 'now' });
-    handler!({}, { sequence: 2, commandId: 'blueLive.toggleMidiInput', receivedAddress: '/blueLive/toggleMidiInput', receivedAt: 'now' });
+    handler!(
+      {},
+      { sequence: 1, commandId: 'score.play', receivedAddress: '/score/play', receivedAt: 'now' },
+    );
+    handler!(
+      {},
+      {
+        sequence: 2,
+        commandId: 'blueLive.toggleMidiInput',
+        receivedAddress: '/blueLive/toggleMidiInput',
+        receivedAt: 'now',
+      },
+    );
 
     expect(callback).toHaveBeenCalledTimes(1);
     expect(mocks.on).toHaveBeenCalledWith(OSC_CONTROL_COMMAND_CHANNEL, expect.any(Function));

@@ -1,13 +1,6 @@
 #!/usr/bin/env node
 import { spawnSync } from 'node:child_process';
-import {
-  chmodSync,
-  existsSync,
-  mkdtempSync,
-  readdirSync,
-  rmSync,
-  statSync,
-} from 'node:fs';
+import { chmodSync, existsSync, mkdtempSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -98,7 +91,9 @@ function main() {
     findBundledEngine(extractedRoot);
     runVerifier(appRun, userDataPath);
     runVerifier(appImage, userDataPath, { APPIMAGE_EXTRACT_AND_RUN: '1' });
-    process.stderr.write('[ok] AppImage direct and extracted no-Csound verification passed without FUSE 2\n');
+    process.stderr.write(
+      '[ok] AppImage direct and extracted no-Csound verification passed without FUSE 2\n',
+    );
   } finally {
     rmSync(workRoot, { recursive: true, force: true });
   }

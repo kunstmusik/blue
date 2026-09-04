@@ -11,7 +11,10 @@ import { useScoreObjectTest } from './useScoreObjectTest';
 import { HostSurfacePortal } from '../../../../host-surface/HostSurfacePortal';
 import { useHostSurface } from '../../../../host-surface/use-host-surface';
 
-export default function JMaskEditor({ document, onPatch }: ScoreObjectEditorComponentProps): React.ReactElement {
+export default function JMaskEditor({
+  document,
+  onPatch,
+}: ScoreObjectEditorComponentProps): React.ReactElement {
   const editor = document.editor;
   if (editor.kind !== 'structured' || editor.editorFamily !== 'JMask') return <></>;
 
@@ -24,23 +27,18 @@ export default function JMaskEditor({ document, onPatch }: ScoreObjectEditorComp
   // Parameter-visibility popup on the shared host-surface policy (spec 090):
   // portaled into the hosting window with host-bound dismissal, which this
   // popup previously lacked entirely.
-  const visibilityAnchor = showVisibilityPopup && visibilityButton
-    ? { type: 'element' as const, element: visibilityButton }
-    : null;
+  const visibilityAnchor =
+    showVisibilityPopup && visibilityButton
+      ? { type: 'element' as const, element: visibilityButton }
+      : null;
   const visibilitySurface = useHostSurface(visibilityAnchor, {
     kind: 'menu',
     gap: 4,
     onDismiss: () => setShowVisibilityPopup(false),
   });
 
-  const {
-    testing,
-    testOutput,
-    testError,
-    runTest,
-    clearTestOutput,
-    clearTestError,
-  } = useScoreObjectTest(document.target);
+  const { testing, testOutput, testError, runTest, clearTestOutput, clearTestError } =
+    useScoreObjectTest(document.target);
 
   const handleTest = useCallback(() => {
     void runTest();
@@ -56,7 +54,9 @@ export default function JMaskEditor({ document, onPatch }: ScoreObjectEditorComp
     };
     const el = testRef.current;
     el?.addEventListener('keydown', handler);
-    return () => { el?.removeEventListener('keydown', handler); };
+    return () => {
+      el?.removeEventListener('keydown', handler);
+    };
   }, [handleTest]);
 
   const patch = useCallback(
@@ -70,29 +70,42 @@ export default function JMaskEditor({ document, onPatch }: ScoreObjectEditorComp
     [document.target, onPatch],
   );
 
-  const handleFieldChange = useCallback((nextField: FieldSnapshot) => {
-    patch({ field: nextField });
-  }, [patch]);
+  const handleFieldChange = useCallback(
+    (nextField: FieldSnapshot) => {
+      patch({ field: nextField });
+    },
+    [patch],
+  );
 
-  const handleSeedUsedChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    patch({ seedUsed: e.target.checked });
-  }, [patch]);
+  const handleSeedUsedChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      patch({ seedUsed: e.target.checked });
+    },
+    [patch],
+  );
 
-  const handleSeedCommit = useCallback((v: number) => {
-    patch({ seed: v });
-  }, [patch]);
+  const handleSeedCommit = useCallback(
+    (v: number) => {
+      patch({ seed: v });
+    },
+    [patch],
+  );
 
-  const handleVisibilityToggle = useCallback((index: number, visible: boolean) => {
-    const next = cloneField(field);
-    const params = getParameters(next);
-    if (index >= 0 && index < params.length) {
-      params[index] = { ...params[index]!, visible };
-    }
-    patch({ field: next });
-  }, [field, patch]);
+  const handleVisibilityToggle = useCallback(
+    (index: number, visible: boolean) => {
+      const next = cloneField(field);
+      const params = getParameters(next);
+      if (index >= 0 && index < params.length) {
+        params[index] = { ...params[index]!, visible };
+      }
+      patch({ field: next });
+    },
+    [field, patch],
+  );
 
   const visibleRows = useMemo(() => {
-    const rows: Array<{ parameter: ParameterSnapshot; fieldIndex: number; parameterNum: number }> = [];
+    const rows: Array<{ parameter: ParameterSnapshot; fieldIndex: number; parameterNum: number }> =
+      [];
     let num = 0;
     for (let i = 0; i < parameters.length; i++) {
       num += 1;
@@ -126,7 +139,10 @@ export default function JMaskEditor({ document, onPatch }: ScoreObjectEditorComp
               const itemLabel = pName ? `Parameter ${i + 1} - ${pName}` : `Parameter ${i + 1}`;
               const isVisible = p.visible !== false;
               return (
-                <label key={i} className="flex cursor-pointer items-center gap-2 px-3 py-0.5 text-role-body text-app-text hover:bg-blue-accent/20">
+                <label
+                  key={i}
+                  className="flex cursor-pointer items-center gap-2 px-3 py-0.5 text-role-body text-app-text hover:bg-blue-accent/20"
+                >
                   <input
                     type="checkbox"
                     checked={isVisible}
@@ -170,16 +186,19 @@ export default function JMaskEditor({ document, onPatch }: ScoreObjectEditorComp
       {testError && (
         <div className="px-3 py-1.5 text-role-body border-b shrink-0 bg-red-900/20 text-red-300 flex items-center gap-2">
           <span>Error: {testError}</span>
-          <button className="underline text-blue-muted hover:text-gray-200" onClick={clearTestError}>dismiss</button>
+          <button
+            className="underline text-blue-muted hover:text-gray-200"
+            onClick={clearTestError}
+          >
+            dismiss
+          </button>
         </div>
       )}
-      {testOutput !== null && (
-        <GeneratedScoreModal text={testOutput} onClose={clearTestOutput} />
-      )}
+      {testOutput !== null && <GeneratedScoreModal text={testOutput} onClose={clearTestOutput} />}
       <div className="flex-1 overflow-auto p-1 space-y-1">
         {visibleRows
-          .filter(r => r.parameter.visible !== false)
-          .map(row => (
+          .filter((r) => r.parameter.visible !== false)
+          .map((row) => (
             <ParameterRow
               key={row.fieldIndex}
               parameter={row.parameter}

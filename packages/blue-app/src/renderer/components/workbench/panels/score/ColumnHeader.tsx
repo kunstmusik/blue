@@ -41,7 +41,27 @@ interface Props {
   onMeterPatch: (patch: MeterMapPatch) => void;
 }
 
-export default function ColumnHeader({ timeState, markers, meters, meterMap, tempoMap, totalBeats, pixelsPerBeat, sampleRate, renderStartTime, renderEndTime, snapEnabled, snapValue, timePointerBeats, scrollContainerRef, rootTimelineOnly, tempo, rulerMouseDown, onTempoPatch, onMeterPatch }: Props) {
+export default function ColumnHeader({
+  timeState,
+  markers,
+  meters,
+  meterMap,
+  tempoMap,
+  totalBeats,
+  pixelsPerBeat,
+  sampleRate,
+  renderStartTime,
+  renderEndTime,
+  snapEnabled,
+  snapValue,
+  timePointerBeats,
+  scrollContainerRef,
+  rootTimelineOnly,
+  tempo,
+  rulerMouseDown,
+  onTempoPatch,
+  onMeterPatch,
+}: Props) {
   const [pointDialogIndex, setPointDialogIndex] = useState<number | null>(null);
   const [meterDialogIndex, setMeterDialogIndex] = useState<number | null>(null);
   const contentWidth = totalBeats * pixelsPerBeat;
@@ -65,7 +85,10 @@ export default function ColumnHeader({ timeState, markers, meters, meterMap, tem
   }, []);
 
   return (
-    <div className="bg-blue-bg border-b border-blue-border/40 overflow-hidden" style={{ minWidth: contentWidth }}>
+    <div
+      className="bg-blue-bg border-b border-blue-border/40 overflow-hidden"
+      style={{ minWidth: contentWidth }}
+    >
       {timeState.tempoRowVisible && (
         <TempoRegionBar
           tempoMap={tempoMap}
@@ -93,8 +116,29 @@ export default function ColumnHeader({ timeState, markers, meters, meterMap, tem
         />
       )}
 
-      <MeterRegionBar meterMap={meterMap} totalBeats={totalBeats} pixelsPerBeat={pixelsPerBeat} rowVisible={timeState.meterRowVisible} rootTimelineOnly={rootTimelineOnly} onMeterPatch={onMeterPatch} onOpenEntryDialog={handleOpenMeterDialog} />
-      <MarkersBar markers={markers} totalBeats={totalBeats} pixelsPerBeat={pixelsPerBeat} rowVisible={timeState.markersRowVisible} snapEnabled={snapEnabled} snapValue={snapValue} meterMap={meterMap} scrollContainerRef={scrollContainerRef} rootTimelineOnly={rootTimelineOnly} tempo={tempo} smpteFrameRate={smpteFrameRate} sampleRate={sampleRate} />
+      <MeterRegionBar
+        meterMap={meterMap}
+        totalBeats={totalBeats}
+        pixelsPerBeat={pixelsPerBeat}
+        rowVisible={timeState.meterRowVisible}
+        rootTimelineOnly={rootTimelineOnly}
+        onMeterPatch={onMeterPatch}
+        onOpenEntryDialog={handleOpenMeterDialog}
+      />
+      <MarkersBar
+        markers={markers}
+        totalBeats={totalBeats}
+        pixelsPerBeat={pixelsPerBeat}
+        rowVisible={timeState.markersRowVisible}
+        snapEnabled={snapEnabled}
+        snapValue={snapValue}
+        meterMap={meterMap}
+        scrollContainerRef={scrollContainerRef}
+        rootTimelineOnly={rootTimelineOnly}
+        tempo={tempo}
+        smpteFrameRate={smpteFrameRate}
+        sampleRate={sampleRate}
+      />
 
       <TimeBar
         timeDisplay={timeState.primaryTimeDisplay}
@@ -144,7 +188,11 @@ export default function ColumnHeader({ timeState, markers, meters, meterMap, tem
   );
 }
 
-interface Mark { x: number; label?: string; type: 'major' | 'minor' }
+interface Mark {
+  x: number;
+  label?: string;
+  type: 'major' | 'minor';
+}
 
 interface TempoMapAdapter {
   beatsToSeconds: (beat: number) => number;
@@ -161,7 +209,20 @@ interface MeterTimelineEntry {
 
 const tempoMapAdapterCache = new WeakMap<TempoMapSnapshot, TempoMapAdapter>();
 
-function TimeBar({ timeDisplay, totalBeats, pixelsPerBeat, tempoMap, meters, smpteFrameRate, sampleRate, secondary, renderStartTime, renderEndTime, timePointerBeats, onMouseDown }: {
+function TimeBar({
+  timeDisplay,
+  totalBeats,
+  pixelsPerBeat,
+  tempoMap,
+  meters,
+  smpteFrameRate,
+  sampleRate,
+  secondary,
+  renderStartTime,
+  renderEndTime,
+  timePointerBeats,
+  onMouseDown,
+}: {
   timeDisplay: string;
   totalBeats: number;
   pixelsPerBeat: number;
@@ -185,7 +246,8 @@ function TimeBar({ timeDisplay, totalBeats, pixelsPerBeat, tempoMap, meters, smp
     sampleRate,
   );
   const ROW_HEIGHT = 20;
-  const hasRenderEnd = renderEndTime != null && renderEndTime > 0 && renderEndTime > (renderStartTime ?? 0);
+  const hasRenderEnd =
+    renderEndTime != null && renderEndTime > 0 && renderEndTime > (renderStartTime ?? 0);
   const startPixel = (renderStartTime ?? -1) >= 0 ? renderStartTime! * pixelsPerBeat : -1;
   const endPixel = hasRenderEnd ? renderEndTime! * pixelsPerBeat : -1;
 
@@ -316,9 +378,7 @@ function createTempoMapAdapter(snapshot: TempoMapSnapshot): TempoMapAdapter {
     const factor1 = 60 / prev.tempo;
     const acceleration = (60 / current.tempo - factor1) / deltaBeats;
     cumulativeSeconds.push(
-      previousSeconds
-      + (factor1 * deltaBeats)
-      + (0.5 * acceleration * deltaBeats * deltaBeats),
+      previousSeconds + factor1 * deltaBeats + 0.5 * acceleration * deltaBeats * deltaBeats,
     );
   }
 
@@ -356,7 +416,7 @@ function createTempoMapAdapter(snapshot: TempoMapSnapshot): TempoMapAdapter {
 
     const factor1 = 60 / t0;
     const acceleration = (60 / t1 - factor1) / segmentBeats;
-    return currentSeconds + (factor1 * deltaBeats) + (0.5 * acceleration * deltaBeats * deltaBeats);
+    return currentSeconds + factor1 * deltaBeats + 0.5 * acceleration * deltaBeats * deltaBeats;
   };
 
   const secondsToBeats = (seconds: number): number => {
@@ -442,7 +502,12 @@ function formatBeat(beats: number): string {
   return beats.toFixed(1);
 }
 
-function computeTimeMarks(totalBeats: number, pixelsPerBeat: number, tempoMap: TempoMapSnapshot, format: string): Mark[] {
+function computeTimeMarks(
+  totalBeats: number,
+  pixelsPerBeat: number,
+  tempoMap: TempoMapSnapshot,
+  format: string,
+): Mark[] {
   const tempoAdapter = createTempoMapAdapter(tempoMap);
   const approxWidth = totalBeats * pixelsPerBeat;
   const startBeat = 0;
@@ -468,9 +533,10 @@ function computeTimeMarks(totalBeats: number, pixelsPerBeat: number, tempoMap: T
     if (x >= 0 && x <= approxWidth) {
       marks.push({
         x,
-        label: format === TimeBase.SECONDS
-          ? formatSecondsWithPrecision(seconds, nfrac)
-          : formatTimeWithPrecision(seconds, nfrac),
+        label:
+          format === TimeBase.SECONDS
+            ? formatSecondsWithPrecision(seconds, nfrac)
+            : formatTimeWithPrecision(seconds, nfrac),
         type: 'major',
       });
     }
@@ -506,23 +572,43 @@ function formatSecondsWithPrecision(seconds: number, nfrac: number): string {
   return text.includes('.') ? text : text + '.0';
 }
 
-function computeSmpteMarks(totalBeats: number, pixelsPerBeat: number, tempoMap: TempoMapSnapshot, frameRate: number): Mark[] {
+function computeSmpteMarks(
+  totalBeats: number,
+  pixelsPerBeat: number,
+  tempoMap: TempoMapSnapshot,
+  frameRate: number,
+): Mark[] {
   const tempoAdapter = createTempoMapAdapter(tempoMap);
   const approxWidth = totalBeats * pixelsPerBeat;
   const startSeconds = 0;
   const endSeconds = tempoAdapter.beatsToSeconds(totalBeats);
   const frameDuration = 1.0 / frameRate;
 
-  const pixelsPerSecond = (endSeconds > 0) ? approxWidth / endSeconds : 1;
+  const pixelsPerSecond = endSeconds > 0 ? approxWidth / endSeconds : 1;
   const minSecPerLabel = 80 / pixelsPerSecond;
 
   const increments = [
-    frameDuration, 2 * frameDuration, 5 * frameDuration, 10 * frameDuration,
-    0.5, 1, 2, 5, 10, 30, 60, 120, 300, 600,
+    frameDuration,
+    2 * frameDuration,
+    5 * frameDuration,
+    10 * frameDuration,
+    0.5,
+    1,
+    2,
+    5,
+    10,
+    30,
+    60,
+    120,
+    300,
+    600,
   ];
   let increment = increments[increments.length - 1];
   for (const inc of increments) {
-    if (minSecPerLabel <= inc) { increment = inc; break; }
+    if (minSecPerLabel <= inc) {
+      increment = inc;
+      break;
+    }
   }
   const alignedStart = Math.floor(startSeconds / increment) * increment;
   const marks: Mark[] = [];
@@ -623,7 +709,11 @@ function formatSampleCount(samples: number, nfrac: number): string {
   return samples.toFixed(nfrac);
 }
 
-function computeMeasureMarks(totalBeats: number, pixelsPerBeat: number, meters: MeterSnapshot[]): Mark[] {
+function computeMeasureMarks(
+  totalBeats: number,
+  pixelsPerBeat: number,
+  meters: MeterSnapshot[],
+): Mark[] {
   const meterTimeline = normalizeMeterEntries(meters);
   const firstMeter = meterTimeline[0]!;
   const beatsPerMeasure = firstMeter.numBeats * (4.0 / firstMeter.beatLength);
@@ -680,19 +770,20 @@ function computeMeasureMarks(totalBeats: number, pixelsPerBeat: number, meters: 
 }
 
 function normalizeMeterEntries(meters: MeterSnapshot[]): MeterTimelineEntry[] {
-  const entries = meters.length > 0
-    ? meters
-    : [{ measure: 1, numBeats: 4, beatLength: 4, startBeat: 0 }];
+  const entries =
+    meters.length > 0 ? meters : [{ measure: 1, numBeats: 4, beatLength: 4, startBeat: 0 }];
 
   const sortedEntries = [...entries].sort((a, b) => a.measure - b.measure);
   const timeline: MeterTimelineEntry[] = [];
 
   sortedEntries.forEach((entry, index) => {
     const beatsPerMeasure = entry.numBeats * (4 / entry.beatLength);
-    const startBeat = index === 0
-      ? 0
-      : timeline[index - 1]!.startBeat
-        + (entry.measure - sortedEntries[index - 1]!.measure) * timeline[index - 1]!.beatsPerMeasure;
+    const startBeat =
+      index === 0
+        ? 0
+        : timeline[index - 1]!.startBeat +
+          (entry.measure - sortedEntries[index - 1]!.measure) *
+            timeline[index - 1]!.beatsPerMeasure;
 
     timeline.push({
       measure: entry.measure,
@@ -717,9 +808,8 @@ function getMeasureStartBeat(meterTimeline: MeterTimelineEntry[], measureNumber:
     const entryStartMeasure = entry.measure;
     const beatsPerMeasure = entry.beatsPerMeasure;
 
-    const meterEndMeasure = i + 1 < meterTimeline.length
-      ? meterTimeline[i + 1]!.measure
-      : Number.POSITIVE_INFINITY;
+    const meterEndMeasure =
+      i + 1 < meterTimeline.length ? meterTimeline[i + 1]!.measure : Number.POSITIVE_INFINITY;
 
     if (measureNumber <= entryStartMeasure) {
       break;
@@ -742,7 +832,10 @@ function getMeasureStartBeat(meterTimeline: MeterTimelineEntry[], measureNumber:
   return beats;
 }
 
-function getMeterAtMeasure(meterTimeline: MeterTimelineEntry[], measureNumber: number): MeterTimelineEntry {
+function getMeterAtMeasure(
+  meterTimeline: MeterTimelineEntry[],
+  measureNumber: number,
+): MeterTimelineEntry {
   let meter = meterTimeline[0]!;
   for (let i = 0; i < meterTimeline.length; i += 1) {
     const entry = meterTimeline[i]!;

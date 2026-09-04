@@ -33,12 +33,14 @@ describe('auditionSelectedScoreObjects', () => {
       return true;
     });
 
-    await expect(auditionSelectedScoreObjects(data, [selected], {
-      isRenderOperationActive: false,
-      isRealtimePlaying: () => true,
-      stopRealtime,
-      startRealtime,
-    })).resolves.toBe(true);
+    await expect(
+      auditionSelectedScoreObjects(data, [selected], {
+        isRenderOperationActive: false,
+        isRealtimePlaying: () => true,
+        stopRealtime,
+        startRealtime,
+      }),
+    ).resolves.toBe(true);
 
     expect(stopRealtime).toHaveBeenCalledOnce();
     expect(startRealtime).toHaveBeenCalledOnce();
@@ -57,10 +59,12 @@ describe('auditionSelectedScoreObjects', () => {
     await expect(auditionSelectedScoreObjects(data, [selected], engine)).resolves.toBe(false);
     expect(startRealtime).toHaveBeenCalledOnce();
 
-    await expect(auditionSelectedScoreObjects(data, [selected], {
-      ...engine,
-      isRenderOperationActive: true,
-    })).resolves.toBe(false);
+    await expect(
+      auditionSelectedScoreObjects(data, [selected], {
+        ...engine,
+        isRenderOperationActive: true,
+      }),
+    ).resolves.toBe(false);
     expect(startRealtime).toHaveBeenCalledOnce();
   });
 
@@ -75,8 +79,12 @@ describe('auditionSelectedScoreObjects', () => {
     };
 
     await expect(auditionSelectedScoreObjects(data, [], engine)).resolves.toBe(false);
-    await expect(auditionSelectedScoreObjects(data, [selected, selected], engine)).rejects.toThrow('duplicate');
-    await expect(auditionSelectedScoreObjects(data, [new GenericScore()], engine)).rejects.toThrow('not part');
+    await expect(auditionSelectedScoreObjects(data, [selected, selected], engine)).rejects.toThrow(
+      'duplicate',
+    );
+    await expect(auditionSelectedScoreObjects(data, [new GenericScore()], engine)).rejects.toThrow(
+      'not part',
+    );
     expect(startRealtime).not.toHaveBeenCalled();
   });
 
@@ -108,12 +116,14 @@ describe('auditionSelectedScoreObjects', () => {
       return true;
     });
 
-    await expect(auditionSelectedScoreObjects(data, [selectedScore, selectedClip], {
-      isRenderOperationActive: false,
-      isRealtimePlaying: () => false,
-      stopRealtime: vi.fn().mockResolvedValue(undefined),
-      startRealtime,
-    })).resolves.toBe(true);
+    await expect(
+      auditionSelectedScoreObjects(data, [selectedScore, selectedClip], {
+        isRenderOperationActive: false,
+        isRealtimePlaying: () => false,
+        stopRealtime: vi.fn().mockResolvedValue(undefined),
+        startRealtime,
+      }),
+    ).resolves.toBe(true);
     expect(data.saveToString()).toBe(sourceXml);
   });
 
@@ -121,15 +131,17 @@ describe('auditionSelectedScoreObjects', () => {
     const { data, selected } = fixture();
     let auditionCopy: BlueData | null = null;
 
-    await expect(auditionSelectedScoreObjects(data, [selected], {
-      isRenderOperationActive: false,
-      isRealtimePlaying: () => false,
-      stopRealtime: vi.fn().mockResolvedValue(undefined),
-      startRealtime: vi.fn(async (copy: BlueData) => {
-        auditionCopy = copy;
-        return true;
+    await expect(
+      auditionSelectedScoreObjects(data, [selected], {
+        isRenderOperationActive: false,
+        isRealtimePlaying: () => false,
+        stopRealtime: vi.fn().mockResolvedValue(undefined),
+        startRealtime: vi.fn(async (copy: BlueData) => {
+          auditionCopy = copy;
+          return true;
+        }),
       }),
-    })).resolves.toBe(true);
+    ).resolves.toBe(true);
 
     const handedOffXml = auditionCopy!.saveToString();
     data.getScore().length = 0;

@@ -20,7 +20,13 @@ interface ScoreObjectPropertiesFormProps {
   onPatch: (patch: ScorePatch) => void;
 }
 
-function FieldRow({ label, children }: { label: string; children: React.ReactNode }): React.ReactElement {
+function FieldRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}): React.ReactElement {
   return (
     <div className={BLUE_INSPECTOR_ROW_CLASS}>
       <label className={BLUE_INSPECTOR_FIELD_LABEL_CLASS}>{label}</label>
@@ -67,7 +73,13 @@ function CommitTextInput({
   );
 }
 
-function ColorSwatch({ color, onChange }: { color: number; onChange: (v: number) => void }): React.ReactElement {
+function ColorSwatch({
+  color,
+  onChange,
+}: {
+  color: number;
+  onChange: (v: number) => void;
+}): React.ReactElement {
   const hex = `#${(color >>> 0).toString(16).padStart(8, '0').slice(2)}`;
   return (
     <div className="flex items-center gap-2">
@@ -80,7 +92,7 @@ function ColorSwatch({ color, onChange }: { color: number; onChange: (v: number)
           const r = parseInt(hexVal.slice(1, 3), 16);
           const g = parseInt(hexVal.slice(3, 5), 16);
           const b = parseInt(hexVal.slice(5, 7), 16);
-          onChange((0xFF000000 | (r << 16) | (g << 8) | b) >>> 0);
+          onChange((0xff000000 | (r << 16) | (g << 8) | b) >>> 0);
         }}
       />
       <span className="text-role-body text-app-text">{hex}</span>
@@ -88,7 +100,17 @@ function ColorSwatch({ color, onChange }: { color: number; onChange: (v: number)
   );
 }
 
-function SelectInput({ value, options, onChange, disabled }: { value: string; options: Array<{ value: string; label: string }>; onChange: (v: string) => void; disabled?: boolean }): React.ReactElement {
+function SelectInput({
+  value,
+  options,
+  onChange,
+  disabled,
+}: {
+  value: string;
+  options: Array<{ value: string; label: string }>;
+  onChange: (v: string) => void;
+  disabled?: boolean;
+}): React.ReactElement {
   return (
     <AppSelect
       className={BLUE_INSPECTOR_INPUT_CLASS}
@@ -111,7 +133,10 @@ function isRepeatBehavior(tb: string | undefined): boolean {
   return tb === 'REPEAT' || tb === 'REPEAT_CLASSIC';
 }
 
-export default function ScoreObjectPropertiesForm({ document, onPatch }: ScoreObjectPropertiesFormProps): React.ReactElement {
+export default function ScoreObjectPropertiesForm({
+  document,
+  onPatch,
+}: ScoreObjectPropertiesFormProps): React.ReactElement {
   const shared = document.shared;
   const target = document.target;
   const timeCtx = document.timeContext;
@@ -126,104 +151,134 @@ export default function ScoreObjectPropertiesForm({ document, onPatch }: ScoreOb
     if (typeof window === 'undefined' || !window.blueAPI?.getNamedChainNames) {
       return () => {};
     }
-    window.blueAPI.getNamedChainNames().then((names) => {
-      if (!cancelled) {
-        setNamedChainNames(names);
-      }
-    }).catch(() => {});
+    window.blueAPI
+      .getNamedChainNames()
+      .then((names) => {
+        if (!cancelled) {
+          setNamedChainNames(names);
+        }
+      })
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
   }, []);
 
-  const handleNameCommit = useCallback((name: string) => {
-    onPatch({
-      type: 'updateSharedProperties',
-      target,
-      patch: { name },
-    });
-  }, [target, onPatch]);
+  const handleNameCommit = useCallback(
+    (name: string) => {
+      onPatch({
+        type: 'updateSharedProperties',
+        target,
+        patch: { name },
+      });
+    },
+    [target, onPatch],
+  );
 
-  const handleStartTimeCommit = useCallback((value: number, timeBase: string) => {
-    onPatch({
-      type: 'updateSharedProperties',
-      target,
-      patch: { startTime: { value, timeBase } },
-    });
-  }, [target, onPatch]);
+  const handleStartTimeCommit = useCallback(
+    (value: number, timeBase: string) => {
+      onPatch({
+        type: 'updateSharedProperties',
+        target,
+        patch: { startTime: { value, timeBase } },
+      });
+    },
+    [target, onPatch],
+  );
 
-  const handleDurationCommit = useCallback((value: number, timeBase: string) => {
-    onPatch({
-      type: 'updateSharedProperties',
-      target,
-      patch: { subjectiveDuration: { value, timeBase } },
-    });
-  }, [target, onPatch]);
+  const handleDurationCommit = useCallback(
+    (value: number, timeBase: string) => {
+      onPatch({
+        type: 'updateSharedProperties',
+        target,
+        patch: { subjectiveDuration: { value, timeBase } },
+      });
+    },
+    [target, onPatch],
+  );
 
-  const handleColorChange = useCallback((backgroundColor: number) => {
-    onPatch({
-      type: 'updateSharedProperties',
-      target,
-      patch: { backgroundColor },
-    });
-  }, [target, onPatch]);
+  const handleColorChange = useCallback(
+    (backgroundColor: number) => {
+      onPatch({
+        type: 'updateSharedProperties',
+        target,
+        patch: { backgroundColor },
+      });
+    },
+    [target, onPatch],
+  );
 
-  const handleTimeBehaviorChange = useCallback((timeBehavior: string) => {
-    onPatch({
-      type: 'updateSoundObjectBehavior',
-      target,
-      patch: { timeBehavior },
-    });
-  }, [target, onPatch]);
-
-  const handleUseRepeatPointChange = useCallback((checked: boolean) => {
-    if (checked) {
+  const handleTimeBehaviorChange = useCallback(
+    (timeBehavior: string) => {
       onPatch({
         type: 'updateSoundObjectBehavior',
         target,
-        patch: {
-          repeatPoint: {
-            value: shared.subjectiveDuration.value,
-            timeBase: shared.subjectiveDuration.timeBase,
+        patch: { timeBehavior },
+      });
+    },
+    [target, onPatch],
+  );
+
+  const handleUseRepeatPointChange = useCallback(
+    (checked: boolean) => {
+      if (checked) {
+        onPatch({
+          type: 'updateSoundObjectBehavior',
+          target,
+          patch: {
+            repeatPoint: {
+              value: shared.subjectiveDuration.value,
+              timeBase: shared.subjectiveDuration.timeBase,
+            },
           },
-        },
-      });
-    } else {
+        });
+      } else {
+        onPatch({
+          type: 'updateSoundObjectBehavior',
+          target,
+          patch: { repeatPoint: null },
+        });
+      }
+    },
+    [target, onPatch, shared.subjectiveDuration.timeBase, shared.subjectiveDuration.value],
+  );
+
+  const handleRepeatPointCommit = useCallback(
+    (value: number, timeBase: string) => {
       onPatch({
         type: 'updateSoundObjectBehavior',
         target,
-        patch: { repeatPoint: null },
+        patch: { repeatPoint: value <= 0 ? null : { value, timeBase } },
       });
-    }
-  }, [target, onPatch, shared.subjectiveDuration.timeBase, shared.subjectiveDuration.value]);
+    },
+    [target, onPatch],
+  );
 
-  const handleRepeatPointCommit = useCallback((value: number, timeBase: string) => {
-    onPatch({
-      type: 'updateSoundObjectBehavior',
-      target,
-      patch: { repeatPoint: value <= 0 ? null : { value, timeBase } },
-    });
-  }, [target, onPatch]);
+  const handleImportNamedChain = useCallback(
+    async (name: string): Promise<NoteProcessorChainSnapshot | null> => {
+      if (!window.blueAPI?.getNamedChain) {
+        return null;
+      }
+      try {
+        return await window.blueAPI.getNamedChain(name);
+      } catch {
+        return null;
+      }
+    },
+    [],
+  );
 
-  const handleImportNamedChain = useCallback(async (name: string): Promise<NoteProcessorChainSnapshot | null> => {
-    if (!window.blueAPI?.getNamedChain) {
-      return null;
-    }
-    try {
-      return await window.blueAPI.getNamedChain(name);
-    } catch {
-      return null;
-    }
-  }, []);
-
-  const handleSaveNamedChain = useCallback((name: string, chain: NoteProcessorChainSnapshot): void => {
-    onPatch({
-      type: 'saveNamedNoteProcessorChain',
-      name,
-      chain,
-    });
-    setNamedChainNames((prev) => prev.includes(name) ? prev : [...prev, name]);
-  }, [onPatch]);
+  const handleSaveNamedChain = useCallback(
+    (name: string, chain: NoteProcessorChainSnapshot): void => {
+      onPatch({
+        type: 'saveNamedNoteProcessorChain',
+        name,
+        chain,
+      });
+      setNamedChainNames((prev) => (prev.includes(name) ? prev : [...prev, name]));
+    },
+    [onPatch],
+  );
 
   const showSoundObjectFields = target.supportsTimeBehavior && tb !== undefined;
 

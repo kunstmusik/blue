@@ -47,10 +47,16 @@ export function FileManagerRootRenameDialog({
           }
         }}
       >
-        <h2 id="file-manager-rename-root-title" className="text-role-title-2 font-bold text-app-text-bright">
+        <h2
+          id="file-manager-rename-root-title"
+          className="text-role-title-2 font-bold text-app-text-bright"
+        >
           Rename Root
         </h2>
-        <label htmlFor="file-manager-root-name" className="mt-4 block text-role-body font-medium text-app-text">
+        <label
+          htmlFor="file-manager-root-name"
+          className="mt-4 block text-role-body font-medium text-app-text"
+        >
           Name
         </label>
         <input
@@ -63,7 +69,11 @@ export function FileManagerRootRenameDialog({
           onChange={(event) => setLabel(event.target.value)}
           className="mt-1 w-full rounded border border-app-border bg-app-background px-2 py-1.5 text-role-body text-app-text-bright outline-none focus:border-app-accent focus:ring-1 focus:ring-app-accent"
         />
-        <p id="file-manager-rename-root-path" className="mt-2 break-all text-role-callout text-app-text-muted" title={path}>
+        <p
+          id="file-manager-rename-root-path"
+          className="mt-2 break-all text-role-callout text-app-text-muted"
+          title={path}
+        >
           {path}
         </p>
         <div className="mt-5 flex justify-end gap-2">

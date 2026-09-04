@@ -5,7 +5,11 @@ import { TimeBehavior } from '../sound-objects/time-behavior';
 import { TimeDuration } from '../time/time-duration';
 import { CompileData } from '../compile-data';
 import { TimeContext } from '../time/time-context';
-import { ALL_PROCESSOR_TYPES, createConfiguredChainWithProcessor, createTestNoteList } from './processor-test-fixtures';
+import {
+  ALL_PROCESSOR_TYPES,
+  createConfiguredChainWithProcessor,
+  createTestNoteList,
+} from './processor-test-fixtures';
 import { AddProcessor } from './add-processor';
 
 describe('Layer scope processor matrix', () => {
@@ -28,7 +32,9 @@ describe('Layer scope processor matrix', () => {
       layer.setNoteProcessorChain(createConfiguredChainWithProcessor(type));
 
       const result = layer.generateForCSD(context, compileData, 0, -1);
-      const expected = createConfiguredChainWithProcessor(type).apply(createTestNoteList().deepCopy());
+      const expected = createConfiguredChainWithProcessor(type).apply(
+        createTestNoteList().deepCopy(),
+      );
       expect(result.toScoreText()).toBe(expected.toScoreText());
     },
   );

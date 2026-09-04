@@ -9,11 +9,19 @@ export class MultiplyProcessor extends NoteProcessor {
   private _pfield = 4;
   private _value = 1;
 
-  getPfield(): string { return this._pfield.toString(); }
-  setPfield(pfield: string): void { this._pfield = parseInt(pfield, 10); }
+  getPfield(): string {
+    return this._pfield.toString();
+  }
+  setPfield(pfield: string): void {
+    this._pfield = parseInt(pfield, 10);
+  }
 
-  getVal(): string { return this._value.toString(); }
-  setVal(val: string): void { this._value = parseFloat(val); }
+  getVal(): string {
+    return this._value.toString();
+  }
+  setVal(val: string): void {
+    this._value = parseFloat(val);
+  }
 
   override process(notes: NoteList): NoteList {
     for (const note of notes) {
@@ -31,7 +39,9 @@ export class MultiplyProcessor extends NoteProcessor {
     return notes;
   }
 
-  override getDisplayName(): string { return 'MultiplyProcessor'; }
+  override getDisplayName(): string {
+    return 'MultiplyProcessor';
+  }
 
   override deepCopy(): MultiplyProcessor {
     const copy = new MultiplyProcessor();

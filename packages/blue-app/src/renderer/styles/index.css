@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme static {
   --text-*: initial;
@@ -75,13 +75,17 @@
   --text-role-callout--line-height: 15px;
   --text-role-subheadline: 11px;
   --text-role-subheadline--line-height: 14px;
-
 }
 
 @layer base {
   body {
     @apply bg-app-bg text-app-text antialiased;
-    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family:
+      'Roboto',
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      sans-serif;
     font-size: var(--text-role-body);
     line-height: var(--text-role-body--line-height);
   }
@@ -334,8 +338,12 @@
   }
 
   @keyframes blueCodeEvalFlash {
-    from { background: var(--color-app-code-flash); }
-    to { background: var(--color-app-clear); }
+    from {
+      background: var(--color-app-code-flash);
+    }
+    to {
+      background: var(--color-app-clear);
+    }
   }
 
   .bsb-tooltip-content {
@@ -353,20 +361,25 @@
     user-select: none;
   }
 
-  .bsb-tooltip-content[data-state="delayed-open"],
-  .bsb-tooltip-content[data-state="instant-open"] {
+  .bsb-tooltip-content[data-state='delayed-open'],
+  .bsb-tooltip-content[data-state='instant-open'] {
     animation: bsbTooltipFadeIn 100ms ease-out;
   }
 
   @keyframes bsbTooltipFadeIn {
-    from { opacity: 0; transform: translateY(2px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(2px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .bsb-tooltip-arrow {
     fill: var(--color-app-canvas);
   }
-
 }
 
 /* Dockview theme overrides for Blue dark theme */
@@ -392,9 +405,14 @@
   --dv-inactivegroup-visiblepanel-tab-color: var(--color-app-text-soft);
   --dv-inactivegroup-hiddenpanel-tab-color: var(--color-app-text-subtle);
   --dv-separator-border: var(--color-app-border);
-  --dv-separator-handle-hover-color: color-mix(in srgb, var(--color-app-accent) 50%, var(--color-app-clear));
+  --dv-separator-handle-hover-color: color-mix(
+    in srgb,
+    var(--color-app-accent) 50%,
+    var(--color-app-clear)
+  );
   --dv-icon-hover-background-color: var(--color-app-accent-soft);
-  --dv-floating-box-shadow: 0 20px 48px color-mix(in srgb, var(--color-app-shadow) 100%, var(--color-app-clear));
+  --dv-floating-box-shadow: 0 20px 48px
+    color-mix(in srgb, var(--color-app-shadow) 100%, var(--color-app-clear));
 }
 
 .dv-dockview .dv-tab .dv-default-tab .dv-default-tab-action {
@@ -435,7 +453,9 @@
   pointer-events: none;
 }
 
-.dv-dockview .dv-tabs-container.dv-vertical .dv-tab:has(.dv-default-tab[data-workbench-active-tab='true'])::before {
+.dv-dockview
+  .dv-tabs-container.dv-vertical
+  .dv-tab:has(.dv-default-tab[data-workbench-active-tab='true'])::before {
   inset: 0 0 0 auto;
   width: 3px;
   height: auto;
@@ -460,8 +480,16 @@
     var(--workbench-bottom-rail-height, 0px);
   height: 100%;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--color-app-border) 32%, var(--color-app-clear)) 0%, var(--color-app-clear) 24%),
-    linear-gradient(135deg, color-mix(in srgb, var(--color-app-surface) 72%, var(--color-app-surface-raised)) 0%, color-mix(in srgb, var(--color-app-overlay) 84%, var(--color-app-bg)) 100%);
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-app-border) 32%, var(--color-app-clear)) 0%,
+      var(--color-app-clear) 24%
+    ),
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-app-surface) 72%, var(--color-app-surface-raised)) 0%,
+      color-mix(in srgb, var(--color-app-overlay) 84%, var(--color-app-bg)) 100%
+    );
 }
 
 .workbench-shell[data-aux-dragging='true'] {
@@ -490,15 +518,27 @@
   border-top: 1px solid var(--color-app-border);
   background:
     linear-gradient(135deg, var(--color-app-accent-muted), var(--color-app-clear) 65%),
-    linear-gradient(180deg, color-mix(in srgb, var(--color-app-surface) 76%, var(--color-app-border)) 0%, color-mix(in srgb, var(--color-app-surface-strong) 82%, var(--color-app-overlay)) 100%);
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-app-surface) 76%, var(--color-app-border)) 0%,
+      color-mix(in srgb, var(--color-app-surface-strong) 82%, var(--color-app-overlay)) 100%
+    );
 }
 
 .workbench-edge-rail {
   display: flex;
   gap: 4px;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--color-app-overlay) 22%, var(--color-app-clear)), color-mix(in srgb, var(--color-app-overlay) 48%, var(--color-app-clear))),
-    linear-gradient(180deg, color-mix(in srgb, var(--color-app-surface) 78%, var(--color-app-hover)), color-mix(in srgb, var(--color-app-surface-strong) 86%, var(--color-app-overlay)));
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-app-overlay) 22%, var(--color-app-clear)),
+      color-mix(in srgb, var(--color-app-overlay) 48%, var(--color-app-clear))
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-app-surface) 78%, var(--color-app-hover)),
+      color-mix(in srgb, var(--color-app-surface-strong) 86%, var(--color-app-overlay))
+    );
 }
 
 .workbench-edge-rail--left {
@@ -538,8 +578,11 @@
   justify-content: center;
   border: 1px solid color-mix(in srgb, var(--color-app-text-muted) 30%, var(--color-app-clear));
   color: var(--color-app-text-muted);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--color-app-surface) 92%, var(--color-app-hover)), color-mix(in srgb, var(--color-app-surface-strong) 90%, var(--color-app-overlay)));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-app-surface) 92%, var(--color-app-hover)),
+    color-mix(in srgb, var(--color-app-surface-strong) 90%, var(--color-app-overlay))
+  );
   transition:
     color 140ms ease,
     background 140ms ease,
@@ -551,8 +594,11 @@
 .workbench-edge-rail__button:hover {
   color: var(--color-app-text-soft);
   border-color: color-mix(in srgb, var(--color-app-accent) 36%, var(--color-app-clear));
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--color-app-hover) 96%, var(--color-app-border)), color-mix(in srgb, var(--color-app-surface-raised) 94%, var(--color-app-overlay)));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-app-hover) 96%, var(--color-app-border)),
+    color-mix(in srgb, var(--color-app-surface-raised) 94%, var(--color-app-overlay))
+  );
 }
 
 .workbench-edge-rail__group-action {
@@ -567,8 +613,16 @@
   color: var(--color-app-text-bright);
   border-color: color-mix(in srgb, var(--color-app-accent) 75%, var(--color-app-clear));
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--color-app-border) 70%, var(--color-app-focus)), color-mix(in srgb, var(--color-app-surface) 72%, var(--color-app-hover))),
-    linear-gradient(135deg, color-mix(in srgb, var(--color-app-accent) 20%, var(--color-app-clear)), var(--color-app-clear));
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-app-border) 70%, var(--color-app-focus)),
+      color-mix(in srgb, var(--color-app-surface) 72%, var(--color-app-hover))
+    ),
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-app-accent) 20%, var(--color-app-clear)),
+      var(--color-app-clear)
+    );
   box-shadow:
     inset 0 0 0 1px var(--color-app-outline-strong),
     0 0 0 1px var(--color-app-accent-muted);
@@ -687,8 +741,14 @@
   cursor: grab;
 }
 
-.workbench-shell[data-aux-dragging='true'] [data-aux-edge] .dv-tabs-and-actions-container .dv-void-container,
-.workbench-shell[data-aux-dragging='true'] [data-aux-edge][data-aux-group-tab-count='1'] .dv-tabs-and-actions-container .dv-tab,
+.workbench-shell[data-aux-dragging='true']
+  [data-aux-edge]
+  .dv-tabs-and-actions-container
+  .dv-void-container,
+.workbench-shell[data-aux-dragging='true']
+  [data-aux-edge][data-aux-group-tab-count='1']
+  .dv-tabs-and-actions-container
+  .dv-tab,
 .workbench-shell[data-aux-dragging='true'] .workbench-aux-slideout__header {
   cursor: grabbing;
 }
@@ -703,8 +763,11 @@
   align-items: center;
   justify-content: center;
   color: var(--color-app-text-soft);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--color-app-hover) 82%, var(--color-app-border)), color-mix(in srgb, var(--color-app-surface-strong) 90%, var(--color-app-overlay)));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-app-hover) 82%, var(--color-app-border)),
+    color-mix(in srgb, var(--color-app-surface-strong) 90%, var(--color-app-overlay))
+  );
   transition:
     color 140ms ease,
     border-color 140ms ease,
@@ -715,8 +778,11 @@
 .workbench-aux-slideout__action:hover {
   color: var(--color-app-text-strong);
   border-color: color-mix(in srgb, var(--color-app-accent) 42%, var(--color-app-clear));
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--color-app-border) 72%, var(--color-app-focus)), color-mix(in srgb, var(--color-app-surface) 76%, var(--color-app-hover)));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-app-border) 72%, var(--color-app-focus)),
+    color-mix(in srgb, var(--color-app-surface) 76%, var(--color-app-hover))
+  );
 }
 
 .workbench-aux-slideout {
@@ -727,8 +793,16 @@
   min-width: 0;
   min-height: 0;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--color-app-hover) 38%, var(--color-app-clear)), color-mix(in srgb, var(--color-app-overlay) 92%, var(--color-app-clear))),
-    linear-gradient(180deg, color-mix(in srgb, var(--color-app-surface) 72%, var(--color-app-border)), color-mix(in srgb, var(--color-app-surface-strong) 82%, var(--color-app-overlay)));
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-app-hover) 38%, var(--color-app-clear)),
+      color-mix(in srgb, var(--color-app-overlay) 92%, var(--color-app-clear))
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-app-surface) 72%, var(--color-app-border)),
+      color-mix(in srgb, var(--color-app-surface-strong) 82%, var(--color-app-overlay))
+    );
   border: 1px solid color-mix(in srgb, var(--color-app-border) 52%, var(--color-app-text-muted));
   box-shadow:
     0 22px 48px color-mix(in srgb, var(--color-app-shadow) 100%, var(--color-app-clear)),
@@ -795,7 +869,11 @@
   padding: 6px 10px;
   border-bottom: 1px solid var(--color-app-border-subtle);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--color-app-hover) 44%, var(--color-app-clear)), color-mix(in srgb, var(--color-app-surface-strong) 86%, var(--color-app-clear))),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-app-hover) 44%, var(--color-app-clear)),
+      color-mix(in srgb, var(--color-app-surface-strong) 86%, var(--color-app-clear))
+    ),
     linear-gradient(135deg, var(--color-app-accent-soft), var(--color-app-clear));
 }
 
@@ -885,7 +963,11 @@
   opacity: 0.42;
   border: 1px solid color-mix(in srgb, var(--color-app-focus) 22%, var(--color-app-clear));
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--color-app-focus) 18%, var(--color-app-clear)), color-mix(in srgb, var(--color-app-overlay) 8%, var(--color-app-clear))),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-app-focus) 18%, var(--color-app-clear)),
+      color-mix(in srgb, var(--color-app-overlay) 8%, var(--color-app-clear))
+    ),
     linear-gradient(135deg, var(--color-app-accent-soft), var(--color-app-clear));
   box-shadow: inset 0 0 0 1px var(--color-app-outline-subtle);
   transition:
@@ -920,8 +1002,16 @@
   opacity: 0.9;
   border-color: color-mix(in srgb, var(--color-app-accent) 56%, var(--color-app-clear));
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--color-app-focus) 30%, var(--color-app-clear)), color-mix(in srgb, var(--color-app-surface) 18%, var(--color-app-clear))),
-    linear-gradient(135deg, color-mix(in srgb, var(--color-app-accent) 18%, var(--color-app-clear)), color-mix(in srgb, var(--color-app-accent) 4%, var(--color-app-clear)));
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-app-focus) 30%, var(--color-app-clear)),
+      color-mix(in srgb, var(--color-app-surface) 18%, var(--color-app-clear))
+    ),
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-app-accent) 18%, var(--color-app-clear)),
+      color-mix(in srgb, var(--color-app-accent) 4%, var(--color-app-clear))
+    );
   box-shadow:
     inset 0 0 0 1px var(--color-app-outline-strong),
     0 0 0 1px var(--color-app-accent-muted);
@@ -974,7 +1064,9 @@
   white-space: nowrap;
   border-right: 1px solid color-mix(in srgb, var(--color-app-border) 28%, var(--color-app-clear));
   border-bottom: 2px solid var(--color-app-clear);
-  transition: color 140ms ease, background 140ms ease;
+  transition:
+    color 140ms ease,
+    background 140ms ease;
   background: var(--color-app-field);
   color: var(--color-app-text-muted);
 }
@@ -1215,7 +1307,8 @@
   overflow-x: hidden;
   background: #000000;
   scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--color-app-text-strong) 12%, var(--color-app-clear)) var(--color-app-clear);
+  scrollbar-color: color-mix(in srgb, var(--color-app-text-strong) 12%, var(--color-app-clear))
+    var(--color-app-clear);
   outline: none;
   cursor: default;
   border-bottom: 1px solid color-mix(in srgb, var(--color-app-border) 20%, var(--color-app-clear));
@@ -1245,7 +1338,8 @@
 
 .score-timeline-scroll {
   scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--color-app-focus) 32%, var(--color-app-clear)) color-mix(in srgb, var(--color-app-input) 92%, var(--color-app-clear));
+  scrollbar-color: color-mix(in srgb, var(--color-app-focus) 32%, var(--color-app-clear))
+    color-mix(in srgb, var(--color-app-input) 92%, var(--color-app-clear));
 }
 
 .score-timeline-scroll::-webkit-scrollbar {

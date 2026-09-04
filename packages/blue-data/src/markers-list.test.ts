@@ -21,7 +21,8 @@ describe('MarkersList', () => {
     });
 
     it('preserves unknown child elements for lossless round-trip', () => {
-      const xml = '<markersList><marker name="A" time="1.5"/><marker name="B" time="3.0"/></markersList>';
+      const xml =
+        '<markersList><marker name="A" time="1.5"/><marker name="B" time="3.0"/></markersList>';
       const elem = Element.parse(xml);
       const list = MarkersList.loadFromXML(elem);
       const saved = list.saveAsXML();
@@ -35,7 +36,8 @@ describe('MarkersList', () => {
     });
 
     it('reads marker names and times from loaded XML', () => {
-      const xml = '<markersList><marker name="Intro">2.0</marker><marker name="Chorus">8.5</marker></markersList>';
+      const xml =
+        '<markersList><marker name="Intro">2.0</marker><marker name="Chorus">8.5</marker></markersList>';
       const elem = Element.parse(xml);
       const list = MarkersList.loadFromXML(elem);
       expect(list.size()).toBe(2);
@@ -46,7 +48,8 @@ describe('MarkersList', () => {
     });
 
     it('reads nested TimePosition marker XML', () => {
-      const xml = '<markersList><marker name="Intro"><time type="BEATS"><csoundBeats>64</csoundBeats></time></marker></markersList>';
+      const xml =
+        '<markersList><marker name="Intro"><time type="BEATS"><csoundBeats>64</csoundBeats></time></marker></markersList>';
       const elem = Element.parse(xml);
       const list = MarkersList.loadFromXML(elem);
 
@@ -172,7 +175,8 @@ describe('MarkersList', () => {
 
   describe('TimePosition helpers', () => {
     it('preserves the marker timebase when setting a TimePosition', () => {
-      const xml = '<markersList><marker name="Intro"><time type="SECONDS"><totalSeconds>4</totalSeconds></time></marker></markersList>';
+      const xml =
+        '<markersList><marker name="Intro"><time type="SECONDS"><totalSeconds>4</totalSeconds></time></marker></markersList>';
       const list = MarkersList.loadFromXML(Element.parse(xml));
 
       list.setMarkerTimePosition(0, TimePosition.seconds(8));

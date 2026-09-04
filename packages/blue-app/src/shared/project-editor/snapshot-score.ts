@@ -97,18 +97,30 @@ import {
   getProjectParameterCatalog,
   getBlueX7Descriptor,
 } from '@blue/data';
-import type { NoteProcessorChainSnapshot as DataNoteProcessorChainSnapshot, Parameter as BlueDataParameter, ScoreObject as BlueDataScoreObject, AutomatableLayer as BlueDataAutomatableLayer, Arrangement as BlueDataArrangement, Mixer as BlueDataMixer, ProjectParameterEntry } from '@blue/data';
+import type {
+  NoteProcessorChainSnapshot as DataNoteProcessorChainSnapshot,
+  Parameter as BlueDataParameter,
+  ScoreObject as BlueDataScoreObject,
+  AutomatableLayer as BlueDataAutomatableLayer,
+  Arrangement as BlueDataArrangement,
+  Mixer as BlueDataMixer,
+  ProjectParameterEntry,
+} from '@blue/data';
 import { AutomationCurve as BlueDataAutomationCurve, LineColors } from '@blue/data';
 import { ParameterHelper } from '@blue/data';
-import type { SnapValueName, BlueX7Voice, BlueX7Common, BlueX7Lfo, BlueX7Operator, BlueX7EnvelopePoint } from '@blue/data';
+import type {
+  SnapValueName,
+  BlueX7Voice,
+  BlueX7Common,
+  BlueX7Lfo,
+  BlueX7Operator,
+  BlueX7EnvelopePoint,
+} from '@blue/data';
 import type { MissingAudioAssetsSession } from '../missing-audio-assets';
 import type { ScoreInsertionLocation } from '../unified-library';
 
 import { moveRangeWithAnchors, scaleRangeWithAnchors } from '../automation-range-math';
-import {
-  BSB_LINE_SELECTOR_HEIGHT,
-  getBsbWidgetDisplaySize,
-} from '../bsb-widget-layout';
+import { BSB_LINE_SELECTOR_HEIGHT, getBsbWidgetDisplaySize } from '../bsb-widget-layout';
 import {
   collectBsbReplacementKeysFromSnapshotTree,
   collectBsbReplacementKeysFromWidgetTree,
@@ -322,10 +334,7 @@ import {
   getScoreObjectId,
   getTrackInstrumentOwnerIdentity,
 } from './identity';
-import {
-  buildSoundAutomationParameters,
-  parseSoundBSB,
-} from './bsb-widgets';
+import { buildSoundAutomationParameters, parseSoundBSB } from './bsb-widgets';
 import {
   buildObjectBuilderBsbInstrumentSnapshot,
   createBlueLiveProjectSnapshot,
@@ -447,7 +456,6 @@ export function createEmptyProjectEditorSnapshot(): ProjectEditorSnapshot {
   };
 }
 
-
 const JAVA_NEWLINE_RE = /\\n/g;
 
 export function splitLabelLines(name: string): string[] {
@@ -533,16 +541,14 @@ export function createBarRendererForSoundObject(
     const frozenFile = fso.getFrozenWaveFileName() ?? '';
     const currentDur = so.getSubjectiveDuration().toBeats(context);
     const inner = fso.getFrozenSoundObject();
-    const originalDur = inner
-      ? inner.getSubjectiveDuration().toBeats(context)
-      : null;
+    const originalDur = inner ? inner.getSubjectiveDuration().toBeats(context) : null;
     return {
       kind: 'frozenSoundObject',
       labelLines,
       frozenWaveFileName: frozenFile,
       waveformKey: frozenFile ? `fso:${frozenFile}` : null,
-      originalDurationBeats: originalDur != null && Number.isFinite(originalDur) && originalDur > 0
-        ? originalDur : null,
+      originalDurationBeats:
+        originalDur != null && Number.isFinite(originalDur) && originalDur > 0 ? originalDur : null,
       currentDurationBeats: currentDur,
     };
   }
@@ -625,25 +631,28 @@ export function createBarRendererForAudioClip(
     audioDurationBeats: secondsToBeats(clip.getAudioDuration ? clip.getAudioDuration() : 0),
     looping: clip.isLooping ? clip.isLooping() : false,
     fadeInBeats: secondsToBeats(clip.getFadeIn ? clip.getFadeIn() : 0),
-    fadeInType: normalizeAudioFadeType(clip.getFadeInType ? String(clip.getFadeInType()) : 'LINEAR'),
+    fadeInType: normalizeAudioFadeType(
+      clip.getFadeInType ? String(clip.getFadeInType()) : 'LINEAR',
+    ),
     fadeOutBeats: secondsToBeats(clip.getFadeOut ? clip.getFadeOut() : 0),
-    fadeOutType: normalizeAudioFadeType(clip.getFadeOutType ? String(clip.getFadeOutType()) : 'LINEAR'),
+    fadeOutType: normalizeAudioFadeType(
+      clip.getFadeOutType ? String(clip.getFadeOutType()) : 'LINEAR',
+    ),
   };
 }
 
 // ─── Score Snapshot Helpers ───
-
-
 
 export function resolveTimelineScoreObjects(
   data: BlueData,
   objectIds: readonly string[],
 ): BlueDataScoreObject[] | null {
   if (
-    objectIds.length === 0
-    || objectIds.some((id) => id.trim().length === 0)
-    || new Set(objectIds).size !== objectIds.length
-  ) return null;
+    objectIds.length === 0 ||
+    objectIds.some((id) => id.trim().length === 0) ||
+    new Set(objectIds).size !== objectIds.length
+  )
+    return null;
   const wanted = new Set(objectIds);
   const found = new Map<string, BlueDataScoreObject>();
 
@@ -726,9 +735,31 @@ function createScoreLayerGroupSnapshots(data: BlueData): ScoreLayerGroupSnapshot
     if (!lg) continue;
 
     if (lg instanceof PolyObject) {
-      result.push(createPolyObjectGroupSnapshot(lg, context, i, allParameters, arrangement, mixer, assignedLayerMap, projectParameterCatalog));
+      result.push(
+        createPolyObjectGroupSnapshot(
+          lg,
+          context,
+          i,
+          allParameters,
+          arrangement,
+          mixer,
+          assignedLayerMap,
+          projectParameterCatalog,
+        ),
+      );
     } else if (lg instanceof TrackLayerGroup) {
-      result.push(createTrackLayerGroupSnapshot(lg, context, i, allParameters, arrangement, mixer, assignedLayerMap, projectParameterCatalog));
+      result.push(
+        createTrackLayerGroupSnapshot(
+          lg,
+          context,
+          i,
+          allParameters,
+          arrangement,
+          mixer,
+          assignedLayerMap,
+          projectParameterCatalog,
+        ),
+      );
     } else if (lg instanceof PatternsLayerGroup) {
       result.push(createPatternsLayerGroupSnapshot(lg, context));
     }
@@ -737,7 +768,16 @@ function createScoreLayerGroupSnapshots(data: BlueData): ScoreLayerGroupSnapshot
   return result;
 }
 
-function createPolyObjectGroupSnapshot(lg: PolyObject, context: TimeContext, rootGroupIndex: number, allParameters: BlueDataParameter[], arrangement: BlueDataArrangement, mixer: BlueDataMixer, assignedLayerMap: Map<string, { layerId: string; layerName: string }>, projectParameterCatalog: readonly ProjectParameterEntry[]): PolyObjectLayerGroupSnapshot {
+function createPolyObjectGroupSnapshot(
+  lg: PolyObject,
+  context: TimeContext,
+  rootGroupIndex: number,
+  allParameters: BlueDataParameter[],
+  arrangement: BlueDataArrangement,
+  mixer: BlueDataMixer,
+  assignedLayerMap: Map<string, { layerId: string; layerName: string }>,
+  projectParameterCatalog: readonly ProjectParameterEntry[],
+): PolyObjectLayerGroupSnapshot {
   const groupId = assignLayerGroupId(lg);
   const layers: ScoreLayerSnapshot[] = [];
 
@@ -747,7 +787,12 @@ function createPolyObjectGroupSnapshot(lg: PolyObject, context: TimeContext, roo
     const items: ScoreRowObjectSnapshot[] = [];
     for (let j = 0; j < layer.length; j++) {
       const sObj = layer[j];
-      const location: ScoreObjectLocationRef = { rootGroupIndex, containerPath: [], layerIndex: i, objectIndex: j };
+      const location: ScoreObjectLocationRef = {
+        rootGroupIndex,
+        containerPath: [],
+        layerIndex: i,
+        objectIndex: j,
+      };
       const objectId = assignScoreObjectId(sObj, 'sobj');
       items.push({
         objectId,
@@ -761,9 +806,14 @@ function createPolyObjectGroupSnapshot(lg: PolyObject, context: TimeContext, roo
         isContainer: sObj instanceof PolyObject,
         editorTarget: buildEditorTargetSnapshot(sObj, objectId, location),
         serializedXml: sObj.saveAsXML().toXml(),
-        barRenderer: sObj instanceof AbstractSoundObject
-          ? createBarRendererForSoundObject(sObj, context)
-          : { kind: 'fallback' as const, labelLines: splitLabelLines(sObj.getName()), reason: 'unknown-type' as const },
+        barRenderer:
+          sObj instanceof AbstractSoundObject
+            ? createBarRendererForSoundObject(sObj, context)
+            : {
+                kind: 'fallback' as const,
+                labelLines: splitLabelLines(sObj.getName()),
+                reason: 'unknown-type' as const,
+              },
       });
     }
     const layerChain = layer.getNoteProcessorChain();
@@ -788,7 +838,10 @@ function createPolyObjectGroupSnapshot(lg: PolyObject, context: TimeContext, roo
       muted: layer.isMuted(),
       solo: layer.isSolo(),
       items,
-      noteProcessorChain: layerChain.getProcessors().length > 0 ? createNoteProcessorChainSnapshot(layerChain) : undefined,
+      noteProcessorChain:
+        layerChain.getProcessors().length > 0
+          ? createNoteProcessorChainSnapshot(layerChain)
+          : undefined,
       automation,
     });
   }
@@ -801,7 +854,10 @@ function createPolyObjectGroupSnapshot(lg: PolyObject, context: TimeContext, roo
     layerCount: lg.length,
     isOpenableContainer: true,
     layers,
-    noteProcessorChain: groupChain.getProcessors().length > 0 ? createNoteProcessorChainSnapshot(groupChain) : undefined,
+    noteProcessorChain:
+      groupChain.getProcessors().length > 0
+        ? createNoteProcessorChainSnapshot(groupChain)
+        : undefined,
   };
 }
 
@@ -875,9 +931,14 @@ function createTrackLayerGroupSnapshot(
         isContainer: item instanceof PolyObject,
         editorTarget: buildEditorTargetSnapshot(item, objectId, location),
         serializedXml: item.saveAsXML().toXml(),
-        barRenderer: item instanceof AbstractSoundObject
-          ? createBarRendererForSoundObject(item, context)
-          : { kind: 'fallback' as const, labelLines: splitLabelLines(item.getName()), reason: 'unknown-type' as const },
+        barRenderer:
+          item instanceof AbstractSoundObject
+            ? createBarRendererForSoundObject(item, context)
+            : {
+                kind: 'fallback' as const,
+                labelLines: splitLabelLines(item.getName()),
+                reason: 'unknown-type' as const,
+              },
       });
     }
 
@@ -905,28 +966,30 @@ function createTrackLayerGroupSnapshot(
       muted: layer.isMuted(),
       solo: layer.isSolo(),
       items,
-      noteProcessorChain: layer.getNoteProcessorChain().getProcessors().length > 0
-        ? createNoteProcessorChainSnapshot(layer.getNoteProcessorChain())
-        : undefined,
+      noteProcessorChain:
+        layer.getNoteProcessorChain().getProcessors().length > 0
+          ? createNoteProcessorChainSnapshot(layer.getNoteProcessorChain())
+          : undefined,
       automation,
       instrument: instrument
         ? {
-          trackId: layerId,
-          type: instrumentType,
-          instrumentType: instrument.constructor.name,
-          name: instrument.getName(),
-          comment: instrument.getComment(),
-          enabled: instrument.isEnabled(),
-          supported: instrumentType !== 'unknown',
-          snapshot: instrumentType === 'unknown'
-            ? undefined
-            : createInstrumentSnapshot(
-              layerId,
-              instrument,
-              instrument.isEnabled(),
-              getTrackInstrumentOwnerIdentity(groupId, layerId),
-            ),
-        }
+            trackId: layerId,
+            type: instrumentType,
+            instrumentType: instrument.constructor.name,
+            name: instrument.getName(),
+            comment: instrument.getComment(),
+            enabled: instrument.isEnabled(),
+            supported: instrumentType !== 'unknown',
+            snapshot:
+              instrumentType === 'unknown'
+                ? undefined
+                : createInstrumentSnapshot(
+                    layerId,
+                    instrument,
+                    instrument.isEnabled(),
+                    getTrackInstrumentOwnerIdentity(groupId, layerId),
+                  ),
+          }
         : null,
     });
   }
@@ -955,12 +1018,16 @@ function collectActivePatternCellIndices(layer: PatternLayer): number[] {
   return indices;
 }
 
-function createPatternsLayerGroupSnapshot(lg: PatternsLayerGroup, context: TimeContext): PatternsLayerGroupSnapshot {
+function createPatternsLayerGroupSnapshot(
+  lg: PatternsLayerGroup,
+  context: TimeContext,
+): PatternsLayerGroupSnapshot {
   const groupId = assignLayerGroupId(lg);
   const rawBeatsLength = lg.getPatternBeatsLength();
-  const effectiveBeatsLength = Number.isFinite(rawBeatsLength) && rawBeatsLength > 0
-    ? rawBeatsLength
-    : PATTERN_BEATS_LENGTH_FALLBACK;
+  const effectiveBeatsLength =
+    Number.isFinite(rawBeatsLength) && rawBeatsLength > 0
+      ? rawBeatsLength
+      : PATTERN_BEATS_LENGTH_FALLBACK;
   const layers: PatternLayerSnapshot[] = [];
 
   for (let i = 0; i < lg.length; i++) {
@@ -996,9 +1063,14 @@ function createPatternsLayerGroupSnapshot(lg: PatternsLayerGroup, context: TimeC
         backgroundColor: source.getBackgroundColor(),
         editorTarget,
         serializedXml: source.saveAsXML().toXml(),
-        barRenderer: source instanceof AbstractSoundObject
-          ? createBarRendererForSoundObject(source, context)
-          : { kind: 'fallback' as const, labelLines: splitLabelLines(source.getName()), reason: 'unknown-type' as const },
+        barRenderer:
+          source instanceof AbstractSoundObject
+            ? createBarRendererForSoundObject(source, context)
+            : {
+                kind: 'fallback' as const,
+                labelLines: splitLabelLines(source.getName()),
+                reason: 'unknown-type' as const,
+              },
       },
       activeCellIndices: collectActivePatternCellIndices(layer),
     });
@@ -1014,7 +1086,10 @@ function createPatternsLayerGroupSnapshot(lg: PatternsLayerGroup, context: TimeC
     patternBeatsLength: rawBeatsLength,
     effectivePatternBeatsLength: effectiveBeatsLength,
     layers,
-    noteProcessorChain: groupChain.getProcessors().length > 0 ? createNoteProcessorChainSnapshot(groupChain) : undefined,
+    noteProcessorChain:
+      groupChain.getProcessors().length > 0
+        ? createNoteProcessorChainSnapshot(groupChain)
+        : undefined,
   };
 }
 
@@ -1025,7 +1100,10 @@ export function createScoreDocumentSnapshot(data: BlueData): ScoreDocumentSnapsh
     timeState: createScoreTimeStateSnapshot(data),
     markers: createMarkerSnapshots(data),
     layerGroups: createScoreLayerGroupSnapshots(data),
-    rootNoteProcessorChain: rootChain.getProcessors().length > 0 ? createNoteProcessorChainSnapshot(rootChain) : undefined,
+    rootNoteProcessorChain:
+      rootChain.getProcessors().length > 0
+        ? createNoteProcessorChainSnapshot(rootChain)
+        : undefined,
   };
 }
 
@@ -1034,24 +1112,30 @@ export function resolveScoreInsertionLocation(
   location: ScoreInsertionLocation,
 ): { groupId: string; layerIndex: number } | null {
   const score = data.getScore();
-  const root = Array.from(score).find((group) => (
-    group instanceof PolyObject && assignLayerGroupId(group) === location.rootGroupId
-  ));
+  const root = Array.from(score).find(
+    (group) => group instanceof PolyObject && assignLayerGroupId(group) === location.rootGroupId,
+  );
   if (!(root instanceof PolyObject)) return null;
 
   let container = root;
   for (const segment of location.containerPath) {
     const containerId = assignLayerGroupId(container);
-    const layerIndex = container.findIndex((_, index) => `${containerId}-layer-${index}` === segment.layerId);
+    const layerIndex = container.findIndex(
+      (_, index) => `${containerId}-layer-${index}` === segment.layerId,
+    );
     if (layerIndex < 0) return null;
     const layer = container[layerIndex];
-    const nested = layer?.find((object) => assignScoreObjectId(object, 'sobj') === segment.objectIdentity);
+    const nested = layer?.find(
+      (object) => assignScoreObjectId(object, 'sobj') === segment.objectIdentity,
+    );
     if (!(nested instanceof PolyObject)) return null;
     container = nested;
   }
 
   const groupId = assignLayerGroupId(container);
-  const layerIndex = container.findIndex((_, index) => `${groupId}-layer-${index}` === location.layerId);
+  const layerIndex = container.findIndex(
+    (_, index) => `${groupId}-layer-${index}` === location.layerId,
+  );
   return layerIndex < 0 ? null : { groupId, layerIndex };
 }
 
@@ -1147,9 +1231,9 @@ export function createScoreObjectPropertiesTarget(
   target: ScoreObjectEditorTargetSnapshot,
 ): ScoreObjectEditorTargetSnapshot {
   if (
-    target.selectedObjectType !== 'Instance'
-    || target.displayContext !== 'instance'
-    || !target.sourceInstanceLocation
+    target.selectedObjectType !== 'Instance' ||
+    target.displayContext !== 'instance' ||
+    !target.sourceInstanceLocation
   ) {
     return target;
   }
@@ -1175,13 +1259,34 @@ function getCodeText(sObj: SoundObject): string {
 }
 
 export function setCodeText(sObj: SoundObject, text: string): boolean {
-  if (sObj instanceof GenericScore) { sObj.setScoreText(text); return true; }
-  if (sObj instanceof PythonObject) { sObj.setPythonCode(text); return true; }
-  if (sObj instanceof ObjectBuilder) { sObj.setCode(text); return true; }
-  if (sObj instanceof ClojureObject) { sObj.setClojureCode(text); return true; }
-  if (sObj instanceof JavaScriptObject) { sObj.setJavaScriptCode(text); return true; }
-  if (sObj instanceof Comment) { sObj.setText(text); return true; }
-  if (sObj instanceof External) { sObj.setText(text); return true; }
+  if (sObj instanceof GenericScore) {
+    sObj.setScoreText(text);
+    return true;
+  }
+  if (sObj instanceof PythonObject) {
+    sObj.setPythonCode(text);
+    return true;
+  }
+  if (sObj instanceof ObjectBuilder) {
+    sObj.setCode(text);
+    return true;
+  }
+  if (sObj instanceof ClojureObject) {
+    sObj.setClojureCode(text);
+    return true;
+  }
+  if (sObj instanceof JavaScriptObject) {
+    sObj.setJavaScriptCode(text);
+    return true;
+  }
+  if (sObj instanceof Comment) {
+    sObj.setText(text);
+    return true;
+  }
+  if (sObj instanceof External) {
+    sObj.setText(text);
+    return true;
+  }
   return false;
 }
 
@@ -1223,8 +1328,10 @@ function getSyntaxForType(
   sObj?: SoundObject | AudioClip,
 ): 'text' | 'csound-score' | 'python' | 'javascript' | 'clojure' {
   switch (objectType) {
-    case 'PythonObject': return 'python';
-    case 'JavaScriptObject': return 'javascript';
+    case 'PythonObject':
+      return 'python';
+    case 'JavaScriptObject':
+      return 'javascript';
     case 'ObjectBuilder':
       if (sObj instanceof ObjectBuilder) {
         switch (sObj.getLanguageType()) {
@@ -1239,15 +1346,21 @@ function getSyntaxForType(
         }
       }
       return 'text';
-    case 'GenericScore': return 'csound-score';
-    default: return 'text';
+    case 'GenericScore':
+      return 'csound-score';
+    default:
+      return 'text';
   }
 }
 
 export function resolveTimelineTarget(
   score: Score,
   location: ScoreObjectLocationRef,
-): { sObj: SoundObject | AudioClip; layer: Array<SoundObject | AudioClip>; objectIndex: number } | null {
+): {
+  sObj: SoundObject | AudioClip;
+  layer: Array<SoundObject | AudioClip>;
+  objectIndex: number;
+} | null {
   const rootGroup = score[location.rootGroupIndex];
   if (!rootGroup) return null;
 
@@ -1302,7 +1415,10 @@ function resolvePatternSourceTarget(
   return null;
 }
 
-export function findPatternsLayerGroupByGroupId(score: Score, groupId: string): PatternsLayerGroup | null {
+export function findPatternsLayerGroupByGroupId(
+  score: Score,
+  groupId: string,
+): PatternsLayerGroup | null {
   for (const group of score) {
     if (group instanceof PatternsLayerGroup && assignLayerGroupId(group) === groupId) {
       return group;
@@ -1311,7 +1427,10 @@ export function findPatternsLayerGroupByGroupId(score: Score, groupId: string): 
   return null;
 }
 
-export function resolveEditorTarget(data: BlueData, target: ScoreObjectEditorTargetSnapshot): { sObj: SoundObject | AudioClip; isLibraryOwned: boolean } | null {
+export function resolveEditorTarget(
+  data: BlueData,
+  target: ScoreObjectEditorTargetSnapshot,
+): { sObj: SoundObject | AudioClip; isLibraryOwned: boolean } | null {
   const score = data.getScore();
 
   let sObj: SoundObject | AudioClip | null = null;
@@ -1355,8 +1474,10 @@ export function resolveEditorTarget(data: BlueData, target: ScoreObjectEditorTar
       // During an optimistic cross-layer drag the renderer has the destination
       // location before the main-owned graph commits it. Stable selection
       // identity keeps the same object editable through that short interval.
-      sObj = (resolveTimelineScoreObjects(data, [target.selectionId])?.[0]
-        ?? null) as SoundObject | AudioClip | null;
+      sObj = (resolveTimelineScoreObjects(data, [target.selectionId])?.[0] ?? null) as
+        | SoundObject
+        | AudioClip
+        | null;
     }
   }
 
@@ -1397,7 +1518,9 @@ function createTimeConversionContext(context: TimeContext): TimeConversionContex
   };
 }
 
-export function createNoteProcessorChainSnapshot(chain: NoteProcessorChain): NoteProcessorChainSnapshot {
+export function createNoteProcessorChainSnapshot(
+  chain: NoteProcessorChain,
+): NoteProcessorChainSnapshot {
   return createNoteProcessorChainSnapshotFromData(chain) as NoteProcessorChainSnapshot;
 }
 
@@ -1419,7 +1542,12 @@ export function createScoreObjectEditorDocument(
         endTimeDisplay: '0.0000',
         backgroundColor: 0,
       },
-      editor: { kind: 'fallback', target, reason: 'removed-target', message: 'Score object no longer exists.' },
+      editor: {
+        kind: 'fallback',
+        target,
+        reason: 'removed-target',
+        message: 'Score object no longer exists.',
+      },
       timeContext: createTimeConversionContext(data.getScore().getTimeContext()),
     };
   }
@@ -1430,18 +1558,24 @@ export function createScoreObjectEditorDocument(
   const primaryDisplay = score.getTimeState().getTimeDisplay() as string;
   const isSoundObject = sObj instanceof AbstractSoundObject;
 
-  const startTime = sObj instanceof AudioClip
-    ? sObj.getStartTime().toBeats(context)
-    : (sObj as SoundObject).getStartTime().toBeats(context);
-  const startTimeBase = String(sObj instanceof AudioClip
-    ? sObj.getStartTime().getTimeBase()
-    : (sObj as SoundObject).getStartTime().getTimeBase());
-  const duration = sObj instanceof AudioClip
-    ? sObj.getSubjectiveDuration().toBeats(context)
-    : (sObj as SoundObject).getSubjectiveDuration().toBeats(context);
-  const durationBase = String(sObj instanceof AudioClip
-    ? sObj.getSubjectiveDuration().getTimeBase()
-    : (sObj as SoundObject).getSubjectiveDuration().getTimeBase());
+  const startTime =
+    sObj instanceof AudioClip
+      ? sObj.getStartTime().toBeats(context)
+      : (sObj as SoundObject).getStartTime().toBeats(context);
+  const startTimeBase = String(
+    sObj instanceof AudioClip
+      ? sObj.getStartTime().getTimeBase()
+      : (sObj as SoundObject).getStartTime().getTimeBase(),
+  );
+  const duration =
+    sObj instanceof AudioClip
+      ? sObj.getSubjectiveDuration().toBeats(context)
+      : (sObj as SoundObject).getSubjectiveDuration().toBeats(context);
+  const durationBase = String(
+    sObj instanceof AudioClip
+      ? sObj.getSubjectiveDuration().getTimeBase()
+      : (sObj as SoundObject).getSubjectiveDuration().getTimeBase(),
+  );
 
   const shared: SharedScoreObjectPropertiesSnapshot = {
     target,
@@ -1473,16 +1607,16 @@ export function createScoreObjectEditorDocument(
           ? { onLoadProcessable: sObj.isOnLoadProcessable() }
           : sObj instanceof ClojureObject
             ? { onLoadProcessable: sObj.isOnLoadProcessable() }
-          : sObj instanceof PythonObject
-            ? { onLoadProcessable: sObj.isOnLoadProcessable() }
-            : sObj instanceof ObjectBuilder
-              ? {
-                commandLine: sObj.getCommandLine(),
-                languageType: sObj.getLanguageType(),
-                editEnabled: sObj.isEditEnabled(),
-                comment: sObj.getComment(),
-              }
-            : undefined;
+            : sObj instanceof PythonObject
+              ? { onLoadProcessable: sObj.isOnLoadProcessable() }
+              : sObj instanceof ObjectBuilder
+                ? {
+                    commandLine: sObj.getCommandLine(),
+                    languageType: sObj.getLanguageType(),
+                    editEnabled: sObj.isEditEnabled(),
+                    comment: sObj.getComment(),
+                  }
+                : undefined;
       editor = {
         kind: 'code',
         target,
@@ -1517,9 +1651,13 @@ export function createScoreObjectEditorDocument(
         audioDuration: clip.getAudioDuration ? clip.getAudioDuration() : 0,
         fileStartTime: clip.getFileStartTime ? clip.getFileStartTime() : 0,
         fadeIn: clip.getFadeIn ? clip.getFadeIn() : 0,
-        fadeInType: normalizeAudioFadeType(clip.getFadeInType ? String(clip.getFadeInType()) : 'LINEAR'),
+        fadeInType: normalizeAudioFadeType(
+          clip.getFadeInType ? String(clip.getFadeInType()) : 'LINEAR',
+        ),
         fadeOut: clip.getFadeOut ? clip.getFadeOut() : 0,
-        fadeOutType: normalizeAudioFadeType(clip.getFadeOutType ? String(clip.getFadeOutType()) : 'LINEAR'),
+        fadeOutType: normalizeAudioFadeType(
+          clip.getFadeOutType ? String(clip.getFadeOutType()) : 'LINEAR',
+        ),
         looping: clip.isLooping ? clip.isLooping() : false,
       };
       break;
@@ -1729,7 +1867,7 @@ export function createScoreObjectEditorDocument(
           editorFamily: objectType,
           payloadSummary: `${lo.getLines().length} line(s)`,
           payload: {
-            lines: lo.getLines().map(l => ({
+            lines: lo.getLines().map((l) => ({
               varName: l.varName,
               min: l.min,
               max: l.max,
@@ -1737,7 +1875,7 @@ export function createScoreObjectEditorDocument(
               color: l.color,
               rightBound: l.rightBound,
               endPointsLinked: l.endPointsLinked,
-              points: l.points.map(pt => ({ x: pt.x, y: pt.y })),
+              points: l.points.map((pt) => ({ x: pt.x, y: pt.y })),
             })),
           },
         };
@@ -1750,7 +1888,7 @@ export function createScoreObjectEditorDocument(
           payloadSummary: `${zlo.getLines().length} zak line(s), zak space: ${zlo.getZakSpace()}`,
           payload: {
             zakSpace: zlo.getZakSpace(),
-            lines: zlo.getLines().map(l => ({
+            lines: zlo.getLines().map((l) => ({
               channel: l.channel,
               min: l.min,
               max: l.max,
@@ -1758,7 +1896,7 @@ export function createScoreObjectEditorDocument(
               color: l.color,
               rightBound: l.rightBound,
               endPointsLinked: l.endPointsLinked,
-              points: l.points.map(pt => ({ x: pt.x, y: pt.y })),
+              points: l.points.map((pt) => ({ x: pt.x, y: pt.y })),
             })),
           },
         };
@@ -1883,7 +2021,9 @@ export function createScoreObjectEditorDocument(
 }
 
 export function createFallbackEditorDocument(
-  reason: TypeSpecificScoreObjectEditorSnapshot extends { kind: 'fallback'; reason: infer R } ? R : never,
+  reason: TypeSpecificScoreObjectEditorSnapshot extends { kind: 'fallback'; reason: infer R }
+    ? R
+    : never,
   message: string,
 ): ScoreObjectEditorDocumentSnapshot {
   const target: ScoreObjectEditorTargetSnapshot = {
@@ -1907,11 +2047,14 @@ export function createFallbackEditorDocument(
       backgroundColor: 0,
     },
     editor: { kind: 'fallback', target, reason, message },
-    timeContext: { meterEntries: [{ measure: 1, numBeats: 4, beatLength: 4 }], tempoEnabled: false, initialTempo: 60, sampleRate: 44100 },
+    timeContext: {
+      meterEntries: [{ measure: 1, numBeats: 4, beatLength: 4 }],
+      tempoEnabled: false,
+      initialTempo: 60,
+      sampleRate: 44100,
+    },
   };
 }
-
-
 
 export function createProjectEditorSnapshot(
   data: BlueData,
@@ -1927,19 +2070,14 @@ export function createProjectEditorSnapshot(
     globalSco: data.getGlobalOrcSco().getGlobalSco(),
     orchestra: createOrchestraSnapshot(data),
     mixer: createMixerSnapshot(data.getMixer()),
-    projectProperties: createProjectPropertiesSnapshot(
-      data.getProjectProperties(),
-    ),
+    projectProperties: createProjectPropertiesSnapshot(data.getProjectProperties()),
     clojureProject: createClojureProjectSnapshot(data.getClojureProjectData()),
     transport: createToolbarProjectTransportSnapshot(data),
     tablesText: data.getTableSet().getTables(),
     scratchPad: createScratchPadSnapshot(data.getScratchPadData()),
     projectUdos: createProjectUdoListSnapshot(data),
     loaded: true,
-    blueLive: createBlueLiveProjectSnapshot(
-      data.getLiveData(),
-      data.getScore().getTimeContext(),
-    ),
+    blueLive: createBlueLiveProjectSnapshot(data.getLiveData(), data.getScore().getTimeContext()),
     midiInput: createMidiInputProcessorSnapshot(data.getMidiInputProcessor()),
     score: createScoreDocumentSnapshot(data),
     namedChains: { names: data.getNoteProcessorChainMap().getChainNames() },
@@ -1952,8 +2090,6 @@ function createScratchPadSnapshot(data: ScratchPadData): ScratchPadSnapshot {
     wordWrapEnabled: data.isWordWrapEnabled(),
   };
 }
-
-
 
 interface ParameterMetadata {
   targetPath: string[];
@@ -1998,9 +2134,10 @@ function buildParameterMetadataMap(
     const preEffects = channel.getPreEffects?.();
     if (preEffects && preEffects.length > 0) {
       for (const effect of preEffects) {
-        const effectName = typeof (effect as any).getSendChannel === 'function'
-          ? `Send: ${(effect as any).getSendChannel()}`
-          : (effect.getName?.() || 'Effect');
+        const effectName =
+          typeof (effect as any).getSendChannel === 'function'
+            ? `Send: ${(effect as any).getSendChannel()}`
+            : effect.getName?.() || 'Effect';
         const params = effect.getParameters?.() ?? [];
         for (const param of params) {
           if (!param) continue;
@@ -2016,9 +2153,10 @@ function buildParameterMetadataMap(
     const postEffects = channel.getPostEffects?.();
     if (postEffects && postEffects.length > 0) {
       for (const effect of postEffects) {
-        const effectName = typeof (effect as any).getSendChannel === 'function'
-          ? `Send: ${(effect as any).getSendChannel()}`
-          : (effect.getName?.() || 'Effect');
+        const effectName =
+          typeof (effect as any).getSendChannel === 'function'
+            ? `Send: ${(effect as any).getSendChannel()}`
+            : effect.getName?.() || 'Effect';
         const params = effect.getParameters?.() ?? [];
         for (const param of params) {
           if (!param) continue;
@@ -2120,27 +2258,27 @@ export function collectLayerAutomationSnapshot(
   }
 
   const selectedIdx = paramIdList.getSelectedIndex();
-  const selectedParameterId = selectedIdx >= 0 && selectedIdx < assignedIds.length
-    ? assignedIds[selectedIdx]
-    : undefined;
+  const selectedParameterId =
+    selectedIdx >= 0 && selectedIdx < assignedIds.length ? assignedIds[selectedIdx] : undefined;
 
-  const targetGroups = layerKind === 'track'
-    ? buildTrackAutomationTargetGroups(
-      automatableLayer,
-      assignedIds,
-      assignedElsewhere,
-      mixer,
-      layerGroupId,
-      projectParameterCatalog,
-    )
-    : buildAutomationTargetGroups(
-      assignedIds,
-      allParameters,
-      assignedElsewhere,
-      arrangement,
-      mixer,
-      projectParameterCatalog,
-    );
+  const targetGroups =
+    layerKind === 'track'
+      ? buildTrackAutomationTargetGroups(
+          automatableLayer,
+          assignedIds,
+          assignedElsewhere,
+          mixer,
+          layerGroupId,
+          projectParameterCatalog,
+        )
+      : buildAutomationTargetGroups(
+          assignedIds,
+          allParameters,
+          assignedElsewhere,
+          arrangement,
+          mixer,
+          projectParameterCatalog,
+        );
 
   return {
     layerId,
@@ -2204,7 +2342,11 @@ function buildAutomationTargetGroups(
     }
     const elsewhere = assignedElsewhere.get(id);
     if (elsewhere) {
-      return { assignmentState: 'assignedOtherLayer', ownerLayerId: elsewhere.layerId, ownerLayerName: elsewhere.layerName };
+      return {
+        assignmentState: 'assignedOtherLayer',
+        ownerLayerId: elsewhere.layerId,
+        ownerLayerName: elsewhere.layerName,
+      };
     }
     return { assignmentState: 'available' };
   }
@@ -2230,29 +2372,41 @@ function buildAutomationTargetGroups(
   }
 
   // ─── Instrument group ───
-  const instrGroup: AutomationTargetGroupSnapshot = { groupId: 'instrument', label: 'Instrument', subGroups: [], targets: [] };
+  const instrGroup: AutomationTargetGroupSnapshot = {
+    groupId: 'instrument',
+    label: 'Instrument',
+    subGroups: [],
+    targets: [],
+  };
 
   for (const ia of arrangement.getArrangement()) {
     if (!ia.enabled || !ia.instr) continue;
     const instr = ia.instr as any;
     if (typeof instr.getParameters !== 'function') continue;
     const ownerIdentity = `arrangement:${ia.arrangementId}`;
-    const ownerEntries = projectParameterCatalog.filter((entry) => entry.ownerIdentity === ownerIdentity);
-    const instrParams = ownerEntries.length > 0
-      ? ownerEntries.map((entry) => entry.parameter)
-      : instr.getParameters();
+    const ownerEntries = projectParameterCatalog.filter(
+      (entry) => entry.ownerIdentity === ownerIdentity,
+    );
+    const instrParams =
+      ownerEntries.length > 0
+        ? ownerEntries.map((entry) => entry.parameter)
+        : instr.getParameters();
     if (!instrParams || !Array.isArray(instrParams) || instrParams.length === 0) continue;
 
     const instrSubGroup: AutomationTargetGroupSnapshot = {
       groupId: `instr-${ia.arrangementId}`,
-      label: ownerEntries[0]?.ownerLabel ?? `${ia.arrangementId}) ${(ia.instr as any).getName?.() ?? 'Instrument'}`,
+      label:
+        ownerEntries[0]?.ownerLabel ??
+        `${ia.arrangementId}) ${(ia.instr as any).getName?.() ?? 'Instrument'}`,
       subGroups: buildBlueX7TargetGroups(ownerEntries, makeTarget),
       targets: ownerEntries.some((entry) => getBlueX7Descriptor(entry.parameter.getName()))
         ? []
         : instrParams
-          .slice()
-          .sort((a: BlueDataParameter, b: BlueDataParameter) => a.getName().localeCompare(b.getName()))
-          .map((p: BlueDataParameter) => makeTarget(p)),
+            .slice()
+            .sort((a: BlueDataParameter, b: BlueDataParameter) =>
+              a.getName().localeCompare(b.getName()),
+            )
+            .map((p: BlueDataParameter) => makeTarget(p)),
     };
     instrGroup.subGroups.push(instrSubGroup);
   }
@@ -2260,14 +2414,26 @@ function buildAutomationTargetGroups(
 
   // ─── Mixer group ───
   if (mixer.isEnabled()) {
-    const mixerGroup: AutomationTargetGroupSnapshot = { groupId: 'mixer', label: 'Mixer', subGroups: [], targets: [] };
+    const mixerGroup: AutomationTargetGroupSnapshot = {
+      groupId: 'mixer',
+      label: 'Mixer',
+      subGroups: [],
+      targets: [],
+    };
 
     // Channels (source channels from channelListGroups + main channels)
     const sourceChannels = mixer.getAllSourceChannels();
     if (sourceChannels.length > 0) {
-      const channelsSubGroup: AutomationTargetGroupSnapshot = { groupId: 'mixer-channels', label: 'Channels', subGroups: [], targets: [] };
+      const channelsSubGroup: AutomationTargetGroupSnapshot = {
+        groupId: 'mixer-channels',
+        label: 'Channels',
+        subGroups: [],
+        targets: [],
+      };
       for (const channel of sourceChannels) {
-        channelsSubGroup.subGroups.push(buildChannelSubGroup(channel, 'channel', getAssignmentState, 'mixer'));
+        channelsSubGroup.subGroups.push(
+          buildChannelSubGroup(channel, 'channel', getAssignmentState, 'mixer'),
+        );
       }
       mixerGroup.subGroups.push(channelsSubGroup);
     }
@@ -2275,15 +2441,24 @@ function buildAutomationTargetGroups(
     // Sub-Channels
     const subChannels = mixer.getSubChannels();
     if (subChannels.length > 0) {
-      const subChannelsGroup: AutomationTargetGroupSnapshot = { groupId: 'mixer-subchannels', label: 'Sub-Channels', subGroups: [], targets: [] };
+      const subChannelsGroup: AutomationTargetGroupSnapshot = {
+        groupId: 'mixer-subchannels',
+        label: 'Sub-Channels',
+        subGroups: [],
+        targets: [],
+      };
       for (const channel of subChannels) {
-        subChannelsGroup.subGroups.push(buildChannelSubGroup(channel, 'subchannel', getAssignmentState, 'mixer'));
+        subChannelsGroup.subGroups.push(
+          buildChannelSubGroup(channel, 'subchannel', getAssignmentState, 'mixer'),
+        );
       }
       mixerGroup.subGroups.push(subChannelsGroup);
     }
 
     // Master (directly, not under a "Channels" wrapper)
-    mixerGroup.subGroups.push(buildChannelSubGroup(mixer.getMaster(), 'master', getAssignmentState, 'mixer'));
+    mixerGroup.subGroups.push(
+      buildChannelSubGroup(mixer.getMaster(), 'master', getAssignmentState, 'mixer'),
+    );
 
     rootGroups.push(mixerGroup);
   }
@@ -2354,15 +2529,11 @@ function buildTrackAutomationTargetGroups(
     });
   }
 
-  const channel = mixer.getAllSourceChannels()
+  const channel = mixer
+    .getAllSourceChannels()
     .find((candidate) => candidate.getAssociation().trim() === trackId);
   if (channel) {
-    const channelGroup = buildChannelSubGroup(
-      channel,
-      'trackChannel',
-      getAssignmentState,
-      'mixer',
-    );
+    const channelGroup = buildChannelSubGroup(channel, 'trackChannel', getAssignmentState, 'mixer');
     result.push({
       groupId: 'track-channel',
       label: 'Track Channel',
@@ -2377,7 +2548,11 @@ function buildTrackAutomationTargetGroups(
 function buildChannelSubGroup(
   channel: any,
   kind: string,
-  getAssignmentState: (id: string) => { assignmentState: AutomationAssignmentState; ownerLayerId?: string; ownerLayerName?: string },
+  getAssignmentState: (id: string) => {
+    assignmentState: AutomationAssignmentState;
+    ownerLayerId?: string;
+    ownerLayerName?: string;
+  },
   sourceKind: AutomationTargetSourceKind,
 ): AutomationTargetGroupSnapshot {
   const channelGroup: AutomationTargetGroupSnapshot = {
@@ -2406,11 +2581,16 @@ function buildChannelSubGroup(
     if (!params || params.length === 0) return null;
     return {
       groupId: `effect-${effect.getName?.() ?? 'unknown'}`,
-      label: (effect.constructor as any).name === 'Send' ? `Send: ${(effect as any).getSendChannel?.() ?? 'unknown'}` : (effect.getName?.() ?? 'Effect'),
+      label:
+        (effect.constructor as any).name === 'Send'
+          ? `Send: ${(effect as any).getSendChannel?.() ?? 'unknown'}`
+          : (effect.getName?.() ?? 'Effect'),
       subGroups: [],
       targets: params
         .slice()
-        .sort((a: BlueDataParameter, b: BlueDataParameter) => a.getName().localeCompare(b.getName()))
+        .sort((a: BlueDataParameter, b: BlueDataParameter) =>
+          a.getName().localeCompare(b.getName()),
+        )
         .map((p: BlueDataParameter) => makeTarget(p)),
     };
   }
@@ -2418,7 +2598,12 @@ function buildChannelSubGroup(
   // Pre-Effects
   const preEffects = channel.getPreEffects?.();
   if (preEffects && preEffects.length > 0) {
-    const preGroup: AutomationTargetGroupSnapshot = { groupId: `${channelGroup.groupId}-pre`, label: 'Pre-Effects', subGroups: [], targets: [] };
+    const preGroup: AutomationTargetGroupSnapshot = {
+      groupId: `${channelGroup.groupId}-pre`,
+      label: 'Pre-Effects',
+      subGroups: [],
+      targets: [],
+    };
     for (const effect of preEffects) {
       const sub = buildEffectSubGroup(effect);
       if (sub) preGroup.subGroups.push(sub);
@@ -2435,7 +2620,12 @@ function buildChannelSubGroup(
   // Post-Effects
   const postEffects = channel.getPostEffects?.();
   if (postEffects && postEffects.length > 0) {
-    const postGroup: AutomationTargetGroupSnapshot = { groupId: `${channelGroup.groupId}-post`, label: 'Post-Effects', subGroups: [], targets: [] };
+    const postGroup: AutomationTargetGroupSnapshot = {
+      groupId: `${channelGroup.groupId}-post`,
+      label: 'Post-Effects',
+      subGroups: [],
+      targets: [],
+    };
     for (const effect of postEffects) {
       const sub = buildEffectSubGroup(effect);
       if (sub) postGroup.subGroups.push(sub);
@@ -2467,9 +2657,10 @@ export function buildAssignedAutomationLayerMap(
     const groupId = assignLayerGroupId(group);
     for (let li = 0; li < group.length; li++) {
       const layer = group[li] as BlueDataAutomatableLayer;
-      const layerId = group instanceof TrackLayerGroup
-        ? (group[li] as TrackLayer).getUniqueId()
-        : `${groupId}-layer-${li}`;
+      const layerId =
+        group instanceof TrackLayerGroup
+          ? (group[li] as TrackLayer).getUniqueId()
+          : `${groupId}-layer-${li}`;
       for (const id of layer.getAutomationParameters().getIds()) {
         result.set(id, { layerId, layerName: layer.getName() });
       }

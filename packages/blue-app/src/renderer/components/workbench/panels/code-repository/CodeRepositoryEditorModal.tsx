@@ -107,7 +107,10 @@ export default function CodeRepositoryEditorModal(): React.ReactElement | null {
   // rendering nothing — the user clicked the menu and expects feedback.
   if (!snapshot) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={handleClose}>
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+        onClick={handleClose}
+      >
         <div
           className="flex w-[440px] max-w-[90vw] flex-col rounded-lg border border-app-border/40 bg-app-menu p-6 shadow-2xl"
           onClick={(e) => e.stopPropagation()}
@@ -119,7 +122,10 @@ export default function CodeRepositoryEditorModal(): React.ReactElement | null {
           }}
         >
           <div className="mb-3 flex items-center justify-between">
-            <h2 id="code-repository-unavailable-title" className="text-role-title-2 font-bold text-app-text-bright">
+            <h2
+              id="code-repository-unavailable-title"
+              className="text-role-title-2 font-bold text-app-text-bright"
+            >
               Code Repository Editor
             </h2>
             <button
@@ -133,7 +139,9 @@ export default function CodeRepositoryEditorModal(): React.ReactElement | null {
             </button>
           </div>
           <p className="break-words text-role-body text-app-text-muted" role="status">
-            {loading ? 'Loading the Code Repository…' : (loadError?.message ?? 'The Code Repository is not available.')}
+            {loading
+              ? 'Loading the Code Repository…'
+              : (loadError?.message ?? 'The Code Repository is not available.')}
           </p>
           <div className="mt-4 flex justify-end gap-2">
             {!loading && (

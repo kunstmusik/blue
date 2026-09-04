@@ -25,8 +25,10 @@ export default function ScoreOverlayLines({
   const hasRenderEnd = renderEndTime > 0 && renderEndTime > renderStartTime;
   const startPixel = renderStartTime >= 0 ? renderStartTime * pixelsPerBeat : -1;
   const endPixel = hasRenderEnd ? renderEndTime * pixelsPerBeat : -1;
-  const pointerPixel = timePointerBeats != null && timePointerBeats >= 0 ? timePointerBeats * pixelsPerBeat : -1;
-  const guidePixel = activeGuideBeat != null && activeGuideBeat >= 0 ? activeGuideBeat * pixelsPerBeat : -1;
+  const pointerPixel =
+    timePointerBeats != null && timePointerBeats >= 0 ? timePointerBeats * pixelsPerBeat : -1;
+  const guidePixel =
+    activeGuideBeat != null && activeGuideBeat >= 0 ? activeGuideBeat * pixelsPerBeat : -1;
   const contentWidth = Math.max(
     totalBeats * pixelsPerBeat,
     startPixel + 2,
@@ -84,4 +86,3 @@ export default function ScoreOverlayLines({
     </div>
   );
 }
-

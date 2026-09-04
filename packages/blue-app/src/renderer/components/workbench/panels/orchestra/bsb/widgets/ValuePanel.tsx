@@ -7,7 +7,12 @@ interface ValuePanelProps {
   onCommit?: (text: string) => void;
 }
 
-export function ValuePanel({ value, width, height, onCommit }: ValuePanelProps): React.ReactElement {
+export function ValuePanel({
+  value,
+  width,
+  height,
+  onCommit,
+}: ValuePanelProps): React.ReactElement {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -38,7 +43,10 @@ export function ValuePanel({ value, width, height, onCommit }: ValuePanelProps):
           className="h-full w-full rounded border border-blue-accent bg-app-bsb-control px-1 text-center font-mono text-role-callout text-app-text outline-none"
           value={editText}
           onChange={(e) => setEditText(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') setEditing(false); }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') commit();
+            if (e.key === 'Escape') setEditing(false);
+          }}
           onBlur={commit}
         />
       </div>
@@ -61,7 +69,10 @@ export function ValuePanel({ value, width, height, onCommit }: ValuePanelProps):
         dominantBaseline="central"
         fill="rgb(240,240,255)"
         fontFamily="Roboto, sans-serif"
-        style={{ fontSize: 'var(--text-role-callout)', lineHeight: 'var(--text-role-callout--line-height)' }}
+        style={{
+          fontSize: 'var(--text-role-callout)',
+          lineHeight: 'var(--text-role-callout--line-height)',
+        }}
       >
         {value}
       </text>

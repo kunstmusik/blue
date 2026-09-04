@@ -61,7 +61,8 @@ function BSBInterfaceEditor({
       if (id === null) return new Set();
       if (shiftKey) {
         const next = new Set(prev);
-        if (next.has(id)) next.delete(id); else next.add(id);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
         return next;
       }
       return new Set([id]);
@@ -82,20 +83,34 @@ function BSBInterfaceEditor({
       onBsbInterfacePatch: dispatchBsbPatch,
       onInstrumentPatch,
     }),
-    [canvasInstrument, selectedWidgetIds, editEnabled, handleWidgetSelect, dispatchBsbPatch, onInstrumentPatch],
+    [
+      canvasInstrument,
+      selectedWidgetIds,
+      editEnabled,
+      handleWidgetSelect,
+      dispatchBsbPatch,
+      onInstrumentPatch,
+    ],
   );
 
-  const handleEditorKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (!showEditModeToggle || isTextEditingTarget(e.target)) return;
-    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'e') {
-      e.preventDefault();
-      e.stopPropagation();
-      dispatchBsbPatch({ type: 'setEditEnabled', value: !instrument.editEnabled });
-    }
-  }, [dispatchBsbPatch, instrument.editEnabled, showEditModeToggle]);
+  const handleEditorKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (!showEditModeToggle || isTextEditingTarget(e.target)) return;
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'e') {
+        e.preventDefault();
+        e.stopPropagation();
+        dispatchBsbPatch({ type: 'setEditEnabled', value: !instrument.editEnabled });
+      }
+    },
+    [dispatchBsbPatch, instrument.editEnabled, showEditModeToggle],
+  );
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-blue-bg" data-shortcut-scope="bsb-interface-editor" onKeyDown={handleEditorKeyDown}>
+    <div
+      className="flex h-full min-h-0 flex-col bg-blue-bg"
+      data-shortcut-scope="bsb-interface-editor"
+      onKeyDown={handleEditorKeyDown}
+    >
       {showEditModeToggle && (
         <div className="flex items-center justify-between border-b border-blue-border px-3 py-1">
           <BSBPresetBar instrument={instrument} onBsbInterfacePatch={dispatchBsbPatch} />
@@ -140,7 +155,7 @@ function BSBInterfaceEditor({
                       'flex-1 border-b-2 px-2 py-1.5 text-role-body uppercase tracking-[0.12em]',
                       rightTab === 'properties'
                         ? 'border-blue-accent text-gray-100'
-                        : 'border-transparent text-blue-muted hover:text-gray-100'
+                        : 'border-transparent text-blue-muted hover:text-gray-100',
                     )}
                     onClick={() => setRightTab('properties')}
                   >
@@ -152,7 +167,7 @@ function BSBInterfaceEditor({
                       'flex-1 border-b-2 px-2 py-1.5 text-role-body uppercase tracking-[0.12em]',
                       rightTab === 'grid'
                         ? 'border-blue-accent text-gray-100'
-                        : 'border-transparent text-blue-muted hover:text-gray-100'
+                        : 'border-transparent text-blue-muted hover:text-gray-100',
                     )}
                     onClick={() => setRightTab('grid')}
                   >
@@ -180,10 +195,10 @@ function BSBInterfaceEditor({
           }
         />
       ) : (
-          <div className="min-h-0 flex-1">
-            <BSBInterfaceCanvas {...canvasProps} />
-          </div>
-        )}
+        <div className="min-h-0 flex-1">
+          <BSBInterfaceCanvas {...canvasProps} />
+        </div>
+      )}
     </div>
   );
 }
@@ -298,22 +313,26 @@ function applyAutomationPreviewToWidget(
   }
 
   if (node.type === 'BSBHSliderBank' || node.type === 'BSBVSliderBank') {
-    const sliderCount = typeof node.properties.numberOfSliders === 'number'
-      ? Math.max(1, node.properties.numberOfSliders)
-      : 1;
+    const sliderCount =
+      typeof node.properties.numberOfSliders === 'number'
+        ? Math.max(1, node.properties.numberOfSliders)
+        : 1;
     const storedSliders = Array.isArray(node.properties.sliders)
-      ? node.properties.sliders as Array<{ value?: number }>
+      ? (node.properties.sliders as Array<{ value?: number }>)
       : [];
     let changed = false;
-    const sliders = Array.from({ length: Math.max(sliderCount, storedSliders.length, 1) }, (_unused, index) => {
-      const current = storedSliders[index] ?? {};
-      const previewValue = values.get(`${objectName}_${index}`);
-      if (previewValue == null) {
-        return current;
-      }
-      changed = true;
-      return { ...current, value: previewValue };
-    });
+    const sliders = Array.from(
+      { length: Math.max(sliderCount, storedSliders.length, 1) },
+      (_unused, index) => {
+        const current = storedSliders[index] ?? {};
+        const previewValue = values.get(`${objectName}_${index}`);
+        if (previewValue == null) {
+          return current;
+        }
+        changed = true;
+        return { ...current, value: previewValue };
+      },
+    );
 
     if (!changed) {
       return node;
@@ -345,9 +364,7 @@ function applyAutomationPreviewToWidget(
   }
 
   if (node.type === 'BSBDropdown') {
-    const items = Array.isArray(node.properties.dropdownItems)
-      ? node.properties.dropdownItems
-      : [];
+    const items = Array.isArray(node.properties.dropdownItems) ? node.properties.dropdownItems : [];
     const maxIndex = Math.max(0, items.length - 1);
     const selectedIndex = Math.max(0, Math.min(maxIndex, Math.round(value)));
     return {
@@ -361,10 +378,10 @@ function applyAutomationPreviewToWidget(
   }
 
   if (
-    node.type === 'BSBHSlider'
-    || node.type === 'BSBVSlider'
-    || node.type === 'BSBKnob'
-    || node.type === 'BSBValue'
+    node.type === 'BSBHSlider' ||
+    node.type === 'BSBVSlider' ||
+    node.type === 'BSBKnob' ||
+    node.type === 'BSBValue'
   ) {
     return {
       ...node,
@@ -380,7 +397,10 @@ function applyAutomationPreviewToWidget(
   return node;
 }
 
-function getAutomationPreviewValue(parameter: SoundAutomationParameterSnapshot, time: number): number {
+function getAutomationPreviewValue(
+  parameter: SoundAutomationParameterSnapshot,
+  time: number,
+): number {
   const points = parameter.points;
   if (points.length === 0) {
     return parameter.value;

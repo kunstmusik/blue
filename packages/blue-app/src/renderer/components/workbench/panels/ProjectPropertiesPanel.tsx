@@ -1,9 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useProjectStore } from '../../../stores/project-store';
-import type {
-  ClojureProjectTabProps,
-  ProjectPropertiesTabProps,
-} from './project-properties/types';
+import type { ClojureProjectTabProps, ProjectPropertiesTabProps } from './project-properties/types';
 import ProjectInformationTab from './project-properties/ProjectInformationTab';
 import RealtimeRenderTab from './project-properties/RealtimeRenderTab';
 import DiskRenderTab from './project-properties/DiskRenderTab';
@@ -11,12 +8,7 @@ import MediaTab from './project-properties/MediaTab';
 import ClojureProjectTab from './project-properties/ClojureProjectTab';
 import { cn } from '../../../lib/cn';
 
-type ProjectPropertiesTabKey =
-  | 'information'
-  | 'realtime'
-  | 'disk'
-  | 'media'
-  | 'clojure';
+type ProjectPropertiesTabKey = 'information' | 'realtime' | 'disk' | 'media' | 'clojure';
 
 const TAB_ORDER: Array<{
   key: ProjectPropertiesTabKey;
@@ -73,7 +65,7 @@ function SectionButton({
         'block w-full border-l-2 px-4 py-2 text-left text-role-body transition-colors',
         active
           ? 'border-l-blue-accent bg-blue-accent/[0.08] text-gray-100'
-          : 'border-l-transparent text-blue-muted hover:text-gray-100'
+          : 'border-l-transparent text-blue-muted hover:text-gray-100',
       )}
       onClick={onClick}
     >
@@ -122,12 +114,8 @@ export default function ProjectPropertiesPanel(): React.ReactElement {
   const loaded = useProjectStore((state) => state.loaded);
   const projectProperties = useProjectStore((state) => state.projectProperties);
   const clojureProject = useProjectStore((state) => state.clojureProject);
-  const updateProjectProperties = useProjectStore(
-    (state) => state.updateProjectProperties,
-  );
-  const updateClojureProject = useProjectStore(
-    (state) => state.updateClojureProject,
-  );
+  const updateProjectProperties = useProjectStore((state) => state.updateProjectProperties);
+  const updateClojureProject = useProjectStore((state) => state.updateClojureProject);
   const [activeTab, setActiveTab] = useState<ProjectPropertiesTabKey>('information');
 
   const propertyProps = useMemo<ProjectPropertiesTabProps>(
@@ -180,11 +168,7 @@ export default function ProjectPropertiesPanel(): React.ReactElement {
         </div>
 
         <div className="min-h-0 flex-1 overflow-auto px-5 py-5 md:px-6 md:py-6">
-          <TabContent
-            tab={activeTab}
-            propertyProps={propertyProps}
-            clojureProps={clojureProps}
-          />
+          <TabContent tab={activeTab} propertyProps={propertyProps} clojureProps={clojureProps} />
         </div>
       </div>
     </div>

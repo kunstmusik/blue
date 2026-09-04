@@ -4,11 +4,17 @@ import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { TempoMapPatch, TempoMapSnapshot, TimeConversionContext } from '../../shared/project-editor';
+import type {
+  TempoMapPatch,
+  TempoMapSnapshot,
+  TimeConversionContext,
+} from '../../shared/project-editor';
 import TempoMapEditorDialog from '../components/workbench/panels/score/TempoMapEditorDialog';
 import { chooseAppSelectOption } from './app-select-test-utils';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const BASE_TEMPO_MAP: TempoMapSnapshot = {
   enabled: true,
@@ -44,7 +50,10 @@ function setSelectValue(select: HTMLSelectElement, value: string): void {
   select.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
-function renderDialog(tempoMap: TempoMapSnapshot = BASE_TEMPO_MAP, timeContext: TimeConversionContext = BASE_TIME_CONTEXT): {
+function renderDialog(
+  tempoMap: TempoMapSnapshot = BASE_TEMPO_MAP,
+  timeContext: TimeConversionContext = BASE_TIME_CONTEXT,
+): {
   container: HTMLDivElement;
   root: Root;
   onCommit: ReturnType<typeof vi.fn<(patch: TempoMapPatch) => void>>;
@@ -138,7 +147,9 @@ describe('TempoMapEditorDialog', () => {
         { beat: 8, tempo: 90, curveType: 'constant', timeBase: 'BEATS' },
       ],
     });
-    const startInputs = Array.from(container.querySelectorAll('input[type="text"]')) as HTMLInputElement[];
+    const startInputs = Array.from(
+      container.querySelectorAll('input[type="text"]'),
+    ) as HTMLInputElement[];
 
     expect(startInputs[0]!.disabled).toBe(false);
 
@@ -174,8 +185,12 @@ describe('TempoMapEditorDialog', () => {
 
   it('commits a replaceTempoMap patch on OK while preserving enabled and visible flags', () => {
     const { container, root, onCommit, onClose } = renderDialog();
-    const startInputs = Array.from(container.querySelectorAll('input[type="text"]')) as HTMLInputElement[];
-    const tempoInputs = Array.from(container.querySelectorAll('input[type="number"]')) as HTMLInputElement[];
+    const startInputs = Array.from(
+      container.querySelectorAll('input[type="text"]'),
+    ) as HTMLInputElement[];
+    const tempoInputs = Array.from(
+      container.querySelectorAll('input[type="number"]'),
+    ) as HTMLInputElement[];
 
     act(() => {
       setInputValue(startInputs[1]!, '6');
@@ -210,8 +225,12 @@ describe('TempoMapEditorDialog', () => {
 
   it('commits edited beat and tempo values on blur and Enter', () => {
     const { container, onCommit } = renderDialog();
-    const startInputs = Array.from(container.querySelectorAll('input[type="text"]')) as HTMLInputElement[];
-    const tempoInputs = Array.from(container.querySelectorAll('input[type="number"]')) as HTMLInputElement[];
+    const startInputs = Array.from(
+      container.querySelectorAll('input[type="text"]'),
+    ) as HTMLInputElement[];
+    const tempoInputs = Array.from(
+      container.querySelectorAll('input[type="number"]'),
+    ) as HTMLInputElement[];
 
     act(() => {
       setInputValue(startInputs[1]!, '6.5');
@@ -246,7 +265,9 @@ describe('TempoMapEditorDialog', () => {
 
   it('reverts duplicate beat values on blur instead of leaving an error state', () => {
     const { container, onCommit, onClose } = renderDialog();
-    const startInputs = Array.from(container.querySelectorAll('input[type="text"]')) as HTMLInputElement[];
+    const startInputs = Array.from(
+      container.querySelectorAll('input[type="text"]'),
+    ) as HTMLInputElement[];
 
     act(() => {
       setInputValue(startInputs[1]!, '0');
@@ -280,7 +301,9 @@ describe('TempoMapEditorDialog', () => {
 
   it('reverts invalid tempo values on Enter instead of leaving an error state', () => {
     const { container, onCommit } = renderDialog();
-    const tempoInputs = Array.from(container.querySelectorAll('input[type="number"]')) as HTMLInputElement[];
+    const tempoInputs = Array.from(
+      container.querySelectorAll('input[type="number"]'),
+    ) as HTMLInputElement[];
 
     act(() => {
       setInputValue(tempoInputs[1]!, '0');
@@ -313,8 +336,12 @@ describe('TempoMapEditorDialog', () => {
 
   it('allows each tempo point to use its own time unit', async () => {
     const { container, onCommit } = renderDialog();
-    const selects = Array.from(container.querySelectorAll('[role="combobox"]')) as HTMLButtonElement[];
-    const startInputs = Array.from(container.querySelectorAll('input[type="text"]')) as HTMLInputElement[];
+    const selects = Array.from(
+      container.querySelectorAll('[role="combobox"]'),
+    ) as HTMLButtonElement[];
+    const startInputs = Array.from(
+      container.querySelectorAll('input[type="text"]'),
+    ) as HTMLInputElement[];
 
     await chooseAppSelectOption(selects[1]!, 'BBF (Bar.Beat.Fraction, hundredths)');
 

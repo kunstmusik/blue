@@ -1,4 +1,12 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { PopoutContextMenuPortal } from '../../../../hooks/host-portals';
 import type { NodeRendererProps, NodeApi } from 'react-arborist';
 import { BlueTree } from '../../../tree/BlueTree';
@@ -20,9 +28,7 @@ export interface LibraryTreeNode {
   categoryId?: string;
 }
 
-export function snapshotToTreeNodes(
-  category: EffectsLibraryCategorySnapshot,
-): LibraryTreeNode {
+export function snapshotToTreeNodes(category: EffectsLibraryCategorySnapshot): LibraryTreeNode {
   const children: LibraryTreeNode[] = [];
 
   for (const sub of category.categories) {
@@ -185,7 +191,7 @@ function EffectMenu({
           </ContextMenu.Item>
           {actions.addToMixerLabel && (
             <>
-          <ContextMenu.Separator className="editor-context-menu__separator" />
+              <ContextMenu.Separator className="editor-context-menu__separator" />
               <ContextMenu.Item
                 className="editor-context-menu__item"
                 onSelect={() => actions.onAddToMixer(effect)}
@@ -200,22 +206,25 @@ function EffectMenu({
   );
 }
 
-function Node({
-  node,
-  style,
-  dragHandle,
-}: NodeRendererProps<LibraryTreeNode>): React.ReactElement {
+function Node({ node, style, dragHandle }: NodeRendererProps<LibraryTreeNode>): React.ReactElement {
   const isCategory = node.data.kind === 'category';
   const isSelected = node.isSelected;
   const actions = useContext(TreeActionsContext);
 
-  const icon = isCategory
-    ? (node.isOpen ? <FolderOpen className="h-3.5 w-3.5 flex-none text-yellow-500" /> : <Folder className="h-3.5 w-3.5 flex-none text-yellow-600" />)
-    : <FileAudio className="h-3.5 w-3.5 flex-none text-blue-400" />;
+  const icon = isCategory ? (
+    node.isOpen ? (
+      <FolderOpen className="h-3.5 w-3.5 flex-none text-yellow-500" />
+    ) : (
+      <Folder className="h-3.5 w-3.5 flex-none text-yellow-600" />
+    )
+  ) : (
+    <FileAudio className="h-3.5 w-3.5 flex-none text-blue-400" />
+  );
 
-  const effectMeta = !isCategory && node.data.effectData
-    ? `${node.data.effectData.numIns}in/${node.data.effectData.numOuts}out`
-    : null;
+  const effectMeta =
+    !isCategory && node.data.effectData
+      ? `${node.data.effectData.numIns}in/${node.data.effectData.numOuts}out`
+      : null;
 
   const childCount = isCategory && node.children ? node.children.length : 0;
 
@@ -236,10 +245,7 @@ function Node({
     >
       {isCategory && (
         <ChevronRight
-          className={cn(
-            'h-3 w-3 flex-none transition-transform',
-            node.isOpen && 'rotate-90',
-          )}
+          className={cn('h-3 w-3 flex-none transition-transform', node.isOpen && 'rotate-90')}
           onClick={(e) => {
             e.stopPropagation();
             node.toggle();

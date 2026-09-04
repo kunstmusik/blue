@@ -142,7 +142,10 @@ describe('Note processor chain round-trip', () => {
         `<noteProcessor type="blue.noteProcessor.PythonProcessor"><code>print("hello")</code></noteProcessor>`,
       ),
     );
-    const unsupported = UnsupportedProcessor.loadFromXML(xmlFragment, 'blue.noteProcessor.PythonProcessor');
+    const unsupported = UnsupportedProcessor.loadFromXML(
+      xmlFragment,
+      'blue.noteProcessor.PythonProcessor',
+    );
     unsupportedChain.addProcessor(unsupported);
     original.getNoteProcessorChainMap().setChain('unsupportedChain', unsupportedChain);
 

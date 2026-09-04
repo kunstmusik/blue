@@ -51,51 +51,52 @@ export function useScoreRulerSelection({
   const dragElementRef = useRef<HTMLElement | null>(null);
   const draggingRef = useRef(false);
 
-  const xToBeats = useCallback((clientX: number, element: HTMLElement) => {
-    const rect = element.getBoundingClientRect();
-    const x = Math.max(0, clientX - rect.left);
-    return x / pixelsPerBeat;
-  }, [pixelsPerBeat]);
+  const xToBeats = useCallback(
+    (clientX: number, element: HTMLElement) => {
+      const rect = element.getBoundingClientRect();
+      const x = Math.max(0, clientX - rect.left);
+      return x / pixelsPerBeat;
+    },
+    [pixelsPerBeat],
+  );
 
-  const snapBeats = useCallback((beats: number, shiftHeld: boolean) => {
-    if (!snapEnabled || shiftHeld) return beats;
-    const sv = snapValueToBeats(
-      snapValue,
-      tempo,
-      smpteFrameRate,
-      sampleRate,
-      pixelsPerBeat,
-    );
-    if (sv <= 0) return beats;
-    return snapBeatToGrid(beats, 'nearest', snapValue, sv, meterMap);
-  }, [snapEnabled, snapValue, meterMap, tempo, smpteFrameRate, sampleRate, pixelsPerBeat]);
+  const snapBeats = useCallback(
+    (beats: number, shiftHeld: boolean) => {
+      if (!snapEnabled || shiftHeld) return beats;
+      const sv = snapValueToBeats(snapValue, tempo, smpteFrameRate, sampleRate, pixelsPerBeat);
+      if (sv <= 0) return beats;
+      return snapBeatToGrid(beats, 'nearest', snapValue, sv, meterMap);
+    },
+    [snapEnabled, snapValue, meterMap, tempo, smpteFrameRate, sampleRate, pixelsPerBeat],
+  );
 
-  const autoScroll = useCallback((clientX: number) => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
+  const autoScroll = useCallback(
+    (clientX: number) => {
+      const container = scrollContainerRef.current;
+      if (!container) return;
 
-    const rect = container.getBoundingClientRect();
-    let delta = 0;
+      const rect = container.getBoundingClientRect();
+      let delta = 0;
 
-    if (clientX < rect.left + AUTO_SCROLL_EDGE_THRESHOLD) {
-      delta = clientX - (rect.left + AUTO_SCROLL_EDGE_THRESHOLD);
-    } else if (clientX > rect.right - AUTO_SCROLL_EDGE_THRESHOLD) {
-      delta = clientX - (rect.right - AUTO_SCROLL_EDGE_THRESHOLD);
-    }
+      if (clientX < rect.left + AUTO_SCROLL_EDGE_THRESHOLD) {
+        delta = clientX - (rect.left + AUTO_SCROLL_EDGE_THRESHOLD);
+      } else if (clientX > rect.right - AUTO_SCROLL_EDGE_THRESHOLD) {
+        delta = clientX - (rect.right - AUTO_SCROLL_EDGE_THRESHOLD);
+      }
 
-    if (delta === 0) return;
+      if (delta === 0) return;
 
-    const step = Math.sign(delta) * Math.min(
-      AUTO_SCROLL_MAX_STEP,
-      Math.max(6, Math.abs(delta) * 0.35),
-    );
+      const step =
+        Math.sign(delta) * Math.min(AUTO_SCROLL_MAX_STEP, Math.max(6, Math.abs(delta) * 0.35));
 
-    const nextScrollLeft = Math.max(0, container.scrollLeft + step);
-    if (nextScrollLeft !== container.scrollLeft) {
-      onUserNavigationRef.current?.();
-      container.scrollLeft = nextScrollLeft;
-    }
-  }, [scrollContainerRef]);
+      const nextScrollLeft = Math.max(0, container.scrollLeft + step);
+      if (nextScrollLeft !== container.scrollLeft) {
+        onUserNavigationRef.current?.();
+        container.scrollLeft = nextScrollLeft;
+      }
+    },
+    [scrollContainerRef],
+  );
 
   const clearDrag = useCallback(() => {
     dragStartX.current = -1;
@@ -105,31 +106,34 @@ export function useScoreRulerSelection({
     setDragging(false);
   }, []);
 
-  const handleDragMove = useCallback((clientX: number, shiftHeld: boolean) => {
-    if (dragStartX.current < 0 || !rootTimelineOnly) return;
+  const handleDragMove = useCallback(
+    (clientX: number, shiftHeld: boolean) => {
+      if (dragStartX.current < 0 || !rootTimelineOnly) return;
 
-    const dragElement = dragElementRef.current;
-    if (!dragElement) return;
+      const dragElement = dragElementRef.current;
+      if (!dragElement) return;
 
-    autoScroll(clientX);
+      autoScroll(clientX);
 
-    if (!draggingRef.current && Math.abs(clientX - dragStartX.current) > DRAG_THRESHOLD) {
-      draggingRef.current = true;
-      setDragging(true);
-    }
+      if (!draggingRef.current && Math.abs(clientX - dragStartX.current) > DRAG_THRESHOLD) {
+        draggingRef.current = true;
+        setDragging(true);
+      }
 
-    if (!draggingRef.current) return;
+      if (!draggingRef.current) return;
 
-    const beats = snapBeats(xToBeats(clientX, dragElement), shiftHeld);
-    const start = Math.min(dragStartBeats.current, beats);
-    const end = Math.max(dragStartBeats.current, beats);
-    applyPatch({
-      transport: {
-        renderStartTime: Math.max(0, start),
-        renderEndTime: Math.max(0, end),
-      },
-    });
-  }, [rootTimelineOnly, autoScroll, snapBeats, xToBeats, applyPatch]);
+      const beats = snapBeats(xToBeats(clientX, dragElement), shiftHeld);
+      const start = Math.min(dragStartBeats.current, beats);
+      const end = Math.max(dragStartBeats.current, beats);
+      applyPatch({
+        transport: {
+          renderStartTime: Math.max(0, start),
+          renderEndTime: Math.max(0, end),
+        },
+      });
+    },
+    [rootTimelineOnly, autoScroll, snapBeats, xToBeats, applyPatch],
+  );
 
   const handleDragEnd = useCallback(() => {
     if (dragStartX.current < 0 || !rootTimelineOnly) {
@@ -149,20 +153,23 @@ export function useScoreRulerSelection({
     clearDrag();
   }, [rootTimelineOnly, applyPatch, clearDrag]);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!rootTimelineOnly || e.button !== 0) return;
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!rootTimelineOnly || e.button !== 0) return;
 
-    // Pressing the ruler is explicit horizontal navigation on the root
-    // timeline; suspend active follow before any drag or auto-scroll runs.
-    onUserNavigationRef.current?.();
+      // Pressing the ruler is explicit horizontal navigation on the root
+      // timeline; suspend active follow before any drag or auto-scroll runs.
+      onUserNavigationRef.current?.();
 
-    dragElementRef.current = e.currentTarget;
-    const beats = snapBeats(xToBeats(e.clientX, e.currentTarget), e.shiftKey);
-    dragStartX.current = e.clientX;
-    dragStartBeats.current = beats;
-    draggingRef.current = false;
-    setDragging(false);
-  }, [rootTimelineOnly, snapBeats, xToBeats]);
+      dragElementRef.current = e.currentTarget;
+      const beats = snapBeats(xToBeats(e.clientX, e.currentTarget), e.shiftKey);
+      dragStartX.current = e.clientX;
+      dragStartBeats.current = beats;
+      draggingRef.current = false;
+      setDragging(false);
+    },
+    [rootTimelineOnly, snapBeats, xToBeats],
+  );
 
   useEffect(() => {
     const onMouseMove = (event: MouseEvent) => {

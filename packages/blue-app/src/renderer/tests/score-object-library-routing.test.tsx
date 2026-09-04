@@ -16,7 +16,11 @@ import {
   type ScoreObjectLibraryEntryRef,
 } from '../../shared/project-editor';
 
-function makeLibRef(libId: string, objectType: string, index: number = 0): ScoreObjectLibraryEntryRef {
+function makeLibRef(
+  libId: string,
+  objectType: string,
+  index: number = 0,
+): ScoreObjectLibraryEntryRef {
   return { libraryId: libId, libraryIndex: index, objectType };
 }
 
@@ -45,8 +49,8 @@ function makeInstanceData() {
 describe('Library-context labeling (T036)', () => {
   it('includes the stable library ID in runtime Instance editor targets', () => {
     const { data, libId } = makeInstanceData();
-    const row = createScoreDocumentSnapshot(data).layerGroups
-      .flatMap((group) => group.layers)
+    const row = createScoreDocumentSnapshot(data)
+      .layerGroups.flatMap((group) => group.layers)
       .flatMap((layer) => layer.items)
       .find((item) => item.objectType === 'Instance')!;
 
@@ -83,8 +87,8 @@ describe('Library-context labeling (T036)', () => {
   it('keeps the type editor on the shared definition and properties on the Instance wrapper', () => {
     const { data, inst } = makeInstanceData();
     inst.setName('Instance Label');
-    const target = createScoreDocumentSnapshot(data).layerGroups
-      .flatMap((group) => group.layers)
+    const target = createScoreDocumentSnapshot(data)
+      .layerGroups.flatMap((group) => group.layers)
       .flatMap((layer) => layer.items)
       .find((item) => item.objectType === 'Instance')!.editorTarget!;
 

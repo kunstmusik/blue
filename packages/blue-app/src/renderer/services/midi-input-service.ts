@@ -250,10 +250,7 @@ export class MidiInputService {
     return result;
   }
 
-  private async openPort(
-    id: string,
-    port: MidiInputPortLike,
-  ): Promise<void> {
+  private async openPort(id: string, port: MidiInputPortLike): Promise<void> {
     // Replace any existing generation so stale callbacks cannot route.
     const generation = ++this.generationCounter;
     let runtime = this.ports.get(id);
@@ -269,7 +266,11 @@ export class MidiInputService {
         // best-effort cleanup must not prevent the replacement from opening
       }
       if (runtime.port !== port) {
-        try { await runtime.port.close(); } catch { /* ignore */ }
+        try {
+          await runtime.port.close();
+        } catch {
+          /* ignore */
+        }
       }
       runtime.port = port;
       runtime.connection = 'connecting';
@@ -294,7 +295,11 @@ export class MidiInputService {
       const message = err instanceof Error ? err.message : String(err);
       this.lastErrors.set(id, message);
       // Detach and release source notes that this port may have generated.
-      try { port.onmidimessage = null; } catch { /* ignore */ }
+      try {
+        port.onmidimessage = null;
+      } catch {
+        /* ignore */
+      }
       if (this.ports.get(id) === runtime && runtime.generation === generation) {
         this.ports.delete(id);
       }
@@ -335,9 +340,21 @@ export class MidiInputService {
     await Promise.all(
       runtimes.map(async (runtime) => {
         runtime.generation = ++this.generationCounter;
-        try { runtime.port.onmidimessage = null; } catch { /* ignore */ }
-        try { await this.deps.releaseSource(getHardwareMidiSourceId(runtime.id)); } catch { /* ignore */ }
-        try { await runtime.port.close(); } catch { /* ignore */ }
+        try {
+          runtime.port.onmidimessage = null;
+        } catch {
+          /* ignore */
+        }
+        try {
+          await this.deps.releaseSource(getHardwareMidiSourceId(runtime.id));
+        } catch {
+          /* ignore */
+        }
+        try {
+          await runtime.port.close();
+        } catch {
+          /* ignore */
+        }
       }),
     );
   }
@@ -422,9 +439,9 @@ export class MidiInputService {
       ...this.preferences.devices.map((pref) => pref.id),
       ...liveInputs.keys(),
     ]);
-    const enabledDeviceIds = Array.from(consideredIds).filter((id) => (
-      this.preferences.devices.find((pref) => pref.id === id)?.enabled ?? true
-    ));
+    const enabledDeviceIds = Array.from(consideredIds).filter(
+      (id) => this.preferences.devices.find((pref) => pref.id === id)?.enabled ?? true,
+    );
     if (enabledDeviceIds.length === 0) {
       this.setPhase('ready');
       this.aggregateMessage = this.aggregateMessage ?? null;
@@ -454,7 +471,10 @@ export class MidiInputService {
           : 'No enabled MIDI input device is currently available.',
       );
     } else if (failedOrMissing > 0) {
-      this.setPhase('partial', 'Some enabled MIDI input devices are unavailable or could not be opened.');
+      this.setPhase(
+        'partial',
+        'Some enabled MIDI input devices are unavailable or could not be opened.',
+      );
     } else {
       this.setPhase('ready');
     }
@@ -562,9 +582,9 @@ function classifyAccessFailure(error: unknown): MidiInputServicePhase {
     return 'unsupported';
   }
   if (
-    name === 'NotAllowedError'
-    || name === 'SecurityError'
-    || /not allowed|denied|permission/i.test(message)
+    name === 'NotAllowedError' ||
+    name === 'SecurityError' ||
+    /not allowed|denied|permission/i.test(message)
   ) {
     return 'denied';
   }

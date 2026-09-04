@@ -14,7 +14,11 @@ import {
   Sound,
 } from '@blue/data';
 import { describe, expect, it, vi } from 'vitest';
-import { createMixerSnapshot, createNestedPolyObjectSnapshot, createProjectEditorSnapshot } from '../../shared/project-editor';
+import {
+  createMixerSnapshot,
+  createNestedPolyObjectSnapshot,
+  createProjectEditorSnapshot,
+} from '../../shared/project-editor';
 import type { InsertionTargetSnapshot, LibraryItemKey } from '../../shared/unified-library';
 import { UnifiedLibraryProjectAdapter } from './project-adapter';
 
@@ -32,7 +36,9 @@ function activeProject() {
   return {
     data,
     group,
-    get revision() { return revision; },
+    get revision() {
+      return revision;
+    },
     provider: () => ({ data, sessionId: 11, revision, commit }),
     commit,
   };
@@ -58,7 +64,8 @@ describe('project library transfer', () => {
     const adapter = new UnifiedLibraryProjectAdapter(project.provider);
     const instrument = new GenericInstrument();
     instrument.setName('Imported Pad');
-    const udoXml = '<udo><style>CLASSIC</style><opcodeName>importedFx</opcodeName><outTypes>a</outTypes><inTypes>a</inTypes><codeBody>aout = ain</codeBody><comments/></udo>';
+    const udoXml =
+      '<udo><style>CLASSIC</style><opcodeName>importedFx</opcodeName><outTypes>a</outTypes><inTypes>a</inTypes><codeBody>aout = ain</codeBody><comments/></udo>';
 
     const instrumentReceipt = adapter.applyInsertion({
       key: { scope: 'user', libraryType: 'instrument', nodeId: 'instrument-1' },
@@ -78,9 +85,15 @@ describe('project library transfer', () => {
     expect(udoReceipt).toMatchObject({ libraryType: 'udo', projectRevision: 6 });
 
     const reopened = await BlueData.loadFromString(project.data.saveToString());
-    expect(reopened.getArrangement().getInstrumentById(instrumentReceipt.insertedIdentity)?.getName())
-      .toBe('Imported Pad');
-    expect(reopened.getOpcodeList().getOpcodes().map((udo) => udo.getName())).toContain('importedFx');
+    expect(
+      reopened.getArrangement().getInstrumentById(instrumentReceipt.insertedIdentity)?.getName(),
+    ).toBe('Imported Pad');
+    expect(
+      reopened
+        .getOpcodeList()
+        .getOpcodes()
+        .map((udo) => udo.getName()),
+    ).toContain('importedFx');
   });
 
   it('instantiates a library BlueX7 with disjoint ids that remain stable on reopen', async () => {
@@ -88,12 +101,15 @@ describe('project library transfer', () => {
     const adapter = new UnifiedLibraryProjectAdapter(project.provider);
     const source = new BlueX7();
     source.setName('Library BlueX7');
-    const sourceParameter = source.getParameters().find(
-      (parameter) => parameter.getName() === 'lfo.speed',
-    )!;
+    const sourceParameter = source
+      .getParameters()
+      .find((parameter) => parameter.getName() === 'lfo.speed')!;
     sourceParameter.setAutomationEnabled(true);
     sourceParameter.setCurve(AutomationCurve.STEP);
-    sourceParameter.setPoints([{ time: 0, value: 12 }, { time: 3, value: 88 }]);
+    sourceParameter.setPoints([
+      { time: 0, value: 12 },
+      { time: 3, value: 88 },
+    ]);
     const sourceIds = new Set(source.getParameters().map((parameter) => parameter.getUniqueId()));
 
     const receipt = adapter.applyInsertion({
@@ -102,25 +118,33 @@ describe('project library transfer', () => {
       target: target('instrument', project.revision),
       mode: 'independent',
     });
-    const inserted = project.data.getArrangement().getInstrumentById(receipt.insertedIdentity) as BlueX7;
+    const inserted = project.data
+      .getArrangement()
+      .getInstrumentById(receipt.insertedIdentity) as BlueX7;
     const insertedIds = inserted.getParameters().map((parameter) => parameter.getUniqueId());
     expect(inserted).toBeInstanceOf(BlueX7);
     expect(insertedIds.every((id) => !sourceIds.has(id))).toBe(true);
-    const insertedParameter = inserted.getParameters().find(
-      (parameter) => parameter.getName() === 'lfo.speed',
-    )!;
+    const insertedParameter = inserted
+      .getParameters()
+      .find((parameter) => parameter.getName() === 'lfo.speed')!;
     expect(insertedParameter).not.toBe(sourceParameter);
     expect(insertedParameter.isAutomationEnabled()).toBe(true);
     expect(insertedParameter.getCurve()).toBe(AutomationCurve.STEP);
     expect(insertedParameter.getPoints()).toEqual(sourceParameter.getPoints());
 
     insertedParameter.setPoints([{ time: 1, value: 50 }]);
-    expect(sourceParameter.getPoints()).toEqual([{ time: 0, value: 12 }, { time: 3, value: 88 }]);
+    expect(sourceParameter.getPoints()).toEqual([
+      { time: 0, value: 12 },
+      { time: 3, value: 88 },
+    ]);
 
     const reopened = await BlueData.loadFromString(project.data.saveToString());
-    const reopenedInstrument = reopened.getArrangement().getInstrumentById(receipt.insertedIdentity) as BlueX7;
-    expect(reopenedInstrument.getParameters().map((parameter) => parameter.getUniqueId()))
-      .toEqual(insertedIds);
+    const reopenedInstrument = reopened
+      .getArrangement()
+      .getInstrumentById(receipt.insertedIdentity) as BlueX7;
+    expect(reopenedInstrument.getParameters().map((parameter) => parameter.getUniqueId())).toEqual(
+      insertedIds,
+    );
   });
 
   it('inserts at exact Orchestra/UDO positions without replacing same-name entries', () => {
@@ -140,23 +164,36 @@ describe('project library transfer', () => {
       target: { ...target('instrument', project.revision), insertIndex: 1 },
       mode: 'independent',
     });
-    expect(project.data.getArrangement().getArrangement().map((entry) => entry.instr?.getName()))
-      .toEqual(['First', 'Middle', 'Last']);
-    expect(project.data.getArrangement().getArrangement().map((entry) => entry.arrangementId))
-      .toEqual(['1', '2', '3']);
+    expect(
+      project.data
+        .getArrangement()
+        .getArrangement()
+        .map((entry) => entry.instr?.getName()),
+    ).toEqual(['First', 'Middle', 'Last']);
+    expect(
+      project.data
+        .getArrangement()
+        .getArrangement()
+        .map((entry) => entry.arrangementId),
+    ).toEqual(['1', '2', '3']);
 
     const existing = new OpcodeDefinition();
     existing.setName('sameName');
     project.data.getOpcodeList().addOpcode(existing);
-    const duplicateNameXml = '<udo><style>CLASSIC</style><opcodeName>sameName</opcodeName><outTypes>a</outTypes><inTypes>a</inTypes><codeBody>aout = ain</codeBody><comments/></udo>';
+    const duplicateNameXml =
+      '<udo><style>CLASSIC</style><opcodeName>sameName</opcodeName><outTypes>a</outTypes><inTypes>a</inTypes><codeBody>aout = ain</codeBody><comments/></udo>';
     adapter.applyInsertion({
       key: { scope: 'user', libraryType: 'udo', nodeId: 'same-name' },
       payloadXml: duplicateNameXml,
       target: { ...target('udo', project.revision), insertIndex: 0 },
       mode: 'independent',
     });
-    expect(project.data.getOpcodeList().getOpcodes().map((udo) => udo.getName()))
-      .toEqual(['sameName', 'sameName']);
+    expect(
+      project.data
+        .getOpcodeList()
+        .getOpcodes()
+        .map((udo) => udo.getName()),
+    ).toEqual(['sameName', 'sameName']);
   });
 
   it('inserts, lists, persists, and deletes UDOs in a specific Instrument UDO list', async () => {
@@ -165,15 +202,21 @@ describe('project library transfer', () => {
     instrument.setName('Embedded Host');
     project.data.getArrangement().addInstrument(instrument, '7');
     const adapter = new UnifiedLibraryProjectAdapter(project.provider);
-    const payloadXml = '<udo><style>MODERN</style><opcodeName>embeddedTone</opcodeName><outTypes>a</outTypes><inputArguments>ain:a</inputArguments><codeBody>return ain</codeBody><comments/></udo>';
+    const payloadXml =
+      '<udo><style>MODERN</style><opcodeName>embeddedTone</opcodeName><outTypes>a</outTypes><inputArguments>ain:a</inputArguments><codeBody>return ain</codeBody><comments/></udo>';
 
-    expect(adapter.validateTransferTarget({
-      kind: 'projectUdo',
-      projectSessionId: 11,
-      projectRevision: project.revision,
-      instrumentAssignmentId: '7',
-      insertIndex: 0,
-    }, 'udo')).toBeNull();
+    expect(
+      adapter.validateTransferTarget(
+        {
+          kind: 'projectUdo',
+          projectSessionId: 11,
+          projectRevision: project.revision,
+          instrumentAssignmentId: '7',
+          insertIndex: 0,
+        },
+        'udo',
+      ),
+    ).toBeNull();
 
     adapter.applyInsertion({
       key: { scope: 'user', libraryType: 'udo', nodeId: 'embedded-udo' },
@@ -186,20 +229,28 @@ describe('project library transfer', () => {
       mode: 'independent',
     });
 
-    expect(instrument.getOpcodeList().getOpcodes().map((udo) => udo.getName()))
-      .toEqual(['embeddedTone']);
-    const embeddedNode = adapter.list('udo').find((item) => (
-      item.key.scope !== 'user'
-      && item.key.locator.kind === 'udo'
-      && item.key.locator.instrumentAssignmentId === '7'
-    ));
+    expect(
+      instrument
+        .getOpcodeList()
+        .getOpcodes()
+        .map((udo) => udo.getName()),
+    ).toEqual(['embeddedTone']);
+    const embeddedNode = adapter
+      .list('udo')
+      .find(
+        (item) =>
+          item.key.scope !== 'user' &&
+          item.key.locator.kind === 'udo' &&
+          item.key.locator.instrumentAssignmentId === '7',
+      );
     expect(embeddedNode).toMatchObject({ displayName: 'embeddedTone' });
 
     const reopened = await BlueData.loadFromString(project.data.saveToString());
     const reopenedInstrument = reopened.getArrangement().getInstrumentById('7');
     expect(reopenedInstrument).toBeInstanceOf(GenericInstrument);
-    expect((reopenedInstrument as GenericInstrument).getOpcodeList().getOpcode(0)?.getName())
-      .toBe('embeddedTone');
+    expect((reopenedInstrument as GenericInstrument).getOpcodeList().getOpcode(0)?.getName()).toBe(
+      'embeddedTone',
+    );
 
     const deletion = adapter.previewDelete(embeddedNode!.key);
     adapter.deleteProjectItem(embeddedNode!.key, deletion.confirmationToken);
@@ -269,13 +320,18 @@ describe('project library transfer', () => {
       { time: 1, value: 0.75 },
     ]);
 
-    expect(adapter.validateTransferTarget({
-      kind: 'scoreBsbSound',
-      projectSessionId: 11,
-      projectRevision: project.revision,
-      location,
-      timeContextRevision: String(project.revision),
-    }, 'instrument')).toBeNull();
+    expect(
+      adapter.validateTransferTarget(
+        {
+          kind: 'scoreBsbSound',
+          projectSessionId: 11,
+          projectRevision: project.revision,
+          location,
+          timeContextRevision: String(project.revision),
+        },
+        'instrument',
+      ),
+    ).toBeNull();
 
     adapter.applyInsertion({
       key: { scope: 'user', libraryType: 'instrument', nodeId: 'bsb-buffer' },
@@ -311,21 +367,23 @@ describe('project library transfer', () => {
     const group = snapshot.score!.layerGroups[0]!;
     const source = new GenericInstrument();
 
-    expect(() => adapter.applyInsertion({
-      key: { scope: 'user', libraryType: 'instrument', nodeId: 'generic-buffer' },
-      payloadXml: source.saveAsXML().toXml(),
-      target: {
-        ...target('instrument', project.revision),
-        destinationKind: 'scoreBsbSound',
-        location: {
-          rootGroupId: group.groupId,
-          containerPath: [],
-          layerId: group.layers[0]!.layerId,
-          startTime: 0,
+    expect(() =>
+      adapter.applyInsertion({
+        key: { scope: 'user', libraryType: 'instrument', nodeId: 'generic-buffer' },
+        payloadXml: source.saveAsXML().toXml(),
+        target: {
+          ...target('instrument', project.revision),
+          destinationKind: 'scoreBsbSound',
+          location: {
+            rootGroupId: group.groupId,
+            containerPath: [],
+            layerId: group.layers[0]!.layerId,
+            startTime: 0,
+          },
         },
-      },
-      mode: 'independent',
-    })).toThrow(/requires a BlueSynthBuilder/i);
+        mode: 'independent',
+      }),
+    ).toThrow(/requires a BlueSynthBuilder/i);
     expect((project.data.getScore()[0] as PolyObject)[0]).toHaveLength(0);
   });
 
@@ -346,15 +404,25 @@ describe('project library transfer', () => {
       timeContextRevision: String(project.revision),
     };
 
-    expect(adapter.validateTransferTarget({
-      ...baseTarget,
-      projectRevision: project.revision - 1,
-    }, 'instrument')).toMatch(/destination changed|choose it again/i);
-    expect(adapter.validateTransferTarget({
-      ...baseTarget,
-      projectRevision: project.revision,
-      location: { ...baseTarget.location, layerId: 'missing-layer' },
-    }, 'instrument')).toMatch(/layer|target|location/i);
+    expect(
+      adapter.validateTransferTarget(
+        {
+          ...baseTarget,
+          projectRevision: project.revision - 1,
+        },
+        'instrument',
+      ),
+    ).toMatch(/destination changed|choose it again/i);
+    expect(
+      adapter.validateTransferTarget(
+        {
+          ...baseTarget,
+          projectRevision: project.revision,
+          location: { ...baseTarget.location, layerId: 'missing-layer' },
+        },
+        'instrument',
+      ),
+    ).toMatch(/layer|target|location/i);
   });
 
   it('adds a user SoundObject to the project SoundObject Library', () => {
@@ -376,8 +444,9 @@ describe('project library transfer', () => {
 
     expect(receipt.libraryType).toBe('soundObject');
     expect(project.data.getSoundObjectLibrary().size()).toBe(before + 1);
-    expect(project.data.getSoundObjectLibrary().getObjectById(receipt.insertedIdentity)?.getName())
-      .toBe('Project Clip');
+    expect(
+      project.data.getSoundObjectLibrary().getObjectById(receipt.insertedIdentity)?.getName(),
+    ).toBe('Project Clip');
   });
 
   it('resolves a stable nested Score path and rejects changed paths or time contexts', () => {
@@ -389,13 +458,21 @@ describe('project library transfer', () => {
     const adapter = new UnifiedLibraryProjectAdapter(project.provider);
     const snapshot = createProjectEditorSnapshot(project.data, null, 11);
     const rootGroup = snapshot.score?.layerGroups.find((candidate) => candidate.name === 'Root');
-    const containerItem = rootGroup?.layers[0]?.items.find((candidate) => candidate.name === 'Nested');
-    if (!rootGroup || !containerItem?.editorTarget?.location) throw new Error('Expected nested Score fixture');
-    const nestedSnapshot = createNestedPolyObjectSnapshot(project.data, containerItem.editorTarget.location);
+    const containerItem = rootGroup?.layers[0]?.items.find(
+      (candidate) => candidate.name === 'Nested',
+    );
+    if (!rootGroup || !containerItem?.editorTarget?.location)
+      throw new Error('Expected nested Score fixture');
+    const nestedSnapshot = createNestedPolyObjectSnapshot(
+      project.data,
+      containerItem.editorTarget.location,
+    );
     if (!nestedSnapshot) throw new Error('Expected nested snapshot');
     const location = {
       rootGroupId: rootGroup.groupId,
-      containerPath: [{ layerId: rootGroup.layers[0]!.layerId, objectIdentity: containerItem.objectId }],
+      containerPath: [
+        { layerId: rootGroup.layers[0]!.layerId, objectIdentity: containerItem.objectId },
+      ],
       layerId: nestedSnapshot.layers[0]!.layerId,
       startTime: 3,
     };
@@ -409,16 +486,30 @@ describe('project library transfer', () => {
     });
     expect(Array.from(nested[0]!, (object) => object.getName())).toEqual(['Nested child']);
 
-    expect(adapter.validateTransferTarget({
-      kind: 'score', projectSessionId: 11, projectRevision: project.revision,
-      location: { ...location, layerId: 'removed-layer' },
-      timeContextRevision: String(project.revision),
-    }, 'soundObject')).toMatch(/path|layer/i);
-    expect(adapter.validateTransferTarget({
-      kind: 'score', projectSessionId: 11, projectRevision: project.revision,
-      location,
-      timeContextRevision: String(project.revision - 1),
-    }, 'soundObject')).toMatch(/time context/i);
+    expect(
+      adapter.validateTransferTarget(
+        {
+          kind: 'score',
+          projectSessionId: 11,
+          projectRevision: project.revision,
+          location: { ...location, layerId: 'removed-layer' },
+          timeContextRevision: String(project.revision),
+        },
+        'soundObject',
+      ),
+    ).toMatch(/path|layer/i);
+    expect(
+      adapter.validateTransferTarget(
+        {
+          kind: 'score',
+          projectSessionId: 11,
+          projectRevision: project.revision,
+          location,
+          timeContextRevision: String(project.revision - 1),
+        },
+        'soundObject',
+      ),
+    ).toMatch(/time context/i);
   });
 
   it('inserts an independent enabled Effect at the exact mixer chain position', () => {
@@ -520,19 +611,27 @@ describe('project library transfer', () => {
   it('rejects stale sessions and target revisions with zero mutation', () => {
     const project = activeProject();
     const adapter = new UnifiedLibraryProjectAdapter(project.provider);
-    const key: LibraryItemKey = { scope: 'user', libraryType: 'instrument', nodeId: 'instrument-1' };
-    expect(() => adapter.applyInsertion({
-      key,
-      payloadXml: new GenericInstrument().saveAsXML().toXml(),
-      target: target('instrument', project.revision, 99),
-      mode: 'independent',
-    })).toThrow(/stale project session/i);
-    expect(() => adapter.applyInsertion({
-      key,
-      payloadXml: new GenericInstrument().saveAsXML().toXml(),
-      target: target('instrument', project.revision - 1),
-      mode: 'independent',
-    })).toThrow(/stale target/i);
+    const key: LibraryItemKey = {
+      scope: 'user',
+      libraryType: 'instrument',
+      nodeId: 'instrument-1',
+    };
+    expect(() =>
+      adapter.applyInsertion({
+        key,
+        payloadXml: new GenericInstrument().saveAsXML().toXml(),
+        target: target('instrument', project.revision, 99),
+        mode: 'independent',
+      }),
+    ).toThrow(/stale project session/i);
+    expect(() =>
+      adapter.applyInsertion({
+        key,
+        payloadXml: new GenericInstrument().saveAsXML().toXml(),
+        target: target('instrument', project.revision - 1),
+        mode: 'independent',
+      }),
+    ).toThrow(/stale target/i);
     expect(project.data.getArrangement().size()).toBe(0);
     expect(project.commit).not.toHaveBeenCalled();
   });
@@ -565,18 +664,25 @@ describe('project library transfer', () => {
     expect(liveObject?.getSoundObject()?.getName()).toBe('Library Phrase');
     expect(liveObject?.getSoundObject()).not.toBe(source);
 
-    expect(adapter.getBlueLiveSoundObjectSource({
-      projectSessionId: 11,
-      projectRevision: project.revision,
-      liveObjectId: liveObject!.getUniqueId(),
-    })).toMatchObject({ displayName: 'Library Phrase', objectType: 'GenericScore' });
+    expect(
+      adapter.getBlueLiveSoundObjectSource({
+        projectSessionId: 11,
+        projectRevision: project.revision,
+        liveObjectId: liveObject!.getUniqueId(),
+      }),
+    ).toMatchObject({ displayName: 'Library Phrase', objectType: 'GenericScore' });
 
     const replacement = new LiveObject();
     project.data.getLiveData().getLiveObjectBins().setLiveObject(0, 0, replacement);
-    expect(adapter.validateTransferTarget({
-      ...exactTarget,
-      projectRevision: project.revision,
-      liveCell: { ...exactTarget.liveCell, expectedLiveObjectId: liveObject!.getUniqueId() },
-    }, 'soundObject')).toMatch(/changed/i);
+    expect(
+      adapter.validateTransferTarget(
+        {
+          ...exactTarget,
+          projectRevision: project.revision,
+          liveCell: { ...exactTarget.liveCell, expectedLiveObjectId: liveObject!.getUniqueId() },
+        },
+        'soundObject',
+      ),
+    ).toMatch(/changed/i);
   });
 });

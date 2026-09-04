@@ -8,7 +8,11 @@
 
 import { EventEmitter } from 'node:events';
 import type { CodeRepositoryNode } from '@blue/data';
-import { createEmptyCodeRepositoryDocument, parseCodeRepositoryXml, serializeCodeRepositoryXml } from '@blue/data';
+import {
+  createEmptyCodeRepositoryDocument,
+  parseCodeRepositoryXml,
+  serializeCodeRepositoryXml,
+} from '@blue/data';
 import { createHash, randomUUID } from 'node:crypto';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -37,7 +41,12 @@ export interface CodeRepositoryServiceOptions {
   readonly clientFactory?: (databasePath: string) => CodeRepositoryClient;
 }
 
-export type CodeRepositoryServicePhase = 'initializing' | 'migrating' | 'ready' | 'failed' | 'stopped';
+export type CodeRepositoryServicePhase =
+  | 'initializing'
+  | 'migrating'
+  | 'ready'
+  | 'failed'
+  | 'stopped';
 
 interface CodeRepositoryServiceSnapshot {
   readonly phase: CodeRepositoryServicePhase;
@@ -167,7 +176,10 @@ export class CodeRepositoryService {
     return this.client;
   }
 
-  async commitDraft(expectedRevision: number, root: CodeRepositoryNode): Promise<CodeRepositorySnapshot> {
+  async commitDraft(
+    expectedRevision: number,
+    root: CodeRepositoryNode,
+  ): Promise<CodeRepositorySnapshot> {
     const client = this.requireClient();
     try {
       const data = await client.commitDraft(expectedRevision, root);
@@ -179,7 +191,11 @@ export class CodeRepositoryService {
     }
   }
 
-  async createGroup(parentId: string, name: string, expectedRevision: number): Promise<CodeRepositorySnapshot> {
+  async createGroup(
+    parentId: string,
+    name: string,
+    expectedRevision: number,
+  ): Promise<CodeRepositorySnapshot> {
     return this.runMutation((client) => client.createGroup(parentId, name, expectedRevision));
   }
 
@@ -189,7 +205,9 @@ export class CodeRepositoryService {
     code: string,
     expectedRevision: number,
   ): Promise<CodeRepositorySnapshot> {
-    return this.runMutation((client) => client.createSnippet(parentId, name, code, expectedRevision));
+    return this.runMutation((client) =>
+      client.createSnippet(parentId, name, code, expectedRevision),
+    );
   }
 
   async moveNode(
@@ -346,7 +364,11 @@ export class CodeRepositoryService {
         format: 'java-blue-code-repository-v1',
       };
     } catch (error) {
-      throw new ServiceError('export-failed', error instanceof Error ? error.message : 'Export failed', false);
+      throw new ServiceError(
+        'export-failed',
+        error instanceof Error ? error.message : 'Export failed',
+        false,
+      );
     }
   }
 
@@ -376,7 +398,10 @@ export class CodeRepositoryService {
       return;
     }
     this.beginMigrationAttempt();
-    const legacyPath = path.join(this.options.legacyConfigurationDirectory ?? '', 'codeRepository.xml');
+    const legacyPath = path.join(
+      this.options.legacyConfigurationDirectory ?? '',
+      'codeRepository.xml',
+    );
     let attemptedSourcePath: string | null = null;
     try {
       const current = await this.client!.getSnapshot();
@@ -386,7 +411,11 @@ export class CodeRepositoryService {
         try {
           xml = fs.readFileSync(legacyPath, 'utf8');
         } catch {
-          throw new ServiceError('source-unreadable', 'Unable to read the legacy Code Repository source.', true);
+          throw new ServiceError(
+            'source-unreadable',
+            'Unable to read the legacy Code Repository source.',
+            true,
+          );
         }
         const hash = sha256(xml);
         if (await this.client!.hasImportedHash(hash)) {
@@ -563,7 +592,9 @@ export class CodeRepositoryService {
     }
   }
 
-  private finishMigrationAttempt(input: Parameters<CodeRepositoryMigrationStateStore['finishAttempt']>[0]): void {
+  private finishMigrationAttempt(
+    input: Parameters<CodeRepositoryMigrationStateStore['finishAttempt']>[0],
+  ): void {
     try {
       this.stateStore?.finishAttempt(input);
     } catch {
@@ -572,7 +603,10 @@ export class CodeRepositoryService {
     }
   }
 
-  private async mapMutationError(error: unknown, client: CodeRepositoryClient): Promise<ServiceError> {
+  private async mapMutationError(
+    error: unknown,
+    client: CodeRepositoryClient,
+  ): Promise<ServiceError> {
     if (error instanceof Error && error.message.includes('revision-conflict')) {
       try {
         this.snapshot = toPublicSnapshot(await client.getSnapshot());
@@ -630,7 +664,10 @@ export class ServiceError extends Error {
   }
 }
 
-function mapMutationError(error: unknown, currentSnapshot: CodeRepositorySnapshot | null): ServiceError {
+function mapMutationError(
+  error: unknown,
+  currentSnapshot: CodeRepositorySnapshot | null,
+): ServiceError {
   const message = error instanceof Error ? error.message : String(error);
   if (message.includes('revision-conflict')) {
     return new ServiceError(
@@ -699,7 +736,10 @@ function preserveDatabaseFiles(databasePath: string): PreservedDatabaseFile[] {
   }
 }
 
-function restoreDatabaseFiles(databasePath: string, preserved: readonly PreservedDatabaseFile[]): void {
+function restoreDatabaseFiles(
+  databasePath: string,
+  preserved: readonly PreservedDatabaseFile[],
+): void {
   for (const currentPath of databaseFiles(databasePath)) {
     if (fs.existsSync(currentPath)) fs.rmSync(currentPath, { force: true });
   }

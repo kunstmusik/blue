@@ -28,7 +28,7 @@ export function normalizeLayerColor(value: number): number {
   if (!isValidLayerColorInput(value)) {
     throw new Error(`Invalid layer color: ${value}`);
   }
-  return ((value & 0x00ffffff) | 0xff000000) | 0;
+  return (value & 0x00ffffff) | 0xff000000 | 0;
 }
 
 /**
@@ -38,7 +38,7 @@ export function tryNormalizeLayerColor(value: unknown): number | null {
   if (!isValidLayerColorInput(value)) {
     return null;
   }
-  return ((value & 0x00ffffff) | 0xff000000) | 0;
+  return (value & 0x00ffffff) | 0xff000000 | 0;
 }
 
 /**
@@ -57,7 +57,7 @@ export function normalizeXmlLayerColor(value: string | null | undefined): number
   if (!isValidLayerColorInput(parsed)) {
     return DEFAULT_LAYER_COLOR;
   }
-  return ((parsed & 0x00ffffff) | 0xff000000) | 0;
+  return (parsed & 0x00ffffff) | 0xff000000 | 0;
 }
 
 /**

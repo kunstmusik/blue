@@ -86,13 +86,33 @@ export const GENERATE_MIDI = 2;
 export const MIDI_NOTE_COUNT = 128;
 
 export const NOTE_NAMES_12TET = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-export const NOTE_NAMES_FULL = ['C', 'C#/Db', 'D', 'D#/Eb', 'E', 'F', 'F#/Gb', 'G', 'G#/Ab', 'A', 'A#/Bb', 'B'];
+export const NOTE_NAMES_FULL = [
+  'C',
+  'C#/Db',
+  'D',
+  'D#/Eb',
+  'E',
+  'F',
+  'F#/Gb',
+  'G',
+  'G#/Ab',
+  'A',
+  'A#/Bb',
+  'B',
+];
 
 export const OCTAVES = 16;
 export const CENTER_OCTAVE = 8;
 export const PITCH_HEADER_WIDTH = 72;
 
-export type DragMode = 'NONE' | 'SELECTING' | 'MOVE' | 'RESIZE_LEFT' | 'RESIZE_RIGHT' | 'FIELD_EDIT' | 'CREATE';
+export type DragMode =
+  | 'NONE'
+  | 'SELECTING'
+  | 'MOVE'
+  | 'RESIZE_LEFT'
+  | 'RESIZE_RIGHT'
+  | 'FIELD_EDIT'
+  | 'CREATE';
 
 export interface NoteData {
   noteIndex: number;
@@ -142,7 +162,11 @@ export function snapBeatRound(value: number, snapBeats: number): number {
   return Math.round(value / snapBeats) * snapBeats;
 }
 
-export function getSnapBeats(snapEnabled: boolean, snapValue: SnapValueName, pixelSecond: number): number {
+export function getSnapBeats(
+  snapEnabled: boolean,
+  snapValue: SnapValueName,
+  pixelSecond: number,
+): number {
   if (!snapEnabled) return 0;
   return snapValueToBeats(snapValue, 60, 24, 44100, pixelSecond);
 }
@@ -167,7 +191,9 @@ export function clonePianoRollScale(scale: ScaleSnapshot): ScaleSnapshot {
   };
 }
 
-export function clonePianoRollFieldDefinitions(fieldDefinitions: FieldDefSnapshot[]): FieldDefSnapshot[] {
+export function clonePianoRollFieldDefinitions(
+  fieldDefinitions: FieldDefSnapshot[],
+): FieldDefSnapshot[] {
   return fieldDefinitions.map((fieldDefinition) => ({ ...fieldDefinition }));
 }
 
@@ -198,16 +224,20 @@ export function applyPianoRollPatchToPayload(
 
   if (patch.instrumentId !== undefined) next.instrumentId = patch.instrumentId as string;
   if (patch.noteTemplate !== undefined) next.noteTemplate = patch.noteTemplate as string;
-  if (patch.pchGenerationMethod !== undefined) next.pchGenerationMethod = patch.pchGenerationMethod as number;
+  if (patch.pchGenerationMethod !== undefined)
+    next.pchGenerationMethod = patch.pchGenerationMethod as number;
   if (patch.transposition !== undefined) next.transposition = patch.transposition as number;
   if (patch.pixelSecond !== undefined) next.pixelSecond = patch.pixelSecond as number;
   if (patch.noteHeight !== undefined) next.noteHeight = patch.noteHeight as number;
   if (patch.snapEnabled !== undefined) next.snapEnabled = patch.snapEnabled as boolean;
   if (patch.snapValue !== undefined) next.snapValue = patch.snapValue as SnapValueName;
   if (patch.useGlobalRuler !== undefined) next.useGlobalRuler = patch.useGlobalRuler as boolean;
-  if (patch.primaryTimeDisplay !== undefined) next.primaryTimeDisplay = patch.primaryTimeDisplay as string;
-  if (patch.secondaryTimeDisplay !== undefined) next.secondaryTimeDisplay = patch.secondaryTimeDisplay as string;
-  if (patch.secondaryRulerEnabled !== undefined) next.secondaryRulerEnabled = patch.secondaryRulerEnabled as boolean;
+  if (patch.primaryTimeDisplay !== undefined)
+    next.primaryTimeDisplay = patch.primaryTimeDisplay as string;
+  if (patch.secondaryTimeDisplay !== undefined)
+    next.secondaryTimeDisplay = patch.secondaryTimeDisplay as string;
+  if (patch.secondaryRulerEnabled !== undefined)
+    next.secondaryRulerEnabled = patch.secondaryRulerEnabled as boolean;
 
   if (patch.scale !== undefined) {
     next.scale = clonePianoRollScale(patch.scale as ScaleSnapshot);
@@ -239,18 +269,23 @@ export function applyPianoRollPatchToPayload(
   }
 
   if (typeof patch.removeFieldDef === 'number') {
-    next.fieldDefinitions = next.fieldDefinitions.filter((_, index) => index !== patch.removeFieldDef);
+    next.fieldDefinitions = next.fieldDefinitions.filter(
+      (_, index) => index !== patch.removeFieldDef,
+    );
   }
 
   if (patch.pianoRollNoteBatch !== undefined) {
-    next.notes = applyPianoRollNoteBatch(next.notes, patch.pianoRollNoteBatch as PianoRollNoteBatch);
+    next.notes = applyPianoRollNoteBatch(
+      next.notes,
+      patch.pianoRollNoteBatch as PianoRollNoteBatch,
+    );
   }
 
   if (
-    patch.fieldDefinitions !== undefined
-    || patch.addFieldDef !== undefined
-    || patch.updateFieldDef !== undefined
-    || patch.removeFieldDef !== undefined
+    patch.fieldDefinitions !== undefined ||
+    patch.addFieldDef !== undefined ||
+    patch.updateFieldDef !== undefined ||
+    patch.removeFieldDef !== undefined
   ) {
     next.notes = realignPianoRollNotes(next.notes, previousFieldDefinitions, next.fieldDefinitions);
   }
@@ -388,11 +423,13 @@ function realignPianoRollNotes(
     ...note,
     fieldValues: nextFieldDefinitions.map((fieldDefinition, index) => {
       const previousIndex = previousFieldDefinitions.findIndex(
-        (previousFieldDefinition) => previousFieldDefinition.fieldName === fieldDefinition.fieldName,
+        (previousFieldDefinition) =>
+          previousFieldDefinition.fieldName === fieldDefinition.fieldName,
       );
-      const value = previousIndex >= 0
-        ? note.fieldValues[previousIndex] ?? fieldDefinition.defaultValue
-        : note.fieldValues[index] ?? fieldDefinition.defaultValue;
+      const value =
+        previousIndex >= 0
+          ? (note.fieldValues[previousIndex] ?? fieldDefinition.defaultValue)
+          : (note.fieldValues[index] ?? fieldDefinition.defaultValue);
       return normalizeFieldValue(value, fieldDefinition);
     }),
   }));

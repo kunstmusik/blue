@@ -10,7 +10,9 @@ import type { JavaBlueCsoundCompletionOptions } from '../components/workbench/pa
 import { useCodeRepositoryStore } from '../stores/code-repository-store';
 import { CODE_REPOSITORY_ROOT_ID } from '@blue/data';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 /**
  * Regression coverage for the cursor-reset bug fixed by reconfiguring the
@@ -31,7 +33,14 @@ describe('SelectedCodeEditor completion reconfigure', () => {
 
   beforeEach(() => {
     rectSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
-      x: 0, y: 0, left: 0, top: 0, right: 400, bottom: 300, width: 400, height: 300,
+      x: 0,
+      y: 0,
+      left: 0,
+      top: 0,
+      right: 400,
+      bottom: 300,
+      width: 400,
+      height: 300,
       toJSON: () => ({}),
     } as DOMRect);
     rangeRectsDescriptor = Object.getOwnPropertyDescriptor(Range.prototype, 'getClientRects');
@@ -83,7 +92,11 @@ describe('SelectedCodeEditor completion reconfigure', () => {
   }
 
   it('preserves the EditorView instance and document when completion options identity changes', () => {
-    renderWith({ projectUdos: [{ name: 'A', style: 'CLASSIC', outTypes: 'a', inTypes: 'a', inputArguments: '' }] });
+    renderWith({
+      projectUdos: [
+        { name: 'A', style: 'CLASSIC', outTypes: 'a', inTypes: 'a', inputArguments: '' },
+      ],
+    });
 
     const viewBefore = getView();
     expect(viewBefore).not.toBeNull();
@@ -91,7 +104,11 @@ describe('SelectedCodeEditor completion reconfigure', () => {
 
     // Simulate the project store handing back a fresh array (new identity,
     // same content) on a project-document-updated broadcast.
-    renderWith({ projectUdos: [{ name: 'A', style: 'CLASSIC', outTypes: 'a', inTypes: 'a', inputArguments: '' }] });
+    renderWith({
+      projectUdos: [
+        { name: 'A', style: 'CLASSIC', outTypes: 'a', inTypes: 'a', inputArguments: '' },
+      ],
+    });
 
     const viewAfter = getView();
     // The view was NOT destroyed and rebuilt — same instance survives.
@@ -101,15 +118,21 @@ describe('SelectedCodeEditor completion reconfigure', () => {
   });
 
   it('still applies new completion options without rebuilding the view', () => {
-    renderWith({ projectUdos: [{ name: 'A', style: 'CLASSIC', outTypes: 'a', inTypes: 'a', inputArguments: '' }] });
+    renderWith({
+      projectUdos: [
+        { name: 'A', style: 'CLASSIC', outTypes: 'a', inTypes: 'a', inputArguments: '' },
+      ],
+    });
     const viewBefore = getView();
     expect(viewBefore).not.toBeNull();
 
     // Different options content (a new UDO) — must reconfigure, not rebuild.
-    renderWith({ projectUdos: [
-      { name: 'A', style: 'CLASSIC', outTypes: 'a', inTypes: 'a', inputArguments: '' },
-      { name: 'B', style: 'CLASSIC', outTypes: 'a', inTypes: 'k', inputArguments: '' },
-    ] });
+    renderWith({
+      projectUdos: [
+        { name: 'A', style: 'CLASSIC', outTypes: 'a', inTypes: 'a', inputArguments: '' },
+        { name: 'B', style: 'CLASSIC', outTypes: 'a', inTypes: 'k', inputArguments: '' },
+      ],
+    });
 
     const viewAfter = getView();
     expect(viewAfter).toBe(viewBefore);
@@ -121,30 +144,40 @@ describe('SelectedCodeEditor completion reconfigure', () => {
     expect(view).not.toBeNull();
     const trigger = container.querySelector('.selected-code-editor') as HTMLElement;
 
-    act(() => trigger.dispatchEvent(new MouseEvent('contextmenu', {
-      bubbles: true,
-      cancelable: true,
-      clientX: 12,
-      clientY: 12,
-    })));
-    let addItem = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')]
-      .find((item) => item.textContent?.includes('Add to Code Repository'));
+    act(() =>
+      trigger.dispatchEvent(
+        new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 12,
+          clientY: 12,
+        }),
+      ),
+    );
+    let addItem = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find((item) =>
+      item.textContent?.includes('Add to Code Repository'),
+    );
     expect(addItem?.getAttribute('data-disabled')).not.toBeNull();
 
     act(() => {
       view!.dispatch({ selection: { anchor: 0, head: 5 } });
     });
-    act(() => trigger.dispatchEvent(new MouseEvent('contextmenu', {
-      bubbles: true,
-      cancelable: true,
-      clientX: 12,
-      clientY: 12,
-    })));
+    act(() =>
+      trigger.dispatchEvent(
+        new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 12,
+          clientY: 12,
+        }),
+      ),
+    );
     await act(async () => {
       await Promise.resolve();
     });
-    addItem = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')]
-      .find((item) => item.textContent?.includes('Add to Code Repository'));
+    addItem = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find((item) =>
+      item.textContent?.includes('Add to Code Repository'),
+    );
     expect(addItem?.getAttribute('data-disabled')).toBeNull();
   });
 
@@ -179,24 +212,32 @@ describe('SelectedCodeEditor completion reconfigure', () => {
     const view = getView()!;
     const trigger = container.querySelector('.selected-code-editor') as HTMLElement;
     act(() => view.dispatch({ selection: { anchor: 0, head: 8 } }));
-    act(() => trigger.dispatchEvent(new MouseEvent('contextmenu', {
-      bubbles: true,
-      cancelable: true,
-      clientX: 12,
-      clientY: 12,
-    })));
+    act(() =>
+      trigger.dispatchEvent(
+        new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 12,
+          clientY: 12,
+        }),
+      ),
+    );
     await act(async () => {
       await Promise.resolve();
     });
-    const addItem = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')]
-      .find((item) => item.textContent?.includes('Add to Code Repository'));
+    const addItem = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find((item) =>
+      item.textContent?.includes('Add to Code Repository'),
+    );
     expect(addItem).toBeTruthy();
     await act(async () => {
       addItem!.click();
       await Promise.resolve();
     });
-    expect([...document.body.querySelectorAll('h2')]
-      .some((heading) => heading.textContent === 'Add to Code Repository')).toBe(true);
+    expect(
+      [...document.body.querySelectorAll('h2')].some(
+        (heading) => heading.textContent === 'Add to Code Repository',
+      ),
+    ).toBe(true);
     expect(document.body.textContent).toContain('selected');
   });
 });

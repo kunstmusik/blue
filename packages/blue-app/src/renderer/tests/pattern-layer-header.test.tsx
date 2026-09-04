@@ -11,7 +11,9 @@ import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { useLayerSelectionStore } from '../stores/layer-selection-store';
 import { useWorkbenchStore } from '../stores/workbench-store';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const originalProjectState = useProjectStore.getState();
 
@@ -55,7 +57,9 @@ describe('PatternLayerHeader', () => {
   let root: Root;
   let openPanel: ReturnType<typeof vi.fn>;
   let applyProjectDocumentPatch: ReturnType<typeof vi.fn>;
-  let originalOpenPanel: typeof useWorkbenchStore.getState extends () => infer State ? State['openPanel'] : never;
+  let originalOpenPanel: typeof useWorkbenchStore.getState extends () => infer State
+    ? State['openPanel']
+    : never;
 
   beforeEach(() => {
     useScoreSelectionStore.getState().clearSelection();
@@ -63,7 +67,9 @@ describe('PatternLayerHeader', () => {
     originalOpenPanel = useWorkbenchStore.getState().openPanel;
     openPanel = vi.fn();
     applyProjectDocumentPatch = vi.fn().mockResolvedValue(undefined);
-    useProjectStore.setState({ applyProjectDocumentPatch } as Partial<ReturnType<typeof useProjectStore.getState>>);
+    useProjectStore.setState({ applyProjectDocumentPatch } as Partial<
+      ReturnType<typeof useProjectStore.getState>
+    >);
     useWorkbenchStore.setState({ openPanel });
     container = document.createElement('div');
     document.body.appendChild(container);
@@ -82,12 +88,7 @@ describe('PatternLayerHeader', () => {
   it('selects the embedded source object and focuses its editor on a row click', () => {
     act(() => {
       root.render(
-        <PatternLayerHeader
-          layer={makeLayer()}
-          groupId="grp"
-          layerIndex={0}
-          layerCount={1}
-        />,
+        <PatternLayerHeader layer={makeLayer()} groupId="grp" layerIndex={0} layerCount={1} />,
       );
     });
 
@@ -109,12 +110,7 @@ describe('PatternLayerHeader', () => {
   it('shows only the pattern layer name', () => {
     act(() => {
       root.render(
-        <PatternLayerHeader
-          layer={makeLayer()}
-          groupId="grp"
-          layerIndex={0}
-          layerCount={1}
-        />,
+        <PatternLayerHeader layer={makeLayer()} groupId="grp" layerIndex={0} layerCount={1} />,
       );
     });
 
@@ -129,14 +125,7 @@ describe('PatternLayerHeader', () => {
     layer.name = '';
 
     act(() => {
-      root.render(
-        <PatternLayerHeader
-          layer={layer}
-          groupId="grp"
-          layerIndex={0}
-          layerCount={1}
-        />,
-      );
+      root.render(<PatternLayerHeader layer={layer} groupId="grp" layerIndex={0} layerCount={1} />);
     });
 
     const header = container.querySelector<HTMLElement>('[data-pattern-layer-header]')!;
@@ -149,12 +138,7 @@ describe('PatternLayerHeader', () => {
   it('renames the pattern layer through the canonical group-index patch', () => {
     act(() => {
       root.render(
-        <PatternLayerHeader
-          layer={makeLayer()}
-          groupId="grp"
-          layerIndex={0}
-          layerCount={1}
-        />,
+        <PatternLayerHeader layer={makeLayer()} groupId="grp" layerIndex={0} layerCount={1} />,
       );
     });
 
@@ -182,20 +166,19 @@ describe('PatternLayerHeader', () => {
   });
 
   it('clears the single editor target for a shift-click layer-range gesture', () => {
-    useScoreSelectionStore.getState().select('source-1', false, makeLayer().sourceObject.editorTarget);
+    useScoreSelectionStore
+      .getState()
+      .select('source-1', false, makeLayer().sourceObject.editorTarget);
     act(() => {
       root.render(
-        <PatternLayerHeader
-          layer={makeLayer()}
-          groupId="grp"
-          layerIndex={0}
-          layerCount={1}
-        />,
+        <PatternLayerHeader layer={makeLayer()} groupId="grp" layerIndex={0} layerCount={1} />,
       );
     });
     const header = container.querySelector<HTMLElement>('[data-pattern-layer-header]')!;
     act(() => {
-      header.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0, shiftKey: true }));
+      header.dispatchEvent(
+        new MouseEvent('mousedown', { bubbles: true, button: 0, shiftKey: true }),
+      );
     });
     expect(useScoreSelectionStore.getState().selectedObjectIds.size).toBe(0);
     expect(openPanel).not.toHaveBeenCalled();
@@ -206,12 +189,7 @@ describe('PatternLayerHeader', () => {
   it('applies layer selection styling and aria-selected on single selection', () => {
     act(() => {
       root.render(
-        <PatternLayerHeader
-          layer={makeLayer()}
-          groupId="grp"
-          layerIndex={0}
-          layerCount={1}
-        />,
+        <PatternLayerHeader layer={makeLayer()} groupId="grp" layerIndex={0} layerCount={1} />,
       );
     });
 

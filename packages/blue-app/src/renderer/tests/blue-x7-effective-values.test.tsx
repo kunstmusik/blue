@@ -11,7 +11,9 @@ import type { BlueX7Voice } from '@blue/data';
 import { createDefaultBlueX7Voice } from '@blue/data';
 import type { BlueX7InstrumentSnapshot, BlueX7Patch } from '../../shared/project-editor';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 type ProbeProps = Parameters<typeof useBlueX7EffectiveValues>[0];
 
@@ -53,7 +55,9 @@ describe('next-note catalog labels (Spec 092 FR-012)', () => {
     });
     const badges = container.querySelectorAll('[data-testid="bluex7-next-note-badge"]');
     expect(badges.length).toBe(0);
-    expect(container.querySelector('label[for="bluex7-algorithm"]')?.textContent).toContain('Algorithm (1–32)');
+    expect(container.querySelector('label[for="bluex7-algorithm"]')?.textContent).toContain(
+      'Algorithm (1–32)',
+    );
     expect(container.querySelector('input[aria-label="Shared Oscillator Sync"]')).not.toBeNull();
     act(() => root.unmount());
     container.remove();
@@ -115,38 +119,52 @@ describe('useBlueX7EffectiveValues (Spec 092 FR-014)', () => {
     });
     // 20 Hz polling: ~2 more ticks inside 100 ms
     expect(getBlueX7EffectiveValues.mock.calls.length).toBeGreaterThanOrEqual(2);
-    expect(container?.querySelector('[data-testid="hook-probe"]')?.getAttribute('data-size')).toBe('1');
+    expect(container?.querySelector('[data-testid="hook-probe"]')?.getAttribute('data-size')).toBe(
+      '1',
+    );
   });
 
   it.each([
-    ['session', {
-      ok: true,
-      projectSessionId: 6,
-      ownerIdentity: 'arrangement:1',
-      engineSequence: 1,
-      values: [{ parameterId: 'param-a', value: 42 }],
-    }],
-    ['owner', {
-      ok: true,
-      projectSessionId: 5,
-      ownerIdentity: 'arrangement:2',
-      engineSequence: 1,
-      values: [{ parameterId: 'param-a', value: 42 }],
-    }],
-    ['parameter set', {
-      ok: true,
-      projectSessionId: 5,
-      ownerIdentity: 'arrangement:1',
-      engineSequence: 1,
-      values: [{ parameterId: 'foreign-param', value: 42 }],
-    }],
-    ['finite value', {
-      ok: true,
-      projectSessionId: 5,
-      ownerIdentity: 'arrangement:1',
-      engineSequence: 1,
-      values: [{ parameterId: 'param-a', value: Number.NaN }],
-    }],
+    [
+      'session',
+      {
+        ok: true,
+        projectSessionId: 6,
+        ownerIdentity: 'arrangement:1',
+        engineSequence: 1,
+        values: [{ parameterId: 'param-a', value: 42 }],
+      },
+    ],
+    [
+      'owner',
+      {
+        ok: true,
+        projectSessionId: 5,
+        ownerIdentity: 'arrangement:2',
+        engineSequence: 1,
+        values: [{ parameterId: 'param-a', value: 42 }],
+      },
+    ],
+    [
+      'parameter set',
+      {
+        ok: true,
+        projectSessionId: 5,
+        ownerIdentity: 'arrangement:1',
+        engineSequence: 1,
+        values: [{ parameterId: 'foreign-param', value: 42 }],
+      },
+    ],
+    [
+      'finite value',
+      {
+        ok: true,
+        projectSessionId: 5,
+        ownerIdentity: 'arrangement:1',
+        engineSequence: 1,
+        values: [{ parameterId: 'param-a', value: Number.NaN }],
+      },
+    ],
   ])('rejects a successful response with invalid %s data', async (_kind, result) => {
     getBlueX7EffectiveValues.mockResolvedValue(result);
     await act(async () => {
@@ -154,7 +172,9 @@ describe('useBlueX7EffectiveValues (Spec 092 FR-014)', () => {
       await Promise.resolve();
     });
 
-    expect(container?.querySelector('[data-testid="hook-probe"]')?.getAttribute('data-size')).toBe('0');
+    expect(container?.querySelector('[data-testid="hook-probe"]')?.getAttribute('data-size')).toBe(
+      '0',
+    );
   });
 
   it('keeps at most one request in flight', async () => {
@@ -207,10 +227,12 @@ describe('useBlueX7EffectiveValues (Spec 092 FR-014)', () => {
     expect(getBlueX7EffectiveValues).toHaveBeenCalledTimes(1);
 
     await act(async () => {
-      root?.render(React.createElement(HookProbe, {
-        ...baseProps,
-        parameterIds: ['next-a', 'next-b'],
-      }));
+      root?.render(
+        React.createElement(HookProbe, {
+          ...baseProps,
+          parameterIds: ['next-a', 'next-b'],
+        }),
+      );
       await Promise.resolve();
     });
     expect(getBlueX7EffectiveValues).toHaveBeenCalledTimes(2);
@@ -269,7 +291,9 @@ describe('useBlueX7EffectiveValues (Spec 092 FR-014)', () => {
       await Promise.resolve();
     });
     // the stale response must never be shown
-    expect(container?.querySelector('[data-testid="hook-probe"]')?.getAttribute('data-size')).toBe('0');
+    expect(container?.querySelector('[data-testid="hook-probe"]')?.getAttribute('data-size')).toBe(
+      '0',
+    );
   });
 
   it('does not poll while runtime activity is inactive and clears values when it stops', async () => {
@@ -291,12 +315,16 @@ describe('useBlueX7EffectiveValues (Spec 092 FR-014)', () => {
       await Promise.resolve();
     });
     expect(getBlueX7EffectiveValues).toHaveBeenCalledTimes(1);
-    expect(container?.querySelector('[data-testid="hook-probe"]')?.getAttribute('data-size')).toBe('1');
+    expect(container?.querySelector('[data-testid="hook-probe"]')?.getAttribute('data-size')).toBe(
+      '1',
+    );
 
     await act(async () => {
       root?.render(React.createElement(HookProbe, { ...baseProps, enabled: false }));
     });
-    expect(container?.querySelector('[data-testid="hook-probe"]')?.getAttribute('data-size')).toBe('0');
+    expect(container?.querySelector('[data-testid="hook-probe"]')?.getAttribute('data-size')).toBe(
+      '0',
+    );
   });
 
   it('reports unavailability without mutating project state or showing values', async () => {
@@ -306,7 +334,8 @@ describe('useBlueX7EffectiveValues (Spec 092 FR-014)', () => {
       root?.render(
         React.createElement(CommonPanel, {
           common: createDefaultBlueX7Voice().common,
-          onApplyPatch: (description: string, patch: BlueX7Patch) => onApplyPatch(description, patch),
+          onApplyPatch: (description: string, patch: BlueX7Patch) =>
+            onApplyPatch(description, patch),
         }),
       );
       root?.render(React.createElement(HookProbe, baseProps));
@@ -332,11 +361,13 @@ describe('useBlueX7EffectiveValues (Spec 092 FR-014)', () => {
     });
 
     await act(async () => {
-      root?.render(React.createElement(HookProbe, {
-        ...baseProps,
-        onObservationStart,
-        onObservationResult,
-      }));
+      root?.render(
+        React.createElement(HookProbe, {
+          ...baseProps,
+          onObservationStart,
+          onObservationResult,
+        }),
+      );
       await Promise.resolve();
     });
     await act(async () => {
@@ -353,11 +384,13 @@ describe('useBlueX7EffectiveValues (Spec 092 FR-014)', () => {
     getBlueX7EffectiveValues.mockResolvedValue({ ok: false, reason: 'not-playing' });
 
     await act(async () => {
-      root?.render(React.createElement(HookProbe, {
-        ...baseProps,
-        onObservationStart,
-        onObservationResult,
-      }));
+      root?.render(
+        React.createElement(HookProbe, {
+          ...baseProps,
+          onObservationStart,
+          onObservationResult,
+        }),
+      );
       await Promise.resolve();
     });
 
@@ -368,29 +401,35 @@ describe('useBlueX7EffectiveValues (Spec 092 FR-014)', () => {
   it('starts a fresh observation when the target changes', async () => {
     const onObservationStart = vi.fn();
     const onObservationResult = vi.fn();
-    getBlueX7EffectiveValues.mockImplementation(async ({ target }: { target: { assignmentId: string } }) => ({
-      ok: true as const,
-      projectSessionId: 5,
-      ownerIdentity: `arrangement:${target.assignmentId}`,
-      engineSequence: 1,
-      values: [],
-    }));
+    getBlueX7EffectiveValues.mockImplementation(
+      async ({ target }: { target: { assignmentId: string } }) => ({
+        ok: true as const,
+        projectSessionId: 5,
+        ownerIdentity: `arrangement:${target.assignmentId}`,
+        engineSequence: 1,
+        values: [],
+      }),
+    );
 
     await act(async () => {
-      root?.render(React.createElement(HookProbe, {
-        ...baseProps,
-        onObservationStart,
-        onObservationResult,
-      }));
+      root?.render(
+        React.createElement(HookProbe, {
+          ...baseProps,
+          onObservationStart,
+          onObservationResult,
+        }),
+      );
       await Promise.resolve();
     });
     await act(async () => {
-      root?.render(React.createElement(HookProbe, {
-        ...baseProps,
-        target: { assignmentId: '2' },
-        onObservationStart,
-        onObservationResult,
-      }));
+      root?.render(
+        React.createElement(HookProbe, {
+          ...baseProps,
+          target: { assignmentId: '2' },
+          onObservationStart,
+          onObservationResult,
+        }),
+      );
       await Promise.resolve();
     });
 
@@ -407,12 +446,14 @@ describe('useBlueX7EffectiveValues (Spec 092 FR-014)', () => {
       enabled: true,
       comment: '',
       voice: createDefaultBlueX7Voice(),
-      parameters: [{
-        parameterId: 'feedback-id',
-        semanticKey: 'common.feedback',
-        fixedValue: 0,
-        automationEnabled: true,
-      }],
+      parameters: [
+        {
+          parameterId: 'feedback-id',
+          semanticKey: 'common.feedback',
+          fixedValue: 0,
+          automationEnabled: true,
+        },
+      ],
     };
     getBlueX7EffectiveValues.mockResolvedValue({
       ok: true,
@@ -423,15 +464,17 @@ describe('useBlueX7EffectiveValues (Spec 092 FR-014)', () => {
     });
 
     await act(async () => {
-      root?.render(React.createElement(BlueX7Editor, {
-        instrument: snapshot,
-        onInstrumentPatch,
-        effectiveValues: {
-          target: assignmentTarget,
-          projectSessionId: 5,
-          enabled: true,
-        },
-      }));
+      root?.render(
+        React.createElement(BlueX7Editor, {
+          instrument: snapshot,
+          onInstrumentPatch,
+          effectiveValues: {
+            target: assignmentTarget,
+            projectSessionId: 5,
+            enabled: true,
+          },
+        }),
+      );
       await Promise.resolve();
     });
 
@@ -489,7 +532,9 @@ describe('useBlueX7EffectiveValues (Spec 092 FR-014)', () => {
     });
 
     // The Op 1 value must NOT be accepted into display state
-    expect(container?.querySelector('[data-testid="hook-probe"]')?.getAttribute('data-size')).toBe('0');
+    expect(container?.querySelector('[data-testid="hook-probe"]')?.getAttribute('data-size')).toBe(
+      '0',
+    );
 
     // Resolve the second request (Op 2)
     await act(async () => {
@@ -504,7 +549,9 @@ describe('useBlueX7EffectiveValues (Spec 092 FR-014)', () => {
     });
 
     // Op 2 value is accepted
-    expect(container?.querySelector('[data-testid="hook-probe"]')?.getAttribute('data-size')).toBe('1');
+    expect(container?.querySelector('[data-testid="hook-probe"]')?.getAttribute('data-size')).toBe(
+      '1',
+    );
   });
 
   it('suppresses requests when parameterIds is empty and clears display state', async () => {
@@ -522,7 +569,9 @@ describe('useBlueX7EffectiveValues (Spec 092 FR-014)', () => {
     });
 
     expect(getBlueX7EffectiveValues).toHaveBeenCalledTimes(1);
-    expect(container?.querySelector('[data-testid="hook-probe"]')?.getAttribute('data-size')).toBe('1');
+    expect(container?.querySelector('[data-testid="hook-probe"]')?.getAttribute('data-size')).toBe(
+      '1',
+    );
 
     getBlueX7EffectiveValues.mockClear();
 
@@ -538,13 +587,16 @@ describe('useBlueX7EffectiveValues (Spec 092 FR-014)', () => {
     });
 
     expect(getBlueX7EffectiveValues).not.toHaveBeenCalled();
-    expect(container?.querySelector('[data-testid="hook-probe"]')?.getAttribute('data-size')).toBe('0');
+    expect(container?.querySelector('[data-testid="hook-probe"]')?.getAttribute('data-size')).toBe(
+      '0',
+    );
   });
 });
 
 describe('catalog-derived widget domains (Spec 092 T088)', () => {
   function setInputValue(input: HTMLInputElement, value: string): void {
-    const tracker = (input as unknown as { _valueTracker?: { setValue: (v: string) => void } })._valueTracker;
+    const tracker = (input as unknown as { _valueTracker?: { setValue: (v: string) => void } })
+      ._valueTracker;
     if (tracker) {
       tracker.setValue('');
     }
@@ -573,18 +625,33 @@ describe('catalog-derived widget domains (Spec 092 T088)', () => {
     expect(feedback!.max).toBe('7');
     act(() => setInputValue(feedback!, '99'));
     expect(onApplyPatch).toHaveBeenCalledTimes(1);
-    expect(onApplyPatch.mock.calls[0]![1]).toEqual({ type: 'setCommonField', field: 'feedback', value: 7 });
+    expect(onApplyPatch.mock.calls[0]![1]).toEqual({
+      type: 'setCommonField',
+      field: 'feedback',
+      value: 7,
+    });
 
     // Transpose shows centered semitones derived from the stored 0..48 domain.
-    const transpose = container.querySelector<HTMLInputElement>('input[aria-label="Key Transpose"]');
+    const transpose = container.querySelector<HTMLInputElement>(
+      'input[aria-label="Key Transpose"]',
+    );
     expect(transpose!.min).toBe('-24');
     expect(transpose!.max).toBe('24');
     act(() => setInputValue(transpose!, '99'));
-    expect(onApplyPatch.mock.calls[1]![1]).toEqual({ type: 'setCommonField', field: 'keyTranspose', value: 48 });
+    expect(onApplyPatch.mock.calls[1]![1]).toEqual({
+      type: 'setCommonField',
+      field: 'keyTranspose',
+      value: 48,
+    });
 
-    const pms = container.querySelector<HTMLInputElement>('input[aria-label="Shared Pitch Modulation Sensitivity"]');
+    const pms = container.querySelector<HTMLInputElement>(
+      'input[aria-label="Shared Pitch Modulation Sensitivity"]',
+    );
     act(() => setInputValue(pms!, '9'));
-    expect(onApplyPatch.mock.calls[2]![1]).toEqual({ type: 'setSharedPitchModulationSensitivity', value: 7 });
+    expect(onApplyPatch.mock.calls[2]![1]).toEqual({
+      type: 'setSharedPitchModulationSensitivity',
+      value: 7,
+    });
 
     act(() => root.unmount());
     container.remove();

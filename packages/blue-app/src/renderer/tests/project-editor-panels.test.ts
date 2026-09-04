@@ -24,12 +24,8 @@ interface MockProjectState {
   clojureProject: ClojureProjectSnapshot;
   updateGlobalOrc: (value: string) => void | Promise<void>;
   updateGlobalSco: (value: string) => void | Promise<void>;
-  updateProjectProperties: (
-    patch: Partial<ProjectPropertiesSnapshot>,
-  ) => void | Promise<void>;
-  updateClojureProject: (
-    clojureProject: ClojureProjectSnapshot,
-  ) => void | Promise<void>;
+  updateProjectProperties: (patch: Partial<ProjectPropertiesSnapshot>) => void | Promise<void>;
+  updateClojureProject: (clojureProject: ClojureProjectSnapshot) => void | Promise<void>;
 }
 
 const { BASE_PROJECT_PROPERTIES, BASE_CLOJURE_PROJECT, mockProjectState } = vi.hoisted(() => {
@@ -147,8 +143,7 @@ function createPanelCompletionResult(doc: string) {
 }
 
 vi.mock('../stores/project-store', () => ({
-  useProjectStore: (selector: (state: MockProjectState) => unknown) =>
-    selector(mockProjectState),
+  useProjectStore: (selector: (state: MockProjectState) => unknown) => selector(mockProjectState),
 }));
 
 beforeEach(() => {
@@ -272,7 +267,9 @@ describe('Project editor panels', () => {
     const html = renderToStaticMarkup(createElement(ProjectPropertiesPanel));
 
     expect(html).toContain('No project loaded');
-    expect(html).toContain('Open a project to edit project information, render settings, and media paths.');
+    expect(html).toContain(
+      'Open a project to edit project information, render settings, and media paths.',
+    );
   });
 
   it('renders the built-in project properties tabs when loaded', () => {
@@ -308,7 +305,9 @@ describe('Project editor panels', () => {
     expect(html).toContain('bg-app-input px-2 py-1 text-role-body text-app-text shadow-inner');
     expect(html).not.toContain('bg-app-input px-3 py-2 text-sm text-app-text shadow-inner');
     expect(html).toContain('text-role-body text-app-text');
-    expect(html).not.toContain('text-body font-medium uppercase tracking-[0.18em] text-app-text-muted');
+    expect(html).not.toContain(
+      'text-body font-medium uppercase tracking-[0.18em] text-app-text-muted',
+    );
   });
 
   it('renders the clojure project dependency editor with library rows', () => {
@@ -334,7 +333,9 @@ describe('Project editor panels', () => {
     expect(html).toContain('2.5.1');
     expect(html).toContain('Move Up');
     expect(html).toContain('text-role-body text-app-text');
-    expect(html).not.toContain('text-ui font-medium uppercase tracking-[0.18em] text-app-text-muted');
+    expect(html).not.toContain(
+      'text-ui font-medium uppercase tracking-[0.18em] text-app-text-muted',
+    );
   });
 
   it('renders the global score editor when loaded', () => {

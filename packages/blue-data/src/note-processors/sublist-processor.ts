@@ -20,11 +20,19 @@ export class SubListProcessor extends NoteProcessor {
     }
   }
 
-  getStart(): string { return this._start.toString(); }
-  setStart(start: string): void { this._start = parseInt(start, 10); }
+  getStart(): string {
+    return this._start.toString();
+  }
+  setStart(start: string): void {
+    this._start = parseInt(start, 10);
+  }
 
-  getEnd(): string { return this._end.toString(); }
-  setEnd(end: string): void { this._end = parseInt(end, 10); }
+  getEnd(): string {
+    return this._end.toString();
+  }
+  setEnd(end: string): void {
+    this._end = parseInt(end, 10);
+  }
 
   override process(notes: NoteList): NoteList {
     if (this._end < 1) {
@@ -33,7 +41,7 @@ export class SubListProcessor extends NoteProcessor {
 
     const tempList = new NoteList();
     for (let i = 0; i < notes.length; i++) {
-      if (i >= (this._start - 1) && i <= (this._end - 1)) {
+      if (i >= this._start - 1 && i <= this._end - 1) {
         tempList.push(notes.getNote(i));
       }
     }
@@ -42,7 +50,9 @@ export class SubListProcessor extends NoteProcessor {
     return tempList;
   }
 
-  override getDisplayName(): string { return 'SubListProcessor'; }
+  override getDisplayName(): string {
+    return 'SubListProcessor';
+  }
 
   override deepCopy(): SubListProcessor {
     return new SubListProcessor(this);

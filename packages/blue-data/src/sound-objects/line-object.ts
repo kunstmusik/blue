@@ -33,9 +33,12 @@ export class LineObject extends AbstractSoundObject {
     }
   }
 
-  getLines(): LineData[] { return [...this._lines]; }
-  addLine(line: LineData): void { this._lines.push(line); }
-
+  getLines(): LineData[] {
+    return [...this._lines];
+  }
+  addLine(line: LineData): void {
+    this._lines.push(line);
+  }
 
   override generateForCSD(
     context: TimeContext,
@@ -104,7 +107,7 @@ export class LineObject extends AbstractSoundObject {
 
         // Java parity: migrate legacy version-1 normalized Y values into min/max range.
         if (version === 1) {
-          y = (y * range) + min;
+          y = y * range + min;
         }
         line.points.push({ x, y });
       }
@@ -162,7 +165,8 @@ export class LineObject extends AbstractSoundObject {
     let tableBuffer = '';
 
     const cacheValue = compileData.getCompilationVariable(LineObject.LINE_OBJECT_CACHE);
-    const tableCache = cacheValue instanceof Map ? cacheValue as Map<string, number> : new Map<string, number>();
+    const tableCache =
+      cacheValue instanceof Map ? (cacheValue as Map<string, number>) : new Map<string, number>();
     if (!(cacheValue instanceof Map)) {
       compileData.setCompilationVariable(LineObject.LINE_OBJECT_CACHE, tableCache);
     }

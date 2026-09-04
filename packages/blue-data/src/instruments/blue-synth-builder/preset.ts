@@ -1,11 +1,11 @@
-import { Element } from "../../serialization/xml-reader";
-import { generatePrefixedUuid } from "../../utilities/uuid";
-import type { BSBGraphicInterface } from "./bsb-graphic-interface";
-import type { BSBWidget } from "./bsb-widget";
-import { BSBGroup } from "./bsb-group";
+import { Element } from '../../serialization/xml-reader';
+import { generatePrefixedUuid } from '../../utilities/uuid';
+import type { BSBGraphicInterface } from './bsb-graphic-interface';
+import type { BSBWidget } from './bsb-widget';
+import { BSBGroup } from './bsb-group';
 
 export class Preset {
-  presetName = "";
+  presetName = '';
   uniqueId = generatePrefixedUuid('preset');
   private _valuesMap = new Map<string, string>();
 
@@ -42,9 +42,12 @@ export class Preset {
     const visit = (widgets: any[]): void => {
       for (const widget of widgets) {
         if (widget.objectName) {
-          const value = typeof widget.getPresetValue === 'function' 
-            ? widget.getPresetValue() 
-            : (widget.value !== undefined ? String(widget.value) : null);
+          const value =
+            typeof widget.getPresetValue === 'function'
+              ? widget.getPresetValue()
+              : widget.value !== undefined
+                ? String(widget.value)
+                : null;
           if (value !== null && value !== undefined) {
             this._valuesMap.set(widget.objectName, value);
           }
@@ -106,32 +109,32 @@ export class Preset {
   }
 
   saveAsXML(): Element {
-    const elem = new Element("preset");
-    elem.setAttribute("name", this.presetName);
-    elem.setAttribute("uniqueId", this.uniqueId);
+    const elem = new Element('preset');
+    elem.setAttribute('name', this.presetName);
+    elem.setAttribute('uniqueId', this.uniqueId);
     const sortedKeys = [...this._valuesMap.keys()].sort();
     for (const key of sortedKeys) {
-      const setting = elem.addElement("setting");
-      setting.setAttribute("name", key);
-      setting.setText(this._valuesMap.get(key) ?? "");
+      const setting = elem.addElement('setting');
+      setting.setAttribute('name', key);
+      setting.setText(this._valuesMap.get(key) ?? '');
     }
     return elem;
   }
 
   static loadFromXML(data: Element): Preset {
     const preset = new Preset();
-    preset.presetName = data.getAttribute("name") ?? "";
-    const uniqueId = data.getAttribute("uniqueId");
+    preset.presetName = data.getAttribute('name') ?? '';
+    const uniqueId = data.getAttribute('uniqueId');
     if (uniqueId) {
       preset.uniqueId = uniqueId;
     }
-    const settings = data.getElements("setting");
+    const settings = data.getElements('setting');
     while (settings.hasMoreElements()) {
       const setting = settings.next();
-      const name = setting.getAttribute("name");
+      const name = setting.getAttribute('name');
       const value = setting.getTextString();
       if (name) {
-        preset._valuesMap.set(name, value ?? "");
+        preset._valuesMap.set(name, value ?? '');
       }
     }
     return preset;

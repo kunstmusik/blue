@@ -173,54 +173,54 @@ const xml = data.saveToString();
 
 ### Core
 
-| Class | Description |
-|-------|-------------|
-| `BlueData` | Root project class. `loadFromString()`, `saveToString()`, `toCSD()` |
-| `ProjectProperties` | Sample rate, ksmps, nchnls, 0dbfs, Csound options |
-| `CompileData` | CSD compilation accumulator |
+| Class               | Description                                                         |
+| ------------------- | ------------------------------------------------------------------- |
+| `BlueData`          | Root project class. `loadFromString()`, `saveToString()`, `toCSD()` |
+| `ProjectProperties` | Sample rate, ksmps, nchnls, 0dbfs, Csound options                   |
+| `CompileData`       | CSD compilation accumulator                                         |
 
 ### Score Layers
 
-| Type | Description |
-|------|-------------|
-| `AudioClip` | File-based audio clip with timing and fades |
-| `AudioLayer` | Layer of AudioClip objects |
-| `AudioLayerGroup` | Group of AudioLayers |
-| `PatternData` | Boolean array pattern |
-| `PatternLayer` | Layer with SoundObject + pattern grid |
-| `PatternsLayerGroup` | Group of PatternLayers |
-| `PolyObject` | Nested layer group (legacy score type) |
+| Type                 | Description                                 |
+| -------------------- | ------------------------------------------- |
+| `AudioClip`          | File-based audio clip with timing and fades |
+| `AudioLayer`         | Layer of AudioClip objects                  |
+| `AudioLayerGroup`    | Group of AudioLayers                        |
+| `PatternData`        | Boolean array pattern                       |
+| `PatternLayer`       | Layer with SoundObject + pattern grid       |
+| `PatternsLayerGroup` | Group of PatternLayers                      |
+| `PolyObject`         | Nested layer group (legacy score type)      |
 
 ### Sound Objects
 
-| Type | Description |
-|------|-------------|
-| `GenericScore` | Raw Csound score text |
-| `ClojureObject` | Clojure code -> score (requires injected Java runtime for execution) |
-| `JavaScriptObject` | JS code → score (uses QuickJS after runtime initialization) |
-| `PythonObject` | Python code → score (requires injected Java runtime for execution) |
-| `ObjectBuilder` | Builder-based score object; Python execution requires injected Java runtime |
-| `CSDSoundObject` | Embedded CSD |
-| `Comment` | Score annotation |
+| Type               | Description                                                                 |
+| ------------------ | --------------------------------------------------------------------------- |
+| `GenericScore`     | Raw Csound score text                                                       |
+| `ClojureObject`    | Clojure code -> score (requires injected Java runtime for execution)        |
+| `JavaScriptObject` | JS code → score (uses QuickJS after runtime initialization)                 |
+| `PythonObject`     | Python code → score (requires injected Java runtime for execution)          |
+| `ObjectBuilder`    | Builder-based score object; Python execution requires injected Java runtime |
+| `CSDSoundObject`   | Embedded CSD                                                                |
+| `Comment`          | Score annotation                                                            |
 
 ### Supporting Types
 
-| Category | Types |
-|----------|-------|
-| Mixer | `Mixer`, `Channel`, `Effect`, `EffectsChain`, `Send` |
-| Automation | `Parameter`, `ParameterList` |
+| Category        | Types                                                          |
+| --------------- | -------------------------------------------------------------- |
+| Mixer           | `Mixer`, `Channel`, `Effect`, `EffectsChain`, `Send`           |
+| Automation      | `Parameter`, `ParameterList`                                   |
 | Note Processors | `AddProcessor`, `MultiplyProcessor`, `Code`, `PythonProcessor` |
-| Live | `LiveObject`, `LiveObjectSet`, `LiveObjectSetList` |
-| MIDI | `MidiKeyMapping`, `MidiVelocityMapping` |
-| Opcodes | `OpcodeDefinition`, `OpcodeList` |
+| Live            | `LiveObject`, `LiveObjectSet`, `LiveObjectSetList`             |
+| MIDI            | `MidiKeyMapping`, `MidiVelocityMapping`                        |
+| Opcodes         | `OpcodeDefinition`, `OpcodeList`                               |
 
 ### Utilities
 
-| Function | Description |
-|----------|-------------|
-| `setScoreStart(notes, offset)` | Shift all notes by offset |
-| `getNotes(scoreText)` | Parse Csound score text into NoteList |
-| `applyNoteProcessorChain(notes, chain)` | Apply processor chain |
+| Function                                | Description                           |
+| --------------------------------------- | ------------------------------------- |
+| `setScoreStart(notes, offset)`          | Shift all notes by offset             |
+| `getNotes(scoreText)`                   | Parse Csound score text into NoteList |
+| `applyNoteProcessorChain(notes, chain)` | Apply processor chain                 |
 
 ## Environment Compatibility
 
@@ -257,12 +257,7 @@ const csd = data.toCSD();
 // Low-level direct JavaScriptObject use should dispose its compile state.
 const compileData = new CompileData();
 try {
-  const notes = new JavaScriptObject().generateForCSD(
-    new TimeContext(),
-    compileData,
-    0,
-    -1,
-  );
+  const notes = new JavaScriptObject().generateForCSD(new TimeContext(), compileData, 0, -1);
   console.log(notes.length);
 } finally {
   disposeJavaScriptCompileState(compileData);
@@ -287,14 +282,12 @@ try {
 
 ```html
 <script type="module">
-  import {
-    BlueData,
-    initializeJavaScriptRuntime,
-  } from '/path/to/@blue/data/dist/index.js';
+  import { BlueData, initializeJavaScriptRuntime } from '/path/to/@blue/data/dist/index.js';
 
   await initializeJavaScriptRuntime();
 
-  const xml = '<blueData version="2.10.0"><projectProperties><title>Test</title></projectProperties></blueData>';
+  const xml =
+    '<blueData version="2.10.0"><projectProperties><title>Test</title></projectProperties></blueData>';
   const data = BlueData.loadFromString(xml);
   console.log(data.getProjectProperties().title); // "Test"
 </script>

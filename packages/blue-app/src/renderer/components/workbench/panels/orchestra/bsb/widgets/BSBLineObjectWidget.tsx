@@ -40,12 +40,16 @@ function BSBLineObjectWidget({
   onWidgetAction,
 }: BSBLineObjectWidgetProps): React.ReactElement {
   const linesRaw = node.properties.lines;
-  const lines: LineData[] = Array.isArray(linesRaw) ? linesRaw as LineData[] : [];
+  const lines: LineData[] = Array.isArray(linesRaw) ? (linesRaw as LineData[]) : [];
   const displaySize = getWidgetDisplaySize(node);
-  const canvasWidth = typeof node.properties.canvasWidth === 'number' ? node.properties.canvasWidth : displaySize.width;
-  const canvasHeight = typeof node.properties.canvasHeight === 'number'
-    ? node.properties.canvasHeight
-    : Math.max(40, displaySize.height - BSB_LINE_SELECTOR_HEIGHT);
+  const canvasWidth =
+    typeof node.properties.canvasWidth === 'number'
+      ? node.properties.canvasWidth
+      : displaySize.width;
+  const canvasHeight =
+    typeof node.properties.canvasHeight === 'number'
+      ? node.properties.canvasHeight
+      : Math.max(40, displaySize.height - BSB_LINE_SELECTOR_HEIGHT);
   const totalHeight = canvasHeight + BSB_LINE_SELECTOR_HEIGHT;
   const lineEditInteractive = !editEnabled;
   const [selectedLineIndex, setSelectedLineIndex] = useState(0);
@@ -56,13 +60,16 @@ function BSBLineObjectWidget({
     }
   }, [lines.length, selectedLineIndex]);
 
-  const commitLines = useCallback((nextLines: LineData[]) => {
-    onBsbInterfacePatch?.({
-      type: 'updateWidgetProperties',
-      widgetId: node.id,
-      properties: { lines: nextLines },
-    });
-  }, [node.id, onBsbInterfacePatch]);
+  const commitLines = useCallback(
+    (nextLines: LineData[]) => {
+      onBsbInterfacePatch?.({
+        type: 'updateWidgetProperties',
+        widgetId: node.id,
+        properties: { lines: nextLines },
+      });
+    },
+    [node.id, onBsbInterfacePatch],
+  );
 
   const selectorLabel = useMemo(() => {
     if (lines.length === 0) {
@@ -72,12 +79,17 @@ function BSBLineObjectWidget({
     return line?.name || line?.varName || `Line ${selectedLineIndex + 1}`;
   }, [lines, selectedLineIndex]);
 
-  const cycleSelectedLine = useCallback((delta: number) => {
-    if (lines.length === 0) {
-      return;
-    }
-    setSelectedLineIndex((current) => ((current + delta) % lines.length + lines.length) % lines.length);
-  }, [lines.length]);
+  const cycleSelectedLine = useCallback(
+    (delta: number) => {
+      if (lines.length === 0) {
+        return;
+      }
+      setSelectedLineIndex(
+        (current) => (((current + delta) % lines.length) + lines.length) % lines.length,
+      );
+    },
+    [lines.length],
+  );
 
   return (
     <WidgetWrapper
@@ -127,7 +139,10 @@ function BSBLineObjectWidget({
           >
             <ChevronLeft className="h-3 w-3" />
           </button>
-          <div className="min-w-0 flex-1 truncate px-1 text-center font-mono text-role-callout text-gray-200" title={selectorLabel}>
+          <div
+            className="min-w-0 flex-1 truncate px-1 text-center font-mono text-role-callout text-gray-200"
+            title={selectorLabel}
+          >
             {selectorLabel}
           </div>
           <button

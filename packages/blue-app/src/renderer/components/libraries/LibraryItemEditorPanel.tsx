@@ -15,7 +15,11 @@ const USER_LIBRARY_LABELS = {
 
 function getDisplayBreadcrumbs(session: LibraryEditorSessionSnapshot): readonly string[] {
   if (session.key.scope === 'user') {
-    return ['User Library', USER_LIBRARY_LABELS[session.key.libraryType], ...session.breadcrumb.slice(1)];
+    return [
+      'User Library',
+      USER_LIBRARY_LABELS[session.key.libraryType],
+      ...session.breadcrumb.slice(1),
+    ];
   }
   if (session.key.scope === 'projectShared' && session.key.libraryType === 'soundObject') {
     return ['Project Library', 'SoundObjects', ...session.breadcrumb.slice(2)];
@@ -27,7 +31,9 @@ interface LibraryItemEditorPanelProps {
   sessionId: string;
 }
 
-export function LibraryItemEditorPanel({ sessionId }: LibraryItemEditorPanelProps): React.ReactElement {
+export function LibraryItemEditorPanel({
+  sessionId,
+}: LibraryItemEditorPanelProps): React.ReactElement {
   const [conflictDialogDismissed, setConflictDialogDismissed] = useState(false);
   const session = useLibraryEditorStore((state) => state.sessions[sessionId]);
   const loading = useLibraryEditorStore((state) => state.loadingSessionIds.has(sessionId));
@@ -40,7 +46,13 @@ export function LibraryItemEditorPanel({ sessionId }: LibraryItemEditorPanelProp
   }, [session?.status]);
 
   if (!session) {
-    return <div className="grid h-full place-items-center p-4 text-role-body text-app-text-muted">{loading ? 'Loading Library editor…' : (error ?? 'Library editor session is no longer available.')}</div>;
+    return (
+      <div className="grid h-full place-items-center p-4 text-role-body text-app-text-muted">
+        {loading
+          ? 'Loading Library editor…'
+          : (error ?? 'Library editor session is no longer available.')}
+      </div>
+    );
   }
 
   const store = useLibraryEditorStore.getState();
@@ -51,13 +63,21 @@ export function LibraryItemEditorPanel({ sessionId }: LibraryItemEditorPanelProp
       </div>
       <LibraryEditorToolbar
         session={session}
-        onSave={() => { void store.save(sessionId); }}
-        onRevert={() => { void store.revert(sessionId); }}
-        onResolveConflict={() => { setConflictDialogDismissed(false); }}
+        onSave={() => {
+          void store.save(sessionId);
+        }}
+        onRevert={() => {
+          void store.revert(sessionId);
+        }}
+        onResolveConflict={() => {
+          setConflictDialogDismissed(false);
+        }}
       />
       <LibraryControlledEditor
         session={session}
-        onPatch={(documentPatch) => { void store.patch(sessionId, { documentPatch }); }}
+        onPatch={(documentPatch) => {
+          void store.patch(sessionId, { documentPatch });
+        }}
       />
       {session.status === 'conflict' && !conflictDialogDismissed && (
         <LibrarySessionDialog
@@ -65,8 +85,12 @@ export function LibraryItemEditorPanel({ sessionId }: LibraryItemEditorPanelProp
           message="The saved item changed elsewhere. Reload the latest item and discard this draft, explicitly overwrite the latest item with this draft, or cancel and retain the draft."
           primaryLabel="Reload latest"
           secondaryLabel="Overwrite latest"
-          onPrimary={() => { void store.resolveConflict(sessionId, 'reloadLatest'); }}
-          onSecondary={() => { void store.resolveConflict(sessionId, 'overwrite'); }}
+          onPrimary={() => {
+            void store.resolveConflict(sessionId, 'reloadLatest');
+          }}
+          onSecondary={() => {
+            void store.resolveConflict(sessionId, 'overwrite');
+          }}
           onCancel={() => {
             setConflictDialogDismissed(true);
             void store.resolveConflict(sessionId, 'cancel');
@@ -74,7 +98,14 @@ export function LibraryItemEditorPanel({ sessionId }: LibraryItemEditorPanelProp
         />
       )}
       {session.status === 'missing' && (
-        <LibrarySessionDialog title="Library item missing" message="This item was deleted. Your draft remains available in this editor until you close it." primaryLabel="Dismiss" onPrimary={() => { void store.patch(sessionId, { pinned: true }); }} />
+        <LibrarySessionDialog
+          title="Library item missing"
+          message="This item was deleted. Your draft remains available in this editor until you close it."
+          primaryLabel="Dismiss"
+          onPrimary={() => {
+            void store.patch(sessionId, { pinned: true });
+          }}
+        />
       )}
     </div>
   );

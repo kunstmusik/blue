@@ -8,7 +8,9 @@ describe('java-runtime-errors', () => {
       message: 'ImportError: No module named orchestra',
     });
 
-    expect(formatted).toBe('Unable to import Jython modules: ImportError: No module named orchestra');
+    expect(formatted).toBe(
+      'Unable to import Jython modules: ImportError: No module named orchestra',
+    );
   });
 
   it('formats Jython syntax failures with source location', () => {
@@ -28,7 +30,9 @@ describe('java-runtime-errors', () => {
       message: 'Operation cannot be accomplished in current state',
     });
 
-    expect(formatted).toBe('Java runtime transport failed: Operation cannot be accomplished in current state');
+    expect(formatted).toBe(
+      'Java runtime transport failed: Operation cannot be accomplished in current state',
+    );
   });
 
   it('falls back to the protocol message for unmapped codes', () => {

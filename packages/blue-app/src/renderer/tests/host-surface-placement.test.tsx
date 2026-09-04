@@ -14,7 +14,9 @@ import type {
   HostSurfaceKind,
 } from '../components/host-surface/host-surface-options';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 // The "popout window": a second JSDOM realm hosting the floated panel
 // content. Its viewport is deliberately smaller than the main window's so
@@ -61,7 +63,11 @@ describe('host-surface placement', () => {
     act(() => {
       root.render(
         <HostDocumentContext.Provider value={popoutDoc}>
-          <SurfaceHarness anchor={anchor} kind={kind} onDismiss={(reason) => dismissals.push(reason)} />
+          <SurfaceHarness
+            anchor={anchor}
+            kind={kind}
+            onDismiss={(reason) => dismissals.push(reason)}
+          />
         </HostDocumentContext.Provider>,
       );
     });
@@ -124,11 +130,10 @@ describe('host-surface placement', () => {
   });
 
   it('constrains oversized content with maxHeight from remaining space', async () => {
-    const surface = await openAndMeasure(
-      { type: 'point', x: 40, y: 50 },
-      'menu',
-      { width: 120, height: 200 },
-    );
+    const surface = await openAndMeasure({ type: 'point', x: 40, y: 50 }, 'menu', {
+      width: 120,
+      height: 200,
+    });
     // 150 - (50 + gap 8) - margin 8 = 84px of usable space below the anchor.
     expect(surface.style.maxHeight).toBe('84px');
     expect(surface.style.overflowY).toBe('auto');
@@ -139,7 +144,17 @@ describe('host-surface placement', () => {
     popoutDoc.body.appendChild(anchorEl);
     Object.defineProperty(anchorEl, 'getBoundingClientRect', {
       configurable: true,
-      value: () => ({ left: 40, top: 50, right: 60, bottom: 70, width: 20, height: 20, x: 40, y: 50, toJSON: () => undefined }),
+      value: () => ({
+        left: 40,
+        top: 50,
+        right: 60,
+        bottom: 70,
+        width: 20,
+        height: 20,
+        x: 40,
+        y: 50,
+        toJSON: () => undefined,
+      }),
     });
     const surface = await openAndMeasure({ type: 'element', element: anchorEl }, 'popover');
     expect(surface.style.left).toBe('40px');

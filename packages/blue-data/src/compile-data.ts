@@ -17,12 +17,12 @@ interface StringChannelEntry {
  * only; it is never serialized into `.blue` XML.
  */
 export type CompiledMidiInstrumentTarget =
-	| { kind: 'track'; trackId: string; runtimeInstrumentId: number | string }
-	| {
-		kind: 'orchestra';
-		assignmentId: string;
-		runtimeInstrumentId: number | string;
-	};
+  | { kind: 'track'; trackId: string; runtimeInstrumentId: number | string }
+  | {
+      kind: 'orchestra';
+      assignmentId: string;
+      runtimeInstrumentId: number | string;
+    };
 
 /**
  * Compiled BlueX7 binding — disposable per-render routing for one arrangement
@@ -36,15 +36,15 @@ export type CompiledMidiInstrumentTarget =
  * binding. Bindings are never serialized into `.blue` XML.
  */
 export interface CompiledBlueX7Binding {
-	/** Stable location identity (never a display name). */
-	ownerIdentity: string;
-	runtimeInstrumentId: string | number;
-	/** Semantic parameter key -> compiled automation channel (gk_blue_autoN). */
-	parameterChannels: ReadonlyMap<string, string>;
-	/** Direct `chnexport` globals consumed by the generated target. */
-	directGlobalChannels: ReadonlyMap<string, string>;
-	/** Per-instance epoch incremented by the generated change coordinator. */
-	domainEpoch: string;
+  /** Stable location identity (never a display name). */
+  ownerIdentity: string;
+  runtimeInstrumentId: string | number;
+  /** Semantic parameter key -> compiled automation channel (gk_blue_autoN). */
+  parameterChannels: ReadonlyMap<string, string>;
+  /** Direct `chnexport` globals consumed by the generated target. */
+  directGlobalChannels: ReadonlyMap<string, string>;
+  /** Per-instance epoch incremented by the generated change coordinator. */
+  domainEpoch: string;
 }
 
 /** Render-scoped registry key for compiled BlueX7 bindings. */
@@ -210,7 +210,8 @@ export class CompileData {
   getTrackRootGroupId(trackId: string): string | undefined {
     const value = this.compileMap.get(`track-root-group:${trackId}`);
     return typeof value === 'string' ? value : undefined;
-  }  getTrackInstrumentId(trackId: string): number | string | undefined {
+  }
+  getTrackInstrumentId(trackId: string): number | string | undefined {
     const value = this.compileMap.get(`track-instrument:${trackId}`);
     return typeof value === 'number' || typeof value === 'string' ? value : undefined;
   }
@@ -272,7 +273,8 @@ export class CompileData {
       if (
         typeof anyInstr.getBlueX7EpochSymbol !== 'function' ||
         typeof anyInstr.getParameters !== 'function'
-      ) continue;
+      )
+        continue;
 
       const sourceId = this.instrSourceId.get(ia.instr);
       let ownerIdentity: string;

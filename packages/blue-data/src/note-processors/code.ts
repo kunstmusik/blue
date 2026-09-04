@@ -7,14 +7,20 @@ const JAVA_TYPE = 'blue.noteProcessor.Code';
 export class Code extends NoteProcessor {
   private _code = '';
 
-  getCode(): string { return this._code; }
-  setCode(code: string): void { this._code = code; }
+  getCode(): string {
+    return this._code;
+  }
+  setCode(code: string): void {
+    this._code = code;
+  }
 
   override process(notes: NoteList): NoteList {
     return notes;
   }
 
-  override getDisplayName(): string { return 'Code'; }
+  override getDisplayName(): string {
+    return 'Code';
+  }
 
   override deepCopy(): Code {
     const copy = new Code();

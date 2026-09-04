@@ -87,11 +87,19 @@ export class JavaScriptObject extends AbstractSoundObject {
     this._backgroundColor = 0x404040;
   }
 
-  getJavaScriptCode(): string { return this._javaScriptCode; }
-  setJavaScriptCode(code: string): void { this._javaScriptCode = code; }
+  getJavaScriptCode(): string {
+    return this._javaScriptCode;
+  }
+  setJavaScriptCode(code: string): void {
+    this._javaScriptCode = code;
+  }
 
-  isOnLoadProcessable(): boolean { return this._onLoadProcessable; }
-  setOnLoadProcessable(val: boolean): void { this._onLoadProcessable = val; }
+  isOnLoadProcessable(): boolean {
+    return this._onLoadProcessable;
+  }
+  setOnLoadProcessable(val: boolean): void {
+    this._onLoadProcessable = val;
+  }
 
   processOnLoad(context: TimeContext, session?: JavaScriptSession): void {
     if (!this._onLoadProcessable || !session) return;
@@ -122,12 +130,7 @@ export class JavaScriptObject extends AbstractSoundObject {
     const repeatPoint = this.getRepeatPoint();
     const repeatPointBeats = repeatPoint ? repeatPoint.toBeats(context) : -1;
 
-    applyTimeBehavior(
-      processed,
-      this.getTimeBehavior(),
-      duration,
-      repeatPointBeats,
-    );
+    applyTimeBehavior(processed, this.getTimeBehavior(), duration, repeatPointBeats);
     setScoreStart(processed, startTime);
 
     return processed;
@@ -142,17 +145,16 @@ export class JavaScriptObject extends AbstractSoundObject {
     const duration = this._subjectiveDuration.toBeats(context);
     const scoreText = executeJavaScriptCode(this._javaScriptCode, duration, compileData);
     const noteList = parseScoreText(scoreText);
-    const processed = await applyNoteProcessorChainAsync(noteList, this.getNoteProcessorChain(), compileData);
+    const processed = await applyNoteProcessorChainAsync(
+      noteList,
+      this.getNoteProcessorChain(),
+      compileData,
+    );
     const startTime = this.getStartTime().toBeats(context);
     const repeatPoint = this.getRepeatPoint();
     const repeatPointBeats = repeatPoint ? repeatPoint.toBeats(context) : -1;
 
-    applyTimeBehavior(
-      processed,
-      this.getTimeBehavior(),
-      duration,
-      repeatPointBeats,
-    );
+    applyTimeBehavior(processed, this.getTimeBehavior(), duration, repeatPointBeats);
     setScoreStart(processed, startTime);
 
     return processed;

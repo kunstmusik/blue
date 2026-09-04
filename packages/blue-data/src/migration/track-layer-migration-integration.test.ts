@@ -4,7 +4,10 @@ import { describe, expect, it } from 'vitest';
 import { BlueData } from '../blue-data';
 import { TrackLayerGroup } from '../score/track/track-layer-group';
 
-const packageRelativeFixtureDirectory = resolve(process.cwd(), 'src/migration/fixtures/track-layer');
+const packageRelativeFixtureDirectory = resolve(
+  process.cwd(),
+  'src/migration/fixtures/track-layer',
+);
 const fixtureDirectory = existsSync(packageRelativeFixtureDirectory)
   ? packageRelativeFixtureDirectory
   : resolve(process.cwd(), 'packages/blue-data/src/migration/fixtures/track-layer');
@@ -23,7 +26,9 @@ describe('Track layer migration integration', () => {
       expect(group).toBeInstanceOf(TrackLayerGroup);
       const trackGroup = group as TrackLayerGroup;
       const trackIds = trackGroup.map((track) => track.getUniqueId());
-      const associatedChannelIds = data.getMixer().getAllSourceChannels()
+      const associatedChannelIds = data
+        .getMixer()
+        .getAllSourceChannels()
         .map((channel) => channel.getAssociation())
         .filter((association) => trackIds.includes(association));
       expect(associatedChannelIds).toEqual(trackIds);

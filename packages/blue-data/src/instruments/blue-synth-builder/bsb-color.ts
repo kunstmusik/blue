@@ -14,7 +14,7 @@ function componentToHex(value: number): string {
 }
 
 function parseHexColor(raw: string): RgbaColor | null {
-  const hex = raw.trim().replace(/^0x/i, '').replace(/^#/,'');
+  const hex = raw.trim().replace(/^0x/i, '').replace(/^#/, '');
   if (/^[0-9a-fA-F]{6}$/.test(hex)) {
     return {
       r: parseInt(hex.substring(0, 2), 16),
@@ -130,9 +130,11 @@ export function encodeCssColorToJavaInt(color: string, fallback = '-8355712'): s
     return fallback;
   }
 
-  const unsigned = (((clampByte(parsed.a) << 24) >>> 0)
-    | (clampByte(parsed.r) << 16)
-    | (clampByte(parsed.g) << 8)
-    | clampByte(parsed.b)) >>> 0;
+  const unsigned =
+    (((clampByte(parsed.a) << 24) >>> 0) |
+      (clampByte(parsed.r) << 16) |
+      (clampByte(parsed.g) << 8) |
+      clampByte(parsed.b)) >>>
+    0;
   return unsigned > 0x7fffffff ? String(unsigned - 0x100000000) : String(unsigned);
 }

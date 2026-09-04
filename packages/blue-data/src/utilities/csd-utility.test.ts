@@ -16,9 +16,7 @@ describe('CSDUtility', () => {
   describe('getTextBetweenTags', () => {
     test('extracts content between matching tags', () => {
       const input = '<CsInstruments>\n  instr 1\n  endin\n</CsInstruments>';
-      expect(getTextBetweenTags('CsInstruments', input)).toBe(
-        '\n  instr 1\n  endin\n',
-      );
+      expect(getTextBetweenTags('CsInstruments', input)).toBe('\n  instr 1\n  endin\n');
     });
 
     test('returns null if start tag is missing', () => {
@@ -26,9 +24,7 @@ describe('CSDUtility', () => {
     });
 
     test('returns null if end tag is missing', () => {
-      expect(
-        getTextBetweenTags('CsInstruments', '<CsInstruments>instr 1'),
-      ).toBeNull();
+      expect(getTextBetweenTags('CsInstruments', '<CsInstruments>instr 1')).toBeNull();
     });
   });
 
@@ -152,15 +148,12 @@ f1 0 10 1
 i1 0 2 3 4 5
 `;
       parseCsScore(data, sco, CSDImportMode.IMPORT_GLOBAL);
-      expect(data.getTableSet().getTables()).toBe(
-        'f1 0 10 1\n f2 0 10 .5 .3 .1\n',
-      );
+      expect(data.getTableSet().getTables()).toBe('f1 0 10 1\n f2 0 10 .5 .3 .1\n');
     });
 
     test('parses multiline score i-statements and continuation lines', () => {
       const data = new BlueData();
-      const score1 =
-        'i1 0 2 3 4 5\n6 7 8 9\n8.8 8\ni1 2 3 4 5\ni1 2 3 4 5\n"test" 1 2 3 4 5\n';
+      const score1 = 'i1 0 2 3 4 5\n6 7 8 9\n8.8 8\ni1 2 3 4 5\ni1 2 3 4 5\n"test" 1 2 3 4 5\n';
       const score2 = 'f1 0 3 4\n   5 6 7\n';
       const score = score1 + score2;
 
@@ -186,13 +179,9 @@ i1 0 2 3 4 5
     test('rejects invalid tempo values', () => {
       const data = new BlueData();
 
-      expect(() =>
-        parseCsScore(
-          data,
-          't bad 120\ni1 0 2',
-          CSDImportMode.IMPORT_GLOBAL,
-        ),
-      ).toThrow('Invalid tempo statement found');
+      expect(() => parseCsScore(data, 't bad 120\ni1 0 2', CSDImportMode.IMPORT_GLOBAL)).toThrow(
+        'Invalid tempo statement found',
+      );
     });
 
     test('importMode: IMPORT_GLOBAL', () => {
@@ -201,9 +190,7 @@ i1 0 2 3 4 5
 
       parseCsScore(data, sco, CSDImportMode.IMPORT_GLOBAL);
 
-      expect(data.getGlobalOrcSco().getGlobalSco()).toBe(
-        'i1 0 2 100\ni2 2 4 200\n',
-      );
+      expect(data.getGlobalOrcSco().getGlobalSco()).toBe('i1 0 2 100\ni2 2 4 200\n');
     });
 
     test('importMode: IMPORT_SINGLE_SOUNDOBJECT per section', () => {
@@ -283,11 +270,7 @@ endin
 `;
       const sco = 'i1 0 4';
 
-      const data = convertOrcScoToBlue(
-        orc,
-        sco,
-        CSDImportMode.IMPORT_SINGLE_SOUNDOBJECT,
-      );
+      const data = convertOrcScoToBlue(orc, sco, CSDImportMode.IMPORT_SINGLE_SOUNDOBJECT);
 
       expect(data.getArrangement().size()).toBe(1);
       const rootPoly = data.getScore()[0] as PolyObject;

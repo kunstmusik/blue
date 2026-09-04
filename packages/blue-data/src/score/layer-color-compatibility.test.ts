@@ -47,7 +47,8 @@ describe('Layer Color Compatibility & Legacy Project Load-Save (US4)', () => {
 
     // Save project XML
     const savedXml = data.saveAsXML();
-    const savedLayerElem = savedXml.getElement('score')
+    const savedLayerElem = savedXml
+      .getElement('score')
       ?.getElement('soundObject')
       ?.getElement('soundLayer');
 

@@ -6,7 +6,11 @@ import type { EngineStateSnapshot } from '@blue/engine-client';
 import { EngineBridge } from './engine-bridge';
 import type { EngineRuntimeService } from './engine-runtime';
 import { EngineSession, type EngineSessionCreationRequest } from './engine-session';
-import { FakeChildProcess, FakeEngineClient, FakeProcessRegistry } from './engine-session.test-support';
+import {
+  FakeChildProcess,
+  FakeEngineClient,
+  FakeProcessRegistry,
+} from './engine-session.test-support';
 
 const { showErrorBox } = vi.hoisted(() => ({ showErrorBox: vi.fn() }));
 
@@ -30,12 +34,17 @@ describe('EngineBridge runtime selection and lifecycle', () => {
       setChannels: vi.fn(async () => ({ ok: true, message: '' })),
       getChannels: vi.fn(async () => ({ ok: true, values: [1, 2, 3], message: '' })),
     };
-    (bridge as unknown as {
-      activeSession: { getClient(): typeof client } | null;
-    }).activeSession = { getClient: () => client };
+    (
+      bridge as unknown as {
+        activeSession: { getClient(): typeof client } | null;
+      }
+    ).activeSession = { getClient: () => client };
 
     await bridge.setChannel('one', 1);
-    await bridge.setChannels([{ name: 'two', value: 2 }, { name: 'three', value: 3 }]);
+    await bridge.setChannels([
+      { name: 'two', value: 2 },
+      { name: 'three', value: 3 },
+    ]);
     await bridge.getChannel('one');
     await bridge.getChannels(['one', 'two', 'three']);
 
@@ -57,8 +66,9 @@ describe('EngineBridge runtime selection and lifecycle', () => {
     const executablePath = path.join(root, 'blue-engine');
     writeFileSync(executablePath, 'fixture');
     const bridge = new EngineBridge(windowStub(), executablePath);
-    expect((bridge as unknown as { findEngine(): string | null }).findEngine())
-      .toBe(executablePath);
+    expect((bridge as unknown as { findEngine(): string | null }).findEngine()).toBe(
+      executablePath,
+    );
   });
 
   it('gates process startup on the runtime probe and reports missing Csound', async () => {
@@ -78,7 +88,14 @@ describe('EngineBridge runtime selection and lifecycle', () => {
         durationMs: 1,
       })),
     } as unknown as EngineRuntimeService;
-    const bridge = new EngineBridge(windowStub(), undefined, undefined, undefined, 'realtime', runtime);
+    const bridge = new EngineBridge(
+      windowStub(),
+      undefined,
+      undefined,
+      undefined,
+      'realtime',
+      runtime,
+    );
 
     await expect(bridge.startEngine()).resolves.toMatchObject({
       ok: false,
@@ -96,21 +113,27 @@ describe('EngineBridge runtime selection and lifecycle', () => {
 
     const internals = bridge as unknown as {
       awaitingPlaybackTerminalState: boolean;
-      finalizePlaybackFromEngine: (snapshot: EngineStateSnapshot, source: 'pubsub' | 'poll') => Promise<void>;
+      finalizePlaybackFromEngine: (
+        snapshot: EngineStateSnapshot,
+        source: 'pubsub' | 'poll',
+      ) => Promise<void>;
     };
     internals.awaitingPlaybackTerminalState = true;
 
-    await internals.finalizePlaybackFromEngine({
-      state: 'stopped',
-      stopReason: 'error',
-      engineCreated: true,
-      running: false,
-      sampleFrames: 0,
-      sampleRate: 44100,
-      ksmps: 64,
-      sequence: 1,
-      lastError: 'invalid orchestra',
-    }, 'pubsub');
+    await internals.finalizePlaybackFromEngine(
+      {
+        state: 'stopped',
+        stopReason: 'error',
+        engineCreated: true,
+        running: false,
+        sampleFrames: 0,
+        sampleRate: 44100,
+        ksmps: 64,
+        sequence: 1,
+        lastError: 'invalid orchestra',
+      },
+      'pubsub',
+    );
 
     expect(warning).not.toHaveBeenCalled();
   });
@@ -122,21 +145,27 @@ describe('EngineBridge runtime selection and lifecycle', () => {
 
     const internals = bridge as unknown as {
       awaitingPlaybackTerminalState: boolean;
-      finalizePlaybackFromEngine: (snapshot: EngineStateSnapshot, source: 'pubsub' | 'poll') => Promise<void>;
+      finalizePlaybackFromEngine: (
+        snapshot: EngineStateSnapshot,
+        source: 'pubsub' | 'poll',
+      ) => Promise<void>;
     };
     internals.awaitingPlaybackTerminalState = true;
 
-    await internals.finalizePlaybackFromEngine({
-      state: 'stopped',
-      stopReason: 'error',
-      engineCreated: true,
-      running: false,
-      sampleFrames: 0,
-      sampleRate: 44100,
-      ksmps: 64,
-      sequence: 1,
-      lastError: 'audio device disconnected',
-    }, 'pubsub');
+    await internals.finalizePlaybackFromEngine(
+      {
+        state: 'stopped',
+        stopReason: 'error',
+        engineCreated: true,
+        running: false,
+        sampleFrames: 0,
+        sampleRate: 44100,
+        ksmps: 64,
+        sequence: 1,
+        lastError: 'audio device disconnected',
+      },
+      'pubsub',
+    );
 
     expect(warning).toHaveBeenCalledWith('Engine error: audio device disconnected');
   });
@@ -169,9 +198,11 @@ describe('EngineBridge runtime selection and lifecycle', () => {
     internals.startEngine = vi.fn(async () => ({ ok: true }));
     internals.activeSession = fakeSession;
 
-    await expect(bridge.playCSD(
-      '<CsoundSynthesizer><CsInstruments>asdf</CsInstruments><CsScore>e</CsScore></CsoundSynthesizer>',
-    )).resolves.toMatchObject({
+    await expect(
+      bridge.playCSD(
+        '<CsoundSynthesizer><CsInstruments>asdf</CsInstruments><CsScore>e</CsScore></CsoundSynthesizer>',
+      ),
+    ).resolves.toMatchObject({
       ok: false,
       failureKind: 'project',
       failureCategory: 'unexpected',
@@ -195,10 +226,16 @@ describe('EngineBridge runtime selection and lifecycle', () => {
       lastError: '',
     } satisfies EngineStateSnapshot;
 
-    let resolveState!: (value: { ok: boolean; state: EngineStateSnapshot; message: string }) => void;
-    const stateReady = new Promise<{ ok: boolean; state: EngineStateSnapshot; message: string }>((resolve) => {
-      resolveState = resolve;
-    });
+    let resolveState!: (value: {
+      ok: boolean;
+      state: EngineStateSnapshot;
+      message: string;
+    }) => void;
+    const stateReady = new Promise<{ ok: boolean; state: EngineStateSnapshot; message: string }>(
+      (resolve) => {
+        resolveState = resolve;
+      },
+    );
 
     const fakeClient = new FakeEngineClient();
     fakeClient.stop = vi.fn().mockResolvedValue({ ok: true, message: '' }) as any;
@@ -292,7 +329,10 @@ describe('EngineBridge runtime selection and lifecycle', () => {
     await session.spawn();
     await session.awaitReady();
 
-    const internals = bridge as unknown as { activeSession: EngineSession | null; isPlaying: boolean };
+    const internals = bridge as unknown as {
+      activeSession: EngineSession | null;
+      isPlaying: boolean;
+    };
     internals.activeSession = session;
     internals.isPlaying = false;
 
@@ -395,23 +435,29 @@ describe('EngineBridge runtime selection and lifecycle', () => {
       activeSession: EngineSession | null;
       isPlaying: boolean;
       awaitingPlaybackTerminalState: boolean;
-      handleEngineState: (snapshot: EngineStateSnapshot, source: 'pubsub' | 'poll') => Promise<void>;
+      handleEngineState: (
+        snapshot: EngineStateSnapshot,
+        source: 'pubsub' | 'poll',
+      ) => Promise<void>;
     };
     internals.activeSession = session;
     internals.isPlaying = true;
     internals.awaitingPlaybackTerminalState = true;
 
-    await internals.handleEngineState({
-      state: 'stopped',
-      stopReason: 'completed',
-      engineCreated: true,
-      running: false,
-      sampleFrames: 441000,
-      sampleRate: 44100,
-      ksmps: 64,
-      sequence: 10,
-      lastError: '',
-    }, 'pubsub');
+    await internals.handleEngineState(
+      {
+        state: 'stopped',
+        stopReason: 'completed',
+        engineCreated: true,
+        running: false,
+        sampleFrames: 441000,
+        sampleRate: 44100,
+        ksmps: 64,
+        sequence: 10,
+        lastError: '',
+      },
+      'pubsub',
+    );
 
     expect(completedCallback).toHaveBeenCalledWith('completed');
     expect(bridge.isCurrentlyPlaying()).toBe(false);
@@ -421,12 +467,15 @@ describe('EngineBridge runtime selection and lifecycle', () => {
   it('cleans the active bridge when the child exits without a terminal state', async () => {
     const child = new FakeChildProcess(889);
     const registry = new FakeProcessRegistry();
-    const createSession = vi.fn((request: EngineSessionCreationRequest) => new EngineSession(request, {
-      spawn: () => child as any,
-      createClient: () => new FakeEngineClient() as any,
-      registerManifest: (manifest) => registry.registerEngineProcess(manifest),
-      removeManifest: (manifestPath) => registry.removeEngineProcessRecord(manifestPath),
-    }));
+    const createSession = vi.fn(
+      (request: EngineSessionCreationRequest) =>
+        new EngineSession(request, {
+          spawn: () => child as any,
+          createClient: () => new FakeEngineClient() as any,
+          registerManifest: (manifest) => registry.registerEngineProcess(manifest),
+          removeManifest: (manifestPath) => registry.removeEngineProcessRecord(manifestPath),
+        }),
+    );
 
     const bridgeWithDependencies = new EngineBridge(
       windowStub(),
@@ -445,7 +494,9 @@ describe('EngineBridge runtime selection and lifecycle', () => {
         }),
       },
     );
-    (bridgeWithDependencies as unknown as { ownerLivenessSupported: boolean }).ownerLivenessSupported = true;
+    (
+      bridgeWithDependencies as unknown as { ownerLivenessSupported: boolean }
+    ).ownerLivenessSupported = true;
 
     const startInternals = bridgeWithDependencies as unknown as {
       startEngineWithTransport: (
@@ -453,8 +504,9 @@ describe('EngineBridge runtime selection and lifecycle', () => {
         transport: 'tcp' | 'ipc',
       ) => Promise<{ ok: boolean }>;
     };
-    await expect(startInternals.startEngineWithTransport('/bin/blue-engine', 'tcp'))
-      .resolves.toMatchObject({ ok: true });
+    await expect(
+      startInternals.startEngineWithTransport('/bin/blue-engine', 'tcp'),
+    ).resolves.toMatchObject({ ok: true });
 
     child.emitExit(1, null);
     await vi.waitFor(() => expect(bridgeWithDependencies.getActiveSession()).toBeNull());
@@ -530,9 +582,13 @@ describe('EngineBridge runtime selection and lifecycle', () => {
   });
 
   it('fails the transport attempt when isolated TCP endpoint allocation is exhausted', async () => {
-    const createSession = vi.fn((request: EngineSessionCreationRequest) => new EngineSession(request));
+    const createSession = vi.fn(
+      (request: EngineSessionCreationRequest) => new EngineSession(request),
+    );
     const allocateEndpoints = async () => {
-      throw new Error('Exhausted available TCP endpoint pairs after 20 attempts starting from port 5555');
+      throw new Error(
+        'Exhausted available TCP endpoint pairs after 20 attempts starting from port 5555',
+      );
     };
 
     const bridge = new EngineBridge(

@@ -63,7 +63,7 @@ function rescale(
   }
 
   const normalized = (value - oldMinimum) / (oldMaximum - oldMinimum);
-  const nextValue = newMinimum + (normalized * (newMaximum - newMinimum));
+  const nextValue = newMinimum + normalized * (newMaximum - newMinimum);
   return snapToResolutionJava(nextValue, newMinimum, newMaximum, resolution);
 }
 
@@ -91,16 +91,30 @@ export class Parameter implements BlueDataObject {
     return s + '.0';
   }
 
-  getName(): string { return this._name; }
-  setName(name: string): void { this._name = name; }
+  getName(): string {
+    return this._name;
+  }
+  setName(name: string): void {
+    this._name = name;
+  }
 
-  getUniqueId(): string { return this._uniqueId; }
-  setUniqueId(id: string): void { this._uniqueId = id; }
+  getUniqueId(): string {
+    return this._uniqueId;
+  }
+  setUniqueId(id: string): void {
+    this._uniqueId = id;
+  }
 
-  getLabel(): string { return this._label; }
-  setLabel(label: string): void { this._label = label; }
+  getLabel(): string {
+    return this._label;
+  }
+  setLabel(label: string): void {
+    this._label = label;
+  }
 
-  getMinimum(): number { return this._minimum; }
+  getMinimum(): number {
+    return this._minimum;
+  }
   setMinimum(v: number, truncate = false): void {
     if (this._minimum === v) {
       return;
@@ -112,16 +126,42 @@ export class Parameter implements BlueDataObject {
     this._points = this._points.map((point) => ({
       ...point,
       value: truncate
-        ? snapToResolutionJava(clamp(point.value, this._minimum, this._maximum), this._minimum, this._maximum, this._resolution)
-        : rescale(point.value, oldMinimum, this._maximum, this._minimum, this._maximum, this._resolution),
+        ? snapToResolutionJava(
+            clamp(point.value, this._minimum, this._maximum),
+            this._minimum,
+            this._maximum,
+            this._resolution,
+          )
+        : rescale(
+            point.value,
+            oldMinimum,
+            this._maximum,
+            this._minimum,
+            this._maximum,
+            this._resolution,
+          ),
     }));
 
     this._fixedValue = truncate
-      ? snapToResolutionJava(clamp(this._fixedValue, this._minimum, this._maximum), this._minimum, this._maximum, this._resolution)
-      : rescale(this._fixedValue, oldMinimum, this._maximum, this._minimum, this._maximum, this._resolution);
+      ? snapToResolutionJava(
+          clamp(this._fixedValue, this._minimum, this._maximum),
+          this._minimum,
+          this._maximum,
+          this._resolution,
+        )
+      : rescale(
+          this._fixedValue,
+          oldMinimum,
+          this._maximum,
+          this._minimum,
+          this._maximum,
+          this._resolution,
+        );
   }
 
-  getMaximum(): number { return this._maximum; }
+  getMaximum(): number {
+    return this._maximum;
+  }
   setMaximum(v: number, truncate = false): void {
     if (this._maximum === v) {
       return;
@@ -133,39 +173,79 @@ export class Parameter implements BlueDataObject {
     this._points = this._points.map((point) => ({
       ...point,
       value: truncate
-        ? snapToResolutionJava(clamp(point.value, this._minimum, this._maximum), this._minimum, this._maximum, this._resolution)
-        : rescale(point.value, this._minimum, oldMaximum, this._minimum, this._maximum, this._resolution),
+        ? snapToResolutionJava(
+            clamp(point.value, this._minimum, this._maximum),
+            this._minimum,
+            this._maximum,
+            this._resolution,
+          )
+        : rescale(
+            point.value,
+            this._minimum,
+            oldMaximum,
+            this._minimum,
+            this._maximum,
+            this._resolution,
+          ),
     }));
 
     this._fixedValue = truncate
-      ? snapToResolutionJava(clamp(this._fixedValue, this._minimum, this._maximum), this._minimum, this._maximum, this._resolution)
-      : rescale(this._fixedValue, this._minimum, oldMaximum, this._minimum, this._maximum, this._resolution);
+      ? snapToResolutionJava(
+          clamp(this._fixedValue, this._minimum, this._maximum),
+          this._minimum,
+          this._maximum,
+          this._resolution,
+        )
+      : rescale(
+          this._fixedValue,
+          this._minimum,
+          oldMaximum,
+          this._minimum,
+          this._maximum,
+          this._resolution,
+        );
   }
 
-  getCurve(): AutomationCurve { return this._curve; }
-  setCurve(c: AutomationCurve): void { this._curve = c; }
+  getCurve(): AutomationCurve {
+    return this._curve;
+  }
+  setCurve(c: AutomationCurve): void {
+    this._curve = c;
+  }
 
-  getPoints(): AutomationPoint[] { return [...this._points]; }
-  setPoints(points: AutomationPoint[]): void { this._points = [...points]; }
+  getPoints(): AutomationPoint[] {
+    return [...this._points];
+  }
+  setPoints(points: AutomationPoint[]): void {
+    this._points = [...points];
+  }
 
   addPoint(time: number, value: number): void {
     this._points.push({ time, value });
     this._points.sort((a, b) => a.time - b.time);
   }
 
-  isEnabled(): boolean { return this._enabled; }
-  setEnabled(e: boolean): void { this._enabled = e; }
+  isEnabled(): boolean {
+    return this._enabled;
+  }
+  setEnabled(e: boolean): void {
+    this._enabled = e;
+  }
 
   /**
    * Set automation enabled state.
    */
-  setAutomationEnabled(e: boolean): void { this._enabled = e; }
+  setAutomationEnabled(e: boolean): void {
+    this._enabled = e;
+  }
 
   /**
    * The exact resolution as a Java-compatible decimal. This is the sole
    * quantization selector; `0.1` and `0.10` are distinct resolutions.
    */
-  getResolutionDecimal(): JavaDecimal { return this._resolution; }
+  getResolutionDecimal(): JavaDecimal {
+    return this._resolution;
+  }
 
   /**
    * Sets the exact resolution. Mirrors Java Parameter.setResolution: the
@@ -186,7 +266,9 @@ export class Parameter implements BlueDataObject {
    * `BigDecimal.doubleValue()`). Display/preview only; it is never the
    * authority for evaluation or persistence.
    */
-  getResolution(): number { return this._resolution.doubleValue; }
+  getResolution(): number {
+    return this._resolution.doubleValue;
+  }
 
   /**
    * Legacy numeric setter retained for callers that only have a double:
@@ -202,7 +284,9 @@ export class Parameter implements BlueDataObject {
   }
 
   /** Canonical Java BigDecimal.toString() text of the exact resolution. */
-  getResolutionText(): string { return this._resolution.canonicalText; }
+  getResolutionText(): string {
+    return this._resolution.canonicalText;
+  }
 
   /**
    * Parses canonical decimal text as the exact resolution. Throws
@@ -217,17 +301,29 @@ export class Parameter implements BlueDataObject {
     this.setResolutionDecimal(parsed.value);
   }
 
-  getCompilationVarName(): string | null { return this._compilationVarName; }
-  setCompilationVarName(name: string): void { this._compilationVarName = name; }
+  getCompilationVarName(): string | null {
+    return this._compilationVarName;
+  }
+  setCompilationVarName(name: string): void {
+    this._compilationVarName = name;
+  }
 
   /**
    * Fixed value for non-automated parameters.
    */
-  getFixedValue(): number { return this._fixedValue; }
-  setFixedValue(v: number): void { this._fixedValue = v; }
+  getFixedValue(): number {
+    return this._fixedValue;
+  }
+  setFixedValue(v: number): void {
+    this._fixedValue = v;
+  }
 
-  getLineColor(): number { return this._lineColor; }
-  setLineColor(c: number): void { this._lineColor = c; }
+  getLineColor(): number {
+    return this._lineColor;
+  }
+  setLineColor(c: number): void {
+    this._lineColor = c;
+  }
 
   /**
    * Check if this parameter has automation enabled (has points).

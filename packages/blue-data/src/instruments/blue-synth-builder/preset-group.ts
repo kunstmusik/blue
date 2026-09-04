@@ -1,12 +1,12 @@
-import { Element } from "../../serialization/xml-reader";
-import type { BSBGraphicInterface } from "./bsb-graphic-interface";
-import { Preset } from "./preset";
+import { Element } from '../../serialization/xml-reader';
+import type { BSBGraphicInterface } from './bsb-graphic-interface';
+import { Preset } from './preset';
 
 export class PresetGroup {
-  presetGroupName = "Presets";
+  presetGroupName = 'Presets';
   subGroups: PresetGroup[] = [];
   presets: Preset[] = [];
-  currentPresetUniqueId = "";
+  currentPresetUniqueId = '';
   currentPresetModified = false;
 
   getPresetGroupName(): string {
@@ -68,12 +68,12 @@ export class PresetGroup {
   }
 
   saveAsXML(): Element {
-    const elem = new Element("presetGroup");
-    elem.setAttribute("name", this.presetGroupName);
+    const elem = new Element('presetGroup');
+    elem.setAttribute('name', this.presetGroupName);
     if (this.currentPresetUniqueId) {
-      elem.setAttribute("currentPresetUniqueId", this.currentPresetUniqueId);
+      elem.setAttribute('currentPresetUniqueId', this.currentPresetUniqueId);
     }
-    elem.setAttribute("currentPresetModified", this.currentPresetModified.toString());
+    elem.setAttribute('currentPresetModified', this.currentPresetModified.toString());
     for (const preset of this.presets) {
       elem.addElement(preset.saveAsXML());
     }
@@ -85,17 +85,17 @@ export class PresetGroup {
 
   static loadFromXML(data: Element): PresetGroup {
     const group = new PresetGroup();
-    group.presetGroupName = data.getAttribute("name") ?? "Presets";
-    group.currentPresetUniqueId = data.getAttribute("currentPresetUniqueId") ?? "";
-    const modified = data.getAttribute("currentPresetModified");
-    group.currentPresetModified = modified === "true";
+    group.presetGroupName = data.getAttribute('name') ?? 'Presets';
+    group.currentPresetUniqueId = data.getAttribute('currentPresetUniqueId') ?? '';
+    const modified = data.getAttribute('currentPresetModified');
+    group.currentPresetModified = modified === 'true';
 
-    const presetElems = data.getElements("preset");
+    const presetElems = data.getElements('preset');
     while (presetElems.hasMoreElements()) {
       group.presets.push(Preset.loadFromXML(presetElems.next()));
     }
 
-    const subGroupElems = data.getElements("presetGroup");
+    const subGroupElems = data.getElements('presetGroup');
     while (subGroupElems.hasMoreElements()) {
       group.subGroups.push(PresetGroup.loadFromXML(subGroupElems.next()));
     }

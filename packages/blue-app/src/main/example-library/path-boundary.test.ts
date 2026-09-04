@@ -53,8 +53,9 @@ describe('path-boundary', () => {
         parsePortableExamplePath('media/loop.wav'),
         '/tmp/library/content',
         {
-        platform: 'linux',
-      });
+          platform: 'linux',
+        },
+      );
       expect(native).toBe('/tmp/library/content/media/loop.wav');
     });
 
@@ -102,8 +103,12 @@ describe('path-boundary', () => {
     });
 
     it('folds case and slash forms for host identity only on win32', () => {
-      expect(collisionIdentityForPortables('Media/A.WAV', 'media/a.wav', { platform: 'win32' })).toBe(true);
-      expect(collisionIdentityForPortables('Media/A.WAV', 'media/a.wav', { platform: 'linux' })).toBe(false);
+      expect(
+        collisionIdentityForPortables('Media/A.WAV', 'media/a.wav', { platform: 'win32' }),
+      ).toBe(true);
+      expect(
+        collisionIdentityForPortables('Media/A.WAV', 'media/a.wav', { platform: 'linux' }),
+      ).toBe(false);
 
       expect(hostCollisionKey('Media\\A.WAV', { platform: 'win32' })).toBe('media/a.wav');
       expect(resolveExamplePathPlatform({ platform: 'darwin' })).toBe('posix');
@@ -148,7 +153,10 @@ describe('path-boundary', () => {
         }
         fs.writeFileSync(path.join(contentRoot, 'inside.blue'), '<project/>', 'utf8');
         expect(
-          realPathInsideRoot(fs.realpathSync(contentRoot), fs.realpathSync(path.join(contentRoot, 'inside.blue'))),
+          realPathInsideRoot(
+            fs.realpathSync(contentRoot),
+            fs.realpathSync(path.join(contentRoot, 'inside.blue')),
+          ),
         ).toBe(true);
       } finally {
         fs.rmSync(tempDir, { recursive: true, force: true });

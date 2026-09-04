@@ -22,9 +22,12 @@ export default function NoteProcessorChainDialog({
   const applyProjectDocumentPatch = useProjectStore((s) => s.applyProjectDocumentPatch);
 
   useEffect(() => {
-    window.blueAPI.getNamedChainNames().then((names) => {
-      if (names) setNamedChainNames(names);
-    }).catch(() => {});
+    window.blueAPI
+      .getNamedChainNames()
+      .then((names) => {
+        if (names) setNamedChainNames(names);
+      })
+      .catch(() => {});
   }, []);
 
   const handleCommit = useCallback((updated: NoteProcessorChainSnapshot) => {
@@ -36,24 +39,33 @@ export default function NoteProcessorChainDialog({
     onClose();
   }, [localChain, onCommit, onClose]);
 
-  const handleImportNamedChain = useCallback(async (name: string): Promise<NoteProcessorChainSnapshot | null> => {
-    try {
-      const result = await window.blueAPI.getNamedChain(name);
-      return result ?? null;
-    } catch {
-      return null;
-    }
-  }, []);
+  const handleImportNamedChain = useCallback(
+    async (name: string): Promise<NoteProcessorChainSnapshot | null> => {
+      try {
+        const result = await window.blueAPI.getNamedChain(name);
+        return result ?? null;
+      } catch {
+        return null;
+      }
+    },
+    [],
+  );
 
-  const handleSaveNamedChain = useCallback((name: string, chainToSave: NoteProcessorChainSnapshot) => {
-    void applyProjectDocumentPatch({
-      score: { type: 'saveNamedNoteProcessorChain', name, chain: chainToSave },
-    });
-    setNamedChainNames((prev) => prev.includes(name) ? prev : [...prev, name]);
-  }, [applyProjectDocumentPatch]);
+  const handleSaveNamedChain = useCallback(
+    (name: string, chainToSave: NoteProcessorChainSnapshot) => {
+      void applyProjectDocumentPatch({
+        score: { type: 'saveNamedNoteProcessorChain', name, chain: chainToSave },
+      });
+      setNamedChainNames((prev) => (prev.includes(name) ? prev : [...prev, name]));
+    },
+    [applyProjectDocumentPatch],
+  );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      onClick={onClose}
+    >
       <div
         className="bg-blue-bg border border-blue-border rounded-lg shadow-xl w-[420px] max-h-[80vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}

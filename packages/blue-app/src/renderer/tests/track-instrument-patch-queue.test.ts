@@ -3,29 +3,30 @@ import { mergePendingInstrumentPatch } from '../components/track-instrument-edit
 
 describe('Track instrument durable patch coalescing', () => {
   it('keeps only the latest scalar replacement value', () => {
-    expect(mergePendingInstrumentPatch(
-      { instrumentText: 'first' },
-      { instrumentText: 'latest' },
-    )).toEqual({ instrumentText: 'latest' });
+    expect(
+      mergePendingInstrumentPatch({ instrumentText: 'first' }, { instrumentText: 'latest' }),
+    ).toEqual({ instrumentText: 'latest' });
   });
 
   it('merges consecutive property values for the same BSB widget', () => {
-    expect(mergePendingInstrumentPatch(
-      {
-        bsbInterface: {
-          type: 'updateWidgetProperties',
-          widgetId: 'xy-pad',
-          properties: { xValue: 0.25 },
+    expect(
+      mergePendingInstrumentPatch(
+        {
+          bsbInterface: {
+            type: 'updateWidgetProperties',
+            widgetId: 'xy-pad',
+            properties: { xValue: 0.25 },
+          },
         },
-      },
-      {
-        bsbInterface: {
-          type: 'updateWidgetProperties',
-          widgetId: 'xy-pad',
-          properties: { yValue: 0.75 },
+        {
+          bsbInterface: {
+            type: 'updateWidgetProperties',
+            widgetId: 'xy-pad',
+            properties: { yValue: 0.75 },
+          },
         },
-      },
-    )).toEqual({
+      ),
+    ).toEqual({
       bsbInterface: {
         type: 'updateWidgetProperties',
         widgetId: 'xy-pad',
@@ -35,22 +36,24 @@ describe('Track instrument durable patch coalescing', () => {
   });
 
   it('retains separate durable patches for different widgets', () => {
-    expect(mergePendingInstrumentPatch(
-      {
-        bsbInterface: {
-          type: 'updateWidgetProperties',
-          widgetId: 'gain',
-          properties: { value: 0.25 },
+    expect(
+      mergePendingInstrumentPatch(
+        {
+          bsbInterface: {
+            type: 'updateWidgetProperties',
+            widgetId: 'gain',
+            properties: { value: 0.25 },
+          },
         },
-      },
-      {
-        bsbInterface: {
-          type: 'updateWidgetProperties',
-          widgetId: 'frequency',
-          properties: { value: 0.75 },
+        {
+          bsbInterface: {
+            type: 'updateWidgetProperties',
+            widgetId: 'frequency',
+            properties: { value: 0.75 },
+          },
         },
-      },
-    )).toBeNull();
+      ),
+    ).toBeNull();
   });
 
   it('coalesces slider-bank values only for the same widget and index', () => {
@@ -72,9 +75,11 @@ describe('Track instrument durable patch coalescing', () => {
     };
 
     expect(mergePendingInstrumentPatch(first, latest)).toEqual(latest);
-    expect(mergePendingInstrumentPatch(first, {
-      bsbInterface: { ...latest.bsbInterface, sliderIndex: 3 },
-    })).toBeNull();
+    expect(
+      mergePendingInstrumentPatch(first, {
+        bsbInterface: { ...latest.bsbInterface, sliderIndex: 3 },
+      }),
+    ).toBeNull();
   });
 
   describe('BlueX7 patch coalescing', () => {
@@ -212,7 +217,9 @@ describe('Track instrument durable patch coalescing', () => {
       expect(mergePendingInstrumentPatch(pms1, pms2)).toEqual(pms2);
 
       const code1 = { blueX7: { type: 'setCsoundPostCode' as const, text: 'outs aout, aout' } };
-      const code2 = { blueX7: { type: 'setCsoundPostCode' as const, text: 'blueMixerOut aout, aout' } };
+      const code2 = {
+        blueX7: { type: 'setCsoundPostCode' as const, text: 'blueMixerOut aout, aout' },
+      };
       expect(mergePendingInstrumentPatch(code1, code2)).toEqual(code2);
     });
   });

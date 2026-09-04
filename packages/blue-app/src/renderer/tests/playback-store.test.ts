@@ -1,10 +1,7 @@
 // @vitest-environment jsdom
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  derivePlaybackDisplayState,
-  usePlaybackStore,
-} from '../stores/playback-store';
+import { derivePlaybackDisplayState, usePlaybackStore } from '../stores/playback-store';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 import { useProjectStore } from '../stores/project-store';
 
@@ -212,7 +209,9 @@ describe('playback store authoritative clock', () => {
       renderStartTime: 12,
       auditioning: true,
     });
-    usePlaybackStore.getState().setStatus({ status: 'playing', message: 'Playing via blue-engine' });
+    usePlaybackStore
+      .getState()
+      .setStatus({ status: 'playing', message: 'Playing via blue-engine' });
 
     expect(usePlaybackStore.getState().isAuditioning).toBe(true);
 

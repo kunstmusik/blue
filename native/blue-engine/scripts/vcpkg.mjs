@@ -73,9 +73,7 @@ export async function resolveVcpkgRoot({
   bootstrap = bootstrapPinnedVcpkg,
 } = {}) {
   const explicitRoot = env.VCPKG_ROOT?.trim();
-  const resolvedRoot = explicitRoot
-    ? resolve(explicitRoot)
-    : join(root, '.vcpkg');
+  const resolvedRoot = explicitRoot ? resolve(explicitRoot) : join(root, '.vcpkg');
 
   try {
     await validateCheckout(resolvedRoot);

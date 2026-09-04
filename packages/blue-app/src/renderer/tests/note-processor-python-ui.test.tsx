@@ -8,7 +8,9 @@ import NoteProcessorChainEditor from '../components/workbench/panels/score-objec
 import { HostDocumentContext } from '../hooks/use-host-document';
 import { useNoteProcessorClipboardStore } from '../stores/note-processor-clipboard-store';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 vi.mock('../components/workbench/panels/editors/SelectedCodeEditor', () => ({
   default: ({
@@ -29,13 +31,17 @@ vi.mock('../components/workbench/panels/editors/SelectedCodeEditor', () => ({
 }));
 
 function findButton(container: Element, label: string): HTMLButtonElement {
-  const button = Array.from(container.querySelectorAll('button')).find((candidate) => candidate.textContent === label);
+  const button = Array.from(container.querySelectorAll('button')).find(
+    (candidate) => candidate.textContent === label,
+  );
   if (!button) throw new Error(`Button not found: ${label}`);
   return button;
 }
 
 function findButtonsByText(container: Element, label: string): HTMLButtonElement[] {
-  return Array.from(container.querySelectorAll('button')).filter((candidate) => candidate.textContent === label);
+  return Array.from(container.querySelectorAll('button')).filter(
+    (candidate) => candidate.textContent === label,
+  );
 }
 
 describe('PythonProcessor Add/Edit UI', () => {
@@ -63,10 +69,7 @@ describe('PythonProcessor Add/Edit UI', () => {
     act(() => {
       root.render(
         <HostDocumentContext.Provider value={document}>
-          <NoteProcessorChainEditor
-            chain={initialChain}
-            onCommit={onCommit}
-          />
+          <NoteProcessorChainEditor chain={initialChain} onCommit={onCommit} />
         </HostDocumentContext.Provider>,
       );
     });
@@ -123,12 +126,7 @@ describe('PythonProcessor Add/Edit UI', () => {
     };
 
     act(() => {
-      root.render(
-        <NoteProcessorChainEditor
-          chain={chain}
-          onCommit={onCommit}
-        />,
-      );
+      root.render(<NoteProcessorChainEditor chain={chain} onCommit={onCommit} />);
     });
 
     // Select the PythonProcessor row
@@ -186,12 +184,7 @@ describe('PythonProcessor Add/Edit UI', () => {
     };
 
     act(() => {
-      root.render(
-        <NoteProcessorChainEditor
-          chain={chain}
-          onCommit={onCommit}
-        />,
-      );
+      root.render(<NoteProcessorChainEditor chain={chain} onCommit={onCommit} />);
     });
 
     // Select the PythonProcessor row
@@ -213,7 +206,10 @@ describe('PythonProcessor Add/Edit UI', () => {
 
     act(() => {
       const newCode = 'for note in notes:\n    note.setPField(4, 5.0)';
-      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set?.call(textarea, newCode);
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set?.call(
+        textarea,
+        newCode,
+      );
       textarea!.dispatchEvent(new Event('input', { bubbles: true }));
       textarea!.dispatchEvent(new Event('change', { bubbles: true }));
     });
@@ -267,12 +263,7 @@ describe('PythonProcessor Add/Edit UI', () => {
     };
 
     act(() => {
-      root.render(
-        <NoteProcessorChainEditor
-          chain={chain}
-          onCommit={onCommit}
-        />,
-      );
+      root.render(<NoteProcessorChainEditor chain={chain} onCommit={onCommit} />);
     });
 
     // Select row & open modal
@@ -289,7 +280,10 @@ describe('PythonProcessor Add/Edit UI', () => {
 
     act(() => {
       const changedCode = 'discard_this = True';
-      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set?.call(textarea, changedCode);
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set?.call(
+        textarea,
+        changedCode,
+      );
       textarea!.dispatchEvent(new Event('input', { bubbles: true }));
     });
 

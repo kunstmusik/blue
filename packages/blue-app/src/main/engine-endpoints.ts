@@ -80,5 +80,7 @@ export async function allocateTcpEndpointPair(
     currentCandidate = pubCandidate + 1;
   }
 
-  throw new Error(`Exhausted available TCP endpoint pairs after ${maxAttempts} attempts starting from port ${basePort}`);
+  throw new Error(
+    `Exhausted available TCP endpoint pairs after ${maxAttempts} attempts starting from port ${basePort}`,
+  );
 }

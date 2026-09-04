@@ -30,7 +30,9 @@ function findLabeledItem(
   return getLabeledItems(items).find((item) => item.label === label);
 }
 
-function collectInsertionItems(items: readonly CsoundEditorMenuItem[]): CsoundEditorInsertionItem[] {
+function collectInsertionItems(
+  items: readonly CsoundEditorMenuItem[],
+): CsoundEditorInsertionItem[] {
   const insertionItems: CsoundEditorInsertionItem[] = [];
   for (const item of items) {
     if (item.kind === 'insertion') {
@@ -230,7 +232,14 @@ describe('createCodeRepositorySubmenu', () => {
 
   it('disables snippet insertion when the editor is read-only', () => {
     const root = makeRoot([
-      { id: 'snip-1', kind: 'snippet', name: 's', parentId: CODE_REPOSITORY_ROOT_ID, order: 0, code: 'x' },
+      {
+        id: 'snip-1',
+        kind: 'snippet',
+        name: 's',
+        parentId: CODE_REPOSITORY_ROOT_ID,
+        order: 0,
+        code: 'x',
+      },
     ]);
     const submenu = createCodeRepositorySubmenu(root, true);
     if (submenu.kind !== 'submenu') throw new Error('expected submenu');
@@ -244,7 +253,11 @@ describe('createAddToCodeRepositoryItem', () => {
     const enabled = createAddToCodeRepositoryItem(true, false);
     const noSelection = createAddToCodeRepositoryItem(false, false);
     const readOnly = createAddToCodeRepositoryItem(true, true);
-    if (enabled.kind !== 'command' || noSelection.kind !== 'command' || readOnly.kind !== 'command') {
+    if (
+      enabled.kind !== 'command' ||
+      noSelection.kind !== 'command' ||
+      readOnly.kind !== 'command'
+    ) {
       throw new Error('Expected Add to Code Repository command items');
     }
     expect(enabled.disabled).toBe(false);
@@ -266,7 +279,9 @@ describe('createJavaBlueCsoundEditorMenuItems', () => {
     expect(opcodes).toBeDefined();
     expect(opcodes?.kind).toBe('submenu');
 
-    const blueVars = menu.find((item) => item.kind !== 'separator' && item.label === 'Blue Variables');
+    const blueVars = menu.find(
+      (item) => item.kind !== 'separator' && item.label === 'Blue Variables',
+    );
     expect(blueVars?.kind).toBe('submenu');
 
     const blueOps = menu.find((item) => item.kind !== 'separator' && item.label === 'Blue Opcodes');
@@ -275,7 +290,14 @@ describe('createJavaBlueCsoundEditorMenuItems', () => {
 
   it('includes a populated Custom submenu and the Add command when data is provided', () => {
     const root = makeRoot([
-      { id: 'snip-1', kind: 'snippet', name: 'solo', parentId: CODE_REPOSITORY_ROOT_ID, order: 0, code: 'sig' },
+      {
+        id: 'snip-1',
+        kind: 'snippet',
+        name: 'solo',
+        parentId: CODE_REPOSITORY_ROOT_ID,
+        order: 0,
+        code: 'sig',
+      },
     ]);
     const menu = createJavaBlueCsoundEditorMenuItems({
       repositoryRoot: root,
@@ -284,20 +306,24 @@ describe('createJavaBlueCsoundEditorMenuItems', () => {
     const custom = menu.find((item) => item.kind !== 'separator' && item.label === 'Custom');
     if (!custom || custom.kind !== 'submenu') throw new Error('expected Custom submenu');
     expect((custom.items[0] as { insertText: string }).insertText).toBe('sig');
-    const add = menu.find((item) => item.kind === 'command' && item.command === 'add-to-code-repository');
+    const add = menu.find(
+      (item) => item.kind === 'command' && item.command === 'add-to-code-repository',
+    );
     expect(add).toBeDefined();
     expect((add as { disabled?: boolean }).disabled).toBeFalsy();
   });
 
   it('builds the deterministic 500-node Custom menu fixture within the responsiveness threshold', () => {
-    const root = makeRoot(Array.from({ length: 500 }, (_, index) => ({
-      id: `snippet-${index}`,
-      kind: 'snippet' as const,
-      name: `Snippet ${index + 1}`,
-      parentId: CODE_REPOSITORY_ROOT_ID,
-      order: index,
-      code: `instr ${index + 1}`,
-    })));
+    const root = makeRoot(
+      Array.from({ length: 500 }, (_, index) => ({
+        id: `snippet-${index}`,
+        kind: 'snippet' as const,
+        name: `Snippet ${index + 1}`,
+        parentId: CODE_REPOSITORY_ROOT_ID,
+        order: index,
+        code: `instr ${index + 1}`,
+      })),
+    );
     const startedAt = performance.now();
     const menu = createCodeRepositorySubmenu(root);
     const elapsedMs = performance.now() - startedAt;

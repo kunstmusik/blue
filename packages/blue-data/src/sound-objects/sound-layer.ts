@@ -172,8 +172,8 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
     const noteList = new NoteList();
 
     // Sort sound objects by start time
-    const sorted = [...this].sort((a, b) =>
-      a.getStartTime().toBeats(context) - b.getStartTime().toBeats(context),
+    const sorted = [...this].sort(
+      (a, b) => a.getStartTime().toBeats(context) - b.getStartTime().toBeats(context),
     );
 
     for (const sObj of sorted) {
@@ -218,8 +218,8 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
   ): Promise<NoteList> {
     const noteList = new NoteList();
 
-    const sorted = [...this].sort((a, b) =>
-      a.getStartTime().toBeats(context) - b.getStartTime().toBeats(context),
+    const sorted = [...this].sort(
+      (a, b) => a.getStartTime().toBeats(context) - b.getStartTime().toBeats(context),
     );
 
     for (const sObj of sorted) {

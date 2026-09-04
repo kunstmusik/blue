@@ -254,7 +254,12 @@ describe('Score patches — moveScoreObjects', () => {
       editorObjectType: 'GenericScore',
       ownerKind: 'timeline',
       displayContext: 'timeline',
-      location: { rootGroupIndex: polyGroupIndex, containerPath: [], layerIndex: 0, objectIndex: 0 },
+      location: {
+        rootGroupIndex: polyGroupIndex,
+        containerPath: [],
+        layerIndex: 0,
+        objectIndex: 0,
+      },
       supportsTimeBehavior: true,
       supportsRepeatPoint: true,
       supportsNoteProcessorChain: true,
@@ -264,12 +269,14 @@ describe('Score patches — moveScoreObjects', () => {
       applyProjectDocumentPatch(data, {
         score: {
           type: 'moveScoreObjects',
-          moves: [{
-            target,
-            targetStartBeats: 4.5,
-            targetLayerIndex: 1,
-            targetGroupId: groupId,
-          }],
+          moves: [
+            {
+              target,
+              targetStartBeats: 4.5,
+              targetLayerIndex: 1,
+              targetGroupId: groupId,
+            },
+          ],
         },
       }),
     ).toBe(true);
@@ -468,7 +475,9 @@ describe('Score patches — updateTypeSpecificEditor', () => {
         score: {
           type: 'updateTypeSpecificEditor',
           target,
-          patch: { updateTrackCell: { trackIndex: 0, columnIndex: 0, stepIndex: 1, value: '8.07' } },
+          patch: {
+            updateTrackCell: { trackIndex: 0, columnIndex: 0, stepIndex: 1, value: '8.07' },
+          },
         },
       }),
     ).toBe(true);

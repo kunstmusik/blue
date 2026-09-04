@@ -60,12 +60,7 @@ export class GenericScore extends AbstractSoundObject implements SoundObject {
     const repeatPoint = this.getRepeatPoint();
     const repeatPointBeats = repeatPoint ? repeatPoint.toBeats(context) : -1;
 
-    applyTimeBehavior(
-      processed,
-      this.getTimeBehavior(),
-      duration,
-      repeatPointBeats,
-    );
+    applyTimeBehavior(processed, this.getTimeBehavior(), duration, repeatPointBeats);
     setScoreStart(processed, startTime);
 
     return processed;
@@ -89,12 +84,7 @@ export class GenericScore extends AbstractSoundObject implements SoundObject {
     const repeatPoint = this.getRepeatPoint();
     const repeatPointBeats = repeatPoint ? repeatPoint.toBeats(context) : -1;
 
-    applyTimeBehavior(
-      processed,
-      this.getTimeBehavior(),
-      duration,
-      repeatPointBeats,
-    );
+    applyTimeBehavior(processed, this.getTimeBehavior(), duration, repeatPointBeats);
     setScoreStart(processed, startTime);
 
     return processed;

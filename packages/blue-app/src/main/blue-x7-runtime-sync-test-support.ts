@@ -52,10 +52,12 @@ function addTrackBlueX7(data: BlueData, name: string): { rootGroupId: string; tr
  * snapshot arrangement, prepare Track instruments, allocate tables, assign
  * parameter names, then register BlueX7 bindings.
  */
-export function compileBlueX7ProjectFixtures(options: {
-  arrangementInstruments?: number;
-  trackInstruments?: number;
-} = {}): BlueX7Fixture {
+export function compileBlueX7ProjectFixtures(
+  options: {
+    arrangementInstruments?: number;
+    trackInstruments?: number;
+  } = {},
+): BlueX7Fixture {
   const arrangementCount = options.arrangementInstruments ?? 1;
   const trackCount = options.trackInstruments ?? 1;
   const data = new BlueData();

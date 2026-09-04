@@ -16,7 +16,9 @@ describe('java-runtime-path', () => {
       mainModuleDir: '/repo/packages/blue-app/dist/main',
     });
 
-    expect(candidates).toEqual([path.resolve('/repo/packages/blue-app/dist/main', '../../assets/java/blue-java.jar')]);
+    expect(candidates).toEqual([
+      path.resolve('/repo/packages/blue-app/dist/main', '../../assets/java/blue-java.jar'),
+    ]);
   });
 
   it('prefers packaged resources candidates when packaged', () => {
@@ -24,7 +26,8 @@ describe('java-runtime-path', () => {
       isPackaged: true,
       mainModuleDir: '/ignored',
       resourcesPath: RESOURCES,
-      existsSync: (candidate) => candidate === path.join(RESOURCES, 'app.asar.unpacked', 'assets', 'java', 'blue-java.jar'),
+      existsSync: (candidate) =>
+        candidate === path.join(RESOURCES, 'app.asar.unpacked', 'assets', 'java', 'blue-java.jar'),
     });
 
     expect(resolution.artifactPath).toBe(
@@ -55,8 +58,20 @@ describe('java-runtime-path', () => {
     });
 
     expect(candidates[0]).toBe(path.join(RESOURCES, 'assets', 'java', 'blue-java.jar'));
-    expect(candidates).toContain(path.join(RESOURCES, 'app.asar.unpacked', 'assets', 'java', 'blue-java.jar'));
-    expect(candidates).toContain(path.join(RESOURCES, 'app.asar.unpacked', 'packages', 'blue-app', 'assets', 'java', 'blue-java.jar'));
+    expect(candidates).toContain(
+      path.join(RESOURCES, 'app.asar.unpacked', 'assets', 'java', 'blue-java.jar'),
+    );
+    expect(candidates).toContain(
+      path.join(
+        RESOURCES,
+        'app.asar.unpacked',
+        'packages',
+        'blue-app',
+        'assets',
+        'java',
+        'blue-java.jar',
+      ),
+    );
   });
 
   it('resolves the development python library location next to the app assets', () => {
@@ -65,7 +80,9 @@ describe('java-runtime-path', () => {
       mainModuleDir: '/repo/packages/blue-app/dist/main',
     });
 
-    expect(candidates).toEqual([path.resolve('/repo/packages/blue-app/dist/main', '../../assets/java/pythonLib')]);
+    expect(candidates).toEqual([
+      path.resolve('/repo/packages/blue-app/dist/main', '../../assets/java/pythonLib'),
+    ]);
   });
 
   it('returns packaged and user python library roots', () => {
@@ -93,7 +110,9 @@ describe('java-runtime-path', () => {
     });
 
     expect(candidates[0]).toBe(path.join(RESOURCES, 'assets', 'java', 'pythonLib'));
-    expect(candidates).toContain(path.join(RESOURCES, 'app.asar.unpacked', 'assets', 'java', 'pythonLib'));
+    expect(candidates).toContain(
+      path.join(RESOURCES, 'app.asar.unpacked', 'assets', 'java', 'pythonLib'),
+    );
   });
 
   it('resolves resources/assets/java/pythonLib as the packaged Python library root when present', () => {

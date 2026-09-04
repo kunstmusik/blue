@@ -6,7 +6,8 @@ import { BSBKnob } from './bsb-knob';
 describe('BSBGraphicInterface', () => {
   it('reports load-time repairs for legacy widgets without ids', () => {
     const graphicInterface = new BSBGraphicInterface();
-    const repairs = graphicInterface.loadFromXML(Element.parse(`
+    const repairs = graphicInterface.loadFromXML(
+      Element.parse(`
       <graphicInterface>
         <bsbObject type="blue.orchestra.blueSynthBuilder.BSBKnob" version="2">
           <objectName>gain</objectName>
@@ -14,7 +15,8 @@ describe('BSBGraphicInterface', () => {
           <y>20</y>
           <value>0.5</value>
         </bsbObject>
-      </graphicInterface>`));
+      </graphicInterface>`),
+    );
 
     const child = graphicInterface.getRootGroup().getChildren()[0];
 

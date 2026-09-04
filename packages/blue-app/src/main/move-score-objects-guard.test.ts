@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BlueData, PolyObject, SoundLayer, AudioFile } from '@blue/data';
-import {
-  applyProjectDocumentPatch,
-  createProjectEditorSnapshot,
-} from '../shared/project-editor';
+import { applyProjectDocumentPatch, createProjectEditorSnapshot } from '../shared/project-editor';
 
 function makeDataWithThreeScoreObjects(): BlueData {
   const data = new BlueData();
@@ -102,7 +99,6 @@ describe('applyProjectDocumentPatch moveScoreObjects — deletion guard', () => 
     const rootPoly = data.getScore()[0] as PolyObject;
     const layer = rootPoly[0]!;
 
-
     const snap = createProjectEditorSnapshot(data, null, 1);
     const realGroupId = snap.score!.layerGroups[0].groupId;
 
@@ -122,8 +118,18 @@ describe('applyProjectDocumentPatch moveScoreObjects — deletion guard', () => 
       score: {
         type: 'moveScoreObjects',
         moves: [
-          { target: target(0), targetStartBeats: 5, targetLayerIndex: 0, targetGroupId: realGroupId },
-          { target: target(1), targetStartBeats: 6, targetLayerIndex: 0, targetGroupId: realGroupId },
+          {
+            target: target(0),
+            targetStartBeats: 5,
+            targetLayerIndex: 0,
+            targetGroupId: realGroupId,
+          },
+          {
+            target: target(1),
+            targetStartBeats: 6,
+            targetLayerIndex: 0,
+            targetGroupId: realGroupId,
+          },
         ],
       },
     });

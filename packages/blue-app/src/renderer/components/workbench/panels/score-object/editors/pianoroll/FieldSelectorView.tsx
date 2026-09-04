@@ -13,14 +13,17 @@ export default function FieldSelectorView({
   selectedFieldDef,
   onSelectField,
 }: FieldSelectorViewProps): React.ReactElement {
-  const handleChange = useCallback((value: string) => {
-    const idx = parseInt(value, 10);
-    if (idx < 0 || idx >= fieldDefinitions.length) {
-      onSelectField(null);
-    } else {
-      onSelectField(fieldDefinitions[idx]!);
-    }
-  }, [fieldDefinitions, onSelectField]);
+  const handleChange = useCallback(
+    (value: string) => {
+      const idx = parseInt(value, 10);
+      if (idx < 0 || idx >= fieldDefinitions.length) {
+        onSelectField(null);
+      } else {
+        onSelectField(fieldDefinitions[idx]!);
+      }
+    },
+    [fieldDefinitions, onSelectField],
+  );
 
   const selectedIndex = selectedFieldDef
     ? fieldDefinitions.findIndex((fd) => fd.fieldName === selectedFieldDef.fieldName)

@@ -79,7 +79,8 @@ export function applyProgramSettingsToNewProject(
   props.diskBenchmarkEnabled = dr.benchmarkEnabled;
   props.diskAdvancedSettings = dr.advancedSettings;
 
-  data.getScore().getTimeContext().setSampleRate(
-    parseInt(props.sampleRate, 10) || 44100,
-  );
+  data
+    .getScore()
+    .getTimeContext()
+    .setSampleRate(parseInt(props.sampleRate, 10) || 44100);
 }

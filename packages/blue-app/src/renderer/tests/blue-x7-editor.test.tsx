@@ -21,10 +21,13 @@ vi.mock('../components/workbench/panels/editors/SelectedCodeEditor', () => ({
   ),
 }));
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 function setInputValue(input: HTMLElement, value: string) {
-  const tracker = (input as unknown as { _valueTracker?: { setValue: (v: string) => void } })._valueTracker;
+  const tracker = (input as unknown as { _valueTracker?: { setValue: (v: string) => void } })
+    ._valueTracker;
   if (tracker) {
     tracker.setValue('');
   }
@@ -49,7 +52,10 @@ function clickElement(element: HTMLElement) {
   element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
 }
 
-const fixturesDir = path.join(__dirname, '../../../../blue-data/src/instruments/blue-x7/test-fixtures');
+const fixturesDir = path.join(
+  __dirname,
+  '../../../../blue-data/src/instruments/blue-x7/test-fixtures',
+);
 const singleSysExBytes = new Uint8Array(readFileSync(path.join(fixturesDir, 'single-voice.syx')));
 const bankSysExBytes = new Uint8Array(readFileSync(path.join(fixturesDir, 'voice-bank.syx')));
 const selectedFile = (bytes: Uint8Array): ArrayBuffer => bytes.slice().buffer;
@@ -144,7 +150,9 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
     });
     expect(onInstrumentPatch).toHaveBeenCalledWith({ comment: 'Tuned Percussion' });
 
-    const enabledCheckbox = container?.querySelector('input[aria-label="Instrument Enabled"]') as HTMLInputElement;
+    const enabledCheckbox = container?.querySelector(
+      'input[aria-label="Instrument Enabled"]',
+    ) as HTMLInputElement;
     act(() => {
       clickElement(enabledCheckbox);
     });
@@ -182,7 +190,9 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
       value: 3,
     });
 
-    const op2Toggle = container?.querySelector('button[aria-label="Toggle Operator 2"]') as HTMLButtonElement;
+    const op2Toggle = container?.querySelector(
+      'button[aria-label="Toggle Operator 2"]',
+    ) as HTMLButtonElement;
     act(() => {
       clickElement(op2Toggle);
     });
@@ -196,7 +206,9 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
   it('dispatches shared sync and shared PMS updates', () => {
     renderEditor();
 
-    const sharedSyncCheckbox = container?.querySelector('input[aria-label="Shared Oscillator Sync"]') as HTMLInputElement;
+    const sharedSyncCheckbox = container?.querySelector(
+      'input[aria-label="Shared Oscillator Sync"]',
+    ) as HTMLInputElement;
     act(() => {
       clickElement(sharedSyncCheckbox);
     });
@@ -218,7 +230,9 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
   it('keeps operator-panel sync and PMS edits shared across all operators', () => {
     renderEditor();
 
-    const operatorSync = container?.querySelector('input[aria-label="Operator Oscillator Sync"]') as HTMLInputElement;
+    const operatorSync = container?.querySelector(
+      'input[aria-label="Operator Oscillator Sync"]',
+    ) as HTMLInputElement;
     act(() => {
       clickElement(operatorSync);
     });
@@ -227,7 +241,9 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
       value: 0,
     });
 
-    const operatorPms = container?.querySelector('input[aria-label="Pitch Modulation Sensitivity"]') as HTMLInputElement;
+    const operatorPms = container?.querySelector(
+      'input[aria-label="Pitch Modulation Sensitivity"]',
+    ) as HTMLInputElement;
     act(() => {
       setInputValue(operatorPms, '5');
     });
@@ -273,12 +289,16 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
     renderEditor();
 
     // Switch to Operator 3 tab (index 2)
-    const op3Tab = container?.querySelector('button[aria-label="Select Operator 3"]') as HTMLButtonElement;
+    const op3Tab = container?.querySelector(
+      'button[aria-label="Select Operator 3"]',
+    ) as HTMLButtonElement;
     act(() => {
       clickElement(op3Tab);
     });
 
-    const outputLevelInput = container?.querySelector('#bluex7-op-output-level') as HTMLInputElement;
+    const outputLevelInput = container?.querySelector(
+      '#bluex7-op-output-level',
+    ) as HTMLInputElement;
     act(() => {
       setInputValue(outputLevelInput, '75');
     });
@@ -326,7 +346,9 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
       point: { rate: 95, level: 50 },
     });
 
-    const postCodeArea = container?.querySelector('textarea[aria-label="Csound Post Code"]') as HTMLTextAreaElement;
+    const postCodeArea = container?.querySelector(
+      'textarea[aria-label="Csound Post Code"]',
+    ) as HTMLTextAreaElement;
     act(() => {
       setInputValue(postCodeArea, 'outs aout * 0.5, aout * 0.5');
     });
@@ -357,7 +379,9 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
       );
     });
 
-    const importBtn = container?.querySelector('button[aria-label="Import DX7 SysEx File"]') as HTMLButtonElement;
+    const importBtn = container?.querySelector(
+      'button[aria-label="Import DX7 SysEx File"]',
+    ) as HTMLButtonElement;
     await act(async () => {
       clickElement(importBtn);
     });
@@ -368,7 +392,9 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
     expect(dialog).not.toBeNull();
     expect(dialog?.textContent).toContain('TESTVOICE1');
 
-    const confirmBtn = container?.querySelector('button[aria-label="Confirm SysEx Import"]') as HTMLButtonElement;
+    const confirmBtn = container?.querySelector(
+      'button[aria-label="Confirm SysEx Import"]',
+    ) as HTMLButtonElement;
     act(() => {
       clickElement(confirmBtn);
     });
@@ -393,7 +419,8 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
       rate: differentValue(importedVoice.pitchEnvelope[0].rate),
       level: differentValue(importedVoice.pitchEnvelope[0].level),
     };
-    initialVoice.csoundPostCode = importedVoice.csoundPostCode === 'old code' ? 'new code' : 'old code';
+    initialVoice.csoundPostCode =
+      importedVoice.csoundPostCode === 'old code' ? 'new code' : 'old code';
     const { instrument } = renderEditor({ voice: initialVoice });
     const onImportSysEx = vi.fn().mockResolvedValue({
       status: 'selected',
@@ -424,32 +451,36 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
       await Promise.resolve();
     });
 
-    const importBtn = container?.querySelector('button[aria-label="Import DX7 SysEx File"]') as HTMLButtonElement;
+    const importBtn = container?.querySelector(
+      'button[aria-label="Import DX7 SysEx File"]',
+    ) as HTMLButtonElement;
     await act(async () => {
       clickElement(importBtn);
     });
-    const confirmBtn = container?.querySelector('button[aria-label="Confirm SysEx Import"]') as HTMLButtonElement;
+    const confirmBtn = container?.querySelector(
+      'button[aria-label="Confirm SysEx Import"]',
+    ) as HTMLButtonElement;
     act(() => {
       clickElement(confirmBtn);
     });
 
     expect(onInstrumentPatch).toHaveBeenCalledTimes(1);
     expect(lastPatch?.blueX7).toEqual({ type: 'replaceVoice', voice: importedVoice });
-    expect((container?.querySelector('input[aria-label="Feedback"]') as HTMLInputElement).value)
-      .toBe(String(importedVoice.common.feedback));
-    expect((container?.querySelector('input[aria-label="Frequency Coarse"]') as HTMLInputElement).value)
-      .toBe(String(importedVoice.operators[0].freqCoarse));
-    expect((container?.querySelector('input[aria-label="Pitch Rate 1"]') as HTMLInputElement).value)
-      .toBe(String(importedVoice.pitchEnvelope[0].rate));
-    expect((container?.querySelector('textarea[aria-label="Csound Post Code"]') as HTMLTextAreaElement).value)
-      .toBe(importedVoice.csoundPostCode);
+    expect(
+      (container?.querySelector('input[aria-label="Feedback"]') as HTMLInputElement).value,
+    ).toBe(String(importedVoice.common.feedback));
+    expect(
+      (container?.querySelector('input[aria-label="Frequency Coarse"]') as HTMLInputElement).value,
+    ).toBe(String(importedVoice.operators[0].freqCoarse));
+    expect(
+      (container?.querySelector('input[aria-label="Pitch Rate 1"]') as HTMLInputElement).value,
+    ).toBe(String(importedVoice.pitchEnvelope[0].rate));
+    expect(
+      (container?.querySelector('textarea[aria-label="Csound Post Code"]') as HTMLTextAreaElement)
+        .value,
+    ).toBe(importedVoice.csoundPostCode);
 
-    for (const testId of [
-      'tab-operators',
-      'tab-pitch',
-      'tab-csound',
-      'tab-global',
-    ]) {
+    for (const testId of ['tab-operators', 'tab-pitch', 'tab-csound', 'tab-global']) {
       const tab = container?.querySelector(`[data-testid="${testId}"]`) as HTMLButtonElement;
       act(() => {
         clickElement(tab);
@@ -478,12 +509,16 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
       );
     });
 
-    const importBtn = container?.querySelector('button[aria-label="Import DX7 SysEx File"]') as HTMLButtonElement;
+    const importBtn = container?.querySelector(
+      'button[aria-label="Import DX7 SysEx File"]',
+    ) as HTMLButtonElement;
     await act(async () => {
       clickElement(importBtn);
     });
 
-    const cancelBtn = container?.querySelector('button[aria-label="Cancel SysEx Import"]') as HTMLButtonElement;
+    const cancelBtn = container?.querySelector(
+      'button[aria-label="Cancel SysEx Import"]',
+    ) as HTMLButtonElement;
     act(() => {
       clickElement(cancelBtn);
     });
@@ -512,14 +547,18 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
       );
     });
 
-    const importBtn = container?.querySelector('button[aria-label="Import DX7 SysEx File"]') as HTMLButtonElement;
+    const importBtn = container?.querySelector(
+      'button[aria-label="Import DX7 SysEx File"]',
+    ) as HTMLButtonElement;
     importBtn.focus();
     await act(async () => {
       clickElement(importBtn);
     });
 
     const dialog = container?.querySelector('[data-testid="sysex-import-dialog"]') as HTMLElement;
-    const closeBtn = dialog.querySelector('button[aria-label="Close SysEx Dialog"]') as HTMLButtonElement;
+    const closeBtn = dialog.querySelector(
+      'button[aria-label="Close SysEx Dialog"]',
+    ) as HTMLButtonElement;
     expect(document.activeElement).toBe(closeBtn);
 
     act(() => {
@@ -532,10 +571,14 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
   });
 
   it('discards an import result when the editor target changes while reading', async () => {
-    let resolveRead: ((value: import('../../shared/blue-x7-sysex').BlueX7SysexReadResult) => void) | undefined;
-    const pendingRead = new Promise<import('../../shared/blue-x7-sysex').BlueX7SysexReadResult>((resolve) => {
-      resolveRead = resolve;
-    });
+    let resolveRead:
+      | ((value: import('../../shared/blue-x7-sysex').BlueX7SysexReadResult) => void)
+      | undefined;
+    const pendingRead = new Promise<import('../../shared/blue-x7-sysex').BlueX7SysexReadResult>(
+      (resolve) => {
+        resolveRead = resolve;
+      },
+    );
     const onImportSysEx = vi.fn(() => pendingRead);
     const { instrument } = renderEditor();
 
@@ -550,7 +593,9 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
       );
     });
 
-    const importBtn = container?.querySelector('button[aria-label="Import DX7 SysEx File"]') as HTMLButtonElement;
+    const importBtn = container?.querySelector(
+      'button[aria-label="Import DX7 SysEx File"]',
+    ) as HTMLButtonElement;
     await act(async () => {
       clickElement(importBtn);
     });
@@ -581,7 +626,9 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
     });
 
     expect(container?.querySelector('[data-testid="sysex-import-dialog"]')).toBeNull();
-    expect(container?.querySelector('[data-testid="sysex-error-banner"]')?.textContent).toContain('target changed');
+    expect(container?.querySelector('[data-testid="sysex-error-banner"]')?.textContent).toContain(
+      'target changed',
+    );
     expect(onInstrumentPatch).not.toHaveBeenCalled();
   });
 
@@ -605,14 +652,18 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
       );
     });
 
-    const importBtn = container?.querySelector('button[aria-label="Import DX7 SysEx File"]') as HTMLButtonElement;
+    const importBtn = container?.querySelector(
+      'button[aria-label="Import DX7 SysEx File"]',
+    ) as HTMLButtonElement;
     await act(async () => {
       clickElement(importBtn);
     });
 
     expect(container?.querySelector('[data-testid="sysex-import-dialog"]')).not.toBeNull();
 
-    const cancelBtn = container?.querySelector('button[aria-label="Cancel SysEx Bank Import"]') as HTMLButtonElement;
+    const cancelBtn = container?.querySelector(
+      'button[aria-label="Cancel SysEx Bank Import"]',
+    ) as HTMLButtonElement;
     act(() => {
       clickElement(cancelBtn);
     });
@@ -642,7 +693,9 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
       );
     });
 
-    const importBtn = container?.querySelector('button[aria-label="Import DX7 SysEx File"]') as HTMLButtonElement;
+    const importBtn = container?.querySelector(
+      'button[aria-label="Import DX7 SysEx File"]',
+    ) as HTMLButtonElement;
     await act(async () => {
       clickElement(importBtn);
     });
@@ -681,12 +734,16 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
       );
     });
 
-    const importBtn = container?.querySelector('button[aria-label="Import DX7 SysEx File"]') as HTMLButtonElement;
+    const importBtn = container?.querySelector(
+      'button[aria-label="Import DX7 SysEx File"]',
+    ) as HTMLButtonElement;
     await act(async () => {
       clickElement(importBtn);
     });
 
-    const slotBtn = container?.querySelector('button[aria-label^="Import Bank Slot"]') as HTMLButtonElement;
+    const slotBtn = container?.querySelector(
+      'button[aria-label^="Import Bank Slot"]',
+    ) as HTMLButtonElement;
     act(() => {
       clickElement(slotBtn);
     });
@@ -720,13 +777,17 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
       );
     });
 
-    const importBtn = container?.querySelector('button[aria-label="Import DX7 SysEx File"]') as HTMLButtonElement;
+    const importBtn = container?.querySelector(
+      'button[aria-label="Import DX7 SysEx File"]',
+    ) as HTMLButtonElement;
     await act(async () => {
       clickElement(importBtn);
     });
 
     expect(onInstrumentPatch).not.toHaveBeenCalled();
-    expect(container?.querySelector('[data-testid="sysex-error-banner"]')?.textContent).toContain('Invalid SysEx checksum');
+    expect(container?.querySelector('[data-testid="sysex-error-banner"]')?.textContent).toContain(
+      'Invalid SysEx checksum',
+    );
   });
 
   it('displays error banner when SysEx file is invalid and cancels cleanly', async () => {
@@ -749,7 +810,9 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
       );
     });
 
-    const importBtn = container?.querySelector('button[aria-label="Import DX7 SysEx File"]') as HTMLButtonElement;
+    const importBtn = container?.querySelector(
+      'button[aria-label="Import DX7 SysEx File"]',
+    ) as HTMLButtonElement;
     await act(async () => {
       clickElement(importBtn);
     });
@@ -768,10 +831,7 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
 
       act(() => {
         root?.render(
-          <BlueX7EditorComponent
-            instrument={instrument}
-            onInstrumentPatch={onInstrumentPatch}
-          />,
+          <BlueX7EditorComponent instrument={instrument} onInstrumentPatch={onInstrumentPatch} />,
         );
       });
 
@@ -781,22 +841,32 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
       expect(container?.querySelector('button[aria-label="Undo BlueX7 edit"]')).not.toBeNull();
 
       // Top-level tabs present
-      const tablist = container?.querySelector('[role="tablist"][aria-label="Instrument Sections"]');
+      const tablist = container?.querySelector(
+        '[role="tablist"][aria-label="Instrument Sections"]',
+      );
       expect(tablist).not.toBeNull();
 
       const globalTab = container?.querySelector('[role="tab"][data-testid="tab-global"]');
       expect(globalTab?.getAttribute('aria-selected')).toBe('true');
 
       // Global panel is visible
-      const globalPanel = container?.querySelector('[data-testid="bluex7-panel-global"]') as HTMLElement;
+      const globalPanel = container?.querySelector(
+        '[data-testid="bluex7-panel-global"]',
+      ) as HTMLElement;
       expect(globalPanel).not.toBeNull();
       expect(globalPanel.style.visibility).toBe('visible');
       expect(globalPanel.getAttribute('aria-hidden')).toBe('false');
 
       // Other panels are hidden
-      const operatorsPanel = container?.querySelector('[data-testid="bluex7-panel-operators"]') as HTMLElement;
-      const pitchPanel = container?.querySelector('[data-testid="bluex7-panel-pitch"]') as HTMLElement;
-      const csoundPanel = container?.querySelector('[data-testid="bluex7-panel-csound"]') as HTMLElement;
+      const operatorsPanel = container?.querySelector(
+        '[data-testid="bluex7-panel-operators"]',
+      ) as HTMLElement;
+      const pitchPanel = container?.querySelector(
+        '[data-testid="bluex7-panel-pitch"]',
+      ) as HTMLElement;
+      const csoundPanel = container?.querySelector(
+        '[data-testid="bluex7-panel-csound"]',
+      ) as HTMLElement;
 
       expect(operatorsPanel.style.visibility).toBe('hidden');
       expect(operatorsPanel.getAttribute('aria-hidden')).toBe('true');
@@ -823,14 +893,20 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
       onOrchestraPatch.mockClear();
 
       // Switch to Operators tab
-      const operatorsTab = container?.querySelector('[role="tab"][data-testid="tab-operators"]') as HTMLButtonElement;
+      const operatorsTab = container?.querySelector(
+        '[role="tab"][data-testid="tab-operators"]',
+      ) as HTMLButtonElement;
       act(() => {
         clickElement(operatorsTab);
       });
 
       expect(operatorsTab.getAttribute('aria-selected')).toBe('true');
-      const operatorsPanel = container?.querySelector('[data-testid="bluex7-panel-operators"]') as HTMLElement;
-      const globalPanel = container?.querySelector('[data-testid="bluex7-panel-global"]') as HTMLElement;
+      const operatorsPanel = container?.querySelector(
+        '[data-testid="bluex7-panel-operators"]',
+      ) as HTMLElement;
+      const globalPanel = container?.querySelector(
+        '[data-testid="bluex7-panel-global"]',
+      ) as HTMLElement;
 
       expect(operatorsPanel.style.visibility).toBe('visible');
       expect(operatorsPanel.getAttribute('aria-hidden')).toBe('false');
@@ -842,21 +918,29 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
       expect(onOrchestraPatch).not.toHaveBeenCalled();
 
       // Switch to Pitch Envelope tab
-      const pitchTab = container?.querySelector('[role="tab"][data-testid="tab-pitch"]') as HTMLButtonElement;
+      const pitchTab = container?.querySelector(
+        '[role="tab"][data-testid="tab-pitch"]',
+      ) as HTMLButtonElement;
       act(() => {
         clickElement(pitchTab);
       });
-      const pitchPanel = container?.querySelector('[data-testid="bluex7-panel-pitch"]') as HTMLElement;
+      const pitchPanel = container?.querySelector(
+        '[data-testid="bluex7-panel-pitch"]',
+      ) as HTMLElement;
       expect(pitchPanel.style.visibility).toBe('visible');
       expect(operatorsPanel.style.visibility).toBe('hidden');
       expect(onInstrumentPatch).not.toHaveBeenCalled();
 
       // Switch to Csound tab
-      const csoundTab = container?.querySelector('[role="tab"][data-testid="tab-csound"]') as HTMLButtonElement;
+      const csoundTab = container?.querySelector(
+        '[role="tab"][data-testid="tab-csound"]',
+      ) as HTMLButtonElement;
       act(() => {
         clickElement(csoundTab);
       });
-      const csoundPanel = container?.querySelector('[data-testid="bluex7-panel-csound"]') as HTMLElement;
+      const csoundPanel = container?.querySelector(
+        '[data-testid="bluex7-panel-csound"]',
+      ) as HTMLElement;
       expect(csoundPanel.style.visibility).toBe('visible');
       expect(pitchPanel.style.visibility).toBe('hidden');
       expect(onInstrumentPatch).not.toHaveBeenCalled();
@@ -870,15 +954,14 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
 
       act(() => {
         root?.render(
-          <BlueX7EditorComponent
-            instrument={instrument}
-            onInstrumentPatch={onInstrumentPatch}
-          />,
+          <BlueX7EditorComponent instrument={instrument} onInstrumentPatch={onInstrumentPatch} />,
         );
       });
 
       // Switch to Csound
-      const csoundTab = container?.querySelector('[role="tab"][data-testid="tab-csound"]') as HTMLButtonElement;
+      const csoundTab = container?.querySelector(
+        '[role="tab"][data-testid="tab-csound"]',
+      ) as HTMLButtonElement;
       act(() => {
         clickElement(csoundTab);
       });
@@ -894,16 +977,15 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
 
       act(() => {
         root?.render(
-          <BlueX7EditorComponent
-            instrument={instrument}
-            onInstrumentPatch={onInstrumentPatch}
-          />,
+          <BlueX7EditorComponent instrument={instrument} onInstrumentPatch={onInstrumentPatch} />,
         );
       });
 
       const globalTab = container?.querySelector('[role="tab"][data-testid="tab-global"]');
       expect(globalTab?.getAttribute('aria-selected')).toBe('true');
-      const globalPanel = container?.querySelector('[data-testid="bluex7-panel-global"]') as HTMLElement;
+      const globalPanel = container?.querySelector(
+        '[data-testid="bluex7-panel-global"]',
+      ) as HTMLElement;
       expect(globalPanel.style.visibility).toBe('visible');
     });
   });
@@ -916,15 +998,14 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
 
       act(() => {
         root?.render(
-          <BlueX7EditorComponent
-            instrument={instrument}
-            onInstrumentPatch={onInstrumentPatch}
-          />,
+          <BlueX7EditorComponent instrument={instrument} onInstrumentPatch={onInstrumentPatch} />,
         );
       });
 
       // Switch to Operators tab
-      const operatorsTab = container?.querySelector('[role="tab"][data-testid="tab-operators"]') as HTMLButtonElement;
+      const operatorsTab = container?.querySelector(
+        '[role="tab"][data-testid="tab-operators"]',
+      ) as HTMLButtonElement;
       act(() => {
         clickElement(operatorsTab);
       });
@@ -944,15 +1025,14 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
 
       act(() => {
         root?.render(
-          <BlueX7EditorComponent
-            instrument={instrument}
-            onInstrumentPatch={onInstrumentPatch}
-          />,
+          <BlueX7EditorComponent instrument={instrument} onInstrumentPatch={onInstrumentPatch} />,
         );
       });
 
       // Switch to Operators tab
-      const operatorsTab = container?.querySelector('[role="tab"][data-testid="tab-operators"]') as HTMLButtonElement;
+      const operatorsTab = container?.querySelector(
+        '[role="tab"][data-testid="tab-operators"]',
+      ) as HTMLButtonElement;
       act(() => {
         clickElement(operatorsTab);
       });
@@ -960,7 +1040,9 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
       onInstrumentPatch.mockClear();
 
       // Switch to Op 3
-      const op3Tab = container?.querySelector('[role="tab"][data-testid="operator-tab-3"]') as HTMLButtonElement;
+      const op3Tab = container?.querySelector(
+        '[role="tab"][data-testid="operator-tab-3"]',
+      ) as HTMLButtonElement;
       act(() => {
         clickElement(op3Tab);
       });
@@ -970,7 +1052,9 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
       expect(op3Tab.getAttribute('aria-selected')).toBe('true');
 
       // Edit Coarse tune on Op 3
-      const coarseInput = container?.querySelector('input[aria-label="Frequency Coarse"]') as HTMLInputElement;
+      const coarseInput = container?.querySelector(
+        'input[aria-label="Frequency Coarse"]',
+      ) as HTMLInputElement;
       expect(coarseInput).not.toBeNull();
       act(() => {
         setInputValue(coarseInput, '5');
@@ -990,28 +1074,31 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
 
       act(() => {
         root?.render(
-          <BlueX7EditorComponent
-            instrument={instrument}
-            onInstrumentPatch={onInstrumentPatch}
-          />,
+          <BlueX7EditorComponent instrument={instrument} onInstrumentPatch={onInstrumentPatch} />,
         );
       });
 
       // Switch to Operators tab
-      const operatorsTab = container?.querySelector('[role="tab"][data-testid="tab-operators"]') as HTMLButtonElement;
+      const operatorsTab = container?.querySelector(
+        '[role="tab"][data-testid="tab-operators"]',
+      ) as HTMLButtonElement;
       act(() => {
         clickElement(operatorsTab);
       });
 
       // Select Op 4
-      const op4Tab = container?.querySelector('[role="tab"][data-testid="operator-tab-4"]') as HTMLButtonElement;
+      const op4Tab = container?.querySelector(
+        '[role="tab"][data-testid="operator-tab-4"]',
+      ) as HTMLButtonElement;
       act(() => {
         clickElement(op4Tab);
       });
       expect(op4Tab.getAttribute('aria-selected')).toBe('true');
 
       // Switch to Pitch Envelope
-      const pitchTab = container?.querySelector('[role="tab"][data-testid="tab-pitch"]') as HTMLButtonElement;
+      const pitchTab = container?.querySelector(
+        '[role="tab"][data-testid="tab-pitch"]',
+      ) as HTMLButtonElement;
       act(() => {
         clickElement(pitchTab);
       });
@@ -1071,7 +1158,9 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
         );
       });
 
-      const pitchTab = container?.querySelector('[role="tab"][data-testid="tab-pitch"]') as HTMLButtonElement;
+      const pitchTab = container?.querySelector(
+        '[role="tab"][data-testid="tab-pitch"]',
+      ) as HTMLButtonElement;
       await act(async () => {
         clickElement(pitchTab);
         await Promise.resolve();
@@ -1082,8 +1171,12 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
         projectSessionId: 10,
         parameterIds: ['pitch-rate-1', 'pitch-level-1'],
       });
-      expect((container?.querySelector('input[aria-label="Pitch Rate 1"]') as HTMLInputElement).value).toBe('77');
-      expect((container?.querySelector('input[aria-label="Pitch Level 1"]') as HTMLInputElement).value).toBe('88');
+      expect(
+        (container?.querySelector('input[aria-label="Pitch Rate 1"]') as HTMLInputElement).value,
+      ).toBe('77');
+      expect(
+        (container?.querySelector('input[aria-label="Pitch Level 1"]') as HTMLInputElement).value,
+      ).toBe('88');
       expect(onInstrumentPatch).not.toHaveBeenCalled();
     });
 
@@ -1100,7 +1193,7 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
       const voice = createDefaultBlueX7Voice();
       const allParameters = Array.from({ length: 151 }, (_, i) => ({
         parameterId: `param-${i + 1}`,
-        semanticKey: (i === 0 ? 'common.algorithm' : i === 1 ? 'common.feedback' : `key-${i}`),
+        semanticKey: i === 0 ? 'common.algorithm' : i === 1 ? 'common.feedback' : `key-${i}`,
         fixedValue: 0,
         automationEnabled: true,
       }));
@@ -1148,7 +1241,9 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
       getBlueX7EffectiveValues.mockClear();
 
       // 2. Switch to Operators tab (Op 1 by default): 24 parameters requested
-      const operatorsTab = container?.querySelector('[role="tab"][data-testid="tab-operators"]') as HTMLButtonElement;
+      const operatorsTab = container?.querySelector(
+        '[role="tab"][data-testid="tab-operators"]',
+      ) as HTMLButtonElement;
       act(() => {
         clickElement(operatorsTab);
       });
@@ -1163,7 +1258,9 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
       getBlueX7EffectiveValues.mockClear();
 
       // 3. Switch to Op 2: 24 parameters requested (Op 2 group)
-      const op2Tab = container?.querySelector('[role="tab"][data-testid="operator-tab-2"]') as HTMLButtonElement;
+      const op2Tab = container?.querySelector(
+        '[role="tab"][data-testid="operator-tab-2"]',
+      ) as HTMLButtonElement;
       act(() => {
         clickElement(op2Tab);
       });
@@ -1176,7 +1273,9 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
       getBlueX7EffectiveValues.mockClear();
 
       // 4. Switch to Pitch Envelope tab: 8 parameters requested
-      const pitchTab = container?.querySelector('[role="tab"][data-testid="tab-pitch"]') as HTMLButtonElement;
+      const pitchTab = container?.querySelector(
+        '[role="tab"][data-testid="tab-pitch"]',
+      ) as HTMLButtonElement;
       act(() => {
         clickElement(pitchTab);
       });
@@ -1189,7 +1288,9 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
       getBlueX7EffectiveValues.mockClear();
 
       // 5. Switch to Csound tab: 0 parameters -> request suppressed
-      const csoundTab = container?.querySelector('[role="tab"][data-testid="tab-csound"]') as HTMLButtonElement;
+      const csoundTab = container?.querySelector(
+        '[role="tab"][data-testid="tab-csound"]',
+      ) as HTMLButtonElement;
       act(() => {
         clickElement(csoundTab);
       });

@@ -20,7 +20,10 @@ import {
   getEvaluableCodeRange,
 } from '../components/workbench/panels/editors/csound-editor-evaluation';
 
-function createFakeEditorView(doc: string, selection: EditorSelection): {
+function createFakeEditorView(
+  doc: string,
+  selection: EditorSelection,
+): {
   view: EditorView;
   getState: () => EditorState;
   focus: () => unknown;
@@ -159,7 +162,9 @@ describe('Csound editor parity completions', () => {
     // A same-name native opcode remains distinguishable from a document UDO.
     expect(result?.options.filter((completion) => completion.label === 'LocalUDO')).toHaveLength(1);
 
-    const projectUdo = projectResult?.options.find((completion) => completion.label === 'ProjectUDO');
+    const projectUdo = projectResult?.options.find(
+      (completion) => completion.label === 'ProjectUDO',
+    );
     expect(projectUdo).toMatchObject({
       label: 'ProjectUDO',
       type: 'function',
@@ -174,13 +179,17 @@ describe('Csound editor parity completions', () => {
     // Native opcode, Blue opcode, Blue variable, BSB replacement key, and
     // document-local variable completions all remain available alongside UDOs.
     const opcodeResult = getCompletionResult('oscil');
-    expect(opcodeResult?.options.some((c) => c.label === 'oscil' && c.detail === 'opcode')).toBe(true);
+    expect(opcodeResult?.options.some((c) => c.label === 'oscil' && c.detail === 'opcode')).toBe(
+      true,
+    );
 
     const blueResult = getCompletionResult('blueMixer');
     expect(blueResult?.options.some((c) => c.label === 'blueMixerOut')).toBe(true);
 
     const variableResult = getCompletionResult('asig = oscil\nas');
-    expect(variableResult?.options.some((c) => c.label === 'asig' && c.detail === 'variable')).toBe(true);
+    expect(variableResult?.options.some((c) => c.label === 'asig' && c.detail === 'variable')).toBe(
+      true,
+    );
 
     const bsbResult = getCompletionResult('<fr');
     expect(bsbResult?.options.some((c) => c.label === '<freq>')).toBe(true);
@@ -210,20 +219,20 @@ describe('Csound editor parity menu and clipboard helpers', () => {
   it('builds the Java Blue-style context menu shape with the required items', () => {
     const menuItems = createJavaBlueCsoundEditorMenuItems();
 
-    expect(
-      menuItems.map((item) => (item.kind === 'separator' ? 'separator' : item.label)),
-    ).toEqual([
-      'Blue Variables',
-      'Opcodes',
-      'Blue Opcodes',
-      'separator',
-      'Custom',
-      'Add to Code Repository',
-      'separator',
-      'Cut',
-      'Copy',
-      'Paste',
-    ]);
+    expect(menuItems.map((item) => (item.kind === 'separator' ? 'separator' : item.label))).toEqual(
+      [
+        'Blue Variables',
+        'Opcodes',
+        'Blue Opcodes',
+        'separator',
+        'Custom',
+        'Add to Code Repository',
+        'separator',
+        'Cut',
+        'Copy',
+        'Paste',
+      ],
+    );
 
     const blueVariables = menuItems[0];
     const blueOpcodes = menuItems[2];
@@ -323,7 +332,11 @@ describe('Csound editor parity menu and clipboard helpers', () => {
   });
 
   it('uses explicit high-priority Cmd/Ctrl Enter bindings for code evaluation', () => {
-    const bindings = createEvaluateCodeKeyBindings('orc', () => vi.fn(), () => true);
+    const bindings = createEvaluateCodeKeyBindings(
+      'orc',
+      () => vi.fn(),
+      () => true,
+    );
 
     expect(bindings.map((binding) => binding.key)).toEqual(['Cmd-Enter', 'Ctrl-Enter']);
     expect(bindings.every((binding) => binding.preventDefault)).toBe(true);

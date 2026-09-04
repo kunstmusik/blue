@@ -81,19 +81,23 @@ describe('java-runtime-client', () => {
     await client.connect();
 
     const request = mockState.requestInstances[0];
-    request.responses.push(Buffer.from(JSON.stringify({
-      id: 'req-1',
-      ok: true,
-      result: {
-        version: '0.0.1',
-        capabilities: ['clojure'],
-        cwd: '/tmp/project',
-        methods: ['runtime.health'],
-      },
-      stdout: '',
-      stderr: '',
-      elapsedMs: 2,
-    })));
+    request.responses.push(
+      Buffer.from(
+        JSON.stringify({
+          id: 'req-1',
+          ok: true,
+          result: {
+            version: '0.0.1',
+            capabilities: ['clojure'],
+            cwd: '/tmp/project',
+            methods: ['runtime.health'],
+          },
+          stdout: '',
+          stderr: '',
+          elapsedMs: 2,
+        }),
+      ),
+    );
 
     const response = await client.health();
 
@@ -115,17 +119,21 @@ describe('java-runtime-client', () => {
     await client.connect();
 
     const request = mockState.requestInstances[0];
-    request.responses.push(Buffer.from(JSON.stringify({
-      id: 'req-1',
-      ok: true,
-      result: {
-        importedModules: ['orchestra', 'pmask'],
-        libraryPaths: ['/app/pythonLib/blue', '/Users/test/pythonLib'],
-      },
-      stdout: '',
-      stderr: '',
-      elapsedMs: 2,
-    })));
+    request.responses.push(
+      Buffer.from(
+        JSON.stringify({
+          id: 'req-1',
+          ok: true,
+          result: {
+            importedModules: ['orchestra', 'pmask'],
+            libraryPaths: ['/app/pythonLib/blue', '/Users/test/pythonLib'],
+          },
+          stdout: '',
+          stderr: '',
+          elapsedMs: 2,
+        }),
+      ),
+    );
 
     const response = await client.jythonImportCheck({ modules: ['orchestra', 'pmask'] });
 
@@ -148,14 +156,18 @@ describe('java-runtime-client', () => {
     await client.connect();
 
     const request = mockState.requestInstances[0];
-    request.responses.push(Buffer.from(JSON.stringify({
-      id: 'req-1',
-      ok: true,
-      result: { value: '2', namespace: 'user0' },
-      stdout: '',
-      stderr: '',
-      elapsedMs: 1,
-    })));
+    request.responses.push(
+      Buffer.from(
+        JSON.stringify({
+          id: 'req-1',
+          ok: true,
+          result: { value: '2', namespace: 'user0' },
+          stdout: '',
+          stderr: '',
+          elapsedMs: 1,
+        }),
+      ),
+    );
 
     const response = await client.evaluateClojure(
       { code: '(+ 1 1)', bindings: {}, returnVariableName: null },
@@ -175,14 +187,18 @@ describe('java-runtime-client', () => {
     await client.connect();
 
     const request = mockState.requestInstances[0];
-    request.responses.push(Buffer.from(JSON.stringify({
-      id: 'different-id',
-      ok: true,
-      result: { accepted: true },
-      stdout: '',
-      stderr: '',
-      elapsedMs: 1,
-    })));
+    request.responses.push(
+      Buffer.from(
+        JSON.stringify({
+          id: 'different-id',
+          ok: true,
+          result: { accepted: true },
+          stdout: '',
+          stderr: '',
+          elapsedMs: 1,
+        }),
+      ),
+    );
 
     const response = await client.shutdown();
 
@@ -204,7 +220,9 @@ describe('java-runtime-client', () => {
     await client.connect();
 
     const firstRequest = mockState.requestInstances[0];
-    firstRequest.receive.mockRejectedValueOnce(new Error('Operation cannot be accomplished in current state'));
+    firstRequest.receive.mockRejectedValueOnce(
+      new Error('Operation cannot be accomplished in current state'),
+    );
 
     const failed = await client.health();
     expect(failed.ok).toBe(false);
@@ -214,19 +232,23 @@ describe('java-runtime-client', () => {
     expect(firstRequest.close).toHaveBeenCalledTimes(1);
 
     mockState.onRequestCreated = (request) => {
-      request.responses.push(Buffer.from(JSON.stringify({
-        id: 'req-2',
-        ok: true,
-        result: {
-          version: '0.0.1',
-          capabilities: ['clojure'],
-          cwd: '/tmp/project',
-          methods: ['runtime.health'],
-        },
-        stdout: '',
-        stderr: '',
-        elapsedMs: 1,
-      })));
+      request.responses.push(
+        Buffer.from(
+          JSON.stringify({
+            id: 'req-2',
+            ok: true,
+            result: {
+              version: '0.0.1',
+              capabilities: ['clojure'],
+              cwd: '/tmp/project',
+              methods: ['runtime.health'],
+            },
+            stdout: '',
+            stderr: '',
+            elapsedMs: 1,
+          }),
+        ),
+      );
     };
 
     const succeeded = await client.health();

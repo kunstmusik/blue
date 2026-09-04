@@ -1,4 +1,7 @@
-import type { ScoreLayerGroupType, ScoreObjectEditorTargetSnapshot } from '../../../../../../shared/project-editor';
+import type {
+  ScoreLayerGroupType,
+  ScoreObjectEditorTargetSnapshot,
+} from '../../../../../../shared/project-editor';
 import {
   getTrackPlacementForSoundObjectType,
   PolyObject,
@@ -13,10 +16,7 @@ import {
   beatsToDuration,
 } from '@blue/data';
 import type { ScoreObjectClipboardEntry } from '../../../../../stores/score-selection-store';
-import type {
-  ScoreLayerGroupSnapshot,
-  ScoreRowObjectSnapshot,
-} from '../types';
+import type { ScoreLayerGroupSnapshot, ScoreRowObjectSnapshot } from '../types';
 
 export interface ScorePasteObject {
   layerIndex: number;
@@ -110,11 +110,7 @@ function flattenLayers(groups: ScoreLayerGroupSnapshot[]): FlatLayerRef[] {
   return layers;
 }
 
-function findGlobalLayerIndex(
-  layers: FlatLayerRef[],
-  groupId: string,
-  localIndex: number,
-): number {
+function findGlobalLayerIndex(layers: FlatLayerRef[], groupId: string, localIndex: number): number {
   return layers.findIndex((layer) => layer.groupId === groupId && layer.localIndex === localIndex);
 }
 
@@ -137,14 +133,8 @@ export function translateClipboardEntriesForPaste(args: {
   targetXBeats: number;
   snapBeatValue: (beats: number) => number;
 }): { ok: true; entries: TranslatedScorePasteEntry[] } | { ok: false; message: string } {
-  const {
-    clipboard,
-    layerGroups,
-    targetGroupId,
-    targetLayerIndex,
-    targetXBeats,
-    snapBeatValue,
-  } = args;
+  const { clipboard, layerGroups, targetGroupId, targetLayerIndex, targetXBeats, snapBeatValue } =
+    args;
 
   if (clipboard.length === 0) {
     return { ok: false, message: 'Nothing to paste.' };
@@ -160,7 +150,10 @@ export function translateClipboardEntriesForPaste(args: {
   for (const entry of clipboard) {
     const globalIndex = findSourceGlobalLayerIndex(flatLayers, entry);
     if (globalIndex < 0) {
-      return { ok: false, message: 'Unable to paste from this copy buffer in the current score view.' };
+      return {
+        ok: false,
+        message: 'Unable to paste from this copy buffer in the current score view.',
+      };
     }
     sourceGlobalLayerIndices.push(globalIndex);
   }
@@ -188,7 +181,8 @@ export function translateClipboardEntriesForPaste(args: {
     if (!layerGroupAcceptsObjectType(targetLayer.groupType, source.objectType)) {
       return {
         ok: false,
-        message: 'Unable to paste because one or more target layers do not accept the copied object types.',
+        message:
+          'Unable to paste because one or more target layers do not accept the copied object types.',
       };
     }
 
@@ -236,14 +230,8 @@ export function createPolyObjectPasteObjectFromClipboard(args: {
   targetXBeats: number;
   snapBeatValue: (beats: number) => number;
 }): { ok: true; pasteObject: ScorePasteObject } | { ok: false; message: string } {
-  const {
-    clipboard,
-    layerGroups,
-    targetGroupId,
-    targetLayerIndex,
-    targetXBeats,
-    snapBeatValue,
-  } = args;
+  const { clipboard, layerGroups, targetGroupId, targetLayerIndex, targetXBeats, snapBeatValue } =
+    args;
 
   if (clipboard.length === 0) {
     return { ok: false, message: 'Nothing to paste.' };
@@ -269,7 +257,10 @@ export function createPolyObjectPasteObjectFromClipboard(args: {
   for (const entry of soundObjectEntries) {
     const globalIdx = findSourceGlobalLayerIndex(flatLayers, entry);
     if (globalIdx < 0) {
-      return { ok: false, message: 'Unable to paste from this copy buffer in the current score view.' };
+      return {
+        ok: false,
+        message: 'Unable to paste from this copy buffer in the current score view.',
+      };
     }
     sourceGlobalIndices.push(globalIdx);
   }
@@ -295,7 +286,10 @@ export function createPolyObjectPasteObjectFromClipboard(args: {
       return { ok: false, message: 'Unable to paste an object with invalid timing.' };
     }
     envelopeStartBeats = Math.min(envelopeStartBeats, entry.startBeats);
-    envelopeEndBeats = Math.max(envelopeEndBeats, entry.startBeats + Math.max(0, entry.durationBeats));
+    envelopeEndBeats = Math.max(
+      envelopeEndBeats,
+      entry.startBeats + Math.max(0, entry.durationBeats),
+    );
 
     let sObj: SoundObject | null = null;
     let loadedFromXml = false;
@@ -321,7 +315,7 @@ export function createPolyObjectPasteObjectFromClipboard(args: {
     sObj.setStartTime(TimePosition.beats(entry.startBeats));
     if (!loadedFromXml) {
       const durationTimeBase = Object.values(TimeBase).includes(entry.durationTimeBase as TimeBase)
-        ? entry.durationTimeBase as TimeBase
+        ? (entry.durationTimeBase as TimeBase)
         : TimeBase.BEATS;
       if (durationTimeBase !== TimeBase.BEATS) {
         return {

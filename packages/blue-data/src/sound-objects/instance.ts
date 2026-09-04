@@ -33,16 +33,21 @@ export class Instance extends AbstractSoundObject {
     }
   }
 
-  getSoundObject(): SoundObject | null { return this._soundObject; }
+  getSoundObject(): SoundObject | null {
+    return this._soundObject;
+  }
   setSoundObject(sObj: SoundObject): void {
     this._soundObject = sObj;
     this.setName(sObj.getName());
     this.setBackgroundColor(sObj.getBackgroundColor());
   }
 
-  getLibraryId(): string { return this._libraryId; }
-  setLibraryId(id: string): void { this._libraryId = id; }
-
+  getLibraryId(): string {
+    return this._libraryId;
+  }
+  setLibraryId(id: string): void {
+    this._libraryId = id;
+  }
 
   override generateForCSD(
     context: TimeContext,
@@ -88,7 +93,13 @@ export class Instance extends AbstractSoundObject {
     }
 
     const nl = this._soundObject.generateForCSDAsync
-      ? await this._soundObject.generateForCSDAsync(context, compileData, startTime, endTime, options)
+      ? await this._soundObject.generateForCSDAsync(
+          context,
+          compileData,
+          startTime,
+          endTime,
+          options,
+        )
       : this._soundObject.generateForCSD(context, compileData, startTime, endTime, options);
     const descriptor = getTrackPlacementForSoundObject(this._soundObject).descriptor;
     markTrackInstrumentTargets(

@@ -1,7 +1,4 @@
-import type {
-  MidiImportStream,
-  MidiImportWarning,
-} from './midi-file-import';
+import type { MidiImportStream, MidiImportWarning } from './midi-file-import';
 import type { MidiImportNote } from './midi-note-template';
 
 interface OpenNote {
@@ -9,9 +6,10 @@ interface OpenNote {
   velocity: number;
 }
 
-export function pairMidiImportStream(
-  stream: MidiImportStream,
-): { notes: MidiImportNote[]; warnings: MidiImportWarning[] } {
+export function pairMidiImportStream(stream: MidiImportStream): {
+  notes: MidiImportNote[];
+  warnings: MidiImportWarning[];
+} {
   const warnings = [...stream.warnings];
   const openNotes = new Map<number, OpenNote[]>();
   const notes: MidiImportNote[] = [];
@@ -19,7 +17,12 @@ export function pairMidiImportStream(
     .map((event, index) => ({ event, index }))
     .sort((a, b) => a.event.absoluteTick - b.event.absoluteTick || a.index - b.index);
 
-  const closeNote = (noteNumber: number, endTick: number, velocity: number, startTick: number): void => {
+  const closeNote = (
+    noteNumber: number,
+    endTick: number,
+    velocity: number,
+    startTick: number,
+  ): void => {
     if (endTick < startTick) {
       warnings.push({
         code: 'invalid-note',
@@ -82,14 +85,12 @@ export function pairMidiImportStream(
   }
 
   const eventEnd = stream.events.reduce(
-    (maxTick, event) => Number.isFinite(event.absoluteTick)
-      ? Math.max(maxTick, event.absoluteTick)
-      : maxTick,
+    (maxTick, event) =>
+      Number.isFinite(event.absoluteTick) ? Math.max(maxTick, event.absoluteTick) : maxTick,
     0,
   );
-  const hasValidStreamEnd = stream.lastTick === undefined || (
-    Number.isFinite(stream.lastTick) && stream.lastTick >= 0
-  );
+  const hasValidStreamEnd =
+    stream.lastTick === undefined || (Number.isFinite(stream.lastTick) && stream.lastTick >= 0);
   if (!hasValidStreamEnd) {
     warnings.push({
       code: 'invalid-note',
@@ -99,9 +100,7 @@ export function pairMidiImportStream(
       tick: stream.lastTick,
     });
   }
-  const streamEnd = hasValidStreamEnd && stream.lastTick !== undefined
-    ? stream.lastTick
-    : eventEnd;
+  const streamEnd = hasValidStreamEnd && stream.lastTick !== undefined ? stream.lastTick : eventEnd;
   for (const [noteNumber, queue] of openNotes) {
     for (const openNote of queue) {
       const endTick = Math.max(openNote.startTick, streamEnd);
@@ -116,6 +115,8 @@ export function pairMidiImportStream(
     }
   }
 
-  notes.sort((a, b) => a.startTick - b.startTick || a.endTick - b.endTick || a.noteNumber - b.noteNumber);
+  notes.sort(
+    (a, b) => a.startTick - b.startTick || a.endTick - b.endTick || a.noteNumber - b.noteNumber,
+  );
   return { notes, warnings };
 }

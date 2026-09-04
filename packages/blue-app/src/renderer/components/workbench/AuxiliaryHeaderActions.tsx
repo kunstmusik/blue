@@ -3,18 +3,12 @@ import { PinOff } from 'lucide-react';
 import { getGroupInstanceForPanel } from './auxiliary-layout';
 import { useWorkbenchStore } from '../../stores/workbench-store';
 
-export default function AuxiliaryHeaderActions(
-  props: IDockviewHeaderActionsProps,
-) {
-  const minimizeAuxiliaryGroup = useWorkbenchStore(
-    (state) => state.minimizeAuxiliaryGroup,
-  );
+export default function AuxiliaryHeaderActions(props: IDockviewHeaderActionsProps) {
+  const minimizeAuxiliaryGroup = useWorkbenchStore((state) => state.minimizeAuxiliaryGroup);
   const auxiliary = useWorkbenchStore((state) => state.auxiliary);
 
   const activePanelId = props.activePanel?.id;
-  const instance = activePanelId
-    ? getGroupInstanceForPanel(auxiliary, activePanelId)
-    : undefined;
+  const instance = activePanelId ? getGroupInstanceForPanel(auxiliary, activePanelId) : undefined;
 
   if (!instance) {
     return null;

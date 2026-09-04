@@ -15,9 +15,7 @@ import {
   applyProjectDocumentPatch,
   createProjectEditorSnapshot,
 } from '../../shared/project-editor';
-import {
-  createPolyObjectPasteObjectFromClipboard,
-} from '../components/workbench/panels/score/layer-groups/score-clipboard-utils';
+import { createPolyObjectPasteObjectFromClipboard } from '../components/workbench/panels/score/layer-groups/score-clipboard-utils';
 import type { ScoreObjectClipboardEntry } from '../stores/score-selection-store';
 import type { ScoreLayerGroupSnapshot } from '../components/workbench/panels/score/types';
 
@@ -81,18 +79,15 @@ describe('PolyObject score context actions', () => {
     const snapshot = createProjectEditorSnapshot(data, null);
     const targetGroupId = snapshot.score.layerGroups[0].groupId;
 
-    const patchResult = applyProjectDocumentPatch(
-      data,
-      {
-        score: {
-          type: 'convertToPolyObject',
-          targets,
-          targetGroupId,
-          targetLayerIndex: 0,
-          selectionId: 'converted_poly',
-        },
+    const patchResult = applyProjectDocumentPatch(data, {
+      score: {
+        type: 'convertToPolyObject',
+        targets,
+        targetGroupId,
+        targetLayerIndex: 0,
+        selectionId: 'converted_poly',
       },
-    );
+    });
 
     expect(patchResult).toBe(true);
 
@@ -292,25 +287,29 @@ describe('PolyObject score context actions', () => {
     source.setSubjectiveDuration(TimeDuration.time(0, 0, 2, 0));
 
     const result = createPolyObjectPasteObjectFromClipboard({
-      clipboard: [{
-        objectId: 'time-object',
-        objectType: 'GenericScore',
-        name: 'Time object',
-        startBeats: 4,
-        durationBeats: 1,
-        durationTimeBase: TimeBase.TIME,
-        backgroundColor: 0,
-        isContainer: false,
-        layerIndex: 0,
-        groupId: 'g0',
-        serializedXml: source.saveAsXML().toXml(),
-      }],
-      layerGroups: [{
-        groupId: 'g0',
-        groupType: 'polyObject',
-        name: 'Poly 1',
-        layers: [{ layerId: 'l0', name: 'L0', height: 32, items: [] }],
-      }],
+      clipboard: [
+        {
+          objectId: 'time-object',
+          objectType: 'GenericScore',
+          name: 'Time object',
+          startBeats: 4,
+          durationBeats: 1,
+          durationTimeBase: TimeBase.TIME,
+          backgroundColor: 0,
+          isContainer: false,
+          layerIndex: 0,
+          groupId: 'g0',
+          serializedXml: source.saveAsXML().toXml(),
+        },
+      ],
+      layerGroups: [
+        {
+          groupId: 'g0',
+          groupType: 'polyObject',
+          name: 'Poly 1',
+          layers: [{ layerId: 'l0', name: 'L0', height: 32, items: [] }],
+        },
+      ],
       targetGroupId: 'g0',
       targetLayerIndex: 0,
       targetXBeats: 0,
@@ -346,19 +345,21 @@ describe('PolyObject score context actions', () => {
     const group = snapshot.score.layerGroups[0]!;
     const item = group.layers[0]!.items[0]!;
     const pasteResult = createPolyObjectPasteObjectFromClipboard({
-      clipboard: [{
-        objectId: item.objectId,
-        objectType: item.objectType,
-        name: item.name,
-        startBeats: item.startBeats,
-        durationBeats: item.durationBeats,
-        durationTimeBase: item.durationTimeBase,
-        backgroundColor: item.backgroundColor,
-        isContainer: item.isContainer,
-        layerIndex: 0,
-        groupId: group.groupId,
-        serializedXml: item.serializedXml,
-      }],
+      clipboard: [
+        {
+          objectId: item.objectId,
+          objectType: item.objectType,
+          name: item.name,
+          startBeats: item.startBeats,
+          durationBeats: item.durationBeats,
+          durationTimeBase: item.durationTimeBase,
+          backgroundColor: item.backgroundColor,
+          isContainer: item.isContainer,
+          layerIndex: 0,
+          groupId: group.groupId,
+          serializedXml: item.serializedXml,
+        },
+      ],
       layerGroups: snapshot.score.layerGroups,
       targetGroupId: group.groupId,
       targetLayerIndex: 0,

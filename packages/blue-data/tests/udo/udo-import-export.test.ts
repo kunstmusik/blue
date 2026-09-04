@@ -49,7 +49,8 @@ describe('UDO import/export', () => {
 
   describe('Csound UDO import via parseUDOText', () => {
     it('parses a classic UDO text block', () => {
-      const text = 'opcode saturate, a, ak\naSig, kDrive xin\naOut = tanh(aSig * kDrive)\nxout aOut\nendop';
+      const text =
+        'opcode saturate, a, ak\naSig, kDrive xin\naOut = tanh(aSig * kDrive)\nxout aOut\nendop';
       const result = parseUDOText(text);
       expect(result.size()).toBe(1);
       const udo = result.getOpcode(0)!;
@@ -60,7 +61,8 @@ describe('UDO import/export', () => {
     });
 
     it('parses a modern UDO text block', () => {
-      const text = 'opcode stereo_width(aSig, kWidth):(a, a)\naLeft = aSig * (1 - kWidth)\naRight = aSig * (1 + kWidth)\nxout aLeft, aRight\nendop';
+      const text =
+        'opcode stereo_width(aSig, kWidth):(a, a)\naLeft = aSig * (1 - kWidth)\naRight = aSig * (1 + kWidth)\nxout aLeft, aRight\nendop';
       const result = parseUDOText(text);
       expect(result.size()).toBe(1);
       const udo = result.getOpcode(0)!;

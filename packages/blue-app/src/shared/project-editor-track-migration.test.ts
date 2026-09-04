@@ -8,10 +8,7 @@ import {
   createProjectEditorSnapshot,
 } from './project-editor';
 
-const fixtureDirectory = resolve(
-  process.cwd(),
-  '../blue-data/src/migration/fixtures/track-layer',
-);
+const fixtureDirectory = resolve(process.cwd(), '../blue-data/src/migration/fixtures/track-layer');
 
 describe('Track migration app projection', () => {
   it('preserves source channel associations and mixer state without duplicating channels', () => {
@@ -49,39 +46,53 @@ describe('Track migration app projection', () => {
     data.getScore().push(group);
 
     const source = new BlueX7();
-    const sourceParameter = source.getParameters().find(
-      (parameter) => parameter.getName() === 'common.feedback',
-    )!;
+    const sourceParameter = source
+      .getParameters()
+      .find((parameter) => parameter.getName() === 'common.feedback')!;
     sourceParameter.setAutomationEnabled(true);
     sourceParameter.setCurve(AutomationCurve.STEP);
-    sourceParameter.setPoints([{ time: 0, value: 1 }, { time: 8, value: 6 }]);
+    sourceParameter.setPoints([
+      { time: 0, value: 1 },
+      { time: 8, value: 6 },
+    ]);
     const sourceIds = new Set(source.getParameters().map((parameter) => parameter.getUniqueId()));
 
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'replaceTrackInstrument',
-        track: {
-          rootGroupId: group.getUniqueId(),
-          trackId: track.getUniqueId(),
-          projectSessionId: 5,
-          projectRevision: 9,
+    expect(
+      applyProjectDocumentPatch(
+        data,
+        {
+          score: {
+            type: 'replaceTrackInstrument',
+            track: {
+              rootGroupId: group.getUniqueId(),
+              trackId: track.getUniqueId(),
+              projectSessionId: 5,
+              projectRevision: 9,
+            },
+            instrument: createInstrumentSnapshot('source-owner', source),
+          },
         },
-        instrument: createInstrumentSnapshot('source-owner', source),
-      },
-    }, { projectSessionId: 5, projectRevision: 9 })).toBe(true);
+        { projectSessionId: 5, projectRevision: 9 },
+      ),
+    ).toBe(true);
 
     const migrated = track.getInstrument() as BlueX7;
-    const migratedParameter = migrated.getParameters().find(
-      (parameter) => parameter.getName() === 'common.feedback',
-    )!;
+    const migratedParameter = migrated
+      .getParameters()
+      .find((parameter) => parameter.getName() === 'common.feedback')!;
     expect(migrated).toBeInstanceOf(BlueX7);
-    expect(migrated.getParameters().every((parameter) => !sourceIds.has(parameter.getUniqueId()))).toBe(true);
+    expect(
+      migrated.getParameters().every((parameter) => !sourceIds.has(parameter.getUniqueId())),
+    ).toBe(true);
     expect(migratedParameter).not.toBe(sourceParameter);
     expect(migratedParameter.isAutomationEnabled()).toBe(true);
     expect(migratedParameter.getCurve()).toBe(AutomationCurve.STEP);
     expect(migratedParameter.getPoints()).toEqual(sourceParameter.getPoints());
 
     migratedParameter.setPoints([{ time: 2, value: 4 }]);
-    expect(sourceParameter.getPoints()).toEqual([{ time: 0, value: 1 }, { time: 8, value: 6 }]);
+    expect(sourceParameter.getPoints()).toEqual([
+      { time: 0, value: 1 },
+      { time: 8, value: 6 },
+    ]);
   });
 });

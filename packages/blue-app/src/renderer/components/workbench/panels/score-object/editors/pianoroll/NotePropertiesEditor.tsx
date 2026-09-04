@@ -16,14 +16,13 @@ export default function NotePropertiesEditor({
 }: NotePropertiesEditorProps): React.ReactElement {
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const singleNote = selectedIndices.size === 1
-    ? notes[[...selectedIndices][0]!]
-    : null;
+  const singleNote = selectedIndices.size === 1 ? notes[[...selectedIndices][0]!] : null;
 
-  const hasOverride = singleNote != null && singleNote.noteTemplate != null && singleNote.noteTemplate !== '';
+  const hasOverride =
+    singleNote != null && singleNote.noteTemplate != null && singleNote.noteTemplate !== '';
   const [overrideEnabled, setOverrideEnabled] = useState(hasOverride);
   const [templateText, setTemplateText] = useState(
-    hasOverride && singleNote?.noteTemplate ? singleNote.noteTemplate : globalNoteTemplate
+    hasOverride && singleNote?.noteTemplate ? singleNote.noteTemplate : globalNoteTemplate,
   );
 
   useEffect(() => {
@@ -34,24 +33,43 @@ export default function NotePropertiesEditor({
     setTemplateText(hasNote && note?.noteTemplate ? note.noteTemplate : globalNoteTemplate);
   }, [selectedIndices, notes, globalNoteTemplate, isUpdating]);
 
-  const handleOverrideChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const checked = e.target.checked;
-    setOverrideEnabled(checked);
-    if (selectedIndices.size === 1) {
-      const idx = [...selectedIndices][0]!;
-      if (!checked) {
-        setIsUpdating(true);
-        onPatch({ pianoRollNoteBatch: { operations: [{ kind: 'update', noteIndex: idx, note: { ...notes[idx]!, noteTemplate: '' } }] } });
-        setTimeout(() => setIsUpdating(false), 0);
+  const handleOverrideChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const checked = e.target.checked;
+      setOverrideEnabled(checked);
+      if (selectedIndices.size === 1) {
+        const idx = [...selectedIndices][0]!;
+        if (!checked) {
+          setIsUpdating(true);
+          onPatch({
+            pianoRollNoteBatch: {
+              operations: [
+                { kind: 'update', noteIndex: idx, note: { ...notes[idx]!, noteTemplate: '' } },
+              ],
+            },
+          });
+          setTimeout(() => setIsUpdating(false), 0);
+        }
       }
-    }
-  }, [selectedIndices, notes, onPatch]);
+    },
+    [selectedIndices, notes, onPatch],
+  );
 
   const handleTemplateBlur = useCallback(() => {
     if (selectedIndices.size === 1 && overrideEnabled) {
       const idx = [...selectedIndices][0]!;
       setIsUpdating(true);
-      onPatch({ pianoRollNoteBatch: { operations: [{ kind: 'update', noteIndex: idx, note: { ...notes[idx]!, noteTemplate: templateText } }] } });
+      onPatch({
+        pianoRollNoteBatch: {
+          operations: [
+            {
+              kind: 'update',
+              noteIndex: idx,
+              note: { ...notes[idx]!, noteTemplate: templateText },
+            },
+          ],
+        },
+      });
       setTimeout(() => setIsUpdating(false), 0);
     }
   }, [selectedIndices, overrideEnabled, templateText, notes, onPatch]);

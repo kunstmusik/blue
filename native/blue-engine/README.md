@@ -50,10 +50,10 @@ the pinned vcpkg source and native dependencies.
 
 ### Build Options
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `USE_PERFORMANCE_TRACKING` | OFF | Compile bounded runtime performance diagnostics into the engine |
-| `BUILD_EXAMPLES` | OFF | Build standalone protocol examples |
+| Option                     | Default | Description                                                     |
+| -------------------------- | ------- | --------------------------------------------------------------- |
+| `USE_PERFORMANCE_TRACKING` | OFF     | Compile bounded runtime performance diagnostics into the engine |
+| `BUILD_EXAMPLES`           | OFF     | Build standalone protocol examples                              |
 
 ## Running
 
@@ -93,8 +93,8 @@ machine-readable response. Empty device arrays are successful results.
 
 ### Environment Variables
 
-| Variable | Description |
-|----------|-------------|
+| Variable         | Description                      |
+| ---------------- | -------------------------------- |
 | `LIBCSOUND_PATH` | Override Csound library location |
 
 ## Testing
@@ -140,28 +140,28 @@ Binary protocol over two ZeroMQ transports:
 
 ### Commands
 
-| Code | Command | Payload (request) |
-|------|---------|-------------------|
-| 0x01 | CREATE_ENGINE | none |
-| 0x02 | COMPILE_ORC | orchestra string (UTF-8) |
-| 0x03 | READ_SCORE | score string (UTF-8) |
-| 0x04 | SET_OPTION | option string (UTF-8) |
-| 0x05 | START | none |
-| 0x06 | STOP | none |
-| 0x07 | DESTROY_ENGINE | none |
-| 0x08 | GET_ENGINE_STATE | none (response: JSON state snapshot) |
-| 0x09 | GET_CAPABILITIES | none (response: immutable engine/protocol/features JSON) |
-| 0x10 | SET_CHANNEL | `name\0` + double value (8B) |
-| 0x11 | GET_CHANNEL | `name\0` (response: double value) |
-| 0x12 | CREATE_CHANNEL | `name\0` + initial double value (8B) |
-| 0x13 | GET_SHM_NAME | none (response: shared memory name as UTF-8) |
-| 0x20 | CREATE_AUTOMATION | `channel\0` + curve(1B) + enabled(1B) + resolutionLength(u32-le) + canonical resolution text (UTF-8) + n_points(u32-le) + points(time,value) pairs (16B each, f64-le) |
-| 0x21 | UPDATE_AUTOMATION | same payload as CREATE_AUTOMATION |
-| 0x22 | DELETE_AUTOMATION | `channel\0` |
-| 0x23 | ENABLE_AUTOMATION | `channel\0` |
-| 0x24 | DISABLE_AUTOMATION | `channel\0` |
-| 0x25 | LIST_AUTOMATIONS | none (response: count + entries) |
-| 0x26 | CLEAR_AUTOMATIONS | none |
+| Code | Command            | Payload (request)                                                                                                                                                     |
+| ---- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0x01 | CREATE_ENGINE      | none                                                                                                                                                                  |
+| 0x02 | COMPILE_ORC        | orchestra string (UTF-8)                                                                                                                                              |
+| 0x03 | READ_SCORE         | score string (UTF-8)                                                                                                                                                  |
+| 0x04 | SET_OPTION         | option string (UTF-8)                                                                                                                                                 |
+| 0x05 | START              | none                                                                                                                                                                  |
+| 0x06 | STOP               | none                                                                                                                                                                  |
+| 0x07 | DESTROY_ENGINE     | none                                                                                                                                                                  |
+| 0x08 | GET_ENGINE_STATE   | none (response: JSON state snapshot)                                                                                                                                  |
+| 0x09 | GET_CAPABILITIES   | none (response: immutable engine/protocol/features JSON)                                                                                                              |
+| 0x10 | SET_CHANNEL        | `name\0` + double value (8B)                                                                                                                                          |
+| 0x11 | GET_CHANNEL        | `name\0` (response: double value)                                                                                                                                     |
+| 0x12 | CREATE_CHANNEL     | `name\0` + initial double value (8B)                                                                                                                                  |
+| 0x13 | GET_SHM_NAME       | none (response: shared memory name as UTF-8)                                                                                                                          |
+| 0x20 | CREATE_AUTOMATION  | `channel\0` + curve(1B) + enabled(1B) + resolutionLength(u32-le) + canonical resolution text (UTF-8) + n_points(u32-le) + points(time,value) pairs (16B each, f64-le) |
+| 0x21 | UPDATE_AUTOMATION  | same payload as CREATE_AUTOMATION                                                                                                                                     |
+| 0x22 | DELETE_AUTOMATION  | `channel\0`                                                                                                                                                           |
+| 0x23 | ENABLE_AUTOMATION  | `channel\0`                                                                                                                                                           |
+| 0x24 | DISABLE_AUTOMATION | `channel\0`                                                                                                                                                           |
+| 0x25 | LIST_AUTOMATIONS   | none (response: count + entries)                                                                                                                                      |
+| 0x26 | CLEAR_AUTOMATIONS  | none                                                                                                                                                                  |
 
 `GET_SHM_NAME` returns a mirror of current scalar control-channel state. It is not the source of truth for channel writes.
 
@@ -192,9 +192,9 @@ Example payload:
 
 ### Status Codes
 
-| Code | Meaning |
-|------|---------|
-| 0x00 | OK |
+| Code | Meaning                                |
+| ---- | -------------------------------------- |
+| 0x00 | OK                                     |
 | 0x01 | ERROR (payload contains error message) |
 
 ### Automation protocol version

@@ -6,7 +6,9 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import JythonRuntimeStatusIndicator from '../components/workbench/panels/score-object/editors/JythonRuntimeStatusIndicator';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 let container: HTMLDivElement;
 let root: Root;
@@ -50,7 +52,10 @@ describe('JythonRuntimeStatusIndicator', () => {
   });
 
   it('shows runtime errors returned by the Jython reinitialize action', async () => {
-    const reinitializeJythonRuntime = vi.fn(async () => ({ ok: false, error: 'Jython runtime is unavailable' }));
+    const reinitializeJythonRuntime = vi.fn(async () => ({
+      ok: false,
+      error: 'Jython runtime is unavailable',
+    }));
     vi.stubGlobal('window', {
       ...window,
       blueAPI: { reinitializeJythonRuntime },

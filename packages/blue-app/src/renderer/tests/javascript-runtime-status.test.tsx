@@ -6,7 +6,9 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import JavaScriptRuntimeStatusIndicator from '../components/workbench/panels/score-object/editors/JavaScriptRuntimeStatusIndicator';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 let container: HTMLDivElement;
 let root: Root;
@@ -50,7 +52,10 @@ describe('JavaScriptRuntimeStatusIndicator', () => {
   });
 
   it('shows runtime errors returned by the JavaScript reinitialize action', async () => {
-    const reinitializeJavaScriptRuntime = vi.fn(async () => ({ ok: false, error: 'QuickJS is unavailable' }));
+    const reinitializeJavaScriptRuntime = vi.fn(async () => ({
+      ok: false,
+      error: 'QuickJS is unavailable',
+    }));
     vi.stubGlobal('window', {
       ...window,
       blueAPI: { reinitializeJavaScriptRuntime },

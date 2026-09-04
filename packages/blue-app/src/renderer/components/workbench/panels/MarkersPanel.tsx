@@ -10,28 +10,42 @@ export default function MarkersPanel(): React.ReactElement {
   const transport = useProjectStore((s) => s.transport);
   const applyPatch = useProjectStore((s) => s.applyProjectDocumentPatch);
 
-  const timeContext = useMemo<TimeConversionContext>(() => ({
-    meterEntries: transport.meterMap.entries.map((entry) => ({
-      measure: entry.measure,
-      numBeats: entry.numBeats,
-      beatLength: entry.beatLength,
-    })),
-    tempoEnabled: transport.tempoMap.enabled,
-    initialTempo: transport.tempoMap.points[0]?.tempo ?? 60,
-    sampleRate: transport.sampleRate,
-  }), [transport.meterMap.entries, transport.tempoMap.enabled, transport.tempoMap.points, transport.sampleRate]);
+  const timeContext = useMemo<TimeConversionContext>(
+    () => ({
+      meterEntries: transport.meterMap.entries.map((entry) => ({
+        measure: entry.measure,
+        numBeats: entry.numBeats,
+        beatLength: entry.beatLength,
+      })),
+      tempoEnabled: transport.tempoMap.enabled,
+      initialTempo: transport.tempoMap.points[0]?.tempo ?? 60,
+      sampleRate: transport.sampleRate,
+    }),
+    [
+      transport.meterMap.entries,
+      transport.tempoMap.enabled,
+      transport.tempoMap.points,
+      transport.sampleRate,
+    ],
+  );
 
-  const handleSetRenderStart = useCallback((marker: MarkerSnapshot) => {
-    applyPatch({
-      transport: { renderStartTime: marker.time, renderEndTime: -1 },
-    });
-  }, [applyPatch]);
+  const handleSetRenderStart = useCallback(
+    (marker: MarkerSnapshot) => {
+      applyPatch({
+        transport: { renderStartTime: marker.time, renderEndTime: -1 },
+      });
+    },
+    [applyPatch],
+  );
 
-  const handleRemove = useCallback((sourceIndex: number) => {
-    applyPatch({
-      score: { type: 'removeMarker', sourceIndex },
-    });
-  }, [applyPatch]);
+  const handleRemove = useCallback(
+    (sourceIndex: number) => {
+      applyPatch({
+        score: { type: 'removeMarker', sourceIndex },
+      });
+    },
+    [applyPatch],
+  );
 
   if (!loaded) {
     return (
@@ -91,7 +105,9 @@ function MarkerRow({
 }): React.ReactElement {
   const applyPatch = useProjectStore((s) => s.applyProjectDocumentPatch);
   const [draftTimeBase, setDraftTimeBase] = useState(marker.timeBase);
-  const [draftTime, setDraftTime] = useState(() => formatForBase(marker.time, marker.timeBase, timeContext, false));
+  const [draftTime, setDraftTime] = useState(() =>
+    formatForBase(marker.time, marker.timeBase, timeContext, false),
+  );
   const [draftLabel, setDraftLabel] = useState(marker.name);
   const timeInputRef = useRef<HTMLInputElement>(null);
   const labelInputRef = useRef<HTMLInputElement>(null);
@@ -125,7 +141,15 @@ function MarkerRow({
     }
 
     setDraftTime(formatForBase(parsed, draftTimeBase, timeContext, false));
-  }, [draftTime, draftTimeBase, timeContext, marker.time, marker.timeBase, marker.sourceIndex, applyPatch]);
+  }, [
+    draftTime,
+    draftTimeBase,
+    timeContext,
+    marker.time,
+    marker.timeBase,
+    marker.sourceIndex,
+    applyPatch,
+  ]);
 
   const commitLabel = useCallback(() => {
     const trimmed = draftLabel.trim();
@@ -146,20 +170,32 @@ function MarkerRow({
     setDraftLabel(trimmed);
   }, [draftLabel, marker.name, marker.sourceIndex, applyPatch]);
 
-  const handleTimeBaseChange = useCallback((nextBase: string) => {
-    const currentBeats = parseForBase(draftTime, draftTimeBase, timeContext, false) ?? marker.time;
-    setDraftTimeBase(nextBase);
-    setDraftTime(formatForBase(currentBeats, nextBase, timeContext, false));
-    if (nextBase !== marker.timeBase) {
-      applyPatch({
-        score: {
-          type: 'updateMarker',
-          sourceIndex: marker.sourceIndex,
-          patch: { timeBeats: currentBeats, timeBase: nextBase },
-        },
-      });
-    }
-  }, [draftTime, draftTimeBase, timeContext, marker.time, marker.timeBase, marker.sourceIndex, applyPatch]);
+  const handleTimeBaseChange = useCallback(
+    (nextBase: string) => {
+      const currentBeats =
+        parseForBase(draftTime, draftTimeBase, timeContext, false) ?? marker.time;
+      setDraftTimeBase(nextBase);
+      setDraftTime(formatForBase(currentBeats, nextBase, timeContext, false));
+      if (nextBase !== marker.timeBase) {
+        applyPatch({
+          score: {
+            type: 'updateMarker',
+            sourceIndex: marker.sourceIndex,
+            patch: { timeBeats: currentBeats, timeBase: nextBase },
+          },
+        });
+      }
+    },
+    [
+      draftTime,
+      draftTimeBase,
+      timeContext,
+      marker.time,
+      marker.timeBase,
+      marker.sourceIndex,
+      applyPatch,
+    ],
+  );
 
   return (
     <tr className="border-b border-blue-border/10 align-top hover:bg-blue-surface/40">
@@ -168,7 +204,10 @@ function MarkerRow({
           className="w-full rounded border border-blue-border/40 bg-blue-surface/80 px-1.5 py-1 text-role-body text-blue-text focus:border-blue-accent focus:outline-none"
           value={draftTimeBase}
           onValueChange={handleTimeBaseChange}
-          options={TIME_BASE_OPTIONS.map((option) => ({ value: option.value, label: option.value }))}
+          options={TIME_BASE_OPTIONS.map((option) => ({
+            value: option.value,
+            label: option.value,
+          }))}
         />
       </td>
       <td className="px-2 py-1.5">

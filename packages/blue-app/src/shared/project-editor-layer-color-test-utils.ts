@@ -18,7 +18,11 @@ import type {
   ScoreRowObjectSnapshot,
   ScoreObjectEditorTargetSnapshot,
 } from './project-editor';
-import { assignLayerGroupId, assignPatternLayerId, assignScoreObjectId } from './project-editor/identity';
+import {
+  assignLayerGroupId,
+  assignPatternLayerId,
+  assignScoreObjectId,
+} from './project-editor/identity';
 
 export function createMockScoreObjectTarget(
   overrides?: Partial<ScoreObjectEditorTargetSnapshot>,
@@ -133,9 +137,7 @@ export function createMockScoreLayerSnapshot(
   };
 }
 
-export function createMockTrackSnapshot(
-  overrides?: Partial<TrackSnapshot>,
-): TrackSnapshot {
+export function createMockTrackSnapshot(overrides?: Partial<TrackSnapshot>): TrackSnapshot {
   return {
     layerKind: 'track',
     layerId: 'track-1',

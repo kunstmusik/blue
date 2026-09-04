@@ -5,11 +5,11 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
-import ColorPickerButton, {
-  ColorPickerPopover,
-} from '../components/ColorPicker';
+import ColorPickerButton, { ColorPickerPopover } from '../components/ColorPicker';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 describe('ColorPicker', () => {
   let host: HTMLDivElement;
@@ -74,7 +74,9 @@ describe('ColorPicker', () => {
     expect(document.querySelector('[role="dialog"]')).toBeTruthy();
 
     act(() => {
-      document.querySelector('[role="dialog"]')!.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+      document
+        .querySelector('[role="dialog"]')!
+        .dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
     });
     expect(document.querySelector('[role="dialog"]')).toBeTruthy();
 
@@ -86,12 +88,16 @@ describe('ColorPicker', () => {
 
     act(() => trigger.click());
     expect(document.querySelector('[role="dialog"]')).toBeTruthy();
-    act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+    act(() =>
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })),
+    );
     expect(document.querySelector('[role="dialog"]')).toBeNull();
   });
 
   it('portals the popover into the anchor element document (floating workbench panels)', () => {
-    const popout = new JSDOM('<!doctype html><html><body><button id="anchor"></button></body></html>');
+    const popout = new JSDOM(
+      '<!doctype html><html><body><button id="anchor"></button></body></html>',
+    );
     const popoutDoc = popout.window.document;
     const anchorElement = popoutDoc.getElementById('anchor')!;
 
@@ -134,7 +140,9 @@ describe('ColorPicker', () => {
       );
     });
     const PopoutMouseEvent = popout.window.MouseEvent;
-    const hueSlider = dialogInPopout!.querySelector('input[aria-label="Hue"]') as HTMLElement | null;
+    const hueSlider = dialogInPopout!.querySelector(
+      'input[aria-label="Hue"]',
+    ) as HTMLElement | null;
     expect(hueSlider).toBeTruthy();
     act(() => {
       hueSlider!.dispatchEvent(new PopoutMouseEvent('mousedown', { bubbles: true }));
@@ -151,7 +159,9 @@ describe('ColorPicker', () => {
   });
 
   it('binds Escape to the anchor element document (floating workbench panels)', () => {
-    const popout = new JSDOM('<!doctype html><html><body><button id="anchor"></button></body></html>');
+    const popout = new JSDOM(
+      '<!doctype html><html><body><button id="anchor"></button></body></html>',
+    );
     const popoutDoc = popout.window.document;
     const anchorElement = popoutDoc.getElementById('anchor')!;
 
@@ -200,9 +210,16 @@ describe('ColorPicker', () => {
     function SurfaceSpy({ children }: { children: React.ReactNode }): React.ReactElement {
       return (
         <div
-          onMouseDown={(e) => { events.push('mousedown'); e.preventDefault(); }}
-          onMouseUp={(e) => { events.push('mouseup'); }}
-          onClick={(e) => { events.push('click'); }}
+          onMouseDown={(e) => {
+            events.push('mousedown');
+            e.preventDefault();
+          }}
+          onMouseUp={(e) => {
+            events.push('mouseup');
+          }}
+          onClick={(e) => {
+            events.push('click');
+          }}
         >
           {children}
         </div>

@@ -81,7 +81,7 @@ Automations use **absolute time from engine start** for synchronization to ensur
 Each channel can have at most one automation.
 
 - **Creation**: Setting a new automation for a channel seamlessly replaces any existing automation.
-- **Updates**: If an automation is updated while running, it continues execution relative to its original start time (if preserving timing is desired) or resets, depending on the command. *Clarification: The "Update" command replaces the definition. The system ensures the new curve is evaluated at the current time offset, preventing jumps if the curve shape essentially matches.*
+- **Updates**: If an automation is updated while running, it continues execution relative to its original start time (if preserving timing is desired) or resets, depending on the command. _Clarification: The "Update" command replaces the definition. The system ensures the new curve is evaluated at the current time offset, preventing jumps if the curve shape essentially matches._
 - **Missing Channels**: If an automation targets a channel that has not been exported yet, its state records an unresolved binding for the current runtime generation. The performance thread does not retry a lookup every period; a new channel-binding generation (for example after a compile) triggers one retry. Pending `setChannel` values are applied when a matching Csound channel is rebuilt.
 
 > [!NOTE]
@@ -170,15 +170,15 @@ struct AutomationState {
 
 ### New Commands
 
-| Code | Command | Description |
-|------|---------|-------------|
-| 0x20 | CREATE_AUTOMATION | Create or replace an automation |
-| 0x21 | UPDATE_AUTOMATION | Update automation parameters |
-| 0x22 | DELETE_AUTOMATION | Remove an automation |
-| 0x23 | ENABLE_AUTOMATION | Enable an automation |
-| 0x24 | DISABLE_AUTOMATION | Disable an automation |
-| 0x25 | LIST_AUTOMATIONS | Query active automations |
-| 0x26 | CLEAR_AUTOMATIONS | Remove all automations |
+| Code | Command            | Description                     |
+| ---- | ------------------ | ------------------------------- |
+| 0x20 | CREATE_AUTOMATION  | Create or replace an automation |
+| 0x21 | UPDATE_AUTOMATION  | Update automation parameters    |
+| 0x22 | DELETE_AUTOMATION  | Remove an automation            |
+| 0x23 | ENABLE_AUTOMATION  | Enable an automation            |
+| 0x24 | DISABLE_AUTOMATION | Disable an automation           |
+| 0x25 | LIST_AUTOMATIONS   | Query active automations        |
+| 0x26 | CLEAR_AUTOMATIONS  | Remove all automations          |
 
 ### Protocol version 2 automation payload
 
@@ -189,15 +189,15 @@ struct AutomationState {
 └──────────────┴──────────────┴───────────┴────────────────────┴────────────────────┴───────────┴────────────────────┘
 ```
 
-| Field | Size | Description |
-|-------|------|-------------|
-| channel_name | variable | Null-terminated UTF-8 string |
-| curve | 1 byte | AutomationCurve enum value |
-| enabled | 1 byte | 0 = disabled, non-zero = enabled |
-| resolutionLength | 4 bytes | uint32_t little-endian byte length |
-| resolution | variable | Canonical Java decimal ASCII text; positive `doubleValue()` activates quantization |
-| n_points | 4 bytes | uint32_t, number of points |
-| points | 16 bytes each | (time: double, value: double) pairs |
+| Field            | Size          | Description                                                                        |
+| ---------------- | ------------- | ---------------------------------------------------------------------------------- |
+| channel_name     | variable      | Null-terminated UTF-8 string                                                       |
+| curve            | 1 byte        | AutomationCurve enum value                                                         |
+| enabled          | 1 byte        | 0 = disabled, non-zero = enabled                                                   |
+| resolutionLength | 4 bytes       | uint32_t little-endian byte length                                                 |
+| resolution       | variable      | Canonical Java decimal ASCII text; positive `doubleValue()` activates quantization |
+| n_points         | 4 bytes       | uint32_t, number of points                                                         |
+| points           | 16 bytes each | (time: double, value: double) pairs                                                |
 
 **Response**: Status + automation ID (4 bytes) on success
 
@@ -321,6 +321,7 @@ benchmark target enables that definition; the distributed engine does not.
 ### Interpolation
 
 **Linear**:
+
 ```cpp
 double t = (elapsed - p0.time) / (p1.time - p0.time);
 double m = (p1.value - p0.value) / (p1.time - p0.time);
@@ -329,6 +330,7 @@ double y = (m * x) + p0.value;
 ```
 
 **Exponential**:
+
 ```cpp
 double t = (elapsed - p0.time) / (p1.time - p0.time);
 // Non-positive endpoints use the existing linear fallback.
@@ -489,7 +491,6 @@ src/
     └── ZmqHandler.cpp
 ```
 
-
 ---
 
 ## Exact Decimal Resolution and Thread Ownership (Spec 073)
@@ -508,7 +509,7 @@ and evaluator details above are the normative protocol-v2 and realtime model.
 - The Blue Engine owns only a transient prepared copy received through the
   engine-client protocol-v2 boundary. Protocol v2 transports canonical
   resolution text (`channelName\0 + curve:u8 + enabled:u8 +
-  resolutionLength:u32-le + resolution:ascii + pointCount:u32-le + points`)
+resolutionLength:u32-le + resolution:ascii + pointCount:u32-le + points`)
   and contains no resolution-double, scale, or precision-mode field.
 
 ### Realtime ownership and retirement

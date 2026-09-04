@@ -131,7 +131,7 @@ linux:
 appImage:
   artifactName: ${productName}-${version}.${ext}
 toolsets:
-  appimage: "1.0.3"
+  appimage: '1.0.3'
 deb:
   artifactName: ${productName}_${version}_amd64.${ext}
   depends:

@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  BlueData,
-  PolyObject,
-  SoundLayer,
-  Sound,
-} from '@blue/data';
+import { BlueData, PolyObject, SoundLayer, Sound } from '@blue/data';
 import {
   createProjectEditorSnapshot,
   createScoreObjectEditorDocument,
@@ -252,7 +247,11 @@ describe('Sound Score Object Editor', () => {
           type: 'updateTypeSpecificEditor',
           target,
           patch: {
-            bsbInterfacePatch: { type: 'updateWidgetProperties', widgetId: 'knob1-id', properties: { value: 0.8 } },
+            bsbInterfacePatch: {
+              type: 'updateWidgetProperties',
+              widgetId: 'knob1-id',
+              properties: { value: 0.8 },
+            },
           },
         },
       });
@@ -263,7 +262,8 @@ describe('Sound Score Object Editor', () => {
     it('adds newly named automatable widgets to the Sound automation payload', () => {
       const { data, target, sound } = createDataWithSound(UNNAMED_AUTOMATABLE_BSB_XML);
       const initialDoc = createScoreObjectEditorDocument(data, { target });
-      const widgetId = ((initialDoc.editor as any).payload as SoundEditorPayload).bsbInstrument?.widgetTree.children?.[0]?.id;
+      const widgetId = ((initialDoc.editor as any).payload as SoundEditorPayload).bsbInstrument
+        ?.widgetTree.children?.[0]?.id;
 
       expect(widgetId).toBeTruthy();
       expect(widgetId).toBe('knob1-id');
@@ -273,13 +273,17 @@ describe('Sound Score Object Editor', () => {
           type: 'updateTypeSpecificEditor',
           target,
           patch: {
-            bsbInterfacePatch: { type: 'updateWidgetProperties', widgetId: widgetId ?? '', properties: { objectName: 'gain' } },
+            bsbInterfacePatch: {
+              type: 'updateWidgetProperties',
+              widgetId: widgetId ?? '',
+              properties: { objectName: 'gain' },
+            },
           },
         },
       });
 
       expect(changed).toBe(true);
-  expect(sound.getBSBInstrumentText()).toContain('<objectName>gain</objectName>');
+      expect(sound.getBSBInstrumentText()).toContain('<objectName>gain</objectName>');
 
       const doc = createScoreObjectEditorDocument(data, { target });
       const payload = (doc.editor as any).payload as SoundEditorPayload;
@@ -291,7 +295,8 @@ describe('Sound Score Object Editor', () => {
     it('rescales Sound automation ranges and points when widget bounds change', () => {
       const { data, target, sound } = createDataWithSound(MINIMAL_BSB_XML);
       const initialDoc = createScoreObjectEditorDocument(data, { target });
-      const widgetId = ((initialDoc.editor as any).payload as SoundEditorPayload).bsbInstrument?.widgetTree.children?.[0]?.id;
+      const widgetId = ((initialDoc.editor as any).payload as SoundEditorPayload).bsbInstrument
+        ?.widgetTree.children?.[0]?.id;
 
       expect(widgetId).toBeTruthy();
       expect(widgetId).toBe('knob1-id');
@@ -301,13 +306,17 @@ describe('Sound Score Object Editor', () => {
           type: 'updateTypeSpecificEditor',
           target,
           patch: {
-            bsbInterfacePatch: { type: 'updateWidgetProperties', widgetId: widgetId ?? '', properties: { maximum: 10 } },
+            bsbInterfacePatch: {
+              type: 'updateWidgetProperties',
+              widgetId: widgetId ?? '',
+              properties: { maximum: 10 },
+            },
           },
         },
       });
 
       expect(changed).toBe(true);
-  expect(sound.getBSBInstrumentText()).toContain('<maximum>10</maximum>');
+      expect(sound.getBSBInstrumentText()).toContain('<maximum>10</maximum>');
 
       const doc = createScoreObjectEditorDocument(data, { target });
       const payload = (doc.editor as any).payload as SoundEditorPayload;
@@ -364,7 +373,11 @@ describe('Sound Score Object Editor', () => {
           patch: {
             automationPatch: {
               parameterId: '12345',
-              points: [{ x: 0, y: 0.2 }, { x: 0.5, y: 0.8 }, { x: 1, y: 0.3 }],
+              points: [
+                { x: 0, y: 0.2 },
+                { x: 0.5, y: 0.8 },
+                { x: 1, y: 0.3 },
+              ],
             },
           },
         },

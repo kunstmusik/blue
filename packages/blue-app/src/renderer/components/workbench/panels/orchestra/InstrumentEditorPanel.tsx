@@ -1,5 +1,8 @@
 import React, { Suspense, useCallback, useEffect, useState } from 'react';
-import type { InstrumentSnapshot, UdoDefinitionSnapshot } from '../../../../../shared/project-editor';
+import type {
+  InstrumentSnapshot,
+  UdoDefinitionSnapshot,
+} from '../../../../../shared/project-editor';
 import type { InstrumentPatch } from '../../../../../shared/project-editor';
 import type { BlueX7RuntimeTarget } from '../../../../../shared/project-editor/contract';
 import InstrumentCommentsPanel from './InstrumentCommentsPanel';
@@ -168,7 +171,7 @@ function InstrumentEditorPanel({
             'border-b-2 px-3 py-2 text-role-body',
             activeTab === 'editor'
               ? 'border-blue-accent text-app-text-strong'
-              : 'border-transparent text-blue-muted hover:text-app-text-strong'
+              : 'border-transparent text-blue-muted hover:text-app-text-strong',
           )}
           onClick={() => setActiveTab('editor')}
         >
@@ -180,7 +183,7 @@ function InstrumentEditorPanel({
             'border-b-2 px-3 py-2 text-role-body',
             activeTab === 'comments'
               ? 'border-blue-accent text-app-text-strong'
-              : 'border-transparent text-blue-muted hover:text-app-text-strong'
+              : 'border-transparent text-blue-muted hover:text-app-text-strong',
           )}
           onClick={() => setActiveTab('comments')}
         >
@@ -190,13 +193,21 @@ function InstrumentEditorPanel({
 
       <div className="relative min-h-0 flex-1">
         <div
-          className={activeTab === 'editor' ? 'relative h-full' : 'pointer-events-none absolute inset-0'}
+          className={
+            activeTab === 'editor' ? 'relative h-full' : 'pointer-events-none absolute inset-0'
+          }
           aria-hidden={activeTab !== 'editor'}
           style={{ visibility: activeTab === 'editor' ? 'visible' : 'hidden' }}
         >
-          <Suspense fallback={(
-            <div aria-hidden="true" className="h-full bg-blue-bg" data-instrument-editor-loading />
-          )}>
+          <Suspense
+            fallback={
+              <div
+                aria-hidden="true"
+                className="h-full bg-blue-bg"
+                data-instrument-editor-loading
+              />
+            }
+          >
             <EditorSurface
               instrument={instrument}
               projectUdos={projectUdos}
@@ -208,7 +219,9 @@ function InstrumentEditorPanel({
           </Suspense>
         </div>
         <div
-          className={activeTab === 'comments' ? 'relative h-full' : 'pointer-events-none absolute inset-0'}
+          className={
+            activeTab === 'comments' ? 'relative h-full' : 'pointer-events-none absolute inset-0'
+          }
           aria-hidden={activeTab !== 'comments'}
           style={{ visibility: activeTab === 'comments' ? 'visible' : 'hidden' }}
         >

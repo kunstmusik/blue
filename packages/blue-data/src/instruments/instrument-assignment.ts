@@ -41,10 +41,8 @@ export class InstrumentAssignment {
 
   static loadFromXML(data: Element): InstrumentAssignment {
     const ia = new InstrumentAssignment();
-    ia.arrangementId =
-      data.getAttribute('arrangementId') ?? data.getAttribute('id') ?? '0';
-    ia.enabled =
-      (data.getAttribute('isEnabled') ?? data.getAttribute('enabled')) !== 'false';
+    ia.arrangementId = data.getAttribute('arrangementId') ?? data.getAttribute('id') ?? '0';
+    ia.enabled = (data.getAttribute('isEnabled') ?? data.getAttribute('enabled')) !== 'false';
 
     const instrElem = data.getElement('instrument');
     if (instrElem) {

@@ -24,11 +24,7 @@ export function createUnifiedLibraryTestDirectory(
   };
 }
 
-export function writeFixtureFile(
-  directory: string,
-  fileName: string,
-  contents: string,
-): string {
+export function writeFixtureFile(directory: string, fileName: string, contents: string): string {
   const filePath = path.join(directory, fileName);
   fs.writeFileSync(filePath, contents, 'utf8');
   return filePath;

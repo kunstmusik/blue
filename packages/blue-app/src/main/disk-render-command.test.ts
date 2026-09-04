@@ -321,9 +321,14 @@ describe('planDiskCommand — complete override', () => {
     expect(plan.outputPath).toBe('renders/final mix.wav');
 
     props.diskAdvancedSettings = '-d -m0';
-    expect(() => planDiskCommand({
-      diskRender: createDefaultDiskRender(), props, outputFile: null, messageColorsEnabled: true,
-    })).toThrow(/must include an output file/i);
+    expect(() =>
+      planDiskCommand({
+        diskRender: createDefaultDiskRender(),
+        props,
+        outputFile: null,
+        messageColorsEnabled: true,
+      }),
+    ).toThrow(/must include an output file/i);
   });
 });
 

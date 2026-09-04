@@ -162,11 +162,13 @@ export function initializeUnifiedLibrarySchema(
     );
   }
   database
-    .prepare(`
+    .prepare(
+      `
       INSERT OR IGNORE INTO library_store_state (
         singleton_id, content_revision, created_at, updated_at
       ) VALUES (1, 0, ?, ?)
-    `)
+    `,
+    )
     .run(now, now);
   database.exec(`PRAGMA user_version = ${CURRENT_LIBRARY_SCHEMA_VERSION}`);
 

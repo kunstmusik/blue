@@ -57,17 +57,26 @@ export class Sound extends AbstractSoundObject {
     }
   }
 
-  getComment(): string { return this._comment; }
-  setComment(text: string): void { this._comment = text; }
+  getComment(): string {
+    return this._comment;
+  }
+  setComment(text: string): void {
+    this._comment = text;
+  }
 
-  getBlueSynthBuilder(): BlueSynthBuilder { return this._blueSynthBuilder; }
-  setBlueSynthBuilder(bsb: BlueSynthBuilder): void { this._blueSynthBuilder = bsb; }
+  getBlueSynthBuilder(): BlueSynthBuilder {
+    return this._blueSynthBuilder;
+  }
+  setBlueSynthBuilder(bsb: BlueSynthBuilder): void {
+    this._blueSynthBuilder = bsb;
+  }
 
-  getBSBInstrumentText(): string { return this._blueSynthBuilder.saveAsXML().toXml(); }
+  getBSBInstrumentText(): string {
+    return this._blueSynthBuilder.saveAsXML().toXml();
+  }
   setBSBInstrumentText(text: string): void {
     this._blueSynthBuilder = Sound.loadBlueSynthBuilderFromText(text);
   }
-
 
   override getTimeBehavior(): TimeBehavior {
     return TimeBehavior.NOT_SUPPORTED;
@@ -90,7 +99,7 @@ export class Sound extends AbstractSoundObject {
       parameter.setCompilationVarName('');
       parameter.setPoints(
         parameter.getPoints().map((point) => ({
-          time: soundStart + (point.time * soundDuration),
+          time: soundStart + point.time * soundDuration,
           value: point.value,
         })),
       );

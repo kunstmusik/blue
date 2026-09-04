@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, type RefObject } from "react";
-import { summarizeWaveformChannels } from "../score/bar-renderers/waveform-cache";
+import { useEffect, useRef, useState, type RefObject } from 'react';
+import { summarizeWaveformChannels } from '../score/bar-renderers/waveform-cache';
 
 interface AudioPlayerWaveformProps {
   audioRef: RefObject<HTMLAudioElement | null>;
@@ -33,11 +33,11 @@ function getAudioContextCtor(): AudioContextCtor | null {
   );
 }
 
-const PEAK_COLOR = "rgb(99 140 255)";
-const PEAK_FILL_COLOR = "rgba(99, 140, 255, 0.32)";
-const ZERO_LINE_COLOR = "rgba(120, 150, 210, 0.22)";
-const PLAYHEAD_COLOR = "rgb(239 68 68)";
-const PLACEHOLDER_COLOR = "rgba(120, 140, 170, 0.25)";
+const PEAK_COLOR = 'rgb(99 140 255)';
+const PEAK_FILL_COLOR = 'rgba(99, 140, 255, 0.32)';
+const ZERO_LINE_COLOR = 'rgba(120, 150, 210, 0.22)';
+const PLAYHEAD_COLOR = 'rgb(239 68 68)';
+const PLACEHOLDER_COLOR = 'rgba(120, 140, 170, 0.25)';
 
 export function buildWaveformEnvelope(
   peaks: Peaks,
@@ -88,7 +88,7 @@ export function drawWaveformEnvelope(
   context.fill();
   context.strokeStyle = PEAK_COLOR;
   context.lineWidth = 1;
-  context.lineJoin = "round";
+  context.lineJoin = 'round';
   context.stroke();
   return true;
 }
@@ -134,13 +134,13 @@ export default function AudioPlayerWaveform({
     (async () => {
       const bytes = await window.blueAPI.readAuthorizedAudioFileBytes(filePath);
       if (cancelled || !bytes) {
-        if (!cancelled) setStatus("Unable to read audio file.");
+        if (!cancelled) setStatus('Unable to read audio file.');
         return;
       }
 
       const AudioContextCtor = getAudioContextCtor();
       if (!AudioContextCtor) {
-        setStatus("Audio decoding is unavailable in this environment.");
+        setStatus('Audio decoding is unavailable in this environment.');
         return;
       }
 
@@ -148,30 +148,21 @@ export default function AudioPlayerWaveform({
       try {
         const decoded = await ctx.decodeAudioData(bytes.slice(0));
         if (cancelled) return;
-        const channelData = Array.from(
-          { length: decoded.numberOfChannels },
-          (_, index) => decoded.getChannelData(index),
+        const channelData = Array.from({ length: decoded.numberOfChannels }, (_, index) =>
+          decoded.getChannelData(index),
         );
         const sampleCount = channelData[0]?.length ?? 0;
-        const samplesPerBucket = Math.max(
-          1,
-          Math.ceil(sampleCount / Math.max(1, width)),
-        );
+        const samplesPerBucket = Math.max(1, Math.ceil(sampleCount / Math.max(1, width)));
         const pixelSecond = decoded.sampleRate / samplesPerBucket;
-        const channels = summarizeWaveformChannels(
-          channelData,
-          decoded.sampleRate,
-          pixelSecond,
-        );
+        const channels = summarizeWaveformChannels(channelData, decoded.sampleRate, pixelSecond);
         const first = channels[0];
         if (first) {
           setPeaks({ min: first.min, max: first.max });
         } else {
-          setStatus("No waveform data.");
+          setStatus('No waveform data.');
         }
       } catch {
-        if (!cancelled)
-          setStatus("Could not decode this audio format for waveform display.");
+        if (!cancelled) setStatus('Could not decode this audio format for waveform display.');
       } finally {
         void ctx.close().catch(() => undefined);
       }
@@ -190,7 +181,7 @@ export default function AudioPlayerWaveform({
       rafId = requestAnimationFrame(draw);
       const canvas = canvasRef.current;
       if (!canvas || width <= 0) return;
-      const ctx2d = canvas.getContext("2d");
+      const ctx2d = canvas.getContext('2d');
       if (!ctx2d) return;
 
       const dpr = window.devicePixelRatio || 1;
@@ -261,7 +252,7 @@ export default function AudioPlayerWaveform({
         <canvas
           ref={canvasRef}
           className="absolute inset-0 h-full w-full"
-          style={{ cursor: duration > 0 ? "pointer" : "default" }}
+          style={{ cursor: duration > 0 ? 'pointer' : 'default' }}
           onPointerDown={(event) => {
             if (duration <= 0) return;
             event.currentTarget.setPointerCapture(event.pointerId);

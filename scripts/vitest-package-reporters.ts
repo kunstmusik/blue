@@ -87,13 +87,9 @@ export function createPackageReporterConfig(
   const summaryPath = process.env.GITHUB_STEP_SUMMARY;
   // Vitest's built-in summary heading is fixed, so relabel an isolated copy.
   const temporaryDirectory =
-    summaryPath === undefined
-      ? undefined
-      : mkdtempSync(join(tmpdir(), 'blue-vitest-summary-'));
+    summaryPath === undefined ? undefined : mkdtempSync(join(tmpdir(), 'blue-vitest-summary-'));
   const temporarySummaryPath =
-    temporaryDirectory === undefined
-      ? undefined
-      : join(temporaryDirectory, 'summary.md');
+    temporaryDirectory === undefined ? undefined : join(temporaryDirectory, 'summary.md');
   const reporter = new GithubActionsReporter({
     jobSummary: {
       outputPath: temporarySummaryPath,

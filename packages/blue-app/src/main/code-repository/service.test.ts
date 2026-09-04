@@ -211,7 +211,11 @@ describe('CodeRepositoryService migration robustness', () => {
   it('does not block startup when legacy XML is malformed', async () => {
     const dir = createCodeRepositoryTestDirectory();
     try {
-      fs.writeFileSync(path.join(dir.directory, 'codeRepository.xml'), '<customAccelerators><broken', 'utf8');
+      fs.writeFileSync(
+        path.join(dir.directory, 'codeRepository.xml'),
+        '<customAccelerators><broken',
+        'utf8',
+      );
       const service = createMigratingService(dir);
       await service.start();
       // Startup completed; the service is usable despite the migration failure.
@@ -233,9 +237,9 @@ describe('CodeRepositoryService migration robustness', () => {
       const service = createMigratingService(dir);
       await service.start();
       const before = service.getSnapshot();
-      await expect(service.importXml('<otherRoot/>', 'explicit.xml', before!.contentRevision)).rejects.toThrow(
-        /customAccelerators|invalid/i,
-      );
+      await expect(
+        service.importXml('<otherRoot/>', 'explicit.xml', before!.contentRevision),
+      ).rejects.toThrow(/customAccelerators|invalid/i);
       // The tree is unchanged after the rejected import.
       const after = service.getSnapshot();
       expect(after?.contentRevision).toBe(before!.contentRevision);
@@ -251,7 +255,9 @@ describe('CodeRepositoryService migration robustness', () => {
       const service = createMigratingService(dir);
       await service.start();
       const before = service.getSnapshot()!;
-      await expect(service.importXml('<otherRoot/>', 'broken.xml', before.contentRevision)).rejects.toMatchObject({
+      await expect(
+        service.importXml('<otherRoot/>', 'broken.xml', before.contentRevision),
+      ).rejects.toMatchObject({
         code: 'invalid-legacy-xml',
       });
       const client = CodeRepositoryClient.openForTesting(dir.databasePath);
@@ -289,7 +295,11 @@ describe('CodeRepositoryService migration robustness', () => {
       expect(service.getSnapshot()).toEqual(before);
       expect(service.getStatus().diagnostic?.code).toBe('source-unreadable');
 
-      fs.writeFileSync(legacyPath, '<customAccelerators><customGroup name="repaired" /></customAccelerators>', 'utf8');
+      fs.writeFileSync(
+        legacyPath,
+        '<customAccelerators><customGroup name="repaired" /></customAccelerators>',
+        'utf8',
+      );
       await service.retry();
       expect(service.getStatus().migrationStatus).toBe('succeeded');
       expect(service.getSnapshot()?.root.children?.[0]?.name).toBe('repaired');
@@ -364,7 +374,9 @@ describe('CodeRepositoryService migration robustness', () => {
       });
       await service.start();
 
-      expect(service.getStatus().diagnostic?.message).toBe('Code Repository storage is unavailable.');
+      expect(service.getStatus().diagnostic?.message).toBe(
+        'Code Repository storage is unavailable.',
+      );
       expect(service.getStatus().diagnostic?.message).not.toContain(dir.directory);
     } finally {
       dir.cleanup();
@@ -397,7 +409,9 @@ describe('CodeRepositoryService migration robustness', () => {
       });
       expect(service.getServiceSnapshot().phase).toBe('ready');
       expect(
-        fs.readdirSync(dir.directory).some((name) => name.startsWith(`${path.basename(dir.databasePath)}.failed-`)),
+        fs
+          .readdirSync(dir.directory)
+          .some((name) => name.startsWith(`${path.basename(dir.databasePath)}.failed-`)),
       ).toBe(true);
       await service.stop();
     } finally {

@@ -1,8 +1,5 @@
 import type { JavaScriptSession } from '@blue/data';
-import type {
-  ReplConsoleEvaluateResult,
-  ReplConsoleEvaluationError,
-} from '../shared/repl-console';
+import type { ReplConsoleEvaluateResult, ReplConsoleEvaluationError } from '../shared/repl-console';
 
 export interface JavaScriptReplProjectContext {
   projectDir: string;
@@ -36,9 +33,7 @@ function formatDumpedValue(value: unknown): string {
 function formatQuickJSError(value: unknown): ReplConsoleEvaluationError {
   if (value && typeof value === 'object') {
     const error = value as DumpedError;
-    const message = typeof error.message === 'string'
-      ? error.message
-      : formatDumpedValue(value);
+    const message = typeof error.message === 'string' ? error.message : formatDumpedValue(value);
     return {
       message,
       ...(typeof error.name === 'string' ? { code: error.name } : {}),
@@ -49,7 +44,10 @@ function formatQuickJSError(value: unknown): ReplConsoleEvaluationError {
   return { message: formatDumpedValue(value) };
 }
 
-function disposeEvalResult(context: QuickJSContext, result: { value?: QuickJSHandle; error?: QuickJSHandle }): void {
+function disposeEvalResult(
+  context: QuickJSContext,
+  result: { value?: QuickJSHandle; error?: QuickJSHandle },
+): void {
   if (result.value) {
     result.value.dispose();
   }
@@ -75,19 +73,13 @@ function setGlobalJson(context: QuickJSContext, name: string, value: unknown): v
   disposeEvalResult(context, result);
 }
 
-function installConsole(
-  context: QuickJSContext,
-  stdout: string[],
-  stderr: string[],
-): void {
+function installConsole(context: QuickJSContext, stdout: string[], stderr: string[]): void {
   const formatArguments = (args: QuickJSHandle[]): string =>
     args.map((arg) => formatDumpedValue(context.dump(arg))).join(' ');
-  const writer = (target: string[], name: string) => context.newFunction(
-    name,
-    (...args: QuickJSHandle[]) => {
+  const writer = (target: string[], name: string) =>
+    context.newFunction(name, (...args: QuickJSHandle[]) => {
       target.push(formatArguments(args));
-    },
-  );
+    });
 
   const consoleHandle = context.newObject();
   const logHandle = writer(stdout, 'log');

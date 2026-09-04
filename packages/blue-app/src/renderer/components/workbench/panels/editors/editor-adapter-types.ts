@@ -3,7 +3,14 @@ import type { CodeRepositoryNode } from '@blue/data';
 
 export type SelectedEditorKind = 'codemirror';
 
-export type CsoundDocumentMode = 'orc' | 'sco' | 'csd' | 'text' | 'javascript' | 'python' | 'clojure';
+export type CsoundDocumentMode =
+  | 'orc'
+  | 'sco'
+  | 'csd'
+  | 'text'
+  | 'javascript'
+  | 'python'
+  | 'clojure';
 
 export interface CsoundCompletionContext {
   text: string;

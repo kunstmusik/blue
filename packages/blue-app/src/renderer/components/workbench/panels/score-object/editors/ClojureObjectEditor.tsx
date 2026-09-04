@@ -4,7 +4,10 @@ import SelectedCodeEditor from '../../editors/SelectedCodeEditor';
 import GeneratedScoreModal from './GeneratedScoreModal';
 import { useScoreObjectTest } from './useScoreObjectTest';
 
-export default function ClojureObjectEditor({ document, onPatch }: ScoreObjectEditorComponentProps): React.ReactElement {
+export default function ClojureObjectEditor({
+  document,
+  onPatch,
+}: ScoreObjectEditorComponentProps): React.ReactElement {
   const editor = document.editor;
   if (editor.kind !== 'code') return <></>;
 
@@ -12,14 +15,8 @@ export default function ClojureObjectEditor({ document, onPatch }: ScoreObjectEd
   const [runtimeError, setRuntimeError] = useState<string | null>(null);
   const [reinitializing, setReinitializing] = useState(false);
 
-  const {
-    testing,
-    testOutput,
-    testError,
-    runTest,
-    clearTestOutput,
-    clearTestError,
-  } = useScoreObjectTest(document.target);
+  const { testing, testOutput, testError, runTest, clearTestOutput, clearTestError } =
+    useScoreObjectTest(document.target);
 
   useEffect(() => {
     setRuntimeError(null);
@@ -28,21 +25,30 @@ export default function ClojureObjectEditor({ document, onPatch }: ScoreObjectEd
     clearTestOutput();
   }, [document.target.selectionId, clearTestError, clearTestOutput]);
 
-  const patch = useCallback((p: Record<string, unknown>) => {
-    onPatch({
-      type: 'updateTypeSpecificEditor',
-      target: document.target,
-      patch: p,
-    });
-  }, [document.target, onPatch]);
+  const patch = useCallback(
+    (p: Record<string, unknown>) => {
+      onPatch({
+        type: 'updateTypeSpecificEditor',
+        target: document.target,
+        patch: p,
+      });
+    },
+    [document.target, onPatch],
+  );
 
-  const handleChange = useCallback((text: string) => {
-    patch({ text });
-  }, [patch]);
+  const handleChange = useCallback(
+    (text: string) => {
+      patch({ text });
+    },
+    [patch],
+  );
 
-  const handleProcessOnLoadChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    patch({ onLoadProcessable: e.target.checked });
-  }, [patch]);
+  const handleProcessOnLoadChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      patch({ onLoadProcessable: e.target.checked });
+    },
+    [patch],
+  );
 
   const handleTest = useCallback(async () => {
     await runTest();
@@ -78,7 +84,9 @@ export default function ClojureObjectEditor({ document, onPatch }: ScoreObjectEd
     };
     const el = containerRef.current;
     el?.addEventListener('keydown', handler);
-    return () => { el?.removeEventListener('keydown', handler); };
+    return () => {
+      el?.removeEventListener('keydown', handler);
+    };
   }, [handleTest]);
 
   return (
@@ -98,7 +106,9 @@ export default function ClojureObjectEditor({ document, onPatch }: ScoreObjectEd
           type="button"
           className="rounded border border-blue-border px-2 py-0.5 text-role-body text-gray-300 hover:border-blue-accent"
           disabled={reinitializing}
-          onClick={() => { void handleReinitialize(); }}
+          onClick={() => {
+            void handleReinitialize();
+          }}
           title="Reinitialize the project Clojure runtime"
         >
           {reinitializing ? 'Reinitializing...' : 'Reinitialize'}
@@ -107,7 +117,9 @@ export default function ClojureObjectEditor({ document, onPatch }: ScoreObjectEd
           type="button"
           className="rounded border border-blue-border px-2 py-0.5 text-role-body text-gray-300 hover:border-blue-accent"
           disabled={testing}
-          onClick={() => { void handleTest(); }}
+          onClick={() => {
+            void handleTest();
+          }}
           title="Test (Cmd/Ctrl+T)"
         >
           {testing ? 'Testing...' : 'Test'}
@@ -137,9 +149,7 @@ export default function ClojureObjectEditor({ document, onPatch }: ScoreObjectEd
           onChange={handleChange}
         />
       </div>
-      {testOutput !== null && (
-        <GeneratedScoreModal text={testOutput} onClose={clearTestOutput} />
-      )}
+      {testOutput !== null && <GeneratedScoreModal text={testOutput} onClose={clearTestOutput} />}
     </div>
   );
 }

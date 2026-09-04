@@ -12,16 +12,42 @@ describe('editor save failure safety', () => {
       instrument.setName('Safe');
       const originalXml = instrument.saveAsXML().toXml();
       const node = await client.createItem({
-        libraryType: 'instrument', parentId: root.id, displayName: 'Safe',
-        payload: { embeddedName: 'Safe', objectType: 'GenericInstrument', supportStatus: 'supported', supportReasonCode: null, supportMessage: null, payloadXml: originalXml, rawHash: 'r', canonicalContentHash: 'c', serializerRevision: '1', preview: {}, dependencies: {}, metadataRevision: 1 },
+        libraryType: 'instrument',
+        parentId: root.id,
+        displayName: 'Safe',
+        payload: {
+          embeddedName: 'Safe',
+          objectType: 'GenericInstrument',
+          supportStatus: 'supported',
+          supportReasonCode: null,
+          supportMessage: null,
+          payloadXml: originalXml,
+          rawHash: 'r',
+          canonicalContentHash: 'c',
+          serializerRevision: '1',
+          preview: {},
+          dependencies: {},
+          metadataRevision: 1,
+        },
       });
       const sessions = new UnifiedLibraryEditorSessionService(client);
-      const opened = await sessions.open({ scope: 'user', libraryType: 'instrument', nodeId: node.id });
-      expect(() => sessions.patch(opened.sessionId, {
-        documentPatch: { kind: 'effect', patch: { name: 'Wrong type' } },
-      })).toThrow(/type mismatch/i);
+      const opened = await sessions.open({
+        scope: 'user',
+        libraryType: 'instrument',
+        nodeId: node.id,
+      });
+      expect(() =>
+        sessions.patch(opened.sessionId, {
+          documentPatch: { kind: 'effect', patch: { name: 'Wrong type' } },
+        }),
+      ).toThrow(/type mismatch/i);
       expect((await client.getItemPayload(node.id)).payloadXml).toBe(originalXml);
-      expect(sessions.get(opened.sessionId)).toMatchObject({ dirty: false, document: { kind: 'instrument' } });
-    } finally { await client.close(); }
+      expect(sessions.get(opened.sessionId)).toMatchObject({
+        dirty: false,
+        document: { kind: 'instrument' },
+      });
+    } finally {
+      await client.close();
+    }
   });
 });

@@ -96,18 +96,22 @@ describe('testScoreObject', () => {
       },
     }));
 
-    const result = await testScoreObject(data, {
-      target: makeTarget('ClojureObject', {
-        rootGroupIndex: 0,
-        containerPath: [],
-        layerIndex: 0,
-        objectIndex: layer.length - 1,
-      }),
-    }, {
-      javaRuntimeClient: {
-        evaluateClojureScoreObject,
-      } as any,
-    });
+    const result = await testScoreObject(
+      data,
+      {
+        target: makeTarget('ClojureObject', {
+          rootGroupIndex: 0,
+          containerPath: [],
+          layerIndex: 0,
+          objectIndex: layer.length - 1,
+        }),
+      },
+      {
+        javaRuntimeClient: {
+          evaluateClojureScoreObject,
+        } as any,
+      },
+    );
 
     expect(result.ok).toBe(true);
     expect(result.output).toContain('i3');
@@ -154,18 +158,22 @@ describe('testScoreObject', () => {
       },
     }));
 
-    const result = await testScoreObject(data, {
-      target: makeTarget('PythonObject', {
-        rootGroupIndex: 0,
-        containerPath: [],
-        layerIndex: 0,
-        objectIndex: layer.length - 1,
-      }),
-    }, {
-      javaRuntimeClient: {
-        evaluateJythonScoreObject,
-      } as any,
-    });
+    const result = await testScoreObject(
+      data,
+      {
+        target: makeTarget('PythonObject', {
+          rootGroupIndex: 0,
+          containerPath: [],
+          layerIndex: 0,
+          objectIndex: layer.length - 1,
+        }),
+      },
+      {
+        javaRuntimeClient: {
+          evaluateJythonScoreObject,
+        } as any,
+      },
+    );
 
     expect(result.ok).toBe(true);
     expect(result.output).toContain('i4');
@@ -212,18 +220,22 @@ describe('testScoreObject', () => {
       },
     }));
 
-    const result = await testScoreObject(data, {
-      target: makeTarget('ObjectBuilder', {
-        rootGroupIndex: 0,
-        containerPath: [],
-        layerIndex: 0,
-        objectIndex: layer.length - 1,
-      }),
-    }, {
-      javaRuntimeClient: {
-        evaluateJythonObjectBuilder,
-      } as any,
-    });
+    const result = await testScoreObject(
+      data,
+      {
+        target: makeTarget('ObjectBuilder', {
+          rootGroupIndex: 0,
+          containerPath: [],
+          layerIndex: 0,
+          objectIndex: layer.length - 1,
+        }),
+      },
+      {
+        javaRuntimeClient: {
+          evaluateJythonObjectBuilder,
+        } as any,
+      },
+    );
 
     expect(result.ok).toBe(true);
     expect(result.output).toContain('i5');
@@ -271,16 +283,20 @@ describe('testScoreObject', () => {
       result: { scoreText: 'i6 0 1 660', namespace: 'user0' },
     }));
 
-    const result = await testScoreObject(data, {
-      target: makeTarget('ObjectBuilder', {
-        rootGroupIndex: 0,
-        containerPath: [],
-        layerIndex: 0,
-        objectIndex: layer.length - 1,
-      }),
-    }, {
-      javaRuntimeClient: { evaluateClojureScoreObject } as any,
-    });
+    const result = await testScoreObject(
+      data,
+      {
+        target: makeTarget('ObjectBuilder', {
+          rootGroupIndex: 0,
+          containerPath: [],
+          layerIndex: 0,
+          objectIndex: layer.length - 1,
+        }),
+      },
+      {
+        javaRuntimeClient: { evaluateClojureScoreObject } as any,
+      },
+    );
 
     expect(result.ok).toBe(true);
     expect(evaluateClojureScoreObject).toHaveBeenCalledWith({
@@ -300,14 +316,18 @@ describe('testScoreObject', () => {
     layer.push(objectBuilder);
     const ensureJavaScriptEngine = vi.fn(initializeJavaScriptRuntime);
 
-    const result = await testScoreObject(data, {
-      target: makeTarget('ObjectBuilder', {
-        rootGroupIndex: 0,
-        containerPath: [],
-        layerIndex: 0,
-        objectIndex: layer.length - 1,
-      }),
-    }, { ensureJavaScriptEngine });
+    const result = await testScoreObject(
+      data,
+      {
+        target: makeTarget('ObjectBuilder', {
+          rootGroupIndex: 0,
+          containerPath: [],
+          layerIndex: 0,
+          objectIndex: layer.length - 1,
+        }),
+      },
+      { ensureJavaScriptEngine },
+    );
 
     expect(result.ok).toBe(true);
     expect(result.output).toContain('i7');
@@ -335,16 +355,20 @@ describe('testScoreObject', () => {
       },
     }));
 
-    const result = await testScoreObject(data, {
-      target: makeTarget('GenericScore', {
-        rootGroupIndex: 0,
-        containerPath: [],
-        layerIndex: 0,
-        objectIndex: layer.length - 1,
-      }),
-    }, {
-      javaRuntimeClient: { processJythonNoteList } as any,
-    });
+    const result = await testScoreObject(
+      data,
+      {
+        target: makeTarget('GenericScore', {
+          rootGroupIndex: 0,
+          containerPath: [],
+          layerIndex: 0,
+          objectIndex: layer.length - 1,
+        }),
+      },
+      {
+        javaRuntimeClient: { processJythonNoteList } as any,
+      },
+    );
 
     expect(result.ok).toBe(true);
     expect(result.output).toContain('880');

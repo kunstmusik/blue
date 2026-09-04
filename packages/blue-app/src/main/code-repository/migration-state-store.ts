@@ -52,7 +52,9 @@ function isDocument(value: unknown): value is CodeRepositoryMigrationStateDocume
   );
 }
 
-export function shouldRunAutomaticMigration(document: CodeRepositoryMigrationStateDocument): boolean {
+export function shouldRunAutomaticMigration(
+  document: CodeRepositoryMigrationStateDocument,
+): boolean {
   return document.migrationState === 'not-started' && document.attemptStatus === 'idle';
 }
 
@@ -66,7 +68,9 @@ export class CodeRepositoryMigrationStateStore {
     try {
       const parsed: unknown = JSON.parse(fs.readFileSync(this.filePath, 'utf8'));
       if (!isDocument(parsed)) throw new Error('Unsupported migration state document');
-      return parsed.attemptStatus === 'inProgress' ? { ...parsed, attemptStatus: 'interrupted' } : parsed;
+      return parsed.attemptStatus === 'inProgress'
+        ? { ...parsed, attemptStatus: 'interrupted' }
+        : parsed;
     } catch {
       return {
         ...DEFAULT_CODE_REPOSITORY_MIGRATION_STATE,

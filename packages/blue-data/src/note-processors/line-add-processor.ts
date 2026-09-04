@@ -20,11 +20,19 @@ export class LineAddProcessor extends NoteProcessor {
     }
   }
 
-  getPfield(): string { return this._pfield.toString(); }
-  setPfield(pfield: string): void { this._pfield = parseInt(pfield, 10); }
+  getPfield(): string {
+    return this._pfield.toString();
+  }
+  setPfield(pfield: string): void {
+    this._pfield = parseInt(pfield, 10);
+  }
 
-  getLineAddString(): string { return this._lineAddString; }
-  setLineAddString(lineAddString: string): void { this._lineAddString = lineAddString; }
+  getLineAddString(): string {
+    return this._lineAddString;
+  }
+  setLineAddString(lineAddString: string): void {
+    this._lineAddString = lineAddString;
+  }
 
   override process(notes: NoteList): NoteList {
     const tm = ValueTimeMapper.createValueTimeMapper(this._lineAddString);
@@ -52,7 +60,9 @@ export class LineAddProcessor extends NoteProcessor {
     return notes;
   }
 
-  override getDisplayName(): string { return 'LineAddProcessor'; }
+  override getDisplayName(): string {
+    return 'LineAddProcessor';
+  }
 
   override deepCopy(): LineAddProcessor {
     return new LineAddProcessor(this);

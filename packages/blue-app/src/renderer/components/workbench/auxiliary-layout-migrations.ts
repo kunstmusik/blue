@@ -103,7 +103,9 @@ interface LegacyStoredWorkbenchLayoutV4 {
  * default-mode anchors, so preserve the old panels in a derived group and
  * restore the seed to its Java Blue default edge.
  */
-export function normalizeStoredAuxiliaryLayoutState(state: AuxiliaryLayoutState): AuxiliaryLayoutState {
+export function normalizeStoredAuxiliaryLayoutState(
+  state: AuxiliaryLayoutState,
+): AuxiliaryLayoutState {
   const normalized = normalizeAuxiliaryLayoutState(state);
   const next = cloneAuxiliaryLayoutState(normalized);
   let maxOrder = next.groups.reduce((max, group) => Math.max(max, group.displayOrder), -1);
@@ -399,7 +401,9 @@ export function upgradeV2ToV5(legacy: LegacyAuxiliaryLayoutStateV2): AuxiliaryLa
   });
 }
 
-export function isLegacyStoredWorkbenchLayoutV6(value: unknown): value is LegacyStoredWorkbenchLayoutV6 {
+export function isLegacyStoredWorkbenchLayoutV6(
+  value: unknown,
+): value is LegacyStoredWorkbenchLayoutV6 {
   return (
     isRecord(value) &&
     value.version === 6 &&
@@ -408,7 +412,9 @@ export function isLegacyStoredWorkbenchLayoutV6(value: unknown): value is Legacy
   );
 }
 
-export function isLegacyStoredWorkbenchLayoutV5(value: unknown): value is LegacyStoredWorkbenchLayoutV5 {
+export function isLegacyStoredWorkbenchLayoutV5(
+  value: unknown,
+): value is LegacyStoredWorkbenchLayoutV5 {
   return (
     isRecord(value) &&
     value.version === 5 &&
@@ -417,7 +423,9 @@ export function isLegacyStoredWorkbenchLayoutV5(value: unknown): value is Legacy
   );
 }
 
-export function isLegacyStoredWorkbenchLayoutV4(value: unknown): value is LegacyStoredWorkbenchLayoutV4 {
+export function isLegacyStoredWorkbenchLayoutV4(
+  value: unknown,
+): value is LegacyStoredWorkbenchLayoutV4 {
   return (
     isRecord(value) &&
     value.version === 4 &&
@@ -428,7 +436,9 @@ export function isLegacyStoredWorkbenchLayoutV4(value: unknown): value is Legacy
   );
 }
 
-export function isLegacyStoredWorkbenchLayoutV3(value: unknown): value is LegacyStoredWorkbenchLayoutV3 {
+export function isLegacyStoredWorkbenchLayoutV3(
+  value: unknown,
+): value is LegacyStoredWorkbenchLayoutV3 {
   return (
     isRecord(value) &&
     value.version === 3 &&
@@ -437,7 +447,9 @@ export function isLegacyStoredWorkbenchLayoutV3(value: unknown): value is Legacy
   );
 }
 
-export function isLegacyStoredWorkbenchLayoutV2(value: unknown): value is LegacyStoredWorkbenchLayoutV2 {
+export function isLegacyStoredWorkbenchLayoutV2(
+  value: unknown,
+): value is LegacyStoredWorkbenchLayoutV2 {
   return (
     isRecord(value) &&
     value.version === 2 &&

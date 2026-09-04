@@ -7,7 +7,9 @@ import { isEditableTarget } from '../components/workbench/panels/score-object/ed
 
 // Second realm mirrors a Dockview popout window: its elements fail
 // `instanceof HTMLElement` from this module's realm.
-const popout = new JSDOM('<!doctype html><html><body><input id="in"><textarea id="ta"></textarea><div id="ce" contenteditable="true"></div></body></html>');
+const popout = new JSDOM(
+  '<!doctype html><html><body><input id="in"><textarea id="ta"></textarea><div id="ce" contenteditable="true"></div></body></html>',
+);
 const popoutDoc = popout.window.document;
 
 describe('realm-safe editable-target guards', () => {

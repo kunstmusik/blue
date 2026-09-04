@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { cn } from '../../../../../../lib/cn';
 
-const INPUT_CLASS = 'w-20 rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none';
+const INPUT_CLASS =
+  'w-20 rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none';
 
 export default function CommitNumberInput({
   value,
@@ -59,7 +60,10 @@ export default function CommitNumberInput({
       value={localValue}
       onChange={(e) => setLocalValue(e.target.value)}
       onFocus={() => setFocused(true)}
-      onBlur={() => { setFocused(false); commit(); }}
+      onBlur={() => {
+        setFocused(false);
+        commit();
+      }}
       onClick={onClick}
       onKeyDown={(e) => {
         if (e.key === 'Enter') {

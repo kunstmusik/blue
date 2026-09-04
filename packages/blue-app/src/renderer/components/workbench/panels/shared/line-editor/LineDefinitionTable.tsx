@@ -47,15 +47,18 @@ export function LineDefinitionTable<TLine extends ScoreEditorLineLike>({
   getLineLabel,
   updateLineLabel,
 }: LineDefinitionTableProps<TLine>): React.ReactElement {
-  const updateLineAt = useCallback((index: number, updater: (line: TLine) => TLine) => {
-    const nextLines = cloneEditableLines(lines);
-    const currentLine = nextLines[index];
-    if (!currentLine) {
-      return;
-    }
-    nextLines[index] = updater(currentLine);
-    onLinesChange(nextLines);
-  }, [lines, onLinesChange]);
+  const updateLineAt = useCallback(
+    (index: number, updater: (line: TLine) => TLine) => {
+      const nextLines = cloneEditableLines(lines);
+      const currentLine = nextLines[index];
+      if (!currentLine) {
+        return;
+      }
+      nextLines[index] = updater(currentLine);
+      onLinesChange(nextLines);
+    },
+    [lines, onLinesChange],
+  );
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
@@ -134,11 +137,16 @@ export function LineDefinitionTable<TLine extends ScoreEditorLineLike>({
                   className="h-8 w-full border-0 border-r border-app-border/30 bg-transparent px-1 font-mono text-role-subheadline text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-app-accent"
                   value={label}
                   onChange={(event) => {
-                    updateLineAt(index, (currentLine) => updateLineLabel(currentLine, event.target.value, index));
+                    updateLineAt(index, (currentLine) =>
+                      updateLineLabel(currentLine, event.target.value, index),
+                    );
                   }}
                 />
               ) : (
-                <div className="truncate border-r border-app-border/30 px-1 font-mono text-app-text-strong" title={label}>
+                <div
+                  className="truncate border-r border-app-border/30 px-1 font-mono text-app-text-strong"
+                  title={label}
+                >
                   {label}
                 </div>
               )}

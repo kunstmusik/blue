@@ -28,9 +28,7 @@ export default function ProjectInformationTab({
         </FieldRow>
       </div>
       <div className="mt-4 flex min-h-0 flex-1 flex-col">
-        <span className={cn('mb-2', APP_INSPECTOR_LABEL_TEXT_CLASS)}>
-          Notes
-        </span>
+        <span className={cn('mb-2', APP_INSPECTOR_LABEL_TEXT_CLASS)}>Notes</span>
         <TextAreaBase
           value={properties.notes}
           placeholder="Project notes"

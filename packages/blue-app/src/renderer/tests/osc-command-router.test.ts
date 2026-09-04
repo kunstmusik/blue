@@ -15,20 +15,38 @@ function makeRouter(options: { loaded?: boolean; running?: boolean } = {}) {
   const calls: string[] = [];
   const project = {
     loaded: options.loaded ?? true,
-    flushPendingPatches: vi.fn(async () => { calls.push('flush'); }),
-    rewindToStart: vi.fn(() => { calls.push('rewind'); }),
-    navigateToNextMarker: vi.fn(() => { calls.push('next'); }),
-    navigateToPreviousMarker: vi.fn(() => { calls.push('previous'); }),
+    flushPendingPatches: vi.fn(async () => {
+      calls.push('flush');
+    }),
+    rewindToStart: vi.fn(() => {
+      calls.push('rewind');
+    }),
+    navigateToNextMarker: vi.fn(() => {
+      calls.push('next');
+    }),
+    navigateToPreviousMarker: vi.fn(() => {
+      calls.push('previous');
+    }),
   };
   const playback = {
-    startFresh: vi.fn(async () => { calls.push('play'); }),
-    stop: vi.fn(async () => { calls.push('stop'); }),
+    startFresh: vi.fn(async () => {
+      calls.push('play');
+    }),
+    stop: vi.fn(async () => {
+      calls.push('stop');
+    }),
   };
   const blueLive = { running: options.running ?? false };
   const api = {
-    toggleBlueLive: vi.fn(async () => { calls.push('live-toggle'); }),
-    recompileBlueLive: vi.fn(async () => { calls.push('live-recompile'); }),
-    sendBlueLiveAllNotesOff: vi.fn(async () => { calls.push('live-all-notes-off'); }),
+    toggleBlueLive: vi.fn(async () => {
+      calls.push('live-toggle');
+    }),
+    recompileBlueLive: vi.fn(async () => {
+      calls.push('live-recompile');
+    }),
+    sendBlueLiveAllNotesOff: vi.fn(async () => {
+      calls.push('live-all-notes-off');
+    }),
   };
   const onError = vi.fn();
   return {

@@ -7,7 +7,11 @@
  * where the pattern is active (true), offset by index * patternBeatsLength.
  */
 import { Layer, LAYER_HEIGHT } from '../../score/layers/layer';
-import { DEFAULT_LAYER_COLOR, normalizeLayerColor, normalizeXmlLayerColor } from '../../score/layers/layer-color';
+import {
+  DEFAULT_LAYER_COLOR,
+  normalizeLayerColor,
+  normalizeXmlLayerColor,
+} from '../../score/layers/layer-color';
 import { ScoreObject } from '../../score/score-object';
 import { PatternData } from './pattern-data';
 import { TimeContext } from '../../time/time-context';
@@ -79,17 +83,33 @@ export class PatternLayer implements Layer {
 
   // ─── Layer ───
 
-  getName(): string { return this._name; }
-  setName(name: string): void { this._name = name; }
+  getName(): string {
+    return this._name;
+  }
+  setName(name: string): void {
+    this._name = name;
+  }
 
-  getLayerHeight(): number { return LAYER_HEIGHT; }
+  getLayerHeight(): number {
+    return LAYER_HEIGHT;
+  }
 
-  getBackgroundColor(): number { return this._backgroundColor; }
-  setBackgroundColor(color: number): void { this._backgroundColor = normalizeLayerColor(color); }
+  getBackgroundColor(): number {
+    return this._backgroundColor;
+  }
+  setBackgroundColor(color: number): void {
+    this._backgroundColor = normalizeLayerColor(color);
+  }
 
-  accepts(_object: ScoreObject): boolean { return false; }
-  contains(_object: ScoreObject): boolean { return false; }
-  remove(_object: ScoreObject): boolean { return false; }
+  accepts(_object: ScoreObject): boolean {
+    return false;
+  }
+  contains(_object: ScoreObject): boolean {
+    return false;
+  }
+  remove(_object: ScoreObject): boolean {
+    return false;
+  }
   clearScoreObjects(): void {}
 
   deepCopy(): PatternLayer {
@@ -107,11 +127,19 @@ export class PatternLayer implements Layer {
     this._unresolvedSoundObject = null;
   }
 
-  isMuted(): boolean { return this._muted; }
-  setMuted(m: boolean): void { this._muted = m; }
+  isMuted(): boolean {
+    return this._muted;
+  }
+  setMuted(m: boolean): void {
+    this._muted = m;
+  }
 
-  isSolo(): boolean { return this._solo; }
-  setSolo(s: boolean): void { this._solo = s; }
+  isSolo(): boolean {
+    return this._solo;
+  }
+  setSolo(s: boolean): void {
+    this._solo = s;
+  }
 
   getPatternData(): PatternData {
     return this._patternData;

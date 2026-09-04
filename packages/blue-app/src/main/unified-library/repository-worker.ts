@@ -62,14 +62,18 @@ export function startUnifiedLibraryRepositoryWorker(databasePath: string): void 
           value = repository.getNode(String(request.args[0]));
           break;
         case 'getRoot':
-          value = repository.getRoot(request.args[0] as 'instrument' | 'udo' | 'soundObject' | 'effect');
+          value = repository.getRoot(
+            request.args[0] as 'instrument' | 'udo' | 'soundObject' | 'effect',
+          );
           break;
         case 'listChildren':
           value = repository.listChildren(String(request.args[0]));
           break;
         case 'listChildrenPage':
           value = repository.listChildrenPage(
-            String(request.args[0]), Number(request.args[1]), Number(request.args[2]),
+            String(request.args[0]),
+            Number(request.args[1]),
+            Number(request.args[2]),
           );
           break;
         case 'hasChildren':
@@ -110,28 +114,39 @@ export function startUnifiedLibraryRepositoryWorker(databasePath: string): void 
           break;
         case 'updateItemPayload':
           value = repository.updateItemPayload(
-            String(request.args[0]), Number(request.args[1]),
+            String(request.args[0]),
+            Number(request.args[1]),
             request.args[2] as RepositoryItemPayloadInput,
           );
           break;
         case 'updateItem':
           value = repository.updateItem(
-            String(request.args[0]), Number(request.args[1]), String(request.args[2]),
+            String(request.args[0]),
+            Number(request.args[1]),
+            String(request.args[2]),
             request.args[3] as RepositoryItemPayloadInput,
           );
           break;
         case 'moveNode':
           value = repository.moveNode(
-            String(request.args[0]), Number(request.args[1]), String(request.args[2]), Number(request.args[3]),
+            String(request.args[0]),
+            Number(request.args[1]),
+            String(request.args[2]),
+            Number(request.args[3]),
             request.args[4] === undefined ? undefined : Number(request.args[4]),
           );
           break;
         case 'reorderNode':
-          value = repository.reorderNode(String(request.args[0]), Number(request.args[1]), Number(request.args[2]));
+          value = repository.reorderNode(
+            String(request.args[0]),
+            Number(request.args[1]),
+            Number(request.args[2]),
+          );
           break;
         case 'duplicateNode':
           value = repository.duplicateNode(
-            String(request.args[0]), Number(request.args[1]),
+            String(request.args[0]),
+            Number(request.args[1]),
             request.args[2] === undefined ? undefined : String(request.args[2]),
             request.args[3] === undefined ? undefined : Number(request.args[3]),
             request.args[4] === undefined ? undefined : Number(request.args[4]),
@@ -144,25 +159,41 @@ export function startUnifiedLibraryRepositoryWorker(databasePath: string): void 
           value = repository.deleteNode(String(request.args[0]), Number(request.args[1]));
           break;
         case 'createFolder':
-          value = repository.createFolder(request.args[0] as Parameters<typeof repository.createFolder>[0]);
+          value = repository.createFolder(
+            request.args[0] as Parameters<typeof repository.createFolder>[0],
+          );
           break;
         case 'createItem':
-          value = repository.createItem(request.args[0] as Parameters<typeof repository.createItem>[0]);
+          value = repository.createItem(
+            request.args[0] as Parameters<typeof repository.createItem>[0],
+          );
           break;
         case 'renameNode':
-          value = repository.renameNode(String(request.args[0]), Number(request.args[1]), String(request.args[2]));
+          value = repository.renameNode(
+            String(request.args[0]),
+            Number(request.args[1]),
+            String(request.args[2]),
+          );
           break;
         case 'startImportBatch':
-          value = repository.startImportBatch(request.args[0] as Parameters<typeof repository.startImportBatch>[0]);
+          value = repository.startImportBatch(
+            request.args[0] as Parameters<typeof repository.startImportBatch>[0],
+          );
           break;
         case 'importLegacyDocument':
-          value = repository.importLegacyDocument(request.args[0] as Parameters<typeof repository.importLegacyDocument>[0]);
+          value = repository.importLegacyDocument(
+            request.args[0] as Parameters<typeof repository.importLegacyDocument>[0],
+          );
           break;
         case 'recordImportSourceFailure':
-          value = repository.recordImportSourceFailure(request.args[0] as Parameters<typeof repository.recordImportSourceFailure>[0]);
+          value = repository.recordImportSourceFailure(
+            request.args[0] as Parameters<typeof repository.recordImportSourceFailure>[0],
+          );
           break;
         case 'finishImportBatch':
-          value = repository.finishImportBatch(request.args[0] as Parameters<typeof repository.finishImportBatch>[0]);
+          value = repository.finishImportBatch(
+            request.args[0] as Parameters<typeof repository.finishImportBatch>[0],
+          );
           break;
         case 'listImportHistory':
           value = repository.listImportHistory(Number(request.args[0] ?? 100));
@@ -190,11 +221,11 @@ export function startUnifiedLibraryRepositoryWorker(databasePath: string): void 
 }
 
 if (
-  !isMainThread
-  && workerData
-  && typeof workerData === 'object'
-  && workerData.kind === 'blue-unified-library-repository'
-  && typeof workerData.databasePath === 'string'
+  !isMainThread &&
+  workerData &&
+  typeof workerData === 'object' &&
+  workerData.kind === 'blue-unified-library-repository' &&
+  typeof workerData.databasePath === 'string'
 ) {
   startUnifiedLibraryRepositoryWorker(workerData.databasePath);
 }

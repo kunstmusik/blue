@@ -89,8 +89,7 @@ export class ClojureProjectData implements BlueDataObject {
   getPomegranateString(): string | null {
     const filtered = this.libraryEntries.filter(
       (entry) =>
-        entry.getDependencyCoordinates().trim().length > 0 &&
-        entry.getVersion().trim().length > 0,
+        entry.getDependencyCoordinates().trim().length > 0 && entry.getVersion().trim().length > 0,
     );
 
     if (filtered.length === 0) {

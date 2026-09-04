@@ -21,7 +21,10 @@ function projectWithSharedUsage() {
   return {
     data,
     adapter: new UnifiedLibraryProjectAdapter(() => ({
-      data, sessionId: 4, revision, commit: () => ++revision,
+      data,
+      sessionId: 4,
+      revision,
+      commit: () => ++revision,
     })),
   };
 }
@@ -33,7 +36,9 @@ describe('project library item editing', () => {
     expect(adapter.getUsage(key)).toMatchObject({ linkedInstanceCount: 2 });
     const preview = adapter.previewDelete(key);
     expect(preview).toMatchObject({ linkedInstanceCount: 2, requiresConfirmation: true });
-    expect(adapter.deleteProjectItem(key, preview.confirmationToken)).toMatchObject({ libraryType: 'soundObject' });
+    expect(adapter.deleteProjectItem(key, preview.confirmationToken)).toMatchObject({
+      libraryType: 'soundObject',
+    });
     expect(data.getSoundObjectLibrary().size()).toBe(0);
     expect((data.getScore()[0] as PolyObject)[0]).toHaveLength(0);
   });
@@ -45,8 +50,16 @@ describe('project library item editing', () => {
     try {
       const root = await client.getRoot('soundObject');
       const copy = await adapter.copyProjectItemToUser(key, client, root.id);
-      expect(copy.id).not.toBe(key.scope === 'user' ? key.nodeId : key.locator.kind === 'soundObject' ? key.locator.libraryId : '');
+      expect(copy.id).not.toBe(
+        key.scope === 'user'
+          ? key.nodeId
+          : key.locator.kind === 'soundObject'
+            ? key.locator.libraryId
+            : '',
+      );
       expect((await client.getItemPayload(copy.id)).payloadXml).toContain('Shared');
-    } finally { await client.close(); }
+    } finally {
+      await client.close();
+    }
   });
 });

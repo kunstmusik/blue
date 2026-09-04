@@ -30,7 +30,7 @@ function BlueSynthBuilderEditor({
               'border-b-2 px-3 py-2 text-role-body',
               activeTab === 'interface'
                 ? 'border-blue-accent text-app-text-strong'
-                : 'border-transparent text-blue-muted hover:text-app-text-strong'
+                : 'border-transparent text-blue-muted hover:text-app-text-strong',
             )}
             onClick={() => setActiveTab('interface')}
           >
@@ -43,7 +43,7 @@ function BlueSynthBuilderEditor({
               'border-b-2 px-3 py-2 text-role-body',
               activeTab === 'code'
                 ? 'border-blue-accent text-gray-100'
-                : 'border-transparent text-blue-muted hover:text-gray-100'
+                : 'border-transparent text-blue-muted hover:text-gray-100',
             )}
             onClick={() => setActiveTab('code')}
           >
@@ -56,7 +56,7 @@ function BlueSynthBuilderEditor({
               'border-b-2 px-3 py-2 text-role-body',
               activeTab === 'udo'
                 ? 'border-blue-accent text-gray-100'
-                : 'border-transparent text-blue-muted hover:text-gray-100'
+                : 'border-transparent text-blue-muted hover:text-gray-100',
             )}
             onClick={() => setActiveTab('udo')}
           >
@@ -65,10 +65,16 @@ function BlueSynthBuilderEditor({
         </div>
       </div>
       <div className="min-h-0 flex-1 overflow-hidden">
-        <div className={activeTab === 'interface' ? 'h-full' : 'hidden'} aria-hidden={activeTab !== 'interface'}>
+        <div
+          className={activeTab === 'interface' ? 'h-full' : 'hidden'}
+          aria-hidden={activeTab !== 'interface'}
+        >
           <BSBInterfaceEditor instrument={instrument} onInstrumentPatch={onInstrumentPatch} />
         </div>
-        <div className={activeTab === 'code' ? 'h-full' : 'hidden'} aria-hidden={activeTab !== 'code'}>
+        <div
+          className={activeTab === 'code' ? 'h-full' : 'hidden'}
+          aria-hidden={activeTab !== 'code'}
+        >
           <BSBCodeEditor
             instrument={instrument}
             projectUdos={projectUdos}
@@ -76,7 +82,10 @@ function BlueSynthBuilderEditor({
             onOrchestraPatch={onOrchestraPatch}
           />
         </div>
-        <div className={activeTab === 'udo' ? 'h-full' : 'hidden'} aria-hidden={activeTab !== 'udo'}>
+        <div
+          className={activeTab === 'udo' ? 'h-full' : 'hidden'}
+          aria-hidden={activeTab !== 'udo'}
+        >
           <BSBUDOPanel
             instrument={instrument}
             projectUdos={projectUdos}

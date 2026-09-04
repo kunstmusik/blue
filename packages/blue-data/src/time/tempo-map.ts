@@ -22,7 +22,7 @@ export class TempoMap {
     if (source) {
       this._enabled = source._enabled;
       this._visible = source._visible;
-      this.points = source.points.map(p => {
+      this.points = source.points.map((p) => {
         const np = new TempoPoint(p.position, p.tempo, p.curveType);
         np.enabled = p.enabled;
         np.visible = p.visible;
@@ -63,14 +63,18 @@ export class TempoMap {
     return this.points[index];
   }
 
-  isEnabled(): boolean { return this._enabled; }
+  isEnabled(): boolean {
+    return this._enabled;
+  }
   setEnabled(enabled: boolean): void {
     this._enabled = enabled;
     this.recalculateAccumulatedTimes();
     this.fireListeners();
   }
 
-  isVisible(): boolean { return this._visible; }
+  isVisible(): boolean {
+    return this._visible;
+  }
   setVisible(visible: boolean): void {
     if (this._visible !== visible) {
       this._visible = visible;
@@ -78,11 +82,17 @@ export class TempoMap {
     }
   }
 
-  size(): number { return this.points.length; }
+  size(): number {
+    return this.points.length;
+  }
 
-  getTempoPoints(): ReadonlyArray<TempoPoint> { return this.points; }
+  getTempoPoints(): ReadonlyArray<TempoPoint> {
+    return this.points;
+  }
 
-  getTempoPoint(index: number): TempoPoint { return this.points[index]; }
+  getTempoPoint(index: number): TempoPoint {
+    return this.points[index];
+  }
 
   /** Add a tempo point, optionally with context for bar-based position resolution. */
   addTempoPoint(point: TempoPoint, context?: TimeContext): void {
@@ -141,7 +151,7 @@ export class TempoMap {
   replaceAll(source: TempoMap): void {
     this._enabled = source._enabled;
     this._visible = source._visible;
-    this.points = source.points.map(p => {
+    this.points = source.points.map((p) => {
       const np = new TempoPoint(p.position, p.tempo, p.curveType);
       np.enabled = p.enabled;
       np.visible = p.visible;
@@ -244,7 +254,7 @@ export class TempoMap {
     // Quadratic formula based on Istvan Varga's solution (April 2006)
     const factor1 = 60.0 / t0;
     const acceleration = (60.0 / t1 - factor1) / segmentBeats;
-    return accumulatedTime + (factor1 * deltaBeats) + (0.5 * acceleration * deltaBeats * deltaBeats);
+    return accumulatedTime + factor1 * deltaBeats + 0.5 * acceleration * deltaBeats * deltaBeats;
   }
 
   /**
@@ -310,7 +320,7 @@ export class TempoMap {
       }
     }
 
-    if (this.points.every(point => point.position.isBeatTime())) {
+    if (this.points.every((point) => point.position.isBeatTime())) {
       this.points.sort((a, b) => a.beat - b.beat);
     }
 
@@ -334,7 +344,10 @@ export class TempoMap {
         // LINEAR
         const factor1 = 60.0 / prev.tempo;
         const acceleration = deltaBeats > 0 ? (60.0 / cur.tempo - factor1) / deltaBeats : 0;
-        cur.accumulatedTime = prev.accumulatedTime + (factor1 * deltaBeats) + (0.5 * acceleration * deltaBeats * deltaBeats);
+        cur.accumulatedTime =
+          prev.accumulatedTime +
+          factor1 * deltaBeats +
+          0.5 * acceleration * deltaBeats * deltaBeats;
       }
     }
   }
@@ -433,7 +446,8 @@ export class TempoMap {
 
     // Also check legacy beatTempoPair format (only if no tempoPoint elements were found)
     const legacyPoints = data.getElements('beatTempoPair');
-    const hasTempoPoints = map.points.length !== 1 || map.points[0].tempo !== 60 || map.points[0].beat !== 0;
+    const hasTempoPoints =
+      map.points.length !== 1 || map.points[0].tempo !== 60 || map.points[0].beat !== 0;
     if (legacyPoints.hasMoreElements() && !hasTempoPoints) {
       map.points = [];
       while (legacyPoints.hasMoreElements()) {

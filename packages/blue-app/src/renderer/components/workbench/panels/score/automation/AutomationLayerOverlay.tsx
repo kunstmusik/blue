@@ -124,9 +124,10 @@ export default function AutomationLayerOverlay({
     setHoveredPointIndex(null);
   }, [mode, automation.selectedParameterId]);
 
-  const inactiveParams = mode === 'singleLine'
-    ? automation.parameters.filter((p) => p.parameterId !== automation.selectedParameterId)
-    : automation.parameters;
+  const inactiveParams =
+    mode === 'singleLine'
+      ? automation.parameters.filter((p) => p.parameterId !== automation.selectedParameterId)
+      : automation.parameters;
 
   const singleLineRange = useMemo(() => {
     if (mode !== 'singleLine' || !selectedParam || !rangeSelection) return null;
@@ -378,10 +379,7 @@ export default function AutomationLayerOverlay({
         // Clamp the snapped time to the neighbor boundaries captured at drag
         // start (Java ParameterLinePanel parity), so the point can never cross
         // a neighbor and reorder/swap indices.
-        const clampedBeat = Math.min(
-          dragState.maxTime,
-          Math.max(dragState.minTime, snappedBeat),
-        );
+        const clampedBeat = Math.min(dragState.maxTime, Math.max(dragState.minTime, snappedBeat));
         onPatch({
           type: 'moveAutomationPoint',
           parameterId: dragState.parameterId,
@@ -413,7 +411,12 @@ export default function AutomationLayerOverlay({
         beatDelta = Math.max(-minTime, beatDelta);
         setPreview({
           parameterId: dragState.parameterId,
-          points: moveRange(dragState.startPoints, dragState.startBeat, dragState.endBeat, beatDelta),
+          points: moveRange(
+            dragState.startPoints,
+            dragState.startBeat,
+            dragState.endBeat,
+            beatDelta,
+          ),
         });
         return;
       }
@@ -465,7 +468,16 @@ export default function AutomationLayerOverlay({
         return;
       }
     },
-    [dragState, localCoords, mode, onPatch, pixelsPerBeat, selectedParam, setSingleParamRange, snapBeatForMouse],
+    [
+      dragState,
+      localCoords,
+      mode,
+      onPatch,
+      pixelsPerBeat,
+      selectedParam,
+      setSingleParamRange,
+      snapBeatForMouse,
+    ],
   );
 
   // Keep the latest drag/release handlers reachable from the window listeners
@@ -593,7 +605,11 @@ export default function AutomationLayerOverlay({
   );
 
   const handlePointMouseDown = useCallback(
-    (parameter: AutomationParameterSnapshot, pointIndex: number, event: React.MouseEvent<SVGCircleElement>) => {
+    (
+      parameter: AutomationParameterSnapshot,
+      pointIndex: number,
+      event: React.MouseEvent<SVGCircleElement>,
+    ) => {
       if (mode !== 'singleLine') return;
       if (parameter.parameterId !== selectedParam?.parameterId) return;
       // Left-click only; right-click on a point is a delete (onContextMenu).
@@ -622,7 +638,11 @@ export default function AutomationLayerOverlay({
   );
 
   const handlePointContextMenu = useCallback(
-    (parameter: AutomationParameterSnapshot, pointIndex: number, event: React.MouseEvent<SVGCircleElement>) => {
+    (
+      parameter: AutomationParameterSnapshot,
+      pointIndex: number,
+      event: React.MouseEvent<SVGCircleElement>,
+    ) => {
       if (mode !== 'singleLine' || parameter.parameterId !== selectedParam?.parameterId) return;
       event.preventDefault();
       event.stopPropagation();
@@ -655,7 +675,10 @@ export default function AutomationLayerOverlay({
   return (
     <div
       ref={containerRef}
-      className={cn('absolute inset-0 z-10', interactive ? 'pointer-events-auto' : 'pointer-events-none')}
+      className={cn(
+        'absolute inset-0 z-10',
+        interactive ? 'pointer-events-auto' : 'pointer-events-none',
+      )}
       onMouseDown={handleMouseDown}
       onMouseMove={handleHoverMove}
       onMouseLeave={() => {
@@ -664,9 +687,10 @@ export default function AutomationLayerOverlay({
       onContextMenu={handleContextMenu}
     >
       {inactiveParams.map((param) => {
-        const override = preview?.parameterId === param.parameterId
-          ? preview.points
-          : multiLinePreview?.[param.parameterId];
+        const override =
+          preview?.parameterId === param.parameterId
+            ? preview.points
+            : multiLinePreview?.[param.parameterId];
         return (
           <AutomationLineView
             key={param.parameterId}
@@ -677,7 +701,9 @@ export default function AutomationLayerOverlay({
             selectedPointIndex={selectedPointIndexFor(param.parameterId)}
             selectionRange={null}
             onPointMouseDown={(pointIndex, event) => handlePointMouseDown(param, pointIndex, event)}
-            onPointContextMenu={(pointIndex, event) => handlePointContextMenu(param, pointIndex, event)}
+            onPointContextMenu={(pointIndex, event) =>
+              handlePointContextMenu(param, pointIndex, event)
+            }
           />
         );
       })}
@@ -694,8 +720,12 @@ export default function AutomationLayerOverlay({
           selectedPointIndex={selectedPointIndexFor(selectedParam.parameterId)}
           hoveredPointIndex={hoveredPointIndex}
           selectionRange={singleLineRange}
-          onPointMouseDown={(pointIndex, event) => handlePointMouseDown(selectedParam, pointIndex, event)}
-          onPointContextMenu={(pointIndex, event) => handlePointContextMenu(selectedParam, pointIndex, event)}
+          onPointMouseDown={(pointIndex, event) =>
+            handlePointMouseDown(selectedParam, pointIndex, event)
+          }
+          onPointContextMenu={(pointIndex, event) =>
+            handlePointContextMenu(selectedParam, pointIndex, event)
+          }
         />
       )}
     </div>

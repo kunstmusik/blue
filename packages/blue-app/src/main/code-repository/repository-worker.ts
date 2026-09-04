@@ -5,10 +5,7 @@
 
 import { isMainThread, parentPort, workerData } from 'node:worker_threads';
 import type { CodeRepositoryNode } from '@blue/data';
-import {
-  CodeRepositoryRepository,
-  type CodeRepositoryImportRecordInput,
-} from './repository';
+import { CodeRepositoryRepository, type CodeRepositoryImportRecordInput } from './repository';
 
 export interface CodeRepositoryWorkerRequest {
   readonly id: number;
@@ -124,11 +121,11 @@ export function startCodeRepositoryWorker(databasePath: string): void {
 }
 
 if (
-  !isMainThread
-  && workerData
-  && typeof workerData === 'object'
-  && workerData.kind === 'blue-code-repository'
-  && typeof workerData.databasePath === 'string'
+  !isMainThread &&
+  workerData &&
+  typeof workerData === 'object' &&
+  workerData.kind === 'blue-code-repository' &&
+  typeof workerData.databasePath === 'string'
 ) {
   startCodeRepositoryWorker(workerData.databasePath);
 }

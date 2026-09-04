@@ -52,11 +52,7 @@ export interface LibraryFailure {
 
 export type LibraryOutcome<T> = { ok: true; value: T } | LibraryFailure;
 
-function failure(
-  code: LibraryFailureCode,
-  message: string,
-  retryable = false,
-): LibraryFailure {
+function failure(code: LibraryFailureCode, message: string, retryable = false): LibraryFailure {
   return { ok: false, code, message, retryable };
 }
 
@@ -80,12 +76,7 @@ export type ExampleLibraryInspection =
 // ---------------------------------------------------------------------------
 // Candidate generations
 
-export type CandidateLifecycle =
-  | 'preparing'
-  | 'prepared'
-  | 'committing'
-  | 'committed'
-  | 'aborted';
+export type CandidateLifecycle = 'preparing' | 'prepared' | 'committing' | 'committed' | 'aborted';
 
 export interface CandidateGeneration {
   operationId: string;
@@ -130,23 +121,28 @@ type InternalFs = Required<ServiceFsSeams>;
 const STAGING_PATTERN = /^staging-[A-Za-z0-9_-]{6,128}$/;
 const BACKUP_PATTERN = /^backup-[A-Za-z0-9_-]{6,128}$/;
 
-function defaultServiceFs(seams: ServiceFsSeams | undefined, libraryRootForWrites: string, atomicSeams: AtomicWriteSeams | undefined): InternalFs {
+function defaultServiceFs(
+  seams: ServiceFsSeams | undefined,
+  libraryRootForWrites: string,
+  atomicSeams: AtomicWriteSeams | undefined,
+): InternalFs {
   const sidecarWriter = async (targetPath: string, contents: string) =>
-    writeJsonAtomically(targetPath, contents, { libraryRoot: libraryRootForWrites, seams: atomicSeams });
+    writeJsonAtomically(targetPath, contents, {
+      libraryRoot: libraryRootForWrites,
+      seams: atomicSeams,
+    });
   return {
     readdirWithTypes:
-      seams?.readdirWithTypes
-      ?? ((dirPath) => fs.promises.readdir(dirPath, { withFileTypes: true })),
-    readFileText:
-      seams?.readFileText ?? ((filePath) => fs.promises.readFile(filePath, 'utf8')),
+      seams?.readdirWithTypes ??
+      ((dirPath) => fs.promises.readdir(dirPath, { withFileTypes: true })),
+    readFileText: seams?.readFileText ?? ((filePath) => fs.promises.readFile(filePath, 'utf8')),
     writeSidecarJson: seams?.writeSidecarJson ?? sidecarWriter,
     rename: seams?.rename ?? ((fromPath, toPath) => fs.promises.rename(fromPath, toPath)),
     unlink: seams?.unlink ?? ((filePath) => fs.promises.unlink(filePath)),
-    removeTree:
-      seams?.removeTree ?? ((dirPath) => fs.promises.rm(dirPath, { recursive: true })),
+    removeTree: seams?.removeTree ?? ((dirPath) => fs.promises.rm(dirPath, { recursive: true })),
     createReadStream:
-      seams?.createReadStream
-      ?? ((filePath) => fs.createReadStream(filePath) as unknown as NodeJS.ReadableStream),
+      seams?.createReadStream ??
+      ((filePath) => fs.createReadStream(filePath) as unknown as NodeJS.ReadableStream),
   };
 }
 
@@ -222,8 +218,7 @@ async function removeOwnedGeneration(
 export function createExampleLibraryService(options: ExampleLibraryServiceOptions) {
   const layout = layoutFor(options.libraryRoot);
   const nowIso = options.nowIso ?? (() => new Date().toISOString());
-  const manifestProvider =
-    options.manifestProvider ?? createFactoryManifestProvider();
+  const manifestProvider = options.manifestProvider ?? createFactoryManifestProvider();
   const fsImpl = defaultServiceFs(options.fsSeams, layout.parent, options.atomicWriteSeams);
 
   async function readInstalledFactoryManifest(): Promise<FactoryManifest | null> {
@@ -234,8 +229,8 @@ export function createExampleLibraryService(options: ExampleLibraryServiceOption
     try {
       const manifest = await manifestProvider.get(factoryRoot);
       if (
-        manifest.files.length === 0
-        || !manifest.files.some((record) => record.relativePath.toLowerCase().endsWith('.blue'))
+        manifest.files.length === 0 ||
+        !manifest.files.some((record) => record.relativePath.toLowerCase().endsWith('.blue'))
       ) {
         return null;
       }
@@ -281,7 +276,9 @@ export function createExampleLibraryService(options: ExampleLibraryServiceOption
   /** Structural sanity of any generation directory (`content/` + valid state). */
   async function generationLayoutIsValid(generationDir: string): Promise<boolean> {
     try {
-      const parsed = parseUserLibraryStateText(await fsImpl.readFileText(path.join(generationDir, 'state.json')));
+      const parsed = parseUserLibraryStateText(
+        await fsImpl.readFileText(path.join(generationDir, 'state.json')),
+      );
       if (parsed.kind !== 'loaded') {
         return false;
       }
@@ -336,7 +333,11 @@ export function createExampleLibraryService(options: ExampleLibraryServiceOption
       // A not-yet-created library parent is simply "nothing to recover";
       // any other listing failure is genuinely unrecoverable here.
       if (errnoOf(err) !== 'ENOENT') {
-        return failure('io-error', `Cannot read the example library folder: ${messageOf(err)}`, true);
+        return failure(
+          'io-error',
+          `Cannot read the example library folder: ${messageOf(err)}`,
+          true,
+        );
       }
       entries = [];
     }
@@ -379,7 +380,9 @@ export function createExampleLibraryService(options: ExampleLibraryServiceOption
   ): Promise<LibraryOutcome<{ recovered: boolean }>> {
     const stagingDir = path.join(layout.parent, journal.stagingDirectoryName);
     const stagingPresent = stagingNames.includes(journal.stagingDirectoryName);
-    const stagingValid = stagingPresent && (await generationMatchesRevision(stagingDir, journal.targetFactoryRevision));
+    const stagingValid =
+      stagingPresent &&
+      (await generationMatchesRevision(stagingDir, journal.targetFactoryRevision));
     const backupName = journal.backupDirectoryName;
     const unexpectedStaging = stagingNames.some((name) => name !== journal.stagingDirectoryName);
     const unexpectedBackup = backupNames.some((name) => name !== backupName);
@@ -392,9 +395,10 @@ export function createExampleLibraryService(options: ExampleLibraryServiceOption
     }
 
     const currentPresent = await directoryExists(layout.currentDir);
-    const currentValid = currentPresent && await generationLayoutIsValid(layout.currentDir);
-    const currentMatchesTarget = currentValid
-      && await generationMatchesRevision(layout.currentDir, journal.targetFactoryRevision);
+    const currentValid = currentPresent && (await generationLayoutIsValid(layout.currentDir));
+    const currentMatchesTarget =
+      currentValid &&
+      (await generationMatchesRevision(layout.currentDir, journal.targetFactoryRevision));
     const backupPresent = backupName !== null && backupNames.includes(backupName);
 
     // No rename happened yet (including a phase advanced just before a
@@ -453,7 +457,11 @@ export function createExampleLibraryService(options: ExampleLibraryServiceOption
     try {
       await fsImpl.rename(stagingDir, layout.currentDir);
     } catch (err) {
-      return failure('io-error', `Could not finish the interrupted operation: ${messageOf(err)}`, true);
+      return failure(
+        'io-error',
+        `Could not finish the interrupted operation: ${messageOf(err)}`,
+        true,
+      );
     }
     if (!(await generationLayoutIsValid(layout.currentDir))) {
       return failure(
@@ -492,10 +500,18 @@ export function createExampleLibraryService(options: ExampleLibraryServiceOption
     try {
       await fsImpl.rename(backupDir, layout.currentDir);
     } catch (err) {
-      return failure('io-error', `Could not restore the previous example library: ${messageOf(err)}`, true);
+      return failure(
+        'io-error',
+        `Could not restore the previous example library: ${messageOf(err)}`,
+        true,
+      );
     }
-    await removeOwnedGeneration(path.join(layout.parent, stagingNameToClean), layout, fsImpl, STAGING_PATTERN)
-      .catch(() => false);
+    await removeOwnedGeneration(
+      path.join(layout.parent, stagingNameToClean),
+      layout,
+      fsImpl,
+      STAGING_PATTERN,
+    ).catch(() => false);
     await discardJournalBestEffort();
     return { ok: true, value: null };
   }
@@ -511,7 +527,9 @@ export function createExampleLibraryService(options: ExampleLibraryServiceOption
 
   // -- Update preparation (US3) --------------------------------------------
 
-  async function hashLocalFileStreaming(nativePath: string): Promise<{ sha256: string; size: number }> {
+  async function hashLocalFileStreaming(
+    nativePath: string,
+  ): Promise<{ sha256: string; size: number }> {
     const hash = createHash('sha256');
     let size = 0;
     const input = fsImpl.createReadStream(nativePath);
@@ -536,10 +554,7 @@ export function createExampleLibraryService(options: ExampleLibraryServiceOption
       }
       for (const entry of dirents) {
         const child = path.join(dirPath, entry.name);
-        const relativeText = path
-          .relative(contentRoot, child)
-          .split(path.sep)
-          .join('/');
+        const relativeText = path.relative(contentRoot, child).split(path.sep).join('/');
         if (entry.isSymbolicLink()) {
           out.push({ relativePath: relativeText, kind: 'symlink', sha256: null, size: null });
           continue;
@@ -576,7 +591,10 @@ export function createExampleLibraryService(options: ExampleLibraryServiceOption
     async function walk(dirPath: string): Promise<void> {
       for (const entry of await fsImpl.readdirWithTypes(dirPath)) {
         const sourceChild = path.join(dirPath, entry.name);
-        const destinationChild = path.join(destinationContentRoot, path.relative(sourceContentRoot, sourceChild));
+        const destinationChild = path.join(
+          destinationContentRoot,
+          path.relative(sourceContentRoot, sourceChild),
+        );
         if (entry.isSymbolicLink()) {
           try {
             const linkTarget = fs.readlinkSync(sourceChild);
@@ -625,11 +643,11 @@ export function createExampleLibraryService(options: ExampleLibraryServiceOption
     const { contentPresent, parsed } = await readCurrentGeneration();
 
     if (
-      !contentPresent
-      || parsed.kind !== 'loaded'
-      || factoryManifest === null
-      || parsed.value.declinedFactoryRevision === factoryManifest.revision
-      || parsed.value.acceptedFactoryRevision === factoryManifest.revision
+      !contentPresent ||
+      parsed.kind !== 'loaded' ||
+      factoryManifest === null ||
+      parsed.value.declinedFactoryRevision === factoryManifest.revision ||
+      parsed.value.acceptedFactoryRevision === factoryManifest.revision
     ) {
       return failure(
         'conflict',
@@ -729,7 +747,6 @@ export function createExampleLibraryService(options: ExampleLibraryServiceOption
     }
   }
 
-
   /** Inspect after recognition/recovery. Purely observational. */
   async function inspect(): Promise<LibraryOutcome<ExampleLibraryInspection>> {
     const recovery = await recover();
@@ -747,7 +764,10 @@ export function createExampleLibraryService(options: ExampleLibraryServiceOption
       if (factoryManifest === null) {
         return {
           ok: true,
-          value: { status: 'unavailable', diagnostic: 'No packaged examples were found on this installation.' },
+          value: {
+            status: 'unavailable',
+            diagnostic: 'No packaged examples were found on this installation.',
+          },
         };
       }
       return { ok: true, value: { status: 'needs-initialization', factory: factoryManifest } };
@@ -823,12 +843,13 @@ export function createExampleLibraryService(options: ExampleLibraryServiceOption
         platform: options.platform,
       });
       const factoryRootAfterCopy = await options.getFactoryRoot();
-      const sourceManifestAfterCopy = factoryRootAfterCopy === null
-        ? null
-        : await buildFactoryManifest(factoryRootAfterCopy, { platform: options.platform });
+      const sourceManifestAfterCopy =
+        factoryRootAfterCopy === null
+          ? null
+          : await buildFactoryManifest(factoryRootAfterCopy, { platform: options.platform });
       if (
-        copiedManifest.revision !== factory.revision
-        || sourceManifestAfterCopy?.revision !== factory.revision
+        copiedManifest.revision !== factory.revision ||
+        sourceManifestAfterCopy?.revision !== factory.revision
       ) {
         throw new Error('the packaged example source changed while it was being copied');
       }
@@ -862,7 +883,11 @@ export function createExampleLibraryService(options: ExampleLibraryServiceOption
     const message = messageOf(error);
     const errno = errnoOf(error);
     if (errno === 'EACCES' || errno === 'EPERM') {
-      return failure('io-error', `Permission denied while preparing the example library: ${message}`, true);
+      return failure(
+        'io-error',
+        `Permission denied while preparing the example library: ${message}`,
+        true,
+      );
     }
     if (errno === 'ENOSPC') {
       return failure('io-error', 'Not enough disk space to prepare the example library.', true);
@@ -954,10 +979,7 @@ export function createExampleLibraryService(options: ExampleLibraryServiceOption
     };
 
     try {
-      if (
-        candidate.kind === 'update'
-        && candidate.sourceUserRevision !== null
-      ) {
+      if (candidate.kind === 'update' && candidate.sourceUserRevision !== null) {
         // Contract step 6: immediately before activation the live user tree
         // must still match the snapshot the candidate was built from.
         const liveSnapshots = await snapshotUserEntries(layout.contentPath);
@@ -973,11 +995,8 @@ export function createExampleLibraryService(options: ExampleLibraryServiceOption
       }
 
       if (
-        !(await generationMatchesRevision(candidate.rootPath, journal.targetFactoryRevision))
-        || (
-          candidate.kind === 'initialize'
-          && !(await initialCandidateContentMatches(candidate))
-        )
+        !(await generationMatchesRevision(candidate.rootPath, journal.targetFactoryRevision)) ||
+        (candidate.kind === 'initialize' && !(await initialCandidateContentMatches(candidate)))
       ) {
         candidate.lifecycle = 'aborted';
         await abortPreparedStaging(candidate.rootPath);
@@ -1140,7 +1159,11 @@ export function createExampleLibraryService(options: ExampleLibraryServiceOption
       return failure('conflict', 'Another example-library change happened concurrently.', true);
     }
     if (errno === 'EACCES' || errno === 'EPERM') {
-      return failure('io-error', `Permission denied while activating the example library: ${message}`, true);
+      return failure(
+        'io-error',
+        `Permission denied while activating the example library: ${message}`,
+        true,
+      );
     }
     return failure('io-error', `Could not activate the example library: ${message}`, true);
   }

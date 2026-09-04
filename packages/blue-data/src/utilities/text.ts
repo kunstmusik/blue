@@ -15,10 +15,7 @@ export function replaceAll(input: string, search: string, replacement: string): 
  * Replace opcode names using Java-compatible whitespace boundary matching.
  * Mirrors TextUtilities.replaceOpcodeNames().
  */
-export function replaceOpcodeNames(
-  replacementValues: Map<string, string>,
-  input: string,
-): string {
+export function replaceOpcodeNames(replacementValues: Map<string, string>, input: string): string {
   let output = input;
 
   for (const [from, to] of replacementValues) {
@@ -26,8 +23,8 @@ export function replaceOpcodeNames(
       continue;
     }
 
-    const escaped = from.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const pattern = new RegExp(`(^|\\s)${escaped}($|\\s)`, "g");
+    const escaped = from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const pattern = new RegExp(`(^|\\s)${escaped}($|\\s)`, 'g');
     output = output.replace(pattern, `$1${to}$2`);
   }
 

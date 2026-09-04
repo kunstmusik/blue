@@ -71,7 +71,9 @@ function buildWorkbenchMenuItems(
   }));
 }
 
-function buildRecentProjectsMenuTemplate(options: ApplicationMenuTemplateOptions): MenuItemConstructorOptions[] {
+function buildRecentProjectsMenuTemplate(
+  options: ApplicationMenuTemplateOptions,
+): MenuItemConstructorOptions[] {
   const recentProjects = options.recentProjects.filter((filePath) => filePath.trim().length > 0);
 
   if (recentProjects.length === 0) {
@@ -85,7 +87,9 @@ function buildRecentProjectsMenuTemplate(options: ApplicationMenuTemplateOptions
   }));
 }
 
-function buildFileMenuTemplate(options: ApplicationMenuTemplateOptions): MenuItemConstructorOptions[] {
+function buildFileMenuTemplate(
+  options: ApplicationMenuTemplateOptions,
+): MenuItemConstructorOptions[] {
   const hasProject = options.hasLoadedProject;
   const canRender = hasProject && !options.isRenderOperationActive;
 
@@ -99,47 +103,124 @@ function buildFileMenuTemplate(options: ApplicationMenuTemplateOptions): MenuIte
     { label: 'Import from ORC/SCO', enabled: hasProject, click: () => options.onImportOrcSco() },
     { label: 'Import MIDI File', enabled: hasProject, click: () => options.onImportMidiFile() },
     { type: 'separator' },
-    { label: 'Close Project', accelerator: options.isDarwin ? 'Shift+Cmd+W' : 'Shift+Ctrl+W', enabled: hasProject, click: () => options.onCloseProject() },
+    {
+      label: 'Close Project',
+      accelerator: options.isDarwin ? 'Shift+Cmd+W' : 'Shift+Ctrl+W',
+      enabled: hasProject,
+      click: () => options.onCloseProject(),
+    },
     { label: 'Revert', enabled: options.canRevertProject, click: () => options.onRevertProject() },
     { type: 'separator' },
-    { label: 'Save', accelerator: 'CmdOrCtrl+S', enabled: hasProject, click: () => options.onSaveFile() },
+    {
+      label: 'Save',
+      accelerator: 'CmdOrCtrl+S',
+      enabled: hasProject,
+      click: () => options.onSaveFile(),
+    },
     { label: 'Save as...', enabled: hasProject, click: () => options.onSaveFileAs() },
     { type: 'separator' },
-    { label: 'Render to Disk', accelerator: options.isDarwin ? 'Shift+Cmd+F9' : 'Shift+Ctrl+F9', enabled: canRender, click: () => options.onRenderToDisk() },
-    { label: 'Render to Disk and Play', accelerator: 'Shift+F9', enabled: canRender, click: () => options.onRenderToDiskAndPlay() },
-    { label: 'Render to Disk and Open', enabled: canRender, click: () => options.onRenderToDiskAndOpen() },
+    {
+      label: 'Render to Disk',
+      accelerator: options.isDarwin ? 'Shift+Cmd+F9' : 'Shift+Ctrl+F9',
+      enabled: canRender,
+      click: () => options.onRenderToDisk(),
+    },
+    {
+      label: 'Render to Disk and Play',
+      accelerator: 'Shift+F9',
+      enabled: canRender,
+      click: () => options.onRenderToDiskAndPlay(),
+    },
+    {
+      label: 'Render to Disk and Open',
+      enabled: canRender,
+      click: () => options.onRenderToDiskAndOpen(),
+    },
     { type: 'separator' },
     { label: 'Recent Projects', submenu: buildRecentProjectsMenuTemplate(options) },
     ...(options.isDarwin
       ? []
       : [
           { type: 'separator' as const },
-          { label: 'Settings...', accelerator: 'CmdOrCtrl+,', click: () => options.onOpenSettings() },
+          {
+            label: 'Settings...',
+            accelerator: 'CmdOrCtrl+,',
+            click: () => options.onOpenSettings(),
+          },
           { type: 'separator' as const },
           { label: 'Quit', accelerator: 'CmdOrCtrl+Q', click: () => options.onRequestQuit() },
         ]),
   ];
 }
 
-function buildProjectMenuTemplate(options: ApplicationMenuTemplateOptions): MenuItemConstructorOptions[] {
+function buildProjectMenuTemplate(
+  options: ApplicationMenuTemplateOptions,
+): MenuItemConstructorOptions[] {
   const hasProject = options.hasLoadedProject;
   // Realtime playback is exclusive with disk render/freeze so F9 (realtime) and
   // Shift+F9 (disk render) accelerators never collide on a busy engine.
   const canRealtimePlay = hasProject && !options.isRenderOperationActive;
-  const canAudition = hasProject && Boolean(options.canAuditionScoreObjects) && !options.isRenderOperationActive;
+  const canAudition =
+    hasProject && Boolean(options.canAuditionScoreObjects) && !options.isRenderOperationActive;
 
   return [
-    { label: 'Generate CSD to Screen', accelerator: 'CmdOrCtrl+Shift+G', enabled: hasProject, click: () => options.onGenerateCsdToScreen() },
-    { label: 'Generate Realtime CSD to Screen', enabled: hasProject, click: () => options.onGenerateRealtimeCsdToScreen() },
-    { label: 'Generate CSD to File', accelerator: 'CmdOrCtrl+G', enabled: hasProject, click: () => options.onGenerateCsdToDisk() },
-    { label: 'Render/Stop Project', accelerator: 'F9', enabled: canRealtimePlay, click: () => options.onRenderStopProject() },
-    { label: 'Audition ScoreObjects', accelerator: 'CmdOrCtrl+Shift+A', enabled: canAudition, click: () => options.onAuditionScoreObjects() },
+    {
+      label: 'Generate CSD to Screen',
+      accelerator: 'CmdOrCtrl+Shift+G',
+      enabled: hasProject,
+      click: () => options.onGenerateCsdToScreen(),
+    },
+    {
+      label: 'Generate Realtime CSD to Screen',
+      enabled: hasProject,
+      click: () => options.onGenerateRealtimeCsdToScreen(),
+    },
+    {
+      label: 'Generate CSD to File',
+      accelerator: 'CmdOrCtrl+G',
+      enabled: hasProject,
+      click: () => options.onGenerateCsdToDisk(),
+    },
+    {
+      label: 'Render/Stop Project',
+      accelerator: 'F9',
+      enabled: canRealtimePlay,
+      click: () => options.onRenderStopProject(),
+    },
+    {
+      label: 'Audition ScoreObjects',
+      accelerator: 'CmdOrCtrl+Shift+A',
+      enabled: canAudition,
+      click: () => options.onAuditionScoreObjects(),
+    },
     { type: 'separator' },
-    { label: 'Follow playback by scrolling score', type: 'checkbox', checked: options.followPlaybackEnabled, enabled: hasProject, click: () => options.onToggleFollowPlayback() },
-    { label: 'Enable follow playback on render start', type: 'checkbox', checked: options.followPlaybackOnStartEnabled, enabled: hasProject, click: () => options.onToggleFollowPlaybackOnStart() },
+    {
+      label: 'Follow playback by scrolling score',
+      type: 'checkbox',
+      checked: options.followPlaybackEnabled,
+      enabled: hasProject,
+      click: () => options.onToggleFollowPlayback(),
+    },
+    {
+      label: 'Enable follow playback on render start',
+      type: 'checkbox',
+      checked: options.followPlaybackOnStartEnabled,
+      enabled: hasProject,
+      click: () => options.onToggleFollowPlaybackOnStart(),
+    },
     { type: 'separator' },
-    { label: 'Navigate to Next Marker', accelerator: ']', enabled: hasProject, click: () => options.onNavigateNextMarker() },
-    { label: 'Navigate to Previous Marker', accelerator: '[', enabled: hasProject, click: () => options.onNavigatePreviousMarker() },
+    {
+      label: 'Navigate to Next Marker',
+      accelerator: ']',
+      enabled: hasProject,
+      click: () => options.onNavigateNextMarker(),
+    },
+    {
+      label: 'Navigate to Previous Marker',
+      accelerator: '[',
+      enabled: hasProject,
+      click: () => options.onNavigatePreviousMarker(),
+    },
     { label: 'Rewind to Start', enabled: hasProject, click: () => options.onRewindToStart() },
     { type: 'separator' },
     {
@@ -154,14 +235,30 @@ function buildProjectMenuTemplate(options: ApplicationMenuTemplateOptions): Menu
     },
     { type: 'separator' },
     { label: 'Edit Tempo Map...', enabled: hasProject, click: () => options.onEditTempoMap() },
-    { label: 'Edit Time Signature Map...', enabled: hasProject, click: () => options.onEditMeterMap() },
-    { label: 'Add Marker', accelerator: 'CmdOrCtrl+M', enabled: hasProject, click: () => options.onAddMarker() },
+    {
+      label: 'Edit Time Signature Map...',
+      enabled: hasProject,
+      click: () => options.onEditMeterMap(),
+    },
+    {
+      label: 'Add Marker',
+      accelerator: 'CmdOrCtrl+M',
+      enabled: hasProject,
+      click: () => options.onAddMarker(),
+    },
     { type: 'separator' },
-    { label: 'Toggle Loop Rendering', accelerator: 'CmdOrCtrl+L', enabled: hasProject, click: () => options.onToggleLoopRendering() },
+    {
+      label: 'Toggle Loop Rendering',
+      accelerator: 'CmdOrCtrl+L',
+      enabled: hasProject,
+      click: () => options.onToggleLoopRendering(),
+    },
   ];
 }
 
-function buildViewMenuTemplate(options: ApplicationMenuTemplateOptions): MenuItemConstructorOptions[] {
+function buildViewMenuTemplate(
+  options: ApplicationMenuTemplateOptions,
+): MenuItemConstructorOptions[] {
   return [
     {
       label: 'Zoom In',
@@ -181,7 +278,9 @@ function buildViewMenuTemplate(options: ApplicationMenuTemplateOptions): MenuIte
   ];
 }
 
-function buildToolsMenuTemplate(options: ApplicationMenuTemplateOptions): MenuItemConstructorOptions[] {
+function buildToolsMenuTemplate(
+  options: ApplicationMenuTemplateOptions,
+): MenuItemConstructorOptions[] {
   return [
     { label: 'Code Repository Editor', click: () => options.onOpenCodeRepositoryEditor() },
     { label: 'Effects Library', click: () => options.onOpenEffectsLibrary() },
@@ -191,14 +290,25 @@ function buildToolsMenuTemplate(options: ApplicationMenuTemplateOptions): MenuIt
   ];
 }
 
-function buildScriptMenuTemplate(options: ApplicationMenuTemplateOptions): MenuItemConstructorOptions[] {
+function buildScriptMenuTemplate(
+  options: ApplicationMenuTemplateOptions,
+): MenuItemConstructorOptions[] {
   return [
-    { label: 'Reinitialize JavaScript Interpreter', click: () => options.onReinitializeJavaScriptRuntime() },
-    { label: 'Reinitialize Jython Interpreter', enabled: options.hasLoadedProject, click: () => options.onReinitializeJythonRuntime() },
+    {
+      label: 'Reinitialize JavaScript Interpreter',
+      click: () => options.onReinitializeJavaScriptRuntime(),
+    },
+    {
+      label: 'Reinitialize Jython Interpreter',
+      enabled: options.hasLoadedProject,
+      click: () => options.onReinitializeJythonRuntime(),
+    },
   ];
 }
 
-function buildWindowMenuTemplate(options: ApplicationMenuTemplateOptions): MenuItemConstructorOptions[] {
+function buildWindowMenuTemplate(
+  options: ApplicationMenuTemplateOptions,
+): MenuItemConstructorOptions[] {
   return [
     { label: 'Editors', submenu: buildWorkbenchMenuItems('editor', options.onFocusPanel) },
     { label: 'Properties', submenu: buildWorkbenchMenuItems('properties', options.onFocusPanel) },
@@ -290,9 +400,7 @@ export function buildApplicationMenuTemplate(
   if (!options.isDarwin) {
     template.push({
       label: 'Help',
-      submenu: [
-        { label: 'About Blue', click: () => options.onOpenAbout() },
-      ],
+      submenu: [{ label: 'About Blue', click: () => options.onOpenAbout() }],
     });
   }
 

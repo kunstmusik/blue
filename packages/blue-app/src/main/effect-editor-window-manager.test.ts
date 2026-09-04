@@ -14,10 +14,7 @@ import {
   PROJECT_DOCUMENT_UPDATED_CHANNEL,
   type ProjectDocumentUpdatedEvent,
 } from '../shared/workbench-window-contract';
-import {
-  clearSettingsCache,
-  setSettingsFilePathForTesting,
-} from './program-settings-store';
+import { clearSettingsCache, setSettingsFilePathForTesting } from './program-settings-store';
 import { loadWindowLayoutSettings, saveWindowLayoutSettings } from './window-layout-store';
 
 const electronMock = vi.hoisted(() => {
@@ -97,7 +94,10 @@ vi.mock('electron', () => ({
   BrowserWindow: electronMock.MockBrowserWindow,
   screen: {
     getAllDisplays: () => [
-      { bounds: { x: 0, y: 0, width: 1920, height: 1080 }, workArea: { x: 0, y: 0, width: 1920, height: 1080 } },
+      {
+        bounds: { x: 0, y: 0, width: 1920, height: 1080 },
+        workArea: { x: 0, y: 0, width: 1920, height: 1080 },
+      },
     ],
   },
 }));
@@ -165,16 +165,12 @@ describe('effect editor window manager', () => {
 
     expect(effectWindow.options.modal).toBe(false);
     expect(effectWindow.options.backgroundColor).toBe('#1a1a2e');
-    expect(isEffectEditorWebContents(
-      effectWindow.webContents as never,
-      request,
-      'interface',
-    )).toBe(true);
-    expect(isEffectEditorWebContents(
-      effectWindow.webContents as never,
-      request,
-      'edit',
-    )).toBe(false);
+    expect(isEffectEditorWebContents(effectWindow.webContents as never, request, 'interface')).toBe(
+      true,
+    );
+    expect(isEffectEditorWebContents(effectWindow.webContents as never, request, 'edit')).toBe(
+      false,
+    );
   });
 
   it('keeps project and library editor windows separate', () => {
@@ -268,7 +264,12 @@ describe('effect editor and interface layout persistence', () => {
     editorWindow.trigger('close');
 
     const layout = loadWindowLayoutSettings();
-    expect(layout.windows['effect-editor']?.normalBounds).toEqual({ x: 320, y: 240, width: 900, height: 700 });
+    expect(layout.windows['effect-editor']?.normalBounds).toEqual({
+      x: 320,
+      y: 240,
+      width: 900,
+      height: 700,
+    });
   });
 
   it('persists effect interface bounds on close under the "effect-interface" identity', () => {
@@ -284,7 +285,12 @@ describe('effect editor and interface layout persistence', () => {
     interfaceWindow.trigger('close');
 
     const layout = loadWindowLayoutSettings();
-    expect(layout.windows['effect-interface']?.normalBounds).toEqual({ x: 320, y: 240, width: 900, height: 700 });
+    expect(layout.windows['effect-interface']?.normalBounds).toEqual({
+      x: 320,
+      y: 240,
+      width: 900,
+      height: 700,
+    });
   });
 
   it('restores effect editor bounds from the canonical store before show', () => {
@@ -306,7 +312,12 @@ describe('effect editor and interface layout persistence', () => {
     };
 
     openEffectEditorWindow(mainWindow, request);
-    expect(electronMock.instances[0]?.setBounds).toHaveBeenCalledWith({ x: 200, y: 200, width: 1100, height: 820 });
+    expect(electronMock.instances[0]?.setBounds).toHaveBeenCalledWith({
+      x: 200,
+      y: 200,
+      width: 1100,
+      height: 820,
+    });
   });
 });
 

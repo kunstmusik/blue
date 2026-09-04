@@ -5,7 +5,12 @@ export interface TrackLayerRowFixture {
   height: number;
   muted: boolean;
   solo: boolean;
-  items: Array<{ id: string; kind: 'audioClip' | 'soundObject'; startBeats: number; durationBeats: number }>;
+  items: Array<{
+    id: string;
+    kind: 'audioClip' | 'soundObject';
+    startBeats: number;
+    durationBeats: number;
+  }>;
   clipboard?: Array<{ trackId: string; itemId: string; kind: 'audioClip' | 'soundObject' }>;
 }
 
@@ -27,9 +32,10 @@ export function createTrackRowFixture(
   };
 }
 
-export function createTrackDragFixture(
-  source: Partial<TrackLayerRowFixture> = {},
-): { source: TrackLayerRowFixture; target: { groupId: string; trackId: string } } {
+export function createTrackDragFixture(source: Partial<TrackLayerRowFixture> = {}): {
+  source: TrackLayerRowFixture;
+  target: { groupId: string; trackId: string };
+} {
   const row = createTrackRowFixture(source);
   return { source: row, target: { groupId: row.groupId, trackId: row.trackId } };
 }

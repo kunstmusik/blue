@@ -22,7 +22,7 @@ export const PROJECT_ARTIFACTS_IPC_CHANNELS = [
   'export-score-object',
 ] as const;
 
-export type ProjectArtifactsIpcChannel = typeof PROJECT_ARTIFACTS_IPC_CHANNELS[number];
+export type ProjectArtifactsIpcChannel = (typeof PROJECT_ARTIFACTS_IPC_CHANNELS)[number];
 
 export interface ProjectArtifactsIpcOptions {
   readonly ipcMain: IpcMainLike;

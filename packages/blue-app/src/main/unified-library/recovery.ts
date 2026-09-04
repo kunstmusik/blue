@@ -5,17 +5,20 @@ import type { LibraryFailureSnapshot } from '../../shared/unified-library';
 export function classifyRepositoryFailure(error: unknown): LibraryFailureSnapshot {
   const message = (error instanceof Error ? error.message : String(error)).slice(0, 1000);
   const lower = message.toLocaleLowerCase();
-  const kind: LibraryFailureSnapshot['kind'] = lower.includes('newer') || lower.includes('user_version')
-    ? 'version'
-    : lower.includes('malformed') || lower.includes('integrity') || lower.includes('not a database')
-      ? 'integrity'
-      : lower.includes('locked') || lower.includes('busy')
-        ? 'lock'
-        : lower.includes('worker')
-          ? 'worker'
-          : lower.includes('upgrade')
-            ? 'upgrade'
-            : 'open';
+  const kind: LibraryFailureSnapshot['kind'] =
+    lower.includes('newer') || lower.includes('user_version')
+      ? 'version'
+      : lower.includes('malformed') ||
+          lower.includes('integrity') ||
+          lower.includes('not a database')
+        ? 'integrity'
+        : lower.includes('locked') || lower.includes('busy')
+          ? 'lock'
+          : lower.includes('worker')
+            ? 'worker'
+            : lower.includes('upgrade')
+              ? 'upgrade'
+              : 'open';
   return { kind, message, retryable: kind !== 'version' };
 }
 

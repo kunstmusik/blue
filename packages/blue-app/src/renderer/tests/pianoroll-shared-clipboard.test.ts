@@ -7,13 +7,15 @@ describe('shared Piano Roll clipboard', () => {
 
   it('exposes one detached note payload to every Piano Roll editor subscriber', () => {
     const source = {
-      notes: [{
-        octave: 8,
-        scaleDegree: 0,
-        start: 1,
-        duration: 2,
-        fieldValues: [0.5, 440],
-      }],
+      notes: [
+        {
+          octave: 8,
+          scaleDegree: 0,
+          start: 1,
+          duration: 2,
+          fieldValues: [0.5, 440],
+        },
+      ],
       sourceStartBeats: 1,
       sourceScaleDegrees: [56],
       sourcePitchIndex: 0,
@@ -25,13 +27,15 @@ describe('shared Piano Roll clipboard', () => {
 
     const targetEditorView = usePianoRollClipboardStore.getState().clipboard;
     expect(targetEditorView).toEqual({
-      notes: [{
-        octave: 8,
-        scaleDegree: 0,
-        start: 1,
-        duration: 2,
-        fieldValues: [0.5, 440],
-      }],
+      notes: [
+        {
+          octave: 8,
+          scaleDegree: 0,
+          start: 1,
+          duration: 2,
+          fieldValues: [0.5, 440],
+        },
+      ],
       sourceStartBeats: 1,
       sourceScaleDegrees: [56],
       sourcePitchIndex: 0,

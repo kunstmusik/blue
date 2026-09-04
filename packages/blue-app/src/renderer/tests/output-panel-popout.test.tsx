@@ -9,7 +9,9 @@ import OutputPanel from '../components/workbench/panels/output/OutputPanel';
 import { HostDocumentContext } from '../hooks/use-host-document';
 import { useOutputStore } from '../stores/output-store';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const popout = new JSDOM('<!doctype html><html><body></body></html>', {
   url: 'https://popout.test',
@@ -67,11 +69,13 @@ describe('OutputPanel popout selection actions', () => {
     expect(scroll).toBeTruthy();
 
     act(() => {
-      scroll.dispatchEvent(new PopoutKeyboardEvent('keydown', {
-        bubbles: true,
-        key: 'a',
-        ctrlKey: true,
-      }));
+      scroll.dispatchEvent(
+        new PopoutKeyboardEvent('keydown', {
+          bubbles: true,
+          key: 'a',
+          ctrlKey: true,
+        }),
+      );
     });
 
     const popoutSelection = popoutDoc.getSelection();
@@ -84,15 +88,18 @@ describe('OutputPanel popout selection actions', () => {
       popoutDoc.dispatchEvent(new Event('selectionchange'));
     });
     act(() => {
-      scroll.dispatchEvent(new PopoutMouseEvent('contextmenu', {
-        bubbles: true,
-        cancelable: true,
-        button: 2,
-      }));
+      scroll.dispatchEvent(
+        new PopoutMouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          button: 2,
+        }),
+      );
     });
 
-    const copy = [...popoutDoc.querySelectorAll<HTMLElement>('[role="menuitem"]')]
-      .find((item) => item.textContent?.trim() === 'Copy');
+    const copy = [...popoutDoc.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(
+      (item) => item.textContent?.trim() === 'Copy',
+    );
     expect(copy?.hasAttribute('data-disabled')).toBe(false);
 
     // Radix moves focus into the menu in this jsdom harness, which can clear

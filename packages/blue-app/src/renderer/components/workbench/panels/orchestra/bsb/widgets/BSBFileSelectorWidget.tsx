@@ -1,5 +1,8 @@
 import React from 'react';
-import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../../../hooks/host-portals';
+import {
+  PopoutContextMenuPortal,
+  portalEventIsolationProps,
+} from '../../../../../../hooks/host-portals';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import WidgetWrapper from './WidgetWrapper';
 import { getWidgetDisplaySize } from './utils';
@@ -22,7 +25,10 @@ function BSBFileSelectorWidget({
   onWidgetAction,
 }: BSBFileSelectorWidgetProps): React.ReactElement {
   const fileName = typeof node.properties.fileName === 'string' ? node.properties.fileName : '';
-  const textFieldWidth = Math.max(10, (typeof node.properties.textFieldWidth === 'number' ? node.properties.textFieldWidth : 100));
+  const textFieldWidth = Math.max(
+    10,
+    typeof node.properties.textFieldWidth === 'number' ? node.properties.textFieldWidth : 100,
+  );
   const displaySize = getWidgetDisplaySize(node);
 
   const commitFileName = (nextFileName: string): void => {
@@ -63,10 +69,13 @@ function BSBFileSelectorWidget({
     event.stopPropagation();
 
     const droppedFile = event.dataTransfer.files[0];
-    let droppedPath = droppedFile ? (droppedFile as File & { path?: string }).path ?? droppedFile.name : '';
+    let droppedPath = droppedFile
+      ? ((droppedFile as File & { path?: string }).path ?? droppedFile.name)
+      : '';
 
     if (!droppedPath) {
-      const uriList = event.dataTransfer.getData('text/uri-list') || event.dataTransfer.getData('text/plain');
+      const uriList =
+        event.dataTransfer.getData('text/uri-list') || event.dataTransfer.getData('text/plain');
       if (uriList.startsWith('file://')) {
         droppedPath = decodeURI(uriList.substring(7).trim());
       } else {
@@ -85,7 +94,22 @@ function BSBFileSelectorWidget({
   };
 
   return (
-    <WidgetWrapper node={node} isSelected={isSelected} editEnabled={editEnabled} onWidgetSelect={onWidgetSelect} displayWidth={displaySize.width} displayHeight={displaySize.height} resizeMeta={resizeMeta} gridSnapEnabled={gridSnapEnabled} gridSnapWidth={gridSnapWidth} gridSnapHeight={gridSnapHeight} onBsbInterfacePatch={onBsbInterfacePatch} selectedWidgetIds={selectedWidgetIds} getWidgetPosition={getWidgetPosition} onWidgetAction={onWidgetAction}>
+    <WidgetWrapper
+      node={node}
+      isSelected={isSelected}
+      editEnabled={editEnabled}
+      onWidgetSelect={onWidgetSelect}
+      displayWidth={displaySize.width}
+      displayHeight={displaySize.height}
+      resizeMeta={resizeMeta}
+      gridSnapEnabled={gridSnapEnabled}
+      gridSnapWidth={gridSnapWidth}
+      gridSnapHeight={gridSnapHeight}
+      onBsbInterfacePatch={onBsbInterfacePatch}
+      selectedWidgetIds={selectedWidgetIds}
+      getWidgetPosition={getWidgetPosition}
+      onWidgetAction={onWidgetAction}
+    >
       <ContextMenu.Root>
         <ContextMenu.Trigger asChild>
           <div
@@ -117,7 +141,12 @@ function BSBFileSelectorWidget({
         </ContextMenu.Trigger>
         <PopoutContextMenuPortal>
           <ContextMenu.Content className="editor-context-menu" {...portalEventIsolationProps}>
-            <ContextMenu.Item className="editor-context-menu__item" onSelect={() => { void openBrowseDialog(); }}>
+            <ContextMenu.Item
+              className="editor-context-menu__item"
+              onSelect={() => {
+                void openBrowseDialog();
+              }}
+            >
               Browse...
             </ContextMenu.Item>
             <ContextMenu.Item className="editor-context-menu__item" onSelect={handleClear}>

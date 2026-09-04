@@ -182,7 +182,9 @@ describe('Code Repository IPC contract guards', () => {
     };
 
     it('accepts only stable success and failure payload shapes', () => {
-      expect(isCodeRepositoryResult({ ok: true, value: validSnapshot }, isCodeRepositorySnapshot)).toBe(true);
+      expect(
+        isCodeRepositoryResult({ ok: true, value: validSnapshot }, isCodeRepositorySnapshot),
+      ).toBe(true);
       expect(
         isCodeRepositoryResult(
           {
@@ -196,8 +198,12 @@ describe('Code Repository IPC contract guards', () => {
           isCodeRepositorySnapshot,
         ),
       ).toBe(true);
-      expect(isCodeRepositoryResult({ ok: true, value: { malformed: true } }, isCodeRepositorySnapshot)).toBe(false);
-      expect(isCodeRepositoryResult({ ok: false, error: { code: 'unknown' } }, isCodeRepositorySnapshot)).toBe(false);
+      expect(
+        isCodeRepositoryResult({ ok: true, value: { malformed: true } }, isCodeRepositorySnapshot),
+      ).toBe(false);
+      expect(
+        isCodeRepositoryResult({ ok: false, error: { code: 'unknown' } }, isCodeRepositorySnapshot),
+      ).toBe(false);
     });
 
     it('rejects malformed errors before they reach the renderer', () => {
@@ -228,8 +234,12 @@ describe('Code Repository IPC contract guards', () => {
 
   it('keeps export filesystem paths behind main', () => {
     expect(isCodeRepositoryExportFileResult({ basename: 'codeRepository.xml' })).toBe(true);
-    expect(isCodeRepositoryExportFileResult({ basename: '/private/user/codeRepository.xml' })).toBe(false);
-    expect(isCodeRepositoryExportFileResult({ basename: 'C:\\Users\\name\\codeRepository.xml' })).toBe(false);
+    expect(isCodeRepositoryExportFileResult({ basename: '/private/user/codeRepository.xml' })).toBe(
+      false,
+    );
+    expect(
+      isCodeRepositoryExportFileResult({ basename: 'C:\\Users\\name\\codeRepository.xml' }),
+    ).toBe(false);
     expect(
       isCodeRepositoryExportFileResult({
         path: '/private/user/codeRepository.xml',

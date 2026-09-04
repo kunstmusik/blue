@@ -9,7 +9,9 @@ import ArrangementPanel from '../components/workbench/panels/orchestra/Arrangeme
 import { HostDocumentContext } from '../hooks/use-host-document';
 
 vi.mock('../components/libraries/LibraryDropMarker', () => ({
-  LibraryDropZone: ({ children }: {
+  LibraryDropZone: ({
+    children,
+  }: {
     children: (state: { active: boolean; dropProps: Record<string, unknown> }) => React.ReactNode;
   }) => children({ active: false, dropProps: {} }),
   LibraryTableDropMarker: () => null,
@@ -46,7 +48,9 @@ vi.mock('../stores/midi-routing-store', () => {
   return { useMidiRoutingStore };
 });
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const popout = new JSDOM('<!doctype html><html><body></body></html>', {
   url: 'https://popout.test',
@@ -86,8 +90,9 @@ describe('ArrangementPanel popout dismissal', () => {
       );
     });
 
-    const addButton = [...host.querySelectorAll<HTMLButtonElement>('button')]
-      .find((button) => button.textContent?.trim() === '+ Add')!;
+    const addButton = [...host.querySelectorAll<HTMLButtonElement>('button')].find(
+      (button) => button.textContent?.trim() === '+ Add',
+    )!;
     expect(addButton).toBeTruthy();
 
     act(() => {

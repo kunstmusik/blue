@@ -195,7 +195,10 @@ describe('ScoreObjectEditorPanel Sound optimistic patching', () => {
   it('updates top-level widget fields and object indexes for Sound BSB patches', () => {
     const doc = makeSoundDocument();
     const sourcePayload = getPayload(doc);
-    const sourceWidget = findWidgetByType(sourcePayload.bsbInstrument?.widgetTree.children, 'BSBKnob');
+    const sourceWidget = findWidgetByType(
+      sourcePayload.bsbInstrument?.widgetTree.children,
+      'BSBKnob',
+    );
 
     if (!sourceWidget?.id) {
       throw new Error('Expected Sound snapshot to contain a BSBKnob widget with an id');
@@ -281,7 +284,10 @@ describe('ScoreObjectEditorPanel Sound optimistic patching', () => {
   it('adds and removes Sound BSB widgets optimistically', () => {
     const doc = makeSoundDocument();
     const originalPayload = getPayload(doc);
-    const originalWidget = findWidgetByType(originalPayload.bsbInstrument?.widgetTree.children, 'BSBKnob');
+    const originalWidget = findWidgetByType(
+      originalPayload.bsbInstrument?.widgetTree.children,
+      'BSBKnob',
+    );
 
     if (!originalWidget?.id) {
       throw new Error('Expected Sound snapshot to contain a BSBKnob widget with an id');
@@ -304,7 +310,10 @@ describe('ScoreObjectEditorPanel Sound optimistic patching', () => {
     if (withAddedWidget.editor.kind !== 'structured') return;
 
     const addedPayload = getPayload(withAddedWidget as ReturnType<typeof makeSoundDocument>);
-    const addedWidget = findWidgetByType(addedPayload.bsbInstrument?.widgetTree.children, 'BSBLabel');
+    const addedWidget = findWidgetByType(
+      addedPayload.bsbInstrument?.widgetTree.children,
+      'BSBLabel',
+    );
 
     expect(addedPayload.bsbInstrument?.widgetTree.children).toHaveLength(2);
     expect(addedWidget?.type).toBe('BSBLabel');
@@ -328,14 +337,21 @@ describe('ScoreObjectEditorPanel Sound optimistic patching', () => {
 
     const removedPayload = getPayload(withRemovedWidget as ReturnType<typeof makeSoundDocument>);
     expect(removedPayload.bsbInstrument?.widgetTree.children).toHaveLength(1);
-    expect(findWidgetByType(removedPayload.bsbInstrument?.widgetTree.children, 'BSBLabel')).toBeNull();
-    expect(findWidgetById(removedPayload.bsbInstrument?.widgetTree.children, originalWidget.id)).not.toBeNull();
+    expect(
+      findWidgetByType(removedPayload.bsbInstrument?.widgetTree.children, 'BSBLabel'),
+    ).toBeNull();
+    expect(
+      findWidgetById(removedPayload.bsbInstrument?.widgetTree.children, originalWidget.id),
+    ).not.toBeNull();
   });
 
   it('adds a new automation parameter immediately when an automatable widget gets an object name', () => {
     const doc = makeSoundDocument(UNNAMED_BSB_XML);
     const sourcePayload = getPayload(doc);
-    const sourceWidget = findWidgetByType(sourcePayload.bsbInstrument?.widgetTree.children, 'BSBKnob');
+    const sourceWidget = findWidgetByType(
+      sourcePayload.bsbInstrument?.widgetTree.children,
+      'BSBKnob',
+    );
 
     if (!sourceWidget?.id) {
       throw new Error('Expected Sound snapshot to contain a BSBKnob widget with an id');
@@ -373,7 +389,10 @@ describe('ScoreObjectEditorPanel Sound optimistic patching', () => {
   it('rescales Sound automation points immediately when widget bounds change', () => {
     const doc = makeSoundDocument();
     const sourcePayload = getPayload(doc);
-    const sourceWidget = findWidgetByType(sourcePayload.bsbInstrument?.widgetTree.children, 'BSBKnob');
+    const sourceWidget = findWidgetByType(
+      sourcePayload.bsbInstrument?.widgetTree.children,
+      'BSBKnob',
+    );
 
     if (!sourceWidget?.id) {
       throw new Error('Expected Sound snapshot to contain a BSBKnob widget with an id');
@@ -418,7 +437,10 @@ describe('ScoreObjectEditorPanel Sound optimistic patching', () => {
   it('keeps slider bank property ranges synchronized during optimistic bound changes', () => {
     const doc = makeSoundDocument(SLIDER_BANK_BSB_XML);
     const sourcePayload = getPayload(doc);
-    const sourceWidget = findWidgetByType(sourcePayload.bsbInstrument?.widgetTree.children, 'BSBHSliderBank');
+    const sourceWidget = findWidgetByType(
+      sourcePayload.bsbInstrument?.widgetTree.children,
+      'BSBHSliderBank',
+    );
 
     if (!sourceWidget?.id) {
       throw new Error('Expected Sound snapshot to contain a BSBHSliderBank widget with an id');
@@ -442,8 +464,13 @@ describe('ScoreObjectEditorPanel Sound optimistic patching', () => {
     if (withMinimum.editor.kind !== 'structured') return;
 
     const minimumPayload = getPayload(withMinimum as ReturnType<typeof makeSoundDocument>);
-    const minimumWidget = findWidgetById(minimumPayload.bsbInstrument?.widgetTree.children, sourceWidget.id);
-    const minimumSliders = minimumWidget?.properties.sliders as Array<{ value?: number }> | undefined;
+    const minimumWidget = findWidgetById(
+      minimumPayload.bsbInstrument?.widgetTree.children,
+      sourceWidget.id,
+    );
+    const minimumSliders = minimumWidget?.properties.sliders as
+      | Array<{ value?: number }>
+      | undefined;
 
     expect(minimumWidget?.minimum).toBe(-1);
     expect(minimumWidget?.properties.minimum).toBe(-1);
@@ -467,8 +494,13 @@ describe('ScoreObjectEditorPanel Sound optimistic patching', () => {
     if (withMaximum.editor.kind !== 'structured') return;
 
     const maximumPayload = getPayload(withMaximum as ReturnType<typeof makeSoundDocument>);
-    const maximumWidget = findWidgetById(maximumPayload.bsbInstrument?.widgetTree.children, sourceWidget.id);
-    const maximumSliders = maximumWidget?.properties.sliders as Array<{ value?: number }> | undefined;
+    const maximumWidget = findWidgetById(
+      maximumPayload.bsbInstrument?.widgetTree.children,
+      sourceWidget.id,
+    );
+    const maximumSliders = maximumWidget?.properties.sliders as
+      | Array<{ value?: number }>
+      | undefined;
 
     expect(maximumWidget?.maximum).toBe(10);
     expect(maximumWidget?.properties.maximum).toBe(10);

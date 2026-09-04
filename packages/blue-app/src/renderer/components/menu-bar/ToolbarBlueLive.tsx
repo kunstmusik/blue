@@ -92,11 +92,7 @@ export default function ToolbarBlueLive(): React.ReactElement {
       >
         Recompile
       </ToolbarTextButton>
-      <ToolbarTextButton
-        title="Send All Notes Off"
-        disabled={!running}
-        onClick={handleAllNotesOff}
-      >
+      <ToolbarTextButton title="Send All Notes Off" disabled={!running} onClick={handleAllNotesOff}>
         All Notes Off
       </ToolbarTextButton>
     </div>

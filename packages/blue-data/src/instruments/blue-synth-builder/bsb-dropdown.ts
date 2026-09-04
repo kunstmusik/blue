@@ -49,7 +49,7 @@ export class BSBDropdown extends BSBWidget {
       if (Number.isFinite(parsed)) {
         this.setValue(parsed);
       } else {
-        const idx = this.dropdownItems.findIndex(item => item.value === val);
+        const idx = this.dropdownItems.findIndex((item) => item.value === val);
         if (idx !== -1) {
           this.setValue(idx);
         }
@@ -62,10 +62,7 @@ export class BSBDropdown extends BSBWidget {
     this.selectedIndex = Math.floor(val);
   }
 
-  override collectReplacements(
-    unit: BSBCompilationUnit,
-    parameters?: Parameter[],
-  ): void {
+  override collectReplacements(unit: BSBCompilationUnit, parameters?: Parameter[]): void {
     const compilationVarName = this.getCompilationVarName(this.objectName, parameters);
     if (compilationVarName) {
       unit.addReplacementValue(this.objectName, compilationVarName);

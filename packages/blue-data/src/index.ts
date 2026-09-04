@@ -6,47 +6,44 @@ export { BLUE_VERSION } from './blue-constants';
 export { CompileData } from './compile-data';
 export type { CompiledBlueX7Binding } from './compile-data';
 export type { CompiledMidiInstrumentTarget } from './compile-data';
-export {
-	getJavaRuntimeClient,
-	setJavaRuntimeClient,
-} from './java-runtime';
+export { getJavaRuntimeClient, setJavaRuntimeClient } from './java-runtime';
 export type {
-	ClojureEvalRequest,
-	ClojureEvalResult,
-	ClojureReinitializeResult,
-	ClojureScoreObjectEvalRequest,
-	ClojureScoreObjectEvalResult,
-	JavaRuntimeClientContract,
-	JavaRuntimeDependencyLoadResult,
-	JavaRuntimeDependencySpec,
-	JavaRuntimeError,
-	JavaRuntimeHealthResult,
-	JavaRuntimeSessionInitRequest,
-	JavaRuntimeSessionInitResult,
-	JythonEvalScriptRequest,
-	JythonEvalScriptResult,
-	JythonImportCheckRequest,
-	JythonImportCheckResult,
-	JythonInstrumentEvalRequest,
-	JythonInstrumentEvalResult,
-	JythonObjectBuilderEvalRequest,
-	JythonObjectBuilderEvalResult,
-	JythonProcessNoteListRequest,
-	JythonProcessNoteListResult,
-	JythonReinitializeResult,
-	JythonScoreObjectEvalRequest,
-	JythonScoreObjectEvalResult,
-	JythonSerializedNote,
-	JavaRuntimeResponse,
-	JavaRuntimeStatus,
+  ClojureEvalRequest,
+  ClojureEvalResult,
+  ClojureReinitializeResult,
+  ClojureScoreObjectEvalRequest,
+  ClojureScoreObjectEvalResult,
+  JavaRuntimeClientContract,
+  JavaRuntimeDependencyLoadResult,
+  JavaRuntimeDependencySpec,
+  JavaRuntimeError,
+  JavaRuntimeHealthResult,
+  JavaRuntimeSessionInitRequest,
+  JavaRuntimeSessionInitResult,
+  JythonEvalScriptRequest,
+  JythonEvalScriptResult,
+  JythonImportCheckRequest,
+  JythonImportCheckResult,
+  JythonInstrumentEvalRequest,
+  JythonInstrumentEvalResult,
+  JythonObjectBuilderEvalRequest,
+  JythonObjectBuilderEvalResult,
+  JythonProcessNoteListRequest,
+  JythonProcessNoteListResult,
+  JythonReinitializeResult,
+  JythonScoreObjectEvalRequest,
+  JythonScoreObjectEvalResult,
+  JythonSerializedNote,
+  JavaRuntimeResponse,
+  JavaRuntimeStatus,
 } from './java-runtime';
 export {
-	disposeJavaScriptCompileState,
-	initializeJavaScriptRuntime,
-	isJavaScriptRuntimeInitialized,
-	JavaScriptSession,
-	setJavaScriptSession,
-	getJavaScriptSession,
+  disposeJavaScriptCompileState,
+  initializeJavaScriptRuntime,
+  isJavaScriptRuntimeInitialized,
+  JavaScriptSession,
+  setJavaScriptSession,
+  getJavaScriptSession,
 } from './javascript-runtime';
 
 // ─── Arrangement ───
@@ -156,9 +153,23 @@ export { TimeState } from './time/time-state';
 export { MeterMap } from './time/meter-map';
 export { MeasureMeterPair } from './time/measure-meter-pair';
 export { Meter } from './time/meter';
-export { beatsToTimePosition, timePositionToBeats, convertTimePosition, secondsToTimePosition, timePositionToSeconds, framesToTimePosition, timePositionToFrames } from './time/time-utilities';
+export {
+  beatsToTimePosition,
+  timePositionToBeats,
+  convertTimePosition,
+  secondsToTimePosition,
+  timePositionToSeconds,
+  framesToTimePosition,
+  timePositionToFrames,
+} from './time/time-utilities';
 export { beatsToDuration } from './time/time-unit-math';
-export { ALL_SNAP_VALUES, getSnapValue, isValidSnapValueName, snapValueToBeats, closestSnapValueMatch } from './time/snap-value';
+export {
+  ALL_SNAP_VALUES,
+  getSnapValue,
+  isValidSnapValueName,
+  snapValueToBeats,
+  closestSnapValueMatch,
+} from './time/snap-value';
 export type { SnapValueName, SnapCategory, SnapValueDefinition } from './time/snap-value';
 
 // ─── Score ───
@@ -190,8 +201,16 @@ export type {
   MidiImportWarning,
   MidiImportWarningCode,
 } from './midi/midi-file-import';
-export { replaceTrackInstrumentP1, applyTrackInstrumentOverride } from './score/score-generation-options';
-export type { ScoreGenerationOptions, InstrumentTargetCollector, InstrumentTargetBehavior, ScoreGenerationOptionsOrSolo } from './score/score-generation-options';
+export {
+  replaceTrackInstrumentP1,
+  applyTrackInstrumentOverride,
+} from './score/score-generation-options';
+export type {
+  ScoreGenerationOptions,
+  InstrumentTargetCollector,
+  InstrumentTargetBehavior,
+  ScoreGenerationOptionsOrSolo,
+} from './score/score-generation-options';
 export type { ScoreObject } from './score/score-object';
 export { ScoreGenerationException } from './score/score-generation-exception';
 
@@ -218,8 +237,16 @@ export { Track as ScoreTrack } from './score/track/track';
 export type { TrackItem } from './score/track/track';
 export { TrackLayerGroup } from './score/track/track-layer-group';
 export { createAuditionProjectCopy } from './score/audition-project';
-export { generateTrackAudioPlaybackNotes, ensureTrackAudioPlaybackInstrument } from './score/track/track-audio-playback';
-export { FadeType, fadeTypeFromString, fadeTypeToString, fadeTypeToCsound } from './score/audio/fade-type';
+export {
+  generateTrackAudioPlaybackNotes,
+  ensureTrackAudioPlaybackInstrument,
+} from './score/track/track-audio-playback';
+export {
+  FadeType,
+  fadeTypeFromString,
+  fadeTypeToString,
+  fadeTypeToCsound,
+} from './score/audio/fade-type';
 export { PLAYBACK_INSTRUMENT_ORC } from './score/audio/playback-instrument-orc';
 export { BLUE_FADE_UDO } from './score/audio/blue-fade-udo';
 
@@ -239,7 +266,10 @@ export { NoteList } from './sound-objects/note-list';
 export { GenericScore } from './sound-objects/generic-score';
 export { PolyObject } from './sound-objects/poly-object';
 export { SoundLayer } from './sound-objects/sound-layer';
-export { SoundObjectLibrary, collectInstanceSoundObjects } from './sound-objects/sound-object-library';
+export {
+  SoundObjectLibrary,
+  collectInstanceSoundObjects,
+} from './sound-objects/sound-object-library';
 export { PythonObject } from './sound-objects/python-object';
 export { ObjectBuilder } from './sound-objects/object-builder';
 export type { ObjectBuilderLanguageType } from './sound-objects/object-builder';
@@ -249,7 +279,11 @@ export { CSDSoundObject } from './sound-objects/csd-sound-object';
 export { Comment } from './sound-objects/comment';
 export { AudioFile } from './sound-objects/audio-file';
 export { Sound } from './sound-objects/sound';
-export { External, setExternalCommandExecutor, getExternalCommandExecutor } from './sound-objects/external';
+export {
+  External,
+  setExternalCommandExecutor,
+  getExternalCommandExecutor,
+} from './sound-objects/external';
 export type { ExternalCommandExecutor } from './sound-objects/external';
 export { Instance } from './sound-objects/instance';
 export { LineObject } from './sound-objects/line-object';
@@ -310,10 +344,27 @@ export { SwitchProcessor } from './note-processors/switch-processor';
 export { SubListProcessor } from './note-processors/sublist-processor';
 export { EqualsProcessor } from './note-processors/equals-processor';
 export { ValueTimeMapper } from './note-processors/value-time-mapper';
-export { getNoteProcessorCatalog, getNoteProcessorDefinition, isAddableProcessor } from './note-processors/note-processor-catalog';
-export type { NoteProcessorDefinition, NoteProcessorParameterDefinition, ParameterValueType } from './note-processors/note-processor-catalog';
-export { createNoteProcessorEntrySnapshot, createNoteProcessorChainSnapshot, reifyProcessorFromSnapshot, reifyChainFromSnapshot, resetSnapshotIdCounter } from './note-processors/note-processor-snapshot';
-export type { NoteProcessorEntrySnapshot, NoteProcessorChainSnapshot } from './note-processors/note-processor-snapshot';
+export {
+  getNoteProcessorCatalog,
+  getNoteProcessorDefinition,
+  isAddableProcessor,
+} from './note-processors/note-processor-catalog';
+export type {
+  NoteProcessorDefinition,
+  NoteProcessorParameterDefinition,
+  ParameterValueType,
+} from './note-processors/note-processor-catalog';
+export {
+  createNoteProcessorEntrySnapshot,
+  createNoteProcessorChainSnapshot,
+  reifyProcessorFromSnapshot,
+  reifyChainFromSnapshot,
+  resetSnapshotIdCounter,
+} from './note-processors/note-processor-snapshot';
+export type {
+  NoteProcessorEntrySnapshot,
+  NoteProcessorChainSnapshot,
+} from './note-processors/note-processor-snapshot';
 
 // ─── Mixer ───
 export { Mixer } from './mixer/mixer';
@@ -327,7 +378,10 @@ export { Send } from './mixer/send';
 export { Parameter } from './automation/parameter';
 export type { AutomationPoint } from './automation/parameter';
 export { AutomationCurve } from './automation/parameter';
-export { automationPointToEngineSeconds, getEngineAutomationPoints } from './automation/parameter-runtime';
+export {
+  automationPointToEngineSeconds,
+  getEngineAutomationPoints,
+} from './automation/parameter-runtime';
 export {
   appendParameterScoreJava,
   buildParameterInitStatementJava,
@@ -368,45 +422,45 @@ export { LiveObjectSet } from './live/live-object-set';
 export { LiveObjectBins } from './live/live-object-bins';
 export { LiveObjectSetList } from './live/live-object-set-list';
 export {
-	prepareTriggerBatch,
-	resolveTriggerTargets,
-	scaleNotesByTempo,
-	computeTempoScale,
+  prepareTriggerBatch,
+  resolveTriggerTargets,
+  scaleNotesByTempo,
+  computeTempoScale,
 } from './live/blue-live-trigger';
 export type {
-	TriggerPreparationResult,
-	PreparedScoreBatch,
-	TriggerEmptyResult,
-	TriggerPreparationFailure,
-	TriggerPreparationFailureCode,
-	TriggerRuntimeContext,
-	TriggerMode,
+  TriggerPreparationResult,
+  PreparedScoreBatch,
+  TriggerEmptyResult,
+  TriggerPreparationFailure,
+  TriggerPreparationFailureCode,
+  TriggerRuntimeContext,
+  TriggerMode,
 } from './live/blue-live-trigger';
 // Shared Java-parity trigger fixtures (test oracles; safe for production import).
 export {
-	createModernLiveData,
-	createModernProject,
-	createOldFormatLiveData,
-	createSparseGridLiveData,
-	createMissingSavedSetIdLiveData,
-	createMultiEnabledLiveData,
-	createLibraryInstanceLiveData,
-	createRuntimeBackedLiveData,
-	createGenericScoreSoundObject,
-	attachSavedSet,
-	MODERN_ENABLED_TARGET_ORDER,
-	MODERN_ALL_POPULATED_TARGET_ORDER,
-	OLD_FORMAT_ENABLED_TARGET_ORDER,
-	SPARSE_GRID_ENABLED_TARGET_ORDER,
-	MULTI_ENABLED_TARGET_ORDER,
-	TEMPO_SCALING_CASES,
-	INVALID_TEMPO_VALUES,
+  createModernLiveData,
+  createModernProject,
+  createOldFormatLiveData,
+  createSparseGridLiveData,
+  createMissingSavedSetIdLiveData,
+  createMultiEnabledLiveData,
+  createLibraryInstanceLiveData,
+  createRuntimeBackedLiveData,
+  createGenericScoreSoundObject,
+  attachSavedSet,
+  MODERN_ENABLED_TARGET_ORDER,
+  MODERN_ALL_POPULATED_TARGET_ORDER,
+  OLD_FORMAT_ENABLED_TARGET_ORDER,
+  SPARSE_GRID_ENABLED_TARGET_ORDER,
+  MULTI_ENABLED_TARGET_ORDER,
+  TEMPO_SCALING_CASES,
+  INVALID_TEMPO_VALUES,
 } from './live/blue-live-trigger-fixtures';
 export type {
-	ExpectedLiveObjectTarget,
-	ExpectedScalingCase,
-	LibraryInstanceFixture,
-	RuntimeBackedFixture,
+  ExpectedLiveObjectTarget,
+  ExpectedScalingCase,
+  LibraryInstanceFixture,
+  RuntimeBackedFixture,
 } from './live/blue-live-trigger-fixtures';
 
 // ─── MIDI ───
@@ -414,7 +468,10 @@ export { MidiInputProcessor } from './midi/midi-input-processor';
 export { MidiKeyMapping } from './midi/midi-key-mapping';
 export { MidiVelocityMapping } from './midi/midi-velocity-mapping';
 export { mapMidiTrigger } from './midi/midi-trigger-routing';
-export type { MidiTriggerMappingInput, MidiTriggerMappingResult } from './midi/midi-trigger-routing';
+export type {
+  MidiTriggerMappingInput,
+  MidiTriggerMappingResult,
+} from './midi/midi-trigger-routing';
 
 // ─── Opcodes ───
 export { OpcodeDefinition } from './opcodes/opcode-definition';
@@ -432,12 +489,12 @@ export { Element, Elements } from './serialization/xml-reader';
 export { ObjRefSaveMap, ObjRefLoadMap } from './serialization/obj-ref-map';
 export * from './libraries';
 export {
-	CLOJURE_PROJECT_DATA_BDO_TYPE,
-	ClojureLibraryEntry,
-	ClojureProjectData,
-	findClojureProjectDataElement,
-	loadClojureProjectDataFromPluginData,
-	replaceClojureProjectDataInPluginData,
+  CLOJURE_PROJECT_DATA_BDO_TYPE,
+  ClojureLibraryEntry,
+  ClojureProjectData,
+  findClojureProjectDataElement,
+  loadClojureProjectDataFromPluginData,
+  replaceClojureProjectDataInPluginData,
 } from './plugins/clojure-project-data';
 
 // ─── Migration ───
@@ -450,8 +507,20 @@ export { ProjectUpgrader_2_3_0 } from './migration/upgrades/upgrade-2.3.0';
 // ─── Utilities ───
 export { clamp } from './utilities/math-utils';
 export { replaceAll, stripSingleLineComments, stripBlockComments } from './utilities/text';
-export { writeInt, readInt, writeDouble, readDouble, writeBoolean, readBoolean } from './utilities/xml';
-export { applyNoteProcessorChain, setScoreStart, getNotes, getTotalDuration } from './utilities/score';
+export {
+  writeInt,
+  readInt,
+  writeDouble,
+  readDouble,
+  writeBoolean,
+  readBoolean,
+} from './utilities/xml';
+export {
+  applyNoteProcessorChain,
+  setScoreStart,
+  getNotes,
+  getTotalDuration,
+} from './utilities/score';
 export {
   CSDImportMode,
   convertCSDtoBlue,

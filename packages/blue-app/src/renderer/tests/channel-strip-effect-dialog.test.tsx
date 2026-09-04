@@ -18,14 +18,19 @@ import type {
 declare global {
   interface Window {
     blueAPI: {
-      sendMixerRealtimeLevelUpdate: (payload: { channelId: string; level: number }) => Promise<void>;
+      sendMixerRealtimeLevelUpdate: (payload: {
+        channelId: string;
+        level: number;
+      }) => Promise<void>;
       focusEffectEditor: (request: unknown) => Promise<boolean>;
       openEffectInterface: (request: unknown) => Promise<void>;
     };
   }
 }
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 vi.mock('../components/workbench/panels/mixer/EffectsChainContextMenu', () => ({
   default: ({
@@ -47,7 +52,10 @@ vi.mock('../components/workbench/panels/mixer/EffectsChainContextMenu', () => ({
         Add New Effect {chain}
       </button>
       {entries[0]?.kind === 'effect' ? (
-        <button type="button" onClick={() => onOpenEditEffectDialog(entries[0] as MixerEffectEntrySnapshot, chain)}>
+        <button
+          type="button"
+          onClick={() => onOpenEditEffectDialog(entries[0] as MixerEffectEntrySnapshot, chain)}
+        >
           Edit Effect Definition {chain}
         </button>
       ) : null}
@@ -68,7 +76,10 @@ vi.mock('../components/effect-editor/EffectEditorPanel', () => ({
       <button type="button" onClick={() => onPatch({ name: 'Edited Effect' })}>
         Rename Draft
       </button>
-      <button type="button" onClick={() => onPatch({ style: snapshot.style === 'MODERN' ? 'CLASSIC' : 'MODERN' })}>
+      <button
+        type="button"
+        onClick={() => onPatch({ style: snapshot.style === 'MODERN' ? 'CLASSIC' : 'MODERN' })}
+      >
         Toggle Style
       </button>
     </div>
@@ -149,7 +160,10 @@ function createMixerSnapshot(channel: MixerChannelSnapshot): MixerSnapshot {
   };
 }
 
-function renderStrip(channel: MixerChannelSnapshot, onPatch: ReturnType<typeof vi.fn>): { container: HTMLDivElement; root: Root } {
+function renderStrip(
+  channel: MixerChannelSnapshot,
+  onPatch: ReturnType<typeof vi.fn>,
+): { container: HTMLDivElement; root: Root } {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);

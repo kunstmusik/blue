@@ -247,8 +247,11 @@ async function launchViaPlaywright(binary, verificationMode, blueFile, userDataP
     await electronApp.waitForEvent('close', { timeout: verifierTimeoutMs });
     const exitCode = child.exitCode;
     const sawSuccessMarker = /verification passed\./i.test(capturedStderr);
-    const crashedAfterSuccess = sawSuccessMarker
-      && (child.signalCode === 'SIGABRT' || child.signalCode === 'SIGSEGV' || (typeof exitCode === 'number' && exitCode !== 0));
+    const crashedAfterSuccess =
+      sawSuccessMarker &&
+      (child.signalCode === 'SIGABRT' ||
+        child.signalCode === 'SIGSEGV' ||
+        (typeof exitCode === 'number' && exitCode !== 0));
     if (crashedAfterSuccess) {
       process.stderr.write(
         `[verify-packaged-app] ${verificationMode} reported success but crashed during teardown ` +
@@ -357,8 +360,9 @@ function launchViaSpawn(binary, verificationMode, blueFile, userDataPath) {
       // crash as a teardown flake rather than a verification failure so the
       // remaining smoke stages can run.
       const sawSuccessMarker = /verification passed\./i.test(capturedStderr);
-      const crashedAfterSuccess = sawSuccessMarker
-        && (signal === 'SIGABRT' || signal === 'SIGSEGV' || (typeof code === 'number' && code !== 0));
+      const crashedAfterSuccess =
+        sawSuccessMarker &&
+        (signal === 'SIGABRT' || signal === 'SIGSEGV' || (typeof code === 'number' && code !== 0));
       if (crashedAfterSuccess) {
         process.stderr.write(
           `[verify-packaged-app] ${verificationMode} reported success but crashed during teardown ` +
@@ -402,23 +406,13 @@ async function runVerifier(binary, verificationMode, blueFile, usePlaywright, us
 async function runSmokeChecks(binary, blueFile, usePlaywright) {
   const userDataPath = mkdtempSync(join(tmpdir(), 'blue-packaged-smoke-'));
   try {
-    const metadataCode = await launchViaSpawn(
-      binary,
-      'packaged-metadata',
-      null,
-      userDataPath,
-    );
+    const metadataCode = await launchViaSpawn(binary, 'packaged-metadata', null, userDataPath);
     if (metadataCode !== 0) {
       return metadataCode;
     }
     // The resource verifier exits before Electron opens Playwright's control
     // channel, so launch that fast pre-ready stage directly.
-    const resourcesCode = await launchViaSpawn(
-      binary,
-      'packaged-resources',
-      null,
-      userDataPath,
-    );
+    const resourcesCode = await launchViaSpawn(binary, 'packaged-resources', null, userDataPath);
     if (resourcesCode !== 0) {
       return resourcesCode;
     }
@@ -430,13 +424,7 @@ async function runSmokeChecks(binary, blueFile, usePlaywright) {
       userDataPath,
     );
     if (projectCode !== 0) return projectCode;
-    return runVerifier(
-      binary,
-      'packaged-engine-mismatch',
-      blueFile,
-      usePlaywright,
-      userDataPath,
-    );
+    return runVerifier(binary, 'packaged-engine-mismatch', blueFile, usePlaywright, userDataPath);
   } finally {
     rmSync(userDataPath, { recursive: true, force: true });
   }

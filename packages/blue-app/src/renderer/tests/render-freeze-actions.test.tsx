@@ -16,45 +16,91 @@ vi.mock('sonner', () => ({
 }));
 
 import ScoreTimeCanvas from '../components/workbench/panels/score/layer-groups/ScoreTimeCanvas';
-import type { PolyObjectLayerGroupSnapshot, ScoreRowObjectSnapshot } from '../components/workbench/panels/score/types';
+import type {
+  PolyObjectLayerGroupSnapshot,
+  ScoreRowObjectSnapshot,
+} from '../components/workbench/panels/score/types';
 import { useProjectStore } from '../stores/project-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { useLibraryStore } from '../stores/library-store';
 import { useFreezeOperationStore } from '../stores/freeze-operation-store';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const originalProjectState = useProjectStore.getState();
 
 function groupWithObject(): PolyObjectLayerGroupSnapshot {
   const target = {
-    selectionId: 'score-1', selectedObjectType: 'GenericScore', editorObjectType: 'GenericScore',
-    ownerKind: 'timeline' as const, displayContext: 'timeline' as const,
+    selectionId: 'score-1',
+    selectedObjectType: 'GenericScore',
+    editorObjectType: 'GenericScore',
+    ownerKind: 'timeline' as const,
+    displayContext: 'timeline' as const,
     location: { rootGroupIndex: 0, containerPath: [], layerIndex: 0, objectIndex: 0 },
-    supportsTimeBehavior: true, supportsRepeatPoint: true, supportsNoteProcessorChain: true,
+    supportsTimeBehavior: true,
+    supportsRepeatPoint: true,
+    supportsNoteProcessorChain: true,
   };
   const item: ScoreRowObjectSnapshot = {
-    objectId: 'score-1', objectType: 'GenericScore', name: 'Freeze me', startBeats: 0,
-    durationBeats: 2, startTimeBase: 'BEATS', durationTimeBase: 'BEATS', backgroundColor: 0x336699,
-    isContainer: false, editorTarget: target,
+    objectId: 'score-1',
+    objectType: 'GenericScore',
+    name: 'Freeze me',
+    startBeats: 0,
+    durationBeats: 2,
+    startTimeBase: 'BEATS',
+    durationTimeBase: 'BEATS',
+    backgroundColor: 0x336699,
+    isContainer: false,
+    editorTarget: target,
     barRenderer: { kind: 'fallback', labelLines: ['Freeze me'], reason: 'unknown-type' },
   };
   const instance: ScoreRowObjectSnapshot = {
-    objectId: 'instance-1', objectType: 'Instance', name: 'Linked instance', startBeats: 4,
-    durationBeats: 2, startTimeBase: 'BEATS', durationTimeBase: 'BEATS', backgroundColor: 0x336699,
+    objectId: 'instance-1',
+    objectType: 'Instance',
+    name: 'Linked instance',
+    startBeats: 4,
+    durationBeats: 2,
+    startTimeBase: 'BEATS',
+    durationTimeBase: 'BEATS',
+    backgroundColor: 0x336699,
     isContainer: false,
     editorTarget: {
-      selectionId: 'instance-1', selectedObjectType: 'Instance', editorObjectType: 'GenericScore',
-      ownerKind: 'library', displayContext: 'instance',
-      sourceInstanceLocation: { rootGroupIndex: 0, containerPath: [], layerIndex: 0, objectIndex: 1 },
+      selectionId: 'instance-1',
+      selectedObjectType: 'Instance',
+      editorObjectType: 'GenericScore',
+      ownerKind: 'library',
+      displayContext: 'instance',
+      sourceInstanceLocation: {
+        rootGroupIndex: 0,
+        containerPath: [],
+        layerIndex: 0,
+        objectIndex: 1,
+      },
       library: { libraryId: 'library-1', libraryIndex: 0, objectType: 'GenericScore' },
-      supportsTimeBehavior: true, supportsRepeatPoint: true, supportsNoteProcessorChain: true,
+      supportsTimeBehavior: true,
+      supportsRepeatPoint: true,
+      supportsNoteProcessorChain: true,
     },
     barRenderer: { kind: 'fallback', labelLines: ['Linked instance'], reason: 'unknown-type' },
   };
   return {
-    groupId: 'root', groupType: 'polyObject', name: 'Root', layerCount: 1, isOpenableContainer: true,
-    layers: [{ layerId: 'root-layer-0', name: 'Layer 1', height: 44, muted: false, solo: false, items: [item, instance] }],
+    groupId: 'root',
+    groupType: 'polyObject',
+    name: 'Root',
+    layerCount: 1,
+    isOpenableContainer: true,
+    layers: [
+      {
+        layerId: 'root-layer-0',
+        name: 'Layer 1',
+        height: 44,
+        muted: false,
+        solo: false,
+        items: [item, instance],
+      },
+    ],
   };
 }
 
@@ -69,8 +115,15 @@ describe('render/freeze renderer actions', () => {
   beforeEach(() => {
     const group = groupWithObject();
     freezeScoreObjects = vi.fn().mockResolvedValue({
-      ok: true, operationId: 'freeze-1', cancelled: false, frozenCount: 1, unfrozenCount: 0,
-      deletedFiles: [], rejectedTargets: [], error: null, project: null,
+      ok: true,
+      operationId: 'freeze-1',
+      cancelled: false,
+      frozenCount: 1,
+      unfrozenCount: 0,
+      deletedFiles: [],
+      rejectedTargets: [],
+      error: null,
+      project: null,
     });
     cancelRenderOperation = vi.fn().mockResolvedValue(true);
     captureScoreSoundObjectClipboard = vi.fn().mockResolvedValue({
@@ -103,9 +156,11 @@ describe('render/freeze renderer actions', () => {
       score: { ...originalProjectState.score, layerGroups: [group] },
       flushPendingPatches: vi.fn().mockResolvedValue(undefined),
     } as Partial<ReturnType<typeof useProjectStore.getState>>);
-    useScoreSelectionStore.getState().setSelection([
-      { objectId: 'score-1', editorTarget: group.layers[0]!.items[0]!.editorTarget },
-    ]);
+    useScoreSelectionStore
+      .getState()
+      .setSelection([
+        { objectId: 'score-1', editorTarget: group.layers[0]!.items[0]!.editorTarget },
+      ]);
     useLibraryStore.setState({ clipboard: null, error: null });
 
     container = document.createElement('div');
@@ -131,7 +186,17 @@ describe('render/freeze renderer actions', () => {
     });
     const surface = container.querySelector('[data-group-id="root"]') as HTMLDivElement;
     Object.defineProperty(surface, 'getBoundingClientRect', {
-      value: () => ({ left: 0, top: 0, right: 800, bottom: 80, width: 800, height: 80, x: 0, y: 0, toJSON: () => undefined }),
+      value: () => ({
+        left: 0,
+        top: 0,
+        right: 800,
+        bottom: 80,
+        width: 800,
+        height: 80,
+        x: 0,
+        y: 0,
+        toJSON: () => undefined,
+      }),
     });
   });
 
@@ -162,10 +227,18 @@ describe('render/freeze renderer actions', () => {
   it('sends selected timeline targets through the freeze IPC action and tracks them in the operation dialog store', async () => {
     const surface = container.querySelector('[data-group-id="root"]') as HTMLDivElement;
     act(() => {
-      surface.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }));
+      surface.dispatchEvent(
+        new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 10,
+          clientY: 10,
+        }),
+      );
     });
-    const action = Array.from(document.querySelectorAll('[role="menuitem"]'))
-      .find((item) => item.textContent?.includes('Freeze/Unfreeze ScoreObjects')) as HTMLElement;
+    const action = Array.from(document.querySelectorAll('[role="menuitem"]')).find((item) =>
+      item.textContent?.includes('Freeze/Unfreeze ScoreObjects'),
+    ) as HTMLElement;
     expect(action).toBeTruthy();
 
     await act(async () => {
@@ -175,10 +248,12 @@ describe('render/freeze renderer actions', () => {
       await Promise.resolve();
     });
 
-    expect(freezeScoreObjects).toHaveBeenCalledWith(expect.objectContaining({
-      operationId: expect.stringMatching(/^freeze-/),
-      targets: [expect.objectContaining({ selectionId: 'score-1', ownerKind: 'timeline' })],
-    }));
+    expect(freezeScoreObjects).toHaveBeenCalledWith(
+      expect.objectContaining({
+        operationId: expect.stringMatching(/^freeze-/),
+        targets: [expect.objectContaining({ selectionId: 'score-1', ownerKind: 'timeline' })],
+      }),
+    );
     const operationId = freezeScoreObjects.mock.calls[0]![0].operationId;
 
     const state = useFreezeOperationStore.getState();
@@ -186,7 +261,12 @@ describe('render/freeze renderer actions', () => {
     expect(state.operationId).toBe(operationId);
     expect(state.phase).toBe('completed');
     expect(state.rows).toEqual([
-      expect.objectContaining({ selectionId: 'score-1', name: 'Freeze me', action: 'freeze', status: 'complete' }),
+      expect.objectContaining({
+        selectionId: 'score-1',
+        name: 'Freeze me',
+        action: 'freeze',
+        status: 'complete',
+      }),
     ]);
 
     // Freeze/unfreeze no longer surfaces toasts; the dialog owns all reporting.
@@ -214,10 +294,18 @@ describe('render/freeze renderer actions', () => {
   it('copies one selected timeline SoundObject into the shared Library clipboard', async () => {
     const surface = container.querySelector('[data-group-id="root"]') as HTMLDivElement;
     act(() => {
-      surface.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }));
+      surface.dispatchEvent(
+        new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 10,
+          clientY: 10,
+        }),
+      );
     });
-    const action = Array.from(document.querySelectorAll('[role="menuitem"]'))
-      .find((item) => item.textContent?.startsWith('Copy')) as HTMLElement;
+    const action = Array.from(document.querySelectorAll('[role="menuitem"]')).find((item) =>
+      item.textContent?.startsWith('Copy'),
+    ) as HTMLElement;
 
     await act(async () => {
       action.click();
@@ -239,10 +327,18 @@ describe('render/freeze renderer actions', () => {
   it('adds the selected timeline SoundObject to the project library without a placeholder alert', async () => {
     const surface = container.querySelector('[data-group-id="root"]') as HTMLDivElement;
     act(() => {
-      surface.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }));
+      surface.dispatchEvent(
+        new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 10,
+          clientY: 10,
+        }),
+      );
     });
-    const action = Array.from(document.querySelectorAll('[role="menuitem"]'))
-      .find((item) => item.textContent === 'Add to Project SoundObjects') as HTMLElement;
+    const action = Array.from(document.querySelectorAll('[role="menuitem"]')).find(
+      (item) => item.textContent === 'Add to Project SoundObjects',
+    ) as HTMLElement;
 
     await act(async () => {
       action.click();
@@ -261,15 +357,18 @@ describe('render/freeze renderer actions', () => {
   it('disables adding an Instance under the context-menu pointer to the project library', async () => {
     const surface = container.querySelector('[data-group-id="root"]') as HTMLDivElement;
     act(() => {
-      surface.dispatchEvent(new MouseEvent('contextmenu', {
-        bubbles: true,
-        cancelable: true,
-        clientX: 210,
-        clientY: 10,
-      }));
+      surface.dispatchEvent(
+        new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 210,
+          clientY: 10,
+        }),
+      );
     });
-    const action = Array.from(document.querySelectorAll('[role="menuitem"]'))
-      .find((item) => item.textContent === 'Add to Project SoundObjects') as HTMLElement;
+    const action = Array.from(document.querySelectorAll('[role="menuitem"]')).find(
+      (item) => item.textContent === 'Add to Project SoundObjects',
+    ) as HTMLElement;
 
     expect(action.classList.contains('editor-context-menu__item')).toBe(true);
     expect(action.closest('.editor-context-menu')).not.toBeNull();
@@ -282,15 +381,29 @@ describe('render/freeze renderer actions', () => {
   });
 
   it('can cancel an in-flight freeze using the renderer-owned operation id', async () => {
-    let finishFreeze!: (value: Awaited<ReturnType<typeof window.blueAPI.freezeScoreObjects>>) => void;
-    freezeScoreObjects.mockReturnValue(new Promise((resolve) => { finishFreeze = resolve; }));
+    let finishFreeze!: (
+      value: Awaited<ReturnType<typeof window.blueAPI.freezeScoreObjects>>,
+    ) => void;
+    freezeScoreObjects.mockReturnValue(
+      new Promise((resolve) => {
+        finishFreeze = resolve;
+      }),
+    );
     const surface = container.querySelector('[data-group-id="root"]') as HTMLDivElement;
 
     act(() => {
-      surface.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }));
+      surface.dispatchEvent(
+        new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 10,
+          clientY: 10,
+        }),
+      );
     });
-    const startAction = Array.from(document.querySelectorAll('[role="menuitem"]'))
-      .find((item) => item.textContent?.includes('Freeze/Unfreeze ScoreObjects')) as HTMLElement;
+    const startAction = Array.from(document.querySelectorAll('[role="menuitem"]')).find((item) =>
+      item.textContent?.includes('Freeze/Unfreeze ScoreObjects'),
+    ) as HTMLElement;
     await act(async () => {
       startAction.click();
       await Promise.resolve();
@@ -309,8 +422,15 @@ describe('render/freeze renderer actions', () => {
 
     await act(async () => {
       finishFreeze({
-        ok: false, operationId: request.operationId, cancelled: true, frozenCount: 0, unfrozenCount: 0,
-        deletedFiles: [], rejectedTargets: [], error: null, project: null,
+        ok: false,
+        operationId: request.operationId,
+        cancelled: true,
+        frozenCount: 0,
+        unfrozenCount: 0,
+        deletedFiles: [],
+        rejectedTargets: [],
+        error: null,
+        project: null,
       });
       await Promise.resolve();
       await Promise.resolve();

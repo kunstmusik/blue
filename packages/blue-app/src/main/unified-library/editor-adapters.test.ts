@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  Effect,
-  GenericInstrument,
-  GenericScore,
-  OpcodeDefinition,
-} from '@blue/data';
+import { Effect, GenericInstrument, GenericScore, OpcodeDefinition } from '@blue/data';
 import { LibraryEditorAdapterRegistry } from './editor-adapters';
 
 describe('Library editor adapters', () => {
@@ -20,10 +15,24 @@ describe('Library editor adapters', () => {
     const soundObject = new GenericScore();
     soundObject.setName('Phrase');
 
-    expect(registry.hydrate('instrument', instrument.saveAsXML().toXml(), 'GenericInstrument', 'supported').kind).toBe('instrument');
-    expect(registry.hydrate('udo', udo.saveAsXML().toXml(), 'OpcodeDefinition', 'supported').kind).toBe('udo');
-    expect(registry.hydrate('effect', effect.saveAsXML().toXml(), 'Effect', 'supported').kind).toBe('effect');
-    expect(registry.hydrate('soundObject', soundObject.saveAsXML().toXml(), 'GenericScore', 'supported').kind).toBe('soundObject');
+    expect(
+      registry.hydrate(
+        'instrument',
+        instrument.saveAsXML().toXml(),
+        'GenericInstrument',
+        'supported',
+      ).kind,
+    ).toBe('instrument');
+    expect(
+      registry.hydrate('udo', udo.saveAsXML().toXml(), 'OpcodeDefinition', 'supported').kind,
+    ).toBe('udo');
+    expect(registry.hydrate('effect', effect.saveAsXML().toXml(), 'Effect', 'supported').kind).toBe(
+      'effect',
+    );
+    expect(
+      registry.hydrate('soundObject', soundObject.saveAsXML().toXml(), 'GenericScore', 'supported')
+        .kind,
+    ).toBe('soundObject');
   });
 
   it('keeps unsupported payload bytes in a read-only document', () => {
@@ -40,11 +49,10 @@ describe('Library editor adapters', () => {
   it('applies typed native patches and returns a refreshed document', () => {
     const udo = new OpcodeDefinition();
     udo.setName('Before');
-    const result = registry.applyPatch(
-      'udo',
-      udo.saveAsXML().toXml(),
-      { kind: 'udo', patch: { type: 'update', index: 0, patch: { name: 'After' } } },
-    );
+    const result = registry.applyPatch('udo', udo.saveAsXML().toXml(), {
+      kind: 'udo',
+      patch: { type: 'update', index: 0, patch: { name: 'After' } },
+    });
     expect(result.document).toMatchObject({ kind: 'udo', snapshot: { name: 'After' } });
     expect(result.payloadXml).toContain('After');
   });
@@ -213,24 +221,20 @@ describe('Library editor adapters', () => {
       expect(doc.snapshot.name).toBe('FM Lead');
     }
 
-    const patched = registry.applyPatch(
-      'instrument',
-      rawXml,
-      {
-        kind: 'instrument',
+    const patched = registry.applyPatch('instrument', rawXml, {
+      kind: 'instrument',
+      patch: {
+        type: 'updateInstrument',
+        assignmentId: 'library-item',
         patch: {
-          type: 'updateInstrument',
-          assignmentId: 'library-item',
-          patch: {
-            blueX7: {
-              type: 'setCommonField',
-              field: 'algorithm',
-              value: 7,
-            },
+          blueX7: {
+            type: 'setCommonField',
+            field: 'algorithm',
+            value: 7,
           },
         },
       },
-    );
+    });
 
     expect(patched.document.kind).toBe('instrument');
     if (patched.document.kind === 'instrument' && patched.document.snapshot.type === 'blueX7') {

@@ -39,7 +39,10 @@ export const SysexImportDialog: React.FC<SysexImportDialogProps> = ({
         aria-modal="true"
         aria-labelledby="sysex-single-title"
       >
-        <div ref={dialogRef} className="flex flex-col w-full max-w-md rounded-lg border border-blue-border bg-blue-bg shadow-xl overflow-hidden">
+        <div
+          ref={dialogRef}
+          className="flex flex-col w-full max-w-md rounded-lg border border-blue-border bg-blue-bg shadow-xl overflow-hidden"
+        >
           <div className="flex items-center justify-between border-b border-blue-border px-4 py-3 bg-blue-surface/40">
             <h2 id="sysex-single-title" className="text-role-title-2 font-bold text-gray-100">
               Import Single DX7 Voice
@@ -56,10 +59,12 @@ export const SysexImportDialog: React.FC<SysexImportDialogProps> = ({
 
           <div className="p-4 space-y-3">
             <p className="text-role-body text-gray-200">
-              Detected single DX7 voice: <strong className="text-blue-accent font-semibold">{state.name}</strong>.
+              Detected single DX7 voice:{' '}
+              <strong className="text-blue-accent font-semibold">{state.name}</strong>.
             </p>
             <p className="text-role-body text-blue-muted">
-              Importing will replace the current BlueX7 voice parameters while preserving instrument metadata.
+              Importing will replace the current BlueX7 voice parameters while preserving instrument
+              metadata.
             </p>
           </div>
 
@@ -98,7 +103,10 @@ export const SysexImportDialog: React.FC<SysexImportDialogProps> = ({
       aria-modal="true"
       aria-labelledby="sysex-bank-title"
     >
-      <div ref={dialogRef} className="flex flex-col max-h-[90vh] w-full max-w-2xl rounded-lg border border-blue-border bg-blue-bg shadow-xl overflow-hidden">
+      <div
+        ref={dialogRef}
+        className="flex flex-col max-h-[90vh] w-full max-w-2xl rounded-lg border border-blue-border bg-blue-bg shadow-xl overflow-hidden"
+      >
         <div className="flex items-center justify-between border-b border-blue-border px-4 py-3 bg-blue-surface/40">
           <div>
             <h2 id="sysex-bank-title" className="text-role-title-2 font-bold text-gray-100">

@@ -15,24 +15,30 @@ import {
   waveColorForBackground,
   fadeColorForBackground,
 } from '../components/workbench/panels/score/bar-renderers/color-utils';
-import { getAudioFadeValue, buildFadePolygon } from '../components/workbench/panels/score/bar-renderers/audio-fade-renderer';
-import { computeThumbnailCache, computeNoteRects } from '../components/workbench/panels/score/bar-renderers/piano-roll-thumbnail-utils';
+import {
+  getAudioFadeValue,
+  buildFadePolygon,
+} from '../components/workbench/panels/score/bar-renderers/audio-fade-renderer';
+import {
+  computeThumbnailCache,
+  computeNoteRects,
+} from '../components/workbench/panels/score/bar-renderers/piano-roll-thumbnail-utils';
 import { computeRepeatMarkers } from '../components/workbench/panels/score/bar-renderers/repeat-marker-utils';
 import { activeRepeatPointBeats as getActiveRepeatPointBeats } from '../components/workbench/panels/score/bar-renderers/ScoreObjectBar';
 import type { AudioFadeType } from '../../shared/project-editor';
 
 describe('color-utils', () => {
   it('argbToRGB strips alpha channel', () => {
-    expect(argbToRGB(0xFF404040)).toBe(0x404040);
-    expect(argbToRGB(0x00FFFFFF)).toBe(0xFFFFFF);
+    expect(argbToRGB(0xff404040)).toBe(0x404040);
+    expect(argbToRGB(0x00ffffff)).toBe(0xffffff);
   });
 
   it('brighten increases RGB values', () => {
     const rgb = 0x808080;
     const brighter = brighten(rgb, 1.5);
-    const r = (brighter >> 16) & 0xFF;
-    const g = (brighter >> 8) & 0xFF;
-    const b = brighter & 0xFF;
+    const r = (brighter >> 16) & 0xff;
+    const g = (brighter >> 8) & 0xff;
+    const b = brighter & 0xff;
     expect(r).toBeGreaterThan(0x80);
     expect(g).toBeGreaterThan(0x80);
     expect(b).toBeGreaterThan(0x80);
@@ -41,33 +47,33 @@ describe('color-utils', () => {
   it('darken decreases RGB values', () => {
     const rgb = 0x808080;
     const darker = darken(rgb, 0.5);
-    const r = (darker >> 16) & 0xFF;
+    const r = (darker >> 16) & 0xff;
     expect(r).toBeLessThan(0x80);
   });
 
   it('isBright detects bright colors', () => {
-    expect(isBright(0xFFFFFF)).toBe(true);
+    expect(isBright(0xffffff)).toBe(true);
     expect(isBright(0x000000)).toBe(false);
     expect(isBright(0x808080)).toBe(false);
   });
 
   it('textColorForBackground returns appropriate contrast', () => {
-    expect(textColorForBackground(0xFFFFFFFF)).toBe('#000000');
-    expect(textColorForBackground(0xFF000000)).toBe('#ffffff');
+    expect(textColorForBackground(0xffffffff)).toBe('#000000');
+    expect(textColorForBackground(0xff000000)).toBe('#ffffff');
   });
 
   it('rgbToCSS formats correctly', () => {
-    expect(rgbToCSS(0xFF0000)).toBe('#ff0000');
+    expect(rgbToCSS(0xff0000)).toBe('#ff0000');
     expect(rgbToCSS(0x000101)).toBe('#000101');
   });
 
   it('waveColorForBackground contrasts', () => {
-    expect(waveColorForBackground(0xFFFFFF)).toBeTruthy();
+    expect(waveColorForBackground(0xffffff)).toBeTruthy();
     expect(waveColorForBackground(0x000000)).toBeTruthy();
   });
 
   it('fadeColorForBackground returns appropriate alpha', () => {
-    expect(fadeColorForBackground(0xFFFFFF)).toBe('rgba(0,0,0,0.251)');
+    expect(fadeColorForBackground(0xffffff)).toBe('rgba(0,0,0,0.251)');
     expect(fadeColorForBackground(0x000000)).toBe('rgba(255,255,255,0.251)');
   });
 
@@ -81,16 +87,16 @@ describe('color-utils', () => {
   });
 
   it('selectedBaseColor matches Java selected background brightening', () => {
-    expect(selectedBaseColor(0xFF404040)).toBe(0x828282);
+    expect(selectedBaseColor(0xff404040)).toBe(0x828282);
   });
 
   it('selectedFillColor uses the brightened color as the gradient base', () => {
-    expect(selectedFillColor(0xFF404040)).toContain('#9c9c9c');
-    expect(selectedFillColor(0xFF404040)).toContain('#828282');
+    expect(selectedFillColor(0xff404040)).toContain('#9c9c9c');
+    expect(selectedFillColor(0xff404040)).toContain('#828282');
   });
 
   it('selectedHeaderColor darkens the selected base color', () => {
-    expect(selectedHeaderColor(0xFF404040)).toBe('#1e1e1e');
+    expect(selectedHeaderColor(0xff404040)).toBe('#1e1e1e');
   });
 });
 
@@ -216,9 +222,7 @@ describe('piano-roll-thumbnail-utils', () => {
   });
 
   it('computeNoteRects REPEAT tiles notes across bar width', () => {
-    const notes = [
-      { octave: 5, scaleDegree: 0, startBeats: 0, durationBeats: 1 },
-    ];
+    const notes = [{ octave: 5, scaleDegree: 0, startBeats: 0, durationBeats: 1 }];
     const cache = computeThumbnailCache(notes, 12)!;
     const rects = computeNoteRects(notes, 12, cache, 'REPEAT', 2, 400, 60, 22, 100);
     expect(rects.length).toBeGreaterThanOrEqual(2);
@@ -226,18 +230,14 @@ describe('piano-roll-thumbnail-utils', () => {
   });
 
   it('computeNoteRects REPEAT_CLASSIC tiles with final truncation', () => {
-    const notes = [
-      { octave: 5, scaleDegree: 0, startBeats: 0, durationBeats: 1 },
-    ];
+    const notes = [{ octave: 5, scaleDegree: 0, startBeats: 0, durationBeats: 1 }];
     const cache = computeThumbnailCache(notes, 12)!;
     const rects = computeNoteRects(notes, 12, cache, 'REPEAT_CLASSIC', 2, 400, 60, 22, 100);
     expect(rects.length).toBeGreaterThanOrEqual(2);
   });
 
   it('computeNoteRects NONE uses raw pixel positioning', () => {
-    const notes = [
-      { octave: 5, scaleDegree: 0, startBeats: 0, durationBeats: 1 },
-    ];
+    const notes = [{ octave: 5, scaleDegree: 0, startBeats: 0, durationBeats: 1 }];
     const cache = computeThumbnailCache(notes, 12)!;
     const rects = computeNoteRects(notes, 12, cache, 'NONE', null, 200, 60, 22, 100);
     expect(rects.length).toBe(1);

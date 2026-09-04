@@ -142,7 +142,7 @@ export class ZakLineObject extends AbstractSoundObject {
           continue;
         }
         if (version === 1) {
-          y = (y * range) + min;
+          y = y * range + min;
         }
         line.points.push({ x, y });
       }
@@ -200,7 +200,8 @@ export class ZakLineObject extends AbstractSoundObject {
     let tableBuffer = '';
 
     const cacheValue = compileData.getCompilationVariable(ZakLineObject.LINE_OBJECT_CACHE);
-    const tableCache = cacheValue instanceof Map ? cacheValue as Map<string, number> : new Map<string, number>();
+    const tableCache =
+      cacheValue instanceof Map ? (cacheValue as Map<string, number>) : new Map<string, number>();
     if (!(cacheValue instanceof Map)) {
       compileData.setCompilationVariable(ZakLineObject.LINE_OBJECT_CACHE, tableCache);
     }

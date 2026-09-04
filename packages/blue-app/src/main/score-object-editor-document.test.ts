@@ -48,7 +48,11 @@ function makeTimelineTarget(
   };
 }
 
-function makeLibRef(libId: string, objectType: string, index: number = 0): ScoreObjectLibraryEntryRef {
+function makeLibRef(
+  libId: string,
+  objectType: string,
+  index: number = 0,
+): ScoreObjectLibraryEntryRef {
   return { libraryId: libId, libraryIndex: index, objectType };
 }
 
@@ -74,7 +78,9 @@ describe('createScoreObjectEditorDocument — code-backed types', () => {
     gs.setScoreText('i1 0 1 440');
     const data = makeDataWithObject(gs);
 
-    const doc = createScoreObjectEditorDocument(data, { target: makeTimelineTarget('GenericScore') });
+    const doc = createScoreObjectEditorDocument(data, {
+      target: makeTimelineTarget('GenericScore'),
+    });
     expect(doc).not.toBeNull();
     expect(doc!.editor.kind).toBe('code');
     if (doc!.editor.kind === 'code') {
@@ -90,7 +96,9 @@ describe('createScoreObjectEditorDocument — code-backed types', () => {
     po.setPythonCode('print("hello")');
     const data = makeDataWithObject(po);
 
-    const doc = createScoreObjectEditorDocument(data, { target: makeTimelineTarget('PythonObject') });
+    const doc = createScoreObjectEditorDocument(data, {
+      target: makeTimelineTarget('PythonObject'),
+    });
     expect(doc).not.toBeNull();
     expect(doc!.editor.kind).toBe('code');
     if (doc!.editor.kind === 'code') {
@@ -105,7 +113,9 @@ describe('createScoreObjectEditorDocument — code-backed types', () => {
     js.setJavaScriptCode('console.log("hi")');
     const data = makeDataWithObject(js);
 
-    const doc = createScoreObjectEditorDocument(data, { target: makeTimelineTarget('JavaScriptObject') });
+    const doc = createScoreObjectEditorDocument(data, {
+      target: makeTimelineTarget('JavaScriptObject'),
+    });
     expect(doc).not.toBeNull();
     expect(doc!.editor.kind).toBe('code');
     if (doc!.editor.kind === 'code') {
@@ -121,7 +131,9 @@ describe('createScoreObjectEditorDocument — code-backed types', () => {
     clj.setOnLoadProcessable(true);
     const data = makeDataWithObject(clj);
 
-    const doc = createScoreObjectEditorDocument(data, { target: makeTimelineTarget('ClojureObject') });
+    const doc = createScoreObjectEditorDocument(data, {
+      target: makeTimelineTarget('ClojureObject'),
+    });
     expect(doc).not.toBeNull();
     expect(doc!.editor.kind).toBe('code');
     if (doc!.editor.kind === 'code') {
@@ -141,7 +153,9 @@ describe('createScoreObjectEditorDocument — code-backed types', () => {
     objectBuilder.setComment('Builder notes');
     const data = makeDataWithObject(objectBuilder);
 
-    const doc = createScoreObjectEditorDocument(data, { target: makeTimelineTarget('ObjectBuilder') });
+    const doc = createScoreObjectEditorDocument(data, {
+      target: makeTimelineTarget('ObjectBuilder'),
+    });
     expect(doc).not.toBeNull();
     expect(doc!.editor.kind).toBe('code');
     if (doc!.editor.kind === 'code') {
@@ -168,7 +182,9 @@ describe('createScoreObjectEditorDocument — code-backed types', () => {
     objectBuilder.setLanguageType(languageType);
     const data = makeDataWithObject(objectBuilder);
 
-    const doc = createScoreObjectEditorDocument(data, { target: makeTimelineTarget('ObjectBuilder') });
+    const doc = createScoreObjectEditorDocument(data, {
+      target: makeTimelineTarget('ObjectBuilder'),
+    });
 
     expect(doc?.editor.kind).toBe('code');
     if (doc?.editor.kind === 'code') {
@@ -218,25 +234,31 @@ describe('createScoreObjectEditorDocument — code-backed types', () => {
     const data = makeDataWithObject(objectBuilder);
     const target = makeTimelineTarget('ObjectBuilder');
 
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'updateTypeSpecificEditor',
-        target,
-        patch: { bsbInterfacePatch: { type: 'addPreset', presetName: 'Quiet' } },
-      },
-    })).toBe(true);
+    expect(
+      applyProjectDocumentPatch(data, {
+        score: {
+          type: 'updateTypeSpecificEditor',
+          target,
+          patch: { bsbInterfacePatch: { type: 'addPreset', presetName: 'Quiet' } },
+        },
+      }),
+    ).toBe(true);
 
     const preset = objectBuilder.getPresetGroup().getPresets()[0];
     expect(preset?.getPresetName()).toBe('Quiet');
     knob.setValue(0.75);
 
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'updateTypeSpecificEditor',
-        target,
-        patch: { bsbInterfacePatch: { type: 'applyPreset', presetUniqueId: preset!.getUniqueId() } },
-      },
-    })).toBe(true);
+    expect(
+      applyProjectDocumentPatch(data, {
+        score: {
+          type: 'updateTypeSpecificEditor',
+          target,
+          patch: {
+            bsbInterfacePatch: { type: 'applyPreset', presetUniqueId: preset!.getUniqueId() },
+          },
+        },
+      }),
+    ).toBe(true);
     expect(knob.value).toBe(0.25);
   });
 
@@ -302,7 +324,9 @@ describe('createScoreObjectEditorDocument — file-backed types', () => {
     fso.setFrozenWaveFileName('freeze0.wav');
     const data = makeDataWithObject(fso);
 
-    const doc = createScoreObjectEditorDocument(data, { target: makeTimelineTarget('FrozenSoundObject') });
+    const doc = createScoreObjectEditorDocument(data, {
+      target: makeTimelineTarget('FrozenSoundObject'),
+    });
     expect(doc).not.toBeNull();
     expect(doc!.editor.kind).toBe('frozenSoundObject');
     if (doc!.editor.kind === 'frozenSoundObject') {
@@ -382,7 +406,9 @@ describe('createScoreObjectEditorDocument — structured types', () => {
     po.setName('Pattern');
     const data = makeDataWithObject(po);
 
-    const doc = createScoreObjectEditorDocument(data, { target: makeTimelineTarget('PatternObject') });
+    const doc = createScoreObjectEditorDocument(data, {
+      target: makeTimelineTarget('PatternObject'),
+    });
     expect(doc).not.toBeNull();
     expect(doc!.editor.kind).toBe('structured');
     if (doc!.editor.kind === 'structured') {
@@ -476,14 +502,18 @@ describe('createScoreObjectEditorDocument — Tier 1: tracker', () => {
 
     const data = makeDataWithObject(to);
 
-    const doc = createScoreObjectEditorDocument(data, { target: makeTimelineTarget('TrackerObject') });
+    const doc = createScoreObjectEditorDocument(data, {
+      target: makeTimelineTarget('TrackerObject'),
+    });
     expect(doc).not.toBeNull();
     expect(doc!.editor.kind).toBe('tracker');
     if (doc!.editor.kind === 'tracker') {
       expect(doc!.editor.tracks.length).toBe(2);
       expect(doc!.editor.tracks[0].trackName).toBe('Track 1');
       expect(doc!.editor.tracks[0].columns.length).toBe(2); // pch, db
-      expect(doc!.editor.tracks[0].columns.map((col) => ({ name: col.name, type: col.type }))).toEqual([
+      expect(
+        doc!.editor.tracks[0].columns.map((col) => ({ name: col.name, type: col.type })),
+      ).toEqual([
         { name: 'pch', type: 0 },
         { name: 'db', type: 4 },
       ]);
@@ -503,7 +533,9 @@ describe('createScoreObjectEditorDocument — Tier 1: tracker', () => {
     to.setName('Empty Tracker');
     const data = makeDataWithObject(to);
 
-    const doc = createScoreObjectEditorDocument(data, { target: makeTimelineTarget('TrackerObject') });
+    const doc = createScoreObjectEditorDocument(data, {
+      target: makeTimelineTarget('TrackerObject'),
+    });
     expect(doc).not.toBeNull();
     expect(doc!.editor.kind).toBe('tracker');
     if (doc!.editor.kind === 'tracker') {
@@ -530,7 +562,11 @@ describe('createScoreObjectEditorDocument — audioClip type', () => {
     alg.push(layer);
     data.getScore().push(alg);
 
-    const target = makeTimelineTarget('AudioClip', { supportsTimeBehavior: false, supportsRepeatPoint: false, supportsNoteProcessorChain: false });
+    const target = makeTimelineTarget('AudioClip', {
+      supportsTimeBehavior: false,
+      supportsRepeatPoint: false,
+      supportsNoteProcessorChain: false,
+    });
     const doc = createScoreObjectEditorDocument(data, { target });
     expect(doc).not.toBeNull();
     expect(doc!.editor.kind).toBe('audioClip');
@@ -569,7 +605,12 @@ describe('createScoreObjectEditorDocument — Instance and library-backed', () =
       editorObjectType: 'GenericScore',
       ownerKind: 'library',
       displayContext: 'instance',
-      sourceInstanceLocation: { rootGroupIndex: 0, containerPath: [], layerIndex: 0, objectIndex: 0 },
+      sourceInstanceLocation: {
+        rootGroupIndex: 0,
+        containerPath: [],
+        layerIndex: 0,
+        objectIndex: 0,
+      },
       library: makeLibRef(libId, 'GenericScore'),
       supportsTimeBehavior: true,
       supportsRepeatPoint: true,
@@ -608,7 +649,12 @@ describe('createScoreObjectEditorDocument — Instance and library-backed', () =
       editorObjectType: 'GenericScore',
       ownerKind: 'library',
       displayContext: 'instance',
-      sourceInstanceLocation: { rootGroupIndex: 0, containerPath: [], layerIndex: 0, objectIndex: 0 },
+      sourceInstanceLocation: {
+        rootGroupIndex: 0,
+        containerPath: [],
+        layerIndex: 0,
+        objectIndex: 0,
+      },
       supportsTimeBehavior: true,
       supportsRepeatPoint: true,
       supportsNoteProcessorChain: true,
@@ -641,7 +687,9 @@ describe('createScoreObjectEditorDocument — shared properties completeness', (
     gs.setScoreText('i1 0 1 440');
     const data = makeDataWithObject(gs);
 
-    const doc = createScoreObjectEditorDocument(data, { target: makeTimelineTarget('GenericScore') });
+    const doc = createScoreObjectEditorDocument(data, {
+      target: makeTimelineTarget('GenericScore'),
+    });
     expect(doc!.shared.timeBehavior).toBeDefined();
     expect(doc!.shared.repeatPoint).toBeDefined();
     expect(doc!.shared.noteProcessorChain).toBeDefined();
@@ -656,7 +704,11 @@ describe('createScoreObjectEditorDocument — shared properties completeness', (
     alg.push(layer);
     data.getScore().push(alg);
 
-    const target = makeTimelineTarget('AudioClip', { supportsTimeBehavior: false, supportsRepeatPoint: false, supportsNoteProcessorChain: false });
+    const target = makeTimelineTarget('AudioClip', {
+      supportsTimeBehavior: false,
+      supportsRepeatPoint: false,
+      supportsNoteProcessorChain: false,
+    });
     const doc = createScoreObjectEditorDocument(data, { target });
     expect(doc!.shared.timeBehavior).toBeUndefined();
     expect(doc!.shared.repeatPoint).toBeUndefined();

@@ -55,10 +55,7 @@ export class OscControlService {
   private shuttingDown = false;
   private snapshot: OscServerRuntimeSnapshot;
 
-  constructor(
-    preferences: OscServerPreferences,
-    deps: OscControlServiceDeps = {},
-  ) {
+  constructor(preferences: OscServerPreferences, deps: OscControlServiceDeps = {}) {
     this.socketFactory = deps.socketFactory ?? (() => createSocket('udp4'));
     this.decoder = deps.decoder ?? decode;
     this.now = deps.now ?? (() => new Date());

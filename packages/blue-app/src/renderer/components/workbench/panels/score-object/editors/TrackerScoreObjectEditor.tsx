@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { cn } from '../../../../../lib/cn';
-import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../../hooks/host-portals';
+import {
+  PopoutContextMenuPortal,
+  portalEventIsolationProps,
+} from '../../../../../hooks/host-portals';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { X, ArrowUp, ArrowDown, HelpCircle } from 'lucide-react';
 import type { ScoreObjectEditorComponentProps } from '../editor-registry';
@@ -44,13 +47,35 @@ interface NoteSnapshot {
 type TrackerScaleSnapshot = NonNullable<TrackerColumnSnapshot['scale']>;
 
 const KEYBOARD_NOTE_MAP: Array<[string, number]> = [
-  ['z', 0], ['s', 1], ['x', 2], ['d', 3], ['c', 4],
-  ['v', 5], ['g', 6], ['b', 7], ['h', 8], ['n', 9],
-  ['j', 10], ['m', 11],
-  ['q', 12], ['2', 13], ['w', 14], ['3', 15], ['e', 16],
-  ['r', 17], ['5', 18], ['t', 19], ['6', 20], ['y', 21],
-  ['7', 22], ['u', 23], ['i', 24], ['9', 25], ['o', 26],
-  ['0', 27], ['p', 28],
+  ['z', 0],
+  ['s', 1],
+  ['x', 2],
+  ['d', 3],
+  ['c', 4],
+  ['v', 5],
+  ['g', 6],
+  ['b', 7],
+  ['h', 8],
+  ['n', 9],
+  ['j', 10],
+  ['m', 11],
+  ['q', 12],
+  ['2', 13],
+  ['w', 14],
+  ['3', 15],
+  ['e', 16],
+  ['r', 17],
+  ['5', 18],
+  ['t', 19],
+  ['6', 20],
+  ['y', 21],
+  ['7', 22],
+  ['u', 23],
+  ['i', 24],
+  ['9', 25],
+  ['o', 26],
+  ['0', 27],
+  ['p', 28],
 ];
 
 const COL_TYPE_PCH = 0;
@@ -59,17 +84,26 @@ const COL_TYPE_MIDI = 2;
 const COL_TYPE_STR = 3;
 const COL_TYPE_NUM = 4;
 
-const TRACKER_MODAL_PANEL_CLASS = 'flex flex-col rounded-lg border border-app-border bg-app-menu shadow-2xl overflow-hidden';
-const TRACKER_MODAL_HEADER_CLASS = 'flex items-center justify-between border-b border-app-border px-4 py-3 bg-app-bg';
+const TRACKER_MODAL_PANEL_CLASS =
+  'flex flex-col rounded-lg border border-app-border bg-app-menu shadow-2xl overflow-hidden';
+const TRACKER_MODAL_HEADER_CLASS =
+  'flex items-center justify-between border-b border-app-border px-4 py-3 bg-app-bg';
 const TRACKER_MODAL_TITLE_CLASS = 'text-role-title-2 font-bold text-app-text-strong';
-const TRACKER_MODAL_CLOSE_BUTTON_CLASS = 'rounded p-1 text-app-text-muted hover:bg-app-hover hover:text-app-text-strong';
-const TRACKER_MODAL_FOOTER_CLASS = 'flex justify-end gap-2 border-t border-app-border px-4 py-3 bg-app-bg';
-const TRACKER_PRIMARY_BUTTON_CLASS = 'rounded bg-app-accent px-4 py-1.5 text-role-body text-app-text-strong hover:bg-app-accent-hover';
-const TRACKER_SECONDARY_BUTTON_CLASS = 'rounded border border-app-border bg-app-surface px-4 py-1.5 text-role-body text-app-text transition-colors hover:bg-app-hover';
-const TRACKER_SECTION_LABEL_CLASS = 'text-role-headline font-bold uppercase tracking-wider text-app-text-muted';
-export const TRACKER_FIELD_CLASS = 'rounded border border-app-border bg-app-input px-2 py-1 text-role-body text-app-text-strong focus:border-app-accent focus:outline-none';
+const TRACKER_MODAL_CLOSE_BUTTON_CLASS =
+  'rounded p-1 text-app-text-muted hover:bg-app-hover hover:text-app-text-strong';
+const TRACKER_MODAL_FOOTER_CLASS =
+  'flex justify-end gap-2 border-t border-app-border px-4 py-3 bg-app-bg';
+const TRACKER_PRIMARY_BUTTON_CLASS =
+  'rounded bg-app-accent px-4 py-1.5 text-role-body text-app-text-strong hover:bg-app-accent-hover';
+const TRACKER_SECONDARY_BUTTON_CLASS =
+  'rounded border border-app-border bg-app-surface px-4 py-1.5 text-role-body text-app-text transition-colors hover:bg-app-hover';
+const TRACKER_SECTION_LABEL_CLASS =
+  'text-role-headline font-bold uppercase tracking-wider text-app-text-muted';
+export const TRACKER_FIELD_CLASS =
+  'rounded border border-app-border bg-app-input px-2 py-1 text-role-body text-app-text-strong focus:border-app-accent focus:outline-none';
 export const TRACKER_MONO_FIELD_CLASS = cn(TRACKER_FIELD_CLASS, 'font-mono');
-const TRACKER_CHECKBOX_CLASS = 'rounded border-app-border bg-app-input accent-app-accent focus:ring-0';
+const TRACKER_CHECKBOX_CLASS =
+  'rounded border-app-border bg-app-input accent-app-accent focus:ring-0';
 const TRACKER_PANEL_ACTIVE_CLASS = 'border-app-border bg-app-canvas';
 const TRACKER_PANEL_INACTIVE_CLASS = 'border-app-border/40 bg-app-overlay opacity-60';
 
@@ -87,9 +121,9 @@ function cloneTrackerColumnSnapshot(column: TrackerColumnSnapshot): TrackerColum
     ...column,
     scale: column.scale
       ? {
-        ...column.scale,
-        ratios: Array.isArray(column.scale.ratios) ? [...column.scale.ratios] : [],
-      }
+          ...column.scale,
+          ratios: Array.isArray(column.scale.ratios) ? [...column.scale.ratios] : [],
+        }
       : null,
   };
 }
@@ -121,9 +155,10 @@ function computeKeyboardNoteValue(
       return `${oct}.${pchStr}`;
     }
     case COL_TYPE_BLUE_PCH: {
-      const scaleDegrees = column?.scale?.ratios?.length && column.scale.ratios.length > 0
-        ? column.scale.ratios.length
-        : 12;
+      const scaleDegrees =
+        column?.scale?.ratios?.length && column.scale.ratios.length > 0
+          ? column.scale.ratios.length
+          : 12;
       const base = (8 + octaveOffset) * scaleDegrees + semitoneOffset;
       const oct = Math.floor(base / scaleDegrees);
       const degree = base % scaleDegrees;
@@ -203,11 +238,7 @@ function ShortcutHelpModal({ onClose }: { onClose: () => void }): React.ReactEle
       <div className={cn(TRACKER_MODAL_PANEL_CLASS, 'w-105')}>
         <div className={TRACKER_MODAL_HEADER_CLASS}>
           <h2 className={TRACKER_MODAL_TITLE_CLASS}>Keyboard Shortcuts</h2>
-          <button
-            className={TRACKER_MODAL_CLOSE_BUTTON_CLASS}
-            onClick={onClose}
-            aria-label="Close"
-          >
+          <button className={TRACKER_MODAL_CLOSE_BUTTON_CLASS} onClick={onClose} aria-label="Close">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -232,10 +263,7 @@ function ShortcutHelpModal({ onClose }: { onClose: () => void }): React.ReactEle
           </table>
         </div>
         <div className={TRACKER_MODAL_FOOTER_CLASS}>
-          <button
-            className={TRACKER_PRIMARY_BUTTON_CLASS}
-            onClick={onClose}
-          >
+          <button className={TRACKER_PRIMARY_BUTTON_CLASS} onClick={onClose}>
             Close
           </button>
         </div>
@@ -343,7 +371,9 @@ function ColumnConfigModal({
   onClose: () => void;
   onSave: (column: TrackerColumnSnapshot) => void;
 }): React.ReactElement {
-  const [draft, setDraft] = useState<TrackerColumnSnapshot>(() => cloneTrackerColumnSnapshot(column));
+  const [draft, setDraft] = useState<TrackerColumnSnapshot>(() =>
+    cloneTrackerColumnSnapshot(column),
+  );
   const [baseFreqText, setBaseFreqText] = useState(
     formatCompactNumber(column.scale?.baseFrequency ?? 261.625565),
   );
@@ -410,7 +440,9 @@ function ColumnConfigModal({
       ...draft,
       rangeMin,
       rangeMax,
-      scale: draft.scale ? { ...draft.scale, ratios: [...draft.scale.ratios] } : createDefaultScaleSnapshot(),
+      scale: draft.scale
+        ? { ...draft.scale, ratios: [...draft.scale.ratios] }
+        : createDefaultScaleSnapshot(),
     });
   };
 
@@ -429,11 +461,7 @@ function ColumnConfigModal({
       <div className={cn(TRACKER_MODAL_PANEL_CLASS, 'w-130')}>
         <div className={TRACKER_MODAL_HEADER_CLASS}>
           <h3 className={TRACKER_MODAL_TITLE_CLASS}>Column Configuration</h3>
-          <button
-            className={TRACKER_MODAL_CLOSE_BUTTON_CLASS}
-            onClick={onClose}
-            aria-label="Close"
-          >
+          <button className={TRACKER_MODAL_CLOSE_BUTTON_CLASS} onClick={onClose} aria-label="Close">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -465,7 +493,12 @@ function ColumnConfigModal({
             </div>
           </div>
 
-          <div className={cn('flex flex-col gap-2 rounded border p-3', isBluePch ? TRACKER_PANEL_ACTIVE_CLASS : TRACKER_PANEL_INACTIVE_CLASS)}>
+          <div
+            className={cn(
+              'flex flex-col gap-2 rounded border p-3',
+              isBluePch ? TRACKER_PANEL_ACTIVE_CLASS : TRACKER_PANEL_INACTIVE_CLASS,
+            )}
+          >
             <div className={TRACKER_SECTION_LABEL_CLASS}>Blue PCH</div>
             <div className="flex items-center gap-2">
               <span className="w-20 text-role-body text-app-text-muted">Scale</span>
@@ -504,13 +537,20 @@ function ColumnConfigModal({
                 className="accent-app-accent"
                 checked={draft.outputFrequency}
                 disabled={!isBluePch}
-                onChange={(e) => setDraft((prev) => ({ ...prev, outputFrequency: e.target.checked }))}
+                onChange={(e) =>
+                  setDraft((prev) => ({ ...prev, outputFrequency: e.target.checked }))
+                }
               />
               Output Frequencies
             </label>
           </div>
 
-          <div className={cn('flex flex-col gap-2 rounded border p-3', isNumber ? TRACKER_PANEL_ACTIVE_CLASS : TRACKER_PANEL_INACTIVE_CLASS)}>
+          <div
+            className={cn(
+              'flex flex-col gap-2 rounded border p-3',
+              isNumber ? TRACKER_PANEL_ACTIVE_CLASS : TRACKER_PANEL_INACTIVE_CLASS,
+            )}
+          >
             <div className={TRACKER_SECTION_LABEL_CLASS}>Number</div>
             <label className="flex items-center gap-2 text-role-body text-app-text">
               <input
@@ -573,16 +613,10 @@ function ColumnConfigModal({
           </div>
         </div>
         <div className={TRACKER_MODAL_FOOTER_CLASS}>
-          <button
-            className={TRACKER_SECONDARY_BUTTON_CLASS}
-            onClick={onClose}
-          >
+          <button className={TRACKER_SECONDARY_BUTTON_CLASS} onClick={onClose}>
             Cancel
           </button>
-          <button
-            className={TRACKER_PRIMARY_BUTTON_CLASS}
-            onClick={handleSave}
-          >
+          <button className={TRACKER_PRIMARY_BUTTON_CLASS} onClick={handleSave}>
             Save
           </button>
         </div>
@@ -638,7 +672,9 @@ export function TrackPropertiesModal({
 
   const handleRemoveColumn = (index: number) => {
     setColumns((prev) => prev.filter((_, i) => i !== index));
-    setEditingColumnIndex((prev) => (prev === index ? null : prev !== null && prev > index ? prev - 1 : prev));
+    setEditingColumnIndex((prev) =>
+      prev === index ? null : prev !== null && prev > index ? prev - 1 : prev,
+    );
   };
 
   const moveColumn = (index: number, direction: -1 | 1) => {
@@ -650,18 +686,24 @@ export function TrackPropertiesModal({
       next.splice(nextIndex, 0, moving);
       return next;
     });
-    setEditingColumnIndex((prev) => (prev === index ? nextIndex : prev === nextIndex ? index : prev));
+    setEditingColumnIndex((prev) =>
+      prev === index ? nextIndex : prev === nextIndex ? index : prev,
+    );
   };
 
   const handleColumnNameChange = (index: number, nextName: string) => {
-    setColumns((prev) => prev.map((column, i) => (i === index ? { ...column, name: nextName } : column)));
+    setColumns((prev) =>
+      prev.map((column, i) => (i === index ? { ...column, name: nextName } : column)),
+    );
   };
 
   const handleColumnConfigSave = (nextColumn: TrackerColumnSnapshot) => {
     if (editingColumnIndex === null) return;
-    setColumns((prev) => prev.map((column, index) => (
-      index === editingColumnIndex ? cloneTrackerColumnSnapshot(nextColumn) : column
-    )));
+    setColumns((prev) =>
+      prev.map((column, index) =>
+        index === editingColumnIndex ? cloneTrackerColumnSnapshot(nextColumn) : column,
+      ),
+    );
     setEditingColumnIndex(null);
   };
 
@@ -675,11 +717,7 @@ export function TrackPropertiesModal({
       <div className={cn(TRACKER_MODAL_PANEL_CLASS, 'w-190')}>
         <div className={TRACKER_MODAL_HEADER_CLASS}>
           <h2 className={TRACKER_MODAL_TITLE_CLASS}>Track Properties</h2>
-          <button
-            className={TRACKER_MODAL_CLOSE_BUTTON_CLASS}
-            onClick={onClose}
-            aria-label="Close"
-          >
+          <button className={TRACKER_MODAL_CLOSE_BUTTON_CLASS} onClick={onClose} aria-label="Close">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -727,10 +765,15 @@ export function TrackPropertiesModal({
             </div>
             <div className="flex flex-col gap-2 rounded border border-app-border/40 bg-black p-2">
               {columns.length === 0 && (
-                <div className="py-2 text-center text-role-body text-app-text-muted">No data columns</div>
+                <div className="py-2 text-center text-role-body text-app-text-muted">
+                  No data columns
+                </div>
               )}
               {columns.map((column, index) => (
-                <div key={index} className="group grid grid-cols-[minmax(0,1fr)_280px_auto] items-center gap-2 rounded border border-app-border/20 bg-app-canvas px-2 py-1.5">
+                <div
+                  key={index}
+                  className="group grid grid-cols-[minmax(0,1fr)_280px_auto] items-center gap-2 rounded border border-app-border/20 bg-app-canvas px-2 py-1.5"
+                >
                   <input
                     type="text"
                     placeholder="Name"
@@ -780,10 +823,7 @@ export function TrackPropertiesModal({
           </div>
         </div>
         <div className={TRACKER_MODAL_FOOTER_CLASS}>
-          <button
-            className={TRACKER_SECONDARY_BUTTON_CLASS}
-            onClick={onClose}
-          >
+          <button className={TRACKER_SECONDARY_BUTTON_CLASS} onClick={onClose}>
             Cancel
           </button>
           <button
@@ -831,14 +871,8 @@ export default function TrackerScoreObjectEditor({
   const [localSteps, setLocalSteps] = useState<string>(String(editor.steps));
   const [useKeyboardNotes, setUseKeyboardNotes] = useState(editor.showNoteNames);
   const [draftCells, setDraftCells] = useState<Record<string, string>>({});
-  const {
-    testing,
-    testOutput,
-    testError,
-    runTest,
-    clearTestOutput,
-    clearTestError,
-  } = useScoreObjectTest(scoreDocument.target);
+  const { testing, testOutput, testError, runTest, clearTestOutput, clearTestError } =
+    useScoreObjectTest(scoreDocument.target);
   const gridRef = useRef<HTMLTableElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   // Keyboard focus ('?' shortcut) must be observed in the hosting window and
@@ -930,39 +964,44 @@ export default function TrackerScoreObjectEditor({
     });
   }, []);
 
-  const getRowFieldValue = useCallback((trackIndex: number, columnIndex: number, stepIndex: number): string => {
-    const row = editor.rows[stepIndex];
-    return row ? normalizeVisualOnlyTrackerValue(String(row[`track-${trackIndex}-col-${columnIndex}`] ?? '')) : '';
-  }, [editor.rows]);
+  const getRowFieldValue = useCallback(
+    (trackIndex: number, columnIndex: number, stepIndex: number): string => {
+      const row = editor.rows[stepIndex];
+      return row
+        ? normalizeVisualOnlyTrackerValue(
+            String(row[`track-${trackIndex}-col-${columnIndex}`] ?? ''),
+          )
+        : '';
+    },
+    [editor.rows],
+  );
 
-  const commitCellEdit = useCallback((
-    trackIndex: number,
-    columnIndex: number,
-    stepIndex: number,
-    liveValue?: string,
-  ) => {
-    if (columnIndex < 0) return;
-    const key = getCellKey(trackIndex, columnIndex, stepIndex);
-    const draft = liveValue ?? draftCellsRef.current[key];
-    if (draft === undefined) return;
+  const commitCellEdit = useCallback(
+    (trackIndex: number, columnIndex: number, stepIndex: number, liveValue?: string) => {
+      if (columnIndex < 0) return;
+      const key = getCellKey(trackIndex, columnIndex, stepIndex);
+      const draft = liveValue ?? draftCellsRef.current[key];
+      if (draft === undefined) return;
 
-    const track = editor.tracks[trackIndex];
-    const colDef = track?.columns?.[columnIndex];
-    const currentValue = getRowFieldValue(trackIndex, columnIndex, stepIndex);
-    const proposed = normalizeVisualOnlyTrackerValue(draft);
-    const valid = colDef ? isTrackerValueValid(proposed, colDef) : true;
+      const track = editor.tracks[trackIndex];
+      const colDef = track?.columns?.[columnIndex];
+      const currentValue = getRowFieldValue(trackIndex, columnIndex, stepIndex);
+      const proposed = normalizeVisualOnlyTrackerValue(draft);
+      const valid = colDef ? isTrackerValueValid(proposed, colDef) : true;
 
-    // Java parity: invalid edits never commit and should revert to last good value.
-    if (!valid) {
+      // Java parity: invalid edits never commit and should revert to last good value.
+      if (!valid) {
+        clearDraftCellValue(key);
+        return;
+      }
+
+      if (proposed !== currentValue) {
+        patch({ updateTrackCell: { trackIndex, columnIndex, stepIndex, value: proposed } });
+      }
       clearDraftCellValue(key);
-      return;
-    }
-
-    if (proposed !== currentValue) {
-      patch({ updateTrackCell: { trackIndex, columnIndex, stepIndex, value: proposed } });
-    }
-    clearDraftCellValue(key);
-  }, [clearDraftCellValue, editor.tracks, getRowFieldValue, patch]);
+    },
+    [clearDraftCellValue, editor.tracks, getRowFieldValue, patch],
+  );
 
   const handleCellChange = useCallback(
     (trackIndex: number, columnIndex: number, stepIndex: number, value: string) => {
@@ -1023,7 +1062,9 @@ export default function TrackerScoreObjectEditor({
       if (track && row) {
         const numCols = track.columns?.length ?? 0;
         for (let ci = 0; ci < numCols; ci++) {
-          fields.push(normalizeVisualOnlyTrackerValue(String(row[`track-${trackIndex}-col-${ci}`] ?? '')));
+          fields.push(
+            normalizeVisualOnlyTrackerValue(String(row[`track-${trackIndex}-col-${ci}`] ?? '')),
+          );
         }
       }
       const status = row ? String(row[`track-${trackIndex}-status`] ?? '') : '';
@@ -1037,11 +1078,13 @@ export default function TrackerScoreObjectEditor({
   );
   const toTrackerActionBuffer = useCallback(
     (notes: NoteSnapshot[]): Array<Array<NoteSnapshot>> =>
-      notes.map((note) => [{
-        tied: note.tied,
-        off: note.off,
-        fields: [...note.fields],
-      }]),
+      notes.map((note) => [
+        {
+          tied: note.tied,
+          off: note.off,
+          fields: [...note.fields],
+        },
+      ]),
     [],
   );
 
@@ -1255,7 +1298,11 @@ export default function TrackerScoreObjectEditor({
             return;
           }
           const colType = colDef.type;
-          if (colType !== COL_TYPE_PCH && colType !== COL_TYPE_BLUE_PCH && colType !== COL_TYPE_MIDI) {
+          if (
+            colType !== COL_TYPE_PCH &&
+            colType !== COL_TYPE_BLUE_PCH &&
+            colType !== COL_TYPE_MIDI
+          ) {
             // Match Java tracker behavior: mapped note keys are consumed while keyboard mode is on.
             e.preventDefault();
             return;
@@ -1281,7 +1328,11 @@ export default function TrackerScoreObjectEditor({
         }
         if (colDef) {
           const colType = colDef.type;
-          if (colType === COL_TYPE_PCH || colType === COL_TYPE_BLUE_PCH || colType === COL_TYPE_MIDI) {
+          if (
+            colType === COL_TYPE_PCH ||
+            colType === COL_TYPE_BLUE_PCH ||
+            colType === COL_TYPE_MIDI
+          ) {
             if (e.key.length === 1) {
               e.preventDefault();
               return;
@@ -1297,17 +1348,20 @@ export default function TrackerScoreObjectEditor({
       switch (e.key) {
         case 'ArrowUp':
           e.preventDefault();
-          if (columnIndex >= 0) commitCellEdit(trackIndex, columnIndex, stepIndex, e.currentTarget.value);
+          if (columnIndex >= 0)
+            commitCellEdit(trackIndex, columnIndex, stepIndex, e.currentTarget.value);
           nextStep = Math.max(0, stepIndex - 1);
           break;
         case 'ArrowDown':
           e.preventDefault();
-          if (columnIndex >= 0) commitCellEdit(trackIndex, columnIndex, stepIndex, e.currentTarget.value);
+          if (columnIndex >= 0)
+            commitCellEdit(trackIndex, columnIndex, stepIndex, e.currentTarget.value);
           nextStep = Math.min(totalSteps - 1, stepIndex + 1);
           break;
         case 'ArrowLeft':
           e.preventDefault();
-          if (columnIndex >= 0) commitCellEdit(trackIndex, columnIndex, stepIndex, e.currentTarget.value);
+          if (columnIndex >= 0)
+            commitCellEdit(trackIndex, columnIndex, stepIndex, e.currentTarget.value);
           nextCol = columnIndex - 1;
           if (nextCol < -1) {
             if (trackIndex > 0) {
@@ -1321,7 +1375,8 @@ export default function TrackerScoreObjectEditor({
           break;
         case 'ArrowRight':
           e.preventDefault();
-          if (columnIndex >= 0) commitCellEdit(trackIndex, columnIndex, stepIndex, e.currentTarget.value);
+          if (columnIndex >= 0)
+            commitCellEdit(trackIndex, columnIndex, stepIndex, e.currentTarget.value);
           nextCol = columnIndex + 1;
           const currentTrackCols = editor.tracks[trackIndex].columns?.length ?? 0;
           if (nextCol >= currentTrackCols) {
@@ -1334,7 +1389,8 @@ export default function TrackerScoreObjectEditor({
           }
           break;
         case 'Tab':
-          if (columnIndex >= 0) commitCellEdit(trackIndex, columnIndex, stepIndex, e.currentTarget.value);
+          if (columnIndex >= 0)
+            commitCellEdit(trackIndex, columnIndex, stepIndex, e.currentTarget.value);
           return;
         default:
           return;
@@ -1356,39 +1412,42 @@ export default function TrackerScoreObjectEditor({
     ],
   );
 
-  const handleGridKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.target !== e.currentTarget || editor.rows.length === 0 || editor.tracks.length === 0) {
-      return;
-    }
-    const active = activeCellRef.current;
-    const trackIndex = Math.max(0, Math.min(editor.tracks.length - 1, active.trackIndex));
-    const stepIndex = Math.max(0, Math.min(editor.rows.length - 1, active.stepIndex));
+  const handleGridKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (e.target !== e.currentTarget || editor.rows.length === 0 || editor.tracks.length === 0) {
+        return;
+      }
+      const active = activeCellRef.current;
+      const trackIndex = Math.max(0, Math.min(editor.tracks.length - 1, active.trackIndex));
+      const stepIndex = Math.max(0, Math.min(editor.rows.length - 1, active.stepIndex));
 
-    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-      e.preventDefault();
-      const delta = e.key === 'ArrowUp' ? -1 : 1;
-      focusCell(
-        gridRef,
-        trackIndex,
-        active.columnIndex,
-        Math.max(0, Math.min(editor.rows.length - 1, stepIndex + delta)),
-      );
-      return;
-    }
-
-    if (e.code === 'Space') {
-      e.preventDefault();
-      e.stopPropagation();
-      patch({
-        trackerAction: {
-          type: 'toggleTie',
+      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        const delta = e.key === 'ArrowUp' ? -1 : 1;
+        focusCell(
+          gridRef,
           trackIndex,
-          stepIndex,
-          columnIndex: -1,
-        },
-      });
-    }
-  }, [editor.rows.length, editor.tracks.length, patch]);
+          active.columnIndex,
+          Math.max(0, Math.min(editor.rows.length - 1, stepIndex + delta)),
+        );
+        return;
+      }
+
+      if (e.code === 'Space') {
+        e.preventDefault();
+        e.stopPropagation();
+        patch({
+          trackerAction: {
+            type: 'toggleTie',
+            trackIndex,
+            stepIndex,
+            columnIndex: -1,
+          },
+        });
+      }
+    },
+    [editor.rows.length, editor.tracks.length, patch],
+  );
 
   const handleSelectTrack = useCallback((index: number) => {
     setSelectedTrack(index);
@@ -1423,7 +1482,6 @@ export default function TrackerScoreObjectEditor({
   return (
     <div ref={rootRef} className="flex h-full flex-col bg-app-bg select-none">
       <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-app-border bg-app-bg px-3 py-1.5">
-
         <button
           className="rounded border border-app-border px-2 py-0.5 text-role-body font-medium text-app-text-muted hover:bg-app-outline-strong"
           onClick={handleAddTrack}
@@ -1486,7 +1544,9 @@ export default function TrackerScoreObjectEditor({
         <button
           className="ml-auto rounded border border-app-accent/40 bg-app-accent/20 px-3 py-0.5 text-role-body font-bold text-app-accent hover:bg-app-accent/30 disabled:opacity-40"
           disabled={!editor.canTest || testing}
-          onClick={() => { void runTest(); }}
+          onClick={() => {
+            void runTest();
+          }}
           title="Generate score from tracker and show results"
         >
           {testing ? 'TESTING...' : 'TEST'}
@@ -1523,7 +1583,15 @@ export default function TrackerScoreObjectEditor({
             className="border-collapse text-role-body w-auto"
             style={{ tableLayout: 'fixed' }}
           >
-            <colgroup><col style={{ width: 44 }} />{editor.tracks.map((t) => [<col key={`${t.trackId}-status`} style={{ width: 24 }} />, ...(t.columns ?? []).map((_, ci) => <col key={`${t.trackId}-col-${ci}`} style={{ width: 64 }} />)])}</colgroup>
+            <colgroup>
+              <col style={{ width: 44 }} />
+              {editor.tracks.map((t) => [
+                <col key={`${t.trackId}-status`} style={{ width: 24 }} />,
+                ...(t.columns ?? []).map((_, ci) => (
+                  <col key={`${t.trackId}-col-${ci}`} style={{ width: 64 }} />
+                )),
+              ])}
+            </colgroup>
             <thead className="sticky top-0 z-20 bg-app-bg">
               <tr className="border-b border-app-border">
                 <th className="border-r border-app-border/40 px-1 py-1 text-center font-bold text-app-text-muted"></th>
@@ -1545,7 +1613,10 @@ export default function TrackerScoreObjectEditor({
                       </th>
                     </ContextMenu.Trigger>
                     <PopoutContextMenuPortal>
-                      <ContextMenu.Content className="editor-context-menu" {...portalEventIsolationProps}>
+                      <ContextMenu.Content
+                        className="editor-context-menu"
+                        {...portalEventIsolationProps}
+                      >
                         <ContextMenu.Item
                           className="editor-context-menu__item"
                           onSelect={() => handleDuplicateTrack(ti)}
@@ -1630,27 +1701,35 @@ export default function TrackerScoreObjectEditor({
                                 statusVal === '-'
                                   ? 'text-app-accent'
                                   : statusVal === 'OFF'
-                                  ? 'text-app-danger'
-                                  : 'text-app-text-subtle',
+                                    ? 'text-app-danger'
+                                    : 'text-app-text-subtle',
                               )}
                               value={statusVal}
                               placeholder="."
                               readOnly
                               onFocus={() => {
-                                activeCellRef.current = { trackIndex: ti, columnIndex: -1, stepIndex: ri };
+                                activeCellRef.current = {
+                                  trackIndex: ti,
+                                  columnIndex: -1,
+                                  stepIndex: ri,
+                                };
                               }}
                               onKeyDown={(e) => handleKeyDown(e, ti, -1, ri)}
                               spellCheck={false}
                             />
                           </td>
                           {(track.columns ?? []).map((colDef, ci) => {
-                            const cellValue = statusVal === 'OFF'
-                              ? 'OFF'
-                              : normalizeVisualOnlyTrackerValue(String(row[`track-${ti}-col-${ci}`] ?? ''));
+                            const cellValue =
+                              statusVal === 'OFF'
+                                ? 'OFF'
+                                : normalizeVisualOnlyTrackerValue(
+                                    String(row[`track-${ti}-col-${ci}`] ?? ''),
+                                  );
                             const key = getCellKey(ti, ci, ri);
                             const draftValue = draftCells[key];
                             const shownValue = draftValue ?? cellValue;
-                            const isInvalid = draftValue !== undefined && !isTrackerValueValid(draftValue, colDef);
+                            const isInvalid =
+                              draftValue !== undefined && !isTrackerValueValid(draftValue, colDef);
                             return (
                               <td key={ci} className="border-r border-app-border/20 px-0 py-0">
                                 <input
@@ -1666,7 +1745,11 @@ export default function TrackerScoreObjectEditor({
                                   placeholder={ci === 0 ? '...' : '---'}
                                   readOnly={statusVal === 'OFF'}
                                   onFocus={(e) => {
-                                    activeCellRef.current = { trackIndex: ti, columnIndex: ci, stepIndex: ri };
+                                    activeCellRef.current = {
+                                      trackIndex: ti,
+                                      columnIndex: ci,
+                                      stepIndex: ri,
+                                    };
                                     const current = e.currentTarget.value.trim();
                                     if (current === '...' || current === '---') {
                                       handleCellChange(ti, ci, ri, '');
@@ -1693,7 +1776,12 @@ export default function TrackerScoreObjectEditor({
       {testError && (
         <div className="flex shrink-0 items-center gap-2 border-b border-app-danger/30 bg-app-danger/15 px-3 py-1.5 text-role-body text-app-danger">
           <span>Error: {testError}</span>
-          <button className="underline text-app-text-muted hover:text-app-text" onClick={clearTestError}>dismiss</button>
+          <button
+            className="underline text-app-text-muted hover:text-app-text"
+            onClick={clearTestError}
+          >
+            dismiss
+          </button>
         </div>
       )}
 
@@ -1704,12 +1792,8 @@ export default function TrackerScoreObjectEditor({
           onSave={handleSaveTrackProperties}
         />
       )}
-      {showShortcutHelp && (
-        <ShortcutHelpModal onClose={() => setShowShortcutHelp(false)} />
-      )}
-      {testOutput !== null && (
-        <GeneratedScoreModal text={testOutput} onClose={clearTestOutput} />
-      )}
+      {showShortcutHelp && <ShortcutHelpModal onClose={() => setShowShortcutHelp(false)} />}
+      {testOutput !== null && <GeneratedScoreModal text={testOutput} onClose={clearTestOutput} />}
     </div>
   );
 }

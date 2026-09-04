@@ -103,12 +103,13 @@ export function resolveBsbRealtimeControlInstrument(
   }
 
   if (!update.track || update.track.projectSessionId !== projectSessionId) return null;
-  const group = data.getScore().find(
-    (candidate): candidate is TrackLayerGroup => (
-      candidate instanceof TrackLayerGroup
-      && candidate.getUniqueId() === update.track?.rootGroupId
-    ),
-  );
+  const group = data
+    .getScore()
+    .find(
+      (candidate): candidate is TrackLayerGroup =>
+        candidate instanceof TrackLayerGroup &&
+        candidate.getUniqueId() === update.track?.rootGroupId,
+    );
   const instrument = group
     ?.find((track) => track.getUniqueId() === update.track?.trackId)
     ?.getInstrument();

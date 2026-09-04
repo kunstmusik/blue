@@ -101,7 +101,10 @@ function getProcessorParameters(proc: NoteProcessor): Record<string, string | nu
   } else if (proc instanceof TuningProcessor) {
     params.pfield = proc.getPfield();
     params.baseFrequency = proc.getBaseFrequency();
-    params.ratios = proc.getRatios().map((ratio) => ratio.toString()).join('\n');
+    params.ratios = proc
+      .getRatios()
+      .map((ratio) => ratio.toString())
+      .join('\n');
   } else if (proc instanceof PythonProcessor) {
     params.code = proc.getCode();
   }
@@ -149,7 +152,10 @@ export function createNoteProcessorEntrySnapshot(proc: NoteProcessor): NoteProce
   };
 }
 
-function buildSummary(proc: NoteProcessor, params: Record<string, string | number | boolean>): string {
+function buildSummary(
+  proc: NoteProcessor,
+  params: Record<string, string | number | boolean>,
+): string {
   if (proc instanceof PythonProcessor) {
     return proc.getDisplayName();
   }
@@ -158,7 +164,10 @@ function buildSummary(proc: NoteProcessor, params: Record<string, string | numbe
   if (entries.length === 0) return proc.getDisplayName();
   const parts = entries.map(([k, v]) => {
     if (k === 'ratios') {
-      const count = String(v).trim().split(/\s+/).filter((token) => token.length > 0).length;
+      const count = String(v)
+        .trim()
+        .split(/\s+/)
+        .filter((token) => token.length > 0).length;
       return `ratios=${count} values`;
     }
     return `${k}=${v}`;
@@ -166,7 +175,9 @@ function buildSummary(proc: NoteProcessor, params: Record<string, string | numbe
   return `${proc.getDisplayName()} (${parts.join(', ')})`;
 }
 
-export function createNoteProcessorChainSnapshot(chain: NoteProcessorChain): NoteProcessorChainSnapshot {
+export function createNoteProcessorChainSnapshot(
+  chain: NoteProcessorChain,
+): NoteProcessorChainSnapshot {
   let hasUnsupported = false;
   let hasDeferred = false;
   const processors: NoteProcessorEntrySnapshot[] = [];
@@ -185,7 +196,9 @@ export function createNoteProcessorChainSnapshot(chain: NoteProcessorChain): Not
   };
 }
 
-export function reifyProcessorFromSnapshot(entry: NoteProcessorEntrySnapshot): NoteProcessor | null {
+export function reifyProcessorFromSnapshot(
+  entry: NoteProcessorEntrySnapshot,
+): NoteProcessor | null {
   if (isPythonProcessorType(entry.processorType)) {
     if (entry.serializedXml) {
       try {
@@ -283,7 +296,8 @@ function applyParametersToProcessor(
     if (params.lineAddString !== undefined) proc.setLineAddString(String(params.lineAddString));
   } else if (proc instanceof LineMultiplyProcessor) {
     if (params.pfield !== undefined) proc.setPfield(String(params.pfield));
-    if (params.lineMultiplyString !== undefined) proc.setLineMultiplyString(String(params.lineMultiplyString));
+    if (params.lineMultiplyString !== undefined)
+      proc.setLineMultiplyString(String(params.lineMultiplyString));
   } else if (proc instanceof TuningProcessor) {
     if (params.pfield !== undefined) proc.setPfield(String(params.pfield));
     if (params.baseFrequency !== undefined) proc.setBaseFrequency(String(params.baseFrequency));

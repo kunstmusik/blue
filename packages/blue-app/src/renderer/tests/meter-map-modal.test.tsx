@@ -7,12 +7,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { MeterMapSnapshot, MeterMapPatch } from '../../shared/project-editor';
 import MeterMapEditorDialog from '../components/workbench/panels/score/MeterMapEditorDialog';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const DEFAULT_METER_MAP: MeterMapSnapshot = {
-  entries: [
-    { measure: 1, numBeats: 4, beatLength: 4, startBeat: 0 },
-  ],
+  entries: [{ measure: 1, numBeats: 4, beatLength: 4, startBeat: 0 }],
 };
 
 const MIXED_METER_MAP: MeterMapSnapshot = {
@@ -36,13 +36,7 @@ function renderModal(meterMap: MeterMapSnapshot = DEFAULT_METER_MAP): {
   const onClose = vi.fn();
 
   act(() => {
-    root.render(
-      <MeterMapEditorDialog
-        meterMap={meterMap}
-        onCommit={onCommit}
-        onClose={onClose}
-      />,
-    );
+    root.render(<MeterMapEditorDialog meterMap={meterMap} onCommit={onCommit} onClose={onClose} />);
   });
 
   return { container, root, onCommit, onClose };
@@ -53,9 +47,7 @@ afterEach(() => {
 });
 
 function findButton(container: HTMLDivElement, text: string): HTMLButtonElement | undefined {
-  return Array.from(container.querySelectorAll('button')).find(
-    (b) => b.textContent === text,
-  );
+  return Array.from(container.querySelectorAll('button')).find((b) => b.textContent === text);
 }
 
 function setInputValue(input: HTMLInputElement, value: string): void {
@@ -96,7 +88,9 @@ describe('MeterMapEditorDialog', () => {
     const { container } = renderModal(MIXED_METER_MAP);
     const addButton = findButton(container, 'Add');
     expect(addButton).toBeTruthy();
-    act(() => { addButton!.click(); });
+    act(() => {
+      addButton!.click();
+    });
 
     const numberInputs = container.querySelectorAll('input[type="number"]');
     const lastInput = numberInputs[numberInputs.length - 1] as HTMLInputElement;
@@ -116,7 +110,9 @@ describe('MeterMapEditorDialog', () => {
     const { container, onCommit, onClose } = renderModal(DEFAULT_METER_MAP);
     const okButton = findButton(container, 'OK');
     expect(okButton).toBeTruthy();
-    act(() => { okButton!.click(); });
+    act(() => {
+      okButton!.click();
+    });
 
     expect(onCommit).toHaveBeenCalledWith({
       type: 'meter-map-replace',
@@ -129,7 +125,9 @@ describe('MeterMapEditorDialog', () => {
     const { container, onCommit, onClose } = renderModal(DEFAULT_METER_MAP);
     const cancelButton = findButton(container, 'Cancel');
     expect(cancelButton).toBeTruthy();
-    act(() => { cancelButton!.click(); });
+    act(() => {
+      cancelButton!.click();
+    });
 
     expect(onCommit).not.toHaveBeenCalled();
     expect(onClose).toHaveBeenCalled();
@@ -141,7 +139,9 @@ describe('MeterMapEditorDialog', () => {
       (b) => b.textContent === 'Del' && !(b as HTMLButtonElement).disabled,
     );
     expect(deleteButtons.length).toBeGreaterThan(0);
-    act(() => { deleteButtons[0]!.click(); });
+    act(() => {
+      deleteButtons[0]!.click();
+    });
 
     const remainingDeleteButtons = Array.from(container.querySelectorAll('button')).filter(
       (b) => b.textContent === 'Del',
@@ -152,7 +152,9 @@ describe('MeterMapEditorDialog', () => {
   it('modal replace produces same canonical shape as row-level edits', () => {
     const { container, onCommit } = renderModal(MIXED_METER_MAP);
     const okButton = findButton(container, 'OK');
-    act(() => { okButton!.click(); });
+    act(() => {
+      okButton!.click();
+    });
 
     expect(onCommit).toHaveBeenCalledWith({
       type: 'meter-map-replace',
@@ -166,8 +168,12 @@ describe('MeterMapEditorDialog', () => {
 
   it('commits edited measure and signature values on blur and Enter', () => {
     const { container, onCommit } = renderModal(MIXED_METER_MAP);
-    const measureInputs = Array.from(container.querySelectorAll('input[type="number"]')) as HTMLInputElement[];
-    const signatureInputs = Array.from(container.querySelectorAll('input[type="text"]')) as HTMLInputElement[];
+    const measureInputs = Array.from(
+      container.querySelectorAll('input[type="number"]'),
+    ) as HTMLInputElement[];
+    const signatureInputs = Array.from(
+      container.querySelectorAll('input[type="text"]'),
+    ) as HTMLInputElement[];
 
     act(() => {
       setInputValue(measureInputs[1]!, '6');
@@ -180,7 +186,9 @@ describe('MeterMapEditorDialog', () => {
     expect(signatureInputs[1]!.value).toBe('5/4');
 
     const okButton = findButton(container, 'OK');
-    act(() => { okButton!.click(); });
+    act(() => {
+      okButton!.click();
+    });
 
     expect(onCommit).toHaveBeenCalledWith({
       type: 'meter-map-replace',
@@ -194,7 +202,9 @@ describe('MeterMapEditorDialog', () => {
 
   it('rejects duplicate measure numbers without committing', () => {
     const { container, onCommit, onClose } = renderModal(MIXED_METER_MAP);
-    const measureInputs = Array.from(container.querySelectorAll('input[type="number"]')) as HTMLInputElement[];
+    const measureInputs = Array.from(
+      container.querySelectorAll('input[type="number"]'),
+    ) as HTMLInputElement[];
 
     act(() => {
       setInputValue(measureInputs[1]!, '9');
@@ -204,7 +214,9 @@ describe('MeterMapEditorDialog', () => {
     expect(container.textContent).toContain('Measure 9 already has a meter entry');
 
     const okButton = findButton(container, 'OK');
-    act(() => { okButton!.click(); });
+    act(() => {
+      okButton!.click();
+    });
 
     expect(onCommit).not.toHaveBeenCalled();
     expect(onClose).not.toHaveBeenCalled();

@@ -112,10 +112,7 @@ vi.mock('zeromq', () => {
 });
 
 import { EngineClient } from '../src/engine-client';
-import {
-  BLUE_ENGINE_PROTOCOL_VERSION,
-  AUTOMATION_DECIMAL_FEATURE,
-} from '../src/capabilities';
+import { BLUE_ENGINE_PROTOCOL_VERSION, AUTOMATION_DECIMAL_FEATURE } from '../src/capabilities';
 import {
   CMD_CREATE_ENGINE,
   CMD_DESTROY_ENGINE,
@@ -133,7 +130,10 @@ function encodeOkResponse(payload = ''): Buffer {
   return response;
 }
 
-function capabilities(protocolVersion = BLUE_ENGINE_PROTOCOL_VERSION, features = [AUTOMATION_DECIMAL_FEATURE]): string {
+function capabilities(
+  protocolVersion = BLUE_ENGINE_PROTOCOL_VERSION,
+  features = [AUTOMATION_DECIMAL_FEATURE],
+): string {
   return JSON.stringify({
     schemaVersion: 1,
     engineVersion: '0.1.0',
@@ -195,27 +195,33 @@ describe('EngineClient', () => {
     await client.connect();
 
     const request = mockState.requestInstances[0];
-    request.responses.push(encodeOkResponse(JSON.stringify({
-      state: 'running',
-      stopReason: 'none',
-      engineCreated: true,
-      running: true,
-      sampleFrames: 4096,
-      sampleRate: 44100,
-      ksmps: 64,
-      sequence: 3,
-      lastError: '',
-    })));
+    request.responses.push(
+      encodeOkResponse(
+        JSON.stringify({
+          state: 'running',
+          stopReason: 'none',
+          engineCreated: true,
+          running: true,
+          sampleFrames: 4096,
+          sampleRate: 44100,
+          ksmps: 64,
+          sequence: 3,
+          lastError: '',
+        }),
+      ),
+    );
 
     const response = await client.getEngineState();
 
     expect(request.sent[0].readUInt8(0)).toBe(CMD_GET_ENGINE_STATE);
     expect(response.ok).toBe(true);
-    expect(response.state).toEqual(expect.objectContaining({
-      state: 'running',
-      sampleFrames: 4096,
-      sequence: 3,
-    }));
+    expect(response.state).toEqual(
+      expect.objectContaining({
+        state: 'running',
+        sampleFrames: 4096,
+        sequence: 3,
+      }),
+    );
 
     request.responses.push(encodeOkResponse());
     await client.disconnect();
@@ -232,26 +238,31 @@ describe('EngineClient', () => {
 
     subscriber.push([
       Buffer.from(ENGINE_STATE_TOPIC, 'utf-8'),
-      Buffer.from(JSON.stringify({
-        state: 'stopped',
-        stopReason: 'completed',
-        engineCreated: true,
-        running: false,
-        sampleFrames: 88200,
-        sampleRate: 44100,
-        ksmps: 64,
-        sequence: 9,
-        lastError: '',
-      }), 'utf-8'),
+      Buffer.from(
+        JSON.stringify({
+          state: 'stopped',
+          stopReason: 'completed',
+          engineCreated: true,
+          running: false,
+          sampleFrames: 88200,
+          sampleRate: 44100,
+          ksmps: 64,
+          sequence: 9,
+          lastError: '',
+        }),
+        'utf-8',
+      ),
     ]);
 
     await flushAsyncWork();
 
-    expect(listener).toHaveBeenCalledWith(expect.objectContaining({
-      state: 'stopped',
-      stopReason: 'completed',
-      sequence: 9,
-    }));
+    expect(listener).toHaveBeenCalledWith(
+      expect.objectContaining({
+        state: 'stopped',
+        stopReason: 'completed',
+        sequence: 9,
+      }),
+    );
 
     request.responses.push(encodeOkResponse());
     await client.disconnect();
@@ -274,26 +285,31 @@ describe('EngineClient', () => {
 
     subscriber.push([
       Buffer.from(ENGINE_STATE_TOPIC, 'utf-8'),
-      Buffer.from(JSON.stringify({
-        state: 'running',
-        stopReason: 'none',
-        engineCreated: true,
-        running: true,
-        sampleFrames: 64,
-        sampleRate: 44100,
-        ksmps: 64,
-        sequence: 2,
-        lastError: '',
-      }), 'utf-8'),
+      Buffer.from(
+        JSON.stringify({
+          state: 'running',
+          stopReason: 'none',
+          engineCreated: true,
+          running: true,
+          sampleFrames: 64,
+          sampleRate: 44100,
+          ksmps: 64,
+          sequence: 2,
+          lastError: '',
+        }),
+        'utf-8',
+      ),
     ]);
 
     await flushAsyncWork();
 
     expect(badListener).toHaveBeenCalledOnce();
-    expect(goodListener).toHaveBeenCalledWith(expect.objectContaining({
-      state: 'running',
-      sequence: 2,
-    }));
+    expect(goodListener).toHaveBeenCalledWith(
+      expect.objectContaining({
+        state: 'running',
+        sequence: 2,
+      }),
+    );
 
     request.responses.push(encodeOkResponse());
     await client.disconnect();
@@ -360,9 +376,7 @@ describe('EngineClient', () => {
       ok: false,
       message: `Blue Engine protocol mismatch: expected ${BLUE_ENGINE_PROTOCOL_VERSION}, received 99`,
     });
-    expect(request.sent.map((message) => message.readUInt8(0))).toEqual([
-      CMD_GET_CAPABILITIES,
-    ]);
+    expect(request.sent.map((message) => message.readUInt8(0))).toEqual([CMD_GET_CAPABILITIES]);
     expect(request.close).toHaveBeenCalledOnce();
   });
 });

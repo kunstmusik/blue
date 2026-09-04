@@ -6,18 +6,10 @@ import {
 } from '../shared/compactFieldStyles';
 import { cn } from '../../../../lib/cn';
 
-function FieldRow({
-  label,
-  children,
-}: {
-  label: string;
-  children: ReactNode;
-}): React.ReactElement {
+function FieldRow({ label, children }: { label: string; children: ReactNode }): React.ReactElement {
   return (
     <label className="grid gap-2 md:grid-cols-[200px_minmax(0,1fr)] md:items-start md:gap-5">
-      <span className={cn('pt-1', APP_INSPECTOR_LABEL_TEXT_CLASS)}>
-        {label}
-      </span>
+      <span className={cn('pt-1', APP_INSPECTOR_LABEL_TEXT_CLASS)}>{label}</span>
       {children}
     </label>
   );
@@ -45,7 +37,7 @@ function InputBase({
         'w-full rounded-lg border border-app-border bg-app-input',
         COMPACT_FIELD_VALUE_CLASS,
         'text-app-text shadow-inner outline-none transition-colors placeholder:text-app-text-muted focus:border-app-accent disabled:cursor-not-allowed disabled:opacity-60',
-        className
+        className,
       )}
       value={value}
       placeholder={placeholder}
@@ -74,7 +66,7 @@ function TextAreaBase({
         'min-h-28 w-full rounded-lg border border-app-border bg-app-input',
         COMPACT_FIELD_VALUE_CLASS,
         'text-app-text shadow-inner outline-none transition-colors placeholder:text-app-text-muted focus:border-app-accent disabled:cursor-not-allowed disabled:opacity-60',
-        className
+        className,
       )}
       value={value}
       placeholder={placeholder}
@@ -104,9 +96,4 @@ function CheckboxBase({
   );
 }
 
-export {
-  FieldRow,
-  InputBase,
-  TextAreaBase,
-  CheckboxBase,
-};
+export { FieldRow, InputBase, TextAreaBase, CheckboxBase };

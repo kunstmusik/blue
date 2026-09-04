@@ -42,16 +42,16 @@ function isLibraryType(value: unknown): value is LibraryType {
 export function isLibraryEditorDocument(value: unknown): value is LibraryEditorDocument {
   if (!isRecord(value) || typeof value.kind !== 'string') return false;
   if (value.kind === 'unsupported') {
-    return isLibraryType(value.libraryType)
-      && typeof value.objectType === 'string'
-      && typeof value.message === 'string'
-      && typeof value.rawXml === 'string';
+    return (
+      isLibraryType(value.libraryType) &&
+      typeof value.objectType === 'string' &&
+      typeof value.message === 'string' &&
+      typeof value.rawXml === 'string'
+    );
   }
   return isLibraryType(value.kind) && isRecord(value.snapshot);
 }
 
 export function isLibraryEditorDocumentPatch(value: unknown): value is LibraryEditorDocumentPatch {
-  return isRecord(value)
-    && isLibraryType(value.kind)
-    && isRecord(value.patch);
+  return isRecord(value) && isLibraryType(value.kind) && isRecord(value.patch);
 }

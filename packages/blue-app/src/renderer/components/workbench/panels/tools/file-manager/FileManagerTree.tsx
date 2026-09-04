@@ -1,4 +1,12 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { ChevronRight, File, Folder, FolderOpen } from 'lucide-react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import type { NodeRendererProps, TreeApi } from 'react-arborist';
@@ -8,7 +16,10 @@ import {
   getFileManagerActionState,
   type FileManagerRootSnapshot,
 } from '../../../../../../shared/file-manager';
-import { clearActiveFileManagerDragPayload, writeFileManagerDragPayload } from './file-manager-drag-drop';
+import {
+  clearActiveFileManagerDragPayload,
+  writeFileManagerDragPayload,
+} from './file-manager-drag-drop';
 import {
   attachDiagnostics,
   childToNode,
@@ -113,19 +124,24 @@ function DirectoryNodeMenu({
   );
 }
 
-function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<FileTreeNode>): React.ReactElement {
+function NodeRenderer({
+  node,
+  style,
+  dragHandle,
+}: NodeRendererProps<FileTreeNode>): React.ReactElement {
   const actions = useContext(TreeActionsContext);
   const diagnostic = node.data.diagnosticId ?? null;
   const isDirectory = node.data.kind === 'directory';
   const isRoot = node.data.rootKind !== null;
   const pendingToggleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const rootDisplayLabel = isRoot
-    ? getRootDisplayLabel(node.data.rootLabel, node.data.path)
-    : null;
+  const rootDisplayLabel = isRoot ? getRootDisplayLabel(node.data.rootLabel, node.data.path) : null;
 
-  useEffect(() => () => {
-    if (pendingToggleRef.current !== null) clearTimeout(pendingToggleRef.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (pendingToggleRef.current !== null) clearTimeout(pendingToggleRef.current);
+    },
+    [],
+  );
 
   const icon = isDirectory ? (
     node.isOpen ? (
@@ -182,7 +198,9 @@ function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<FileTreeNod
       style={style}
       className={cn(
         'flex items-center gap-1.5 pr-2 text-role-body select-none cursor-pointer',
-        node.isSelected ? 'bg-app-accent/20 text-app-text-bright' : 'text-app-text hover:bg-app-hover'
+        node.isSelected
+          ? 'bg-app-accent/20 text-app-text-bright'
+          : 'text-app-text hover:bg-app-hover',
       )}
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
@@ -205,7 +223,9 @@ function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<FileTreeNod
           <span className="text-app-text-muted"> - {node.data.path}</span>
         </span>
       ) : (
-        <span className="min-w-0 truncate" title={node.data.path}>{node.data.name}</span>
+        <span className="min-w-0 truncate" title={node.data.path}>
+          {node.data.name}
+        </span>
       )}
       {node.data.rootKind === 'favorite' && (
         <span className="ml-auto flex-none text-role-callout text-app-text-muted">favorite</span>
@@ -266,19 +286,23 @@ export default function FileManagerTree({
     });
   }, []);
 
-  const applyDiagnostics = useCallback((updater: (previous: Record<string, string>) => Record<string, string>) => {
-    setDiagnosticsState((previous) => {
-      const next = updater(previous);
-      sessionTreeState.diagnostics = next;
-      return next;
-    });
-  }, []);
+  const applyDiagnostics = useCallback(
+    (updater: (previous: Record<string, string>) => Record<string, string>) => {
+      setDiagnosticsState((previous) => {
+        const next = updater(previous);
+        sessionTreeState.diagnostics = next;
+        return next;
+      });
+    },
+    [],
+  );
 
-  const rootKey = useMemo(() => roots.map((root) => `${root.id}:${root.label}`).join('\n'), [roots]);
+  const rootKey = useMemo(
+    () => roots.map((root) => `${root.id}:${root.label}`).join('\n'),
+    [roots],
+  );
   useEffect(() => {
-    applyTree((previous) =>
-      roots.map((root) => rootToNode(root, findNode(previous, root.id))),
-    );
+    applyTree((previous) => roots.map((root) => rootToNode(root, findNode(previous, root.id))));
   }, [rootKey]);
 
   useEffect(() => {
@@ -306,20 +330,22 @@ export default function FileManagerTree({
     };
 
     measure();
-    const ResizeObserverCtor = el.ownerDocument.defaultView?.ResizeObserver ?? globalThis.ResizeObserver;
-    const resizeObserver = typeof ResizeObserverCtor === 'function'
-      ? new ResizeObserverCtor(measure)
-      : null;
+    const ResizeObserverCtor =
+      el.ownerDocument.defaultView?.ResizeObserver ?? globalThis.ResizeObserver;
+    const resizeObserver =
+      typeof ResizeObserverCtor === 'function' ? new ResizeObserverCtor(measure) : null;
     resizeObserver?.observe(el);
 
     // Dockview can change the panel's visibility and inline layout without
     // changing the tree container's measured size. Those mutations can still
     // reset the physical list offset, so reassert the session offset on the
     // nearest stable panel host as well.
-    const MutationObserverCtor = el.ownerDocument.defaultView?.MutationObserver ?? globalThis.MutationObserver;
-    const mutationObserver = typeof MutationObserverCtor === 'function'
-      ? new MutationObserverCtor(restoreSilentlyLostScroll)
-      : null;
+    const MutationObserverCtor =
+      el.ownerDocument.defaultView?.MutationObserver ?? globalThis.MutationObserver;
+    const mutationObserver =
+      typeof MutationObserverCtor === 'function'
+        ? new MutationObserverCtor(restoreSilentlyLostScroll)
+        : null;
     const mutationTarget = el.closest<HTMLElement>('.dv-groupview') ?? el.parentElement ?? el;
     mutationObserver?.observe(mutationTarget, { attributes: true, childList: true, subtree: true });
 
@@ -344,42 +370,47 @@ export default function FileManagerTree({
     return () => clearTimeout(timeoutId);
   }, []);
 
-  const loadChildrenFor = useCallback(async (nodeId: string, directoryPath: string) => {
-    if (inFlightRef.current.has(nodeId)) return;
-    inFlightRef.current.add(nodeId);
-    try {
-      const result = await window.blueAPI.listFileManagerDirectory({ path: directoryPath });
-      if (result.status === 'ok') {
-        const ancestorIdentities = new Set(collectAncestorIdentities(treeRef.current, nodeId) ?? []);
-        const target = findNode(treeRef.current, nodeId);
-        if (!target) return;
-        const children = result.snapshot.children
-          .filter((child) => !ancestorIdentities.has(child.id))
-          .map((child) => childToNode(target, child));
-        applyTree((previous) => {
-          if (!findNode(previous, nodeId)) return previous;
-          return withChildren(previous, nodeId, children);
-        });
-        applyDiagnostics((previous) => {
-          const diagnostic = result.snapshot.diagnostic;
-          if (diagnostic !== undefined) return { ...previous, [nodeId]: diagnostic };
-          if (!(nodeId in previous)) return previous;
-          const next = { ...previous };
-          delete next[nodeId];
-          return next;
-        });
-      } else {
-        applyDiagnostics((previous) => ({ ...previous, [nodeId]: result.message }));
+  const loadChildrenFor = useCallback(
+    async (nodeId: string, directoryPath: string) => {
+      if (inFlightRef.current.has(nodeId)) return;
+      inFlightRef.current.add(nodeId);
+      try {
+        const result = await window.blueAPI.listFileManagerDirectory({ path: directoryPath });
+        if (result.status === 'ok') {
+          const ancestorIdentities = new Set(
+            collectAncestorIdentities(treeRef.current, nodeId) ?? [],
+          );
+          const target = findNode(treeRef.current, nodeId);
+          if (!target) return;
+          const children = result.snapshot.children
+            .filter((child) => !ancestorIdentities.has(child.id))
+            .map((child) => childToNode(target, child));
+          applyTree((previous) => {
+            if (!findNode(previous, nodeId)) return previous;
+            return withChildren(previous, nodeId, children);
+          });
+          applyDiagnostics((previous) => {
+            const diagnostic = result.snapshot.diagnostic;
+            if (diagnostic !== undefined) return { ...previous, [nodeId]: diagnostic };
+            if (!(nodeId in previous)) return previous;
+            const next = { ...previous };
+            delete next[nodeId];
+            return next;
+          });
+        } else {
+          applyDiagnostics((previous) => ({ ...previous, [nodeId]: result.message }));
+        }
+      } catch (err) {
+        applyDiagnostics((previous) => ({
+          ...previous,
+          [nodeId]: err instanceof Error ? err.message : String(err),
+        }));
+      } finally {
+        inFlightRef.current.delete(nodeId);
       }
-    } catch (err) {
-      applyDiagnostics((previous) => ({
-        ...previous,
-        [nodeId]: err instanceof Error ? err.message : String(err),
-      }));
-    } finally {
-      inFlightRef.current.delete(nodeId);
-    }
-  }, [applyDiagnostics, applyTree]);
+    },
+    [applyDiagnostics, applyTree],
+  );
 
   useEffect(() => {
     if (sessionTreeState.focusedNodeId !== null) {
@@ -390,18 +421,21 @@ export default function FileManagerTree({
     }
   }, [loadChildrenFor]);
 
-  const handleToggle = useCallback((id: string) => {
-    if (sessionTreeState.openIds.has(id)) {
-      sessionTreeState.openIds.delete(id);
-    } else {
-      sessionTreeState.openIds.add(id);
-    }
-    const node = findNode(treeRef.current, id);
-    if (!node || !node.canExpand) return;
-    if (node.children === undefined) {
-      void loadChildrenFor(id, node.path);
-    }
-  }, [loadChildrenFor]);
+  const handleToggle = useCallback(
+    (id: string) => {
+      if (sessionTreeState.openIds.has(id)) {
+        sessionTreeState.openIds.delete(id);
+      } else {
+        sessionTreeState.openIds.add(id);
+      }
+      const node = findNode(treeRef.current, id);
+      if (!node || !node.canExpand) return;
+      if (node.children === undefined) {
+        void loadChildrenFor(id, node.path);
+      }
+    },
+    [loadChildrenFor],
+  );
 
   const initialOpenState = useMemo(() => {
     const open: Record<string, boolean> = {};
@@ -410,42 +444,50 @@ export default function FileManagerTree({
     return open;
   }, [focusedNodeId]);
 
-  const refreshDirectory = useCallback((nodeId: string, directoryPath: string) => {
-    void loadChildrenFor(nodeId, directoryPath);
-  }, [loadChildrenFor]);
+  const refreshDirectory = useCallback(
+    (nodeId: string, directoryPath: string) => {
+      void loadChildrenFor(nodeId, directoryPath);
+    },
+    [loadChildrenFor],
+  );
 
-  const handleFocusDirectory = useCallback(async (targetNode: FileTreeNode) => {
-    const freshNode = findNode(treeRef.current, targetNode.id);
-    if (!freshNode || freshNode.children === undefined) {
-      await loadChildrenFor(targetNode.id, targetNode.path);
-    }
+  const handleFocusDirectory = useCallback(
+    async (targetNode: FileTreeNode) => {
+      const freshNode = findNode(treeRef.current, targetNode.id);
+      if (!freshNode || freshNode.children === undefined) {
+        await loadChildrenFor(targetNode.id, targetNode.path);
+      }
 
-    const chain = collectBreadcrumb(treeRef.current, targetNode.id) ?? [{
-      id: targetNode.id,
-      path: targetNode.path,
-      name: targetNode.name,
-    }];
+      const chain = collectBreadcrumb(treeRef.current, targetNode.id) ?? [
+        {
+          id: targetNode.id,
+          path: targetNode.path,
+          name: targetNode.name,
+        },
+      ];
 
-    sessionTreeState.levelStack.push({
-      focusedNodeId: sessionTreeState.focusedNodeId,
-      breadcrumb: [...sessionTreeState.breadcrumb],
-      openIds: new Set(sessionTreeState.openIds),
-      scrollOffset: sessionTreeState.scrollOffset,
-    });
+      sessionTreeState.levelStack.push({
+        focusedNodeId: sessionTreeState.focusedNodeId,
+        breadcrumb: [...sessionTreeState.breadcrumb],
+        openIds: new Set(sessionTreeState.openIds),
+        scrollOffset: sessionTreeState.scrollOffset,
+      });
 
-    sessionTreeState.focusedNodeId = targetNode.id;
-    sessionTreeState.breadcrumb = chain;
-    sessionTreeState.openIds = new Set([targetNode.id]);
-    sessionTreeState.scrollOffset = 0;
+      sessionTreeState.focusedNodeId = targetNode.id;
+      sessionTreeState.breadcrumb = chain;
+      sessionTreeState.openIds = new Set([targetNode.id]);
+      sessionTreeState.scrollOffset = 0;
 
-    setFocusedNodeId(targetNode.id);
-    setBreadcrumb(chain);
+      setFocusedNodeId(targetNode.id);
+      setBreadcrumb(chain);
 
-    treeApiRef.current?.list.current?.scrollTo(0);
-    if (treeApiRef.current?.listEl.current) {
-      treeApiRef.current.listEl.current.scrollTop = 0;
-    }
-  }, [loadChildrenFor]);
+      treeApiRef.current?.list.current?.scrollTo(0);
+      if (treeApiRef.current?.listEl.current) {
+        treeApiRef.current.listEl.current.scrollTop = 0;
+      }
+    },
+    [loadChildrenFor],
+  );
 
   const handleNavigateToRoots = useCallback(() => {
     const rootState = sessionTreeState.levelStack.find((s) => s.focusedNodeId === null) ?? {
@@ -473,51 +515,53 @@ export default function FileManagerTree({
     }, 0);
   }, []);
 
-  const handleNavigateToSegment = useCallback((index: number) => {
-    if (index < 0 || index >= breadcrumb.length) return;
-    const targetSegment = breadcrumb[index];
-    if (!targetSegment) return;
+  const handleNavigateToSegment = useCallback(
+    (index: number) => {
+      if (index < 0 || index >= breadcrumb.length) return;
+      const targetSegment = breadcrumb[index];
+      if (!targetSegment) return;
 
-    // Stack entries are keyed by the view they snapshot (focusedNodeId, null
-    // = roots view), not by breadcrumb position: a level the user skipped —
-    // for example a root that was expanded but never focused — has no saved
-    // entry, so it gets a fresh state instead of a neighboring level's.
-    const stack = sessionTreeState.levelStack;
-    let savedIndex = -1;
-    for (let i = stack.length - 1; i >= 0; i--) {
-      if (stack[i]!.focusedNodeId === targetSegment.id) {
-        savedIndex = i;
-        break;
+      // Stack entries are keyed by the view they snapshot (focusedNodeId, null
+      // = roots view), not by breadcrumb position: a level the user skipped —
+      // for example a root that was expanded but never focused — has no saved
+      // entry, so it gets a fresh state instead of a neighboring level's.
+      const stack = sessionTreeState.levelStack;
+      let savedIndex = -1;
+      for (let i = stack.length - 1; i >= 0; i--) {
+        if (stack[i]!.focusedNodeId === targetSegment.id) {
+          savedIndex = i;
+          break;
+        }
       }
-    }
-    const saved = savedIndex >= 0 ? stack[savedIndex] : undefined;
+      const saved = savedIndex >= 0 ? stack[savedIndex] : undefined;
 
-    const restoredOpenIds = saved ? new Set(saved.openIds) : new Set([targetSegment.id]);
-    const restoredScroll = saved ? saved.scrollOffset : 0;
+      const restoredOpenIds = saved ? new Set(saved.openIds) : new Set([targetSegment.id]);
+      const restoredScroll = saved ? saved.scrollOffset : 0;
 
-    const nextBreadcrumb = breadcrumb.slice(0, index + 1);
-    // Pop the restored view's old snapshot. If the level was never visited,
-    // retain the entries above it so the roots snapshot stays restorable.
-    const nextLevelStack = savedIndex >= 0
-      ? stack.slice(0, savedIndex)
-      : stack.slice(0, index + 1);
+      const nextBreadcrumb = breadcrumb.slice(0, index + 1);
+      // Pop the restored view's old snapshot. If the level was never visited,
+      // retain the entries above it so the roots snapshot stays restorable.
+      const nextLevelStack =
+        savedIndex >= 0 ? stack.slice(0, savedIndex) : stack.slice(0, index + 1);
 
-    sessionTreeState.focusedNodeId = targetSegment.id;
-    sessionTreeState.breadcrumb = nextBreadcrumb;
-    sessionTreeState.openIds = restoredOpenIds;
-    sessionTreeState.scrollOffset = restoredScroll;
-    sessionTreeState.levelStack = nextLevelStack;
+      sessionTreeState.focusedNodeId = targetSegment.id;
+      sessionTreeState.breadcrumb = nextBreadcrumb;
+      sessionTreeState.openIds = restoredOpenIds;
+      sessionTreeState.scrollOffset = restoredScroll;
+      sessionTreeState.levelStack = nextLevelStack;
 
-    setFocusedNodeId(targetSegment.id);
-    setBreadcrumb(nextBreadcrumb);
+      setFocusedNodeId(targetSegment.id);
+      setBreadcrumb(nextBreadcrumb);
 
-    setTimeout(() => {
-      treeApiRef.current?.list.current?.scrollTo(restoredScroll);
-      if (treeApiRef.current?.listEl.current) {
-        treeApiRef.current.listEl.current.scrollTop = restoredScroll;
-      }
-    }, 0);
-  }, [breadcrumb]);
+      setTimeout(() => {
+        treeApiRef.current?.list.current?.scrollTo(restoredScroll);
+        if (treeApiRef.current?.listEl.current) {
+          treeApiRef.current.listEl.current.scrollTop = restoredScroll;
+        }
+      }, 0);
+    },
+    [breadcrumb],
+  );
 
   const startRenameRoot = useCallback((rootId: string) => {
     setRenamingRootId(rootId);
@@ -527,10 +571,13 @@ export default function FileManagerTree({
     setRenamingRootId(null);
   }, []);
 
-  const submitRenameRoot = useCallback(async (rootId: string, rootPath: string, newLabel: string) => {
-    setRenamingRootId(null);
-    await onRenameRoot(rootId, rootPath, newLabel);
-  }, [onRenameRoot]);
+  const submitRenameRoot = useCallback(
+    async (rootId: string, rootPath: string, newLabel: string) => {
+      setRenamingRootId(null);
+      await onRenameRoot(rootId, rootPath, newLabel);
+    },
+    [onRenameRoot],
+  );
 
   const actions = useMemo<FileManagerTreeActions>(
     () => ({

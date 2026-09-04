@@ -125,8 +125,11 @@ export function main(argv) {
       return null;
     }
   })();
-  if (previous === generated && provenance.current.orchestra.sha256 === orcDigest
-    && provenance.current.generatedModule.sha256 === sha256(generated)) {
+  if (
+    previous === generated &&
+    provenance.current.orchestra.sha256 === orcDigest &&
+    provenance.current.generatedModule.sha256 === sha256(generated)
+  ) {
     console.log('generate:blue-x7: output already up to date.');
     return;
   }

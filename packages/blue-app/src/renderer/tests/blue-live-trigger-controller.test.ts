@@ -1,14 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import {
-  BlueData,
-  GenericScore,
-  LiveObject,
-  LiveObjectBins,
-} from '@blue/data';
-import {
-  createModernProject,
-  createRuntimeBackedLiveData,
-} from '@blue/data';
+import { BlueData, GenericScore, LiveObject, LiveObjectBins } from '@blue/data';
+import { createModernProject, createRuntimeBackedLiveData } from '@blue/data';
 import {
   BlueLiveTriggerController,
   type BlueLiveTriggerControllerAccessors,

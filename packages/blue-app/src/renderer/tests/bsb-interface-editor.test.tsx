@@ -45,7 +45,9 @@ function makeWidgetNode(overrides: Partial<BsbWidgetNodeSnapshot> = {}): BsbWidg
   };
 }
 
-function makeInstrument(overrides: Partial<BlueSynthBuilderInstrumentSnapshot> = {}): BlueSynthBuilderInstrumentSnapshot {
+function makeInstrument(
+  overrides: Partial<BlueSynthBuilderInstrumentSnapshot> = {},
+): BlueSynthBuilderInstrumentSnapshot {
   return {
     assignmentId: '1',
     type: 'blueSynthBuilder',
@@ -109,10 +111,19 @@ describe('BSB Interface Editor', () => {
   it('handles empty widgetTree for empty interfaces', () => {
     const instrument = makeInstrument({
       widgetTree: {
-        id: 'root', type: 'BSBRootGroup', objectName: '',
-        x: 0, y: 0, width: 0, height: 0,
-        value: 0, minimum: 0, maximum: 0,
-        editable: true, properties: {}, children: [],
+        id: 'root',
+        type: 'BSBRootGroup',
+        objectName: '',
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+        value: 0,
+        minimum: 0,
+        maximum: 0,
+        editable: true,
+        properties: {},
+        children: [],
       },
     });
     expect(instrument.widgetTree.children).toHaveLength(0);
@@ -144,7 +155,10 @@ describe('BSB Interface Editor', () => {
         id: 'root',
         type: 'BSBRootGroup',
         objectName: '',
-        x: 0, y: 0, width: 0, height: 0,
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
         value: 0,
         minimum: 0,
         maximum: 1,
@@ -156,7 +170,10 @@ describe('BSB Interface Editor', () => {
             id: 'g1',
             type: 'BSBGroup',
             objectName: '',
-            x: 0, y: 0, width: 200, height: 100,
+            x: 0,
+            y: 0,
+            width: 200,
+            height: 100,
             value: 0,
             minimum: 0,
             maximum: 1,
@@ -187,9 +204,7 @@ describe('BSB Interface Editor', () => {
         maximum: 1,
         editable: true,
         properties: {},
-        children: [
-          makeWidgetNode({ id: 'edge', x: 700, y: 420, width: 60, height: 24 }),
-        ],
+        children: [makeWidgetNode({ id: 'edge', x: 700, y: 420, width: 60, height: 24 })],
       },
     });
 
@@ -255,9 +270,7 @@ describe('BSB Interface Editor', () => {
             maximum: 1,
             editable: true,
             properties: {},
-            children: [
-              makeWidgetNode({ id: 'inner', x: 700, y: 410, width: 60, height: 24 }),
-            ],
+            children: [makeWidgetNode({ id: 'inner', x: 700, y: 410, width: 60, height: 24 })],
           },
         ],
       },
@@ -319,7 +332,10 @@ describe('BSB Interface Editor', () => {
             min: 0,
             max: 1,
             color: '#ff0000',
-            points: [{ x: 0, y: 0.25 }, { x: 1, y: 0.75 }],
+            points: [
+              { x: 0, y: 0.25 },
+              { x: 1, y: 0.75 },
+            ],
           },
         ],
       },
@@ -409,7 +425,9 @@ describe('BSB Interface Editor', () => {
     );
 
     expect(html).toContain('<circle');
-    expect(html.indexOf('fill="rgb(63,102,150)"')).toBeLessThan(html.indexOf('fill="rgb(20,29,45)"'));
+    expect(html.indexOf('fill="rgb(63,102,150)"')).toBeLessThan(
+      html.indexOf('fill="rgb(20,29,45)"'),
+    );
   });
 
   it('does not feed group display height back into stored model height', () => {
@@ -496,7 +514,13 @@ describe('BSB Grid Settings', () => {
     const patches: BsbInterfacePatch[] = [];
     const onPatch = (p: BsbInterfacePatch) => patches.push(p);
 
-    const gridSettings: GridSettingsSnapshot = { enabled: true, snapEnabled: true, width: 10, height: 10, gridStyle: 'NONE' };
+    const gridSettings: GridSettingsSnapshot = {
+      enabled: true,
+      snapEnabled: true,
+      width: 10,
+      height: 10,
+      gridStyle: 'NONE',
+    };
     onPatch({ type: 'updateGridSettings', patch: { width: 20 } });
     onPatch({ type: 'updateGridSettings', patch: { snapEnabled: false } });
 
@@ -506,9 +530,21 @@ describe('BSB Grid Settings', () => {
   });
 
   it('merges partial grid settings patches correctly', () => {
-    const base: GridSettingsSnapshot = { enabled: true, snapEnabled: true, width: 10, height: 10, gridStyle: 'NONE' };
+    const base: GridSettingsSnapshot = {
+      enabled: true,
+      snapEnabled: true,
+      width: 10,
+      height: 10,
+      gridStyle: 'NONE',
+    };
     const updated = { ...base, ...{ width: 20 } };
-    expect(updated).toEqual({ enabled: true, snapEnabled: true, width: 20, height: 10, gridStyle: 'NONE' });
+    expect(updated).toEqual({
+      enabled: true,
+      snapEnabled: true,
+      width: 20,
+      height: 10,
+      gridStyle: 'NONE',
+    });
   });
 
   it('keeps snapping enabled even when grid visibility is off', () => {
@@ -577,9 +613,7 @@ describe('BSB Grid Settings', () => {
         maximum: 1,
         editable: true,
         properties: { groupName: 'Group', titleEnabled: true },
-        children: [
-          makeWidgetNode({ id: 'nested-source', objectName: 'nested', x: 4, y: 5 }),
-        ],
+        children: [makeWidgetNode({ id: 'nested-source', objectName: 'nested', x: 4, y: 5 })],
       },
     ]);
     const pasted = buildPastedWidgets(clipboard, 40, 60, false);
@@ -684,7 +718,13 @@ describe('BSB Edit-Mode Affordances (T056)', () => {
   });
 
   it('renders BSBValue as non-interactive label in edit mode', () => {
-    const node = makeWidgetNode({ id: 'w1', type: 'BSBValue', objectName: 'gain', width: 60, height: 24 });
+    const node = makeWidgetNode({
+      id: 'w1',
+      type: 'BSBValue',
+      objectName: 'gain',
+      width: 60,
+      height: 24,
+    });
     const html = renderToStaticMarkup(
       createElement(BSBValueWidget, {
         node,

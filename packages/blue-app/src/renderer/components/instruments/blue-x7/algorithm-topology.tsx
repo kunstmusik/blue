@@ -21,9 +21,7 @@ export const AlgorithmTopology: React.FC<AlgorithmTopologyProps> = ({
       data-testid="bluex7-algorithm-topology"
     >
       <div className="flex items-center justify-between w-full">
-        <span className="text-role-headline font-bold text-gray-300">
-          Algorithm {algorithm}
-        </span>
+        <span className="text-role-headline font-bold text-gray-300">Algorithm {algorithm}</span>
         {onOpenModal && (
           <button
             type="button"

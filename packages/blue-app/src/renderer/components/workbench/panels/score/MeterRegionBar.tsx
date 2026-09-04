@@ -1,5 +1,9 @@
 import { useState, useCallback } from 'react';
-import type { MeterMapSnapshot, MeterSnapshot, MeterMapPatch } from '../../../../../shared/project-editor';
+import type {
+  MeterMapSnapshot,
+  MeterSnapshot,
+  MeterMapPatch,
+} from '../../../../../shared/project-editor';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import {
   deriveMeterRegions,
@@ -40,29 +44,35 @@ export default function MeterRegionBar({
   const contentWidth = totalBeats * pixelsPerBeat;
   const regions = deriveMeterRegions(meterMap, totalBeats);
 
-  const handleDoubleClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!rootTimelineOnly) return;
-    const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const rawBeat = screenXToBeat(x, pixelsPerBeat);
-    const measure = beatToMeasure(rawBeat, entries);
-    const existingIdx = findEntryAtMeasure(entries, measure);
+  const handleDoubleClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!rootTimelineOnly) return;
+      const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const rawBeat = screenXToBeat(x, pixelsPerBeat);
+      const measure = beatToMeasure(rawBeat, entries);
+      const existingIdx = findEntryAtMeasure(entries, measure);
 
-    if (existingIdx >= 0) {
-      onOpenEntryDialog(existingIdx);
-      return;
-    }
+      if (existingIdx >= 0) {
+        onOpenEntryDialog(existingIdx);
+        return;
+      }
 
-    onMeterPatch({ type: 'meter-map-set-entry', measure, numBeats: 4, beatLength: 4 });
-  }, [rootTimelineOnly, pixelsPerBeat, entries, onMeterPatch, onOpenEntryDialog]);
+      onMeterPatch({ type: 'meter-map-set-entry', measure, numBeats: 4, beatLength: 4 });
+    },
+    [rootTimelineOnly, pixelsPerBeat, entries, onMeterPatch, onOpenEntryDialog],
+  );
 
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const beat = screenXToBeat(x, pixelsPerBeat);
-    const idx = findRegionAtBeat(regions, beat);
-    setHoveredRegion(idx);
-  }, [regions, pixelsPerBeat]);
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const beat = screenXToBeat(x, pixelsPerBeat);
+      const idx = findRegionAtBeat(regions, beat);
+      setHoveredRegion(idx);
+    },
+    [regions, pixelsPerBeat],
+  );
 
   const handleMouseLeave = useCallback(() => {
     setHoveredRegion(null);
@@ -110,10 +120,7 @@ export default function MeterRegionBar({
             </ContextMenu.Trigger>
             {rootTimelineOnly && (
               <PopoutContextMenuPortal>
-                <ContextMenu.Content
-                  className="editor-context-menu"
-                  {...portalEventIsolationProps}
-                >
+                <ContextMenu.Content className="editor-context-menu" {...portalEventIsolationProps}>
                   <ContextMenu.Item
                     className="editor-context-menu__item"
                     onSelect={() => onOpenEntryDialog(i)}
@@ -125,7 +132,12 @@ export default function MeterRegionBar({
                       <ContextMenu.Separator className="editor-context-menu__separator" />
                       <ContextMenu.Item
                         className="editor-context-menu__item text-app-danger"
-                        onSelect={() => onMeterPatch({ type: 'meter-map-remove-entry', measure: region.entry.measure })}
+                        onSelect={() =>
+                          onMeterPatch({
+                            type: 'meter-map-remove-entry',
+                            measure: region.entry.measure,
+                          })
+                        }
                       >
                         Delete Time Signature Change
                       </ContextMenu.Item>

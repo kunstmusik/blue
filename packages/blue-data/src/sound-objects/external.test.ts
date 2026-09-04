@@ -167,7 +167,9 @@ describe('External', () => {
       ext.setCommandLine('cmd');
 
       const mockExecutor: ExternalCommandExecutor = {
-        execute() { return 'i1 0 2 440'; },
+        execute() {
+          return 'i1 0 2 440';
+        },
       };
       setExternalCommandExecutor(mockExecutor);
 
@@ -182,7 +184,9 @@ describe('External', () => {
       ext.setCommandLine('cmd');
 
       const mockExecutor: ExternalCommandExecutor = {
-        execute() { throw new Error('execution failed'); },
+        execute() {
+          throw new Error('execution failed');
+        },
       };
       setExternalCommandExecutor(mockExecutor);
 
@@ -198,13 +202,21 @@ describe('External', () => {
     });
 
     it('allows setting and getting executor', () => {
-      const mock: ExternalCommandExecutor = { execute() { return ''; } };
+      const mock: ExternalCommandExecutor = {
+        execute() {
+          return '';
+        },
+      };
       setExternalCommandExecutor(mock);
       expect(getExternalCommandExecutor()).toBe(mock);
     });
 
     it('allows clearing executor', () => {
-      const mock: ExternalCommandExecutor = { execute() { return ''; } };
+      const mock: ExternalCommandExecutor = {
+        execute() {
+          return '';
+        },
+      };
       setExternalCommandExecutor(mock);
       setExternalCommandExecutor(null);
       expect(getExternalCommandExecutor()).toBeNull();

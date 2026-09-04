@@ -8,14 +8,8 @@ export interface FollowScrollInput {
 }
 
 export function getFollowScrollTarget(input: FollowScrollInput): number | null {
-  const {
-    isPlaybackActive,
-    isFollowEnabled,
-    pointerPixel,
-    scrollLeft,
-    clientWidth,
-    scrollWidth,
-  } = input;
+  const { isPlaybackActive, isFollowEnabled, pointerPixel, scrollLeft, clientWidth, scrollWidth } =
+    input;
 
   if (!isPlaybackActive || !isFollowEnabled) {
     return null;

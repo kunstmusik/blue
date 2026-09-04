@@ -13,13 +13,23 @@ export class TrackerNote {
     }
   }
 
-  isTied(): boolean { return this._tied; }
-  setTied(tied: boolean): void { this._tied = tied; }
+  isTied(): boolean {
+    return this._tied;
+  }
+  setTied(tied: boolean): void {
+    this._tied = tied;
+  }
 
-  isOff(): boolean { return this._off; }
-  setOff(off: boolean): void { this._off = off; }
+  isOff(): boolean {
+    return this._off;
+  }
+  setOff(off: boolean): void {
+    this._off = off;
+  }
 
-  getNumFields(): number { return 1 + this._fields.length; }
+  getNumFields(): number {
+    return 1 + this._fields.length;
+  }
 
   addColumn(): void {
     this._fields.push('');

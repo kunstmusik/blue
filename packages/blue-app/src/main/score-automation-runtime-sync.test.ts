@@ -1,21 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
-import {
-  BlueData,
-  BlueX7,
-  Channel,
-  PolyObject,
-  TrackLayerGroup,
-} from '@blue/data';
+import { BlueData, BlueX7, Channel, PolyObject, TrackLayerGroup } from '@blue/data';
 import { AutomationCurveCode } from '@blue/engine-client';
 import { EngineBridge } from './engine-bridge';
 import {
   collectAffectedProjectScoreAutomationParameterIds,
   syncScoreAutomationParametersToEngine,
 } from './score-automation-runtime-sync';
-import {
-  applyProjectDocumentPatch,
-  createScoreDocumentSnapshot,
-} from '../shared/project-editor';
+import { applyProjectDocumentPatch, createScoreDocumentSnapshot } from '../shared/project-editor';
 import type {
   ProjectDocumentPatch,
   ScoreAutomationLayerRef,
@@ -108,7 +99,10 @@ function createRuntimeProject(parameterCount = 1, client = createMockClient()): 
   };
 }
 
-async function applyScorePatchAndSync(project: RuntimeProject, scorePatch: ScorePatch): Promise<void> {
+async function applyScorePatchAndSync(
+  project: RuntimeProject,
+  scorePatch: ScorePatch,
+): Promise<void> {
   const patch: ProjectDocumentPatch = { score: scorePatch };
   const affectedIds = collectAffectedProjectScoreAutomationParameterIds(project.data, patch);
   const changed = applyProjectDocumentPatch(project.data, patch);
@@ -123,10 +117,13 @@ async function applyScorePatchAndSync(project: RuntimeProject, scorePatch: Score
   await syncScoreAutomationParametersToEngine(project.data, affectedIds, project.bridge, timing);
 }
 
-function enableAutomation(param: RuntimeProject['params'][number], points = [
-  { time: 2, value: 0.2 },
-  { time: 6, value: 0.8 },
-]): void {
+function enableAutomation(
+  param: RuntimeProject['params'][number],
+  points = [
+    { time: 2, value: 0.2 },
+    { time: 6, value: 0.8 },
+  ],
+): void {
   param.setAutomationEnabled(true);
   param.setPoints(points);
 }
@@ -249,9 +246,11 @@ describe('EngineBridge automation sync', () => {
       const project = createRuntimeProject();
       const param = project.params[0]!;
       enableAutomation(param);
-      (project.bridge as unknown as {
-        lastAutomationSyncAt: Map<string, number>;
-      }).lastAutomationSyncAt.set('gk_blue_auto0', Date.now());
+      (
+        project.bridge as unknown as {
+          lastAutomationSyncAt: Map<string, number>;
+        }
+      ).lastAutomationSyncAt.set('gk_blue_auto0', Date.now());
 
       void project.bridge.syncAutomationParameter(param, timing);
       param.setPoints([
@@ -281,14 +280,22 @@ describe('EngineBridge automation sync', () => {
       { time: 8, value: 0.9 },
     ]);
 
-    await project.bridge.syncAutomationParameter(param, {
-      ...timing,
-      renderStartTime: 4,
-    }, { coalesce: false });
-    await project.bridge.syncAutomationParameter(param, {
-      ...timing,
-      renderStartTime: 0,
-    }, { coalesce: false });
+    await project.bridge.syncAutomationParameter(
+      param,
+      {
+        ...timing,
+        renderStartTime: 4,
+      },
+      { coalesce: false },
+    );
+    await project.bridge.syncAutomationParameter(
+      param,
+      {
+        ...timing,
+        renderStartTime: 0,
+      },
+      { coalesce: false },
+    );
 
     expect(lastPoints(project.client.updateAutomation.mock.calls[0]!)).toEqual([
       { time: 0, value: 0.5 },

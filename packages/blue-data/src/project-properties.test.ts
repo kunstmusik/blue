@@ -69,7 +69,8 @@ describe('ProjectProperties', () => {
 
   describe('legacy alias: copyToMediaFolderOnImport', () => {
     it('loads copyToMediaFolderOnImport as copyToMediaFileOnImport', () => {
-      const xml = '<projectProperties><copyToMediaFolderOnImport>false</copyToMediaFolderOnImport></projectProperties>';
+      const xml =
+        '<projectProperties><copyToMediaFolderOnImport>false</copyToMediaFolderOnImport></projectProperties>';
       const elem = Element.parse(xml);
       const props = ProjectProperties.loadFromXML(elem);
       expect(props.copyToMediaFileOnImport).toBe(false);
@@ -137,11 +138,7 @@ describe('ProjectProperties', () => {
       props.completeOverride = true;
       props.advancedSettings = 'csound -odac -b512 "-+rtaudio=pa_bl"';
 
-      expect(props.getRealtimeCsoundOptions()).toEqual([
-        '-odac',
-        '-b512',
-        '-+rtaudio=pa_bl',
-      ]);
+      expect(props.getRealtimeCsoundOptions()).toEqual(['-odac', '-b512', '-+rtaudio=pa_bl']);
     });
   });
 });

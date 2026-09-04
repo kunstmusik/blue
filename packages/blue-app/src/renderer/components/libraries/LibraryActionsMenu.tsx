@@ -13,7 +13,13 @@ interface LibraryActionsMenuProps {
 
 const ITEM_CLASS = 'editor-context-menu__item';
 
-export function LibraryActionsMenu({ selectedType, onImport, onImportDirectory, onExportCurrent, onExportAll }: LibraryActionsMenuProps): React.ReactElement {
+export function LibraryActionsMenu({
+  selectedType,
+  onImport,
+  onImportDirectory,
+  onExportCurrent,
+  onExportAll,
+}: LibraryActionsMenuProps): React.ReactElement {
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
@@ -35,15 +41,27 @@ export function LibraryActionsMenu({ selectedType, onImport, onImportDirectory, 
           data-auxiliary-portal="true"
           {...portalEventIsolationProps}
         >
-          <DropdownMenu.Item className={ITEM_CLASS} onSelect={onImport}>Import XML…</DropdownMenu.Item>
-          <DropdownMenu.Item className={ITEM_CLASS} onSelect={onImportDirectory}>Import Java Configuration Directory…</DropdownMenu.Item>
+          <DropdownMenu.Item className={ITEM_CLASS} onSelect={onImport}>
+            Import XML…
+          </DropdownMenu.Item>
+          <DropdownMenu.Item className={ITEM_CLASS} onSelect={onImportDirectory}>
+            Import Java Configuration Directory…
+          </DropdownMenu.Item>
           <DropdownMenu.Item
             className={ITEM_CLASS}
             disabled={selectedType === 'all'}
-            aria-label={selectedType === 'all' ? 'Export Current unavailable when all library types are shown' : 'Export Current'}
+            aria-label={
+              selectedType === 'all'
+                ? 'Export Current unavailable when all library types are shown'
+                : 'Export Current'
+            }
             onSelect={onExportCurrent}
-          >Export Current…</DropdownMenu.Item>
-          <DropdownMenu.Item className={ITEM_CLASS} onSelect={onExportAll}>Export All…</DropdownMenu.Item>
+          >
+            Export Current…
+          </DropdownMenu.Item>
+          <DropdownMenu.Item className={ITEM_CLASS} onSelect={onExportAll}>
+            Export All…
+          </DropdownMenu.Item>
         </DropdownMenu.Content>
       </PopoutDropdownMenuPortal>
     </DropdownMenu.Root>

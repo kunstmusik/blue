@@ -1,5 +1,10 @@
 import { useState, useCallback, useRef } from 'react';
-import type { MeterMapSnapshot, TempoMapSnapshot, TempoMapPatch, TempoCurveTypeSnapshot } from '../../../../../shared/project-editor';
+import type {
+  MeterMapSnapshot,
+  TempoMapSnapshot,
+  TempoMapPatch,
+  TempoCurveTypeSnapshot,
+} from '../../../../../shared/project-editor';
 import type { SnapValueName } from '@blue/data';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import {
@@ -46,34 +51,59 @@ export default function TempoRegionBar({
   const enabled = tempoMap.enabled;
   const barRef = useRef<HTMLDivElement>(null);
 
-  const handleDoubleClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!enabled || !rootTimelineOnly) return;
-    const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const rawBeat = screenXToBeat(x, pixelsPerBeat);
-    const beat = snapBeat(Math.max(0, rawBeat), snapEnabled, snapValue, pixelsPerBeat, tempoMap.points[0]?.tempo ?? 60, 30, 44100, meterMap);
+  const handleDoubleClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!enabled || !rootTimelineOnly) return;
+      const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const rawBeat = screenXToBeat(x, pixelsPerBeat);
+      const beat = snapBeat(
+        Math.max(0, rawBeat),
+        snapEnabled,
+        snapValue,
+        pixelsPerBeat,
+        tempoMap.points[0]?.tempo ?? 60,
+        30,
+        44100,
+        meterMap,
+      );
 
-    const existingIdx = findExistingPointNearBeat(
+      const existingIdx = findExistingPointNearBeat(
+        tempoMap.points,
+        beat,
+        Math.max(0.001, 4 / Math.max(1, pixelsPerBeat)),
+      );
+      if (existingIdx >= 0) {
+        onOpenPointDialog(existingIdx);
+        return;
+      }
+
+      const tempo = getTempoAtBeat(tempoMap.points, beat);
+      onTempoPatch({ type: 'addTempoPoint', point: { beat, tempo, curveType: 'constant' } });
+    },
+    [
+      enabled,
+      rootTimelineOnly,
+      pixelsPerBeat,
+      snapEnabled,
+      snapValue,
+      meterMap,
       tempoMap.points,
-      beat,
-      Math.max(0.001, 4 / Math.max(1, pixelsPerBeat)),
-    );
-    if (existingIdx >= 0) {
-      onOpenPointDialog(existingIdx);
-      return;
-    }
+      onTempoPatch,
+      onOpenPointDialog,
+    ],
+  );
 
-    const tempo = getTempoAtBeat(tempoMap.points, beat);
-    onTempoPatch({ type: 'addTempoPoint', point: { beat, tempo, curveType: 'constant' } });
-  }, [enabled, rootTimelineOnly, pixelsPerBeat, snapEnabled, snapValue, meterMap, tempoMap.points, onTempoPatch, onOpenPointDialog]);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const beat = screenXToBeat(x, pixelsPerBeat);
-    const idx = findRegionAtBeat(regions, beat);
-    setHoveredRegion(idx);
-  }, [regions, pixelsPerBeat]);
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const beat = screenXToBeat(x, pixelsPerBeat);
+      const idx = findRegionAtBeat(regions, beat);
+      setHoveredRegion(idx);
+    },
+    [regions, pixelsPerBeat],
+  );
 
   const handleMouseLeave = useCallback(() => {
     setHoveredRegion(null);
@@ -82,7 +112,10 @@ export default function TempoRegionBar({
   return (
     <div
       ref={barRef}
-      className={cn('relative select-none overflow-hidden', enabled ? 'cursor-pointer' : 'cursor-default')}
+      className={cn(
+        'relative select-none overflow-hidden',
+        enabled ? 'cursor-pointer' : 'cursor-default',
+      )}
       style={{ height: TEMPO_REGION_BAR_HEIGHT, minWidth: contentWidth }}
       onDoubleClick={handleDoubleClick}
       onMouseMove={handleMouseMove}
@@ -102,7 +135,8 @@ export default function TempoRegionBar({
         if (isHovered && enabled) fillColor = 'rgb(80,80,110)';
 
         const showLabel = width >= 30;
-        const rampUp = showRamp && i < regions.length - 1 && region.tempo < tempoMap.points[i + 1]?.tempo;
+        const rampUp =
+          showRamp && i < regions.length - 1 && region.tempo < tempoMap.points[i + 1]?.tempo;
 
         return (
           <ContextMenu.Root key={`region-${i}`}>
@@ -120,7 +154,10 @@ export default function TempoRegionBar({
               >
                 {showLabel && (
                   <span
-                    className={cn('relative z-10 pl-1 text-role-subheadline whitespace-nowrap', enabled ? 'text-white' : 'text-gray-600')}
+                    className={cn(
+                      'relative z-10 pl-1 text-role-subheadline whitespace-nowrap',
+                      enabled ? 'text-white' : 'text-gray-600',
+                    )}
                   >
                     {'\u2669'} {Math.round(region.tempo)}
                   </span>
@@ -146,10 +183,7 @@ export default function TempoRegionBar({
             </ContextMenu.Trigger>
             {enabled && rootTimelineOnly && (
               <PopoutContextMenuPortal>
-                <ContextMenu.Content
-                  className="editor-context-menu"
-                  {...portalEventIsolationProps}
-                >
+                <ContextMenu.Content className="editor-context-menu" {...portalEventIsolationProps}>
                   <ContextMenu.Item
                     className="editor-context-menu__item"
                     onSelect={() => onOpenPointDialog(i)}
@@ -160,14 +194,18 @@ export default function TempoRegionBar({
                   <ContextMenu.Item
                     className="editor-context-menu__item"
                     disabled={region.curveType === 'constant'}
-                    onSelect={() => onTempoPatch({ type: 'setTempoCurveType', index: i, curveType: 'constant' })}
+                    onSelect={() =>
+                      onTempoPatch({ type: 'setTempoCurveType', index: i, curveType: 'constant' })
+                    }
                   >
                     Constant
                   </ContextMenu.Item>
                   <ContextMenu.Item
                     className="editor-context-menu__item"
                     disabled={region.curveType === 'linear'}
-                    onSelect={() => onTempoPatch({ type: 'setTempoCurveType', index: i, curveType: 'linear' })}
+                    onSelect={() =>
+                      onTempoPatch({ type: 'setTempoCurveType', index: i, curveType: 'linear' })
+                    }
                   >
                     Linear
                   </ContextMenu.Item>

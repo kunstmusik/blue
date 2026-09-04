@@ -3,7 +3,9 @@ import { packageRoot, vcpkgBaseline } from './artifact.mjs';
 import { supportedTargetKeys } from './target.mjs';
 
 const manifest = JSON.parse(await readFile(new URL('../vcpkg.json', import.meta.url), 'utf8'));
-const configuration = JSON.parse(await readFile(new URL('../vcpkg-configuration.json', import.meta.url), 'utf8'));
+const configuration = JSON.parse(
+  await readFile(new URL('../vcpkg-configuration.json', import.meta.url), 'utf8'),
+);
 if (
   manifest['builtin-baseline'] !== vcpkgBaseline ||
   configuration['default-registry']?.baseline !== vcpkgBaseline

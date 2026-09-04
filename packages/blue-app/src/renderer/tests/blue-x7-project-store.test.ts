@@ -1,10 +1,7 @@
 // @vitest-environment jsdom
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  __testClearPendingPatches,
-  useProjectStore,
-} from '../stores/project-store';
+import { __testClearPendingPatches, useProjectStore } from '../stores/project-store';
 import {
   createEmptyProjectEditorSnapshot,
   BlueX7InstrumentSnapshot,
@@ -42,14 +39,16 @@ describe('project-store — BlueX7 optimistic projection & reconciliation', () =
     snapshot.loaded = true;
     snapshot.sessionId = 1;
     snapshot.orchestra.instruments = [x7Snapshot];
-    snapshot.orchestra.arrangement.rows = [{
-      assignmentId: '1',
-      enabled: true,
-      instrumentName: 'BlueX7 Patch',
-      instrumentType: 'blueX7',
-      instrumentSummary: 'BlueX7',
-      editable: true,
-    }];
+    snapshot.orchestra.arrangement.rows = [
+      {
+        assignmentId: '1',
+        enabled: true,
+        instrumentName: 'BlueX7 Patch',
+        instrumentType: 'blueX7',
+        instrumentSummary: 'BlueX7',
+        editable: true,
+      },
+    ];
 
     useProjectStore.getState().setProjectInfo({
       ...snapshot,
@@ -91,7 +90,8 @@ describe('project-store — BlueX7 optimistic projection & reconciliation', () =
       },
     });
 
-    const instrument1 = useProjectStore.getState().orchestra.instruments[0] as BlueX7InstrumentSnapshot;
+    const instrument1 = useProjectStore.getState().orchestra
+      .instruments[0] as BlueX7InstrumentSnapshot;
     expect(instrument1.voice.common.algorithm).toBe(9);
 
     await useProjectStore.getState().applyProjectDocumentPatch({
@@ -108,7 +108,8 @@ describe('project-store — BlueX7 optimistic projection & reconciliation', () =
       },
     });
 
-    const instrument2 = useProjectStore.getState().orchestra.instruments[0] as BlueX7InstrumentSnapshot;
+    const instrument2 = useProjectStore.getState().orchestra
+      .instruments[0] as BlueX7InstrumentSnapshot;
     expect(instrument2.voice.common.operatorEnabled[2]).toBe(false);
   });
 
@@ -127,8 +128,16 @@ describe('project-store — BlueX7 optimistic projection & reconciliation', () =
       },
     });
 
-    const instrument = useProjectStore.getState().orchestra.instruments[0] as BlueX7InstrumentSnapshot;
-    expect(instrument.voice.common.operatorEnabled).toEqual([false, true, false, true, false, true]);
+    const instrument = useProjectStore.getState().orchestra
+      .instruments[0] as BlueX7InstrumentSnapshot;
+    expect(instrument.voice.common.operatorEnabled).toEqual([
+      false,
+      true,
+      false,
+      true,
+      false,
+      true,
+    ]);
     expect(
       instrument.parameters
         ?.filter((parameter) => parameter.semanticKey.endsWith('.enabled'))
@@ -164,25 +173,29 @@ describe('project-store — BlueX7 optimistic projection & reconciliation', () =
     const snapshot = createEmptyProjectEditorSnapshot();
     snapshot.loaded = true;
     snapshot.sessionId = 1;
-    snapshot.score!.layerGroups = [{
-      groupId: 'track-group',
-      groupType: 'track',
-      name: 'Tracks',
-      defaultHeightIndex: 1,
-      layerCount: 1,
-      isOpenableContainer: false,
-      layers: [{
-        layerId: 'track-layer',
-        layerKind: 'track',
-        layerSelectionId: 'track-layer-selection',
-        name: 'Track',
-        height: 22,
-        muted: false,
-        solo: false,
-        items: [],
-        instrument: null,
-      }],
-    }];
+    snapshot.score!.layerGroups = [
+      {
+        groupId: 'track-group',
+        groupType: 'track',
+        name: 'Tracks',
+        defaultHeightIndex: 1,
+        layerCount: 1,
+        isOpenableContainer: false,
+        layers: [
+          {
+            layerId: 'track-layer',
+            layerKind: 'track',
+            layerSelectionId: 'track-layer-selection',
+            name: 'Track',
+            height: 22,
+            muted: false,
+            solo: false,
+            items: [],
+            instrument: null,
+          },
+        ],
+      },
+    ];
     useProjectStore.getState().setProjectInfo({
       ...snapshot,
       filePath: '/tmp/test-bluex7-track.blue',

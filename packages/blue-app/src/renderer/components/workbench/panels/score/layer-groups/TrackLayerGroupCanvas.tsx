@@ -3,11 +3,7 @@ import * as ContextMenu from '@radix-ui/react-context-menu';
 import ShiftObjectsDialog from '../ShiftObjectsDialog';
 import { ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
-import {
-  getAllSoundObjectTypeDescriptors,
-  snapValueToBeats,
-  type SnapValueName,
-} from '@blue/data';
+import { getAllSoundObjectTypeDescriptors, snapValueToBeats, type SnapValueName } from '@blue/data';
 import type {
   AudioFadeType,
   MeterMapSnapshot,
@@ -57,9 +53,14 @@ import {
   readAudioDropSource,
 } from '../../tools/file-manager/file-manager-drag-drop';
 import { getAudioFileDuration, subscribeAudioFileDuration } from './audio-file-duration-cache';
-import ScoreObjectColorPicker, { type ScoreObjectColorPickerHandle } from './ScoreObjectColorPicker';
+import ScoreObjectColorPicker, {
+  type ScoreObjectColorPickerHandle,
+} from './ScoreObjectColorPicker';
 import type { ColorPickerAnchorRect } from '../../../../ColorPicker';
-import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../../hooks/host-portals';
+import {
+  PopoutContextMenuPortal,
+  portalEventIsolationProps,
+} from '../../../../../hooks/host-portals';
 
 interface Props {
   group: TrackLayerGroupSnapshot;
@@ -80,7 +81,14 @@ interface Props {
   onDoubleClickObject?: (objectId: string) => void;
 }
 
-type GestureMode = 'marquee' | 'move' | 'resizeLeft' | 'resizeRight' | 'fadeIn' | 'fadeOut' | 'slideFileStart';
+type GestureMode =
+  | 'marquee'
+  | 'move'
+  | 'resizeLeft'
+  | 'resizeRight'
+  | 'fadeIn'
+  | 'fadeOut'
+  | 'slideFileStart';
 
 interface TrackPreview {
   startBeats: number;
@@ -152,7 +160,12 @@ const TRACK_SOUND_OBJECT_TYPES = getAllSoundObjectTypeDescriptors()
   .map((descriptor) => descriptor.typeName)
   .sort((a, b) => a.localeCompare(b));
 
-function trackRef(group: TrackLayerGroupSnapshot, trackId: string, sessionId: number, revision: number) {
+function trackRef(
+  group: TrackLayerGroupSnapshot,
+  trackId: string,
+  sessionId: number,
+  revision: number,
+) {
   return {
     rootGroupId: group.groupId,
     trackId,
@@ -202,13 +215,23 @@ export default function TrackLayerGroupCanvas({
   const colorPickerAnchorElementRef = useRef<HTMLElement | null>(null);
   const pendingColorTargetsRef = useRef<ScoreObjectEditorTargetSnapshot[]>([]);
   const gestureRef = useRef<GestureState | null>(null);
-  const [marquee, setMarquee] = useState<{ startX: number; startY: number; endX: number; endY: number } | null>(null);
+  const [marquee, setMarquee] = useState<{
+    startX: number;
+    startY: number;
+    endX: number;
+    endY: number;
+  } | null>(null);
   const marqueeRef = useRef<typeof marquee>(null);
-  const [contextMenuPos, setContextMenuPos] = useState<{ xBeats: number; layerIndex: number } | null>(null);
+  const [contextMenuPos, setContextMenuPos] = useState<{
+    xBeats: number;
+    layerIndex: number;
+  } | null>(null);
   const [showShiftDialog, setShowShiftDialog] = useState(false);
   const [contextMenuObjectId, setContextMenuObjectId] = useState<string | null>(null);
   const [previewByObjectId, setPreviewByObjectId] = useState<Record<string, TrackPreview>>({});
-  const [audioPreviewByObjectId, setAudioPreviewByObjectId] = useState<Record<string, AudioClipPreview>>({});
+  const [audioPreviewByObjectId, setAudioPreviewByObjectId] = useState<
+    Record<string, AudioClipPreview>
+  >({});
   const [fadeContextMenu, setFadeContextMenu] = useState<FadeContextMenuState | null>(null);
   const [hoveredAudioObjectId, setHoveredAudioObjectId] = useState<string | null>(null);
   const [cursorOverride, setCursorOverride] = useState<string | null>(null);
@@ -219,14 +242,20 @@ export default function TrackLayerGroupCanvas({
     height: number;
   } | null>(null);
   const lastAudioDropSourceRef = useRef<{ path: string; x: number; y: number } | null>(null);
-  const pendingMovePatchRef = useRef<Array<{
-    target: ScoreObjectEditorTargetSnapshot;
-    targetStartBeats: number;
-    targetLayerIndex: number;
-    targetGroupId: string;
-  }>>([]);
-  const pendingSharedPropertyPatchRef = useRef<Map<string, { startBeats?: number; durationBeats?: number }>>(new Map());
-  const pendingFadePatchRef = useRef<Map<string, { fadeInBeats?: number; fadeOutBeats?: number }>>(new Map());
+  const pendingMovePatchRef = useRef<
+    Array<{
+      target: ScoreObjectEditorTargetSnapshot;
+      targetStartBeats: number;
+      targetLayerIndex: number;
+      targetGroupId: string;
+    }>
+  >([]);
+  const pendingSharedPropertyPatchRef = useRef<
+    Map<string, { startBeats?: number; durationBeats?: number }>
+  >(new Map());
+  const pendingFadePatchRef = useRef<Map<string, { fadeInBeats?: number; fadeOutBeats?: number }>>(
+    new Map(),
+  );
   const pendingFileStartPatchRef = useRef<Map<string, { fileStartTimeBeats: number }>>(new Map());
 
   const selectedObjectIds = useScoreSelectionStore((state) => state.selectedObjectIds);
@@ -252,13 +281,17 @@ export default function TrackLayerGroupCanvas({
   const snapBeats = snapEnabled
     ? snapValueToBeats(snapValue, tempo, smpteFrameRate, 44100, pixelsPerBeat)
     : 0;
-  const snapBeat = useCallback((beats: number, direction: 'floor' | 'nearest') => {
-    if (!snapEnabled || snapBeats <= 0) return beats;
-    return snapBeatToGrid(beats, direction, snapValue, snapBeats, meterMap);
-  }, [meterMap, snapBeats, snapEnabled, snapValue]);
-  const beatsToSeconds = useCallback((beats: number) => (
-    tempo > 0 ? Math.max(0, beats) * 60 / tempo : Math.max(0, beats)
-  ), [tempo]);
+  const snapBeat = useCallback(
+    (beats: number, direction: 'floor' | 'nearest') => {
+      if (!snapEnabled || snapBeats <= 0) return beats;
+      return snapBeatToGrid(beats, direction, snapValue, snapBeats, meterMap);
+    },
+    [meterMap, snapBeats, snapEnabled, snapValue],
+  );
+  const beatsToSeconds = useCallback(
+    (beats: number) => (tempo > 0 ? (Math.max(0, beats) * 60) / tempo : Math.max(0, beats)),
+    [tempo],
+  );
 
   const toLocalXY = useCallback((clientX: number, clientY: number) => {
     const rect = containerRef.current?.getBoundingClientRect();
@@ -266,57 +299,70 @@ export default function TrackLayerGroupCanvas({
     return { x: clientX - rect.left, y: clientY - rect.top };
   }, []);
 
-  const getDisplayItem = useCallback((item: ScoreRowObjectSnapshot): ScoreRowObjectSnapshot => {
-    const timingPreview = previewByObjectId[item.objectId];
-    const audioPreview = audioPreviewByObjectId[item.objectId];
-    const timed = timingPreview
-      ? { ...item, startBeats: timingPreview.startBeats, durationBeats: timingPreview.durationBeats }
-      : item;
-    if (!audioPreview || timed.barRenderer.kind !== 'audioClip') return timed;
-    return {
-      ...timed,
-      barRenderer: {
-        ...timed.barRenderer,
-        fileStartTimeBeats: audioPreview.fileStartTimeBeats ?? timed.barRenderer.fileStartTimeBeats,
-        fadeInBeats: audioPreview.fadeInBeats ?? timed.barRenderer.fadeInBeats,
-        fadeOutBeats: audioPreview.fadeOutBeats ?? timed.barRenderer.fadeOutBeats,
-      },
-    };
-  }, [audioPreviewByObjectId, previewByObjectId]);
+  const getDisplayItem = useCallback(
+    (item: ScoreRowObjectSnapshot): ScoreRowObjectSnapshot => {
+      const timingPreview = previewByObjectId[item.objectId];
+      const audioPreview = audioPreviewByObjectId[item.objectId];
+      const timed = timingPreview
+        ? {
+            ...item,
+            startBeats: timingPreview.startBeats,
+            durationBeats: timingPreview.durationBeats,
+          }
+        : item;
+      if (!audioPreview || timed.barRenderer.kind !== 'audioClip') return timed;
+      return {
+        ...timed,
+        barRenderer: {
+          ...timed.barRenderer,
+          fileStartTimeBeats:
+            audioPreview.fileStartTimeBeats ?? timed.barRenderer.fileStartTimeBeats,
+          fadeInBeats: audioPreview.fadeInBeats ?? timed.barRenderer.fadeInBeats,
+          fadeOutBeats: audioPreview.fadeOutBeats ?? timed.barRenderer.fadeOutBeats,
+        },
+      };
+    },
+    [audioPreviewByObjectId, previewByObjectId],
+  );
 
-  const collectSelectedOriginals = useCallback((
-    primaryItem: ScoreRowObjectSnapshot,
-    groupStartIndexById: Map<string, number>,
-  ): OriginalTrackItem[] => {
-    const selectedIds = selectedObjectIds.has(primaryItem.objectId)
-      ? new Set(selectedObjectIds)
-      : new Set([primaryItem.objectId]);
-    const originals: OriginalTrackItem[] = [];
-    for (const layerGroup of allLayerGroups) {
-      const groupStart = groupStartIndexById.get(layerGroup.groupId) ?? 0;
-      for (let layerIndex = 0; layerIndex < layerGroup.layers.length; layerIndex += 1) {
-        for (const candidate of layerGroup.layers[layerIndex]!.items) {
-          if (!selectedIds.has(candidate.objectId)) continue;
-          const display = getDisplayItem(candidate);
-          originals.push({
-            objectId: candidate.objectId,
-            objectType: candidate.objectType,
-            groupId: layerGroup.groupId,
-            layerIndex,
-            globalLayerIndex: groupStart + layerIndex,
-            startBeats: display.startBeats,
-            durationBeats: display.durationBeats,
-            startTimeBase: candidate.startTimeBase,
-            durationTimeBase: candidate.durationTimeBase,
-            fadeInBeats: display.barRenderer.kind === 'audioClip' ? display.barRenderer.fadeInBeats : 0,
-            fadeOutBeats: display.barRenderer.kind === 'audioClip' ? display.barRenderer.fadeOutBeats : 0,
-            editorTarget: candidate.editorTarget,
-          });
+  const collectSelectedOriginals = useCallback(
+    (
+      primaryItem: ScoreRowObjectSnapshot,
+      groupStartIndexById: Map<string, number>,
+    ): OriginalTrackItem[] => {
+      const selectedIds = selectedObjectIds.has(primaryItem.objectId)
+        ? new Set(selectedObjectIds)
+        : new Set([primaryItem.objectId]);
+      const originals: OriginalTrackItem[] = [];
+      for (const layerGroup of allLayerGroups) {
+        const groupStart = groupStartIndexById.get(layerGroup.groupId) ?? 0;
+        for (let layerIndex = 0; layerIndex < layerGroup.layers.length; layerIndex += 1) {
+          for (const candidate of layerGroup.layers[layerIndex]!.items) {
+            if (!selectedIds.has(candidate.objectId)) continue;
+            const display = getDisplayItem(candidate);
+            originals.push({
+              objectId: candidate.objectId,
+              objectType: candidate.objectType,
+              groupId: layerGroup.groupId,
+              layerIndex,
+              globalLayerIndex: groupStart + layerIndex,
+              startBeats: display.startBeats,
+              durationBeats: display.durationBeats,
+              startTimeBase: candidate.startTimeBase,
+              durationTimeBase: candidate.durationTimeBase,
+              fadeInBeats:
+                display.barRenderer.kind === 'audioClip' ? display.barRenderer.fadeInBeats : 0,
+              fadeOutBeats:
+                display.barRenderer.kind === 'audioClip' ? display.barRenderer.fadeOutBeats : 0,
+              editorTarget: candidate.editorTarget,
+            });
+          }
         }
       }
-    }
-    return originals;
-  }, [allLayerGroups, getDisplayItem, selectedObjectIds]);
+      return originals;
+    },
+    [allLayerGroups, getDisplayItem, selectedObjectIds],
+  );
 
   const clearPreview = useCallback(() => {
     setPreviewByObjectId({});
@@ -324,7 +370,10 @@ export default function TrackLayerGroupCanvas({
 
   useEffect(() => {
     if (Object.keys(audioPreviewByObjectId).length === 0) return;
-    const current = new Map<string, { fileStartTimeBeats: number; fadeInBeats: number; fadeOutBeats: number }>();
+    const current = new Map<
+      string,
+      { fileStartTimeBeats: number; fadeInBeats: number; fadeOutBeats: number }
+    >();
     for (const layer of group.layers) {
       for (const item of layer.items) {
         if (item.barRenderer.kind !== 'audioClip') continue;
@@ -338,10 +387,14 @@ export default function TrackLayerGroupCanvas({
     const settled = Object.entries(audioPreviewByObjectId)
       .filter(([objectId, preview]) => {
         const value = current.get(objectId);
-        return !value || (
-          (preview.fileStartTimeBeats === undefined || Math.abs(preview.fileStartTimeBeats - value.fileStartTimeBeats) < 1e-6)
-          && (preview.fadeInBeats === undefined || Math.abs(preview.fadeInBeats - value.fadeInBeats) < 1e-6)
-          && (preview.fadeOutBeats === undefined || Math.abs(preview.fadeOutBeats - value.fadeOutBeats) < 1e-6)
+        return (
+          !value ||
+          ((preview.fileStartTimeBeats === undefined ||
+            Math.abs(preview.fileStartTimeBeats - value.fileStartTimeBeats) < 1e-6) &&
+            (preview.fadeInBeats === undefined ||
+              Math.abs(preview.fadeInBeats - value.fadeInBeats) < 1e-6) &&
+            (preview.fadeOutBeats === undefined ||
+              Math.abs(preview.fadeOutBeats - value.fadeOutBeats) < 1e-6))
         );
       })
       .map(([objectId]) => objectId);
@@ -380,9 +433,10 @@ export default function TrackLayerGroupCanvas({
     };
   }, [setAudioDropGuideBeat]);
 
-  const getSelectedEntries = useCallback(() => (
-    collectClipboardEntriesForSelection(allLayerGroups, selectedObjectIds)
-  ), [allLayerGroups, selectedObjectIds]);
+  const getSelectedEntries = useCallback(
+    () => collectClipboardEntriesForSelection(allLayerGroups, selectedObjectIds),
+    [allLayerGroups, selectedObjectIds],
+  );
 
   const handleRemove = useCallback(() => {
     const targets = getSelectedEntries()
@@ -433,8 +487,11 @@ export default function TrackLayerGroupCanvas({
       removeTargets();
       return;
     }
-    void captureScoreSoundObject({ projectSessionId, projectRevision, location })
-      .then((captured) => { if (captured) removeTargets(); });
+    void captureScoreSoundObject({ projectSessionId, projectRevision, location }).then(
+      (captured) => {
+        if (captured) removeTargets();
+      },
+    );
   }, [
     applyProjectDocumentPatch,
     captureScoreSoundObject,
@@ -445,36 +502,47 @@ export default function TrackLayerGroupCanvas({
     projectSessionId,
   ]);
 
-  const commitMoves = useCallback((
-    moves: Array<{ entry: ScoreObjectClipboardEntry; targetStartBeats: number }>,
-  ) => {
-    const optimisticMoves = moves.map(({ entry, targetStartBeats }) => ({
-      objectId: entry.objectId,
-      targetStartBeats,
-      targetLayerIndex: entry.layerIndex,
-      targetGroupId: entry.groupId,
-    }));
-    moveScoreObjects(optimisticMoves);
-    const canonicalMoves = moves.flatMap(({ entry, targetStartBeats }) => entry.editorTarget ? [{
-      target: entry.editorTarget,
-      targetStartBeats,
-      targetLayerIndex: entry.layerIndex,
-      targetGroupId: entry.groupId,
-    }] : []);
-    if (canonicalMoves.length > 0) {
-      void applyProjectDocumentPatch({ score: { type: 'moveScoreObjects', moves: canonicalMoves } });
-    }
-  }, [applyProjectDocumentPatch, moveScoreObjects]);
+  const commitMoves = useCallback(
+    (moves: Array<{ entry: ScoreObjectClipboardEntry; targetStartBeats: number }>) => {
+      const optimisticMoves = moves.map(({ entry, targetStartBeats }) => ({
+        objectId: entry.objectId,
+        targetStartBeats,
+        targetLayerIndex: entry.layerIndex,
+        targetGroupId: entry.groupId,
+      }));
+      moveScoreObjects(optimisticMoves);
+      const canonicalMoves = moves.flatMap(({ entry, targetStartBeats }) =>
+        entry.editorTarget
+          ? [
+              {
+                target: entry.editorTarget,
+                targetStartBeats,
+                targetLayerIndex: entry.layerIndex,
+                targetGroupId: entry.groupId,
+              },
+            ]
+          : [],
+      );
+      if (canonicalMoves.length > 0) {
+        void applyProjectDocumentPatch({
+          score: { type: 'moveScoreObjects', moves: canonicalMoves },
+        });
+      }
+    },
+    [applyProjectDocumentPatch, moveScoreObjects],
+  );
 
   const handleFollowTheLeader = useCallback(() => {
     const sorted = [...getSelectedEntries()].sort((a, b) => a.startBeats - b.startBeats);
     if (sorted.length < 2) return;
     let cursor = sorted[0]!.startBeats;
-    commitMoves(sorted.map((entry) => {
-      const targetStartBeats = cursor;
-      cursor += entry.durationBeats;
-      return { entry, targetStartBeats };
-    }));
+    commitMoves(
+      sorted.map((entry) => {
+        const targetStartBeats = cursor;
+        cursor += entry.durationBeats;
+        return { entry, targetStartBeats };
+      }),
+    );
   }, [commitMoves, getSelectedEntries]);
 
   const handleReverse = useCallback(() => {
@@ -482,28 +550,43 @@ export default function TrackLayerGroupCanvas({
     if (entries.length < 2) return;
     const start = Math.min(...entries.map((entry) => entry.startBeats));
     const end = Math.max(...entries.map((entry) => entry.startBeats + entry.durationBeats));
-    commitMoves(entries.map((entry) => ({
-      entry,
-      targetStartBeats: start + end - (entry.startBeats + entry.durationBeats),
-    })));
+    commitMoves(
+      entries.map((entry) => ({
+        entry,
+        targetStartBeats: start + end - (entry.startBeats + entry.durationBeats),
+      })),
+    );
   }, [commitMoves, getSelectedEntries]);
 
-  const handleAlign = useCallback((alignment: 'left' | 'center' | 'right') => {
-    const entries = getSelectedEntries();
-    if (entries.length < 2) return;
-    if (alignment === 'left') {
-      const start = Math.min(...entries.map((entry) => entry.startBeats));
-      commitMoves(entries.map((entry) => ({ entry, targetStartBeats: start })));
-    } else if (alignment === 'right') {
-      const end = Math.max(...entries.map((entry) => entry.startBeats + entry.durationBeats));
-      commitMoves(entries.map((entry) => ({ entry, targetStartBeats: Math.max(0, end - entry.durationBeats) })));
-    } else {
-      const start = Math.min(...entries.map((entry) => entry.startBeats));
-      const end = Math.max(...entries.map((entry) => entry.startBeats + entry.durationBeats));
-      const center = (start + end) / 2;
-      commitMoves(entries.map((entry) => ({ entry, targetStartBeats: Math.max(0, center - entry.durationBeats / 2) })));
-    }
-  }, [commitMoves, getSelectedEntries]);
+  const handleAlign = useCallback(
+    (alignment: 'left' | 'center' | 'right') => {
+      const entries = getSelectedEntries();
+      if (entries.length < 2) return;
+      if (alignment === 'left') {
+        const start = Math.min(...entries.map((entry) => entry.startBeats));
+        commitMoves(entries.map((entry) => ({ entry, targetStartBeats: start })));
+      } else if (alignment === 'right') {
+        const end = Math.max(...entries.map((entry) => entry.startBeats + entry.durationBeats));
+        commitMoves(
+          entries.map((entry) => ({
+            entry,
+            targetStartBeats: Math.max(0, end - entry.durationBeats),
+          })),
+        );
+      } else {
+        const start = Math.min(...entries.map((entry) => entry.startBeats));
+        const end = Math.max(...entries.map((entry) => entry.startBeats + entry.durationBeats));
+        const center = (start + end) / 2;
+        commitMoves(
+          entries.map((entry) => ({
+            entry,
+            targetStartBeats: Math.max(0, center - entry.durationBeats / 2),
+          })),
+        );
+      }
+    },
+    [commitMoves, getSelectedEntries],
+  );
 
   const handleShift = useCallback(() => {
     const entries = getSelectedEntries();
@@ -532,16 +615,29 @@ export default function TrackLayerGroupCanvas({
       .map((entry) => entry.editorTarget)
       .filter((target): target is ScoreObjectEditorTargetSnapshot => target !== undefined);
     if (targets.length > 0) {
-      void applyProjectDocumentPatch({ score: { type: 'setSubjectiveDurationToObjective', targets } });
+      void applyProjectDocumentPatch({
+        score: { type: 'setSubjectiveDurationToObjective', targets },
+      });
     }
   }, [applyProjectDocumentPatch, getSelectedEntries]);
 
-  const handleColorSelected = useCallback((backgroundColor: number) => {
-    const targets = pendingColorTargetsRef.current;
-    void Promise.all(targets.map((target) => applyProjectDocumentPatch({ score: {
-      type: 'updateSharedProperties', target, patch: { backgroundColor },
-    } })));
-  }, [applyProjectDocumentPatch]);
+  const handleColorSelected = useCallback(
+    (backgroundColor: number) => {
+      const targets = pendingColorTargetsRef.current;
+      void Promise.all(
+        targets.map((target) =>
+          applyProjectDocumentPatch({
+            score: {
+              type: 'updateSharedProperties',
+              target,
+              patch: { backgroundColor },
+            },
+          }),
+        ),
+      );
+    },
+    [applyProjectDocumentPatch],
+  );
 
   const handleSetColor = useCallback(() => {
     const entries = getSelectedEntries();
@@ -552,7 +648,11 @@ export default function TrackLayerGroupCanvas({
     const anchor = colorPickerAnchorRef.current;
     if (targets.length === 0 || !anchor) return;
     pendingColorTargetsRef.current = targets;
-    colorPickerRef.current?.open(entries[0]!.backgroundColor, anchor, colorPickerAnchorElementRef.current);
+    colorPickerRef.current?.open(
+      entries[0]!.backgroundColor,
+      anchor,
+      colorPickerAnchorElementRef.current,
+    );
   }, [getSelectedEntries]);
 
   const handleSetToLayerColor = useCallback(async () => {
@@ -586,10 +686,14 @@ export default function TrackLayerGroupCanvas({
     const replacement = clipboard[0]!;
     const invalid = selected.find((entry) => {
       const targetGroup = allLayerGroups.find((candidate) => candidate.groupId === entry.groupId);
-      return !targetGroup || !layerGroupAcceptsObjectType(targetGroup.groupType, replacement.objectType);
+      return (
+        !targetGroup || !layerGroupAcceptsObjectType(targetGroup.groupType, replacement.objectType)
+      );
     });
     if (invalid) {
-      toast.error(`${replacement.objectType} is not compatible with the selected destination layer.`);
+      toast.error(
+        `${replacement.objectType} is not compatible with the selected destination layer.`,
+      );
       return;
     }
     const removeTargets = selected
@@ -597,24 +701,30 @@ export default function TrackLayerGroupCanvas({
       .filter((target): target is ScoreObjectEditorTargetSnapshot => target !== undefined);
     void (async () => {
       if (removeTargets.length > 0) {
-        await applyProjectDocumentPatch({ score: { type: 'removeScoreObjects', targets: removeTargets } });
+        await applyProjectDocumentPatch({
+          score: { type: 'removeScoreObjects', targets: removeTargets },
+        });
       }
       for (const entry of selected) {
-        await applyProjectDocumentPatch({ score: {
-          type: 'addScoreObjects',
-          groupId: entry.groupId,
-          objects: [{
-            layerIndex: entry.layerIndex,
-            objectType: replacement.objectType,
-            name: replacement.name,
-            startBeats: entry.startBeats,
-            durationBeats: entry.durationBeats,
-            startTimeBase: entry.startTimeBase,
-            durationTimeBase: entry.durationTimeBase,
-            backgroundColor: replacement.backgroundColor,
-            serializedXml: replacement.serializedXml,
-          }],
-        } });
+        await applyProjectDocumentPatch({
+          score: {
+            type: 'addScoreObjects',
+            groupId: entry.groupId,
+            objects: [
+              {
+                layerIndex: entry.layerIndex,
+                objectType: replacement.objectType,
+                name: replacement.name,
+                startBeats: entry.startBeats,
+                durationBeats: entry.durationBeats,
+                startTimeBase: entry.startTimeBase,
+                durationTimeBase: entry.durationTimeBase,
+                backgroundColor: replacement.backgroundColor,
+                serializedXml: replacement.serializedXml,
+              },
+            ],
+          },
+        });
       }
       clearSelection();
     })();
@@ -623,13 +733,17 @@ export default function TrackLayerGroupCanvas({
   const handleExport = useCallback(async () => {
     const entries = getSelectedEntries();
     if (
-      entries.length !== 1
-      || entries[0]!.objectType === 'AudioClip'
-      || entries[0]!.objectType === 'Instance'
-      || !entries[0]!.serializedXml
-    ) return;
+      entries.length !== 1 ||
+      entries[0]!.objectType === 'AudioClip' ||
+      entries[0]!.objectType === 'Instance' ||
+      !entries[0]!.serializedXml
+    )
+      return;
     try {
-      const result = await window.blueAPI.exportScoreObject(entries[0]!.serializedXml, entries[0]!.name);
+      const result = await window.blueAPI.exportScoreObject(
+        entries[0]!.serializedXml,
+        entries[0]!.name,
+      );
       if (result.status === 'error') toast.error(result.error);
     } catch (error) {
       toast.error('Error: Could not export Sound Object.');
@@ -648,7 +762,8 @@ export default function TrackLayerGroupCanvas({
       }
 
       const imported = result.object;
-      const layer = group.layers[Math.max(0, Math.min(contextMenuPos.layerIndex, group.layers.length - 1))];
+      const layer =
+        group.layers[Math.max(0, Math.min(contextMenuPos.layerIndex, group.layers.length - 1))];
       if (!layer) return;
       if (!layerGroupAcceptsObjectType('track', imported.objectType)) {
         toast.error(`${imported.objectType} cannot be imported into a Track.`);
@@ -677,376 +792,543 @@ export default function TrackLayerGroupCanvas({
       toast.error('Error: Could not read Sound Object from file');
       console.error('Error importing Sound Object', error);
     }
-  }, [applyProjectDocumentPatch, clampBeat, contextMenuPos, group, projectRevision, projectSessionId, snapBeat, totalBeats]);
+  }, [
+    applyProjectDocumentPatch,
+    clampBeat,
+    contextMenuPos,
+    group,
+    projectRevision,
+    projectSessionId,
+    snapBeat,
+    totalBeats,
+  ]);
 
-  const addTrackItem = useCallback((objectType: 'AudioClip' | string, startBeats: number, layerIndex: number) => {
-    const layer = group.layers[Math.max(0, Math.min(layerIndex, group.layers.length - 1))];
-    if (!layer || !layerGroupAcceptsObjectType('track', objectType)) return;
-    void applyProjectDocumentPatch({
-      score: {
-        type: 'addTrackItem',
-        track: trackRef(group, layer.layerId, projectSessionId, projectRevision),
-        item: {
-          objectType,
-          ...(objectType === 'AudioClip' ? { name: 'AudioClip' } : {}),
-          durationBeats: 4,
-          startTimeBase: 'BEATS',
-          durationTimeBase: 'BEATS',
+  const addTrackItem = useCallback(
+    (objectType: 'AudioClip' | string, startBeats: number, layerIndex: number) => {
+      const layer = group.layers[Math.max(0, Math.min(layerIndex, group.layers.length - 1))];
+      if (!layer || !layerGroupAcceptsObjectType('track', objectType)) return;
+      void applyProjectDocumentPatch({
+        score: {
+          type: 'addTrackItem',
+          track: trackRef(group, layer.layerId, projectSessionId, projectRevision),
+          item: {
+            objectType,
+            ...(objectType === 'AudioClip' ? { name: 'AudioClip' } : {}),
+            durationBeats: 4,
+            startTimeBase: 'BEATS',
+            durationTimeBase: 'BEATS',
+          },
+          startBeats: clampBeat(snapBeat(startBeats, 'floor'), totalBeats),
         },
-        startBeats: clampBeat(snapBeat(startBeats, 'floor'), totalBeats),
-      },
-    });
-  }, [applyProjectDocumentPatch, group, projectRevision, projectSessionId, snapBeat, totalBeats]);
+      });
+    },
+    [applyProjectDocumentPatch, group, projectRevision, projectSessionId, snapBeat, totalBeats],
+  );
 
-  const pasteAtTrackPosition = useCallback((layerIndex: number, xBeats: number) => {
-    if (clipboard.length === 0) return;
-    const layer = group.layers[layerIndex];
-    if (!layer) return;
-    const offset = xBeats - Math.min(...clipboard.map((entry) => entry.startBeats));
-    const patches = clipboard.map((entry) => ({
-      type: 'addTrackItem' as const,
-      track: trackRef(group, layer.layerId, projectSessionId, projectRevision),
-      item: itemTransfer(entry),
-      startBeats: clampBeat(snapBeat(entry.startBeats + offset, 'floor'), totalBeats),
-    }));
-    for (const patch of patches) {
-      if (layerGroupAcceptsObjectType('track', patch.item.objectType ?? '')) {
-        void applyProjectDocumentPatch({ score: patch });
+  const pasteAtTrackPosition = useCallback(
+    (layerIndex: number, xBeats: number) => {
+      if (clipboard.length === 0) return;
+      const layer = group.layers[layerIndex];
+      if (!layer) return;
+      const offset = xBeats - Math.min(...clipboard.map((entry) => entry.startBeats));
+      const patches = clipboard.map((entry) => ({
+        type: 'addTrackItem' as const,
+        track: trackRef(group, layer.layerId, projectSessionId, projectRevision),
+        item: itemTransfer(entry),
+        startBeats: clampBeat(snapBeat(entry.startBeats + offset, 'floor'), totalBeats),
+      }));
+      for (const patch of patches) {
+        if (layerGroupAcceptsObjectType('track', patch.item.objectType ?? '')) {
+          void applyProjectDocumentPatch({ score: patch });
+        }
       }
-    }
-  }, [applyProjectDocumentPatch, clipboard, group, projectRevision, projectSessionId, snapBeat, totalBeats]);
+    },
+    [
+      applyProjectDocumentPatch,
+      clipboard,
+      group,
+      projectRevision,
+      projectSessionId,
+      snapBeat,
+      totalBeats,
+    ],
+  );
 
   const handlePaste = useCallback(() => {
     if (!contextMenuPos) return;
     pasteAtTrackPosition(contextMenuPos.layerIndex, contextMenuPos.xBeats);
   }, [contextMenuPos, pasteAtTrackPosition]);
 
-  const handleMouseDown = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
-    if (event.button !== 0) return;
-    const { x, y } = toLocalXY(event.clientX, event.clientY);
-    const xBeats = x / pixelsPerBeat;
-    const hit = findTimelineHit(group.layers, xBeats, y, pixelsPerBeat, DEFAULT_ROW_HEIGHT);
-    const layerHit = findTimelineLayerAtY(group.layers, y, DEFAULT_ROW_HEIGHT);
-
-    if ((event.metaKey || event.ctrlKey) && !hit && layerHit && clipboard.length > 0) {
-      event.preventDefault();
-      pasteAtTrackPosition(layerHit.layerIndex, xBeats);
-      gestureRef.current = null;
-      return;
-    }
-
-    // Spec 067: an explicit pointer selection of a Track timeline surface
-    // (empty location or contained ScoreObject/clip) focuses that Track. The
-    // focus layer is the one under the pointer; identity is stable.
-    const focusLayer = hit
-      ? group.layers[hit.layerIndex]
-      : layerHit
-        ? group.layers[layerHit.layerIndex]
-        : undefined;
-    if (focusLayer) {
-      useMidiRoutingStore.getState().focusTrack({
-        projectSessionId,
-        rootGroupId: group.groupId,
-        trackId: focusLayer.layerId,
-        displayName: focusLayer.name,
-      });
-    }
-
-    if (!hit) {
-      if (!event.shiftKey) {
-        clearSelection();
-        clearLayerSelection();
-      }
-      gestureRef.current = {
-        mode: 'marquee',
-        startClientX: event.clientX,
-        startClientY: event.clientY,
-        startBeats: xBeats,
-        startLayerIndex: findTimelineLayerAtY(group.layers, y, DEFAULT_ROW_HEIGHT)?.layerIndex ?? 0,
-        startGlobalLayer: 0,
-        startGroupYOffset: 0,
-        minLayerAdjust: 0,
-        maxLayerAdjust: 0,
-        globalLayerMap: [],
-        additive: event.shiftKey,
-        originals: [],
-      };
-      marqueeRef.current = null;
-      setMarquee(null);
-      return;
-    }
-
-    if (event.shiftKey || event.metaKey || event.ctrlKey) {
-      select(hit.item.objectId, true, hit.item.editorTarget);
-      gestureRef.current = null;
-      return;
-    }
-    if (!selectedObjectIds.has(hit.item.objectId)) {
-      select(hit.item.objectId, false, hit.item.editorTarget);
-    }
-
-    const displayItem = getDisplayItem(hit.item);
-    if (event.altKey && displayItem.barRenderer.kind === 'audioClip') {
-      gestureRef.current = {
-        mode: 'slideFileStart',
-        startClientX: event.clientX,
-        startClientY: event.clientY,
-        startBeats: displayItem.startBeats,
-        startLayerIndex: hit.layerIndex,
-        startGlobalLayer: hit.layerIndex,
-        startGroupYOffset: 0,
-        minLayerAdjust: 0,
-        maxLayerAdjust: 0,
-        globalLayerMap: [],
-        activeObjectId: hit.item.objectId,
-        startFileStartBeats: displayItem.barRenderer.fileStartTimeBeats,
-        audioDurationBeats: displayItem.barRenderer.audioDurationBeats,
-        looping: displayItem.barRenderer.looping,
-        additive: false,
-        originals: [{
-          objectId: hit.item.objectId,
-          objectType: hit.item.objectType,
-          groupId: group.groupId,
-          layerIndex: hit.layerIndex,
-          globalLayerIndex: hit.layerIndex,
-          startBeats: displayItem.startBeats,
-          durationBeats: displayItem.durationBeats,
-          startTimeBase: hit.item.startTimeBase,
-          durationTimeBase: hit.item.durationTimeBase,
-          fadeInBeats: displayItem.barRenderer.fadeInBeats,
-          fadeOutBeats: displayItem.barRenderer.fadeOutBeats,
-          editorTarget: hit.item.editorTarget,
-        }],
-      };
-      return;
-    }
-
-    const globalData = buildTimelineGlobalLayerData(allLayerGroups, DEFAULT_ROW_HEIGHT, GROUP_SPACER);
-    const currentGroupStart = globalData.groupStartIndexById.get(group.groupId) ?? 0;
-    const currentGroupYOffset = globalData.groupYOffsetById.get(group.groupId) ?? 0;
-    const originals = collectSelectedOriginals(hit.item, globalData.groupStartIndexById);
-    if (originals.length === 0) return;
-
-    const localX = x - displayItem.startBeats * pixelsPerBeat;
-    const width = Math.max(displayItem.durationBeats * pixelsPerBeat, 4);
-    const onLeftEdge = selectedObjectIds.has(hit.item.objectId) && localX >= 0 && localX < RESIZE_EDGE_PX;
-    const onRightEdge = selectedObjectIds.has(hit.item.objectId) && localX > width - RESIZE_EDGE_PX && localX <= width;
-    let minLayerAdjust = 0;
-    let maxLayerAdjust = 0;
-    if (!onLeftEdge && !onRightEdge) {
-      minLayerAdjust = Number.NEGATIVE_INFINITY;
-      maxLayerAdjust = Number.POSITIVE_INFINITY;
-      for (const original of originals) {
-        const bounds = getTimelineLayerAdjustBounds(
-          globalData.layerMap,
-          original.objectType,
-          original.globalLayerIndex,
-          layerGroupAcceptsObjectType,
-        );
-        minLayerAdjust = Math.max(minLayerAdjust, bounds.min);
-        maxLayerAdjust = Math.min(maxLayerAdjust, bounds.max);
-      }
-      if (!Number.isFinite(minLayerAdjust)) minLayerAdjust = 0;
-      if (!Number.isFinite(maxLayerAdjust)) maxLayerAdjust = 0;
-    }
-
-    gestureRef.current = {
-      mode: onLeftEdge ? 'resizeLeft' : onRightEdge ? 'resizeRight' : 'move',
-      startClientX: event.clientX,
-      startClientY: event.clientY,
-      startBeats: xBeats,
-      startLayerIndex: hit.layerIndex,
-      startGlobalLayer: currentGroupStart + hit.layerIndex,
-      startGroupYOffset: currentGroupYOffset,
-      minLayerAdjust,
-      maxLayerAdjust,
-      globalLayerMap: globalData.layerMap.map(({ groupId, localIndex }) => ({ groupId, localIndex })),
-      resizeReferenceStartBeats: displayItem.startBeats,
-      resizeReferenceDurationBeats: displayItem.durationBeats,
-      additive: false,
-      originals,
-    };
-  }, [allLayerGroups, clearLayerSelection, clearSelection, clipboard.length, collectSelectedOriginals, getDisplayItem, group.groupId, group.layers, pasteAtTrackPosition, pixelsPerBeat, select, selectedObjectIds, toLocalXY]);
-
-  const startFadeHandleDrag = useCallback((
-    event: React.MouseEvent<HTMLDivElement>,
-    item: ScoreRowObjectSnapshot,
-    layerIndex: number,
-    mode: 'fadeIn' | 'fadeOut',
-  ) => {
-    if (event.button !== 0) return;
-    event.preventDefault();
-    event.stopPropagation();
-    if (!selectedObjectIds.has(item.objectId) || selectedObjectIds.size !== 1) {
-      select(item.objectId, false, item.editorTarget);
-    }
-    const displayItem = getDisplayItem(item);
-    if (displayItem.barRenderer.kind !== 'audioClip') return;
-    gestureRef.current = {
-      mode,
-      startClientX: event.clientX,
-      startClientY: event.clientY,
-      startBeats: displayItem.startBeats,
-      startLayerIndex: layerIndex,
-      startGlobalLayer: layerIndex,
-      startGroupYOffset: 0,
-      minLayerAdjust: 0,
-      maxLayerAdjust: 0,
-      globalLayerMap: [],
-      activeObjectId: item.objectId,
-      startFadeBeats: mode === 'fadeIn' ? displayItem.barRenderer.fadeInBeats : displayItem.barRenderer.fadeOutBeats,
-      additive: false,
-      originals: [{
-        objectId: item.objectId,
-        objectType: item.objectType,
-        groupId: group.groupId,
-        layerIndex,
-        globalLayerIndex: layerIndex,
-        startBeats: displayItem.startBeats,
-        durationBeats: displayItem.durationBeats,
-        startTimeBase: item.startTimeBase,
-        durationTimeBase: item.durationTimeBase,
-        fadeInBeats: displayItem.barRenderer.fadeInBeats,
-        fadeOutBeats: displayItem.barRenderer.fadeOutBeats,
-        editorTarget: item.editorTarget,
-      }],
-    };
-  }, [getDisplayItem, group.groupId, select, selectedObjectIds]);
-
-  const handleMouseMove = useCallback((event: React.MouseEvent<HTMLDivElement> | MouseEvent) => {
-    const gesture = gestureRef.current;
-    if (!gesture) {
+  const handleMouseDown = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (event.button !== 0) return;
       const { x, y } = toLocalXY(event.clientX, event.clientY);
-      const hit = findTimelineHit(group.layers, x / pixelsPerBeat, y, pixelsPerBeat, DEFAULT_ROW_HEIGHT);
+      const xBeats = x / pixelsPerBeat;
+      const hit = findTimelineHit(group.layers, xBeats, y, pixelsPerBeat, DEFAULT_ROW_HEIGHT);
+      const layerHit = findTimelineLayerAtY(group.layers, y, DEFAULT_ROW_HEIGHT);
+
+      if ((event.metaKey || event.ctrlKey) && !hit && layerHit && clipboard.length > 0) {
+        event.preventDefault();
+        pasteAtTrackPosition(layerHit.layerIndex, xBeats);
+        gestureRef.current = null;
+        return;
+      }
+
+      // Spec 067: an explicit pointer selection of a Track timeline surface
+      // (empty location or contained ScoreObject/clip) focuses that Track. The
+      // focus layer is the one under the pointer; identity is stable.
+      const focusLayer = hit
+        ? group.layers[hit.layerIndex]
+        : layerHit
+          ? group.layers[layerHit.layerIndex]
+          : undefined;
+      if (focusLayer) {
+        useMidiRoutingStore.getState().focusTrack({
+          projectSessionId,
+          rootGroupId: group.groupId,
+          trackId: focusLayer.layerId,
+          displayName: focusLayer.name,
+        });
+      }
+
       if (!hit) {
-        setHoveredAudioObjectId(null);
-        setCursorOverride(null);
+        if (!event.shiftKey) {
+          clearSelection();
+          clearLayerSelection();
+        }
+        gestureRef.current = {
+          mode: 'marquee',
+          startClientX: event.clientX,
+          startClientY: event.clientY,
+          startBeats: xBeats,
+          startLayerIndex:
+            findTimelineLayerAtY(group.layers, y, DEFAULT_ROW_HEIGHT)?.layerIndex ?? 0,
+          startGlobalLayer: 0,
+          startGroupYOffset: 0,
+          minLayerAdjust: 0,
+          maxLayerAdjust: 0,
+          globalLayerMap: [],
+          additive: event.shiftKey,
+          originals: [],
+        };
+        marqueeRef.current = null;
+        setMarquee(null);
         return;
       }
-      const display = getDisplayItem(hit.item);
-      setHoveredAudioObjectId(display.barRenderer.kind === 'audioClip' ? hit.item.objectId : null);
+
+      if (event.shiftKey || event.metaKey || event.ctrlKey) {
+        select(hit.item.objectId, true, hit.item.editorTarget);
+        gestureRef.current = null;
+        return;
+      }
       if (!selectedObjectIds.has(hit.item.objectId)) {
-        setCursorOverride(null);
+        select(hit.item.objectId, false, hit.item.editorTarget);
+      }
+
+      const displayItem = getDisplayItem(hit.item);
+      if (event.altKey && displayItem.barRenderer.kind === 'audioClip') {
+        gestureRef.current = {
+          mode: 'slideFileStart',
+          startClientX: event.clientX,
+          startClientY: event.clientY,
+          startBeats: displayItem.startBeats,
+          startLayerIndex: hit.layerIndex,
+          startGlobalLayer: hit.layerIndex,
+          startGroupYOffset: 0,
+          minLayerAdjust: 0,
+          maxLayerAdjust: 0,
+          globalLayerMap: [],
+          activeObjectId: hit.item.objectId,
+          startFileStartBeats: displayItem.barRenderer.fileStartTimeBeats,
+          audioDurationBeats: displayItem.barRenderer.audioDurationBeats,
+          looping: displayItem.barRenderer.looping,
+          additive: false,
+          originals: [
+            {
+              objectId: hit.item.objectId,
+              objectType: hit.item.objectType,
+              groupId: group.groupId,
+              layerIndex: hit.layerIndex,
+              globalLayerIndex: hit.layerIndex,
+              startBeats: displayItem.startBeats,
+              durationBeats: displayItem.durationBeats,
+              startTimeBase: hit.item.startTimeBase,
+              durationTimeBase: hit.item.durationTimeBase,
+              fadeInBeats: displayItem.barRenderer.fadeInBeats,
+              fadeOutBeats: displayItem.barRenderer.fadeOutBeats,
+              editorTarget: hit.item.editorTarget,
+            },
+          ],
+        };
         return;
       }
-      const localX = x - display.startBeats * pixelsPerBeat;
-      const width = Math.max(display.durationBeats * pixelsPerBeat, 4);
-      setCursorOverride(localX >= 0 && localX < RESIZE_EDGE_PX
-        ? 'w-resize'
-        : localX > width - RESIZE_EDGE_PX && localX <= width
-          ? 'e-resize'
-          : 'move');
-      return;
-    }
 
-    const { x, y } = toLocalXY(event.clientX, event.clientY);
-    if (gesture.mode === 'marquee') {
-      const start = toLocalXY(gesture.startClientX, gesture.startClientY);
-      const next = { startX: start.x, startY: start.y, endX: x, endY: y };
-      marqueeRef.current = next;
-      setMarquee(next);
-      return;
-    }
-
-    if (gesture.mode === 'move') {
-      const rawDelta = timelinePointerDeltaBeats(x, gesture.startBeats, pixelsPerBeat);
-      const minOriginalStart = Math.min(...gesture.originals.map((original) => original.startBeats));
-      const boundedDelta = Math.max(-minOriginalStart, rawDelta);
-      const delta = snapBeat(minOriginalStart + boundedDelta, 'nearest') - minOriginalStart;
-      const currentGlobalLayer = findTimelineGlobalLayerAtY(
+      const globalData = buildTimelineGlobalLayerData(
         allLayerGroups,
-        y + gesture.startGroupYOffset,
         DEFAULT_ROW_HEIGHT,
         GROUP_SPACER,
       );
-      const rawLayerAdjust = currentGlobalLayer - gesture.startGlobalLayer;
-      const layerAdjust = Math.max(gesture.minLayerAdjust, Math.min(gesture.maxLayerAdjust, rawLayerAdjust));
-      const moves = gesture.originals.flatMap((original) => {
-        const target = gesture.globalLayerMap[original.globalLayerIndex + layerAdjust];
-        return target ? [{
-          objectId: original.objectId,
-          targetStartBeats: original.startBeats + delta,
-          targetLayerIndex: target.localIndex,
-          targetGroupId: target.groupId,
-        }] : [];
-      });
-      if (moves.length === 0) return;
-      moveScoreObjects(moves);
-      setPreviewByObjectId(Object.fromEntries(moves.map((move) => {
-        const original = gesture.originals.find((entry) => entry.objectId === move.objectId)!;
-        return [move.objectId, { startBeats: move.targetStartBeats, durationBeats: original.durationBeats }];
-      })));
-      pendingMovePatchRef.current = moves.flatMap((move) => {
-        const target = gesture.originals.find((entry) => entry.objectId === move.objectId)?.editorTarget;
-        return target ? [{ target, targetStartBeats: move.targetStartBeats, targetLayerIndex: move.targetLayerIndex, targetGroupId: move.targetGroupId }] : [];
-      });
-      return;
-    }
+      const currentGroupStart = globalData.groupStartIndexById.get(group.groupId) ?? 0;
+      const currentGroupYOffset = globalData.groupYOffsetById.get(group.groupId) ?? 0;
+      const originals = collectSelectedOriginals(hit.item, globalData.groupStartIndexById);
+      if (originals.length === 0) return;
 
-    if (gesture.mode === 'resizeLeft' || gesture.mode === 'resizeRight') {
-      const rawDelta = timelinePointerDeltaBeats(x, gesture.startBeats, pixelsPerBeat);
-      let resizes: Array<{ objectId: string; targetStartBeats: number; targetDurationBeats: number }>;
-      if (gesture.mode === 'resizeRight') {
-        const referenceStart = gesture.resizeReferenceStartBeats ?? gesture.originals[0]!.startBeats;
-        const referenceDuration = gesture.resizeReferenceDurationBeats ?? gesture.originals[0]!.durationBeats;
-        const referenceEnd = referenceStart + referenceDuration;
-        const snappedDelta = snapBeat(referenceEnd + rawDelta, 'nearest') - referenceEnd;
-        resizes = gesture.originals.map((original) => ({
-          objectId: original.objectId,
-          targetStartBeats: original.startBeats,
-          targetDurationBeats: Math.max(MIN_TRACK_ITEM_DURATION, original.durationBeats + snappedDelta),
-        }));
-      } else {
-        const referenceStart = gesture.resizeReferenceStartBeats ?? gesture.originals[0]!.startBeats;
-        const snappedDelta = snapBeat(referenceStart + rawDelta, 'nearest') - referenceStart;
-        const minDelta = Math.max(...gesture.originals.map((original) => -original.startBeats));
-        const maxDelta = Math.max(0, Math.min(...gesture.originals.map((original) => original.durationBeats - MIN_TRACK_ITEM_DURATION)));
-        const delta = Math.max(minDelta, Math.min(maxDelta, snappedDelta));
-        resizes = gesture.originals.map((original) => ({
-          objectId: original.objectId,
-          targetStartBeats: original.startBeats + delta,
-          targetDurationBeats: original.durationBeats - delta,
-        }));
+      const localX = x - displayItem.startBeats * pixelsPerBeat;
+      const width = Math.max(displayItem.durationBeats * pixelsPerBeat, 4);
+      const onLeftEdge =
+        selectedObjectIds.has(hit.item.objectId) && localX >= 0 && localX < RESIZE_EDGE_PX;
+      const onRightEdge =
+        selectedObjectIds.has(hit.item.objectId) &&
+        localX > width - RESIZE_EDGE_PX &&
+        localX <= width;
+      let minLayerAdjust = 0;
+      let maxLayerAdjust = 0;
+      if (!onLeftEdge && !onRightEdge) {
+        minLayerAdjust = Number.NEGATIVE_INFINITY;
+        maxLayerAdjust = Number.POSITIVE_INFINITY;
+        for (const original of originals) {
+          const bounds = getTimelineLayerAdjustBounds(
+            globalData.layerMap,
+            original.objectType,
+            original.globalLayerIndex,
+            layerGroupAcceptsObjectType,
+          );
+          minLayerAdjust = Math.max(minLayerAdjust, bounds.min);
+          maxLayerAdjust = Math.min(maxLayerAdjust, bounds.max);
+        }
+        if (!Number.isFinite(minLayerAdjust)) minLayerAdjust = 0;
+        if (!Number.isFinite(maxLayerAdjust)) maxLayerAdjust = 0;
       }
-      resizeScoreObjects(resizes);
-      setPreviewByObjectId(Object.fromEntries(resizes.map((resize) => [resize.objectId, {
-        startBeats: resize.targetStartBeats,
-        durationBeats: resize.targetDurationBeats,
-      }])));
-      resizes.forEach((resize) => pendingSharedPropertyPatchRef.current.set(resize.objectId, {
-        startBeats: resize.targetStartBeats,
-        durationBeats: resize.targetDurationBeats,
-      }));
-      return;
-    }
 
-    const active = gesture.originals[0];
-    if (!active || !gesture.activeObjectId) return;
-    const delta = (event.clientX - gesture.startClientX) / Math.max(pixelsPerBeat, 1);
-    if (gesture.mode === 'slideFileStart') {
-      let next = (gesture.startFileStartBeats ?? 0) - delta;
-      const audioDuration = gesture.audioDurationBeats ?? 0;
-      if (gesture.looping && audioDuration > 0) {
-        while (next < 0) next += audioDuration;
-        next %= audioDuration;
-      } else {
-        next = Math.max(0, Math.min(Math.max(audioDuration - active.durationBeats, 0), next));
+      gestureRef.current = {
+        mode: onLeftEdge ? 'resizeLeft' : onRightEdge ? 'resizeRight' : 'move',
+        startClientX: event.clientX,
+        startClientY: event.clientY,
+        startBeats: xBeats,
+        startLayerIndex: hit.layerIndex,
+        startGlobalLayer: currentGroupStart + hit.layerIndex,
+        startGroupYOffset: currentGroupYOffset,
+        minLayerAdjust,
+        maxLayerAdjust,
+        globalLayerMap: globalData.layerMap.map(({ groupId, localIndex }) => ({
+          groupId,
+          localIndex,
+        })),
+        resizeReferenceStartBeats: displayItem.startBeats,
+        resizeReferenceDurationBeats: displayItem.durationBeats,
+        additive: false,
+        originals,
+      };
+    },
+    [
+      allLayerGroups,
+      clearLayerSelection,
+      clearSelection,
+      clipboard.length,
+      collectSelectedOriginals,
+      getDisplayItem,
+      group.groupId,
+      group.layers,
+      pasteAtTrackPosition,
+      pixelsPerBeat,
+      select,
+      selectedObjectIds,
+      toLocalXY,
+    ],
+  );
+
+  const startFadeHandleDrag = useCallback(
+    (
+      event: React.MouseEvent<HTMLDivElement>,
+      item: ScoreRowObjectSnapshot,
+      layerIndex: number,
+      mode: 'fadeIn' | 'fadeOut',
+    ) => {
+      if (event.button !== 0) return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (!selectedObjectIds.has(item.objectId) || selectedObjectIds.size !== 1) {
+        select(item.objectId, false, item.editorTarget);
       }
-      setAudioPreviewByObjectId((previous) => ({ ...previous, [active.objectId]: { ...previous[active.objectId], fileStartTimeBeats: next } }));
-      setAudioClipEditorPreview(active.objectId, { fileStartTime: beatsToSeconds(next) });
-      pendingFileStartPatchRef.current.set(active.objectId, { fileStartTimeBeats: next });
-      return;
-    }
-    if (gesture.mode === 'fadeIn') {
-      const next = Math.max(0, Math.min(active.durationBeats - active.fadeOutBeats, (gesture.startFadeBeats ?? active.fadeInBeats) + delta));
-      setAudioPreviewByObjectId((previous) => ({ ...previous, [active.objectId]: { ...previous[active.objectId], fadeInBeats: next } }));
-      pendingFadePatchRef.current.set(active.objectId, { ...pendingFadePatchRef.current.get(active.objectId), fadeInBeats: next });
-    } else if (gesture.mode === 'fadeOut') {
-      const next = Math.max(0, Math.min(active.durationBeats - active.fadeInBeats, (gesture.startFadeBeats ?? active.fadeOutBeats) - delta));
-      setAudioPreviewByObjectId((previous) => ({ ...previous, [active.objectId]: { ...previous[active.objectId], fadeOutBeats: next } }));
-      pendingFadePatchRef.current.set(active.objectId, { ...pendingFadePatchRef.current.get(active.objectId), fadeOutBeats: next });
-    }
-  }, [allLayerGroups, beatsToSeconds, getDisplayItem, group.layers, moveScoreObjects, pixelsPerBeat, resizeScoreObjects, selectedObjectIds, setAudioClipEditorPreview, snapBeat, toLocalXY]);
+      const displayItem = getDisplayItem(item);
+      if (displayItem.barRenderer.kind !== 'audioClip') return;
+      gestureRef.current = {
+        mode,
+        startClientX: event.clientX,
+        startClientY: event.clientY,
+        startBeats: displayItem.startBeats,
+        startLayerIndex: layerIndex,
+        startGlobalLayer: layerIndex,
+        startGroupYOffset: 0,
+        minLayerAdjust: 0,
+        maxLayerAdjust: 0,
+        globalLayerMap: [],
+        activeObjectId: item.objectId,
+        startFadeBeats:
+          mode === 'fadeIn'
+            ? displayItem.barRenderer.fadeInBeats
+            : displayItem.barRenderer.fadeOutBeats,
+        additive: false,
+        originals: [
+          {
+            objectId: item.objectId,
+            objectType: item.objectType,
+            groupId: group.groupId,
+            layerIndex,
+            globalLayerIndex: layerIndex,
+            startBeats: displayItem.startBeats,
+            durationBeats: displayItem.durationBeats,
+            startTimeBase: item.startTimeBase,
+            durationTimeBase: item.durationTimeBase,
+            fadeInBeats: displayItem.barRenderer.fadeInBeats,
+            fadeOutBeats: displayItem.barRenderer.fadeOutBeats,
+            editorTarget: item.editorTarget,
+          },
+        ],
+      };
+    },
+    [getDisplayItem, group.groupId, select, selectedObjectIds],
+  );
+
+  const handleMouseMove = useCallback(
+    (event: React.MouseEvent<HTMLDivElement> | MouseEvent) => {
+      const gesture = gestureRef.current;
+      if (!gesture) {
+        const { x, y } = toLocalXY(event.clientX, event.clientY);
+        const hit = findTimelineHit(
+          group.layers,
+          x / pixelsPerBeat,
+          y,
+          pixelsPerBeat,
+          DEFAULT_ROW_HEIGHT,
+        );
+        if (!hit) {
+          setHoveredAudioObjectId(null);
+          setCursorOverride(null);
+          return;
+        }
+        const display = getDisplayItem(hit.item);
+        setHoveredAudioObjectId(
+          display.barRenderer.kind === 'audioClip' ? hit.item.objectId : null,
+        );
+        if (!selectedObjectIds.has(hit.item.objectId)) {
+          setCursorOverride(null);
+          return;
+        }
+        const localX = x - display.startBeats * pixelsPerBeat;
+        const width = Math.max(display.durationBeats * pixelsPerBeat, 4);
+        setCursorOverride(
+          localX >= 0 && localX < RESIZE_EDGE_PX
+            ? 'w-resize'
+            : localX > width - RESIZE_EDGE_PX && localX <= width
+              ? 'e-resize'
+              : 'move',
+        );
+        return;
+      }
+
+      const { x, y } = toLocalXY(event.clientX, event.clientY);
+      if (gesture.mode === 'marquee') {
+        const start = toLocalXY(gesture.startClientX, gesture.startClientY);
+        const next = { startX: start.x, startY: start.y, endX: x, endY: y };
+        marqueeRef.current = next;
+        setMarquee(next);
+        return;
+      }
+
+      if (gesture.mode === 'move') {
+        const rawDelta = timelinePointerDeltaBeats(x, gesture.startBeats, pixelsPerBeat);
+        const minOriginalStart = Math.min(
+          ...gesture.originals.map((original) => original.startBeats),
+        );
+        const boundedDelta = Math.max(-minOriginalStart, rawDelta);
+        const delta = snapBeat(minOriginalStart + boundedDelta, 'nearest') - minOriginalStart;
+        const currentGlobalLayer = findTimelineGlobalLayerAtY(
+          allLayerGroups,
+          y + gesture.startGroupYOffset,
+          DEFAULT_ROW_HEIGHT,
+          GROUP_SPACER,
+        );
+        const rawLayerAdjust = currentGlobalLayer - gesture.startGlobalLayer;
+        const layerAdjust = Math.max(
+          gesture.minLayerAdjust,
+          Math.min(gesture.maxLayerAdjust, rawLayerAdjust),
+        );
+        const moves = gesture.originals.flatMap((original) => {
+          const target = gesture.globalLayerMap[original.globalLayerIndex + layerAdjust];
+          return target
+            ? [
+                {
+                  objectId: original.objectId,
+                  targetStartBeats: original.startBeats + delta,
+                  targetLayerIndex: target.localIndex,
+                  targetGroupId: target.groupId,
+                },
+              ]
+            : [];
+        });
+        if (moves.length === 0) return;
+        moveScoreObjects(moves);
+        setPreviewByObjectId(
+          Object.fromEntries(
+            moves.map((move) => {
+              const original = gesture.originals.find((entry) => entry.objectId === move.objectId)!;
+              return [
+                move.objectId,
+                { startBeats: move.targetStartBeats, durationBeats: original.durationBeats },
+              ];
+            }),
+          ),
+        );
+        pendingMovePatchRef.current = moves.flatMap((move) => {
+          const target = gesture.originals.find(
+            (entry) => entry.objectId === move.objectId,
+          )?.editorTarget;
+          return target
+            ? [
+                {
+                  target,
+                  targetStartBeats: move.targetStartBeats,
+                  targetLayerIndex: move.targetLayerIndex,
+                  targetGroupId: move.targetGroupId,
+                },
+              ]
+            : [];
+        });
+        return;
+      }
+
+      if (gesture.mode === 'resizeLeft' || gesture.mode === 'resizeRight') {
+        const rawDelta = timelinePointerDeltaBeats(x, gesture.startBeats, pixelsPerBeat);
+        let resizes: Array<{
+          objectId: string;
+          targetStartBeats: number;
+          targetDurationBeats: number;
+        }>;
+        if (gesture.mode === 'resizeRight') {
+          const referenceStart =
+            gesture.resizeReferenceStartBeats ?? gesture.originals[0]!.startBeats;
+          const referenceDuration =
+            gesture.resizeReferenceDurationBeats ?? gesture.originals[0]!.durationBeats;
+          const referenceEnd = referenceStart + referenceDuration;
+          const snappedDelta = snapBeat(referenceEnd + rawDelta, 'nearest') - referenceEnd;
+          resizes = gesture.originals.map((original) => ({
+            objectId: original.objectId,
+            targetStartBeats: original.startBeats,
+            targetDurationBeats: Math.max(
+              MIN_TRACK_ITEM_DURATION,
+              original.durationBeats + snappedDelta,
+            ),
+          }));
+        } else {
+          const referenceStart =
+            gesture.resizeReferenceStartBeats ?? gesture.originals[0]!.startBeats;
+          const snappedDelta = snapBeat(referenceStart + rawDelta, 'nearest') - referenceStart;
+          const minDelta = Math.max(...gesture.originals.map((original) => -original.startBeats));
+          const maxDelta = Math.max(
+            0,
+            Math.min(
+              ...gesture.originals.map(
+                (original) => original.durationBeats - MIN_TRACK_ITEM_DURATION,
+              ),
+            ),
+          );
+          const delta = Math.max(minDelta, Math.min(maxDelta, snappedDelta));
+          resizes = gesture.originals.map((original) => ({
+            objectId: original.objectId,
+            targetStartBeats: original.startBeats + delta,
+            targetDurationBeats: original.durationBeats - delta,
+          }));
+        }
+        resizeScoreObjects(resizes);
+        setPreviewByObjectId(
+          Object.fromEntries(
+            resizes.map((resize) => [
+              resize.objectId,
+              {
+                startBeats: resize.targetStartBeats,
+                durationBeats: resize.targetDurationBeats,
+              },
+            ]),
+          ),
+        );
+        resizes.forEach((resize) =>
+          pendingSharedPropertyPatchRef.current.set(resize.objectId, {
+            startBeats: resize.targetStartBeats,
+            durationBeats: resize.targetDurationBeats,
+          }),
+        );
+        return;
+      }
+
+      const active = gesture.originals[0];
+      if (!active || !gesture.activeObjectId) return;
+      const delta = (event.clientX - gesture.startClientX) / Math.max(pixelsPerBeat, 1);
+      if (gesture.mode === 'slideFileStart') {
+        let next = (gesture.startFileStartBeats ?? 0) - delta;
+        const audioDuration = gesture.audioDurationBeats ?? 0;
+        if (gesture.looping && audioDuration > 0) {
+          while (next < 0) next += audioDuration;
+          next %= audioDuration;
+        } else {
+          next = Math.max(0, Math.min(Math.max(audioDuration - active.durationBeats, 0), next));
+        }
+        setAudioPreviewByObjectId((previous) => ({
+          ...previous,
+          [active.objectId]: { ...previous[active.objectId], fileStartTimeBeats: next },
+        }));
+        setAudioClipEditorPreview(active.objectId, { fileStartTime: beatsToSeconds(next) });
+        pendingFileStartPatchRef.current.set(active.objectId, { fileStartTimeBeats: next });
+        return;
+      }
+      if (gesture.mode === 'fadeIn') {
+        const next = Math.max(
+          0,
+          Math.min(
+            active.durationBeats - active.fadeOutBeats,
+            (gesture.startFadeBeats ?? active.fadeInBeats) + delta,
+          ),
+        );
+        setAudioPreviewByObjectId((previous) => ({
+          ...previous,
+          [active.objectId]: { ...previous[active.objectId], fadeInBeats: next },
+        }));
+        pendingFadePatchRef.current.set(active.objectId, {
+          ...pendingFadePatchRef.current.get(active.objectId),
+          fadeInBeats: next,
+        });
+      } else if (gesture.mode === 'fadeOut') {
+        const next = Math.max(
+          0,
+          Math.min(
+            active.durationBeats - active.fadeInBeats,
+            (gesture.startFadeBeats ?? active.fadeOutBeats) - delta,
+          ),
+        );
+        setAudioPreviewByObjectId((previous) => ({
+          ...previous,
+          [active.objectId]: { ...previous[active.objectId], fadeOutBeats: next },
+        }));
+        pendingFadePatchRef.current.set(active.objectId, {
+          ...pendingFadePatchRef.current.get(active.objectId),
+          fadeOutBeats: next,
+        });
+      }
+    },
+    [
+      allLayerGroups,
+      beatsToSeconds,
+      getDisplayItem,
+      group.layers,
+      moveScoreObjects,
+      pixelsPerBeat,
+      resizeScoreObjects,
+      selectedObjectIds,
+      setAudioClipEditorPreview,
+      snapBeat,
+      toLocalXY,
+    ],
+  );
 
   const handleMouseUp = useCallback(() => {
     const gesture = gestureRef.current;
@@ -1058,27 +1340,38 @@ export default function TrackLayerGroupCanvas({
         const right = Math.max(activeMarquee.startX, activeMarquee.endX) / pixelsPerBeat;
         const top = Math.min(activeMarquee.startY, activeMarquee.endY);
         const bottom = Math.max(activeMarquee.startY, activeMarquee.endY);
-        const currentGroupIndex = Math.max(0, allLayerGroups.findIndex((candidate) => candidate.groupId === group.groupId));
-        const entries: Array<{ objectId: string; editorTarget?: ScoreObjectEditorTargetSnapshot }> = [];
+        const currentGroupIndex = Math.max(
+          0,
+          allLayerGroups.findIndex((candidate) => candidate.groupId === group.groupId),
+        );
+        const entries: Array<{ objectId: string; editorTarget?: ScoreObjectEditorTargetSnapshot }> =
+          [];
         for (let groupIndex = 0; groupIndex < allLayerGroups.length; groupIndex += 1) {
           const candidateGroup = allLayerGroups[groupIndex]!;
           let yShift = 0;
           const low = Math.min(groupIndex, currentGroupIndex);
           const high = Math.max(groupIndex, currentGroupIndex);
           for (let index = low; index < high; index += 1) {
-            const height = allLayerGroups[index]!.layers.reduce((sum, layer) => sum + (layer.height || DEFAULT_ROW_HEIGHT), 0) + GROUP_SPACER;
+            const height =
+              allLayerGroups[index]!.layers.reduce(
+                (sum, layer) => sum + (layer.height || DEFAULT_ROW_HEIGHT),
+                0,
+              ) + GROUP_SPACER;
             yShift += groupIndex > currentGroupIndex ? height : -height;
           }
           let layerTop = 0;
           for (const layer of candidateGroup.layers) {
             const layerHeight = layer.height || DEFAULT_ROW_HEIGHT;
             for (const item of layer.items) {
-              if (selectionIntersectsTimelineItem(item, layerTop, layerHeight, {
-                left,
-                right,
-                top: top - yShift,
-                bottom: bottom - yShift,
-              })) entries.push({ objectId: item.objectId, editorTarget: item.editorTarget });
+              if (
+                selectionIntersectsTimelineItem(item, layerTop, layerHeight, {
+                  left,
+                  right,
+                  top: top - yShift,
+                  bottom: bottom - yShift,
+                })
+              )
+                entries.push({ objectId: item.objectId, editorTarget: item.editorTarget });
             }
             layerTop += layerHeight;
           }
@@ -1087,8 +1380,13 @@ export default function TrackLayerGroupCanvas({
         else setSelection(entries);
       }
     } else if (gesture.mode === 'move' && pendingMovePatchRef.current.length > 0) {
-      void applyProjectDocumentPatch({ score: { type: 'moveScoreObjects', moves: pendingMovePatchRef.current } });
-    } else if ((gesture.mode === 'resizeLeft' || gesture.mode === 'resizeRight') && pendingSharedPropertyPatchRef.current.size > 0) {
+      void applyProjectDocumentPatch({
+        score: { type: 'moveScoreObjects', moves: pendingMovePatchRef.current },
+      });
+    } else if (
+      (gesture.mode === 'resizeLeft' || gesture.mode === 'resizeRight') &&
+      pendingSharedPropertyPatchRef.current.size > 0
+    ) {
       const pending = Array.from(pendingSharedPropertyPatchRef.current.entries());
       void (async () => {
         for (const [objectId, values] of pending) {
@@ -1099,32 +1397,61 @@ export default function TrackLayerGroupCanvas({
               type: 'updateSharedProperties',
               target: original.editorTarget,
               patch: {
-                startTime: { value: values.startBeats ?? original.startBeats, timeBase: original.startTimeBase },
-                subjectiveDuration: { value: values.durationBeats ?? original.durationBeats, timeBase: original.durationTimeBase },
+                startTime: {
+                  value: values.startBeats ?? original.startBeats,
+                  timeBase: original.startTimeBase,
+                },
+                subjectiveDuration: {
+                  value: values.durationBeats ?? original.durationBeats,
+                  timeBase: original.durationTimeBase,
+                },
               },
             },
           });
         }
       })();
-    } else if ((gesture.mode === 'fadeIn' || gesture.mode === 'fadeOut') && pendingFadePatchRef.current.size > 0) {
+    } else if (
+      (gesture.mode === 'fadeIn' || gesture.mode === 'fadeOut') &&
+      pendingFadePatchRef.current.size > 0
+    ) {
       const pending = Array.from(pendingFadePatchRef.current.entries());
       void (async () => {
         for (const [objectId, values] of pending) {
-          const target = gesture.originals.find((entry) => entry.objectId === objectId)?.editorTarget;
+          const target = gesture.originals.find(
+            (entry) => entry.objectId === objectId,
+          )?.editorTarget;
           if (!target) continue;
-          await applyProjectDocumentPatch({ score: { type: 'updateTypeSpecificEditor', target, patch: {
-            ...(values.fadeInBeats !== undefined ? { fadeIn: beatsToSeconds(values.fadeInBeats) } : {}),
-            ...(values.fadeOutBeats !== undefined ? { fadeOut: beatsToSeconds(values.fadeOutBeats) } : {}),
-          } } });
+          await applyProjectDocumentPatch({
+            score: {
+              type: 'updateTypeSpecificEditor',
+              target,
+              patch: {
+                ...(values.fadeInBeats !== undefined
+                  ? { fadeIn: beatsToSeconds(values.fadeInBeats) }
+                  : {}),
+                ...(values.fadeOutBeats !== undefined
+                  ? { fadeOut: beatsToSeconds(values.fadeOutBeats) }
+                  : {}),
+              },
+            },
+          });
         }
       })();
     } else if (gesture.mode === 'slideFileStart' && pendingFileStartPatchRef.current.size > 0) {
       const pending = Array.from(pendingFileStartPatchRef.current.entries());
       void (async () => {
         for (const [objectId, values] of pending) {
-          const target = gesture.originals.find((entry) => entry.objectId === objectId)?.editorTarget;
+          const target = gesture.originals.find(
+            (entry) => entry.objectId === objectId,
+          )?.editorTarget;
           if (!target) continue;
-          await applyProjectDocumentPatch({ score: { type: 'updateTypeSpecificEditor', target, patch: { fileStartTime: beatsToSeconds(values.fileStartTimeBeats) } } });
+          await applyProjectDocumentPatch({
+            score: {
+              type: 'updateTypeSpecificEditor',
+              target,
+              patch: { fileStartTime: beatsToSeconds(values.fileStartTimeBeats) },
+            },
+          });
         }
       })();
     }
@@ -1138,42 +1465,68 @@ export default function TrackLayerGroupCanvas({
     setMarquee(null);
     setCursorOverride(null);
     gestureRef.current = null;
-  }, [addToSelection, allLayerGroups, applyProjectDocumentPatch, beatsToSeconds, clearPreview, group.groupId, marquee, pixelsPerBeat, setSelection]);
+  }, [
+    addToSelection,
+    allLayerGroups,
+    applyProjectDocumentPatch,
+    beatsToSeconds,
+    clearPreview,
+    group.groupId,
+    marquee,
+    pixelsPerBeat,
+    setSelection,
+  ]);
 
-  const handleDoubleClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
-    const { x, y } = toLocalXY(event.clientX, event.clientY);
-    const hit = findTimelineHit(group.layers, x / pixelsPerBeat, y, pixelsPerBeat, DEFAULT_ROW_HEIGHT);
-    if (!hit) return;
-    if (hit.item.isContainer && onDoubleClickObject) {
-      onDoubleClickObject(hit.item.objectId);
-    } else {
-      openPanel('ScoreObjectEditorTopComponent');
-    }
-  }, [group.layers, onDoubleClickObject, openPanel, pixelsPerBeat, toLocalXY]);
+  const handleDoubleClick = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      const { x, y } = toLocalXY(event.clientX, event.clientY);
+      const hit = findTimelineHit(
+        group.layers,
+        x / pixelsPerBeat,
+        y,
+        pixelsPerBeat,
+        DEFAULT_ROW_HEIGHT,
+      );
+      if (!hit) return;
+      if (hit.item.isContainer && onDoubleClickObject) {
+        onDoubleClickObject(hit.item.objectId);
+      } else {
+        openPanel('ScoreObjectEditorTopComponent');
+      }
+    },
+    [group.layers, onDoubleClickObject, openPanel, pixelsPerBeat, toLocalXY],
+  );
 
-  const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
-    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'c') {
-      event.preventDefault();
-      handleCopy();
-    } else if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'x') {
-      event.preventDefault();
-      handleCut();
-    } else if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'v') {
-      event.preventDefault();
-      handlePaste();
-    } else if (
-      (event.metaKey || event.ctrlKey)
-      && !event.shiftKey
-      && !event.altKey
-      && event.key.toLowerCase() === 'a'
-    ) {
-      event.preventDefault();
-      setSelection(group.layers.flatMap(collectTimelineLayerSelection));
-    } else if (!event.metaKey && !event.ctrlKey && (event.key === 'Delete' || event.key === 'Backspace')) {
-      event.preventDefault();
-      handleRemove();
-    }
-  }, [group.layers, handleCopy, handleCut, handlePaste, handleRemove, setSelection]);
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'c') {
+        event.preventDefault();
+        handleCopy();
+      } else if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'x') {
+        event.preventDefault();
+        handleCut();
+      } else if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'v') {
+        event.preventDefault();
+        handlePaste();
+      } else if (
+        (event.metaKey || event.ctrlKey) &&
+        !event.shiftKey &&
+        !event.altKey &&
+        event.key.toLowerCase() === 'a'
+      ) {
+        event.preventDefault();
+        setSelection(group.layers.flatMap(collectTimelineLayerSelection));
+      } else if (
+        !event.metaKey &&
+        !event.ctrlKey &&
+        (event.key === 'Delete' || event.key === 'Backspace')
+      ) {
+        event.preventDefault();
+        handleRemove();
+      }
+    },
+    [group.layers, handleCopy, handleCut, handlePaste, handleRemove, setSelection],
+  );
 
   const handleSelectLayer = useCallback(() => {
     if (!contextMenuPos) return;
@@ -1182,23 +1535,35 @@ export default function TrackLayerGroupCanvas({
   }, [contextMenuPos, group.layers, setSelection]);
 
   const handleSelectAllBefore = useCallback(() => {
-    if (contextMenuPos) setSelection(collectTimelineBoundarySelection(allLayerGroups, contextMenuPos.xBeats, 'before'));
+    if (contextMenuPos)
+      setSelection(
+        collectTimelineBoundarySelection(allLayerGroups, contextMenuPos.xBeats, 'before'),
+      );
   }, [allLayerGroups, contextMenuPos, setSelection]);
 
   const handleSelectAllAfter = useCallback(() => {
-    if (contextMenuPos) setSelection(collectTimelineBoundarySelection(allLayerGroups, contextMenuPos.xBeats, 'after'));
+    if (contextMenuPos)
+      setSelection(
+        collectTimelineBoundarySelection(allLayerGroups, contextMenuPos.xBeats, 'after'),
+      );
   }, [allLayerGroups, contextMenuPos, setSelection]);
 
-  const handleFadeTypeSelect = useCallback((fadeType: AudioFadeType) => {
-    if (!fadeContextMenu?.target) return;
-    void applyProjectDocumentPatch({
-      score: {
-        type: 'updateTypeSpecificEditor',
-        target: fadeContextMenu.target,
-        patch: fadeContextMenu.side === 'fadeIn' ? { fadeInType: fadeType } : { fadeOutType: fadeType },
-      },
-    });
-  }, [applyProjectDocumentPatch, fadeContextMenu]);
+  const handleFadeTypeSelect = useCallback(
+    (fadeType: AudioFadeType) => {
+      if (!fadeContextMenu?.target) return;
+      void applyProjectDocumentPatch({
+        score: {
+          type: 'updateTypeSpecificEditor',
+          target: fadeContextMenu.target,
+          patch:
+            fadeContextMenu.side === 'fadeIn'
+              ? { fadeInType: fadeType }
+              : { fadeOutType: fadeType },
+        },
+      });
+    },
+    [applyProjectDocumentPatch, fadeContextMenu],
+  );
 
   const handleMouseMoveRef = useRef(handleMouseMove);
   handleMouseMoveRef.current = handleMouseMove;
@@ -1223,45 +1588,62 @@ export default function TrackLayerGroupCanvas({
   // SPEC 076: accept a File Manager regular-file drag or one external OS
   // audio file, mapped to the layer under the pointer and the snapped start
   // beat. The typed main commit revalidates everything before mutating.
-  const commitAudioFileDrop = useCallback(async (event: React.DragEvent<HTMLDivElement>) => {
-    const blueAPI = window.blueAPI;
-    if (!blueAPI?.commitAudioFileDrop || !blueAPI.getPathForFile) return;
-    const source = readAudioDropSource(event.dataTransfer, (file) => blueAPI.getPathForFile(file));
-    if (!source) return;
-    if (!isCsoundAudioSourcePath(source.path)) {
-      toast.error(`Unsupported audio source: ${source.path}`);
-      return;
-    }
-    const { x, y } = toLocalXY(event.clientX, event.clientY);
-    const layerHit = findTimelineLayerAtY(group.layers, y, DEFAULT_ROW_HEIGHT);
-    const layer = layerHit ? group.layers[layerHit.layerIndex] : undefined;
-    if (!layer) return;
-    const startBeats = clampBeat(snapBeat(x / pixelsPerBeat, 'floor'), totalBeats);
-    const result = await blueAPI.commitAudioFileDrop({
-      sourcePath: source.path,
-      sourceKind: source.kind,
-      track: trackRef(group, layer.layerId, projectSessionId, projectRevision),
-      startBeats,
-    });
-    if (result.status === 'rejected') {
-      toast.error(result.message);
-    }
-  }, [clampBeat, group, pixelsPerBeat, projectRevision, projectSessionId, snapBeat, totalBeats]);
+  const commitAudioFileDrop = useCallback(
+    async (event: React.DragEvent<HTMLDivElement>) => {
+      const blueAPI = window.blueAPI;
+      if (!blueAPI?.commitAudioFileDrop || !blueAPI.getPathForFile) return;
+      const source = readAudioDropSource(event.dataTransfer, (file) =>
+        blueAPI.getPathForFile(file),
+      );
+      if (!source) return;
+      if (!isCsoundAudioSourcePath(source.path)) {
+        toast.error(`Unsupported audio source: ${source.path}`);
+        return;
+      }
+      const { x, y } = toLocalXY(event.clientX, event.clientY);
+      const layerHit = findTimelineLayerAtY(group.layers, y, DEFAULT_ROW_HEIGHT);
+      const layer = layerHit ? group.layers[layerHit.layerIndex] : undefined;
+      if (!layer) return;
+      const startBeats = clampBeat(snapBeat(x / pixelsPerBeat, 'floor'), totalBeats);
+      const result = await blueAPI.commitAudioFileDrop({
+        sourcePath: source.path,
+        sourceKind: source.kind,
+        track: trackRef(group, layer.layerId, projectSessionId, projectRevision),
+        startBeats,
+      });
+      if (result.status === 'rejected') {
+        toast.error(result.message);
+      }
+    },
+    [clampBeat, group, pixelsPerBeat, projectRevision, projectSessionId, snapBeat, totalBeats],
+  );
 
-  const rows = useMemo(() => group.layers.map((layer) => ({
-    layer,
-    height: layer.height || DEFAULT_ROW_HEIGHT,
-  })), [group.layers]);
+  const rows = useMemo(
+    () =>
+      group.layers.map((layer) => ({
+        layer,
+        height: layer.height || DEFAULT_ROW_HEIGHT,
+      })),
+    [group.layers],
+  );
   const selectedEntries = getSelectedEntries();
   const canArrangeSelection = selectedEntries.length > 1;
-  const canSetObjectiveDuration = selectedEntries.length > 0
-    && selectedEntries.every((entry) => entry.objectType !== 'AudioClip' && Boolean(entry.editorTarget));
-  const canExport = selectedEntries.length === 1
-    && selectedEntries[0]!.objectType !== 'AudioClip'
-    && selectedEntries[0]!.objectType !== 'Instance'
-    && Boolean(selectedEntries[0]!.serializedXml);
+  const canSetObjectiveDuration =
+    selectedEntries.length > 0 &&
+    selectedEntries.every(
+      (entry) => entry.objectType !== 'AudioClip' && Boolean(entry.editorTarget),
+    );
+  const canExport =
+    selectedEntries.length === 1 &&
+    selectedEntries[0]!.objectType !== 'AudioClip' &&
+    selectedEntries[0]!.objectType !== 'Instance' &&
+    Boolean(selectedEntries[0]!.serializedXml);
   return (
-    <ContextMenu.Root onOpenChange={(open) => { if (!open) setContextMenuObjectId(null); }}>
+    <ContextMenu.Root
+      onOpenChange={(open) => {
+        if (!open) setContextMenuObjectId(null);
+      }}
+    >
       <ContextMenu.Trigger asChild>
         <div
           ref={containerRef}
@@ -1295,7 +1677,10 @@ export default function TrackLayerGroupCanvas({
               return;
             }
             const getPathForFile = window.blueAPI?.getPathForFile;
-            if (getPathForFile && !dataTransferCanAcceptAudioDrop(event.dataTransfer, getPathForFile)) {
+            if (
+              getPathForFile &&
+              !dataTransferCanAcceptAudioDrop(event.dataTransfer, getPathForFile)
+            ) {
               setAudioDropGhost(null);
               setAudioDropGuideBeat(null);
               lastAudioDropSourceRef.current = null;
@@ -1313,12 +1698,15 @@ export default function TrackLayerGroupCanvas({
             event.dataTransfer.dropEffect = 'copy';
 
             const startBeats = clampBeat(snapBeat(x / pixelsPerBeat, 'floor'), totalBeats);
-            const source = getPathForFile ? readAudioDropSource(event.dataTransfer, getPathForFile) : null;
+            const source = getPathForFile
+              ? readAudioDropSource(event.dataTransfer, getPathForFile)
+              : null;
             lastAudioDropSourceRef.current = source ? { path: source.path, x, y } : null;
             const durationSeconds = source ? getAudioFileDuration(source.path) : null;
-            const durationBeats = durationSeconds !== null && durationSeconds > 0
-              ? tempoMapSecondsToBeats(durationSeconds, tempoMap)
-              : 4;
+            const durationBeats =
+              durationSeconds !== null && durationSeconds > 0
+                ? tempoMapSecondsToBeats(durationSeconds, tempoMap)
+                : 4;
 
             const left = startBeats * pixelsPerBeat;
             const width = Math.max(4, durationBeats * pixelsPerBeat);
@@ -1350,7 +1738,13 @@ export default function TrackLayerGroupCanvas({
           }}
           onContextMenu={(event) => {
             const { x, y } = toLocalXY(event.clientX, event.clientY);
-            const hit = findTimelineHit(group.layers, x / pixelsPerBeat, y, pixelsPerBeat, DEFAULT_ROW_HEIGHT);
+            const hit = findTimelineHit(
+              group.layers,
+              x / pixelsPerBeat,
+              y,
+              pixelsPerBeat,
+              DEFAULT_ROW_HEIGHT,
+            );
             const layerHit = findTimelineLayerAtY(group.layers, y, DEFAULT_ROW_HEIGHT);
             setContextMenuPos({
               xBeats: clampBeat(x / pixelsPerBeat, totalBeats),
@@ -1375,9 +1769,21 @@ export default function TrackLayerGroupCanvas({
                 const fadeInWidth = display.barRenderer.fadeInBeats * pixelsPerBeat;
                 const fadeOutWidth = display.barRenderer.fadeOutBeats * pixelsPerBeat;
                 if (fadeInWidth > 0 && relativeX >= 0 && relativeX <= fadeInWidth) {
-                  setFadeContextMenu({ objectId: hit.item.objectId, target: hit.item.editorTarget, side: 'fadeIn' });
-                } else if (fadeOutWidth > 0 && relativeX >= width - fadeOutWidth && relativeX <= width) {
-                  setFadeContextMenu({ objectId: hit.item.objectId, target: hit.item.editorTarget, side: 'fadeOut' });
+                  setFadeContextMenu({
+                    objectId: hit.item.objectId,
+                    target: hit.item.editorTarget,
+                    side: 'fadeIn',
+                  });
+                } else if (
+                  fadeOutWidth > 0 &&
+                  relativeX >= width - fadeOutWidth &&
+                  relativeX <= width
+                ) {
+                  setFadeContextMenu({
+                    objectId: hit.item.objectId,
+                    target: hit.item.editorTarget,
+                    side: 'fadeOut',
+                  });
                 }
               }
             } else {
@@ -1407,15 +1813,33 @@ export default function TrackLayerGroupCanvas({
                   const displayItem = getDisplayItem(item);
                   const width = Math.max(4, displayItem.durationBeats * pixelsPerBeat);
                   const left = displayItem.startBeats * pixelsPerBeat;
-                  const audioBar = displayItem.barRenderer.kind === 'audioClip' ? displayItem.barRenderer : null;
-                  const showFadeHandles = Boolean(audioBar && (
-                    hoveredAudioObjectId === item.objectId || gestureRef.current?.activeObjectId === item.objectId
-                  ));
+                  const audioBar =
+                    displayItem.barRenderer.kind === 'audioClip' ? displayItem.barRenderer : null;
+                  const showFadeHandles = Boolean(
+                    audioBar &&
+                    (hoveredAudioObjectId === item.objectId ||
+                      gestureRef.current?.activeObjectId === item.objectId),
+                  );
                   const fadeInLeft = audioBar
-                    ? Math.max(left, Math.min(left + width - FADE_HANDLE_SIZE, left + Math.round(audioBar.fadeInBeats * pixelsPerBeat)))
+                    ? Math.max(
+                        left,
+                        Math.min(
+                          left + width - FADE_HANDLE_SIZE,
+                          left + Math.round(audioBar.fadeInBeats * pixelsPerBeat),
+                        ),
+                      )
                     : 0;
                   const fadeOutLeft = audioBar
-                    ? Math.max(left, Math.min(left + width - FADE_HANDLE_SIZE, left + width - Math.round(audioBar.fadeOutBeats * pixelsPerBeat) - FADE_HANDLE_SIZE))
+                    ? Math.max(
+                        left,
+                        Math.min(
+                          left + width - FADE_HANDLE_SIZE,
+                          left +
+                            width -
+                            Math.round(audioBar.fadeOutBeats * pixelsPerBeat) -
+                            FADE_HANDLE_SIZE,
+                        ),
+                      )
                     : 0;
                   return (
                     <Fragment key={item.objectId}>
@@ -1423,7 +1847,7 @@ export default function TrackLayerGroupCanvas({
                         item={displayItem}
                         selected={selectedObjectIds.has(item.objectId)}
                         pixelsPerBeat={pixelsPerBeat}
-                        pixelsPerSecond={tempo > 0 ? pixelsPerBeat * tempo / 60 : pixelsPerBeat}
+                        pixelsPerSecond={tempo > 0 ? (pixelsPerBeat * tempo) / 60 : pixelsPerBeat}
                         rowHeight={height}
                         durationBeats={displayItem.durationBeats}
                       />
@@ -1433,23 +1857,37 @@ export default function TrackLayerGroupCanvas({
                             data-fade-handle="in"
                             data-object-id={item.objectId}
                             style={{
-                              position: 'absolute', left: fadeInLeft, top: 2,
-                              width: FADE_HANDLE_SIZE, height: FADE_HANDLE_SIZE,
+                              position: 'absolute',
+                              left: fadeInLeft,
+                              top: 2,
+                              width: FADE_HANDLE_SIZE,
+                              height: FADE_HANDLE_SIZE,
                               backgroundColor: 'var(--color-app-text-strong)',
-                              boxShadow: FADE_HANDLE_OUTLINE, cursor: 'e-resize', zIndex: 3,
+                              boxShadow: FADE_HANDLE_OUTLINE,
+                              cursor: 'e-resize',
+                              zIndex: 3,
                             }}
-                            onMouseDown={(event) => startFadeHandleDrag(event, item, layerIndex, 'fadeIn')}
+                            onMouseDown={(event) =>
+                              startFadeHandleDrag(event, item, layerIndex, 'fadeIn')
+                            }
                           />
                           <div
                             data-fade-handle="out"
                             data-object-id={item.objectId}
                             style={{
-                              position: 'absolute', left: fadeOutLeft, top: 2,
-                              width: FADE_HANDLE_SIZE, height: FADE_HANDLE_SIZE,
+                              position: 'absolute',
+                              left: fadeOutLeft,
+                              top: 2,
+                              width: FADE_HANDLE_SIZE,
+                              height: FADE_HANDLE_SIZE,
                               backgroundColor: 'var(--color-app-text-strong)',
-                              boxShadow: FADE_HANDLE_OUTLINE, cursor: 'w-resize', zIndex: 3,
+                              boxShadow: FADE_HANDLE_OUTLINE,
+                              cursor: 'w-resize',
+                              zIndex: 3,
                             }}
-                            onMouseDown={(event) => startFadeHandleDrag(event, item, layerIndex, 'fadeOut')}
+                            onMouseDown={(event) =>
+                              startFadeHandleDrag(event, item, layerIndex, 'fadeOut')
+                            }
                           />
                         </>
                       )}
@@ -1485,8 +1923,10 @@ export default function TrackLayerGroupCanvas({
                 top: Math.min(marquee.startY, marquee.endY),
                 width: Math.abs(marquee.endX - marquee.startX),
                 height: Math.abs(marquee.startY - marquee.endY),
-                backgroundColor: 'color-mix(in srgb, var(--color-app-text-strong) 6%, var(--color-app-clear))',
-                border: '1px solid color-mix(in srgb, var(--color-app-text-strong) 50%, var(--color-app-clear))',
+                backgroundColor:
+                  'color-mix(in srgb, var(--color-app-text-strong) 6%, var(--color-app-clear))',
+                border:
+                  '1px solid color-mix(in srgb, var(--color-app-text-strong) 50%, var(--color-app-clear))',
               }}
             />
           )}
@@ -1515,37 +1955,80 @@ export default function TrackLayerGroupCanvas({
         <ContextMenu.Content className="editor-context-menu" {...portalEventIsolationProps}>
           {fadeContextMenu ? (
             AUDIO_FADE_TYPE_OPTIONS.map((option) => (
-              <ContextMenu.Item key={option.value} className="editor-context-menu__item" onSelect={() => handleFadeTypeSelect(option.value)}>
+              <ContextMenu.Item
+                key={option.value}
+                className="editor-context-menu__item"
+                onSelect={() => handleFadeTypeSelect(option.value)}
+              >
                 {option.label}
               </ContextMenu.Item>
             ))
           ) : contextMenuObjectId && selectedObjectIds.size > 0 ? (
             <>
-              <ContextMenu.Item className="editor-context-menu__item" disabled={clipboard.length !== 1} onSelect={handleReplaceWithBuffer}>
+              <ContextMenu.Item
+                className="editor-context-menu__item"
+                disabled={clipboard.length !== 1}
+                onSelect={handleReplaceWithBuffer}
+              >
                 Replace with SoundObject in Buffer
               </ContextMenu.Item>
               <ContextMenu.Separator className="editor-context-menu__separator" />
-              <ContextMenu.Item className="editor-context-menu__item" disabled={!canArrangeSelection} onSelect={handleFollowTheLeader}>
+              <ContextMenu.Item
+                className="editor-context-menu__item"
+                disabled={!canArrangeSelection}
+                onSelect={handleFollowTheLeader}
+              >
                 Follow the Leader
               </ContextMenu.Item>
-              <ContextMenu.Item className="editor-context-menu__item" disabled={!canArrangeSelection} onSelect={handleReverse}>
+              <ContextMenu.Item
+                className="editor-context-menu__item"
+                disabled={!canArrangeSelection}
+                onSelect={handleReverse}
+              >
                 Reverse
               </ContextMenu.Item>
               <ContextMenu.Sub>
-                <ContextMenu.SubTrigger className="editor-context-menu__item editor-context-menu__subtrigger" disabled={!canArrangeSelection}>
+                <ContextMenu.SubTrigger
+                  className="editor-context-menu__item editor-context-menu__subtrigger"
+                  disabled={!canArrangeSelection}
+                >
                   <span>Align</span>
                   <ChevronRight className="w-3.5 h-3.5 opacity-60" />
                 </ContextMenu.SubTrigger>
                 <PopoutContextMenuPortal>
-                  <ContextMenu.SubContent className="editor-context-menu" {...portalEventIsolationProps}>
-                    <ContextMenu.Item className="editor-context-menu__item" onSelect={() => handleAlign('left')}>Align Left</ContextMenu.Item>
-                    <ContextMenu.Item className="editor-context-menu__item" onSelect={() => handleAlign('center')}>Align Center</ContextMenu.Item>
-                    <ContextMenu.Item className="editor-context-menu__item" onSelect={() => handleAlign('right')}>Align Right</ContextMenu.Item>
+                  <ContextMenu.SubContent
+                    className="editor-context-menu"
+                    {...portalEventIsolationProps}
+                  >
+                    <ContextMenu.Item
+                      className="editor-context-menu__item"
+                      onSelect={() => handleAlign('left')}
+                    >
+                      Align Left
+                    </ContextMenu.Item>
+                    <ContextMenu.Item
+                      className="editor-context-menu__item"
+                      onSelect={() => handleAlign('center')}
+                    >
+                      Align Center
+                    </ContextMenu.Item>
+                    <ContextMenu.Item
+                      className="editor-context-menu__item"
+                      onSelect={() => handleAlign('right')}
+                    >
+                      Align Right
+                    </ContextMenu.Item>
                   </ContextMenu.SubContent>
                 </PopoutContextMenuPortal>
               </ContextMenu.Sub>
-              <ContextMenu.Item className="editor-context-menu__item" onSelect={handleShift}>Shift…</ContextMenu.Item>
-              <ContextMenu.Item className="editor-context-menu__item" disabled={!canSetObjectiveDuration} onSelect={handleSetSubjectiveToObjective}>
+              <ContextMenu.Item className="editor-context-menu__item" onSelect={handleShift}>
+                Shift…
+              </ContextMenu.Item>
+              <ContextMenu.Item
+                className="editor-context-menu__item"
+                disabled={!canSetObjectiveDuration}
+                onSelect={handleSetSubjectiveToObjective}
+              >
                 Set Subjective Time to Objective Time
               </ContextMenu.Item>
               <ContextMenu.Separator className="editor-context-menu__separator" />
@@ -1557,13 +2040,27 @@ export default function TrackLayerGroupCanvas({
               </ContextMenu.Item>
               <ContextMenu.Separator className="editor-context-menu__separator" />
               <ContextMenu.Item className="editor-context-menu__item" onSelect={handleRemove}>
-                Remove<span className="float-right text-blue-muted text-role-callout ml-4">Del</span>
+                Remove
+                <span className="float-right text-blue-muted text-role-callout ml-4">Del</span>
               </ContextMenu.Item>
               <ContextMenu.Separator className="editor-context-menu__separator" />
-              <ContextMenu.Item className="editor-context-menu__item" onSelect={handleSetColor}>Set Color…</ContextMenu.Item>
-              <ContextMenu.Item className="editor-context-menu__item" onSelect={handleSetToLayerColor}>Set to Layer Color</ContextMenu.Item>
+              <ContextMenu.Item className="editor-context-menu__item" onSelect={handleSetColor}>
+                Set Color…
+              </ContextMenu.Item>
+              <ContextMenu.Item
+                className="editor-context-menu__item"
+                onSelect={handleSetToLayerColor}
+              >
+                Set to Layer Color
+              </ContextMenu.Item>
               <ContextMenu.Separator className="editor-context-menu__separator" />
-              <ContextMenu.Item className="editor-context-menu__item" disabled={!canExport} onSelect={handleExport}>Export…</ContextMenu.Item>
+              <ContextMenu.Item
+                className="editor-context-menu__item"
+                disabled={!canExport}
+                onSelect={handleExport}
+              >
+                Export…
+              </ContextMenu.Item>
             </>
           ) : (
             <>
@@ -1573,12 +2070,21 @@ export default function TrackLayerGroupCanvas({
                   <ChevronRight className="w-3.5 h-3.5 opacity-60" />
                 </ContextMenu.SubTrigger>
                 <PopoutContextMenuPortal>
-                  <ContextMenu.SubContent className="editor-context-menu" {...portalEventIsolationProps}>
+                  <ContextMenu.SubContent
+                    className="editor-context-menu"
+                    {...portalEventIsolationProps}
+                  >
                     {TRACK_SOUND_OBJECT_TYPES.map((objectType) => (
                       <ContextMenu.Item
                         key={objectType}
                         className="editor-context-menu__item"
-                        onSelect={() => addTrackItem(objectType, contextMenuPos?.xBeats ?? 0, contextMenuPos?.layerIndex ?? 0)}
+                        onSelect={() =>
+                          addTrackItem(
+                            objectType,
+                            contextMenuPos?.xBeats ?? 0,
+                            contextMenuPos?.layerIndex ?? 0,
+                          )
+                        }
                       >
                         {objectType}
                       </ContextMenu.Item>
@@ -1586,19 +2092,53 @@ export default function TrackLayerGroupCanvas({
                   </ContextMenu.SubContent>
                 </PopoutContextMenuPortal>
               </ContextMenu.Sub>
-              <ContextMenu.Item className="editor-context-menu__item" onSelect={() => addTrackItem('AudioClip', contextMenuPos?.xBeats ?? 0, contextMenuPos?.layerIndex ?? 0)}>
+              <ContextMenu.Item
+                className="editor-context-menu__item"
+                onSelect={() =>
+                  addTrackItem(
+                    'AudioClip',
+                    contextMenuPos?.xBeats ?? 0,
+                    contextMenuPos?.layerIndex ?? 0,
+                  )
+                }
+              >
                 Add AudioClip
               </ContextMenu.Item>
               {clipboard.length > 0 && (
-                <ContextMenu.Item className="editor-context-menu__item" onSelect={handlePaste}>Paste
+                <ContextMenu.Item className="editor-context-menu__item" onSelect={handlePaste}>
+                  Paste
                 </ContextMenu.Item>
               )}
               <ContextMenu.Separator className="editor-context-menu__separator" />
-              <ContextMenu.Item className="editor-context-menu__item" disabled={!contextMenuPos} onSelect={handleSelectLayer}>Select Layer</ContextMenu.Item>
-              <ContextMenu.Item className="editor-context-menu__item" disabled={!contextMenuPos} onSelect={handleSelectAllBefore}>Select All Before</ContextMenu.Item>
-              <ContextMenu.Item className="editor-context-menu__item" disabled={!contextMenuPos} onSelect={handleSelectAllAfter}>Select All After</ContextMenu.Item>
+              <ContextMenu.Item
+                className="editor-context-menu__item"
+                disabled={!contextMenuPos}
+                onSelect={handleSelectLayer}
+              >
+                Select Layer
+              </ContextMenu.Item>
+              <ContextMenu.Item
+                className="editor-context-menu__item"
+                disabled={!contextMenuPos}
+                onSelect={handleSelectAllBefore}
+              >
+                Select All Before
+              </ContextMenu.Item>
+              <ContextMenu.Item
+                className="editor-context-menu__item"
+                disabled={!contextMenuPos}
+                onSelect={handleSelectAllAfter}
+              >
+                Select All After
+              </ContextMenu.Item>
               <ContextMenu.Separator className="editor-context-menu__separator" />
-              <ContextMenu.Item className="editor-context-menu__item" disabled={!contextMenuPos} onSelect={handleImport}>Import…</ContextMenu.Item>
+              <ContextMenu.Item
+                className="editor-context-menu__item"
+                disabled={!contextMenuPos}
+                onSelect={handleImport}
+              >
+                Import…
+              </ContextMenu.Item>
             </>
           )}
         </ContextMenu.Content>

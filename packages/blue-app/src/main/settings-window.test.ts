@@ -2,12 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { openSettingsWindow, closeSettingsWindow, resolveSettingsWindowClose } from './settings-window';
-import { SETTINGS_CLOSE_REQUEST_CHANNEL } from '../shared/settings-window';
 import {
-  clearSettingsCache,
-  setSettingsFilePathForTesting,
-} from './program-settings-store';
+  openSettingsWindow,
+  closeSettingsWindow,
+  resolveSettingsWindowClose,
+} from './settings-window';
+import { SETTINGS_CLOSE_REQUEST_CHANNEL } from '../shared/settings-window';
+import { clearSettingsCache, setSettingsFilePathForTesting } from './program-settings-store';
 import { loadWindowLayoutSettings, saveWindowLayoutSettings } from './window-layout-store';
 
 const electronMock = vi.hoisted(() => {
@@ -69,7 +70,10 @@ vi.mock('electron', () => ({
   BrowserWindow: electronMock.MockBrowserWindow,
   screen: {
     getAllDisplays: () => [
-      { bounds: { x: 0, y: 0, width: 1920, height: 1080 }, workArea: { x: 0, y: 0, width: 1920, height: 1080 } },
+      {
+        bounds: { x: 0, y: 0, width: 1920, height: 1080 },
+        workArea: { x: 0, y: 0, width: 1920, height: 1080 },
+      },
     ],
   },
 }));
@@ -159,7 +163,12 @@ describe('settings window layout persistence', () => {
     settingsWindow.trigger('close');
 
     const layout = loadWindowLayoutSettings();
-    expect(layout.windows.settings?.normalBounds).toEqual({ x: 80, y: 90, width: 800, height: 600 });
+    expect(layout.windows.settings?.normalBounds).toEqual({
+      x: 80,
+      y: 90,
+      width: 800,
+      height: 600,
+    });
   });
 
   it('applies saved settings window bounds before the window is shown', () => {
@@ -179,7 +188,12 @@ describe('settings window layout persistence', () => {
     openSettingsWindow(mainWindow);
 
     const settingsWindow = electronMock.instances[0]!;
-    expect(settingsWindow.setBounds).toHaveBeenCalledWith({ x: 200, y: 150, width: 700, height: 500 });
+    expect(settingsWindow.setBounds).toHaveBeenCalledWith({
+      x: 200,
+      y: 150,
+      width: 700,
+      height: 500,
+    });
   });
 });
 

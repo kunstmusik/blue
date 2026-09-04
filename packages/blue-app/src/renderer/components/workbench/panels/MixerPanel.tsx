@@ -17,7 +17,10 @@ export default function MixerPanel(): React.ReactElement {
   const projectSessionId = useProjectStore((state) => state.sessionId);
   const projectRevision = getProjectDocumentRevision();
   const projectEffectNodes = useProjectLibraryNodes(
-    'projectOwned', 'effect', loaded ? projectSessionId : null, projectRevision,
+    'projectOwned',
+    'effect',
+    loaded ? projectSessionId : null,
+    projectRevision,
   );
   const [chainSelection, setChainSelection] = useState<MixerChainSelection | null>(null);
 
@@ -43,15 +46,23 @@ export default function MixerPanel(): React.ReactElement {
     [applyProjectDocumentPatch],
   );
 
-  const handleOpenEffectInterface = useCallback((request: { ownerType: 'project' | 'library'; effectId: string; projectRef?: { channelId: string; chain: 'pre' | 'post'; entryId: string }; libraryRef?: { libraryEffectId: string } }) => {
-    void (async () => {
-      await flushPendingPatches();
-      const focused = await window.blueAPI.focusEffectEditor(request);
-      if (!focused) {
-        await window.blueAPI.openEffectInterface(request);
-      }
-    })();
-  }, [flushPendingPatches]);
+  const handleOpenEffectInterface = useCallback(
+    (request: {
+      ownerType: 'project' | 'library';
+      effectId: string;
+      projectRef?: { channelId: string; chain: 'pre' | 'post'; entryId: string };
+      libraryRef?: { libraryEffectId: string };
+    }) => {
+      void (async () => {
+        await flushPendingPatches();
+        const focused = await window.blueAPI.focusEffectEditor(request);
+        if (!focused) {
+          await window.blueAPI.openEffectInterface(request);
+        }
+      })();
+    },
+    [flushPendingPatches],
+  );
 
   const handleRemoveSubChannel = useCallback(
     (channelId: string) => {
@@ -114,7 +125,9 @@ export default function MixerPanel(): React.ReactElement {
             <input
               type="checkbox"
               checked={mixer.enabled}
-              onChange={(event) => handleMixerPatch({ type: 'setMixerEnabled', value: event.target.checked })}
+              onChange={(event) =>
+                handleMixerPatch({ type: 'setMixerEnabled', value: event.target.checked })
+              }
               className="accent-blue-accent"
             />
             <span>Enabled</span>
@@ -124,7 +137,12 @@ export default function MixerPanel(): React.ReactElement {
             <input
               type="number"
               value={mixer.extraRenderTime}
-              onChange={(event) => handleMixerPatch({ type: 'updateExtraRenderTime', value: Number(event.target.value) })}
+              onChange={(event) =>
+                handleMixerPatch({
+                  type: 'updateExtraRenderTime',
+                  value: Number(event.target.value),
+                })
+              }
               className="mixer-toolbar__input"
             />
           </label>
@@ -145,7 +163,7 @@ export default function MixerPanel(): React.ReactElement {
 
         <div className="mixer-main">
           <div className="mixer-channels-scroll">
-            {mixer.channelListGroups.map((group, index) => (
+            {mixer.channelListGroups.map((group, index) =>
               group.channels.length > 0 ? (
                 <div
                   key={group.association ?? `channel-group-${index}`}
@@ -157,7 +175,10 @@ export default function MixerPanel(): React.ReactElement {
                       if (!group.association) {
                         return;
                       }
-                      openGroupRenameDialog(group.association, group.listName || 'Track Layer Group');
+                      openGroupRenameDialog(
+                        group.association,
+                        group.listName || 'Track Layer Group',
+                      );
                     }}
                     title={group.association ? 'Double-click to rename group' : undefined}
                   >
@@ -183,8 +204,8 @@ export default function MixerPanel(): React.ReactElement {
                     ))}
                   </div>
                 </div>
-              ) : null
-            ))}
+              ) : null,
+            )}
             {mixer.channels.length > 0 && (
               <div className="mixer-channel-group">
                 <div className="mixer-channel-group__header">Orchestra</div>
@@ -270,11 +291,9 @@ export default function MixerPanel(): React.ReactElement {
                 className="w-full rounded-sm border border-blue-accent/40 bg-blue-surface/60 px-2 py-1 text-role-body text-blue-text outline-none"
                 value={groupRenameDialog.name}
                 onChange={(event) => {
-                  setGroupRenameDialog((prev) => (
-                    prev
-                      ? { ...prev, name: event.target.value }
-                      : prev
-                  ));
+                  setGroupRenameDialog((prev) =>
+                    prev ? { ...prev, name: event.target.value } : prev,
+                  );
                 }}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter') {

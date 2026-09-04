@@ -11,14 +11,17 @@ import type {
   BlueLiveNoteTriggerRequest,
   BlueLiveNoteTriggerResult,
 } from '../shared/project-editor';
-import {
-  isBoundedTargetIdentity,
-  isNonnegativeInteger,
-} from '../shared/midi-input';
+import { isBoundedTargetIdentity, isNonnegativeInteger } from '../shared/midi-input';
 import type { EngineRuntimeService } from './engine-runtime';
 import type { EngineControlTrafficObservation } from './engine-bridge';
 
-export type BlueLiveEngineStatus = 'idle' | 'starting' | 'running' | 'stopping' | 'stopped' | 'error';
+export type BlueLiveEngineStatus =
+  | 'idle'
+  | 'starting'
+  | 'running'
+  | 'stopping'
+  | 'stopped'
+  | 'error';
 
 export interface BlueLiveStatusSnapshot {
   status: BlueLiveEngineStatus;
@@ -211,7 +214,9 @@ export class BlueLiveEngineSession {
       }
     } catch (error: unknown) {
       if (sessionId === this.sessionId && this.awaitingTerminalState) {
-        console.warn(`[BlueLive] getEngineState poll failed: ${error instanceof Error ? error.message : String(error)}`);
+        console.warn(
+          `[BlueLive] getEngineState poll failed: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
     }
   }
@@ -221,20 +226,26 @@ export class BlueLiveEngineSession {
       return;
     }
 
-    await this.finalizeFromEngine({
-      state: 'stopped',
-      stopReason: 'error',
-      engineCreated: false,
-      running: false,
-      sampleFrames: 0,
-      sampleRate: 0,
-      ksmps: 0,
-      sequence: this.lastEngineStateSequence,
-      lastError: 'Blue Live engine exited unexpectedly',
-    }, source);
+    await this.finalizeFromEngine(
+      {
+        state: 'stopped',
+        stopReason: 'error',
+        engineCreated: false,
+        running: false,
+        sampleFrames: 0,
+        sampleRate: 0,
+        ksmps: 0,
+        sequence: this.lastEngineStateSequence,
+        lastError: 'Blue Live engine exited unexpectedly',
+      },
+      source,
+    );
   }
 
-  private async handleEngineState(snapshot: EngineStateSnapshot, source: 'pubsub' | 'poll'): Promise<void> {
+  private async handleEngineState(
+    snapshot: EngineStateSnapshot,
+    source: 'pubsub' | 'poll',
+  ): Promise<void> {
     if (!this.awaitingTerminalState) {
       return;
     }
@@ -261,8 +272,10 @@ export class BlueLiveEngineSession {
     }
 
     const now = Date.now();
-    if (!this.pendingPolledTerminalState ||
-        this.pendingPolledTerminalState.snapshot.sequence !== snapshot.sequence) {
+    if (
+      !this.pendingPolledTerminalState ||
+      this.pendingPolledTerminalState.snapshot.sequence !== snapshot.sequence
+    ) {
       this.pendingPolledTerminalState = { snapshot, firstSeenAt: now };
       return;
     }
@@ -272,7 +285,10 @@ export class BlueLiveEngineSession {
     }
   }
 
-  private describeTerminalState(snapshot: EngineStateSnapshot, source: 'pubsub' | 'poll'): {
+  private describeTerminalState(
+    snapshot: EngineStateSnapshot,
+    source: 'pubsub' | 'poll',
+  ): {
     status: 'stopped' | 'error';
     message: string;
   } {
@@ -297,7 +313,10 @@ export class BlueLiveEngineSession {
     }
   }
 
-  private async finalizeFromEngine(snapshot: EngineStateSnapshot, source: 'pubsub' | 'poll'): Promise<void> {
+  private async finalizeFromEngine(
+    snapshot: EngineStateSnapshot,
+    source: 'pubsub' | 'poll',
+  ): Promise<void> {
     if (!this.awaitingTerminalState) {
       return;
     }
@@ -323,7 +342,8 @@ export class BlueLiveEngineSession {
     this.setStatus('starting', 'Starting Blue Live...');
     this.sessionId++;
     this.projectRevision = revision;
-    this.projectDirectory = projectDirectory && projectDirectory.trim().length > 0 ? projectDirectory : null;
+    this.projectDirectory =
+      projectDirectory && projectDirectory.trim().length > 0 ? projectDirectory : null;
     this.projectData = data;
 
     let resolveStartCompletion = (): void => {};
@@ -353,9 +373,10 @@ export class BlueLiveEngineSession {
       const runtimeScore = normalizeScoreForEngineApi(score, this.namedInstrumentNumbers);
 
       const liveOptions = this.buildLiveOptions(liveData, options);
-      const tempCsdPath = await (
-        this.dependencies.writeTempCsdSnapshot ?? writeTempCsdSnapshot
-      )(csd.csdText, this.projectDirectory);
+      const tempCsdPath = await (this.dependencies.writeTempCsdSnapshot ?? writeTempCsdSnapshot)(
+        csd.csdText,
+        this.projectDirectory,
+      );
       if (await this.stopCancelledStart(lifecycleGeneration)) {
         return this.getSnapshot();
       }
@@ -367,20 +388,20 @@ export class BlueLiveEngineSession {
 
       const bridge = this.dependencies.createBridge
         ? this.dependencies.createBridge(
-          this.mainWindow,
-          this.enginePath,
-          this.port,
-          this.pubPort,
-          this.engineRuntime,
-        )
+            this.mainWindow,
+            this.enginePath,
+            this.port,
+            this.pubPort,
+            this.engineRuntime,
+          )
         : new EngineBridge(
-          this.mainWindow,
-          this.enginePath,
-          this.port,
-          this.pubPort,
-          'blue-live',
-          this.engineRuntime,
-        );
+            this.mainWindow,
+            this.enginePath,
+            this.port,
+            this.pubPort,
+            'blue-live',
+            this.engineRuntime,
+          );
       this.bridge = bridge;
       bridge.setWorkingDirectory(this.projectDirectory);
 
@@ -651,12 +672,14 @@ export class BlueLiveEngineSession {
   }
 
   getControlTrafficSnapshot(): EngineControlTrafficObservation {
-    return this.bridge?.getControlTrafficSnapshot() ?? {
-      readCommands: 0,
-      readEntries: 0,
-      writeCommands: 0,
-      writeEntries: 0,
-    };
+    return (
+      this.bridge?.getControlTrafficSnapshot() ?? {
+        readCommands: 0,
+        readEntries: 0,
+        writeCommands: 0,
+        writeEntries: 0,
+      }
+    );
   }
 
   async syncAutomationParameter(
@@ -669,9 +692,7 @@ export class BlueLiveEngineSession {
     await this.bridge.syncAutomationParameter(parameter, automationTiming);
   }
 
-  async triggerNote(
-    request: BlueLiveNoteTriggerRequest,
-  ): Promise<BlueLiveNoteTriggerResult> {
+  async triggerNote(request: BlueLiveNoteTriggerRequest): Promise<BlueLiveNoteTriggerResult> {
     const client = this.bridge?.getClient();
     const projectData = this.projectData;
 
@@ -698,9 +719,10 @@ export class BlueLiveEngineSession {
     });
 
     const paddedNoteNum = this.getPaddedNoteNum(mapped.originalMidiNote);
-    const scoreText = request.type === 'noteOff'
-      ? `i-${scoreInstrumentId}.${paddedNoteNum} 0 0`
-      : `i${scoreInstrumentId}.${paddedNoteNum} 0 -1 ${mapped.mappedPitchValue} ${mapped.mappedAmplitudeValue}`;
+    const scoreText =
+      request.type === 'noteOff'
+        ? `i-${scoreInstrumentId}.${paddedNoteNum} 0 0`
+        : `i${scoreInstrumentId}.${paddedNoteNum} 0 -1 ${mapped.mappedPitchValue} ${mapped.mappedAmplitudeValue}`;
 
     try {
       const resp = await client.readScore(
@@ -812,9 +834,7 @@ export class BlueLiveEngineSession {
    * (stale session, missing/malformed target, unmapped channel) so the caller
    * fail-closes without a wrong-instrument fallback.
    */
-  private resolveRequestTarget(
-    request: BlueLiveNoteTriggerRequest,
-  ): number | string | null {
+  private resolveRequestTarget(request: BlueLiveNoteTriggerRequest): number | string | null {
     // Validate the optional Blue Live session fence before any target lookup.
     if (request.liveSessionId !== undefined) {
       if (!isNonnegativeInteger(request.liveSessionId)) return null;
@@ -831,7 +851,11 @@ export class BlueLiveEngineSession {
     if (normalizedTarget.kind === 'channel') {
       // A channel target that disagrees with the request channel is malformed.
       if (normalizedTarget.channel !== request.channel) return null;
-      if (!Number.isInteger(normalizedTarget.channel) || normalizedTarget.channel < 0 || normalizedTarget.channel > 15) {
+      if (
+        !Number.isInteger(normalizedTarget.channel) ||
+        normalizedTarget.channel < 0 ||
+        normalizedTarget.channel > 15
+      ) {
         return null;
       }
       const projectData = this.projectData;
@@ -920,9 +944,7 @@ export function resolveNamedInstrumentNumbers(orchestra: string): Map<string, nu
     }
 
     const rawId = match[1] ?? '';
-    const instrId = rawId.startsWith('"') && rawId.endsWith('"')
-      ? rawId.slice(1, -1)
-      : rawId;
+    const instrId = rawId.startsWith('"') && rawId.endsWith('"') ? rawId.slice(1, -1) : rawId;
 
     if (/^\d+$/.test(instrId)) {
       maxNumericId = Math.max(maxNumericId, Number.parseInt(instrId, 10));

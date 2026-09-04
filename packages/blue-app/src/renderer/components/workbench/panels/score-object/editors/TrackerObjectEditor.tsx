@@ -8,7 +8,13 @@ import {
   BLUE_INSPECTOR_VALUE_TEXT_CLASS,
 } from '../../shared/compactFieldStyles';
 
-function FieldRow({ label, children }: { label: string; children: React.ReactNode }): React.ReactElement {
+function FieldRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}): React.ReactElement {
   return (
     <div className={BLUE_INSPECTOR_ROW_CLASS}>
       <label className={BLUE_INSPECTOR_FIELD_LABEL_CLASS}>{label}</label>
@@ -17,7 +23,10 @@ function FieldRow({ label, children }: { label: string; children: React.ReactNod
   );
 }
 
-export default function TrackerObjectEditor({ document, onPatch }: ScoreObjectEditorComponentProps): React.ReactElement {
+export default function TrackerObjectEditor({
+  document,
+  onPatch,
+}: ScoreObjectEditorComponentProps): React.ReactElement {
   const editor = document.editor;
   if (editor.kind !== 'structured' || editor.editorFamily !== 'TrackerObject') return <></>;
 
@@ -26,17 +35,23 @@ export default function TrackerObjectEditor({ document, onPatch }: ScoreObjectEd
     trackData: string[][];
   };
 
-  const patch = useCallback((p: Record<string, unknown>) => {
-    onPatch({
-      type: 'updateTypeSpecificEditor',
-      target: document.target,
-      patch: p,
-    });
-  }, [document.target, onPatch]);
+  const patch = useCallback(
+    (p: Record<string, unknown>) => {
+      onPatch({
+        type: 'updateTypeSpecificEditor',
+        target: document.target,
+        patch: p,
+      });
+    },
+    [document.target, onPatch],
+  );
 
-  const handleCellChange = useCallback((trackIndex: number, stepIndex: number, value: string) => {
-    patch({ updateTrackCell: { trackIndex, stepIndex, value } });
-  }, [patch]);
+  const handleCellChange = useCallback(
+    (trackIndex: number, stepIndex: number, value: string) => {
+      patch({ updateTrackCell: { trackIndex, stepIndex, value } });
+    },
+    [patch],
+  );
 
   const handleAddTrack = useCallback(() => {
     patch({ addTrack: true });
@@ -71,7 +86,9 @@ export default function TrackerObjectEditor({ document, onPatch }: ScoreObjectEd
               <tr className="border-b border-blue-border">
                 <th className="px-2 py-1 text-left text-blue-muted font-normal w-16">Track</th>
                 {trackData[0]?.map((_, si) => (
-                  <th key={si} className="px-1 py-1 text-center text-blue-muted font-normal">{si}</th>
+                  <th key={si} className="px-1 py-1 text-center text-blue-muted font-normal">
+                    {si}
+                  </th>
                 ))}
               </tr>
             </thead>
@@ -80,7 +97,7 @@ export default function TrackerObjectEditor({ document, onPatch }: ScoreObjectEd
                 <tr key={ti} className="border-b border-blue-border/50">
                   <td className="px-2 py-0.5 text-gray-400">{ti}</td>
                   {track.map((cell, si) => (
-                     <td key={si} className="px-0.5 py-0.5">
+                    <td key={si} className="px-0.5 py-0.5">
                       <input
                         type="text"
                         className="w-full min-w-[3rem] rounded border border-blue-border bg-blue-bg px-1 py-0.5 text-role-body text-gray-100 font-mono focus:border-blue-accent focus:outline-none text-center"
@@ -98,7 +115,9 @@ export default function TrackerObjectEditor({ document, onPatch }: ScoreObjectEd
           <button
             className="px-2 py-1 text-role-body rounded border border-blue-border text-blue-muted hover:bg-blue-border/30"
             onClick={handleAddTrack}
-          >+ Add Track</button>
+          >
+            + Add Track
+          </button>
         </div>
       </div>
     </div>

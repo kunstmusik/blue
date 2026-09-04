@@ -1,7 +1,10 @@
 // @vitest-environment jsdom
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { applyLegacyLayoutMigration, createDefaultWindowLayoutSettings } from '../../shared/window-layout-settings';
+import {
+  applyLegacyLayoutMigration,
+  createDefaultWindowLayoutSettings,
+} from '../../shared/window-layout-settings';
 
 const FIXED_NOW = '2026-07-05T12:00:00.000Z';
 const fixedNow = () => FIXED_NOW;

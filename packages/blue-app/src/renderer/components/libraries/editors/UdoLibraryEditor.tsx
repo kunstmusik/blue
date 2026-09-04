@@ -10,12 +10,18 @@ interface UdoLibraryEditorProps {
 }
 
 export function UdoLibraryEditor({ snapshot, onPatch }: UdoLibraryEditorProps): React.ReactElement {
-  const update = useCallback((patch: Partial<UdoDefinitionSnapshot>) => {
-    onPatch({ kind: 'udo', patch: { type: 'update', index: 0, patch } });
-  }, [onPatch]);
-  const convert = useCallback((style: 'CLASSIC' | 'MODERN') => {
-    onPatch({ kind: 'udo', patch: { type: 'convertStyle', index: 0, style } });
-  }, [onPatch]);
+  const update = useCallback(
+    (patch: Partial<UdoDefinitionSnapshot>) => {
+      onPatch({ kind: 'udo', patch: { type: 'update', index: 0, patch } });
+    },
+    [onPatch],
+  );
+  const convert = useCallback(
+    (style: 'CLASSIC' | 'MODERN') => {
+      onPatch({ kind: 'udo', patch: { type: 'convertStyle', index: 0, style } });
+    },
+    [onPatch],
+  );
   // A standalone library UDO offers only itself (for intentional recursion);
   // project-global UDOs from an unrelated open project must never appear.
   const javaBlueCompletionOptions = useMemo(

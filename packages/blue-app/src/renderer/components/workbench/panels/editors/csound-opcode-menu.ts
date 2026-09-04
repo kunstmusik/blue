@@ -72,7 +72,9 @@ export function getOpcodeInsertText(entry: RichOpcodeCatalogEntry): string {
   return statements[0].trim();
 }
 
-function buildOpcodeCategoryTree(opcodes: readonly RichOpcodeCatalogEntry[]): OpcodeCategoryTreeNode {
+function buildOpcodeCategoryTree(
+  opcodes: readonly RichOpcodeCatalogEntry[],
+): OpcodeCategoryTreeNode {
   const root: OpcodeCategoryTreeNode = {
     name: 'Opcodes',
     subcategories: new Map(),
@@ -82,7 +84,10 @@ function buildOpcodeCategoryTree(opcodes: readonly RichOpcodeCatalogEntry[]): Op
   for (const entry of opcodes) {
     const rawCategory = entry.category?.trim();
     const parts = rawCategory
-      ? rawCategory.split(':').map((part) => part.trim()).filter(Boolean)
+      ? rawCategory
+          .split(':')
+          .map((part) => part.trim())
+          .filter(Boolean)
       : ['Miscellaneous'];
 
     let current = root;

@@ -66,12 +66,12 @@ describe('useCodeRepositoryStore', () => {
       message: 'Repository database could not be opened',
       retryable: true,
     };
-    (globalThis as unknown as { blueAPI: Record<string, unknown> }).blueAPI.getCodeRepositorySnapshot = vi.fn(
-      async () => ({
-        ok: false as const,
-        error,
-      }),
-    );
+    (
+      globalThis as unknown as { blueAPI: Record<string, unknown> }
+    ).blueAPI.getCodeRepositorySnapshot = vi.fn(async () => ({
+      ok: false as const,
+      error,
+    }));
 
     await useCodeRepositoryStore.getState().refresh();
 
@@ -84,7 +84,9 @@ describe('useCodeRepositoryStore', () => {
       ok: true as const,
       value: makeSnapshot(4, ['x']),
     }));
-    (globalThis as unknown as { blueAPI: Record<string, unknown> }).blueAPI.commitCodeRepositoryDraft = commit;
+    (
+      globalThis as unknown as { blueAPI: Record<string, unknown> }
+    ).blueAPI.commitCodeRepositoryDraft = commit;
     await useCodeRepositoryStore.getState().openEditor();
     const draft = useCodeRepositoryStore.getState().snapshot!.root;
     const result = await useCodeRepositoryStore.getState().save(draft);
@@ -103,7 +105,9 @@ describe('useCodeRepositoryStore', () => {
         currentSnapshot: makeSnapshot(4, ['saved elsewhere']),
       },
     }));
-    (globalThis as unknown as { blueAPI: Record<string, unknown> }).blueAPI.commitCodeRepositoryDraft = commit;
+    (
+      globalThis as unknown as { blueAPI: Record<string, unknown> }
+    ).blueAPI.commitCodeRepositoryDraft = commit;
     await useCodeRepositoryStore.getState().openEditor();
     const draft = useCodeRepositoryStore.getState().snapshot!.root;
     const result = await useCodeRepositoryStore.getState().save(draft);
@@ -129,7 +133,9 @@ describe('useCodeRepositoryStore', () => {
       ok: true as const,
       value: { snapshot: recovered, importedNodeCount: 1, sourceHash: 'hash' },
     }));
-    (globalThis as unknown as { blueAPI: Record<string, unknown> }).blueAPI.importCodeRepositoryFile = importFile;
+    (
+      globalThis as unknown as { blueAPI: Record<string, unknown> }
+    ).blueAPI.importCodeRepositoryFile = importFile;
 
     const result = await useCodeRepositoryStore.getState().importFile();
 

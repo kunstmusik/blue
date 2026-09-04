@@ -67,7 +67,9 @@ export class LiveObject implements BlueDataObject {
 
   getSoundObjectType(): string {
     if (!this._soundObject) return '';
-    return (this._soundObject as unknown as Record<string, unknown>).constructor?.name as string ?? '';
+    return (
+      ((this._soundObject as unknown as Record<string, unknown>).constructor?.name as string) ?? ''
+    );
   }
 
   get hasSoundObject(): boolean {

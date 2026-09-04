@@ -10,7 +10,9 @@ import ZakLineObjectEditor from '../components/workbench/panels/score-object/edi
 import { EditableLineCanvas } from '../components/workbench/panels/shared/line-editor/EditableLineCanvas';
 import { HostDocumentContext } from '../hooks/use-host-document';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 class MockResizeObserver {
   constructor(private readonly callback: ResizeObserverCallback) {}
@@ -23,7 +25,8 @@ class MockResizeObserver {
   unobserve() {}
 }
 
-(globalThis as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver = MockResizeObserver;
+(globalThis as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver =
+  MockResizeObserver;
 
 function makeTarget(editorObjectType: string) {
   return {
@@ -44,7 +47,10 @@ function makeTarget(editorObjectType: string) {
   };
 }
 
-function makeDocument(editorFamily: 'LineObject' | 'ZakLineObject', payload: Record<string, unknown>) {
+function makeDocument(
+  editorFamily: 'LineObject' | 'ZakLineObject',
+  payload: Record<string, unknown>,
+) {
   const target = makeTarget(editorFamily);
   return {
     id: `${editorFamily}-doc`,
@@ -60,7 +66,11 @@ function makeDocument(editorFamily: 'LineObject' | 'ZakLineObject', payload: Rec
   } as any;
 }
 
-function renderEditor(element: React.ReactElement): { container: HTMLDivElement; root: Root; unmount: () => void } {
+function renderEditor(element: React.ReactElement): {
+  container: HTMLDivElement;
+  root: Root;
+  unmount: () => void;
+} {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);
@@ -69,9 +79,7 @@ function renderEditor(element: React.ReactElement): { container: HTMLDivElement;
     // These editors are workbench panel content in production; supply the
     // docked-case host document their popups bind to (spec 090).
     root.render(
-      <HostDocumentContext.Provider value={document}>
-        {element}
-      </HostDocumentContext.Provider>,
+      <HostDocumentContext.Provider value={document}>{element}</HostDocumentContext.Provider>,
     );
   });
 
@@ -94,34 +102,39 @@ function setInputValue(input: HTMLInputElement, value: string) {
 }
 
 function findButtonByText(label: string): HTMLButtonElement | null {
-  return Array.from(document.body.querySelectorAll('button')).find(
-    (button): button is HTMLButtonElement => button.textContent?.trim() === label,
-  ) ?? null;
+  return (
+    Array.from(document.body.querySelectorAll('button')).find(
+      (button): button is HTMLButtonElement => button.textContent?.trim() === label,
+    ) ?? null
+  );
 }
 
 function getClientPointForSvg(svg: SVGSVGElement, svgX: number, svgY: number) {
   const rect = svg.getBoundingClientRect();
   const viewBox = svg.viewBox.baseVal;
   return {
-    clientX: rect.left + ((svgX / viewBox.width) * rect.width),
-    clientY: rect.top + ((svgY / viewBox.height) * rect.height),
+    clientX: rect.left + (svgX / viewBox.width) * rect.width,
+    clientY: rect.top + (svgY / viewBox.height) * rect.height,
   };
 }
 
 let rectSpy: ReturnType<typeof vi.spyOn>;
 
 beforeEach(() => {
-  rectSpy = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(() => ({
-    x: 0,
-    y: 0,
-    width: 800,
-    height: 360,
-    top: 0,
-    left: 0,
-    right: 800,
-    bottom: 360,
-    toJSON: () => ({}),
-  }) as DOMRect);
+  rectSpy = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(
+    () =>
+      ({
+        x: 0,
+        y: 0,
+        width: 800,
+        height: 360,
+        top: 0,
+        left: 0,
+        right: 800,
+        bottom: 360,
+        toJSON: () => ({}),
+      }) as DOMRect,
+  );
 });
 
 afterEach(() => {
@@ -142,7 +155,10 @@ describe('Line and Zak line score editors', () => {
               color: 0x20dd00,
               rightBound: true,
               endPointsLinked: false,
-              points: [{ x: 0, y: 0.25 }, { x: 1, y: 0.75 }],
+              points: [
+                { x: 0, y: 0.25 },
+                { x: 1, y: 0.75 },
+              ],
             },
             {
               varName: 'line1',
@@ -151,7 +167,11 @@ describe('Line and Zak line score editors', () => {
               color: 0x0000ff,
               rightBound: true,
               endPointsLinked: true,
-              points: [{ x: 0, y: -1 }, { x: 0.5, y: 1 }, { x: 1, y: -1 }],
+              points: [
+                { x: 0, y: -1 },
+                { x: 0.5, y: 1 },
+                { x: 1, y: -1 },
+              ],
             },
           ],
         })}
@@ -175,12 +195,14 @@ describe('Line and Zak line score editors', () => {
       expect(label.hasAttribute('font-size')).toBe(false);
     }
     act(() => {
-      svg!.dispatchEvent(new MouseEvent('contextmenu', {
-        bubbles: true,
-        cancelable: true,
-        clientX: 240,
-        clientY: 180,
-      }));
+      svg!.dispatchEvent(
+        new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 240,
+          clientY: 180,
+        }),
+      );
     });
 
     expect(document.body.textContent).toContain('Edit Points');
@@ -202,7 +224,10 @@ describe('Line and Zak line score editors', () => {
               color: 0xffa500,
               rightBound: true,
               endPointsLinked: false,
-              points: [{ x: 0, y: 0.1 }, { x: 1, y: 0.8 }],
+              points: [
+                { x: 0, y: 0.1 },
+                { x: 1, y: 0.8 },
+              ],
             },
             {
               channel: 7,
@@ -211,7 +236,11 @@ describe('Line and Zak line score editors', () => {
               color: 0xcd3700,
               rightBound: true,
               endPointsLinked: true,
-              points: [{ x: 0, y: -0.5 }, { x: 0.4, y: 0.7 }, { x: 1, y: -0.5 }],
+              points: [
+                { x: 0, y: -0.5 },
+                { x: 0.4, y: 0.7 },
+                { x: 1, y: -0.5 },
+              ],
             },
           ],
         })}
@@ -228,12 +257,14 @@ describe('Line and Zak line score editors', () => {
     const svg = tree.container.querySelector('polyline')?.ownerSVGElement;
     expect(svg).not.toBeNull();
     act(() => {
-      svg!.dispatchEvent(new MouseEvent('contextmenu', {
-        bubbles: true,
-        cancelable: true,
-        clientX: 260,
-        clientY: 200,
-      }));
+      svg!.dispatchEvent(
+        new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 260,
+          clientY: 200,
+        }),
+      );
     });
 
     expect(document.body.textContent).toContain('Edit Points');
@@ -243,15 +274,21 @@ describe('Line and Zak line score editors', () => {
   });
 
   it('keeps linked endpoints synchronized when editing points in the shared point editor', () => {
-    const initialLines = [{
-      varName: 'line0',
-      min: 0,
-      max: 1,
-      color: 0x20dd00,
-      rightBound: true,
-      endPointsLinked: true,
-      points: [{ x: 0, y: 0.15 }, { x: 0.5, y: 0.65 }, { x: 1, y: 0.15 }],
-    }];
+    const initialLines = [
+      {
+        varName: 'line0',
+        min: 0,
+        max: 1,
+        color: 0x20dd00,
+        rightBound: true,
+        endPointsLinked: true,
+        points: [
+          { x: 0, y: 0.15 },
+          { x: 0.5, y: 0.65 },
+          { x: 1, y: 0.15 },
+        ],
+      },
+    ];
     let latestLines = initialLines;
 
     function Harness(): React.ReactElement {
@@ -276,12 +313,14 @@ describe('Line and Zak line score editors', () => {
 
     const menuPoint = getClientPointForSvg(svg!, 100, 60);
     act(() => {
-      svg!.dispatchEvent(new MouseEvent('contextmenu', {
-        bubbles: true,
-        cancelable: true,
-        clientX: menuPoint.clientX,
-        clientY: menuPoint.clientY,
-      }));
+      svg!.dispatchEvent(
+        new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          clientX: menuPoint.clientX,
+          clientY: menuPoint.clientY,
+        }),
+      );
     });
 
     const editPointsButton = findButtonByText('Edit Points');
@@ -290,7 +329,9 @@ describe('Line and Zak line score editors', () => {
       editPointsButton!.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
     });
 
-    const inputs = Array.from(document.body.querySelectorAll('input[type="number"]')) as HTMLInputElement[];
+    const inputs = Array.from(
+      document.body.querySelectorAll('input[type="number"]'),
+    ) as HTMLInputElement[];
     const firstYInput = inputs[1];
     expect(firstYInput).toBeDefined();
 
@@ -331,7 +372,10 @@ describe('Line and Zak line score editors', () => {
             color: '#ff0000',
             rightBound: true,
             endPointsLinked: false,
-            points: [{ x: 0, y: 0.25 }, { x: 1, y: 0.75 }],
+            points: [
+              { x: 0, y: 0.25 },
+              { x: 1, y: 0.75 },
+            ],
           },
         ],
       },
@@ -352,12 +396,14 @@ describe('Line and Zak line score editors', () => {
 
     const menuPoint = getClientPointForSvg(svg!, 100, 60);
     act(() => {
-      svg!.dispatchEvent(new MouseEvent('contextmenu', {
-        bubbles: true,
-        cancelable: true,
-        clientX: menuPoint.clientX,
-        clientY: menuPoint.clientY,
-      }));
+      svg!.dispatchEvent(
+        new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          clientX: menuPoint.clientX,
+          clientY: menuPoint.clientY,
+        }),
+      );
     });
 
     expect(document.body.textContent).not.toContain('Edit Points');
@@ -365,34 +411,42 @@ describe('Line and Zak line score editors', () => {
 
     const point = getClientPointForSvg(svg!, 5, 90);
     act(() => {
-      svg!.dispatchEvent(new MouseEvent('mousedown', {
-        bubbles: true,
-        cancelable: true,
-        button: 0,
-        clientX: point.clientX,
-        clientY: point.clientY,
-      }));
+      svg!.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          cancelable: true,
+          button: 0,
+          clientX: point.clientX,
+          clientY: point.clientY,
+        }),
+      );
     });
     act(() => {
-      window.dispatchEvent(new MouseEvent('mousemove', {
-        bubbles: true,
-        cancelable: true,
-        clientX: point.clientX,
-        clientY: point.clientY - 80,
-      }));
-      window.dispatchEvent(new MouseEvent('mouseup', {
-        bubbles: true,
-        cancelable: true,
-        clientX: point.clientX,
-        clientY: point.clientY - 80,
-      }));
+      window.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          cancelable: true,
+          clientX: point.clientX,
+          clientY: point.clientY - 80,
+        }),
+      );
+      window.dispatchEvent(
+        new MouseEvent('mouseup', {
+          bubbles: true,
+          cancelable: true,
+          clientX: point.clientX,
+          clientY: point.clientY - 80,
+        }),
+      );
     });
 
     expect(onBsbInterfacePatch).toHaveBeenCalledTimes(1);
-    expect(onBsbInterfacePatch).toHaveBeenCalledWith(expect.objectContaining({
-      type: 'updateWidgetProperties',
-      widgetId: 'line-widget',
-    }));
+    expect(onBsbInterfacePatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'updateWidgetProperties',
+        widgetId: 'line-widget',
+      }),
+    );
 
     tree.unmount();
   });

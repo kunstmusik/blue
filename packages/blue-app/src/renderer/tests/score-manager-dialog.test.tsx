@@ -10,7 +10,9 @@ import {
   type ScoreDocumentSnapshot,
 } from '../../shared/project-editor';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const { mockProjectState } = vi.hoisted(() => ({
   mockProjectState: {
@@ -83,10 +85,7 @@ function clickMenuItem(item: HTMLElement): void {
 }
 
 function setTextInputValue(input: HTMLInputElement, value: string): void {
-  const valueSetter = Object.getOwnPropertyDescriptor(
-    HTMLInputElement.prototype,
-    'value',
-  )?.set;
+  const valueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
   valueSetter?.call(input, value);
   input.dispatchEvent(new Event('input', { bubbles: true }));
 }
@@ -104,13 +103,17 @@ afterEach(() => {
 describe('ScoreManagerDialog', () => {
   it('shows built-in layer-group options and dispatches the selected type', () => {
     const { container, root } = renderDialog();
-    const trigger = container.querySelector('button[aria-label="Add Layer Group"]') as HTMLButtonElement;
+    const trigger = container.querySelector(
+      'button[aria-label="Add Layer Group"]',
+    ) as HTMLButtonElement;
 
     act(() => {
       openAddLayerGroupMenu(trigger);
     });
 
-    const menuItems = Array.from(document.body.querySelectorAll('[role="menuitem"]')) as HTMLElement[];
+    const menuItems = Array.from(
+      document.body.querySelectorAll('[role="menuitem"]'),
+    ) as HTMLElement[];
     expect(menuItems.map((item) => item.textContent?.trim())).toEqual([
       'Add SoundObject Layer Group',
       'Add Track Layer Group',
@@ -140,8 +143,8 @@ describe('ScoreManagerDialog', () => {
   it('commits layer-group rename on Enter', () => {
     const { container, root } = renderDialog();
 
-    const firstGroupRow = Array.from(container.querySelectorAll('.cursor-pointer')).find((node) =>
-      node.textContent?.trim() === 'Existing Group',
+    const firstGroupRow = Array.from(container.querySelectorAll('.cursor-pointer')).find(
+      (node) => node.textContent?.trim() === 'Existing Group',
     ) as HTMLDivElement;
     expect(firstGroupRow.textContent).toContain('Existing Group');
 
@@ -182,7 +185,9 @@ describe('ScoreManagerDialog', () => {
     act(() => {
       layerRow.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
-    const removeButton = container.querySelector<HTMLButtonElement>('button[title="Remove Layer"]')!;
+    const removeButton = container.querySelector<HTMLButtonElement>(
+      'button[title="Remove Layer"]',
+    )!;
     expect(removeButton.disabled).toBe(false);
     act(() => {
       removeButton.click();
@@ -190,7 +195,9 @@ describe('ScoreManagerDialog', () => {
 
     const dialog = container.querySelector('[data-layer-removal-dialog]');
     expect(dialog).toBeTruthy();
-    const cleanupCheckbox = container.querySelector<HTMLInputElement>('[data-delete-empty-layer-groups]');
+    const cleanupCheckbox = container.querySelector<HTMLInputElement>(
+      '[data-delete-empty-layer-groups]',
+    );
     expect(cleanupCheckbox?.checked).toBe(true);
 
     act(() => {
@@ -212,7 +219,9 @@ describe('ScoreManagerDialog', () => {
 
   it('confirms layer-group removal via ConfirmationDialog and cancels safely', () => {
     const { container, root } = renderDialog();
-    const removeGroupButton = container.querySelector<HTMLButtonElement>('button[title="Remove Layer Group"]')!;
+    const removeGroupButton = container.querySelector<HTMLButtonElement>(
+      'button[title="Remove Layer Group"]',
+    )!;
     expect(removeGroupButton).toBeTruthy();
 
     // Click remove layer group
@@ -238,7 +247,9 @@ describe('ScoreManagerDialog', () => {
       removeGroupButton.click();
     });
     const confirmDialog = document.body.querySelector('[role="alertdialog"]');
-    const deleteButton = confirmDialog?.querySelector<HTMLButtonElement>('[data-action-id="remove"]')!;
+    const deleteButton = confirmDialog?.querySelector<HTMLButtonElement>(
+      '[data-action-id="remove"]',
+    )!;
     act(() => {
       deleteButton.click();
     });
@@ -272,20 +283,24 @@ describe('ScoreManagerDialog', () => {
       ],
     };
     const { container, root } = renderDialog(score);
-    const removeGroupButton = container.querySelector<HTMLButtonElement>('button[title="Remove Layer Group"]')!;
+    const removeGroupButton = container.querySelector<HTMLButtonElement>(
+      'button[title="Remove Layer Group"]',
+    )!;
 
     act(() => {
       removeGroupButton.click();
     });
-    const secondGroupRow = Array.from(container.querySelectorAll('.cursor-pointer')).find((node) =>
-      node.textContent?.trim() === 'Second Group',
+    const secondGroupRow = Array.from(container.querySelectorAll('.cursor-pointer')).find(
+      (node) => node.textContent?.trim() === 'Second Group',
     ) as HTMLDivElement;
     expect(secondGroupRow).toBeTruthy();
     act(() => {
       secondGroupRow.click();
     });
 
-    const deleteButton = document.body.querySelector<HTMLButtonElement>('[data-action-id="remove"]')!;
+    const deleteButton = document.body.querySelector<HTMLButtonElement>(
+      '[data-action-id="remove"]',
+    )!;
     act(() => {
       deleteButton.click();
     });

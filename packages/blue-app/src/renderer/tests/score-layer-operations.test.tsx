@@ -10,7 +10,9 @@ import { useLayerSelectionStore } from '../stores/layer-selection-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 class MockResizeObserver {
   observe(): void {}
@@ -18,7 +20,8 @@ class MockResizeObserver {
   disconnect(): void {}
 }
 
-(globalThis as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver = MockResizeObserver;
+(globalThis as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver =
+  MockResizeObserver;
 
 const { mockScorePathState } = vi.hoisted(() => ({
   mockScorePathState: {
@@ -150,18 +153,21 @@ describe('Score layer operations (US3)', () => {
 
   async function openContextMenu(header: HTMLElement): Promise<void> {
     await act(async () => {
-      header.dispatchEvent(new MouseEvent('contextmenu', {
-        bubbles: true,
-        cancelable: true,
-        button: 2,
-      }));
+      header.dispatchEvent(
+        new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          button: 2,
+        }),
+      );
       await Promise.resolve();
     });
   }
 
   function findMenuItem(label: string): HTMLElement | undefined {
-    return Array.from(document.body.querySelectorAll<HTMLElement>('[role="menuitem"]'))
-      .find((item) => item.textContent?.trim() === label);
+    return Array.from(document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')).find(
+      (item) => item.textContent?.trim() === label,
+    );
   }
 
   it('pushes selected layer range up and down with Alt+ArrowUp and Alt+ArrowDown', async () => {
@@ -179,13 +185,17 @@ describe('Score layer operations (US3)', () => {
       sound1.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
     });
     act(() => {
-      sound2.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0, shiftKey: true }));
+      sound2.dispatchEvent(
+        new MouseEvent('mousedown', { bubbles: true, button: 0, shiftKey: true }),
+      );
     });
     expect(useLayerSelectionStore.getState().selectedKeys.size).toBe(2);
 
     // Push Up with Alt+ArrowUp -> move [1, 2] to 0 -> layers become Sound 2, Sound 3, Sound 1
     act(() => {
-      headersList.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', altKey: true, bubbles: true }));
+      headersList.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowUp', altKey: true, bubbles: true }),
+      );
     });
 
     const group = useProjectStore.getState().score.layerGroups[0]!;
@@ -193,7 +203,9 @@ describe('Score layer operations (US3)', () => {
 
     // Push Down with Alt+ArrowDown -> move [0, 1] to 1 -> layers become Sound 1, Sound 2, Sound 3
     act(() => {
-      headersList.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', altKey: true, bubbles: true }));
+      headersList.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowDown', altKey: true, bubbles: true }),
+      );
     });
 
     const groupAfterDown = useProjectStore.getState().score.layerGroups[0]!;
@@ -215,7 +227,9 @@ describe('Score layer operations (US3)', () => {
       sound0.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
     });
     act(() => {
-      sound1.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0, shiftKey: true }));
+      sound1.dispatchEvent(
+        new MouseEvent('mousedown', { bubbles: true, button: 0, shiftKey: true }),
+      );
     });
 
     // Press Delete key
@@ -249,7 +263,9 @@ describe('Score layer operations (US3)', () => {
       sound0.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
     });
     act(() => {
-      sound1.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0, shiftKey: true }));
+      sound1.dispatchEvent(
+        new MouseEvent('mousedown', { bubbles: true, button: 0, shiftKey: true }),
+      );
     });
 
     // Press Delete key
@@ -280,7 +296,9 @@ describe('Score layer operations (US3)', () => {
 
     act(() => {
       sound0.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
-      sound1.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0, shiftKey: true }));
+      sound1.dispatchEvent(
+        new MouseEvent('mousedown', { bubbles: true, button: 0, shiftKey: true }),
+      );
     });
     expect(useLayerSelectionStore.getState().selectedKeys.size).toBe(2);
 
@@ -289,18 +307,24 @@ describe('Score layer operations (US3)', () => {
     act(() => {
       findMenuItem('Remove 2 Layers')?.click();
     });
-    expect(container.querySelector('[data-layer-removal-dialog]')?.textContent).toContain('Delete 2 layers?');
+    expect(container.querySelector('[data-layer-removal-dialog]')?.textContent).toContain(
+      'Delete 2 layers?',
+    );
     act(() => {
       container.querySelector<HTMLButtonElement>('[data-layer-removal-cancel]')?.click();
     });
 
     await openContextMenu(track0);
-    expect(useLayerSelectionStore.getState().selectedKeys).toEqual(new Set(['track-group:lsel-track-0']));
+    expect(useLayerSelectionStore.getState().selectedKeys).toEqual(
+      new Set(['track-group:lsel-track-0']),
+    );
     expect(findMenuItem('Remove Layer')).toBeTruthy();
     act(() => {
       findMenuItem('Remove Layer')?.click();
     });
-    expect(container.querySelector('[data-layer-removal-dialog]')?.textContent).toContain('Delete 1 layer?');
+    expect(container.querySelector('[data-layer-removal-dialog]')?.textContent).toContain(
+      'Delete 1 layer?',
+    );
     act(() => {
       container.querySelector<HTMLButtonElement>('[data-layer-removal-cancel]')?.click();
     });
@@ -327,8 +351,9 @@ describe('Score layer operations (US3)', () => {
       container.querySelector<HTMLButtonElement>('[data-layer-removal-confirm]')!.click();
     });
 
-    expect(useProjectStore.getState().score.layerGroups[0]!.layers.map((layer) => layer.name))
-      .toEqual(['Sound 2', 'Sound 3']);
+    expect(
+      useProjectStore.getState().score.layerGroups[0]!.layers.map((layer) => layer.name),
+    ).toEqual(['Sound 2', 'Sound 3']);
   });
 
   it('does not open removal when Delete or Backspace is pressed in a layer-name field', () => {
@@ -365,11 +390,15 @@ describe('Score layer operations (US3)', () => {
     const headersList = container.querySelector<HTMLElement>('[data-layer-headers-list]')!;
     act(() => {
       sound0.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
-      sound2.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0, shiftKey: true }));
+      sound2.dispatchEvent(
+        new MouseEvent('mousedown', { bubbles: true, button: 0, shiftKey: true }),
+      );
       headersList.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }));
     });
 
-    const cleanupCheckbox = container.querySelector<HTMLInputElement>('[data-delete-empty-layer-groups]')!;
+    const cleanupCheckbox = container.querySelector<HTMLInputElement>(
+      '[data-delete-empty-layer-groups]',
+    )!;
     expect(cleanupCheckbox.checked).toBe(true);
     act(() => {
       cleanupCheckbox.click();
@@ -409,10 +438,9 @@ describe('Score layer operations (US3)', () => {
     ];
 
     const ranges = useLayerSelectionStore.getState().getSelectedRanges(currentVisibleLayers);
-    const availability = useLayerSelectionStore.getState().getOperationAvailability(
-      useProjectStore.getState().score.layerGroups,
-      currentVisibleLayers,
-    );
+    const availability = useLayerSelectionStore
+      .getState()
+      .getOperationAvailability(useProjectStore.getState().score.layerGroups, currentVisibleLayers);
 
     expect(availability.canPushUp).toBe(false);
     expect(availability.pushUpDisabledReason).toBe('at-group-start');
@@ -433,7 +461,9 @@ describe('Score layer operations (US3)', () => {
       sound2.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
     });
     act(() => {
-      track0.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0, shiftKey: true }));
+      track0.dispatchEvent(
+        new MouseEvent('mousedown', { bubbles: true, button: 0, shiftKey: true }),
+      );
     });
 
     const currentVisibleLayers = [
@@ -459,10 +489,9 @@ describe('Score layer operations (US3)', () => {
       },
     ];
 
-    const availability = useLayerSelectionStore.getState().getOperationAvailability(
-      useProjectStore.getState().score.layerGroups,
-      currentVisibleLayers,
-    );
+    const availability = useLayerSelectionStore
+      .getState()
+      .getOperationAvailability(useProjectStore.getState().score.layerGroups, currentVisibleLayers);
 
     expect(availability.canPushUp).toBe(false);
     expect(availability.pushUpDisabledReason).toBe('selection-spans-groups');
@@ -481,10 +510,42 @@ describe('Score layer operations (US3)', () => {
         layerCount: 4,
         isOpenableContainer: true,
         layers: [
-          { layerId: 'sound-layer-0', layerSelectionId: 'lsel-sound-0', name: 'Sound 1', height: 44, muted: false, solo: false, items: [] },
-          { layerId: 'sound-layer-1', layerSelectionId: 'lsel-sound-1', name: 'Sound 2', height: 44, muted: false, solo: false, items: [] },
-          { layerId: 'sound-layer-2', layerSelectionId: 'lsel-sound-2', name: 'Sound 3', height: 44, muted: false, solo: false, items: [] },
-          { layerId: 'sound-layer-3', layerSelectionId: 'lsel-sound-3', name: 'Sound 4', height: 44, muted: false, solo: false, items: [] },
+          {
+            layerId: 'sound-layer-0',
+            layerSelectionId: 'lsel-sound-0',
+            name: 'Sound 1',
+            height: 44,
+            muted: false,
+            solo: false,
+            items: [],
+          },
+          {
+            layerId: 'sound-layer-1',
+            layerSelectionId: 'lsel-sound-1',
+            name: 'Sound 2',
+            height: 44,
+            muted: false,
+            solo: false,
+            items: [],
+          },
+          {
+            layerId: 'sound-layer-2',
+            layerSelectionId: 'lsel-sound-2',
+            name: 'Sound 3',
+            height: 44,
+            muted: false,
+            solo: false,
+            items: [],
+          },
+          {
+            layerId: 'sound-layer-3',
+            layerSelectionId: 'lsel-sound-3',
+            name: 'Sound 4',
+            height: 44,
+            muted: false,
+            solo: false,
+            items: [],
+          },
         ],
       },
     ];
@@ -517,7 +578,9 @@ describe('Score layer operations (US3)', () => {
       sound1.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
     });
     act(() => {
-      sound3.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0, shiftKey: true }));
+      sound3.dispatchEvent(
+        new MouseEvent('mousedown', { bubbles: true, button: 0, shiftKey: true }),
+      );
     });
 
     expect(useLayerSelectionStore.getState().selectedKeys.size).toBe(3);
@@ -532,18 +595,22 @@ describe('Score layer operations (US3)', () => {
       layer: useProjectStore.getState().score.layerGroups[0]!.layers[i]!,
     }));
     const ranges = useLayerSelectionStore.getState().getSelectedRanges(visibleRefs);
-    expect(ranges).toEqual([{
-      groupId: 'sound-group',
-      groupType: 'polyObject',
-      startIndex: 1,
-      endIndex: 3,
-      layerSelectionIds: ['lsel-sound-1', 'lsel-sound-2', 'lsel-sound-3'],
-      count: 3,
-    }]);
+    expect(ranges).toEqual([
+      {
+        groupId: 'sound-group',
+        groupType: 'polyObject',
+        startIndex: 1,
+        endIndex: 3,
+        layerSelectionIds: ['lsel-sound-1', 'lsel-sound-2', 'lsel-sound-3'],
+        count: 3,
+      },
+    ]);
 
     // Push Up with Alt+ArrowUp
     act(() => {
-      headersList.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', altKey: true, bubbles: true }));
+      headersList.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowUp', altKey: true, bubbles: true }),
+      );
     });
 
     const group = useProjectStore.getState().score.layerGroups[0]!;
@@ -552,18 +619,23 @@ describe('Score layer operations (US3)', () => {
 
     // Selection follows the moved layers
     expect(useLayerSelectionStore.getState().selectedKeys.size).toBe(3);
-    expect(useLayerSelectionStore.getState().selectedKeys).toEqual(new Set([
-      'sound-group:lsel-sound-1',
-      'sound-group:lsel-sound-2',
-      'sound-group:lsel-sound-3',
-    ]));
+    expect(useLayerSelectionStore.getState().selectedKeys).toEqual(
+      new Set(['sound-group:lsel-sound-1', 'sound-group:lsel-sound-2', 'sound-group:lsel-sound-3']),
+    );
 
     // Now push down with Alt+ArrowDown
     act(() => {
-      headersList.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', altKey: true, bubbles: true }));
+      headersList.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowDown', altKey: true, bubbles: true }),
+      );
     });
 
     const groupAfterDown = useProjectStore.getState().score.layerGroups[0]!;
-    expect(groupAfterDown.layers.map((l) => l.name)).toEqual(['Sound 1', 'Sound 2', 'Sound 3', 'Sound 4']);
+    expect(groupAfterDown.layers.map((l) => l.name)).toEqual([
+      'Sound 1',
+      'Sound 2',
+      'Sound 3',
+      'Sound 4',
+    ]);
   });
 });

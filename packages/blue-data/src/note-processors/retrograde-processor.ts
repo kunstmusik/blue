@@ -26,7 +26,9 @@ export class RetrogradeProcessor extends NoteProcessor {
     return notes;
   }
 
-  override getDisplayName(): string { return 'RetrogradeProcessor'; }
+  override getDisplayName(): string {
+    return 'RetrogradeProcessor';
+  }
 
   override deepCopy(): RetrogradeProcessor {
     return new RetrogradeProcessor();

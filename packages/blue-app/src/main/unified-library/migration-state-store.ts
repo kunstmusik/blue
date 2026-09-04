@@ -2,7 +2,12 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 export type LegacyMigrationState = 'never' | 'completed' | 'skipped' | 'failed';
-export type LibraryMigrationResultKind = 'none' | 'complete' | 'partial' | 'noSources' | 'pipelineFailure';
+export type LibraryMigrationResultKind =
+  | 'none'
+  | 'complete'
+  | 'partial'
+  | 'noSources'
+  | 'pipelineFailure';
 
 export interface LibraryBackupDescriptor {
   readonly id: string;
@@ -38,23 +43,29 @@ export const DEFAULT_LIBRARY_MIGRATION_STATE: LibraryMigrationStateDocument = {
 function isDocument(value: unknown): value is LibraryMigrationStateDocument {
   if (typeof value !== 'object' || value === null) return false;
   const candidate = value as Partial<LibraryMigrationStateDocument>;
-  return candidate.version === 1
-    && ['never', 'completed', 'skipped', 'failed'].includes(String(candidate.legacyMigrationState))
-    && ['idle', 'inProgress', 'interrupted'].includes(String(candidate.attemptStatus))
-    && ['none', 'complete', 'partial', 'noSources', 'pipelineFailure'].includes(String(candidate.lastResultKind))
-    && (candidate.lastAttemptAt === null || typeof candidate.lastAttemptAt === 'string')
-    && (candidate.lastImportBatchId === null || typeof candidate.lastImportBatchId === 'string')
-    && (candidate.lastError === null || typeof candidate.lastError === 'string')
-    && Array.isArray(candidate.knownBackups);
+  return (
+    candidate.version === 1 &&
+    ['never', 'completed', 'skipped', 'failed'].includes(String(candidate.legacyMigrationState)) &&
+    ['idle', 'inProgress', 'interrupted'].includes(String(candidate.attemptStatus)) &&
+    ['none', 'complete', 'partial', 'noSources', 'pipelineFailure'].includes(
+      String(candidate.lastResultKind),
+    ) &&
+    (candidate.lastAttemptAt === null || typeof candidate.lastAttemptAt === 'string') &&
+    (candidate.lastImportBatchId === null || typeof candidate.lastImportBatchId === 'string') &&
+    (candidate.lastError === null || typeof candidate.lastError === 'string') &&
+    Array.isArray(candidate.knownBackups)
+  );
 }
 
 export function shouldRunAutomaticMigration(
   document: LibraryMigrationStateDocument,
   itemCount: number,
 ): boolean {
-  return itemCount === 0
-    && document.legacyMigrationState === 'never'
-    && document.attemptStatus === 'idle';
+  return (
+    itemCount === 0 &&
+    document.legacyMigrationState === 'never' &&
+    document.attemptStatus === 'idle'
+  );
 }
 
 export class LibraryMigrationStateStore {
@@ -73,7 +84,11 @@ export class LibraryMigrationStateStore {
         ...DEFAULT_LIBRARY_MIGRATION_STATE,
         legacyMigrationState: 'failed',
         lastResultKind: 'pipelineFailure',
-        lastError: `Migration state is unreadable: ${error instanceof Error ? error.message : String(error)}`.slice(0, 1000),
+        lastError:
+          `Migration state is unreadable: ${error instanceof Error ? error.message : String(error)}`.slice(
+            0,
+            1000,
+          ),
       };
     }
   }
@@ -91,14 +106,23 @@ export class LibraryMigrationStateStore {
     fs.renameSync(temporaryPath, this.filePath);
     try {
       const directory = fs.openSync(path.dirname(this.filePath), 'r');
-      try { fs.fsyncSync(directory); } finally { fs.closeSync(directory); }
+      try {
+        fs.fsyncSync(directory);
+      } finally {
+        fs.closeSync(directory);
+      }
     } catch {
       // Some supported filesystems do not allow syncing a directory handle.
     }
   }
 
   beginAttempt(at = new Date().toISOString()): LibraryMigrationStateDocument {
-    const next = { ...this.load(), attemptStatus: 'inProgress' as const, lastAttemptAt: at, lastError: null };
+    const next = {
+      ...this.load(),
+      attemptStatus: 'inProgress' as const,
+      lastAttemptAt: at,
+      lastError: null,
+    };
     this.write(next);
     return next;
   }

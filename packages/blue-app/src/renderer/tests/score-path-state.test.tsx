@@ -6,14 +6,20 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { useScorePathState } from '../components/workbench/panels/score/useScorePathState';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 interface Captured {
   session: ReturnType<typeof useScorePathState>['session'];
   navigateToGroup: ReturnType<typeof useScorePathState>['navigateToGroup'];
 }
 
-function Harness({ capture }: { capture: React.MutableRefObject<Captured | null> }): React.ReactElement {
+function Harness({
+  capture,
+}: {
+  capture: React.MutableRefObject<Captured | null>;
+}): React.ReactElement {
   const { session, navigateToGroup } = useScorePathState();
   capture.current = { session, navigateToGroup };
   return React.createElement('div');

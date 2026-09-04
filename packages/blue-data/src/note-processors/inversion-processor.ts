@@ -19,11 +19,19 @@ export class InversionProcessor extends NoteProcessor {
     }
   }
 
-  getPfield(): string { return this._pfield.toString(); }
-  setPfield(pfield: string): void { this._pfield = parseInt(pfield, 10); }
+  getPfield(): string {
+    return this._pfield.toString();
+  }
+  setPfield(pfield: string): void {
+    this._pfield = parseInt(pfield, 10);
+  }
 
-  getVal(): string { return this._value.toString(); }
-  setVal(value: string): void { this._value = parseFloat(value); }
+  getVal(): string {
+    return this._value.toString();
+  }
+  setVal(value: string): void {
+    this._value = parseFloat(value);
+  }
 
   override process(notes: NoteList): NoteList {
     for (const note of notes) {
@@ -42,7 +50,9 @@ export class InversionProcessor extends NoteProcessor {
     return notes;
   }
 
-  override getDisplayName(): string { return 'InversionProcessor'; }
+  override getDisplayName(): string {
+    return 'InversionProcessor';
+  }
 
   override deepCopy(): InversionProcessor {
     return new InversionProcessor(this);

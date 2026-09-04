@@ -13,9 +13,7 @@ type AudioFileListener = (filePath: string) => void;
 const listeners = new Set<AudioFileListener>();
 let pendingFilePath: string | null = null;
 
-export function subscribePendingAudioFile(
-  listener: AudioFileListener,
-): () => void {
+export function subscribePendingAudioFile(listener: AudioFileListener): () => void {
   listeners.add(listener);
   if (pendingFilePath !== null) {
     const filePath = pendingFilePath;

@@ -35,17 +35,14 @@ export abstract class BSBWidget {
   }
 
   /**
-   * Set the numeric value of this widget. 
+   * Set the numeric value of this widget.
    * Subclasses should override this to sync internal state (e.g. selected, selectedIndex).
    */
   setValue(val: number): void {
     this.value = val;
   }
 
-  protected getCompilationVarName(
-    key: string,
-    parameters?: Parameter[],
-  ): string | null {
+  protected getCompilationVarName(key: string, parameters?: Parameter[]): string | null {
     if (key && parameters) {
       const param = parameters.find((candidate) => candidate.getName() === key);
       if (param && param.getCompilationVarName()) {
@@ -151,7 +148,8 @@ export abstract class BSBWidget {
 
     clone.id = this.id ? generatePrefixedUuid('w') : '';
 
-    const dropdownItems = (clone as unknown as { dropdownItems?: Array<{ uniqueId?: string }> }).dropdownItems;
+    const dropdownItems = (clone as unknown as { dropdownItems?: Array<{ uniqueId?: string }> })
+      .dropdownItems;
     if (Array.isArray(dropdownItems)) {
       for (const item of dropdownItems) {
         item.uniqueId = generatePrefixedUuid('dropdown');

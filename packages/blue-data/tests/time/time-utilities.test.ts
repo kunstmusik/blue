@@ -19,7 +19,9 @@ import { makeDefaultContext } from './helpers';
 
 describe('TimeUtilities', () => {
   let context: TimeContext;
-  beforeEach(() => { context = makeDefaultContext(); });
+  beforeEach(() => {
+    context = makeDefaultContext();
+  });
 
   // ===== timePositionToBeats =====
 
@@ -160,7 +162,11 @@ describe('TimeUtilities', () => {
     context.getMeterMap().add(new MeasureMeterPair(5, new Meter(3, 4)));
     const bbst = TimePosition.bbst(6, 2, 1, 0);
     const beats = timePositionToBeats(bbst, context);
-    const result = convertTimePosition(beatsToTimePosition(beats, TimeBase.BBST, context), TimeBase.BBST, context);
+    const result = convertTimePosition(
+      beatsToTimePosition(beats, TimeBase.BBST, context),
+      TimeBase.BBST,
+      context,
+    );
     expect(result.getBar()).toBe(bbst.getBar());
     expect(result.getBeat()).toBe(bbst.getBeat());
   });

@@ -6,7 +6,10 @@ import {
   toAppZoomFactor,
   type AppZoomCommand,
 } from '../shared/app-zoom';
-import type { ProgramSettingsSnapshot, ProgramSettingsSaveResult } from '../shared/program-settings';
+import type {
+  ProgramSettingsSnapshot,
+  ProgramSettingsSaveResult,
+} from '../shared/program-settings';
 
 export interface AppZoomCommandResult {
   previousPercent: number;
@@ -91,9 +94,7 @@ export function createAppZoomController(adapters: AppZoomControllerAdapters): Ap
 
     let persistence: AppZoomCommandResult['persistence'] = 'saved';
     try {
-      const result = adapters.saveSnapshot(
-        preserveCurrentZoom(adapters.loadSnapshot()),
-      );
+      const result = adapters.saveSnapshot(preserveCurrentZoom(adapters.loadSnapshot()));
       if (!result?.ok) {
         persistence = 'failed';
       }

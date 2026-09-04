@@ -1,49 +1,59 @@
-import { useRef, useCallback, useState, useEffect, useLayoutEffect, useMemo } from "react";
+import { useRef, useCallback, useState, useEffect, useLayoutEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../hooks/host-portals';
 import { isEventInsidePortalPopup } from '../../../utils/cross-realm-dom';
 import { cn } from '../../../lib/cn';
-import * as ContextMenu from "@radix-ui/react-context-menu";
-import { Check, ChevronRight, ChevronDown, ChevronLeft, Plus } from "lucide-react";
-import { getProjectDocumentRevision, useProjectStore } from "../../../stores/project-store";
+import * as ContextMenu from '@radix-ui/react-context-menu';
+import { Check, ChevronRight, ChevronDown, ChevronLeft, Plus } from 'lucide-react';
+import { getProjectDocumentRevision, useProjectStore } from '../../../stores/project-store';
 import type {
   ScoreDocumentSnapshot,
   ScoreLayerGroupSnapshot,
   ScoreLayerSnapshot,
   ScoreRowObjectSnapshot,
   PolyObjectLayerGroupSnapshot,
-} from "./score/types";
-import { DEFAULT_ROW_HEIGHT } from "./score/types";
-import { computePatternExtentBeats } from "./score/layer-groups/patterns-timeline-utils";
-import type { TempoMapPatch, MeterMapPatch, NoteProcessorChainSnapshot, ScoreAutomationPatch } from "../../../../shared/project-editor";
-import { type SnapValueName, DEFAULT_LAYER_COLOR, formatLayerColorToHex, normalizeLayerColor } from "@blue/data";
-import type { RulerConfigChanges } from "./score/RulerConfigDialog";
-import SplitPane from "./orchestra/SplitPane";
-import ScoreToolbar from "./score/ScoreToolbar";
-import RulerConfigDialog from "./score/RulerConfigDialog";
-import ScoreManagerDialog from "./score/ScoreManagerDialog";
-import AutomationTargetMenu from "./score/automation/AutomationTargetMenu";
-import TempoMapEditorDialog from "./score/TempoMapEditorDialog";
-import MeterMapEditorDialog from "./score/MeterMapEditorDialog";
-import ColumnHeader from "./score/ColumnHeader";
-import LayerPanel from "./score/LayerPanel";
-import { useScorePathState } from "./score/useScorePathState";
-import { useScoreWheelZoom, computePixelsPerBeat } from "./score/useScoreWheelZoom";
-import { useScoreSelectionStore } from "../../../stores/score-selection-store";
-import { useMidiRoutingStore } from "../../../stores/midi-routing-store";
-import { useLayerSelectionStore } from "../../../stores/layer-selection-store";
-import { useScoreRulerSelection } from "./score/useScoreRulerSelection";
-import { getFollowScrollTarget } from "./score/follow-playback";
-import { usePlaybackStore } from "../../../stores/playback-store";
-import { useScoreColorHistoryStore } from "../../../stores/score-color-history-store";
-import ScoreOverlayLines from "./score/ScoreOverlayLines";
-import NoteProcessorChainDialog from "./score-object/note-processors/NoteProcessorChainDialog";
-import TrackInstrumentControl from "./score/TrackInstrumentControl";
-import ColorPickerButton from "../../ColorPicker";
-import PatternLayerHeader from "./score/PatternLayerHeader";
-import LayerRemovalConfirmationDialog from "./score/LayerRemovalConfirmationDialog";
-import { buildApplyLayerColorToAllClipsPatch } from "./score/score-color-actions";
-import { secondsToBeats as tempoMapSecondsToBeats } from "./score/tempo-map-utils";
+} from './score/types';
+import { DEFAULT_ROW_HEIGHT } from './score/types';
+import { computePatternExtentBeats } from './score/layer-groups/patterns-timeline-utils';
+import type {
+  TempoMapPatch,
+  MeterMapPatch,
+  NoteProcessorChainSnapshot,
+  ScoreAutomationPatch,
+} from '../../../../shared/project-editor';
+import {
+  type SnapValueName,
+  DEFAULT_LAYER_COLOR,
+  formatLayerColorToHex,
+  normalizeLayerColor,
+} from '@blue/data';
+import type { RulerConfigChanges } from './score/RulerConfigDialog';
+import SplitPane from './orchestra/SplitPane';
+import ScoreToolbar from './score/ScoreToolbar';
+import RulerConfigDialog from './score/RulerConfigDialog';
+import ScoreManagerDialog from './score/ScoreManagerDialog';
+import AutomationTargetMenu from './score/automation/AutomationTargetMenu';
+import TempoMapEditorDialog from './score/TempoMapEditorDialog';
+import MeterMapEditorDialog from './score/MeterMapEditorDialog';
+import ColumnHeader from './score/ColumnHeader';
+import LayerPanel from './score/LayerPanel';
+import { useScorePathState } from './score/useScorePathState';
+import { useScoreWheelZoom, computePixelsPerBeat } from './score/useScoreWheelZoom';
+import { useScoreSelectionStore } from '../../../stores/score-selection-store';
+import { useMidiRoutingStore } from '../../../stores/midi-routing-store';
+import { useLayerSelectionStore } from '../../../stores/layer-selection-store';
+import { useScoreRulerSelection } from './score/useScoreRulerSelection';
+import { getFollowScrollTarget } from './score/follow-playback';
+import { usePlaybackStore } from '../../../stores/playback-store';
+import { useScoreColorHistoryStore } from '../../../stores/score-color-history-store';
+import ScoreOverlayLines from './score/ScoreOverlayLines';
+import NoteProcessorChainDialog from './score-object/note-processors/NoteProcessorChainDialog';
+import TrackInstrumentControl from './score/TrackInstrumentControl';
+import ColorPickerButton from '../../ColorPicker';
+import PatternLayerHeader from './score/PatternLayerHeader';
+import LayerRemovalConfirmationDialog from './score/LayerRemovalConfirmationDialog';
+import { buildApplyLayerColorToAllClipsPatch } from './score/score-color-actions';
+import { secondsToBeats as tempoMapSecondsToBeats } from './score/tempo-map-utils';
 import {
   buildLayerRemovalPlan,
   buildSelectionKey,
@@ -56,7 +66,7 @@ import {
   getPushDisabledReasonLabel,
   type LayerRemovalPlan,
   type VisibleLayerRef,
-} from "./score/layer-selection-utils";
+} from './score/layer-selection-utils';
 
 type ChainDialogTarget =
   | { scope: 'soundLayer'; groupId: string; layerIndex: number }
@@ -64,17 +74,24 @@ type ChainDialogTarget =
   | { scope: 'layerGroup'; groupId: string }
   | { scope: 'rootScore' };
 
-function ChainDialogWrapper({ target, onClose }: { target: ChainDialogTarget; onClose: () => void }) {
+function ChainDialogWrapper({
+  target,
+  onClose,
+}: {
+  target: ChainDialogTarget;
+  onClose: () => void;
+}) {
   const applyProjectDocumentPatch = useProjectStore((s) => s.applyProjectDocumentPatch);
   const score = useProjectStore((s) => s.score);
   const projectSessionId = useProjectStore((s) => s.sessionId);
   const projectRevision = getProjectDocumentRevision();
 
-  const title = target.scope === 'rootScore'
-    ? 'Root Score - Note Processors'
-    : target.scope === 'layerGroup'
-      ? 'Layer Group - Note Processors'
-      : `Layer ${target.layerIndex + 1} - Note Processors`;
+  const title =
+    target.scope === 'rootScore'
+      ? 'Root Score - Note Processors'
+      : target.scope === 'layerGroup'
+        ? 'Layer Group - Note Processors'
+        : `Layer ${target.layerIndex + 1} - Note Processors`;
 
   const emptyChain: NoteProcessorChainSnapshot = {
     processors: [],
@@ -89,8 +106,12 @@ function ChainDialogWrapper({ target, onClose }: { target: ChainDialogTarget; on
     const group = score.layerGroups.find((g) => g.groupId === target.groupId);
     existingChain = group?.noteProcessorChain;
   } else if (target.scope === 'track') {
-    const group = score.layerGroups.find((g) => g.groupId === target.groupId && g.groupType === 'track');
-    existingChain = group?.layers.find((layer) => layer.layerId === target.trackId)?.noteProcessorChain;
+    const group = score.layerGroups.find(
+      (g) => g.groupId === target.groupId && g.groupType === 'track',
+    );
+    existingChain = group?.layers.find(
+      (layer) => layer.layerId === target.trackId,
+    )?.noteProcessorChain;
   } else {
     const group = score.layerGroups.find((g) => g.groupId === target.groupId);
     const layer = group?.layers[target.layerIndex];
@@ -99,34 +120,48 @@ function ChainDialogWrapper({ target, onClose }: { target: ChainDialogTarget; on
 
   const chain = existingChain ?? emptyChain;
 
-  const handleCommit = useCallback((updated: NoteProcessorChainSnapshot) => {
-    if (target.scope === 'soundLayer') {
-      void applyProjectDocumentPatch({
-        score: { type: 'replaceScopedNoteProcessorChain', scope: 'soundLayer', groupId: target.groupId, layerIndex: target.layerIndex, chain: updated },
-      });
-    } else if (target.scope === 'track') {
-      void applyProjectDocumentPatch({
-        score: {
-          type: 'replaceTrackNoteProcessorChain',
-          track: {
-            rootGroupId: target.groupId,
-            trackId: target.trackId,
-            projectSessionId,
-            projectRevision,
+  const handleCommit = useCallback(
+    (updated: NoteProcessorChainSnapshot) => {
+      if (target.scope === 'soundLayer') {
+        void applyProjectDocumentPatch({
+          score: {
+            type: 'replaceScopedNoteProcessorChain',
+            scope: 'soundLayer',
+            groupId: target.groupId,
+            layerIndex: target.layerIndex,
+            chain: updated,
           },
-          chain: updated,
-        },
-      });
-    } else if (target.scope === 'layerGroup') {
-      void applyProjectDocumentPatch({
-        score: { type: 'replaceScopedNoteProcessorChain', scope: 'layerGroup', groupId: target.groupId, chain: updated },
-      });
-    } else {
-      void applyProjectDocumentPatch({
-        score: { type: 'replaceScopedNoteProcessorChain', scope: 'rootScore', chain: updated },
-      });
-    }
-  }, [target, applyProjectDocumentPatch, projectRevision, projectSessionId]);
+        });
+      } else if (target.scope === 'track') {
+        void applyProjectDocumentPatch({
+          score: {
+            type: 'replaceTrackNoteProcessorChain',
+            track: {
+              rootGroupId: target.groupId,
+              trackId: target.trackId,
+              projectSessionId,
+              projectRevision,
+            },
+            chain: updated,
+          },
+        });
+      } else if (target.scope === 'layerGroup') {
+        void applyProjectDocumentPatch({
+          score: {
+            type: 'replaceScopedNoteProcessorChain',
+            scope: 'layerGroup',
+            groupId: target.groupId,
+            chain: updated,
+          },
+        });
+      } else {
+        void applyProjectDocumentPatch({
+          score: { type: 'replaceScopedNoteProcessorChain', scope: 'rootScore', chain: updated },
+        });
+      }
+    },
+    [target, applyProjectDocumentPatch, projectRevision, projectSessionId],
+  );
 
   return (
     <NoteProcessorChainDialog
@@ -138,7 +173,7 @@ function ChainDialogWrapper({ target, onClose }: { target: ChainDialogTarget; on
   );
 }
 
-type ScoreMode = "score" | "singleLine" | "multiLine";
+type ScoreMode = 'score' | 'singleLine' | 'multiLine';
 
 const GROUP_SPACER = 36;
 
@@ -150,7 +185,7 @@ export default function ScorePanel() {
   const lastScorePatch = useProjectStore((s) => s.lastScorePatch);
   const flushPendingPatches = useProjectStore((s) => s.flushPendingPatches);
 
-  const [mode, setMode] = useState<ScoreMode>("score");
+  const [mode, setMode] = useState<ScoreMode>('score');
   const [snapEnabled, setSnapEnabled] = useState(score.timeState.snapEnabled);
   const [snapValue, setSnapValue] = useState<SnapValueName>(
     score.timeState.snapValue as SnapValueName,
@@ -279,41 +314,47 @@ export default function ScorePanel() {
     expectedHorizontalScrollsRef.current = { body: nextScrollLeft, header: nextScrollLeft };
   }, []);
 
-  const synchronizeHorizontalScroll = useCallback((nextScrollLeft: number) => {
-    const timeline = scrollContainerRef.current;
-    const header = timelineHeaderRef.current;
+  const synchronizeHorizontalScroll = useCallback(
+    (nextScrollLeft: number) => {
+      const timeline = scrollContainerRef.current;
+      const header = timelineHeaderRef.current;
 
-    if (timeline && timeline.scrollLeft !== nextScrollLeft) {
-      timeline.scrollLeft = nextScrollLeft;
-    }
+      if (timeline && timeline.scrollLeft !== nextScrollLeft) {
+        timeline.scrollLeft = nextScrollLeft;
+      }
 
-    const resolvedScrollLeft = timeline?.scrollLeft ?? nextScrollLeft;
-    if (header && header.scrollLeft !== resolvedScrollLeft) {
-      header.scrollLeft = resolvedScrollLeft;
-    }
-    setScrollOverlayLeft(resolvedScrollLeft);
-  }, [scrollContainerRef]);
+      const resolvedScrollLeft = timeline?.scrollLeft ?? nextScrollLeft;
+      if (header && header.scrollLeft !== resolvedScrollLeft) {
+        header.scrollLeft = resolvedScrollLeft;
+      }
+      setScrollOverlayLeft(resolvedScrollLeft);
+    },
+    [scrollContainerRef],
+  );
 
-  const applyProgrammaticHorizontalScroll = useCallback((nextScrollLeft: number) => {
-    markExpectedHorizontalScroll(nextScrollLeft);
-    synchronizeHorizontalScroll(nextScrollLeft);
-  }, [markExpectedHorizontalScroll, synchronizeHorizontalScroll]);
+  const applyProgrammaticHorizontalScroll = useCallback(
+    (nextScrollLeft: number) => {
+      markExpectedHorizontalScroll(nextScrollLeft);
+      synchronizeHorizontalScroll(nextScrollLeft);
+    },
+    [markExpectedHorizontalScroll, synchronizeHorizontalScroll],
+  );
 
   /**
    * Scroll-origin callback for wheel/gesture handling: cursor-anchored and
    * pinch zoom reposition the viewport without suspending follow (FR-008),
    * while Shift+wheel horizontal movement is user navigation (FR-005).
    */
-  const handleWheelScrollOrigin = useCallback((
-    origin: 'user-navigation' | 'view-scale',
-    expectedScrollLeft?: number,
-  ) => {
-    if (origin === 'view-scale' && typeof expectedScrollLeft === 'number') {
-      markExpectedHorizontalScroll(expectedScrollLeft);
-      return;
-    }
-    suspendForUserNavigation();
-  }, [markExpectedHorizontalScroll, suspendForUserNavigation]);
+  const handleWheelScrollOrigin = useCallback(
+    (origin: 'user-navigation' | 'view-scale', expectedScrollLeft?: number) => {
+      if (origin === 'view-scale' && typeof expectedScrollLeft === 'number') {
+        markExpectedHorizontalScroll(expectedScrollLeft);
+        return;
+      }
+      suspendForUserNavigation();
+    },
+    [markExpectedHorizontalScroll, suspendForUserNavigation],
+  );
 
   const activeSegment = session.segments[session.segments.length - 1];
 
@@ -347,9 +388,7 @@ export default function ScorePanel() {
   }, [activeSegment?.groupId, activeSegment?.location, lastScorePatch, flushPendingPatches]);
 
   const effectiveLayerGroups: ScoreLayerGroupSnapshot[] =
-    session.activeGroupId && nestedSnapshot
-      ? [nestedSnapshot]
-      : score.layerGroups;
+    session.activeGroupId && nestedSnapshot ? [nestedSnapshot] : score.layerGroups;
 
   const scopeKey = `${sessionId}:${session.activeGroupId ?? 'root'}`;
   const visibleLayers = useMemo(
@@ -363,7 +402,16 @@ export default function ScorePanel() {
 
   const pixelsPerBeat = computePixelsPerBeat(timeState.zoomIterations);
 
-  useScoreWheelZoom(scrollContainerRef, timelineHeaderRef, timeState.zoomIterations, pixelsPerBeat, loaded, setTimeState, effectiveLayerGroups, handleWheelScrollOrigin);
+  useScoreWheelZoom(
+    scrollContainerRef,
+    timelineHeaderRef,
+    timeState.zoomIterations,
+    pixelsPerBeat,
+    loaded,
+    setTimeState,
+    effectiveLayerGroups,
+    handleWheelScrollOrigin,
+  );
 
   // Track the scroll container width so totalBeats can fill the visible area when zoomed out.
   useLayoutEffect(() => {
@@ -418,13 +466,13 @@ export default function ScorePanel() {
 
   const livePlayheadTransport = transportAnchor ?? transport;
   const hasLivePlaybackClock =
-    playbackClock !== null &&
-    (playbackStatus === 'playing' || playbackStatus === 'stopping');
+    playbackClock !== null && (playbackStatus === 'playing' || playbackStatus === 'stopping');
 
-  const timePointerBeats = hasLivePlaybackClock && clockElapsed >= 0
-    ? livePlayheadTransport.renderStartTime
-      + tempoMapSecondsToBeats(clockElapsed, livePlayheadTransport.tempoMap)
-    : null;
+  const timePointerBeats =
+    hasLivePlaybackClock && clockElapsed >= 0
+      ? livePlayheadTransport.renderStartTime +
+        tempoMapSecondsToBeats(clockElapsed, livePlayheadTransport.tempoMap)
+      : null;
 
   // Follow playback (Java ScoreTopComponent parity): keep the viewport
   // stationary while the playhead is visible; when it reaches or passes the
@@ -470,13 +518,20 @@ export default function ScorePanel() {
     if (scrollToBeatTarget == null || !scrollContainerRef.current) return;
     const pointerPixel = scrollToBeatTarget * pixelsPerBeat;
     const w = scrollContainerRef.current.clientWidth;
-    const newX = Math.max(0, pointerPixel - (w / 8));
+    const newX = Math.max(0, pointerPixel - w / 8);
     // Marker/rewind navigation is explicit user navigation even though the
     // resulting scroll is applied programmatically (FR-005).
     suspendForUserNavigation();
     applyProgrammaticHorizontalScroll(newX);
     clearScrollTarget(null);
-  }, [scrollToBeatTarget, pixelsPerBeat, scrollContainerRef, clearScrollTarget, applyProgrammaticHorizontalScroll, suspendForUserNavigation]);
+  }, [
+    scrollToBeatTarget,
+    pixelsPerBeat,
+    scrollContainerRef,
+    clearScrollTarget,
+    applyProgrammaticHorizontalScroll,
+    suspendForUserNavigation,
+  ]);
 
   useLayoutEffect(() => {
     const timeline = scrollContainerRef.current;
@@ -486,7 +541,14 @@ export default function ScorePanel() {
       markExpectedHorizontalScroll(timeline.scrollLeft);
       synchronizeHorizontalScroll(timeline.scrollLeft);
     }
-  }, [session.activeGroupId, pixelsPerBeat, totalBeats, scrollContainerRef, synchronizeHorizontalScroll, markExpectedHorizontalScroll]);
+  }, [
+    session.activeGroupId,
+    pixelsPerBeat,
+    totalBeats,
+    scrollContainerRef,
+    synchronizeHorizontalScroll,
+    markExpectedHorizontalScroll,
+  ]);
 
   const handleTimelineScroll = useCallback(() => {
     const timeline = scrollContainerRef.current;
@@ -562,7 +624,10 @@ export default function ScorePanel() {
 
     const startBeats = left / pixelsPerBeat;
     const endBeats = right / pixelsPerBeat;
-    const hitItems: Array<{ objectId: string; editorTarget: ScoreRowObjectSnapshot["editorTarget"] }> = [];
+    const hitItems: Array<{
+      objectId: string;
+      editorTarget: ScoreRowObjectSnapshot['editorTarget'];
+    }> = [];
     let groupYOff = 0;
     for (const lg of effectiveLayerGroups) {
       for (const layer of lg.layers) {
@@ -607,11 +672,11 @@ export default function ScorePanel() {
     if (!bgMarqueeActive) return;
     const onMove = (e: MouseEvent) => bgMarqueeMoveRef.current(e.clientX, e.clientY);
     const onUp = () => bgMarqueeUpRef.current();
-    window.addEventListener("mousemove", onMove, true);
-    window.addEventListener("mouseup", onUp, true);
+    window.addEventListener('mousemove', onMove, true);
+    window.addEventListener('mouseup', onUp, true);
     return () => {
-      window.removeEventListener("mousemove", onMove, true);
-      window.removeEventListener("mouseup", onUp, true);
+      window.removeEventListener('mousemove', onMove, true);
+      window.removeEventListener('mouseup', onUp, true);
     };
   }, [bgMarqueeActive]);
 
@@ -707,7 +772,9 @@ export default function ScorePanel() {
         }}
         getSegmentNoteProcessorChain={(index: number) => {
           if (index === 0) return score.rootNoteProcessorChain;
-          const group = effectiveLayerGroups.find((g) => g.groupId === session.segments[index]?.groupId);
+          const group = effectiveLayerGroups.find(
+            (g) => g.groupId === session.segments[index]?.groupId,
+          );
           return group?.noteProcessorChain;
         }}
       />
@@ -738,10 +805,16 @@ export default function ScorePanel() {
             leftHeaderRef={leftHeaderRef}
             onLeftScroll={handleLeftHeaderScroll}
             onManage={() => setManageDialogOpen(true)}
-            onLayerGroupNoteProcessorChain={(groupId) => setChainDialogTarget({ scope: 'layerGroup', groupId })}
-            onSoundLayerNoteProcessorChain={(groupId, layerIndex, trackId) => setChainDialogTarget(
-              trackId ? { scope: 'track', groupId, trackId, layerIndex } : { scope: 'soundLayer', groupId, layerIndex },
-            )}
+            onLayerGroupNoteProcessorChain={(groupId) =>
+              setChainDialogTarget({ scope: 'layerGroup', groupId })
+            }
+            onSoundLayerNoteProcessorChain={(groupId, layerIndex, trackId) =>
+              setChainDialogTarget(
+                trackId
+                  ? { scope: 'track', groupId, trackId, layerIndex }
+                  : { scope: 'soundLayer', groupId, layerIndex },
+              )
+            }
           />
         }
         second={
@@ -804,9 +877,7 @@ export default function ScorePanel() {
                   meterMap={transport.meterMap}
                   tempoMap={transport.tempoMap}
                   tempo={
-                    transport.tempoMap.points.length > 0
-                      ? transport.tempoMap.points[0].tempo
-                      : 60
+                    transport.tempoMap.points.length > 0 ? transport.tempoMap.points[0].tempo : 60
                   }
                   smpteFrameRate={timeState.smpteFrameRate || 24}
                 />
@@ -833,9 +904,9 @@ export default function ScorePanel() {
                       height: Math.abs(bgMarquee.endClientY - bgMarquee.startClientY),
                       zIndex: 20,
                       backgroundColor:
-                        "color-mix(in srgb, var(--color-app-text-strong) 6%, var(--color-app-clear))",
+                        'color-mix(in srgb, var(--color-app-text-strong) 6%, var(--color-app-clear))',
                       border:
-                        "1px solid color-mix(in srgb, var(--color-app-text-strong) 50%, var(--color-app-clear))",
+                        '1px solid color-mix(in srgb, var(--color-app-text-strong) 50%, var(--color-app-clear))',
                     }}
                   />
                 );
@@ -854,10 +925,7 @@ export default function ScorePanel() {
       )}
 
       {manageDialogOpen && (
-        <ScoreManagerDialog
-          score={score}
-          onClose={() => setManageDialogOpen(false)}
-        />
+        <ScoreManagerDialog score={score} onClose={() => setManageDialogOpen(false)} />
       )}
 
       {tempoMapEditorOpen && (
@@ -886,22 +954,22 @@ export default function ScorePanel() {
         />
       )}
       {chainDialogTarget && (
-        <ChainDialogWrapper
-          target={chainDialogTarget}
-          onClose={() => setChainDialogTarget(null)}
-        />
+        <ChainDialogWrapper target={chainDialogTarget} onClose={() => setChainDialogTarget(null)} />
       )}
     </div>
   );
 }
 
 interface LeftPanelProps {
-  timeState: ScoreDocumentSnapshot["timeState"];
+  timeState: ScoreDocumentSnapshot['timeState'];
   tempoMapEnabled: boolean;
   tempoMapVisible: boolean;
   onTempoEnabledChange: (enabled: boolean) => void;
   onTempoVisibleChange: (visible: boolean) => void;
-  onRowVisibilityChange: (key: 'tempoRowVisible' | 'meterRowVisible' | 'markersRowVisible', value: boolean) => void;
+  onRowVisibilityChange: (
+    key: 'tempoRowVisible' | 'meterRowVisible' | 'markersRowVisible',
+    value: boolean,
+  ) => void;
   layerGroups: ScoreLayerGroupSnapshot[];
   visibleLayers?: VisibleLayerRef[];
   scopeKey?: string;
@@ -936,13 +1004,16 @@ function LeftPanel({
   const applyProjectDocumentPatch = useProjectStore((s) => s.applyProjectDocumentPatch);
   const [pendingRemovalPlan, setPendingRemovalPlan] = useState<LayerRemovalPlan | null>(null);
 
-  const handleRemovalConfirm = useCallback((deleteEmptyLayerGroups: boolean) => {
-    if (!pendingRemovalPlan) return;
-    void applyProjectDocumentPatch({
-      score: createRemoveLayerRangesPatch(pendingRemovalPlan, deleteEmptyLayerGroups),
-    });
-    setPendingRemovalPlan(null);
-  }, [applyProjectDocumentPatch, pendingRemovalPlan]);
+  const handleRemovalConfirm = useCallback(
+    (deleteEmptyLayerGroups: boolean) => {
+      if (!pendingRemovalPlan) return;
+      void applyProjectDocumentPatch({
+        score: createRemoveLayerRangesPatch(pendingRemovalPlan, deleteEmptyLayerGroups),
+      });
+      setPendingRemovalPlan(null);
+    },
+    [applyProjectDocumentPatch, pendingRemovalPlan],
+  );
 
   return (
     <div className="h-full flex flex-col bg-blue-surface border-r border-blue-border/40">
@@ -951,7 +1022,12 @@ function LeftPanel({
           <>
             <RowHeader onContextMenu={onRowVisibilityChange} rowVisibility={timeState}>
               <label className="flex items-center gap-1.5 text-role-callout text-blue-muted cursor-pointer select-none">
-                <input type="checkbox" className="w-2.5 h-2.5" checked={tempoMapEnabled} onChange={(e) => onTempoEnabledChange(e.target.checked)} />
+                <input
+                  type="checkbox"
+                  className="w-2.5 h-2.5"
+                  checked={tempoMapEnabled}
+                  onChange={(e) => onTempoEnabledChange(e.target.checked)}
+                />
                 Use Tempo
               </label>
               <button
@@ -959,11 +1035,18 @@ function LeftPanel({
                 title="Toggle tempo editor"
                 onClick={() => onTempoVisibleChange(!tempoMapVisible)}
               >
-                {tempoMapVisible ? <ChevronDown size={10} className="text-blue-text group-hover:text-white" /> : <ChevronRight size={10} className="group-hover:text-white" />}
+                {tempoMapVisible ? (
+                  <ChevronDown size={10} className="text-blue-text group-hover:text-white" />
+                ) : (
+                  <ChevronRight size={10} className="group-hover:text-white" />
+                )}
               </button>
             </RowHeader>
             {tempoMapVisible && (
-              <div className="border-b border-app-border-muted bg-blue-surface/30" style={{ height: 80 }} />
+              <div
+                className="border-b border-app-border-muted bg-blue-surface/30"
+                style={{ height: 80 }}
+              />
             )}
           </>
         )}
@@ -1007,7 +1090,9 @@ function LeftPanel({
           const currentVisibleLayers = visibleLayers ?? [];
           if (event.altKey && event.key === 'ArrowUp') {
             event.preventDefault();
-            const ranges = useLayerSelectionStore.getState().getSelectedRanges(currentVisibleLayers);
+            const ranges = useLayerSelectionStore
+              .getState()
+              .getSelectedRanges(currentVisibleLayers);
             const availability = getLayerOperationAvailability(visibleGroups, ranges);
             if (availability.canPushUp && ranges.length === 1) {
               const r = ranges[0]!;
@@ -1017,7 +1102,9 @@ function LeftPanel({
             }
           } else if (event.altKey && event.key === 'ArrowDown') {
             event.preventDefault();
-            const ranges = useLayerSelectionStore.getState().getSelectedRanges(currentVisibleLayers);
+            const ranges = useLayerSelectionStore
+              .getState()
+              .getSelectedRanges(currentVisibleLayers);
             const availability = getLayerOperationAvailability(visibleGroups, ranges);
             if (availability.canPushDown && ranges.length === 1) {
               const r = ranges[0]!;
@@ -1027,7 +1114,9 @@ function LeftPanel({
             }
           } else if (event.key === 'Delete' || event.key === 'Backspace') {
             event.preventDefault();
-            const ranges = useLayerSelectionStore.getState().getSelectedRanges(currentVisibleLayers);
+            const ranges = useLayerSelectionStore
+              .getState()
+              .getSelectedRanges(currentVisibleLayers);
             if (ranges.length > 0) {
               const plan = buildLayerRemovalPlan(visibleGroups, ranges);
               if (plan.totalLayerCount > 0) {
@@ -1036,10 +1125,14 @@ function LeftPanel({
             }
           } else if (event.key === 'ArrowUp') {
             event.preventDefault();
-            useLayerSelectionStore.getState().moveFocus('up', currentVisibleLayers, event.shiftKey, scopeKey);
+            useLayerSelectionStore
+              .getState()
+              .moveFocus('up', currentVisibleLayers, event.shiftKey, scopeKey);
           } else if (event.key === 'ArrowDown') {
             event.preventDefault();
-            useLayerSelectionStore.getState().moveFocus('down', currentVisibleLayers, event.shiftKey, scopeKey);
+            useLayerSelectionStore
+              .getState()
+              .moveFocus('down', currentVisibleLayers, event.shiftKey, scopeKey);
           }
         }}
       >
@@ -1051,7 +1144,11 @@ function LeftPanel({
               groupIndex={gi}
               totalGroups={visibleGroups.length}
               layerCount={group.layers.length}
-              onNoteProcessorChain={group.groupType === 'polyObject' ? () => onLayerGroupNoteProcessorChain(group.groupId) : undefined}
+              onNoteProcessorChain={
+                group.groupType === 'polyObject'
+                  ? () => onLayerGroupNoteProcessorChain(group.groupId)
+                  : undefined
+              }
               noteProcessorChain={group.noteProcessorChain}
             />
           );
@@ -1060,39 +1157,41 @@ function LeftPanel({
             <div key={group.groupId}>
               {group.groupType === 'patterns'
                 ? group.layers.map((layer, li) => (
-                  <PatternLayerHeader
-                    key={layer.layerId}
-                    layer={layer}
-                    groupId={group.groupId}
-                    layerIndex={li}
-                    layerCount={group.layers.length}
-                    layerGroups={visibleGroups}
-                    visibleLayers={visibleLayers}
-                    scopeKey={scopeKey}
-                  />
-                ))
+                    <PatternLayerHeader
+                      key={layer.layerId}
+                      layer={layer}
+                      groupId={group.groupId}
+                      layerIndex={li}
+                      layerCount={group.layers.length}
+                      layerGroups={visibleGroups}
+                      visibleLayers={visibleLayers}
+                      scopeKey={scopeKey}
+                    />
+                  ))
                 : group.layers.map((layer, li) => (
-                  <SoundLayerHeader
-                    key={layer.layerId}
-                    layer={layer}
-                    groupType={group.groupType}
-                    groupId={group.groupId}
-                    layerIndex={li}
-                    layerCount={group.layers.length}
-                    layerGroups={visibleGroups}
-                    rootGroupIndex={gi}
-                    projectSessionId={projectSessionId}
-                    projectRevision={projectRevision}
-                    visibleLayers={visibleLayers}
-                    scopeKey={scopeKey}
-                    onNoteProcessorChain={(groupId, layerIndex) => onSoundLayerNoteProcessorChain(
-                      groupId,
-                      layerIndex,
-                      group.groupType === 'track' ? layer.layerId : undefined,
-                    )}
-                    noteProcessorChain={layer.noteProcessorChain}
-                  />
-                ))}
+                    <SoundLayerHeader
+                      key={layer.layerId}
+                      layer={layer}
+                      groupType={group.groupType}
+                      groupId={group.groupId}
+                      layerIndex={li}
+                      layerCount={group.layers.length}
+                      layerGroups={visibleGroups}
+                      rootGroupIndex={gi}
+                      projectSessionId={projectSessionId}
+                      projectRevision={projectRevision}
+                      visibleLayers={visibleLayers}
+                      scopeKey={scopeKey}
+                      onNoteProcessorChain={(groupId, layerIndex) =>
+                        onSoundLayerNoteProcessorChain(
+                          groupId,
+                          layerIndex,
+                          group.groupType === 'track' ? layer.layerId : undefined,
+                        )
+                      }
+                      noteProcessorChain={layer.noteProcessorChain}
+                    />
+                  ))}
               {spacer}
             </div>
           );
@@ -1309,27 +1408,31 @@ function SoundLayerHeader({
   const selectSingle = useLayerSelectionStore((state) => state.selectSingle);
   const extendTo = useLayerSelectionStore((state) => state.extendTo);
 
-  const fallbackVisibleLayers = useMemo((): VisibleLayerRef[] => [
-    {
-      scopeKey: scopeKey ?? 'test',
-      groupId,
-      groupType,
-      layerSelectionId,
-      layerId: layer.layerId,
-      localIndex: layerIndex,
-      globalIndex: layerIndex,
-      layer,
-    },
-  ], [groupId, groupType, layer, layerIndex, layerSelectionId, scopeKey]);
+  const fallbackVisibleLayers = useMemo(
+    (): VisibleLayerRef[] => [
+      {
+        scopeKey: scopeKey ?? 'test',
+        groupId,
+        groupType,
+        layerSelectionId,
+        layerId: layer.layerId,
+        localIndex: layerIndex,
+        globalIndex: layerIndex,
+        layer,
+      },
+    ],
+    [groupId, groupType, layer, layerIndex, layerSelectionId, scopeKey],
+  );
   const effectiveVisibleLayers = visibleLayers ?? fallbackVisibleLayers;
 
-  const midiFocused = useMidiRoutingStore((state) => (
-    groupType === 'track'
-    && state.focusedTarget?.kind === 'track'
-    && state.focusedTarget.projectSessionId === projectSessionId
-    && state.focusedTarget.rootGroupId === groupId
-    && state.focusedTarget.trackId === layer.layerId
-  ));
+  const midiFocused = useMidiRoutingStore(
+    (state) =>
+      groupType === 'track' &&
+      state.focusedTarget?.kind === 'track' &&
+      state.focusedTarget.projectSessionId === projectSessionId &&
+      state.focusedTarget.rootGroupId === groupId &&
+      state.focusedTarget.trackId === layer.layerId,
+  );
 
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState(layer.name);
@@ -1338,14 +1441,16 @@ function SoundLayerHeader({
   const heightIndex = Math.round(height / 22) - 1;
   const showNoteProcessorButton = groupType === 'polyObject' || groupType === 'track';
   const showLayerHeightMenu = groupType === 'polyObject' || groupType === 'track';
-  const showAutomationButton = (groupType === 'polyObject' || groupType === 'track') && !!layer.automation;
+  const showAutomationButton =
+    (groupType === 'polyObject' || groupType === 'track') && !!layer.automation;
   const selectedAutomationParameter = layer.automation?.parameters.find(
     (parameter) => parameter.parameterId === layer.automation?.selectedParameterId,
   );
-  const showAutomationFooter = showAutomationButton
-    && height >= 44
-    && !!selectedAutomationParameter
-    && (layer.automation?.parameterIds.length ?? 0) > 0;
+  const showAutomationFooter =
+    showAutomationButton &&
+    height >= 44 &&
+    !!selectedAutomationParameter &&
+    (layer.automation?.parameterIds.length ?? 0) > 0;
   const trackInstrument = groupType === 'track' && 'instrument' in layer ? layer.instrument : null;
 
   const commitEdit = useCallback(() => {
@@ -1371,7 +1476,7 @@ function SoundLayerHeader({
   );
 
   const btnClass = (active: boolean, activeBg: string) =>
-    `w-5 h-4 text-role-callout font-bold rounded-sm border border-app-border/30 flex items-center justify-center ${active ? activeBg + " text-black" : "bg-transparent text-app-text-muted hover:text-app-text"}`;
+    `w-5 h-4 text-role-callout font-bold rounded-sm border border-app-border/30 flex items-center justify-center ${active ? activeBg + ' text-black' : 'bg-transparent text-app-text-muted hover:text-app-text'}`;
 
   const ctxItemClass = 'editor-context-menu__item';
 
@@ -1380,9 +1485,7 @@ function SoundLayerHeader({
     groupId,
     layerId: layer.layerId,
     layerIndex,
-    layerKind: groupType === 'track'
-        ? 'track' as const
-        : 'soundObject' as const,
+    layerKind: groupType === 'track' ? ('track' as const) : ('soundObject' as const),
   };
 
   const dispatchAutomationPatch = (patch: ScoreAutomationPatch) => {
@@ -1392,7 +1495,9 @@ function SoundLayerHeader({
         await flushPendingPatches();
       } catch (error: unknown) {
         console.error('[score] Failed to apply automation patch:', error);
-        toast.error(`Failed to update automation: ${error instanceof Error ? error.message : String(error)}`);
+        toast.error(
+          `Failed to update automation: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
     })();
   };
@@ -1457,373 +1562,388 @@ function SoundLayerHeader({
       : [singleLayerRange];
   };
 
-  const handleRemovalConfirm = useCallback((deleteEmptyLayerGroups: boolean) => {
-    if (!pendingRemovalPlan) return;
-    void applyProjectDocumentPatch({
-      score: createRemoveLayerRangesPatch(pendingRemovalPlan, deleteEmptyLayerGroups),
-    });
-    setPendingRemovalPlan(null);
-  }, [applyProjectDocumentPatch, pendingRemovalPlan]);
+  const handleRemovalConfirm = useCallback(
+    (deleteEmptyLayerGroups: boolean) => {
+      if (!pendingRemovalPlan) return;
+      void applyProjectDocumentPatch({
+        score: createRemoveLayerRangesPatch(pendingRemovalPlan, deleteEmptyLayerGroups),
+      });
+      setPendingRemovalPlan(null);
+    },
+    [applyProjectDocumentPatch, pendingRemovalPlan],
+  );
 
   return (
     <>
-    <ContextMenu.Root onOpenChange={(open) => {
-      if (open && !isLayerSelected) {
-        selectSingle(selectionKey, effectiveVisibleLayers, scopeKey);
-      }
-    }}>
-      <ContextMenu.Trigger asChild>
-        <div
-          tabIndex={-1}
-          data-score-layer-header
-          data-layer-id={layer.layerId}
-          data-layer-selection-id={layerSelectionId}
-          data-midi-focused={midiFocused ? 'true' : undefined}
-          data-keyboard-focused={isFocusKey && keyboardFocus ? 'true' : undefined}
-          aria-selected={isLayerSelected ? 'true' : 'false'}
-          data-selected-layer={isLayerSelected ? 'true' : undefined}
-          className={cn(
-            'relative flex items-start overflow-hidden border-b border-l-2 border-app-border-muted select-none focus:outline-none',
-            isLayerSelected ? 'border-l-app-accent bg-app-selection' : 'border-l-transparent',
-            midiFocused && 'ring-1 ring-inset ring-app-accent/70',
-            isFocusKey && keyboardFocus && 'ring-1 ring-app-accent/80',
-          )}
-          style={{ height }}
-          onDoubleClick={startEdit}
-          onMouseDown={(event) => {
-            if (event.button !== 0) return;
-            const target = event.target as HTMLElement;
-            if (target.closest('button, input, [data-track-instrument-control]')) return;
-            if (event.shiftKey) {
-              extendTo(selectionKey, effectiveVisibleLayers, scopeKey);
-            } else {
-              selectSingle(selectionKey, effectiveVisibleLayers, scopeKey);
-            }
-            event.currentTarget.focus();
-          }}
-          onPointerDown={(event) => {
-            if (groupType !== 'track' || event.button !== 0) return;
-            const target = event.target as HTMLElement;
-            if (target.closest('button, [data-track-instrument-control]')) return;
-            useMidiRoutingStore.getState().focusTrack({
-              projectSessionId,
-              rootGroupId: groupId,
-              trackId: layer.layerId,
-              displayName: layer.name || `Track ${layerIndex + 1}`,
-            });
-          }}
-        >
-          {groupType === 'track' && (
-            <TrackInstrumentControl
-              groupId={groupId}
-              trackId={layer.layerId}
-              instrument={trackInstrument}
-              projectSessionId={projectSessionId}
-              projectRevision={projectRevision}
-              displayName={layer.name}
-            />
-          )}
-          {editing ? (
-            <input
-              ref={inputRef}
-              className="flex-1 min-w-0 px-1 text-role-body bg-blue-surface/60 text-blue-text outline-none border border-blue-accent/40 rounded-sm mx-1 mt-0.5"
-              value={editValue}
-              onChange={(e) => setEditValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") commitEdit();
-                if (e.key === "Escape") cancelEdit();
-              }}
-              onBlur={commitEdit}
-            />
-          ) : (
-            <span
-              className={cn(
-                'flex-1 min-w-0 px-1.5 text-role-body text-blue-text truncate pointer-events-none mt-0.5',
-                isLayerSelected && 'text-app-text-strong',
-              )}
-            >
-              {layer.name}
-            </span>
-          )}
-          <div className="shrink-0 flex items-start gap-px mr-1 pt-0.5">
-            <ColorPickerButton
-              value={formatLayerColorToHex(layer.backgroundColor ?? DEFAULT_LAYER_COLOR)}
-              onChange={(hex) => {
-                const color = normalizeLayerColor(parseInt(hex.replace('#', ''), 16));
-                setLayerBackgroundColor(groupId, layerIndex, color);
-              }}
-              onGestureComplete={async ({ initialValue, finalValue }) => {
-                const initial = normalizeLayerColor(parseInt(initialValue.replace('#', ''), 16));
-                const final = normalizeLayerColor(parseInt(finalValue.replace('#', ''), 16));
-                if (initial === final) return;
-                try {
-                  await flushPendingPatches();
-                  pushColorHistoryEntry({
-                    label: `Change ${layer.name} Color`,
-                    forward: {
-                      score: {
-                        type: 'updateLayerState',
-                        groupId,
-                        layerIndex,
-                        patch: { backgroundColor: final },
-                      },
-                    },
-                    inverse: {
-                      score: {
-                        type: 'updateLayerState',
-                        groupId,
-                        layerIndex,
-                        patch: { backgroundColor: initial },
-                      },
-                    },
-                  });
-                } catch {
-                  // Rejection reconciliation - do not record history entry
-                }
-              }}
-              ariaLabel={`Layer color for ${layer.name}`}
-              title={`Layer color: ${layer.name}`}
-              className="w-4 h-4 rounded-sm border border-app-border/40 shrink-0 cursor-pointer mr-0.5"
-            />
-            <button
-              className={btnClass(!!layer.muted, 'bg-app-warning')}
-              title="Mute"
-              style={layer.muted ? { color: 'var(--color-app-text-strong)' } : {}}
-              onClick={(e) => {
-                e.stopPropagation();
-                setLayerMute(groupId, layerIndex, !(layer.muted ?? false));
-              }}
-            >
-              M
-            </button>
-            <button
-              className={btnClass(!!layer.solo, 'bg-app-success')}
-              title="Solo"
-              style={layer.solo ? { color: 'var(--color-app-text-strong)' } : {}}
-              onClick={(e) => {
-                e.stopPropagation();
-                setLayerSolo(groupId, layerIndex, !(layer.solo ?? false));
-              }}
-            >
-              S
-            </button>
-            {showNoteProcessorButton && (
-              <button
+      <ContextMenu.Root
+        onOpenChange={(open) => {
+          if (open && !isLayerSelected) {
+            selectSingle(selectionKey, effectiveVisibleLayers, scopeKey);
+          }
+        }}
+      >
+        <ContextMenu.Trigger asChild>
+          <div
+            tabIndex={-1}
+            data-score-layer-header
+            data-layer-id={layer.layerId}
+            data-layer-selection-id={layerSelectionId}
+            data-midi-focused={midiFocused ? 'true' : undefined}
+            data-keyboard-focused={isFocusKey && keyboardFocus ? 'true' : undefined}
+            aria-selected={isLayerSelected ? 'true' : 'false'}
+            data-selected-layer={isLayerSelected ? 'true' : undefined}
+            className={cn(
+              'relative flex items-start overflow-hidden border-b border-l-2 border-app-border-muted select-none focus:outline-none',
+              isLayerSelected ? 'border-l-app-accent bg-app-selection' : 'border-l-transparent',
+              midiFocused && 'ring-1 ring-inset ring-app-accent/70',
+              isFocusKey && keyboardFocus && 'ring-1 ring-app-accent/80',
+            )}
+            style={{ height }}
+            onDoubleClick={startEdit}
+            onMouseDown={(event) => {
+              if (event.button !== 0) return;
+              const target = event.target as HTMLElement;
+              if (target.closest('button, input, [data-track-instrument-control]')) return;
+              if (event.shiftKey) {
+                extendTo(selectionKey, effectiveVisibleLayers, scopeKey);
+              } else {
+                selectSingle(selectionKey, effectiveVisibleLayers, scopeKey);
+              }
+              event.currentTarget.focus();
+            }}
+            onPointerDown={(event) => {
+              if (groupType !== 'track' || event.button !== 0) return;
+              const target = event.target as HTMLElement;
+              if (target.closest('button, [data-track-instrument-control]')) return;
+              useMidiRoutingStore.getState().focusTrack({
+                projectSessionId,
+                rootGroupId: groupId,
+                trackId: layer.layerId,
+                displayName: layer.name || `Track ${layerIndex + 1}`,
+              });
+            }}
+          >
+            {groupType === 'track' && (
+              <TrackInstrumentControl
+                groupId={groupId}
+                trackId={layer.layerId}
+                instrument={trackInstrument}
+                projectSessionId={projectSessionId}
+                projectRevision={projectRevision}
+                displayName={layer.name}
+              />
+            )}
+            {editing ? (
+              <input
+                ref={inputRef}
+                className="flex-1 min-w-0 px-1 text-role-body bg-blue-surface/60 text-blue-text outline-none border border-blue-accent/40 rounded-sm mx-1 mt-0.5"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') commitEdit();
+                  if (e.key === 'Escape') cancelEdit();
+                }}
+                onBlur={commitEdit}
+              />
+            ) : (
+              <span
                 className={cn(
-                  'relative w-5 h-4 text-role-callout font-bold rounded-sm border flex items-center justify-center',
-                  noteProcessorChain && noteProcessorChain.processors.length > 0
-                    ? 'bg-red-600 border-red-500 text-white'
-                    : 'bg-transparent border-app-border/30 text-app-text-muted hover:text-app-text',
+                  'flex-1 min-w-0 px-1.5 text-role-body text-blue-text truncate pointer-events-none mt-0.5',
+                  isLayerSelected && 'text-app-text-strong',
                 )}
-                title="Note Processors"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (onNoteProcessorChain) {
-                    onNoteProcessorChain(groupId, layerIndex);
+              >
+                {layer.name}
+              </span>
+            )}
+            <div className="shrink-0 flex items-start gap-px mr-1 pt-0.5">
+              <ColorPickerButton
+                value={formatLayerColorToHex(layer.backgroundColor ?? DEFAULT_LAYER_COLOR)}
+                onChange={(hex) => {
+                  const color = normalizeLayerColor(parseInt(hex.replace('#', ''), 16));
+                  setLayerBackgroundColor(groupId, layerIndex, color);
+                }}
+                onGestureComplete={async ({ initialValue, finalValue }) => {
+                  const initial = normalizeLayerColor(parseInt(initialValue.replace('#', ''), 16));
+                  const final = normalizeLayerColor(parseInt(finalValue.replace('#', ''), 16));
+                  if (initial === final) return;
+                  try {
+                    await flushPendingPatches();
+                    pushColorHistoryEntry({
+                      label: `Change ${layer.name} Color`,
+                      forward: {
+                        score: {
+                          type: 'updateLayerState',
+                          groupId,
+                          layerIndex,
+                          patch: { backgroundColor: final },
+                        },
+                      },
+                      inverse: {
+                        score: {
+                          type: 'updateLayerState',
+                          groupId,
+                          layerIndex,
+                          patch: { backgroundColor: initial },
+                        },
+                      },
+                    });
+                  } catch {
+                    // Rejection reconciliation - do not record history entry
                   }
                 }}
-              >
-                N
-              </button>
-            )}
-            {showAutomationButton && (
-              <AutomationTargetMenu
-                trigger={
-                  <button
-                    className={btnClass(false, "")}
-                    title="Automation"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                    }}
-                  >
-                    A
-                  </button>
-                }
-                automation={layer.automation}
-                layerRef={layerRef}
-                onPatch={(patch) => {
-                  dispatchAutomationPatch(patch);
-                }}
+                ariaLabel={`Layer color for ${layer.name}`}
+                title={`Layer color: ${layer.name}`}
+                className="w-4 h-4 rounded-sm border border-app-border/40 shrink-0 cursor-pointer mr-0.5"
               />
+              <button
+                className={btnClass(!!layer.muted, 'bg-app-warning')}
+                title="Mute"
+                style={layer.muted ? { color: 'var(--color-app-text-strong)' } : {}}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLayerMute(groupId, layerIndex, !(layer.muted ?? false));
+                }}
+              >
+                M
+              </button>
+              <button
+                className={btnClass(!!layer.solo, 'bg-app-success')}
+                title="Solo"
+                style={layer.solo ? { color: 'var(--color-app-text-strong)' } : {}}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLayerSolo(groupId, layerIndex, !(layer.solo ?? false));
+                }}
+              >
+                S
+              </button>
+              {showNoteProcessorButton && (
+                <button
+                  className={cn(
+                    'relative w-5 h-4 text-role-callout font-bold rounded-sm border flex items-center justify-center',
+                    noteProcessorChain && noteProcessorChain.processors.length > 0
+                      ? 'bg-red-600 border-red-500 text-white'
+                      : 'bg-transparent border-app-border/30 text-app-text-muted hover:text-app-text',
+                  )}
+                  title="Note Processors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onNoteProcessorChain) {
+                      onNoteProcessorChain(groupId, layerIndex);
+                    }
+                  }}
+                >
+                  N
+                </button>
+              )}
+              {showAutomationButton && (
+                <AutomationTargetMenu
+                  trigger={
+                    <button
+                      className={btnClass(false, '')}
+                      title="Automation"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                      }}
+                    >
+                      A
+                    </button>
+                  }
+                  automation={layer.automation}
+                  layerRef={layerRef}
+                  onPatch={(patch) => {
+                    dispatchAutomationPatch(patch);
+                  }}
+                />
+              )}
+            </div>
+            {showAutomationFooter && (
+              <div className="absolute left-1 right-1 top-5 flex h-4 items-center gap-1 text-role-callout text-app-text-muted">
+                <ColorPickerButton
+                  value={selectedAutomationColor}
+                  className="h-3.5 w-3.5 shrink-0 cursor-pointer border-0 bg-transparent p-0"
+                  title="Automation line color"
+                  ariaLabel="Automation line color"
+                  onChange={handleAutomationColorChange}
+                />
+                <span
+                  data-automation-parameter-name
+                  className="flex-1 min-w-0 truncate"
+                  title={
+                    selectedAutomationParameter.targetPath &&
+                    selectedAutomationParameter.targetPath.length > 0
+                      ? selectedAutomationParameter.targetPath.join(' > ')
+                      : selectedAutomationParameter.displayName || selectedAutomationParameter.name
+                  }
+                >
+                  {selectedAutomationParameter.displayName || selectedAutomationParameter.name}
+                </span>
+                <button
+                  className="w-3.5 h-3.5 shrink-0 bg-blue-surface/40 hover:bg-blue-surface/80 rounded border border-blue-border/30 flex items-center justify-center text-role-callout"
+                  title="Previous Parameter"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAutomationPrevNext(-1);
+                  }}
+                >
+                  <ChevronLeft className="h-2.5 w-2.5" />
+                </button>
+                <button
+                  className="w-3.5 h-3.5 shrink-0 bg-blue-surface/40 hover:bg-blue-surface/80 rounded border border-blue-border/30 flex items-center justify-center text-role-callout"
+                  title="Next Parameter"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAutomationPrevNext(1);
+                  }}
+                >
+                  <ChevronRight className="h-2.5 w-2.5" />
+                </button>
+              </div>
             )}
           </div>
-          {showAutomationFooter && (
-            <div className="absolute left-1 right-1 top-5 flex h-4 items-center gap-1 text-role-callout text-app-text-muted">
-              <ColorPickerButton
-                value={selectedAutomationColor}
-                className="h-3.5 w-3.5 shrink-0 cursor-pointer border-0 bg-transparent p-0"
-                title="Automation line color"
-                ariaLabel="Automation line color"
-                onChange={handleAutomationColorChange}
-              />
-              <span
-                data-automation-parameter-name
-                className="flex-1 min-w-0 truncate"
-                title={
-                  selectedAutomationParameter.targetPath && selectedAutomationParameter.targetPath.length > 0
-                    ? selectedAutomationParameter.targetPath.join(' > ')
-                    : (selectedAutomationParameter.displayName || selectedAutomationParameter.name)
-                }
-              >
-                {selectedAutomationParameter.displayName || selectedAutomationParameter.name}
-              </span>
-              <button
-                className="w-3.5 h-3.5 shrink-0 bg-blue-surface/40 hover:bg-blue-surface/80 rounded border border-blue-border/30 flex items-center justify-center text-role-callout"
-                title="Previous Parameter"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleAutomationPrevNext(-1);
-                }}
-              >
-                <ChevronLeft className="h-2.5 w-2.5" />
-              </button>
-              <button
-                className="w-3.5 h-3.5 shrink-0 bg-blue-surface/40 hover:bg-blue-surface/80 rounded border border-blue-border/30 flex items-center justify-center text-role-callout"
-                title="Next Parameter"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleAutomationPrevNext(1);
-                }}
-              >
-                <ChevronRight className="h-2.5 w-2.5" />
-              </button>
-            </div>
-          )}
-         </div>
-       </ContextMenu.Trigger>
-       <PopoutContextMenuPortal>
-        <ContextMenu.Content className="editor-context-menu" {...portalEventIsolationProps}>
-          {availability.canAdd && (
-            <>
-              <ContextMenu.Item
-                className={ctxItemClass}
-                data-layer-add-above
-                onSelect={() => addLayer(groupId, layerIndex - 1)}
-              >
-                Add Layer Above
-              </ContextMenu.Item>
-              <ContextMenu.Item
-                className={ctxItemClass}
-                data-layer-add-below
-                onSelect={() => addLayer(groupId, layerIndex)}
-              >
-                Add Layer Below
-              </ContextMenu.Item>
-            </>
-          )}
-          <ContextMenu.Separator className="editor-context-menu__separator" />
-          <ContextMenu.Item
-            className={ctxItemClass}
-            disabled={removalPlan.totalLayerCount === 0}
-            onSelect={() => {
-              const ranges = getContextRanges();
-              const plan = buildLayerRemovalPlan(effectiveLayerGroups, ranges);
-              if (plan.totalLayerCount === 0) return;
-              setPendingRemovalPlan(plan);
-            }}
-          >
-            {removalPlan.totalLayerCount > 1 ? `Remove ${removalPlan.totalLayerCount} Layers` : 'Remove Layer'}
-          </ContextMenu.Item>
-          <ContextMenu.Item
-            className={ctxItemClass}
-            disabled={!availability.canPushUp}
-            data-push-disabled-reason={getPushDisabledReasonLabel(availability.pushUpDisabledReason)}
-            title={getPushDisabledReasonLabel(availability.pushUpDisabledReason)}
-            onSelect={() => {
-              const ranges = getContextRanges();
-              const avail = getLayerOperationAvailability(effectiveLayerGroups, ranges);
-              if (!avail.canPushUp || ranges.length !== 1) return;
-              const r = ranges[0]!;
-              void applyProjectDocumentPatch({
-                score: createMoveLayerRangePatch(r, r.startIndex - 1),
-              });
-            }}
-          >
-            Push Up
-          </ContextMenu.Item>
-          <ContextMenu.Item
-            className={ctxItemClass}
-            disabled={!availability.canPushDown}
-            data-push-disabled-reason={getPushDisabledReasonLabel(availability.pushDownDisabledReason)}
-            title={getPushDisabledReasonLabel(availability.pushDownDisabledReason)}
-            onSelect={() => {
-              const ranges = getContextRanges();
-              const avail = getLayerOperationAvailability(effectiveLayerGroups, ranges);
-              if (!avail.canPushDown || ranges.length !== 1) return;
-              const r = ranges[0]!;
-              void applyProjectDocumentPatch({
-                score: createMoveLayerRangePatch(r, r.startIndex + 1),
-              });
-            }}
-          >
-            Push Down
-          </ContextMenu.Item>
-          {showLayerHeightMenu && (
-            <>
-              <ContextMenu.Separator className="editor-context-menu__separator" />
-              <ContextMenu.Sub>
-                <ContextMenu.SubTrigger
-                  className={cn(ctxItemClass, 'editor-context-menu__subtrigger')}
+        </ContextMenu.Trigger>
+        <PopoutContextMenuPortal>
+          <ContextMenu.Content className="editor-context-menu" {...portalEventIsolationProps}>
+            {availability.canAdd && (
+              <>
+                <ContextMenu.Item
+                  className={ctxItemClass}
+                  data-layer-add-above
+                  onSelect={() => addLayer(groupId, layerIndex - 1)}
                 >
-                  <span>Layer Height</span>
-                  <ChevronRight className="w-3.5 h-3.5 opacity-60" />
-                </ContextMenu.SubTrigger>
-                <PopoutContextMenuPortal>
-                  <ContextMenu.SubContent className="editor-context-menu" {...portalEventIsolationProps}>
-                    {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((idx) => (
-                      <ContextMenu.Item
-                        key={idx}
-                        className={ctxItemClass}
-                        onSelect={() => setLayerHeight(groupId, layerIndex, idx)}
-                      >
-                        <span className="w-4 flex items-center justify-center mr-1">
-                          {heightIndex === idx && <Check className="w-3 h-3 text-app-accent" />}
-                        </span>
-                        <span>{idx + 1}</span>
-                      </ContextMenu.Item>
-                    ))}
-                  </ContextMenu.SubContent>
-                </PopoutContextMenuPortal>
-              </ContextMenu.Sub>
-            </>
-          )}
-          <ContextMenu.Separator className="editor-context-menu__separator" />
-          <ContextMenu.Item
-            className={ctxItemClass}
-            onSelect={async () => {
-              const groups = layerGroups ?? [];
-              const pair = buildApplyLayerColorToAllClipsPatch({
-                groupId,
-                layerIndex,
-                layerGroups: groups,
-              });
-              if (pair) {
-                try {
-                  await applyProjectDocumentPatch(pair.forward);
-                  await flushPendingPatches();
-                  pushColorHistoryEntry({
-                    label: `Apply Layer Color to All Clips (${layer.name})`,
-                    forward: pair.forward,
-                    inverse: pair.inverse,
-                  });
-                } catch {
-                  // Rejection reconciliation - do not record history entry
+                  Add Layer Above
+                </ContextMenu.Item>
+                <ContextMenu.Item
+                  className={ctxItemClass}
+                  data-layer-add-below
+                  onSelect={() => addLayer(groupId, layerIndex)}
+                >
+                  Add Layer Below
+                </ContextMenu.Item>
+              </>
+            )}
+            <ContextMenu.Separator className="editor-context-menu__separator" />
+            <ContextMenu.Item
+              className={ctxItemClass}
+              disabled={removalPlan.totalLayerCount === 0}
+              onSelect={() => {
+                const ranges = getContextRanges();
+                const plan = buildLayerRemovalPlan(effectiveLayerGroups, ranges);
+                if (plan.totalLayerCount === 0) return;
+                setPendingRemovalPlan(plan);
+              }}
+            >
+              {removalPlan.totalLayerCount > 1
+                ? `Remove ${removalPlan.totalLayerCount} Layers`
+                : 'Remove Layer'}
+            </ContextMenu.Item>
+            <ContextMenu.Item
+              className={ctxItemClass}
+              disabled={!availability.canPushUp}
+              data-push-disabled-reason={getPushDisabledReasonLabel(
+                availability.pushUpDisabledReason,
+              )}
+              title={getPushDisabledReasonLabel(availability.pushUpDisabledReason)}
+              onSelect={() => {
+                const ranges = getContextRanges();
+                const avail = getLayerOperationAvailability(effectiveLayerGroups, ranges);
+                if (!avail.canPushUp || ranges.length !== 1) return;
+                const r = ranges[0]!;
+                void applyProjectDocumentPatch({
+                  score: createMoveLayerRangePatch(r, r.startIndex - 1),
+                });
+              }}
+            >
+              Push Up
+            </ContextMenu.Item>
+            <ContextMenu.Item
+              className={ctxItemClass}
+              disabled={!availability.canPushDown}
+              data-push-disabled-reason={getPushDisabledReasonLabel(
+                availability.pushDownDisabledReason,
+              )}
+              title={getPushDisabledReasonLabel(availability.pushDownDisabledReason)}
+              onSelect={() => {
+                const ranges = getContextRanges();
+                const avail = getLayerOperationAvailability(effectiveLayerGroups, ranges);
+                if (!avail.canPushDown || ranges.length !== 1) return;
+                const r = ranges[0]!;
+                void applyProjectDocumentPatch({
+                  score: createMoveLayerRangePatch(r, r.startIndex + 1),
+                });
+              }}
+            >
+              Push Down
+            </ContextMenu.Item>
+            {showLayerHeightMenu && (
+              <>
+                <ContextMenu.Separator className="editor-context-menu__separator" />
+                <ContextMenu.Sub>
+                  <ContextMenu.SubTrigger
+                    className={cn(ctxItemClass, 'editor-context-menu__subtrigger')}
+                  >
+                    <span>Layer Height</span>
+                    <ChevronRight className="w-3.5 h-3.5 opacity-60" />
+                  </ContextMenu.SubTrigger>
+                  <PopoutContextMenuPortal>
+                    <ContextMenu.SubContent
+                      className="editor-context-menu"
+                      {...portalEventIsolationProps}
+                    >
+                      {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((idx) => (
+                        <ContextMenu.Item
+                          key={idx}
+                          className={ctxItemClass}
+                          onSelect={() => setLayerHeight(groupId, layerIndex, idx)}
+                        >
+                          <span className="w-4 flex items-center justify-center mr-1">
+                            {heightIndex === idx && <Check className="w-3 h-3 text-app-accent" />}
+                          </span>
+                          <span>{idx + 1}</span>
+                        </ContextMenu.Item>
+                      ))}
+                    </ContextMenu.SubContent>
+                  </PopoutContextMenuPortal>
+                </ContextMenu.Sub>
+              </>
+            )}
+            <ContextMenu.Separator className="editor-context-menu__separator" />
+            <ContextMenu.Item
+              className={ctxItemClass}
+              onSelect={async () => {
+                const groups = layerGroups ?? [];
+                const pair = buildApplyLayerColorToAllClipsPatch({
+                  groupId,
+                  layerIndex,
+                  layerGroups: groups,
+                });
+                if (pair) {
+                  try {
+                    await applyProjectDocumentPatch(pair.forward);
+                    await flushPendingPatches();
+                    pushColorHistoryEntry({
+                      label: `Apply Layer Color to All Clips (${layer.name})`,
+                      forward: pair.forward,
+                      inverse: pair.inverse,
+                    });
+                  } catch {
+                    // Rejection reconciliation - do not record history entry
+                  }
                 }
-              }
-            }}
-          >
-            Apply Layer Color to All Clips
-          </ContextMenu.Item>
-        </ContextMenu.Content>
-      </PopoutContextMenuPortal>
-    </ContextMenu.Root>
-    {pendingRemovalPlan && (
-      <LayerRemovalConfirmationDialog
-        plan={pendingRemovalPlan}
-        onCancel={() => setPendingRemovalPlan(null)}
-        onConfirm={handleRemovalConfirm}
-      />
-    )}
+              }}
+            >
+              Apply Layer Color to All Clips
+            </ContextMenu.Item>
+          </ContextMenu.Content>
+        </PopoutContextMenuPortal>
+      </ContextMenu.Root>
+      {pendingRemovalPlan && (
+        <LayerRemovalConfirmationDialog
+          plan={pendingRemovalPlan}
+          onCancel={() => setPendingRemovalPlan(null)}
+          onConfirm={handleRemovalConfirm}
+        />
+      )}
     </>
   );
 }

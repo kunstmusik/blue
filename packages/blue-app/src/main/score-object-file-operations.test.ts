@@ -1,9 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import * as path from 'path';
-import {
-  buildWavBytes,
-  buildAiffBytes,
-} from '@blue/data';
+import { buildWavBytes, buildAiffBytes } from '@blue/data';
 import {
   selectScoreObjectAudioFile,
   saveFrozenSoundObjectCopy,
@@ -82,13 +79,21 @@ describe('score-object-file-operations', () => {
   describe('inspectAudioFileMetadata', () => {
     it('returns empty status for blank path', () => {
       const { deps } = createTestFixtureFS();
-      const result = inspectAudioFileMetadata('', { projectDirectory: projectDir, sfDir: null }, deps);
+      const result = inspectAudioFileMetadata(
+        '',
+        { projectDirectory: projectDir, sfDir: null },
+        deps,
+      );
       expect(result.status).toBe('empty');
     });
 
     it('returns missing status for non-existent file', () => {
       const { deps } = createTestFixtureFS();
-      const result = inspectAudioFileMetadata('nonexistent.wav', { projectDirectory: projectDir, sfDir: null }, deps);
+      const result = inspectAudioFileMetadata(
+        'nonexistent.wav',
+        { projectDirectory: projectDir, sfDir: null },
+        deps,
+      );
       expect(result.status).toBe('missing');
       if (result.status === 'missing') {
         expect(result.path).toBe('nonexistent.wav');
@@ -98,7 +103,11 @@ describe('score-object-file-operations', () => {
 
     it('returns available status with parsed metadata for valid file', () => {
       const { deps } = createTestFixtureFS();
-      const result = inspectAudioFileMetadata('sample.wav', { projectDirectory: projectDir, sfDir: null }, deps);
+      const result = inspectAudioFileMetadata(
+        'sample.wav',
+        { projectDirectory: projectDir, sfDir: null },
+        deps,
+      );
       expect(result.status).toBe('available');
       if (result.status === 'available') {
         expect(result.formatType).toBe('WAV');
@@ -114,7 +123,11 @@ describe('score-object-file-operations', () => {
 
     it('returns unsupported status for corrupt file', () => {
       const { deps } = createTestFixtureFS();
-      const result = inspectAudioFileMetadata('corrupt.wav', { projectDirectory: projectDir, sfDir: null }, deps);
+      const result = inspectAudioFileMetadata(
+        'corrupt.wav',
+        { projectDirectory: projectDir, sfDir: null },
+        deps,
+      );
       expect(result.status).toBe('unsupported');
       if (result.status === 'unsupported') {
         expect(result.path).toBe('corrupt.wav');
@@ -142,21 +155,33 @@ describe('score-object-file-operations', () => {
 
     it('returns missing when artifact file does not exist', () => {
       const { deps } = createTestFixtureFS();
-      const result = inspectFrozenArtifact('freeze99.wav', { projectDirectory: projectDir, sfDir: null }, deps);
+      const result = inspectFrozenArtifact(
+        'freeze99.wav',
+        { projectDirectory: projectDir, sfDir: null },
+        deps,
+      );
       expect(result.artifactStatus).toBe('missing');
       expect(result.canSaveCopy).toBe(false);
     });
 
     it('returns available when artifact exists', () => {
       const { deps } = createTestFixtureFS();
-      const result = inspectFrozenArtifact('freeze0.wav', { projectDirectory: projectDir, sfDir: null }, deps);
+      const result = inspectFrozenArtifact(
+        'freeze0.wav',
+        { projectDirectory: projectDir, sfDir: null },
+        deps,
+      );
       expect(result.artifactStatus).toBe('available');
       expect(result.canSaveCopy).toBe(true);
     });
 
     it('returns unreadable when the project-local artifact cannot be read', () => {
       const { deps } = createTestFixtureFS();
-      const result = inspectFrozenArtifact('freeze-unreadable.wav', { projectDirectory: projectDir, sfDir: null }, deps);
+      const result = inspectFrozenArtifact(
+        'freeze-unreadable.wav',
+        { projectDirectory: projectDir, sfDir: null },
+        deps,
+      );
 
       expect(result.artifactStatus).toBe('unreadable');
       expect(result.canSaveCopy).toBe(false);
@@ -333,7 +358,10 @@ describe('score-object-file-operations', () => {
     it('returns error when frozen artifact is missing', async () => {
       const { deps } = createTestFixtureFS();
       const result = await saveFrozenSoundObjectCopy(
-        { frozenWaveFileName: 'missing.wav', context: { projectDirectory: projectDir, sfDir: null } },
+        {
+          frozenWaveFileName: 'missing.wav',
+          context: { projectDirectory: projectDir, sfDir: null },
+        },
         deps,
       );
 
@@ -366,7 +394,10 @@ describe('score-object-file-operations', () => {
       deps.showSaveDialog = vi.fn().mockResolvedValue(path.join(projectDir, 'freeze0.wav'));
 
       const result = await saveFrozenSoundObjectCopy(
-        { frozenWaveFileName: 'freeze0.wav', context: { projectDirectory: projectDir, sfDir: null } },
+        {
+          frozenWaveFileName: 'freeze0.wav',
+          context: { projectDirectory: projectDir, sfDir: null },
+        },
         deps,
       );
 
@@ -382,7 +413,10 @@ describe('score-object-file-operations', () => {
       deps.showSaveDialog = vi.fn().mockResolvedValue(path.join(projectDir, 'export.wav'));
 
       const result = await saveFrozenSoundObjectCopy(
-        { frozenWaveFileName: 'freeze-unreadable.wav', context: { projectDirectory: projectDir, sfDir: null } },
+        {
+          frozenWaveFileName: 'freeze-unreadable.wav',
+          context: { projectDirectory: projectDir, sfDir: null },
+        },
         deps,
       );
 
@@ -397,7 +431,10 @@ describe('score-object-file-operations', () => {
       const { deps } = createTestFixtureFS();
 
       const result = await saveFrozenSoundObjectCopy(
-        { frozenWaveFileName: 'freeze0.wav', context: { projectDirectory: projectDir, sfDir: null } },
+        {
+          frozenWaveFileName: 'freeze0.wav',
+          context: { projectDirectory: projectDir, sfDir: null },
+        },
         deps,
       );
 
@@ -412,7 +449,10 @@ describe('score-object-file-operations', () => {
       deps.showSaveDialog = vi.fn().mockResolvedValue(null);
 
       const result = await saveFrozenSoundObjectCopy(
-        { frozenWaveFileName: 'freeze0.wav', context: { projectDirectory: projectDir, sfDir: null } },
+        {
+          frozenWaveFileName: 'freeze0.wav',
+          context: { projectDirectory: projectDir, sfDir: null },
+        },
         deps,
       );
 
@@ -424,7 +464,10 @@ describe('score-object-file-operations', () => {
       deps.showSaveDialog = vi.fn().mockResolvedValue(projectDir);
 
       const result = await saveFrozenSoundObjectCopy(
-        { frozenWaveFileName: 'freeze0.wav', context: { projectDirectory: projectDir, sfDir: null } },
+        {
+          frozenWaveFileName: 'freeze0.wav',
+          context: { projectDirectory: projectDir, sfDir: null },
+        },
         deps,
       );
 
@@ -439,7 +482,10 @@ describe('score-object-file-operations', () => {
       deps.showSaveDialog = vi.fn().mockResolvedValue(path.join(projectDir, 'freeze_copy.wav'));
 
       const result = await saveFrozenSoundObjectCopy(
-        { frozenWaveFileName: 'freeze0.wav', context: { projectDirectory: projectDir, sfDir: null } },
+        {
+          frozenWaveFileName: 'freeze0.wav',
+          context: { projectDirectory: projectDir, sfDir: null },
+        },
         deps,
       );
 
@@ -458,7 +504,10 @@ describe('score-object-file-operations', () => {
       deps.confirmOverwrite = vi.fn().mockResolvedValue(false);
 
       const result = await saveFrozenSoundObjectCopy(
-        { frozenWaveFileName: 'freeze0.wav', context: { projectDirectory: projectDir, sfDir: null } },
+        {
+          frozenWaveFileName: 'freeze0.wav',
+          context: { projectDirectory: projectDir, sfDir: null },
+        },
         deps,
       );
 
@@ -472,7 +521,10 @@ describe('score-object-file-operations', () => {
       deps.showSaveDialog = vi.fn().mockResolvedValue(dest);
 
       const result = await saveFrozenSoundObjectCopy(
-        { frozenWaveFileName: 'freeze0.wav', context: { projectDirectory: projectDir, sfDir: null } },
+        {
+          frozenWaveFileName: 'freeze0.wav',
+          context: { projectDirectory: projectDir, sfDir: null },
+        },
         deps,
       );
 
@@ -492,7 +544,10 @@ describe('score-object-file-operations', () => {
       deps.confirmOverwrite = vi.fn().mockResolvedValue(true);
 
       const result = await saveFrozenSoundObjectCopy(
-        { frozenWaveFileName: 'freeze0.wav', context: { projectDirectory: projectDir, sfDir: null } },
+        {
+          frozenWaveFileName: 'freeze0.wav',
+          context: { projectDirectory: projectDir, sfDir: null },
+        },
         deps,
       );
 

@@ -21,7 +21,8 @@ export function getAudioFileDuration(filePath: string): number | null {
 
   if (!pendingDurationLoads.has(filePath) && window.blueAPI?.readAudioFileBytes) {
     pendingDurationLoads.add(filePath);
-    window.blueAPI.readAudioFileBytes(filePath)
+    window.blueAPI
+      .readAudioFileBytes(filePath)
       .then((bytes) => {
         if (bytes) {
           try {

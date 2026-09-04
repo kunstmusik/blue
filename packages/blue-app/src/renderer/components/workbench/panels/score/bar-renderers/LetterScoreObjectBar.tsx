@@ -1,6 +1,13 @@
 import type { BarRendererProps } from './renderer-registry';
 import ScoreObjectBar, { LabelText, RepeatMarkers, activeRepeatPointBeats } from './ScoreObjectBar';
-import { argbToRGB, brighten, darken, isBright, rgbToCSS, textColorForBackground } from './color-utils';
+import {
+  argbToRGB,
+  brighten,
+  darken,
+  isBright,
+  rgbToCSS,
+  textColorForBackground,
+} from './color-utils';
 
 export default function LetterScoreObjectBar({
   item,
@@ -62,12 +69,7 @@ export default function LetterScoreObjectBar({
       >
         {br.letter}
       </span>
-      <LabelText
-        labelLines={br.labelLines}
-        color={fg}
-        show={showText}
-        xOffset={13}
-      />
+      <LabelText labelLines={br.labelLines} color={fg} show={showText} xOffset={13} />
       <RepeatMarkers
         repeatPointBeats={repeatPointBeats}
         durationBeats={durationBeats}

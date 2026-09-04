@@ -16,29 +16,28 @@ const updateSplitLocation = vi.fn();
 const loadLayoutSpy = vi.fn();
 
 vi.mock('../stores/layout-settings-store', () => ({
-  useLayoutSettingsStore: Object.assign(
-    vi.fn(),
-    {
-      getState: () => ({
-        layout: createDefaultWindowLayoutSettings(),
-        updateSplitLocation: (...args: unknown[]) => updateSplitLocation(...args),
-      }),
-    },
-  ),
-}));
-
-(useLayoutSettingsStore as unknown as ReturnType<typeof vi.fn>).mockImplementation((selector?: (s: unknown) => unknown) => {
-  if (typeof selector === 'function') {
-    return selector({
+  useLayoutSettingsStore: Object.assign(vi.fn(), {
+    getState: () => ({
       layout: createDefaultWindowLayoutSettings(),
       updateSplitLocation: (...args: unknown[]) => updateSplitLocation(...args),
-    });
-  }
-  return {
-    layout: createDefaultWindowLayoutSettings(),
-    updateSplitLocation: (...args: unknown[]) => updateSplitLocation(...args),
-  };
-});
+    }),
+  }),
+}));
+
+(useLayoutSettingsStore as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+  (selector?: (s: unknown) => unknown) => {
+    if (typeof selector === 'function') {
+      return selector({
+        layout: createDefaultWindowLayoutSettings(),
+        updateSplitLocation: (...args: unknown[]) => updateSplitLocation(...args),
+      });
+    }
+    return {
+      layout: createDefaultWindowLayoutSettings(),
+      updateSplitLocation: (...args: unknown[]) => updateSplitLocation(...args),
+    };
+  },
+);
 
 let container: HTMLDivElement;
 let root: Root;
@@ -109,13 +108,15 @@ describe('SplitPane persistence contract', () => {
       },
     };
 
-    (useLayoutSettingsStore as unknown as ReturnType<typeof vi.fn>).mockImplementation((selector?: (s: unknown) => unknown) => {
-      const state = {
-        layout: savedLayout,
-        updateSplitLocation: (...args: unknown[]) => updateSplitLocation(...args),
-      };
-      return typeof selector === 'function' ? selector(state) : state;
-    });
+    (useLayoutSettingsStore as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+      (selector?: (s: unknown) => unknown) => {
+        const state = {
+          layout: savedLayout,
+          updateSplitLocation: (...args: unknown[]) => updateSplitLocation(...args),
+        };
+        return typeof selector === 'function' ? selector(state) : state;
+      },
+    );
 
     act(() => {
       root.render(

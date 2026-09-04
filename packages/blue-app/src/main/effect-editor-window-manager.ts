@@ -8,10 +8,7 @@ import {
   PROJECT_DOCUMENT_UPDATED_CHANNEL,
   type ProjectDocumentUpdatedEvent,
 } from '../shared/workbench-window-contract';
-import {
-  attachWindowStateHandlers,
-  restoreWindowState,
-} from './window-state-manager';
+import { attachWindowStateHandlers, restoreWindowState } from './window-state-manager';
 
 export type EffectEditorMode = 'interface' | 'edit';
 
@@ -31,10 +28,7 @@ function getWindowKey(request: EffectEditorRequest, mode: EffectEditorMode): str
   return `${mode}:${request.ownerType}:${request.effectId}`;
 }
 
-function buildEffectEditorUrl(
-  request: EffectEditorRequest,
-  mode: EffectEditorMode,
-): string {
+function buildEffectEditorUrl(request: EffectEditorRequest, mode: EffectEditorMode): string {
   const params = new URLSearchParams({
     ownerType: request.ownerType,
     effectId: request.effectId,
@@ -56,9 +50,7 @@ function buildEffectEditorUrl(
     return `${devBase}/effect-editor.html?${params.toString()}`;
   }
 
-  const fileUrl = pathToFileURL(
-    path.join(__dirname, '..', 'renderer', 'effect-editor.html'),
-  );
+  const fileUrl = pathToFileURL(path.join(__dirname, '..', 'renderer', 'effect-editor.html'));
   fileUrl.search = params.toString();
   return fileUrl.toString();
 }
@@ -128,9 +120,7 @@ export function openEffectInterfaceWindow(
       contextIsolation: true,
       nodeIntegration: false,
       devTools: true,
-      ...(options.initialZoomFactor !== undefined
-        ? { zoomFactor: options.initialZoomFactor }
-        : {}),
+      ...(options.initialZoomFactor !== undefined ? { zoomFactor: options.initialZoomFactor } : {}),
     },
   });
 
@@ -143,13 +133,7 @@ export function openEffectInterfaceWindow(
   restoreWindowState(effectWindow, 'effect-interface');
   const disposeStateHandlers = attachWindowStateHandlers(effectWindow, 'effect-interface');
 
-  finishOpeningEffectWindow(
-    effectWindow,
-    key,
-    request,
-    'interface',
-    disposeStateHandlers,
-  );
+  finishOpeningEffectWindow(effectWindow, key, request, 'interface', disposeStateHandlers);
   return effectWindow;
 }
 
@@ -186,22 +170,14 @@ export function openEffectEditorWindow(
       contextIsolation: true,
       nodeIntegration: false,
       devTools: true,
-      ...(options.initialZoomFactor !== undefined
-        ? { zoomFactor: options.initialZoomFactor }
-        : {}),
+      ...(options.initialZoomFactor !== undefined ? { zoomFactor: options.initialZoomFactor } : {}),
     },
   });
 
   restoreWindowState(effectWindow, 'effect-editor');
   const disposeStateHandlers = attachWindowStateHandlers(effectWindow, 'effect-editor');
 
-  finishOpeningEffectWindow(
-    effectWindow,
-    key,
-    request,
-    'edit',
-    disposeStateHandlers,
-  );
+  finishOpeningEffectWindow(effectWindow, key, request, 'edit', disposeStateHandlers);
   return effectWindow;
 }
 
@@ -232,9 +208,7 @@ export function focusEffectEditorWindow(request: EffectEditorRequest): boolean {
   return focusEffectEditorWindowMode(request) !== null;
 }
 
-export function focusEffectEditorWindowMode(
-  request: EffectEditorRequest,
-): EffectEditorMode | null {
+export function focusEffectEditorWindowMode(request: EffectEditorRequest): EffectEditorMode | null {
   for (const mode of ['edit', 'interface'] as const) {
     const key = getWindowKey(request, mode);
     const existing = effectEditorWindows.get(key);
@@ -282,9 +256,6 @@ export function broadcastProjectDocumentUpdateToEffectWindows(
   for (const [key, state] of effectEditorWindows.entries()) {
     if (!key.includes(':project:')) continue;
     if (state.window.isDestroyed()) continue;
-    state.window.webContents.send(
-      PROJECT_DOCUMENT_UPDATED_CHANNEL,
-      event,
-    );
+    state.window.webContents.send(PROJECT_DOCUMENT_UPDATED_CHANNEL, event);
   }
 }

@@ -80,7 +80,9 @@ function scorePatchRequiresCanonicalProjectRefresh(patch: ScorePatch): boolean {
       return patch.groupType === 'track' || patch.groupType === 'patterns';
     case 'updateSoundObjectBehavior':
     case 'replaceNoteProcessorChain':
-      return (patch as { target?: { patternSource?: unknown } }).target?.patternSource !== undefined;
+      return (
+        (patch as { target?: { patternSource?: unknown } }).target?.patternSource !== undefined
+      );
     case 'addScoreObjects':
       return patch.objects.some((object) => object.objectType === 'PolyObject');
     case 'addTrackItem':
@@ -98,24 +100,21 @@ function scorePatchRequiresCanonicalProjectRefresh(patch: ScorePatch): boolean {
   }
 }
 
-function patchesRequireCanonicalProjectRefresh(
-  patches: readonly ProjectDocumentPatch[],
-): boolean {
+function patchesRequireCanonicalProjectRefresh(patches: readonly ProjectDocumentPatch[]): boolean {
   return patches.some(
-    (patch) => (
-      (patch.score !== undefined && scorePatchRequiresCanonicalProjectRefresh(patch.score))
-      || patch.mixer?.type === 'renameChannelListGroup'
-      || patch.clojureProject !== undefined
-    ),
+    (patch) =>
+      (patch.score !== undefined && scorePatchRequiresCanonicalProjectRefresh(patch.score)) ||
+      patch.mixer?.type === 'renameChannelListGroup' ||
+      patch.clojureProject !== undefined,
   );
 }
 
 function isMutationAcknowledgementPatch(patch: ProjectDocumentPatch): boolean {
   return (
-    patch.score?.type === 'createTrackInstrument'
-    || patch.score?.type === 'replaceTrackInstrument'
-    || patch.score?.type === 'clearTrackInstrument'
-    || isScoreColorPatch(patch)
+    patch.score?.type === 'createTrackInstrument' ||
+    patch.score?.type === 'replaceTrackInstrument' ||
+    patch.score?.type === 'clearTrackInstrument' ||
+    isScoreColorPatch(patch)
   );
 }
 
@@ -123,9 +122,7 @@ function isTrackInstrumentAcknowledgementPatch(patch: ProjectDocumentPatch): boo
   return isMutationAcknowledgementPatch(patch) && !isScoreColorPatch(patch);
 }
 
-function patchesRequireMutationAcknowledgement(
-  patches: readonly ProjectDocumentPatch[],
-): boolean {
+function patchesRequireMutationAcknowledgement(patches: readonly ProjectDocumentPatch[]): boolean {
   return patches.some(isMutationAcknowledgementPatch);
 }
 
@@ -136,8 +133,9 @@ function isScoreColorPatch(patch: ProjectDocumentPatch): boolean {
   if (scorePatch.type === 'updateLayerState') {
     return scorePatch.patch.backgroundColor !== undefined;
   }
-  return scorePatch.type === 'updateSharedProperties'
-    && scorePatch.patch.backgroundColor !== undefined;
+  return (
+    scorePatch.type === 'updateSharedProperties' && scorePatch.patch.backgroundColor !== undefined
+  );
 }
 
 function hasUnacknowledgedMutation(
@@ -156,9 +154,7 @@ function hasUnacknowledgedMutation(
 
     if (colorStatuses.length !== patches.length) return true;
 
-    if (patches.some((patch, index) => (
-      isScoreColorPatch(patch) && colorStatuses[index] !== true
-    ))) {
+    if (patches.some((patch, index) => isScoreColorPatch(patch) && colorStatuses[index] !== true)) {
       return true;
     }
   }
@@ -167,10 +163,12 @@ function hasUnacknowledgedMutation(
     if (receipt.patchChanged === undefined) return receipt.changed === false;
     if (receipt.patchChanged.length !== patches.length) return true;
 
-    if (patches.some((patch, index) => (
-      isTrackInstrumentAcknowledgementPatch(patch)
-        && receipt.patchChanged?.[index] !== true
-    ))) {
+    if (
+      patches.some(
+        (patch, index) =>
+          isTrackInstrumentAcknowledgementPatch(patch) && receipt.patchChanged?.[index] !== true,
+      )
+    ) {
       return true;
     }
   }
@@ -299,7 +297,13 @@ export function createProjectPatchQueue(
     },
 
     acceptRevision(sessionId, revision) {
-      if (!Number.isInteger(sessionId) || sessionId < 0 || !Number.isInteger(revision) || revision < 0) return;
+      if (
+        !Number.isInteger(sessionId) ||
+        sessionId < 0 ||
+        !Number.isInteger(revision) ||
+        revision < 0
+      )
+        return;
       if (sessionId !== currentSessionId) {
         clearTimer();
         pending = [];

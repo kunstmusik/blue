@@ -12,7 +12,9 @@ import type {
   ScoreLayerAutomationSnapshot,
 } from '../../shared/project-editor';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 // Radix DropdownMenu relies on pointer-capture APIs that jsdom does not implement.
 beforeAll(() => {
@@ -26,9 +28,28 @@ beforeAll(() => {
 
 function buildAutomation(): ScoreLayerAutomationSnapshot {
   const targets: AutomationTargetSnapshot[] = [
-    { parameterId: 'p-avail', label: 'Freq', sourceKind: 'instrument', automationEnabled: false, assignmentState: 'available' },
-    { parameterId: 'p-current', label: 'Amp', sourceKind: 'instrument', automationEnabled: true, assignmentState: 'assignedCurrentLayer' },
-    { parameterId: 'p-other', label: 'Ch1 Level', sourceKind: 'mixer', automationEnabled: true, assignmentState: 'assignedOtherLayer', ownerLayerName: 'Layer 2' },
+    {
+      parameterId: 'p-avail',
+      label: 'Freq',
+      sourceKind: 'instrument',
+      automationEnabled: false,
+      assignmentState: 'available',
+    },
+    {
+      parameterId: 'p-current',
+      label: 'Amp',
+      sourceKind: 'instrument',
+      automationEnabled: true,
+      assignmentState: 'assignedCurrentLayer',
+    },
+    {
+      parameterId: 'p-other',
+      label: 'Ch1 Level',
+      sourceKind: 'mixer',
+      automationEnabled: true,
+      assignmentState: 'assignedOtherLayer',
+      ownerLayerName: 'Layer 2',
+    },
   ];
   return {
     layerId: 'layer-1',
@@ -66,35 +87,41 @@ function buildTrackAutomation(): ScoreLayerAutomationSnapshot {
     layerKind: 'track',
     parameterIds: [],
     parameters: [],
-    targetGroups: [{
-      groupId: 'track-channel',
-      label: 'Track Channel',
-      subGroups: [
-        {
-          groupId: 'track-channel-pre',
-          label: 'Pre-Effects',
-          subGroups: [{
-            groupId: 'pre-filter',
-            label: 'Filter',
-            subGroups: [],
-            targets: [buildTarget('pre-cutoff', 'Cutoff')],
-          }],
-          targets: [],
-        },
-        {
-          groupId: 'track-channel-post',
-          label: 'Post-Effects',
-          subGroups: [{
-            groupId: 'post-reverb',
-            label: 'Reverb',
-            subGroups: [],
-            targets: [buildTarget('post-room', 'Room Size')],
-          }],
-          targets: [],
-        },
-      ],
-      targets: [buildTarget('track-db', 'dB')],
-    }],
+    targetGroups: [
+      {
+        groupId: 'track-channel',
+        label: 'Track Channel',
+        subGroups: [
+          {
+            groupId: 'track-channel-pre',
+            label: 'Pre-Effects',
+            subGroups: [
+              {
+                groupId: 'pre-filter',
+                label: 'Filter',
+                subGroups: [],
+                targets: [buildTarget('pre-cutoff', 'Cutoff')],
+              },
+            ],
+            targets: [],
+          },
+          {
+            groupId: 'track-channel-post',
+            label: 'Post-Effects',
+            subGroups: [
+              {
+                groupId: 'post-reverb',
+                label: 'Reverb',
+                subGroups: [],
+                targets: [buildTarget('post-room', 'Room Size')],
+              },
+            ],
+            targets: [],
+          },
+        ],
+        targets: [buildTarget('track-db', 'dB')],
+      },
+    ],
     missingParameterIds: [],
   };
 }
@@ -143,63 +170,96 @@ async function clickMenuItem(label: string) {
 describe('AutomationTargetMenu', () => {
   it('renders BlueX7 catalog groups, location disambiguators, and next-note metadata', async () => {
     const automation = buildAutomation();
-    automation.targetGroups = [{
-      groupId: 'instrument',
-      label: 'Instrument',
-      targets: [],
-      subGroups: [{
-        groupId: 'instr-7',
-        label: '7) Duplicate X7',
+    automation.targetGroups = [
+      {
+        groupId: 'instrument',
+        label: 'Instrument',
         targets: [],
         subGroups: [
           {
-            groupId: 'common',
-            label: 'Common',
-            subGroups: [],
-            targets: [{
-              parameterId: 'algorithm-id',
-              label: 'Algorithm',
-              sourceKind: 'instrument',
-              automationEnabled: false,
-              assignmentState: 'available',
-              ownerIdentity: 'arrangement:7',
-              locationLabel: '7) Duplicate X7',
-              updateClass: 'next-note',
-            }],
-          },
-          {
-            groupId: 'lfo', label: 'LFO', subGroups: [], targets: [{
-              parameterId: 'lfo-id', label: 'Speed', sourceKind: 'instrument',
-              automationEnabled: false, assignmentState: 'available',
-            }],
-          },
-          {
-            groupId: 'pitch-envelope', label: 'Pitch Envelope', subGroups: [], targets: [{
-              parameterId: 'peg-id', label: 'Rate 1', sourceKind: 'instrument',
-              automationEnabled: false, assignmentState: 'available',
-            }],
-          },
-          {
-            groupId: 'operator-1', label: 'Operator 1', subGroups: [], targets: [{
-              parameterId: 'op-id', label: 'Output Level', sourceKind: 'instrument',
-              automationEnabled: false, assignmentState: 'available',
-            }],
+            groupId: 'instr-7',
+            label: '7) Duplicate X7',
+            targets: [],
+            subGroups: [
+              {
+                groupId: 'common',
+                label: 'Common',
+                subGroups: [],
+                targets: [
+                  {
+                    parameterId: 'algorithm-id',
+                    label: 'Algorithm',
+                    sourceKind: 'instrument',
+                    automationEnabled: false,
+                    assignmentState: 'available',
+                    ownerIdentity: 'arrangement:7',
+                    locationLabel: '7) Duplicate X7',
+                    updateClass: 'next-note',
+                  },
+                ],
+              },
+              {
+                groupId: 'lfo',
+                label: 'LFO',
+                subGroups: [],
+                targets: [
+                  {
+                    parameterId: 'lfo-id',
+                    label: 'Speed',
+                    sourceKind: 'instrument',
+                    automationEnabled: false,
+                    assignmentState: 'available',
+                  },
+                ],
+              },
+              {
+                groupId: 'pitch-envelope',
+                label: 'Pitch Envelope',
+                subGroups: [],
+                targets: [
+                  {
+                    parameterId: 'peg-id',
+                    label: 'Rate 1',
+                    sourceKind: 'instrument',
+                    automationEnabled: false,
+                    assignmentState: 'available',
+                  },
+                ],
+              },
+              {
+                groupId: 'operator-1',
+                label: 'Operator 1',
+                subGroups: [],
+                targets: [
+                  {
+                    parameterId: 'op-id',
+                    label: 'Output Level',
+                    sourceKind: 'instrument',
+                    automationEnabled: false,
+                    assignmentState: 'available',
+                  },
+                ],
+              },
+            ],
           },
         ],
-      }],
-    }];
+      },
+    ];
     const { container, root } = renderMenu(automation);
     const hoverSubmenu = async (label: string): Promise<void> => {
-      const item = (Array.from(document.querySelectorAll('[role="menuitem"]')) as HTMLElement[])
-        .find((candidate) => candidate.textContent?.includes(label));
+      const item = (
+        Array.from(document.querySelectorAll('[role="menuitem"]')) as HTMLElement[]
+      ).find((candidate) => candidate.textContent?.includes(label));
       expect(item).toBeTruthy();
       await act(async () => {
-        item!.dispatchEvent(new PointerEvent('pointermove', {
-          bubbles: true,
-          pointerType: 'mouse',
-          clientX: 40,
-          clientY: 20,
-        }));
+        item!.dispatchEvent(
+          new PointerEvent('pointermove', {
+            bubbles: true,
+            pointerType: 'mouse',
+            clientX: 40,
+            clientY: 20,
+          }),
+        );
         await new Promise((resolve) => setTimeout(resolve, 150));
       });
     };
@@ -226,45 +286,54 @@ describe('AutomationTargetMenu', () => {
       groupId,
       label,
       targets: [],
-      subGroups: [{
-        groupId: `${groupId}-common`,
-        label: 'Common',
-        subGroups: [],
-        targets: [{
-          parameterId,
-          label: 'Algorithm',
-          sourceKind: 'instrument',
-          automationEnabled: false,
-          assignmentState: 'available',
-          ownerIdentity: `arrangement:${groupId}`,
-          locationLabel: label,
-          updateClass: 'next-note',
-        }],
-      }],
-    });
-    automation.targetGroups = [{
-      groupId: 'instrument',
-      label: 'Instrument',
-      targets: [],
       subGroups: [
-        ownerSubgroup('7', '7) Duplicate X7', 'a7-algorithm-id'),
-        ownerSubgroup('8', '8) Duplicate X7', 'a8-algorithm-id'),
-        ownerSubgroup('9', '9) Duplicate X7', 'a9-algorithm-id'),
-        ownerSubgroup('10', '10) Duplicate X7', 'a10-algorithm-id'),
+        {
+          groupId: `${groupId}-common`,
+          label: 'Common',
+          subGroups: [],
+          targets: [
+            {
+              parameterId,
+              label: 'Algorithm',
+              sourceKind: 'instrument',
+              automationEnabled: false,
+              assignmentState: 'available',
+              ownerIdentity: `arrangement:${groupId}`,
+              locationLabel: label,
+              updateClass: 'next-note',
+            },
+          ],
+        },
       ],
-    }];
+    });
+    automation.targetGroups = [
+      {
+        groupId: 'instrument',
+        label: 'Instrument',
+        targets: [],
+        subGroups: [
+          ownerSubgroup('7', '7) Duplicate X7', 'a7-algorithm-id'),
+          ownerSubgroup('8', '8) Duplicate X7', 'a8-algorithm-id'),
+          ownerSubgroup('9', '9) Duplicate X7', 'a9-algorithm-id'),
+          ownerSubgroup('10', '10) Duplicate X7', 'a10-algorithm-id'),
+        ],
+      },
+    ];
     const { container, root } = renderMenu(automation);
     const hoverSubmenu = async (label: string): Promise<void> => {
-      const item = (Array.from(document.querySelectorAll('[role="menuitem"]')) as HTMLElement[])
-        .find((candidate) => candidate.textContent?.includes(label));
+      const item = (
+        Array.from(document.querySelectorAll('[role="menuitem"]')) as HTMLElement[]
+      ).find((candidate) => candidate.textContent?.includes(label));
       expect(item, `submenu item '${label}'`).toBeTruthy();
       await act(async () => {
-        item!.dispatchEvent(new PointerEvent('pointermove', {
-          bubbles: true,
-          pointerType: 'mouse',
-          clientX: 40,
-          clientY: 20,
-        }));
+        item!.dispatchEvent(
+          new PointerEvent('pointermove', {
+            bubbles: true,
+            pointerType: 'mouse',
+            clientX: 40,
+            clientY: 20,
+          }),
+        );
         await new Promise((resolve) => setTimeout(resolve, 150));
       });
     };
@@ -273,7 +342,12 @@ describe('AutomationTargetMenu', () => {
       // listed with pairwise-distinct location labels.
       await openMenu(container);
       const menuText = getMenuText();
-      for (const label of ['7) Duplicate X7', '8) Duplicate X7', '9) Duplicate X7', '10) Duplicate X7']) {
+      for (const label of [
+        '7) Duplicate X7',
+        '8) Duplicate X7',
+        '9) Duplicate X7',
+        '10) Duplicate X7',
+      ]) {
         expect(menuText).toContain(label);
       }
       // Interaction 2: open the last same-named owner's cascade.
@@ -416,23 +490,29 @@ describe('AutomationTargetMenu', () => {
               trigger={<button type="button">A</button>}
               automation={{
                 ...buildAutomation(),
-                targetGroups: [{
-                  groupId: 'instrument',
-                  label: 'Instrument',
-                  subGroups: [{
-                    groupId: 'instr-a1',
-                    label: '1) Synth',
-                    subGroups: [],
-                    targets: [{
-                      parameterId: 'p-nested',
-                      label: 'Freq',
-                      sourceKind: 'instrument',
-                      automationEnabled: false,
-                      assignmentState: 'available',
-                    }],
-                  }],
-                  targets: [],
-                }],
+                targetGroups: [
+                  {
+                    groupId: 'instrument',
+                    label: 'Instrument',
+                    subGroups: [
+                      {
+                        groupId: 'instr-a1',
+                        label: '1) Synth',
+                        subGroups: [],
+                        targets: [
+                          {
+                            parameterId: 'p-nested',
+                            label: 'Freq',
+                            sourceKind: 'instrument',
+                            automationEnabled: false,
+                            assignmentState: 'available',
+                          },
+                        ],
+                      },
+                    ],
+                    targets: [],
+                  },
+                ],
               }}
               layerRef={layerRef}
               onPatch={(patch: ScoreAutomationPatch) => onPatch(patch)}
@@ -445,25 +525,36 @@ describe('AutomationTargetMenu', () => {
       await openMenu(container);
 
       // Open the nested arrangement submenu the way a pointer hover would.
-      const subTrigger = (Array.from(document.querySelectorAll('[role="menuitem"]')) as HTMLElement[])
-        .find((el) => el.textContent === '1) Synth');
+      const subTrigger = (
+        Array.from(document.querySelectorAll('[role="menuitem"]')) as HTMLElement[]
+      ).find((el) => el.textContent === '1) Synth');
       expect(subTrigger).toBeTruthy();
       await act(async () => {
-        subTrigger!.dispatchEvent(new PointerEvent('pointermove', {
-          bubbles: true, pointerType: 'mouse', clientX: 40, clientY: 20,
-        }));
+        subTrigger!.dispatchEvent(
+          new PointerEvent('pointermove', {
+            bubbles: true,
+            pointerType: 'mouse',
+            clientX: 40,
+            clientY: 20,
+          }),
+        );
         await new Promise((resolve) => setTimeout(resolve, 150));
       });
 
-      const item = (Array.from(document.querySelectorAll('[role="menuitem"]')) as HTMLElement[])
-        .find((el) => el.textContent?.includes('Freq'));
+      const item = (
+        Array.from(document.querySelectorAll('[role="menuitem"]')) as HTMLElement[]
+      ).find((el) => el.textContent?.includes('Freq'));
       expect(item).toBeTruthy();
 
       // Real press sequence: pointerdown, mousedown, pointerup, mouseup, click.
       await act(async () => {
-        item!.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerType: 'mouse' }));
+        item!.dispatchEvent(
+          new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerType: 'mouse' }),
+        );
         item!.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
-        item!.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, button: 0, pointerType: 'mouse' }));
+        item!.dispatchEvent(
+          new PointerEvent('pointerup', { bubbles: true, button: 0, pointerType: 'mouse' }),
+        );
         item!.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, button: 0 }));
         item!.click();
         await Promise.resolve();

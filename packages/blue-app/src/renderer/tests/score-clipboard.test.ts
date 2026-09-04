@@ -52,16 +52,18 @@ describe('shared Score and Blue Live clipboard', () => {
 
     expect(translated).toEqual({
       ok: true,
-      entries: [{
-        source,
-        object: expect.objectContaining({
-          groupId: targetGroup.groupId,
-          layerIndex: 0,
-          startBeats: 8,
-          objectType: 'GenericScore',
-          serializedXml: source.serializedXml,
-        }),
-      }],
+      entries: [
+        {
+          source,
+          object: expect.objectContaining({
+            groupId: targetGroup.groupId,
+            layerIndex: 0,
+            startBeats: 8,
+            objectType: 'GenericScore',
+            serializedXml: source.serializedXml,
+          }),
+        },
+      ],
     });
   });
 

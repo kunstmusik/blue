@@ -29,12 +29,14 @@ describe('syncCompiledRuntimeParameterNames', () => {
 
     createProjectEditorSnapshot(data, '/tmp/test.blue');
 
-    const liveInstrumentChannel = data.getMixer().getChannels().find(
-      (channel) => channel.getAssociation() === '1',
-    );
-    const liveAudioChannel = data.getMixer().getAllSourceChannels().find(
-      (channel) => channel.getAssociation() === layer.getUniqueId(),
-    );
+    const liveInstrumentChannel = data
+      .getMixer()
+      .getChannels()
+      .find((channel) => channel.getAssociation() === '1');
+    const liveAudioChannel = data
+      .getMixer()
+      .getAllSourceChannels()
+      .find((channel) => channel.getAssociation() === layer.getUniqueId());
 
     expect(liveInstrumentChannel?.getLevelParameter().getCompilationVarName()).toBeNull();
     expect(liveAudioChannel?.getLevelParameter().getCompilationVarName()).toBeNull();
@@ -47,8 +49,12 @@ describe('syncCompiledRuntimeParameterNames', () => {
     );
 
     expect(sync.liveCount).toBe(sync.compiledCount);
-    expect(liveInstrumentChannel?.getLevelParameter().getCompilationVarName()).toMatch(/^gk_blue_auto\d+$/);
-    expect(liveAudioChannel?.getLevelParameter().getCompilationVarName()).toMatch(/^gk_blue_auto\d+$/);
+    expect(liveInstrumentChannel?.getLevelParameter().getCompilationVarName()).toMatch(
+      /^gk_blue_auto\d+$/,
+    );
+    expect(liveAudioChannel?.getLevelParameter().getCompilationVarName()).toMatch(
+      /^gk_blue_auto\d+$/,
+    );
   });
 
   it('copies Blue Live compiled BSB parameter names back to the live instrument', () => {
@@ -133,7 +139,10 @@ describe('syncCompiledRuntimeParameterNames', () => {
     expect(arrangementInstrument.getParameters()[0]!.getCompilationVarName()).toBe('gk_blue_auto0');
     expect(trackInstrument.getParameters()[0]!.getCompilationVarName()).toBe('gk_blue_auto151');
 
-    for (const parameter of [...arrangementInstrument.getParameters(), ...trackInstrument.getParameters()]) {
+    for (const parameter of [
+      ...arrangementInstrument.getParameters(),
+      ...trackInstrument.getParameters(),
+    ]) {
       parameter.setCompilationVarName('');
     }
     const rebuilt = data.toRealtimePlaybackCSD();

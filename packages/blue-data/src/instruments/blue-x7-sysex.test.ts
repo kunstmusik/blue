@@ -157,14 +157,62 @@ describe('BlueX7 SysEx Decoder — Java Parity & Binary Fixtures', () => {
 
   it('rejects malformed framing, headers, payload bytes, and checksums', () => {
     const cases: Array<[string, (bytes: Uint8Array) => void, RegExp]> = [
-      ['start byte', (bytes) => { bytes[0] = 0; }, /framing/i],
-      ['manufacturer', (bytes) => { bytes[1] = 0x42; }, /manufacturer/i],
-      ['device/channel', (bytes) => { bytes[2] = 0x10; }, /device|header/i],
-      ['format', (bytes) => { bytes[3] = 9; }, /format|header/i],
-      ['voice count', (bytes) => { bytes[4] = 32; }, /count|header/i],
-      ['payload byte range', (bytes) => { bytes[6] = 0x80; }, /7-bit|payload/i],
-      ['checksum', (bytes) => { bytes[bytes.length - 2] ^= 1; }, /checksum/i],
-      ['terminator', (bytes) => { bytes[bytes.length - 1] = 0; }, /framing/i],
+      [
+        'start byte',
+        (bytes) => {
+          bytes[0] = 0;
+        },
+        /framing/i,
+      ],
+      [
+        'manufacturer',
+        (bytes) => {
+          bytes[1] = 0x42;
+        },
+        /manufacturer/i,
+      ],
+      [
+        'device/channel',
+        (bytes) => {
+          bytes[2] = 0x10;
+        },
+        /device|header/i,
+      ],
+      [
+        'format',
+        (bytes) => {
+          bytes[3] = 9;
+        },
+        /format|header/i,
+      ],
+      [
+        'voice count',
+        (bytes) => {
+          bytes[4] = 32;
+        },
+        /count|header/i,
+      ],
+      [
+        'payload byte range',
+        (bytes) => {
+          bytes[6] = 0x80;
+        },
+        /7-bit|payload/i,
+      ],
+      [
+        'checksum',
+        (bytes) => {
+          bytes[bytes.length - 2] ^= 1;
+        },
+        /checksum/i,
+      ],
+      [
+        'terminator',
+        (bytes) => {
+          bytes[bytes.length - 1] = 0;
+        },
+        /framing/i,
+      ],
     ];
 
     for (const [label, mutate, message] of cases) {

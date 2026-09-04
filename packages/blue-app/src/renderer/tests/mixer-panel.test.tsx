@@ -22,7 +22,9 @@ declare global {
   }
 }
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 interface MockProjectState {
   loaded: boolean;
@@ -46,14 +48,12 @@ const { mockProjectState, mockUIState } = vi.hoisted(() => ({
 }));
 
 vi.mock('../stores/project-store', () => ({
-  useProjectStore: (selector: (state: MockProjectState) => unknown) =>
-    selector(mockProjectState),
+  useProjectStore: (selector: (state: MockProjectState) => unknown) => selector(mockProjectState),
   getProjectDocumentRevision: () => 0,
 }));
 
 vi.mock('../stores/ui-store', () => ({
-  useUIStore: (selector: (state: MockUIState) => unknown) =>
-    selector(mockUIState),
+  useUIStore: (selector: (state: MockUIState) => unknown) => selector(mockUIState),
 }));
 
 function seedLoadedProject(): void {
@@ -149,10 +149,7 @@ function renderPanel(): { container: HTMLDivElement; root: Root } {
 }
 
 function setTextInputValue(input: HTMLInputElement, value: string): void {
-  const valueSetter = Object.getOwnPropertyDescriptor(
-    HTMLInputElement.prototype,
-    'value',
-  )?.set;
+  const valueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
   valueSetter?.call(input, value);
   input.dispatchEvent(new Event('input', { bubbles: true }));
 }
@@ -202,7 +199,8 @@ describe('MixerPanel', () => {
 
   it('fills the available level slider height', async () => {
     seedLoadedProject();
-    const heightSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+    const heightSpy = vi
+      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
       .mockImplementation(function (this: HTMLElement) {
         if (this.classList.contains('mixer-level-slider-wrapper')) {
           return { height: 180 } as DOMRect;
@@ -218,8 +216,9 @@ describe('MixerPanel', () => {
       });
 
       expect(
-        [...container.querySelectorAll('.mixer-level-slider-wrapper svg')]
-          .map((slider) => slider.getAttribute('height')),
+        [...container.querySelectorAll('.mixer-level-slider-wrapper svg')].map((slider) =>
+          slider.getAttribute('height'),
+        ),
       ).toEqual(['180', '180']);
     } finally {
       act(() => {
@@ -233,7 +232,9 @@ describe('MixerPanel', () => {
   it('keeps only one Effect selected across all channels', () => {
     seedLoadedProjectWithEffects();
     const { container, root } = renderPanel();
-    const effectRows = [...container.querySelectorAll<HTMLElement>('[data-library-drop-target="effect-row"]')];
+    const effectRows = [
+      ...container.querySelectorAll<HTMLElement>('[data-library-drop-target="effect-row"]'),
+    ];
     expect(effectRows).toHaveLength(2);
 
     act(() => effectRows[0]!.click());
@@ -296,13 +297,13 @@ describe('MixerPanel', () => {
     const { container, root } = renderPanel();
 
     const names = Array.from(
-      container.querySelectorAll<HTMLElement>(
-        '.mixer-channel-group__strips .mixer-channel-name',
-      ),
+      container.querySelectorAll<HTMLElement>('.mixer-channel-group__strips .mixer-channel-name'),
     );
 
     expect(names.map((name) => name.textContent)).toEqual(['Track 1', 'Track 2']);
-    expect(names.every((name) => name.classList.contains('mixer-channel-name--fallback'))).toBe(true);
+    expect(names.every((name) => name.classList.contains('mixer-channel-name--fallback'))).toBe(
+      true,
+    );
 
     act(() => {
       root.unmount();

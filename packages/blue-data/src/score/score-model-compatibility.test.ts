@@ -221,7 +221,10 @@ i1 2 1 440</scoreText>
       let found = false;
       while (children.hasMoreElements()) {
         const child = children.next();
-        if (child.getName() === 'soundObject' && child.getAttribute('type') === 'blue.soundObject.PolyObject') {
+        if (
+          child.getName() === 'soundObject' &&
+          child.getAttribute('type') === 'blue.soundObject.PolyObject'
+        ) {
           found = true;
         }
       }

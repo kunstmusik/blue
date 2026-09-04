@@ -101,39 +101,41 @@ const blueCodeMirrorTheme = EditorView.theme(
   { dark: true },
 );
 
-const blueSyntaxHighlight = syntaxHighlighting(HighlightStyle.define([
-  { tag: t.keyword, color: '#c792ea' },
-  { tag: t.name, color: '#82aaff' },
-  { tag: t.deleted, color: '#82aaff' },
-  { tag: t.character, color: '#82aaff' },
-  { tag: t.propertyName, color: '#d6deeb' },
-  { tag: t.variableName, color: '#d6deeb' },
-  { tag: t.function(t.variableName), color: '#82aaff' },
-  { tag: t.function(t.propertyName), color: '#82aaff' },
-  { tag: t.literal, color: '#f78c6c' },
-  { tag: t.inserted, color: '#f78c6c' },
-  { tag: t.string, color: '#c3e88d' },
-  { tag: t.special(t.string), color: '#c3e88d' },
-  { tag: t.number, color: '#f78c6c' },
-  { tag: t.bool, color: '#f78c6c' },
-  { tag: t.null, color: '#f78c6c' },
-  { tag: t.operator, color: '#89ddff' },
-  { tag: t.paren, color: '#89ddff' },
-  { tag: t.angleBracket, color: '#89ddff' },
-  { tag: t.bracket, color: '#89ddff' },
-  { tag: t.regexp, color: '#89ddff' },
-  { tag: t.escape, color: '#89ddff' },
-  { tag: t.comment, color: '#637777', fontStyle: 'italic' },
-  { tag: t.meta, color: '#ffcb6b' },
-  { tag: t.tagName, color: '#f07178' },
-  { tag: t.attributeName, color: '#c792ea' },
-  { tag: t.attributeValue, color: '#c3e88d' },
-  { tag: t.typeName, color: '#ffcb6b' },
-  { tag: t.className, color: '#ffcb6b' },
-  { tag: t.definition(t.variableName), color: '#82aaff' },
-  { tag: t.separator, color: '#89ddff' },
-  { tag: t.special(t.variableName), color: '#ffcb6b' },
-]));
+const blueSyntaxHighlight = syntaxHighlighting(
+  HighlightStyle.define([
+    { tag: t.keyword, color: '#c792ea' },
+    { tag: t.name, color: '#82aaff' },
+    { tag: t.deleted, color: '#82aaff' },
+    { tag: t.character, color: '#82aaff' },
+    { tag: t.propertyName, color: '#d6deeb' },
+    { tag: t.variableName, color: '#d6deeb' },
+    { tag: t.function(t.variableName), color: '#82aaff' },
+    { tag: t.function(t.propertyName), color: '#82aaff' },
+    { tag: t.literal, color: '#f78c6c' },
+    { tag: t.inserted, color: '#f78c6c' },
+    { tag: t.string, color: '#c3e88d' },
+    { tag: t.special(t.string), color: '#c3e88d' },
+    { tag: t.number, color: '#f78c6c' },
+    { tag: t.bool, color: '#f78c6c' },
+    { tag: t.null, color: '#f78c6c' },
+    { tag: t.operator, color: '#89ddff' },
+    { tag: t.paren, color: '#89ddff' },
+    { tag: t.angleBracket, color: '#89ddff' },
+    { tag: t.bracket, color: '#89ddff' },
+    { tag: t.regexp, color: '#89ddff' },
+    { tag: t.escape, color: '#89ddff' },
+    { tag: t.comment, color: '#637777', fontStyle: 'italic' },
+    { tag: t.meta, color: '#ffcb6b' },
+    { tag: t.tagName, color: '#f07178' },
+    { tag: t.attributeName, color: '#c792ea' },
+    { tag: t.attributeValue, color: '#c3e88d' },
+    { tag: t.typeName, color: '#ffcb6b' },
+    { tag: t.className, color: '#ffcb6b' },
+    { tag: t.definition(t.variableName), color: '#82aaff' },
+    { tag: t.separator, color: '#89ddff' },
+    { tag: t.special(t.variableName), color: '#ffcb6b' },
+  ]),
+);
 
 export default function SelectedCodeEditor({
   value,
@@ -187,28 +189,31 @@ export default function SelectedCodeEditor({
     [onAddToCodeRepository, readOnly],
   );
 
-  const createRepositorySnippet = useCallback(async (
-    parentId: string,
-    name: string,
-    code: string,
-    expectedRevision: number,
-  ): Promise<{ ok: true } | { ok: false; error: { message: string } }> => {
-    if (!window.blueAPI?.createCodeRepositorySnippet) {
-      return {
-        ok: false,
-        error: { message: 'Code Repository is unavailable' },
-      };
-    }
-    const result = await window.blueAPI.createCodeRepositorySnippet({
-      parentId,
-      name,
-      code,
-      expectedRevision,
-    });
-    if (!result.ok) return { ok: false, error: { message: result.error.message } };
-    await useCodeRepositoryStore.getState().refresh();
-    return { ok: true };
-  }, []);
+  const createRepositorySnippet = useCallback(
+    async (
+      parentId: string,
+      name: string,
+      code: string,
+      expectedRevision: number,
+    ): Promise<{ ok: true } | { ok: false; error: { message: string } }> => {
+      if (!window.blueAPI?.createCodeRepositorySnippet) {
+        return {
+          ok: false,
+          error: { message: 'Code Repository is unavailable' },
+        };
+      }
+      const result = await window.blueAPI.createCodeRepositorySnippet({
+        parentId,
+        name,
+        code,
+        expectedRevision,
+      });
+      if (!result.ok) return { ok: false, error: { message: result.error.message } };
+      await useCodeRepositoryStore.getState().refresh();
+      return { ok: true };
+    },
+    [],
+  );
 
   const evaluateCodeEnabledRef = useRef(evaluateCodeEnabled);
   const onEvaluateCodeRef = useRef(onEvaluateCode);
@@ -245,9 +250,15 @@ export default function SelectedCodeEditor({
       EditorView.lineWrapping,
       evaluationFlashPlugin,
       editorPlaceholder(placeholder ?? ''),
-      ...(hasEvaluateCodeHandler ? [
-        createEvaluateCodeKeymapExtension(mode, () => onEvaluateCodeRef.current, () => evaluateCodeEnabledRef.current),
-      ] : []),
+      ...(hasEvaluateCodeHandler
+        ? [
+            createEvaluateCodeKeymapExtension(
+              mode,
+              () => onEvaluateCodeRef.current,
+              () => evaluateCodeEnabledRef.current,
+            ),
+          ]
+        : []),
       EditorView.updateListener.of((update) => {
         if (update.selectionSet) {
           setSelectedText(getSelectedText(update.state));
@@ -261,7 +272,11 @@ export default function SelectedCodeEditor({
       // Autocompletion is held in a Compartment so its options can be updated
       // via reconfigure() (see the effect below) without rebuilding the view.
       completionCompartment.of(
-        createCsoundCompletionExtension(dynamicCompletionProviders, javaBlueCompletionOptions, mode),
+        createCsoundCompletionExtension(
+          dynamicCompletionProviders,
+          javaBlueCompletionOptions,
+          mode,
+        ),
       ),
       ...createCsoundEditorExtensions(mode),
     ];
@@ -298,7 +313,11 @@ export default function SelectedCodeEditor({
     }
     view.dispatch({
       effects: completionCompartment.reconfigure(
-        createCsoundCompletionExtension(dynamicCompletionProviders, javaBlueCompletionOptions, mode),
+        createCsoundCompletionExtension(
+          dynamicCompletionProviders,
+          javaBlueCompletionOptions,
+          mode,
+        ),
       ),
     });
   }, [completionCompartment, dynamicCompletionProviders, javaBlueCompletionOptions, mode]);

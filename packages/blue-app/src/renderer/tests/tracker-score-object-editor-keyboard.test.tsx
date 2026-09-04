@@ -8,7 +8,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createScoreObjectEditorDocument } from '../../shared/project-editor';
 import TrackerScoreObjectEditor from '../components/workbench/panels/score-object/editors/TrackerScoreObjectEditor';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 function makeTrackerDocument() {
   const data = new BlueData();
@@ -68,9 +70,11 @@ describe('TrackerScoreObjectEditor keyboard interaction', () => {
     act(() => checkbox.click());
 
     expect(checkbox.checked).toBe(true);
-    expect(onPatch).toHaveBeenLastCalledWith(expect.objectContaining({
-      patch: { showNoteNames: true },
-    }));
+    expect(onPatch).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        patch: { showNoteNames: true },
+      }),
+    );
   });
 
   it('moves row focus with Arrow keys and toggles ties with Space from the status cell', () => {
@@ -79,10 +83,16 @@ describe('TrackerScoreObjectEditor keyboard interaction', () => {
       root.render(<TrackerScoreObjectEditor document={makeTrackerDocument()} onPatch={onPatch} />);
     });
 
-    const firstStatus = container.querySelector<HTMLInputElement>('[data-track="0"][data-col="-1"][data-step="0"]')!;
+    const firstStatus = container.querySelector<HTMLInputElement>(
+      '[data-track="0"][data-col="-1"][data-step="0"]',
+    )!;
     act(() => firstStatus.focus());
 
-    const down = new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true });
+    const down = new KeyboardEvent('keydown', {
+      key: 'ArrowDown',
+      bubbles: true,
+      cancelable: true,
+    });
     act(() => firstStatus.dispatchEvent(down));
     expect(down.defaultPrevented).toBe(true);
     expect(document.activeElement).toBe(
@@ -98,16 +108,18 @@ describe('TrackerScoreObjectEditor keyboard interaction', () => {
     });
     act(() => firstStatus.dispatchEvent(space));
     expect(space.defaultPrevented).toBe(true);
-    expect(onPatch).toHaveBeenLastCalledWith(expect.objectContaining({
-      patch: {
-        trackerAction: {
-          type: 'toggleTie',
-          trackIndex: 0,
-          stepIndex: 0,
-          columnIndex: -1,
+    expect(onPatch).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        patch: {
+          trackerAction: {
+            type: 'toggleTie',
+            trackIndex: 0,
+            stepIndex: 0,
+            columnIndex: -1,
+          },
         },
-      },
-    }));
+      }),
+    );
   });
 
   it('prevents grid-background Arrow navigation from scrolling the page', () => {
@@ -117,7 +129,11 @@ describe('TrackerScoreObjectEditor keyboard interaction', () => {
 
     const grid = container.querySelector<HTMLElement>('[aria-label="Tracker grid"]')!;
     act(() => grid.focus());
-    const down = new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true });
+    const down = new KeyboardEvent('keydown', {
+      key: 'ArrowDown',
+      bubbles: true,
+      cancelable: true,
+    });
     act(() => grid.dispatchEvent(down));
 
     expect(down.defaultPrevented).toBe(true);

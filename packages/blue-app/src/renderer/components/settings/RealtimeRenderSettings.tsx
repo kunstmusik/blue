@@ -37,7 +37,10 @@ export default function RealtimeRenderSettings({
   const [probeResult, setProbeResult] = useState<EngineProbeResult | null>(null);
   const [probing, setProbing] = useState(false);
   const [ioResult, setIoResult] = useState<CsoundIoQueryResult | null>(null);
-  const [ioLoading, setIoLoading] = useState<{ audio: boolean; midi: boolean }>({ audio: false, midi: false });
+  const [ioLoading, setIoLoading] = useState<{ audio: boolean; midi: boolean }>({
+    audio: false,
+    midi: false,
+  });
   const ioRequestGeneration = useRef<{ audio: number; midi: number }>({ audio: 0, midi: 0 });
   const set = <K extends keyof RealtimeRenderSettingsSnapshot>(
     key: K,
@@ -64,12 +67,14 @@ export default function RealtimeRenderSettings({
   const midiInputs: CsoundRuntimeDevice[] = ioResult?.report?.midiInputs ?? [];
   const midiOutputs: CsoundRuntimeDevice[] = ioResult?.report?.midiOutputs ?? [];
   const savedAudioModuleUnavailable = Boolean(
-    ioResult?.report && settings.audioDriver
-      && !ioResult.report.audioModules.some((module) => module.name === settings.audioDriver),
+    ioResult?.report &&
+    settings.audioDriver &&
+    !ioResult.report.audioModules.some((module) => module.name === settings.audioDriver),
   );
   const savedMidiModuleUnavailable = Boolean(
-    ioResult?.report && settings.midiDriver
-      && !ioResult.report.midiModules.some((module) => module.name === settings.midiDriver),
+    ioResult?.report &&
+    settings.midiDriver &&
+    !ioResult.report.midiModules.some((module) => module.name === settings.midiDriver),
   );
   const audioModuleLabel = (name: string) => {
     const label = formatCsoundRuntimeModuleOption('audio', name);
@@ -89,7 +94,9 @@ export default function RealtimeRenderSettings({
     try {
       const request = {
         enginePathOverride: usesBundledEngine ? null : externalEnginePath,
-        ...(effectiveCsoundLibraryPath.trim() ? { csoundLibraryPath: effectiveCsoundLibraryPath.trim() } : {}),
+        ...(effectiveCsoundLibraryPath.trim()
+          ? { csoundLibraryPath: effectiveCsoundLibraryPath.trim() }
+          : {}),
       };
       const result = await window.blueAPI.probeEngineRuntime(request);
       setProbeResult(result);
@@ -111,21 +118,22 @@ export default function RealtimeRenderSettings({
       if (!result || requestId !== ioRequestGeneration.current[scope]) return null;
       setIoResult((previous) => {
         if (!previous?.report || !result.report) return result;
-        const report = scope === 'audio'
-          ? {
-              ...previous.report,
-              ...result.report,
-              selectedMidiModule: previous.report.selectedMidiModule,
-              midiInputs: previous.report.midiInputs,
-              midiOutputs: previous.report.midiOutputs,
-            }
-          : {
-              ...previous.report,
-              ...result.report,
-              selectedAudioModule: previous.report.selectedAudioModule,
-              audioInputs: previous.report.audioInputs,
-              audioOutputs: previous.report.audioOutputs,
-            };
+        const report =
+          scope === 'audio'
+            ? {
+                ...previous.report,
+                ...result.report,
+                selectedMidiModule: previous.report.selectedMidiModule,
+                midiInputs: previous.report.midiInputs,
+                midiOutputs: previous.report.midiOutputs,
+              }
+            : {
+                ...previous.report,
+                ...result.report,
+                selectedAudioModule: previous.report.selectedAudioModule,
+                audioInputs: previous.report.audioInputs,
+                audioOutputs: previous.report.audioOutputs,
+              };
         return { ...result, report };
       });
       return result;
@@ -183,7 +191,9 @@ export default function RealtimeRenderSettings({
         <button
           type="button"
           disabled={probing}
-          onClick={() => { void checkEngine(); }}
+          onClick={() => {
+            void checkEngine();
+          }}
           className="rounded-md bg-app-accent px-3 py-1.5 text-role-body text-white disabled:opacity-50"
         >
           {probing ? 'Checking…' : 'Check Engine and Csound'}
@@ -201,21 +211,26 @@ export default function RealtimeRenderSettings({
         >
           <div>{probeResult.message}</div>
           {probeResult.selection && (
-            <div>Source: {probeResult.selection.source} — {probeResult.selection.executablePath}</div>
+            <div>
+              Source: {probeResult.selection.source} — {probeResult.selection.executablePath}
+            </div>
           )}
           {probeResult.report && (
             <div>
               Engine {probeResult.report.engine.engineVersion}, protocol{' '}
               {probeResult.report.engine.protocolVersion}; Csound{' '}
               {probeResult.report.csound.major ?? 'unavailable'}
-              {probeResult.report.csound.loadedPath ? ` — ${probeResult.report.csound.loadedPath}` : ''}
+              {probeResult.report.csound.loadedPath
+                ? ` — ${probeResult.report.csound.loadedPath}`
+                : ''}
             </div>
           )}
         </div>
       )}
 
       <div className="mb-4 text-role-callout text-app-text-subtle">
-        Realtime and offline work use the managed Blue Engine Csound runtime; legacy executable settings remain preserved for downgrade compatibility.
+        Realtime and offline work use the managed Blue Engine Csound runtime; legacy executable
+        settings remain preserved for downgrade compatibility.
       </div>
       <SettingsField
         label="Csound Library Override"
@@ -271,14 +286,24 @@ export default function RealtimeRenderSettings({
         value={settings.audioDriver}
         onChange={(value) => set('audioDriver', value)}
       >
-        {audioModules.length === 0 && <option value={settings.audioDriver}>{settings.audioDriver ? audioModuleLabel(settings.audioDriver) : 'Scan modules'}</option>}
-        {audioModules.map((driver) => <option key={driver} value={driver}>{audioModuleLabel(driver)}</option>)}
+        {audioModules.length === 0 && (
+          <option value={settings.audioDriver}>
+            {settings.audioDriver ? audioModuleLabel(settings.audioDriver) : 'Scan modules'}
+          </option>
+        )}
+        {audioModules.map((driver) => (
+          <option key={driver} value={driver}>
+            {audioModuleLabel(driver)}
+          </option>
+        ))}
       </SettingsSelectField>
       <div className="mb-4">
         <button
           type="button"
           disabled={ioLoading.audio}
-          onClick={() => { void queryIo('audio'); }}
+          onClick={() => {
+            void queryIo('audio');
+          }}
           className="rounded-md border border-app-border px-3 py-1.5 text-role-body text-app-text-muted hover:border-app-accent/60 disabled:cursor-default disabled:opacity-50"
         >
           {ioLoading.audio ? 'Scanning Audio Devices…' : 'Rescan Audio Devices'}
@@ -323,14 +348,24 @@ export default function RealtimeRenderSettings({
         value={settings.midiDriver}
         onChange={(value) => set('midiDriver', value)}
       >
-        {midiModules.length === 0 && <option value={settings.midiDriver}>{settings.midiDriver ? midiModuleLabel(settings.midiDriver) : 'Scan modules'}</option>}
-        {midiModules.map((driver) => <option key={driver} value={driver}>{midiModuleLabel(driver)}</option>)}
+        {midiModules.length === 0 && (
+          <option value={settings.midiDriver}>
+            {settings.midiDriver ? midiModuleLabel(settings.midiDriver) : 'Scan modules'}
+          </option>
+        )}
+        {midiModules.map((driver) => (
+          <option key={driver} value={driver}>
+            {midiModuleLabel(driver)}
+          </option>
+        ))}
       </SettingsSelectField>
       <div className="mb-4">
         <button
           type="button"
           disabled={ioLoading.midi}
-          onClick={() => { void queryIo('midi'); }}
+          onClick={() => {
+            void queryIo('midi');
+          }}
           className="rounded-md border border-app-border px-3 py-1.5 text-role-body text-app-text-muted hover:border-app-accent/60 disabled:cursor-default disabled:opacity-50"
         >
           {ioLoading.midi ? 'Scanning MIDI Devices…' : 'Rescan MIDI Devices'}
@@ -362,7 +397,8 @@ export default function RealtimeRenderSettings({
       />
 
       <div role="status" className="mb-3 text-role-callout text-app-text-muted">
-        {selectedStatus ?? 'Runtime modules and devices load automatically for the selected audio and MIDI modules. Use Rescan when devices are attached or detached.'}
+        {selectedStatus ??
+          'Runtime modules and devices load automatically for the selected audio and MIDI modules. Use Rescan when devices are attached or detached.'}
         {savedAudioModuleUnavailable ? ' — saved audio module is currently unavailable' : ''}
         {savedMidiModuleUnavailable ? ' — saved MIDI module is currently unavailable' : ''}
         {ioResult && !ioResult.ok ? ` — ${ioResult.message}` : ''}

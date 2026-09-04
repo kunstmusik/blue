@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import type { MeterMapSnapshot, MeterMapPatch } from '../../../../../shared/project-editor';
 import { parseMeterSignature, isPowerOfTwo } from './meter-map-utils';
 
-const SECONDARY_BUTTON_CLASS = 'rounded border border-app-border/40 bg-app-surface px-3 py-1 text-role-body text-app-text transition-colors hover:bg-app-hover';
+const SECONDARY_BUTTON_CLASS =
+  'rounded border border-app-border/40 bg-app-surface px-3 py-1 text-role-body text-app-text transition-colors hover:bg-app-hover';
 
 interface MeterEntryDialogProps {
   entryIndex: number;
@@ -64,17 +65,29 @@ export default function MeterEntryDialog({
       beatLength: parsed.beatLength,
     });
     onClose();
-  }, [entry.measure, isFirst, prevMeasure, nextMeasure, measure, signatureText, onMeterPatch, onClose]);
+  }, [
+    entry.measure,
+    isFirst,
+    prevMeasure,
+    nextMeasure,
+    measure,
+    signatureText,
+    onMeterPatch,
+    onClose,
+  ]);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleOk();
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      onClose();
-    }
-  }, [handleOk, onClose]);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleOk();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    },
+    [handleOk, onClose],
+  );
 
   return (
     <div
@@ -87,7 +100,9 @@ export default function MeterEntryDialog({
         onKeyDown={handleKeyDown}
       >
         <h3 className="mb-3 text-role-title-3 font-semibold text-app-text">
-          {isFirst ? 'Edit Initial Time Signature' : `Edit Time Signature at Measure ${entry.measure}`}
+          {isFirst
+            ? 'Edit Initial Time Signature'
+            : `Edit Time Signature at Measure ${entry.measure}`}
         </h3>
 
         <div className="space-y-2">
@@ -114,16 +129,11 @@ export default function MeterEntryDialog({
               placeholder="e.g. 4/4 or 7/8"
             />
           </div>
-          {error && (
-            <p className="text-role-callout text-app-danger">{error}</p>
-          )}
+          {error && <p className="text-role-callout text-app-danger">{error}</p>}
         </div>
 
         <div className="flex justify-end gap-2 mt-4">
-          <button
-            className={SECONDARY_BUTTON_CLASS}
-            onClick={onClose}
-          >
+          <button className={SECONDARY_BUTTON_CLASS} onClick={onClose}>
             Cancel
           </button>
           <button

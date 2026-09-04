@@ -71,10 +71,12 @@ vi.mock('electron', () => ({
   app: { getPath: () => '/tmp' },
   BrowserWindow: electronMock.MockBrowserWindow,
   screen: {
-    getAllDisplays: () => [{
-      bounds: { x: 0, y: 0, width: 1920, height: 1080 },
-      workArea: { x: 0, y: 0, width: 1920, height: 1080 },
-    }],
+    getAllDisplays: () => [
+      {
+        bounds: { x: 0, y: 0, width: 1920, height: 1080 },
+        workArea: { x: 0, y: 0, width: 1920, height: 1080 },
+      },
+    ],
   },
 }));
 
@@ -112,8 +114,9 @@ describe('Track instrument editor window manager', () => {
     expect(electronMock.instances[0]!.options.modal).toBe(false);
     expect(electronMock.instances[0]!.options.show).toBe(false);
     expect(electronMock.instances[0]!.options.alwaysOnTop).toBe(true);
-    expect(String(electronMock.instances[0]!.loadURL.mock.calls[0]?.[0]))
-      .toContain('rootGroupId=group-1');
+    expect(String(electronMock.instances[0]!.loadURL.mock.calls[0]?.[0])).toContain(
+      'rootGroupId=group-1',
+    );
     expect(electronMock.instances[0]!.focus).toHaveBeenCalledTimes(1);
 
     const event = { sessionId: 3, revision: 5, snapshot: {} } as never;
@@ -127,9 +130,15 @@ describe('Track instrument editor window manager', () => {
   it('closes every editor attached to a removed Track group', () => {
     const mainWindow = { isDestroyed: vi.fn(() => false) } as never;
     const fence = { projectSessionId: 3, projectRevision: 4 };
-    openTrackInstrumentEditorWindow(mainWindow, { track: { rootGroupId: 'group-1', trackId: 'track-1', ...fence } });
-    openTrackInstrumentEditorWindow(mainWindow, { track: { rootGroupId: 'group-1', trackId: 'track-2', ...fence } });
-    openTrackInstrumentEditorWindow(mainWindow, { track: { rootGroupId: 'group-2', trackId: 'track-1', ...fence } });
+    openTrackInstrumentEditorWindow(mainWindow, {
+      track: { rootGroupId: 'group-1', trackId: 'track-1', ...fence },
+    });
+    openTrackInstrumentEditorWindow(mainWindow, {
+      track: { rootGroupId: 'group-1', trackId: 'track-2', ...fence },
+    });
+    openTrackInstrumentEditorWindow(mainWindow, {
+      track: { rootGroupId: 'group-2', trackId: 'track-1', ...fence },
+    });
 
     closeTrackInstrumentEditorWindowsForGroup('group-1');
 
@@ -163,13 +172,25 @@ describe('Track instrument editor window manager', () => {
       },
     });
 
-    expect(isTrackInstrumentEditorWebContents(
-      electronMock.instances[0]!.webContents as never,
-      { track: { rootGroupId: 'group-1', trackId: 'track-1', projectSessionId: 3, projectRevision: 4 } },
-    )).toBe(true);
-    expect(isTrackInstrumentEditorWebContents(
-      electronMock.instances[0]!.webContents as never,
-      { track: { rootGroupId: 'group-2', trackId: 'track-1', projectSessionId: 3, projectRevision: 4 } },
-    )).toBe(false);
+    expect(
+      isTrackInstrumentEditorWebContents(electronMock.instances[0]!.webContents as never, {
+        track: {
+          rootGroupId: 'group-1',
+          trackId: 'track-1',
+          projectSessionId: 3,
+          projectRevision: 4,
+        },
+      }),
+    ).toBe(true);
+    expect(
+      isTrackInstrumentEditorWebContents(electronMock.instances[0]!.webContents as never, {
+        track: {
+          rootGroupId: 'group-2',
+          trackId: 'track-1',
+          projectSessionId: 3,
+          projectRevision: 4,
+        },
+      }),
+    ).toBe(false);
   });
 });

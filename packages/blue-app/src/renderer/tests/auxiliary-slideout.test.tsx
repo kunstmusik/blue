@@ -27,7 +27,9 @@ vi.mock('../components/workbench/panels/ScratchPadPanel', () => ({
   default: () => React.createElement('div', { 'data-testid': 'scratch-pad-panel' }),
 }));
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 function renderRoot(element: React.ReactElement): {
   container: HTMLDivElement;

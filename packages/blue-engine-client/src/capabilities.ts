@@ -25,10 +25,7 @@ export interface EngineCapabilities {
   features: string[];
 }
 
-export function hasEngineFeature(
-  capabilities: EngineCapabilities,
-  feature: string,
-): boolean {
+export function hasEngineFeature(capabilities: EngineCapabilities, feature: string): boolean {
   return capabilities.features.includes(feature);
 }
 
@@ -59,7 +56,10 @@ export function decodeEngineCapabilities(value: unknown): EngineCapabilities {
   if (typeof value.sourceRevision !== 'string' || value.sourceRevision.trim() === '') {
     throw new EngineCapabilitiesDecodeError('Source revision is required');
   }
-  if (!Array.isArray(value.features) || value.features.some((feature) => typeof feature !== 'string')) {
+  if (
+    !Array.isArray(value.features) ||
+    value.features.some((feature) => typeof feature !== 'string')
+  ) {
     throw new EngineCapabilitiesDecodeError('Engine features must be strings');
   }
   return {

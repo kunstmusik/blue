@@ -10,7 +10,9 @@ import ScoreObjectColorPicker, {
   type ScoreObjectColorPickerHandle,
 } from '../components/workbench/panels/score/layer-groups/ScoreObjectColorPicker';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 describe('ScoreObjectColorPicker', () => {
   let host: HTMLDivElement;
@@ -81,7 +83,9 @@ describe('ScoreObjectColorPicker', () => {
     // the popover can resolve the hosting document. Containment must NOT treat
     // the entire timeline as "inside the picker", or outside clicks never
     // dismiss it after a color is applied.
-    const popout = new JSDOM('<!doctype html><html><body><div id="timeline"><div id="an-object"></div></div></body></html>');
+    const popout = new JSDOM(
+      '<!doctype html><html><body><div id="timeline"><div id="an-object"></div></div></body></html>',
+    );
     const popoutDoc = popout.window.document;
     const timeline = popoutDoc.getElementById('timeline')!;
     const objectBehindPicker = popoutDoc.getElementById('an-object')!;
@@ -112,7 +116,9 @@ describe('ScoreObjectColorPicker', () => {
 
     // …then a mousedown on the timeline (outside the popover) must dismiss it.
     act(() => {
-      objectBehindPicker.dispatchEvent(new popout.window.MouseEvent('mousedown', { bubbles: true }));
+      objectBehindPicker.dispatchEvent(
+        new popout.window.MouseEvent('mousedown', { bubbles: true }),
+      );
     });
     expect(popoutDoc.querySelector('[role="dialog"][aria-label="Color picker"]')).toBeNull();
   });

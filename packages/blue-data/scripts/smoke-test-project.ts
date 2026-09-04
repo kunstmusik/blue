@@ -51,26 +51,80 @@ score.push(root);
 
 const BEATS_PER_MEASURE = 4;
 const sobjTypes: Array<{ name: string; obj: () => any }> = [
-  { name: 'GenericScore', obj: () => { const o = new GenericScore(); o.setScoreText('i1 0 1 440 0.5'); return o; } },
-  { name: 'PythonObject', obj: () => { const o = new PythonObject(); o.setPythonCode('# python code\nprint("hello")'); return o; } },
-  { name: 'JavaScriptObject', obj: () => { const o = new JavaScriptObject(); o.setJavaScriptCode('// js code\nconsole.log("hello")'); return o; } },
-  { name: 'Comment', obj: () => { const o = new Comment(); o.setText('This is a comment'); return o; } },
-  { name: 'External', obj: () => { const o = new External(); o.setCommandLine('echo'); o.setText('external text'); return o; } },
-  { name: 'AudioFile', obj: () => { const o = new AudioFile(); o.setSoundFileName('test.wav'); return o; } },
-  { name: 'Sound', obj: () => { const o = new Sound(); o.setComment('BSB sound'); return o; } },
+  {
+    name: 'GenericScore',
+    obj: () => {
+      const o = new GenericScore();
+      o.setScoreText('i1 0 1 440 0.5');
+      return o;
+    },
+  },
+  {
+    name: 'PythonObject',
+    obj: () => {
+      const o = new PythonObject();
+      o.setPythonCode('# python code\nprint("hello")');
+      return o;
+    },
+  },
+  {
+    name: 'JavaScriptObject',
+    obj: () => {
+      const o = new JavaScriptObject();
+      o.setJavaScriptCode('// js code\nconsole.log("hello")');
+      return o;
+    },
+  },
+  {
+    name: 'Comment',
+    obj: () => {
+      const o = new Comment();
+      o.setText('This is a comment');
+      return o;
+    },
+  },
+  {
+    name: 'External',
+    obj: () => {
+      const o = new External();
+      o.setCommandLine('echo');
+      o.setText('external text');
+      return o;
+    },
+  },
+  {
+    name: 'AudioFile',
+    obj: () => {
+      const o = new AudioFile();
+      o.setSoundFileName('test.wav');
+      return o;
+    },
+  },
+  {
+    name: 'Sound',
+    obj: () => {
+      const o = new Sound();
+      o.setComment('BSB sound');
+      return o;
+    },
+  },
   { name: 'LineObject', obj: () => new LineObject() },
   { name: 'ZakLineObject', obj: () => new ZakLineObject() },
-  { name: 'PatternObject', obj: () => { const o = new PatternObject(); return o; } },
+  {
+    name: 'PatternObject',
+    obj: () => {
+      const o = new PatternObject();
+      return o;
+    },
+  },
   { name: 'PianoRoll', obj: () => new PianoRoll() },
   { name: 'TrackerObject', obj: () => new TrackerObject() },
   { name: 'JMask', obj: () => new JMask() },
 ];
 
 const colors = [
-  0xFF6699, 0x66FF99, 0x6699FF, 0xFFCC66,
-  0xCC66FF, 0x66FFCC, 0xFF9966, 0x9966FF,
-  0x66CCFF, 0xFF66CC, 0xCCFF66, 0x66FF66,
-  0xFF6666, 0x6666FF,
+  0xff6699, 0x66ff99, 0x6699ff, 0xffcc66, 0xcc66ff, 0x66ffcc, 0xff9966, 0x9966ff, 0x66ccff,
+  0xff66cc, 0xccff66, 0x66ff66, 0xff6666, 0x6666ff,
 ];
 
 for (let i = 0; i < sobjTypes.length; i++) {
@@ -100,7 +154,9 @@ gi.labelTextColor = '0xffffffff';
 const GAP = 10;
 const WIDGET_H = 60;
 
-function row(r: number) { return r * (WIDGET_H + GAP) + GAP; }
+function row(r: number) {
+  return r * (WIDGET_H + GAP) + GAP;
+}
 
 const hslider = new BSBHSlider();
 hslider.objectName = 'volume';

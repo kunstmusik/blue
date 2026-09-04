@@ -49,9 +49,7 @@ describe('Orchestra arrangement actions', () => {
         },
       }),
     ).toBe(true);
-    expect(data.getArrangement().getInstrumentById('1')).toBeInstanceOf(
-      JavaScriptInstrument,
-    );
+    expect(data.getArrangement().getInstrumentById('1')).toBeInstanceOf(JavaScriptInstrument);
 
     expect(
       applyProjectDocumentPatch(data, {
@@ -67,9 +65,6 @@ describe('Orchestra arrangement actions', () => {
         orchestra: { type: 'convertGenericToBsb', assignmentId: '1' },
       }),
     ).toBe(true);
-    expect(data.getArrangement().getInstrumentById('1')).toBeInstanceOf(
-      BlueSynthBuilder,
-    );
+    expect(data.getArrangement().getInstrumentById('1')).toBeInstanceOf(BlueSynthBuilder);
   });
 });
-

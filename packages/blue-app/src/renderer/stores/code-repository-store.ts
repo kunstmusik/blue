@@ -7,7 +7,11 @@
 
 import { create } from 'zustand';
 import type { CodeRepositoryNode } from '@blue/data';
-import type { CodeRepositoryError, CodeRepositorySnapshot, CodeRepositoryStatus } from '../../shared/code-repository';
+import type {
+  CodeRepositoryError,
+  CodeRepositorySnapshot,
+  CodeRepositoryStatus,
+} from '../../shared/code-repository';
 
 let unsubscribeChanged: (() => void) | null = null;
 
@@ -29,7 +33,9 @@ export interface CodeRepositoryStoreState {
   importFile: () => Promise<{ ok: true } | { ok: false; error: CodeRepositoryError } | null>;
   retry: () => Promise<void>;
   reloadConflict: () => void;
-  save: (root: CodeRepositoryNode) => Promise<{ ok: true } | { ok: false; error: CodeRepositoryError }>;
+  save: (
+    root: CodeRepositoryNode,
+  ) => Promise<{ ok: true } | { ok: false; error: CodeRepositoryError }>;
 }
 
 export const useCodeRepositoryStore = create<CodeRepositoryStoreState>((set, get) => ({

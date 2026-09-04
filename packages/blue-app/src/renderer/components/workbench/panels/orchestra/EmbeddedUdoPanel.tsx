@@ -1,9 +1,6 @@
 import React, { useCallback } from 'react';
 
-import type {
-  InstrumentPatch,
-  UdoDefinitionSnapshot,
-} from '../../../../../shared/project-editor';
+import type { InstrumentPatch, UdoDefinitionSnapshot } from '../../../../../shared/project-editor';
 import { useUdoCallbacks } from '../../../../hooks/use-udo-callbacks';
 import UdoWorkspacePanel from '../udo/UdoWorkspacePanel';
 import type { UdoLibraryDropTarget } from '../udo/UdoTable';

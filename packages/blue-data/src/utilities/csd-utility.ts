@@ -162,9 +162,7 @@ export function parseCsOrc(data: BlueData, orc: string): void {
           } else if (trimLine.startsWith('sr')) {
             sr = line.substring(line.indexOf('=') + 1).trim();
           } else if (trimLine.startsWith('nchnls')) {
-            data.getProjectProperties().channels = line
-              .substring(line.indexOf('=') + 1)
-              .trim();
+            data.getProjectProperties().channels = line.substring(line.indexOf('=') + 1).trim();
           } else if (trimLine.startsWith('ksmps')) {
             ksmps = line.substring(line.indexOf('=') + 1).trim();
           } else {
@@ -259,9 +257,10 @@ export function parseCsOrc(data: BlueData, orc: string): void {
 
   if (sr != null) {
     data.getProjectProperties().sampleRate = sr;
-    data.getScore().getTimeContext().setSampleRate(
-      parseInt(sr, 10) || 44100,
-    );
+    data
+      .getScore()
+      .getTimeContext()
+      .setSampleRate(parseInt(sr, 10) || 44100);
   }
 
   if (ksmps != null) {
@@ -271,11 +270,7 @@ export function parseCsOrc(data: BlueData, orc: string): void {
   data.getGlobalOrcSco().setGlobalOrc(globalOrch);
 }
 
-export function parseCsScore(
-  data: BlueData,
-  scoreText: string,
-  importMode: CSDImportMode,
-): void {
+export function parseCsScore(data: BlueData, scoreText: string, importMode: CSDImportMode): void {
   let tables = '';
   let iStatements = '';
 
@@ -486,11 +481,7 @@ function setSoundObjectsPerInstrument(data: BlueData, section: ScoreSection): vo
 
     notes.normalizeNoteList();
 
-    const genScore = createSizedGenericScore(
-      notes.toScoreText(),
-      `Instrument ${iNum}`,
-      context,
-    );
+    const genScore = createSizedGenericScore(notes.toScoreText(), `Instrument ${iNum}`, context);
 
     genScore.setStartTime(TimePosition.beats(minStart + section.sectionStartTime));
 

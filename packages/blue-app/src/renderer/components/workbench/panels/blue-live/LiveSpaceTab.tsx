@@ -24,7 +24,7 @@ import type { LegacyBlueLiveTriggerResult } from '../../../../../shared/project-
 import type { ScoreObjectClipboardEntry } from '../../../../stores/score-selection-store';
 import { getLibraryTransferSourceType } from '../../../../../shared/unified-library';
 import { PopoutContextMenuPortal } from '../../../../hooks/host-portals';
-import { isNodeLike } from "../../../../utils/cross-realm-dom";
+import { isNodeLike } from '../../../../utils/cross-realm-dom';
 import { useHostDocument } from '../../../../hooks/use-host-document';
 
 export default function LiveSpaceTab(): React.ReactElement {
@@ -55,15 +55,21 @@ export default function LiveSpaceTab(): React.ReactElement {
   const clearScoreObjectSelection = useScoreSelectionStore((state) => state.clearSelection);
   const openPanel = useWorkbenchStore((state) => state.openPanel);
 
-  const handleToggleEnabled = useCallback((ci: number, ri: number, cell: LiveObjectCellSnapshot | null) => {
-    if (cell) {
-      applyBlueLivePatch({ type: 'setCellEnabled', column: ci, row: ri, enabled: !cell.enabled });
-    }
-  }, [applyBlueLivePatch]);
+  const handleToggleEnabled = useCallback(
+    (ci: number, ri: number, cell: LiveObjectCellSnapshot | null) => {
+      if (cell) {
+        applyBlueLivePatch({ type: 'setCellEnabled', column: ci, row: ri, enabled: !cell.enabled });
+      }
+    },
+    [applyBlueLivePatch],
+  );
 
-  const handleApplySet = useCallback((index: number) => {
-    applyBlueLivePatch({ type: 'applySet', index });
-  }, [applyBlueLivePatch]);
+  const handleApplySet = useCallback(
+    (index: number) => {
+      applyBlueLivePatch({ type: 'applySet', index });
+    },
+    [applyBlueLivePatch],
+  );
 
   const setTargetCell = useCallback((column: number, row: number) => {
     setSelectedCol(column);
@@ -71,116 +77,125 @@ export default function LiveSpaceTab(): React.ReactElement {
     rootRef.current?.focus();
   }, []);
 
-  const selectCellForEditing = useCallback((
-    column: number,
-    row: number,
-    cell: LiveObjectCellSnapshot | null,
-  ) => {
-    setTargetCell(column, row);
-    if (!cell?.hasSoundObject) {
-      clearScoreObjectSelection();
-      return;
-    }
-    selectScoreObject(
-      cell.uniqueId,
-      false,
-      createBlueLiveEditorTargetSnapshot(cell, column, row),
-    );
-    openPanel('ScoreObjectEditorTopComponent');
-  }, [clearScoreObjectSelection, openPanel, selectScoreObject, setTargetCell]);
+  const selectCellForEditing = useCallback(
+    (column: number, row: number, cell: LiveObjectCellSnapshot | null) => {
+      setTargetCell(column, row);
+      if (!cell?.hasSoundObject) {
+        clearScoreObjectSelection();
+        return;
+      }
+      selectScoreObject(
+        cell.uniqueId,
+        false,
+        createBlueLiveEditorTargetSnapshot(cell, column, row),
+      );
+      openPanel('ScoreObjectEditorTopComponent');
+    },
+    [clearScoreObjectSelection, openPanel, selectScoreObject, setTargetCell],
+  );
 
-  const clearLiveEditorSelection = useCallback((cell: LiveObjectCellSnapshot | null) => {
-    if (!cell) return;
-    const target = useScoreSelectionStore.getState().selectedObjectTarget;
-    if (
-      target?.ownerKind === 'blueLive'
-      && target.blueLive?.liveObjectId === cell.uniqueId
-    ) {
-      clearScoreObjectSelection();
-    }
-  }, [clearScoreObjectSelection]);
+  const clearLiveEditorSelection = useCallback(
+    (cell: LiveObjectCellSnapshot | null) => {
+      if (!cell) return;
+      const target = useScoreSelectionStore.getState().selectedObjectTarget;
+      if (target?.ownerKind === 'blueLive' && target.blueLive?.liveObjectId === cell.uniqueId) {
+        clearScoreObjectSelection();
+      }
+    },
+    [clearScoreObjectSelection],
+  );
 
-  const addSoundObject = useCallback((
-    column: number,
-    row: number,
-    objectType: BlueLiveSoundObjectType,
-    currentCell: LiveObjectCellSnapshot | null,
-  ) => {
-    const cell = createLiveObjectCellSnapshot({ objectType });
-    if (cell) {
-      clearLiveEditorSelection(currentCell);
-      applyBlueLivePatch({ type: 'setCell', column, row, cell });
-    }
-  }, [applyBlueLivePatch, clearLiveEditorSelection]);
-
-  const copyCell = useCallback(async (cell: LiveObjectCellSnapshot | null): Promise<boolean> => {
-    const entry = createScoreClipboardEntry(cell);
-    if (!entry || !cell) return false;
-    const captured = await captureBlueLiveSoundObject({
-      projectSessionId,
-      projectRevision,
-      liveObjectId: cell.uniqueId,
-    });
-    if (!captured) return false;
-    copyScoreObjects([entry]);
-    return true;
-  }, [captureBlueLiveSoundObject, copyScoreObjects, projectRevision, projectSessionId]);
-
-  const cutCell = useCallback(async (
-    column: number,
-    row: number,
-    cell: LiveObjectCellSnapshot | null,
-  ) => {
-    if (await copyCell(cell)) {
-      clearLiveEditorSelection(cell);
-      applyBlueLivePatch({ type: 'setCell', column, row, cell: null });
-    }
-  }, [applyBlueLivePatch, clearLiveEditorSelection, copyCell]);
-
-  const pasteCell = useCallback((
-    column: number,
-    row: number,
-    currentCell: LiveObjectCellSnapshot | null,
-  ) => {
-    const entry = getPasteableBlueLiveEntry(scoreObjectClipboard);
-    if (entry?.serializedXml) {
-      const cell = createLiveObjectCellSnapshot({
-        objectType: entry.objectType,
-        serializedXml: entry.serializedXml,
-      });
+  const addSoundObject = useCallback(
+    (
+      column: number,
+      row: number,
+      objectType: BlueLiveSoundObjectType,
+      currentCell: LiveObjectCellSnapshot | null,
+    ) => {
+      const cell = createLiveObjectCellSnapshot({ objectType });
       if (cell) {
         clearLiveEditorSelection(currentCell);
         applyBlueLivePatch({ type: 'setCell', column, row, cell });
       }
-      return;
-    }
-    if (!libraryClipboard || getLibraryTransferSourceType(libraryClipboard.source) !== 'soundObject') return;
-    void transferLibraryItem(
-      { kind: 'clipboard', source: libraryClipboard.source },
-      {
-        kind: 'blueLive',
+    },
+    [applyBlueLivePatch, clearLiveEditorSelection],
+  );
+
+  const copyCell = useCallback(
+    async (cell: LiveObjectCellSnapshot | null): Promise<boolean> => {
+      const entry = createScoreClipboardEntry(cell);
+      if (!entry || !cell) return false;
+      const captured = await captureBlueLiveSoundObject({
         projectSessionId,
         projectRevision,
-        liveCell: {
-          column,
-          row,
-          expectedLiveObjectId: currentCell?.uniqueId ?? null,
-        },
-      },
-    );
-  }, [
-    applyBlueLivePatch,
-    clearLiveEditorSelection,
-    libraryClipboard,
-    projectRevision,
-    projectSessionId,
-    scoreObjectClipboard,
-    transferLibraryItem,
-  ]);
+        liveObjectId: cell.uniqueId,
+      });
+      if (!captured) return false;
+      copyScoreObjects([entry]);
+      return true;
+    },
+    [captureBlueLiveSoundObject, copyScoreObjects, projectRevision, projectSessionId],
+  );
 
-  const canPasteCell = getPasteableBlueLiveEntry(scoreObjectClipboard) !== null
-    || Boolean(libraryClipboard
-      && getLibraryTransferSourceType(libraryClipboard.source) === 'soundObject');
+  const cutCell = useCallback(
+    async (column: number, row: number, cell: LiveObjectCellSnapshot | null) => {
+      if (await copyCell(cell)) {
+        clearLiveEditorSelection(cell);
+        applyBlueLivePatch({ type: 'setCell', column, row, cell: null });
+      }
+    },
+    [applyBlueLivePatch, clearLiveEditorSelection, copyCell],
+  );
+
+  const pasteCell = useCallback(
+    (column: number, row: number, currentCell: LiveObjectCellSnapshot | null) => {
+      const entry = getPasteableBlueLiveEntry(scoreObjectClipboard);
+      if (entry?.serializedXml) {
+        const cell = createLiveObjectCellSnapshot({
+          objectType: entry.objectType,
+          serializedXml: entry.serializedXml,
+        });
+        if (cell) {
+          clearLiveEditorSelection(currentCell);
+          applyBlueLivePatch({ type: 'setCell', column, row, cell });
+        }
+        return;
+      }
+      if (
+        !libraryClipboard ||
+        getLibraryTransferSourceType(libraryClipboard.source) !== 'soundObject'
+      )
+        return;
+      void transferLibraryItem(
+        { kind: 'clipboard', source: libraryClipboard.source },
+        {
+          kind: 'blueLive',
+          projectSessionId,
+          projectRevision,
+          liveCell: {
+            column,
+            row,
+            expectedLiveObjectId: currentCell?.uniqueId ?? null,
+          },
+        },
+      );
+    },
+    [
+      applyBlueLivePatch,
+      clearLiveEditorSelection,
+      libraryClipboard,
+      projectRevision,
+      projectSessionId,
+      scoreObjectClipboard,
+      transferLibraryItem,
+    ],
+  );
+
+  const canPasteCell =
+    getPasteableBlueLiveEntry(scoreObjectClipboard) !== null ||
+    Boolean(
+      libraryClipboard && getLibraryTransferSourceType(libraryClipboard.source) === 'soundObject',
+    );
 
   const hoveredSetIds = useMemo(() => {
     if (hoveredSetIndex < 0 || !blueLive) return new Set<string>();
@@ -191,47 +206,59 @@ export default function LiveSpaceTab(): React.ReactElement {
   const isTriggerBusy = triggerFeedback.status === 'busy';
   const canTrigger = loaded && blueLiveRunning && !isTriggerBusy;
 
-  const runTrigger = useCallback(async (mode: 'selected' | 'enabled') => {
-    if (!canTrigger) return;
-    if (mode === 'selected') {
-      const cell = selectedCol >= 0 && selectedRow >= 0
-        ? blueLive?.bins.cells[selectedCol]?.[selectedRow] ?? null
-        : null;
-      if (!cell || !cell.hasSoundObject) return;
-    }
+  const runTrigger = useCallback(
+    async (mode: 'selected' | 'enabled') => {
+      if (!canTrigger) return;
+      if (mode === 'selected') {
+        const cell =
+          selectedCol >= 0 && selectedRow >= 0
+            ? (blueLive?.bins.cells[selectedCol]?.[selectedRow] ?? null)
+            : null;
+        if (!cell || !cell.hasSoundObject) return;
+      }
 
-    // Flush pending project patches so the trigger uses the latest
-    // acknowledged canonical state. A failed flush rejects and the trigger
-    // is not attempted.
-    try {
-      await flushPendingPatches();
-    } catch {
-      setTriggerResult({ status: 'error', message: 'Could not apply pending edits before trigger' });
-      return;
-    }
+      // Flush pending project patches so the trigger uses the latest
+      // acknowledged canonical state. A failed flush rejects and the trigger
+      // is not attempted.
+      try {
+        await flushPendingPatches();
+      } catch {
+        setTriggerResult({
+          status: 'error',
+          message: 'Could not apply pending edits before trigger',
+        });
+        return;
+      }
 
-    setTriggerBusy();
-    try {
-      const request = mode === 'selected'
-        ? { mode: 'selected' as const, liveObjectId: blueLive!.bins.cells[selectedCol]?.[selectedRow]?.uniqueId ?? '' }
-        : { mode: 'enabled' as const };
-      const result: LegacyBlueLiveTriggerResult = await window.blueAPI.triggerBlueLiveObjects(request);
-      mapTriggerResultToFeedback(result, setTriggerResult);
-    } catch (err) {
-      setTriggerResult({
-        status: 'error',
-        message: err instanceof Error ? err.message : String(err),
-      });
-    }
-  }, [
-    canTrigger,
-    selectedCol,
-    selectedRow,
-    blueLive,
-    flushPendingPatches,
-    setTriggerBusy,
-    setTriggerResult,
-  ]);
+      setTriggerBusy();
+      try {
+        const request =
+          mode === 'selected'
+            ? {
+                mode: 'selected' as const,
+                liveObjectId: blueLive!.bins.cells[selectedCol]?.[selectedRow]?.uniqueId ?? '',
+              }
+            : { mode: 'enabled' as const };
+        const result: LegacyBlueLiveTriggerResult =
+          await window.blueAPI.triggerBlueLiveObjects(request);
+        mapTriggerResultToFeedback(result, setTriggerResult);
+      } catch (err) {
+        setTriggerResult({
+          status: 'error',
+          message: err instanceof Error ? err.message : String(err),
+        });
+      }
+    },
+    [
+      canTrigger,
+      selectedCol,
+      selectedRow,
+      blueLive,
+      flushPendingPatches,
+      setTriggerBusy,
+      setTriggerResult,
+    ],
+  );
 
   // Platform-appropriate Command/Ctrl+T (selected) and Command/Ctrl+Shift+T (enabled).
   const shortcutHostDocument = useHostDocument();
@@ -270,7 +297,11 @@ export default function LiveSpaceTab(): React.ReactElement {
   }, [triggerFeedback.status, triggerFeedback.token, clearTrigger]);
 
   if (!loaded || !blueLive) {
-    return <div style={{ color: 'var(--color-app-text-muted)', padding: '12px' }}>No project loaded.</div>;
+    return (
+      <div style={{ color: 'var(--color-app-text-muted)', padding: '12px' }}>
+        No project loaded.
+      </div>
+    );
   }
 
   const { bins, sets, tempo, repeat, repeatEnabled } = blueLive;
@@ -283,23 +314,32 @@ export default function LiveSpaceTab(): React.ReactElement {
       style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
     >
       {/* Toolbar */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-        padding: '6px 8px',
-        borderBottom: '1px solid var(--color-app-border)',
-        background: 'var(--color-app-surface)',
-        flexShrink: 0,
-        flexWrap: 'wrap',
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          padding: '6px 8px',
+          borderBottom: '1px solid var(--color-app-border)',
+          background: 'var(--color-app-surface)',
+          flexShrink: 0,
+          flexWrap: 'wrap',
+        }}
+      >
         <label style={toolbarLabelStyle}>
           Tempo
           <input
             type="number"
-            min={1} max={300} step={1}
+            min={1}
+            max={300}
+            step={1}
             value={tempo}
-            onChange={(e) => applyBlueLivePatch({ type: 'updateTempoRepeat', patch: { tempo: Number(e.target.value) } })}
+            onChange={(e) =>
+              applyBlueLivePatch({
+                type: 'updateTempoRepeat',
+                patch: { tempo: Number(e.target.value) },
+              })
+            }
             style={spinnerStyle}
           />
         </label>
@@ -307,18 +347,32 @@ export default function LiveSpaceTab(): React.ReactElement {
           Repeat
           <input
             type="number"
-            min={1} max={256} step={1}
+            min={1}
+            max={256}
+            step={1}
             value={repeat}
-            onChange={(e) => applyBlueLivePatch({ type: 'updateTempoRepeat', patch: { repeat: Number(e.target.value) } })}
+            onChange={(e) =>
+              applyBlueLivePatch({
+                type: 'updateTempoRepeat',
+                patch: { repeat: Number(e.target.value) },
+              })
+            }
             style={spinnerStyle}
           />
         </label>
         <button
           type="button"
-          onClick={() => applyBlueLivePatch({ type: 'updateTempoRepeat', patch: { repeatEnabled: !repeatEnabled } })}
+          onClick={() =>
+            applyBlueLivePatch({
+              type: 'updateTempoRepeat',
+              patch: { repeatEnabled: !repeatEnabled },
+            })
+          }
           style={{
             ...toolbarBtnStyle,
-            background: repeatEnabled ? 'var(--color-app-accent)' : 'var(--color-app-surface-strong)',
+            background: repeatEnabled
+              ? 'var(--color-app-accent)'
+              : 'var(--color-app-surface-strong)',
             color: repeatEnabled ? 'var(--color-app-text-strong)' : 'var(--color-app-text-muted)',
           }}
           title="Audible global Repeat is deferred in this release; values remain editable and preserved"
@@ -328,10 +382,23 @@ export default function LiveSpaceTab(): React.ReactElement {
         <button
           type="button"
           onClick={() => void runTrigger('selected')}
-          disabled={!canTrigger || !(selectedCol >= 0 && selectedRow >= 0 && bins.cells[selectedCol]?.[selectedRow]?.hasSoundObject)}
+          disabled={
+            !canTrigger ||
+            !(
+              selectedCol >= 0 &&
+              selectedRow >= 0 &&
+              bins.cells[selectedCol]?.[selectedRow]?.hasSoundObject
+            )
+          }
           style={{
             ...toolbarBtnStyle,
-            opacity: (canTrigger && selectedCol >= 0 && selectedRow >= 0 && bins.cells[selectedCol]?.[selectedRow]?.hasSoundObject) ? 1 : 0.5,
+            opacity:
+              canTrigger &&
+              selectedCol >= 0 &&
+              selectedRow >= 0 &&
+              bins.cells[selectedCol]?.[selectedRow]?.hasSoundObject
+                ? 1
+                : 0.5,
             cursor: canTrigger ? 'pointer' : 'not-allowed',
           }}
           title="Trigger selected cell (⌘/Ctrl+T)"
@@ -352,21 +419,26 @@ export default function LiveSpaceTab(): React.ReactElement {
           Trigger
         </button>
         {triggerFeedback.status !== 'idle' && (
-          <span style={{
-            fontSize: 'var(--text-role-callout)',
-            lineHeight: 'var(--text-role-callout--line-height)',
-            color: triggerFeedback.status === 'error'
-              ? 'var(--color-app-error)'
-              : triggerFeedback.status === 'submitted'
-                ? 'var(--color-app-success, var(--color-app-text-muted))'
-                : 'var(--color-app-text-muted)',
-          }}>
-            {triggerFeedback.message || (
-              triggerFeedback.status === 'busy' ? 'Triggering…'
-                : triggerFeedback.status === 'submitted' ? 'Submitted'
-                : triggerFeedback.status === 'empty' ? 'No targets'
-                : ''
-            )}
+          <span
+            style={{
+              fontSize: 'var(--text-role-callout)',
+              lineHeight: 'var(--text-role-callout--line-height)',
+              color:
+                triggerFeedback.status === 'error'
+                  ? 'var(--color-app-error)'
+                  : triggerFeedback.status === 'submitted'
+                    ? 'var(--color-app-success, var(--color-app-text-muted))'
+                    : 'var(--color-app-text-muted)',
+            }}
+          >
+            {triggerFeedback.message ||
+              (triggerFeedback.status === 'busy'
+                ? 'Triggering…'
+                : triggerFeedback.status === 'submitted'
+                  ? 'Submitted'
+                  : triggerFeedback.status === 'empty'
+                    ? 'No targets'
+                    : '')}
           </span>
         )}
       </div>
@@ -374,37 +446,49 @@ export default function LiveSpaceTab(): React.ReactElement {
       {/* Split: Saved Sets | Grid */}
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
         {/* Saved Sets sidebar */}
-        <div style={{
-          width: '140px',
-          flexShrink: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          borderRight: '1px solid var(--color-app-border)',
-          background: 'var(--color-app-surface)',
-        }}>
-          <div style={{
-            padding: '4px 8px',
-            fontSize: 'var(--text-role-headline)',
-            lineHeight: 'var(--text-role-headline--line-height)',
-            color: 'var(--color-app-text-muted)',
-            borderBottom: '1px solid var(--color-app-border)',
-            fontWeight: 700,
-          }} data-blue-live-saved-sets-heading>
+        <div
+          style={{
+            width: '140px',
+            flexShrink: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            borderRight: '1px solid var(--color-app-border)',
+            background: 'var(--color-app-surface)',
+          }}
+        >
+          <div
+            style={{
+              padding: '4px 8px',
+              fontSize: 'var(--text-role-headline)',
+              lineHeight: 'var(--text-role-headline--line-height)',
+              color: 'var(--color-app-text-muted)',
+              borderBottom: '1px solid var(--color-app-border)',
+              fontWeight: 700,
+            }}
+            data-blue-live-saved-sets-heading
+          >
             Saved Sets
           </div>
           <div style={{ flex: 1, overflow: 'auto', background: '#000000' }}>
             {sets.length === 0 && (
-              <div style={{
-                padding: '8px',
-                fontSize: 'var(--text-role-callout)',
-                lineHeight: 'var(--text-role-callout--line-height)',
-                color: 'var(--color-app-text-subtle)',
-              }}>No saved sets</div>
+              <div
+                style={{
+                  padding: '8px',
+                  fontSize: 'var(--text-role-callout)',
+                  lineHeight: 'var(--text-role-callout--line-height)',
+                  color: 'var(--color-app-text-subtle)',
+                }}
+              >
+                No saved sets
+              </div>
             )}
             {sets.map((set, i) => (
               <div
                 key={i}
-                onClick={() => { setSelectedSetIndex(i); handleApplySet(i); }}
+                onClick={() => {
+                  setSelectedSetIndex(i);
+                  handleApplySet(i);
+                }}
                 onMouseEnter={() => setHoveredSetIndex(i)}
                 onMouseLeave={() => setHoveredSetIndex(-1)}
                 style={{
@@ -413,8 +497,14 @@ export default function LiveSpaceTab(): React.ReactElement {
                   lineHeight: 'var(--text-role-body--line-height)',
                   cursor: 'pointer',
                   background: selectedSetIndex === i ? 'var(--color-app-accent-muted)' : undefined,
-                  color: selectedSetIndex === i ? 'var(--color-app-text-strong)' : 'var(--color-app-text-muted)',
-                  borderLeft: selectedSetIndex === i ? '2px solid var(--color-app-accent)' : '2px solid transparent',
+                  color:
+                    selectedSetIndex === i
+                      ? 'var(--color-app-text-strong)'
+                      : 'var(--color-app-text-muted)',
+                  borderLeft:
+                    selectedSetIndex === i
+                      ? '2px solid var(--color-app-accent)'
+                      : '2px solid transparent',
                 }}
                 title={set.name}
               >
@@ -422,47 +512,94 @@ export default function LiveSpaceTab(): React.ReactElement {
               </div>
             ))}
           </div>
-          <div style={{
-            display: 'flex',
-            gap: '2px',
-            padding: '4px',
-            borderTop: '1px solid var(--color-app-border)',
-          }}>
-            <button type="button" onClick={() => {
-              if (selectedSetIndex > 0) applyBlueLivePatch({ type: 'moveSet', from: selectedSetIndex, to: selectedSetIndex - 1 });
-            }} style={setBtnStyle} title="Move up">↑</button>
-            <button type="button" onClick={() => {
-              if (selectedSetIndex >= 0 && selectedSetIndex < sets.length - 1) applyBlueLivePatch({ type: 'moveSet', from: selectedSetIndex, to: selectedSetIndex + 1 });
-            }} style={setBtnStyle} title="Move down">↓</button>
-            <button type="button" onClick={() => applyBlueLivePatch({ type: 'captureEnabledSet' })} style={setBtnStyle} title="Capture current enabled state">+</button>
-            <button type="button" onClick={() => {
-              if (selectedSetIndex >= 0) applyBlueLivePatch({ type: 'removeSet', index: selectedSetIndex });
-            }} style={setBtnStyle} title="Remove selected set">−</button>
+          <div
+            style={{
+              display: 'flex',
+              gap: '2px',
+              padding: '4px',
+              borderTop: '1px solid var(--color-app-border)',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                if (selectedSetIndex > 0)
+                  applyBlueLivePatch({
+                    type: 'moveSet',
+                    from: selectedSetIndex,
+                    to: selectedSetIndex - 1,
+                  });
+              }}
+              style={setBtnStyle}
+              title="Move up"
+            >
+              ↑
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (selectedSetIndex >= 0 && selectedSetIndex < sets.length - 1)
+                  applyBlueLivePatch({
+                    type: 'moveSet',
+                    from: selectedSetIndex,
+                    to: selectedSetIndex + 1,
+                  });
+              }}
+              style={setBtnStyle}
+              title="Move down"
+            >
+              ↓
+            </button>
+            <button
+              type="button"
+              onClick={() => applyBlueLivePatch({ type: 'captureEnabledSet' })}
+              style={setBtnStyle}
+              title="Capture current enabled state"
+            >
+              +
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (selectedSetIndex >= 0)
+                  applyBlueLivePatch({ type: 'removeSet', index: selectedSetIndex });
+              }}
+              style={setBtnStyle}
+              title="Remove selected set"
+            >
+              −
+            </button>
           </div>
         </div>
 
         {/* Live Object Grid */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {/* Column headers */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: `32px repeat(${bins.columns}, 1fr)`,
-            gap: '1px',
-            padding: '0 4px',
-            borderBottom: '1px solid var(--color-app-border)',
-            background: 'var(--color-app-surface)',
-            flexShrink: 0,
-          }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: `32px repeat(${bins.columns}, 1fr)`,
+              gap: '1px',
+              padding: '0 4px',
+              borderBottom: '1px solid var(--color-app-border)',
+              background: 'var(--color-app-surface)',
+              flexShrink: 0,
+            }}
+          >
             <div style={{ width: '32px' }} />
             {Array.from({ length: bins.columns }, (_, ci) => (
-              <div key={ci} data-blue-live-column-header style={{
-                textAlign: 'center',
-                fontSize: 'var(--text-role-headline)',
-                lineHeight: 'var(--text-role-headline--line-height)',
-                color: 'var(--color-app-text-subtle)',
-                padding: '2px 0',
-                fontWeight: 700,
-              }}>
+              <div
+                key={ci}
+                data-blue-live-column-header
+                style={{
+                  textAlign: 'center',
+                  fontSize: 'var(--text-role-headline)',
+                  lineHeight: 'var(--text-role-headline--line-height)',
+                  color: 'var(--color-app-text-subtle)',
+                  padding: '2px 0',
+                  fontWeight: 700,
+                }}
+              >
                 {ci + 1}
               </div>
             ))}
@@ -470,23 +607,28 @@ export default function LiveSpaceTab(): React.ReactElement {
 
           {/* Grid rows */}
           <div style={{ flex: 1, overflow: 'auto', padding: '0 4px', background: '#000000' }}>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: `32px repeat(${bins.columns}, 1fr)`,
-              gridTemplateRows: `repeat(${bins.rows}, 24px)`,
-              gap: '1px',
-            }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: `32px repeat(${bins.columns}, 1fr)`,
+                gridTemplateRows: `repeat(${bins.rows}, 24px)`,
+                gap: '1px',
+              }}
+            >
               {Array.from({ length: bins.rows }, (_, ri) => (
                 <React.Fragment key={ri}>
                   {/* Row label */}
-                  <div data-blue-live-row-label style={{
-                    fontSize: 'var(--text-role-subheadline)',
-                    lineHeight: 'var(--text-role-subheadline--line-height)',
-                    color: 'var(--color-app-text-subtle)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}>
+                  <div
+                    data-blue-live-row-label
+                    style={{
+                      fontSize: 'var(--text-role-subheadline)',
+                      lineHeight: 'var(--text-role-subheadline--line-height)',
+                      color: 'var(--color-app-text-subtle)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
                     {ri + 1}
                   </div>
                   {/* Cells */}
@@ -514,13 +656,17 @@ export default function LiveSpaceTab(): React.ReactElement {
                               lineHeight: 'var(--text-role-body--line-height)',
                               cursor: 'pointer',
                               borderRadius: '2px',
-                              border: isSelected ? '1px solid var(--color-app-text-strong)' : '1px solid var(--color-app-border)',
+                              border: isSelected
+                                ? '1px solid var(--color-app-text-strong)'
+                                : '1px solid var(--color-app-border)',
                               background: cell?.enabled
                                 ? 'var(--color-app-warning)'
                                 : isHoveredSet
                                   ? 'var(--color-app-outline-strong)'
                                   : '#000000',
-                              color: cell?.enabled ? 'var(--color-app-canvas)' : 'var(--color-app-text-subtle)',
+                              color: cell?.enabled
+                                ? 'var(--color-app-canvas)'
+                                : 'var(--color-app-text-subtle)',
                               fontWeight: cell?.enabled ? 500 : 400,
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
@@ -528,7 +674,11 @@ export default function LiveSpaceTab(): React.ReactElement {
                               padding: '0 4px',
                               transition: 'background 0.1s',
                             }}
-                            title={cell ? `${cell.displayName || 'empty'} — double-click to ${cell.enabled ? 'disable' : 'enable'}` : `(${ci + 1}, ${ri + 1})`}
+                            title={
+                              cell
+                                ? `${cell.displayName || 'empty'} — double-click to ${cell.enabled ? 'disable' : 'enable'}`
+                                : `(${ci + 1}, ${ri + 1})`
+                            }
                           >
                             {cell?.displayName || ''}
                           </div>
@@ -576,14 +726,18 @@ export default function LiveSpaceTab(): React.ReactElement {
                             <ContextMenu.Item
                               className="editor-context-menu__item"
                               disabled={!cell}
-                              onSelect={() => { void cutCell(ci, ri, cell); }}
+                              onSelect={() => {
+                                void cutCell(ci, ri, cell);
+                              }}
                             >
                               Cut
                             </ContextMenu.Item>
                             <ContextMenu.Item
                               className="editor-context-menu__item"
                               disabled={!cell}
-                              onSelect={() => { void copyCell(cell); }}
+                              onSelect={() => {
+                                void copyCell(cell);
+                              }}
                             >
                               Copy
                             </ContextMenu.Item>
@@ -603,7 +757,9 @@ export default function LiveSpaceTab(): React.ReactElement {
                             </ContextMenu.Item>
                             <ContextMenu.Item
                               className="editor-context-menu__item"
-                              onSelect={() => applyBlueLivePatch({ type: 'insertRow', index: ri + 1 })}
+                              onSelect={() =>
+                                applyBlueLivePatch({ type: 'insertRow', index: ri + 1 })
+                              }
                             >
                               Insert Row After
                             </ContextMenu.Item>
@@ -617,20 +773,26 @@ export default function LiveSpaceTab(): React.ReactElement {
                             <ContextMenu.Separator className="editor-context-menu__separator" />
                             <ContextMenu.Item
                               className="editor-context-menu__item"
-                              onSelect={() => applyBlueLivePatch({ type: 'insertColumn', index: ci })}
+                              onSelect={() =>
+                                applyBlueLivePatch({ type: 'insertColumn', index: ci })
+                              }
                             >
                               Insert Column Before
                             </ContextMenu.Item>
                             <ContextMenu.Item
                               className="editor-context-menu__item"
-                              onSelect={() => applyBlueLivePatch({ type: 'insertColumn', index: ci + 1 })}
+                              onSelect={() =>
+                                applyBlueLivePatch({ type: 'insertColumn', index: ci + 1 })
+                              }
                             >
                               Insert Column After
                             </ContextMenu.Item>
                             <ContextMenu.Item
                               className="editor-context-menu__item"
                               disabled={bins.columns <= 1}
-                              onSelect={() => applyBlueLivePatch({ type: 'removeColumn', index: ci })}
+                              onSelect={() =>
+                                applyBlueLivePatch({ type: 'removeColumn', index: ci })
+                              }
                             >
                               Remove Column
                             </ContextMenu.Item>
@@ -653,10 +815,12 @@ export function isEditableShortcutTarget(target: EventTarget | null): boolean {
   // Structural check: popout-realm nodes fail instanceof HTMLElement.
   const el = target as HTMLElement | null;
   if (!isNodeLike(el)) return false;
-  return el.isContentEditable
-    || el.tagName === 'INPUT'
-    || el.tagName === 'TEXTAREA'
-    || el.tagName === 'SELECT';
+  return (
+    el.isContentEditable ||
+    el.tagName === 'INPUT' ||
+    el.tagName === 'TEXTAREA' ||
+    el.tagName === 'SELECT'
+  );
 }
 
 const toolbarLabelStyle: React.CSSProperties = {
@@ -722,9 +886,10 @@ function mapTriggerResultToFeedback(
   if (result.status === 'empty') {
     setTriggerResult({
       status: 'empty',
-      message: result.targetCount > 0
-        ? 'Selected cells generated no notes'
-        : 'No enabled cells to trigger',
+      message:
+        result.targetCount > 0
+          ? 'Selected cells generated no notes'
+          : 'No enabled cells to trigger',
     });
     return;
   }
@@ -777,10 +942,7 @@ function createLiveObjectCellSnapshot(args: {
 function createScoreClipboardEntry(
   cell: LiveObjectCellSnapshot | null,
 ): ScoreObjectClipboardEntry | null {
-  if (
-    !cell?.serializedXml
-    || !cell.hasSoundObject
-  ) {
+  if (!cell?.serializedXml || !cell.hasSoundObject) {
     return null;
   }
   return {
@@ -804,7 +966,5 @@ function getPasteableBlueLiveEntry(
 ): ScoreObjectClipboardEntry | null {
   if (clipboard.length !== 1) return null;
   const entry = clipboard[0];
-  return entry?.serializedXml && isBlueLiveSoundObjectType(entry.objectType)
-    ? entry
-    : null;
+  return entry?.serializedXml && isBlueLiveSoundObjectType(entry.objectType) ? entry : null;
 }

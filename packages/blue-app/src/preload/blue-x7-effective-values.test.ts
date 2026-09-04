@@ -10,18 +10,18 @@ vi.mock('electron', () => ({
 }));
 
 type PreloadBridge = {
-  getBlueX7EffectiveValues: (
-    request: unknown,
-  ) => Promise<unknown>;
+  getBlueX7EffectiveValues: (request: unknown) => Promise<unknown>;
 };
 
 async function loadBridge(): Promise<PreloadBridge> {
   vi.resetModules();
   await import('./preload');
   const { contextBridge } = await import('electron');
-  const calls = (contextBridge as unknown as {
-    exposeInMainWorld: ReturnType<typeof vi.fn>;
-  }).exposeInMainWorld.mock.calls;
+  const calls = (
+    contextBridge as unknown as {
+      exposeInMainWorld: ReturnType<typeof vi.fn>;
+    }
+  ).exposeInMainWorld.mock.calls;
   const bridge = calls.find(([name]) => name === 'blueAPI')?.[1] as PreloadBridge;
   if (!bridge) throw new Error('blueAPI bridge was not exposed');
   return bridge;

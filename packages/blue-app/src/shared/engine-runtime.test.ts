@@ -35,22 +35,28 @@ describe('engine runtime shared contract', () => {
   });
 
   it('rejects inconsistent readiness and malformed arrays', () => {
-    expect(() => decodeEngineCompatibilityReport({
-      ...report,
-      ready: false,
-    })).toThrow('inconsistent');
-    expect(() => decodeEngineCompatibilityReport({
-      ...report,
-      csound: { ...report.csound, missingSymbols: [1] },
-    })).toThrow('missingSymbols');
+    expect(() =>
+      decodeEngineCompatibilityReport({
+        ...report,
+        ready: false,
+      }),
+    ).toThrow('inconsistent');
+    expect(() =>
+      decodeEngineCompatibilityReport({
+        ...report,
+        csound: { ...report.csound, missingSymbols: [1] },
+      }),
+    ).toThrow('missingSymbols');
   });
 
   it('normalizes transient requests without retaining unknown fields', () => {
-    expect(normalizeEngineProbeRequest({
-      enginePathOverride: ' /engine ',
-      csoundLibraryPath: '',
-      projectData: 'must-not-cross-ipc',
-    })).toEqual({
+    expect(
+      normalizeEngineProbeRequest({
+        enginePathOverride: ' /engine ',
+        csoundLibraryPath: '',
+        projectData: 'must-not-cross-ipc',
+      }),
+    ).toEqual({
       enginePathOverride: '/engine',
       csoundLibraryPath: null,
     });

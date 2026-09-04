@@ -48,7 +48,10 @@ describe('native-confirmation adapter', () => {
     expect(showMessageBoxMock).toHaveBeenCalledTimes(1);
     expect(mockWindow.isDestroyed).toHaveBeenCalled();
 
-    const [passedWindow, options] = showMessageBoxMock.mock.calls[0] as [BrowserWindow, MessageBoxOptions];
+    const [passedWindow, options] = showMessageBoxMock.mock.calls[0] as [
+      BrowserWindow,
+      MessageBoxOptions,
+    ];
     expect(passedWindow).toBe(mockWindow);
     expect(options.type).toBe('question');
     expect(options.title).toBe('Confirm Delete');

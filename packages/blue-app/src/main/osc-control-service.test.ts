@@ -80,10 +80,13 @@ function createService(
   preferredPort: number,
   events: OscCommandEvent[] = [],
 ): OscControlService {
-  const service = new OscControlService({ preferredPort }, {
-    socketFactory: () => registry.create(),
-    onCommand: (event) => events.push(event),
-  });
+  const service = new OscControlService(
+    { preferredPort },
+    {
+      socketFactory: () => registry.create(),
+      onCommand: (event) => events.push(event),
+    },
+  );
   services.push(service);
   return service;
 }
@@ -103,7 +106,10 @@ describe('OscControlService', () => {
     await service.start({ preferredPort: 8123 });
     expect(service.getSnapshot()).toMatchObject({ phase: 'listening', activePort: 8123 });
 
-    activeSocket(registry, 8123).emit('message', encode(new Message('/score/play/alternate', 1, 'ignored')));
+    activeSocket(registry, 8123).emit(
+      'message',
+      encode(new Message('/score/play/alternate', 1, 'ignored')),
+    );
     await waitFor(() => events.length === 1);
     expect(events[0]).toMatchObject({
       commandId: 'score.play',
@@ -117,12 +123,18 @@ describe('OscControlService', () => {
     const service = createService(registry, 8124, events);
     await service.start({ preferredPort: 8124 });
 
-    const nested = new Bundle(999999999, new Message('/score/markerNext'), new Message('/score/play'));
+    const nested = new Bundle(
+      999999999,
+      new Message('/score/markerNext'),
+      new Message('/score/play'),
+    );
     const bundle = new Bundle(999999999, new Message('/score/rewind'), nested);
     activeSocket(registry, 8124).emit('message', encode(bundle));
     await waitFor(() => events.length === 3);
     expect(events.map((event) => event.commandId)).toEqual([
-      'score.rewind', 'score.markerNext', 'score.play',
+      'score.rewind',
+      'score.markerNext',
+      'score.play',
     ]);
   });
 
@@ -206,9 +218,12 @@ describe('OscControlService', () => {
 
   it('reports non-conflict bind errors without scanning another port', async () => {
     const registry = new FakeSocketRegistry();
-    const service = new OscControlService({ preferredPort: 8131 }, {
-      socketFactory: () => registry.create('EACCES'),
-    });
+    const service = new OscControlService(
+      { preferredPort: 8131 },
+      {
+        socketFactory: () => registry.create('EACCES'),
+      },
+    );
     services.push(service);
 
     await service.start({ preferredPort: 8131 });

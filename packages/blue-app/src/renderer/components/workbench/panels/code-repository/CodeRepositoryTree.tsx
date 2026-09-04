@@ -114,7 +114,11 @@ function RepositoryNodeMenu({
   );
 }
 
-function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<RepoTreeNode>): React.ReactElement {
+function NodeRenderer({
+  node,
+  style,
+  dragHandle,
+}: NodeRendererProps<RepoTreeNode>): React.ReactElement {
   const renameInputRef = useRef<HTMLInputElement | null>(null);
   const actions = useContext(TreeActionsContext);
   const isContainer = node.data.kind === 'root' || node.data.kind === 'group';
@@ -184,7 +188,9 @@ function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<RepoTreeNod
       ) : (
         <span className="min-w-0 truncate">{node.data.name}</span>
       )}
-      {isRoot && <span className="ml-auto flex-none text-role-callout text-app-text-muted">root</span>}
+      {isRoot && (
+        <span className="ml-auto flex-none text-role-callout text-app-text-muted">root</span>
+      )}
     </div>
   );
 
@@ -230,7 +236,9 @@ export default function CodeRepositoryTree({
 
   return (
     <div className="flex h-full flex-col">
-      <p className="mb-2 text-role-callout text-app-text-muted">Right-click an item for actions. Double-click to rename.</p>
+      <p className="mb-2 text-role-callout text-app-text-muted">
+        Right-click an item for actions. Double-click to rename.
+      </p>
       <TreeActionsContext.Provider value={actions}>
         <div className="min-h-0 flex-1 overflow-auto rounded bg-black p-1">
           <BlueTree<RepoTreeNode>

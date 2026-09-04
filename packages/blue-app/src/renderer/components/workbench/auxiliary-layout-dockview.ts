@@ -416,10 +416,7 @@ function ensureDockedEdgeGroup(
  * Returns the edges whose docked presentation actually changed; only those
  * edges may receive focus during presentation restore.
  */
-function reconcileDockedEdges(
-  api: DockviewApi,
-  target: AuxiliaryLayoutState,
-): Set<AuxiliaryEdge> {
+function reconcileDockedEdges(api: DockviewApi, target: AuxiliaryLayoutState): Set<AuxiliaryEdge> {
   const dockedEntries: Record<
     AuxiliaryEdge,
     Array<{ instance: AuxiliaryGroupInstance; panelId: string }>
@@ -744,7 +741,10 @@ export function restoreClosedAuxiliaryPanel(
   const result = transitionAuxiliaryLayout(api, state, next, {
     preserveDockedSizes: preservedDockedSizes,
   });
-  if (result.status === 'applied' && (origin.presentation === 'docked' || origin.presentation === 'maximized')) {
+  if (
+    result.status === 'applied' &&
+    (origin.presentation === 'docked' || origin.presentation === 'maximized')
+  ) {
     focusDockviewPanel(api, panelId);
   }
   return result.state;

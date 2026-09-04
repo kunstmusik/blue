@@ -6,7 +6,9 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import CsoundRCEditorModal from '../components/workbench/panels/tools/CsoundRCEditorModal';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 describe('CsoundRCEditorModal', () => {
   let container: HTMLDivElement | null = null;
@@ -64,13 +66,18 @@ describe('CsoundRCEditorModal', () => {
     expect(document.body.textContent).toContain('/Users/test/.csound7rc');
 
     act(() => {
-      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set;
+      const nativeSetter = Object.getOwnPropertyDescriptor(
+        window.HTMLTextAreaElement.prototype,
+        'value',
+      )?.set;
       nativeSetter?.call(textarea, '-m0 -d -W -o dac');
       textarea.dispatchEvent(new Event('input', { bubbles: true }));
       textarea.dispatchEvent(new Event('change', { bubbles: true }));
     });
 
-    const saveBtn = Array.from(document.querySelectorAll('button')).find((btn) => btn.textContent === 'Save');
+    const saveBtn = Array.from(document.querySelectorAll('button')).find(
+      (btn) => btn.textContent === 'Save',
+    );
     expect(saveBtn).not.toBeUndefined();
 
     await act(async () => {

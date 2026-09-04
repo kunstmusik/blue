@@ -33,7 +33,11 @@ const checks = [
   { name: 'package-inputs', script: 'verify-package-inputs.mjs', required: true },
   { name: 'release-workflows', script: 'validate-release-workflows.mjs', required: true },
   { name: 'release-artifacts', script: 'release-artifact-manifest.test.mjs', required: true },
-  { name: 'release-credentials-tests', script: 'release-credential-preflight.test.mjs', required: true },
+  {
+    name: 'release-credentials-tests',
+    script: 'release-credential-preflight.test.mjs',
+    required: true,
+  },
   {
     name: 'credential-preflight (advisory)',
     script: 'release-credential-preflight.mjs',
@@ -49,9 +53,13 @@ const results = [];
 
 for (const check of checks) {
   process.stderr.write(`\n-- ${check.name} --\n`);
-  const result = spawnSync(process.execPath, [join(scriptsDir, check.script), ...(check.args ?? [])], {
-    stdio: 'inherit',
-  });
+  const result = spawnSync(
+    process.execPath,
+    [join(scriptsDir, check.script), ...(check.args ?? [])],
+    {
+      stdio: 'inherit',
+    },
+  );
   const code = typeof result.status === 'number' ? result.status : 1;
   const ok = code === 0;
   results.push({ name: check.name, ok, required: check.required, code });

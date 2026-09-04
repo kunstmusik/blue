@@ -5,10 +5,7 @@ import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { BlueData } from '../../blue-data';
 import { createDefaultBlueX7Voice } from '../blue-x7';
-import {
-  BLUE_X7_PARAMETER_DESCRIPTORS,
-  readBlueX7VoiceValue,
-} from './parameter-catalog';
+import { BLUE_X7_PARAMETER_DESCRIPTORS, readBlueX7VoiceValue } from './parameter-catalog';
 import { BLUE_X7_MODERN_ORCHESTRA } from './modern-orchestra.generated';
 import { generateBlueX7Target } from './csound-target-generator';
 import { buildBlueX7VoiceTransport } from './voice-transport';
@@ -164,7 +161,8 @@ function truncateFixtureScore(csd: string, endTime: number): string {
   const scoreStart = csd.indexOf('<CsScore>');
   const scoreEnd = csd.indexOf('</CsScore>', scoreStart);
   if (scoreStart < 0 || scoreEnd < 0) throw new Error('fixture CSD has no score section');
-  const score = csd.slice(scoreStart + '<CsScore>'.length, scoreEnd)
+  const score = csd
+    .slice(scoreStart + '<CsScore>'.length, scoreEnd)
     .split(/\r?\n/)
     .filter((line) => {
       const match = line.trim().match(/^i(?:"[^"]+"|\S*)\s+([-+]?\d+(?:\.\d+)?)/);
@@ -204,16 +202,16 @@ function validateCheckedInFixture(directory: string): FixtureSummary | null {
   fs.writeFileSync(densePath, truncateFixtureScore(generated, 10));
   const denseWavPath = path.join(directory, 'blue-x7-pop-song-dense-10s.wav');
   const denseRuns = Math.max(1, Number(process.env.BLUE_X7_TAIL_RUNS ?? 1));
-  const denseResults = Array.from({ length: denseRuns }, () => runTimed(
-    'csound', ['-d', '-W', '--format=double', '-o', denseWavPath, densePath], directory,
-  ));
+  const denseResults = Array.from({ length: denseRuns }, () =>
+    runTimed('csound', ['-d', '-W', '--format=double', '-o', denseWavPath, densePath], directory),
+  );
   const failedDense = denseResults.find((result) => result.status !== 0);
   if (failedDense) {
     throw new Error(`Dense checked-in BlueX7 fixture failed to render:\n${failedDense.stderr}`);
   }
-  const dense = denseResults.reduce((best, result) => (
-    result.userSeconds + result.sysSeconds < best.userSeconds + best.sysSeconds ? result : best
-  ));
+  const dense = denseResults.reduce((best, result) =>
+    result.userSeconds + result.sysSeconds < best.userSeconds + best.sysSeconds ? result : best,
+  );
   const denseSamples = readDoubleWave(denseWavPath);
   const denseRenderedSeconds = denseSamples.length / 44_100 / 2;
   const mirrorOn = benchmarkEngine(densePath, true, directory);
@@ -227,9 +225,8 @@ function validateCheckedInFixture(directory: string): FixtureSummary | null {
     denseRuns,
     denseRenderedSeconds,
     denseCpuSeconds: dense.userSeconds + dense.sysSeconds,
-    denseRealtimeRatio: dense.realSeconds > 0
-      ? denseRenderedSeconds / dense.realSeconds
-      : Number.POSITIVE_INFINITY,
+    denseRealtimeRatio:
+      dense.realSeconds > 0 ? denseRenderedSeconds / dense.realSeconds : Number.POSITIVE_INFINITY,
     engineMirrorOnSeconds: mirrorOn?.realSeconds ?? null,
     engineMirrorOffSeconds: mirrorOff?.realSeconds ?? null,
   };
@@ -271,11 +268,7 @@ function runVariant(
   const wavPath = path.join(directory, `${name}.wav`);
   fs.writeFileSync(csdPath, buildCsd(voice, target, epoch));
 
-  const compile = runTimed(
-    'csound',
-    ['--syntax-check-only', '-m0', csdPath],
-    directory,
-  );
+  const compile = runTimed('csound', ['--syntax-check-only', '-m0', csdPath], directory);
   if (compile.status !== 0) {
     throw new Error(`Csound syntax check failed for ${name}:\n${compile.stderr}`);
   }
@@ -298,9 +291,10 @@ function runVariant(
     userSeconds: performance.userSeconds,
     sysSeconds: performance.sysSeconds,
     renderedSeconds,
-    realtimeRatio: performance.realSeconds > 0
-      ? renderedSeconds / performance.realSeconds
-      : Number.POSITIVE_INFINITY,
+    realtimeRatio:
+      performance.realSeconds > 0
+        ? renderedSeconds / performance.realSeconds
+        : Number.POSITIVE_INFINITY,
     samples,
   };
 }
@@ -314,16 +308,17 @@ function maximumDifference(left: Float64Array, right: Float64Array): number {
   return result;
 }
 
-function benchmarkEngine(
-  csdPath: string,
-  mirror: boolean,
-  cwd: string,
-): Timing | null {
+function benchmarkEngine(csdPath: string, mirror: boolean, cwd: string): Timing | null {
   if (!enginePath) return null;
   const args = [
     '--disable-thread-priority-elevation',
     ...(mirror ? [] : ['--disable-shared-memory']),
-    '--run-csound', '--', '-n', '-d', '-m0', csdPath,
+    '--run-csound',
+    '--',
+    '-n',
+    '-d',
+    '-m0',
+    csdPath,
   ];
   const result = runTimed(enginePath, args, cwd);
   if (result.status !== 0) {
@@ -410,23 +405,21 @@ describe.skipIf(!benchmarkEnabled || !hasCsound)('BlueX7 dense performance bench
           epoch: true,
         },
       ];
-      const results = variants.map((variant) => runVariant(
-        variant.name,
-        voice,
-        variant.target,
-        variant.epoch,
-        directory,
-      ));
+      const results = variants.map((variant) =>
+        runVariant(variant.name, voice, variant.target, variant.epoch, directory),
+      );
       const byName = new Map(results.map((result) => [result.name, result]));
       const reference = byName.get('static-udo')!;
       for (const result of results) {
         expect(result.samples.length).toBeGreaterThan(0);
         expect(result.samples.every(Number.isFinite)).toBe(true);
       }
-      expect(maximumDifference(reference.samples, byName.get('live-udo-epoch')!.samples))
-        .toBeLessThan(1e-9);
-      expect(maximumDifference(reference.samples, byName.get('live-inline-epoch')!.samples))
-        .toBeLessThan(1e-9);
+      expect(
+        maximumDifference(reference.samples, byName.get('live-udo-epoch')!.samples),
+      ).toBeLessThan(1e-9);
+      expect(
+        maximumDifference(reference.samples, byName.get('live-inline-epoch')!.samples),
+      ).toBeLessThan(1e-9);
 
       const carrierSkewVoice = createDefaultBlueX7Voice();
       carrierSkewVoice.common.algorithm = 16;
@@ -465,22 +458,34 @@ describe.skipIf(!benchmarkEnabled || !hasCsound)('BlueX7 dense performance bench
         directory,
       );
       const summary = results.map(({ samples: _samples, ...result }) => result);
-      console.info(JSON.stringify({
-        sampleRate: SAMPLE_RATE,
-        ksmps: KSMPS,
-        noteCount: NOTE_COUNT,
-        noteDuration: NOTE_DURATION,
-        engine: enginePath ?? null,
-        fixture,
-        carrierSkew: (({ samples: _samples, ...result }) => result)(carrierSkew),
-        variants: summary,
-        mirrorOn,
-        mirrorOff,
-        outputMaxDifference: {
-          staticVsUdoEpoch: maximumDifference(reference.samples, byName.get('live-udo-epoch')!.samples),
-          staticVsInlineEpoch: maximumDifference(reference.samples, byName.get('live-inline-epoch')!.samples),
-        },
-      }, null, 2));
+      console.info(
+        JSON.stringify(
+          {
+            sampleRate: SAMPLE_RATE,
+            ksmps: KSMPS,
+            noteCount: NOTE_COUNT,
+            noteDuration: NOTE_DURATION,
+            engine: enginePath ?? null,
+            fixture,
+            carrierSkew: (({ samples: _samples, ...result }) => result)(carrierSkew),
+            variants: summary,
+            mirrorOn,
+            mirrorOff,
+            outputMaxDifference: {
+              staticVsUdoEpoch: maximumDifference(
+                reference.samples,
+                byName.get('live-udo-epoch')!.samples,
+              ),
+              staticVsInlineEpoch: maximumDifference(
+                reference.samples,
+                byName.get('live-inline-epoch')!.samples,
+              ),
+            },
+          },
+          null,
+          2,
+        ),
+      );
     } finally {
       fs.rmSync(directory, { recursive: true, force: true });
     }

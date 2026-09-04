@@ -1,10 +1,7 @@
 import { createHash } from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
-import {
-  ExamplePathError,
-  parsePortableExamplePath,
-} from './path-boundary';
+import { ExamplePathError, parsePortableExamplePath } from './path-boundary';
 
 /**
  * Durable provenance state for the user-owned example library
@@ -67,9 +64,7 @@ export class ExampleLibraryStateError extends Error {
 }
 
 /** Canonical revision derived from present baselines (empty set included). */
-export function deriveRevisionFromBaselines(
-  baselines: readonly FactoryBaselineRecord[],
-): string {
+export function deriveRevisionFromBaselines(baselines: readonly FactoryBaselineRecord[]): string {
   const present = baselines
     .filter((baseline) => baseline.factoryPresent)
     .map((baseline) => [baseline.relativePath, baseline.factorySha256, baseline.factorySize]);
@@ -83,9 +78,11 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 }
 
 function isValidRevision(value: unknown): value is string {
-  return typeof value === 'string'
-    && value.startsWith('sha256:')
-    && HEX_64.test(value.slice('sha256:'.length));
+  return (
+    typeof value === 'string' &&
+    value.startsWith('sha256:') &&
+    HEX_64.test(value.slice('sha256:'.length))
+  );
 }
 
 function requireTimestamp(value: unknown, label: string, errors: string[]): void {
@@ -95,7 +92,9 @@ function requireTimestamp(value: unknown, label: string, errors: string[]): void
 }
 
 /** Validate a decoded `state.json` payload against every documented rule. */
-export function validateUserLibraryState(raw: unknown): { state: UserLibraryState } | { invalid: string[] } {
+export function validateUserLibraryState(
+  raw: unknown,
+): { state: UserLibraryState } | { invalid: string[] } {
   const errors: string[] = [];
   if (!isPlainObject(raw)) {
     return { invalid: ['State document must be a JSON object'] };
@@ -150,16 +149,13 @@ export function validateUserLibraryState(raw: unknown): { state: UserLibraryStat
       errors.push(`duplicate baseline path: ${relativePath}`);
       return;
     }
-    if (
-      typeof entryRaw.factorySha256 !== 'string'
-      || !HEX_64.test(entryRaw.factorySha256)
-    ) {
+    if (typeof entryRaw.factorySha256 !== 'string' || !HEX_64.test(entryRaw.factorySha256)) {
       errors.push(`baseline ${relativePath} has a malformed factorySha256`);
     }
     if (
-      typeof entryRaw.factorySize !== 'number'
-      || !Number.isSafeInteger(entryRaw.factorySize)
-      || entryRaw.factorySize < 0
+      typeof entryRaw.factorySize !== 'number' ||
+      !Number.isSafeInteger(entryRaw.factorySize) ||
+      entryRaw.factorySize < 0
     ) {
       errors.push(`baseline ${relativePath} has an invalid factorySize`);
     }
@@ -195,7 +191,9 @@ export function validateUserLibraryState(raw: unknown): { state: UserLibraryStat
       schemaVersion: raw.schemaVersion as number,
       acceptedFactoryRevision: raw.acceptedFactoryRevision as string,
       declinedFactoryRevision:
-        raw.declinedFactoryRevision === undefined ? null : (raw.declinedFactoryRevision as string | null),
+        raw.declinedFactoryRevision === undefined
+          ? null
+          : (raw.declinedFactoryRevision as string | null),
       baselines,
       lastCompletedAt: String(raw.lastCompletedAt),
     },
@@ -212,8 +210,8 @@ export function serializeUserLibraryState(state: UserLibraryState): string {
     a.relativePath < b.relativePath ? -1 : a.relativePath > b.relativePath ? 1 : 0,
   );
   const declined =
-    state.declinedFactoryRevision !== null
-    && state.declinedFactoryRevision !== state.acceptedFactoryRevision
+    state.declinedFactoryRevision !== null &&
+    state.declinedFactoryRevision !== state.acceptedFactoryRevision
       ? state.declinedFactoryRevision
       : null;
 
@@ -234,7 +232,9 @@ export function serializeUserLibraryState(state: UserLibraryState): string {
 }
 
 /** Parse `state.json` contents into loaded/absent/invalid outcomes. */
-export function parseUserLibraryStateText(text: string | null | undefined): ParsedSidecar<UserLibraryState> {
+export function parseUserLibraryStateText(
+  text: string | null | undefined,
+): ParsedSidecar<UserLibraryState> {
   if (text === null || text === undefined || text.trim() === '') {
     return { kind: 'absent' };
   }
@@ -245,10 +245,17 @@ export function parseUserLibraryStateText(text: string | null | undefined): Pars
     return { kind: 'invalid', reasons: ['State file is not valid JSON'] };
   }
   const result = validateUserLibraryState(decoded);
-  return 'state' in result ? { kind: 'loaded', value: result.state } : { kind: 'invalid', reasons: result.invalid };
+  return 'state' in result
+    ? { kind: 'loaded', value: result.state }
+    : { kind: 'invalid', reasons: result.invalid };
 }
 
-function requireSafeSegmentPair(operationId: unknown, directoryName: unknown, prefix: 'staging' | 'backup', errors: string[]): void {
+function requireSafeSegmentPair(
+  operationId: unknown,
+  directoryName: unknown,
+  prefix: 'staging' | 'backup',
+  errors: string[],
+): void {
   if (typeof operationId !== 'string' || !/^[A-Za-z0-9_-]{6,128}$/.test(operationId)) {
     errors.push('operationId must be safe path-segment text');
     return;
@@ -259,7 +266,9 @@ function requireSafeSegmentPair(operationId: unknown, directoryName: unknown, pr
 }
 
 /** Validate a decoded `operation.json` payload. */
-export function validateOperationJournal(raw: unknown): { journal: ExampleLibraryOperationJournal } | { invalid: string[] } {
+export function validateOperationJournal(
+  raw: unknown,
+): { journal: ExampleLibraryOperationJournal } | { invalid: string[] } {
   const errors: string[] = [];
   if (!isPlainObject(raw)) {
     return { invalid: ['Journal document must be a JSON object'] };
@@ -291,7 +300,9 @@ export function validateOperationJournal(raw: unknown): { journal: ExampleLibrar
 
   if (errors.length > 0 || typeof raw.operationId !== 'string') {
     if (typeof raw.operationId !== 'string') {
-      return { invalid: errors.length > 0 ? errors : ['operationId must be safe path-segment text'] };
+      return {
+        invalid: errors.length > 0 ? errors : ['operationId must be safe path-segment text'],
+      };
     }
     return { invalid: errors };
   }
@@ -320,7 +331,9 @@ export function serializeOperationJournal(journal: ExampleLibraryOperationJourna
   return `${JSON.stringify(check.journal, null, 2)}\n`;
 }
 
-export function parseOperationJournalText(text: string | null | undefined): ParsedSidecar<ExampleLibraryOperationJournal> {
+export function parseOperationJournalText(
+  text: string | null | undefined,
+): ParsedSidecar<ExampleLibraryOperationJournal> {
   if (text === null || text === undefined || text.trim() === '') {
     return { kind: 'absent' };
   }
@@ -370,8 +383,8 @@ function defaultWriteSeams(seams?: AtomicWriteSeams): Required<AtomicWriteSeams>
     open: seams?.open ?? adaptedOpen,
     rename: seams?.rename ?? ((fromPath, toPath) => fs.promises.rename(fromPath, toPath)),
     fsyncDirectory:
-      seams?.fsyncDirectory
-      ?? (async (dirPath) => {
+      seams?.fsyncDirectory ??
+      (async (dirPath) => {
         const dirFd = await fs.promises.open(dirPath, 'r');
         try {
           await dirFd.sync();
@@ -380,11 +393,12 @@ function defaultWriteSeams(seams?: AtomicWriteSeams): Required<AtomicWriteSeams>
         }
       }),
     mkdir:
-      seams?.mkdir
-      ?? (async (dirPath) => {
+      seams?.mkdir ??
+      (async (dirPath) => {
         await fs.promises.mkdir(dirPath, { recursive: true });
       }),
-    uniqueSuffix: seams?.uniqueSuffix ?? (() => `${Date.now().toString(36)}-${nextUniqueCounter++}`),
+    uniqueSuffix:
+      seams?.uniqueSuffix ?? (() => `${Date.now().toString(36)}-${nextUniqueCounter++}`),
   };
 }
 

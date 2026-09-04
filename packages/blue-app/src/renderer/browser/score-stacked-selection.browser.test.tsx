@@ -10,14 +10,13 @@ import type {
 import { useProjectStore } from '../stores/project-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const originalScore = useProjectStore.getState().score;
 
-function createItem(
-  objectId: string,
-  rootGroupIndex: number,
-): ScoreRowObjectSnapshot {
+function createItem(objectId: string, rootGroupIndex: number): ScoreRowObjectSnapshot {
   return {
     objectId,
     objectType: 'JavaScriptObject',
@@ -71,9 +70,7 @@ function createGroup(
       height,
       muted: false,
       solo: false,
-      items: layerIndex === 0
-        ? [createItem(`${groupId}-item`, rootGroupIndex)]
-        : [],
+      items: layerIndex === 0 ? [createItem(`${groupId}-item`, rootGroupIndex)] : [],
     })),
   };
 }
@@ -84,13 +81,15 @@ function dispatchPrimaryMouseEvent(
   clientX: number,
   clientY: number,
 ): void {
-  target.dispatchEvent(new MouseEvent(type, {
-    bubbles: true,
-    cancelable: true,
-    button: 0,
-    clientX,
-    clientY,
-  }));
+  target.dispatchEvent(
+    new MouseEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      button: 0,
+      clientX,
+      clientY,
+    }),
+  );
 }
 
 describe('stacked Score timeline selection', () => {
@@ -124,10 +123,7 @@ describe('stacked Score timeline selection', () => {
 
     act(() => {
       root.render(
-        <div
-          data-testid="timeline-scroll"
-          style={{ width: 400, height: 200, overflow: 'auto' }}
-        >
+        <div data-testid="timeline-scroll" style={{ width: 400, height: 200, overflow: 'auto' }}>
           <LayerPanel
             layerGroups={layerGroups}
             onOpenNested={() => undefined}
@@ -151,7 +147,9 @@ describe('stacked Score timeline selection', () => {
     });
 
     const scroller = container.querySelector('[data-testid="timeline-scroll"]') as HTMLDivElement;
-    const secondCanvas = container.querySelector('[data-group-id="second-group"]') as HTMLDivElement;
+    const secondCanvas = container.querySelector(
+      '[data-group-id="second-group"]',
+    ) as HTMLDivElement;
     const rect = secondCanvas.getBoundingClientRect();
     expect(rect.top).toBeGreaterThan(0);
     expect(rect.top).toBeLessThan(scroller.getBoundingClientRect().bottom);
@@ -206,7 +204,9 @@ describe('stacked Score timeline selection', () => {
       );
     });
 
-    const canvasRow = container.querySelector('[data-group-id="first-group"] [data-layer-id="first-group-layer-0"]');
+    const canvasRow = container.querySelector(
+      '[data-group-id="first-group"] [data-layer-id="first-group-layer-0"]',
+    );
     expect(canvasRow).toBeTruthy();
   });
 });

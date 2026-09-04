@@ -20,10 +20,7 @@ import {
   isSupportedAppZoomPercent,
   normalizeAppZoomPercent,
 } from './app-zoom';
-import {
-  normalizeFileManagerFavorites,
-  normalizeFileManagerRootLabels,
-} from './file-manager';
+import { normalizeFileManagerFavorites, normalizeFileManagerRootLabels } from './file-manager';
 
 export type ProgramSettingsPanelId =
   | 'general'
@@ -218,9 +215,7 @@ export interface PlaybackPreferencePatch {
  * Validate a PlaybackPreferencePatch payload. Returns true when the patch
  * contains at least one boolean field and no non-boolean values.
  */
-export function isValidPlaybackPreferencePatch(
-  patch: unknown,
-): patch is PlaybackPreferencePatch {
+export function isValidPlaybackPreferencePatch(patch: unknown): patch is PlaybackPreferencePatch {
   if (patch == null || typeof patch !== 'object') return false;
   const p = patch as Record<string, unknown>;
   const hasFollow = 'followPlayback' in p;
@@ -252,19 +247,37 @@ export interface UsageParityMatrixEntry {
 export const PROGRAM_SETTINGS_VERSION = 3;
 
 export const TIME_BASE_CHOICES: readonly string[] = [
-  'BEATS', 'BBT', 'BBST', 'BBF', 'TIME', 'SECONDS', 'SMPTE', 'FRAME',
+  'BEATS',
+  'BBT',
+  'BBST',
+  'BBF',
+  'TIME',
+  'SECONDS',
+  'SMPTE',
+  'FRAME',
 ];
 
 export const SNAP_VALUE_CHOICES: readonly string[] = [
-  'BAR', 'HALF', 'BEAT', 'EIGHTH', 'SIXTEENTH', 'THIRTY_SECOND', 'SIXTY_FOURTH',
-  'QUARTER_TRIPLET', 'EIGHTH_TRIPLET', 'SIXTEENTH_TRIPLET',
-  'ONE_SECOND', 'HUNDRED_MS', 'TEN_MS', 'ONE_MS',
-  'FRAME', 'SAMPLE', 'AUTO',
+  'BAR',
+  'HALF',
+  'BEAT',
+  'EIGHTH',
+  'SIXTEENTH',
+  'THIRTY_SECOND',
+  'SIXTY_FOURTH',
+  'QUARTER_TRIPLET',
+  'EIGHTH_TRIPLET',
+  'SIXTEENTH_TRIPLET',
+  'ONE_SECOND',
+  'HUNDRED_MS',
+  'TEN_MS',
+  'ONE_MS',
+  'FRAME',
+  'SAMPLE',
+  'AUTO',
 ];
 
-export const SMPTE_FRAME_RATES: readonly number[] = [
-  23.976, 24, 25, 29.97, 30, 50, 59.94, 60,
-];
+export const SMPTE_FRAME_RATES: readonly number[] = [23.976, 24, 25, 29.97, 30, 50, 59.94, 60];
 
 export const LAYER_HEIGHT_CHOICES: readonly number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
@@ -280,11 +293,26 @@ export function normalizeDefaultLayerGroupType(value: unknown): DefaultLayerGrou
 }
 
 export const FILE_FORMAT_CHOICES: readonly string[] = [
-  'WAV', 'AIFF', 'AU', 'RAW', 'IRCAM', 'W64', 'WAVEX', 'SD2', 'FLAC',
+  'WAV',
+  'AIFF',
+  'AU',
+  'RAW',
+  'IRCAM',
+  'W64',
+  'WAVEX',
+  'SD2',
+  'FLAC',
 ];
 
 export const SAMPLE_FORMAT_CHOICES: readonly string[] = [
-  'ALAW', 'ULAW', 'SCHAR', 'UCHAR', 'FLOAT', 'SHORT', 'LONG', '24BIT',
+  'ALAW',
+  'ULAW',
+  'SCHAR',
+  'UCHAR',
+  'FLOAT',
+  'SHORT',
+  'LONG',
+  '24BIT',
 ];
 
 export function getAudioDrivers(platform: string): string[] {
@@ -333,10 +361,12 @@ export function normalizeFreezeMaxJobs(value: unknown): number {
 }
 
 export function isSupportedFreezeMaxJobs(value: unknown): value is number {
-  return typeof value === 'number'
-    && Number.isInteger(value)
-    && value >= FREEZE_MAX_JOBS_MIN
-    && value <= FREEZE_MAX_JOBS_MAX;
+  return (
+    typeof value === 'number' &&
+    Number.isInteger(value) &&
+    value >= FREEZE_MAX_JOBS_MIN &&
+    value <= FREEZE_MAX_JOBS_MAX
+  );
 }
 
 export function getDefaultAudioDriver(platform: string): string {
@@ -362,17 +392,13 @@ export function getDefaultMidiDriver(platform: string): string {
 }
 
 export function isAbsoluteEnginePath(value: string): boolean {
-  return value.startsWith('/') ||
-    /^[A-Za-z]:[\\/]/.test(value) ||
-    value.startsWith('\\\\');
+  return value.startsWith('/') || /^[A-Za-z]:[\\/]/.test(value) || value.startsWith('\\\\');
 }
 
 export function normalizeEnginePathSetting(value: unknown): string {
   if (typeof value !== 'string') return 'blue-engine';
   const normalized = value.trim();
-  return normalized === '' || normalized === 'blue-engine'
-    ? 'blue-engine'
-    : normalized;
+  return normalized === '' || normalized === 'blue-engine' ? 'blue-engine' : normalized;
 }
 
 export function normalizeCsoundLibraryPath(value: unknown): string {
@@ -382,17 +408,23 @@ export function normalizeCsoundLibraryPath(value: unknown): string {
 
 export function getDefaultSoftwareBufferSize(platform: string): number {
   switch (platform) {
-    case 'darwin': return 1024;
-    case 'win32': return 4096;
-    default: return 256;
+    case 'darwin':
+      return 1024;
+    case 'win32':
+      return 4096;
+    default:
+      return 256;
   }
 }
 
 export function getDefaultHardwareBufferSize(platform: string): number {
   switch (platform) {
-    case 'darwin': return 4096;
-    case 'win32': return 16384;
-    default: return 1024;
+    case 'darwin':
+      return 4096;
+    case 'win32':
+      return 16384;
+    default:
+      return 1024;
   }
 }
 
@@ -439,7 +471,9 @@ export function createDefaultUtilitySettings(platform: string): UtilitySettingsS
   };
 }
 
-export function createDefaultRealtimeRenderSettings(platform: string): RealtimeRenderSettingsSnapshot {
+export function createDefaultRealtimeRenderSettings(
+  platform: string,
+): RealtimeRenderSettingsSnapshot {
   return {
     csoundExecutable: getDefaultCsoundExecutable(platform),
     defaultSr: '44100',
@@ -573,7 +607,10 @@ export function validateProgramSettings(
     });
   }
 
-  if (snapshot.projectDefaults.layerHeightDefault < 0 || snapshot.projectDefaults.layerHeightDefault > 8) {
+  if (
+    snapshot.projectDefaults.layerHeightDefault < 0 ||
+    snapshot.projectDefaults.layerHeightDefault > 8
+  ) {
     issues.push({
       path: 'projectDefaults.layerHeightDefault',
       message: 'Must be between 0 and 8',
@@ -786,10 +823,7 @@ export function mergeWithDefaults(
     ? normalizeMidiInputPreferences(saved.midiInput)
     : createDefaultMidiInputPreferences();
 
-  const mergedOsc = normalizeOscServerPreferences(
-    saved.osc,
-    savedAppSpecific.oscInputPort,
-  );
+  const mergedOsc = normalizeOscServerPreferences(saved.osc, savedAppSpecific.oscInputPort);
 
   return {
     version: saved.version ?? PROGRAM_SETTINGS_VERSION,
@@ -797,10 +831,14 @@ export function mergeWithDefaults(
     // the in-memory snapshot or get written back to program-settings.json.
     general: {
       workDirectory: saved.general?.workDirectory ?? defaults.general.workDirectory,
-      newUserDefaultsEnabled: saved.general?.newUserDefaultsEnabled ?? defaults.general.newUserDefaultsEnabled,
-      messageColorsEnabled: saved.general?.messageColorsEnabled ?? defaults.general.messageColorsEnabled,
-      csoundErrorWarningEnabled: saved.general?.csoundErrorWarningEnabled ?? defaults.general.csoundErrorWarningEnabled,
-      directoryTempFileLimit: saved.general?.directoryTempFileLimit ?? defaults.general.directoryTempFileLimit,
+      newUserDefaultsEnabled:
+        saved.general?.newUserDefaultsEnabled ?? defaults.general.newUserDefaultsEnabled,
+      messageColorsEnabled:
+        saved.general?.messageColorsEnabled ?? defaults.general.messageColorsEnabled,
+      csoundErrorWarningEnabled:
+        saved.general?.csoundErrorWarningEnabled ?? defaults.general.csoundErrorWarningEnabled,
+      directoryTempFileLimit:
+        saved.general?.directoryTempFileLimit ?? defaults.general.directoryTempFileLimit,
     },
     projectDefaults: {
       ...defaults.projectDefaults,
@@ -827,7 +865,10 @@ export function mergeWithDefaults(
   };
 }
 
-export const PROGRAM_SETTINGS_PANEL_ORDER: readonly { id: ProgramSettingsPanelId; label: string }[] = [
+export const PROGRAM_SETTINGS_PANEL_ORDER: readonly {
+  id: ProgramSettingsPanelId;
+  label: string;
+}[] = [
   { id: 'general', label: 'General' },
   { id: 'projectDefaults', label: 'Project Defaults' },
   { id: 'playback', label: 'Playback' },

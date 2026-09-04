@@ -7,16 +7,20 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { MeterMapSnapshot, MeterMapPatch, MeterSnapshot } from '../../shared/project-editor';
 import MeterRegionBar from '../components/workbench/panels/score/MeterRegionBar';
 import MeterEntryDialog from '../components/workbench/panels/score/MeterEntryDialog';
-import { beatToMeasure, deriveMeterRegions, findRegionAtBeat } from '../components/workbench/panels/score/meter-map-utils';
+import {
+  beatToMeasure,
+  deriveMeterRegions,
+  findRegionAtBeat,
+} from '../components/workbench/panels/score/meter-map-utils';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const mountedRoots: Root[] = [];
 
 const DEFAULT_METER_MAP: MeterMapSnapshot = {
-  entries: [
-    { measure: 1, numBeats: 4, beatLength: 4, startBeat: 0 },
-  ],
+  entries: [{ measure: 1, numBeats: 4, beatLength: 4, startBeat: 0 }],
 };
 
 const MIXED_METER_MAP: MeterMapSnapshot = {
@@ -65,14 +69,18 @@ function renderMeterBar(options?: {
 
   const bar = container.firstElementChild as HTMLDivElement | null;
   if (bar) {
-    bar.getBoundingClientRect = () => ({
-      x: 0, y: 0, left: 0, top: 0,
-      right: totalBeats * pixelsPerBeat,
-      bottom: 20,
-      width: totalBeats * pixelsPerBeat,
-      height: 20,
-      toJSON: () => ({}),
-    }) as DOMRect;
+    bar.getBoundingClientRect = () =>
+      ({
+        x: 0,
+        y: 0,
+        left: 0,
+        top: 0,
+        right: totalBeats * pixelsPerBeat,
+        bottom: 20,
+        width: totalBeats * pixelsPerBeat,
+        height: 20,
+        toJSON: () => ({}),
+      }) as DOMRect;
   }
 
   return { container, root, bar, onMeterPatch, onOpenEntryDialog };
@@ -201,7 +209,9 @@ describe('MeterEntryDialog', () => {
       (b) => b.textContent === 'OK',
     );
     expect(okButton).toBeTruthy();
-    act(() => { okButton!.click(); });
+    act(() => {
+      okButton!.click();
+    });
 
     expect(onPatch).toHaveBeenCalledWith({
       type: 'meter-map-update-entry',
@@ -236,7 +246,9 @@ describe('MeterEntryDialog', () => {
       (b) => b.textContent === 'Cancel',
     );
     expect(cancelButton).toBeTruthy();
-    act(() => { cancelButton!.click(); });
+    act(() => {
+      cancelButton!.click();
+    });
 
     expect(onPatch).not.toHaveBeenCalled();
     expect(onClose).toHaveBeenCalled();

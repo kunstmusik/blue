@@ -7,31 +7,36 @@ import type { NoteProcessorChainSnapshot } from '../../shared/project-editor';
 import NoteProcessorChainEditor from '../components/workbench/panels/score-object/note-processors/NoteProcessorChainEditor';
 import { useNoteProcessorClipboardStore } from '../stores/note-processor-clipboard-store';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 function makeChain(
   id: string,
   processorType: 'AddProcessor' | 'MultiplyProcessor',
 ): NoteProcessorChainSnapshot {
   return {
-    processors: [{
-      id,
-      processorType,
-      displayName: processorType,
-      supported: true,
-      deferred: false,
-      summary: processorType,
-      parameters: { pfield: '4', val: processorType === 'AddProcessor' ? '5' : '2' },
-      serializedXml: '',
-    }],
+    processors: [
+      {
+        id,
+        processorType,
+        displayName: processorType,
+        supported: true,
+        deferred: false,
+        summary: processorType,
+        parameters: { pfield: '4', val: processorType === 'AddProcessor' ? '5' : '2' },
+        serializedXml: '',
+      },
+    ],
     hasUnsupportedProcessors: false,
     hasDeferredProcessors: false,
   };
 }
 
 function findButton(container: Element, label: string): HTMLButtonElement {
-  const button = Array.from(container.querySelectorAll('button'))
-    .find((candidate) => candidate.textContent === label);
+  const button = Array.from(container.querySelectorAll('button')).find(
+    (candidate) => candidate.textContent === label,
+  );
   if (!button) throw new Error(`Button not found: ${label}`);
   return button;
 }

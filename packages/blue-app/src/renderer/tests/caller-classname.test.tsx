@@ -10,7 +10,9 @@ import CommitNumberInput from '../components/workbench/panels/score-object/edito
 import { ToolbarDisplayCard } from '../components/menu-bar/ToolbarDisplays';
 import { BlueX7TabList } from '../components/instruments/blue-x7/tab-list';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 describe('Caller className precedence in shared components (US1)', () => {
   let container: HTMLDivElement;
@@ -31,11 +33,7 @@ describe('Caller className precedence in shared components (US1)', () => {
     it('allows caller utility to override base utility', () => {
       act(() => {
         root.render(
-          <ColorPickerButton
-            value="#ff0000"
-            onChange={() => {}}
-            className="cursor-default"
-          />
+          <ColorPickerButton value="#ff0000" onChange={() => {}} className="cursor-default" />,
         );
       });
       const btn = container.querySelector('button')!;
@@ -46,12 +44,7 @@ describe('Caller className precedence in shared components (US1)', () => {
 
     it('renders clean class list with no caller className', () => {
       act(() => {
-        root.render(
-          <ColorPickerButton
-            value="#ff0000"
-            onChange={() => {}}
-          />
-        );
+        root.render(<ColorPickerButton value="#ff0000" onChange={() => {}} />);
       });
       const btn = container.querySelector('button')!;
       expect(btn.className).toBe('cursor-pointer h-6 w-7 rounded border border-app-border');
@@ -70,7 +63,7 @@ describe('Caller className precedence in shared components (US1)', () => {
             selected={false}
             backgroundColor={0xff0000}
             className="overflow-visible relative"
-          />
+          />,
         );
       });
       const el = container.firstElementChild as HTMLElement;
@@ -90,7 +83,7 @@ describe('Caller className precedence in shared components (US1)', () => {
             barHeight={24}
             selected={false}
             backgroundColor={0xff0000}
-          />
+          />,
         );
       });
       const el = container.firstElementChild as HTMLElement;
@@ -101,13 +94,7 @@ describe('Caller className precedence in shared components (US1)', () => {
   describe('CommitNumberInput', () => {
     it('allows caller utility to override base utility', () => {
       act(() => {
-        root.render(
-          <CommitNumberInput
-            value={10}
-            onChange={() => {}}
-            className="w-32"
-          />
-        );
+        root.render(<CommitNumberInput value={10} onChange={() => {}} className="w-32" />);
       });
       const input = container.querySelector('input')!;
       const classList = input.className.split(/\s+/).filter(Boolean);
@@ -117,12 +104,7 @@ describe('Caller className precedence in shared components (US1)', () => {
 
     it('renders clean class list with no caller className', () => {
       act(() => {
-        root.render(
-          <CommitNumberInput
-            value={10}
-            onChange={() => {}}
-          />
-        );
+        root.render(<CommitNumberInput value={10} onChange={() => {}} />);
       });
       const input = container.querySelector('input')!;
       expect(input.className).not.toMatch(/\s{2,}/);
@@ -136,7 +118,7 @@ describe('Caller className precedence in shared components (US1)', () => {
         root.render(
           <ToolbarDisplayCard title="Test" className="p-2 p-4">
             <span>content</span>
-          </ToolbarDisplayCard>
+          </ToolbarDisplayCard>,
         );
       });
       const section = container.querySelector('section')!;
@@ -151,7 +133,7 @@ describe('Caller className precedence in shared components (US1)', () => {
         root.render(
           <ToolbarDisplayCard title="Test">
             <span>content</span>
-          </ToolbarDisplayCard>
+          </ToolbarDisplayCard>,
         );
       });
       const section = container.querySelector('section')!;
@@ -171,7 +153,7 @@ describe('Caller className precedence in shared components (US1)', () => {
             activeTab="tab1"
             onSelectTab={() => {}}
             className="items-start"
-          />
+          />,
         );
       });
       const el = container.querySelector('[role="tablist"]')!;
@@ -188,7 +170,7 @@ describe('Caller className precedence in shared components (US1)', () => {
             tabs={tabs}
             activeTab="tab1"
             onSelectTab={() => {}}
-          />
+          />,
         );
       });
       const el = container.querySelector('[role="tablist"]')!;

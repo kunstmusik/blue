@@ -95,13 +95,26 @@ import {
   createNoteProcessorChainSnapshot as createNoteProcessorChainSnapshotFromData,
   reifyChainFromSnapshot,
 } from '@blue/data';
-import type { NoteProcessorChainSnapshot as DataNoteProcessorChainSnapshot, Parameter as BlueDataParameter, ScoreObject as BlueDataScoreObject, AutomatableLayer as BlueDataAutomatableLayer, Arrangement as BlueDataArrangement, Mixer as BlueDataMixer } from '@blue/data';
+import type {
+  NoteProcessorChainSnapshot as DataNoteProcessorChainSnapshot,
+  Parameter as BlueDataParameter,
+  ScoreObject as BlueDataScoreObject,
+  AutomatableLayer as BlueDataAutomatableLayer,
+  Arrangement as BlueDataArrangement,
+  Mixer as BlueDataMixer,
+} from '@blue/data';
 import { AutomationCurve as BlueDataAutomationCurve, LineColors } from '@blue/data';
 import { ParameterHelper } from '@blue/data';
-import type { SnapValueName, BlueX7Voice, BlueX7Common, BlueX7Lfo, BlueX7Operator, BlueX7EnvelopePoint } from '@blue/data';
+import type {
+  SnapValueName,
+  BlueX7Voice,
+  BlueX7Common,
+  BlueX7Lfo,
+  BlueX7Operator,
+  BlueX7EnvelopePoint,
+} from '@blue/data';
 import type { MissingAudioAssetsSession } from '../missing-audio-assets';
 import type { ScoreInsertionLocation } from '../unified-library';
-
 
 const MIXER_CHANNEL_IDS = new WeakMap<object, string>();
 const MIXER_ENTRY_IDS = new WeakMap<object, string>();
@@ -115,7 +128,6 @@ export function getTrackInstrumentOwnerIdentity(rootGroupId: string, trackId: st
   return `track:${rootGroupId}:${trackId}`;
 }
 
-
 export function assignMixerSnapshotId(
   map: WeakMap<object, string>,
   value: object,
@@ -127,9 +139,10 @@ export function assignMixerSnapshotId(
     return existing;
   }
 
-  const id = preferredId && preferredId.trim().length > 0
-    ? preferredId.trim()
-    : `${prefix}-${nextMixerSnapshotId++}`;
+  const id =
+    preferredId && preferredId.trim().length > 0
+      ? preferredId.trim()
+      : `${prefix}-${nextMixerSnapshotId++}`;
   map.set(value, id);
   return id;
 }
@@ -155,7 +168,6 @@ export function getMixerEntrySnapshotId(entry: Effect | Send, preferredId?: stri
     preferredId,
   );
 }
-
 
 const LAYER_GROUP_ID_MAP = new WeakMap<object, string>();
 let nextLayerGroupId = 1;

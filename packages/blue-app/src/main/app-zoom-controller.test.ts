@@ -18,12 +18,14 @@ interface MockWindow {
   };
 }
 
-function createMockWindow(options: Partial<{
-  destroyed: boolean;
-  webContentsDestroyed: boolean;
-  currentFactor: number;
-  setZoomFactorThrows: boolean;
-}> = {}): MockWindow {
+function createMockWindow(
+  options: Partial<{
+    destroyed: boolean;
+    webContentsDestroyed: boolean;
+    currentFactor: number;
+    setZoomFactorThrows: boolean;
+  }> = {},
+): MockWindow {
   const destroyed = options.destroyed ?? false;
   const webContentsDestroyed = options.webContentsDestroyed ?? false;
   const currentFactor = options.currentFactor ?? 1;
@@ -44,17 +46,21 @@ function createMockWindow(options: Partial<{
   };
 }
 
-function createDefaultSnapshot(appZoomPercent: number = APP_ZOOM_DEFAULT_PERCENT): ProgramSettingsSnapshot {
+function createDefaultSnapshot(
+  appZoomPercent: number = APP_ZOOM_DEFAULT_PERCENT,
+): ProgramSettingsSnapshot {
   const snapshot = createDefaultProgramSettings('darwin');
   snapshot.appSpecific.appZoomPercent = appZoomPercent;
   return snapshot;
 }
 
-function createAdapters(options: {
-  initialSnapshot?: ProgramSettingsSnapshot;
-  windows?: MockWindow[];
-  saveResult?: { ok: boolean } | Error;
-} = {}): AppZoomControllerAdapters & {
+function createAdapters(
+  options: {
+    initialSnapshot?: ProgramSettingsSnapshot;
+    windows?: MockWindow[];
+    saveResult?: { ok: boolean } | Error;
+  } = {},
+): AppZoomControllerAdapters & {
   windows: MockWindow[];
   loadSnapshot: ReturnType<typeof vi.fn>;
   saveSnapshot: ReturnType<typeof vi.fn>;
@@ -302,7 +308,10 @@ describe('app-zoom-controller persistence and stale-draft protection', () => {
     const failed = controller.execute('zoom-in');
     expect(failed.persistence).toBe('failed');
 
-    adapters.saveSnapshot.mockImplementationOnce(() => ({ ok: true, snapshot: createDefaultSnapshot(120) }));
+    adapters.saveSnapshot.mockImplementationOnce(() => ({
+      ok: true,
+      snapshot: createDefaultSnapshot(120),
+    }));
     const recovered = controller.execute('zoom-in');
     expect(recovered.persistence).toBe('saved');
     expect(recovered.zoomPercent).toBe(120);

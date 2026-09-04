@@ -90,25 +90,25 @@ blue-electron/
 
 ### Packages
 
-| Package | Environment | Purpose |
-|---------|------------|---------|
-| **`@blue/data`** | Browser + Node.js | Core data model — all Blue data classes with XML serialization compatible with Java `.blue` files |
-| **`@blue/engine-client`** | Node.js only | ZeroMQ client for the C++ blue-engine process (playback control) |
-| **`@blue/engine-native`** | Native desktop targets | C++ source, pinned vcpkg build, tests, and verified artifacts |
-| **`@blue/app`** | Electron | Desktop application shell — loads `.blue` files, generates CSD, plays via blue-engine |
+| Package                   | Environment            | Purpose                                                                                           |
+| ------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------- |
+| **`@blue/data`**          | Browser + Node.js      | Core data model — all Blue data classes with XML serialization compatible with Java `.blue` files |
+| **`@blue/engine-client`** | Node.js only           | ZeroMQ client for the C++ blue-engine process (playback control)                                  |
+| **`@blue/engine-native`** | Native desktop targets | C++ source, pinned vcpkg build, tests, and verified artifacts                                     |
+| **`@blue/app`**           | Electron               | Desktop application shell — loads `.blue` files, generates CSD, plays via blue-engine             |
 
 ---
 
 ## Prerequisites
 
-| Tool | Version | Required |
-|------|---------|----------|
-| [Node.js](https://nodejs.org/) | 22+ | ✅ |
-| [pnpm](https://pnpm.io/) | 10+ | ✅ |
-| Java and Maven | Java 17+ / Maven 3+ | For the Java helper runtime and app builds |
-| CMake and C/C++ toolchain | CMake 3.21+ | Source builds only |
-| vcpkg | Pinned repository revision | Bootstrapped automatically on the first native build; `VCPKG_ROOT` may select an existing checkout |
-| Csound 7 | Latest | Optional at startup; required for audio playback/rendering |
+| Tool                           | Version                    | Required                                                                                           |
+| ------------------------------ | -------------------------- | -------------------------------------------------------------------------------------------------- |
+| [Node.js](https://nodejs.org/) | 22+                        | ✅                                                                                                 |
+| [pnpm](https://pnpm.io/)       | 10+                        | ✅                                                                                                 |
+| Java and Maven                 | Java 17+ / Maven 3+        | For the Java helper runtime and app builds                                                         |
+| CMake and C/C++ toolchain      | CMake 3.21+                | Source builds only                                                                                 |
+| vcpkg                          | Pinned repository revision | Bootstrapped automatically on the first native build; `VCPKG_ROOT` may select an existing checkout |
+| Csound 7                       | Latest                     | Optional at startup; required for audio playback/rendering                                         |
 
 Blue Engine is built from `native/blue-engine` and bundled with installed
 applications. Do not install a separate `blue-engine` executable. Blue opens,
@@ -194,12 +194,12 @@ AppImage runtime, including extract-and-run operation without FUSE 2.
 
 Contributor, develop, and stable packages are unsigned and require no production signing credentials. Stable releases use the protected GitHub `release` Environment as the publisher boundary; under the current single-maintainer policy, no separate approval prompt is configured. Signed macOS and Windows release paths are reserved for future funded work.
 
-| Audience | Quick command |
-| --- | --- |
-| Contributor (local unsigned package) | `pnpm --filter @blue/app package:dir && pnpm --filter @blue/app verify:packaged-app` |
-| PR validation | `.github/workflows/pr.yml` directly uploads versioned `.dmg`, `.exe`, `.AppImage`, and `.deb` Actions artifacts for macOS arm64, Windows x64, and Linux x64. |
-| Develop build | Push to `develop`; `.github/workflows/develop.yml` directly uploads native packages named `blue-{os}-{cputype}-{version}-{short-sha}.{ext}` and creates no GitHub Release. |
-| Maintainer (stable release) | Push an immutable `vX.Y.Z` tag matching `packages/blue-app/package.json`. After all package jobs succeed, `.github/workflows/release.yml` publishes verified unsigned `.dmg`, `.exe`, `.AppImage`, and `.deb` assets from the `release` Environment. |
+| Audience                             | Quick command                                                                                                                                                                                                                                        |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Contributor (local unsigned package) | `pnpm --filter @blue/app package:dir && pnpm --filter @blue/app verify:packaged-app`                                                                                                                                                                 |
+| PR validation                        | `.github/workflows/pr.yml` directly uploads versioned `.dmg`, `.exe`, `.AppImage`, and `.deb` Actions artifacts for macOS arm64, Windows x64, and Linux x64.                                                                                         |
+| Develop build                        | Push to `develop`; `.github/workflows/develop.yml` directly uploads native packages named `blue-{os}-{cputype}-{version}-{short-sha}.{ext}` and creates no GitHub Release.                                                                           |
+| Maintainer (stable release)          | Push an immutable `vX.Y.Z` tag matching `packages/blue-app/package.json`. After all package jobs succeed, `.github/workflows/release.yml` publishes verified unsigned `.dmg`, `.exe`, `.AppImage`, and `.deb` assets from the `release` Environment. |
 
 The `package:*` scripts are the normal packaging entry point. Each stages the selected Blue Engine, generates `release-metadata.json`, validates the complete package inputs, and then invokes `electron-builder`. To run input validation separately after building, first run `pnpm --filter @blue/app release:metadata`, then `pnpm verify:package-inputs`.
 
@@ -257,8 +257,11 @@ pnpm --filter @blue/data test -- --coverage
 # Lint all packages
 pnpm lint
 
-# Format all packages
-pnpm exec prettier --write "packages/*/src/**/*.ts"
+# Check formatting across repository
+pnpm format:check
+
+# Format repository files
+pnpm format
 ```
 
 ### Import Guidelines for `@blue/data`
@@ -284,7 +287,7 @@ every intentional divergence in the active feature spec and plan.
 1. Create the file in the appropriate `packages/blue-data/src/` subdirectory
 2. Implement `saveAsXML(): Element` and `static loadFromXML(data: Element): T`
 3. Implement `deepCopy(): T` (via `DeepCopyable<T>`)
-4. Add a round-trip test in `src/**/`*name*`.test.ts`
+4. Add a round-trip test in `src/**/`_name_`.test.ts`
 5. Export from `src/index.ts`
 
 ---
@@ -306,12 +309,12 @@ For the current resume state, parity investigations, and next debugging targets,
 
 ### Key Design Decisions
 
-| Decision | Rationale |
-|----------|-----------|
-| **Electron (not Tauri)** | Blue-engine communicates via ZMQ — Node.js talks to it directly. No Rust FFI needed. |
-| **Universal `@blue/data`** | Zero Node.js built-ins. Works in browser and Node for future web app. |
-| **XML serialization** | Must match Java `electric.xml` format exactly for bi-directional `.blue` compatibility. |
-| **Migration on load** | XML-level upgrades (like Java) before deserialization — handles structural schema changes. |
+| Decision                     | Rationale                                                                                                                                                                     |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Electron (not Tauri)**     | Blue-engine communicates via ZMQ — Node.js talks to it directly. No Rust FFI needed.                                                                                          |
+| **Universal `@blue/data`**   | Zero Node.js built-ins. Works in browser and Node for future web app.                                                                                                         |
+| **XML serialization**        | Must match Java `electric.xml` format exactly for bi-directional `.blue` compatibility.                                                                                       |
+| **Migration on load**        | XML-level upgrades (like Java) before deserialization — handles structural schema changes.                                                                                    |
 | **Host-injected JVM helper** | Electron main owns the Java helper and injects an abstract runtime contract into `@blue/data`; hosts without Java preserve project metadata and report unavailable execution. |
 
 ### Data Flow
@@ -347,13 +350,13 @@ Element.toXml() ←────────────────── BlueDa
 
 ### For More Detail
 
-| Document | Content |
-|----------|---------|
-| [`research/001-project-analysis-and-plan.md`](research/001-project-analysis-and-plan.md) | Full architecture analysis, framework decision, Phase 1-10 plan |
-| [`research/002-data-class-dependency-graph.md`](research/002-data-class-dependency-graph.md) | All 85+ classes mapped to TS targets in 14 dependency layers |
-| [`research/003-engine-protocol.md`](research/003-engine-protocol.md) | ZMQ binary protocol reference for blue-engine client |
-| [`specs/001-blue-data-port/spec.md`](specs/001-blue-data-port/spec.md) | Feature specification with 6 user stories, 30 requirements |
-| [`specs/001-blue-data-port/plan.md`](specs/001-blue-data-port/plan.md) | Technical implementation plan with full source tree mapping |
+| Document                                                                                     | Content                                                         |
+| -------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| [`research/001-project-analysis-and-plan.md`](research/001-project-analysis-and-plan.md)     | Full architecture analysis, framework decision, Phase 1-10 plan |
+| [`research/002-data-class-dependency-graph.md`](research/002-data-class-dependency-graph.md) | All 85+ classes mapped to TS targets in 14 dependency layers    |
+| [`research/003-engine-protocol.md`](research/003-engine-protocol.md)                         | ZMQ binary protocol reference for blue-engine client            |
+| [`specs/001-blue-data-port/spec.md`](specs/001-blue-data-port/spec.md)                       | Feature specification with 6 user stories, 30 requirements      |
+| [`specs/001-blue-data-port/plan.md`](specs/001-blue-data-port/plan.md)                       | Technical implementation plan with full source tree mapping     |
 
 ---
 
@@ -388,4 +391,4 @@ See [LICENSE](LICENSE) for details.
 
 ---
 
-*This project ports Blue from Java/NetBeans RCP to TypeScript. The original Blue Java application is at [https://github.com/kunstmusik/blue](https://github.com/kunstmusik/blue).*
+_This project ports Blue from Java/NetBeans RCP to TypeScript. The original Blue Java application is at [https://github.com/kunstmusik/blue](https://github.com/kunstmusik/blue)._

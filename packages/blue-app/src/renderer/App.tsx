@@ -75,7 +75,9 @@ export default function App(): React.ReactElement {
         {transferPreview && (
           <LibraryTransferDialog
             preview={transferPreview}
-            onApply={(mode) => { void applyTransfer(mode); }}
+            onApply={(mode) => {
+              void applyTransfer(mode);
+            }}
             onCancel={cancelTransfer}
           />
         )}

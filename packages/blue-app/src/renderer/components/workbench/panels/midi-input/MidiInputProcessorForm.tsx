@@ -1,7 +1,10 @@
 import { useCallback, useRef, useState, type ReactElement } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { useProjectStore } from '../../../../stores/project-store';
-import type { MidiInputProcessorSnapshot, MidiScaleSnapshot } from '../../../../../shared/project-editor';
+import type {
+  MidiInputProcessorSnapshot,
+  MidiScaleSnapshot,
+} from '../../../../../shared/project-editor';
 import { BLUE_INSPECTOR_LABEL_TEXT_CLASS } from '../shared/compactFieldStyles';
 import { PopoutContextMenuPortal } from '../../../../hooks/host-portals';
 import { AppSelect } from '../../../AppSelect';
@@ -32,7 +35,9 @@ function ensureOption(options: ReadonlyArray<{ value: string; label: string }>, 
 function FormRow({ label, children }: { label: string; children: ReactElement }): ReactElement {
   return (
     <div className="flex items-center gap-3">
-      <span className={cn('w-24 flex-none text-right', BLUE_INSPECTOR_LABEL_TEXT_CLASS)}>{label}</span>
+      <span className={cn('w-24 flex-none text-right', BLUE_INSPECTOR_LABEL_TEXT_CLASS)}>
+        {label}
+      </span>
       <div className="flex-1 min-w-0">{children}</div>
     </div>
   );
@@ -48,32 +53,29 @@ function ScaleSelector({
   const inputRef = useRef<HTMLInputElement>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const handleFileSelect = useCallback(
-    async () => {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = '.scl';
-      input.click();
+  const handleFileSelect = useCallback(async () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.scl';
+    input.click();
 
-      await new Promise<void>((resolve) => {
-        input.onchange = () => resolve();
-      });
+    await new Promise<void>((resolve) => {
+      input.onchange = () => resolve();
+    });
 
-      const file = input.files?.[0];
-      if (!file) return;
+    const file = input.files?.[0];
+    if (!file) return;
 
-      try {
-        const text = await file.text();
-        const parsed = parseScalaFile(text, file.name.replace(/\.scl$/i, ''));
-        if (parsed) {
-          onScaleChange(parsed);
-        }
-      } catch {
-        // ignore read errors
+    try {
+      const text = await file.text();
+      const parsed = parseScalaFile(text, file.name.replace(/\.scl$/i, ''));
+      if (parsed) {
+        onScaleChange(parsed);
       }
-    },
-    [onScaleChange],
-  );
+    } catch {
+      // ignore read errors
+    }
+  }, [onScaleChange]);
 
   const handleReset = useCallback(() => {
     onScaleChange(null);
@@ -105,10 +107,7 @@ function ScaleSelector({
 
       <PopoutContextMenuPortal>
         <ContextMenu.Content className="workbench-context-menu">
-          <ContextMenu.Item
-            className="workbench-context-menu__item"
-            onSelect={handleReset}
-          >
+          <ContextMenu.Item className="workbench-context-menu__item" onSelect={handleReset}>
             Reset (12TET)
           </ContextMenu.Item>
         </ContextMenu.Content>
@@ -118,7 +117,9 @@ function ScaleSelector({
 }
 
 function parseScalaFile(text: string, fallbackName: string): MidiScaleSnapshot | null {
-  const lines = text.split(/\r?\n/).filter((line) => !line.startsWith('!') && line.trim().length > 0);
+  const lines = text
+    .split(/\r?\n/)
+    .filter((line) => !line.startsWith('!') && line.trim().length > 0);
   if (lines.length === 0) return null;
 
   const scaleName = lines[0]!.trim() || fallbackName;

@@ -12,12 +12,12 @@ import {
   createProjectEditorSnapshot,
   createScoreObjectEditorDocument,
 } from './project-editor';
-import type {
-  ScoreObjectEditorRequest,
-  NoteProcessorChainSnapshot,
-} from './project-editor';
+import type { ScoreObjectEditorRequest, NoteProcessorChainSnapshot } from './project-editor';
 
-function createProjectWithChain(...processors: import('@blue/data').NoteProcessor[]): { data: BlueData; target: import('./project-editor').ScoreObjectEditorTargetSnapshot } {
+function createProjectWithChain(...processors: import('@blue/data').NoteProcessor[]): {
+  data: BlueData;
+  target: import('./project-editor').ScoreObjectEditorTargetSnapshot;
+} {
   const data = new BlueData();
   const score = data.getScore();
   score.length = 0;
@@ -39,7 +39,9 @@ function createProjectWithChain(...processors: import('@blue/data').NoteProcesso
   return { data, target: item.editorTarget };
 }
 
-function makeChainSnapshot(processors: Array<{ processorType: string; val?: string }>): NoteProcessorChainSnapshot {
+function makeChainSnapshot(
+  processors: Array<{ processorType: string; val?: string }>,
+): NoteProcessorChainSnapshot {
   return {
     processors: processors.map((p, i) => ({
       id: `np-${i}`,
@@ -56,7 +58,10 @@ function makeChainSnapshot(processors: Array<{ processorType: string; val?: stri
   };
 }
 
-function getChainFromData(data: BlueData, target: import('./project-editor').ScoreObjectEditorTargetSnapshot): NoteProcessorChainSnapshot | null | undefined {
+function getChainFromData(
+  data: BlueData,
+  target: import('./project-editor').ScoreObjectEditorTargetSnapshot,
+): NoteProcessorChainSnapshot | null | undefined {
   const request: ScoreObjectEditorRequest = { target };
   const doc = createScoreObjectEditorDocument(data, request);
   return doc?.shared.noteProcessorChain;

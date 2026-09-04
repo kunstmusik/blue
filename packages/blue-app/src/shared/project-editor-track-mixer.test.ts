@@ -1,12 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  BlueData,
-  Channel,
-  Effect,
-  Send,
-  TrackLayer,
-  TrackLayerGroup,
-} from '@blue/data';
+import { BlueData, Channel, Effect, Send, TrackLayer, TrackLayerGroup } from '@blue/data';
 import {
   applyProjectDocumentPatch,
   findMixerChannelById,
@@ -25,8 +18,9 @@ describe('Track mixer reconciliation', () => {
 
     reconcileMixerWithArrangement(data);
 
-    expect(findMixerChannelById(data.getMixer(), track.getUniqueId()))
-      .toBe(data.getMixer().getChannelListGroups()[0]![0]);
+    expect(findMixerChannelById(data.getMixer(), track.getUniqueId())).toBe(
+      data.getMixer().getChannelListGroups()[0]![0],
+    );
   });
 
   it('uses the latest Track channel gain when playback is compiled again', () => {
@@ -39,13 +33,15 @@ describe('Track mixer reconciliation', () => {
     data.getScore().push(group);
     reconcileMixerWithArrangement(data);
 
-    expect(applyProjectDocumentPatch(data, {
-      mixer: {
-        type: 'updateChannel',
-        channelId: track.getUniqueId(),
-        patch: { level: -18 },
-      },
-    })).toBe(true);
+    expect(
+      applyProjectDocumentPatch(data, {
+        mixer: {
+          type: 'updateChannel',
+          channelId: track.getUniqueId(),
+          patch: { level: -18 },
+        },
+      }),
+    ).toBe(true);
 
     const render = data.toRealtimePlaybackCSD();
 
@@ -72,7 +68,9 @@ describe('Track mixer reconciliation', () => {
 
     reconcileMixerWithArrangement(data);
     const sourceGroup = data.getMixer().getChannelListGroups()[0];
-    const firstChannel = sourceGroup.find((channel) => channel.getAssociation() === first.getUniqueId());
+    const firstChannel = sourceGroup.find(
+      (channel) => channel.getAssociation() === first.getUniqueId(),
+    );
     expect(firstChannel).toBeDefined();
 
     const effect = new Effect();
@@ -113,15 +111,15 @@ describe('Track mixer reconciliation', () => {
 
       const groups = data.getMixer().getChannelListGroups();
       expect(groups).toHaveLength(1);
-      expect(Array.from(groups[0], (channel) => channel.getAssociation()).sort()).toEqual([
-        first.getUniqueId(),
-        second.getUniqueId(),
-      ].sort());
+      expect(Array.from(groups[0], (channel) => channel.getAssociation()).sort()).toEqual(
+        [first.getUniqueId(), second.getUniqueId()].sort(),
+      );
     }
 
-    const finalFirstChannel = data.getMixer().getChannelListGroups()[0].find(
-      (channel) => channel.getAssociation() === first.getUniqueId(),
-    );
+    const finalFirstChannel = data
+      .getMixer()
+      .getChannelListGroups()[0]
+      .find((channel) => channel.getAssociation() === first.getUniqueId());
     expect(finalFirstChannel).toBeDefined();
     expect(finalFirstChannel!.getPreEffects()[0].getName()).toBe('Preserved Effect');
     expect(finalFirstChannel!.getPostEffects()[0]).toBeInstanceOf(Send);

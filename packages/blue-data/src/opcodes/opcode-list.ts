@@ -11,9 +11,7 @@ export class OpcodeList {
 
   constructor(other?: OpcodeList) {
     if (other) {
-      this._opcodes = other.getOpcodes().map(
-        (opcode) => opcode.deepCopy() as OpcodeDefinition,
-      );
+      this._opcodes = other.getOpcodes().map((opcode) => opcode.deepCopy() as OpcodeDefinition);
     }
   }
 
@@ -145,6 +143,6 @@ export class OpcodeList {
    */
   toString(): string {
     if (this._opcodes.length === 0) return '';
-    return this._opcodes.map(op => op.generateCode()).join('\n');
+    return this._opcodes.map((op) => op.generateCode()).join('\n');
   }
 }

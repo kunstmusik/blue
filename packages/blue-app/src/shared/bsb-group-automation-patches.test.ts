@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  BlueData,
-  BlueSynthBuilder,
-  BSBGroup,
-  BSBKnob,
-} from '@blue/data';
+import { BlueData, BlueSynthBuilder, BSBGroup, BSBKnob } from '@blue/data';
 import type { Parameter } from '@blue/data';
 import { applyProjectDocumentPatch } from './project-editor';
 
@@ -31,18 +26,20 @@ describe('BSB group/ungroup document patches', () => {
     parameter.addPoint(0.0, 0.0);
     parameter.addPoint(1.0, 0.75);
 
-    expect(applyProjectDocumentPatch(data, {
-      orchestra: {
-        type: 'updateInstrument',
-        assignmentId: '1',
-        patch: {
-          bsbInterface: {
-            type: 'makeGroup',
-            widgetIds: [knob.id],
+    expect(
+      applyProjectDocumentPatch(data, {
+        orchestra: {
+          type: 'updateInstrument',
+          assignmentId: '1',
+          patch: {
+            bsbInterface: {
+              type: 'makeGroup',
+              widgetIds: [knob.id],
+            },
           },
         },
-      },
-    })).toBe(true);
+      }),
+    ).toBe(true);
 
     const group = root.getChildren().find((child) => child instanceof BSBGroup);
     expect(group).toBeInstanceOf(BSBGroup);
@@ -57,18 +54,20 @@ describe('BSB group/ungroup document patches', () => {
       { time: 1.0, value: 0.75 },
     ]);
 
-    expect(applyProjectDocumentPatch(data, {
-      orchestra: {
-        type: 'updateInstrument',
-        assignmentId: '1',
-        patch: {
-          bsbInterface: {
-            type: 'breakGroup',
-            widgetId: group!.id,
+    expect(
+      applyProjectDocumentPatch(data, {
+        orchestra: {
+          type: 'updateInstrument',
+          assignmentId: '1',
+          patch: {
+            bsbInterface: {
+              type: 'breakGroup',
+              widgetId: group!.id,
+            },
           },
         },
-      },
-    })).toBe(true);
+      }),
+    ).toBe(true);
 
     const afterBreak = findParamByName(instrument, 'test1');
     expect(afterBreak).toBe(parameter);

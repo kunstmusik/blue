@@ -23,17 +23,17 @@ function parserError(error: unknown): Error {
 function validateMidiHeader(data: MidiData): { format: 0 | 1; ticksPerBeat: number } {
   const ticksPerBeat = data.header.ticksPerBeat;
   if (data.header.format !== 0 && data.header.format !== 1) {
-    throw new Error(`Unsupported MIDI format ${String(data.header.format)}; only formats 0 and 1 are supported.`);
+    throw new Error(
+      `Unsupported MIDI format ${String(data.header.format)}; only formats 0 and 1 are supported.`,
+    );
   }
-  if (
-    typeof ticksPerBeat !== 'number' ||
-    !Number.isInteger(ticksPerBeat) ||
-    ticksPerBeat <= 0
-  ) {
+  if (typeof ticksPerBeat !== 'number' || !Number.isInteger(ticksPerBeat) || ticksPerBeat <= 0) {
     throw new Error('Unsupported MIDI timing: the file must use a positive PPQ division.');
   }
   if (data.tracks.length !== data.header.numTracks) {
-    throw new Error(`MIDI header expected ${data.header.numTracks} tracks but found ${data.tracks.length}.`);
+    throw new Error(
+      `MIDI header expected ${data.header.numTracks} tracks but found ${data.tracks.length}.`,
+    );
   }
   return { format: data.header.format, ticksPerBeat };
 }
@@ -49,7 +49,9 @@ function createStream(trackIndex: number, channel: number): MidiImportStream {
   };
 }
 
-function isNoteEvent(event: MidiEvent): event is Extract<MidiEvent, { type: 'noteOn' | 'noteOff' }> {
+function isNoteEvent(
+  event: MidiEvent,
+): event is Extract<MidiEvent, { type: 'noteOn' | 'noteOff' }> {
   return event.type === 'noteOn' || event.type === 'noteOff';
 }
 
@@ -103,9 +105,8 @@ function normalizeTrack(trackIndex: number, events: MidiEvent[]): MidiImportTrac
     };
     stream.events.push(noteEvent);
     stream.noteCount += event.type === 'noteOn' && event.velocity > 0 ? 1 : 0;
-    stream.firstTick = stream.firstTick === undefined
-      ? absoluteTick
-      : Math.min(stream.firstTick, absoluteTick);
+    stream.firstTick =
+      stream.firstTick === undefined ? absoluteTick : Math.min(stream.firstTick, absoluteTick);
     stream.lastTick = Math.max(stream.lastTick ?? absoluteTick, absoluteTick);
     streams.set(event.channel, stream);
   }

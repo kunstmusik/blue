@@ -40,16 +40,25 @@ export type ScoreObjectEditorComponent = React.ComponentType<ScoreObjectEditorCo
 
 function resolveStructuredEditor(editorFamily: string): ScoreObjectEditorComponent {
   switch (editorFamily) {
-    case 'PatternObject': return PatternObjectEditor;
-    case 'LineObject': return LineObjectEditor;
-    case 'ZakLineObject': return ZakLineObjectEditor;
-    case 'PianoRoll': return PianoRollEditor;
-    case 'TrackerObject': return TrackerObjectEditor;
+    case 'PatternObject':
+      return PatternObjectEditor;
+    case 'LineObject':
+      return LineObjectEditor;
+    case 'ZakLineObject':
+      return ZakLineObjectEditor;
+    case 'PianoRoll':
+      return PianoRollEditor;
+    case 'TrackerObject':
+      return TrackerObjectEditor;
 
-    case 'JMask': return JMaskEditor;
-    case 'Sound': return SoundEditor;
-    case 'PolyObject': return PolyObjectEditor;
-    default: return UnsupportedScoreObjectEditor;
+    case 'JMask':
+      return JMaskEditor;
+    case 'Sound':
+      return SoundEditor;
+    case 'PolyObject':
+      return PolyObjectEditor;
+    default:
+      return UnsupportedScoreObjectEditor;
   }
 }
 

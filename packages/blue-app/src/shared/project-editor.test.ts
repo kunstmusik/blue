@@ -64,19 +64,25 @@ describe('Scratch Pad project bridge', () => {
       wordWrapEnabled: false,
     });
 
-    expect(applyProjectDocumentPatch(data, {
-      scratchPad: { text: 'Updated notes' },
-    })).toBe(true);
+    expect(
+      applyProjectDocumentPatch(data, {
+        scratchPad: { text: 'Updated notes' },
+      }),
+    ).toBe(true);
     expect(data.getScratchPadData().getScratchText()).toBe('Updated notes');
     expect(data.getScratchPadData().isWordWrapEnabled()).toBe(false);
 
-    expect(applyProjectDocumentPatch(data, {
-      scratchPad: { wordWrapEnabled: true },
-    })).toBe(true);
+    expect(
+      applyProjectDocumentPatch(data, {
+        scratchPad: { wordWrapEnabled: true },
+      }),
+    ).toBe(true);
     expect(data.getScratchPadData().isWordWrapEnabled()).toBe(true);
-    expect(applyProjectDocumentPatch(data, {
-      scratchPad: {},
-    })).toBe(false);
+    expect(
+      applyProjectDocumentPatch(data, {
+        scratchPad: {},
+      }),
+    ).toBe(false);
     expect(isEmptyProjectDocumentPatch({ scratchPad: {} })).toBe(true);
   });
 });

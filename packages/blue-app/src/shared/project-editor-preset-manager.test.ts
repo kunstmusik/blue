@@ -20,10 +20,7 @@ function createPresetProject(): {
   const nested = new PresetGroup();
   nested.setPresetGroupName('Nested');
   nested.presets.push(createPreset('preset-c', 'C'));
-  root.presets.push(
-    createPreset('preset-a', 'A'),
-    createPreset('preset-b', 'B'),
-  );
+  root.presets.push(createPreset('preset-a', 'A'), createPreset('preset-b', 'B'));
   root.subGroups.push(nested);
   root.setCurrentPresetUniqueId('preset-c');
   root.setCurrentPresetModified(true);
@@ -32,10 +29,7 @@ function createPresetProject(): {
   return { data, root };
 }
 
-function applyPresetPatch(
-  data: BlueData,
-  bsbInterface: BsbInterfacePatch,
-): boolean {
+function applyPresetPatch(data: BlueData, bsbInterface: BsbInterfacePatch): boolean {
   return applyProjectDocumentPatch(data, {
     orchestra: {
       type: 'updateInstrument',
@@ -65,12 +59,11 @@ describe('BSB preset manager patches', () => {
       }),
     ).toBe(true);
 
-    expect(root.presets.map((preset) => preset.getUniqueId())).toEqual([
-      'preset-a',
+    expect(root.presets.map((preset) => preset.getUniqueId())).toEqual(['preset-a']);
+    expect(root.subGroups[0]?.presets.map((preset) => preset.getPresetName())).toEqual([
+      'C',
+      'Renamed',
     ]);
-    expect(
-      root.subGroups[0]?.presets.map((preset) => preset.getPresetName()),
-    ).toEqual(['C', 'Renamed']);
   });
 
   it('reorders presets and groups when moving downward within one parent', () => {
@@ -87,10 +80,7 @@ describe('BSB preset manager patches', () => {
         targetIndex: 4,
       }),
     ).toBe(true);
-    expect(root.presets.map((preset) => preset.getUniqueId())).toEqual([
-      'preset-b',
-      'preset-a',
-    ]);
+    expect(root.presets.map((preset) => preset.getUniqueId())).toEqual(['preset-b', 'preset-a']);
 
     expect(
       applyPresetPatch(data, {
@@ -100,22 +90,19 @@ describe('BSB preset manager patches', () => {
         targetIndex: 2,
       }),
     ).toBe(true);
-    expect(root.subGroups.map((group) => group.getPresetGroupName())).toEqual([
+    expect(root.subGroups.map((group) => group.getPresetGroupName())).toEqual(['Second', 'Nested']);
+
+    const reopened = BlueData.loadFromString(data.saveToString());
+    const reopenedInstrument = reopened.getArrangement().getInstrumentById('1') as BlueSynthBuilder;
+    const reopenedGroup = reopenedInstrument.getPresetGroup();
+    expect(reopenedGroup?.presets.map((preset) => preset.getUniqueId())).toEqual([
+      'preset-b',
+      'preset-a',
+    ]);
+    expect(reopenedGroup?.subGroups.map((group) => group.getPresetGroupName())).toEqual([
       'Second',
       'Nested',
     ]);
-
-    const reopened = BlueData.loadFromString(data.saveToString());
-    const reopenedInstrument = reopened
-      .getArrangement()
-      .getInstrumentById('1') as BlueSynthBuilder;
-    const reopenedGroup = reopenedInstrument.getPresetGroup();
-    expect(
-      reopenedGroup?.presets.map((preset) => preset.getUniqueId()),
-    ).toEqual(['preset-b', 'preset-a']);
-    expect(
-      reopenedGroup?.subGroups.map((group) => group.getPresetGroupName()),
-    ).toEqual(['Second', 'Nested']);
   });
 
   it('reorders and renames groups while rejecting descendant moves', () => {

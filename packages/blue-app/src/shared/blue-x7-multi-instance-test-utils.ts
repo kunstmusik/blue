@@ -35,9 +35,9 @@ function configureInstrument(instrument: BlueX7, ownerIndex: number): void {
   instrument.getParameters().forEach((parameter, parameterIndex) => {
     parameter.setUniqueId(`x7-owner-${ownerIndex + 1}-parameter-${parameterIndex + 1}`);
   });
-  const automated = instrument.getParameters().find(
-    (parameter) => parameter.getName() === 'common.feedback',
-  )!;
+  const automated = instrument
+    .getParameters()
+    .find((parameter) => parameter.getName() === 'common.feedback')!;
   automated.setAutomationEnabled(true);
   automated.setPoints([
     { time: 0, value: ownerIndex + 1 },

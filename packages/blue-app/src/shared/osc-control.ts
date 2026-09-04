@@ -20,12 +20,7 @@ export interface OscServerPreferences {
   preferredPort: number;
 }
 
-export type OscServerPhase =
-  | 'stopped'
-  | 'starting'
-  | 'listening'
-  | 'restarting'
-  | 'error';
+export type OscServerPhase = 'stopped' | 'starting' | 'listening' | 'restarting' | 'error';
 
 export interface OscRuntimeDiagnostic {
   code: string | null;
@@ -55,7 +50,7 @@ export type OscCommandId =
   | 'blueLive.allNotesOff';
 
 export const OSC_COMMAND_CATEGORIES = ['Score', 'Blue Live'] as const;
-export type OscCommandCategory = typeof OSC_COMMAND_CATEGORIES[number];
+export type OscCommandCategory = (typeof OSC_COMMAND_CATEGORIES)[number];
 
 /**
  * Renderer capabilities supplied at dispatch time. Keeping this structural
@@ -189,10 +184,12 @@ export interface OscCommandEvent {
 }
 
 export function isValidOscPort(value: unknown): value is number {
-  return typeof value === 'number'
-    && Number.isInteger(value)
-    && value >= OSC_MIN_PORT
-    && value <= OSC_MAX_PORT;
+  return (
+    typeof value === 'number' &&
+    Number.isInteger(value) &&
+    value >= OSC_MIN_PORT &&
+    value <= OSC_MAX_PORT
+  );
 }
 
 export function createDefaultOscServerPreferences(): OscServerPreferences {
@@ -245,26 +242,28 @@ export function isOscServerRuntimeSnapshot(value: unknown): value is OscServerRu
   if (!value || typeof value !== 'object') return false;
   const snapshot = value as Partial<OscServerRuntimeSnapshot>;
   return (
-    snapshot.phase === 'stopped'
-    || snapshot.phase === 'starting'
-    || snapshot.phase === 'listening'
-    || snapshot.phase === 'restarting'
-    || snapshot.phase === 'error'
-  )
-    && isValidOscPort(snapshot.preferredPort)
-    && (snapshot.activePort === null || isValidOscPort(snapshot.activePort))
-    && (snapshot.fallbackFrom === null || isValidOscPort(snapshot.fallbackFrom))
-    && typeof snapshot.revision === 'number'
-    && typeof snapshot.updatedAt === 'string';
+    (snapshot.phase === 'stopped' ||
+      snapshot.phase === 'starting' ||
+      snapshot.phase === 'listening' ||
+      snapshot.phase === 'restarting' ||
+      snapshot.phase === 'error') &&
+    isValidOscPort(snapshot.preferredPort) &&
+    (snapshot.activePort === null || isValidOscPort(snapshot.activePort)) &&
+    (snapshot.fallbackFrom === null || isValidOscPort(snapshot.fallbackFrom)) &&
+    typeof snapshot.revision === 'number' &&
+    typeof snapshot.updatedAt === 'string'
+  );
 }
 
 export function isOscCommandEvent(value: unknown): value is OscCommandEvent {
   if (!value || typeof value !== 'object') return false;
   const event = value as Partial<OscCommandEvent>;
-  return typeof event.sequence === 'number'
-    && Number.isInteger(event.sequence)
-    && event.sequence > 0
-    && OSC_COMMAND_REGISTRY.some((command) => command.id === event.commandId)
-    && typeof event.receivedAddress === 'string'
-    && typeof event.receivedAt === 'string';
+  return (
+    typeof event.sequence === 'number' &&
+    Number.isInteger(event.sequence) &&
+    event.sequence > 0 &&
+    OSC_COMMAND_REGISTRY.some((command) => command.id === event.commandId) &&
+    typeof event.receivedAddress === 'string' &&
+    typeof event.receivedAt === 'string'
+  );
 }

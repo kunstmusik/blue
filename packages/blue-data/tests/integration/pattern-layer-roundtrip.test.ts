@@ -593,7 +593,6 @@ describe('PatternLayer with unknown type', () => {
   });
 });
 
-
 function attachSerializableSource(group: PatternsLayerGroup): void {
   for (const layer of group) {
     const gs = new GenericScore();

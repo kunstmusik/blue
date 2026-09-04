@@ -40,8 +40,8 @@ export function getProjectUdoSessionObjectId(
   return target?.track
     ? `track:${target.track.rootGroupId}:${target.track.trackId}:udo:${index}`
     : target?.instrumentAssignmentId
-    ? `instrument:${target.instrumentAssignmentId}:udo:${index}`
-    : `udo:${index}`;
+      ? `instrument:${target.instrumentAssignmentId}:udo:${index}`
+      : `udo:${index}`;
 }
 
 function createProjectUdoTarget(
@@ -83,11 +83,7 @@ function MenuItem({
   onSelect: () => void;
 }): React.ReactElement {
   return (
-    <ContextMenu.Item
-      className="editor-context-menu__item"
-      disabled={disabled}
-      onSelect={onSelect}
-    >
+    <ContextMenu.Item className="editor-context-menu__item" disabled={disabled} onSelect={onSelect}>
       {children}
     </ContextMenu.Item>
   );
@@ -120,17 +116,21 @@ export default function UdoTable({
     ? getLibraryTransferSourceType(libraryClipboard.source) === 'udo'
     : false;
 
-  const pasteLibraryUdo = useCallback((insertIndex: number) => {
-    if (
-      !libraryDropTarget
-      || !libraryClipboard
-      || getLibraryTransferSourceType(libraryClipboard.source) !== 'udo'
-    ) return;
-    void transferLibraryItem(
-      { kind: 'clipboard', source: libraryClipboard.source },
-      createProjectUdoTarget(libraryDropTarget, insertIndex),
-    );
-  }, [libraryClipboard, libraryDropTarget, transferLibraryItem]);
+  const pasteLibraryUdo = useCallback(
+    (insertIndex: number) => {
+      if (
+        !libraryDropTarget ||
+        !libraryClipboard ||
+        getLibraryTransferSourceType(libraryClipboard.source) !== 'udo'
+      )
+        return;
+      void transferLibraryItem(
+        { kind: 'clipboard', source: libraryClipboard.source },
+        createProjectUdoTarget(libraryDropTarget, insertIndex),
+      );
+    },
+    [libraryClipboard, libraryDropTarget, transferLibraryItem],
+  );
 
   const handleRowClick = useCallback(
     (index: number, event: React.MouseEvent<HTMLTableRowElement>) => {
@@ -167,20 +167,11 @@ export default function UdoTable({
             </button>
           </DropdownMenu.Trigger>
           <PopoutDropdownMenuPortal>
-            <DropdownMenu.Content
-              className="editor-context-menu"
-              align="start"
-            >
-              <DropdownMenu.Item
-                className="editor-context-menu__item"
-                onSelect={onImportBlueUdo}
-              >
+            <DropdownMenu.Content className="editor-context-menu" align="start">
+              <DropdownMenu.Item className="editor-context-menu__item" onSelect={onImportBlueUdo}>
                 Blue UDO (.blueUDO)
               </DropdownMenu.Item>
-              <DropdownMenu.Item
-                className="editor-context-menu__item"
-                onSelect={onImportCsoundUdo}
-              >
+              <DropdownMenu.Item className="editor-context-menu__item" onSelect={onImportCsoundUdo}>
                 Csound UDO (.udo/.orc/.csd)
               </DropdownMenu.Item>
             </DropdownMenu.Content>
@@ -194,43 +185,45 @@ export default function UdoTable({
         tabIndex={0}
         onKeyDown={(event) => {
           if (
-            (event.metaKey || event.ctrlKey)
-            && event.key.toLocaleLowerCase() === 'v'
-            && libraryUdoAvailable
-            && !isTextEditingTarget(event.target)
+            (event.metaKey || event.ctrlKey) &&
+            event.key.toLocaleLowerCase() === 'v' &&
+            libraryUdoAvailable &&
+            !isTextEditingTarget(event.target)
           ) {
             event.preventDefault();
-            const lastSelectedIndex = selectedIndices.length > 0
-              ? Math.max(...selectedIndices)
-              : udolist.length - 1;
+            const lastSelectedIndex =
+              selectedIndices.length > 0 ? Math.max(...selectedIndices) : udolist.length - 1;
             pasteLibraryUdo(lastSelectedIndex + 1);
           }
         }}
       >
-          <table className="w-full shrink-0 text-left text-role-body">
-            <thead className="sticky top-0 bg-app-surface-strong">
-              <tr className="border-b border-app-border">
-                <th className="px-3 py-2 font-medium text-app-text-strong">Name</th>
-                <th className="px-3 py-2 font-medium text-app-text-strong">Style</th>
-                <th className="px-3 py-2 font-medium text-app-text-strong">Out Types</th>
-                <th className="px-3 py-2 font-medium text-app-text-strong">
-                  In Types / Input Args
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {udolist.map((udo, index) => {
-                const isSelected = selectedIndices.includes(index);
-                const projectNode = projectNodes.find((node) => (
-                  node.key?.scope === 'projectOwned'
-                  && node.key.locator.kind === 'udo'
-                  && node.key.locator.sessionObjectId
-                    === getProjectUdoSessionObjectId(libraryDropTarget, index)
-                )) ?? null;
-                const row = (active: boolean, dropProps: Partial<LibraryDropZoneState['dropProps']>) => (
-                  <ContextMenu.Root>
-                    <ContextMenu.Trigger asChild>
-                      <ProjectLibraryDragSource node={projectNode}>
+        <table className="w-full shrink-0 text-left text-role-body">
+          <thead className="sticky top-0 bg-app-surface-strong">
+            <tr className="border-b border-app-border">
+              <th className="px-3 py-2 font-medium text-app-text-strong">Name</th>
+              <th className="px-3 py-2 font-medium text-app-text-strong">Style</th>
+              <th className="px-3 py-2 font-medium text-app-text-strong">Out Types</th>
+              <th className="px-3 py-2 font-medium text-app-text-strong">In Types / Input Args</th>
+            </tr>
+          </thead>
+          <tbody>
+            {udolist.map((udo, index) => {
+              const isSelected = selectedIndices.includes(index);
+              const projectNode =
+                projectNodes.find(
+                  (node) =>
+                    node.key?.scope === 'projectOwned' &&
+                    node.key.locator.kind === 'udo' &&
+                    node.key.locator.sessionObjectId ===
+                      getProjectUdoSessionObjectId(libraryDropTarget, index),
+                ) ?? null;
+              const row = (
+                active: boolean,
+                dropProps: Partial<LibraryDropZoneState['dropProps']>,
+              ) => (
+                <ContextMenu.Root>
+                  <ContextMenu.Trigger asChild>
+                    <ProjectLibraryDragSource node={projectNode}>
                       <tr
                         {...dropProps}
                         data-library-drop-target={libraryDropTarget ? 'udo-row' : undefined}
@@ -258,72 +251,76 @@ export default function UdoTable({
                         </td>
                         <td className="px-3 py-2 text-app-text">{udo.outTypes || '-'}</td>
                         <td className="px-3 py-2 text-app-text">
-                          {udo.style === 'CLASSIC'
-                            ? udo.inTypes || '-'
-                            : udo.inputArguments || '-'}
+                          {udo.style === 'CLASSIC' ? udo.inTypes || '-' : udo.inputArguments || '-'}
                         </td>
                       </tr>
-                      </ProjectLibraryDragSource>
-                    </ContextMenu.Trigger>
-                    <PopoutContextMenuPortal>
-                      <ContextMenu.Content className="editor-context-menu">
-                        <MenuItem disabled={!canMoveUp} onSelect={onMoveSelectionUp}>
-                          Push Up
-                        </MenuItem>
-                        <MenuItem disabled={!canMoveDown} onSelect={onMoveSelectionDown}>
-                          Push Down
-                        </MenuItem>
-                        <ContextMenu.Separator className="editor-context-menu__separator" />
-                        <MenuItem disabled={!hasSingleSelection || !projectNode} onSelect={() => onCopySelection('copy')}>
-                          Copy
-                        </MenuItem>
-                        <MenuItem disabled={!hasSingleSelection || !projectNode} onSelect={() => onCopySelection('cut')}>
-                          Cut
-                        </MenuItem>
-                        <MenuItem
-                          disabled={!libraryUdoAvailable}
-                          onSelect={() => pasteLibraryUdo(index + 1)}
+                    </ProjectLibraryDragSource>
+                  </ContextMenu.Trigger>
+                  <PopoutContextMenuPortal>
+                    <ContextMenu.Content className="editor-context-menu">
+                      <MenuItem disabled={!canMoveUp} onSelect={onMoveSelectionUp}>
+                        Push Up
+                      </MenuItem>
+                      <MenuItem disabled={!canMoveDown} onSelect={onMoveSelectionDown}>
+                        Push Down
+                      </MenuItem>
+                      <ContextMenu.Separator className="editor-context-menu__separator" />
+                      <MenuItem
+                        disabled={!hasSingleSelection || !projectNode}
+                        onSelect={() => onCopySelection('copy')}
+                      >
+                        Copy
+                      </MenuItem>
+                      <MenuItem
+                        disabled={!hasSingleSelection || !projectNode}
+                        onSelect={() => onCopySelection('cut')}
+                      >
+                        Cut
+                      </MenuItem>
+                      <MenuItem
+                        disabled={!libraryUdoAvailable}
+                        onSelect={() => pasteLibraryUdo(index + 1)}
+                      >
+                        Paste
+                      </MenuItem>
+                      <ContextMenu.Separator className="editor-context-menu__separator" />
+                      <ContextMenu.Sub>
+                        <ContextMenu.SubTrigger
+                          className="editor-context-menu__item editor-context-menu__subtrigger"
+                          disabled={!hasSingleSelection}
                         >
-                          Paste
-                        </MenuItem>
-                        <ContextMenu.Separator className="editor-context-menu__separator" />
-                        <ContextMenu.Sub>
-                          <ContextMenu.SubTrigger
-                            className="editor-context-menu__item editor-context-menu__subtrigger"
-                            disabled={!hasSingleSelection}
-                          >
-                            <span>Export</span>
-                            <ChevronRight className="w-3.5 h-3.5 opacity-60" />
-                          </ContextMenu.SubTrigger>
-                          <PopoutContextMenuPortal>
-                            <ContextMenu.SubContent className="editor-context-menu">
-                              <ContextMenu.Item
-                                className="editor-context-menu__item"
-                                disabled={!hasSingleSelection}
-                                onSelect={onExportBlueUdo}
-                              >
-                                Blue UDO (.blueUDO)
-                              </ContextMenu.Item>
-                              <ContextMenu.Item
-                                className="editor-context-menu__item"
-                                disabled={!hasSingleSelection}
-                                onSelect={onExportCsoundUdo}
-                              >
-                                Csound UDO (.udo)
-                              </ContextMenu.Item>
-                            </ContextMenu.SubContent>
-                          </PopoutContextMenuPortal>
-                        </ContextMenu.Sub>
-                        <ContextMenu.Separator className="editor-context-menu__separator" />
-                        <MenuItem disabled={!hasSelection} onSelect={onRemoveSelection}>
-                          Remove
-                        </MenuItem>
-                      </ContextMenu.Content>
-                    </PopoutContextMenuPortal>
-                  </ContextMenu.Root>
-                );
-                return (
-                  <React.Fragment key={`${udo.name}-${index}`}>
+                          <span>Export</span>
+                          <ChevronRight className="w-3.5 h-3.5 opacity-60" />
+                        </ContextMenu.SubTrigger>
+                        <PopoutContextMenuPortal>
+                          <ContextMenu.SubContent className="editor-context-menu">
+                            <ContextMenu.Item
+                              className="editor-context-menu__item"
+                              disabled={!hasSingleSelection}
+                              onSelect={onExportBlueUdo}
+                            >
+                              Blue UDO (.blueUDO)
+                            </ContextMenu.Item>
+                            <ContextMenu.Item
+                              className="editor-context-menu__item"
+                              disabled={!hasSingleSelection}
+                              onSelect={onExportCsoundUdo}
+                            >
+                              Csound UDO (.udo)
+                            </ContextMenu.Item>
+                          </ContextMenu.SubContent>
+                        </PopoutContextMenuPortal>
+                      </ContextMenu.Sub>
+                      <ContextMenu.Separator className="editor-context-menu__separator" />
+                      <MenuItem disabled={!hasSelection} onSelect={onRemoveSelection}>
+                        Remove
+                      </MenuItem>
+                    </ContextMenu.Content>
+                  </PopoutContextMenuPortal>
+                </ContextMenu.Root>
+              );
+              return (
+                <React.Fragment key={`${udo.name}-${index}`}>
                   {libraryDropTarget && (
                     <LibraryTableDropMarker
                       target={createProjectUdoTarget(libraryDropTarget, index)}
@@ -332,24 +329,24 @@ export default function UdoTable({
                     />
                   )}
                   {libraryDropTarget ? (
-                    <LibraryDropZone
-                      target={createProjectUdoTarget(libraryDropTarget, index + 1)}
-                    >
+                    <LibraryDropZone target={createProjectUdoTarget(libraryDropTarget, index + 1)}>
                       {({ active, dropProps }) => row(active, dropProps)}
                     </LibraryDropZone>
-                  ) : row(false, {})}
-                  </React.Fragment>
-                );
-              })}
-            </tbody>
-          </table>
-          {libraryDropTarget && (
-            <LibraryBlockDropMarker
-              target={createProjectUdoTarget(libraryDropTarget, udolist.length)}
-              label="Insert UDO at end"
-              fillRemaining
-            />
-          )}
+                  ) : (
+                    row(false, {})
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </tbody>
+        </table>
+        {libraryDropTarget && (
+          <LibraryBlockDropMarker
+            target={createProjectUdoTarget(libraryDropTarget, udolist.length)}
+            label="Insert UDO at end"
+            fillRemaining
+          />
+        )}
       </div>
     </div>
   );

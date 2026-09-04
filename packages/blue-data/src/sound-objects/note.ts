@@ -4,9 +4,7 @@ const TOKEN_PATTERN = /"[^"]*"|\[[^\]]*\]|\S*/g;
 
 function evalBracketExpression(expr: string): string {
   try {
-    const sanitized = expr
-      .replace(/[^0-9+\-*/().eE\s]/g, '')
-      .trim();
+    const sanitized = expr.replace(/[^0-9+\-*/().eE\s]/g, '').trim();
     if (!sanitized) return '0';
     const result = new Function(`return (${sanitized})`)();
     if (typeof result === 'number' && isFinite(result)) {
@@ -89,13 +87,19 @@ export class Note {
           const instr1 = parseInt(buffer[0], 10);
           const instr2 = parseInt(previousNote.getPField(1) ?? '', 10);
           if (instr1 === instr2) performCarry = true;
-        } catch { /* not numeric */ }
+        } catch {
+          /* not numeric */
+        }
       }
 
       if (performCarry) {
         const numFieldsToCopy = previousNote.getPCount() - buffer.length;
         if (numFieldsToCopy > 0) {
-          for (let i = previousNote.getPCount() - numFieldsToCopy; i < previousNote.getPCount(); i++) {
+          for (
+            let i = previousNote.getPCount() - numFieldsToCopy;
+            i < previousNote.getPCount();
+            i++
+          ) {
             buffer.push(previousNote.getPField(i + 1) ?? '');
           }
         }
@@ -125,25 +129,39 @@ export class Note {
     this.setTied(rawDur < 0);
   }
 
-  getStartTime(): number { return this._startTime; }
+  getStartTime(): number {
+    return this._startTime;
+  }
   setStartTime(time: number): void {
     this._startTime = time;
     this._pFields.set(2, formatJavaDouble(time));
   }
 
-  getSubjectiveDuration(): number { return this._subjectiveDuration; }
+  getSubjectiveDuration(): number {
+    return this._subjectiveDuration;
+  }
   setSubjectiveDuration(duration: number): void {
     this._subjectiveDuration = Math.abs(duration);
   }
 
-  getObjectiveDuration(): number { return this.getSubjectiveDuration(); }
+  getObjectiveDuration(): number {
+    return this.getSubjectiveDuration();
+  }
 
-  getEndTime(): number { return this._startTime + this._subjectiveDuration; }
+  getEndTime(): number {
+    return this._startTime + this._subjectiveDuration;
+  }
 
-  isTiedNote(): boolean { return this.isTied; }
-  setTied(tied: boolean): void { this.isTied = tied; }
+  isTiedNote(): boolean {
+    return this.isTied;
+  }
+  setTied(tied: boolean): void {
+    this.isTied = tied;
+  }
 
-  getPCount(): number { return this._pFields.size; }
+  getPCount(): number {
+    return this._pFields.size;
+  }
 
   getPField(index: number): string | undefined {
     return this._pFields.get(index);

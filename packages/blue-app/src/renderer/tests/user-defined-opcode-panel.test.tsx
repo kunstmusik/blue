@@ -7,7 +7,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import UserDefinedOpcodePanel from '../components/workbench/panels/UserDefinedOpcodePanel';
 import { useProjectStore } from '../stores/project-store';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const originalProjectState = useProjectStore.getState();
 
@@ -46,15 +48,17 @@ describe('UserDefinedOpcodeTopComponent', () => {
       loaded: true,
       sessionId: 17,
       filePath: '/tmp/project.blue',
-      projectUdos: [{
-        name: 'tone',
-        style: 'CLASSIC',
-        outTypes: 'a',
-        inTypes: 'a',
-        inputArguments: '',
-        code: 'aout = ain',
-        comments: '',
-      }],
+      projectUdos: [
+        {
+          name: 'tone',
+          style: 'CLASSIC',
+          outTypes: 'a',
+          inTypes: 'a',
+          inputArguments: '',
+          code: 'aout = ain',
+          comments: '',
+        },
+      ],
       applyProjectUdoPatch: vi.fn(async () => true),
     });
     const container = document.createElement('div');

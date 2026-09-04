@@ -63,7 +63,10 @@ describe('BlueX7 modern CSD generation — TimewaveCanon regression', () => {
 
     // Host wrappers appear per instrument with the Blue pitch conversion and
     // direct-global voice targets.
-    const wrappers = generatedCsd.match(/iBlueX7MidiNote = \(p4 < 15 \? ftom:i\(cpspch:i\(p4\)\) : ftom:i\(p4\)\)/g) ?? [];
+    const wrappers =
+      generatedCsd.match(
+        /iBlueX7MidiNote = \(p4 < 15 \? ftom:i\(cpspch:i\(p4\)\) : ftom:i\(p4\)\)/g,
+      ) ?? [];
     expect(wrappers.length).toBe(3);
 
     // No legacy Pinkston renderer remnants remain.

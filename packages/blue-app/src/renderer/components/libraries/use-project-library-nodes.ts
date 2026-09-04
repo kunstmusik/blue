@@ -66,7 +66,10 @@ export function useProjectLibraryNodes(
       }
     };
     void refresh();
-    const unsubscribe = window.blueAPI.onLibraryChanged?.(() => { void refresh(); }) ?? (() => undefined);
+    const unsubscribe =
+      window.blueAPI.onLibraryChanged?.(() => {
+        void refresh();
+      }) ?? (() => undefined);
     return () => {
       active = false;
       unsubscribe();

@@ -30,7 +30,9 @@ export default function JavaScriptRuntimeStatusIndicator(): React.ReactElement {
         type="button"
         className="rounded border border-blue-border px-2 py-0.5 text-role-body text-gray-300 hover:border-blue-accent"
         disabled={reinitializing}
-        onClick={() => { void handleReinitialize(); }}
+        onClick={() => {
+          void handleReinitialize();
+        }}
         title="Reinitialize the project JavaScript runtime"
       >
         {reinitializing ? 'Reinitializing...' : 'Reinitialize JavaScript'}

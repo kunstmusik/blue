@@ -48,19 +48,26 @@ describe('Track layer renderer integration contract', () => {
     });
     expect(layer.items[1]?.barRenderer.kind).toBe('audioClip');
 
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'removeScoreObjects',
-        targets: [layer.items[0]!.editorTarget],
-      },
-    }, { projectSessionId: 11, projectRevision: 4 })).toBe(true);
+    expect(
+      applyProjectDocumentPatch(
+        data,
+        {
+          score: {
+            type: 'removeScoreObjects',
+            targets: [layer.items[0]!.editorTarget],
+          },
+        },
+        { projectSessionId: 11, projectRevision: 4 },
+      ),
+    ).toBe(true);
     expect(track).toHaveLength(1);
 
     const reopened = BlueData.loadFromString(data.saveToString());
     const reopenedSnapshot = createProjectEditorSnapshot(reopened, '/tmp/track-integration.blue');
     const reopenedGroup = reopenedSnapshot.score?.layerGroups[0];
     expect(reopenedGroup?.groupType).toBe('track');
-    const reopenedItems = reopenedGroup?.groupType === 'track' ? reopenedGroup.layers[0]?.items : undefined;
+    const reopenedItems =
+      reopenedGroup?.groupType === 'track' ? reopenedGroup.layers[0]?.items : undefined;
     expect(reopenedItems).toHaveLength(1);
     expect(reopenedItems?.[0]?.objectType).toBe('AudioClip');
   });

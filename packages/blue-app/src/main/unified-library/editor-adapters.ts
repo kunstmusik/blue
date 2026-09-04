@@ -66,7 +66,8 @@ function createSoundObjectWorkspace(value: SoundObject): BlueData {
 
 function createSoundObjectDocument(value: SoundObject): LibraryEditorDocument {
   const data = createSoundObjectWorkspace(value);
-  const target = createScoreDocumentSnapshot(data).layerGroups[0]?.layers[0]?.items[0]?.editorTarget;
+  const target =
+    createScoreDocumentSnapshot(data).layerGroups[0]?.layers[0]?.items[0]?.editorTarget;
   if (!target) throw new Error('Unable to create SoundObject editor target');
   const snapshot = createScoreObjectEditorDocument(data, { target });
   if (!snapshot) throw new Error('Unable to create SoundObject editor document');
@@ -84,12 +85,21 @@ export class LibraryEditorAdapterRegistry {
     try {
       switch (libraryType) {
         case 'instrument':
-          return { kind: 'instrument', snapshot: createInstrumentSnapshot('library-item', loadInstrument(payloadXml)) };
+          return {
+            kind: 'instrument',
+            snapshot: createInstrumentSnapshot('library-item', loadInstrument(payloadXml)),
+          };
         case 'udo':
-          return { kind: 'udo', snapshot: udoToSnapshot(OpcodeDefinition.loadFromXML(Element.parse(payloadXml))) };
+          return {
+            kind: 'udo',
+            snapshot: udoToSnapshot(OpcodeDefinition.loadFromXML(Element.parse(payloadXml))),
+          };
         case 'effect': {
           const value = Effect.loadFromXML(Element.parse(payloadXml));
-          return { kind: 'effect', snapshot: createEffectEditorSnapshot(value, 'library-item', 'library') };
+          return {
+            kind: 'effect',
+            snapshot: createEffectEditorSnapshot(value, 'library-item', 'library'),
+          };
         }
         case 'soundObject':
           return createSoundObjectDocument(loadSoundObject(payloadXml));
@@ -116,7 +126,10 @@ export class LibraryEditorAdapterRegistry {
         if (!value) throw new Error('Instrument editor source is missing');
         const nextXml = value.saveAsXML().toXml();
         return {
-          document: { kind: 'instrument', snapshot: createInstrumentSnapshot('library-item', value) },
+          document: {
+            kind: 'instrument',
+            snapshot: createInstrumentSnapshot('library-item', value),
+          },
           payloadXml: nextXml,
         };
       }
@@ -138,7 +151,10 @@ export class LibraryEditorAdapterRegistry {
         }
         const nextXml = value.saveAsXML().toXml();
         return {
-          document: { kind: 'effect', snapshot: createEffectEditorSnapshot(value, 'library-item', 'library') },
+          document: {
+            kind: 'effect',
+            snapshot: createEffectEditorSnapshot(value, 'library-item', 'library'),
+          },
           payloadXml: nextXml,
         };
       }
@@ -150,7 +166,10 @@ export class LibraryEditorAdapterRegistry {
         const root = data.getScore()[0];
         const value = root instanceof PolyObject ? root[0]?.[0] : undefined;
         if (!value) throw new Error('SoundObject editor source is missing');
-        return { document: createSoundObjectDocument(value), payloadXml: value.saveAsXML().toXml() };
+        return {
+          document: createSoundObjectDocument(value),
+          payloadXml: value.saveAsXML().toXml(),
+        };
       }
     }
   }

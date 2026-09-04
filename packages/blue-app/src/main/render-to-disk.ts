@@ -10,7 +10,10 @@ import * as path from 'path';
 
 import type { BlueData, JavaRuntimeClientContract, JavaScriptSession } from '@blue/data';
 
-import type { DiskRenderSettingsSnapshot, GeneralSettingsSnapshot } from '../shared/program-settings';
+import type {
+  DiskRenderSettingsSnapshot,
+  GeneralSettingsSnapshot,
+} from '../shared/program-settings';
 import type {
   RenderOperationResult,
   RenderOperationStatus,
@@ -139,7 +142,9 @@ export async function executeRenderToDisk(
   try {
     csdText = await generateDiskCsd(data, javaScriptSession, javaRuntimeClient);
   } catch (err) {
-    return reportFailure(`CSD generation failed: ${err instanceof Error ? err.message : String(err)}`);
+    return reportFailure(
+      `CSD generation failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 
   const csdPath = await writeTempCsdSnapshot(csdText, projectDirectory);
@@ -161,20 +166,27 @@ export async function executeRenderToDisk(
 
   let result: { exitCode: number; stderr: string };
   try {
-    result = await executionSeam.runCsound(allArgs, projectDirectory, (progress) => {
-      statusCallback({
-        operationId,
-        kind: 'diskRender',
-        phase: 'rendering',
-        message: `Rendering to ${path.basename(verifyPath)}...`,
-        progress,
-        outputPath: verifyPath,
-        error: null,
-      });
-    }, totalDuration);
+    result = await executionSeam.runCsound(
+      allArgs,
+      projectDirectory,
+      (progress) => {
+        statusCallback({
+          operationId,
+          kind: 'diskRender',
+          phase: 'rendering',
+          message: `Rendering to ${path.basename(verifyPath)}...`,
+          progress,
+          outputPath: verifyPath,
+          error: null,
+        });
+      },
+      totalDuration,
+    );
   } catch (err) {
     await cleanupTempCsdSnapshots();
-    return reportFailure(`Could not start Csound: ${err instanceof Error ? err.message : String(err)}`);
+    return reportFailure(
+      `Could not start Csound: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 
   await cleanupTempCsdSnapshots();
@@ -227,10 +239,7 @@ export async function generateDiskCsd(
  * Uses the project's `fileName` when configured and `askOnRender` is false.
  * Returns null when the caller should show a dialog (askOnRender or empty fileName).
  */
-export function resolveOutputFilePath(
-  data: BlueData,
-  projectDirectory: string,
-): string | null {
+export function resolveOutputFilePath(data: BlueData, projectDirectory: string): string | null {
   const props = data.getProjectProperties();
 
   if (props.askOnRender || !props.fileName || props.fileName.trim().length === 0) {
@@ -245,7 +254,10 @@ export function resolveOutputFilePath(
 }
 
 /** Unsaved projects render from the app temp directory; only freezing requires a saved project. */
-export function resolveRenderWorkingDirectory(currentFilePath: string | null, tempDirectory: string): string {
+export function resolveRenderWorkingDirectory(
+  currentFilePath: string | null,
+  tempDirectory: string,
+): string {
   return currentFilePath ? path.dirname(currentFilePath) : tempDirectory;
 }
 

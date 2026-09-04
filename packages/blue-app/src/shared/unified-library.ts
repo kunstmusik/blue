@@ -1,19 +1,8 @@
-import type {
-  LibraryEditorDocument,
-  LibraryEditorDocumentPatch,
-} from './library-editor-document';
-import {
-  isLibraryEditorDocument,
-  isLibraryEditorDocumentPatch,
-} from './library-editor-document';
+import type { LibraryEditorDocument, LibraryEditorDocumentPatch } from './library-editor-document';
+import { isLibraryEditorDocument, isLibraryEditorDocumentPatch } from './library-editor-document';
 import type { BsbWidgetNodeSnapshot } from './project-editor';
 
-export const LIBRARY_TYPES = [
-  'instrument',
-  'udo',
-  'soundObject',
-  'effect',
-] as const;
+export const LIBRARY_TYPES = ['instrument', 'udo', 'soundObject', 'effect'] as const;
 
 export type LibraryType = (typeof LIBRARY_TYPES)[number];
 export type LibraryScopeKind = 'user' | 'projectOwned' | 'projectShared';
@@ -339,7 +328,12 @@ export interface InsertionTargetSnapshot {
     readonly expectedLiveObjectId: string | null;
   };
   readonly location?: ScoreInsertionLocation;
-  readonly destinationKind?: 'score' | 'scoreBsbSound' | 'projectSoundObjectLibrary' | 'trackInstrument' | 'blueLive';
+  readonly destinationKind?:
+    | 'score'
+    | 'scoreBsbSound'
+    | 'projectSoundObjectLibrary'
+    | 'trackInstrument'
+    | 'blueLive';
 }
 
 export interface LibraryContextSnapshot {
@@ -383,16 +377,15 @@ export type CapturableLibraryTransferSource =
       readonly revision: number;
     };
 
-export type LibraryTransferSource = CapturableLibraryTransferSource
+export type LibraryTransferSource =
+  | CapturableLibraryTransferSource
   | {
       readonly kind: 'buffer';
       readonly clipboardId: string;
       readonly libraryType: LibraryType;
     };
 
-export function getLibraryTransferSourceType(
-  source: LibraryTransferSource,
-): LibraryType {
+export function getLibraryTransferSourceType(source: LibraryTransferSource): LibraryType {
   return source.kind === 'library' ? source.key.libraryType : source.libraryType;
 }
 
@@ -516,9 +509,8 @@ export function getAvailableNumericArrangementId(
 
   const next = parsePositiveArrangementId(assignmentIds[insertIndex]!);
   if (next === null) return null;
-  const previous = insertIndex === 0
-    ? 0
-    : parsePositiveArrangementId(assignmentIds[insertIndex - 1]!);
+  const previous =
+    insertIndex === 0 ? 0 : parsePositiveArrangementId(assignmentIds[insertIndex - 1]!);
   if (previous === null) return null;
 
   let candidate = previous + 1;
@@ -734,22 +726,28 @@ export const UNIFIED_LIBRARY_PREPARE_MUTATION_CHANNEL = 'unified-library:prepare
 export const UNIFIED_LIBRARY_CUT_TO_CLIPBOARD_CHANNEL = 'unified-library:cut-to-clipboard';
 export const UNIFIED_LIBRARY_SET_CLIPBOARD_CHANNEL = 'unified-library:set-clipboard';
 export const UNIFIED_LIBRARY_SET_BSB_CLIPBOARD_CHANNEL = 'unified-library:set-bsb-clipboard';
-export const UNIFIED_LIBRARY_CAPTURE_SCORE_SOUND_OBJECT_CHANNEL = 'unified-library:capture-score-sound-object';
-export const UNIFIED_LIBRARY_CAPTURE_TRACK_INSTRUMENT_CHANNEL = 'unified-library:capture-track-instrument';
-export const UNIFIED_LIBRARY_CAPTURE_BLUE_LIVE_SOUND_OBJECT_CHANNEL = 'unified-library:capture-blue-live-sound-object';
-export const UNIFIED_LIBRARY_ADD_SCORE_SOUND_OBJECT_CHANNEL = 'unified-library:add-score-sound-object';
+export const UNIFIED_LIBRARY_CAPTURE_SCORE_SOUND_OBJECT_CHANNEL =
+  'unified-library:capture-score-sound-object';
+export const UNIFIED_LIBRARY_CAPTURE_TRACK_INSTRUMENT_CHANNEL =
+  'unified-library:capture-track-instrument';
+export const UNIFIED_LIBRARY_CAPTURE_BLUE_LIVE_SOUND_OBJECT_CHANNEL =
+  'unified-library:capture-blue-live-sound-object';
+export const UNIFIED_LIBRARY_ADD_SCORE_SOUND_OBJECT_CHANNEL =
+  'unified-library:add-score-sound-object';
 export const UNIFIED_LIBRARY_EDITOR_OPEN_CHANNEL = 'unified-library:editor-open';
 export const UNIFIED_LIBRARY_EDITOR_GET_CHANNEL = 'unified-library:editor-get';
 export const UNIFIED_LIBRARY_EDITOR_PATCH_CHANNEL = 'unified-library:editor-patch';
 export const UNIFIED_LIBRARY_EDITOR_SAVE_CHANNEL = 'unified-library:editor-save';
 export const UNIFIED_LIBRARY_EDITOR_REVERT_CHANNEL = 'unified-library:editor-revert';
-export const UNIFIED_LIBRARY_EDITOR_RESOLVE_CONFLICT_CHANNEL = 'unified-library:editor-resolve-conflict';
+export const UNIFIED_LIBRARY_EDITOR_RESOLVE_CONFLICT_CHANNEL =
+  'unified-library:editor-resolve-conflict';
 export const UNIFIED_LIBRARY_EDITOR_CLOSE_CHANNEL = 'unified-library:editor-close';
 export const UNIFIED_LIBRARY_EDITOR_CHANGED_CHANNEL = 'unified-library:editor-changed';
 export const UNIFIED_LIBRARY_DRAFT_SHUTDOWN_CHANNEL = 'unified-library:draft-shutdown';
 export const UNIFIED_LIBRARY_DRAFT_RESOLVE_CHANNEL = 'unified-library:draft-resolve';
 export const UNIFIED_LIBRARY_PROJECT_USAGE_CHANNEL = 'unified-library:project-usage';
-export const UNIFIED_LIBRARY_PROJECT_DELETE_PREVIEW_CHANNEL = 'unified-library:project-delete-preview';
+export const UNIFIED_LIBRARY_PROJECT_DELETE_PREVIEW_CHANNEL =
+  'unified-library:project-delete-preview';
 export const UNIFIED_LIBRARY_PROJECT_DELETE_CHANNEL = 'unified-library:project-delete';
 export const UNIFIED_LIBRARY_TRANSFER_TO_USER_CHANNEL = 'unified-library:transfer-to-user';
 export const UNIFIED_LIBRARY_IMPORT_SELECT_CHANNEL = 'unified-library:import-select';
@@ -796,36 +794,45 @@ export function isLibraryType(value: unknown): value is LibraryType {
 
 export function isLibraryDragDescriptor(value: unknown): value is LibraryDragDescriptor {
   if (!isRecord(value)) return false;
-  return Object.keys(value).every((key) => key === 'dragSessionId' || key === 'libraryType' || key === 'sourceScope')
-    && isNonEmptyString(value.dragSessionId)
-    && isLibraryType(value.libraryType)
-    && (value.sourceScope === undefined
-      || value.sourceScope === 'user'
-      || value.sourceScope === 'projectOwned'
-      || value.sourceScope === 'projectShared');
+  return (
+    Object.keys(value).every(
+      (key) => key === 'dragSessionId' || key === 'libraryType' || key === 'sourceScope',
+    ) &&
+    isNonEmptyString(value.dragSessionId) &&
+    isLibraryType(value.libraryType) &&
+    (value.sourceScope === undefined ||
+      value.sourceScope === 'user' ||
+      value.sourceScope === 'projectOwned' ||
+      value.sourceScope === 'projectShared')
+  );
 }
 
 export function isBeginLibraryDragRequest(value: unknown): value is BeginLibraryDragRequest {
-  return isRecord(value)
-    && isNonEmptyString(value.dragSessionId)
-    && isLibraryItemKey(value.key)
-    && (isNonNegativeInteger(value.revision) || isNonEmptyString(value.revision));
+  return (
+    isRecord(value) &&
+    isNonEmptyString(value.dragSessionId) &&
+    isLibraryItemKey(value.key) &&
+    (isNonNegativeInteger(value.revision) || isNonEmptyString(value.revision))
+  );
 }
 
 export function isLibraryTransferSource(value: unknown): value is LibraryTransferSource {
   if (!isRecord(value)) return false;
   if (value.kind === 'library') {
-    return isLibraryItemKey(value.key)
-      && (isNonNegativeInteger(value.revision) || isNonEmptyString(value.revision));
+    return (
+      isLibraryItemKey(value.key) &&
+      (isNonNegativeInteger(value.revision) || isNonEmptyString(value.revision))
+    );
   }
   if (value.kind === 'buffer') {
-    return isNonEmptyString(value.clipboardId)
-      && isLibraryType(value.libraryType);
+    return isNonEmptyString(value.clipboardId) && isLibraryType(value.libraryType);
   }
-  return value.kind === 'userNode'
-    && isLibraryType(value.libraryType)
-    && isNonEmptyString(value.nodeId)
-    && isNonNegativeInteger(value.revision);
+  return (
+    value.kind === 'userNode' &&
+    isLibraryType(value.libraryType) &&
+    isNonEmptyString(value.nodeId) &&
+    isNonNegativeInteger(value.revision)
+  );
 }
 
 export function isCutLibraryToClipboardRequest(
@@ -839,114 +846,143 @@ export function isScoreTimelineSoundObjectRequest(
   value: unknown,
 ): value is ScoreTimelineSoundObjectRequest {
   if (
-    !isRecord(value)
-    || !isNonNegativeInteger(value.projectSessionId)
-    || !isNonNegativeInteger(value.projectRevision)
-    || !isRecord(value.location)
-    || !isNonNegativeInteger(value.location.rootGroupIndex)
-    || !isNonNegativeInteger(value.location.layerIndex)
-    || !isNonNegativeInteger(value.location.objectIndex)
-    || !Array.isArray(value.location.containerPath)
-  ) return false;
-  return value.location.containerPath.every((segment) => (
-    isRecord(segment)
-    && isNonNegativeInteger(segment.layerIndex)
-    && isNonNegativeInteger(segment.objectIndex)
-  ));
+    !isRecord(value) ||
+    !isNonNegativeInteger(value.projectSessionId) ||
+    !isNonNegativeInteger(value.projectRevision) ||
+    !isRecord(value.location) ||
+    !isNonNegativeInteger(value.location.rootGroupIndex) ||
+    !isNonNegativeInteger(value.location.layerIndex) ||
+    !isNonNegativeInteger(value.location.objectIndex) ||
+    !Array.isArray(value.location.containerPath)
+  )
+    return false;
+  return value.location.containerPath.every(
+    (segment) =>
+      isRecord(segment) &&
+      isNonNegativeInteger(segment.layerIndex) &&
+      isNonNegativeInteger(segment.objectIndex),
+  );
 }
 
 export function isTrackInstrumentClipboardRequest(
   value: unknown,
 ): value is TrackInstrumentClipboardRequest {
-  return isRecord(value)
-    && isNonNegativeInteger(value.projectSessionId)
-    && isNonNegativeInteger(value.projectRevision)
-    && isNonEmptyString(value.rootGroupId)
-    && isNonEmptyString(value.trackId);
+  return (
+    isRecord(value) &&
+    isNonNegativeInteger(value.projectSessionId) &&
+    isNonNegativeInteger(value.projectRevision) &&
+    isNonEmptyString(value.rootGroupId) &&
+    isNonEmptyString(value.trackId)
+  );
 }
 
 export function isBlueLiveSoundObjectClipboardRequest(
   value: unknown,
 ): value is BlueLiveSoundObjectClipboardRequest {
-  return isRecord(value)
-    && isNonNegativeInteger(value.projectSessionId)
-    && isNonNegativeInteger(value.projectRevision)
-    && isNonEmptyString(value.liveObjectId);
+  return (
+    isRecord(value) &&
+    isNonNegativeInteger(value.projectSessionId) &&
+    isNonNegativeInteger(value.projectRevision) &&
+    isNonEmptyString(value.liveObjectId)
+  );
 }
 
-export function isLibraryInteractionClipboard(value: unknown): value is LibraryInteractionClipboard {
-  return isRecord(value)
-    && (value.operation === 'copy' || value.operation === 'cut')
-    && isLibraryTransferSource(value.source)
-    && typeof value.capturedAt === 'number'
-    && Number.isFinite(value.capturedAt)
-    && value.capturedAt >= 0
-    && (value.objectType === undefined || typeof value.objectType === 'string');
+export function isLibraryInteractionClipboard(
+  value: unknown,
+): value is LibraryInteractionClipboard {
+  return (
+    isRecord(value) &&
+    (value.operation === 'copy' || value.operation === 'cut') &&
+    isLibraryTransferSource(value.source) &&
+    typeof value.capturedAt === 'number' &&
+    Number.isFinite(value.capturedAt) &&
+    value.capturedAt >= 0 &&
+    (value.objectType === undefined || typeof value.objectType === 'string')
+  );
 }
 
 export function isLibraryExactTransferTarget(value: unknown): value is LibraryExactTransferTarget {
-  if (!isRecord(value)
-    || !isNonNegativeInteger(value.projectSessionId)
-    || !isNonNegativeInteger(value.projectRevision)
-    || typeof value.kind !== 'string') return false;
+  if (
+    !isRecord(value) ||
+    !isNonNegativeInteger(value.projectSessionId) ||
+    !isNonNegativeInteger(value.projectRevision) ||
+    typeof value.kind !== 'string'
+  )
+    return false;
   if (value.kind === 'orchestra') {
     return isNonNegativeInteger(value.insertIndex);
   }
   if (value.kind === 'trackInstrument') {
-    return isRecord(value.track)
-      && isNonEmptyString(value.track.rootGroupId)
-      && isNonEmptyString(value.track.trackId);
+    return (
+      isRecord(value.track) &&
+      isNonEmptyString(value.track.rootGroupId) &&
+      isNonEmptyString(value.track.trackId)
+    );
   }
   if (value.kind === 'blueLive') {
-    return isRecord(value.liveCell)
-      && isNonNegativeInteger(value.liveCell.column)
-      && isNonNegativeInteger(value.liveCell.row)
-      && (value.liveCell.expectedLiveObjectId === null
-        || isNonEmptyString(value.liveCell.expectedLiveObjectId));
+    return (
+      isRecord(value.liveCell) &&
+      isNonNegativeInteger(value.liveCell.column) &&
+      isNonNegativeInteger(value.liveCell.row) &&
+      (value.liveCell.expectedLiveObjectId === null ||
+        isNonEmptyString(value.liveCell.expectedLiveObjectId))
+    );
   }
   if (value.kind === 'projectUdo') {
     const hasInstrumentOwner = value.instrumentAssignmentId !== undefined;
     const hasTrackOwner = value.track !== undefined;
-    return isNonNegativeInteger(value.insertIndex)
-      && (value.instrumentAssignmentId === undefined
-        || isNonEmptyString(value.instrumentAssignmentId))
-      && (value.track === undefined
-        || (isRecord(value.track)
-          && isNonEmptyString(value.track.rootGroupId)
-          && isNonEmptyString(value.track.trackId)))
-      && !(hasInstrumentOwner && hasTrackOwner);
+    return (
+      isNonNegativeInteger(value.insertIndex) &&
+      (value.instrumentAssignmentId === undefined ||
+        isNonEmptyString(value.instrumentAssignmentId)) &&
+      (value.track === undefined ||
+        (isRecord(value.track) &&
+          isNonEmptyString(value.track.rootGroupId) &&
+          isNonEmptyString(value.track.trackId))) &&
+      !(hasInstrumentOwner && hasTrackOwner)
+    );
   }
   if (value.kind === 'effectChain') {
-    return isNonEmptyString(value.channelId)
-      && (value.chain === 'pre' || value.chain === 'post')
-      && isNonNegativeInteger(value.insertIndex)
-      && typeof value.chainRevision === 'string';
+    return (
+      isNonEmptyString(value.channelId) &&
+      (value.chain === 'pre' || value.chain === 'post') &&
+      isNonNegativeInteger(value.insertIndex) &&
+      typeof value.chainRevision === 'string'
+    );
   }
   if (value.kind === 'score' || value.kind === 'scoreBsbSound') {
-    return isRecord(value.location)
-      && isNonEmptyString(value.location.rootGroupId)
-      && Array.isArray(value.location.containerPath)
-      && isNonEmptyString(value.location.layerId)
-      && typeof value.location.startTime === 'number'
-      && Number.isFinite(value.location.startTime)
-      && isNonEmptyString(value.timeContextRevision);
+    return (
+      isRecord(value.location) &&
+      isNonEmptyString(value.location.rootGroupId) &&
+      Array.isArray(value.location.containerPath) &&
+      isNonEmptyString(value.location.layerId) &&
+      typeof value.location.startTime === 'number' &&
+      Number.isFinite(value.location.startTime) &&
+      isNonEmptyString(value.timeContextRevision)
+    );
   }
   if (value.kind === 'projectSoundObjectLibrary') return true;
   return false;
 }
 
-export function isLibraryTransferSourceReference(value: unknown): value is LibraryTransferSourceReference {
+export function isLibraryTransferSourceReference(
+  value: unknown,
+): value is LibraryTransferSourceReference {
   if (!isRecord(value)) return false;
   return value.kind === 'drag'
     ? isNonEmptyString(value.dragSessionId)
     : value.kind === 'clipboard' && isLibraryTransferSource(value.source);
 }
 
-export function isLibraryTransferPreviewRequest(value: unknown): value is LibraryTransferPreviewRequest {
-  return isRecord(value)
-    && isLibraryTransferSourceReference(value.source)
-    && isLibraryExactTransferTarget(value.target)
-    && (value.mode === undefined || value.mode === 'independent' || value.mode === 'sharedInstance');
+export function isLibraryTransferPreviewRequest(
+  value: unknown,
+): value is LibraryTransferPreviewRequest {
+  return (
+    isRecord(value) &&
+    isLibraryTransferSourceReference(value.source) &&
+    isLibraryExactTransferTarget(value.target) &&
+    (value.mode === undefined || value.mode === 'independent' || value.mode === 'sharedInstance')
+  );
 }
 
 export function isLibraryServicePhase(value: unknown): value is LibraryServicePhase {
@@ -956,75 +992,85 @@ export function isLibraryServicePhase(value: unknown): value is LibraryServicePh
 function isBsbClipboardWidget(value: unknown): value is BsbWidgetNodeSnapshot {
   if (!isRecord(value)) return false;
   if (
-    typeof value.id !== 'string'
-    || typeof value.type !== 'string'
-    || typeof value.objectName !== 'string'
-    || typeof value.x !== 'number'
-    || !Number.isFinite(value.x)
-    || typeof value.y !== 'number'
-    || !Number.isFinite(value.y)
-    || typeof value.width !== 'number'
-    || !Number.isFinite(value.width)
-    || typeof value.height !== 'number'
-    || !Number.isFinite(value.height)
-    || typeof value.value !== 'number'
-    || !Number.isFinite(value.value)
-    || typeof value.minimum !== 'number'
-    || !Number.isFinite(value.minimum)
-    || typeof value.maximum !== 'number'
-    || !Number.isFinite(value.maximum)
-    || typeof value.editable !== 'boolean'
-    || !isRecord(value.properties)
-  ) return false;
-  return value.children === undefined
-    || (Array.isArray(value.children) && value.children.every(isBsbClipboardWidget));
+    typeof value.id !== 'string' ||
+    typeof value.type !== 'string' ||
+    typeof value.objectName !== 'string' ||
+    typeof value.x !== 'number' ||
+    !Number.isFinite(value.x) ||
+    typeof value.y !== 'number' ||
+    !Number.isFinite(value.y) ||
+    typeof value.width !== 'number' ||
+    !Number.isFinite(value.width) ||
+    typeof value.height !== 'number' ||
+    !Number.isFinite(value.height) ||
+    typeof value.value !== 'number' ||
+    !Number.isFinite(value.value) ||
+    typeof value.minimum !== 'number' ||
+    !Number.isFinite(value.minimum) ||
+    typeof value.maximum !== 'number' ||
+    !Number.isFinite(value.maximum) ||
+    typeof value.editable !== 'boolean' ||
+    !isRecord(value.properties)
+  )
+    return false;
+  return (
+    value.children === undefined ||
+    (Array.isArray(value.children) && value.children.every(isBsbClipboardWidget))
+  );
 }
 
 export function isBsbCanvasClipboard(value: unknown): value is BsbCanvasClipboard {
-  return isRecord(value)
-    && typeof value.originX === 'number'
-    && Number.isFinite(value.originX)
-    && typeof value.originY === 'number'
-    && Number.isFinite(value.originY)
-    && Array.isArray(value.widgets)
-    && value.widgets.length > 0
-    && value.widgets.every(isBsbClipboardWidget);
+  return (
+    isRecord(value) &&
+    typeof value.originX === 'number' &&
+    Number.isFinite(value.originX) &&
+    typeof value.originY === 'number' &&
+    Number.isFinite(value.originY) &&
+    Array.isArray(value.widgets) &&
+    value.widgets.length > 0 &&
+    value.widgets.every(isBsbClipboardWidget)
+  );
 }
 
 export function isLibraryServiceSnapshot(value: unknown): value is LibraryServiceSnapshot {
   if (!isRecord(value) || !isLibraryServicePhase(value.phase)) return false;
   if (!isNonNegativeInteger(value.contentRevision)) return false;
   if (
-    value.migrationState !== 'never'
-    && value.migrationState !== 'completed'
-    && value.migrationState !== 'skipped'
-    && value.migrationState !== 'failed'
-  ) return false;
+    value.migrationState !== 'never' &&
+    value.migrationState !== 'completed' &&
+    value.migrationState !== 'skipped' &&
+    value.migrationState !== 'failed'
+  )
+    return false;
   const itemCounts = value.userItemCounts;
   if (!isRecord(itemCounts)) return false;
   if (!LIBRARY_TYPES.every((type) => isNonNegativeInteger(itemCounts[type]))) {
     return false;
   }
-  return (value.projectSessionId === null || isNonNegativeInteger(value.projectSessionId))
-    && typeof value.writable === 'boolean'
-    && (value.clipboard === undefined
-      || value.clipboard === null
-      || isLibraryInteractionClipboard(value.clipboard))
-    && (value.bsbClipboard === undefined
-      || value.bsbClipboard === null
-      || isBsbCanvasClipboard(value.bsbClipboard));
+  return (
+    (value.projectSessionId === null || isNonNegativeInteger(value.projectSessionId)) &&
+    typeof value.writable === 'boolean' &&
+    (value.clipboard === undefined ||
+      value.clipboard === null ||
+      isLibraryInteractionClipboard(value.clipboard)) &&
+    (value.bsbClipboard === undefined ||
+      value.bsbClipboard === null ||
+      isBsbCanvasClipboard(value.bsbClipboard))
+  );
 }
 
 export function isLibraryChangedEvent(value: unknown): value is LibraryChangedEvent {
   if (!isRecord(value) || !isNonNegativeInteger(value.contentRevision)) return false;
   if (typeof value.requiresFullRefresh !== 'boolean') return false;
-  return value.cause === 'mutation'
-    || value.cause === 'itemSave'
-    || value.cause === 'import'
-    || value.cause === 'importUndo'
-    || value.cause === 'migration'
-    || value.cause === 'recovery'
-    || value.cause === 'projectChanged';
+  return (
+    value.cause === 'mutation' ||
+    value.cause === 'itemSave' ||
+    value.cause === 'import' ||
+    value.cause === 'importUndo' ||
+    value.cause === 'migration' ||
+    value.cause === 'recovery' ||
+    value.cause === 'projectChanged'
+  );
 }
 
 export function isProjectItemLocator(value: unknown): value is ProjectItemLocator {
@@ -1033,31 +1079,37 @@ export function isProjectItemLocator(value: unknown): value is ProjectItemLocato
   if (value.kind === 'udo') {
     const hasInstrumentOwner = value.instrumentAssignmentId !== undefined;
     const hasTrackOwner = value.track !== undefined;
-    return isNonEmptyString(value.sessionObjectId)
-      && (value.instrumentAssignmentId === undefined
-        || isNonEmptyString(value.instrumentAssignmentId))
-      && (value.track === undefined
-        || (isRecord(value.track)
-          && isNonEmptyString(value.track.rootGroupId)
-          && isNonEmptyString(value.track.trackId)))
-      && !(hasInstrumentOwner && hasTrackOwner)
-      && isRecord(value.persistedFingerprint)
-      && isNonEmptyString(value.persistedFingerprint.canonicalHash)
-      && isNonEmptyString(value.persistedFingerprint.opcodeName)
-      && (value.persistedFingerprint.style === 'CLASSIC'
-        || value.persistedFingerprint.style === 'MODERN');
+    return (
+      isNonEmptyString(value.sessionObjectId) &&
+      (value.instrumentAssignmentId === undefined ||
+        isNonEmptyString(value.instrumentAssignmentId)) &&
+      (value.track === undefined ||
+        (isRecord(value.track) &&
+          isNonEmptyString(value.track.rootGroupId) &&
+          isNonEmptyString(value.track.trackId))) &&
+      !(hasInstrumentOwner && hasTrackOwner) &&
+      isRecord(value.persistedFingerprint) &&
+      isNonEmptyString(value.persistedFingerprint.canonicalHash) &&
+      isNonEmptyString(value.persistedFingerprint.opcodeName) &&
+      (value.persistedFingerprint.style === 'CLASSIC' ||
+        value.persistedFingerprint.style === 'MODERN')
+    );
   }
   if (value.kind === 'soundObject') {
-    return isNonEmptyString(value.libraryId)
-      && isRecord(value.persistedFingerprint)
-      && isNonEmptyString(value.persistedFingerprint.canonicalHash)
-      && isNonEmptyString(value.persistedFingerprint.displayName)
-      && isNonEmptyString(value.persistedFingerprint.objectType);
+    return (
+      isNonEmptyString(value.libraryId) &&
+      isRecord(value.persistedFingerprint) &&
+      isNonEmptyString(value.persistedFingerprint.canonicalHash) &&
+      isNonEmptyString(value.persistedFingerprint.displayName) &&
+      isNonEmptyString(value.persistedFingerprint.objectType)
+    );
   }
   if (value.kind === 'effect') {
-    return isNonEmptyString(value.channelId)
-      && (value.chain === 'pre' || value.chain === 'post')
-      && isNonEmptyString(value.entryId);
+    return (
+      isNonEmptyString(value.channelId) &&
+      (value.chain === 'pre' || value.chain === 'post') &&
+      isNonEmptyString(value.entryId)
+    );
   }
   return false;
 }
@@ -1066,11 +1118,14 @@ export function isLibraryItemKey(value: unknown): value is LibraryItemKey {
   if (!isRecord(value) || !isLibraryType(value.libraryType)) return false;
   if (value.scope === 'user') return isNonEmptyString(value.nodeId);
   if (value.scope !== 'projectOwned' && value.scope !== 'projectShared') return false;
-  if (!isNonNegativeInteger(value.projectSessionId) || !isProjectItemLocator(value.locator)) return false;
-  return (value.libraryType === 'instrument' && value.locator.kind === 'instrument')
-    || (value.libraryType === 'udo' && value.locator.kind === 'udo')
-    || (value.libraryType === 'soundObject' && value.locator.kind === 'soundObject')
-    || (value.libraryType === 'effect' && value.locator.kind === 'effect');
+  if (!isNonNegativeInteger(value.projectSessionId) || !isProjectItemLocator(value.locator))
+    return false;
+  return (
+    (value.libraryType === 'instrument' && value.locator.kind === 'instrument') ||
+    (value.libraryType === 'udo' && value.locator.kind === 'udo') ||
+    (value.libraryType === 'soundObject' && value.locator.kind === 'soundObject') ||
+    (value.libraryType === 'effect' && value.locator.kind === 'effect')
+  );
 }
 
 export function isBrowseLibraryRequest(value: unknown): value is BrowseLibraryRequest {
@@ -1079,27 +1134,33 @@ export function isBrowseLibraryRequest(value: unknown): value is BrowseLibraryRe
   }
   if (value.cursor !== undefined && typeof value.cursor !== 'string') return false;
   if (
-    value.expectedContentRevision !== undefined
-    && !isNonNegativeInteger(value.expectedContentRevision)
-  ) return false;
+    value.expectedContentRevision !== undefined &&
+    !isNonNegativeInteger(value.expectedContentRevision)
+  )
+    return false;
 
   const parent = value.parent;
   if (!isLibraryType(parent.libraryType)) return false;
   if (parent.scope === 'user') {
     return parent.nodeId === undefined || isNonEmptyString(parent.nodeId);
   }
-  return (parent.scope === 'projectOwned' || parent.scope === 'projectShared')
-    && isNonNegativeInteger(parent.projectSessionId);
+  return (
+    (parent.scope === 'projectOwned' || parent.scope === 'projectShared') &&
+    isNonNegativeInteger(parent.projectSessionId)
+  );
 }
 
 export function isSearchLibrariesRequest(value: unknown): value is SearchLibrariesRequest {
   if (!isRecord(value) || typeof value.query !== 'string') return false;
   if (value.typeFilter !== 'all' && !isLibraryType(value.typeFilter)) return false;
-  if (value.projectSessionId !== null && !isNonNegativeInteger(value.projectSessionId)) return false;
+  if (value.projectSessionId !== null && !isNonNegativeInteger(value.projectSessionId))
+    return false;
   if (value.cursor !== undefined && typeof value.cursor !== 'string') return false;
   if (!hasOptionalBoundedLimit(value.limit)) return false;
-  return value.expectedContentRevision === undefined
-    || isNonNegativeInteger(value.expectedContentRevision);
+  return (
+    value.expectedContentRevision === undefined ||
+    isNonNegativeInteger(value.expectedContentRevision)
+  );
 }
 
 export function isLibraryContextRequest(value: unknown): value is LibraryContextRequest {
@@ -1109,34 +1170,42 @@ export function isLibraryContextRequest(value: unknown): value is LibraryContext
     return isNonNegativeInteger(value.projectSessionId);
   }
   if (value.type === 'trackInstrumentTarget') {
-    return isNonNegativeInteger(value.projectSessionId)
-      && isNonEmptyString(value.rootGroupId)
-      && isNonEmptyString(value.trackId);
+    return (
+      isNonNegativeInteger(value.projectSessionId) &&
+      isNonEmptyString(value.rootGroupId) &&
+      isNonEmptyString(value.trackId)
+    );
   }
   if (value.type === 'effectTarget') {
-    return isNonNegativeInteger(value.projectSessionId)
-      && isNonEmptyString(value.channelId)
-      && (value.chain === 'pre' || value.chain === 'post')
-      && isNonNegativeInteger(value.insertIndex)
-      && isNonEmptyString(value.targetRevision);
+    return (
+      isNonNegativeInteger(value.projectSessionId) &&
+      isNonEmptyString(value.channelId) &&
+      (value.chain === 'pre' || value.chain === 'post') &&
+      isNonNegativeInteger(value.insertIndex) &&
+      isNonEmptyString(value.targetRevision)
+    );
   }
   if (value.type === 'soundObjectTarget') {
-    return isNonNegativeInteger(value.projectSessionId)
-      && isRecord(value.location)
-      && isNonEmptyString(value.location.rootGroupId)
-      && Array.isArray(value.location.containerPath)
-      && isNonEmptyString(value.location.layerId)
-      && typeof value.location.startTime === 'number'
-      && Number.isFinite(value.location.startTime)
-      && isNonEmptyString(value.targetRevision);
+    return (
+      isNonNegativeInteger(value.projectSessionId) &&
+      isRecord(value.location) &&
+      isNonEmptyString(value.location.rootGroupId) &&
+      Array.isArray(value.location.containerPath) &&
+      isNonEmptyString(value.location.layerId) &&
+      typeof value.location.startTime === 'number' &&
+      Number.isFinite(value.location.startTime) &&
+      isNonEmptyString(value.targetRevision)
+    );
   }
   return false;
 }
 
 export function isLibraryInsertionRequest(value: unknown): value is LibraryInsertionRequest {
-  return isRecord(value)
-    && isLibraryItemKey(value.key)
-    && (value.mode === undefined || value.mode === 'independent' || value.mode === 'sharedInstance');
+  return (
+    isRecord(value) &&
+    isLibraryItemKey(value.key) &&
+    (value.mode === undefined || value.mode === 'independent' || value.mode === 'sharedInstance')
+  );
 }
 
 export function isConfirmedLibraryInsertionRequest(
@@ -1148,68 +1217,95 @@ export function isConfirmedLibraryInsertionRequest(
 export function isUserLibraryMutation(value: unknown): value is UserLibraryMutation {
   if (!isRecord(value) || typeof value.type !== 'string') return false;
   if (value.type === 'createFolder') {
-    return isLibraryType(value.libraryType)
-      && isNonEmptyString(value.parentId)
-      && typeof value.name === 'string'
-      && (value.insertIndex === undefined || isNonNegativeInteger(value.insertIndex));
+    return (
+      isLibraryType(value.libraryType) &&
+      isNonEmptyString(value.parentId) &&
+      typeof value.name === 'string' &&
+      (value.insertIndex === undefined || isNonNegativeInteger(value.insertIndex))
+    );
   }
   if (!isNonEmptyString(value.nodeId) || !isNonNegativeInteger(value.expectedRevision)) {
     return false;
   }
   if (value.type === 'renameNode') return typeof value.name === 'string';
   if (value.type === 'moveNode') {
-    return isNonEmptyString(value.parentId)
-      && (value.expectedParentRevision === undefined || isNonNegativeInteger(value.expectedParentRevision))
-      && (value.targetIndex === undefined || isNonNegativeInteger(value.targetIndex));
+    return (
+      isNonEmptyString(value.parentId) &&
+      (value.expectedParentRevision === undefined ||
+        isNonNegativeInteger(value.expectedParentRevision)) &&
+      (value.targetIndex === undefined || isNonNegativeInteger(value.targetIndex))
+    );
   }
   if (value.type === 'reorderNode') return isNonNegativeInteger(value.targetIndex);
   if (value.type === 'duplicateNode') {
-    return (value.parentId === undefined || isNonEmptyString(value.parentId))
-      && (value.expectedParentRevision === undefined || isNonNegativeInteger(value.expectedParentRevision))
-      && (value.targetIndex === undefined || isNonNegativeInteger(value.targetIndex));
+    return (
+      (value.parentId === undefined || isNonEmptyString(value.parentId)) &&
+      (value.expectedParentRevision === undefined ||
+        isNonNegativeInteger(value.expectedParentRevision)) &&
+      (value.targetIndex === undefined || isNonNegativeInteger(value.targetIndex))
+    );
   }
   return value.type === 'deleteNode' && typeof value.confirmation === 'string';
 }
 
-export function isPrepareLibraryMutationRequest(value: unknown): value is PrepareLibraryMutationRequest {
-  return isRecord(value)
-    && value.type === 'deleteNode'
-    && isNonEmptyString(value.nodeId)
-    && isNonNegativeInteger(value.expectedRevision);
+export function isPrepareLibraryMutationRequest(
+  value: unknown,
+): value is PrepareLibraryMutationRequest {
+  return (
+    isRecord(value) &&
+    value.type === 'deleteNode' &&
+    isNonEmptyString(value.nodeId) &&
+    isNonNegativeInteger(value.expectedRevision)
+  );
 }
 
 export function isOpenLibraryEditorRequest(value: unknown): value is OpenLibraryEditorRequest {
-  return isRecord(value) && isLibraryItemKey(value.key)
-    && (value.pinned === undefined || typeof value.pinned === 'boolean');
+  return (
+    isRecord(value) &&
+    isLibraryItemKey(value.key) &&
+    (value.pinned === undefined || typeof value.pinned === 'boolean')
+  );
 }
 
 export function isLibraryEditorPatchRequest(value: unknown): value is LibraryEditorPatchRequest {
-  return isRecord(value) && isNonEmptyString(value.sessionId)
-    && (value.documentPatch === undefined || isLibraryEditorDocumentPatch(value.documentPatch))
-    && (value.displayName === undefined || typeof value.displayName === 'string')
-    && (value.pinned === undefined || typeof value.pinned === 'boolean');
+  return (
+    isRecord(value) &&
+    isNonEmptyString(value.sessionId) &&
+    (value.documentPatch === undefined || isLibraryEditorDocumentPatch(value.documentPatch)) &&
+    (value.displayName === undefined || typeof value.displayName === 'string') &&
+    (value.pinned === undefined || typeof value.pinned === 'boolean')
+  );
 }
 
-export function isLibraryEditorConflictRequest(value: unknown): value is LibraryEditorConflictRequest {
-  return isRecord(value) && isNonEmptyString(value.sessionId)
-    && (value.decision === 'reloadLatest' || value.decision === 'overwrite' || value.decision === 'cancel');
+export function isLibraryEditorConflictRequest(
+  value: unknown,
+): value is LibraryEditorConflictRequest {
+  return (
+    isRecord(value) &&
+    isNonEmptyString(value.sessionId) &&
+    (value.decision === 'reloadLatest' ||
+      value.decision === 'overwrite' ||
+      value.decision === 'cancel')
+  );
 }
 
 export function isLibraryEditorSessionSnapshot(
   value: unknown,
 ): value is LibraryEditorSessionSnapshot {
-  return isRecord(value)
-    && isNonEmptyString(value.sessionId)
-    && isLibraryItemKey(value.key)
-    && typeof value.displayName === 'string'
-    && typeof value.objectType === 'string'
-    && Array.isArray(value.breadcrumb)
-    && value.breadcrumb.every((part) => typeof part === 'string')
-    && (typeof value.baseRevision === 'number' || typeof value.baseRevision === 'string')
-    && isLibraryEditorDocument(value.document)
-    && typeof value.dirty === 'boolean'
-    && typeof value.pinned === 'boolean'
-    && (value.status === 'ready' || value.status === 'conflict' || value.status === 'missing');
+  return (
+    isRecord(value) &&
+    isNonEmptyString(value.sessionId) &&
+    isLibraryItemKey(value.key) &&
+    typeof value.displayName === 'string' &&
+    typeof value.objectType === 'string' &&
+    Array.isArray(value.breadcrumb) &&
+    value.breadcrumb.every((part) => typeof part === 'string') &&
+    (typeof value.baseRevision === 'number' || typeof value.baseRevision === 'string') &&
+    isLibraryEditorDocument(value.document) &&
+    typeof value.dirty === 'boolean' &&
+    typeof value.pinned === 'boolean' &&
+    (value.status === 'ready' || value.status === 'conflict' || value.status === 'missing')
+  );
 }
 
 export function createLibraryCursor(payload: LibraryCursorPayload): string {
@@ -1225,11 +1321,12 @@ export function parseLibraryCursor(value: string): LibraryCursorPayload | null {
       return null;
     }
     if (
-      !isNonNegativeInteger(parsed.contentRevision)
-      || !isNonNegativeInteger(parsed.offset)
-      || typeof parsed.signature !== 'string'
-      || parsed.signature.length > 512
-    ) return null;
+      !isNonNegativeInteger(parsed.contentRevision) ||
+      !isNonNegativeInteger(parsed.offset) ||
+      typeof parsed.signature !== 'string' ||
+      parsed.signature.length > 512
+    )
+      return null;
     return {
       kind: parsed.kind,
       contentRevision: parsed.contentRevision,

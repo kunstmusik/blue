@@ -13,7 +13,11 @@ describe('Project Store Score Color Application (US3)', () => {
   beforeEach(() => {
     vi.stubGlobal('window', {
       blueAPI: {
-        commitProjectDocumentPatches: vi.fn(async () => ({ revision: 1, sessionId: 0, changed: true })),
+        commitProjectDocumentPatches: vi.fn(async () => ({
+          revision: 1,
+          sessionId: 0,
+          changed: true,
+        })),
         getProjectDocument: vi.fn(),
       },
     });
@@ -46,11 +50,23 @@ describe('Project Store Score Color Application (US3)', () => {
         layers: [
           createMockScoreLayerSnapshot({
             layerId: 'layer-0',
-            items: [createMockScoreRowObjectSnapshot({ objectId: 'item-1', editorTarget: target1, backgroundColor: 0x111111 })],
+            items: [
+              createMockScoreRowObjectSnapshot({
+                objectId: 'item-1',
+                editorTarget: target1,
+                backgroundColor: 0x111111,
+              }),
+            ],
           }),
           createMockScoreLayerSnapshot({
             layerId: 'layer-1',
-            items: [createMockScoreRowObjectSnapshot({ objectId: 'item-2', editorTarget: target2, backgroundColor: 0x222222 })],
+            items: [
+              createMockScoreRowObjectSnapshot({
+                objectId: 'item-2',
+                editorTarget: target2,
+                backgroundColor: 0x222222,
+              }),
+            ],
           }),
         ],
       },
@@ -105,11 +121,23 @@ describe('Project Store Score Color Application (US3)', () => {
         layers: [
           createMockScoreLayerSnapshot({
             layerId: 'layer-0',
-            items: [createMockScoreRowObjectSnapshot({ objectId: 'item-1', editorTarget: target1, backgroundColor: 0x111111 })],
+            items: [
+              createMockScoreRowObjectSnapshot({
+                objectId: 'item-1',
+                editorTarget: target1,
+                backgroundColor: 0x111111,
+              }),
+            ],
           }),
           createMockScoreLayerSnapshot({
             layerId: 'layer-1',
-            items: [createMockScoreRowObjectSnapshot({ objectId: 'item-2', editorTarget: target2, backgroundColor: 0x222222 })],
+            items: [
+              createMockScoreRowObjectSnapshot({
+                objectId: 'item-2',
+                editorTarget: target2,
+                backgroundColor: 0x222222,
+              }),
+            ],
           }),
         ],
       },
@@ -170,21 +198,27 @@ describe('Project Store Score Color Application (US3)', () => {
       location: { ...itemTarget.location!, objectIndex: 99 },
     };
 
-    snapshot.score.layerGroups = [{
-      groupId: 'group-1',
-      groupType: 'polyObject',
-      name: 'SoundObjects',
-      layerCount: 1,
-      isOpenableContainer: true,
-      layers: [createMockScoreLayerSnapshot({
-        layerId: 'layer-0',
-        items: [createMockScoreRowObjectSnapshot({
-          objectId: 'item-1',
-          editorTarget: itemTarget,
-          backgroundColor: 0x111111,
-        })],
-      })],
-    }];
+    snapshot.score.layerGroups = [
+      {
+        groupId: 'group-1',
+        groupType: 'polyObject',
+        name: 'SoundObjects',
+        layerCount: 1,
+        isOpenableContainer: true,
+        layers: [
+          createMockScoreLayerSnapshot({
+            layerId: 'layer-0',
+            items: [
+              createMockScoreRowObjectSnapshot({
+                objectId: 'item-1',
+                editorTarget: itemTarget,
+                backgroundColor: 0x111111,
+              }),
+            ],
+          }),
+        ],
+      },
+    ];
 
     useProjectStore.getState().setProjectInfo({
       title: 'Test',
@@ -206,8 +240,9 @@ describe('Project Store Score Color Application (US3)', () => {
       },
     });
 
-    expect(useProjectStore.getState().score.layerGroups[0].layers[0].items[0].backgroundColor)
-      .toBe(0x111111);
+    expect(useProjectStore.getState().score.layerGroups[0].layers[0].items[0].backgroundColor).toBe(
+      0x111111,
+    );
   });
 
   it('rejects Pattern-source and selection aliases that resolve to the same source object', async () => {
@@ -232,16 +267,18 @@ describe('Project Store Score Color Application (US3)', () => {
       location: undefined,
     });
 
-    snapshot.score.layerGroups = [{
-      groupId: 'pattern-group',
-      groupType: 'patterns',
-      name: 'Patterns',
-      layerCount: 1,
-      isOpenableContainer: false,
-      patternBeatsLength: 4,
-      effectivePatternBeatsLength: 4,
-      layers: [patternLayer],
-    }];
+    snapshot.score.layerGroups = [
+      {
+        groupId: 'pattern-group',
+        groupType: 'patterns',
+        name: 'Patterns',
+        layerCount: 1,
+        isOpenableContainer: false,
+        patternBeatsLength: 4,
+        effectivePatternBeatsLength: 4,
+        layers: [patternLayer],
+      },
+    ];
 
     useProjectStore.getState().setProjectInfo({
       title: 'Test',
@@ -263,8 +300,9 @@ describe('Project Store Score Color Application (US3)', () => {
       },
     });
 
-    expect(useProjectStore.getState().score.layerGroups[0].layers[0].sourceObject.backgroundColor)
-      .toBe(0x111111);
+    expect(
+      useProjectStore.getState().score.layerGroups[0].layers[0].sourceObject.backgroundColor,
+    ).toBe(0x111111);
   });
 
   it('reconciles optimistic changes when canonical commit returns changed: false', async () => {
@@ -284,7 +322,13 @@ describe('Project Store Score Color Application (US3)', () => {
         layers: [
           createMockScoreLayerSnapshot({
             layerId: 'layer-0',
-            items: [createMockScoreRowObjectSnapshot({ objectId: 'item-1', editorTarget: target1, backgroundColor: 0x111111 })],
+            items: [
+              createMockScoreRowObjectSnapshot({
+                objectId: 'item-1',
+                editorTarget: target1,
+                backgroundColor: 0x111111,
+              }),
+            ],
           }),
         ],
       },
@@ -315,9 +359,9 @@ describe('Project Store Score Color Application (US3)', () => {
       },
     });
 
-    await expect(
-      useProjectStore.getState().flushPendingPatches(),
-    ).rejects.toThrow('Score object color change was not applied');
+    await expect(useProjectStore.getState().flushPendingPatches()).rejects.toThrow(
+      'Score object color change was not applied',
+    );
 
     // Optimistic change was reconciled back to canonical
     const score = useProjectStore.getState().score;
@@ -341,7 +385,13 @@ describe('Project Store Score Color Application (US3)', () => {
         layers: [
           createMockScoreLayerSnapshot({
             layerId: 'layer-0',
-            items: [createMockScoreRowObjectSnapshot({ objectId: 'item-1', editorTarget: target1, backgroundColor: 0x111111 })],
+            items: [
+              createMockScoreRowObjectSnapshot({
+                objectId: 'item-1',
+                editorTarget: target1,
+                backgroundColor: 0x111111,
+              }),
+            ],
           }),
         ],
       },
@@ -369,9 +419,9 @@ describe('Project Store Score Color Application (US3)', () => {
       },
     });
 
-    await expect(
-      useProjectStore.getState().flushPendingPatches(),
-    ).rejects.toThrow('IPC network failure');
+    await expect(useProjectStore.getState().flushPendingPatches()).rejects.toThrow(
+      'IPC network failure',
+    );
 
     const score = useProjectStore.getState().score;
     expect(score.layerGroups[0].layers[0].items[0].backgroundColor).toBe(0x111111);

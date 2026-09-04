@@ -32,10 +32,12 @@ export function getEngineAutomationPoints(
     return [];
   }
 
-  const projected: AutomationPoint[] = [{
-    time: 0,
-    value: parameter.getValue(renderStartTime),
-  }];
+  const projected: AutomationPoint[] = [
+    {
+      time: 0,
+      value: parameter.getValue(renderStartTime),
+    },
+  ];
   for (const point of points) {
     if (point.time <= renderStartTime) {
       continue;

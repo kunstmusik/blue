@@ -66,18 +66,21 @@ describe('program-settings defaults', () => {
   });
 
   it('migrates a version-2 runtime path without dropping legacy selections', () => {
-    const merged = mergeWithDefaults({
-      version: 2,
-      appSpecific: {
-        enginePath: '/external/blue-engine',
-        csoundLibraryPath: '/Library/Frameworks/CsoundLib64.framework/CsoundLib64',
-      } as any,
-      realtimeRender: {
-        audioDriver: 'custom-audio',
-        audioOutText: 'saved-output',
-      } as any,
-      utility: { csoundExecutable: '/legacy/csound' } as any,
-    }, 'darwin');
+    const merged = mergeWithDefaults(
+      {
+        version: 2,
+        appSpecific: {
+          enginePath: '/external/blue-engine',
+          csoundLibraryPath: '/Library/Frameworks/CsoundLib64.framework/CsoundLib64',
+        } as any,
+        realtimeRender: {
+          audioDriver: 'custom-audio',
+          audioOutText: 'saved-output',
+        } as any,
+        utility: { csoundExecutable: '/legacy/csound' } as any,
+      },
+      'darwin',
+    );
     expect(merged.version).toBe(2);
     expect(merged.appSpecific.csoundLibraryPath).toContain('CsoundLib64');
     expect(merged.realtimeRender.audioDriver).toBe('custom-audio');
@@ -104,7 +107,14 @@ describe('program-settings defaults', () => {
 describe('program-settings choices', () => {
   it('has correct panel order', () => {
     expect(PROGRAM_SETTINGS_PANEL_ORDER.map((p) => p.id)).toEqual([
-      'general', 'projectDefaults', 'playback', 'utility', 'realtimeRender', 'diskRender', 'midi', 'osc',
+      'general',
+      'projectDefaults',
+      'playback',
+      'utility',
+      'realtimeRender',
+      'diskRender',
+      'midi',
+      'osc',
     ]);
   });
 
@@ -183,10 +193,12 @@ describe('program-settings validation', () => {
   it('rejects a relative external engine override without changing the settings version', () => {
     const s = createDefaultProgramSettings('darwin');
     s.appSpecific.enginePath = 'relative/blue-engine';
-    expect(validateProgramSettings(s)).toContainEqual(expect.objectContaining({
-      path: 'appSpecific.enginePath',
-      severity: 'error',
-    }));
+    expect(validateProgramSettings(s)).toContainEqual(
+      expect.objectContaining({
+        path: 'appSpecific.enginePath',
+        severity: 'error',
+      }),
+    );
     expect(s.version).toBe(3);
   });
 
@@ -194,16 +206,20 @@ describe('program-settings validation', () => {
     const s = createDefaultProgramSettings('darwin');
     s.general.directoryTempFileLimit = 0;
     const issues = validateProgramSettings(s);
-    expect(issues.some((i) => i.path === 'general.directoryTempFileLimit' && i.severity === 'error')).toBe(true);
+    expect(
+      issues.some((i) => i.path === 'general.directoryTempFileLimit' && i.severity === 'error'),
+    ).toBe(true);
   });
 
   it('rejects an invalid default layer group type', () => {
     const s = createDefaultProgramSettings('darwin');
     s.projectDefaults.defaultLayerGroupType = 'INVALID' as never;
-    expect(validateProgramSettings(s)).toContainEqual(expect.objectContaining({
-      path: 'projectDefaults.defaultLayerGroupType',
-      severity: 'error',
-    }));
+    expect(validateProgramSettings(s)).toContainEqual(
+      expect.objectContaining({
+        path: 'projectDefaults.defaultLayerGroupType',
+        severity: 'error',
+      }),
+    );
   });
 
   it('rejects invalid playbackFps', () => {
@@ -216,7 +232,9 @@ describe('program-settings validation', () => {
   it('rejects an invalid OSC preferred port', () => {
     const s = createDefaultProgramSettings('darwin');
     s.osc.preferredPort = 65536;
-    expect(validateProgramSettings(s).some((issue) => issue.path === 'osc.preferredPort')).toBe(true);
+    expect(validateProgramSettings(s).some((issue) => issue.path === 'osc.preferredPort')).toBe(
+      true,
+    );
   });
 
   it('rejects invalid realtime sr', () => {
@@ -264,61 +282,97 @@ describe('program-settings mergeWithDefaults', () => {
   });
 
   it('normalizes a missing or malformed saved default layer group type to Track', () => {
-    expect(mergeWithDefaults({ projectDefaults: {} }, 'darwin').projectDefaults.defaultLayerGroupType).toBe('TRACK');
-    expect(mergeWithDefaults({ projectDefaults: { defaultLayerGroupType: 'invalid' } as any }, 'darwin').projectDefaults.defaultLayerGroupType).toBe('TRACK');
-    expect(mergeWithDefaults({ projectDefaults: { defaultLayerGroupType: 'SOUND_OBJECT' } as any }, 'darwin').projectDefaults.defaultLayerGroupType).toBe('SOUND_OBJECT');
+    expect(
+      mergeWithDefaults({ projectDefaults: {} }, 'darwin').projectDefaults.defaultLayerGroupType,
+    ).toBe('TRACK');
+    expect(
+      mergeWithDefaults({ projectDefaults: { defaultLayerGroupType: 'invalid' } as any }, 'darwin')
+        .projectDefaults.defaultLayerGroupType,
+    ).toBe('TRACK');
+    expect(
+      mergeWithDefaults(
+        { projectDefaults: { defaultLayerGroupType: 'SOUND_OBJECT' } as any },
+        'darwin',
+      ).projectDefaults.defaultLayerGroupType,
+    ).toBe('SOUND_OBJECT');
   });
 
   it('preserves saved values', () => {
-    const merged = mergeWithDefaults({
-      general: { workDirectory: '/saved' } as any,
-    }, 'darwin');
+    const merged = mergeWithDefaults(
+      {
+        general: { workDirectory: '/saved' } as any,
+      },
+      'darwin',
+    );
     expect(merged.general.workDirectory).toBe('/saved');
     expect(merged.general.messageColorsEnabled).toBe(false);
   });
 
   it('drops the removed alpha marquee setting from legacy snapshots', () => {
-    const merged = mergeWithDefaults({
-      general: {
-        drawAlphaBackgroundOnMarquee: true,
-        messageColorsEnabled: true,
-      } as any,
-    }, 'darwin');
+    const merged = mergeWithDefaults(
+      {
+        general: {
+          drawAlphaBackgroundOnMarquee: true,
+          messageColorsEnabled: true,
+        } as any,
+      },
+      'darwin',
+    );
 
     expect(merged.general.messageColorsEnabled).toBe(true);
     expect(Object.hasOwn(merged.general, 'drawAlphaBackgroundOnMarquee')).toBe(false);
   });
 
   it('migrates a valid legacy OSC input port and ignores invalid placeholders', () => {
-    expect(mergeWithDefaults({
-      appSpecific: { oscInputPort: 9020 } as any,
-    }, 'darwin').osc.preferredPort).toBe(9020);
-    expect(mergeWithDefaults({
-      appSpecific: { oscInputPort: 0 } as any,
-    }, 'darwin').osc.preferredPort).toBe(8000);
+    expect(
+      mergeWithDefaults(
+        {
+          appSpecific: { oscInputPort: 9020 } as any,
+        },
+        'darwin',
+      ).osc.preferredPort,
+    ).toBe(9020);
+    expect(
+      mergeWithDefaults(
+        {
+          appSpecific: { oscInputPort: 0 } as any,
+        },
+        'darwin',
+      ).osc.preferredPort,
+    ).toBe(8000);
   });
 
   it('defaults File Manager favorites to an empty list and normalizes saved entries', () => {
     expect(mergeWithDefaults({}, 'darwin').appSpecific.fileManagerFavorites).toEqual([]);
-    expect(mergeWithDefaults({
-      appSpecific: {
-        fileManagerFavorites: ['/Users/a/music', '  ', 7, '/Users/a/music', '/Users/b'],
-      } as any,
-    }, 'darwin').appSpecific.fileManagerFavorites).toEqual(['/Users/a/music', '/Users/b']);
+    expect(
+      mergeWithDefaults(
+        {
+          appSpecific: {
+            fileManagerFavorites: ['/Users/a/music', '  ', 7, '/Users/a/music', '/Users/b'],
+          } as any,
+        },
+        'darwin',
+      ).appSpecific.fileManagerFavorites,
+    ).toEqual(['/Users/a/music', '/Users/b']);
   });
 
   it('defaults File Manager root labels to an empty map and normalizes saved entries', () => {
     expect(mergeWithDefaults({}, 'darwin').appSpecific.fileManagerRootLabels).toEqual({});
-    expect(mergeWithDefaults({
-      appSpecific: {
-        fileManagerRootLabels: {
-          '/Users/a': 'Home Folder',
-          '/': '  ',
-          '/Volumes/media': 123,
-          '/Volumes/backup': 'Backup Drive',
+    expect(
+      mergeWithDefaults(
+        {
+          appSpecific: {
+            fileManagerRootLabels: {
+              '/Users/a': 'Home Folder',
+              '/': '  ',
+              '/Volumes/media': 123,
+              '/Volumes/backup': 'Backup Drive',
+            },
+          } as any,
         },
-      } as any,
-    }, 'darwin').appSpecific.fileManagerRootLabels).toEqual({
+        'darwin',
+      ).appSpecific.fileManagerRootLabels,
+    ).toEqual({
       '/Users/a': 'Home Folder',
       '/Volumes/backup': 'Backup Drive',
     });
@@ -338,43 +392,51 @@ describe('program-settings appSpecific.windowLayout', () => {
   });
 
   it('mergeWithDefaults preserves valid saved window layout entries', () => {
-    const merged = mergeWithDefaults({
-      appSpecific: {
-        enginePath: '/engine',
-        recentFiles: [],
-        windowBounds: null,
-        midiInputDevice: '',
-        midiOutputDevice: '',
-        oscInputPort: 0,
-        oscOutputHost: 'localhost',
-        oscOutputPort: 0,
-        windowLayout: {
-          version: WINDOW_LAYOUT_SETTINGS_VERSION,
-          windows: {
-            main: {
-              normalBounds: { x: 5, y: 5, width: 800, height: 600 },
-              displayState: 'normal',
+    const merged = mergeWithDefaults(
+      {
+        appSpecific: {
+          enginePath: '/engine',
+          recentFiles: [],
+          windowBounds: null,
+          midiInputDevice: '',
+          midiOutputDevice: '',
+          oscInputPort: 0,
+          oscOutputHost: 'localhost',
+          oscOutputPort: 0,
+          windowLayout: {
+            version: WINDOW_LAYOUT_SETTINGS_VERSION,
+            windows: {
+              main: {
+                normalBounds: { x: 5, y: 5, width: 800, height: 600 },
+                displayState: 'normal',
+              },
+            },
+            splits: {},
+            legacyMigration: {
+              blueSettingsWindowBoundsMigrated: true,
+              workbenchLocalStorageMigrated: false,
             },
           },
-          splits: {},
-          legacyMigration: {
-            blueSettingsWindowBoundsMigrated: true,
-            workbenchLocalStorageMigrated: false,
-          },
-        },
-      } as any,
-    }, 'darwin');
+        } as any,
+      },
+      'darwin',
+    );
 
     expect(merged.appSpecific.windowLayout?.windows.main?.normalBounds.x).toBe(5);
-    expect(merged.appSpecific.windowLayout?.legacyMigration.blueSettingsWindowBoundsMigrated).toBe(true);
+    expect(merged.appSpecific.windowLayout?.legacyMigration.blueSettingsWindowBoundsMigrated).toBe(
+      true,
+    );
   });
 
   it('mergeWithDefaults drops malformed windowLayout and falls back to defaults', () => {
-    const merged = mergeWithDefaults({
-      appSpecific: {
-        windowLayout: { version: 'bad', windows: 'nope' } as any,
-      } as any,
-    }, 'darwin');
+    const merged = mergeWithDefaults(
+      {
+        appSpecific: {
+          windowLayout: { version: 'bad', windows: 'nope' } as any,
+        } as any,
+      },
+      'darwin',
+    );
 
     expect(merged.appSpecific.windowLayout).toEqual(createDefaultWindowLayoutSettings());
   });
@@ -395,20 +457,28 @@ describe('program-settings appSpecific.windowLayout', () => {
       splits: {
         'orchestra.outer': { orientation: 'horizontal', controlledPane: 'first', sizePx: 250 },
       },
-      legacyMigration: { blueSettingsWindowBoundsMigrated: true, workbenchLocalStorageMigrated: false },
+      legacyMigration: {
+        blueSettingsWindowBoundsMigrated: true,
+        workbenchLocalStorageMigrated: false,
+      },
     };
     base.general.workDirectory = '/keep';
     base.appSpecific.enginePath = '/engine';
     base.realtimeRender.audioDriver = 'CoreAudio';
 
-    const merged = mergeWithDefaults({
-      general: { workDirectory: '/keep' },
-      appSpecific: { windowLayout: base.appSpecific.windowLayout, enginePath: '/engine' },
-      realtimeRender: { audioDriver: 'CoreAudio' },
-    } as any, 'darwin');
+    const merged = mergeWithDefaults(
+      {
+        general: { workDirectory: '/keep' },
+        appSpecific: { windowLayout: base.appSpecific.windowLayout, enginePath: '/engine' },
+        realtimeRender: { audioDriver: 'CoreAudio' },
+      } as any,
+      'darwin',
+    );
     expect(merged.appSpecific.windowLayout?.windows.main?.normalBounds.width).toBe(1024);
     expect(merged.appSpecific.windowLayout?.splits['orchestra.outer']?.sizePx).toBe(250);
-    expect(merged.appSpecific.windowLayout?.legacyMigration.blueSettingsWindowBoundsMigrated).toBe(true);
+    expect(merged.appSpecific.windowLayout?.legacyMigration.blueSettingsWindowBoundsMigrated).toBe(
+      true,
+    );
     expect(merged.general.workDirectory).toBe('/keep');
     expect(merged.appSpecific.enginePath).toBe('/engine');
     expect(merged.realtimeRender.audioDriver).toBe('CoreAudio');
@@ -419,10 +489,16 @@ describe('program-settings appSpecific.windowLayout', () => {
     base.general.workDirectory = '/keep';
     base.appSpecific.enginePath = '/engine';
 
-    const merged = mergeWithDefaults({
-      general: { workDirectory: '/keep' },
-      appSpecific: { windowLayout: { version: 'bad', windows: 'nope' } as any, enginePath: '/engine' },
-    } as any, 'darwin');
+    const merged = mergeWithDefaults(
+      {
+        general: { workDirectory: '/keep' },
+        appSpecific: {
+          windowLayout: { version: 'bad', windows: 'nope' } as any,
+          enginePath: '/engine',
+        },
+      } as any,
+      'darwin',
+    );
 
     expect(merged.appSpecific.windowLayout).toEqual(createDefaultWindowLayoutSettings());
     expect(merged.general.workDirectory).toBe('/keep');
@@ -443,19 +519,22 @@ describe('program-settings appSpecific.appZoomPercent (SPEC 061)', () => {
   });
 
   it('mergeWithDefaults preserves a valid saved zoom percent and keeps siblings intact', () => {
-    const merged = mergeWithDefaults({
-      appSpecific: {
-        enginePath: '/engine',
-        recentFiles: ['/a.blue'],
-        windowBounds: null,
-        midiInputDevice: '',
-        midiOutputDevice: '',
-        oscInputPort: 0,
-        oscOutputHost: 'localhost',
-        oscOutputPort: 0,
-        appZoomPercent: 170,
+    const merged = mergeWithDefaults(
+      {
+        appSpecific: {
+          enginePath: '/engine',
+          recentFiles: ['/a.blue'],
+          windowBounds: null,
+          midiInputDevice: '',
+          midiOutputDevice: '',
+          oscInputPort: 0,
+          oscOutputHost: 'localhost',
+          oscOutputPort: 0,
+          appZoomPercent: 170,
+        } as any,
       } as any,
-    } as any, 'darwin');
+      'darwin',
+    );
 
     expect(merged.appSpecific.appZoomPercent).toBe(170);
     expect(merged.appSpecific.enginePath).toBe('/engine');
@@ -464,11 +543,14 @@ describe('program-settings appSpecific.appZoomPercent (SPEC 061)', () => {
   });
 
   it('mergeWithDefaults falls back to 100 for missing appZoomPercent while preserving other app-specific fields', () => {
-    const merged = mergeWithDefaults({
-      appSpecific: {
-        enginePath: '/engine',
+    const merged = mergeWithDefaults(
+      {
+        appSpecific: {
+          enginePath: '/engine',
+        } as any,
       } as any,
-    } as any, 'darwin');
+      'darwin',
+    );
 
     expect(merged.appSpecific.appZoomPercent).toBe(100);
     expect(merged.appSpecific.enginePath).toBe('/engine');
@@ -488,9 +570,12 @@ describe('program-settings appSpecific.appZoomPercent (SPEC 061)', () => {
     ];
 
     for (const { input, label } of cases) {
-      const merged = mergeWithDefaults({
-        appSpecific: { appZoomPercent: input } as any,
-      } as any, 'darwin');
+      const merged = mergeWithDefaults(
+        {
+          appSpecific: { appZoomPercent: input } as any,
+        } as any,
+        'darwin',
+      );
       expect(merged.appSpecific.appZoomPercent, label).toBe(100);
     }
   });
@@ -509,16 +594,22 @@ describe('program-settings appSpecific.appZoomPercent (SPEC 061)', () => {
       const s = createDefaultProgramSettings('darwin');
       (s.appSpecific as any).appZoomPercent = v;
       const issues = validateProgramSettings(s);
-      expect(issues.some((i) => i.path === 'appSpecific.appZoomPercent'), `value=${v}`).toBe(false);
+      expect(
+        issues.some((i) => i.path === 'appSpecific.appZoomPercent'),
+        `value=${v}`,
+      ).toBe(false);
     }
   });
 
   it('mergeWithDefaults does not bump the program-settings version when filling appZoomPercent', () => {
     const savedVersion = 2;
-    const merged = mergeWithDefaults({
-      version: savedVersion,
-      appSpecific: {} as any,
-    } as any, 'darwin');
+    const merged = mergeWithDefaults(
+      {
+        version: savedVersion,
+        appSpecific: {} as any,
+      } as any,
+      'darwin',
+    );
     expect(merged.version).toBe(savedVersion);
   });
 });
@@ -527,7 +618,9 @@ describe('isValidPlaybackPreferencePatch (SPEC 079)', () => {
   it('accepts patches with at least one boolean field', () => {
     expect(isValidPlaybackPreferencePatch({ followPlayback: true })).toBe(true);
     expect(isValidPlaybackPreferencePatch({ followPlaybackOnStart: false })).toBe(true);
-    expect(isValidPlaybackPreferencePatch({ followPlayback: false, followPlaybackOnStart: true })).toBe(true);
+    expect(
+      isValidPlaybackPreferencePatch({ followPlayback: false, followPlaybackOnStart: true }),
+    ).toBe(true);
   });
 
   it('rejects empty or non-object payloads', () => {
@@ -542,7 +635,9 @@ describe('isValidPlaybackPreferencePatch (SPEC 079)', () => {
     expect(isValidPlaybackPreferencePatch({ followPlayback: 'yes' })).toBe(false);
     expect(isValidPlaybackPreferencePatch({ followPlaybackOnStart: 1 })).toBe(false);
     expect(isValidPlaybackPreferencePatch({ followPlayback: null })).toBe(false);
-    expect(isValidPlaybackPreferencePatch({ followPlayback: true, followPlaybackOnStart: 'no' })).toBe(false);
+    expect(
+      isValidPlaybackPreferencePatch({ followPlayback: true, followPlaybackOnStart: 'no' }),
+    ).toBe(false);
   });
 });
 
@@ -550,13 +645,18 @@ describe('program-settings utility.freezeMaxJobs (SPEC 085)', () => {
   it('defaults to 4 on fresh Utility and ProgramSettings snapshots', () => {
     expect(createDefaultUtilitySettings('darwin').freezeMaxJobs).toBe(FREEZE_MAX_JOBS_DEFAULT);
     expect(createDefaultUtilitySettings('win32').freezeMaxJobs).toBe(FREEZE_MAX_JOBS_DEFAULT);
-    expect(createDefaultProgramSettings('darwin').utility.freezeMaxJobs).toBe(FREEZE_MAX_JOBS_DEFAULT);
+    expect(createDefaultProgramSettings('darwin').utility.freezeMaxJobs).toBe(
+      FREEZE_MAX_JOBS_DEFAULT,
+    );
   });
 
   it('mergeWithDefaults preserves a valid saved freezeMaxJobs with utility siblings intact', () => {
-    const merged = mergeWithDefaults({
-      utility: { csoundExecutable: '/custom/csound', freezeFlags: '-W', freezeMaxJobs: 7 } as any,
-    } as any, 'darwin');
+    const merged = mergeWithDefaults(
+      {
+        utility: { csoundExecutable: '/custom/csound', freezeFlags: '-W', freezeMaxJobs: 7 } as any,
+      } as any,
+      'darwin',
+    );
     expect(merged.utility.freezeMaxJobs).toBe(7);
     expect(merged.utility.csoundExecutable).toBe('/custom/csound');
     expect(merged.utility.freezeFlags).toBe('-W');
@@ -576,7 +676,10 @@ describe('program-settings utility.freezeMaxJobs (SPEC 085)', () => {
     ];
     for (const { input, label } of cases) {
       expect(normalizeFreezeMaxJobs(input), label).toBe(FREEZE_MAX_JOBS_DEFAULT);
-      const merged = mergeWithDefaults({ utility: { freezeMaxJobs: input } as any } as any, 'darwin');
+      const merged = mergeWithDefaults(
+        { utility: { freezeMaxJobs: input } as any } as any,
+        'darwin',
+      );
       expect(merged.utility.freezeMaxJobs, label).toBe(FREEZE_MAX_JOBS_DEFAULT);
     }
   });
@@ -590,7 +693,9 @@ describe('program-settings utility.freezeMaxJobs (SPEC 085)', () => {
     for (const value of [0, -1, 33, 1.5, Number.NaN]) {
       const snapshot = createDefaultProgramSettings('darwin');
       snapshot.utility.freezeMaxJobs = value as number;
-      const issues = validateProgramSettings(snapshot).filter((issue) => issue.path === 'utility.freezeMaxJobs');
+      const issues = validateProgramSettings(snapshot).filter(
+        (issue) => issue.path === 'utility.freezeMaxJobs',
+      );
       expect(issues, `value ${value}`).toHaveLength(1);
       expect(issues[0].severity).toBe('error');
     }
@@ -600,7 +705,9 @@ describe('program-settings utility.freezeMaxJobs (SPEC 085)', () => {
     for (const value of [FREEZE_MAX_JOBS_MIN, 4, FREEZE_MAX_JOBS_MAX]) {
       const snapshot = createDefaultProgramSettings('darwin');
       snapshot.utility.freezeMaxJobs = value;
-      const issues = validateProgramSettings(snapshot).filter((issue) => issue.path === 'utility.freezeMaxJobs');
+      const issues = validateProgramSettings(snapshot).filter(
+        (issue) => issue.path === 'utility.freezeMaxJobs',
+      );
       expect(issues, `value ${value}`).toHaveLength(0);
     }
   });

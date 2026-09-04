@@ -98,11 +98,13 @@ describe('ReplConsolePanel', () => {
       });
 
       await act(async () => {
-        input.dispatchEvent(new KeyboardEvent('keydown', {
-          bubbles: true,
-          cancelable: true,
-          key: 'Enter',
-        }));
+        input.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            bubbles: true,
+            cancelable: true,
+            key: 'Enter',
+          }),
+        );
         await Promise.resolve();
       });
 

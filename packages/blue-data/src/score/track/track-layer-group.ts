@@ -14,10 +14,15 @@ import { Element } from '../../serialization/xml-reader';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../../serialization/obj-ref-map';
 import { writeInt } from '../../utilities/xml';
 import { LAYER_HEIGHT } from '../layers/layer';
-import { normalizeScoreGenerationOptions, type ScoreGenerationOptionsOrSolo } from '../score-generation-options';
+import {
+  normalizeScoreGenerationOptions,
+  type ScoreGenerationOptionsOrSolo,
+} from '../score-generation-options';
 
 export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
-  static get [Symbol.species](): ArrayConstructor { return Array; }
+  static get [Symbol.species](): ArrayConstructor {
+    return Array;
+  }
   private _name = 'Track Layer Group';
   private _uniqueId = generateUniqueId();
   private _defaultHeightIndex = 0;
@@ -40,16 +45,30 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
     }
   }
 
-  getName(): string { return this._name; }
-  setName(name: string): void { this._name = name; }
-  getUniqueId(): string { return this._uniqueId; }
+  getName(): string {
+    return this._name;
+  }
+  setName(name: string): void {
+    this._name = name;
+  }
+  getUniqueId(): string {
+    return this._uniqueId;
+  }
   setUniqueId(uniqueId: string): void {
     if (uniqueId.trim()) this._uniqueId = uniqueId.trim();
   }
-  getDefaultHeightIndex(): number { return this._defaultHeightIndex; }
-  setDefaultHeightIndex(index: number): void { this._defaultHeightIndex = Math.max(0, Math.min(Track.HEIGHT_MAX_INDEX, index)); }
-  getNoteProcessorChain(): NoteProcessorChain { return new NoteProcessorChain(); }
-  hasSoloLayers(): boolean { return this.some((track) => track.isSolo()); }
+  getDefaultHeightIndex(): number {
+    return this._defaultHeightIndex;
+  }
+  setDefaultHeightIndex(index: number): void {
+    this._defaultHeightIndex = Math.max(0, Math.min(Track.HEIGHT_MAX_INDEX, index));
+  }
+  getNoteProcessorChain(): NoteProcessorChain {
+    return new NoteProcessorChain();
+  }
+  hasSoloLayers(): boolean {
+    return this.some((track) => track.isSolo());
+  }
 
   /**
    * Runs on-load processing for script SoundObjects placed directly on a
@@ -104,11 +123,13 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
       if (track.isMuted()) continue;
       if (generationOptions.processWithSolo && !track.isSolo()) continue;
       const trackId = getTrackInstrumentId(compileData, track.getUniqueId());
-      notes.merge(track.generateForCSD(context, compileData, startTime, endTime, {
-        ...generationOptions,
-        trackId: track.getUniqueId(),
-        instrumentOverrideId: trackId,
-      }));
+      notes.merge(
+        track.generateForCSD(context, compileData, startTime, endTime, {
+          ...generationOptions,
+          trackId: track.getUniqueId(),
+          instrumentOverrideId: trackId,
+        }),
+      );
     }
     return notes;
   }
@@ -126,11 +147,13 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
       if (track.isMuted()) continue;
       if (generationOptions.processWithSolo && !track.isSolo()) continue;
       const trackId = getTrackInstrumentId(compileData, track.getUniqueId());
-      notes.merge(await track.generateForCSDAsync(context, compileData, startTime, endTime, {
-        ...generationOptions,
-        trackId: track.getUniqueId(),
-        instrumentOverrideId: trackId,
-      }));
+      notes.merge(
+        await track.generateForCSDAsync(context, compileData, startTime, endTime, {
+          ...generationOptions,
+          trackId: track.getUniqueId(),
+          instrumentOverrideId: trackId,
+        }),
+      );
     }
     return notes;
   }
@@ -213,8 +236,12 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
 
   onLoadComplete(_context: TimeContext): void {}
 
-  deepCopy(): TrackLayerGroup { return new TrackLayerGroup(this); }
-  getTotalHeight(): number { return this.reduce((height, track) => height + track.getLayerHeight(), 0); }
+  deepCopy(): TrackLayerGroup {
+    return new TrackLayerGroup(this);
+  }
+  getTotalHeight(): number {
+    return this.reduce((height, track) => height + track.getLayerHeight(), 0);
+  }
   getLayerNumForY(y: number): number {
     let running = 0;
     for (let i = 0; i < this.length; i++) {
@@ -229,13 +256,17 @@ type TrackOnLoadTarget = JavaScriptObject | ClojureObject | PythonObject;
 
 function resolveTrackOnLoadTarget(item: unknown): TrackOnLoadTarget | null {
   if (!(item instanceof Instance)) {
-    return item instanceof JavaScriptObject || item instanceof ClojureObject || item instanceof PythonObject
+    return item instanceof JavaScriptObject ||
+      item instanceof ClojureObject ||
+      item instanceof PythonObject
       ? item
       : null;
   }
   const target = item.getSoundObject();
   if (target instanceof Instance) return resolveTrackOnLoadTarget(target);
-  return target instanceof JavaScriptObject || target instanceof ClojureObject || target instanceof PythonObject
+  return target instanceof JavaScriptObject ||
+    target instanceof ClojureObject ||
+    target instanceof PythonObject
     ? target
     : null;
 }

@@ -108,21 +108,21 @@ function serializeFolder(
   descriptor: LegacyLibraryFormatDescriptor,
   folder: LegacyLibraryFolderPlan,
 ): string {
-  const rootAttribute = descriptor.ordering === 'categoriesFirst'
-    ? ` isRoot="${folder.isRoot ? 'true' : 'false'}"`
-    : '';
+  const rootAttribute =
+    descriptor.ordering === 'categoriesFirst'
+      ? ` isRoot="${folder.isRoot ? 'true' : 'false'}"`
+      : '';
   const open = `<${descriptor.categoryElement} categoryName="${escapeAttribute(folder.name)}"${rootAttribute}>`;
-  const orderedChildren = descriptor.ordering === 'categoriesFirst'
-    ? [
-        ...folder.children.filter((child) => child.kind === 'folder'),
-        ...folder.children.filter((child) => child.kind === 'item'),
-      ]
-    : folder.children;
+  const orderedChildren =
+    descriptor.ordering === 'categoriesFirst'
+      ? [
+          ...folder.children.filter((child) => child.kind === 'folder'),
+          ...folder.children.filter((child) => child.kind === 'item'),
+        ]
+      : folder.children;
   const body = orderedChildren
     .map((child) =>
-      child.kind === 'folder'
-        ? serializeFolder(descriptor, child)
-        : child.payload.rawXml,
+      child.kind === 'folder' ? serializeFolder(descriptor, child) : child.payload.rawXml,
     )
     .join('');
   return `${open}${body}</${descriptor.categoryElement}>`;

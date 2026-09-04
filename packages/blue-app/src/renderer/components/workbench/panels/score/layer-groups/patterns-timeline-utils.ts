@@ -5,10 +5,7 @@
  * position is derived from its integer cell index and the group's shared
  * pattern step length.
  */
-import type {
-  PatternLayerSnapshot,
-  PatternsLayerGroupSnapshot,
-} from '../types';
+import type { PatternLayerSnapshot, PatternsLayerGroupSnapshot } from '../types';
 
 /** Positive-definite scale guard; never produces NaN CSS values. */
 export function safePixelsPerBeat(pixelsPerBeat: number): number {
@@ -48,10 +45,10 @@ export function cellsBetween(start: number, end: number): number[] {
 
 /** Maximum active-cell end in beats; zero when the group has no active cells. */
 export function computePatternExtentBeats(group: PatternsLayerGroupSnapshot): number {
-  const step = Number.isFinite(group.effectivePatternBeatsLength)
-    && group.effectivePatternBeatsLength > 0
-    ? group.effectivePatternBeatsLength
-    : 1;
+  const step =
+    Number.isFinite(group.effectivePatternBeatsLength) && group.effectivePatternBeatsLength > 0
+      ? group.effectivePatternBeatsLength
+      : 1;
   let maxCell = -1;
   for (const layer of group.layers) {
     for (const cellIndex of layer.activeCellIndices) {

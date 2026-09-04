@@ -6,7 +6,9 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import OscSettings from '../components/settings/OscSettings';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const roots: Array<{ root: Root; container: HTMLDivElement }> = [];
 
@@ -91,7 +93,10 @@ describe('OscSettings', () => {
     const { container, onChange } = renderPanel();
     const input = container.querySelector('input') as HTMLInputElement;
     act(() => {
-      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(input, '9100');
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(
+        input,
+        '9100',
+      );
       input.dispatchEvent(new Event('input', { bubbles: true }));
     });
     expect(onChange).toHaveBeenCalledWith({ preferredPort: 9100 });

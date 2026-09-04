@@ -28,14 +28,14 @@ import {
 } from '../src/protocol';
 
 describe('Automation Protocol Encoding', () => {
-
   it('encodes createAutomation with correct binary layout', () => {
     const buf = encodeCreateAutomation(
-      'gk_blue_auto0',    // name
+      'gk_blue_auto0', // name
       AutomationCurveCode.LINEAR, // curve
-      true,               // enabled
+      true, // enabled
       '1E-31', // canonical exact resolution text
-      [                   // points
+      [
+        // points
         { time: 0.0, value: 0.5 },
         { time: 4.0, value: 1.0 },
       ],
@@ -69,8 +69,7 @@ describe('Automation Protocol Encoding', () => {
     // resolution length and canonical ASCII text
     const resolutionLength = payload.readUInt32LE(offset);
     offset += 4;
-    expect(payload.toString('ascii', offset, offset + resolutionLength))
-      .toBe('1E-31');
+    expect(payload.toString('ascii', offset, offset + resolutionLength)).toBe('1E-31');
     offset += resolutionLength;
 
     // n_points (u32)
@@ -90,13 +89,9 @@ describe('Automation Protocol Encoding', () => {
   });
 
   it('encodes updateAutomation with UPDATE command byte', () => {
-    const buf = encodeUpdateAutomation(
-      'test',
-      AutomationCurveCode.STEP,
-      true,
-      '0.1',
-      [{ time: 0, value: 1 }],
-    );
+    const buf = encodeUpdateAutomation('test', AutomationCurveCode.STEP, true, '0.1', [
+      { time: 0, value: 1 },
+    ]);
 
     expect(buf.readUInt8(0)).toBe(CMD_UPDATE_AUTOMATION);
   });
@@ -129,8 +124,13 @@ describe('Automation Protocol Encoding', () => {
     const nameEnd = payload.indexOf(0);
     const resolutionLengthOffset = nameEnd + 1 + 1 + 1;
     const resolutionLength = payload.readUInt32LE(resolutionLengthOffset);
-    expect(payload.toString('ascii', resolutionLengthOffset + 4,
-      resolutionLengthOffset + 4 + resolutionLength)).toBe(resolution);
+    expect(
+      payload.toString(
+        'ascii',
+        resolutionLengthOffset + 4,
+        resolutionLengthOffset + 4 + resolutionLength,
+      ),
+    ).toBe(resolution);
   });
 
   it('encodes with no points', () => {
@@ -144,12 +144,20 @@ describe('Automation Protocol Encoding', () => {
   });
 
   it('rejects lossy or malformed automation inputs before sending', () => {
-    expect(() => encodeCreateAutomation('ch', AutomationCurveCode.LINEAR, true, '1,0', [])).toThrow();
-    expect(() => encodeCreateAutomation('ch', AutomationCurveCode.LINEAR, true, '1e-7', [])).toThrow();
-    expect(() => encodeCreateAutomation('ch', AutomationCurveCode.LINEAR, true, '1', [
-      { time: Number.NaN, value: 0 },
-    ])).toThrow();
-    expect(() => encodeCreateAutomation('ch\0bad', AutomationCurveCode.LINEAR, true, '1', [])).toThrow();
+    expect(() =>
+      encodeCreateAutomation('ch', AutomationCurveCode.LINEAR, true, '1,0', []),
+    ).toThrow();
+    expect(() =>
+      encodeCreateAutomation('ch', AutomationCurveCode.LINEAR, true, '1e-7', []),
+    ).toThrow();
+    expect(() =>
+      encodeCreateAutomation('ch', AutomationCurveCode.LINEAR, true, '1', [
+        { time: Number.NaN, value: 0 },
+      ]),
+    ).toThrow();
+    expect(() =>
+      encodeCreateAutomation('ch\0bad', AutomationCurveCode.LINEAR, true, '1', []),
+    ).toThrow();
   });
 
   it('encodes name-only commands (delete, enable, disable)', () => {
@@ -190,7 +198,6 @@ describe('Automation Protocol Encoding', () => {
 });
 
 describe('Automation List Decoding', () => {
-
   it('decodes empty list', () => {
     const payload = Buffer.alloc(4);
     payload.writeUInt32LE(0, 0);
@@ -202,14 +209,18 @@ describe('Automation List Decoding', () => {
     // count(4) + id(4) + enabled(1) + channel(64) + n_points(4) = 77
     const payload = Buffer.alloc(4 + 73);
     let offset = 0;
-    payload.writeUInt32LE(1, offset); offset += 4; // count = 1
-    payload.writeUInt32LE(42, offset); offset += 4; // id = 42
-    payload.writeUInt8(1, offset); offset += 1;      // enabled = true
+    payload.writeUInt32LE(1, offset);
+    offset += 4; // count = 1
+    payload.writeUInt32LE(42, offset);
+    offset += 4; // id = 42
+    payload.writeUInt8(1, offset);
+    offset += 1; // enabled = true
     // channel name (64 bytes, null-padded)
     const name = 'gk_blue_auto0';
     payload.write(name, offset, 'utf-8');
     offset += 64;
-    payload.writeUInt32LE(3, offset); offset += 4;   // n_points = 3
+    payload.writeUInt32LE(3, offset);
+    offset += 4; // n_points = 3
 
     const entries = decodeAutomationList(payload);
     expect(entries.length).toBe(1);
@@ -223,17 +234,26 @@ describe('Automation List Decoding', () => {
     const entrySize = 4 + 1 + 64 + 4; // 73
     const payload = Buffer.alloc(4 + entrySize * 2);
     let offset = 0;
-    payload.writeUInt32LE(2, offset); offset += 4;
+    payload.writeUInt32LE(2, offset);
+    offset += 4;
     // Entry 0
-    payload.writeUInt32LE(0, offset); offset += 4;
-    payload.writeUInt8(1, offset); offset += 1;
-    Buffer.from('ch0\0').copy(payload, offset); offset += 64;
-    payload.writeUInt32LE(2, offset); offset += 4;
+    payload.writeUInt32LE(0, offset);
+    offset += 4;
+    payload.writeUInt8(1, offset);
+    offset += 1;
+    Buffer.from('ch0\0').copy(payload, offset);
+    offset += 64;
+    payload.writeUInt32LE(2, offset);
+    offset += 4;
     // Entry 1
-    payload.writeUInt32LE(1, offset); offset += 4;
-    payload.writeUInt8(0, offset); offset += 1;
-    Buffer.from('ch1\0').copy(payload, offset); offset += 64;
-    payload.writeUInt32LE(0, offset); offset += 4;
+    payload.writeUInt32LE(1, offset);
+    offset += 4;
+    payload.writeUInt8(0, offset);
+    offset += 1;
+    Buffer.from('ch1\0').copy(payload, offset);
+    offset += 64;
+    payload.writeUInt32LE(0, offset);
+    offset += 4;
 
     const entries = decodeAutomationList(payload);
     expect(entries.length).toBe(2);
@@ -244,17 +264,22 @@ describe('Automation List Decoding', () => {
   });
 
   it('decodes engine state snapshots from JSON payloads', () => {
-    const snapshot = decodeEngineStatePayload(Buffer.from(JSON.stringify({
-      state: 'stopped',
-      stopReason: 'completed',
-      engineCreated: true,
-      running: false,
-      sampleFrames: 88200,
-      sampleRate: 44100,
-      ksmps: 64,
-      sequence: 7,
-      lastError: '',
-    }), 'utf-8'));
+    const snapshot = decodeEngineStatePayload(
+      Buffer.from(
+        JSON.stringify({
+          state: 'stopped',
+          stopReason: 'completed',
+          engineCreated: true,
+          running: false,
+          sampleFrames: 88200,
+          sampleRate: 44100,
+          ksmps: 64,
+          sequence: 7,
+          lastError: '',
+        }),
+        'utf-8',
+      ),
+    );
 
     expect(snapshot).toEqual({
       state: 'stopped',
@@ -293,7 +318,11 @@ describe('Batch Channel Protocol Encoding (batch-channels-v1)', () => {
     const secondStart = 9 + 'gk_blue_auto0'.length + 8;
     expect(buf.readUInt16LE(secondStart)).toBe(Buffer.byteLength(utf8Name, 'utf-8'));
     expect(
-      buf.toString('utf-8', secondStart + 2, secondStart + 2 + Buffer.byteLength(utf8Name, 'utf-8')),
+      buf.toString(
+        'utf-8',
+        secondStart + 2,
+        secondStart + 2 + Buffer.byteLength(utf8Name, 'utf-8'),
+      ),
     ).toBe(utf8Name);
     expect(buf.readDoubleLE(secondStart + 2 + Buffer.byteLength(utf8Name, 'utf-8'))).toBe(-0.25);
   });
@@ -324,20 +353,23 @@ describe('Batch Channel Protocol Encoding (batch-channels-v1)', () => {
     expect(() =>
       encodeSetChannels(Array.from({ length: 152 }, (_, i) => ({ name: `c${i}`, value: 0 }))),
     ).toThrow(RangeError);
-    expect(() =>
-      encodeGetChannels(Array.from({ length: 152 }, (_, i) => `c${i}`)),
-    ).toThrow(RangeError);
-    expect(() => encodeSetChannels([{ name: 'a', value: 1 }, { name: 'a', value: 2 }])).toThrow(
-      /duplicate/i,
+    expect(() => encodeGetChannels(Array.from({ length: 152 }, (_, i) => `c${i}`))).toThrow(
+      RangeError,
     );
+    expect(() =>
+      encodeSetChannels([
+        { name: 'a', value: 1 },
+        { name: 'a', value: 2 },
+      ]),
+    ).toThrow(/duplicate/i);
     expect(() => encodeGetChannels(['a', 'a'])).toThrow(/duplicate/i);
     expect(() => encodeSetChannels([{ name: 'a\0b', value: 1 }])).toThrow(/NUL/i);
     expect(() => encodeSetChannels([{ name: '', value: 1 }])).toThrow(RangeError);
     expect(() => encodeGetChannels(['x'.repeat(64)])).toThrow(/limit/i);
     expect(() => encodeSetChannels([{ name: 'a', value: Number.NaN }])).toThrow(/finite/i);
-    expect(() =>
-      encodeSetChannels([{ name: 'a', value: Number.POSITIVE_INFINITY }]),
-    ).toThrow(/finite/i);
+    expect(() => encodeSetChannels([{ name: 'a', value: Number.POSITIVE_INFINITY }])).toThrow(
+      /finite/i,
+    );
   });
 
   it('rejects malformed get response payloads without partial results', () => {

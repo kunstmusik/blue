@@ -93,9 +93,6 @@ export interface PlacementResult {
 export const DEFAULT_SURFACE_GAP = 8;
 export const DEFAULT_SURFACE_MARGIN = 8;
 
-export function surfaceCloseOnHostScrollByKind(
-  kind: HostSurfaceKind,
-  override?: boolean,
-): boolean {
+export function surfaceCloseOnHostScrollByKind(kind: HostSurfaceKind, override?: boolean): boolean {
   return override ?? kind === 'menu';
 }

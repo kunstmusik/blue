@@ -5,7 +5,9 @@ import { JSDOM } from 'jsdom';
 import { containsNode, isEventInsidePortalPopup, isNodeLike } from '../utils/cross-realm-dom';
 
 describe('cross-realm DOM utilities', () => {
-  const popout = new JSDOM('<!doctype html><html><body><div id="menu"><button id="item"></button></div><div id="outside"></div></body></html>');
+  const popout = new JSDOM(
+    '<!doctype html><html><body><div id="menu"><button id="item"></button></div><div id="outside"></div></body></html>',
+  );
   const popoutDoc = popout.window.document;
   const menu = popoutDoc.getElementById('menu')!;
   const item = popoutDoc.getElementById('item')!;

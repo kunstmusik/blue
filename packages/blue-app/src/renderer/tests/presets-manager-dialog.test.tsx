@@ -78,23 +78,27 @@ function createInstrument(): BlueSynthBuilderInstrumentSnapshot {
 }
 
 function findTreeRow(container: HTMLDivElement, label: string): HTMLDivElement | undefined {
-  return Array.from(container.querySelectorAll<HTMLDivElement>('.cursor-pointer'))
-    .find((row) => row.textContent?.trim() === label);
+  return Array.from(container.querySelectorAll<HTMLDivElement>('.cursor-pointer')).find(
+    (row) => row.textContent?.trim() === label,
+  );
 }
 
 async function openContextMenu(row: HTMLDivElement): Promise<void> {
   await act(async () => {
-    row.dispatchEvent(new MouseEvent('contextmenu', {
-      bubbles: true,
-      cancelable: true,
-      button: 2,
-    }));
+    row.dispatchEvent(
+      new MouseEvent('contextmenu', {
+        bubbles: true,
+        cancelable: true,
+        button: 2,
+      }),
+    );
     await Promise.resolve();
   });
 }
 
 function findMenuItem(label: string): HTMLElement | undefined {
-  return Array.from(document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')).reverse()
+  return Array.from(document.body.querySelectorAll<HTMLElement>('[role="menuitem"]'))
+    .reverse()
     .find((item) => item.textContent?.trim() === label);
 }
 
@@ -113,11 +117,7 @@ describe('PresetsManagerDialog', () => {
     const tree = buildPresetTree(createPresetGroup());
 
     expect(tree.id).toBe('group:root');
-    expect(tree.children?.map((node) => node.name)).toEqual([
-      'Nested',
-      'A',
-      'B',
-    ]);
+    expect(tree.children?.map((node) => node.name)).toEqual(['Nested', 'A', 'B']);
     expect(tree.children?.[0]).toMatchObject({
       id: 'group:0',
       kind: 'group',
@@ -140,9 +140,10 @@ describe('PresetsManagerDialog', () => {
       parentGroupPath: [],
       targetIndex: 3,
     });
-    expect(
-      instrument.presetGroup?.presets.map((preset) => preset.uniqueId),
-    ).toEqual(['preset-b', 'preset-a']);
+    expect(instrument.presetGroup?.presets.map((preset) => preset.uniqueId)).toEqual([
+      'preset-b',
+      'preset-a',
+    ]);
 
     applyBsbInterfacePatchToSnapshot(instrument, {
       type: 'renamePresetGroup',
@@ -173,7 +174,8 @@ describe('PresetsManagerDialog', () => {
             presetGroup={createPresetGroup()}
             onBsbInterfacePatch={onPatch}
             onClose={onClose}
-          />,
+          />
+          ,
         </HostDocumentContext.Provider>,
       );
     });
@@ -183,8 +185,9 @@ describe('PresetsManagerDialog', () => {
     expect(container.textContent).toContain('Nested');
     expect(container.textContent).toContain('Delete key removes');
 
-    const presetRow = Array.from(container.querySelectorAll('.cursor-pointer'))
-      .find((row) => row.textContent?.trim() === 'B') as HTMLDivElement | undefined;
+    const presetRow = Array.from(container.querySelectorAll('.cursor-pointer')).find(
+      (row) => row.textContent?.trim() === 'B',
+    ) as HTMLDivElement | undefined;
     expect(presetRow).toBeTruthy();
     act(() => {
       presetRow?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
@@ -230,7 +233,11 @@ describe('PresetsManagerDialog', () => {
     if (!rootRow) return;
     await openContextMenu(rootRow);
 
-    expect(Array.from(document.body.querySelectorAll('[role="menuitem"]')).map((item) => item.textContent?.trim())).toEqual(
+    expect(
+      Array.from(document.body.querySelectorAll('[role="menuitem"]')).map((item) =>
+        item.textContent?.trim(),
+      ),
+    ).toEqual(
       expect.arrayContaining([
         'Remove',
         'Cut',
@@ -272,9 +279,11 @@ describe('PresetsManagerDialog', () => {
     document.body.appendChild(container);
     root = createRoot(container);
     const onPatch = vi.fn();
-    const importPresetFile = vi.fn<() => Promise<string | null>>().mockResolvedValue(
-      '<preset name="Imported" uniqueId="source"><setting name="cutoff">0.5</setting></preset>',
-    );
+    const importPresetFile = vi
+      .fn<() => Promise<string | null>>()
+      .mockResolvedValue(
+        '<preset name="Imported" uniqueId="source"><setting name="cutoff">0.5</setting></preset>',
+      );
     const exportPresetFile = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
     window.blueAPI = {
       ...window.blueAPI,
@@ -302,14 +311,16 @@ describe('PresetsManagerDialog', () => {
       await Promise.resolve();
     });
     expect(importPresetFile).toHaveBeenCalledTimes(1);
-    expect(onPatch).toHaveBeenCalledWith(expect.objectContaining({
-      type: 'addPresetFromSnapshot',
-      parentGroupPath: [0],
-      preset: expect.objectContaining({
-        name: 'Imported',
-        values: { cutoff: '0.5' },
+    expect(onPatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'addPresetFromSnapshot',
+        parentGroupPath: [0],
+        preset: expect.objectContaining({
+          name: 'Imported',
+          values: { cutoff: '0.5' },
+        }),
       }),
-    }));
+    );
 
     const rootRow = findTreeRow(container, 'Presets');
     expect(rootRow).toBeTruthy();
@@ -355,11 +366,13 @@ describe('PresetsManagerDialog', () => {
     expect(findMenuItem('Paste')?.getAttribute('data-disabled')).toBeNull();
     act(() => findMenuItem('Paste')?.click());
 
-    expect(onPatch).toHaveBeenCalledWith(expect.objectContaining({
-      type: 'addPresetFromSnapshot',
-      parentGroupPath: [0],
-      preset: expect.objectContaining({ name: 'B' }),
-    }));
+    expect(onPatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'addPresetFromSnapshot',
+        parentGroupPath: [0],
+        preset: expect.objectContaining({ name: 'B' }),
+      }),
+    );
 
     await openContextMenu(nestedRow);
     act(() => findMenuItem('Add Folder')?.click());
@@ -418,7 +431,9 @@ describe('PresetsManagerDialog', () => {
     });
 
     const confirmDialog = document.body.querySelector('[role="alertdialog"]');
-    const deleteButton = confirmDialog?.querySelector<HTMLButtonElement>('[data-action-id="delete"]');
+    const deleteButton = confirmDialog?.querySelector<HTMLButtonElement>(
+      '[data-action-id="delete"]',
+    );
     expect(deleteButton).toBeTruthy();
     act(() => {
       deleteButton?.click();

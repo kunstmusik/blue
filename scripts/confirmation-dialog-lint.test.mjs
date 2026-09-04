@@ -39,7 +39,12 @@ test('production renderer code rejects bare, window, and globalThis browser dial
 
   const errors = ruleErrors(result);
   assert.equal(errors.length, 9);
-  assert.ok(errors.every((message) => message.ruleId === 'no-restricted-globals' || message.ruleId === 'no-restricted-properties'));
+  assert.ok(
+    errors.every(
+      (message) =>
+        message.ruleId === 'no-restricted-globals' || message.ruleId === 'no-restricted-properties',
+    ),
+  );
 });
 
 test('main-process code rejects both synchronous and asynchronous message boxes', async () => {
@@ -50,7 +55,12 @@ test('main-process code rejects both synchronous and asynchronous message boxes'
 
   const errors = ruleErrors(result);
   assert.equal(errors.length, 4);
-  assert.ok(errors.every((message) => message.ruleId === 'no-restricted-properties' || message.ruleId === 'no-restricted-syntax'));
+  assert.ok(
+    errors.every(
+      (message) =>
+        message.ruleId === 'no-restricted-properties' || message.ruleId === 'no-restricted-syntax',
+    ),
+  );
 });
 
 test('tests and the native confirmation adapter are explicit lint boundaries', async () => {

@@ -49,15 +49,14 @@ export function generateTrackAudioPlaybackNotes(
     const startOffset = Math.max(startTime - clipStart, 0);
     const newStart = Math.max(clipStart - startTime, 0);
     const newEnd = clipEnd - startTime;
-    const newDuration = usesEndTime && newEnd > adjustedEndTime
-      ? adjustedEndTime - newStart
-      : newEnd - newStart;
+    const newDuration =
+      usesEndTime && newEnd > adjustedEndTime ? adjustedEndTime - newStart : newEnd - newStart;
 
     const note = Note.createNote(12);
     note.setPField(String(instrId), 1);
     note.setStartTime(newStart);
     note.setSubjectiveDuration(newDuration);
-    note.setPField(`"${clip.getAudioFile().replace(/\\/g, '/') }"`, 4);
+    note.setPField(`"${clip.getAudioFile().replace(/\\/g, '/')}"`, 4);
     note.setPField(String(clipFileStart), 5);
     note.setPField(String(startOffset), 6);
     note.setPField(String(clipDur), 7);
@@ -89,25 +88,29 @@ export function ensureTrackAudioPlaybackInstrument(
     // With the mixer disabled no BlueMixer instrument reads ga_bluemix_* or
     // ga_bluesub_* variables, so clips must output directly, matching how the
     // arrangement compiler rewrites blueMixerOut to outc for that case.
-    instrument.setText(`${PLAYBACK_INSTRUMENT_ORC.replaceAll('{0}', 'a1').replaceAll('{1}', 'a2')}\noutc a1, a2\n`);
+    instrument.setText(
+      `${PLAYBACK_INSTRUMENT_ORC.replaceAll('{0}', 'a1').replaceAll('{1}', 'a2')}\noutc a1, a2\n`,
+    );
   } else if (associatedChannel) {
     const channelId = compileData.getChannelIdAssignments().get(associatedChannel);
     if (channelId == null) {
       throw new Error(`Missing mixer channel assignment for Track '${trackId}'`);
     }
     instrument.setText(
-      PLAYBACK_INSTRUMENT_ORC
-        .replaceAll('{0}', Mixer.getChannelVar(channelId, 0))
-        .replaceAll('{1}', Mixer.getChannelVar(channelId, 1)),
+      PLAYBACK_INSTRUMENT_ORC.replaceAll('{0}', Mixer.getChannelVar(channelId, 0)).replaceAll(
+        '{1}',
+        Mixer.getChannelVar(channelId, 1),
+      ),
     );
   } else {
     // No channel is associated with this Track. Route into the Master
     // sub-channel so the clip stays audible under the BlueMixer, mirroring
     // the arrangement compiler's fallback for instruments without a channel.
     instrument.setText(
-      PLAYBACK_INSTRUMENT_ORC
-        .replaceAll('{0}', Mixer.getSubChannelVar(Mixer.MASTER_CHANNEL, 0))
-        .replaceAll('{1}', Mixer.getSubChannelVar(Mixer.MASTER_CHANNEL, 1)),
+      PLAYBACK_INSTRUMENT_ORC.replaceAll(
+        '{0}',
+        Mixer.getSubChannelVar(Mixer.MASTER_CHANNEL, 0),
+      ).replaceAll('{1}', Mixer.getSubChannelVar(Mixer.MASTER_CHANNEL, 1)),
     );
   }
   instrument.setName(`Track Audio Playback (${trackId})`);

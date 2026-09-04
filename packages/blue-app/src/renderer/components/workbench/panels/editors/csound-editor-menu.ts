@@ -93,7 +93,10 @@ const BLUE_OPCODE_DEFINITIONS: InsertionDefinition[] = [
   },
 ];
 
-function toInsertionItem(definition: InsertionDefinition, disabled = false): CsoundEditorInsertionItem {
+function toInsertionItem(
+  definition: InsertionDefinition,
+  disabled = false,
+): CsoundEditorInsertionItem {
   return {
     kind: 'insertion',
     id: definition.id,
@@ -105,7 +108,11 @@ function toInsertionItem(definition: InsertionDefinition, disabled = false): Cso
   };
 }
 
-function createDisabledItem(id: string, label: string, disabledReason: string): CsoundEditorDisabledItem {
+function createDisabledItem(
+  id: string,
+  label: string,
+  disabledReason: string,
+): CsoundEditorDisabledItem {
   return {
     kind: 'disabled',
     id,
@@ -130,20 +137,28 @@ function createSubmenu(
   };
 }
 
-export function createBlueVariablesSubmenu(options: CsoundEditorMenuOptions = {}): CsoundEditorSubmenuItem {
+export function createBlueVariablesSubmenu(
+  options: CsoundEditorMenuOptions = {},
+): CsoundEditorSubmenuItem {
   return createSubmenu(
     'blue-variables',
     'Blue Variables',
-    BLUE_VARIABLE_DEFINITIONS.map((definition) => toInsertionItem(definition, Boolean(options.readOnly))),
+    BLUE_VARIABLE_DEFINITIONS.map((definition) =>
+      toInsertionItem(definition, Boolean(options.readOnly)),
+    ),
     Boolean(options.readOnly),
   );
 }
 
-export function createBlueOpcodesSubmenu(options: CsoundEditorMenuOptions = {}): CsoundEditorSubmenuItem {
+export function createBlueOpcodesSubmenu(
+  options: CsoundEditorMenuOptions = {},
+): CsoundEditorSubmenuItem {
   return createSubmenu(
     'blue-opcodes',
     'Blue Opcodes',
-    BLUE_OPCODE_DEFINITIONS.map((definition) => toInsertionItem(definition, Boolean(options.readOnly))),
+    BLUE_OPCODE_DEFINITIONS.map((definition) =>
+      toInsertionItem(definition, Boolean(options.readOnly)),
+    ),
     Boolean(options.readOnly),
   );
 }
@@ -158,19 +173,11 @@ export function createCodeRepositorySubmenu(
   readOnly = false,
 ): CsoundEditorSubmenuItem | CsoundEditorDisabledItem {
   if (!root) {
-    return createDisabledItem(
-      'custom',
-      'Custom',
-      'No Code Repository is available.',
-    );
+    return createDisabledItem('custom', 'Custom', 'No Code Repository is available.');
   }
   const childItems = buildRepositoryMenuItems(root.children ?? [], readOnly);
   if (childItems.length === 0) {
-    return createDisabledItem(
-      'custom',
-      'Custom',
-      'The Code Repository is empty.',
-    );
+    return createDisabledItem('custom', 'Custom', 'The Code Repository is empty.');
   }
   return {
     kind: 'submenu',
@@ -282,21 +289,25 @@ export function createJavaBlueCsoundEditorMenuItems(
       disabled: readOnly,
       disabledReason: readOnly ? 'Editor is read-only' : undefined,
     },
-    ...(options.showEvaluateCode ? [
-      {
-        kind: 'separator' as const,
-        id: 'evaluate-code-separator',
-      } satisfies CsoundEditorMenuItem,
-      {
-        kind: 'command' as const,
-        id: 'evaluate-code',
-        label: 'Evaluate Code',
-        shortcutLabel: getEvaluateCodeShortcutLabel(),
-        command: 'evaluate-code' as const,
-        disabled: !options.evaluateCodeEnabled,
-        disabledReason: !options.evaluateCodeEnabled ? 'Start Blue Live or realtime playback to evaluate code' : undefined,
-      } satisfies CsoundEditorMenuItem,
-    ] : []),
+    ...(options.showEvaluateCode
+      ? [
+          {
+            kind: 'separator' as const,
+            id: 'evaluate-code-separator',
+          } satisfies CsoundEditorMenuItem,
+          {
+            kind: 'command' as const,
+            id: 'evaluate-code',
+            label: 'Evaluate Code',
+            shortcutLabel: getEvaluateCodeShortcutLabel(),
+            command: 'evaluate-code' as const,
+            disabled: !options.evaluateCodeEnabled,
+            disabledReason: !options.evaluateCodeEnabled
+              ? 'Start Blue Live or realtime playback to evaluate code'
+              : undefined,
+          } satisfies CsoundEditorMenuItem,
+        ]
+      : []),
   ];
 }
 

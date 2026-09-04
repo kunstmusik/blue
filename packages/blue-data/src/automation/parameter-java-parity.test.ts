@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from 'vitest';
 
-import { AutomationCurve, Parameter } from "./parameter";
+import { AutomationCurve, Parameter } from './parameter';
 import {
   assertManifestInvariants,
   doubleToBits,
@@ -9,7 +9,7 @@ import {
   loadRealtimeFixtureCases,
   loadResolutionFixtureCases,
   type RealtimeFixtureCase,
-} from "../test-support/java-parity-fixtures";
+} from '../test-support/java-parity-fixtures';
 
 function parameterForCase(fixtureCase: RealtimeFixtureCase): Parameter {
   const parameter = new Parameter();
@@ -29,7 +29,7 @@ function collectFailures(cases: RealtimeFixtureCase[]): string[] {
   for (const fixtureCase of cases) {
     const parameter = parameterForCase(fixtureCase);
     const actual = parameter.getValue(fixtureCase.evaluationTime);
-    if (fixtureCase.expectedKind === "exception") {
+    if (fixtureCase.expectedKind === 'exception') {
       // Java throws NumberFormatException when a non-finite value reaches
       // BigDecimal; the TS evaluator keeps the raw non-finite double instead
       // of throwing (documented intentional divergence: diagnostics are
@@ -49,7 +49,7 @@ function collectFailures(cases: RealtimeFixtureCase[]): string[] {
   return failures;
 }
 
-describe("Parameter realtime evaluation matches Java Line.getValue bit-for-bit", () => {
+describe('Parameter realtime evaluation matches Java Line.getValue bit-for-bit', () => {
   const manifest = loadJavaParityManifest();
   const cases = loadRealtimeFixtureCases();
   // full-corpus invariants need every section loaded
@@ -59,28 +59,28 @@ describe("Parameter realtime evaluation matches Java Line.getValue bit-for-bit",
     offline: loadOfflineFixtureCases(),
   });
 
-  it("matches every bits-expected realtime fixture case exactly", () => {
+  it('matches every bits-expected realtime fixture case exactly', () => {
     const failures = collectFailures(cases);
     if (failures.length > 0) {
       throw new Error(
-        `realtime parity failures (${failures.length}):\n  ${failures.slice(0, 8).join("\n  ")}`,
+        `realtime parity failures (${failures.length}):\n  ${failures.slice(0, 8).join('\n  ')}`,
       );
     }
   });
 
-  it("covers positive-resolution quantized cases", () => {
+  it('covers positive-resolution quantized cases', () => {
     const quantized = cases.filter(
-      (c) => c.expectedKind === "bits" && Number(c.resolutionText) > 0,
+      (c) => c.expectedKind === 'bits' && Number(c.resolutionText) > 0,
     );
     expect(quantized.length).toBeGreaterThan(500);
   });
 
-  it("detects a one-bit mutation in a realtime expectation", () => {
-    const bitsCase = cases.find((c) => c.expectedKind === "bits" && c.expectedBits !== "")!;
+  it('detects a one-bit mutation in a realtime expectation', () => {
+    const bitsCase = cases.find((c) => c.expectedKind === 'bits' && c.expectedBits !== '')!;
     const originalBits = bitsCase.expectedBits;
     const mutated = cases.map((c) =>
       c === bitsCase
-        ? { ...c, expectedBits: originalBits.slice(0, 15) + (originalBits[15] === "0" ? "1" : "0") }
+        ? { ...c, expectedBits: originalBits.slice(0, 15) + (originalBits[15] === '0' ? '1' : '0') }
         : c,
     );
     // evaluate against the mutated expectation set: the original implementation
@@ -90,18 +90,18 @@ describe("Parameter realtime evaluation matches Java Line.getValue bit-for-bit",
     expect(mutatedFailures[0]).toContain(bitsCase.caseId);
   });
 
-  it("evaluates manager-level cases through the sample-time boundary", () => {
-    const mgr = cases.find((c) => c.caseId === "c-rt-mgr-48000")!;
+  it('evaluates manager-level cases through the sample-time boundary', () => {
+    const mgr = cases.find((c) => c.caseId === 'c-rt-mgr-48000')!;
     const parameter = parameterForCase(mgr);
     const elapsed = mgr.sampleNumber! / mgr.sampleRate!;
     expect(doubleToBits(parameter.getValue(elapsed))).toBe(mgr.expectedBits);
   });
 
-  it("reproduces Java duplicate-time last-of-run selection", () => {
+  it('reproduces Java duplicate-time last-of-run selection', () => {
     const parameter = new Parameter();
     parameter.setAutomationEnabled(true);
     parameter.setCurve(AutomationCurve.LINEAR);
-    parameter.setResolutionText("-1");
+    parameter.setResolutionText('-1');
     parameter.setPoints([
       { time: 0.0, value: 0.1 },
       { time: 2.0, value: 0.2 },
@@ -111,11 +111,11 @@ describe("Parameter realtime evaluation matches Java Line.getValue bit-for-bit",
     expect(parameter.getValue(2.0)).toBe(0.777);
   });
 
-  it("reproduces Java before-first extrapolation", () => {
+  it('reproduces Java before-first extrapolation', () => {
     const parameter = new Parameter();
     parameter.setAutomationEnabled(true);
     parameter.setCurve(AutomationCurve.LINEAR);
-    parameter.setResolutionText("-1");
+    parameter.setResolutionText('-1');
     parameter.setPoints([
       { time: 1.0, value: 0.5 },
       { time: 2.0, value: 1.5 },
@@ -124,11 +124,11 @@ describe("Parameter realtime evaluation matches Java Line.getValue bit-for-bit",
     expect(parameter.getValue(0.5)).toBe(0.0);
   });
 
-  it("keeps the descending bias and exact quantization", () => {
+  it('keeps the descending bias and exact quantization', () => {
     const parameter = new Parameter();
     parameter.setAutomationEnabled(true);
     parameter.setCurve(AutomationCurve.LINEAR);
-    parameter.setResolutionText("0.1");
+    parameter.setResolutionText('0.1');
     parameter.setPoints([
       { time: 0.0, value: 1.0 },
       { time: 1.0, value: 0.0 },
@@ -137,11 +137,11 @@ describe("Parameter realtime evaluation matches Java Line.getValue bit-for-bit",
     expect(parameter.getValue(0.46)).toBe(0.6);
   });
 
-  it("applies the same descending bias before extension-curve quantization", () => {
+  it('applies the same descending bias before extension-curve quantization', () => {
     const parameter = new Parameter();
     parameter.setAutomationEnabled(true);
     parameter.setCurve(AutomationCurve.EXPONENTIAL);
-    parameter.setResolutionText("0.1");
+    parameter.setResolutionText('0.1');
     parameter.setPoints([
       { time: 0.0, value: 1.0 },
       { time: 1.0, value: 0.0 },

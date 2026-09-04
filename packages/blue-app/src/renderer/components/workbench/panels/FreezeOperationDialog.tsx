@@ -54,7 +54,9 @@ export default function FreezeOperationDialog(): React.ReactElement | null {
   }, []);
 
   const terminal = isTerminalOperationPhase(phase);
-  const dialogRef = useDialogFocus(open, () => { close(); });
+  const dialogRef = useDialogFocus(open, () => {
+    close();
+  });
   const okButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
@@ -68,7 +70,8 @@ export default function FreezeOperationDialog(): React.ReactElement | null {
   const handleOutputScroll = (): void => {
     const element = outputRef.current;
     if (!element) return;
-    stickToBottomRef.current = element.scrollTop + element.clientHeight >= element.scrollHeight - 40;
+    stickToBottomRef.current =
+      element.scrollTop + element.clientHeight >= element.scrollHeight - 40;
   };
   const selectedOutput = selectedRow?.output ?? '';
   useEffect(() => {
@@ -94,9 +97,10 @@ export default function FreezeOperationDialog(): React.ReactElement | null {
       result && result.frozenCount > 0 ? `${result.frozenCount} frozen` : null,
       result && result.unfrozenCount > 0 ? `${result.unfrozenCount} unfrozen` : null,
     ].filter((part): part is string => part !== null);
-    summary = changes.length > 0
-      ? `Freeze/unfreeze complete: ${changes.join(', ')}.`
-      : (message || 'Freeze/unfreeze complete.');
+    summary =
+      changes.length > 0
+        ? `Freeze/unfreeze complete: ${changes.join(', ')}.`
+        : message || 'Freeze/unfreeze complete.';
   } else if (phase === 'cancelled') {
     summary = 'Freeze/unfreeze cancelled.';
   } else if (phase === 'failed') {
@@ -121,18 +125,40 @@ export default function FreezeOperationDialog(): React.ReactElement | null {
         aria-labelledby="freeze-operation-title"
       >
         <div className="flex items-center justify-between border-b border-app-hover px-4 py-3">
-          <h2 id="freeze-operation-title" className="text-role-title-2 font-bold text-app-text-bright" data-testid="freeze-dialog-title">
+          <h2
+            id="freeze-operation-title"
+            className="text-role-title-2 font-bold text-app-text-bright"
+            data-testid="freeze-dialog-title"
+          >
             {operationDialogTitle(verb, phase)}
           </h2>
         </div>
 
         <div className="min-h-0 flex-1 overflow-auto px-4 py-3">
-          <table className="w-full border-collapse text-left text-role-body text-app-text" data-testid="freeze-items-table">
+          <table
+            className="w-full border-collapse text-left text-role-body text-app-text"
+            data-testid="freeze-items-table"
+          >
             <thead>
               <tr className="text-app-text-muted">
-                <th scope="col" className="sticky top-0 bg-app-surface px-2 py-2 text-role-headline font-bold">Object</th>
-                <th scope="col" className="sticky top-0 bg-app-surface px-2 py-2 text-role-headline font-bold">Freeze File</th>
-                <th scope="col" className="sticky top-0 bg-app-surface px-2 py-2 text-role-headline font-bold">Status</th>
+                <th
+                  scope="col"
+                  className="sticky top-0 bg-app-surface px-2 py-2 text-role-headline font-bold"
+                >
+                  Object
+                </th>
+                <th
+                  scope="col"
+                  className="sticky top-0 bg-app-surface px-2 py-2 text-role-headline font-bold"
+                >
+                  Freeze File
+                </th>
+                <th
+                  scope="col"
+                  className="sticky top-0 bg-app-surface px-2 py-2 text-role-headline font-bold"
+                >
+                  Status
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -143,7 +169,9 @@ export default function FreezeOperationDialog(): React.ReactElement | null {
                   aria-selected={row.selectionId === selectedSelectionId}
                   className={cn(
                     'cursor-pointer border-b border-app-hover/60',
-                    row.selectionId === selectedSelectionId ? 'bg-app-selection' : 'hover:bg-app-hover/40'
+                    row.selectionId === selectedSelectionId
+                      ? 'bg-app-selection'
+                      : 'hover:bg-app-hover/40',
                   )}
                   onClick={() => selectRow(row.selectionId)}
                 >
@@ -179,9 +207,11 @@ export default function FreezeOperationDialog(): React.ReactElement | null {
             aria-controls="freeze-output-console"
             onClick={toggleOutput}
           >
-            {outputExpanded
-              ? <ChevronDown size={14} strokeWidth={2.5} aria-hidden="true" />
-              : <ChevronRight size={14} strokeWidth={2.5} aria-hidden="true" />}
+            {outputExpanded ? (
+              <ChevronDown size={14} strokeWidth={2.5} aria-hidden="true" />
+            ) : (
+              <ChevronRight size={14} strokeWidth={2.5} aria-hidden="true" />
+            )}
             <span>Output{selectedRow ? ` — ${selectedRow.name}` : ''}</span>
           </button>
           {outputExpanded && (
@@ -198,7 +228,10 @@ export default function FreezeOperationDialog(): React.ReactElement | null {
         </div>
 
         <div className="flex items-center justify-between gap-4 border-t border-app-hover px-4 py-3">
-          <span className="min-w-0 truncate text-role-callout text-app-text-muted" data-testid="freeze-dialog-summary">
+          <span
+            className="min-w-0 truncate text-role-callout text-app-text-muted"
+            data-testid="freeze-dialog-summary"
+          >
             {summary}
           </span>
           <div className="flex shrink-0 items-center gap-2">

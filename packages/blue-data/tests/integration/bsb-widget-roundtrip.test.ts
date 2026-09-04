@@ -23,10 +23,7 @@ function bsbWrap(innerXml: string): string {
   return `<bsbObject type="placeholder">${innerXml}</bsbObject>`;
 }
 
-function parseAndLoad<T extends BSBWidget>(
-  Ctor: new () => T,
-  innerXml: string,
-): T {
+function parseAndLoad<T extends BSBWidget>(Ctor: new () => T, innerXml: string): T {
   const widget = new Ctor();
   widget.loadFromXML(Element.parse(bsbWrap(innerXml)));
   return widget;
@@ -40,7 +37,9 @@ function roundTrip(widget: BSBWidget): Element {
 describe('BSB Widget XML Round-Trip', () => {
   describe('BSBHSlider', () => {
     it('parses all fields from Java XML', () => {
-      const w = parseAndLoad(BSBHSlider, `
+      const w = parseAndLoad(
+        BSBHSlider,
+        `
         <objectName>gain</objectName><x>10</x><y>20</y>
         <comment>my slider</comment>
         <automationAllowed>true</automationAllowed>
@@ -49,7 +48,8 @@ describe('BSB Widget XML Round-Trip', () => {
         <bdresolution>0.01</bdresolution>
         <randomizable>true</randomizable>
         <valueDisplayEnabled>false</valueDisplayEnabled>
-      `);
+      `,
+      );
       expect(w.objectName).toBe('gain');
       expect(w.x).toBe(10);
       expect(w.y).toBe(20);
@@ -63,13 +63,16 @@ describe('BSB Widget XML Round-Trip', () => {
     });
 
     it('survives save→re-parse round-trip', () => {
-      const w = parseAndLoad(BSBHSlider, `
+      const w = parseAndLoad(
+        BSBHSlider,
+        `
         <objectName>vol</objectName><x>5</x><y>15</y>
         <comment>test</comment><automationAllowed>false</automationAllowed>
         <minimum>-1</minimum><maximum>1</maximum><value>0.3</value>
         <sliderWidth>150</sliderWidth><bdresolution>0.05</bdresolution>
         <randomizable>false</randomizable><valueDisplayEnabled>true</valueDisplayEnabled>
-      `);
+      `,
+      );
       const rt = roundTrip(w);
       const w2 = new BSBHSlider();
       w2.loadFromXML(rt);
@@ -85,13 +88,16 @@ describe('BSB Widget XML Round-Trip', () => {
 
   describe('BSBVSlider', () => {
     it('parses all fields', () => {
-      const w = parseAndLoad(BSBVSlider, `
+      const w = parseAndLoad(
+        BSBVSlider,
+        `
         <objectName>freq</objectName><x>0</x><y>0</y>
         <comment>vert</comment><automationAllowed>true</automationAllowed>
         <minimum>20</minimum><maximum>20000</maximum><value>440</value>
         <sliderHeight>300</sliderHeight><bdresolution>1</bdresolution>
         <randomizable>true</randomizable><valueDisplayEnabled>true</valueDisplayEnabled>
-      `);
+      `,
+      );
       expect(w.sliderHeight).toBe(300);
       expect(w.value).toBe(440);
       expect(w.comment).toBe('vert');
@@ -100,7 +106,9 @@ describe('BSB Widget XML Round-Trip', () => {
 
   describe('BSBKnob', () => {
     it('parses knobWidth but not knobHeight', () => {
-      const w = parseAndLoad(BSBKnob, `
+      const w = parseAndLoad(
+        BSBKnob,
+        `
         <objectName>knob1</objectName><x>10</x><y>10</y>
         <automationAllowed>true</automationAllowed>
         <minimum>0</minimum><maximum>1</maximum><value>0.7</value>
@@ -108,7 +116,8 @@ describe('BSB Widget XML Round-Trip', () => {
         <randomizable>true</randomizable><valueDisplayEnabled>true</valueDisplayEnabled>
         <label>Volume</label><labelEnabled>true</labelEnabled>
         <font><name>Arial</name><size>14</size><style>1</style></font>
-      `);
+      `,
+      );
       expect(w.knobWidth).toBe(80);
       expect(w.label).toBe('Volume');
       expect(w.labelEnabled).toBe(true);
@@ -119,24 +128,30 @@ describe('BSB Widget XML Round-Trip', () => {
     });
 
     it('defaults labelEnabled to false', () => {
-      const w = parseAndLoad(BSBKnob, `
+      const w = parseAndLoad(
+        BSBKnob,
+        `
         <objectName>k</objectName><x>0</x><y>0</y>
         <minimum>0</minimum><maximum>1</maximum><value>0</value>
         <knobWidth>60</knobWidth>
-      `);
+      `,
+      );
       expect(w.labelEnabled).toBe(false);
     });
   });
 
   describe('BSBCheckBox', () => {
     it('parses selected + label (not checkedVal/uncheckedVal)', () => {
-      const w = parseAndLoad(BSBCheckBox, `
+      const w = parseAndLoad(
+        BSBCheckBox,
+        `
         <objectName>mute</objectName><x>5</x><y>5</y>
         <comment>mute toggle</comment>
         <automationAllowed>true</automationAllowed>
         <label>Mute</label><selected>true</selected>
         <randomizable>false</randomizable>
-      `);
+      `,
+      );
       expect(w.label).toBe('Mute');
       expect(w.selected).toBe(true);
       expect(w.randomizable).toBe(false);
@@ -146,10 +161,13 @@ describe('BSB Widget XML Round-Trip', () => {
     });
 
     it('collects "1" or "0" replacements', () => {
-      const w = parseAndLoad(BSBCheckBox, `
+      const w = parseAndLoad(
+        BSBCheckBox,
+        `
         <objectName>flag</objectName><x>0</x><y>0</y>
         <label>Flag</label><selected>true</selected>
-      `);
+      `,
+      );
       const unit = new BSBCompilationUnit();
       w.collectReplacements(unit);
       const result = unit.replaceBSBValues('<flag>');
@@ -159,7 +177,9 @@ describe('BSB Widget XML Round-Trip', () => {
 
   describe('BSBDropdown', () => {
     it('parses items, fontSize, selectedIndex', () => {
-      const w = parseAndLoad(BSBDropdown, `
+      const w = parseAndLoad(
+        BSBDropdown,
+        `
         <objectName>waveform</objectName><x>0</x><y>0</y>
         <automationAllowed>true</automationAllowed>
         <selectedIndex>1</selectedIndex><fontSize>14</fontSize>
@@ -168,7 +188,8 @@ describe('BSB Widget XML Round-Trip', () => {
           <bsbDropdownItem uniqueId="abc"><name>Sine</name><value>0</value></bsbDropdownItem>
           <bsbDropdownItem uniqueId="def"><name>Saw</name><value>1</value></bsbDropdownItem>
         </bsbDropdownItemList>
-      `);
+      `,
+      );
       expect(w.selectedIndex).toBe(1);
       expect(w.fontSize).toBe(14);
       expect(w.dropdownItems).toHaveLength(2);
@@ -177,14 +198,17 @@ describe('BSB Widget XML Round-Trip', () => {
     });
 
     it('migrates legacy Swing HTML dropdown labels into plain text plus fontSize', () => {
-      const w = parseAndLoad(BSBDropdown, `
+      const w = parseAndLoad(
+        BSBDropdown,
+        `
         <objectName>waveform</objectName><x>0</x><y>0</y>
         <selectedIndex>0</selectedIndex>
         <bsbDropdownItemList>
           <bsbDropdownItem uniqueId="abc"><name>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Mode A&lt;/font&gt;&lt;/html&gt;</name><value>0</value></bsbDropdownItem>
           <bsbDropdownItem uniqueId="def"><name>Mode B</name><value>1</value></bsbDropdownItem>
         </bsbDropdownItemList>
-      `);
+      `,
+      );
 
       expect(w.fontSize).toBe(18);
       expect(w.dropdownItems[0].name).toBe('Mode A');
@@ -194,11 +218,14 @@ describe('BSB Widget XML Round-Trip', () => {
 
   describe('BSBValue', () => {
     it('parses defaultValue (not precision)', () => {
-      const w = parseAndLoad(BSBValue, `
+      const w = parseAndLoad(
+        BSBValue,
+        `
         <objectName>val1</objectName><x>0</x><y>0</y>
         <automationAllowed>true</automationAllowed>
         <minimum>0</minimum><maximum>100</maximum><defaultValue>42</defaultValue>
-      `);
+      `,
+      );
       expect(w.defaultValue).toBe(42);
       expect(w.minimum).toBe(0);
       expect(w.maximum).toBe(100);
@@ -208,7 +235,9 @@ describe('BSB Widget XML Round-Trip', () => {
 
   describe('BSBGroup', () => {
     it('parses groupName, colors, titleEnabled, font, children', () => {
-      const w = parseAndLoad(BSBGroup, `
+      const w = parseAndLoad(
+        BSBGroup,
+        `
         <objectName></objectName><x>0</x><y>0</y>
         <comment>my group</comment>
         <groupName>Oscillators</groupName>
@@ -223,7 +252,8 @@ describe('BSB Widget XML Round-Trip', () => {
           <minimum>0</minimum><maximum>1</maximum><value>0.5</value>
           <sliderWidth>100</sliderWidth>
         </bsbObject>
-      `);
+      `,
+      );
       expect(w.groupName).toBe('Oscillators');
       expect(w.backgroundColor).toBe('rgba(255,0,0,0.5)');
       expect(w.borderColor).toBe('#FF0000');
@@ -239,14 +269,16 @@ describe('BSB Widget XML Round-Trip', () => {
   describe('BSBLabel', () => {
     it('reads "label" element (not "labelText")', () => {
       const w = new BSBLabel();
-      w.loadFromXML(Element.parse(`
+      w.loadFromXML(
+        Element.parse(`
         <bsbObject type="placeholder" version="2">
           <objectName></objectName><x>10</x><y>20</y>
           <comment>a label</comment>
           <label>Hello World</label>
           <font><name>Monospace</name><size>10</size><style>0</style></font>
         </bsbObject>
-      `));
+      `),
+      );
       expect(w.label).toBe('Hello World');
       expect(w.font.name).toBe('Monospace');
       expect(w.comment).toBe('a label');
@@ -254,10 +286,13 @@ describe('BSB Widget XML Round-Trip', () => {
     });
 
     it('migrates legacy Swing HTML labels into plain text and bold Roboto font metadata', () => {
-      const w = parseAndLoad(BSBLabel, `
+      const w = parseAndLoad(
+        BSBLabel,
+        `
         <objectName></objectName><x>10</x><y>20</y>
         <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Amp Env&lt;/font&gt;&lt;/html&gt;</label>
-      `);
+      `,
+      );
 
       expect(w.label).toBe('Amp Env');
       expect(w.font).toEqual({ name: 'Roboto', size: 18, style: 1 });
@@ -266,11 +301,14 @@ describe('BSB Widget XML Round-Trip', () => {
 
   describe('BSBTextField', () => {
     it('reads "value" element (not "textFieldValue")', () => {
-      const w = parseAndLoad(BSBTextField, `
+      const w = parseAndLoad(
+        BSBTextField,
+        `
         <objectName>filename</objectName><x>0</x><y>0</y>
         <comment>file name</comment>
         <value>test.wav</value><textFieldWidth>200</textFieldWidth>
-      `);
+      `,
+      );
       expect(w.textValue).toBe('test.wav');
       expect(w.textFieldWidth).toBe(200);
       expect(w.comment).toBe('file name');
@@ -280,13 +318,16 @@ describe('BSB Widget XML Round-Trip', () => {
 
   describe('BSBFileSelector', () => {
     it('reads fileName and textFieldWidth', () => {
-      const w = parseAndLoad(BSBFileSelector, `
+      const w = parseAndLoad(
+        BSBFileSelector,
+        `
         <objectName>sfile</objectName><x>0</x><y>0</y>
         <comment>pick file</comment>
         <fileName>/path/to/file.wav</fileName>
         <textFieldWidth>250</textFieldWidth>
         <stringChannelEnabled>true</stringChannelEnabled>
-      `);
+      `,
+      );
       expect(w.fileName).toBe('/path/to/file.wav');
       expect(w.textFieldWidth).toBe(250);
       expect(w.stringChannelEnabled).toBe(true);
@@ -297,14 +338,17 @@ describe('BSB Widget XML Round-Trip', () => {
 
   describe('BSBXYController', () => {
     it('reads xMin/xMax/yMin/yMax (not xMinimum etc.)', () => {
-      const w = parseAndLoad(BSBXYController, `
+      const w = parseAndLoad(
+        BSBXYController,
+        `
         <objectName>xy1</objectName><x>0</x><y>0</y>
         <automationAllowed>true</automationAllowed>
         <width>200</width><height>150</height>
         <xMin>-1</xMin><xMax>1</xMax><yMin>0</yMin><yMax>100</yMax>
         <xValue>0.5</xValue><yValue>50</yValue>
         <randomizable>true</randomizable><valueDisplayEnabled>true</valueDisplayEnabled>
-      `);
+      `,
+      );
       expect(w.xMin).toBe(-1);
       expect(w.xMax).toBe(1);
       expect(w.yMin).toBe(0);
@@ -319,7 +363,9 @@ describe('BSB Widget XML Round-Trip', () => {
 
   describe('BSBLineObject', () => {
     it('parses canvas dimensions, line data, separatorType', () => {
-      const w = parseAndLoad(BSBLineObject, `
+      const w = parseAndLoad(
+        BSBLineObject,
+        `
         <objectName>env1</objectName><x>0</x><y>0</y>
         <comment>envelope</comment>
         <canvasWidth>300</canvasWidth><canvasHeight>200</canvasHeight>
@@ -333,7 +379,8 @@ describe('BSB Widget XML Round-Trip', () => {
             <linePoint x="0" y="0"/><linePoint x="0.5" y="1"/><linePoint x="1" y="0"/>
           </line>
         </lines>
-      `);
+      `,
+      );
       expect(w.canvasWidth).toBe(300);
       expect(w.canvasHeight).toBe(200);
       expect(w.xMax).toBe(1);
@@ -351,11 +398,14 @@ describe('BSB Widget XML Round-Trip', () => {
 
   describe('BSBSubChannelDropdown', () => {
     it('parses channelOutput', () => {
-      const w = parseAndLoad(BSBSubChannelDropdown, `
+      const w = parseAndLoad(
+        BSBSubChannelDropdown,
+        `
         <objectName>sub1</objectName><x>0</x><y>0</y>
         <comment>sub chan</comment>
         <channelOutput>Channel 1</channelOutput>
-      `);
+      `,
+      );
       expect(w.channelOutput).toBe('Channel 1');
       expect(w.comment).toBe('sub chan');
     });
@@ -363,7 +413,9 @@ describe('BSB Widget XML Round-Trip', () => {
 
   describe('BSBHSliderBank', () => {
     it('derives slider count from child bsbObject elements', () => {
-      const w = parseAndLoad(BSBHSliderBank, `
+      const w = parseAndLoad(
+        BSBHSliderBank,
+        `
         <objectName>bank1</objectName><x>0</x><y>0</y>
         <automationAllowed>true</automationAllowed>
         <minimum>0</minimum><maximum>1</maximum><bdresolution>0.1</bdresolution>
@@ -379,7 +431,8 @@ describe('BSB Widget XML Round-Trip', () => {
           <minimum>0</minimum><maximum>1</maximum><value>0.7</value>
           <sliderWidth>80</sliderWidth>
         </bsbObject>
-      `);
+      `,
+      );
       expect(w.numberOfSliders).toBe(2);
       expect(w.sliderWidth).toBe(80);
       expect(w.gap).toBe(10);
@@ -391,7 +444,9 @@ describe('BSB Widget XML Round-Trip', () => {
 
   describe('BSBVSliderBank', () => {
     it('derives slider count from child bsbObject elements', () => {
-      const w = parseAndLoad(BSBVSliderBank, `
+      const w = parseAndLoad(
+        BSBVSliderBank,
+        `
         <objectName>vb1</objectName><x>0</x><y>0</y>
         <automationAllowed>true</automationAllowed>
         <minimum>0</minimum><maximum>1</maximum><bdresolution>0.1</bdresolution>
@@ -402,7 +457,8 @@ describe('BSB Widget XML Round-Trip', () => {
           <minimum>0</minimum><maximum>1</maximum><value>0.5</value>
           <sliderHeight>120</sliderHeight>
         </bsbObject>
-      `);
+      `,
+      );
       expect(w.numberOfSliders).toBe(1);
       expect(w.sliderHeight).toBe(120);
       expect(w.gap).toBe(5);
@@ -421,7 +477,10 @@ describe('BSB Widget XML Round-Trip', () => {
         { Ctor: BSBValue, type: 'blue.orchestra.blueSynthBuilder.BSBValue' },
         { Ctor: BSBLabel, type: 'blue.orchestra.blueSynthBuilder.BSBLabel' },
         { Ctor: BSBTextField, type: 'blue.orchestra.blueSynthBuilder.BSBTextField' },
-        { Ctor: BSBSubChannelDropdown, type: 'blue.orchestra.blueSynthBuilder.BSBSubChannelDropdown' },
+        {
+          Ctor: BSBSubChannelDropdown,
+          type: 'blue.orchestra.blueSynthBuilder.BSBSubChannelDropdown',
+        },
       ];
       for (const { Ctor, type } of types) {
         const xml = `<bsbObject type="${type}">
@@ -438,32 +497,41 @@ describe('BSB Widget XML Round-Trip', () => {
 
   describe('automationAllowed field', () => {
     it('defaults to false when absent from XML', () => {
-      const w = parseAndLoad(BSBHSlider, `
+      const w = parseAndLoad(
+        BSBHSlider,
+        `
         <objectName>a</objectName><x>0</x><y>0</y>
         <minimum>0</minimum><maximum>1</maximum><value>0</value>
         <sliderWidth>100</sliderWidth>
-      `);
+      `,
+      );
       expect(w.automationAllowed).toBe(false);
     });
 
     it('reads explicit true value', () => {
-      const w = parseAndLoad(BSBHSlider, `
+      const w = parseAndLoad(
+        BSBHSlider,
+        `
         <objectName>a</objectName><x>0</x><y>0</y>
         <automationAllowed>true</automationAllowed>
         <minimum>0</minimum><maximum>1</maximum><value>0</value>
         <sliderWidth>100</sliderWidth>
-      `);
+      `,
+      );
       expect(w.automationAllowed).toBe(true);
     });
   });
 
   describe('legacy element name aliases', () => {
     it('BSBXYController reads xMin (not xMinimum)', () => {
-      const w = parseAndLoad(BSBXYController, `
+      const w = parseAndLoad(
+        BSBXYController,
+        `
         <objectName>xy</objectName><x>0</x><y>0</y>
         <xMin>-5</xMin><xMax>5</xMax><yMin>0</yMin><yMax>1</yMax>
         <xValue>0</xValue><yValue>0.5</yValue>
-      `);
+      `,
+      );
       expect(w.xMin).toBe(-5);
       expect(w.xMax).toBe(5);
     });

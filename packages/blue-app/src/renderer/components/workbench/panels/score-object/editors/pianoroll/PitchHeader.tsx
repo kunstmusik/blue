@@ -1,6 +1,13 @@
 import React, { useMemo } from 'react';
 import type { NoteSnapshot, ScaleSnapshot } from './types';
-import { OCTAVES, CENTER_OCTAVE, NOTE_NAMES_FULL, GENERATE_MIDI, MIDI_NOTE_COUNT, PITCH_HEADER_WIDTH } from './types';
+import {
+  OCTAVES,
+  CENTER_OCTAVE,
+  NOTE_NAMES_FULL,
+  GENERATE_MIDI,
+  MIDI_NOTE_COUNT,
+  PITCH_HEADER_WIDTH,
+} from './types';
 
 interface PitchHeaderProps {
   notes: NoteSnapshot[];
@@ -10,9 +17,15 @@ interface PitchHeaderProps {
   pchGenerationMethod: number;
 }
 
-export default function PitchHeader({ notes, selectedIndices, scale, noteHeight, pchGenerationMethod }: PitchHeaderProps): React.ReactElement {
+export default function PitchHeader({
+  notes,
+  selectedIndices,
+  scale,
+  noteHeight,
+  pchGenerationMethod,
+}: PitchHeaderProps): React.ReactElement {
   const isMidi = pchGenerationMethod === GENERATE_MIDI;
-  const numDegrees = isMidi ? 12 : (scale.ratios.length || 12);
+  const numDegrees = isMidi ? 12 : scale.ratios.length || 12;
   const minOctave = CENTER_OCTAVE - Math.floor(OCTAVES / 2);
   const totalRows = isMidi ? MIDI_NOTE_COUNT : OCTAVES * numDegrees;
   const totalHeight = totalRows * noteHeight;
@@ -37,7 +50,8 @@ export default function PitchHeader({ notes, selectedIndices, scale, noteHeight,
     } else {
       for (let oct = minOctave + OCTAVES - 1; oct >= minOctave; oct--) {
         for (let deg = numDegrees - 1; deg >= 0; deg--) {
-          const rowFromTop = (OCTAVES - 1 - (oct - minOctave)) * numDegrees + (numDegrees - 1 - deg);
+          const rowFromTop =
+            (OCTAVES - 1 - (oct - minOctave)) * numDegrees + (numDegrees - 1 - deg);
           const isOctave = deg === 0;
           let label = '';
           if (isOctave) {
@@ -53,25 +67,32 @@ export default function PitchHeader({ notes, selectedIndices, scale, noteHeight,
   }, [isMidi, numDegrees, noteHeight, minOctave]);
 
   const selectedHighlights = useMemo(() => {
-    return [...selectedIndices].map((i) => {
-      const n = notes[i];
-      if (!n) return null;
-      let y: number;
-      if (isMidi) {
-        const midiNote = n.octave * 12 + n.scaleDegree;
-        y = (MIDI_NOTE_COUNT - 1 - midiNote) * noteHeight;
-      } else {
-        const rowFromTop = (OCTAVES - 1 - (n.octave - minOctave)) * numDegrees + (numDegrees - 1 - n.scaleDegree);
-        y = rowFromTop * noteHeight;
-      }
-      return { key: i, y };
-    }).filter(Boolean);
+    return [...selectedIndices]
+      .map((i) => {
+        const n = notes[i];
+        if (!n) return null;
+        let y: number;
+        if (isMidi) {
+          const midiNote = n.octave * 12 + n.scaleDegree;
+          y = (MIDI_NOTE_COUNT - 1 - midiNote) * noteHeight;
+        } else {
+          const rowFromTop =
+            (OCTAVES - 1 - (n.octave - minOctave)) * numDegrees + (numDegrees - 1 - n.scaleDegree);
+          y = rowFromTop * noteHeight;
+        }
+        return { key: i, y };
+      })
+      .filter(Boolean);
   }, [selectedIndices, notes, noteHeight, isMidi, numDegrees, minOctave]);
 
   return (
-    <div className="relative bg-app-surface-strong" style={{ width: PITCH_HEADER_WIDTH, height: totalHeight }}>
+    <div
+      className="relative bg-app-surface-strong"
+      style={{ width: PITCH_HEADER_WIDTH, height: totalHeight }}
+    >
       {rows.map((row, i) => (
-        <div key={`ph-${i}`}
+        <div
+          key={`ph-${i}`}
           className="absolute left-0 right-0 border-b"
           style={{
             top: row.y,
@@ -80,23 +101,34 @@ export default function PitchHeader({ notes, selectedIndices, scale, noteHeight,
           }}
         >
           {row.label && (
-            <span className="absolute right-1 text-role-subheadline select-none" style={{ top: Math.max(1, (noteHeight - 10) / 2), color: row.isOctave ? 'rgba(198,226,255,0.9)' : 'rgba(198,226,255,0.45)' }}>
+            <span
+              className="absolute right-1 text-role-subheadline select-none"
+              style={{
+                top: Math.max(1, (noteHeight - 10) / 2),
+                color: row.isOctave ? 'rgba(198,226,255,0.9)' : 'rgba(198,226,255,0.45)',
+              }}
+            >
               {row.label}
             </span>
           )}
         </div>
       ))}
-      {selectedHighlights.map((h) => h && (
-        <div key={`hl-${h.key}`}
-          className="absolute left-0"
-          style={{
-            top: h.y,
-            width: 4,
-            height: noteHeight,
-            backgroundColor: 'color-mix(in srgb, var(--color-app-success) 70%, var(--color-app-clear))',
-          }}
-        />
-      ))}
+      {selectedHighlights.map(
+        (h) =>
+          h && (
+            <div
+              key={`hl-${h.key}`}
+              className="absolute left-0"
+              style={{
+                top: h.y,
+                width: 4,
+                height: noteHeight,
+                backgroundColor:
+                  'color-mix(in srgb, var(--color-app-success) 70%, var(--color-app-clear))',
+              }}
+            />
+          ),
+      )}
     </div>
   );
 }

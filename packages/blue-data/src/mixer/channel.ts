@@ -2,22 +2,22 @@
  * Channel — a mixer channel with effects chain and sends.
  * Mirrors the Java Channel class.
  */
-import { EffectsChain } from "./effects-chain";
-import { Send } from "./send";
-import { Element } from "../serialization/xml-reader";
-import { BlueDataObject } from "../blue-data-object";
-import { Parameter } from "../automation/parameter";
-import { writeDouble, writeBoolean } from "../utilities/xml";
+import { EffectsChain } from './effects-chain';
+import { Send } from './send';
+import { Element } from '../serialization/xml-reader';
+import { BlueDataObject } from '../blue-data-object';
+import { Parameter } from '../automation/parameter';
+import { writeDouble, writeBoolean } from '../utilities/xml';
 
 export class Channel implements BlueDataObject {
-  static readonly MASTER = "Master";
-  static readonly NAME = "name";
-  static readonly LEVEL = "level";
-  static readonly SOLO = "solo";
-  static readonly MUTED = "muted";
-  static readonly OUT_CHANNEL = "outChannel";
+  static readonly MASTER = 'Master';
+  static readonly NAME = 'name';
+  static readonly LEVEL = 'level';
+  static readonly SOLO = 'solo';
+  static readonly MUTED = 'muted';
+  static readonly OUT_CHANNEL = 'outChannel';
 
-  private _name = "Channel";
+  private _name = 'Channel';
   private _outChannel = Channel.MASTER;
   private _muted = false;
   private _solo = false;
@@ -27,13 +27,13 @@ export class Channel implements BlueDataObject {
   private _preEffects = new EffectsChain();
   private _postEffects = new EffectsChain();
   private _effectsChain = new EffectsChain();
-  private _association = "";
+  private _association = '';
   private _levelParameter: Parameter;
 
   constructor() {
     this._levelParameter = new Parameter();
-    this._levelParameter.setName("Volume");
-    this._levelParameter.setLabel("dB");
+    this._levelParameter.setName('Volume');
+    this._levelParameter.setLabel('dB');
     this._levelParameter.setMinimum(-96.0);
     this._levelParameter.setMaximum(12.0);
     this._levelParameter.setFixedValue(0.0);
@@ -129,23 +129,23 @@ export class Channel implements BlueDataObject {
   }
 
   saveAsXML(): Element {
-    const elem = new Element("channel");
+    const elem = new Element('channel');
     if (this._association) {
-      elem.setAttribute("association", this._association);
+      elem.setAttribute('association', this._association);
     }
 
-    elem.addElement("name").setText(this._name);
-    elem.addElement("outChannel").setText(this._outChannel);
-    elem.addElement(writeDouble("level", this._level));
-    elem.addElement(writeBoolean("muted", this._muted));
-    elem.addElement(writeBoolean("solo", this._solo));
+    elem.addElement('name').setText(this._name);
+    elem.addElement('outChannel').setText(this._outChannel);
+    elem.addElement(writeDouble('level', this._level));
+    elem.addElement(writeBoolean('muted', this._muted));
+    elem.addElement(writeBoolean('solo', this._solo));
 
     const preEffects = this._preEffects.saveAsXML();
-    preEffects.setAttribute("bin", "pre");
+    preEffects.setAttribute('bin', 'pre');
     elem.addElement(preEffects);
 
     const postEffects = this._postEffects.saveAsXML();
-    postEffects.setAttribute("bin", "post");
+    postEffects.setAttribute('bin', 'post');
     elem.addElement(postEffects);
 
     if (this._effectsChain.length > 0 && this._effectsChain !== this._postEffects) {
@@ -160,32 +160,30 @@ export class Channel implements BlueDataObject {
   static loadFromXML(data: Element): Channel {
     const channel = new Channel();
 
-    channel._name = data.getTextString("name") ?? "";
-    channel._muted =
-      data.getTextString("muted") === "true";
-    channel._solo =
-      data.getTextString("solo") === "true";
+    channel._name = data.getTextString('name') ?? '';
+    channel._muted = data.getTextString('muted') === 'true';
+    channel._solo = data.getTextString('solo') === 'true';
 
     // Out channel routing
-    const outCh = data.getTextString("outChannel");
+    const outCh = data.getTextString('outChannel');
     if (outCh) channel._outChannel = outCh;
 
     // Level (in dB)
-    const level = data.getTextString("level");
+    const level = data.getTextString('level');
     if (level) channel._level = parseFloat(level);
 
-    const assoc = data.getAttribute("association") ?? data.getTextString("association");
+    const assoc = data.getAttribute('association') ?? data.getTextString('association');
     if (assoc) channel._association = assoc;
 
     // Effects chains: <effectsChain bin='pre'> and <effectsChain bin='post'>
-    const ecNodes = data.getElements("effectsChain");
+    const ecNodes = data.getElements('effectsChain');
     while (ecNodes.hasMoreElements()) {
       const ecNode = ecNodes.next();
       const loaded = EffectsChain.loadFromXML(ecNode);
-      const bin = ecNode.getAttribute("bin") ?? "";
-      if (bin === "pre") {
+      const bin = ecNode.getAttribute('bin') ?? '';
+      if (bin === 'pre') {
         channel._preEffects = loaded;
-      } else if (bin === "post") {
+      } else if (bin === 'post') {
         channel._postEffects = loaded;
       } else {
         channel._effectsChain = loaded;
@@ -194,12 +192,12 @@ export class Channel implements BlueDataObject {
     }
 
     // Legacy standalone sends are treated as post-fader sends.
-    const sendNodes = data.getElements("send");
+    const sendNodes = data.getElements('send');
     while (sendNodes.hasMoreElements()) {
       channel._postEffects.push(Send.loadFromXML(sendNodes.next()));
     }
 
-    const paramNodes = data.getElements("parameter");
+    const paramNodes = data.getElements('parameter');
     while (paramNodes.hasMoreElements()) {
       const paramElem = paramNodes.next();
       channel._levelParameter = Parameter.loadFromXML(paramElem);

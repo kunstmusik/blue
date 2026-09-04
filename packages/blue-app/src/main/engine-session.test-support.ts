@@ -6,13 +6,8 @@ import type {
   EngineStateListener,
   EngineStateSnapshot,
 } from '@blue/engine-client';
-import {
-  AUTOMATION_DECIMAL_FEATURE,
-  BLUE_ENGINE_PROTOCOL_VERSION,
-} from '@blue/engine-client';
-import type {
-  EngineProcessManifest,
-} from './engine-process-registry';
+import { AUTOMATION_DECIMAL_FEATURE, BLUE_ENGINE_PROTOCOL_VERSION } from '@blue/engine-client';
+import type { EngineProcessManifest } from './engine-process-registry';
 
 export class FakeChildProcess extends EventEmitter {
   pid: number;
@@ -119,7 +114,11 @@ export class FakeEngineClient {
     }
   }
 
-  async getCapabilities(): Promise<{ ok: boolean; capabilities?: EngineCapabilities; message: string }> {
+  async getCapabilities(): Promise<{
+    ok: boolean;
+    capabilities?: EngineCapabilities;
+    message: string;
+  }> {
     return { ok: true, capabilities: this.capabilities, message: '' };
   }
 
@@ -195,7 +194,10 @@ export class FakeEngineClient {
     }
   }
 
-  async createChannel(name: string, initialValue: number): Promise<{ ok: boolean; message: string }> {
+  async createChannel(
+    name: string,
+    initialValue: number,
+  ): Promise<{ ok: boolean; message: string }> {
     this.channels.set(name, initialValue);
     return { ok: true, message: '' };
   }
@@ -229,7 +231,10 @@ export class FakeEngineClient {
 export class ControllableClock {
   private currentTime = 1000000;
   private nextTimerId = 1;
-  private activeTimers = new Map<number, { dueTime: number; callback: () => void; intervalMs?: number }>();
+  private activeTimers = new Map<
+    number,
+    { dueTime: number; callback: () => void; intervalMs?: number }
+  >();
 
   now(): number {
     return this.currentTime;

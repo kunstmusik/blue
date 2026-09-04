@@ -9,9 +9,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
  * - A `Document`: docked panels get the main window document; floated panels
  *   get their popout window's document.
  */
-export const HostDocumentContext = createContext<Document | null | undefined>(
-  undefined,
-);
+export const HostDocumentContext = createContext<Document | null | undefined>(undefined);
 
 interface UseHostDocumentOptions {
   /**
@@ -22,9 +20,7 @@ interface UseHostDocumentOptions {
 }
 
 /** Resolves the hosting document for the calling component. */
-export function useHostDocument(
-  options: UseHostDocumentOptions = {},
-): Document | null {
+export function useHostDocument(options: UseHostDocumentOptions = {}): Document | null {
   const { fallbackToGlobal = false } = options;
   const hostDocument = useContext(HostDocumentContext);
   if (hostDocument === undefined) {

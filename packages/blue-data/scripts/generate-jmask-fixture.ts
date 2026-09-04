@@ -1,12 +1,5 @@
 import { writeFileSync, mkdirSync } from 'fs';
-import {
-  BlueData,
-  PolyObject,
-  SoundLayer,
-  JMask,
-  TimePosition,
-  TimeDuration,
-} from '../src/index';
+import { BlueData, PolyObject, SoundLayer, JMask, TimePosition, TimeDuration } from '../src/index';
 import {
   Field,
   Parameter,
@@ -101,9 +94,24 @@ seg.table.max = 1;
 seg.table.interpolationType = Table.ON;
 seg.table.interpolation = 0;
 seg.table.points = [
-  (() => { const p = new TablePoint(); p.time = 0; p.value = 0; return p; })(),
-  (() => { const p = new TablePoint(); p.time = 0.5; p.value = 1; return p; })(),
-  (() => { const p = new TablePoint(); p.time = 1; p.value = 0; return p; })(),
+  (() => {
+    const p = new TablePoint();
+    p.time = 0;
+    p.value = 0;
+    return p;
+  })(),
+  (() => {
+    const p = new TablePoint();
+    p.time = 0.5;
+    p.value = 1;
+    return p;
+  })(),
+  (() => {
+    const p = new TablePoint();
+    p.time = 1;
+    p.value = 0;
+    return p;
+  })(),
 ];
 const quant7 = p7.getQuantizer()!;
 quant7.enabled = true;
@@ -135,7 +143,7 @@ field.parameters.push(p8);
 
 const p9 = Parameter.create(new Probability());
 p9.setName('p9-Probability');
-(prob => {
+((prob) => {
   prob.selectedIndex = 0;
 })(p9.getGenerator() as Probability);
 const mask9 = p9.getMask()!;

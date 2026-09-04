@@ -95,18 +95,29 @@ import {
   createNoteProcessorChainSnapshot as createNoteProcessorChainSnapshotFromData,
   reifyChainFromSnapshot,
 } from '@blue/data';
-import type { NoteProcessorChainSnapshot as DataNoteProcessorChainSnapshot, Parameter as BlueDataParameter, ScoreObject as BlueDataScoreObject, AutomatableLayer as BlueDataAutomatableLayer, Arrangement as BlueDataArrangement, Mixer as BlueDataMixer } from '@blue/data';
+import type {
+  NoteProcessorChainSnapshot as DataNoteProcessorChainSnapshot,
+  Parameter as BlueDataParameter,
+  ScoreObject as BlueDataScoreObject,
+  AutomatableLayer as BlueDataAutomatableLayer,
+  Arrangement as BlueDataArrangement,
+  Mixer as BlueDataMixer,
+} from '@blue/data';
 import { AutomationCurve as BlueDataAutomationCurve, LineColors } from '@blue/data';
 import { ParameterHelper } from '@blue/data';
-import type { SnapValueName, BlueX7Voice, BlueX7Common, BlueX7Lfo, BlueX7Operator, BlueX7EnvelopePoint } from '@blue/data';
+import type {
+  SnapValueName,
+  BlueX7Voice,
+  BlueX7Common,
+  BlueX7Lfo,
+  BlueX7Operator,
+  BlueX7EnvelopePoint,
+} from '@blue/data';
 import type { MissingAudioAssetsSession } from '../missing-audio-assets';
 import type { ScoreInsertionLocation } from '../unified-library';
 
 import { moveRangeWithAnchors, scaleRangeWithAnchors } from '../automation-range-math';
-import {
-  BSB_LINE_SELECTOR_HEIGHT,
-  getBsbWidgetDisplaySize,
-} from '../bsb-widget-layout';
+import { BSB_LINE_SELECTOR_HEIGHT, getBsbWidgetDisplaySize } from '../bsb-widget-layout';
 import {
   collectBsbReplacementKeysFromSnapshotTree,
   collectBsbReplacementKeysFromWidgetTree,
@@ -166,7 +177,7 @@ export function collectGraphicInterfaceWidgets(graphicInterface: {
     const objectName =
       typeof record.getObjectName === 'function'
         ? (record.getObjectName as () => unknown)()
-        : record.objectName ?? record._objectName;
+        : (record.objectName ?? record._objectName);
     if (typeof objectName === 'string' && objectName.trim()) {
       widgets.push({
         objectName: objectName.trim(),
@@ -183,7 +194,7 @@ export function collectGraphicInterfaceWidgets(graphicInterface: {
     const children =
       typeof record.getChildren === 'function'
         ? (record.getChildren as () => unknown[]).call(node)
-        : record.children ?? record._children;
+        : (record.children ?? record._children);
     if (Array.isArray(children)) {
       children.forEach(visit);
     }
@@ -207,7 +218,9 @@ export function collectGraphicInterfaceObjectNames(graphicInterface: {
   };
   isEditEnabled(): boolean;
 }): string[] {
-  return collectBsbReplacementKeysFromWidgetTree(graphicInterface.getRootGroup() as unknown as BSBWidget);
+  return collectBsbReplacementKeysFromWidgetTree(
+    graphicInterface.getRootGroup() as unknown as BSBWidget,
+  );
 }
 
 function cloneBsbSnapshotValue<T>(value: T): T {
@@ -226,7 +239,10 @@ function cloneBsbSnapshotValue<T>(value: T): T {
   return next as T;
 }
 
-function getWidgetSnapshotFallbackSize(record: Record<string, unknown>): { width: number; height: number } {
+function getWidgetSnapshotFallbackSize(record: Record<string, unknown>): {
+  width: number;
+  height: number;
+} {
   return {
     width:
       typeof record.width === 'number'
@@ -256,15 +272,32 @@ function serializeBsbWidgetSnapshot(widget: unknown): BsbWidgetNodeSnapshot | nu
   const id = typeof record.id === 'string' ? record.id : '';
   if (!id) return null;
 
-  const ctorName = typeof record.constructor === 'function' && 'name' in record.constructor
-    ? String(record.constructor.name)
-    : 'Unknown';
+  const ctorName =
+    typeof record.constructor === 'function' && 'name' in record.constructor
+      ? String(record.constructor.name)
+      : 'Unknown';
 
   const preservedOnly = !KNOWN_WIDGET_TYPES.has(ctorName);
 
   const properties: Record<string, unknown> = {};
   for (const [key, val] of Object.entries(record)) {
-    if (['id', 'objectName', 'x', 'y', 'width', 'height', 'parameterName', '_children', 'children', 'stringChannel', 'labelFont', 'font'].includes(key)) continue;
+    if (
+      [
+        'id',
+        'objectName',
+        'x',
+        'y',
+        'width',
+        'height',
+        'parameterName',
+        '_children',
+        'children',
+        'stringChannel',
+        'labelFont',
+        'font',
+      ].includes(key)
+    )
+      continue;
     if (key === 'dropdownItems' && Array.isArray(val)) {
       properties.dropdownItems = cloneBsbSnapshotValue(val);
       continue;
@@ -296,17 +329,22 @@ function serializeBsbWidgetSnapshot(widget: unknown): BsbWidgetNodeSnapshot | nu
           : [];
 
         return {
-          varName: typeof lineRecord.name === 'string' && lineRecord.name.trim().length > 0
-            ? lineRecord.name
-            : typeof lineRecord.varName === 'string'
-              ? lineRecord.varName
-              : '',
+          varName:
+            typeof lineRecord.name === 'string' && lineRecord.name.trim().length > 0
+              ? lineRecord.name
+              : typeof lineRecord.varName === 'string'
+                ? lineRecord.varName
+                : '',
           min: typeof lineRecord.min === 'number' ? lineRecord.min : 0,
           max: typeof lineRecord.max === 'number' ? lineRecord.max : 1,
           color: normalizeBsbLineColor(lineRecord.color),
           resolution: typeof lineRecord.resolution === 'string' ? lineRecord.resolution : undefined,
-          rightBound: typeof lineRecord.rightBound === 'boolean' ? lineRecord.rightBound : undefined,
-          endPointsLinked: typeof lineRecord.endPointsLinked === 'boolean' ? lineRecord.endPointsLinked : undefined,
+          rightBound:
+            typeof lineRecord.rightBound === 'boolean' ? lineRecord.rightBound : undefined,
+          endPointsLinked:
+            typeof lineRecord.endPointsLinked === 'boolean'
+              ? lineRecord.endPointsLinked
+              : undefined,
           points,
         };
       });
@@ -324,7 +362,12 @@ function serializeBsbWidgetSnapshot(widget: unknown): BsbWidgetNodeSnapshot | nu
       });
       continue;
     }
-    if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean' || val === null) {
+    if (
+      typeof val === 'string' ||
+      typeof val === 'number' ||
+      typeof val === 'boolean' ||
+      val === null
+    ) {
       properties[key] = val as string | number | boolean | null;
     }
   }
@@ -349,9 +392,10 @@ function serializeBsbWidgetSnapshot(widget: unknown): BsbWidgetNodeSnapshot | nu
     properties.numberOfSliders = Math.max(1, sliderCount);
   }
 
-  const children = typeof record.getChildren === 'function'
-    ? (record.getChildren as () => unknown[]).call(widget)
-    : record.children ?? record._children;
+  const children =
+    typeof record.getChildren === 'function'
+      ? (record.getChildren as () => unknown[]).call(widget)
+      : (record.children ?? record._children);
 
   const childSnapshots = Array.isArray(children)
     ? children
@@ -378,11 +422,11 @@ function serializeBsbWidgetSnapshot(widget: unknown): BsbWidgetNodeSnapshot | nu
   };
 
   if (
-    (ctorName === 'BSBHSlider'
-      || ctorName === 'BSBVSlider'
-      || ctorName === 'BSBHSliderBank'
-      || ctorName === 'BSBVSliderBank')
-    && typeof record.getResolutionText === 'function'
+    (ctorName === 'BSBHSlider' ||
+      ctorName === 'BSBVSlider' ||
+      ctorName === 'BSBHSliderBank' ||
+      ctorName === 'BSBVSliderBank') &&
+    typeof record.getResolutionText === 'function'
   ) {
     try {
       const resolutionText = (record.getResolutionText as () => unknown).call(widget);
@@ -450,8 +494,6 @@ export function buildWidgetTreeSnapshotFromGraphicInterface(graphicInterface: {
   };
 }
 
-
-
 export function collectBsbWidgets(bsb: BlueSynthBuilder): BsbWidgetSnapshot[] {
   const widgets: BsbWidgetSnapshot[] = [];
   const visit = (node: unknown): void => {
@@ -460,7 +502,7 @@ export function collectBsbWidgets(bsb: BlueSynthBuilder): BsbWidgetSnapshot[] {
     const objectName =
       typeof record.getObjectName === 'function'
         ? (record.getObjectName as () => unknown)()
-        : record.objectName ?? record._objectName;
+        : (record.objectName ?? record._objectName);
     if (typeof objectName === 'string' && objectName.trim()) {
       widgets.push({
         objectName: objectName.trim(),
@@ -476,7 +518,7 @@ export function collectBsbWidgets(bsb: BlueSynthBuilder): BsbWidgetSnapshot[] {
     const children =
       typeof record.getChildren === 'function'
         ? (record.getChildren as () => unknown[]).call(node)
-        : record.children ?? record._children;
+        : (record.children ?? record._children);
     if (Array.isArray(children)) {
       children.forEach(visit);
     }
@@ -514,7 +556,9 @@ export function parseSoundBSB(text: string): BlueSynthBuilder {
   return legacy;
 }
 
-export function buildSoundAutomationParameters(bsb: BlueSynthBuilder): SoundAutomationParameterSnapshot[] {
+export function buildSoundAutomationParameters(
+  bsb: BlueSynthBuilder,
+): SoundAutomationParameterSnapshot[] {
   const params = bsb.getParameters();
   return params.map((param) => ({
     parameterId: param.getUniqueId(),
@@ -531,13 +575,22 @@ export function buildSoundAutomationParameters(bsb: BlueSynthBuilder): SoundAuto
   }));
 }
 
-
-
 const KNOWN_WIDGET_TYPES = new Set([
-  'BSBKnob', 'BSBCheckBox', 'BSBHSlider', 'BSBVSlider',
-  'BSBHSliderBank', 'BSBVSliderBank', 'BSBValue', 'BSBDropdown',
-  'BSBXYController', 'BSBSubChannelDropdown', 'BSBFileSelector',
-  'BSBTextField', 'BSBLabel', 'BSBLineObject', 'BSBGroup',
+  'BSBKnob',
+  'BSBCheckBox',
+  'BSBHSlider',
+  'BSBVSlider',
+  'BSBHSliderBank',
+  'BSBVSliderBank',
+  'BSBValue',
+  'BSBDropdown',
+  'BSBXYController',
+  'BSBSubChannelDropdown',
+  'BSBFileSelector',
+  'BSBTextField',
+  'BSBLabel',
+  'BSBLineObject',
+  'BSBGroup',
 ]);
 
 function bsbColorIntToCss(color: number): string {
@@ -643,8 +696,6 @@ export function buildUdoListSnapshot(bsb: BlueSynthBuilder): UdoDefinitionSnapsh
   }));
 }
 
-
-
 export function createPresetGroupFromSnapshot(snapshot?: PresetGroupSnapshot): PresetGroup | null {
   if (!snapshot) return null;
 
@@ -667,9 +718,7 @@ export function createPresetGroupFromSnapshot(snapshot?: PresetGroupSnapshot): P
     }
 
     if (groupSnapshot.currentPresetUniqueId) {
-      group.setCurrentPresetUniqueId(
-        presetIdMap.get(groupSnapshot.currentPresetUniqueId) ?? '',
-      );
+      group.setCurrentPresetUniqueId(presetIdMap.get(groupSnapshot.currentPresetUniqueId) ?? '');
     }
     return group;
   };
@@ -708,7 +757,10 @@ export function restoreBsbAutomationParameters(
   }
 }
 
-export function applyEmbeddedOpcodeListPatch(opcodeList: OpcodeList, patch: EmbeddedOpcodeListPatch): boolean {
+export function applyEmbeddedOpcodeListPatch(
+  opcodeList: OpcodeList,
+  patch: EmbeddedOpcodeListPatch,
+): boolean {
   switch (patch.type) {
     case 'addUdo': {
       const definition = patch.definition
@@ -726,7 +778,8 @@ export function applyEmbeddedOpcodeListPatch(opcodeList: OpcodeList, patch: Embe
       if (patch.patch.name !== undefined) existing.setName(patch.patch.name);
       if (patch.patch.outTypes !== undefined) existing.setOutTypes(patch.patch.outTypes);
       if (patch.patch.inTypes !== undefined) existing.setInTypes(patch.patch.inTypes);
-      if (patch.patch.inputArguments !== undefined) existing.setInputArguments(patch.patch.inputArguments);
+      if (patch.patch.inputArguments !== undefined)
+        existing.setInputArguments(patch.patch.inputArguments);
       if (patch.patch.code !== undefined) existing.setCode(patch.patch.code);
       if (patch.patch.comments !== undefined) existing.setComments(patch.patch.comments);
       if (patch.patch.style !== undefined) {
@@ -750,10 +803,7 @@ export function applyEmbeddedOpcodeListPatch(opcodeList: OpcodeList, patch: Embe
   }
 }
 
-function getPresetGroupAtPath(
-  root: PresetGroup,
-  path: readonly number[],
-): PresetGroup | null {
+function getPresetGroupAtPath(root: PresetGroup, path: readonly number[]): PresetGroup | null {
   let current = root;
   for (const index of path) {
     if (!Number.isInteger(index) || index < 0) return null;
@@ -764,10 +814,7 @@ function getPresetGroupAtPath(
   return current;
 }
 
-function findPresetParentGroup(
-  root: PresetGroup,
-  presetUniqueId: string,
-): PresetGroup | null {
+function findPresetParentGroup(root: PresetGroup, presetUniqueId: string): PresetGroup | null {
   if (root.presets.some((preset) => preset.getUniqueId() === presetUniqueId)) {
     return root;
   }
@@ -779,8 +826,10 @@ function findPresetParentGroup(
 }
 
 function isPathWithin(path: readonly number[], possibleParent: readonly number[]): boolean {
-  return possibleParent.length < path.length
-    && possibleParent.every((index, position) => path[position] === index);
+  return (
+    possibleParent.length < path.length &&
+    possibleParent.every((index, position) => path[position] === index)
+  );
 }
 
 function clearMissingCurrentPreset(presetGroup: PresetGroup): void {
@@ -825,9 +874,10 @@ function movePresetAtPath(
   const rawPresetIndex = Number.isFinite(targetIndex)
     ? Math.trunc(targetIndex) - targetParent.subGroups.length
     : targetParent.presets.length;
-  const adjustedPresetIndex = sourceParent === targetParent && sourceIndex < rawPresetIndex
-    ? rawPresetIndex - 1
-    : rawPresetIndex;
+  const adjustedPresetIndex =
+    sourceParent === targetParent && sourceIndex < rawPresetIndex
+      ? rawPresetIndex - 1
+      : rawPresetIndex;
   const presetIndex = Math.max(0, Math.min(adjustedPresetIndex, targetParent.presets.length));
   targetParent.presets.splice(presetIndex, 0, preset);
   return true;
@@ -839,8 +889,9 @@ function movePresetGroupAtPath(
   parentGroupPath: readonly number[],
   targetIndex: number,
 ): boolean {
-  const samePath = sourcePath.length === parentGroupPath.length
-    && sourcePath.every((index, position) => parentGroupPath[position] === index);
+  const samePath =
+    sourcePath.length === parentGroupPath.length &&
+    sourcePath.every((index, position) => parentGroupPath[position] === index);
   if (sourcePath.length === 0 || samePath || isPathWithin(parentGroupPath, sourcePath)) {
     return false;
   }
@@ -849,11 +900,11 @@ function movePresetGroupAtPath(
   const targetParent = getPresetGroupAtPath(root, parentGroupPath);
   const sourceIndex = sourcePath[sourcePath.length - 1];
   if (
-    !sourceParent
-    || !targetParent
-    || sourceIndex === undefined
-    || !Number.isInteger(sourceIndex)
-    || sourceIndex < 0
+    !sourceParent ||
+    !targetParent ||
+    sourceIndex === undefined ||
+    !Number.isInteger(sourceIndex) ||
+    sourceIndex < 0
   ) {
     return false;
   }
@@ -864,9 +915,10 @@ function movePresetGroupAtPath(
   const rawGroupIndex = Number.isFinite(targetIndex)
     ? Math.trunc(targetIndex)
     : targetParent.subGroups.length;
-  const adjustedGroupIndex = sourceParent === targetParent && sourceIndex < rawGroupIndex
-    ? rawGroupIndex - 1
-    : rawGroupIndex;
+  const adjustedGroupIndex =
+    sourceParent === targetParent && sourceIndex < rawGroupIndex
+      ? rawGroupIndex - 1
+      : rawGroupIndex;
   const groupIndex = Math.max(0, Math.min(adjustedGroupIndex, targetParent.subGroups.length));
   targetParent.subGroups.splice(groupIndex, 0, group);
   return true;
@@ -880,22 +932,26 @@ function createPresetFromSnapshot(snapshot: PresetSnapshot): Preset {
   return preset;
 }
 
-function createPresetGroupFromInsertedSnapshot(
-  snapshot: PresetGroupSnapshot,
-): PresetGroup {
+function createPresetGroupFromInsertedSnapshot(snapshot: PresetGroupSnapshot): PresetGroup {
   const group = new PresetGroup();
   group.setPresetGroupName(snapshot.name);
   group.setCurrentPresetModified(snapshot.currentPresetModified);
   group.presets = snapshot.presets.map(createPresetFromSnapshot);
   group.subGroups = snapshot.subGroups.map(createPresetGroupFromInsertedSnapshot);
 
-  if (snapshot.currentPresetUniqueId && group.findPresetByUniqueId(snapshot.currentPresetUniqueId)) {
+  if (
+    snapshot.currentPresetUniqueId &&
+    group.findPresetByUniqueId(snapshot.currentPresetUniqueId)
+  ) {
     group.setCurrentPresetUniqueId(snapshot.currentPresetUniqueId);
   }
   return group;
 }
 
-export function applyBsbInterfacePatch(instrument: BlueSynthBuilder, patch: BsbInterfacePatch): boolean {
+export function applyBsbInterfacePatch(
+  instrument: BlueSynthBuilder,
+  patch: BsbInterfacePatch,
+): boolean {
   switch (patch.type) {
     case 'setEditEnabled':
       instrument.setBsbEditEnabled(patch.value);
@@ -979,7 +1035,9 @@ export function applyBsbInterfacePatch(instrument: BlueSynthBuilder, patch: BsbI
       const newFolder = new PresetGroup();
       newFolder.setPresetGroupName(patch.groupName);
       targetGroup.subGroups.push(newFolder);
-      targetGroup.subGroups.sort((a, b) => a.getPresetGroupName().localeCompare(b.getPresetGroupName()));
+      targetGroup.subGroups.sort((a, b) =>
+        a.getPresetGroupName().localeCompare(b.getPresetGroupName()),
+      );
       return true;
     }
     case 'addPresetFromSnapshot': {
@@ -1031,22 +1089,22 @@ export function applyBsbInterfacePatch(instrument: BlueSynthBuilder, patch: BsbI
       const presetGroup = instrument.getPresetGroup();
       return presetGroup
         ? movePresetAtPath(
-          presetGroup,
-          patch.presetUniqueId,
-          patch.parentGroupPath,
-          patch.targetIndex,
-        )
+            presetGroup,
+            patch.presetUniqueId,
+            patch.parentGroupPath,
+            patch.targetIndex,
+          )
         : false;
     }
     case 'movePresetGroup': {
       const presetGroup = instrument.getPresetGroup();
       return presetGroup
         ? movePresetGroupAtPath(
-          presetGroup,
-          patch.groupPath,
-          patch.parentGroupPath,
-          patch.targetIndex,
-        )
+            presetGroup,
+            patch.groupPath,
+            patch.parentGroupPath,
+            patch.targetIndex,
+          )
         : false;
     }
     case 'synchronizePresets': {
@@ -1079,7 +1137,10 @@ export function applyBsbInterfacePatch(instrument: BlueSynthBuilder, patch: BsbI
       if (patch.patch.style !== undefined) {
         convertedPatch.style = UDOStyle[patch.patch.style as keyof typeof UDOStyle];
       }
-      return instrument.updateUdo(patch.index, convertedPatch as Parameters<typeof instrument.updateUdo>[1]);
+      return instrument.updateUdo(
+        patch.index,
+        convertedPatch as Parameters<typeof instrument.updateUdo>[1],
+      );
     }
     case 'convertUdoStyle':
       return instrument.convertUdoStyle(
@@ -1108,7 +1169,8 @@ export function applyBsbInterfacePatch(instrument: BlueSynthBuilder, patch: BsbI
       collect(gi.getRootGroup());
       if (widgetsToGroup.length === 0) return false;
 
-      let minX = Infinity, minY = Infinity;
+      let minX = Infinity,
+        minY = Infinity;
       for (const w of widgetsToGroup) {
         minX = Math.min(minX, w.x);
         minY = Math.min(minY, w.y);
@@ -1126,9 +1188,7 @@ export function applyBsbInterfacePatch(instrument: BlueSynthBuilder, patch: BsbI
         group.addChild(w);
       }
 
-      const targetParent = patch.parentGroupId
-        ? gi.findWidgetById(patch.parentGroupId)
-        : null;
+      const targetParent = patch.parentGroupId ? gi.findWidgetById(patch.parentGroupId) : null;
       if (targetParent instanceof BSBGroup) {
         targetParent.addChild(group);
       } else {
@@ -1172,7 +1232,9 @@ export function applyBsbInterfacePatch(instrument: BlueSynthBuilder, patch: BsbI
       let parsed: BsbWidgetNodeSnapshot[];
       try {
         parsed = JSON.parse(patch.widgetData);
-      } catch { return false; }
+      } catch {
+        return false;
+      }
       if (!Array.isArray(parsed) || parsed.length === 0) return false;
 
       const existingNames = new Set<string>();
@@ -1187,9 +1249,7 @@ export function applyBsbInterfacePatch(instrument: BlueSynthBuilder, patch: BsbI
       };
       collectNames(gi.getRootGroup());
 
-      const targetParent = patch.parentGroupId
-        ? gi.findWidgetById(patch.parentGroupId)
-        : null;
+      const targetParent = patch.parentGroupId ? gi.findWidgetById(patch.parentGroupId) : null;
       const parent = targetParent instanceof BSBGroup ? targetParent : gi.getRootGroup();
 
       for (const node of parsed) {
@@ -1218,9 +1278,10 @@ export function createWidgetFromSnapshot(gi: any, node: BsbWidgetNodeSnapshot): 
 
   const applyFontPatch = (prefix: 'font' | 'labelFont', key: string, val: unknown): void => {
     const existing = widgetRecord[prefix];
-    const nextFont: Record<string, unknown> = existing && typeof existing === 'object'
-      ? cloneBsbSnapshotValue(existing as Record<string, unknown>)
-      : {};
+    const nextFont: Record<string, unknown> =
+      existing && typeof existing === 'object'
+        ? cloneBsbSnapshotValue(existing as Record<string, unknown>)
+        : {};
     const field = key.substring(prefix.length + 1);
     if (!field) return;
     nextFont[field] = cloneBsbSnapshotValue(val);
@@ -1228,13 +1289,13 @@ export function createWidgetFromSnapshot(gi: any, node: BsbWidgetNodeSnapshot): 
   };
 
   const dropdownItems = Array.isArray(node.properties?.dropdownItems)
-    ? node.properties!.dropdownItems as Array<Record<string, unknown>>
+    ? (node.properties!.dropdownItems as Array<Record<string, unknown>>)
     : null;
   const lines = Array.isArray(node.properties?.lines)
-    ? node.properties!.lines as Array<Record<string, unknown>>
+    ? (node.properties!.lines as Array<Record<string, unknown>>)
     : null;
   const sliders = Array.isArray(node.properties?.sliders)
-    ? node.properties!.sliders as Array<Record<string, unknown>>
+    ? (node.properties!.sliders as Array<Record<string, unknown>>)
     : null;
 
   for (const [key, val] of Object.entries(node.properties ?? {})) {
@@ -1242,9 +1303,10 @@ export function createWidgetFromSnapshot(gi: any, node: BsbWidgetNodeSnapshot): 
       widgetRecord.dropdownItems = dropdownItems.map((item) => ({
         name: typeof item.name === 'string' ? item.name : '',
         value: typeof item.value === 'string' ? item.value : '',
-        uniqueId: typeof item.uniqueId === 'string' && item.uniqueId.length > 0
-          ? item.uniqueId
-          : crypto.randomUUID(),
+        uniqueId:
+          typeof item.uniqueId === 'string' && item.uniqueId.length > 0
+            ? item.uniqueId
+            : crypto.randomUUID(),
       }));
       continue;
     }
@@ -1268,7 +1330,12 @@ export function createWidgetFromSnapshot(gi: any, node: BsbWidgetNodeSnapshot): 
       continue;
     }
 
-    if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean' || val === null) {
+    if (
+      typeof val === 'string' ||
+      typeof val === 'number' ||
+      typeof val === 'boolean' ||
+      val === null
+    ) {
       widgetRecord[key] = val;
       continue;
     }
@@ -1288,7 +1355,10 @@ export function createWidgetFromSnapshot(gi: any, node: BsbWidgetNodeSnapshot): 
     return widget;
   }
 
-  if (widget.constructor.name === 'BSBHSliderBank' || widget.constructor.name === 'BSBVSliderBank') {
+  if (
+    widget.constructor.name === 'BSBHSliderBank' ||
+    widget.constructor.name === 'BSBVSliderBank'
+  ) {
     const widgetAny = widget as unknown as Record<string, unknown> & { numberOfSliders?: number };
     const childType = widget.constructor.name === 'BSBHSliderBank' ? 'BSBHSlider' : 'BSBVSlider';
     const nextSliders: BSBWidget[] = [];
@@ -1323,7 +1393,8 @@ export function createWidgetFromSnapshot(gi: any, node: BsbWidgetNodeSnapshot): 
 
   if (widget.constructor.name === 'BSBLineObject') {
     widgetRecord.canvasWidth = node.properties?.canvasWidth ?? node.width;
-    widgetRecord.canvasHeight = node.properties?.canvasHeight ?? Math.max(40, node.height - BSB_LINE_SELECTOR_HEIGHT);
+    widgetRecord.canvasHeight =
+      node.properties?.canvasHeight ?? Math.max(40, node.height - BSB_LINE_SELECTOR_HEIGHT);
     if (lines) {
       widgetRecord.lines = cloneBsbSnapshotValue(lines);
     }
@@ -1359,7 +1430,11 @@ export function ensureUniqueName(node: BsbWidgetNodeSnapshot, existingNames: Set
   }
 }
 
-function hasCollision(candidate: string, node: BsbWidgetNodeSnapshot, existingNames: Set<string>): boolean {
+function hasCollision(
+  candidate: string,
+  node: BsbWidgetNodeSnapshot,
+  existingNames: Set<string>,
+): boolean {
   if (existingNames.has(candidate)) return true;
   const origName = node.objectName;
   node.objectName = candidate;
@@ -1378,8 +1453,6 @@ function getDerivedKeysForSnapshot(node: BsbWidgetNodeSnapshot): string[] {
 export function getDerivedKeys(widget: BSBWidget): string[] {
   return getDerivedKeysFromWidget(widget);
 }
-
-
 
 export function snapshotToUdo(snapshot: UdoDefinitionSnapshot): OpcodeDefinition {
   const udo = new OpcodeDefinition();

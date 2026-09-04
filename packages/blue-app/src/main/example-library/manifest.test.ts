@@ -102,22 +102,26 @@ describe('buildFactoryManifest', () => {
     });
 
     expect(reversedCalls).toBeGreaterThan(0);
-    expect(manifest.files.map((f) => f.relativePath)).toEqual([
-      'Z.txt',
-      'a/deep.txt',
-      'm.txt',
-    ]);
+    expect(manifest.files.map((f) => f.relativePath)).toEqual(['Z.txt', 'a/deep.txt', 'm.txt']);
   });
 
   it.each([
-    ['symlink to file', (root: string) => {
-      fs.writeFileSync(path.join(root, 'real.blue'), 'x');
-      fs.symlinkSync(path.join(root, 'real.blue'), path.join(root, 'link.blue'));
-    }, 'symlink-entry'],
-    ['symlinked directory', (root: string) => {
-      fs.mkdirSync(path.join(root, 'inside'));
-      fs.symlinkSync(path.join(root, 'inside'), path.join(root, 'elsewhere'), 'dir');
-    }, 'symlink-entry'],
+    [
+      'symlink to file',
+      (root: string) => {
+        fs.writeFileSync(path.join(root, 'real.blue'), 'x');
+        fs.symlinkSync(path.join(root, 'real.blue'), path.join(root, 'link.blue'));
+      },
+      'symlink-entry',
+    ],
+    [
+      'symlinked directory',
+      (root: string) => {
+        fs.mkdirSync(path.join(root, 'inside'));
+        fs.symlinkSync(path.join(root, 'inside'), path.join(root, 'elsewhere'), 'dir');
+      },
+      'symlink-entry',
+    ],
   ])('rejects %s as invalid factory input', async (_label, setup, expectedCode) => {
     const root = writeTree({ 'base.blue': 'ok' });
     setup(root);
@@ -176,34 +180,58 @@ describe('buildFactoryManifest', () => {
   });
 
   it('rejects a file whose identity a directory already occupies', async () => {
-      await expect(buildFactoryManifest('/unused-root', {
-      platform: 'linux',
-      fsSeams: {
-        readdirWithTypes: async (dirPath) => {
-          if (dirPath === '/unused-root') {
-            return [
-              { name: 'entry', isFile: () => true, isDirectory: () => false, isSymbolicLink: () => false },
-              { name: 'entry', isFile: () => false, isDirectory: () => true, isSymbolicLink: () => false },
-            ];
-          }
-          return [];
+    await expect(
+      buildFactoryManifest('/unused-root', {
+        platform: 'linux',
+        fsSeams: {
+          readdirWithTypes: async (dirPath) => {
+            if (dirPath === '/unused-root') {
+              return [
+                {
+                  name: 'entry',
+                  isFile: () => true,
+                  isDirectory: () => false,
+                  isSymbolicLink: () => false,
+                },
+                {
+                  name: 'entry',
+                  isFile: () => false,
+                  isDirectory: () => true,
+                  isSymbolicLink: () => false,
+                },
+              ];
+            }
+            return [];
+          },
+          readFileStream: () => Readable.from(['bytes']),
         },
-        readFileStream: () => Readable.from(['bytes']),
-      },
-    })).rejects.toMatchObject({ code: 'path-collision' });
+      }),
+    ).rejects.toMatchObject({ code: 'path-collision' });
   });
 
   it('detects case-only collisions between two files through the identity fold', async () => {
-    await expect(buildFactoryManifest('/unused-case-root', {
-      platform: 'win32',
-      fsSeams: {
-        readdirWithTypes: async () => [
-          { name: 'SAME.TXT', isFile: () => true, isDirectory: () => false, isSymbolicLink: () => false },
-          { name: 'same.txt', isFile: () => true, isDirectory: () => false, isSymbolicLink: () => false },
-        ],
-        readFileStream: () => Readable.from(['first']),
-      },
-    })).rejects.toMatchObject({ code: 'path-collision' });
+    await expect(
+      buildFactoryManifest('/unused-case-root', {
+        platform: 'win32',
+        fsSeams: {
+          readdirWithTypes: async () => [
+            {
+              name: 'SAME.TXT',
+              isFile: () => true,
+              isDirectory: () => false,
+              isSymbolicLink: () => false,
+            },
+            {
+              name: 'same.txt',
+              isFile: () => true,
+              isDirectory: () => false,
+              isSymbolicLink: () => false,
+            },
+          ],
+          readFileStream: () => Readable.from(['first']),
+        },
+      }),
+    ).rejects.toMatchObject({ code: 'path-collision' });
   });
 
   it('reports unreadable directories as unreadable-factory-source via injected failures', async () => {

@@ -6,7 +6,11 @@ import {
   isCodeRepositoryNode,
   validateCodeRepositoryTree,
 } from './code-repository';
-import { CodeRepositoryXmlError, parseCodeRepositoryXml, serializeCodeRepositoryXml } from './code-repository-codec';
+import {
+  CodeRepositoryXmlError,
+  parseCodeRepositoryXml,
+  serializeCodeRepositoryXml,
+} from './code-repository-codec';
 
 // Java-compatible fixture retained for codec interoperability coverage. It is
 // not packaged or used as a TS Blue first-run seed.
@@ -149,7 +153,9 @@ describe('parseCodeRepositoryXml', () => {
   });
 
   it('throws on malformed XML', () => {
-    expect(() => parseCodeRepositoryXml('<customAccelerators><customGroup')).toThrow(CodeRepositoryXmlError);
+    expect(() => parseCodeRepositoryXml('<customAccelerators><customGroup')).toThrow(
+      CodeRepositoryXmlError,
+    );
   });
 
   it('throws on a non-customAccelerators root', () => {
@@ -195,9 +201,9 @@ describe('parseCodeRepositoryXml', () => {
   });
 
   it('rejects blank group and snippet names as whole-document validation failures', () => {
-    expect(() => parseCodeRepositoryXml('<customAccelerators><customGroup name="   "/></customAccelerators>')).toThrow(
-      CodeRepositoryXmlError,
-    );
+    expect(() =>
+      parseCodeRepositoryXml('<customAccelerators><customGroup name="   "/></customAccelerators>'),
+    ).toThrow(CodeRepositoryXmlError);
     expect(() =>
       parseCodeRepositoryXml(
         '<customAccelerators><customAccelerator><name> </name><signature>x</signature></customAccelerator></customAccelerators>',
@@ -306,7 +312,9 @@ describe('validateCodeRepositoryTree', () => {
   it('rejects a draft that replaces the protected root identity or uses blank names', () => {
     const doc = createEmptyCodeRepositoryDocument();
     expect(validateCodeRepositoryTree({ ...doc.root, id: 'other-root' })?.code).toBe('root-id');
-    expect(validateCodeRepositoryTree({ ...doc.root, name: 'Renamed Root' })?.code).toBe('root-name');
+    expect(validateCodeRepositoryTree({ ...doc.root, name: 'Renamed Root' })?.code).toBe(
+      'root-name',
+    );
     expect(validateCodeRepositoryTree({ ...doc.root, order: 1 })?.code).toBe('root-order');
     expect(
       validateCodeRepositoryTree({
@@ -419,11 +427,14 @@ describe('collectDescendantIds', () => {
 
 describe('defensive tree parsing', () => {
   it('rejects XML nesting beyond the supported repository depth', () => {
-    const openings = Array.from({ length: 66 }, (_, index) => `<customGroup name="g${index}">`).join('');
+    const openings = Array.from(
+      { length: 66 },
+      (_, index) => `<customGroup name="g${index}">`,
+    ).join('');
     const closings = '</customGroup>'.repeat(66);
-    expect(() => parseCodeRepositoryXml(`<customAccelerators>${openings}${closings}</customAccelerators>`)).toThrow(
-      /maximum group depth/,
-    );
+    expect(() =>
+      parseCodeRepositoryXml(`<customAccelerators>${openings}${closings}</customAccelerators>`),
+    ).toThrow(/maximum group depth/);
   });
 });
 

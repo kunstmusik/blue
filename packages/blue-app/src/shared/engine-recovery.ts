@@ -64,7 +64,10 @@ export function decodeEngineRecoveryStatus(raw: unknown): EngineRecoveryStatus |
     return null;
   }
 
-  if (typeof record.sessionKind !== 'string' || !VALID_SESSION_KINDS.has(record.sessionKind as EngineRecoverySessionKind)) {
+  if (
+    typeof record.sessionKind !== 'string' ||
+    !VALID_SESSION_KINDS.has(record.sessionKind as EngineRecoverySessionKind)
+  ) {
     return null;
   }
   const sessionKind = record.sessionKind as EngineRecoverySessionKind;
@@ -74,7 +77,11 @@ export function decodeEngineRecoveryStatus(raw: unknown): EngineRecoveryStatus |
   }
   const phase = record.phase as EngineRecoveryPhase;
 
-  if (typeof record.attempt !== 'number' || !Number.isInteger(record.attempt) || record.attempt < 1) {
+  if (
+    typeof record.attempt !== 'number' ||
+    !Number.isInteger(record.attempt) ||
+    record.attempt < 1
+  ) {
     return null;
   }
   const attempt = record.attempt;

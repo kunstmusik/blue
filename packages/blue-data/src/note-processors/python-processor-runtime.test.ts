@@ -2,17 +2,30 @@ import { describe, expect, it, vi } from 'vitest';
 import { CompileData } from '../compile-data';
 import { Note } from '../sound-objects/note';
 import { NoteList } from '../sound-objects/note-list';
-import { setJavaRuntimeClient, type JavaRuntimeClientContract, type JythonSerializedNote } from '../java-runtime';
+import {
+  setJavaRuntimeClient,
+  type JavaRuntimeClientContract,
+  type JythonSerializedNote,
+} from '../java-runtime';
 import { PythonProcessor } from './python-processor';
 
 function createRuntimeClient(): JavaRuntimeClientContract {
   return {
     health: vi.fn(async () => ({ ok: true, result: { version: '0.0.1', methods: [] } })),
-    initSession: vi.fn(async () => ({ ok: true, result: { projectSessionId: 1, clojureNamespace: 'user0', dependenciesLoaded: [] } })),
+    initSession: vi.fn(async () => ({
+      ok: true,
+      result: { projectSessionId: 1, clojureNamespace: 'user0', dependenciesLoaded: [] },
+    })),
     reinitializeClojure: vi.fn(async () => ({ ok: true, result: { clojureNamespace: 'user1' } })),
     evaluateClojure: vi.fn(async () => ({ ok: true, result: { value: '', namespace: 'user0' } })),
-    evaluateClojureScoreObject: vi.fn(async () => ({ ok: true, result: { scoreText: '', namespace: 'user0' } })),
-    jythonImportCheck: vi.fn(async () => ({ ok: true, result: { importedModules: [], libraryPaths: [] } })),
+    evaluateClojureScoreObject: vi.fn(async () => ({
+      ok: true,
+      result: { scoreText: '', namespace: 'user0' },
+    })),
+    jythonImportCheck: vi.fn(async () => ({
+      ok: true,
+      result: { importedModules: [], libraryPaths: [] },
+    })),
     evaluateJythonScript: vi.fn(async () => ({ ok: true, result: { value: '' } })),
     evaluateJythonScoreObject: vi.fn(async () => ({ ok: true, result: { scoreText: '' } })),
     evaluateJythonObjectBuilder: vi.fn(async () => ({ ok: true, result: { scoreText: '' } })),
@@ -22,7 +35,9 @@ function createRuntimeClient(): JavaRuntimeClientContract {
       result: {
         notes: notes.map((note: JythonSerializedNote) => ({
           ...note,
-          pfields: note.pfields.map((value: string, index: number) => (index === 3 ? '880' : value)),
+          pfields: note.pfields.map((value: string, index: number) =>
+            index === 3 ? '880' : value,
+          ),
         })),
       },
     })),

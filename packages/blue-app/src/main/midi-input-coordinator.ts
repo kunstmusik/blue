@@ -72,49 +72,61 @@ export class MidiInputCoordinator {
       throw new Error('MIDI input IPC is already initialized.');
     }
 
-    const unregister = registerIpcTransaction(this.deps.ipcMain ?? ipcMain, 'midi-input', (scope) => {
+    const unregister = registerIpcTransaction(
+      this.deps.ipcMain ?? ipcMain,
+      'midi-input',
+      (scope) => {
+        scope.handle(
+          MIDI_INPUT_INITIALIZE_CHANNEL,
+          async (event): Promise<MidiInputServiceInitialization | null> => {
+            if (!this.deps.isPrimaryWebContents(event.sender)) {
+              return null;
+            }
+            this.primaryContents = event.sender;
+            event.sender.once('destroyed', () => {
+              if (this.primaryContents === event.sender) {
+                this.primaryContents = null;
+                this.finishPendingShutdown();
+              }
+            });
+            return {
+              preferences: this.deps.getProgramSettings().midiInput,
+              cachedSnapshot: this.cachedSnapshot,
+            };
+          },
+        );
 
-    scope.handle(MIDI_INPUT_INITIALIZE_CHANNEL, async (event): Promise<MidiInputServiceInitialization | null> => {
-      if (!this.deps.isPrimaryWebContents(event.sender)) {
-        return null;
-      }
-      this.primaryContents = event.sender;
-      event.sender.once('destroyed', () => {
-        if (this.primaryContents === event.sender) {
-          this.primaryContents = null;
-          this.finishPendingShutdown();
-        }
-      });
-      return {
-        preferences: this.deps.getProgramSettings().midiInput,
-        cachedSnapshot: this.cachedSnapshot,
-      };
-    });
+        scope.on(MIDI_INPUT_REPORT_SNAPSHOT_CHANNEL, (event, snapshot: unknown) => {
+          if (!this.deps.isPrimaryWebContents(event.sender)) return;
+          if (!isValidSnapshot(snapshot)) return;
+          this.handleReportSnapshot(snapshot);
+        });
 
-    scope.on(MIDI_INPUT_REPORT_SNAPSHOT_CHANNEL, (event, snapshot: unknown) => {
-      if (!this.deps.isPrimaryWebContents(event.sender)) return;
-      if (!isValidSnapshot(snapshot)) return;
-      this.handleReportSnapshot(snapshot);
-    });
+        scope.on(MIDI_INPUT_COMMAND_ACK_CHANNEL, (event, ack: unknown) => {
+          if (!this.deps.isPrimaryWebContents(event.sender)) return;
+          if (!isValidAck(ack)) return;
+          this.handleAck(ack);
+        });
 
-    scope.on(MIDI_INPUT_COMMAND_ACK_CHANNEL, (event, ack: unknown) => {
-      if (!this.deps.isPrimaryWebContents(event.sender)) return;
-      if (!isValidAck(ack)) return;
-      this.handleAck(ack);
-    });
+        scope.handle(
+          MIDI_INPUT_GET_SNAPSHOT_CHANNEL,
+          async (event): Promise<MidiInputServiceSnapshot | null> => {
+            if (!this.deps.isApplicationWebContents(event.sender)) return null;
+            return this.cachedSnapshot;
+          },
+        );
 
-    scope.handle(MIDI_INPUT_GET_SNAPSHOT_CHANNEL, async (event): Promise<MidiInputServiceSnapshot | null> => {
-      if (!this.deps.isApplicationWebContents(event.sender)) return null;
-      return this.cachedSnapshot;
-    });
-
-    scope.handle(MIDI_INPUT_REQUEST_RESCAN_CHANNEL, async (event): Promise<{ accepted: boolean; message?: string }> => {
-      if (!this.deps.isApplicationWebContents(event.sender)) {
-        return { accepted: false, message: 'Not permitted' };
-      }
-      return this.requestRescan();
-    });
-    });
+        scope.handle(
+          MIDI_INPUT_REQUEST_RESCAN_CHANNEL,
+          async (event): Promise<{ accepted: boolean; message?: string }> => {
+            if (!this.deps.isApplicationWebContents(event.sender)) {
+              return { accepted: false, message: 'Not permitted' };
+            }
+            return this.requestRescan();
+          },
+        );
+      },
+    );
     this.unregisterIpc = unregister;
     this.initialized = true;
   }

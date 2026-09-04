@@ -8,15 +8,17 @@ export const TYPOGRAPHY_ROLES = [
   'subheadline',
 ] as const;
 
-export type TypographyRoleId = typeof TYPOGRAPHY_ROLES[number];
+export type TypographyRoleId = (typeof TYPOGRAPHY_ROLES)[number];
 
 export interface TypographyFontOptions {
   family?: 'proportional' | 'monospace' | string;
   weight?: 'normal' | 'semibold' | 'bold' | number | string;
 }
 
-const DEFAULT_PROPORTIONAL_FAMILY = "'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-const DEFAULT_MONOSPACE_FAMILY = "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+const DEFAULT_PROPORTIONAL_FAMILY =
+  "'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+const DEFAULT_MONOSPACE_FAMILY =
+  "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
 
 /**
  * Resolves a semantic typography role into a valid CSS font string suitable for Canvas 2D context.
@@ -49,7 +51,9 @@ export function resolveTypographyRoleFont(
   }
 
   if (!fontSize) {
-    throw new Error(`Unable to resolve CSS variable ${varName} for role "${role}". Ensure styles/index.css is loaded.`);
+    throw new Error(
+      `Unable to resolve CSS variable ${varName} for role "${role}". Ensure styles/index.css is loaded.`,
+    );
   }
 
   // Weight resolution

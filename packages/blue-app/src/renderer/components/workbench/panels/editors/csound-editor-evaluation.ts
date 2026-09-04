@@ -1,4 +1,11 @@
-import { type EditorState, type Extension, Prec, StateEffect, StateField, type Range } from '@codemirror/state';
+import {
+  type EditorState,
+  type Extension,
+  Prec,
+  StateEffect,
+  StateField,
+  type Range,
+} from '@codemirror/state';
 import { Decoration, EditorView, keymap, type KeyBinding } from '@codemirror/view';
 import type { CsoundDocumentMode } from './editor-adapter-types';
 
@@ -128,10 +135,16 @@ export function getEvaluableCodeRange(
   state: EditorState,
   mode: CsoundDocumentMode,
 ): EvaluableCodeRange | null {
-  return getSelectedCodeRange(state) ?? (mode === 'sco' ? getScoContextRange(state) : getOrcContextRange(state));
+  return (
+    getSelectedCodeRange(state) ??
+    (mode === 'sco' ? getScoContextRange(state) : getOrcContextRange(state))
+  );
 }
 
-export function flashEvaluatedCode(view: EditorView, range: Pick<EvaluableCodeRange, 'from' | 'to'>): void {
+export function flashEvaluatedCode(
+  view: EditorView,
+  range: Pick<EvaluableCodeRange, 'from' | 'to'>,
+): void {
   const flashMark = Decoration.mark({
     class: 'cm-blue-code-eval-flash',
   });

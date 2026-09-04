@@ -102,10 +102,7 @@ describe('Java Blue UDO completion adapter', () => {
     });
 
     it('keeps a same-name incomplete document declaration beside a parsed complete overload', () => {
-      const result = complete(
-        'opcode Poly, a, k\nendop\nopcode Poly\nPoly',
-        {},
-      );
+      const result = complete('opcode Poly, a, k\nendop\nopcode Poly\nPoly', {});
       const rows = result?.options.filter((c) => c.label === 'Poly') ?? [];
       expect(rows).toHaveLength(2);
       expect(rows.some((c) => c.displayLabel === 'Poly (k) → a')).toBe(true);
@@ -138,9 +135,7 @@ describe('Java Blue UDO completion adapter', () => {
       const result = complete('asig = oscil\nas', {
         contextUdos: [udo('asigRelated', { inTypes: 'a' })],
       });
-      const variable = result?.options.find(
-        (c) => c.label === 'asig' && c.detail === 'variable',
-      );
+      const variable = result?.options.find((c) => c.label === 'asig' && c.detail === 'variable');
       expect(variable).toBeDefined();
     });
   });
@@ -299,11 +294,18 @@ describe('Java Blue UDO completion adapter', () => {
 
     it('preserves an overload across a style conversion that keeps the callable signature', () => {
       const classic = complete('Conv', {
-        contextUdos: [udo('Conv', { style: 'CLASSIC', inTypes: 'ak', outTypes: 'a', inputArguments: '' })],
+        contextUdos: [
+          udo('Conv', { style: 'CLASSIC', inTypes: 'ak', outTypes: 'a', inputArguments: '' }),
+        ],
       });
       const modern = complete('Conv', {
         contextUdos: [
-          udo('Conv', { style: 'MODERN', inTypes: '', outTypes: 'a', inputArguments: 'aSig, kFreq' }),
+          udo('Conv', {
+            style: 'MODERN',
+            inTypes: '',
+            outTypes: 'a',
+            inputArguments: 'aSig, kFreq',
+          }),
         ],
       });
       expect(classic?.options.filter((c) => c.label === 'Conv').length).toBe(1);
@@ -337,13 +339,11 @@ describe('Java Blue UDO completion adapter', () => {
 
   describe('completion construction performance (US3, T024)', () => {
     it('keeps p95 completion construction below 100 ms for 500 project and 100 context UDOs', () => {
-      const projectUdos: JavaBlueUdoCompletionDefinition[] = Array.from(
-        { length: 500 },
-        (_, i) => udo(`ProjUDO${i}`, { inTypes: i % 2 === 0 ? 'a' : 'k', outTypes: 'a' }),
+      const projectUdos: JavaBlueUdoCompletionDefinition[] = Array.from({ length: 500 }, (_, i) =>
+        udo(`ProjUDO${i}`, { inTypes: i % 2 === 0 ? 'a' : 'k', outTypes: 'a' }),
       );
-      const contextUdos: JavaBlueUdoCompletionDefinition[] = Array.from(
-        { length: 100 },
-        (_, i) => udo(`CtxUDO${i}`, { inTypes: 'k', outTypes: 'a' }),
+      const contextUdos: JavaBlueUdoCompletionDefinition[] = Array.from({ length: 100 }, (_, i) =>
+        udo(`CtxUDO${i}`, { inTypes: 'k', outTypes: 'a' }),
       );
       const source = createJavaBlueCsoundCompletionSource({ contextUdos, projectUdos });
 

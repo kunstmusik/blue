@@ -5,7 +5,8 @@ import { findRawXmlElements, parseRawXmlDocument } from './raw-xml-document';
 
 describe('raw XML document', () => {
   it('extracts exact leaf slices with BMP and non-BMP Unicode before and inside the leaf', () => {
-    const rawLeaf = '<soundObject type="example.Future"><name>🎹 Ω</name><!-- exact --></soundObject>';
+    const rawLeaf =
+      '<soundObject type="example.Future"><name>🎹 Ω</name><!-- exact --></soundObject>';
     const xml = `<soundObjectLibrary><!-- préface 🎼 --><category categoryName="根">${rawLeaf}</category></soundObjectLibrary>`;
     const document = parseRawXmlDocument(xml);
 
@@ -16,7 +17,8 @@ describe('raw XML document', () => {
   });
 
   it('retains comments, CDATA, entity spelling, and unknown nested content', () => {
-    const rawLeaf = '<effect><name>A &amp; B</name><!--c--><plugin><![CDATA[x < y]]></plugin></effect>';
+    const rawLeaf =
+      '<effect><name>A &amp; B</name><!--c--><plugin><![CDATA[x < y]]></plugin></effect>';
     const xml = `<effectsLibrary><effectCategory categoryName="root" isRoot="true">${rawLeaf}</effectCategory></effectsLibrary>`;
     const document = parseRawXmlDocument(xml);
 

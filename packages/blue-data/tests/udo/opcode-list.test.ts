@@ -5,7 +5,6 @@ import { UDOStyle } from '../../src/opcodes/udo-style';
 import { Element } from '../../src/serialization/xml-reader';
 
 describe('OpcodeList', () => {
-
   it('getNameOfEquivalentCopy finds classic equivalent', () => {
     const list = new OpcodeList();
 

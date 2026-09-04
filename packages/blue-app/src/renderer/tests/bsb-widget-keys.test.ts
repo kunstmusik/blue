@@ -10,7 +10,9 @@ import {
 } from '../../shared/bsb-widget-keys';
 import type { BsbWidgetNodeSnapshot } from '../../shared/project-editor';
 
-function makeSnapshot(overrides: Partial<BsbWidgetNodeSnapshot> & { type: string; objectName: string }): BsbWidgetNodeSnapshot {
+function makeSnapshot(
+  overrides: Partial<BsbWidgetNodeSnapshot> & { type: string; objectName: string },
+): BsbWidgetNodeSnapshot {
   return {
     id: overrides.id ?? 'test-id',
     type: overrides.type,
@@ -174,7 +176,11 @@ describe('getBsbObjectNameValidationKeysFromSnapshot', () => {
       objectName: 'bank',
       properties: { sliders: [{ value: 0 }, { value: 0 }, { value: 0 }] },
     });
-    expect(getBsbObjectNameValidationKeysFromSnapshot(node, 'bank')).toEqual(['bank_0', 'bank_1', 'bank_2']);
+    expect(getBsbObjectNameValidationKeysFromSnapshot(node, 'bank')).toEqual([
+      'bank_0',
+      'bank_1',
+      'bank_2',
+    ]);
   });
 
   it('keeps line-object validation on the raw object name to match Java manual rename behavior', () => {

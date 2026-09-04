@@ -22,13 +22,7 @@ export default function CommentScoreObjectBar({
       selected={selected}
       backgroundColor={item.backgroundColor}
     >
-      <LabelText
-        labelLines={br.labelLines}
-        color={fg}
-        show={showText}
-        yStart={15}
-        italic
-      />
+      <LabelText labelLines={br.labelLines} color={fg} show={showText} yStart={15} italic />
     </ScoreObjectBar>
   );
 }

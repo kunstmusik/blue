@@ -157,41 +157,43 @@ describe('parseAudioFileMetadata', () => {
 
   describe('error handling', () => {
     it('rejects empty data', () => {
-      expect(() => parseAudioFileMetadata(new Uint8Array(0))).toThrow(
-        AudioFileMetadataError,
-      );
+      expect(() => parseAudioFileMetadata(new Uint8Array(0))).toThrow(AudioFileMetadataError);
     });
 
     it('rejects unknown format', () => {
       const bytes = new Uint8Array([0x00, 0x01, 0x02, 0x03, 0, 0, 0, 0, 0, 0, 0, 0]);
-      expect(() => parseAudioFileMetadata(bytes)).toThrow(
-        AudioFileMetadataError,
-      );
+      expect(() => parseAudioFileMetadata(bytes)).toThrow(AudioFileMetadataError);
     });
 
     it('rejects truncated WAV', () => {
       const bytes = buildWavBytes(2, 44100, 16, 100).slice(0, 20);
-      expect(() => parseAudioFileMetadata(bytes)).toThrow(
-        AudioFileMetadataError,
-      );
+      expect(() => parseAudioFileMetadata(bytes)).toThrow(AudioFileMetadataError);
     });
 
     it('rejects RIFF without WAVE', () => {
       const buf = new Array(44).fill(0);
-      buf[0] = 0x52; buf[1] = 0x49; buf[2] = 0x46; buf[3] = 0x46; // RIFF
-      buf[8] = 0x58; buf[9] = 0x58; buf[10] = 0x58; buf[11] = 0x58; // XXXX
-      expect(() => parseAudioFileMetadata(new Uint8Array(buf))).toThrow(
-        /WAVE/,
-      );
+      buf[0] = 0x52;
+      buf[1] = 0x49;
+      buf[2] = 0x46;
+      buf[3] = 0x46; // RIFF
+      buf[8] = 0x58;
+      buf[9] = 0x58;
+      buf[10] = 0x58;
+      buf[11] = 0x58; // XXXX
+      expect(() => parseAudioFileMetadata(new Uint8Array(buf))).toThrow(/WAVE/);
     });
 
     it('rejects FORM without AIFF/AIFC', () => {
       const buf = new Array(44).fill(0);
-      buf[0] = 0x46; buf[1] = 0x4f; buf[2] = 0x52; buf[3] = 0x4d; // FORM
-      buf[8] = 0x58; buf[9] = 0x58; buf[10] = 0x58; buf[11] = 0x58; // XXXX
-      expect(() => parseAudioFileMetadata(new Uint8Array(buf))).toThrow(
-        /AIFF/,
-      );
+      buf[0] = 0x46;
+      buf[1] = 0x4f;
+      buf[2] = 0x52;
+      buf[3] = 0x4d; // FORM
+      buf[8] = 0x58;
+      buf[9] = 0x58;
+      buf[10] = 0x58;
+      buf[11] = 0x58; // XXXX
+      expect(() => parseAudioFileMetadata(new Uint8Array(buf))).toThrow(/AIFF/);
     });
   });
 });

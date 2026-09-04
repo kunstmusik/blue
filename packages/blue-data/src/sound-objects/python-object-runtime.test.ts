@@ -7,11 +7,20 @@ import { PythonObject } from './python-object';
 function createRuntimeClient(): JavaRuntimeClientContract {
   return {
     health: vi.fn(async () => ({ ok: true, result: { version: '0.0.1', methods: [] } })),
-    initSession: vi.fn(async () => ({ ok: true, result: { projectSessionId: 1, clojureNamespace: 'user0', dependenciesLoaded: [] } })),
+    initSession: vi.fn(async () => ({
+      ok: true,
+      result: { projectSessionId: 1, clojureNamespace: 'user0', dependenciesLoaded: [] },
+    })),
     reinitializeClojure: vi.fn(async () => ({ ok: true, result: { clojureNamespace: 'user1' } })),
     evaluateClojure: vi.fn(async () => ({ ok: true, result: { value: '', namespace: 'user0' } })),
-    evaluateClojureScoreObject: vi.fn(async () => ({ ok: true, result: { scoreText: '', namespace: 'user0' } })),
-    jythonImportCheck: vi.fn(async () => ({ ok: true, result: { importedModules: [], libraryPaths: [] } })),
+    evaluateClojureScoreObject: vi.fn(async () => ({
+      ok: true,
+      result: { scoreText: '', namespace: 'user0' },
+    })),
+    jythonImportCheck: vi.fn(async () => ({
+      ok: true,
+      result: { importedModules: [], libraryPaths: [] },
+    })),
     evaluateJythonScript: vi.fn(async () => ({ ok: true, result: { value: '' } })),
     evaluateJythonScoreObject: vi.fn(async () => ({
       ok: true,

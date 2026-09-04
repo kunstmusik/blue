@@ -78,11 +78,15 @@ async function resolveHostIdentity(filePath: string, platform: string): Promise<
   return normalizeFileManagerHostIdentity(base, platform);
 }
 
-function mapStatError(err: unknown): { code: 'not-found' | 'not-directory' | 'permission-denied' | 'read-failed'; message: string } {
+function mapStatError(err: unknown): {
+  code: 'not-found' | 'not-directory' | 'permission-denied' | 'read-failed';
+  message: string;
+} {
   const errno = (err as NodeJS.ErrnoException | null)?.code;
   if (errno === 'ENOENT') return { code: 'not-found', message: 'Path not found.' };
   if (errno === 'ENOTDIR') return { code: 'not-directory', message: 'Path is not a directory.' };
-  if (errno === 'EACCES' || errno === 'EPERM') return { code: 'permission-denied', message: 'Permission denied.' };
+  if (errno === 'EACCES' || errno === 'EPERM')
+    return { code: 'permission-denied', message: 'Permission denied.' };
   return { code: 'read-failed', message: err instanceof Error ? err.message : String(err) };
 }
 
@@ -117,12 +121,15 @@ export async function getFileManagerRoots(
     if (seenIdentities.has(id)) continue;
     seenIdentities.add(id);
 
-    const isHome = id === homeId || (resolvedHome.length > 0 && path.resolve(staticPath) === resolvedHome);
+    const isHome =
+      id === homeId || (resolvedHome.length > 0 && path.resolve(staticPath) === resolvedHome);
     const defaultLabel = isHome ? 'Home' : 'Root';
-    const customLabel = rootLabels[id] ?? rootLabels[staticPath] ?? rootLabels[path.resolve(staticPath)];
-    const label = typeof customLabel === 'string' && customLabel.trim().length > 0
-      ? customLabel.trim()
-      : defaultLabel;
+    const customLabel =
+      rootLabels[id] ?? rootLabels[staticPath] ?? rootLabels[path.resolve(staticPath)];
+    const label =
+      typeof customLabel === 'string' && customLabel.trim().length > 0
+        ? customLabel.trim()
+        : defaultLabel;
 
     roots.push({
       id,
@@ -151,10 +158,12 @@ export async function getFileManagerRoots(
     if (seenIdentities.has(id)) continue;
     seenIdentities.add(id);
 
-    const customLabel = rootLabels[id] ?? rootLabels[trimmedFavoritePath] ?? rootLabels[resolvedFavorite];
-    const label = typeof customLabel === 'string' && customLabel.trim().length > 0
-      ? customLabel.trim()
-      : resolvedFavorite;
+    const customLabel =
+      rootLabels[id] ?? rootLabels[trimmedFavoritePath] ?? rootLabels[resolvedFavorite];
+    const label =
+      typeof customLabel === 'string' && customLabel.trim().length > 0
+        ? customLabel.trim()
+        : resolvedFavorite;
 
     roots.push({
       id,
@@ -175,9 +184,9 @@ export async function getFileManagerRoots(
  * comparison with a case-sensitive tie-break; a symlink to a directory stays
  * expandable because the final kind comes from stat, not the dirent.
  */
-export async function listFileManagerDirectory(
-  request: { path: string },
-): Promise<FileManagerDirectoryResult> {
+export async function listFileManagerDirectory(request: {
+  path: string;
+}): Promise<FileManagerDirectoryResult> {
   const target = typeof request?.path === 'string' ? request.path : '';
   if (target.trim().length === 0 || !path.isAbsolute(target)) {
     return {
@@ -233,7 +242,9 @@ export async function listFileManagerDirectory(
       // A disappearing or unreadable child is omitted from this listing with
       // a directory-level diagnostic rather than failing the whole read.
       omittedCount += 1;
-      console.warn(`[file-manager] Omitted unreadable child: ${childPath} (${err instanceof Error ? err.message : String(err)})`);
+      console.warn(
+        `[file-manager] Omitted unreadable child: ${childPath} (${err instanceof Error ? err.message : String(err)})`,
+      );
     }
   }
   children.sort(compareNodeNames);
@@ -245,7 +256,9 @@ export async function listFileManagerDirectory(
       children,
       loadedAt: Date.now(),
       ...(omittedCount > 0
-        ? { diagnostic: `${omittedCount} ${omittedCount === 1 ? 'entry was' : 'entries were'} unreadable and omitted.` }
+        ? {
+            diagnostic: `${omittedCount} ${omittedCount === 1 ? 'entry was' : 'entries were'} unreadable and omitted.`,
+          }
         : {}),
     },
   };
@@ -256,9 +269,9 @@ export async function listFileManagerDirectory(
  * favorite write or folder action. Returns the main-normalized absolute path
  * used for the settings write.
  */
-export async function validateFileManagerDirectory(
-  request: { path: string },
-): Promise<FileManagerValidateDirectoryResult> {
+export async function validateFileManagerDirectory(request: {
+  path: string;
+}): Promise<FileManagerValidateDirectoryResult> {
   const target = typeof request?.path === 'string' ? request.path : '';
   const trimmedTarget = target.trim();
   if (trimmedTarget.length === 0 || !path.isAbsolute(trimmedTarget)) {
@@ -287,7 +300,9 @@ export interface AudioFileDropProjectContext {
 
 export interface AudioFileDropCommitContext {
   getCurrentProject: () => AudioFileDropProjectContext | null;
-  commitProjectDocumentPatch: (patch: ProjectDocumentPatch) => Promise<ProjectDocumentCommitReceipt>;
+  commitProjectDocumentPatch: (
+    patch: ProjectDocumentPatch,
+  ) => Promise<ProjectDocumentCommitReceipt>;
 }
 
 function rejectedDrop(code: AudioDropRejectionCode, message: string): CommitAudioFileDropResult {
@@ -327,8 +342,8 @@ export async function commitAudioFileDrop(
     return rejectedDrop('no-project', 'No project is open.');
   }
   if (
-    request.track.projectSessionId !== current.sessionId
-    || request.track.projectRevision !== current.revision
+    request.track.projectSessionId !== current.sessionId ||
+    request.track.projectRevision !== current.revision
   ) {
     return rejectedDrop('stale-project', 'The score changed while dragging. Drop again to retry.');
   }
@@ -342,7 +357,10 @@ export async function commitAudioFileDrop(
     return rejectedDrop('not-a-file', `Could not access source file: ${sourcePath}`);
   }
   if (!isCsoundAudioSourcePath(sourcePath)) {
-    return rejectedDrop('unsupported-extension', `Unsupported audio source: ${path.basename(sourcePath)}`);
+    return rejectedDrop(
+      'unsupported-extension',
+      `Unsupported audio source: ${path.basename(sourcePath)}`,
+    );
   }
   try {
     await fs.promises.access(sourcePath, fs.constants.R_OK);
@@ -363,13 +381,11 @@ export async function commitAudioFileDrop(
   let copiedToMedia = false;
   let createdMediaPath: string | null = null;
   if (current.copyToMediaFileOnImport && projectDirectory) {
-    const copyResult = copySourceToProjectMediaFolder(
-      {
-        sourcePath,
-        projectDirectory,
-        mediaFolder: current.mediaFolder,
-      },
-    );
+    const copyResult = copySourceToProjectMediaFolder({
+      sourcePath,
+      projectDirectory,
+      mediaFolder: current.mediaFolder,
+    });
     if (copyResult.status === 'error') {
       return rejectedDrop('copy-failed', copyResult.message);
     }

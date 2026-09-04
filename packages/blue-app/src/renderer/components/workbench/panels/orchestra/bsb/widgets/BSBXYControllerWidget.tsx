@@ -55,20 +55,45 @@ function BSBXYControllerWidget({
   }, []);
 
   return (
-    <WidgetWrapper node={node} isSelected={isSelected} editEnabled={editEnabled} onWidgetSelect={onWidgetSelect} displayWidth={displaySize.width} displayHeight={displaySize.height} resizeMeta={resizeMeta} gridSnapEnabled={gridSnapEnabled} gridSnapWidth={gridSnapWidth} gridSnapHeight={gridSnapHeight} onBsbInterfacePatch={onBsbInterfacePatch} selectedWidgetIds={selectedWidgetIds} getWidgetPosition={getWidgetPosition} onWidgetAction={onWidgetAction}>
+    <WidgetWrapper
+      node={node}
+      isSelected={isSelected}
+      editEnabled={editEnabled}
+      onWidgetSelect={onWidgetSelect}
+      displayWidth={displaySize.width}
+      displayHeight={displaySize.height}
+      resizeMeta={resizeMeta}
+      gridSnapEnabled={gridSnapEnabled}
+      gridSnapWidth={gridSnapWidth}
+      gridSnapHeight={gridSnapHeight}
+      onBsbInterfacePatch={onBsbInterfacePatch}
+      selectedWidgetIds={selectedWidgetIds}
+      getWidgetPosition={getWidgetPosition}
+      onWidgetAction={onWidgetAction}
+    >
       <div className="flex h-full w-full flex-col overflow-hidden rounded border border-blue-border/40 bg-blue-surface/30">
         <div
           ref={padRef}
           className="relative flex-1 min-h-0 bg-app-bsb-input"
           style={{ cursor: editEnabled ? 'default' : 'crosshair' }}
-          onMouseDown={editEnabled ? undefined : (e) => {
-            e.stopPropagation();
-            updateFromPointer(e.clientX, e.clientY);
-            const onMove = (ev: MouseEvent) => { ev.preventDefault(); updateFromPointer(ev.clientX, ev.clientY); };
-            const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
-            window.addEventListener('mousemove', onMove);
-            window.addEventListener('mouseup', onUp);
-          }}
+          onMouseDown={
+            editEnabled
+              ? undefined
+              : (e) => {
+                  e.stopPropagation();
+                  updateFromPointer(e.clientX, e.clientY);
+                  const onMove = (ev: MouseEvent) => {
+                    ev.preventDefault();
+                    updateFromPointer(ev.clientX, ev.clientY);
+                  };
+                  const onUp = () => {
+                    window.removeEventListener('mousemove', onMove);
+                    window.removeEventListener('mouseup', onUp);
+                  };
+                  window.addEventListener('mousemove', onMove);
+                  window.addEventListener('mouseup', onUp);
+                }
+          }
         >
           <div
             className="absolute h-px w-full bg-blue-border/20"
@@ -84,7 +109,10 @@ function BSBXYControllerWidget({
           />
         </div>
         {showValue && (
-          <div className="flex shrink-0 items-center justify-center gap-2 border-t border-blue-border/20 px-1 text-role-callout text-blue-muted" style={{ height: BSB_XY_READOUT_HEIGHT }}>
+          <div
+            className="flex shrink-0 items-center justify-center gap-2 border-t border-blue-border/20 px-1 text-role-callout text-blue-muted"
+            style={{ height: BSB_XY_READOUT_HEIGHT }}
+          >
             <span>x: {xValue.toFixed(2)}</span>
             <span>y: {yValue.toFixed(2)}</span>
           </div>

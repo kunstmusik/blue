@@ -62,10 +62,7 @@ export {
   createJMaskPayloadSummary,
 } from './snapshot-mixer-orchestra';
 
-export {
-  applyScoreTimeStatePatch,
-  isScoreColorPatchAccepted,
-} from './patch-score';
+export { applyScoreTimeStatePatch, isScoreColorPatchAccepted } from './patch-score';
 
 export {
   applyProjectPropertiesPatch,
@@ -78,10 +75,7 @@ export {
   createNestedPolyObjectSnapshot,
 } from './patch-mixer-bluelive';
 
-export {
-  applyProjectDocumentPatch,
-  isEmptyProjectDocumentPatch,
-} from './patch-document';
+export { applyProjectDocumentPatch, isEmptyProjectDocumentPatch } from './patch-document';
 
 export {
   collectBsbReplacementKeysFromSnapshotTree,

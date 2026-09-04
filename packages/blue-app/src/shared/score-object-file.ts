@@ -25,13 +25,9 @@ export type ScoreObjectExportResult =
   | { status: 'saved' | 'cancelled' }
   | { status: 'error'; error: string };
 
-export type ScoreObjectValidationResult =
-  | { ok: true }
-  | { ok: false; error: string };
+export type ScoreObjectValidationResult = { ok: true } | { ok: false; error: string };
 
-type LoadedScoreObjectResult =
-  | { ok: true; object: SoundObject }
-  | { ok: false; error: string };
+type LoadedScoreObjectResult = { ok: true; object: SoundObject } | { ok: false; error: string };
 
 function loadScoreObjectXML(xml: string): LoadedScoreObjectResult {
   let root: Element;
@@ -66,8 +62,7 @@ function containsInstance(polyObject: PolyObject): boolean {
 }
 
 function hasUnsupportedInstance(object: SoundObject): boolean {
-  return object instanceof Instance
-    || (object instanceof PolyObject && containsInstance(object));
+  return object instanceof Instance || (object instanceof PolyObject && containsInstance(object));
 }
 
 export function prepareScoreObjectImport(
@@ -80,7 +75,8 @@ export function prepareScoreObjectImport(
   if (hasUnsupportedInstance(loaded.object)) {
     return {
       ok: false,
-      error: 'Import of Instance objects or PolyObjects containing Instance objects is not supported.',
+      error:
+        'Import of Instance objects or PolyObjects containing Instance objects is not supported.',
     };
   }
 
@@ -109,7 +105,8 @@ export function validateScoreObjectExport(xml: string): ScoreObjectValidationRes
   if (hasUnsupportedInstance(loaded.object)) {
     return {
       ok: false,
-      error: 'Export of Instance objects or PolyObjects containing Instance objects is not allowed.',
+      error:
+        'Export of Instance objects or PolyObjects containing Instance objects is not allowed.',
     };
   }
   return { ok: true };

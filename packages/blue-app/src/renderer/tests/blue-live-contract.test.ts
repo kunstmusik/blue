@@ -80,10 +80,8 @@ describe('Blue Live snapshot/patch contract', () => {
     liveObject.setSoundObject(soundObject);
     data.getLiveData().getLiveObjectBins().setLiveObject(0, 0, liveObject);
 
-    const cell = createBlueLiveProjectSnapshot(
-      data.getLiveData(),
-      data.getScore().getTimeContext(),
-    ).bins.cells[0]![0]!;
+    const cell = createBlueLiveProjectSnapshot(data.getLiveData(), data.getScore().getTimeContext())
+      .bins.cells[0]![0]!;
 
     expect(cell).toMatchObject({
       uniqueId: 'live-copy-source',
@@ -127,13 +125,17 @@ describe('Blue Live snapshot/patch contract', () => {
     expect(cell.displayName).toBe('Pasted phrase');
     expect(cell.startBeats).toBe(0);
 
-    expect(applyProjectDocumentPatch(data, {
-      blueLive: { type: 'setCell', column: 0, row: 0, cell: null },
-    })).toBe(true);
+    expect(
+      applyProjectDocumentPatch(data, {
+        blueLive: { type: 'setCell', column: 0, row: 0, cell: null },
+      }),
+    ).toBe(true);
     expect(createBlueLiveProjectSnapshot(data.getLiveData()).bins.cells[0]![0]).toBeNull();
-    expect(applyProjectDocumentPatch(data, {
-      blueLive: { type: 'setCell', column: 0, row: 0, cell: null },
-    })).toBe(false);
+    expect(
+      applyProjectDocumentPatch(data, {
+        blueLive: { type: 'setCell', column: 0, row: 0, cell: null },
+      }),
+    ).toBe(false);
   });
 
   it('deserializes independent object graphs for repeated Live Space pastes', () => {
@@ -152,12 +154,16 @@ describe('Blue Live snapshot/patch contract', () => {
       serializedXml: source.saveAsXML().toXml(),
     });
 
-    expect(applyProjectDocumentPatch(data, {
-      blueLive: { type: 'setCell', column: 0, row: 0, cell: makeCell('paste-one') },
-    })).toBe(true);
-    expect(applyProjectDocumentPatch(data, {
-      blueLive: { type: 'setCell', column: 1, row: 0, cell: makeCell('paste-two') },
-    })).toBe(true);
+    expect(
+      applyProjectDocumentPatch(data, {
+        blueLive: { type: 'setCell', column: 0, row: 0, cell: makeCell('paste-one') },
+      }),
+    ).toBe(true);
+    expect(
+      applyProjectDocumentPatch(data, {
+        blueLive: { type: 'setCell', column: 1, row: 0, cell: makeCell('paste-two') },
+      }),
+    ).toBe(true);
 
     const bins = data.getLiveData().getLiveObjectBins();
     const first = bins.getLiveObject(0, 0)!.getSoundObject()!;
@@ -189,23 +195,27 @@ describe('Blue Live snapshot/patch contract', () => {
       text: 'i1 0 1 440',
     });
 
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'updateSharedProperties',
-        target,
-        patch: {
-          name: 'Edited from Live',
-          subjectiveDuration: { value: 6, timeBase: 'BEATS' },
+    expect(
+      applyProjectDocumentPatch(data, {
+        score: {
+          type: 'updateSharedProperties',
+          target,
+          patch: {
+            name: 'Edited from Live',
+            subjectiveDuration: { value: 6, timeBase: 'BEATS' },
+          },
         },
-      },
-    })).toBe(true);
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'updateTypeSpecificEditor',
-        target,
-        patch: { text: 'i2 0 2 660' },
-      },
-    })).toBe(true);
+      }),
+    ).toBe(true);
+    expect(
+      applyProjectDocumentPatch(data, {
+        score: {
+          type: 'updateTypeSpecificEditor',
+          target,
+          patch: { text: 'i2 0 2 660' },
+        },
+      }),
+    ).toBe(true);
     expect(soundObject.getName()).toBe('Edited from Live');
     expect(soundObject.getSubjectiveDuration().toBeats(data.getScore().getTimeContext())).toBe(6);
     expect(soundObject.getScoreText()).toBe('i2 0 2 660');
@@ -226,13 +236,15 @@ describe('Blue Live snapshot/patch contract', () => {
 
     bins.insertRow(0);
     expect(bins.getLiveObject(0, 2)?.getUniqueId()).toBe('moving-live-target');
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'updateSharedProperties',
-        target,
-        patch: { name: 'Resolved by identity' },
-      },
-    })).toBe(true);
+    expect(
+      applyProjectDocumentPatch(data, {
+        score: {
+          type: 'updateSharedProperties',
+          target,
+          patch: { name: 'Resolved by identity' },
+        },
+      }),
+    ).toBe(true);
     expect(bins.getLiveObject(0, 2)?.getSoundObject()?.getName()).toBe('Resolved by identity');
   });
 
@@ -254,13 +266,15 @@ describe('Blue Live snapshot/patch contract', () => {
       kind: 'fallback',
       reason: 'removed-target',
     });
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'updateSharedProperties',
-        target,
-        patch: { name: 'Must not apply' },
-      },
-    })).toBe(false);
+    expect(
+      applyProjectDocumentPatch(data, {
+        score: {
+          type: 'updateSharedProperties',
+          target,
+          patch: { name: 'Must not apply' },
+        },
+      }),
+    ).toBe(false);
     expect(replacement.getSoundObject()?.getName()).not.toBe('Must not apply');
   });
 
@@ -279,15 +293,31 @@ describe('Blue Live snapshot/patch contract', () => {
       serializedXml,
     });
 
-    expect(applyProjectDocumentPatch(data, {
-      blueLive: { type: 'setCell', column: 99, row: 0, cell: makeCell(new GenericScore().saveAsXML().toXml()) },
-    })).toBe(false);
-    expect(applyProjectDocumentPatch(data, {
-      blueLive: { type: 'setCell', column: 0, row: 0, cell: makeCell('<not-xml') },
-    })).toBe(false);
-    expect(applyProjectDocumentPatch(data, {
-      blueLive: { type: 'setCell', column: 0, row: 0, cell: makeCell(unsupported.saveAsXML().toXml()) },
-    })).toBe(false);
+    expect(
+      applyProjectDocumentPatch(data, {
+        blueLive: {
+          type: 'setCell',
+          column: 99,
+          row: 0,
+          cell: makeCell(new GenericScore().saveAsXML().toXml()),
+        },
+      }),
+    ).toBe(false);
+    expect(
+      applyProjectDocumentPatch(data, {
+        blueLive: { type: 'setCell', column: 0, row: 0, cell: makeCell('<not-xml') },
+      }),
+    ).toBe(false);
+    expect(
+      applyProjectDocumentPatch(data, {
+        blueLive: {
+          type: 'setCell',
+          column: 0,
+          row: 0,
+          cell: makeCell(unsupported.saveAsXML().toXml()),
+        },
+      }),
+    ).toBe(false);
     expect(createBlueLiveProjectSnapshot(data.getLiveData()).bins.cells[0]![0]).toBeNull();
   });
 
@@ -303,7 +333,10 @@ describe('Blue Live snapshot/patch contract', () => {
   it('applies updateOptions patch', () => {
     const data = createProjectWithLiveData();
     applyProjectDocumentPatch(data, {
-      blueLive: { type: 'updateOptions', patch: { commandLine: '--new-flag', commandLineEnabled: false } },
+      blueLive: {
+        type: 'updateOptions',
+        patch: { commandLine: '--new-flag', commandLineEnabled: false },
+      },
     });
     const snap = createBlueLiveProjectSnapshot(data.getLiveData());
 
@@ -453,10 +486,23 @@ describe('Blue Live snapshot/patch contract', () => {
 
     const data2 = createProjectWithLiveData();
     applyProjectDocumentPatch(data2, {
-      blueLive: { type: 'updateOptions', patch: { commandLine: original.commandLine, commandLineEnabled: original.commandLineEnabled } },
+      blueLive: {
+        type: 'updateOptions',
+        patch: {
+          commandLine: original.commandLine,
+          commandLineEnabled: original.commandLineEnabled,
+        },
+      },
     });
     applyProjectDocumentPatch(data2, {
-      blueLive: { type: 'updateTempoRepeat', patch: { tempo: original.tempo, repeat: original.repeat, repeatEnabled: original.repeatEnabled } },
+      blueLive: {
+        type: 'updateTempoRepeat',
+        patch: {
+          tempo: original.tempo,
+          repeat: original.repeat,
+          repeatEnabled: original.repeatEnabled,
+        },
+      },
     });
     applyProjectDocumentPatch(data2, {
       blueLive: { type: 'updateLiveCodeText', text: original.liveCodeText },

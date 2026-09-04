@@ -37,14 +37,20 @@ export default function RenderToDiskDialog(): React.ReactElement | null {
   // Isolated renderer tests and early startup can intentionally expose only a
   // partial preload bridge; disk-render statuses still require the full bridge.
   useEffect(() => {
-    const unsubscribe = window.blueAPI?.onRenderOperationStatus?.((status: RenderOperationStatus) => {
-      useRenderToDiskStore.getState().handleStatus(status);
-    });
-    return () => { unsubscribe?.(); };
+    const unsubscribe = window.blueAPI?.onRenderOperationStatus?.(
+      (status: RenderOperationStatus) => {
+        useRenderToDiskStore.getState().handleStatus(status);
+      },
+    );
+    return () => {
+      unsubscribe?.();
+    };
   }, []);
 
   const terminal = isTerminalOperationPhase(phase);
-  const dialogRef = useDialogFocus(open, () => { close(); });
+  const dialogRef = useDialogFocus(open, () => {
+    close();
+  });
   const okButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
@@ -64,7 +70,8 @@ export default function RenderToDiskDialog(): React.ReactElement | null {
   const handleOutputScroll = (): void => {
     const element = outputRef.current;
     if (!element) return;
-    stickToBottomRef.current = element.scrollTop + element.clientHeight >= element.scrollHeight - 40;
+    stickToBottomRef.current =
+      element.scrollTop + element.clientHeight >= element.scrollHeight - 40;
   };
   useEffect(() => {
     const element = outputRef.current;
@@ -77,13 +84,14 @@ export default function RenderToDiskDialog(): React.ReactElement | null {
     return null;
   }
 
-  const rowStatus: OperationRowStatus = phase === 'completed'
-    ? 'complete'
-    : phase === 'cancelled'
-      ? 'cancelled'
-      : phase === 'failed'
-        ? 'failed'
-        : 'running';
+  const rowStatus: OperationRowStatus =
+    phase === 'completed'
+      ? 'complete'
+      : phase === 'cancelled'
+        ? 'cancelled'
+        : phase === 'failed'
+          ? 'failed'
+          : 'running';
 
   const summary = terminal
     ? message
@@ -105,17 +113,34 @@ export default function RenderToDiskDialog(): React.ReactElement | null {
         aria-labelledby="render-to-disk-title"
       >
         <div className="flex items-center justify-between border-b border-app-hover px-4 py-3">
-          <h2 id="render-to-disk-title" className="text-role-title-2 font-bold text-app-text-bright" data-testid="render-dialog-title">
+          <h2
+            id="render-to-disk-title"
+            className="text-role-title-2 font-bold text-app-text-bright"
+            data-testid="render-dialog-title"
+          >
             {operationDialogTitle('Render to Disk', phase)}
           </h2>
         </div>
 
         <div className="min-h-0 flex-1 overflow-auto px-4 py-3">
-          <table className="w-full border-collapse text-left text-role-body text-app-text" data-testid="render-items-table">
+          <table
+            className="w-full border-collapse text-left text-role-body text-app-text"
+            data-testid="render-items-table"
+          >
             <thead>
               <tr className="text-app-text-muted">
-                <th scope="col" className="sticky top-0 bg-app-surface px-2 py-2 text-role-headline font-bold">Output</th>
-                <th scope="col" className="sticky top-0 bg-app-surface px-2 py-2 text-role-headline font-bold">Status</th>
+                <th
+                  scope="col"
+                  className="sticky top-0 bg-app-surface px-2 py-2 text-role-headline font-bold"
+                >
+                  Output
+                </th>
+                <th
+                  scope="col"
+                  className="sticky top-0 bg-app-surface px-2 py-2 text-role-headline font-bold"
+                >
+                  Status
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -150,9 +175,11 @@ export default function RenderToDiskDialog(): React.ReactElement | null {
             aria-controls="render-output-console"
             onClick={toggleOutput}
           >
-            {outputExpanded
-              ? <ChevronDown size={14} strokeWidth={2.5} aria-hidden="true" />
-              : <ChevronRight size={14} strokeWidth={2.5} aria-hidden="true" />}
+            {outputExpanded ? (
+              <ChevronDown size={14} strokeWidth={2.5} aria-hidden="true" />
+            ) : (
+              <ChevronRight size={14} strokeWidth={2.5} aria-hidden="true" />
+            )}
             <span>Output</span>
           </button>
           {outputExpanded && (
@@ -169,7 +196,10 @@ export default function RenderToDiskDialog(): React.ReactElement | null {
         </div>
 
         <div className="flex items-center justify-between gap-4 border-t border-app-hover px-4 py-3">
-          <span className="min-w-0 truncate text-role-callout text-app-text-muted" data-testid="render-dialog-summary">
+          <span
+            className="min-w-0 truncate text-role-callout text-app-text-muted"
+            data-testid="render-dialog-summary"
+          >
             {summary}
           </span>
           <div className="flex shrink-0 items-center gap-2">

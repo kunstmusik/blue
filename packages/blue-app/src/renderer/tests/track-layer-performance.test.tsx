@@ -44,8 +44,18 @@ describe('Track timeline performance envelope', () => {
           },
         };
         Object.defineProperties(item, {
-          startBeats: { get: () => { startReads += 1; return index; } },
-          durationBeats: { get: () => { durationReads += 1; return 1; } },
+          startBeats: {
+            get: () => {
+              startReads += 1;
+              return index;
+            },
+          },
+          durationBeats: {
+            get: () => {
+              durationReads += 1;
+              return 1;
+            },
+          },
         });
         return item;
       }),
@@ -59,12 +69,14 @@ describe('Track timeline performance envelope', () => {
 
     startReads = 0;
     durationReads = 0;
-    const selected = layer.items.filter((item) => selectionIntersectsTimelineItem(
-      item,
-      0,
-      layer.height,
-      { left: 500, right: 510, top: 0, bottom: 22 },
-    ));
+    const selected = layer.items.filter((item) =>
+      selectionIntersectsTimelineItem(item, 0, layer.height, {
+        left: 500,
+        right: 510,
+        top: 0,
+        bottom: 22,
+      }),
+    );
     expect(selected.map((item) => item.objectId)).toEqual(
       Array.from({ length: 12 }, (_, index) => `item-${index + 499}`),
     );

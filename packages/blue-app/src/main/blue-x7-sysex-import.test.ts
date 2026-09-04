@@ -3,9 +3,7 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { dialog } from 'electron';
-import {
-  selectBlueX7SysexFile,
-} from './blue-x7-sysex-import';
+import { selectBlueX7SysexFile } from './blue-x7-sysex-import';
 
 vi.mock('electron', () => ({
   dialog: {
@@ -17,7 +15,17 @@ vi.mock('electron', () => ({
 }));
 
 describe('BlueX7 SysEx Import — Main Process Service', () => {
-  const fixturesDir = path.join(__dirname, '..', '..', '..', 'blue-data', 'src', 'instruments', 'blue-x7', 'test-fixtures');
+  const fixturesDir = path.join(
+    __dirname,
+    '..',
+    '..',
+    '..',
+    'blue-data',
+    'src',
+    'instruments',
+    'blue-x7',
+    'test-fixtures',
+  );
   const singleSyxPath = path.join(fixturesDir, 'single-voice.syx');
   const bankSyxPath = path.join(fixturesDir, 'voice-bank.syx');
 

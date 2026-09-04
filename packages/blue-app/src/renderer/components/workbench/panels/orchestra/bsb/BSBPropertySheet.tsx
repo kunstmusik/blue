@@ -127,24 +127,157 @@ const NUMBER_PROPS = new Set([
 ]);
 
 const BEANINFO_PROPERTIES: Record<string, string[]> = {
-  BSBHSlider: ['objectName', 'x', 'y', 'sliderWidth', 'minimum', 'maximum', 'value', 'resolution', 'valueDisplayEnabled', 'automationAllowed', 'randomizable', 'comment'],
-  BSBVSlider: ['objectName', 'x', 'y', 'sliderHeight', 'minimum', 'maximum', 'value', 'resolution', 'valueDisplayEnabled', 'automationAllowed', 'randomizable', 'comment'],
-  BSBKnob: ['objectName', 'x', 'y', 'knobWidth', 'minimum', 'maximum', 'value', 'label', 'labelEnabled', 'labelFont', 'valueDisplayEnabled', 'automationAllowed', 'randomizable', 'comment'],
+  BSBHSlider: [
+    'objectName',
+    'x',
+    'y',
+    'sliderWidth',
+    'minimum',
+    'maximum',
+    'value',
+    'resolution',
+    'valueDisplayEnabled',
+    'automationAllowed',
+    'randomizable',
+    'comment',
+  ],
+  BSBVSlider: [
+    'objectName',
+    'x',
+    'y',
+    'sliderHeight',
+    'minimum',
+    'maximum',
+    'value',
+    'resolution',
+    'valueDisplayEnabled',
+    'automationAllowed',
+    'randomizable',
+    'comment',
+  ],
+  BSBKnob: [
+    'objectName',
+    'x',
+    'y',
+    'knobWidth',
+    'minimum',
+    'maximum',
+    'value',
+    'label',
+    'labelEnabled',
+    'labelFont',
+    'valueDisplayEnabled',
+    'automationAllowed',
+    'randomizable',
+    'comment',
+  ],
   BSBCheckBox: ['objectName', 'x', 'y', 'label', 'automationAllowed', 'randomizable', 'comment'],
-  BSBDropdown: ['objectName', 'x', 'y', 'selectedIndex', 'BSBDropdownItemList', 'fontSize', 'automationAllowed', 'randomizable', 'comment'],
+  BSBDropdown: [
+    'objectName',
+    'x',
+    'y',
+    'selectedIndex',
+    'BSBDropdownItemList',
+    'fontSize',
+    'automationAllowed',
+    'randomizable',
+    'comment',
+  ],
   BSBLabel: ['x', 'y', 'label', 'font'],
   BSBTextField: ['objectName', 'x', 'y', 'textFieldWidth', 'value', 'comment'],
   BSBValue: ['objectName', 'x', 'y', 'minimum', 'maximum', 'defaultValue', 'automationAllowed'],
-  BSBXYController: ['objectName', 'x', 'y', 'width', 'height', 'XMin', 'XMax', 'YMin', 'YMax', 'valueDisplayEnabled', 'automationAllowed', 'randomizable', 'comment'],
-  BSBGroup: ['x', 'y', 'groupName', 'titleEnabled', 'font', 'backgroundColor', 'borderColor', 'labelTextColor', 'comment'],
-  BSBFileSelector: ['objectName', 'x', 'y', 'textFieldWidth', 'stringChannelEnabled', 'fileName', 'comment'],
-  BSBHSliderBank: ['objectName', 'x', 'y', 'numberOfSliders', 'sliderWidth', 'minimum', 'maximum', 'resolution', 'gap', 'valueDisplayEnabled', 'automationAllowed', 'randomizable', 'comment'],
-  BSBVSliderBank: ['objectName', 'x', 'y', 'numberOfSliders', 'sliderHeight', 'minimum', 'maximum', 'resolution', 'gap', 'valueDisplayEnabled', 'automationAllowed', 'randomizable', 'comment'],
-  BSBLineObject: ['objectName', 'x', 'y', 'canvasWidth', 'canvasHeight', 'XMax', 'lines', 'separatorType', 'leadingZero', 'relativeXValues', 'locked', 'comment'],
+  BSBXYController: [
+    'objectName',
+    'x',
+    'y',
+    'width',
+    'height',
+    'XMin',
+    'XMax',
+    'YMin',
+    'YMax',
+    'valueDisplayEnabled',
+    'automationAllowed',
+    'randomizable',
+    'comment',
+  ],
+  BSBGroup: [
+    'x',
+    'y',
+    'groupName',
+    'titleEnabled',
+    'font',
+    'backgroundColor',
+    'borderColor',
+    'labelTextColor',
+    'comment',
+  ],
+  BSBFileSelector: [
+    'objectName',
+    'x',
+    'y',
+    'textFieldWidth',
+    'stringChannelEnabled',
+    'fileName',
+    'comment',
+  ],
+  BSBHSliderBank: [
+    'objectName',
+    'x',
+    'y',
+    'numberOfSliders',
+    'sliderWidth',
+    'minimum',
+    'maximum',
+    'resolution',
+    'gap',
+    'valueDisplayEnabled',
+    'automationAllowed',
+    'randomizable',
+    'comment',
+  ],
+  BSBVSliderBank: [
+    'objectName',
+    'x',
+    'y',
+    'numberOfSliders',
+    'sliderHeight',
+    'minimum',
+    'maximum',
+    'resolution',
+    'gap',
+    'valueDisplayEnabled',
+    'automationAllowed',
+    'randomizable',
+    'comment',
+  ],
+  BSBLineObject: [
+    'objectName',
+    'x',
+    'y',
+    'canvasWidth',
+    'canvasHeight',
+    'XMax',
+    'lines',
+    'separatorType',
+    'leadingZero',
+    'relativeXValues',
+    'locked',
+    'comment',
+  ],
   BSBSubChannelDropdown: ['objectName', 'x', 'y', 'comment'],
 };
 
-const TOP_LEVEL_PROPERTY_KEYS = new Set(['objectName', 'x', 'y', 'width', 'height', 'value', 'minimum', 'maximum']);
+const TOP_LEVEL_PROPERTY_KEYS = new Set([
+  'objectName',
+  'x',
+  'y',
+  'width',
+  'height',
+  'value',
+  'minimum',
+  'maximum',
+]);
 const NON_RENDERED_PROPERTIES = new Set(['BSBDropdownItemList', 'font', 'labelFont', 'lines']);
 
 interface PropertyBinding {
@@ -295,7 +428,6 @@ function EditableBsbPropertySheet({
   allObjectNames: Set<string>;
   onBsbInterfacePatch: (patch: BsbInterfacePatch) => void;
 }): React.ReactElement {
-
   const allowed = BEANINFO_PROPERTIES[widget.type];
   const allowedSet = allowed ? new Set(allowed) : null;
 
@@ -326,7 +458,8 @@ function EditableBsbPropertySheet({
       if (merged.has(key)) continue;
       const isFontKey = key.startsWith('labelFont.') || key.startsWith('font.');
       if (!isFontKey) continue;
-      if (allowedSet && !allowedSet.has(key.startsWith('labelFont.') ? 'labelFont' : 'font')) continue;
+      if (allowedSet && !allowedSet.has(key.startsWith('labelFont.') ? 'labelFont' : 'font'))
+        continue;
       if (value !== undefined && value !== null) {
         merged.set(key, value);
       }
@@ -414,7 +547,8 @@ function EditableBsbPropertySheet({
         }
 
         const isExactResolution = key === 'resolution' && typeof rawVal === 'string';
-        const isNumber = !isExactResolution && (NUMBER_PROPS.has(key) || typeof rawVal === 'number');
+        const isNumber =
+          !isExactResolution && (NUMBER_PROPS.has(key) || typeof rawVal === 'number');
         const isObjectName = key === 'objectName';
 
         return (
@@ -426,11 +560,13 @@ function EditableBsbPropertySheet({
               widget={widget}
               widgetId={widget.id}
               allObjectNames={allObjectNames}
-              validate={isExactResolution
-                ? validateExactResolutionProperty
-                : isNumber
-                  ? (v: string) => validateNumericProperty(key, v, widget)
-                  : undefined}
+              validate={
+                isExactResolution
+                  ? validateExactResolutionProperty
+                  : isNumber
+                    ? (v: string) => validateNumericProperty(key, v, widget)
+                    : undefined
+              }
               onCommit={(val) => {
                 if (isNumber) {
                   updateProperty(key, val === '' ? 0 : parseFloat(val as string));
@@ -443,7 +579,7 @@ function EditableBsbPropertySheet({
         );
       })}
 
-      {fontGroups.map(g => (
+      {fontGroups.map((g) => (
         <PropertyRow key={g.prefix} label={g.label}>
           <div className="flex items-center gap-1">
             <span className="flex-1 truncate rounded border border-app-border bg-app-surface-raised px-2 py-1 text-role-body text-app-text-strong">
@@ -461,14 +597,24 @@ function EditableBsbPropertySheet({
 
       {widget.properties?.dropdownItems != null && (
         <DropdownItemsEditor
-          items={widget.properties.dropdownItems as Array<{ name?: string; value?: string; uniqueId?: string }>}
+          items={
+            widget.properties.dropdownItems as Array<{
+              name?: string;
+              value?: string;
+              uniqueId?: string;
+            }>
+          }
           onUpdate={(items) => updateProperty('dropdownItems', items)}
         />
       )}
 
       {widget.type === 'BSBLineObject' && (
         <LineObjectEditor
-          lines={Array.isArray(widget.properties?.lines) ? widget.properties.lines as Array<LineEditorItem> : []}
+          lines={
+            Array.isArray(widget.properties?.lines)
+              ? (widget.properties.lines as Array<LineEditorItem>)
+              : []
+          }
           onUpdate={(lines) => updateProperty('lines', lines)}
         />
       )}
@@ -492,7 +638,13 @@ function validateExactResolutionProperty(proposed: string): string | null {
   return parsed.ok ? parsed.value.canonicalText : null;
 }
 
-function PropertyRow({ label, children }: { label: string; children: React.ReactNode }): React.ReactElement {
+function PropertyRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}): React.ReactElement {
   return (
     <div className="grid grid-cols-[80px_1fr] items-center gap-2">
       <label className="truncate text-role-body text-app-text">{label}</label>
@@ -567,7 +719,10 @@ function PropertyInput({
       value={localValue}
       onChange={(e) => setLocalValue(e.target.value)}
       onFocus={() => setFocused(true)}
-      onBlur={() => { setFocused(false); commit(); }}
+      onBlur={() => {
+        setFocused(false);
+        commit();
+      }}
       onKeyDown={(e) => {
         if (e.key === 'Enter') {
           e.preventDefault();
@@ -601,9 +756,15 @@ export function validateNumericProperty(
     return String(Math.max(0, num));
   }
 
-  if (key === 'width' || key === 'height' || key === 'sliderWidth' ||
-      key === 'sliderHeight' || key === 'knobWidth' || key === 'canvasWidth' ||
-      key === 'canvasHeight') {
+  if (
+    key === 'width' ||
+    key === 'height' ||
+    key === 'sliderWidth' ||
+    key === 'sliderHeight' ||
+    key === 'knobWidth' ||
+    key === 'canvasWidth' ||
+    key === 'canvasHeight'
+  ) {
     return String(Math.max(1, Math.round(num)));
   }
 
@@ -662,7 +823,12 @@ export function validateNumericProperty(
   return proposed;
 }
 
-const STYLE_NAMES: Record<number, string> = { 0: 'Plain', 1: 'Bold', 2: 'Italic', 3: 'Bold Italic' };
+const STYLE_NAMES: Record<number, string> = {
+  0: 'Plain',
+  1: 'Bold',
+  2: 'Italic',
+  3: 'Bold Italic',
+};
 
 function fontSummary(font: FontChoice): string {
   const styleName = STYLE_NAMES[font.style] ?? 'Plain';
@@ -706,7 +872,9 @@ function DropdownItemsEditor({
 }): React.ReactElement | null {
   const safeItems = Array.isArray(items) ? items : [];
   const normalizedItems = useMemo(() => safeItems.map(normalizeDropdownItem), [safeItems]);
-  const needsNormalization = normalizedItems.some((item, index) => item.uniqueId !== safeItems[index]?.uniqueId);
+  const needsNormalization = normalizedItems.some(
+    (item, index) => item.uniqueId !== safeItems[index]?.uniqueId,
+  );
 
   useEffect(() => {
     if (Array.isArray(items) && needsNormalization) {
@@ -719,16 +887,26 @@ function DropdownItemsEditor({
   return (
     <div className="mt-2 border-t border-app-border pt-2">
       <div className="mb-1 flex items-center justify-between">
-        <span className="text-role-headline font-bold uppercase tracking-[0.16em] text-app-text-muted">Dropdown Items</span>
+        <span className="text-role-headline font-bold uppercase tracking-[0.16em] text-app-text-muted">
+          Dropdown Items
+        </span>
         <button
           className="rounded bg-app-accent px-2 py-0.5 text-role-callout text-app-text-strong hover:bg-app-accent-hover"
-          onClick={() => onUpdate([...normalizedItems, createDropdownItem('New Item', String(normalizedItems.length))])}
+          onClick={() =>
+            onUpdate([
+              ...normalizedItems,
+              createDropdownItem('New Item', String(normalizedItems.length)),
+            ])
+          }
         >
           + Add
         </button>
       </div>
       {normalizedItems.map((item, i) => (
-        <div key={item.uniqueId ?? i} className="mb-1 grid grid-cols-[1fr_1fr_auto] items-center gap-1">
+        <div
+          key={item.uniqueId ?? i}
+          className="mb-1 grid grid-cols-[1fr_1fr_auto] items-center gap-1"
+        >
           <input
             className="w-full rounded border border-app-border bg-app-surface-raised px-1 py-0.5 text-role-body text-app-text-strong outline-none focus:border-app-accent"
             value={item.name}
@@ -776,7 +954,9 @@ function DropdownItemsEditor({
             </button>
             <button
               className="p-0.5 text-role-callout text-app-danger hover:opacity-80"
-              onClick={() => onUpdate(normalizedItems.filter((_, idx) => idx !== i).map(cloneDropdownItem))}
+              onClick={() =>
+                onUpdate(normalizedItems.filter((_, idx) => idx !== i).map(cloneDropdownItem))
+              }
               title="Remove"
             >
               <X className="h-3 w-3" />
@@ -825,7 +1005,9 @@ function LineObjectEditor({
   };
 
   useEffect(() => {
-    const needsNormalization = normalizedLines.some((line, index) => !lineValuesEqual(line, safeLines[index]));
+    const needsNormalization = normalizedLines.some(
+      (line, index) => !lineValuesEqual(line, safeLines[index]),
+    );
     if (Array.isArray(lines) && needsNormalization) {
       onUpdate(normalizedLines);
     }
@@ -836,7 +1018,9 @@ function LineObjectEditor({
   return (
     <div className="mt-2 border-t border-app-border pt-2">
       <div className="mb-1 flex items-center justify-between">
-        <span className="text-role-headline font-bold uppercase tracking-[0.16em] text-app-text-muted">Lines</span>
+        <span className="text-role-headline font-bold uppercase tracking-[0.16em] text-app-text-muted">
+          Lines
+        </span>
         <button
           className="rounded bg-app-accent px-2 py-0.5 text-role-callout text-app-text-strong hover:bg-app-accent-hover"
           onClick={() => onUpdate([...normalizedLines, createLineItem(normalizedLines)])}
@@ -854,7 +1038,10 @@ function LineObjectEditor({
           <div className="px-1 py-1" />
         </div>
         {normalizedLines.map((line, i) => (
-          <div key={`line-${i}`} className="grid min-w-[376px] grid-cols-[36px_minmax(82px,1fr)_64px_64px_88px_42px] items-center border-b border-app-border/30 text-role-body last:border-b-0">
+          <div
+            key={`line-${i}`}
+            className="grid min-w-[376px] grid-cols-[36px_minmax(82px,1fr)_64px_64px_88px_42px] items-center border-b border-app-border/30 text-role-body last:border-b-0"
+          >
             <label className="flex h-full min-h-8 items-center justify-center border-r border-app-border/30">
               <span className="sr-only">Color</span>
               <ColorPickerButton
@@ -876,14 +1063,18 @@ function LineObjectEditor({
               type="number"
               step="any"
               value={line.min}
-              onChange={(event) => updateLine(i, { min: parseFloatField(event.target.value, line.min) })}
+              onChange={(event) =>
+                updateLine(i, { min: parseFloatField(event.target.value, line.min) })
+              }
             />
             <input
               className="h-8 w-full border-0 border-r border-app-border/30 bg-transparent px-1 text-right text-role-body text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-app-accent"
               type="number"
               step="any"
               value={line.max}
-              onChange={(event) => updateLine(i, { max: parseFloatField(event.target.value, line.max) })}
+              onChange={(event) =>
+                updateLine(i, { max: parseFloatField(event.target.value, line.max) })
+              }
             />
             <label className="flex h-8 items-center justify-center border-r border-app-border/30">
               <span className="sr-only">Link First/Last</span>
@@ -921,7 +1112,9 @@ function LineObjectEditor({
               </button>
               <button
                 className="p-0.5 text-role-callout text-app-danger hover:opacity-80"
-                onClick={() => onUpdate(normalizedLines.filter((_, idx) => idx !== i).map(cloneLineItem))}
+                onClick={() =>
+                  onUpdate(normalizedLines.filter((_, idx) => idx !== i).map(cloneLineItem))
+                }
                 title="Remove"
               >
                 <X className="h-3 w-3" />
@@ -938,9 +1131,10 @@ function normalizeDropdownItem(item: DropdownItemEditor): DropdownItemEditor {
   return {
     name: typeof item.name === 'string' ? item.name : '',
     value: typeof item.value === 'string' ? item.value : '',
-    uniqueId: typeof item.uniqueId === 'string' && item.uniqueId.length > 0
-      ? item.uniqueId
-      : createDropdownUniqueId(),
+    uniqueId:
+      typeof item.uniqueId === 'string' && item.uniqueId.length > 0
+        ? item.uniqueId
+        : createDropdownUniqueId(),
   };
 }
 
@@ -973,22 +1167,27 @@ function normalizeLineItems(items: Array<LineEditorItem>): Array<LineEditorItem>
   });
 }
 
-function normalizeLineItem(item: LineEditorItem, index = 0, usedNames = new Set<string>()): LineEditorItem {
-  const points = Array.isArray(item.points) && item.points.length > 0
-    ? item.points.map((point) => ({
-        x: typeof point?.x === 'number' ? point.x : 0,
-        y: typeof point?.y === 'number' ? point.y : 0,
-      }))
-    : createLineItem([], index).points;
+function normalizeLineItem(
+  item: LineEditorItem,
+  index = 0,
+  usedNames = new Set<string>(),
+): LineEditorItem {
+  const points =
+    Array.isArray(item.points) && item.points.length > 0
+      ? item.points.map((point) => ({
+          x: typeof point?.x === 'number' ? point.x : 0,
+          y: typeof point?.y === 'number' ? point.y : 0,
+        }))
+      : createLineItem([], index).points;
 
-  const rawName = typeof item.varName === 'string'
-    ? item.varName
-    : typeof item.name === 'string'
-      ? item.name
-      : '';
-  const varName = rawName.trim().length > 0
-    ? rawName
-    : createUniqueLineNameFromNames(usedNames, index);
+  const rawName =
+    typeof item.varName === 'string'
+      ? item.varName
+      : typeof item.name === 'string'
+        ? item.name
+        : '';
+  const varName =
+    rawName.trim().length > 0 ? rawName : createUniqueLineNameFromNames(usedNames, index);
 
   return {
     varName,
@@ -1002,7 +1201,10 @@ function normalizeLineItem(item: LineEditorItem, index = 0, usedNames = new Set<
   };
 }
 
-function createLineItem(existingLines: Array<LineEditorItem> = [], colorIndex = existingLines.length): LineEditorItem {
+function createLineItem(
+  existingLines: Array<LineEditorItem> = [],
+  colorIndex = existingLines.length,
+): LineEditorItem {
   return {
     varName: createUniqueLineName(existingLines),
     min: 0,
@@ -1027,15 +1229,19 @@ function cloneLineItem(item: LineEditorItem): LineEditorItem {
 
 function lineValuesEqual(a: LineEditorItem, b: LineEditorItem | undefined): boolean {
   if (!b) return false;
-  return a.varName === b.varName
-    && a.min === b.min
-    && a.max === b.max
-    && a.color === b.color
-    && a.resolution === b.resolution
-    && a.rightBound === b.rightBound
-    && a.endPointsLinked === b.endPointsLinked
-    && a.points.length === (b.points?.length ?? 0)
-    && a.points.every((point, index) => point.x === b.points?.[index]?.x && point.y === b.points?.[index]?.y);
+  return (
+    a.varName === b.varName &&
+    a.min === b.min &&
+    a.max === b.max &&
+    a.color === b.color &&
+    a.resolution === b.resolution &&
+    a.rightBound === b.rightBound &&
+    a.endPointsLinked === b.endPointsLinked &&
+    a.points.length === (b.points?.length ?? 0) &&
+    a.points.every(
+      (point, index) => point.x === b.points?.[index]?.x && point.y === b.points?.[index]?.y,
+    )
+  );
 }
 
 function parseFloatField(value: string, fallback?: number): number {
@@ -1050,7 +1256,13 @@ function getLinePaletteColor(index: number): string {
 function createUniqueLineName(lines: Array<LineEditorItem>): string {
   const usedNames = new Set(
     lines
-      .map((line) => typeof line.varName === 'string' ? line.varName : typeof line.name === 'string' ? line.name : '')
+      .map((line) =>
+        typeof line.varName === 'string'
+          ? line.varName
+          : typeof line.name === 'string'
+            ? line.name
+            : '',
+      )
       .filter((name) => name.length > 0),
   );
   return createUniqueLineNameFromNames(usedNames, lines.length);
@@ -1070,7 +1282,11 @@ function createUniqueLineNameFromNames(usedNames: Set<string>, fallbackIndex: nu
   return `line${nextIndex}`;
 }
 
-function isLineNameAvailable(lines: Array<LineEditorItem>, currentIndex: number, proposedName: string): boolean {
+function isLineNameAvailable(
+  lines: Array<LineEditorItem>,
+  currentIndex: number,
+  proposedName: string,
+): boolean {
   return lines.every((line, index) => index === currentIndex || line.varName !== proposedName);
 }
 

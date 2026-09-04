@@ -32,13 +32,7 @@
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { constants } from 'node:fs';
-import {
-  accessSync,
-  existsSync,
-  readFileSync,
-  readdirSync,
-  statSync,
-} from 'node:fs';
+import { accessSync, existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -81,7 +75,8 @@ function checkPath(label, filePath, kind = 'file') {
     }
     return { ok: true, code: 'OK', message: `${label}: ${filePath}` };
   } catch (error) {
-    const code = error && typeof error === 'object' && 'code' in error ? String(error.code) : 'STAT_FAILED';
+    const code =
+      error && typeof error === 'object' && 'code' in error ? String(error.code) : 'STAT_FAILED';
     return {
       ok: false,
       code,
@@ -131,8 +126,10 @@ export function checkStagedBlueEngine({
     };
   }
   const expectedEntries = ['artifact.json', target.executableName].sort();
-  if (entries.length !== expectedEntries.length ||
-      entries.some((entry, index) => entry !== expectedEntries[index])) {
+  if (
+    entries.length !== expectedEntries.length ||
+    entries.some((entry, index) => entry !== expectedEntries[index])
+  ) {
     return {
       ok: false,
       code: 'BLUE_ENGINE_STAGE_CONTENTS',
@@ -152,11 +149,13 @@ export function checkStagedBlueEngine({
       detail: [error instanceof Error ? error.message : String(error)],
     };
   }
-  if (manifest.schemaVersion !== 1 ||
-      manifest.protocolVersion !== engineProtocolVersion ||
-      manifest.platform !== target.platform ||
-      manifest.arch !== target.arch ||
-      manifest.executableName !== target.executableName) {
+  if (
+    manifest.schemaVersion !== 1 ||
+    manifest.protocolVersion !== engineProtocolVersion ||
+    manifest.platform !== target.platform ||
+    manifest.arch !== target.arch ||
+    manifest.executableName !== target.executableName
+  ) {
     return {
       ok: false,
       code: 'BLUE_ENGINE_MANIFEST_MISMATCH',
@@ -171,13 +170,16 @@ export function checkStagedBlueEngine({
     };
   }
   const dirtyRevision = manifest.sourceRevision.startsWith('dirty:');
-  const revision = dirtyRevision ? manifest.sourceRevision.slice('dirty:'.length) : manifest.sourceRevision;
+  const revision = dirtyRevision
+    ? manifest.sourceRevision.slice('dirty:'.length)
+    : manifest.sourceRevision;
   if (revision !== expectedRevision || (ci && dirtyRevision)) {
     return {
       ok: false,
-      code: dirtyRevision && ci
-        ? 'BLUE_ENGINE_DIRTY_CI_REVISION'
-        : 'BLUE_ENGINE_SOURCE_REVISION_MISMATCH',
+      code:
+        dirtyRevision && ci
+          ? 'BLUE_ENGINE_DIRTY_CI_REVISION'
+          : 'BLUE_ENGINE_SOURCE_REVISION_MISMATCH',
       message: `Bundled Blue Engine revision ${manifest.sourceRevision} does not match ${expectedRevision}`,
     };
   }
@@ -223,7 +225,10 @@ export function checkStagedBlueEngine({
 function checkJavaHelperOutputs() {
   const jar = join(appRoot, 'assets', 'java', 'blue-java.jar');
   const pythonLib = join(appRoot, 'assets', 'java', 'pythonLib');
-  return [checkPath('Java helper JAR', jar, 'file'), checkPath('Java helper Python library', pythonLib, 'dir')];
+  return [
+    checkPath('Java helper JAR', jar, 'file'),
+    checkPath('Java helper Python library', pythonLib, 'dir'),
+  ];
 }
 
 /**
@@ -354,7 +359,10 @@ export function checkReleaseMetadata({
       message: `Release metadata appVersion ${String(metadata.appVersion)} does not match ${packageVersion}`,
     };
   }
-  if (typeof metadata.sourceRevision !== 'string' || !/^[0-9a-f]{40}$/i.test(metadata.sourceRevision)) {
+  if (
+    typeof metadata.sourceRevision !== 'string' ||
+    !/^[0-9a-f]{40}$/i.test(metadata.sourceRevision)
+  ) {
     return {
       ok: false,
       code: 'RELEASE_METADATA_REVISION_INVALID',
@@ -585,9 +593,7 @@ function checkViteExternalizationContract() {
   };
 }
 
-export function collectPackageInputDiagnostics({
-  target = resolvePackageTarget(),
-} = {}) {
+export function collectPackageInputDiagnostics({ target = resolvePackageTarget() } = {}) {
   /** @type {Diagnostic[]} */
   return [
     ...checkJavaHelperOutputs(),

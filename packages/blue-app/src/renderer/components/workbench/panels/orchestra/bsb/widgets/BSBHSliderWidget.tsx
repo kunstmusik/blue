@@ -1,5 +1,8 @@
 import React, { useCallback, useRef, useEffect } from 'react';
-import { BSB_VALUE_PANEL_HEIGHT, BSB_VALUE_PANEL_WIDTH } from '../../../../../../../shared/bsb-widget-layout';
+import {
+  BSB_VALUE_PANEL_HEIGHT,
+  BSB_VALUE_PANEL_WIDTH,
+} from '../../../../../../../shared/bsb-widget-layout';
 import WidgetWrapper from './WidgetWrapper';
 import { ValuePanel, formatValue } from './ValuePanel';
 import { getWidgetDisplaySize } from './utils';
@@ -24,7 +27,8 @@ function BSBHSliderWidget({
   getWidgetPosition,
   onWidgetAction,
 }: BSBHSliderWidgetProps): React.ReactElement {
-  const sliderWidth = typeof node.properties.sliderWidth === 'number' ? node.properties.sliderWidth : 150;
+  const sliderWidth =
+    typeof node.properties.sliderWidth === 'number' ? node.properties.sliderWidth : 150;
   const displaySize = getWidgetDisplaySize(node);
   const value = node.value;
   const minimum = node.minimum;
@@ -75,26 +79,44 @@ function BSBHSliderWidget({
     };
   }, [editEnabled]);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
-    if (editEnabled) return;
-    e.preventDefault();
-    dragging.current = true;
-    const { sliderWidth: sw, minimum: min, range: r, nodeId } = paramsRef.current;
-    const rect = svgRef.current!.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const trackStart = THUMB_R;
-    const trackEnd = sw - THUMB_R;
-    const newPct = Math.max(0, Math.min(1, (x - trackStart) / (trackEnd - trackStart)));
-    const newVal = min + newPct * r;
-    patchRef.current({
-      type: 'updateWidgetProperties',
-      widgetId: nodeId,
-      properties: { value: newVal },
-    });
-  }, [editEnabled]);
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent<SVGSVGElement>) => {
+      if (editEnabled) return;
+      e.preventDefault();
+      dragging.current = true;
+      const { sliderWidth: sw, minimum: min, range: r, nodeId } = paramsRef.current;
+      const rect = svgRef.current!.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const trackStart = THUMB_R;
+      const trackEnd = sw - THUMB_R;
+      const newPct = Math.max(0, Math.min(1, (x - trackStart) / (trackEnd - trackStart)));
+      const newVal = min + newPct * r;
+      patchRef.current({
+        type: 'updateWidgetProperties',
+        widgetId: nodeId,
+        properties: { value: newVal },
+      });
+    },
+    [editEnabled],
+  );
 
   return (
-    <WidgetWrapper node={node} isSelected={isSelected} editEnabled={editEnabled} onWidgetSelect={onWidgetSelect} displayWidth={displaySize.width} displayHeight={displaySize.height} resizeMeta={resizeMeta} gridSnapEnabled={gridSnapEnabled} gridSnapWidth={gridSnapWidth} gridSnapHeight={gridSnapHeight} onBsbInterfacePatch={onBsbInterfacePatch} selectedWidgetIds={selectedWidgetIds} getWidgetPosition={getWidgetPosition} onWidgetAction={onWidgetAction}>
+    <WidgetWrapper
+      node={node}
+      isSelected={isSelected}
+      editEnabled={editEnabled}
+      onWidgetSelect={onWidgetSelect}
+      displayWidth={displaySize.width}
+      displayHeight={displaySize.height}
+      resizeMeta={resizeMeta}
+      gridSnapEnabled={gridSnapEnabled}
+      gridSnapWidth={gridSnapWidth}
+      gridSnapHeight={gridSnapHeight}
+      onBsbInterfacePatch={onBsbInterfacePatch}
+      selectedWidgetIds={selectedWidgetIds}
+      getWidgetPosition={getWidgetPosition}
+      onWidgetAction={onWidgetAction}
+    >
       <div className="flex h-full w-full" style={{ width: totalWidth, height: totalHeight }}>
         <svg
           ref={svgRef}

@@ -90,8 +90,7 @@ function javaCanonicalText(coefficient: bigint, scale: number): string {
     }
     return sign + digits.slice(0, precision - scale) + '.' + digits.slice(precision - scale);
   }
-  const mantissa =
-    precision > 1 ? digits[0] + '.' + digits.slice(1) : digits;
+  const mantissa = precision > 1 ? digits[0] + '.' + digits.slice(1) : digits;
   const exponent = adjusted >= 0 ? '+' + adjusted : String(adjusted);
   return sign + mantissa + 'E' + exponent;
 }
@@ -102,7 +101,12 @@ function makeJavaDecimal(coefficient: bigint, scale: number): JavaDecimal {
     coefficient: coefficient.toString(),
     scale,
     canonicalText,
-    doubleValue: javaDecimalToBinary64({ coefficient: coefficient.toString(), scale, canonicalText, doubleValue: 0 }),
+    doubleValue: javaDecimalToBinary64({
+      coefficient: coefficient.toString(),
+      scale,
+      canonicalText,
+      doubleValue: 0,
+    }),
   });
 }
 
@@ -155,7 +159,11 @@ export function parseJavaDecimal(text: string): JavaDecimalResult {
   if (index < text.length) {
     const c = text[index];
     if (c !== 'e' && c !== 'E') {
-      return { ok: false, code: 'INVALID_DECIMAL_SYNTAX', message: `unexpected character '${c}' in decimal text` };
+      return {
+        ok: false,
+        code: 'INVALID_DECIMAL_SYNTAX',
+        message: `unexpected character '${c}' in decimal text`,
+      };
     }
     index++;
     let exponentNegative = false;
@@ -178,7 +186,11 @@ export function parseJavaDecimal(text: string): JavaDecimalResult {
       }
     }
     if (exponentDigits.length === 0) {
-      return { ok: false, code: 'INVALID_DECIMAL_SYNTAX', message: 'decimal exponent has no digits' };
+      return {
+        ok: false,
+        code: 'INVALID_DECIMAL_SYNTAX',
+        message: 'decimal exponent has no digits',
+      };
     }
     exponent = BigInt(exponentDigits);
     if (exponentNegative) exponent = -exponent;
@@ -188,12 +200,20 @@ export function parseJavaDecimal(text: string): JavaDecimalResult {
   }
 
   if (index !== text.length) {
-    return { ok: false, code: 'INVALID_DECIMAL_SYNTAX', message: 'trailing characters in decimal text' };
+    return {
+      ok: false,
+      code: 'INVALID_DECIMAL_SYNTAX',
+      message: 'trailing characters in decimal text',
+    };
   }
 
   const scaleBig = BigInt(fracDigits.length) - exponent;
   if (scaleBig > BigInt(INT32_MAX) || scaleBig < BigInt(INT32_MIN)) {
-    return { ok: false, code: 'DECIMAL_SCALE_OVERFLOW', message: 'decimal scale out of 32-bit range' };
+    return {
+      ok: false,
+      code: 'DECIMAL_SCALE_OVERFLOW',
+      message: 'decimal scale out of 32-bit range',
+    };
   }
   const scale = Number(scaleBig);
 
@@ -408,7 +428,11 @@ function setScale(
   mode: 'FLOOR' | 'HALF_UP',
 ): JavaDecimalResult {
   if (newScale < INT32_MIN || newScale > INT32_MAX) {
-    return { ok: false, code: 'DECIMAL_SCALE_OVERFLOW', message: 'target scale out of 32-bit range' };
+    return {
+      ok: false,
+      code: 'DECIMAL_SCALE_OVERFLOW',
+      message: 'target scale out of 32-bit range',
+    };
   }
   const coefficient = coefficientOf(decimal);
   if (newScale === decimal.scale) {
@@ -417,13 +441,21 @@ function setScale(
   if (newScale > decimal.scale) {
     const pad = newScale - decimal.scale;
     if (pad > POW10_LIMIT) {
-      return { ok: false, code: 'DECIMAL_WORKSPACE_UNAVAILABLE', message: 'decimal workspace is unavailable for the requested scale' };
+      return {
+        ok: false,
+        code: 'DECIMAL_WORKSPACE_UNAVAILABLE',
+        message: 'decimal workspace is unavailable for the requested scale',
+      };
     }
     return { ok: true, value: makeJavaDecimal(coefficient * pow10(pad), newScale) };
   }
   const k = decimal.scale - newScale;
   if (k > POW10_LIMIT) {
-    return { ok: false, code: 'DECIMAL_WORKSPACE_UNAVAILABLE', message: 'decimal workspace is unavailable for the requested scale' };
+    return {
+      ok: false,
+      code: 'DECIMAL_WORKSPACE_UNAVAILABLE',
+      message: 'decimal workspace is unavailable for the requested scale',
+    };
   }
   const divisor = pow10(k);
   let quotient = coefficient / divisor;

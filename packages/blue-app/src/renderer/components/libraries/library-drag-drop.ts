@@ -6,9 +6,7 @@ import type {
 
 export const BLUE_LIBRARY_DRAG_MIME = 'application/x-blue-library-drag';
 
-export function beginLibraryNodeDrag(
-  node: LibraryBrowseNode,
-): LibraryDragDescriptor | null {
+export function beginLibraryNodeDrag(node: LibraryBrowseNode): LibraryDragDescriptor | null {
   if (!node.key || node.nodeKind !== 'item') return null;
   const descriptor: LibraryDragDescriptor = {
     dragSessionId: crypto.randomUUID(),
@@ -34,22 +32,30 @@ export function writeLibraryDragDescriptor(
   dataTransfer.setData('text/plain', 'Blue Library Item');
 }
 
-export function readLibraryDragSource(dataTransfer: DataTransfer): LibraryTransferSourceReference | null {
+export function readLibraryDragSource(
+  dataTransfer: DataTransfer,
+): LibraryTransferSourceReference | null {
   const descriptor = readLibraryDragDescriptor(dataTransfer);
   return descriptor ? { kind: 'drag', dragSessionId: descriptor.dragSessionId } : null;
 }
 
-export function readLibraryDragDescriptor(dataTransfer: DataTransfer): LibraryDragDescriptor | null {
+export function readLibraryDragDescriptor(
+  dataTransfer: DataTransfer,
+): LibraryDragDescriptor | null {
   try {
-    const parsed = JSON.parse(dataTransfer.getData(BLUE_LIBRARY_DRAG_MIME)) as Partial<LibraryDragDescriptor>;
+    const parsed = JSON.parse(
+      dataTransfer.getData(BLUE_LIBRARY_DRAG_MIME),
+    ) as Partial<LibraryDragDescriptor>;
     return typeof parsed.dragSessionId === 'string' && typeof parsed.libraryType === 'string'
-      ? parsed as LibraryDragDescriptor
+      ? (parsed as LibraryDragDescriptor)
       : null;
   } catch {
     return null;
   }
 }
 
-export async function cancelLibraryNodeDrag(descriptor: LibraryDragDescriptor | null): Promise<void> {
+export async function cancelLibraryNodeDrag(
+  descriptor: LibraryDragDescriptor | null,
+): Promise<void> {
   if (descriptor) await window.blueAPI.cancelLibraryDrag(descriptor.dragSessionId);
 }

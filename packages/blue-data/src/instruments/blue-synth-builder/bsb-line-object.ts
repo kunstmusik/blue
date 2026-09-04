@@ -6,10 +6,7 @@ import { Element } from '../../serialization/xml-reader';
 import { BSBWidget } from './bsb-widget';
 import { BSBCompilationUnit } from './bsb-compilation-unit';
 import { formatBlueNumber } from '../../utilities/number-format';
-import {
-  decodeBsbColorToCss,
-  encodeCssColorToJavaInt,
-} from './bsb-color';
+import { decodeBsbColorToCss, encodeCssColorToJavaInt } from './bsb-color';
 
 export type SeparatorType = 'None' | 'Comma' | 'Single Quote';
 
@@ -114,15 +111,15 @@ export function normalizeBsbLinePatch(lines: unknown): Line[] {
   const usedNames = new Set<string>();
 
   return lines.map((line, index) => {
-    const record = line && typeof line === 'object' ? line as Record<string, unknown> : {};
-    const rawName = typeof record.varName === 'string'
-      ? record.varName
-      : typeof record.name === 'string'
-        ? record.name
-        : '';
-    let varName = rawName.trim().length > 0
-      ? rawName
-      : createUniqueBsbLineNameFromNames(usedNames, index);
+    const record = line && typeof line === 'object' ? (line as Record<string, unknown>) : {};
+    const rawName =
+      typeof record.varName === 'string'
+        ? record.varName
+        : typeof record.name === 'string'
+          ? record.name
+          : '';
+    let varName =
+      rawName.trim().length > 0 ? rawName : createUniqueBsbLineNameFromNames(usedNames, index);
     if (usedNames.has(varName)) {
       varName = createUniqueBsbLineNameFromNames(usedNames, index);
     }
@@ -130,18 +127,26 @@ export function normalizeBsbLinePatch(lines: unknown): Line[] {
 
     const min = typeof record.min === 'number' && Number.isFinite(record.min) ? record.min : 0;
     const max = typeof record.max === 'number' && Number.isFinite(record.max) ? record.max : 1;
-    const points = Array.isArray(record.points) && record.points.length > 0
-      ? record.points.map((point) => {
-          const pointRecord = point && typeof point === 'object' ? point as Record<string, unknown> : {};
-          return {
-            x: typeof pointRecord.x === 'number' && Number.isFinite(pointRecord.x) ? pointRecord.x : 0,
-            y: typeof pointRecord.y === 'number' && Number.isFinite(pointRecord.y) ? pointRecord.y : 0,
-          };
-        })
-      : [
-          { x: 0, y: 0.5 },
-          { x: 1, y: 0.5 },
-        ];
+    const points =
+      Array.isArray(record.points) && record.points.length > 0
+        ? record.points.map((point) => {
+            const pointRecord =
+              point && typeof point === 'object' ? (point as Record<string, unknown>) : {};
+            return {
+              x:
+                typeof pointRecord.x === 'number' && Number.isFinite(pointRecord.x)
+                  ? pointRecord.x
+                  : 0,
+              y:
+                typeof pointRecord.y === 'number' && Number.isFinite(pointRecord.y)
+                  ? pointRecord.y
+                  : 0,
+            };
+          })
+        : [
+            { x: 0, y: 0.5 },
+            { x: 1, y: 0.5 },
+          ];
 
     const endPointsLinked = record.endPointsLinked === true;
     if (endPointsLinked && points.length >= 2) {
@@ -171,7 +176,8 @@ export function parseBsbLineFromXml(lineElem: Element, fallbackName: string): Li
   const varName = xmlName || xmlVarName || fallbackName;
   const min = parseFloat(lineElem.getAttribute('min') ?? '0');
   const max = parseFloat(lineElem.getAttribute('max') ?? '1');
-  const resolution = lineElem.getAttribute('bdresolution') ?? lineElem.getAttribute('resolution') ?? '-1';
+  const resolution =
+    lineElem.getAttribute('bdresolution') ?? lineElem.getAttribute('resolution') ?? '-1';
   const rightBound = (lineElem.getAttribute('rightBound') ?? 'false') === 'true';
   const endPointsLinked = (lineElem.getAttribute('endPointsLinked') ?? 'false') === 'true';
   const color = normalizeBsbLineColor(lineElem.getAttribute('color') ?? '#808080');
@@ -201,10 +207,7 @@ export function parseBsbLineFromXml(lineElem: Element, fallbackName: string): Li
   }
 
   if (points.length === 0) {
-    points.push(
-      { x: 0, y: (min + max) * 0.5 },
-      { x: 1, y: (min + max) * 0.5 },
-    );
+    points.push({ x: 0, y: (min + max) * 0.5 }, { x: 1, y: (min + max) * 0.5 });
   }
 
   return {
@@ -294,7 +297,7 @@ export class BSBLineObject extends BSBWidget {
 
         line.points.push({
           x: nextX,
-          y: version === 1 ? (nextY * range) + line.min : nextY,
+          y: version === 1 ? nextY * range + line.min : nextY,
         });
       }
     }
@@ -303,8 +306,8 @@ export class BSBLineObject extends BSBWidget {
   private getLineString(line: Line): string {
     if (line.points.length === 0) return '';
 
-    const xVals = line.points.map(p => p.x * this.xMax);
-    const yVals = line.points.map(p => p.y);
+    const xVals = line.points.map((p) => p.x * this.xMax);
+    const yVals = line.points.map((p) => p.y);
 
     if (this.relativeXValues) {
       for (let i = xVals.length - 1; i > 0; i--) {
@@ -330,9 +333,12 @@ export class BSBLineObject extends BSBWidget {
 
   private getSeparatorString(): string {
     switch (this.separatorType) {
-      case 'Comma': return ', ';
-      case 'Single Quote': return "' ";
-      default: return ' ';
+      case 'Comma':
+        return ', ';
+      case 'Single Quote':
+        return "' ";
+      default:
+        return ' ';
     }
   }
 

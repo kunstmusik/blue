@@ -31,19 +31,39 @@ describe('10,000-item library performance', () => {
       const plan: LegacyLibraryDocumentPlan = {
         libraryType: 'instrument',
         descriptor: {
-          libraryType: 'instrument', fileName: 'userInstrumentLibrary.xml',
-          rootElement: 'instrumentLibrary', categoryElement: 'instrumentCategory',
-          leafElement: 'instrument', ordering: 'categoriesFirst',
+          libraryType: 'instrument',
+          fileName: 'userInstrumentLibrary.xml',
+          rootElement: 'instrumentLibrary',
+          categoryElement: 'instrumentCategory',
+          leafElement: 'instrument',
+          ordering: 'categoriesFirst',
         },
-        root: { kind: 'folder', name: 'Instrument Library', isRoot: true, sourceIndex: 0, children: items },
+        root: {
+          kind: 'folder',
+          name: 'Instrument Library',
+          isRoot: true,
+          sourceIndex: 0,
+          children: items,
+        },
         folderCount: 0,
         itemCount: items.length,
         unsupportedCount: 0,
         diagnostics: [],
         sourceRawHash: 'benchmark',
       };
-      await client.startImportBatch({ id: 'benchmark', mode: 'automatic', sourceCount: 1, startedAt: new Date(0).toISOString() });
-      await client.importLegacyDocument({ batchId: 'benchmark', sourceId: 'benchmark-source', sourcePath: 'memory', sourceKind: 'primary', plan });
+      await client.startImportBatch({
+        id: 'benchmark',
+        mode: 'automatic',
+        sourceCount: 1,
+        startedAt: new Date(0).toISOString(),
+      });
+      await client.importLegacyDocument({
+        batchId: 'benchmark',
+        sourceId: 'benchmark-source',
+        sourcePath: 'memory',
+        sourceKind: 'primary',
+        plan,
+      });
 
       const root = await client.getRoot('instrument');
       const service = new UnifiedLibraryService(':memory:', () => client);
@@ -74,7 +94,10 @@ describe('10,000-item library performance', () => {
       }
       const firstSearchStart = performance.now();
       let search = await service.searchLibraries({
-        query: 'item 00000', typeFilter: 'instrument', projectSessionId: null, limit: 20,
+        query: 'item 00000',
+        typeFilter: 'instrument',
+        projectSessionId: null,
+        limit: 20,
       });
       const searchDurations = [performance.now() - firstSearchStart];
       for (let sample = 1; sample < 20; sample += 1) {
@@ -106,8 +129,12 @@ describe('10,000-item library performance', () => {
       expect(editorSpy).not.toHaveBeenCalled();
       expect(browsePageDurations[0]).toBeLessThan(2_000);
       expect(browsePageDurations.filter((duration) => duration < 1_000)).toHaveLength(20);
-      expect(searchDurations.filter((duration) => duration < 1_000).length).toBeGreaterThanOrEqual(19);
+      expect(searchDurations.filter((duration) => duration < 1_000).length).toBeGreaterThanOrEqual(
+        19,
+      );
       expect(previewMs).toBeLessThan(250);
-    } finally { await client.close(); }
+    } finally {
+      await client.close();
+    }
   }, 20_000);
 });

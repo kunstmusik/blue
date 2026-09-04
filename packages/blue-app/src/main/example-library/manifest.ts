@@ -3,11 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Readable } from 'stream';
 import { finished } from 'stream/promises';
-import {
-  hostCollisionKey,
-  parsePortableExamplePath,
-  PortableExamplePath,
-} from './path-boundary';
+import { hostCollisionKey, parsePortableExamplePath, PortableExamplePath } from './path-boundary';
 
 /**
  * Deterministic runtime manifest of an installed factory example tree
@@ -64,8 +60,7 @@ function defaultSeams(seams: ManifestFsSeams | undefined): Required<ManifestFsSe
     readdirWithTypes:
       seams?.readdirWithTypes ??
       ((dirPath) => fs.promises.readdir(dirPath, { withFileTypes: true })),
-    readFileStream:
-      seams?.readFileStream ?? ((filePath) => fs.createReadStream(filePath)),
+    readFileStream: seams?.readFileStream ?? ((filePath) => fs.createReadStream(filePath)),
   };
 }
 
@@ -191,9 +186,9 @@ export function deriveFactoryRevision(files: readonly FactoryFileManifestRecord[
 
 export function isValidFactoryRevision(value: unknown): value is string {
   return (
-    typeof value === 'string'
-    && value.startsWith('sha256:')
-    && HEX_64.test(value.slice('sha256:'.length))
+    typeof value === 'string' &&
+    value.startsWith('sha256:') &&
+    HEX_64.test(value.slice('sha256:'.length))
   );
 }
 

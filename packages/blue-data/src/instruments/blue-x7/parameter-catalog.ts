@@ -307,109 +307,256 @@ interface OperatorFieldSpec {
 
 const OPERATOR_FIELD_SPECS: OperatorFieldSpec[] = [
   {
-    key: 'envelope.1.rate', label: 'Envelope Rate 1', minimum: 0, maximum: 99,
-    kind: 'continuous-integer', offset: 0,
-    read: (op) => op.envelope[0].rate, write: (op, v) => { op.envelope[0].rate = v; },
+    key: 'envelope.1.rate',
+    label: 'Envelope Rate 1',
+    minimum: 0,
+    maximum: 99,
+    kind: 'continuous-integer',
+    offset: 0,
+    read: (op) => op.envelope[0].rate,
+    write: (op, v) => {
+      op.envelope[0].rate = v;
+    },
   },
   {
-    key: 'envelope.1.level', label: 'Envelope Level 1', minimum: 0, maximum: 99,
-    kind: 'continuous-integer', offset: 4,
-    read: (op) => op.envelope[0].level, write: (op, v) => { op.envelope[0].level = v; },
+    key: 'envelope.1.level',
+    label: 'Envelope Level 1',
+    minimum: 0,
+    maximum: 99,
+    kind: 'continuous-integer',
+    offset: 4,
+    read: (op) => op.envelope[0].level,
+    write: (op, v) => {
+      op.envelope[0].level = v;
+    },
   },
   {
-    key: 'envelope.2.rate', label: 'Envelope Rate 2', minimum: 0, maximum: 99,
-    kind: 'continuous-integer', offset: 1,
-    read: (op) => op.envelope[1].rate, write: (op, v) => { op.envelope[1].rate = v; },
+    key: 'envelope.2.rate',
+    label: 'Envelope Rate 2',
+    minimum: 0,
+    maximum: 99,
+    kind: 'continuous-integer',
+    offset: 1,
+    read: (op) => op.envelope[1].rate,
+    write: (op, v) => {
+      op.envelope[1].rate = v;
+    },
   },
   {
-    key: 'envelope.2.level', label: 'Envelope Level 2', minimum: 0, maximum: 99,
-    kind: 'continuous-integer', offset: 5,
-    read: (op) => op.envelope[1].level, write: (op, v) => { op.envelope[1].level = v; },
+    key: 'envelope.2.level',
+    label: 'Envelope Level 2',
+    minimum: 0,
+    maximum: 99,
+    kind: 'continuous-integer',
+    offset: 5,
+    read: (op) => op.envelope[1].level,
+    write: (op, v) => {
+      op.envelope[1].level = v;
+    },
   },
   {
-    key: 'envelope.3.rate', label: 'Envelope Rate 3', minimum: 0, maximum: 99,
-    kind: 'continuous-integer', offset: 2,
-    read: (op) => op.envelope[2].rate, write: (op, v) => { op.envelope[2].rate = v; },
+    key: 'envelope.3.rate',
+    label: 'Envelope Rate 3',
+    minimum: 0,
+    maximum: 99,
+    kind: 'continuous-integer',
+    offset: 2,
+    read: (op) => op.envelope[2].rate,
+    write: (op, v) => {
+      op.envelope[2].rate = v;
+    },
   },
   {
-    key: 'envelope.3.level', label: 'Envelope Level 3', minimum: 0, maximum: 99,
-    kind: 'continuous-integer', offset: 6,
-    read: (op) => op.envelope[2].level, write: (op, v) => { op.envelope[2].level = v; },
+    key: 'envelope.3.level',
+    label: 'Envelope Level 3',
+    minimum: 0,
+    maximum: 99,
+    kind: 'continuous-integer',
+    offset: 6,
+    read: (op) => op.envelope[2].level,
+    write: (op, v) => {
+      op.envelope[2].level = v;
+    },
   },
   {
-    key: 'envelope.4.rate', label: 'Envelope Rate 4', minimum: 0, maximum: 99,
-    kind: 'continuous-integer', offset: 3,
-    read: (op) => op.envelope[3].rate, write: (op, v) => { op.envelope[3].rate = v; },
+    key: 'envelope.4.rate',
+    label: 'Envelope Rate 4',
+    minimum: 0,
+    maximum: 99,
+    kind: 'continuous-integer',
+    offset: 3,
+    read: (op) => op.envelope[3].rate,
+    write: (op, v) => {
+      op.envelope[3].rate = v;
+    },
   },
   {
-    key: 'envelope.4.level', label: 'Envelope Level 4', minimum: 0, maximum: 99,
-    kind: 'continuous-integer', offset: 7,
-    read: (op) => op.envelope[3].level, write: (op, v) => { op.envelope[3].level = v; },
+    key: 'envelope.4.level',
+    label: 'Envelope Level 4',
+    minimum: 0,
+    maximum: 99,
+    kind: 'continuous-integer',
+    offset: 7,
+    read: (op) => op.envelope[3].level,
+    write: (op, v) => {
+      op.envelope[3].level = v;
+    },
   },
   {
-    key: 'breakpoint', label: 'Breakpoint', minimum: 0, maximum: 99,
-    kind: 'continuous-integer', offset: 8,
-    read: (op) => op.breakpoint, write: (op, v) => { op.breakpoint = v; },
+    key: 'breakpoint',
+    label: 'Breakpoint',
+    minimum: 0,
+    maximum: 99,
+    kind: 'continuous-integer',
+    offset: 8,
+    read: (op) => op.breakpoint,
+    write: (op, v) => {
+      op.breakpoint = v;
+    },
   },
   {
-    key: 'depthLeft', label: 'Depth Left', minimum: 0, maximum: 99,
-    kind: 'continuous-integer', offset: 9,
-    read: (op) => op.depthLeft, write: (op, v) => { op.depthLeft = v; },
+    key: 'depthLeft',
+    label: 'Depth Left',
+    minimum: 0,
+    maximum: 99,
+    kind: 'continuous-integer',
+    offset: 9,
+    read: (op) => op.depthLeft,
+    write: (op, v) => {
+      op.depthLeft = v;
+    },
   },
   {
-    key: 'depthRight', label: 'Depth Right', minimum: 0, maximum: 99,
-    kind: 'continuous-integer', offset: 10,
-    read: (op) => op.depthRight, write: (op, v) => { op.depthRight = v; },
+    key: 'depthRight',
+    label: 'Depth Right',
+    minimum: 0,
+    maximum: 99,
+    kind: 'continuous-integer',
+    offset: 10,
+    read: (op) => op.depthRight,
+    write: (op, v) => {
+      op.depthRight = v;
+    },
   },
   {
-    key: 'curveLeft', label: 'Curve Left', minimum: 0, maximum: 3,
-    kind: 'categorical', offset: 11,
-    read: (op) => op.curveLeft, write: (op, v) => { op.curveLeft = v; },
+    key: 'curveLeft',
+    label: 'Curve Left',
+    minimum: 0,
+    maximum: 3,
+    kind: 'categorical',
+    offset: 11,
+    read: (op) => op.curveLeft,
+    write: (op, v) => {
+      op.curveLeft = v;
+    },
   },
   {
-    key: 'curveRight', label: 'Curve Right', minimum: 0, maximum: 3,
-    kind: 'categorical', offset: 12,
-    read: (op) => op.curveRight, write: (op, v) => { op.curveRight = v; },
+    key: 'curveRight',
+    label: 'Curve Right',
+    minimum: 0,
+    maximum: 3,
+    kind: 'categorical',
+    offset: 12,
+    read: (op) => op.curveRight,
+    write: (op, v) => {
+      op.curveRight = v;
+    },
   },
   {
-    key: 'keyboardRateScaling', label: 'Keyboard Rate Scaling', minimum: 0, maximum: 7,
-    kind: 'continuous-integer', offset: 13,
-    read: (op) => op.keyboardRateScaling, write: (op, v) => { op.keyboardRateScaling = v; },
+    key: 'keyboardRateScaling',
+    label: 'Keyboard Rate Scaling',
+    minimum: 0,
+    maximum: 7,
+    kind: 'continuous-integer',
+    offset: 13,
+    read: (op) => op.keyboardRateScaling,
+    write: (op, v) => {
+      op.keyboardRateScaling = v;
+    },
   },
   {
-    key: 'amplitudeModulationSensitivity', label: 'Amplitude Modulation Sensitivity', minimum: 0, maximum: 3,
-    kind: 'continuous-integer', offset: 14,
-    read: (op) => op.modulationAmplitude, write: (op, v) => { op.modulationAmplitude = v; },
+    key: 'amplitudeModulationSensitivity',
+    label: 'Amplitude Modulation Sensitivity',
+    minimum: 0,
+    maximum: 3,
+    kind: 'continuous-integer',
+    offset: 14,
+    read: (op) => op.modulationAmplitude,
+    write: (op, v) => {
+      op.modulationAmplitude = v;
+    },
   },
   {
-    key: 'velocitySensitivity', label: 'Velocity Sensitivity', minimum: 0, maximum: 7,
-    kind: 'continuous-integer', offset: 15,
-    read: (op) => op.velocitySensitivity, write: (op, v) => { op.velocitySensitivity = v; },
+    key: 'velocitySensitivity',
+    label: 'Velocity Sensitivity',
+    minimum: 0,
+    maximum: 7,
+    kind: 'continuous-integer',
+    offset: 15,
+    read: (op) => op.velocitySensitivity,
+    write: (op, v) => {
+      op.velocitySensitivity = v;
+    },
   },
   {
-    key: 'outputLevel', label: 'Output Level', minimum: 0, maximum: 99,
-    kind: 'continuous-integer', offset: 16,
-    read: (op) => op.outputLevel, write: (op, v) => { op.outputLevel = v; },
+    key: 'outputLevel',
+    label: 'Output Level',
+    minimum: 0,
+    maximum: 99,
+    kind: 'continuous-integer',
+    offset: 16,
+    read: (op) => op.outputLevel,
+    write: (op, v) => {
+      op.outputLevel = v;
+    },
   },
   {
-    key: 'oscillatorMode', label: 'Oscillator Mode', minimum: 0, maximum: 1,
-    kind: 'categorical', offset: 17,
-    read: (op) => op.mode, write: (op, v) => { op.mode = v; },
+    key: 'oscillatorMode',
+    label: 'Oscillator Mode',
+    minimum: 0,
+    maximum: 1,
+    kind: 'categorical',
+    offset: 17,
+    read: (op) => op.mode,
+    write: (op, v) => {
+      op.mode = v;
+    },
   },
   {
-    key: 'frequencyCoarse', label: 'Frequency Coarse', minimum: 0, maximum: 31,
-    kind: 'continuous-integer', offset: 18,
-    read: (op) => op.freqCoarse, write: (op, v) => { op.freqCoarse = v; },
+    key: 'frequencyCoarse',
+    label: 'Frequency Coarse',
+    minimum: 0,
+    maximum: 31,
+    kind: 'continuous-integer',
+    offset: 18,
+    read: (op) => op.freqCoarse,
+    write: (op, v) => {
+      op.freqCoarse = v;
+    },
   },
   {
-    key: 'frequencyFine', label: 'Frequency Fine', minimum: 0, maximum: 99,
-    kind: 'continuous-integer', offset: 19,
-    read: (op) => op.freqFine, write: (op, v) => { op.freqFine = v; },
+    key: 'frequencyFine',
+    label: 'Frequency Fine',
+    minimum: 0,
+    maximum: 99,
+    kind: 'continuous-integer',
+    offset: 19,
+    read: (op) => op.freqFine,
+    write: (op, v) => {
+      op.freqFine = v;
+    },
   },
   {
-    key: 'detune', label: 'Detune', minimum: -7, maximum: 7,
-    kind: 'continuous-integer', offset: 20,
-    read: (op) => op.detune, write: (op, v) => { op.detune = v; },
+    key: 'detune',
+    label: 'Detune',
+    minimum: -7,
+    maximum: 7,
+    kind: 'continuous-integer',
+    offset: 20,
+    read: (op) => op.detune,
+    write: (op, v) => {
+      op.detune = v;
+    },
   },
 ];
 
@@ -449,22 +596,21 @@ for (const operator of OPERATOR_KEYS) {
 }
 
 /** Frozen public descriptors in fixed catalog order. */
-export const BLUE_X7_PARAMETER_DESCRIPTORS: readonly BlueX7ParameterDescriptor[] =
-  Object.freeze(
-    entries.map((entry) =>
-      Object.freeze({
-        key: entry.key,
-        group: entry.group,
-        label: entry.label,
-        minimum: entry.minimum,
-        maximum: entry.maximum,
-        resolution: entry.resolution,
-        kind: entry.kind,
-        updateClass: entry.updateClass,
-        transport: Object.freeze({ ...entry.transport }),
-      }),
-    ),
-  );
+export const BLUE_X7_PARAMETER_DESCRIPTORS: readonly BlueX7ParameterDescriptor[] = Object.freeze(
+  entries.map((entry) =>
+    Object.freeze({
+      key: entry.key,
+      group: entry.group,
+      label: entry.label,
+      minimum: entry.minimum,
+      maximum: entry.maximum,
+      resolution: entry.resolution,
+      kind: entry.kind,
+      updateClass: entry.updateClass,
+      transport: Object.freeze({ ...entry.transport }),
+    }),
+  ),
+);
 
 const entriesByKey = new Map(entries.map((entry) => [entry.key, entry]));
 
@@ -483,11 +629,7 @@ export function readBlueX7VoiceValue(voice: BlueX7Voice, key: string): number | 
  * quantized to the descriptor domain; non-finite values and unknown keys fail
  * without mutation. Returns whether the write was applied.
  */
-export function writeBlueX7VoiceValue(
-  voice: BlueX7Voice,
-  key: string,
-  value: number,
-): boolean {
+export function writeBlueX7VoiceValue(voice: BlueX7Voice, key: string, value: number): boolean {
   const entry = entriesByKey.get(key);
   if (!entry) {
     return false;

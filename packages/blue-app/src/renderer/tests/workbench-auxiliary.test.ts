@@ -442,7 +442,8 @@ describe('workbench auxiliary layout helpers', () => {
     const state = createDefaultAuxiliaryLayoutState();
     seedGroupPanels(state, 'output-main', ['BlueFileManagerTopComponent'], []);
     const hosting = state.groups.filter((group) =>
-      group.panelIds.includes('BlueFileManagerTopComponent'));
+      group.panelIds.includes('BlueFileManagerTopComponent'),
+    );
     expect(hosting).toHaveLength(1);
     expect(getGroupInstanceForPanel(state, 'BlueFileManagerTopComponent')).toBe(hosting[0]);
   });
@@ -1397,11 +1398,10 @@ describe('auxiliary layout transition contract', () => {
 
   function buildEdgeMoveFixture(): TransitionFixture {
     const state = createDefaultAuxiliaryLayoutState();
-    seedGroupPanels(
-      state,
-      'properties-main',
-      ['LibrariesTopComponent', 'SoundObjectPropertiesTopComponent'],
-    );
+    seedGroupPanels(state, 'properties-main', [
+      'LibrariesTopComponent',
+      'SoundObjectPropertiesTopComponent',
+    ]);
     seedGroupPanels(state, 'output-main', ['OutputTopComponent', 'BlueFileManagerTopComponent']);
 
     const api = createDockviewApiStub();
@@ -1495,7 +1495,9 @@ describe('auxiliary layout transition contract', () => {
     const bad = cloneAuxiliaryLayoutState(current);
     const seeded = findSeeded(bad, 'properties-main')!;
     bad.groups.push({
-      ...cloneAuxiliaryLayoutState(bad).groups.find((g) => g.kind === 'seeded' && g.seedGroupId === 'output-main')!,
+      ...cloneAuxiliaryLayoutState(bad).groups.find(
+        (g) => g.kind === 'seeded' && g.seedGroupId === 'output-main',
+      )!,
       groupInstanceId: 'derived:conflict',
       kind: 'derived-singleton',
       edge: 'left',
@@ -1569,11 +1571,10 @@ describe('auxiliary layout transition contract', () => {
 describe('auxiliary layout transition presentations', () => {
   function buildPresentationFixture() {
     const state = createDefaultAuxiliaryLayoutState();
-    seedGroupPanels(
-      state,
-      'properties-main',
-      ['SoundObjectPropertiesTopComponent', 'LibrariesTopComponent'],
-    );
+    seedGroupPanels(state, 'properties-main', [
+      'SoundObjectPropertiesTopComponent',
+      'LibrariesTopComponent',
+    ]);
     seedGroupPanels(state, 'output-main', ['OutputTopComponent', 'BlueFileManagerTopComponent']);
 
     const api = createDockviewApiStub();
@@ -1682,7 +1683,8 @@ describe('auxiliary layout transition presentations', () => {
     expect(librariesPanel).toBeDefined();
 
     const derived = split.groups.find(
-      (group) => group.kind === 'derived-singleton' && group.panelIds.includes('LibrariesTopComponent'),
+      (group) =>
+        group.kind === 'derived-singleton' && group.panelIds.includes('LibrariesTopComponent'),
     );
     expect(derived?.edge).toBe('left');
 

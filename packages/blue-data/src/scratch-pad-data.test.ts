@@ -31,7 +31,8 @@ describe('ScratchPadData', () => {
     });
 
     it('loads both fields together', () => {
-      const xml = '<scratchPadData><isWordWrapEnabled>false</isWordWrapEnabled><scratchText>Notes here</scratchText></scratchPadData>';
+      const xml =
+        '<scratchPadData><isWordWrapEnabled>false</isWordWrapEnabled><scratchText>Notes here</scratchText></scratchPadData>';
       const elem = Element.parse(xml);
       const data = ScratchPadData.loadFromXML(elem);
       expect(data.getScratchText()).toBe('Notes here');

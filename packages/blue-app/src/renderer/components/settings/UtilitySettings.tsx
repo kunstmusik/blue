@@ -23,14 +23,15 @@ export default function UtilitySettings({
 
   const setFreezeMaxJobsDraft = (value: string): void => {
     const numericValue = Number(value);
-    const nextValue = value.trim() !== ''
-      && Number.isInteger(numericValue)
-      && numericValue >= FREEZE_MAX_JOBS_MIN
-      && numericValue <= FREEZE_MAX_JOBS_MAX
-      ? numericValue
-      // Preserve invalid drafts so the main-process settings validator can
-      // reject them with the actionable utility.freezeMaxJobs issue.
-      : (value as unknown as UtilitySettingsSnapshot['freezeMaxJobs']);
+    const nextValue =
+      value.trim() !== '' &&
+      Number.isInteger(numericValue) &&
+      numericValue >= FREEZE_MAX_JOBS_MIN &&
+      numericValue <= FREEZE_MAX_JOBS_MAX
+        ? numericValue
+        : // Preserve invalid drafts so the main-process settings validator can
+          // reject them with the actionable utility.freezeMaxJobs issue.
+          (value as unknown as UtilitySettingsSnapshot['freezeMaxJobs']);
     set('freezeMaxJobs', nextValue);
   };
 
@@ -40,7 +41,8 @@ export default function UtilitySettings({
       dependencyNote="Freeze and SoundFont inspection use the managed Blue Engine Csound runtime. Freeze flags remain configurable; the legacy executable is retained only for downgrade compatibility."
     >
       <div className="mb-4 text-role-callout text-app-text-subtle">
-        SoundFont inspection and freeze rendering use the managed Blue Engine Csound runtime. The legacy executable value is preserved for downgrade compatibility.
+        SoundFont inspection and freeze rendering use the managed Blue Engine Csound runtime. The
+        legacy executable value is preserved for downgrade compatibility.
       </div>
 
       <SettingsField

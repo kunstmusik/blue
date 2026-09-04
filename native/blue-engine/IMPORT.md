@@ -3,13 +3,13 @@
 Blue Engine is maintained here as ordinary monorepo source. Its prior Git
 history remains in the former standalone repository for archaeology only.
 
-| Item | Value |
-|---|---|
-| Source repository | `/Users/stevenyi/work/csound/blue-engine` |
-| Source branch | `main` |
-| Upstream base | `3c8d78f4c5781b14ab6b6c328aab0e59c1be3f8a` |
+| Item                | Value                                      |
+| ------------------- | ------------------------------------------ |
+| Source repository   | `/Users/stevenyi/work/csound/blue-engine`  |
+| Source branch       | `main`                                     |
+| Upstream base       | `3c8d78f4c5781b14ab6b6c328aab0e59c1be3f8a` |
 | Imported checkpoint | `6d59daa180cd6474d4fe181918539695d5512101` |
-| Import date | 2026-07-28 |
+| Import date         | 2026-07-28                                 |
 
 The source repository was clean and resolved to the imported checkpoint
 immediately before copying. The import used the committed tree and excluded

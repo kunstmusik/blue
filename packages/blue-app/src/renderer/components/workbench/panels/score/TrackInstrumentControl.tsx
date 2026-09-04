@@ -2,7 +2,10 @@ import { useCallback } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { ChevronRight, Music2 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { SupportedNewInstrumentType, TrackInstrumentSummary } from '../../../../../shared/project-editor';
+import type {
+  SupportedNewInstrumentType,
+  TrackInstrumentSummary,
+} from '../../../../../shared/project-editor';
 import { getProjectDocumentRevision, useProjectStore } from '../../../../stores/project-store';
 import { useLibraryStore } from '../../../../stores/library-store';
 import { useMidiRoutingStore } from '../../../../stores/midi-routing-store';
@@ -61,38 +64,50 @@ export default function TrackInstrumentControl({
       await window.blueAPI.openTrackInstrumentEditor({ track });
     } catch (error) {
       console.error('[track-instrument-control] Failed to open editor:', error);
-      toast.error(`Failed to open Track instrument editor: ${error instanceof Error ? error.message : String(error)}`);
+      toast.error(
+        `Failed to open Track instrument editor: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }, [flushPendingPatches, track]);
 
-  const createInstrument = useCallback(async (instrumentType: SupportedNewInstrumentType) => {
-    const instrumentLabel = NEW_INSTRUMENTS.find((option) => option.type === instrumentType)?.label
-      ?? instrumentType;
-    try {
-      // Drain an earlier commit before reading the fence. Otherwise this
-      // action can be queued behind a commit that advances the revision.
-      await flushPendingPatches();
-      const currentTrack = {
-        rootGroupId: groupId,
-        trackId,
-        projectSessionId,
-        // Track mutations are fenced; read the revision when the menu action
-        // is selected instead of relying on the value captured during render.
-        projectRevision: getProjectDocumentRevision(),
-      } as const;
+  const createInstrument = useCallback(
+    async (instrumentType: SupportedNewInstrumentType) => {
+      const instrumentLabel =
+        NEW_INSTRUMENTS.find((option) => option.type === instrumentType)?.label ?? instrumentType;
+      try {
+        // Drain an earlier commit before reading the fence. Otherwise this
+        // action can be queued behind a commit that advances the revision.
+        await flushPendingPatches();
+        const currentTrack = {
+          rootGroupId: groupId,
+          trackId,
+          projectSessionId,
+          // Track mutations are fenced; read the revision when the menu action
+          // is selected instead of relying on the value captured during render.
+          projectRevision: getProjectDocumentRevision(),
+        } as const;
 
-      await applyProjectDocumentPatch({
-        score: { type: 'createTrackInstrument', track: currentTrack, instrumentType },
-      });
-      await flushPendingPatches();
-    } catch (error: unknown) {
-      toast.error(`Failed to add ${instrumentLabel} to Track: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  }, [applyProjectDocumentPatch, flushPendingPatches, groupId, projectSessionId, trackId]);
+        await applyProjectDocumentPatch({
+          score: { type: 'createTrackInstrument', track: currentTrack, instrumentType },
+        });
+        await flushPendingPatches();
+      } catch (error: unknown) {
+        toast.error(
+          `Failed to add ${instrumentLabel} to Track: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    },
+    [applyProjectDocumentPatch, flushPendingPatches, groupId, projectSessionId, trackId],
+  );
 
   const copyInstrument = useCallback(() => {
     if (instrument?.snapshot) {
-      void captureTrackInstrument({ projectSessionId, projectRevision, rootGroupId: groupId, trackId });
+      void captureTrackInstrument({
+        projectSessionId,
+        projectRevision,
+        rootGroupId: groupId,
+        trackId,
+      });
     }
   }, [captureTrackInstrument, groupId, instrument, projectRevision, projectSessionId, trackId]);
 
@@ -110,7 +125,16 @@ export default function TrackInstrumentControl({
     } catch {
       // Keep the captured payload; the project assignment was not cleared.
     }
-  }, [applyProjectDocumentPatch, captureTrackInstrument, groupId, instrument, projectRevision, projectSessionId, track, trackId]);
+  }, [
+    applyProjectDocumentPatch,
+    captureTrackInstrument,
+    groupId,
+    instrument,
+    projectRevision,
+    projectSessionId,
+    track,
+    trackId,
+  ]);
 
   const pasteInstrument = useCallback(() => {
     void libraryDrop.paste();
@@ -137,7 +161,9 @@ export default function TrackInstrumentControl({
             type="button"
             className={cn(
               'flex h-5 w-5 items-center justify-center rounded-sm border border-app-border/30',
-              instrument ? 'bg-app-accent/20 text-app-text' : 'text-app-text-muted hover:text-app-text',
+              instrument
+                ? 'bg-app-accent/20 text-app-text'
+                : 'text-app-text-muted hover:text-app-text',
             )}
             title={instrument ? `Track Instrument: ${label}` : 'Track Instrument: None'}
             aria-label={instrument ? `Track Instrument: ${label}` : 'Assign Track Instrument'}
@@ -167,7 +193,9 @@ export default function TrackInstrumentControl({
           sideOffset={4}
           {...portalEventIsolationProps}
         >
-          <ContextMenu.Label className="px-3 py-1 text-role-headline font-bold text-app-text-muted">Track Instrument</ContextMenu.Label>
+          <ContextMenu.Label className="px-3 py-1 text-role-headline font-bold text-app-text-muted">
+            Track Instrument
+          </ContextMenu.Label>
           <ContextMenu.Item
             className="editor-context-menu__item"
             disabled={!instrument}

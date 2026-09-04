@@ -63,9 +63,9 @@ export function blueX7PatchToRuntimeIntent(patch: BlueX7Patch): BlueX7PatchRunti
   switch (patch.type) {
     case 'setCommonField': {
       if (patch.field === 'operatorEnabled') {
-        return Array.isArray(patch.value)
-          && patch.value.length === 6
-          && patch.value.every((value) => typeof value === 'boolean')
+        return Array.isArray(patch.value) &&
+          patch.value.length === 6 &&
+          patch.value.every((value) => typeof value === 'boolean')
           ? { kind: 'complete-voice' }
           : { kind: 'none' };
       }
@@ -111,9 +111,7 @@ export function blueX7PatchToRuntimeIntent(patch: BlueX7Patch): BlueX7PatchRunti
     case 'setSharedPitchModulationSensitivity':
       return {
         kind: 'fixed-delta',
-        changes: [
-          { semanticKey: 'lfo.pitchModulationSensitivity', value: patch.value },
-        ],
+        changes: [{ semanticKey: 'lfo.pitchModulationSensitivity', value: patch.value }],
       };
     case 'setOperatorEnvelopePoint':
       return {

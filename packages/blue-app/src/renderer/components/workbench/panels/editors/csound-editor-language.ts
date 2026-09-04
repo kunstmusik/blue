@@ -19,11 +19,16 @@ export const SELECTED_CSOUND_EDITOR: SelectedEditorMetadata = {
   mode: 'orc',
 };
 
-export type CsoundDocumentMode = 'orc' | 'sco' | 'csd' | 'text' | 'javascript' | 'python' | 'clojure';
+export type CsoundDocumentMode =
+  | 'orc'
+  | 'sco'
+  | 'csd'
+  | 'text'
+  | 'javascript'
+  | 'python'
+  | 'clojure';
 
-export function getSelectedEditorMetadata(
-  mode: CsoundDocumentMode,
-): SelectedEditorMetadata {
+export function getSelectedEditorMetadata(mode: CsoundDocumentMode): SelectedEditorMetadata {
   return {
     kind: 'codemirror',
     languageId:
@@ -75,9 +80,7 @@ export function createCsoundCompletionExtension(
   return autocompletion({ override: completionSources });
 }
 
-export function createCsoundEditorExtensions(
-  mode: CsoundDocumentMode = 'orc',
-): Extension[] {
+export function createCsoundEditorExtensions(mode: CsoundDocumentMode = 'orc'): Extension[] {
   const extensions: Extension[] = [];
   if (mode === 'javascript') {
     extensions.push(javascript());

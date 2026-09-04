@@ -25,10 +25,7 @@ describe('Project Defaults default layer group selector', () => {
 
     const selector = container.querySelector('[role="combobox"]') as HTMLButtonElement | null;
     expect(selector?.textContent).toContain('Track Layer');
-    expect(await getAppSelectOptionLabels(selector!)).toEqual([
-      'Track Layer',
-      'SoundObject Layer',
-    ]);
+    expect(await getAppSelectOptionLabels(selector!)).toEqual(['Track Layer', 'SoundObject Layer']);
 
     await chooseAppSelectOption(selector!, 'SoundObject Layer');
     expect(onChange).toHaveBeenCalledWith({

@@ -79,7 +79,11 @@ describe('blue-live-trigger target selection', () => {
 
   it('returns target-not-found for a missing selected id', () => {
     const data = createModernProject();
-    const result = resolveTriggerTargets(data.getLiveData().getLiveObjectBins(), 'selected', 'does-not-exist');
+    const result = resolveTriggerTargets(
+      data.getLiveData().getLiveObjectBins(),
+      'selected',
+      'does-not-exist',
+    );
     expect('failure' in result).toBe(true);
     if ('failure' in result) {
       expect(result.failure.code).toBe('target-not-found');
@@ -300,11 +304,20 @@ describe('blue-live-trigger runtime-backed generation', () => {
   function createRuntimeClient(): JavaRuntimeClientContract {
     return {
       health: async () => ({ ok: true, result: { version: 'fake', methods: [] } }),
-      initSession: async () => ({ ok: true, result: { projectSessionId: 1, clojureNamespace: 'fake', dependenciesLoaded: [] } }),
+      initSession: async () => ({
+        ok: true,
+        result: { projectSessionId: 1, clojureNamespace: 'fake', dependenciesLoaded: [] },
+      }),
       reinitializeClojure: async () => ({ ok: true, result: { clojureNamespace: 'fake' } }),
       evaluateClojure: async () => ({ ok: true, result: { value: '', namespace: 'fake' } }),
-      evaluateClojureScoreObject: async () => ({ ok: true, result: { scoreText: 'i1 1 2 440', namespace: 'fake' } }),
-      jythonImportCheck: async () => ({ ok: true, result: { importedModules: [], libraryPaths: [] } }),
+      evaluateClojureScoreObject: async () => ({
+        ok: true,
+        result: { scoreText: 'i1 1 2 440', namespace: 'fake' },
+      }),
+      jythonImportCheck: async () => ({
+        ok: true,
+        result: { importedModules: [], libraryPaths: [] },
+      }),
       evaluateJythonScript: async () => ({ ok: true, result: { value: '' } }),
       evaluateJythonScoreObject: async () => ({ ok: true, result: { scoreText: 'i1 2 3 880' } }),
       evaluateJythonObjectBuilder: async () => ({ ok: true, result: { scoreText: 'i1 3 4 330' } }),

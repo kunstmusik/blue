@@ -9,7 +9,10 @@ import { useOutputStore } from '../stores/output-store';
 import { useBlueLiveStore } from '../stores/blue-live-store';
 import { useRenderToDiskStore } from '../stores/render-to-disk-store';
 import { useLayoutSettingsStore } from '../stores/layout-settings-store';
-import { hasAuditionEligibleSelection, useScoreSelectionStore } from '../stores/score-selection-store';
+import {
+  hasAuditionEligibleSelection,
+  useScoreSelectionStore,
+} from '../stores/score-selection-store';
 import {
   applyLegacyLayoutMigration,
   createDefaultWindowLayoutSettings,
@@ -53,83 +56,91 @@ export function useIPCListeners(): void {
 
   useEffect(() => {
     if (!window.blueAPI?.getProgramSettings) return;
-    window.blueAPI.getProgramSettings().then((settings: ProgramSettingsSnapshot) => {
-      hydrateFromProgramSettings(settings);
-      useLayoutSettingsStore.getState().setLayout(
-        settings.appSpecific.windowLayout ?? createDefaultWindowLayoutSettings(),
-      );
+    window.blueAPI
+      .getProgramSettings()
+      .then((settings: ProgramSettingsSnapshot) => {
+        hydrateFromProgramSettings(settings);
+        useLayoutSettingsStore
+          .getState()
+          .setLayout(settings.appSpecific.windowLayout ?? createDefaultWindowLayoutSettings());
 
-      // Drive one-time legacy renderer-only layout migration into the
-      // canonical app-wide layout store. Skipped silently once both markers
-      // are set or when the blueAPI does not expose the layout update method.
-      const api = window.blueAPI as unknown as {
-        updateWindowLayout?: (request: unknown) => Promise<WindowLayoutSettingsSnapshot>;
-      };
-      if (!api?.updateWindowLayout) return;
+        // Drive one-time legacy renderer-only layout migration into the
+        // canonical app-wide layout store. Skipped silently once both markers
+        // are set or when the blueAPI does not expose the layout update method.
+        const api = window.blueAPI as unknown as {
+          updateWindowLayout?: (request: unknown) => Promise<WindowLayoutSettingsSnapshot>;
+        };
+        if (!api?.updateWindowLayout) return;
 
-      const currentLayout =
-        settings.appSpecific.windowLayout ?? createDefaultWindowLayoutSettings();
-      if (
-        currentLayout.legacyMigration.blueSettingsWindowBoundsMigrated &&
-        currentLayout.legacyMigration.workbenchLocalStorageMigrated
-      ) {
-        return;
-      }
+        const currentLayout =
+          settings.appSpecific.windowLayout ?? createDefaultWindowLayoutSettings();
+        if (
+          currentLayout.legacyMigration.blueSettingsWindowBoundsMigrated &&
+          currentLayout.legacyMigration.workbenchLocalStorageMigrated
+        ) {
+          return;
+        }
 
-      const payload: LegacyLayoutMigrationPayload = {};
-      try {
-        const blueSettingsRaw = localStorage.getItem('blue-settings');
-        if (blueSettingsRaw) {
-          const parsed = JSON.parse(blueSettingsRaw) as { windowBounds?: unknown };
-          if (parsed && parsed.windowBounds) {
-            payload.windowBounds = parsed.windowBounds as LegacyLayoutMigrationPayload['windowBounds'];
+        const payload: LegacyLayoutMigrationPayload = {};
+        try {
+          const blueSettingsRaw = localStorage.getItem('blue-settings');
+          if (blueSettingsRaw) {
+            const parsed = JSON.parse(blueSettingsRaw) as { windowBounds?: unknown };
+            if (parsed && parsed.windowBounds) {
+              payload.windowBounds =
+                parsed.windowBounds as LegacyLayoutMigrationPayload['windowBounds'];
+            }
           }
+        } catch {
+          // Ignore malformed localStorage; migration simply skips the field.
         }
-      } catch {
-        // Ignore malformed localStorage; migration simply skips the field.
-      }
 
-      try {
-        const workbenchLegacy = localStorage.getItem('blue-workbench-layout');
-        if (typeof workbenchLegacy === 'string' && workbenchLegacy.length > 0) {
-          payload.workbenchSerializedLayout = workbenchLegacy;
+        try {
+          const workbenchLegacy = localStorage.getItem('blue-workbench-layout');
+          if (typeof workbenchLegacy === 'string' && workbenchLegacy.length > 0) {
+            payload.workbenchSerializedLayout = workbenchLegacy;
+          }
+        } catch {
+          // Ignore unavailable localStorage; migration simply skips the field.
         }
-      } catch {
-        // Ignore unavailable localStorage; migration simply skips the field.
-      }
 
-      // Run the shared helper locally first so the renderer immediately
-      // reflects the migrated state, then persist through the canonical IPC
-      // so the marker is durable.
-      const merged = applyLegacyLayoutMigration(currentLayout, payload);
-      useLayoutSettingsStore.getState().setLayout(merged);
+        // Run the shared helper locally first so the renderer immediately
+        // reflects the migrated state, then persist through the canonical IPC
+        // so the marker is durable.
+        const merged = applyLegacyLayoutMigration(currentLayout, payload);
+        useLayoutSettingsStore.getState().setLayout(merged);
 
-      // Persist the migration payload through main so copied values and markers
-      // land in the app-wide settings file together.
-      void api.updateWindowLayout!({
-        type: 'legacy-migration',
-        legacy: payload,
-      }).then((next) => {
-        useLayoutSettingsStore.getState().setLayout(next);
-      }).catch(() => {
-        // Migration is best-effort; the next launch retries automatically.
-      });
-    }).catch(() => {});
+        // Persist the migration payload through main so copied values and markers
+        // land in the app-wide settings file together.
+        void api.updateWindowLayout!({
+          type: 'legacy-migration',
+          legacy: payload,
+        })
+          .then((next) => {
+            useLayoutSettingsStore.getState().setLayout(next);
+          })
+          .catch(() => {
+            // Migration is best-effort; the next launch retries automatically.
+          });
+      })
+      .catch(() => {});
   }, [hydrateFromProgramSettings]);
 
   useEffect(() => {
     if (!window.blueAPI?.syncLegacyRendererSettings) return;
     const state = useSettingsStore.getState();
-    window.blueAPI.syncLegacyRendererSettings({
-      enginePath: state.enginePath,
-      recentFiles: state.recentFiles,
-      windowBounds: state.windowBounds,
-      midiInputDevice: state.midiInputDevice,
-      midiOutputDevice: state.midiOutputDevice,
-      oscInputPort: state.oscInputPort,
-      oscOutputHost: state.oscOutputHost,
-      oscOutputPort: state.oscOutputPort,
-    }).catch(() => {});
+    window.blueAPI
+      .syncLegacyRendererSettings({
+        enginePath: state.enginePath,
+        recentFiles: state.recentFiles,
+        windowBounds: state.windowBounds,
+        midiInputDevice: state.midiInputDevice,
+        midiOutputDevice: state.midiOutputDevice,
+        oscInputPort: state.oscInputPort,
+        oscOutputHost: state.oscOutputHost,
+        oscOutputPort: state.oscOutputPort,
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -180,8 +191,8 @@ export function useIPCListeners(): void {
 
     const unsubNativeMenuCommand = window.blueAPI.onNativeMenuCommand((command) => {
       if (
-        !useProjectStore.getState().loaded
-        && (command.type === 'focus-panel' || command.type === 'open-effects-library')
+        !useProjectStore.getState().loaded &&
+        (command.type === 'focus-panel' || command.type === 'open-effects-library')
       ) {
         setActivePanel('workspace');
       }

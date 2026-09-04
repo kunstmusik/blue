@@ -123,8 +123,8 @@ describe('Parameter point sorting', () => {
 
     const reloaded = Parameter.loadFromXML(Element.parse(param.saveAsXML().toXml()));
     const pts = reloaded.getPoints();
-    expect(pts.map(p => p.time)).toEqual([1, 3, 5]);
-    expect(pts.map(p => p.value)).toEqual([0.1, 0.3, 0.5]);
+    expect(pts.map((p) => p.time)).toEqual([1, 3, 5]);
+    expect(pts.map((p) => p.value)).toEqual([0.1, 0.3, 0.5]);
   });
 });
 

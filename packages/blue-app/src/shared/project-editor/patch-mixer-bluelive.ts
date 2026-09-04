@@ -95,18 +95,29 @@ import {
   createNoteProcessorChainSnapshot as createNoteProcessorChainSnapshotFromData,
   reifyChainFromSnapshot,
 } from '@blue/data';
-import type { NoteProcessorChainSnapshot as DataNoteProcessorChainSnapshot, Parameter as BlueDataParameter, ScoreObject as BlueDataScoreObject, AutomatableLayer as BlueDataAutomatableLayer, Arrangement as BlueDataArrangement, Mixer as BlueDataMixer } from '@blue/data';
+import type {
+  NoteProcessorChainSnapshot as DataNoteProcessorChainSnapshot,
+  Parameter as BlueDataParameter,
+  ScoreObject as BlueDataScoreObject,
+  AutomatableLayer as BlueDataAutomatableLayer,
+  Arrangement as BlueDataArrangement,
+  Mixer as BlueDataMixer,
+} from '@blue/data';
 import { AutomationCurve as BlueDataAutomationCurve, LineColors } from '@blue/data';
 import { ParameterHelper } from '@blue/data';
-import type { SnapValueName, BlueX7Voice, BlueX7Common, BlueX7Lfo, BlueX7Operator, BlueX7EnvelopePoint } from '@blue/data';
+import type {
+  SnapValueName,
+  BlueX7Voice,
+  BlueX7Common,
+  BlueX7Lfo,
+  BlueX7Operator,
+  BlueX7EnvelopePoint,
+} from '@blue/data';
 import type { MissingAudioAssetsSession } from '../missing-audio-assets';
 import type { ScoreInsertionLocation } from '../unified-library';
 
 import { moveRangeWithAnchors, scaleRangeWithAnchors } from '../automation-range-math';
-import {
-  BSB_LINE_SELECTOR_HEIGHT,
-  getBsbWidgetDisplaySize,
-} from '../bsb-widget-layout';
+import { BSB_LINE_SELECTOR_HEIGHT, getBsbWidgetDisplaySize } from '../bsb-widget-layout';
 import {
   collectBsbReplacementKeysFromSnapshotTree,
   collectBsbReplacementKeysFromWidgetTree,
@@ -319,10 +330,7 @@ import {
   getMixerChannelSnapshotId,
   getMixerEntrySnapshotId,
 } from './identity';
-import {
-  applyBsbInterfacePatch,
-  applyEmbeddedOpcodeListPatch,
-} from './bsb-widgets';
+import { applyBsbInterfacePatch, applyEmbeddedOpcodeListPatch } from './bsb-widgets';
 import {
   buildAssignedAutomationLayerMap,
   buildAssignedElsewhereMapForLayer,
@@ -417,10 +425,7 @@ function areClojureProjectSnapshotsEqual(
   });
 }
 
-export function applyClojureProjectPatch(
-  data: BlueData,
-  patch: ClojureProjectSnapshot,
-): boolean {
+export function applyClojureProjectPatch(data: BlueData, patch: ClojureProjectSnapshot): boolean {
   const currentSnapshot = createClojureProjectSnapshot(data.getClojureProjectData());
   if (areClojureProjectSnapshotsEqual(currentSnapshot, patch)) {
     return false;
@@ -439,8 +444,6 @@ export function applyClojureProjectPatch(
   return true;
 }
 
-
-
 export function createScaleFromSnapshot(snapshot: MidiScaleSnapshot | null): Scale | null {
   if (!snapshot) {
     return null;
@@ -455,7 +458,12 @@ export function createScaleFromSnapshot(snapshot: MidiScaleSnapshot | null): Sca
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value) && Object.getPrototypeOf(value) === Object.prototype;
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    Object.getPrototypeOf(value) === Object.prototype
+  );
 }
 
 function snapshotJMaskValue(value: unknown): unknown {
@@ -504,9 +512,7 @@ export function mergeJMaskSnapshotValue(baseValue: unknown, patchValue: unknown)
     return patchValue.map((entry) => snapshotJMaskValue(entry));
   }
 
-  const merged: Record<string, unknown> = isPlainObject(baseValue)
-    ? { ...baseValue }
-    : {};
+  const merged: Record<string, unknown> = isPlainObject(baseValue) ? { ...baseValue } : {};
 
   for (const [key, value] of Object.entries(merged)) {
     merged[key] = snapshotJMaskValue(value);
@@ -522,7 +528,10 @@ export function mergeJMaskSnapshotValue(baseValue: unknown, patchValue: unknown)
   return merged;
 }
 
-export function applyJMaskPatchToPayload(payload: JMaskEditorPayload, patch: Record<string, unknown>): JMaskEditorPayload {
+export function applyJMaskPatchToPayload(
+  payload: JMaskEditorPayload,
+  patch: Record<string, unknown>,
+): JMaskEditorPayload {
   const nextPayload: JMaskEditorPayload = {
     ...payload,
     field: { ...payload.field },
@@ -543,7 +552,10 @@ export function applyJMaskPatchToPayload(payload: JMaskEditorPayload, patch: Rec
       continue;
     }
 
-    nextPayload[key] = mergeJMaskSnapshotValue((payload as Record<string, unknown>)[key], value) as never;
+    nextPayload[key] = mergeJMaskSnapshotValue(
+      (payload as Record<string, unknown>)[key],
+      value,
+    ) as never;
   }
 
   return nextPayload;
@@ -629,10 +641,7 @@ export function createTrackerColumnFromSnapshot(snapshot: TrackerColumnSnapshot)
   return column;
 }
 
-export function applyMidiInputPatch(
-  data: BlueData,
-  patch: MidiInputPatch,
-): boolean {
+export function applyMidiInputPatch(data: BlueData, patch: MidiInputPatch): boolean {
   const midiInput = data.getMidiInputProcessor();
 
   switch (patch.type) {
@@ -659,15 +668,24 @@ export function applyBlueLivePatch(data: BlueData, patch: BlueLivePatch): boolea
   switch (patch.type) {
     case 'updateOptions': {
       let changed = false;
-      if (patch.patch.commandLine !== undefined && liveData.getCommandLine() !== patch.patch.commandLine) {
+      if (
+        patch.patch.commandLine !== undefined &&
+        liveData.getCommandLine() !== patch.patch.commandLine
+      ) {
         liveData.setCommandLine(patch.patch.commandLine);
         changed = true;
       }
-      if (patch.patch.commandLineEnabled !== undefined && liveData.isCommandLineEnabled() !== patch.patch.commandLineEnabled) {
+      if (
+        patch.patch.commandLineEnabled !== undefined &&
+        liveData.isCommandLineEnabled() !== patch.patch.commandLineEnabled
+      ) {
         liveData.setCommandLineEnabled(patch.patch.commandLineEnabled);
         changed = true;
       }
-      if (patch.patch.commandLineOverride !== undefined && liveData.isCommandLineOverride() !== patch.patch.commandLineOverride) {
+      if (
+        patch.patch.commandLineOverride !== undefined &&
+        liveData.isCommandLineOverride() !== patch.patch.commandLineOverride
+      ) {
         liveData.setCommandLineOverride(patch.patch.commandLineOverride);
         changed = true;
       }
@@ -683,7 +701,10 @@ export function applyBlueLivePatch(data: BlueData, patch: BlueLivePatch): boolea
         liveData.setRepeat(patch.patch.repeat);
         changed = true;
       }
-      if (patch.patch.repeatEnabled !== undefined && liveData.isRepeatEnabled() !== patch.patch.repeatEnabled) {
+      if (
+        patch.patch.repeatEnabled !== undefined &&
+        liveData.isRepeatEnabled() !== patch.patch.repeatEnabled
+      ) {
         liveData.setRepeatEnabled(patch.patch.repeatEnabled);
         changed = true;
       }
@@ -703,10 +724,10 @@ export function applyBlueLivePatch(data: BlueData, patch: BlueLivePatch): boolea
     case 'setCell': {
       const bins = liveData.getLiveObjectBins();
       if (
-        patch.column < 0
-        || patch.column >= bins.getColumnCount()
-        || patch.row < 0
-        || patch.row >= bins.getRowCount()
+        patch.column < 0 ||
+        patch.column >= bins.getColumnCount() ||
+        patch.row < 0 ||
+        patch.row >= bins.getRowCount()
       ) {
         return false;
       }
@@ -770,15 +791,10 @@ export function applyBlueLivePatch(data: BlueData, patch: BlueLivePatch): boolea
       return liveData.getLiveObjectSets().move(patch.from, patch.to);
     }
     case 'applySet': {
-      return liveData.getLiveObjectSets().applySet(
-        patch.index,
-        liveData.getLiveObjectBins(),
-      );
+      return liveData.getLiveObjectSets().applySet(patch.index, liveData.getLiveObjectBins());
     }
   }
 }
-
-
 
 function createEffectFromXml(effectXml: string): Effect {
   return Effect.loadFromXML(Element.parse(effectXml));
@@ -800,16 +816,19 @@ export function findMixerChannelById(mixer: Mixer, channelId: string): Channel |
     return mixer.getMaster();
   }
 
-  const sourceChannel = mixer.getAllSourceChannels().find(
-    (channel) => channel.getAssociation() === channelId || getMixerChannelSnapshotId(channel) === channelId,
-  );
+  const sourceChannel = mixer
+    .getAllSourceChannels()
+    .find(
+      (channel) =>
+        channel.getAssociation() === channelId || getMixerChannelSnapshotId(channel) === channelId,
+    );
   if (sourceChannel) {
     return sourceChannel;
   }
 
-  const subChannel = mixer.getSubChannels().find(
-    (channel) => getMixerChannelSnapshotId(channel) === channelId,
-  );
+  const subChannel = mixer
+    .getSubChannels()
+    .find((channel) => getMixerChannelSnapshotId(channel) === channelId);
   if (subChannel) {
     return subChannel;
   }
@@ -818,7 +837,11 @@ export function findMixerChannelById(mixer: Mixer, channelId: string): Channel |
 }
 
 function reconcileSubChannelName(mixer: Mixer, oldName: string, newName: string): void {
-  const allChannels = [mixer.getMaster(), ...mixer.getAllSourceChannels(), ...mixer.getSubChannels()];
+  const allChannels = [
+    mixer.getMaster(),
+    ...mixer.getAllSourceChannels(),
+    ...mixer.getSubChannels(),
+  ];
 
   for (const channel of allChannels) {
     if (channel.getOutChannel() === oldName) {
@@ -834,7 +857,11 @@ function reconcileSubChannelName(mixer: Mixer, oldName: string, newName: string)
 }
 
 function reconcileSubChannelRemoved(mixer: Mixer, removedName: string): void {
-  const allChannels = [mixer.getMaster(), ...mixer.getAllSourceChannels(), ...mixer.getSubChannels()];
+  const allChannels = [
+    mixer.getMaster(),
+    ...mixer.getAllSourceChannels(),
+    ...mixer.getSubChannels(),
+  ];
 
   for (const channel of allChannels) {
     if (channel.getOutChannel() === removedName) {
@@ -1046,7 +1073,10 @@ function applyMixerPatchToChain(
       }
       const send = chain[index] as Send;
       let changed = false;
-      if (patch.patch.sendChannel !== undefined && send.getSendChannel() !== patch.patch.sendChannel) {
+      if (
+        patch.patch.sendChannel !== undefined &&
+        send.getSendChannel() !== patch.patch.sendChannel
+      ) {
         send.setSendChannel(patch.patch.sendChannel);
         changed = true;
       }
@@ -1229,9 +1259,9 @@ export function applyMixerPatchToData(data: BlueData, patch: MixerPatch): boolea
       return true;
     }
     case 'removeSubChannel': {
-      const index = mixer.getSubChannels().findIndex(
-        (channel) => getMixerChannelSnapshotId(channel) === patch.channelId,
-      );
+      const index = mixer
+        .getSubChannels()
+        .findIndex((channel) => getMixerChannelSnapshotId(channel) === patch.channelId);
       if (index < 0) {
         return false;
       }
@@ -1253,16 +1283,14 @@ export function applyMixerPatchToData(data: BlueData, patch: MixerPatch): boolea
       if (!chain) {
         return false;
       }
-      return applyMixerPatchToChain(
-        chain,
-        patch,
-        'entryId' in patch ? patch.entryId : undefined,
-      );
+      return applyMixerPatchToChain(chain, patch, 'entryId' in patch ? patch.entryId : undefined);
     }
     case 'moveChainEntryAcrossChains': {
       const fromChain = findMixerChainForChannel(mixer, patch.fromChannelId, patch.fromChain);
       if (!fromChain) return false;
-      const fromIndex = fromChain.findIndex((entry) => getMixerEntrySnapshotId(entry) === patch.entryId);
+      const fromIndex = fromChain.findIndex(
+        (entry) => getMixerEntrySnapshotId(entry) === patch.entryId,
+      );
       if (fromIndex < 0) return false;
       const [removed] = fromChain.splice(fromIndex, 1);
       const toChain = findMixerChainForChannel(mixer, patch.toChannelId, patch.toChain);
@@ -1277,8 +1305,6 @@ export function applyMixerPatchToData(data: BlueData, patch: MixerPatch): boolea
   }
 }
 
-
-
 export function createNestedPolyObjectSnapshot(
   data: BlueData,
   location: ScoreObjectLocationRef,
@@ -1287,10 +1313,7 @@ export function createNestedPolyObjectSnapshot(
   const context = score.getTimeContext();
   const arrangement = data.getArrangement();
   const mixer = data.getMixer();
-  const allParameters = ParameterHelper.getAllParameters(
-    arrangement,
-    mixer,
-  );
+  const allParameters = ParameterHelper.getAllParameters(arrangement, mixer);
   const assignedLayerMap = buildAssignedAutomationLayerMap(score);
   const lg = score[location.rootGroupIndex];
   if (!lg || !(lg instanceof PolyObject)) return null;
@@ -1312,7 +1335,10 @@ export function createNestedPolyObjectSnapshot(
 
   const parentPath: ScoreObjectLocationRef = {
     rootGroupIndex: location.rootGroupIndex,
-    containerPath: [...location.containerPath, { layerIndex: location.layerIndex, objectIndex: location.objectIndex }],
+    containerPath: [
+      ...location.containerPath,
+      { layerIndex: location.layerIndex, objectIndex: location.objectIndex },
+    ],
     layerIndex: 0,
     objectIndex: 0,
   };
@@ -1343,9 +1369,14 @@ export function createNestedPolyObjectSnapshot(
         backgroundColor: nestedObj.getBackgroundColor(),
         isContainer: nestedObj instanceof PolyObject,
         editorTarget: buildEditorTargetSnapshot(nestedObj, objectId, itemLocation),
-        barRenderer: nestedObj instanceof AbstractSoundObject
-          ? createBarRendererForSoundObject(nestedObj, context)
-          : { kind: 'fallback' as const, labelLines: splitLabelLines(nestedObj.getName()), reason: 'unknown-type' as const },
+        barRenderer:
+          nestedObj instanceof AbstractSoundObject
+            ? createBarRendererForSoundObject(nestedObj, context)
+            : {
+                kind: 'fallback' as const,
+                labelLines: splitLabelLines(nestedObj.getName()),
+                reason: 'unknown-type' as const,
+              },
       });
     }
     const elsewhereMap = buildAssignedElsewhereMapForLayer(layerId, assignedLayerMap);
@@ -1368,9 +1399,10 @@ export function createNestedPolyObjectSnapshot(
       solo: subLayer.isSolo(),
       backgroundColor: subLayer.getBackgroundColor(),
       items,
-      noteProcessorChain: subLayer.getNoteProcessorChain().getProcessors().length > 0
-        ? createNoteProcessorChainSnapshot(subLayer.getNoteProcessorChain())
-        : undefined,
+      noteProcessorChain:
+        subLayer.getNoteProcessorChain().getProcessors().length > 0
+          ? createNoteProcessorChainSnapshot(subLayer.getNoteProcessorChain())
+          : undefined,
       automation,
     });
   }
@@ -1384,9 +1416,14 @@ export function createNestedPolyObjectSnapshot(
     layerCount: sObj.length,
     isOpenableContainer: true,
     layers,
-    noteProcessorChain: groupChain.getProcessors().length > 0 ? createNoteProcessorChainSnapshot(groupChain) : undefined,
+    noteProcessorChain:
+      groupChain.getProcessors().length > 0
+        ? createNoteProcessorChainSnapshot(groupChain)
+        : undefined,
   };
 }
 
-
-export { reconcileMixerSnapshotWithArrangement, reconcileMixerWithArrangement } from './snapshot-mixer-orchestra';
+export {
+  reconcileMixerSnapshotWithArrangement,
+  reconcileMixerWithArrangement,
+} from './snapshot-mixer-orchestra';

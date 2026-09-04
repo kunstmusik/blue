@@ -14,10 +14,7 @@ import {
   applyJMaskPatchToPayload,
   createJMaskPayloadSummary,
 } from '../../../../../shared/project-editor';
-import {
-  applyPianoRollPatchToPayload,
-  type PianoRollPayload,
-} from './editors/pianoroll/types';
+import { applyPianoRollPatchToPayload, type PianoRollPayload } from './editors/pianoroll/types';
 import { secondsToBeats } from '../../../../time/time-unit-logic';
 
 interface SnapshotAutomationSpec {
@@ -32,12 +29,17 @@ function clampAutomationValue(value: number, minimum: number, maximum: number): 
   return Math.min(maximum, Math.max(minimum, value));
 }
 
-function snapAutomationValue(value: number, minimum: number, maximum: number, resolution: number): number {
+function snapAutomationValue(
+  value: number,
+  minimum: number,
+  maximum: number,
+  resolution: number,
+): number {
   if (!Number.isFinite(resolution) || resolution <= 0) {
     return clampAutomationValue(value, minimum, maximum);
   }
 
-  const snapped = minimum + (Math.round((value - minimum) / resolution) * resolution);
+  const snapped = minimum + Math.round((value - minimum) / resolution) * resolution;
   return clampAutomationValue(snapped, minimum, maximum);
 }
 
@@ -54,7 +56,7 @@ function rescaleAutomationValue(
   }
 
   const normalized = (value - oldMinimum) / (oldMaximum - oldMinimum);
-  const nextValue = newMinimum + (normalized * (newMaximum - newMinimum));
+  const nextValue = newMinimum + normalized * (newMaximum - newMinimum);
   return snapAutomationValue(nextValue, newMinimum, newMaximum, resolution);
 }
 
@@ -108,7 +110,9 @@ function getSnapshotScalarValue(node: BsbWidgetNodeSnapshot): number {
   return typeof node.value === 'number' ? node.value : 0;
 }
 
-function buildAutomationSpecsFromSnapshotNode(node: BsbWidgetNodeSnapshot): SnapshotAutomationSpec[] {
+function buildAutomationSpecsFromSnapshotNode(
+  node: BsbWidgetNodeSnapshot,
+): SnapshotAutomationSpec[] {
   const objectName = node.objectName.trim();
   if (!objectName) {
     return [];
@@ -135,7 +139,7 @@ function buildAutomationSpecsFromSnapshotNode(node: BsbWidgetNodeSnapshot): Snap
 
   if (node.type === 'BSBHSliderBank' || node.type === 'BSBVSliderBank') {
     const sliders = Array.isArray(node.properties.sliders)
-      ? node.properties.sliders as Array<{ value?: number }>
+      ? (node.properties.sliders as Array<{ value?: number }>)
       : [];
     return sliders.map((slider, index) => ({
       name: `${objectName}_${index}`,
@@ -147,41 +151,47 @@ function buildAutomationSpecsFromSnapshotNode(node: BsbWidgetNodeSnapshot): Snap
   }
 
   if (node.type === 'BSBCheckBox') {
-    return [{
-      name: objectName,
-      value: getSnapshotScalarValue(node),
-      minimum: 0,
-      maximum: 1,
-      resolution: 1,
-    }];
+    return [
+      {
+        name: objectName,
+        value: getSnapshotScalarValue(node),
+        minimum: 0,
+        maximum: 1,
+        resolution: 1,
+      },
+    ];
   }
 
   if (node.type === 'BSBDropdown') {
     const dropdownItems = Array.isArray(node.properties.dropdownItems)
       ? node.properties.dropdownItems
       : [];
-    return [{
-      name: objectName,
-      value: getSnapshotScalarValue(node),
-      minimum: 0,
-      maximum: Math.max(0, dropdownItems.length - 1),
-      resolution: 1,
-    }];
+    return [
+      {
+        name: objectName,
+        value: getSnapshotScalarValue(node),
+        minimum: 0,
+        maximum: Math.max(0, dropdownItems.length - 1),
+        resolution: 1,
+      },
+    ];
   }
 
   if (
-    node.type === 'BSBHSlider'
-    || node.type === 'BSBVSlider'
-    || node.type === 'BSBKnob'
-    || node.type === 'BSBValue'
+    node.type === 'BSBHSlider' ||
+    node.type === 'BSBVSlider' ||
+    node.type === 'BSBKnob' ||
+    node.type === 'BSBValue'
   ) {
-    return [{
-      name: objectName,
-      value: getSnapshotScalarValue(node),
-      minimum: node.minimum,
-      maximum: node.maximum,
-      resolution: getSnapshotAutomationResolution(node),
-    }];
+    return [
+      {
+        name: objectName,
+        value: getSnapshotScalarValue(node),
+        minimum: node.minimum,
+        maximum: node.maximum,
+        resolution: getSnapshotAutomationResolution(node),
+      },
+    ];
   }
 
   return [];
@@ -195,7 +205,10 @@ function buildSoundAutomationRenameMap(
     return new Map();
   }
 
-  const previousNode = findBsbWidgetNodeById(previousInstrument.widgetTree ?? undefined, patch.widgetId);
+  const previousNode = findBsbWidgetNodeById(
+    previousInstrument.widgetTree ?? undefined,
+    patch.widgetId,
+  );
   if (!previousNode) {
     return new Map();
   }
@@ -225,7 +238,9 @@ function buildSoundAutomationParametersFromSnapshot(
   previousParameters: SoundAutomationParameterSnapshot[],
   patch: BsbInterfacePatch,
 ): SoundAutomationParameterSnapshot[] {
-  const existingByName = new Map(previousParameters.map((parameter) => [parameter.name, parameter]));
+  const existingByName = new Map(
+    previousParameters.map((parameter) => [parameter.name, parameter]),
+  );
   const renameMap = buildSoundAutomationRenameMap(previousInstrument, patch);
   const nextParameters: SoundAutomationParameterSnapshot[] = [];
   const seenNames = new Set<string>();
@@ -245,7 +260,10 @@ function buildSoundAutomationParametersFromSnapshot(
 
     const hasAutomatedParameter = specs.some((spec) => {
       const renamed = renameMap.get(spec.name);
-      return existingByName.get(spec.name)?.automationEnabled || (renamed ? existingByName.get(renamed)?.automationEnabled : false);
+      return (
+        existingByName.get(spec.name)?.automationEnabled ||
+        (renamed ? existingByName.get(renamed)?.automationEnabled : false)
+      );
     });
 
     if (!getSnapshotAutomationAllowed(node) && !hasAutomatedParameter) {
@@ -257,8 +275,9 @@ function buildSoundAutomationParametersFromSnapshot(
         continue;
       }
 
-      const previousParameter = existingByName.get(spec.name)
-        ?? (() => {
+      const previousParameter =
+        existingByName.get(spec.name) ??
+        (() => {
           const renamed = renameMap.get(spec.name);
           return renamed ? existingByName.get(renamed) : undefined;
         })();
@@ -329,29 +348,38 @@ export function applyPatchToDocument(
     const editor: TypeSpecificScoreObjectEditorSnapshot = {
       ...doc.editor,
       ...(patch.patch.scoreText !== undefined && { scoreText: patch.patch.scoreText as string }),
-      ...(patch.patch.commandLine !== undefined && { commandLine: patch.patch.commandLine as string }),
+      ...(patch.patch.commandLine !== undefined && {
+        commandLine: patch.patch.commandLine as string,
+      }),
       ...(patch.patch.syntaxType !== undefined && { syntaxType: patch.patch.syntaxType as string }),
     };
     return { ...doc, editor };
   }
   if (patch.type === 'updateTypeSpecificEditor' && doc.editor.kind === 'code') {
     const auxiliaryFlags = { ...doc.editor.auxiliaryFlags };
-    for (const key of ['commandLine', 'languageType', 'editEnabled', 'comment', 'onLoadProcessable']) {
+    for (const key of [
+      'commandLine',
+      'languageType',
+      'editEnabled',
+      'comment',
+      'onLoadProcessable',
+    ]) {
       const value = patch.patch[key];
       if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
         auxiliaryFlags[key] = value;
       }
     }
     const languageType = patch.patch.languageType;
-    const syntax = languageType === 'PYTHON'
-      ? 'python'
-      : languageType === 'JAVASCRIPT'
-        ? 'javascript'
-        : languageType === 'CLOJURE'
-          ? 'clojure'
-          : languageType === 'EXTERNAL'
-            ? 'text'
-            : doc.editor.syntax;
+    const syntax =
+      languageType === 'PYTHON'
+        ? 'python'
+        : languageType === 'JAVASCRIPT'
+          ? 'javascript'
+          : languageType === 'CLOJURE'
+            ? 'clojure'
+            : languageType === 'EXTERNAL'
+              ? 'text'
+              : doc.editor.syntax;
     let bsbInstrument = doc.editor.bsbInstrument;
     if (patch.patch.bsbInterfacePatch !== undefined && bsbInstrument) {
       bsbInstrument = structuredClone(bsbInstrument);
@@ -363,7 +391,7 @@ export function applyPatchToDocument(
     const editor: TypeSpecificScoreObjectEditorSnapshot = {
       ...doc.editor,
       syntax,
-      text: patch.patch.text !== undefined ? patch.patch.text as string : doc.editor.text,
+      text: patch.patch.text !== undefined ? (patch.patch.text as string) : doc.editor.text,
       ...(Object.keys(auxiliaryFlags).length > 0 ? { auxiliaryFlags } : {}),
       ...(bsbInstrument ? { bsbInstrument } : {}),
     };
@@ -372,7 +400,7 @@ export function applyPatchToDocument(
   if (patch.type === 'updateTypeSpecificEditor' && doc.editor.kind === 'tracker') {
     const p = patch.patch;
     const e = doc.editor;
-    const makeDefaultTrackColumns = (): TrackerColumnSnapshot[] => ([
+    const makeDefaultTrackColumns = (): TrackerColumnSnapshot[] => [
       {
         name: 'pch',
         type: 0,
@@ -405,7 +433,7 @@ export function applyPatchToDocument(
         },
         sourceIndex: 1,
       },
-    ]);
+    ];
     const makeRow = (
       stepIndex: number,
       trackDefs: Array<{
@@ -428,8 +456,11 @@ export function applyPatchToDocument(
     };
     const getStatus = (row: Record<string, string | number | null>, trackIndex: number): string =>
       String(row[`track-${trackIndex}-status`] ?? '');
-    const getField = (row: Record<string, string | number | null>, trackIndex: number, columnIndex: number): string =>
-      String(row[`track-${trackIndex}-col-${columnIndex}`] ?? '');
+    const getField = (
+      row: Record<string, string | number | null>,
+      trackIndex: number,
+      columnIndex: number,
+    ): string => String(row[`track-${trackIndex}-col-${columnIndex}`] ?? '');
     const isRowActive = (
       row: Record<string, string | number | null>,
       trackIndex: number,
@@ -453,10 +484,12 @@ export function applyPatchToDocument(
       switch (column.type) {
         case 0: {
           const parts = val.split('.');
-          return parts.length === 2
-            && parts[0].length > 0
-            && parts[1].length > 0
-            && !Number.isNaN(Number.parseFloat(val));
+          return (
+            parts.length === 2 &&
+            parts[0].length > 0 &&
+            parts[1].length > 0 &&
+            !Number.isNaN(Number.parseFloat(val))
+          );
         }
         case 1: {
           const parts = val.split('.');
@@ -524,9 +557,10 @@ export function applyPatchToDocument(
           const oct = Number.parseInt(parts[0], 10);
           const degree = Number.parseInt(parts[1], 10);
           if (Number.isNaN(oct) || Number.isNaN(degree)) return null;
-          const scaleDegrees = column.scale?.ratios?.length && column.scale.ratios.length > 0
-            ? column.scale.ratios.length
-            : 12;
+          const scaleDegrees =
+            column.scale?.ratios?.length && column.scale.ratios.length > 0
+              ? column.scale.ratios.length
+              : 12;
           const nextIndex = oct * scaleDegrees + degree + 1;
           return `${Math.floor(nextIndex / scaleDegrees)}.${nextIndex % scaleDegrees}`;
         }
@@ -536,7 +570,9 @@ export function applyPatchToDocument(
           return `${midi + 1}`;
         }
         case 4: {
-          let next = column.restrictedToInteger ? Number.parseInt(value, 10) + 1 : Number(value) + 1;
+          let next = column.restrictedToInteger
+            ? Number.parseInt(value, 10) + 1
+            : Number(value) + 1;
           if (!Number.isFinite(next) || Number.isNaN(next)) return null;
           if (column.usingRange) next = Math.min(next, column.rangeMax);
           return column.restrictedToInteger ? Math.trunc(next).toString() : next.toString();
@@ -562,9 +598,10 @@ export function applyPatchToDocument(
           const oct = Number.parseInt(parts[0], 10);
           const degree = Number.parseInt(parts[1], 10);
           if (Number.isNaN(oct) || Number.isNaN(degree)) return null;
-          const scaleDegrees = column.scale?.ratios?.length && column.scale.ratios.length > 0
-            ? column.scale.ratios.length
-            : 12;
+          const scaleDegrees =
+            column.scale?.ratios?.length && column.scale.ratios.length > 0
+              ? column.scale.ratios.length
+              : 12;
           const nextIndex = oct * scaleDegrees + degree - 1;
           return `${Math.floor(nextIndex / scaleDegrees)}.${nextIndex % scaleDegrees}`;
         }
@@ -574,7 +611,9 @@ export function applyPatchToDocument(
           return `${midi - 1}`;
         }
         case 4: {
-          let next = column.restrictedToInteger ? Number.parseInt(value, 10) - 1 : Number(value) - 1;
+          let next = column.restrictedToInteger
+            ? Number.parseInt(value, 10) - 1
+            : Number(value) - 1;
           if (!Number.isFinite(next) || Number.isNaN(next)) return null;
           if (column.usingRange) next = Math.max(next, column.rangeMin);
           return column.restrictedToInteger ? Math.trunc(next).toString() : next.toString();
@@ -633,14 +672,22 @@ export function applyPatchToDocument(
         stepIndex: number;
         value: string;
       };
-      if (stepIndex >= 0 && stepIndex < rows.length && trackIndex >= 0 && trackIndex < tracks.length) {
+      if (
+        stepIndex >= 0 &&
+        stepIndex < rows.length &&
+        trackIndex >= 0 &&
+        trackIndex < tracks.length
+      ) {
         const row = { ...rows[stepIndex] };
         if (columnIndex === -1) {
-          const normalizedStatus = String(value ?? '').trim().toUpperCase() === 'OFF'
-            ? 'OFF'
-            : String(value ?? '').trim() === '-'
-            ? '-'
-            : '';
+          const normalizedStatus =
+            String(value ?? '')
+              .trim()
+              .toUpperCase() === 'OFF'
+              ? 'OFF'
+              : String(value ?? '').trim() === '-'
+                ? '-'
+                : '';
           row[`track-${trackIndex}-status`] = normalizedStatus;
           if (normalizedStatus === 'OFF') {
             const colCount = tracks[trackIndex]?.columns?.length ?? 0;
@@ -667,7 +714,10 @@ export function applyPatchToDocument(
                   let previousActiveRow: Record<string, string | number | null> | null = null;
                   for (let i = stepIndex - 1; i >= 0; i--) {
                     const candidate = rows[i];
-                    if (candidate && isRowActive(candidate, trackIndex, tracks[trackIndex]?.columns?.length ?? 0)) {
+                    if (
+                      candidate &&
+                      isRowActive(candidate, trackIndex, tracks[trackIndex]?.columns?.length ?? 0)
+                    ) {
                       previousActiveRow = candidate;
                       break;
                     }
@@ -676,7 +726,11 @@ export function applyPatchToDocument(
                     row[`track-${trackIndex}-status`] = getStatus(previousActiveRow, trackIndex);
                     const colCount = tracks[trackIndex]?.columns?.length ?? 0;
                     for (let ci = 0; ci < colCount; ci++) {
-                      row[`track-${trackIndex}-col-${ci}`] = getField(previousActiveRow, trackIndex, ci);
+                      row[`track-${trackIndex}-col-${ci}`] = getField(
+                        previousActiveRow,
+                        trackIndex,
+                        ci,
+                      );
                     }
                   } else {
                     row[`track-${trackIndex}-status`] = '';
@@ -710,7 +764,12 @@ export function applyPatchToDocument(
         noteBuffer?: Array<Array<TrackerActionNoteSnapshot>>;
       };
       const { trackIndex, stepIndex, columnIndex } = action;
-      if (trackIndex >= 0 && trackIndex < tracks.length && stepIndex >= 0 && stepIndex < rows.length) {
+      if (
+        trackIndex >= 0 &&
+        trackIndex < tracks.length &&
+        stepIndex >= 0 &&
+        stepIndex < rows.length
+      ) {
         const colCount = tracks[trackIndex]?.columns?.length ?? 0;
         let row = { ...rows[stepIndex] };
         switch (action.type) {
@@ -753,9 +812,15 @@ export function applyPatchToDocument(
             break;
           }
           case 'incrementValue': {
-            if (columnIndex >= 0 && columnIndex < colCount && getStatus(row, trackIndex) !== 'OFF') {
+            if (
+              columnIndex >= 0 &&
+              columnIndex < colCount &&
+              getStatus(row, trackIndex) !== 'OFF'
+            ) {
               const colDef = tracks[trackIndex]?.columns?.[columnIndex];
-              const current = normalizeVisualOnlyTrackerValue(getField(row, trackIndex, columnIndex));
+              const current = normalizeVisualOnlyTrackerValue(
+                getField(row, trackIndex, columnIndex),
+              );
               if (colDef && current.length > 0) {
                 const nextValue = incrementColumnValue(current, colDef);
                 if (nextValue !== null) {
@@ -767,9 +832,15 @@ export function applyPatchToDocument(
             break;
           }
           case 'decrementValue': {
-            if (columnIndex >= 0 && columnIndex < colCount && getStatus(row, trackIndex) !== 'OFF') {
+            if (
+              columnIndex >= 0 &&
+              columnIndex < colCount &&
+              getStatus(row, trackIndex) !== 'OFF'
+            ) {
               const colDef = tracks[trackIndex]?.columns?.[columnIndex];
-              const current = normalizeVisualOnlyTrackerValue(getField(row, trackIndex, columnIndex));
+              const current = normalizeVisualOnlyTrackerValue(
+                getField(row, trackIndex, columnIndex),
+              );
               if (colDef && current.length > 0) {
                 const nextValue = decrementColumnValue(current, colDef);
                 if (nextValue !== null) {
@@ -802,7 +873,12 @@ export function applyPatchToDocument(
               if (destStep >= rows.length) break;
               const snapshot = buf[i]?.[0];
               if (!snapshot) continue;
-              rows[destStep] = writeRowNoteSnapshot(rows[destStep]!, trackIndex, colCount, snapshot);
+              rows[destStep] = writeRowNoteSnapshot(
+                rows[destStep]!,
+                trackIndex,
+                colCount,
+                snapshot,
+              );
             }
             break;
           }
@@ -837,7 +913,9 @@ export function applyPatchToDocument(
                     workingRow[`track-${trackIndex}-status`] = '';
                     for (let ci = 0; ci < colCount; ci++) {
                       const c = tracks[trackIndex]?.columns?.[ci];
-                      workingRow[`track-${trackIndex}-col-${ci}`] = c ? getTrackerDefaultValue(c) : '';
+                      workingRow[`track-${trackIndex}-col-${ci}`] = c
+                        ? getTrackerDefaultValue(c)
+                        : '';
                     }
                   }
                 }
@@ -853,7 +931,12 @@ export function applyPatchToDocument(
       }
     }
     if (Array.isArray(p.cellChanges)) {
-      for (const change of p.cellChanges as Array<{ trackId: string; rowIndex: number; columnId: string; value: string | number | null }>) {
+      for (const change of p.cellChanges as Array<{
+        trackId: string;
+        rowIndex: number;
+        columnId: string;
+        value: string | number | null;
+      }>) {
         if (change.rowIndex >= 0 && change.rowIndex < rows.length) {
           rows[change.rowIndex] = { ...rows[change.rowIndex], [change.columnId]: change.value };
         }
@@ -920,11 +1003,7 @@ export function applyPatchToDocument(
         rows = oldRows.map((row, rowIndex) => {
           const next: Record<string, string | number | null> = { step: rowIndex };
           for (let ti = 0; ti < tracks.length; ti++) {
-            const sourceTi = ti <= sourceIndex
-              ? ti
-              : ti === sourceIndex + 1
-              ? sourceIndex
-              : ti - 1;
+            const sourceTi = ti <= sourceIndex ? ti : ti === sourceIndex + 1 ? sourceIndex : ti - 1;
             next[`track-${ti}-status`] = row[`track-${sourceTi}-status`] ?? '';
             const colCount = tracks[ti]?.columns?.length ?? 0;
             for (let ci = 0; ci < colCount; ci++) {
@@ -952,7 +1031,9 @@ export function applyPatchToDocument(
     if (p.removeTrack !== undefined) {
       const idx = p.removeTrack as number;
       if (idx >= 0 && idx < tracks.length) {
-        tracks = tracks.filter((_, i) => i !== idx).map((t, i) => ({ ...t, trackId: `tracker-track-${i}` }));
+        tracks = tracks
+          .filter((_, i) => i !== idx)
+          .map((t, i) => ({ ...t, trackId: `tracker-track-${i}` }));
         rows = rows.map((row) => {
           const newRow: Record<string, string | number | null> = { step: row.step };
           for (let ti = 0; ti < tracks.length; ti++) {
@@ -971,13 +1052,7 @@ export function applyPatchToDocument(
       }
     }
     if (p.updateTrackProperties !== undefined) {
-      const {
-        trackIndex,
-        name,
-        instrumentId,
-        noteTemplate,
-        columns,
-      } = p.updateTrackProperties as {
+      const { trackIndex, name, instrumentId, noteTemplate, columns } = p.updateTrackProperties as {
         trackIndex: number;
         name: string;
         instrumentId: string;
@@ -991,17 +1066,17 @@ export function applyPatchToDocument(
           if (index !== trackIndex) return track;
           const nextColumns = columns
             ? columns.map((col, nextIndex) => ({
-              ...col,
-              sourceIndex: (() => {
-                if (typeof col.sourceIndex === 'number' && Number.isInteger(col.sourceIndex)) {
-                  return col.sourceIndex;
-                }
-                if (col.sourceIndex === undefined) {
-                  return nextIndex < oldColCount ? nextIndex : null;
-                }
-                return null;
-              })(),
-            }))
+                ...col,
+                sourceIndex: (() => {
+                  if (typeof col.sourceIndex === 'number' && Number.isInteger(col.sourceIndex)) {
+                    return col.sourceIndex;
+                  }
+                  if (col.sourceIndex === undefined) {
+                    return nextIndex < oldColCount ? nextIndex : null;
+                  }
+                  return null;
+                })(),
+              }))
             : track.columns;
           return {
             ...track,
@@ -1015,22 +1090,23 @@ export function applyPatchToDocument(
           const newColCount = tracks[trackIndex]?.columns?.length ?? 0;
           rows = rows.map((row, rowIndex) => {
             const next: Record<string, string | number | null> = { ...row, step: rowIndex };
-            const sourceMap = tracks[trackIndex]?.columns?.map((col, colIndex) => {
-              if (typeof col.sourceIndex === 'number' && Number.isInteger(col.sourceIndex)) {
-                return col.sourceIndex >= 0 && col.sourceIndex < oldColCount ? col.sourceIndex : null;
-              }
-              if (col.sourceIndex === undefined) {
-                return colIndex < oldColCount ? colIndex : null;
-              }
-              return null;
-            }) ?? [];
+            const sourceMap =
+              tracks[trackIndex]?.columns?.map((col, colIndex) => {
+                if (typeof col.sourceIndex === 'number' && Number.isInteger(col.sourceIndex)) {
+                  return col.sourceIndex >= 0 && col.sourceIndex < oldColCount
+                    ? col.sourceIndex
+                    : null;
+                }
+                if (col.sourceIndex === undefined) {
+                  return colIndex < oldColCount ? colIndex : null;
+                }
+                return null;
+              }) ?? [];
             for (let ci = 0; ci < newColCount; ci++) {
               const key = `track-${trackIndex}-col-${ci}`;
               const sourceIndex = sourceMap[ci];
               next[key] =
-                sourceIndex !== null
-                  ? row[`track-${trackIndex}-col-${sourceIndex}`] ?? ''
-                  : '';
+                sourceIndex !== null ? (row[`track-${trackIndex}-col-${sourceIndex}`] ?? '') : '';
             }
             for (let ci = newColCount; ci < oldColCount; ci++) {
               delete next[`track-${trackIndex}-col-${ci}`];
@@ -1056,16 +1132,23 @@ export function applyPatchToDocument(
     const editor: TypeSpecificScoreObjectEditorSnapshot = {
       ...doc.editor,
       ...(patch.patch.audioFile !== undefined && { audioFile: patch.patch.audioFile as string }),
-      ...(patch.patch.fileStartTime !== undefined && { fileStartTime: patch.patch.fileStartTime as number }),
+      ...(patch.patch.fileStartTime !== undefined && {
+        fileStartTime: patch.patch.fileStartTime as number,
+      }),
       ...(patch.patch.fadeIn !== undefined && { fadeIn: patch.patch.fadeIn as number }),
       ...(patch.patch.fadeOut !== undefined && { fadeOut: patch.patch.fadeOut as number }),
       ...(patch.patch.fadeInType !== undefined && { fadeInType: patch.patch.fadeInType as string }),
-      ...(patch.patch.fadeOutType !== undefined && { fadeOutType: patch.patch.fadeOutType as string }),
+      ...(patch.patch.fadeOutType !== undefined && {
+        fadeOutType: patch.patch.fadeOutType as string,
+      }),
       ...(patch.patch.looping !== undefined && { looping: patch.patch.looping as boolean }),
     };
     let shared = doc.shared;
     if (patch.patch.looping === false && doc.editor.audioDuration > 0) {
-      const fileStart = patch.patch.fileStartTime !== undefined ? (patch.patch.fileStartTime as number) : doc.editor.fileStartTime;
+      const fileStart =
+        patch.patch.fileStartTime !== undefined
+          ? (patch.patch.fileStartTime as number)
+          : doc.editor.fileStartTime;
       const durLimit = secondsToBeats(
         Math.max(0, doc.editor.audioDuration - fileStart),
         doc.timeContext,
@@ -1082,15 +1165,29 @@ export function applyPatchToDocument(
     }
     return { ...doc, shared, editor };
   }
-  if (patch.type === 'updateTypeSpecificEditor' && doc.editor.kind === 'structured' && doc.editor.editorFamily === 'PianoRoll') {
+  if (
+    patch.type === 'updateTypeSpecificEditor' &&
+    doc.editor.kind === 'structured' &&
+    doc.editor.editorFamily === 'PianoRoll'
+  ) {
     const editor: TypeSpecificScoreObjectEditorSnapshot = {
       ...doc.editor,
-      payload: applyPianoRollPatchToPayload(doc.editor.payload as unknown as PianoRollPayload, patch.patch as Record<string, unknown>) as unknown as Record<string, unknown>,
+      payload: applyPianoRollPatchToPayload(
+        doc.editor.payload as unknown as PianoRollPayload,
+        patch.patch as Record<string, unknown>,
+      ) as unknown as Record<string, unknown>,
     };
     return { ...doc, editor };
   }
-  if (patch.type === 'updateTypeSpecificEditor' && doc.editor.kind === 'structured' && doc.editor.editorFamily === 'JMask') {
-    const payload = applyJMaskPatchToPayload(doc.editor.payload as JMaskEditorPayload, patch.patch as Record<string, unknown>);
+  if (
+    patch.type === 'updateTypeSpecificEditor' &&
+    doc.editor.kind === 'structured' &&
+    doc.editor.editorFamily === 'JMask'
+  ) {
+    const payload = applyJMaskPatchToPayload(
+      doc.editor.payload as JMaskEditorPayload,
+      patch.patch as Record<string, unknown>,
+    );
     const editor: TypeSpecificScoreObjectEditorSnapshot = {
       ...doc.editor,
       payload,
@@ -1130,7 +1227,7 @@ export function applyPatchToDocument(
         previousInstrument,
         bsbInstr,
         Array.isArray(payload.automationParameters)
-          ? payload.automationParameters as SoundAutomationParameterSnapshot[]
+          ? (payload.automationParameters as SoundAutomationParameterSnapshot[])
           : [],
         interfacePatch,
       );
@@ -1140,8 +1237,10 @@ export function applyPatchToDocument(
     if (p.bsbCodePatch !== undefined && payload.bsbInstrument) {
       const bsbInstr = { ...(payload.bsbInstrument as Record<string, unknown>) };
       const codePatch = p.bsbCodePatch as Record<string, string>;
-      if (codePatch.instrumentText !== undefined) bsbInstr.instrumentText = codePatch.instrumentText;
-      if (codePatch.alwaysOnInstrumentText !== undefined) bsbInstr.alwaysOnInstrumentText = codePatch.alwaysOnInstrumentText;
+      if (codePatch.instrumentText !== undefined)
+        bsbInstr.instrumentText = codePatch.instrumentText;
+      if (codePatch.alwaysOnInstrumentText !== undefined)
+        bsbInstr.alwaysOnInstrumentText = codePatch.alwaysOnInstrumentText;
       if (codePatch.globalOrc !== undefined) bsbInstr.globalOrc = codePatch.globalOrc;
       if (codePatch.globalSco !== undefined) bsbInstr.globalSco = codePatch.globalSco;
       payload.bsbInstrument = bsbInstr;
@@ -1156,24 +1255,31 @@ export function applyPatchToDocument(
         curve?: string;
         resolutionDecimal?: string;
       };
-      const params = (payload.automationParameters as Array<Record<string, unknown>>).map((param) => {
-        if (param.parameterId !== autoPatch.parameterId && param.name !== autoPatch.parameterId) return param;
-        const updated = { ...param };
-        if (autoPatch.automationEnabled !== undefined) updated.automationEnabled = autoPatch.automationEnabled;
-        if (autoPatch.points !== undefined) updated.points = autoPatch.points;
-        if (autoPatch.curve !== undefined) updated.curve = autoPatch.curve;
-        if (autoPatch.resolutionDecimal !== undefined) {
-          updated.resolutionDecimal = autoPatch.resolutionDecimal;
-          const numeric = Number(autoPatch.resolutionDecimal);
-          if (Number.isFinite(numeric)) updated.resolution = numeric;
-        }
-        return updated;
-      });
+      const params = (payload.automationParameters as Array<Record<string, unknown>>).map(
+        (param) => {
+          if (param.parameterId !== autoPatch.parameterId && param.name !== autoPatch.parameterId)
+            return param;
+          const updated = { ...param };
+          if (autoPatch.automationEnabled !== undefined)
+            updated.automationEnabled = autoPatch.automationEnabled;
+          if (autoPatch.points !== undefined) updated.points = autoPatch.points;
+          if (autoPatch.curve !== undefined) updated.curve = autoPatch.curve;
+          if (autoPatch.resolutionDecimal !== undefined) {
+            updated.resolutionDecimal = autoPatch.resolutionDecimal;
+            const numeric = Number(autoPatch.resolutionDecimal);
+            if (Number.isFinite(numeric)) updated.resolution = numeric;
+          }
+          return updated;
+        },
+      );
       payload.automationParameters = params;
     }
 
     if (p.toggleStep !== undefined && Array.isArray(payload.patterns)) {
-      const { patternIndex, stepIndex } = p.toggleStep as { patternIndex: number; stepIndex: number };
+      const { patternIndex, stepIndex } = p.toggleStep as {
+        patternIndex: number;
+        stepIndex: number;
+      };
       const patterns = (payload.patterns as Array<Record<string, unknown>>).map((pat, pi) => {
         if (pi !== patternIndex) return pat;
         const values = [...(pat.values as boolean[])];
@@ -1199,7 +1305,10 @@ export function applyPatchToDocument(
       payload.patterns = patterns;
     }
     if (p.updatePatternScore !== undefined && Array.isArray(payload.patterns)) {
-      const { patternIndex, patternScore } = p.updatePatternScore as { patternIndex: number; patternScore: string };
+      const { patternIndex, patternScore } = p.updatePatternScore as {
+        patternIndex: number;
+        patternScore: string;
+      };
       const patterns = (payload.patterns as Array<Record<string, unknown>>).map((pat, pi) => {
         if (pi !== patternIndex) return pat;
         return { ...pat, patternScore };
@@ -1207,7 +1316,10 @@ export function applyPatchToDocument(
       payload.patterns = patterns;
     }
     if (p.updatePatternName !== undefined && Array.isArray(payload.patterns)) {
-      const { patternIndex, patternName } = p.updatePatternName as { patternIndex: number; patternName: string };
+      const { patternIndex, patternName } = p.updatePatternName as {
+        patternIndex: number;
+        patternName: string;
+      };
       const patterns = (payload.patterns as Array<Record<string, unknown>>).map((pat, pi) => {
         if (pi !== patternIndex) return pat;
         return { ...pat, patternName };
@@ -1229,7 +1341,11 @@ export function applyPatchToDocument(
       payload.numSteps = numSteps;
     }
     if (p.updateTrackCell !== undefined && Array.isArray(payload.trackData)) {
-      const { trackIndex, stepIndex, value } = p.updateTrackCell as { trackIndex: number; stepIndex: number; value: string };
+      const { trackIndex, stepIndex, value } = p.updateTrackCell as {
+        trackIndex: number;
+        stepIndex: number;
+        value: string;
+      };
       const trackData = (payload.trackData as string[][]).map((track, ti) => {
         if (ti !== trackIndex) return track;
         const updated = [...track];
@@ -1253,12 +1369,21 @@ export function applyPatchToDocument(
   if (patch.type === 'updateSharedProperties') {
     const shared = { ...doc.shared };
     if (patch.patch.name !== undefined) shared.name = patch.patch.name;
-    if (patch.patch.backgroundColor !== undefined) shared.backgroundColor = patch.patch.backgroundColor;
+    if (patch.patch.backgroundColor !== undefined)
+      shared.backgroundColor = patch.patch.backgroundColor;
     if (patch.patch.startTime !== undefined) {
-      shared.startTime = { ...shared.startTime, value: patch.patch.startTime.value, timeBase: patch.patch.startTime.timeBase };
+      shared.startTime = {
+        ...shared.startTime,
+        value: patch.patch.startTime.value,
+        timeBase: patch.patch.startTime.timeBase,
+      };
     }
     if (patch.patch.subjectiveDuration !== undefined) {
-      shared.subjectiveDuration = { ...shared.subjectiveDuration, value: patch.patch.subjectiveDuration.value, timeBase: patch.patch.subjectiveDuration.timeBase };
+      shared.subjectiveDuration = {
+        ...shared.subjectiveDuration,
+        value: patch.patch.subjectiveDuration.value,
+        timeBase: patch.patch.subjectiveDuration.timeBase,
+      };
     }
     return { ...doc, shared };
   }

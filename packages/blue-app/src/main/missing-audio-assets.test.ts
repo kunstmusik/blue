@@ -62,7 +62,10 @@ function makeDataWithNested(nestedObjects: SoundObject[]): BlueData {
   return data;
 }
 
-function ctx(projectDirectory: string | null = '/proj', sfDir: string | null = null): MissingAudioResolutionContext {
+function ctx(
+  projectDirectory: string | null = '/proj',
+  sfDir: string | null = null,
+): MissingAudioResolutionContext {
   return { projectDirectory, sfDir };
 }
 
@@ -130,7 +133,9 @@ describe('collectMissingAudioFiles — Java Blue parity scope', () => {
 });
 
 describe('findAudioFile — BlueSystem.findFile parity order', () => {
-  const probe = makeProbe(new Set([path.join('/proj', 'a.wav'), '/abs/b.wav', path.join('/sfx', 'c.wav')]));
+  const probe = makeProbe(
+    new Set([path.join('/proj', 'a.wav'), '/abs/b.wav', path.join('/sfx', 'c.wav')]),
+  );
 
   it('prefers project-directory resolution', () => {
     expect(findAudioFile('a.wav', ctx('/proj', '/sfx'), probe)).toBe(path.join('/proj', 'a.wav'));
@@ -238,10 +243,7 @@ describe('applyReplacementMappings — Java reconcileAudioFiles parity', () => {
       makeAudioFile('missing.wav'),
       makeAudioFile('untouched.wav'),
     ]);
-    const changed = applyReplacementMappings(
-      data,
-      new Map([['missing.wav', 'replaced.wav']]),
-    );
+    const changed = applyReplacementMappings(data, new Map([['missing.wav', 'replaced.wav']]));
     expect(changed).toBe(true);
     const poly = data.getScore()[0] as PolyObject;
     const names = Array.from(poly[0]!.map((o) => (o as AudioFile).getSoundFileName()));
@@ -251,7 +253,9 @@ describe('applyReplacementMappings — Java reconcileAudioFiles parity', () => {
   it('returns false and changes nothing when the mapping map is empty', () => {
     const data = makeDataWithRootObjects([makeAudioFile('missing.wav')]);
     expect(applyReplacementMappings(data, new Map())).toBe(false);
-    expect(((data.getScore()[0] as PolyObject)[0]![0] as AudioFile).getSoundFileName()).toBe('missing.wav');
+    expect(((data.getScore()[0] as PolyObject)[0]![0] as AudioFile).getSoundFileName()).toBe(
+      'missing.wav',
+    );
   });
 
   it('updates AudioFile references inside nested PolyObjects', () => {
@@ -308,14 +312,13 @@ describe('session lifecycle and stale detection', () => {
       '/proj',
     );
     expect(applyReplacementMappings(data, mappings)).toBe(false);
-    expect(((data.getScore()[0] as PolyObject)[0]![0] as AudioFile).getSoundFileName()).toBe('missing.wav');
+    expect(((data.getScore()[0] as PolyObject)[0]![0] as AudioFile).getSoundFileName()).toBe(
+      'missing.wav',
+    );
   });
 
   it('partial resolution leaves unmapped original paths unchanged', () => {
-    const data = makeDataWithRootObjects([
-      makeAudioFile('one.wav'),
-      makeAudioFile('two.wav'),
-    ]);
+    const data = makeDataWithRootObjects([makeAudioFile('one.wav'), makeAudioFile('two.wav')]);
     const mappings = buildReplacementMappings(
       [
         { originalPath: 'one.wav', replacementPath: '/tmp/one-fixed.wav' },
@@ -324,7 +327,9 @@ describe('session lifecycle and stale detection', () => {
       '/proj',
     );
     applyReplacementMappings(data, mappings);
-    const names = Array.from((data.getScore()[0] as PolyObject)[0]!.map((o) => (o as AudioFile).getSoundFileName()));
+    const names = Array.from(
+      (data.getScore()[0] as PolyObject)[0]!.map((o) => (o as AudioFile).getSoundFileName()),
+    );
     expect(names).toEqual(['/tmp/one-fixed.wav', 'two.wav']);
   });
 });
@@ -336,7 +341,9 @@ describe('AudioFile replacement round-trips through save/load', () => {
 
     const xml = data.saveToString();
     const reloaded = await BlueData.loadFromString(xml);
-    const reloadedName = ((reloaded.getScore()[0] as PolyObject)[0]![0] as AudioFile).getSoundFileName();
+    const reloadedName = (
+      (reloaded.getScore()[0] as PolyObject)[0]![0] as AudioFile
+    ).getSoundFileName();
     expect(reloadedName).toBe('media/replaced.wav');
   });
 });

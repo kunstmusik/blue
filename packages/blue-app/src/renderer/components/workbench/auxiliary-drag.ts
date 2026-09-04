@@ -32,8 +32,7 @@ export function getAuxiliaryEdgeDropTarget(
   point: AuxiliaryDragPoint,
   threshold = AUXILIARY_EDGE_DRAG_THRESHOLD,
 ): AuxiliaryEdge | undefined {
-  const withinVertical =
-    point.y >= bounds.top - threshold && point.y <= bounds.bottom + threshold;
+  const withinVertical = point.y >= bounds.top - threshold && point.y <= bounds.bottom + threshold;
   const withinHorizontal =
     point.x >= bounds.left - threshold && point.x <= bounds.right + threshold;
 

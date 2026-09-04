@@ -36,29 +36,61 @@ export class Column {
     }
   }
 
-  getName(): string { return this._name; }
-  setName(name: string): void { this._name = name; }
+  getName(): string {
+    return this._name;
+  }
+  setName(name: string): void {
+    this._name = name;
+  }
 
-  getType(): number { return this._type; }
-  setType(type: number): void { this._type = type; }
+  getType(): number {
+    return this._type;
+  }
+  setType(type: number): void {
+    this._type = type;
+  }
 
-  isRestrictedToInteger(): boolean { return this._restrictedToInteger; }
-  setRestrictedToInteger(restricted: boolean): void { this._restrictedToInteger = restricted; }
+  isRestrictedToInteger(): boolean {
+    return this._restrictedToInteger;
+  }
+  setRestrictedToInteger(restricted: boolean): void {
+    this._restrictedToInteger = restricted;
+  }
 
-  isUsingRange(): boolean { return this._usingRange; }
-  setUsingRange(using: boolean): void { this._usingRange = using; }
+  isUsingRange(): boolean {
+    return this._usingRange;
+  }
+  setUsingRange(using: boolean): void {
+    this._usingRange = using;
+  }
 
-  getRangeMin(): number { return this._rangeMin; }
-  setRangeMin(min: number): void { this._rangeMin = min; }
+  getRangeMin(): number {
+    return this._rangeMin;
+  }
+  setRangeMin(min: number): void {
+    this._rangeMin = min;
+  }
 
-  getRangeMax(): number { return this._rangeMax; }
-  setRangeMax(max: number): void { this._rangeMax = max; }
+  getRangeMax(): number {
+    return this._rangeMax;
+  }
+  setRangeMax(max: number): void {
+    this._rangeMax = max;
+  }
 
-  getScale(): Scale { return this._scale; }
-  setScale(scale: Scale): void { this._scale = scale; }
+  getScale(): Scale {
+    return this._scale;
+  }
+  setScale(scale: Scale): void {
+    this._scale = scale;
+  }
 
-  isOutputFrequency(): boolean { return this._outputFrequency; }
-  setOutputFrequency(output: boolean): void { this._outputFrequency = output; }
+  isOutputFrequency(): boolean {
+    return this._outputFrequency;
+  }
+  setOutputFrequency(output: boolean): void {
+    this._outputFrequency = output;
+  }
 
   isValid(input: string): boolean {
     const val = input.trim();

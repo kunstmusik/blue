@@ -1,10 +1,10 @@
-import { describe, expect, it } from "vitest";
-import { Element } from "../../serialization/xml-reader";
-import { PresetGroup } from "./preset-group";
-import { Preset } from "./preset";
+import { describe, expect, it } from 'vitest';
+import { Element } from '../../serialization/xml-reader';
+import { PresetGroup } from './preset-group';
+import { Preset } from './preset';
 
-describe("PresetGroup", () => {
-  it("round-trips through XML with presets and subgroups", () => {
+describe('PresetGroup', () => {
+  it('round-trips through XML with presets and subgroups', () => {
     const xml = `<presetGroup name="My Presets" currentPresetUniqueId="abc123" currentPresetModified="true">
       <preset name="Preset A" uniqueId="abc123">
         <setting name="amp">ver2:0.75</setting>
@@ -18,59 +18,59 @@ describe("PresetGroup", () => {
     </presetGroup>`;
 
     const group = PresetGroup.loadFromXML(Element.parse(xml));
-    expect(group.getPresetGroupName()).toBe("My Presets");
-    expect(group.getCurrentPresetUniqueId()).toBe("abc123");
+    expect(group.getPresetGroupName()).toBe('My Presets');
+    expect(group.getCurrentPresetUniqueId()).toBe('abc123');
     expect(group.isCurrentPresetModified()).toBe(true);
     expect(group.getPresets()).toHaveLength(1);
-    expect(group.getPresets()[0].getPresetName()).toBe("Preset A");
-    expect(group.getPresets()[0].getValue("amp")).toBe("ver2:0.75");
+    expect(group.getPresets()[0].getPresetName()).toBe('Preset A');
+    expect(group.getPresets()[0].getValue('amp')).toBe('ver2:0.75');
     expect(group.getSubGroups()).toHaveLength(1);
     expect(group.getSubGroups()[0].getPresets()).toHaveLength(1);
 
     const savedXml = group.saveAsXML().toXml();
     expect(savedXml).toContain('name="My Presets"');
     expect(savedXml).toContain('uniqueId="abc123"');
-    expect(savedXml).toContain("ver2:0.75");
+    expect(savedXml).toContain('ver2:0.75');
 
     const reloaded = PresetGroup.loadFromXML(Element.parse(savedXml));
-    expect(reloaded.getPresetGroupName()).toBe("My Presets");
+    expect(reloaded.getPresetGroupName()).toBe('My Presets');
     expect(reloaded.getPresets()).toHaveLength(1);
-    expect(reloaded.getPresets()[0].getValue("freq")).toBe("ver2:440");
-    expect(reloaded.getSubGroups()[0].getPresets()[0].getPresetName()).toBe("Preset B");
+    expect(reloaded.getPresets()[0].getValue('freq')).toBe('ver2:440');
+    expect(reloaded.getSubGroups()[0].getPresets()[0].getPresetName()).toBe('Preset B');
   });
 
-  it("handles empty preset groups", () => {
+  it('handles empty preset groups', () => {
     const xml = `<presetGroup name="Empty"/>`;
     const group = PresetGroup.loadFromXML(Element.parse(xml));
-    expect(group.getPresetGroupName()).toBe("Empty");
+    expect(group.getPresetGroupName()).toBe('Empty');
     expect(group.getPresets()).toHaveLength(0);
     expect(group.getSubGroups()).toHaveLength(0);
   });
 
-  it("finds presets by unique ID recursively", () => {
+  it('finds presets by unique ID recursively', () => {
     const group = new PresetGroup();
     const p1 = new Preset();
-    p1.uniqueId = "id1";
-    p1.presetName = "A";
+    p1.uniqueId = 'id1';
+    p1.presetName = 'A';
     const subGroup = new PresetGroup();
     const p2 = new Preset();
-    p2.uniqueId = "id2";
-    p2.presetName = "B";
+    p2.uniqueId = 'id2';
+    p2.presetName = 'B';
     subGroup.presets.push(p2);
     group.presets.push(p1);
     group.subGroups.push(subGroup);
 
-    expect(group.findPresetByUniqueId("id1")?.getPresetName()).toBe("A");
-    expect(group.findPresetByUniqueId("id2")?.getPresetName()).toBe("B");
-    expect(group.findPresetByUniqueId("id3")).toBeNull();
+    expect(group.findPresetByUniqueId('id1')?.getPresetName()).toBe('A');
+    expect(group.findPresetByUniqueId('id2')?.getPresetName()).toBe('B');
+    expect(group.findPresetByUniqueId('id3')).toBeNull();
   });
 
-  it("preserves preset settings sorted by key on save", () => {
+  it('preserves preset settings sorted by key on save', () => {
     const preset = new Preset();
-    preset.presetName = "Test";
-    preset.uniqueId = "u1";
-    preset.setValue("zebra", "1");
-    preset.setValue("alpha", "2");
+    preset.presetName = 'Test';
+    preset.uniqueId = 'u1';
+    preset.setValue('zebra', '1');
+    preset.setValue('alpha', '2');
 
     const group = new PresetGroup();
     group.presets.push(preset);

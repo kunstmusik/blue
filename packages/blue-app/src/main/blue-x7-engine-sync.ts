@@ -12,10 +12,7 @@ import { BlueX7 } from '@blue/data';
 import type { TrackLayerGroup } from '@blue/data';
 import type { BlueX7RuntimeTarget } from '../shared/project-editor/contract';
 import type { BlueX7RuntimeEnvironment } from './blue-x7-runtime-sync';
-import {
-  applyBlueX7CompleteVoiceBatch,
-  applyBlueX7LiveUpdate,
-} from './blue-x7-runtime-sync';
+import { applyBlueX7CompleteVoiceBatch, applyBlueX7LiveUpdate } from './blue-x7-runtime-sync';
 import { blueX7PatchToRuntimeIntent } from '../shared/blue-x7-patch-intents';
 import type { InstrumentPatch } from '../shared/project-editor';
 
@@ -52,9 +49,7 @@ export function invalidateActiveBlueX7Binding(ownerIdentity: string): void {
   activeBindings.delete(ownerIdentity);
 }
 
-export function getActiveBlueX7Binding(
-  ownerIdentity: string,
-): CompiledBlueX7Binding | undefined {
+export function getActiveBlueX7Binding(ownerIdentity: string): CompiledBlueX7Binding | undefined {
   return activeBindings.get(ownerIdentity);
 }
 
@@ -69,10 +64,7 @@ export function resolveBlueX7OwnerFromData(
     const ia = data
       .getArrangement()
       .getArrangement()
-      .find(
-        (entry) =>
-          entry.arrangementId === target.assignmentId && entry.enabled && entry.instr,
-      );
+      .find((entry) => entry.arrangementId === target.assignmentId && entry.enabled && entry.instr);
     if (!ia || !(ia.instr instanceof BlueX7)) return null;
     const instrument = ia.instr;
     return {
@@ -88,9 +80,7 @@ export function resolveBlueX7OwnerFromData(
         (candidate as unknown as { getUniqueId?: () => string }).getUniqueId?.() ===
         target.track.rootGroupId,
     );
-  const track = group?.find(
-    (candidate) => candidate.getUniqueId() === target.track.trackId,
-  );
+  const track = group?.find((candidate) => candidate.getUniqueId() === target.track.trackId);
   const instrument = track?.getInstrument();
   if (!track || !(instrument instanceof BlueX7) || !instrument.isEnabled()) return null;
   return {
@@ -106,7 +96,8 @@ export function createBlueX7RuntimeEnvironment(
     currentProjectSessionId: deps.getSessionId,
     currentProjectRevision: deps.getRevision,
     isPlaying: deps.isPlaying,
-    resolveOwner: (target) => resolveBlueX7OwnerFromData(deps.getData(), target, deps.getSessionId()),
+    resolveOwner: (target) =>
+      resolveBlueX7OwnerFromData(deps.getData(), target, deps.getSessionId()),
     getBinding: getActiveBlueX7Binding,
     writeChannels: deps.writeChannels,
     readChannels: deps.readChannels,
@@ -114,10 +105,7 @@ export function createBlueX7RuntimeEnvironment(
   };
 }
 
-function findBlueX7InstrumentByOwner(
-  data: BlueData,
-  ownerIdentity: string,
-): BlueX7 | null {
+function findBlueX7InstrumentByOwner(data: BlueData, ownerIdentity: string): BlueX7 | null {
   if (ownerIdentity.startsWith('arrangement:')) {
     const assignmentId = ownerIdentity.slice('arrangement:'.length);
     const ia = data

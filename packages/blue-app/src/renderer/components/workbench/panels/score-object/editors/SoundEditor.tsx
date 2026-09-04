@@ -31,70 +31,90 @@ const SOUND_TABS: Array<{ key: SoundTabId; label: string }> = [
   { key: 'comments', label: 'Comments' },
 ];
 
-export default function SoundEditor({ document, onPatch, projectUdos }: ScoreObjectEditorComponentProps): React.ReactElement {
+export default function SoundEditor({
+  document,
+  onPatch,
+  projectUdos,
+}: ScoreObjectEditorComponentProps): React.ReactElement {
   const editor = document.editor;
   if (editor.kind !== 'structured' || editor.editorFamily !== 'Sound') return <></>;
 
   const payload = editor.payload as unknown as SoundEditorPayload;
   const { comment, bsbInstrument, automationParameters, availableTabs } = payload;
   const bsbInstrumentWithAutomation = useMemo(
-    () => bsbInstrument ? { ...bsbInstrument, automationParameters } : null,
+    () => (bsbInstrument ? { ...bsbInstrument, automationParameters } : null),
     [bsbInstrument, automationParameters],
   );
   const [activeTab, setActiveTab] = useState<SoundTabId>(availableTabs[0] ?? 'comments');
-  const {
-    testing,
-    testOutput,
-    testError,
-    runTest,
-    clearTestOutput,
-    clearTestError,
-  } = useScoreObjectTest(document.target);
+  const { testing, testOutput, testError, runTest, clearTestOutput, clearTestError } =
+    useScoreObjectTest(document.target);
 
-  const handleInstrumentPatch = useCallback((patch: InstrumentPatch) => {
-    const scorePatch: Record<string, unknown> = {};
-    if (patch.bsbInterface) {
-      scorePatch.bsbInterfacePatch = patch.bsbInterface;
-    }
-    if (patch.instrumentText !== undefined || patch.alwaysOnInstrumentText !== undefined
-      || patch.globalOrc !== undefined || patch.globalSco !== undefined) {
-      scorePatch.bsbCodePatch = {};
-      if (patch.instrumentText !== undefined) (scorePatch.bsbCodePatch as Record<string, unknown>).instrumentText = patch.instrumentText;
-      if (patch.alwaysOnInstrumentText !== undefined) (scorePatch.bsbCodePatch as Record<string, unknown>).alwaysOnInstrumentText = patch.alwaysOnInstrumentText;
-      if (patch.globalOrc !== undefined) (scorePatch.bsbCodePatch as Record<string, unknown>).globalOrc = patch.globalOrc;
-      if (patch.globalSco !== undefined) (scorePatch.bsbCodePatch as Record<string, unknown>).globalSco = patch.globalSco;
-    }
-    onPatch({
-      type: 'updateTypeSpecificEditor',
-      target: document.target,
-      patch: scorePatch,
-    });
-  }, [document.target, onPatch]);
+  const handleInstrumentPatch = useCallback(
+    (patch: InstrumentPatch) => {
+      const scorePatch: Record<string, unknown> = {};
+      if (patch.bsbInterface) {
+        scorePatch.bsbInterfacePatch = patch.bsbInterface;
+      }
+      if (
+        patch.instrumentText !== undefined ||
+        patch.alwaysOnInstrumentText !== undefined ||
+        patch.globalOrc !== undefined ||
+        patch.globalSco !== undefined
+      ) {
+        scorePatch.bsbCodePatch = {};
+        if (patch.instrumentText !== undefined)
+          (scorePatch.bsbCodePatch as Record<string, unknown>).instrumentText =
+            patch.instrumentText;
+        if (patch.alwaysOnInstrumentText !== undefined)
+          (scorePatch.bsbCodePatch as Record<string, unknown>).alwaysOnInstrumentText =
+            patch.alwaysOnInstrumentText;
+        if (patch.globalOrc !== undefined)
+          (scorePatch.bsbCodePatch as Record<string, unknown>).globalOrc = patch.globalOrc;
+        if (patch.globalSco !== undefined)
+          (scorePatch.bsbCodePatch as Record<string, unknown>).globalSco = patch.globalSco;
+      }
+      onPatch({
+        type: 'updateTypeSpecificEditor',
+        target: document.target,
+        patch: scorePatch,
+      });
+    },
+    [document.target, onPatch],
+  );
 
   const handleOrchestraPatch = useCallback((_patch: OrchestraPatch) => {
     // no-op: Sound BSB patches go through handleInstrumentPatch
   }, []);
 
-  const handleCommentChange = useCallback((value: string) => {
-    onPatch({
-      type: 'updateTypeSpecificEditor',
-      target: document.target,
-      patch: { comment: value },
-    });
-  }, [document.target, onPatch]);
+  const handleCommentChange = useCallback(
+    (value: string) => {
+      onPatch({
+        type: 'updateTypeSpecificEditor',
+        target: document.target,
+        patch: { comment: value },
+      });
+    },
+    [document.target, onPatch],
+  );
 
-  const handleAutomationPatch = useCallback((parameterId: string, updates: {
-    automationEnabled?: boolean;
-    points?: Array<{ x: number; y: number }>;
-    curve?: string;
-    resolutionDecimal?: string;
-  }) => {
-    onPatch({
-      type: 'updateTypeSpecificEditor',
-      target: document.target,
-      patch: { automationPatch: { parameterId, ...updates } },
-    });
-  }, [document.target, onPatch]);
+  const handleAutomationPatch = useCallback(
+    (
+      parameterId: string,
+      updates: {
+        automationEnabled?: boolean;
+        points?: Array<{ x: number; y: number }>;
+        curve?: string;
+        resolutionDecimal?: string;
+      },
+    ) => {
+      onPatch({
+        type: 'updateTypeSpecificEditor',
+        target: document.target,
+        patch: { automationPatch: { parameterId, ...updates } },
+      });
+    },
+    [document.target, onPatch],
+  );
 
   const visibleTabs = SOUND_TABS.filter((t) => availableTabs.includes(t.key as SoundEditorTab));
 
@@ -112,7 +132,7 @@ export default function SoundEditor({ document, onPatch, projectUdos }: ScoreObj
                   'border-b-2 px-3 py-2 text-role-body',
                   activeTab === tab.key
                     ? 'border-app-accent text-app-text-strong'
-                    : 'border-transparent text-app-text-muted hover:text-app-text-strong'
+                    : 'border-transparent text-app-text-muted hover:text-app-text-strong',
                 )}
                 onClick={() => setActiveTab(tab.key)}
               >
@@ -124,7 +144,9 @@ export default function SoundEditor({ document, onPatch, projectUdos }: ScoreObj
             type="button"
             className="mb-1 rounded border border-app-border bg-app-surface px-2 py-0.5 text-role-body text-app-text hover:border-app-accent disabled:opacity-50"
             disabled={testing}
-            onClick={() => { void runTest(); }}
+            onClick={() => {
+              void runTest();
+            }}
             title="Test generated score"
           >
             {testing ? 'Testing...' : 'Test'}
@@ -134,7 +156,12 @@ export default function SoundEditor({ document, onPatch, projectUdos }: ScoreObj
       {testError && (
         <div className="flex shrink-0 items-center gap-2 border-b border-app-danger/30 bg-app-danger/10 px-3 py-1.5 text-role-body text-app-danger">
           <span>Error: {testError}</span>
-          <button className="underline text-app-text-muted hover:text-app-text" onClick={clearTestError}>dismiss</button>
+          <button
+            className="underline text-app-text-muted hover:text-app-text"
+            onClick={clearTestError}
+          >
+            dismiss
+          </button>
         </div>
       )}
       <div className="min-h-0 flex-1 overflow-hidden">
@@ -147,7 +174,10 @@ export default function SoundEditor({ document, onPatch, projectUdos }: ScoreObj
           </div>
         )}
         {activeTab === 'automation' && (
-          <div className={activeTab === 'automation' ? 'h-full' : 'hidden'} aria-hidden={activeTab !== 'automation'}>
+          <div
+            className={activeTab === 'automation' ? 'h-full' : 'hidden'}
+            aria-hidden={activeTab !== 'automation'}
+          >
             <SoundAutomationPanel
               parameters={automationParameters}
               onAutomationPatch={handleAutomationPatch}
@@ -157,7 +187,10 @@ export default function SoundEditor({ document, onPatch, projectUdos }: ScoreObj
           </div>
         )}
         {activeTab === 'code' && bsbInstrument && (
-          <div className={activeTab === 'code' ? 'h-full' : 'hidden'} aria-hidden={activeTab !== 'code'}>
+          <div
+            className={activeTab === 'code' ? 'h-full' : 'hidden'}
+            aria-hidden={activeTab !== 'code'}
+          >
             <BSBCodeEditor
               instrument={bsbInstrument}
               projectUdos={projectUdos}
@@ -167,12 +200,15 @@ export default function SoundEditor({ document, onPatch, projectUdos }: ScoreObj
           </div>
         )}
         {activeTab === 'udo' && bsbInstrument && (
-          <div className={activeTab === 'udo' ? 'h-full' : 'hidden'} aria-hidden={activeTab !== 'udo'}>
-          <BSBUDOPanel
-            instrument={bsbInstrument}
-            projectUdos={projectUdos}
-            onInstrumentPatch={handleInstrumentPatch}
-          />
+          <div
+            className={activeTab === 'udo' ? 'h-full' : 'hidden'}
+            aria-hidden={activeTab !== 'udo'}
+          >
+            <BSBUDOPanel
+              instrument={bsbInstrument}
+              projectUdos={projectUdos}
+              onInstrumentPatch={handleInstrumentPatch}
+            />
           </div>
         )}
         {activeTab === 'comments' && (
@@ -187,9 +223,7 @@ export default function SoundEditor({ document, onPatch, projectUdos }: ScoreObj
           </div>
         )}
       </div>
-      {testOutput !== null && (
-        <GeneratedScoreModal text={testOutput} onClose={clearTestOutput} />
-      )}
+      {testOutput !== null && <GeneratedScoreModal text={testOutput} onClose={clearTestOutput} />}
     </div>
   );
 }
@@ -198,12 +232,15 @@ export default function SoundEditor({ document, onPatch, projectUdos }: ScoreObj
 
 interface SoundAutomationPanelProps {
   parameters: SoundAutomationParameterSnapshot[];
-  onAutomationPatch: (parameterId: string, updates: {
-    automationEnabled?: boolean;
-    points?: Array<{ x: number; y: number }>;
-    curve?: string;
-    resolutionDecimal?: string;
-  }) => void;
+  onAutomationPatch: (
+    parameterId: string,
+    updates: {
+      automationEnabled?: boolean;
+      points?: Array<{ x: number; y: number }>;
+      curve?: string;
+      resolutionDecimal?: string;
+    },
+  ) => void;
   startTimeBeats: number;
   durationBeats: number;
 }
@@ -220,7 +257,9 @@ interface AutomationLineView {
   points: Array<{ x: number; y: number }>;
 }
 
-function ensureAutomationPoints(parameter: SoundAutomationParameterSnapshot): Array<{ x: number; y: number }> | undefined {
+function ensureAutomationPoints(
+  parameter: SoundAutomationParameterSnapshot,
+): Array<{ x: number; y: number }> | undefined {
   if (parameter.points.length >= 2) return undefined;
   const fallbackY = clamp(parameter.value, parameter.minimum, parameter.maximum);
   if (parameter.points.length === 0) {
@@ -237,7 +276,10 @@ function ensureAutomationPoints(parameter: SoundAutomationParameterSnapshot): Ar
   ].sort((left, right) => left.x - right.x);
 }
 
-function pointsEqual(left: Array<{ x: number; y: number }>, right: Array<{ x: number; y: number }>): boolean {
+function pointsEqual(
+  left: Array<{ x: number; y: number }>,
+  right: Array<{ x: number; y: number }>,
+): boolean {
   if (left.length !== right.length) {
     return false;
   }
@@ -260,37 +302,43 @@ function SoundAutomationPanel({
   durationBeats,
 }: SoundAutomationPanelProps): React.ReactElement {
   const sortedParameters = useMemo(
-    () => [...parameters].sort((left, right) => {
-      const leftName = left.name || left.label || left.parameterId;
-      const rightName = right.name || right.label || right.parameterId;
-      return leftName.localeCompare(rightName);
-    }),
+    () =>
+      [...parameters].sort((left, right) => {
+        const leftName = left.name || left.label || left.parameterId;
+        const rightName = right.name || right.label || right.parameterId;
+        return leftName.localeCompare(rightName);
+      }),
     [parameters],
   );
 
   const lines = useMemo<AutomationLineView[]>(
-    () => sortedParameters
-      .filter((parameter) => parameter.automationEnabled)
-      .map((parameter, index) => ({
-        parameterId: parameter.parameterId,
-        name: parameter.name || parameter.label || parameter.parameterId,
-        displayName: parameter.name || parameter.label || parameter.parameterId,
-        color: getJavaLineColor(index),
-        min: parameter.minimum,
-        max: parameter.maximum,
-        rightBound: true,
-        endPointsLinked: false,
-        points: (ensureAutomationPoints(parameter) ?? parameter.points).map((point) => ({ ...point })),
-      })),
+    () =>
+      sortedParameters
+        .filter((parameter) => parameter.automationEnabled)
+        .map((parameter, index) => ({
+          parameterId: parameter.parameterId,
+          name: parameter.name || parameter.label || parameter.parameterId,
+          displayName: parameter.name || parameter.label || parameter.parameterId,
+          color: getJavaLineColor(index),
+          min: parameter.minimum,
+          max: parameter.maximum,
+          rightBound: true,
+          endPointsLinked: false,
+          points: (ensureAutomationPoints(parameter) ?? parameter.points).map((point) => ({
+            ...point,
+          })),
+        })),
     [sortedParameters],
   );
-  const [selectedParamId, setSelectedParamId] = useState<string | null>(lines[0]?.parameterId ?? null);
+  const [selectedParamId, setSelectedParamId] = useState<string | null>(
+    lines[0]?.parameterId ?? null,
+  );
   const selectedParameter = useMemo(
     () => sortedParameters.find((parameter) => parameter.parameterId === selectedParamId) ?? null,
     [selectedParamId, sortedParameters],
   );
-  const selectedResolutionText = selectedParameter?.resolutionDecimal
-    ?? String(selectedParameter?.resolution ?? '-1');
+  const selectedResolutionText =
+    selectedParameter?.resolutionDecimal ?? String(selectedParameter?.resolution ?? '-1');
   const [resolutionDraft, setResolutionDraft] = useState(selectedResolutionText);
   const [resolutionError, setResolutionError] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -333,22 +381,25 @@ function SoundAutomationPanel({
     }
   }, [onAutomationPatch, resolutionDraft, selectedParamId, selectedResolutionText]);
 
-  const handleLinesChange = useCallback((nextLines: AutomationLineView[]) => {
-    nextLines.forEach((nextLine, index) => {
-      const previousLine = lines[index];
-      if (!previousLine || previousLine.parameterId !== nextLine.parameterId) {
-        onAutomationPatch(nextLine.parameterId, {
-          points: nextLine.points.map((point) => ({ ...point })),
-        });
-        return;
-      }
-      if (!pointsEqual(previousLine.points, nextLine.points)) {
-        onAutomationPatch(nextLine.parameterId, {
-          points: nextLine.points.map((point) => ({ ...point })),
-        });
-      }
-    });
-  }, [lines, onAutomationPatch]);
+  const handleLinesChange = useCallback(
+    (nextLines: AutomationLineView[]) => {
+      nextLines.forEach((nextLine, index) => {
+        const previousLine = lines[index];
+        if (!previousLine || previousLine.parameterId !== nextLine.parameterId) {
+          onAutomationPatch(nextLine.parameterId, {
+            points: nextLine.points.map((point) => ({ ...point })),
+          });
+          return;
+        }
+        if (!pointsEqual(previousLine.points, nextLine.points)) {
+          onAutomationPatch(nextLine.parameterId, {
+            points: nextLine.points.map((point) => ({ ...point })),
+          });
+        }
+      });
+    },
+    [lines, onAutomationPatch],
+  );
 
   const openEditDialog = useCallback(() => {
     const initial: Record<string, boolean> = {};
@@ -399,18 +450,23 @@ function SoundAutomationPanel({
           value={selectedParamId ?? ''}
           onValueChange={setSelectedParamId}
           disabled={lines.length === 0}
-          options={lines.length === 0
-            ? [{ value: '', label: 'No automations enabled' }]
-            : lines.map((line) => ({ value: line.parameterId, label: line.displayName }))}
+          options={
+            lines.length === 0
+              ? [{ value: '', label: 'No automations enabled' }]
+              : lines.map((line) => ({ value: line.parameterId, label: line.displayName }))
+          }
         />
         {selectedParameter && (
-          <label className="flex items-center gap-1 text-app-text-soft" title="Exact Java decimal resolution">
+          <label
+            className="flex items-center gap-1 text-app-text-soft"
+            title="Exact Java decimal resolution"
+          >
             <span>Resolution</span>
             <input
               aria-label="Exact automation resolution"
               className={cn(
                 'w-24 rounded border bg-app-surface px-2 py-1 text-role-body text-app-text-strong focus:border-app-accent focus:outline-none',
-                resolutionError ? 'border-app-danger' : 'border-app-border'
+                resolutionError ? 'border-app-danger' : 'border-app-border',
               )}
               value={resolutionDraft}
               onChange={(event) => {
@@ -442,8 +498,14 @@ function SoundAutomationPanel({
       </div>
 
       {showEditDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowEditDialog(false)}>
-          <div className="w-160 max-h-[70vh] overflow-hidden rounded border border-app-border bg-app-hover shadow-xl" onClick={(event) => event.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => setShowEditDialog(false)}
+        >
+          <div
+            className="w-160 max-h-[70vh] overflow-hidden rounded border border-app-border bg-app-hover shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
             <div className="border-b border-app-border px-4 py-3 text-role-headline font-bold text-app-text-strong">
               Choose Parameters to Automate
             </div>
@@ -471,7 +533,9 @@ function SoundAutomationPanel({
                           className="accent-app-accent"
                         />
                       </td>
-                      <td className="px-3 py-2">{parameter.name || parameter.label || parameter.parameterId}</td>
+                      <td className="px-3 py-2">
+                        {parameter.name || parameter.label || parameter.parameterId}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -515,25 +579,34 @@ function SoundAutomationCanvas({
   durationBeats,
   onLinesChange,
 }: SoundAutomationCanvasProps): React.ReactElement {
-  const { ref: canvasHostRef, size: canvasSize } = useMeasuredElementSize<HTMLDivElement>({ width: 720, height: 360 });
+  const { ref: canvasHostRef, size: canvasSize } = useMeasuredElementSize<HTMLDivElement>({
+    width: 720,
+    height: 360,
+  });
   const effectiveDuration = durationBeats > 0 ? durationBeats : 1;
-  const tooltipFormatter = useCallback(({ line, point }: {
-    line: AutomationLineView;
-    point: { x: number; y: number };
-    lineIndex: number;
-    pointIndex: number;
-  }) => ({
-    xText: (startTimeBeats + (point.x * effectiveDuration)).toFixed(3),
-    yText: point.y.toFixed(4),
-    ySuffix: line.displayName,
-  }), [effectiveDuration, startTimeBeats]);
+  const tooltipFormatter = useCallback(
+    ({
+      line,
+      point,
+    }: {
+      line: AutomationLineView;
+      point: { x: number; y: number };
+      lineIndex: number;
+      pointIndex: number;
+    }) => ({
+      xText: (startTimeBeats + point.x * effectiveDuration).toFixed(3),
+      yText: point.y.toFixed(4),
+      ySuffix: line.displayName,
+    }),
+    [effectiveDuration, startTimeBeats],
+  );
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-app-canvas">
       <div className="relative h-6 border-b border-app-border bg-app-menu text-role-subheadline text-app-text-soft">
         {Array.from({ length: 7 }, (_, index) => {
           const ratio = index / 6;
-          const time = startTimeBeats + (ratio * effectiveDuration);
+          const time = startTimeBeats + ratio * effectiveDuration;
           return (
             <div key={index} className="absolute top-0 h-full" style={{ left: `${ratio * 100}%` }}>
               <div className="h-3 border-l border-app-border/70" />

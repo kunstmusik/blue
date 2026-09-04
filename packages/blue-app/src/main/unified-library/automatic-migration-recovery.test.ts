@@ -22,17 +22,31 @@ describe('automatic migration recovery policy', () => {
     const primary = path.join(config, 'udoLibrary.xml');
     const backup = `${primary}~`;
     fs.writeFileSync(primary, '<udoLibrary><broken>', 'utf8');
-    fs.writeFileSync(backup, '<udoLibrary><udoCategory categoryName="UDO Library" isRoot="true"/></udoLibrary>', 'utf8');
-    const state = new LibraryMigrationStateStore(path.join(directory(), 'blue-libraries-state.json'));
+    fs.writeFileSync(
+      backup,
+      '<udoLibrary><udoCategory categoryName="UDO Library" isRoot="true"/></udoLibrary>',
+      'utf8',
+    );
+    const state = new LibraryMigrationStateStore(
+      path.join(directory(), 'blue-libraries-state.json'),
+    );
     const client = UnifiedLibraryRepositoryClient.openForTesting(':memory:');
     try {
-      const report = await new UnifiedLibraryImportExportService(client).runAutomaticMigration(config, state);
+      const report = await new UnifiedLibraryImportExportService(client).runAutomaticMigration(
+        config,
+        state,
+      );
       const source = report.sources.find((entry) => entry.libraryType === 'udo');
       expect(source).toMatchObject({ status: 'failed', backupAvailable: true });
       expect((await client.getSnapshot()).itemCounts.udo).toBe(0);
       expect(state.load().legacyMigrationState).toBe('failed');
-      const second = await new UnifiedLibraryImportExportService(client).runAutomaticMigration(config, state);
+      const second = await new UnifiedLibraryImportExportService(client).runAutomaticMigration(
+        config,
+        state,
+      );
       expect(second.message).toMatch(/already attempted/i);
-    } finally { await client.close(); }
+    } finally {
+      await client.close();
+    }
   });
 });

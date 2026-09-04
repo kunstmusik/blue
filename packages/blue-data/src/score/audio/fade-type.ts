@@ -39,10 +39,15 @@ export function fadeTypeToString(ft: FadeType): string {
  */
 export function fadeTypeToCsound(ft: FadeType): number {
   switch (ft) {
-    case FadeType.LINEAR: return 0;
-    case FadeType.CONSTANT_POWER: return 1;
-    case FadeType.SYMMETRIC: return 2;
-    case FadeType.FAST: return 3;
-    case FadeType.SLOW: return 4;
+    case FadeType.LINEAR:
+      return 0;
+    case FadeType.CONSTANT_POWER:
+      return 1;
+    case FadeType.SYMMETRIC:
+      return 2;
+    case FadeType.FAST:
+      return 3;
+    case FadeType.SLOW:
+      return 4;
   }
 }

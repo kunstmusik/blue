@@ -13,8 +13,17 @@ import { Element } from '../serialization/xml-reader';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
 import { initBasicFromXML, getBasicXML } from './sound-object-utilities';
-import { getJavaRuntimeClient, type JavaRuntimeClientContract, type JavaRuntimeError } from '../java-runtime';
-import { applyNoteProcessorChainAsync, applyTimeBehavior, getNotes, setScoreStart } from '../utilities/score';
+import {
+  getJavaRuntimeClient,
+  type JavaRuntimeClientContract,
+  type JavaRuntimeError,
+} from '../java-runtime';
+import {
+  applyNoteProcessorChainAsync,
+  applyTimeBehavior,
+  getNotes,
+  setScoreStart,
+} from '../utilities/score';
 
 function formatRuntimeError(message: string, error?: JavaRuntimeError): string {
   const baseMessage = error?.message?.trim().length ? error.message : message;
@@ -40,11 +49,19 @@ export class PythonObject extends AbstractSoundObject {
     this._backgroundColor = 0x404040;
   }
 
-  getPythonCode(): string { return this._pythonCode; }
-  setPythonCode(code: string): void { this._pythonCode = code; }
+  getPythonCode(): string {
+    return this._pythonCode;
+  }
+  setPythonCode(code: string): void {
+    this._pythonCode = code;
+  }
 
-  isOnLoadProcessable(): boolean { return this._onLoadProcessable; }
-  setOnLoadProcessable(val: boolean): void { this._onLoadProcessable = val; }
+  isOnLoadProcessable(): boolean {
+    return this._onLoadProcessable;
+  }
+  setOnLoadProcessable(val: boolean): void {
+    this._onLoadProcessable = val;
+  }
 
   processOnLoad(_context: TimeContext): void {
     if (!this._onLoadProcessable) return;
@@ -104,18 +121,17 @@ export class PythonObject extends AbstractSoundObject {
     }
 
     const noteList = getNotes(response.result?.scoreText ?? '');
-    const processed = await applyNoteProcessorChainAsync(noteList, this.getNoteProcessorChain(), compileData);
+    const processed = await applyNoteProcessorChainAsync(
+      noteList,
+      this.getNoteProcessorChain(),
+      compileData,
+    );
     const duration = this.getSubjectiveDuration().toBeats(context);
     const startTime = this.getStartTime().toBeats(context);
     const repeatPoint = this.getRepeatPoint();
     const repeatPointBeats = repeatPoint ? repeatPoint.toBeats(context) : -1;
 
-    applyTimeBehavior(
-      processed,
-      this.getTimeBehavior(),
-      duration,
-      repeatPointBeats,
-    );
+    applyTimeBehavior(processed, this.getTimeBehavior(), duration, repeatPointBeats);
     setScoreStart(processed, startTime);
 
     return processed;

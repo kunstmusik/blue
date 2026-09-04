@@ -4,7 +4,6 @@ import { UDOStyle } from '../../src/opcodes/udo-style';
 import { Element } from '../../src/serialization/xml-reader';
 
 describe('OpcodeDefinition (UserDefinedOpcode)', () => {
-
   // ─── Classic Code Generation ───
 
   it('generates classic-style code with tab-indented header and endop', () => {
@@ -92,7 +91,7 @@ describe('OpcodeDefinition (UserDefinedOpcode)', () => {
     expect(code).toContain('    line3');
     // Blank line between should not have spaces
     const lines = code.split('\n');
-    const blankLine = lines.find(l => l.length === 0);
+    const blankLine = lines.find((l) => l.length === 0);
     expect(blankLine).toBeDefined();
   });
 

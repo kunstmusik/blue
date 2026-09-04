@@ -17,8 +17,7 @@ export const WINDOW_LAYOUT_SETTINGS_VERSION = 1;
 export const WINDOW_LAYOUT_RESET_CHANNEL = 'window-layout:reset';
 
 /** Current Electron display work areas used to keep restored popouts visible. */
-export const WINDOW_LAYOUT_DISPLAY_WORK_AREAS_CHANNEL =
-  'window-layout:get-display-work-areas';
+export const WINDOW_LAYOUT_DISPLAY_WORK_AREAS_CHANNEL = 'window-layout:get-display-work-areas';
 
 export interface DisplayWorkArea {
   x: number;
@@ -165,7 +164,11 @@ export function isValidWindowState(
 ): candidate is WindowStateSnapshot {
   if (!candidate || typeof candidate !== 'object') return false;
   const c = candidate as Partial<WindowStateSnapshot>;
-  if (c.displayState !== 'normal' && c.displayState !== 'maximized' && c.displayState !== 'fullscreen') {
+  if (
+    c.displayState !== 'normal' &&
+    c.displayState !== 'maximized' &&
+    c.displayState !== 'fullscreen'
+  ) {
     return false;
   }
   const bounds = c.normalBounds;
@@ -180,7 +183,9 @@ export function isValidWindowState(
 
   const workAreas = options.workAreas;
   if (workAreas && workAreas.length > 0) {
-    const intersects = workAreas.some((area) => rectanglesIntersect(b as WindowBoundsSnapshot, area));
+    const intersects = workAreas.some((area) =>
+      rectanglesIntersect(b as WindowBoundsSnapshot, area),
+    );
     if (!intersects) return false;
   }
 
@@ -191,21 +196,14 @@ function rectanglesIntersect(
   a: WindowBoundsSnapshot,
   b: { x: number; y: number; width: number; height: number },
 ): boolean {
-  return (
-    a.x < b.x + b.width &&
-    a.x + a.width > b.x &&
-    a.y < b.y + b.height &&
-    a.y + a.height > b.y
-  );
+  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
 }
 
 /**
  * Validates a split location snapshot without consulting external state.
  * Returns the normalized snapshot when valid, otherwise null.
  */
-export function normalizeSplitLocation(
-  candidate: unknown,
-): SplitLocationSnapshot | null {
+export function normalizeSplitLocation(candidate: unknown): SplitLocationSnapshot | null {
   if (!candidate || typeof candidate !== 'object') return null;
   const c = candidate as Partial<SplitLocationSnapshot>;
 
@@ -226,11 +224,7 @@ export function normalizeSplitLocation(
  * not writing the clamped value back to durable settings unless the user
  * actively resized the divider.
  */
-export function clampSplitSizePx(
-  sizePx: number,
-  min: number,
-  max: number,
-): number {
+export function clampSplitSizePx(sizePx: number, min: number, max: number): number {
   if (!Number.isFinite(sizePx)) return min;
   if (!Number.isFinite(min) || !Number.isFinite(max)) return sizePx;
   const lower = Math.min(min, max);

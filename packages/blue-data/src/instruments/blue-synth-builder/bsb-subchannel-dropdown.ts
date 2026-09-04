@@ -14,8 +14,7 @@ export class BSBSubChannelDropdown extends BSBWidget {
     return null;
   }
 
-  override setPresetValue(_val: string): void {
-  }
+  override setPresetValue(_val: string): void {}
 
   override collectReplacements(unit: BSBCompilationUnit): void {
     unit.addReplacementValue(this.objectName, this.channelOutput);

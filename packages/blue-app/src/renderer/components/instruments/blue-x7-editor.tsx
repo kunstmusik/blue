@@ -7,7 +7,11 @@ import {
   decodeSingleVoice,
   getBankVoiceNames,
 } from '@blue/data';
-import type { BlueX7InstrumentSnapshot, InstrumentPatch, OrchestraMutationProps } from '../../../shared/project-editor';
+import type {
+  BlueX7InstrumentSnapshot,
+  InstrumentPatch,
+  OrchestraMutationProps,
+} from '../../../shared/project-editor';
 import type { BlueX7RuntimeTarget } from '../../../shared/project-editor/contract';
 import { validateBlueX7SysexReadResult } from '../../../shared/blue-x7-sysex';
 import { useBlueX7History } from './blue-x7/use-blue-x7-history';
@@ -73,18 +77,12 @@ export const BlueX7Editor: React.FC<BlueX7EditorProps> = ({
   const contextIdentityRef = useRef(contextIdentity);
   contextIdentityRef.current = contextIdentity;
 
-  const {
-    canUndo,
-    canRedo,
-    undoDescription,
-    redoDescription,
-    applyPatch,
-    undo,
-    redo,
-  } = useBlueX7History(instrument, onInstrumentPatch);
+  const { canUndo, canRedo, undoDescription, redoDescription, applyPatch, undo, redo } =
+    useBlueX7History(instrument, onInstrumentPatch);
 
   const parameterByKey = useMemo(
-    () => new Map((instrument.parameters ?? []).map((parameter) => [parameter.semanticKey, parameter])),
+    () =>
+      new Map((instrument.parameters ?? []).map((parameter) => [parameter.semanticKey, parameter])),
     [instrument.parameters],
   );
   const activeSemanticKeys = useMemo<Set<string>>(() => {
@@ -181,7 +179,9 @@ export const BlueX7Editor: React.FC<BlueX7EditorProps> = ({
       if (!readFn) return;
       const res = validateBlueX7SysexReadResult(await readFn());
       if (contextIdentityRef.current !== importIdentity) {
-        setImportError('The BlueX7 editor target changed while the SysEx file was loading. Import discarded.');
+        setImportError(
+          'The BlueX7 editor target changed while the SysEx file was loading. Import discarded.',
+        );
         return;
       }
 
@@ -212,27 +212,35 @@ export const BlueX7Editor: React.FC<BlueX7EditorProps> = ({
   };
 
   const handleConfirmImportVoice = (importedVoice: BlueX7Voice, importedName: string) => {
-    if (sysexModalState.type === 'closed' || sysexModalState.contextIdentity !== contextIdentityRef.current) {
+    if (
+      sysexModalState.type === 'closed' ||
+      sysexModalState.contextIdentity !== contextIdentityRef.current
+    ) {
       setSysexModalState({ type: 'closed' });
-      setImportError('The BlueX7 editor target changed before the SysEx import was confirmed. Import discarded.');
+      setImportError(
+        'The BlueX7 editor target changed before the SysEx import was confirmed. Import discarded.',
+      );
       return;
     }
 
     // Single atomic patch replacing modeled voice data while preserving metadata.
-    applyPatch(
-      `Import DX7 Voice: ${importedName.trim() || 'Imported Voice'}`,
-      {
-        type: 'replaceVoice',
-        voice: importedVoice,
-      },
-    );
+    applyPatch(`Import DX7 Voice: ${importedName.trim() || 'Imported Voice'}`, {
+      type: 'replaceVoice',
+      voice: importedVoice,
+    });
   };
 
   return (
-    <div className="box-border flex h-full min-h-0 min-w-0 w-full flex-col overflow-hidden bg-blue-bg text-gray-100 p-4 gap-3" data-testid="blue-x7-editor">
+    <div
+      className="box-border flex h-full min-h-0 min-w-0 w-full flex-col overflow-hidden bg-blue-bg text-gray-100 p-4 gap-3"
+      data-testid="blue-x7-editor"
+    >
       {/* Error alert if SysEx import failed */}
       {importError && (
-        <div className="shrink-0 flex items-center justify-between rounded border border-red-500/50 bg-red-900/30 p-2.5 text-role-callout text-red-200" data-testid="sysex-error-banner">
+        <div
+          className="shrink-0 flex items-center justify-between rounded border border-red-500/50 bg-red-900/30 p-2.5 text-role-callout text-red-200"
+          data-testid="sysex-error-banner"
+        >
           <span>{importError}</span>
           <button
             type="button"
@@ -248,7 +256,10 @@ export const BlueX7Editor: React.FC<BlueX7EditorProps> = ({
       <div className="shrink-0 flex flex-wrap items-center justify-between gap-3 border-b border-blue-border pb-3">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
-            <label htmlFor="bluex7-instrument-name" className="text-role-headline font-bold text-blue-muted">
+            <label
+              htmlFor="bluex7-instrument-name"
+              className="text-role-headline font-bold text-blue-muted"
+            >
               Name:
             </label>
             <input
@@ -445,11 +456,7 @@ export const BlueX7Editor: React.FC<BlueX7EditorProps> = ({
           }
           data-testid="bluex7-panel-csound"
         >
-          <CsoundPanel
-            active={activeTab === 'csound'}
-            voice={voice}
-            onApplyPatch={applyPatch}
-          />
+          <CsoundPanel active={activeTab === 'csound'} voice={voice} onApplyPatch={applyPatch} />
         </div>
       </div>
 

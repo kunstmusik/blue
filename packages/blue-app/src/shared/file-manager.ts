@@ -166,7 +166,9 @@ export function serializeFileManagerDragPayload(payload: FileManagerDragPayload)
   return JSON.stringify(payload);
 }
 
-export function parseFileManagerDragPayload(raw: string | null | undefined): FileManagerDragPayload | null {
+export function parseFileManagerDragPayload(
+  raw: string | null | undefined,
+): FileManagerDragPayload | null {
   if (!raw) return null;
   let parsed: unknown;
   try {
@@ -177,11 +179,11 @@ export function parseFileManagerDragPayload(raw: string | null | undefined): Fil
   if (typeof parsed !== 'object' || parsed === null) return null;
   const candidate = parsed as Partial<FileManagerDragPayload>;
   if (
-    candidate.version !== 1
-    || candidate.kind !== 'file'
-    || typeof candidate.path !== 'string'
-    || candidate.path.length === 0
-    || typeof candidate.name !== 'string'
+    candidate.version !== 1 ||
+    candidate.kind !== 'file' ||
+    typeof candidate.path !== 'string' ||
+    candidate.path.length === 0 ||
+    typeof candidate.name !== 'string'
   ) {
     return null;
   }
@@ -197,11 +199,30 @@ export function parseFileManagerDragPayload(raw: string | null | undefined): Fil
  * until the packaged Csound source path is verified for them.
  */
 export const CSOUND_AUDIO_SOURCE_EXTENSIONS: readonly string[] = [
-  'wav', 'wave', 'aif', 'aiff', 'aifc',
-  'au', 'paf', 'svx', 'nist', 'voc', 'ircam',
-  'w64', 'wavex', 'sd2', 'flac', 'caf', 'wve',
-  'ogg', 'oga', 'mpc2k', 'rf64',
-  'mp3', 'mp2', 'mpeg',
+  'wav',
+  'wave',
+  'aif',
+  'aiff',
+  'aifc',
+  'au',
+  'paf',
+  'svx',
+  'nist',
+  'voc',
+  'ircam',
+  'w64',
+  'wavex',
+  'sd2',
+  'flac',
+  'caf',
+  'wve',
+  'ogg',
+  'oga',
+  'mpc2k',
+  'rf64',
+  'mp3',
+  'mp2',
+  'mpeg',
 ];
 
 /** Case-insensitive final-suffix check; dot-prefixed names never match. */

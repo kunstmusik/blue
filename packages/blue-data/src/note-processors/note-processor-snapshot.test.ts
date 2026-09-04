@@ -4,7 +4,11 @@ import { NoteProcessorChain } from './note-processor-chain';
 import { AddProcessor } from './add-processor';
 import { MultiplyProcessor } from './multiply-processor';
 import { TuningProcessor } from './tuning-processor';
-import { createNoteProcessorChainSnapshot, reifyChainFromSnapshot, resetSnapshotIdCounter } from './note-processor-snapshot';
+import {
+  createNoteProcessorChainSnapshot,
+  reifyChainFromSnapshot,
+  resetSnapshotIdCounter,
+} from './note-processor-snapshot';
 import { PythonProcessor } from './python-processor';
 import { UnsupportedProcessor } from './unsupported-processor';
 
@@ -166,7 +170,8 @@ describe('Note processor snapshot', () => {
           deferred: true,
           summary: 'PythonProcessor (deferred)',
           parameters: {},
-          serializedXml: '<noteProcessor type="blue.noteProcessor.PythonProcessor"><code>x = 1</code></noteProcessor>',
+          serializedXml:
+            '<noteProcessor type="blue.noteProcessor.PythonProcessor"><code>x = 1</code></noteProcessor>',
         },
       ],
       hasUnsupportedProcessors: true,

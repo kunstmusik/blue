@@ -4,7 +4,8 @@ import type { ScoreTimeStateSnapshot } from '../../../../../shared/project-edito
 import { useHostDocument } from '../../../../hooks/use-host-document';
 import { AppSelect } from '../../../AppSelect';
 
-const SECONDARY_BUTTON_CLASS = 'px-3 py-1 text-role-body text-blue-text bg-blue-surface/40 hover:bg-blue-surface/70 rounded border border-blue-border/40 transition-colors cursor-pointer';
+const SECONDARY_BUTTON_CLASS =
+  'px-3 py-1 text-role-body text-blue-text bg-blue-surface/40 hover:bg-blue-surface/70 rounded border border-blue-border/40 transition-colors cursor-pointer';
 
 export type TimebaseUpdateMode = 'UPDATE_ALL' | 'UPDATE_MATCHING';
 
@@ -47,7 +48,9 @@ const SMPTE_FRAME_RATES = [
 
 export default function RulerConfigDialog({ timeState, onApply, onClose }: Props) {
   const [primaryTimeDisplay, setPrimaryTimeDisplay] = useState(timeState.primaryTimeDisplay);
-  const [secondaryRulerEnabled, setSecondaryRulerEnabled] = useState(timeState.secondaryRulerEnabled);
+  const [secondaryRulerEnabled, setSecondaryRulerEnabled] = useState(
+    timeState.secondaryRulerEnabled,
+  );
   const [secondaryTimeDisplay, setSecondaryTimeDisplay] = useState(timeState.secondaryTimeDisplay);
   const [smpteFrameRate, setSmpteFrameRate] = useState(timeState.smpteFrameRate);
 
@@ -83,14 +86,18 @@ export default function RulerConfigDialog({ timeState, onApply, onClose }: Props
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div
         className="w-full max-w-md rounded-lg border border-blue-border/50 bg-app-menu text-blue-text shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4 space-y-4">
-          <h2 className="text-role-title-2 font-bold border-b border-blue-border/30 pb-2">Ruler Configuration</h2>
+          <h2 className="text-role-title-2 font-bold border-b border-blue-border/30 pb-2">
+            Ruler Configuration
+          </h2>
 
           {/* Primary Ruler */}
           <fieldset className="space-y-2">
@@ -221,10 +228,7 @@ export default function RulerConfigDialog({ timeState, onApply, onClose }: Props
 
           {/* Buttons */}
           <div className="flex justify-end gap-2 pt-2 border-t border-blue-border/30">
-            <button
-              className={SECONDARY_BUTTON_CLASS}
-              onClick={onClose}
-            >
+            <button className={SECONDARY_BUTTON_CLASS} onClick={onClose}>
               Cancel
             </button>
             <button

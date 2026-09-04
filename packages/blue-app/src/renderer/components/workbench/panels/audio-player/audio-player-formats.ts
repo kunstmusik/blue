@@ -7,8 +7,19 @@
  * player decodes with Chromium, not Csound.
  */
 export const AUDIO_FILE_PLAYER_EXTENSIONS: readonly string[] = [
-  'wav', 'wave', 'aif', 'aiff', 'mp3', 'ogg', 'oga', 'flac', 'au',
-  'm4a', 'w64', 'opus', 'weba',
+  'wav',
+  'wave',
+  'aif',
+  'aiff',
+  'mp3',
+  'ogg',
+  'oga',
+  'flac',
+  'au',
+  'm4a',
+  'w64',
+  'opus',
+  'weba',
 ];
 
 /** Case-insensitive final-suffix check; dot-prefixed names never match. */

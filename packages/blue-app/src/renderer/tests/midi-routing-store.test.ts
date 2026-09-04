@@ -1,8 +1,5 @@
 import { describe, expect, it, beforeEach } from 'vitest';
-import {
-  useMidiRoutingStore,
-  type MidiRoutingReconciliation,
-} from '../stores/midi-routing-store';
+import { useMidiRoutingStore, type MidiRoutingReconciliation } from '../stores/midi-routing-store';
 
 describe('MIDI routing focus store', () => {
   beforeEach(() => {

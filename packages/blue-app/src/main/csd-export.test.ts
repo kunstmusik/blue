@@ -31,15 +31,17 @@ describe('saveGeneratedCsdToDisk', () => {
     const writeFile = vi.fn(async () => undefined);
     const send = vi.fn();
 
-    await expect(saveGeneratedCsdToDisk({
-      currentData: { toDiskCSD },
-      currentFilePath: '/native/project.blue',
-      mainWindow: { webContents: { send } } as any,
-      dialogApi: {
-        showSaveDialog: vi.fn(async () => ({ canceled: true, filePath: undefined })),
-      } as any,
-      writeFile: writeFile as any,
-    })).resolves.toBeNull();
+    await expect(
+      saveGeneratedCsdToDisk({
+        currentData: { toDiskCSD },
+        currentFilePath: '/native/project.blue',
+        mainWindow: { webContents: { send } } as any,
+        dialogApi: {
+          showSaveDialog: vi.fn(async () => ({ canceled: true, filePath: undefined })),
+        } as any,
+        writeFile: writeFile as any,
+      }),
+    ).resolves.toBeNull();
 
     expect(toDiskCSD).not.toHaveBeenCalled();
     expect(writeFile).not.toHaveBeenCalled();

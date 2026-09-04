@@ -13,7 +13,7 @@ describe('Layer Color Model', () => {
   describe('Layer color normalization and constants', () => {
     it('has the canonical neutral dark gray default (-12566464 / #404040)', () => {
       expect(DEFAULT_LAYER_COLOR).toBe(-12566464);
-      expect((0xff404040 | 0)).toBe(-12566464);
+      expect(0xff404040 | 0).toBe(-12566464);
       expect(formatLayerColorToHex(DEFAULT_LAYER_COLOR)).toBe('#404040');
     });
 

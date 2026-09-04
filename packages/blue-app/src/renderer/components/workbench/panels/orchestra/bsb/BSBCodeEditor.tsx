@@ -39,10 +39,7 @@ export default function BSBCodeEditor({
     }),
     [bsbReplacementKeys, instrument.udolist, projectUdos],
   );
-  const scoreCompletionOptions = useMemo(
-    () => ({ bsbReplacementKeys }),
-    [bsbReplacementKeys],
-  );
+  const scoreCompletionOptions = useMemo(() => ({ bsbReplacementKeys }), [bsbReplacementKeys]);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -52,7 +49,9 @@ export default function BSBCodeEditor({
           return (
             <div
               key={tab.key}
-              className={isActive ? 'relative h-full p-3' : 'pointer-events-none absolute inset-0 p-3'}
+              className={
+                isActive ? 'relative h-full p-3' : 'pointer-events-none absolute inset-0 p-3'
+              }
               aria-hidden={!isActive}
               style={{ visibility: isActive ? 'visible' : 'hidden' }}
             >
@@ -83,7 +82,7 @@ export default function BSBCodeEditor({
                 'border-t-2 px-3 py-2 text-role-body',
                 activeTab === tab.key
                   ? 'border-blue-accent text-gray-100'
-                  : 'border-transparent text-blue-muted hover:text-gray-100'
+                  : 'border-transparent text-blue-muted hover:text-gray-100',
               )}
               onClick={() => setActiveTab(tab.key)}
             >

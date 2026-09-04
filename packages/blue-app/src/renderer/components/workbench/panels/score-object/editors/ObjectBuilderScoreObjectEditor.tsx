@@ -28,7 +28,9 @@ export default function ObjectBuilderScoreObjectEditor({
   const editor = document.editor;
   if (editor.kind !== 'code') return <></>;
 
-  const languageType = String(editor.auxiliaryFlags?.languageType ?? 'PYTHON') as ObjectBuilderLanguage;
+  const languageType = String(
+    editor.auxiliaryFlags?.languageType ?? 'PYTHON',
+  ) as ObjectBuilderLanguage;
   const commandLine = String(editor.auxiliaryFlags?.commandLine ?? '');
   const comment = String(editor.auxiliaryFlags?.comment ?? '');
   const editEnabled = editor.auxiliaryFlags?.editEnabled !== false;
@@ -38,36 +40,33 @@ export default function ObjectBuilderScoreObjectEditor({
     () => createBsbReplacementKeys(editor.bsbInstrument?.objectNames ?? []),
     [objectNamesSignature],
   );
-  const completionOptions = useMemo(
-    () => ({ bsbReplacementKeys }),
-    [bsbReplacementKeys],
-  );
-  const {
-    testing,
-    testOutput,
-    testError,
-    runTest,
-    clearTestOutput,
-    clearTestError,
-  } = useScoreObjectTest(document.target);
+  const completionOptions = useMemo(() => ({ bsbReplacementKeys }), [bsbReplacementKeys]);
+  const { testing, testOutput, testError, runTest, clearTestOutput, clearTestError } =
+    useScoreObjectTest(document.target);
 
-  const patch = useCallback((value: Record<string, unknown>) => {
-    onPatch({
-      type: 'updateTypeSpecificEditor',
-      target: document.target,
-      patch: value,
-    });
-  }, [document.target, onPatch]);
+  const patch = useCallback(
+    (value: Record<string, unknown>) => {
+      onPatch({
+        type: 'updateTypeSpecificEditor',
+        target: document.target,
+        patch: value,
+      });
+    },
+    [document.target, onPatch],
+  );
 
   const handleTest = useCallback(() => {
     void runTest();
   }, [runTest]);
 
-  const handleInstrumentPatch = useCallback((instrumentPatch: InstrumentPatch) => {
-    if (instrumentPatch.bsbInterface) {
-      patch({ bsbInterfacePatch: instrumentPatch.bsbInterface });
-    }
-  }, [patch]);
+  const handleInstrumentPatch = useCallback(
+    (instrumentPatch: InstrumentPatch) => {
+      if (instrumentPatch.bsbInterface) {
+        patch({ bsbInterfacePatch: instrumentPatch.bsbInterface });
+      }
+    },
+    [patch],
+  );
 
   const containerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -79,7 +78,9 @@ export default function ObjectBuilderScoreObjectEditor({
     };
     const element = containerRef.current;
     element?.addEventListener('keydown', handler);
-    return () => { element?.removeEventListener('keydown', handler); };
+    return () => {
+      element?.removeEventListener('keydown', handler);
+    };
   }, [handleTest]);
 
   return (
@@ -95,9 +96,11 @@ export default function ObjectBuilderScoreObjectEditor({
                 'border-b-2 px-3 py-2 text-role-body capitalize',
                 activeTab === tab
                   ? 'border-app-accent text-app-text-strong'
-                  : 'border-transparent text-app-text-muted hover:text-app-text-strong'
+                  : 'border-transparent text-app-text-muted hover:text-app-text-strong',
               )}
-              onClick={() => { setActiveTab(tab); }}
+              onClick={() => {
+                setActiveTab(tab);
+              }}
             >
               {tab}
             </button>
@@ -116,7 +119,12 @@ export default function ObjectBuilderScoreObjectEditor({
       {testError && (
         <div className="flex shrink-0 items-center gap-2 border-b bg-red-900/20 px-3 py-1.5 text-role-body text-red-300">
           <span>Error: {testError}</span>
-          <button className="underline text-blue-muted hover:text-gray-200" onClick={clearTestError}>dismiss</button>
+          <button
+            className="underline text-blue-muted hover:text-gray-200"
+            onClick={clearTestError}
+          >
+            dismiss
+          </button>
         </div>
       )}
       <div className="min-h-0 flex-1 overflow-hidden">
@@ -137,7 +145,9 @@ export default function ObjectBuilderScoreObjectEditor({
                   aria-label="ObjectBuilder language"
                   className="rounded border border-blue-border bg-app-surface px-1 py-0.5"
                   value={languageType}
-                  onValueChange={(value) => { patch({ languageType: value }); }}
+                  onValueChange={(value) => {
+                    patch({ languageType: value });
+                  }}
                   options={[
                     { value: 'PYTHON', label: 'Python' },
                     { value: 'JAVASCRIPT', label: 'JavaScript' },
@@ -153,14 +163,18 @@ export default function ObjectBuilderScoreObjectEditor({
                   className="min-w-0 flex-1 rounded border border-blue-border bg-app-surface px-1 py-0.5 disabled:opacity-50"
                   value={commandLine}
                   disabled={languageType !== 'EXTERNAL'}
-                  onChange={(event) => { patch({ commandLine: event.target.value }); }}
+                  onChange={(event) => {
+                    patch({ commandLine: event.target.value });
+                  }}
                 />
               </label>
               <label className="flex items-center gap-1 text-role-body text-gray-300">
                 <input
                   type="checkbox"
                   checked={editEnabled}
-                  onChange={(event) => { patch({ editEnabled: event.target.checked }); }}
+                  onChange={(event) => {
+                    patch({ editEnabled: event.target.checked });
+                  }}
                 />
                 Edit Code
               </label>
@@ -175,7 +189,9 @@ export default function ObjectBuilderScoreObjectEditor({
                 readOnly={!editEnabled}
                 ariaLabel={`ObjectBuilder ${languageType} code editor`}
                 javaBlueCompletionOptions={completionOptions}
-                onChange={(text) => { patch({ text }); }}
+                onChange={(text) => {
+                  patch({ text });
+                }}
               />
             </div>
           </div>
@@ -187,14 +203,14 @@ export default function ObjectBuilderScoreObjectEditor({
               aria-label="ObjectBuilder comment"
               className="min-h-0 flex-1 resize-none rounded border border-blue-border bg-app-surface px-2 py-1"
               value={comment}
-              onChange={(event) => { patch({ comment: event.target.value }); }}
+              onChange={(event) => {
+                patch({ comment: event.target.value });
+              }}
             />
           </label>
         )}
       </div>
-      {testOutput !== null && (
-        <GeneratedScoreModal text={testOutput} onClose={clearTestOutput} />
-      )}
+      {testOutput !== null && <GeneratedScoreModal text={testOutput} onClose={clearTestOutput} />}
     </div>
   );
 }

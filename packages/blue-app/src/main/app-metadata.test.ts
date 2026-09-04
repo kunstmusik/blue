@@ -42,16 +42,18 @@ describe('resolveAppMetadata', () => {
   });
 
   it('uses the development git fallback when packaged metadata is unavailable', () => {
-    expect(resolveAppMetadata({
-      appVersion: '0.0.1',
-      isPackaged: false,
-      getSourceRevision: () => 'b'.repeat(40),
-      releaseChannel: 'development',
-      processVersions: {},
-      readFile: () => {
-        throw new Error('metadata unavailable');
-      },
-    })).toEqual({
+    expect(
+      resolveAppMetadata({
+        appVersion: '0.0.1',
+        isPackaged: false,
+        getSourceRevision: () => 'b'.repeat(40),
+        releaseChannel: 'development',
+        processVersions: {},
+        readFile: () => {
+          throw new Error('metadata unavailable');
+        },
+      }),
+    ).toEqual({
       version: '0.0.1',
       sourceRevision: 'b'.repeat(40),
       buildDate: 'unknown',
@@ -65,19 +67,22 @@ describe('resolveAppMetadata', () => {
   });
 
   it('ignores generated release metadata during non-packaged development runs', () => {
-    expect(resolveAppMetadata({
-      appVersion: '0.0.1',
-      appPath: '/app',
-      isPackaged: false,
-      releaseChannel: 'development',
-      getSourceRevision: () => 'c'.repeat(40),
-      readFile: () => JSON.stringify({
-        appVersion: '9.9.9',
-        sourceRevision: 'd'.repeat(40),
-        generatedAt: '2026-05-04T12:00:00.000Z',
-        channel: 'stable',
+    expect(
+      resolveAppMetadata({
+        appVersion: '0.0.1',
+        appPath: '/app',
+        isPackaged: false,
+        releaseChannel: 'development',
+        getSourceRevision: () => 'c'.repeat(40),
+        readFile: () =>
+          JSON.stringify({
+            appVersion: '9.9.9',
+            sourceRevision: 'd'.repeat(40),
+            generatedAt: '2026-05-04T12:00:00.000Z',
+            channel: 'stable',
+          }),
       }),
-    })).toEqual({
+    ).toEqual({
       version: '0.0.1',
       sourceRevision: 'c'.repeat(40),
       buildDate: 'unknown',
@@ -91,17 +96,20 @@ describe('resolveAppMetadata', () => {
   });
 
   it('does not trust invalid packaged fields', () => {
-    expect(resolveAppMetadata({
-      appVersion: '',
-      appPath: '/app',
-      isPackaged: true,
-      readFile: () => JSON.stringify({
+    expect(
+      resolveAppMetadata({
         appVersion: '',
-        sourceRevision: '',
-        generatedAt: 'not a date',
-        channel: 'nightly',
+        appPath: '/app',
+        isPackaged: true,
+        readFile: () =>
+          JSON.stringify({
+            appVersion: '',
+            sourceRevision: '',
+            generatedAt: 'not a date',
+            channel: 'nightly',
+          }),
       }),
-    })).toEqual({
+    ).toEqual({
       version: 'unknown',
       sourceRevision: 'unknown',
       buildDate: 'unknown',

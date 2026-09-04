@@ -6,7 +6,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import WelcomeScreen from '../components/welcome/WelcomeScreen';
 import { useSettingsStore } from '../stores/settings-store';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 describe('WelcomeScreen', () => {
   let container: HTMLDivElement;
@@ -107,8 +109,9 @@ describe('WelcomeScreen', () => {
       root.render(<WelcomeScreen />);
     });
 
-    const openButton = [...container.querySelectorAll('button')]
-      .find((button) => button.textContent?.includes('Open a .blue Project'));
+    const openButton = [...container.querySelectorAll('button')].find((button) =>
+      button.textContent?.includes('Open a .blue Project'),
+    );
     expect(openButton).toBeDefined();
 
     act(() => {

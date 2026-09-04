@@ -187,7 +187,9 @@ describe('UnifiedLibraryProjectAdapter', () => {
     const edited = GenericScore.loadFromXML(definition.saveAsXML());
     edited.setScoreText('i2 0 1 880');
 
-    expect(adapter.saveEditorSource(key, source.revision, edited.saveAsXML().toXml())).not.toBeNull();
+    expect(
+      adapter.saveEditorSource(key, source.revision, edited.saveAsXML().toXml()),
+    ).not.toBeNull();
 
     const canonical = data.getSoundObjectLibrary().getObjectById(libraryId);
     expect(first.getSoundObject()).toBe(canonical);

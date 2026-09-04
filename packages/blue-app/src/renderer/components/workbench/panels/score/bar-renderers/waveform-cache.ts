@@ -13,10 +13,12 @@ export interface WaveformCacheEntry {
 }
 
 function readUint32BE(data: Uint8Array, offset: number): number {
-  return data[offset] * 0x1000000
-    + data[offset + 1] * 0x10000
-    + data[offset + 2] * 0x100
-    + data[offset + 3];
+  return (
+    data[offset] * 0x1000000 +
+    data[offset + 1] * 0x10000 +
+    data[offset + 2] * 0x100 +
+    data[offset + 3]
+  );
 }
 
 function fourCC(data: Uint8Array, offset: number): string {
@@ -54,7 +56,10 @@ export function summarizeAiffPcmBytes(
     metadata.frameCount,
     Math.floor((data.length - sampleDataOffset) / frameSize),
   );
-  const samplesPerBucket = Math.max(1, Math.floor(metadata.sampleRate / normalizePixelSecond(pixelSecond)));
+  const samplesPerBucket = Math.max(
+    1,
+    Math.floor(metadata.sampleRate / normalizePixelSecond(pixelSecond)),
+  );
   const bucketCount = Math.max(1, Math.ceil(frameCount / samplesPerBucket));
   const channels = Array.from({ length: metadata.channels }, () => ({
     min: new Array<number>(bucketCount).fill(1),
@@ -65,7 +70,8 @@ export function summarizeAiffPcmBytes(
   for (let frame = 0; frame < frameCount; frame++) {
     const bucket = Math.floor(frame / samplesPerBucket);
     for (let channel = 0; channel < metadata.channels; channel++) {
-      const sampleOffset = sampleDataOffset + (frame * metadata.channels + channel) * bytesPerSample;
+      const sampleOffset =
+        sampleDataOffset + (frame * metadata.channels + channel) * bytesPerSample;
       let sample: number;
       if (bytesPerSample === 1) {
         const value = data[sampleOffset];
@@ -73,7 +79,8 @@ export function summarizeAiffPcmBytes(
       } else if (bytesPerSample === 2) {
         sample = view.getInt16(sampleOffset, false) / 0x8000;
       } else if (bytesPerSample === 3) {
-        const raw = data[sampleOffset] * 0x10000 + data[sampleOffset + 1] * 0x100 + data[sampleOffset + 2];
+        const raw =
+          data[sampleOffset] * 0x10000 + data[sampleOffset + 1] * 0x100 + data[sampleOffset + 2];
         sample = (raw >= 0x800000 ? raw - 0x1000000 : raw) / 0x800000;
       } else {
         sample = view.getInt32(sampleOffset, false) / 0x80000000;
@@ -108,8 +115,10 @@ function emitWaveformUpdate(key: string): void {
 }
 
 function getAudioContext(): AudioContext | null {
-  const AudioContextCtor = globalThis.AudioContext
-    ?? (globalThis as typeof globalThis & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  const AudioContextCtor =
+    globalThis.AudioContext ??
+    (globalThis as typeof globalThis & { webkitAudioContext?: typeof AudioContext })
+      .webkitAudioContext;
   if (!AudioContextCtor) {
     return null;
   }
@@ -140,8 +149,13 @@ export function buildWaveformCacheKey(key: string, pixelSecond: number): string 
   return `${key}@${normalizePixelSecond(pixelSecond)}`;
 }
 
-export function getWaveformCacheEntry(key: string, pixelSecond?: number): WaveformCacheEntry | undefined {
-  return waveformCache.get(pixelSecond === undefined ? key : buildWaveformCacheKey(key, pixelSecond));
+export function getWaveformCacheEntry(
+  key: string,
+  pixelSecond?: number,
+): WaveformCacheEntry | undefined {
+  return waveformCache.get(
+    pixelSecond === undefined ? key : buildWaveformCacheKey(key, pixelSecond),
+  );
 }
 
 export function setWaveformCacheEntry(entry: WaveformCacheEntry): void {
@@ -210,14 +224,20 @@ export function summarizeWaveformChannels(
   });
 }
 
-async function loadWaveform(cacheKey: string, filePath: string, pixelSecond: number): Promise<void> {
+async function loadWaveform(
+  cacheKey: string,
+  filePath: string,
+  pixelSecond: number,
+): Promise<void> {
   if (pendingWaveformLoads.has(cacheKey)) {
     return pendingWaveformLoads.get(cacheKey)!;
   }
 
   const loadPromise = (async () => {
     try {
-      const bytes = normalizeAudioBytes(await window.blueAPI.readAudioFileBytes(filePath) as unknown);
+      const bytes = normalizeAudioBytes(
+        (await window.blueAPI.readAudioFileBytes(filePath)) as unknown,
+      );
       if (!bytes) {
         setWaveformCacheEntry({
           key: cacheKey,
@@ -258,7 +278,9 @@ async function loadWaveform(cacheKey: string, filePath: string, pixelSecond: num
       try {
         const decoded = await audioContext.decodeAudioData(bytes.slice(0));
         const channels = summarizeWaveformChannels(
-          Array.from({ length: decoded.numberOfChannels }, (_, index) => decoded.getChannelData(index)),
+          Array.from({ length: decoded.numberOfChannels }, (_, index) =>
+            decoded.getChannelData(index),
+          ),
           decoded.sampleRate,
           pixelSecond,
         );
@@ -290,7 +312,11 @@ async function loadWaveform(cacheKey: string, filePath: string, pixelSecond: num
   return loadPromise;
 }
 
-export function requestWaveform(key: string, filePath: string, pixelSecond: number): WaveformCacheEntry {
+export function requestWaveform(
+  key: string,
+  filePath: string,
+  pixelSecond: number,
+): WaveformCacheEntry {
   const cacheKey = buildWaveformCacheKey(key, pixelSecond);
   const existing = waveformCache.get(cacheKey);
   if (existing) return existing;
@@ -334,30 +360,32 @@ export function buildWaveformPathData(
   const channelMiddle = Math.floor(channelHeight / 2);
   const startOffsetPixels = Math.max(0, startOffsetBeats * pixelsPerBeat);
 
-  return entry.channels.map((channel, channelIndex) => {
-    const sampleCount = Math.min(channel.min.length, channel.max.length);
-    if (sampleCount === 0) {
-      return '';
-    }
-
-    const center = channelMiddle + (channelIndex * channelHeight);
-    let path = '';
-    for (let x = 0; x < width; x += 1) {
-      let sampleIndex = Math.floor(startOffsetPixels + x);
-
-      if (looping) {
-        sampleIndex = ((sampleIndex % sampleCount) + sampleCount) % sampleCount;
-      } else if (sampleIndex < 0 || sampleIndex >= sampleCount) {
-        continue;
+  return entry.channels
+    .map((channel, channelIndex) => {
+      const sampleCount = Math.min(channel.min.length, channel.max.length);
+      if (sampleCount === 0) {
+        return '';
       }
 
-      const min = channel.min[sampleIndex] ?? 0;
-      const max = channel.max[sampleIndex] ?? 0;
-      const yTop = center - (max * channelMiddle);
-      const yBottom = center - (min * channelMiddle);
-      path += `M${x + 0.5} ${yTop} L${x + 0.5} ${yBottom} `;
-    }
+      const center = channelMiddle + channelIndex * channelHeight;
+      let path = '';
+      for (let x = 0; x < width; x += 1) {
+        let sampleIndex = Math.floor(startOffsetPixels + x);
 
-    return path.trim();
-  }).filter((path) => path.length > 0);
+        if (looping) {
+          sampleIndex = ((sampleIndex % sampleCount) + sampleCount) % sampleCount;
+        } else if (sampleIndex < 0 || sampleIndex >= sampleCount) {
+          continue;
+        }
+
+        const min = channel.min[sampleIndex] ?? 0;
+        const max = channel.max[sampleIndex] ?? 0;
+        const yTop = center - max * channelMiddle;
+        const yBottom = center - min * channelMiddle;
+        path += `M${x + 0.5} ${yTop} L${x + 0.5} ${yBottom} `;
+      }
+
+      return path.trim();
+    })
+    .filter((path) => path.length > 0);
 }

@@ -10,7 +10,11 @@ export interface ExternalTestResult {
   error?: string;
 }
 
-export function prepareCommandLine(commandLine: string, inFileName: string, outFileName?: string): string {
+export function prepareCommandLine(
+  commandLine: string,
+  inFileName: string,
+  outFileName?: string,
+): string {
   let cmd = commandLine;
   if (!cmd.includes('$infile')) {
     cmd = cmd + ' ' + inFileName;

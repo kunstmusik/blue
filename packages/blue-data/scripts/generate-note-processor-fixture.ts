@@ -37,7 +37,7 @@ for (let i = 0; i < catalog.length; i++) {
   sObj.setScoreText(SCORE_TEXT);
   sObj.setStartTime(TimePosition.beats(i * BEATS_PER_OBJECT));
   sObj.setSubjectiveDuration(TimeDuration.beats(BEATS_PER_OBJECT));
-  sObj.setBackgroundColor(0x4488CC + i * 0x111111);
+  sObj.setBackgroundColor(0x4488cc + i * 0x111111);
 
   const proc = def.createDefault();
   const chain = new NoteProcessorChain();

@@ -19,15 +19,14 @@ function cloneClipboard(clipboard: BsbCanvasClipboard | null): BsbCanvasClipboar
   return {
     originX: clipboard.originX,
     originY: clipboard.originY,
-    widgets: clipboard.widgets.map((widget) =>
-      JSON.parse(JSON.stringify(widget)) as BsbWidgetNodeSnapshot),
+    widgets: clipboard.widgets.map(
+      (widget) => JSON.parse(JSON.stringify(widget)) as BsbWidgetNodeSnapshot,
+    ),
   };
 }
 
 function publishClipboard(clipboard: BsbCanvasClipboard | null): void {
-  const publish = typeof window === 'undefined'
-    ? undefined
-    : window.blueAPI?.setBsbClipboard;
+  const publish = typeof window === 'undefined' ? undefined : window.blueAPI?.setBsbClipboard;
   if (typeof publish === 'function') {
     void publish(cloneClipboard(clipboard)).catch(() => undefined);
   }

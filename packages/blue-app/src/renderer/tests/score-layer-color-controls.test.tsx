@@ -14,14 +14,17 @@ import {
   createMockPatternLayerSnapshot,
 } from '../../shared/project-editor-layer-color-test-utils';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 class MockResizeObserver {
   observe(): void {}
   unobserve(): void {}
   disconnect(): void {}
 }
-(globalThis as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver = MockResizeObserver;
+(globalThis as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver =
+  MockResizeObserver;
 
 const { mockScorePathState } = vi.hoisted(() => ({
   mockScorePathState: {
@@ -93,7 +96,9 @@ describe('Score Layer Color Controls', () => {
       root.render(<ScorePanel />);
     });
 
-    const swatchButton = host.querySelector<HTMLButtonElement>('button[aria-label*="Violin Layer"][aria-label*="color"], button[aria-label="Layer color for Violin Layer"]');
+    const swatchButton = host.querySelector<HTMLButtonElement>(
+      'button[aria-label*="Violin Layer"][aria-label*="color"], button[aria-label="Layer color for Violin Layer"]',
+    );
     expect(swatchButton).toBeTruthy();
     expect(swatchButton?.getAttribute('aria-label')).toMatch(/color/i);
     expect(swatchButton?.style.backgroundColor).toBe('rgb(0, 0, 255)');
@@ -160,7 +165,9 @@ describe('Score Layer Color Controls', () => {
       root.render(<ScorePanel />);
     });
 
-    const swatchButton = host.querySelector<HTMLButtonElement>('button[aria-label*="Bass Track"][aria-label*="color"], button[aria-label="Layer color for Bass Track"]');
+    const swatchButton = host.querySelector<HTMLButtonElement>(
+      'button[aria-label*="Bass Track"][aria-label*="color"], button[aria-label="Layer color for Bass Track"]',
+    );
     expect(swatchButton).toBeTruthy();
     expect(swatchButton?.style.backgroundColor).toBe('rgb(0, 255, 0)');
 
@@ -202,16 +209,13 @@ describe('Score Layer Color Controls', () => {
 
     act(() => {
       root.render(
-        <PatternLayerHeader
-          layer={layer}
-          groupId="pattern-group"
-          layerIndex={0}
-          layerCount={1}
-        />,
+        <PatternLayerHeader layer={layer} groupId="pattern-group" layerIndex={0} layerCount={1} />,
       );
     });
 
-    const swatchButton = host.querySelector<HTMLButtonElement>('button[aria-label*="Drums Pattern"][aria-label*="color"], button[aria-label="Layer color for Drums Pattern"]');
+    const swatchButton = host.querySelector<HTMLButtonElement>(
+      'button[aria-label*="Drums Pattern"][aria-label*="color"], button[aria-label="Layer color for Drums Pattern"]',
+    );
     expect(swatchButton).toBeTruthy();
     expect(swatchButton?.style.backgroundColor).toBe('rgb(255, 0, 0)');
 

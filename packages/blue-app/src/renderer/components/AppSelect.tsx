@@ -63,7 +63,9 @@ export function AppSelect({
   return (
     <Select.Root
       value={encodeValue(value)}
-      onValueChange={(nextValue) => onValueChange(nextValue === EMPTY_OPTION_VALUE ? '' : nextValue)}
+      onValueChange={(nextValue) =>
+        onValueChange(nextValue === EMPTY_OPTION_VALUE ? '' : nextValue)
+      }
       disabled={disabled}
       name={name}
       required={required}
@@ -81,42 +83,47 @@ export function AppSelect({
           <ChevronDown className="h-3.5 w-3.5 shrink-0 text-app-text-muted" aria-hidden="true" />
         </Select.Icon>
       </Select.Trigger>
-      {open ? <PopoutSelectPortal>
-        <Select.Content
-          position="popper"
-          sideOffset={4}
-          collisionPadding={8}
-          className={cn(
-            'z-[1000] min-w-[var(--radix-select-trigger-width)] max-w-[var(--radix-select-content-available-width)] overflow-hidden rounded border border-app-border bg-app-menu shadow-lg',
-            contentClassName,
-          )}
-          data-auxiliary-portal="true"
-          {...portalEventIsolationProps}
-        >
-          <Select.ScrollUpButton className="flex h-5 items-center justify-center text-app-text-muted">
-            <ChevronUp className="h-3.5 w-3.5" aria-hidden="true" />
-          </Select.ScrollUpButton>
-          <Select.Viewport className="max-h-[var(--radix-select-content-available-height)] p-1">
-            {options.map((option) => (
-              <Select.Item
-                key={encodeValue(option.value)}
-                value={encodeValue(option.value)}
-                textValue={option.textValue ?? (typeof option.label === 'string' ? option.label : undefined)}
-                disabled={option.disabled}
-                className={ITEM_CLASS}
-              >
-                <Select.ItemText>{option.label}</Select.ItemText>
-                <Select.ItemIndicator className="absolute right-2 inline-flex items-center">
-                  <Check className="h-3.5 w-3.5 text-app-accent" aria-hidden="true" />
-                </Select.ItemIndicator>
-              </Select.Item>
-            ))}
-          </Select.Viewport>
-          <Select.ScrollDownButton className="flex h-5 items-center justify-center text-app-text-muted">
-            <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
-          </Select.ScrollDownButton>
-        </Select.Content>
-      </PopoutSelectPortal> : null}
+      {open ? (
+        <PopoutSelectPortal>
+          <Select.Content
+            position="popper"
+            sideOffset={4}
+            collisionPadding={8}
+            className={cn(
+              'z-[1000] min-w-[var(--radix-select-trigger-width)] max-w-[var(--radix-select-content-available-width)] overflow-hidden rounded border border-app-border bg-app-menu shadow-lg',
+              contentClassName,
+            )}
+            data-auxiliary-portal="true"
+            {...portalEventIsolationProps}
+          >
+            <Select.ScrollUpButton className="flex h-5 items-center justify-center text-app-text-muted">
+              <ChevronUp className="h-3.5 w-3.5" aria-hidden="true" />
+            </Select.ScrollUpButton>
+            <Select.Viewport className="max-h-[var(--radix-select-content-available-height)] p-1">
+              {options.map((option) => (
+                <Select.Item
+                  key={encodeValue(option.value)}
+                  value={encodeValue(option.value)}
+                  textValue={
+                    option.textValue ??
+                    (typeof option.label === 'string' ? option.label : undefined)
+                  }
+                  disabled={option.disabled}
+                  className={ITEM_CLASS}
+                >
+                  <Select.ItemText>{option.label}</Select.ItemText>
+                  <Select.ItemIndicator className="absolute right-2 inline-flex items-center">
+                    <Check className="h-3.5 w-3.5 text-app-accent" aria-hidden="true" />
+                  </Select.ItemIndicator>
+                </Select.Item>
+              ))}
+            </Select.Viewport>
+            <Select.ScrollDownButton className="flex h-5 items-center justify-center text-app-text-muted">
+              <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+            </Select.ScrollDownButton>
+          </Select.Content>
+        </PopoutSelectPortal>
+      ) : null}
     </Select.Root>
   );
 }

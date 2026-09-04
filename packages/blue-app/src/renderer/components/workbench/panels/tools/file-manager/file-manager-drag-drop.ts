@@ -36,21 +36,24 @@ function getFileManagerDragChannel(): BroadcastChannel | null {
   if (typeof window === 'undefined' || typeof window.BroadcastChannel !== 'function') return null;
 
   fileManagerDragChannel = new window.BroadcastChannel(FILE_MANAGER_DRAG_CHANNEL);
-  fileManagerDragChannel.addEventListener('message', (event: MessageEvent<FileManagerDragMessage>) => {
-    if (event.data.type === 'clear') {
-      activeFileManagerDragPayload = null;
-      return;
-    }
-    const payload = event.data.payload;
-    if (
-      payload.version === 1
-      && payload.kind === 'file'
-      && typeof payload.path === 'string'
-      && typeof payload.name === 'string'
-    ) {
-      activeFileManagerDragPayload = payload;
-    }
-  });
+  fileManagerDragChannel.addEventListener(
+    'message',
+    (event: MessageEvent<FileManagerDragMessage>) => {
+      if (event.data.type === 'clear') {
+        activeFileManagerDragPayload = null;
+        return;
+      }
+      const payload = event.data.payload;
+      if (
+        payload.version === 1 &&
+        payload.kind === 'file' &&
+        typeof payload.path === 'string' &&
+        typeof payload.name === 'string'
+      ) {
+        activeFileManagerDragPayload = payload;
+      }
+    },
+  );
   return fileManagerDragChannel;
 }
 
@@ -100,8 +103,11 @@ export function readAudioDropSource(
   getPathForFile: (file: File) => string,
 ): AudioDropSource | null {
   const raw = dataTransfer.getData(BLUE_FILE_MANAGER_DRAG_MIME);
-  const internal = (raw ? parseFileManagerDragPayload(raw) : null)
-    ?? (dataTransfer.types.includes(BLUE_FILE_MANAGER_DRAG_MIME) ? activeFileManagerDragPayload : null);
+  const internal =
+    (raw ? parseFileManagerDragPayload(raw) : null) ??
+    (dataTransfer.types.includes(BLUE_FILE_MANAGER_DRAG_MIME)
+      ? activeFileManagerDragPayload
+      : null);
   if (internal) {
     return { kind: 'file-manager', path: internal.path, name: internal.name };
   }
@@ -136,10 +142,10 @@ export function dataTransferMayCarryAudioDrop(dataTransfer: DataTransfer): boole
   if (dataTransfer.types.includes(BLUE_LIBRARY_DRAG_MIME)) return false;
   if (dataTransfer.files.length > 1) return false;
   return (
-    dataTransfer.types.includes(BLUE_FILE_MANAGER_DRAG_MIME)
-    || dataTransfer.types.includes('Files')
-    || dataTransfer.types.includes('text/uri-list')
-    || dataTransfer.types.includes('text/plain')
+    dataTransfer.types.includes(BLUE_FILE_MANAGER_DRAG_MIME) ||
+    dataTransfer.types.includes('Files') ||
+    dataTransfer.types.includes('text/uri-list') ||
+    dataTransfer.types.includes('text/plain')
   );
 }
 
@@ -155,5 +161,7 @@ export function dataTransferCanAcceptAudioDrop(
   }
   // During dragover from external OS, dataTransfer.getData is inaccessible in Chromium,
   // but 'Files' type indicates a file drop is in progress.
-  return dataTransfer.types.includes('Files') && !dataTransfer.types.includes(BLUE_LIBRARY_DRAG_MIME);
+  return (
+    dataTransfer.types.includes('Files') && !dataTransfer.types.includes(BLUE_LIBRARY_DRAG_MIME)
+  );
 }

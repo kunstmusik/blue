@@ -3,7 +3,11 @@ import { chmod, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { developmentEnginePath, EngineRuntimeService, type ProbeProcessRunner } from './engine-runtime';
+import {
+  developmentEnginePath,
+  EngineRuntimeService,
+  type ProbeProcessRunner,
+} from './engine-runtime';
 
 function report(protocolVersion = 2, ready = true): string {
   return JSON.stringify({
@@ -43,14 +47,17 @@ describe('EngineRuntimeService', () => {
     const bytes = Buffer.from('workspace engine');
     await writeFile(enginePath, bytes);
     await chmod(enginePath, 0o755);
-    await writeFile(path.join(path.dirname(enginePath), 'artifact.json'), JSON.stringify({
-      schemaVersion: 1,
-      protocolVersion: 2,
-      platform: 'darwin',
-      arch: 'arm64',
-      executableName: 'blue-engine',
-      sha256: createHash('sha256').update(bytes).digest('hex'),
-    }));
+    await writeFile(
+      path.join(path.dirname(enginePath), 'artifact.json'),
+      JSON.stringify({
+        schemaVersion: 1,
+        protocolVersion: 2,
+        platform: 'darwin',
+        arch: 'arm64',
+        executableName: 'blue-engine',
+        sha256: createHash('sha256').update(bytes).digest('hex'),
+      }),
+    );
     runner = async () => ({
       exitCode: 0,
       stdout: report(),
@@ -94,14 +101,17 @@ describe('EngineRuntimeService', () => {
       await mkdir(path.dirname(packagedPath), { recursive: true });
       await writeFile(packagedPath, bytes);
       await chmod(packagedPath, 0o755);
-      await writeFile(path.join(path.dirname(packagedPath), 'artifact.json'), JSON.stringify({
-        schemaVersion: 1,
-        protocolVersion: 2,
-        platform,
-        arch,
-        executableName,
-        sha256: createHash('sha256').update(bytes).digest('hex'),
-      }));
+      await writeFile(
+        path.join(path.dirname(packagedPath), 'artifact.json'),
+        JSON.stringify({
+          schemaVersion: 1,
+          protocolVersion: 2,
+          platform,
+          arch,
+          executableName,
+          sha256: createHash('sha256').update(bytes).digest('hex'),
+        }),
+      );
       const selection = await service({
         isPackaged: true,
         resourcesPath,
@@ -114,9 +124,12 @@ describe('EngineRuntimeService', () => {
   );
 
   it('normalizes the legacy sentinel and requires absolute explicit overrides', async () => {
-    expect((await service({ getSettingsEnginePath: () => '' }).resolve()).source).toBe('development');
-    await expect(service({ getSettingsEnginePath: () => 'relative-engine' }).resolve())
-      .rejects.toThrow('absolute path');
+    expect((await service({ getSettingsEnginePath: () => '' }).resolve()).source).toBe(
+      'development',
+    );
+    await expect(
+      service({ getSettingsEnginePath: () => 'relative-engine' }).resolve(),
+    ).rejects.toThrow('absolute path');
   });
 
   it('uses an absolute environment override before settings', async () => {
@@ -129,8 +142,9 @@ describe('EngineRuntimeService', () => {
   });
 
   it('returns an actionable build instruction when the development artifact is absent', async () => {
-    await expect(service({ repoRoot: path.join(repoRoot, 'missing') }).resolve())
-      .rejects.toThrow('pnpm --filter @blue/engine-native build');
+    await expect(service({ repoRoot: path.join(repoRoot, 'missing') }).resolve()).rejects.toThrow(
+      'pnpm --filter @blue/engine-native build',
+    );
   });
 
   it('probes with an absolute path and returns structured Csound failures', async () => {
@@ -226,7 +240,8 @@ describe('EngineRuntimeService', () => {
     let calls = 0;
     runner = async (_selectedPath, args) => {
       calls += 1;
-      if (args[0] === '--probe-csound') return { exitCode: 0, stdout: report(), stderr: '', timedOut: false };
+      if (args[0] === '--probe-csound')
+        return { exitCode: 0, stdout: report(), stderr: '', timedOut: false };
       expect(args).toEqual(['--list-io', '--json', '--audio-module', 'pa_bl']);
       return { exitCode: 0, stdout: io, stderr: '', timedOut: false };
     };
@@ -238,33 +253,36 @@ describe('EngineRuntimeService', () => {
 
   it('maps discovery timeout, invalid JSON, missing capability, and unavailable modules', async () => {
     const base = JSON.parse(report()) as Record<string, any>;
-    const io = (overrides: Record<string, unknown> = {}) => JSON.stringify({
-      schemaVersion: 1,
-      engine: base.engine,
-      csound: base.csound,
-      selectedAudioModule: null,
-      selectedMidiModule: null,
-      audioModules: [{ name: 'pa_bl', kind: 'audio' }],
-      midiModules: [],
-      audioInputs: [],
-      audioOutputs: [],
-      midiInputs: [],
-      midiOutputs: [],
-      diagnostics: [],
-      ready: true,
-      ...overrides,
-    });
+    const io = (overrides: Record<string, unknown> = {}) =>
+      JSON.stringify({
+        schemaVersion: 1,
+        engine: base.engine,
+        csound: base.csound,
+        selectedAudioModule: null,
+        selectedMidiModule: null,
+        audioModules: [{ name: 'pa_bl', kind: 'audio' }],
+        midiModules: [],
+        audioInputs: [],
+        audioOutputs: [],
+        midiInputs: [],
+        midiOutputs: [],
+        diagnostics: [],
+        ready: true,
+        ...overrides,
+      });
 
     let mode: 'timeout' | 'invalid' | 'missing-capability' | 'unavailable' | 'ready' = 'timeout';
     runner = async (_selectedPath, args) => {
       if (args[0] === '--probe-csound') {
-        const probe = mode === 'missing-capability'
-          ? { ...base, engine: { ...base.engine, features: ['csound-probe-v1'] } }
-          : base;
+        const probe =
+          mode === 'missing-capability'
+            ? { ...base, engine: { ...base.engine, features: ['csound-probe-v1'] } }
+            : base;
         return { exitCode: 0, stdout: JSON.stringify(probe), stderr: '', timedOut: false };
       }
       if (mode === 'timeout') return { exitCode: null, stdout: '', stderr: '', timedOut: true };
-      if (mode === 'invalid') return { exitCode: 0, stdout: '{', stderr: 'invalid', timedOut: false };
+      if (mode === 'invalid')
+        return { exitCode: 0, stdout: '{', stderr: 'invalid', timedOut: false };
       if (mode === 'unavailable') {
         return {
           exitCode: 65,
@@ -286,8 +304,9 @@ describe('EngineRuntimeService', () => {
     expect(unavailable.report?.diagnostics[0]).toContain('unavailable');
     mode = 'ready';
     expect((await service().queryCsoundIo({}, { retry: true })).ok).toBe(true);
-    expect((await service().probe({ csoundLibraryPath: 'relative/csound' })).errorCode)
-      .toBe('ENGINE_PROBE_FAILED');
+    expect((await service().probe({ csoundLibraryPath: 'relative/csound' })).errorCode).toBe(
+      'ENGINE_PROBE_FAILED',
+    );
   });
 
   it('executes performance arguments through the resolved engine without shell interpretation', async () => {
@@ -301,7 +320,9 @@ describe('EngineRuntimeService', () => {
       },
     });
     const result = await runtime.executeCsound({
-      kind: 'performance', operationId: 'perf-1', cwd: repoRoot,
+      kind: 'performance',
+      operationId: 'perf-1',
+      cwd: repoRoot,
       args: ['-n', 'file with spaces.csd'],
     });
     expect(result.state).toBe('completed');
@@ -322,7 +343,10 @@ describe('EngineRuntimeService', () => {
       }),
     });
     const result = await runtime.executeCsound({
-      kind: 'performance', operationId: 'start-error', cwd: repoRoot, args: [],
+      kind: 'performance',
+      operationId: 'start-error',
+      cwd: repoRoot,
+      args: [],
     });
     expect(result.state).toBe('failed');
     expect(result.message).toBe('spawn failed');
@@ -339,7 +363,10 @@ describe('EngineRuntimeService', () => {
       },
     });
     const result = await runtime.executeCsound({
-      kind: 'utility', operationId: 'utility-1', utilityName: 'sndinfo', cwd: repoRoot,
+      kind: 'utility',
+      operationId: 'utility-1',
+      utilityName: 'sndinfo',
+      cwd: repoRoot,
       args: ['path with spaces.aif'],
     });
     expect(result.state).toBe('completed');
@@ -356,9 +383,15 @@ describe('EngineRuntimeService', () => {
         return { exitCode: 0, signal: null, stdout: '', stderr: '', started: true };
       },
     });
-    const result = await runtime.executeCsound({
-      kind: 'performance', operationId: 'race-1', cwd: repoRoot, args: [],
-    }, { signal: controller.signal });
+    const result = await runtime.executeCsound(
+      {
+        kind: 'performance',
+        operationId: 'race-1',
+        cwd: repoRoot,
+        args: [],
+      },
+      { signal: controller.signal },
+    );
     expect(result.state).toBe('cancelled');
     expect(result.errorCode).toBe('CSOUND_EXECUTION_CANCELLED');
   });

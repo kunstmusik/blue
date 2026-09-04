@@ -1,8 +1,4 @@
-import type {
-  MixerSnapshot,
-  MixerChannelSnapshot,
-  MixerSendEntrySnapshot,
-} from './project-editor';
+import type { MixerSnapshot, MixerChannelSnapshot, MixerSendEntrySnapshot } from './project-editor';
 
 export interface MixerRoutingValidationResult {
   issues: MixerRoutingIssue[];
@@ -10,12 +6,7 @@ export interface MixerRoutingValidationResult {
 
 export interface MixerRoutingIssue {
   severity: 'warning' | 'error';
-  code:
-    | 'self-output'
-    | 'self-send'
-    | 'feedback-risk'
-    | 'missing-target'
-    | 'invalid-paste-target';
+  code: 'self-output' | 'self-send' | 'feedback-risk' | 'missing-target' | 'invalid-paste-target';
   channelId: string;
   entryId?: string;
   targetName?: string;
@@ -31,7 +22,10 @@ function resolveChannelNameToId(mixer: MixerSnapshot, name: string): string {
   return name;
 }
 
-function resolveRoutingTarget(mixer: MixerSnapshot, target: string): { id: string; channel: MixerChannelSnapshot | null } {
+function resolveRoutingTarget(
+  mixer: MixerSnapshot,
+  target: string,
+): { id: string; channel: MixerChannelSnapshot | null } {
   const byId = findChannelById(mixer, target);
   if (byId) return { id: target, channel: byId };
   const byName = findChannelByName(mixer, target);
@@ -203,11 +197,7 @@ function isPossibleOut(
 }
 
 function getAllChannels(mixer: MixerSnapshot): MixerChannelSnapshot[] {
-  return [
-    ...getSourceChannels(mixer),
-    ...mixer.subChannels,
-    mixer.master,
-  ];
+  return [...getSourceChannels(mixer), ...mixer.subChannels, mixer.master];
 }
 
 function getSourceChannels(mixer: MixerSnapshot): MixerChannelSnapshot[] {
@@ -215,17 +205,11 @@ function getSourceChannels(mixer: MixerSnapshot): MixerChannelSnapshot[] {
   return [...groupedChannels, ...mixer.channels];
 }
 
-function findChannelById(
-  mixer: MixerSnapshot,
-  channelId: string,
-): MixerChannelSnapshot | null {
+function findChannelById(mixer: MixerSnapshot, channelId: string): MixerChannelSnapshot | null {
   return getAllChannels(mixer).find((ch) => ch.id === channelId) ?? null;
 }
 
-function findChannelByName(
-  mixer: MixerSnapshot,
-  name: string,
-): MixerChannelSnapshot | null {
+function findChannelByName(mixer: MixerSnapshot, name: string): MixerChannelSnapshot | null {
   return getAllChannels(mixer).find((ch) => ch.name === name) ?? null;
 }
 
@@ -261,10 +245,7 @@ function validateChannelSends(
   }
 }
 
-function validateFeedbackLoops(
-  mixer: MixerSnapshot,
-  issues: MixerRoutingIssue[],
-): void {
+function validateFeedbackLoops(mixer: MixerSnapshot, issues: MixerRoutingIssue[]): void {
   const adjacency = buildSendAdjacency(mixer);
 
   const visited = new Set<string>();

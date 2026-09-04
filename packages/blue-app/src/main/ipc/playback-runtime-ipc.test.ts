@@ -23,21 +23,22 @@ const HANDLER_CHANNELS = PLAYBACK_RUNTIME_IPC_CHANNELS.filter(
 describe('playback/runtime IPC registrar', () => {
   it('registers the exact 30-channel invoke/listener sequence and exact teardown', () => {
     const ipcMain = new FakeRegistrarIpcMain();
-    const listeners = Object.fromEntries(LISTENER_CHANNELS.map((channel) => [channel, vi.fn()])) as unknown as Record<
-      PlaybackRuntimeListenerChannel,
-      IpcMainEventListener
-    >;
+    const listeners = Object.fromEntries(
+      LISTENER_CHANNELS.map((channel) => [channel, vi.fn()]),
+    ) as unknown as Record<PlaybackRuntimeListenerChannel, IpcMainEventListener>;
     const dispose = registerPlaybackRuntimeIpc({
       ipcMain,
       handlers: createHandlerRecord(HANDLER_CHANNELS),
       listeners,
     });
 
-    expect(ipcMain.registrations).toEqual(PLAYBACK_RUNTIME_IPC_CHANNELS.map((channel) => (
-      LISTENER_CHANNELS.includes(channel as PlaybackRuntimeListenerChannel)
-        ? `on:${channel}`
-        : `handle:${channel}`
-    )));
+    expect(ipcMain.registrations).toEqual(
+      PLAYBACK_RUNTIME_IPC_CHANNELS.map((channel) =>
+        LISTENER_CHANNELS.includes(channel as PlaybackRuntimeListenerChannel)
+          ? `on:${channel}`
+          : `handle:${channel}`,
+      ),
+    );
     expect(ipcMain.listeners.get(LISTENER_CHANNELS[0])).toBe(listeners[LISTENER_CHANNELS[0]]);
     expectIdempotentReverseDisposal(ipcMain, dispose);
   });
@@ -48,7 +49,10 @@ describe('playback/runtime IPC registrar', () => {
     const eventTargets: string[] = [];
     handlers['toggle-play'] = vi.fn(async () => ({ started: false, reason: 'render-active' }));
     handlers['blue-live:get-status'] = vi.fn(() => ({ state: 'idle' }));
-    handlers['repl-console:evaluate'] = vi.fn((_event, request) => ({ ok: true, value: request.code }));
+    handlers['repl-console:evaluate'] = vi.fn((_event, request) => ({
+      ok: true,
+      value: request.code,
+    }));
     handlers['send-bsb-realtime-control-update'] = vi.fn((_event, update) => update);
     handlers['render-to-disk'] = vi.fn((_event, request) => ({
       ok: false,
@@ -56,8 +60,12 @@ describe('playback/runtime IPC registrar', () => {
       cancelled: true,
     }));
     const listeners = {
-      'sync-audition-score-object-availability': vi.fn((event: { sender: string }) => eventTargets.push(event.sender)),
-      'sync-follow-playback-state': vi.fn((event: { sender: string }) => eventTargets.push(event.sender)),
+      'sync-audition-score-object-availability': vi.fn((event: { sender: string }) =>
+        eventTargets.push(event.sender),
+      ),
+      'sync-follow-playback-state': vi.fn((event: { sender: string }) =>
+        eventTargets.push(event.sender),
+      ),
     };
     registerPlaybackRuntimeIpc({ ipcMain, handlers, listeners });
 
@@ -66,12 +74,18 @@ describe('playback/runtime IPC registrar', () => {
       reason: 'render-active',
     });
     expect(ipcMain.handlers.get('blue-live:get-status')?.({})).toEqual({ state: 'idle' });
-    expect(ipcMain.handlers.get('repl-console:evaluate')?.({}, { code: '2 + 2' }))
-      .toEqual({ ok: true, value: '2 + 2' });
-    expect(ipcMain.handlers.get('send-bsb-realtime-control-update')?.({}, { value: 0.5 }))
-      .toEqual({ value: 0.5 });
-    expect(ipcMain.handlers.get('render-to-disk')?.({}, { operationId: 'render-1' }))
-      .toEqual({ ok: false, operationId: 'render-1', cancelled: true });
+    expect(ipcMain.handlers.get('repl-console:evaluate')?.({}, { code: '2 + 2' })).toEqual({
+      ok: true,
+      value: '2 + 2',
+    });
+    expect(ipcMain.handlers.get('send-bsb-realtime-control-update')?.({}, { value: 0.5 })).toEqual({
+      value: 0.5,
+    });
+    expect(ipcMain.handlers.get('render-to-disk')?.({}, { operationId: 'render-1' })).toEqual({
+      ok: false,
+      operationId: 'render-1',
+      cancelled: true,
+    });
     ipcMain.listeners.get('sync-follow-playback-state')?.({ sender: 'main-renderer' }, true);
     expect(eventTargets).toEqual(['main-renderer']);
   });
@@ -79,7 +93,9 @@ describe('playback/runtime IPC registrar', () => {
   it('preserves runtime errors', () => {
     const ipcMain = new FakeRegistrarIpcMain();
     const handlers = createHandlerRecord(HANDLER_CHANNELS);
-    handlers['engine:evaluate-code'] = vi.fn(() => { throw new Error('engine unavailable'); });
+    handlers['engine:evaluate-code'] = vi.fn(() => {
+      throw new Error('engine unavailable');
+    });
     registerPlaybackRuntimeIpc({
       ipcMain,
       handlers,
@@ -88,7 +104,8 @@ describe('playback/runtime IPC registrar', () => {
         'sync-follow-playback-state': vi.fn(),
       },
     });
-    expect(() => ipcMain.handlers.get('engine:evaluate-code')?.({}, 'i1 0 1'))
-      .toThrow('engine unavailable');
+    expect(() => ipcMain.handlers.get('engine:evaluate-code')?.({}, 'i1 0 1')).toThrow(
+      'engine unavailable',
+    );
   });
 });

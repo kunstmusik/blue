@@ -1,4 +1,10 @@
-import type { MeterMapSnapshot, TempoMapSnapshot, TempoPointSnapshot, TempoCurveTypeSnapshot, TempoMapPatch } from '../../../../../shared/project-editor';
+import type {
+  MeterMapSnapshot,
+  TempoMapSnapshot,
+  TempoPointSnapshot,
+  TempoCurveTypeSnapshot,
+  TempoMapPatch,
+} from '../../../../../shared/project-editor';
 import type { SnapValueName } from '@blue/data';
 import { snapValueToBeats } from '@blue/data';
 import { snapBeatToGrid } from './snap-grid-utils';
@@ -100,9 +106,7 @@ export function secondsToBeats(seconds: number, tempoMap: TempoMapSnapshot): num
     const factor1 = 60 / previous.tempo;
     const acceleration = (60 / current.tempo - factor1) / deltaBeats;
     cumulativeSeconds.push(
-      previousSeconds
-      + (factor1 * deltaBeats)
-      + (0.5 * acceleration * deltaBeats * deltaBeats),
+      previousSeconds + factor1 * deltaBeats + 0.5 * acceleration * deltaBeats * deltaBeats,
     );
   }
 
@@ -157,7 +161,11 @@ export function screenYToTempo(y: number, height: number): number {
   return Math.max(TEMPO_MIN_BPM, Math.min(TEMPO_MAX_BPM, raw));
 }
 
-export function findExistingPointNearBeat(points: TempoPointSnapshot[], beat: number, tolerance: number = 0.001): number {
+export function findExistingPointNearBeat(
+  points: TempoPointSnapshot[],
+  beat: number,
+  tolerance: number = 0.001,
+): number {
   for (let i = 0; i < points.length; i++) {
     if (Math.abs(points[i].beat - beat) < tolerance) return i;
   }

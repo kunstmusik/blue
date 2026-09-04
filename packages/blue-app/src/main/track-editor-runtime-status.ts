@@ -9,10 +9,7 @@ import {
 export type TrackEditorRuntimeStatusSubscriber = Pick<WebContents, 'once' | 'send'>;
 
 export interface TrackEditorRuntimeStatusDependencies {
-  isAuthorized?: (
-    subscriber: WebContents,
-    request: TrackInstrumentEditorRequest,
-  ) => boolean;
+  isAuthorized?: (subscriber: WebContents, request: TrackInstrumentEditorRequest) => boolean;
 }
 
 export interface TrackEditorRuntimeStatusCoordinator {
@@ -109,8 +106,8 @@ export function createTrackEditorRuntimeStatusCoordinator(
 
     publish: (activity) => {
       if (
-        status.playbackRunning === activity.playbackRunning
-        && status.blueLiveRunning === activity.blueLiveRunning
+        status.playbackRunning === activity.playbackRunning &&
+        status.blueLiveRunning === activity.blueLiveRunning
       ) {
         return status;
       }

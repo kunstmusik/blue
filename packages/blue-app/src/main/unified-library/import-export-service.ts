@@ -16,10 +16,7 @@ import type {
   ManualLibraryImportResult,
 } from '../../shared/unified-library';
 import { UnifiedLibraryRepositoryClient } from './repository-client';
-import {
-  LibraryMigrationStateStore,
-  shouldRunAutomaticMigration,
-} from './migration-state-store';
+import { LibraryMigrationStateStore, shouldRunAutomaticMigration } from './migration-state-store';
 
 export interface AutomaticMigrationSourceSummary {
   readonly libraryType: LibraryType;
@@ -78,7 +75,10 @@ export function commitAtomicExport(
     backupPath: `${output.targetPath}.${transactionId}.bak`,
     existed: fs.existsSync(output.targetPath),
   }));
-  const journalPath = path.join(path.dirname(outputs[0]!.targetPath), `.blue-library-export-${transactionId}.json`);
+  const journalPath = path.join(
+    path.dirname(outputs[0]!.targetPath),
+    `.blue-library-export-${transactionId}.json`,
+  );
   const promoted: typeof prepared = [];
   const backedUp: typeof prepared = [];
   try {
@@ -88,9 +88,23 @@ export function commitAtomicExport(
       try {
         fs.writeFileSync(descriptor, output.contents, 'utf8');
         fs.fsyncSync(descriptor);
-      } finally { fs.closeSync(descriptor); }
+      } finally {
+        fs.closeSync(descriptor);
+      }
     }
-    fs.writeFileSync(journalPath, JSON.stringify({ transactionId, outputs: prepared.map(({ targetPath, stagedPath, backupPath, existed }) => ({ targetPath, stagedPath, backupPath, existed })) }), 'utf8');
+    fs.writeFileSync(
+      journalPath,
+      JSON.stringify({
+        transactionId,
+        outputs: prepared.map(({ targetPath, stagedPath, backupPath, existed }) => ({
+          targetPath,
+          stagedPath,
+          backupPath,
+          existed,
+        })),
+      }),
+      'utf8',
+    );
     for (const output of prepared) {
       if (output.existed) {
         fs.renameSync(output.targetPath, output.backupPath);
@@ -100,7 +114,8 @@ export function commitAtomicExport(
     for (const output of prepared) {
       fs.renameSync(output.stagedPath, output.targetPath);
       promoted.push(output);
-      if (options.failAfterPromotions === promoted.length) throw new Error('Injected export promotion failure');
+      if (options.failAfterPromotions === promoted.length)
+        throw new Error('Injected export promotion failure');
     }
     for (const output of backedUp) fs.unlinkSync(output.backupPath);
     fs.unlinkSync(journalPath);
@@ -113,7 +128,8 @@ export function commitAtomicExport(
     }
     for (const output of prepared) {
       if (fs.existsSync(output.stagedPath)) fs.unlinkSync(output.stagedPath);
-      if (fs.existsSync(output.backupPath) && !fs.existsSync(output.targetPath)) fs.renameSync(output.backupPath, output.targetPath);
+      if (fs.existsSync(output.backupPath) && !fs.existsSync(output.targetPath))
+        fs.renameSync(output.backupPath, output.targetPath);
     }
     if (fs.existsSync(journalPath)) fs.unlinkSync(journalPath);
     throw error;
@@ -135,7 +151,8 @@ export class UnifiedLibraryImportExportService {
   constructor(private readonly repository: UnifiedLibraryRepositoryClient) {}
 
   async previewManualImport(sourcePaths: readonly string[]): Promise<ManualLibraryImportPreview> {
-    if (this.operationActive) throw new Error('A library interchange operation is already in progress');
+    if (this.operationActive)
+      throw new Error('A library interchange operation is already in progress');
     const sources: {
       preview: ManualImportSourcePreview;
       plan?: LegacyLibraryDocumentPlan;
@@ -161,19 +178,21 @@ export class UnifiedLibraryImportExportService {
           },
         });
       } catch (error) {
-        sources.push({ preview: {
-          sourcePath,
-          sourceHash,
-          libraryType: null,
-          folderCount: 0,
-          itemCount: 0,
-          unsupportedCount: 0,
-          exactDuplicateCount: 0,
+        sources.push({
+          preview: {
+            sourcePath,
+            sourceHash,
+            libraryType: null,
+            folderCount: 0,
+            itemCount: 0,
+            unsupportedCount: 0,
+            exactDuplicateCount: 0,
             aliasConflictCount: 0,
             ambiguousFolderCount: 0,
             folderConflicts: [],
             error: safeMessage(error),
-        } });
+          },
+        });
       }
     }
     const previewToken = randomUUID();
@@ -189,7 +208,8 @@ export class UnifiedLibraryImportExportService {
     const pending = this.manualPreviews.get(previewToken);
     this.manualPreviews.delete(previewToken);
     if (!pending || pending.expiresAt < Date.now()) throw new Error('Import preview expired');
-    if (this.operationActive) throw new Error('A library interchange operation is already in progress');
+    if (this.operationActive)
+      throw new Error('A library interchange operation is already in progress');
     this.operationActive = true;
     const batchId = randomUUID();
     const startedAt = new Date().toISOString();
@@ -204,11 +224,18 @@ export class UnifiedLibraryImportExportService {
             throw new Error(`Choose a destination for ${conflict.sourceBreadcrumb.join(' / ')}`);
           }
           if (!conflict.candidates.some((candidate) => candidate.nodeId === selectedNodeId)) {
-            throw new Error(`The selected destination for ${conflict.sourceBreadcrumb.join(' / ')} is no longer valid`);
+            throw new Error(
+              `The selected destination for ${conflict.sourceBreadcrumb.join(' / ')} is no longer valid`,
+            );
           }
         }
       }
-      await this.repository.startImportBatch({ id: batchId, mode: 'manualXmlFiles', sourceCount: pending.sources.length, startedAt });
+      await this.repository.startImportBatch({
+        id: batchId,
+        mode: 'manualXmlFiles',
+        sourceCount: pending.sources.length,
+        startedAt,
+      });
       let createdNodeCount = 0;
       let exactDuplicateCount = 0;
       let aliasCount = 0;
@@ -219,20 +246,29 @@ export class UnifiedLibraryImportExportService {
         if (!source.plan) {
           failedSources += 1;
           await this.repository.recordImportSourceFailure({
-            batchId, sourceId, sourcePath: source.preview.sourcePath, sourceKind: 'selectedFile',
-            sourceRawHash: source.preview.sourceHash, diagnostic: source.preview.error ?? 'Unrecognized source',
+            batchId,
+            sourceId,
+            sourcePath: source.preview.sourcePath,
+            sourceKind: 'selectedFile',
+            sourceRawHash: source.preview.sourceHash,
+            diagnostic: source.preview.error ?? 'Unrecognized source',
           });
           continue;
         }
         try {
           const folderResolutions = Object.fromEntries(
-            Object.entries(source.folderResolutionPaths ?? {}).map(([conflictId, resolutionPath]) => (
-              [resolutionPath, folderSelections[conflictId]!]
-            )),
+            Object.entries(source.folderResolutionPaths ?? {}).map(
+              ([conflictId, resolutionPath]) => [resolutionPath, folderSelections[conflictId]!],
+            ),
           );
           const result = await this.repository.importLegacyDocument({
-            batchId, sourceId, sourcePath: source.preview.sourcePath, sourceKind: 'selectedFile',
-            plan: source.plan, conflictPolicy: 'merge', folderResolutions,
+            batchId,
+            sourceId,
+            sourcePath: source.preview.sourcePath,
+            sourceKind: 'selectedFile',
+            plan: source.plan,
+            conflictPolicy: 'merge',
+            folderResolutions,
           });
           createdNodeCount += result.createdNodeIds.length;
           exactDuplicateCount += result.exactDuplicateCount;
@@ -241,20 +277,29 @@ export class UnifiedLibraryImportExportService {
         } catch (error) {
           failedSources += 1;
           await this.repository.recordImportSourceFailure({
-            batchId, sourceId, sourcePath: source.preview.sourcePath, sourceKind: 'selectedFile',
-            libraryType: source.plan.libraryType, sourceRawHash: source.preview.sourceHash,
+            batchId,
+            sourceId,
+            sourcePath: source.preview.sourcePath,
+            sourceKind: 'selectedFile',
+            libraryType: source.plan.libraryType,
+            sourceRawHash: source.preview.sourceHash,
             diagnostic: safeMessage(error),
           });
         }
       }
-      const status: ManualLibraryImportResult['status'] = successfulSources > 0
-        ? failedSources > 0 ? 'partial' : 'completed'
-        : 'failed';
+      const status: ManualLibraryImportResult['status'] =
+        successfulSources > 0 ? (failedSources > 0 ? 'partial' : 'completed') : 'failed';
       await this.repository.finishImportBatch({
         batchId,
         status,
         completedAt: new Date().toISOString(),
-        counts: { createdNodeCount, exactDuplicateCount, aliasCount, successfulSources, failedSources },
+        counts: {
+          createdNodeCount,
+          exactDuplicateCount,
+          aliasCount,
+          successfulSources,
+          failedSources,
+        },
         report: { previewToken },
       });
       return { batchId, status, createdNodeCount, exactDuplicateCount, aliasCount };
@@ -264,11 +309,14 @@ export class UnifiedLibraryImportExportService {
   }
 
   async undoManualImport(batchId: string): Promise<readonly string[]> {
-    if (this.operationActive) throw new Error('A library interchange operation is already in progress');
+    if (this.operationActive)
+      throw new Error('A library interchange operation is already in progress');
     this.operationActive = true;
     try {
       return (await this.repository.undoImportBatch(batchId)).removedNodeIds;
-    } finally { this.operationActive = false; }
+    } finally {
+      this.operationActive = false;
+    }
   }
 
   async exportCurrent(
@@ -276,32 +324,41 @@ export class UnifiedLibraryImportExportService {
     targetPath: string,
     approve: (preflight: LibraryExportPreflight) => Promise<boolean> = async () => true,
   ): Promise<boolean> {
-    if (this.operationActive) throw new Error('A library interchange operation is already in progress');
+    if (this.operationActive)
+      throw new Error('A library interchange operation is already in progress');
     this.operationActive = true;
     try {
       const plan = await this.buildExportPlan(libraryType);
       const contents = exportLegacyLibraryDocument(plan);
       parseLegacyLibraryDocument(contents);
-      if (!await approve({
-        outputs: [{
-          libraryType,
-          targetPath,
-          itemCount: plan.itemCount,
-          unsupportedPreservedCount: plan.unsupportedCount,
-          overwritesExisting: fs.existsSync(targetPath),
-        }],
-        unrepresentableCount: 0,
-      })) return false;
+      if (
+        !(await approve({
+          outputs: [
+            {
+              libraryType,
+              targetPath,
+              itemCount: plan.itemCount,
+              unsupportedPreservedCount: plan.unsupportedCount,
+              overwritesExisting: fs.existsSync(targetPath),
+            },
+          ],
+          unrepresentableCount: 0,
+        }))
+      )
+        return false;
       commitAtomicExport([{ targetPath, contents }]);
       return true;
-    } finally { this.operationActive = false; }
+    } finally {
+      this.operationActive = false;
+    }
   }
 
   async exportAll(
     destinationDirectory: string,
     approve: (preflight: LibraryExportPreflight) => Promise<boolean> = async () => true,
   ): Promise<boolean> {
-    if (this.operationActive) throw new Error('A library interchange operation is already in progress');
+    if (this.operationActive)
+      throw new Error('A library interchange operation is already in progress');
     this.operationActive = true;
     try {
       const outputs: AtomicExportOutput[] = [];
@@ -320,17 +377,20 @@ export class UnifiedLibraryImportExportService {
           overwritesExisting: fs.existsSync(targetPath),
         });
       }
-      if (!await approve({ outputs: summaries, unrepresentableCount: 0 })) return false;
+      if (!(await approve({ outputs: summaries, unrepresentableCount: 0 }))) return false;
       commitAtomicExport(outputs);
       return true;
-    } finally { this.operationActive = false; }
+    } finally {
+      this.operationActive = false;
+    }
   }
 
   async runAutomaticMigration(
     configurationDirectory: string,
     stateStore: LibraryMigrationStateStore,
   ): Promise<AutomaticMigrationReport> {
-    if (this.operationActive) throw new Error('A library interchange operation is already in progress');
+    if (this.operationActive)
+      throw new Error('A library interchange operation is already in progress');
     this.operationActive = true;
     const startedAt = new Date().toISOString();
     try {
@@ -340,21 +400,33 @@ export class UnifiedLibraryImportExportService {
       const state = stateStore.load();
       if (hasUserContent && state.legacyMigrationState === 'never') {
         stateStore.finishAttempt({ state: 'skipped', resultKind: 'noSources', batchId: null });
-        return this.emptyReport(startedAt, 'skipped', 'Automatic migration was skipped because the user library is nonempty.');
+        return this.emptyReport(
+          startedAt,
+          'skipped',
+          'Automatic migration was skipped because the user library is nonempty.',
+        );
       }
       if (!shouldRunAutomaticMigration(state, hasUserContent ? Math.max(1, itemCount) : 0)) {
-        return this.emptyReport(startedAt, 'skipped', 'Automatic migration was already attempted; use manual import to retry.');
+        return this.emptyReport(
+          startedAt,
+          'skipped',
+          'Automatic migration was already attempted; use manual import to retry.',
+        );
       }
 
       const descriptors = Object.values(LEGACY_LIBRARY_FORMATS);
-      const available = descriptors.filter((descriptor) => (
-        fs.existsSync(path.join(configurationDirectory, descriptor.fileName))
-      ));
+      const available = descriptors.filter((descriptor) =>
+        fs.existsSync(path.join(configurationDirectory, descriptor.fileName)),
+      );
       stateStore.beginAttempt(startedAt);
       if (available.length === 0) {
         stateStore.finishAttempt({ state: 'skipped', resultKind: 'noSources', batchId: null });
         return {
-          ...this.emptyReport(startedAt, 'skipped', 'No recognized Java Blue library files were found.'),
+          ...this.emptyReport(
+            startedAt,
+            'skipped',
+            'No recognized Java Blue library files were found.',
+          ),
           sources: descriptors.map((descriptor) => ({
             libraryType: descriptor.libraryType,
             sourcePath: path.join(configurationDirectory, descriptor.fileName),
@@ -362,7 +434,9 @@ export class UnifiedLibraryImportExportService {
             folderCount: 0,
             itemCount: 0,
             unsupportedCount: 0,
-            backupAvailable: fs.existsSync(path.join(configurationDirectory, `${descriptor.fileName}~`)),
+            backupAvailable: fs.existsSync(
+              path.join(configurationDirectory, `${descriptor.fileName}~`),
+            ),
           })),
         };
       }
@@ -396,7 +470,8 @@ export class UnifiedLibraryImportExportService {
           const bytes = fs.readFileSync(sourcePath);
           sourceHash = hashBytes(bytes);
           const plan = parseLegacyLibraryDocument(bytes.toString('utf8'));
-          if (plan.libraryType !== descriptor.libraryType) throw new Error('Library type does not match the source filename');
+          if (plan.libraryType !== descriptor.libraryType)
+            throw new Error('Library type does not match the source filename');
           const result = await this.repository.importLegacyDocument({
             batchId,
             sourceId,
@@ -440,9 +515,12 @@ export class UnifiedLibraryImportExportService {
 
       const imported = sources.filter((source) => source.status === 'imported');
       const failed = sources.filter((source) => source.status === 'failed');
-      const status = imported.length > 0
-        ? failed.length > 0 ? 'partial' as const : 'complete' as const
-        : 'failed' as const;
+      const status =
+        imported.length > 0
+          ? failed.length > 0
+            ? ('partial' as const)
+            : ('complete' as const)
+          : ('failed' as const);
       const completedAt = new Date().toISOString();
       const counts = {
         folders: imported.reduce((sum, source) => sum + source.folderCount, 0),
@@ -460,26 +538,34 @@ export class UnifiedLibraryImportExportService {
       });
       stateStore.finishAttempt({
         state: imported.length > 0 ? 'completed' : 'failed',
-        resultKind: status === 'partial' ? 'partial' : status === 'complete' ? 'complete' : 'pipelineFailure',
+        resultKind:
+          status === 'partial' ? 'partial' : status === 'complete' ? 'complete' : 'pipelineFailure',
         batchId,
-        error: failed.length > 0 ? `${failed.length} source${failed.length === 1 ? '' : 's'} failed.` : null,
+        error:
+          failed.length > 0
+            ? `${failed.length} source${failed.length === 1 ? '' : 's'} failed.`
+            : null,
         at: completedAt,
       });
       return {
         batchId,
         status,
-        message: status === 'complete'
-          ? 'Java Blue libraries were imported successfully.'
-          : status === 'partial'
-            ? 'Some Java Blue libraries were imported; review the failed sources.'
-            : 'No Java Blue library source could be imported.',
+        message:
+          status === 'complete'
+            ? 'Java Blue libraries were imported successfully.'
+            : status === 'partial'
+              ? 'Some Java Blue libraries were imported; review the failed sources.'
+              : 'No Java Blue library source could be imported.',
         sources,
         startedAt,
         completedAt,
       };
     } catch (error) {
       stateStore.finishAttempt({
-        state: 'failed', resultKind: 'pipelineFailure', batchId: null, error: safeMessage(error),
+        state: 'failed',
+        resultKind: 'pipelineFailure',
+        batchId: null,
+        error: safeMessage(error),
       });
       throw error;
     } finally {
@@ -492,10 +578,20 @@ export class UnifiedLibraryImportExportService {
     status: AutomaticMigrationReport['status'],
     message: string,
   ): AutomaticMigrationReport {
-    return { batchId: null, status, message, sources: [], startedAt, completedAt: new Date().toISOString() };
+    return {
+      batchId: null,
+      status,
+      message,
+      sources: [],
+      startedAt,
+      completedAt: new Date().toISOString(),
+    };
   }
 
-  private async analyzeManualPlan(plan: LegacyLibraryDocumentPlan, sourceHash: string): Promise<{
+  private async analyzeManualPlan(
+    plan: LegacyLibraryDocumentPlan,
+    sourceHash: string,
+  ): Promise<{
     exactDuplicateCount: number;
     aliasConflictCount: number;
     ambiguousFolderCount: number;
@@ -513,14 +609,21 @@ export class UnifiedLibraryImportExportService {
       sourceBreadcrumb: readonly string[],
       sourceIndices: readonly number[],
     ): Promise<void> => {
-      const siblingGroups = await Promise.all(parentIds.map((parentId) => this.repository.listChildren(parentId)));
+      const siblingGroups = await Promise.all(
+        parentIds.map((parentId) => this.repository.listChildren(parentId)),
+      );
       for (const [childIndex, child] of children.entries()) {
         const childIndices = [...sourceIndices, childIndex];
         if (child.kind === 'folder') {
-          const matches = siblingGroups.flatMap((siblings) => siblings.filter((candidate) => (
-            candidate.nodeKind === 'folder' && candidate.displayName === child.name
-          )));
-          const uniqueMatches = [...new Map(matches.map((candidate) => [candidate.id, candidate])).values()];
+          const matches = siblingGroups.flatMap((siblings) =>
+            siblings.filter(
+              (candidate) =>
+                candidate.nodeKind === 'folder' && candidate.displayName === child.name,
+            ),
+          );
+          const uniqueMatches = [
+            ...new Map(matches.map((candidate) => [candidate.id, candidate])).values(),
+          ];
           const childBreadcrumb = [...sourceBreadcrumb, child.name];
           if (uniqueMatches.length > 1) {
             const resolutionPath = childIndices.join('.');
@@ -529,14 +632,21 @@ export class UnifiedLibraryImportExportService {
             folderConflicts.push({
               conflictId,
               sourceBreadcrumb: childBreadcrumb,
-              candidates: await Promise.all(uniqueMatches.map(async (candidate) => ({
-                nodeId: candidate.id,
-                breadcrumb: await this.repository.getBreadcrumb(candidate.id),
-              }))),
+              candidates: await Promise.all(
+                uniqueMatches.map(async (candidate) => ({
+                  nodeId: candidate.id,
+                  breadcrumb: await this.repository.getBreadcrumb(candidate.id),
+                })),
+              ),
             });
           }
           if (uniqueMatches.length > 0) {
-            await walk(uniqueMatches.map((candidate) => candidate.id), child.children, childBreadcrumb, childIndices);
+            await walk(
+              uniqueMatches.map((candidate) => candidate.id),
+              child.children,
+              childBreadcrumb,
+              childIndices,
+            );
           }
           continue;
         }
@@ -546,7 +656,11 @@ export class UnifiedLibraryImportExportService {
         let sameName = false;
         for (const sibling of siblings.filter((candidate) => candidate.nodeKind === 'item')) {
           if (sibling.displayName === child.displayName) sameName = true;
-          if ((await this.repository.getItemPayload(sibling.id)).canonicalContentHash === child.payload.canonicalContentHash) duplicate = true;
+          if (
+            (await this.repository.getItemPayload(sibling.id)).canonicalContentHash ===
+            child.payload.canonicalContentHash
+          )
+            duplicate = true;
         }
         if (duplicate) exactDuplicateCount += 1;
         else if (sameName) aliasConflictCount += 1;
@@ -574,7 +688,10 @@ export class UnifiedLibraryImportExportService {
         if (node.nodeKind === 'folder') {
           folderCount += 1;
           result.push({
-            kind: 'folder', name: node.displayName, isRoot: false, sourceIndex: node.sortIndex,
+            kind: 'folder',
+            name: node.displayName,
+            isRoot: false,
+            sourceIndex: node.sortIndex,
             children: await buildChildren(node.id),
           });
         } else if (node.nodeKind === 'item') {
@@ -582,7 +699,9 @@ export class UnifiedLibraryImportExportService {
           itemCount += 1;
           if (payload.supportStatus === 'unsupported') unsupportedCount += 1;
           result.push({
-            kind: 'item', displayName: node.displayName, sourceIndex: node.sortIndex,
+            kind: 'item',
+            displayName: node.displayName,
+            sourceIndex: node.sortIndex,
             payload: {
               embeddedName: payload.embeddedName,
               objectType: payload.objectType,
@@ -594,8 +713,12 @@ export class UnifiedLibraryImportExportService {
               canonicalContentHash: payload.canonicalContentHash,
               preview: payload.preview as never,
               dependencies: {
-                itemOwned: Array.isArray(payload.dependencies.itemOwned) ? payload.dependencies.itemOwned.map(String) : [],
-                unresolvedExternal: Array.isArray(payload.dependencies.unresolvedExternal) ? payload.dependencies.unresolvedExternal.map(String) : [],
+                itemOwned: Array.isArray(payload.dependencies.itemOwned)
+                  ? payload.dependencies.itemOwned.map(String)
+                  : [],
+                unresolvedExternal: Array.isArray(payload.dependencies.unresolvedExternal)
+                  ? payload.dependencies.unresolvedExternal.map(String)
+                  : [],
               },
             },
           });
@@ -604,12 +727,21 @@ export class UnifiedLibraryImportExportService {
       return result;
     };
     const root: LegacyLibraryFolderPlan = {
-      kind: 'folder', name: rootNode.displayName, isRoot: true, sourceIndex: 0,
+      kind: 'folder',
+      name: rootNode.displayName,
+      isRoot: true,
+      sourceIndex: 0,
       children: await buildChildren(rootNode.id),
     };
     return {
-      libraryType, descriptor, root, folderCount, itemCount, unsupportedCount,
-      diagnostics: [], sourceRawHash: '',
+      libraryType,
+      descriptor,
+      root,
+      folderCount,
+      itemCount,
+      unsupportedCount,
+      diagnostics: [],
+      sourceRawHash: '',
     };
   }
 }

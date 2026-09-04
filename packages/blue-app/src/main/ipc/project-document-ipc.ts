@@ -38,7 +38,7 @@ export const PROJECT_DOCUMENT_IPC_CHANNELS = [
   'track-instrument-editor:runtime-status:unsubscribe',
 ] as const;
 
-export type ProjectDocumentIpcChannel = typeof PROJECT_DOCUMENT_IPC_CHANNELS[number];
+export type ProjectDocumentIpcChannel = (typeof PROJECT_DOCUMENT_IPC_CHANNELS)[number];
 
 export interface ProjectDocumentIpcOptions {
   readonly ipcMain: IpcMainLike;

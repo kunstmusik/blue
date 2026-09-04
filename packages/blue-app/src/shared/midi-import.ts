@@ -1,8 +1,4 @@
-import type {
-  MidiImportDocument,
-  MidiImportSettings,
-  MidiImportWarning,
-} from '@blue/data';
+import type { MidiImportDocument, MidiImportSettings, MidiImportWarning } from '@blue/data';
 import type { ProjectEditorSnapshot } from './project-editor';
 
 export type { MidiImportSettings } from '@blue/data';

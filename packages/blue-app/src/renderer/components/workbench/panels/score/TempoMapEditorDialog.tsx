@@ -1,5 +1,10 @@
 import { useState, useCallback } from 'react';
-import type { TempoMapSnapshot, TempoPointSnapshot, TempoMapPatch, TimeConversionContext } from '../../../../../shared/project-editor';
+import type {
+  TempoMapSnapshot,
+  TempoPointSnapshot,
+  TempoMapPatch,
+  TimeConversionContext,
+} from '../../../../../shared/project-editor';
 import { TIME_BASE_OPTIONS, formatForBase, parseForBase } from '../../../../time/time-unit-logic';
 import { AppSelect } from '../../../AppSelect';
 import { cn } from '../../../../lib/cn';
@@ -21,7 +26,8 @@ interface TableRow {
 }
 
 const BEAT_EPSILON = 0.001;
-const SECONDARY_BUTTON_CLASS = 'rounded border border-app-border/40 bg-app-surface px-3 py-1 text-role-body text-app-text transition-colors hover:bg-app-hover';
+const SECONDARY_BUTTON_CLASS =
+  'rounded border border-app-border/40 bg-app-surface px-3 py-1 text-role-body text-app-text transition-colors hover:bg-app-hover';
 
 function formatNumber(value: number): string {
   return value.toString();
@@ -56,7 +62,7 @@ export default function TempoMapEditorDialog({
         tempo: Math.round(p.tempo),
         curveType: p.curveType,
       };
-    })
+    }),
   );
 
   const handleAdd = useCallback(() => {
@@ -78,27 +84,34 @@ export default function TempoMapEditorDialog({
     });
   }, [timeContext]);
 
-  const validateBeat = useCallback((index: number, value: string): number | null => {
-    const row = rows[index];
-    const beat = row ? parseForBase(value, row.timeBase, timeContext, false) : parseNumberText(value);
-    if (beat == null || beat < 0) {
-      setError('Start time must be valid for the selected time unit');
-      return null;
-    }
+  const validateBeat = useCallback(
+    (index: number, value: string): number | null => {
+      const row = rows[index];
+      const beat = row
+        ? parseForBase(value, row.timeBase, timeContext, false)
+        : parseNumberText(value);
+      if (beat == null || beat < 0) {
+        setError('Start time must be valid for the selected time unit');
+        return null;
+      }
 
-    const duplicate = rows.some((row, i) => {
-      if (i === index) return false;
-      const otherBeat = parseForBase(row.beatText, row.timeBase, timeContext, false);
-      return otherBeat != null && Math.abs(otherBeat - beat) < BEAT_EPSILON;
-    });
-    if (duplicate) {
-      setError(`Time point ${formatForBase(beat, row?.timeBase ?? 'BEATS', timeContext, false)} already has a tempo point`);
-      return null;
-    }
+      const duplicate = rows.some((row, i) => {
+        if (i === index) return false;
+        const otherBeat = parseForBase(row.beatText, row.timeBase, timeContext, false);
+        return otherBeat != null && Math.abs(otherBeat - beat) < BEAT_EPSILON;
+      });
+      if (duplicate) {
+        setError(
+          `Time point ${formatForBase(beat, row?.timeBase ?? 'BEATS', timeContext, false)} already has a tempo point`,
+        );
+        return null;
+      }
 
-    setError(null);
-    return beat;
-  }, [rows, timeContext]);
+      setError(null);
+      return beat;
+    },
+    [rows, timeContext],
+  );
 
   const validateTempo = useCallback((value: string): number | null => {
     const tempo = parseNumberText(value);
@@ -110,16 +123,21 @@ export default function TempoMapEditorDialog({
     return Math.round(tempo);
   }, []);
 
-  const handleRemove = useCallback((index: number) => {
-    setRows((prev) => {
-      if (prev.length <= 1) return prev;
-      const row = prev[index];
-      const beat = row ? (parseForBase(row.beatText, row.timeBase, timeContext, false) ?? row.beat) : null;
-      if (beat != null && isZeroBeat(beat)) return prev;
-      return prev.filter((_, i) => i !== index);
-    });
-    setError(null);
-  }, [timeContext]);
+  const handleRemove = useCallback(
+    (index: number) => {
+      setRows((prev) => {
+        if (prev.length <= 1) return prev;
+        const row = prev[index];
+        const beat = row
+          ? (parseForBase(row.beatText, row.timeBase, timeContext, false) ?? row.beat)
+          : null;
+        if (beat != null && isZeroBeat(beat)) return prev;
+        return prev.filter((_, i) => i !== index);
+      });
+      setError(null);
+    },
+    [timeContext],
+  );
 
   const handleBeatChange = useCallback((index: number, value: string) => {
     setRows((prev) => {
@@ -129,52 +147,66 @@ export default function TempoMapEditorDialog({
     });
   }, []);
 
-  const revertBeat = useCallback((index: number) => {
-    setRows((prev) => {
-      const row = prev[index];
-      if (!row) return prev;
-      const next = [...prev];
-      next[index] = {
-        ...row,
-        beatText: formatForBase(row.beat, row.timeBase, timeContext, false),
-      };
-      return next;
-    });
-    setError(null);
-  }, [timeContext]);
+  const revertBeat = useCallback(
+    (index: number) => {
+      setRows((prev) => {
+        const row = prev[index];
+        if (!row) return prev;
+        const next = [...prev];
+        next[index] = {
+          ...row,
+          beatText: formatForBase(row.beat, row.timeBase, timeContext, false),
+        };
+        return next;
+      });
+      setError(null);
+    },
+    [timeContext],
+  );
 
-  const commitBeat = useCallback((index: number, value?: string): boolean => {
-    const row = rows[index];
-    if (!row) return false;
-    const beat = validateBeat(index, value ?? row.beatText);
-    if (beat == null) {
-      revertBeat(index);
-      return false;
-    }
-    setRows((prev) => {
-      const next = [...prev];
-      next[index] = { ...next[index], beatText: formatForBase(beat, row.timeBase, timeContext, false), beat };
-      return next;
-    });
-    return true;
-  }, [revertBeat, rows, timeContext, validateBeat]);
+  const commitBeat = useCallback(
+    (index: number, value?: string): boolean => {
+      const row = rows[index];
+      if (!row) return false;
+      const beat = validateBeat(index, value ?? row.beatText);
+      if (beat == null) {
+        revertBeat(index);
+        return false;
+      }
+      setRows((prev) => {
+        const next = [...prev];
+        next[index] = {
+          ...next[index],
+          beatText: formatForBase(beat, row.timeBase, timeContext, false),
+          beat,
+        };
+        return next;
+      });
+      return true;
+    },
+    [revertBeat, rows, timeContext, validateBeat],
+  );
 
-  const handleTimeBaseChange = useCallback((index: number, timeBase: string) => {
-    setRows((prev) => {
-      const row = prev[index];
-      if (!row) return prev;
-      const currentBeat = parseForBase(row.beatText, row.timeBase, timeContext, false) ?? row.beat;
-      const next = [...prev];
-      next[index] = {
-        ...row,
-        timeBase,
-        beat: currentBeat,
-        beatText: formatForBase(currentBeat, timeBase, timeContext, false),
-      };
-      return next;
-    });
-    setError(null);
-  }, [timeContext]);
+  const handleTimeBaseChange = useCallback(
+    (index: number, timeBase: string) => {
+      setRows((prev) => {
+        const row = prev[index];
+        if (!row) return prev;
+        const currentBeat =
+          parseForBase(row.beatText, row.timeBase, timeContext, false) ?? row.beat;
+        const next = [...prev];
+        next[index] = {
+          ...row,
+          timeBase,
+          beat: currentBeat,
+          beatText: formatForBase(currentBeat, timeBase, timeContext, false),
+        };
+        return next;
+      });
+      setError(null);
+    },
+    [timeContext],
+  );
 
   const handleTempoChange = useCallback((index: number, value: string) => {
     setRows((prev) => {
@@ -198,21 +230,24 @@ export default function TempoMapEditorDialog({
     setError(null);
   }, []);
 
-  const commitTempo = useCallback((index: number, value?: string): boolean => {
-    const row = rows[index];
-    if (!row) return false;
-    const tempo = validateTempo(value ?? row.tempoText);
-    if (tempo == null) {
-      revertTempo(index);
-      return false;
-    }
-    setRows((prev) => {
-      const next = [...prev];
-      next[index] = { ...next[index], tempoText: formatNumber(tempo), tempo };
-      return next;
-    });
-    return true;
-  }, [revertTempo, rows, validateTempo]);
+  const commitTempo = useCallback(
+    (index: number, value?: string): boolean => {
+      const row = rows[index];
+      if (!row) return false;
+      const tempo = validateTempo(value ?? row.tempoText);
+      if (tempo == null) {
+        revertTempo(index);
+        return false;
+      }
+      setRows((prev) => {
+        const next = [...prev];
+        next[index] = { ...next[index], tempoText: formatNumber(tempo), tempo };
+        return next;
+      });
+      return true;
+    },
+    [revertTempo, rows, validateTempo],
+  );
 
   const handleOk = useCallback(() => {
     const points: TempoPointSnapshot[] = [];
@@ -224,7 +259,9 @@ export default function TempoMapEditorDialog({
         return;
       }
       if (seenBeats.some((existing) => Math.abs(existing - beat) < BEAT_EPSILON)) {
-        setError(`Time point ${formatForBase(beat, row.timeBase, timeContext, false)} already has a tempo point`);
+        setError(
+          `Time point ${formatForBase(beat, row.timeBase, timeContext, false)} already has a tempo point`,
+        );
         return;
       }
       seenBeats.push(beat);
@@ -234,7 +271,12 @@ export default function TempoMapEditorDialog({
         setError('All tempos must be between 1 and 999 BPM');
         return;
       }
-      points.push({ beat, tempo: Math.round(tempo), curveType: row.curveType, timeBase: row.timeBase });
+      points.push({
+        beat,
+        tempo: Math.round(tempo),
+        curveType: row.curveType,
+        timeBase: row.timeBase,
+      });
     }
 
     const sortedRows = points.sort((a, b) => a.beat - b.beat);
@@ -259,12 +301,15 @@ export default function TempoMapEditorDialog({
     onClose();
   }, [rows, timeContext, tempoMap.enabled, tempoMap.visible, onCommit, onClose]);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      onClose();
-    }
-  }, [onClose]);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    },
+    [onClose],
+  );
 
   const canDelete = rows.length > 1;
 
@@ -279,7 +324,9 @@ export default function TempoMapEditorDialog({
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
-        <h3 className="px-4 pb-2 pt-3 text-role-title-3 font-semibold text-app-text">Edit Tempo Map</h3>
+        <h3 className="px-4 pb-2 pt-3 text-role-title-3 font-semibold text-app-text">
+          Edit Tempo Map
+        </h3>
 
         <div className="px-4 pb-2 max-h-[200px] overflow-y-auto bg-black">
           <table className="w-full text-role-body">
@@ -293,7 +340,8 @@ export default function TempoMapEditorDialog({
             </thead>
             <tbody>
               {rows.map((row, i) => {
-                const rowBeat = parseForBase(row.beatText, row.timeBase, timeContext, false) ?? row.beat;
+                const rowBeat =
+                  parseForBase(row.beatText, row.timeBase, timeContext, false) ?? row.beat;
                 const isTimeZero = isZeroBeat(rowBeat);
                 const canDeleteRow = canDelete && !isTimeZero;
 
@@ -345,7 +393,9 @@ export default function TempoMapEditorDialog({
                       <button
                         className={cn(
                           'rounded px-1.5 py-0.5 text-role-callout',
-                          canDeleteRow ? 'text-app-danger hover:bg-app-outline-strong' : 'cursor-not-allowed text-app-text-muted',
+                          canDeleteRow
+                            ? 'text-app-danger hover:bg-app-outline-strong'
+                            : 'cursor-not-allowed text-app-text-muted',
                         )}
                         disabled={!canDeleteRow}
                         onClick={() => handleRemove(i)}
@@ -358,9 +408,7 @@ export default function TempoMapEditorDialog({
               })}
             </tbody>
           </table>
-          {error && (
-            <p className="mt-2 text-role-callout text-app-danger">{error}</p>
-          )}
+          {error && <p className="mt-2 text-role-callout text-app-danger">{error}</p>}
         </div>
 
         <div className="flex items-center justify-between border-t border-app-border/20 px-4 py-2">
@@ -371,10 +419,7 @@ export default function TempoMapEditorDialog({
             Add
           </button>
           <div className="flex gap-2">
-            <button
-              className={SECONDARY_BUTTON_CLASS}
-              onClick={onClose}
-            >
+            <button className={SECONDARY_BUTTON_CLASS} onClick={onClose}>
               Cancel
             </button>
             <button

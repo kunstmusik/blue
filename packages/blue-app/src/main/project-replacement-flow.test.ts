@@ -15,8 +15,9 @@ interface StubTarget {
   name: string;
 }
 
-function createStubFlow(overrides: Partial<ReplacementFlowCallbacks<StubTarget>> = {}):
-  ReplacementFlowCallbacks<StubTarget> & { calls: string[] } {
+function createStubFlow(
+  overrides: Partial<ReplacementFlowCallbacks<StubTarget>> = {},
+): ReplacementFlowCallbacks<StubTarget> & { calls: string[] } {
   const calls: string[] = [];
   const flow: ReplacementFlowCallbacks<StubTarget> & { calls: string[] } = {
     calls,
@@ -44,7 +45,10 @@ function createStubFlow(overrides: Partial<ReplacementFlowCallbacks<StubTarget>>
   return flow;
 }
 
-function expectOutcome(outcome: ReplacementFlowOutcome, status: ReplacementFlowOutcome['status']): void {
+function expectOutcome(
+  outcome: ReplacementFlowOutcome,
+  status: ReplacementFlowOutcome['status'],
+): void {
   expect(outcome).toEqual({ status });
 }
 
@@ -175,13 +179,15 @@ describe('runProjectFileReplacement', () => {
     readProject: (filePath: string) => string;
   }
 
-  function createHarness(options: {
-    selectedPath?: string | null;
-    currentPath?: string | null;
-    confirmSave?: () => Promise<boolean> | boolean;
-    confirmLibraryDraft?: () => Promise<boolean> | boolean;
-    renderActive?: () => boolean;
-  } = {}) {
+  function createHarness(
+    options: {
+      selectedPath?: string | null;
+      currentPath?: string | null;
+      confirmSave?: () => Promise<boolean> | boolean;
+      confirmLibraryDraft?: () => Promise<boolean> | boolean;
+      renderActive?: () => boolean;
+    } = {},
+  ) {
     const harness: ProjectFileHarness = {
       calls: [],
       currentPath: options.currentPath ?? null,
@@ -207,8 +213,9 @@ describe('runProjectFileReplacement', () => {
       },
       isSameFile: (filePath) => {
         harness.calls.push('same-file-check');
-        return harness.currentPath !== null
-          && isSameProjectPathIdentity(filePath, harness.currentPath);
+        return (
+          harness.currentPath !== null && isSameProjectPathIdentity(filePath, harness.currentPath)
+        );
       },
       preflight: async () => {
         renderChecks += 1;
@@ -250,7 +257,10 @@ describe('runProjectFileReplacement', () => {
   });
 
   it('returns cancelled after chooser cancellation without replacement prompts', async () => {
-    const { harness, run } = createHarness({ selectedPath: null, currentPath: '/work/current.blue' });
+    const { harness, run } = createHarness({
+      selectedPath: null,
+      currentPath: '/work/current.blue',
+    });
     const outcome = await run();
 
     expectOutcome(outcome, 'cancelled');
@@ -460,8 +470,9 @@ describe('Open Project entry-path matrix (US1: spec FR-003/FR-004/FR-005)', () =
           calls.push('parse');
           return { xml } as unknown as never;
         },
-        isSameFile: (filePath) => testCase.currentPath !== null
-          && isSameProjectPathIdentity(filePath, testCase.currentPath),
+        isSameFile: (filePath) =>
+          testCase.currentPath !== null &&
+          isSameProjectPathIdentity(filePath, testCase.currentPath),
         preflight: async () => {
           renderChecks += 1;
           return renderActive();
@@ -491,55 +502,58 @@ describe('Open Project entry-path matrix (US1: spec FR-003/FR-004/FR-005)', () =
   it.each([
     ['native-menu', '/work/malformed.blue'],
     ['recent-project', '/work/malformed.blue'],
-  ] as const)('%s: malformed target fails before any replacement prompt', async (_entry, selectedPath) => {
-    const calls: string[] = [];
-    await expect(runProjectFileReplacement<{ xml: string }>({
-      selectFile: () => selectedPath,
-      readFile: () => {
-        calls.push('read');
-        throw new Error('cannot parse project');
-      },
-      parseProject: (xml) => ({ xml }),
-      isSameFile: () => false,
-      preflight: () => true,
-      confirmSave: () => {
-        calls.push('confirmSave');
-        return true;
-      },
-      confirmLibraryDraft: () => true,
-      commit: () => {
-        calls.push('commit');
-      },
-    })).rejects.toThrow('cannot parse project');
+  ] as const)(
+    '%s: malformed target fails before any replacement prompt',
+    async (_entry, selectedPath) => {
+      const calls: string[] = [];
+      await expect(
+        runProjectFileReplacement<{ xml: string }>({
+          selectFile: () => selectedPath,
+          readFile: () => {
+            calls.push('read');
+            throw new Error('cannot parse project');
+          },
+          parseProject: (xml) => ({ xml }),
+          isSameFile: () => false,
+          preflight: () => true,
+          confirmSave: () => {
+            calls.push('confirmSave');
+            return true;
+          },
+          confirmLibraryDraft: () => true,
+          commit: () => {
+            calls.push('commit');
+          },
+        }),
+      ).rejects.toThrow('cannot parse project');
 
-    expect(calls).toEqual(['read']);
-  });
+      expect(calls).toEqual(['read']);
+    },
+  );
 
-  it.each([
-    ['native-menu'],
-    ['keyboard-preload'],
-    ['recent-project'],
-    ['open-example'],
-  ] as const)('%s: render becoming active during choosing blocks at the commit re-check', async (entry) => {
-    void entry;
-    let renderChecks = 0;
-    const outcome = await runProjectFileReplacement({
-      selectFile: () => '/work/other.blue',
-      readFile: () => '<blue/>',
-      parseProject: (xml) => ({ xml } as unknown as never),
-      isSameFile: () => false,
-      preflight: () => {
-        renderChecks += 1;
-        return renderChecks === 1;
-      },
-      confirmSave: () => true,
-      confirmLibraryDraft: () => true,
-      commit: () => undefined,
-    });
+  it.each([['native-menu'], ['keyboard-preload'], ['recent-project'], ['open-example']] as const)(
+    '%s: render becoming active during choosing blocks at the commit re-check',
+    async (entry) => {
+      void entry;
+      let renderChecks = 0;
+      const outcome = await runProjectFileReplacement({
+        selectFile: () => '/work/other.blue',
+        readFile: () => '<blue/>',
+        parseProject: (xml) => ({ xml }) as unknown as never,
+        isSameFile: () => false,
+        preflight: () => {
+          renderChecks += 1;
+          return renderChecks === 1;
+        },
+        confirmSave: () => true,
+        confirmLibraryDraft: () => true,
+        commit: () => undefined,
+      });
 
-    expect(outcome).toEqual({ status: 'cancelled' });
-    expect(renderChecks).toBe(2);
-  });
+      expect(outcome).toEqual({ status: 'cancelled' });
+      expect(renderChecks).toBe(2);
+    },
+  );
 });
 
 describe('resolveReplacementSaveDecision', () => {
@@ -574,7 +588,11 @@ describe('resolveReplacementSaveDecision', () => {
   }
 
   it('proceeds after a durable save to the current path', async () => {
-    const { deps, calls } = createSaveHarness({ choice: 'save', hasProject: true, saveCurrent: true });
+    const { deps, calls } = createSaveHarness({
+      choice: 'save',
+      hasProject: true,
+      saveCurrent: true,
+    });
     await expect(resolveReplacementSaveDecision(deps)).resolves.toBe('saved');
     expect(calls).toEqual(['hasCurrentProject', 'choose', 'saveCurrent']);
     expect(deps.saveAs).not.toHaveBeenCalled();
@@ -625,10 +643,7 @@ describe('resolveReplacementSaveDecision', () => {
 });
 
 describe('runTransactionalSaveAs', () => {
-  function createSaveAsHarness(options: {
-    destination?: string | null;
-    writeSucceeds?: boolean;
-  }) {
+  function createSaveAsHarness(options: { destination?: string | null; writeSucceeds?: boolean }) {
     const calls: string[] = [];
     let publishedPath: string | null = null;
     const deps = {
@@ -649,7 +664,9 @@ describe('runTransactionalSaveAs', () => {
   }
 
   it('publishes the new path only after a successful write', async () => {
-    const { deps, calls, getPublishedPath } = createSaveAsHarness({ destination: '/work/new.blue' });
+    const { deps, calls, getPublishedPath } = createSaveAsHarness({
+      destination: '/work/new.blue',
+    });
     await expect(runTransactionalSaveAs(deps)).resolves.toBe(true);
     expect(calls).toEqual(['chooseDestination', 'write', 'publish:/work/new.blue']);
     expect(getPublishedPath()).toBe('/work/new.blue');
@@ -849,40 +866,44 @@ describe('MIDI replacement matrix (US3: spec FR-008)', () => {
     valid: boolean;
   }
 
-  function createMidiFlow(session: MidiSession, options: {
-    confirmSave?: () => Promise<boolean> | boolean;
-    confirmLibraryDraft?: () => Promise<boolean> | boolean;
-  } = {}) {
+  function createMidiFlow(
+    session: MidiSession,
+    options: {
+      confirmSave?: () => Promise<boolean> | boolean;
+      confirmLibraryDraft?: () => Promise<boolean> | boolean;
+    } = {},
+  ) {
     const calls: string[] = [];
     const commitTarget: unknown[] = [];
-    const run = () => runMidiImportReplacement<{ built: true }>({
-      preflight: () => {
-        calls.push('preflight');
-        return true;
-      },
-      prepare: () => {
-        calls.push('build');
-        return { built: true };
-      },
-      confirmSave: async () => {
-        calls.push('confirmSave');
-        return options.confirmSave ? await options.confirmSave() : true;
-      },
-      confirmLibraryDraft: async () => {
-        calls.push('confirmLibraryDraft');
-        return options.confirmLibraryDraft ? await options.confirmLibraryDraft() : true;
-      },
-      revalidate: () => {
-        calls.push('revalidate');
-        if (!session.valid) {
-          throw new Error('The MIDI import session has expired.');
-        }
-      },
-      commit: () => {
-        calls.push('commit');
-        commitTarget.push(session);
-      },
-    });
+    const run = () =>
+      runMidiImportReplacement<{ built: true }>({
+        preflight: () => {
+          calls.push('preflight');
+          return true;
+        },
+        prepare: () => {
+          calls.push('build');
+          return { built: true };
+        },
+        confirmSave: async () => {
+          calls.push('confirmSave');
+          return options.confirmSave ? await options.confirmSave() : true;
+        },
+        confirmLibraryDraft: async () => {
+          calls.push('confirmLibraryDraft');
+          return options.confirmLibraryDraft ? await options.confirmLibraryDraft() : true;
+        },
+        revalidate: () => {
+          calls.push('revalidate');
+          if (!session.valid) {
+            throw new Error('The MIDI import session has expired.');
+          }
+        },
+        commit: () => {
+          calls.push('commit');
+          commitTarget.push(session);
+        },
+      });
     return { calls, run };
   }
 
@@ -891,7 +912,15 @@ describe('MIDI replacement matrix (US3: spec FR-008)', () => {
     const outcome = await run();
 
     expect(outcome).toEqual({ status: 'committed' });
-    expect(calls).toEqual(['preflight', 'build', 'preflight', 'confirmLibraryDraft', 'confirmSave', 'revalidate', 'commit']);
+    expect(calls).toEqual([
+      'preflight',
+      'build',
+      'preflight',
+      'confirmLibraryDraft',
+      'confirmSave',
+      'revalidate',
+      'commit',
+    ]);
   });
 
   it('leaves the pending mapping session available when the save decision is cancelled', async () => {
@@ -900,7 +929,13 @@ describe('MIDI replacement matrix (US3: spec FR-008)', () => {
     const outcome = await run();
 
     expect(outcome).toEqual({ status: 'blocked' });
-    expect(calls).toEqual(['preflight', 'build', 'preflight', 'confirmLibraryDraft', 'confirmSave']);
+    expect(calls).toEqual([
+      'preflight',
+      'build',
+      'preflight',
+      'confirmLibraryDraft',
+      'confirmSave',
+    ]);
     expect(session.valid).toBe(true);
   });
 
@@ -917,7 +952,14 @@ describe('MIDI replacement matrix (US3: spec FR-008)', () => {
     const { calls, run } = createMidiFlow({ token: 't1', valid: false });
     await expect(run()).rejects.toThrow('The MIDI import session has expired.');
 
-    expect(calls).toEqual(['preflight', 'build', 'preflight', 'confirmLibraryDraft', 'confirmSave', 'revalidate']);
+    expect(calls).toEqual([
+      'preflight',
+      'build',
+      'preflight',
+      'confirmLibraryDraft',
+      'confirmSave',
+      'revalidate',
+    ]);
   });
 
   it('never commits twice across retries of the same session', async () => {
@@ -956,56 +998,59 @@ describe('Replacement transaction safety (US4: spec FR-010/FR-011/FR-015)', () =
       calls,
       currentPath: options.hasCurrentPath ? '/work/current.blue' : null,
       currentDirty: true,
-      run: () => runReplacementFlow<{ prepared: true }>({
-        preflight: () => {
-          calls.push('preflight');
-          return true;
-        },
-        prepare: () => {
-          calls.push('prepare');
-          return { prepared: true };
-        },
-        confirmSave: async () => {
-          calls.push('confirmSave');
-          const outcome = await resolveReplacementSaveDecision({
-            choose: () => options.choice,
-            hasCurrentProject: () => true,
-            hasCurrentPath: () => options.hasCurrentPath,
-            saveCurrent: () => {
-              calls.push('saveCurrent');
-              const succeeds = options.writeSucceeds ?? true;
-              if (succeeds) harness.currentDirty = false;
-              return succeeds;
-            },
-            saveAs: () => {
-              calls.push('saveAs');
-              return runTransactionalSaveAs({
-                chooseDestination: () => {
-                  calls.push('chooseDestination');
-                  return options.saveDestination === undefined ? '/work/chosen.blue' : options.saveDestination;
-                },
-                writeProject: () => {
-                  calls.push('write');
-                  return options.writeSucceeds ?? true;
-                },
-                publishPath: (filePath) => {
-                  calls.push(`publish:${filePath}`);
-                  harness.currentPath = filePath;
-                  harness.currentDirty = false;
-                },
-              });
-            },
-          });
-          return outcome === 'saved' || outcome === 'discarded';
-        },
-        confirmLibraryDraft: () => {
-          calls.push('confirmLibraryDraft');
-          return options.confirmLibraryDraft ? options.confirmLibraryDraft() : true;
-        },
-        commit: () => {
-          calls.push('commit');
-        },
-      }),
+      run: () =>
+        runReplacementFlow<{ prepared: true }>({
+          preflight: () => {
+            calls.push('preflight');
+            return true;
+          },
+          prepare: () => {
+            calls.push('prepare');
+            return { prepared: true };
+          },
+          confirmSave: async () => {
+            calls.push('confirmSave');
+            const outcome = await resolveReplacementSaveDecision({
+              choose: () => options.choice,
+              hasCurrentProject: () => true,
+              hasCurrentPath: () => options.hasCurrentPath,
+              saveCurrent: () => {
+                calls.push('saveCurrent');
+                const succeeds = options.writeSucceeds ?? true;
+                if (succeeds) harness.currentDirty = false;
+                return succeeds;
+              },
+              saveAs: () => {
+                calls.push('saveAs');
+                return runTransactionalSaveAs({
+                  chooseDestination: () => {
+                    calls.push('chooseDestination');
+                    return options.saveDestination === undefined
+                      ? '/work/chosen.blue'
+                      : options.saveDestination;
+                  },
+                  writeProject: () => {
+                    calls.push('write');
+                    return options.writeSucceeds ?? true;
+                  },
+                  publishPath: (filePath) => {
+                    calls.push(`publish:${filePath}`);
+                    harness.currentPath = filePath;
+                    harness.currentDirty = false;
+                  },
+                });
+              },
+            });
+            return outcome === 'saved' || outcome === 'discarded';
+          },
+          confirmLibraryDraft: () => {
+            calls.push('confirmLibraryDraft');
+            return options.confirmLibraryDraft ? options.confirmLibraryDraft() : true;
+          },
+          commit: () => {
+            calls.push('commit');
+          },
+        }),
     };
     return harness;
   }
@@ -1021,31 +1066,57 @@ describe('Replacement transaction safety (US4: spec FR-010/FR-011/FR-015)', () =
   });
 
   it('commits after a successful Save As publishes the new path', async () => {
-    const harness = createTransactionHarness({ choice: 'save', hasCurrentPath: false, saveDestination: '/work/new.blue' });
+    const harness = createTransactionHarness({
+      choice: 'save',
+      hasCurrentPath: false,
+      saveDestination: '/work/new.blue',
+    });
     const outcome = await harness.run();
 
     expect(outcome).toEqual({ status: 'committed' });
     expect(harness.calls).toEqual([
-      'preflight', 'prepare', 'preflight', 'confirmLibraryDraft', 'confirmSave',
-      'saveAs', 'chooseDestination', 'write', 'publish:/work/new.blue', 'commit',
+      'preflight',
+      'prepare',
+      'preflight',
+      'confirmLibraryDraft',
+      'confirmSave',
+      'saveAs',
+      'chooseDestination',
+      'write',
+      'publish:/work/new.blue',
+      'commit',
     ]);
     expect(harness.currentPath).toBe('/work/new.blue');
     expect(harness.currentDirty).toBe(false);
   });
 
   it('blocks and keeps the current path stable when Save As is cancelled', async () => {
-    const harness = createTransactionHarness({ choice: 'save', hasCurrentPath: false, saveDestination: null });
+    const harness = createTransactionHarness({
+      choice: 'save',
+      hasCurrentPath: false,
+      saveDestination: null,
+    });
     const outcome = await harness.run();
 
     expect(outcome).toEqual({ status: 'blocked' });
     expect(harness.calls).toEqual([
-      'preflight', 'prepare', 'preflight', 'confirmLibraryDraft', 'confirmSave', 'saveAs', 'chooseDestination',
+      'preflight',
+      'prepare',
+      'preflight',
+      'confirmLibraryDraft',
+      'confirmSave',
+      'saveAs',
+      'chooseDestination',
     ]);
     expect(harness.currentPath).toBeNull();
   });
 
   it('blocks when the Save As overwrite is declined', async () => {
-    const harness = createTransactionHarness({ choice: 'save', hasCurrentPath: false, saveDestination: null });
+    const harness = createTransactionHarness({
+      choice: 'save',
+      hasCurrentPath: false,
+      saveDestination: null,
+    });
     const outcome = await harness.run();
 
     expect(outcome).toEqual({ status: 'blocked' });
@@ -1053,11 +1124,22 @@ describe('Replacement transaction safety (US4: spec FR-010/FR-011/FR-015)', () =
   });
 
   it('blocks and preserves the current path when the durable write fails', async () => {
-    const harness = createTransactionHarness({ choice: 'save', hasCurrentPath: true, writeSucceeds: false });
+    const harness = createTransactionHarness({
+      choice: 'save',
+      hasCurrentPath: true,
+      writeSucceeds: false,
+    });
     const outcome = await harness.run();
 
     expect(outcome).toEqual({ status: 'blocked' });
-    expect(harness.calls).toEqual(['preflight', 'prepare', 'preflight', 'confirmLibraryDraft', 'confirmSave', 'saveCurrent']);
+    expect(harness.calls).toEqual([
+      'preflight',
+      'prepare',
+      'preflight',
+      'confirmLibraryDraft',
+      'confirmSave',
+      'saveCurrent',
+    ]);
     expect(harness.currentPath).toBe('/work/current.blue');
     expect(harness.currentDirty).toBe(true);
   });
@@ -1067,7 +1149,13 @@ describe('Replacement transaction safety (US4: spec FR-010/FR-011/FR-015)', () =
     const outcome = await harness.run();
 
     expect(outcome).toEqual({ status: 'blocked' });
-    expect(harness.calls).toEqual(['preflight', 'prepare', 'preflight', 'confirmLibraryDraft', 'confirmSave']);
+    expect(harness.calls).toEqual([
+      'preflight',
+      'prepare',
+      'preflight',
+      'confirmLibraryDraft',
+      'confirmSave',
+    ]);
     expect(harness.currentPath).toBe('/work/current.blue');
   });
 

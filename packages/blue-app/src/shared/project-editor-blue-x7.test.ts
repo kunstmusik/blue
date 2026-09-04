@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { BlueData, BlueX7, createDefaultBlueX7Voice, Element, getBlueX7Descriptor } from '@blue/data';
+import {
+  BlueData,
+  BlueX7,
+  createDefaultBlueX7Voice,
+  Element,
+  getBlueX7Descriptor,
+} from '@blue/data';
 import {
   createOrchestraSnapshot,
   applyProjectDocumentPatch,
@@ -209,9 +215,14 @@ describe('Project Editor - BlueX7 Contract', () => {
     instr.setComment('Important Comment');
     project.getArrangement().addInstrument(instr, '1');
     const assignmentId = '1';
-    const automated = instr.getParameters().find((parameter) => parameter.getName() === 'common.feedback')!;
+    const automated = instr
+      .getParameters()
+      .find((parameter) => parameter.getName() === 'common.feedback')!;
     automated.setAutomationEnabled(true);
-    automated.setPoints([{ time: 0, value: 2 }, { time: 4, value: 7 }]);
+    automated.setPoints([
+      { time: 0, value: 2 },
+      { time: 4, value: 7 },
+    ]);
     automated.setLineColor(-123456);
     const parameterIds = instr.getParameters().map((parameter) => parameter.getUniqueId());
 
@@ -242,7 +253,10 @@ describe('Project Editor - BlueX7 Contract', () => {
     expect(instr.getParameters().map((parameter) => parameter.getUniqueId())).toEqual(parameterIds);
     expect(automated.getFixedValue()).toBe(4);
     expect(automated.isAutomationEnabled()).toBe(true);
-    expect(automated.getPoints()).toEqual([{ time: 0, value: 2 }, { time: 4, value: 7 }]);
+    expect(automated.getPoints()).toEqual([
+      { time: 0, value: 2 },
+      { time: 4, value: 7 },
+    ]);
     expect(automated.getLineColor()).toBe(-123456);
   });
 
@@ -451,17 +465,27 @@ describe('Project Editor - BlueX7 Contract', () => {
     const before = JSON.stringify(instr.getVoice());
 
     const invalidPatches = [
-      { type: 'setCommonField', field: 'algorithm', value: 40 },        // 1-32
-      { type: 'setCommonField', field: 'keyTranspose', value: -1 },     // 0-48
-      { type: 'setCommonField', field: 'feedback', value: 8 },          // 0-7
+      { type: 'setCommonField', field: 'algorithm', value: 40 }, // 1-32
+      { type: 'setCommonField', field: 'keyTranspose', value: -1 }, // 0-48
+      { type: 'setCommonField', field: 'feedback', value: 8 }, // 0-7
       { type: 'setOperatorField', operatorIndex: 1, field: 'freqCoarse', value: 32 }, // 0-31
-      { type: 'setOperatorField', operatorIndex: 1, field: 'detune', value: -8 },     // -7..7
+      { type: 'setOperatorField', operatorIndex: 1, field: 'detune', value: -8 }, // -7..7
       { type: 'setOperatorField', operatorIndex: 1, field: 'outputLevel', value: 100 }, // 0-99
-      { type: 'setOperatorField', operatorIndex: 6, field: 'outputLevel', value: 50 },  // bad index
-      { type: 'setLfoField', field: 'wave', value: 6 },                 // 0-5
-      { type: 'setSharedOscillatorSync', value: 2 },                    // 0-1
-      { type: 'setOperatorEnvelopePoint', operatorIndex: 0, stageIndex: 4, point: { rate: 10, level: 10 } },
-      { type: 'setOperatorEnvelopePoint', operatorIndex: 0, stageIndex: 0, point: { rate: 100, level: 10 } },
+      { type: 'setOperatorField', operatorIndex: 6, field: 'outputLevel', value: 50 }, // bad index
+      { type: 'setLfoField', field: 'wave', value: 6 }, // 0-5
+      { type: 'setSharedOscillatorSync', value: 2 }, // 0-1
+      {
+        type: 'setOperatorEnvelopePoint',
+        operatorIndex: 0,
+        stageIndex: 4,
+        point: { rate: 10, level: 10 },
+      },
+      {
+        type: 'setOperatorEnvelopePoint',
+        operatorIndex: 0,
+        stageIndex: 0,
+        point: { rate: 100, level: 10 },
+      },
       { type: 'setPitchEnvelopePoint', stageIndex: 0, point: { rate: 10, level: -1 } },
     ] as const;
 
@@ -494,7 +518,12 @@ describe('Project Editor - BlueX7 Contract', () => {
     apply({ type: 'setCommonField', field: 'keyTranspose', value: 48 });
     apply({ type: 'setOperatorField', operatorIndex: 5, field: 'detune', value: -7 });
     apply({ type: 'setOperatorField', operatorIndex: 5, field: 'detune', value: 7 });
-    apply({ type: 'setOperatorEnvelopePoint', operatorIndex: 5, stageIndex: 3, point: { rate: 99, level: 0 } });
+    apply({
+      type: 'setOperatorEnvelopePoint',
+      operatorIndex: 5,
+      stageIndex: 3,
+      point: { rate: 99, level: 0 },
+    });
     apply({ type: 'setLfoField', field: 'wave', value: 5 });
     apply({ type: 'setSharedPitchModulationSensitivity', value: 7 });
 
@@ -509,43 +538,172 @@ describe('Project Editor - BlueX7 Contract', () => {
 
   it('derives every patch-field domain from the parameter catalog (T088 lockstep)', () => {
     const cases: Array<{ make: (value: number) => unknown; key: string }> = [
-      { make: (value) => ({ type: 'setCommonField', field: 'algorithm', value }), key: 'common.algorithm' },
-      { make: (value) => ({ type: 'setCommonField', field: 'keyTranspose', value }), key: 'common.transpose' },
-      { make: (value) => ({ type: 'setCommonField', field: 'feedback', value }), key: 'common.feedback' },
+      {
+        make: (value) => ({ type: 'setCommonField', field: 'algorithm', value }),
+        key: 'common.algorithm',
+      },
+      {
+        make: (value) => ({ type: 'setCommonField', field: 'keyTranspose', value }),
+        key: 'common.transpose',
+      },
+      {
+        make: (value) => ({ type: 'setCommonField', field: 'feedback', value }),
+        key: 'common.feedback',
+      },
       { make: (value) => ({ type: 'setLfoField', field: 'speed', value }), key: 'lfo.speed' },
       { make: (value) => ({ type: 'setLfoField', field: 'delay', value }), key: 'lfo.delay' },
-      { make: (value) => ({ type: 'setLfoField', field: 'pitchModulationDepth', value }), key: 'lfo.pitchModulationDepth' },
-      { make: (value) => ({ type: 'setLfoField', field: 'amplitudeModulationDepth', value }), key: 'lfo.amplitudeModulationDepth' },
+      {
+        make: (value) => ({ type: 'setLfoField', field: 'pitchModulationDepth', value }),
+        key: 'lfo.pitchModulationDepth',
+      },
+      {
+        make: (value) => ({ type: 'setLfoField', field: 'amplitudeModulationDepth', value }),
+        key: 'lfo.amplitudeModulationDepth',
+      },
       { make: (value) => ({ type: 'setLfoField', field: 'wave', value }), key: 'lfo.wave' },
       { make: (value) => ({ type: 'setLfoField', field: 'sync', value }), key: 'lfo.sync' },
-      { make: (value) => ({ type: 'setSharedOscillatorSync', value }), key: 'common.oscillatorKeySync' },
-      { make: (value) => ({ type: 'setSharedPitchModulationSensitivity', value }), key: 'lfo.pitchModulationSensitivity' },
-      { make: (value) => ({ type: 'setOperatorField', operatorIndex: 2, field: 'mode', value }), key: 'operator.3.oscillatorMode' },
+      {
+        make: (value) => ({ type: 'setSharedOscillatorSync', value }),
+        key: 'common.oscillatorKeySync',
+      },
+      {
+        make: (value) => ({ type: 'setSharedPitchModulationSensitivity', value }),
+        key: 'lfo.pitchModulationSensitivity',
+      },
+      {
+        make: (value) => ({ type: 'setOperatorField', operatorIndex: 2, field: 'mode', value }),
+        key: 'operator.3.oscillatorMode',
+      },
       // Per-operator sync and PMS back the editor-shared controls.
-      { make: (value) => ({ type: 'setOperatorField', operatorIndex: 2, field: 'sync', value }), key: 'common.oscillatorKeySync' },
-      { make: (value) => ({ type: 'setOperatorField', operatorIndex: 2, field: 'freqCoarse', value }), key: 'operator.3.frequencyCoarse' },
-      { make: (value) => ({ type: 'setOperatorField', operatorIndex: 2, field: 'freqFine', value }), key: 'operator.3.frequencyFine' },
-      { make: (value) => ({ type: 'setOperatorField', operatorIndex: 2, field: 'detune', value }), key: 'operator.3.detune' },
-      { make: (value) => ({ type: 'setOperatorField', operatorIndex: 2, field: 'breakpoint', value }), key: 'operator.3.breakpoint' },
-      { make: (value) => ({ type: 'setOperatorField', operatorIndex: 2, field: 'curveLeft', value }), key: 'operator.3.curveLeft' },
-      { make: (value) => ({ type: 'setOperatorField', operatorIndex: 2, field: 'curveRight', value }), key: 'operator.3.curveRight' },
-      { make: (value) => ({ type: 'setOperatorField', operatorIndex: 2, field: 'depthLeft', value }), key: 'operator.3.depthLeft' },
-      { make: (value) => ({ type: 'setOperatorField', operatorIndex: 2, field: 'depthRight', value }), key: 'operator.3.depthRight' },
-      { make: (value) => ({ type: 'setOperatorField', operatorIndex: 2, field: 'keyboardRateScaling', value }), key: 'operator.3.keyboardRateScaling' },
-      { make: (value) => ({ type: 'setOperatorField', operatorIndex: 2, field: 'outputLevel', value }), key: 'operator.3.outputLevel' },
-      { make: (value) => ({ type: 'setOperatorField', operatorIndex: 2, field: 'velocitySensitivity', value }), key: 'operator.3.velocitySensitivity' },
-      { make: (value) => ({ type: 'setOperatorField', operatorIndex: 2, field: 'modulationAmplitude', value }), key: 'operator.3.amplitudeModulationSensitivity' },
-      { make: (value) => ({ type: 'setOperatorField', operatorIndex: 2, field: 'modulationPitch', value }), key: 'lfo.pitchModulationSensitivity' },
+      {
+        make: (value) => ({ type: 'setOperatorField', operatorIndex: 2, field: 'sync', value }),
+        key: 'common.oscillatorKeySync',
+      },
+      {
+        make: (value) => ({
+          type: 'setOperatorField',
+          operatorIndex: 2,
+          field: 'freqCoarse',
+          value,
+        }),
+        key: 'operator.3.frequencyCoarse',
+      },
+      {
+        make: (value) => ({ type: 'setOperatorField', operatorIndex: 2, field: 'freqFine', value }),
+        key: 'operator.3.frequencyFine',
+      },
+      {
+        make: (value) => ({ type: 'setOperatorField', operatorIndex: 2, field: 'detune', value }),
+        key: 'operator.3.detune',
+      },
+      {
+        make: (value) => ({
+          type: 'setOperatorField',
+          operatorIndex: 2,
+          field: 'breakpoint',
+          value,
+        }),
+        key: 'operator.3.breakpoint',
+      },
+      {
+        make: (value) => ({
+          type: 'setOperatorField',
+          operatorIndex: 2,
+          field: 'curveLeft',
+          value,
+        }),
+        key: 'operator.3.curveLeft',
+      },
+      {
+        make: (value) => ({
+          type: 'setOperatorField',
+          operatorIndex: 2,
+          field: 'curveRight',
+          value,
+        }),
+        key: 'operator.3.curveRight',
+      },
+      {
+        make: (value) => ({
+          type: 'setOperatorField',
+          operatorIndex: 2,
+          field: 'depthLeft',
+          value,
+        }),
+        key: 'operator.3.depthLeft',
+      },
+      {
+        make: (value) => ({
+          type: 'setOperatorField',
+          operatorIndex: 2,
+          field: 'depthRight',
+          value,
+        }),
+        key: 'operator.3.depthRight',
+      },
+      {
+        make: (value) => ({
+          type: 'setOperatorField',
+          operatorIndex: 2,
+          field: 'keyboardRateScaling',
+          value,
+        }),
+        key: 'operator.3.keyboardRateScaling',
+      },
+      {
+        make: (value) => ({
+          type: 'setOperatorField',
+          operatorIndex: 2,
+          field: 'outputLevel',
+          value,
+        }),
+        key: 'operator.3.outputLevel',
+      },
+      {
+        make: (value) => ({
+          type: 'setOperatorField',
+          operatorIndex: 2,
+          field: 'velocitySensitivity',
+          value,
+        }),
+        key: 'operator.3.velocitySensitivity',
+      },
+      {
+        make: (value) => ({
+          type: 'setOperatorField',
+          operatorIndex: 2,
+          field: 'modulationAmplitude',
+          value,
+        }),
+        key: 'operator.3.amplitudeModulationSensitivity',
+      },
+      {
+        make: (value) => ({
+          type: 'setOperatorField',
+          operatorIndex: 2,
+          field: 'modulationPitch',
+          value,
+        }),
+        key: 'lfo.pitchModulationSensitivity',
+      },
     ];
 
     for (const { make, key } of cases) {
       const descriptor = getBlueX7Descriptor(key);
       expect(descriptor, `catalog descriptor for '${key}'`).toBeDefined();
       const { minimum, maximum } = descriptor!;
-      expect(isValidBlueX7Patch(make(minimum) as never), `${key} accepts minimum ${minimum}`).toBe(true);
-      expect(isValidBlueX7Patch(make(maximum) as never), `${key} accepts maximum ${maximum}`).toBe(true);
-      expect(isValidBlueX7Patch(make(maximum + 1) as never), `${key} rejects above maximum`).toBe(false);
-      expect(isValidBlueX7Patch(make(minimum - 1) as never), `${key} rejects below minimum`).toBe(false);
+      expect(isValidBlueX7Patch(make(minimum) as never), `${key} accepts minimum ${minimum}`).toBe(
+        true,
+      );
+      expect(isValidBlueX7Patch(make(maximum) as never), `${key} accepts maximum ${maximum}`).toBe(
+        true,
+      );
+      expect(isValidBlueX7Patch(make(maximum + 1) as never), `${key} rejects above maximum`).toBe(
+        false,
+      );
+      expect(isValidBlueX7Patch(make(minimum - 1) as never), `${key} rejects below minimum`).toBe(
+        false,
+      );
     }
 
     // Envelope stage points resolve through the same catalog domains.
@@ -621,13 +779,15 @@ describe('Project Editor - BlueX7 Contract', () => {
     } as never;
 
     expect(isValidBlueX7Patch(malformed)).toBe(false);
-    expect(() => applyProjectDocumentPatch(project, {
-      orchestra: {
-        type: 'updateInstrument',
-        assignmentId: '1',
-        patch: { blueX7: malformed },
-      },
-    })).not.toThrow();
+    expect(() =>
+      applyProjectDocumentPatch(project, {
+        orchestra: {
+          type: 'updateInstrument',
+          assignmentId: '1',
+          patch: { blueX7: malformed },
+        },
+      }),
+    ).not.toThrow();
     expect(instr.getVoice()).toEqual(before);
   });
 });

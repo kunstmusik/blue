@@ -7,7 +7,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NoteProcessorChainSnapshot } from '../../shared/project-editor';
 import NoteProcessorChainDialog from '../components/workbench/panels/score-object/note-processors/NoteProcessorChainDialog';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const { mockProjectState } = vi.hoisted(() => ({
   mockProjectState: {
@@ -16,20 +18,23 @@ const { mockProjectState } = vi.hoisted(() => ({
 }));
 
 vi.mock('../stores/project-store', () => ({
-  useProjectStore: (selector: (state: typeof mockProjectState) => unknown) => selector(mockProjectState),
+  useProjectStore: (selector: (state: typeof mockProjectState) => unknown) =>
+    selector(mockProjectState),
 }));
 
 const CHAIN: NoteProcessorChainSnapshot = {
-  processors: [{
-    id: 'np-test',
-    processorType: 'AddProcessor',
-    displayName: 'AddProcessor',
-    supported: true,
-    deferred: false,
-    summary: 'AddProcessor',
-    parameters: { pfield: '4', val: '5' },
-    serializedXml: '',
-  }],
+  processors: [
+    {
+      id: 'np-test',
+      processorType: 'AddProcessor',
+      displayName: 'AddProcessor',
+      supported: true,
+      deferred: false,
+      summary: 'AddProcessor',
+      parameters: { pfield: '4', val: '5' },
+      serializedXml: '',
+    },
+  ],
   hasUnsupportedProcessors: false,
   hasDeferredProcessors: false,
 };
@@ -54,7 +59,9 @@ function renderDialog(): { container: HTMLDivElement; root: Root } {
 }
 
 function findButton(container: HTMLDivElement, text: string): HTMLButtonElement {
-  const button = Array.from(container.querySelectorAll('button')).find((candidate) => candidate.textContent === text);
+  const button = Array.from(container.querySelectorAll('button')).find(
+    (candidate) => candidate.textContent === text,
+  );
   if (!button) throw new Error(`Button not found: ${text}`);
   return button;
 }
@@ -87,7 +94,9 @@ describe('NoteProcessorChainDialog', () => {
       findButton(container, 'Save As...').click();
     });
 
-    const input = container.querySelector('input[placeholder="Chain name"]') as HTMLInputElement | null;
+    const input = container.querySelector(
+      'input[placeholder="Chain name"]',
+    ) as HTMLInputElement | null;
     expect(input).not.toBeNull();
 
     act(() => {

@@ -35,10 +35,7 @@ export default function OrchestraPanel(): React.ReactElement {
       return;
     }
 
-    if (
-      selectedAssignmentId &&
-      !rows.some((row) => row.assignmentId === selectedAssignmentId)
-    ) {
+    if (selectedAssignmentId && !rows.some((row) => row.assignmentId === selectedAssignmentId)) {
       setSelectedAssignmentId(rows[0]?.assignmentId ?? null);
     }
   }, [rows, selectedAssignmentId]);
@@ -69,7 +66,7 @@ export default function OrchestraPanel(): React.ReactElement {
         minFirstSize={300}
         minSecondSize={360}
         orientation="horizontal"
-        first={(
+        first={
           <div className="relative h-full min-h-0">
             <ArrangementPanel
               rows={rows}
@@ -80,22 +77,30 @@ export default function OrchestraPanel(): React.ReactElement {
               projectRevision={projectRevision}
             />
           </div>
-        )}
+        }
         second={
           <InstrumentEditorPanel
             instrument={selectedInstrument}
             projectUdos={projectUdos}
             onOrchestraPatch={updateOrchestra}
-            blueX7Runtime={selectedInstrument?.type === 'blueX7' ? {
-              target: { assignmentId: selectedInstrument.assignmentId },
-              projectSessionId,
-              enabled: playbackRunning || blueLiveRunning,
-            } : undefined}
-            embeddedUdoTarget={selectedInstrument ? {
-              projectSessionId,
-              projectRevision,
-              instrumentAssignmentId: selectedInstrument.assignmentId,
-            } : undefined}
+            blueX7Runtime={
+              selectedInstrument?.type === 'blueX7'
+                ? {
+                    target: { assignmentId: selectedInstrument.assignmentId },
+                    projectSessionId,
+                    enabled: playbackRunning || blueLiveRunning,
+                  }
+                : undefined
+            }
+            embeddedUdoTarget={
+              selectedInstrument
+                ? {
+                    projectSessionId,
+                    projectRevision,
+                    instrumentAssignmentId: selectedInstrument.assignmentId,
+                  }
+                : undefined
+            }
           />
         }
       />

@@ -79,13 +79,9 @@ describe('ProjectProperties Java-compatible round-trip', () => {
     expect(reloaded.diskBenchmarkEnabled).toBe(props.diskBenchmarkEnabled);
     expect(reloaded.diskAdvancedSettings).toBe(props.diskAdvancedSettings);
     expect(reloaded.diskCompleteOverride).toBe(props.diskCompleteOverride);
-    expect(reloaded.diskAlwaysRenderEntireProject).toBe(
-      props.diskAlwaysRenderEntireProject,
-    );
+    expect(reloaded.diskAlwaysRenderEntireProject).toBe(props.diskAlwaysRenderEntireProject);
     expect(reloaded.mediaFolder).toBe(props.mediaFolder);
-    expect(reloaded.copyToMediaFileOnImport).toBe(
-      props.copyToMediaFileOnImport,
-    );
+    expect(reloaded.copyToMediaFileOnImport).toBe(props.copyToMediaFileOnImport);
     expect(reloaded.commandLine).toBe(props.commandLine);
     expect(reloaded.diskCommandLine).toBe(props.diskCommandLine);
     expect(reloaded.oFormat).toBe(props.oFormat);

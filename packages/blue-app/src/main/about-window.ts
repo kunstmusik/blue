@@ -79,9 +79,7 @@ export function openAboutWindow(
       contextIsolation: true,
       nodeIntegration: false,
       devTools: true,
-      ...(options.initialZoomFactor !== undefined
-        ? { zoomFactor: options.initialZoomFactor }
-        : {}),
+      ...(options.initialZoomFactor !== undefined ? { zoomFactor: options.initialZoomFactor } : {}),
     },
   });
 

@@ -3,9 +3,7 @@ import type {
   NoteProcessorChainSnapshot,
   NoteProcessorEntrySnapshot,
 } from '../../../../../../shared/project-editor';
-import {
-  getNoteProcessorCatalog,
-} from '@blue/data';
+import { getNoteProcessorCatalog } from '@blue/data';
 import type { NoteProcessorDefinition } from '@blue/data';
 import { useNoteProcessorClipboardStore } from '../../../../../stores/note-processor-clipboard-store';
 import { HostSurfacePortal } from '../../../../host-surface/HostSurfacePortal';
@@ -22,7 +20,11 @@ function freshId(): string {
 
 function cloneChain(chain: NoteProcessorChainSnapshot): NoteProcessorChainSnapshot {
   return {
-    processors: chain.processors.map((p) => ({ ...p, parameters: { ...p.parameters }, id: freshId() })),
+    processors: chain.processors.map((p) => ({
+      ...p,
+      parameters: { ...p.parameters },
+      id: freshId(),
+    })),
     hasUnsupportedProcessors: chain.hasUnsupportedProcessors,
     hasDeferredProcessors: chain.hasDeferredProcessors,
   };
@@ -36,9 +38,16 @@ interface NoteProcessorChainEditorProps {
   onSaveNamedChain?: (name: string, chain: NoteProcessorChainSnapshot) => void;
 }
 
-const BTN = 'px-1.5 py-0.5 rounded text-role-callout border border-blue-border hover:bg-blue-border/40 text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed';
+const BTN =
+  'px-1.5 py-0.5 rounded text-role-callout border border-blue-border hover:bg-blue-border/40 text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed';
 
-export default function NoteProcessorChainEditor({ chain, onCommit, namedChainNames, onImportNamedChain, onSaveNamedChain }: NoteProcessorChainEditorProps): React.ReactElement {
+export default function NoteProcessorChainEditor({
+  chain,
+  onCommit,
+  namedChainNames,
+  onImportNamedChain,
+  onSaveNamedChain,
+}: NoteProcessorChainEditorProps): React.ReactElement {
   const [local, setLocal] = useState<NoteProcessorChainSnapshot>(() => cloneChain(chain));
   const [selectedIdx, setSelectedIdx] = useState<number>(-1);
   const clipboard = useNoteProcessorClipboardStore((state) => state.clipboard);
@@ -53,44 +62,48 @@ export default function NoteProcessorChainEditor({ chain, onCommit, namedChainNa
   // Both dropdowns ride the shared host-surface policy (spec 090): portaled
   // into the hosting window, viewport-derived max height instead of a fixed
   // cap, host-bound dismissal, and close-on-host-scroll.
-  const addAnchor = showAddMenu && addButton
-    ? { type: 'element' as const, element: addButton }
-    : null;
+  const addAnchor =
+    showAddMenu && addButton ? { type: 'element' as const, element: addButton } : null;
   const addMenuSurface = useHostSurface(addAnchor, {
     kind: 'menu',
     gap: 4,
     onDismiss: () => setShowAddMenu(false),
   });
-  const importAnchor = showImportMenu && importButton
-    ? { type: 'element' as const, element: importButton }
-    : null;
+  const importAnchor =
+    showImportMenu && importButton ? { type: 'element' as const, element: importButton } : null;
   const importMenuSurface = useHostSurface(importAnchor, {
     kind: 'menu',
     gap: 4,
     onDismiss: () => setShowImportMenu(false),
   });
 
-  const commit = useCallback((updated: NoteProcessorChainSnapshot) => {
-    setLocal(updated);
-    onCommit(updated);
-  }, [onCommit]);
+  const commit = useCallback(
+    (updated: NoteProcessorChainSnapshot) => {
+      setLocal(updated);
+      onCommit(updated);
+    },
+    [onCommit],
+  );
 
-  const handleAdd = useCallback((def: NoteProcessorDefinition) => {
-    const entry: NoteProcessorEntrySnapshot = {
-      id: freshId(),
-      processorType: def.type,
-      displayName: def.displayName,
-      supported: true,
-      deferred: false,
-      summary: def.displayName,
-      parameters: Object.fromEntries(def.parameters.map((p) => [p.name, p.defaultValue])),
-      serializedXml: '',
-    };
-    const updated = { ...local, processors: [...local.processors, entry] };
-    commit(updated);
-    setSelectedIdx(updated.processors.length - 1);
-    setShowAddMenu(false);
-  }, [local, commit]);
+  const handleAdd = useCallback(
+    (def: NoteProcessorDefinition) => {
+      const entry: NoteProcessorEntrySnapshot = {
+        id: freshId(),
+        processorType: def.type,
+        displayName: def.displayName,
+        supported: true,
+        deferred: false,
+        summary: def.displayName,
+        parameters: Object.fromEntries(def.parameters.map((p) => [p.name, p.defaultValue])),
+        serializedXml: '',
+      };
+      const updated = { ...local, processors: [...local.processors, entry] };
+      commit(updated);
+      setSelectedIdx(updated.processors.length - 1);
+      setShowAddMenu(false);
+    },
+    [local, commit],
+  );
 
   const handleRemove = useCallback(() => {
     if (selectedIdx < 0 || selectedIdx >= local.processors.length) return;
@@ -154,34 +167,48 @@ export default function NoteProcessorChainEditor({ chain, onCommit, namedChainNa
     setSelectedIdx(-1);
   }, [commit]);
 
-  const handleParamChange = useCallback((paramName: string, value: string | number | boolean) => {
-    if (selectedIdx < 0 || selectedIdx >= local.processors.length) return;
-    const procs = [...local.processors];
-    const entry = { ...procs[selectedIdx], parameters: { ...procs[selectedIdx].parameters, [paramName]: value } };
-    const def = CATALOG.find((d) => d.type === entry.processorType);
-    if (entry.processorType === 'PythonProcessor') {
-      entry.summary = def?.displayName ?? entry.processorType;
-    } else {
-      const paramParts = Object.entries(entry.parameters).map(([k, v]) => `${k}=${v}`);
-      entry.summary = def ? `${def.displayName} (${paramParts.join(', ')})` : entry.processorType;
-    }
-    procs[selectedIdx] = entry;
-    commit({ ...local, processors: procs });
-  }, [local, selectedIdx, commit]);
+  const handleParamChange = useCallback(
+    (paramName: string, value: string | number | boolean) => {
+      if (selectedIdx < 0 || selectedIdx >= local.processors.length) return;
+      const procs = [...local.processors];
+      const entry = {
+        ...procs[selectedIdx],
+        parameters: { ...procs[selectedIdx].parameters, [paramName]: value },
+      };
+      const def = CATALOG.find((d) => d.type === entry.processorType);
+      if (entry.processorType === 'PythonProcessor') {
+        entry.summary = def?.displayName ?? entry.processorType;
+      } else {
+        const paramParts = Object.entries(entry.parameters).map(([k, v]) => `${k}=${v}`);
+        entry.summary = def ? `${def.displayName} (${paramParts.join(', ')})` : entry.processorType;
+      }
+      procs[selectedIdx] = entry;
+      commit({ ...local, processors: procs });
+    },
+    [local, selectedIdx, commit],
+  );
 
-  const handleImport = useCallback(async (name: string) => {
-    if (!onImportNamedChain) return;
-    const imported = await onImportNamedChain(name);
-    if (!imported) return;
-    const newEntries = imported.processors.map((p) => ({ ...p, parameters: { ...p.parameters }, id: freshId() }));
-    const updated: NoteProcessorChainSnapshot = {
-      processors: [...local.processors, ...newEntries],
-      hasUnsupportedProcessors: local.hasUnsupportedProcessors || imported.hasUnsupportedProcessors,
-      hasDeferredProcessors: local.hasDeferredProcessors || imported.hasDeferredProcessors,
-    };
-    commit(updated);
-    setShowImportMenu(false);
-  }, [local, commit, onImportNamedChain]);
+  const handleImport = useCallback(
+    async (name: string) => {
+      if (!onImportNamedChain) return;
+      const imported = await onImportNamedChain(name);
+      if (!imported) return;
+      const newEntries = imported.processors.map((p) => ({
+        ...p,
+        parameters: { ...p.parameters },
+        id: freshId(),
+      }));
+      const updated: NoteProcessorChainSnapshot = {
+        processors: [...local.processors, ...newEntries],
+        hasUnsupportedProcessors:
+          local.hasUnsupportedProcessors || imported.hasUnsupportedProcessors,
+        hasDeferredProcessors: local.hasDeferredProcessors || imported.hasDeferredProcessors,
+      };
+      commit(updated);
+      setShowImportMenu(false);
+    },
+    [local, commit, onImportNamedChain],
+  );
 
   const handleSaveAs = useCallback(() => {
     if (!onSaveNamedChain || !saveName.trim() || local.processors.length === 0) return;
@@ -220,13 +247,31 @@ export default function NoteProcessorChainEditor({ chain, onCommit, namedChainNa
             ))}
           </HostSurfacePortal>
         </div>
-        <button className={BTN} disabled={!hasSelection} onClick={handleRemove}>Remove</button>
-        <button className={BTN} disabled={selectedIdx <= 0} onClick={handleMoveUp}>Up</button>
-        <button className={BTN} disabled={!hasSelection || selectedIdx >= local.processors.length - 1} onClick={handleMoveDown}>Down</button>
-        <button className={BTN} disabled={!hasSelection} onClick={handleCopy}>Copy</button>
-        <button className={BTN} disabled={!hasSelection} onClick={handleCut}>Cut</button>
-        <button className={BTN} disabled={!clipboard} onClick={handlePaste}>Paste</button>
-        <button className={BTN} disabled={local.processors.length === 0} onClick={handleClear}>Clear</button>
+        <button className={BTN} disabled={!hasSelection} onClick={handleRemove}>
+          Remove
+        </button>
+        <button className={BTN} disabled={selectedIdx <= 0} onClick={handleMoveUp}>
+          Up
+        </button>
+        <button
+          className={BTN}
+          disabled={!hasSelection || selectedIdx >= local.processors.length - 1}
+          onClick={handleMoveDown}
+        >
+          Down
+        </button>
+        <button className={BTN} disabled={!hasSelection} onClick={handleCopy}>
+          Copy
+        </button>
+        <button className={BTN} disabled={!hasSelection} onClick={handleCut}>
+          Cut
+        </button>
+        <button className={BTN} disabled={!clipboard} onClick={handlePaste}>
+          Paste
+        </button>
+        <button className={BTN} disabled={local.processors.length === 0} onClick={handleClear}>
+          Clear
+        </button>
         {namedChainNames && namedChainNames.length > 0 && onImportNamedChain && (
           <div>
             <button
@@ -270,10 +315,18 @@ export default function NoteProcessorChainEditor({ chain, onCommit, namedChainNa
                   placeholder="Chain name"
                   value={saveName}
                   onChange={(e) => setSaveName(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleSaveAs(); if (e.key === 'Escape') { setShowSaveDialog(false); setSaveName(''); } }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSaveAs();
+                    if (e.key === 'Escape') {
+                      setShowSaveDialog(false);
+                      setSaveName('');
+                    }
+                  }}
                   autoFocus
                 />
-                <button className={BTN} onClick={handleSaveAs} disabled={!saveName.trim()}>OK</button>
+                <button className={BTN} onClick={handleSaveAs} disabled={!saveName.trim()}>
+                  OK
+                </button>
               </div>
             )}
           </>
@@ -289,11 +342,19 @@ export default function NoteProcessorChainEditor({ chain, onCommit, namedChainNa
               key={proc.id}
               className={cn(
                 'flex items-center gap-2 px-2 py-1 text-role-body cursor-pointer',
-                idx === selectedIdx ? 'bg-blue-accent/20 text-white' : 'hover:bg-blue-border/20'
+                idx === selectedIdx ? 'bg-blue-accent/20 text-white' : 'hover:bg-blue-border/20',
               )}
               onClick={() => setSelectedIdx(idx)}
             >
-              <span className={proc.supported ? (proc.deferred ? 'text-orange-400' : 'text-gray-200') : 'text-yellow-400'}>
+              <span
+                className={
+                  proc.supported
+                    ? proc.deferred
+                      ? 'text-orange-400'
+                      : 'text-gray-200'
+                    : 'text-yellow-400'
+                }
+              >
                 {proc.displayName}
               </span>
               {proc.deferred && (
@@ -375,7 +436,9 @@ function NoteProcessorParameterEditor({
         const isReadOnly = processorType === 'TuningProcessor' && param.name === 'ratios';
         return (
           <div key={param.name} className="flex items-center gap-2">
-            <label className="w-24 shrink-0 text-role-body text-blue-muted text-right">{param.label}</label>
+            <label className="w-24 shrink-0 text-role-body text-blue-muted text-right">
+              {param.label}
+            </label>
             {param.valueType === 'boolean' ? (
               <input
                 type="checkbox"
@@ -387,7 +450,7 @@ function NoteProcessorParameterEditor({
               <textarea
                 className={cn(
                   'flex-1 min-h-16 rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none min-w-0 resize-y',
-                  isReadOnly && 'opacity-60 cursor-default'
+                  isReadOnly && 'opacity-60 cursor-default',
                 )}
                 value={String(value ?? param.defaultValue)}
                 onChange={(e) => onChange(param.name, e.target.value)}

@@ -7,7 +7,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import ColorPickerButton from '../components/ColorPicker';
 import { HostDocumentContext } from '../hooks/use-host-document';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 describe('Score Layer Color Popout & Host Placement (T046)', () => {
   let host: HTMLDivElement;
@@ -37,11 +39,13 @@ describe('Score Layer Color Popout & Host Placement (T046)', () => {
             ariaLabel="Layer color for Layer 1"
             title="Layer color: Layer 1"
           />
-        </HostDocumentContext.Provider>
+        </HostDocumentContext.Provider>,
       );
     });
 
-    const button = host.querySelector('button[aria-label="Layer color for Layer 1"]') as HTMLButtonElement | null;
+    const button = host.querySelector(
+      'button[aria-label="Layer color for Layer 1"]',
+    ) as HTMLButtonElement | null;
     expect(button).not.toBeNull();
     expect(button?.getAttribute('title')).toBe('Layer color: Layer 1');
 
@@ -69,16 +73,14 @@ describe('Score Layer Color Popout & Host Placement (T046)', () => {
     act(() => {
       root.render(
         <HostDocumentContext.Provider value={popoutDoc}>
-          <ColorPickerButton
-            value="#ff0000"
-            onChange={vi.fn()}
-            ariaLabel="Floating Layer Color"
-          />
-        </HostDocumentContext.Provider>
+          <ColorPickerButton value="#ff0000" onChange={vi.fn()} ariaLabel="Floating Layer Color" />
+        </HostDocumentContext.Provider>,
       );
     });
 
-    const button = host.querySelector('button[aria-label="Floating Layer Color"]') as HTMLButtonElement | null;
+    const button = host.querySelector(
+      'button[aria-label="Floating Layer Color"]',
+    ) as HTMLButtonElement | null;
     expect(button).not.toBeNull();
 
     // Open popup

@@ -1,5 +1,8 @@
 import React, { useCallback, useRef, useEffect } from 'react';
-import { BSB_VALUE_PANEL_HEIGHT, BSB_VALUE_PANEL_WIDTH } from '../../../../../../../shared/bsb-widget-layout';
+import {
+  BSB_VALUE_PANEL_HEIGHT,
+  BSB_VALUE_PANEL_WIDTH,
+} from '../../../../../../../shared/bsb-widget-layout';
 import WidgetWrapper from './WidgetWrapper';
 import { ValuePanel, formatValue } from './ValuePanel';
 import { getWidgetDisplaySize } from './utils';
@@ -25,7 +28,8 @@ function BSBVSliderWidget({
   getWidgetPosition,
   onWidgetAction,
 }: BSBVSliderWidgetProps): React.ReactElement {
-  const sliderHeight = typeof node.properties.sliderHeight === 'number' ? node.properties.sliderHeight : 150;
+  const sliderHeight =
+    typeof node.properties.sliderHeight === 'number' ? node.properties.sliderHeight : 150;
   const displaySize = getWidgetDisplaySize(node);
   const value = node.value;
   const minimum = node.minimum;
@@ -75,30 +79,51 @@ function BSBVSliderWidget({
     };
   }, [editEnabled]);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
-    if (editEnabled) return;
-    e.preventDefault();
-    dragging.current = true;
-    const { sliderHeight: sh, minimum: min, range: r, nodeId } = paramsRef.current;
-    const rect = svgRef.current!.getBoundingClientRect();
-    const y = e.clientY - rect.top;
-    const trackStart = THUMB_R;
-    const trackEnd = sh - THUMB_R;
-    const newPct = 1 - Math.max(0, Math.min(1, (y - trackStart) / (trackEnd - trackStart)));
-    const newVal = min + newPct * r;
-    patchRef.current({
-      type: 'updateWidgetProperties',
-      widgetId: nodeId,
-      properties: { value: newVal },
-    });
-  }, [editEnabled]);
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent<SVGSVGElement>) => {
+      if (editEnabled) return;
+      e.preventDefault();
+      dragging.current = true;
+      const { sliderHeight: sh, minimum: min, range: r, nodeId } = paramsRef.current;
+      const rect = svgRef.current!.getBoundingClientRect();
+      const y = e.clientY - rect.top;
+      const trackStart = THUMB_R;
+      const trackEnd = sh - THUMB_R;
+      const newPct = 1 - Math.max(0, Math.min(1, (y - trackStart) / (trackEnd - trackStart)));
+      const newVal = min + newPct * r;
+      patchRef.current({
+        type: 'updateWidgetProperties',
+        widgetId: nodeId,
+        properties: { value: newVal },
+      });
+    },
+    [editEnabled],
+  );
 
   const trackX = SLIDER_WIDTH / 2 - TRACK_W / 2;
   const thumbCy = sliderHeight - THUMB_R - (sliderHeight - 2 * THUMB_R) * pct;
 
   return (
-    <WidgetWrapper node={node} isSelected={isSelected} editEnabled={editEnabled} onWidgetSelect={onWidgetSelect} displayWidth={displaySize.width} displayHeight={displaySize.height} resizeMeta={resizeMeta} gridSnapEnabled={gridSnapEnabled} gridSnapWidth={gridSnapWidth} gridSnapHeight={gridSnapHeight} onBsbInterfacePatch={onBsbInterfacePatch} selectedWidgetIds={selectedWidgetIds} getWidgetPosition={getWidgetPosition} onWidgetAction={onWidgetAction}>
-      <div className="flex h-full w-full flex-col" style={{ width: displaySize.width, height: totalHeight }}>
+    <WidgetWrapper
+      node={node}
+      isSelected={isSelected}
+      editEnabled={editEnabled}
+      onWidgetSelect={onWidgetSelect}
+      displayWidth={displaySize.width}
+      displayHeight={displaySize.height}
+      resizeMeta={resizeMeta}
+      gridSnapEnabled={gridSnapEnabled}
+      gridSnapWidth={gridSnapWidth}
+      gridSnapHeight={gridSnapHeight}
+      onBsbInterfacePatch={onBsbInterfacePatch}
+      selectedWidgetIds={selectedWidgetIds}
+      getWidgetPosition={getWidgetPosition}
+      onWidgetAction={onWidgetAction}
+    >
+      <div
+        className="flex h-full w-full flex-col"
+        style={{ width: displaySize.width, height: totalHeight }}
+      >
         <svg
           ref={svgRef}
           width={displaySize.width}
@@ -125,18 +150,8 @@ function BSBVSliderWidget({
             ry={2}
             fill="rgb(102,177,253)"
           />
-          <circle
-            cx={SLIDER_WIDTH / 2}
-            cy={thumbCy}
-            r={THUMB_R}
-            fill="rgb(102,177,253)"
-          />
-          <circle
-            cx={SLIDER_WIDTH / 2}
-            cy={thumbCy}
-            r={THUMB_R - 2}
-            fill="rgb(38,51,76)"
-          />
+          <circle cx={SLIDER_WIDTH / 2} cy={thumbCy} r={THUMB_R} fill="rgb(102,177,253)" />
+          <circle cx={SLIDER_WIDTH / 2} cy={thumbCy} r={THUMB_R - 2} fill="rgb(38,51,76)" />
         </svg>
         {showValue && (
           <ValuePanel

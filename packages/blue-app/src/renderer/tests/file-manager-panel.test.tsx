@@ -18,13 +18,29 @@ import { subscribePendingAudioFile } from '../components/workbench/panels/audio-
 import { subscribePendingSoundFontFile } from '../components/workbench/panels/tools/soundfont-viewer-bus';
 import { useWorkbenchStore } from '../stores/workbench-store';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 function makeRoots(): FileManagerRootSnapshot[] {
   return [
     { id: '/', path: '/', label: 'Root', kind: 'static', available: true, isDirectory: true },
-    { id: '/Users/me', path: '/Users/me', label: 'Home', kind: 'static', available: true, isDirectory: true },
-    { id: '/Volumes/media', path: '/Volumes/media', label: '/Volumes/media', kind: 'favorite', available: true, isDirectory: true },
+    {
+      id: '/Users/me',
+      path: '/Users/me',
+      label: 'Home',
+      kind: 'static',
+      available: true,
+      isDirectory: true,
+    },
+    {
+      id: '/Volumes/media',
+      path: '/Volumes/media',
+      label: '/Volumes/media',
+      kind: 'favorite',
+      available: true,
+      isDirectory: true,
+    },
   ];
 }
 
@@ -51,9 +67,11 @@ function directoryResult(
 }
 
 function findRow(label: string): HTMLElement | null {
-  return Array.from(document.querySelectorAll<HTMLElement>('div[class*="cursor-pointer"]')).find(
-    (row) => row.textContent?.includes(label) ?? false,
-  ) ?? null;
+  return (
+    Array.from(document.querySelectorAll<HTMLElement>('div[class*="cursor-pointer"]')).find(
+      (row) => row.textContent?.includes(label) ?? false,
+    ) ?? null
+  );
 }
 
 async function clickSingle(element: HTMLElement | null): Promise<void> {
@@ -69,8 +87,9 @@ async function openRootRenameDialog(row: HTMLElement | null): Promise<HTMLElemen
   await act(async () => {
     row!.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
   });
-  const renameItem = Array.from(document.body.querySelectorAll<HTMLElement>('[role="menuitem"]'))
-    .find((item) => item.textContent === 'Rename Root');
+  const renameItem = Array.from(
+    document.body.querySelectorAll<HTMLElement>('[role="menuitem"]'),
+  ).find((item) => item.textContent === 'Rename Root');
   expect(renameItem).not.toBeUndefined();
   await act(async () => {
     renameItem!.click();
@@ -118,7 +137,9 @@ describe('File Manager panel and tree', () => {
     document.body.appendChild(container);
     root = createRoot(container);
     getFileManagerRoots.mockResolvedValue(makeRoots());
-    useWorkbenchStore.setState({ openPanel } as Partial<ReturnType<typeof useWorkbenchStore.getState>>);
+    useWorkbenchStore.setState({ openPanel } as Partial<
+      ReturnType<typeof useWorkbenchStore.getState>
+    >);
     authorizeAudioFile.mockResolvedValue(true);
     (window as unknown as { blueAPI: Record<string, unknown> }).blueAPI = {
       getFileManagerRoots,
@@ -139,7 +160,9 @@ describe('File Manager panel and tree', () => {
     container?.remove();
     container = null;
     root = null;
-    useWorkbenchStore.setState({ openPanel: originalOpenPanel } as Partial<ReturnType<typeof useWorkbenchStore.getState>>);
+    useWorkbenchStore.setState({ openPanel: originalOpenPanel } as Partial<
+      ReturnType<typeof useWorkbenchStore.getState>
+    >);
     vi.clearAllMocks();
   });
 
@@ -187,7 +210,13 @@ describe('File Manager panel and tree', () => {
     );
 
     act(() => {
-      root!.render(<FileManagerTree roots={makeRoots()} onAddFavorite={addFavorite} onRemoveFavorite={removeFavorite} />);
+      root!.render(
+        <FileManagerTree
+          roots={makeRoots()}
+          onAddFavorite={addFavorite}
+          onRemoveFavorite={removeFavorite}
+        />,
+      );
     });
     await act(async () => {});
 
@@ -215,7 +244,13 @@ describe('File Manager panel and tree', () => {
     );
 
     act(() => {
-      root!.render(<FileManagerTree roots={makeRoots()} onAddFavorite={addFavorite} onRemoveFavorite={removeFavorite} />);
+      root!.render(
+        <FileManagerTree
+          roots={makeRoots()}
+          onAddFavorite={addFavorite}
+          onRemoveFavorite={removeFavorite}
+        />,
+      );
     });
     await act(async () => {});
 
@@ -236,7 +271,13 @@ describe('File Manager panel and tree', () => {
     });
 
     act(() => {
-      root!.render(<FileManagerTree roots={makeRoots()} onAddFavorite={addFavorite} onRemoveFavorite={removeFavorite} />);
+      root!.render(
+        <FileManagerTree
+          roots={makeRoots()}
+          onAddFavorite={addFavorite}
+          onRemoveFavorite={removeFavorite}
+        />,
+      );
     });
     await act(async () => {});
 
@@ -255,7 +296,13 @@ describe('File Manager panel and tree', () => {
     });
 
     act(() => {
-      root!.render(<FileManagerTree roots={makeRoots()} onAddFavorite={addFavorite} onRemoveFavorite={removeFavorite} />);
+      root!.render(
+        <FileManagerTree
+          roots={makeRoots()}
+          onAddFavorite={addFavorite}
+          onRemoveFavorite={removeFavorite}
+        />,
+      );
     });
     await act(async () => {});
     await clickSingle(findRow('/Users/me'));
@@ -269,20 +316,28 @@ describe('File Manager panel and tree', () => {
       snapshot: {
         directoryPath: '/',
         loadedAt: 1,
-        children: [{
-          id: '/',
-          path: '/loop',
-          name: 'loop',
-          kind: 'directory',
-          parentPath: '/',
-          isSymlink: true,
-          canExpand: true,
-        }],
+        children: [
+          {
+            id: '/',
+            path: '/loop',
+            name: 'loop',
+            kind: 'directory',
+            parentPath: '/',
+            isSymlink: true,
+            canExpand: true,
+          },
+        ],
       },
     });
 
     act(() => {
-      root!.render(<FileManagerTree roots={makeRoots()} onAddFavorite={addFavorite} onRemoveFavorite={removeFavorite} />);
+      root!.render(
+        <FileManagerTree
+          roots={makeRoots()}
+          onAddFavorite={addFavorite}
+          onRemoveFavorite={removeFavorite}
+        />,
+      );
     });
     await act(async () => {});
     await clickSingle(findRow('Root - /'));
@@ -298,7 +353,13 @@ describe('File Manager panel and tree', () => {
     listFileManagerDirectory.mockResolvedValue(directoryResult('/Users/me', children));
 
     act(() => {
-      root!.render(<FileManagerTree roots={makeRoots()} onAddFavorite={addFavorite} onRemoveFavorite={removeFavorite} />);
+      root!.render(
+        <FileManagerTree
+          roots={makeRoots()}
+          onAddFavorite={addFavorite}
+          onRemoveFavorite={removeFavorite}
+        />,
+      );
     });
     await act(async () => {});
 
@@ -320,14 +381,21 @@ describe('File Manager panel and tree', () => {
     );
 
     act(() => {
-      root!.render(<FileManagerTree roots={makeRoots()} onAddFavorite={addFavorite} onRemoveFavorite={removeFavorite} />);
+      root!.render(
+        <FileManagerTree
+          roots={makeRoots()}
+          onAddFavorite={addFavorite}
+          onRemoveFavorite={removeFavorite}
+        />,
+      );
     });
     await act(async () => {});
     await clickSingle(findRow('/Users/me'));
 
     const menuItems = () =>
-      Array.from(document.body.querySelectorAll<HTMLElement>('[role="menuitem"]'))
-        .map((item) => item.textContent ?? '');
+      Array.from(document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')).map(
+        (item) => item.textContent ?? '',
+      );
     const openMenu = async (label: string) => {
       const row = findRow(label);
       expect(row, `row for ${label}`).not.toBeNull();
@@ -380,18 +448,26 @@ describe('File Manager panel and tree', () => {
     await clickSingle(findRow('/Users/me'));
 
     await act(async () => {
-      findRow('Projects')!.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+      findRow('Projects')!.dispatchEvent(
+        new MouseEvent('contextmenu', { bubbles: true, cancelable: true }),
+      );
     });
-    const addItem = Array.from(document.body.querySelectorAll<HTMLElement>('[role="menuitem"]'))
-      .find((item) => item.textContent === 'Add to Favorites')!;
+    const addItem = Array.from(
+      document.body.querySelectorAll<HTMLElement>('[role="menuitem"]'),
+    ).find((item) => item.textContent === 'Add to Favorites')!;
     await act(async () => {
       addItem.click();
     });
 
     expect(validateFileManagerDirectory).toHaveBeenCalledWith({ path: '/Users/me/Projects' });
     expect(saveProgramSettings).toHaveBeenCalledOnce();
-    const saved = saveProgramSettings.mock.calls[0]![0] as { appSpecific: { fileManagerFavorites: string[] } };
-    expect(saved.appSpecific.fileManagerFavorites).toEqual(['/Volumes/media', '/Users/me/Projects']);
+    const saved = saveProgramSettings.mock.calls[0]![0] as {
+      appSpecific: { fileManagerFavorites: string[] };
+    };
+    expect(saved.appSpecific.fileManagerFavorites).toEqual([
+      '/Volumes/media',
+      '/Users/me/Projects',
+    ]);
     expect(getFileManagerRoots).toHaveBeenCalledTimes(2);
   });
 
@@ -416,10 +492,13 @@ describe('File Manager panel and tree', () => {
     await clickSingle(findRow('/Users/me'));
 
     await act(async () => {
-      findRow('Projects')!.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+      findRow('Projects')!.dispatchEvent(
+        new MouseEvent('contextmenu', { bubbles: true, cancelable: true }),
+      );
     });
-    const addItem = Array.from(document.body.querySelectorAll<HTMLElement>('[role="menuitem"]'))
-      .find((item) => item.textContent === 'Add to Favorites')!;
+    const addItem = Array.from(
+      document.body.querySelectorAll<HTMLElement>('[role="menuitem"]'),
+    ).find((item) => item.textContent === 'Add to Favorites')!;
     await act(async () => {
       addItem.click();
     });
@@ -441,17 +520,22 @@ describe('File Manager panel and tree', () => {
     await act(async () => {});
 
     await act(async () => {
-      findRow('/Volumes/media')!.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+      findRow('/Volumes/media')!.dispatchEvent(
+        new MouseEvent('contextmenu', { bubbles: true, cancelable: true }),
+      );
     });
-    const removeItem = Array.from(document.body.querySelectorAll<HTMLElement>('[role="menuitem"]'))
-      .find((item) => item.textContent === 'Remove from Favorites')!;
+    const removeItem = Array.from(
+      document.body.querySelectorAll<HTMLElement>('[role="menuitem"]'),
+    ).find((item) => item.textContent === 'Remove from Favorites')!;
     expect(removeItem).toBeTruthy();
     await act(async () => {
       removeItem.click();
     });
 
     expect(saveProgramSettings).toHaveBeenCalledOnce();
-    const saved = saveProgramSettings.mock.calls[0]![0] as { appSpecific: { fileManagerFavorites: string[] } };
+    const saved = saveProgramSettings.mock.calls[0]![0] as {
+      appSpecific: { fileManagerFavorites: string[] };
+    };
     expect(saved.appSpecific.fileManagerFavorites).toEqual([]);
     expect(getFileManagerRoots).toHaveBeenCalledTimes(2);
   });
@@ -469,7 +553,13 @@ describe('File Manager panel and tree', () => {
     });
 
     act(() => {
-      root!.render(<FileManagerTree roots={makeRoots()} onAddFavorite={addFavorite} onRemoveFavorite={removeFavorite} />);
+      root!.render(
+        <FileManagerTree
+          roots={makeRoots()}
+          onAddFavorite={addFavorite}
+          onRemoveFavorite={removeFavorite}
+        />,
+      );
     });
     await act(async () => {});
     await clickSingle(findRow('/Users/me'));
@@ -477,10 +567,13 @@ describe('File Manager panel and tree', () => {
     expect(document.body.textContent).toContain('old.wav');
 
     await act(async () => {
-      findRow('Projects')!.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+      findRow('Projects')!.dispatchEvent(
+        new MouseEvent('contextmenu', { bubbles: true, cancelable: true }),
+      );
     });
-    const refreshItem = Array.from(document.body.querySelectorAll<HTMLElement>('[role="menuitem"]'))
-      .find((item) => item.textContent === 'Refresh Folder')!;
+    const refreshItem = Array.from(
+      document.body.querySelectorAll<HTMLElement>('[role="menuitem"]'),
+    ).find((item) => item.textContent === 'Refresh Folder')!;
     await act(async () => {
       refreshItem.click();
     });
@@ -500,7 +593,13 @@ describe('File Manager panel and tree', () => {
     );
 
     act(() => {
-      root!.render(<FileManagerTree roots={makeRoots()} onAddFavorite={addFavorite} onRemoveFavorite={removeFavorite} />);
+      root!.render(
+        <FileManagerTree
+          roots={makeRoots()}
+          onAddFavorite={addFavorite}
+          onRemoveFavorite={removeFavorite}
+        />,
+      );
     });
     await act(async () => {});
     await clickSingle(findRow('/Users/me'));
@@ -551,7 +650,13 @@ describe('File Manager panel and tree', () => {
     );
 
     act(() => {
-      root!.render(<FileManagerTree roots={makeRoots()} onAddFavorite={addFavorite} onRemoveFavorite={removeFavorite} />);
+      root!.render(
+        <FileManagerTree
+          roots={makeRoots()}
+          onAddFavorite={addFavorite}
+          onRemoveFavorite={removeFavorite}
+        />,
+      );
     });
     await act(async () => {});
     await clickSingle(findRow('/Users/me'));
@@ -569,19 +674,29 @@ describe('File Manager panel and tree', () => {
   it('keeps open state independent when a favorite is a subfolder of another root', async () => {
     const roots: FileManagerRootSnapshot[] = [
       { id: '/', path: '/', label: '/', kind: 'static', available: true, isDirectory: true },
-      { id: '/Users/me', path: '/Users/me', label: '/Users/me', kind: 'static', available: true, isDirectory: true },
-      { id: '/Users/me/projects', path: '/Users/me/projects', label: '/Users/me/projects', kind: 'favorite', available: true, isDirectory: true },
+      {
+        id: '/Users/me',
+        path: '/Users/me',
+        label: '/Users/me',
+        kind: 'static',
+        available: true,
+        isDirectory: true,
+      },
+      {
+        id: '/Users/me/projects',
+        path: '/Users/me/projects',
+        label: '/Users/me/projects',
+        kind: 'favorite',
+        available: true,
+        isDirectory: true,
+      },
     ];
     listFileManagerDirectory.mockImplementation(async ({ path }: { path: string }) => {
       switch (path) {
         case '/Users/me':
-          return directoryResult('/Users/me', [
-            { name: 'x', kind: 'directory' },
-          ]);
+          return directoryResult('/Users/me', [{ name: 'x', kind: 'directory' }]);
         case '/Users/me/projects':
-          return directoryResult('/Users/me/projects', [
-            { name: 'x', kind: 'directory' },
-          ]);
+          return directoryResult('/Users/me/projects', [{ name: 'x', kind: 'directory' }]);
         case '/Users/me/x':
           return directoryResult('/Users/me/x', [{ name: 'home-child.txt', kind: 'file' }]);
         default:
@@ -590,13 +705,20 @@ describe('File Manager panel and tree', () => {
     });
 
     act(() => {
-      root!.render(<FileManagerTree roots={roots} onAddFavorite={addFavorite} onRemoveFavorite={removeFavorite} />);
+      root!.render(
+        <FileManagerTree
+          roots={roots}
+          onAddFavorite={addFavorite}
+          onRemoveFavorite={removeFavorite}
+        />,
+      );
     });
     await act(async () => {});
 
     const rowsNamed = (label: string) =>
-      Array.from(document.querySelectorAll<HTMLElement>('[class*="select-none"]'))
-        .filter((row) => (row.textContent ?? '').trim() === label);
+      Array.from(document.querySelectorAll<HTMLElement>('[class*="select-none"]')).filter(
+        (row) => (row.textContent ?? '').trim() === label,
+      );
 
     // Expand the home branch's x and the favorite branch's x.
     await clickSingle(findRow('/Users/me'));
@@ -615,8 +737,22 @@ describe('File Manager panel and tree', () => {
 
   it('does not share open state between a favorite root and the same-named child under its parent root', async () => {
     const roots: FileManagerRootSnapshot[] = [
-      { id: '/Users/me', path: '/Users/me', label: '/Users/me', kind: 'static', available: true, isDirectory: true },
-      { id: '/Users/me/projects', path: '/Users/me/projects', label: '/Users/me/projects', kind: 'favorite', available: true, isDirectory: true },
+      {
+        id: '/Users/me',
+        path: '/Users/me',
+        label: '/Users/me',
+        kind: 'static',
+        available: true,
+        isDirectory: true,
+      },
+      {
+        id: '/Users/me/projects',
+        path: '/Users/me/projects',
+        label: '/Users/me/projects',
+        kind: 'favorite',
+        available: true,
+        isDirectory: true,
+      },
     ];
     listFileManagerDirectory.mockImplementation(async ({ path }: { path: string }) => {
       if (path === '/Users/me') {
@@ -626,7 +762,13 @@ describe('File Manager panel and tree', () => {
     });
 
     act(() => {
-      root!.render(<FileManagerTree roots={roots} onAddFavorite={addFavorite} onRemoveFavorite={removeFavorite} />);
+      root!.render(
+        <FileManagerTree
+          roots={roots}
+          onAddFavorite={addFavorite}
+          onRemoveFavorite={removeFavorite}
+        />,
+      );
     });
     await act(async () => {});
 
@@ -637,8 +779,9 @@ describe('File Manager panel and tree', () => {
         .getAttribute('aria-expanded');
 
     const projectsChildRow = () =>
-      Array.from(document.querySelectorAll<HTMLElement>('[class*="select-none"]'))
-        .find((row) => (row.textContent ?? '').trim() === 'projects')!;
+      Array.from(document.querySelectorAll<HTMLElement>('[class*="select-none"]')).find(
+        (row) => (row.textContent ?? '').trim() === 'projects',
+      )!;
     const favoriteRootRow = () => findRow('/Users/me/projects')!;
 
     await clickSingle(findRow('/Users/me'));
@@ -648,7 +791,9 @@ describe('File Manager panel and tree', () => {
     // favorite root `/Users/me/projects` closed.
     await clickSingle(projectsChildRow());
     expect(document.body.textContent).toContain('fav-child.wav');
-    expect(favoriteRootRow().closest('[role="treeitem"]')!.getAttribute('aria-expanded')).toBe('false');
+    expect(favoriteRootRow().closest('[role="treeitem"]')!.getAttribute('aria-expanded')).toBe(
+      'false',
+    );
   });
 
   it('restores loaded children and open state after a remount (docked/slideout move)', async () => {
@@ -662,7 +807,11 @@ describe('File Manager panel and tree', () => {
     const renderTree = (target: { root: ReturnType<typeof createRoot> }) => {
       act(() => {
         target.root.render(
-          <FileManagerTree roots={makeRoots()} onAddFavorite={addFavorite} onRemoveFavorite={removeFavorite} />,
+          <FileManagerTree
+            roots={makeRoots()}
+            onAddFavorite={addFavorite}
+            onRemoveFavorite={removeFavorite}
+          />,
         );
       });
     };
@@ -675,7 +824,9 @@ describe('File Manager panel and tree', () => {
     expect(listFileManagerDirectory).toHaveBeenCalledTimes(2);
 
     // Simulate a docked -> slideout move: unmount, then remount elsewhere.
-    act(() => { root!.unmount(); });
+    act(() => {
+      root!.unmount();
+    });
     container!.remove();
     const host = document.createElement('div');
     document.body.appendChild(host);
@@ -686,21 +837,25 @@ describe('File Manager panel and tree', () => {
     expect(listFileManagerDirectory).toHaveBeenCalledTimes(2);
     expect(document.body.textContent).toContain('A-dir');
     expect(document.body.textContent).toContain('deep.wav');
-    expect(
-      findRow('/Users/me')!.closest('[role="treeitem"]')!.getAttribute('aria-expanded'),
-    ).toBe('true');
+    expect(findRow('/Users/me')!.closest('[role="treeitem"]')!.getAttribute('aria-expanded')).toBe(
+      'true',
+    );
 
     // Collapse bookkeeping still works against the restored open state.
     await clickSingle(findRow('/Users/me'));
     expect(document.body.textContent).not.toContain('deep.wav');
 
-    act(() => { secondRoot.unmount(); });
+    act(() => {
+      secondRoot.unmount();
+    });
     host.remove();
   });
 
   it('routes a double-clicked supported audio file to the Audio File Player', async () => {
     const received: string[] = [];
-    const unsubscribe = subscribePendingAudioFile((path) => { received.push(path); });
+    const unsubscribe = subscribePendingAudioFile((path) => {
+      received.push(path);
+    });
     listFileManagerDirectory.mockResolvedValue(
       directoryResult('/Users/me', [
         { name: 'A-dir', kind: 'directory' },
@@ -739,7 +894,9 @@ describe('File Manager panel and tree', () => {
 
   it('routes a double-clicked .sf2 file to the SoundFont Viewer', async () => {
     const soundFonts: string[] = [];
-    const unsubscribeSoundFont = subscribePendingSoundFontFile((path) => { soundFonts.push(path); });
+    const unsubscribeSoundFont = subscribePendingSoundFontFile((path) => {
+      soundFonts.push(path);
+    });
     listFileManagerDirectory.mockResolvedValue(
       directoryResult('/Users/me', [
         { name: 'piano.sf2', kind: 'file' },
@@ -754,7 +911,9 @@ describe('File Manager panel and tree', () => {
     await clickSingle(findRow('/Users/me'));
 
     await act(async () => {
-      findRow('piano.sf2')!.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, cancelable: true }));
+      findRow('piano.sf2')!.dispatchEvent(
+        new MouseEvent('dblclick', { bubbles: true, cancelable: true }),
+      );
     });
     expect(openPanel).toHaveBeenCalledExactlyOnceWith('SoundFontViewerTopComponent');
     expect(soundFonts).toEqual(['/Users/me/piano.sf2']);
@@ -767,7 +926,9 @@ describe('File Manager panel and tree', () => {
   it('does not open the player when main refuses to authorize the file', async () => {
     authorizeAudioFile.mockResolvedValue(false);
     const received: string[] = [];
-    const unsubscribe = subscribePendingAudioFile((path) => { received.push(path); });
+    const unsubscribe = subscribePendingAudioFile((path) => {
+      received.push(path);
+    });
     listFileManagerDirectory.mockResolvedValue(
       directoryResult('/Users/me', [{ name: 'song.wav', kind: 'file' }]),
     );
@@ -779,7 +940,9 @@ describe('File Manager panel and tree', () => {
     await clickSingle(findRow('/Users/me'));
 
     await act(async () => {
-      findRow('song.wav')!.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, cancelable: true }));
+      findRow('song.wav')!.dispatchEvent(
+        new MouseEvent('dblclick', { bubbles: true, cancelable: true }),
+      );
     });
 
     expect(authorizeAudioFile).toHaveBeenCalledOnce();
@@ -793,9 +956,30 @@ describe('File Manager panel and tree', () => {
     it('renders roots in Label - /path format with an unnamed fallback and muted paths', async () => {
       getFileManagerRoots.mockResolvedValue([
         { id: '/', path: '/', label: 'Root', kind: 'static', available: true, isDirectory: true },
-        { id: '/Users/me', path: '/Users/me', label: 'Home', kind: 'static', available: true, isDirectory: true },
-        { id: '/Volumes/media', path: '/Volumes/media', label: '/Volumes/media', kind: 'favorite', available: true, isDirectory: true },
-        { id: '/Volumes/samples', path: '/Volumes/samples', label: 'Samples', kind: 'favorite', available: true, isDirectory: true },
+        {
+          id: '/Users/me',
+          path: '/Users/me',
+          label: 'Home',
+          kind: 'static',
+          available: true,
+          isDirectory: true,
+        },
+        {
+          id: '/Volumes/media',
+          path: '/Volumes/media',
+          label: '/Volumes/media',
+          kind: 'favorite',
+          available: true,
+          isDirectory: true,
+        },
+        {
+          id: '/Volumes/samples',
+          path: '/Volumes/samples',
+          label: 'Samples',
+          kind: 'favorite',
+          available: true,
+          isDirectory: true,
+        },
       ]);
 
       act(() => {
@@ -1015,8 +1199,9 @@ describe('File Manager panel and tree', () => {
       expect(document.body.textContent).toContain('take1.wav');
 
       // Click 'Projects' breadcrumb segment to navigate back to Projects
-      const projectsButton = Array.from(breadcrumb!.querySelectorAll<HTMLElement>('button'))
-        .find((btn) => btn.textContent?.includes('Projects'));
+      const projectsButton = Array.from(breadcrumb!.querySelectorAll<HTMLElement>('button')).find(
+        (btn) => btn.textContent?.includes('Projects'),
+      );
       expect(projectsButton).toBeTruthy();
       await act(async () => {
         projectsButton!.click();
@@ -1028,8 +1213,9 @@ describe('File Manager panel and tree', () => {
       expect(document.body.textContent).toContain('Audio');
 
       // Click 'Roots' breadcrumb segment to return to the full roots view
-      const rootsButton = Array.from(breadcrumb!.querySelectorAll<HTMLElement>('button'))
-        .find((btn) => btn.textContent?.includes('Roots'));
+      const rootsButton = Array.from(breadcrumb!.querySelectorAll<HTMLElement>('button')).find(
+        (btn) => btn.textContent?.includes('Roots'),
+      );
       expect(rootsButton).toBeTruthy();
       await act(async () => {
         rootsButton!.click();
@@ -1063,7 +1249,9 @@ describe('File Manager panel and tree', () => {
       await clickSingle(findRow('Home - /Users/me'));
 
       await act(async () => {
-        findRow('Projects')!.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, cancelable: true }));
+        findRow('Projects')!.dispatchEvent(
+          new MouseEvent('dblclick', { bubbles: true, cancelable: true }),
+        );
       });
       await act(async () => {});
 
@@ -1071,7 +1259,9 @@ describe('File Manager panel and tree', () => {
       expect(document.body.textContent).toContain('song.wav');
 
       // Unmount and remount (simulating panel tab change or docked/slideout move)
-      act(() => { root!.unmount(); });
+      act(() => {
+        root!.unmount();
+      });
       container!.remove();
       const host = document.createElement('div');
       document.body.appendChild(host);
@@ -1084,13 +1274,17 @@ describe('File Manager panel and tree', () => {
       expect(document.body.textContent).toContain('Projects');
       expect(document.body.textContent).toContain('song.wav');
 
-      act(() => { secondRoot.unmount(); });
+      act(() => {
+        secondRoot.unmount();
+      });
       host.remove();
     });
 
     it('allows audio drag, context menu, and tool opening inside focused view', async () => {
       const receivedAudio: string[] = [];
-      const unsub = subscribePendingAudioFile((path) => { receivedAudio.push(path); });
+      const unsub = subscribePendingAudioFile((path) => {
+        receivedAudio.push(path);
+      });
       listFileManagerDirectory.mockImplementation(async ({ path }: { path: string }) => {
         if (path === '/Users/me') {
           return directoryResult('/Users/me', [{ name: 'Projects', kind: 'directory' }]);
@@ -1108,16 +1302,21 @@ describe('File Manager panel and tree', () => {
 
       await clickSingle(findRow('Home - /Users/me'));
       await act(async () => {
-        findRow('Projects')!.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, cancelable: true }));
+        findRow('Projects')!.dispatchEvent(
+          new MouseEvent('dblclick', { bubbles: true, cancelable: true }),
+        );
       });
       await act(async () => {});
 
       // 1. Context menu inside focused view
       await act(async () => {
-        findRow('SubDir')!.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+        findRow('SubDir')!.dispatchEvent(
+          new MouseEvent('contextmenu', { bubbles: true, cancelable: true }),
+        );
       });
-      const menuItems = Array.from(document.body.querySelectorAll<HTMLElement>('[role="menuitem"]'))
-        .map((item) => item.textContent ?? '');
+      const menuItems = Array.from(
+        document.body.querySelectorAll<HTMLElement>('[role="menuitem"]'),
+      ).map((item) => item.textContent ?? '');
       expect(menuItems).toEqual(['Refresh Folder', 'Add to Favorites']);
       await act(async () => {
         document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
@@ -1133,7 +1332,9 @@ describe('File Manager panel and tree', () => {
         dropEffect: 'none',
         effectAllowed: 'none',
         getData: (type: string) => payloadByType[type] ?? '',
-        setData: (type: string, value: string) => { payloadByType[type] = value; },
+        setData: (type: string, value: string) => {
+          payloadByType[type] = value;
+        },
       };
       const dragEvent = new Event('dragstart', { bubbles: true, cancelable: true });
       Object.defineProperty(dragEvent, 'dataTransfer', { value: dataTransfer });
@@ -1169,8 +1370,7 @@ describe('File Manager panel and tree', () => {
           target.root.render(<FileManagerPanel />);
         });
       };
-      const scroller = () =>
-        document.querySelector<HTMLElement>('div[style*="overflow: auto"]');
+      const scroller = () => document.querySelector<HTMLElement>('div[style*="overflow: auto"]');
       const setListMetrics = (element: HTMLElement) => {
         Object.defineProperties(element, {
           clientHeight: { configurable: true, value: 400 },
@@ -1195,7 +1395,9 @@ describe('File Manager panel and tree', () => {
       expect(sessionTreeState.scrollOffset).toBe(120);
 
       // Unmount and remount into a fresh container (panel move/remount).
-      act(() => { root!.unmount(); });
+      act(() => {
+        root!.unmount();
+      });
       container!.remove();
       const host = document.createElement('div');
       document.body.appendChild(host);
@@ -1213,7 +1415,9 @@ describe('File Manager panel and tree', () => {
       expect(sessionTreeState.scrollOffset).toBe(120);
       expect(scroller()?.scrollTop ?? 0).toBe(120);
 
-      act(() => { secondRoot.unmount(); });
+      act(() => {
+        secondRoot.unmount();
+      });
       host.remove();
     });
 
@@ -1234,7 +1438,9 @@ describe('File Manager panel and tree', () => {
       // root itself was never focused, so it has no saved level state.
       await clickSingle(findRow('Home - /Users/me'));
       await act(async () => {
-        findRow('Projects')!.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, cancelable: true }));
+        findRow('Projects')!.dispatchEvent(
+          new MouseEvent('dblclick', { bubbles: true, cancelable: true }),
+        );
       });
       await act(async () => {});
       expect(document.body.querySelector('nav[aria-label="Breadcrumb"]')).not.toBeNull();
@@ -1242,19 +1448,25 @@ describe('File Manager panel and tree', () => {
       // Click the ROOT segment (Home, index 0): a never-focused level gets a
       // fresh focused view and must not consume the roots-view snapshot.
       const breadcrumb = document.body.querySelector('nav[aria-label="Breadcrumb"]')!;
-      const homeButton = Array.from(breadcrumb.querySelectorAll<HTMLElement>('button'))
-        .find((btn) => btn.textContent === 'Home')!;
+      const homeButton = Array.from(breadcrumb.querySelectorAll<HTMLElement>('button')).find(
+        (btn) => btn.textContent === 'Home',
+      )!;
       expect(homeButton).toBeTruthy();
-      await act(async () => { homeButton.click(); });
+      await act(async () => {
+        homeButton.click();
+      });
       await act(async () => {});
       expect(document.body.textContent).toContain('Projects');
 
       // Returning to Roots must restore the roots view exactly as left
       // (Home expanded, Projects visible).
-      const rootsButton = Array.from(document.body.querySelectorAll<HTMLElement>('button'))
-        .find((btn) => btn.textContent === 'Roots')!;
+      const rootsButton = Array.from(document.body.querySelectorAll<HTMLElement>('button')).find(
+        (btn) => btn.textContent === 'Roots',
+      )!;
       expect(rootsButton).toBeTruthy();
-      await act(async () => { rootsButton.click(); });
+      await act(async () => {
+        rootsButton.click();
+      });
       await act(async () => {});
 
       expect(document.body.querySelector('nav[aria-label="Breadcrumb"]')).toBeNull();

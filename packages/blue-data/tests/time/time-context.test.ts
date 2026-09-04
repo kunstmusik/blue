@@ -138,8 +138,10 @@ describe('TimeContext Serialization', () => {
 
     expect(loaded.getMeterMap().size()).toBe(original.getMeterMap().size());
     const testBeat = 3.0;
-    expect(loaded.getTempoMap().beatsToSeconds(testBeat))
-      .toBeCloseTo(original.getTempoMap().beatsToSeconds(testBeat), 4);
+    expect(loaded.getTempoMap().beatsToSeconds(testBeat)).toBeCloseTo(
+      original.getTempoMap().beatsToSeconds(testBeat),
+      4,
+    );
   });
 
   it('testLegacyXmlWithSampleRateIsIgnored', () => {
@@ -153,9 +155,13 @@ describe('TimeContext Serialization', () => {
   it('testTimeContextDefaultSerialization', () => {
     const original = new TimeContext();
     const loaded = TimeContext.loadFromXML(original.saveAsXML());
-    expect(loaded.getTempoMap().beatsToSeconds(4.0))
-      .toBeCloseTo(original.getTempoMap().beatsToSeconds(4.0), 4);
-    expect(loaded.getMeterMap().get(0).getMeter().equals(original.getMeterMap().get(0).getMeter())).toBe(true);
+    expect(loaded.getTempoMap().beatsToSeconds(4.0)).toBeCloseTo(
+      original.getTempoMap().beatsToSeconds(4.0),
+      4,
+    );
+    expect(
+      loaded.getMeterMap().get(0).getMeter().equals(original.getMeterMap().get(0).getMeter()),
+    ).toBe(true);
   });
 
   it('testDefaultContextSampleRateIs44100', () => {

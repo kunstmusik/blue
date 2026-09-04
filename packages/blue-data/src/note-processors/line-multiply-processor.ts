@@ -20,11 +20,19 @@ export class LineMultiplyProcessor extends NoteProcessor {
     }
   }
 
-  getPfield(): string { return this._pfield.toString(); }
-  setPfield(pfield: string): void { this._pfield = parseInt(pfield, 10); }
+  getPfield(): string {
+    return this._pfield.toString();
+  }
+  setPfield(pfield: string): void {
+    this._pfield = parseInt(pfield, 10);
+  }
 
-  getLineMultiplyString(): string { return this._lineMultiplyString; }
-  setLineMultiplyString(lineMultiplyString: string): void { this._lineMultiplyString = lineMultiplyString; }
+  getLineMultiplyString(): string {
+    return this._lineMultiplyString;
+  }
+  setLineMultiplyString(lineMultiplyString: string): void {
+    this._lineMultiplyString = lineMultiplyString;
+  }
 
   override process(notes: NoteList): NoteList {
     const tm = ValueTimeMapper.createValueTimeMapper(this._lineMultiplyString);
@@ -52,7 +60,9 @@ export class LineMultiplyProcessor extends NoteProcessor {
     return notes;
   }
 
-  override getDisplayName(): string { return 'LineMultiplyProcessor'; }
+  override getDisplayName(): string {
+    return 'LineMultiplyProcessor';
+  }
 
   override deepCopy(): LineMultiplyProcessor {
     return new LineMultiplyProcessor(this);

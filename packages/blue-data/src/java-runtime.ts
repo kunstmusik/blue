@@ -198,9 +198,7 @@ export function setJavaRuntimeClient(
   compileData.clearCompilationVariable(JAVA_RUNTIME_CLIENT_KEY);
 }
 
-export function getJavaRuntimeClient(
-  compileData: CompileData,
-): JavaRuntimeClientContract | null {
+export function getJavaRuntimeClient(compileData: CompileData): JavaRuntimeClientContract | null {
   const runtimeClient = compileData.getCompilationVariable(JAVA_RUNTIME_CLIENT_KEY);
   return (runtimeClient as JavaRuntimeClientContract | null | undefined) ?? null;
 }

@@ -18,7 +18,6 @@ function EmptyState({ message }: { message: string }): React.ReactElement {
   );
 }
 
-
 export default function ScoreObjectEditorPanel(): React.ReactElement {
   const loaded = useProjectStore((s) => s.loaded);
   const score = useProjectStore((s) => s.score);
@@ -58,17 +57,18 @@ export default function ScoreObjectEditorPanel(): React.ReactElement {
   const libraryEditorSession = useLibraryEditorStore((state) => {
     const libraryId = editorTarget?.library?.libraryId;
     if (!libraryId) return undefined;
-    return Object.values(state.sessions).find((session) => (
-      session.key.scope !== 'user'
-      && session.key.locator.kind === 'soundObject'
-      && session.key.locator.libraryId === libraryId
-    ));
+    return Object.values(state.sessions).find(
+      (session) =>
+        session.key.scope !== 'user' &&
+        session.key.locator.kind === 'soundObject' &&
+        session.key.locator.libraryId === libraryId,
+    );
   });
   const previousLibrarySessionState = useRef<{ sessionId: string; dirty: boolean } | null>(null);
 
-  const audioClipEditorPreview = useProjectStore((s) => (
-    selectedObjectId ? s.audioClipEditorPreviewByObjectId[selectedObjectId] ?? null : null
-  ));
+  const audioClipEditorPreview = useProjectStore((s) =>
+    selectedObjectId ? (s.audioClipEditorPreviewByObjectId[selectedObjectId] ?? null) : null,
+  );
 
   useEffect(() => {
     if (!loaded || !selectedObjectId) {
@@ -81,18 +81,23 @@ export default function ScoreObjectEditorPanel(): React.ReactElement {
     }
     let cancelled = false;
     setLoading(true);
-    window.blueAPI.getScoreObjectEditorDocument({ target: editorTarget }).then((doc) => {
-      if (!cancelled) {
-        setDocument(doc);
-        setLoading(false);
-      }
-    }).catch(() => {
-      if (!cancelled) {
-        setDocument(null);
-        setLoading(false);
-      }
-    });
-    return () => { cancelled = true; };
+    window.blueAPI
+      .getScoreObjectEditorDocument({ target: editorTarget })
+      .then((doc) => {
+        if (!cancelled) {
+          setDocument(doc);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setDocument(null);
+          setLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [loaded, selectedObjectId, editorTargetKey]);
 
   useEffect(() => {
@@ -109,8 +114,17 @@ export default function ScoreObjectEditorPanel(): React.ReactElement {
         if (!cancelled) setDocument(null);
       }
     })();
-    return () => { cancelled = true; };
-  }, [document?.editor.kind, loaded, selectedObjectId, editorTargetKey, lastScorePatch, flushPendingPatches]);
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    document?.editor.kind,
+    loaded,
+    selectedObjectId,
+    editorTargetKey,
+    lastScorePatch,
+    flushPendingPatches,
+  ]);
 
   useEffect(() => {
     const previous = previousLibrarySessionState.current;
@@ -118,12 +132,13 @@ export default function ScoreObjectEditorPanel(): React.ReactElement {
       ? { sessionId: libraryEditorSession.sessionId, dirty: libraryEditorSession.dirty }
       : null;
     if (
-      !libraryEditorSession
-      || previous?.sessionId !== libraryEditorSession.sessionId
-      || !previous.dirty
-      || libraryEditorSession.dirty
-      || !editorTarget
-    ) return;
+      !libraryEditorSession ||
+      previous?.sessionId !== libraryEditorSession.sessionId ||
+      !previous.dirty ||
+      libraryEditorSession.dirty ||
+      !editorTarget
+    )
+      return;
 
     let cancelled = false;
     void (async () => {
@@ -135,7 +150,9 @@ export default function ScoreObjectEditorPanel(): React.ReactElement {
         if (!cancelled) setDocument(null);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [editorTargetKey, flushPendingPatches, libraryEditorSession?.dirty]);
 
   useEffect(() => {
@@ -156,10 +173,13 @@ export default function ScoreObjectEditorPanel(): React.ReactElement {
     });
   }, [audioClipEditorPreview]);
 
-  const handlePatch = useCallback((patch: ScorePatch): void => {
-    applyProjectDocumentPatch({ score: patch });
-    setDocument((current) => (current ? applyPatchToDocument(current, patch) : current));
-  }, [applyProjectDocumentPatch]);
+  const handlePatch = useCallback(
+    (patch: ScorePatch): void => {
+      applyProjectDocumentPatch({ score: patch });
+      setDocument((current) => (current ? applyPatchToDocument(current, patch) : current));
+    },
+    [applyProjectDocumentPatch],
+  );
 
   if (!loaded) {
     return <EmptyState message="No project loaded" />;

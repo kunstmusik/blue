@@ -29,7 +29,18 @@ export interface DiskCommandInputs {
   messageColorsEnabled: boolean;
 }
 
-const AUDIO_EXTENSIONS = ['.wav', '.aiff', '.aif', '.aifc', '.flac', '.au', '.raw', '.w64', '.wavex', '.sd2'];
+const AUDIO_EXTENSIONS = [
+  '.wav',
+  '.aiff',
+  '.aif',
+  '.aifc',
+  '.flac',
+  '.au',
+  '.raw',
+  '.w64',
+  '.wavex',
+  '.sd2',
+];
 
 /**
  * Compute the disk message-level bitmask from project properties.
@@ -53,12 +64,12 @@ export function tokenizeCommand(text: string): string[] {
   const matches = trimmed.match(/"[^"]*"|'[^']*'|\S+/g) ?? [];
   return matches
     .map((token) => token.trim())
-    .map((token) => (
-      (token.startsWith('"') && token.endsWith('"'))
-      || (token.startsWith("'") && token.endsWith("'"))
+    .map((token) =>
+      (token.startsWith('"') && token.endsWith('"')) ||
+      (token.startsWith("'") && token.endsWith("'"))
         ? token.slice(1, -1)
-        : token
-    ))
+        : token,
+    )
     .filter((token) => token.length > 0);
 }
 
@@ -93,7 +104,10 @@ export function extractOutputFromCommand(args: string[]): string | null {
  * Does NOT include the executable, the project message flag, project advanced
  * settings, or the output file.
  */
-function buildDiskRenderFlags(diskRender: DiskRenderSettingsSnapshot, messageColorsEnabled: boolean): string[] {
+function buildDiskRenderFlags(
+  diskRender: DiskRenderSettingsSnapshot,
+  messageColorsEnabled: boolean,
+): string[] {
   const flags: string[] = [];
 
   if (!messageColorsEnabled) {

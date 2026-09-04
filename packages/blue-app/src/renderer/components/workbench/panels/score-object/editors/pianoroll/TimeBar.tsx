@@ -103,7 +103,7 @@ function RulerRow({
     <div
       className={cn(
         'relative overflow-hidden border-b border-blue-border/20',
-        secondary ? 'bg-app-input' : 'bg-app-surface-strong'
+        secondary ? 'bg-app-input' : 'bg-app-surface-strong',
       )}
       style={{ width: totalBeats * pixelSecond, height: PIANO_ROLL_RULER_ROW_HEIGHT }}
     >
@@ -114,7 +114,10 @@ function RulerRow({
           style={{
             left: mark.x,
             top: mark.type === 'major' ? 0 : PIANO_ROLL_RULER_ROW_HEIGHT * 0.5,
-            height: mark.type === 'major' ? PIANO_ROLL_RULER_ROW_HEIGHT : PIANO_ROLL_RULER_ROW_HEIGHT * 0.5,
+            height:
+              mark.type === 'major'
+                ? PIANO_ROLL_RULER_ROW_HEIGHT
+                : PIANO_ROLL_RULER_ROW_HEIGHT * 0.5,
             borderLeft: `1px solid ${mark.type === 'major' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.09)'}`,
           }}
         >
@@ -177,7 +180,12 @@ function formatBeat(beats: number): string {
   return beats === Math.floor(beats) ? String(Math.round(beats)) : beats.toFixed(1);
 }
 
-function computeTimeMarks(totalBeats: number, pixelsPerBeat: number, tempo: number, format: string): Mark[] {
+function computeTimeMarks(
+  totalBeats: number,
+  pixelsPerBeat: number,
+  tempo: number,
+  format: string,
+): Mark[] {
   const secondsPerBeat = 60 / tempo;
   const totalSeconds = totalBeats * secondsPerBeat;
   const nticks = Math.max((totalBeats * pixelsPerBeat) / 80, 2);
@@ -195,9 +203,10 @@ function computeTimeMarks(totalBeats: number, pixelsPerBeat: number, tempo: numb
     if (x >= 0 && x <= totalBeats * pixelsPerBeat) {
       marks.push({
         x,
-        label: format === TimeBase.SECONDS
-          ? formatSecondsWithPrecision(seconds, nfrac)
-          : formatTimeWithPrecision(seconds, nfrac),
+        label:
+          format === TimeBase.SECONDS
+            ? formatSecondsWithPrecision(seconds, nfrac)
+            : formatTimeWithPrecision(seconds, nfrac),
         type: 'major',
       });
     }
@@ -205,14 +214,31 @@ function computeTimeMarks(totalBeats: number, pixelsPerBeat: number, tempo: numb
   return marks;
 }
 
-function computeSmpteMarks(totalBeats: number, pixelsPerBeat: number, tempo: number, frameRate: number): Mark[] {
+function computeSmpteMarks(
+  totalBeats: number,
+  pixelsPerBeat: number,
+  tempo: number,
+  frameRate: number,
+): Mark[] {
   const secondsPerBeat = 60 / tempo;
   const totalSeconds = totalBeats * secondsPerBeat;
   const pixelsPerSecond = pixelsPerBeat / secondsPerBeat;
   const minSecPerLabel = 80 / pixelsPerSecond;
   const increments = [
-    1 / frameRate, 2 / frameRate, 5 / frameRate, 10 / frameRate,
-    0.5, 1, 2, 5, 10, 30, 60, 120, 300, 600,
+    1 / frameRate,
+    2 / frameRate,
+    5 / frameRate,
+    10 / frameRate,
+    0.5,
+    1,
+    2,
+    5,
+    10,
+    30,
+    60,
+    120,
+    300,
+    600,
   ];
   let increment = increments[increments.length - 1]!;
   for (const inc of increments) {
@@ -232,7 +258,12 @@ function computeSmpteMarks(totalBeats: number, pixelsPerBeat: number, tempo: num
   return marks;
 }
 
-function computeSamplesMarks(totalBeats: number, pixelsPerBeat: number, tempo: number, sampleRate: number): Mark[] {
+function computeSamplesMarks(
+  totalBeats: number,
+  pixelsPerBeat: number,
+  tempo: number,
+  sampleRate: number,
+): Mark[] {
   const safeSampleRate = sampleRate > 0 ? sampleRate : 44100;
   const secondsPerBeat = 60 / tempo;
   const totalSamples = totalBeats * secondsPerBeat * safeSampleRate;
@@ -255,7 +286,11 @@ function computeSamplesMarks(totalBeats: number, pixelsPerBeat: number, tempo: n
   return marks;
 }
 
-function computeMeasureMarks(totalBeats: number, pixelsPerBeat: number, meters: MeterEntry[]): Mark[] {
+function computeMeasureMarks(
+  totalBeats: number,
+  pixelsPerBeat: number,
+  meters: MeterEntry[],
+): Mark[] {
   const meterTimeline = normalizeMeterEntries(meters);
   const firstMeter = meterTimeline[0]!;
   const beatsPerMeasure = firstMeter.beatsPerMeasure;
@@ -302,18 +337,18 @@ function computeMeasureMarks(totalBeats: number, pixelsPerBeat: number, meters: 
 }
 
 function normalizeMeterEntries(meters: MeterEntry[]): MeterTimelineEntry[] {
-  const entries = meters.length > 0
-    ? meters
-    : [{ measure: 1, numBeats: 4, beatLength: 4 }];
+  const entries = meters.length > 0 ? meters : [{ measure: 1, numBeats: 4, beatLength: 4 }];
   const sortedEntries = [...entries].sort((a, b) => a.measure - b.measure);
   const timeline: MeterTimelineEntry[] = [];
 
   sortedEntries.forEach((entry, index) => {
     const beatsPerMeasure = entry.numBeats * (4 / entry.beatLength);
-    const startBeat = index === 0
-      ? 0
-      : timeline[index - 1]!.startBeat
-        + (entry.measure - sortedEntries[index - 1]!.measure) * timeline[index - 1]!.beatsPerMeasure;
+    const startBeat =
+      index === 0
+        ? 0
+        : timeline[index - 1]!.startBeat +
+          (entry.measure - sortedEntries[index - 1]!.measure) *
+            timeline[index - 1]!.beatsPerMeasure;
 
     timeline.push({ ...entry, startBeat, beatsPerMeasure });
   });
@@ -329,9 +364,8 @@ function getMeasureStartBeat(meterTimeline: MeterTimelineEntry[], measureNumber:
 
   for (let i = 0; i < meterTimeline.length; i += 1) {
     const entry = meterTimeline[i]!;
-    const meterEndMeasure = i + 1 < meterTimeline.length
-      ? meterTimeline[i + 1]!.measure
-      : Number.POSITIVE_INFINITY;
+    const meterEndMeasure =
+      i + 1 < meterTimeline.length ? meterTimeline[i + 1]!.measure : Number.POSITIVE_INFINITY;
 
     if (measureNumber <= entry.measure) break;
 
@@ -349,7 +383,10 @@ function getMeasureStartBeat(meterTimeline: MeterTimelineEntry[], measureNumber:
   return beats;
 }
 
-function getMeterAtMeasure(meterTimeline: MeterTimelineEntry[], measureNumber: number): MeterTimelineEntry {
+function getMeterAtMeasure(
+  meterTimeline: MeterTimelineEntry[],
+  measureNumber: number,
+): MeterTimelineEntry {
   let meter = meterTimeline[0]!;
   for (const entry of meterTimeline) {
     if (entry.measure <= measureNumber) {

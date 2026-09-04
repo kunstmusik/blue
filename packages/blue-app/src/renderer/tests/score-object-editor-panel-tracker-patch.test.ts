@@ -50,13 +50,15 @@ describe('ScoreObjectEditorPanel tracker optimistic patching', () => {
   it('round-trips tracker keyboard toolbar state through the canonical object', () => {
     const { data, doc } = makeTrackerHarness(1, 8);
 
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'updateTypeSpecificEditor',
-        target: doc.target,
-        patch: { showNoteNames: true, octave: 3 },
-      },
-    })).toBe(true);
+    expect(
+      applyProjectDocumentPatch(data, {
+        score: {
+          type: 'updateTypeSpecificEditor',
+          target: doc.target,
+          patch: { showNoteNames: true, octave: 3 },
+        },
+      }),
+    ).toBe(true);
 
     const refreshed = createScoreObjectEditorDocument(data, { target: doc.target });
     expect(refreshed?.editor.kind).toBe('tracker');
@@ -77,7 +79,9 @@ describe('ScoreObjectEditorPanel tracker optimistic patching', () => {
     if (next.editor.kind !== 'tracker') return;
 
     expect(next.editor.tracks).toHaveLength(2);
-    expect(next.editor.tracks[1]?.columns.map((col) => ({ name: col.name, type: col.type }))).toEqual([
+    expect(
+      next.editor.tracks[1]?.columns.map((col) => ({ name: col.name, type: col.type })),
+    ).toEqual([
       { name: 'pch', type: 0 },
       { name: 'db', type: 4 },
     ]);
@@ -202,12 +206,16 @@ describe('ScoreObjectEditorPanel tracker optimistic patching', () => {
     const duplicated = applyPatchToDocument(withBaseNote, {
       type: 'updateTypeSpecificEditor',
       target: withBaseNote.target,
-      patch: { trackerAction: { type: 'clearOrDuplicate', trackIndex: 0, stepIndex: 1, columnIndex: 0 } },
+      patch: {
+        trackerAction: { type: 'clearOrDuplicate', trackIndex: 0, stepIndex: 1, columnIndex: 0 },
+      },
     });
     const cleared = applyPatchToDocument(duplicated, {
       type: 'updateTypeSpecificEditor',
       target: duplicated.target,
-      patch: { trackerAction: { type: 'clearOrDuplicate', trackIndex: 0, stepIndex: 1, columnIndex: 0 } },
+      patch: {
+        trackerAction: { type: 'clearOrDuplicate', trackIndex: 0, stepIndex: 1, columnIndex: 0 },
+      },
     });
     const setOff = applyPatchToDocument(cleared, {
       type: 'updateTypeSpecificEditor',
@@ -217,7 +225,9 @@ describe('ScoreObjectEditorPanel tracker optimistic patching', () => {
     const clearedOff = applyPatchToDocument(setOff, {
       type: 'updateTypeSpecificEditor',
       target: setOff.target,
-      patch: { trackerAction: { type: 'clearOrDuplicate', trackIndex: 0, stepIndex: 1, columnIndex: 0 } },
+      patch: {
+        trackerAction: { type: 'clearOrDuplicate', trackIndex: 0, stepIndex: 1, columnIndex: 0 },
+      },
     });
 
     expect(duplicated.editor.kind).toBe('tracker');
@@ -225,11 +235,12 @@ describe('ScoreObjectEditorPanel tracker optimistic patching', () => {
     expect(setOff.editor.kind).toBe('tracker');
     expect(clearedOff.editor.kind).toBe('tracker');
     if (
-      duplicated.editor.kind !== 'tracker'
-      || cleared.editor.kind !== 'tracker'
-      || setOff.editor.kind !== 'tracker'
-      || clearedOff.editor.kind !== 'tracker'
-    ) return;
+      duplicated.editor.kind !== 'tracker' ||
+      cleared.editor.kind !== 'tracker' ||
+      setOff.editor.kind !== 'tracker' ||
+      clearedOff.editor.kind !== 'tracker'
+    )
+      return;
 
     expect(duplicated.editor.rows[1]?.['track-0-col-0']).toBe('8.05');
     expect(duplicated.editor.rows[1]?.['track-0-col-1']).toBe('82');

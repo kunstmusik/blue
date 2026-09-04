@@ -45,7 +45,12 @@ export const ALGORITHM_DEFINITIONS: Record<number, AlgoSpec> = {
       { num: 4, col: 1, row: 2, isCarrier: false },
       { num: 3, col: 1, row: 3, isCarrier: true },
     ],
-    conns: [[2, 1], [6, 5], [5, 4], [4, 3]],
+    conns: [
+      [2, 1],
+      [6, 5],
+      [5, 4],
+      [4, 3],
+    ],
     fb: [6, 6],
   },
   2: {
@@ -57,7 +62,12 @@ export const ALGORITHM_DEFINITIONS: Record<number, AlgoSpec> = {
       { num: 4, col: 1, row: 2, isCarrier: false },
       { num: 3, col: 1, row: 3, isCarrier: true },
     ],
-    conns: [[2, 1], [6, 5], [5, 4], [4, 3]],
+    conns: [
+      [2, 1],
+      [6, 5],
+      [5, 4],
+      [4, 3],
+    ],
     fb: [2, 2],
   },
   3: {
@@ -69,7 +79,12 @@ export const ALGORITHM_DEFINITIONS: Record<number, AlgoSpec> = {
       { num: 5, col: 1, row: 2, isCarrier: false },
       { num: 4, col: 1, row: 3, isCarrier: true },
     ],
-    conns: [[3, 2], [2, 1], [6, 5], [5, 4]],
+    conns: [
+      [3, 2],
+      [2, 1],
+      [6, 5],
+      [5, 4],
+    ],
     fb: [6, 6],
   },
   4: {
@@ -81,7 +96,12 @@ export const ALGORITHM_DEFINITIONS: Record<number, AlgoSpec> = {
       { num: 5, col: 1, row: 2, isCarrier: false },
       { num: 4, col: 1, row: 3, isCarrier: true },
     ],
-    conns: [[3, 2], [2, 1], [6, 5], [5, 4]],
+    conns: [
+      [3, 2],
+      [2, 1],
+      [6, 5],
+      [5, 4],
+    ],
     fb: [4, 6],
   },
   5: {
@@ -93,7 +113,11 @@ export const ALGORITHM_DEFINITIONS: Record<number, AlgoSpec> = {
       { num: 6, col: 2, row: 2, isCarrier: false },
       { num: 5, col: 2, row: 3, isCarrier: true },
     ],
-    conns: [[2, 1], [4, 3], [6, 5]],
+    conns: [
+      [2, 1],
+      [4, 3],
+      [6, 5],
+    ],
     fb: [6, 6],
   },
   6: {
@@ -105,7 +129,11 @@ export const ALGORITHM_DEFINITIONS: Record<number, AlgoSpec> = {
       { num: 6, col: 2, row: 2, isCarrier: false },
       { num: 5, col: 2, row: 3, isCarrier: true },
     ],
-    conns: [[2, 1], [4, 3], [6, 5]],
+    conns: [
+      [2, 1],
+      [4, 3],
+      [6, 5],
+    ],
     fb: [5, 6],
   },
   7: {
@@ -117,7 +145,12 @@ export const ALGORITHM_DEFINITIONS: Record<number, AlgoSpec> = {
       { num: 6, col: 2, row: 1, isCarrier: false },
       { num: 5, col: 2, row: 2, isCarrier: false },
     ],
-    conns: [[2, 1], [6, 5], [4, 3], [5, 3]],
+    conns: [
+      [2, 1],
+      [6, 5],
+      [4, 3],
+      [5, 3],
+    ],
     fb: [6, 6],
   },
   8: {
@@ -129,7 +162,12 @@ export const ALGORITHM_DEFINITIONS: Record<number, AlgoSpec> = {
       { num: 6, col: 2, row: 1, isCarrier: false },
       { num: 5, col: 2, row: 2, isCarrier: false },
     ],
-    conns: [[2, 1], [6, 5], [4, 3], [5, 3]],
+    conns: [
+      [2, 1],
+      [6, 5],
+      [4, 3],
+      [5, 3],
+    ],
     fb: [4, 4],
   },
   9: {
@@ -141,7 +179,12 @@ export const ALGORITHM_DEFINITIONS: Record<number, AlgoSpec> = {
       { num: 6, col: 2, row: 1, isCarrier: false },
       { num: 5, col: 2, row: 2, isCarrier: false },
     ],
-    conns: [[2, 1], [6, 5], [4, 3], [5, 3]],
+    conns: [
+      [2, 1],
+      [6, 5],
+      [4, 3],
+      [5, 3],
+    ],
     fb: [2, 2],
   },
   10: {
@@ -153,7 +196,12 @@ export const ALGORITHM_DEFINITIONS: Record<number, AlgoSpec> = {
       { num: 2, col: 2, row: 2, isCarrier: false },
       { num: 1, col: 2, row: 3, isCarrier: true },
     ],
-    conns: [[3, 2], [2, 1], [5, 4], [6, 4]],
+    conns: [
+      [3, 2],
+      [2, 1],
+      [5, 4],
+      [6, 4],
+    ],
     fb: [3, 3],
   },
   11: {
@@ -165,7 +213,12 @@ export const ALGORITHM_DEFINITIONS: Record<number, AlgoSpec> = {
       { num: 2, col: 2, row: 2, isCarrier: false },
       { num: 1, col: 2, row: 3, isCarrier: true },
     ],
-    conns: [[3, 2], [2, 1], [5, 4], [6, 4]],
+    conns: [
+      [3, 2],
+      [2, 1],
+      [5, 4],
+      [6, 4],
+    ],
     fb: [6, 6],
   },
   12: {
@@ -177,7 +230,12 @@ export const ALGORITHM_DEFINITIONS: Record<number, AlgoSpec> = {
       { num: 2, col: 3, row: 2, isCarrier: false },
       { num: 1, col: 3, row: 3, isCarrier: true },
     ],
-    conns: [[2, 1], [4, 3], [5, 3], [6, 3]],
+    conns: [
+      [2, 1],
+      [4, 3],
+      [5, 3],
+      [6, 3],
+    ],
     fb: [2, 2],
   },
   13: {
@@ -189,7 +247,12 @@ export const ALGORITHM_DEFINITIONS: Record<number, AlgoSpec> = {
       { num: 2, col: 3, row: 2, isCarrier: false },
       { num: 1, col: 3, row: 3, isCarrier: true },
     ],
-    conns: [[2, 1], [4, 3], [5, 3], [6, 3]],
+    conns: [
+      [2, 1],
+      [4, 3],
+      [5, 3],
+      [6, 3],
+    ],
     fb: [6, 6],
   },
   14: {
@@ -201,7 +264,12 @@ export const ALGORITHM_DEFINITIONS: Record<number, AlgoSpec> = {
       { num: 4, col: 1, row: 2, isCarrier: false },
       { num: 3, col: 1, row: 3, isCarrier: true },
     ],
-    conns: [[2, 1], [5, 4], [6, 4], [4, 3]],
+    conns: [
+      [2, 1],
+      [5, 4],
+      [6, 4],
+      [4, 3],
+    ],
     fb: [6, 6],
   },
   15: {
@@ -213,7 +281,12 @@ export const ALGORITHM_DEFINITIONS: Record<number, AlgoSpec> = {
       { num: 4, col: 1, row: 2, isCarrier: false },
       { num: 3, col: 1, row: 3, isCarrier: true },
     ],
-    conns: [[2, 1], [5, 4], [6, 4], [4, 3]],
+    conns: [
+      [2, 1],
+      [5, 4],
+      [6, 4],
+      [4, 3],
+    ],
     fb: [2, 2],
   },
   16: {
@@ -225,7 +298,13 @@ export const ALGORITHM_DEFINITIONS: Record<number, AlgoSpec> = {
       { num: 6, col: 2, row: 1, isCarrier: false },
       { num: 5, col: 2, row: 2, isCarrier: false },
     ],
-    conns: [[4, 3], [6, 5], [2, 1], [3, 1], [5, 1]],
+    conns: [
+      [4, 3],
+      [6, 5],
+      [2, 1],
+      [3, 1],
+      [5, 1],
+    ],
     fb: [6, 6],
   },
   17: {
@@ -237,7 +316,13 @@ export const ALGORITHM_DEFINITIONS: Record<number, AlgoSpec> = {
       { num: 6, col: 2, row: 1, isCarrier: false },
       { num: 5, col: 2, row: 2, isCarrier: false },
     ],
-    conns: [[4, 3], [6, 5], [2, 1], [3, 1], [5, 1]],
+    conns: [
+      [4, 3],
+      [6, 5],
+      [2, 1],
+      [3, 1],
+      [5, 1],
+    ],
     fb: [2, 2],
   },
   18: {
@@ -249,7 +334,13 @@ export const ALGORITHM_DEFINITIONS: Record<number, AlgoSpec> = {
       { num: 5, col: 2, row: 1, isCarrier: false },
       { num: 4, col: 2, row: 2, isCarrier: false },
     ],
-    conns: [[6, 5], [5, 4], [2, 1], [3, 1], [4, 1]],
+    conns: [
+      [6, 5],
+      [5, 4],
+      [2, 1],
+      [3, 1],
+      [4, 1],
+    ],
     fb: [3, 3],
   },
   19: {
@@ -261,7 +352,12 @@ export const ALGORITHM_DEFINITIONS: Record<number, AlgoSpec> = {
       { num: 4, col: 1, row: 3, isCarrier: true },
       { num: 5, col: 2, row: 3, isCarrier: true },
     ],
-    conns: [[3, 2], [2, 1], [6, 4], [6, 5]],
+    conns: [
+      [3, 2],
+      [2, 1],
+      [6, 4],
+      [6, 5],
+    ],
     fb: [6, 6],
   },
   20: {
@@ -273,7 +369,12 @@ export const ALGORITHM_DEFINITIONS: Record<number, AlgoSpec> = {
       { num: 6, col: '20_col2_mid', row: 2, isCarrier: false },
       { num: 4, col: '20_col2_mid', row: 3, isCarrier: true },
     ],
-    conns: [[3, 1], [3, 2], [5, 4], [6, 4]],
+    conns: [
+      [3, 1],
+      [3, 2],
+      [5, 4],
+      [6, 4],
+    ],
     fb: [3, 3],
   },
   21: {
@@ -285,7 +386,12 @@ export const ALGORITHM_DEFINITIONS: Record<number, AlgoSpec> = {
       { num: 4, col: 2, row: 3, isCarrier: true },
       { num: 5, col: 3, row: 3, isCarrier: true },
     ],
-    conns: [[3, 1], [3, 2], [6, 4], [6, 5]],
+    conns: [
+      [3, 1],
+      [3, 2],
+      [6, 4],
+      [6, 5],
+    ],
     fb: [3, 3],
   },
   22: {
@@ -297,7 +403,12 @@ export const ALGORITHM_DEFINITIONS: Record<number, AlgoSpec> = {
       { num: 4, col: 2, row: 3, isCarrier: true },
       { num: 5, col: 3, row: 3, isCarrier: true },
     ],
-    conns: [[2, 1], [6, 3], [6, 4], [6, 5]],
+    conns: [
+      [2, 1],
+      [6, 3],
+      [6, 4],
+      [6, 5],
+    ],
     fb: [6, 6],
   },
   23: {
@@ -309,7 +420,11 @@ export const ALGORITHM_DEFINITIONS: Record<number, AlgoSpec> = {
       { num: 4, col: 2, row: 3, isCarrier: true },
       { num: 5, col: 3, row: 3, isCarrier: true },
     ],
-    conns: [[3, 2], [6, 4], [6, 5]],
+    conns: [
+      [3, 2],
+      [6, 4],
+      [6, 5],
+    ],
     fb: [6, 6],
   },
   24: {
@@ -321,7 +436,11 @@ export const ALGORITHM_DEFINITIONS: Record<number, AlgoSpec> = {
       { num: 4, col: 3, row: 3, isCarrier: true },
       { num: 5, col: 4, row: 3, isCarrier: true },
     ],
-    conns: [[6, 3], [6, 4], [6, 5]],
+    conns: [
+      [6, 3],
+      [6, 4],
+      [6, 5],
+    ],
     fb: [6, 6],
   },
   25: {
@@ -333,7 +452,10 @@ export const ALGORITHM_DEFINITIONS: Record<number, AlgoSpec> = {
       { num: 4, col: 3, row: 3, isCarrier: true },
       { num: 5, col: 4, row: 3, isCarrier: true },
     ],
-    conns: [[6, 4], [6, 5]],
+    conns: [
+      [6, 4],
+      [6, 5],
+    ],
     fb: [6, 6],
   },
   26: {
@@ -345,7 +467,11 @@ export const ALGORITHM_DEFINITIONS: Record<number, AlgoSpec> = {
       { num: 6, col: 3, row: 2, isCarrier: false },
       { num: 4, col: 3, row: 3, isCarrier: true },
     ],
-    conns: [[3, 4], [5, 4], [6, 4]],
+    conns: [
+      [3, 4],
+      [5, 4],
+      [6, 4],
+    ],
     fb: [6, 6],
   },
   27: {
@@ -357,7 +483,11 @@ export const ALGORITHM_DEFINITIONS: Record<number, AlgoSpec> = {
       { num: 6, col: 3, row: 2, isCarrier: false },
       { num: 4, col: 3, row: 3, isCarrier: true },
     ],
-    conns: [[3, 4], [5, 4], [6, 4]],
+    conns: [
+      [3, 4],
+      [5, 4],
+      [6, 4],
+    ],
     fb: [3, 3],
   },
   28: {
@@ -369,7 +499,11 @@ export const ALGORITHM_DEFINITIONS: Record<number, AlgoSpec> = {
       { num: 3, col: 1, row: 3, isCarrier: true },
       { num: 6, col: 2, row: 3, isCarrier: true },
     ],
-    conns: [[2, 1], [5, 4], [4, 3]],
+    conns: [
+      [2, 1],
+      [5, 4],
+      [4, 3],
+    ],
     fb: [5, 5],
   },
   29: {
@@ -381,7 +515,10 @@ export const ALGORITHM_DEFINITIONS: Record<number, AlgoSpec> = {
       { num: 6, col: 3, row: 2, isCarrier: false },
       { num: 5, col: 3, row: 3, isCarrier: true },
     ],
-    conns: [[4, 3], [6, 5]],
+    conns: [
+      [4, 3],
+      [6, 5],
+    ],
     fb: [6, 6],
   },
   30: {
@@ -393,7 +530,10 @@ export const ALGORITHM_DEFINITIONS: Record<number, AlgoSpec> = {
       { num: 3, col: 2, row: 3, isCarrier: true },
       { num: 6, col: 3, row: 3, isCarrier: true },
     ],
-    conns: [[5, 4], [4, 3]],
+    conns: [
+      [5, 4],
+      [4, 3],
+    ],
     fb: [5, 5],
   },
   31: {
@@ -441,21 +581,24 @@ export const AlgorithmSvg: React.FC<AlgorithmSvgProps> = ({
 }) => {
   const spec = ALGORITHM_DEFINITIONS[algorithm] ?? ALGORITHM_DEFINITIONS[1];
 
-  const opsDict: Record<number, {
-    cx: number;
-    cy: number;
-    x: number;
-    y: number;
-    top: number;
-    bottom: number;
-    left: number;
-    right: number;
-    num: number;
-    isCarrier: boolean;
-  }> = {};
+  const opsDict: Record<
+    number,
+    {
+      cx: number;
+      cy: number;
+      x: number;
+      y: number;
+      top: number;
+      bottom: number;
+      left: number;
+      right: number;
+      num: number;
+      isCarrier: boolean;
+    }
+  > = {};
 
   for (const op of spec.ops) {
-    const cx = typeof op.col === 'number' ? (16.0 + op.col * COL_STEP) : (COLS[op.col] ?? 16.0);
+    const cx = typeof op.col === 'number' ? 16.0 + op.col * COL_STEP : (COLS[op.col] ?? 16.0);
     const cy = ROW_CENTERS[op.row] ?? 16.0;
     const x = cx - BOX_W / 2;
     const y = cy - BOX_H / 2;
@@ -593,12 +736,8 @@ export const AlgorithmSvg: React.FC<AlgorithmSvgProps> = ({
 
       {Object.values(opsDict).map((layout) => {
         const isEnabled = operatorEnabled ? (operatorEnabled[layout.num - 1] ?? true) : true;
-        const fillCol = isEnabled
-          ? (layout.isCarrier ? '#1b4d3e' : '#203a63')
-          : '#0f172a';
-        const strokeCol = isEnabled
-          ? (layout.isCarrier ? '#38a169' : '#5a85c3')
-          : '#475569';
+        const fillCol = isEnabled ? (layout.isCarrier ? '#1b4d3e' : '#203a63') : '#0f172a';
+        const strokeCol = isEnabled ? (layout.isCarrier ? '#38a169' : '#5a85c3') : '#475569';
         const textCol = isEnabled ? '#f1f5f9' : '#64748b';
 
         return (
@@ -609,18 +748,30 @@ export const AlgorithmSvg: React.FC<AlgorithmSvgProps> = ({
             tabIndex={interactive ? 0 : undefined}
             aria-label={`Operator ${layout.num}: ${isEnabled ? 'Enabled' : 'Muted'} (click to toggle)`}
             aria-pressed={interactive ? isEnabled : undefined}
-            onClick={interactive ? (e) => {
-              e.stopPropagation();
-              onToggleOperator?.(layout.num - 1);
-            } : undefined}
-            onKeyDown={interactive ? (e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                e.stopPropagation();
-                onToggleOperator?.(layout.num - 1);
-              }
-            } : undefined}
-            className={interactive ? 'cursor-pointer transition-transform duration-100 hover:scale-110 origin-center' : undefined}
+            onClick={
+              interactive
+                ? (e) => {
+                    e.stopPropagation();
+                    onToggleOperator?.(layout.num - 1);
+                  }
+                : undefined
+            }
+            onKeyDown={
+              interactive
+                ? (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onToggleOperator?.(layout.num - 1);
+                    }
+                  }
+                : undefined
+            }
+            className={
+              interactive
+                ? 'cursor-pointer transition-transform duration-100 hover:scale-110 origin-center'
+                : undefined
+            }
             style={{ transformOrigin: `${layout.cx}px ${layout.cy}px` }}
           >
             <title>{`Operator ${layout.num}: ${isEnabled ? 'Enabled (click to mute)' : 'Muted (click to enable)'}`}</title>

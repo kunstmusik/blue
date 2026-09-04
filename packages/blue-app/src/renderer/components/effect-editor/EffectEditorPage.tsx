@@ -16,7 +16,10 @@ function closeWindow(): void {
   window.close();
 }
 
-function parseRequestFromLocation(): { request: EffectEditorRequest; mode: 'interface' | 'edit' } | null {
+function parseRequestFromLocation(): {
+  request: EffectEditorRequest;
+  mode: 'interface' | 'edit';
+} | null {
   const params = new URLSearchParams(window.location.search);
   const effectId = params.get('effectId');
   const ownerType = params.get('ownerType');
@@ -89,14 +92,15 @@ export default function EffectEditorPage(): React.ReactElement {
   useEffect(() => {
     if (!request || editorImportStarted.current) return;
     editorImportStarted.current = true;
-    const loading = mode === 'interface'
-      ? import('./EffectInterfacePanel')
-      : import('./EffectEditorPanel');
-    void loading.then((module) => {
-      setLoadedEditor(() => module.default);
-    }).catch((loadError: unknown) => {
-      setError(loadError instanceof Error ? loadError.message : String(loadError));
-    });
+    const loading =
+      mode === 'interface' ? import('./EffectInterfacePanel') : import('./EffectEditorPanel');
+    void loading
+      .then((module) => {
+        setLoadedEditor(() => module.default);
+      })
+      .catch((loadError: unknown) => {
+        setError(loadError instanceof Error ? loadError.message : String(loadError));
+      });
   }, [mode, request]);
 
   // Reuse the canonical project-document event. The main process routes it only
@@ -159,10 +163,7 @@ export default function EffectEditorPage(): React.ReactElement {
 
   return (
     <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-app-bg text-app-text-strong">
-      <LoadedEditor
-        snapshot={snapshotWithLiveUdos}
-        onPatch={applyPatch}
-      />
+      <LoadedEditor snapshot={snapshotWithLiveUdos} onPatch={applyPatch} />
     </div>
   );
 }

@@ -34,10 +34,7 @@ function createPianoRoll(
   return pianoRoll;
 }
 
-function createScore(
-  layerPath: 'sound-object' | 'track',
-  pianoRoll = createPianoRoll(),
-): Score {
+function createScore(layerPath: 'sound-object' | 'track', pianoRoll = createPianoRoll()): Score {
   const score = new Score();
   score.length = 0;
 

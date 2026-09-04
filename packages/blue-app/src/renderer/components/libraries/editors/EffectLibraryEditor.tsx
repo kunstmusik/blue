@@ -8,9 +8,15 @@ interface EffectLibraryEditorProps {
   onPatch: (patch: LibraryEditorDocumentPatch) => void;
 }
 
-export function EffectLibraryEditor({ snapshot, onPatch }: EffectLibraryEditorProps): React.ReactElement {
-  const handlePatch = useCallback((patch: EffectEditablePatch) => {
-    onPatch({ kind: 'effect', patch });
-  }, [onPatch]);
+export function EffectLibraryEditor({
+  snapshot,
+  onPatch,
+}: EffectLibraryEditorProps): React.ReactElement {
+  const handlePatch = useCallback(
+    (patch: EffectEditablePatch) => {
+      onPatch({ kind: 'effect', patch });
+    },
+    [onPatch],
+  );
   return <EffectEditorPanel snapshot={snapshot} onPatch={handlePatch} />;
 }

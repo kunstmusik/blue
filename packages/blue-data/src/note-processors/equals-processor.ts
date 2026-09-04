@@ -19,11 +19,19 @@ export class EqualsProcessor extends NoteProcessor {
     }
   }
 
-  getPfield(): string { return this._pfield.toString(); }
-  setPfield(pfield: string): void { this._pfield = parseInt(pfield, 10); }
+  getPfield(): string {
+    return this._pfield.toString();
+  }
+  setPfield(pfield: string): void {
+    this._pfield = parseInt(pfield, 10);
+  }
 
-  getVal(): string { return this._value; }
-  setVal(value: string): void { this._value = value; }
+  getVal(): string {
+    return this._value;
+  }
+  setVal(value: string): void {
+    this._value = value;
+  }
 
   override process(notes: NoteList): NoteList {
     for (const note of notes) {
@@ -40,7 +48,9 @@ export class EqualsProcessor extends NoteProcessor {
     return notes;
   }
 
-  override getDisplayName(): string { return 'EqualsProcessor'; }
+  override getDisplayName(): string {
+    return 'EqualsProcessor';
+  }
 
   override deepCopy(): EqualsProcessor {
     return new EqualsProcessor(this);

@@ -64,7 +64,9 @@ export function collectBsbWidgets(root: WidgetCollectionRoot): BSBWidget[] {
 }
 
 export function collectBsbWidgetIds(root: WidgetCollectionRoot): string[] {
-  return collectBsbWidgets(root).map((widget) => widget.id).filter((id) => id.length > 0);
+  return collectBsbWidgets(root)
+    .map((widget) => widget.id)
+    .filter((id) => id.length > 0);
 }
 
 export function findBsbWidgetById(root: BSBGroup, widgetId: string): BSBWidget | null {
@@ -106,8 +108,7 @@ export function normalizeBsbWidgetIds(root: BSBGroup): BsbWidgetIdRepair[] {
 }
 
 export function createUniqueBsbWidgetId(rootOrIds: BSBGroup | Set<string>): string {
-  const existingIds = rootOrIds instanceof Set
-    ? new Set(rootOrIds)
-    : new Set(collectBsbWidgetIds(rootOrIds));
+  const existingIds =
+    rootOrIds instanceof Set ? new Set(rootOrIds) : new Set(collectBsbWidgetIds(rootOrIds));
   return nextUniqueWidgetId(existingIds);
 }

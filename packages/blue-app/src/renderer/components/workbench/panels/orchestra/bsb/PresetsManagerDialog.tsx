@@ -29,7 +29,10 @@ import type {
   PresetGroupSnapshot,
   PresetSnapshot,
 } from '../../../../../../shared/project-editor';
-import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../../hooks/host-portals';
+import {
+  PopoutContextMenuPortal,
+  portalEventIsolationProps,
+} from '../../../../../hooks/host-portals';
 import { useHostDocument } from '../../../../../hooks/use-host-document';
 
 export interface PresetsManagerDialogProps {
@@ -96,9 +99,10 @@ function findPresetSnapshotById(
 }
 
 function createFreshPresetId(): string {
-  const id = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const id =
+    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   return `preset:${id}`;
 }
 
@@ -121,9 +125,9 @@ function createInsertedPresetGroupSnapshot(
       uniqueId,
     };
   });
-  const subGroups = snapshot.subGroups.map((subGroup) => (
-    createInsertedPresetGroupSnapshot(subGroup, presetIdMap)
-  ));
+  const subGroups = snapshot.subGroups.map((subGroup) =>
+    createInsertedPresetGroupSnapshot(subGroup, presetIdMap),
+  );
   const currentPresetUniqueId = snapshot.currentPresetUniqueId
     ? presetIdMap.get(snapshot.currentPresetUniqueId)
     : undefined;
@@ -131,9 +135,7 @@ function createInsertedPresetGroupSnapshot(
   return {
     ...snapshot,
     currentPresetUniqueId,
-    currentPresetModified: currentPresetUniqueId
-      ? snapshot.currentPresetModified
-      : false,
+    currentPresetModified: currentPresetUniqueId ? snapshot.currentPresetModified : false,
     subGroups,
     presets,
   };
@@ -174,7 +176,10 @@ function presetGroupFromSnapshot(snapshot: PresetGroupSnapshot): PresetGroup {
   group.setCurrentPresetModified(snapshot.currentPresetModified);
   group.presets = snapshot.presets.map(presetFromSnapshot);
   group.subGroups = snapshot.subGroups.map(presetGroupFromSnapshot);
-  if (snapshot.currentPresetUniqueId && group.findPresetByUniqueId(snapshot.currentPresetUniqueId)) {
+  if (
+    snapshot.currentPresetUniqueId &&
+    group.findPresetByUniqueId(snapshot.currentPresetUniqueId)
+  ) {
     group.setCurrentPresetUniqueId(snapshot.currentPresetUniqueId);
   }
   return group;
@@ -214,30 +219,18 @@ export function buildPresetTree(
   };
 }
 
-function isPathWithin(
-  path: readonly number[],
-  possibleParent: readonly number[],
-): boolean {
+function isPathWithin(path: readonly number[], possibleParent: readonly number[]): boolean {
   return (
     possibleParent.length < path.length &&
     possibleParent.every((index, position) => path[position] === index)
   );
 }
 
-function arePathsEqual(
-  left: readonly number[],
-  right: readonly number[],
-): boolean {
-  return (
-    left.length === right.length &&
-    left.every((index, position) => right[position] === index)
-  );
+function arePathsEqual(left: readonly number[], right: readonly number[]): boolean {
+  return left.length === right.length && left.every((index, position) => right[position] === index);
 }
 
-function findTreeNode(
-  node: PresetTreeNode,
-  id: string | null,
-): PresetTreeNode | undefined {
+function findTreeNode(node: PresetTreeNode, id: string | null): PresetTreeNode | undefined {
   if (!id) return undefined;
   if (node.id === id) return node;
   for (const child of node.children ?? []) {
@@ -272,8 +265,7 @@ function PresetNode({
   const isGroup = node.data.kind === 'group';
   const isRoot = isGroup && node.data.groupPath.length === 0;
   const isActiveDropTarget = isGroup && node.willReceiveDrop && tree.canDrop();
-  const isCurrent =
-    !isGroup && node.data.presetUniqueId === actions.currentPresetUniqueId;
+  const isCurrent = !isGroup && node.data.presetUniqueId === actions.currentPresetUniqueId;
 
   useEffect(() => {
     if (!node.isEditing) return;
@@ -292,7 +284,7 @@ function PresetNode({
           ? 'bg-blue-accent/25 text-gray-100 ring-1 ring-inset ring-blue-accent/80'
           : node.isSelected
             ? 'bg-blue-accent/20 text-gray-100'
-            : 'text-gray-300 hover:bg-white/5'
+            : 'text-gray-300 hover:bg-white/5',
       )}
       onClick={(event) => {
         node.handleClick(event);
@@ -305,10 +297,7 @@ function PresetNode({
     >
       {isGroup ? (
         <ChevronRight
-          className={cn(
-            'h-3 w-3 flex-none transition-transform',
-            node.isOpen && 'rotate-90'
-          )}
+          className={cn('h-3 w-3 flex-none transition-transform', node.isOpen && 'rotate-90')}
           aria-hidden="true"
           onClick={(event) => {
             event.stopPropagation();
@@ -320,21 +309,12 @@ function PresetNode({
       )}
       {isGroup ? (
         node.isOpen ? (
-          <FolderOpen
-            className="h-3.5 w-3.5 flex-none text-yellow-500"
-            aria-hidden="true"
-          />
+          <FolderOpen className="h-3.5 w-3.5 flex-none text-yellow-500" aria-hidden="true" />
         ) : (
-          <Folder
-            className="h-3.5 w-3.5 flex-none text-yellow-600"
-            aria-hidden="true"
-          />
+          <Folder className="h-3.5 w-3.5 flex-none text-yellow-600" aria-hidden="true" />
         )
       ) : (
-        <SlidersHorizontal
-          className="h-3.5 w-3.5 flex-none text-blue-400"
-          aria-hidden="true"
-        />
+        <SlidersHorizontal className="h-3.5 w-3.5 flex-none text-blue-400" aria-hidden="true" />
       )}
       {node.isEditing ? (
         <input
@@ -408,13 +388,17 @@ function PresetNode({
           <ContextMenu.Item
             className="editor-context-menu__item"
             disabled={!isGroup}
-            onSelect={() => { void actions.onImport(node); }}
+            onSelect={() => {
+              void actions.onImport(node);
+            }}
           >
             Import
           </ContextMenu.Item>
           <ContextMenu.Item
             className="editor-context-menu__item"
-            onSelect={() => { void actions.onExport(node); }}
+            onSelect={() => {
+              void actions.onExport(node);
+            }}
           >
             Export
           </ContextMenu.Item>
@@ -509,15 +493,11 @@ export default function PresetsManagerDialog({
     (node: NodeApi<PresetTreeNode>): PresetClipboard | null => {
       if (node.data.kind === 'group') {
         const group = getPresetGroupSnapshotAtPath(presetGroup, node.data.groupPath);
-        return group
-          ? { kind: 'group', item: clonePresetGroupSnapshot(group) }
-          : null;
+        return group ? { kind: 'group', item: clonePresetGroupSnapshot(group) } : null;
       }
       if (!node.data.presetUniqueId) return null;
       const preset = findPresetSnapshotById(presetGroup, node.data.presetUniqueId);
-      return preset
-        ? { kind: 'preset', item: clonePresetSnapshot(preset) }
-        : null;
+      return preset ? { kind: 'preset', item: clonePresetSnapshot(preset) } : null;
     },
     [presetGroup],
   );
@@ -548,14 +528,11 @@ export default function PresetsManagerDialog({
     [dispatch],
   );
 
-  const handleRemove = useCallback(
-    (node: NodeApi<PresetTreeNode>) => {
-      const data = node.data;
-      if (data.kind === 'group' && data.groupPath.length === 0) return;
-      setPendingDeleteNode(data);
-    },
-    [],
-  );
+  const handleRemove = useCallback((node: NodeApi<PresetTreeNode>) => {
+    const data = node.data;
+    if (data.kind === 'group' && data.groupPath.length === 0) return;
+    setPendingDeleteNode(data);
+  }, []);
 
   const handleCut = useCallback(
     (node: NodeApi<PresetTreeNode>) => {
@@ -628,7 +605,9 @@ export default function PresetsManagerDialog({
           toast.error('The selected file does not contain a preset or preset folder.');
         }
       } catch (error) {
-        toast.error(`Failed to import presets: ${error instanceof Error ? error.message : String(error)}`);
+        toast.error(
+          `Failed to import presets: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
     },
     [dispatch],
@@ -639,12 +618,15 @@ export default function PresetsManagerDialog({
       const item = getClipboardItem(node);
       if (!item) return;
       try {
-        const xml = item.kind === 'preset'
-          ? presetFromSnapshot(item.item).saveAsXML().toXml()
-          : presetGroupFromSnapshot(item.item).saveAsXML().toXml();
+        const xml =
+          item.kind === 'preset'
+            ? presetFromSnapshot(item.item).saveAsXML().toXml()
+            : presetGroupFromSnapshot(item.item).saveAsXML().toXml();
         await window.blueAPI.exportPresetFile(xml, item.item.name);
       } catch (error) {
-        toast.error(`Failed to export presets: ${error instanceof Error ? error.message : String(error)}`);
+        toast.error(
+          `Failed to export presets: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
     },
     [getClipboardItem],
@@ -682,11 +664,7 @@ export default function PresetsManagerDialog({
       const parent = args.parentNode;
       if (!node) return;
       const parentGroupPath =
-        parent?.data.kind === 'group'
-          ? parent.data.groupPath
-          : args.parentId === null
-            ? []
-            : null;
+        parent?.data.kind === 'group' ? parent.data.groupPath : args.parentId === null ? [] : null;
       if (!parentGroupPath) return;
 
       if (node.data.kind === 'group') {
@@ -724,10 +702,7 @@ export default function PresetsManagerDialog({
     [dispatch],
   );
 
-  const selectedNode = useMemo(
-    () => findTreeNode(rootNode, selectedId),
-    [rootNode, selectedId],
-  );
+  const selectedNode = useMemo(() => findTreeNode(rootNode, selectedId), [rootNode, selectedId]);
 
   const treeActions = useMemo<PresetTreeActions>(
     () => ({
@@ -779,8 +754,7 @@ export default function PresetsManagerDialog({
               Presets Manager
             </h2>
             <p className="mt-1 text-role-callout text-app-text-muted">
-              Drag presets or folders to reorder them or move them into another
-              folder.
+              Drag presets or folders to reorder them or move them into another folder.
             </p>
           </div>
           <button
@@ -797,15 +771,10 @@ export default function PresetsManagerDialog({
           <span className="truncate" aria-live="polite">
             Selected: {selectedLabel}
           </span>
-          <span className="shrink-0">
-            Double-click to rename · Delete key removes
-          </span>
+          <span className="shrink-0">Double-click to rename · Delete key removes</span>
         </div>
 
-        <div
-          ref={treeContainerRef}
-          className="min-h-0 flex-1 overflow-hidden bg-black px-2 py-2"
-        >
+        <div ref={treeContainerRef} className="min-h-0 flex-1 overflow-hidden bg-black px-2 py-2">
           <PresetTreeActionsContext.Provider value={treeActions}>
             <BlueTree<PresetTreeNode>
               data={[rootNode]}
@@ -823,9 +792,7 @@ export default function PresetsManagerDialog({
               onRename={handleRename}
               onMove={handleMove}
               onDelete={handleDelete}
-              disableDrag={(data) =>
-                data.kind === 'group' && data.groupPath.length === 0
-              }
+              disableDrag={(data) => data.kind === 'group' && data.groupPath.length === 0}
               disableDrop={({ parentNode, dragNodes }) => {
                 const parentGroupPath =
                   parentNode.data.kind === 'group'
@@ -874,7 +841,10 @@ export default function PresetsManagerDialog({
               if (pendingDeleteNode.kind === 'group') {
                 dispatch({ type: 'removePresetGroup', groupPath: pendingDeleteNode.groupPath });
               } else if (pendingDeleteNode.presetUniqueId) {
-                dispatch({ type: 'removePreset', presetUniqueId: pendingDeleteNode.presetUniqueId });
+                dispatch({
+                  type: 'removePreset',
+                  presetUniqueId: pendingDeleteNode.presetUniqueId,
+                });
               }
               setSelectedId(null);
             }

@@ -7,7 +7,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { TempoMapPatch, TempoMapSnapshot } from '../../shared/project-editor';
 import TempoRegionBar from '../components/workbench/panels/score/TempoRegionBar';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const BASE_TEMPO_MAP: TempoMapSnapshot = {
   enabled: true,
@@ -56,17 +58,18 @@ function renderTempoRegionBar(options?: {
   });
 
   const bar = container.firstElementChild as HTMLDivElement;
-  bar.getBoundingClientRect = () => ({
-    x: 0,
-    y: 0,
-    left: 0,
-    top: 0,
-    right: totalBeats * pixelsPerBeat,
-    bottom: 20,
-    width: totalBeats * pixelsPerBeat,
-    height: 20,
-    toJSON: () => ({}),
-  }) as DOMRect;
+  bar.getBoundingClientRect = () =>
+    ({
+      x: 0,
+      y: 0,
+      left: 0,
+      top: 0,
+      right: totalBeats * pixelsPerBeat,
+      bottom: 20,
+      width: totalBeats * pixelsPerBeat,
+      height: 20,
+      toJSON: () => ({}),
+    }) as DOMRect;
 
   return { container, root, bar, onTempoPatch, onOpenPointDialog };
 }
@@ -105,11 +108,13 @@ describe('TempoRegionBar', () => {
     });
 
     act(() => {
-      bar.dispatchEvent(new MouseEvent('dblclick', {
-        bubbles: true,
-        clientX: 73,
-        clientY: 10,
-      }));
+      bar.dispatchEvent(
+        new MouseEvent('dblclick', {
+          bubbles: true,
+          clientX: 73,
+          clientY: 10,
+        }),
+      );
     });
 
     expect(onOpenPointDialog).not.toHaveBeenCalled();
@@ -129,11 +134,13 @@ describe('TempoRegionBar', () => {
     });
 
     act(() => {
-      bar.dispatchEvent(new MouseEvent('dblclick', {
-        bubbles: true,
-        clientX: 82,
-        clientY: 10,
-      }));
+      bar.dispatchEvent(
+        new MouseEvent('dblclick', {
+          bubbles: true,
+          clientX: 82,
+          clientY: 10,
+        }),
+      );
     });
 
     expect(onTempoPatch).not.toHaveBeenCalled();
@@ -149,13 +156,15 @@ describe('TempoRegionBar', () => {
     const secondRegion = Array.from(container.querySelectorAll('[title]'))[1] as HTMLDivElement;
 
     act(() => {
-      secondRegion.dispatchEvent(new MouseEvent('contextmenu', {
-        bubbles: true,
-        cancelable: true,
-        button: 2,
-        clientX: 90,
-        clientY: 10,
-      }));
+      secondRegion.dispatchEvent(
+        new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          button: 2,
+          clientX: 90,
+          clientY: 10,
+        }),
+      );
     });
 
     expect(document.body.textContent).toContain('Edit Tempo...');

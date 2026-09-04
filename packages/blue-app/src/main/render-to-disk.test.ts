@@ -19,12 +19,28 @@ import {
 
 function diskRenderSettings(): DiskRenderSettingsSnapshot {
   return {
-    csoundExecutable: 'csound', defaultSr: '44100', defaultKsmps: '1', defaultNchnls: '2',
-    useZeroDbfs: true, zeroDbfs: '1', fileFormatEnabled: true, fileFormat: 'WAV',
-    sampleFormatEnabled: true, sampleFormat: 'SHORT', savePeakInformation: true,
-    ditherOutput: false, rewriteHeader: true, noteAmpsEnabled: true, outOfRangeEnabled: true,
-    warningsEnabled: true, benchmarkEnabled: true, displaysDisabled: true, advancedSettings: '',
-    renderMethod: '', externalPlayCommandEnabled: false, externalPlayCommand: 'command $outfile',
+    csoundExecutable: 'csound',
+    defaultSr: '44100',
+    defaultKsmps: '1',
+    defaultNchnls: '2',
+    useZeroDbfs: true,
+    zeroDbfs: '1',
+    fileFormatEnabled: true,
+    fileFormat: 'WAV',
+    sampleFormatEnabled: true,
+    sampleFormat: 'SHORT',
+    savePeakInformation: true,
+    ditherOutput: false,
+    rewriteHeader: true,
+    noteAmpsEnabled: true,
+    outOfRangeEnabled: true,
+    warningsEnabled: true,
+    benchmarkEnabled: true,
+    displaysDisabled: true,
+    advancedSettings: '',
+    renderMethod: '',
+    externalPlayCommandEnabled: false,
+    externalPlayCommand: 'command $outfile',
     externalOpenCommand: 'command $outfile',
   };
 }
@@ -40,7 +56,9 @@ describe('executeRenderToDisk', () => {
 
   it('allows unsaved projects to render from the application temp directory', () => {
     expect(resolveRenderWorkingDirectory(null, '/application/temp')).toBe('/application/temp');
-    expect(resolveRenderWorkingDirectory('/projects/example.blue', '/application/temp')).toBe(path.dirname('/projects/example.blue'));
+    expect(resolveRenderWorkingDirectory('/projects/example.blue', '/application/temp')).toBe(
+      path.dirname('/projects/example.blue'),
+    );
   });
 
   it('uses the active shared JavaScript session for synchronous disk CSD generation', async () => {
@@ -48,8 +66,9 @@ describe('executeRenderToDisk', () => {
     const toDiskCSD = vi.fn(() => 'javascript-csd');
     const toDiskCSDAsync = vi.fn(async () => 'async-csd');
 
-    await expect(generateDiskCsd({ toDiskCSD, toDiskCSDAsync }, session, null))
-      .resolves.toBe('javascript-csd');
+    await expect(generateDiskCsd({ toDiskCSD, toDiskCSDAsync }, session, null)).resolves.toBe(
+      'javascript-csd',
+    );
     expect(toDiskCSD).toHaveBeenCalledWith(session);
     expect(toDiskCSDAsync).not.toHaveBeenCalled();
   });
@@ -60,8 +79,9 @@ describe('executeRenderToDisk', () => {
     const toDiskCSD = vi.fn(() => 'sync-csd');
     const toDiskCSDAsync = vi.fn(async () => 'java-runtime-csd');
 
-    await expect(generateDiskCsd({ toDiskCSD, toDiskCSDAsync }, session, runtimeClient))
-      .resolves.toBe('java-runtime-csd');
+    await expect(
+      generateDiskCsd({ toDiskCSD, toDiskCSDAsync }, session, runtimeClient),
+    ).resolves.toBe('java-runtime-csd');
     expect(toDiskCSDAsync).toHaveBeenCalledWith(session, runtimeClient);
     expect(toDiskCSD).not.toHaveBeenCalled();
   });
@@ -150,7 +170,9 @@ describe('executeRenderToDisk', () => {
     expect(result.error).toMatch(/exited with code 1.*render failed/i);
     expect(data.saveToString()).toBe(before);
     expect(statuses.at(-1)).toMatchObject({ phase: 'failed' });
-    expect(fs.readdirSync(projectDirectory).filter((name) => name.startsWith('tempCsd'))).toEqual([]);
+    expect(fs.readdirSync(projectDirectory).filter((name) => name.startsWith('tempCsd'))).toEqual(
+      [],
+    );
   });
 
   it('reports spawn failures without mutating the project', async () => {
@@ -170,7 +192,11 @@ describe('executeRenderToDisk', () => {
       'render',
       'disk-spawn-failure',
       vi.fn(),
-      { runCsound: async () => { throw new Error('ENOENT'); } },
+      {
+        runCsound: async () => {
+          throw new Error('ENOENT');
+        },
+      },
     );
 
     expect(result.ok).toBe(false);
@@ -207,7 +233,9 @@ describe('executeRenderToDisk', () => {
 
     expect(result).toMatchObject({ ok: false, cancelled: true, error: null });
     expect(data.saveToString()).toBe(before);
-    expect(fs.readdirSync(projectDirectory).filter((name) => name.startsWith('tempCsd'))).toEqual([]);
+    expect(fs.readdirSync(projectDirectory).filter((name) => name.startsWith('tempCsd'))).toEqual(
+      [],
+    );
   });
 
   it('forwards determinate Csound progress while rendering', async () => {
@@ -249,7 +277,9 @@ describe('resolveOutputFilePath', () => {
     props.askOnRender = false;
     props.fileName = 'renders/final mix.wav';
 
-    expect(resolveOutputFilePath(data, '/projects/example')).toBe(path.resolve('/projects/example', 'renders/final mix.wav'));
+    expect(resolveOutputFilePath(data, '/projects/example')).toBe(
+      path.resolve('/projects/example', 'renders/final mix.wav'),
+    );
 
     props.fileName = '/exports/exact.wav';
     const absoluteExpected = path.isAbsolute('/exports/exact.wav')

@@ -19,7 +19,9 @@ interface CompileProjectRequest {
   mode: CompileMode;
 }
 
-export function resolveCompileMode(options: Pick<CompileCommandOptions, 'realtime' | 'bluelive'>): CompileMode {
+export function resolveCompileMode(
+  options: Pick<CompileCommandOptions, 'realtime' | 'bluelive'>,
+): CompileMode {
   if (options.realtime && options.bluelive) {
     throw new Error('`--realtime` and `--bluelive` are mutually exclusive.');
   }
@@ -35,7 +37,9 @@ export function resolveCompileMode(options: Pick<CompileCommandOptions, 'realtim
   return 'disk';
 }
 
-export async function compileProject(request: CompileProjectRequest): Promise<{ bytesWritten: number }> {
+export async function compileProject(
+  request: CompileProjectRequest,
+): Promise<{ bytesWritten: number }> {
   const projectPath = path.resolve(request.projectPath);
   const outputPath = path.resolve(request.outputPath);
 

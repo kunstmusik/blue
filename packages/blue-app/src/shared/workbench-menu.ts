@@ -17,13 +17,43 @@ export interface PanelDescriptor {
 
 export const WORKBENCH_PANEL_REGISTRY: PanelDescriptor[] = [
   { id: 'ScoreTopComponent', title: 'Score', mode: 'editor', openAtStartup: true, icon: '♪' },
-  { id: 'OrchestraTopComponent', title: 'Orchestra', mode: 'editor', openAtStartup: true, position: 200, icon: '🎻' },
-  { id: 'GlobalOrchestraTopComponent', title: 'Global Orchestra', mode: 'editor', openAtStartup: true },
+  {
+    id: 'OrchestraTopComponent',
+    title: 'Orchestra',
+    mode: 'editor',
+    openAtStartup: true,
+    position: 200,
+    icon: '🎻',
+  },
+  {
+    id: 'GlobalOrchestraTopComponent',
+    title: 'Global Orchestra',
+    mode: 'editor',
+    openAtStartup: true,
+  },
   { id: 'GlobalScoreTopComponent', title: 'Global Score', mode: 'editor', openAtStartup: true },
   { id: 'TablesTopComponent', title: 'Tables', mode: 'editor', openAtStartup: true },
-  { id: 'UserDefinedOpcodeTopComponent', title: 'UDOs', mode: 'editor', openAtStartup: true, position: 300 },
-  { id: 'ProjectPropertiesTopComponent', title: 'Project Properties', mode: 'editor', openAtStartup: true },
-  { id: 'BlueLiveTopComponent', title: 'Blue Live', mode: 'editor', openAtStartup: true, position: 800, icon: '🔴' },
+  {
+    id: 'UserDefinedOpcodeTopComponent',
+    title: 'UDOs',
+    mode: 'editor',
+    openAtStartup: true,
+    position: 300,
+  },
+  {
+    id: 'ProjectPropertiesTopComponent',
+    title: 'Project Properties',
+    mode: 'editor',
+    openAtStartup: true,
+  },
+  {
+    id: 'BlueLiveTopComponent',
+    title: 'Blue Live',
+    mode: 'editor',
+    openAtStartup: true,
+    position: 800,
+    icon: '🔴',
+  },
   {
     id: 'ScratchPadTopComponent',
     title: 'Scratch Pad',
@@ -116,7 +146,16 @@ export const WORKBENCH_PANEL_REGISTRY: PanelDescriptor[] = [
     auxiliaryGroupId: 'output-main',
     auxiliaryRailLabel: 'Files',
   },
-  { id: 'VirtualKeyboardTopComponent', title: 'Virtual Keyboard', mode: 'output', openAtStartup: false, position: 800, icon: '🎹', auxiliaryGroupId: 'output-main', auxiliaryRailLabel: 'Virtual Keyboard' },
+  {
+    id: 'VirtualKeyboardTopComponent',
+    title: 'Virtual Keyboard',
+    mode: 'output',
+    openAtStartup: false,
+    position: 800,
+    icon: '🎹',
+    auxiliaryGroupId: 'output-main',
+    auxiliaryRailLabel: 'Virtual Keyboard',
+  },
   {
     id: 'OutputTopComponent',
     title: 'Output',
@@ -126,9 +165,30 @@ export const WORKBENCH_PANEL_REGISTRY: PanelDescriptor[] = [
     auxiliaryRailLabel: 'Output',
   },
 
-  { id: 'JavaScriptConsoleTopComponent', title: 'JavaScript Console', mode: 'repl', openAtStartup: false, auxiliaryGroupId: 'output-main', auxiliaryRailLabel: 'JS Console' },
-  { id: 'JythonConsoleTopComponent', title: 'Python Console', mode: 'repl', openAtStartup: false, auxiliaryGroupId: 'output-main', auxiliaryRailLabel: 'Python Console' },
-  { id: 'ClojureConsoleTopComponent', title: 'Clojure REPL', mode: 'repl', openAtStartup: false, auxiliaryGroupId: 'output-main', auxiliaryRailLabel: 'Clojure REPL' },
+  {
+    id: 'JavaScriptConsoleTopComponent',
+    title: 'JavaScript Console',
+    mode: 'repl',
+    openAtStartup: false,
+    auxiliaryGroupId: 'output-main',
+    auxiliaryRailLabel: 'JS Console',
+  },
+  {
+    id: 'JythonConsoleTopComponent',
+    title: 'Python Console',
+    mode: 'repl',
+    openAtStartup: false,
+    auxiliaryGroupId: 'output-main',
+    auxiliaryRailLabel: 'Python Console',
+  },
+  {
+    id: 'ClojureConsoleTopComponent',
+    title: 'Clojure REPL',
+    mode: 'repl',
+    openAtStartup: false,
+    auxiliaryGroupId: 'output-main',
+    auxiliaryRailLabel: 'Clojure REPL',
+  },
 ];
 
 export const PANEL_MAP = new Map(WORKBENCH_PANEL_REGISTRY.map((panel) => [panel.id, panel]));

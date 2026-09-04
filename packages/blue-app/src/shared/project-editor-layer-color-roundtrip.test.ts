@@ -1,21 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { BlueData } from '@blue/data';
 import { Element } from '@blue/data';
-import {
-  createTestProjectWithLayers,
-} from './project-editor-layer-color-test-utils';
-import {
-  createScoreDocumentSnapshot,
-} from './project-editor/snapshot-score';
+import { createTestProjectWithLayers } from './project-editor-layer-color-test-utils';
+import { createScoreDocumentSnapshot } from './project-editor/snapshot-score';
 
 describe('Bridge Layer & Item Color Roundtrip (US4)', () => {
   it('preserves exact layer and item colors across save and reopen for SoundLayer, Track, and PatternLayer', () => {
-    const {
-      data,
-      soundLayer,
-      track,
-      patternLayer,
-    } = createTestProjectWithLayers();
+    const { data, soundLayer, track, patternLayer } = createTestProjectWithLayers();
 
     // Set custom distinct colors on each layer type
     soundLayer.setBackgroundColor(-65536); // Red
@@ -36,9 +27,13 @@ describe('Bridge Layer & Item Color Roundtrip (US4)', () => {
     const reloadedSnapshot = createScoreDocumentSnapshot(reloadedData);
 
     // Assert layer snapshot colors
-    const polyGroupSnapshot = reloadedSnapshot.layerGroups.find((g) => g.groupType === 'polyObject')!;
+    const polyGroupSnapshot = reloadedSnapshot.layerGroups.find(
+      (g) => g.groupType === 'polyObject',
+    )!;
     const trackGroupSnapshot = reloadedSnapshot.layerGroups.find((g) => g.groupType === 'track')!;
-    const patternGroupSnapshot = reloadedSnapshot.layerGroups.find((g) => g.groupType === 'patterns')!;
+    const patternGroupSnapshot = reloadedSnapshot.layerGroups.find(
+      (g) => g.groupType === 'patterns',
+    )!;
 
     expect(polyGroupSnapshot.layers[0].backgroundColor).toBe(-65536);
     expect(polyGroupSnapshot.layers[0].items[0].backgroundColor).toBe(-16711936);

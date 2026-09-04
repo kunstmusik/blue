@@ -40,18 +40,28 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 /** Runtime guards for the Electron boundary. TypeScript types do not validate IPC payloads. */
 export function isRenderToDiskRequest(value: unknown): value is RenderToDiskRequest {
-  return isRecord(value) && typeof value.action === 'string'
-    && DISK_RENDER_ACTIONS.includes(value.action as DiskRenderAction)
-    && (value.operationId === undefined || (typeof value.operationId === 'string' && value.operationId.length > 0));
+  return (
+    isRecord(value) &&
+    typeof value.action === 'string' &&
+    DISK_RENDER_ACTIONS.includes(value.action as DiskRenderAction) &&
+    (value.operationId === undefined ||
+      (typeof value.operationId === 'string' && value.operationId.length > 0))
+  );
 }
 
 export function isFreezeScoreObjectsRequest(value: unknown): value is FreezeScoreObjectsRequest {
-  return isRecord(value) && Array.isArray(value.targets)
-    && value.targets.every((target) => isRecord(target))
-    && (value.operationId === undefined || (typeof value.operationId === 'string' && value.operationId.length > 0));
+  return (
+    isRecord(value) &&
+    Array.isArray(value.targets) &&
+    value.targets.every((target) => isRecord(target)) &&
+    (value.operationId === undefined ||
+      (typeof value.operationId === 'string' && value.operationId.length > 0))
+  );
 }
 
-export function isCancelRenderOperationRequest(value: unknown): value is CancelRenderOperationRequest {
+export function isCancelRenderOperationRequest(
+  value: unknown,
+): value is CancelRenderOperationRequest {
   return isRecord(value) && typeof value.operationId === 'string' && value.operationId.length > 0;
 }
 
@@ -86,21 +96,30 @@ export interface RenderOperationStatus {
 
 const RENDER_OPERATION_KINDS: readonly RenderOperationKind[] = ['diskRender', 'freeze'];
 const RENDER_OPERATION_PHASES: readonly RenderOperationPhase[] = [
-  'preparing', 'rendering', 'inspecting', 'committing', 'completed', 'cancelled', 'failed',
+  'preparing',
+  'rendering',
+  'inspecting',
+  'committing',
+  'completed',
+  'cancelled',
+  'failed',
 ];
 
 export function isRenderOperationStatus(value: unknown): value is RenderOperationStatus {
-  return isRecord(value)
-    && typeof value.operationId === 'string'
-    && RENDER_OPERATION_KINDS.includes(value.kind as RenderOperationKind)
-    && RENDER_OPERATION_PHASES.includes(value.phase as RenderOperationPhase)
-    && typeof value.message === 'string'
-    && (value.progress === null || typeof value.progress === 'number')
-    && (value.outputPath === null || typeof value.outputPath === 'string')
-    && (value.error === null || typeof value.error === 'string')
-    && (value.action === undefined || value.action === null
-      || (typeof value.action === 'string'
-        && DISK_RENDER_ACTIONS.includes(value.action as DiskRenderAction)));
+  return (
+    isRecord(value) &&
+    typeof value.operationId === 'string' &&
+    RENDER_OPERATION_KINDS.includes(value.kind as RenderOperationKind) &&
+    RENDER_OPERATION_PHASES.includes(value.phase as RenderOperationPhase) &&
+    typeof value.message === 'string' &&
+    (value.progress === null || typeof value.progress === 'number') &&
+    (value.outputPath === null || typeof value.outputPath === 'string') &&
+    (value.error === null || typeof value.error === 'string') &&
+    (value.action === undefined ||
+      value.action === null ||
+      (typeof value.action === 'string' &&
+        DISK_RENDER_ACTIONS.includes(value.action as DiskRenderAction)))
+  );
 }
 
 // ─── Main → Renderer freeze item status ───
@@ -130,20 +149,28 @@ export interface FreezeItemStatus {
   outputType: 'stdout' | 'stderr' | null;
 }
 
-const FREEZE_ITEM_PHASES: readonly FreezeItemPhase[] = ['pending', 'running', 'rendered', 'complete', 'failed'];
+const FREEZE_ITEM_PHASES: readonly FreezeItemPhase[] = [
+  'pending',
+  'running',
+  'rendered',
+  'complete',
+  'failed',
+];
 const FREEZE_ITEM_ACTIONS: readonly FreezeItemAction[] = ['freeze', 'unfreeze'];
 
 export function isFreezeItemStatus(value: unknown): value is FreezeItemStatus {
-  return isRecord(value)
-    && typeof value.operationId === 'string'
-    && typeof value.selectionId === 'string'
-    && typeof value.name === 'string'
-    && FREEZE_ITEM_ACTIONS.includes(value.action as FreezeItemAction)
-    && FREEZE_ITEM_PHASES.includes(value.phase as FreezeItemPhase)
-    && (value.freezeFile === null || typeof value.freezeFile === 'string')
-    && (value.reason === null || typeof value.reason === 'string')
-    && (value.outputAppend === null || typeof value.outputAppend === 'string')
-    && (value.outputType === null || value.outputType === 'stdout' || value.outputType === 'stderr');
+  return (
+    isRecord(value) &&
+    typeof value.operationId === 'string' &&
+    typeof value.selectionId === 'string' &&
+    typeof value.name === 'string' &&
+    FREEZE_ITEM_ACTIONS.includes(value.action as FreezeItemAction) &&
+    FREEZE_ITEM_PHASES.includes(value.phase as FreezeItemPhase) &&
+    (value.freezeFile === null || typeof value.freezeFile === 'string') &&
+    (value.reason === null || typeof value.reason === 'string') &&
+    (value.outputAppend === null || typeof value.outputAppend === 'string') &&
+    (value.outputType === null || value.outputType === 'stdout' || value.outputType === 'stderr')
+  );
 }
 
 // ─── Results ───

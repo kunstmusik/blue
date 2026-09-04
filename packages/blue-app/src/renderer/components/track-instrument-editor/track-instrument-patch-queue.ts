@@ -22,10 +22,7 @@ function getOnlyPatchKey(patch: InstrumentPatch): keyof InstrumentPatch | null {
   return keys.length === 1 ? keys[0]! : null;
 }
 
-function mergeBlueX7Patch(
-  previous: BlueX7Patch,
-  next: BlueX7Patch,
-): BlueX7Patch | null {
+function mergeBlueX7Patch(previous: BlueX7Patch, next: BlueX7Patch): BlueX7Patch | null {
   if (previous.type !== next.type) return null;
 
   switch (previous.type) {
@@ -46,7 +43,9 @@ function mergeBlueX7Patch(
       return next;
     case 'setOperatorEnvelopePoint': {
       const n = next as typeof previous;
-      return previous.operatorIndex === n.operatorIndex && previous.stageIndex === n.stageIndex ? next : null;
+      return previous.operatorIndex === n.operatorIndex && previous.stageIndex === n.stageIndex
+        ? next
+        : null;
     }
     case 'setPitchEnvelopePoint':
       return previous.stageIndex === (next as typeof previous).stageIndex ? next : null;
@@ -57,19 +56,23 @@ function mergeBsbInterfacePatch(
   previous: BsbInterfacePatch,
   next: BsbInterfacePatch,
 ): BsbInterfacePatch | null {
-  if (previous.type === 'updateWidgetProperties'
-    && next.type === 'updateWidgetProperties'
-    && previous.widgetId === next.widgetId) {
+  if (
+    previous.type === 'updateWidgetProperties' &&
+    next.type === 'updateWidgetProperties' &&
+    previous.widgetId === next.widgetId
+  ) {
     return {
       ...next,
       properties: { ...previous.properties, ...next.properties },
     };
   }
 
-  if (previous.type === 'updateSliderBankValue'
-    && next.type === 'updateSliderBankValue'
-    && previous.widgetId === next.widgetId
-    && previous.sliderIndex === next.sliderIndex) {
+  if (
+    previous.type === 'updateSliderBankValue' &&
+    next.type === 'updateSliderBankValue' &&
+    previous.widgetId === next.widgetId &&
+    previous.sliderIndex === next.sliderIndex
+  ) {
     return next;
   }
 
@@ -92,15 +95,11 @@ export function mergePendingInstrumentPatch(
       },
     };
   }
-  if (previousKey === 'bsbInterface'
-    && previous.bsbInterface
-    && next.bsbInterface) {
+  if (previousKey === 'bsbInterface' && previous.bsbInterface && next.bsbInterface) {
     const merged = mergeBsbInterfacePatch(previous.bsbInterface, next.bsbInterface);
     return merged ? { bsbInterface: merged } : null;
   }
-  if (previousKey === 'blueX7'
-    && previous.blueX7
-    && next.blueX7) {
+  if (previousKey === 'blueX7' && previous.blueX7 && next.blueX7) {
     const merged = mergeBlueX7Patch(previous.blueX7, next.blueX7);
     return merged ? { blueX7: merged } : null;
   }

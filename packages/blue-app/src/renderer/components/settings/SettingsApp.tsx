@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  PROGRAM_SETTINGS_PANEL_ORDER,
-} from '../../../shared/program-settings';
+import { PROGRAM_SETTINGS_PANEL_ORDER } from '../../../shared/program-settings';
 import type {
   ProgramSettingsSnapshot,
   ProgramSettingsPanelId,
@@ -50,7 +48,9 @@ export default function SettingsApp(): React.ReactElement {
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [setMidiSavedPreferences]);
 
   // Subscribe to runtime MIDI snapshot updates from main (if available).
@@ -67,7 +67,9 @@ export default function SettingsApp(): React.ReactElement {
     void api.getMidiInputServiceSnapshot?.().then((snapshot) => {
       if (snapshot) setMidiSnapshot(snapshot);
     });
-    return () => { unsub(); };
+    return () => {
+      unsub();
+    };
   }, [setMidiSnapshot]);
 
   useEffect(() => {
@@ -76,12 +78,21 @@ export default function SettingsApp(): React.ReactElement {
       onOscServerSnapshot?: (callback: (snapshot: OscServerRuntimeSnapshot) => void) => () => void;
     };
     const unsubscribe = api.onOscServerSnapshot?.((snapshot) => {
-      setOscRuntime((current) => !current || snapshot.revision >= current.revision ? snapshot : current);
+      setOscRuntime((current) =>
+        !current || snapshot.revision >= current.revision ? snapshot : current,
+      );
     });
-    void api.getOscServerSnapshot?.().then((snapshot) => {
-      setOscRuntime((current) => !current || snapshot.revision >= current.revision ? snapshot : current);
-    }).catch(() => undefined);
-    return () => { unsubscribe?.(); };
+    void api
+      .getOscServerSnapshot?.()
+      .then((snapshot) => {
+        setOscRuntime((current) =>
+          !current || snapshot.revision >= current.revision ? snapshot : current,
+        );
+      })
+      .catch(() => undefined);
+    return () => {
+      unsubscribe?.();
+    };
   }, []);
 
   const handleDraftChange = useCallback((updated: ProgramSettingsSnapshot) => {
@@ -125,7 +136,7 @@ export default function SettingsApp(): React.ReactElement {
 
     let decision: 'yes' | 'no' | 'cancel';
     try {
-      decision = await api.confirmSettingsClose?.() ?? 'cancel';
+      decision = (await api.confirmSettingsClose?.()) ?? 'cancel';
     } catch {
       decision = 'cancel';
     }
@@ -147,7 +158,9 @@ export default function SettingsApp(): React.ReactElement {
       onSettingsCloseRequest?: (callback: () => void) => () => void;
     };
     if (!api.onSettingsCloseRequest) return undefined;
-    return api.onSettingsCloseRequest(() => { void handleSettingsCloseRequest(); });
+    return api.onSettingsCloseRequest(() => {
+      void handleSettingsCloseRequest();
+    });
   }, [handleSettingsCloseRequest]);
 
   const handleCancel = useCallback(() => {
@@ -171,11 +184,7 @@ export default function SettingsApp(): React.ReactElement {
   }, [active, setMidiSavedPreferences]);
 
   if (loading || !draft) {
-    return (
-      <div className="px-6 py-6 text-role-body text-app-text-muted">
-        Loading settings...
-      </div>
-    );
+    return <div className="px-6 py-6 text-role-body text-app-text-muted">Loading settings...</div>;
   }
 
   const secondaryButtonClass =
@@ -219,14 +228,18 @@ export default function SettingsApp(): React.ReactElement {
             enginePath={draft.appSpecific.enginePath}
             csoundLibraryPath={draft.appSpecific.csoundLibraryPath}
             onChange={(realtimeRender) => handleDraftChange({ ...draft, realtimeRender })}
-            onEnginePathChange={(enginePath) => handleDraftChange({
-              ...draft,
-              appSpecific: { ...draft.appSpecific, enginePath },
-            })}
-            onCsoundLibraryPathChange={(csoundLibraryPath) => handleDraftChange({
-              ...draft,
-              appSpecific: { ...draft.appSpecific, csoundLibraryPath },
-            })}
+            onEnginePathChange={(enginePath) =>
+              handleDraftChange({
+                ...draft,
+                appSpecific: { ...draft.appSpecific, enginePath },
+              })
+            }
+            onCsoundLibraryPathChange={(csoundLibraryPath) =>
+              handleDraftChange({
+                ...draft,
+                appSpecific: { ...draft.appSpecific, csoundLibraryPath },
+              })
+            }
           />
         );
       case 'diskRender':
@@ -267,13 +280,13 @@ export default function SettingsApp(): React.ReactElement {
         ))}
       </nav>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <div className="min-h-0 flex-1 overflow-auto px-6 py-6">
-          {renderPanel()}
-        </div>
+        <div className="min-h-0 flex-1 overflow-auto px-6 py-6">{renderPanel()}</div>
         {validationIssues.length > 0 && (
           <div className="border-t border-app-danger/30 bg-app-danger/10 px-4 py-2 text-role-body text-app-danger">
             {validationIssues.map((issue, i) => (
-              <div key={i}>{issue.path}: {issue.message}</div>
+              <div key={i}>
+                {issue.path}: {issue.message}
+              </div>
             ))}
           </div>
         )}

@@ -24,7 +24,7 @@ describe('BlueData frozen SoundObject and AudioFile persistence', () => {
     frozen.setNumChannels(2);
     frozen.setStartTime(TimePosition.beats(4));
     frozen.setSubjectiveDuration(TimeDuration.beats(2));
-    ((data.getScore()[0] as PolyObject)[0]).push(frozen);
+    (data.getScore()[0] as PolyObject)[0].push(frozen);
 
     const xmlRoot = data.saveAsXML();
     xmlRoot.getElement('pluginData')?.addElement('unknownFeature').setText('keep-me');
@@ -33,7 +33,7 @@ describe('BlueData frozen SoundObject and AudioFile persistence', () => {
     expect(xml).not.toContain('canSaveCopy');
 
     const reopened = BlueData.loadFromString(xml);
-    const restored = ((reopened.getScore()[0] as PolyObject)[0][0]) as FrozenSoundObject;
+    const restored = (reopened.getScore()[0] as PolyObject)[0][0] as FrozenSoundObject;
 
     expect(restored).toBeInstanceOf(FrozenSoundObject);
     expect(restored.getFrozenWaveFileName()).toBe('freeze7.wav');
@@ -49,7 +49,7 @@ describe('BlueData frozen SoundObject and AudioFile persistence', () => {
     af.setName('Percussion');
     af.setSoundFileName('audio/snare.wav');
     af.setCsoundPostCode('aChannel1 = aChannel1 * 0.9');
-    ((data.getScore()[0] as PolyObject)[0]).push(af);
+    (data.getScore()[0] as PolyObject)[0].push(af);
 
     const xml = data.saveToString();
     const audioFileXml = xml.slice(xml.indexOf('<soundObject type="blue.soundObject.AudioFile">'));
@@ -61,7 +61,7 @@ describe('BlueData frozen SoundObject and AudioFile persistence', () => {
     expect(audioFileXml).not.toContain('channelVariables');
 
     const reopened = BlueData.loadFromString(xml);
-    const restored = ((reopened.getScore()[0] as PolyObject)[0][0]) as AudioFile;
+    const restored = (reopened.getScore()[0] as PolyObject)[0][0] as AudioFile;
 
     expect(restored).toBeInstanceOf(AudioFile);
     expect(restored.getSoundFileName()).toBe('audio/snare.wav');

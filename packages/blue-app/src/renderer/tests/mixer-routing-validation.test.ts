@@ -8,7 +8,9 @@ import {
   getValidSendTargets,
 } from '../../shared/mixer-routing-validation';
 
-function makeChannel(overrides: Partial<MixerChannelSnapshot> & { id: string }): MixerChannelSnapshot {
+function makeChannel(
+  overrides: Partial<MixerChannelSnapshot> & { id: string },
+): MixerChannelSnapshot {
   return {
     name: overrides.id,
     channelKind: 'instrument',
@@ -54,9 +56,7 @@ function makeMixerSnapshot(overrides?: Partial<MixerSnapshot>): MixerSnapshot {
 describe('validateMixerRouting', () => {
   it('returns no issues for a clean mixer with valid routing', () => {
     const mixer = makeMixerSnapshot({
-      channels: [
-        makeChannel({ id: 'ch1', name: 'Lead', outChannel: 'Master' }),
-      ],
+      channels: [makeChannel({ id: 'ch1', name: 'Lead', outChannel: 'Master' })],
     });
     const result = validateMixerRouting(mixer);
     expect(result.issues).toHaveLength(0);
@@ -87,9 +87,7 @@ describe('validateMixerRouting', () => {
 
   it('catches self-output as an error with code self-output', () => {
     const mixer = makeMixerSnapshot({
-      channels: [
-        makeChannel({ id: 'ch1', name: 'Lead', outChannel: 'Lead' }),
-      ],
+      channels: [makeChannel({ id: 'ch1', name: 'Lead', outChannel: 'Lead' })],
     });
     const result = validateMixerRouting(mixer);
     expect(result.issues).toEqual(
@@ -128,9 +126,7 @@ describe('validateMixerRouting', () => {
 
   it('catches missing output target as missing-target', () => {
     const mixer = makeMixerSnapshot({
-      channels: [
-        makeChannel({ id: 'ch1', name: 'Lead', outChannel: 'nonexistent' }),
-      ],
+      channels: [makeChannel({ id: 'ch1', name: 'Lead', outChannel: 'nonexistent' })],
     });
     const result = validateMixerRouting(mixer);
     expect(result.issues).toEqual(
@@ -164,9 +160,7 @@ describe('validateMixerRouting', () => {
       ],
     });
     const result = validateMixerRouting(mixer);
-    const feedbackWarnings = result.issues.filter(
-      (i) => i.code === 'feedback-risk',
-    );
+    const feedbackWarnings = result.issues.filter((i) => i.code === 'feedback-risk');
     expect(feedbackWarnings.length).toBeGreaterThanOrEqual(1);
     expect(feedbackWarnings[0]).toEqual(
       expect.objectContaining({
@@ -215,18 +209,14 @@ describe('validateMixerRouting', () => {
 describe('validateSendTarget', () => {
   it('returns null for valid targets', () => {
     const mixer = makeMixerSnapshot({
-      channels: [
-        makeChannel({ id: 'ch1', name: 'Lead', outChannel: 'Master' }),
-      ],
+      channels: [makeChannel({ id: 'ch1', name: 'Lead', outChannel: 'Master' })],
     });
     expect(validateSendTarget(mixer, 'ch1', 'Master')).toBeNull();
   });
 
   it('returns self-send error when source equals target', () => {
     const mixer = makeMixerSnapshot({
-      channels: [
-        makeChannel({ id: 'ch1', name: 'Lead', outChannel: 'Master' }),
-      ],
+      channels: [makeChannel({ id: 'ch1', name: 'Lead', outChannel: 'Master' })],
     });
     const issue = validateSendTarget(mixer, 'ch1', 'Lead');
     expect(issue).toEqual(
@@ -240,9 +230,7 @@ describe('validateSendTarget', () => {
 
   it('returns missing-target error for nonexistent target', () => {
     const mixer = makeMixerSnapshot({
-      channels: [
-        makeChannel({ id: 'ch1', name: 'Lead', outChannel: 'Master' }),
-      ],
+      channels: [makeChannel({ id: 'ch1', name: 'Lead', outChannel: 'Master' })],
     });
     const issue = validateSendTarget(mixer, 'ch1', 'nonexistent');
     expect(issue).toEqual(
@@ -258,18 +246,14 @@ describe('validateSendTarget', () => {
 describe('validateOutputTarget', () => {
   it('returns null for a valid output target', () => {
     const mixer = makeMixerSnapshot({
-      channels: [
-        makeChannel({ id: 'ch1', name: 'Lead', outChannel: 'Master' }),
-      ],
+      channels: [makeChannel({ id: 'ch1', name: 'Lead', outChannel: 'Master' })],
     });
     expect(validateOutputTarget(mixer, 'ch1', 'Master')).toBeNull();
   });
 
   it('returns self-output error when channel outputs to itself', () => {
     const mixer = makeMixerSnapshot({
-      channels: [
-        makeChannel({ id: 'ch1', name: 'Lead', outChannel: 'Lead' }),
-      ],
+      channels: [makeChannel({ id: 'ch1', name: 'Lead', outChannel: 'Lead' })],
     });
     const issue = validateOutputTarget(mixer, 'ch1', 'Lead');
     expect(issue).toEqual(
@@ -283,9 +267,7 @@ describe('validateOutputTarget', () => {
 
   it('returns missing-target error for nonexistent output target', () => {
     const mixer = makeMixerSnapshot({
-      channels: [
-        makeChannel({ id: 'ch1', name: 'Lead', outChannel: 'Master' }),
-      ],
+      channels: [makeChannel({ id: 'ch1', name: 'Lead', outChannel: 'Master' })],
     });
     const issue = validateOutputTarget(mixer, 'ch1', 'nonexistent');
     expect(issue).toEqual(
@@ -305,7 +287,12 @@ describe('getValidOutputTargets', () => {
         makeChannel({ id: 'ch1', name: 'Lead', channelKind: 'instrument', outChannel: 'Master' }),
       ],
       subChannels: [
-        makeChannel({ id: 'sub1', name: 'Reverb', channelKind: 'subChannel', outChannel: 'Master' }),
+        makeChannel({
+          id: 'sub1',
+          name: 'Reverb',
+          channelKind: 'subChannel',
+          outChannel: 'Master',
+        }),
       ],
     });
     const targets = getValidOutputTargets(mixer, 'sub1');
@@ -384,7 +371,12 @@ describe('getValidSendTargets', () => {
         makeChannel({ id: 'ch2', name: 'Bass', channelKind: 'instrument', outChannel: 'Master' }),
       ],
       subChannels: [
-        makeChannel({ id: 'sub1', name: 'Reverb', channelKind: 'subChannel', outChannel: 'Master' }),
+        makeChannel({
+          id: 'sub1',
+          name: 'Reverb',
+          channelKind: 'subChannel',
+          outChannel: 'Master',
+        }),
       ],
     });
     const targets = getValidSendTargets(mixer, 'ch1');
@@ -401,7 +393,12 @@ describe('getValidSendTargets', () => {
         makeChannel({ id: 'ch1', name: 'Lead', channelKind: 'instrument', outChannel: 'Master' }),
       ],
       subChannels: [
-        makeChannel({ id: 'sub1', name: 'Reverb', channelKind: 'subChannel', outChannel: 'Master' }),
+        makeChannel({
+          id: 'sub1',
+          name: 'Reverb',
+          channelKind: 'subChannel',
+          outChannel: 'Master',
+        }),
       ],
     });
     const targets = getValidSendTargets(mixer, 'sub1');
@@ -512,7 +509,12 @@ describe('getValidOutputTargets for instrument channels', () => {
         makeChannel({ id: 'ch2', name: 'Bass', channelKind: 'instrument', outChannel: 'Master' }),
       ],
       subChannels: [
-        makeChannel({ id: 'sub1', name: 'Reverb', channelKind: 'subChannel', outChannel: 'Master' }),
+        makeChannel({
+          id: 'sub1',
+          name: 'Reverb',
+          channelKind: 'subChannel',
+          outChannel: 'Master',
+        }),
         makeChannel({ id: 'sub2', name: 'Delay', channelKind: 'subChannel', outChannel: 'Master' }),
       ],
     });

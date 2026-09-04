@@ -18,11 +18,11 @@ describe('TrackerObject', () => {
     const track = new Track();
     track.setInstrumentId('1');
     track.resizeSteps(16);
-    
+
     // Set a note at step 0
     track.getTrackerNote(0).setValue(1, '8.00'); // pch column
-    track.getTrackerNote(0).setValue(2, '80');   // db column
-    
+    track.getTrackerNote(0).setValue(2, '80'); // db column
+
     obj.getTracks().setSteps(16);
     obj.getTracks().addTrack(track);
     obj.setStepsPerBeat(4);
@@ -44,11 +44,11 @@ describe('TrackerObject', () => {
     const track = new Track();
     track.setInstrumentId('1');
     track.resizeSteps(16);
-    
+
     track.getTrackerNote(0).setTied(true);
     track.getTrackerNote(0).setValue(1, '8.00');
     track.getTrackerNote(0).setValue(2, '80');
-    
+
     obj.getTracks().setSteps(16);
     obj.getTracks().addTrack(track);
     obj.setStepsPerBeat(4);
@@ -69,10 +69,10 @@ describe('TrackerObject', () => {
         <steps>64</steps>
       </trackList>
     </blue.soundObject.TrackerObject>`;
-    
+
     const doc = Element.parse(xml);
     const obj = TrackerObject.loadFromXML(doc);
-    
+
     expect(obj.getStepsPerBeat()).toBe(1); // Default for legacy
   });
 
@@ -84,10 +84,10 @@ describe('TrackerObject', () => {
         <steps>64</steps>
       </trackList>
     </blue.soundObject.TrackerObject>`;
-    
+
     const doc = Element.parse(xml);
     const obj = TrackerObject.loadFromXML(doc);
-    
+
     expect(obj.getStepsPerBeat()).toBe(2);
   });
 

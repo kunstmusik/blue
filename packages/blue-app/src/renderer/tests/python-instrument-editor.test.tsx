@@ -5,13 +5,12 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type {
-  PythonInstrumentSnapshot,
-  UdoDefinitionSnapshot,
-} from '../../shared/project-editor';
+import type { PythonInstrumentSnapshot, UdoDefinitionSnapshot } from '../../shared/project-editor';
 import PythonInstrumentEditor from '../components/workbench/panels/orchestra/PythonInstrumentEditor';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 function udoSnapshot(name: string): UdoDefinitionSnapshot {
   return {

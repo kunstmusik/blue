@@ -49,13 +49,19 @@ describe('UnifiedLibraryRepository foundation', () => {
       const initial = UnifiedLibraryRepository.open(directory.databasePath);
       const root = initial.getRoot('instrument');
       const firstFolder = initial.createFolder({
-        libraryType: 'instrument', parentId: root.id, displayName: 'First',
+        libraryType: 'instrument',
+        parentId: root.id,
+        displayName: 'First',
       });
       const secondFolder = initial.createFolder({
-        libraryType: 'instrument', parentId: root.id, displayName: 'Second',
+        libraryType: 'instrument',
+        parentId: root.id,
+        displayName: 'Second',
       });
       const item = initial.createItem({
-        libraryType: 'instrument', parentId: firstFolder.id, displayName: 'Pad 0',
+        libraryType: 'instrument',
+        parentId: firstFolder.id,
+        displayName: 'Pad 0',
         payload: ITEM_PAYLOAD,
       });
       itemId = item.id;
@@ -66,8 +72,14 @@ describe('UnifiedLibraryRepository foundation', () => {
       for (let cycle = 0; cycle < 50; cycle += 1) {
         const repository = UnifiedLibraryRepository.open(directory.databasePath);
         const rootId = repository.getRoot('instrument').id;
-        expect(repository.getNode(firstFolderId)).toMatchObject({ id: firstFolderId, parentId: rootId });
-        expect(repository.getNode(secondFolderId)).toMatchObject({ id: secondFolderId, parentId: rootId });
+        expect(repository.getNode(firstFolderId)).toMatchObject({
+          id: firstFolderId,
+          parentId: rootId,
+        });
+        expect(repository.getNode(secondFolderId)).toMatchObject({
+          id: secondFolderId,
+          parentId: rootId,
+        });
 
         const current = repository.getNode(itemId);
         const renamed = repository.renameNode(itemId, current.revision, `Pad ${cycle + 1}`);
@@ -120,9 +132,13 @@ describe('UnifiedLibraryRepository foundation', () => {
 
   it('promotes unchanged Java-qualified built-ins when support becomes available', () => {
     const directory = createUnifiedLibraryTestDirectory('blue-library-reclassify-');
-    const payloadXml = '<soundObject type="blue.soundObject.Sound"><name>Playable Sound</name><instrument type="blue.orchestra.BlueSynthBuilder"><name>Embedded</name><graphicInterface/><parameterList/><opcodeList/></instrument></soundObject>';
+    const payloadXml =
+      '<soundObject type="blue.soundObject.Sound"><name>Playable Sound</name><instrument type="blue.orchestra.BlueSynthBuilder"><name>Embedded</name><graphicInterface/><parameterList/><opcodeList/></instrument></soundObject>';
     const classified = classifyLibraryPayload('soundObject', parseRawXmlDocument(payloadXml).root);
-    expect(classified).toMatchObject({ supportStatus: 'supported', rawHash: stableTextHash(payloadXml) });
+    expect(classified).toMatchObject({
+      supportStatus: 'supported',
+      rawHash: stableTextHash(payloadXml),
+    });
     try {
       const initial = UnifiedLibraryRepository.open(directory.databasePath);
       const root = initial.getRoot('soundObject');

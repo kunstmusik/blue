@@ -17,8 +17,12 @@ import { initBasicFromXML } from './sound-object-utilities';
 export class CSDSoundObject extends AbstractSoundObject {
   private _csdText = '';
 
-  getCsdText(): string { return this._csdText; }
-  setCsdText(text: string): void { this._csdText = text; }
+  getCsdText(): string {
+    return this._csdText;
+  }
+  setCsdText(text: string): void {
+    this._csdText = text;
+  }
 
   override generateForCSD(
     _context: TimeContext,

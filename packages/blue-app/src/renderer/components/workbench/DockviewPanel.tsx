@@ -12,16 +12,24 @@ const DockviewPanel = forwardRef<HTMLDivElement, IDockviewPanelProps>(
     // Stable mirror of `ref`: the hook needs an object ref even when callers
     // pass a callback ref.
     const shellMirror = useRef<HTMLDivElement | null>(null);
-    const setShell = useCallback((node: HTMLDivElement | null) => {
-      shellMirror.current = node;
-      if (typeof ref === 'function') ref(node);
-      else if (ref) ref.current = node;
-    }, [ref]);
-    const hostDocument = useShellHostDocument(shellMirror, (cb) => props.api.onDidLocationChange(cb));
+    const setShell = useCallback(
+      (node: HTMLDivElement | null) => {
+        shellMirror.current = node;
+        if (typeof ref === 'function') ref(node);
+        else if (ref) ref.current = node;
+      },
+      [ref],
+    );
+    const hostDocument = useShellHostDocument(shellMirror, (cb) =>
+      props.api.onDidLocationChange(cb),
+    );
 
     if (!descriptor && !librarySessionId) {
       return (
-        <div ref={setShell} className="h-full bg-blue-bg flex items-center justify-center text-blue-muted">
+        <div
+          ref={setShell}
+          className="h-full bg-blue-bg flex items-center justify-center text-blue-muted"
+        >
           Unknown panel: {props.api.title}
         </div>
       );

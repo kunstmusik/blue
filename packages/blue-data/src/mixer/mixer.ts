@@ -2,14 +2,14 @@
  * Mixer — the complete mixer with channels, subchannels, effects, and routing.
  * Mirrors the Java Mixer class.
  */
-import { Channel } from "./channel";
-import { ChannelList } from "./channel-list";
-import { Element } from "../serialization/xml-reader";
-import { BlueDataObject } from "../blue-data-object";
-import { writeBoolean, writeDouble } from "../utilities/xml";
+import { Channel } from './channel';
+import { ChannelList } from './channel-list';
+import { Element } from '../serialization/xml-reader';
+import { BlueDataObject } from '../blue-data-object';
+import { writeBoolean, writeDouble } from '../utilities/xml';
 
 export class Mixer implements BlueDataObject {
-  static readonly MASTER_CHANNEL = "Master";
+  static readonly MASTER_CHANNEL = 'Master';
 
   private _enabled = true;
   private _channelListGroups: ChannelList[] = [];
@@ -21,9 +21,9 @@ export class Mixer implements BlueDataObject {
 
   constructor() {
     this._master.setName(Mixer.MASTER_CHANNEL);
-    this._channels.setListName("Orchestra");
+    this._channels.setListName('Orchestra');
     this._channels.setListNameEditSupported(false);
-    this._subChannels.setListName("SubChannels");
+    this._subChannels.setListName('SubChannels');
     this._subChannels.setListNameEditSupported(false);
   }
 
@@ -71,7 +71,7 @@ export class Mixer implements BlueDataObject {
    * Get Csound variable name for a subchannel output.
    */
   static getSubChannelVar(name: string, outputIndex: number): string {
-    const safeName = name.replace(/\s+/g, "_");
+    const safeName = name.replace(/\s+/g, '_');
     return `ga_bluesub_${safeName}_${outputIndex}`;
   }
 
@@ -102,10 +102,7 @@ export class Mixer implements BlueDataObject {
    *   ...
    *   ga_bluesub_Master_0 init 0
    */
-  getInitStatements(
-    channelIdAssignments: Map<Channel, number>,
-    nchnls: number,
-  ): string {
+  getInitStatements(channelIdAssignments: Map<Channel, number>, nchnls: number): string {
     const lines: string[] = [];
 
     // Source channels: ga_bluemix_{id}_{ch}
@@ -121,7 +118,7 @@ export class Mixer implements BlueDataObject {
     for (const subChannel of this._subChannels) {
       const id = channelIdAssignments.get(subChannel);
       if (id === undefined) continue;
-      const name = subChannel.getName().replace(/\s+/g, "_");
+      const name = subChannel.getName().replace(/\s+/g, '_');
       for (let ch = 0; ch < nchnls; ch++) {
         lines.push(`ga_bluesub_${name}_${ch}\tinit\t0`);
       }
@@ -132,7 +129,7 @@ export class Mixer implements BlueDataObject {
       lines.push(`ga_bluesub_Master_${ch}\tinit\t0`);
     }
 
-    return lines.join("\n");
+    return lines.join('\n');
   }
 
   /**
@@ -143,8 +140,8 @@ export class Mixer implements BlueDataObject {
   }
 
   saveAsXML(): Element {
-    const elem = new Element("mixer");
-    elem.addElement(writeBoolean("enabled", this._enabled));
+    const elem = new Element('mixer');
+    elem.addElement(writeBoolean('enabled', this._enabled));
 
     if (this._channelListGroups.length > 0) {
       const groupsElem = elem.addElement('channelListGroups');
@@ -154,15 +151,15 @@ export class Mixer implements BlueDataObject {
     }
 
     const channelsElem = this._channels.saveAsXML();
-    channelsElem.setAttribute("list", "channels");
+    channelsElem.setAttribute('list', 'channels');
     elem.addElement(channelsElem);
 
     const subChannelsElem = this._subChannels.saveAsXML();
-    subChannelsElem.setAttribute("list", "subChannels");
+    subChannelsElem.setAttribute('list', 'subChannels');
     elem.addElement(subChannelsElem);
 
     elem.addElement(this._master.saveAsXML());
-    elem.addElement(writeDouble("extraRenderTime", this._extraRenderTime));
+    elem.addElement(writeDouble('extraRenderTime', this._extraRenderTime));
     return elem;
   }
 
@@ -175,25 +172,25 @@ export class Mixer implements BlueDataObject {
       }
     };
 
-    const enabledElem = data.getElement("enabled");
+    const enabledElem = data.getElement('enabled');
     if (enabledElem) {
-      mixer._enabled = enabledElem.getTextString() !== "false";
+      mixer._enabled = enabledElem.getTextString() !== 'false';
     }
 
-    const channelListGroups = data.getElement("channelListGroups");
+    const channelListGroups = data.getElement('channelListGroups');
     if (channelListGroups) {
-      const groupedLists = channelListGroups.getElements("channelList");
+      const groupedLists = channelListGroups.getElements('channelList');
       while (groupedLists.hasMoreElements()) {
         mixer._channelListGroups.push(ChannelList.loadFromXML(groupedLists.next()));
       }
     }
 
-    const channelLists = data.getElements("channelList");
+    const channelLists = data.getElements('channelList');
     while (channelLists.hasMoreElements()) {
       const clNode = channelLists.next();
-      const listAttr = clNode.getAttribute("list") ?? "";
+      const listAttr = clNode.getAttribute('list') ?? '';
       const loaded = ChannelList.loadFromXML(clNode);
-      if (listAttr === "subChannels" || listAttr === "SubChannels") {
+      if (listAttr === 'subChannels' || listAttr === 'SubChannels') {
         appendChannels(mixer._subChannels, loaded);
       } else {
         appendChannels(mixer._channels, loaded);
@@ -201,37 +198,37 @@ export class Mixer implements BlueDataObject {
     }
 
     if (mixer._channels.length === 0) {
-      const chNode = data.getElement("channels");
+      const chNode = data.getElement('channels');
       if (chNode) {
         mixer._channels = ChannelList.loadFromXML(chNode);
       }
     }
     if (mixer._subChannels.length === 0) {
-      const subChNode = data.getElement("subChannels");
+      const subChNode = data.getElement('subChannels');
       if (subChNode) {
         mixer._subChannels = ChannelList.loadFromXML(subChNode);
       }
     }
 
     mixer._channels.setListNameEditSupported(true);
-    mixer._channels.setListName("Orchestra");
+    mixer._channels.setListName('Orchestra');
     mixer._channels.setListNameEditSupported(false);
 
     mixer._subChannels.setListNameEditSupported(true);
-    mixer._subChannels.setListName("SubChannels");
+    mixer._subChannels.setListName('SubChannels');
     mixer._subChannels.setListNameEditSupported(false);
 
-    const channelNodes = data.getElements("channel");
+    const channelNodes = data.getElements('channel');
     while (channelNodes.hasMoreElements()) {
       const chNode = channelNodes.next();
       const ch = Channel.loadFromXML(chNode);
       const chName = ch.getName();
-      if (chName === Mixer.MASTER_CHANNEL || chName === "master") {
+      if (chName === Mixer.MASTER_CHANNEL || chName === 'master') {
         mixer._master = ch;
       }
     }
 
-    const extraTime = data.getTextString("extraRenderTime");
+    const extraTime = data.getTextString('extraRenderTime');
     if (extraTime) mixer._extraRenderTime = parseFloat(extraTime);
 
     return mixer;
@@ -240,7 +237,7 @@ export class Mixer implements BlueDataObject {
   deepCopy(): BlueDataObject {
     const copy = new Mixer();
     copy._enabled = this._enabled;
-    copy._channelListGroups = this._channelListGroups.map(cl => cl.deepCopy() as ChannelList);
+    copy._channelListGroups = this._channelListGroups.map((cl) => cl.deepCopy() as ChannelList);
     copy._channels = this._channels.deepCopy() as ChannelList;
     copy._subChannels = this._subChannels.deepCopy() as ChannelList;
     copy._master = this._master.deepCopy() as Channel;

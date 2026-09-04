@@ -101,7 +101,8 @@ describe('Blue Live CSD generation', () => {
     data.getArrangement().addInstrument(instr, '1');
 
     const result = data.toBlueLiveCSD();
-    const instruments = result.csdText.match(/<CsInstruments>([\s\S]*?)<\/CsInstruments>/)?.[1] ?? '';
+    const instruments =
+      result.csdText.match(/<CsInstruments>([\s\S]*?)<\/CsInstruments>/)?.[1] ?? '';
     const score = result.csdText.match(/<CsScore>([\s\S]*?)<\/CsScore>/)?.[1] ?? '';
 
     expect(instruments).toContain('giArr init 2');

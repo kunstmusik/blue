@@ -22,9 +22,7 @@ export function LibrarySessionDialog({
   secondaryLabel = 'Alternative',
 }: LibrarySessionDialogProps): React.ReactElement {
   const [open, setOpen] = React.useState(true);
-  const actions: InAppConfirmationAction[] = [
-    { id: 'cancel', label: 'Cancel', intent: 'cancel' },
-  ];
+  const actions: InAppConfirmationAction[] = [{ id: 'cancel', label: 'Cancel', intent: 'cancel' }];
   if (onSecondary) {
     actions.push({ id: 'secondary', label: secondaryLabel, intent: 'secondary' });
   }

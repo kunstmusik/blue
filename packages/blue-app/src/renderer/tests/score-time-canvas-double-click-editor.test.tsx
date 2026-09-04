@@ -13,12 +13,18 @@ import { useProjectStore } from '../stores/project-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { useWorkbenchStore } from '../stores/workbench-store';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const originalProjectState = useProjectStore.getState();
 const originalWorkbenchState = useWorkbenchStore.getState();
 
-function soundItem(objectId: string, layerIndex: number, objectIndex: number): ScoreRowObjectSnapshot {
+function soundItem(
+  objectId: string,
+  layerIndex: number,
+  objectIndex: number,
+): ScoreRowObjectSnapshot {
   return {
     objectId,
     objectType: 'GenericScore',
@@ -48,7 +54,11 @@ function soundItem(objectId: string, layerIndex: number, objectIndex: number): S
   };
 }
 
-function polyObjectItem(objectId: string, layerIndex: number, objectIndex: number): ScoreRowObjectSnapshot {
+function polyObjectItem(
+  objectId: string,
+  layerIndex: number,
+  objectIndex: number,
+): ScoreRowObjectSnapshot {
   return {
     ...soundItem(objectId, layerIndex, objectIndex),
     objectType: 'PolyObject',
@@ -78,9 +88,15 @@ function makeGroup(item: ScoreRowObjectSnapshot): PolyObjectLayerGroupSnapshot {
 
 function dispatchAt(target: EventTarget, type: string, clientX: number, clientY: number): void {
   act(() => {
-    target.dispatchEvent(new MouseEvent(type, {
-      bubbles: true, cancelable: true, button: 0, clientX, clientY,
-    }));
+    target.dispatchEvent(
+      new MouseEvent(type, {
+        bubbles: true,
+        cancelable: true,
+        button: 0,
+        clientX,
+        clientY,
+      }),
+    );
   });
 }
 
@@ -128,7 +144,14 @@ describe('ScoreTimeCanvas double-click editor parity', () => {
     surface = container.querySelector('[data-group-id="g1"]') as HTMLDivElement;
     Object.defineProperty(surface, 'getBoundingClientRect', {
       value: () => ({
-        left: 0, top: 0, right: 800, bottom: 120, width: 800, height: 120, x: 0, y: 0,
+        left: 0,
+        top: 0,
+        right: 800,
+        bottom: 120,
+        width: 800,
+        height: 120,
+        x: 0,
+        y: 0,
         toJSON: () => undefined,
       }),
     });
@@ -138,20 +161,26 @@ describe('ScoreTimeCanvas double-click editor parity', () => {
 
   beforeEach(() => {
     openPanel = vi.fn();
-    useWorkbenchStore.setState({ openPanel } as Partial<ReturnType<typeof useWorkbenchStore.getState>>);
+    useWorkbenchStore.setState({ openPanel } as Partial<
+      ReturnType<typeof useWorkbenchStore.getState>
+    >);
     useScoreSelectionStore.getState().clearSelection();
     onDoubleClickObject = vi.fn();
   });
 
   afterEach(() => {
-    act(() => { root.unmount(); });
+    act(() => {
+      root.unmount();
+    });
     useProjectStore.setState({
       score: originalProjectState.score,
       applyProjectDocumentPatch: originalProjectState.applyProjectDocumentPatch,
       moveScoreObjects: originalProjectState.moveScoreObjects,
       resizeScoreObjects: originalProjectState.resizeScoreObjects,
     } as Partial<ReturnType<typeof useProjectStore.getState>>);
-    useWorkbenchStore.setState({ openPanel: originalWorkbenchState.openPanel } as Partial<ReturnType<typeof useWorkbenchStore.getState>>);
+    useWorkbenchStore.setState({ openPanel: originalWorkbenchState.openPanel } as Partial<
+      ReturnType<typeof useWorkbenchStore.getState>
+    >);
     useScoreSelectionStore.getState().clearSelection();
     container.remove();
     document.body.innerHTML = '';
@@ -199,8 +228,9 @@ describe('ScoreTimeCanvas double-click editor parity', () => {
     render(item);
 
     dispatchAt(surface, 'contextmenu', 10, 10);
-    const setColor = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]'))
-      .find((menuItem) => menuItem.textContent === 'Set Color…')!;
+    const setColor = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]')).find(
+      (menuItem) => menuItem.textContent === 'Set Color…',
+    )!;
     expect(setColor).toBeTruthy();
     act(() => setColor.click());
 

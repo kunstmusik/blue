@@ -1,13 +1,13 @@
-import { GROUP_SPACER } from "./types";
-import type { ScoreLayerGroupSnapshot, ScoreObjectLocationRef } from "./types";
-import type { SnapValueName } from "@blue/data";
-import type { MeterMapSnapshot, TempoMapSnapshot } from "../../../../../shared/project-editor";
-import type { ScoreInsertionLocation } from "../../../../../shared/unified-library";
-import ScoreTimeCanvas from "./layer-groups/ScoreTimeCanvas";
-import PatternsLayerGroupCanvas from "./layer-groups/PatternsLayerGroupCanvas";
-import { computePatternExtentBeats } from "./layer-groups/patterns-timeline-utils";
-import TrackLayerGroupCanvas from "./layer-groups/TrackLayerGroupCanvas";
-import MultiLineOverlay from "./automation/MultiLineOverlay";
+import { GROUP_SPACER } from './types';
+import type { ScoreLayerGroupSnapshot, ScoreObjectLocationRef } from './types';
+import type { SnapValueName } from '@blue/data';
+import type { MeterMapSnapshot, TempoMapSnapshot } from '../../../../../shared/project-editor';
+import type { ScoreInsertionLocation } from '../../../../../shared/unified-library';
+import ScoreTimeCanvas from './layer-groups/ScoreTimeCanvas';
+import PatternsLayerGroupCanvas from './layer-groups/PatternsLayerGroupCanvas';
+import { computePatternExtentBeats } from './layer-groups/patterns-timeline-utils';
+import TrackLayerGroupCanvas from './layer-groups/TrackLayerGroupCanvas';
+import MultiLineOverlay from './automation/MultiLineOverlay';
 
 type ScoreMode = 'score' | 'singleLine' | 'multiLine';
 
@@ -66,11 +66,11 @@ export default function LayerPanel({
 
   // The content width must cover the shared timeline and any active pattern
   // cell extent that reaches beyond it.
-  const maxPatternExtentBeats = visibleGroups.reduce((max, group) => (
-    group.groupType === 'patterns'
-      ? Math.max(max, computePatternExtentBeats(group))
-      : max
-  ), 0);
+  const maxPatternExtentBeats = visibleGroups.reduce(
+    (max, group) =>
+      group.groupType === 'patterns' ? Math.max(max, computePatternExtentBeats(group)) : max,
+    0,
+  );
   const contentWidth = Math.max(totalBeats, maxPatternExtentBeats) * pixelsPerBeat;
 
   return (
@@ -85,7 +85,7 @@ export default function LayerPanel({
         );
 
         switch (group.groupType) {
-          case "polyObject":
+          case 'polyObject':
             return (
               <div key={group.groupId} className="not-last:border-b border-app-border/40">
                 <ScoreTimeCanvas
@@ -107,9 +107,7 @@ export default function LayerPanel({
                     let containerName = group.name;
                     let itemLocation: ScoreObjectLocationRef | undefined;
                     for (const layer of group.layers) {
-                      const found = layer.items.find(
-                        (it) => it.objectId === objectId,
-                      );
+                      const found = layer.items.find((it) => it.objectId === objectId);
                       if (found) {
                         containerName = found.name;
                         itemLocation = found.editorTarget?.location;
@@ -130,7 +128,7 @@ export default function LayerPanel({
                 {spacer}
               </div>
             );
-          case "patterns":
+          case 'patterns':
             return (
               <div key={group.groupId}>
                 <PatternsLayerGroupCanvas
@@ -148,7 +146,7 @@ export default function LayerPanel({
                 {spacer}
               </div>
             );
-          case "track":
+          case 'track':
             return (
               <div key={group.groupId} className="not-last:border-b border-app-border/40">
                 <TrackLayerGroupCanvas

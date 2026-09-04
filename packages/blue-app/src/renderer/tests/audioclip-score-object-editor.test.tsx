@@ -20,7 +20,9 @@ import {
 import AudioClipScoreObjectEditor from '../components/workbench/panels/score-object/editors/AudioClipScoreObjectEditor';
 import { applyPatchToDocument } from '../components/workbench/panels/score-object/score-object-document-reducer';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 function setInputValue(input: HTMLInputElement, value: string) {
   const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
@@ -57,7 +59,9 @@ describe('AudioClipScoreObjectEditor — Component UI and Parity', () => {
     supportsNoteProcessorChain: false,
   };
 
-  type AudioClipEditorOverrides = Partial<Extract<ScoreObjectEditorDocumentSnapshot['editor'], { kind: 'audioClip' }>> & {
+  type AudioClipEditorOverrides = Partial<
+    Extract<ScoreObjectEditorDocumentSnapshot['editor'], { kind: 'audioClip' }>
+  > & {
     durationBeats?: number;
   };
 
@@ -143,23 +147,31 @@ describe('AudioClipScoreObjectEditor — Component UI and Parity', () => {
     expect(inputValues).toContain('samples/kick.wav');
 
     // File Start: 1.5s -> 0:00:01.500
-    const fileStartInput = container!.querySelector('input[title="File start offset (H:MM:SS.mmm)"]') as HTMLInputElement;
+    const fileStartInput = container!.querySelector(
+      'input[title="File start offset (H:MM:SS.mmm)"]',
+    ) as HTMLInputElement;
     expect(fileStartInput).not.toBeNull();
     expect(fileStartInput.value).toBe('0:00:01.500');
 
     // File Duration: 10s -> 0:00:10.000
-    const durationInput = container!.querySelector('input[title="Total audio file duration"]') as HTMLInputElement;
+    const durationInput = container!.querySelector(
+      'input[title="Total audio file duration"]',
+    ) as HTMLInputElement;
     expect(durationInput).not.toBeNull();
     expect(durationInput.value).toBe('0:00:10.000');
     expect(durationInput.disabled).toBe(true);
 
     // Fade In: 0.5s -> 0:00:00.500
-    const fadeInInput = container!.querySelector('input[title="Fade in time in seconds"]') as HTMLInputElement;
+    const fadeInInput = container!.querySelector(
+      'input[title="Fade in time in seconds"]',
+    ) as HTMLInputElement;
     expect(fadeInInput).not.toBeNull();
     expect(fadeInInput.value).toBe('0:00:00.500');
 
     // Fade Out: 0.75s -> 0:00:00.750
-    const fadeOutInput = container!.querySelector('input[title="Fade out time in seconds"]') as HTMLInputElement;
+    const fadeOutInput = container!.querySelector(
+      'input[title="Fade out time in seconds"]',
+    ) as HTMLInputElement;
     expect(fadeOutInput).not.toBeNull();
     expect(fadeOutInput.value).toBe('0:00:00.750');
 
@@ -185,7 +197,9 @@ describe('AudioClipScoreObjectEditor — Component UI and Parity', () => {
       root!.render(<AudioClipScoreObjectEditor document={doc} onPatch={onPatch} />);
     });
 
-    const fadeInInput = container!.querySelector('input[title="Fade in time in seconds"]') as HTMLInputElement;
+    const fadeInInput = container!.querySelector(
+      'input[title="Fade in time in seconds"]',
+    ) as HTMLInputElement;
 
     // Enter valid plain seconds "2.25"
     act(() => {
@@ -228,7 +242,9 @@ describe('AudioClipScoreObjectEditor — Component UI and Parity', () => {
       root!.render(<AudioClipScoreObjectEditor document={doc} onPatch={onPatch} />);
     });
 
-    const fadeOutInput = container!.querySelector('input[title="Fade out time in seconds"]') as HTMLInputElement;
+    const fadeOutInput = container!.querySelector(
+      'input[title="Fade out time in seconds"]',
+    ) as HTMLInputElement;
 
     // Enter timecode "0:00:02.000"
     act(() => {
@@ -271,7 +287,9 @@ describe('AudioClipScoreObjectEditor — Component UI and Parity', () => {
       root!.render(<AudioClipScoreObjectEditor document={doc} onPatch={onPatch} />);
     });
 
-    const fadeInInput = container!.querySelector('input[title="Fade in time in seconds"]') as HTMLInputElement;
+    const fadeInInput = container!.querySelector(
+      'input[title="Fade in time in seconds"]',
+    ) as HTMLInputElement;
     act(() => {
       setInputValue(fadeInInput, '15');
       fadeInInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
@@ -288,20 +306,25 @@ describe('AudioClipScoreObjectEditor — Component UI and Parity', () => {
 
   it('clamps the duration editor in canonical beats at the active tempo', () => {
     const onPatch = vi.fn();
-    const doc = createDoc({
-      durationBeats: 30,
-      audioDuration: 10,
-      fileStartTime: 0,
-      looping: false,
-    }, tempo120Context);
+    const doc = createDoc(
+      {
+        durationBeats: 30,
+        audioDuration: 10,
+        fileStartTime: 0,
+        looping: false,
+      },
+      tempo120Context,
+    );
 
     act(() => {
       root!.render(<AudioClipScoreObjectEditor document={doc} onPatch={onPatch} />);
     });
 
-    const durationLabel = Array.from(container!.querySelectorAll('label'))
-      .find((label) => label.textContent === 'Duration');
-    const durationInput = durationLabel?.parentElement?.querySelector<HTMLInputElement>('input[type="text"]');
+    const durationLabel = Array.from(container!.querySelectorAll('label')).find(
+      (label) => label.textContent === 'Duration',
+    );
+    const durationInput =
+      durationLabel?.parentElement?.querySelector<HTMLInputElement>('input[type="text"]');
     expect(durationInput).toBeDefined();
 
     act(() => {
@@ -317,11 +340,14 @@ describe('AudioClipScoreObjectEditor — Component UI and Parity', () => {
   });
 
   it('optimistically clamps duration in beats when tempo is enabled', () => {
-    const doc = createDoc({
-      durationBeats: 30,
-      audioDuration: 10,
-      fileStartTime: 0,
-    }, tempo120Context);
+    const doc = createDoc(
+      {
+        durationBeats: 30,
+        audioDuration: 10,
+        fileStartTime: 0,
+      },
+      tempo120Context,
+    );
 
     const next = applyPatchToDocument(doc, {
       type: 'updateTypeSpecificEditor',
@@ -341,7 +367,9 @@ describe('AudioClipScoreObjectEditor — Component UI and Parity', () => {
       root!.render(<AudioClipScoreObjectEditor document={doc} onPatch={onPatch} />);
     });
 
-    const fadeInInput = container!.querySelector('input[title="Fade in time in seconds"]') as HTMLInputElement;
+    const fadeInInput = container!.querySelector(
+      'input[title="Fade in time in seconds"]',
+    ) as HTMLInputElement;
     act(() => {
       setInputValue(fadeInInput, '1.5s');
       triggerBlur(fadeInInput);
@@ -367,8 +395,12 @@ describe('AudioClipScoreObjectEditor — Component UI and Parity', () => {
       root!.render(<AudioClipScoreObjectEditor document={doc} onPatch={onPatch} />);
     });
 
-    const fadeInInput = container!.querySelector('input[title="Fade in time in seconds"]') as HTMLInputElement;
-    const fadeOutInput = container!.querySelector('input[title="Fade out time in seconds"]') as HTMLInputElement;
+    const fadeInInput = container!.querySelector(
+      'input[title="Fade in time in seconds"]',
+    ) as HTMLInputElement;
+    const fadeOutInput = container!.querySelector(
+      'input[title="Fade out time in seconds"]',
+    ) as HTMLInputElement;
 
     act(() => {
       setInputValue(fadeInInput, '99.9');
@@ -393,7 +425,9 @@ describe('AudioClipScoreObjectEditor — Component UI and Parity', () => {
       root!.render(<AudioClipScoreObjectEditor document={doc} onPatch={onPatch} />);
     });
 
-    const fileStartInput = container!.querySelector('input[title="File start offset (H:MM:SS.mmm)"]') as HTMLInputElement;
+    const fileStartInput = container!.querySelector(
+      'input[title="File start offset (H:MM:SS.mmm)"]',
+    ) as HTMLInputElement;
 
     // Enter value exceeding audioDuration (12.0 > 8.0) -> clamped to 8.0
     act(() => {

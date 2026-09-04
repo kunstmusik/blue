@@ -209,10 +209,23 @@ endop</udo>
       // scratchPadData, noteProcessorChainMap, renderStartTime, renderEndTime,
       // markersList, loopRendering, midiInputProcessor, pluginData
       const expectedOrder = [
-        'projectProperties', 'arrangement', 'mixer', 'tables',
-        'soundObjectLibrary', 'globalOrcSco', 'opcodeList', 'liveData', 'score',
-        'scratchPadData', 'noteProcessorChainMap', 'renderStartTime', 'renderEndTime',
-        'markersList', 'loopRendering', 'midiInputProcessor', 'pluginData',
+        'projectProperties',
+        'arrangement',
+        'mixer',
+        'tables',
+        'soundObjectLibrary',
+        'globalOrcSco',
+        'opcodeList',
+        'liveData',
+        'score',
+        'scratchPadData',
+        'noteProcessorChainMap',
+        'renderStartTime',
+        'renderEndTime',
+        'markersList',
+        'loopRendering',
+        'midiInputProcessor',
+        'pluginData',
       ];
       expect(childNames).toEqual(expectedOrder);
     });

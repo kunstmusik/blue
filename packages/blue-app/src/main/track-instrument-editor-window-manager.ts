@@ -8,10 +8,7 @@ import {
   PROJECT_DOCUMENT_UPDATED_CHANNEL,
   type ProjectDocumentUpdatedEvent,
 } from '../shared/workbench-window-contract';
-import {
-  attachWindowStateHandlers,
-  restoreWindowState,
-} from './window-state-manager';
+import { attachWindowStateHandlers, restoreWindowState } from './window-state-manager';
 interface TrackInstrumentEditorWindowState {
   window: BrowserWindow;
   disposeStateHandlers: (() => void) | null;
@@ -25,9 +22,7 @@ function getWindowKey(request: TrackInstrumentEditorRequest): string {
   return `${request.track.projectSessionId}:${request.track.rootGroupId}:${request.track.trackId}`;
 }
 
-function buildTrackInstrumentEditorUrl(
-  request: TrackInstrumentEditorRequest,
-): string {
+function buildTrackInstrumentEditorUrl(request: TrackInstrumentEditorRequest): string {
   const params = new URLSearchParams({
     rootGroupId: request.track.rootGroupId,
     trackId: request.track.trackId,
@@ -85,17 +80,12 @@ export function openTrackInstrumentEditorWindow(
       contextIsolation: true,
       nodeIntegration: false,
       devTools: true,
-      ...(options.initialZoomFactor !== undefined
-        ? { zoomFactor: options.initialZoomFactor }
-        : {}),
+      ...(options.initialZoomFactor !== undefined ? { zoomFactor: options.initialZoomFactor } : {}),
     },
   });
 
   restoreWindowState(editorWindow, 'track-instrument-editor');
-  const disposeStateHandlers = attachWindowStateHandlers(
-    editorWindow,
-    'track-instrument-editor',
-  );
+  const disposeStateHandlers = attachWindowStateHandlers(editorWindow, 'track-instrument-editor');
 
   trackInstrumentEditorWindows.set(key, {
     window: editorWindow,
@@ -119,9 +109,7 @@ export function openTrackInstrumentEditorWindow(
   return editorWindow;
 }
 
-export function closeTrackInstrumentEditorWindow(
-  request: TrackInstrumentEditorRequest,
-): void {
+export function closeTrackInstrumentEditorWindow(request: TrackInstrumentEditorRequest): void {
   const key = getWindowKey(request);
   const existing = trackInstrumentEditorWindows.get(key);
   if (existing && !existing.window.isDestroyed()) existing.window.close();
@@ -154,9 +142,7 @@ export function closeTrackInstrumentEditorWindows(): void {
   }
 }
 
-export function focusTrackInstrumentEditorWindow(
-  request: TrackInstrumentEditorRequest,
-): boolean {
+export function focusTrackInstrumentEditorWindow(request: TrackInstrumentEditorRequest): boolean {
   const existing = trackInstrumentEditorWindows.get(getWindowKey(request));
   if (!existing || existing.window.isDestroyed()) return false;
   existing.window.focus();

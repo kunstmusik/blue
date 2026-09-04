@@ -81,7 +81,9 @@ describe('BlueData.deepCopy aggregate isolation', () => {
     const copyInstrument = copyLibrary!.getInstrument('Solo Instrument');
     expect(copyInstrument).toBeDefined();
     copyInstrument!.setName('Mutated Instrument');
-    expect(original.getInstrumentLibrary()!.getInstrument('Solo Instrument')!.getName()).toBe('Solo Instrument');
+    expect(original.getInstrumentLibrary()!.getInstrument('Solo Instrument')!.getName()).toBe(
+      'Solo Instrument',
+    );
   });
 
   it('isolates the opcode list instead of aliasing it', () => {
@@ -194,7 +196,11 @@ describe('BlueData.deepCopy aggregate isolation', () => {
     original.getLiveData().setLiveObjectBins(bins);
 
     const copy = original.deepCopy() as BlueData;
-    const copiedPoly = copy.getLiveData().getLiveObjectBins().getLiveObject(0, 0)!.getSoundObject() as PolyObject;
+    const copiedPoly = copy
+      .getLiveData()
+      .getLiveObjectBins()
+      .getLiveObject(0, 0)!
+      .getSoundObject() as PolyObject;
     const copiedInstance = (copiedPoly[0] as SoundLayer)[0] as Instance;
 
     expect(copiedInstance.getSoundObject()).toBe(copy.getSoundObjectLibrary().getObject(0));
@@ -232,7 +238,9 @@ describe('BlueData.deepCopy forbidden static boundary', () => {
     // Guard the esbuild bundle constraint: no require(), no dynamic import(),
     // and no Node built-in modules in @blue/data.
     const srcDir = path.resolve(__dirname);
-    const files = fs.readdirSync(srcDir).filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts'));
+    const files = fs
+      .readdirSync(srcDir)
+      .filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts'));
     const forbiddenPatterns = [
       /\brequire\s*\(/,
       /\bimport\s*\(/,
@@ -245,10 +253,7 @@ describe('BlueData.deepCopy forbidden static boundary', () => {
     for (const file of files) {
       const contents = fs.readFileSync(path.join(srcDir, file), 'utf8');
       for (const pattern of forbiddenPatterns) {
-        expect(
-          pattern.test(contents),
-          `${file} matches forbidden pattern ${pattern}`,
-        ).toBe(false);
+        expect(pattern.test(contents), `${file} matches forbidden pattern ${pattern}`).toBe(false);
       }
     }
   });

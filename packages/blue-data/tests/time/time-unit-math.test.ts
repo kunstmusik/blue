@@ -19,7 +19,9 @@ import { makeDefaultContext } from './helpers';
 
 describe('TimeUnitMath', () => {
   let context: TimeContext;
-  beforeEach(() => { context = makeDefaultContext(); });
+  beforeEach(() => {
+    context = makeDefaultContext();
+  });
 
   // ===== Position + Duration =====
 
@@ -61,11 +63,15 @@ describe('TimeUnitMath', () => {
   // ===== Position - Position =====
 
   it('testDistance_Basic', () => {
-    expect(distance(context, TimePosition.beats(2.0), TimePosition.beats(6.0)).toBeats(context)).toBeCloseTo(4.0, 4);
+    expect(
+      distance(context, TimePosition.beats(2.0), TimePosition.beats(6.0)).toBeats(context),
+    ).toBeCloseTo(4.0, 4);
   });
 
   it('testDistance_Reversed', () => {
-    expect(distance(context, TimePosition.beats(6.0), TimePosition.beats(2.0)).toBeats(context)).toBeCloseTo(4.0, 4);
+    expect(
+      distance(context, TimePosition.beats(6.0), TimePosition.beats(2.0)).toBeats(context),
+    ).toBeCloseTo(4.0, 4);
   });
 
   it('testDistance_SamePosition', () => {
@@ -74,39 +80,55 @@ describe('TimeUnitMath', () => {
   });
 
   it('testDistance_MixedTypes', () => {
-    expect(distance(context, TimePosition.bbf(1, 1, 0), TimePosition.beats(4.0)).toBeats(context)).toBeCloseTo(4.0, 4);
+    expect(
+      distance(context, TimePosition.bbf(1, 1, 0), TimePosition.beats(4.0)).toBeats(context),
+    ).toBeCloseTo(4.0, 4);
   });
 
   it('testForwardDistance_Normal', () => {
-    expect(forwardDistance(context, TimePosition.beats(2.0), TimePosition.beats(6.0)).toBeats(context)).toBeCloseTo(4.0, 4);
+    expect(
+      forwardDistance(context, TimePosition.beats(2.0), TimePosition.beats(6.0)).toBeats(context),
+    ).toBeCloseTo(4.0, 4);
   });
 
   it('testForwardDistance_Reversed_ClampedToZero', () => {
-    expect(forwardDistance(context, TimePosition.beats(6.0), TimePosition.beats(2.0)).toBeats(context)).toBeCloseTo(0.0, 4);
+    expect(
+      forwardDistance(context, TimePosition.beats(6.0), TimePosition.beats(2.0)).toBeats(context),
+    ).toBeCloseTo(0.0, 4);
   });
 
   // ===== Duration + Duration =====
 
   it('testAddDurations', () => {
-    expect(add(context, TimeDuration.beats(3.0), TimeDuration.beats(2.0)).toBeats(context)).toBeCloseTo(5.0, 4);
+    expect(
+      add(context, TimeDuration.beats(3.0), TimeDuration.beats(2.0)).toBeats(context),
+    ).toBeCloseTo(5.0, 4);
   });
 
   it('testAddDurations_MixedTypes', () => {
-    expect(add(context, TimeDuration.beats(4.0), TimeDuration.bbt(0, 2, 0)).toBeats(context)).toBeCloseTo(6.0, 4);
+    expect(
+      add(context, TimeDuration.beats(4.0), TimeDuration.bbt(0, 2, 0)).toBeats(context),
+    ).toBeCloseTo(6.0, 4);
   });
 
   it('testAddDurations_Zero', () => {
-    expect(add(context, TimeDuration.beats(4.0), TimeDuration.beats(0.0)).toBeats(context)).toBeCloseTo(4.0, 4);
+    expect(
+      add(context, TimeDuration.beats(4.0), TimeDuration.beats(0.0)).toBeats(context),
+    ).toBeCloseTo(4.0, 4);
   });
 
   // ===== Duration - Duration =====
 
   it('testSubtractDurations', () => {
-    expect(subtract(context, TimeDuration.beats(5.0), TimeDuration.beats(2.0)).toBeats(context)).toBeCloseTo(3.0, 4);
+    expect(
+      subtract(context, TimeDuration.beats(5.0), TimeDuration.beats(2.0)).toBeats(context),
+    ).toBeCloseTo(3.0, 4);
   });
 
   it('testSubtractDurations_ClampedToZero', () => {
-    expect(subtract(context, TimeDuration.beats(2.0), TimeDuration.beats(5.0)).toBeats(context)).toBeCloseTo(0.0, 4);
+    expect(
+      subtract(context, TimeDuration.beats(2.0), TimeDuration.beats(5.0)).toBeats(context),
+    ).toBeCloseTo(0.0, 4);
   });
 
   // ===== Position - Duration =====
@@ -118,7 +140,9 @@ describe('TimeUnitMath', () => {
   });
 
   it('testSubtractDurationFromPosition_ClampedToZero', () => {
-    expect(subtract(context, TimePosition.beats(2.0), TimeDuration.beats(5.0)).toBeats(context)).toBeCloseTo(0.0, 4);
+    expect(
+      subtract(context, TimePosition.beats(2.0), TimeDuration.beats(5.0)).toBeats(context),
+    ).toBeCloseTo(0.0, 4);
   });
 
   it('testSubtractDurationFromPosition_PreservesTimeBase', () => {
@@ -210,7 +234,10 @@ describe('TimeUnitMath', () => {
   });
 
   it('testFromTimePosition_BBFPosition', () => {
-    expect(fromTimePosition(TimePosition.bbf(2, 1, 0), context).toBeats(context)).toBeCloseTo(4.0, 4);
+    expect(fromTimePosition(TimePosition.bbf(2, 1, 0), context).toBeats(context)).toBeCloseTo(
+      4.0,
+      4,
+    );
   });
 
   it('testFromTimePosition_WithTargetTimeBase', () => {
@@ -221,7 +248,11 @@ describe('TimeUnitMath', () => {
   });
 
   it('testFromTimePosition_WithTargetSecondsTimeBase', () => {
-    const result = fromTimePosition(TimePosition.timeValue(0, 0, 4, 500), TimeBase.SECONDS, context);
+    const result = fromTimePosition(
+      TimePosition.timeValue(0, 0, 4, 500),
+      TimeBase.SECONDS,
+      context,
+    );
     expect(result.getTimeBase()).toBe(TimeBase.SECONDS);
     expect(result.getTotalSeconds()).toBeCloseTo(4.5, 4);
   });

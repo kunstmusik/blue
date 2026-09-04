@@ -19,7 +19,8 @@ const arbitraryUtilityRegex = new RegExp(
   'g',
 );
 
-const arbitraryFontSizeUtilityRegex = /\b(?:[A-Za-z0-9_-]+:)*text-\[(?<value>\d+(?:\.\d+)?(?:px|rem|em|pt))\](?:\/\[[^\]]+\])?/g;
+const arbitraryFontSizeUtilityRegex =
+  /\b(?:[A-Za-z0-9_-]+:)*text-\[(?<value>\d+(?:\.\d+)?(?:px|rem|em|pt))\](?:\/\[[^\]]+\])?/g;
 
 const inlineColorRegex = new RegExp(
   String.raw`\b(?:background(?:Color)?|color|border(?:Color)?|outlineColor|fill|stroke|boxShadow)\s*:\s*(?<quote>['"])(?<value>[^'"]*${colorLiteralPattern}[^'"]*)\k<quote>`,
@@ -75,8 +76,8 @@ function listFiles(directory) {
     }
 
     if (
-      textExtensions.has(path.extname(entry.name))
-      && !/\.(?:test|spec)\.[^.]+$/u.test(entry.name)
+      textExtensions.has(path.extname(entry.name)) &&
+      !/\.(?:test|spec)\.[^.]+$/u.test(entry.name)
     ) {
       files.push(absolutePath);
     }
@@ -133,7 +134,9 @@ function findSuggestedRole(value) {
 }
 
 function parseExceptions(markdown) {
-  const markerMatch = markdown.match(/<!-- audit-exceptions:start -->([\s\S]*?)<!-- audit-exceptions:end -->/);
+  const markerMatch = markdown.match(
+    /<!-- audit-exceptions:start -->([\s\S]*?)<!-- audit-exceptions:end -->/,
+  );
   if (!markerMatch) {
     return [];
   }
@@ -204,15 +207,36 @@ for (const absolutePath of listFiles(rendererRoot)) {
     const lineNumber = index + 1;
 
     for (const match of line.matchAll(arbitraryUtilityRegex)) {
-      pushFinding(findings, exceptionRecords, relativePath, lineNumber, match.groups.value, 'arbitrary-utility');
+      pushFinding(
+        findings,
+        exceptionRecords,
+        relativePath,
+        lineNumber,
+        match.groups.value,
+        'arbitrary-utility',
+      );
     }
 
     for (const match of line.matchAll(arbitraryFontSizeUtilityRegex)) {
-      pushFinding(findings, exceptionRecords, relativePath, lineNumber, match.groups.value, 'arbitrary-utility');
+      pushFinding(
+        findings,
+        exceptionRecords,
+        relativePath,
+        lineNumber,
+        match.groups.value,
+        'arbitrary-utility',
+      );
     }
 
     for (const match of line.matchAll(inlineColorRegex)) {
-      pushFinding(findings, exceptionRecords, relativePath, lineNumber, match.groups.value, 'static-inline-color');
+      pushFinding(
+        findings,
+        exceptionRecords,
+        relativePath,
+        lineNumber,
+        match.groups.value,
+        'static-inline-color',
+      );
     }
 
     for (const match of line.matchAll(themeAliasRegex)) {
@@ -223,14 +247,25 @@ for (const absolutePath of listFiles(rendererRoot)) {
       if (definedThemeAliases.has(alias)) {
         continue;
       }
-      pushFinding(findings, exceptionRecords, relativePath, lineNumber, alias, 'undefined-theme-alias');
+      pushFinding(
+        findings,
+        exceptionRecords,
+        relativePath,
+        lineNumber,
+        alias,
+        'undefined-theme-alias',
+      );
     }
 
     if (!isCssFile) {
       return;
     }
 
-    if (absolutePath === themePath && lineNumber >= themeBlockStartLine && lineNumber <= themeBlockEndLine) {
+    if (
+      absolutePath === themePath &&
+      lineNumber >= themeBlockStartLine &&
+      lineNumber <= themeBlockEndLine
+    ) {
       return;
     }
 
@@ -266,5 +301,7 @@ const report = {
 
 console.log(JSON.stringify(report, null, 2));
 
-const hasFailures = Object.entries(summary).some(([key, value]) => key !== 'approvedExceptions' && value > 0);
+const hasFailures = Object.entries(summary).some(
+  ([key, value]) => key !== 'approvedExceptions' && value > 0,
+);
 process.exit(hasFailures ? 1 : 0);

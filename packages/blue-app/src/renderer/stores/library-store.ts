@@ -25,10 +25,7 @@ import {
   type BlueLiveSoundObjectClipboardRequest,
   type CapturableLibraryTransferSource,
 } from '../../shared/unified-library';
-import {
-  libraryEditorPanelId,
-  useLibraryEditorStore,
-} from './library-editor-store';
+import { libraryEditorPanelId, useLibraryEditorStore } from './library-editor-store';
 import { useWorkbenchStore } from './workbench-store';
 import { useBsbClipboardStore } from './bsb-clipboard-store';
 import { getProjectDocumentRevision } from './project-store';
@@ -81,12 +78,21 @@ interface LibraryState {
   captureScoreSoundObject: (request: ScoreTimelineSoundObjectRequest) => Promise<boolean>;
   captureTrackInstrument: (request: TrackInstrumentClipboardRequest) => Promise<boolean>;
   captureBlueLiveSoundObject: (request: BlueLiveSoundObjectClipboardRequest) => Promise<boolean>;
-  addScoreSoundObjectToProjectLibrary: (request: ScoreTimelineSoundObjectRequest) => Promise<boolean>;
+  addScoreSoundObjectToProjectLibrary: (
+    request: ScoreTimelineSoundObjectRequest,
+  ) => Promise<boolean>;
   cancelClipboard: () => void;
   pasteInto: (parent: LibraryBrowseNode) => Promise<boolean>;
-  transferToUser: (source: LibraryTransferSourceReference, parent: LibraryBrowseNode) => Promise<boolean>;
+  transferToUser: (
+    source: LibraryTransferSourceReference,
+    parent: LibraryBrowseNode,
+  ) => Promise<boolean>;
   moveUserNode: (source: LibraryBrowseNode, destination: LibraryBrowseNode) => Promise<boolean>;
-  transferToProject: (source: LibraryTransferSourceReference, target: LibraryExactTransferTarget, mode?: LibraryInsertionMode) => Promise<boolean>;
+  transferToProject: (
+    source: LibraryTransferSourceReference,
+    target: LibraryExactTransferTarget,
+    mode?: LibraryInsertionMode,
+  ) => Promise<boolean>;
   applyTransfer: (mode?: LibraryInsertionMode) => Promise<boolean>;
   cancelTransfer: () => void;
   prepareDelete: (node: LibraryBrowseNode) => Promise<boolean>;
@@ -264,9 +270,11 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   refresh: async () => {
     const generation = ++refreshGeneration;
     const previous = get();
-    const userResults = await Promise.all(LIBRARY_TYPES.map((libraryType) => (
-      window.blueAPI.browseLibraries({ parent: { scope: 'user', libraryType }, limit: 1 })
-    )));
+    const userResults = await Promise.all(
+      LIBRARY_TYPES.map((libraryType) =>
+        window.blueAPI.browseLibraries({ parent: { scope: 'user', libraryType }, limit: 1 }),
+      ),
+    );
     if (generation !== refreshGeneration) return;
 
     const nodesByType = { ...previous.nodesByType };
@@ -284,14 +292,24 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
 
     set({ nodesByType, userRootsByType, error: errors.length > 0 ? errors.join(' ') : null });
 
-    const loadedParents = Object.keys(previous.childrenByParent).map((nodeId) => {
-      const refreshedRoot = Object.values(userRootsByType).find((node) => node?.nodeId === nodeId);
-      return refreshedRoot ?? findUserNode(previous, nodeId);
-    }).filter((node): node is LibraryBrowseNode => node !== null && node.scope === 'user');
-    const loadedResults = await Promise.all(loadedParents.map(async (node) => ({
-      node,
-      result: await browseAllChildren({ scope: 'user', libraryType: node.libraryType, nodeId: node.nodeId }),
-    })));
+    const loadedParents = Object.keys(previous.childrenByParent)
+      .map((nodeId) => {
+        const refreshedRoot = Object.values(userRootsByType).find(
+          (node) => node?.nodeId === nodeId,
+        );
+        return refreshedRoot ?? findUserNode(previous, nodeId);
+      })
+      .filter((node): node is LibraryBrowseNode => node !== null && node.scope === 'user');
+    const loadedResults = await Promise.all(
+      loadedParents.map(async (node) => ({
+        node,
+        result: await browseAllChildren({
+          scope: 'user',
+          libraryType: node.libraryType,
+          nodeId: node.nodeId,
+        }),
+      })),
+    );
     if (generation !== refreshGeneration) return;
     set((state) => {
       const childrenByParent = { ...state.childrenByParent };
@@ -344,7 +362,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     const state = get();
     const query = state.query.trim();
     if (!query) return;
-    const cursor = append ? state.nextSearchCursor ?? undefined : undefined;
+    const cursor = append ? (state.nextSearchCursor ?? undefined) : undefined;
     if (append && !cursor) return;
     const generation = ++searchGeneration;
     const typeFilter = state.typeFilter;
@@ -356,16 +374,19 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
       limit: 100,
     });
     if (
-      generation !== searchGeneration
-      || get().query.trim() !== query
-      || get().typeFilter !== typeFilter
-    ) return;
+      generation !== searchGeneration ||
+      get().query.trim() !== query ||
+      get().typeFilter !== typeFilter
+    )
+      return;
     if (!result.ok) {
       set({ error: result.error.message });
       return;
     }
     set((current) => ({
-      searchResults: append ? [...current.searchResults, ...result.value.results] : result.value.results,
+      searchResults: append
+        ? [...current.searchResults, ...result.value.results]
+        : result.value.results,
       nextSearchCursor: result.value.nextCursor,
       error: null,
     }));
@@ -380,12 +401,12 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     expandGenerations.set(node.nodeId, generation);
     const refreshAtStart = refreshGeneration;
     const result = await browseAllChildren({
-      scope: 'user', libraryType: node.libraryType, nodeId: node.nodeId,
+      scope: 'user',
+      libraryType: node.libraryType,
+      nodeId: node.nodeId,
     });
-    if (
-      expandGenerations.get(node.nodeId) !== generation
-      || refreshAtStart !== refreshGeneration
-    ) return;
+    if (expandGenerations.get(node.nodeId) !== generation || refreshAtStart !== refreshGeneration)
+      return;
     if (!result.ok) {
       set({ error: result.error.message });
       return;
@@ -411,18 +432,19 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     if (node.revision === undefined || node.nodeKind === 'root') return false;
     if (node.scope === 'user' && typeof node.revision !== 'number') return false;
     if (node.scope !== 'user' && (node.nodeKind !== 'item' || !node.key)) return false;
-    const source: CapturableLibraryTransferSource = node.scope === 'user'
-      ? {
-          kind: 'userNode' as const,
-          libraryType: node.libraryType,
-          nodeId: node.nodeId,
-          revision: node.revision as number,
-        }
-      : {
-          kind: 'library' as const,
-          key: node.key!,
-          revision: node.revision,
-        };
+    const source: CapturableLibraryTransferSource =
+      node.scope === 'user'
+        ? {
+            kind: 'userNode' as const,
+            libraryType: node.libraryType,
+            nodeId: node.nodeId,
+            revision: node.revision as number,
+          }
+        : {
+            kind: 'library' as const,
+            key: node.key!,
+            revision: node.revision,
+          };
     if (operation === 'copy') {
       const clipboard: LibraryInteractionClipboard = {
         operation,
@@ -438,7 +460,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
       const publishClipboard = window.blueAPI.setLibraryClipboard;
       if (typeof publishClipboard === 'function') {
         try {
-          if (!await publishClipboard(clipboard)) {
+          if (!(await publishClipboard(clipboard))) {
             if (get().clipboard === clipboard) set({ clipboard: previousClipboard });
             return false;
           }
@@ -478,10 +500,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
         toast.error(preview.error.message);
         return false;
       }
-      if (
-        source.key.libraryType === 'soundObject'
-        && preview.value.linkedInstanceCount > 0
-      ) {
+      if (source.key.libraryType === 'soundObject' && preview.value.linkedInstanceCount > 0) {
         const targetKey = source.key;
         let decision: Awaited<ReturnType<typeof window.blueAPI.showNativeConfirmation>>;
         try {
@@ -502,7 +521,9 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
         }
         if (decision.actionId !== 'cut' || decision.outcome !== 'selected') return false;
 
-        let revalidatedPreview: Awaited<ReturnType<typeof window.blueAPI.previewProjectLibraryDelete>>;
+        let revalidatedPreview: Awaited<
+          ReturnType<typeof window.blueAPI.previewProjectLibraryDelete>
+        >;
         try {
           revalidatedPreview = await window.blueAPI.previewProjectLibraryDelete(targetKey);
         } catch {
@@ -514,12 +535,13 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
           return false;
         }
         if (
-          JSON.stringify(get().selectedKey) !== JSON.stringify(selectedKeyAtRequest)
-          || getProjectDocumentRevision() !== projectRevisionAtRequest
-          || revalidatedPreview.value.linkedInstanceCount !== preview.value.linkedInstanceCount
-          || JSON.stringify(revalidatedPreview.value.locations) !== JSON.stringify(preview.value.locations)
-          || revalidatedPreview.value.requiresConfirmation !== preview.value.requiresConfirmation
-          || revalidatedPreview.value.confirmationToken.length === 0
+          JSON.stringify(get().selectedKey) !== JSON.stringify(selectedKeyAtRequest) ||
+          getProjectDocumentRevision() !== projectRevisionAtRequest ||
+          revalidatedPreview.value.linkedInstanceCount !== preview.value.linkedInstanceCount ||
+          JSON.stringify(revalidatedPreview.value.locations) !==
+            JSON.stringify(preview.value.locations) ||
+          revalidatedPreview.value.requiresConfirmation !== preview.value.requiresConfirmation ||
+          revalidatedPreview.value.confirmationToken.length === 0
         ) {
           return false;
         }
@@ -545,9 +567,10 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     }
     set({
       clipboard: result.value.clipboard,
-      selectedKey: node.key && JSON.stringify(get().selectedKey) === JSON.stringify(node.key)
-        ? null
-        : get().selectedKey,
+      selectedKey:
+        node.key && JSON.stringify(get().selectedKey) === JSON.stringify(node.key)
+          ? null
+          : get().selectedKey,
       error: null,
     });
     await get().refresh();
@@ -617,7 +640,9 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
       parent = findUserNode(get(), destination.parentId) ?? destination;
       if (parent.nodeKind === 'item') {
         const parentResult = await browseAllChildren({
-          scope: 'user', libraryType: destination.libraryType, nodeId: destination.parentId,
+          scope: 'user',
+          libraryType: destination.libraryType,
+          nodeId: destination.parentId,
         });
         if (!parentResult.ok) {
           set({ error: parentResult.error.message });
@@ -675,16 +700,16 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
 
   transferToUser: async (source, destination) => {
     if (destination.scope !== 'user') return false;
-    const parent = destination.nodeKind === 'item' && destination.parentId
-      ? findUserNode(get(), destination.parentId)
-      : destination;
+    const parent =
+      destination.nodeKind === 'item' && destination.parentId
+        ? findUserNode(get(), destination.parentId)
+        : destination;
     if (!parent || parent.nodeKind === 'item') {
       set({ error: 'The destination folder is unavailable.' });
       return false;
     }
-    const sourceType = source.kind === 'clipboard'
-      ? getLibraryTransferSourceType(source.source)
-      : null;
+    const sourceType =
+      source.kind === 'clipboard' ? getLibraryTransferSourceType(source.source) : null;
     if (sourceType && sourceType !== parent.libraryType) {
       set({ error: 'Library items can only be pasted within the same library type.' });
       return false;
@@ -703,14 +728,15 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
 
   moveUserNode: async (source, destination) => {
     if (
-      source.scope !== 'user'
-      || destination.scope !== 'user'
-      || source.nodeKind === 'root'
-      || destination.nodeKind === 'item'
-      || source.libraryType !== destination.libraryType
-      || source.nodeId === destination.nodeId
-      || typeof source.revision !== 'number'
-    ) return false;
+      source.scope !== 'user' ||
+      destination.scope !== 'user' ||
+      source.nodeKind === 'root' ||
+      destination.nodeKind === 'item' ||
+      source.libraryType !== destination.libraryType ||
+      source.nodeId === destination.nodeId ||
+      typeof source.revision !== 'number'
+    )
+      return false;
     const applied = await get().applyMutation({
       type: 'moveNode',
       nodeId: source.nodeId,
@@ -733,7 +759,11 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
       return false;
     }
     if (!result.value.canApply) {
-      set({ error: result.value.blockingReasons.join(' '), transferPreview: null, transferSource: null });
+      set({
+        error: result.value.blockingReasons.join(' '),
+        transferPreview: null,
+        transferSource: null,
+      });
       toast.error(result.value.blockingReasons.join(' '));
       return false;
     }
@@ -797,11 +827,14 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
         await editorStore.save(sessionId);
         const saved = useLibraryEditorStore.getState().sessions[sessionId];
         if (!saved || saved.dirty || saved.status !== 'ready') {
-          set({ error: useLibraryEditorStore.getState().error ?? 'Unable to save the Library Item draft.' });
+          set({
+            error:
+              useLibraryEditorStore.getState().error ?? 'Unable to save the Library Item draft.',
+          });
           return false;
         }
       } else {
-        if (!await editorStore.close(sessionId, 'discard')) return false;
+        if (!(await editorStore.close(sessionId, 'discard'))) return false;
         useWorkbenchStore.getState().closePanel(libraryEditorPanelId(sessionId));
       }
     }
@@ -827,16 +860,21 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     const selectedKey = get().selectedKey;
     set({
       deletePreview: null,
-      clipboard: clipboard?.source.kind === 'userNode' && preview.affectedNodeIds.includes(clipboard.source.nodeId)
-        ? null
-        : clipboard,
-      selectedKey: selectedKey?.scope === 'user' && preview.affectedNodeIds.includes(selectedKey.nodeId)
-        ? null
-        : selectedKey,
+      clipboard:
+        clipboard?.source.kind === 'userNode' &&
+        preview.affectedNodeIds.includes(clipboard.source.nodeId)
+          ? null
+          : clipboard,
+      selectedKey:
+        selectedKey?.scope === 'user' && preview.affectedNodeIds.includes(selectedKey.nodeId)
+          ? null
+          : selectedKey,
       error: null,
     });
     await get().refresh();
-    toast.success(`Deleted ${preview.affectedCount} Library ${preview.affectedCount === 1 ? 'item' : 'items'}.`);
+    toast.success(
+      `Deleted ${preview.affectedCount} Library ${preview.affectedCount === 1 ? 'item' : 'items'}.`,
+    );
     return true;
   },
 
@@ -870,7 +908,9 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
       if (!result.ok) return set({ error: result.error.message });
       set({ importPreview: result.value, importResult: null, error: null });
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : 'Unable to import Java Blue library XML.' });
+      set({
+        error: error instanceof Error ? error.message : 'Unable to import Java Blue library XML.',
+      });
     }
   },
 
@@ -901,10 +941,11 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
 
   importInstrumentToFolder: async (parent) => {
     if (
-      parent.scope !== 'user'
-      || parent.libraryType !== 'instrument'
-      || (parent.nodeKind !== 'root' && parent.nodeKind !== 'folder')
-    ) return false;
+      parent.scope !== 'user' ||
+      parent.libraryType !== 'instrument' ||
+      (parent.nodeKind !== 'root' && parent.nodeKind !== 'folder')
+    )
+      return false;
     const result = await window.blueAPI.importLibraryInstrument(parent.nodeId);
     if (!result) return false;
     if (!result.ok) {
@@ -921,12 +962,13 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
 
   exportInstrument: async (node) => {
     if (
-      node.scope !== 'user'
-      || node.libraryType !== 'instrument'
-      || node.nodeKind !== 'item'
-      || !node.key
-      || node.key.scope !== 'user'
-    ) return false;
+      node.scope !== 'user' ||
+      node.libraryType !== 'instrument' ||
+      node.nodeKind !== 'item' ||
+      !node.key ||
+      node.key.scope !== 'user'
+    )
+      return false;
     const result = await window.blueAPI.exportLibraryInstrument(node.key);
     if (!result) return false;
     if (!result.ok) {

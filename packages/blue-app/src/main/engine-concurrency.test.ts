@@ -1,8 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import {
-  buildEngineEndpoints,
-  createEngineSharedMemoryName,
-} from './engine-bridge';
+import { buildEngineEndpoints, createEngineSharedMemoryName } from './engine-bridge';
 import {
   getEngineProcessManifestPath,
   planEngineProcessSweep,
@@ -37,7 +34,14 @@ function manifestV2(
     pid,
     ownerPid,
     enginePath: '/app/resources/assets/engine/blue-engine',
-    spawnArgs: ['--control-endpoint', controlEndpoint, '--pub-endpoint', pubEndpoint, '--shm', shmName],
+    spawnArgs: [
+      '--control-endpoint',
+      controlEndpoint,
+      '--pub-endpoint',
+      pubEndpoint,
+      '--shm',
+      shmName,
+    ],
     controlEndpoint,
     pubEndpoint,
     shmName,
@@ -85,8 +89,7 @@ describe('concurrent realtime and Blue Live engine isolation', () => {
     expect(realtime.shmName).not.toBe(live.shmName);
     expect(realtime.controlEndpoint).not.toBe(live.controlEndpoint);
     expect(realtime.pubEndpoint).not.toBe(live.pubEndpoint);
-    expect(getEngineProcessManifestPath(realtime))
-      .not.toBe(getEngineProcessManifestPath(live));
+    expect(getEngineProcessManifestPath(realtime)).not.toBe(getEngineProcessManifestPath(live));
   });
 
   it('isolates sessions across two distinct app owners and preserves live foreign owner', async () => {

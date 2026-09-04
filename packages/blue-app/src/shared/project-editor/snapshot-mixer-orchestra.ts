@@ -95,18 +95,29 @@ import {
   createNoteProcessorChainSnapshot as createNoteProcessorChainSnapshotFromData,
   reifyChainFromSnapshot,
 } from '@blue/data';
-import type { NoteProcessorChainSnapshot as DataNoteProcessorChainSnapshot, Parameter as BlueDataParameter, ScoreObject as BlueDataScoreObject, AutomatableLayer as BlueDataAutomatableLayer, Arrangement as BlueDataArrangement, Mixer as BlueDataMixer } from '@blue/data';
+import type {
+  NoteProcessorChainSnapshot as DataNoteProcessorChainSnapshot,
+  Parameter as BlueDataParameter,
+  ScoreObject as BlueDataScoreObject,
+  AutomatableLayer as BlueDataAutomatableLayer,
+  Arrangement as BlueDataArrangement,
+  Mixer as BlueDataMixer,
+} from '@blue/data';
 import { AutomationCurve as BlueDataAutomationCurve, LineColors } from '@blue/data';
 import { ParameterHelper } from '@blue/data';
-import type { SnapValueName, BlueX7Voice, BlueX7Common, BlueX7Lfo, BlueX7Operator, BlueX7EnvelopePoint } from '@blue/data';
+import type {
+  SnapValueName,
+  BlueX7Voice,
+  BlueX7Common,
+  BlueX7Lfo,
+  BlueX7Operator,
+  BlueX7EnvelopePoint,
+} from '@blue/data';
 import type { MissingAudioAssetsSession } from '../missing-audio-assets';
 import type { ScoreInsertionLocation } from '../unified-library';
 
 import { moveRangeWithAnchors, scaleRangeWithAnchors } from '../automation-range-math';
-import {
-  BSB_LINE_SELECTOR_HEIGHT,
-  getBsbWidgetDisplaySize,
-} from '../bsb-widget-layout';
+import { BSB_LINE_SELECTOR_HEIGHT, getBsbWidgetDisplaySize } from '../bsb-widget-layout';
 import {
   collectBsbReplacementKeysFromSnapshotTree,
   collectBsbReplacementKeysFromWidgetTree,
@@ -397,8 +408,12 @@ export function createJMaskEditorPayload(jmask: JMask): JMaskEditorPayload {
 }
 
 export function createJMaskPayloadSummary(payload: JMaskEditorPayload): string {
-  const parameterCount = Array.isArray(payload.field.parameters) ? payload.field.parameters.length : 0;
-  return payload.seedUsed ? `seed: ${payload.seed}; ${parameterCount} params` : `random; ${parameterCount} params`;
+  const parameterCount = Array.isArray(payload.field.parameters)
+    ? payload.field.parameters.length
+    : 0;
+  return payload.seedUsed
+    ? `seed: ${payload.seed}; ${parameterCount} params`
+    : `random; ${parameterCount} params`;
 }
 
 function createEffectSnapshotBase(effect: Effect): EffectSnapshot {
@@ -574,9 +589,9 @@ export function createMixerSnapshot(mixer: Mixer): MixerSnapshot {
   return {
     enabled: mixer.isEnabled(),
     extraRenderTime: mixer.getExtraRenderTime(),
-    channelListGroups: mixer.getChannelListGroups().map((channelList) =>
-      createMixerChannelListSnapshot(channelList),
-    ),
+    channelListGroups: mixer
+      .getChannelListGroups()
+      .map((channelList) => createMixerChannelListSnapshot(channelList)),
     channels: Array.from(mixer.getChannels(), (channel) =>
       createMixerChannelSnapshot(channel, 'instrument'),
     ),
@@ -682,9 +697,7 @@ export function createToolbarProjectTransportSnapshot(
     renderStartTime: data.getRenderStartTime(),
     renderEndTime: data.getRenderEndTime(),
     loopRendering: data.isLoopRendering(),
-    tempoMap: createTempoMapSnapshot(
-      data.getScore().getTimeContext().getTempoMap(),
-    ),
+    tempoMap: createTempoMapSnapshot(data.getScore().getTimeContext().getTempoMap()),
     meterMap: createMeterMapSnapshot(timeContext.getMeterMap()),
     sampleRate: Number(data.getProjectProperties().sampleRate) || 44100,
     smpteFrameRate: timeContext.getSmpteFramesPerSecond(),
@@ -758,9 +771,9 @@ export function createClojureProjectSnapshot(
 
 // ─── Bar Renderer Snapshot Helpers ───
 
-
-
-export function getInstrumentSnapshotType(instrument: Instrument | undefined): InstrumentSnapshot['type'] {
+export function getInstrumentSnapshotType(
+  instrument: Instrument | undefined,
+): InstrumentSnapshot['type'] {
   if (instrument instanceof GenericInstrument) return 'generic';
   if (instrument instanceof JavaScriptInstrument) return 'javascript';
   if (instrument instanceof PythonInstrument) return 'python';
@@ -774,9 +787,9 @@ export function getInstrumentSummary(instrument: Instrument | undefined): string
   return instrument.constructor.name;
 }
 
-
-
-export function buildSoundBSBInstrumentSnapshot(bsb: BlueSynthBuilder): BlueSynthBuilderInstrumentSnapshot {
+export function buildSoundBSBInstrumentSnapshot(
+  bsb: BlueSynthBuilder,
+): BlueSynthBuilderInstrumentSnapshot {
   return {
     assignmentId: '',
     type: 'blueSynthBuilder',
@@ -828,7 +841,6 @@ export function applyObjectBuilderBsbInterfacePatch(
   }
   return changed;
 }
-
 
 export function createProjectUdoListSnapshot(data: BlueData): UdoDefinitionSnapshot[] {
   const opcodes = data.getOpcodeList().getOpcodes();
@@ -1047,11 +1059,11 @@ export function createInstrumentFromSnapshot(snapshot: InstrumentSnapshot): Inst
       ? new JavaScriptInstrument()
       : snapshot.type === 'python'
         ? new PythonInstrument()
-      : snapshot.type === 'blueX7'
-        ? new BlueX7()
-        : snapshot.type === 'blueSynthBuilder'
-          ? new BlueSynthBuilder()
-          : new GenericInstrument();
+        : snapshot.type === 'blueX7'
+          ? new BlueX7()
+          : snapshot.type === 'blueSynthBuilder'
+            ? new BlueSynthBuilder()
+            : new GenericInstrument();
 
   applyInstrumentPatch(instrument, {
     name: snapshot.name,
@@ -1059,11 +1071,7 @@ export function createInstrumentFromSnapshot(snapshot: InstrumentSnapshot): Inst
     enabled: snapshot.enabled,
   });
 
-  if (
-    snapshot.type === 'generic' ||
-    snapshot.type === 'javascript' ||
-    snapshot.type === 'python'
-  ) {
+  if (snapshot.type === 'generic' || snapshot.type === 'javascript' || snapshot.type === 'python') {
     applyInstrumentPatch(instrument, {
       text: snapshot.text,
       globalOrc: snapshot.globalOrc,
@@ -1073,9 +1081,8 @@ export function createInstrumentFromSnapshot(snapshot: InstrumentSnapshot): Inst
     if (instrument instanceof GenericInstrument || instrument instanceof JavaScriptInstrument) {
       const opcodeList = instrument.getOpcodeList();
       opcodeList.clear();
-      const definitions = snapshot.type === 'generic' || snapshot.type === 'javascript'
-        ? snapshot.udolist
-        : [];
+      const definitions =
+        snapshot.type === 'generic' || snapshot.type === 'javascript' ? snapshot.udolist : [];
       for (const definition of definitions) {
         opcodeList.addOpcode(snapshotToUdo(definition));
       }
@@ -1119,8 +1126,8 @@ export function createInstrumentFromSnapshot(snapshot: InstrumentSnapshot): Inst
         if (!parameterSnapshot) continue;
         if (parameterSnapshot.label !== undefined) parameter.setLabel(parameterSnapshot.label);
         if (
-          parameterSnapshot.curve !== undefined
-          && parameterSnapshot.curve in BlueDataAutomationCurve
+          parameterSnapshot.curve !== undefined &&
+          parameterSnapshot.curve in BlueDataAutomationCurve
         ) {
           parameter.setCurve(
             BlueDataAutomationCurve[
@@ -1142,8 +1149,6 @@ export function createInstrumentFromSnapshot(snapshot: InstrumentSnapshot): Inst
   return instrument;
 }
 
-
-
 export function createOpcodeListFromSnapshots(snapshots: UdoDefinitionSnapshot[]): OpcodeList {
   const opcodeList = new OpcodeList();
   for (const snapshot of snapshots) {
@@ -1151,8 +1156,6 @@ export function createOpcodeListFromSnapshots(snapshots: UdoDefinitionSnapshot[]
   }
   return opcodeList;
 }
-
-
 
 export function applyInstrumentPatch(instrument: Instrument, patch: InstrumentPatch): boolean {
   let changed = false;
@@ -1183,7 +1186,9 @@ export function applyInstrumentPatch(instrument: Instrument, patch: InstrumentPa
       changed = true;
     }
     if (patch.embeddedOpcodeList) {
-      changed = applyEmbeddedOpcodeListPatch(instrument.getOpcodeList(), patch.embeddedOpcodeList) || changed;
+      changed =
+        applyEmbeddedOpcodeListPatch(instrument.getOpcodeList(), patch.embeddedOpcodeList) ||
+        changed;
     }
   } else if (instrument instanceof JavaScriptInstrument || instrument instanceof PythonInstrument) {
     if (patch.text !== undefined && instrument.getText() !== patch.text) {
@@ -1199,7 +1204,9 @@ export function applyInstrumentPatch(instrument: Instrument, patch: InstrumentPa
       changed = true;
     }
     if (patch.embeddedOpcodeList) {
-      changed = applyEmbeddedOpcodeListPatch(instrument.getOpcodeList(), patch.embeddedOpcodeList) || changed;
+      changed =
+        applyEmbeddedOpcodeListPatch(instrument.getOpcodeList(), patch.embeddedOpcodeList) ||
+        changed;
     }
   } else if (instrument instanceof BlueSynthBuilder) {
     if (
@@ -1229,7 +1236,10 @@ export function applyInstrumentPatch(instrument: Instrument, patch: InstrumentPa
         changed = instrument.updateWidgetValue(objectName, value) || changed;
       }
     }
-    if (patch.bsbOpcodeListText !== undefined && instrument.getOpcodeListText() !== patch.bsbOpcodeListText) {
+    if (
+      patch.bsbOpcodeListText !== undefined &&
+      instrument.getOpcodeListText() !== patch.bsbOpcodeListText
+    ) {
       instrument.setOpcodeListText(patch.bsbOpcodeListText);
       changed = true;
     }
@@ -1253,7 +1263,11 @@ export function applyInstrumentPatch(instrument: Instrument, patch: InstrumentPa
           changed = true;
           break;
         case 'setOperatorField':
-          instrument.setOperatorField(p.operatorIndex, p.field, p.value as BlueX7Operator[typeof p.field]);
+          instrument.setOperatorField(
+            p.operatorIndex,
+            p.field,
+            p.value as BlueX7Operator[typeof p.field],
+          );
           changed = true;
           break;
         case 'setSharedOscillatorSync':
@@ -1298,8 +1312,6 @@ export function convertGenericToBsb(instrument: GenericInstrument): BlueSynthBui
   return bsb;
 }
 
-
-
 export function createBlueLiveProjectSnapshot(
   liveData: LiveData,
   context: TimeContext = new TimeContext(),
@@ -1324,7 +1336,9 @@ export function createBlueLiveProjectSnapshot(
           startBeats: soundObject?.getStartTime().toBeats(context),
           durationBeats: soundObject?.getSubjectiveDuration().toBeats(context),
           startTimeBase: soundObject ? String(soundObject.getStartTime().getTimeBase()) : undefined,
-          durationTimeBase: soundObject ? String(soundObject.getSubjectiveDuration().getTimeBase()) : undefined,
+          durationTimeBase: soundObject
+            ? String(soundObject.getSubjectiveDuration().getTimeBase())
+            : undefined,
           backgroundColor: soundObject?.getBackgroundColor(),
         });
       } else {
@@ -1343,10 +1357,13 @@ export function createBlueLiveProjectSnapshot(
     repeatEnabled: liveData.isRepeatEnabled(),
     liveCodeText: liveData.getLiveCodeText(),
     bins: { columns: bins.getColumnCount(), rows: bins.getRowCount(), cells },
-    sets: liveData.getLiveObjectSets().getSets().map((set) => ({
-      name: set.getName(),
-      liveObjectIds: set.getLiveObjectIds(),
-    })),
+    sets: liveData
+      .getLiveObjectSets()
+      .getSets()
+      .map((set) => ({
+        name: set.getName(),
+        liveObjectIds: set.getLiveObjectIds(),
+      })),
   };
 }
 
@@ -1380,9 +1397,13 @@ export function createTrackerColumnSnapshot(
   };
 }
 
-export function createMidiInputProcessorSnapshot(
-  processor: { getKeyMapping(): string; getVelocityMapping(): string; getPitchConstant(): string; getAmpConstant(): string; getScale(): Scale | null },
-): MidiInputProcessorSnapshot {
+export function createMidiInputProcessorSnapshot(processor: {
+  getKeyMapping(): string;
+  getVelocityMapping(): string;
+  getPitchConstant(): string;
+  getAmpConstant(): string;
+  getScale(): Scale | null;
+}): MidiInputProcessorSnapshot {
   return {
     keyMapping: processor.getKeyMapping(),
     velocityMapping: processor.getVelocityMapping(),
@@ -1391,8 +1412,6 @@ export function createMidiInputProcessorSnapshot(
     scale: createMidiScaleSnapshot(processor.getScale()),
   };
 }
-
-
 
 export function reconcileMixerSnapshotWithArrangement(
   mixer: MixerSnapshot,
@@ -1408,7 +1427,8 @@ export function reconcileMixerSnapshotWithArrangement(
   let fallbackIndex = 0;
 
   for (const row of orchestra.arrangement.rows) {
-    const existing = existingByAssociation.get(row.assignmentId) ?? fallbackChannels[fallbackIndex++];
+    const existing =
+      existingByAssociation.get(row.assignmentId) ?? fallbackChannels[fallbackIndex++];
     if (existing) {
       nextChannels.push({
         ...existing,
@@ -1524,13 +1544,13 @@ function reconcileTrackChannelListGroups(
 
   return descriptors.map((descriptor) => {
     const existingGroup =
-      existingByAssociation.get(descriptor.association) ??
-      fallbackGroups[fallbackGroupIndex++];
+      existingByAssociation.get(descriptor.association) ?? fallbackGroups[fallbackGroupIndex++];
     const existingChannelsByAssociation = indexFirstByAssociation(
       existingGroup?.channels ?? [],
       (channel) => channel.association,
     );
-    const fallbackChannels = existingGroup?.channels.filter((channel) => !channel.association) ?? [];
+    const fallbackChannels =
+      existingGroup?.channels.filter((channel) => !channel.association) ?? [];
     let fallbackChannelIndex = 0;
 
     const channels = descriptor.channels.map((channelDescriptor) => {
@@ -1596,9 +1616,14 @@ export function findTrackLayerGroupByAssociation(
 ): TrackLayerGroup | null {
   const targetAssociation = association?.trim() ?? '';
   if (!targetAssociation) return null;
-  return data.getScore().find(
-    (group): group is TrackLayerGroup => group instanceof TrackLayerGroup && group.getUniqueId() === targetAssociation,
-  ) ?? null;
+  return (
+    data
+      .getScore()
+      .find(
+        (group): group is TrackLayerGroup =>
+          group instanceof TrackLayerGroup && group.getUniqueId() === targetAssociation,
+      ) ?? null
+  );
 }
 
 export function reconcileMixerWithArrangement(data: BlueData): boolean {
@@ -1615,9 +1640,8 @@ export function reconcileMixerWithArrangement(data: BlueData): boolean {
   };
 
   const sourceChannels = mixer.getAllSourceChannels();
-  const sourceByAssociation = indexFirstByAssociation(
-    sourceChannels,
-    (channel) => channel.getAssociation(),
+  const sourceByAssociation = indexFirstByAssociation(sourceChannels, (channel) =>
+    channel.getAssociation(),
   );
   const sourceFallbackChannels = sourceChannels.filter(
     (channel) => channel.getAssociation().trim().length === 0,
@@ -1640,9 +1664,8 @@ export function reconcileMixerWithArrangement(data: BlueData): boolean {
     mixer.getMaster().getPan() !== reconciledWithGroups.master.pan;
   const nextSourceChannels = reconciledSourceSnapshots.map((snapshot) => {
     const current =
-      (snapshot.association
-        ? sourceByAssociation.get(snapshot.association)
-        : undefined) ?? sourceFallbackChannels[sourceFallbackIndex++];
+      (snapshot.association ? sourceByAssociation.get(snapshot.association) : undefined) ??
+      sourceFallbackChannels[sourceFallbackIndex++];
 
     const next = current ?? new Channel();
     if (
@@ -1669,33 +1692,38 @@ export function reconcileMixerWithArrangement(data: BlueData): boolean {
     return next;
   });
 
-  const nextChannelListGroups = reconciledWithGroups.channelListGroups.map((groupSnapshot, index) => {
-    const currentGroup = mixer.getChannelListGroups()[index];
-    const nextGroup = new ChannelList();
-    const targetAssociation = groupSnapshot.association?.trim() ?? '';
-    nextGroup.setAssociation(targetAssociation.length > 0 ? targetAssociation : null);
-    nextGroup.setListName(groupSnapshot.listName);
-    nextGroup.setListNameEditSupported(groupSnapshot.listNameEditSupported);
-    if (
-      !currentGroup ||
-      (currentGroup.getAssociation()?.trim() ?? '') !== targetAssociation ||
-      currentGroup.getListName() !== groupSnapshot.listName ||
-      currentGroup.isListNameEditSupported() !== groupSnapshot.listNameEditSupported ||
-      currentGroup.length !== groupSnapshot.channels.length
-    ) {
-      changed = true;
-    }
-    const groupStart = reconciledWithGroups.channelListGroups
-      .slice(0, index)
-      .reduce((count, group) => count + group.channels.length, 0);
-    const groupEnd = groupStart + groupSnapshot.channels.length;
-    const groupChannels = nextSourceChannels.slice(groupStart, groupEnd);
-    nextGroup.push(...groupChannels);
-    return nextGroup;
-  });
+  const nextChannelListGroups = reconciledWithGroups.channelListGroups.map(
+    (groupSnapshot, index) => {
+      const currentGroup = mixer.getChannelListGroups()[index];
+      const nextGroup = new ChannelList();
+      const targetAssociation = groupSnapshot.association?.trim() ?? '';
+      nextGroup.setAssociation(targetAssociation.length > 0 ? targetAssociation : null);
+      nextGroup.setListName(groupSnapshot.listName);
+      nextGroup.setListNameEditSupported(groupSnapshot.listNameEditSupported);
+      if (
+        !currentGroup ||
+        (currentGroup.getAssociation()?.trim() ?? '') !== targetAssociation ||
+        currentGroup.getListName() !== groupSnapshot.listName ||
+        currentGroup.isListNameEditSupported() !== groupSnapshot.listNameEditSupported ||
+        currentGroup.length !== groupSnapshot.channels.length
+      ) {
+        changed = true;
+      }
+      const groupStart = reconciledWithGroups.channelListGroups
+        .slice(0, index)
+        .reduce((count, group) => count + group.channels.length, 0);
+      const groupEnd = groupStart + groupSnapshot.channels.length;
+      const groupChannels = nextSourceChannels.slice(groupStart, groupEnd);
+      nextGroup.push(...groupChannels);
+      return nextGroup;
+    },
+  );
 
   const nextFlatChannels = nextSourceChannels.slice(
-    reconciledWithGroups.channelListGroups.reduce((count, group) => count + group.channels.length, 0),
+    reconciledWithGroups.channelListGroups.reduce(
+      (count, group) => count + group.channels.length,
+      0,
+    ),
   );
 
   const nextSubChannels = reconciledWithGroups.subChannels.map((snapshot, index) => {

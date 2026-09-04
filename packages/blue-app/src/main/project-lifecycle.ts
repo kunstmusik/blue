@@ -1,11 +1,6 @@
 import type { BlueData } from '@blue/data';
-import {
-  type ProjectDocumentCommitReceipt,
-} from '../shared/project-editor';
-import {
-  type ProjectSession,
-  type ProjectSessionSnapshot,
-} from './project-session';
+import { type ProjectDocumentCommitReceipt } from '../shared/project-editor';
+import { type ProjectSession, type ProjectSessionSnapshot } from './project-session';
 
 export interface ProjectLifecycleDependencies {
   readonly session: ProjectSession;
@@ -24,15 +19,22 @@ export interface ProjectLifecycleCandidate {
 
 export interface ProjectLifecycle {
   replace(candidate: ProjectLifecycleCandidate): Promise<Readonly<ProjectSessionSnapshot>>;
-  open(load: () => ProjectLifecycleCandidate | Promise<ProjectLifecycleCandidate>): Promise<boolean>;
+  open(
+    load: () => ProjectLifecycleCandidate | Promise<ProjectLifecycleCandidate>,
+  ): Promise<boolean>;
   save(write: (data: BlueData, filePath: string) => void | Promise<void>): Promise<boolean>;
   saveAs(
     filePath: string,
     write: (data: BlueData, filePath: string) => void | Promise<void>,
   ): Promise<boolean>;
-  revert(load: () => ProjectLifecycleCandidate | Promise<ProjectLifecycleCandidate>): Promise<boolean>;
+  revert(
+    load: () => ProjectLifecycleCandidate | Promise<ProjectLifecycleCandidate>,
+  ): Promise<boolean>;
   close(): Promise<Readonly<ProjectSessionSnapshot>>;
-  recordMutation(change: { changed: boolean; invalidateSession?: boolean }): ProjectDocumentCommitReceipt;
+  recordMutation(change: {
+    changed: boolean;
+    invalidateSession?: boolean;
+  }): ProjectDocumentCommitReceipt;
 }
 
 const noop = async (): Promise<void> => {};

@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { Parameter } from '../../src/automation/parameter';
-import { automationPointToEngineSeconds, getEngineAutomationPoints } from '../../src/automation/parameter-runtime';
+import {
+  automationPointToEngineSeconds,
+  getEngineAutomationPoints,
+} from '../../src/automation/parameter-runtime';
 import { TempoMap } from '../../src/time/tempo-map';
 import { CurveType } from '../../src/time/curve-type';
 import { TempoPoint } from '../../src/time/tempo-point';

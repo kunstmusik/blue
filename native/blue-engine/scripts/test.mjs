@@ -33,7 +33,12 @@ if (mode === 'integration') {
 run('ctest', ctestArgs);
 
 if (mode === 'profiling') {
-  const defaultExecutable = join(packageRoot, `build-${target.key}-debug`, target.platform === 'win32' ? buildType : '', target.executableName);
+  const defaultExecutable = join(
+    packageRoot,
+    `build-${target.key}-debug`,
+    target.platform === 'win32' ? buildType : '',
+    target.executableName,
+  );
   run(process.execPath, ['scripts/build.mjs', '--build-type', buildType, '--no-stage']);
   const bytes = await readFile(defaultExecutable);
   const text = bytes.toString('latin1');

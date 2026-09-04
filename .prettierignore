@@ -1,0 +1,97 @@
+# Dependencies and package managers
+node_modules/
+**/node_modules/**
+.pnpm-store/
+**/.pnpm-store/**
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Build, release, and compiler outputs
+dist/
+**/dist/**
+build/
+**/build/**
+release/
+**/release/**
+.engine-stage/
+**/.engine-stage/**
+*.tsbuildinfo
+release-metadata.json
+
+# Worktrees and version control
+.git/
+**/.git/**
+.worktrees/
+**/.worktrees/**
+
+# Test coverage and reports
+coverage/
+**/coverage/**
+
+# Generated content and fixtures
+generated/
+**/generated/**
+fixtures/
+**/fixtures/**
+__fixtures__/
+**/__fixtures__/**
+test-fixtures/
+**/test-fixtures/**
+target/
+**/target/**
+graphify-out/
+
+# Vendored assets and binary/media files
+vendor/
+**/vendor/**
+*.wasm
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.ico
+*.svg
+*.woff
+*.woff2
+*.ttf
+*.eot
+*.jar
+*.dylib
+*.so
+*.dll
+*.exe
+*.AppImage
+*.dmg
+*.deb
+*.zip
+*.tar.*
+*.plist
+
+# Native Blue Engine build and vcpkg files
+native/blue-engine/build*/
+native/blue-engine/.vcpkg/
+native/blue-engine/vcpkg_installed/
+native/blue-engine/downloads/
+
+# Example projects, user content, and Csound artifacts
+examples/
+**/examples/**
+user-content/
+**/user-content/**
+*.blue
+*.blue~
+*.csd
+temp*.csd
+
+# Historical research and specification archives
+specs/
+.specify/
+research/
+.tmp-research/
+
+# Agent and assistant skill bundles
+.agents/skills/
+**/.agents/skills/**
+.claude/skills/
+**/.claude/skills/**

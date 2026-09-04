@@ -24,21 +24,27 @@ export default async function signBlueEngine(context) {
 
   const identity = process.env.BLUE_MAC_SIGN_IDENTITY?.trim();
   if (!identity) {
-    process.stderr.write('[blue-engine] macOS signing identity not configured; verified nested executable layout only\n');
+    process.stderr.write(
+      '[blue-engine] macOS signing identity not configured; verified nested executable layout only\n',
+    );
     return;
   }
   const entitlements = join(appRoot, 'build', 'entitlements.blue-engine.mac.plist');
-  execFileSync('/usr/bin/codesign', [
-    '--force',
-    '--timestamp',
-    '--options',
-    'runtime',
-    '--entitlements',
-    entitlements,
-    '--sign',
-    identity,
-    enginePath,
-  ], { stdio: 'inherit' });
+  execFileSync(
+    '/usr/bin/codesign',
+    [
+      '--force',
+      '--timestamp',
+      '--options',
+      'runtime',
+      '--entitlements',
+      entitlements,
+      '--sign',
+      identity,
+      enginePath,
+    ],
+    { stdio: 'inherit' },
+  );
   execFileSync('/usr/bin/codesign', ['--verify', '--strict', '--verbose=2', enginePath], {
     stdio: 'inherit',
   });

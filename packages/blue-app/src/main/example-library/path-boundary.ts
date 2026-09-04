@@ -48,7 +48,9 @@ function validatePortableText(value: string): PortableExamplePath {
     throw new ExamplePathError('Portable example paths must not contain NUL characters');
   }
   if (value.startsWith('/') || value.endsWith('/')) {
-    throw new ExamplePathError(`Portable example path must be relative without edge slashes: ${value}`);
+    throw new ExamplePathError(
+      `Portable example path must be relative without edge slashes: ${value}`,
+    );
   }
   if (path.posix.isAbsolute(value)) {
     throw new ExamplePathError(`Portable example path must be relative: ${value}`);
@@ -83,9 +85,7 @@ export function parsePortableExamplePath(raw: unknown): PortableExamplePath {
 }
 
 /** Non-throwing variant of {@link parsePortableExamplePath}. */
-export function tryParsePortableExamplePath(
-  raw: unknown,
-): PortableExamplePath | null {
+export function tryParsePortableExamplePath(raw: unknown): PortableExamplePath | null {
   try {
     return parsePortableExamplePath(raw);
   } catch {
@@ -145,12 +145,13 @@ export function collisionIdentityForPortables(
   const platform = resolveExamplePathPlatform(options);
   const left = portableA.replaceAll('\\', '/');
   const right = portableB.replaceAll('\\', '/');
-  return platform === 'win32'
-    ? left.toLowerCase() === right.toLowerCase()
-    : left === right;
+  return platform === 'win32' ? left.toLowerCase() === right.toLowerCase() : left === right;
 }
 
-export function hostCollisionKey(portableOrRelative: string, options: ExamplePathOptions = {}): string {
+export function hostCollisionKey(
+  portableOrRelative: string,
+  options: ExamplePathOptions = {},
+): string {
   const platform = resolveExamplePathPlatform(options);
   const normalized = portableOrRelative.replaceAll('\\', '/');
   return platform === 'win32' ? normalized.toLowerCase() : normalized;

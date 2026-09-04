@@ -104,19 +104,22 @@ export function decodeEngineCompatibilityReport(value: unknown): EngineCompatibi
   if (!csoundStatuses.has(csound.status as CsoundProbeStatus)) {
     throw new Error('Unknown Csound probe status');
   }
-  if (!Array.isArray(csound.supportedMajors) ||
-      csound.supportedMajors.some((major) => !Number.isInteger(major))) {
+  if (
+    !Array.isArray(csound.supportedMajors) ||
+    csound.supportedMajors.some((major) => !Number.isInteger(major))
+  ) {
     throw new Error('supportedMajors must contain integers');
   }
-  if (!Array.isArray(csound.missingSymbols) ||
-      csound.missingSymbols.some((symbol) => typeof symbol !== 'string')) {
+  if (
+    !Array.isArray(csound.missingSymbols) ||
+    csound.missingSymbols.some((symbol) => typeof symbol !== 'string')
+  ) {
     throw new Error('missingSymbols must contain strings');
   }
   if (typeof csound.message !== 'string' || typeof value.ready !== 'boolean') {
     throw new Error('Compatibility readiness fields are invalid');
   }
-  if ((value.ready && csound.status !== 'ready') ||
-      (!value.ready && csound.status === 'ready')) {
+  if ((value.ready && csound.status !== 'ready') || (!value.ready && csound.status === 'ready')) {
     throw new Error('Compatibility ready/status fields are inconsistent');
   }
   return {

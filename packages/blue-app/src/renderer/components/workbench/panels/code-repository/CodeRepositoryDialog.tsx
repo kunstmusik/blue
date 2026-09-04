@@ -6,7 +6,10 @@ import { CODE_REPOSITORY_ROOT_ID } from '@blue/data';
 import CodeRepositoryTree from './CodeRepositoryTree';
 import CodeRepositorySnippetEditor from './CodeRepositorySnippetEditor';
 import { ConfirmationDialog } from '../../../dialogs/ConfirmationDialog';
-import type { CodeRepositoryDiagnostic, CodeRepositoryError } from '../../../../../shared/code-repository';
+import type {
+  CodeRepositoryDiagnostic,
+  CodeRepositoryError,
+} from '../../../../../shared/code-repository';
 
 function createFreshNodeId(): string {
   return globalThis.crypto.randomUUID();
@@ -23,7 +26,9 @@ interface CodeRepositoryDialogProps {
     contentRevision: number;
   } | null;
   readonly onClose: () => void;
-  readonly onSave: (root: CodeRepositoryNode) => Promise<{ ok: true } | { ok: false; error: { message: string } }>;
+  readonly onSave: (
+    root: CodeRepositoryNode,
+  ) => Promise<{ ok: true } | { ok: false; error: { message: string } }>;
   readonly onExport?: () => void;
   readonly onImport?: () => void | Promise<void>;
   /** Retry an interrupted/failed automatic migration without closing the editor. */
@@ -122,7 +127,8 @@ export default function CodeRepositoryDialog({
       const currentDraft = draftRef.current;
       const draftIsClean =
         currentDraft === null ||
-        (previousSnapshot !== null && JSON.stringify(currentDraft) === JSON.stringify(previousSnapshot.root));
+        (previousSnapshot !== null &&
+          JSON.stringify(currentDraft) === JSON.stringify(previousSnapshot.root));
       if (draftIsClean) {
         const nextDraft = clone(snapshot.root);
         draftRef.current = nextDraft;
@@ -189,7 +195,9 @@ export default function CodeRepositoryDialog({
     try {
       await onRetry();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Code Repository migration retry failed');
+      toast.error(
+        error instanceof Error ? error.message : 'Code Repository migration retry failed',
+      );
     } finally {
       setRetryingMigration(false);
     }
@@ -308,7 +316,10 @@ export default function CodeRepositoryDialog({
   if (!snapshot) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={handleClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+      onClick={handleClose}
+    >
       <div
         className="flex h-[75vh] w-[900px] max-w-[95vw] flex-col rounded-lg border border-app-border/40 bg-app-menu p-4 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
@@ -318,7 +329,10 @@ export default function CodeRepositoryDialog({
         aria-labelledby="code-repository-editor-title"
       >
         <div className="mb-3 flex items-center justify-between">
-          <h2 id="code-repository-editor-title" className="text-role-title-2 font-bold text-app-text-bright">
+          <h2
+            id="code-repository-editor-title"
+            className="text-role-title-2 font-bold text-app-text-bright"
+          >
             Code Repository Editor
           </h2>
           <button
@@ -356,7 +370,9 @@ export default function CodeRepositoryDialog({
             className="mb-3 flex items-center justify-between gap-3 rounded border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-role-callout text-app-text"
             role="alert"
           >
-            <span>Your draft is preserved. Reload replaces it with the latest saved repository.</span>
+            <span>
+              Your draft is preserved. Reload replaces it with the latest saved repository.
+            </span>
             <button
               type="button"
               className={SECONDARY_BUTTON_CLASS}
@@ -408,13 +424,25 @@ export default function CodeRepositoryDialog({
             >
               Import…
             </button>
-            <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => onExport?.()} disabled={!onExport}>
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              onClick={() => onExport?.()}
+              disabled={!onExport}
+            >
               Export…
             </button>
           </div>
           <div className="flex items-center gap-2">
-            {dirty && <span className="text-role-callout text-app-text-muted">Unsaved changes</span>}
-            <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={handleClose} disabled={saving}>
+            {dirty && (
+              <span className="text-role-callout text-app-text-muted">Unsaved changes</span>
+            )}
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              onClick={handleClose}
+              disabled={saving}
+            >
               Cancel
             </button>
             <button

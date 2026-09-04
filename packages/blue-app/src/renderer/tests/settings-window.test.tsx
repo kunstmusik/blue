@@ -8,7 +8,9 @@ import SettingsApp from '../components/settings/SettingsApp';
 import { createDefaultProgramSettings } from '../../shared/program-settings';
 import type { ProgramSettingsSnapshot } from '../../shared/program-settings';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const defaultSettings = createDefaultProgramSettings('darwin');
 let settingsCloseRequest: (() => void) | null = null;
@@ -16,9 +18,9 @@ let settingsCloseRequest: (() => void) | null = null;
 const mockBlueAPI = {
   getProgramSettings: vi.fn(() => Promise.resolve({ ...defaultSettings })),
   saveProgramSettings: vi.fn((s: ProgramSettingsSnapshot) =>
-    Promise.resolve({ ok: true, snapshot: s })),
-  resetProgramSettingsPanel: vi.fn((panel: string) =>
-    Promise.resolve({ ...defaultSettings })),
+    Promise.resolve({ ok: true, snapshot: s }),
+  ),
+  resetProgramSettingsPanel: vi.fn((panel: string) => Promise.resolve({ ...defaultSettings })),
   getProgramSettingsUsageMatrix: vi.fn(() => Promise.resolve([])),
   syncLegacyRendererSettings: vi.fn(() => Promise.resolve({ ...defaultSettings })),
   openSettingsWindow: vi.fn(() => Promise.resolve()),
@@ -30,16 +32,18 @@ const mockBlueAPI = {
   }),
   confirmSettingsClose: vi.fn(() => Promise.resolve<'yes' | 'no' | 'cancel'>('cancel')),
   resolveSettingsClose: vi.fn(),
-  getOscServerSnapshot: vi.fn(() => Promise.resolve({
-    phase: 'listening',
-    preferredPort: 8000,
-    activePort: 8000,
-    fallbackFrom: null,
-    lastBindError: null,
-    lastPacketError: null,
-    revision: 1,
-    updatedAt: new Date().toISOString(),
-  })),
+  getOscServerSnapshot: vi.fn(() =>
+    Promise.resolve({
+      phase: 'listening',
+      preferredPort: 8000,
+      activePort: 8000,
+      fallbackFrom: null,
+      lastBindError: null,
+      lastPacketError: null,
+      revision: 1,
+      updatedAt: new Date().toISOString(),
+    }),
+  ),
   onOscServerSnapshot: vi.fn(() => () => {}),
 };
 
@@ -82,7 +86,14 @@ describe('settings renderer (044)', () => {
     expect(container.textContent).toContain('OSC');
     const navButtons = Array.from(container.querySelectorAll('nav button'));
     expect(navButtons.map((button) => button.textContent)).toEqual([
-      'General', 'Project Defaults', 'Playback', 'Utility', 'Realtime Render', 'Disk Render', 'MIDI', 'OSC',
+      'General',
+      'Project Defaults',
+      'Playback',
+      'Utility',
+      'Realtime Render',
+      'Disk Render',
+      'MIDI',
+      'OSC',
     ]);
   });
 
@@ -102,7 +113,9 @@ describe('settings renderer (044)', () => {
 
     const buttons = Array.from(container.querySelectorAll('button'));
     const pdButton = buttons.find((b) => b.textContent === 'Project Defaults');
-    await act(() => { pdButton?.click(); });
+    await act(() => {
+      pdButton?.click();
+    });
 
     expect(container.textContent).toContain('Default Author');
     expect(container.textContent).toContain('Mixer Enabled');
@@ -116,7 +129,9 @@ describe('settings renderer (044)', () => {
 
     const buttons = Array.from(container.querySelectorAll('button'));
     const pbButton = buttons.find((b) => b.textContent === 'Playback');
-    await act(() => { pbButton?.click(); });
+    await act(() => {
+      pbButton?.click();
+    });
 
     expect(container.textContent).toContain('Time Pointer Animation FPS');
     expect(container.textContent).toContain('Score Follows Playback');
@@ -129,7 +144,9 @@ describe('settings renderer (044)', () => {
 
     const buttons = Array.from(container.querySelectorAll('button'));
     const rtButton = buttons.find((b) => b.textContent === 'Realtime Render');
-    await act(() => { rtButton?.click(); });
+    await act(() => {
+      rtButton?.click();
+    });
 
     expect(container.textContent).toContain('Csound Library Override');
     expect(container.textContent).toContain('managed Blue Engine Csound runtime');
@@ -147,7 +164,10 @@ describe('settings renderer (044)', () => {
       (input as HTMLInputElement)?.focus();
     });
     await act(() => {
-      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(input, '/new-dir');
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(
+        input,
+        '/new-dir',
+      );
       input?.dispatchEvent(new Event('input', { bubbles: true }));
     });
 
@@ -164,7 +184,9 @@ describe('settings renderer (044)', () => {
     await act(async () => {
       root.render(<SettingsApp />);
     });
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+    });
 
     await act(async () => {
       settingsCloseRequest?.();
@@ -179,28 +201,38 @@ describe('settings renderer (044)', () => {
     ['yes', 'allow', true],
     ['no', 'allow', false],
     ['cancel', 'cancel', false],
-  ] as const)('handles an unsaved native close choice: %s', async (choice, resolution, shouldSave) => {
-    mockBlueAPI.confirmSettingsClose.mockResolvedValueOnce(choice);
-    await act(async () => {
-      root.render(<SettingsApp />);
-    });
-    await act(async () => { await Promise.resolve(); });
+  ] as const)(
+    'handles an unsaved native close choice: %s',
+    async (choice, resolution, shouldSave) => {
+      mockBlueAPI.confirmSettingsClose.mockResolvedValueOnce(choice);
+      await act(async () => {
+        root.render(<SettingsApp />);
+      });
+      await act(async () => {
+        await Promise.resolve();
+      });
 
-    const input = container.querySelector('input[placeholder="(default user directory)"]') as HTMLInputElement;
-    await act(async () => {
-      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(input, '/unsaved-dir');
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-    });
-    await act(async () => {
-      settingsCloseRequest?.();
-      await Promise.resolve();
-      await Promise.resolve();
-    });
+      const input = container.querySelector(
+        'input[placeholder="(default user directory)"]',
+      ) as HTMLInputElement;
+      await act(async () => {
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(
+          input,
+          '/unsaved-dir',
+        );
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+      await act(async () => {
+        settingsCloseRequest?.();
+        await Promise.resolve();
+        await Promise.resolve();
+      });
 
-    expect(mockBlueAPI.confirmSettingsClose).toHaveBeenCalledTimes(1);
-    expect(mockBlueAPI.saveProgramSettings).toHaveBeenCalledTimes(shouldSave ? 1 : 0);
-    expect(mockBlueAPI.resolveSettingsClose).toHaveBeenCalledWith(resolution);
-  });
+      expect(mockBlueAPI.confirmSettingsClose).toHaveBeenCalledTimes(1);
+      expect(mockBlueAPI.saveProgramSettings).toHaveBeenCalledTimes(shouldSave ? 1 : 0);
+      expect(mockBlueAPI.resolveSettingsClose).toHaveBeenCalledWith(resolution);
+    },
+  );
 
   it('keeps Settings open when applying from the close prompt fails validation', async () => {
     mockBlueAPI.confirmSettingsClose.mockResolvedValueOnce('yes');
@@ -211,11 +243,18 @@ describe('settings renderer (044)', () => {
     await act(async () => {
       root.render(<SettingsApp />);
     });
-    await act(async () => { await Promise.resolve(); });
-
-    const input = container.querySelector('input[placeholder="(default user directory)"]') as HTMLInputElement;
     await act(async () => {
-      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(input, '/unsaved-dir');
+      await Promise.resolve();
+    });
+
+    const input = container.querySelector(
+      'input[placeholder="(default user directory)"]',
+    ) as HTMLInputElement;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(
+        input,
+        '/unsaved-dir',
+      );
       input.dispatchEvent(new Event('input', { bubbles: true }));
     });
     await act(async () => {
@@ -234,11 +273,18 @@ describe('settings renderer (044)', () => {
     await act(async () => {
       root.render(<SettingsApp />);
     });
-    await act(async () => { await Promise.resolve(); });
-
-    const input = container.querySelector('input[placeholder="(default user directory)"]') as HTMLInputElement;
     await act(async () => {
-      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(input, '/unsaved-dir');
+      await Promise.resolve();
+    });
+
+    const input = container.querySelector(
+      'input[placeholder="(default user directory)"]',
+    ) as HTMLInputElement;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(
+        input,
+        '/unsaved-dir',
+      );
       input.dispatchEvent(new Event('input', { bubbles: true }));
     });
     await act(async () => {
@@ -255,32 +301,56 @@ describe('settings renderer (044)', () => {
       root.render(<SettingsApp />);
     });
 
-    const oscButton = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'OSC');
-    await act(() => { oscButton?.click(); });
+    const oscButton = Array.from(container.querySelectorAll('button')).find(
+      (b) => b.textContent === 'OSC',
+    );
+    await act(() => {
+      oscButton?.click();
+    });
     const input = container.querySelector('input[type="number"]') as HTMLInputElement;
     expect(input.value).toBe('8000');
 
     await act(() => {
-      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(input, '9100');
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(
+        input,
+        '9100',
+      );
       input.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    const cancel = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Cancel');
-    await act(() => { cancel?.click(); });
+    const cancel = Array.from(container.querySelectorAll('button')).find(
+      (b) => b.textContent === 'Cancel',
+    );
+    await act(() => {
+      cancel?.click();
+    });
     expect(mockBlueAPI.saveProgramSettings).not.toHaveBeenCalled();
 
     const afterCancel = container.querySelector('input[type="number"]') as HTMLInputElement;
     await act(() => {
-      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(afterCancel, '9100');
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(
+        afterCancel,
+        '9100',
+      );
       afterCancel.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    const apply = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Apply');
-    await act(async () => { apply?.click(); });
-    expect(mockBlueAPI.saveProgramSettings).toHaveBeenCalledWith(expect.objectContaining({
-      osc: { preferredPort: 9100 },
-    }));
+    const apply = Array.from(container.querySelectorAll('button')).find(
+      (b) => b.textContent === 'Apply',
+    );
+    await act(async () => {
+      apply?.click();
+    });
+    expect(mockBlueAPI.saveProgramSettings).toHaveBeenCalledWith(
+      expect.objectContaining({
+        osc: { preferredPort: 9100 },
+      }),
+    );
 
-    const reset = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Reset Panel');
-    await act(async () => { reset?.click(); });
+    const reset = Array.from(container.querySelectorAll('button')).find(
+      (b) => b.textContent === 'Reset Panel',
+    );
+    await act(async () => {
+      reset?.click();
+    });
     expect(mockBlueAPI.resetProgramSettingsPanel).toHaveBeenCalledWith('osc');
   });
 
@@ -291,7 +361,9 @@ describe('settings renderer (044)', () => {
 
     const buttons = Array.from(container.querySelectorAll('button'));
     const utilButton = buttons.find((b) => b.textContent === 'Utility');
-    await act(() => { utilButton?.click(); });
+    await act(() => {
+      utilButton?.click();
+    });
 
     expect(container.textContent).toContain('Freeze Flags');
     expect(container.textContent).toContain('managed Blue Engine Csound runtime');
@@ -305,7 +377,9 @@ describe('settings renderer (044)', () => {
 
     const buttons = Array.from(container.querySelectorAll('button'));
     const utilButton = buttons.find((b) => b.textContent === 'Utility');
-    await act(() => { utilButton?.click(); });
+    await act(() => {
+      utilButton?.click();
+    });
 
     const input = container.querySelector('input[type="number"]') as HTMLInputElement;
     expect(input).toBeInstanceOf(HTMLInputElement);
@@ -322,26 +396,48 @@ describe('settings renderer (044)', () => {
 
     mockBlueAPI.saveProgramSettings.mockResolvedValueOnce({
       ok: false,
-      validationIssues: [{ path: 'utility.freezeMaxJobs', message: 'Must be an integer between 1 and 32', severity: 'error' }],
+      validationIssues: [
+        {
+          path: 'utility.freezeMaxJobs',
+          message: 'Must be an integer between 1 and 32',
+          severity: 'error',
+        },
+      ],
     });
-    await act(async () => { applyButton?.click(); });
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => {
+      applyButton?.click();
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
 
     expect(mockBlueAPI.saveProgramSettings).toHaveBeenCalledWith(
       expect.objectContaining({ utility: expect.objectContaining({ freezeMaxJobs: 7 }) }),
     );
     expect(container.textContent).toContain('Must be an integer between 1 and 32');
 
-    await act(async () => { applyButton?.click(); });
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => {
+      applyButton?.click();
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
     expect(mockBlueAPI.saveProgramSettings).toHaveLastReturnedWith(
-      Promise.resolve(expect.objectContaining({
-        snapshot: expect.objectContaining({ utility: expect.objectContaining({ freezeMaxJobs: 7 }) }),
-      })),
+      Promise.resolve(
+        expect.objectContaining({
+          snapshot: expect.objectContaining({
+            utility: expect.objectContaining({ freezeMaxJobs: 7 }),
+          }),
+        }),
+      ),
     );
 
-    const reset = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Reset Panel');
-    await act(async () => { reset?.click(); });
+    const reset = Array.from(container.querySelectorAll('button')).find(
+      (b) => b.textContent === 'Reset Panel',
+    );
+    await act(async () => {
+      reset?.click();
+    });
     expect(mockBlueAPI.resetProgramSettingsPanel).toHaveBeenCalledWith('utility');
   });
 
@@ -350,8 +446,12 @@ describe('settings renderer (044)', () => {
       root.render(<SettingsApp />);
     });
 
-    const utilButton = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Utility');
-    await act(() => { utilButton?.click(); });
+    const utilButton = Array.from(container.querySelectorAll('button')).find(
+      (b) => b.textContent === 'Utility',
+    );
+    await act(() => {
+      utilButton?.click();
+    });
 
     const input = container.querySelector('input[type="number"]') as HTMLInputElement;
     const applyButton = Array.from(container.querySelectorAll('button')).find(
@@ -359,21 +459,30 @@ describe('settings renderer (044)', () => {
     );
     const validationResult = {
       ok: false,
-      validationIssues: [{
-        path: 'utility.freezeMaxJobs',
-        message: 'Must be an integer between 1 and 32',
-        severity: 'error' as const,
-      }],
+      validationIssues: [
+        {
+          path: 'utility.freezeMaxJobs',
+          message: 'Must be an integer between 1 and 32',
+          severity: 'error' as const,
+        },
+      ],
     };
     mockBlueAPI.saveProgramSettings.mockResolvedValue(validationResult);
 
     for (const value of ['0', '1.5', '']) {
       await act(() => {
-        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(input, value);
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(
+          input,
+          value,
+        );
         input.dispatchEvent(new Event('input', { bubbles: true }));
       });
-      await act(async () => { applyButton?.click(); });
-      await act(async () => { await Promise.resolve(); });
+      await act(async () => {
+        applyButton?.click();
+      });
+      await act(async () => {
+        await Promise.resolve();
+      });
 
       expect(mockBlueAPI.saveProgramSettings).toHaveBeenLastCalledWith(
         expect.objectContaining({ utility: expect.objectContaining({ freezeMaxJobs: value }) }),

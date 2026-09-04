@@ -15,7 +15,12 @@ interface TableEditorProps {
   minMaxEnabled?: boolean;
 }
 
-export default function TableEditor({ table, duration, onChange, minMaxEnabled = true }: TableEditorProps): React.ReactElement {
+export default function TableEditor({
+  table,
+  duration,
+  onChange,
+  minMaxEnabled = true,
+}: TableEditorProps): React.ReactElement {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [drawW, setDrawW] = useState(400);
@@ -25,7 +30,8 @@ export default function TableEditor({ table, duration, onChange, minMaxEnabled =
   const points = (table.points as Array<{ kind?: string; time: number; value: number }>) ?? [];
   const min = typeof table.min === 'number' ? table.min : 0;
   const max = typeof table.max === 'number' ? table.max : 1;
-  const interpolationType = typeof table.interpolationType === 'number' ? table.interpolationType : 1;
+  const interpolationType =
+    typeof table.interpolationType === 'number' ? table.interpolationType : 1;
   const interpolation = typeof table.interpolation === 'number' ? table.interpolation : 0;
   const range = max - min || 1;
 
@@ -42,15 +48,26 @@ export default function TableEditor({ table, duration, onChange, minMaxEnabled =
     update();
     const obs = new ResizeObserver(update);
     obs.observe(el);
-    return () => { obs.disconnect(); };
+    return () => {
+      obs.disconnect();
+    };
   }, []);
 
   const toCanvasX = useCallback((t: number) => PAD + t * plotW, [plotW]);
-  const toCanvasY = useCallback((v: number) => PAD + (1 - (v - min) / range) * plotH, [plotH, min, range]);
-  const fromCanvasX = useCallback((cx: number) => Math.max(0, Math.min(1, (cx - PAD) / plotW)), [plotW]);
-  const fromCanvasY = useCallback((cy: number) => min + (1 - (cy - PAD) / plotH) * range, [plotH, min, range]);
+  const toCanvasY = useCallback(
+    (v: number) => PAD + (1 - (v - min) / range) * plotH,
+    [plotH, min, range],
+  );
+  const fromCanvasX = useCallback(
+    (cx: number) => Math.max(0, Math.min(1, (cx - PAD) / plotW)),
+    [plotW],
+  );
+  const fromCanvasY = useCallback(
+    (cy: number) => min + (1 - (cy - PAD) / plotH) * range,
+    [plotH, min, range],
+  );
 
-  const dpr = typeof window !== 'undefined' ? window.devicePixelRatio ?? 1 : 1;
+  const dpr = typeof window !== 'undefined' ? (window.devicePixelRatio ?? 1) : 1;
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -123,58 +140,69 @@ export default function TableEditor({ table, duration, onChange, minMaxEnabled =
     ctx.restore();
   }, [points, selectedPoint, drawW, dpr, toCanvasX, toCanvasY, duration, plotW, plotH, range, min]);
 
-  useEffect(() => { draw(); }, [draw]);
+  useEffect(() => {
+    draw();
+  }, [draw]);
 
-  const findHit = useCallback((clientX: number, clientY: number): number | null => {
-    const canvas = canvasRef.current;
-    if (!canvas) return null;
-    const rect = canvas.getBoundingClientRect();
-    const mx = (clientX - rect.left) * (drawW / rect.width);
-    const my = (clientY - rect.top) * (CANVAS_H / rect.height);
-    for (let i = 0; i < points.length; i++) {
-      const px = toCanvasX(points[i]!.time);
-      const py = toCanvasY(points[i]!.value);
-      if (Math.hypot(px - mx, py - my) <= 5) return i;
-    }
-    return null;
-  }, [points, drawW, toCanvasX, toCanvasY]);
-
-  const getBoundaries = useCallback((idx: number): { left: number; right: number } => {
-    if (idx === 0) return { left: 0, right: 0 };
-    if (idx === points.length - 1) return { left: 1, right: 1 };
-    return { left: points[idx - 1]?.time ?? 0, right: points[idx + 1]?.time ?? 1 };
-  }, [points]);
-
-  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (e.button !== 0) return;
-    const hit = findHit(e.clientX, e.clientY);
-    if (hit !== null) {
-      setDragIdx(hit);
-      setSelectedPoint(hit);
-      return;
-    }
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const mx = (e.clientX - rect.left) * (drawW / rect.width);
-    const my = (e.clientY - rect.top) * (CANVAS_H / rect.height);
-    if (mx < PAD || mx > drawW - PAD || my < PAD || my > CANVAS_H - PAD) return;
-
-    const time = fromCanvasX(mx);
-    const value = fromCanvasY(my);
-    const newPoints = [...points];
-    let insertIdx = newPoints.length;
-    for (let i = 0; i < newPoints.length - 1; i++) {
-      if (time >= newPoints[i]!.time && time <= newPoints[i + 1]!.time) {
-        insertIdx = i + 1;
-        break;
+  const findHit = useCallback(
+    (clientX: number, clientY: number): number | null => {
+      const canvas = canvasRef.current;
+      if (!canvas) return null;
+      const rect = canvas.getBoundingClientRect();
+      const mx = (clientX - rect.left) * (drawW / rect.width);
+      const my = (clientY - rect.top) * (CANVAS_H / rect.height);
+      for (let i = 0; i < points.length; i++) {
+        const px = toCanvasX(points[i]!.time);
+        const py = toCanvasY(points[i]!.value);
+        if (Math.hypot(px - mx, py - my) <= 5) return i;
       }
-    }
-    newPoints.splice(insertIdx, 0, { kind: 'TablePoint', time, value });
-    onChange({ ...structuredClone(table), points: newPoints });
-    setDragIdx(insertIdx);
-    setSelectedPoint(insertIdx);
-  }, [findHit, getBoundaries, points, table, onChange, drawW, fromCanvasX, fromCanvasY]);
+      return null;
+    },
+    [points, drawW, toCanvasX, toCanvasY],
+  );
+
+  const getBoundaries = useCallback(
+    (idx: number): { left: number; right: number } => {
+      if (idx === 0) return { left: 0, right: 0 };
+      if (idx === points.length - 1) return { left: 1, right: 1 };
+      return { left: points[idx - 1]?.time ?? 0, right: points[idx + 1]?.time ?? 1 };
+    },
+    [points],
+  );
+
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent<HTMLCanvasElement>) => {
+      if (e.button !== 0) return;
+      const hit = findHit(e.clientX, e.clientY);
+      if (hit !== null) {
+        setDragIdx(hit);
+        setSelectedPoint(hit);
+        return;
+      }
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const mx = (e.clientX - rect.left) * (drawW / rect.width);
+      const my = (e.clientY - rect.top) * (CANVAS_H / rect.height);
+      if (mx < PAD || mx > drawW - PAD || my < PAD || my > CANVAS_H - PAD) return;
+
+      const time = fromCanvasX(mx);
+      const value = fromCanvasY(my);
+      const newPoints = [...points];
+      let insertIdx = newPoints.length;
+      for (let i = 0; i < newPoints.length - 1; i++) {
+        if (time >= newPoints[i]!.time && time <= newPoints[i + 1]!.time) {
+          insertIdx = i + 1;
+          break;
+        }
+      }
+      newPoints.splice(insertIdx, 0, { kind: 'TablePoint', time, value });
+      onChange({ ...structuredClone(table), points: newPoints });
+      setDragIdx(insertIdx);
+      setSelectedPoint(insertIdx);
+    },
+    [findHit, getBoundaries, points, table, onChange, drawW, fromCanvasX, fromCanvasY],
+  );
 
   useEffect(() => {
     if (dragIdx === null) return undefined;
@@ -193,7 +221,9 @@ export default function TableEditor({ table, duration, onChange, minMaxEnabled =
       newPoints[dragIdx] = { kind: 'TablePoint', time, value };
       onChange({ ...structuredClone(table), points: newPoints });
     };
-    const handleUp = () => { setDragIdx(null); };
+    const handleUp = () => {
+      setDragIdx(null);
+    };
     window.addEventListener('mousemove', handleMove);
     window.addEventListener('mouseup', handleUp);
     return () => {
@@ -202,38 +232,56 @@ export default function TableEditor({ table, duration, onChange, minMaxEnabled =
     };
   }, [dragIdx, points, table, onChange, drawW, fromCanvasX, fromCanvasY, getBoundaries, min, max]);
 
-  const handleContextMenu = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    e.preventDefault();
-    const hit = findHit(e.clientX, e.clientY);
-    if (hit === null || hit === 0 || hit === points.length - 1) return;
-    const newPoints = points.filter((_, i) => i !== hit);
-    onChange({ ...structuredClone(table), points: newPoints });
-    setSelectedPoint(null);
-  }, [findHit, points, table, onChange]);
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent<HTMLCanvasElement>) => {
+      e.preventDefault();
+      const hit = findHit(e.clientX, e.clientY);
+      if (hit === null || hit === 0 || hit === points.length - 1) return;
+      const newPoints = points.filter((_, i) => i !== hit);
+      onChange({ ...structuredClone(table), points: newPoints });
+      setSelectedPoint(null);
+    },
+    [findHit, points, table, onChange],
+  );
 
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (dragIdx !== null) return;
-    const hit = findHit(e.clientX, e.clientY);
-    setSelectedPoint(hit);
-  }, [dragIdx, findHit]);
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLCanvasElement>) => {
+      if (dragIdx !== null) return;
+      const hit = findHit(e.clientX, e.clientY);
+      setSelectedPoint(hit);
+    },
+    [dragIdx, findHit],
+  );
 
-  const handleInterpolationTypeChange = useCallback((value: string) => {
-    onChange({ ...structuredClone(table), interpolationType: parseInt(value, 10) });
-  }, [table, onChange]);
+  const handleInterpolationTypeChange = useCallback(
+    (value: string) => {
+      onChange({ ...structuredClone(table), interpolationType: parseInt(value, 10) });
+    },
+    [table, onChange],
+  );
 
-  const handleInterpolationCommit = useCallback((v: number) => {
-    onChange({ ...structuredClone(table), interpolation: v });
-  }, [table, onChange]);
+  const handleInterpolationCommit = useCallback(
+    (v: number) => {
+      onChange({ ...structuredClone(table), interpolation: v });
+    },
+    [table, onChange],
+  );
 
-  const handleMinCommit = useCallback((v: number) => {
-    if (v >= max) return;
-    onChange({ ...structuredClone(table), min: v });
-  }, [table, onChange, max]);
+  const handleMinCommit = useCallback(
+    (v: number) => {
+      if (v >= max) return;
+      onChange({ ...structuredClone(table), min: v });
+    },
+    [table, onChange, max],
+  );
 
-  const handleMaxCommit = useCallback((v: number) => {
-    if (v <= min) return;
-    onChange({ ...structuredClone(table), max: v });
-  }, [table, onChange, min]);
+  const handleMaxCommit = useCallback(
+    (v: number) => {
+      if (v <= min) return;
+      onChange({ ...structuredClone(table), max: v });
+    },
+    [table, onChange, min],
+  );
 
   return (
     <div className="flex flex-col gap-1">
@@ -246,7 +294,9 @@ export default function TableEditor({ table, duration, onChange, minMaxEnabled =
           className="block cursor-crosshair select-none rounded-sm"
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
-          onMouseLeave={() => { if (dragIdx === null) setSelectedPoint(null); }}
+          onMouseLeave={() => {
+            if (dragIdx === null) setSelectedPoint(null);
+          }}
           onContextMenu={handleContextMenu}
         />
       </div>

@@ -20,12 +20,12 @@ interface RuntimeDeviceFieldProps {
 
 function deviceOptionLabel(device: CsoundRuntimeDevice): string {
   const name = device.displayName || device.deviceId;
-  const interfaceName = device.interfaceName && device.interfaceName !== name
-    ? ` — ${device.interfaceName}`
-    : '';
-  const channelCount = device.maxChannels === null
-    ? ''
-    : ` - ${device.maxChannels} channel${device.maxChannels === 1 ? '' : 's'}`;
+  const interfaceName =
+    device.interfaceName && device.interfaceName !== name ? ` — ${device.interfaceName}` : '';
+  const channelCount =
+    device.maxChannels === null
+      ? ''
+      : ` - ${device.maxChannels} channel${device.maxChannels === 1 ? '' : 's'}`;
   return `${name}${interfaceName} (${device.deviceId})${channelCount}`;
 }
 
@@ -51,19 +51,26 @@ export default function RuntimeDeviceField({
   const inputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
 
-  const discovered = defaultDevice?.deviceId === value
-    || devices.some((device) => device.deviceId === value);
+  const discovered =
+    defaultDevice?.deviceId === value || devices.some((device) => device.deviceId === value);
   const runtimeDevices = defaultDevice
     ? devices.filter((device) => device.deviceId !== defaultDevice.deviceId)
     : devices;
-  const help = description
-    ?? (value && !discovered
+  const help =
+    description ??
+    (value && !discovered
       ? 'Saved/custom value is not currently reported by the selected module; it remains editable.'
       : 'Choose a discovered device or enter the exact Csound identifier.');
-  const options: DeviceOption[] = useMemo(() => [
-    ...(defaultDevice ? [{ value: defaultDevice.deviceId, label: defaultDevice.label }] : []),
-    ...runtimeDevices.map((device) => ({ value: device.deviceId, label: deviceOptionLabel(device) })),
-  ], [defaultDevice, runtimeDevices]);
+  const options: DeviceOption[] = useMemo(
+    () => [
+      ...(defaultDevice ? [{ value: defaultDevice.deviceId, label: defaultDevice.label }] : []),
+      ...runtimeDevices.map((device) => ({
+        value: device.deviceId,
+        label: deviceOptionLabel(device),
+      })),
+    ],
+    [defaultDevice, runtimeDevices],
+  );
 
   const anchor = useMemo<HostSurfaceAnchor | null>(
     () => (open && inputRef.current ? { type: 'element', element: inputRef.current } : null),
@@ -121,29 +128,32 @@ export default function RuntimeDeviceField({
         className="z-[10000] overflow-y-auto rounded-md border border-app-border bg-app-menu p-1 text-role-body text-app-text shadow-xl"
         style={{
           width: listWidth,
-          maxHeight: surface.placement?.maxHeight != null
-            ? Math.min(DEVICE_LIST_MAX_HEIGHT, surface.placement.maxHeight)
-            : DEVICE_LIST_MAX_HEIGHT,
+          maxHeight:
+            surface.placement?.maxHeight != null
+              ? Math.min(DEVICE_LIST_MAX_HEIGHT, surface.placement.maxHeight)
+              : DEVICE_LIST_MAX_HEIGHT,
         }}
       >
         <div id={listId}>
           {options.length === 0 ? (
             <div className="px-2 py-1.5 text-app-text-muted">No runtime devices reported.</div>
-          ) : options.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              role="option"
-              aria-selected={option.value === value}
-              className="block w-full rounded px-2 py-1.5 text-left hover:bg-app-accent/10"
-              onClick={() => {
-                onChange(option.value);
-                closeList();
-              }}
-            >
-              {option.label}
-            </button>
-          ))}
+          ) : (
+            options.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                role="option"
+                aria-selected={option.value === value}
+                className="block w-full rounded px-2 py-1.5 text-left hover:bg-app-accent/10"
+                onClick={() => {
+                  onChange(option.value);
+                  closeList();
+                }}
+              >
+                {option.label}
+              </button>
+            ))
+          )}
         </div>
       </HostSurfacePortal>
     </div>

@@ -80,8 +80,9 @@ describe('Track instrument CSD generation', () => {
     instrument.getGraphicInterface().getRootGroup().addChild(gain);
     track.setInstrument(instrument);
 
-    const exportedChannels = [...data.toCSD().matchAll(/^(gk_blue_auto\d+) chnexport/gm)]
-      .map((match) => match[1]);
+    const exportedChannels = [...data.toCSD().matchAll(/^(gk_blue_auto\d+) chnexport/gm)].map(
+      (match) => match[1],
+    );
 
     expect(exportedChannels.length).toBeGreaterThan(0);
     expect(new Set(exportedChannels).size).toBe(exportedChannels.length);
@@ -116,7 +117,9 @@ describe('Track instrument compiled MIDI target catalog', () => {
     // setInstrument deep-copies, so disable the Track's owned copy directly.
     track.getInstrument()!.setEnabled(false);
     const disabled = data.toBlueLiveCSD();
-    expect((disabled.midiInstrumentTargets ?? []).filter((t) => t.kind === 'track')).toHaveLength(0);
+    expect((disabled.midiInstrumentTargets ?? []).filter((t) => t.kind === 'track')).toHaveLength(
+      0,
+    );
   });
 
   it('rebuilds the catalog without stale Track entries after instrument clear', () => {

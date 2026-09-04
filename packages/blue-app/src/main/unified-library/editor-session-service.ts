@@ -54,16 +54,24 @@ export class UnifiedLibraryEditorSessionService {
 
   constructor(
     private readonly repository: UnifiedLibraryRepositoryClient,
-    private readonly projectAdapter: UnifiedLibraryProjectAdapter = new UnifiedLibraryProjectAdapter(() => null),
+    private readonly projectAdapter: UnifiedLibraryProjectAdapter = new UnifiedLibraryProjectAdapter(
+      () => null,
+    ),
   ) {}
 
   open(key: LibraryItemKey, pinned = false): Promise<LibraryEditorSessionSnapshot> {
     const operation = this.openTail.then(() => this.openExclusive(key, pinned));
-    this.openTail = operation.then(() => undefined, () => undefined);
+    this.openTail = operation.then(
+      () => undefined,
+      () => undefined,
+    );
     return operation;
   }
 
-  private async openExclusive(key: LibraryItemKey, pinned: boolean): Promise<LibraryEditorSessionSnapshot> {
+  private async openExclusive(
+    key: LibraryItemKey,
+    pinned: boolean,
+  ): Promise<LibraryEditorSessionSnapshot> {
     const existingId = this.byLogicalKey.get(logicalKey(key));
     if (existingId) {
       const existing = this.requireSession(existingId);
@@ -77,9 +85,7 @@ export class UnifiedLibraryEditorSessionService {
     for (const session of this.sessions.values()) {
       if (!session.dirty && !session.pinned) this.remove(session.sessionId);
     }
-    const source = key.scope === 'user'
-      ? null
-      : this.projectAdapter.getEditorSource(key);
+    const source = key.scope === 'user' ? null : this.projectAdapter.getEditorSource(key);
     if (key.scope !== 'user' && !source) throw new Error('Project library item not found');
     const node = key.scope === 'user' ? await this.repository.getNode(key.nodeId) : null;
     const payload = key.scope === 'user' ? await this.repository.getItemPayload(key.nodeId) : null;
@@ -231,14 +237,15 @@ export class UnifiedLibraryEditorSessionService {
       displayName: patch.displayName ?? current.displayName,
       document: applied?.document ?? current.document,
       draftXml,
-      dirty: draftXml !== current.savedXml
-        || (patch.displayName ?? current.displayName) !== this.savedNames.get(sessionId),
-      pinned: patch.pinned ?? (
-        draftXml !== current.savedXml
-        || (patch.displayName ?? current.displayName) !== this.savedNames.get(sessionId)
+      dirty:
+        draftXml !== current.savedXml ||
+        (patch.displayName ?? current.displayName) !== this.savedNames.get(sessionId),
+      pinned:
+        patch.pinned ??
+        (draftXml !== current.savedXml ||
+        (patch.displayName ?? current.displayName) !== this.savedNames.get(sessionId)
           ? true
-          : current.pinned
-      ),
+          : current.pinned),
       status: 'ready',
     };
     this.sessions.set(sessionId, next);
@@ -298,12 +305,17 @@ export class UnifiedLibraryEditorSessionService {
         return { status: 'conflict', session: this.toSnapshot(conflict) };
       }
       const payload = await this.repository.getItemPayload(node.id);
-      const savedNode = await this.repository.updateItem(node.id, node.revision, current.displayName, {
-        ...payload,
-        payloadXml: current.draftXml,
-        rawHash: hash(current.draftXml),
-        canonicalContentHash: hash(current.draftXml),
-      });
+      const savedNode = await this.repository.updateItem(
+        node.id,
+        node.revision,
+        current.displayName,
+        {
+          ...payload,
+          payloadXml: current.draftXml,
+          rawHash: hash(current.draftXml),
+          canonicalContentHash: hash(current.draftXml),
+        },
+      );
       const saved = {
         ...current,
         breadcrumb: await this.repository.getBreadcrumb(node.id),
@@ -410,11 +422,15 @@ export class UnifiedLibraryEditorSessionService {
   }
 
   prepareShutdown(reason: LibraryDraftShutdownPreview['reason']): LibraryDraftShutdownPreview {
-    const dirtySessionIds = this.list().filter((session) => session.dirty).map((session) => session.sessionId);
+    const dirtySessionIds = this.list()
+      .filter((session) => session.dirty)
+      .map((session) => session.sessionId);
     return { reason, dirtySessionIds, mayContinue: dirtySessionIds.length === 0 };
   }
 
-  async resolveShutdown(decision: 'save' | 'discard' | 'cancel'): Promise<{ mayContinue: boolean }> {
+  async resolveShutdown(
+    decision: 'save' | 'discard' | 'cancel',
+  ): Promise<{ mayContinue: boolean }> {
     if (decision === 'cancel') return { mayContinue: false };
     if (decision === 'save') {
       for (const session of this.list().filter((candidate) => candidate.dirty)) {
@@ -424,18 +440,19 @@ export class UnifiedLibraryEditorSessionService {
       return { mayContinue: true };
     }
     for (const [id, session] of this.sessions) {
-      if (session.dirty) this.sessions.set(id, {
-        ...session,
-        draftXml: session.savedXml,
-        document: this.adapters.hydrate(
-          session.key.libraryType,
-          session.savedXml,
-          session.objectType,
-          session.document.kind === 'unsupported' ? 'unsupported' : 'supported',
-        ),
-        dirty: false,
-        status: 'ready',
-      });
+      if (session.dirty)
+        this.sessions.set(id, {
+          ...session,
+          draftXml: session.savedXml,
+          document: this.adapters.hydrate(
+            session.key.libraryType,
+            session.savedXml,
+            session.objectType,
+            session.document.kind === 'unsupported' ? 'unsupported' : 'supported',
+          ),
+          dirty: false,
+          status: 'ready',
+        });
     }
     return { mayContinue: true };
   }

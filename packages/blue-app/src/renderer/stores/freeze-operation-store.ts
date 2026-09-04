@@ -52,8 +52,10 @@ function canApplyItemPhase(
   itemPhase: FreezeItemStatus['phase'],
 ): boolean {
   if (!isTerminalPhase(operationPhase)) return true;
-  return (operationPhase === 'completed' && itemPhase === 'complete')
-    || (operationPhase === 'failed' && itemPhase === 'failed');
+  return (
+    (operationPhase === 'completed' && itemPhase === 'complete') ||
+    (operationPhase === 'failed' && itemPhase === 'failed')
+  );
 }
 
 function appendRowOutput(output: string, append: string): string {
@@ -80,9 +82,8 @@ function optimisticRows(entries: ScoreObjectClipboardEntry[]): FreezeOperationRo
   for (const entry of entries) {
     const target = entry.editorTarget;
     if (!target) continue;
-    const frozenBarRenderer = entry.barRenderer?.kind === 'frozenSoundObject'
-      ? entry.barRenderer
-      : null;
+    const frozenBarRenderer =
+      entry.barRenderer?.kind === 'frozenSoundObject' ? entry.barRenderer : null;
     rows.push({
       selectionId: target.selectionId,
       name: entry.name,
@@ -194,7 +195,7 @@ export const useFreezeOperationStore = create<FreezeOperationState>((set, get) =
         if (isTerminalPhase(state.phase)) {
           return {
             result,
-            error: result.ok ? state.error : (rejectedReasons || result.error || state.error),
+            error: result.ok ? state.error : rejectedReasons || result.error || state.error,
           };
         }
         return {
@@ -202,7 +203,7 @@ export const useFreezeOperationStore = create<FreezeOperationState>((set, get) =
           progress: outcome === 'completed' ? 100 : null,
           rows: settleRows(state.rows, outcome),
           result,
-          error: result.ok ? null : (rejectedReasons || result.error),
+          error: result.ok ? null : rejectedReasons || result.error,
         };
       });
     } catch (error) {
@@ -214,7 +215,7 @@ export const useFreezeOperationStore = create<FreezeOperationState>((set, get) =
           progress: cancelled ? null : state.progress,
           message: cancelled ? 'Freeze/unfreeze cancelled.' : state.message,
           rows: settleRows(state.rows, cancelled ? 'cancelled' : 'failed'),
-          error: cancelled ? null : (error instanceof Error ? error.message : String(error)),
+          error: cancelled ? null : error instanceof Error ? error.message : String(error),
         };
       });
     }
@@ -251,7 +252,10 @@ export const useFreezeOperationStore = create<FreezeOperationState>((set, get) =
         freezeFile: event.freezeFile ?? row.freezeFile,
         status: applyPhase ? event.phase : row.status,
         reason: applyPhase && event.phase === 'failed' ? event.reason : row.reason,
-        output: event.outputAppend !== null ? appendRowOutput(row.output, event.outputAppend) : row.output,
+        output:
+          event.outputAppend !== null
+            ? appendRowOutput(row.output, event.outputAppend)
+            : row.output,
       };
       const rows = [...state.rows];
       rows[rowIndex] = updated;

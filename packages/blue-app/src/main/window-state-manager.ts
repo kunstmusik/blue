@@ -154,9 +154,10 @@ export function captureWindowState(window: BrowserWindow): WindowStateSnapshot |
   // manager hint).
   let normalBounds: WindowStateSnapshot['normalBounds'];
   try {
-    normalBounds = isMaximized || isFullScreen
-      ? (window.getNormalBounds?.() ?? window.getBounds())
-      : window.getBounds();
+    normalBounds =
+      isMaximized || isFullScreen
+        ? (window.getNormalBounds?.() ?? window.getBounds())
+        : window.getBounds();
   } catch {
     normalBounds = window.getBounds();
   }
@@ -196,10 +197,7 @@ export function getAvailableDisplayWorkAreas(): DisplayWorkArea[] {
   return safeGetAllDisplays().map(({ workArea }) => ({ ...workArea }));
 }
 
-export function resetWindowToDefaultBounds(
-  window: BrowserWindow,
-  windowId: WindowId,
-): boolean {
+export function resetWindowToDefaultBounds(window: BrowserWindow, windowId: WindowId): boolean {
   if (window.isDestroyed()) return false;
 
   try {
@@ -226,9 +224,7 @@ export function resetWindowToDefaultBounds(
   }
 }
 
-export function resetTrackedWindowsToDefaultBounds(
-  windows: BrowserWindow[],
-): number {
+export function resetTrackedWindowsToDefaultBounds(windows: BrowserWindow[]): number {
   let resetCount = 0;
   for (const window of windows) {
     const windowId = trackedWindowIds.get(window);

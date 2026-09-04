@@ -97,18 +97,29 @@ import {
   isValidLayerColorInput,
   normalizeLayerColor,
 } from '@blue/data';
-import type { NoteProcessorChainSnapshot as DataNoteProcessorChainSnapshot, Parameter as BlueDataParameter, ScoreObject as BlueDataScoreObject, AutomatableLayer as BlueDataAutomatableLayer, Arrangement as BlueDataArrangement, Mixer as BlueDataMixer } from '@blue/data';
+import type {
+  NoteProcessorChainSnapshot as DataNoteProcessorChainSnapshot,
+  Parameter as BlueDataParameter,
+  ScoreObject as BlueDataScoreObject,
+  AutomatableLayer as BlueDataAutomatableLayer,
+  Arrangement as BlueDataArrangement,
+  Mixer as BlueDataMixer,
+} from '@blue/data';
 import { AutomationCurve as BlueDataAutomationCurve, LineColors } from '@blue/data';
 import { getProjectParameterCatalog } from '@blue/data';
-import type { SnapValueName, BlueX7Voice, BlueX7Common, BlueX7Lfo, BlueX7Operator, BlueX7EnvelopePoint } from '@blue/data';
+import type {
+  SnapValueName,
+  BlueX7Voice,
+  BlueX7Common,
+  BlueX7Lfo,
+  BlueX7Operator,
+  BlueX7EnvelopePoint,
+} from '@blue/data';
 import type { MissingAudioAssetsSession } from '../missing-audio-assets';
 import type { ScoreInsertionLocation } from '../unified-library';
 
 import { moveRangeWithAnchors, scaleRangeWithAnchors } from '../automation-range-math';
-import {
-  BSB_LINE_SELECTOR_HEIGHT,
-  getBsbWidgetDisplaySize,
-} from '../bsb-widget-layout';
+import { BSB_LINE_SELECTOR_HEIGHT, getBsbWidgetDisplaySize } from '../bsb-widget-layout';
 import {
   collectBsbReplacementKeysFromSnapshotTree,
   collectBsbReplacementKeysFromWidgetTree,
@@ -323,11 +334,7 @@ import {
   getMixerChannelSnapshotId,
   getMixerEntrySnapshotId,
 } from './identity';
-import {
-  applyBsbInterfacePatch,
-  applyEmbeddedOpcodeListPatch,
-  parseSoundBSB,
-} from './bsb-widgets';
+import { applyBsbInterfacePatch, applyEmbeddedOpcodeListPatch, parseSoundBSB } from './bsb-widgets';
 import {
   buildEditorTargetSnapshot,
   createBarRendererForAudioClip,
@@ -384,13 +391,14 @@ function applyTimebaseUpdate(
         if (!Array.isArray(layer)) continue;
         for (const sObj of layer as unknown as BlueDataScoreObject[]) {
           if (!('getStartTime' in sObj)) continue;
-          const updateStart = scoreObjectMode === 'UPDATE_ALL'
-            || sObj.getStartTime().getTimeBase() === oldTimeBase;
+          const updateStart =
+            scoreObjectMode === 'UPDATE_ALL' || sObj.getStartTime().getTimeBase() === oldTimeBase;
           if (updateStart) {
             sObj.setStartTime(convertTimePosition(sObj.getStartTime(), newTimeBase, context));
           }
-          const updateDuration = scoreObjectMode === 'UPDATE_ALL'
-            || sObj.getSubjectiveDuration().getTimeBase() === oldTimeBase;
+          const updateDuration =
+            scoreObjectMode === 'UPDATE_ALL' ||
+            sObj.getSubjectiveDuration().getTimeBase() === oldTimeBase;
           if (updateDuration) {
             const durBeats = sObj.getSubjectiveDuration().toBeats(context);
             sObj.setSubjectiveDuration(beatsToDuration(durBeats, newTimeBase, context));
@@ -399,8 +407,8 @@ function applyTimebaseUpdate(
             const so = sObj as AbstractSoundObject;
             const rp = so.getRepeatPoint();
             if (rp) {
-              const shouldUpdate = scoreObjectMode === 'UPDATE_ALL'
-                || rp.getTimeBase() === oldTimeBase;
+              const shouldUpdate =
+                scoreObjectMode === 'UPDATE_ALL' || rp.getTimeBase() === oldTimeBase;
               if (shouldUpdate) {
                 const rpBeats = rp.toBeats(context);
                 so.setRepeatPoint(beatsToDuration(rpBeats, newTimeBase, context));
@@ -416,8 +424,7 @@ function applyTimebaseUpdate(
     const markers = data.getMarkersList();
     for (let i = 0; i < markers.size(); i++) {
       const markerTime = markers.getMarkerTimePosition(i);
-      const shouldUpdate = markerMode === 'UPDATE_ALL'
-        || markerTime.getTimeBase() === oldTimeBase;
+      const shouldUpdate = markerMode === 'UPDATE_ALL' || markerTime.getTimeBase() === oldTimeBase;
       if (shouldUpdate) {
         markers.setMarkerTimePosition(i, convertTimePosition(markerTime, newTimeBase, context));
       }
@@ -436,7 +443,11 @@ export function applyScoreTimeStatePatch(
     ts.setSnapEnabled(patch.snapEnabled);
     changed = true;
   }
-  if (patch.snapValue !== undefined && isValidSnapValueName(patch.snapValue) && ts.getSnapValue() !== patch.snapValue) {
+  if (
+    patch.snapValue !== undefined &&
+    isValidSnapValueName(patch.snapValue) &&
+    ts.getSnapValue() !== patch.snapValue
+  ) {
     ts.setSnapValue(patch.snapValue as SnapValueName);
     changed = true;
   }
@@ -456,7 +467,10 @@ export function applyScoreTimeStatePatch(
       changed = true;
     }
   }
-  if (patch.secondaryRulerEnabled !== undefined && ts.isSecondaryRulerEnabled() !== patch.secondaryRulerEnabled) {
+  if (
+    patch.secondaryRulerEnabled !== undefined &&
+    ts.isSecondaryRulerEnabled() !== patch.secondaryRulerEnabled
+  ) {
     ts.setSecondaryRulerEnabled(patch.secondaryRulerEnabled);
     changed = true;
   }
@@ -468,11 +482,18 @@ export function applyScoreTimeStatePatch(
     ts.setMeterRowVisible(patch.meterRowVisible);
     changed = true;
   }
-  if (patch.markersRowVisible !== undefined && ts.isMarkersRowVisible() !== patch.markersRowVisible) {
+  if (
+    patch.markersRowVisible !== undefined &&
+    ts.isMarkersRowVisible() !== patch.markersRowVisible
+  ) {
     ts.setMarkersRowVisible(patch.markersRowVisible);
     changed = true;
   }
-  if (patch.smpteFrameRate !== undefined && patch.smpteFrameRate > 0 && ts.getSmpteFrameRate() !== patch.smpteFrameRate) {
+  if (
+    patch.smpteFrameRate !== undefined &&
+    patch.smpteFrameRate > 0 &&
+    ts.getSmpteFrameRate() !== patch.smpteFrameRate
+  ) {
     ts.setSmpteFrameRate(patch.smpteFrameRate);
     changed = true;
   }
@@ -483,7 +504,13 @@ export function applyScoreTimeStatePatch(
 
   if (oldTimeDisplay !== undefined && patch.scoreObjectUpdateMode != null) {
     const newBase = patch.primaryTimeDisplay as TimeBase;
-    applyTimebaseUpdate(data, oldTimeDisplay, newBase, patch.scoreObjectUpdateMode, patch.markerUpdateMode ?? null);
+    applyTimebaseUpdate(
+      data,
+      oldTimeDisplay,
+      newBase,
+      patch.scoreObjectUpdateMode,
+      patch.markerUpdateMode ?? null,
+    );
   }
 
   return changed;
@@ -500,10 +527,23 @@ export function isNonEmptyScorePatch(patch: ScorePatch): boolean {
   if (patch.type === 'updateLayerState') {
     return Object.keys(patch.patch).length > 0;
   }
-  if (patch.type === 'updateSharedProperties' || patch.type === 'updateSoundObjectBehavior' || patch.type === 'replaceNoteProcessorChain' || patch.type === 'updateTypeSpecificEditor' || patch.type === 'replaceScopedNoteProcessorChain' || patch.type === 'saveNamedNoteProcessorChain' || patch.type === 'deleteNamedNoteProcessorChain') {
+  if (
+    patch.type === 'updateSharedProperties' ||
+    patch.type === 'updateSoundObjectBehavior' ||
+    patch.type === 'replaceNoteProcessorChain' ||
+    patch.type === 'updateTypeSpecificEditor' ||
+    patch.type === 'replaceScopedNoteProcessorChain' ||
+    patch.type === 'saveNamedNoteProcessorChain' ||
+    patch.type === 'deleteNamedNoteProcessorChain'
+  ) {
     return true;
   }
-  if (patch.type === 'addScoreObjects' || patch.type === 'moveScoreObjects' || patch.type === 'addLayer' || patch.type === 'removeLayer') {
+  if (
+    patch.type === 'addScoreObjects' ||
+    patch.type === 'moveScoreObjects' ||
+    patch.type === 'addLayer' ||
+    patch.type === 'removeLayer'
+  ) {
     return true;
   }
   if (patch.type === 'removeScoreObjects') {
@@ -533,8 +573,6 @@ export function scorePatchTouchesMixerAudioChannels(patch: ScorePatch): boolean 
 }
 
 // ─── End Score Snapshot Helpers ───
-
-
 
 function findPolyObjectByGroupId(score: Score, groupId: string): PolyObject | null {
   for (let i = 0; i < score.length; i++) {
@@ -568,16 +606,19 @@ function getManagedLayerGroupId(group: ManagedLayerGroup): string {
 }
 
 function isManagedLayerGroup(value: unknown): value is ManagedLayerGroup {
-  return value instanceof PolyObject
-    || value instanceof TrackLayerGroup
-    || value instanceof PatternsLayerGroup;
+  return (
+    value instanceof PolyObject ||
+    value instanceof TrackLayerGroup ||
+    value instanceof PatternsLayerGroup
+  );
 }
 
 function createManagedLayerGroup(
   groupType: ScoreLayerGroupType | undefined,
   defaultLayerGroupType: 'TRACK' | 'SOUND_OBJECT' = 'TRACK',
 ): ManagedLayerGroup {
-  const effectiveGroupType = groupType ?? (defaultLayerGroupType === 'SOUND_OBJECT' ? 'polyObject' : 'track');
+  const effectiveGroupType =
+    groupType ?? (defaultLayerGroupType === 'SOUND_OBJECT' ? 'polyObject' : 'track');
   switch (effectiveGroupType) {
     case 'track': {
       const group = new TrackLayerGroup();
@@ -599,8 +640,11 @@ function createManagedLayerGroup(
 }
 
 function findLayerGroupByGroupId(score: Score, groupId: string): ManagedLayerGroup | null {
-  return collectManagedLayerGroupLocations(score)
-    .find((location) => getManagedLayerGroupId(location.group) === groupId)?.group ?? null;
+  return (
+    collectManagedLayerGroupLocations(score).find(
+      (location) => getManagedLayerGroupId(location.group) === groupId,
+    )?.group ?? null
+  );
 }
 
 interface ManagedLayerGroupLocation {
@@ -614,7 +658,12 @@ function collectManagedLayerGroupLocations(score: Score): ManagedLayerGroupLocat
   const locations: ManagedLayerGroupLocation[] = [];
   const visited = new Set<ManagedLayerGroup>();
 
-  const visit = (group: ManagedLayerGroup, parent: unknown[], index: number, depth: number): void => {
+  const visit = (
+    group: ManagedLayerGroup,
+    parent: unknown[],
+    index: number,
+    depth: number,
+  ): void => {
     if (visited.has(group)) return;
     visited.add(group);
     locations.push({ group, parent, index, depth });
@@ -678,8 +727,10 @@ function moveLayerRangeInManagedGroup(
   endIndex: number,
   targetIndex: number,
 ): boolean {
-  if (!isValidLayerRange(startIndex, endIndex, group.length)
-    || !isValidLayerRangeTarget(startIndex, endIndex, targetIndex, group.length)) {
+  if (
+    !isValidLayerRange(startIndex, endIndex, group.length) ||
+    !isValidLayerRangeTarget(startIndex, endIndex, targetIndex, group.length)
+  ) {
     return false;
   }
   if (group instanceof PolyObject) {
@@ -697,7 +748,8 @@ function applyRemoveLayerRangesPatch(
 ): boolean {
   const score = data.getScore();
   const ranges = patch.ranges;
-  if (!areLayerRangesValid(ranges, (groupId) => findLayerGroupByGroupId(score, groupId)?.length)) return false;
+  if (!areLayerRangesValid(ranges, (groupId) => findLayerGroupByGroupId(score, groupId)?.length))
+    return false;
 
   const byGroup = new Map<string, Array<{ startIndex: number; endIndex: number }>>();
   for (const r of ranges) {
@@ -721,14 +773,12 @@ function applyRemoveLayerRangesPatch(
   if (patch.deleteEmptyLayerGroups) {
     const affectedGroupIds = new Set(byGroup.keys());
     const emptyGroups = collectManagedLayerGroupLocations(score)
-      .filter((location) => (
-        affectedGroupIds.has(getManagedLayerGroupId(location.group))
-        && location.group.length === 0
-      ))
-      .sort((left, right) => (
-        right.depth - left.depth
-        || right.index - left.index
-      ));
+      .filter(
+        (location) =>
+          affectedGroupIds.has(getManagedLayerGroupId(location.group)) &&
+          location.group.length === 0,
+      )
+      .sort((left, right) => right.depth - left.depth || right.index - left.index);
     for (const location of emptyGroups) {
       if (location.parent[location.index] === location.group) {
         location.parent.splice(location.index, 1);
@@ -752,34 +802,42 @@ type LayerHeightManagedLayer = {
 };
 
 function isLayerStateManagedLayer(value: unknown): value is LayerStateManagedLayer {
-  return typeof value === 'object'
-    && value !== null
-    && 'isMuted' in value
-    && typeof value.isMuted === 'function'
-    && 'setMuted' in value
-    && typeof value.setMuted === 'function'
-    && 'isSolo' in value
-    && typeof value.isSolo === 'function'
-    && 'setSolo' in value
-    && typeof value.setSolo === 'function';
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'isMuted' in value &&
+    typeof value.isMuted === 'function' &&
+    'setMuted' in value &&
+    typeof value.setMuted === 'function' &&
+    'isSolo' in value &&
+    typeof value.isSolo === 'function' &&
+    'setSolo' in value &&
+    typeof value.setSolo === 'function'
+  );
 }
 
 function isLayerHeightManagedLayer(value: unknown): value is LayerHeightManagedLayer {
-  return typeof value === 'object'
-    && value !== null
-    && 'getHeightIndex' in value
-    && typeof value.getHeightIndex === 'function'
-    && 'setHeightIndex' in value
-    && typeof value.setHeightIndex === 'function';
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'getHeightIndex' in value &&
+    typeof value.getHeightIndex === 'function' &&
+    'setHeightIndex' in value &&
+    typeof value.setHeightIndex === 'function'
+  );
 }
 
-function isColorManaged(value: unknown): value is { getBackgroundColor(): number; setBackgroundColor(color: number): void } {
-  return typeof value === 'object'
-    && value !== null
-    && 'getBackgroundColor' in value
-    && typeof (value as { getBackgroundColor: unknown }).getBackgroundColor === 'function'
-    && 'setBackgroundColor' in value
-    && typeof (value as { setBackgroundColor: unknown }).setBackgroundColor === 'function';
+function isColorManaged(
+  value: unknown,
+): value is { getBackgroundColor(): number; setBackgroundColor(color: number): void } {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'getBackgroundColor' in value &&
+    typeof (value as { getBackgroundColor: unknown }).getBackgroundColor === 'function' &&
+    'setBackgroundColor' in value &&
+    typeof (value as { setBackgroundColor: unknown }).setBackgroundColor === 'function'
+  );
 }
 
 function applyUpdateLayerStatePatch(
@@ -831,7 +889,10 @@ function applyUpdateLayerStatePatch(
   return changed;
 }
 
-function applyAddScoreObjectsPatch(data: BlueData, patch: ScorePatch & { type: 'addScoreObjects' }): boolean {
+function applyAddScoreObjectsPatch(
+  data: BlueData,
+  patch: ScorePatch & { type: 'addScoreObjects' },
+): boolean {
   const score = data.getScore();
 
   const targetGroup = findLayerGroupByGroupId(score, patch.groupId);
@@ -890,7 +951,11 @@ function applyAddScoreObjectsPatch(data: BlueData, patch: ScorePatch & { type: '
 
     targetObject.setName(obj.name);
     targetObject.setStartTime(
-      beatsToTimePosition(obj.startBeats, (obj.startTimeBase ?? TimeBase.BEATS) as TimeBase, context),
+      beatsToTimePosition(
+        obj.startBeats,
+        (obj.startTimeBase ?? TimeBase.BEATS) as TimeBase,
+        context,
+      ),
     );
     if (sObj instanceof PolyObject && obj.serializedXml) {
       // A serialized PolyObject may contain TIME/BBT/etc. child durations.
@@ -899,7 +964,11 @@ function applyAddScoreObjectsPatch(data: BlueData, patch: ScorePatch & { type: '
       sObj.normalizeSoundObjects(context);
     } else {
       targetObject.setSubjectiveDuration(
-        beatsToDuration(obj.durationBeats, (obj.durationTimeBase ?? TimeBase.BEATS) as TimeBase, context),
+        beatsToDuration(
+          obj.durationBeats,
+          (obj.durationTimeBase ?? TimeBase.BEATS) as TimeBase,
+          context,
+        ),
       );
     }
     if (obj.backgroundColor !== undefined) {
@@ -991,7 +1060,9 @@ function applyMoveScoreObjectsPatch(
     // A prior splice in this same patch (or a duplicate/stale location) can
     // shift indices; never splice out an object that is not the one we resolved,
     // as that would silently move or delete the wrong score object.
-    if (entry.sourceResolved.layer[entry.sourceResolved.objectIndex] !== entry.sourceResolved.sObj) {
+    if (
+      entry.sourceResolved.layer[entry.sourceResolved.objectIndex] !== entry.sourceResolved.sObj
+    ) {
       continue;
     }
     const [sObj] = entry.sourceResolved.layer.splice(entry.sourceResolved.objectIndex, 1);
@@ -1013,7 +1084,10 @@ function applyMoveScoreObjectsPatch(
   return changed;
 }
 
-function removeScoreObjectByTarget(data: BlueData, target: ScoreObjectEditorTargetSnapshot): boolean {
+function removeScoreObjectByTarget(
+  data: BlueData,
+  target: ScoreObjectEditorTargetSnapshot,
+): boolean {
   const score = data.getScore();
   const location = target.location ?? target.sourceInstanceLocation;
   if (!location) return false;
@@ -1075,7 +1149,10 @@ function applyConvertScoreObjectToObjectBuilder(
   return true;
 }
 
-function applyMoveLayerGroupPatch(data: BlueData, patch: ScorePatch & { type: 'moveLayerGroup' }): boolean {
+function applyMoveLayerGroupPatch(
+  data: BlueData,
+  patch: ScorePatch & { type: 'moveLayerGroup' },
+): boolean {
   const score = data.getScore();
   const sourceIdx = findRootLayerGroupIndexByGroupId(score, patch.groupId);
   if (sourceIdx === -1) return false;
@@ -1086,14 +1163,20 @@ function applyMoveLayerGroupPatch(data: BlueData, patch: ScorePatch & { type: 'm
   return true;
 }
 
-function applyRenameLayerGroupPatch(data: BlueData, patch: ScorePatch & { type: 'renameLayerGroup' }): boolean {
+function applyRenameLayerGroupPatch(
+  data: BlueData,
+  patch: ScorePatch & { type: 'renameLayerGroup' },
+): boolean {
   const targetGroup = findLayerGroupByGroupId(data.getScore(), patch.groupId);
   if (!targetGroup) return false;
   targetGroup.setName(patch.name);
   return true;
 }
 
-function applyRemoveLayerGroupPatch(data: BlueData, patch: ScorePatch & { type: 'removeLayerGroup' }): boolean {
+function applyRemoveLayerGroupPatch(
+  data: BlueData,
+  patch: ScorePatch & { type: 'removeLayerGroup' },
+): boolean {
   const score = data.getScore();
   const idx = findRootLayerGroupIndexByGroupId(score, patch.groupId);
   if (idx === -1) return false;
@@ -1101,7 +1184,10 @@ function applyRemoveLayerGroupPatch(data: BlueData, patch: ScorePatch & { type: 
   return true;
 }
 
-function applyScopedNoteProcessorChainPatch(data: BlueData, patch: ScorePatch & { type: 'replaceScopedNoteProcessorChain' }): boolean {
+function applyScopedNoteProcessorChainPatch(
+  data: BlueData,
+  patch: ScorePatch & { type: 'replaceScopedNoteProcessorChain' },
+): boolean {
   const score = data.getScore();
 
   if (patch.scope === 'rootScore') {
@@ -1162,19 +1248,19 @@ function getAutomationLayerFromGroup(
   ref: ScoreAutomationLayerRef,
 ): BlueDataAutomatableLayer | null {
   if (
-    ref.layerKind === 'soundObject'
-    && group instanceof PolyObject
-    && ref.layerIndex >= 0
-    && ref.layerIndex < group.length
+    ref.layerKind === 'soundObject' &&
+    group instanceof PolyObject &&
+    ref.layerIndex >= 0 &&
+    ref.layerIndex < group.length
   ) {
     return group[ref.layerIndex] as BlueDataAutomatableLayer;
   }
 
   if (
-    ref.layerKind === 'track'
-    && group instanceof TrackLayerGroup
-    && ref.layerIndex >= 0
-    && ref.layerIndex < group.length
+    ref.layerKind === 'track' &&
+    group instanceof TrackLayerGroup &&
+    ref.layerIndex >= 0 &&
+    ref.layerIndex < group.length
   ) {
     return group[ref.layerIndex] as BlueDataAutomatableLayer;
   }
@@ -1218,7 +1304,10 @@ function findAutomationLayerByGroupId(
   return null;
 }
 
-function resolveAutomationLayerRef(data: BlueData, ref: ScoreAutomationLayerRef): BlueDataAutomatableLayer | null {
+function resolveAutomationLayerRef(
+  data: BlueData,
+  ref: ScoreAutomationLayerRef,
+): BlueDataAutomatableLayer | null {
   const byGroupId = findAutomationLayerByGroupId(data, ref);
   if (byGroupId) return byGroupId;
 
@@ -1231,17 +1320,15 @@ function resolveAutomationLayerRef(data: BlueData, ref: ScoreAutomationLayerRef)
 }
 
 function findParameterById(data: BlueData, parameterId: string): BlueDataParameter | null {
-  return getProjectParameterCatalog(data)
-    .find((entry) => entry.parameter.getUniqueId() === parameterId)
-    ?.parameter ?? null;
+  return (
+    getProjectParameterCatalog(data).find((entry) => entry.parameter.getUniqueId() === parameterId)
+      ?.parameter ?? null
+  );
 }
 
-function removeAutomationParameterFromGroup(
-  group: unknown,
-  parameterId: string,
-): void {
-    if (!(group instanceof PolyObject) && !(group instanceof TrackLayerGroup)) {
-      return;
+function removeAutomationParameterFromGroup(group: unknown, parameterId: string): void {
+  if (!(group instanceof PolyObject) && !(group instanceof TrackLayerGroup)) {
+    return;
   }
 
   for (const layer of group) {
@@ -1260,10 +1347,7 @@ function removeAutomationParameterFromGroup(
   }
 }
 
-function removeAutomationParameterFromAllLayers(
-  data: BlueData,
-  parameterId: string,
-): void {
+function removeAutomationParameterFromAllLayers(data: BlueData, parameterId: string): void {
   const score = data.getScore();
   for (let gi = 0; gi < score.length; gi++) {
     removeAutomationParameterFromGroup(score[gi], parameterId);
@@ -1275,9 +1359,7 @@ function seedDefaultAutomationPoint(param: BlueDataParameter): void {
     return;
   }
 
-  param.setPoints([
-    clampAutomationPoint(param, { time: 0, value: param.getFixedValue() }),
-  ]);
+  param.setPoints([clampAutomationPoint(param, { time: 0, value: param.getFixedValue() })]);
 }
 
 function clampAutomationPoint(
@@ -1288,7 +1370,10 @@ function clampAutomationPoint(
     time: Math.max(0, Number.isFinite(point.time) ? point.time : 0),
     value: Math.min(
       param.getMaximum(),
-      Math.max(param.getMinimum(), Number.isFinite(point.value) ? point.value : param.getFixedValue()),
+      Math.max(
+        param.getMinimum(),
+        Number.isFinite(point.value) ? point.value : param.getFixedValue(),
+      ),
     ),
   };
 }
@@ -1297,9 +1382,7 @@ function normalizeAutomationPoints(
   param: BlueDataParameter,
   points: AutomationPointSnapshot[],
 ): AutomationPointSnapshot[] {
-  return points
-    .map((point) => clampAutomationPoint(param, point))
-    .sort((a, b) => a.time - b.time);
+  return points.map((point) => clampAutomationPoint(param, point)).sort((a, b) => a.time - b.time);
 }
 
 function findAutomationLayerBySnapshotId(
@@ -1307,15 +1390,14 @@ function findAutomationLayerBySnapshotId(
   layerId: string,
 ): BlueDataAutomatableLayer | null {
   function visitGroup(group: unknown): BlueDataAutomatableLayer | null {
-  if (!(group instanceof PolyObject) && !(group instanceof TrackLayerGroup)) {
+    if (!(group instanceof PolyObject) && !(group instanceof TrackLayerGroup)) {
       return null;
     }
 
     const groupId = assignLayerGroupId(group);
     for (let li = 0; li < group.length; li++) {
-      const candidateLayerId = group instanceof TrackLayerGroup
-        ? group[li]?.getUniqueId()
-        : `${groupId}-layer-${li}`;
+      const candidateLayerId =
+        group instanceof TrackLayerGroup ? group[li]?.getUniqueId() : `${groupId}-layer-${li}`;
       if (candidateLayerId === layerId) {
         return group[li] as BlueDataAutomatableLayer;
       }
@@ -1377,13 +1459,15 @@ function applyAutomationRangePatch(
       // Use anchored transforms that insert boundary anchor points at the
       // selection edges, preserving line shape outside the selection (Java
       // Line.processLineForSelectionDrag/Scale parity).
-      const after = patch.type === 'moveAutomationRange'
-        ? moveRangeWithAnchors(before, startBeat, endBeat, patch.beatDelta)
-        : scaleRangeWithAnchors(before, startBeat, endBeat, patch.anchorBeat, patch.scaleFactor);
+      const after =
+        patch.type === 'moveAutomationRange'
+          ? moveRangeWithAnchors(before, startBeat, endBeat, patch.beatDelta)
+          : scaleRangeWithAnchors(before, startBeat, endBeat, patch.anchorBeat, patch.scaleFactor);
 
       const normalized = normalizeAutomationPoints(param, after);
-      const same = before.length === normalized.length
-        && before.every((point, index) => {
+      const same =
+        before.length === normalized.length &&
+        before.every((point, index) => {
           const next = normalized[index];
           return next && point.time === next.time && point.value === next.value;
         });
@@ -1429,7 +1513,8 @@ function shouldAbortAutomationRangeScaleForPartialObjects(
     const objects = layer as unknown as readonly unknown[];
     for (const obj of objects) {
       const isClip = obj instanceof AudioClip;
-      const isScoreObject = !isClip && (obj instanceof AbstractSoundObject || obj instanceof PolyObject);
+      const isScoreObject =
+        !isClip && (obj instanceof AbstractSoundObject || obj instanceof PolyObject);
       if (!isClip && !isScoreObject) continue;
       if (isClip ? !includeAudioClips : !includeScoreObjects) continue;
 
@@ -1447,8 +1532,10 @@ function shouldAbortAutomationRangeScaleForPartialObjects(
       }
 
       const endBeats = startBeats + timed.getSubjectiveDuration().toBeats(context);
-      if ((startBeats < startBeat && endBeats > startBeat)
-        || (startBeats < endBeat && endBeats > endBeat)) {
+      if (
+        (startBeats < startBeat && endBeats > startBeat) ||
+        (startBeats < endBeat && endBeats > endBeat)
+      ) {
         return true;
       }
     }
@@ -1496,7 +1583,8 @@ function applyAutomationRangeObjectAlignment(
     const objects = layer as unknown as readonly unknown[];
     for (const obj of objects) {
       const isClip = obj instanceof AudioClip;
-      const isScoreObject = !isClip && (obj instanceof AbstractSoundObject || obj instanceof PolyObject);
+      const isScoreObject =
+        !isClip && (obj instanceof AbstractSoundObject || obj instanceof PolyObject);
       if (!isClip && !isScoreObject) continue;
 
       const timed = obj as {
@@ -1531,8 +1619,14 @@ function applyAutomationRangeObjectAlignment(
         const durBeats = dur.toBeats(context);
         const endBeats = startBeats + durBeats;
 
-        const newStart = Math.max(0, patch.anchorBeat + (startBeats - patch.anchorBeat) * patch.scaleFactor);
-        const newEnd = Math.max(0, patch.anchorBeat + (endBeats - patch.anchorBeat) * patch.scaleFactor);
+        const newStart = Math.max(
+          0,
+          patch.anchorBeat + (startBeats - patch.anchorBeat) * patch.scaleFactor,
+        );
+        const newEnd = Math.max(
+          0,
+          patch.anchorBeat + (endBeats - patch.anchorBeat) * patch.scaleFactor,
+        );
         const newDur = Math.max(0, newEnd - newStart);
 
         if (newStart === startBeats && newDur === durBeats) continue;
@@ -1673,9 +1767,7 @@ function applyScoreAutomationPatch(data: BlueData, patch: ScorePatch): boolean |
       const pts = param.getPoints();
       if (patch.pointIndex >= 0 && patch.pointIndex < pts.length) {
         const point = clampAutomationPoint(param, patch.point);
-        const newPts = pts.map((p, idx) =>
-          idx === patch.pointIndex ? point : p
-        );
+        const newPts = pts.map((p, idx) => (idx === patch.pointIndex ? point : p));
         param.setPoints(normalizeAutomationPoints(param, newPts));
       }
       return true;
@@ -1689,8 +1781,8 @@ function applyScoreAutomationPatch(data: BlueData, patch: ScorePatch): boolean |
         getProjectParameterCatalog(data).map((entry) => entry.parameter.getUniqueId()),
       );
       const idsToRemove = patch.parameterIds
-        ? patch.parameterIds.filter(id => !validIds.has(id))
-        : paramList.getIds().filter(id => !validIds.has(id));
+        ? patch.parameterIds.filter((id) => !validIds.has(id))
+        : paramList.getIds().filter((id) => !validIds.has(id));
       for (const id of idsToRemove) {
         paramList.removeParameterId(id);
       }
@@ -1707,15 +1799,17 @@ function applyScoreAutomationPatch(data: BlueData, patch: ScorePatch): boolean |
 }
 
 function isTrackScorePatch(patch: ScorePatch): patch is TrackScorePatch {
-  return patch.type === 'addTrackItem'
-    || patch.type === 'moveTrackItems'
-    || patch.type === 'resizeTrackItems'
-    || patch.type === 'removeTrackItems'
-    || patch.type === 'replaceTrackNoteProcessorChain'
-    || patch.type === 'createTrackInstrument'
-    || patch.type === 'replaceTrackInstrument'
-    || patch.type === 'clearTrackInstrument'
-    || patch.type === 'updateTrackInstrument';
+  return (
+    patch.type === 'addTrackItem' ||
+    patch.type === 'moveTrackItems' ||
+    patch.type === 'resizeTrackItems' ||
+    patch.type === 'removeTrackItems' ||
+    patch.type === 'replaceTrackNoteProcessorChain' ||
+    patch.type === 'createTrackInstrument' ||
+    patch.type === 'replaceTrackInstrument' ||
+    patch.type === 'clearTrackInstrument' ||
+    patch.type === 'updateTrackInstrument'
+  );
 }
 
 interface ResolvedTrackRef {
@@ -1757,13 +1851,26 @@ interface ResolvedTrackItem {
   objectIndex: number;
 }
 
-function resolveTrackItem(score: Score, ref: TrackItemRef, context?: ProjectDocumentPatchContext): ResolvedTrackItem | null {
+function resolveTrackItem(
+  score: Score,
+  ref: TrackItemRef,
+  context?: ProjectDocumentPatchContext,
+): ResolvedTrackItem | null {
   const resolved = resolveTrackRef(score, ref.track, context);
   if (!resolved) return null;
   if (ref.objectIndex !== undefined) {
-    if (!Number.isInteger(ref.objectIndex) || ref.objectIndex < 0 || ref.objectIndex >= resolved.track.length) return null;
+    if (
+      !Number.isInteger(ref.objectIndex) ||
+      ref.objectIndex < 0 ||
+      ref.objectIndex >= resolved.track.length
+    )
+      return null;
     const item = resolved.track[ref.objectIndex];
-    if (ref.objectId && assignScoreObjectId(item, item instanceof AudioClip ? 'aclp' : 'sobj') !== ref.objectId) return null;
+    if (
+      ref.objectId &&
+      assignScoreObjectId(item, item instanceof AudioClip ? 'aclp' : 'sobj') !== ref.objectId
+    )
+      return null;
     return { track: resolved.track, item, objectIndex: ref.objectIndex };
   }
   if (!ref.objectId || !ref.objectId.trim()) return null;
@@ -1789,13 +1896,14 @@ function setTrackItemTiming(
     (startTimeBase ?? TimeBase.BEATS) as TimeBase,
     context,
   );
-  const duration = durationBeats === undefined
-    ? undefined
-    : beatsToDuration(
-      Math.max(0, Number.isFinite(durationBeats) ? durationBeats : 0),
-      (durationTimeBase ?? TimeBase.BEATS) as TimeBase,
-      context,
-    );
+  const duration =
+    durationBeats === undefined
+      ? undefined
+      : beatsToDuration(
+          Math.max(0, Number.isFinite(durationBeats) ? durationBeats : 0),
+          (durationTimeBase ?? TimeBase.BEATS) as TimeBase,
+          context,
+        );
   if (item instanceof AudioClip) {
     item.setStartTime(start);
     if (duration) item.setSubjectiveDuration(duration);
@@ -1832,7 +1940,14 @@ function reifyTrackItemTransfer(
   if (transfer.name !== undefined) item.setName(transfer.name);
   if (transfer.backgroundColor !== undefined) item.setBackgroundColor(transfer.backgroundColor);
   if (transfer.startBeats !== undefined) {
-    setTrackItemTiming(item, context, transfer.startBeats, transfer.durationBeats, transfer.startTimeBase, transfer.durationTimeBase);
+    setTrackItemTiming(
+      item,
+      context,
+      transfer.startBeats,
+      transfer.durationBeats,
+      transfer.startTimeBase,
+      transfer.durationTimeBase,
+    );
   }
   return item;
 }
@@ -1916,10 +2031,12 @@ function applyTrackScorePatch(
     const entries = resolved as Array<{ resize: TrackItemResize; target: ResolvedTrackItem }>;
     if (new Set(entries.map((entry) => entry.target.item)).size !== entries.length) return false;
     for (const entry of entries) {
-      if (!Number.isFinite(entry.resize.targetStartBeats)
-        || !Number.isFinite(entry.resize.targetDurationBeats)
-        || entry.resize.targetDurationBeats <= 0
-        || entry.target.track.indexOf(entry.target.item) < 0) {
+      if (
+        !Number.isFinite(entry.resize.targetStartBeats) ||
+        !Number.isFinite(entry.resize.targetDurationBeats) ||
+        entry.resize.targetDurationBeats <= 0 ||
+        entry.target.track.indexOf(entry.target.item) < 0
+      ) {
         return false;
       }
     }
@@ -1939,7 +2056,9 @@ function applyTrackScorePatch(
 
   if (patch.type === 'replaceTrackNoteProcessorChain') {
     target.track.setNoteProcessorChain(
-      patch.chain ? reifyChainFromSnapshot(patch.chain as DataNoteProcessorChainSnapshot) : new NoteProcessorChain(),
+      patch.chain
+        ? reifyChainFromSnapshot(patch.chain as DataNoteProcessorChainSnapshot)
+        : new NoteProcessorChain(),
     );
     return true;
   }
@@ -1990,13 +2109,15 @@ function applyConvertToPolyObjectPatch(
   const seenObjects = new Set<SoundObject>();
 
   for (const target of patch.targets) {
-    const location = target.ownerKind === 'library' && target.displayContext === 'instance'
-      ? target.sourceInstanceLocation
-      : target.location;
+    const location =
+      target.ownerKind === 'library' && target.displayContext === 'instance'
+        ? target.sourceInstanceLocation
+        : target.location;
     if (!location) return false;
 
     const resolved = resolveTimelineTarget(score, location);
-    if (!resolved || resolved.sObj instanceof AudioClip || seenObjects.has(resolved.sObj)) return false;
+    if (!resolved || resolved.sObj instanceof AudioClip || seenObjects.has(resolved.sObj))
+      return false;
 
     seenObjects.add(resolved.sObj);
     resolvedTargets.push({ sObj: resolved.sObj });
@@ -2038,7 +2159,9 @@ function applyConvertToPolyObjectPatch(
 
   for (const item of resolvedTargets) {
     const sObj = item.sObj;
-    const gIdx = allLayers.findIndex((l) => l.includes(sObj) || ('contains' in l && l.contains(sObj)));
+    const gIdx = allLayers.findIndex(
+      (l) => l.includes(sObj) || ('contains' in l && l.contains(sObj)),
+    );
     if (gIdx === -1) return false;
     const layer = allLayers[gIdx]!;
 
@@ -2061,10 +2184,10 @@ function applyConvertToPolyObjectPatch(
   }
 
   if (
-    targetItems.length === 0
-    || targetItems.length !== resolvedTargets.length
-    || !Number.isFinite(layerMin)
-    || !Number.isFinite(layerMax)
+    targetItems.length === 0 ||
+    targetItems.length !== resolvedTargets.length ||
+    !Number.isFinite(layerMin) ||
+    !Number.isFinite(layerMax)
   ) {
     return false;
   }
@@ -2131,7 +2254,11 @@ function applyUpdatePatternCellsPatch(
       writeIndexByKey.set(key, writes.length);
       writes.push({ layerId: change.layerId, cellIndex: change.cellIndex, active: change.active });
     } else {
-      writes[existingIndex] = { layerId: change.layerId, cellIndex: change.cellIndex, active: change.active };
+      writes[existingIndex] = {
+        layerId: change.layerId,
+        cellIndex: change.cellIndex,
+        active: change.active,
+      };
     }
   }
 
@@ -2164,7 +2291,9 @@ function applyUpdatePatternBeatsLengthPatch(
   return true;
 }
 
-function getScoreObjectColorTargetKey(target: ScoreObjectEditorTargetSnapshot | null | undefined): string | null {
+function getScoreObjectColorTargetKey(
+  target: ScoreObjectEditorTargetSnapshot | null | undefined,
+): string | null {
   if (!target) return null;
   if (target.patternSource) {
     const ps = target.patternSource;
@@ -2245,7 +2374,8 @@ export function isScoreColorPatchAccepted(data: BlueData, patch: ScorePatch): bo
     }
     case 'updateSharedProperties': {
       if (!isValidLayerColorInput(patch.patch?.backgroundColor)) return false;
-      if (patch.target?.ownerKind === 'blueLive' || patch.target?.ownerKind === 'library') return false;
+      if (patch.target?.ownerKind === 'blueLive' || patch.target?.ownerKind === 'library')
+        return false;
       let resolved: { sObj: SoundObject | AudioClip; isLibraryOwned: boolean } | null;
       try {
         resolved = resolveEditorTarget(data, patch.target);
@@ -2255,8 +2385,10 @@ export function isScoreColorPatchAccepted(data: BlueData, patch: ScorePatch): bo
       return !!resolved && !resolved.isLibraryOwned && isColorManaged(resolved.sObj);
     }
     case 'setScoreObjectBackgroundColors':
-      return Array.isArray(patch.updates)
-        && (patch.updates.length === 0 || resolveScoreObjectColorUpdates(data, patch.updates) !== null);
+      return (
+        Array.isArray(patch.updates) &&
+        (patch.updates.length === 0 || resolveScoreObjectColorUpdates(data, patch.updates) !== null)
+      );
     default:
       return false;
   }
@@ -2331,9 +2463,10 @@ export function applyScoreObjectPatch(
       let durationBeats: number | null = null;
       if (object instanceof GenericScore) {
         const notes = parseScoreNotes(object.getScoreText());
-        durationBeats = notes.length === 0
-          ? null
-          : Math.max(...notes.map((note) => note.getStartTime() + note.getObjectiveDuration()));
+        durationBeats =
+          notes.length === 0
+            ? null
+            : Math.max(...notes.map((note) => note.getStartTime() + note.getObjectiveDuration()));
       } else if (object instanceof Instance && object.getSoundObject()) {
         durationBeats = object.getSoundObject()!.getSubjectiveDuration().toBeats(context);
       } else {
@@ -2348,11 +2481,13 @@ export function applyScoreObjectPatch(
     });
     if (updates.some((update) => update === null)) return false;
     for (const update of updates as Array<{ object: SoundObject; durationBeats: number }>) {
-      update.object.setSubjectiveDuration(beatsToDuration(
-        update.durationBeats,
-        update.object.getSubjectiveDuration().getTimeBase(),
-        context,
-      ));
+      update.object.setSubjectiveDuration(
+        beatsToDuration(
+          update.durationBeats,
+          update.object.getSubjectiveDuration().getTimeBase(),
+          context,
+        ),
+      );
     }
     return updates.length > 0;
   }
@@ -2410,7 +2545,11 @@ export function applyScoreObjectPatch(
   if (patch.type === 'addLayerGroup') {
     const score = data.getScore();
     const insertAt = patch.insertAtIndex ?? score.length;
-    score.splice(insertAt, 0, createManagedLayerGroup(patch.groupType, patchContext?.defaultLayerGroupType));
+    score.splice(
+      insertAt,
+      0,
+      createManagedLayerGroup(patch.groupType, patchContext?.defaultLayerGroupType),
+    );
     return true;
   }
 
@@ -2422,7 +2561,9 @@ export function applyScoreObjectPatch(
     const name = patch.name ?? `Marker ${data.getMarkersList().size() + 1}`;
     const context = data.getScore().getTimeContext();
     const targetBase = data.getScore().getTimeState().getTimeDisplay();
-    data.getMarkersList().addMarkerPosition(name, beatsToTimePosition(patch.timeBeats, targetBase, context));
+    data
+      .getMarkersList()
+      .addMarkerPosition(name, beatsToTimePosition(patch.timeBeats, targetBase, context));
     return true;
   }
 
@@ -2504,8 +2645,10 @@ export function applyScoreObjectPatch(
         changed = true;
       }
       if (p.backgroundColor !== undefined) {
-        if (isColorManaged(sObj)
-          && !areEquivalentScoreColors(sObj.getBackgroundColor(), p.backgroundColor)) {
+        if (
+          isColorManaged(sObj) &&
+          !areEquivalentScoreColors(sObj.getBackgroundColor(), p.backgroundColor)
+        ) {
           sObj.setBackgroundColor(p.backgroundColor);
           changed = true;
         }
@@ -2590,10 +2733,9 @@ export function applyScoreObjectPatch(
           changed = true;
         }
         if (p.bsbInterfacePatch !== undefined) {
-          changed = applyObjectBuilderBsbInterfacePatch(
-            sObj,
-            p.bsbInterfacePatch as BsbInterfacePatch,
-          ) || changed;
+          changed =
+            applyObjectBuilderBsbInterfacePatch(sObj, p.bsbInterfacePatch as BsbInterfacePatch) ||
+            changed;
         }
         return changed;
       }
@@ -2640,9 +2782,18 @@ export function applyScoreObjectPatch(
         }
         if (Array.isArray(p.cellChanges)) {
           const trackList = to.getTracks();
-          for (const change of p.cellChanges as Array<{ trackId: string; rowIndex: number; columnId: string; value: string | number | null }>) {
+          for (const change of p.cellChanges as Array<{
+            trackId: string;
+            rowIndex: number;
+            columnId: string;
+            value: string | number | null;
+          }>) {
             const trackIdx = parseInt(change.trackId.replace('tracker-track-', ''), 10);
-            if (trackIdx >= 0 && trackIdx < trackList.size() && change.columnId.startsWith('track-')) {
+            if (
+              trackIdx >= 0 &&
+              trackIdx < trackList.size() &&
+              change.columnId.startsWith('track-')
+            ) {
               const track = trackList.getTrack(trackIdx)!;
               if (change.rowIndex >= 0 && change.rowIndex < track.getNumSteps()) {
                 const trNote = track.getTrackerNote(change.rowIndex);
@@ -2667,7 +2818,12 @@ export function applyScoreObjectPatch(
           to.getTracks().setSteps(p.steps as number);
         }
         if (p.updateTrackCell !== undefined) {
-          const { trackIndex, columnIndex, stepIndex, value } = p.updateTrackCell as { trackIndex: number; columnIndex: number; stepIndex: number; value: string };
+          const { trackIndex, columnIndex, stepIndex, value } = p.updateTrackCell as {
+            trackIndex: number;
+            columnIndex: number;
+            stepIndex: number;
+            value: string;
+          };
           const trackList = to.getTracks();
           if (trackIndex >= 0 && trackIndex < trackList.size()) {
             const track = trackList.getTrack(trackIndex)!;
@@ -2675,7 +2831,8 @@ export function applyScoreObjectPatch(
               const trNote = track.getTrackerNote(stepIndex);
               const val = String(value ?? '').trim();
 
-              if (columnIndex === -1) { // status column
+              if (columnIndex === -1) {
+                // status column
                 if (val === '-') {
                   trNote.setTied(true);
                   trNote.setOff(false);
@@ -2730,13 +2887,14 @@ export function applyScoreObjectPatch(
           }
         }
         if (p.updateTrackProperties !== undefined) {
-          const { trackIndex, name, instrumentId, noteTemplate, columns } = p.updateTrackProperties as {
-            trackIndex: number;
-            name: string;
-            instrumentId: string;
-            noteTemplate: string;
-            columns?: TrackerColumnSnapshot[];
-          };
+          const { trackIndex, name, instrumentId, noteTemplate, columns } =
+            p.updateTrackProperties as {
+              trackIndex: number;
+              name: string;
+              instrumentId: string;
+              noteTemplate: string;
+              columns?: TrackerColumnSnapshot[];
+            };
           const track = to.getTracks().getTrack(trackIndex);
           if (track) {
             track.setName(name);
@@ -2759,7 +2917,10 @@ export function applyScoreObjectPatch(
                 priorValues.push(rowValues);
               }
               const sourceIndexMap: Array<number | null> = columns.map((columnDef, newIndex) => {
-                if (typeof columnDef.sourceIndex === 'number' && Number.isInteger(columnDef.sourceIndex)) {
+                if (
+                  typeof columnDef.sourceIndex === 'number' &&
+                  Number.isInteger(columnDef.sourceIndex)
+                ) {
                   const sourceIndex = columnDef.sourceIndex;
                   return sourceIndex >= 0 && sourceIndex < oldCols.length ? sourceIndex : null;
                 }
@@ -2828,9 +2989,10 @@ export function applyScoreObjectPatch(
           const track = trackList.getTrack(action.trackIndex);
 
           if (track) {
-            const note = action.stepIndex >= 0 && action.stepIndex < track.getNumSteps()
-              ? track.getTrackerNote(action.stepIndex)
-              : null;
+            const note =
+              action.stepIndex >= 0 && action.stepIndex < track.getNumSteps()
+                ? track.getTrackerNote(action.stepIndex)
+                : null;
 
             switch (action.type) {
               case 'toggleTie':
@@ -2982,9 +3144,11 @@ export function applyScoreObjectPatch(
         if (p.audioFile !== undefined) clip.setAudioFile(p.audioFile as string);
         if (p.fileStartTime !== undefined) clip.setFileStartTime(p.fileStartTime as number);
         if (p.fadeIn !== undefined) clip.setFadeIn(p.fadeIn as number);
-        if (p.fadeInType !== undefined) clip.setFadeInType(toBlueDataFadeType(p.fadeInType as string));
+        if (p.fadeInType !== undefined)
+          clip.setFadeInType(toBlueDataFadeType(p.fadeInType as string));
         if (p.fadeOut !== undefined) clip.setFadeOut(p.fadeOut as number);
-        if (p.fadeOutType !== undefined) clip.setFadeOutType(toBlueDataFadeType(p.fadeOutType as string));
+        if (p.fadeOutType !== undefined)
+          clip.setFadeOutType(toBlueDataFadeType(p.fadeOutType as string));
         if (p.looping !== undefined) clip.setLooping(context, p.looping as boolean);
         return true;
       }
@@ -3033,7 +3197,10 @@ export function applyScoreObjectPatch(
           }
         }
         if (p.toggleStep !== undefined) {
-          const { patternIndex, stepIndex } = p.toggleStep as { patternIndex: number; stepIndex: number };
+          const { patternIndex, stepIndex } = p.toggleStep as {
+            patternIndex: number;
+            stepIndex: number;
+          };
           if (patternIndex >= 0 && patternIndex < po.size()) {
             const pat = po.getPattern(patternIndex);
             if (stepIndex >= 0 && stepIndex < pat.values.length) {
@@ -3042,13 +3209,19 @@ export function applyScoreObjectPatch(
           }
         }
         if (p.updatePatternScore !== undefined) {
-          const { patternIndex, patternScore } = p.updatePatternScore as { patternIndex: number; patternScore: string };
+          const { patternIndex, patternScore } = p.updatePatternScore as {
+            patternIndex: number;
+            patternScore: string;
+          };
           if (patternIndex >= 0 && patternIndex < po.size()) {
             po.getPattern(patternIndex).patternScore = patternScore;
           }
         }
         if (p.updatePatternName !== undefined) {
-          const { patternIndex, patternName } = p.updatePatternName as { patternIndex: number; patternName: string };
+          const { patternIndex, patternName } = p.updatePatternName as {
+            patternIndex: number;
+            patternName: string;
+          };
           if (patternIndex >= 0 && patternIndex < po.size()) {
             po.getPattern(patternIndex).patternName = patternName;
           }
@@ -3091,11 +3264,20 @@ export function applyScoreObjectPatch(
             channel: line.channel,
             min: typeof line.min === 'number' ? line.min : existingLines[index]?.min,
             max: typeof line.max === 'number' ? line.max : existingLines[index]?.max,
-            resolution: typeof line.resolution === 'string' ? line.resolution : existingLines[index]?.resolution,
+            resolution:
+              typeof line.resolution === 'string'
+                ? line.resolution
+                : existingLines[index]?.resolution,
             color: line.color,
-            rightBound: typeof line.rightBound === 'boolean' ? line.rightBound : existingLines[index]?.rightBound,
-            endPointsLinked: typeof line.endPointsLinked === 'boolean' ? line.endPointsLinked : existingLines[index]?.endPointsLinked,
-            points: line.points.map(pt => ({ x: pt.x, y: pt.y })),
+            rightBound:
+              typeof line.rightBound === 'boolean'
+                ? line.rightBound
+                : existingLines[index]?.rightBound,
+            endPointsLinked:
+              typeof line.endPointsLinked === 'boolean'
+                ? line.endPointsLinked
+                : existingLines[index]?.endPointsLinked,
+            points: line.points.map((pt) => ({ x: pt.x, y: pt.y })),
           }));
         }
         return true;
@@ -3105,34 +3287,47 @@ export function applyScoreObjectPatch(
         const p = patch.patch;
         if (p.lines !== undefined) {
           const existingLines = lo.getLines();
-          const inner = lo as unknown as { _lines: Array<{
-            varName: string;
-            min?: number;
-            max?: number;
-            resolution?: string;
-            color: number;
-            rightBound?: boolean;
-            endPointsLinked?: boolean;
-            points: Array<{ x: number; y: number }>;
-          }> };
-          inner._lines = (p.lines as Array<{
-            varName: string;
-            min?: number;
-            max?: number;
-            resolution?: string;
-            color: number;
-            rightBound?: boolean;
-            endPointsLinked?: boolean;
-            points: Array<{ x: number; y: number }>;
-          }>).map((line, index) => ({
+          const inner = lo as unknown as {
+            _lines: Array<{
+              varName: string;
+              min?: number;
+              max?: number;
+              resolution?: string;
+              color: number;
+              rightBound?: boolean;
+              endPointsLinked?: boolean;
+              points: Array<{ x: number; y: number }>;
+            }>;
+          };
+          inner._lines = (
+            p.lines as Array<{
+              varName: string;
+              min?: number;
+              max?: number;
+              resolution?: string;
+              color: number;
+              rightBound?: boolean;
+              endPointsLinked?: boolean;
+              points: Array<{ x: number; y: number }>;
+            }>
+          ).map((line, index) => ({
             varName: line.varName,
             min: typeof line.min === 'number' ? line.min : existingLines[index]?.min,
             max: typeof line.max === 'number' ? line.max : existingLines[index]?.max,
-            resolution: typeof line.resolution === 'string' ? line.resolution : existingLines[index]?.resolution,
+            resolution:
+              typeof line.resolution === 'string'
+                ? line.resolution
+                : existingLines[index]?.resolution,
             color: line.color,
-            rightBound: typeof line.rightBound === 'boolean' ? line.rightBound : existingLines[index]?.rightBound,
-            endPointsLinked: typeof line.endPointsLinked === 'boolean' ? line.endPointsLinked : existingLines[index]?.endPointsLinked,
-            points: line.points.map(pt => ({ x: pt.x, y: pt.y })),
+            rightBound:
+              typeof line.rightBound === 'boolean'
+                ? line.rightBound
+                : existingLines[index]?.rightBound,
+            endPointsLinked:
+              typeof line.endPointsLinked === 'boolean'
+                ? line.endPointsLinked
+                : existingLines[index]?.endPointsLinked,
+            points: line.points.map((pt) => ({ x: pt.x, y: pt.y })),
           }));
         }
         return true;
@@ -3143,7 +3338,10 @@ export function applyScoreObjectPatch(
         if (p.seedUsed !== undefined) jm.setSeedUsed(p.seedUsed as boolean);
         if (p.seed !== undefined) jm.setSeed(p.seed as number);
         if (p.field !== undefined) {
-          const nextFieldSnapshot = mergeJMaskSnapshotValue(createJMaskEditorPayload(jm).field, p.field) as Record<string, unknown>;
+          const nextFieldSnapshot = mergeJMaskSnapshotValue(
+            createJMaskEditorPayload(jm).field,
+            p.field,
+          ) as Record<string, unknown>;
           jm.setField(loadFieldFromSnapshot(nextFieldSnapshot));
         }
         return true;
@@ -3153,7 +3351,8 @@ export function applyScoreObjectPatch(
         const p = patch.patch;
         if (p.instrumentId !== undefined) pr.setInstrumentId(p.instrumentId as string);
         if (p.noteTemplate !== undefined) pr.setNoteTemplate(p.noteTemplate as string);
-        if (p.pchGenerationMethod !== undefined) pr.setPchGenerationMethod(p.pchGenerationMethod as number);
+        if (p.pchGenerationMethod !== undefined)
+          pr.setPchGenerationMethod(p.pchGenerationMethod as number);
         if (p.transposition !== undefined) pr.setTransposition(p.transposition as number);
         if (p.pixelSecond !== undefined) pr.setPixelSecond(p.pixelSecond as number);
         if (p.noteHeight !== undefined) pr.setNoteHeight(p.noteHeight as number);
@@ -3168,23 +3367,28 @@ export function applyScoreObjectPatch(
           }
         }
         if (Array.isArray(p.fieldDefinitions)) {
-          applyPianoRollFieldDefinitions(pr, p.fieldDefinitions as Array<{
-            fieldName: string;
-            fieldType: string;
-            minValue: number;
-            maxValue: number;
-            defaultValue: number;
-          }>);
+          applyPianoRollFieldDefinitions(
+            pr,
+            p.fieldDefinitions as Array<{
+              fieldName: string;
+              fieldType: string;
+              minValue: number;
+              maxValue: number;
+              defaultValue: number;
+            }>,
+          );
         }
         if (p.addFieldDef !== undefined) {
           const fieldDefinitions = getPianoRollFieldDefinitionsSnapshot(pr);
-          fieldDefinitions.push(p.addFieldDef as {
-            fieldName: string;
-            fieldType: string;
-            minValue: number;
-            maxValue: number;
-            defaultValue: number;
-          });
+          fieldDefinitions.push(
+            p.addFieldDef as {
+              fieldName: string;
+              fieldType: string;
+              minValue: number;
+              maxValue: number;
+              defaultValue: number;
+            },
+          );
           applyPianoRollFieldDefinitions(pr, fieldDefinitions);
         }
         if (p.updateFieldDef !== undefined) {
@@ -3205,7 +3409,9 @@ export function applyScoreObjectPatch(
           }
         }
         if (typeof p.removeFieldDef === 'number') {
-          const fieldDefinitions = getPianoRollFieldDefinitionsSnapshot(pr).filter((_, index) => index !== p.removeFieldDef);
+          const fieldDefinitions = getPianoRollFieldDefinitionsSnapshot(pr).filter(
+            (_, index) => index !== p.removeFieldDef,
+          );
           applyPianoRollFieldDefinitions(pr, fieldDefinitions);
         }
         if (p.useGlobalRuler !== undefined) pr.setUseGlobalRuler(p.useGlobalRuler as boolean);
@@ -3224,8 +3430,22 @@ export function applyScoreObjectPatch(
             operations: Array<{
               kind: string;
               noteIndex?: number;
-              note?: { octave: number; scaleDegree: number; start: number; duration: number; fieldValues?: number[]; noteTemplate?: string | null };
-              notes?: Array<{ octave: number; scaleDegree: number; start: number; duration: number; fieldValues?: number[]; noteTemplate?: string | null }>;
+              note?: {
+                octave: number;
+                scaleDegree: number;
+                start: number;
+                duration: number;
+                fieldValues?: number[];
+                noteTemplate?: string | null;
+              };
+              notes?: Array<{
+                octave: number;
+                scaleDegree: number;
+                start: number;
+                duration: number;
+                fieldValues?: number[];
+                noteTemplate?: string | null;
+              }>;
               noteIndices?: number[];
               deltaStart?: number;
               deltaDuration?: number;
@@ -3264,10 +3484,15 @@ export function applyScoreObjectPatch(
                     pn.setScaleDegree(noteData.scaleDegree);
                     pn.setStart(noteData.start);
                     pn.setDuration(noteData.duration);
-                    if (noteData.noteTemplate !== undefined) pn.setNoteTemplate(noteData.noteTemplate);
+                    if (noteData.noteTemplate !== undefined)
+                      pn.setNoteTemplate(noteData.noteTemplate);
                     if (noteData.fieldValues) {
                       const fields = pn.getFields();
-                      for (let fi = 0; fi < noteData.fieldValues.length && fi < fieldDefs.length; fi++) {
+                      for (
+                        let fi = 0;
+                        fi < noteData.fieldValues.length && fi < fieldDefs.length;
+                        fi++
+                      ) {
                         if (fi < fields.length) {
                           fields[fi]!.setValue(noteData.fieldValues[fi]!);
                         }
@@ -3292,13 +3517,20 @@ export function applyScoreObjectPatch(
                 break;
               }
               case 'move': {
-                if (op.noteIndex !== undefined && (op.deltaStart !== undefined || op.deltaOctave !== undefined || op.deltaScaleDegree !== undefined)) {
+                if (
+                  op.noteIndex !== undefined &&
+                  (op.deltaStart !== undefined ||
+                    op.deltaOctave !== undefined ||
+                    op.deltaScaleDegree !== undefined)
+                ) {
                   const notes = pr.getNotes();
                   const note = notes[op.noteIndex];
                   if (note) {
                     if (op.deltaStart !== undefined) note.setStart(note.getStart() + op.deltaStart);
-                    if (op.deltaOctave !== undefined) note.setOctave(note.getOctave() + op.deltaOctave);
-                    if (op.deltaScaleDegree !== undefined) note.setScaleDegree(note.getScaleDegree() + op.deltaScaleDegree);
+                    if (op.deltaOctave !== undefined)
+                      note.setOctave(note.getOctave() + op.deltaOctave);
+                    if (op.deltaScaleDegree !== undefined)
+                      note.setScaleDegree(note.getScaleDegree() + op.deltaScaleDegree);
                     pr.setNotes(notes);
                   }
                 }
@@ -3321,13 +3553,19 @@ export function applyScoreObjectPatch(
                   const existing = notes[op.noteIndex];
                   if (existing) {
                     if (op.note.octave !== undefined) existing.setOctave(op.note.octave);
-                    if (op.note.scaleDegree !== undefined) existing.setScaleDegree(op.note.scaleDegree);
+                    if (op.note.scaleDegree !== undefined)
+                      existing.setScaleDegree(op.note.scaleDegree);
                     if (op.note.start !== undefined) existing.setStart(op.note.start);
                     if (op.note.duration !== undefined) existing.setDuration(op.note.duration);
-                    if (op.note.noteTemplate !== undefined) existing.setNoteTemplate(op.note.noteTemplate);
+                    if (op.note.noteTemplate !== undefined)
+                      existing.setNoteTemplate(op.note.noteTemplate);
                     if (op.note.fieldValues) {
                       const fields = existing.getFields();
-                      for (let fi = 0; fi < op.note.fieldValues.length && fi < fields.length; fi++) {
+                      for (
+                        let fi = 0;
+                        fi < op.note.fieldValues.length && fi < fields.length;
+                        fi++
+                      ) {
                         fields[fi]!.setValue(op.note.fieldValues[fi]!);
                       }
                     }
@@ -3346,10 +3584,15 @@ export function applyScoreObjectPatch(
                     pn.setScaleDegree(noteData.scaleDegree);
                     pn.setStart(noteData.start);
                     pn.setDuration(noteData.duration);
-                    if (noteData.noteTemplate !== undefined) pn.setNoteTemplate(noteData.noteTemplate);
+                    if (noteData.noteTemplate !== undefined)
+                      pn.setNoteTemplate(noteData.noteTemplate);
                     if (noteData.fieldValues) {
                       const fields = pn.getFields();
-                      for (let fi = 0; fi < noteData.fieldValues.length && fi < fields.length; fi++) {
+                      for (
+                        let fi = 0;
+                        fi < noteData.fieldValues.length && fi < fields.length;
+                        fi++
+                      ) {
                         fields[fi]!.setValue(noteData.fieldValues[fi]!);
                       }
                     }
@@ -3381,8 +3624,10 @@ export function applyScoreObjectPatch(
           const codePatch = p.bsbCodePatch as Record<string, string>;
           const bsb = parseSoundBSB(snd.getBSBInstrumentText());
           if (bsb) {
-            if (codePatch.instrumentText !== undefined) bsb.setInstrumentText(codePatch.instrumentText);
-            if (codePatch.alwaysOnInstrumentText !== undefined) bsb.setAlwaysOnInstrumentText(codePatch.alwaysOnInstrumentText);
+            if (codePatch.instrumentText !== undefined)
+              bsb.setInstrumentText(codePatch.instrumentText);
+            if (codePatch.alwaysOnInstrumentText !== undefined)
+              bsb.setAlwaysOnInstrumentText(codePatch.alwaysOnInstrumentText);
             if (codePatch.globalOrc !== undefined) bsb.setGlobalOrc(codePatch.globalOrc);
             if (codePatch.globalSco !== undefined) bsb.setGlobalSco(codePatch.globalSco);
             snd.setBSBInstrumentText(bsb.saveAsXML().toXml());
@@ -3392,7 +3637,10 @@ export function applyScoreObjectPatch(
         if (p.bsbOpcodeListPatch !== undefined) {
           const bsb = parseSoundBSB(snd.getBSBInstrumentText());
           if (bsb) {
-            applyEmbeddedOpcodeListPatch(bsb.getOpcodeList(), p.bsbOpcodeListPatch as EmbeddedOpcodeListPatch);
+            applyEmbeddedOpcodeListPatch(
+              bsb.getOpcodeList(),
+              p.bsbOpcodeListPatch as EmbeddedOpcodeListPatch,
+            );
             snd.setBSBInstrumentText(bsb.saveAsXML().toXml());
           }
         }
@@ -3409,7 +3657,9 @@ export function applyScoreObjectPatch(
           if (bsb) {
             const params = bsb.getParameters();
             const param = params.find(
-              (pr: BlueDataParameter) => pr.getUniqueId() === autoPatch.parameterId || pr.getName() === autoPatch.parameterId,
+              (pr: BlueDataParameter) =>
+                pr.getUniqueId() === autoPatch.parameterId ||
+                pr.getName() === autoPatch.parameterId,
             );
             if (param) {
               if (autoPatch.resolutionDecimal !== undefined) {
@@ -3421,9 +3671,15 @@ export function applyScoreObjectPatch(
                   return false;
                 }
               }
-              if (autoPatch.automationEnabled !== undefined) param.setAutomationEnabled(autoPatch.automationEnabled);
+              if (autoPatch.automationEnabled !== undefined)
+                param.setAutomationEnabled(autoPatch.automationEnabled);
               if (autoPatch.points !== undefined) {
-                param.setPoints(autoPatch.points.map((pt: { x: number; y: number }) => ({ time: pt.x, value: pt.y })));
+                param.setPoints(
+                  autoPatch.points.map((pt: { x: number; y: number }) => ({
+                    time: pt.x,
+                    value: pt.y,
+                  })),
+                );
               }
               if (autoPatch.curve !== undefined) {
                 const curveKey = autoPatch.curve as keyof typeof BlueDataAutomationCurve;
@@ -3505,9 +3761,13 @@ export function applyTempoMapPatch(data: BlueData, tempoPatch: TempoMapPatch): b
       const newBeat = pt.beat ?? current.beat;
       const newTempo = pt.tempo ?? current.tempo;
       const newCurve = pt.curveType
-        ? (pt.curveType === 'constant' ? CurveType.CONSTANT : CurveType.LINEAR)
+        ? pt.curveType === 'constant'
+          ? CurveType.CONSTANT
+          : CurveType.LINEAR
         : current.curveType;
-      const newTimeBase = isValidTimeBase(pt.timeBase) ? pt.timeBase : current.position.getTimeBase();
+      const newTimeBase = isValidTimeBase(pt.timeBase)
+        ? pt.timeBase
+        : current.position.getTimeBase();
 
       if (Math.abs(current.beat) < 0.001 && Math.abs(newBeat) >= 0.001) return false;
       if (!isFinite(newTempo) || newTempo <= 0) return false;
@@ -3521,7 +3781,13 @@ export function applyTempoMapPatch(data: BlueData, tempoPatch: TempoMapPatch): b
         if (newBeat >= next.beat) return false;
       }
 
-      tempoMap.setTempoPoint(idx, beatsToTimePosition(newBeat, newTimeBase, context), newTempo, newCurve, context);
+      tempoMap.setTempoPoint(
+        idx,
+        beatsToTimePosition(newBeat, newTimeBase, context),
+        newTempo,
+        newCurve,
+        context,
+      );
       return true;
     }
     case 'setTempoCurveType': {
@@ -3548,11 +3814,12 @@ export function applyTempoMapPatch(data: BlueData, tempoPatch: TempoMapPatch): b
       source.setVisible(tempoPatch.map.visible);
       source.reset();
       const points = tempoPatch.map.points.map(
-        (p) => new TempoPoint(
-          beatsToTimePosition(p.beat, tempoPointTimeBase(p), context),
-          p.tempo,
-          p.curveType === 'constant' ? CurveType.CONSTANT : CurveType.LINEAR,
-        ),
+        (p) =>
+          new TempoPoint(
+            beatsToTimePosition(p.beat, tempoPointTimeBase(p), context),
+            p.tempo,
+            p.curveType === 'constant' ? CurveType.CONSTANT : CurveType.LINEAR,
+          ),
       );
       source.setTempoPoint(0, points[0].position, points[0].tempo, points[0].curveType, context);
       for (let i = 1; i < points.length; i++) {
@@ -3590,9 +3857,7 @@ function validateMeterMapEntries(entries: MeterEntryInput[]): boolean {
 }
 
 function isMeterDependentTimeBase(timeBase: TimeBase): boolean {
-  return timeBase === TimeBase.BBT
-    || timeBase === TimeBase.BBST
-    || timeBase === TimeBase.BBF;
+  return timeBase === TimeBase.BBT || timeBase === TimeBase.BBST || timeBase === TimeBase.BBF;
 }
 
 function isCloseBeatValue(a: number, b: number): boolean {
@@ -3622,7 +3887,7 @@ function beatsToDurationAtReferenceBeat(
 
   switch (targetBase) {
     case TimeBase.BBT: {
-      let ticks = Math.round(fractionalBeat * ppq / beatScale);
+      let ticks = Math.round((fractionalBeat * ppq) / beatScale);
       if (ticks >= ppq) {
         ticks = 0;
         beat += 1;
@@ -3651,7 +3916,7 @@ function beatsToDurationAtReferenceBeat(
       break;
     }
     case TimeBase.BBF: {
-      let fraction = Math.round(fractionalBeat * 100 / beatScale);
+      let fraction = Math.round((fractionalBeat * 100) / beatScale);
       if (fraction >= 100) {
         fraction = 0;
         beat += 1;
@@ -3673,10 +3938,12 @@ function beatsToDurationAtReferenceBeat(
 function isScoreObjectLike(value: unknown): value is BlueDataScoreObject {
   if (typeof value !== 'object' || value === null) return false;
   const candidate = value as Partial<BlueDataScoreObject>;
-  return typeof candidate.getStartTime === 'function'
-    && typeof candidate.setStartTime === 'function'
-    && typeof candidate.getSubjectiveDuration === 'function'
-    && typeof candidate.setSubjectiveDuration === 'function';
+  return (
+    typeof candidate.getStartTime === 'function' &&
+    typeof candidate.setStartTime === 'function' &&
+    typeof candidate.getSubjectiveDuration === 'function' &&
+    typeof candidate.setSubjectiveDuration === 'function'
+  );
 }
 
 function reencodeScoreObjectForMeterMapChange(
@@ -3695,7 +3962,9 @@ function reencodeScoreObjectForMeterMapChange(
   const durationBase = duration.getTimeBase();
   if (isMeterDependentTimeBase(durationBase)) {
     const durationBeats = duration.toBeats(oldContext);
-    sObj.setSubjectiveDuration(beatsToDurationAtReferenceBeat(durationBeats, durationBase, newContext, startBeats));
+    sObj.setSubjectiveDuration(
+      beatsToDurationAtReferenceBeat(durationBeats, durationBase, newContext, startBeats),
+    );
   }
 
   if (sObj instanceof AbstractSoundObject || sObj instanceof PolyObject) {
@@ -3703,7 +3972,9 @@ function reencodeScoreObjectForMeterMapChange(
     const repeatPointBase = repeatPoint?.getTimeBase();
     if (repeatPoint && repeatPointBase && isMeterDependentTimeBase(repeatPointBase)) {
       const repeatPointBeats = repeatPoint.toBeats(oldContext);
-      sObj.setRepeatPoint(beatsToDurationAtReferenceBeat(repeatPointBeats, repeatPointBase, newContext, startBeats));
+      sObj.setRepeatPoint(
+        beatsToDurationAtReferenceBeat(repeatPointBeats, repeatPointBase, newContext, startBeats),
+      );
     }
   }
 }
@@ -3748,7 +4019,10 @@ export function applyMeterMapPatch(data: BlueData, meterPatch: MeterMapPatch): b
   switch (meterPatch.type) {
     case 'meter-map-set-entry': {
       if (!validateMeterEntryInput(meterPatch)) break;
-      const pair = new MeasureMeterPair(meterPatch.measure, new Meter(meterPatch.numBeats, meterPatch.beatLength));
+      const pair = new MeasureMeterPair(
+        meterPatch.measure,
+        new Meter(meterPatch.numBeats, meterPatch.beatLength),
+      );
       meterMap.add(pair);
       changed = true;
       break;
@@ -3773,7 +4047,10 @@ export function applyMeterMapPatch(data: BlueData, meterPatch: MeterMapPatch): b
         const next = meterMap.get(entryIndex + 1);
         if (meterPatch.measure >= next.measure) break;
       }
-      const pair = new MeasureMeterPair(meterPatch.measure, new Meter(meterPatch.numBeats, meterPatch.beatLength));
+      const pair = new MeasureMeterPair(
+        meterPatch.measure,
+        new Meter(meterPatch.numBeats, meterPatch.beatLength),
+      );
       meterMap.set(entryIndex, pair);
       changed = true;
       break;
@@ -3793,7 +4070,9 @@ export function applyMeterMapPatch(data: BlueData, meterPatch: MeterMapPatch): b
       for (let i = 0; i < meterMap.size(); i++) {
         if (i !== entryIndex) {
           const e = meterMap.get(i);
-          source.add(new MeasureMeterPair(e.measure, new Meter(e.meter.numBeats, e.meter.beatLength)));
+          source.add(
+            new MeasureMeterPair(e.measure, new Meter(e.meter.numBeats, e.meter.beatLength)),
+          );
         }
       }
       meterMap.replaceAll(source);
@@ -3804,7 +4083,9 @@ export function applyMeterMapPatch(data: BlueData, meterPatch: MeterMapPatch): b
       if (!validateMeterMapEntries(meterPatch.entries)) break;
       const source = new MeterMap();
       for (const entry of meterPatch.entries) {
-        source.add(new MeasureMeterPair(entry.measure, new Meter(entry.numBeats, entry.beatLength)));
+        source.add(
+          new MeasureMeterPair(entry.measure, new Meter(entry.numBeats, entry.beatLength)),
+        );
       }
       meterMap.replaceAll(source);
       changed = true;

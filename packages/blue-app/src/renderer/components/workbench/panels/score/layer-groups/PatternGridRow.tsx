@@ -20,9 +20,9 @@ interface Props {
 }
 
 function validCellIndices(layer: PatternLayerSnapshot): number[] {
-  return layer.activeCellIndices.filter((cellIndex) => (
-    Number.isInteger(cellIndex) && cellIndex >= 0
-  ));
+  return layer.activeCellIndices.filter(
+    (cellIndex) => Number.isInteger(cellIndex) && cellIndex >= 0,
+  );
 }
 
 export default function PatternGridRow({
@@ -37,7 +37,9 @@ export default function PatternGridRow({
   const activeCells = validCellIndices(layer);
   const previewByCell = new Map(paintPreview.map((cell) => [cell.cellIndex, cell.active] as const));
   const selectedKeys = useLayerSelectionStore((s) => s.selectedKeys);
-  const isSelected = propIsLayerSelected ?? (groupId ? selectedKeys.has(buildSelectionKey(groupId, getLayerSelectionId(layer))) : false);
+  const isSelected =
+    propIsLayerSelected ??
+    (groupId ? selectedKeys.has(buildSelectionKey(groupId, getLayerSelectionId(layer))) : false);
 
   return (
     <div

@@ -27,7 +27,11 @@ export class TempoPoint {
    * - TempoPoint(position?: TimePosition, tempo?: number, curveType?: CurveType)
    * - TempoPoint(beat?: number, tempo?: number, curveType?: CurveType) — creates beats position
    */
-  constructor(position?: TimePosition | number, tempo: number = 60, curveType: CurveType = CurveType.LINEAR) {
+  constructor(
+    position?: TimePosition | number,
+    tempo: number = 60,
+    curveType: CurveType = CurveType.LINEAR,
+  ) {
     if (typeof position === 'number') {
       this.position = TimePosition.beats(position);
       this.beat = position;

@@ -36,9 +36,7 @@ function cloneSnapshotValue<T>(value: T): T {
   }
   return next as T;
 }
-function clonePresetGroupSnapshot(
-  group: PresetGroupSnapshot,
-): PresetGroupSnapshot {
+function clonePresetGroupSnapshot(group: PresetGroupSnapshot): PresetGroupSnapshot {
   return {
     ...group,
     subGroups: group.subGroups.map((subGroup) => clonePresetGroupSnapshot(subGroup)),
@@ -66,16 +64,20 @@ export function applyBsbInterfacePatchToSnapshot(
     return typeof node.value === 'number' ? node.value : 0;
   };
 
-  const clampToRange = (value: number, minimum: number, maximum: number): number => (
-    Math.min(maximum, Math.max(minimum, value))
-  );
+  const clampToRange = (value: number, minimum: number, maximum: number): number =>
+    Math.min(maximum, Math.max(minimum, value));
 
-  const snapToResolution = (value: number, minimum: number, maximum: number, resolution: number): number => {
+  const snapToResolution = (
+    value: number,
+    minimum: number,
+    maximum: number,
+    resolution: number,
+  ): number => {
     if (!Number.isFinite(resolution) || resolution <= 0) {
       return clampToRange(value, minimum, maximum);
     }
 
-    const snapped = minimum + (Math.round((value - minimum) / resolution) * resolution);
+    const snapped = minimum + Math.round((value - minimum) / resolution) * resolution;
     return clampToRange(snapped, minimum, maximum);
   };
 
@@ -92,13 +94,12 @@ export function applyBsbInterfacePatchToSnapshot(
     }
 
     const normalized = (value - oldMinimum) / (oldMaximum - oldMinimum);
-    const nextValue = newMinimum + (normalized * (newMaximum - newMinimum));
+    const nextValue = newMinimum + normalized * (newMaximum - newMinimum);
     return snapToResolution(nextValue, newMinimum, newMaximum, resolution);
   };
 
-  const getNodeResolution = (node: BsbWidgetNodeSnapshot): number => (
-    typeof node.properties.resolution === 'number' ? node.properties.resolution : -1
-  );
+  const getNodeResolution = (node: BsbWidgetNodeSnapshot): number =>
+    typeof node.properties.resolution === 'number' ? node.properties.resolution : -1;
 
   const rescaleNodeMinimum = (node: BsbWidgetNodeSnapshot, newMinimum: number): void => {
     const oldMinimum = node.minimum;
@@ -106,7 +107,7 @@ export function applyBsbInterfacePatchToSnapshot(
 
     if (node.type === 'BSBHSliderBank' || node.type === 'BSBVSliderBank') {
       const sliders = Array.isArray(node.properties.sliders)
-        ? node.properties.sliders as Array<{ value?: number }>
+        ? (node.properties.sliders as Array<{ value?: number }>)
         : [];
       node.minimum = newMinimum;
       node.properties.minimum = newMinimum;
@@ -126,7 +127,14 @@ export function applyBsbInterfacePatchToSnapshot(
 
     node.minimum = newMinimum;
     node.properties.minimum = newMinimum;
-    node.value = rescaleValue(node.value, oldMinimum, oldMaximum, newMinimum, oldMaximum, getNodeResolution(node));
+    node.value = rescaleValue(
+      node.value,
+      oldMinimum,
+      oldMaximum,
+      newMinimum,
+      oldMaximum,
+      getNodeResolution(node),
+    );
     if (node.type === 'BSBValue') {
       node.properties.defaultValue = node.value;
     }
@@ -138,7 +146,7 @@ export function applyBsbInterfacePatchToSnapshot(
 
     if (node.type === 'BSBHSliderBank' || node.type === 'BSBVSliderBank') {
       const sliders = Array.isArray(node.properties.sliders)
-        ? node.properties.sliders as Array<{ value?: number }>
+        ? (node.properties.sliders as Array<{ value?: number }>)
         : [];
       node.maximum = newMaximum;
       node.properties.maximum = newMaximum;
@@ -158,7 +166,14 @@ export function applyBsbInterfacePatchToSnapshot(
 
     node.maximum = newMaximum;
     node.properties.maximum = newMaximum;
-    node.value = rescaleValue(node.value, oldMinimum, oldMaximum, oldMinimum, newMaximum, getNodeResolution(node));
+    node.value = rescaleValue(
+      node.value,
+      oldMinimum,
+      oldMaximum,
+      oldMinimum,
+      newMaximum,
+      getNodeResolution(node),
+    );
     if (node.type === 'BSBValue') {
       node.properties.defaultValue = node.value;
     }
@@ -187,7 +202,9 @@ export function applyBsbInterfacePatchToSnapshot(
     };
 
     instrument.widgetTree.children.forEach(visit);
-    instrument.widgets = nextWidgets.sort((left, right) => left.objectName.localeCompare(right.objectName));
+    instrument.widgets = nextWidgets.sort((left, right) =>
+      left.objectName.localeCompare(right.objectName),
+    );
   };
 
   const syncSliderBankLayout = (node: BsbWidgetNodeSnapshot): void => {
@@ -200,12 +217,14 @@ export function applyBsbInterfacePatchToSnapshot(
     const showValue = node.properties.valueDisplayEnabled === true;
 
     if (node.type === 'BSBHSliderBank') {
-      const sliderWidth = typeof node.properties.sliderWidth === 'number' ? node.properties.sliderWidth : 150;
+      const sliderWidth =
+        typeof node.properties.sliderWidth === 'number' ? node.properties.sliderWidth : 150;
       const size = getHSliderBankDisplaySize(sliderCount, sliderWidth, gap, showValue);
       node.width = size.width;
       node.height = size.height;
     } else if (node.type === 'BSBVSliderBank') {
-      const sliderHeight = typeof node.properties.sliderHeight === 'number' ? node.properties.sliderHeight : 150;
+      const sliderHeight =
+        typeof node.properties.sliderHeight === 'number' ? node.properties.sliderHeight : 150;
       const size = getVSliderBankDisplaySize(sliderCount, sliderHeight, gap, showValue);
       node.width = size.width;
       node.height = size.height;
@@ -221,18 +240,17 @@ export function applyBsbInterfacePatchToSnapshot(
     return parsePresetNumber(raw.startsWith('ver2:') ? raw.substring(5) : raw);
   };
 
-  const applyLineObjectPreset = (
-    node: BsbWidgetNodeSnapshot,
-    raw: string,
-  ): void => {
+  const applyLineObjectPreset = (node: BsbWidgetNodeSnapshot, raw: string): void => {
     const existingLines = Array.isArray(node.properties.lines)
-      ? (node.properties.lines as Array<{
-          varName?: string;
-          min?: number;
-          max?: number;
-          color?: string;
-          points?: Array<{ x: number; y: number }>;
-        }>).map((line) => ({
+      ? (
+          node.properties.lines as Array<{
+            varName?: string;
+            min?: number;
+            max?: number;
+            color?: string;
+            points?: Array<{ x: number; y: number }>;
+          }>
+        ).map((line) => ({
           ...line,
           points: Array.isArray(line.points) ? line.points.map((point) => ({ ...point })) : [],
         }))
@@ -265,7 +283,7 @@ export function applyBsbInterfacePatchToSnapshot(
 
         points.push({
           x: nextX,
-          y: version === 1 ? (nextY * range) + min : nextY,
+          y: version === 1 ? nextY * range + min : nextY,
         });
       }
 
@@ -275,17 +293,15 @@ export function applyBsbInterfacePatchToSnapshot(
     node.properties = { ...node.properties, lines: existingLines };
   };
 
-  const applyPresetValueToNode = (
-    node: BsbWidgetNodeSnapshot,
-    raw: string,
-  ): void => {
+  const applyPresetValueToNode = (node: BsbWidgetNodeSnapshot, raw: string): void => {
     if (node.type === 'BSBHSliderBank' || node.type === 'BSBVSliderBank') {
       const sliderValues = raw.split(':');
-      const sliderCount = typeof node.properties.numberOfSliders === 'number'
-        ? Math.max(1, node.properties.numberOfSliders)
-        : Array.isArray(node.properties.sliders)
-          ? Math.max(1, node.properties.sliders.length)
-          : 1;
+      const sliderCount =
+        typeof node.properties.numberOfSliders === 'number'
+          ? Math.max(1, node.properties.numberOfSliders)
+          : Array.isArray(node.properties.sliders)
+            ? Math.max(1, node.properties.sliders.length)
+            : 1;
       const existingSliders = Array.isArray(node.properties.sliders)
         ? (node.properties.sliders as Array<{ value?: number }>).map((slider) => ({ ...slider }))
         : Array.from({ length: sliderCount }, () => ({ value: node.minimum ?? 0 }));
@@ -315,7 +331,7 @@ export function applyBsbInterfacePatchToSnapshot(
       if (raw.startsWith('id:')) {
         const uniqueId = raw.substring(3);
         const items = Array.isArray(node.properties.dropdownItems)
-          ? node.properties.dropdownItems as Array<{ uniqueId?: string }>
+          ? (node.properties.dropdownItems as Array<{ uniqueId?: string }>)
           : [];
         const index = items.findIndex((item) => item?.uniqueId === uniqueId);
         selectedIndex = index >= 0 ? index : null;
@@ -358,8 +374,8 @@ export function applyBsbInterfacePatchToSnapshot(
         const relativeX = parsePresetNumber(parts[0]);
         const relativeY = parsePresetNumber(parts[1]);
         if (relativeX !== null && relativeY !== null) {
-          nextX = (relativeX * (xMax - xMin)) + xMin;
-          nextY = (relativeY * (yMax - yMin)) + yMin;
+          nextX = relativeX * (xMax - xMin) + xMin;
+          nextY = relativeY * (yMax - yMin) + yMin;
         }
       } else if (parts.length >= 3) {
         nextX = parseFloat(parts[1]);
@@ -391,7 +407,7 @@ export function applyBsbInterfacePatchToSnapshot(
       if (raw.indexOf(':') < 0) {
         const relative = parsePresetNumber(raw);
         if (relative !== null) {
-          node.value = (relative * (node.maximum - node.minimum)) + node.minimum;
+          node.value = relative * (node.maximum - node.minimum) + node.minimum;
         }
       } else {
         const parsed = parsePresetNumber(raw.substring(raw.indexOf(':') + 1));
@@ -408,13 +424,13 @@ export function applyBsbInterfacePatchToSnapshot(
     }
   };
 
-  const cloneWidgetNode = (node: BsbWidgetNodeSnapshot): BsbWidgetNodeSnapshot => cloneSnapshotValue(node);
+  const cloneWidgetNode = (node: BsbWidgetNodeSnapshot): BsbWidgetNodeSnapshot =>
+    cloneSnapshotValue(node);
 
-  const createPastedWidgetId = (): string => (
+  const createPastedWidgetId = (): string =>
     typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
       ? crypto.randomUUID()
-      : `pasted-${Date.now()}-${Math.random().toString(16).slice(2)}`
-  );
+      : `pasted-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
   const normalizePastedWidgetNode = (raw: unknown): BsbWidgetNodeSnapshot | null => {
     if (!raw || typeof raw !== 'object') {
@@ -432,14 +448,18 @@ export function applyBsbInterfacePatchToSnapshot(
     node.x = typeof node.x === 'number' && Number.isFinite(node.x) ? node.x : 0;
     node.y = typeof node.y === 'number' && Number.isFinite(node.y) ? node.y : 0;
     node.width = typeof node.width === 'number' && Number.isFinite(node.width) ? node.width : 60;
-    node.height = typeof node.height === 'number' && Number.isFinite(node.height) ? node.height : 24;
+    node.height =
+      typeof node.height === 'number' && Number.isFinite(node.height) ? node.height : 24;
     node.value = typeof node.value === 'number' && Number.isFinite(node.value) ? node.value : 0;
-    node.minimum = typeof node.minimum === 'number' && Number.isFinite(node.minimum) ? node.minimum : 0;
-    node.maximum = typeof node.maximum === 'number' && Number.isFinite(node.maximum) ? node.maximum : 1;
+    node.minimum =
+      typeof node.minimum === 'number' && Number.isFinite(node.minimum) ? node.minimum : 0;
+    node.maximum =
+      typeof node.maximum === 'number' && Number.isFinite(node.maximum) ? node.maximum : 1;
     node.editable = node.editable !== false;
-    node.properties = node.properties && typeof node.properties === 'object' && !Array.isArray(node.properties)
-      ? cloneSnapshotValue(node.properties)
-      : {};
+    node.properties =
+      node.properties && typeof node.properties === 'object' && !Array.isArray(node.properties)
+        ? cloneSnapshotValue(node.properties)
+        : {};
 
     if (Array.isArray(record.children)) {
       node.children = record.children
@@ -463,8 +483,11 @@ export function applyBsbInterfacePatchToSnapshot(
     if (nextNode.children && nextNode.children.length > 0) {
       const previousChildren = previousNode?.children ?? [];
       const nextChildren = nextNode.children.map((child, index) =>
-        syncWidgetTreeLayout(previousChildren[index], child));
-      const childrenChanged = nextChildren.some((child, index) => child !== nextNode.children?.[index]);
+        syncWidgetTreeLayout(previousChildren[index], child),
+      );
+      const childrenChanged = nextChildren.some(
+        (child, index) => child !== nextNode.children?.[index],
+      );
       if (childrenChanged) {
         nextLayoutNode = cloneWidgetNode(nextNode);
         nextLayoutNode.children = nextChildren;
@@ -507,18 +530,14 @@ export function applyBsbInterfacePatchToSnapshot(
   const updateWidgetTreeById = (
     node: BsbWidgetNodeSnapshot,
     widgetId: string,
-    updater: (
-      nextNode: BsbWidgetNodeSnapshot,
-    ) => boolean,
+    updater: (nextNode: BsbWidgetNodeSnapshot) => boolean,
   ): {
     node: BsbWidgetNodeSnapshot;
     changed: boolean;
   } => {
     if (node.id === widgetId) {
       const nextNode = cloneWidgetNode(node);
-      return updater(nextNode)
-        ? { node: nextNode, changed: true }
-        : { node, changed: false };
+      return updater(nextNode) ? { node: nextNode, changed: true } : { node, changed: false };
     }
 
     if (!node.children) {
@@ -633,12 +652,24 @@ export function applyBsbInterfacePatchToSnapshot(
       const result = updateWidgetTreeById(instrument.widgetTree, patch.widgetId, (node) => {
         for (const [key, value] of Object.entries(patch.properties)) {
           switch (key) {
-            case 'objectName': node.objectName = value as string; break;
-            case 'x': node.x = value as number; break;
-            case 'y': node.y = value as number; break;
-            case 'width': node.width = value as number; break;
-            case 'height': node.height = value as number; break;
-            case 'value': node.value = value as number; break;
+            case 'objectName':
+              node.objectName = value as string;
+              break;
+            case 'x':
+              node.x = value as number;
+              break;
+            case 'y':
+              node.y = value as number;
+              break;
+            case 'width':
+              node.width = value as number;
+              break;
+            case 'height':
+              node.height = value as number;
+              break;
+            case 'value':
+              node.value = value as number;
+              break;
             case 'resolution':
               // Preserve the exact decimal text in the optimistic snapshot;
               // the numeric projection is display/layout-only.
@@ -694,20 +725,20 @@ export function applyBsbInterfacePatchToSnapshot(
               break;
             case 'canvasHeight':
               node.properties.canvasHeight = value as number;
-              node.height = node.type === 'BSBLineObject'
-                ? (value as number) + BSB_LINE_SELECTOR_HEIGHT
-                : (value as number);
+              node.height =
+                node.type === 'BSBLineObject'
+                  ? (value as number) + BSB_LINE_SELECTOR_HEIGHT
+                  : (value as number);
               break;
             case 'textFieldWidth':
               node.properties.textFieldWidth = value as number;
-              node.width = node.type === 'BSBFileSelector'
-                ? (value as number) + 30
-                : (value as number);
+              node.width =
+                node.type === 'BSBFileSelector' ? (value as number) + 30 : (value as number);
               break;
             case 'numberOfSliders': {
               const nextCount = Math.max(1, value as number);
               const previous = Array.isArray(node.properties.sliders)
-                ? node.properties.sliders as Array<{ value?: number }>
+                ? (node.properties.sliders as Array<{ value?: number }>)
                 : [];
               node.properties.numberOfSliders = nextCount;
               node.properties.sliders = Array.from(
@@ -720,10 +751,16 @@ export function applyBsbInterfacePatchToSnapshot(
             case 'valueDisplayEnabled':
               node.properties.valueDisplayEnabled = value;
               if (node.type === 'BSBHSlider') {
-                const sliderWidth = typeof node.properties.sliderWidth === 'number' ? node.properties.sliderWidth : 150;
+                const sliderWidth =
+                  typeof node.properties.sliderWidth === 'number'
+                    ? node.properties.sliderWidth
+                    : 150;
                 node.width = sliderWidth + (value ? 50 : 0);
               } else if (node.type === 'BSBVSlider') {
-                const sliderHeight = typeof node.properties.sliderHeight === 'number' ? node.properties.sliderHeight : 150;
+                const sliderHeight =
+                  typeof node.properties.sliderHeight === 'number'
+                    ? node.properties.sliderHeight
+                    : 150;
                 node.height = sliderHeight + (value ? 30 : 0);
               } else if (node.type === 'BSBHSliderBank' || node.type === 'BSBVSliderBank') {
                 syncSliderBankLayout(node);
@@ -742,18 +779,21 @@ export function applyBsbInterfacePatchToSnapshot(
                   return {
                     name: typeof record.name === 'string' ? record.name : '',
                     value: typeof record.value === 'string' ? record.value : '',
-                    uniqueId: typeof record.uniqueId === 'string' && record.uniqueId.length > 0
-                      ? record.uniqueId
-                      : (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+                    uniqueId:
+                      typeof record.uniqueId === 'string' && record.uniqueId.length > 0
+                        ? record.uniqueId
+                        : typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
                           ? `dropdown-${crypto.randomUUID()}`
-                          : `dropdown-${Date.now()}-${Math.random().toString(16).slice(2)}`),
+                          : `dropdown-${Date.now()}-${Math.random().toString(16).slice(2)}`,
                   };
                 });
               } else {
                 node.properties.dropdownItems = value as unknown;
               }
               break;
-            default: node.properties[key] = value; break;
+            default:
+              node.properties[key] = value;
+              break;
           }
         }
         return true;
@@ -766,11 +806,12 @@ export function applyBsbInterfacePatchToSnapshot(
     case 'updateSliderBankValue': {
       if (!instrument.widgetTree) break;
       const result = updateWidgetTreeById(instrument.widgetTree, patch.widgetId, (node) => {
-        const sliderCount = typeof node.properties.numberOfSliders === 'number'
-          ? Math.max(1, node.properties.numberOfSliders)
-          : Array.isArray(node.properties.sliders)
-            ? Math.max(1, node.properties.sliders.length)
-            : 1;
+        const sliderCount =
+          typeof node.properties.numberOfSliders === 'number'
+            ? Math.max(1, node.properties.numberOfSliders)
+            : Array.isArray(node.properties.sliders)
+              ? Math.max(1, node.properties.sliders.length)
+              : 1;
         const sliders = Array.isArray(node.properties.sliders)
           ? [...(node.properties.sliders as Array<{ value?: number }>)]
           : Array.from({ length: sliderCount }, () => ({ value: node.minimum ?? 0 }));
@@ -895,7 +936,8 @@ export function applyBsbInterfacePatchToSnapshot(
       if (instrument.presetGroup) {
         instrument.presetGroup = clonePresetGroupSnapshot(instrument.presetGroup);
         const parent = findPresetParentSnapshot(instrument.presetGroup, patch.presetUniqueId);
-        const index = parent?.presets.findIndex((preset) => preset.uniqueId === patch.presetUniqueId) ?? -1;
+        const index =
+          parent?.presets.findIndex((preset) => preset.uniqueId === patch.presetUniqueId) ?? -1;
         if (parent && index >= 0) {
           parent.presets.splice(index, 1);
           clearMissingCurrentPresetSnapshot(instrument.presetGroup);
@@ -990,7 +1032,10 @@ export function applyBsbInterfacePatchToSnapshot(
           if (node.type !== 'BSBGroup') {
             return false;
           }
-          node.children = [...(node.children ?? []), ...pastedNodes.map((pasted) => cloneWidgetNode(pasted))];
+          node.children = [
+            ...(node.children ?? []),
+            ...pastedNodes.map((pasted) => cloneWidgetNode(pasted)),
+          ];
           return true;
         });
         if (result.changed) {
@@ -998,7 +1043,10 @@ export function applyBsbInterfacePatchToSnapshot(
         }
       } else {
         const nextRoot = cloneWidgetNode(instrument.widgetTree);
-        nextRoot.children = [...(nextRoot.children ?? []), ...pastedNodes.map((pasted) => cloneWidgetNode(pasted))];
+        nextRoot.children = [
+          ...(nextRoot.children ?? []),
+          ...pastedNodes.map((pasted) => cloneWidgetNode(pasted)),
+        ];
         commitWidgetTreeMutation(instrument.widgetTree, nextRoot);
       }
       break;
@@ -1061,7 +1109,12 @@ export function applyBsbInterfacePatchToSnapshot(
     }
     case 'reorderUdo': {
       const reorderUdolist = instrument.udolist ? [...instrument.udolist] : [];
-      if (patch.from >= 0 && patch.from < reorderUdolist.length && patch.to >= 0 && patch.to < reorderUdolist.length) {
+      if (
+        patch.from >= 0 &&
+        patch.from < reorderUdolist.length &&
+        patch.to >= 0 &&
+        patch.to < reorderUdolist.length
+      ) {
         const [moved] = reorderUdolist.splice(patch.from, 1);
         reorderUdolist.splice(patch.to, 0, moved);
       }
@@ -1079,10 +1132,10 @@ function shouldPreserveWidgetMetadataForBsbPatch(patch: BsbInterfacePatch): bool
     case 'updateWidgetProperties': {
       const properties = patch.properties as Record<string, unknown>;
       return !(
-        Object.prototype.hasOwnProperty.call(properties, 'objectName')
-        || Object.prototype.hasOwnProperty.call(properties, 'lines')
-        || Object.prototype.hasOwnProperty.call(properties, 'numberOfSliders')
-        || Object.prototype.hasOwnProperty.call(properties, 'sliders')
+        Object.prototype.hasOwnProperty.call(properties, 'objectName') ||
+        Object.prototype.hasOwnProperty.call(properties, 'lines') ||
+        Object.prototype.hasOwnProperty.call(properties, 'numberOfSliders') ||
+        Object.prototype.hasOwnProperty.call(properties, 'sliders')
       );
     }
     case 'updateSliderBankValue':
@@ -1198,20 +1251,20 @@ function movePresetSnapshot(
   const rawPresetIndex = Number.isFinite(targetIndex)
     ? Math.trunc(targetIndex) - targetParent.subGroups.length
     : targetParent.presets.length;
-  const adjustedPresetIndex = sourceParent === targetParent && sourceIndex < rawPresetIndex
-    ? rawPresetIndex - 1
-    : rawPresetIndex;
+  const adjustedPresetIndex =
+    sourceParent === targetParent && sourceIndex < rawPresetIndex
+      ? rawPresetIndex - 1
+      : rawPresetIndex;
   const presetIndex = Math.max(0, Math.min(adjustedPresetIndex, targetParent.presets.length));
   targetParent.presets.splice(presetIndex, 0, preset);
   return true;
 }
 
-function isSnapshotPathWithin(
-  path: readonly number[],
-  possibleParent: readonly number[],
-): boolean {
-  return possibleParent.length < path.length
-    && possibleParent.every((index, position) => path[position] === index);
+function isSnapshotPathWithin(path: readonly number[], possibleParent: readonly number[]): boolean {
+  return (
+    possibleParent.length < path.length &&
+    possibleParent.every((index, position) => path[position] === index)
+  );
 }
 
 function movePresetGroupSnapshot(
@@ -1220,8 +1273,9 @@ function movePresetGroupSnapshot(
   parentGroupPath: readonly number[],
   targetIndex: number,
 ): boolean {
-  const samePath = sourcePath.length === parentGroupPath.length
-    && sourcePath.every((index, position) => parentGroupPath[position] === index);
+  const samePath =
+    sourcePath.length === parentGroupPath.length &&
+    sourcePath.every((index, position) => parentGroupPath[position] === index);
   if (sourcePath.length === 0 || samePath || isSnapshotPathWithin(parentGroupPath, sourcePath)) {
     return false;
   }
@@ -1230,11 +1284,11 @@ function movePresetGroupSnapshot(
   const targetParent = getPresetGroupSnapshotAtPath(root, parentGroupPath);
   const sourceIndex = sourcePath[sourcePath.length - 1];
   if (
-    !sourceParent
-    || !targetParent
-    || sourceIndex === undefined
-    || !Number.isInteger(sourceIndex)
-    || sourceIndex < 0
+    !sourceParent ||
+    !targetParent ||
+    sourceIndex === undefined ||
+    !Number.isInteger(sourceIndex) ||
+    sourceIndex < 0
   ) {
     return false;
   }
@@ -1244,9 +1298,10 @@ function movePresetGroupSnapshot(
   const rawGroupIndex = Number.isFinite(targetIndex)
     ? Math.trunc(targetIndex)
     : targetParent.subGroups.length;
-  const adjustedGroupIndex = sourceParent === targetParent && sourceIndex < rawGroupIndex
-    ? rawGroupIndex - 1
-    : rawGroupIndex;
+  const adjustedGroupIndex =
+    sourceParent === targetParent && sourceIndex < rawGroupIndex
+      ? rawGroupIndex - 1
+      : rawGroupIndex;
   const groupIndex = Math.max(0, Math.min(adjustedGroupIndex, targetParent.subGroups.length));
   targetParent.subGroups.splice(groupIndex, 0, group);
   return true;

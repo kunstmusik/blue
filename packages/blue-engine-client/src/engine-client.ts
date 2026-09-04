@@ -381,7 +381,10 @@ export class EngineClient {
   /**
    * Send a command with a string payload.
    */
-  private async sendCommand(cmd: number, payload: string): Promise<{ ok: boolean; message: string }> {
+  private async sendCommand(
+    cmd: number,
+    payload: string,
+  ): Promise<{ ok: boolean; message: string }> {
     const payloadBuf = Buffer.from(payload, 'utf-8');
     const buf = Buffer.alloc(5 + payloadBuf.length);
     buf.writeUInt8(cmd, 0);
@@ -393,7 +396,10 @@ export class EngineClient {
   /**
    * Create a named channel with an initial value.
    */
-  async createChannel(name: string, initialValue: number): Promise<{ ok: boolean; message: string }> {
+  async createChannel(
+    name: string,
+    initialValue: number,
+  ): Promise<{ ok: boolean; message: string }> {
     const nameBuf = Buffer.from(name + '\0', 'utf-8');
     const valueBuf = Buffer.alloc(8);
     valueBuf.writeDoubleLE(initialValue, 0);
@@ -451,7 +457,10 @@ export class EngineClient {
       return { ok: false, message: 'Batch channels require a completed capability handshake' };
     }
     if (!hasEngineFeature(this.verifiedCapabilities, BATCH_CHANNELS_FEATURE)) {
-      return { ok: false, message: `Blue Engine is missing required capability: ${BATCH_CHANNELS_FEATURE}` };
+      return {
+        ok: false,
+        message: `Blue Engine is missing required capability: ${BATCH_CHANNELS_FEATURE}`,
+      };
     }
     return { ok: true };
   }

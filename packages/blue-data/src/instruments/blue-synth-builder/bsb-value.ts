@@ -16,7 +16,7 @@ export class BSBValue extends BSBWidget {
   }
 
   override setPresetValue(val: string): void {
-    const parsed = parseFloat(val.replace(/^ver2:/, ""));
+    const parsed = parseFloat(val.replace(/^ver2:/, ''));
     if (Number.isFinite(parsed)) {
       this.setValue(parsed);
     }
@@ -27,11 +27,13 @@ export class BSBValue extends BSBWidget {
     this.defaultValue = val;
   }
 
-  override collectReplacements(
-    unit: BSBCompilationUnit,
-    parameters?: Parameter[],
-  ): void {
-    this.addCompilationReplacement(unit, this.objectName, formatBlueNumber(this.defaultValue), parameters);
+  override collectReplacements(unit: BSBCompilationUnit, parameters?: Parameter[]): void {
+    this.addCompilationReplacement(
+      unit,
+      this.objectName,
+      formatBlueNumber(this.defaultValue),
+      parameters,
+    );
   }
 
   loadFromXML(data: Element): void {

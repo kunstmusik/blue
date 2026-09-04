@@ -4,12 +4,17 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import PatternsLayerGroupCanvas from '../components/workbench/panels/score/layer-groups/PatternsLayerGroupCanvas';
 import ScoreOverlayLines from '../components/workbench/panels/score/ScoreOverlayLines';
-import type { PatternLayerSnapshot, PatternsLayerGroupSnapshot } from '../components/workbench/panels/score/types';
+import type {
+  PatternLayerSnapshot,
+  PatternsLayerGroupSnapshot,
+} from '../components/workbench/panels/score/types';
 import { useProjectStore } from '../stores/project-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
 import type { ProjectDocumentPatch } from '../../shared/project-editor';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const ROW_HEIGHT = 44;
 const PPB = 20;
@@ -59,7 +64,10 @@ function makeLayer(layerId: string, name: string, cells: number[]): PatternLayer
   };
 }
 
-function makeGroup(stepBeats = 4, layers: PatternLayerSnapshot[] = [makeLayer('pl-1', 'A', [0, 3])]): PatternsLayerGroupSnapshot {
+function makeGroup(
+  stepBeats = 4,
+  layers: PatternLayerSnapshot[] = [makeLayer('pl-1', 'A', [0, 3])],
+): PatternsLayerGroupSnapshot {
   return {
     groupId: 'grp',
     groupType: 'patterns',
@@ -143,13 +151,15 @@ describe('Patterns Layer-Group canvas (Chromium)', () => {
 
   function mouse(target: EventTarget, type: string, clientX: number, clientY: number) {
     act(() => {
-      target.dispatchEvent(new MouseEvent(type, {
-        bubbles: true,
-        cancelable: true,
-        button: 0,
-        clientX,
-        clientY,
-      }));
+      target.dispatchEvent(
+        new MouseEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          button: 0,
+          clientX,
+          clientY,
+        }),
+      );
     });
   }
 
@@ -178,30 +188,37 @@ describe('Patterns Layer-Group canvas (Chromium)', () => {
     mouse(canvas(), 'mousedown', 10, 10);
     mouse(window, 'mousemove', 170, ROW_HEIGHT + 10);
     mouse(window, 'mouseup', 170, ROW_HEIGHT + 10);
-    expect(capturedPatches).toEqual([{
-      score: {
-        type: 'updatePatternCells',
-        groupId: 'grp',
-        changes: [
-          { layerId: 'pl-1', cellIndex: 0, active: true },
-          { layerId: 'pl-1', cellIndex: 1, active: true },
-          { layerId: 'pl-1', cellIndex: 2, active: true },
-        ],
+    expect(capturedPatches).toEqual([
+      {
+        score: {
+          type: 'updatePatternCells',
+          groupId: 'grp',
+          changes: [
+            { layerId: 'pl-1', cellIndex: 0, active: true },
+            { layerId: 'pl-1', cellIndex: 1, active: true },
+            { layerId: 'pl-1', cellIndex: 2, active: true },
+          ],
+        },
       },
-    }]);
+    ]);
   });
 
   it('co-renders one shared playhead at the same beat-to-pixel position', () => {
     mount(makeGroup(4, [makeLayer('pl-1', 'A', [0]), makeLayer('pl-2', 'B', [1])]), PPB, true);
-    const pointer = [...container.querySelectorAll<HTMLElement>('[data-score-overlay-content] > div')]
-      .find((element) => element.style.left === '120px');
+    const pointer = [
+      ...container.querySelectorAll<HTMLElement>('[data-score-overlay-content] > div'),
+    ].find((element) => element.style.left === '120px');
     expect(pointer).toBeDefined();
   });
 
   it('renders a dense representative group without occurrence nodes', () => {
-    const layers = Array.from({ length: 64 }, (_, row) => (
-      makeLayer(`pl-${row}`, `Row ${row}`, Array.from({ length: 256 }, (_, cell) => cell))
-    ));
+    const layers = Array.from({ length: 64 }, (_, row) =>
+      makeLayer(
+        `pl-${row}`,
+        `Row ${row}`,
+        Array.from({ length: 256 }, (_, cell) => cell),
+      ),
+    );
     const start = performance.now();
     mount(makeGroup(4, layers));
     const elapsed = performance.now() - start;

@@ -2,7 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { ensureUniqueName } from '../../shared/project-editor';
 import type { BsbWidgetNodeSnapshot } from '../../shared/project-editor';
 
-function makeSnapshot(overrides: Partial<BsbWidgetNodeSnapshot> & { type: string; objectName: string }): BsbWidgetNodeSnapshot {
+function makeSnapshot(
+  overrides: Partial<BsbWidgetNodeSnapshot> & { type: string; objectName: string },
+): BsbWidgetNodeSnapshot {
   return {
     id: overrides.id ?? 'test-id',
     type: overrides.type,
@@ -38,24 +40,33 @@ describe('ensureUniqueName', () => {
 
   it('renames BSBGroup children of all widget types', () => {
     const allTypes = [
-      'BSBHSlider', 'BSBVSlider', 'BSBKnob', 'BSBCheckBox', 'BSBLabel',
-      'BSBTextField', 'BSBDropdown', 'BSBSubChannelDropdown', 'BSBValue',
-      'BSBXYController', 'BSBFileSelector', 'BSBLineObject',
-      'BSBHSliderBank', 'BSBVSliderBank',
+      'BSBHSlider',
+      'BSBVSlider',
+      'BSBKnob',
+      'BSBCheckBox',
+      'BSBLabel',
+      'BSBTextField',
+      'BSBDropdown',
+      'BSBSubChannelDropdown',
+      'BSBValue',
+      'BSBXYController',
+      'BSBFileSelector',
+      'BSBLineObject',
+      'BSBHSliderBank',
+      'BSBVSliderBank',
     ];
-    const existing = new Set([...allTypes.map(t => t.toLowerCase()), 'bsbgroup']);
-    const children = allTypes.map(t => makeSnapshot({ type: t, objectName: t.toLowerCase() }));
+    const existing = new Set([...allTypes.map((t) => t.toLowerCase()), 'bsbgroup']);
+    const children = allTypes.map((t) => makeSnapshot({ type: t, objectName: t.toLowerCase() }));
     const group = makeSnapshot({
       type: 'BSBGroup',
       objectName: '',
-      children: [
-        ...children,
-        makeSnapshot({ type: 'BSBGroup', objectName: 'bsbgroup' }),
-      ],
+      children: [...children, makeSnapshot({ type: 'BSBGroup', objectName: 'bsbgroup' })],
     });
     ensureUniqueName(group, existing);
     for (let i = 0; i < allTypes.length; i++) {
-      expect(group.children![i].objectName, `${allTypes[i]} should be renamed`).toBe(allTypes[i].toLowerCase() + '1');
+      expect(group.children![i].objectName, `${allTypes[i]} should be renamed`).toBe(
+        allTypes[i].toLowerCase() + '1',
+      );
     }
     expect(group.children![allTypes.length].objectName).toBe('bsbgroup1');
   });
@@ -89,9 +100,7 @@ describe('ensureUniqueName', () => {
     const group = makeSnapshot({
       type: 'BSBGroup',
       objectName: '',
-      children: [
-        makeSnapshot({ type: 'BSBHSlider', objectName: 'child1' }),
-      ],
+      children: [makeSnapshot({ type: 'BSBHSlider', objectName: 'child1' })],
     });
     ensureUniqueName(group, existing);
     expect(group.objectName).toBe('');

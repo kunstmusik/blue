@@ -28,7 +28,9 @@ function widget(overrides: Partial<BsbWidgetNodeSnapshot> = {}): BsbWidgetNodeSn
   };
 }
 
-function instrument(overrides: Partial<BlueSynthBuilderInstrumentSnapshot> = {}): BlueSynthBuilderInstrumentSnapshot {
+function instrument(
+  overrides: Partial<BlueSynthBuilderInstrumentSnapshot> = {},
+): BlueSynthBuilderInstrumentSnapshot {
   return {
     assignmentId: '1',
     type: 'blueSynthBuilder',
@@ -83,7 +85,12 @@ describe('BSB interface snapshot reducer', () => {
     const objectNames = snapshot.objectNames;
     const widgets = snapshot.widgets;
 
-    applyBsbInstrumentPatchToSnapshot(snapshot, { type: 'moveWidget', widgetId: 'w1', x: 80, y: 90 });
+    applyBsbInstrumentPatchToSnapshot(snapshot, {
+      type: 'moveWidget',
+      widgetId: 'w1',
+      x: 80,
+      y: 90,
+    });
 
     expect(snapshot.widgetTree.children![0]).toMatchObject({ x: 80, y: 90 });
     expect(snapshot.objectNames).toBe(objectNames);
@@ -100,10 +107,12 @@ describe('BSB interface snapshot reducer', () => {
 
     expect(snapshot.widgetTree.children![0].objectName).toBe('gain');
     expect(snapshot.objectNames).toContain('gain');
-    expect(() => applyBsbInterfacePatchToSnapshot(snapshot, {
-      type: 'removeWidget',
-      widgetId: 'missing-widget',
-    })).not.toThrow();
+    expect(() =>
+      applyBsbInterfacePatchToSnapshot(snapshot, {
+        type: 'removeWidget',
+        widgetId: 'missing-widget',
+      }),
+    ).not.toThrow();
   });
 
   it('supports nested layout and group creation without deep-cloning siblings', () => {
@@ -151,21 +160,48 @@ describe('BSB interface snapshot reducer', () => {
       name: 'Brighter',
     });
 
-    expect(snapshot.presetGroup!.presets.map((preset) => preset.name)).toEqual(['Default', 'Brighter']);
+    expect(snapshot.presetGroup!.presets.map((preset) => preset.name)).toEqual([
+      'Default',
+      'Brighter',
+    ]);
   });
 
   it('updates grid, UDO, and embedded opcode state without replacing unrelated metadata', () => {
     const snapshot = instrument({
-      udolist: [{ name: 'foo', style: 'CLASSIC', outTypes: '', inTypes: '', inputArguments: '', code: 'opcode foo', comments: '' }],
+      udolist: [
+        {
+          name: 'foo',
+          style: 'CLASSIC',
+          outTypes: '',
+          inTypes: '',
+          inputArguments: '',
+          code: 'opcode foo',
+          comments: '',
+        },
+      ],
       opcodeListText: 'old',
     });
     const objectNames = snapshot.objectNames;
 
-    applyBsbInstrumentPatchToSnapshot(snapshot, { type: 'updateGridSettings', patch: { width: 20 } });
-    applyBsbInstrumentPatchToSnapshot(snapshot, { type: 'updateEmbeddedOpcodeList', opcodeList: 'new' });
+    applyBsbInstrumentPatchToSnapshot(snapshot, {
+      type: 'updateGridSettings',
+      patch: { width: 20 },
+    });
+    applyBsbInstrumentPatchToSnapshot(snapshot, {
+      type: 'updateEmbeddedOpcodeList',
+      opcodeList: 'new',
+    });
     applyBsbInstrumentPatchToSnapshot(snapshot, {
       type: 'addUdo',
-      definition: { name: 'bar', style: 'CLASSIC', outTypes: '', inTypes: '', inputArguments: '', code: 'opcode bar', comments: '' },
+      definition: {
+        name: 'bar',
+        style: 'CLASSIC',
+        outTypes: '',
+        inTypes: '',
+        inputArguments: '',
+        code: 'opcode bar',
+        comments: '',
+      },
     });
 
     expect(snapshot.gridSettings.width).toBe(20);

@@ -18,8 +18,12 @@ export class RotateProcessor extends NoteProcessor {
     }
   }
 
-  getNoteIndex(): string { return this._noteIndex.toString(); }
-  setNoteIndex(noteIndex: string): void { this._noteIndex = parseInt(noteIndex, 10); }
+  getNoteIndex(): string {
+    return this._noteIndex.toString();
+  }
+  setNoteIndex(noteIndex: string): void {
+    this._noteIndex = parseInt(noteIndex, 10);
+  }
 
   override process(notes: NoteList): NoteList {
     if (notes.length < 2 || this._noteIndex === 1) {
@@ -64,7 +68,9 @@ export class RotateProcessor extends NoteProcessor {
     return notes;
   }
 
-  override getDisplayName(): string { return 'RotateProcessor'; }
+  override getDisplayName(): string {
+    return 'RotateProcessor';
+  }
 
   override deepCopy(): RotateProcessor {
     return new RotateProcessor(this);

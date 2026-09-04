@@ -7,7 +7,10 @@ import {
 } from '../shared/confirmation-dialog';
 
 export interface NativeConfirmationDialogSeam {
-  showMessageBox(browserWindow: BrowserWindow, options: MessageBoxOptions): Promise<MessageBoxReturnValue>;
+  showMessageBox(
+    browserWindow: BrowserWindow,
+    options: MessageBoxOptions,
+  ): Promise<MessageBoxReturnValue>;
 }
 
 export const defaultElectronDialogSeam: NativeConfirmationDialogSeam = {
@@ -42,7 +45,7 @@ export async function showNativeConfirmation(
     message: request.message,
     buttons,
     defaultId: defaultIndex >= 0 ? defaultIndex : 0,
-    cancelId: cancelIndex >= 0 ? cancelIndex : (buttons.length > 1 ? 1 : 0),
+    cancelId: cancelIndex >= 0 ? cancelIndex : buttons.length > 1 ? 1 : 0,
   };
 
   if (request.detail !== undefined) {

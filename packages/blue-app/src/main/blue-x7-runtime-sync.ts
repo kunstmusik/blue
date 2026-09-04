@@ -72,17 +72,11 @@ export type BlueX7LiveWritePlan =
       message: string;
     };
 
-function sessionMatches(
-  env: BlueX7RuntimeEnvironment,
-  projectSessionId: number,
-): boolean {
+function sessionMatches(env: BlueX7RuntimeEnvironment, projectSessionId: number): boolean {
   return projectSessionId === env.currentProjectSessionId();
 }
 
-function revisionMatches(
-  env: BlueX7RuntimeEnvironment,
-  expected: number | undefined,
-): boolean {
+function revisionMatches(env: BlueX7RuntimeEnvironment, expected: number | undefined): boolean {
   if (expected === undefined) {
     return true;
   }
@@ -100,10 +94,12 @@ export function planBlueX7LiveWrite(
   env: BlueX7RuntimeEnvironment,
   update: BlueX7RealtimeControlUpdate,
 ): BlueX7LiveWritePlan {
-  if (
-    (update.target.assignmentId === undefined) === (update.target.track === undefined)
-  ) {
-    return { status: 'error', reason: 'invalid-target', message: 'target must have exactly one owner branch' };
+  if ((update.target.assignmentId === undefined) === (update.target.track === undefined)) {
+    return {
+      status: 'error',
+      reason: 'invalid-target',
+      message: 'target must have exactly one owner branch',
+    };
   }
   if (!sessionMatches(env, update.projectSessionId)) {
     return { status: 'skip', reason: 'stale-session' };
@@ -118,7 +114,11 @@ export function planBlueX7LiveWrite(
 
   const descriptor = getBlueX7Descriptor(update.semanticKey);
   if (!descriptor) {
-    return { status: 'error', reason: 'unknown-key', message: `unknown semantic key: ${update.semanticKey}` };
+    return {
+      status: 'error',
+      reason: 'unknown-key',
+      message: `unknown semantic key: ${update.semanticKey}`,
+    };
   }
   const parameter = owner
     .getParameters()
@@ -145,7 +145,11 @@ export function planBlueX7LiveWrite(
 
   const binding = env.getBinding(owner.ownerIdentity);
   if (!binding) {
-    return { status: 'error', reason: 'binding-not-found', message: `no compiled binding for ${owner.ownerIdentity}` };
+    return {
+      status: 'error',
+      reason: 'binding-not-found',
+      message: `no compiled binding for ${owner.ownerIdentity}`,
+    };
   }
   const channel = binding.parameterChannels.get(parameter.getName());
   if (!channel) {
@@ -157,7 +161,11 @@ export function planBlueX7LiveWrite(
   }
   const quantized = quantizeBlueX7DescriptorValue(descriptor, update.value);
   if (quantized === null) {
-    return { status: 'error', reason: 'invalid-value', message: 'value rejected by the descriptor domain' };
+    return {
+      status: 'error',
+      reason: 'invalid-value',
+      message: 'value rejected by the descriptor domain',
+    };
   }
   return {
     status: 'ok',
@@ -200,9 +208,15 @@ export interface BlueX7CompleteVoiceStep {
 export function planBlueX7CompleteVoiceBatch(
   env: BlueX7RuntimeEnvironment,
   batch: BlueX7RuntimeUpdateBatch,
-): { status: 'ok'; ownerIdentity: string; steps: BlueX7CompleteVoiceStep[] } | { status: 'error'; reason: string; message: string } {
+):
+  | { status: 'ok'; ownerIdentity: string; steps: BlueX7CompleteVoiceStep[] }
+  | { status: 'error'; reason: string; message: string } {
   if (!sessionMatches(env, batch.projectSessionId)) {
-    return { status: 'error', reason: 'stale-session', message: 'project session no longer current' };
+    return {
+      status: 'error',
+      reason: 'stale-session',
+      message: 'project session no longer current',
+    };
   }
   if (!revisionMatches(env, batch.expectedProjectRevision)) {
     return { status: 'error', reason: 'stale-revision', message: 'project revision moved' };
@@ -213,7 +227,11 @@ export function planBlueX7CompleteVoiceBatch(
   }
   const binding = env.getBinding(owner.ownerIdentity);
   if (!binding) {
-    return { status: 'error', reason: 'binding-not-found', message: `no compiled binding for ${owner.ownerIdentity}` };
+    return {
+      status: 'error',
+      reason: 'binding-not-found',
+      message: `no compiled binding for ${owner.ownerIdentity}`,
+    };
   }
   if (batch.mode !== 'complete-voice') {
     return { status: 'error', reason: 'invalid-mode', message: 'complete-voice batches only' };
@@ -227,9 +245,7 @@ export function planBlueX7CompleteVoiceBatch(
       message: `complete-voice batch must carry all ${parameters.length} values`,
     };
   }
-  const valueByParameterId = new Map(
-    batch.values.map((entry) => [entry.parameterId, entry.value]),
-  );
+  const valueByParameterId = new Map(batch.values.map((entry) => [entry.parameterId, entry.value]));
   const channelEntries: { name: string; value: number }[] = [];
   for (const parameter of parameters) {
     const raw = valueByParameterId.get(parameter.getUniqueId());
@@ -325,9 +341,7 @@ export async function requestBlueX7EffectiveValues(
   const channelNames: string[] = [];
   const channelByParameterId = new Map<string, string>();
   for (const parameterId of request.parameterIds) {
-    const parameter = parameters.find(
-      (candidate) => candidate.getUniqueId() === parameterId,
-    );
+    const parameter = parameters.find((candidate) => candidate.getUniqueId() === parameterId);
     // The owner exists: an unknown id means that control has no channel here.
     if (!parameter) {
       return { ok: false, reason: 'channel-unavailable' };
@@ -346,8 +360,8 @@ export async function requestBlueX7EffectiveValues(
   }
 
   if (
-    result.values.length !== channelNames.length
-    || result.values.some((value) => !Number.isFinite(value))
+    result.values.length !== channelNames.length ||
+    result.values.some((value) => !Number.isFinite(value))
   ) {
     return { ok: false, reason: 'channel-unavailable' };
   }

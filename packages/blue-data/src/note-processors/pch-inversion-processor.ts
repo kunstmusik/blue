@@ -7,7 +7,7 @@ import { getBaseTen } from '../utilities/score';
 const JAVA_TYPE = 'blue.noteProcessor.PchInversionProcessor';
 
 export class PchInversionProcessor extends NoteProcessor {
-  private _value = 8.00;
+  private _value = 8.0;
   private _pfield = 4;
 
   constructor();
@@ -20,11 +20,19 @@ export class PchInversionProcessor extends NoteProcessor {
     }
   }
 
-  getPfield(): string { return this._pfield.toString(); }
-  setPfield(pfield: string): void { this._pfield = parseInt(pfield, 10); }
+  getPfield(): string {
+    return this._pfield.toString();
+  }
+  setPfield(pfield: string): void {
+    this._pfield = parseInt(pfield, 10);
+  }
 
-  getVal(): string { return this._value.toString(); }
-  setVal(value: string): void { this._value = parseFloat(value); }
+  getVal(): string {
+    return this._value.toString();
+  }
+  setVal(value: string): void {
+    this._value = parseFloat(value);
+  }
 
   override process(notes: NoteList): NoteList {
     for (let i = 0; i < notes.length; i++) {
@@ -54,7 +62,9 @@ export class PchInversionProcessor extends NoteProcessor {
     return notes;
   }
 
-  override getDisplayName(): string { return 'PchInversionProcessor'; }
+  override getDisplayName(): string {
+    return 'PchInversionProcessor';
+  }
 
   override deepCopy(): PchInversionProcessor {
     return new PchInversionProcessor(this);

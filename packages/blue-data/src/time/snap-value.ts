@@ -37,11 +37,26 @@ const SNAP_VALUES: ReadonlyMap<SnapValueName, SnapValueDefinition> = new Map([
   ['BEAT', { name: 'BEAT', displayName: 'Beat', baseValue: 1.0, category: 'MUSICAL' }],
   ['EIGHTH', { name: 'EIGHTH', displayName: '1/8', baseValue: 0.5, category: 'MUSICAL' }],
   ['SIXTEENTH', { name: 'SIXTEENTH', displayName: '1/16', baseValue: 0.25, category: 'MUSICAL' }],
-  ['THIRTY_SECOND', { name: 'THIRTY_SECOND', displayName: '1/32', baseValue: 0.125, category: 'MUSICAL' }],
-  ['SIXTY_FOURTH', { name: 'SIXTY_FOURTH', displayName: '1/64', baseValue: 0.0625, category: 'MUSICAL' }],
-  ['QUARTER_TRIPLET', { name: 'QUARTER_TRIPLET', displayName: '1/4T', baseValue: 1.0 / 3.0, category: 'TRIPLET' }],
-  ['EIGHTH_TRIPLET', { name: 'EIGHTH_TRIPLET', displayName: '1/8T', baseValue: 1.0 / 6.0, category: 'TRIPLET' }],
-  ['SIXTEENTH_TRIPLET', { name: 'SIXTEENTH_TRIPLET', displayName: '1/16T', baseValue: 1.0 / 12.0, category: 'TRIPLET' }],
+  [
+    'THIRTY_SECOND',
+    { name: 'THIRTY_SECOND', displayName: '1/32', baseValue: 0.125, category: 'MUSICAL' },
+  ],
+  [
+    'SIXTY_FOURTH',
+    { name: 'SIXTY_FOURTH', displayName: '1/64', baseValue: 0.0625, category: 'MUSICAL' },
+  ],
+  [
+    'QUARTER_TRIPLET',
+    { name: 'QUARTER_TRIPLET', displayName: '1/4T', baseValue: 1.0 / 3.0, category: 'TRIPLET' },
+  ],
+  [
+    'EIGHTH_TRIPLET',
+    { name: 'EIGHTH_TRIPLET', displayName: '1/8T', baseValue: 1.0 / 6.0, category: 'TRIPLET' },
+  ],
+  [
+    'SIXTEENTH_TRIPLET',
+    { name: 'SIXTEENTH_TRIPLET', displayName: '1/16T', baseValue: 1.0 / 12.0, category: 'TRIPLET' },
+  ],
   ['ONE_SECOND', { name: 'ONE_SECOND', displayName: '1 sec', baseValue: 1.0, category: 'TIME' }],
   ['HUNDRED_MS', { name: 'HUNDRED_MS', displayName: '100 ms', baseValue: 0.1, category: 'TIME' }],
   ['TEN_MS', { name: 'TEN_MS', displayName: '10 ms', baseValue: 0.01, category: 'TIME' }],

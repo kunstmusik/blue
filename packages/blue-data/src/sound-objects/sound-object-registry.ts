@@ -70,9 +70,11 @@ export function getAllSoundObjectTypeDescriptors(): readonly SoundObjectTypeDesc
   return [...seen.values()];
 }
 
-export function getTrackPlacementForSoundObject(
-  object: SoundObject,
-): { compatible: boolean; reason?: string; descriptor?: SoundObjectTypeDescriptor } {
+export function getTrackPlacementForSoundObject(object: SoundObject): {
+  compatible: boolean;
+  reason?: string;
+  descriptor?: SoundObjectTypeDescriptor;
+} {
   const placement = getTrackPlacementForSoundObjectType(object.constructor.name);
   if (!placement.compatible || placement.descriptor?.instrumentTargetBehavior !== 'propagated') {
     return placement;
@@ -92,9 +94,11 @@ export function getTrackPlacementForSoundObject(
   };
 }
 
-export function getTrackPlacementForSoundObjectType(
-  typeName: string | null | undefined,
-): { compatible: boolean; reason?: string; descriptor?: SoundObjectTypeDescriptor } {
+export function getTrackPlacementForSoundObjectType(typeName: string | null | undefined): {
+  compatible: boolean;
+  reason?: string;
+  descriptor?: SoundObjectTypeDescriptor;
+} {
   const rawType = typeName ?? '';
   const descriptor = getSoundObjectTypeDescriptor(rawType);
   if (!descriptor) {
@@ -110,7 +114,10 @@ export function getTrackPlacementForSoundObjectType(
   };
 }
 
-export function loadSoundObjectFromXML(data: Element, objRefMap?: ObjRefLoadMap): SoundObject | null {
+export function loadSoundObjectFromXML(
+  data: Element,
+  objRefMap?: ObjRefLoadMap,
+): SoundObject | null {
   const rawType = data.getAttribute('type');
   if (!rawType) return null;
 

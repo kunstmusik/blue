@@ -180,15 +180,13 @@ export default function MultiLineOverlay({
         // (layer row) containment. Compute the vertical extent of the selected
         // rows and reject clicks that fall outside it — those start a new
         // selection, not a move.
-        const selectedRows = geometry.filter(
-          (r) => currentRange.layerIds.includes(r.layerId),
-        );
-        const marqueeTop = selectedRows.length > 0
-          ? Math.min(...selectedRows.map((r) => r.top))
-          : 0;
-        const marqueeBottom = selectedRows.length > 0
-          ? Math.max(...selectedRows.map((r) => r.top + r.height))
-          : Infinity;
+        const selectedRows = geometry.filter((r) => currentRange.layerIds.includes(r.layerId));
+        const marqueeTop =
+          selectedRows.length > 0 ? Math.min(...selectedRows.map((r) => r.top)) : 0;
+        const marqueeBottom =
+          selectedRows.length > 0
+            ? Math.max(...selectedRows.map((r) => r.top + r.height))
+            : Infinity;
         const insideVertical = coords.y >= marqueeTop && coords.y <= marqueeBottom;
 
         const edge = rangeEdgeNear(
@@ -222,7 +220,17 @@ export default function MultiLineOverlay({
       useScoreSelectionStore.getState().clearSelection();
       setDrag({ kind: 'selecting', anchorBeat: beat, startY: coords.y, shiftKey: e.shiftKey });
     },
-    [currentRange, geometry, hasAutomatable, localCoords, pixelsPerBeat, setMultiLineObjectPreview, setMultiLinePreview, setRangeSelection, snapBeatForMouse],
+    [
+      currentRange,
+      geometry,
+      hasAutomatable,
+      localCoords,
+      pixelsPerBeat,
+      setMultiLineObjectPreview,
+      setMultiLinePreview,
+      setRangeSelection,
+      snapBeatForMouse,
+    ],
   );
 
   const handleMouseMove = useCallback(
@@ -256,9 +264,7 @@ export default function MultiLineOverlay({
             moveRangeWithAnchors(points, drag.range.startBeat, drag.range.endBeat, beatDelta),
           ),
         );
-        setMultiLineObjectPreview(
-          computeObjectMovePreview(layerGroups, drag.range, beatDelta),
-        );
+        setMultiLineObjectPreview(computeObjectMovePreview(layerGroups, drag.range, beatDelta));
         return;
       }
 
@@ -279,7 +285,13 @@ export default function MultiLineOverlay({
         setDrag({ ...drag, scaleFactor });
         setMultiLinePreview(
           computeMultiLinePreview(layerGroups, drag.range, (points) =>
-            scaleRangeWithAnchors(points, drag.range.startBeat, drag.range.endBeat, drag.anchorBeat, scaleFactor),
+            scaleRangeWithAnchors(
+              points,
+              drag.range.startBeat,
+              drag.range.endBeat,
+              drag.anchorBeat,
+              scaleFactor,
+            ),
           ),
         );
         setMultiLineObjectPreview(
@@ -288,7 +300,17 @@ export default function MultiLineOverlay({
         return;
       }
     },
-    [drag, geometry, layerGroups, localCoords, pixelsPerBeat, setMultiLineObjectPreview, setMultiLinePreview, setRangeSelection, snapBeatForMouse],
+    [
+      drag,
+      geometry,
+      layerGroups,
+      localCoords,
+      pixelsPerBeat,
+      setMultiLineObjectPreview,
+      setMultiLinePreview,
+      setRangeSelection,
+      snapBeatForMouse,
+    ],
   );
 
   const handleMouseUp = useCallback(
@@ -353,13 +375,23 @@ export default function MultiLineOverlay({
         setMultiLinePreview(null);
         setMultiLineObjectPreview(null);
         // Update range to the scaled position.
-        const scaledStart = drag.anchorBeat + (drag.range.startBeat - drag.anchorBeat) * drag.scaleFactor;
-        const scaledEnd = drag.anchorBeat + (drag.range.endBeat - drag.anchorBeat) * drag.scaleFactor;
+        const scaledStart =
+          drag.anchorBeat + (drag.range.startBeat - drag.anchorBeat) * drag.scaleFactor;
+        const scaledEnd =
+          drag.anchorBeat + (drag.range.endBeat - drag.anchorBeat) * drag.scaleFactor;
         setRangeSelection({ ...drag.range, startBeat: scaledStart, endBeat: scaledEnd });
       }
       setDrag({ kind: 'none' });
     },
-    [currentRange, dispatchPatch, drag, layerGroups, rangeSelection, setMultiLinePreview, setRangeSelection],
+    [
+      currentRange,
+      dispatchPatch,
+      drag,
+      layerGroups,
+      rangeSelection,
+      setMultiLinePreview,
+      setRangeSelection,
+    ],
   );
 
   if (!hasAutomatable) return null;
@@ -376,9 +408,7 @@ export default function MultiLineOverlay({
     const left = Math.min(startBeat, endBeat) * pixelsPerBeat;
     const width = Math.abs(endBeat - startBeat) * pixelsPerBeat;
     // Vertical span covers every selected row.
-    const selectedRows = geometry.filter(
-      (r) => currentRange.layerIds.includes(r.layerId),
-    );
+    const selectedRows = geometry.filter((r) => currentRange.layerIds.includes(r.layerId));
     if (selectedRows.length === 0) return null;
     const top = Math.min(...selectedRows.map((r) => r.top));
     const bottom = Math.max(...selectedRows.map((r) => r.top + r.height));
@@ -542,7 +572,10 @@ function computeObjectScalePreview(
       for (const item of layer.items) {
         if (!selectedIds.has(item.objectId)) continue;
         const startBeats = Math.max(0, anchorBeat + (item.startBeats - anchorBeat) * scaleFactor);
-        const endBeats = Math.max(0, anchorBeat + (item.startBeats + item.durationBeats - anchorBeat) * scaleFactor);
+        const endBeats = Math.max(
+          0,
+          anchorBeat + (item.startBeats + item.durationBeats - anchorBeat) * scaleFactor,
+        );
         preview[item.objectId] = {
           startBeats,
           durationBeats: Math.max(0, endBeats - startBeats),

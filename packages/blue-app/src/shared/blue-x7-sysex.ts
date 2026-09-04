@@ -26,7 +26,9 @@ export function isBlueX7SysexReadResult(value: unknown): value is BlueX7SysexRea
 
   if (obj.status === 'error') {
     return (
-      (obj.code === 'read-failed' || obj.code === 'unsupported-size' || obj.code === 'invalid-request') &&
+      (obj.code === 'read-failed' ||
+        obj.code === 'unsupported-size' ||
+        obj.code === 'invalid-request') &&
       typeof obj.message === 'string'
     );
   }

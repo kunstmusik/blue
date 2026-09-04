@@ -62,7 +62,9 @@ export function LibraryTableDropMarker({
                 active && 'h-3 bg-app-accent',
               )}
             />
-            <span id={feedbackId} role="status" aria-live="polite" className="sr-only">{feedback}</span>
+            <span id={feedbackId} role="status" aria-live="polite" className="sr-only">
+              {feedback}
+            </span>
           </div>
         </DropContextMenu>
       </td>
@@ -98,17 +100,24 @@ export function LibraryBlockDropMarker({
           fillRemaining
             ? 'min-h-8 flex-1 focus-visible:bg-app-accent/20 focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-app-accent'
             : 'h-2 focus-visible:h-3 focus-visible:bg-app-accent/35',
-          active && (fillRemaining
-            ? 'bg-app-accent/20 ring-1 ring-inset ring-app-accent'
-            : 'h-3 bg-app-accent'),
+          active &&
+            (fillRemaining
+              ? 'bg-app-accent/20 ring-1 ring-inset ring-app-accent'
+              : 'h-3 bg-app-accent'),
         )}
       />
-      <span id={feedbackId} role="status" aria-live="polite" className="sr-only">{feedback}</span>
+      <span id={feedbackId} role="status" aria-live="polite" className="sr-only">
+        {feedback}
+      </span>
     </div>
   );
-  return pasteContextMenu
-    ? <DropContextMenu canPaste={canPaste} paste={paste}>{marker}</DropContextMenu>
-    : marker;
+  return pasteContextMenu ? (
+    <DropContextMenu canPaste={canPaste} paste={paste}>
+      {marker}
+    </DropContextMenu>
+  ) : (
+    marker
+  );
 }
 
 export function LibraryDropZone({

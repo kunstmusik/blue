@@ -46,7 +46,10 @@ describe('mixed Track content', () => {
     const reopened = BlueData.loadFromString(data.saveToString());
     const reopenedTrack = (reopened.getScore()[0] as TrackLayerGroup)[0]!;
     expect(reopenedTrack.getUniqueId()).toBe('mixed-track');
-    expect(reopenedTrack.map((item) => item.constructor.name)).toEqual(['AudioClip', 'GenericScore']);
+    expect(reopenedTrack.map((item) => item.constructor.name)).toEqual([
+      'AudioClip',
+      'GenericScore',
+    ]);
     expect(reopenedTrack[0]!.getStartTime().toBeats(reopened.getScore().getTimeContext())).toBe(0);
     expect(reopenedTrack[1]!.getStartTime().toBeats(reopened.getScore().getTimeContext())).toBe(1);
   });
@@ -70,7 +73,9 @@ describe('mixed Track content', () => {
 
     first.setMuted(false);
     first.setSolo(true);
-    const soloNotes = group.generateForCSD(context, new CompileData(), 0, 6, { processWithSolo: true });
+    const soloNotes = group.generateForCSD(context, new CompileData(), 0, 6, {
+      processWithSolo: true,
+    });
     expect(soloNotes.length).toBeGreaterThan(0);
     expect(soloNotes.map((note) => note.getStartTime()).every((start) => start < 2)).toBe(true);
   });

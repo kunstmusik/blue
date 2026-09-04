@@ -66,10 +66,12 @@ describe('Arrangement', () => {
     expect(arrangement.replaceInstrument('1', replacement)).toBe(true);
     expect(arrangement.getInstrumentById('1')).toBe(replacement);
 
-    expect(arrangement.updateAssignment('1', {
-      enabled: false,
-      nextArrangementId: '2',
-    })).toBe(true);
+    expect(
+      arrangement.updateAssignment('1', {
+        enabled: false,
+        nextArrangementId: '2',
+      }),
+    ).toBe(true);
     expect(arrangement.getArrangement()[0].arrangementId).toBe('2');
     expect(arrangement.getArrangement()[0].enabled).toBe(false);
   });

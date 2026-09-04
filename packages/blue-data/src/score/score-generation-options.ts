@@ -1,11 +1,7 @@
 import { Note } from '../sound-objects/note';
 import { NoteList } from '../sound-objects/note-list';
 
-export type InstrumentTargetBehavior =
-  | 'assignable'
-  | 'propagated'
-  | 'preserve'
-  | 'none';
+export type InstrumentTargetBehavior = 'assignable' | 'propagated' | 'preserve' | 'none';
 
 export interface InstrumentTargetCollector {
   mark(note: Note, behavior: InstrumentTargetBehavior): void;
@@ -89,6 +85,9 @@ export function markTrackInstrumentTargets(
         behavior === 'assignable' || behavior === 'propagated' ? 'assignable' : 'preserve',
       );
     }
-    collector?.mark(note, note.getTrackInstrumentTarget() === 'assignable' ? 'assignable' : 'preserve');
+    collector?.mark(
+      note,
+      note.getTrackInstrumentTarget() === 'assignable' ? 'assignable' : 'preserve',
+    );
   }
 }

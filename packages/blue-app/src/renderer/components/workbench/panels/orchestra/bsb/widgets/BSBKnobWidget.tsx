@@ -34,9 +34,14 @@ function BSBKnobWidget({
   const labelText = typeof node.properties.label === 'string' ? node.properties.label : '';
   const showValue = node.properties.valueDisplayEnabled === true;
 
-  const labelFontName = typeof node.properties['labelFont.name'] === 'string' ? node.properties['labelFont.name'] : 'Roboto';
-  const labelFontSize = typeof node.properties['labelFont.size'] === 'number' ? node.properties['labelFont.size'] : 12;
-  const labelFontStyle = typeof node.properties['labelFont.style'] === 'number' ? node.properties['labelFont.style'] : 0;
+  const labelFontName =
+    typeof node.properties['labelFont.name'] === 'string'
+      ? node.properties['labelFont.name']
+      : 'Roboto';
+  const labelFontSize =
+    typeof node.properties['labelFont.size'] === 'number' ? node.properties['labelFont.size'] : 12;
+  const labelFontStyle =
+    typeof node.properties['labelFont.style'] === 'number' ? node.properties['labelFont.style'] : 0;
   const labelMetrics = showLabel
     ? measureTextContent(labelText, getFontString(labelFontName, labelFontSize, labelFontStyle))
     : { width: 0, height: 0 };
@@ -50,9 +55,10 @@ function BSBKnobWidget({
   const displaySize = getWidgetDisplaySize(node);
   const labelH = showLabel ? Math.max(16, Math.ceil(labelMetrics.height)) : 0;
   const valueH = showValue ? VALUE_HEIGHT : 0;
-  const knobSize = typeof node.properties.knobWidth === 'number'
-    ? node.properties.knobWidth
-    : Math.max(30, displaySize.height - labelH - valueH);
+  const knobSize =
+    typeof node.properties.knobWidth === 'number'
+      ? node.properties.knobWidth
+      : Math.max(30, displaySize.height - labelH - valueH);
   const totalH = displaySize.height;
 
   const svgRef = useRef<SVGSVGElement>(null);
@@ -62,69 +68,106 @@ function BSBKnobWidget({
   const patchRef = useRef(onBsbInterfacePatch);
   patchRef.current = onBsbInterfacePatch;
 
-  const handleMouseDown = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
-    if (editEnabled) return;
-    e.preventDefault();
-    e.stopPropagation();
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent<SVGSVGElement>) => {
+      if (editEnabled) return;
+      e.preventDefault();
+      e.stopPropagation();
 
-    const svg = svgRef.current;
-    if (!svg) return;
+      const svg = svgRef.current;
+      if (!svg) return;
 
-    const computeValue = (clientX: number, clientY: number): number => {
-      const rect = svg.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
-      let angle = Math.atan2(-(clientY - cy), clientX - cx) * 180 / Math.PI;
-      if (angle < 0) angle += 360;
-      let rel = ARC_START - angle;
-      if (rel < 0) rel += 360;
-      if (rel > ARC_LENGTH) return -1;
-      return rel / ARC_LENGTH;
-    };
+      const computeValue = (clientX: number, clientY: number): number => {
+        const rect = svg.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        let angle = (Math.atan2(-(clientY - cy), clientX - cx) * 180) / Math.PI;
+        if (angle < 0) angle += 360;
+        let rel = ARC_START - angle;
+        if (rel < 0) rel += 360;
+        if (rel > ARC_LENGTH) return -1;
+        return rel / ARC_LENGTH;
+      };
 
-    const { minimum: min, range: r, nodeId } = paramsRef.current;
+      const { minimum: min, range: r, nodeId } = paramsRef.current;
 
-    const newVal = computeValue(e.clientX, e.clientY);
-    if (newVal >= 0) {
-      patchRef.current({
-        type: 'updateWidgetProperties',
-        widgetId: nodeId,
-        properties: { value: min + newVal * r },
-      });
-    }
-
-    const onMouseMove = (moveEvent: MouseEvent) => {
-      const v = computeValue(moveEvent.clientX, moveEvent.clientY);
-      if (v >= 0) {
+      const newVal = computeValue(e.clientX, e.clientY);
+      if (newVal >= 0) {
         patchRef.current({
           type: 'updateWidgetProperties',
-          widgetId: paramsRef.current.nodeId,
-          properties: { value: paramsRef.current.minimum + v * paramsRef.current.range },
+          widgetId: nodeId,
+          properties: { value: min + newVal * r },
         });
       }
-    };
 
-    const onMouseUp = () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-    };
+      const onMouseMove = (moveEvent: MouseEvent) => {
+        const v = computeValue(moveEvent.clientX, moveEvent.clientY);
+        if (v >= 0) {
+          patchRef.current({
+            type: 'updateWidgetProperties',
+            widgetId: paramsRef.current.nodeId,
+            properties: { value: paramsRef.current.minimum + v * paramsRef.current.range },
+          });
+        }
+      };
 
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
-  }, [editEnabled]);
+      const onMouseUp = () => {
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);
+      };
+
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+    },
+    [editEnabled],
+  );
 
   return (
-    <WidgetWrapper node={node} isSelected={isSelected} editEnabled={editEnabled} onWidgetSelect={onWidgetSelect} displayWidth={displaySize.width} displayHeight={displaySize.height} resizeMeta={resizeMeta} gridSnapEnabled={gridSnapEnabled} gridSnapWidth={gridSnapWidth} gridSnapHeight={gridSnapHeight} onBsbInterfacePatch={onBsbInterfacePatch} selectedWidgetIds={selectedWidgetIds} getWidgetPosition={getWidgetPosition} onWidgetAction={onWidgetAction}>
-      <div className="flex h-full w-full flex-col items-center" style={{ width: displaySize.width, height: totalH }}>
+    <WidgetWrapper
+      node={node}
+      isSelected={isSelected}
+      editEnabled={editEnabled}
+      onWidgetSelect={onWidgetSelect}
+      displayWidth={displaySize.width}
+      displayHeight={displaySize.height}
+      resizeMeta={resizeMeta}
+      gridSnapEnabled={gridSnapEnabled}
+      gridSnapWidth={gridSnapWidth}
+      gridSnapHeight={gridSnapHeight}
+      onBsbInterfacePatch={onBsbInterfacePatch}
+      selectedWidgetIds={selectedWidgetIds}
+      getWidgetPosition={getWidgetPosition}
+      onWidgetAction={onWidgetAction}
+    >
+      <div
+        className="flex h-full w-full flex-col items-center"
+        style={{ width: displaySize.width, height: totalH }}
+      >
         {showLabel && (
           <div
             className="flex w-full items-center justify-center overflow-hidden"
-            style={{ height: labelH, fontFamily: `'${labelFontName}', Roboto, sans-serif`, fontSize: labelFontSize, lineHeight: 'normal', color: 'var(--color-app-text-bright)' }}
+            style={{
+              height: labelH,
+              fontFamily: `'${labelFontName}', Roboto, sans-serif`,
+              fontSize: labelFontSize,
+              lineHeight: 'normal',
+              color: 'var(--color-app-text-bright)',
+            }}
           >
-            <BsbTextLabel text={labelText} plainClassName="truncate" htmlClassName="inline-block max-w-full text-center" />
+            <BsbTextLabel
+              text={labelText}
+              plainClassName="truncate"
+              htmlClassName="inline-block max-w-full text-center"
+            />
           </div>
         )}
-        <KnobSVG ref={svgRef} size={knobSize} value={knobVal} interactive={!editEnabled} onMouseDown={handleMouseDown} />
+        <KnobSVG
+          ref={svgRef}
+          size={knobSize}
+          value={knobVal}
+          interactive={!editEnabled}
+          onMouseDown={handleMouseDown}
+        />
         {showValue && (
           <div
             className="flex items-center justify-center"
@@ -149,12 +192,15 @@ function BSBKnobWidget({
 
 export default React.memo(BSBKnobWidget);
 
-const KnobSVG = React.forwardRef<SVGSVGElement, {
-  size: number;
-  value: number;
-  interactive: boolean;
-  onMouseDown: (e: React.MouseEvent<SVGSVGElement>) => void;
-}>(({ size, value, interactive, onMouseDown }, ref) => {
+const KnobSVG = React.forwardRef<
+  SVGSVGElement,
+  {
+    size: number;
+    value: number;
+    interactive: boolean;
+    onMouseDown: (e: React.MouseEvent<SVGSVGElement>) => void;
+  }
+>(({ size, value, interactive, onMouseDown }, ref) => {
   const drawSize = size - 2;
   const mid = drawSize / 2;
   const cx = mid + 1;
@@ -188,17 +234,23 @@ const KnobSVG = React.forwardRef<SVGSVGElement, {
       {valPath && <path d={valPath} fill={TRACK_COLOR} />}
       <path d={trackPath} fill="none" stroke="black" strokeWidth={0.5} />
       <circle cx={cx} cy={cy} r={knobR} fill="black" />
-      <g transform={`translate(${cx},${cy}) rotate(${rotation * 180 / Math.PI})`}>
+      <g transform={`translate(${cx},${cy}) rotate(${(rotation * 180) / Math.PI})`}>
         <line
-          x1={lineStart} y1={0} x2={lineEnd} y2={0}
+          x1={lineStart}
+          y1={0}
+          x2={lineEnd}
+          y2={0}
           stroke={TRACK_COLOR_BRIGHT}
           strokeWidth={lineW}
           strokeLinecap="round"
         />
         <rect
-          x={-notchAdj} y={-notchAdj}
-          width={notchLen} height={notchW}
-          rx={notchW} ry={notchW}
+          x={-notchAdj}
+          y={-notchAdj}
+          width={notchLen}
+          height={notchW}
+          rx={notchW}
+          ry={notchW}
           fill={TRACK_COLOR}
           stroke="rgb(16,16,16)"
           strokeWidth={Math.max(0.5, drawSize / 40)}
@@ -211,11 +263,17 @@ const KnobSVG = React.forwardRef<SVGSVGElement, {
 KnobSVG.displayName = 'KnobSVG';
 
 function polarToXY(cx: number, cy: number, r: number, angleDeg: number): { x: number; y: number } {
-  const rad = angleDeg * Math.PI / 180;
+  const rad = (angleDeg * Math.PI) / 180;
   return { x: cx + r * Math.cos(rad), y: cy - r * Math.sin(rad) };
 }
 
-function describePieArc(cx: number, cy: number, r: number, startDeg: number, sweepDeg: number): string {
+function describePieArc(
+  cx: number,
+  cy: number,
+  r: number,
+  startDeg: number,
+  sweepDeg: number,
+): string {
   const s = polarToXY(cx, cy, r, startDeg);
   const e = polarToXY(cx, cy, r, startDeg + sweepDeg);
   const large = Math.abs(sweepDeg) > 180 ? 1 : 0;

@@ -5,46 +5,40 @@
  * Generates CSD orchestra code from an instrumentText template
  * with `<objectName>` placeholders replaced by BSB widget values.
  */
-import { Element } from "../serialization/xml-reader";
-import { ObjRefSaveMap, ObjRefLoadMap } from "../serialization/obj-ref-map";
-import { Instrument } from "./instrument";
-import { BSBCompilationUnit } from "./blue-synth-builder/bsb-compilation-unit";
-import { BSBGraphicInterface, GridSettingsData } from "./blue-synth-builder/bsb-graphic-interface";
-import { BSBGroup } from "./blue-synth-builder/bsb-group";
-import { BSBWidget } from "./blue-synth-builder/bsb-widget";
-import { Parameter, AutomationCurve } from "../automation/parameter";
+import { Element } from '../serialization/xml-reader';
+import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
+import { Instrument } from './instrument';
+import { BSBCompilationUnit } from './blue-synth-builder/bsb-compilation-unit';
+import { BSBGraphicInterface, GridSettingsData } from './blue-synth-builder/bsb-graphic-interface';
+import { BSBGroup } from './blue-synth-builder/bsb-group';
+import { BSBWidget } from './blue-synth-builder/bsb-widget';
+import { Parameter, AutomationCurve } from '../automation/parameter';
 import { clamp } from '../utilities/math-utils';
 import { JavaDecimal, parseJavaDecimal, snapToResolutionJava } from '../automation/java-decimal';
-import { BSBCheckBox } from "./blue-synth-builder/bsb-check-box";
-import { BSBHSlider } from "./blue-synth-builder/bsb-hslider";
-import { BSBXYController } from "./blue-synth-builder/bsb-xy-controller";
-import {
-  StringChannel,
-  BSBFileSelector,
-} from "./blue-synth-builder/bsb-file-selector";
-import { BSBDropdown } from "./blue-synth-builder/bsb-dropdown";
-import { BSBKnob } from "./blue-synth-builder/bsb-knob";
-import { BSBLabel } from "./blue-synth-builder/bsb-label";
-import { BSBValue } from "./blue-synth-builder/bsb-value";
-import { BSBVSlider } from "./blue-synth-builder/bsb-vslider";
-import { OpcodeList } from "../opcodes/opcode-list";
-import { PresetGroup } from "./blue-synth-builder/preset-group";
-import { Preset } from "./blue-synth-builder/preset";
-import { OpcodeDefinition } from "../opcodes/opcode-definition";
-import { UDOStyle } from "../opcodes/udo-style";
+import { BSBCheckBox } from './blue-synth-builder/bsb-check-box';
+import { BSBHSlider } from './blue-synth-builder/bsb-hslider';
+import { BSBXYController } from './blue-synth-builder/bsb-xy-controller';
+import { StringChannel, BSBFileSelector } from './blue-synth-builder/bsb-file-selector';
+import { BSBDropdown } from './blue-synth-builder/bsb-dropdown';
+import { BSBKnob } from './blue-synth-builder/bsb-knob';
+import { BSBLabel } from './blue-synth-builder/bsb-label';
+import { BSBValue } from './blue-synth-builder/bsb-value';
+import { BSBVSlider } from './blue-synth-builder/bsb-vslider';
+import { OpcodeList } from '../opcodes/opcode-list';
+import { PresetGroup } from './blue-synth-builder/preset-group';
+import { Preset } from './blue-synth-builder/preset';
+import { OpcodeDefinition } from '../opcodes/opcode-definition';
+import { UDOStyle } from '../opcodes/udo-style';
 import {
   appendUserDefinedOpcodes,
   convertToClassic,
   convertToModern,
-} from "../opcodes/udo-utilities";
-import { ParameterList } from "../automation/parameter-list";
+} from '../opcodes/udo-utilities';
+import { ParameterList } from '../automation/parameter-list';
 import { BSBHSliderBank } from './blue-synth-builder/bsb-hslider-bank';
 import { BSBVSliderBank } from './blue-synth-builder/bsb-vslider-bank';
-import {
-  BSBLineObject,
-  normalizeBsbLinePatch,
-} from './blue-synth-builder/bsb-line-object';
-import { replaceOpcodeNames } from "../utilities/text";
+import { BSBLineObject, normalizeBsbLinePatch } from './blue-synth-builder/bsb-line-object';
+import { replaceOpcodeNames } from '../utilities/text';
 import { generatePrefixedUuid } from '../utilities/uuid';
 import { collectBsbWidgets } from './blue-synth-builder/bsb-identity';
 
@@ -53,13 +47,14 @@ function parseUdoBlock(
   OpcodeDef: typeof OpcodeDefinition,
   style: typeof UDOStyle,
 ): OpcodeDefinition | null {
-  const lines = block.split("\n").map((l) => l.trim());
+  const lines = block.split('\n').map((l) => l.trim());
   if (lines.length < 3) return null;
-  const headerIdx = lines.findIndex((l) => l.startsWith("opcode "));
+  const headerIdx = lines.findIndex((l) => l.startsWith('opcode '));
   if (headerIdx < 0) return null;
   const header = lines[headerIdx];
-  const endIdx = lines.findIndex((l, i) => i > headerIdx && l.startsWith("endop"));
-  const codeLines = endIdx > headerIdx ? lines.slice(headerIdx + 1, endIdx) : lines.slice(headerIdx + 1);
+  const endIdx = lines.findIndex((l, i) => i > headerIdx && l.startsWith('endop'));
+  const codeLines =
+    endIdx > headerIdx ? lines.slice(headerIdx + 1, endIdx) : lines.slice(headerIdx + 1);
 
   const match = header.match(/^opcode\s+(\w+),\s*([^,]*),\s*(.*)$/);
   if (!match) return null;
@@ -69,7 +64,7 @@ function parseUdoBlock(
   udo.setOutTypes(match[2].trim());
   udo.setInTypes(match[3].trim());
   udo.setStyle(style.MODERN);
-  udo.setCode(codeLines.join("\n"));
+  udo.setCode(codeLines.join('\n'));
   return udo;
 }
 
@@ -100,7 +95,7 @@ function rescaleValue(
   }
 
   const normalized = (value - oldMinimum) / (oldMaximum - oldMinimum);
-  const nextValue = newMinimum + (normalized * (newMaximum - newMinimum));
+  const nextValue = newMinimum + normalized * (newMaximum - newMinimum);
   return snapToResolutionJava(nextValue, newMinimum, newMaximum, resolution);
 }
 
@@ -143,13 +138,27 @@ function rescaleWidgetRangeMinimum(widget: BSBWidget, newMinimum: number): void 
   if (widget instanceof BSBHSliderBank || widget instanceof BSBVSliderBank) {
     widget.minimum = newMinimum;
     for (const slider of widget.sliders) {
-      slider.setValue(rescaleValue(slider.value, oldMinimum, oldMaximum, newMinimum, oldMaximum, widget.resolutionDecimal));
+      slider.setValue(
+        rescaleValue(
+          slider.value,
+          oldMinimum,
+          oldMaximum,
+          newMinimum,
+          oldMaximum,
+          widget.resolutionDecimal,
+        ),
+      );
     }
     return;
   }
 
   widget.minimum = newMinimum;
-  if (widget instanceof BSBKnob || widget instanceof BSBHSlider || widget instanceof BSBVSlider || widget instanceof BSBValue) {
+  if (
+    widget instanceof BSBKnob ||
+    widget instanceof BSBHSlider ||
+    widget instanceof BSBVSlider ||
+    widget instanceof BSBValue
+  ) {
     rescaleScalarWidgetValue(widget, oldMinimum, oldMaximum, newMinimum, oldMaximum);
   }
 }
@@ -161,13 +170,27 @@ function rescaleWidgetRangeMaximum(widget: BSBWidget, newMaximum: number): void 
   if (widget instanceof BSBHSliderBank || widget instanceof BSBVSliderBank) {
     widget.maximum = newMaximum;
     for (const slider of widget.sliders) {
-      slider.setValue(rescaleValue(slider.value, oldMinimum, oldMaximum, oldMinimum, newMaximum, widget.resolutionDecimal));
+      slider.setValue(
+        rescaleValue(
+          slider.value,
+          oldMinimum,
+          oldMaximum,
+          oldMinimum,
+          newMaximum,
+          widget.resolutionDecimal,
+        ),
+      );
     }
     return;
   }
 
   widget.maximum = newMaximum;
-  if (widget instanceof BSBKnob || widget instanceof BSBHSlider || widget instanceof BSBVSlider || widget instanceof BSBValue) {
+  if (
+    widget instanceof BSBKnob ||
+    widget instanceof BSBHSlider ||
+    widget instanceof BSBVSlider ||
+    widget instanceof BSBValue
+  ) {
     rescaleScalarWidgetValue(widget, oldMinimum, oldMaximum, oldMinimum, newMaximum);
   }
 }
@@ -252,10 +275,10 @@ function hasLegacyBsbWidgetChildId(element: Element): boolean {
 }
 
 export class BlueSynthBuilder extends Instrument {
-  private _instrumentText = "";
-  private _alwaysOnInstrumentText = "";
-  private _globalOrc = "";
-  private _globalSco = "";
+  private _instrumentText = '';
+  private _alwaysOnInstrumentText = '';
+  private _globalOrc = '';
+  private _globalSco = '';
   private _graphicInterface = new BSBGraphicInterface();
   private _graphicInterfaceXML: Element | null = null;
   private _parameters = new ParameterList();
@@ -353,7 +376,7 @@ export class BlueSynthBuilder extends Instrument {
    *   compilationVarName instead of their raw value.
    */
   generateInstrument(parameters?: Parameter[]): string {
-    if (!this._instrumentText) return "";
+    if (!this._instrumentText) return '';
 
     return this.renderTextWithReplacements(this._instrumentText, parameters);
   }
@@ -363,11 +386,7 @@ export class BlueSynthBuilder extends Instrument {
       return null;
     }
 
-    return this.renderTextWithReplacements(
-      this._alwaysOnInstrumentText,
-      this._parameters,
-      true,
-    );
+    return this.renderTextWithReplacements(this._alwaysOnInstrumentText, this._parameters, true);
   }
 
   generateGlobalOrc(): string | null {
@@ -390,15 +409,17 @@ export class BlueSynthBuilder extends Instrument {
   }
 
   private isParameterBackedWidget(widget: BSBWidget): boolean {
-    return widget instanceof BSBKnob
-      || widget instanceof BSBHSlider
-      || widget instanceof BSBVSlider
-      || widget instanceof BSBCheckBox
-      || widget instanceof BSBDropdown
-      || widget instanceof BSBValue
-      || widget instanceof BSBXYController
-      || widget instanceof BSBHSliderBank
-      || widget instanceof BSBVSliderBank;
+    return (
+      widget instanceof BSBKnob ||
+      widget instanceof BSBHSlider ||
+      widget instanceof BSBVSlider ||
+      widget instanceof BSBCheckBox ||
+      widget instanceof BSBDropdown ||
+      widget instanceof BSBValue ||
+      widget instanceof BSBXYController ||
+      widget instanceof BSBHSliderBank ||
+      widget instanceof BSBVSliderBank
+    );
   }
 
   private buildParameterSpecs(widget: BSBWidget): BSBParameterSpec[] {
@@ -437,44 +458,52 @@ export class BlueSynthBuilder extends Instrument {
     }
 
     if (widget instanceof BSBCheckBox) {
-      return [{
-        name: objectName,
-        fixedValue: widget.selected ? 1 : 0,
-        minimum: 0,
-        maximum: 1,
-        resolution: parseRequiredDecimal('1'),
-      }];
+      return [
+        {
+          name: objectName,
+          fixedValue: widget.selected ? 1 : 0,
+          minimum: 0,
+          maximum: 1,
+          resolution: parseRequiredDecimal('1'),
+        },
+      ];
     }
 
     if (widget instanceof BSBDropdown) {
-      return [{
-        name: objectName,
-        fixedValue: widget.selectedIndex,
-        minimum: 0,
-        maximum: Math.max(0, widget.dropdownItems.length - 1),
-        resolution: parseRequiredDecimal('1'),
-      }];
+      return [
+        {
+          name: objectName,
+          fixedValue: widget.selectedIndex,
+          minimum: 0,
+          maximum: Math.max(0, widget.dropdownItems.length - 1),
+          resolution: parseRequiredDecimal('1'),
+        },
+      ];
     }
 
     if (widget instanceof BSBHSlider || widget instanceof BSBVSlider) {
-      return [{
-        name: objectName,
-        fixedValue: widget.value,
-        minimum: widget.minimum,
-        maximum: widget.maximum,
-        resolution: widget.resolutionDecimal,
-      }];
+      return [
+        {
+          name: objectName,
+          fixedValue: widget.value,
+          minimum: widget.minimum,
+          maximum: widget.maximum,
+          resolution: widget.resolutionDecimal,
+        },
+      ];
     }
 
     if (widget instanceof BSBKnob || widget instanceof BSBValue) {
       const fixedValue = widget instanceof BSBValue ? widget.defaultValue : widget.value;
-      return [{
-        name: objectName,
-        fixedValue,
-        minimum: widget.minimum,
-        maximum: widget.maximum,
-        resolution: parseRequiredDecimal('-1'),
-      }];
+      return [
+        {
+          name: objectName,
+          fixedValue,
+          minimum: widget.minimum,
+          maximum: widget.maximum,
+          resolution: parseRequiredDecimal('-1'),
+        },
+      ];
     }
 
     return [];
@@ -507,7 +536,9 @@ export class BlueSynthBuilder extends Instrument {
         return;
       }
 
-      const hasAutomatedParameter = specs.some((spec) => existingByName.get(spec.name)?.isAutomationEnabled());
+      const hasAutomatedParameter = specs.some((spec) =>
+        existingByName.get(spec.name)?.isAutomationEnabled(),
+      );
       if (!widget.automationAllowed && !hasAutomatedParameter) {
         return;
       }
@@ -602,10 +633,7 @@ export class BlueSynthBuilder extends Instrument {
       return;
     }
 
-    this._udoReplacementValues = appendUserDefinedOpcodes(
-      this._opcodeList,
-      udoList,
-    );
+    this._udoReplacementValues = appendUserDefinedOpcodes(this._opcodeList, udoList);
   }
 
   getOpcodeListText(): string {
@@ -613,14 +641,18 @@ export class BlueSynthBuilder extends Instrument {
   }
 
   setOpcodeListText(text: string): void {
-    const lines = text.split("\n");
+    const lines = text.split('\n');
     const newList = new OpcodeList();
     let current: string[] = [];
     for (const line of lines) {
       const trimmed = line.trim();
-      if (trimmed.startsWith("opcode") && trimmed.includes(",") && !current.some((l) => l.trim().startsWith("opcode"))) {
+      if (
+        trimmed.startsWith('opcode') &&
+        trimmed.includes(',') &&
+        !current.some((l) => l.trim().startsWith('opcode'))
+      ) {
         if (current.length > 0) {
-          const udo = parseUdoBlock(current.join("\n"), OpcodeDefinition, UDOStyle);
+          const udo = parseUdoBlock(current.join('\n'), OpcodeDefinition, UDOStyle);
           if (udo) newList.addOpcode(udo);
         }
         current = [line];
@@ -629,7 +661,7 @@ export class BlueSynthBuilder extends Instrument {
       }
     }
     if (current.length > 0) {
-      const udo = parseUdoBlock(current.join("\n"), OpcodeDefinition, UDOStyle);
+      const udo = parseUdoBlock(current.join('\n'), OpcodeDefinition, UDOStyle);
       if (udo) newList.addOpcode(udo);
     }
     this._opcodeList = newList;
@@ -670,15 +702,18 @@ export class BlueSynthBuilder extends Instrument {
   /**
    * Update a UDO at the specified index with partial properties.
    */
-  updateUdo(index: number, patch: Partial<{
-    name: string;
-    style: UDOStyle;
-    outTypes: string;
-    inTypes: string;
-    inputArguments: string;
-    code: string;
-    comments: string;
-  }>): boolean {
+  updateUdo(
+    index: number,
+    patch: Partial<{
+      name: string;
+      style: UDOStyle;
+      outTypes: string;
+      inTypes: string;
+      inputArguments: string;
+      code: string;
+      comments: string;
+    }>,
+  ): boolean {
     const udo = this._opcodeList.getOpcode(index);
     if (!udo) return false;
 
@@ -743,7 +778,7 @@ export class BlueSynthBuilder extends Instrument {
           if (typeof widget.setPresetValue === 'function') {
             widget.setPresetValue(val);
           } else {
-            const parsed = parseFloat(val.replace(/^ver2:/, ""));
+            const parsed = parseFloat(val.replace(/^ver2:/, ''));
             if (Number.isFinite(parsed)) {
               widget.value = parsed;
             }
@@ -751,12 +786,12 @@ export class BlueSynthBuilder extends Instrument {
 
           // Sync with parameter(s) if they exist
           if (widget instanceof BSBXYController) {
-            const px = this._parameters.find(p => p.getName() === `${widget.objectName}X`);
-            const py = this._parameters.find(p => p.getName() === `${widget.objectName}Y`);
+            const px = this._parameters.find((p) => p.getName() === `${widget.objectName}X`);
+            const py = this._parameters.find((p) => p.getName() === `${widget.objectName}Y`);
             if (px) px.setFixedValue(widget.xValue);
             if (py) py.setFixedValue(widget.yValue);
           } else {
-            const param = this._parameters.find(p => p.getName() === widget.objectName);
+            const param = this._parameters.find((p) => p.getName() === widget.objectName);
             if (param) {
               param.setFixedValue(widget.value);
             }
@@ -775,10 +810,7 @@ export class BlueSynthBuilder extends Instrument {
     return true;
   }
 
-  updateWidgetProperties(
-    widgetId: string,
-    properties: Record<string, unknown>,
-  ): boolean {
+  updateWidgetProperties(widgetId: string, properties: Record<string, unknown>): boolean {
     const widget = this._graphicInterface.findWidgetById(widgetId);
     if (!widget) return false;
     const previousObjectName = widget.objectName;
@@ -790,9 +822,10 @@ export class BlueSynthBuilder extends Instrument {
     ): boolean => {
       const target = widget as unknown as Record<string, unknown>;
       const current = target[rootKey];
-      const next = current && typeof current === 'object'
-        ? { ...(current as Record<string, unknown>) }
-        : { name: 'Roboto', size: 12, style: 0 };
+      const next =
+        current && typeof current === 'object'
+          ? { ...(current as Record<string, unknown>) }
+          : { name: 'Roboto', size: 12, style: 0 };
 
       if (field === 'name' && typeof value === 'string') {
         next.name = value;
@@ -810,160 +843,161 @@ export class BlueSynthBuilder extends Instrument {
 
     for (const [key, value] of Object.entries(properties)) {
       switch (key) {
-        case "objectName":
-          if (typeof value === "string") widget.objectName = value;
+        case 'objectName':
+          if (typeof value === 'string') widget.objectName = value;
           break;
-        case "x":
-          if (typeof value === "number") widget.x = value;
+        case 'x':
+          if (typeof value === 'number') widget.x = value;
           break;
-        case "y":
-          if (typeof value === "number") widget.y = value;
+        case 'y':
+          if (typeof value === 'number') widget.y = value;
           break;
-        case "value":
-          if (typeof value === "number") {
+        case 'value':
+          if (typeof value === 'number') {
             widget.setValue(value);
             if (widget.objectName) {
-              const param = this._parameters.find(p => p.getName() === widget.objectName);
+              const param = this._parameters.find((p) => p.getName() === widget.objectName);
               if (param) {
                 param.setFixedValue(value);
               }
             }
           }
           break;
-        case "selected":
-          if (typeof value === "boolean") {
+        case 'selected':
+          if (typeof value === 'boolean') {
             widget.setValue(value ? 1 : 0);
             if (widget.objectName) {
-              const param = this._parameters.find(p => p.getName() === widget.objectName);
+              const param = this._parameters.find((p) => p.getName() === widget.objectName);
               if (param) {
                 param.setFixedValue(value ? 1 : 0);
               }
             }
           }
           break;
-        case "selectedIndex":
-          if (typeof value === "number") {
+        case 'selectedIndex':
+          if (typeof value === 'number') {
             widget.setValue(value);
             if (widget.objectName) {
-              const param = this._parameters.find(p => p.getName() === widget.objectName);
+              const param = this._parameters.find((p) => p.getName() === widget.objectName);
               if (param) {
                 param.setFixedValue(value);
               }
             }
           }
           break;
-        case "dropdownItems":
+        case 'dropdownItems':
           if (widget instanceof BSBDropdown && Array.isArray(value)) {
             widget.dropdownItems = value.map((item) => {
               const record = item as Record<string, unknown>;
               return {
                 name: typeof record.name === 'string' ? record.name : '',
                 value: typeof record.value === 'string' ? record.value : '',
-                uniqueId: typeof record.uniqueId === 'string' && record.uniqueId.length > 0
-                  ? record.uniqueId
-                  : generatePrefixedUuid('dropdown'),
+                uniqueId:
+                  typeof record.uniqueId === 'string' && record.uniqueId.length > 0
+                    ? record.uniqueId
+                    : generatePrefixedUuid('dropdown'),
               };
             });
           }
           break;
-        case "fontSize":
-          if (widget instanceof BSBDropdown && typeof value === "number") {
+        case 'fontSize':
+          if (widget instanceof BSBDropdown && typeof value === 'number') {
             widget.setFontSize(value);
           }
           break;
-        case "lines":
+        case 'lines':
           if (widget instanceof BSBLineObject) {
             widget.lines = normalizeBsbLinePatch(value);
           }
           break;
-        case "font.name":
+        case 'font.name':
           if (widget instanceof BSBGroup || widget instanceof BSBLabel) {
-            applyFontPatch("font", "name", value);
+            applyFontPatch('font', 'name', value);
           }
           break;
-        case "font.size":
+        case 'font.size':
           if (widget instanceof BSBGroup || widget instanceof BSBLabel) {
-            applyFontPatch("font", "size", value);
+            applyFontPatch('font', 'size', value);
           }
           break;
-        case "font.style":
+        case 'font.style':
           if (widget instanceof BSBGroup || widget instanceof BSBLabel) {
-            applyFontPatch("font", "style", value);
+            applyFontPatch('font', 'style', value);
           }
           break;
-        case "labelFont.name":
+        case 'labelFont.name':
           if (widget instanceof BSBKnob) {
-            applyFontPatch("labelFont", "name", value);
+            applyFontPatch('labelFont', 'name', value);
           }
           break;
-        case "labelFont.size":
+        case 'labelFont.size':
           if (widget instanceof BSBKnob) {
-            applyFontPatch("labelFont", "size", value);
+            applyFontPatch('labelFont', 'size', value);
           }
           break;
-        case "labelFont.style":
+        case 'labelFont.style':
           if (widget instanceof BSBKnob) {
-            applyFontPatch("labelFont", "style", value);
+            applyFontPatch('labelFont', 'style', value);
           }
           break;
-        case "defaultValue":
-          if (typeof value === "number") {
+        case 'defaultValue':
+          if (typeof value === 'number') {
             widget.setValue(value);
             if (widget.objectName) {
-              const param = this._parameters.find(p => p.getName() === widget.objectName);
+              const param = this._parameters.find((p) => p.getName() === widget.objectName);
               if (param) {
                 param.setFixedValue(value);
               }
             }
           }
           break;
-        case "xValue":
-          if (typeof value === "number") {
-            (widget as unknown as Record<string, unknown>)["xValue"] = value;
-            const xName = widget.objectName + "X";
-            const px = this._parameters.find(p => p.getName() === xName);
+        case 'xValue':
+          if (typeof value === 'number') {
+            (widget as unknown as Record<string, unknown>)['xValue'] = value;
+            const xName = widget.objectName + 'X';
+            const px = this._parameters.find((p) => p.getName() === xName);
             if (px) px.setFixedValue(value);
           }
           break;
-        case "yValue":
-          if (typeof value === "number") {
-            (widget as unknown as Record<string, unknown>)["yValue"] = value;
-            const yName = widget.objectName + "Y";
-            const py = this._parameters.find(p => p.getName() === yName);
+        case 'yValue':
+          if (typeof value === 'number') {
+            (widget as unknown as Record<string, unknown>)['yValue'] = value;
+            const yName = widget.objectName + 'Y';
+            const py = this._parameters.find((p) => p.getName() === yName);
             if (py) py.setFixedValue(value);
           }
           break;
-        case "minimum":
-          if (typeof value === "number") {
+        case 'minimum':
+          if (typeof value === 'number') {
             rescaleWidgetRangeMinimum(widget, value);
           }
           break;
-        case "maximum":
-          if (typeof value === "number") {
+        case 'maximum':
+          if (typeof value === 'number') {
             rescaleWidgetRangeMaximum(widget, value);
           }
           break;
-        case "resolution":
+        case 'resolution':
           if (
-            widget instanceof BSBHSlider
-            || widget instanceof BSBVSlider
-            || widget instanceof BSBHSliderBank
-            || widget instanceof BSBVSliderBank
+            widget instanceof BSBHSlider ||
+            widget instanceof BSBVSlider ||
+            widget instanceof BSBHSliderBank ||
+            widget instanceof BSBVSliderBank
           ) {
-            if (typeof value === "string") {
+            if (typeof value === 'string') {
               widget.setResolutionText(value);
-            } else if (typeof value === "number") {
+            } else if (typeof value === 'number') {
               widget.resolution = value;
             }
           }
           break;
-        case "resolutionDecimal":
+        case 'resolutionDecimal':
           if (
-            typeof value === "string"
-            && (widget instanceof BSBHSlider
-              || widget instanceof BSBVSlider
-              || widget instanceof BSBHSliderBank
-              || widget instanceof BSBVSliderBank)
+            typeof value === 'string' &&
+            (widget instanceof BSBHSlider ||
+              widget instanceof BSBVSlider ||
+              widget instanceof BSBHSliderBank ||
+              widget instanceof BSBVSliderBank)
           ) {
             widget.setResolutionText(value);
           }
@@ -1035,7 +1069,7 @@ export class BlueSynthBuilder extends Instrument {
     widget.setValue(value);
 
     // Sync with parameter if it exists
-    const param = this._parameters.find(p => p.getName() === objectName);
+    const param = this._parameters.find((p) => p.getName() === objectName);
     if (param) {
       param.setFixedValue(value);
     }
@@ -1072,13 +1106,13 @@ export class BlueSynthBuilder extends Instrument {
     if (!group) return channels;
 
     const getChildren = (group as any).getChildren;
-    if (typeof getChildren !== "function") return channels;
+    if (typeof getChildren !== 'function') return channels;
 
     for (const child of getChildren.call(group) || []) {
       if (child instanceof BSBFileSelector) {
         const sc = child.getStringChannel();
         if (sc) channels.push(sc);
-      } else if (typeof (child as any).getChildren === "function") {
+      } else if (typeof (child as any).getChildren === 'function') {
         channels.push(...this._collectStringChannels(child));
       }
     }
@@ -1089,16 +1123,16 @@ export class BlueSynthBuilder extends Instrument {
   // ─── XML Serialization ───
 
   saveAsXML(_objRefMap?: ObjRefSaveMap): Element {
-    const elem = new Element("instrument");
-    elem.setAttribute("type", "blue.orchestra.BlueSynthBuilder");
-    elem.setAttribute("enabled", this._enabled.toString());
-    elem.setAttribute("editEnabled", this._editEnabled.toString());
-    elem.addElement("name").setText(this._name);
-    elem.addElement("comment").setText(this._comment);
-    elem.addElement("globalOrc").setText(this._globalOrc || "");
-    elem.addElement("globalSco").setText(this._globalSco || "");
-    elem.addElement("instrumentText").setText(this._instrumentText || "");
-    elem.addElement("alwaysOnInstrumentText").setText(this._alwaysOnInstrumentText || "");
+    const elem = new Element('instrument');
+    elem.setAttribute('type', 'blue.orchestra.BlueSynthBuilder');
+    elem.setAttribute('enabled', this._enabled.toString());
+    elem.setAttribute('editEnabled', this._editEnabled.toString());
+    elem.addElement('name').setText(this._name);
+    elem.addElement('comment').setText(this._comment);
+    elem.addElement('globalOrc').setText(this._globalOrc || '');
+    elem.addElement('globalSco').setText(this._globalSco || '');
+    elem.addElement('instrumentText').setText(this._instrumentText || '');
+    elem.addElement('alwaysOnInstrumentText').setText(this._alwaysOnInstrumentText || '');
     if (this._graphicInterfaceXML) {
       elem.addElement(Element.parse(this._graphicInterfaceXML.toXml()));
     } else {
@@ -1114,59 +1148,55 @@ export class BlueSynthBuilder extends Instrument {
     return elem;
   }
 
-  static loadFromXML(
-    data: Element,
-    _objRefMap?: ObjRefLoadMap,
-  ): BlueSynthBuilder {
+  static loadFromXML(data: Element, _objRefMap?: ObjRefLoadMap): BlueSynthBuilder {
     const bsb = new BlueSynthBuilder();
 
-    bsb._enabled = data.getAttribute("enabled") !== "false";
+    bsb._enabled = data.getAttribute('enabled') !== 'false';
 
-    const editEnabled = data.getAttribute("editEnabled");
-    if (editEnabled !== null) bsb._editEnabled = editEnabled === "true";
+    const editEnabled = data.getAttribute('editEnabled');
+    if (editEnabled !== null) bsb._editEnabled = editEnabled === 'true';
 
-    const name = data.getTextString("name");
-    bsb._name = name !== null ? name : "";
+    const name = data.getTextString('name');
+    bsb._name = name !== null ? name : '';
 
-    const comment = data.getTextString("comment");
+    const comment = data.getTextString('comment');
     if (comment) bsb._comment = comment;
 
-    const instrText = data.getTextString("instrumentText");
+    const instrText = data.getTextString('instrumentText');
     if (instrText) bsb._instrumentText = instrText;
 
-    const alwaysOnText = data.getTextString("alwaysOnInstrumentText");
+    const alwaysOnText = data.getTextString('alwaysOnInstrumentText');
     if (alwaysOnText) bsb._alwaysOnInstrumentText = alwaysOnText;
 
-    const globalOrc = data.getTextString("globalOrc");
+    const globalOrc = data.getTextString('globalOrc');
     if (globalOrc) bsb._globalOrc = globalOrc;
 
-    const globalSco = data.getTextString("globalSco");
+    const globalSco = data.getTextString('globalSco');
     if (globalSco) bsb._globalSco = globalSco;
 
     // Load graphic interface
-    const giElem = data.getElement("graphicInterface");
+    const giElem = data.getElement('graphicInterface');
     if (giElem) {
       const hasLegacyWidgetIds = hasLegacyBsbWidgetChildId(giElem);
       const idRepairs = bsb._graphicInterface.loadFromXML(giElem);
-      bsb._graphicInterfaceXML = idRepairs.length === 0 && !hasLegacyWidgetIds
-        ? Element.parse(giElem.toXml())
-        : null;
+      bsb._graphicInterfaceXML =
+        idRepairs.length === 0 && !hasLegacyWidgetIds ? Element.parse(giElem.toXml()) : null;
     }
 
     // Load preset group
-    const presetGroupElem = data.getElement("presetGroup");
+    const presetGroupElem = data.getElement('presetGroup');
     if (presetGroupElem) {
       bsb._presetGroup = PresetGroup.loadFromXML(presetGroupElem);
     }
 
     // Load parameters
-    const paramListElem = data.getElement("parameterList") ?? data.getElement("bsbParameterList");
+    const paramListElem = data.getElement('parameterList') ?? data.getElement('bsbParameterList');
     if (paramListElem) {
       bsb._parameters = BlueSynthBuilder._loadParameters(paramListElem);
     }
 
     // Load opcode list (UDOs)
-    const opcodeListElem = data.getElement("opcodeList");
+    const opcodeListElem = data.getElement('opcodeList');
     if (opcodeListElem) {
       bsb._opcodeList = OpcodeList.loadFromXML(opcodeListElem);
     }
@@ -1181,7 +1211,7 @@ export class BlueSynthBuilder extends Instrument {
    */
   private static _loadParameters(data: Element): ParameterList {
     const parameters = new ParameterList();
-    const paramElems = data.getElements("parameter");
+    const paramElems = data.getElements('parameter');
 
     while (paramElems.hasMoreElements()) {
       const elem = paramElems.next();

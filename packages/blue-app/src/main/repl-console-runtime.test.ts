@@ -36,7 +36,10 @@ describe('evaluateJavaScriptConsole', () => {
 
     const first = evaluateJavaScriptConsole(
       session,
-      { code: 'globalThis.counter = 4; console.log("hello", counter); counter', projectSessionId: 7 },
+      {
+        code: 'globalThis.counter = 4; console.log("hello", counter); counter',
+        projectSessionId: 7,
+      },
       project,
     );
     const second = evaluateJavaScriptConsole(
@@ -84,11 +87,13 @@ describe('evaluateJavaScriptConsole', () => {
 
   it('does not carry runtime globals into a replacement project session', () => {
     createSession();
-    expect(evaluateJavaScriptConsole(
-      session,
-      { code: 'globalThis.projectScopedValue = 42; projectScopedValue', projectSessionId: 7 },
-      project,
-    )).toMatchObject({ ok: true, value: '42', projectSessionId: 7 });
+    expect(
+      evaluateJavaScriptConsole(
+        session,
+        { code: 'globalThis.projectScopedValue = 42; projectScopedValue', projectSessionId: 7 },
+        project,
+      ),
+    ).toMatchObject({ ok: true, value: '42', projectSessionId: 7 });
 
     session.dispose();
     session = new JavaScriptSession();
@@ -96,10 +101,12 @@ describe('evaluateJavaScriptConsole', () => {
       ...project,
       project: { ...project.project, sessionId: 8, label: 'Replacement Project' },
     };
-    expect(evaluateJavaScriptConsole(
-      session,
-      { code: 'typeof projectScopedValue', projectSessionId: 8 },
-      replacementProject,
-    )).toMatchObject({ ok: true, value: 'undefined', projectSessionId: 8 });
+    expect(
+      evaluateJavaScriptConsole(
+        session,
+        { code: 'typeof projectScopedValue', projectSessionId: 8 },
+        replacementProject,
+      ),
+    ).toMatchObject({ ok: true, value: 'undefined', projectSessionId: 8 });
   });
 });

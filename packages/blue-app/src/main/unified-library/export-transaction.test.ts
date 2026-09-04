@@ -12,13 +12,20 @@ describe('atomic export transaction', () => {
     fs.writeFileSync(first, 'old-a', 'utf8');
     fs.writeFileSync(second, 'old-b', 'utf8');
     try {
-      expect(() => commitAtomicExport([
-        { targetPath: first, contents: 'new-a' },
-        { targetPath: second, contents: 'new-b' },
-      ], { failAfterPromotions: 1 })).toThrow(/injected/i);
+      expect(() =>
+        commitAtomicExport(
+          [
+            { targetPath: first, contents: 'new-a' },
+            { targetPath: second, contents: 'new-b' },
+          ],
+          { failAfterPromotions: 1 },
+        ),
+      ).toThrow(/injected/i);
       expect(fs.readFileSync(first, 'utf8')).toBe('old-a');
       expect(fs.readFileSync(second, 'utf8')).toBe('old-b');
       expect(fs.readdirSync(directory).sort()).toEqual(['a.xml', 'b.xml']);
-    } finally { fs.rmSync(directory, { recursive: true, force: true }); }
+    } finally {
+      fs.rmSync(directory, { recursive: true, force: true });
+    }
   });
 });

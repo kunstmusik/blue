@@ -2,10 +2,17 @@ import React, { useRef, useEffect } from 'react';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { ChevronRight } from 'lucide-react';
-import type { BsbWidgetNodeSnapshot, BsbInterfacePatch } from '../../../../../../../shared/project-editor';
+import type {
+  BsbWidgetNodeSnapshot,
+  BsbInterfacePatch,
+} from '../../../../../../../shared/project-editor';
 import type { BSBWidgetResizeMeta } from '../bsb-widget-meta';
 import { getWidgetDisplaySize } from './utils';
-import { PopoutContextMenuPortal, PopoutTooltipPortal, portalEventIsolationProps } from '../../../../../../hooks/host-portals';
+import {
+  PopoutContextMenuPortal,
+  PopoutTooltipPortal,
+  portalEventIsolationProps,
+} from '../../../../../../hooks/host-portals';
 import { cn } from '../../../../../../lib/cn';
 
 const HANDLE_SIZE = 5;
@@ -63,7 +70,12 @@ function WidgetWrapper({
 
   const moveDragRef = useRef<MoveDragState | null>(null);
   const hasDraggedRef = useRef(false);
-  const moveParamsRef = useRef({ gridSnapEnabled, gridSnapWidth, gridSnapHeight, onBsbInterfacePatch });
+  const moveParamsRef = useRef({
+    gridSnapEnabled,
+    gridSnapWidth,
+    gridSnapHeight,
+    onBsbInterfacePatch,
+  });
   moveParamsRef.current = { gridSnapEnabled, gridSnapWidth, gridSnapHeight, onBsbInterfacePatch };
 
   const moveRafRef = useRef(0);
@@ -78,7 +90,12 @@ function WidgetWrapper({
       moveRafRef.current = requestAnimationFrame(() => {
         const md2 = moveDragRef.current;
         if (!md2) return;
-        const { gridSnapEnabled: snap, gridSnapWidth: gw, gridSnapHeight: gh, onBsbInterfacePatch: patch } = moveParamsRef.current;
+        const {
+          gridSnapEnabled: snap,
+          gridSnapWidth: gw,
+          gridSnapHeight: gh,
+          onBsbInterfacePatch: patch,
+        } = moveParamsRef.current;
         let dx = e.clientX - md2.originClientX;
         let dy = e.clientY - md2.originClientY;
         if (snap && gw) dx = Math.round(dx / gw) * gw;
@@ -105,7 +122,9 @@ function WidgetWrapper({
       cancelAnimationFrame(moveRafRef.current);
       moveDragRef.current = null;
       // Clear hasDragged after a short delay so click handler can read it
-      setTimeout(() => { hasDraggedRef.current = false; }, 0);
+      setTimeout(() => {
+        hasDraggedRef.current = false;
+      }, 0);
     };
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
@@ -116,11 +135,17 @@ function WidgetWrapper({
     };
   }, []);
 
-  const sizeStyle = autoSize && displayWidth === undefined && displayHeight === undefined
-    ? {}
-    : { width: w, height: h };
+  const sizeStyle =
+    autoSize && displayWidth === undefined && displayHeight === undefined
+      ? {}
+      : { width: w, height: h };
 
-  const showHandles = editEnabled && isSelected && (selectedWidgetIds?.size ?? 0) <= 1 && resizeMeta && onBsbInterfacePatch &&
+  const showHandles =
+    editEnabled &&
+    isSelected &&
+    (selectedWidgetIds?.size ?? 0) <= 1 &&
+    resizeMeta &&
+    onBsbInterfacePatch &&
     (resizeMeta.canResizeWidth || resizeMeta.canResizeHeight);
 
   const tooltipText =
@@ -147,7 +172,7 @@ function WidgetWrapper({
       className={cn(
         'absolute cursor-default select-none',
         isSelected && editEnabled && 'ring-2 ring-blue-accent',
-        node.preservedOnly && 'opacity-60'
+        node.preservedOnly && 'opacity-60',
       )}
       style={{
         left: node.x,
@@ -183,14 +208,60 @@ function WidgetWrapper({
       {children}
       {showHandles && resizeMeta!.canResizeWidth && (
         <>
-          <ResizeHandle edge="right" containerW={w} containerH={h} nodeId={node.id} minSize={resizeMeta!.minWidth} propertyKey={widthResizeProperty} startValue={resolveResizeStartValue(node, widthResizeProperty, measuredSize.width)} gridSnapEnabled={gridSnapEnabled} gridSnapSize={gridSnapWidth} onPatch={onBsbInterfacePatch!} />
-          <ResizeHandle edge="left" containerW={w} containerH={h} nodeId={node.id} nodeX={node.x} minSize={resizeMeta!.minWidth} propertyKey={widthResizeProperty} startValue={resolveResizeStartValue(node, widthResizeProperty, measuredSize.width)} gridSnapEnabled={gridSnapEnabled} gridSnapSize={gridSnapWidth} onPatch={onBsbInterfacePatch!} />
+          <ResizeHandle
+            edge="right"
+            containerW={w}
+            containerH={h}
+            nodeId={node.id}
+            minSize={resizeMeta!.minWidth}
+            propertyKey={widthResizeProperty}
+            startValue={resolveResizeStartValue(node, widthResizeProperty, measuredSize.width)}
+            gridSnapEnabled={gridSnapEnabled}
+            gridSnapSize={gridSnapWidth}
+            onPatch={onBsbInterfacePatch!}
+          />
+          <ResizeHandle
+            edge="left"
+            containerW={w}
+            containerH={h}
+            nodeId={node.id}
+            nodeX={node.x}
+            minSize={resizeMeta!.minWidth}
+            propertyKey={widthResizeProperty}
+            startValue={resolveResizeStartValue(node, widthResizeProperty, measuredSize.width)}
+            gridSnapEnabled={gridSnapEnabled}
+            gridSnapSize={gridSnapWidth}
+            onPatch={onBsbInterfacePatch!}
+          />
         </>
       )}
       {showHandles && resizeMeta!.canResizeHeight && (
         <>
-          <ResizeHandle edge="bottom" containerW={w} containerH={h} nodeId={node.id} minSize={resizeMeta!.minHeight} propertyKey={heightResizeProperty} startValue={resolveResizeStartValue(node, heightResizeProperty, measuredSize.height)} gridSnapEnabled={gridSnapEnabled} gridSnapSize={gridSnapHeight} onPatch={onBsbInterfacePatch!} />
-          <ResizeHandle edge="top" containerW={w} containerH={h} nodeId={node.id} nodeY={node.y} minSize={resizeMeta!.minHeight} propertyKey={heightResizeProperty} startValue={resolveResizeStartValue(node, heightResizeProperty, measuredSize.height)} gridSnapEnabled={gridSnapEnabled} gridSnapSize={gridSnapHeight} onPatch={onBsbInterfacePatch!} />
+          <ResizeHandle
+            edge="bottom"
+            containerW={w}
+            containerH={h}
+            nodeId={node.id}
+            minSize={resizeMeta!.minHeight}
+            propertyKey={heightResizeProperty}
+            startValue={resolveResizeStartValue(node, heightResizeProperty, measuredSize.height)}
+            gridSnapEnabled={gridSnapEnabled}
+            gridSnapSize={gridSnapHeight}
+            onPatch={onBsbInterfacePatch!}
+          />
+          <ResizeHandle
+            edge="top"
+            containerW={w}
+            containerH={h}
+            nodeId={node.id}
+            nodeY={node.y}
+            minSize={resizeMeta!.minHeight}
+            propertyKey={heightResizeProperty}
+            startValue={resolveResizeStartValue(node, heightResizeProperty, measuredSize.height)}
+            gridSnapEnabled={gridSnapEnabled}
+            gridSnapSize={gridSnapHeight}
+            onPatch={onBsbInterfacePatch!}
+          />
         </>
       )}
     </div>
@@ -198,22 +269,17 @@ function WidgetWrapper({
 
   const wrapped = tooltipText ? (
     <Tooltip.Root>
-      <Tooltip.Trigger asChild>
-        {widgetDiv}
-      </Tooltip.Trigger>
+      <Tooltip.Trigger asChild>{widgetDiv}</Tooltip.Trigger>
       <PopoutTooltipPortal>
-        <Tooltip.Content
-          className="bsb-tooltip-content"
-          sideOffset={4}
-          side="top"
-          align="center"
-        >
+        <Tooltip.Content className="bsb-tooltip-content" sideOffset={4} side="top" align="center">
           {tooltipText}
           <Tooltip.Arrow className="bsb-tooltip-arrow" width={10} height={5} />
         </Tooltip.Content>
       </PopoutTooltipPortal>
     </Tooltip.Root>
-  ) : widgetDiv;
+  ) : (
+    widgetDiv
+  );
 
   if (!editEnabled) return wrapped;
 
@@ -225,10 +291,12 @@ function WidgetWrapper({
   const action = (a: string) => () => onWidgetAction?.(a);
 
   return (
-    <ContextMenu.Root onOpenChange={(open) => { if (open && !isSelected) onWidgetSelect(node.id); }}>
-      <ContextMenu.Trigger asChild>
-        {wrapped}
-      </ContextMenu.Trigger>
+    <ContextMenu.Root
+      onOpenChange={(open) => {
+        if (open && !isSelected) onWidgetSelect(node.id);
+      }}
+    >
+      <ContextMenu.Trigger asChild>{wrapped}</ContextMenu.Trigger>
       <PopoutContextMenuPortal>
         <ContextMenu.Content className="editor-context-menu" {...portalEventIsolationProps}>
           {hasSelection && (
@@ -248,13 +316,19 @@ function WidgetWrapper({
           {multiSelected && (
             <>
               <ContextMenu.Separator className="editor-context-menu__separator" />
-              <ContextMenu.Item className="editor-context-menu__item" onSelect={action('make-group')}>
+              <ContextMenu.Item
+                className="editor-context-menu__item"
+                onSelect={action('make-group')}
+              >
                 Make Group
               </ContextMenu.Item>
             </>
           )}
           {singleGroupSelected && (
-            <ContextMenu.Item className="editor-context-menu__item" onSelect={action('break-group')}>
+            <ContextMenu.Item
+              className="editor-context-menu__item"
+              onSelect={action('break-group')}
+            >
               Break Group
             </ContextMenu.Item>
           )}
@@ -267,26 +341,75 @@ function WidgetWrapper({
                   <ChevronRight className="w-3.5 h-3.5 opacity-60" />
                 </ContextMenu.SubTrigger>
                 <PopoutContextMenuPortal>
-                  <ContextMenu.SubContent className="editor-context-menu" {...portalEventIsolationProps}>
-                    <ContextMenu.Item className="editor-context-menu__item" onSelect={action('align-left')}>Left</ContextMenu.Item>
-                    <ContextMenu.Item className="editor-context-menu__item" onSelect={action('align-right')}>Right</ContextMenu.Item>
-                    <ContextMenu.Item className="editor-context-menu__item" onSelect={action('align-top')}>Top</ContextMenu.Item>
-                    <ContextMenu.Item className="editor-context-menu__item" onSelect={action('align-bottom')}>Bottom</ContextMenu.Item>
+                  <ContextMenu.SubContent
+                    className="editor-context-menu"
+                    {...portalEventIsolationProps}
+                  >
+                    <ContextMenu.Item
+                      className="editor-context-menu__item"
+                      onSelect={action('align-left')}
+                    >
+                      Left
+                    </ContextMenu.Item>
+                    <ContextMenu.Item
+                      className="editor-context-menu__item"
+                      onSelect={action('align-right')}
+                    >
+                      Right
+                    </ContextMenu.Item>
+                    <ContextMenu.Item
+                      className="editor-context-menu__item"
+                      onSelect={action('align-top')}
+                    >
+                      Top
+                    </ContextMenu.Item>
+                    <ContextMenu.Item
+                      className="editor-context-menu__item"
+                      onSelect={action('align-bottom')}
+                    >
+                      Bottom
+                    </ContextMenu.Item>
                     <ContextMenu.Separator className="editor-context-menu__separator" />
-                    <ContextMenu.Item className="editor-context-menu__item" onSelect={action('align-center-h')}>Center Horizontal</ContextMenu.Item>
-                    <ContextMenu.Item className="editor-context-menu__item" onSelect={action('align-center-v')}>Center Vertical</ContextMenu.Item>
+                    <ContextMenu.Item
+                      className="editor-context-menu__item"
+                      onSelect={action('align-center-h')}
+                    >
+                      Center Horizontal
+                    </ContextMenu.Item>
+                    <ContextMenu.Item
+                      className="editor-context-menu__item"
+                      onSelect={action('align-center-v')}
+                    >
+                      Center Vertical
+                    </ContextMenu.Item>
                   </ContextMenu.SubContent>
                 </PopoutContextMenuPortal>
               </ContextMenu.Sub>
               <ContextMenu.Sub>
-                <ContextMenu.SubTrigger className="editor-context-menu__item editor-context-menu__subtrigger" disabled={!canDistribute}>
+                <ContextMenu.SubTrigger
+                  className="editor-context-menu__item editor-context-menu__subtrigger"
+                  disabled={!canDistribute}
+                >
                   <span>Distribute</span>
                   <ChevronRight className="w-3.5 h-3.5 opacity-60" />
                 </ContextMenu.SubTrigger>
                 <PopoutContextMenuPortal>
-                  <ContextMenu.SubContent className="editor-context-menu" {...portalEventIsolationProps}>
-                    <ContextMenu.Item className="editor-context-menu__item" onSelect={action('distribute-h')}>Horizontal</ContextMenu.Item>
-                    <ContextMenu.Item className="editor-context-menu__item" onSelect={action('distribute-v')}>Vertical</ContextMenu.Item>
+                  <ContextMenu.SubContent
+                    className="editor-context-menu"
+                    {...portalEventIsolationProps}
+                  >
+                    <ContextMenu.Item
+                      className="editor-context-menu__item"
+                      onSelect={action('distribute-h')}
+                    >
+                      Horizontal
+                    </ContextMenu.Item>
+                    <ContextMenu.Item
+                      className="editor-context-menu__item"
+                      onSelect={action('distribute-v')}
+                    >
+                      Vertical
+                    </ContextMenu.Item>
                   </ContextMenu.SubContent>
                 </PopoutContextMenuPortal>
               </ContextMenu.Sub>
@@ -341,9 +464,19 @@ function ResizeHandle({
   gridSnapSize,
   onPatch,
 }: ResizeHandleProps): React.ReactElement {
-  const dragState = useRef<{ startClient: number; startVal: number; startPos: number } | null>(null);
+  const dragState = useRef<{ startClient: number; startVal: number; startPos: number } | null>(
+    null,
+  );
   const rafRef = useRef(0);
-  const paramsRef = useRef({ nodeId, nodeX, nodeY, minSize, gridSnapEnabled, gridSnapSize, propertyKey });
+  const paramsRef = useRef({
+    nodeId,
+    nodeX,
+    nodeY,
+    minSize,
+    gridSnapEnabled,
+    gridSnapSize,
+    propertyKey,
+  });
   paramsRef.current = { nodeId, nodeX, nodeY, minSize, gridSnapEnabled, gridSnapSize, propertyKey };
   const patchRef = useRef(onPatch);
   patchRef.current = onPatch;
@@ -352,10 +485,46 @@ function ResizeHandle({
 
   const handleStyle: React.CSSProperties = (() => {
     switch (edge) {
-      case 'right': return { position: 'absolute', right: 0, top: containerH / 2 - HANDLE_SIZE / 2, width: HANDLE_SIZE, height: HANDLE_SIZE, cursor: 'e-resize', zIndex: 20 };
-      case 'left': return { position: 'absolute', left: 0, top: containerH / 2 - HANDLE_SIZE / 2, width: HANDLE_SIZE, height: HANDLE_SIZE, cursor: 'w-resize', zIndex: 20 };
-      case 'bottom': return { position: 'absolute', bottom: 0, left: containerW / 2 - HANDLE_SIZE / 2, width: HANDLE_SIZE, height: HANDLE_SIZE, cursor: 's-resize', zIndex: 20 };
-      case 'top': return { position: 'absolute', top: 0, left: containerW / 2 - HANDLE_SIZE / 2, width: HANDLE_SIZE, height: HANDLE_SIZE, cursor: 'n-resize', zIndex: 20 };
+      case 'right':
+        return {
+          position: 'absolute',
+          right: 0,
+          top: containerH / 2 - HANDLE_SIZE / 2,
+          width: HANDLE_SIZE,
+          height: HANDLE_SIZE,
+          cursor: 'e-resize',
+          zIndex: 20,
+        };
+      case 'left':
+        return {
+          position: 'absolute',
+          left: 0,
+          top: containerH / 2 - HANDLE_SIZE / 2,
+          width: HANDLE_SIZE,
+          height: HANDLE_SIZE,
+          cursor: 'w-resize',
+          zIndex: 20,
+        };
+      case 'bottom':
+        return {
+          position: 'absolute',
+          bottom: 0,
+          left: containerW / 2 - HANDLE_SIZE / 2,
+          width: HANDLE_SIZE,
+          height: HANDLE_SIZE,
+          cursor: 's-resize',
+          zIndex: 20,
+        };
+      case 'top':
+        return {
+          position: 'absolute',
+          top: 0,
+          left: containerW / 2 - HANDLE_SIZE / 2,
+          width: HANDLE_SIZE,
+          height: HANDLE_SIZE,
+          cursor: 'n-resize',
+          zIndex: 20,
+        };
     }
   })();
 
@@ -368,19 +537,33 @@ function ResizeHandle({
       rafRef.current = requestAnimationFrame(() => {
         const ds2 = dragState.current;
         if (!ds2) return;
-        const { nodeId: id, minSize: ms, gridSnapEnabled: snap, gridSnapSize: gs, propertyKey: pk } = paramsRef.current;
+        const {
+          nodeId: id,
+          minSize: ms,
+          gridSnapEnabled: snap,
+          gridSnapSize: gs,
+          propertyKey: pk,
+        } = paramsRef.current;
         const client = isHorizontal ? e.clientX : e.clientY;
         let delta = client - ds2.startClient;
         if (snap && gs) delta = Math.round(delta / gs) * gs;
 
         if (edge === 'right' || edge === 'bottom') {
           const newSize = Math.max(ms, ds2.startVal + delta);
-          patchRef.current({ type: 'updateWidgetProperties', widgetId: id, properties: { [pk]: newSize } });
+          patchRef.current({
+            type: 'updateWidgetProperties',
+            widgetId: id,
+            properties: { [pk]: newSize },
+          });
         } else {
           const newSize = Math.max(ms, ds2.startVal - delta);
           const newPos = ds2.startPos + delta;
           if (newPos >= 0) {
-            patchRef.current({ type: 'updateWidgetProperties', widgetId: id, properties: { [pk]: newSize, [isHorizontal ? 'x' : 'y']: newPos } });
+            patchRef.current({
+              type: 'updateWidgetProperties',
+              widgetId: id,
+              properties: { [pk]: newSize, [isHorizontal ? 'x' : 'y']: newPos },
+            });
           }
         }
       });
@@ -406,7 +589,11 @@ function ResizeHandle({
       onMouseDown={(e) => {
         e.stopPropagation();
         e.preventDefault();
-        dragState.current = { startClient: isHorizontal ? e.clientX : e.clientY, startVal: startValue, startPos: edge === 'left' ? (nodeX ?? 0) : edge === 'top' ? (nodeY ?? 0) : 0 };
+        dragState.current = {
+          startClient: isHorizontal ? e.clientX : e.clientY,
+          startVal: startValue,
+          startPos: edge === 'left' ? (nodeX ?? 0) : edge === 'top' ? (nodeY ?? 0) : 0,
+        };
       }}
       onClick={(e) => e.stopPropagation()}
     />

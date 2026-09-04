@@ -122,7 +122,7 @@ export class ObjectBuilder extends AbstractSoundObject {
   setLanguageType(languageType: string): void {
     const normalized = (languageType ?? '').trim().toUpperCase();
     this.languageType = OBJECT_BUILDER_LANGUAGE_TYPES.has(normalized)
-      ? normalized as ObjectBuilderLanguageType
+      ? (normalized as ObjectBuilderLanguageType)
       : 'PYTHON';
   }
 
@@ -186,7 +186,9 @@ export class ObjectBuilder extends AbstractSoundObject {
         break;
       case 'PYTHON':
       case 'CLOJURE':
-        console.warn(`ObjectBuilder.generateForCSD skipped: ${this.languageType} requires Java runtime`);
+        console.warn(
+          `ObjectBuilder.generateForCSD skipped: ${this.languageType} requires Java runtime`,
+        );
         return new NoteList();
     }
 
@@ -211,7 +213,9 @@ export class ObjectBuilder extends AbstractSoundObject {
     } else {
       const runtimeClient = getJavaRuntimeClient(compileData);
       if (!runtimeClient) {
-        throw new Error(`ObjectBuilder ${this.languageType} execution requires a Java runtime session`);
+        throw new Error(
+          `ObjectBuilder ${this.languageType} execution requires a Java runtime session`,
+        );
       }
 
       if (this.languageType === 'PYTHON') {
@@ -240,7 +244,11 @@ export class ObjectBuilder extends AbstractSoundObject {
     }
 
     const noteList = getNotes(scoreText);
-    const processed = await applyNoteProcessorChainAsync(noteList, this.getNoteProcessorChain(), compileData);
+    const processed = await applyNoteProcessorChainAsync(
+      noteList,
+      this.getNoteProcessorChain(),
+      compileData,
+    );
     return this.finishNoteList(processed, context);
   }
 

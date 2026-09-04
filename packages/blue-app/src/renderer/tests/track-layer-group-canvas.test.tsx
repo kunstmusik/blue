@@ -11,7 +11,10 @@ import {
   snapTimelineBeat,
   timelinePointerDeltaBeats,
 } from '../components/workbench/panels/score/layer-groups/score-timeline-gesture-utils';
-import type { ScoreLayerSnapshot, ScoreRowObjectSnapshot } from '../components/workbench/panels/score/types';
+import type {
+  ScoreLayerSnapshot,
+  ScoreRowObjectSnapshot,
+} from '../components/workbench/panels/score/types';
 import type { ScoreLayerGroupSnapshot, TrackLayerGroupSnapshot } from '../../shared/project-editor';
 import TrackLayerGroupCanvas from '../components/workbench/panels/score/layer-groups/TrackLayerGroupCanvas';
 import { useProjectStore } from '../stores/project-store';
@@ -21,9 +24,15 @@ import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { useLayerSelectionStore } from '../stores/layer-selection-store';
 import { useWorkbenchStore } from '../stores/workbench-store';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
-function makeItem(objectId: string, startBeats: number, durationBeats: number): ScoreRowObjectSnapshot {
+function makeItem(
+  objectId: string,
+  startBeats: number,
+  durationBeats: number,
+): ScoreRowObjectSnapshot {
   return {
     objectId,
     objectType: 'GenericScore',
@@ -79,7 +88,11 @@ function withLocation(
   };
 }
 
-function makeAudioItem(objectId: string, startBeats: number, durationBeats: number): ScoreRowObjectSnapshot {
+function makeAudioItem(
+  objectId: string,
+  startBeats: number,
+  durationBeats: number,
+): ScoreRowObjectSnapshot {
   return {
     ...makeItem(objectId, startBeats, durationBeats),
     objectType: 'AudioClip',
@@ -115,13 +128,15 @@ function makeTrackGroup(items: ScoreRowObjectSnapshot[]): TrackLayerGroupSnapsho
     defaultHeightIndex: 0,
     layerCount: 1,
     isOpenableContainer: false,
-    layers: [{
-      ...makeLayer(items.map((item, index) => withLocation(item, 1, 0, index))),
-      layerId: 'track-row',
-      layerKind: 'track',
-      instrument: null,
-      height: 44,
-    }],
+    layers: [
+      {
+        ...makeLayer(items.map((item, index) => withLocation(item, 1, 0, index))),
+        layerId: 'track-row',
+        layerKind: 'track',
+        instrument: null,
+        height: 44,
+      },
+    ],
   };
 }
 
@@ -132,57 +147,81 @@ function makeSoundGroup(items: ScoreRowObjectSnapshot[]): ScoreLayerGroupSnapsho
     name: 'SoundObjects',
     layerCount: 1,
     isOpenableContainer: true,
-    layers: [{
-      ...makeLayer(items.map((item, index) => withLocation(item, 0, 0, index))),
-      layerId: 'sound-row',
-      height: 44,
-    }],
+    layers: [
+      {
+        ...makeLayer(items.map((item, index) => withLocation(item, 0, 0, index))),
+        layerId: 'sound-row',
+        height: 44,
+      },
+    ],
   };
 }
 
-function renderTrackCanvas(group: TrackLayerGroupSnapshot, allLayerGroups: ScoreLayerGroupSnapshot[] = [group]) {
+function renderTrackCanvas(
+  group: TrackLayerGroupSnapshot,
+  allLayerGroups: ScoreLayerGroupSnapshot[] = [group],
+) {
   const host = document.createElement('div');
   document.body.appendChild(host);
   const root = createRoot(host);
   act(() => {
-    root.render(<TrackLayerGroupCanvas
-      group={group}
-      allLayerGroups={allLayerGroups}
-      projectSessionId={1}
-      projectRevision={1}
-      scoreRootGroupId={group.groupId}
-      scoreContainerPath={[]}
-      totalBeats={16}
-      pixelsPerBeat={25}
-      snapEnabled={false}
-      snapValue="BEAT"
-      tempo={120}
-      tempoMap={{
-        enabled: false,
-        visible: false,
-        points: [{ beat: 0, tempo: 60, curveType: 'constant' }],
-      }}
-      smpteFrameRate={30}
-      meterMap={{ entries: [{ measure: 0, numBeats: 4, beatLength: 4, startBeat: 0 }] }}
-    />);
+    root.render(
+      <TrackLayerGroupCanvas
+        group={group}
+        allLayerGroups={allLayerGroups}
+        projectSessionId={1}
+        projectRevision={1}
+        scoreRootGroupId={group.groupId}
+        scoreContainerPath={[]}
+        totalBeats={16}
+        pixelsPerBeat={25}
+        snapEnabled={false}
+        snapValue="BEAT"
+        tempo={120}
+        tempoMap={{
+          enabled: false,
+          visible: false,
+          points: [{ beat: 0, tempo: 60, curveType: 'constant' }],
+        }}
+        smpteFrameRate={30}
+        meterMap={{ entries: [{ measure: 0, numBeats: 4, beatLength: 4, startBeat: 0 }] }}
+      />,
+    );
   });
   const surface = host.querySelector('[data-track-layer-group="true"]') as HTMLDivElement;
-  Object.defineProperty(surface, 'getBoundingClientRect', { value: () => ({
-    left: 0, top: 0, right: 400, bottom: 44, width: 400, height: 44, x: 0, y: 0,
-    toJSON: () => undefined,
-  }) });
+  Object.defineProperty(surface, 'getBoundingClientRect', {
+    value: () => ({
+      left: 0,
+      top: 0,
+      right: 400,
+      bottom: 44,
+      width: 400,
+      height: 44,
+      x: 0,
+      y: 0,
+      toJSON: () => undefined,
+    }),
+  });
   return { host, root, surface };
 }
 
 function mouse(target: EventTarget, type: string, x: number, y: number, init: MouseEventInit = {}) {
-  target.dispatchEvent(new MouseEvent(type, {
-    bubbles: true, cancelable: true, button: 0, clientX: x, clientY: y, ...init,
-  }));
+  target.dispatchEvent(
+    new MouseEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      button: 0,
+      clientX: x,
+      clientY: y,
+      ...init,
+    }),
+  );
 }
 
 function clickContextMenuItem(label: string): void {
-  const menuItem = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]'))
-    .find((item) => item.textContent?.trim() === label);
+  const menuItem = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]')).find(
+    (item) => item.textContent?.trim() === label,
+  );
   expect(menuItem).toBeTruthy();
   act(() => {
     menuItem?.click();
@@ -217,17 +256,23 @@ beforeEach(() => {
   useMidiRoutingStore.getState().clearFocusForProjectSession();
   useScoreSelectionStore.setState({ select: originalSelect });
   useLibraryStore.setState({ captureScoreSoundObject: vi.fn().mockResolvedValue(true) });
-  useWorkbenchStore.setState({ openPanel: vi.fn() } as Partial<ReturnType<typeof useWorkbenchStore.getState>>);
+  useWorkbenchStore.setState({ openPanel: vi.fn() } as Partial<
+    ReturnType<typeof useWorkbenchStore.getState>
+  >);
 });
 
 afterEach(() => {
-  useProjectStore.setState(originalProjectActions as Partial<ReturnType<typeof useProjectStore.getState>>);
+  useProjectStore.setState(
+    originalProjectActions as Partial<ReturnType<typeof useProjectStore.getState>>,
+  );
   useLibraryStore.setState({ captureScoreSoundObject: originalCaptureScoreSoundObject });
   useScoreSelectionStore.setState({ select: originalSelect });
   useScoreSelectionStore.getState().clearSelection();
   useScoreSelectionStore.getState().clearClipboard();
   useMidiRoutingStore.getState().clearFocusForProjectSession();
-  useWorkbenchStore.setState({ openPanel: originalOpenPanel } as Partial<ReturnType<typeof useWorkbenchStore.getState>>);
+  useWorkbenchStore.setState({ openPanel: originalOpenPanel } as Partial<
+    ReturnType<typeof useWorkbenchStore.getState>
+  >);
   window.blueAPI = originalBlueAPI;
   document.body.innerHTML = '';
 });
@@ -247,18 +292,22 @@ describe('Track layer timeline gestures', () => {
 
   it('supports marquee intersection and floor/nearest snapping', () => {
     const item = makeItem('selected', 2, 2);
-    expect(selectionIntersectsTimelineItem(item, 22, 22, {
-      left: 3,
-      right: 4,
-      top: 10,
-      bottom: 30,
-    })).toBe(true);
-    expect(selectionIntersectsTimelineItem(item, 44, 22, {
-      left: 3,
-      right: 4,
-      top: 10,
-      bottom: 30,
-    })).toBe(false);
+    expect(
+      selectionIntersectsTimelineItem(item, 22, 22, {
+        left: 3,
+        right: 4,
+        top: 10,
+        bottom: 30,
+      }),
+    ).toBe(true);
+    expect(
+      selectionIntersectsTimelineItem(item, 44, 22, {
+        left: 3,
+        right: 4,
+        top: 10,
+        bottom: 30,
+      }),
+    ).toBe(false);
     expect(snapTimelineBeat(1.7, true, 0.5, 'floor')).toBe(1.5);
     expect(snapTimelineBeat(1.7, true, 0.5, 'nearest')).toBe(1.5);
     expect(snapTimelineBeat(1.8, true, 0.5, 'nearest')).toBe(2);
@@ -301,72 +350,86 @@ describe('Track layer timeline gestures', () => {
   it.each([
     ['Command', { metaKey: true }],
     ['Control', { ctrlKey: true }],
-  ] as const)('leaves %s+Shift+A available for the native audition accelerator', (_label, modifiers) => {
-    const group = makeTrackGroup([
-      makeItem('selected-object', 1, 2),
-      makeItem('other-object', 5, 2),
-    ]);
-    const { root, surface } = renderTrackCanvas(group);
+  ] as const)(
+    'leaves %s+Shift+A available for the native audition accelerator',
+    (_label, modifiers) => {
+      const group = makeTrackGroup([
+        makeItem('selected-object', 1, 2),
+        makeItem('other-object', 5, 2),
+      ]);
+      const { root, surface } = renderTrackCanvas(group);
 
-    act(() => {
-      useScoreSelectionStore.getState().setSelection([{
-        objectId: 'selected-object',
-        editorTarget: group.layers[0]!.items[0]!.editorTarget,
-      }]);
-    });
+      act(() => {
+        useScoreSelectionStore.getState().setSelection([
+          {
+            objectId: 'selected-object',
+            editorTarget: group.layers[0]!.items[0]!.editorTarget,
+          },
+        ]);
+      });
 
-    const event = new KeyboardEvent('keydown', {
-      bubbles: true,
-      cancelable: true,
-      key: 'a',
-      shiftKey: true,
-      ...modifiers,
-    });
-    act(() => surface.dispatchEvent(event));
+      const event = new KeyboardEvent('keydown', {
+        bubbles: true,
+        cancelable: true,
+        key: 'a',
+        shiftKey: true,
+        ...modifiers,
+      });
+      act(() => surface.dispatchEvent(event));
 
-    expect(event.defaultPrevented).toBe(false);
-    expect([...useScoreSelectionStore.getState().selectedObjectIds]).toEqual(['selected-object']);
-    act(() => root.unmount());
-  });
+      expect(event.defaultPrevented).toBe(false);
+      expect([...useScoreSelectionStore.getState().selectedObjectIds]).toEqual(['selected-object']);
+      act(() => root.unmount());
+    },
+  );
 
   it.each([
     ['Command', { metaKey: true }],
     ['Control', { ctrlKey: true }],
-  ] as const)('pastes the ScoreObject buffer at an empty Track location on %s-click', (_label, modifiers) => {
-    useScoreSelectionStore.setState({
-      clipboard: [{
-        ...makeItem('copied-object', 1, 2),
-        layerIndex: 0,
-        groupId: 'source-group',
-      }],
-    });
-    const group = makeTrackGroup([]);
-    const { root, surface } = renderTrackCanvas(group);
+  ] as const)(
+    'pastes the ScoreObject buffer at an empty Track location on %s-click',
+    (_label, modifiers) => {
+      useScoreSelectionStore.setState({
+        clipboard: [
+          {
+            ...makeItem('copied-object', 1, 2),
+            layerIndex: 0,
+            groupId: 'source-group',
+          },
+        ],
+      });
+      const group = makeTrackGroup([]);
+      const { root, surface } = renderTrackCanvas(group);
 
-    act(() => mouse(surface, 'mousedown', 100, 15, modifiers));
+      act(() => mouse(surface, 'mousedown', 100, 15, modifiers));
 
-    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
-    expect(applyPatch).toHaveBeenCalledWith({
-      score: {
-        type: 'addTrackItem',
-        track: {
-          rootGroupId: 'track-group',
-          trackId: 'track-row',
-          projectSessionId: 1,
-          projectRevision: 1,
+      const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<
+        typeof vi.fn
+      >;
+      expect(applyPatch).toHaveBeenCalledWith({
+        score: {
+          type: 'addTrackItem',
+          track: {
+            rootGroupId: 'track-group',
+            trackId: 'track-row',
+            projectSessionId: 1,
+            projectRevision: 1,
+          },
+          item: expect.objectContaining({ objectType: 'GenericScore', name: 'copied-object' }),
+          startBeats: 4,
         },
-        item: expect.objectContaining({ objectType: 'GenericScore', name: 'copied-object' }),
-        startBeats: 4,
-      },
-    });
-    act(() => root.unmount());
-  });
+      });
+      act(() => root.unmount());
+    },
+  );
 
   it('does not reselect a PianoRoll when double-click opens its existing editor', () => {
     const select = vi.fn(originalSelect);
     const openPanel = vi.fn();
     useScoreSelectionStore.setState({ select });
-    useWorkbenchStore.setState({ openPanel } as Partial<ReturnType<typeof useWorkbenchStore.getState>>);
+    useWorkbenchStore.setState({ openPanel } as Partial<
+      ReturnType<typeof useWorkbenchStore.getState>
+    >);
     const pianoRoll = {
       ...makeItem('piano-roll', 1, 2),
       objectType: 'PianoRoll',
@@ -393,7 +456,9 @@ describe('Track layer timeline gestures', () => {
   it('positions each rendered bar exactly once', () => {
     const group = makeTrackGroup([makeItem('track-object', 2, 2)]);
     const { host, root } = renderTrackCanvas(group);
-    const bar = Array.from(host.querySelectorAll('div')).find((element) => element.style.left === '50px');
+    const bar = Array.from(host.querySelectorAll('div')).find(
+      (element) => element.style.left === '50px',
+    );
     expect(bar).toBeTruthy();
     expect(bar?.parentElement?.style.left).toBe('');
     act(() => root.unmount());
@@ -416,7 +481,9 @@ describe('Track layer timeline gestures', () => {
       mouse(window, 'mouseup', 87, 20);
     });
 
-    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<
+      typeof vi.fn
+    >;
     expect(applyPatch).toHaveBeenCalledWith({
       score: {
         type: 'moveScoreObjects',
@@ -463,7 +530,9 @@ describe('Track layer timeline gestures', () => {
       mouse(window, 'mouseup', 113, 4);
     });
 
-    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<
+      typeof vi.fn
+    >;
     expect(applyPatch).toHaveBeenCalledWith({
       score: {
         type: 'updateTypeSpecificEditor',
@@ -513,7 +582,9 @@ describe('Track layer timeline gestures', () => {
       await Promise.resolve();
     });
 
-    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<
+      typeof vi.fn
+    >;
     expect(applyPatch).toHaveBeenCalledWith({
       score: {
         type: 'addTrackItem',
@@ -615,15 +686,18 @@ describe('Track layer timeline gestures', () => {
     ]);
     const { host, root, surface } = renderTrackCanvas(group);
     act(() => {
-      useScoreSelectionStore.getState().setSelection(group.layers[0]!.items.map((item) => ({
-        objectId: item.objectId,
-        editorTarget: item.editorTarget,
-      })));
+      useScoreSelectionStore.getState().setSelection(
+        group.layers[0]!.items.map((item) => ({
+          objectId: item.objectId,
+          editorTarget: item.editorTarget,
+        })),
+      );
     });
 
     act(() => mouse(surface, 'contextmenu', 30, 15));
-    const setColor = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]'))
-      .find((item) => item.textContent === 'Set Color…')!;
+    const setColor = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]')).find(
+      (item) => item.textContent === 'Set Color…',
+    )!;
     await act(async () => {
       setColor.click();
       await Promise.resolve();
@@ -644,7 +718,9 @@ describe('Track layer timeline gestures', () => {
     expect(Number.parseFloat(picker.style.top)).toBeGreaterThanOrEqual(52);
     expect(document.querySelector('[role="dialog"]')).toBeTruthy();
 
-    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<
+      typeof vi.fn
+    >;
     expect(applyPatch).toHaveBeenCalledWith({
       score: {
         type: 'updateSharedProperties',
@@ -680,17 +756,21 @@ describe('Track layer timeline gestures', () => {
     const group = makeTrackGroup([makeItem('track-object', 1, 1)]);
     const { root, surface } = renderTrackCanvas(group);
     act(() => {
-      useScoreSelectionStore.getState().setSelection([{
-        objectId: 'track-object',
-        editorTarget: group.layers[0]!.items[0]!.editorTarget,
-      }]);
+      useScoreSelectionStore.getState().setSelection([
+        {
+          objectId: 'track-object',
+          editorTarget: group.layers[0]!.items[0]!.editorTarget,
+        },
+      ]);
     });
     act(() => {
-      surface.dispatchEvent(new KeyboardEvent('keydown', {
-        bubbles: true,
-        metaKey: true,
-        key: 'c',
-      }));
+      surface.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          bubbles: true,
+          metaKey: true,
+          key: 'c',
+        }),
+      );
     });
 
     expect(useLibraryStore.getState().captureScoreSoundObject).toHaveBeenCalledWith({
@@ -705,27 +785,36 @@ describe('Track layer timeline gestures', () => {
   it('removes a cut Track SoundObject only after the portable buffer capture succeeds', async () => {
     let resolveCapture: ((captured: boolean) => void) | undefined;
     useLibraryStore.setState({
-      captureScoreSoundObject: vi.fn().mockImplementation(() => new Promise<boolean>((resolve) => {
-        resolveCapture = resolve;
-      })),
+      captureScoreSoundObject: vi.fn().mockImplementation(
+        () =>
+          new Promise<boolean>((resolve) => {
+            resolveCapture = resolve;
+          }),
+      ),
     });
     const group = makeTrackGroup([makeItem('track-object', 1, 1)]);
     const { root, surface } = renderTrackCanvas(group);
     act(() => {
-      useScoreSelectionStore.getState().setSelection([{
-        objectId: 'track-object',
-        editorTarget: group.layers[0]!.items[0]!.editorTarget,
-      }]);
+      useScoreSelectionStore.getState().setSelection([
+        {
+          objectId: 'track-object',
+          editorTarget: group.layers[0]!.items[0]!.editorTarget,
+        },
+      ]);
     });
     act(() => {
-      surface.dispatchEvent(new KeyboardEvent('keydown', {
-        bubbles: true,
-        metaKey: true,
-        key: 'x',
-      }));
+      surface.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          bubbles: true,
+          metaKey: true,
+          key: 'x',
+        }),
+      );
     });
 
-    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<
+      typeof vi.fn
+    >;
     expect(applyPatch).not.toHaveBeenCalled();
     await act(async () => resolveCapture?.(true));
     expect(applyPatch).toHaveBeenCalledWith({
@@ -752,16 +841,18 @@ describe('Track layer timeline gestures', () => {
     act(() => {
       useLayerSelectionStore.getState().selectSingle(
         'track-group:track-row',
-        [{
-          scopeKey: 'test',
-          groupId: 'track-group',
-          groupType: 'track',
-          layerSelectionId: 'track-row',
-          layerId: 'track-row',
-          localIndex: 0,
-          globalIndex: 0,
-          layer: group.layers[0]!,
-        }],
+        [
+          {
+            scopeKey: 'test',
+            groupId: 'track-group',
+            groupType: 'track',
+            layerSelectionId: 'track-row',
+            layerId: 'track-row',
+            localIndex: 0,
+            globalIndex: 0,
+            layer: group.layers[0]!,
+          },
+        ],
         'test',
       );
     });

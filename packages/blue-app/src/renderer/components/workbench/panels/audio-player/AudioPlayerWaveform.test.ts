@@ -1,11 +1,8 @@
-import { describe, expect, it, vi } from "vitest";
-import {
-  buildWaveformEnvelope,
-  drawWaveformEnvelope,
-} from "./AudioPlayerWaveform";
+import { describe, expect, it, vi } from 'vitest';
+import { buildWaveformEnvelope, drawWaveformEnvelope } from './AudioPlayerWaveform';
 
-describe("buildWaveformEnvelope", () => {
-  it("builds one ordered envelope spanning the canvas", () => {
+describe('buildWaveformEnvelope', () => {
+  it('builds one ordered envelope spanning the canvas', () => {
     const points = buildWaveformEnvelope(
       {
         min: [-0.8, 0.4, -0.2],
@@ -21,13 +18,13 @@ describe("buildWaveformEnvelope", () => {
     expect(points[0]?.yBottom).toBeCloseTo(52.4);
   });
 
-  it("keeps full-scale peaks inside the canvas", () => {
+  it('keeps full-scale peaks inside the canvas', () => {
     const points = buildWaveformEnvelope({ min: [-2], max: [2] }, 100, 64);
 
     expect(points).toEqual([{ x: 50, yTop: 2, yBottom: 62 }]);
   });
 
-  it("draws one closed path instead of isolated bucket rectangles", () => {
+  it('draws one closed path instead of isolated bucket rectangles', () => {
     const context = {
       beginPath: vi.fn(),
       moveTo: vi.fn(),

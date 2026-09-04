@@ -26,7 +26,10 @@ import {
 } from '../shared/window-layout-settings';
 
 const webContentsSend = vi.fn();
-const mockWindows: Array<{ isDestroyed: () => boolean; webContents: { send: typeof webContentsSend } }> = [];
+const mockWindows: Array<{
+  isDestroyed: () => boolean;
+  webContents: { send: typeof webContentsSend };
+}> = [];
 
 vi.mock('electron', () => ({
   BrowserWindow: {
@@ -228,9 +231,7 @@ describe('window-layout-store reset preserves unrelated settings', () => {
   it('runs the current-session window reset hook before broadcasting', () => {
     const resetCurrentSession = vi.fn();
     setCurrentSessionWindowResetHandler(resetCurrentSession);
-    mockWindows.push(
-      { isDestroyed: () => false, webContents: { send: webContentsSend } },
-    );
+    mockWindows.push({ isDestroyed: () => false, webContents: { send: webContentsSend } });
 
     resetWindowLayout();
 

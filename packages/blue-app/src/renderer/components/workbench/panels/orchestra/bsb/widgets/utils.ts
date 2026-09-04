@@ -81,9 +81,7 @@ export function measureTextContent(text: string, font: string): { width: number;
     height: Math.ceil(rect.height),
   };
 
-  const metrics = measured.width > 0 && measured.height > 0
-    ? measured
-    : fallback;
+  const metrics = measured.width > 0 && measured.height > 0 ? measured : fallback;
 
   cacheMeasurement(cacheKey, metrics);
   return metrics;
@@ -120,12 +118,15 @@ export function getDropdownDisplayWidth(node: BsbWidgetNodeSnapshot): number {
   let maxW = 0;
 
   if (node.type === 'BSBSubChannelDropdown') {
-    const channelOutput = typeof node.properties.channelOutput === 'string' ? node.properties.channelOutput : '';
+    const channelOutput =
+      typeof node.properties.channelOutput === 'string' ? node.properties.channelOutput : '';
     const text = channelOutput || node.objectName || 'Sub Channel';
     maxW = measureTextWidth(text, font);
   } else {
     const itemsRaw = node.properties.dropdownItems;
-    const items: Array<{ name?: string; value?: string }> = Array.isArray(itemsRaw) ? itemsRaw as any : [];
+    const items: Array<{ name?: string; value?: string }> = Array.isArray(itemsRaw)
+      ? (itemsRaw as any)
+      : [];
     for (const item of items) {
       const text = item.name || item.value || '';
       maxW = Math.max(maxW, measureTextWidth(text, font));
@@ -154,28 +155,37 @@ export function getFontString(name: string, size: number, style = 0): string {
   return parts.join(' ');
 }
 
-export function getWidgetDisplaySize(node: BsbWidgetNodeSnapshot): { width: number; height: number } {
+export function getWidgetDisplaySize(node: BsbWidgetNodeSnapshot): {
+  width: number;
+  height: number;
+} {
   switch (node.type) {
     case 'BSBHSlider': {
-      const sliderWidth = typeof node.properties.sliderWidth === 'number'
-        ? node.properties.sliderWidth
-        : typeof node.width === 'number'
-          ? node.width
-          : 150;
+      const sliderWidth =
+        typeof node.properties.sliderWidth === 'number'
+          ? node.properties.sliderWidth
+          : typeof node.width === 'number'
+            ? node.width
+            : 150;
       return {
-        width: Math.max(45, sliderWidth) + (node.properties.valueDisplayEnabled === true ? BSB_VALUE_PANEL_WIDTH : 0),
+        width:
+          Math.max(45, sliderWidth) +
+          (node.properties.valueDisplayEnabled === true ? BSB_VALUE_PANEL_WIDTH : 0),
         height: BSB_VALUE_PANEL_HEIGHT,
       };
     }
     case 'BSBVSlider': {
-      const sliderHeight = typeof node.properties.sliderHeight === 'number'
-        ? node.properties.sliderHeight
-        : typeof node.height === 'number'
-          ? node.height
-          : 150;
+      const sliderHeight =
+        typeof node.properties.sliderHeight === 'number'
+          ? node.properties.sliderHeight
+          : typeof node.height === 'number'
+            ? node.height
+            : 150;
       return {
         width: BSB_VALUE_PANEL_WIDTH,
-        height: Math.max(45, sliderHeight) + (node.properties.valueDisplayEnabled === true ? BSB_VALUE_PANEL_HEIGHT : 0),
+        height:
+          Math.max(45, sliderHeight) +
+          (node.properties.valueDisplayEnabled === true ? BSB_VALUE_PANEL_HEIGHT : 0),
       };
     }
     case 'BSBHSliderBank': {
@@ -184,11 +194,12 @@ export function getWidgetDisplaySize(node: BsbWidgetNodeSnapshot): { width: numb
         : typeof node.properties.numberOfSliders === 'number'
           ? Math.max(1, node.properties.numberOfSliders)
           : 1;
-      const sliderWidth = typeof node.properties.sliderWidth === 'number'
-        ? node.properties.sliderWidth
-        : typeof node.width === 'number'
-          ? node.width
-          : 150;
+      const sliderWidth =
+        typeof node.properties.sliderWidth === 'number'
+          ? node.properties.sliderWidth
+          : typeof node.width === 'number'
+            ? node.width
+            : 150;
       return getHSliderBankDisplaySize(
         sliderCount,
         sliderWidth,
@@ -202,11 +213,12 @@ export function getWidgetDisplaySize(node: BsbWidgetNodeSnapshot): { width: numb
         : typeof node.properties.numberOfSliders === 'number'
           ? Math.max(1, node.properties.numberOfSliders)
           : 1;
-      const sliderHeight = typeof node.properties.sliderHeight === 'number'
-        ? node.properties.sliderHeight
-        : typeof node.height === 'number'
-          ? node.height
-          : 150;
+      const sliderHeight =
+        typeof node.properties.sliderHeight === 'number'
+          ? node.properties.sliderHeight
+          : typeof node.height === 'number'
+            ? node.height
+            : 150;
       return getVSliderBankDisplaySize(
         sliderCount,
         sliderHeight,
@@ -215,24 +227,31 @@ export function getWidgetDisplaySize(node: BsbWidgetNodeSnapshot): { width: numb
       );
     }
     case 'BSBKnob': {
-      const knobWidth = typeof node.properties.knobWidth === 'number'
-        ? node.properties.knobWidth
-        : typeof node.width === 'number'
-          ? node.width
-          : 60;
+      const knobWidth =
+        typeof node.properties.knobWidth === 'number'
+          ? node.properties.knobWidth
+          : typeof node.width === 'number'
+            ? node.width
+            : 60;
       const labelEnabled = node.properties.labelEnabled !== false;
-      const labelText = labelEnabled && typeof node.properties.label === 'string'
-        ? node.properties.label
-        : '';
-      const labelFontName = typeof node.properties['labelFont.name'] === 'string' ? node.properties['labelFont.name'] : 'Roboto';
-      const labelFontSize = typeof node.properties['labelFont.size'] === 'number' ? node.properties['labelFont.size'] : 12;
-      const labelFontStyle = typeof node.properties['labelFont.style'] === 'number' ? node.properties['labelFont.style'] : 0;
+      const labelText =
+        labelEnabled && typeof node.properties.label === 'string' ? node.properties.label : '';
+      const labelFontName =
+        typeof node.properties['labelFont.name'] === 'string'
+          ? node.properties['labelFont.name']
+          : 'Roboto';
+      const labelFontSize =
+        typeof node.properties['labelFont.size'] === 'number'
+          ? node.properties['labelFont.size']
+          : 12;
+      const labelFontStyle =
+        typeof node.properties['labelFont.style'] === 'number'
+          ? node.properties['labelFont.style']
+          : 0;
       const labelMetrics = labelEnabled
         ? measureTextContent(labelText, getFontString(labelFontName, labelFontSize, labelFontStyle))
         : { width: 0, height: 0 };
-      const labelHeight = labelEnabled
-        ? Math.max(16, Math.ceil(labelMetrics.height))
-        : 0;
+      const labelHeight = labelEnabled ? Math.max(16, Math.ceil(labelMetrics.height)) : 0;
       const valueHeight = node.properties.valueDisplayEnabled === true ? 16 : 0;
       return {
         width: Math.max(knobWidth, Math.ceil(labelMetrics.width)),
@@ -240,31 +259,40 @@ export function getWidgetDisplaySize(node: BsbWidgetNodeSnapshot): { width: numb
       };
     }
     case 'BSBXYController': {
-      const baseWidth = typeof node.properties.width === 'number'
-        ? node.properties.width
-        : typeof node.width === 'number'
-          ? node.width
-          : 100;
-      const baseHeight = typeof node.properties.height === 'number'
-        ? node.properties.height
-        : typeof node.height === 'number'
-          ? node.height
-          : 80;
+      const baseWidth =
+        typeof node.properties.width === 'number'
+          ? node.properties.width
+          : typeof node.width === 'number'
+            ? node.width
+            : 100;
+      const baseHeight =
+        typeof node.properties.height === 'number'
+          ? node.properties.height
+          : typeof node.height === 'number'
+            ? node.height
+            : 80;
       return {
         width: baseWidth,
-        height: baseHeight + (node.properties.valueDisplayEnabled === true ? BSB_XY_READOUT_HEIGHT : 0),
+        height:
+          baseHeight + (node.properties.valueDisplayEnabled === true ? BSB_XY_READOUT_HEIGHT : 0),
       };
     }
     case 'BSBGroup': {
       const titleEnabled = node.properties.titleEnabled !== false;
-      const groupName = typeof node.properties.groupName === 'string' ? node.properties.groupName : '';
-      const fontName = typeof node.properties['font.name'] === 'string' ? node.properties['font.name'] : 'Roboto';
-      const fontSize = typeof node.properties['font.size'] === 'number' ? node.properties['font.size'] : 12;
-      const fontStyle = typeof node.properties['font.style'] === 'number' ? node.properties['font.style'] : 0;
-      const titleMetrics = titleEnabled && groupName
-        ? measureTextContent(groupName, getFontString(fontName, fontSize, fontStyle))
-        : { width: 0, height: 0 };
-      const labelHeight = titleEnabled && groupName ? Math.max(20, Math.ceil(titleMetrics.height)) : 0;
+      const groupName =
+        typeof node.properties.groupName === 'string' ? node.properties.groupName : '';
+      const fontName =
+        typeof node.properties['font.name'] === 'string' ? node.properties['font.name'] : 'Roboto';
+      const fontSize =
+        typeof node.properties['font.size'] === 'number' ? node.properties['font.size'] : 12;
+      const fontStyle =
+        typeof node.properties['font.style'] === 'number' ? node.properties['font.style'] : 0;
+      const titleMetrics =
+        titleEnabled && groupName
+          ? measureTextContent(groupName, getFontString(fontName, fontSize, fontStyle))
+          : { width: 0, height: 0 };
+      const labelHeight =
+        titleEnabled && groupName ? Math.max(20, Math.ceil(titleMetrics.height)) : 0;
       const titleWidth = titleEnabled && groupName ? Math.ceil(titleMetrics.width) + 2 : 0;
 
       let childrenWidth = 10;
@@ -284,10 +312,16 @@ export function getWidgetDisplaySize(node: BsbWidgetNodeSnapshot): { width: numb
     }
     case 'BSBLabel': {
       const labelText = typeof node.properties.label === 'string' ? node.properties.label : '';
-      const fontName = typeof node.properties['font.name'] === 'string' ? node.properties['font.name'] : 'Roboto';
-      const fontSize = typeof node.properties['font.size'] === 'number' ? node.properties['font.size'] : 12;
-      const fontStyle = typeof node.properties['font.style'] === 'number' ? node.properties['font.style'] : 0;
-      const labelMetrics = measureTextContent(labelText, getFontString(fontName, fontSize, fontStyle));
+      const fontName =
+        typeof node.properties['font.name'] === 'string' ? node.properties['font.name'] : 'Roboto';
+      const fontSize =
+        typeof node.properties['font.size'] === 'number' ? node.properties['font.size'] : 12;
+      const fontStyle =
+        typeof node.properties['font.style'] === 'number' ? node.properties['font.style'] : 0;
+      const labelMetrics = measureTextContent(
+        labelText,
+        getFontString(fontName, fontSize, fontStyle),
+      );
       return {
         width: Math.max(1, Math.ceil(labelMetrics.width) + 1),
         height: Math.max(16, Math.ceil(labelMetrics.height)) + 1,
@@ -311,38 +345,42 @@ export function getWidgetDisplaySize(node: BsbWidgetNodeSnapshot): { width: numb
       };
     }
     case 'BSBTextField': {
-      const textFieldWidth = typeof node.properties.textFieldWidth === 'number'
-        ? node.properties.textFieldWidth
-        : typeof node.width === 'number'
-          ? node.width
-          : 100;
+      const textFieldWidth =
+        typeof node.properties.textFieldWidth === 'number'
+          ? node.properties.textFieldWidth
+          : typeof node.width === 'number'
+            ? node.width
+            : 100;
       return {
         width: textFieldWidth,
         height: 30,
       };
     }
     case 'BSBFileSelector': {
-      const textFieldWidth = typeof node.properties.textFieldWidth === 'number'
-        ? node.properties.textFieldWidth
-        : typeof node.width === 'number'
-          ? node.width - 30
-          : 100;
+      const textFieldWidth =
+        typeof node.properties.textFieldWidth === 'number'
+          ? node.properties.textFieldWidth
+          : typeof node.width === 'number'
+            ? node.width - 30
+            : 100;
       return {
         width: textFieldWidth + 30,
         height: 30,
       };
     }
     case 'BSBLineObject': {
-      const canvasWidth = typeof node.properties.canvasWidth === 'number'
-        ? node.properties.canvasWidth
-        : typeof node.width === 'number'
-          ? node.width
-          : 200;
-      const canvasHeight = typeof node.properties.canvasHeight === 'number'
-        ? node.properties.canvasHeight
-        : typeof node.height === 'number'
-          ? node.height - BSB_LINE_SELECTOR_HEIGHT
-          : 160;
+      const canvasWidth =
+        typeof node.properties.canvasWidth === 'number'
+          ? node.properties.canvasWidth
+          : typeof node.width === 'number'
+            ? node.width
+            : 200;
+      const canvasHeight =
+        typeof node.properties.canvasHeight === 'number'
+          ? node.properties.canvasHeight
+          : typeof node.height === 'number'
+            ? node.height - BSB_LINE_SELECTOR_HEIGHT
+            : 160;
       return {
         width: canvasWidth,
         height: canvasHeight + BSB_LINE_SELECTOR_HEIGHT,
@@ -417,11 +455,17 @@ function ensureSharedHtmlMeasureEl(): HTMLDivElement {
   return sharedHtmlMeasureEl;
 }
 
-function estimateSwingHtmlTextContent(text: string, fontSize: number): { width: number; height: number } {
+function estimateSwingHtmlTextContent(
+  text: string,
+  fontSize: number,
+): { width: number; height: number } {
   const plainText = stripBsbSwingHtmlText(text);
   const lines = plainText ? plainText.split('\n') : [''];
   const effectiveFontSize = getBsbSwingHtmlMaxFontSizePx(text, fontSize);
-  const width = lines.reduce((maxWidth, line) => Math.max(maxWidth, estimateTextWidth(line, effectiveFontSize)), 0);
+  const width = lines.reduce(
+    (maxWidth, line) => Math.max(maxWidth, estimateTextWidth(line, effectiveFontSize)),
+    0,
+  );
   const lineHeight = Math.max(16, Math.ceil(effectiveFontSize * 1.25));
   return {
     width,
@@ -523,9 +567,7 @@ function sanitizeFontFaceValue(rawValue: string | null): string | null {
     return null;
   }
 
-  return fonts
-    .map((font) => (font.includes(' ') ? `'${font}'` : font))
-    .join(',');
+  return fonts.map((font) => (font.includes(' ') ? `'${font}'` : font)).join(',');
 }
 
 function escapeHtml(text: string): string {

@@ -20,10 +20,7 @@ import { acquireTreeDndManager } from './tree-dnd-domain';
  * backend per document no matter how many trees coexist. Callers keep the
  * ordinary Arborist props and tree ref; manager/backend wiring is owned here.
  */
-export type BlueTreeProps<T> = Omit<
-  TreeProps<T>,
-  'dndManager' | 'dndBackend' | 'dndRootElement'
->;
+export type BlueTreeProps<T> = Omit<TreeProps<T>, 'dndManager' | 'dndBackend' | 'dndRootElement'>;
 
 interface BoundDomain {
   document: Document;
@@ -46,7 +43,11 @@ function BlueTreeImpl<T>(
     const manager = doc ? acquireTreeDndManager(doc) : null;
 
     setDomain((current) =>
-      manager && current?.manager === manager ? current : manager ? { document: doc!, manager } : null,
+      manager && current?.manager === manager
+        ? current
+        : manager
+          ? { document: doc!, manager }
+          : null,
     );
     if (!manager || !doc) {
       return;

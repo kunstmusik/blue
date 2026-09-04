@@ -28,11 +28,7 @@ export default function GenericScoreObjectBar({
       selected={selected}
       backgroundColor={item.backgroundColor}
     >
-      <LabelText
-        labelLines={br.labelLines}
-        color={fg}
-        show={showText}
-      />
+      <LabelText labelLines={br.labelLines} color={fg} show={showText} />
       {repeatPointBeats != null && (br.kind === 'generic' || br.kind === 'letter') && (
         <RepeatMarkers
           repeatPointBeats={repeatPointBeats}

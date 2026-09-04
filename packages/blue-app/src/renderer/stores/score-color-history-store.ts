@@ -62,7 +62,9 @@ export const useScoreColorHistoryStore = create<ScoreColorHistoryState>((set, ge
       return false;
     }
     try {
-      const result: unknown = await useProjectStore.getState().applyProjectDocumentPatch(currentEntry.inverse);
+      const result: unknown = await useProjectStore
+        .getState()
+        .applyProjectDocumentPatch(currentEntry.inverse);
       if (result === false) {
         return false;
       }
@@ -93,7 +95,9 @@ export const useScoreColorHistoryStore = create<ScoreColorHistoryState>((set, ge
       return false;
     }
     try {
-      const result: unknown = await useProjectStore.getState().applyProjectDocumentPatch(nextEntry.forward);
+      const result: unknown = await useProjectStore
+        .getState()
+        .applyProjectDocumentPatch(nextEntry.forward);
       if (result === false) {
         return false;
       }

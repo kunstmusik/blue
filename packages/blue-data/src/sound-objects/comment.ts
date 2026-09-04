@@ -25,9 +25,12 @@ export class Comment extends AbstractSoundObject {
     }
   }
 
-  getText(): string { return this._commentText; }
-  setText(text: string): void { this._commentText = text; }
-
+  getText(): string {
+    return this._commentText;
+  }
+  setText(text: string): void {
+    this._commentText = text;
+  }
 
   override getTimeBehavior(): TimeBehavior {
     return TimeBehavior.NOT_SUPPORTED;

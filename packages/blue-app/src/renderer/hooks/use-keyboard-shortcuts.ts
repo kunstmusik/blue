@@ -51,7 +51,15 @@ export function useKeyboardShortcuts(): void {
         await togglePlay();
       }
 
-      if (e.code === 'KeyF' && !meta && !e.altKey && !e.shiftKey && !e.repeat && hasProject && !editingText) {
+      if (
+        e.code === 'KeyF' &&
+        !meta &&
+        !e.altKey &&
+        !e.shiftKey &&
+        !e.repeat &&
+        hasProject &&
+        !editingText
+      ) {
         e.preventDefault();
         usePlaybackStore.getState().toggleFollowPlayback();
       }

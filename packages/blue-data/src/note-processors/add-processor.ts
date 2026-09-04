@@ -9,11 +9,19 @@ export class AddProcessor extends NoteProcessor {
   private _pfield = 4;
   private _value = 0;
 
-  getPfield(): string { return this._pfield.toString(); }
-  setPfield(pfield: string): void { this._pfield = parseInt(pfield, 10); }
+  getPfield(): string {
+    return this._pfield.toString();
+  }
+  setPfield(pfield: string): void {
+    this._pfield = parseInt(pfield, 10);
+  }
 
-  getVal(): string { return this._value.toString(); }
-  setVal(val: string): void { this._value = parseFloat(val); }
+  getVal(): string {
+    return this._value.toString();
+  }
+  setVal(val: string): void {
+    this._value = parseFloat(val);
+  }
 
   override process(notes: NoteList): NoteList {
     for (const note of notes) {
@@ -31,7 +39,9 @@ export class AddProcessor extends NoteProcessor {
     return notes;
   }
 
-  override getDisplayName(): string { return 'AddProcessor'; }
+  override getDisplayName(): string {
+    return 'AddProcessor';
+  }
 
   override deepCopy(): AddProcessor {
     const copy = new AddProcessor();

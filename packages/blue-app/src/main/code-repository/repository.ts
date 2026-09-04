@@ -8,7 +8,11 @@
 import { randomUUID } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import type { CodeRepositoryNode } from '@blue/data';
-import { CODE_REPOSITORY_ROOT_ID, collectDescendantIds, validateCodeRepositoryTree } from '@blue/data';
+import {
+  CODE_REPOSITORY_ROOT_ID,
+  collectDescendantIds,
+  validateCodeRepositoryTree,
+} from '@blue/data';
 import { initializeCodeRepositorySchema } from './schema';
 
 /** Shape of a row mapped out of the database for internal validation. */
@@ -78,7 +82,9 @@ export class CodeRepositoryRepository {
 
   isInitialized(): boolean {
     this.assertOpen();
-    const row = this.database.prepare('SELECT initialized FROM code_repository_state WHERE singleton_id = 1').get();
+    const row = this.database
+      .prepare('SELECT initialized FROM code_repository_state WHERE singleton_id = 1')
+      .get();
     return Boolean(row?.initialized);
   }
 
@@ -86,7 +92,9 @@ export class CodeRepositoryRepository {
   getSnapshot(): CodeRepositorySnapshotData {
     this.assertOpen();
     const rows = this.database
-      .prepare('SELECT * FROM code_repository_nodes ORDER BY parent_id IS NULL DESC, sort_order, id')
+      .prepare(
+        'SELECT * FROM code_repository_nodes ORDER BY parent_id IS NULL DESC, sort_order, id',
+      )
       .all() as Record<string, unknown>[];
     const nodes = new Map<string, CodeRepositoryNode>();
     const childrenByParent = new Map<string | null, CodeRepositoryNode[]>();
@@ -170,7 +178,11 @@ export class CodeRepositoryRepository {
 
   // Single-node operations --------------------------------------------
 
-  createGroup(parentId: string, name: string, expectedRevision: number): CodeRepositorySnapshotData {
+  createGroup(
+    parentId: string,
+    name: string,
+    expectedRevision: number,
+  ): CodeRepositorySnapshotData {
     return this.withTransaction(() => {
       this.assertExpectedRevision(expectedRevision);
       const displayName = requireNonBlankName(name);
@@ -191,7 +203,12 @@ export class CodeRepositoryRepository {
     });
   }
 
-  createSnippet(parentId: string, name: string, code: string, expectedRevision: number): CodeRepositorySnapshotData {
+  createSnippet(
+    parentId: string,
+    name: string,
+    code: string,
+    expectedRevision: number,
+  ): CodeRepositorySnapshotData {
     return this.withTransaction(() => {
       this.assertExpectedRevision(expectedRevision);
       const displayName = requireNonBlankName(name);
@@ -212,7 +229,12 @@ export class CodeRepositoryRepository {
     });
   }
 
-  moveNode(nodeId: string, parentId: string, order: number, expectedRevision: number): CodeRepositorySnapshotData {
+  moveNode(
+    nodeId: string,
+    parentId: string,
+    order: number,
+    expectedRevision: number,
+  ): CodeRepositorySnapshotData {
     return this.withTransaction(() => {
       this.assertExpectedRevision(expectedRevision);
       if (nodeId === CODE_REPOSITORY_ROOT_ID) {
@@ -346,7 +368,9 @@ export class CodeRepositoryRepository {
   // Internals ----------------------------------------------------------
 
   private requireNode(nodeId: string): CodeRepositoryDbNode {
-    const row = this.database.prepare('SELECT * FROM code_repository_nodes WHERE id = ?').get(nodeId);
+    const row = this.database
+      .prepare('SELECT * FROM code_repository_nodes WHERE id = ?')
+      .get(nodeId);
     if (!row) throw new Error(`invalid-tree:missing-node:${nodeId}`);
     return mapDbRow(row as Record<string, unknown>);
   }
@@ -388,7 +412,9 @@ export class CodeRepositoryRepository {
 
   private nextSortOrder(parentId: string): number {
     const row = this.database
-      .prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_order FROM code_repository_nodes WHERE parent_id = ?')
+      .prepare(
+        'SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_order FROM code_repository_nodes WHERE parent_id = ?',
+      )
       .get(parentId);
     return Number(row?.next_order ?? 0);
   }
@@ -406,14 +432,18 @@ export class CodeRepositoryRepository {
         ids.splice(insertAt, 0, moving);
       }
     }
-    const update = this.database.prepare('UPDATE code_repository_nodes SET sort_order = ? WHERE id = ?');
+    const update = this.database.prepare(
+      'UPDATE code_repository_nodes SET sort_order = ? WHERE id = ?',
+    );
     ids.forEach((id, index) => update.run(index, id));
   }
 
   private markInitialized(): void {
     const now = Date.now();
     this.database
-      .prepare('UPDATE code_repository_state SET initialized = 1, updated_at = ? WHERE singleton_id = 1')
+      .prepare(
+        'UPDATE code_repository_state SET initialized = 1, updated_at = ? WHERE singleton_id = 1',
+      )
       .run(now);
   }
 

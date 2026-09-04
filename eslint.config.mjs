@@ -40,7 +40,8 @@ export default tseslint.config(
         'error',
         {
           name: 'confirm',
-          message: 'Use window.blueAPI.showNativeConfirmation or ConfirmationDialog instead of window.confirm / confirm.',
+          message:
+            'Use window.blueAPI.showNativeConfirmation or ConfirmationDialog instead of window.confirm / confirm.',
         },
         {
           name: 'prompt',
@@ -56,7 +57,8 @@ export default tseslint.config(
         {
           object: 'window',
           property: 'confirm',
-          message: 'Use window.blueAPI.showNativeConfirmation or ConfirmationDialog instead of window.confirm.',
+          message:
+            'Use window.blueAPI.showNativeConfirmation or ConfirmationDialog instead of window.confirm.',
         },
         {
           object: 'window',
@@ -71,7 +73,8 @@ export default tseslint.config(
         {
           object: 'globalThis',
           property: 'confirm',
-          message: 'Use window.blueAPI.showNativeConfirmation or ConfirmationDialog instead of globalThis.confirm.',
+          message:
+            'Use window.blueAPI.showNativeConfirmation or ConfirmationDialog instead of globalThis.confirm.',
         },
         {
           object: 'globalThis',
@@ -87,12 +90,16 @@ export default tseslint.config(
       'no-restricted-syntax': [
         'error',
         {
-          selector: "CallExpression[callee.type='MemberExpression'][callee.property.name='showMessageBox']",
-          message: 'Use showNativeConfirmation from packages/blue-app/src/main/native-confirmation.ts instead of calling showMessageBox directly.',
+          selector:
+            "CallExpression[callee.type='MemberExpression'][callee.property.name='showMessageBox']",
+          message:
+            'Use showNativeConfirmation from packages/blue-app/src/main/native-confirmation.ts instead of calling showMessageBox directly.',
         },
         {
-          selector: "CallExpression[callee.type='MemberExpression'][callee.property.name='showMessageBoxSync']",
-          message: 'Use showNativeConfirmation from packages/blue-app/src/main/native-confirmation.ts instead of calling showMessageBoxSync directly.',
+          selector:
+            "CallExpression[callee.type='MemberExpression'][callee.property.name='showMessageBoxSync']",
+          message:
+            'Use showNativeConfirmation from packages/blue-app/src/main/native-confirmation.ts instead of calling showMessageBoxSync directly.',
         },
       ],
     },
@@ -107,23 +114,29 @@ export default tseslint.config(
         {
           object: 'dialog',
           property: 'showMessageBox',
-          message: 'Use showNativeConfirmation from packages/blue-app/src/main/native-confirmation.ts instead of dialog.showMessageBox directly.',
+          message:
+            'Use showNativeConfirmation from packages/blue-app/src/main/native-confirmation.ts instead of dialog.showMessageBox directly.',
         },
         {
           object: 'dialog',
           property: 'showMessageBoxSync',
-          message: 'Use showNativeConfirmation from packages/blue-app/src/main/native-confirmation.ts instead of dialog.showMessageBoxSync directly.',
+          message:
+            'Use showNativeConfirmation from packages/blue-app/src/main/native-confirmation.ts instead of dialog.showMessageBoxSync directly.',
         },
       ],
       'no-restricted-syntax': [
         'error',
         {
-          selector: "CallExpression[callee.type='MemberExpression'][callee.property.name='showMessageBox']",
-          message: 'Use showNativeConfirmation from packages/blue-app/src/main/native-confirmation.ts instead of calling showMessageBox directly.',
+          selector:
+            "CallExpression[callee.type='MemberExpression'][callee.property.name='showMessageBox']",
+          message:
+            'Use showNativeConfirmation from packages/blue-app/src/main/native-confirmation.ts instead of calling showMessageBox directly.',
         },
         {
-          selector: "CallExpression[callee.type='MemberExpression'][callee.property.name='showMessageBoxSync']",
-          message: 'Use showNativeConfirmation from packages/blue-app/src/main/native-confirmation.ts instead of calling showMessageBoxSync directly.',
+          selector:
+            "CallExpression[callee.type='MemberExpression'][callee.property.name='showMessageBoxSync']",
+          message:
+            'Use showNativeConfirmation from packages/blue-app/src/main/native-confirmation.ts instead of calling showMessageBoxSync directly.',
         },
       ],
     },
@@ -135,11 +148,14 @@ export default tseslint.config(
       'no-restricted-syntax': [
         'error',
         {
-          selector: "JSXAttribute[name.name='className'] > JSXExpressionContainer > TemplateLiteral",
-          message: 'Use cn() from src/renderer/lib/cn.ts instead of template literals for className.',
+          selector:
+            "JSXAttribute[name.name='className'] > JSXExpressionContainer > TemplateLiteral",
+          message:
+            'Use cn() from src/renderer/lib/cn.ts instead of template literals for className.',
         },
         {
-          selector: "JSXAttribute[name.name='className'] JSXExpressionContainer CallExpression[callee.property.name='join']",
+          selector:
+            "JSXAttribute[name.name='className'] JSXExpressionContainer CallExpression[callee.property.name='join']",
           message: 'Use cn() from src/renderer/lib/cn.ts instead of array join for className.',
         },
       ],

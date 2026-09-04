@@ -40,13 +40,10 @@ function convertPch(midiKey: number): string {
 }
 
 function convertOct(midiKey: number): string {
-  return formatBlueNumber((midiKey / 12.0) + 3.0);
+  return formatBlueNumber(midiKey / 12.0 + 3.0);
 }
 
-function processKey(
-  processor: MidiInputProcessor,
-  key: number,
-): string {
+function processKey(processor: MidiInputProcessor, key: number): string {
   const scale = processor.getScale() ?? new Scale();
 
   switch (processor.getKeyMapping()) {
@@ -88,10 +85,7 @@ function processKey(
   }
 }
 
-function processVelocity(
-  processor: MidiInputProcessor,
-  velocity: number,
-): string {
+function processVelocity(processor: MidiInputProcessor, velocity: number): string {
   switch (processor.getVelocityMapping()) {
     case 'MIDI':
       return velocity.toString();

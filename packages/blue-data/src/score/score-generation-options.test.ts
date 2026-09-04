@@ -15,9 +15,12 @@ describe('Track score generation options', () => {
     ['-3.5', '-17.5'],
     ['"lead"', '17'],
     ['lead.main', '17'],
-  ])('replaces the instrument portion of %s while preserving suffix semantics', (input, expected) => {
-    expect(replaceTrackInstrumentP1(input, 17)).toBe(expected);
-  });
+  ])(
+    'replaces the instrument portion of %s while preserving suffix semantics',
+    (input, expected) => {
+      expect(replaceTrackInstrumentP1(input, 17)).toBe(expected);
+    },
+  );
 
   it.each(['', '3abc', '1..2', '1i'])('preserves malformed or empty authored p1 %s', (input) => {
     expect(replaceTrackInstrumentP1(input, 17)).toBe(input);

@@ -100,7 +100,7 @@ describe('waitForCurrentWorkbenchApi', () => {
 });
 
 describe('createPopoutOpenGuard', () => {
-  it('does not reload Electron\'s about:blank proxy before popout navigation', () => {
+  it("does not reload Electron's about:blank proxy before popout navigation", () => {
     vi.useFakeTimers();
     const reload = vi.fn();
     const location = { pathname: 'blank', reload };
@@ -259,9 +259,7 @@ describe('explicit popout restoration', () => {
       getPanel: vi.fn((id: string) => panels.get(id)),
       addPopoutGroup: vi.fn(async (item: typeof score | typeof sourceGroup) => {
         const movedPanels = 'panels' in item ? [...item.panels] : [item];
-        sourceGroup.panels = sourceGroup.panels.filter(
-          (panel) => !movedPanels.includes(panel),
-        );
+        sourceGroup.panels = sourceGroup.panels.filter((panel) => !movedPanels.includes(panel));
         for (const panel of movedPanels) {
           panel.group = popoutGroup;
           popoutGroup.panels.push(panel);
@@ -270,10 +268,7 @@ describe('explicit popout restoration', () => {
       }),
     };
 
-    const groupIds = await restorePreparedPopoutGroups(
-      api as never,
-      prepared.intents,
-    );
+    const groupIds = await restorePreparedPopoutGroups(api as never, prepared.intents);
 
     expect(api.addPopoutGroup).toHaveBeenCalledWith(
       score,

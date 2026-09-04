@@ -37,8 +37,9 @@ describe('BlueX7 pop-song fixture generator', () => {
     expect(rolls.length).toBe(12);
     for (const roll of rolls) {
       expect(roll.getPchGenerationMethod(), roll.getName()).toBe(0);
-      expect(roll.getNoteTemplate(), roll.getName())
-        .toMatch(/^i <INSTR_ID> <START> <DUR> <FREQ> (88|104)$/);
+      expect(roll.getNoteTemplate(), roll.getName()).toMatch(
+        /^i <INSTR_ID> <START> <DUR> <FREQ> (88|104)$/,
+      );
       // Object times are stored as BBF positions/durations, not raw beats.
       expect(roll.getStartTime().getTimeBase(), roll.getName()).toBe(TimeBase.BBF);
       expect(roll.getSubjectiveDuration().getTimeBase(), roll.getName()).toBe(TimeBase.BBF);

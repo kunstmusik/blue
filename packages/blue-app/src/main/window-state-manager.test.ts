@@ -8,10 +8,7 @@ import {
   resetTrackedWindowsToDefaultBounds,
   resetWindowToDefaultBounds,
 } from './window-state-manager';
-import {
-  clearSettingsCache,
-  setSettingsFilePathForTesting,
-} from './program-settings-store';
+import { clearSettingsCache, setSettingsFilePathForTesting } from './program-settings-store';
 import { loadWindowLayoutSettings, saveWindowLayoutSettings } from './window-layout-store';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -50,7 +47,12 @@ vi.mock('electron', () => ({
   screen: screenMock,
 }));
 
-function createMockWindow(initialBounds: { x: number; y: number; width: number; height: number }): MockBrowserWindow {
+function createMockWindow(initialBounds: {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}): MockBrowserWindow {
   const maximized = { value: false };
   const fullscreen = { value: false };
   const minimized = { value: false };
@@ -76,9 +78,15 @@ function createMockWindow(initialBounds: { x: number; y: number; width: number; 
       initialBounds.x = x;
       initialBounds.y = y;
     }),
-    maximize: vi.fn(() => { maximized.value = true; }),
-    unmaximize: vi.fn(() => { maximized.value = false; }),
-    setFullScreen: vi.fn((value: boolean) => { fullscreen.value = value; }),
+    maximize: vi.fn(() => {
+      maximized.value = true;
+    }),
+    unmaximize: vi.fn(() => {
+      maximized.value = false;
+    }),
+    setFullScreen: vi.fn((value: boolean) => {
+      fullscreen.value = value;
+    }),
     on: vi.fn((event: string, handler: (...args: unknown[]) => void) => {
       let set = handlers.get(event);
       if (!set) {
@@ -116,7 +124,10 @@ beforeEach(() => {
   clearSettingsCache();
   screenMock.getAllDisplays.mockReset();
   screenMock.getAllDisplays.mockReturnValue([
-    { bounds: { x: 0, y: 0, width: 1920, height: 1080 }, workArea: { x: 0, y: 0, width: 1920, height: 1080 } },
+    {
+      bounds: { x: 0, y: 0, width: 1920, height: 1080 },
+      workArea: { x: 0, y: 0, width: 1920, height: 1080 },
+    },
   ]);
 });
 
@@ -142,7 +153,9 @@ describe('window-state-manager reset defaults', () => {
   it('resets only windows still tracked by attachWindowStateHandlers', () => {
     const main = createMockWindow({ x: 100, y: 100, width: 700, height: 500 });
     const settings = createMockWindow({ x: 200, y: 200, width: 700, height: 500 });
-    const disposeSettings = attachWindowStateHandlers(settings as never, 'settings', { onSave: vi.fn() });
+    const disposeSettings = attachWindowStateHandlers(settings as never, 'settings', {
+      onSave: vi.fn(),
+    });
     attachWindowStateHandlers(main as never, 'main', { onSave: vi.fn() });
     disposeSettings();
 
@@ -278,7 +291,10 @@ describe('window-state-manager restoreWindowState', () => {
 
   it('falls back to defaults when saved bounds are offscreen', () => {
     screenMock.getAllDisplays.mockReturnValue([
-      { bounds: { x: 0, y: 0, width: 1000, height: 1000 }, workArea: { x: 0, y: 0, width: 1000, height: 1000 } },
+      {
+        bounds: { x: 0, y: 0, width: 1000, height: 1000 },
+        workArea: { x: 0, y: 0, width: 1000, height: 1000 },
+      },
     ]);
     const window = createMockWindow({ x: 0, y: 0, width: 1200, height: 800 });
     const result = restoreWindowState(window as never, 'main', {
@@ -311,7 +327,14 @@ describe('window-state-manager attachWindowStateHandlers', () => {
 
     attachWindowStateHandlers(window as never, 'main', { onSave: savedSpy });
 
-    for (const event of ['move', 'maximize', 'unmaximize', 'enter-full-screen', 'leave-full-screen', 'close']) {
+    for (const event of [
+      'move',
+      'maximize',
+      'unmaximize',
+      'enter-full-screen',
+      'leave-full-screen',
+      'close',
+    ]) {
       window.trigger(event);
     }
     expect(savedSpy).toHaveBeenCalledTimes(6);

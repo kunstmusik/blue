@@ -2,12 +2,20 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
-import { createDefaultBsbWidgetSnapshot, type BlueSynthBuilderInstrumentSnapshot } from '../../shared/project-editor';
+import {
+  createDefaultBsbWidgetSnapshot,
+  type BlueSynthBuilderInstrumentSnapshot,
+} from '../../shared/project-editor';
 import { resolveBsbSwingHtmlFontSizePx, stripBsbSwingHtmlText } from '../../shared/bsb-swing-html';
 import BSBInterfaceCanvas from '../components/workbench/panels/orchestra/bsb/BSBInterfaceCanvas';
-import { getSanitizedBsbSwingHtml, getWidgetDisplaySize } from '../components/workbench/panels/orchestra/bsb/widgets/utils';
+import {
+  getSanitizedBsbSwingHtml,
+  getWidgetDisplaySize,
+} from '../components/workbench/panels/orchestra/bsb/widgets/utils';
 
-function makeInstrument(children: BlueSynthBuilderInstrumentSnapshot['widgetTree']['children']): BlueSynthBuilderInstrumentSnapshot {
+function makeInstrument(
+  children: BlueSynthBuilderInstrumentSnapshot['widgetTree']['children'],
+): BlueSynthBuilderInstrumentSnapshot {
   return {
     assignmentId: '1',
     type: 'blueSynthBuilder',

@@ -106,10 +106,14 @@ export class Score extends Array<LayerGroup<Layer>> {
       const layerGroup = this[i];
 
       if (!hasSolo) {
-        const nl = layerGroup.generateForCSD(context, compileData, startTime, endTime, { processWithSolo: false });
+        const nl = layerGroup.generateForCSD(context, compileData, startTime, endTime, {
+          processWithSolo: false,
+        });
         noteList.merge(nl);
       } else {
-        const nl = layerGroup.generateForCSD(context, compileData, startTime, endTime, { processWithSolo: true });
+        const nl = layerGroup.generateForCSD(context, compileData, startTime, endTime, {
+          processWithSolo: true,
+        });
         noteList.merge(nl);
       }
     }
@@ -129,30 +133,24 @@ export class Score extends Array<LayerGroup<Layer>> {
       const layerGroup = this[i];
 
       if (layerGroup instanceof PolyObject) {
-        const nl = await layerGroup.generateForCSDAsync(
-          context,
-          compileData,
-          startTime,
-          endTime,
-          { processWithSolo: hasSolo },
-        );
+        const nl = await layerGroup.generateForCSDAsync(context, compileData, startTime, endTime, {
+          processWithSolo: hasSolo,
+        });
         noteList.merge(nl);
         continue;
       }
 
       if (layerGroup instanceof TrackLayerGroup) {
-        const nl = await layerGroup.generateForCSDAsync(
-          context,
-          compileData,
-          startTime,
-          endTime,
-          { processWithSolo: hasSolo },
-        );
+        const nl = await layerGroup.generateForCSDAsync(context, compileData, startTime, endTime, {
+          processWithSolo: hasSolo,
+        });
         noteList.merge(nl);
         continue;
       }
 
-      const nl = layerGroup.generateForCSD(context, compileData, startTime, endTime, { processWithSolo: hasSolo });
+      const nl = layerGroup.generateForCSD(context, compileData, startTime, endTime, {
+        processWithSolo: hasSolo,
+      });
       noteList.merge(nl);
     }
 
@@ -223,7 +221,11 @@ export class Score extends Array<LayerGroup<Layer>> {
           break;
         case 'soundObject': {
           const type = node.getAttribute('type');
-          if (type === 'blue.soundObject.PolyObject' || type === 'PolyObject' || node.hasElement('soundLayer')) {
+          if (
+            type === 'blue.soundObject.PolyObject' ||
+            type === 'PolyObject' ||
+            node.hasElement('soundLayer')
+          ) {
             const polyObject = PolyObject.loadFromXML(node, objRefMap);
             polyObject.setTimeBehavior(TimeBehavior.NONE);
             score.push(polyObject);

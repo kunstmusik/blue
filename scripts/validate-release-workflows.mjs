@@ -158,9 +158,24 @@ forbidRegex(
   'PR_NO_PUSH',
   'pr.yml must not trigger on push (use develop.yml or release.yml for branch pushes)',
 );
-requireSubstring('.github/workflows/pr.yml', 'target-id: macos-arm64', 'PR_MACOS_ARM64', 'pr.yml must cover macos-arm64');
-requireSubstring('.github/workflows/pr.yml', 'target-id: windows-x64', 'PR_WINDOWS_X64', 'pr.yml must cover windows-x64');
-requireSubstring('.github/workflows/pr.yml', 'target-id: linux-x64', 'PR_LINUX_X64', 'pr.yml must cover linux-x64');
+requireSubstring(
+  '.github/workflows/pr.yml',
+  'target-id: macos-arm64',
+  'PR_MACOS_ARM64',
+  'pr.yml must cover macos-arm64',
+);
+requireSubstring(
+  '.github/workflows/pr.yml',
+  'target-id: windows-x64',
+  'PR_WINDOWS_X64',
+  'pr.yml must cover windows-x64',
+);
+requireSubstring(
+  '.github/workflows/pr.yml',
+  'target-id: linux-x64',
+  'PR_LINUX_X64',
+  'pr.yml must cover linux-x64',
+);
 forbidRegex(
   '.github/workflows/pr.yml',
   /package:macos-x64/,
@@ -259,9 +274,24 @@ requireSubstring(
   'DEVELOP_METADATA_CHANNEL',
   'develop.yml must build development-channel metadata',
 );
-requireSubstring('.github/workflows/develop.yml', 'target-id: macos-arm64', 'DEVELOP_MACOS_ARM64', 'develop.yml must cover macos-arm64');
-requireSubstring('.github/workflows/develop.yml', 'target-id: windows-x64', 'DEVELOP_WINDOWS_X64', 'develop.yml must cover windows-x64');
-requireSubstring('.github/workflows/develop.yml', 'target-id: linux-x64', 'DEVELOP_LINUX_X64', 'develop.yml must cover linux-x64');
+requireSubstring(
+  '.github/workflows/develop.yml',
+  'target-id: macos-arm64',
+  'DEVELOP_MACOS_ARM64',
+  'develop.yml must cover macos-arm64',
+);
+requireSubstring(
+  '.github/workflows/develop.yml',
+  'target-id: windows-x64',
+  'DEVELOP_WINDOWS_X64',
+  'develop.yml must cover windows-x64',
+);
+requireSubstring(
+  '.github/workflows/develop.yml',
+  'target-id: linux-x64',
+  'DEVELOP_LINUX_X64',
+  'develop.yml must cover linux-x64',
+);
 forbidRegex(
   '.github/workflows/develop.yml',
   /package:macos-x64/,
@@ -342,7 +372,12 @@ forbidRegex(
 );
 
 // === release.yml ===
-requireSubstring('.github/workflows/release.yml', "tags:", 'RELEASE_TAG_TRIGGER', 'release.yml must trigger on tags');
+requireSubstring(
+  '.github/workflows/release.yml',
+  'tags:',
+  'RELEASE_TAG_TRIGGER',
+  'release.yml must trigger on tags',
+);
 requireRegex(
   '.github/workflows/release.yml',
   /v\*\.\*\.\*/,

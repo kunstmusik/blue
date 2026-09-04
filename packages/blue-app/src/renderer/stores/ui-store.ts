@@ -24,5 +24,4 @@ export const useUIStore = create<UIState & UIActions>()((set) => ({
   selectLayer: (selectedLayer) => set({ selectedLayer }),
 
   setZoom: (zoom) => set({ zoom }),
-
 }));

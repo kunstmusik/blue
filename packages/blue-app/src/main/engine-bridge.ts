@@ -26,11 +26,12 @@ export interface EngineControlTrafficObservation {
   readonly writeCommands: number;
   readonly writeEntries: number;
 }
+import { hasEngineFeature, OWNER_LIVENESS_FEATURE } from '@blue/engine-client/capabilities';
 import {
-  hasEngineFeature,
-  OWNER_LIVENESS_FEATURE,
-} from '@blue/engine-client/capabilities';
-import { allocateTcpEndpointPair, type EndpointAllocationOptions, type TcpEndpointPair } from './engine-endpoints';
+  allocateTcpEndpointPair,
+  type EndpointAllocationOptions,
+  type TcpEndpointPair,
+} from './engine-endpoints';
 import {
   EngineSession,
   classifyProcessError,
@@ -80,7 +81,9 @@ function resolveEngineTransport(): EngineTransport {
 
   if (requestedTransport === 'ipc' || requestedTransport === 'tcp') {
     if (requestedTransport === 'ipc' && process.platform === 'win32') {
-      console.warn('[EngineBridge] BLUE_ENGINE_TRANSPORT=ipc is not supported on Windows; falling back to tcp.');
+      console.warn(
+        '[EngineBridge] BLUE_ENGINE_TRANSPORT=ipc is not supported on Windows; falling back to tcp.',
+      );
       return 'tcp';
     }
 
@@ -88,14 +91,19 @@ function resolveEngineTransport(): EngineTransport {
   }
 
   if (requestedTransport && requestedTransport !== 'tcp') {
-    console.warn(`[EngineBridge] Unknown BLUE_ENGINE_TRANSPORT=${requestedTransport}; falling back to tcp.`);
+    console.warn(
+      `[EngineBridge] Unknown BLUE_ENGINE_TRANSPORT=${requestedTransport}; falling back to tcp.`,
+    );
   }
 
   return process.platform === 'win32' ? 'tcp' : 'ipc';
 }
 
 function isUnsupportedIpcEndpointError(stderr: string): boolean {
-  return stderr.includes('Unknown option: --control-endpoint') || stderr.includes('Unknown option: --pub-endpoint');
+  return (
+    stderr.includes('Unknown option: --control-endpoint') ||
+    stderr.includes('Unknown option: --pub-endpoint')
+  );
 }
 
 function isUnknownOwnerPidOptionError(stderr: string): boolean {
@@ -140,10 +148,12 @@ async function stopClientWithTimeout(
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
   let stopRequest: Promise<EngineStopResponse>;
   try {
-    stopRequest = Promise.resolve(client.stop()).catch((error: unknown): EngineStopResponse => ({
-      ok: false,
-      message: error instanceof Error ? error.message : String(error),
-    }));
+    stopRequest = Promise.resolve(client.stop()).catch(
+      (error: unknown): EngineStopResponse => ({
+        ok: false,
+        message: error instanceof Error ? error.message : String(error),
+      }),
+    );
   } catch (error: unknown) {
     return {
       ok: false,
@@ -155,10 +165,14 @@ async function stopClientWithTimeout(
     return await Promise.race([
       stopRequest,
       new Promise<EngineStopResponse>((resolve) => {
-        timeoutId = setTimeout(() => resolve({
-          ok: false,
-          message: `Engine stop command timed out after ${STOP_COMMAND_TIMEOUT_MS} ms`,
-        }), STOP_COMMAND_TIMEOUT_MS);
+        timeoutId = setTimeout(
+          () =>
+            resolve({
+              ok: false,
+              message: `Engine stop command timed out after ${STOP_COMMAND_TIMEOUT_MS} ms`,
+            }),
+          STOP_COMMAND_TIMEOUT_MS,
+        );
       }),
     ]);
   } finally {
@@ -291,7 +305,10 @@ export class EngineBridge {
     this.workingDirectory = directory && directory.trim().length > 0 ? directory : null;
   }
 
-  private sendPlaybackStatus(status: 'starting' | 'playing' | 'stopping' | 'stopped' | 'error', message?: string): void {
+  private sendPlaybackStatus(
+    status: 'starting' | 'playing' | 'stopping' | 'stopped' | 'error',
+    message?: string,
+  ): void {
     broadcastToWorkbenchWindows('playback-status', message ? { status, message } : { status });
   }
 
@@ -340,12 +357,17 @@ export class EngineBridge {
       }
     } catch (error: unknown) {
       if (sessionId === this.playbackSessionId && this.awaitingPlaybackTerminalState) {
-        console.warn(`[EngineBridge] getEngineState poll failed: ${error instanceof Error ? error.message : String(error)}`);
+        console.warn(
+          `[EngineBridge] getEngineState poll failed: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
     }
   }
 
-  private async handleEngineState(snapshot: EngineStateSnapshot, source: 'pubsub' | 'poll'): Promise<void> {
+  private async handleEngineState(
+    snapshot: EngineStateSnapshot,
+    source: 'pubsub' | 'poll',
+  ): Promise<void> {
     if (!this.awaitingPlaybackTerminalState) {
       return;
     }
@@ -382,8 +404,10 @@ export class EngineBridge {
     }
 
     const now = Date.now();
-    if (!this.pendingPolledTerminalState ||
-        this.pendingPolledTerminalState.snapshot.sequence !== snapshot.sequence) {
+    if (
+      !this.pendingPolledTerminalState ||
+      this.pendingPolledTerminalState.snapshot.sequence !== snapshot.sequence
+    ) {
       this.pendingPolledTerminalState = { snapshot, firstSeenAt: now };
       return;
     }
@@ -393,7 +417,10 @@ export class EngineBridge {
     }
   }
 
-  private describeTerminalState(snapshot: EngineStateSnapshot, source: 'pubsub' | 'poll' | 'stop-command'): {
+  private describeTerminalState(
+    snapshot: EngineStateSnapshot,
+    source: 'pubsub' | 'poll' | 'stop-command',
+  ): {
     status: 'stopped' | 'error';
     message: string;
   } {
@@ -427,7 +454,10 @@ export class EngineBridge {
     this.lastAutomationSyncAt.clear();
   }
 
-  private async finalizePlaybackFromEngine(snapshot: EngineStateSnapshot, source: 'pubsub' | 'poll' | 'stop-command'): Promise<void> {
+  private async finalizePlaybackFromEngine(
+    snapshot: EngineStateSnapshot,
+    source: 'pubsub' | 'poll' | 'stop-command',
+  ): Promise<void> {
     if (!this.awaitingPlaybackTerminalState) {
       return;
     }
@@ -494,7 +524,10 @@ export class EngineBridge {
         if (result.status !== 'cleanup-failed') {
           return true;
         }
-        this.recordSessionDiagnostics(session, 'Cleanup failed: process exit could not be confirmed');
+        this.recordSessionDiagnostics(
+          session,
+          'Cleanup failed: process exit could not be confirmed',
+        );
       } catch (error: unknown) {
         this.recordSessionDiagnostics(
           session,
@@ -575,7 +608,9 @@ export class EngineBridge {
         continue;
       }
       if (currentTransport === 'ipc' && result.fallbackToTcp) {
-        console.warn('[EngineBridge] Installed blue-engine does not support IPC endpoints yet; retrying with TCP.');
+        console.warn(
+          '[EngineBridge] Installed blue-engine does not support IPC endpoints yet; retrying with TCP.',
+        );
         transportIndex++;
         continue;
       }
@@ -601,7 +636,8 @@ export class EngineBridge {
   ): Promise<EngineTransportStartResult> {
     const sharedMemoryDisabled = process.env.BLUE_ENGINE_DISABLE_SHARED_MEMORY === '1';
     const channelMirroringDisabled = process.env.BLUE_ENGINE_DISABLE_CHANNEL_MIRRORING === '1';
-    const threadPriorityElevationDisabled = process.env.BLUE_ENGINE_DISABLE_THREAD_PRIORITY_ELEVATION === '1';
+    const threadPriorityElevationDisabled =
+      process.env.BLUE_ENGINE_DISABLE_THREAD_PRIORITY_ELEVATION === '1';
 
     const extraArgs: string[] = [];
     if (sharedMemoryDisabled) {
@@ -616,8 +652,12 @@ export class EngineBridge {
 
     this.stderr = '';
     console.log(`[EngineBridge] Shared memory: ${sharedMemoryDisabled ? 'disabled' : 'enabled'}`);
-    console.log(`[EngineBridge] Channel mirroring: ${channelMirroringDisabled ? 'disabled' : 'enabled'}`);
-    console.log(`[EngineBridge] Thread priority elevation: ${threadPriorityElevationDisabled ? 'disabled' : 'enabled'}`);
+    console.log(
+      `[EngineBridge] Channel mirroring: ${channelMirroringDisabled ? 'disabled' : 'enabled'}`,
+    );
+    console.log(
+      `[EngineBridge] Thread priority elevation: ${threadPriorityElevationDisabled ? 'disabled' : 'enabled'}`,
+    );
     console.log(`[EngineBridge] Starting session (${transport}): ${enginePath}`);
 
     const spawnWorkingDirectory =
@@ -631,7 +671,9 @@ export class EngineBridge {
     let pubPort = this.pubPort;
     if (transport === 'tcp') {
       try {
-        const tcpPair = await (this.bridgeDependencies.allocateEndpoints ?? allocateTcpEndpointPair)({
+        const tcpPair = await (
+          this.bridgeDependencies.allocateEndpoints ?? allocateTcpEndpointPair
+        )({
           basePort: this.port,
         });
         port = tcpPair.controlPort;
@@ -653,7 +695,10 @@ export class EngineBridge {
       }
     }
 
-    const session = (this.bridgeDependencies.createSession ?? ((request: EngineSessionCreationRequest) => new EngineSession(request)))({
+    const session = (
+      this.bridgeDependencies.createSession ??
+      ((request: EngineSessionCreationRequest) => new EngineSession(request))
+    )({
       kind: this.engineSessionKind,
       enginePath,
       generation: ++this.playbackSessionId,
@@ -701,16 +746,18 @@ export class EngineBridge {
         retryWithoutOwnerPid = true;
         console.warn(
           '[EngineBridge] Selected blue-engine does not support --owner-pid; ' +
-          'retrying without owner lifetime monitoring for this engine.',
+            'retrying without owner lifetime monitoring for this engine.',
         );
       }
 
-      const errorMessage = readyResult.errorMessage || stderrMessage || 'The blue-engine process exited immediately.';
+      const errorMessage =
+        readyResult.errorMessage || stderrMessage || 'The blue-engine process exited immediately.';
       const failureCategory = readyResult.failureCategory ?? 'unexpected';
       this.recordSessionDiagnostics(session, `Startup failed: ${errorMessage}`);
       const cleanupResult = await session.shutdown('readiness-failed');
       if (cleanupResult.status === 'cleanup-failed') {
-        const cleanupMessage = 'Startup failed and the engine process could not be confirmed stopped.';
+        const cleanupMessage =
+          'Startup failed and the engine process could not be confirmed stopped.';
         this.recordSessionDiagnostics(session, cleanupMessage);
         return {
           ok: false,
@@ -737,48 +784,55 @@ export class EngineBridge {
       }
     });
 
-    void session.awaitExit().then(async (lifecycleResult) => {
-      if (validateSessionAuthority(session, this.activeSession)) {
-        console.log(`[EngineBridge] Engine exited: code=${lifecycleResult.exitCode}, signal=${lifecycleResult.signalCode}`);
-        const awaitingTerminalState = this.awaitingPlaybackTerminalState;
-        const hadPendingTerminalCleanup = this.terminalCleanupPromise !== null;
-        const stderrMessage = session.getStderr().trim();
-
-        const cleanup = (async () => {
-          this.recordSessionDiagnostics(
-            session,
-            `Engine exited unexpectedly (code: ${lifecycleResult.exitCode}, signal: ${lifecycleResult.signalCode})`,
+    void session
+      .awaitExit()
+      .then(async (lifecycleResult) => {
+        if (validateSessionAuthority(session, this.activeSession)) {
+          console.log(
+            `[EngineBridge] Engine exited: code=${lifecycleResult.exitCode}, signal=${lifecycleResult.signalCode}`,
           );
+          const awaitingTerminalState = this.awaitingPlaybackTerminalState;
+          const hadPendingTerminalCleanup = this.terminalCleanupPromise !== null;
+          const stderrMessage = session.getStderr().trim();
 
-          this.resetPlaybackTracking();
-          this.clearPendingAutomationSyncs();
-          this.activeSession = null;
-          this.setPlayingState(false);
+          const cleanup = (async () => {
+            this.recordSessionDiagnostics(
+              session,
+              `Engine exited unexpectedly (code: ${lifecycleResult.exitCode}, signal: ${lifecycleResult.signalCode})`,
+            );
 
-          const cleanupResult = await session.shutdown('process-exit');
-          if (cleanupResult.status === 'cleanup-failed') {
-            this.recordSessionDiagnostics(session, 'Cleanup failed after process exit');
-          }
+            this.resetPlaybackTracking();
+            this.clearPendingAutomationSyncs();
+            this.activeSession = null;
+            this.setPlayingState(false);
 
-          if (awaitingTerminalState && !hadPendingTerminalCleanup) {
-            const detail = stderrMessage
-              ? `Engine error: ${stderrMessage.split('\n').pop()}`
-              : `Engine exited before publishing terminal playback state (code: ${lifecycleResult.exitCode}, signal: ${lifecycleResult.signalCode})`;
-            this.sendPlaybackError(detail);
-          }
-        })();
-        let trackedCleanup!: Promise<void>;
-        trackedCleanup = cleanup.finally(() => {
-          if (this.terminalCleanupPromise === trackedCleanup) {
-            this.terminalCleanupPromise = null;
-          }
-        });
-        this.terminalCleanupPromise = trackedCleanup;
-        await trackedCleanup;
-      }
-    }).catch((error: unknown) => {
-      console.error(`[EngineBridge] Exit cleanup failed: ${error instanceof Error ? error.message : String(error)}`);
-    });
+            const cleanupResult = await session.shutdown('process-exit');
+            if (cleanupResult.status === 'cleanup-failed') {
+              this.recordSessionDiagnostics(session, 'Cleanup failed after process exit');
+            }
+
+            if (awaitingTerminalState && !hadPendingTerminalCleanup) {
+              const detail = stderrMessage
+                ? `Engine error: ${stderrMessage.split('\n').pop()}`
+                : `Engine exited before publishing terminal playback state (code: ${lifecycleResult.exitCode}, signal: ${lifecycleResult.signalCode})`;
+              this.sendPlaybackError(detail);
+            }
+          })();
+          let trackedCleanup!: Promise<void>;
+          trackedCleanup = cleanup.finally(() => {
+            if (this.terminalCleanupPromise === trackedCleanup) {
+              this.terminalCleanupPromise = null;
+            }
+          });
+          this.terminalCleanupPromise = trackedCleanup;
+          await trackedCleanup;
+        }
+      })
+      .catch((error: unknown) => {
+        console.error(
+          `[EngineBridge] Exit cleanup failed: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      });
 
     console.log('[EngineBridge] Engine started successfully');
     return { ok: true, fallbackToTcp: false, retryWithoutOwnerPid: false };
@@ -817,7 +871,9 @@ export class EngineBridge {
           await this.killEngine();
         }
       } catch (err) {
-        console.warn(`[EngineBridge] stop command error: ${err instanceof Error ? err.message : String(err)}`);
+        console.warn(
+          `[EngineBridge] stop command error: ${err instanceof Error ? err.message : String(err)}`,
+        );
         await this.killEngine();
         if (emitStatus && wasPlaying) {
           this.sendPlaybackStatus('error', err instanceof Error ? err.message : String(err));
@@ -903,7 +959,9 @@ export class EngineBridge {
             console.warn(`[EngineBridge] setOption skipped: ${opt} — ${resp.message}`);
           }
         } catch (err: unknown) {
-          console.error(`[EngineBridge] setOption error: ${opt} — ${err instanceof Error ? err.message : String(err)}`);
+          console.error(
+            `[EngineBridge] setOption error: ${opt} — ${err instanceof Error ? err.message : String(err)}`,
+          );
         }
       }
 
@@ -951,7 +1009,9 @@ export class EngineBridge {
         const cleaned = await this.killEngine();
         return {
           ok: false,
-          failureCategory: cleaned ? classifyProcessError(null, startResp.message) : 'cleanup-failed',
+          failureCategory: cleaned
+            ? classifyProcessError(null, startResp.message)
+            : 'cleanup-failed',
           errorMessage: `Engine start failed: ${startResp.message}`,
         };
       }
@@ -995,7 +1055,9 @@ export class EngineBridge {
     try {
       await client.clearAutomations();
     } catch (err) {
-      console.warn(`[EngineBridge] clearAutomations failed: ${err instanceof Error ? err.message : String(err)}`);
+      console.warn(
+        `[EngineBridge] clearAutomations failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
 
     for (const param of parameters) {
@@ -1022,7 +1084,9 @@ export class EngineBridge {
             console.warn(`[EngineBridge] createAutomation(${varName}) failed: ${resp.message}`);
           }
         } catch (err) {
-          console.warn(`[EngineBridge] createAutomation(${varName}) error: ${err instanceof Error ? err.message : String(err)}`);
+          console.warn(
+            `[EngineBridge] createAutomation(${varName}) error: ${err instanceof Error ? err.message : String(err)}`,
+          );
         }
       } else {
         try {
@@ -1032,7 +1096,9 @@ export class EngineBridge {
             await client.setChannel(varName, fixedVal);
           }
         } catch (err) {
-          console.warn(`[EngineBridge] createChannel(${varName}) error: ${err instanceof Error ? err.message : String(err)}`);
+          console.warn(
+            `[EngineBridge] createChannel(${varName}) error: ${err instanceof Error ? err.message : String(err)}`,
+          );
         }
       }
     }
@@ -1095,11 +1161,7 @@ export class EngineBridge {
       }
 
       this.lastAutomationSyncAt.set(varName, Date.now());
-      void this.sendAutomationParameterSync(
-        client,
-        pending.parameter,
-        pending.automationTiming,
-      );
+      void this.sendAutomationParameterSync(client, pending.parameter, pending.automationTiming);
     }, delayMs);
 
     this.pendingAutomationSyncs.set(varName, {
@@ -1124,9 +1186,10 @@ export class EngineBridge {
       automationTiming?.renderStartTime ?? 0,
       automationTiming?.tempoMap,
     );
-    const shouldAutomate = parameter.isAutomationEnabled()
-      && parameter.getPoints().length >= 2
-      && runtimePoints.length >= 2;
+    const shouldAutomate =
+      parameter.isAutomationEnabled() &&
+      parameter.getPoints().length >= 2 &&
+      runtimePoints.length >= 2;
     if (shouldAutomate) {
       await this.updateOrCreateAutomation(client, parameter, varName, automationTiming);
       return;
@@ -1173,10 +1236,14 @@ export class EngineBridge {
         points,
       );
       if (!createResp.ok) {
-        console.warn(`[EngineBridge] createAutomation(${varName}) failed after update miss: ${createResp.message}`);
+        console.warn(
+          `[EngineBridge] createAutomation(${varName}) failed after update miss: ${createResp.message}`,
+        );
       }
     } catch (err) {
-      console.warn(`[EngineBridge] updateAutomation(${varName}) error: ${err instanceof Error ? err.message : String(err)}`);
+      console.warn(
+        `[EngineBridge] updateAutomation(${varName}) error: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
 
@@ -1192,7 +1259,9 @@ export class EngineBridge {
         console.warn(`[EngineBridge] deleteAutomation(${varName}) failed: ${deleteResp.message}`);
       }
     } catch (err) {
-      console.warn(`[EngineBridge] deleteAutomation(${varName}) error: ${err instanceof Error ? err.message : String(err)}`);
+      console.warn(
+        `[EngineBridge] deleteAutomation(${varName}) error: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
 
     const value = getRuntimeFixedChannelValue(parameter, automationTiming);
@@ -1201,11 +1270,15 @@ export class EngineBridge {
       if (!setResp.ok) {
         const createResp = await client.createChannel(varName, value);
         if (!createResp.ok) {
-          console.warn(`[EngineBridge] setChannel(${varName}) failed after automation delete: ${setResp.message}`);
+          console.warn(
+            `[EngineBridge] setChannel(${varName}) failed after automation delete: ${setResp.message}`,
+          );
         }
       }
     } catch (err) {
-      console.warn(`[EngineBridge] setChannel(${varName}) error after automation delete: ${err instanceof Error ? err.message : String(err)}`);
+      console.warn(
+        `[EngineBridge] setChannel(${varName}) error after automation delete: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
 
@@ -1347,10 +1420,14 @@ function parseCSD(csd: string): { orchestra: string; score: string; options: str
 
 function mapAutomationCurve(curve: AutomationCurve): AutomationCurveCode {
   switch (curve) {
-    case AutomationCurve.STEP: return AutomationCurveCode.STEP;
-    case AutomationCurve.LINEAR: return AutomationCurveCode.LINEAR;
-    case AutomationCurve.EXPONENTIAL: return AutomationCurveCode.EXPONENTIAL;
-    default: return AutomationCurveCode.LINEAR;
+    case AutomationCurve.STEP:
+      return AutomationCurveCode.STEP;
+    case AutomationCurve.LINEAR:
+      return AutomationCurveCode.LINEAR;
+    case AutomationCurve.EXPONENTIAL:
+      return AutomationCurveCode.EXPONENTIAL;
+    default:
+      return AutomationCurveCode.LINEAR;
   }
 }
 
@@ -1365,8 +1442,7 @@ function getAutomationResolutionText(parameter: Parameter): string {
 }
 
 function isAutomationNotFoundMessage(message: string): boolean {
-  return /automation\s+not\s+found/i.test(message)
-    || /not\s+found.*automation/i.test(message);
+  return /automation\s+not\s+found/i.test(message) || /not\s+found.*automation/i.test(message);
 }
 
 function getRuntimeFixedChannelValue(

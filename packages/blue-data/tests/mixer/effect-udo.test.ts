@@ -4,7 +4,6 @@ import { UDOStyle } from '../../src/opcodes/udo-style';
 import { Element } from '../../src/serialization/xml-reader';
 
 describe('Effect UDO Generation', () => {
-
   it('classic generateUDO includes xin line', () => {
     const effect = new Effect();
     effect.setStyle(UDOStyle.CLASSIC);

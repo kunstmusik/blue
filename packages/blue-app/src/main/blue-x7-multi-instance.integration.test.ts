@@ -29,33 +29,37 @@ describe.skipIf(!hasCsound)('BlueX7 four-owner stress integration', () => {
   it('renders 32 notes over 60 seconds with 600 isolated edits and finite bounded output', () => {
     const fixture = createBlueX7MultiInstanceFixture();
     expect(fixture.owners).toHaveLength(4);
-    expect(fixture.owners.reduce(
-      (count, owner) => count + owner.noteText.split('\n').length,
-      0,
-    )).toBe(32);
+    expect(
+      fixture.owners.reduce((count, owner) => count + owner.noteText.split('\n').length, 0),
+    ).toBe(32);
 
-    const initialOtherValues = fixture.owners.map(
-      (owner) => owner.instrument.getParameters().find(
-        (parameter) => parameter.getName() === 'lfo.speed',
-      )!.getFixedValue(),
+    const initialOtherValues = fixture.owners.map((owner) =>
+      owner.instrument
+        .getParameters()
+        .find((parameter) => parameter.getName() === 'lfo.speed')!
+        .getFixedValue(),
     );
     const latencies: number[] = [];
     for (let index = 0; index < 600; index += 1) {
       const ownerIndex = index % fixture.owners.length;
       const started = performance.now();
-      expect(fixture.owners[ownerIndex]!.instrument.applyFixedValue('lfo.speed', index % 100)).toBe(true);
+      expect(fixture.owners[ownerIndex]!.instrument.applyFixedValue('lfo.speed', index % 100)).toBe(
+        true,
+      );
       latencies.push(performance.now() - started);
       fixture.owners.forEach((owner, candidateIndex) => {
         if (candidateIndex === ownerIndex) return;
-        const value = owner.instrument.getParameters().find(
-          (parameter) => parameter.getName() === 'lfo.speed',
-        )!.getFixedValue();
+        const value = owner.instrument
+          .getParameters()
+          .find((parameter) => parameter.getName() === 'lfo.speed')!
+          .getFixedValue();
         const candidateLastEdit = [...Array(index + 1).keys()]
           .reverse()
           .find((editIndex) => editIndex % fixture.owners.length === candidateIndex);
-        const expected = candidateLastEdit === undefined
-          ? initialOtherValues[candidateIndex]
-          : candidateLastEdit % 100;
+        const expected =
+          candidateLastEdit === undefined
+            ? initialOtherValues[candidateIndex]
+            : candidateLastEdit % 100;
         expect(value).toBe(expected);
       });
     }
@@ -69,14 +73,13 @@ describe.skipIf(!hasCsound)('BlueX7 four-owner stress integration', () => {
     // release tail must finish before the final-second stuck-note check.
     fixture.data.setRenderEndTime(70);
     fs.writeFileSync(csdPath, fixture.data.toCSD(), 'utf8');
-    expect(() => execFileSync('csound', [
-      '-nd',
-      '-W',
-      '--0dbfs=1',
-      '--format=double',
-      '-o', wavPath,
-      csdPath,
-    ], { cwd: scratch, stdio: ['ignore', 'pipe', 'pipe'] })).not.toThrow();
+    expect(() =>
+      execFileSync(
+        'csound',
+        ['-nd', '-W', '--0dbfs=1', '--format=double', '-o', wavPath, csdPath],
+        { cwd: scratch, stdio: ['ignore', 'pipe', 'pipe'] },
+      ),
+    ).not.toThrow();
 
     const wav = fs.readFileSync(wavPath);
     const dataOffset = wavDataOffset(wav);

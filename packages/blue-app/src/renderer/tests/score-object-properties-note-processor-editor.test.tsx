@@ -12,7 +12,9 @@ import type {
 } from '../../shared/project-editor';
 import ScoreObjectPropertiesForm from '../components/workbench/panels/score-object/ScoreObjectPropertiesForm';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const DEFAULT_TIME_CONTEXT: TimeConversionContext = {
   meterEntries: [{ measure: 1, numBeats: 4, beatLength: 4 }],
@@ -35,24 +37,31 @@ function makeTarget(selectionId: string): ScoreObjectEditorTargetSnapshot {
   };
 }
 
-function makeChain(processorType: 'AddProcessor' | 'MultiplyProcessor'): NoteProcessorChainSnapshot {
+function makeChain(
+  processorType: 'AddProcessor' | 'MultiplyProcessor',
+): NoteProcessorChainSnapshot {
   return {
-    processors: [{
-      id: `np-${processorType}`,
-      processorType,
-      displayName: processorType,
-      supported: true,
-      deferred: false,
-      summary: processorType,
-      parameters: { pfield: '4', val: processorType === 'AddProcessor' ? '5' : '2' },
-      serializedXml: '',
-    }],
+    processors: [
+      {
+        id: `np-${processorType}`,
+        processorType,
+        displayName: processorType,
+        supported: true,
+        deferred: false,
+        summary: processorType,
+        parameters: { pfield: '4', val: processorType === 'AddProcessor' ? '5' : '2' },
+        serializedXml: '',
+      },
+    ],
     hasUnsupportedProcessors: false,
     hasDeferredProcessors: false,
   };
 }
 
-function makeDocument(selectionId: string, processorType: 'AddProcessor' | 'MultiplyProcessor'): ScoreObjectEditorDocumentSnapshot {
+function makeDocument(
+  selectionId: string,
+  processorType: 'AddProcessor' | 'MultiplyProcessor',
+): ScoreObjectEditorDocumentSnapshot {
   const target = makeTarget(selectionId);
   return {
     target,
@@ -72,7 +81,11 @@ function makeDocument(selectionId: string, processorType: 'AddProcessor' | 'Mult
   };
 }
 
-function renderForm(document: ScoreObjectEditorDocumentSnapshot): { container: HTMLDivElement; root: Root; onPatch: ReturnType<typeof vi.fn> } {
+function renderForm(document: ScoreObjectEditorDocumentSnapshot): {
+  container: HTMLDivElement;
+  root: Root;
+  onPatch: ReturnType<typeof vi.fn>;
+} {
   const container = window.document.createElement('div');
   window.document.body.appendChild(container);
   const root = createRoot(container);
@@ -86,7 +99,9 @@ function renderForm(document: ScoreObjectEditorDocumentSnapshot): { container: H
 }
 
 function findButton(container: HTMLDivElement, text: string): HTMLButtonElement {
-  const button = Array.from(container.querySelectorAll('button')).find((candidate) => candidate.textContent === text);
+  const button = Array.from(container.querySelectorAll('button')).find(
+    (candidate) => candidate.textContent === text,
+  );
   if (!button) throw new Error(`Button not found: ${text}`);
   return button;
 }
@@ -106,7 +121,12 @@ describe('ScoreObjectPropertiesForm note processor editor', () => {
     expect(container.innerHTML).toContain('AddProcessor');
 
     act(() => {
-      root.render(<ScoreObjectPropertiesForm document={makeDocument('object-b', 'MultiplyProcessor')} onPatch={onPatch} />);
+      root.render(
+        <ScoreObjectPropertiesForm
+          document={makeDocument('object-b', 'MultiplyProcessor')}
+          onPatch={onPatch}
+        />,
+      );
     });
 
     expect(container.innerHTML).toContain('MultiplyProcessor');
@@ -120,7 +140,9 @@ describe('ScoreObjectPropertiesForm note processor editor', () => {
   it('keeps the score-object properties form on the compact inspector field classes', () => {
     const { container, root } = renderForm(makeDocument('object-a', 'AddProcessor'));
 
-    expect(container.innerHTML).toContain('w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none');
+    expect(container.innerHTML).toContain(
+      'w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none',
+    );
     expect(container.innerHTML).toContain('w-28 shrink-0 text-right text-role-body text-app-text');
     expect(container.innerHTML).not.toContain('px-3 py-2 text-sm');
     expect(container.innerHTML).not.toContain('w-28 shrink-0 text-right text-sm text-blue-muted');
@@ -137,7 +159,9 @@ describe('ScoreObjectPropertiesForm note processor editor', () => {
       findButton(container, 'Save As...').click();
     });
 
-    const input = container.querySelector('input[placeholder="Chain name"]') as HTMLInputElement | null;
+    const input = container.querySelector(
+      'input[placeholder="Chain name"]',
+    ) as HTMLInputElement | null;
     expect(input).not.toBeNull();
 
     act(() => {

@@ -4,10 +4,7 @@ import {
   NESTED_LEGACY_LIBRARY_FIXTURES,
   JAVA_COMPATIBILITY_LIBRARY_FIXTURES,
 } from './fixtures/legacy-library-corpus';
-import {
-  exportLegacyLibraryDocument,
-  parseLegacyLibraryDocument,
-} from './legacy-library-codec';
+import { exportLegacyLibraryDocument, parseLegacyLibraryDocument } from './legacy-library-codec';
 
 describe('legacy library envelope codec', () => {
   it('recognizes the four Java Blue roots and stable type descriptors', () => {
@@ -49,11 +46,7 @@ describe('legacy library envelope codec', () => {
     const fixture = NESTED_LEGACY_LIBRARY_FIXTURES[3];
     const plan = parseLegacyLibraryDocument(fixture.xml);
 
-    expect(plan.root.children.map((child) => child.kind)).toEqual([
-      'item',
-      'folder',
-      'item',
-    ]);
+    expect(plan.root.children.map((child) => child.kind)).toEqual(['item', 'folder', 'item']);
     expect(plan.unsupportedCount).toBe(1);
 
     const unsupported = plan.root.children[2];
@@ -69,7 +62,8 @@ describe('legacy library envelope codec', () => {
   });
 
   it('marks a known outer type with unknown nested content unsupported as a whole', () => {
-    const rawLeaf = '<instrument type="blue.orchestra.GenericInstrument"><name>Future</name><futureField keep="exact"/></instrument>';
+    const rawLeaf =
+      '<instrument type="blue.orchestra.GenericInstrument"><name>Future</name><futureField keep="exact"/></instrument>';
     const plan = parseLegacyLibraryDocument(
       `<instrumentLibrary><instrumentCategory categoryName="Root" isRoot="true">${rawLeaf}</instrumentCategory></instrumentLibrary>`,
     );
@@ -110,7 +104,8 @@ describe('legacy library envelope codec', () => {
         const visit = (folder: typeof plan.root): void => {
           for (const child of folder.children) {
             if (child.kind === 'folder') visit(child);
-            else if (child.payload.supportStatus === 'unsupported') values.push(child.payload.rawXml);
+            else if (child.payload.supportStatus === 'unsupported')
+              values.push(child.payload.rawXml);
           }
         };
         visit(plan.root);

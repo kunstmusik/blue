@@ -53,8 +53,7 @@ function findFirstDescendant(node: RawXmlElement, names: readonly string[]): Raw
 
 function hasUnsupportedNestedContent(node: RawXmlElement): boolean {
   return node.children.some(
-    (child) =>
-      UNSUPPORTED_NESTED_NAMES.has(child.name) || hasUnsupportedNestedContent(child),
+    (child) => UNSUPPORTED_NESTED_NAMES.has(child.name) || hasUnsupportedNestedContent(child),
   );
 }
 

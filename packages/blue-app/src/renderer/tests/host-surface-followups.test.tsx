@@ -9,25 +9,23 @@ import ArrangementPanel from '../components/workbench/panels/orchestra/Arrangeme
 import JMaskEditor from '../components/workbench/panels/score-object/editors/JMaskEditor';
 import FontChooserDialog from '../components/workbench/panels/orchestra/bsb/FontChooserDialog';
 import { HostDocumentContext } from '../hooks/use-host-document';
-import {
-  BlueData,
-  JMask,
-  PolyObject,
-  SoundLayer,
-  TimeDuration,
-} from '@blue/data';
+import { BlueData, JMask, PolyObject, SoundLayer, TimeDuration } from '@blue/data';
 import {
   createScoreObjectEditorDocument,
   type ScoreObjectEditorDocumentSnapshot,
   type ScoreObjectEditorTargetSnapshot,
 } from '../../shared/project-editor';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const popout = new JSDOM('<!doctype html><html><body></body></html>');
 const popoutDoc = popout.window.document;
 const PopoutMouseEvent = popout.window.MouseEvent;
-(popout.window.HTMLElement.prototype as HTMLElement & { scrollIntoView?: () => void }).scrollIntoView ??= () => undefined;
+(
+  popout.window.HTMLElement.prototype as HTMLElement & { scrollIntoView?: () => void }
+).scrollIntoView ??= () => undefined;
 popout.window.Element.prototype.hasPointerCapture ??= () => false;
 popout.window.Element.prototype.setPointerCapture ??= () => undefined;
 popout.window.Element.prototype.releasePointerCapture ??= () => undefined;
@@ -65,7 +63,9 @@ describe('follow-up host-surface migrations (spec 090, T026-T028)', () => {
 
   const renderTree = (node: React.ReactElement) => {
     act(() => {
-      root.render(<HostDocumentContext.Provider value={popoutDoc}>{node}</HostDocumentContext.Provider>);
+      root.render(
+        <HostDocumentContext.Provider value={popoutDoc}>{node}</HostDocumentContext.Provider>,
+      );
     });
   };
 
@@ -113,7 +113,9 @@ describe('follow-up host-surface migrations (spec 090, T026-T028)', () => {
         projectRevision={1}
       />,
     );
-    const addButton = [...host.querySelectorAll('button')].find((b) => b.textContent?.trim() === '+ Add')!;
+    const addButton = [...host.querySelectorAll('button')].find(
+      (b) => b.textContent?.trim() === '+ Add',
+    )!;
     click(addButton);
     await flushFrame();
 
@@ -127,15 +129,22 @@ describe('follow-up host-surface migrations (spec 090, T026-T028)', () => {
     });
     expect(surface()).toBeTruthy();
 
-    click([...menu!.querySelectorAll('button')].find((b) => b.textContent === 'Generic Instrument')!);
+    click(
+      [...menu!.querySelectorAll('button')].find((b) => b.textContent === 'Generic Instrument')!,
+    );
     await flushFrame();
-    expect(onOrchestraPatch).toHaveBeenCalledWith({ type: 'addInstrument', instrumentType: 'generic' });
+    expect(onOrchestraPatch).toHaveBeenCalledWith({
+      type: 'addInstrument',
+      instrumentType: 'generic',
+    });
     expect(surface()).toBeNull();
   });
 
   it('JMaskEditor parameter-visibility popup portals into the host document and dismisses outside', async () => {
     renderTree(<JMaskEditor document={makeJMaskDocument()} onPatch={vi.fn()} />);
-    const visibilityButton = host.querySelector<HTMLButtonElement>('button[aria-label="Parameter Visibility"]')!;
+    const visibilityButton = host.querySelector<HTMLButtonElement>(
+      'button[aria-label="Parameter Visibility"]',
+    )!;
     expect(visibilityButton).toBeTruthy();
     click(visibilityButton);
     await flushFrame();
@@ -165,14 +174,21 @@ describe('follow-up host-surface migrations (spec 090, T026-T028)', () => {
       />,
     );
     // The font trigger is the button showing the current font name.
-    const fontButton = [...host.querySelectorAll('button')]
-      .find((b) => b.textContent?.trim() === 'Roboto')!;
+    const fontButton = [...host.querySelectorAll('button')].find(
+      (b) => b.textContent?.trim() === 'Roboto',
+    )!;
     expect(fontButton).toBeTruthy();
     Object.defineProperty(fontButton, 'getBoundingClientRect', {
       configurable: true,
       value: () => ({
-        left: 100, top: 100, right: 284, bottom: 130,
-        width: 184, height: 30, x: 100, y: 100,
+        left: 100,
+        top: 100,
+        right: 284,
+        bottom: 130,
+        width: 184,
+        height: 30,
+        x: 100,
+        y: 100,
       }),
     });
     click(fontButton);
@@ -189,9 +205,12 @@ describe('follow-up host-surface migrations (spec 090, T026-T028)', () => {
     // Escape inside the dropdown closes the dropdown but NOT the dialog
     // (nested-surface rule).
     act(() => {
-      filterInput.dispatchEvent(new popout.window.KeyboardEvent('keydown', {
-        key: 'Escape', bubbles: true,
-      }));
+      filterInput.dispatchEvent(
+        new popout.window.KeyboardEvent('keydown', {
+          key: 'Escape',
+          bubbles: true,
+        }),
+      );
     });
     await flushFrame();
     expect(surface()).toBeNull();
@@ -210,15 +229,19 @@ describe('follow-up host-surface migrations (spec 090, T026-T028)', () => {
 
     // Style uses the same app-owned surface instead of a native select menu.
     expect(host.querySelector('select')).toBeNull();
-    const styleButton = [...host.querySelectorAll('button')]
-      .find((button) => button.textContent?.trim() === 'Plain')!;
+    const styleButton = [...host.querySelectorAll('button')].find(
+      (button) => button.textContent?.trim() === 'Plain',
+    )!;
     click(styleButton);
     await flushFrame();
     const styleMenu = popoutDoc.querySelector<HTMLElement>('[role="listbox"]');
     expect(styleMenu).toBeTruthy();
-    expect(styleMenu!.closest('[data-auxiliary-portal="true"]')?.className).toContain('bg-app-menu');
-    const boldOption = [...styleMenu!.querySelectorAll<HTMLElement>('[role="option"]')]
-      .find((option) => option.textContent?.trim() === 'Bold')!;
+    expect(styleMenu!.closest('[data-auxiliary-portal="true"]')?.className).toContain(
+      'bg-app-menu',
+    );
+    const boldOption = [...styleMenu!.querySelectorAll<HTMLElement>('[role="option"]')].find(
+      (option) => option.textContent?.trim() === 'Bold',
+    )!;
     click(boldOption);
     await flushFrame();
     expect(surface()).toBeNull();

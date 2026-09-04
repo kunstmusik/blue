@@ -81,12 +81,22 @@ describe('UnifiedLibraryService foundation', () => {
     const clipboard = {
       originX: 10,
       originY: 20,
-      widgets: [{
-        id: 'slider-1', type: 'BSBHSlider', objectName: 'amp',
-        x: 10, y: 20, width: 120, height: 24,
-        value: 0.5, minimum: 0, maximum: 1, editable: true,
-        properties: {},
-      }],
+      widgets: [
+        {
+          id: 'slider-1',
+          type: 'BSBHSlider',
+          objectName: 'amp',
+          x: 10,
+          y: 20,
+          width: 120,
+          height: 24,
+          value: 0.5,
+          minimum: 0,
+          maximum: 1,
+          editable: true,
+          properties: {},
+        },
+      ],
     };
 
     expect(service.setBsbClipboard(clipboard)).toBe(true);
@@ -107,7 +117,8 @@ describe('UnifiedLibraryService foundation', () => {
     const directory = await mkdtemp(path.join(tmpdir(), 'blue-binstr-'));
     const inputPath = path.join(directory, 'input.binstr');
     const outputPath = path.join(directory, 'output.binstr');
-    const xml = '<instrument type="blue.orchestra.GenericInstrument"><name>Imported Pad</name></instrument>';
+    const xml =
+      '<instrument type="blue.orchestra.GenericInstrument"><name>Imported Pad</name></instrument>';
     await writeFile(inputPath, xml, 'utf8');
 
     try {

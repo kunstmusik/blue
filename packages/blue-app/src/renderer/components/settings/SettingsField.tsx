@@ -9,7 +9,8 @@ const FIELD_INPUT_CLASS =
   'w-full max-w-[400px] rounded-md border border-app-border bg-app-canvas px-2.5 py-1.5 text-role-body text-app-text outline-none transition-colors placeholder:text-app-text-muted focus:border-app-accent disabled:cursor-not-allowed disabled:opacity-50';
 const FIELD_SELECT_CLASS =
   'min-w-[140px] max-w-[400px] rounded-md border border-app-border bg-app-canvas px-2.5 py-1.5 text-role-body text-app-text outline-none transition-colors focus:border-app-accent disabled:cursor-not-allowed disabled:opacity-50';
-const FIELD_CHECKBOX_CLASS = 'mb-3 flex cursor-pointer items-start gap-2 text-role-body text-app-text';
+const FIELD_CHECKBOX_CLASS =
+  'mb-3 flex cursor-pointer items-start gap-2 text-role-body text-app-text';
 const FIELD_CHECKBOX_INPUT_CLASS =
   'mt-0.5 h-4 w-4 rounded border-app-border bg-app-canvas accent-app-accent disabled:cursor-not-allowed';
 
@@ -17,7 +18,10 @@ export const SETTINGS_NARROW_FIELD_CLASS = 'w-[120px] max-w-none';
 export const SETTINGS_MEDIUM_FIELD_CLASS = 'max-w-[300px]';
 export const SETTINGS_INDENT_CLASS = 'pl-6';
 
-interface SettingsFieldProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'children' | 'onChange' | 'value'> {
+interface SettingsFieldProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  'children' | 'onChange' | 'value'
+> {
   label: string;
   value: string | number;
   onChange: (value: string) => void;
@@ -39,14 +43,8 @@ export default function SettingsField({
 }: SettingsFieldProps): React.ReactElement {
   return (
     <div className={cn(FIELD_CONTAINER_CLASS, containerClassName)}>
-      <label className={FIELD_LABEL_CLASS}>
-        {label}
-      </label>
-      {description && (
-        <div className={FIELD_DESCRIPTION_CLASS}>
-          {description}
-        </div>
-      )}
+      <label className={FIELD_LABEL_CLASS}>{label}</label>
+      {description && <div className={FIELD_DESCRIPTION_CLASS}>{description}</div>}
       <input
         ref={inputRef}
         {...inputProps}
@@ -85,7 +83,13 @@ export function SettingsSelectField({
   ...selectProps
 }: SettingsSelectFieldProps): React.ReactElement {
   const options = React.Children.toArray(children).flatMap((child): AppSelectOption[] => {
-    if (!React.isValidElement<{ value?: string | number; disabled?: boolean; children?: React.ReactNode }>(child)) {
+    if (
+      !React.isValidElement<{
+        value?: string | number;
+        disabled?: boolean;
+        children?: React.ReactNode;
+      }>(child)
+    ) {
       return [];
     }
     const optionValue = child.props.value;
@@ -109,7 +113,10 @@ export function SettingsSelectField({
   );
 }
 
-interface SettingsCheckboxFieldProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'checked' | 'children' | 'onChange' | 'type'> {
+interface SettingsCheckboxFieldProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  'checked' | 'children' | 'onChange' | 'type'
+> {
   label: string;
   checked: boolean;
   onChange: (checked: boolean) => void;

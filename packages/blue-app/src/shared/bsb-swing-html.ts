@@ -17,9 +17,7 @@ export function stripBsbSwingHtmlText(text: string): string {
     return decodeBsbHtmlEntities(text);
   }
 
-  const withoutOuterHtml = text
-    .replace(OUTER_HTML_OPEN_RE, '')
-    .replace(OUTER_HTML_CLOSE_RE, '');
+  const withoutOuterHtml = text.replace(OUTER_HTML_OPEN_RE, '').replace(OUTER_HTML_CLOSE_RE, '');
 
   return decodeBsbHtmlEntities(withoutOuterHtml.replace(BREAK_TAG_RE, '\n').replace(TAG_RE, ''))
     .replace(/\r\n?/g, '\n')
@@ -54,7 +52,9 @@ export function getBsbSwingHtmlMaxFontSizePx(text: string, inheritedFontSize = 1
 function resolveSwingFontSizeSlot(rawSize: string): number | null {
   const trimmed = rawSize.trim();
   if (/^[+-]\d+$/.test(trimmed)) {
-    return normalizeSwingFontSizeSlot(SWING_HTML_DEFAULT_BASE_FONT_SIZE + Number.parseInt(trimmed, 10));
+    return normalizeSwingFontSizeSlot(
+      SWING_HTML_DEFAULT_BASE_FONT_SIZE + Number.parseInt(trimmed, 10),
+    );
   }
   if (/^\d+$/.test(trimmed)) {
     return normalizeSwingFontSizeSlot(Number.parseInt(trimmed, 10));
@@ -67,7 +67,10 @@ function normalizeSwingFontSizeSlot(size: number): number {
 }
 
 function swingFontSizeSlotToPx(slot: number): number {
-  return SWING_HTML_FONT_SIZE_BUCKETS[normalizeSwingFontSizeSlot(slot) - 1] ?? SWING_HTML_FONT_SIZE_BUCKETS[2];
+  return (
+    SWING_HTML_FONT_SIZE_BUCKETS[normalizeSwingFontSizeSlot(slot) - 1] ??
+    SWING_HTML_FONT_SIZE_BUCKETS[2]
+  );
 }
 
 function decodeBsbHtmlEntities(text: string): string {

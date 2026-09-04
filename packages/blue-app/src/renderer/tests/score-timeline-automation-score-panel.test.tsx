@@ -12,7 +12,9 @@ import { __testClearPendingPatches, useProjectStore } from '../stores/project-st
 import { useLayerSelectionStore } from '../stores/layer-selection-store';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 class MockResizeObserver {
   observe(): void {}
@@ -20,7 +22,8 @@ class MockResizeObserver {
   disconnect(): void {}
 }
 
-(globalThis as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver = MockResizeObserver;
+(globalThis as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver =
+  MockResizeObserver;
 
 const { mockScorePathState } = vi.hoisted(() => ({
   mockScorePathState: {
@@ -61,42 +64,50 @@ describe('ScorePanel sound-object automation in a popout', () => {
       groupId: 'instr-1',
       label: '1) Synth',
       subGroups: [],
-      targets: [{
-        parameterId: 'synth-frequency',
-        label: 'Frequency',
-        sourceKind: 'instrument',
-        automationEnabled: false,
-        assignmentState: 'available',
-      }],
-    };
-    snapshot.score.layerGroups = [{
-      groupId: 'sound-group',
-      groupType: 'polyObject',
-      name: 'Sound Objects',
-      layerCount: 1,
-      isOpenableContainer: true,
-      layers: [{
-        layerId: 'sound-layer-0',
-        name: 'Sound 1',
-        height: 44,
-        muted: false,
-        solo: false,
-        items: [],
-        automation: {
-          layerId: 'sound-layer-0',
-          layerKind: 'soundObject',
-          parameterIds: [],
-          parameters: [],
-          targetGroups: [{
-            groupId: 'instrument',
-            label: 'Instrument',
-            subGroups: [target],
-            targets: [],
-          }],
-          missingParameterIds: [],
+      targets: [
+        {
+          parameterId: 'synth-frequency',
+          label: 'Frequency',
+          sourceKind: 'instrument',
+          automationEnabled: false,
+          assignmentState: 'available',
         },
-      }],
-    }];
+      ],
+    };
+    snapshot.score.layerGroups = [
+      {
+        groupId: 'sound-group',
+        groupType: 'polyObject',
+        name: 'Sound Objects',
+        layerCount: 1,
+        isOpenableContainer: true,
+        layers: [
+          {
+            layerId: 'sound-layer-0',
+            name: 'Sound 1',
+            height: 44,
+            muted: false,
+            solo: false,
+            items: [],
+            automation: {
+              layerId: 'sound-layer-0',
+              layerKind: 'soundObject',
+              parameterIds: [],
+              parameters: [],
+              targetGroups: [
+                {
+                  groupId: 'instrument',
+                  label: 'Instrument',
+                  subGroups: [target],
+                  targets: [],
+                },
+              ],
+              missingParameterIds: [],
+            },
+          },
+        ],
+      },
+    ];
 
     useProjectStore.getState().setProjectInfo({
       title: 'Test Project',
@@ -115,12 +126,16 @@ describe('ScorePanel sound-object automation in a popout', () => {
     });
 
     window.blueAPI = {
-      commitProjectDocumentPatches: vi.fn().mockResolvedValue({ changed: true, revision: 1, sessionId: 1 }),
+      commitProjectDocumentPatches: vi
+        .fn()
+        .mockResolvedValue({ changed: true, revision: 1, sessionId: 1 }),
       getProjectDocument: vi.fn().mockResolvedValue(null),
       getNestedPolyObjectSnapshot: vi.fn().mockResolvedValue(null),
     } as typeof window.blueAPI;
 
-    popout = new JSDOM('<!doctype html><html><body></body></html>', { url: 'https://score-popout.test' });
+    popout = new JSDOM('<!doctype html><html><body></body></html>', {
+      url: 'https://score-popout.test',
+    });
     host = popout.window.document.createElement('div');
     popout.window.document.body.appendChild(host);
     root = createRoot(host);
@@ -145,26 +160,31 @@ describe('ScorePanel sound-object automation in a popout', () => {
       await Promise.resolve();
     });
 
-    const trigger = popout.window.document.querySelector<HTMLButtonElement>('[title="Automation"]')!;
+    const trigger =
+      popout.window.document.querySelector<HTMLButtonElement>('[title="Automation"]')!;
     const PopoutPointerEvent = popout.window.PointerEvent ?? popout.window.MouseEvent;
     act(() => {
       trigger.dispatchEvent(new PopoutPointerEvent('pointerdown', { bubbles: true, button: 0 }));
       trigger.dispatchEvent(new PopoutPointerEvent('click', { bubbles: true, button: 0 }));
     });
 
-    const instrument = Array.from(popout.window.document.querySelectorAll<HTMLElement>('[role="menuitem"]'))
-      .find((item) => item.textContent?.includes('1) Synth'))!;
+    const instrument = Array.from(
+      popout.window.document.querySelectorAll<HTMLElement>('[role="menuitem"]'),
+    ).find((item) => item.textContent?.includes('1) Synth'))!;
     expect(instrument).toBeTruthy();
 
     act(() => {
-      instrument.dispatchEvent(new PopoutPointerEvent('pointermove', { bubbles: true, pointerType: 'mouse' }));
+      instrument.dispatchEvent(
+        new PopoutPointerEvent('pointermove', { bubbles: true, pointerType: 'mouse' }),
+      );
     });
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 160));
     });
 
-    const frequency = Array.from(popout.window.document.querySelectorAll<HTMLElement>('[role="menuitem"]'))
-      .find((item) => item.textContent?.trim() === 'Frequency')!;
+    const frequency = Array.from(
+      popout.window.document.querySelectorAll<HTMLElement>('[role="menuitem"]'),
+    ).find((item) => item.textContent?.trim() === 'Frequency')!;
     expect(frequency).toBeTruthy();
 
     await act(async () => {

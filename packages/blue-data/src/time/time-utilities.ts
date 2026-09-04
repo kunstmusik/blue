@@ -19,7 +19,11 @@ export function timePositionToBeats(position: TimePosition, context: TimeContext
 /**
  * Convert beats to a TimePosition of the given base type.
  */
-export function beatsToTimePosition(beats: number, base: TimeBase, context: TimeContext): TimePosition {
+export function beatsToTimePosition(
+  beats: number,
+  base: TimeBase,
+  context: TimeContext,
+): TimePosition {
   switch (base) {
     case TimeBase.BEATS:
       return TimePosition.beats(beats);
@@ -75,7 +79,11 @@ export function beatsToTimePosition(beats: number, base: TimeBase, context: Time
  * Convert a TimePosition from one base to another.
  * Returns the same instance if the bases match.
  */
-export function convertTimePosition(position: TimePosition, targetBase: TimeBase, context: TimeContext): TimePosition {
+export function convertTimePosition(
+  position: TimePosition,
+  targetBase: TimeBase,
+  context: TimeContext,
+): TimePosition {
   if (position.getTimeBase() === targetBase) return position;
   const beats = position.toBeats(context);
   return beatsToTimePosition(beats, targetBase, context);
@@ -84,7 +92,11 @@ export function convertTimePosition(position: TimePosition, targetBase: TimeBase
 /**
  * Convert seconds to a TimePosition of the given base.
  */
-export function secondsToTimePosition(seconds: number, base: TimeBase, context: TimeContext): TimePosition {
+export function secondsToTimePosition(
+  seconds: number,
+  base: TimeBase,
+  context: TimeContext,
+): TimePosition {
   const beats = context.getTempoMap().secondsToBeats(seconds);
   return beatsToTimePosition(beats, base, context);
 }
@@ -99,7 +111,11 @@ export function timePositionToSeconds(position: TimePosition, context: TimeConte
 /**
  * Convert frames to a TimePosition of the given base.
  */
-export function framesToTimePosition(frames: number, base: TimeBase, context: TimeContext): TimePosition {
+export function framesToTimePosition(
+  frames: number,
+  base: TimeBase,
+  context: TimeContext,
+): TimePosition {
   const secs = frames / context.getSampleRate();
   const beats = context.getTempoMap().secondsToBeats(secs);
   return beatsToTimePosition(beats, base, context);

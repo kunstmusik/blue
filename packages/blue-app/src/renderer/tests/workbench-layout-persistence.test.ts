@@ -195,7 +195,10 @@ describe('transition-applied layout persistence (SPEC 084)', () => {
             moveTo: ({ group: targetGroup, index }: { group: any; index?: number }) => {
               panel.group.panels = panel.group.panels.filter((entry: any) => entry.id !== id);
               panel.group = targetGroup;
-              const at = Math.max(0, Math.min(index ?? targetGroup.panels.length, targetGroup.panels.length));
+              const at = Math.max(
+                0,
+                Math.min(index ?? targetGroup.panels.length, targetGroup.panels.length),
+              );
               targetGroup.panels.splice(at, 0, panel);
             },
           },
@@ -233,9 +236,7 @@ describe('transition-applied layout persistence (SPEC 084)', () => {
     expect(serialized).not.toContain('status');
     expect(serialized).not.toContain('dragDropManager');
 
-    const persistedGroup = parsed.auxiliary.groups.find(
-      (group: any) => group.panelIds.length > 0,
-    );
+    const persistedGroup = parsed.auxiliary.groups.find((group: any) => group.panelIds.length > 0);
     expect(parsedGroupsOnEdge(parsed, 'left')).toContain('LibrariesTopComponent');
     void persistedGroup;
   });
@@ -248,15 +249,21 @@ describe('transition-applied layout persistence (SPEC 084)', () => {
     expect(createStoredWorkbenchLayout({} as any, parsedV7.auxiliary).version).toBe(7);
 
     const legacyEdges = {
-      byEdge: { right: { panelIds: ['LibrariesTopComponent'], activePanelId: 'LibrariesTopComponent' } },
+      byEdge: {
+        right: { panelIds: ['LibrariesTopComponent'], activePanelId: 'LibrariesTopComponent' },
+      },
     };
-    const v2 = JSON.stringify({ version: 2, dockview: { grid: {}, panels: {} }, auxiliary: legacyEdges });
+    const v2 = JSON.stringify({
+      version: 2,
+      dockview: { grid: {}, panels: {} },
+      auxiliary: legacyEdges,
+    });
     const parsedV2 = parseStoredWorkbenchLayout(v2);
     expect(createStoredWorkbenchLayout({} as any, parsedV2.auxiliary).version).toBe(7);
     expect(
-      parsedV2.auxiliary.groups
-        .find((group) => group.kind === 'seeded' && group.seedGroupId === 'properties-main')!
-        .panelIds,
+      parsedV2.auxiliary.groups.find(
+        (group) => group.kind === 'seeded' && group.seedGroupId === 'properties-main',
+      )!.panelIds,
     ).toContain('LibrariesTopComponent');
   });
 });

@@ -61,9 +61,7 @@ export function getSelectedParameter(
 ): AutomationTargetSnapshot | undefined {
   const selectedId = automation.selectedParameterId;
   if (!selectedId) return undefined;
-  return getAllTargetsFromGroups(automation.targetGroups).find(
-    (t) => t.parameterId === selectedId,
-  );
+  return getAllTargetsFromGroups(automation.targetGroups).find((t) => t.parameterId === selectedId);
 }
 
 export function getTargetLabel(target: AutomationTargetSnapshot): string {
@@ -72,10 +70,14 @@ export function getTargetLabel(target: AutomationTargetSnapshot): string {
 
 export function getAssignmentStateLabel(state: AutomationAssignmentState): string {
   switch (state) {
-    case 'assignedCurrentLayer': return '●';
-    case 'assignedOtherLayer': return '◎';
-    case 'missing': return '✕';
-    default: return '';
+    case 'assignedCurrentLayer':
+      return '●';
+    case 'assignedOtherLayer':
+      return '◎';
+    case 'missing':
+      return '✕';
+    default:
+      return '';
   }
 }
 

@@ -32,19 +32,30 @@ function projectVoicePatch(voice: BlueX7Voice, patch: BlueX7Patch): BlueX7Voice 
       break;
     case 'setOperatorField': {
       const operators = [...next.operators] as typeof next.operators;
-      operators[patch.operatorIndex] = { ...operators[patch.operatorIndex], [patch.field]: patch.value };
+      operators[patch.operatorIndex] = {
+        ...operators[patch.operatorIndex],
+        [patch.field]: patch.value,
+      };
       next.operators = operators;
       break;
     }
     case 'setSharedOscillatorSync':
-      next.operators = next.operators.map((operator) => ({ ...operator, sync: patch.value })) as typeof next.operators;
+      next.operators = next.operators.map((operator) => ({
+        ...operator,
+        sync: patch.value,
+      })) as typeof next.operators;
       break;
     case 'setSharedPitchModulationSensitivity':
-      next.operators = next.operators.map((operator) => ({ ...operator, modulationPitch: patch.value })) as typeof next.operators;
+      next.operators = next.operators.map((operator) => ({
+        ...operator,
+        modulationPitch: patch.value,
+      })) as typeof next.operators;
       break;
     case 'setOperatorEnvelopePoint': {
       const operators = [...next.operators] as typeof next.operators;
-      const envelope = [...operators[patch.operatorIndex].envelope] as typeof operators[0]['envelope'];
+      const envelope = [
+        ...operators[patch.operatorIndex].envelope,
+      ] as (typeof operators)[0]['envelope'];
       envelope[patch.stageIndex] = { ...patch.point };
       operators[patch.operatorIndex] = { ...operators[patch.operatorIndex], envelope };
       next.operators = operators;
@@ -73,7 +84,11 @@ export interface UseBlueX7HistoryResult {
   canRedo: boolean;
   undoDescription?: string;
   redoDescription?: string;
-  applyPatch: (description: string, patch: BlueX7Patch, extraPatch?: Partial<InstrumentPatch>) => void;
+  applyPatch: (
+    description: string,
+    patch: BlueX7Patch,
+    extraPatch?: Partial<InstrumentPatch>,
+  ) => void;
   undo: () => void;
   redo: () => void;
 }

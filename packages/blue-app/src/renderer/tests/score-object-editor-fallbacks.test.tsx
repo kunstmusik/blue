@@ -19,7 +19,11 @@ import {
   type ScoreObjectLibraryEntryRef,
 } from '../../shared/project-editor';
 
-function makeLibRef(libId: string, objectType: string, index: number = 0): ScoreObjectLibraryEntryRef {
+function makeLibRef(
+  libId: string,
+  objectType: string,
+  index: number = 0,
+): ScoreObjectLibraryEntryRef {
   return { libraryId: libId, libraryIndex: index, objectType };
 }
 
@@ -304,7 +308,12 @@ describe('Library-context stale selection (T036)', () => {
       editorObjectType: 'GenericScore',
       ownerKind: 'library',
       displayContext: 'instance',
-      sourceInstanceLocation: { rootGroupIndex: 0, containerPath: [], layerIndex: 0, objectIndex: 0 },
+      sourceInstanceLocation: {
+        rootGroupIndex: 0,
+        containerPath: [],
+        layerIndex: 0,
+        objectIndex: 0,
+      },
       supportsTimeBehavior: true,
       supportsRepeatPoint: true,
       supportsNoteProcessorChain: true,

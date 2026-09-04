@@ -37,7 +37,7 @@ import { BlueTree } from '../../../tree/BlueTree';
 
 <BlueTree<MyNode> ref={treeApiRef} data={nodes} /* ordinary Arborist props */>
   {RowRenderer}
-</BlueTree>
+</BlueTree>;
 ```
 
 `BlueTree` keeps the ordinary Arborist props and forwarded `TreeApi` ref.

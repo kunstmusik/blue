@@ -10,10 +10,12 @@ vi.mock('zeromq', () => ({
 function createDataWithDependencies() {
   return {
     getClojureProjectData: () => ({
-      getLibraryEntries: () => [{
-        getDependencyCoordinates: () => 'org.clojure/data.json',
-        getVersion: () => '2.5.1',
-      }],
+      getLibraryEntries: () => [
+        {
+          getDependencyCoordinates: () => 'org.clojure/data.json',
+          getVersion: () => '2.5.1',
+        },
+      ],
     }),
   } as any;
 }
@@ -38,7 +40,15 @@ describe('java-runtime-session', () => {
     const client = {
       connect: vi.fn(async () => undefined),
       disconnect: vi.fn(async () => undefined),
-      health: vi.fn(async () => ({ ok: true, result: { version: '0.0.1', capabilities: ['clojure'], cwd: '/tmp/project', methods: ['runtime.health'] } })),
+      health: vi.fn(async () => ({
+        ok: true,
+        result: {
+          version: '0.0.1',
+          capabilities: ['clojure'],
+          cwd: '/tmp/project',
+          methods: ['runtime.health'],
+        },
+      })),
       initSession,
       reinitializeClojure: vi.fn(async () => ({ ok: true, result: { clojureNamespace: 'user1' } })),
       evaluateClojure: vi.fn(),
@@ -46,17 +56,20 @@ describe('java-runtime-session', () => {
       shutdown: vi.fn(async () => ({ ok: true, result: { accepted: true } })),
     } as any;
     const createClient = vi.fn(() => client);
-    const createProcess = vi.fn(async () => ({
-      process: { exitCode: null, killed: false, kill: vi.fn() },
-      javaExecutable: 'java',
-      artifactPath: '/assets/blue-java.jar',
-      controlEndpoint: 'tcp://127.0.0.1:5555',
-      eventEndpoint: 'tcp://127.0.0.1:5556',
-      authToken: 'secret',
-      workingDirectory: '/tmp/project',
-      stdoutText: '',
-      stderrText: '',
-    } as any));
+    const createProcess = vi.fn(
+      async () =>
+        ({
+          process: { exitCode: null, killed: false, kill: vi.fn() },
+          javaExecutable: 'java',
+          artifactPath: '/assets/blue-java.jar',
+          controlEndpoint: 'tcp://127.0.0.1:5555',
+          eventEndpoint: 'tcp://127.0.0.1:5556',
+          authToken: 'secret',
+          workingDirectory: '/tmp/project',
+          stdoutText: '',
+          stderrText: '',
+        }) as any,
+    );
 
     const manager = new JavaRuntimeSessionManager(
       {
@@ -65,8 +78,17 @@ describe('java-runtime-session', () => {
         userDataPath: '/Users/test/Library/Application Support/Blue',
       },
       {
-        resolveArtifactPath: () => ({ artifactPath: '/assets/blue-java.jar', candidatePaths: ['/assets/blue-java.jar'], exists: true }),
-        probeJavaExecutable: async () => ({ available: true, executable: 'java', versionMajor: 21, rawOutput: 'openjdk version "21.0.2"' }),
+        resolveArtifactPath: () => ({
+          artifactPath: '/assets/blue-java.jar',
+          candidatePaths: ['/assets/blue-java.jar'],
+          exists: true,
+        }),
+        probeJavaExecutable: async () => ({
+          available: true,
+          executable: 'java',
+          versionMajor: 21,
+          rawOutput: 'openjdk version "21.0.2"',
+        }),
         createJavaRuntimeProcess: createProcess,
         createClient,
       },
@@ -81,8 +103,14 @@ describe('java-runtime-session', () => {
       projectSessionId: 7,
       projectDir: '/tmp/project',
       clojureDependencies: [{ coordinates: 'org.clojure/data.json', version: '2.5.1' }],
-      jythonPythonLibRoot: path.resolve('/repo/packages/blue-app/dist/main', '../../assets/java/pythonLib'),
-      jythonUserPythonLibRoot: path.join('/Users/test/Library/Application Support/Blue', 'pythonLib'),
+      jythonPythonLibRoot: path.resolve(
+        '/repo/packages/blue-app/dist/main',
+        '../../assets/java/pythonLib',
+      ),
+      jythonUserPythonLibRoot: path.join(
+        '/Users/test/Library/Application Support/Blue',
+        'pythonLib',
+      ),
     });
   });
 
@@ -91,24 +119,38 @@ describe('java-runtime-session', () => {
     const client = {
       connect: vi.fn(async () => undefined),
       disconnect: vi.fn(async () => undefined),
-      health: vi.fn(async () => ({ ok: true, result: { version: '0.0.1', capabilities: ['clojure'], cwd: '/tmp/project', methods: ['runtime.health'] } })),
-      initSession: vi.fn(async () => ({ ok: true, result: { projectSessionId: 2, clojureNamespace: 'user0', dependenciesLoaded: [] } })),
+      health: vi.fn(async () => ({
+        ok: true,
+        result: {
+          version: '0.0.1',
+          capabilities: ['clojure'],
+          cwd: '/tmp/project',
+          methods: ['runtime.health'],
+        },
+      })),
+      initSession: vi.fn(async () => ({
+        ok: true,
+        result: { projectSessionId: 2, clojureNamespace: 'user0', dependenciesLoaded: [] },
+      })),
       reinitializeClojure: vi.fn(async () => ({ ok: true, result: { clojureNamespace: 'user1' } })),
       evaluateClojure: vi.fn(),
       evaluateClojureScoreObject: vi.fn(),
       shutdown: vi.fn(async () => ({ ok: true, result: { accepted: true } })),
     } as any;
-    const createProcess = vi.fn(async () => ({
-      process: { exitCode: null, killed: false, kill: vi.fn() },
-      javaExecutable: 'java',
-      artifactPath: '/assets/blue-java.jar',
-      controlEndpoint: 'tcp://127.0.0.1:5555',
-      eventEndpoint: 'tcp://127.0.0.1:5556',
-      authToken: 'secret',
-      workingDirectory: '/tmp/project',
-      stdoutText: '',
-      stderrText: '',
-    } as any));
+    const createProcess = vi.fn(
+      async () =>
+        ({
+          process: { exitCode: null, killed: false, kill: vi.fn() },
+          javaExecutable: 'java',
+          artifactPath: '/assets/blue-java.jar',
+          controlEndpoint: 'tcp://127.0.0.1:5555',
+          eventEndpoint: 'tcp://127.0.0.1:5556',
+          authToken: 'secret',
+          workingDirectory: '/tmp/project',
+          stdoutText: '',
+          stderrText: '',
+        }) as any,
+    );
 
     const manager = new JavaRuntimeSessionManager(
       {
@@ -117,8 +159,17 @@ describe('java-runtime-session', () => {
         userDataPath: '/Users/test/Library/Application Support/Blue',
       },
       {
-        resolveArtifactPath: () => ({ artifactPath: '/assets/blue-java.jar', candidatePaths: ['/assets/blue-java.jar'], exists: true }),
-        probeJavaExecutable: async () => ({ available: true, executable: 'java', versionMajor: 21, rawOutput: 'openjdk version "21.0.2"' }),
+        resolveArtifactPath: () => ({
+          artifactPath: '/assets/blue-java.jar',
+          candidatePaths: ['/assets/blue-java.jar'],
+          exists: true,
+        }),
+        probeJavaExecutable: async () => ({
+          available: true,
+          executable: 'java',
+          versionMajor: 21,
+          rawOutput: 'openjdk version "21.0.2"',
+        }),
         createJavaRuntimeProcess: createProcess,
         createClient: () => client,
       },
@@ -138,8 +189,19 @@ describe('java-runtime-session', () => {
     const firstClient = {
       connect: vi.fn(async () => undefined),
       disconnect: vi.fn(async () => undefined),
-      health: vi.fn(async () => ({ ok: true, result: { version: '0.0.1', capabilities: ['clojure'], cwd: '/tmp/project-a', methods: ['runtime.health'] } })),
-      initSession: vi.fn(async () => ({ ok: true, result: { projectSessionId: 1, clojureNamespace: 'user0', dependenciesLoaded: [] } })),
+      health: vi.fn(async () => ({
+        ok: true,
+        result: {
+          version: '0.0.1',
+          capabilities: ['clojure'],
+          cwd: '/tmp/project-a',
+          methods: ['runtime.health'],
+        },
+      })),
+      initSession: vi.fn(async () => ({
+        ok: true,
+        result: { projectSessionId: 1, clojureNamespace: 'user0', dependenciesLoaded: [] },
+      })),
       reinitializeClojure: vi.fn(async () => ({ ok: true, result: { clojureNamespace: 'user1' } })),
       evaluateClojure: vi.fn(),
       evaluateClojureScoreObject: vi.fn(),
@@ -148,8 +210,19 @@ describe('java-runtime-session', () => {
     const secondClient = {
       connect: vi.fn(async () => undefined),
       disconnect: vi.fn(async () => undefined),
-      health: vi.fn(async () => ({ ok: true, result: { version: '0.0.1', capabilities: ['clojure'], cwd: '/tmp/project-b', methods: ['runtime.health'] } })),
-      initSession: vi.fn(async () => ({ ok: true, result: { projectSessionId: 2, clojureNamespace: 'user2', dependenciesLoaded: [] } })),
+      health: vi.fn(async () => ({
+        ok: true,
+        result: {
+          version: '0.0.1',
+          capabilities: ['clojure'],
+          cwd: '/tmp/project-b',
+          methods: ['runtime.health'],
+        },
+      })),
+      initSession: vi.fn(async () => ({
+        ok: true,
+        result: { projectSessionId: 2, clojureNamespace: 'user2', dependenciesLoaded: [] },
+      })),
       reinitializeClojure: vi.fn(async () => ({ ok: true, result: { clojureNamespace: 'user3' } })),
       evaluateClojure: vi.fn(),
       evaluateClojureScoreObject: vi.fn(),
@@ -185,14 +258,22 @@ describe('java-runtime-session', () => {
         userDataPath: '/Users/test/Library/Application Support/Blue',
       },
       {
-        resolveArtifactPath: () => ({ artifactPath: '/assets/blue-java.jar', candidatePaths: ['/assets/blue-java.jar'], exists: true }),
-        probeJavaExecutable: async () => ({ available: true, executable: 'java', versionMajor: 21, rawOutput: 'openjdk version "21.0.2"' }),
-        createJavaRuntimeProcess: vi.fn()
+        resolveArtifactPath: () => ({
+          artifactPath: '/assets/blue-java.jar',
+          candidatePaths: ['/assets/blue-java.jar'],
+          exists: true,
+        }),
+        probeJavaExecutable: async () => ({
+          available: true,
+          executable: 'java',
+          versionMajor: 21,
+          rawOutput: 'openjdk version "21.0.2"',
+        }),
+        createJavaRuntimeProcess: vi
+          .fn()
           .mockResolvedValueOnce(firstHandle)
           .mockResolvedValueOnce(secondHandle),
-        createClient: vi.fn()
-          .mockReturnValueOnce(firstClient)
-          .mockReturnValueOnce(secondClient),
+        createClient: vi.fn().mockReturnValueOnce(firstClient).mockReturnValueOnce(secondClient),
         terminateProcess,
       },
     );
@@ -207,8 +288,14 @@ describe('java-runtime-session', () => {
       projectSessionId: 2,
       projectDir: '/tmp/project-b',
       clojureDependencies: [],
-      jythonPythonLibRoot: path.resolve('/repo/packages/blue-app/dist/main', '../../assets/java/pythonLib'),
-      jythonUserPythonLibRoot: path.join('/Users/test/Library/Application Support/Blue', 'pythonLib'),
+      jythonPythonLibRoot: path.resolve(
+        '/repo/packages/blue-app/dist/main',
+        '../../assets/java/pythonLib',
+      ),
+      jythonUserPythonLibRoot: path.join(
+        '/Users/test/Library/Application Support/Blue',
+        'pythonLib',
+      ),
     });
   });
 
@@ -218,8 +305,19 @@ describe('java-runtime-session', () => {
     const client = {
       connect: vi.fn(async () => undefined),
       disconnect: vi.fn(async () => undefined),
-      health: vi.fn(async () => ({ ok: true, result: { version: '0.0.1', capabilities: ['clojure'], cwd: '/tmp/project', methods: ['runtime.health'] } })),
-      initSession: vi.fn(async () => ({ ok: true, result: { projectSessionId: 4, clojureNamespace: 'user0', dependenciesLoaded: [] } })),
+      health: vi.fn(async () => ({
+        ok: true,
+        result: {
+          version: '0.0.1',
+          capabilities: ['clojure'],
+          cwd: '/tmp/project',
+          methods: ['runtime.health'],
+        },
+      })),
+      initSession: vi.fn(async () => ({
+        ok: true,
+        result: { projectSessionId: 4, clojureNamespace: 'user0', dependenciesLoaded: [] },
+      })),
       reinitializeClojure: vi.fn(async () => ({ ok: true, result: { clojureNamespace: 'user1' } })),
       evaluateClojure: vi.fn(),
       evaluateClojureScoreObject: vi.fn(),
@@ -234,8 +332,17 @@ describe('java-runtime-session', () => {
         userDataPath: '/Users/test/Library/Application Support/Blue',
       },
       {
-        resolveArtifactPath: () => ({ artifactPath: '/assets/blue-java.jar', candidatePaths: ['/assets/blue-java.jar'], exists: true }),
-        probeJavaExecutable: async () => ({ available: true, executable: 'java', versionMajor: 21, rawOutput: 'openjdk version "21.0.2"' }),
+        resolveArtifactPath: () => ({
+          artifactPath: '/assets/blue-java.jar',
+          candidatePaths: ['/assets/blue-java.jar'],
+          exists: true,
+        }),
+        probeJavaExecutable: async () => ({
+          available: true,
+          executable: 'java',
+          versionMajor: 21,
+          rawOutput: 'openjdk version "21.0.2"',
+        }),
         createJavaRuntimeProcess: createProcess,
         createClient: () => client,
       },
@@ -267,10 +374,30 @@ describe('java-runtime-session', () => {
     const client = {
       connect: vi.fn(async () => undefined),
       disconnect: vi.fn(async () => undefined),
-      health: vi.fn(async () => ({ ok: true, result: { version: '0.0.1', capabilities: ['clojure', 'jython'], cwd: '/tmp/project', methods: ['runtime.health'] } })),
-      initSession: vi.fn(async () => ({ ok: true, result: { projectSessionId: 9, clojureNamespace: 'user0', dependenciesLoaded: [], jythonReady: true, jythonLibraryPaths: ['/tmp/pythonLib'] } })),
+      health: vi.fn(async () => ({
+        ok: true,
+        result: {
+          version: '0.0.1',
+          capabilities: ['clojure', 'jython'],
+          cwd: '/tmp/project',
+          methods: ['runtime.health'],
+        },
+      })),
+      initSession: vi.fn(async () => ({
+        ok: true,
+        result: {
+          projectSessionId: 9,
+          clojureNamespace: 'user0',
+          dependenciesLoaded: [],
+          jythonReady: true,
+          jythonLibraryPaths: ['/tmp/pythonLib'],
+        },
+      })),
       reinitializeClojure: vi.fn(async () => ({ ok: true, result: { clojureNamespace: 'user1' } })),
-      reinitializeJython: vi.fn(async () => ({ ok: true, result: { libraryPaths: ['/tmp/pythonLib'] } })),
+      reinitializeJython: vi.fn(async () => ({
+        ok: true,
+        result: { libraryPaths: ['/tmp/pythonLib'] },
+      })),
       evaluateClojure: vi.fn(),
       evaluateClojureScoreObject: vi.fn(),
       shutdown: vi.fn(async () => ({ ok: true, result: { accepted: true } })),
@@ -283,19 +410,29 @@ describe('java-runtime-session', () => {
         userDataPath: '/Users/test/Library/Application Support/Blue',
       },
       {
-        resolveArtifactPath: () => ({ artifactPath: '/assets/blue-java.jar', candidatePaths: ['/assets/blue-java.jar'], exists: true }),
-        probeJavaExecutable: async () => ({ available: true, executable: 'java', versionMajor: 21, rawOutput: 'openjdk version "21.0.2"' }),
-        createJavaRuntimeProcess: async () => ({
-          process: { exitCode: null, killed: false, kill: vi.fn() },
-          javaExecutable: 'java',
+        resolveArtifactPath: () => ({
           artifactPath: '/assets/blue-java.jar',
-          controlEndpoint: 'tcp://127.0.0.1:5555',
-          eventEndpoint: 'tcp://127.0.0.1:5556',
-          authToken: 'secret',
-          workingDirectory: '/tmp/project',
-          stdoutText: '',
-          stderrText: '',
-        } as any),
+          candidatePaths: ['/assets/blue-java.jar'],
+          exists: true,
+        }),
+        probeJavaExecutable: async () => ({
+          available: true,
+          executable: 'java',
+          versionMajor: 21,
+          rawOutput: 'openjdk version "21.0.2"',
+        }),
+        createJavaRuntimeProcess: async () =>
+          ({
+            process: { exitCode: null, killed: false, kill: vi.fn() },
+            javaExecutable: 'java',
+            artifactPath: '/assets/blue-java.jar',
+            controlEndpoint: 'tcp://127.0.0.1:5555',
+            eventEndpoint: 'tcp://127.0.0.1:5556',
+            authToken: 'secret',
+            workingDirectory: '/tmp/project',
+            stdoutText: '',
+            stderrText: '',
+          }) as any,
         createClient: () => client,
       },
     );
@@ -313,8 +450,25 @@ describe('java-runtime-session', () => {
     const client = {
       connect: vi.fn(async () => undefined),
       disconnect: vi.fn(async () => undefined),
-      health: vi.fn(async () => ({ ok: true, result: { version: '0.0.1', capabilities: ['clojure', 'jython'], cwd: '/tmp/project', methods: ['runtime.health'] } })),
-      initSession: vi.fn(async () => ({ ok: true, result: { projectSessionId: 9, clojureNamespace: 'user0', dependenciesLoaded: [], jythonReady: true, jythonLibraryPaths: ['/tmp/pythonLib'] } })),
+      health: vi.fn(async () => ({
+        ok: true,
+        result: {
+          version: '0.0.1',
+          capabilities: ['clojure', 'jython'],
+          cwd: '/tmp/project',
+          methods: ['runtime.health'],
+        },
+      })),
+      initSession: vi.fn(async () => ({
+        ok: true,
+        result: {
+          projectSessionId: 9,
+          clojureNamespace: 'user0',
+          dependenciesLoaded: [],
+          jythonReady: true,
+          jythonLibraryPaths: ['/tmp/pythonLib'],
+        },
+      })),
       reinitializeClojure: vi.fn(async () => ({ ok: true, result: { clojureNamespace: 'user1' } })),
       reinitializeJython: vi.fn(async () => ({
         ok: false,
@@ -337,19 +491,29 @@ describe('java-runtime-session', () => {
         userDataPath: '/Users/test/Library/Application Support/Blue',
       },
       {
-        resolveArtifactPath: () => ({ artifactPath: '/assets/blue-java.jar', candidatePaths: ['/assets/blue-java.jar'], exists: true }),
-        probeJavaExecutable: async () => ({ available: true, executable: 'java', versionMajor: 21, rawOutput: 'openjdk version "21.0.2"' }),
-        createJavaRuntimeProcess: async () => ({
-          process: { exitCode: null, killed: false, kill: vi.fn() },
-          javaExecutable: 'java',
+        resolveArtifactPath: () => ({
           artifactPath: '/assets/blue-java.jar',
-          controlEndpoint: 'tcp://127.0.0.1:5555',
-          eventEndpoint: 'tcp://127.0.0.1:5556',
-          authToken: 'secret',
-          workingDirectory: '/tmp/project',
-          stdoutText: '',
-          stderrText: '',
-        } as any),
+          candidatePaths: ['/assets/blue-java.jar'],
+          exists: true,
+        }),
+        probeJavaExecutable: async () => ({
+          available: true,
+          executable: 'java',
+          versionMajor: 21,
+          rawOutput: 'openjdk version "21.0.2"',
+        }),
+        createJavaRuntimeProcess: async () =>
+          ({
+            process: { exitCode: null, killed: false, kill: vi.fn() },
+            javaExecutable: 'java',
+            artifactPath: '/assets/blue-java.jar',
+            controlEndpoint: 'tcp://127.0.0.1:5555',
+            eventEndpoint: 'tcp://127.0.0.1:5556',
+            authToken: 'secret',
+            workingDirectory: '/tmp/project',
+            stdoutText: '',
+            stderrText: '',
+          }) as any,
         createClient: () => client,
       },
     );

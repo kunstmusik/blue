@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import type { TimebaseUpdateMode } from '../components/workbench/panels/score/RulerConfigDialog';
-import { TimeBase, TimePosition, TimeDuration, TimeContext, BlueData, GenericScore } from '@blue/data';
+import {
+  TimeBase,
+  TimePosition,
+  TimeDuration,
+  TimeContext,
+  BlueData,
+  GenericScore,
+} from '@blue/data';
 import { applyScoreTimeStatePatch, applyProjectDocumentPatch } from '../../shared/project-editor';
 import type { ScoreObjectEditorTargetSnapshot } from '../../shared/project-editor';
 
@@ -141,7 +148,9 @@ describe('Ruler Config Timebase Update Logic', () => {
       scoreObjectMode: TimebaseUpdateMode | null,
       markerMode: TimebaseUpdateMode | null,
     ) {
-      const updatedObjects = objects.map((obj) => shouldUpdateObject(obj, oldTimeBase, scoreObjectMode));
+      const updatedObjects = objects.map((obj) =>
+        shouldUpdateObject(obj, oldTimeBase, scoreObjectMode),
+      );
       const updatedMarkers = markers.map((m) => shouldUpdateMarker(m, oldTimeBase, markerMode));
       return { updatedObjects, updatedMarkers };
     }
@@ -482,7 +491,10 @@ describe('Ruler Config Timebase Update Logic', () => {
       layer.push(gs2);
 
       // Step 2: User selects gs1, changes start time to BBT via properties panel
-      const target1 = { ...makeTarget(gs1Id), location: { rootGroupIndex: 0, containerPath: [], layerIndex: 0, objectIndex: 0 } };
+      const target1 = {
+        ...makeTarget(gs1Id),
+        location: { rootGroupIndex: 0, containerPath: [], layerIndex: 0, objectIndex: 0 },
+      };
       const beatsValue = gs1.getStartTime().toBeats(ctx);
       applyProjectDocumentPatch(data, {
         score: {
@@ -528,7 +540,10 @@ describe('Ruler Config Timebase Update Logic', () => {
       const gs1Id = gs1.getName();
 
       // Manually set gs1 to BBT
-      const target1 = { ...makeTarget(gs1Id), location: { rootGroupIndex: 0, containerPath: [], layerIndex: 0, objectIndex: 0 } };
+      const target1 = {
+        ...makeTarget(gs1Id),
+        location: { rootGroupIndex: 0, containerPath: [], layerIndex: 0, objectIndex: 0 },
+      };
       const beatsValue = gs1.getStartTime().toBeats(ctx);
       applyProjectDocumentPatch(data, {
         score: {

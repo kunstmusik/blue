@@ -56,12 +56,14 @@ export function setElementRect(
 
 export function dispatchContextMenuKey(element: Element, key = 'F10'): void {
   act(() => {
-    element.dispatchEvent(new KeyboardEvent('keydown', {
-      bubbles: true,
-      cancelable: true,
-      key,
-      shiftKey: key === 'F10',
-    }));
+    element.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        bubbles: true,
+        cancelable: true,
+        key,
+        shiftKey: key === 'F10',
+      }),
+    );
   });
 }
 
@@ -72,11 +74,13 @@ export function dispatchPointerEvent(
 ): void {
   const EventConstructor = globalThis.PointerEvent ?? MouseEvent;
   act(() => {
-    element.dispatchEvent(new EventConstructor(type, {
-      bubbles: true,
-      cancelable: true,
-      ...init,
-    }));
+    element.dispatchEvent(
+      new EventConstructor(type, {
+        bubbles: true,
+        cancelable: true,
+        ...init,
+      }),
+    );
   });
 }
 
@@ -93,5 +97,7 @@ export function dispatchDragEvent(
     clientY: { value: coordinates.clientY ?? 0 },
     relatedTarget: { value: null },
   });
-  act(() => { element.dispatchEvent(event); });
+  act(() => {
+    element.dispatchEvent(event);
+  });
 }

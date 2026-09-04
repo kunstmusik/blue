@@ -8,7 +8,9 @@ import type { ArrangementRowSnapshot } from '../../shared/project-editor';
 import ArrangementPanel from '../components/workbench/panels/orchestra/ArrangementPanel';
 import { HostDocumentContext } from '../hooks/use-host-document';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const ROWS: ArrangementRowSnapshot[] = [
   {
@@ -21,7 +23,10 @@ const ROWS: ArrangementRowSnapshot[] = [
   },
 ];
 
-function renderRoot(element: React.ReactElement): { container: HTMLDivElement; unmount: () => void } {
+function renderRoot(element: React.ReactElement): {
+  container: HTMLDivElement;
+  unmount: () => void;
+} {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root: Root = createRoot(container);
@@ -78,7 +83,9 @@ describe('ArrangementPanel', () => {
       expect(document.body.textContent).toContain('Generic Instrument');
 
       act(() => {
-        document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+        document.body.dispatchEvent(
+          new MouseEvent('mousedown', { bubbles: true, cancelable: true }),
+        );
       });
 
       expect(document.body.textContent).not.toContain('Generic Instrument');
@@ -115,8 +122,22 @@ describe('ArrangementPanel MIDI focus (Spec 067 US2)', () => {
 
   it('focuses the Orchestra assignment on explicit row click', () => {
     const rows: ArrangementRowSnapshot[] = [
-      { assignmentId: '1', enabled: true, instrumentName: 'Lead', instrumentType: 'generic', instrumentSummary: 'GenericInstrument', editable: true },
-      { assignmentId: '2', enabled: true, instrumentName: 'Pad', instrumentType: 'generic', instrumentSummary: 'GenericInstrument', editable: true },
+      {
+        assignmentId: '1',
+        enabled: true,
+        instrumentName: 'Lead',
+        instrumentType: 'generic',
+        instrumentSummary: 'GenericInstrument',
+        editable: true,
+      },
+      {
+        assignmentId: '2',
+        enabled: true,
+        instrumentName: 'Pad',
+        instrumentType: 'generic',
+        instrumentSummary: 'GenericInstrument',
+        editable: true,
+      },
     ];
     const onSelect = vi.fn();
     const rendered = renderRoot(
@@ -148,7 +169,14 @@ describe('ArrangementPanel MIDI focus (Spec 067 US2)', () => {
 
   it('uses (unnamed) for an assignment with an empty instrument name', () => {
     const rows: ArrangementRowSnapshot[] = [
-      { assignmentId: '7', enabled: true, instrumentName: '', instrumentType: 'generic', instrumentSummary: 'GenericInstrument', editable: true },
+      {
+        assignmentId: '7',
+        enabled: true,
+        instrumentName: '',
+        instrumentType: 'generic',
+        instrumentSummary: 'GenericInstrument',
+        editable: true,
+      },
     ];
     const rendered = renderRoot(
       <ArrangementPanel

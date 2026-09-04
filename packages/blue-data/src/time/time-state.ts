@@ -9,7 +9,14 @@
 import { TimeBase } from './time-base';
 import { SnapValueName, isValidSnapValueName } from './snap-value';
 import { Element } from '../serialization/xml-reader';
-import { writeBoolean, readBoolean, writeDouble, readDouble, writeInt, readInt } from '../utilities/xml';
+import {
+  writeBoolean,
+  readBoolean,
+  writeDouble,
+  readDouble,
+  writeInt,
+  readInt,
+} from '../utilities/xml';
 
 const CURRENT_FORMAT_VERSION = 2;
 
@@ -24,9 +31,12 @@ function parseTimeBase(text: string | null | undefined, defaultValue: TimeBase):
   const legacyValue = parseInt(trimmed, 10);
   if (!Number.isNaN(legacyValue)) {
     switch (legacyValue) {
-      case 0: return TimeBase.TIME;
-      case 1: return TimeBase.BEATS;
-      default: return defaultValue;
+      case 0:
+        return TimeBase.TIME;
+      case 1:
+        return TimeBase.BEATS;
+      default:
+        return defaultValue;
     }
   }
   return defaultValue;
@@ -50,9 +60,16 @@ function parseSnapValue(text: string | null | undefined): SnapValueName {
 function closestSnapValueMatchLegacy(legacyValue: number): SnapValueName {
   // Import-free closest match for legacy double values
   const musicalValues: Array<[SnapValueName, number]> = [
-    ['BAR', 4.0], ['HALF', 2.0], ['BEAT', 1.0], ['EIGHTH', 0.5],
-    ['SIXTEENTH', 0.25], ['THIRTY_SECOND', 0.125], ['SIXTY_FOURTH', 0.0625],
-    ['QUARTER_TRIPLET', 1.0 / 3.0], ['EIGHTH_TRIPLET', 1.0 / 6.0], ['SIXTEENTH_TRIPLET', 1.0 / 12.0],
+    ['BAR', 4.0],
+    ['HALF', 2.0],
+    ['BEAT', 1.0],
+    ['EIGHTH', 0.5],
+    ['SIXTEENTH', 0.25],
+    ['THIRTY_SECOND', 0.125],
+    ['SIXTY_FOURTH', 0.0625],
+    ['QUARTER_TRIPLET', 1.0 / 3.0],
+    ['EIGHTH_TRIPLET', 1.0 / 6.0],
+    ['SIXTEENTH_TRIPLET', 1.0 / 12.0],
   ];
   let best: SnapValueName = 'BEAT';
   let bestDiff = Number.MAX_VALUE;
@@ -97,38 +114,82 @@ export class TimeState {
     return 100 * Math.exp(Math.log(2) * (this.zoomIterations / 32.0));
   }
 
-  isSnapEnabled(): boolean { return this.snapEnabled; }
-  setSnapEnabled(value: boolean): void { this.snapEnabled = value; }
+  isSnapEnabled(): boolean {
+    return this.snapEnabled;
+  }
+  setSnapEnabled(value: boolean): void {
+    this.snapEnabled = value;
+  }
 
-  getSnapValue(): SnapValueName { return this.snapValue; }
-  setSnapValue(value: SnapValueName): void { this.snapValue = value; }
+  getSnapValue(): SnapValueName {
+    return this.snapValue;
+  }
+  setSnapValue(value: SnapValueName): void {
+    this.snapValue = value;
+  }
 
-  getTimeDisplay(): TimeBase { return this.timeDisplay; }
-  setTimeDisplay(value: TimeBase): void { this.timeDisplay = value; }
+  getTimeDisplay(): TimeBase {
+    return this.timeDisplay;
+  }
+  setTimeDisplay(value: TimeBase): void {
+    this.timeDisplay = value;
+  }
 
-  getSecondaryTimeDisplay(): TimeBase { return this.secondaryTimeDisplay; }
-  setSecondaryTimeDisplay(value: TimeBase): void { this.secondaryTimeDisplay = value; }
+  getSecondaryTimeDisplay(): TimeBase {
+    return this.secondaryTimeDisplay;
+  }
+  setSecondaryTimeDisplay(value: TimeBase): void {
+    this.secondaryTimeDisplay = value;
+  }
 
-  isSecondaryRulerEnabled(): boolean { return this.secondaryRulerEnabled; }
-  setSecondaryRulerEnabled(value: boolean): void { this.secondaryRulerEnabled = value; }
+  isSecondaryRulerEnabled(): boolean {
+    return this.secondaryRulerEnabled;
+  }
+  setSecondaryRulerEnabled(value: boolean): void {
+    this.secondaryRulerEnabled = value;
+  }
 
-  isTempoRowVisible(): boolean { return this.tempoRowVisible; }
-  setTempoRowVisible(value: boolean): void { this.tempoRowVisible = value; }
+  isTempoRowVisible(): boolean {
+    return this.tempoRowVisible;
+  }
+  setTempoRowVisible(value: boolean): void {
+    this.tempoRowVisible = value;
+  }
 
-  isMeterRowVisible(): boolean { return this.meterRowVisible; }
-  setMeterRowVisible(value: boolean): void { this.meterRowVisible = value; }
+  isMeterRowVisible(): boolean {
+    return this.meterRowVisible;
+  }
+  setMeterRowVisible(value: boolean): void {
+    this.meterRowVisible = value;
+  }
 
-  isMarkersRowVisible(): boolean { return this.markersRowVisible; }
-  setMarkersRowVisible(value: boolean): void { this.markersRowVisible = value; }
+  isMarkersRowVisible(): boolean {
+    return this.markersRowVisible;
+  }
+  setMarkersRowVisible(value: boolean): void {
+    this.markersRowVisible = value;
+  }
 
-  getSmpteFrameRate(): number { return this.smpteFrameRate; }
-  setSmpteFrameRate(value: number): void { this.smpteFrameRate = value; }
+  getSmpteFrameRate(): number {
+    return this.smpteFrameRate;
+  }
+  setSmpteFrameRate(value: number): void {
+    this.smpteFrameRate = value;
+  }
 
-  getZoomIterations(): number { return this.zoomIterations; }
-  setZoomIterations(value: number): void { this.zoomIterations = value; }
+  getZoomIterations(): number {
+    return this.zoomIterations;
+  }
+  setZoomIterations(value: number): void {
+    this.zoomIterations = value;
+  }
 
-  lowerPixelSecond(): void { this.zoomIterations--; }
-  raisePixelSecond(): void { this.zoomIterations++; }
+  lowerPixelSecond(): void {
+    this.zoomIterations--;
+  }
+  raisePixelSecond(): void {
+    this.zoomIterations++;
+  }
 
   // ─── XML Serialization ───
 

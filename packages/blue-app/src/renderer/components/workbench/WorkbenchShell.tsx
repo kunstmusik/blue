@@ -34,10 +34,7 @@ import {
   getAuxiliaryEdgeFromGroupElement,
 } from './auxiliary-drag';
 import { useDocumentMouseDownOutside } from '../../hooks/use-document-mousedown-outside';
-import {
-  useWorkbenchStore,
-  waitForCurrentWorkbenchApi,
-} from '../../stores/workbench-store';
+import { useWorkbenchStore, waitForCurrentWorkbenchApi } from '../../stores/workbench-store';
 import { useLayoutSettingsStore } from '../../stores/layout-settings-store';
 import { useRenderAndPlayInterceptor } from './panels/audio-player/use-render-and-play';
 import type {
@@ -667,21 +664,21 @@ export default function WorkbenchShell() {
           <div
             className={cn(
               'workbench-aux-edge-drop-target workbench-aux-edge-drop-target--left',
-              activeDrag.targetEdge === 'left' && 'is-active'
+              activeDrag.targetEdge === 'left' && 'is-active',
             )}
             aria-hidden="true"
           />
           <div
             className={cn(
               'workbench-aux-edge-drop-target workbench-aux-edge-drop-target--right',
-              activeDrag.targetEdge === 'right' && 'is-active'
+              activeDrag.targetEdge === 'right' && 'is-active',
             )}
             aria-hidden="true"
           />
           <div
             className={cn(
               'workbench-aux-edge-drop-target workbench-aux-edge-drop-target--bottom',
-              activeDrag.targetEdge === 'bottom' && 'is-active'
+              activeDrag.targetEdge === 'bottom' && 'is-active',
             )}
             aria-hidden="true"
           />

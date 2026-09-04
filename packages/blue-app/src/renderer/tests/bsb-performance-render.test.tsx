@@ -24,7 +24,9 @@ const widgetRenderCounts = vi.hoisted(() => ({
   value: 0,
 }));
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 vi.mock('../components/workbench/panels/orchestra/ArrangementPanel', () => ({
   default: React.memo((props: any) => {
@@ -360,10 +362,7 @@ describe('BSB performance render isolation', () => {
       ...baseInstrument,
       widgetTree: {
         ...baseInstrument.widgetTree,
-        children: [
-          { ...ampNode, value: 0.75 },
-          freqNode,
-        ],
+        children: [{ ...ampNode, value: 0.75 }, freqNode],
       },
     };
 

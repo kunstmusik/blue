@@ -275,8 +275,13 @@ describe('MIDI replacement entry point', () => {
 
     expect(outcome).toEqual({ status: 'committed' });
     expect(calls).toEqual([
-      'preflight', 'prepare', 'preflight', 'confirmLibraryDraft', 'confirmSave',
-      'revalidate', 'commit',
+      'preflight',
+      'prepare',
+      'preflight',
+      'confirmLibraryDraft',
+      'confirmSave',
+      'revalidate',
+      'commit',
     ]);
   });
 
@@ -395,12 +400,24 @@ describe('project lifecycle compatibility workflow', () => {
     const session = new ProjectSession();
     const lifecycle = createProjectLifecycle({
       session,
-      stopProjectRuntimes: () => { events.push('stop'); },
-      closeProjectEditors: () => { events.push('editors'); },
-      clearProjectServices: () => { events.push('clear'); },
-      publishProjectChanged: (snapshot) => { events.push(`changed:${snapshot.filePath}:${snapshot.sessionId}`); },
-      publishProjectLoaded: (snapshot) => { events.push(`loaded:${snapshot.filePath}:${snapshot.sessionId}`); },
-      publishProjectClosed: (snapshot) => { events.push(`closed:${snapshot.filePath}:${snapshot.sessionId}`); },
+      stopProjectRuntimes: () => {
+        events.push('stop');
+      },
+      closeProjectEditors: () => {
+        events.push('editors');
+      },
+      clearProjectServices: () => {
+        events.push('clear');
+      },
+      publishProjectChanged: (snapshot) => {
+        events.push(`changed:${snapshot.filePath}:${snapshot.sessionId}`);
+      },
+      publishProjectLoaded: (snapshot) => {
+        events.push(`loaded:${snapshot.filePath}:${snapshot.sessionId}`);
+      },
+      publishProjectClosed: (snapshot) => {
+        events.push(`closed:${snapshot.filePath}:${snapshot.sessionId}`);
+      },
     });
 
     await lifecycle.open(() => ({
@@ -411,13 +428,20 @@ describe('project lifecycle compatibility workflow', () => {
     expect(session.read().data?.getProjectProperties().title).toBe('Compatibility Project');
 
     const openedSessionId = session.read().sessionId;
-    await expect(lifecycle.open(() => { throw new Error('candidate parse failed'); }))
-      .rejects.toThrow('candidate parse failed');
+    await expect(
+      lifecycle.open(() => {
+        throw new Error('candidate parse failed');
+      }),
+    ).rejects.toThrow('candidate parse failed');
     expect(session.read().sessionId).toBe(openedSessionId);
     expect(session.read().filePath).toBe('/native/opened.blue');
 
     await lifecycle.replace({ data: new BlueData(), filePath: null });
-    expect(await lifecycle.save(() => { throw new Error('unreachable'); })).toBe(false);
+    expect(
+      await lifecycle.save(() => {
+        throw new Error('unreachable');
+      }),
+    ).toBe(false);
 
     await lifecycle.open(() => ({
       data: BlueData.loadFromString(sourceXml),
@@ -450,13 +474,34 @@ describe('project lifecycle compatibility workflow', () => {
     expect(session.read().data).toBeNull();
     expect(session.read().filePath).toBeNull();
     expect(events).toEqual([
-      'stop', 'editors', 'clear', 'changed:/native/opened.blue:1', 'loaded:/native/opened.blue:1',
-      'stop', 'editors', 'clear', 'changed:null:2', 'loaded:null:2',
-      'stop', 'editors', 'clear', 'changed:/native/opened.blue:3', 'loaded:/native/opened.blue:3',
-      'write:C:\\Users\\Blue\\saved-as.blue', 'changed:C:\\Users\\Blue\\saved-as.blue:3',
-      'write:C:\\Users\\Blue\\saved-as.blue', 'changed:C:\\Users\\Blue\\saved-as.blue:3',
-      'stop', 'editors', 'clear', 'changed:C:\\Users\\Blue\\saved-as.blue:4', 'loaded:C:\\Users\\Blue\\saved-as.blue:4',
-      'stop', 'editors', 'clear', 'closed:null:5',
+      'stop',
+      'editors',
+      'clear',
+      'changed:/native/opened.blue:1',
+      'loaded:/native/opened.blue:1',
+      'stop',
+      'editors',
+      'clear',
+      'changed:null:2',
+      'loaded:null:2',
+      'stop',
+      'editors',
+      'clear',
+      'changed:/native/opened.blue:3',
+      'loaded:/native/opened.blue:3',
+      'write:C:\\Users\\Blue\\saved-as.blue',
+      'changed:C:\\Users\\Blue\\saved-as.blue:3',
+      'write:C:\\Users\\Blue\\saved-as.blue',
+      'changed:C:\\Users\\Blue\\saved-as.blue:3',
+      'stop',
+      'editors',
+      'clear',
+      'changed:C:\\Users\\Blue\\saved-as.blue:4',
+      'loaded:C:\\Users\\Blue\\saved-as.blue:4',
+      'stop',
+      'editors',
+      'clear',
+      'closed:null:5',
     ]);
   });
 });

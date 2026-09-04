@@ -16,7 +16,9 @@ import type {
   ScoreLayerAutomationSnapshot,
 } from '../../shared/project-editor';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const popout = new JSDOM('<!doctype html><html><body></body></html>', {
   url: 'https://popout.test',
@@ -60,17 +62,21 @@ const automation: ScoreLayerAutomationSnapshot = {
   parameterIds: [],
   selectedParameterId: undefined,
   parameters: [],
-  targetGroups: [{
-    groupId: 'instrument',
-    label: 'Instrument',
-    targets: [],
-    subGroups: [{
-      groupId: 'instrument-1',
-      label: '1) Synth',
-      targets: [target],
-      subGroups: [],
-    }],
-  } satisfies AutomationTargetGroupSnapshot],
+  targetGroups: [
+    {
+      groupId: 'instrument',
+      label: 'Instrument',
+      targets: [],
+      subGroups: [
+        {
+          groupId: 'instrument-1',
+          label: '1) Synth',
+          targets: [target],
+          subGroups: [],
+        },
+      ],
+    } satisfies AutomationTargetGroupSnapshot,
+  ],
   missingParameterIds: [],
 };
 
@@ -112,20 +118,24 @@ describe('AutomationTargetMenu in a floated panel', () => {
       await Promise.resolve();
     });
 
-    const groupTrigger = [...popoutDoc.querySelectorAll<HTMLElement>('[role="menuitem"]')]
-      .find((item) => item.textContent?.trim() === '1) Synth');
+    const groupTrigger = [...popoutDoc.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(
+      (item) => item.textContent?.trim() === '1) Synth',
+    );
     expect(groupTrigger).toBeTruthy();
 
     await act(async () => {
-      groupTrigger!.dispatchEvent(makePopoutPointerEvent('pointermove', {
-        clientX: 30,
-        clientY: 30,
-      }));
+      groupTrigger!.dispatchEvent(
+        makePopoutPointerEvent('pointermove', {
+          clientX: 30,
+          clientY: 30,
+        }),
+      );
       await new Promise((resolve) => setTimeout(resolve, 150));
     });
 
-    const parameterItem = [...popoutDoc.querySelectorAll<HTMLElement>('[role="menuitem"]')]
-      .find((item) => item.textContent?.trim() === target.label);
+    const parameterItem = [...popoutDoc.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(
+      (item) => item.textContent?.trim() === target.label,
+    );
     expect(parameterItem).toBeTruthy();
 
     await act(async () => {
@@ -148,7 +158,8 @@ class MockResizeObserver {
   unobserve(): void {}
   disconnect(): void {}
 }
-(globalThis as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver = MockResizeObserver;
+(globalThis as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver =
+  MockResizeObserver;
 
 describe('AutomationLineView point readout (spec 090)', () => {
   let host: HTMLDivElement;
@@ -163,7 +174,9 @@ describe('AutomationLineView point readout (spec 090)', () => {
     }
   };
 
-  const makeParameter = (points: Array<{ time: number; value: number }>): AutomationParameterSnapshot => ({
+  const makeParameter = (
+    points: Array<{ time: number; value: number }>,
+  ): AutomationParameterSnapshot => ({
     parameterId: 'p-readout',
     name: 'Frequency',
     label: 'Hz',
@@ -188,7 +201,9 @@ describe('AutomationLineView point readout (spec 090)', () => {
       root.render(
         <HostDocumentContext.Provider value={doc}>
           <div
-            ref={(el) => { rowRef.current = el; }}
+            ref={(el) => {
+              rowRef.current = el;
+            }}
             style={{ overflow: 'hidden', width: 240, height: 40 }}
           >
             <AutomationLineView
@@ -203,7 +218,17 @@ describe('AutomationLineView point readout (spec 090)', () => {
       );
     });
     const row = rowRef.current!;
-    const rowRect = () => ({ left: 0, top: 60, right: 240, bottom: 100, width: 240, height: 40, x: 0, y: 60, toJSON: () => undefined });
+    const rowRect = () => ({
+      left: 0,
+      top: 60,
+      right: 240,
+      bottom: 100,
+      width: 240,
+      height: 40,
+      x: 0,
+      y: 60,
+      toJSON: () => undefined,
+    });
     Object.defineProperty(row, 'getBoundingClientRect', { configurable: true, value: rowRect });
     const svg = row.querySelector('svg');
     if (svg) {
@@ -255,7 +280,10 @@ describe('AutomationLineView point readout (spec 090)', () => {
 
     const readout = popoutDoc.body.querySelector<HTMLElement>('[data-host-surface]')!;
     Object.defineProperty(readout, 'offsetWidth', { configurable: true, get: () => READOUT_WIDTH });
-    Object.defineProperty(readout, 'offsetHeight', { configurable: true, get: () => READOUT_HEIGHT });
+    Object.defineProperty(readout, 'offsetHeight', {
+      configurable: true,
+      get: () => READOUT_HEIGHT,
+    });
     // One more frame so the measured size participates in collision.
     act(() => {
       popout.window.dispatchEvent(new popout.window.Event('resize'));

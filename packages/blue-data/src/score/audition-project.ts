@@ -49,7 +49,8 @@ export function createAuditionProjectCopy(
     }
 
     if (sourceGroup instanceof TrackLayerGroup && copiedGroup instanceof TrackLayerGroup) {
-      if (filterTrackLayerGroup(sourceGroup, copiedGroup, selected)) retainedGroups.push(copiedGroup);
+      if (filterTrackLayerGroup(sourceGroup, copiedGroup, selected))
+        retainedGroups.push(copiedGroup);
     }
   }
 

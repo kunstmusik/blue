@@ -35,87 +35,109 @@ type DragState =
   | { type: 'render-start' }
   | null;
 
-export default function MarkersBar({ markers, totalBeats, pixelsPerBeat, rowVisible, snapEnabled, snapValue, meterMap, scrollContainerRef, rootTimelineOnly, tempo, smpteFrameRate, sampleRate }: Props) {
+export default function MarkersBar({
+  markers,
+  totalBeats,
+  pixelsPerBeat,
+  rowVisible,
+  snapEnabled,
+  snapValue,
+  meterMap,
+  scrollContainerRef,
+  rootTimelineOnly,
+  tempo,
+  smpteFrameRate,
+  sampleRate,
+}: Props) {
   const applyPatch = useProjectStore((s) => s.applyProjectDocumentPatch);
   const rowRef = useRef<HTMLDivElement>(null);
   const dragStateRef = useRef<DragState>(null);
   const [draggingSourceIndex, setDraggingSourceIndex] = useState<number | null>(null);
 
-  const snapBeats = useCallback((beats: number, shiftHeld: boolean) => {
-    if (!snapEnabled || shiftHeld) return beats;
-    const sv = snapValueToBeats(
-      snapValue,
-      tempo,
-      smpteFrameRate,
-      sampleRate,
-      pixelsPerBeat,
-    );
-    if (sv <= 0) return beats;
-    return snapBeatToGrid(beats, 'nearest', snapValue, sv, meterMap);
-  }, [snapEnabled, snapValue, meterMap, tempo, smpteFrameRate, sampleRate, pixelsPerBeat]);
+  const snapBeats = useCallback(
+    (beats: number, shiftHeld: boolean) => {
+      if (!snapEnabled || shiftHeld) return beats;
+      const sv = snapValueToBeats(snapValue, tempo, smpteFrameRate, sampleRate, pixelsPerBeat);
+      if (sv <= 0) return beats;
+      return snapBeatToGrid(beats, 'nearest', snapValue, sv, meterMap);
+    },
+    [snapEnabled, snapValue, meterMap, tempo, smpteFrameRate, sampleRate, pixelsPerBeat],
+  );
 
-  const xToBeats = useCallback((clientX: number) => {
-    const element = rowRef.current;
-    if (!element) return 0;
+  const xToBeats = useCallback(
+    (clientX: number) => {
+      const element = rowRef.current;
+      if (!element) return 0;
 
-    const rect = element.getBoundingClientRect();
-    const x = Math.max(0, clientX - rect.left);
-    return x / pixelsPerBeat;
-  }, [pixelsPerBeat]);
+      const rect = element.getBoundingClientRect();
+      const x = Math.max(0, clientX - rect.left);
+      return x / pixelsPerBeat;
+    },
+    [pixelsPerBeat],
+  );
 
-  const autoScroll = useCallback((clientX: number) => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
+  const autoScroll = useCallback(
+    (clientX: number) => {
+      const container = scrollContainerRef.current;
+      if (!container) return;
 
-    const rect = container.getBoundingClientRect();
-    let delta = 0;
+      const rect = container.getBoundingClientRect();
+      let delta = 0;
 
-    if (clientX < rect.left + AUTO_SCROLL_EDGE_THRESHOLD) {
-      delta = clientX - (rect.left + AUTO_SCROLL_EDGE_THRESHOLD);
-    } else if (clientX > rect.right - AUTO_SCROLL_EDGE_THRESHOLD) {
-      delta = clientX - (rect.right - AUTO_SCROLL_EDGE_THRESHOLD);
-    }
+      if (clientX < rect.left + AUTO_SCROLL_EDGE_THRESHOLD) {
+        delta = clientX - (rect.left + AUTO_SCROLL_EDGE_THRESHOLD);
+      } else if (clientX > rect.right - AUTO_SCROLL_EDGE_THRESHOLD) {
+        delta = clientX - (rect.right - AUTO_SCROLL_EDGE_THRESHOLD);
+      }
 
-    if (delta === 0) return;
+      if (delta === 0) return;
 
-    const step = Math.sign(delta) * Math.min(
-      AUTO_SCROLL_MAX_STEP,
-      Math.max(6, Math.abs(delta) * 0.35),
-    );
+      const step =
+        Math.sign(delta) * Math.min(AUTO_SCROLL_MAX_STEP, Math.max(6, Math.abs(delta) * 0.35));
 
-    const nextScrollLeft = Math.max(0, container.scrollLeft + step);
-    if (nextScrollLeft !== container.scrollLeft) {
-      container.scrollLeft = nextScrollLeft;
-    }
-  }, [scrollContainerRef]);
+      const nextScrollLeft = Math.max(0, container.scrollLeft + step);
+      if (nextScrollLeft !== container.scrollLeft) {
+        container.scrollLeft = nextScrollLeft;
+      }
+    },
+    [scrollContainerRef],
+  );
 
   const clearDrag = useCallback(() => {
     dragStateRef.current = null;
     setDraggingSourceIndex(null);
   }, []);
 
-  const applyDragUpdate = useCallback((clientX: number, shiftHeld: boolean) => {
-    const dragState = dragStateRef.current;
-    if (!dragState || !rootTimelineOnly) return;
+  const applyDragUpdate = useCallback(
+    (clientX: number, shiftHeld: boolean) => {
+      const dragState = dragStateRef.current;
+      if (!dragState || !rootTimelineOnly) return;
 
-    autoScroll(clientX);
+      autoScroll(clientX);
 
-    if (dragState.type === 'marker') {
-      const currentMouseBeats = xToBeats(clientX);
-      const draggedBeats = dragState.startMarkerBeats + (currentMouseBeats - dragState.startMouseBeats);
-      const beats = Math.max(0, snapBeats(draggedBeats, shiftHeld));
+      if (dragState.type === 'marker') {
+        const currentMouseBeats = xToBeats(clientX);
+        const draggedBeats =
+          dragState.startMarkerBeats + (currentMouseBeats - dragState.startMouseBeats);
+        const beats = Math.max(0, snapBeats(draggedBeats, shiftHeld));
+        applyPatch({
+          score: {
+            type: 'updateMarker',
+            sourceIndex: dragState.sourceIndex,
+            patch: { timeBeats: beats },
+          },
+        });
+        return;
+      }
+
+      const beats = Math.max(0, snapBeats(xToBeats(clientX), shiftHeld));
+
       applyPatch({
-        score: { type: 'updateMarker', sourceIndex: dragState.sourceIndex, patch: { timeBeats: beats } },
+        transport: { renderStartTime: beats, renderEndTime: -1 },
       });
-      return;
-    }
-
-    const beats = Math.max(0, snapBeats(xToBeats(clientX), shiftHeld));
-
-    applyPatch({
-      transport: { renderStartTime: beats, renderEndTime: -1 },
-    });
-  }, [rootTimelineOnly, autoScroll, snapBeats, xToBeats, applyPatch]);
+    },
+    [rootTimelineOnly, autoScroll, snapBeats, xToBeats, applyPatch],
+  );
 
   useEffect(() => {
     const onMouseMove = (event: MouseEvent) => {
@@ -139,43 +161,49 @@ export default function MarkersBar({ markers, totalBeats, pixelsPerBeat, rowVisi
     };
   }, [applyDragUpdate, clearDrag]);
 
-  const startMarkerDrag = useCallback((sourceIndex: number, clientX: number, startMarkerBeats: number) => {
-    if (!rootTimelineOnly) return;
-    dragStateRef.current = {
-      type: 'marker',
-      sourceIndex,
-      startMouseBeats: xToBeats(clientX),
-      startMarkerBeats,
-    };
-    setDraggingSourceIndex(sourceIndex);
-  }, [rootTimelineOnly, xToBeats]);
-
-  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!rootTimelineOnly || e.button !== 0) return;
-
-    e.preventDefault();
-
-    if (e.shiftKey) {
-      const beats = Math.max(0, snapBeats(xToBeats(e.clientX), false));
-      const sourceIndex = markers.length;
-      applyPatch({
-        score: { type: 'addMarker', timeBeats: beats },
-      });
+  const startMarkerDrag = useCallback(
+    (sourceIndex: number, clientX: number, startMarkerBeats: number) => {
+      if (!rootTimelineOnly) return;
       dragStateRef.current = {
         type: 'marker',
         sourceIndex,
-        startMouseBeats: beats,
-        startMarkerBeats: beats,
+        startMouseBeats: xToBeats(clientX),
+        startMarkerBeats,
       };
       setDraggingSourceIndex(sourceIndex);
-    } else {
-      const beats = Math.max(0, snapBeats(xToBeats(e.clientX), e.shiftKey));
-      applyPatch({
-        transport: { renderStartTime: beats, renderEndTime: -1 },
-      });
-      dragStateRef.current = { type: 'render-start' };
-    }
-  }, [rootTimelineOnly, snapBeats, xToBeats, markers.length, applyPatch]);
+    },
+    [rootTimelineOnly, xToBeats],
+  );
+
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!rootTimelineOnly || e.button !== 0) return;
+
+      e.preventDefault();
+
+      if (e.shiftKey) {
+        const beats = Math.max(0, snapBeats(xToBeats(e.clientX), false));
+        const sourceIndex = markers.length;
+        applyPatch({
+          score: { type: 'addMarker', timeBeats: beats },
+        });
+        dragStateRef.current = {
+          type: 'marker',
+          sourceIndex,
+          startMouseBeats: beats,
+          startMarkerBeats: beats,
+        };
+        setDraggingSourceIndex(sourceIndex);
+      } else {
+        const beats = Math.max(0, snapBeats(xToBeats(e.clientX), e.shiftKey));
+        applyPatch({
+          transport: { renderStartTime: beats, renderEndTime: -1 },
+        });
+        dragStateRef.current = { type: 'render-start' };
+      }
+    },
+    [rootTimelineOnly, snapBeats, xToBeats, markers.length, applyPatch],
+  );
 
   if (!rowVisible) return null;
 
@@ -200,7 +228,13 @@ export default function MarkersBar({ markers, totalBeats, pixelsPerBeat, rowVisi
   );
 }
 
-function MarkerWidget({ marker, sourceIndex, pixelsPerBeat, onStartDrag, isDragging }: {
+function MarkerWidget({
+  marker,
+  sourceIndex,
+  pixelsPerBeat,
+  onStartDrag,
+  isDragging,
+}: {
   marker: MarkerSnapshot;
   sourceIndex: number;
   pixelsPerBeat: number;
@@ -213,12 +247,15 @@ function MarkerWidget({ marker, sourceIndex, pixelsPerBeat, onStartDrag, isDragg
   const inputRef = useRef<HTMLInputElement>(null);
   const left = marker.time * pixelsPerBeat;
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (e.button !== 0) return;
-    e.stopPropagation();
-    e.preventDefault();
-    onStartDrag(sourceIndex, e.clientX, marker.time);
-  }, [onStartDrag, sourceIndex, marker.time]);
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.button !== 0) return;
+      e.stopPropagation();
+      e.preventDefault();
+      onStartDrag(sourceIndex, e.clientX, marker.time);
+    },
+    [onStartDrag, sourceIndex, marker.time],
+  );
 
   const beginRename = useCallback(() => {
     setRenameValue(marker.name);
@@ -226,10 +263,13 @@ function MarkerWidget({ marker, sourceIndex, pixelsPerBeat, onStartDrag, isDragg
     requestAnimationFrame(() => inputRef.current?.focus());
   }, [marker.name]);
 
-  const handleDoubleClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    beginRename();
-  }, [beginRename]);
+  const handleDoubleClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      beginRename();
+    },
+    [beginRename],
+  );
 
   const commitRename = useCallback(() => {
     setRenaming(false);
@@ -259,10 +299,13 @@ function MarkerWidget({ marker, sourceIndex, pixelsPerBeat, onStartDrag, isDragg
           onMouseDown={handleMouseDown}
           onDoubleClick={handleDoubleClick}
         >
-          <div
-            className="inline-flex h-5 w-max max-w-none items-center border border-app-warning/80 bg-app-warning/70 pr-[3px] shadow-inner"
-          >
-            <svg width="10" height="10" viewBox="0 0 10 10" className="shrink-0 left-0 top-0 absolute">
+          <div className="inline-flex h-5 w-max max-w-none items-center border border-app-warning/80 bg-app-warning/70 pr-[3px] shadow-inner">
+            <svg
+              width="10"
+              height="10"
+              viewBox="0 0 10 10"
+              className="shrink-0 left-0 top-0 absolute"
+            >
               <polygon
                 points="0,0 0,10 10,0"
                 fill="#ffd68a"

@@ -10,9 +10,7 @@ import {
   BlueX7,
   Element,
 } from '@blue/data';
-import {
-  createScoreDocumentSnapshot,
-} from './project-editor';
+import { createScoreDocumentSnapshot } from './project-editor';
 import type {
   ScoreLayerAutomationSnapshot,
   AutomationParameterSnapshot,
@@ -205,12 +203,23 @@ describe('AutomationParameterSnapshot shape', () => {
     data.getScore()[0]![0]!.getAutomationParameters().addParameterId(preEffectParam.getUniqueId());
 
     const updatedSnap = createScoreDocumentSnapshot(data);
-    const updatedAutomation = updatedSnap.layerGroups.find((g) => g.groupType === 'track')!.layers[0]!.automation!;
-    const volumeSnap = updatedAutomation.parameters.find((p) => p.parameterId === levelParam.getUniqueId())!;
-    const effectSnap = updatedAutomation.parameters.find((p) => p.parameterId === preEffectParam.getUniqueId())!;
+    const updatedAutomation = updatedSnap.layerGroups.find((g) => g.groupType === 'track')!
+      .layers[0]!.automation!;
+    const volumeSnap = updatedAutomation.parameters.find(
+      (p) => p.parameterId === levelParam.getUniqueId(),
+    )!;
+    const effectSnap = updatedAutomation.parameters.find(
+      (p) => p.parameterId === preEffectParam.getUniqueId(),
+    )!;
 
     expect(volumeSnap.targetPath).toEqual(['Mixer', 'Channel', 'Volume']);
-    expect(effectSnap.targetPath).toEqual(['Mixer', 'Channel', 'Pre-Effects', 'Pre Filter', 'cutoff']);
+    expect(effectSnap.targetPath).toEqual([
+      'Mixer',
+      'Channel',
+      'Pre-Effects',
+      'Pre Filter',
+      'cutoff',
+    ]);
   });
 });
 
@@ -234,7 +243,9 @@ describe('AutomationTargetGroupSnapshot shape', () => {
     const snap = createScoreDocumentSnapshot(data);
     const automation = snap.layerGroups[0]!.layers[0]!.automation!;
 
-    function collectAllTargets(groups: AutomationTargetGroupSnapshot[]): AutomationTargetSnapshot[] {
+    function collectAllTargets(
+      groups: AutomationTargetGroupSnapshot[],
+    ): AutomationTargetSnapshot[] {
       const result: AutomationTargetSnapshot[] = [];
       function walk(g: AutomationTargetGroupSnapshot) {
         result.push(...g.targets);
@@ -253,17 +264,16 @@ describe('AutomationTargetGroupSnapshot shape', () => {
     expect(typeof target.sourceKind).toBe('string');
     expect(typeof target.automationEnabled).toBe('boolean');
     expect(
-      ['available', 'assignedCurrentLayer', 'assignedOtherLayer', 'missing'].includes(target.assignmentState),
+      ['available', 'assignedCurrentLayer', 'assignedOtherLayer', 'missing'].includes(
+        target.assignmentState,
+      ),
     ).toBe(true);
   });
 });
 
 describe('BlueX7 owner-aware automation targets (Spec 092 US3)', () => {
   function flatten(groups: AutomationTargetGroupSnapshot[]): AutomationTargetSnapshot[] {
-    return groups.flatMap((group) => [
-      ...group.targets,
-      ...flatten(group.subGroups),
-    ]);
+    return groups.flatMap((group) => [...group.targets, ...flatten(group.subGroups)]);
   }
 
   it('exposes 151 nested targets for arrangement and owning Track locations', () => {
@@ -291,10 +301,12 @@ describe('BlueX7 owner-aware automation targets (Spec 092 US3)', () => {
     const snapshot = createScoreDocumentSnapshot(data);
     const arrangementAutomation = snapshot.layerGroups[0]!.layers[0]!.automation!;
     const trackAutomation = snapshot.layerGroups[1]!.layers[0]!.automation!;
-    const arrangementTargets = flatten(arrangementAutomation.targetGroups)
-      .filter((target) => target.ownerIdentity === 'arrangement:7');
-    const trackTargets = flatten(trackAutomation.targetGroups)
-      .filter((target) => target.ownerIdentity === 'track:x7-group:x7-track');
+    const arrangementTargets = flatten(arrangementAutomation.targetGroups).filter(
+      (target) => target.ownerIdentity === 'arrangement:7',
+    );
+    const trackTargets = flatten(trackAutomation.targetGroups).filter(
+      (target) => target.ownerIdentity === 'track:x7-group:x7-track',
+    );
 
     expect(arrangementTargets).toHaveLength(151);
     expect(trackTargets).toHaveLength(151);
@@ -305,8 +317,9 @@ describe('BlueX7 owner-aware automation targets (Spec 092 US3)', () => {
     expect(snapshot.layerGroups[1]!.layers[0]!.instrument?.snapshot).toMatchObject({
       ownerIdentity: 'track:x7-group:x7-track',
     });
-    expect(new Set(arrangementTargets.map((target) => target.updateClass)))
-      .toEqual(new Set(['active-note', 'next-note']));
+    expect(new Set(arrangementTargets.map((target) => target.updateClass))).toEqual(
+      new Set(['active-note', 'next-note']),
+    );
 
     const arrangementOwnerGroup = arrangementAutomation.targetGroups
       .find((group) => group.groupId === 'instrument')!
@@ -360,7 +373,12 @@ describe('BlueX7 owner-aware automation targets (Spec 092 US3)', () => {
     // The arrangement chooser exposes all four same-named owners, each with
     // the complete 151-target catalog and a pairwise-distinct location label.
     const arrangementAutomation = snapshot.layerGroups[0]!.layers[0]!.automation!;
-    const arrangementOwnerIds = ['arrangement:7', 'arrangement:8', 'arrangement:9', 'arrangement:10'];
+    const arrangementOwnerIds = [
+      'arrangement:7',
+      'arrangement:8',
+      'arrangement:9',
+      'arrangement:10',
+    ];
     const arrangementTargetsById = new Map(
       arrangementOwnerIds.map((ownerIdentity) => [
         ownerIdentity,
@@ -372,7 +390,8 @@ describe('BlueX7 owner-aware automation targets (Spec 092 US3)', () => {
     for (const ownerIdentity of arrangementOwnerIds) {
       expect(arrangementTargetsById.get(ownerIdentity), ownerIdentity).toHaveLength(151);
       expect(
-        new Set(arrangementTargetsById.get(ownerIdentity)!.map((target) => target.parameterId)).size,
+        new Set(arrangementTargetsById.get(ownerIdentity)!.map((target) => target.parameterId))
+          .size,
       ).toBe(151);
     }
     const arrangementLabels = arrangementOwnerIds.map(
@@ -446,7 +465,7 @@ describe('automation field on ScoreLayerSnapshot', () => {
     const { data } = createProjectWithAssociatedTrack();
     const snap = createScoreDocumentSnapshot(data);
 
-    const audioGroup = snap.layerGroups.find(g => g.groupType === 'track');
+    const audioGroup = snap.layerGroups.find((g) => g.groupType === 'track');
     expect(audioGroup).toBeDefined();
     expect(audioGroup!.layers[0]!.automation).toBeDefined();
     expect(audioGroup!.layers[0]!.automation!.parameterIds).toEqual([]);
@@ -459,7 +478,7 @@ describe('automation field on ScoreLayerSnapshot', () => {
     data.getMixer().getChannels().splice(0, 0, unrelated);
 
     const snap = createScoreDocumentSnapshot(data);
-    const audioGroup = snap.layerGroups.find(g => g.groupType === 'track')!;
+    const audioGroup = snap.layerGroups.find((g) => g.groupType === 'track')!;
     const automation = audioGroup.layers[0]!.automation!;
     const serializedTargets = JSON.stringify(automation.targetGroups);
     const trackChannelGroup = automation.targetGroups[0]!;

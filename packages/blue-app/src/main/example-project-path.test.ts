@@ -125,7 +125,10 @@ describe('example-project-path', () => {
       fs.writeFileSync(projectPath, '<project />', 'utf8');
 
       try {
-        const caseVariant = projectPath.replace(`${path.sep}Blue${path.sep}`, `${path.sep}blue${path.sep}`);
+        const caseVariant = projectPath.replace(
+          `${path.sep}Blue${path.sep}`,
+          `${path.sep}blue${path.sep}`,
+        );
         expect(tryRelativeExistingExamplePath(contentRoot, caseVariant, 'darwin')).toBe(
           path.join('techniques', 'pvoc.blue'),
         );
@@ -149,11 +152,7 @@ describe('example-project-path', () => {
 
     try {
       expect(
-        resolveExampleLibraryPickerSelection(
-          currentProject,
-          offeredRoot,
-          currentRoot,
-        ),
+        resolveExampleLibraryPickerSelection(currentProject, offeredRoot, currentRoot),
       ).toEqual({ filePath: offeredProject, relativePath });
     } finally {
       fs.rmSync(tempRoot, { recursive: true, force: true });
@@ -171,11 +170,7 @@ describe('example-project-path', () => {
 
     try {
       expect(
-        resolveExampleLibraryPickerSelection(
-          externalProject,
-          offeredRoot,
-          currentRoot,
-        ),
+        resolveExampleLibraryPickerSelection(externalProject, offeredRoot, currentRoot),
       ).toBeNull();
     } finally {
       fs.rmSync(tempRoot, { recursive: true, force: true });

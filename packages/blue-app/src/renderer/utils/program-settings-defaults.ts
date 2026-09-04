@@ -1,7 +1,10 @@
 import { Effect, UDOStyle } from '@blue/data';
 
 import type { UdoDefinitionSnapshot } from '../../shared/project-editor';
-import { EMPTY_UDO_SNAPSHOT, cloneUdoSnapshot } from '../components/workbench/panels/udo/udo-snapshot-utils';
+import {
+  EMPTY_UDO_SNAPSHOT,
+  cloneUdoSnapshot,
+} from '../components/workbench/panels/udo/udo-snapshot-utils';
 
 const FALLBACK_UDO_STYLE = 'MODERN' as const;
 

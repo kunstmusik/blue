@@ -20,7 +20,9 @@ export class PchAddProcessor extends NoteProcessor {
     }
   }
 
-  getPfield(): string { return this._pfield.toString(); }
+  getPfield(): string {
+    return this._pfield.toString();
+  }
   setPfield(pfield: string): void {
     const p = parseInt(pfield, 10);
     if (p > 3) {
@@ -28,8 +30,12 @@ export class PchAddProcessor extends NoteProcessor {
     }
   }
 
-  getVal(): string { return this._value.toString(); }
-  setVal(value: string): void { this._value = parseInt(value, 10); }
+  getVal(): string {
+    return this._value.toString();
+  }
+  setVal(value: string): void {
+    this._value = parseInt(value, 10);
+  }
 
   override process(notes: NoteList): NoteList {
     for (let i = 0; i < notes.length; i++) {
@@ -56,7 +62,9 @@ export class PchAddProcessor extends NoteProcessor {
     return notes;
   }
 
-  override getDisplayName(): string { return 'PchAddProcessor'; }
+  override getDisplayName(): string {
+    return 'PchAddProcessor';
+  }
 
   override deepCopy(): PchAddProcessor {
     return new PchAddProcessor(this);

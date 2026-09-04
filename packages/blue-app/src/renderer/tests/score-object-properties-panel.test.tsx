@@ -2,7 +2,11 @@ import React, { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import ScoreObjectPropertiesPanel from '../components/workbench/panels/ScoreObjectPropertiesPanel';
-import type { ScoreObjectEditorDocumentSnapshot, ScoreObjectEditorTargetSnapshot, TimeConversionContext } from '../../shared/project-editor';
+import type {
+  ScoreObjectEditorDocumentSnapshot,
+  ScoreObjectEditorTargetSnapshot,
+  TimeConversionContext,
+} from '../../shared/project-editor';
 
 const DEFAULT_TIME_CONTEXT: TimeConversionContext = {
   meterEntries: [{ measure: 1, numBeats: 4, beatLength: 4 }],
@@ -24,11 +28,11 @@ vi.mock('../stores/score-selection-store', () => ({
   useScoreSelectionStore: vi.fn((selector: any) => selector(mockSelectionState)),
 }));
 
-vi.mock('../../shared/project-editor', async () => (
-  vi.importActual('../../shared/project-editor')
-));
+vi.mock('../../shared/project-editor', async () => vi.importActual('../../shared/project-editor'));
 
-function makeTarget(overrides?: Partial<ScoreObjectEditorTargetSnapshot>): ScoreObjectEditorTargetSnapshot {
+function makeTarget(
+  overrides?: Partial<ScoreObjectEditorTargetSnapshot>,
+): ScoreObjectEditorTargetSnapshot {
   return {
     selectionId: 'sobj-0-0',
     selectedObjectType: 'GenericScore',
@@ -43,7 +47,9 @@ function makeTarget(overrides?: Partial<ScoreObjectEditorTargetSnapshot>): Score
   };
 }
 
-function makeEditorDoc(overrides?: Partial<ScoreObjectEditorDocumentSnapshot>): ScoreObjectEditorDocumentSnapshot {
+function makeEditorDoc(
+  overrides?: Partial<ScoreObjectEditorDocumentSnapshot>,
+): ScoreObjectEditorDocumentSnapshot {
   const target = makeTarget();
   return {
     target,
@@ -66,7 +72,11 @@ function makeEditorDoc(overrides?: Partial<ScoreObjectEditorDocumentSnapshot>): 
 
 describe('ScoreObjectPropertiesPanel — no selection states (T016)', () => {
   beforeEach(() => {
-    mockStoreState = { loaded: false, score: { timeState: { primaryTimeDisplay: 'BEATS' }, layerGroups: [] }, applyProjectDocumentPatch: mockApplyPatch };
+    mockStoreState = {
+      loaded: false,
+      score: { timeState: { primaryTimeDisplay: 'BEATS' }, layerGroups: [] },
+      applyProjectDocumentPatch: mockApplyPatch,
+    };
     mockSelectionState = { selectedObjectIds: new Set() };
     mockApplyPatch.mockClear();
   });
@@ -80,19 +90,23 @@ describe('ScoreObjectPropertiesPanel — no selection states (T016)', () => {
     mockStoreState.loaded = true;
     mockStoreState.score = {
       timeState: { primaryTimeDisplay: 'BEATS' },
-      layerGroups: [{
-        groupId: 'g0',
-        layers: [{
-          layerId: 'l0',
-          name: '',
-          height: 44,
-          muted: false,
-          solo: false,
-          items: [],
-        }],
-        layerCount: 1,
-        label: 'Score',
-      }],
+      layerGroups: [
+        {
+          groupId: 'g0',
+          layers: [
+            {
+              layerId: 'l0',
+              name: '',
+              height: 44,
+              muted: false,
+              solo: false,
+              items: [],
+            },
+          ],
+          layerCount: 1,
+          label: 'Score',
+        },
+      ],
     };
 
     const html = renderToStaticMarkup(createElement(ScoreObjectPropertiesPanel));
@@ -112,19 +126,23 @@ describe('ScoreObjectPropertiesPanel — no selection states (T016)', () => {
     mockSelectionState.selectedObjectIds = new Set(['missing-id']);
     mockStoreState.score = {
       timeState: { primaryTimeDisplay: 'BEATS' },
-      layerGroups: [{
-        groupId: 'g0',
-        layers: [{
-          layerId: 'l0',
-          name: '',
-          height: 44,
-          muted: false,
-          solo: false,
-          items: [],
-        }],
-        layerCount: 1,
-        label: 'Score',
-      }],
+      layerGroups: [
+        {
+          groupId: 'g0',
+          layers: [
+            {
+              layerId: 'l0',
+              name: '',
+              height: 44,
+              muted: false,
+              solo: false,
+              items: [],
+            },
+          ],
+          layerCount: 1,
+          label: 'Score',
+        },
+      ],
     };
 
     const html = renderToStaticMarkup(createElement(ScoreObjectPropertiesPanel));
@@ -139,26 +157,32 @@ describe('ScoreObjectPropertiesPanel — single selection (T016)', () => {
       loaded: true,
       score: {
         timeState: { primaryTimeDisplay: 'BEATS' },
-        layerGroups: [{
-          groupId: 'g0',
-          layers: [{
-            layerId: 'l0',
-            name: '',
-            height: 44,
-            muted: false,
-            solo: false,
-            items: [{
-              objectId: 'sobj-0-0',
-              name: 'My Score',
-              startBeats: 2,
-              durationBeats: 4,
-              backgroundColor: 0xff0000,
-              editorTarget: target,
-            }],
-          }],
-          layerCount: 1,
-          label: 'Score',
-        }],
+        layerGroups: [
+          {
+            groupId: 'g0',
+            layers: [
+              {
+                layerId: 'l0',
+                name: '',
+                height: 44,
+                muted: false,
+                solo: false,
+                items: [
+                  {
+                    objectId: 'sobj-0-0',
+                    name: 'My Score',
+                    startBeats: 2,
+                    durationBeats: 4,
+                    backgroundColor: 0xff0000,
+                    editorTarget: target,
+                  },
+                ],
+              },
+            ],
+            layerCount: 1,
+            label: 'Score',
+          },
+        ],
       },
       applyProjectDocumentPatch: mockApplyPatch,
     };
@@ -242,7 +266,19 @@ describe('ScoreObjectPropertiesPanel — time behavior, repeat point, note proce
         endTimeDisplay: '2.0000',
         backgroundColor: 0,
       },
-      editor: { kind: 'audioClip', target, audioFile: 'test.wav', numChannels: 0, audioDuration: 0, fileStartTime: 0, fadeIn: 0, fadeInType: 'LINEAR', fadeOut: 0, fadeOutType: 'LINEAR', looping: false },
+      editor: {
+        kind: 'audioClip',
+        target,
+        audioFile: 'test.wav',
+        numChannels: 0,
+        audioDuration: 0,
+        fileStartTime: 0,
+        fadeIn: 0,
+        fadeInType: 'LINEAR',
+        fadeOut: 0,
+        fadeOutType: 'LINEAR',
+        looping: false,
+      },
     });
     expect(doc.shared.timeBehavior).toBeUndefined();
     expect(doc.shared.repeatPoint).toBeUndefined();

@@ -6,24 +6,28 @@ import { MidiImportService } from './midi-import-service';
 const document: MidiImportDocument = {
   format: 0,
   division: { kind: 'ppq', ticksPerBeat: 480 },
-  tracks: [{
-    trackIndex: 0,
-    tempoChanges: [],
-    lastTick: 480,
-    streams: [{
-      streamKey: '0:0',
+  tracks: [
+    {
       trackIndex: 0,
-      channel: 0,
-      noteCount: 1,
-      firstTick: 0,
+      tempoChanges: [],
       lastTick: 480,
-      warnings: [],
-      events: [
-        { absoluteTick: 0, type: 'noteOn', noteNumber: 60, velocity: 100 },
-        { absoluteTick: 480, type: 'noteOff', noteNumber: 60, velocity: 0 },
+      streams: [
+        {
+          streamKey: '0:0',
+          trackIndex: 0,
+          channel: 0,
+          noteCount: 1,
+          firstTick: 0,
+          lastTick: 480,
+          warnings: [],
+          events: [
+            { absoluteTick: 0, type: 'noteOn', noteNumber: 60, velocity: 100 },
+            { absoluteTick: 480, type: 'noteOff', noteNumber: 60, velocity: 0 },
+          ],
+        },
       ],
-    }],
-  }],
+    },
+  ],
   tempoChanges: [],
 };
 
@@ -31,21 +35,23 @@ const preview: MidiImportPreview = {
   fileName: 'test.mid',
   format: 0,
   ticksPerBeat: 480,
-  streams: [{
-    streamKey: '0:0',
-    trackIndex: 0,
-    channel: 0,
-    noteCount: 1,
-    firstBeat: 0,
-    lastBeat: 1,
-    warnings: [],
-    defaults: {
+  streams: [
+    {
       streamKey: '0:0',
-      instrumentId: '1',
-      noteTemplate: 'i<INSTR_ID> <START> <DUR> <KEY> <VELOCITY>',
-      trimTime: false,
+      trackIndex: 0,
+      channel: 0,
+      noteCount: 1,
+      firstBeat: 0,
+      lastBeat: 1,
+      warnings: [],
+      defaults: {
+        streamKey: '0:0',
+        instrumentId: '1',
+        noteTemplate: 'i<INSTR_ID> <START> <DUR> <KEY> <VELOCITY>',
+        trimTime: false,
+      },
     },
-  }],
+  ],
 };
 
 function createService(sessionId = 4): MidiImportService {
@@ -129,7 +135,9 @@ describe('MidiImportService', () => {
     expect(service.validateCommit('stale-token', [])).toMatchObject({ ok: false });
     expect(service.validateCommit(started.token, [])).toMatchObject({ ok: false });
     service.clear(started.token);
-    expect(service.validateCommit(started.token, [preview.streams[0].defaults])).toMatchObject({ ok: false });
+    expect(service.validateCommit(started.token, [preview.streams[0].defaults])).toMatchObject({
+      ok: false,
+    });
   });
 
   it('rejects a commit after the project session changes', async () => {
@@ -154,7 +162,9 @@ describe('MidiImportService', () => {
     const service = new MidiImportService({
       chooseFile: async () => '/tmp/broken.mid',
       readFile: () => new Uint8Array([1]),
-      parseFile: () => { throw new Error('Bad MIDI file'); },
+      parseFile: () => {
+        throw new Error('Bad MIDI file');
+      },
       getProjectSessionId: () => 1,
     });
 

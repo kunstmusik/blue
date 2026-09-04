@@ -6,43 +6,50 @@ import { useScoreObjectTest } from './useScoreObjectTest';
 import { BLUE_INSPECTOR_LABEL_TEXT_CLASS } from '../../shared/compactFieldStyles';
 import { cn } from '../../../../../lib/cn';
 
-export default function ExternalScoreObjectEditor({ document, onPatch }: ScoreObjectEditorComponentProps): React.ReactElement {
+export default function ExternalScoreObjectEditor({
+  document,
+  onPatch,
+}: ScoreObjectEditorComponentProps): React.ReactElement {
   const editor = document.editor;
   if (editor.kind !== 'external') return <></>;
 
-  const {
-    testing,
-    testOutput,
-    testError,
-    runTest,
-    clearTestOutput,
-    clearTestError,
-  } = useScoreObjectTest(document.target);
+  const { testing, testOutput, testError, runTest, clearTestOutput, clearTestError } =
+    useScoreObjectTest(document.target);
 
   const modeMap: Record<string, 'orc' | 'sco' | 'text' | 'javascript' | 'python'> = {
-    'Python': 'python',
-    'JavaScript': 'javascript',
-    'Csound': 'sco',
-    'text': 'text',
+    Python: 'python',
+    JavaScript: 'javascript',
+    Csound: 'sco',
+    text: 'text',
   };
 
-  const patch = useCallback((p: Record<string, unknown>) => {
-    onPatch({
-      type: 'updateTypeSpecificEditor',
-      target: document.target,
-      patch: p,
-    });
-  }, [document.target, onPatch]);
+  const patch = useCallback(
+    (p: Record<string, unknown>) => {
+      onPatch({
+        type: 'updateTypeSpecificEditor',
+        target: document.target,
+        patch: p,
+      });
+    },
+    [document.target, onPatch],
+  );
 
-  const handleCodeChange = useCallback((text: string) => {
-    patch({ scoreText: text });
-  }, [patch]);
+  const handleCodeChange = useCallback(
+    (text: string) => {
+      patch({ scoreText: text });
+    },
+    [patch],
+  );
 
-  const handleCommandLineChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    patch({ commandLine: e.target.value });
-  }, [patch]);
+  const handleCommandLineChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      patch({ commandLine: e.target.value });
+    },
+    [patch],
+  );
 
-  const canTest = !testing && (editor.commandLine.trim().length > 0 || editor.scoreText.trim().length > 0);
+  const canTest =
+    !testing && (editor.commandLine.trim().length > 0 || editor.scoreText.trim().length > 0);
 
   const handleTest = useCallback(async () => {
     await runTest();
@@ -70,7 +77,12 @@ export default function ExternalScoreObjectEditor({ document, onPatch }: ScoreOb
       {testError && (
         <div className="px-3 py-1.5 text-role-body border-b shrink-0 bg-red-900/20 text-red-300 flex items-center gap-2">
           <span>Error: {testError}</span>
-          <button className="underline text-blue-muted hover:text-gray-200" onClick={clearTestError}>dismiss</button>
+          <button
+            className="underline text-blue-muted hover:text-gray-200"
+            onClick={clearTestError}
+          >
+            dismiss
+          </button>
         </div>
       )}
       <div className="flex-1 overflow-hidden">
@@ -83,9 +95,7 @@ export default function ExternalScoreObjectEditor({ document, onPatch }: ScoreOb
           onChange={handleCodeChange}
         />
       </div>
-      {testOutput !== null && (
-        <GeneratedScoreModal text={testOutput} onClose={clearTestOutput} />
-      )}
+      {testOutput !== null && <GeneratedScoreModal text={testOutput} onClose={clearTestOutput} />}
     </div>
   );
 }

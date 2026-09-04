@@ -11,20 +11,40 @@ export class FieldDef {
   private _defaultValue = 1.0;
   private _fieldType: FieldType = FieldType.CONTINUOUS;
 
-  getFieldName(): string { return this._fieldName; }
-  setFieldName(name: string): void { this._fieldName = name; }
+  getFieldName(): string {
+    return this._fieldName;
+  }
+  setFieldName(name: string): void {
+    this._fieldName = name;
+  }
 
-  getMinValue(): number { return this._minValue; }
-  setMinValue(v: number): void { this._minValue = v; }
+  getMinValue(): number {
+    return this._minValue;
+  }
+  setMinValue(v: number): void {
+    this._minValue = v;
+  }
 
-  getMaxValue(): number { return this._maxValue; }
-  setMaxValue(v: number): void { this._maxValue = v; }
+  getMaxValue(): number {
+    return this._maxValue;
+  }
+  setMaxValue(v: number): void {
+    this._maxValue = v;
+  }
 
-  getDefaultValue(): number { return this._defaultValue; }
-  setDefaultValue(v: number): void { this._defaultValue = v; }
+  getDefaultValue(): number {
+    return this._defaultValue;
+  }
+  setDefaultValue(v: number): void {
+    this._defaultValue = v;
+  }
 
-  getFieldType(): FieldType { return this._fieldType; }
-  setFieldType(t: FieldType): void { this._fieldType = t; }
+  getFieldType(): FieldType {
+    return this._fieldType;
+  }
+  setFieldType(t: FieldType): void {
+    this._fieldType = t;
+  }
 
   convertToFieldType(val: number): number {
     if (this._fieldType === FieldType.DISCRETE) {

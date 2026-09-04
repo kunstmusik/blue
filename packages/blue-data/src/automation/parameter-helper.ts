@@ -8,28 +8,25 @@
  * - Mixer sub channels: effect parameters + channel volume
  * - Mixer master: channel volume
  */
-import { Parameter } from "../automation/parameter";
-import { Arrangement } from "../arrangement";
-import { Mixer } from "../mixer/mixer";
-import { Channel } from "../mixer/channel";
-import { Effect } from "../mixer/effect";
-import { Send } from "../mixer/send";
-import { EffectsChain } from "../mixer/effects-chain";
+import { Parameter } from '../automation/parameter';
+import { Arrangement } from '../arrangement';
+import { Mixer } from '../mixer/mixer';
+import { Channel } from '../mixer/channel';
+import { Effect } from '../mixer/effect';
+import { Send } from '../mixer/send';
+import { EffectsChain } from '../mixer/effects-chain';
 
 /**
  * Get all parameters from arrangement and mixer.
  */
-export function getAllParameters(
-  arrangement: Arrangement,
-  mixer: Mixer,
-): Parameter[] {
+export function getAllParameters(arrangement: Arrangement, mixer: Mixer): Parameter[] {
   const parameters: Parameter[] = [];
 
   // Parameters from instruments in arrangement
   for (const ia of arrangement.getArrangement()) {
     if (!ia.enabled || !ia.instr) continue;
     const instr = ia.instr as any;
-    if (typeof instr.getParameters === "function") {
+    if (typeof instr.getParameters === 'function') {
       const instrParams = instr.getParameters();
       if (instrParams && Array.isArray(instrParams)) {
         parameters.push(...instrParams);
@@ -58,10 +55,7 @@ export function getAllParameters(
 /**
  * Collect parameters from a mixer channel: effects, volume, and sends.
  */
-function collectChannelParameters(
-  channel: Channel,
-  parameters: Parameter[],
-): void {
+function collectChannelParameters(channel: Channel, parameters: Parameter[]): void {
   collectChainParameters(channel.getPreEffects(), parameters);
   collectChainParameters(channel.getPostEffects(), parameters);
 
@@ -69,10 +63,7 @@ function collectChannelParameters(
   parameters.push(channel.getLevelParameter());
 }
 
-function collectChainParameters(
-  chain: EffectsChain,
-  parameters: Parameter[],
-): void {
+function collectChainParameters(chain: EffectsChain, parameters: Parameter[]): void {
   for (const item of chain) {
     if (item instanceof Effect || item instanceof Send) {
       parameters.push(...item.getParameters());

@@ -33,14 +33,18 @@ afterEach(async () => {
 
 describe('BlueLive recompile lifecycle (T035)', () => {
   it('recompile from idle attempts to start', async () => {
-    const session = trackSession(new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561));
+    const session = trackSession(
+      new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561),
+    );
     const data = new BlueData();
     const result = await session.recompile(data, 1);
     expect(result.sessionId).toBe(1);
   });
 
   it('recompile increments project revision', async () => {
-    const session = trackSession(new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561));
+    const session = trackSession(
+      new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561),
+    );
     const data = new BlueData();
     const result = await session.recompile(data, 5);
     expect(result.projectRevision).toBe(5);
@@ -55,13 +59,17 @@ describe('BlueLive recompile lifecycle (T035)', () => {
   });
 
   it('stop during starting state is handled', async () => {
-    const session = trackSession(new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561));
+    const session = trackSession(
+      new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561),
+    );
     const result = await session.stop();
     expect(result.status).toBe('idle');
   });
 
   it('multiple recompile calls increment sessionId', async () => {
-    const session = trackSession(new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561));
+    const session = trackSession(
+      new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561),
+    );
     const data = new BlueData();
     await session.recompile(data, 1);
     const before = session.getStatus().sessionId;
@@ -93,14 +101,18 @@ describe('BlueLive All Notes Off CSD instrument (T036)', () => {
 
 describe('BlueLive toolbar Recompile and All Notes Off enablement (T037)', () => {
   it('all-notes-off returns ok:false when not running', async () => {
-    const session = trackSession(new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561));
+    const session = trackSession(
+      new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561),
+    );
     const result = await session.sendAllNotesOff();
     expect(result.ok).toBe(false);
     expect(result.message).toContain('not running');
   });
 
   it('recompile on stopped session restarts', async () => {
-    const session = trackSession(new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561));
+    const session = trackSession(
+      new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561),
+    );
     const data = new BlueData();
     await session.recompile(data, 1);
     const afterFirst = session.getStatus();

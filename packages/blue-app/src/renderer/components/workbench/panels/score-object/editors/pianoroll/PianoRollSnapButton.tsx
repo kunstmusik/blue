@@ -3,7 +3,10 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import type { SnapValueName } from '@blue/data';
 import { getSnapValue } from '@blue/data';
-import { PopoutDropdownMenuPortal, portalEventIsolationProps } from '../../../../../../hooks/host-portals';
+import {
+  PopoutDropdownMenuPortal,
+  portalEventIsolationProps,
+} from '../../../../../../hooks/host-portals';
 import { cn } from '../../../../../../lib/cn';
 
 interface PianoRollSnapButtonProps {
@@ -14,15 +17,20 @@ interface PianoRollSnapButtonProps {
 }
 
 const SNAP_GROUPS: { label: string; values: SnapValueName[] }[] = [
-  { label: 'Musical', values: ['BAR', 'HALF', 'BEAT', 'EIGHTH', 'SIXTEENTH', 'THIRTY_SECOND', 'SIXTY_FOURTH'] },
+  {
+    label: 'Musical',
+    values: ['BAR', 'HALF', 'BEAT', 'EIGHTH', 'SIXTEENTH', 'THIRTY_SECOND', 'SIXTY_FOURTH'],
+  },
   { label: 'Triplets', values: ['QUARTER_TRIPLET', 'EIGHTH_TRIPLET', 'SIXTEENTH_TRIPLET'] },
   { label: 'Time', values: ['ONE_SECOND', 'HUNDRED_MS', 'TEN_MS', 'ONE_MS'] },
   { label: 'SMPTE', values: ['FRAME'] },
 ];
 
 const menuClass = 'z-50 min-w-35 rounded border border-blue-border/50 bg-app-menu py-1 shadow-lg';
-const itemClass = 'cursor-pointer rounded-sm px-3 py-1 text-role-body text-blue-text outline-none data-[highlighted]:bg-app-highlight';
-const subTriggerClass = 'flex w-full cursor-pointer items-center justify-between rounded-sm px-3 py-1 text-role-body text-blue-text outline-none data-[highlighted]:bg-app-highlight';
+const itemClass =
+  'cursor-pointer rounded-sm px-3 py-1 text-role-body text-blue-text outline-none data-[highlighted]:bg-app-highlight';
+const subTriggerClass =
+  'flex w-full cursor-pointer items-center justify-between rounded-sm px-3 py-1 text-role-body text-blue-text outline-none data-[highlighted]:bg-app-highlight';
 
 export default function PianoRollSnapButton({
   snapEnabled,
@@ -40,7 +48,7 @@ export default function PianoRollSnapButton({
           'px-1.5 text-role-body border rounded-l transition-colors cursor-pointer flex items-center',
           snapEnabled
             ? 'bg-blue-accent/20 text-blue-text border-blue-accent/40'
-            : 'bg-transparent text-blue-muted border-blue-border/40 hover:bg-blue-hover'
+            : 'bg-transparent text-blue-muted border-blue-border/40 hover:bg-blue-hover',
         )}
         onClick={onToggleSnap}
         title="Toggle snap on/off"
@@ -54,7 +62,7 @@ export default function PianoRollSnapButton({
               'px-1 border border-l-0 rounded-r transition-colors cursor-pointer flex items-center',
               snapEnabled
                 ? 'bg-blue-accent/20 text-blue-text border-blue-accent/40'
-                : 'bg-transparent text-blue-muted border-blue-border/40 hover:bg-blue-hover'
+                : 'bg-transparent text-blue-muted border-blue-border/40 hover:bg-blue-hover',
             )}
             title="Configure snap value"
           >
@@ -87,17 +95,9 @@ export default function PianoRollSnapButton({
                 onChangeSnapValue={onChangeSnapValue}
               />
             ))}
-            <SnapItem
-              value="SAMPLE"
-              snapValue={snapValue}
-              onChangeSnapValue={onChangeSnapValue}
-            />
+            <SnapItem value="SAMPLE" snapValue={snapValue} onChangeSnapValue={onChangeSnapValue} />
             <DropdownMenu.Separator className="h-px bg-blue-border/30 my-1" />
-            <SnapItem
-              value="AUTO"
-              snapValue={snapValue}
-              onChangeSnapValue={onChangeSnapValue}
-            />
+            <SnapItem value="AUTO" snapValue={snapValue} onChangeSnapValue={onChangeSnapValue} />
           </DropdownMenu.Content>
         </PopoutDropdownMenuPortal>
       </DropdownMenu.Root>
@@ -123,7 +123,12 @@ function SnapSubmenu({
         <ChevronRight className="w-3.5 h-3.5 opacity-60 ml-2" />
       </DropdownMenu.SubTrigger>
       <PopoutDropdownMenuPortal>
-        <DropdownMenu.SubContent className={menuClass} sideOffset={-2} alignOffset={-4} {...portalEventIsolationProps}>
+        <DropdownMenu.SubContent
+          className={menuClass}
+          sideOffset={-2}
+          alignOffset={-4}
+          {...portalEventIsolationProps}
+        >
           {values.map((value) => (
             <SnapItem
               key={value}
@@ -152,7 +157,7 @@ function SnapItem({
     <DropdownMenu.Item
       className={cn(
         itemClass,
-        snapValue === value && 'bg-blue-accent/20 text-blue-text font-medium'
+        snapValue === value && 'bg-blue-accent/20 text-blue-text font-medium',
       )}
       onSelect={() => onChangeSnapValue(value)}
     >

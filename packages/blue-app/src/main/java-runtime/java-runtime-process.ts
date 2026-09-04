@@ -42,9 +42,8 @@ interface JavaRuntimeProcessDependencies {
 }
 
 export function parseJavaVersion(rawOutput: string): number | null {
-  const versionToken = rawOutput.match(/version\s+\"([^\"]+)\"/i)?.[1]
-    ?? rawOutput.match(/\"([^\"]+)\"/)?.[1]
-    ?? null;
+  const versionToken =
+    rawOutput.match(/version\s+\"([^\"]+)\"/i)?.[1] ?? rawOutput.match(/\"([^\"]+)\"/)?.[1] ?? null;
 
   if (!versionToken) {
     return null;

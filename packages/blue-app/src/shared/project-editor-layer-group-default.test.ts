@@ -14,9 +14,10 @@ describe('generic layer-group creation', () => {
     expect(added).toBeInstanceOf(TrackLayerGroup);
     expect((added as TrackLayerGroup).length).toBe(1);
     const track = (added as TrackLayerGroup)[0]!;
-    const mixerGroup = data.getMixer().getChannelListGroups().find(
-      (candidate) => candidate.getAssociation() === (added as TrackLayerGroup).getUniqueId(),
-    );
+    const mixerGroup = data
+      .getMixer()
+      .getChannelListGroups()
+      .find((candidate) => candidate.getAssociation() === (added as TrackLayerGroup).getUniqueId());
     expect(mixerGroup).toBeDefined();
     expect(Array.from(mixerGroup ?? [], (channel) => channel.getAssociation())).toEqual([
       track.getUniqueId(),

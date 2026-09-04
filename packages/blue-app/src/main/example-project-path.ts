@@ -44,16 +44,18 @@ export function resolveExampleProjectPath(
   context: ExampleProjectPathContext,
 ): ExampleProjectPathResolution {
   const existsSync = context.existsSync ?? fs.existsSync;
-  const isDirectorySync = context.isDirectorySync ?? ((candidate: string) => {
-    if (context.existsSync !== undefined) {
-      return true;
-    }
-    try {
-      return fs.statSync(candidate).isDirectory();
-    } catch {
-      return false;
-    }
-  });
+  const isDirectorySync =
+    context.isDirectorySync ??
+    ((candidate: string) => {
+      if (context.existsSync !== undefined) {
+        return true;
+      }
+      try {
+        return fs.statSync(candidate).isDirectory();
+      } catch {
+        return false;
+      }
+    });
   const candidatePaths = getExampleProjectCandidates(context);
   const usableCandidate = candidatePaths.find(
     (candidate) => existsSync(candidate) && isDirectorySync(candidate),
@@ -68,9 +70,7 @@ export function resolveExampleProjectPath(
 }
 
 function isContainedRelativePath(relativePath: string): boolean {
-  return relativePath !== ''
-    && !relativePath.startsWith('..')
-    && !path.isAbsolute(relativePath);
+  return relativePath !== '' && !relativePath.startsWith('..') && !path.isAbsolute(relativePath);
 }
 
 /**
@@ -100,9 +100,7 @@ export function tryRelativeExistingExamplePath(
     while (true) {
       const cursorStat = fs.statSync(cursor);
       if (cursorStat.dev === rootStat.dev && cursorStat.ino === rootStat.ino) {
-        return relativeSegments.length > 0
-          ? relativeSegments.reverse().join(path.sep)
-          : null;
+        return relativeSegments.length > 0 ? relativeSegments.reverse().join(path.sep) : null;
       }
 
       const parent = path.dirname(cursor);
@@ -135,10 +133,9 @@ export function resolveExampleLibraryPickerSelection(
     return null;
   }
 
-  const relativePath = tryRelativeExistingExamplePath(
-    offeredContentRoot,
-    selectedPath,
-  ) ?? tryRelativeExistingExamplePath(currentContentRoot, selectedPath);
+  const relativePath =
+    tryRelativeExistingExamplePath(offeredContentRoot, selectedPath) ??
+    tryRelativeExistingExamplePath(currentContentRoot, selectedPath);
   if (relativePath === null) return null;
 
   const offeredFilePath = path.join(offeredContentRoot, relativePath);

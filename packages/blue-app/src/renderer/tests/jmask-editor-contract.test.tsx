@@ -1,12 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
-import {
-  BlueData,
-  JMask,
-  PolyObject,
-  SoundLayer,
-  TimeDuration,
-} from '@blue/data';
+import { BlueData, JMask, PolyObject, SoundLayer, TimeDuration } from '@blue/data';
 import {
   applyProjectDocumentPatch,
   createScoreObjectEditorDocument,

@@ -1,8 +1,5 @@
 import * as nodePath from 'path';
-import type {
-  CandidateGeneration,
-  ExampleLibraryInspection,
-} from './example-library/service';
+import type { CandidateGeneration, ExampleLibraryInspection } from './example-library/service';
 
 /**
  * Dependency-injected Open Example coordinator
@@ -46,9 +43,7 @@ export interface ProjectLoadFailed {
   message: string;
 }
 
-export type ProjectLoadResult<Project> =
-  | ProjectLoadedOk<Project>
-  | ProjectLoadFailed;
+export type ProjectLoadResult<Project> = ProjectLoadedOk<Project> | ProjectLoadFailed;
 
 export type OpenExampleCommitStepResult =
   | { ok: true }
@@ -69,12 +64,7 @@ export interface UpdateConflictReport {
 
 export type UpdateOfferChoice = 'update-and-open' | 'keep-current-and-open' | 'cancel';
 
-export type OpenExampleFlowStatus =
-  | 'committed'
-  | 'no-op'
-  | 'cancelled'
-  | 'blocked'
-  | 'failed';
+export type OpenExampleFlowStatus = 'committed' | 'no-op' | 'cancelled' | 'blocked' | 'failed';
 
 export interface OpenExampleFlowDependencies<Project> {
   /** Render/freeze safety gate; runs first and again after preparation. */
@@ -93,9 +83,7 @@ export interface OpenExampleFlowDependencies<Project> {
   // -- Native decision surfaces (fail closed to cancel) --------------------
   chooseFirstUseCopy: () => Promise<boolean>;
   chooseForUpdateOffer: () => Promise<UpdateOfferChoice>;
-  chooseContinueDespiteUpdateConflicts: (
-    report: UpdateConflictReport,
-  ) => Promise<boolean>;
+  chooseContinueDespiteUpdateConflicts: (report: UpdateConflictReport) => Promise<boolean>;
   chooseOpenCurrentExamplesWithoutUpdateCheck: () => Promise<boolean>;
   /**
    * Spec edge-case guard: when the active project is an example inside the
@@ -123,10 +111,7 @@ export interface OpenExampleFlowDependencies<Project> {
   confirmLibraryDraftTransition: (finalContentPath: string) => Promise<boolean> | boolean;
   confirmSaveBeforeReplace: (finalContentPath: string) => Promise<boolean> | boolean;
   getCurrentContentRoot: () => string;
-  installParsedProject: (
-    project: Project,
-    finalContentPath: string,
-  ) => Promise<void> | void;
+  installParsedProject: (project: Project, finalContentPath: string) => Promise<void> | void;
 
   // -- User-facing diagnostics ------------------------------------------------
   reportBlockedLibrary: (diagnostic: string) => Promise<void> | void;
@@ -137,9 +122,7 @@ export interface OpenExampleFlowDependencies<Project> {
 }
 
 /** Summarize preserved-conflict paths carried by an updated candidate state. */
-function conflictSummaryFrom(
-  candidate: CandidateGeneration | null,
-): UpdateConflictReport | null {
+function conflictSummaryFrom(candidate: CandidateGeneration | null): UpdateConflictReport | null {
   const summary = candidate?.summary;
   if (summary === null || summary === undefined) {
     return null;
@@ -176,10 +159,7 @@ export async function runOpenExampleProjectFlow<Project>(
     | { status: OpenExampleFlowStatus; detail?: string }
     | { status: 'retry-requested'; detail: string };
 
-  const requestRetry = async (
-    message: string,
-    retryable: boolean,
-  ): Promise<AttemptResult> => {
+  const requestRetry = async (message: string, retryable: boolean): Promise<AttemptResult> => {
     const retry = await dependencies.reportPreparationFailure(message, retryable);
     return retry
       ? { status: 'retry-requested', detail: message }
@@ -242,8 +222,8 @@ export async function runOpenExampleProjectFlow<Project>(
           candidate = prepared.candidate;
           const summary = conflictSummaryFrom(prepared.candidate);
           if (
-            summary !== null
-            && !(await dependencies.chooseContinueDespiteUpdateConflicts(summary))
+            summary !== null &&
+            !(await dependencies.chooseContinueDespiteUpdateConflicts(summary))
           ) {
             return { status: 'cancelled' };
           }
@@ -312,8 +292,8 @@ export async function runOpenExampleProjectFlow<Project>(
       }
 
       if (
-        candidate?.kind === 'update'
-        && !(await dependencies.ensureActiveProjectSafeBeforeLibrarySwap())
+        candidate?.kind === 'update' &&
+        !(await dependencies.ensureActiveProjectSafeBeforeLibrarySwap())
       ) {
         return { status: 'cancelled', detail: 'Library swap deferred.' };
       }

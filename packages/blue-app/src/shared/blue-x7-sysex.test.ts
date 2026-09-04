@@ -37,8 +37,18 @@ describe('BlueX7 SysEx Read Result Runtime Validation', () => {
     expect(isBlueX7SysexReadResult({})).toBe(false);
     expect(isBlueX7SysexReadResult({ status: 'unknown' })).toBe(false);
     expect(isBlueX7SysexReadResult({ status: 'selected', fileName: 'x.syx' })).toBe(false);
-    expect(isBlueX7SysexReadResult({ status: 'selected', fileName: 'x.syx', bytes: new ArrayBuffer(10) })).toBe(false);
-    expect(isBlueX7SysexReadResult({ status: 'error', code: 'unknown', message: 'bad' })).toBe(false);
-    expect(() => validateBlueX7SysexReadResult({ status: 'invalid' })).toThrow(/Invalid BlueX7 SysEx read result payload/);
+    expect(
+      isBlueX7SysexReadResult({
+        status: 'selected',
+        fileName: 'x.syx',
+        bytes: new ArrayBuffer(10),
+      }),
+    ).toBe(false);
+    expect(isBlueX7SysexReadResult({ status: 'error', code: 'unknown', message: 'bad' })).toBe(
+      false,
+    );
+    expect(() => validateBlueX7SysexReadResult({ status: 'invalid' })).toThrow(
+      /Invalid BlueX7 SysEx read result payload/,
+    );
   });
 });

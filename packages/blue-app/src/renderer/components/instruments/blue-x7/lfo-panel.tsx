@@ -27,7 +27,8 @@ const LFO_WAVEFORMS = [
 ];
 
 export const LfoPanel: React.FC<LfoPanelProps> = ({ lfo, effectiveValues, onApplyPatch }) => {
-  const effective = (key: string, fallback: number): number => effectiveValues?.get(key) ?? fallback;
+  const effective = (key: string, fallback: number): number =>
+    effectiveValues?.get(key) ?? fallback;
   const handleFieldChange = (field: keyof BlueX7Lfo, label: string, domain: BlueX7WidgetDomain) => {
     return (e: React.ChangeEvent<HTMLInputElement>) => {
       const val = parseInt(e.target.value, 10);
@@ -61,9 +62,14 @@ export const LfoPanel: React.FC<LfoPanelProps> = ({ lfo, effectiveValues, onAppl
   };
 
   return (
-    <div className="rounded border border-blue-border bg-blue-surface/40 p-3 space-y-3" data-testid="bluex7-lfo-panel">
+    <div
+      className="rounded border border-blue-border bg-blue-surface/40 p-3 space-y-3"
+      data-testid="bluex7-lfo-panel"
+    >
       <div className="flex items-center justify-between border-b border-blue-border pb-1">
-        <span className="text-role-headline font-bold text-gray-200 uppercase tracking-wider">Low Frequency Oscillator (LFO)</span>
+        <span className="text-role-headline font-bold text-gray-200 uppercase tracking-wider">
+          Low Frequency Oscillator (LFO)
+        </span>
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-6">
@@ -104,7 +110,8 @@ export const LfoPanel: React.FC<LfoPanelProps> = ({ lfo, effectiveValues, onAppl
         {/* PMD */}
         <div className="flex flex-col gap-1">
           <label htmlFor="bluex7-lfo-pmd" className="text-role-body text-blue-muted">
-            PMD ({LFO_FIELD_DOMAINS.pitchModulationDepth.min}–{LFO_FIELD_DOMAINS.pitchModulationDepth.max})
+            PMD ({LFO_FIELD_DOMAINS.pitchModulationDepth.min}–
+            {LFO_FIELD_DOMAINS.pitchModulationDepth.max})
           </label>
           <input
             id="bluex7-lfo-pmd"
@@ -113,7 +120,11 @@ export const LfoPanel: React.FC<LfoPanelProps> = ({ lfo, effectiveValues, onAppl
             min={LFO_FIELD_DOMAINS.pitchModulationDepth.min}
             max={LFO_FIELD_DOMAINS.pitchModulationDepth.max}
             value={effective('lfo.pitchModulationDepth', lfo.pitchModulationDepth)}
-            onChange={handleFieldChange('pitchModulationDepth', 'PMD', LFO_FIELD_DOMAINS.pitchModulationDepth)}
+            onChange={handleFieldChange(
+              'pitchModulationDepth',
+              'PMD',
+              LFO_FIELD_DOMAINS.pitchModulationDepth,
+            )}
             className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           />
         </div>
@@ -121,7 +132,8 @@ export const LfoPanel: React.FC<LfoPanelProps> = ({ lfo, effectiveValues, onAppl
         {/* AMD */}
         <div className="flex flex-col gap-1">
           <label htmlFor="bluex7-lfo-amd" className="text-role-body text-blue-muted">
-            AMD ({LFO_FIELD_DOMAINS.amplitudeModulationDepth.min}–{LFO_FIELD_DOMAINS.amplitudeModulationDepth.max})
+            AMD ({LFO_FIELD_DOMAINS.amplitudeModulationDepth.min}–
+            {LFO_FIELD_DOMAINS.amplitudeModulationDepth.max})
           </label>
           <input
             id="bluex7-lfo-amd"
@@ -130,7 +142,11 @@ export const LfoPanel: React.FC<LfoPanelProps> = ({ lfo, effectiveValues, onAppl
             min={LFO_FIELD_DOMAINS.amplitudeModulationDepth.min}
             max={LFO_FIELD_DOMAINS.amplitudeModulationDepth.max}
             value={effective('lfo.amplitudeModulationDepth', lfo.amplitudeModulationDepth)}
-            onChange={handleFieldChange('amplitudeModulationDepth', 'AMD', LFO_FIELD_DOMAINS.amplitudeModulationDepth)}
+            onChange={handleFieldChange(
+              'amplitudeModulationDepth',
+              'AMD',
+              LFO_FIELD_DOMAINS.amplitudeModulationDepth,
+            )}
             className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           />
         </div>

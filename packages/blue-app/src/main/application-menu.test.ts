@@ -260,10 +260,25 @@ describe('application menu template', () => {
       followPlaybackOnStartEnabled: true,
       ...createHandlers(),
     };
-    const emptySelection = buildApplicationMenuTemplate({ ...base, canAuditionScoreObjects: false });
-    const busy = buildApplicationMenuTemplate({ ...base, canAuditionScoreObjects: true, isRenderOperationActive: true });
-    expect(getSubmenu(emptySelection.find((item) => item.label === 'Project')).find((item) => item.label === 'Audition ScoreObjects')?.enabled).toBe(false);
-    expect(getSubmenu(busy.find((item) => item.label === 'Project')).find((item) => item.label === 'Audition ScoreObjects')?.enabled).toBe(false);
+    const emptySelection = buildApplicationMenuTemplate({
+      ...base,
+      canAuditionScoreObjects: false,
+    });
+    const busy = buildApplicationMenuTemplate({
+      ...base,
+      canAuditionScoreObjects: true,
+      isRenderOperationActive: true,
+    });
+    expect(
+      getSubmenu(emptySelection.find((item) => item.label === 'Project')).find(
+        (item) => item.label === 'Audition ScoreObjects',
+      )?.enabled,
+    ).toBe(false);
+    expect(
+      getSubmenu(busy.find((item) => item.label === 'Project')).find(
+        (item) => item.label === 'Audition ScoreObjects',
+      )?.enabled,
+    ).toBe(false);
   });
 
   it('builds the macOS Blue menu with the expected order and actions', () => {
@@ -278,7 +293,16 @@ describe('application menu template', () => {
       ...handlers,
     });
 
-    expect(template.map((item) => item.label)).toEqual(['Blue', 'File', 'Edit', 'View', 'Project', 'Script', 'Tools', 'Window']);
+    expect(template.map((item) => item.label)).toEqual([
+      'Blue',
+      'File',
+      'Edit',
+      'View',
+      'Project',
+      'Script',
+      'Tools',
+      'Window',
+    ]);
 
     const blueMenu = getSubmenu(template[0]);
     expect(blueMenu.map((item) => item.label)).toContain('About Blue');
@@ -293,7 +317,22 @@ describe('application menu template', () => {
     expect(handlers.onOpenSettings).toHaveBeenCalledTimes(1);
 
     const fileMenu = getSubmenu(template[1]);
-    expect(getLabels(fileMenu)).toEqual(['New Project', 'Open Project', 'Open Example Project...', 'Import CSD File', 'Import from ORC/SCO', 'Import MIDI File', 'Close Project', 'Revert', 'Save', 'Save as...', 'Render to Disk', 'Render to Disk and Play', 'Render to Disk and Open', 'Recent Projects']);
+    expect(getLabels(fileMenu)).toEqual([
+      'New Project',
+      'Open Project',
+      'Open Example Project...',
+      'Import CSD File',
+      'Import from ORC/SCO',
+      'Import MIDI File',
+      'Close Project',
+      'Revert',
+      'Save',
+      'Save as...',
+      'Render to Disk',
+      'Render to Disk and Play',
+      'Render to Disk and Open',
+      'Recent Projects',
+    ]);
 
     const recentMenu = getSubmenu(fileMenu.find((item) => item.label === 'Recent Projects'));
     expect(getLabels(recentMenu)).toEqual(['one.blue', 'two.blue']);
@@ -318,7 +357,9 @@ describe('application menu template', () => {
 
     const projectMenu = getSubmenu(template[4]);
     expect(projectMenu.find((item) => item.label === 'Generate CSD to Screen')).toBeTruthy();
-    expect(projectMenu.find((item) => item.label === 'Generate Realtime CSD to Screen')).toBeTruthy();
+    expect(
+      projectMenu.find((item) => item.label === 'Generate Realtime CSD to Screen'),
+    ).toBeTruthy();
     expect(projectMenu.find((item) => item.label === 'Blue Live')).toBeTruthy();
     projectMenu.find((item) => item.label === 'Generate CSD to Screen')?.click?.();
     expect(handlers.onGenerateCsdToScreen).toHaveBeenCalledTimes(1);
@@ -327,7 +368,10 @@ describe('application menu template', () => {
     expect(handlers.onGenerateRealtimeCsdToScreen).toHaveBeenCalledTimes(1);
 
     const scriptMenu = getSubmenu(template[5]);
-    expect(getLabels(scriptMenu)).toEqual(['Reinitialize JavaScript Interpreter', 'Reinitialize Jython Interpreter']);
+    expect(getLabels(scriptMenu)).toEqual([
+      'Reinitialize JavaScript Interpreter',
+      'Reinitialize Jython Interpreter',
+    ]);
     scriptMenu.find((item) => item.label === 'Reinitialize JavaScript Interpreter')?.click?.();
     scriptMenu.find((item) => item.label === 'Reinitialize Jython Interpreter')?.click?.();
     expect(handlers.onReinitializeJavaScriptRuntime).toHaveBeenCalledOnce();
@@ -342,7 +386,13 @@ describe('application menu template', () => {
     expect(toolsMenu.find((item) => item.label === 'SoundFont Viewer')).toBeFalsy();
 
     const windowMenu = getSubmenu(template[7]);
-    expect(windowMenu.map((item) => item.label).slice(0, 5)).toEqual(['Editors', 'Properties', 'Output', 'REPL', 'Toggle Dev Tools']);
+    expect(windowMenu.map((item) => item.label).slice(0, 5)).toEqual([
+      'Editors',
+      'Properties',
+      'Output',
+      'REPL',
+      'Toggle Dev Tools',
+    ]);
     expect(windowMenu.find((item) => item.label === 'Reset Default Layout')).toBeFalsy();
     expect(windowMenu.find((item) => item.label === 'Reset Windows')).toBeTruthy();
 
@@ -351,7 +401,11 @@ describe('application menu template', () => {
     expect(handlers.onResetLayout).toHaveBeenCalledTimes(1);
 
     const editorsMenu = getSubmenu(windowMenu.find((item) => item.label === 'Editors'));
-    expect(editorsMenu.map((item) => item.label).slice(0, 3)).toEqual(['Score', 'Orchestra', 'Global Orchestra']);
+    expect(editorsMenu.map((item) => item.label).slice(0, 3)).toEqual([
+      'Score',
+      'Orchestra',
+      'Global Orchestra',
+    ]);
     editorsMenu[0]?.click?.();
     expect(handlers.onFocusPanel).toHaveBeenCalledWith('ScoreTopComponent');
   });
@@ -385,10 +439,36 @@ describe('application menu template', () => {
       ...handlers,
     });
 
-    expect(template.map((item) => item.label)).toEqual(['File', 'Edit', 'View', 'Project', 'Script', 'Tools', 'Help', 'Window']);
+    expect(template.map((item) => item.label)).toEqual([
+      'File',
+      'Edit',
+      'View',
+      'Project',
+      'Script',
+      'Tools',
+      'Help',
+      'Window',
+    ]);
 
     const fileMenu = getSubmenu(template[0]);
-    expect(getLabels(fileMenu)).toEqual(['New Project', 'Open Project', 'Open Example Project...', 'Import CSD File', 'Import from ORC/SCO', 'Import MIDI File', 'Close Project', 'Revert', 'Save', 'Save as...', 'Render to Disk', 'Render to Disk and Play', 'Render to Disk and Open', 'Recent Projects', 'Settings...', 'Quit']);
+    expect(getLabels(fileMenu)).toEqual([
+      'New Project',
+      'Open Project',
+      'Open Example Project...',
+      'Import CSD File',
+      'Import from ORC/SCO',
+      'Import MIDI File',
+      'Close Project',
+      'Revert',
+      'Save',
+      'Save as...',
+      'Render to Disk',
+      'Render to Disk and Play',
+      'Render to Disk and Open',
+      'Recent Projects',
+      'Settings...',
+      'Quit',
+    ]);
 
     const recentMenu = getSubmenu(fileMenu.find((item) => item.label === 'Recent Projects'));
     expect(getLabels(recentMenu)).toEqual(['No Recent Projects']);
@@ -404,13 +484,21 @@ describe('application menu template', () => {
     expect(handlers.onRequestQuit).toHaveBeenCalledTimes(1);
 
     const projectMenu = getSubmenu(template[3]);
-    expect(projectMenu.find((item) => item.label === 'Generate CSD to Screen')?.enabled).toBe(false);
-    expect(projectMenu.find((item) => item.label === 'Generate Realtime CSD to Screen')?.enabled).toBe(false);
+    expect(projectMenu.find((item) => item.label === 'Generate CSD to Screen')?.enabled).toBe(
+      false,
+    );
+    expect(
+      projectMenu.find((item) => item.label === 'Generate Realtime CSD to Screen')?.enabled,
+    ).toBe(false);
     expect(projectMenu.find((item) => item.label === 'Blue Live')?.enabled).toBe(false);
 
     const scriptMenu = getSubmenu(template[4]);
-    expect(scriptMenu.find((item) => item.label === 'Reinitialize JavaScript Interpreter')?.enabled).not.toBe(false);
-    expect(scriptMenu.find((item) => item.label === 'Reinitialize Jython Interpreter')?.enabled).toBe(false);
+    expect(
+      scriptMenu.find((item) => item.label === 'Reinitialize JavaScript Interpreter')?.enabled,
+    ).not.toBe(false);
+    expect(
+      scriptMenu.find((item) => item.label === 'Reinitialize Jython Interpreter')?.enabled,
+    ).toBe(false);
 
     const toolsMenu = getSubmenu(template[5]);
     expect(toolsMenu.find((item) => item.label === 'Effects Library')).toBeTruthy();
@@ -458,9 +546,15 @@ describe('application menu template', () => {
     });
     const viewMenu = getSubmenu(template.find((item) => item.label === 'View'));
 
-    expect(viewMenu.find((item) => item.label === 'Zoom In')?.accelerator).toBe('CommandOrControl+Plus');
-    expect(viewMenu.find((item) => item.label === 'Zoom Out')?.accelerator).toBe('CommandOrControl+-');
-    expect(viewMenu.find((item) => item.label === 'Actual Size')?.accelerator).toBe('CommandOrControl+0');
+    expect(viewMenu.find((item) => item.label === 'Zoom In')?.accelerator).toBe(
+      'CommandOrControl+Plus',
+    );
+    expect(viewMenu.find((item) => item.label === 'Zoom Out')?.accelerator).toBe(
+      'CommandOrControl+-',
+    );
+    expect(viewMenu.find((item) => item.label === 'Actual Size')?.accelerator).toBe(
+      'CommandOrControl+0',
+    );
   });
 
   it('routes each View zoom item to its matching custom callback', () => {
@@ -535,7 +629,9 @@ describe('application menu template', () => {
       ...handlers,
     });
     const enabledProjectMenu = getSubmenu(enabledTemplate.find((item) => item.label === 'Project'));
-    const enabledEditTempoMap = enabledProjectMenu.find((item) => item.label === 'Edit Tempo Map...');
+    const enabledEditTempoMap = enabledProjectMenu.find(
+      (item) => item.label === 'Edit Tempo Map...',
+    );
 
     expect(enabledEditTempoMap?.enabled).toBe(true);
     enabledEditTempoMap?.click?.();
@@ -550,8 +646,12 @@ describe('application menu template', () => {
       followPlaybackOnStartEnabled: true,
       ...createHandlers(),
     });
-    const disabledProjectMenu = getSubmenu(disabledTemplate.find((item) => item.label === 'Project'));
-    const disabledEditTempoMap = disabledProjectMenu.find((item) => item.label === 'Edit Tempo Map...');
+    const disabledProjectMenu = getSubmenu(
+      disabledTemplate.find((item) => item.label === 'Project'),
+    );
+    const disabledEditTempoMap = disabledProjectMenu.find(
+      (item) => item.label === 'Edit Tempo Map...',
+    );
 
     expect(disabledEditTempoMap?.enabled).toBe(false);
   });
@@ -569,7 +669,9 @@ describe('application menu template', () => {
       ...handlers,
     });
     const enabledProjectMenu = getSubmenu(enabledTemplate.find((item) => item.label === 'Project'));
-    const enabledEditMeterMap = enabledProjectMenu.find((item: any) => item.label === 'Edit Time Signature Map...');
+    const enabledEditMeterMap = enabledProjectMenu.find(
+      (item: any) => item.label === 'Edit Time Signature Map...',
+    );
 
     expect(enabledEditMeterMap?.enabled).toBe(true);
     enabledEditMeterMap?.click?.();
@@ -584,15 +686,23 @@ describe('application menu template', () => {
       followPlaybackOnStartEnabled: true,
       ...createHandlers(),
     });
-    const disabledProjectMenu = getSubmenu(disabledTemplate.find((item) => item.label === 'Project'));
-    const disabledEditMeterMap = disabledProjectMenu.find((item: any) => item.label === 'Edit Time Signature Map...');
+    const disabledProjectMenu = getSubmenu(
+      disabledTemplate.find((item) => item.label === 'Project'),
+    );
+    const disabledEditMeterMap = disabledProjectMenu.find(
+      (item: any) => item.label === 'Edit Time Signature Map...',
+    );
 
     expect(disabledEditMeterMap?.enabled).toBe(false);
   });
 });
 
 describe('application menu follow playback mirror (SPEC 079)', () => {
-  function buildFollowMenu(followPlaybackEnabled: boolean, followPlaybackOnStartEnabled: boolean, hasLoadedProject: boolean) {
+  function buildFollowMenu(
+    followPlaybackEnabled: boolean,
+    followPlaybackOnStartEnabled: boolean,
+    hasLoadedProject: boolean,
+  ) {
     const handlers = createHandlers();
     const template = buildApplicationMenuTemplate({
       hasLoadedProject,
@@ -608,7 +718,9 @@ describe('application menu follow playback mirror (SPEC 079)', () => {
     return {
       handlers,
       follow: projectMenu.find((item: any) => item.label === 'Follow playback by scrolling score'),
-      onStart: projectMenu.find((item: any) => item.label === 'Enable follow playback on render start'),
+      onStart: projectMenu.find(
+        (item: any) => item.label === 'Enable follow playback on render start',
+      ),
     };
   }
 

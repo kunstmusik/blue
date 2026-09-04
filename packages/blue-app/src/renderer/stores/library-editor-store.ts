@@ -70,9 +70,10 @@ export const useLibraryEditorStore = create<LibraryEditorState>((set, get) => ({
     }
     set((state) => ({
       sessions: Object.fromEntries([
-        ...Object.entries(state.sessions).filter(([sessionId, session]) => (
-          sessionId === result.value.sessionId || session.dirty || session.pinned
-        )),
+        ...Object.entries(state.sessions).filter(
+          ([sessionId, session]) =>
+            sessionId === result.value.sessionId || session.dirty || session.pinned,
+        ),
         [result.value.sessionId, result.value],
       ]),
       error: null,
@@ -89,7 +90,11 @@ export const useLibraryEditorStore = create<LibraryEditorState>((set, get) => ({
       const loadingSessionIds = new Set(state.loadingSessionIds);
       loadingSessionIds.delete(sessionId);
       return result.ok
-        ? { loadingSessionIds, sessions: { ...state.sessions, [sessionId]: result.value }, error: null }
+        ? {
+            loadingSessionIds,
+            sessions: { ...state.sessions, [sessionId]: result.value },
+            error: null,
+          }
         : { loadingSessionIds, error: result.error.message };
     });
     return result.ok ? result.value : null;
@@ -128,11 +133,12 @@ export const useLibraryEditorStore = create<LibraryEditorState>((set, get) => ({
       set({ error: result.error.message });
       return false;
     }
-    if (result.value) set((state) => {
-      const sessions = { ...state.sessions };
-      delete sessions[sessionId];
-      return { sessions, error: null };
-    });
+    if (result.value)
+      set((state) => {
+        const sessions = { ...state.sessions };
+        delete sessions[sessionId];
+        return { sessions, error: null };
+      });
     return result.value;
   },
 

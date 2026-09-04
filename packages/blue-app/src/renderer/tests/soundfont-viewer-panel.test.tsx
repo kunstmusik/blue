@@ -8,7 +8,9 @@ import SoundFontViewerPanel from '../components/workbench/panels/tools/SoundFont
 import { emitPendingSoundFontFile } from '../components/workbench/panels/tools/soundfont-viewer-bus';
 import { DEFAULT_SPLIT_SIZE_PX } from '../../shared/window-layout-settings';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 describe('SoundFont Viewer panel', () => {
   let container: HTMLDivElement | null = null;
@@ -54,7 +56,9 @@ describe('SoundFont Viewer panel', () => {
       root!.render(<SoundFontViewerPanel />);
     });
 
-    const chooseButton = Array.from(document.querySelectorAll('button')).find((button) => button.textContent?.includes('Choose file'));
+    const chooseButton = Array.from(document.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('Choose file'),
+    );
     await act(async () => {
       chooseButton?.click();
     });
@@ -124,11 +128,17 @@ describe('SoundFont Viewer panel', () => {
     Object.defineProperty(fileManagerDrop, 'dataTransfer', {
       value: {
         files: [],
-        getData: (type: string) => (type === 'text/plain'
-          ? '/Users/me/samples/a.wav'
-          : type === 'application/x-blue-file-manager-file'
-            ? JSON.stringify({ version: 1, kind: 'file', path: '/Users/me/samples/a.wav', name: 'a.wav' })
-            : ''),
+        getData: (type: string) =>
+          type === 'text/plain'
+            ? '/Users/me/samples/a.wav'
+            : type === 'application/x-blue-file-manager-file'
+              ? JSON.stringify({
+                  version: 1,
+                  kind: 'file',
+                  path: '/Users/me/samples/a.wav',
+                  name: 'a.wav',
+                })
+              : '',
       },
     });
     await act(async () => {
@@ -147,7 +157,10 @@ describe('SoundFont Viewer panel', () => {
     });
 
     emitPendingSoundFontFile('/SoundFonts/Choir.sf2');
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
 
     expect(inspectSoundFont).toHaveBeenCalledWith('/SoundFonts/Choir.sf2');
     expect(document.body.textContent).toContain('Choir.sf2');
@@ -164,11 +177,16 @@ describe('SoundFont Viewer panel', () => {
     act(() => {
       lateRoot.render(<SoundFontViewerPanel />);
     });
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
 
     expect(inspectSoundFont).toHaveBeenCalledWith('/SoundFonts/Late.sf2');
 
-    act(() => { lateRoot.unmount(); });
+    act(() => {
+      lateRoot.unmount();
+    });
     host.remove();
   });
 
@@ -177,12 +195,16 @@ describe('SoundFont Viewer panel', () => {
       root!.render(<SoundFontViewerPanel />);
     });
 
-    const chooseButton = Array.from(document.querySelectorAll('button')).find((button) => button.textContent?.includes('Choose file'));
+    const chooseButton = Array.from(document.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('Choose file'),
+    );
     await act(async () => {
       chooseButton?.click();
     });
 
-    const copyButton = container!.querySelector<HTMLButtonElement>('[aria-label="Copy full path"]')!;
+    const copyButton = container!.querySelector<HTMLButtonElement>(
+      '[aria-label="Copy full path"]',
+    )!;
     expect(copyButton).toBeTruthy();
     await act(async () => {
       copyButton.click();
@@ -211,7 +233,9 @@ describe('SoundFont Viewer panel', () => {
       window.dispatchEvent(new Event('resize'));
     });
 
-    expect(container!.querySelector('[data-soundfont-splitter]')?.getAttribute('aria-orientation')).toBe('vertical');
+    expect(
+      container!.querySelector('[data-soundfont-splitter]')?.getAttribute('aria-orientation'),
+    ).toBe('vertical');
   });
 
   it('uses the shared 200px default for the table splitter', () => {

@@ -1,10 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import {
-  BlueData,
-  GenericInstrument,
-  LiveData,
-  TrackLayerGroup,
-} from '@blue/data';
+import { BlueData, GenericInstrument, LiveData, TrackLayerGroup } from '@blue/data';
 import {
   BlueLiveEngineSession,
   normalizeScoreForEngineApi,
@@ -60,10 +55,12 @@ function createMockClient() {
   };
 }
 
-function createRunningSession(opts: {
-  data?: BlueData;
-  readScoreOk?: boolean;
-} = {}) {
+function createRunningSession(
+  opts: {
+    data?: BlueData;
+    readScoreOk?: boolean;
+  } = {},
+) {
   const client = createMockClient();
   if (opts.readScoreOk === false) {
     client.readScore.mockResolvedValue({ ok: false, message: 'engine rejected' });
@@ -78,25 +75,22 @@ function createRunningSession(opts: {
     getClient: vi.fn(() => client),
     killAndWait,
   } as unknown as EngineBridge;
-  const session = trackSession(new BlueLiveEngineSession(
-    createMockWindow(),
-    'csound',
-    5560,
-    5561,
-    undefined,
-    {
+  const session = trackSession(
+    new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561, undefined, {
       createBridge: () => bridge,
       writeTempCsdSnapshot: async () => '/tmp/blue-live-target.csd',
       cleanupDelayMs: 0,
-    },
-  ));
+    }),
+  );
   const data = opts.data ?? new BlueData();
   return { session, client, bridge, data };
 }
 
 describe('BlueLiveEngineSession', () => {
   it('starts in idle status', () => {
-    const session = trackSession(new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561));
+    const session = trackSession(
+      new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561),
+    );
     const status = session.getStatus();
     expect(status.status).toBe('idle');
     expect(status.running).toBe(false);
@@ -104,46 +98,60 @@ describe('BlueLiveEngineSession', () => {
   });
 
   it('isRunning returns false initially', () => {
-    const session = trackSession(new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561));
+    const session = trackSession(
+      new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561),
+    );
     expect(session.isRunning()).toBe(false);
   });
 
   it('stop returns current snapshot when not running', async () => {
-    const session = trackSession(new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561));
+    const session = trackSession(
+      new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561),
+    );
     const result = await session.stop();
     expect(result.status).toBe('idle');
   });
 
   it('sendAllNotesOff returns error when not running', async () => {
-    const session = trackSession(new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561));
+    const session = trackSession(
+      new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561),
+    );
     const result = await session.sendAllNotesOff();
     expect(result.ok).toBe(false);
     expect(result.message).toContain('not running');
   });
 
   it('evaluateOrchestra returns error when not running', async () => {
-    const session = trackSession(new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561));
+    const session = trackSession(
+      new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561),
+    );
     const result = await session.evaluateOrchestra('instr 1\nendin');
     expect(result.ok).toBe(false);
     expect(result.message).toContain('not running');
   });
 
   it('sendScore returns error when not running', async () => {
-    const session = trackSession(new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561));
+    const session = trackSession(
+      new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561),
+    );
     const result = await session.sendScore('i 1 0 1');
     expect(result.ok).toBe(false);
     expect(result.message).toContain('not running');
   });
 
   it('submitPreparedScore returns error when not running', async () => {
-    const session = trackSession(new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561));
+    const session = trackSession(
+      new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561),
+    );
     const result = await session.submitPreparedScore('i 1 0 1', 0);
     expect(result.ok).toBe(false);
     expect(result.message).toContain('not running');
   });
 
   it('submitPreparedScore returns error for an empty score', async () => {
-    const session = trackSession(new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561));
+    const session = trackSession(
+      new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561),
+    );
     // Force a running-like state by checking the empty-score guard independently:
     // when not running the not-running message takes precedence, which still
     // proves the guard fires before any engine call.
@@ -152,12 +160,16 @@ describe('BlueLiveEngineSession', () => {
   });
 
   it('isActive returns false when idle', () => {
-    const session = trackSession(new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561));
+    const session = trackSession(
+      new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561),
+    );
     expect(session.isActive()).toBe(false);
   });
 
   it('recompile from idle starts the engine', async () => {
-    const session = trackSession(new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561));
+    const session = trackSession(
+      new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561),
+    );
     const data = new BlueData();
 
     const result = await session.recompile(data, 1);
@@ -171,13 +183,9 @@ describe('BlueLiveEngineSession', () => {
 
   it('retains the shared runtime service while using its isolated port pair', () => {
     const runtime = { probe: vi.fn() } as unknown as EngineRuntimeService;
-    const session = trackSession(new BlueLiveEngineSession(
-      createMockWindow(),
-      undefined,
-      5560,
-      5561,
-      runtime,
-    ));
+    const session = trackSession(
+      new BlueLiveEngineSession(createMockWindow(), undefined, 5560, 5561, runtime),
+    );
     const internals = session as unknown as {
       engineRuntime: EngineRuntimeService;
       port: number;
@@ -204,18 +212,13 @@ describe('BlueLiveEngineSession', () => {
       getClient,
       killAndWait,
     } as unknown as EngineBridge;
-    const session = trackSession(new BlueLiveEngineSession(
-      createMockWindow(),
-      'csound',
-      5560,
-      5561,
-      undefined,
-      {
+    const session = trackSession(
+      new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561, undefined, {
         createBridge: () => bridge,
         writeTempCsdSnapshot: async () => '/tmp/blue-live-starting.csd',
         cleanupDelayMs: 0,
-      },
-    ));
+      }),
+    );
 
     const start = session.start(new BlueData(), 1);
     await vi.waitFor(() => {
@@ -263,28 +266,18 @@ describe('BlueLiveEngineSession buildLiveOptions (via LiveData)', () => {
 
 describe('parseCSD helper behavior', () => {
   it('assigns stable numeric ids to named orchestra instruments', () => {
-    const namedIds = resolveNamedInstrumentNumbers([
-      'instr 1',
-      'endin',
-      'instr blueAllNotesOff',
-      'endin',
-      'instr BlueMixer',
-      'endin',
-    ].join('\n'));
+    const namedIds = resolveNamedInstrumentNumbers(
+      ['instr 1', 'endin', 'instr blueAllNotesOff', 'endin', 'instr BlueMixer', 'endin'].join('\n'),
+    );
 
     expect(namedIds.get('blueAllNotesOff')).toBe(2);
     expect(namedIds.get('BlueMixer')).toBe(3);
   });
 
   it('normalizes named score events for engine-api readScore', () => {
-    const namedIds = resolveNamedInstrumentNumbers([
-      'instr 1',
-      'endin',
-      'instr blueAllNotesOff',
-      'endin',
-      'instr BlueMixer',
-      'endin',
-    ].join('\n'));
+    const namedIds = resolveNamedInstrumentNumbers(
+      ['instr 1', 'endin', 'instr blueAllNotesOff', 'endin', 'instr BlueMixer', 'endin'].join('\n'),
+    );
 
     const normalized = normalizeScoreForEngineApi(
       'i "BlueMixer" 0 36000\n i "blueAllNotesOff" 0 1',
@@ -297,10 +290,12 @@ describe('parseCSD helper behavior', () => {
 });
 
 describe('BlueLiveEngineSession target catalog (Spec 067)', () => {
-  function createRunningSession(opts: {
-    data?: BlueData;
-    readScoreOk?: boolean;
-  } = {}) {
+  function createRunningSession(
+    opts: {
+      data?: BlueData;
+      readScoreOk?: boolean;
+    } = {},
+  ) {
     const client = createMockClient();
     if (opts.readScoreOk === false) {
       client.readScore.mockResolvedValue({ ok: false, message: 'engine rejected' });
@@ -313,18 +308,13 @@ describe('BlueLiveEngineSession target catalog (Spec 067)', () => {
       getClient: vi.fn(() => client),
       killAndWait,
     } as unknown as EngineBridge;
-    const session = trackSession(new BlueLiveEngineSession(
-      createMockWindow(),
-      'csound',
-      5560,
-      5561,
-      undefined,
-      {
+    const session = trackSession(
+      new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561, undefined, {
         createBridge: () => bridge,
         writeTempCsdSnapshot: async () => '/tmp/blue-live-target.csd',
         cleanupDelayMs: 0,
-      },
-    ));
+      }),
+    );
     const data = opts.data ?? new BlueData();
     return { session, client, bridge, data };
   }
@@ -368,7 +358,11 @@ describe('BlueLiveEngineSession target catalog (Spec 067)', () => {
     client.readScore.mockResolvedValue({ ok: false, message: 'engine rejected' });
 
     const result = await session.triggerNote({
-      type: 'noteOn', midiNote: 60, velocity: 100, channel: 0, source: 'mouse',
+      type: 'noteOn',
+      midiNote: 60,
+      velocity: 100,
+      channel: 0,
+      source: 'mouse',
     });
 
     expect(result.ok).toBe(false);
@@ -386,7 +380,11 @@ describe('BlueLiveEngineSession target catalog (Spec 067)', () => {
     client.readScore.mockRejectedValue(new Error('transport failed'));
 
     const result = await session.triggerNote({
-      type: 'noteOn', midiNote: 60, velocity: 100, channel: 0, source: 'mouse',
+      type: 'noteOn',
+      midiNote: 60,
+      velocity: 100,
+      channel: 0,
+      source: 'mouse',
     });
 
     expect(result.ok).toBe(false);
@@ -616,7 +614,11 @@ describe('BlueLiveEngineSession Orchestra target resolution (Spec 067 US2)', () 
     client.readScore.mockClear();
 
     const result = await session.triggerNote({
-      type: 'noteOn', midiNote: 60, velocity: 100, channel: 0, source: 'mouse',
+      type: 'noteOn',
+      midiNote: 60,
+      velocity: 100,
+      channel: 0,
+      source: 'mouse',
       target: { kind: 'orchestra', assignmentId: '5' },
       liveSessionId: session.getStatus().sessionId,
     });
@@ -636,7 +638,11 @@ describe('BlueLiveEngineSession Orchestra target resolution (Spec 067 US2)', () 
     client.readScore.mockClear();
 
     const result = await session.triggerNote({
-      type: 'noteOn', midiNote: 60, velocity: 100, channel: 0, source: 'mouse',
+      type: 'noteOn',
+      midiNote: 60,
+      velocity: 100,
+      channel: 0,
+      source: 'mouse',
       target: { kind: 'orchestra', assignmentId: 'lead' },
       liveSessionId: session.getStatus().sessionId,
     });
@@ -653,7 +659,11 @@ describe('BlueLiveEngineSession Orchestra target resolution (Spec 067 US2)', () 
     client.readScore.mockClear();
 
     const result = await session.triggerNote({
-      type: 'noteOn', midiNote: 60, velocity: 100, channel: 0, source: 'mouse',
+      type: 'noteOn',
+      midiNote: 60,
+      velocity: 100,
+      channel: 0,
+      source: 'mouse',
       target: { kind: 'orchestra', assignmentId: 'missing' },
       liveSessionId: session.getStatus().sessionId,
     });
@@ -696,7 +706,11 @@ describe('BlueLiveEngineSession target-independent project MIDI mapping (Spec 06
     ];
     for (const target of targets) {
       const result = await session.triggerNote({
-        type: 'noteOn', midiNote: 61, velocity: 99, channel: 0, source: 'hardware',
+        type: 'noteOn',
+        midiNote: 61,
+        velocity: 99,
+        channel: 0,
+        source: 'hardware',
         target,
         liveSessionId,
       });
@@ -717,7 +731,11 @@ describe('BlueLiveEngineSession Direct Channel compatibility (Spec 067 US3)', ()
     client.readScore.mockClear();
 
     const result = await session.triggerNote({
-      type: 'noteOn', midiNote: 60, velocity: 100, channel: 0, source: 'mouse',
+      type: 'noteOn',
+      midiNote: 60,
+      velocity: 100,
+      channel: 0,
+      source: 'mouse',
       // no target, no liveSessionId — legacy direct-channel request
     });
     expect(result.ok).toBe(true);
@@ -733,7 +751,11 @@ describe('BlueLiveEngineSession Direct Channel compatibility (Spec 067 US3)', ()
     await session.start(data, 1);
 
     const result = await session.triggerNote({
-      type: 'noteOn', midiNote: 60, velocity: 100, channel: 0, source: 'hardware',
+      type: 'noteOn',
+      midiNote: 60,
+      velocity: 100,
+      channel: 0,
+      source: 'hardware',
       target: { kind: 'channel', channel: 0 },
     });
     expect(result.ok).toBe(true);
@@ -750,7 +772,11 @@ describe('BlueLiveEngineSession Direct Channel compatibility (Spec 067 US3)', ()
     client.readScore.mockClear();
 
     const result = await session.triggerNote({
-      type: 'noteOn', midiNote: 60, velocity: 100, channel: 0, source: 'hardware',
+      type: 'noteOn',
+      midiNote: 60,
+      velocity: 100,
+      channel: 0,
+      source: 'hardware',
     });
 
     expect(result.ok).toBe(false);
@@ -769,7 +795,11 @@ describe('BlueLiveEngineSession Direct Channel compatibility (Spec 067 US3)', ()
     client.readScore.mockClear();
 
     const result = await session.triggerNote({
-      type: 'noteOn', midiNote: 60, velocity: 100, channel: 0, source: 'hardware',
+      type: 'noteOn',
+      midiNote: 60,
+      velocity: 100,
+      channel: 0,
+      source: 'hardware',
     });
 
     expect(result.ok).toBe(false);
@@ -784,7 +814,11 @@ describe('BlueLiveEngineSession Direct Channel compatibility (Spec 067 US3)', ()
     client.readScore.mockClear();
 
     const result = await session.triggerNote({
-      type: 'noteOn', midiNote: 60, velocity: 100, channel: 0, source: 'hardware',
+      type: 'noteOn',
+      midiNote: 60,
+      velocity: 100,
+      channel: 0,
+      source: 'hardware',
       target: { kind: 'channel', channel: 5 },
     });
     expect(result.ok).toBe(false);
@@ -798,7 +832,11 @@ describe('BlueLiveEngineSession Direct Channel compatibility (Spec 067 US3)', ()
     client.readScore.mockClear();
 
     const result = await session.triggerNote({
-      type: 'noteOn', midiNote: 60, velocity: 100, channel: 9, source: 'hardware',
+      type: 'noteOn',
+      midiNote: 60,
+      velocity: 100,
+      channel: 9,
+      source: 'hardware',
       // no arrangement entry at index 9
     });
     expect(result.ok).toBe(false);
@@ -808,18 +846,28 @@ describe('BlueLiveEngineSession Direct Channel compatibility (Spec 067 US3)', ()
 
   it('preserves existing assignment ordering for direct-channel resolution', async () => {
     const data = new BlueData();
-    const a = new GenericInstrument(); a.setText('out aout');
-    const b = new GenericInstrument(); b.setText('out aout');
+    const a = new GenericInstrument();
+    a.setText('out aout');
+    const b = new GenericInstrument();
+    b.setText('out aout');
     data.getArrangement().addInstrument(a, '1');
     data.getArrangement().addInstrument(b, '2');
     const { session } = createRunningSession({ data });
     await session.start(data, 1);
 
     const ch0 = await session.triggerNote({
-      type: 'noteOn', midiNote: 60, velocity: 100, channel: 0, source: 'hardware',
+      type: 'noteOn',
+      midiNote: 60,
+      velocity: 100,
+      channel: 0,
+      source: 'hardware',
     });
     const ch1 = await session.triggerNote({
-      type: 'noteOn', midiNote: 60, velocity: 100, channel: 1, source: 'hardware',
+      type: 'noteOn',
+      midiNote: 60,
+      velocity: 100,
+      channel: 1,
+      source: 'hardware',
     });
     expect(ch0.submittedScoreText).toMatch(/^i1\./);
     expect(ch1.submittedScoreText).toMatch(/^i2\./);
@@ -835,7 +883,11 @@ describe('BlueLiveEngineSession catalog lifecycle (Spec 067 US4)', () => {
     expect(startResult.status).toBe('error');
 
     const result = await session.triggerNote({
-      type: 'noteOn', midiNote: 60, velocity: 100, channel: 0, source: 'mouse',
+      type: 'noteOn',
+      midiNote: 60,
+      velocity: 100,
+      channel: 0,
+      source: 'mouse',
       target: { kind: 'track', trackId: 'any' },
       liveSessionId: session.getStatus().sessionId,
     });
@@ -872,7 +924,11 @@ describe('BlueLiveEngineSession catalog lifecycle (Spec 067 US4)', () => {
     client.readScore.mockClear();
 
     const result = await session.triggerNote({
-      type: 'noteOn', midiNote: 60, velocity: 100, channel: 0, source: 'mouse',
+      type: 'noteOn',
+      midiNote: 60,
+      velocity: 100,
+      channel: 0,
+      source: 'mouse',
       target: { kind: 'track', trackId: 'any' },
       liveSessionId: firstSessionId, // stale
     });

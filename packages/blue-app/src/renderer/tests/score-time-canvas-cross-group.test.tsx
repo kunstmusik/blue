@@ -14,7 +14,9 @@ import type {
 import { useProjectStore } from '../stores/project-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const originalProjectState = useProjectStore.getState();
 const originalBlueAPI = window.blueAPI;
@@ -221,18 +223,21 @@ function dispatchMouseEvent(
   clientX: number,
   clientY: number,
 ): void {
-  target.dispatchEvent(new MouseEvent(type, {
-    bubbles: true,
-    cancelable: true,
-    button: 0,
-    clientX,
-    clientY,
-  }));
+  target.dispatchEvent(
+    new MouseEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      button: 0,
+      clientX,
+      clientY,
+    }),
+  );
 }
 
 function clickContextMenuItem(label: string): void {
-  const menuItem = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]'))
-    .find((item) => item.textContent?.trim() === label);
+  const menuItem = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]')).find(
+    (item) => item.textContent?.trim() === label,
+  );
   expect(menuItem).toBeTruthy();
   act(() => {
     menuItem?.click();
@@ -267,14 +272,18 @@ afterEach(() => {
 
 describe('ScoreTimeCanvas cross-group gestures', () => {
   it('selects SoundObject layers and timeline boundaries from the empty-area menu', () => {
-    const soundGroup = createSoundGroup([[
-      createSoundItem('sound-before', 'Sound Before', 0, 0, 0, 1),
-      createSoundItem('sound-after', 'Sound After', 0, 1, 6, 1),
-    ]]);
-    const trackGroup = createTrackGroup([[
-      createSoundItem('track-before', 'Track Before', 0, 0, 1, 1),
-      createSoundItem('track-after', 'Track After', 0, 1, 5, 1),
-    ]]);
+    const soundGroup = createSoundGroup([
+      [
+        createSoundItem('sound-before', 'Sound Before', 0, 0, 0, 1),
+        createSoundItem('sound-after', 'Sound After', 0, 1, 6, 1),
+      ],
+    ]);
+    const trackGroup = createTrackGroup([
+      [
+        createSoundItem('track-before', 'Track Before', 0, 0, 1, 1),
+        createSoundItem('track-after', 'Track After', 0, 1, 5, 1),
+      ],
+    ]);
 
     const { root, surface } = renderCanvas(soundGroup, [soundGroup, trackGroup]);
 
@@ -311,10 +320,12 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
   });
 
   it('keeps boundary selection scoped to an empty nested score view', () => {
-    const rootGroup = createSoundGroup([[
-      createSoundItem('root-before', 'Root Before', 0, 0, 0, 1),
-      createSoundItem('root-after', 'Root After', 0, 1, 6, 1),
-    ]]);
+    const rootGroup = createSoundGroup([
+      [
+        createSoundItem('root-before', 'Root Before', 0, 0, 0, 1),
+        createSoundItem('root-after', 'Root After', 0, 1, 6, 1),
+      ],
+    ]);
     const nestedGroup = createSoundGroup([[]]);
     const { root, surface } = renderCanvas(nestedGroup, [rootGroup], {
       scoreContainerPath: [{ layerId: 'root-layer', objectIdentity: 'nested-poly-object' }],
@@ -338,11 +349,13 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
   });
 
   it('sets selected SoundObject subjective time to objective time', () => {
-    const soundGroup = createSoundGroup([[
-      createSoundItem('sound-object', 'Sound Object', 0, 0, 1, 2),
-    ]]);
+    const soundGroup = createSoundGroup([
+      [createSoundItem('sound-object', 'Sound Object', 0, 0, 1, 2)],
+    ]);
     const item = soundGroup.layers[0]!.items[0]!;
-    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<
+      typeof vi.fn
+    >;
     const { root, surface } = renderCanvas(soundGroup, [soundGroup]);
 
     act(() => {
@@ -363,11 +376,13 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
   });
 
   it('confirms and dispatches Java-compatible ObjectBuilder conversion', () => {
-    const soundGroup = createSoundGroup([[
-      createSoundItem('python-object', 'Python', 0, 0, 1, 2, 'PythonObject'),
-    ]]);
+    const soundGroup = createSoundGroup([
+      [createSoundItem('python-object', 'Python', 0, 0, 1, 2, 'PythonObject')],
+    ]);
     const item = soundGroup.layers[0]!.items[0]!;
-    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<
+      typeof vi.fn
+    >;
     const { root, surface } = renderCanvas(soundGroup, [soundGroup]);
 
     act(() => {
@@ -394,15 +409,19 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
       },
     });
 
-    act(() => { root.unmount(); });
+    act(() => {
+      root.unmount();
+    });
   });
 
   it('fails closed when the ObjectBuilder conversion target changes while confirmation is open', () => {
-    const soundGroup = createSoundGroup([[
-      createSoundItem('python-object', 'Python', 0, 0, 1, 2, 'PythonObject'),
-    ]]);
+    const soundGroup = createSoundGroup([
+      [createSoundItem('python-object', 'Python', 0, 0, 1, 2, 'PythonObject')],
+    ]);
     const item = soundGroup.layers[0]!.items[0]!;
-    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<
+      typeof vi.fn
+    >;
     const { root, surface } = renderCanvas(soundGroup, [soundGroup]);
 
     act(() => {
@@ -411,56 +430,72 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
     clickContextMenuItem('Convert to ObjectBuilder');
 
     act(() => {
-      useScoreSelectionStore.getState().setSelection([{
-        objectId: item.objectId,
-        editorTarget: {
-          ...item.editorTarget!,
-          location: { ...item.editorTarget!.location!, objectIndex: 1 },
+      useScoreSelectionStore.getState().setSelection([
+        {
+          objectId: item.objectId,
+          editorTarget: {
+            ...item.editorTarget!,
+            location: { ...item.editorTarget!.location!, objectIndex: 1 },
+          },
         },
-      }]);
+      ]);
     });
 
-    const convertButton = document.body.querySelector<HTMLButtonElement>('[data-action-id="convert"]');
+    const convertButton = document.body.querySelector<HTMLButtonElement>(
+      '[data-action-id="convert"]',
+    );
     act(() => {
       convertButton?.click();
     });
 
     expect(applyPatch).not.toHaveBeenCalled();
-    act(() => { root.unmount(); });
+    act(() => {
+      root.unmount();
+    });
   });
 
   it('disables ObjectBuilder conversion for unsupported score object types', () => {
-    const soundGroup = createSoundGroup([[
-      createSoundItem('generic-object', 'Generic', 0, 0, 1, 2),
-    ]]);
-    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
+    const soundGroup = createSoundGroup([
+      [createSoundItem('generic-object', 'Generic', 0, 0, 1, 2)],
+    ]);
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<
+      typeof vi.fn
+    >;
     const { root, surface } = renderCanvas(soundGroup, [soundGroup]);
 
     act(() => {
       dispatchMouseEvent(surface, 'contextmenu', 35, 10);
     });
-    const menuItem = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]'))
-      .find((candidate) => candidate.textContent?.trim() === 'Convert to ObjectBuilder');
+    const menuItem = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]')).find(
+      (candidate) => candidate.textContent?.trim() === 'Convert to ObjectBuilder',
+    );
     expect(menuItem?.getAttribute('data-disabled')).toBe('');
-    act(() => { menuItem?.click(); });
+    act(() => {
+      menuItem?.click();
+    });
     expect(applyPatch).not.toHaveBeenCalled();
 
-    act(() => { root.unmount(); });
+    act(() => {
+      root.unmount();
+    });
   });
 
   it('disables subjective time conversion for selected AudioClips', () => {
-    const audioGroup = createSoundGroup([[
-      createAudioItem('audio-clip', 'Audio Clip', 0, 0, 1, 2),
-    ]]);
-    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
+    const audioGroup = createSoundGroup([
+      [createAudioItem('audio-clip', 'Audio Clip', 0, 0, 1, 2)],
+    ]);
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<
+      typeof vi.fn
+    >;
     const { root, surface } = renderCanvas(audioGroup, [audioGroup]);
 
     act(() => {
       dispatchMouseEvent(surface, 'contextmenu', 35, 10);
     });
 
-    const menuItem = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]'))
-      .find((item) => item.textContent?.trim() === 'Set Subjective Time to Objective Time');
+    const menuItem = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]')).find(
+      (item) => item.textContent?.trim() === 'Set Subjective Time to Objective Time',
+    );
     expect(menuItem?.getAttribute('data-disabled')).toBe('');
     act(() => {
       menuItem?.click();
@@ -496,19 +531,23 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
   });
 
   it('replaces selected SoundObjects with the single SoundObject in the buffer', async () => {
-    const soundGroup = createSoundGroup([[
-      createSoundItem('sound-object', 'Original', 0, 0, 1, 2),
-    ]]);
+    const soundGroup = createSoundGroup([
+      [createSoundItem('sound-object', 'Original', 0, 0, 1, 2)],
+    ]);
     const replacement = createSoundItem('buffer-object', 'Replacement', 0, 0, 0, 7);
-    useScoreSelectionStore.getState().copySelected([{
-      ...replacement,
-      objectId: 'buffer-object',
-      groupId: 'buffer-group',
-      layerIndex: 0,
-      serializedXml: '<soundObject />',
-    }]);
+    useScoreSelectionStore.getState().copySelected([
+      {
+        ...replacement,
+        objectId: 'buffer-object',
+        groupId: 'buffer-group',
+        layerIndex: 0,
+        serializedXml: '<soundObject />',
+      },
+    ]);
     const item = soundGroup.layers[0]!.items[0]!;
-    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<
+      typeof vi.fn
+    >;
     const { root, surface } = renderCanvas(soundGroup, [soundGroup]);
 
     act(() => {
@@ -530,17 +569,19 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
       score: {
         type: 'addScoreObjects',
         groupId: 'sound-group',
-        objects: [{
-          layerIndex: 0,
-          objectType: 'GenericScore',
-          name: 'Replacement',
-          startBeats: 1,
-          durationBeats: 2,
-          startTimeBase: 'BEATS',
-          durationTimeBase: 'BEATS',
-          backgroundColor: replacement.backgroundColor,
-          serializedXml: '<soundObject />',
-        }],
+        objects: [
+          {
+            layerIndex: 0,
+            objectType: 'GenericScore',
+            name: 'Replacement',
+            startBeats: 1,
+            durationBeats: 2,
+            startTimeBase: 'BEATS',
+            durationTimeBase: 'BEATS',
+            backgroundColor: replacement.backgroundColor,
+            serializedXml: '<soundObject />',
+          },
+        ],
       },
     });
     expect(useScoreSelectionStore.getState().selectedObjectIds).toEqual(new Set());
@@ -551,10 +592,10 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
   });
 
   it('shifts selected sound objects by the prompted beat amount', () => {
-    const soundGroup = createSoundGroup([[
-      createSoundItem('sound-object', 'Item', 0, 0, 2, 4),
-    ]]);
-    const moveScoreObjects = useProjectStore.getState().moveScoreObjects as ReturnType<typeof vi.fn>;
+    const soundGroup = createSoundGroup([[createSoundItem('sound-object', 'Item', 0, 0, 2, 4)]]);
+    const moveScoreObjects = useProjectStore.getState().moveScoreObjects as ReturnType<
+      typeof vi.fn
+    >;
     const { root, surface } = renderCanvas(soundGroup, [soundGroup]);
 
     act(() => {
@@ -566,12 +607,17 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
     expect(input).not.toBeNull();
 
     act(() => {
-      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set;
+      const nativeSetter = Object.getOwnPropertyDescriptor(
+        window.HTMLInputElement.prototype,
+        'value',
+      )?.set;
       nativeSetter?.call(input, '3.5');
       input.dispatchEvent(new Event('input', { bubbles: true }));
     });
 
-    const okButton = Array.from(document.querySelectorAll('button')).find((btn) => btn.textContent === 'OK');
+    const okButton = Array.from(document.querySelectorAll('button')).find(
+      (btn) => btn.textContent === 'OK',
+    );
     expect(okButton).not.toBeUndefined();
 
     act(() => {
@@ -580,9 +626,16 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
 
     const item = soundGroup.layers[0]!.items[0]!;
     expect(moveScoreObjects).toHaveBeenCalledWith([
-      { objectId: 'sound-object', targetStartBeats: 5.5, targetLayerIndex: 0, targetGroupId: 'sound-group' },
+      {
+        objectId: 'sound-object',
+        targetStartBeats: 5.5,
+        targetLayerIndex: 0,
+        targetGroupId: 'sound-group',
+      },
     ]);
-    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<
+      typeof vi.fn
+    >;
     expect(applyPatch).toHaveBeenCalledWith({
       score: {
         type: 'moveScoreObjects',
@@ -603,12 +656,8 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
   });
 
   it('resizes selected soundObject and audio objects from a soundObject edge drag', async () => {
-    const soundGroup = createSoundGroup([
-      [createSoundItem('sound-1', 'Sine', 0, 0, 0, 2)],
-    ]);
-    const audioGroup = createTrackGroup([
-      [createAudioItem('audio-1', 'Kick', 0, 0, 1, 2)],
-    ]);
+    const soundGroup = createSoundGroup([[createSoundItem('sound-1', 'Sine', 0, 0, 0, 2)]]);
+    const audioGroup = createTrackGroup([[createAudioItem('audio-1', 'Kick', 0, 0, 1, 2)]]);
 
     useScoreSelectionStore.getState().setSelection([
       { objectId: 'sound-1', editorTarget: soundGroup.layers[0]!.items[0]!.editorTarget },
@@ -616,7 +665,8 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
     ]);
 
     const { root, surface } = renderCanvas(soundGroup, [soundGroup, audioGroup]);
-    const resizeScoreObjects = useProjectStore.getState().resizeScoreObjects as unknown as ReturnType<typeof vi.fn>;
+    const resizeScoreObjects = useProjectStore.getState()
+      .resizeScoreObjects as unknown as ReturnType<typeof vi.fn>;
 
     await act(async () => {
       dispatchMouseEvent(surface, 'mousedown', 49, 10);
@@ -644,12 +694,8 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
   });
 
   it('stops soundObject-origin left resize for all selected objects when any selected object reaches beat zero', async () => {
-    const soundGroup = createSoundGroup([
-      [createSoundItem('sound-1', 'Sine', 0, 0, 1, 2)],
-    ]);
-    const audioGroup = createTrackGroup([
-      [createAudioItem('audio-1', 'Kick', 0, 0, 3, 2)],
-    ]);
+    const soundGroup = createSoundGroup([[createSoundItem('sound-1', 'Sine', 0, 0, 1, 2)]]);
+    const audioGroup = createTrackGroup([[createAudioItem('audio-1', 'Kick', 0, 0, 3, 2)]]);
 
     useScoreSelectionStore.getState().setSelection([
       { objectId: 'sound-1', editorTarget: soundGroup.layers[0]!.items[0]!.editorTarget },
@@ -657,7 +703,8 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
     ]);
 
     const { root, surface } = renderCanvas(soundGroup, [soundGroup, audioGroup]);
-    const resizeScoreObjects = useProjectStore.getState().resizeScoreObjects as unknown as ReturnType<typeof vi.fn>;
+    const resizeScoreObjects = useProjectStore.getState()
+      .resizeScoreObjects as unknown as ReturnType<typeof vi.fn>;
 
     await act(async () => {
       dispatchMouseEvent(surface, 'mousedown', 26, 10);
@@ -685,9 +732,7 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
   });
 
   it('renders snap lines without using an oversized row canvas on long scores', () => {
-    const soundGroup = createSoundGroup([
-      [createSoundItem('sound-1', 'Sine', 0, 0, 0, 2)],
-    ]);
+    const soundGroup = createSoundGroup([[createSoundItem('sound-1', 'Sine', 0, 0, 0, 2)]]);
 
     const { root, surface } = renderCanvas(soundGroup, [soundGroup], {
       pixelsPerBeat: 25,
@@ -734,22 +779,26 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
       await Promise.resolve();
     });
 
-    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<
+      typeof vi.fn
+    >;
     expect(applyPatch).toHaveBeenCalledWith({
       score: {
         type: 'addScoreObjects',
         groupId: 'sound-group',
-        objects: [expect.objectContaining({
-          layerIndex: 0,
-          objectType: 'GenericScore',
-          name: 'Imported BBF',
-          startBeats: 4,
-          durationBeats: 9,
-          startTimeBase: 'BBF',
-          durationTimeBase: 'BBF',
-          backgroundColor: 0x336699,
-          serializedXml,
-        })],
+        objects: [
+          expect.objectContaining({
+            layerIndex: 0,
+            objectType: 'GenericScore',
+            name: 'Imported BBF',
+            startBeats: 4,
+            durationBeats: 9,
+            startTimeBase: 'BBF',
+            durationTimeBase: 'BBF',
+            backgroundColor: 0x336699,
+            serializedXml,
+          }),
+        ],
       },
     });
 

@@ -19,10 +19,7 @@ import {
   PROJECT_ARTIFACTS_IPC_CHANNELS,
   registerProjectArtifactsIpc,
 } from './project-artifacts-ipc';
-import {
-  PROJECT_DOCUMENT_IPC_CHANNELS,
-  registerProjectDocumentIpc,
-} from './project-document-ipc';
+import { PROJECT_DOCUMENT_IPC_CHANNELS, registerProjectDocumentIpc } from './project-document-ipc';
 import {
   PROJECT_LIFECYCLE_IPC_CHANNELS,
   registerProjectLifecycleIpc,
@@ -33,9 +30,7 @@ const PLAYBACK_LISTENERS: readonly PlaybackRuntimeListenerChannel[] = [
   'sync-follow-playback-state',
 ];
 
-const APPLICATION_LISTENERS: readonly ApplicationListenerChannel[] = [
-  'settings:close-response',
-];
+const APPLICATION_LISTENERS: readonly ApplicationListenerChannel[] = ['settings:close-response'];
 
 const PLAYBACK_HANDLERS = PLAYBACK_RUNTIME_IPC_CHANNELS.filter(
   (c): c is Exclude<PlaybackRuntimeIpcChannel, PlaybackRuntimeListenerChannel> =>
@@ -86,32 +81,42 @@ function extractListeners<T extends string>(
 export function registerMainProcessDomainIpc(options: MainProcessDomainIpcOptions): () => void {
   const disposers: Array<() => void> = [];
   try {
-    disposers.push(registerProjectLifecycleIpc({
-      ipcMain: options.ipcMain,
-      handlers: extractHandlers(PROJECT_LIFECYCLE_IPC_CHANNELS, options.handlers),
-    }));
+    disposers.push(
+      registerProjectLifecycleIpc({
+        ipcMain: options.ipcMain,
+        handlers: extractHandlers(PROJECT_LIFECYCLE_IPC_CHANNELS, options.handlers),
+      }),
+    );
 
-    disposers.push(registerPlaybackRuntimeIpc({
-      ipcMain: options.ipcMain,
-      handlers: extractHandlers(PLAYBACK_HANDLERS, options.handlers),
-      listeners: extractListeners(PLAYBACK_LISTENERS, options.listeners),
-    }));
+    disposers.push(
+      registerPlaybackRuntimeIpc({
+        ipcMain: options.ipcMain,
+        handlers: extractHandlers(PLAYBACK_HANDLERS, options.handlers),
+        listeners: extractListeners(PLAYBACK_LISTENERS, options.listeners),
+      }),
+    );
 
-    disposers.push(registerProjectArtifactsIpc({
-      ipcMain: options.ipcMain,
-      handlers: extractHandlers(PROJECT_ARTIFACTS_IPC_CHANNELS, options.handlers),
-    }));
+    disposers.push(
+      registerProjectArtifactsIpc({
+        ipcMain: options.ipcMain,
+        handlers: extractHandlers(PROJECT_ARTIFACTS_IPC_CHANNELS, options.handlers),
+      }),
+    );
 
-    disposers.push(registerApplicationIpc({
-      ipcMain: options.ipcMain,
-      handlers: extractHandlers(APPLICATION_HANDLERS, options.handlers),
-      listeners: extractListeners(APPLICATION_LISTENERS, options.listeners),
-    }));
+    disposers.push(
+      registerApplicationIpc({
+        ipcMain: options.ipcMain,
+        handlers: extractHandlers(APPLICATION_HANDLERS, options.handlers),
+        listeners: extractListeners(APPLICATION_LISTENERS, options.listeners),
+      }),
+    );
 
-    disposers.push(registerProjectDocumentIpc({
-      ipcMain: options.ipcMain,
-      handlers: extractHandlers(PROJECT_DOCUMENT_IPC_CHANNELS, options.handlers),
-    }));
+    disposers.push(
+      registerProjectDocumentIpc({
+        ipcMain: options.ipcMain,
+        handlers: extractHandlers(PROJECT_DOCUMENT_IPC_CHANNELS, options.handlers),
+      }),
+    );
   } catch (error) {
     for (const dispose of disposers.slice().reverse()) {
       try {

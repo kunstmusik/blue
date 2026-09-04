@@ -46,14 +46,26 @@ export class External extends AbstractSoundObject {
     }
   }
 
-  getCommandLine(): string { return this._commandLine; }
-  setCommandLine(cmd: string): void { this._commandLine = cmd; }
+  getCommandLine(): string {
+    return this._commandLine;
+  }
+  setCommandLine(cmd: string): void {
+    this._commandLine = cmd;
+  }
 
-  getText(): string { return this._text; }
-  setText(text: string): void { this._text = text; }
+  getText(): string {
+    return this._text;
+  }
+  setText(text: string): void {
+    this._text = text;
+  }
 
-  getSyntaxType(): string { return this._syntaxType; }
-  setSyntaxType(type: string): void { this._syntaxType = type; }
+  getSyntaxType(): string {
+    return this._syntaxType;
+  }
+  setSyntaxType(type: string): void {
+    this._syntaxType = type;
+  }
 
   override generateForCSD(
     context: TimeContext,
@@ -74,7 +86,10 @@ export class External extends AbstractSoundObject {
     try {
       rawScore = executor.execute(this._commandLine, this._text, null);
     } catch (ex) {
-      console.warn('External.generateForCSD: command execution failed:', ex instanceof Error ? ex.message : String(ex));
+      console.warn(
+        'External.generateForCSD: command execution failed:',
+        ex instanceof Error ? ex.message : String(ex),
+      );
       return new NoteList();
     }
 
@@ -114,12 +129,19 @@ export class External extends AbstractSoundObject {
     try {
       rawScore = executor.execute(this._commandLine, this._text, null);
     } catch (ex) {
-      console.warn('External.generateForCSDAsync: command execution failed:', ex instanceof Error ? ex.message : String(ex));
+      console.warn(
+        'External.generateForCSDAsync: command execution failed:',
+        ex instanceof Error ? ex.message : String(ex),
+      );
       return new NoteList();
     }
 
     const noteList = getNotes(rawScore);
-    const processed = await applyNoteProcessorChainAsync(noteList, this.getNoteProcessorChain(), compileData);
+    const processed = await applyNoteProcessorChainAsync(
+      noteList,
+      this.getNoteProcessorChain(),
+      compileData,
+    );
     const duration = this.getSubjectiveDuration().toBeats(context);
     const startTimeOffset = this.getStartTime().toBeats(context);
     const repeatPoint = this.getRepeatPoint();

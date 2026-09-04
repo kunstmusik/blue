@@ -2,11 +2,19 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { BlueData, Effect, PolyObject, SoundLayer } from '@blue/data';
-import { useProjectStore, __testFlushPendingPatches, __testAwaitPendingPatches, __testClearPendingPatches } from '../stores/project-store';
+import {
+  useProjectStore,
+  __testFlushPendingPatches,
+  __testAwaitPendingPatches,
+  __testClearPendingPatches,
+} from '../stores/project-store';
 import { usePlaybackStore } from '../stores/playback-store';
 import { useUIStore } from '../stores/ui-store';
 import { useSettingsStore } from '../stores/settings-store';
-import { createEmptyProjectEditorSnapshot, createProjectEditorSnapshot } from '../../shared/project-editor';
+import {
+  createEmptyProjectEditorSnapshot,
+  createProjectEditorSnapshot,
+} from '../../shared/project-editor';
 import { getWindowTitle } from '../../shared/window-title';
 import { TimeBase } from '../../shared/time-base';
 import MainToolbar from '../components/menu-bar/MainToolbar';
@@ -463,7 +471,9 @@ describe('Project Store', () => {
     useProjectStore.getState().renameLayer('audio-layer-0-unique', 'Renamed Layer');
 
     expect(useProjectStore.getState().score.layerGroups[0]?.layers[0]?.name).toBe('Renamed Layer');
-    expect(useProjectStore.getState().mixer.channelListGroups[0]?.channels[0]?.name).toBe('Renamed Layer');
+    expect(useProjectStore.getState().mixer.channelListGroups[0]?.channels[0]?.name).toBe(
+      'Renamed Layer',
+    );
 
     __testFlushPendingPatches();
     await __testAwaitPendingPatches();
@@ -541,7 +551,9 @@ describe('Project Store', () => {
     expect(useProjectStore.getState().mixer.channelListGroups[0]?.channels[0]?.name).toBe(
       'Renamed From Mixer',
     );
-    expect(useProjectStore.getState().score.layerGroups[0]?.layers[0]?.name).toBe('Renamed From Mixer');
+    expect(useProjectStore.getState().score.layerGroups[0]?.layers[0]?.name).toBe(
+      'Renamed From Mixer',
+    );
   });
 
   it('optimistically merges meter-map patches into transport state and queued commits', async () => {
@@ -590,7 +602,13 @@ describe('Project Store', () => {
 
     await useProjectStore.getState().applyProjectDocumentPatch({
       transport: {
-        meterMapPatch: { type: 'meter-map-update-entry', previousMeasure: 5, measure: 6, numBeats: 5, beatLength: 4 },
+        meterMapPatch: {
+          type: 'meter-map-update-entry',
+          previousMeasure: 5,
+          measure: 6,
+          numBeats: 5,
+          beatLength: 4,
+        },
       },
     });
 
@@ -644,7 +662,13 @@ describe('Project Store', () => {
       },
       {
         transport: {
-          meterMapPatch: { type: 'meter-map-update-entry', previousMeasure: 5, measure: 6, numBeats: 5, beatLength: 4 },
+          meterMapPatch: {
+            type: 'meter-map-update-entry',
+            previousMeasure: 5,
+            measure: 6,
+            numBeats: 5,
+            beatLength: 4,
+          },
         },
       },
       {
@@ -902,16 +926,18 @@ describe('Project Store', () => {
     useProjectStore.getState().setProjectInfo(snapshot);
 
     const chain = {
-      processors: [{
-        id: 'np-test',
-        processorType: 'AddProcessor',
-        displayName: 'AddProcessor',
-        supported: true,
-        deferred: false,
-        summary: 'AddProcessor',
-        parameters: { pfield: '4', val: '5' },
-        serializedXml: '',
-      }],
+      processors: [
+        {
+          id: 'np-test',
+          processorType: 'AddProcessor',
+          displayName: 'AddProcessor',
+          supported: true,
+          deferred: false,
+          summary: 'AddProcessor',
+          parameters: { pfield: '4', val: '5' },
+          serializedXml: '',
+        },
+      ],
       hasUnsupportedProcessors: false,
       hasDeferredProcessors: false,
     };
@@ -923,13 +949,23 @@ describe('Project Store', () => {
       score: { type: 'replaceScopedNoteProcessorChain', scope: 'layerGroup', groupId: 'g0', chain },
     });
     await useProjectStore.getState().applyProjectDocumentPatch({
-      score: { type: 'replaceScopedNoteProcessorChain', scope: 'soundLayer', groupId: 'g0', layerIndex: 1, chain },
+      score: {
+        type: 'replaceScopedNoteProcessorChain',
+        scope: 'soundLayer',
+        groupId: 'g0',
+        layerIndex: 1,
+        chain,
+      },
     });
 
     const score = useProjectStore.getState().score;
     expect(score.rootNoteProcessorChain?.processors[0]?.processorType).toBe('AddProcessor');
-    expect(score.layerGroups[0]?.noteProcessorChain?.processors[0]?.processorType).toBe('AddProcessor');
-    expect(score.layerGroups[0]?.layers[1]?.noteProcessorChain?.processors[0]?.processorType).toBe('AddProcessor');
+    expect(score.layerGroups[0]?.noteProcessorChain?.processors[0]?.processorType).toBe(
+      'AddProcessor',
+    );
+    expect(score.layerGroups[0]?.layers[1]?.noteProcessorChain?.processors[0]?.processorType).toBe(
+      'AddProcessor',
+    );
 
     await useProjectStore.getState().applyProjectDocumentPatch({
       score: {
@@ -940,7 +976,9 @@ describe('Project Store', () => {
         chain: { ...chain, processors: [] },
       },
     });
-    expect(useProjectStore.getState().score.layerGroups[0]?.layers[1]?.noteProcessorChain).toBeUndefined();
+    expect(
+      useProjectStore.getState().score.layerGroups[0]?.layers[1]?.noteProcessorChain,
+    ).toBeUndefined();
   });
 
   it('clears the active project session when the project is closed', () => {
@@ -1121,9 +1159,7 @@ describe('Project Store', () => {
       patch: { text: 'aout oscili p4, p6' },
     });
 
-    expect(useProjectStore.getState().orchestra.instruments[0]?.text).toBe(
-      'aout oscili p4, p6',
-    );
+    expect(useProjectStore.getState().orchestra.instruments[0]?.text).toBe('aout oscili p4, p6');
 
     await pending;
   });
@@ -1217,7 +1253,13 @@ describe('Project Store', () => {
             objectNames: ['amp', 'freq'],
             widgets: [
               { objectName: 'amp', widgetType: 'BSBKnob', value: 0.5, minimum: 0, maximum: 1 },
-              { objectName: 'freq', widgetType: 'BSBValue', value: 440, minimum: 20, maximum: 20000 },
+              {
+                objectName: 'freq',
+                widgetType: 'BSBValue',
+                value: 440,
+                minimum: 20,
+                maximum: 20000,
+              },
             ],
           },
         ],
@@ -1307,9 +1349,7 @@ describe('Project Store', () => {
       patch: { text: 'aout oscili p4, p7' },
     });
 
-    expect(useProjectStore.getState().orchestra.instruments[0]?.text).toBe(
-      'aout oscili p4, p7',
-    );
+    expect(useProjectStore.getState().orchestra.instruments[0]?.text).toBe('aout oscili p4, p7');
 
     vi.advanceTimersByTime(200);
 
@@ -1349,7 +1389,9 @@ describe('Playback Store', () => {
 
   it('T350: stop calls window.blueAPI.stopPlayback and waits for engine status', async () => {
     mockBlueAPI.stopPlayback.mockResolvedValue(undefined);
-    usePlaybackStore.getState().setStatus({ status: 'playing', message: 'Playing via blue-engine' });
+    usePlaybackStore
+      .getState()
+      .setStatus({ status: 'playing', message: 'Playing via blue-engine' });
 
     await usePlaybackStore.getState().stop();
 
@@ -1393,9 +1435,10 @@ describe('Playback Store', () => {
   it('T350: togglePlay sets starting state while playback is preparing', async () => {
     let resolveToggle: ((value: boolean) => void) | undefined;
     mockBlueAPI.togglePlay.mockImplementation(
-      () => new Promise<boolean>((resolve) => {
-        resolveToggle = resolve;
-      }),
+      () =>
+        new Promise<boolean>((resolve) => {
+          resolveToggle = resolve;
+        }),
     );
 
     const pending = usePlaybackStore.getState().togglePlay();
@@ -1416,9 +1459,10 @@ describe('Playback Store', () => {
   it('T350: togglePlay ignores duplicate requests while startup is in progress', async () => {
     let resolveToggle: ((value: boolean) => void) | undefined;
     mockBlueAPI.togglePlay.mockImplementation(
-      () => new Promise<boolean>((resolve) => {
-        resolveToggle = resolve;
-      }),
+      () =>
+        new Promise<boolean>((resolve) => {
+          resolveToggle = resolve;
+        }),
     );
 
     const first = usePlaybackStore.getState().togglePlay();
@@ -1464,21 +1508,31 @@ describe('Playback Store', () => {
 
 describe('Keyboard Shortcuts', () => {
   it('treats CodeMirror and form controls as text-editing targets', () => {
-    expect(isTextEditingTarget({
-      closest: vi.fn((selector: string) => (selector.includes('.cm-editor') ? {} : null)),
-    } as never)).toBe(true);
-    expect(isTextEditingTarget({
-      closest: vi.fn((selector: string) => (selector.includes('textarea') ? {} : null)),
-    } as never)).toBe(true);
-    expect(isTextEditingTarget({
-      closest: vi.fn((selector: string) => (selector.includes('.workbench-context-menu') ? {} : null)),
-    } as never)).toBe(true);
+    expect(
+      isTextEditingTarget({
+        closest: vi.fn((selector: string) => (selector.includes('.cm-editor') ? {} : null)),
+      } as never),
+    ).toBe(true);
+    expect(
+      isTextEditingTarget({
+        closest: vi.fn((selector: string) => (selector.includes('textarea') ? {} : null)),
+      } as never),
+    ).toBe(true);
+    expect(
+      isTextEditingTarget({
+        closest: vi.fn((selector: string) =>
+          selector.includes('.workbench-context-menu') ? {} : null,
+        ),
+      } as never),
+    ).toBe(true);
   });
 
   it('does not treat non-editing targets as text-editing targets', () => {
-    expect(isTextEditingTarget({
-      closest: vi.fn(() => null),
-    } as never)).toBe(false);
+    expect(
+      isTextEditingTarget({
+        closest: vi.fn(() => null),
+      } as never),
+    ).toBe(false);
     expect(isTextEditingTarget(null)).toBe(false);
   });
 });
@@ -1649,9 +1703,7 @@ describe('Toolbar Shell', () => {
 describe('Window title', () => {
   it('formats the app title from the current project file name', () => {
     expect(getWindowTitle(null)).toBe('Blue');
-    expect(getWindowTitle('/Users/stevenyi/work/demo/project.blue')).toBe(
-      'Blue - project.blue',
-    );
+    expect(getWindowTitle('/Users/stevenyi/work/demo/project.blue')).toBe('Blue - project.blue');
   });
 });
 

@@ -11,10 +11,18 @@ vi.mock('../stores/settings-store', async () => {
 beforeEach(() => {
   vi.stubGlobal('localStorage', {
     getItem: (key: string) => localStorageStore[key] ?? null,
-    setItem: (key: string, value: string) => { localStorageStore[key] = value; },
-    removeItem: (key: string) => { delete localStorageStore[key]; },
-    clear: () => { Object.keys(localStorageStore).forEach((k) => delete localStorageStore[k]); },
-    get length() { return Object.keys(localStorageStore).length; },
+    setItem: (key: string, value: string) => {
+      localStorageStore[key] = value;
+    },
+    removeItem: (key: string) => {
+      delete localStorageStore[key];
+    },
+    clear: () => {
+      Object.keys(localStorageStore).forEach((k) => delete localStorageStore[k]);
+    },
+    get length() {
+      return Object.keys(localStorageStore).length;
+    },
     key: (i: number) => Object.keys(localStorageStore)[i] ?? null,
   });
 });

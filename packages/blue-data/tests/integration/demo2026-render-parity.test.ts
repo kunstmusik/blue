@@ -84,9 +84,7 @@ describe('BlueData score scheduling parity', () => {
     const notes = new NoteList([createNote('1', 127.75, 0.25)]);
 
     const scoreText = (data as any).buildScoreText('', '', notes) as string;
-    const scoreEvents = scoreText
-      .split(/\r?\n/)
-      .filter((line) => line.startsWith('i'));
+    const scoreEvents = scoreText.split(/\r?\n/).filter((line) => line.startsWith('i'));
 
     expect(scoreEvents).toEqual(['i1\t127.75\t0.25']);
   });
@@ -124,31 +122,32 @@ describe('Score-based sound object parity', () => {
   });
 });
 
-describe.skipIf(
-  !fs.existsSync(DEMO2026_BLUE_PATH) || !fs.existsSync(DEMO2026_CSD_PATH),
-)('Demo2026 render parity', () => {
-  let generatedScoreEvents: string[];
-  let referenceScoreEvents: string[];
+describe.skipIf(!fs.existsSync(DEMO2026_BLUE_PATH) || !fs.existsSync(DEMO2026_CSD_PATH))(
+  'Demo2026 render parity',
+  () => {
+    let generatedScoreEvents: string[];
+    let referenceScoreEvents: string[];
 
-  beforeAll(async () => {
-    const xml = fs.readFileSync(DEMO2026_BLUE_PATH, 'utf-8');
-    const data = await BlueData.loadFromString(xml);
-    const generatedCsd = data.toCSD();
-    const referenceCsd = fs.readFileSync(DEMO2026_CSD_PATH, 'utf-8');
+    beforeAll(async () => {
+      const xml = fs.readFileSync(DEMO2026_BLUE_PATH, 'utf-8');
+      const data = await BlueData.loadFromString(xml);
+      const generatedCsd = data.toCSD();
+      const referenceCsd = fs.readFileSync(DEMO2026_CSD_PATH, 'utf-8');
 
-    generatedScoreEvents = extractScoreEvents(generatedCsd);
-    referenceScoreEvents = extractScoreEvents(referenceCsd);
-  });
+      generatedScoreEvents = extractScoreEvents(generatedCsd);
+      referenceScoreEvents = extractScoreEvents(referenceCsd);
+    });
 
-  it('matches the Java score event instrument ordering', () => {
-    expect(extractInstrumentSequence(generatedScoreEvents)).toEqual(
-      extractInstrumentSequence(referenceScoreEvents),
-    );
-  });
+    it('matches the Java score event instrument ordering', () => {
+      expect(extractInstrumentSequence(generatedScoreEvents)).toEqual(
+        extractInstrumentSequence(referenceScoreEvents),
+      );
+    });
 
-  it('matches the Java always-on event durations', () => {
-    expect(generatedScoreEvents.slice(-6).map(normalizeWhitespace)).toEqual(
-      referenceScoreEvents.slice(-6).map(normalizeWhitespace),
-    );
-  });
-});
+    it('matches the Java always-on event durations', () => {
+      expect(generatedScoreEvents.slice(-6).map(normalizeWhitespace)).toEqual(
+        referenceScoreEvents.slice(-6).map(normalizeWhitespace),
+      );
+    });
+  },
+);

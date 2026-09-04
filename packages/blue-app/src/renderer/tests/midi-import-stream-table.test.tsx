@@ -7,7 +7,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import MidiImportStreamTable from '../components/workbench/panels/MidiImportStreamTable';
 import type { MidiImportPreview, MidiImportSettings } from '../../shared/midi-import';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 describe('MidiImportStreamTable typography', () => {
   let container: HTMLDivElement;
@@ -23,22 +25,24 @@ describe('MidiImportStreamTable typography', () => {
       fileName: 'input.mid',
       format: 1,
       ticksPerBeat: 480,
-      streams: [{
-        streamKey: 'track-0',
-        trackIndex: 0,
-        trackName: 'Piano',
-        channel: 0,
-        noteCount: 8,
-        firstBeat: 0,
-        lastBeat: 4,
-        warnings: [],
-        defaults: {
+      streams: [
+        {
           streamKey: 'track-0',
-          instrumentId: '1',
-          noteTemplate: 'i1 ${start} ${duration} ${pitch} ${velocity}',
-          trimTime: false,
+          trackIndex: 0,
+          trackName: 'Piano',
+          channel: 0,
+          noteCount: 8,
+          firstBeat: 0,
+          lastBeat: 4,
+          warnings: [],
+          defaults: {
+            streamKey: 'track-0',
+            instrumentId: '1',
+            noteTemplate: 'i1 ${start} ${duration} ${pitch} ${velocity}',
+            trimTime: false,
+          },
         },
-      }],
+      ],
     };
     const rows: MidiImportSettings[] = [preview.streams[0]!.defaults];
     container = document.createElement('div');

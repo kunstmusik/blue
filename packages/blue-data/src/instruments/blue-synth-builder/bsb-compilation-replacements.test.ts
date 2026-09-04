@@ -24,10 +24,7 @@ function createParameter(name: string, compilationVarName: string): Parameter {
   return parameter;
 }
 
-function compileTemplate(
-  template: string,
-  configure: (unit: BSBCompilationUnit) => void,
-): string {
+function compileTemplate(template: string, configure: (unit: BSBCompilationUnit) => void): string {
   const unit = new BSBCompilationUnit();
   configure(unit);
   return unit.replaceBSBValues(template);
@@ -189,12 +186,15 @@ describe('BSB compilation replacements', () => {
     subChannel.objectName = 'subChannel';
     subChannel.channelOutput = 'Bus A';
 
-    const compiled = compileTemplate('<textField>|<fileSelect>|<stringFile>|<subChannel>', (unit) => {
-      textField.collectReplacements(unit);
-      fileSelector.collectReplacements(unit);
-      stringChannelSelector.collectReplacements(unit);
-      subChannel.collectReplacements(unit);
-    });
+    const compiled = compileTemplate(
+      '<textField>|<fileSelect>|<stringFile>|<subChannel>',
+      (unit) => {
+        textField.collectReplacements(unit);
+        fileSelector.collectReplacements(unit);
+        stringChannelSelector.collectReplacements(unit);
+        subChannel.collectReplacements(unit);
+      },
+    );
 
     expect(compiled).toBe('hello world|audio/clip.wav|gS_blue_str0|Bus A');
   });

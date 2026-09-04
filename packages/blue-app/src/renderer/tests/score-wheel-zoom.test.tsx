@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import React, { act } from "react";
-import { createRoot, type Root } from "react-dom/client";
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import React, { act } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
 import {
   computePixelsPerBeat,
   normalizeWheelDeltaY,
@@ -11,43 +11,43 @@ import {
   MAX_ZOOM,
   PINCH_ZOOM_SENSITIVITY,
   WHEEL_ZOOM_SENSITIVITY,
-} from "../components/workbench/panels/score/useScoreWheelZoom";
-import { useProjectStore } from "../stores/project-store";
-import type { ScoreLayerGroupSnapshot } from "../../shared/project-editor";
+} from '../components/workbench/panels/score/useScoreWheelZoom';
+import { useProjectStore } from '../stores/project-store';
+import type { ScoreLayerGroupSnapshot } from '../../shared/project-editor';
 
-describe("computePixelsPerBeat", () => {
-  it("calculates exact pixels per beat for base and octave zoom iterations", () => {
+describe('computePixelsPerBeat', () => {
+  it('calculates exact pixels per beat for base and octave zoom iterations', () => {
     expect(computePixelsPerBeat(0)).toBeCloseTo(100, 5);
     expect(computePixelsPerBeat(32)).toBeCloseTo(200, 5);
     expect(computePixelsPerBeat(-32)).toBeCloseTo(50, 5);
     expect(computePixelsPerBeat(64)).toBeCloseTo(400, 5);
   });
 
-  it("clamps pixels per beat to [1, 10000]", () => {
+  it('clamps pixels per beat to [1, 10000]', () => {
     expect(computePixelsPerBeat(-300)).toBe(1);
     expect(computePixelsPerBeat(300)).toBe(10000);
   });
 });
 
-describe("normalizeWheelDeltaY", () => {
-  it("returns raw deltaY for pixel mode (deltaMode 0)", () => {
+describe('normalizeWheelDeltaY', () => {
+  it('returns raw deltaY for pixel mode (deltaMode 0)', () => {
     const event = { deltaY: -12.5, deltaMode: 0 } as WheelEvent;
     expect(normalizeWheelDeltaY(event)).toBe(-12.5);
   });
 
-  it("converts line mode (deltaMode 1) to equivalent pixel delta", () => {
+  it('converts line mode (deltaMode 1) to equivalent pixel delta', () => {
     const event = { deltaY: -3, deltaMode: 1 } as WheelEvent;
     expect(normalizeWheelDeltaY(event)).toBe(-75);
   });
 
-  it("converts page mode (deltaMode 2) to equivalent pixel delta", () => {
+  it('converts page mode (deltaMode 2) to equivalent pixel delta', () => {
     const event = { deltaY: -1, deltaMode: 2 } as WheelEvent;
     expect(normalizeWheelDeltaY(event)).toBe(-400);
   });
 });
 
-describe("computeZoomDelta", () => {
-  it("computes continuous trackpad pinch zoom delta without sensitivity cliff", () => {
+describe('computeZoomDelta', () => {
+  it('computes continuous trackpad pinch zoom delta without sensitivity cliff', () => {
     // Normal pinch out (fingers spreading) -> negative deltaY -> positive zoomDelta (zoom in)
     const pinchOut = {
       ctrlKey: true,
@@ -76,7 +76,7 @@ describe("computeZoomDelta", () => {
     expect(computeZoomDelta(fastPinch)).toBe(50 * PINCH_ZOOM_SENSITIVITY);
   });
 
-  it("uses modern wheel direction for Alt + Wheel (wheel up zooms in)", () => {
+  it('uses modern wheel direction for Alt + Wheel (wheel up zooms in)', () => {
     // Negative DOM deltaY means wheel up -> positive zoomIterations.
     const wheelUp = {
       ctrlKey: false,
@@ -96,7 +96,7 @@ describe("computeZoomDelta", () => {
     expect(computeZoomDelta(wheelDown)).toBeCloseTo(-4.0, 4);
   });
 
-  it("keeps Ctrl-pinch deltas linear for large pixel-mode events", () => {
+  it('keeps Ctrl-pinch deltas linear for large pixel-mode events', () => {
     const nearBoundary = {
       ctrlKey: true,
       altKey: false,
@@ -108,17 +108,11 @@ describe("computeZoomDelta", () => {
       deltaY: -50,
     } as WheelEvent;
 
-    expect(computeZoomDelta(nearBoundary)).toBeCloseTo(
-      49 * PINCH_ZOOM_SENSITIVITY,
-      4,
-    );
-    expect(computeZoomDelta(atBoundary)).toBeCloseTo(
-      50 * PINCH_ZOOM_SENSITIVITY,
-      4,
-    );
+    expect(computeZoomDelta(nearBoundary)).toBeCloseTo(49 * PINCH_ZOOM_SENSITIVITY, 4);
+    expect(computeZoomDelta(atBoundary)).toBeCloseTo(50 * PINCH_ZOOM_SENSITIVITY, 4);
   });
 
-  it("handles smooth scrolling mouse deltas continuously", () => {
+  it('handles smooth scrolling mouse deltas continuously', () => {
     const smoothWheel = {
       ctrlKey: false,
       altKey: true,
@@ -129,7 +123,7 @@ describe("computeZoomDelta", () => {
   });
 });
 
-describe("useScoreWheelZoom hook", () => {
+describe('useScoreWheelZoom hook', () => {
   let domContainer: HTMLDivElement;
   let root: Root;
   let scrollContainer: HTMLDivElement;
@@ -140,11 +134,11 @@ describe("useScoreWheelZoom hook", () => {
 
   const mockLayerGroups: ScoreLayerGroupSnapshot[] = [
     {
-      groupId: "group-1",
-      name: "Group 1",
+      groupId: 'group-1',
+      name: 'Group 1',
       layers: [
-        { name: "Layer 1", height: 22, scoreObjects: [] },
-        { name: "Layer 2", height: 44, scoreObjects: [] },
+        { name: 'Layer 1', height: 22, scoreObjects: [] },
+        { name: 'Layer 2', height: 44, scoreObjects: [] },
       ],
     } as any,
   ];
@@ -177,27 +171,27 @@ describe("useScoreWheelZoom hook", () => {
     vi.clearAllMocks();
     (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
-    Object.defineProperty(window.navigator, "platform", {
-      value: "MacIntel",
+    Object.defineProperty(window.navigator, 'platform', {
+      value: 'MacIntel',
       configurable: true,
     });
 
-    domContainer = document.createElement("div");
+    domContainer = document.createElement('div');
     document.body.appendChild(domContainer);
     root = createRoot(domContainer);
 
-    scrollContainer = document.createElement("div");
-    header = document.createElement("div");
+    scrollContainer = document.createElement('div');
+    header = document.createElement('div');
     document.body.appendChild(scrollContainer);
     document.body.appendChild(header);
 
-    Object.defineProperty(scrollContainer, "getBoundingClientRect", {
+    Object.defineProperty(scrollContainer, 'getBoundingClientRect', {
       value: () => ({ left: 0, top: 0, width: 800, height: 600 }),
     });
     scrollContainer.scrollLeft = 100;
     header.scrollLeft = 100;
 
-    vi.spyOn(useProjectStore, "getState").mockReturnValue({
+    vi.spyOn(useProjectStore, 'getState').mockReturnValue({
       applyProjectDocumentPatch: applyPatch,
       setLayerHeight,
     } as any);
@@ -212,13 +206,13 @@ describe("useScoreWheelZoom hook", () => {
     header.remove();
   });
 
-  it("handles trackpad pinch-to-zoom and updates scroll anchor", () => {
+  it('handles trackpad pinch-to-zoom and updates scroll anchor', () => {
     act(() => {
       root.render(<TestComponent zoomIterations={0} />);
     });
 
     // Simulate pinch out (zoom in) with cursor at x = 200 (localX = 200 + 100 = 300)
-    const wheelEvent = new WheelEvent("wheel", {
+    const wheelEvent = new WheelEvent('wheel', {
       bubbles: true,
       cancelable: true,
       clientX: 200,
@@ -236,7 +230,7 @@ describe("useScoreWheelZoom hook", () => {
     expect(updated.zoomIterations).toBe(5);
 
     expect(applyPatch).toHaveBeenCalledWith({
-      score: { type: "updateTimeState", patch: { zoomIterations: 5 } },
+      score: { type: 'updateTimeState', patch: { zoomIterations: 5 } },
     });
 
     // Anchor calculation check:
@@ -247,13 +241,13 @@ describe("useScoreWheelZoom hook", () => {
     expect(header.scrollLeft).toBe(scrollContainer.scrollLeft);
   });
 
-  it("composes consecutive pinch events before React rerenders", () => {
+  it('composes consecutive pinch events before React rerenders', () => {
     act(() => {
       root.render(<TestComponent zoomIterations={0} />);
     });
 
     const createPinchEvent = () =>
-      new WheelEvent("wheel", {
+      new WheelEvent('wheel', {
         bubbles: true,
         cancelable: true,
         clientX: 200,
@@ -270,17 +264,17 @@ describe("useScoreWheelZoom hook", () => {
     const secondUpdater = setTimeState.mock.calls[1][0];
     expect(firstUpdater({ zoomIterations: 0 }).zoomIterations).toBe(5);
     expect(secondUpdater({ zoomIterations: 5 }).zoomIterations).toBe(10);
-    expect(
-      applyPatch.mock.calls.map(([patch]) => patch.score.patch.zoomIterations),
-    ).toEqual([5, 10]);
+    expect(applyPatch.mock.calls.map(([patch]) => patch.score.patch.zoomIterations)).toEqual([
+      5, 10,
+    ]);
   });
 
-  it("clamps zoom to MAX_ZOOM", () => {
+  it('clamps zoom to MAX_ZOOM', () => {
     act(() => {
       root.render(<TestComponent zoomIterations={MAX_ZOOM} />);
     });
 
-    const zoomInEvent = new WheelEvent("wheel", {
+    const zoomInEvent = new WheelEvent('wheel', {
       bubbles: true,
       cancelable: true,
       clientX: 200,
@@ -296,12 +290,12 @@ describe("useScoreWheelZoom hook", () => {
     expect(setTimeState).not.toHaveBeenCalled();
   });
 
-  it("clamps zoom to MIN_ZOOM", () => {
+  it('clamps zoom to MIN_ZOOM', () => {
     act(() => {
       root.render(<TestComponent zoomIterations={MIN_ZOOM} />);
     });
 
-    const zoomOutEvent = new WheelEvent("wheel", {
+    const zoomOutEvent = new WheelEvent('wheel', {
       bubbles: true,
       cancelable: true,
       clientX: 200,
@@ -316,12 +310,12 @@ describe("useScoreWheelZoom hook", () => {
     expect(setTimeState).not.toHaveBeenCalled();
   });
 
-  it("handles Alt + Wheel zoom", () => {
+  it('handles Alt + Wheel zoom', () => {
     act(() => {
       root.render(<TestComponent zoomIterations={0} />);
     });
 
-    const wheelEvent = new WheelEvent("wheel", {
+    const wheelEvent = new WheelEvent('wheel', {
       bubbles: true,
       cancelable: true,
       clientX: 200,
@@ -339,12 +333,12 @@ describe("useScoreWheelZoom hook", () => {
     expect(updated.zoomIterations).toBeCloseTo(4, 4);
   });
 
-  it("handles Shift + Wheel for horizontal scrolling without zooming", () => {
+  it('handles Shift + Wheel for horizontal scrolling without zooming', () => {
     act(() => {
       root.render(<TestComponent zoomIterations={0} />);
     });
 
-    const shiftScrollEvent = new WheelEvent("wheel", {
+    const shiftScrollEvent = new WheelEvent('wheel', {
       bubbles: true,
       cancelable: true,
       clientX: 200,
@@ -361,13 +355,13 @@ describe("useScoreWheelZoom hook", () => {
     expect(header.scrollLeft).toBe(150);
   });
 
-  it("handles layer height modifier (Cmd+Scroll on Mac or Ctrl+Scroll on Win/Linux)", () => {
+  it('handles layer height modifier (Cmd+Scroll on Mac or Ctrl+Scroll on Win/Linux)', () => {
     act(() => {
       root.render(<TestComponent zoomIterations={0} layerGroups={mockLayerGroups} />);
     });
 
     // Cursor on layer 1 (y: 10px -> within layer 0 [0..22])
-    const heightEvent = new WheelEvent("wheel", {
+    const heightEvent = new WheelEvent('wheel', {
       bubbles: true,
       cancelable: true,
       clientX: 100,
@@ -381,7 +375,7 @@ describe("useScoreWheelZoom hook", () => {
 
     scrollContainer.dispatchEvent(heightEvent);
 
-    expect(setLayerHeight).toHaveBeenCalledWith("group-1", 0, 1);
+    expect(setLayerHeight).toHaveBeenCalledWith('group-1', 0, 1);
     expect(setTimeState).not.toHaveBeenCalled();
   });
 });

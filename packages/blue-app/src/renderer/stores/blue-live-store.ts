@@ -54,14 +54,15 @@ let triggerTokenCounter = 0;
 export const useBlueLiveStore = create<BlueLiveStore>((set) => ({
   ...initialState,
 
-  setStatusFromSnapshot: (snapshot) => set({
-    status: snapshot.status,
-    running: snapshot.running,
-    message: snapshot.message ?? '',
-    sessionId: snapshot.sessionId,
-    projectRevision: snapshot.projectRevision ?? null,
-    initialized: true,
-  }),
+  setStatusFromSnapshot: (snapshot) =>
+    set({
+      status: snapshot.status,
+      running: snapshot.running,
+      message: snapshot.message ?? '',
+      sessionId: snapshot.sessionId,
+      projectRevision: snapshot.projectRevision ?? null,
+      initialized: true,
+    }),
 
   reset: () => set(initialState),
 

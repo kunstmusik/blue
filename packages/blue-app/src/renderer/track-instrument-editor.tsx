@@ -14,10 +14,6 @@ if (!root) throw new Error('Root element not found');
 createRoot(root).render(
   <StrictMode>
     <TrackInstrumentEditorPage />
-    <Toaster
-      position="bottom-right"
-      theme="dark"
-      toastOptions={rendererToastOptions}
-    />
+    <Toaster position="bottom-right" theme="dark" toastOptions={rendererToastOptions} />
   </StrictMode>,
 );

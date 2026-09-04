@@ -9,9 +9,7 @@ import { useBlueLiveStore } from '../stores/blue-live-store';
 import { useMidiRoutingStore } from '../stores/midi-routing-store';
 import { useProjectStore } from '../stores/project-store';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
-import {
-  _installVirtualKeyboardRouter,
-} from '../hooks/use-midi-input-service';
+import { _installVirtualKeyboardRouter } from '../hooks/use-midi-input-service';
 import { MidiNoteRouter } from '../services/midi-note-router';
 import { chooseAppSelectOption } from './app-select-test-utils';
 
@@ -24,14 +22,17 @@ declare global {
   }
 }
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 class MockResizeObserver {
   observe() {}
   unobserve() {}
   disconnect() {}
 }
-(globalThis as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver = MockResizeObserver;
+(globalThis as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver =
+  MockResizeObserver;
 
 function seedLoadedProject(): void {
   const snapshot = createEmptyProjectEditorSnapshot();
@@ -88,8 +89,7 @@ beforeEach(() => {
       await window.blueAPI?.sendBlueLiveAllNotesOff?.();
       return { ok: true };
     },
-    isLiveActive: () =>
-      useProjectStore.getState().loaded && useBlueLiveStore.getState().running,
+    isLiveActive: () => useProjectStore.getState().loaded && useBlueLiveStore.getState().running,
   });
   _installVirtualKeyboardRouter(router);
 });
@@ -120,7 +120,15 @@ describe('VirtualKeyboardPanel', () => {
     Object.defineProperty(canvas, 'clientHeight', { value: 150 });
 
     await act(async () => {
-      canvas.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, clientX: 5, clientY: 140, button: 0 }));
+      canvas.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 5,
+          clientY: 140,
+          button: 0,
+        }),
+      );
       await Promise.resolve();
     });
 
@@ -146,7 +154,9 @@ describe('VirtualKeyboardPanel', () => {
     });
 
     const { container, root } = renderPanel();
-    const allNotesOffButton = Array.from(container.querySelectorAll('button')).find((button) => button.textContent === 'All Notes Off') as HTMLButtonElement | undefined;
+    const allNotesOffButton = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.textContent === 'All Notes Off',
+    ) as HTMLButtonElement | undefined;
 
     expect(allNotesOffButton).toBeTruthy();
 
@@ -208,7 +218,9 @@ describe('VirtualKeyboardPanel', () => {
     useMidiRoutingStore.getState().setMode('channel');
 
     const { container, root } = renderPanel();
-    const channelInput = container.querySelector('input[type="number"][min="1"]') as HTMLInputElement | null;
+    const channelInput = container.querySelector(
+      'input[type="number"][min="1"]',
+    ) as HTMLInputElement | null;
 
     expect(channelInput).toBeTruthy();
     expect(channelInput?.value).toBe('1');
@@ -264,7 +276,9 @@ describe('VirtualKeyboardPanel MIDI routing control (Spec 067)', () => {
     const { container, root } = renderPanel();
     const select = container.querySelector('[role="combobox"]') as HTMLButtonElement;
     await chooseAppSelectOption(select, 'Direct Channel');
-    const channelInput = container.querySelector('input[type="number"][min="1"]') as HTMLInputElement | null;
+    const channelInput = container.querySelector(
+      'input[type="number"][min="1"]',
+    ) as HTMLInputElement | null;
     expect(channelInput).toBeTruthy();
     expect(channelInput?.value).toBe('1');
     act(() => root.unmount());
@@ -283,14 +297,18 @@ describe('VirtualKeyboardPanel MIDI routing control (Spec 067)', () => {
 describe('Virtual Keyboard Direct Channel compatibility (Spec 067 US3)', () => {
   it('retains the focused target when switching to Direct Channel but ignores it for routing', () => {
     useMidiRoutingStore.getState().focusTrack({
-      projectSessionId: 1, rootGroupId: 'root', trackId: 'track-1', displayName: 'Bass',
+      projectSessionId: 1,
+      rootGroupId: 'root',
+      trackId: 'track-1',
+      displayName: 'Bass',
     });
     useMidiRoutingStore.getState().setMode('channel');
     // Focus is retained for later mode reuse.
     expect(useMidiRoutingStore.getState().focusedTarget?.trackId).toBe('track-1');
     // But channel mode resolves to the event channel, not the focus.
     expect(useMidiRoutingStore.getState().resolveTargetForNote(4)).toEqual({
-      kind: 'channel', channel: 4,
+      kind: 'channel',
+      channel: 4,
     });
   });
 
@@ -301,7 +319,9 @@ describe('Virtual Keyboard Direct Channel compatibility (Spec 067 US3)', () => {
     const select = container.querySelector('[role="combobox"]') as HTMLButtonElement;
     await chooseAppSelectOption(select, 'Direct Channel');
     // Channel mode: channel input appears with one-based display.
-    const channelInput = container.querySelector('input[type="number"][min="1"]') as HTMLInputElement;
+    const channelInput = container.querySelector(
+      'input[type="number"][min="1"]',
+    ) as HTMLInputElement;
     expect(channelInput).toBeTruthy();
     expect(channelInput.value).toBe('1');
     act(() => root.unmount());

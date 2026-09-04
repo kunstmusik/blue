@@ -49,7 +49,14 @@
 
 import { createRequire } from 'node:module';
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, readdirSync, statSync, writeFileSync, createReadStream } from 'node:fs';
+import {
+  existsSync,
+  readFileSync,
+  readdirSync,
+  statSync,
+  writeFileSync,
+  createReadStream,
+} from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -64,9 +71,27 @@ const appPkgPath = join(repoRoot, 'packages', 'blue-app', 'package.json');
 
 const PACKAGE_TARGET_DEFINITIONS = /** @type {const} */ ([
   { targetId: 'macos-x64', platform: 'macOS', arch: 'x64', format: 'DMG', extensions: ['.dmg'] },
-  { targetId: 'macos-arm64', platform: 'macOS', arch: 'arm64', format: 'DMG', extensions: ['.dmg'] },
-  { targetId: 'windows-x64', platform: 'Windows', arch: 'x64', format: 'NSIS', extensions: ['.exe'] },
-  { targetId: 'linux-x64', platform: 'Linux', arch: 'x64', format: 'AppImage', extensions: ['.AppImage'] },
+  {
+    targetId: 'macos-arm64',
+    platform: 'macOS',
+    arch: 'arm64',
+    format: 'DMG',
+    extensions: ['.dmg'],
+  },
+  {
+    targetId: 'windows-x64',
+    platform: 'Windows',
+    arch: 'x64',
+    format: 'NSIS',
+    extensions: ['.exe'],
+  },
+  {
+    targetId: 'linux-x64',
+    platform: 'Linux',
+    arch: 'x64',
+    format: 'AppImage',
+    extensions: ['.AppImage'],
+  },
   { targetId: 'linux-x64', platform: 'Linux', arch: 'x64', format: 'Deb', extensions: ['.deb'] },
 ]);
 
@@ -187,7 +212,8 @@ function findPackageFilesForTarget(target, releaseDir, appVersion) {
 
       if (target.platform === 'macOS' && target.format === 'DMG') {
         const builderName = lower.endsWith(`-${target.arch}.dmg`);
-        const standardizedName = lower === `blue-${target.targetId}-${appVersion.toLowerCase()}.dmg`;
+        const standardizedName =
+          lower === `blue-${target.targetId}-${appVersion.toLowerCase()}.dmg`;
         if (!builderName && !standardizedName) continue;
       } else if (target.platform === 'Windows') {
         // NSIS produces "Blue Setup 0.0.1.exe"; accept any .exe that includes
@@ -228,7 +254,9 @@ async function generate(flags) {
   const releaseDir = flags['release-dir']
     ? resolve(flags['release-dir'])
     : join(repoRoot, 'packages', 'blue-app', 'release');
-  const { appVersion } = flags['app-version'] ? { appVersion: flags['app-version'] } : readAppVersion();
+  const { appVersion } = flags['app-version']
+    ? { appVersion: flags['app-version'] }
+    : readAppVersion();
   const sourceRevision = flags['source-revision'] ?? detectSourceRevision();
   const mode = flags['asset-mode'] === 'bundles' ? 'bundles' : 'packages';
   const verificationStatus = flags['verification-status'] ?? 'pending';
@@ -237,7 +265,9 @@ async function generate(flags) {
     throw new Error(`Unsupported --verification-status value: ${verificationStatus}`);
   }
   if (!Number.isSafeInteger(engineProtocolVersion) || engineProtocolVersion < 1) {
-    throw new Error(`Unsupported --engine-protocol-version value: ${flags['engine-protocol-version']}`);
+    throw new Error(
+      `Unsupported --engine-protocol-version value: ${flags['engine-protocol-version']}`,
+    );
   }
 
   /** @type {Array<Record<string, unknown>>} */
@@ -246,14 +276,18 @@ async function generate(flags) {
   for (const def of definitionsForMode(mode)) {
     const matches =
       mode === 'bundles'
-        ? [join(releaseDir, bundleFileName(def.targetId, appVersion))].filter((filePath) => existsSync(filePath))
+        ? [join(releaseDir, bundleFileName(def.targetId, appVersion))].filter((filePath) =>
+            existsSync(filePath),
+          )
         : findPackageFilesForTarget(
             /** @type {typeof PACKAGE_TARGET_DEFINITIONS[number]} */ (def),
             releaseDir,
             appVersion,
           );
     if (matches.length === 0) {
-      process.stderr.write(`[skip] ${def.targetId}/${def.format}: no package file in ${releaseDir}\n`);
+      process.stderr.write(
+        `[skip] ${def.targetId}/${def.format}: no package file in ${releaseDir}\n`,
+      );
       continue;
     }
     if (matches.length > 1) {
@@ -295,11 +329,15 @@ async function generate(flags) {
   process.stderr.write(`Targets described: ${targets.length}\n`);
 
   if (targets.length === 0) {
-    process.stderr.write('Warning: manifest contains no targets. Did the package build run first?\n');
+    process.stderr.write(
+      'Warning: manifest contains no targets. Did the package build run first?\n',
+    );
   }
 
   // Write a combined checksum file next to the manifest for upload convenience.
-  const checksumPath = flags['checksums-out'] ? resolve(flags['checksums-out']) : `${outPath}.sha256`;
+  const checksumPath = flags['checksums-out']
+    ? resolve(flags['checksums-out'])
+    : `${outPath}.sha256`;
   const checksumText = targets
     .map((t) => `${t.sha256}  ${basename(/** @type {string} */ (t.path))}`)
     .join('\n');
@@ -313,7 +351,9 @@ async function generate(flags) {
 async function validate(flags) {
   const manifestPath = flags.manifest ? resolve(flags.manifest) : null;
   if (!manifestPath || !existsSync(manifestPath)) {
-    process.stderr.write(`Manifest not found: ${manifestPath ?? '(no --manifest flag provided)'}\n`);
+    process.stderr.write(
+      `Manifest not found: ${manifestPath ?? '(no --manifest flag provided)'}\n`,
+    );
     process.exit(1);
   }
 
@@ -339,7 +379,10 @@ async function validate(flags) {
       ? DEFAULT_TARGET_IDS
       : Array.from(new Set(PACKAGE_TARGET_DEFINITIONS.map((definition) => definition.targetId)));
   const requiredTargetIds = flags['expected-targets']
-    ? flags['expected-targets'].split(',').map((s) => s.trim()).filter(Boolean)
+    ? flags['expected-targets']
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
     : defaultTargetIds;
   const definitions = definitionsForMode(mode);
   const requiredDefinitions = definitions.filter((def) => requiredTargetIds.includes(def.targetId));
@@ -365,8 +408,7 @@ async function validate(flags) {
     if (manifest.engine.sourceRevision !== manifest.sourceRevision) {
       errors.push('Manifest engine sourceRevision does not match the application sourceRevision.');
     }
-    if (flags['require-verified'] === 'true' &&
-        manifest.engine.verificationStatus !== 'verified') {
+    if (flags['require-verified'] === 'true' && manifest.engine.verificationStatus !== 'verified') {
       errors.push('Manifest engine verificationStatus must be "verified".');
     }
   }
@@ -420,7 +462,9 @@ async function validate(flags) {
       mode === 'bundles' &&
       packagePath !== bundleFileName(targetId, String(manifest.appVersion))
     ) {
-      errors.push(`Target ${targetId} path does not match its required stable ZIP name: ${packagePath}`);
+      errors.push(
+        `Target ${targetId} path does not match its required stable ZIP name: ${packagePath}`,
+      );
       continue;
     }
     const resolvedPackagePath = join(manifestDir, packagePath);
@@ -466,14 +510,23 @@ async function validate(flags) {
   }
 
   if (typeof flags['app-version'] === 'string' && manifest.appVersion !== flags['app-version']) {
-    errors.push(`Manifest appVersion "${manifest.appVersion}" does not match "${flags['app-version']}".`);
+    errors.push(
+      `Manifest appVersion "${manifest.appVersion}" does not match "${flags['app-version']}".`,
+    );
   }
-  if (typeof flags['source-revision'] === 'string' && manifest.sourceRevision !== flags['source-revision']) {
-    errors.push(`Manifest sourceRevision "${manifest.sourceRevision}" does not match "${flags['source-revision']}".`);
+  if (
+    typeof flags['source-revision'] === 'string' &&
+    manifest.sourceRevision !== flags['source-revision']
+  ) {
+    errors.push(
+      `Manifest sourceRevision "${manifest.sourceRevision}" does not match "${flags['source-revision']}".`,
+    );
   }
 
   if (mode === 'bundles') {
-    const expectedFiles = requiredDefinitions.map((def) => bundleFileName(def.targetId, String(manifest.appVersion)));
+    const expectedFiles = requiredDefinitions.map((def) =>
+      bundleFileName(def.targetId, String(manifest.appVersion)),
+    );
     const actualFiles = readdirSync(manifestDir).filter((entry) => /^blue-.+\.zip$/.test(entry));
     for (const expectedFile of expectedFiles) {
       if (!actualFiles.includes(expectedFile)) {

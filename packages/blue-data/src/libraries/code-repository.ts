@@ -63,7 +63,8 @@ export function isCodeRepositoryNode(value: unknown): value is CodeRepositoryNod
     if (!isCodeRepositoryNodeKind(node.kind)) return false;
     if (typeof node.name !== 'string' || node.name.trim().length === 0) return false;
     if (node.parentId !== null && typeof node.parentId !== 'string') return false;
-    if (typeof node.order !== 'number' || !Number.isInteger(node.order) || node.order < 0) return false;
+    if (typeof node.order !== 'number' || !Number.isInteger(node.order) || node.order < 0)
+      return false;
     if (node.code !== undefined && typeof node.code !== 'string') return false;
     if (node.children !== undefined) {
       if (!Array.isArray(node.children)) return false;
@@ -78,7 +79,11 @@ export function isCodeRepositoryDocument(value: unknown): value is CodeRepositor
   if (!value || typeof value !== 'object') return false;
   const doc = value as Partial<CodeRepositoryDocument>;
   if (!isCodeRepositoryNode(doc.root)) return false;
-  if (typeof doc.contentRevision !== 'number' || !Number.isInteger(doc.contentRevision) || doc.contentRevision < 0) {
+  if (
+    typeof doc.contentRevision !== 'number' ||
+    !Number.isInteger(doc.contentRevision) ||
+    doc.contentRevision < 0
+  ) {
     return false;
   }
   return true;
@@ -133,9 +138,7 @@ export function validateCodeRepositoryTree(
   }
 
   const ids = new Set<string>([root.id]);
-  const stack: Array<{ node: CodeRepositoryNode; depth: number }> = [
-    { node: root, depth: 0 },
-  ];
+  const stack: Array<{ node: CodeRepositoryNode; depth: number }> = [{ node: root, depth: 0 }];
 
   while (stack.length > 0) {
     const { node, depth } = stack.pop()!;

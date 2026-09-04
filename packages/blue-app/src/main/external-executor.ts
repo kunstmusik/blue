@@ -23,7 +23,11 @@ export function executeExternalTestSync(request: ExternalTestRequest): ExternalT
   try {
     workDir = fs.mkdtempSync(path.join(tmpDirBase, 'blue-ext-'));
   } catch (err) {
-    return { ok: false, output: '', error: `Failed to create temp dir: ${err instanceof Error ? err.message : String(err)}` };
+    return {
+      ok: false,
+      output: '',
+      error: `Failed to create temp dir: ${err instanceof Error ? err.message : String(err)}`,
+    };
   }
 
   try {
@@ -60,16 +64,18 @@ export function executeExternalTestSync(request: ExternalTestRequest): ExternalT
       };
     }
   } finally {
-    try { fs.rmSync(workDir, { recursive: true }); } catch { /* ignore */ }
+    try {
+      fs.rmSync(workDir, { recursive: true });
+    } catch {
+      /* ignore */
+    }
   }
 }
 
 function runCommandSync(commandLine: string, cwd: string): string {
   const isWindows = process.platform === 'win32';
   const cmd = isWindows ? 'powershell.exe' : '/bin/sh';
-  const cmdArgs = isWindows
-    ? ['-NoProfile', '-Command', commandLine]
-    : ['-c', commandLine];
+  const cmdArgs = isWindows ? ['-NoProfile', '-Command', commandLine] : ['-c', commandLine];
 
   return execFileSync(cmd, cmdArgs, {
     cwd,
@@ -79,11 +85,15 @@ function runCommandSync(commandLine: string, cwd: string): string {
   });
 }
 
-export async function executeExternalTest(request: ExternalTestRequest): Promise<ExternalTestResult> {
+export async function executeExternalTest(
+  request: ExternalTestRequest,
+): Promise<ExternalTestResult> {
   return executeExternalTestSync(request);
 }
 
-export function createMainExternalExecutor(getProjectDir: () => string | null): ExternalCommandExecutor {
+export function createMainExternalExecutor(
+  getProjectDir: () => string | null,
+): ExternalCommandExecutor {
   return {
     execute(commandLine: string, textBody: string, _projectDir: string | null): string {
       const projectDir = getProjectDir();

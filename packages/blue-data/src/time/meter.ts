@@ -45,7 +45,7 @@ export class Meter {
   }
 
   hashCode(): number {
-    return ((this.numBeats * 31 + this.beatLength) >>> 0) * 2654435761 | 0;
+    return (((this.numBeats * 31 + this.beatLength) >>> 0) * 2654435761) | 0;
   }
 
   equals(other: Meter): boolean {

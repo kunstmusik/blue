@@ -6,15 +6,15 @@
  * instrument from the InstrumentLibrary to a specific instrument ID in the
  * generated CSD.
  */
-import { InstrumentAssignment } from "./instruments/instrument-assignment";
-import { Instrument } from "./instruments/instrument";
-import { CompileData } from "./compile-data";
-import { Parameter } from "./automation/parameter";
-import { replaceAll, stripSingleLineComments } from "./utilities/text";
-import { Element } from "./serialization/xml-reader";
-import { Mixer } from "./mixer/mixer";
-import { Channel } from "./mixer/channel";
-import { Tables } from "./tables";
+import { InstrumentAssignment } from './instruments/instrument-assignment';
+import { Instrument } from './instruments/instrument';
+import { CompileData } from './compile-data';
+import { Parameter } from './automation/parameter';
+import { replaceAll, stripSingleLineComments } from './utilities/text';
+import { Element } from './serialization/xml-reader';
+import { Mixer } from './mixer/mixer';
+import { Channel } from './mixer/channel';
+import { Tables } from './tables';
 
 export class Arrangement {
   private arrangement: InstrumentAssignment[] = [];
@@ -84,7 +84,7 @@ export class Arrangement {
   }
 
   getInstrumentId(index: number): string {
-    return this.arrangement[index]?.arrangementId ?? "";
+    return this.arrangement[index]?.arrangementId ?? '';
   }
 
   getInstrument(index: number): Instrument {
@@ -187,10 +187,7 @@ export class Arrangement {
 
       // Use parameter-aware generateInstrument if parameters are available
       let instrumentText: string;
-      if (
-        instrParams &&
-        typeof (ia.instr as any).generateInstrument === "function"
-      ) {
+      if (instrParams && typeof (ia.instr as any).generateInstrument === 'function') {
         instrumentText = (ia.instr as any).generateInstrument(instrParams);
       } else {
         instrumentText = ia.instr.generateInstrument();
@@ -198,10 +195,7 @@ export class Arrangement {
       if (!instrumentText) continue;
 
       // Transform instrument text with arrangement ID substitution
-      let transformed = this.replaceInstrumentId(
-        ia.arrangementId,
-        instrumentText,
-      );
+      let transformed = this.replaceInstrumentId(ia.arrangementId, instrumentText);
 
       // Handle blueMixerOut → outc conversion
       transformed = this.convertBlueMixerOut(
@@ -215,19 +209,19 @@ export class Arrangement {
       // Java CSDRender appends "\n" after transformed text:
       // buffer.append(transformed).append("\n");
       // This ensures endin is on its own line
-      if (!transformed.endsWith("\n")) {
-        transformed += "\n";
+      if (!transformed.endsWith('\n')) {
+        transformed += '\n';
       }
-      if (!transformed.endsWith("\n\n")) {
-        transformed += "\n";
+      if (!transformed.endsWith('\n\n')) {
+        transformed += '\n';
       }
 
       buffer.push(`\tinstr ${ia.arrangementId}\t;${ia.instr.getName()}\n`);
       buffer.push(transformed);
-      buffer.push("\tendin\n\n");
+      buffer.push('\tendin\n\n');
     }
 
-    return buffer.join("");
+    return buffer.join('');
   }
 
   async generateOrchestraAsync(
@@ -246,10 +240,7 @@ export class Arrangement {
       let instrumentText = await ia.instr.generateInstrumentAsync(compileData, instrParams);
       if (!instrumentText) continue;
 
-      let transformed = this.replaceInstrumentId(
-        ia.arrangementId,
-        instrumentText,
-      );
+      let transformed = this.replaceInstrumentId(ia.arrangementId, instrumentText);
 
       transformed = this.convertBlueMixerOut(
         compileData,
@@ -259,19 +250,19 @@ export class Arrangement {
         nchnls,
       );
 
-      if (!transformed.endsWith("\n")) {
-        transformed += "\n";
+      if (!transformed.endsWith('\n')) {
+        transformed += '\n';
       }
-      if (!transformed.endsWith("\n\n")) {
-        transformed += "\n";
+      if (!transformed.endsWith('\n\n')) {
+        transformed += '\n';
       }
 
       buffer.push(`\tinstr ${ia.arrangementId}\t;${ia.instr.getName()}\n`);
       buffer.push(transformed);
-      buffer.push("\tendin\n\n");
+      buffer.push('\tendin\n\n');
     }
 
-    return buffer.join("");
+    return buffer.join('');
   }
 
   /**
@@ -293,7 +284,7 @@ export class Arrangement {
       seenInstruments.add(ia.instr);
     }
 
-    return buffer.join("\n");
+    return buffer.join('\n');
   }
 
   /**
@@ -312,7 +303,7 @@ export class Arrangement {
       }
     }
 
-    return buffer.join("\n");
+    return buffer.join('\n');
   }
 
   /**
@@ -343,8 +334,8 @@ export class Arrangement {
       replacementId = `"${arrangementId}"`;
     }
 
-    let transformed = replaceAll(input, "<INSTR_ID>", replacementId);
-    transformed = replaceAll(transformed, "<INSTR_NAME>", arrangementId);
+    let transformed = replaceAll(input, '<INSTR_ID>', replacementId);
+    transformed = replaceAll(transformed, '<INSTR_NAME>', arrangementId);
     return transformed;
   }
 
@@ -355,7 +346,7 @@ export class Arrangement {
     input: string,
     nchnls: number,
   ): string {
-    if (!input.includes("blueMixerOut") && !input.includes("blueMixerIn")) {
+    if (!input.includes('blueMixerOut') && !input.includes('blueMixerIn')) {
       return input;
     }
 
@@ -364,48 +355,41 @@ export class Arrangement {
     let blueMixerInFound = false;
 
     for (const line of lines) {
-      const mixerInIndex = line.indexOf("blueMixerIn");
+      const mixerInIndex = line.indexOf('blueMixerIn');
 
       if (mixerInIndex > 0) {
         const noCommentLine = stripSingleLineComments(line);
-        if (!noCommentLine.includes("blueMixerIn")) {
+        if (!noCommentLine.includes('blueMixerIn')) {
           buffer.push(line);
           continue;
         }
 
         if (!mixer?.isEnabled()) {
-          throw new Error(
-            "Error: Instrument uses blueMixerIn but mixer is not enabled",
-          );
+          throw new Error('Error: Instrument uses blueMixerIn but mixer is not enabled');
         }
 
         blueMixerInFound = true;
         const argText = noCommentLine.substring(0, mixerInIndex).trim();
-        const args = argText.split(",");
+        const args = argText.split(',');
         const channel = this.getChannelForArrangementId(mixer, arrangementId, compileData);
 
         for (let i = 0; i < nchnls && i < args.length; i++) {
           const arg = args[i].trim();
-          const variable = this.getMixerVariable(
-            compileData,
-            mixer,
-            channel,
-            i,
-          );
+          const variable = this.getMixerVariable(compileData, mixer, channel, i);
           buffer.push(`${arg} = ${variable}`);
         }
 
         continue;
       }
 
-      if (line.trim().startsWith("blueMixerOut")) {
+      if (line.trim().startsWith('blueMixerOut')) {
         const argText = line.trim().substring(12);
-        const args = argText.split(",");
-        const firstArg = args[0]?.trim() ?? "";
+        const args = argText.split(',');
+        const firstArg = args[0]?.trim() ?? '';
 
         if (/^".*"$/.test(firstArg)) {
           if (!mixer?.isEnabled()) {
-            buffer.push(`outc ${args.slice(1).join(",")}`);
+            buffer.push(`outc ${args.slice(1).join(',')}`);
             continue;
           }
 
@@ -415,17 +399,15 @@ export class Arrangement {
           );
 
           if (!subChannel) {
-            throw new Error(
-              `Unable to find subchannel with name: ${subChannelName}`,
-            );
+            throw new Error(`Unable to find subchannel with name: ${subChannelName}`);
           }
 
           mixer.addSubChannelDependency(subChannelName);
 
-                for (let i = 1; i < nchnls + 1 && i < args.length; i++) {
-                  const arg = args[i] ?? "";
+          for (let i = 1; i < nchnls + 1 && i < args.length; i++) {
+            const arg = args[i] ?? '';
             const variable = Mixer.getSubChannelVar(subChannelName, i - 1);
-            const operator = blueMixerInFound ? "=" : "+=";
+            const operator = blueMixerInFound ? '=' : '+=';
             buffer.push(`${variable} ${operator} ${arg}`);
           }
 
@@ -433,20 +415,15 @@ export class Arrangement {
         }
 
         if (!mixer?.isEnabled()) {
-          buffer.push(line.replaceAll("blueMixerOut", "outc"));
+          buffer.push(line.replaceAll('blueMixerOut', 'outc'));
           continue;
         }
 
         const channel = this.getChannelForArrangementId(mixer, arrangementId, compileData);
         for (let i = 0; i < nchnls && i < args.length; i++) {
-          const arg = args[i] ?? "";
-          const variable = this.getMixerVariable(
-            compileData,
-            mixer,
-            channel,
-            i,
-          );
-          const operator = blueMixerInFound ? "=" : "+=";
+          const arg = args[i] ?? '';
+          const variable = this.getMixerVariable(compileData, mixer, channel, i);
+          const operator = blueMixerInFound ? '=' : '+=';
           buffer.push(`${variable} ${operator} ${arg}`);
         }
 
@@ -456,7 +433,7 @@ export class Arrangement {
       buffer.push(line);
     }
 
-    return buffer.join("\n");
+    return buffer.join('\n');
   }
 
   private getChannelForArrangementId(
@@ -472,9 +449,7 @@ export class Arrangement {
         .find((channel) => channel.getAssociation() === sourceId);
       if (associated) return associated;
     }
-    return mixer
-      .getAllSourceChannels()
-      .find((channel) => channel.getName() === arrangementId);
+    return mixer.getAllSourceChannels().find((channel) => channel.getName() === arrangementId);
   }
 
   private getMixerVariable(
@@ -488,10 +463,8 @@ export class Arrangement {
     }
 
     const channelId = compileData.getChannelIdAssignments().get(channel);
-    if (typeof channelId !== "number") {
-      throw new Error(
-        `Unable to find mixer channel assignment for channel: ${channel.getName()}`,
-      );
+    if (typeof channelId !== 'number') {
+      throw new Error(`Unable to find mixer channel assignment for channel: ${channel.getName()}`);
     }
 
     return Mixer.getChannelVar(channelId, outputIndex);
@@ -500,7 +473,7 @@ export class Arrangement {
   // ─── XML Serialization ───
 
   saveAsXML(): Element {
-    const elem = new Element("arrangement");
+    const elem = new Element('arrangement');
     for (const ia of this.arrangement) {
       elem.addElement(ia.saveAsXML());
     }
@@ -509,7 +482,7 @@ export class Arrangement {
 
   static loadFromXML(data: Element): Arrangement {
     const arr = new Arrangement();
-    const items = data.getElements("instrumentAssignment");
+    const items = data.getElements('instrumentAssignment');
 
     while (items.hasMoreElements()) {
       const elem = items.next();
@@ -519,10 +492,7 @@ export class Arrangement {
     return arr;
   }
 
-  static loadFromXMLWithLibrary(
-    data: Element,
-    _iLibrary: unknown,
-  ): Arrangement {
+  static loadFromXMLWithLibrary(data: Element, _iLibrary: unknown): Arrangement {
     return Arrangement.loadFromXML(data);
   }
 }

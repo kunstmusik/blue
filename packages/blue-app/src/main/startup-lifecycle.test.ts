@@ -7,9 +7,31 @@ describe('StartupLifecycle', () => {
   it('starts in order and rolls completed reversible stages back in reverse order', async () => {
     const events: string[] = [];
     const lifecycle = createStartupLifecycle([
-      { name: 'protocol', start: () => { events.push('start:protocol'); }, rollback: () => { events.push('rollback:protocol'); } },
-      { name: 'windows', start: () => { events.push('start:windows'); }, rollback: () => { events.push('rollback:windows'); } },
-      { name: 'registrars', start: () => { events.push('start:registrars'); throw new Error('registrar failed'); } },
+      {
+        name: 'protocol',
+        start: () => {
+          events.push('start:protocol');
+        },
+        rollback: () => {
+          events.push('rollback:protocol');
+        },
+      },
+      {
+        name: 'windows',
+        start: () => {
+          events.push('start:windows');
+        },
+        rollback: () => {
+          events.push('rollback:windows');
+        },
+      },
+      {
+        name: 'registrars',
+        start: () => {
+          events.push('start:registrars');
+          throw new Error('registrar failed');
+        },
+      },
     ]);
 
     await expect(lifecycle.start()).rejects.toThrow('registrar failed');
@@ -28,9 +50,30 @@ describe('StartupLifecycle', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation((...args) => errors.push(args));
     const events: string[] = [];
     const lifecycle = createStartupLifecycle([
-      { name: 'one', start: () => { events.push('start:one'); }, rollback: () => { throw new Error('cleanup one'); } },
-      { name: 'two', start: () => { events.push('start:two'); }, rollback: () => { events.push('rollback:two'); } },
-      { name: 'three', start: () => { throw new Error('startup three'); } },
+      {
+        name: 'one',
+        start: () => {
+          events.push('start:one');
+        },
+        rollback: () => {
+          throw new Error('cleanup one');
+        },
+      },
+      {
+        name: 'two',
+        start: () => {
+          events.push('start:two');
+        },
+        rollback: () => {
+          events.push('rollback:two');
+        },
+      },
+      {
+        name: 'three',
+        start: () => {
+          throw new Error('startup three');
+        },
+      },
     ]);
 
     await expect(lifecycle.start()).rejects.toThrow('startup three');
@@ -58,8 +101,12 @@ describe('StartupLifecycle', () => {
     const lifecycle = createStartupLifecycle([
       {
         name: 'registrars',
-        start: () => { events.push('start:registrars'); },
-        rollback: () => { events.push('rollback:registrars'); },
+        start: () => {
+          events.push('start:registrars');
+        },
+        rollback: () => {
+          events.push('rollback:registrars');
+        },
       },
       {
         name: 'services',

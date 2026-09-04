@@ -1,9 +1,7 @@
 // @vitest-environment jsdom
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import {
-  DEFAULT_LAYER_COLOR,
-} from '@blue/data';
+import { DEFAULT_LAYER_COLOR } from '@blue/data';
 import { useProjectStore } from '../stores/project-store';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 import {
@@ -91,7 +89,9 @@ describe('project-store layer colors optimistic updates', () => {
         durationBeats: 2,
         isContainer: false,
         // backgroundColor is omitted
-      } as unknown as Parameters<ReturnType<typeof useProjectStore.getState>['addScoreObjects']>[0][0],
+      } as unknown as Parameters<
+        ReturnType<typeof useProjectStore.getState>['addScoreObjects']
+      >[0][0],
     ]);
 
     const layers = useProjectStore.getState().score!.layerGroups[0].layers;
@@ -116,7 +116,9 @@ describe('project-store layer colors optimistic updates', () => {
         durationBeats: 2,
         backgroundColor: 0xff0000,
         isContainer: false,
-      } as unknown as Parameters<ReturnType<typeof useProjectStore.getState>['addScoreObjects']>[0][0],
+      } as unknown as Parameters<
+        ReturnType<typeof useProjectStore.getState>['addScoreObjects']
+      >[0][0],
     ]);
 
     const layers = useProjectStore.getState().score!.layerGroups[0].layers;

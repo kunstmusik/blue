@@ -10,7 +10,9 @@ import { useLayerSelectionStore } from '../stores/layer-selection-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 class MockResizeObserver {
   observe(): void {}
@@ -18,7 +20,8 @@ class MockResizeObserver {
   disconnect(): void {}
 }
 
-(globalThis as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver = MockResizeObserver;
+(globalThis as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver =
+  MockResizeObserver;
 
 const { mockScorePathState } = vi.hoisted(() => ({
   mockScorePathState: {
@@ -195,7 +198,9 @@ describe('Score layer keyboard navigation (US2)', () => {
 
     // Press ArrowDown
     act(() => {
-      headersContainer.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+      headersContainer.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }),
+      );
     });
 
     expect(sound0.getAttribute('aria-selected')).toBe('false');
@@ -204,7 +209,9 @@ describe('Score layer keyboard navigation (US2)', () => {
 
     // Press ArrowDown again across group boundary to Track 0
     act(() => {
-      headersContainer.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+      headersContainer.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }),
+      );
     });
 
     expect(sound1.getAttribute('aria-selected')).toBe('false');
@@ -213,7 +220,9 @@ describe('Score layer keyboard navigation (US2)', () => {
 
     // Press ArrowUp back to Sound 1
     act(() => {
-      headersContainer.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+      headersContainer.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }),
+      );
     });
 
     expect(track0.getAttribute('aria-selected')).toBe('false');
@@ -238,7 +247,9 @@ describe('Score layer keyboard navigation (US2)', () => {
 
     // Shift + ArrowDown
     act(() => {
-      headersContainer.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', shiftKey: true, bubbles: true }));
+      headersContainer.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowDown', shiftKey: true, bubbles: true }),
+      );
     });
 
     expect(useLayerSelectionStore.getState().selectedKeys.size).toBe(2);
@@ -246,7 +257,9 @@ describe('Score layer keyboard navigation (US2)', () => {
 
     // Shift + ArrowDown again (across group to Track 0)
     act(() => {
-      headersContainer.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', shiftKey: true, bubbles: true }));
+      headersContainer.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowDown', shiftKey: true, bubbles: true }),
+      );
     });
 
     expect(useLayerSelectionStore.getState().selectedKeys.size).toBe(3);
@@ -254,7 +267,9 @@ describe('Score layer keyboard navigation (US2)', () => {
 
     // Shift + ArrowUp (contract back to Sound 0 + Sound 1)
     act(() => {
-      headersContainer.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', shiftKey: true, bubbles: true }));
+      headersContainer.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowUp', shiftKey: true, bubbles: true }),
+      );
     });
 
     expect(useLayerSelectionStore.getState().selectedKeys.size).toBe(2);

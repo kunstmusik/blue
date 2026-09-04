@@ -46,7 +46,7 @@ export function getMidiNoteFromComputerKey(key: string, octave: number): number 
     return null;
   }
 
-  const midiNote = (octave * 12) + offset;
+  const midiNote = octave * 12 + offset;
   if (midiNote < 0 || midiNote > 127) {
     return null;
   }

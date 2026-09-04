@@ -1,4 +1,8 @@
-import type { MeterMapSnapshot, MeterSnapshot, MeterMapPatch } from '../../../../../shared/project-editor';
+import type {
+  MeterMapSnapshot,
+  MeterSnapshot,
+  MeterMapPatch,
+} from '../../../../../shared/project-editor';
 
 export const METER_REGION_BAR_HEIGHT = 20;
 

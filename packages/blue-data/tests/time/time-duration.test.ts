@@ -11,7 +11,9 @@ import { Element } from '../../src/serialization/xml-reader';
 
 describe('TimeDuration', () => {
   let context: TimeContext;
-  beforeEach(() => { context = makeDefaultContext(); });
+  beforeEach(() => {
+    context = makeDefaultContext();
+  });
 
   // ===== DurationBeats =====
 
@@ -220,17 +222,35 @@ describe('TimeDuration', () => {
   });
 
   it('testDurationXMLLoadsJavaAndLegacyTagNames', () => {
-    const javaBbt = Element.parse('<duration type="BBT"><bars>1</bars><beats>2</beats><ticks>120</ticks></duration>');
-    const legacyBbt = Element.parse('<duration type="BBT"><bar>1</bar><beat>2</beat><ticks>120</ticks></duration>');
-    expect(TimeDuration.loadFromXML(javaBbt).equals(TimeDuration.loadFromXML(legacyBbt))).toBe(true);
+    const javaBbt = Element.parse(
+      '<duration type="BBT"><bars>1</bars><beats>2</beats><ticks>120</ticks></duration>',
+    );
+    const legacyBbt = Element.parse(
+      '<duration type="BBT"><bar>1</bar><beat>2</beat><ticks>120</ticks></duration>',
+    );
+    expect(TimeDuration.loadFromXML(javaBbt).equals(TimeDuration.loadFromXML(legacyBbt))).toBe(
+      true,
+    );
 
-    const javaSeconds = Element.parse('<duration type="SECONDS"><totalSeconds>2.5</totalSeconds></duration>');
-    const legacySeconds = Element.parse('<duration type="SECONDS"><seconds>2.5</seconds></duration>');
-    expect(TimeDuration.loadFromXML(javaSeconds).equals(TimeDuration.loadFromXML(legacySeconds))).toBe(true);
+    const javaSeconds = Element.parse(
+      '<duration type="SECONDS"><totalSeconds>2.5</totalSeconds></duration>',
+    );
+    const legacySeconds = Element.parse(
+      '<duration type="SECONDS"><seconds>2.5</seconds></duration>',
+    );
+    expect(
+      TimeDuration.loadFromXML(javaSeconds).equals(TimeDuration.loadFromXML(legacySeconds)),
+    ).toBe(true);
 
-    const javaFrame = Element.parse('<duration type="FRAME"><frameCount>44100</frameCount></duration>');
-    const legacyFrame = Element.parse('<duration type="FRAME"><frameNumber>44100</frameNumber></duration>');
-    expect(TimeDuration.loadFromXML(javaFrame).equals(TimeDuration.loadFromXML(legacyFrame))).toBe(true);
+    const javaFrame = Element.parse(
+      '<duration type="FRAME"><frameCount>44100</frameCount></duration>',
+    );
+    const legacyFrame = Element.parse(
+      '<duration type="FRAME"><frameNumber>44100</frameNumber></duration>',
+    );
+    expect(TimeDuration.loadFromXML(javaFrame).equals(TimeDuration.loadFromXML(legacyFrame))).toBe(
+      true,
+    );
   });
 
   // ===== Position vs Duration BBT =====

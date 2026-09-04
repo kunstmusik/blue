@@ -101,17 +101,23 @@ describe('SoundEditor automation UI parity', () => {
 
   it('renders all enabled automation lines with hollow control points', () => {
     const document = createSoundEditorDocument();
-    const payload = (document.editor as { payload: { automationParameters: Array<{
-      parameterId: string;
-      name: string;
-      label: string;
-      automationEnabled: boolean;
-      value: number;
-      minimum: number;
-      maximum: number;
-      curve: string;
-      points: Array<{ x: number; y: number }>;
-    }> } }).payload;
+    const payload = (
+      document.editor as {
+        payload: {
+          automationParameters: Array<{
+            parameterId: string;
+            name: string;
+            label: string;
+            automationEnabled: boolean;
+            value: number;
+            minimum: number;
+            maximum: number;
+            curve: string;
+            points: Array<{ x: number; y: number }>;
+          }>;
+        };
+      }
+    ).payload;
     payload.automationParameters.push({
       parameterId: 'grainsize',
       name: 'grainsize',

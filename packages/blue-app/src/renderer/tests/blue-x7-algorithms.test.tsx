@@ -7,7 +7,9 @@ import { ALGORITHM_IMAGES, getAlgorithmImage } from '../assets/blue-x7/algorithm
 import { AlgorithmTopology } from '../components/instruments/blue-x7/algorithm-topology';
 import { AlgorithmDialog } from '../components/instruments/blue-x7/algorithm-dialog';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 describe('BlueX7 Algorithm Topology and Manifest', () => {
   let container: HTMLDivElement | null = null;
@@ -92,7 +94,9 @@ describe('BlueX7 Algorithm Topology and Manifest', () => {
     expect(onToggleOperator).toHaveBeenCalledWith(0); // 0-indexed operator 1
 
     // Clicking Change button triggers onOpenModal
-    const btn = container?.querySelector('button[aria-label="Choose Algorithm Dialog"]') as HTMLButtonElement;
+    const btn = container?.querySelector(
+      'button[aria-label="Choose Algorithm Dialog"]',
+    ) as HTMLButtonElement;
     act(() => {
       btn.click();
     });
@@ -122,7 +126,9 @@ describe('BlueX7 Algorithm Topology and Manifest', () => {
     expect(algButtons?.length).toBe(32);
 
     // Click algorithm 14
-    const alg14Btn = container?.querySelector('button[aria-label="Select Algorithm 14"]') as HTMLButtonElement;
+    const alg14Btn = container?.querySelector(
+      'button[aria-label="Select Algorithm 14"]',
+    ) as HTMLButtonElement;
     expect(alg14Btn).not.toBeNull();
 
     act(() => {

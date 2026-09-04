@@ -13,16 +13,13 @@ export default function GlobalScorePanel(): React.ReactElement {
 
   const evaluateEnabled = blueLiveRunning || playbackStatus === 'playing';
 
-  const handleEvaluateCode = useCallback(
-    (text: string) => {
-      window.blueAPI?.evaluateCode({
-        editorKind: 'sco',
-        text,
-        sourcePanelId: 'GlobalScoreTopComponent',
-      });
-    },
-    [],
-  );
+  const handleEvaluateCode = useCallback((text: string) => {
+    window.blueAPI?.evaluateCode({
+      editorKind: 'sco',
+      text,
+      sourcePanelId: 'GlobalScoreTopComponent',
+    });
+  }, []);
 
   if (!loaded) {
     return (

@@ -37,11 +37,7 @@ function MenuItem({
   onSelect: () => void;
 }): React.ReactElement {
   return (
-    <ContextMenu.Item
-      className="editor-context-menu__item"
-      disabled={disabled}
-      onSelect={onSelect}
-    >
+    <ContextMenu.Item className="editor-context-menu__item" disabled={disabled} onSelect={onSelect}>
       {children}
     </ContextMenu.Item>
   );
@@ -63,7 +59,8 @@ export default function EffectsChainContextMenu({
   onPasteLibraryEffect,
   onProjectClipboardCapture,
 }: EffectsChainContextMenuProps): React.ReactElement {
-  const selected = selectedIndex >= 0 && selectedIndex < entries.length ? entries[selectedIndex] : null;
+  const selected =
+    selectedIndex >= 0 && selectedIndex < entries.length ? entries[selectedIndex] : null;
   const isEffect = selected?.kind === 'effect';
   const hasSelection = selected !== null;
 
@@ -72,11 +69,7 @@ export default function EffectsChainContextMenu({
       <ContextMenu.Trigger asChild>{children}</ContextMenu.Trigger>
       <PopoutContextMenuPortal>
         <ContextMenu.Content className="editor-context-menu">
-          <MenuItem
-            onSelect={onAddNewEffect}
-          >
-            Add New Effect
-          </MenuItem>
+          <MenuItem onSelect={onAddNewEffect}>Add New Effect</MenuItem>
 
           <MenuItem
             disabled={isMaster}
@@ -136,7 +129,11 @@ export default function EffectsChainContextMenu({
               }
             }}
           >
-            {isEffect ? 'Open Editor for Effect' : hasSelection ? 'Open Editor for Send' : 'Open Editor'}
+            {isEffect
+              ? 'Open Editor for Effect'
+              : hasSelection
+                ? 'Open Editor for Send'
+                : 'Open Editor'}
           </MenuItem>
 
           <MenuItem
@@ -163,7 +160,13 @@ export default function EffectsChainContextMenu({
               });
             }}
           >
-            {selected?.enabled ? (isEffect ? 'Disable Effect' : 'Disable Send') : isEffect ? 'Enable Effect' : 'Enable Send'}
+            {selected?.enabled
+              ? isEffect
+                ? 'Disable Effect'
+                : 'Disable Send'
+              : isEffect
+                ? 'Enable Effect'
+                : 'Enable Send'}
           </MenuItem>
 
           <ContextMenu.Separator className="editor-context-menu__separator" />

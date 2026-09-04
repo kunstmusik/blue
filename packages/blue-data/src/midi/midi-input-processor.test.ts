@@ -48,7 +48,8 @@ describe('MidiInputProcessor', () => {
     });
 
     it('loads pitchConstant', () => {
-      const xml = '<midiInputProcessor><pitchConstant>gk_pitch</pitchConstant></midiInputProcessor>';
+      const xml =
+        '<midiInputProcessor><pitchConstant>gk_pitch</pitchConstant></midiInputProcessor>';
       const elem = Element.parse(xml);
       const mip = MidiInputProcessor.loadFromXML(elem);
       expect(mip.getPitchConstant()).toBe('gk_pitch');

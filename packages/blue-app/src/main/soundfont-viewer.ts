@@ -53,7 +53,9 @@ export function buildSoundFontProbeCsd(filePath: string): string {
   return SOUND_FONT_PROBE_CSD.replace('$filename', normalizeSoundFontPath(filePath));
 }
 
-export function parseSoundFontOutput(output: string): Pick<SoundFontInfo, 'instruments' | 'presets'> {
+export function parseSoundFontOutput(
+  output: string,
+): Pick<SoundFontInfo, 'instruments' | 'presets'> {
   const instruments: SoundFontInstrumentInfo[] = [];
   const presets: SoundFontPresetInfo[] = [];
   let section: 'instrument' | 'preset' | null = null;
@@ -116,9 +118,7 @@ export async function inspectSoundFont(
     throw new Error('The selected SoundFont is not a file.');
   }
 
-  const tempDirectory = await fs.promises.mkdtemp(
-    path.join(temporaryDirectory, 'blue-soundfont-'),
-  );
+  const tempDirectory = await fs.promises.mkdtemp(path.join(temporaryDirectory, 'blue-soundfont-'));
   const csdPath = path.join(tempDirectory, 'probe.csd');
 
   try {

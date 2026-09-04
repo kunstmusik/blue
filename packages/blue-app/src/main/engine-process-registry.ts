@@ -54,22 +54,32 @@ export interface EngineProcessSweepReport {
 
 const registryDir = path.join(os.tmpdir(), 'blue-electron', 'engine-processes');
 
-function getManifestFileName(manifest: Pick<EngineProcessManifestV1, 'kind' | 'ownerPid' | 'pid' | 'startedAt'> & { sessionId?: string }): string {
+function getManifestFileName(
+  manifest: Pick<EngineProcessManifestV1, 'kind' | 'ownerPid' | 'pid' | 'startedAt'> & {
+    sessionId?: string;
+  },
+): string {
   const identifier = manifest.sessionId ?? String(manifest.startedAt);
-  return [
-    'blue-engine',
-    manifest.kind,
-    String(manifest.ownerPid),
-    String(manifest.pid),
-    identifier,
-  ].join('-') + '.json';
+  return (
+    [
+      'blue-engine',
+      manifest.kind,
+      String(manifest.ownerPid),
+      String(manifest.pid),
+      identifier,
+    ].join('-') + '.json'
+  );
 }
 
 export function getEngineProcessRegistryDir(): string {
   return registryDir;
 }
 
-export function getEngineProcessManifestPath(manifest: Pick<EngineProcessManifestV1, 'kind' | 'ownerPid' | 'pid' | 'startedAt'> & { sessionId?: string }): string {
+export function getEngineProcessManifestPath(
+  manifest: Pick<EngineProcessManifestV1, 'kind' | 'ownerPid' | 'pid' | 'startedAt'> & {
+    sessionId?: string;
+  },
+): string {
   return path.join(registryDir, getManifestFileName(manifest));
 }
 
@@ -143,7 +153,10 @@ export function planEngineProcessSweep(
   }
 
   if (state.engineIdentityMatch === false) {
-    return { action: 'remove', reason: 'engine process identity no longer matches tracked process' };
+    return {
+      action: 'remove',
+      reason: 'engine process identity no longer matches tracked process',
+    };
   }
 
   if (state.commandLine === null) {
@@ -163,13 +176,15 @@ export function planEngineProcessSweep(
 
 export async function registerEngineProcess(manifest: EngineProcessManifest): Promise<string> {
   await fs.promises.mkdir(registryDir, { recursive: true });
-  const record = manifest.version === 2
-    ? {
-      ...manifest,
-      ownerStartToken: manifest.ownerStartToken ?? await getProcessStartToken(manifest.ownerPid),
-      engineStartToken: manifest.engineStartToken ?? await getProcessStartToken(manifest.pid),
-    }
-    : manifest;
+  const record =
+    manifest.version === 2
+      ? {
+          ...manifest,
+          ownerStartToken:
+            manifest.ownerStartToken ?? (await getProcessStartToken(manifest.ownerPid)),
+          engineStartToken: manifest.engineStartToken ?? (await getProcessStartToken(manifest.pid)),
+        }
+      : manifest;
   const filePath = getEngineProcessManifestPath(record);
   const tempPath = `${filePath}.tmp`;
   await fs.promises.writeFile(tempPath, JSON.stringify(record, null, 2), 'utf-8');
@@ -177,7 +192,9 @@ export async function registerEngineProcess(manifest: EngineProcessManifest): Pr
   return filePath;
 }
 
-export async function removeEngineProcessRecord(filePath: string | null | undefined): Promise<void> {
+export async function removeEngineProcessRecord(
+  filePath: string | null | undefined,
+): Promise<void> {
   if (!filePath) {
     return;
   }
@@ -247,8 +264,14 @@ export async function sweepStaleBlueEngineProcesses(): Promise<EngineProcessSwee
         typeof parsed.shmName !== 'string' ||
         typeof parsed.startedAt !== 'number' ||
         (parsed.version === 2 && typeof parsed.sessionId !== 'string') ||
-        (parsed.version === 2 && parsed.ownerStartToken !== undefined && parsed.ownerStartToken !== null && typeof parsed.ownerStartToken !== 'string') ||
-        (parsed.version === 2 && parsed.engineStartToken !== undefined && parsed.engineStartToken !== null && typeof parsed.engineStartToken !== 'string')
+        (parsed.version === 2 &&
+          parsed.ownerStartToken !== undefined &&
+          parsed.ownerStartToken !== null &&
+          typeof parsed.ownerStartToken !== 'string') ||
+        (parsed.version === 2 &&
+          parsed.engineStartToken !== undefined &&
+          parsed.engineStartToken !== null &&
+          typeof parsed.engineStartToken !== 'string')
       ) {
         throw new Error('invalid manifest');
       }
@@ -268,12 +291,14 @@ export async function sweepStaleBlueEngineProcesses(): Promise<EngineProcessSwee
       ownerAlive,
       engineAlive,
       commandLine: await readProcessCommandLine(manifest.pid),
-      ownerIdentityMatch: manifest.version === 2 && manifest.ownerStartToken && ownerStartToken
-        ? manifest.ownerStartToken === ownerStartToken
-        : undefined,
-      engineIdentityMatch: manifest.version === 2 && manifest.engineStartToken && engineStartToken
-        ? manifest.engineStartToken === engineStartToken
-        : undefined,
+      ownerIdentityMatch:
+        manifest.version === 2 && manifest.ownerStartToken && ownerStartToken
+          ? manifest.ownerStartToken === ownerStartToken
+          : undefined,
+      engineIdentityMatch:
+        manifest.version === 2 && manifest.engineStartToken && engineStartToken
+          ? manifest.engineStartToken === engineStartToken
+          : undefined,
     });
 
     switch (plan.action) {
@@ -324,11 +349,15 @@ async function readProcessCommandLine(pid: number): Promise<string | null> {
 
   try {
     if (process.platform === 'win32') {
-      const { stdout } = await execFileAsync('powershell.exe', [
-        '-NoProfile',
-        '-Command',
-        `(Get-CimInstance Win32_Process -Filter "ProcessId = ${pid}").CommandLine`,
-      ], { windowsHide: true });
+      const { stdout } = await execFileAsync(
+        'powershell.exe',
+        [
+          '-NoProfile',
+          '-Command',
+          `(Get-CimInstance Win32_Process -Filter "ProcessId = ${pid}").CommandLine`,
+        ],
+        { windowsHide: true },
+      );
 
       const commandLine = stdout.trim();
       return commandLine.length > 0 ? commandLine : null;
@@ -351,11 +380,15 @@ async function getProcessStartToken(pid: number): Promise<string | null> {
 
   try {
     if (process.platform === 'win32') {
-      const { stdout } = await execFileAsync('powershell.exe', [
-        '-NoProfile',
-        '-Command',
-        `(Get-CimInstance Win32_Process -Filter "ProcessId = ${pid}").CreationDate`,
-      ], { windowsHide: true });
+      const { stdout } = await execFileAsync(
+        'powershell.exe',
+        [
+          '-NoProfile',
+          '-Command',
+          `(Get-CimInstance Win32_Process -Filter "ProcessId = ${pid}").CreationDate`,
+        ],
+        { windowsHide: true },
+      );
       const token = stdout.trim();
       return token.length > 0 ? `windows:${token}` : null;
     }
@@ -364,7 +397,10 @@ async function getProcessStartToken(pid: number): Promise<string | null> {
       const stat = await fs.promises.readFile(`/proc/${pid}/stat`, 'utf-8');
       const commandEnd = stat.lastIndexOf(')');
       if (commandEnd < 0) return null;
-      const fields = stat.slice(commandEnd + 2).trim().split(/\s+/);
+      const fields = stat
+        .slice(commandEnd + 2)
+        .trim()
+        .split(/\s+/);
       const startTime = fields[19];
       return startTime ? `linux:${startTime}` : null;
     }

@@ -29,14 +29,16 @@ describe('java-runtime-protocol', () => {
   });
 
   it('decodes success responses', () => {
-    const response = decodeJavaRuntimeResponse<{ accepted: boolean }>(JSON.stringify({
-      id: 'req-2',
-      ok: true,
-      result: { accepted: true },
-      stdout: '',
-      stderr: '',
-      elapsedMs: 5,
-    }));
+    const response = decodeJavaRuntimeResponse<{ accepted: boolean }>(
+      JSON.stringify({
+        id: 'req-2',
+        ok: true,
+        result: { accepted: true },
+        stdout: '',
+        stderr: '',
+        elapsedMs: 5,
+      }),
+    );
 
     expect(response.ok).toBe(true);
     if (response.ok) {
@@ -46,14 +48,16 @@ describe('java-runtime-protocol', () => {
   });
 
   it('decodes failure responses', () => {
-    const response = decodeJavaRuntimeResponse(JSON.stringify({
-      id: 'req-3',
-      ok: false,
-      error: { code: 'PROTOCOL_ERROR', message: 'Bad request' },
-      stdout: '',
-      stderr: '',
-      elapsedMs: 2,
-    }));
+    const response = decodeJavaRuntimeResponse(
+      JSON.stringify({
+        id: 'req-3',
+        ok: false,
+        error: { code: 'PROTOCOL_ERROR', message: 'Bad request' },
+        stdout: '',
+        stderr: '',
+        elapsedMs: 2,
+      }),
+    );
 
     expect(response.ok).toBe(false);
     if (!response.ok) {

@@ -12,8 +12,9 @@ describe('Dockview left auxiliary restoration', () => {
   let host: HTMLDivElement;
   let root: Root;
 
-  (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean })
-    .IS_REACT_ACT_ENVIRONMENT = true;
+  (
+    globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+  ).IS_REACT_ACT_ENVIRONMENT = true;
 
   beforeEach(() => {
     host = document.createElement('div');
@@ -42,9 +43,7 @@ describe('Dockview left auxiliary restoration', () => {
     });
 
     const state = createDefaultAuxiliaryLayoutState();
-    const properties = state.groups.find(
-      (group) => group.seedGroupId === 'properties-main',
-    )!;
+    const properties = state.groups.find((group) => group.seedGroupId === 'properties-main')!;
     properties.edge = 'left';
     properties.panelIds = ['LibrariesTopComponent'];
     properties.dockedPanelIds = ['LibrariesTopComponent'];
@@ -62,9 +61,7 @@ describe('Dockview left auxiliary restoration', () => {
       api!.layout(1200, 800);
     });
 
-    const leftGroup = api!.groups.find(
-      (group) => group.id === 'blue-aux-edge-left',
-    )!;
+    const leftGroup = api!.groups.find((group) => group.id === 'blue-aux-edge-left')!;
     expect(leftGroup.element.getBoundingClientRect().width).toBeCloseTo(360, 0);
   });
 });

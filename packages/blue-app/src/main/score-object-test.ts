@@ -47,7 +47,9 @@ function canGenerateForCSD(value: unknown): value is GenerateForCsdObject {
 }
 
 function canGenerateForCSDAsync(value: unknown): value is AsyncGenerateForCsdObject {
-  return typeof (value as { generateForCSDAsync?: unknown } | null)?.generateForCSDAsync === 'function';
+  return (
+    typeof (value as { generateForCSDAsync?: unknown } | null)?.generateForCSDAsync === 'function'
+  );
 }
 
 export async function testScoreObject(
@@ -94,8 +96,9 @@ export async function testScoreObject(
     };
   }
 
-  const usesJavaScript = sObj instanceof JavaScriptObject
-    || (sObj instanceof ObjectBuilder && sObj.getLanguageType() === 'JAVASCRIPT');
+  const usesJavaScript =
+    sObj instanceof JavaScriptObject ||
+    (sObj instanceof ObjectBuilder && sObj.getLanguageType() === 'JAVASCRIPT');
   if (usesJavaScript) {
     await options.ensureJavaScriptEngine?.();
   }
@@ -109,19 +112,10 @@ export async function testScoreObject(
       setJavaRuntimeClient(compileData, options.javaRuntimeClient);
     }
 
-    const noteList = canGenerateForCSDAsync(sObj) && options.javaRuntimeClient
-      ? await sObj.generateForCSDAsync(
-        data.getScore().getTimeContext(),
-        compileData,
-        0.0,
-        -1.0,
-      )
-      : sObj.generateForCSD(
-        data.getScore().getTimeContext(),
-        compileData,
-        0.0,
-        -1.0,
-      );
+    const noteList =
+      canGenerateForCSDAsync(sObj) && options.javaRuntimeClient
+        ? await sObj.generateForCSDAsync(data.getScore().getTimeContext(), compileData, 0.0, -1.0)
+        : sObj.generateForCSD(data.getScore().getTimeContext(), compileData, 0.0, -1.0);
 
     return { ok: true, output: noteList.toScoreText() };
   } catch (err) {

@@ -130,7 +130,12 @@ describe('window-layout-settings isValidWindowState', () => {
     expect(
       isValidWindowState({
         ...validWindowState(),
-        normalBounds: { x: 0, y: 0, width: DEFAULT_WINDOW_MINIMUM_SIZE, height: DEFAULT_WINDOW_MINIMUM_SIZE },
+        normalBounds: {
+          x: 0,
+          y: 0,
+          width: DEFAULT_WINDOW_MINIMUM_SIZE,
+          height: DEFAULT_WINDOW_MINIMUM_SIZE,
+        },
       }),
     ).toBe(true);
   });
@@ -336,11 +341,15 @@ describe('window-layout-settings mergeWindowLayoutSettings', () => {
 describe('window-layout-settings applyWindowLayoutUpdate', () => {
   it('applies a valid window-state update with an updatedAt stamp', () => {
     const base = createDefaultWindowLayoutSettings();
-    const next = applyWindowLayoutUpdate(base, {
-      type: 'window-state',
-      windowId: 'main',
-      state: validWindowState(),
-    }, fixedNow);
+    const next = applyWindowLayoutUpdate(
+      base,
+      {
+        type: 'window-state',
+        windowId: 'main',
+        state: validWindowState(),
+      },
+      fixedNow,
+    );
     expect(next.windows.main).toEqual({
       ...validWindowState(),
       updatedAt: FIXED_NOW,
@@ -348,48 +357,68 @@ describe('window-layout-settings applyWindowLayoutUpdate', () => {
   });
 
   it('ignores invalid window-state payloads but keeps prior entries', () => {
-    const base = applyWindowLayoutUpdate(createDefaultWindowLayoutSettings(), {
-      type: 'window-state',
-      windowId: 'main',
-      state: validWindowState(),
-    }, fixedNow);
-    const next = applyWindowLayoutUpdate(base, {
-      type: 'window-state',
-      windowId: 'settings',
-      state: {
-        normalBounds: { x: 0, y: 0, width: 0, height: 0 },
-        displayState: 'normal',
+    const base = applyWindowLayoutUpdate(
+      createDefaultWindowLayoutSettings(),
+      {
+        type: 'window-state',
+        windowId: 'main',
+        state: validWindowState(),
       },
-    }, fixedNow);
+      fixedNow,
+    );
+    const next = applyWindowLayoutUpdate(
+      base,
+      {
+        type: 'window-state',
+        windowId: 'settings',
+        state: {
+          normalBounds: { x: 0, y: 0, width: 0, height: 0 },
+          displayState: 'normal',
+        },
+      },
+      fixedNow,
+    );
     expect(next.windows.main).toBeDefined();
     expect(next.windows.settings).toBeUndefined();
   });
 
   it('applies a workbench-layout update', () => {
-    const next = applyWindowLayoutUpdate(createDefaultWindowLayoutSettings(), {
-      type: 'workbench-layout',
-      serializedLayout: '{"version":5}',
-    }, fixedNow);
+    const next = applyWindowLayoutUpdate(
+      createDefaultWindowLayoutSettings(),
+      {
+        type: 'workbench-layout',
+        serializedLayout: '{"version":5}',
+      },
+      fixedNow,
+    );
     expect(next.workbench).toEqual({ serializedLayout: '{"version":5}', updatedAt: FIXED_NOW });
   });
 
   it('clears the reset marker after the rebuilt workbench is saved', () => {
     const reset = resetWindowLayoutSettings(fixedNow);
-    const next = applyWindowLayoutUpdate(reset, {
-      type: 'workbench-layout',
-      serializedLayout: '{"version":6}',
-    }, fixedNow);
+    const next = applyWindowLayoutUpdate(
+      reset,
+      {
+        type: 'workbench-layout',
+        serializedLayout: '{"version":6}',
+      },
+      fixedNow,
+    );
 
     expect(next.lastResetAt).toBeUndefined();
     expect(next.workbench?.serializedLayout).toBe('{"version":6}');
   });
 
   it('applies a split-location update', () => {
-    const next = applyWindowLayoutUpdate(createDefaultWindowLayoutSettings(), {
-      type: 'split-location',
-      splitId: 'orchestra.outer',
-      location: { orientation: 'horizontal', controlledPane: 'first', sizePx: 240 },
-    }, fixedNow);
+    const next = applyWindowLayoutUpdate(
+      createDefaultWindowLayoutSettings(),
+      {
+        type: 'split-location',
+        splitId: 'orchestra.outer',
+        location: { orientation: 'horizontal', controlledPane: 'first', sizePx: 240 },
+      },
+      fixedNow,
+    );
     expect(next.splits['orchestra.outer']).toEqual({
       orientation: 'horizontal',
       controlledPane: 'first',
@@ -399,23 +428,31 @@ describe('window-layout-settings applyWindowLayoutUpdate', () => {
   });
 
   it('applies a legacy-migration marker update', () => {
-    const next = applyWindowLayoutUpdate(createDefaultWindowLayoutSettings(), {
-      type: 'legacy-migration',
-      legacy: { blueSettingsWindowBoundsMigrated: true },
-    }, fixedNow);
+    const next = applyWindowLayoutUpdate(
+      createDefaultWindowLayoutSettings(),
+      {
+        type: 'legacy-migration',
+        legacy: { blueSettingsWindowBoundsMigrated: true },
+      },
+      fixedNow,
+    );
     expect(next.legacyMigration.blueSettingsWindowBoundsMigrated).toBe(true);
     expect(next.legacyMigration.workbenchLocalStorageMigrated).toBe(true);
     expect(next.legacyMigration.migratedAt).toBe(FIXED_NOW);
   });
 
   it('applies legacy-migration payload values through the update API', () => {
-    const next = applyWindowLayoutUpdate(createDefaultWindowLayoutSettings(), {
-      type: 'legacy-migration',
-      legacy: {
-        windowBounds: { x: 20, y: 30, width: 900, height: 700 },
-        workbenchSerializedLayout: '{"version":5}',
+    const next = applyWindowLayoutUpdate(
+      createDefaultWindowLayoutSettings(),
+      {
+        type: 'legacy-migration',
+        legacy: {
+          windowBounds: { x: 20, y: 30, width: 900, height: 700 },
+          workbenchSerializedLayout: '{"version":5}',
+        },
       },
-    }, fixedNow);
+      fixedNow,
+    );
 
     expect(next.windows.main?.normalBounds).toEqual({ x: 20, y: 30, width: 900, height: 700 });
     expect(next.workbench?.serializedLayout).toBe('{"version":5}');
@@ -513,11 +550,7 @@ describe('window-layout-settings applyLegacyLayoutMigration', () => {
   });
 
   it('marks both markers complete even when neither legacy source is present', () => {
-    const next = applyLegacyLayoutMigration(
-      createDefaultWindowLayoutSettings(),
-      {},
-      fixedNow,
-    );
+    const next = applyLegacyLayoutMigration(createDefaultWindowLayoutSettings(), {}, fixedNow);
 
     expect(next.legacyMigration.blueSettingsWindowBoundsMigrated).toBe(true);
     expect(next.legacyMigration.workbenchLocalStorageMigrated).toBe(true);
@@ -527,20 +560,28 @@ describe('window-layout-settings applyLegacyLayoutMigration', () => {
 describe('window-layout-settings invalid value preservation (T056)', () => {
   it('drops a corrupt window-state entry while preserving all other valid windows', () => {
     const base = createDefaultWindowLayoutSettings();
-    const withValid = applyWindowLayoutUpdate(base, {
-      type: 'window-state',
-      windowId: 'main',
-      state: validWindowState(),
-    }, fixedNow);
-
-    const withBad = applyWindowLayoutUpdate(withValid, {
-      type: 'window-state',
-      windowId: 'settings',
-      state: {
-        normalBounds: { x: 0, y: 0, width: 10, height: 10 },
-        displayState: 'normal',
+    const withValid = applyWindowLayoutUpdate(
+      base,
+      {
+        type: 'window-state',
+        windowId: 'main',
+        state: validWindowState(),
       },
-    }, fixedNow);
+      fixedNow,
+    );
+
+    const withBad = applyWindowLayoutUpdate(
+      withValid,
+      {
+        type: 'window-state',
+        windowId: 'settings',
+        state: {
+          normalBounds: { x: 0, y: 0, width: 10, height: 10 },
+          displayState: 'normal',
+        },
+      },
+      fixedNow,
+    );
 
     expect(withBad.windows.main).toBeDefined();
     expect(withBad.windows.main!.normalBounds.width).toBe(800);
@@ -549,17 +590,25 @@ describe('window-layout-settings invalid value preservation (T056)', () => {
 
   it('drops a corrupt split entry while preserving all other valid splits', () => {
     const base = createDefaultWindowLayoutSettings();
-    const withGood = applyWindowLayoutUpdate(base, {
-      type: 'split-location',
-      splitId: 'orchestra.outer',
-      location: { orientation: 'horizontal', controlledPane: 'first', sizePx: 250 },
-    }, fixedNow);
+    const withGood = applyWindowLayoutUpdate(
+      base,
+      {
+        type: 'split-location',
+        splitId: 'orchestra.outer',
+        location: { orientation: 'horizontal', controlledPane: 'first', sizePx: 250 },
+      },
+      fixedNow,
+    );
 
-    const withBad = applyWindowLayoutUpdate(withGood, {
-      type: 'split-location',
-      splitId: 'score.main',
-      location: { orientation: 'horizontal', controlledPane: 'first', sizePx: -50 },
-    }, fixedNow);
+    const withBad = applyWindowLayoutUpdate(
+      withGood,
+      {
+        type: 'split-location',
+        splitId: 'score.main',
+        location: { orientation: 'horizontal', controlledPane: 'first', sizePx: -50 },
+      },
+      fixedNow,
+    );
 
     expect(withBad.splits['orchestra.outer']).toBeDefined();
     expect(withBad.splits['score.main']).toBeUndefined();

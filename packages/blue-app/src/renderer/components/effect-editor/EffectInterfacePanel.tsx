@@ -53,9 +53,12 @@ export default function EffectInterfacePanel({
   onEditorUsable,
 }: EffectInterfacePanelProps): React.ReactElement {
   const instrument = useMemo(() => buildInterfaceInstrument(snapshot), [snapshot]);
-  const handleInstrumentPatch = useCallback((patch: InstrumentPatch) => {
-    if (patch.bsbInterface) onPatch({ bsbInterface: patch.bsbInterface });
-  }, [onPatch]);
+  const handleInstrumentPatch = useCallback(
+    (patch: InstrumentPatch) => {
+      if (patch.bsbInterface) onPatch({ bsbInterface: patch.bsbInterface });
+    },
+    [onPatch],
+  );
 
   useEffect(() => {
     onEditorUsable?.();

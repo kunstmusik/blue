@@ -220,12 +220,12 @@ export class ProjectProperties {
     elem.addElement('diskBenchmarkEnabled').setText(this.diskBenchmarkEnabled.toString());
     elem.addElement('diskAdvancedSettings').setText(this.diskAdvancedSettings);
     elem.addElement('diskCompleteOverride').setText(this.diskCompleteOverride.toString());
-    elem.addElement('diskAlwaysRenderEntireProject').setText(this.diskAlwaysRenderEntireProject.toString());
+    elem
+      .addElement('diskAlwaysRenderEntireProject')
+      .setText(this.diskAlwaysRenderEntireProject.toString());
 
     elem.addElement('mediaFolder').setText(this.mediaFolder);
-    elem.addElement('copyToMediaFileOnImport').setText(
-      this.copyToMediaFileOnImport.toString(),
-    );
+    elem.addElement('copyToMediaFileOnImport').setText(this.copyToMediaFileOnImport.toString());
 
     if (this.commandLine) elem.addElement('commandLine').setText(this.commandLine);
     if (this.diskCommandLine) elem.addElement('diskCommandLine').setText(this.diskCommandLine);
@@ -295,13 +295,15 @@ export class ProjectProperties {
     if (noteAmpsEnabled !== null) props.noteAmpsEnabled = noteAmpsEnabled.toLowerCase() === 'true';
 
     const outOfRangeEnabled = data.getTextString('outOfRangeEnabled');
-    if (outOfRangeEnabled !== null) props.outOfRangeEnabled = outOfRangeEnabled.toLowerCase() === 'true';
+    if (outOfRangeEnabled !== null)
+      props.outOfRangeEnabled = outOfRangeEnabled.toLowerCase() === 'true';
 
     const warningsEnabled = data.getTextString('warningsEnabled');
     if (warningsEnabled !== null) props.warningsEnabled = warningsEnabled.toLowerCase() === 'true';
 
     const benchmarkEnabled = data.getTextString('benchmarkEnabled');
-    if (benchmarkEnabled !== null) props.benchmarkEnabled = benchmarkEnabled.toLowerCase() === 'true';
+    if (benchmarkEnabled !== null)
+      props.benchmarkEnabled = benchmarkEnabled.toLowerCase() === 'true';
 
     const adv = data.getTextString('advancedSettings');
     if (adv !== null) props.advancedSettings = adv;
@@ -316,16 +318,20 @@ export class ProjectProperties {
     if (askOnRender !== null) props.askOnRender = askOnRender.toLowerCase() === 'true';
 
     const diskNoteAmpsEnabled = data.getTextString('diskNoteAmpsEnabled');
-    if (diskNoteAmpsEnabled !== null) props.diskNoteAmpsEnabled = diskNoteAmpsEnabled.toLowerCase() === 'true';
+    if (diskNoteAmpsEnabled !== null)
+      props.diskNoteAmpsEnabled = diskNoteAmpsEnabled.toLowerCase() === 'true';
 
     const diskOutOfRangeEnabled = data.getTextString('diskOutOfRangeEnabled');
-    if (diskOutOfRangeEnabled !== null) props.diskOutOfRangeEnabled = diskOutOfRangeEnabled.toLowerCase() === 'true';
+    if (diskOutOfRangeEnabled !== null)
+      props.diskOutOfRangeEnabled = diskOutOfRangeEnabled.toLowerCase() === 'true';
 
     const diskWarningsEnabled = data.getTextString('diskWarningsEnabled');
-    if (diskWarningsEnabled !== null) props.diskWarningsEnabled = diskWarningsEnabled.toLowerCase() === 'true';
+    if (diskWarningsEnabled !== null)
+      props.diskWarningsEnabled = diskWarningsEnabled.toLowerCase() === 'true';
 
     const diskBenchmarkEnabled = data.getTextString('diskBenchmarkEnabled');
-    if (diskBenchmarkEnabled !== null) props.diskBenchmarkEnabled = diskBenchmarkEnabled.toLowerCase() === 'true';
+    if (diskBenchmarkEnabled !== null)
+      props.diskBenchmarkEnabled = diskBenchmarkEnabled.toLowerCase() === 'true';
 
     const diskAdv = data.getTextString('diskAdvancedSettings');
     if (diskAdv !== null) props.diskAdvancedSettings = diskAdv;
@@ -335,8 +341,7 @@ export class ProjectProperties {
 
     const diskAlwaysRenderEntireProject = data.getTextString('diskAlwaysRenderEntireProject');
     if (diskAlwaysRenderEntireProject !== null) {
-      props.diskAlwaysRenderEntireProject =
-        diskAlwaysRenderEntireProject.toLowerCase() === 'true';
+      props.diskAlwaysRenderEntireProject = diskAlwaysRenderEntireProject.toLowerCase() === 'true';
     }
 
     const mediaFolder = data.getTextString('mediaFolder');
@@ -344,8 +349,7 @@ export class ProjectProperties {
 
     const copyToMediaFileOnImport = data.getTextString('copyToMediaFileOnImport');
     if (copyToMediaFileOnImport !== null) {
-      props.copyToMediaFileOnImport =
-        copyToMediaFileOnImport.toLowerCase() === 'true';
+      props.copyToMediaFileOnImport = copyToMediaFileOnImport.toLowerCase() === 'true';
     } else {
       // Legacy alias: copyToMediaFolderOnImport → copyToMediaFileOnImport
       const legacyCopy = data.getTextString('copyToMediaFolderOnImport');

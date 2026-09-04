@@ -33,10 +33,7 @@ describe('Blue Live project replacement lifecycle', () => {
     });
     let replacementEligible = false;
 
-    const replacement = stopBlueLiveForProjectReplacement(
-      controller,
-      { stop },
-    ).then(() => {
+    const replacement = stopBlueLiveForProjectReplacement(controller, { stop }).then(() => {
       replacementEligible = true;
     });
 

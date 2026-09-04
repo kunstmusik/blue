@@ -30,11 +30,8 @@ describe('Project Editor Score Color Application (US3)', () => {
     soundLayer.setBackgroundColor(0x123456);
     soundLayer[0].setBackgroundColor(0xffff0000);
     const snapshot = createProjectEditorSnapshot(data, null);
-    const itemTarget = snapshot.score.layerGroups
-      .find((group) => group.groupId === polyGroupId)!
-      .layers[0]!
-      .items[0]!
-      .editorTarget!;
+    const itemTarget = snapshot.score.layerGroups.find((group) => group.groupId === polyGroupId)!
+      .layers[0]!.items[0]!.editorTarget!;
 
     const repeatedPickerPreview: ProjectDocumentPatch = {
       score: {
@@ -62,17 +59,21 @@ describe('Project Editor Score Color Application (US3)', () => {
       selectionId: 'stale-item',
       location: { ...itemTarget.location!, objectIndex: 999 },
     };
-    expect(isScoreColorPatchAccepted(data, {
-      type: 'updateSharedProperties',
-      target: staleTarget,
-      patch: { backgroundColor: 0xff0000 },
-    })).toBe(false);
-    expect(isScoreColorPatchAccepted(data, {
-      type: 'updateLayerState',
-      groupId: polyGroupId,
-      layerIndex: 0,
-      patch: { backgroundColor: Number.NaN },
-    })).toBe(false);
+    expect(
+      isScoreColorPatchAccepted(data, {
+        type: 'updateSharedProperties',
+        target: staleTarget,
+        patch: { backgroundColor: 0xff0000 },
+      }),
+    ).toBe(false);
+    expect(
+      isScoreColorPatchAccepted(data, {
+        type: 'updateLayerState',
+        groupId: polyGroupId,
+        layerIndex: 0,
+        patch: { backgroundColor: Number.NaN },
+      }),
+    ).toBe(false);
   });
 
   it('handles empty updates array as a successful no-op without mutation', () => {
@@ -224,7 +225,15 @@ describe('Project Editor Score Color Application (US3)', () => {
   });
 
   it('atomically updates mixed target kinds: sound layer, track, and pattern source', () => {
-    const { data, soundLayer, track, patternLayer, patternGroupId, patternLayerId, patternSourceId } = createTestProjectWithLayers();
+    const {
+      data,
+      soundLayer,
+      track,
+      patternLayer,
+      patternGroupId,
+      patternLayerId,
+      patternSourceId,
+    } = createTestProjectWithLayers();
     const polyItem = soundLayer[0];
     const trackItem = track[0];
     const patternSrcItem = patternLayer.getSoundObject();
@@ -285,9 +294,9 @@ describe('Project Editor Score Color Application (US3)', () => {
 
     const changed = applyProjectDocumentPatch(data, patch);
     expect(changed).toBe(true);
-    expect(polyItem.getBackgroundColor()).toBe(((0x112233 & 0x00ffffff) | 0xff000000) | 0);
-    expect(trackItem.getBackgroundColor()).toBe(((0x445566 & 0x00ffffff) | 0xff000000) | 0);
-    expect(patternSrcItem.getBackgroundColor()).toBe(((0x778899 & 0x00ffffff) | 0xff000000) | 0);
+    expect(polyItem.getBackgroundColor()).toBe((0x112233 & 0x00ffffff) | 0xff000000 | 0);
+    expect(trackItem.getBackgroundColor()).toBe((0x445566 & 0x00ffffff) | 0xff000000 | 0);
+    expect(patternSrcItem.getBackgroundColor()).toBe((0x778899 & 0x00ffffff) | 0xff000000 | 0);
   });
 
   it('atomically updates 1,000 targets on a single layer in one operation', () => {
@@ -335,7 +344,7 @@ describe('Project Editor Score Color Application (US3)', () => {
 
     expect(changed).toBe(true);
     expect(duration).toBeLessThan(1000); // Fast execution
-    expect(layer[0].getBackgroundColor()).toBe(((0x223344 & 0x00ffffff) | 0xff000000) | 0);
-    expect(layer[999].getBackgroundColor()).toBe(((0x223344 & 0x00ffffff) | 0xff000000) | 0);
+    expect(layer[0].getBackgroundColor()).toBe((0x223344 & 0x00ffffff) | 0xff000000 | 0);
+    expect(layer[999].getBackgroundColor()).toBe((0x223344 & 0x00ffffff) | 0xff000000 | 0);
   });
 });

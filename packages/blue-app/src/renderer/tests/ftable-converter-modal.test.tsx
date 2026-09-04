@@ -6,7 +6,9 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import FTableConverterModal from '../components/workbench/panels/tools/FTableConverterModal';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 describe('FTableConverterModal', () => {
   let container: HTMLDivElement | null = null;
@@ -51,13 +53,18 @@ describe('FTableConverterModal', () => {
     const outputArea = textareas[1] as HTMLTextAreaElement;
 
     act(() => {
-      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set;
+      const nativeSetter = Object.getOwnPropertyDescriptor(
+        window.HTMLTextAreaElement.prototype,
+        'value',
+      )?.set;
       nativeSetter?.call(inputArea, 'f 1 0 1024 10 1');
       inputArea.dispatchEvent(new Event('input', { bubbles: true }));
       inputArea.dispatchEvent(new Event('change', { bubbles: true }));
     });
 
-    const convertBtn = Array.from(document.querySelectorAll('button')).find((btn) => btn.textContent === 'Convert to FTGEN');
+    const convertBtn = Array.from(document.querySelectorAll('button')).find(
+      (btn) => btn.textContent === 'Convert to FTGEN',
+    );
     expect(convertBtn).not.toBeUndefined();
 
     act(() => {

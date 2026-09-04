@@ -213,7 +213,10 @@ describe('TempoMap', () => {
   it('testRecalculateBeatPositions', () => {
     const tm = new TempoMap();
     const context = new TimeContext();
-    tm.addTempoPoint(new TempoPoint(TimePosition.bbst(2, 1, 1, 0), 120.0, CurveType.LINEAR), context);
+    tm.addTempoPoint(
+      new TempoPoint(TimePosition.bbst(2, 1, 1, 0), 120.0, CurveType.LINEAR),
+      context,
+    );
 
     expect(tm.size()).toBe(2);
     expect(tm.getBeat(0)).toBeCloseTo(0.0, 4);

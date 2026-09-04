@@ -30,7 +30,7 @@ function getSymmetricCurvePoints(): number[] {
 
   for (let i = 2; i < 9; i++) {
     const coef = 0.3 * Math.pow(0.5, i);
-    const ix = 0.7 + (0.3 * (i / 9.0));
+    const ix = 0.7 + 0.3 * (i / 9.0);
     const index = i * 2;
     points[index] = ix;
     points[index + 1] = coef;
@@ -62,13 +62,17 @@ function calcCubicCoefficients(points: number[]): CubicCoefficients[] {
 
   for (let i = 0; i < pointCount; i++) {
     if (i === 0) {
-      const slope0 = (pointAt(points, 2) - pointAt(points, 0)) / (pointAt(points, 3) - pointAt(points, 1));
-      const slope1 = (pointAt(points, 4) - pointAt(points, 2)) / (pointAt(points, 5) - pointAt(points, 3));
-      const firstPointSlope = (slope0 * slope1) < 0 ? 0 : (2.0 / (slope1 + slope0));
+      const slope0 =
+        (pointAt(points, 2) - pointAt(points, 0)) / (pointAt(points, 3) - pointAt(points, 1));
+      const slope1 =
+        (pointAt(points, 4) - pointAt(points, 2)) / (pointAt(points, 5) - pointAt(points, 3));
+      const firstPointSlope = slope0 * slope1 < 0 ? 0 : 2.0 / (slope1 + slope0);
 
-      previousSlope = ((3.0 * ((pointAt(points, 3) - pointAt(points, 1))
-        / (2.0 * (pointAt(points, 2) - pointAt(points, 0)))))
-        - (firstPointSlope * 0.5));
+      previousSlope =
+        3.0 *
+          ((pointAt(points, 3) - pointAt(points, 1)) /
+            (2.0 * (pointAt(points, 2) - pointAt(points, 0)))) -
+        firstPointSlope * 0.5;
       continue;
     }
 
@@ -79,22 +83,25 @@ function calcCubicCoefficients(points: number[]): CubicCoefficients[] {
     let pointSlope: number;
 
     if (i === pointCount - 1) {
-      pointSlope = ((3 * yDelta) / (2 * xDelta)) - (previousSlope * 0.5);
+      pointSlope = (3 * yDelta) / (2 * xDelta) - previousSlope * 0.5;
     } else {
-      const slopeBefore = (pointAt(points, pointOffset + 2) - pointAt(points, pointOffset))
-        / (pointAt(points, pointOffset + 3) - pointAt(points, pointOffset + 1));
+      const slopeBefore =
+        (pointAt(points, pointOffset + 2) - pointAt(points, pointOffset)) /
+        (pointAt(points, pointOffset + 3) - pointAt(points, pointOffset + 1));
       const slopeAfter = xDelta / yDelta;
-      pointSlope = ((slopeAfter * slopeBefore) < 0.0) ? 0.0 : (2 / (slopeAfter + slopeBefore));
+      pointSlope = slopeAfter * slopeBefore < 0.0 ? 0.0 : 2 / (slopeAfter + slopeBefore);
     }
 
-    const secondDerivativeLeft = (((-2 * (pointSlope + (2 * previousSlope))) / xDelta)
-      + ((6 * yDelta) / xDelta2));
-    const secondDerivativeRight = ((2 * ((2 * pointSlope) + previousSlope)) / xDelta)
-      - ((6 * yDelta) / xDelta2);
+    const secondDerivativeLeft =
+      (-2 * (pointSlope + 2 * previousSlope)) / xDelta + (6 * yDelta) / xDelta2;
+    const secondDerivativeRight =
+      (2 * (2 * pointSlope + previousSlope)) / xDelta - (6 * yDelta) / xDelta2;
 
     const d = (secondDerivativeRight - secondDerivativeLeft) / (6 * xDelta);
-    const c = ((pointAt(points, pointOffset) * secondDerivativeLeft)
-      - (pointAt(points, pointOffset - 2) * secondDerivativeRight)) / (2 * xDelta);
+    const c =
+      (pointAt(points, pointOffset) * secondDerivativeLeft -
+        pointAt(points, pointOffset - 2) * secondDerivativeRight) /
+      (2 * xDelta);
 
     const prevX = pointAt(points, pointOffset - 2);
     const currentX = pointAt(points, pointOffset);
@@ -104,10 +111,10 @@ function calcCubicCoefficients(points: number[]): CubicCoefficients[] {
     const currentX2 = currentX * currentX;
     const currentX3 = currentX2 * currentX;
 
-    const b = (yDelta - (c * (currentX2 - prevX2)) - (d * (currentX3 - prevX3))) / xDelta;
+    const b = (yDelta - c * (currentX2 - prevX2) - d * (currentX3 - prevX3)) / xDelta;
 
     coefficients.push({
-      a: prevY - (b * prevX) - (c * prevX2) - (d * prevX3),
+      a: prevY - b * prevX - c * prevX2 - d * prevX3,
       b,
       c,
       d,
@@ -123,11 +130,7 @@ const SYMMETRIC_IN_POINTS = reverseCurve(SYMMETRIC_OUT_POINTS);
 const SYMMETRIC_IN_COEFFICIENTS = calcCubicCoefficients(SYMMETRIC_IN_POINTS);
 const SYMMETRIC_OUT_COEFFICIENTS = calcCubicCoefficients(SYMMETRIC_OUT_POINTS);
 
-function calcSymmetric(
-  x: number,
-  coefficients: CubicCoefficients[],
-  points: number[],
-): number {
+function calcSymmetric(x: number, coefficients: CubicCoefficients[], points: number[]): number {
   if (x <= pointAt(points, 0)) return pointAt(points, 1);
   if (x >= pointAt(points, points.length - 2)) return pointAt(points, points.length - 1);
 
@@ -143,15 +146,15 @@ function calcSymmetric(
 
   const x2 = x * x;
   const x3 = x2 * x;
-  return cubicCoefficients.a + (x * cubicCoefficients.b)
-    + (x2 * cubicCoefficients.c) + (x3 * cubicCoefficients.d);
+  return (
+    cubicCoefficients.a +
+    x * cubicCoefficients.b +
+    x2 * cubicCoefficients.c +
+    x3 * cubicCoefficients.d
+  );
 }
 
-export function getAudioFadeValue(
-  x: number,
-  fadeType: AudioFadeType,
-  fadeIn: boolean,
-): number {
+export function getAudioFadeValue(x: number, fadeType: AudioFadeType, fadeIn: boolean): number {
   const cx = Math.max(0, Math.min(1, x));
 
   if (fadeIn) {
@@ -188,7 +191,7 @@ export function getAudioFadeValue(
     }
   }
 
-  return fadeIn ? cx : (1.0 - cx);
+  return fadeIn ? cx : 1.0 - cx;
 }
 
 export function buildFadePolygon(

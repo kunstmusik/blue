@@ -36,7 +36,7 @@ describe('ClojureProjectData', () => {
 
     expect(data.getPomegranateString()).toBe(
       "(use '[cemerick.pomegranate :only (add-dependencies)])\n" +
-        "(add-dependencies :coordinates '[[com.kunstmusik/score \"0.3.0\" :exclusions [org.clojure/clojure]]\n" +
+        '(add-dependencies :coordinates \'[[com.kunstmusik/score "0.3.0" :exclusions [org.clojure/clojure]]\n' +
         '] :repositories (merge cemerick.pomegranate.aether/maven-central {"clojars" "https://repo.clojars.org"}))',
     );
 
@@ -47,8 +47,8 @@ describe('ClojureProjectData', () => {
 
     expect(data.getPomegranateString()).toBe(
       "(use '[cemerick.pomegranate :only (add-dependencies)])\n" +
-        "(add-dependencies :coordinates '[[com.kunstmusik/score \"0.3.0\" :exclusions [org.clojure/clojure]]\n" +
-        "[com.kunstmusik/pink \"0.3.0\" :exclusions [org.clojure/clojure]]\n" +
+        '(add-dependencies :coordinates \'[[com.kunstmusik/score "0.3.0" :exclusions [org.clojure/clojure]]\n' +
+        '[com.kunstmusik/pink "0.3.0" :exclusions [org.clojure/clojure]]\n' +
         '] :repositories (merge cemerick.pomegranate.aether/maven-central {"clojars" "https://repo.clojars.org"}))',
     );
   });
@@ -92,9 +92,9 @@ describe('ClojureProjectData', () => {
 
     const replaced = replaceClojureProjectDataInPluginData(pluginDataXml, replacement);
     expect(replaced).toHaveLength(2);
-    expect(loadClojureProjectDataFromPluginData(replaced)?.getLibraryEntries()[0].getVersion()).toBe(
-      '0.4.0',
-    );
+    expect(
+      loadClojureProjectDataFromPluginData(replaced)?.getLibraryEntries()[0].getVersion(),
+    ).toBe('0.4.0');
     expect(replaced[0].getAttribute('bdoType')).toBe('other.Plugin');
   });
 

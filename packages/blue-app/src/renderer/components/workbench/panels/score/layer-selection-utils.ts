@@ -64,7 +64,9 @@ export function buildSelectionKey(groupId: string, layerSelectionId: string): st
   return `${groupId}:${layerSelectionId}`;
 }
 
-export function parseSelectionKey(key: string): { groupId: string; layerSelectionId: string } | null {
+export function parseSelectionKey(
+  key: string,
+): { groupId: string; layerSelectionId: string } | null {
   const index = key.indexOf(':');
   if (index === -1) return null;
   return {
@@ -151,9 +153,8 @@ export function deriveSelectedLayerRanges(
   };
 
   for (const ref of selectedRefs) {
-    const startsNewRange = !current
-      || current.groupId !== ref.groupId
-      || ref.localIndex !== current.endIndex + 1;
+    const startsNewRange =
+      !current || current.groupId !== ref.groupId || ref.localIndex !== current.endIndex + 1;
     if (startsNewRange) {
       flush();
       current = {
@@ -296,7 +297,9 @@ export function createRemoveLayerRangesPatch(
   };
 }
 
-export function getPushDisabledReasonLabel(reason: PushDisabledReason | undefined): string | undefined {
+export function getPushDisabledReasonLabel(
+  reason: PushDisabledReason | undefined,
+): string | undefined {
   switch (reason) {
     case 'no-selection':
       return 'Select a layer first';

@@ -11,7 +11,9 @@ import type {
 import BSBInterfaceCanvas from '../components/workbench/panels/orchestra/bsb/BSBInterfaceCanvas';
 import { useBsbClipboardStore } from '../stores/bsb-clipboard-store';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 function makeWidgetNode(overrides: Partial<BsbWidgetNodeSnapshot> = {}): BsbWidgetNodeSnapshot {
   return {
@@ -61,7 +63,10 @@ function makeInstrument(): BlueSynthBuilderInstrumentSnapshot {
   };
 }
 
-function renderRoot(element: React.ReactElement): { container: HTMLDivElement; unmount: () => void } {
+function renderRoot(element: React.ReactElement): {
+  container: HTMLDivElement;
+  unmount: () => void;
+} {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root: Root = createRoot(container);
@@ -113,7 +118,9 @@ describe('BSB keyboard shortcut scoping', () => {
       );
       cleanup = rendered.unmount;
 
-      const canvas = rendered.container.querySelector('[data-shortcut-scope="bsb-interface-canvas"]') as HTMLDivElement | null;
+      const canvas = rendered.container.querySelector(
+        '[data-shortcut-scope="bsb-interface-canvas"]',
+      ) as HTMLDivElement | null;
       expect(canvas).not.toBeNull();
 
       act(() => {
@@ -155,7 +162,9 @@ describe('BSB keyboard shortcut scoping', () => {
       );
       cleanup = rendered.unmount;
 
-      const canvas = rendered.container.querySelector('[data-shortcut-scope="bsb-interface-canvas"]') as HTMLDivElement | null;
+      const canvas = rendered.container.querySelector(
+        '[data-shortcut-scope="bsb-interface-canvas"]',
+      ) as HTMLDivElement | null;
       expect(canvas).not.toBeNull();
 
       act(() => {
@@ -205,7 +214,9 @@ describe('BSB keyboard shortcut scoping', () => {
       );
       cleanup = rendered.unmount;
 
-      const canvas = rendered.container.querySelector('[data-shortcut-scope="bsb-interface-canvas"]') as HTMLDivElement | null;
+      const canvas = rendered.container.querySelector(
+        '[data-shortcut-scope="bsb-interface-canvas"]',
+      ) as HTMLDivElement | null;
       const inner = canvas?.firstElementChild as HTMLDivElement | null;
       expect(inner).not.toBeNull();
       if (!inner) {
@@ -276,7 +287,9 @@ describe('BSB keyboard shortcut scoping', () => {
       );
       cleanup = rendered.unmount;
 
-      const button = rendered.container.querySelector('[data-widget-id="sub-channel"] button') as HTMLButtonElement | null;
+      const button = rendered.container.querySelector(
+        '[data-widget-id="sub-channel"] button',
+      ) as HTMLButtonElement | null;
       expect(button).not.toBeNull();
       expect(button?.disabled).toBe(false);
 

@@ -18,7 +18,6 @@ import { UDOStyle } from '../../src/opcodes/udo-style';
 import { Element } from '../../src/serialization/xml-reader';
 
 describe('UDOUtilities', () => {
-
   // ─── Parsing Modern UDO Text ───
 
   it('parses modern UDO text', () => {

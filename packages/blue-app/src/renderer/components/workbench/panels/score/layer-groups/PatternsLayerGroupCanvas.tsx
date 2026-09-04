@@ -1,16 +1,22 @@
-import { useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+} from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import type { SnapValueName } from '@blue/data';
 import type { MeterMapSnapshot } from '../../../../../../shared/project-editor';
-import type {
-  PatternCellEdit,
-  PatternsLayerGroupSnapshot,
-} from '../types';
+import type { PatternCellEdit, PatternsLayerGroupSnapshot } from '../types';
 import { DEFAULT_ROW_HEIGHT } from '../types';
 import { useProjectStore } from '../../../../../stores/project-store';
 import { useScoreSelectionStore } from '../../../../../stores/score-selection-store';
 import { useWorkbenchStore } from '../../../../../stores/workbench-store';
-import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../../hooks/host-portals';
+import {
+  PopoutContextMenuPortal,
+  portalEventIsolationProps,
+} from '../../../../../hooks/host-portals';
 import PatternGridRow from './PatternGridRow';
 import {
   beatToPixelX,
@@ -21,10 +27,7 @@ import {
   pixelXToBeat,
   safePixelsPerBeat,
 } from './patterns-timeline-utils';
-import {
-  mapPatternShapeToTarget,
-  SINGLE_PATTERN_CELL_SHAPE,
-} from './patterns-clipboard-utils';
+import { mapPatternShapeToTarget, SINGLE_PATTERN_CELL_SHAPE } from './patterns-clipboard-utils';
 
 interface Props {
   group: PatternsLayerGroupSnapshot;
@@ -55,11 +58,7 @@ interface PaintPreviewCell extends PatternCellTarget {
   active: boolean;
 }
 
-export default function PatternsLayerGroupCanvas({
-  group,
-  totalBeats,
-  pixelsPerBeat,
-}: Props) {
+export default function PatternsLayerGroupCanvas({ group, totalBeats, pixelsPerBeat }: Props) {
   const applyProjectDocumentPatch = useProjectStore((state) => state.applyProjectDocumentPatch);
   const flushPendingPatches = useProjectStore((state) => state.flushPendingPatches);
   const openPanel = useWorkbenchStore((state) => state.openPanel);
@@ -74,22 +73,25 @@ export default function PatternsLayerGroupCanvas({
   const [contextTarget, setContextTarget] = useState<PatternCellTarget | null>(null);
 
   const scale = safePixelsPerBeat(pixelsPerBeat);
-  const stepBeats = Number.isFinite(group.effectivePatternBeatsLength)
-    && group.effectivePatternBeatsLength > 0
-    ? group.effectivePatternBeatsLength
-    : 1;
+  const stepBeats =
+    Number.isFinite(group.effectivePatternBeatsLength) && group.effectivePatternBeatsLength > 0
+      ? group.effectivePatternBeatsLength
+      : 1;
   const stepWidth = beatToPixelX(stepBeats, scale);
   const contentWidth = Math.max(totalBeats, computePatternExtentBeats(group), stepBeats) * scale;
 
-  const commitPatternPatch = useCallback((changes: PatternCellEdit[]) => {
-    if (changes.length === 0) return;
-    void (async () => {
-      await applyProjectDocumentPatch({
-        score: { type: 'updatePatternCells', groupId: group.groupId, changes },
-      });
-      await flushPendingPatches();
-    })();
-  }, [applyProjectDocumentPatch, flushPendingPatches, group.groupId]);
+  const commitPatternPatch = useCallback(
+    (changes: PatternCellEdit[]) => {
+      if (changes.length === 0) return;
+      void (async () => {
+        await applyProjectDocumentPatch({
+          score: { type: 'updatePatternCells', groupId: group.groupId, changes },
+        });
+        await flushPendingPatches();
+      })();
+    },
+    [applyProjectDocumentPatch, flushPendingPatches, group.groupId],
+  );
 
   const toLocalXY = useCallback((clientX: number, clientY: number): { x: number; y: number } => {
     const element = containerRef.current;
@@ -98,15 +100,18 @@ export default function PatternsLayerGroupCanvas({
     return { x: clientX - rect.left, y: clientY - rect.top };
   }, []);
 
-  const cellTargetAtPoint = useCallback((clientX: number, clientY: number): PatternCellTarget | null => {
-    const { x, y } = toLocalXY(clientX, clientY);
-    const rowHit = findPatternRowAtY(group.layers, y, DEFAULT_ROW_HEIGHT);
-    if (!rowHit) return null;
-    return {
-      layerId: rowHit.layer.layerId,
-      cellIndex: cellIndexAtBeat(pixelXToBeat(x, scale), stepBeats),
-    };
-  }, [group.layers, scale, stepBeats, toLocalXY]);
+  const cellTargetAtPoint = useCallback(
+    (clientX: number, clientY: number): PatternCellTarget | null => {
+      const { x, y } = toLocalXY(clientX, clientY);
+      const rowHit = findPatternRowAtY(group.layers, y, DEFAULT_ROW_HEIGHT);
+      if (!rowHit) return null;
+      return {
+        layerId: rowHit.layer.layerId,
+        cellIndex: cellIndexAtBeat(pixelXToBeat(x, scale), stepBeats),
+      };
+    },
+    [group.layers, scale, stepBeats, toLocalXY],
+  );
 
   const setPreviewForGesture = useCallback((gesture: PaintGesture) => {
     const preview = [...gesture.changes.entries()]
@@ -119,39 +124,45 @@ export default function PatternsLayerGroupCanvas({
     setPaintPreview(preview);
   }, []);
 
-  const handleMouseDown = useCallback((event: ReactMouseEvent<HTMLDivElement>) => {
-    if (event.button !== 0) return;
-    const target = cellTargetAtPoint(event.clientX, event.clientY);
-    if (!target) return;
-    const layer = group.layers.find((candidate) => candidate.layerId === target.layerId);
-    if (!layer) return;
+  const handleMouseDown = useCallback(
+    (event: ReactMouseEvent<HTMLDivElement>) => {
+      if (event.button !== 0) return;
+      const target = cellTargetAtPoint(event.clientX, event.clientY);
+      if (!target) return;
+      const layer = group.layers.find((candidate) => candidate.layerId === target.layerId);
+      if (!layer) return;
 
-    const active = !layer.activeCellIndices.includes(target.cellIndex);
-    const gesture: PaintGesture = {
-      layerId: target.layerId,
-      active,
-      lastCellIndex: target.cellIndex,
-      changes: new Map([[target.cellIndex, active]]),
-    };
-    gestureRef.current = gesture;
-    setPreviewForGesture(gesture);
-    setGestureActive(true);
-    event.preventDefault();
-  }, [cellTargetAtPoint, group.layers, setPreviewForGesture]);
+      const active = !layer.activeCellIndices.includes(target.cellIndex);
+      const gesture: PaintGesture = {
+        layerId: target.layerId,
+        active,
+        lastCellIndex: target.cellIndex,
+        changes: new Map([[target.cellIndex, active]]),
+      };
+      gestureRef.current = gesture;
+      setPreviewForGesture(gesture);
+      setGestureActive(true);
+      event.preventDefault();
+    },
+    [cellTargetAtPoint, group.layers, setPreviewForGesture],
+  );
 
-  const handleWindowMouseMove = useCallback((event: MouseEvent) => {
-    const gesture = gestureRef.current;
-    if (!gesture) return;
-    const { x } = toLocalXY(event.clientX, event.clientY);
-    const cellIndex = cellIndexAtBeat(pixelXToBeat(x, scale), stepBeats);
-    if (cellIndex === gesture.lastCellIndex) return;
+  const handleWindowMouseMove = useCallback(
+    (event: MouseEvent) => {
+      const gesture = gestureRef.current;
+      if (!gesture) return;
+      const { x } = toLocalXY(event.clientX, event.clientY);
+      const cellIndex = cellIndexAtBeat(pixelXToBeat(x, scale), stepBeats);
+      if (cellIndex === gesture.lastCellIndex) return;
 
-    for (const traversedCell of cellsBetween(gesture.lastCellIndex, cellIndex)) {
-      gesture.changes.set(traversedCell, gesture.active);
-    }
-    gesture.lastCellIndex = cellIndex;
-    setPreviewForGesture(gesture);
-  }, [scale, setPreviewForGesture, stepBeats, toLocalXY]);
+      for (const traversedCell of cellsBetween(gesture.lastCellIndex, cellIndex)) {
+        gesture.changes.set(traversedCell, gesture.active);
+      }
+      gesture.lastCellIndex = cellIndex;
+      setPreviewForGesture(gesture);
+    },
+    [scale, setPreviewForGesture, stepBeats, toLocalXY],
+  );
 
   const handleWindowMouseUp = useCallback(() => {
     const gesture = gestureRef.current;
@@ -160,13 +171,15 @@ export default function PatternsLayerGroupCanvas({
     setPaintPreview([]);
     if (!gesture) return;
 
-    commitPatternPatch([...gesture.changes.entries()]
-      .sort(([left], [right]) => left - right)
-      .map(([cellIndex, active]) => ({
-        layerId: gesture.layerId,
-        cellIndex,
-        active,
-      })));
+    commitPatternPatch(
+      [...gesture.changes.entries()]
+        .sort(([left], [right]) => left - right)
+        .map(([cellIndex, active]) => ({
+          layerId: gesture.layerId,
+          cellIndex,
+          active,
+        })),
+    );
   }, [commitPatternPatch]);
 
   useEffect(() => {
@@ -186,16 +199,20 @@ export default function PatternsLayerGroupCanvas({
     setContextTarget(null);
   }, [group.groupId]);
 
-  const handleContextMenu = useCallback((event: ReactMouseEvent<HTMLDivElement>) => {
-    setContextTarget(cellTargetAtPoint(event.clientX, event.clientY));
-  }, [cellTargetAtPoint]);
+  const handleContextMenu = useCallback(
+    (event: ReactMouseEvent<HTMLDivElement>) => {
+      setContextTarget(cellTargetAtPoint(event.clientX, event.clientY));
+    },
+    [cellTargetAtPoint],
+  );
 
   const targetLayer = contextTarget
     ? group.layers.find((layer) => layer.layerId === contextTarget.layerId)
     : undefined;
-  const targetIsActive = !!targetLayer
-    && !!contextTarget
-    && targetLayer.activeCellIndices.includes(contextTarget.cellIndex);
+  const targetIsActive =
+    !!targetLayer &&
+    !!contextTarget &&
+    targetLayer.activeCellIndices.includes(contextTarget.cellIndex);
   const canPaste = !!patternClipboard && !!contextTarget;
 
   const handleCopy = useCallback(() => {
@@ -219,13 +236,16 @@ export default function PatternsLayerGroupCanvas({
     commitPatternPatch(mapPatternShapeToTarget(patternClipboard, contextTarget, group));
   }, [commitPatternPatch, contextTarget, group, patternClipboard]);
 
-  const selectSourceForTarget = useCallback((target: PatternCellTarget | null) => {
-    if (!target) return;
-    const layer = group.layers.find((candidate) => candidate.layerId === target.layerId);
-    if (!layer) return;
-    select(layer.sourceObject.objectId, false, layer.sourceObject.editorTarget);
-    openPanel('ScoreObjectEditorTopComponent');
-  }, [group.layers, openPanel, select]);
+  const selectSourceForTarget = useCallback(
+    (target: PatternCellTarget | null) => {
+      if (!target) return;
+      const layer = group.layers.find((candidate) => candidate.layerId === target.layerId);
+      if (!layer) return;
+      select(layer.sourceObject.objectId, false, layer.sourceObject.editorTarget);
+      openPanel('ScoreObjectEditorTopComponent');
+    },
+    [group.layers, openPanel, select],
+  );
 
   const handleProperties = useCallback(() => {
     selectSourceForTarget(contextTarget);
@@ -263,21 +283,45 @@ export default function PatternsLayerGroupCanvas({
       </ContextMenu.Trigger>
 
       <PopoutContextMenuPortal>
-        <ContextMenu.Content className="editor-context-menu" data-pattern-context-menu {...portalEventIsolationProps}>
-          <ContextMenu.Item className="editor-context-menu__item" disabled={!targetIsActive} onSelect={handleCut}>
+        <ContextMenu.Content
+          className="editor-context-menu"
+          data-pattern-context-menu
+          {...portalEventIsolationProps}
+        >
+          <ContextMenu.Item
+            className="editor-context-menu__item"
+            disabled={!targetIsActive}
+            onSelect={handleCut}
+          >
             Cut
           </ContextMenu.Item>
-          <ContextMenu.Item className="editor-context-menu__item" disabled={!targetIsActive} onSelect={handleCopy}>
+          <ContextMenu.Item
+            className="editor-context-menu__item"
+            disabled={!targetIsActive}
+            onSelect={handleCopy}
+          >
             Copy
           </ContextMenu.Item>
-          <ContextMenu.Item className="editor-context-menu__item" disabled={!canPaste} onSelect={handlePaste}>
+          <ContextMenu.Item
+            className="editor-context-menu__item"
+            disabled={!canPaste}
+            onSelect={handlePaste}
+          >
             Paste
           </ContextMenu.Item>
-          <ContextMenu.Item className="editor-context-menu__item" disabled={!targetIsActive} onSelect={handleDelete}>
+          <ContextMenu.Item
+            className="editor-context-menu__item"
+            disabled={!targetIsActive}
+            onSelect={handleDelete}
+          >
             Delete
           </ContextMenu.Item>
           <ContextMenu.Separator className="editor-context-menu__separator" />
-          <ContextMenu.Item className="editor-context-menu__item" disabled={!targetLayer} onSelect={handleProperties}>
+          <ContextMenu.Item
+            className="editor-context-menu__item"
+            disabled={!targetLayer}
+            onSelect={handleProperties}
+          >
             Properties
           </ContextMenu.Item>
         </ContextMenu.Content>

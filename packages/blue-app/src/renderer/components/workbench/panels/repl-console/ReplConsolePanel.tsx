@@ -72,10 +72,7 @@ export default function ReplConsolePanel({ language }: ReplConsolePanelProps): R
 
   const appendLine = useCallback((kind: ConsoleLine['kind'], text: string) => {
     if (!text) return;
-    setLines((current) => [
-      ...current,
-      { id: nextLineId.current++, kind, text },
-    ]);
+    setLines((current) => [...current, { id: nextLineId.current++, kind, text }]);
   }, []);
 
   const openConsole = useCallback(async () => {
@@ -88,7 +85,10 @@ export default function ReplConsolePanel({ language }: ReplConsolePanelProps): R
       setRuntimeMessage(result.error ?? null);
       const marker = `${result.project.sessionId}:${result.project.loaded ? result.project.label : 'No Project'}`;
       if (lastProjectMarker.current !== marker) {
-        appendLine('system', `// project: ${result.project.loaded ? result.project.label : 'No Project'}`);
+        appendLine(
+          'system',
+          `// project: ${result.project.loaded ? result.project.label : 'No Project'}`,
+        );
         lastProjectMarker.current = marker;
       }
     } catch (error: unknown) {
@@ -160,14 +160,22 @@ export default function ReplConsolePanel({ language }: ReplConsolePanelProps): R
     }
   }, [appendLine, busy, input, language, runtime]);
 
-  const handleHistory = useCallback((direction: 'previous' | 'next') => {
-    if (history.length === 0) return;
-    const nextIndex = direction === 'previous'
-      ? historyIndex < 0 ? history.length - 1 : Math.max(0, historyIndex - 1)
-      : historyIndex < 0 ? -1 : Math.min(history.length - 1, historyIndex + 1);
-    setHistoryIndex(nextIndex);
-    setInput(nextIndex < 0 ? '' : history[nextIndex] ?? '');
-  }, [history, historyIndex]);
+  const handleHistory = useCallback(
+    (direction: 'previous' | 'next') => {
+      if (history.length === 0) return;
+      const nextIndex =
+        direction === 'previous'
+          ? historyIndex < 0
+            ? history.length - 1
+            : Math.max(0, historyIndex - 1)
+          : historyIndex < 0
+            ? -1
+            : Math.min(history.length - 1, historyIndex + 1);
+      setHistoryIndex(nextIndex);
+      setInput(nextIndex < 0 ? '' : (history[nextIndex] ?? ''));
+    },
+    [history, historyIndex],
+  );
 
   const handleReinitialize = useCallback(async () => {
     if (!window.blueAPI?.reinitializeReplConsole || busy) return;
@@ -197,14 +205,19 @@ export default function ReplConsolePanel({ language }: ReplConsolePanelProps): R
   const canRun = runtime === 'ready' && !busy;
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-app-canvas text-app-text" data-testid={`${language}-repl-console`}>
+    <div
+      className="flex h-full min-h-0 flex-col bg-app-canvas text-app-text"
+      data-testid={`${language}-repl-console`}
+    >
       <div className="flex shrink-0 items-center justify-between border-b border-app-border bg-app-surface px-3 py-1.5">
         <span className="text-role-callout font-medium text-app-text-strong">{config.title}</span>
         <div className="flex items-center gap-1">
           <button
             type="button"
             className="rounded border border-transparent p-1.5 text-app-text-muted hover:border-app-border hover:bg-app-hover hover:text-app-text-strong disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() => { void handleReinitialize(); }}
+            onClick={() => {
+              void handleReinitialize();
+            }}
             disabled={busy}
             title={`Reinitialize ${config.title}`}
             aria-label={`Reinitialize ${config.title}`}
@@ -223,11 +236,16 @@ export default function ReplConsolePanel({ language }: ReplConsolePanelProps): R
         </div>
       </div>
 
-      <div ref={outputRef} className="min-h-0 flex-1 overflow-y-auto px-3 py-2 font-mono text-role-body">
+      <div
+        ref={outputRef}
+        className="min-h-0 flex-1 overflow-y-auto px-3 py-2 font-mono text-role-body"
+      >
         {lines.map((line) => (
           <div key={line.id} className="group flex whitespace-pre-wrap break-words">
             {line.kind === 'input' ? (
-              <span className="shrink-0 select-none font-semibold" style={{ color: config.accent }}>{config.prompt}</span>
+              <span className="shrink-0 select-none font-semibold" style={{ color: config.accent }}>
+                {config.prompt}
+              </span>
             ) : (
               <span
                 className="shrink-0 select-none text-app-text-subtle"
@@ -237,19 +255,34 @@ export default function ReplConsolePanel({ language }: ReplConsolePanelProps): R
                 {' '}
               </span>
             )}
-            <span className={line.kind === 'error' ? 'text-app-error' : line.kind === 'system' ? 'text-app-text-muted' : line.kind === 'input' ? 'text-app-text-strong' : 'text-app-text'}>
+            <span
+              className={
+                line.kind === 'error'
+                  ? 'text-app-error'
+                  : line.kind === 'system'
+                    ? 'text-app-text-muted'
+                    : line.kind === 'input'
+                      ? 'text-app-text-strong'
+                      : 'text-app-text'
+              }
+            >
               {line.text}
             </span>
           </div>
         ))}
         {busy ? (
           <div className="mt-1 flex items-center gap-2 text-app-text-muted">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: config.accent }} />
+            <span
+              className="h-1.5 w-1.5 animate-pulse rounded-full"
+              style={{ backgroundColor: config.accent }}
+            />
             Evaluating…
           </div>
         ) : null}
         <div className="flex items-start whitespace-pre-wrap break-words">
-          <span className="shrink-0 select-none font-semibold" style={{ color: config.accent }}>{config.prompt}</span>
+          <span className="shrink-0 select-none font-semibold" style={{ color: config.accent }}>
+            {config.prompt}
+          </span>
           <textarea
             ref={inputRef}
             value={input}

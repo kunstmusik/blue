@@ -5,14 +5,13 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ScratchPadPanel from '../components/workbench/panels/ScratchPadPanel';
-import {
-  __testClearPendingPatches,
-  useProjectStore,
-} from '../stores/project-store';
+import { __testClearPendingPatches, useProjectStore } from '../stores/project-store';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 import { getPanel } from '../../shared/workbench-menu';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 let commitProjectDocumentPatches: ReturnType<typeof vi.fn>;
 

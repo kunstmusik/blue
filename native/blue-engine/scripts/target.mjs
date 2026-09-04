@@ -1,9 +1,15 @@
 import process from 'node:process';
 
 const supportedTargets = new Map([
-  ['darwin-arm64', { platform: 'darwin', arch: 'arm64', triplet: 'blue-arm64-osx', preset: 'macos-arm64' }],
+  [
+    'darwin-arm64',
+    { platform: 'darwin', arch: 'arm64', triplet: 'blue-arm64-osx', preset: 'macos-arm64' },
+  ],
   ['darwin-x64', { platform: 'darwin', arch: 'x64', triplet: 'blue-x64-osx', preset: 'macos-x64' }],
-  ['win32-x64', { platform: 'win32', arch: 'x64', triplet: 'blue-x64-windows', preset: 'windows-x64' }],
+  [
+    'win32-x64',
+    { platform: 'win32', arch: 'x64', triplet: 'blue-x64-windows', preset: 'windows-x64' },
+  ],
   ['linux-x64', { platform: 'linux', arch: 'x64', triplet: 'blue-x64-linux', preset: 'linux-x64' }],
 ]);
 

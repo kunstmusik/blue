@@ -51,7 +51,10 @@ describe('syncBsbInstrumentRuntimeChannels', () => {
     track.setInstrument(instrument);
     data.getScore().push(group);
     const trackInstrument = track.getInstrument() as BlueSynthBuilder;
-    const trackKnob = trackInstrument.getGraphicInterface().getRootGroup().getChildren()[0] as BSBKnob;
+    const trackKnob = trackInstrument
+      .getGraphicInterface()
+      .getRootGroup()
+      .getChildren()[0] as BSBKnob;
     trackInstrument.getParameters()[0]!.setCompilationVarName('gk_blue_auto3');
 
     const writer = vi.fn(async () => {});

@@ -141,13 +141,9 @@ export default function SplitPane({
   const maxFirstSize = Math.max(0, availableSize - minSecondSize);
   const minFirstBound = Math.max(0, Math.min(minFirstSize, maxFirstSize));
   const controlledMin =
-    controlledPane === 'first'
-      ? minFirstBound
-      : Math.max(0, availableSize - maxFirstSize);
+    controlledPane === 'first' ? minFirstBound : Math.max(0, availableSize - maxFirstSize);
   const controlledMax =
-    controlledPane === 'first'
-      ? maxFirstSize
-      : Math.max(0, availableSize - minFirstSize);
+    controlledPane === 'first' ? maxFirstSize : Math.max(0, availableSize - minFirstSize);
 
   // Choose the rendered first-pane size:
   //  - When splitId is set, derive from the persisted controlled-pane size and
@@ -223,16 +219,11 @@ export default function SplitPane({
       const pointerOffset = getPointerOffset(moveEvent, rect, orientation);
       const nextMaxFirstSize = Math.max(0, available - minSecondSize);
       const nextMinFirstSize = Math.max(0, Math.min(minFirstSize, nextMaxFirstSize));
-      const nextFirstSize = Math.min(
-        Math.max(pointerOffset, nextMinFirstSize),
-        nextMaxFirstSize,
-      );
+      const nextFirstSize = Math.min(Math.max(pointerOffset, nextMinFirstSize), nextMaxFirstSize);
 
       if (splitId) {
         const nextControlled =
-          controlledPane === 'first'
-            ? nextFirstSize
-            : Math.max(0, available - nextFirstSize);
+          controlledPane === 'first' ? nextFirstSize : Math.max(0, available - nextFirstSize);
         setControlledSizePx(nextControlled);
         persistControlledSize(nextControlled);
       } else {
@@ -265,7 +256,9 @@ export default function SplitPane({
 
       const clampedFirstSize = clampSplitSizePx(nextFirstSize, minFirstBound, maxFirstSize);
       const nextControlled =
-        controlledPane === 'first' ? clampedFirstSize : Math.max(0, availableSize - clampedFirstSize);
+        controlledPane === 'first'
+          ? clampedFirstSize
+          : Math.max(0, availableSize - clampedFirstSize);
       const clampedControlledSize = clampSplitSizePx(nextControlled, controlledMin, controlledMax);
       setControlledSizePx(clampedControlledSize);
       persistControlledSize(clampedControlledSize);
@@ -291,13 +284,15 @@ export default function SplitPane({
     if (nextRatio === null) return;
 
     event.preventDefault();
-    setSplitRatio(Math.min(Math.max(nextRatio, minFirstBound / availableSize), maxFirstSize / availableSize));
+    setSplitRatio(
+      Math.min(Math.max(nextRatio, minFirstBound / availableSize), maxFirstSize / availableSize),
+    );
   };
 
   const containerClasses = cn(
     'flex h-full min-h-0 w-full overflow-hidden',
     orientation === 'horizontal' ? 'flex-row' : 'flex-col',
-    className
+    className,
   );
 
   const accessibleControlledSize =
@@ -307,18 +302,16 @@ export default function SplitPane({
 
   const paneClasses = 'min-h-0 min-w-0 overflow-hidden';
   const firstPaneStyle =
-    orientation === 'horizontal'
-      ? { width: `${firstSize}px` }
-      : { height: `${firstSize}px` };
+    orientation === 'horizontal' ? { width: `${firstSize}px` } : { height: `${firstSize}px` };
 
   const handleClasses = cn(
     'group flex flex-none items-center justify-center border-blue-border bg-app-surface-strong transition-colors hover:bg-app-hover focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-app-accent',
-    orientation === 'horizontal' ? 'h-full w-3 cursor-col-resize' : 'h-3 w-full cursor-row-resize'
+    orientation === 'horizontal' ? 'h-full w-3 cursor-col-resize' : 'h-3 w-full cursor-row-resize',
   );
 
   const handleGripClasses = cn(
     'rounded-full bg-blue-border/80 transition-colors group-hover:bg-blue-accent',
-    orientation === 'horizontal' ? 'h-10 w-px' : 'h-px w-10'
+    orientation === 'horizontal' ? 'h-10 w-px' : 'h-px w-10',
   );
 
   const firstPaneDataset = splitId
@@ -349,9 +342,7 @@ export default function SplitPane({
       >
         <div className={handleGripClasses} />
       </button>
-      <div className={cn(paneClasses, 'flex-1', secondClassName)}>
-        {second}
-      </div>
+      <div className={cn(paneClasses, 'flex-1', secondClassName)}>{second}</div>
     </div>
   );
 }

@@ -1,9 +1,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '../../lib/cn';
-import type { LibraryBrowseNode, LibraryDragDescriptor, LibraryInteractionClipboard, LibraryItemKey } from '../../../shared/unified-library';
+import type {
+  LibraryBrowseNode,
+  LibraryDragDescriptor,
+  LibraryInteractionClipboard,
+  LibraryItemKey,
+} from '../../../shared/unified-library';
 import { LibraryContextMenu } from './LibraryContextMenu';
-import { BLUE_LIBRARY_DRAG_MIME, beginLibraryNodeDrag, cancelLibraryNodeDrag, readLibraryDragDescriptor, writeLibraryDragDescriptor } from './library-drag-drop';
+import {
+  BLUE_LIBRARY_DRAG_MIME,
+  beginLibraryNodeDrag,
+  cancelLibraryNodeDrag,
+  readLibraryDragDescriptor,
+  writeLibraryDragDescriptor,
+} from './library-drag-drop';
 
 interface LibraryTreeProps {
   label: string;
@@ -42,7 +53,8 @@ export function validateLibraryNodeName(name: string): string | null {
   const normalized = name.normalize('NFKC').trim();
   if (!normalized) return 'A name is required.';
   if (normalized.length > 255) return 'Names must be 255 characters or fewer.';
-  if (/[/\\\u0000-\u001f]/u.test(normalized)) return 'Names cannot contain slashes or control characters.';
+  if (/[/\\\u0000-\u001f]/u.test(normalized))
+    return 'Names cannot contain slashes or control characters.';
   return null;
 }
 
@@ -108,15 +120,20 @@ export function LibraryTree({
     append(nodes, 1);
     return result;
   }, [childrenByParent, expanded, nodes]);
-  const visibleById = useMemo(() => new Map(
-    [
-      ...visible.map(({ node }) => node),
-      ...(dropRoot ? [dropRoot] : []),
-    ].map((node) => [node.nodeId, node]),
-  ), [dropRoot, visible]);
-  const resolvedActiveIndex = selectedNodeId === undefined
-    ? activeIndex
-    : visible.findIndex(({ node }) => node.nodeId === selectedNodeId);
+  const visibleById = useMemo(
+    () =>
+      new Map(
+        [...visible.map(({ node }) => node), ...(dropRoot ? [dropRoot] : [])].map((node) => [
+          node.nodeId,
+          node,
+        ]),
+      ),
+    [dropRoot, visible],
+  );
+  const resolvedActiveIndex =
+    selectedNodeId === undefined
+      ? activeIndex
+      : visible.findIndex(({ node }) => node.nodeId === selectedNodeId);
 
   const markActive = (index: number): void => {
     setActiveIndex(index);
@@ -124,19 +141,19 @@ export function LibraryTree({
     if (nodeId) onSelectedNodeChange?.(nodeId);
   };
 
-  const isDescendantDestination = useCallback((
-    source: LibraryBrowseNode,
-    destination: LibraryBrowseNode,
-  ): boolean => {
-    let current: LibraryBrowseNode | undefined = destination;
-    const visited = new Set<string>();
-    while (current && !visited.has(current.nodeId)) {
-      if (current.nodeId === source.nodeId) return true;
-      visited.add(current.nodeId);
-      current = current.parentId ? visibleById.get(current.parentId) : undefined;
-    }
-    return false;
-  }, [visibleById]);
+  const isDescendantDestination = useCallback(
+    (source: LibraryBrowseNode, destination: LibraryBrowseNode): boolean => {
+      let current: LibraryBrowseNode | undefined = destination;
+      const visited = new Set<string>();
+      while (current && !visited.has(current.nodeId)) {
+        if (current.nodeId === source.nodeId) return true;
+        visited.add(current.nodeId);
+        current = current.parentId ? visibleById.get(current.parentId) : undefined;
+      }
+      return false;
+    },
+    [visibleById],
+  );
 
   const toggle = (node: LibraryBrowseNode): void => {
     if (node.nodeKind === 'item') return;
@@ -153,13 +170,14 @@ export function LibraryTree({
 
   const prepareDrag = useCallback((node: LibraryBrowseNode) => {
     if (node.supportStatus === 'unsupported' || dragDescriptors.current[node.nodeId]) return;
-    const descriptor = node.scope === 'user' && node.nodeKind === 'folder'
-      ? {
-          dragSessionId: crypto.randomUUID(),
-          libraryType: node.libraryType,
-          sourceScope: 'user' as const,
-        }
-      : beginLibraryNodeDrag(node);
+    const descriptor =
+      node.scope === 'user' && node.nodeKind === 'folder'
+        ? {
+            dragSessionId: crypto.randomUUID(),
+            libraryType: node.libraryType,
+            sourceScope: 'user' as const,
+          }
+        : beginLibraryNodeDrag(node);
     if (descriptor) {
       dragDescriptors.current[node.nodeId] = descriptor;
       if (node.scope === 'user') draggedUserNodes.current[descriptor.dragSessionId] = node;
@@ -199,27 +217,34 @@ export function LibraryTree({
       role="tree"
       aria-label={label}
       tabIndex={0}
-      aria-activedescendant={visible[resolvedActiveIndex] ? `library-node-${visible[resolvedActiveIndex].node.nodeId}` : undefined}
+      aria-activedescendant={
+        visible[resolvedActiveIndex]
+          ? `library-node-${visible[resolvedActiveIndex].node.nodeId}`
+          : undefined
+      }
       className="outline-none focus-visible:ring-1 focus-visible:ring-app-accent"
       onDragOver={(event) => {
         if (!event.dataTransfer.types.includes(BLUE_LIBRARY_DRAG_MIME)) return;
         const transferredDescriptor = readLibraryDragDescriptor(event.dataTransfer);
-        const descriptor = transferredDescriptor?.sourceScope === 'user'
-          ? transferredDescriptor
-          : activeUserDragDescriptor.current ?? transferredDescriptor;
+        const descriptor =
+          transferredDescriptor?.sourceScope === 'user'
+            ? transferredDescriptor
+            : (activeUserDragDescriptor.current ?? transferredDescriptor);
         const row = (event.target as HTMLElement).closest<HTMLElement>('[data-library-node-id]');
-        const destination = visible.find(({ node }) => node.nodeId === row?.dataset.libraryNodeId)?.node ?? dropRoot;
+        const destination =
+          visible.find(({ node }) => node.nodeId === row?.dataset.libraryNodeId)?.node ?? dropRoot;
         if (descriptor?.sourceScope === 'user') {
           const source = draggedUserNodes.current[descriptor.dragSessionId];
           if (
-            !source
-            || !onMoveToUser
-            || !destination
-            || destination.scope !== 'user'
-            || destination.nodeKind === 'item'
-            || source.libraryType !== destination.libraryType
-            || (source.nodeKind === 'folder' && isDescendantDestination(source, destination))
-          ) return;
+            !source ||
+            !onMoveToUser ||
+            !destination ||
+            destination.scope !== 'user' ||
+            destination.nodeKind === 'item' ||
+            source.libraryType !== destination.libraryType ||
+            (source.nodeKind === 'folder' && isDescendantDestination(source, destination))
+          )
+            return;
           event.preventDefault();
           event.dataTransfer.dropEffect = 'move';
           setDropTargetId(destination.nodeId);
@@ -227,37 +252,42 @@ export function LibraryTree({
         }
         if (!onTransferToUser) return;
         if (
-          !destination
-          || destination.scope !== 'user'
-          || (descriptor && destination.libraryType !== descriptor.libraryType)
-        ) return;
+          !destination ||
+          destination.scope !== 'user' ||
+          (descriptor && destination.libraryType !== descriptor.libraryType)
+        )
+          return;
         event.preventDefault();
         event.dataTransfer.dropEffect = 'copy';
         setDropTargetId(destination.nodeId);
       }}
       onDragLeave={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDropTargetId(null);
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null))
+          setDropTargetId(null);
       }}
       onDrop={(event) => {
         const transferredDescriptor = readLibraryDragDescriptor(event.dataTransfer);
-        const descriptor = transferredDescriptor?.sourceScope === 'user'
-          ? transferredDescriptor
-          : activeUserDragDescriptor.current ?? transferredDescriptor;
+        const descriptor =
+          transferredDescriptor?.sourceScope === 'user'
+            ? transferredDescriptor
+            : (activeUserDragDescriptor.current ?? transferredDescriptor);
         const row = (event.target as HTMLElement).closest<HTMLElement>('[data-library-node-id]');
-        const destination = visible.find(({ node }) => node.nodeId === row?.dataset.libraryNodeId)?.node ?? dropRoot;
+        const destination =
+          visible.find(({ node }) => node.nodeId === row?.dataset.libraryNodeId)?.node ?? dropRoot;
         setDropTargetId(null);
         if (descriptor?.sourceScope === 'user') {
           const source = draggedUserNodes.current[descriptor.dragSessionId];
           delete draggedUserNodes.current[descriptor.dragSessionId];
           if (
-            !source
-            || !onMoveToUser
-            || !destination
-            || destination.scope !== 'user'
-            || destination.nodeKind === 'item'
-            || source.libraryType !== destination.libraryType
-            || (source.nodeKind === 'folder' && isDescendantDestination(source, destination))
-          ) return;
+            !source ||
+            !onMoveToUser ||
+            !destination ||
+            destination.scope !== 'user' ||
+            destination.nodeKind === 'item' ||
+            source.libraryType !== destination.libraryType ||
+            (source.nodeKind === 'folder' && isDescendantDestination(source, destination))
+          )
+            return;
           event.preventDefault();
           onMoveToUser(source, destination);
           if (source.nodeKind === 'item') void cancelLibraryNodeDrag(descriptor);
@@ -265,12 +295,13 @@ export function LibraryTree({
           return;
         }
         if (
-          !descriptor
-          || !onTransferToUser
-          || !destination
-          || destination.scope !== 'user'
-          || destination.libraryType !== descriptor.libraryType
-        ) return;
+          !descriptor ||
+          !onTransferToUser ||
+          !destination ||
+          destination.scope !== 'user' ||
+          destination.libraryType !== descriptor.libraryType
+        )
+          return;
         event.preventDefault();
         onTransferToUser(descriptor, destination);
       }}
@@ -301,27 +332,29 @@ export function LibraryTree({
           if (node) {
             const row = document.getElementById(`library-node-${node.nodeId}`);
             const rect = row?.getBoundingClientRect();
-            row?.dispatchEvent(new MouseEvent('contextmenu', {
-              bubbles: true,
-              cancelable: true,
-              clientX: rect?.left ?? 12,
-              clientY: rect?.bottom ?? 12,
-            }));
+            row?.dispatchEvent(
+              new MouseEvent('contextmenu', {
+                bubbles: true,
+                cancelable: true,
+                clientX: rect?.left ?? 12,
+                clientY: rect?.bottom ?? 12,
+              }),
+            );
           }
         }
       }}
     >
-      <span className="sr-only" aria-live="polite">{dragMessage}</span>
-      {nodes.length === 0 && <p className="px-3 py-2 text-role-callout text-app-text-muted">No items</p>}
+      <span className="sr-only" aria-live="polite">
+        {dragMessage}
+      </span>
+      {nodes.length === 0 && (
+        <p className="px-3 py-2 text-role-callout text-app-text-muted">No items</p>
+      )}
       {visible.map(({ node, level }, index) => {
         const canExpand = node.nodeKind !== 'item';
-        const siblings = node.parentId
-          ? childrenByParent[node.parentId] ?? []
-          : nodes;
+        const siblings = node.parentId ? (childrenByParent[node.parentId] ?? []) : nodes;
         const siblingIndex = siblings.findIndex((candidate) => candidate.nodeId === node.nodeId);
-        const tooltip = node.nodeKind === 'item'
-          ? node.breadcrumb.join(' / ')
-          : node.displayName;
+        const tooltip = node.nodeKind === 'item' ? node.breadcrumb.join(' / ') : node.displayName;
         return (
           <LibraryContextMenu
             key={node.nodeId}
@@ -335,12 +368,16 @@ export function LibraryTree({
             onImportInstrument={onImportInstrument}
             onExportInstrument={onExportInstrument}
             onDelete={onDelete}
-            onMoveUp={onReorder && siblingIndex > 0
-              ? (candidate) => onReorder(candidate, siblingIndex - 1)
-              : undefined}
-            onMoveDown={onReorder && siblingIndex >= 0 && siblingIndex < siblings.length - 1
-              ? (candidate) => onReorder(candidate, siblingIndex + 1)
-              : undefined}
+            onMoveUp={
+              onReorder && siblingIndex > 0
+                ? (candidate) => onReorder(candidate, siblingIndex - 1)
+                : undefined
+            }
+            onMoveDown={
+              onReorder && siblingIndex >= 0 && siblingIndex < siblings.length - 1
+                ? (candidate) => onReorder(candidate, siblingIndex + 1)
+                : undefined
+            }
           >
             <div
               id={`library-node-${node.nodeId}`}
@@ -363,8 +400,10 @@ export function LibraryTree({
               onContextMenu={() => markActive(index)}
               onPointerDown={() => prepareDrag(node)}
               onMouseEnter={() => prepareDrag(node)}
-              draggable={(node.nodeKind === 'item' && node.supportStatus !== 'unsupported')
-                || (node.scope === 'user' && node.nodeKind === 'folder')}
+              draggable={
+                (node.nodeKind === 'item' && node.supportStatus !== 'unsupported') ||
+                (node.scope === 'user' && node.nodeKind === 'folder')
+              }
               onDragStart={(event) => {
                 // This is a browser-native library drag, not a React DnD
                 // Arborist source. Keep the shared tree manager from starting
@@ -389,25 +428,39 @@ export function LibraryTree({
                 delete dragDescriptors.current[node.nodeId];
                 if (descriptor) delete draggedUserNodes.current[descriptor.dragSessionId];
                 activeUserDragDescriptor.current = null;
-                setDragMessage(event.dataTransfer.dropEffect === 'none'
-                  ? 'Drag cancelled'
-                  : node.scope === 'user' ? `${node.displayName} moved` : `${node.displayName} added`);
+                setDragMessage(
+                  event.dataTransfer.dropEffect === 'none'
+                    ? 'Drag cancelled'
+                    : node.scope === 'user'
+                      ? `${node.displayName} moved`
+                      : `${node.displayName} added`,
+                );
               }}
             >
               <button
                 type="button"
                 tabIndex={-1}
-                aria-label={canExpand ? `${expanded.has(node.nodeId) ? 'Collapse' : 'Expand'} ${node.displayName}` : undefined}
-                className={canExpand
-                  ? 'flex h-6 w-6 shrink-0 items-center justify-center text-app-text-strong'
-                  : 'h-6 w-6 shrink-0 text-app-text-muted'}
-                onClick={() => canExpand ? toggle(node) : activate(index)}
+                aria-label={
+                  canExpand
+                    ? `${expanded.has(node.nodeId) ? 'Collapse' : 'Expand'} ${node.displayName}`
+                    : undefined
+                }
+                className={
+                  canExpand
+                    ? 'flex h-6 w-6 shrink-0 items-center justify-center text-app-text-strong'
+                    : 'h-6 w-6 shrink-0 text-app-text-muted'
+                }
+                onClick={() => (canExpand ? toggle(node) : activate(index))}
               >
-                {canExpand
-                  ? expanded.has(node.nodeId)
-                    ? <ChevronDown aria-hidden="true" size={14} strokeWidth={2.5} />
-                    : <ChevronRight aria-hidden="true" size={14} strokeWidth={2.5} />
-                  : ''}
+                {canExpand ? (
+                  expanded.has(node.nodeId) ? (
+                    <ChevronDown aria-hidden="true" size={14} strokeWidth={2.5} />
+                  ) : (
+                    <ChevronRight aria-hidden="true" size={14} strokeWidth={2.5} />
+                  )
+                ) : (
+                  ''
+                )}
               </button>
               {renamingId === node.nodeId ? (
                 <span className="min-w-0 flex-1">
@@ -417,7 +470,10 @@ export function LibraryTree({
                     aria-label={`Rename ${node.displayName}`}
                     aria-invalid={Boolean(renameError)}
                     value={renameValue}
-                    onChange={(event) => { setRenameValue(event.currentTarget.value); setRenameError(null); }}
+                    onChange={(event) => {
+                      setRenameValue(event.currentTarget.value);
+                      setRenameError(null);
+                    }}
                     onBlur={() => submitRename(node)}
                     onKeyDown={(event) => {
                       event.stopPropagation();
@@ -426,7 +482,11 @@ export function LibraryTree({
                     }}
                     className="w-full rounded border border-app-accent bg-app-input px-1 text-role-body"
                   />
-                  {renameError && <span role="alert" className="block text-role-callout text-red-400">{renameError}</span>}
+                  {renameError && (
+                    <span role="alert" className="block text-role-callout text-red-400">
+                      {renameError}
+                    </span>
+                  )}
                 </span>
               ) : (
                 <button
@@ -436,7 +496,8 @@ export function LibraryTree({
                   onClick={() => activate(index)}
                   onDoubleClick={(event) => {
                     event.stopPropagation();
-                    if (onRename && node.scope === 'user' && node.nodeKind !== 'root') startRename(node);
+                    if (onRename && node.scope === 'user' && node.nodeKind !== 'root')
+                      startRename(node);
                     else if (node.key) onOpen?.(node.key);
                   }}
                 >
@@ -444,7 +505,12 @@ export function LibraryTree({
                 </button>
               )}
               {node.supportStatus === 'unsupported' && (
-                <span role="status" aria-label={`${node.displayName} is unsupported`} title="Contains unsupported nested data" className="text-amber-400">
+                <span
+                  role="status"
+                  aria-label={`${node.displayName} is unsupported`}
+                  title="Contains unsupported nested data"
+                  className="text-amber-400"
+                >
                   ⚠ unsupported
                 </span>
               )}

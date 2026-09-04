@@ -85,7 +85,7 @@ export function applyTimeBehavior(
       setScoreStart(tempNL, windowStart);
 
       const end = windowEnd;
-      tempNL.removeIf(n => n.getStartTime() >= end);
+      tempNL.removeIf((n) => n.getStartTime() >= end);
 
       for (const note of tempNL) {
         const noteStart = note.getStartTime();

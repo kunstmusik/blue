@@ -1,7 +1,5 @@
 import { create } from 'zustand';
-import type {
-  MidiInputServiceSnapshot,
-} from '../../shared/midi-input';
+import type { MidiInputServiceSnapshot } from '../../shared/midi-input';
 import {
   compareMidiInputDevicePreference,
   type MidiInputDevicePreference,
@@ -84,9 +82,7 @@ export const useMidiInputStore = create<MidiInputStoreState>((set, get) => ({
 
   updateDraftDevice: (id, patch) => {
     const current = get().draftMidiInput;
-    const devices = current.devices.map((d) =>
-      d.id === id ? { ...d, ...patch } : d,
-    );
+    const devices = current.devices.map((d) => (d.id === id ? { ...d, ...patch } : d));
     set({
       draftMidiInput: { devices: sortDevices(devices) },
       draftDirty: true,

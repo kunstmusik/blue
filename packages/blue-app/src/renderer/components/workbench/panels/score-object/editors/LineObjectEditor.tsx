@@ -35,7 +35,10 @@ export default function LineObjectEditor({
 
   const { lines } = editor.payload as { lines: LineData[] };
   const [selectedLineIndex, setSelectedLineIndex] = useState(0);
-  const { ref: canvasHostRef, size: canvasSize } = useMeasuredElementSize<HTMLDivElement>({ width: 720, height: 360 });
+  const { ref: canvasHostRef, size: canvasSize } = useMeasuredElementSize<HTMLDivElement>({
+    width: 720,
+    height: 360,
+  });
 
   useEffect(() => {
     if (selectedLineIndex >= lines.length) {
@@ -43,27 +46,33 @@ export default function LineObjectEditor({
     }
   }, [lines.length, selectedLineIndex]);
 
-  const patchLines = useCallback((nextLines: LineData[]) => {
-    onPatch({
-      type: 'updateTypeSpecificEditor',
-      target: document.target,
-      patch: { lines: nextLines },
-    });
-  }, [document.target, onPatch]);
+  const patchLines = useCallback(
+    (nextLines: LineData[]) => {
+      onPatch({
+        type: 'updateTypeSpecificEditor',
+        target: document.target,
+        patch: { lines: nextLines },
+      });
+    },
+    [document.target, onPatch],
+  );
 
   const handleAddLine = useCallback(() => {
-    const nextLines = [...lines, {
-      varName: createNextLineName(lines),
-      min: 0,
-      max: 1,
-      color: getJavaLineColor(lines.length),
-      rightBound: true,
-      endPointsLinked: false,
-      points: [
-        { x: 0, y: 0.5 },
-        { x: 1, y: 0.5 },
-      ],
-    } satisfies LineData];
+    const nextLines = [
+      ...lines,
+      {
+        varName: createNextLineName(lines),
+        min: 0,
+        max: 1,
+        color: getJavaLineColor(lines.length),
+        rightBound: true,
+        endPointsLinked: false,
+        points: [
+          { x: 0, y: 0.5 },
+          { x: 1, y: 0.5 },
+        ],
+      } satisfies LineData,
+    ];
     patchLines(nextLines);
     setSelectedLineIndex(nextLines.length - 1);
   }, [lines, patchLines]);
@@ -115,9 +124,7 @@ export default function LineObjectEditor({
                 className="inline-block h-2.5 w-2.5 rounded-full"
                 style={{ backgroundColor: colorSwatch(selectedLine.color) }}
               />
-              <span className="font-mono text-role-body text-gray-300">
-                {selectedLine.varName}
-              </span>
+              <span className="font-mono text-role-body text-gray-300">{selectedLine.varName}</span>
               <span className="text-role-callout text-blue-muted">
                 {selectedLine.points.length} points
               </span>

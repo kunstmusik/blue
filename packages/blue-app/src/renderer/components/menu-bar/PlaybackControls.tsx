@@ -68,18 +68,10 @@ export default function PlaybackControls(): React.ReactElement {
       >
         <SkipBack className="h-4 w-4" aria-hidden="true" />
       </ToolbarIconButton>
-      <ToolbarIconButton
-        title="Next Marker"
-        disabled={!canControl}
-        onClick={navigateToNextMarker}
-      >
+      <ToolbarIconButton title="Next Marker" disabled={!canControl} onClick={navigateToNextMarker}>
         <SkipForward className="h-4 w-4" aria-hidden="true" />
       </ToolbarIconButton>
-      <ToolbarIconButton
-        title="Rewind to Start"
-        disabled={!canControl}
-        onClick={rewindToStart}
-      >
+      <ToolbarIconButton title="Rewind to Start" disabled={!canControl} onClick={rewindToStart}>
         <Rewind className="h-4 w-4" aria-hidden="true" />
       </ToolbarIconButton>
       {showStop ? (

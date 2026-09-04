@@ -2,9 +2,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useLayoutSettingsStore } from '../stores/layout-settings-store';
-import type {
-  ProgramSettingsSnapshot,
-} from '../../shared/program-settings';
+import type { ProgramSettingsSnapshot } from '../../shared/program-settings';
 import {
   createDefaultWindowLayoutSettings,
   resetWindowLayoutSettings,
@@ -18,7 +16,9 @@ interface BlueAPIMock {
   onWindowLayoutReset: ReturnType<typeof vi.fn>;
 }
 
-function createProgramSettings(layoutOverrides: Partial<ReturnType<typeof createDefaultWindowLayoutSettings>> = {}): ProgramSettingsSnapshot {
+function createProgramSettings(
+  layoutOverrides: Partial<ReturnType<typeof createDefaultWindowLayoutSettings>> = {},
+): ProgramSettingsSnapshot {
   const base = createDefaultWindowLayoutSettings();
   return {
     version: 1,
@@ -41,7 +41,12 @@ function createProgramSettings(layoutOverrides: Partial<ReturnType<typeof create
       defaultSnapValue: 'BEAT',
       defaultSmpteFrameRate: 24,
     },
-    playback: { playbackFps: 24, playbackLatencyCorrection: 0, followPlayback: true, followPlaybackOnStart: true },
+    playback: {
+      playbackFps: 24,
+      playbackLatencyCorrection: 0,
+      followPlayback: true,
+      followPlaybackOnStart: true,
+    },
     utility: { csoundExecutable: 'csound', freezeFlags: '-Wdo' },
     realtimeRender: {
       csoundExecutable: 'csound',
@@ -190,7 +195,9 @@ describe('layout-settings-store', () => {
       type: 'workbench-layout',
       serializedLayout: '{"version":5}',
     });
-    expect(useLayoutSettingsStore.getState().layout?.workbench?.serializedLayout).toBe('{"version":5}');
+    expect(useLayoutSettingsStore.getState().layout?.workbench?.serializedLayout).toBe(
+      '{"version":5}',
+    );
   });
 
   it('forwards window-state updates to the main process', async () => {

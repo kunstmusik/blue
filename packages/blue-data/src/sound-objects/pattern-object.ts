@@ -38,19 +38,33 @@ export class PatternObject extends AbstractSoundObject {
       this.copyFrom(other);
       this._beats = other._beats;
       this._subDivisions = other._subDivisions;
-      this._patterns = other._patterns.map(p => Pattern.copyFrom(p));
+      this._patterns = other._patterns.map((p) => Pattern.copyFrom(p));
     }
   }
 
-  getBeats(): number { return this._beats; }
-  setBeats(b: number): void { this._beats = b; }
+  getBeats(): number {
+    return this._beats;
+  }
+  setBeats(b: number): void {
+    this._beats = b;
+  }
 
-  getSubDivisions(): number { return this._subDivisions; }
-  setSubDivisions(s: number): void { this._subDivisions = s; }
+  getSubDivisions(): number {
+    return this._subDivisions;
+  }
+  setSubDivisions(s: number): void {
+    this._subDivisions = s;
+  }
 
-  size(): number { return this._patterns.length; }
-  getPattern(index: number): Pattern { return this._patterns[index]; }
-  addPattern(pattern: Pattern): void { this._patterns.push(pattern); }
+  size(): number {
+    return this._patterns.length;
+  }
+  getPattern(index: number): Pattern {
+    return this._patterns[index];
+  }
+  addPattern(pattern: Pattern): void {
+    this._patterns.push(pattern);
+  }
 
   private generateRawNotes(): NoteList {
     const tempNoteList = new NoteList();

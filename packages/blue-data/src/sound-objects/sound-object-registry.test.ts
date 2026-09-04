@@ -35,7 +35,8 @@ describe('SoundObjectRegistry', () => {
 
   describe('loadSoundObjectFromXML', () => {
     it('loads GenericScore by short name', () => {
-      const xml = '<soundObject type="GenericScore"><name>Test</name><scoreText>i1 0 1 440</scoreText></soundObject>';
+      const xml =
+        '<soundObject type="GenericScore"><name>Test</name><scoreText>i1 0 1 440</scoreText></soundObject>';
       const elem = Element.parse(xml);
       const obj = loadSoundObjectFromXML(elem);
       expect(obj).not.toBeNull();
@@ -43,7 +44,8 @@ describe('SoundObjectRegistry', () => {
     });
 
     it('loads GenericScore by Java full class name', () => {
-      const xml = '<soundObject type="blue.soundObject.GenericScore"><name>Test</name><scoreText>i1 0 1 440</scoreText></soundObject>';
+      const xml =
+        '<soundObject type="blue.soundObject.GenericScore"><name>Test</name><scoreText>i1 0 1 440</scoreText></soundObject>';
       const elem = Element.parse(xml);
       const obj = loadSoundObjectFromXML(elem);
       expect(obj).not.toBeNull();
@@ -70,10 +72,25 @@ describe('SoundObjectRegistry', () => {
       const descriptors = getAllSoundObjectTypeDescriptors();
       const names = new Set(descriptors.map((descriptor) => descriptor.typeName));
       const expected = [
-        'GenericScore', 'PolyObject', 'PythonObject', 'ClojureObject', 'JavaScriptObject',
-        'CSDSoundObject', 'Comment', 'AudioFile', 'Sound', 'External', 'Instance',
-        'LineObject', 'ZakLineObject', 'PatternObject', 'PianoRoll', 'JMask',
-        'TrackerObject', 'FrozenSoundObject', 'ObjectBuilder',
+        'GenericScore',
+        'PolyObject',
+        'PythonObject',
+        'ClojureObject',
+        'JavaScriptObject',
+        'CSDSoundObject',
+        'Comment',
+        'AudioFile',
+        'Sound',
+        'External',
+        'Instance',
+        'LineObject',
+        'ZakLineObject',
+        'PatternObject',
+        'PianoRoll',
+        'JMask',
+        'TrackerObject',
+        'FrozenSoundObject',
+        'ObjectBuilder',
       ];
 
       expect(expected.every((name) => names.has(name))).toBe(true);
@@ -89,7 +106,9 @@ describe('SoundObjectRegistry', () => {
     });
 
     it('denies unknown sound-object classes by default', () => {
-      const unknown = { constructor: { name: 'UnregisteredSoundObject' } } as unknown as GenericScore;
+      const unknown = {
+        constructor: { name: 'UnregisteredSoundObject' },
+      } as unknown as GenericScore;
       const placement = getTrackPlacementForSoundObject(unknown);
       expect(placement.compatible).toBe(false);
       expect(placement.reason).toContain('not registered');

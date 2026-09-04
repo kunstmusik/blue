@@ -4,7 +4,14 @@
  * generator evaluation, and editor state preservation.
  */
 import { Element, Elements } from '../serialization/xml-reader';
-import { writeBoolean, writeDouble, writeInt, readBoolean, readDouble, readInt } from '../utilities/xml';
+import {
+  writeBoolean,
+  writeDouble,
+  writeInt,
+  readBoolean,
+  readDouble,
+  readInt,
+} from '../utilities/xml';
 import { formatBlueNumber } from '../utilities/number-format';
 import { clamp } from '../utilities/math-utils';
 import { NoteList } from './note-list';
@@ -25,12 +32,18 @@ function roundTo(value: number, digits: number): number {
   return Math.round(value * factor) / factor;
 }
 
-function rescale(value: number, oldMin: number, oldMax: number, newMin: number, newMax: number): number {
+function rescale(
+  value: number,
+  oldMin: number,
+  oldMax: number,
+  newMin: number,
+  newMax: number,
+): number {
   if (oldMax === oldMin) {
     return newMin;
   }
   const normalized = (value - oldMin) / (oldMax - oldMin);
-  return newMin + (normalized * (newMax - newMin));
+  return newMin + normalized * (newMax - newMin);
 }
 
 function wrap(value: number, low: number, high: number): number {
@@ -77,7 +90,7 @@ export class JavaRandom {
   nextDouble(): number {
     const high = this.next(26);
     const low = this.next(27);
-    return ((high * 134217728) + low) / TWO_POW_53;
+    return (high * 134217728 + low) / TWO_POW_53;
   }
 }
 
@@ -180,23 +193,23 @@ export class Table {
 
   private interpolateValue(ex: number, r: number, a: number, b: number): number {
     if (ex === 0.0) {
-      return a + (r * (b - a));
+      return a + r * (b - a);
     }
     if (ex > 0.0 && b >= a) {
-      return a + (Math.pow(r, ex + 1.0) * (b - a));
+      return a + Math.pow(r, ex + 1.0) * (b - a);
     }
     if (ex > 0.0 && b < a) {
-      return b + (Math.pow(1.0 - r, ex + 1.0) * (a - b));
+      return b + Math.pow(1.0 - r, ex + 1.0) * (a - b);
     }
     if (ex < 0.0 && b >= a) {
-      return b + (Math.pow(1.0 - r, Math.abs(ex) + 1.0) * (a - b));
+      return b + Math.pow(1.0 - r, Math.abs(ex) + 1.0) * (a - b);
     }
-    return a + (Math.pow(r, Math.abs(ex) + 1.0) * (b - a));
+    return a + Math.pow(r, Math.abs(ex) + 1.0) * (b - a);
   }
 
   private interpolateCosine(r: number, a: number, b: number): number {
-    const cx = Math.cos((Math.PI * r) + Math.PI) / 2.0 + 0.5;
-    return a + (cx * (b - a));
+    const cx = Math.cos(Math.PI * r + Math.PI) / 2.0 + 0.5;
+    return a + cx * (b - a);
   }
 
   private integrateSegment(x1: number, xe: number, y1: number, y2: number): number {
@@ -416,7 +429,7 @@ export class Table {
 
       if (this.interpolationType !== Table.OFF) {
         if (index >= 2) {
-          for (let k = 0; k < (index - 1); k += 1) {
+          for (let k = 0; k < index - 1; k += 1) {
             phsum += this.integrateSegment(x[k + 1]! - x[k]!, x[k + 1]! - x[k]!, y[k]!, y[k + 1]!);
           }
         }
@@ -424,12 +437,17 @@ export class Table {
         if (xtr >= x[pointsSize - 1]!) {
           phsum += xtr * y[pointsSize - 1]! - x[pointsSize - 1]! * y[pointsSize - 1]!;
         } else {
-          phsum += this.integrateSegment(xtr - x[index - 1]!, x[index]! - x[index - 1]!, y[index - 1]!, y[index]!);
+          phsum += this.integrateSegment(
+            xtr - x[index - 1]!,
+            x[index]! - x[index - 1]!,
+            y[index - 1]!,
+            y[index]!,
+          );
         }
         erg = phsum;
       } else {
         if (index >= 2) {
-          for (let k = 0; k < (index - 1); k += 1) {
+          for (let k = 0; k < index - 1; k += 1) {
             phsum += x[k + 1]! * y[k]! - x[k]! * y[k]!;
           }
         }
@@ -607,7 +625,7 @@ export class Mask {
     const localTime = this.duration !== 0 ? time / this.duration : 0;
     const localHigh = this.highTableEnabled ? this.highTable.getValue(localTime) : this.high;
     const localLow = this.lowTableEnabled ? this.lowTable.getValue(localTime) : this.low;
-    return localLow + ((localHigh - localLow) * this.mapValueToRange(value));
+    return localLow + (localHigh - localLow) * this.mapValueToRange(value);
   }
 }
 
@@ -727,9 +745,15 @@ export class Quantizer {
     }
 
     const localTime = this.duration !== 0 ? time / this.duration : 0;
-    const localGridSize = this.gridSizeTableEnabled ? this.gridSizeTable.getValue(localTime) : this.gridSize;
-    const localStrength = this.strengthTableEnabled ? this.strengthTable.getValue(localTime) : this.strength;
-    const localOffset = this.offsetTableEnabled ? this.offsetTable.getValue(localTime) : this.offset;
+    const localGridSize = this.gridSizeTableEnabled
+      ? this.gridSizeTable.getValue(localTime)
+      : this.gridSize;
+    const localStrength = this.strengthTableEnabled
+      ? this.strengthTable.getValue(localTime)
+      : this.strength;
+    const localOffset = this.offsetTableEnabled
+      ? this.offsetTable.getValue(localTime)
+      : this.offset;
 
     if (localGridSize === 0) {
       return value;
@@ -738,7 +762,7 @@ export class Quantizer {
     const d = value - localOffset;
     const r = Math.floor((d + localGridSize / 2.0) / localGridSize);
     const err = d / localGridSize - r;
-    return localOffset + ((r + (err * (1 - localStrength))) * localGridSize);
+    return localOffset + (r + err * (1 - localStrength)) * localGridSize;
   }
 }
 
@@ -946,7 +970,7 @@ export class Random implements Generator, Quantizable, Accumulatable {
   initialize(_duration: number): void {}
 
   getValue(_time: number, rnd: JavaRandom): number {
-    return this.min + ((this.max - this.min) * rnd.nextDouble());
+    return this.min + (this.max - this.min) * rnd.nextDouble();
   }
 
   saveAsXML(): Element {
@@ -971,7 +995,16 @@ export class Oscillator implements Generator, Maskable, Quantizable, Accumulatab
   static readonly TRIANGLE = 5;
   static readonly POW_UP = 6;
   static readonly POW_DOWN = 7;
-  static readonly FUNCTIONS = ['Sine', 'Cosine', 'Saw (Increasing)', 'Saw (Decreasing)', 'Square', 'Triangle', 'Power Function (Increasing)', 'Power Function (Decreasing)'];
+  static readonly FUNCTIONS = [
+    'Sine',
+    'Cosine',
+    'Saw (Increasing)',
+    'Saw (Decreasing)',
+    'Square',
+    'Triangle',
+    'Power Function (Increasing)',
+    'Power Function (Decreasing)',
+  ];
 
   oscillatorType = Oscillator.SINE;
   phaseInit = 0.0;
@@ -1030,7 +1063,7 @@ export class Oscillator implements Generator, Maskable, Quantizable, Accumulatab
 
   private getPhase(time: number): number {
     if (!this.freqTableEnabled) {
-      return this.phaseInit + (time * this.frequency);
+      return this.phaseInit + time * this.frequency;
     }
     return this.phaseInit + this.freqTable.getphs(time);
   }
@@ -1209,7 +1242,10 @@ export class ItemList implements Generator, TableLike, Accumulatable {
   private shuffleItems(): void {
     for (let index = this.listItems.length - 1; index > 0; index -= 1) {
       const swapIndex = Math.floor(Math.random() * (index + 1));
-      [this.listItems[index], this.listItems[swapIndex]] = [this.listItems[swapIndex]!, this.listItems[index]!];
+      [this.listItems[index], this.listItems[swapIndex]] = [
+        this.listItems[swapIndex]!,
+        this.listItems[index]!,
+      ];
     }
   }
 
@@ -1468,7 +1504,7 @@ export class Exponential implements ProbabilityGenerator {
         } else {
           e = Math.log(x);
         }
-        e = (e / 14.0 / localLambda) + 0.5;
+        e = e / 14.0 / localLambda + 0.5;
       } while (e > 1.0 || e < 0.0);
       return e;
     }
@@ -2041,19 +2077,23 @@ function supportsMask(generator: Generator): boolean {
 }
 
 function supportsQuantizer(generator: Generator): boolean {
-  return generator instanceof Random
-    || generator instanceof Oscillator
-    || generator instanceof Segment
-    || generator instanceof Probability;
+  return (
+    generator instanceof Random ||
+    generator instanceof Oscillator ||
+    generator instanceof Segment ||
+    generator instanceof Probability
+  );
 }
 
 function supportsAccumulator(generator: Generator): boolean {
-  return generator instanceof Constant
-    || generator instanceof Random
-    || generator instanceof Oscillator
-    || generator instanceof Segment
-    || generator instanceof ItemList
-    || generator instanceof Probability;
+  return (
+    generator instanceof Constant ||
+    generator instanceof Random ||
+    generator instanceof Oscillator ||
+    generator instanceof Segment ||
+    generator instanceof ItemList ||
+    generator instanceof Probability
+  );
 }
 
 const GENERATOR_LOADERS: Record<string, (data: Element) => Generator> = {
@@ -2511,7 +2551,9 @@ function loadGeneratorSnapshot(snapshot: Record<string, unknown>): Generator | n
   }
 }
 
-function loadProbabilityGeneratorSnapshot(snapshot: Record<string, unknown>): ProbabilityGenerator | null {
+function loadProbabilityGeneratorSnapshot(
+  snapshot: Record<string, unknown>,
+): ProbabilityGenerator | null {
   const kind = typeof snapshot.kind === 'string' ? snapshot.kind : '';
   switch (kind) {
     case 'Uniform':

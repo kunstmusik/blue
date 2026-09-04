@@ -53,22 +53,26 @@ describe('MIDI file import conversion', () => {
   it('expands Java-compatible key and velocity placeholders', () => {
     const note = { startTick: 0, endTick: 480, noteNumber: 69, velocity: 127 };
 
-    expect(expandMidiNoteTemplate(
-      '<INSTR_ID> <START> <DUR> <KEY> <KEY_PCH> <KEY_OCT> <KEY_CPS> <VELOCITY> <VELOCITY_AMP>',
-      '7',
-      note,
-      0,
-      1,
-    )).toBe('7 0.0 1.0 69 8.09 8.75 440.0 127 32546.035593324712');
+    expect(
+      expandMidiNoteTemplate(
+        '<INSTR_ID> <START> <DUR> <KEY> <KEY_PCH> <KEY_OCT> <KEY_CPS> <VELOCITY> <VELOCITY_AMP>',
+        '7',
+        note,
+        0,
+        1,
+      ),
+    ).toBe('7 0.0 1.0 69 8.09 8.75 440.0 127 32546.035593324712');
   });
 
   it('pairs velocity-zero note-ons and overlapping same-key notes by FIFO', () => {
-    const result = buildMidiImportProject(createDocument(), [{
-      streamKey: '0:0',
-      instrumentId: '1',
-      noteTemplate: MIDI_IMPORT_DEFAULT_NOTE_TEMPLATE,
-      trimTime: false,
-    }]);
+    const result = buildMidiImportProject(createDocument(), [
+      {
+        streamKey: '0:0',
+        instrumentId: '1',
+        noteTemplate: MIDI_IMPORT_DEFAULT_NOTE_TEMPLATE,
+        trimTime: false,
+      },
+    ]);
     const root = result.data.getScore()[0] as PolyObject;
     const score = root[0][0] as GenericScore;
 
@@ -87,12 +91,14 @@ describe('MIDI file import conversion', () => {
       { absoluteTick: 480, bpm: 90, trackIndex: 0 },
     ];
 
-    const result = buildMidiImportProject(document, [{
-      streamKey: '0:0',
-      instrumentId: '1',
-      noteTemplate: MIDI_IMPORT_DEFAULT_NOTE_TEMPLATE,
-      trimTime: false,
-    }]);
+    const result = buildMidiImportProject(document, [
+      {
+        streamKey: '0:0',
+        instrumentId: '1',
+        noteTemplate: MIDI_IMPORT_DEFAULT_NOTE_TEMPLATE,
+        trimTime: false,
+      },
+    ]);
     const tempoMap = result.data.getScore().getTimeContext().getTempoMap();
 
     expect(tempoMap.isEnabled()).toBe(true);
@@ -144,7 +150,10 @@ describe('MIDI file import conversion', () => {
     expect((root[1][0] as GenericScore).getScoreText()).toContain('i2 0.0 1.0 67 90');
 
     const polyRoot = buildMidiImportProject(document, settings).data.getScore()[0] as PolyObject;
-    expect(Array.from(polyRoot, (layer) => layer.getName())).toEqual(['Track 0 Ch 1', 'Track 0 Ch 2']);
+    expect(Array.from(polyRoot, (layer) => layer.getName())).toEqual([
+      'Track 0 Ch 1',
+      'Track 0 Ch 2',
+    ]);
   });
 
   it('normalizes a trimmed stream to its first note', () => {
@@ -155,12 +164,14 @@ describe('MIDI file import conversion', () => {
     }));
     document.tracks[0].streams[0].lastTick = 1440;
 
-    const result = buildMidiImportProject(document, [{
-      streamKey: '0:0',
-      instrumentId: ' 3 ',
-      noteTemplate: ` ${MIDI_IMPORT_DEFAULT_NOTE_TEMPLATE} `,
-      trimTime: true,
-    }]);
+    const result = buildMidiImportProject(document, [
+      {
+        streamKey: '0:0',
+        instrumentId: ' 3 ',
+        noteTemplate: ` ${MIDI_IMPORT_DEFAULT_NOTE_TEMPLATE} `,
+        trimTime: true,
+      },
+    ]);
     const root = result.data.getScore()[0] as PolyObject;
     const score = root[0][0] as GenericScore;
 
@@ -177,12 +188,14 @@ describe('MIDI file import conversion', () => {
     ];
     document.tracks[0].streams[0].lastTick = 480;
 
-    const result = buildMidiImportProject(document, [{
-      streamKey: '0:0',
-      instrumentId: '1',
-      noteTemplate: MIDI_IMPORT_DEFAULT_NOTE_TEMPLATE,
-      trimTime: false,
-    }]);
+    const result = buildMidiImportProject(document, [
+      {
+        streamKey: '0:0',
+        instrumentId: '1',
+        noteTemplate: MIDI_IMPORT_DEFAULT_NOTE_TEMPLATE,
+        trimTime: false,
+      },
+    ]);
 
     expect(result.warnings.map((warning) => warning.code)).toEqual([
       'unmatched-note-off',
@@ -192,31 +205,37 @@ describe('MIDI file import conversion', () => {
   });
 
   it('rejects a zero-valued instrument ID', () => {
-    expect(() => validateMidiImportSettings(createDocument(), [{
-      streamKey: '0:0',
-      instrumentId: '0.0',
-      noteTemplate: MIDI_IMPORT_DEFAULT_NOTE_TEMPLATE,
-      trimTime: false,
-    }])).toThrow('Instrument ID must not be zero');
+    expect(() =>
+      validateMidiImportSettings(createDocument(), [
+        {
+          streamKey: '0:0',
+          instrumentId: '0.0',
+          noteTemplate: MIDI_IMPORT_DEFAULT_NOTE_TEMPLATE,
+          trimTime: false,
+        },
+      ]),
+    ).toThrow('Instrument ID must not be zero');
   });
 
   it('rejects invalid tempo changes before constructing a project', () => {
     const document = createDocument();
     document.tempoChanges = [{ absoluteTick: 0, bpm: Number.NaN, trackIndex: 0 }];
 
-    expect(() => buildMidiImportProject(document, [{
-      streamKey: '0:0',
-      instrumentId: '1',
-      noteTemplate: MIDI_IMPORT_DEFAULT_NOTE_TEMPLATE,
-      trimTime: false,
-    }])).toThrow('invalid tempo change');
+    expect(() =>
+      buildMidiImportProject(document, [
+        {
+          streamKey: '0:0',
+          instrumentId: '1',
+          noteTemplate: MIDI_IMPORT_DEFAULT_NOTE_TEMPLATE,
+          trimTime: false,
+        },
+      ]),
+    ).toThrow('invalid tempo change');
   });
 
   it('reports invalid velocities without emitting invalid notes', () => {
     const stream = createDocument().tracks[0].streams[0];
-    stream.events = [
-      { absoluteTick: 0, type: 'noteOn', noteNumber: 60, velocity: Number.NaN },
-    ];
+    stream.events = [{ absoluteTick: 0, type: 'noteOn', noteNumber: 60, velocity: Number.NaN }];
 
     const paired = pairMidiImportStream(stream);
 
@@ -230,12 +249,14 @@ describe('MIDI file import conversion', () => {
       { absoluteTick: 0, bpm: 120, trackIndex: 0 },
       { absoluteTick: 480, bpm: 90, trackIndex: 0 },
     ];
-    const result = buildMidiImportProject(document, [{
-      streamKey: '0:0',
-      instrumentId: '1',
-      noteTemplate: MIDI_IMPORT_DEFAULT_NOTE_TEMPLATE,
-      trimTime: false,
-    }]);
+    const result = buildMidiImportProject(document, [
+      {
+        streamKey: '0:0',
+        instrumentId: '1',
+        noteTemplate: MIDI_IMPORT_DEFAULT_NOTE_TEMPLATE,
+        trimTime: false,
+      },
+    ]);
     const loaded = BlueData.loadFromString(result.data.saveToString());
     const root = loaded.getScore()[0] as PolyObject;
     const score = root[0][0] as GenericScore;

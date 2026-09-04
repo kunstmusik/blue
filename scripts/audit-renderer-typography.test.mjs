@@ -62,12 +62,26 @@ async function createFixtureWorkspace(options = {}) {
   await mkdir(docsDir, { recursive: true });
 
   // Standard entry points
-  await writeFile(join(rendererDir, 'styles', 'index.css'), options.indexCss ?? VALID_INDEX_CSS, 'utf8');
+  await writeFile(
+    join(rendererDir, 'styles', 'index.css'),
+    options.indexCss ?? VALID_INDEX_CSS,
+    'utf8',
+  );
   await writeFile(join(docsDir, 'typography.md'), options.guide ?? VALID_TYPOGRAPHY_GUIDE, 'utf8');
 
   // Create standard entrypoint files
-  for (const entry of ['main.tsx', 'settings-main.tsx', 'about-main.tsx', 'effect-editor.tsx', 'track-instrument-editor.tsx']) {
-    await writeFile(join(rendererDir, entry), `import './styles/index.css';\nexport function App() { return <div className="text-role-body">OK</div>; }`, 'utf8');
+  for (const entry of [
+    'main.tsx',
+    'settings-main.tsx',
+    'about-main.tsx',
+    'effect-editor.tsx',
+    'track-instrument-editor.tsx',
+  ]) {
+    await writeFile(
+      join(rendererDir, entry),
+      `import './styles/index.css';\nexport function App() { return <div className="text-role-body">OK</div>; }`,
+      'utf8',
+    );
   }
 
   // Create custom files if provided
@@ -84,14 +98,13 @@ async function createFixtureWorkspace(options = {}) {
 
 async function runAudit(workspaceDir, extraArgs = []) {
   try {
-    const { stdout } = await execFileAsync(process.execPath, [
-      scriptPath,
-      '--root',
-      workspaceDir,
-      ...extraArgs,
-    ], {
-      cwd: repoRoot,
-    });
+    const { stdout } = await execFileAsync(
+      process.execPath,
+      [scriptPath, '--root', workspaceDir, ...extraArgs],
+      {
+        cwd: repoRoot,
+      },
+    );
     return { exitCode: 0, result: JSON.parse(stdout) };
   } catch (error) {
     const stdout = error.stdout ? JSON.parse(error.stdout) : null;
@@ -628,10 +641,12 @@ test('normalizes paths to deterministic POSIX format on all platforms', async ()
 
 test('rejects a dynamic or expanded token namespace', async () => {
   const workspace = await createFixtureWorkspace({
-    indexCss: VALID_INDEX_CSS
-      .replace('@theme static {', '@theme {')
+    indexCss: VALID_INDEX_CSS.replace('@theme static {', '@theme {')
       .replace('  --text-*: initial;\n\n', '')
-      .replace('  --text-role-body: 13px;', '  --text-role-body: 13px;\n  --text-legacy-extra: 12px;'),
+      .replace(
+        '  --text-role-body: 13px;',
+        '  --text-role-body: 13px;\n  --text-legacy-extra: 12px;',
+      ),
   });
 
   try {

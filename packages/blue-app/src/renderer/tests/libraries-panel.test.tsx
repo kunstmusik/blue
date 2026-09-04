@@ -13,7 +13,9 @@ import { isAuxiliaryInteractionTarget } from '../components/workbench/auxiliary-
 import { useLibraryStore } from '../stores/library-store';
 import { HostDocumentContext } from '../hooks/use-host-document';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const unsupported: LibraryBrowseNode = {
   key: { scope: 'user', libraryType: 'soundObject', nodeId: 'unsupported' },
@@ -43,7 +45,9 @@ function render(element: React.ReactElement): { container: HTMLDivElement; root:
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);
-  act(() => { root.render(element); });
+  act(() => {
+    root.render(element);
+  });
   return { container, root };
 }
 
@@ -98,19 +102,31 @@ describe('Libraries panel', () => {
   it('uses Body for library breadcrumbs and bold Headline for the user-library group heading', async () => {
     const breadcrumb = render(<LibraryBreadcrumbs parts={['SoundObjects', 'Motifs']} />);
     expect(breadcrumb.container.querySelector('nav')?.className).toContain('text-role-body');
-    act(() => { breadcrumb.root.unmount(); });
+    act(() => {
+      breadcrumb.root.unmount();
+    });
 
     const { container, root } = render(<LibrariesPanel />);
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
-    const heading = Array.from(container.querySelectorAll('h2')).find((candidate) => candidate.textContent === 'User Libraries');
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    const heading = Array.from(container.querySelectorAll('h2')).find(
+      (candidate) => candidate.textContent === 'User Libraries',
+    );
     expect(heading?.className).toContain('text-role-headline');
     expect(heading?.className).toContain('font-bold');
-    act(() => { root.unmount(); });
+    act(() => {
+      root.unmount();
+    });
   });
 
   it('renders a user-only hierarchy with collapsed roots and no migration/project chrome', async () => {
     const { container, root } = render(<LibrariesPanel />);
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
     expect(container.textContent).toContain('User Libraries');
     expect(container.textContent).not.toContain('No project is open');
     expect(container.textContent).not.toContain('Current Project');
@@ -128,15 +144,23 @@ describe('Libraries panel', () => {
     act(() => {
       (soundRoot.querySelector('button[aria-label^="Expand"]') as HTMLButtonElement).click();
     });
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
     const warning = container.querySelector('[role="status"]');
     expect(warning?.textContent).toContain('unsupported');
-    act(() => { root.unmount(); });
+    act(() => {
+      root.unmount();
+    });
   });
 
   it('keeps exactly one selected row across all user-library roots', async () => {
     const { container, root } = render(<LibrariesPanel />);
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
     const soundRoot = container.querySelector('#library-node-root-soundObject') as HTMLElement;
     const effectRoot = container.querySelector('#library-node-root-effect') as HTMLElement;
 
@@ -147,7 +171,9 @@ describe('Libraries panel', () => {
     expect(container.querySelectorAll('[aria-selected="true"]')).toHaveLength(1);
     expect(soundRoot.getAttribute('aria-selected')).toBe('false');
     expect(effectRoot.getAttribute('aria-selected')).toBe('true');
-    act(() => { root.unmount(); });
+    act(() => {
+      root.unmount();
+    });
   });
 
   it('keeps item metadata out of the row and exposes its address as a tooltip', () => {
@@ -161,9 +187,12 @@ describe('Libraries panel', () => {
       <LibraryTree label="Search" nodes={[contextual]} onSelect={vi.fn()} />,
     );
     expect(container.textContent).not.toContain('blue.soundObject.GenericScore');
-    expect(container.querySelector('#library-node-unsupported')?.getAttribute('title'))
-      .toBe('SoundObjects / Motifs / Legacy Object');
-    act(() => { root.unmount(); });
+    expect(container.querySelector('#library-node-unsupported')?.getAttribute('title')).toBe(
+      'SoundObjects / Motifs / Legacy Object',
+    );
+    act(() => {
+      root.unmount();
+    });
   });
 
   it('supports keyboard tree navigation and selection', () => {
@@ -175,19 +204,32 @@ describe('Libraries panel', () => {
     );
     const tree = container.querySelector('[role="tree"]') as HTMLElement;
     tree.focus();
-    act(() => { tree.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true })); });
-    act(() => { tree.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); });
+    act(() => {
+      tree.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    });
+    act(() => {
+      tree.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    });
     expect(onSelect).toHaveBeenCalledWith(second.key);
-    act(() => { root.unmount(); });
+    act(() => {
+      root.unmount();
+    });
   });
 
   it('exposes focused ellipsis commands with an accessible disabled reason', async () => {
     useLibraryStore.setState({ typeFilter: 'all' });
     const { container, root } = render(<LibrariesPanel />);
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
-    const trigger = container.querySelector('button[aria-label="Library actions"]') as HTMLButtonElement;
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    const trigger = container.querySelector(
+      'button[aria-label="Library actions"]',
+    ) as HTMLButtonElement;
     act(() => trigger.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0 })));
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+    });
     const exportCurrent = document.body.querySelector('[aria-label^="Export Current unavailable"]');
     expect(exportCurrent?.getAttribute('aria-disabled')).toBe('true');
     expect(document.activeElement?.getAttribute('role')).toBe('menu');
@@ -213,7 +255,9 @@ describe('Libraries panel', () => {
     const outside = document.createElement('button');
     document.body.appendChild(outside);
     expect(isAuxiliaryInteractionTarget(outside)).toBe(false);
-    act(() => { root.unmount(); });
+    act(() => {
+      root.unmount();
+    });
   });
 
   it('hosts actions and tree context menus in a floated Library panel document', async () => {
@@ -224,11 +268,18 @@ describe('Libraries panel', () => {
         <LibrariesPanel />
       </HostDocumentContext.Provider>,
     );
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
 
-    const trigger = container.querySelector('button[aria-label="Library actions"]') as HTMLButtonElement;
+    const trigger = container.querySelector(
+      'button[aria-label="Library actions"]',
+    ) as HTMLButtonElement;
     act(() => trigger.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0 })));
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+    });
     expect(popoutDoc.body.querySelector('[role="menu"]')).toBeTruthy();
     expect(document.body.querySelector('[role="menu"]')).toBeNull();
 
@@ -236,12 +287,20 @@ describe('Libraries panel', () => {
       popoutDoc.dispatchEvent(new popout.window.KeyboardEvent('keydown', { key: 'Escape' }));
     });
     const instrumentRoot = container.querySelector('#library-node-root-instrument') as HTMLElement;
-    act(() => instrumentRoot.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
-    await act(async () => { await Promise.resolve(); });
+    act(() =>
+      instrumentRoot.dispatchEvent(
+        new MouseEvent('contextmenu', { bubbles: true, cancelable: true }),
+      ),
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
     expect(popoutDoc.body.querySelector('[aria-label="Instruments commands"]')).toBeTruthy();
     expect(document.body.querySelector('[aria-label="Instruments commands"]')).toBeNull();
 
-    act(() => { root.unmount(); });
+    act(() => {
+      root.unmount();
+    });
     popout.window.close();
   });
 
@@ -260,7 +319,9 @@ describe('Libraries panel', () => {
     const second = render(<LibrariesPanel />);
     const secondScroller = second.container.querySelector('[data-library-scroll]') as HTMLElement;
     expect(secondScroller.scrollTop).toBe(510);
-    act(() => { second.root.unmount(); });
+    act(() => {
+      second.root.unmount();
+    });
   });
 
   it('announces affected count and dirty-session choices before destructive deletion', () => {
@@ -283,27 +344,40 @@ describe('Libraries panel', () => {
     expect(dialog?.textContent).toContain('unsaved changes');
     expect(dialog?.textContent).toContain('Discard & Delete');
     expect(dialog?.textContent).toContain('Save & Delete');
-    act(() => { root.unmount(); });
+    act(() => {
+      root.unmount();
+    });
   });
 
   it('creates a folder with an in-app name dialog instead of Electron window.prompt', async () => {
     const { container, root } = render(<LibrariesPanel />);
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
     const instrumentRoot = container.querySelector('#library-node-root-instrument') as HTMLElement;
     act(() => instrumentRoot.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true })));
-    await act(async () => { await Promise.resolve(); });
-    const createFolder = [...document.body.querySelectorAll('[role="menuitem"]')]
-      .find((item) => item.textContent === 'Create Folder…') as HTMLElement;
+    await act(async () => {
+      await Promise.resolve();
+    });
+    const createFolder = [...document.body.querySelectorAll('[role="menuitem"]')].find(
+      (item) => item.textContent === 'Create Folder…',
+    ) as HTMLElement;
     act(() => createFolder.click());
 
     const input = container.querySelector('input[aria-label="Folder name"]') as HTMLInputElement;
     expect(input).toBeTruthy();
     act(() => {
-      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(input, 'Textures');
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(
+        input,
+        'Textures',
+      );
       input.dispatchEvent(new Event('input', { bubbles: true }));
     });
     await act(async () => {
-      input.closest('form')?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      input
+        .closest('form')
+        ?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
       await Promise.resolve();
       await Promise.resolve();
     });
@@ -314,7 +388,9 @@ describe('Libraries panel', () => {
       name: 'Textures',
     });
     expect(container.querySelector('input[aria-label="Folder name"]')).toBeNull();
-    act(() => { root.unmount(); });
+    act(() => {
+      root.unmount();
+    });
   });
 
   it('offers project SoundObject clipboard Paste on the matching user root', async () => {
@@ -343,13 +419,21 @@ describe('Libraries panel', () => {
       },
     });
     const { container, root } = render(<LibrariesPanel />);
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
 
     const soundRoot = container.querySelector('#library-node-root-soundObject') as HTMLElement;
-    act(() => soundRoot.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
-    await act(async () => { await Promise.resolve(); });
-    const paste = [...document.body.querySelectorAll('[role="menuitem"]')]
-      .find((item) => item.textContent === 'Paste') as HTMLElement;
+    act(() =>
+      soundRoot.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })),
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+    const paste = [...document.body.querySelectorAll('[role="menuitem"]')].find(
+      (item) => item.textContent === 'Paste',
+    ) as HTMLElement;
     expect(paste).toBeTruthy();
     expect(paste.getAttribute('data-disabled')).toBeNull();
 
@@ -365,6 +449,8 @@ describe('Libraries panel', () => {
       },
       'root-soundObject',
     );
-    act(() => { root.unmount(); });
+    act(() => {
+      root.unmount();
+    });
   });
 });

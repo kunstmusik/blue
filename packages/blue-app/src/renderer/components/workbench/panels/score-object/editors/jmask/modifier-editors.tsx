@@ -1,12 +1,29 @@
 import React, { useCallback } from 'react';
-import type { GeneratorSnapshot, MaskSnapshot, QuantizerSnapshot, AccumulatorSnapshot } from './jmask-utils';
+import type {
+  GeneratorSnapshot,
+  MaskSnapshot,
+  QuantizerSnapshot,
+  AccumulatorSnapshot,
+} from './jmask-utils';
 import TableEditor from './TableEditor';
 import CommitNumberInput, { CommitNumberField } from './CommitNumberInput';
 import { AppSelect } from '../../../../../AppSelect';
 
-function ConstantOrTable({ label, constantValue, tableEnabled, table, duration, onConstantChange, onTableToggle, onTableChange }: {
-  label: string; constantValue: number; tableEnabled: boolean;
-  table: Record<string, unknown>; duration: number;
+function ConstantOrTable({
+  label,
+  constantValue,
+  tableEnabled,
+  table,
+  duration,
+  onConstantChange,
+  onTableToggle,
+  onTableChange,
+}: {
+  label: string;
+  constantValue: number;
+  tableEnabled: boolean;
+  table: Record<string, unknown>;
+  duration: number;
   onConstantChange: (v: number) => void;
   onTableToggle: (enabled: boolean) => void;
   onTableChange: (table: Record<string, unknown>) => void;
@@ -17,7 +34,7 @@ function ConstantOrTable({ label, constantValue, tableEnabled, table, duration, 
         <AppSelect
           className="rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           value={tableEnabled ? 1 : 0}
-          onValueChange={value => onTableToggle(value === '1')}
+          onValueChange={(value) => onTableToggle(value === '1')}
           options={[
             { value: 0, label: `${label} (Constant)` },
             { value: 1, label: `${label} (Table)` },
@@ -32,7 +49,11 @@ function ConstantOrTable({ label, constantValue, tableEnabled, table, duration, 
   );
 }
 
-export function MaskEditor({ mask, duration, onChange }: {
+export function MaskEditor({
+  mask,
+  duration,
+  onChange,
+}: {
   mask: MaskSnapshot;
   duration: number;
   onChange: (mask: MaskSnapshot) => void;
@@ -45,35 +66,53 @@ export function MaskEditor({ mask, duration, onChange }: {
   const highTable = (mask.highTable as Record<string, unknown>) ?? {};
   const lowTable = (mask.lowTable as Record<string, unknown>) ?? {};
 
-  const update = useCallback((patch: Partial<MaskSnapshot>) => {
-    onChange({ ...structuredClone(mask), ...patch });
-  }, [mask, onChange]);
+  const update = useCallback(
+    (patch: Partial<MaskSnapshot>) => {
+      onChange({ ...structuredClone(mask), ...patch });
+    },
+    [mask, onChange],
+  );
 
   return (
     <div className="flex flex-col gap-1 px-2 py-1.5">
       <div className="text-role-headline text-gray-300 font-bold">Mask</div>
       <div className="flex items-center gap-2">
-        <CommitNumberField label="Map Value" value={mapValue} step={0.01} onChange={v => update({ mapValue: v })} />
+        <CommitNumberField
+          label="Map Value"
+          value={mapValue}
+          step={0.01}
+          onChange={(v) => update({ mapValue: v })}
+        />
       </div>
       <ConstantOrTable
-        label="High Value" constantValue={high} tableEnabled={highTableEnabled}
-        table={highTable} duration={duration}
-        onConstantChange={v => update({ high: v })}
-        onTableToggle={e => update({ highTableEnabled: e })}
-        onTableChange={t => update({ highTable: t })}
+        label="High Value"
+        constantValue={high}
+        tableEnabled={highTableEnabled}
+        table={highTable}
+        duration={duration}
+        onConstantChange={(v) => update({ high: v })}
+        onTableToggle={(e) => update({ highTableEnabled: e })}
+        onTableChange={(t) => update({ highTable: t })}
       />
       <ConstantOrTable
-        label="Low Value" constantValue={low} tableEnabled={lowTableEnabled}
-        table={lowTable} duration={duration}
-        onConstantChange={v => update({ low: v })}
-        onTableToggle={e => update({ lowTableEnabled: e })}
-        onTableChange={t => update({ lowTable: t })}
+        label="Low Value"
+        constantValue={low}
+        tableEnabled={lowTableEnabled}
+        table={lowTable}
+        duration={duration}
+        onConstantChange={(v) => update({ low: v })}
+        onTableToggle={(e) => update({ lowTableEnabled: e })}
+        onTableChange={(t) => update({ lowTable: t })}
       />
     </div>
   );
 }
 
-export function QuantizerEditor({ quantizer, duration, onChange }: {
+export function QuantizerEditor({
+  quantizer,
+  duration,
+  onChange,
+}: {
   quantizer: QuantizerSnapshot;
   duration: number;
   onChange: (quantizer: QuantizerSnapshot) => void;
@@ -88,33 +127,45 @@ export function QuantizerEditor({ quantizer, duration, onChange }: {
   const strengthTable = (quantizer.strengthTable as Record<string, unknown>) ?? {};
   const offsetTable = (quantizer.offsetTable as Record<string, unknown>) ?? {};
 
-  const update = useCallback((patch: Partial<QuantizerSnapshot>) => {
-    onChange({ ...structuredClone(quantizer), ...patch });
-  }, [quantizer, onChange]);
+  const update = useCallback(
+    (patch: Partial<QuantizerSnapshot>) => {
+      onChange({ ...structuredClone(quantizer), ...patch });
+    },
+    [quantizer, onChange],
+  );
 
   return (
     <div className="flex flex-col gap-1 px-2 py-1.5">
       <div className="text-role-headline text-gray-300 font-bold">Quantizer</div>
       <ConstantOrTable
-        label="Grid Size" constantValue={gridSize} tableEnabled={gridSizeTableEnabled}
-        table={gridSizeTable} duration={duration}
-        onConstantChange={v => update({ gridSize: v })}
-        onTableToggle={e => update({ gridSizeTableEnabled: e })}
-        onTableChange={t => update({ gridSizeTable: t })}
+        label="Grid Size"
+        constantValue={gridSize}
+        tableEnabled={gridSizeTableEnabled}
+        table={gridSizeTable}
+        duration={duration}
+        onConstantChange={(v) => update({ gridSize: v })}
+        onTableToggle={(e) => update({ gridSizeTableEnabled: e })}
+        onTableChange={(t) => update({ gridSizeTable: t })}
       />
       <ConstantOrTable
-        label="Strength" constantValue={strength} tableEnabled={strengthTableEnabled}
-        table={strengthTable} duration={duration}
-        onConstantChange={v => update({ strength: v })}
-        onTableToggle={e => update({ strengthTableEnabled: e })}
-        onTableChange={t => update({ strengthTable: t })}
+        label="Strength"
+        constantValue={strength}
+        tableEnabled={strengthTableEnabled}
+        table={strengthTable}
+        duration={duration}
+        onConstantChange={(v) => update({ strength: v })}
+        onTableToggle={(e) => update({ strengthTableEnabled: e })}
+        onTableChange={(t) => update({ strengthTable: t })}
       />
       <ConstantOrTable
-        label="Offset" constantValue={offset} tableEnabled={offsetTableEnabled}
-        table={offsetTable} duration={duration}
-        onConstantChange={v => update({ offset: v })}
-        onTableToggle={e => update({ offsetTableEnabled: e })}
-        onTableChange={t => update({ offsetTable: t })}
+        label="Offset"
+        constantValue={offset}
+        tableEnabled={offsetTableEnabled}
+        table={offsetTable}
+        duration={duration}
+        onConstantChange={(v) => update({ offset: v })}
+        onTableToggle={(e) => update({ offsetTableEnabled: e })}
+        onTableChange={(t) => update({ offsetTable: t })}
       />
     </div>
   );
@@ -122,7 +173,11 @@ export function QuantizerEditor({ quantizer, duration, onChange }: {
 
 const ACCUMULATOR_MODES = ['On', 'Limit', 'Mirror', 'Wrap'];
 
-export function AccumulatorEditor({ accumulator, duration, onChange }: {
+export function AccumulatorEditor({
+  accumulator,
+  duration,
+  onChange,
+}: {
   accumulator: AccumulatorSnapshot;
   duration: number;
   onChange: (accumulator: AccumulatorSnapshot) => void;
@@ -135,9 +190,12 @@ export function AccumulatorEditor({ accumulator, duration, onChange }: {
   const highTable = (accumulator.highTable as Record<string, unknown>) ?? {};
   const lowTable = (accumulator.lowTable as Record<string, unknown>) ?? {};
 
-  const update = useCallback((patch: Partial<AccumulatorSnapshot>) => {
-    onChange({ ...structuredClone(accumulator), ...patch });
-  }, [accumulator, onChange]);
+  const update = useCallback(
+    (patch: Partial<AccumulatorSnapshot>) => {
+      onChange({ ...structuredClone(accumulator), ...patch });
+    },
+    [accumulator, onChange],
+  );
 
   return (
     <div className="flex flex-col gap-1 px-2 py-1.5">
@@ -146,23 +204,29 @@ export function AccumulatorEditor({ accumulator, duration, onChange }: {
         <AppSelect
           className="rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           value={mode}
-          onValueChange={value => update({ mode: parseInt(value, 10) })}
+          onValueChange={(value) => update({ mode: parseInt(value, 10) })}
           options={ACCUMULATOR_MODES.map((label, value) => ({ value, label }))}
         />
       </div>
       <ConstantOrTable
-        label="High Value" constantValue={high} tableEnabled={highTableEnabled}
-        table={highTable} duration={duration}
-        onConstantChange={v => update({ high: v })}
-        onTableToggle={e => update({ highTableEnabled: e })}
-        onTableChange={t => update({ highTable: t })}
+        label="High Value"
+        constantValue={high}
+        tableEnabled={highTableEnabled}
+        table={highTable}
+        duration={duration}
+        onConstantChange={(v) => update({ high: v })}
+        onTableToggle={(e) => update({ highTableEnabled: e })}
+        onTableChange={(t) => update({ highTable: t })}
       />
       <ConstantOrTable
-        label="Low Value" constantValue={low} tableEnabled={lowTableEnabled}
-        table={lowTable} duration={duration}
-        onConstantChange={v => update({ low: v })}
-        onTableToggle={e => update({ lowTableEnabled: e })}
-        onTableChange={t => update({ lowTable: t })}
+        label="Low Value"
+        constantValue={low}
+        tableEnabled={lowTableEnabled}
+        table={lowTable}
+        duration={duration}
+        onConstantChange={(v) => update({ low: v })}
+        onTableToggle={(e) => update({ lowTableEnabled: e })}
+        onTableChange={(t) => update({ lowTable: t })}
       />
     </div>
   );

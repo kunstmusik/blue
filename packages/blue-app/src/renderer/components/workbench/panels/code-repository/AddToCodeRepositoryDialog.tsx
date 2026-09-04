@@ -58,7 +58,9 @@ export default function AddToCodeRepositoryDialog({
 
   const groups = useMemo(() => {
     if (!root) return [] as GroupEntry[];
-    const entries: GroupEntry[] = [{ id: CODE_REPOSITORY_ROOT_ID, label: 'Code Repository (root)' }];
+    const entries: GroupEntry[] = [
+      { id: CODE_REPOSITORY_ROOT_ID, label: 'Code Repository (root)' },
+    ];
     collectGroups(root, 1, entries);
     return entries;
   }, [root]);
@@ -108,7 +110,10 @@ export default function AddToCodeRepositoryDialog({
   }, [code, name, parentId, contentRevision, onCreate, onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={requestClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+      onClick={requestClose}
+    >
       <div
         className="flex h-[72vh] min-h-[420px] max-h-[90vh] w-[760px] max-w-[94vw] flex-col rounded-lg border border-app-border/40 bg-app-menu p-5 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
@@ -118,7 +123,10 @@ export default function AddToCodeRepositoryDialog({
         aria-labelledby="add-code-repository-title"
       >
         <div className="mb-3 flex items-center justify-between">
-          <h2 id="add-code-repository-title" className="text-role-title-2 font-bold text-app-text-bright">
+          <h2
+            id="add-code-repository-title"
+            className="text-role-title-2 font-bold text-app-text-bright"
+          >
             Add to Code Repository
           </h2>
           <button
@@ -136,14 +144,24 @@ export default function AddToCodeRepositoryDialog({
         {!root ? (
           <>
             <p className="break-words text-role-body text-app-text-muted" role="status">
-              The Code Repository is unavailable. Retry the repository service, then add the selection again.
+              The Code Repository is unavailable. Retry the repository service, then add the
+              selection again.
             </p>
             <div className="mt-4 flex justify-end gap-2">
-              <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={requestClose} disabled={submitting}>
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                onClick={requestClose}
+                disabled={submitting}
+              >
                 Close
               </button>
               {onRetry && (
-                <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void onRetry()}>
+                <button
+                  type="button"
+                  className={PRIMARY_BUTTON_CLASS}
+                  onClick={() => void onRetry()}
+                >
                   Retry
                 </button>
               )}
@@ -151,7 +169,10 @@ export default function AddToCodeRepositoryDialog({
           </>
         ) : (
           <>
-            <label htmlFor="code-repository-snippet-name" className="mb-1 block text-role-body text-app-text-muted">
+            <label
+              htmlFor="code-repository-snippet-name"
+              className="mb-1 block text-role-body text-app-text-muted"
+            >
               Name
             </label>
             <input
@@ -169,12 +190,19 @@ export default function AddToCodeRepositoryDialog({
               autoFocus={Boolean(root)}
             />
             {validationError && (
-              <p id="code-repository-name-error" className="-mt-2 mb-3 text-role-callout text-red-400" role="alert">
+              <p
+                id="code-repository-name-error"
+                className="-mt-2 mb-3 text-role-callout text-red-400"
+                role="alert"
+              >
                 {validationError}
               </p>
             )}
 
-            <label htmlFor="code-repository-destination" className="mb-1 block text-role-body text-app-text-muted">
+            <label
+              htmlFor="code-repository-destination"
+              className="mb-1 block text-role-body text-app-text-muted"
+            >
               Destination Group
             </label>
             <AppSelect
@@ -198,7 +226,12 @@ export default function AddToCodeRepositoryDialog({
             </div>
 
             <div className="mt-4 flex justify-end gap-2">
-              <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={requestClose} disabled={submitting}>
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                onClick={requestClose}
+                disabled={submitting}
+              >
                 Cancel
               </button>
               <button

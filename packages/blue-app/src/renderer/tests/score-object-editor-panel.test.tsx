@@ -72,17 +72,29 @@ function makeBsbInstrument(udoNames: string[] = []): BlueSynthBuilderInstrumentS
     editEnabled: true,
     gridSettings: { enabled: false, snapEnabled: false, width: 10, height: 10 },
     widgetTree: {
-      id: 'root', type: 'BSBRootGroup', objectName: '',
-      x: 0, y: 0, width: 0, height: 0,
-      value: 0, minimum: 0, maximum: 0,
-      editable: true, properties: {},
+      id: 'root',
+      type: 'BSBRootGroup',
+      objectName: '',
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0,
+      value: 0,
+      minimum: 0,
+      maximum: 0,
+      editable: true,
+      properties: {},
       children: [],
     },
     udolist: udoNames.map(udoSnapshot),
   };
 }
 
-function makeLibRef(libId: string, objectType: string, index: number = 0): ScoreObjectLibraryEntryRef {
+function makeLibRef(
+  libId: string,
+  objectType: string,
+  index: number = 0,
+): ScoreObjectLibraryEntryRef {
   return { libraryId: libId, libraryIndex: index, objectType };
 }
 
@@ -126,7 +138,9 @@ describe('Code-backed editor document creation (T026)', () => {
     gs.setScoreText('i1 0 1 440');
     const data = makeDataWithObject(gs);
 
-    const doc = createScoreObjectEditorDocument(data, { target: makeTimelineTarget('GenericScore') });
+    const doc = createScoreObjectEditorDocument(data, {
+      target: makeTimelineTarget('GenericScore'),
+    });
     expect(doc!.editor.kind).toBe('code');
     if (doc!.editor.kind === 'code') {
       expect(doc!.editor.syntax).toBe('csound-score');
@@ -139,7 +153,9 @@ describe('Code-backed editor document creation (T026)', () => {
     po.setPythonCode('print("test")');
     const data = makeDataWithObject(po);
 
-    const doc = createScoreObjectEditorDocument(data, { target: makeTimelineTarget('PythonObject') });
+    const doc = createScoreObjectEditorDocument(data, {
+      target: makeTimelineTarget('PythonObject'),
+    });
     expect(doc!.editor.kind).toBe('code');
     if (doc!.editor.kind === 'code') {
       expect(doc!.editor.syntax).toBe('python');
@@ -151,7 +167,9 @@ describe('Code-backed editor document creation (T026)', () => {
     js.setJavaScriptCode('console.log("test");');
     const data = makeDataWithObject(js);
 
-    const doc = createScoreObjectEditorDocument(data, { target: makeTimelineTarget('JavaScriptObject') });
+    const doc = createScoreObjectEditorDocument(data, {
+      target: makeTimelineTarget('JavaScriptObject'),
+    });
     expect(doc!.editor.kind).toBe('code');
     if (doc!.editor.kind === 'code') {
       expect(doc!.editor.syntax).toBe('javascript');
@@ -322,7 +340,12 @@ describe('Instance and library-backed routing (T027)', () => {
       editorObjectType: 'GenericScore',
       ownerKind: 'library',
       displayContext: 'instance',
-      sourceInstanceLocation: { rootGroupIndex: 0, containerPath: [], layerIndex: 0, objectIndex: 0 },
+      sourceInstanceLocation: {
+        rootGroupIndex: 0,
+        containerPath: [],
+        layerIndex: 0,
+        objectIndex: 0,
+      },
       library: makeLibRef(libId, 'GenericScore', 0),
       supportsTimeBehavior: true,
       supportsRepeatPoint: true,
@@ -454,11 +477,20 @@ describe('PianoRoll editor document and mutation', () => {
           secondaryRulerEnabled: true,
           secondaryTimeDisplay: TimeBase.SMPTE,
           pianoRollNoteBatch: {
-            operations: [{
-              kind: 'update',
-              noteIndex: 0,
-              note: { octave: 8, scaleDegree: 7, start: 1, duration: 2, fieldValues: [0.75], noteTemplate: 'i1 0 1 440' },
-            }],
+            operations: [
+              {
+                kind: 'update',
+                noteIndex: 0,
+                note: {
+                  octave: 8,
+                  scaleDegree: 7,
+                  start: 1,
+                  duration: 2,
+                  fieldValues: [0.75],
+                  noteTemplate: 'i1 0 1 440',
+                },
+              },
+            ],
           },
         },
       },

@@ -175,7 +175,11 @@ export function isCodeRepositoryNode(value: unknown): value is CodeRepositoryNod
 export function isCodeRepositorySnapshot(value: unknown): value is CodeRepositorySnapshot {
   if (!isObject(value)) return false;
   if (!isCodeRepositoryNode(value.root)) return false;
-  if (value.root.kind !== 'root' || value.root.id !== CODE_REPOSITORY_ROOT_ID || value.root.parentId !== null) {
+  if (
+    value.root.kind !== 'root' ||
+    value.root.id !== CODE_REPOSITORY_ROOT_ID ||
+    value.root.parentId !== null
+  ) {
     return false;
   }
   if (
@@ -202,8 +206,10 @@ export function isCodeRepositoryStatus(value: unknown): value is CodeRepositoryS
   }
   if (value.diagnostic !== undefined) {
     if (!isObject(value.diagnostic)) return false;
-    if (typeof value.diagnostic.code !== 'string' || value.diagnostic.code.length === 0) return false;
-    if (typeof value.diagnostic.message !== 'string' || value.diagnostic.message.length === 0) return false;
+    if (typeof value.diagnostic.code !== 'string' || value.diagnostic.code.length === 0)
+      return false;
+    if (typeof value.diagnostic.message !== 'string' || value.diagnostic.message.length === 0)
+      return false;
     if (
       value.diagnostic.sourceLabel !== undefined &&
       (typeof value.diagnostic.sourceLabel !== 'string' ||
@@ -254,7 +260,9 @@ export function isCodeRepositoryImportResult(value: unknown): value is CodeRepos
   );
 }
 
-export function isCodeRepositoryExportFileResult(value: unknown): value is CodeRepositoryExportFileResult {
+export function isCodeRepositoryExportFileResult(
+  value: unknown,
+): value is CodeRepositoryExportFileResult {
   return (
     isObject(value) &&
     !('path' in value) &&

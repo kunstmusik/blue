@@ -17,11 +17,15 @@ import { useWorkbenchStore } from '../stores/workbench-store';
 import { BlueTree } from '../components/tree/BlueTree';
 import { acquireTreeDndManager, hasActiveTreeDrag } from '../components/tree/tree-dnd-domain';
 import type { NodeRendererProps } from 'react-arborist';
-import type { FileManagerDirectoryResult, FileManagerRootSnapshot } from '../../../shared/file-manager';
+import type {
+  FileManagerDirectoryResult,
+  FileManagerRootSnapshot,
+} from '../../../shared/file-manager';
 import type { LibraryBrowseNode } from '../../../shared/unified-library';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
-  true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const LIBRARY_NODES: LibraryBrowseNode[] = [
   {
@@ -37,7 +41,11 @@ const LIBRARY_NODES: LibraryBrowseNode[] = [
     revision: 1,
   },
   ...['organic', 'synth', 'reverb'].map((name, index) => ({
-    key: { scope: 'user' as const, libraryType: 'instrument' as const, nodeId: `library-item-${name}` },
+    key: {
+      scope: 'user' as const,
+      libraryType: 'instrument' as const,
+      nodeId: `library-item-${name}`,
+    },
     nodeId: `library-item-${name}`,
     parentId: 'library-root',
     libraryType: 'instrument' as const,
@@ -70,7 +78,12 @@ function directoryResult(): Extract<FileManagerDirectoryResult, { status: 'ok' }
       directoryPath: '/work',
       loadedAt: 1,
       children: [
-        { id: '/work/project.blue', path: '/work/project.blue', name: 'project.blue', kind: 'file' },
+        {
+          id: '/work/project.blue',
+          path: '/work/project.blue',
+          name: 'project.blue',
+          kind: 'file',
+        },
         { id: '/work/audio', path: '/work/audio', name: 'audio', kind: 'directory' },
         ...Array.from({ length: 30 }, (_, index) => ({
           id: `/work/clip-${String(index).padStart(2, '0')}`,
@@ -206,182 +219,201 @@ describe('workbench tree movement lifecycle', () => {
     'moves populated Libraries across all edges for 20 cycles without losing File Manager',
     { timeout: 60_000 },
     async () => {
-    const api = await setupWorkbench();
-
-    await act(async () => {
-      api.layout(1200, 800);
-      api.addPanel({ id: 'ScoreTopComponent', component: 'default', title: 'Score' });
-
-      const state = createDefaultAuxiliaryLayoutState();
-      const properties = state.groups.find(
-        (group) => group.kind === 'seeded' && group.seedGroupId === 'properties-main',
-      )!;
-      properties.edge = 'right';
-      properties.panelIds = ['LibrariesTopComponent'];
-      properties.dockedPanelIds = ['LibrariesTopComponent'];
-      properties.activePanelId = 'LibrariesTopComponent';
-
-      const output = state.groups.find(
-        (group) => group.kind === 'seeded' && group.seedGroupId === 'output-main',
-      )!;
-      output.panelIds = ['OutputTopComponent', 'BlueFileManagerTopComponent'];
-      output.dockedPanelIds = [...output.panelIds];
-      output.activePanelId = 'BlueFileManagerTopComponent';
-
-      useWorkbenchStore.setState({
-        api,
-        auxiliary: applyAuxiliaryLayout(api, state),
-        floatingOrigins: {},
-        closedPanelOrigins: {},
-      });
-    });
-
-    await act(async () => {});
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    const waitFor = async (predicate: () => boolean, timeoutMs = 3_000): Promise<void> => {
-      const start = Date.now();
-      while (Date.now() - start < timeoutMs) {
-        if (predicate()) return;
-        await new Promise((resolve) => setTimeout(resolve, 25));
-      }
-      throw new Error('Timed out waiting for the File Manager fixture');
-    };
-    await waitFor(() => Boolean(document.querySelector('[title="/work"]')));
-    const workRoot = document.querySelector<HTMLElement>('[title="/work"]')!;
-    act(() => {
-      workRoot.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    });
-    await waitFor(() => Boolean(document.querySelector('[title="/work/project.blue"]')));
-    await new Promise((resolve) => setTimeout(resolve, 350));
-
-    const audioRow = document
-      .querySelector<HTMLElement>('[title="/work/audio"]')!
-      .closest<HTMLElement>('div.select-none')!;
-    act(() => {
-      audioRow.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    });
-    await act(async () => {});
-    expect(audioRow.className).toContain('bg-app-accent');
-
-    const initialScrollContainer = document.querySelector<HTMLElement>(
-      '[data-testid="panel-host-BlueFileManagerTopComponent"] div[style*="overflow: auto"]',
-    )!;
-    initialScrollContainer.scrollTo(0, 8);
-    initialScrollContainer.dispatchEvent(new Event('scroll', { bubbles: true }));
-    await act(async () => {});
-    await new Promise((resolve) => setTimeout(resolve, 200));
-    expect(initialScrollContainer.scrollTop).toBe(8);
-    expect(sessionTreeState.scrollOffset).toBe(8);
-    const bottomHeightBefore = api.groups
-      .find((group) => group.id === 'blue-aux-edge-bottom')!
-      .element.getBoundingClientRect().height;
-
-    const fileManagerPanel = api.getPanel('BlueFileManagerTopComponent');
-    expect(fileManagerPanel).toBeDefined();
-
-    const cycleEdges: Array<'left' | 'bottom' | 'right'> = ['left', 'bottom', 'right', 'right'];
-
-    for (let cycle = 0; cycle < 20; cycle++) {
-      const targetEdge = cycleEdges[cycle % cycleEdges.length]!;
+      const api = await setupWorkbench();
 
       await act(async () => {
-        useWorkbenchStore.getState().movePanelToEdge('LibrariesTopComponent', targetEdge);
+        api.layout(1200, 800);
+        api.addPanel({ id: 'ScoreTopComponent', component: 'default', title: 'Score' });
+
+        const state = createDefaultAuxiliaryLayoutState();
+        const properties = state.groups.find(
+          (group) => group.kind === 'seeded' && group.seedGroupId === 'properties-main',
+        )!;
+        properties.edge = 'right';
+        properties.panelIds = ['LibrariesTopComponent'];
+        properties.dockedPanelIds = ['LibrariesTopComponent'];
+        properties.activePanelId = 'LibrariesTopComponent';
+
+        const output = state.groups.find(
+          (group) => group.kind === 'seeded' && group.seedGroupId === 'output-main',
+        )!;
+        output.panelIds = ['OutputTopComponent', 'BlueFileManagerTopComponent'];
+        output.dockedPanelIds = [...output.panelIds];
+        output.activePanelId = 'BlueFileManagerTopComponent';
+
+        useWorkbenchStore.setState({
+          api,
+          auxiliary: applyAuxiliaryLayout(api, state),
+          floatingOrigins: {},
+          closedPanelOrigins: {},
+        });
       });
+
       await act(async () => {});
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
-      const auxiliary = useWorkbenchStore.getState().auxiliary;
-      const instance = getGroupInstanceForPanel(auxiliary, 'LibrariesTopComponent');
-      expect(instance?.edge, `cycle ${cycle}: requested placement`).toBe(targetEdge);
-      expect(instance?.dockedPanelIds).toContain('LibrariesTopComponent');
-
-      expect(
-        api.getPanel('BlueFileManagerTopComponent'),
-        `cycle ${cycle}: File Manager panel identity`,
-      ).toBe(fileManagerPanel);
-
-      await act(async () => {
-        api.getPanel('BlueFileManagerTopComponent')?.api.setActive();
+      const waitFor = async (predicate: () => boolean, timeoutMs = 3_000): Promise<void> => {
+        const start = Date.now();
+        while (Date.now() - start < timeoutMs) {
+          if (predicate()) return;
+          await new Promise((resolve) => setTimeout(resolve, 25));
+        }
+        throw new Error('Timed out waiting for the File Manager fixture');
+      };
+      await waitFor(() => Boolean(document.querySelector('[title="/work"]')));
+      const workRoot = document.querySelector<HTMLElement>('[title="/work"]')!;
+      act(() => {
+        workRoot.dispatchEvent(new MouseEvent('click', { bubbles: true }));
       });
-      await new Promise((resolve) => setTimeout(resolve, 20));
+      await waitFor(() => Boolean(document.querySelector('[title="/work/project.blue"]')));
+      await new Promise((resolve) => setTimeout(resolve, 350));
 
-      expect(
-        document.querySelector('[title="/work/project.blue"]'),
-        `cycle ${cycle}: expansion retained across ${targetEdge}`,
-      ).not.toBeNull();
-      const selectedRow = document
+      const audioRow = document
         .querySelector<HTMLElement>('[title="/work/audio"]')!
         .closest<HTMLElement>('div.select-none')!;
-      expect(selectedRow.className, `cycle ${cycle}: selection retained across ${targetEdge}`).toContain(
-        'bg-app-accent',
-      );
-      const scrollContainer = document.querySelector<HTMLElement>(
+      act(() => {
+        audioRow.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      });
+      await act(async () => {});
+      expect(audioRow.className).toContain('bg-app-accent');
+
+      const initialScrollContainer = document.querySelector<HTMLElement>(
         '[data-testid="panel-host-BlueFileManagerTopComponent"] div[style*="overflow: auto"]',
       )!;
-      expect(scrollContainer.scrollTop, `cycle ${cycle}: scroll retained across ${targetEdge}`).toBe(8);
+      initialScrollContainer.scrollTo(0, 8);
+      initialScrollContainer.dispatchEvent(new Event('scroll', { bubbles: true }));
+      await act(async () => {});
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      expect(initialScrollContainer.scrollTop).toBe(8);
+      expect(sessionTreeState.scrollOffset).toBe(8);
+      const bottomHeightBefore = api.groups
+        .find((group) => group.id === 'blue-aux-edge-bottom')!
+        .element.getBoundingClientRect().height;
 
-      const bottomGroupAfter = api.groups.find((group) => group.id === 'blue-aux-edge-bottom')!;
-      expect(
-        bottomGroupAfter.element.getBoundingClientRect().height,
-        `cycle ${cycle}: bottom size retained`,
-      ).toBeCloseTo(bottomHeightBefore, 0);
-      const fileManagerPresentation = useWorkbenchStore.getState().auxiliary.groups.find((group) =>
-        group.panelIds.includes('BlueFileManagerTopComponent'),
+      const fileManagerPanel = api.getPanel('BlueFileManagerTopComponent');
+      expect(fileManagerPanel).toBeDefined();
+
+      const cycleEdges: Array<'left' | 'bottom' | 'right'> = ['left', 'bottom', 'right', 'right'];
+
+      for (let cycle = 0; cycle < 20; cycle++) {
+        const targetEdge = cycleEdges[cycle % cycleEdges.length]!;
+
+        await act(async () => {
+          useWorkbenchStore.getState().movePanelToEdge('LibrariesTopComponent', targetEdge);
+        });
+        await act(async () => {});
+        await new Promise((resolve) => setTimeout(resolve, 10));
+
+        const auxiliary = useWorkbenchStore.getState().auxiliary;
+        const instance = getGroupInstanceForPanel(auxiliary, 'LibrariesTopComponent');
+        expect(instance?.edge, `cycle ${cycle}: requested placement`).toBe(targetEdge);
+        expect(instance?.dockedPanelIds).toContain('LibrariesTopComponent');
+
+        expect(
+          api.getPanel('BlueFileManagerTopComponent'),
+          `cycle ${cycle}: File Manager panel identity`,
+        ).toBe(fileManagerPanel);
+
+        await act(async () => {
+          api.getPanel('BlueFileManagerTopComponent')?.api.setActive();
+        });
+        await new Promise((resolve) => setTimeout(resolve, 20));
+
+        expect(
+          document.querySelector('[title="/work/project.blue"]'),
+          `cycle ${cycle}: expansion retained across ${targetEdge}`,
+        ).not.toBeNull();
+        const selectedRow = document
+          .querySelector<HTMLElement>('[title="/work/audio"]')!
+          .closest<HTMLElement>('div.select-none')!;
+        expect(
+          selectedRow.className,
+          `cycle ${cycle}: selection retained across ${targetEdge}`,
+        ).toContain('bg-app-accent');
+        const scrollContainer = document.querySelector<HTMLElement>(
+          '[data-testid="panel-host-BlueFileManagerTopComponent"] div[style*="overflow: auto"]',
+        )!;
+        expect(
+          scrollContainer.scrollTop,
+          `cycle ${cycle}: scroll retained across ${targetEdge}`,
+        ).toBe(8);
+
+        const bottomGroupAfter = api.groups.find((group) => group.id === 'blue-aux-edge-bottom')!;
+        expect(
+          bottomGroupAfter.element.getBoundingClientRect().height,
+          `cycle ${cycle}: bottom size retained`,
+        ).toBeCloseTo(bottomHeightBefore, 0);
+        const fileManagerPresentation = useWorkbenchStore
+          .getState()
+          .auxiliary.groups.find((group) => group.panelIds.includes('BlueFileManagerTopComponent'));
+        expect(fileManagerPresentation?.isMaximized, `cycle ${cycle}: presentation retained`).toBe(
+          false,
+        );
+        expect(
+          fileManagerPresentation?.dockedPanelIds,
+          `cycle ${cycle}: panel remains docked`,
+        ).toContain('BlueFileManagerTopComponent');
+        const activeElement = document.activeElement;
+        const librariesGroupElement = api.getPanel('LibrariesTopComponent')?.group
+          .element as HTMLElement;
+        const fileManagerGroupElement = api.getPanel('BlueFileManagerTopComponent')?.group
+          .element as HTMLElement;
+        expect(
+          Boolean(
+            librariesGroupElement.contains(activeElement) ||
+            fileManagerGroupElement.contains(activeElement),
+          ),
+          `cycle ${cycle}: focus remains within the affected workbench groups`,
+        ).toBe(true);
+
+        const duplicateBackendErrors = capturedErrors.filter((message) =>
+          message.includes('two HTML5 backends'),
+        );
+        expect(duplicateBackendErrors, `cycle ${cycle}: no duplicate backend errors`).toEqual([]);
+      }
+
+      expect(mountCounts['BlueFileManagerTopComponent']).toBeGreaterThan(0);
+      expect(mountCounts['LibrariesTopComponent']).toBeGreaterThan(0);
+
+      expect(capturedErrors).toEqual([]);
+
+      // Dockview lazily unmounts inactive tab content (the same behavior as the
+      // real workbench). Activating the moved panel remounts its content from
+      // the preserved live panel object.
+      expect(api.getPanel('LibrariesTopComponent')).toBeDefined();
+      await act(async () => {
+        api.getPanel('LibrariesTopComponent')?.api.setActive();
+      });
+      await new Promise((resolve) => setTimeout(resolve, 30));
+
+      const librariesRows = document.querySelectorAll('[data-library-node-id]');
+      expect(librariesRows.length).toBe(LIBRARY_NODES.length);
+
+      const libraryItem = document.querySelector<HTMLElement>(
+        '[data-library-node-id="library-item-organic"]',
+      )!;
+      const libraryDragData = new DataTransfer();
+      act(() => {
+        libraryItem.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+        libraryItem.dispatchEvent(
+          new DragEvent('dragstart', {
+            bubbles: true,
+            cancelable: true,
+            dataTransfer: libraryDragData,
+          }),
+        );
+      });
+      expect(readLibraryDragDescriptor(libraryDragData)).toEqual(
+        expect.objectContaining({ libraryType: 'instrument', sourceScope: 'user' }),
       );
-      expect(fileManagerPresentation?.isMaximized, `cycle ${cycle}: presentation retained`).toBe(false);
-      expect(fileManagerPresentation?.dockedPanelIds, `cycle ${cycle}: panel remains docked`).toContain(
-        'BlueFileManagerTopComponent',
-      );
-      const activeElement = document.activeElement;
-      const librariesGroupElement = api.getPanel('LibrariesTopComponent')?.group.element as HTMLElement;
-      const fileManagerGroupElement = api.getPanel('BlueFileManagerTopComponent')?.group.element as HTMLElement;
-      expect(
-        Boolean(librariesGroupElement.contains(activeElement) || fileManagerGroupElement.contains(activeElement)),
-        `cycle ${cycle}: focus remains within the affected workbench groups`,
-      ).toBe(true);
-
-      const duplicateBackendErrors = capturedErrors.filter((message) =>
-        message.includes('two HTML5 backends'),
-      );
-      expect(duplicateBackendErrors, `cycle ${cycle}: no duplicate backend errors`).toEqual([]);
-    }
-
-    expect(mountCounts['BlueFileManagerTopComponent']).toBeGreaterThan(0);
-    expect(mountCounts['LibrariesTopComponent']).toBeGreaterThan(0);
-
-    expect(capturedErrors).toEqual([]);
-
-    // Dockview lazily unmounts inactive tab content (the same behavior as the
-    // real workbench). Activating the moved panel remounts its content from
-    // the preserved live panel object.
-    expect(api.getPanel('LibrariesTopComponent')).toBeDefined();
-    await act(async () => {
-      api.getPanel('LibrariesTopComponent')?.api.setActive();
-    });
-    await new Promise((resolve) => setTimeout(resolve, 30));
-
-    const librariesRows = document.querySelectorAll('[data-library-node-id]');
-    expect(librariesRows.length).toBe(LIBRARY_NODES.length);
-
-    const libraryItem = document.querySelector<HTMLElement>(
-      '[data-library-node-id="library-item-organic"]',
-    )!;
-    const libraryDragData = new DataTransfer();
-    act(() => {
-      libraryItem.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
-      libraryItem.dispatchEvent(
-        new DragEvent('dragstart', { bubbles: true, cancelable: true, dataTransfer: libraryDragData }),
-      );
-    });
-    expect(readLibraryDragDescriptor(libraryDragData)).toEqual(
-      expect.objectContaining({ libraryType: 'instrument', sourceScope: 'user' }),
-    );
-    libraryDragData.dropEffect = 'copy';
-    act(() => {
-      libraryItem.dispatchEvent(new DragEvent('dragend', { bubbles: true, dataTransfer: libraryDragData }));
-    });
-    });
+      libraryDragData.dropEffect = 'copy';
+      act(() => {
+        libraryItem.dispatchEvent(
+          new DragEvent('dragend', { bubbles: true, dataTransfer: libraryDragData }),
+        );
+      });
+    },
+  );
 });
 
 describe('unaffected auxiliary session preservation', () => {
@@ -514,7 +546,6 @@ describe('unaffected auxiliary session preservation', () => {
       await act(async () => {});
       expect(scrollContainer.scrollTop).toBe(8);
 
-
       const fileManagerPanel = api.getPanel('BlueFileManagerTopComponent');
       const mountsBefore = mountCounts['BlueFileManagerTopComponent'];
       const focusBefore = document.activeElement;
@@ -549,9 +580,7 @@ describe('unaffected auxiliary session preservation', () => {
 
         expect(scrollContainer.scrollTop, `${targetEdge}: scroll retained`).toBe(8);
 
-        const bottomGroupAfter = api.groups.find(
-          (group) => group.id === 'blue-aux-edge-bottom',
-        )!;
+        const bottomGroupAfter = api.groups.find((group) => group.id === 'blue-aux-edge-bottom')!;
         expect(
           bottomGroupAfter.element.getBoundingClientRect().height,
           `${targetEdge}: docked size retained`,
@@ -564,18 +593,16 @@ describe('unaffected auxiliary session preservation', () => {
         expect(fileManagerPresentation?.isMaximized, `${targetEdge}: presentation retained`).toBe(
           false,
         );
-        expect(
-          fileManagerPresentation?.dockedPanelIds,
-          `${targetEdge}: still docked`,
-        ).toContain('BlueFileManagerTopComponent');
+        expect(fileManagerPresentation?.dockedPanelIds, `${targetEdge}: still docked`).toContain(
+          'BlueFileManagerTopComponent',
+        );
 
         const active = document.activeElement;
-        const librariesGroupElement = api
-          .getPanel('LibrariesTopComponent')
-          ?.group.element as HTMLElement | undefined;
-        const fileManagerGroupElement = api.getPanel(
-          'BlueFileManagerTopComponent',
-        )?.group.element as HTMLElement | undefined;
+        const librariesGroupElement = api.getPanel('LibrariesTopComponent')?.group.element as
+          | HTMLElement
+          | undefined;
+        const fileManagerGroupElement = api.getPanel('BlueFileManagerTopComponent')?.group
+          .element as HTMLElement | undefined;
         expect(
           Boolean(
             librariesGroupElement?.contains(active) || fileManagerGroupElement?.contains(active),
@@ -750,7 +777,8 @@ describe('workbench tree movement edge cases', () => {
         useWorkbenchStore.getState().movePanelToEdge('LibrariesTopComponent', 'left');
       });
       expect(
-        getGroupInstanceForPanel(useWorkbenchStore.getState().auxiliary, 'LibrariesTopComponent')?.edge,
+        getGroupInstanceForPanel(useWorkbenchStore.getState().auxiliary, 'LibrariesTopComponent')
+          ?.edge,
       ).toBe('left');
 
       nativeDragData.dropEffect = 'copy';
@@ -783,7 +811,9 @@ describe('workbench tree movement edge cases', () => {
       });
       await act(async () => {});
 
-      const arboristRow = arboristHost.querySelector<HTMLElement>('[data-testid="real-drag-real-1"]')!;
+      const arboristRow = arboristHost.querySelector<HTMLElement>(
+        '[data-testid="real-drag-real-1"]',
+      )!;
       const arboristDragData = new DataTransfer();
       act(() => {
         arboristRow.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
@@ -802,7 +832,8 @@ describe('workbench tree movement edge cases', () => {
         useWorkbenchStore.getState().movePanelToEdge('LibrariesTopComponent', 'bottom');
       });
       expect(
-        getGroupInstanceForPanel(useWorkbenchStore.getState().auxiliary, 'LibrariesTopComponent')?.edge,
+        getGroupInstanceForPanel(useWorkbenchStore.getState().auxiliary, 'LibrariesTopComponent')
+          ?.edge,
       ).toBe('left');
 
       act(() => {
@@ -817,7 +848,8 @@ describe('workbench tree movement edge cases', () => {
         useWorkbenchStore.getState().movePanelToEdge('LibrariesTopComponent', 'bottom');
       });
       expect(
-        getGroupInstanceForPanel(useWorkbenchStore.getState().auxiliary, 'LibrariesTopComponent')?.edge,
+        getGroupInstanceForPanel(useWorkbenchStore.getState().auxiliary, 'LibrariesTopComponent')
+          ?.edge,
       ).toBe('bottom');
       expect(capturedErrors).toEqual([]);
 
@@ -826,39 +858,35 @@ describe('workbench tree movement edge cases', () => {
     },
   );
 
-  it(
-    'preserves minimized neighbors while another panel moves',
-    { timeout: 60_000 },
-    async () => {
-      const api = await setupWorkbench((state) => {
-        const output = state.groups.find(
-          (group) => group.kind === 'seeded' && group.seedGroupId === 'output-main',
-        )!;
-        output.dockedPanelIds = ['BlueFileManagerTopComponent'];
-      });
-
-      const before = useWorkbenchStore.getState().auxiliary;
-      const outputBefore = before.groups.find(
+  it('preserves minimized neighbors while another panel moves', { timeout: 60_000 }, async () => {
+    const api = await setupWorkbench((state) => {
+      const output = state.groups.find(
         (group) => group.kind === 'seeded' && group.seedGroupId === 'output-main',
       )!;
-      expect(outputBefore.dockedPanelIds).not.toContain('OutputTopComponent');
+      output.dockedPanelIds = ['BlueFileManagerTopComponent'];
+    });
 
-      await act(async () => {
-        useWorkbenchStore.getState().movePanelToEdge('LibrariesTopComponent', 'bottom');
-      });
-      await act(async () => {});
+    const before = useWorkbenchStore.getState().auxiliary;
+    const outputBefore = before.groups.find(
+      (group) => group.kind === 'seeded' && group.seedGroupId === 'output-main',
+    )!;
+    expect(outputBefore.dockedPanelIds).not.toContain('OutputTopComponent');
 
-      const after = useWorkbenchStore.getState().auxiliary;
-      const outputAfter = after.groups.find(
-        (group) => group.kind === 'seeded' && group.seedGroupId === 'output-main',
-      )!;
-      expect(outputAfter.dockedPanelIds).not.toContain('OutputTopComponent');
-      expect(
-        after.groups.find((group) => group.panelIds.includes('LibrariesTopComponent'))?.edge,
-      ).toBe('bottom');
-      expect(capturedErrors).toEqual([]);
-    },
-  );
+    await act(async () => {
+      useWorkbenchStore.getState().movePanelToEdge('LibrariesTopComponent', 'bottom');
+    });
+    await act(async () => {});
+
+    const after = useWorkbenchStore.getState().auxiliary;
+    const outputAfter = after.groups.find(
+      (group) => group.kind === 'seeded' && group.seedGroupId === 'output-main',
+    )!;
+    expect(outputAfter.dockedPanelIds).not.toContain('OutputTopComponent');
+    expect(
+      after.groups.find((group) => group.panelIds.includes('LibrariesTopComponent'))?.edge,
+    ).toBe('bottom');
+    expect(capturedErrors).toEqual([]);
+  });
 
   it(
     'survives a tree surface unmounting in the same tick as a panel move',
@@ -902,7 +930,9 @@ describe('workbench tree movement edge cases', () => {
       expect(
         auxiliary.groups.find((group) => group.panelIds.includes('LibrariesTopComponent'))?.edge,
       ).toBe('left');
-      expect(capturedErrors.filter((message) => message.includes('two HTML5 backends'))).toEqual([]);
+      expect(capturedErrors.filter((message) => message.includes('two HTML5 backends'))).toEqual(
+        [],
+      );
     },
   );
 });

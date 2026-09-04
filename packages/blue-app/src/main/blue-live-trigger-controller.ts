@@ -27,9 +27,7 @@ import type {
   LegacyBlueLiveTriggerRequest,
   LegacyBlueLiveTriggerResult,
 } from '../shared/project-editor';
-import {
-  validateLegacyBlueLiveTriggerRequest,
-} from '../shared/project-editor';
+import { validateLegacyBlueLiveTriggerRequest } from '../shared/project-editor';
 import type { BlueLiveEngineSession, BlueLiveStatusSnapshot } from './blue-live-engine';
 
 export interface BlueLiveJavaRuntimeSession {
@@ -167,7 +165,8 @@ export class BlueLiveTriggerController {
     // Fence: check document revision and session generation after preparation.
     const currentRevision = this.accessors.getDocumentRevision();
     const currentSessionId = this.accessors.getProjectSessionId();
-    const currentBlueLiveSessionId = this.accessors.getBlueLiveSession()?.getStatus().sessionId ?? 0;
+    const currentBlueLiveSessionId =
+      this.accessors.getBlueLiveSession()?.getStatus().sessionId ?? 0;
 
     if (!this.acceptingTriggers) {
       return staleResult('stale-session', currentRevision, currentBlueLiveSessionId);
@@ -181,9 +180,9 @@ export class BlueLiveTriggerController {
 
     if (result.kind === 'failure') {
       if (
-        result.failure.code === 'invalid-request'
-        || result.failure.code === 'target-not-found'
-        || result.failure.code === 'invalid-tempo'
+        result.failure.code === 'invalid-request' ||
+        result.failure.code === 'target-not-found' ||
+        result.failure.code === 'invalid-tempo'
       ) {
         return rejectedResult(
           result.failure.code,
@@ -368,9 +367,10 @@ function staleResult(
     ok: false,
     status: 'stale',
     code,
-    message: code === 'stale-document'
-      ? 'The project changed before the trigger could complete'
-      : 'The Blue Live session changed before the trigger could complete',
+    message:
+      code === 'stale-document'
+        ? 'The project changed before the trigger could complete'
+        : 'The Blue Live session changed before the trigger could complete',
     targetCount: 0,
     noteCount: 0,
     documentRevision,

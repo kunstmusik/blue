@@ -42,20 +42,20 @@ export function LibraryContextMenu({
 }: LibraryContextMenuProps): React.ReactElement {
   const userOwned = node.scope === 'user';
   const canContainChildren = node.nodeKind === 'folder' || node.nodeKind === 'root';
-  const hasPasteDestination = canContainChildren || (node.nodeKind === 'item' && node.parentId !== null);
+  const hasPasteDestination =
+    canContainChildren || (node.nodeKind === 'item' && node.parentId !== null);
   const pasteCompatible = Boolean(
-    clipboard
-    && getLibraryTransferSourceType(clipboard.source) === node.libraryType
-    && hasPasteDestination,
+    clipboard &&
+    getLibraryTransferSourceType(clipboard.source) === node.libraryType &&
+    hasPasteDestination,
   );
-  const canImportInstrument = userOwned
-    && node.libraryType === 'instrument'
-    && canContainChildren
-    && onImportInstrument;
-  const canExportInstrument = userOwned
-    && node.libraryType === 'instrument'
-    && node.nodeKind === 'item'
-    && onExportInstrument;
+  const canImportInstrument =
+    userOwned && node.libraryType === 'instrument' && canContainChildren && onImportInstrument;
+  const canExportInstrument =
+    userOwned &&
+    node.libraryType === 'instrument' &&
+    node.nodeKind === 'item' &&
+    onExportInstrument;
   return (
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>{children}</ContextMenu.Trigger>
@@ -68,17 +68,26 @@ export function LibraryContextMenu({
           {...portalEventIsolationProps}
         >
           {canContainChildren && userOwned && onCreateFolder && (
-            <ContextMenu.Item className={ITEM_CLASS} onSelect={() => onCreateFolder(node)}>Create Folder…</ContextMenu.Item>
+            <ContextMenu.Item className={ITEM_CLASS} onSelect={() => onCreateFolder(node)}>
+              Create Folder…
+            </ContextMenu.Item>
           )}
           {userOwned && node.nodeKind !== 'root' && onDuplicate && (
-            <ContextMenu.Item className={ITEM_CLASS} onSelect={() => onDuplicate(node)}>Duplicate</ContextMenu.Item>
+            <ContextMenu.Item className={ITEM_CLASS} onSelect={() => onDuplicate(node)}>
+              Duplicate
+            </ContextMenu.Item>
           )}
           {node.nodeKind !== 'root' && onCut && (
-            <ContextMenu.Item className={ITEM_CLASS} onSelect={() => onCut(node)}>Cut</ContextMenu.Item>
+            <ContextMenu.Item className={ITEM_CLASS} onSelect={() => onCut(node)}>
+              Cut
+            </ContextMenu.Item>
           )}
-          {((userOwned && node.nodeKind !== 'root') || (!userOwned && node.nodeKind === 'item')) && onCopy && (
-            <ContextMenu.Item className={ITEM_CLASS} onSelect={() => onCopy(node)}>Copy</ContextMenu.Item>
-          )}
+          {((userOwned && node.nodeKind !== 'root') || (!userOwned && node.nodeKind === 'item')) &&
+            onCopy && (
+              <ContextMenu.Item className={ITEM_CLASS} onSelect={() => onCopy(node)}>
+                Copy
+              </ContextMenu.Item>
+            )}
           {onPaste && (
             <ContextMenu.Item
               disabled={!pasteCompatible}
@@ -93,12 +102,18 @@ export function LibraryContextMenu({
             <>
               <ContextMenu.Separator className="editor-context-menu__separator" />
               {canImportInstrument && (
-                <ContextMenu.Item className={ITEM_CLASS} onSelect={() => onImportInstrument?.(node)}>
+                <ContextMenu.Item
+                  className={ITEM_CLASS}
+                  onSelect={() => onImportInstrument?.(node)}
+                >
                   Import…
                 </ContextMenu.Item>
               )}
               {canExportInstrument && (
-                <ContextMenu.Item className={ITEM_CLASS} onSelect={() => onExportInstrument?.(node)}>
+                <ContextMenu.Item
+                  className={ITEM_CLASS}
+                  onSelect={() => onExportInstrument?.(node)}
+                >
                   Export…
                 </ContextMenu.Item>
               )}
@@ -107,14 +122,31 @@ export function LibraryContextMenu({
           {userOwned && node.nodeKind !== 'root' && (onMoveUp || onMoveDown) && (
             <>
               <ContextMenu.Separator className="editor-context-menu__separator" />
-              <ContextMenu.Item disabled={!onMoveUp} className={ITEM_CLASS} onSelect={() => onMoveUp?.(node)}>Move Up</ContextMenu.Item>
-              <ContextMenu.Item disabled={!onMoveDown} className={ITEM_CLASS} onSelect={() => onMoveDown?.(node)}>Move Down</ContextMenu.Item>
+              <ContextMenu.Item
+                disabled={!onMoveUp}
+                className={ITEM_CLASS}
+                onSelect={() => onMoveUp?.(node)}
+              >
+                Move Up
+              </ContextMenu.Item>
+              <ContextMenu.Item
+                disabled={!onMoveDown}
+                className={ITEM_CLASS}
+                onSelect={() => onMoveDown?.(node)}
+              >
+                Move Down
+              </ContextMenu.Item>
             </>
           )}
           {onDelete && node.nodeKind !== 'root' && (
             <>
               <ContextMenu.Separator className="editor-context-menu__separator" />
-              <ContextMenu.Item className={cn(ITEM_CLASS, 'text-red-300')} onSelect={() => onDelete(node)}>Delete…</ContextMenu.Item>
+              <ContextMenu.Item
+                className={cn(ITEM_CLASS, 'text-red-300')}
+                onSelect={() => onDelete(node)}
+              >
+                Delete…
+              </ContextMenu.Item>
             </>
           )}
         </ContextMenu.Content>

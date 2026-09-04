@@ -57,8 +57,8 @@ const RESTART_VALUES = [90, 130, 250];
 const RESTART_CYCLES = parseRestartCycles();
 
 const LEGAL_PERCENTS = Array.from(
-  { length: ((MAX_PERCENT - MIN_PERCENT) / STEP_PERCENT) + 1 },
-  (_, index) => MIN_PERCENT + (index * STEP_PERCENT),
+  { length: (MAX_PERCENT - MIN_PERCENT) / STEP_PERCENT + 1 },
+  (_, index) => MIN_PERCENT + index * STEP_PERCENT,
 );
 
 function parseRestartCycles() {
@@ -92,9 +92,7 @@ function settingsFilePath(profileDir) {
 
 function seedAppZoomPercent(profileDir, percent) {
   const filePath = settingsFilePath(profileDir);
-  const existing = fs.existsSync(filePath)
-    ? JSON.parse(fs.readFileSync(filePath, 'utf-8'))
-    : {};
+  const existing = fs.existsSync(filePath) ? JSON.parse(fs.readFileSync(filePath, 'utf-8')) : {};
   existing.appSpecific = {
     ...(existing.appSpecific ?? {}),
     appZoomPercent: percent,
@@ -126,19 +124,22 @@ async function waitForMainPage(electronApp) {
 }
 
 async function readWindowStates(electronApp) {
-  return electronApp.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()
-    .filter((window) => !window.isDestroyed() && !window.webContents.isDestroyed())
-    .map((window) => ({
-      title: window.getTitle(),
-      url: window.webContents.getURL(),
-      zoomFactor: window.webContents.getZoomFactor(),
-      visible: window.isVisible(),
-    })));
+  return electronApp.evaluate(({ BrowserWindow }) =>
+    BrowserWindow.getAllWindows()
+      .filter((window) => !window.isDestroyed() && !window.webContents.isDestroyed())
+      .map((window) => ({
+        title: window.getTitle(),
+        url: window.webContents.getURL(),
+        zoomFactor: window.webContents.getZoomFactor(),
+        visible: window.isVisible(),
+      })),
+  );
 }
 
 function factorsMatch(states, expectedFactor) {
-  return states.length > 0 && states.every(
-    ({ zoomFactor }) => Math.abs(zoomFactor - expectedFactor) <= FACTOR_TOLERANCE,
+  return (
+    states.length > 0 &&
+    states.every(({ zoomFactor }) => Math.abs(zoomFactor - expectedFactor) <= FACTOR_TOLERANCE)
   );
 }
 
@@ -272,11 +273,13 @@ async function verifyMenuContractWithFocusedControl(electron) {
 
     const menuContract = await app.evaluate(({ Menu }) => {
       const viewMenu = Menu.getApplicationMenu()?.items.find((item) => item.label === 'View');
-      return viewMenu?.submenu?.items.map(({ label, accelerator, role }) => ({
-        label,
-        accelerator: accelerator ?? null,
-        role: role ?? null,
-      })) ?? [];
+      return (
+        viewMenu?.submenu?.items.map(({ label, accelerator, role }) => ({
+          label,
+          accelerator: accelerator ?? null,
+          role: role ?? null,
+        })) ?? []
+      );
     });
     assert.deepEqual(menuContract, [
       { label: 'Zoom In', accelerator: 'CommandOrControl+Plus', role: null },
@@ -301,7 +304,9 @@ async function verifyMenuContractWithFocusedControl(electron) {
     await app.close();
     removeTempProfile(profileDir);
   }
-  console.log('[verify:app-zoom] PASS: menu contract and callbacks while an interactive control is focused.');
+  console.log(
+    '[verify:app-zoom] PASS: menu contract and callbacks while an interactive control is focused.',
+  );
 }
 
 async function openRepresentativeWindows(mainPage) {
@@ -323,10 +328,12 @@ async function openRepresentativeWindows(mainPage) {
 }
 
 function hasRepresentativeWindows(states) {
-  return states.some(({ url }) => /index\.html/.test(url))
-    && states.some(({ url }) => /settings\.html/.test(url))
-    && states.some(({ url }) => /effect-editor\.html/.test(url))
-    && states.some(({ url }) => /popout\.html/.test(url));
+  return (
+    states.some(({ url }) => /index\.html/.test(url)) &&
+    states.some(({ url }) => /settings\.html/.test(url)) &&
+    states.some(({ url }) => /effect-editor\.html/.test(url)) &&
+    states.some(({ url }) => /popout\.html/.test(url))
+  );
 }
 
 async function verifyMultiWindowAndStaleDraft(electron) {
@@ -340,7 +347,8 @@ async function verifyMultiWindowAndStaleDraft(electron) {
     const staleDraft = await openRepresentativeWindows(mainPage);
     await waitForWindowStates(
       app,
-      (states) => states.length >= 4 && hasRepresentativeWindows(states) && factorsMatch(states, 1.2),
+      (states) =>
+        states.length >= 4 && hasRepresentativeWindows(states) && factorsMatch(states, 1.2),
       'representative main, Settings, effect, and popout windows were not created at factor 1.2',
     );
 
@@ -370,7 +378,9 @@ async function verifyMultiWindowAndStaleDraft(electron) {
     await app.close();
     removeTempProfile(profileDir);
   }
-  console.log(`[verify:app-zoom] PASS: representative multi-window broadcast in <= ${ACCEPTANCE_BROADCAST_MS}ms and stale-draft protection.`);
+  console.log(
+    `[verify:app-zoom] PASS: representative multi-window broadcast in <= ${ACCEPTANCE_BROADCAST_MS}ms and stale-draft protection.`,
+  );
 }
 
 async function verifyRestarts(electron) {
@@ -398,7 +408,9 @@ async function verifyRestarts(electron) {
     await app.close().catch(() => {});
     removeTempProfile(profileDir);
   }
-  console.log(`[verify:app-zoom] PASS: ${RESTART_CYCLES} same-profile restarts across ${RESTART_VALUES.length} non-default values.`);
+  console.log(
+    `[verify:app-zoom] PASS: ${RESTART_CYCLES} same-profile restarts across ${RESTART_VALUES.length} non-default values.`,
+  );
 }
 
 async function verifyMalformedSettings(electron) {
@@ -444,7 +456,9 @@ async function verifyWriteFailureRecovery(electron) {
     await app.close().catch(() => {});
     removeTempProfile(profileDir);
   }
-  console.log('[verify:app-zoom] PASS: write failure keeps runtime zoom and a later save restores after restart.');
+  console.log(
+    '[verify:app-zoom] PASS: write failure keeps runtime zoom and a later save restores after restart.',
+  );
 }
 
 async function run() {

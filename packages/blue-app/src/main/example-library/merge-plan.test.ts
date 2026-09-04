@@ -34,10 +34,19 @@ function baseline(
   size: number,
   present = true,
 ): FactoryBaselineRecord {
-  return { relativePath, factorySha256: sha(contentSeed), factorySize: size, factoryPresent: present };
+  return {
+    relativePath,
+    factorySha256: sha(contentSeed),
+    factorySize: size,
+    factoryPresent: present,
+  };
 }
 
-function regular(relativePath: string, contentSeed: string, size = contentSeed.length): UserEntrySnapshot {
+function regular(
+  relativePath: string,
+  contentSeed: string,
+  size = contentSeed.length,
+): UserEntrySnapshot {
   return { relativePath, kind: 'regular', sha256: sha(contentSeed), size };
 }
 
@@ -101,17 +110,13 @@ describe('merge planner · contract matrix rows', () => {
   it('rows 3–4: untouched file kept or replaced with fresh bytes; no conflicts', () => {
     const baselines = [baseline(A_FILE[0], 'A', 10)];
 
-    const unchanged = planning(baselines, [regular(A_FILE[0], 'A', 10)], [
-      [A_FILE[0], 'A', 10],
-    ]);
+    const unchanged = planning(baselines, [regular(A_FILE[0], 'A', 10)], [[A_FILE[0], 'A', 10]]);
     expect(unchanged.actions).toEqual([
       { kind: 'keep-unchanged', relativePath: A_FILE[0], conflict: false },
     ]);
     expect(unchanged.appliedFactoryPaths).toEqual([]);
 
-    const replaced = planning(baselines, [regular(A_FILE[0], 'A', 10)], [
-      [A_FILE[0], 'B9', 12],
-    ]);
+    const replaced = planning(baselines, [regular(A_FILE[0], 'A', 10)], [[A_FILE[0], 'B9', 12]]);
     expect(replaced.actions).toEqual([
       { kind: 'replace-untouched', relativePath: A_FILE[0], conflict: false },
     ]);
@@ -122,25 +127,31 @@ describe('merge planner · contract matrix rows', () => {
   it('row 5: user-modified file preserved; reported only when factory also changed', () => {
     const baselines = [baseline('doc/readme.md', 'ORIG', 4)];
 
-    const silentKeep = planning(baselines, [regular('doc/readme.md', 'MINE')], [
-      ['doc/readme.md', 'ORIG', 4],
-    ]);
+    const silentKeep = planning(
+      baselines,
+      [regular('doc/readme.md', 'MINE')],
+      [['doc/readme.md', 'ORIG', 4]],
+    );
     expect(silentKeep.actions).toEqual([
       { kind: 'preserve-user-modified', relativePath: 'doc/readme.md', conflict: false },
     ]);
 
-    const loudKeep = planning(baselines, [regular('doc/readme.md', 'MINE')], [
-      ['doc/readme.md', 'THEIRS', 6],
-    ]);
+    const loudKeep = planning(
+      baselines,
+      [regular('doc/readme.md', 'MINE')],
+      [['doc/readme.md', 'THEIRS', 6]],
+    );
     expect(loudKeep.actions).toEqual([
       { kind: 'preserve-user-modified', relativePath: 'doc/readme.md', conflict: true },
     ]);
     expect(loudKeep.summary.conflicts).toContain('doc/readme.md');
 
     // Non-regular entries take the path-type collision row instead.
-    const symlinkOccupied = planning(baselines, [ofKind('doc/readme.md', 'symlink')], [
-      ['doc/readme.md', 'ANY', 1],
-    ]);
+    const symlinkOccupied = planning(
+      baselines,
+      [ofKind('doc/readme.md', 'symlink')],
+      [['doc/readme.md', 'ANY', 1]],
+    );
     expect(symlinkOccupied.actions).toEqual([
       { kind: 'preserve-collision', relativePath: 'doc/readme.md', conflict: true },
     ]);
@@ -162,9 +173,11 @@ describe('merge planner · contract matrix rows', () => {
   it('row 7: directory/symlink occupying the file path is a reported collision', () => {
     const baselines = [baseline('shape/target.blue', 'SHAPE', 2)];
     for (const kind of ['directory', 'symlink', 'other'] as const) {
-      const plan = planning(baselines, [ofKind('shape/target.blue', kind)], [
-        ['shape/target.blue', 'NEXT', 4],
-      ]);
+      const plan = planning(
+        baselines,
+        [ofKind('shape/target.blue', kind)],
+        [['shape/target.blue', 'NEXT', 4]],
+      );
       expect(plan.actions).toEqual([
         { kind: 'preserve-collision', relativePath: 'shape/target.blue', conflict: true },
       ]);
@@ -194,17 +207,21 @@ describe('merge planner · contract matrix rows', () => {
   it('rows 9–11: reintroduced factory paths after tombstones classify by live user state', () => {
     const tombstone = baseline(A_TOMBSTONE_PATH, 'OLDBYTES', 21, false);
 
-    const retainedUntouched = planning(tombstone && [tombstone], [regular(A_TOMBSTONE_PATH, 'OLDBYTES', 21)], [
-      [A_TOMBSTONE_PATH, 'RETURNS-DIFFERENT', 30],
-    ]);
+    const retainedUntouched = planning(
+      tombstone && [tombstone],
+      [regular(A_TOMBSTONE_PATH, 'OLDBYTES', 21)],
+      [[A_TOMBSTONE_PATH, 'RETURNS-DIFFERENT', 30]],
+    );
     expect(retainedUntouched.actions).toEqual([
       { kind: 'add-factory', relativePath: A_TOMBSTONE_PATH, conflict: false },
     ]);
     expect(retainedUntouched.appliedFactoryPaths).toEqual([A_TOMBSTONE_PATH]);
 
-    const retainedModified = planning([tombstone], [regular(A_TOMBSTONE_PATH, 'MYPAGE', 55)], [
-      [A_TOMBSTONE_PATH, 'RETURN', 10],
-    ]);
+    const retainedModified = planning(
+      [tombstone],
+      [regular(A_TOMBSTONE_PATH, 'MYPAGE', 55)],
+      [[A_TOMBSTONE_PATH, 'RETURN', 10]],
+    );
     expect(retainedModified.actions).toEqual([
       { kind: 'preserve-user-modified', relativePath: A_TOMBSTONE_PATH, conflict: true },
     ]);
@@ -216,7 +233,11 @@ describe('merge planner · contract matrix rows', () => {
   });
 
   it('row 12: user-only trees at brand-new locations are preserved without baselines', () => {
-    const plan = planning([], [regular('my-sandbox/idea.csd', 'USERCS'), regular('notes.txt', 'NOTE')], []);
+    const plan = planning(
+      [],
+      [regular('my-sandbox/idea.csd', 'USERCS'), regular('notes.txt', 'NOTE')],
+      [],
+    );
     expect(plan.actions.sort((a, b) => (a.relativePath < b.relativePath ? -1 : 1))).toEqual([
       { kind: 'preserve-user-only', relativePath: 'my-sandbox/idea.csd', conflict: false },
       { kind: 'preserve-user-only', relativePath: 'notes.txt', conflict: false },
@@ -256,7 +277,11 @@ describe('merge planner · invariants and outputs', () => {
       baseline('changed/file.blue', 'CHANGED-OLD', 31),
       baseline('dropped/legacy.csd', 'DROPPED', 5),
     ];
-    const plan = planning(baselines, [regular('changed/file.blue', 'CHANGED-OLD', 31)], installedFiles);
+    const plan = planning(
+      baselines,
+      [regular('changed/file.blue', 'CHANGED-OLD', 31)],
+      installedFiles,
+    );
 
     expect(plan.nextState.acceptedFactoryRevision).toBe(manifestOf(installedFiles).revision);
     expect(deriveRevisionFromBaselines(plan.nextState.baselines)).toBe(
@@ -284,14 +309,18 @@ describe('merge planner · invariants and outputs', () => {
     const conflictingActions = plan.actions.filter((action) => action.conflict);
     expect(conflictingActions).toHaveLength(15);
     expect(plan.summary.conflicts.length).toBeLessThanOrEqual(8);
-    expect(plan.summary.conflicts.every((pathText) => pathText.startsWith('bulk/sample'))).toBe(true);
+    expect(plan.summary.conflicts.every((pathText) => pathText.startsWith('bulk/sample'))).toBe(
+      true,
+    );
   });
 
   it('rejects installed manifests whose own revision contradicts their records', () => {
     const brokenManifest: FactoryManifest = {
       schemaVersion: 1,
       revision: 'sha256:' + 'z'.repeat(63) + '!',
-      files: [{ relativePath: parsePortableExamplePath('a/blue.blue'), sha256: sha('AAA'), size: 3 }],
+      files: [
+        { relativePath: parsePortableExamplePath('a/blue.blue'), sha256: sha('AAA'), size: 3 },
+      ],
     };
     expect(() =>
       planExampleUpdate({ baselines: [], userEntries: [], installed: brokenManifest }),
@@ -299,10 +328,7 @@ describe('merge planner · invariants and outputs', () => {
   });
 
   it('derives a stable source-user revision across snapshot ordering', () => {
-    const entries = [
-      regular('b/second.blue', 'S'),
-      regular('a/first.blue', 'F'),
-    ];
+    const entries = [regular('b/second.blue', 'S'), regular('a/first.blue', 'F')];
     const reordered = [...entries].reverse();
     expect(deriveSourceUserRevision(entries)).toBe(deriveSourceUserRevision(reordered));
     expect(deriveSourceUserRevision(entries)).toMatch(/^sha256:[0-9a-f]{64}$/);

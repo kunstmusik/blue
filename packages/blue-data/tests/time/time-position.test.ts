@@ -7,7 +7,9 @@ import { Element } from '../../src/serialization/xml-reader';
 
 describe('TimePosition', () => {
   let context: TimeContext;
-  beforeEach(() => { context = makeDefaultContext(); });
+  beforeEach(() => {
+    context = makeDefaultContext();
+  });
 
   // ===== BeatTime =====
 
@@ -210,12 +212,24 @@ describe('TimePosition', () => {
   });
 
   it('testTimePositionXMLLoadsJavaAndLegacyTagNames', () => {
-    const javaSeconds = Element.parse('<position type="SECONDS"><totalSeconds>2.5</totalSeconds></position>');
-    const legacySeconds = Element.parse('<position type="SECONDS"><seconds>2.5</seconds></position>');
-    expect(TimePosition.loadFromXML(javaSeconds).equals(TimePosition.loadFromXML(legacySeconds))).toBe(true);
+    const javaSeconds = Element.parse(
+      '<position type="SECONDS"><totalSeconds>2.5</totalSeconds></position>',
+    );
+    const legacySeconds = Element.parse(
+      '<position type="SECONDS"><seconds>2.5</seconds></position>',
+    );
+    expect(
+      TimePosition.loadFromXML(javaSeconds).equals(TimePosition.loadFromXML(legacySeconds)),
+    ).toBe(true);
 
-    const javaFrame = Element.parse('<position type="FRAME"><frameCount>44100</frameCount></position>');
-    const legacyFrame = Element.parse('<position type="FRAME"><frameNumber>44100</frameNumber></position>');
-    expect(TimePosition.loadFromXML(javaFrame).equals(TimePosition.loadFromXML(legacyFrame))).toBe(true);
+    const javaFrame = Element.parse(
+      '<position type="FRAME"><frameCount>44100</frameCount></position>',
+    );
+    const legacyFrame = Element.parse(
+      '<position type="FRAME"><frameNumber>44100</frameNumber></position>',
+    );
+    expect(TimePosition.loadFromXML(javaFrame).equals(TimePosition.loadFromXML(legacyFrame))).toBe(
+      true,
+    );
   });
 });

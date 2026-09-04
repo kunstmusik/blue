@@ -44,7 +44,10 @@ describe('buildFreezeRenderData', () => {
     const tempScore = result.tempData.getScore();
 
     expect(tempScore).toHaveLength(1);
-    const polyObj = tempScore[0] as unknown as { length: number; [0]: { length: number; [0]: { getName: () => string } } };
+    const polyObj = tempScore[0] as unknown as {
+      length: number;
+      [0]: { length: number; [0]: { getName: () => string } };
+    };
     expect(polyObj).toHaveLength(1);
     const layer = polyObj[0];
     expect(layer).toHaveLength(1);

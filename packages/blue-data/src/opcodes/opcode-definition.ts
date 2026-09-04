@@ -25,29 +25,61 @@ export class OpcodeDefinition implements BlueDataObject {
   private _comments = '';
   private _commentText: string | null = null;
 
-  getName(): string { return this._name; }
-  setName(name: string): void { this._name = name; }
+  getName(): string {
+    return this._name;
+  }
+  setName(name: string): void {
+    this._name = name;
+  }
 
-  getStyle(): UDOStyle { return this._style; }
-  setStyle(style: UDOStyle): void { this._style = style; }
+  getStyle(): UDOStyle {
+    return this._style;
+  }
+  setStyle(style: UDOStyle): void {
+    this._style = style;
+  }
 
-  getOutTypes(): string { return this._outTypes; }
-  setOutTypes(types: string): void { this._outTypes = types; }
+  getOutTypes(): string {
+    return this._outTypes;
+  }
+  setOutTypes(types: string): void {
+    this._outTypes = types;
+  }
 
-  getInTypes(): string { return this._inTypes; }
-  setInTypes(types: string): void { this._inTypes = types; }
+  getInTypes(): string {
+    return this._inTypes;
+  }
+  setInTypes(types: string): void {
+    this._inTypes = types;
+  }
 
-  getInputArguments(): string { return this._inputArguments; }
-  setInputArguments(args: string): void { this._inputArguments = args; }
+  getInputArguments(): string {
+    return this._inputArguments;
+  }
+  setInputArguments(args: string): void {
+    this._inputArguments = args;
+  }
 
-  getCode(): string { return this._code; }
-  setCode(code: string): void { this._code = code; }
+  getCode(): string {
+    return this._code;
+  }
+  setCode(code: string): void {
+    this._code = code;
+  }
 
-  getComments(): string { return this._comments; }
-  setComments(comments: string): void { this._comments = comments; }
+  getComments(): string {
+    return this._comments;
+  }
+  setComments(comments: string): void {
+    this._comments = comments;
+  }
 
-  getCommentText(): string | null { return this._commentText; }
-  setCommentText(text: string | null): void { this._commentText = text; }
+  getCommentText(): string | null {
+    return this._commentText;
+  }
+  setCommentText(text: string | null): void {
+    this._commentText = text;
+  }
 
   /**
    * Generate CSD text for this UDO, dispatching to classic or modern style.
@@ -102,7 +134,7 @@ export class OpcodeDefinition implements BlueDataObject {
     const trimmed = this._trimTrailingLineBreaks(source);
     if (!trimmed) return '';
     const lines = trimmed.split('\n');
-    return lines.map(line => line.length > 0 ? `    ${line}` : '').join('\n');
+    return lines.map((line) => (line.length > 0 ? `    ${line}` : '')).join('\n');
   }
 
   private _trimTrailingLineBreaks(source: string): string {
@@ -119,15 +151,20 @@ export class OpcodeDefinition implements BlueDataObject {
   isEquivalent(other: OpcodeDefinition | null): boolean {
     if (other == null) return false;
 
-    const thisOutTypes = this._style === UDOStyle.MODERN
-      ? normalizeModernOutTypesForComparison(this._outTypes)
-      : normalizeClassicOutTypes(this._outTypes);
-    const otherOutTypes = other._style === UDOStyle.MODERN
-      ? normalizeModernOutTypesForComparison(other._outTypes)
-      : normalizeClassicOutTypes(other._outTypes);
+    const thisOutTypes =
+      this._style === UDOStyle.MODERN
+        ? normalizeModernOutTypesForComparison(this._outTypes)
+        : normalizeClassicOutTypes(this._outTypes);
+    const otherOutTypes =
+      other._style === UDOStyle.MODERN
+        ? normalizeModernOutTypesForComparison(other._outTypes)
+        : normalizeClassicOutTypes(other._outTypes);
 
-    if (this._style !== other._style || thisOutTypes !== otherOutTypes
-        || this._code !== other._code) {
+    if (
+      this._style !== other._style ||
+      thisOutTypes !== otherOutTypes ||
+      this._code !== other._code
+    ) {
       return false;
     }
 
@@ -141,11 +178,11 @@ export class OpcodeDefinition implements BlueDataObject {
     const elem = new Element('udo');
     elem.addElement('style').setText(this._style);
     elem.addElement('opcodeName').setText(this._name);
-    elem.addElement('outTypes').setText(
-      this._style === UDOStyle.MODERN
-        ? getModernOutTypesDisplay(this._outTypes)
-        : this._outTypes
-    );
+    elem
+      .addElement('outTypes')
+      .setText(
+        this._style === UDOStyle.MODERN ? getModernOutTypesDisplay(this._outTypes) : this._outTypes,
+      );
     if (this._style === UDOStyle.MODERN) {
       elem.addElement('inputArguments').setText(this._inputArguments);
     } else {

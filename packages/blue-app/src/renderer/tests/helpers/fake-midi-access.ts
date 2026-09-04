@@ -43,7 +43,10 @@ export class FakeMidiInput implements FakeMidiPortLike {
   state: FakeMidiPortState;
   connection: FakeMidiPortConnection;
   onmidimessage:
-    | ((this: unknown, ev: { data: Uint8Array; target: unknown; timeStamp: number; srcElement?: unknown }) => unknown)
+    | ((
+        this: unknown,
+        ev: { data: Uint8Array; target: unknown; timeStamp: number; srcElement?: unknown },
+      ) => unknown)
     | null = null;
   onstatechange: ((this: unknown, ev: unknown) => unknown) | null = null;
   private openImpl?: () => void;
@@ -179,9 +182,7 @@ type MapLike<T> = Map<string, T> & {
   removeEventListener?(type: string, listener: (ev: unknown) => void): void;
 };
 
-function createPortMap<T extends FakeMidiPortLike>(
-  ports: T[],
-): MapLike<T> {
+function createPortMap<T extends FakeMidiPortLike>(ports: T[]): MapLike<T> {
   const map = new Map<string, T>(ports.map((p) => [p.id, p])) as MapLike<T>;
   const stateListeners = new Set<(ev: unknown) => void>();
   (map as unknown as { onstatechange: null }).onstatechange = null;
@@ -192,7 +193,8 @@ function createPortMap<T extends FakeMidiPortLike>(
     if (type === 'statechange') stateListeners.delete(listener);
   };
   const dispatch = (ev: unknown): void => {
-    const direct = (map as unknown as { onstatechange: ((ev: unknown) => unknown) | null }).onstatechange;
+    const direct = (map as unknown as { onstatechange: ((ev: unknown) => unknown) | null })
+      .onstatechange;
     if (typeof direct === 'function') void direct.call(map, ev);
     for (const l of stateListeners) l(ev);
   };

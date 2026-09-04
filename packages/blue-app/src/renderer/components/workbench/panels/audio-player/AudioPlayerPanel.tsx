@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from "react";
-import { Pause, Play, Repeat } from "lucide-react";
-import { encodeAudioPath } from "./audio-url";
-import { subscribePendingAudioFile } from "./audio-player-bus";
-import { formatAudioTime } from "./audio-time";
-import AudioPlayerWaveform from "./AudioPlayerWaveform";
-import AudioPlayerMetadata from "./AudioPlayerMetadata";
-import { cn } from "../../../../lib/cn";
+import { useEffect, useRef, useState } from 'react';
+import { Pause, Play, Repeat } from 'lucide-react';
+import { encodeAudioPath } from './audio-url';
+import { subscribePendingAudioFile } from './audio-player-bus';
+import { formatAudioTime } from './audio-time';
+import AudioPlayerWaveform from './AudioPlayerWaveform';
+import AudioPlayerMetadata from './AudioPlayerMetadata';
+import { cn } from '../../../../lib/cn';
 
 interface AudioMetadata {
   sampleRate: number | null;
@@ -107,7 +107,7 @@ export default function AudioPlayerPanel(): React.ReactElement {
     if (!audio || !filePath) return;
     if (audio.paused) {
       void audio.play().catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : "Could not play audio.");
+        setError(err instanceof Error ? err.message : 'Could not play audio.');
       });
     } else {
       audio.pause();
@@ -139,24 +139,18 @@ export default function AudioPlayerPanel(): React.ReactElement {
         onEnded={() => {
           if (!isLooping) setIsPlaying(false);
         }}
-        onTimeUpdate={(event) =>
-          setCurrentTime(event.currentTarget.currentTime)
-        }
+        onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
         onLoadedMetadata={(event) => {
           const audio = event.currentTarget;
           setDuration(Number.isFinite(audio.duration) ? audio.duration : 0);
           if (autoplayRef.current) {
             autoplayRef.current = false;
             void audio.play().catch((err: unknown) => {
-              setError(
-                err instanceof Error
-                  ? err.message
-                  : "Could not autoplay rendered file.",
-              );
+              setError(err instanceof Error ? err.message : 'Could not autoplay rendered file.');
             });
           }
         }}
-        onError={() => setError("Could not load audio file.")}
+        onError={() => setError('Could not load audio file.')}
       />
 
       <div className="flex items-center">
@@ -176,22 +170,19 @@ export default function AudioPlayerPanel(): React.ReactElement {
         onSeek={handleSeek}
       />
 
-      <div
-        className="flex items-center gap-1.5"
-        aria-label="Audio transport controls"
-      >
+      <div className="flex items-center gap-1.5" aria-label="Audio transport controls">
         <button
           type="button"
           className={cn(
             'inline-flex h-7 w-7 items-center justify-center rounded border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-accent disabled:opacity-40',
             isPlaying
               ? 'border-blue-accent bg-blue-accent text-white'
-              : 'border-blue-border bg-blue-surface text-blue-fg hover:bg-blue-surface-hover'
+              : 'border-blue-border bg-blue-surface text-blue-fg hover:bg-blue-surface-hover',
           )}
           onClick={togglePlay}
           disabled={!filePath}
-          aria-label={isPlaying ? "Pause" : "Play"}
-          title={isPlaying ? "Pause" : "Play"}
+          aria-label={isPlaying ? 'Pause' : 'Play'}
+          title={isPlaying ? 'Pause' : 'Play'}
         >
           {isPlaying ? (
             <Pause className="h-4 w-4" aria-hidden="true" />
@@ -205,13 +196,13 @@ export default function AudioPlayerPanel(): React.ReactElement {
             'inline-flex h-7 w-7 items-center justify-center rounded border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-accent disabled:opacity-40',
             isLooping
               ? 'border-blue-accent bg-blue-accent text-white'
-              : 'border-blue-border bg-blue-surface text-blue-fg hover:bg-blue-surface-hover'
+              : 'border-blue-border bg-blue-surface text-blue-fg hover:bg-blue-surface-hover',
           )}
           onClick={toggleLoop}
           disabled={!filePath}
           aria-pressed={isLooping}
-          aria-label={isLooping ? "Disable loop" : "Enable loop"}
-          title={isLooping ? "Disable loop" : "Enable loop"}
+          aria-label={isLooping ? 'Disable loop' : 'Enable loop'}
+          title={isLooping ? 'Disable loop' : 'Enable loop'}
         >
           <Repeat className="h-4 w-4" aria-hidden="true" />
         </button>

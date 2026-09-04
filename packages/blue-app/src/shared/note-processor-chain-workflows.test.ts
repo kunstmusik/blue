@@ -19,16 +19,18 @@ import type { NoteProcessorChainSnapshot, ScoreObjectEditorRequest } from './pro
 
 function makeChainSnapshot(processorType: string, val: string): NoteProcessorChainSnapshot {
   return {
-    processors: [{
-      id: 'np-0',
-      processorType,
-      displayName: processorType,
-      supported: true,
-      deferred: false,
-      summary: processorType,
-      parameters: { pfield: '4', val },
-      serializedXml: '',
-    }],
+    processors: [
+      {
+        id: 'np-0',
+        processorType,
+        displayName: processorType,
+        supported: true,
+        deferred: false,
+        summary: processorType,
+        parameters: { pfield: '4', val },
+        serializedXml: '',
+      },
+    ],
     hasUnsupportedProcessors: false,
     hasDeferredProcessors: false,
   };
@@ -92,13 +94,19 @@ describe('note-processor-chain-workflows', () => {
       expect(snap.layerGroups).toHaveLength(1);
       expect(snap.layerGroups[0]!.noteProcessorChain).toBeDefined();
       expect(snap.layerGroups[0]!.noteProcessorChain!.processors).toHaveLength(1);
-      expect(snap.layerGroups[0]!.noteProcessorChain!.processors[0]!.processorType).toBe('RotateProcessor');
+      expect(snap.layerGroups[0]!.noteProcessorChain!.processors[0]!.processorType).toBe(
+        'RotateProcessor',
+      );
 
       expect(snap.layerGroups[0]!.layers[0]!.noteProcessorChain).toBeUndefined();
       expect(snap.layerGroups[0]!.layers[1]!.noteProcessorChain).toBeDefined();
       expect(snap.layerGroups[0]!.layers[1]!.noteProcessorChain!.processors).toHaveLength(1);
-      expect(snap.layerGroups[0]!.layers[1]!.noteProcessorChain!.processors[0]!.processorType).toBe('MultiplyProcessor');
-      expect(snap.layerGroups[0]!.layers[1]!.noteProcessorChain!.processors[0]!.parameters.val).toBe('3');
+      expect(snap.layerGroups[0]!.layers[1]!.noteProcessorChain!.processors[0]!.processorType).toBe(
+        'MultiplyProcessor',
+      );
+      expect(
+        snap.layerGroups[0]!.layers[1]!.noteProcessorChain!.processors[0]!.parameters.val,
+      ).toBe('3');
     });
   });
 
@@ -145,8 +153,12 @@ describe('note-processor-chain-workflows', () => {
       const after = createScoreDocumentSnapshot(data);
       expect(after.layerGroups[0]!.layers[0]!.noteProcessorChain).toBeDefined();
       expect(after.layerGroups[0]!.layers[0]!.noteProcessorChain!.processors).toHaveLength(1);
-      expect(after.layerGroups[0]!.layers[0]!.noteProcessorChain!.processors[0]!.processorType).toBe('MultiplyProcessor');
-      expect(after.layerGroups[0]!.layers[0]!.noteProcessorChain!.processors[0]!.parameters.val).toBe('5');
+      expect(
+        after.layerGroups[0]!.layers[0]!.noteProcessorChain!.processors[0]!.processorType,
+      ).toBe('MultiplyProcessor');
+      expect(
+        after.layerGroups[0]!.layers[0]!.noteProcessorChain!.processors[0]!.parameters.val,
+      ).toBe('5');
     });
   });
 
@@ -156,7 +168,9 @@ describe('note-processor-chain-workflows', () => {
       const snap = createScoreDocumentSnapshot(data);
       const groupId = snap.layerGroups[0]!.groupId;
 
-      expect(snap.layerGroups[0]!.noteProcessorChain!.processors[0]!.processorType).toBe('RotateProcessor');
+      expect(snap.layerGroups[0]!.noteProcessorChain!.processors[0]!.processorType).toBe(
+        'RotateProcessor',
+      );
 
       const chain = makeChainSnapshot('AddProcessor', '11');
       applyProjectDocumentPatch(data, {
@@ -170,7 +184,9 @@ describe('note-processor-chain-workflows', () => {
 
       const after = createScoreDocumentSnapshot(data);
       expect(after.layerGroups[0]!.noteProcessorChain!.processors).toHaveLength(1);
-      expect(after.layerGroups[0]!.noteProcessorChain!.processors[0]!.processorType).toBe('AddProcessor');
+      expect(after.layerGroups[0]!.noteProcessorChain!.processors[0]!.processorType).toBe(
+        'AddProcessor',
+      );
       expect(after.layerGroups[0]!.noteProcessorChain!.processors[0]!.parameters.val).toBe('11');
     });
   });
@@ -247,8 +263,10 @@ describe('note-processor-chain-workflows', () => {
       const data = createDataWithAllScopes();
       const before = createScoreDocumentSnapshot(data);
 
-      const originalGroupType = before.layerGroups[0]!.noteProcessorChain!.processors[0]!.processorType;
-      const originalLayerVal = before.layerGroups[0]!.layers[1]!.noteProcessorChain!.processors[0]!.parameters.val;
+      const originalGroupType =
+        before.layerGroups[0]!.noteProcessorChain!.processors[0]!.processorType;
+      const originalLayerVal =
+        before.layerGroups[0]!.layers[1]!.noteProcessorChain!.processors[0]!.parameters.val;
 
       const newRoot = makeChainSnapshot('MultiplyProcessor', '99');
       applyProjectDocumentPatch(data, {
@@ -262,8 +280,12 @@ describe('note-processor-chain-workflows', () => {
       const after = createScoreDocumentSnapshot(data);
       expect(after.rootNoteProcessorChain!.processors[0]!.processorType).toBe('MultiplyProcessor');
       expect(after.rootNoteProcessorChain!.processors[0]!.parameters.val).toBe('99');
-      expect(after.layerGroups[0]!.noteProcessorChain!.processors[0]!.processorType).toBe(originalGroupType);
-      expect(after.layerGroups[0]!.layers[1]!.noteProcessorChain!.processors[0]!.parameters.val).toBe(originalLayerVal);
+      expect(after.layerGroups[0]!.noteProcessorChain!.processors[0]!.processorType).toBe(
+        originalGroupType,
+      );
+      expect(
+        after.layerGroups[0]!.layers[1]!.noteProcessorChain!.processors[0]!.parameters.val,
+      ).toBe(originalLayerVal);
     });
 
     it('modifying layer chain does not affect root or group chains', () => {
@@ -272,7 +294,8 @@ describe('note-processor-chain-workflows', () => {
       const groupId = snap.layerGroups[0]!.groupId;
 
       const originalRootVal = snap.rootNoteProcessorChain!.processors[0]!.parameters.val;
-      const originalGroupType = snap.layerGroups[0]!.noteProcessorChain!.processors[0]!.processorType;
+      const originalGroupType =
+        snap.layerGroups[0]!.noteProcessorChain!.processors[0]!.processorType;
 
       const newLayer = makeChainSnapshot('AddProcessor', '55');
       applyProjectDocumentPatch(data, {
@@ -286,10 +309,16 @@ describe('note-processor-chain-workflows', () => {
       });
 
       const after = createScoreDocumentSnapshot(data);
-      expect(after.layerGroups[0]!.layers[0]!.noteProcessorChain!.processors[0]!.processorType).toBe('AddProcessor');
-      expect(after.layerGroups[0]!.layers[0]!.noteProcessorChain!.processors[0]!.parameters.val).toBe('55');
+      expect(
+        after.layerGroups[0]!.layers[0]!.noteProcessorChain!.processors[0]!.processorType,
+      ).toBe('AddProcessor');
+      expect(
+        after.layerGroups[0]!.layers[0]!.noteProcessorChain!.processors[0]!.parameters.val,
+      ).toBe('55');
       expect(after.rootNoteProcessorChain!.processors[0]!.parameters.val).toBe(originalRootVal);
-      expect(after.layerGroups[0]!.noteProcessorChain!.processors[0]!.processorType).toBe(originalGroupType);
+      expect(after.layerGroups[0]!.noteProcessorChain!.processors[0]!.processorType).toBe(
+        originalGroupType,
+      );
     });
 
     it('modifying group chain does not affect root or layer chains', () => {
@@ -298,7 +327,8 @@ describe('note-processor-chain-workflows', () => {
       const groupId = snap.layerGroups[0]!.groupId;
 
       const originalRootVal = snap.rootNoteProcessorChain!.processors[0]!.parameters.val;
-      const originalLayerVal = snap.layerGroups[0]!.layers[1]!.noteProcessorChain!.processors[0]!.parameters.val;
+      const originalLayerVal =
+        snap.layerGroups[0]!.layers[1]!.noteProcessorChain!.processors[0]!.parameters.val;
 
       const newGroup = makeChainSnapshot('MultiplyProcessor', '88');
       applyProjectDocumentPatch(data, {
@@ -311,10 +341,14 @@ describe('note-processor-chain-workflows', () => {
       });
 
       const after = createScoreDocumentSnapshot(data);
-      expect(after.layerGroups[0]!.noteProcessorChain!.processors[0]!.processorType).toBe('MultiplyProcessor');
+      expect(after.layerGroups[0]!.noteProcessorChain!.processors[0]!.processorType).toBe(
+        'MultiplyProcessor',
+      );
       expect(after.layerGroups[0]!.noteProcessorChain!.processors[0]!.parameters.val).toBe('88');
       expect(after.rootNoteProcessorChain!.processors[0]!.parameters.val).toBe(originalRootVal);
-      expect(after.layerGroups[0]!.layers[1]!.noteProcessorChain!.processors[0]!.parameters.val).toBe(originalLayerVal);
+      expect(
+        after.layerGroups[0]!.layers[1]!.noteProcessorChain!.processors[0]!.parameters.val,
+      ).toBe(originalLayerVal);
     });
   });
 
@@ -368,16 +402,26 @@ describe('note-processor-chain-workflows', () => {
       expect(after.rootNoteProcessorChain!.processors[0]!.parameters.val).toBe('100');
 
       expect(after.layerGroups[0]!.noteProcessorChain!.processors).toHaveLength(1);
-      expect(after.layerGroups[0]!.noteProcessorChain!.processors[0]!.processorType).toBe('AddProcessor');
+      expect(after.layerGroups[0]!.noteProcessorChain!.processors[0]!.processorType).toBe(
+        'AddProcessor',
+      );
       expect(after.layerGroups[0]!.noteProcessorChain!.processors[0]!.parameters.val).toBe('200');
 
       expect(after.layerGroups[0]!.layers[0]!.noteProcessorChain!.processors).toHaveLength(1);
-      expect(after.layerGroups[0]!.layers[0]!.noteProcessorChain!.processors[0]!.processorType).toBe('MultiplyProcessor');
-      expect(after.layerGroups[0]!.layers[0]!.noteProcessorChain!.processors[0]!.parameters.val).toBe('300');
+      expect(
+        after.layerGroups[0]!.layers[0]!.noteProcessorChain!.processors[0]!.processorType,
+      ).toBe('MultiplyProcessor');
+      expect(
+        after.layerGroups[0]!.layers[0]!.noteProcessorChain!.processors[0]!.parameters.val,
+      ).toBe('300');
 
       expect(after.layerGroups[0]!.layers[1]!.noteProcessorChain!.processors).toHaveLength(1);
-      expect(after.layerGroups[0]!.layers[1]!.noteProcessorChain!.processors[0]!.processorType).toBe('AddProcessor');
-      expect(after.layerGroups[0]!.layers[1]!.noteProcessorChain!.processors[0]!.parameters.val).toBe('400');
+      expect(
+        after.layerGroups[0]!.layers[1]!.noteProcessorChain!.processors[0]!.processorType,
+      ).toBe('AddProcessor');
+      expect(
+        after.layerGroups[0]!.layers[1]!.noteProcessorChain!.processors[0]!.parameters.val,
+      ).toBe('400');
     });
   });
 });

@@ -13,23 +13,47 @@ export class MidiVelocityMapping implements BlueDataObject {
   private _minValue = 0;
   private _maxValue = 1;
 
-  isEnabled(): boolean { return this._enabled; }
-  setEnabled(e: boolean): void { this._enabled = e; }
+  isEnabled(): boolean {
+    return this._enabled;
+  }
+  setEnabled(e: boolean): void {
+    this._enabled = e;
+  }
 
-  getPFieldIndex(): number { return this._pFieldIndex; }
-  setPFieldIndex(idx: number): void { this._pFieldIndex = idx; }
+  getPFieldIndex(): number {
+    return this._pFieldIndex;
+  }
+  setPFieldIndex(idx: number): void {
+    this._pFieldIndex = idx;
+  }
 
-  getMinVelocity(): number { return this._minVelocity; }
-  setMinVelocity(v: number): void { this._minVelocity = v; }
+  getMinVelocity(): number {
+    return this._minVelocity;
+  }
+  setMinVelocity(v: number): void {
+    this._minVelocity = v;
+  }
 
-  getMaxVelocity(): number { return this._maxVelocity; }
-  setMaxVelocity(v: number): void { this._maxVelocity = v; }
+  getMaxVelocity(): number {
+    return this._maxVelocity;
+  }
+  setMaxVelocity(v: number): void {
+    this._maxVelocity = v;
+  }
 
-  getMinValue(): number { return this._minValue; }
-  setMinValue(v: number): void { this._minValue = v; }
+  getMinValue(): number {
+    return this._minValue;
+  }
+  setMinValue(v: number): void {
+    this._minValue = v;
+  }
 
-  getMaxValue(): number { return this._maxValue; }
-  setMaxValue(v: number): void { this._maxValue = v; }
+  getMaxValue(): number {
+    return this._maxValue;
+  }
+  setMaxValue(v: number): void {
+    this._maxValue = v;
+  }
 
   saveAsXML(): Element {
     const elem = new Element('midiVelocityMapping');

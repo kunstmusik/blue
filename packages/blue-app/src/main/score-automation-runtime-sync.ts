@@ -1,14 +1,5 @@
-import {
-  getProjectParameterCatalog,
-  PolyObject,
-  TrackLayerGroup,
-} from '@blue/data';
-import type {
-  AutomatableLayer,
-  BlueData,
-  Parameter,
-  TempoMap,
-} from '@blue/data';
+import { getProjectParameterCatalog, PolyObject, TrackLayerGroup } from '@blue/data';
+import type { AutomatableLayer, BlueData, Parameter, TempoMap } from '@blue/data';
 import type {
   ProjectDocumentPatch,
   ScoreAutomationLayerRef,
@@ -29,7 +20,9 @@ export interface AutomationRuntimeSyncBridge {
   ): void | Promise<void>;
 }
 
-export function buildAutomationRuntimeTimingContext(data: BlueData): AutomationRuntimeTimingContext {
+export function buildAutomationRuntimeTimingContext(
+  data: BlueData,
+): AutomationRuntimeTimingContext {
   return {
     renderStartTime: data.getRenderStartTime(),
     sampleRate: Number(data.getProjectProperties().sampleRate) || 44100,
@@ -188,19 +181,19 @@ function getAutomationLayerFromGroup(
   ref: ScoreAutomationLayerRef,
 ): AutomatableLayer | null {
   if (
-    ref.layerKind === 'soundObject'
-    && group instanceof PolyObject
-    && ref.layerIndex >= 0
-    && ref.layerIndex < group.length
+    ref.layerKind === 'soundObject' &&
+    group instanceof PolyObject &&
+    ref.layerIndex >= 0 &&
+    ref.layerIndex < group.length
   ) {
     return group[ref.layerIndex] as AutomatableLayer;
   }
 
   if (
-    ref.layerKind === 'track'
-    && group instanceof TrackLayerGroup
-    && ref.layerIndex >= 0
-    && ref.layerIndex < group.length
+    ref.layerKind === 'track' &&
+    group instanceof TrackLayerGroup &&
+    ref.layerIndex >= 0 &&
+    ref.layerIndex < group.length
   ) {
     return group[ref.layerIndex] as AutomatableLayer;
   }

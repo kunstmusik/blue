@@ -14,21 +14,25 @@ async function generateMetadata(extraArgs, env = {}) {
   const outputDir = await mkdtemp(join(tmpdir(), 'blue-release-metadata-'));
   const outputPath = join(outputDir, 'release-metadata.json');
   try {
-    await execFileAsync(process.execPath, [
-      scriptPath,
-      '--out',
-      outputPath,
-      '--app-version',
-      '2.3.4',
-      '--source-revision',
-      'a'.repeat(40),
-      '--prerelease-timestamp',
-      '1777896000',
-      ...extraArgs,
-    ], {
-      cwd: repoRoot,
-      env: { ...process.env, ...env },
-    });
+    await execFileAsync(
+      process.execPath,
+      [
+        scriptPath,
+        '--out',
+        outputPath,
+        '--app-version',
+        '2.3.4',
+        '--source-revision',
+        'a'.repeat(40),
+        '--prerelease-timestamp',
+        '1777896000',
+        ...extraArgs,
+      ],
+      {
+        cwd: repoRoot,
+        env: { ...process.env, ...env },
+      },
+    );
     return JSON.parse(await readFile(outputPath, 'utf8'));
   } finally {
     await rm(outputDir, { recursive: true, force: true });

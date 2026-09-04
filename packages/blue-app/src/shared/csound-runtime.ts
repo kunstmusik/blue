@@ -78,11 +78,11 @@ export function formatCsoundRuntimeModuleOption(
   kind: CsoundRuntimeModuleKind,
   name: string,
 ): string {
-  const friendlyName = (kind === 'audio' ? knownAudioModuleLabels : knownMidiModuleLabels)[name.toLowerCase()];
+  const friendlyName = (kind === 'audio' ? knownAudioModuleLabels : knownMidiModuleLabels)[
+    name.toLowerCase()
+  ];
   if (!friendlyName) return name;
-  return friendlyName === name
-    ? friendlyName
-    : `${friendlyName} (${name})`;
+  return friendlyName === name ? friendlyName : `${friendlyName} (${name})`;
 }
 
 export interface CsoundRuntimeDevice {
@@ -196,9 +196,11 @@ function decodeModule(value: unknown): CsoundRuntimeModule {
 }
 
 function decodeDevice(value: unknown): CsoundRuntimeDevice {
-  if (!isObject(value)
-    || !moduleKinds.has(value.kind as CsoundRuntimeModuleKind)
-    || !directions.has(value.direction as CsoundRuntimeDeviceDirection)) {
+  if (
+    !isObject(value) ||
+    !moduleKinds.has(value.kind as CsoundRuntimeModuleKind) ||
+    !directions.has(value.direction as CsoundRuntimeDeviceDirection)
+  ) {
     throw new Error('Invalid Csound runtime device kind or direction');
   }
   const maxChannels = value.maxChannels;
@@ -247,7 +249,10 @@ export function decodeCsoundIoReport(value: unknown): CsoundIoReport {
   if (typeof value.ready !== 'boolean' || value.ready !== engine.ready) {
     throw new Error('Csound I/O readiness is inconsistent');
   }
-  if (!Array.isArray(value.diagnostics) || value.diagnostics.some((item) => typeof item !== 'string')) {
+  if (
+    !Array.isArray(value.diagnostics) ||
+    value.diagnostics.some((item) => typeof item !== 'string')
+  ) {
     throw new Error('Csound I/O diagnostics must be strings');
   }
   const decodeModules = (items: unknown, expectedKind: CsoundRuntimeModuleKind) => {
@@ -258,10 +263,14 @@ export function decodeCsoundIoReport(value: unknown): CsoundIoReport {
       return module;
     });
   };
-  const selectedAudioModule = value.selectedAudioModule === null
-    ? null : stringField(value.selectedAudioModule, 'selectedAudioModule');
-  const selectedMidiModule = value.selectedMidiModule === null
-    ? null : stringField(value.selectedMidiModule, 'selectedMidiModule');
+  const selectedAudioModule =
+    value.selectedAudioModule === null
+      ? null
+      : stringField(value.selectedAudioModule, 'selectedAudioModule');
+  const selectedMidiModule =
+    value.selectedMidiModule === null
+      ? null
+      : stringField(value.selectedMidiModule, 'selectedMidiModule');
   const audioModules = decodeModules(value.audioModules, 'audio');
   const midiModules = decodeModules(value.midiModules, 'midi');
   if (selectedAudioModule && !audioModules.some((module) => module.name === selectedAudioModule)) {
@@ -337,18 +346,29 @@ export function normalizeCsoundExecutionRequest(
   if (!isObject(value) || (value.kind !== 'utility' && value.kind !== 'performance')) {
     throw new Error('Csound execution kind must be utility or performance');
   }
-  if (typeof value.operationId !== 'string') throw new Error('Csound execution operationId is required');
+  if (typeof value.operationId !== 'string')
+    throw new Error('Csound execution operationId is required');
   if (typeof value.cwd !== 'string') throw new Error('Csound execution cwd is required');
   const operationId = value.operationId.trim();
   if (!operationId) throw new Error('Csound execution operationId is required');
-  if (!Array.isArray(value.args) || value.args.some((arg) => typeof arg !== 'string' || arg.includes('\0'))) {
+  if (
+    !Array.isArray(value.args) ||
+    value.args.some((arg) => typeof arg !== 'string' || arg.includes('\0'))
+  ) {
     throw new Error('Csound execution args must be NUL-free strings');
   }
   if (!value.cwd.trim()) throw new Error('Csound execution cwd is required');
   const csoundLibraryPath = normalizePathValue(value.csoundLibraryPath, 'csoundLibraryPath');
   if (value.kind === 'utility') {
     const utilityName = value.utilityName.trim();
-    if (!utilityName || utilityName === '--' || utilityName.length >= 128 || utilityName.includes('/') || utilityName.includes('\\') || utilityName.includes('\0')) {
+    if (
+      !utilityName ||
+      utilityName === '--' ||
+      utilityName.length >= 128 ||
+      utilityName.includes('/') ||
+      utilityName.includes('\\') ||
+      utilityName.includes('\0')
+    ) {
       throw new Error('Csound utility name must be a simple registered name');
     }
     return { ...value, operationId, csoundLibraryPath, utilityName };

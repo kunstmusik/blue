@@ -7,28 +7,32 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import MidiImportDialog from '../components/workbench/panels/MidiImportDialog';
 import type { MidiImportPreview } from '../../shared/midi-import';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const preview: MidiImportPreview = {
   fileName: 'notes.mid',
   format: 0,
   ticksPerBeat: 480,
-  streams: [{
-    streamKey: '0:0',
-    trackIndex: 0,
-    trackName: 'Piano',
-    channel: 0,
-    noteCount: 2,
-    firstBeat: 0,
-    lastBeat: 2,
-    warnings: [],
-    defaults: {
+  streams: [
+    {
       streamKey: '0:0',
-      instrumentId: '1',
-      noteTemplate: 'i<INSTR_ID> <START> <DUR> <KEY> <VELOCITY>',
-      trimTime: false,
+      trackIndex: 0,
+      trackName: 'Piano',
+      channel: 0,
+      noteCount: 2,
+      firstBeat: 0,
+      lastBeat: 2,
+      warnings: [],
+      defaults: {
+        streamKey: '0:0',
+        instrumentId: '1',
+        noteTemplate: 'i<INSTR_ID> <START> <DUR> <KEY> <VELOCITY>',
+        trimTime: false,
+      },
     },
-  }],
+  ],
 };
 
 describe('MidiImportDialog', () => {
@@ -68,8 +72,13 @@ describe('MidiImportDialog', () => {
     expect(document.querySelector('h2')?.textContent).toBe('MIDI Import Settings');
     expect(document.body.textContent).toContain('Piano');
 
-    const input = document.querySelector('input[aria-label="Instrument ID for 0:0"]') as HTMLInputElement;
-    const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set;
+    const input = document.querySelector(
+      'input[aria-label="Instrument ID for 0:0"]',
+    ) as HTMLInputElement;
+    const nativeSetter = Object.getOwnPropertyDescriptor(
+      window.HTMLInputElement.prototype,
+      'value',
+    )?.set;
     act(() => {
       nativeSetter?.call(input, '7');
       input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -77,11 +86,15 @@ describe('MidiImportDialog', () => {
     });
 
     await act(async () => {
-      const importButton = Array.from(document.querySelectorAll('button')).find((button) => button.textContent === 'Import');
+      const importButton = Array.from(document.querySelectorAll('button')).find(
+        (button) => button.textContent === 'Import',
+      );
       importButton?.click();
     });
 
-    expect(commitMidiImport).toHaveBeenCalledWith('token-1', [expect.objectContaining({ instrumentId: '7' })]);
+    expect(commitMidiImport).toHaveBeenCalledWith('token-1', [
+      expect.objectContaining({ instrumentId: '7' }),
+    ]);
   });
 
   it('cancels a ready import without committing', async () => {
@@ -90,7 +103,9 @@ describe('MidiImportDialog', () => {
       window.dispatchEvent(new CustomEvent('blue-open-midi-import'));
     });
     act(() => {
-      const cancelButton = Array.from(document.querySelectorAll('button')).find((button) => button.textContent === 'Cancel');
+      const cancelButton = Array.from(document.querySelectorAll('button')).find(
+        (button) => button.textContent === 'Cancel',
+      );
       cancelButton?.click();
     });
 
@@ -105,15 +120,22 @@ describe('MidiImportDialog', () => {
       window.dispatchEvent(new CustomEvent('blue-open-midi-import'));
     });
 
-    const input = document.querySelector('input[aria-label="Instrument ID for 0:0"]') as HTMLInputElement;
-    const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set;
+    const input = document.querySelector(
+      'input[aria-label="Instrument ID for 0:0"]',
+    ) as HTMLInputElement;
+    const nativeSetter = Object.getOwnPropertyDescriptor(
+      window.HTMLInputElement.prototype,
+      'value',
+    )?.set;
     act(() => {
       nativeSetter?.call(input, '0');
       input.dispatchEvent(new Event('input', { bubbles: true }));
       input.dispatchEvent(new Event('change', { bubbles: true }));
     });
     await act(async () => {
-      const importButton = Array.from(document.querySelectorAll('button')).find((button) => button.textContent === 'Import');
+      const importButton = Array.from(document.querySelectorAll('button')).find(
+        (button) => button.textContent === 'Import',
+      );
       importButton?.click();
     });
 
@@ -122,13 +144,18 @@ describe('MidiImportDialog', () => {
   });
 
   it('keeps the dialog open and displays commit errors', async () => {
-    commitMidiImport.mockResolvedValueOnce({ status: 'error', message: 'The MIDI import session has expired.' });
+    commitMidiImport.mockResolvedValueOnce({
+      status: 'error',
+      message: 'The MIDI import session has expired.',
+    });
     act(() => root!.render(<MidiImportDialog />));
     await act(async () => {
       window.dispatchEvent(new CustomEvent('blue-open-midi-import'));
     });
     await act(async () => {
-      const importButton = Array.from(document.querySelectorAll('button')).find((button) => button.textContent === 'Import');
+      const importButton = Array.from(document.querySelectorAll('button')).find(
+        (button) => button.textContent === 'Import',
+      );
       importButton?.click();
     });
 
@@ -143,7 +170,9 @@ describe('MidiImportDialog', () => {
       window.dispatchEvent(new CustomEvent('blue-open-midi-import'));
     });
     await act(async () => {
-      const importButton = Array.from(document.querySelectorAll('button')).find((button) => button.textContent === 'Import');
+      const importButton = Array.from(document.querySelectorAll('button')).find(
+        (button) => button.textContent === 'Import',
+      );
       importButton?.click();
     });
 
@@ -157,7 +186,9 @@ describe('MidiImportDialog', () => {
       window.dispatchEvent(new CustomEvent('blue-open-midi-import'));
     });
     await act(async () => {
-      const importButton = Array.from(document.querySelectorAll('button')).find((button) => button.textContent === 'Import');
+      const importButton = Array.from(document.querySelectorAll('button')).find(
+        (button) => button.textContent === 'Import',
+      );
       importButton?.click();
     });
 
@@ -170,12 +201,16 @@ describe('MidiImportDialog', () => {
 
     commitMidiImport.mockResolvedValueOnce({ status: 'installed', project: {} });
     await act(async () => {
-      const importButton = Array.from(document.querySelectorAll('button')).find((button) => button.textContent === 'Import');
+      const importButton = Array.from(document.querySelectorAll('button')).find(
+        (button) => button.textContent === 'Import',
+      );
       importButton?.click();
     });
 
     expect(commitMidiImport).toHaveBeenCalledTimes(2);
-    expect(commitMidiImport).toHaveBeenLastCalledWith('token-1', [expect.objectContaining({ instrumentId: '1' })]);
+    expect(commitMidiImport).toHaveBeenLastCalledWith('token-1', [
+      expect.objectContaining({ instrumentId: '1' }),
+    ]);
   });
 
   it('080: closes without committing when the MIDI file chooser is cancelled', async () => {
@@ -196,16 +231,20 @@ describe('MidiImportDialog', () => {
       token: 'token-warnings',
       preview: {
         ...preview,
-        streams: [{
-          ...preview.streams[0],
-          warnings: [{
-            code: 'dangling-note-on',
-            message: 'Closed dangling note-on for key 60 at the end of the stream.',
-            trackIndex: 0,
-            channel: 0,
-            tick: 960,
-          }],
-        }],
+        streams: [
+          {
+            ...preview.streams[0],
+            warnings: [
+              {
+                code: 'dangling-note-on',
+                message: 'Closed dangling note-on for key 60 at the end of the stream.',
+                trackIndex: 0,
+                channel: 0,
+                tick: 960,
+              },
+            ],
+          },
+        ],
       },
     });
     act(() => root!.render(<MidiImportDialog />));

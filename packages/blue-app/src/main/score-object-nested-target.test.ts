@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { AddProcessor, BlueData, GenericScore, MultiplyProcessor, NoteProcessorChain, PolyObject, SoundLayer } from '@blue/data';
+import {
+  AddProcessor,
+  BlueData,
+  GenericScore,
+  MultiplyProcessor,
+  NoteProcessorChain,
+  PolyObject,
+  SoundLayer,
+} from '@blue/data';
 import {
   applyProjectDocumentPatch,
   createNestedPolyObjectSnapshot,
@@ -7,7 +15,10 @@ import {
   type ScoreObjectEditorTargetSnapshot,
 } from '../shared/project-editor';
 
-function buildNestedGenericScoreData(): { data: BlueData; target: ScoreObjectEditorTargetSnapshot } {
+function buildNestedGenericScoreData(): {
+  data: BlueData;
+  target: ScoreObjectEditorTargetSnapshot;
+} {
   const data = new BlueData();
   const rootGroup = data.getScore()[0];
   if (!(rootGroup instanceof PolyObject)) {
@@ -101,6 +112,8 @@ describe('Nested score object target resolution', () => {
     expect(snapshot!.name).toBe('Nested Container');
     expect(snapshot!.layerCount).toBe(1);
     expect(snapshot!.noteProcessorChain!.processors[0]!.processorType).toBe('AddProcessor');
-    expect(snapshot!.layers[0]!.noteProcessorChain!.processors[0]!.processorType).toBe('MultiplyProcessor');
+    expect(snapshot!.layers[0]!.noteProcessorChain!.processors[0]!.processorType).toBe(
+      'MultiplyProcessor',
+    );
   });
 });

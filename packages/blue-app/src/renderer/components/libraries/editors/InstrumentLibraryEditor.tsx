@@ -8,10 +8,16 @@ interface InstrumentLibraryEditorProps {
   onPatch: (patch: LibraryEditorDocumentPatch) => void;
 }
 
-export function InstrumentLibraryEditor({ snapshot, onPatch }: InstrumentLibraryEditorProps): React.ReactElement {
-  const handlePatch = useCallback((patch: OrchestraPatch) => {
-    onPatch({ kind: 'instrument', patch });
-  }, [onPatch]);
+export function InstrumentLibraryEditor({
+  snapshot,
+  onPatch,
+}: InstrumentLibraryEditorProps): React.ReactElement {
+  const handlePatch = useCallback(
+    (patch: OrchestraPatch) => {
+      onPatch({ kind: 'instrument', patch });
+    },
+    [onPatch],
+  );
   return (
     <InstrumentEditorPanel
       instrument={snapshot}

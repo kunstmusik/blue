@@ -29,9 +29,7 @@ export const UNNAMED_ROOT_LABEL = 'Unnamed Root';
 
 export function getRootDisplayLabel(rootLabel: string | undefined, rootPath: string): string {
   const trimmedLabel = rootLabel?.trim() ?? '';
-  return trimmedLabel.length > 0 && trimmedLabel !== rootPath
-    ? trimmedLabel
-    : UNNAMED_ROOT_LABEL;
+  return trimmedLabel.length > 0 && trimmedLabel !== rootPath ? trimmedLabel : UNNAMED_ROOT_LABEL;
 }
 
 export interface FocusLevelState {
@@ -117,7 +115,11 @@ export function findNode(nodes: FileTreeNode[], id: string): FileTreeNode | unde
 }
 
 /** Collects the chain of normalized filesystem identities to the target node. */
-export function collectAncestorIdentities(nodes: FileTreeNode[], id: string, chain: string[] = []): string[] | null {
+export function collectAncestorIdentities(
+  nodes: FileTreeNode[],
+  id: string,
+  chain: string[] = [],
+): string[] | null {
   for (const node of nodes) {
     const nextChain = [...chain, node.identity];
     if (node.id === id) return nextChain;
@@ -150,7 +152,11 @@ export function collectBreadcrumb(
   return null;
 }
 
-export function withChildren(nodes: FileTreeNode[], id: string, children: FileTreeNode[]): FileTreeNode[] {
+export function withChildren(
+  nodes: FileTreeNode[],
+  id: string,
+  children: FileTreeNode[],
+): FileTreeNode[] {
   return nodes.map((node) => {
     if (node.id === id) return { ...node, children };
     if (node.children) return { ...node, children: withChildren(node.children, id, children) };
@@ -162,7 +168,10 @@ export function withChildren(nodes: FileTreeNode[], id: string, children: FileTr
  * Marks a node whose directory listing failed with the diagnostic message so
  * the row can present a recoverable inline error.
  */
-export function attachDiagnostics(nodes: FileTreeNode[], diagnostics: Record<string, string>): FileTreeNode[] {
+export function attachDiagnostics(
+  nodes: FileTreeNode[],
+  diagnostics: Record<string, string>,
+): FileTreeNode[] {
   let changed = false;
   const mapped = nodes.map((node) => {
     const diagnostic = diagnostics[node.id];

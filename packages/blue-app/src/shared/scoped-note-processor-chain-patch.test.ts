@@ -8,24 +8,23 @@ import {
   AddProcessor,
   MultiplyProcessor,
 } from '@blue/data';
-import {
-  applyProjectDocumentPatch,
-  createScoreDocumentSnapshot,
-} from './project-editor';
+import { applyProjectDocumentPatch, createScoreDocumentSnapshot } from './project-editor';
 import type { NoteProcessorChainSnapshot } from './project-editor';
 
 function makeChainSnapshot(processorType: string, val: string): NoteProcessorChainSnapshot {
   return {
-    processors: [{
-      id: 'np-0',
-      processorType,
-      displayName: processorType,
-      supported: true,
-      deferred: false,
-      summary: processorType,
-      parameters: { pfield: '4', val },
-      serializedXml: '',
-    }],
+    processors: [
+      {
+        id: 'np-0',
+        processorType,
+        displayName: processorType,
+        supported: true,
+        deferred: false,
+        summary: processorType,
+        parameters: { pfield: '4', val },
+        serializedXml: '',
+      },
+    ],
     hasUnsupportedProcessors: false,
     hasDeferredProcessors: false,
   };
@@ -81,8 +80,12 @@ describe('replaceScopedNoteProcessorChain patch - soundLayer scope', () => {
     const after = createScoreDocumentSnapshot(data);
     expect(after.layerGroups[0]!.layers[0]!.noteProcessorChain).toBeDefined();
     expect(after.layerGroups[0]!.layers[0]!.noteProcessorChain!.processors).toHaveLength(1);
-    expect(after.layerGroups[0]!.layers[0]!.noteProcessorChain!.processors[0]!.processorType).toBe('AddProcessor');
-    expect(after.layerGroups[0]!.layers[0]!.noteProcessorChain!.processors[0]!.parameters.val).toBe('5');
+    expect(after.layerGroups[0]!.layers[0]!.noteProcessorChain!.processors[0]!.processorType).toBe(
+      'AddProcessor',
+    );
+    expect(after.layerGroups[0]!.layers[0]!.noteProcessorChain!.processors[0]!.parameters.val).toBe(
+      '5',
+    );
   });
 
   it('replaces non-empty chain with empty chain on sound layer', () => {
@@ -166,7 +169,9 @@ describe('replaceScopedNoteProcessorChain patch - layerGroup scope', () => {
     const after = createScoreDocumentSnapshot(data);
     expect(after.layerGroups[0]!.noteProcessorChain).toBeDefined();
     expect(after.layerGroups[0]!.noteProcessorChain!.processors).toHaveLength(1);
-    expect(after.layerGroups[0]!.noteProcessorChain!.processors[0]!.processorType).toBe('AddProcessor');
+    expect(after.layerGroups[0]!.noteProcessorChain!.processors[0]!.processorType).toBe(
+      'AddProcessor',
+    );
     expect(after.layerGroups[0]!.noteProcessorChain!.processors[0]!.parameters.val).toBe('7');
   });
 
@@ -340,10 +345,16 @@ describe('replaceScopedNoteProcessorChain patch - all three scopes together', ()
     expect(after.rootNoteProcessorChain!.processors[0]!.processorType).toBe('AddProcessor');
     expect(after.rootNoteProcessorChain!.processors[0]!.parameters.val).toBe('1');
 
-    expect(after.layerGroups[0]!.noteProcessorChain!.processors[0]!.processorType).toBe('MultiplyProcessor');
+    expect(after.layerGroups[0]!.noteProcessorChain!.processors[0]!.processorType).toBe(
+      'MultiplyProcessor',
+    );
     expect(after.layerGroups[0]!.noteProcessorChain!.processors[0]!.parameters.val).toBe('2');
 
-    expect(after.layerGroups[0]!.layers[0]!.noteProcessorChain!.processors[0]!.processorType).toBe('AddProcessor');
-    expect(after.layerGroups[0]!.layers[0]!.noteProcessorChain!.processors[0]!.parameters.val).toBe('3');
+    expect(after.layerGroups[0]!.layers[0]!.noteProcessorChain!.processors[0]!.processorType).toBe(
+      'AddProcessor',
+    );
+    expect(after.layerGroups[0]!.layers[0]!.noteProcessorChain!.processors[0]!.parameters.val).toBe(
+      '3',
+    );
   });
 });

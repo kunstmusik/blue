@@ -5,14 +5,23 @@ import {
   createScoreDocumentSnapshot,
   applyProjectDocumentPatch,
 } from '../../shared/project-editor';
-import { BlueData, GenericScore, MeterMap, Meter, MeasureMeterPair, TimeDuration, TimePosition } from '@blue/data';
-import { deriveSnapLineBeats, snapBeatToGrid } from '../components/workbench/panels/score/snap-grid-utils';
+import {
+  BlueData,
+  GenericScore,
+  MeterMap,
+  Meter,
+  MeasureMeterPair,
+  TimeDuration,
+  TimePosition,
+} from '@blue/data';
+import {
+  deriveSnapLineBeats,
+  snapBeatToGrid,
+} from '../components/workbench/panels/score/snap-grid-utils';
 
 function makeSingleEntrySnapshot(): MeterMapSnapshot {
   return {
-    entries: [
-      { measure: 1, numBeats: 4, beatLength: 4, startBeat: 0 },
-    ],
+    entries: [{ measure: 1, numBeats: 4, beatLength: 4, startBeat: 0 }],
   };
 }
 
@@ -75,25 +84,45 @@ describe('Meter snapshot creation', () => {
 describe('Meter patch validation', () => {
   it('rejects meter-map-set-entry with non-positive measure', () => {
     const data = new BlueData();
-    const patch: MeterMapPatch = { type: 'meter-map-set-entry', measure: 0, numBeats: 4, beatLength: 4 };
+    const patch: MeterMapPatch = {
+      type: 'meter-map-set-entry',
+      measure: 0,
+      numBeats: 4,
+      beatLength: 4,
+    };
     expect(applyProjectDocumentPatch(data, { transport: { meterMapPatch: patch } })).toBe(false);
   });
 
   it('rejects meter-map-set-entry with non-integer measure', () => {
     const data = new BlueData();
-    const patch: MeterMapPatch = { type: 'meter-map-set-entry', measure: 1.5, numBeats: 4, beatLength: 4 };
+    const patch: MeterMapPatch = {
+      type: 'meter-map-set-entry',
+      measure: 1.5,
+      numBeats: 4,
+      beatLength: 4,
+    };
     expect(applyProjectDocumentPatch(data, { transport: { meterMapPatch: patch } })).toBe(false);
   });
 
   it('rejects meter-map-set-entry with non-positive numBeats', () => {
     const data = new BlueData();
-    const patch: MeterMapPatch = { type: 'meter-map-set-entry', measure: 3, numBeats: 0, beatLength: 4 };
+    const patch: MeterMapPatch = {
+      type: 'meter-map-set-entry',
+      measure: 3,
+      numBeats: 0,
+      beatLength: 4,
+    };
     expect(applyProjectDocumentPatch(data, { transport: { meterMapPatch: patch } })).toBe(false);
   });
 
   it('rejects meter-map-set-entry with non-positive beatLength', () => {
     const data = new BlueData();
-    const patch: MeterMapPatch = { type: 'meter-map-set-entry', measure: 3, numBeats: 4, beatLength: 0 };
+    const patch: MeterMapPatch = {
+      type: 'meter-map-set-entry',
+      measure: 3,
+      numBeats: 4,
+      beatLength: 0,
+    };
     expect(applyProjectDocumentPatch(data, { transport: { meterMapPatch: patch } })).toBe(false);
   });
 
@@ -111,26 +140,72 @@ describe('Meter patch validation', () => {
 
   it('rejects update that moves first entry away from measure 1', () => {
     const data = new BlueData();
-    data.getScore().getTimeContext().getMeterMap().add(new MeasureMeterPair(1, new Meter(4, 4)));
-    data.getScore().getTimeContext().getMeterMap().add(new MeasureMeterPair(5, new Meter(3, 4)));
-    const patch: MeterMapPatch = { type: 'meter-map-update-entry', previousMeasure: 1, measure: 2, numBeats: 4, beatLength: 4 };
+    data
+      .getScore()
+      .getTimeContext()
+      .getMeterMap()
+      .add(new MeasureMeterPair(1, new Meter(4, 4)));
+    data
+      .getScore()
+      .getTimeContext()
+      .getMeterMap()
+      .add(new MeasureMeterPair(5, new Meter(3, 4)));
+    const patch: MeterMapPatch = {
+      type: 'meter-map-update-entry',
+      previousMeasure: 1,
+      measure: 2,
+      numBeats: 4,
+      beatLength: 4,
+    };
     expect(applyProjectDocumentPatch(data, { transport: { meterMapPatch: patch } })).toBe(false);
   });
 
   it('rejects update that moves entry before neighbor', () => {
     const data = new BlueData();
-    data.getScore().getTimeContext().getMeterMap().add(new MeasureMeterPair(1, new Meter(4, 4)));
-    data.getScore().getTimeContext().getMeterMap().add(new MeasureMeterPair(5, new Meter(3, 4)));
-    const patch: MeterMapPatch = { type: 'meter-map-update-entry', previousMeasure: 5, measure: 1, numBeats: 3, beatLength: 4 };
+    data
+      .getScore()
+      .getTimeContext()
+      .getMeterMap()
+      .add(new MeasureMeterPair(1, new Meter(4, 4)));
+    data
+      .getScore()
+      .getTimeContext()
+      .getMeterMap()
+      .add(new MeasureMeterPair(5, new Meter(3, 4)));
+    const patch: MeterMapPatch = {
+      type: 'meter-map-update-entry',
+      previousMeasure: 5,
+      measure: 1,
+      numBeats: 3,
+      beatLength: 4,
+    };
     expect(applyProjectDocumentPatch(data, { transport: { meterMapPatch: patch } })).toBe(false);
   });
 
   it('rejects update that moves entry past next neighbor', () => {
     const data = new BlueData();
-    data.getScore().getTimeContext().getMeterMap().add(new MeasureMeterPair(1, new Meter(4, 4)));
-    data.getScore().getTimeContext().getMeterMap().add(new MeasureMeterPair(5, new Meter(3, 4)));
-    data.getScore().getTimeContext().getMeterMap().add(new MeasureMeterPair(9, new Meter(7, 8)));
-    const patch: MeterMapPatch = { type: 'meter-map-update-entry', previousMeasure: 5, measure: 10, numBeats: 3, beatLength: 4 };
+    data
+      .getScore()
+      .getTimeContext()
+      .getMeterMap()
+      .add(new MeasureMeterPair(1, new Meter(4, 4)));
+    data
+      .getScore()
+      .getTimeContext()
+      .getMeterMap()
+      .add(new MeasureMeterPair(5, new Meter(3, 4)));
+    data
+      .getScore()
+      .getTimeContext()
+      .getMeterMap()
+      .add(new MeasureMeterPair(9, new Meter(7, 8)));
+    const patch: MeterMapPatch = {
+      type: 'meter-map-update-entry',
+      previousMeasure: 5,
+      measure: 10,
+      numBeats: 3,
+      beatLength: 4,
+    };
     expect(applyProjectDocumentPatch(data, { transport: { meterMapPatch: patch } })).toBe(false);
   });
 
@@ -142,26 +217,35 @@ describe('Meter patch validation', () => {
 
   it('rejects replace where first entry is not measure 1', () => {
     const data = new BlueData();
-    const patch: MeterMapPatch = { type: 'meter-map-replace', entries: [{ measure: 2, numBeats: 4, beatLength: 4 }] };
+    const patch: MeterMapPatch = {
+      type: 'meter-map-replace',
+      entries: [{ measure: 2, numBeats: 4, beatLength: 4 }],
+    };
     expect(applyProjectDocumentPatch(data, { transport: { meterMapPatch: patch } })).toBe(false);
   });
 
   it('rejects replace with duplicate measures', () => {
     const data = new BlueData();
-    const patch: MeterMapPatch = { type: 'meter-map-replace', entries: [
-      { measure: 1, numBeats: 4, beatLength: 4 },
-      { measure: 1, numBeats: 3, beatLength: 4 },
-    ] };
+    const patch: MeterMapPatch = {
+      type: 'meter-map-replace',
+      entries: [
+        { measure: 1, numBeats: 4, beatLength: 4 },
+        { measure: 1, numBeats: 3, beatLength: 4 },
+      ],
+    };
     expect(applyProjectDocumentPatch(data, { transport: { meterMapPatch: patch } })).toBe(false);
   });
 
   it('rejects replace with non-ascending measures', () => {
     const data = new BlueData();
-    const patch: MeterMapPatch = { type: 'meter-map-replace', entries: [
-      { measure: 1, numBeats: 4, beatLength: 4 },
-      { measure: 3, numBeats: 3, beatLength: 4 },
-      { measure: 2, numBeats: 7, beatLength: 8 },
-    ] };
+    const patch: MeterMapPatch = {
+      type: 'meter-map-replace',
+      entries: [
+        { measure: 1, numBeats: 4, beatLength: 4 },
+        { measure: 3, numBeats: 3, beatLength: 4 },
+        { measure: 2, numBeats: 7, beatLength: 8 },
+      ],
+    };
     expect(applyProjectDocumentPatch(data, { transport: { meterMapPatch: patch } })).toBe(false);
   });
 });
@@ -169,7 +253,12 @@ describe('Meter patch validation', () => {
 describe('Meter patch application', () => {
   it('adds a new meter entry', () => {
     const data = new BlueData();
-    const patch: MeterMapPatch = { type: 'meter-map-set-entry', measure: 5, numBeats: 3, beatLength: 4 };
+    const patch: MeterMapPatch = {
+      type: 'meter-map-set-entry',
+      measure: 5,
+      numBeats: 3,
+      beatLength: 4,
+    };
     expect(applyProjectDocumentPatch(data, { transport: { meterMapPatch: patch } })).toBe(true);
 
     const meterMap = data.getScore().getTimeContext().getMeterMap();
@@ -180,8 +269,17 @@ describe('Meter patch application', () => {
 
   it('replaces an existing entry at the same measure via set-entry', () => {
     const data = new BlueData();
-    data.getScore().getTimeContext().getMeterMap().add(new MeasureMeterPair(5, new Meter(3, 4)));
-    const patch: MeterMapPatch = { type: 'meter-map-set-entry', measure: 5, numBeats: 6, beatLength: 8 };
+    data
+      .getScore()
+      .getTimeContext()
+      .getMeterMap()
+      .add(new MeasureMeterPair(5, new Meter(3, 4)));
+    const patch: MeterMapPatch = {
+      type: 'meter-map-set-entry',
+      measure: 5,
+      numBeats: 6,
+      beatLength: 8,
+    };
     expect(applyProjectDocumentPatch(data, { transport: { meterMapPatch: patch } })).toBe(true);
 
     const meterMap = data.getScore().getTimeContext().getMeterMap();
@@ -197,7 +295,13 @@ describe('Meter patch application', () => {
     mm.add(new MeasureMeterPair(5, new Meter(3, 4)));
     mm.add(new MeasureMeterPair(9, new Meter(7, 8)));
 
-    const patch: MeterMapPatch = { type: 'meter-map-update-entry', previousMeasure: 5, measure: 7, numBeats: 3, beatLength: 4 };
+    const patch: MeterMapPatch = {
+      type: 'meter-map-update-entry',
+      previousMeasure: 5,
+      measure: 7,
+      numBeats: 3,
+      beatLength: 4,
+    };
     expect(applyProjectDocumentPatch(data, { transport: { meterMapPatch: patch } })).toBe(true);
 
     const entries = mm.getEntries();
@@ -223,11 +327,14 @@ describe('Meter patch application', () => {
 
   it('replaces the full meter map', () => {
     const data = new BlueData();
-    const patch: MeterMapPatch = { type: 'meter-map-replace', entries: [
-      { measure: 1, numBeats: 4, beatLength: 4 },
-      { measure: 5, numBeats: 3, beatLength: 4 },
-      { measure: 9, numBeats: 7, beatLength: 8 },
-    ] };
+    const patch: MeterMapPatch = {
+      type: 'meter-map-replace',
+      entries: [
+        { measure: 1, numBeats: 4, beatLength: 4 },
+        { measure: 5, numBeats: 3, beatLength: 4 },
+        { measure: 9, numBeats: 7, beatLength: 8 },
+      ],
+    };
     expect(applyProjectDocumentPatch(data, { transport: { meterMapPatch: patch } })).toBe(true);
 
     const entries = data.getScore().getTimeContext().getMeterMap().getEntries();
@@ -241,14 +348,26 @@ describe('Meter patch application', () => {
 
   it('first entry remains immutable after update attempt to measure != 1', () => {
     const data = new BlueData();
-    const patch: MeterMapPatch = { type: 'meter-map-update-entry', previousMeasure: 1, measure: 2, numBeats: 3, beatLength: 4 };
+    const patch: MeterMapPatch = {
+      type: 'meter-map-update-entry',
+      previousMeasure: 1,
+      measure: 2,
+      numBeats: 3,
+      beatLength: 4,
+    };
     expect(applyProjectDocumentPatch(data, { transport: { meterMapPatch: patch } })).toBe(false);
     expect(data.getScore().getTimeContext().getMeterMap().get(0).measure).toBe(1);
   });
 
   it('allows updating first entry signature without changing measure', () => {
     const data = new BlueData();
-    const patch: MeterMapPatch = { type: 'meter-map-update-entry', previousMeasure: 1, measure: 1, numBeats: 3, beatLength: 4 };
+    const patch: MeterMapPatch = {
+      type: 'meter-map-update-entry',
+      previousMeasure: 1,
+      measure: 1,
+      numBeats: 3,
+      beatLength: 4,
+    };
     expect(applyProjectDocumentPatch(data, { transport: { meterMapPatch: patch } })).toBe(true);
     expect(data.getScore().getTimeContext().getMeterMap().get(0).meter.numBeats).toBe(3);
   });
@@ -266,7 +385,12 @@ describe('Meter patch application', () => {
     expect(sObj.getStartTime().toBeats(beforeContext)).toBe(8);
     expect(sObj.getSubjectiveDuration().toBeats(beforeContext)).toBe(4);
 
-    const patch: MeterMapPatch = { type: 'meter-map-set-entry', measure: 2, numBeats: 5, beatLength: 4 };
+    const patch: MeterMapPatch = {
+      type: 'meter-map-set-entry',
+      measure: 2,
+      numBeats: 5,
+      beatLength: 4,
+    };
     expect(applyProjectDocumentPatch(data, { transport: { meterMapPatch: patch } })).toBe(true);
 
     const afterContext = data.getScore().getTimeContext();
@@ -292,7 +416,12 @@ describe('Meter patch application', () => {
     const beforeContext = data.getScore().getTimeContext();
     expect(sObj.getStartTime().toBeats(beforeContext)).toBe(16);
 
-    const patch: MeterMapPatch = { type: 'meter-map-set-entry', measure: 2, numBeats: 5, beatLength: 4 };
+    const patch: MeterMapPatch = {
+      type: 'meter-map-set-entry',
+      measure: 2,
+      numBeats: 5,
+      beatLength: 4,
+    };
     expect(applyProjectDocumentPatch(data, { transport: { meterMapPatch: patch } })).toBe(true);
 
     const afterContext = data.getScore().getTimeContext();
@@ -311,7 +440,13 @@ describe('Meter patch application', () => {
     sObj.setSubjectiveDuration(TimeDuration.bbf(1, 0, 0));
     layer.push(sObj);
 
-    const patch: MeterMapPatch = { type: 'meter-map-update-entry', previousMeasure: 1, measure: 1, numBeats: 3, beatLength: 4 };
+    const patch: MeterMapPatch = {
+      type: 'meter-map-update-entry',
+      previousMeasure: 1,
+      measure: 1,
+      numBeats: 3,
+      beatLength: 4,
+    };
     expect(applyProjectDocumentPatch(data, { transport: { meterMapPatch: patch } })).toBe(true);
 
     const afterContext = data.getScore().getTimeContext();
@@ -335,17 +470,21 @@ describe('Meter patch application', () => {
     const group = snapshot.layerGroups[0]!;
     const target = group.layers[0]!.items[0]!.editorTarget;
 
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'moveScoreObjects',
-        moves: [{
-          target,
-          targetStartBeats: 16,
-          targetLayerIndex: 0,
-          targetGroupId: group.groupId,
-        }],
-      },
-    })).toBe(true);
+    expect(
+      applyProjectDocumentPatch(data, {
+        score: {
+          type: 'moveScoreObjects',
+          moves: [
+            {
+              target,
+              targetStartBeats: 16,
+              targetLayerIndex: 0,
+              targetGroupId: group.groupId,
+            },
+          ],
+        },
+      }),
+    ).toBe(true);
 
     const context = data.getScore().getTimeContext();
     expect(String(sObj.getStartTime().getTimeBase())).toBe('BBF');
@@ -363,18 +502,21 @@ describe('Meter patch application', () => {
     sObj.setSubjectiveDuration(TimeDuration.bbf(1, 0, 0));
     layer.push(sObj);
 
-    const target = createScoreDocumentSnapshot(data).layerGroups[0]!.layers[0]!.items[0]!.editorTarget;
+    const target =
+      createScoreDocumentSnapshot(data).layerGroups[0]!.layers[0]!.items[0]!.editorTarget;
 
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'updateSharedProperties',
-        target,
-        patch: {
-          startTime: { value: 4, timeBase: 'BBF' },
-          subjectiveDuration: { value: 5, timeBase: 'BBF' },
+    expect(
+      applyProjectDocumentPatch(data, {
+        score: {
+          type: 'updateSharedProperties',
+          target,
+          patch: {
+            startTime: { value: 4, timeBase: 'BBF' },
+            subjectiveDuration: { value: 5, timeBase: 'BBF' },
+          },
         },
-      },
-    })).toBe(true);
+      }),
+    ).toBe(true);
 
     const context = data.getScore().getTimeContext();
     expect(String(sObj.getStartTime().getTimeBase())).toBe('BBF');
@@ -385,9 +527,13 @@ describe('Meter patch application', () => {
 
   it('preserves each selected object start time base when moving across a mixed-meter boundary', () => {
     const data = new BlueData();
-    expect(applyProjectDocumentPatch(data, {
-      transport: { meterMapPatch: { type: 'meter-map-set-entry', measure: 2, numBeats: 5, beatLength: 4 } },
-    })).toBe(true);
+    expect(
+      applyProjectDocumentPatch(data, {
+        transport: {
+          meterMapPatch: { type: 'meter-map-set-entry', measure: 2, numBeats: 5, beatLength: 4 },
+        },
+      }),
+    ).toBe(true);
 
     const rootGroup = data.getScore()[0] as unknown as Array<Array<GenericScore>>;
     const layer = rootGroup[0]!;
@@ -405,17 +551,19 @@ describe('Meter patch application', () => {
     const snapshot = createScoreDocumentSnapshot(data);
     const group = snapshot.layerGroups[0]!;
     const items = group.layers[0]!.items;
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'moveScoreObjects',
-        moves: items.map((item) => ({
-          target: item.editorTarget,
-          targetStartBeats: 16,
-          targetLayerIndex: 0,
-          targetGroupId: group.groupId,
-        })),
-      },
-    })).toBe(true);
+    expect(
+      applyProjectDocumentPatch(data, {
+        score: {
+          type: 'moveScoreObjects',
+          moves: items.map((item) => ({
+            target: item.editorTarget,
+            targetStartBeats: 16,
+            targetLayerIndex: 0,
+            targetGroupId: group.groupId,
+          })),
+        },
+      }),
+    ).toBe(true);
 
     const context = data.getScore().getTimeContext();
     expect(String(bbfObj.getStartTime().getTimeBase())).toBe('BBF');
@@ -435,9 +583,13 @@ describe('Meter patch application', () => {
 
   it('preserves each selected object start and duration base when resizing across a mixed-meter boundary', () => {
     const data = new BlueData();
-    expect(applyProjectDocumentPatch(data, {
-      transport: { meterMapPatch: { type: 'meter-map-set-entry', measure: 2, numBeats: 5, beatLength: 4 } },
-    })).toBe(true);
+    expect(
+      applyProjectDocumentPatch(data, {
+        transport: {
+          meterMapPatch: { type: 'meter-map-set-entry', measure: 2, numBeats: 5, beatLength: 4 },
+        },
+      }),
+    ).toBe(true);
 
     const rootGroup = data.getScore()[0] as unknown as Array<Array<GenericScore>>;
     const layer = rootGroup[0]!;
@@ -460,16 +612,18 @@ describe('Meter patch application', () => {
     ];
 
     for (const target of resizeTargets) {
-      expect(applyProjectDocumentPatch(data, {
-        score: {
-          type: 'updateSharedProperties',
-          target: target.item.editorTarget,
-          patch: {
-            startTime: { value: 16, timeBase: target.startTimeBase },
-            subjectiveDuration: { value: 7, timeBase: target.durationTimeBase },
+      expect(
+        applyProjectDocumentPatch(data, {
+          score: {
+            type: 'updateSharedProperties',
+            target: target.item.editorTarget,
+            patch: {
+              startTime: { value: 16, timeBase: target.startTimeBase },
+              subjectiveDuration: { value: 7, timeBase: target.durationTimeBase },
+            },
           },
-        },
-      })).toBe(true);
+        }),
+      ).toBe(true);
     }
 
     const context = data.getScore().getTimeContext();
@@ -599,8 +753,16 @@ describe('Integration: meter patch variants update canonical snapshot', () => {
   it('multiple patches produce consistent canonical state', () => {
     const data = new BlueData();
 
-    applyProjectDocumentPatch(data, { transport: { meterMapPatch: { type: 'meter-map-set-entry', measure: 5, numBeats: 3, beatLength: 4 } } });
-    applyProjectDocumentPatch(data, { transport: { meterMapPatch: { type: 'meter-map-set-entry', measure: 9, numBeats: 7, beatLength: 8 } } });
+    applyProjectDocumentPatch(data, {
+      transport: {
+        meterMapPatch: { type: 'meter-map-set-entry', measure: 5, numBeats: 3, beatLength: 4 },
+      },
+    });
+    applyProjectDocumentPatch(data, {
+      transport: {
+        meterMapPatch: { type: 'meter-map-set-entry', measure: 9, numBeats: 7, beatLength: 8 },
+      },
+    });
 
     const snapshot = createMeterMapSnapshot(data.getScore().getTimeContext().getMeterMap());
     expect(snapshot.entries).toHaveLength(3);

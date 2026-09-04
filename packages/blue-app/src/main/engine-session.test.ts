@@ -152,9 +152,12 @@ describe('EngineSession lifecycle and ordering', () => {
     const child = new FakeChildProcess(302);
     const client = new FakeEngineClient();
     let releaseDisconnect!: () => void;
-    const disconnect = vi.fn(() => new Promise<void>((resolve) => {
-      releaseDisconnect = resolve;
-    }));
+    const disconnect = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          releaseDisconnect = resolve;
+        }),
+    );
     client.disconnect = disconnect;
 
     const session = new EngineSession(
@@ -295,10 +298,14 @@ describe('EngineSession lifecycle and ordering', () => {
 
   it('classifies runtime library load failures ahead of generic not-found engine failures', () => {
     expect(classifyProcessError(null, 'dlopen: library not found')).toBe('runtime-unavailable');
-    expect(classifyProcessError(null, 'Csound shared library not found')).toBe('runtime-unavailable');
+    expect(classifyProcessError(null, 'Csound shared library not found')).toBe(
+      'runtime-unavailable',
+    );
     expect(classifyProcessError(new Error('Csound 7 was not found'))).toBe('runtime-unavailable');
     expect(classifyProcessError(new Error('spawn blue-engine ENOENT'))).toBe('engine-unavailable');
-    expect(classifyProcessError(new Error('blue-engine not found in PATH'))).toBe('engine-unavailable');
+    expect(classifyProcessError(new Error('blue-engine not found in PATH'))).toBe(
+      'engine-unavailable',
+    );
     expect(classifyProcessError(null, '', 127)).toBe('engine-unavailable');
   });
 

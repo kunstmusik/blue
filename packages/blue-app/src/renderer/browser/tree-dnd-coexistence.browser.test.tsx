@@ -24,8 +24,9 @@ import type {
   FileManagerRootSnapshot,
 } from '../../../shared/file-manager';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
-  true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 interface SimpleNode {
   id: string;
@@ -150,7 +151,12 @@ function directoryResult(): Extract<FileManagerDirectoryResult, { status: 'ok' }
       directoryPath: '/work',
       loadedAt: 1,
       children: [
-        { id: '/work/project.blue', path: '/work/project.blue', name: 'project.blue', kind: 'file' },
+        {
+          id: '/work/project.blue',
+          path: '/work/project.blue',
+          name: 'project.blue',
+          kind: 'file',
+        },
         { id: '/work/audio', path: '/work/audio', name: 'audio', kind: 'directory' },
       ],
     },
@@ -267,11 +273,7 @@ describe('tree drag ownership coexistence', () => {
               >
                 {SimpleRow}
               </BlueTree>
-              <LibraryTree
-                label="Libraries"
-                nodes={libraryNodes}
-                onSelect={() => {}}
-              />
+              <LibraryTree label="Libraries" nodes={libraryNodes} onSelect={() => {}} />
               <PresetsManagerDialog
                 presetGroup={presetGroup}
                 onBsbInterfacePatch={(patch) => presetPatches.push(patch)}
@@ -301,22 +303,29 @@ describe('tree drag ownership coexistence', () => {
         );
 
         const presetDialog = surfacesHost.querySelector<HTMLElement>('[role="dialog"]')!;
-        const presetTreeItems = () => Array.from(
-          presetDialog.querySelectorAll<HTMLElement>('[role="treeitem"]'),
-        );
-        const nestedTreeItem = presetTreeItems().find((row) => row.textContent?.includes('Nested'))!;
+        const presetTreeItems = () =>
+          Array.from(presetDialog.querySelectorAll<HTMLElement>('[role="treeitem"]'));
+        const nestedTreeItem = presetTreeItems().find((row) =>
+          row.textContent?.includes('Nested'),
+        )!;
         const nestedRow = nestedTreeItem.querySelector<HTMLElement>('.cursor-pointer')!;
         expect(nestedRow, `cycle ${cycle}: preset group row`).toBeTruthy();
         act(() => {
           nestedRow.dispatchEvent(new MouseEvent('click', { bubbles: true }));
         });
         await act(async () => {});
-        expect(nestedTreeItem.getAttribute('aria-expanded'), `cycle ${cycle}: preset collapse`).toBe('false');
+        expect(
+          nestedTreeItem.getAttribute('aria-expanded'),
+          `cycle ${cycle}: preset collapse`,
+        ).toBe('false');
         act(() => {
           nestedRow.dispatchEvent(new MouseEvent('click', { bubbles: true }));
         });
         await act(async () => {});
-        expect(nestedTreeItem.getAttribute('aria-expanded'), `cycle ${cycle}: preset expansion`).toBe('true');
+        expect(
+          nestedTreeItem.getAttribute('aria-expanded'),
+          `cycle ${cycle}: preset expansion`,
+        ).toBe('true');
 
         const presetTreeItem = presetTreeItems().find((row) => row.textContent?.trim() === 'B')!;
         const presetRow = presetTreeItem.querySelector<HTMLElement>('.cursor-pointer')!;
@@ -324,7 +333,9 @@ describe('tree drag ownership coexistence', () => {
           presetRow.dispatchEvent(new MouseEvent('click', { bubbles: true }));
         });
         await act(async () => {});
-        expect(presetDialog.textContent, `cycle ${cycle}: preset selection`).toContain('Selected: B');
+        expect(presetDialog.textContent, `cycle ${cycle}: preset selection`).toContain(
+          'Selected: B',
+        );
 
         const selectedPresetTreeItem = presetTreeItems().find(
           (row) => row.textContent?.trim() === 'B',
@@ -343,7 +354,9 @@ describe('tree drag ownership coexistence', () => {
             )?.set;
             setInputValue?.call(renameInput, 'Bravo');
             renameInput.dispatchEvent(new Event('input', { bubbles: true }));
-            renameInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            renameInput.dispatchEvent(
+              new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
+            );
           });
         }
         expect(presetPatches, `cycle ${cycle}: preset rename patch`).toContainEqual({
@@ -364,7 +377,9 @@ describe('tree drag ownership coexistence', () => {
         });
         expect(hasActiveTreeDrag(document), `cycle ${cycle}: preset drag ownership`).toBe(true);
         act(() => {
-          draggedPresetRow.dispatchEvent(new DragEvent('dragend', { bubbles: true, dataTransfer: dragData }));
+          draggedPresetRow.dispatchEvent(
+            new DragEvent('dragend', { bubbles: true, dataTransfer: dragData }),
+          );
         });
         expect(hasActiveTreeDrag(document), `cycle ${cycle}: preset drag cleanup`).toBe(false);
 
@@ -397,7 +412,9 @@ describe('tree drag ownership coexistence', () => {
     );
     await act(async () => {});
 
-    const itemRow = librariesHost.querySelector<HTMLElement>('[data-library-node-id="library-item-1"]')!;
+    const itemRow = librariesHost.querySelector<HTMLElement>(
+      '[data-library-node-id="library-item-1"]',
+    )!;
     expect(itemRow.draggable).toBe(true);
 
     act(() => {
@@ -497,7 +514,14 @@ describe('tree drag ownership coexistence', () => {
     const emptyHost = makeHost();
     mountFixture(
       emptyHost,
-      <BlueTree<SimpleNode> data={[]} width={320} height={24} rowHeight={24} indent={16} idAccessor="id">
+      <BlueTree<SimpleNode>
+        data={[]}
+        width={320}
+        height={24}
+        rowHeight={24}
+        indent={16}
+        idAccessor="id"
+      >
         {SimpleRow}
       </BlueTree>,
     );
@@ -509,7 +533,14 @@ describe('tree drag ownership coexistence', () => {
     const largeHost = makeHost();
     mountFixture(
       largeHost,
-      <BlueTree<SimpleNode> data={largeData} width={320} height={96} rowHeight={24} indent={16} idAccessor="id">
+      <BlueTree<SimpleNode>
+        data={largeData}
+        width={320}
+        height={96}
+        rowHeight={24}
+        indent={16}
+        idAccessor="id"
+      >
         {SimpleRow}
       </BlueTree>,
     );

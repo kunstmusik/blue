@@ -65,7 +65,16 @@ export const effectDocument: LibraryEditorDocument = {
     gridSettings: { enabled: true, snapEnabled: true, width: 10, height: 10 },
     objectNames: [],
     widgets: [],
-    widgetTree: { id: 'root', type: 'BSBRootGroup', objectName: '', value: 0, minimum: 0, maximum: 1, properties: {}, children: [] },
+    widgetTree: {
+      id: 'root',
+      type: 'BSBRootGroup',
+      objectName: '',
+      value: 0,
+      minimum: 0,
+      maximum: 1,
+      properties: {},
+      children: [],
+    },
     udos: [
       {
         name: 'LibraryEffectUDO',

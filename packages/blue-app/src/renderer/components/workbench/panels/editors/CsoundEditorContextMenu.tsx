@@ -31,7 +31,6 @@ interface CsoundEditorContextMenuProps {
   onAddToCodeRepository?: (selectedText: string) => void;
 }
 
-
 function isSubmenuItem(item: CsoundEditorMenuItem): item is CsoundEditorSubmenuItem {
   return item.kind === 'submenu';
 }
@@ -68,7 +67,6 @@ function renderMenuItem(
   }
 
   if (isSubmenuItem(item)) {
-
     return (
       <ContextMenu.Sub key={item.id}>
         <ContextMenu.SubTrigger
@@ -80,15 +78,23 @@ function renderMenuItem(
           <ChevronRight aria-hidden="true" className="w-3.5 h-3.5 opacity-60" />
         </ContextMenu.SubTrigger>
 
-          <PopoutContextMenuPortal>
-            <ContextMenu.SubContent
-              className="editor-context-menu editor-context-menu--submenu"
-              sideOffset={6}
-              alignOffset={-4}
-            >
-              {item.items.map((childItem) => renderMenuItem(childItem, editorViewRef, clipboardBridge, onEvaluateCode, onAddToCodeRepository))}
-            </ContextMenu.SubContent>
-          </PopoutContextMenuPortal>
+        <PopoutContextMenuPortal>
+          <ContextMenu.SubContent
+            className="editor-context-menu editor-context-menu--submenu"
+            sideOffset={6}
+            alignOffset={-4}
+          >
+            {item.items.map((childItem) =>
+              renderMenuItem(
+                childItem,
+                editorViewRef,
+                clipboardBridge,
+                onEvaluateCode,
+                onAddToCodeRepository,
+              ),
+            )}
+          </ContextMenu.SubContent>
+        </PopoutContextMenuPortal>
       </ContextMenu.Sub>
     );
   }
@@ -186,20 +192,23 @@ export default function CsoundEditorContextMenu({
   onEvaluateCode,
   onAddToCodeRepository,
 }: CsoundEditorContextMenuProps): React.ReactElement {
-
   return (
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>{children}</ContextMenu.Trigger>
 
-
-        <PopoutContextMenuPortal>
-          <ContextMenu.Content
-            className="editor-context-menu"
-            sideOffset={6}
-          >
-            {menuItems.map((item) => renderMenuItem(item, editorViewRef, clipboardBridge, onEvaluateCode, onAddToCodeRepository))}
-          </ContextMenu.Content>
-        </PopoutContextMenuPortal>
+      <PopoutContextMenuPortal>
+        <ContextMenu.Content className="editor-context-menu" sideOffset={6}>
+          {menuItems.map((item) =>
+            renderMenuItem(
+              item,
+              editorViewRef,
+              clipboardBridge,
+              onEvaluateCode,
+              onAddToCodeRepository,
+            ),
+          )}
+        </ContextMenu.Content>
+      </PopoutContextMenuPortal>
     </ContextMenu.Root>
   );
 }

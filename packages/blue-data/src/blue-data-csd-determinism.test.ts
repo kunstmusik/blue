@@ -93,16 +93,21 @@ describe('BlueData deterministic render parity', () => {
       'track:four-owner-group:track-a',
       'track:four-owner-group:track-b',
     ]);
-    expect(new Set(first.blueX7Bindings.flatMap(
-      (binding) => [...binding.parameterChannels.values()],
-    )).size).toBe(4 * 151);
+    expect(
+      new Set(first.blueX7Bindings.flatMap((binding) => [...binding.parameterChannels.values()]))
+        .size,
+    ).toBe(4 * 151);
     expect(new Set(first.blueX7Bindings.map((binding) => binding.domainEpoch)).size).toBe(4);
-    expect(first.blueX7Bindings.every(
-      (binding) => binding.directGlobalChannels === binding.parameterChannels,
-    )).toBe(true);
-    expect(first.blueX7Bindings.slice(2).every(
-      (binding) => typeof binding.runtimeInstrumentId === 'number',
-    )).toBe(true);
+    expect(
+      first.blueX7Bindings.every(
+        (binding) => binding.directGlobalChannels === binding.parameterChannels,
+      ),
+    ).toBe(true);
+    expect(
+      first.blueX7Bindings
+        .slice(2)
+        .every((binding) => typeof binding.runtimeInstrumentId === 'number'),
+    ).toBe(true);
 
     group.splice(0, 2, group[1]!, group[0]!);
     const reordered = data.toRealtimePlaybackCSD();
@@ -121,12 +126,16 @@ describe('BlueData deterministic render parity', () => {
       'track:four-owner-group:track-a',
     ]);
     const rebuilt = data.toRealtimePlaybackCSD();
-    expect(rebuilt.blueX7Bindings.map((binding) => ({
-      ownerIdentity: binding.ownerIdentity,
-      channels: [...binding.parameterChannels.entries()],
-    }))).toEqual(afterRemoval.blueX7Bindings.map((binding) => ({
-      ownerIdentity: binding.ownerIdentity,
-      channels: [...binding.parameterChannels.entries()],
-    })));
+    expect(
+      rebuilt.blueX7Bindings.map((binding) => ({
+        ownerIdentity: binding.ownerIdentity,
+        channels: [...binding.parameterChannels.entries()],
+      })),
+    ).toEqual(
+      afterRemoval.blueX7Bindings.map((binding) => ({
+        ownerIdentity: binding.ownerIdentity,
+        channels: [...binding.parameterChannels.entries()],
+      })),
+    );
   });
 });

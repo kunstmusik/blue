@@ -5,21 +5,27 @@ import type { LibraryExactTransferTarget, LibraryType } from '../../shared/unifi
 import { useLibraryStore } from '../stores/library-store';
 
 const previewLibraryTransfer = vi.fn(async (request: { target: LibraryExactTransferTarget }) => {
-  const libraryType: LibraryType = request.target.kind === 'orchestra'
-    ? 'instrument'
-    : request.target.kind === 'projectUdo'
-      ? 'udo'
-      : request.target.kind === 'effectChain'
-        ? 'effect'
-        : 'soundObject';
+  const libraryType: LibraryType =
+    request.target.kind === 'orchestra'
+      ? 'instrument'
+      : request.target.kind === 'projectUdo'
+        ? 'udo'
+        : request.target.kind === 'effectChain'
+          ? 'effect'
+          : 'soundObject';
   return {
     ok: true as const,
     value: {
       previewToken: `preview-${libraryType}`,
       item: {
         key: { scope: 'user' as const, libraryType, nodeId: `${libraryType}-1` },
-        displayName: libraryType, libraryType, scope: 'user' as const, objectType: libraryType,
-        supportStatus: 'supported' as const, supportMessage: null, fields: {},
+        displayName: libraryType,
+        libraryType,
+        scope: 'user' as const,
+        objectType: libraryType,
+        supportStatus: 'supported' as const,
+        supportMessage: null,
+        fields: {},
         dependencies: { itemOwned: [], unresolvedExternal: [] },
       },
       target: request.target,
@@ -33,7 +39,8 @@ const previewLibraryTransfer = vi.fn(async (request: { target: LibraryExactTrans
 const applyLibraryTransfer = vi.fn(async (token: string) => ({
   ok: true as const,
   value: {
-    projectSessionId: 3, projectRevision: 8,
+    projectSessionId: 3,
+    projectRevision: 8,
     libraryType: token.replace('preview-', '') as LibraryType,
     insertedIdentity: token,
     message: 'Added.',
@@ -50,18 +57,45 @@ beforeEach(() => {
 describe('direct Library transfer routing', () => {
   it('uses the same explicit preview/apply path for all four exact destinations', async () => {
     const targets: Array<[LibraryType, LibraryExactTransferTarget]> = [
-      ['instrument', { kind: 'orchestra', projectSessionId: 3, projectRevision: 7, insertIndex: 2 }],
+      [
+        'instrument',
+        { kind: 'orchestra', projectSessionId: 3, projectRevision: 7, insertIndex: 2 },
+      ],
       ['udo', { kind: 'projectUdo', projectSessionId: 3, projectRevision: 7, insertIndex: 1 }],
-      ['effect', { kind: 'effectChain', projectSessionId: 3, projectRevision: 7, channelId: 'main', chain: 'pre', insertIndex: 0, chainRevision: '' }],
-      ['soundObject', {
-        kind: 'score', projectSessionId: 3, projectRevision: 7,
-        location: { rootGroupId: 'root', containerPath: [], layerId: 'root-layer-0', startTime: 4 },
-        timeContextRevision: '7',
-      }],
+      [
+        'effect',
+        {
+          kind: 'effectChain',
+          projectSessionId: 3,
+          projectRevision: 7,
+          channelId: 'main',
+          chain: 'pre',
+          insertIndex: 0,
+          chainRevision: '',
+        },
+      ],
+      [
+        'soundObject',
+        {
+          kind: 'score',
+          projectSessionId: 3,
+          projectRevision: 7,
+          location: {
+            rootGroupId: 'root',
+            containerPath: [],
+            layerId: 'root-layer-0',
+            startTime: 4,
+          },
+          timeContextRevision: '7',
+        },
+      ],
     ];
 
     for (const [libraryType, target] of targets) {
-      const source = { kind: 'clipboard' as const, source: { kind: 'userNode' as const, libraryType, nodeId: `${libraryType}-1`, revision: 1 } };
+      const source = {
+        kind: 'clipboard' as const,
+        source: { kind: 'userNode' as const, libraryType, nodeId: `${libraryType}-1`, revision: 1 },
+      };
       expect(await useLibraryStore.getState().transferToProject(source, target)).toBe(true);
     }
 
@@ -77,18 +111,44 @@ describe('direct Library transfer routing', () => {
         previewToken: 'blocked',
         item: {
           key: { scope: 'user', libraryType: 'effect', nodeId: 'effect-1' },
-          displayName: 'Effect', libraryType: 'effect', scope: 'user', objectType: 'Effect',
-          supportStatus: 'supported', supportMessage: null, fields: {},
+          displayName: 'Effect',
+          libraryType: 'effect',
+          scope: 'user',
+          objectType: 'Effect',
+          supportStatus: 'supported',
+          supportMessage: null,
+          fields: {},
           dependencies: { itemOwned: [], unresolvedExternal: ['external UDO'] },
         },
-        target: { kind: 'effectChain', projectSessionId: 3, projectRevision: 7, channelId: 'main', chain: 'pre', insertIndex: 0, chainRevision: '' },
-        requestedMode: 'independent', allowedModes: ['independent'], canApply: false,
+        target: {
+          kind: 'effectChain',
+          projectSessionId: 3,
+          projectRevision: 7,
+          channelId: 'main',
+          chain: 'pre',
+          insertIndex: 0,
+          chainRevision: '',
+        },
+        requestedMode: 'independent',
+        allowedModes: ['independent'],
+        canApply: false,
         blockingReasons: ['Resolve external dependencies before transfer.'],
       },
     });
     const applied = await useLibraryStore.getState().transferToProject(
-      { kind: 'clipboard', source: { kind: 'userNode', libraryType: 'effect', nodeId: 'effect-1', revision: 1 } },
-      { kind: 'effectChain', projectSessionId: 3, projectRevision: 7, channelId: 'main', chain: 'pre', insertIndex: 0, chainRevision: '' },
+      {
+        kind: 'clipboard',
+        source: { kind: 'userNode', libraryType: 'effect', nodeId: 'effect-1', revision: 1 },
+      },
+      {
+        kind: 'effectChain',
+        projectSessionId: 3,
+        projectRevision: 7,
+        channelId: 'main',
+        chain: 'pre',
+        insertIndex: 0,
+        chainRevision: '',
+      },
     );
     expect(applied).toBe(false);
     expect(applyLibraryTransfer).not.toHaveBeenCalled();

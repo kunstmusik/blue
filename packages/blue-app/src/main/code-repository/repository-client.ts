@@ -95,7 +95,12 @@ export class CodeRepositoryClient {
     name: string,
     expectedRevision: number,
   ): Promise<CodeRepositorySnapshotData> {
-    return this.request<CodeRepositorySnapshotData>('createGroup', parentId, name, expectedRevision);
+    return this.request<CodeRepositorySnapshotData>(
+      'createGroup',
+      parentId,
+      name,
+      expectedRevision,
+    );
   }
 
   createSnippet(
@@ -119,7 +124,13 @@ export class CodeRepositoryClient {
     order: number,
     expectedRevision: number,
   ): Promise<CodeRepositorySnapshotData> {
-    return this.request<CodeRepositorySnapshotData>('moveNode', nodeId, parentId, order, expectedRevision);
+    return this.request<CodeRepositorySnapshotData>(
+      'moveNode',
+      nodeId,
+      parentId,
+      order,
+      expectedRevision,
+    );
   }
 
   updateNode(
@@ -146,7 +157,9 @@ export class CodeRepositoryClient {
     return this.request<CodeRepositoryImportRecord[]>('listImports', limit);
   }
 
-  runForTesting<T>(operation: (repository: CodeRepositoryRepository) => T | Promise<T>): Promise<T> {
+  runForTesting<T>(
+    operation: (repository: CodeRepositoryRepository) => T | Promise<T>,
+  ): Promise<T> {
     if (!this.repository) return Promise.reject(new Error('In-process repository is unavailable'));
     return this.enqueue(() => operation(this.repository as CodeRepositoryRepository));
   }

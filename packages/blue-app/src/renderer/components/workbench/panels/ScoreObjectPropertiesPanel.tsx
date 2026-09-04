@@ -24,12 +24,21 @@ function applyPatchToDocument(
   if (patch.type === 'updateSharedProperties') {
     const shared = { ...doc.shared };
     if (patch.patch.name !== undefined) shared.name = patch.patch.name;
-    if (patch.patch.backgroundColor !== undefined) shared.backgroundColor = patch.patch.backgroundColor;
+    if (patch.patch.backgroundColor !== undefined)
+      shared.backgroundColor = patch.patch.backgroundColor;
     if (patch.patch.startTime !== undefined) {
-      shared.startTime = { ...shared.startTime, value: patch.patch.startTime.value, timeBase: patch.patch.startTime.timeBase };
+      shared.startTime = {
+        ...shared.startTime,
+        value: patch.patch.startTime.value,
+        timeBase: patch.patch.startTime.timeBase,
+      };
     }
     if (patch.patch.subjectiveDuration !== undefined) {
-      shared.subjectiveDuration = { ...shared.subjectiveDuration, value: patch.patch.subjectiveDuration.value, timeBase: patch.patch.subjectiveDuration.timeBase };
+      shared.subjectiveDuration = {
+        ...shared.subjectiveDuration,
+        value: patch.patch.subjectiveDuration.value,
+        timeBase: patch.patch.subjectiveDuration.timeBase,
+      };
     }
     if (patch.patch.startTime !== undefined || patch.patch.subjectiveDuration !== undefined) {
       const start = patch.patch.startTime?.value ?? shared.startTime.value;
@@ -41,9 +50,14 @@ function applyPatchToDocument(
   if (patch.type === 'updateSoundObjectBehavior') {
     const shared = { ...doc.shared };
     if (patch.patch.timeBehavior !== undefined) shared.timeBehavior = patch.patch.timeBehavior;
-    if (patch.patch.repeatPoint !== undefined) shared.repeatPoint = patch.patch.repeatPoint
-      ? { value: patch.patch.repeatPoint.value, timeBase: patch.patch.repeatPoint.timeBase, displayText: '' }
-      : null;
+    if (patch.patch.repeatPoint !== undefined)
+      shared.repeatPoint = patch.patch.repeatPoint
+        ? {
+            value: patch.patch.repeatPoint.value,
+            timeBase: patch.patch.repeatPoint.timeBase,
+            displayText: '',
+          }
+        : null;
     return { ...doc, shared };
   }
   if (patch.type === 'replaceNoteProcessorChain') {
@@ -64,7 +78,10 @@ function sameLocation(
   for (let i = 0; i < a.containerPath.length; i++) {
     const segmentA = a.containerPath[i];
     const segmentB = b.containerPath[i];
-    if (segmentA.layerIndex !== segmentB.layerIndex || segmentA.objectIndex !== segmentB.objectIndex) {
+    if (
+      segmentA.layerIndex !== segmentB.layerIndex ||
+      segmentA.objectIndex !== segmentB.objectIndex
+    ) {
       return false;
     }
   }
@@ -84,7 +101,10 @@ function sameTarget(
   if (sameLocation(a.location, b.location)) return true;
   if (sameLocation(a.sourceInstanceLocation, b.sourceInstanceLocation)) return true;
   if (a.library && b.library) {
-    return a.library.libraryId === b.library.libraryId && a.library.libraryIndex === b.library.libraryIndex;
+    return (
+      a.library.libraryId === b.library.libraryId &&
+      a.library.libraryIndex === b.library.libraryIndex
+    );
   }
   return false;
 }
@@ -124,9 +144,10 @@ export default function ScoreObjectPropertiesPanel(): React.ReactElement {
     if (selectedObjectTarget) return selectedObjectTarget;
     return selectedRow?.editorTarget ?? null;
   }, [selectedObjectTarget, selectedRow]);
-  const propertiesTarget = useMemo(() => (
-    editorTarget ? createScoreObjectPropertiesTarget(editorTarget) : null
-  ), [editorTarget]);
+  const propertiesTarget = useMemo(
+    () => (editorTarget ? createScoreObjectPropertiesTarget(editorTarget) : null),
+    [editorTarget],
+  );
   const propertiesTargetKey = propertiesTarget ? JSON.stringify(propertiesTarget) : null;
 
   const primaryTimeDisplay = score.timeState.primaryTimeDisplay;
@@ -142,8 +163,8 @@ export default function ScoreObjectPropertiesPanel(): React.ReactElement {
       return;
     }
     let cancelled = false;
-    const retainCurrentDocument = documentRef.current !== null
-      && sameTarget(documentRef.current.target, propertiesTarget);
+    const retainCurrentDocument =
+      documentRef.current !== null && sameTarget(documentRef.current.target, propertiesTarget);
     if (!retainCurrentDocument) setLoading(true);
     void flushPendingPatches()
       .then(() => window.blueAPI.getScoreObjectEditorDocument({ target: propertiesTarget }))
@@ -163,16 +184,25 @@ export default function ScoreObjectPropertiesPanel(): React.ReactElement {
           console.error('[score-properties] Failed to load editor document:', error);
         }
       });
-    return () => { cancelled = true; };
-  }, [loaded, selectedObjectId, propertiesTargetKey, primaryTimeDisplay, meterMap, flushPendingPatches]);
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    loaded,
+    selectedObjectId,
+    propertiesTargetKey,
+    primaryTimeDisplay,
+    meterMap,
+    flushPendingPatches,
+  ]);
 
   useEffect(() => {
     if (!propertiesTarget || !lastScorePatch) return;
     if (
-      (lastScorePatch.type === 'updateSharedProperties'
-        || lastScorePatch.type === 'updateSoundObjectBehavior'
-        || lastScorePatch.type === 'replaceNoteProcessorChain')
-      && sameTarget(lastScorePatch.target, propertiesTarget)
+      (lastScorePatch.type === 'updateSharedProperties' ||
+        lastScorePatch.type === 'updateSoundObjectBehavior' ||
+        lastScorePatch.type === 'replaceNoteProcessorChain') &&
+      sameTarget(lastScorePatch.target, propertiesTarget)
     ) {
       setDocument((prev) => (prev ? applyPatchToDocument(prev, lastScorePatch) : prev));
     }
@@ -185,8 +215,8 @@ export default function ScoreObjectPropertiesPanel(): React.ReactElement {
       const start = selectedLiveShared.startBeats ?? prev.shared.startTime.value;
       const duration = selectedLiveShared.durationBeats ?? prev.shared.subjectiveDuration.value;
       if (
-        Math.abs(prev.shared.startTime.value - start) < 1e-6
-        && Math.abs(prev.shared.subjectiveDuration.value - duration) < 1e-6
+        Math.abs(prev.shared.startTime.value - start) < 1e-6 &&
+        Math.abs(prev.shared.subjectiveDuration.value - duration) < 1e-6
       ) {
         return prev;
       }
@@ -202,12 +232,15 @@ export default function ScoreObjectPropertiesPanel(): React.ReactElement {
     });
   }, [selectedLiveShared?.startBeats, selectedLiveShared?.durationBeats]);
 
-  const handlePatch = useCallback((patch: ScorePatch): void => {
-    applyProjectDocumentPatch({ score: patch });
-    setDocument((currentDocument) => (
-      currentDocument ? applyPatchToDocument(currentDocument, patch) : currentDocument
-    ));
-  }, [applyProjectDocumentPatch]);
+  const handlePatch = useCallback(
+    (patch: ScorePatch): void => {
+      applyProjectDocumentPatch({ score: patch });
+      setDocument((currentDocument) =>
+        currentDocument ? applyPatchToDocument(currentDocument, patch) : currentDocument,
+      );
+    },
+    [applyProjectDocumentPatch],
+  );
 
   if (!loaded) {
     return <EmptyState message="No project loaded" />;
@@ -232,10 +265,7 @@ export default function ScoreObjectPropertiesPanel(): React.ReactElement {
   return (
     <div className="flex flex-col h-full bg-blue-bg">
       <div className="flex-1 overflow-y-auto">
-        <ScoreObjectPropertiesForm
-          document={document}
-          onPatch={handlePatch}
-        />
+        <ScoreObjectPropertiesForm document={document} onPatch={handlePatch} />
       </div>
     </div>
   );

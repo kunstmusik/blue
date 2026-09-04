@@ -7,7 +7,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import MissingAudioAssetsModal from '../components/workbench/panels/MissingAudioAssetsModal';
 import type { MissingAudioAssetsSession } from '../../shared/missing-audio-assets';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 interface MockProjectState {
   missingAudioSession: MissingAudioAssetsSession | null;
@@ -26,8 +28,7 @@ const { mockProjectState } = vi.hoisted(() => ({
 }));
 
 vi.mock('../stores/project-store', () => ({
-  useProjectStore: (selector: (state: MockProjectState) => unknown) =>
-    selector(mockProjectState),
+  useProjectStore: (selector: (state: MockProjectState) => unknown) => selector(mockProjectState),
 }));
 
 interface BlueApiMock {
@@ -36,7 +37,9 @@ interface BlueApiMock {
   dismissMissingAudioAssets: ReturnType<typeof vi.fn>;
 }
 
-function makeSession(rows: Array<{ originalPath: string; replacementPath?: string }>): MissingAudioAssetsSession {
+function makeSession(
+  rows: Array<{ originalPath: string; replacementPath?: string }>,
+): MissingAudioAssetsSession {
   return {
     sessionId: 'sess-1',
     projectSessionId: 1,
@@ -105,8 +108,8 @@ describe('MissingAudioAssetsModal', () => {
     renderModal();
 
     await act(async () => {
-      const browseButton = [...container.querySelectorAll('button')].find((b) =>
-        b.textContent === 'Browse',
+      const browseButton = [...container.querySelectorAll('button')].find(
+        (b) => b.textContent === 'Browse',
       )!;
       browseButton.click();
       await Promise.resolve();
@@ -128,7 +131,9 @@ describe('MissingAudioAssetsModal', () => {
     renderModal();
 
     await act(async () => {
-      const okButton = [...container.querySelectorAll('button')].find((b) => b.textContent === 'OK')!;
+      const okButton = [...container.querySelectorAll('button')].find(
+        (b) => b.textContent === 'OK',
+      )!;
       okButton.click();
       await Promise.resolve();
     });
@@ -152,11 +157,11 @@ describe('MissingAudioAssetsModal', () => {
     renderModal();
 
     await act(async () => {
-      ([...container.querySelectorAll('button')].find((b) => b.textContent === 'Browse')!).click();
+      [...container.querySelectorAll('button')].find((b) => b.textContent === 'Browse')!.click();
       await Promise.resolve();
     });
     await act(async () => {
-      ([...container.querySelectorAll('button')].find((b) => b.textContent === 'OK')!).click();
+      [...container.querySelectorAll('button')].find((b) => b.textContent === 'OK')!.click();
       await Promise.resolve();
     });
 
@@ -164,7 +169,9 @@ describe('MissingAudioAssetsModal', () => {
       sessionId: 'sess-1',
       replacements: [{ originalPath: 'a.wav', replacementPath: '/new.wav' }],
     });
-    expect(mockProjectState.applyMissingAudioResolvedSnapshot).toHaveBeenCalledWith({ sessionId: 1 });
+    expect(mockProjectState.applyMissingAudioResolvedSnapshot).toHaveBeenCalledWith({
+      sessionId: 1,
+    });
     expect(mockProjectState.setMissingAudioSession).toHaveBeenCalledWith(null);
   });
 
@@ -173,7 +180,7 @@ describe('MissingAudioAssetsModal', () => {
     renderModal();
 
     await act(async () => {
-      ([...container.querySelectorAll('button')].find((b) => b.textContent === 'Cancel')!).click();
+      [...container.querySelectorAll('button')].find((b) => b.textContent === 'Cancel')!.click();
       await Promise.resolve();
     });
 
@@ -219,7 +226,7 @@ describe('MissingAudioAssetsModal', () => {
     renderModal();
 
     await act(async () => {
-      ([...container.querySelectorAll('button')].find((b) => b.textContent === 'OK')!).click();
+      [...container.querySelectorAll('button')].find((b) => b.textContent === 'OK')!.click();
       await Promise.resolve();
     });
 
@@ -239,12 +246,16 @@ describe('MissingAudioAssetsModal', () => {
     const buttons = () => [...container.querySelectorAll('button')];
 
     await act(async () => {
-      (buttons().find((b) => b.textContent === 'Browse')!).click();
+      buttons()
+        .find((b) => b.textContent === 'Browse')!
+        .click();
       await Promise.resolve();
     });
 
     await act(async () => {
-      (buttons().find((b) => b.textContent === 'OK')!).click();
+      buttons()
+        .find((b) => b.textContent === 'OK')!
+        .click();
       await Promise.resolve();
     });
 

@@ -1,9 +1,5 @@
 import React, { useMemo, useState, useRef, useCallback } from 'react';
-import {
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-} from '@tanstack/react-table';
+import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { Element, loadInstrumentFromXML } from '@blue/data';
 import { toast } from 'sonner';
 import {
@@ -46,23 +42,25 @@ function ArrangementPanel({
   const libraryClipboard = useLibraryStore((state) => state.clipboard);
   const transferLibraryItem = useLibraryStore((state) => state.transferToProject);
   const captureClipboard = useLibraryStore((state) => state.captureClipboard);
-  const focusedAssignmentId = useMidiRoutingStore((state) => (
-    state.focusedTarget?.kind === 'orchestra'
-    && state.focusedTarget.projectSessionId === projectSessionId
+  const focusedAssignmentId = useMidiRoutingStore((state) =>
+    state.focusedTarget?.kind === 'orchestra' &&
+    state.focusedTarget.projectSessionId === projectSessionId
       ? state.focusedTarget.assignmentId
-      : null
-  ));
+      : null,
+  );
   const projectNodes = useProjectLibraryNodes(
-    'projectOwned', 'instrument', projectSessionId, projectRevision,
+    'projectOwned',
+    'instrument',
+    projectSessionId,
+    projectRevision,
   );
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [addButton, setAddButton] = useState<HTMLButtonElement | null>(null);
   // The + Add dropdown rides the shared host-surface policy (spec 090):
   // portaled into the hosting window, viewport-aware placement, host-bound
   // dismissal with the trigger exempt, and close-on-host-scroll.
-  const addAnchor = addMenuOpen && addButton
-    ? { type: 'element' as const, element: addButton }
-    : null;
+  const addAnchor =
+    addMenuOpen && addButton ? { type: 'element' as const, element: addButton } : null;
   const addMenuSurface = useHostSurface(addAnchor, {
     kind: 'menu',
     gap: 4,
@@ -118,55 +116,57 @@ function ArrangementPanel({
   });
   const insertionIds = useMemo(() => {
     const assignmentIds = rows.map((row) => row.assignmentId);
-    return Array.from(
-      { length: rows.length + 1 },
-      (_, index) => getAvailableNumericArrangementId(assignmentIds, index),
+    return Array.from({ length: rows.length + 1 }, (_, index) =>
+      getAvailableNumericArrangementId(assignmentIds, index),
     );
   }, [rows]);
 
   const getColumnWidth = (colId: string) => {
-    const col = columns.find(c => ('id' in c ? c.id === colId : 'accessorKey' in c && c.accessorKey === colId));
+    const col = columns.find((c) =>
+      'id' in c ? c.id === colId : 'accessorKey' in c && c.accessorKey === colId,
+    );
     const defaultSize = col && 'size' in col ? (col as any).size : 100;
     return columnSizing[colId] ?? defaultSize;
   };
 
-  const startResize = useCallback((colId: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setResizingCol(colId);
-    resizeStartX.current = e.clientX;
-    resizeStartWidth.current = getColumnWidth(colId);
+  const startResize = useCallback(
+    (colId: string, e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setResizingCol(colId);
+      resizeStartX.current = e.clientX;
+      resizeStartWidth.current = getColumnWidth(colId);
 
-    const minSize = (() => {
-      const col = columns.find(c => ('id' in c ? c.id === colId : false));
-      return col && 'minSize' in col ? (col as any).minSize : 30;
-    })();
+      const minSize = (() => {
+        const col = columns.find((c) => ('id' in c ? c.id === colId : false));
+        return col && 'minSize' in col ? (col as any).minSize : 30;
+      })();
 
-    const onMouseMove = (moveEvent: MouseEvent) => {
-      const delta = moveEvent.clientX - resizeStartX.current;
-      const newWidth = Math.max(minSize, resizeStartWidth.current + delta);
-      setColumnSizing(prev => ({ ...prev, [colId]: newWidth }));
-    };
+      const onMouseMove = (moveEvent: MouseEvent) => {
+        const delta = moveEvent.clientX - resizeStartX.current;
+        const newWidth = Math.max(minSize, resizeStartWidth.current + delta);
+        setColumnSizing((prev) => ({ ...prev, [colId]: newWidth }));
+      };
 
-    const onMouseUp = () => {
-      setResizingCol(null);
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-    };
+      const onMouseUp = () => {
+        setResizingCol(null);
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      };
 
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
-  }, [columns, columnSizing]);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    },
+    [columns, columnSizing],
+  );
 
   const selectedRowStillExists = useMemo(
     () =>
-      selectedAssignmentId
-        ? rows.some((row) => row.assignmentId === selectedAssignmentId)
-        : false,
+      selectedAssignmentId ? rows.some((row) => row.assignmentId === selectedAssignmentId) : false,
     [rows, selectedAssignmentId],
   );
 
@@ -176,55 +176,68 @@ function ArrangementPanel({
   };
 
   const captureAssignment = (assignmentId: string, operation: 'copy' | 'cut') => {
-    const node = projectNodes.find((candidate) => (
-      candidate.key?.scope === 'projectOwned'
-      && candidate.key.locator.kind === 'instrument'
-      && candidate.key.locator.assignmentId === assignmentId
-    ));
+    const node = projectNodes.find(
+      (candidate) =>
+        candidate.key?.scope === 'projectOwned' &&
+        candidate.key.locator.kind === 'instrument' &&
+        candidate.key.locator.assignmentId === assignmentId,
+    );
     if (node) void captureClipboard(node, operation);
   };
 
   const libraryInstrumentAvailable = libraryClipboard
     ? getLibraryTransferSourceType(libraryClipboard.source) === 'instrument'
     : false;
-  const pasteLibraryInstrument = useCallback((insertIndex: number) => {
-    if (
-      !libraryClipboard
-      || getLibraryTransferSourceType(libraryClipboard.source) !== 'instrument'
-    ) return;
-    void transferLibraryItem(
-      { kind: 'clipboard', source: libraryClipboard.source },
-      { kind: 'orchestra', projectSessionId, projectRevision, insertIndex },
-    );
-  }, [libraryClipboard, projectRevision, projectSessionId, transferLibraryItem]);
+  const pasteLibraryInstrument = useCallback(
+    (insertIndex: number) => {
+      if (
+        !libraryClipboard ||
+        getLibraryTransferSourceType(libraryClipboard.source) !== 'instrument'
+      )
+        return;
+      void transferLibraryItem(
+        { kind: 'clipboard', source: libraryClipboard.source },
+        { kind: 'orchestra', projectSessionId, projectRevision, insertIndex },
+      );
+    },
+    [libraryClipboard, projectRevision, projectSessionId, transferLibraryItem],
+  );
 
-  const pasteInstrument = useCallback((insertIndex: number) => {
-    if (libraryInstrumentAvailable) {
-      pasteLibraryInstrument(insertIndex);
-    }
-  }, [libraryInstrumentAvailable, pasteLibraryInstrument]);
+  const pasteInstrument = useCallback(
+    (insertIndex: number) => {
+      if (libraryInstrumentAvailable) {
+        pasteLibraryInstrument(insertIndex);
+      }
+    },
+    [libraryInstrumentAvailable, pasteLibraryInstrument],
+  );
 
-  const importInstrument = useCallback(async (insertAfterAssignmentId: string) => {
-    try {
-      const xml = await window.blueAPI.importArrangementInstrument();
-      if (!xml) return;
-      const root = Element.parse(xml);
-      if (root.getName() !== 'instrument') {
-        throw new Error('File did not contain an instrument.');
+  const importInstrument = useCallback(
+    async (insertAfterAssignmentId: string) => {
+      try {
+        const xml = await window.blueAPI.importArrangementInstrument();
+        if (!xml) return;
+        const root = Element.parse(xml);
+        if (root.getName() !== 'instrument') {
+          throw new Error('File did not contain an instrument.');
+        }
+        const instrument = loadInstrumentFromXML(root);
+        if (!instrument) {
+          throw new Error('Could not read instrument from file.');
+        }
+        await onOrchestraPatch({
+          type: 'pasteInstrument',
+          instrument: createInstrumentSnapshot('imported', instrument, instrument.isEnabled()),
+          insertAfterAssignmentId,
+        });
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : 'Could not read instrument from file.',
+        );
       }
-      const instrument = loadInstrumentFromXML(root);
-      if (!instrument) {
-        throw new Error('Could not read instrument from file.');
-      }
-      await onOrchestraPatch({
-        type: 'pasteInstrument',
-        instrument: createInstrumentSnapshot('imported', instrument, instrument.isEnabled()),
-        insertAfterAssignmentId,
-      });
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Could not read instrument from file.');
-    }
-  }, [onOrchestraPatch]);
+    },
+    [onOrchestraPatch],
+  );
 
   const exportInstrument = useCallback(async (assignmentId: string) => {
     try {
@@ -282,10 +295,10 @@ function ArrangementPanel({
         tabIndex={0}
         onKeyDown={(event) => {
           if (
-            (event.metaKey || event.ctrlKey)
-            && event.key.toLocaleLowerCase() === 'v'
-            && libraryInstrumentAvailable
-            && !isTextEditingTarget(event.target)
+            (event.metaKey || event.ctrlKey) &&
+            event.key.toLocaleLowerCase() === 'v' &&
+            libraryInstrumentAvailable &&
+            !isTextEditingTarget(event.target)
           ) {
             event.preventDefault();
             const selectedIndex = rows.findIndex(
@@ -328,82 +341,102 @@ function ArrangementPanel({
               const selected = row.original.assignmentId === selectedAssignmentId;
               const midiFocused = row.original.assignmentId === focusedAssignmentId;
               const canInsertAfter = insertionIds[index + 1] !== null;
-              const projectNode = projectNodes.find((candidate) => (
-                candidate.key?.scope === 'projectOwned'
-                && candidate.key.locator.kind === 'instrument'
-                && candidate.key.locator.assignmentId === row.original.assignmentId
-              )) ?? null;
+              const projectNode =
+                projectNodes.find(
+                  (candidate) =>
+                    candidate.key?.scope === 'projectOwned' &&
+                    candidate.key.locator.kind === 'instrument' &&
+                    candidate.key.locator.assignmentId === row.original.assignmentId,
+                ) ?? null;
               return (
                 <React.Fragment key={row.id}>
-                {insertionIds[index] !== null ? (
-                  <LibraryTableDropMarker
-                    target={{ kind: 'orchestra', projectSessionId, projectRevision, insertIndex: index }}
-                    colSpan={row.getVisibleCells().length}
-                    label={`Insert Instrument before ${row.original.instrumentName}`}
-                  />
-                ) : null}
-                <LibraryDropZone
-                  target={{ kind: 'orchestra', projectSessionId, projectRevision, insertIndex: index + 1 }}
-                  enabled={canInsertAfter}
-                >
-                  {({ active, dropProps }) => (
-                    <ArrangementContextMenu
-                      row={row.original}
-                      hasClipboard={canInsertAfter && libraryInstrumentAvailable}
-                      onCopy={(assignmentId) => captureAssignment(assignmentId, 'copy')}
-                      onCut={(assignmentId) => captureAssignment(assignmentId, 'cut')}
-                      onPaste={() => pasteInstrument(index + 1)}
-                      onImport={() => importInstrument(row.original.assignmentId)}
-                      onExport={() => exportInstrument(row.original.assignmentId)}
-                      onOrchestraPatch={onOrchestraPatch}
-                    >
-                      <ProjectLibraryDragSource node={projectNode}>
-                      <tr
-                        {...dropProps}
-                        data-assignment-id={row.original.assignmentId}
-                        data-midi-focused={midiFocused ? 'true' : undefined}
-                        data-library-drop-target={canInsertAfter ? 'orchestra-row' : undefined}
-                        className={cn(
-                          'cursor-default border-b border-l-2 border-l-transparent border-app-border/50 text-app-text-soft',
-                          active && 'ring-1 ring-inset ring-app-accent',
-                          midiFocused && 'border-l-app-accent ring-1 ring-inset ring-app-accent/70',
-                          selected ? 'bg-app-accent/20 text-app-text-strong' : 'hover:bg-app-hover'
-                        )}
-                        onClick={() => {
-                          const clicked = row.original;
-                          onSelectAssignment(clicked.assignmentId);
-                          // Spec 067: an explicit user row selection focuses this
-                          // Orchestra assignment for MIDI routing. The auto/editor
-                          // fallback selection in OrchestraPanel never reaches this
-                          // handler, so opening the panel or auto-selecting the first
-                          // editor row does not steal performance focus.
-                          useMidiRoutingStore.getState().focusOrchestra({
-                            projectSessionId,
-                            assignmentId: clicked.assignmentId,
-                            displayName: clicked.instrumentName || '(unnamed)',
-                          });
-                        }}
+                  {insertionIds[index] !== null ? (
+                    <LibraryTableDropMarker
+                      target={{
+                        kind: 'orchestra',
+                        projectSessionId,
+                        projectRevision,
+                        insertIndex: index,
+                      }}
+                      colSpan={row.getVisibleCells().length}
+                      label={`Insert Instrument before ${row.original.instrumentName}`}
+                    />
+                  ) : null}
+                  <LibraryDropZone
+                    target={{
+                      kind: 'orchestra',
+                      projectSessionId,
+                      projectRevision,
+                      insertIndex: index + 1,
+                    }}
+                    enabled={canInsertAfter}
+                  >
+                    {({ active, dropProps }) => (
+                      <ArrangementContextMenu
+                        row={row.original}
+                        hasClipboard={canInsertAfter && libraryInstrumentAvailable}
+                        onCopy={(assignmentId) => captureAssignment(assignmentId, 'copy')}
+                        onCut={(assignmentId) => captureAssignment(assignmentId, 'cut')}
+                        onPaste={() => pasteInstrument(index + 1)}
+                        onImport={() => importInstrument(row.original.assignmentId)}
+                        onExport={() => exportInstrument(row.original.assignmentId)}
+                        onOrchestraPatch={onOrchestraPatch}
                       >
-                        {row.getVisibleCells().map((cell) => (
-                          <td
-                            key={cell.id}
-                            className="truncate px-2 py-1.5"
-                            style={{ width: getColumnWidth(cell.column.id) }}
+                        <ProjectLibraryDragSource node={projectNode}>
+                          <tr
+                            {...dropProps}
+                            data-assignment-id={row.original.assignmentId}
+                            data-midi-focused={midiFocused ? 'true' : undefined}
+                            data-library-drop-target={canInsertAfter ? 'orchestra-row' : undefined}
+                            className={cn(
+                              'cursor-default border-b border-l-2 border-l-transparent border-app-border/50 text-app-text-soft',
+                              active && 'ring-1 ring-inset ring-app-accent',
+                              midiFocused &&
+                                'border-l-app-accent ring-1 ring-inset ring-app-accent/70',
+                              selected
+                                ? 'bg-app-accent/20 text-app-text-strong'
+                                : 'hover:bg-app-hover',
+                            )}
+                            onClick={() => {
+                              const clicked = row.original;
+                              onSelectAssignment(clicked.assignmentId);
+                              // Spec 067: an explicit user row selection focuses this
+                              // Orchestra assignment for MIDI routing. The auto/editor
+                              // fallback selection in OrchestraPanel never reaches this
+                              // handler, so opening the panel or auto-selecting the first
+                              // editor row does not steal performance focus.
+                              useMidiRoutingStore.getState().focusOrchestra({
+                                projectSessionId,
+                                assignmentId: clicked.assignmentId,
+                                displayName: clicked.instrumentName || '(unnamed)',
+                              });
+                            }}
                           >
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </td>
-                        ))}
-                      </tr>
-                      </ProjectLibraryDragSource>
-                    </ArrangementContextMenu>
-                  )}
-                </LibraryDropZone>
+                            {row.getVisibleCells().map((cell) => (
+                              <td
+                                key={cell.id}
+                                className="truncate px-2 py-1.5"
+                                style={{ width: getColumnWidth(cell.column.id) }}
+                              >
+                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                              </td>
+                            ))}
+                          </tr>
+                        </ProjectLibraryDragSource>
+                      </ArrangementContextMenu>
+                    )}
+                  </LibraryDropZone>
                 </React.Fragment>
               );
             })}
             {insertionIds[rows.length] !== null ? (
               <LibraryTableDropMarker
-                target={{ kind: 'orchestra', projectSessionId, projectRevision, insertIndex: rows.length }}
+                target={{
+                  kind: 'orchestra',
+                  projectSessionId,
+                  projectRevision,
+                  insertIndex: rows.length,
+                }}
                 colSpan={Math.max(1, table.getAllLeafColumns().length)}
                 label="Insert Instrument at end"
               />

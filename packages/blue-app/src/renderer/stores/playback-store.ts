@@ -101,11 +101,8 @@ export function derivePlaybackDisplayState(
   const sampleRate = clock.sampleRate && clock.sampleRate > 0 ? clock.sampleRate : null;
   const elapsedMs = Math.max(0, nowMs - clock.receivedAtMs);
   const interpolatedFrames =
-    sampleRate !== null
-      ? clock.sampleFrames + (elapsedMs / 1000) * sampleRate
-      : clock.sampleFrames;
-  const elapsedSeconds =
-    sampleRate !== null ? interpolatedFrames / sampleRate : interpolatedFrames;
+    sampleRate !== null ? clock.sampleFrames + (elapsedMs / 1000) * sampleRate : clock.sampleFrames;
+  const elapsedSeconds = sampleRate !== null ? interpolatedFrames / sampleRate : interpolatedFrames;
 
   return {
     sampleFrames: interpolatedFrames,
@@ -144,7 +141,10 @@ function mirrorFollowState(enabled: boolean): void {
  * saved follow preference without forcing it on. Internal loops, seeks, and
  * engine position restarts never re-run this rule.
  */
-function applyFollowOnStartRule(state: PlaybackState, set: (partial: Partial<PlaybackState>) => void): void {
+function applyFollowOnStartRule(
+  state: PlaybackState,
+  set: (partial: Partial<PlaybackState>) => void,
+): void {
   const next = state.followPlaybackOnStart ? true : state.savedFollowPlayback;
   if (state.followPlayback === next) return;
   set({ followPlayback: next });
@@ -196,9 +196,7 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
 
       await useProjectStore.getState().flushPendingPatches();
 
-      const transportAnchor = clonePlaybackTransportAnchor(
-        useProjectStore.getState().transport,
-      );
+      const transportAnchor = clonePlaybackTransportAnchor(useProjectStore.getState().transport);
       set((state) => ({
         ...state,
         transportAnchor,
@@ -238,9 +236,7 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
 
       await useProjectStore.getState().flushPendingPatches();
 
-      const transportAnchor = clonePlaybackTransportAnchor(
-        useProjectStore.getState().transport,
-      );
+      const transportAnchor = clonePlaybackTransportAnchor(useProjectStore.getState().transport);
       set((state) => ({ ...state, transportAnchor }));
 
       const playing = await window.blueAPI.restartPlayback();
@@ -317,7 +313,11 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
 
   setStatus: ({ status, message, renderStartTime, auditioning }) => {
     const normalizedStatus: PlaybackStatus =
-      status === 'starting' || status === 'playing' || status === 'stopping' || status === 'stopped' || status === 'error'
+      status === 'starting' ||
+      status === 'playing' ||
+      status === 'stopping' ||
+      status === 'stopped' ||
+      status === 'error'
         ? status
         : 'idle';
 
@@ -352,9 +352,9 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
         nextState.display = createIdlePlaybackDisplayState();
         nextState.transportAnchor = null;
       } else if (
-        normalizedStatus === 'playing'
-        && state.transportAnchor === null
-        && nextState.transportAnchor === undefined
+        normalizedStatus === 'playing' &&
+        state.transportAnchor === null &&
+        nextState.transportAnchor === undefined
       ) {
         nextState.transportAnchor = clonePlaybackTransportAnchor(
           useProjectStore.getState().transport,
@@ -366,7 +366,11 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
 
     // Session end discards the session's follow state (including suspension)
     // and reverts the toolbar/native menu to the saved preference.
-    if (normalizedStatus === 'idle' || normalizedStatus === 'stopped' || normalizedStatus === 'error') {
+    if (
+      normalizedStatus === 'idle' ||
+      normalizedStatus === 'stopped' ||
+      normalizedStatus === 'error'
+    ) {
       restoreFollowFromSaved(get(), set);
     }
   },
@@ -395,10 +399,7 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
         return state;
       }
 
-      const sampleRate =
-        snapshot.sampleRate ??
-        currentClock?.sampleRate ??
-        null;
+      const sampleRate = snapshot.sampleRate ?? currentClock?.sampleRate ?? null;
       const ksmps = snapshot.ksmps ?? currentClock?.ksmps ?? null;
       const receivedAtMs = Date.now();
       const nextClock: PlaybackClockState = {

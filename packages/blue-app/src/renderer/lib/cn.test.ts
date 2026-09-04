@@ -17,7 +17,7 @@ describe('cn() class composition helper', () => {
 
   it('preserves opaque and custom classes (BEM, third-party) verbatim without conflict resolution', () => {
     expect(cn('mixer-chain-entry--disabled', 'scrollbar-thin')).toBe(
-      'mixer-chain-entry--disabled scrollbar-thin'
+      'mixer-chain-entry--disabled scrollbar-thin',
     );
     expect(cn('dv-default-view-content', 'cm-editor')).toBe('dv-default-view-content cm-editor');
     expect(cn('custom-class', 'another-custom-class')).toBe('custom-class another-custom-class');
@@ -42,11 +42,9 @@ describe('cn() class composition helper', () => {
 
     it('preserves text-role tokens when unrelated utilities merge', () => {
       expect(cn('text-role-body font-bold', 'text-white')).toBe(
-        'text-role-body font-bold text-white'
+        'text-role-body font-bold text-white',
       );
-      expect(cn('text-role-title-3', 'py-2', 'px-4')).toBe(
-        'text-role-title-3 py-2 px-4'
-      );
+      expect(cn('text-role-title-3', 'py-2', 'px-4')).toBe('text-role-title-3 py-2 px-4');
     });
 
     it('covers all seven registered text roles', () => {

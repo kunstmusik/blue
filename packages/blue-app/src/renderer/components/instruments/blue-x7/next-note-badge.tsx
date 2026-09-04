@@ -12,12 +12,12 @@ export const NextNoteBadge: React.FC<{ semanticKey: string }> = ({ semanticKey }
     return null;
   }
   return (
-  <span
-    data-testid="bluex7-next-note-badge"
-    title="Applies from the next triggered note"
-    className="ml-1 rounded border border-amber-500/50 bg-amber-900/30 px-1 py-px text-role-callout font-medium text-amber-200"
-  >
-    next note
-  </span>
+    <span
+      data-testid="bluex7-next-note-badge"
+      title="Applies from the next triggered note"
+      className="ml-1 rounded border border-amber-500/50 bg-amber-900/30 px-1 py-px text-role-callout font-medium text-amber-200"
+    >
+      next note
+    </span>
   );
 };

@@ -1,5 +1,12 @@
 import type { NoteSnapshot, ScaleSnapshot, FieldDefSnapshot, DragMode, NoteData } from './types';
-import { snapBeatFloor, snapBeatRound, OCTAVES, CENTER_OCTAVE, GENERATE_MIDI, MIDI_NOTE_COUNT } from './types';
+import {
+  snapBeatFloor,
+  snapBeatRound,
+  OCTAVES,
+  CENTER_OCTAVE,
+  GENERATE_MIDI,
+  MIDI_NOTE_COUNT,
+} from './types';
 
 const EDGE = 5;
 const AUTO_SCROLL_MARGIN = 30;
@@ -20,7 +27,12 @@ export interface NoteCanvasListenerCallbacks {
 
   addNote: (start: number, scaleDegree: number, octave: number, duration?: number) => void;
   commitNoteTimeEdit: (noteData: NoteData[], endData: NoteData[]) => void;
-  commitFieldEdit: (noteIndices: number[], fieldIndex: number, originalValues: number[], endValues: number[]) => void;
+  commitFieldEdit: (
+    noteIndices: number[],
+    fieldIndex: number,
+    originalValues: number[],
+    endValues: number[],
+  ) => void;
   removeSelectedNotes: () => void;
   copySelectedNotes: () => void;
   cutSelectedNotes: () => void;
@@ -70,8 +82,12 @@ export class NoteCanvasMouseListener {
     this.callbacks = callbacks;
   }
 
-  getDragMode(): DragMode { return this.dragMode; }
-  getPreviewNotes(): NoteSnapshot[] | null { return this.previewNotes; }
+  getDragMode(): DragMode {
+    return this.dragMode;
+  }
+  getPreviewNotes(): NoteSnapshot[] | null {
+    return this.previewNotes;
+  }
   getMarquee(): { x1: number; y1: number; x2: number; y2: number } | null {
     if (!this.marqueeVisible) return null;
     return {
@@ -87,7 +103,7 @@ export class NoteCanvasMouseListener {
   }
 
   private numDegrees(): number {
-    return this.isMidi() ? 12 : (this.callbacks.scale.ratios.length || 12);
+    return this.isMidi() ? 12 : this.callbacks.scale.ratios.length || 12;
   }
 
   private totalRows(): number {
@@ -108,8 +124,9 @@ export class NoteCanvasMouseListener {
       return (MIDI_NOTE_COUNT - 1 - midiNote) * this.callbacks.noteHeight;
     }
     const nd = this.numDegrees();
-    const rowFromTop = (OCTAVES - 1 - (octave - (CENTER_OCTAVE - Math.floor(OCTAVES / 2)))) * nd
-      + (nd - 1 - scaleDegree);
+    const rowFromTop =
+      (OCTAVES - 1 - (octave - (CENTER_OCTAVE - Math.floor(OCTAVES / 2)))) * nd +
+      (nd - 1 - scaleDegree);
     return rowFromTop * this.callbacks.noteHeight;
   }
 
@@ -130,7 +147,10 @@ export class NoteCanvasMouseListener {
     return { octave: Math.max(minOctave, Math.min(minOctave + OCTAVES - 1, octave)), scaleDegree };
   }
 
-  private hitTestNotes(x: number, y: number): { index: number; edge: 'left' | 'right' | 'body' } | null {
+  private hitTestNotes(
+    x: number,
+    y: number,
+  ): { index: number; edge: 'left' | 'right' | 'body' } | null {
     const notes = this.callbacks.notes;
     for (let i = notes.length - 1; i >= 0; i--) {
       const n = notes[i]!;
@@ -151,25 +171,30 @@ export class NoteCanvasMouseListener {
   private setupSourceData(): void {
     const notes = this.callbacks.notes;
     const selected = this.callbacks.selectedIndices;
-    const sourceIndices = selected.size > 0 && selected.has(this.mouseNoteIndex)
-      ? [...selected]
-      : [this.mouseNoteIndex];
+    const sourceIndices =
+      selected.size > 0 && selected.has(this.mouseNoteIndex)
+        ? [...selected]
+        : [this.mouseNoteIndex];
     this.noteSourceData = sourceIndices.flatMap((i) => {
       const note = notes[i];
       if (!note) return [];
-      return [{
-        noteIndex: i,
-        originStart: note.start,
-        originDuration: note.duration,
-        octave: note.octave,
-        scaleDegree: note.scaleDegree,
-      }];
+      return [
+        {
+          noteIndex: i,
+          originStart: note.start,
+          originDuration: note.duration,
+          octave: note.octave,
+          scaleDegree: note.scaleDegree,
+        },
+      ];
     });
     this.noteSourceStart = this.noteSourceData.reduce(
-      (min, d) => Math.min(min, d.originStart), Infinity,
+      (min, d) => Math.min(min, d.originStart),
+      Infinity,
     );
     this.minTimeAdjust = this.noteSourceData.reduce(
-      (max, d) => Math.max(max, -d.originDuration), -Infinity,
+      (max, d) => Math.max(max, -d.originDuration),
+      -Infinity,
     );
   }
 
@@ -202,7 +227,7 @@ export class NoteCanvasMouseListener {
         }
         this.setupSourceData();
         const fdIndex = this.callbacks.fieldDefinitions.findIndex(
-          (fd) => fd.fieldName === this.callbacks.selectedFieldDef!.fieldName
+          (fd) => fd.fieldName === this.callbacks.selectedFieldDef!.fieldName,
         );
         this.affectedFieldIndex = fdIndex;
         const selectedForFieldEdit = this.callbacks.selectedIndices.has(hit.index)
@@ -246,7 +271,6 @@ export class NoteCanvasMouseListener {
       this.startOctave = octave;
       this.startScaleDegree = scaleDegree;
       this.dragStartX = x;
-
     } else {
       if (ctrlOrMeta) {
         this.callbacks.pasteNotesAt(beat, octave, scaleDegree);
@@ -260,7 +284,9 @@ export class NoteCanvasMouseListener {
         this.startScaleDegree = scaleDegree;
         this.dragStartX = x;
         const initialDuration = this.callbacks.snapEnabled
-          ? (this.callbacks.snapBeats > 0 ? this.callbacks.snapBeats : 1)
+          ? this.callbacks.snapBeats > 0
+            ? this.callbacks.snapBeats
+            : 1
           : 5 / this.callbacks.pixelSecond;
         this.createNote = {
           octave,
@@ -320,7 +346,7 @@ export class NoteCanvasMouseListener {
               ...n,
               start: src.originStart + deltaBeat,
               octave: src.octave + deltaOctave,
-              scaleDegree: ((src.scaleDegree + deltaDegree) % nd + nd) % nd,
+              scaleDegree: (((src.scaleDegree + deltaDegree) % nd) + nd) % nd,
             };
           }
           return { ...n };
@@ -333,10 +359,14 @@ export class NoteCanvasMouseListener {
       case 'CREATE': {
         const pixelSecond = this.callbacks.pixelSecond;
         const minDuration = this.callbacks.snapEnabled
-          ? (this.callbacks.snapBeats > 0 ? this.callbacks.snapBeats : 0.0625)
+          ? this.callbacks.snapBeats > 0
+            ? this.callbacks.snapBeats
+            : 0.0625
           : EDGE / pixelSecond;
         const initialDuration = this.callbacks.snapEnabled
-          ? (this.callbacks.snapBeats > 0 ? this.callbacks.snapBeats : 1)
+          ? this.callbacks.snapBeats > 0
+            ? this.callbacks.snapBeats
+            : 1
           : 5 / pixelSecond;
         const originEnd = this.startBeat + initialDuration;
         const rawTimeAdjust = (x - this.dragStartX) / pixelSecond;
@@ -347,7 +377,7 @@ export class NoteCanvasMouseListener {
           const snapEndTime = snapBeatRound(originEnd + rawTimeAdjust, snapValue);
           let newDuration = snapEndTime - this.startBeat;
           const rawDuration = initialDuration + rawTimeAdjust;
-          duration = (newDuration < rawDuration) ? newDuration + snapValue : newDuration;
+          duration = newDuration < rawDuration ? newDuration + snapValue : newDuration;
           duration = Math.max(minDuration, duration);
         }
 
@@ -376,7 +406,7 @@ export class NoteCanvasMouseListener {
             const originEnd = src.originStart + src.originDuration;
             const snapEndTime = snapBeatRound(originEnd + timeAdjust, snapValue);
             let newTimeAdjust = snapEndTime - originEnd;
-            timeAdjust = (newTimeAdjust < timeAdjust) ? newTimeAdjust + snapValue : newTimeAdjust;
+            timeAdjust = newTimeAdjust < timeAdjust ? newTimeAdjust + snapValue : newTimeAdjust;
           }
         }
 
@@ -384,7 +414,11 @@ export class NoteCanvasMouseListener {
         this.previewNotes = this.callbacks.notes.map((n, i) => {
           const src = this.noteSourceData.find((d) => d.noteIndex === i);
           if (src) {
-            return { ...n, start: src.originStart, duration: Math.max(minDuration, src.originDuration + finalTimeAdjust) };
+            return {
+              ...n,
+              start: src.originStart,
+              duration: Math.max(minDuration, src.originDuration + finalTimeAdjust),
+            };
           }
           return { ...n };
         });
@@ -408,7 +442,8 @@ export class NoteCanvasMouseListener {
           if (src) {
             const snapStartTime = snapBeatRound(src.originStart + timeAdjust, snapValue);
             let newTimeAdjust = snapStartTime - src.originStart;
-            timeAdjust = (newTimeAdjust > leftMinTimeAdjust) ? newTimeAdjust - snapValue : newTimeAdjust;
+            timeAdjust =
+              newTimeAdjust > leftMinTimeAdjust ? newTimeAdjust - snapValue : newTimeAdjust;
           }
         }
 
@@ -435,18 +470,23 @@ export class NoteCanvasMouseListener {
         if (range <= 0) break;
         const yScale = 200;
         const valueDelta = -(deltaY / yScale) * range;
-        const selected = this.fieldEditNoteIndices.length > 0
-          ? this.fieldEditNoteIndices
-          : [...this.callbacks.selectedIndices];
+        const selected =
+          this.fieldEditNoteIndices.length > 0
+            ? this.fieldEditNoteIndices
+            : [...this.callbacks.selectedIndices];
         const notes = this.callbacks.notes;
         this.previewNotes = notes.map((n, i) => {
           const selIdx = selected.indexOf(i);
           if (selIdx >= 0) {
             const origVal = this.originalFieldValues[selIdx]!;
-            const newVal = Math.max(fieldDef.minValue, Math.min(fieldDef.maxValue, origVal + valueDelta));
+            const newVal = Math.max(
+              fieldDef.minValue,
+              Math.min(fieldDef.maxValue, origVal + valueDelta),
+            );
             const newFields = [...n.fieldValues];
             if (this.affectedFieldIndex < newFields.length) {
-              newFields[this.affectedFieldIndex] = fieldDef.fieldType === 'DISCRETE' ? Math.round(newVal) : newVal;
+              newFields[this.affectedFieldIndex] =
+                fieldDef.fieldType === 'DISCRETE' ? Math.round(newVal) : newVal;
             }
             return { ...n, fieldValues: newFields };
           }
@@ -521,14 +561,20 @@ export class NoteCanvasMouseListener {
 
       case 'FIELD_EDIT': {
         if (!this.previewNotes || this.affectedFieldIndex < 0) break;
-        const selected = this.fieldEditNoteIndices.length > 0
-          ? this.fieldEditNoteIndices
-          : [...this.callbacks.selectedIndices];
+        const selected =
+          this.fieldEditNoteIndices.length > 0
+            ? this.fieldEditNoteIndices
+            : [...this.callbacks.selectedIndices];
         const endValues = selected.map((i) => {
           const note = this.previewNotes![i];
-          return note ? note.fieldValues[this.affectedFieldIndex] ?? 0 : 0;
+          return note ? (note.fieldValues[this.affectedFieldIndex] ?? 0) : 0;
         });
-        this.callbacks.commitFieldEdit(selected, this.affectedFieldIndex, this.originalFieldValues, endValues);
+        this.callbacks.commitFieldEdit(
+          selected,
+          this.affectedFieldIndex,
+          this.originalFieldValues,
+          endValues,
+        );
         break;
       }
     }

@@ -138,8 +138,12 @@ export default function MissingAudioAssetsModal(): React.ReactElement | null {
           <table className="w-full border-collapse text-left text-role-body text-app-text">
             <thead>
               <tr className="border-b border-app-hover text-app-text-muted">
-                <th scope="col" className="px-2 py-2 font-medium">Original File</th>
-                <th scope="col" className="px-2 py-2 font-medium">New File</th>
+                <th scope="col" className="px-2 py-2 font-medium">
+                  Original File
+                </th>
+                <th scope="col" className="px-2 py-2 font-medium">
+                  New File
+                </th>
                 <th scope="col" className="px-2 py-2 font-medium" aria-label="Actions" />
               </tr>
             </thead>
@@ -149,7 +153,10 @@ export default function MissingAudioAssetsModal(): React.ReactElement | null {
                 return (
                   <tr key={row.originalPath} className="border-b border-app-hover/60">
                     <td className="break-all px-2 py-2 align-top">{row.originalPath}</td>
-                    <td className="break-all px-2 py-2 align-top" data-testid={`replacement-${row.originalPath}`}>
+                    <td
+                      className="break-all px-2 py-2 align-top"
+                      data-testid={`replacement-${row.originalPath}`}
+                    >
                       {replacementPath || <span className="text-app-text-muted">—</span>}
                     </td>
                     <td className="whitespace-nowrap px-2 py-2 align-top text-right">

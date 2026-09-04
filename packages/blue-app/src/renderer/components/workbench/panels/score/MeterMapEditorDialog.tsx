@@ -1,9 +1,14 @@
 import { useState, useCallback } from 'react';
-import type { MeterMapSnapshot, MeterMapPatch, MeterEntryInput } from '../../../../../shared/project-editor';
+import type {
+  MeterMapSnapshot,
+  MeterMapPatch,
+  MeterEntryInput,
+} from '../../../../../shared/project-editor';
 import { parseMeterSignature, isPowerOfTwo } from './meter-map-utils';
 import { cn } from '../../../../lib/cn';
 
-const SECONDARY_BUTTON_CLASS = 'rounded border border-app-border/40 bg-app-surface px-3 py-1 text-role-body text-app-text transition-colors hover:bg-app-hover';
+const SECONDARY_BUTTON_CLASS =
+  'rounded border border-app-border/40 bg-app-surface px-3 py-1 text-role-body text-app-text transition-colors hover:bg-app-hover';
 
 interface MeterMapEditorDialogProps {
   meterMap: MeterMapSnapshot;
@@ -37,7 +42,7 @@ export default function MeterMapEditorDialog({
       signatureText: `${e.numBeats}/${e.beatLength}`,
       numBeats: e.numBeats,
       beatLength: e.beatLength,
-    }))
+    })),
   );
 
   const handleAdd = useCallback(() => {
@@ -56,37 +61,50 @@ export default function MeterMapEditorDialog({
     });
   }, []);
 
-  const validateMeasure = useCallback((index: number, value: string): number | null => {
-    const measure = parseMeasureText(value);
-    if (measure == null || measure < 1) {
-      setError('Measure must be a positive integer');
-      return null;
-    }
+  const validateMeasure = useCallback(
+    (index: number, value: string): number | null => {
+      const measure = parseMeasureText(value);
+      if (measure == null || measure < 1) {
+        setError('Measure must be a positive integer');
+        return null;
+      }
 
-    if (index === 0 && measure !== 1) {
-      setError('First meter entry must start at measure 1');
-      return null;
-    }
+      if (index === 0 && measure !== 1) {
+        setError('First meter entry must start at measure 1');
+        return null;
+      }
 
-    const duplicate = rows.some((row, i) => i !== index && parseMeasureText(row.measure) === measure);
-    if (duplicate) {
-      setError(`Measure ${measure} already has a meter entry`);
-      return null;
-    }
+      const duplicate = rows.some(
+        (row, i) => i !== index && parseMeasureText(row.measure) === measure,
+      );
+      if (duplicate) {
+        setError(`Measure ${measure} already has a meter entry`);
+        return null;
+      }
 
-    setError(null);
-    return measure;
-  }, [rows]);
+      setError(null);
+      return measure;
+    },
+    [rows],
+  );
 
-  const validateSignature = useCallback((value: string): { numBeats: number; beatLength: number } | null => {
-    const parsed = parseMeterSignature(value);
-    if (!parsed || !Number.isInteger(parsed.numBeats) || parsed.numBeats < 1 || !isPowerOfTwo(parsed.beatLength)) {
-      setError('Invalid signature format (use N/D with a power-of-two denominator)');
-      return null;
-    }
-    setError(null);
-    return parsed;
-  }, []);
+  const validateSignature = useCallback(
+    (value: string): { numBeats: number; beatLength: number } | null => {
+      const parsed = parseMeterSignature(value);
+      if (
+        !parsed ||
+        !Number.isInteger(parsed.numBeats) ||
+        parsed.numBeats < 1 ||
+        !isPowerOfTwo(parsed.beatLength)
+      ) {
+        setError('Invalid signature format (use N/D with a power-of-two denominator)');
+        return null;
+      }
+      setError(null);
+      return parsed;
+    },
+    [],
+  );
 
   const handleRemove = useCallback((index: number) => {
     setRows((prev) => {
@@ -104,18 +122,21 @@ export default function MeterMapEditorDialog({
     });
   }, []);
 
-  const commitMeasure = useCallback((index: number, value?: string): boolean => {
-    const row = rows[index];
-    if (!row) return false;
-    const measure = validateMeasure(index, value ?? row.measure);
-    if (measure == null) return false;
-    setRows((prev) => {
-      const next = [...prev];
-      next[index] = { ...next[index], measure: measure.toString() };
-      return next;
-    });
-    return true;
-  }, [rows, validateMeasure]);
+  const commitMeasure = useCallback(
+    (index: number, value?: string): boolean => {
+      const row = rows[index];
+      if (!row) return false;
+      const measure = validateMeasure(index, value ?? row.measure);
+      if (measure == null) return false;
+      setRows((prev) => {
+        const next = [...prev];
+        next[index] = { ...next[index], measure: measure.toString() };
+        return next;
+      });
+      return true;
+    },
+    [rows, validateMeasure],
+  );
 
   const handleSignatureChange = useCallback((index: number, value: string) => {
     setRows((prev) => {
@@ -125,23 +146,26 @@ export default function MeterMapEditorDialog({
     });
   }, []);
 
-  const commitSignature = useCallback((index: number, value?: string): boolean => {
-    const row = rows[index];
-    if (!row) return false;
-    const parsed = validateSignature(value ?? row.signatureText);
-    if (!parsed) return false;
-    setRows((prev) => {
-      const next = [...prev];
-      next[index] = {
-        ...next[index],
-        signatureText: `${parsed.numBeats}/${parsed.beatLength}`,
-        numBeats: parsed.numBeats,
-        beatLength: parsed.beatLength,
-      };
-      return next;
-    });
-    return true;
-  }, [rows, validateSignature]);
+  const commitSignature = useCallback(
+    (index: number, value?: string): boolean => {
+      const row = rows[index];
+      if (!row) return false;
+      const parsed = validateSignature(value ?? row.signatureText);
+      if (!parsed) return false;
+      setRows((prev) => {
+        const next = [...prev];
+        next[index] = {
+          ...next[index],
+          signatureText: `${parsed.numBeats}/${parsed.beatLength}`,
+          numBeats: parsed.numBeats,
+          beatLength: parsed.beatLength,
+        };
+        return next;
+      });
+      return true;
+    },
+    [rows, validateSignature],
+  );
 
   const handleOk = useCallback(() => {
     const entries: MeterEntryInput[] = [];
@@ -158,7 +182,12 @@ export default function MeterMapEditorDialog({
       }
       seenMeasures.add(measure);
       const parsed = parseMeterSignature(row.signatureText);
-      if (!parsed || !Number.isInteger(parsed.numBeats) || parsed.numBeats < 1 || !isPowerOfTwo(parsed.beatLength)) {
+      if (
+        !parsed ||
+        !Number.isInteger(parsed.numBeats) ||
+        parsed.numBeats < 1 ||
+        !isPowerOfTwo(parsed.beatLength)
+      ) {
         setError('All time signatures must use N/D with a power-of-two denominator');
         return;
       }
@@ -180,12 +209,15 @@ export default function MeterMapEditorDialog({
     onClose();
   }, [rows, onCommit, onClose]);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      onClose();
-    }
-  }, [onClose]);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    },
+    [onClose],
+  );
 
   const canDelete = rows.length > 1;
 
@@ -200,7 +232,9 @@ export default function MeterMapEditorDialog({
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
-        <h3 className="px-4 pb-2 pt-3 text-role-title-3 font-semibold text-app-text">Edit Time Signature Map</h3>
+        <h3 className="px-4 pb-2 pt-3 text-role-title-3 font-semibold text-app-text">
+          Edit Time Signature Map
+        </h3>
 
         <div className="px-4 pb-2 max-h-[200px] overflow-y-auto bg-black">
           <table className="w-full text-role-body">
@@ -251,7 +285,9 @@ export default function MeterMapEditorDialog({
                     <button
                       className={cn(
                         'rounded px-1.5 py-0.5 text-role-callout',
-                        canDelete ? 'text-app-danger hover:bg-app-outline-strong' : 'cursor-not-allowed text-app-text-muted',
+                        canDelete
+                          ? 'text-app-danger hover:bg-app-outline-strong'
+                          : 'cursor-not-allowed text-app-text-muted',
                       )}
                       disabled={!canDelete}
                       onClick={() => handleRemove(i)}
@@ -263,9 +299,7 @@ export default function MeterMapEditorDialog({
               ))}
             </tbody>
           </table>
-          {error && (
-            <p className="mt-2 text-role-callout text-app-danger">{error}</p>
-          )}
+          {error && <p className="mt-2 text-role-callout text-app-danger">{error}</p>}
         </div>
 
         <div className="flex items-center justify-between border-t border-app-border/20 px-4 py-2">
@@ -276,10 +310,7 @@ export default function MeterMapEditorDialog({
             Add
           </button>
           <div className="flex gap-2">
-            <button
-              className={SECONDARY_BUTTON_CLASS}
-              onClick={onClose}
-            >
+            <button className={SECONDARY_BUTTON_CLASS} onClick={onClose}>
               Cancel
             </button>
             <button

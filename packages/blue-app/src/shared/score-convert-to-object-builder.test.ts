@@ -26,9 +26,10 @@ import {
  * Builds a PolyObject-rooted score with a single layer holding `sObj` and
  * returns an editor target pointing at it.
  */
-function buildTimelineData(
-  sObj: PythonObject | External | GenericScore,
-): { data: BlueData; target: ScoreObjectEditorTargetSnapshot } {
+function buildTimelineData(sObj: PythonObject | External | GenericScore): {
+  data: BlueData;
+  target: ScoreObjectEditorTargetSnapshot;
+} {
   const data = new BlueData();
   const rootGroup = data.getScore()[0];
   if (!(rootGroup instanceof PolyObject)) {
@@ -156,7 +157,7 @@ describe('convertScoreObjectToObjectBuilder patch', () => {
       score: { type: 'convertScoreObjectToObjectBuilder', target },
     });
 
-    const builder = ((data.getScore()[0] as PolyObject)[0][0] as ObjectBuilder);
+    const builder = (data.getScore()[0] as PolyObject)[0][0] as ObjectBuilder;
     builder.getNoteProcessorChain().clear();
 
     expect(builder.getNoteProcessorChain().getProcessors()).toHaveLength(0);
@@ -253,7 +254,7 @@ describe('convertScoreObjectToObjectBuilder patch', () => {
       score: { type: 'convertScoreObjectToObjectBuilder', target },
     });
 
-    const builder = ((data.getScore()[0] as PolyObject)[0][0] as ObjectBuilder);
+    const builder = (data.getScore()[0] as PolyObject)[0][0] as ObjectBuilder;
     const xml = builder.saveAsXML().toXml();
 
     // Reload from the serialized XML and verify the converted fields survive.

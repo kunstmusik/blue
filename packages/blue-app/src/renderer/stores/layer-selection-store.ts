@@ -98,17 +98,18 @@ export const useLayerSelectionStore = create<LayerSelectionState>((set, get) => 
     const currentKey = state.focusKey ?? state.anchorKey;
     const currentIdx = currentKey
       ? visibleLayers.findIndex(
-        (l) => buildSelectionKey(l.groupId, l.layerSelectionId) === currentKey,
-      )
+          (l) => buildSelectionKey(l.groupId, l.layerSelectionId) === currentKey,
+        )
       : -1;
 
     let nextIdx: number;
     if (currentIdx === -1) {
       nextIdx = direction === 'down' ? 0 : visibleLayers.length - 1;
     } else {
-      nextIdx = direction === 'up'
-        ? Math.max(0, currentIdx - 1)
-        : Math.min(visibleLayers.length - 1, currentIdx + 1);
+      nextIdx =
+        direction === 'up'
+          ? Math.max(0, currentIdx - 1)
+          : Math.min(visibleLayers.length - 1, currentIdx + 1);
     }
 
     const target = visibleLayers[nextIdx];
@@ -149,9 +150,7 @@ export const useLayerSelectionStore = create<LayerSelectionState>((set, get) => 
 
   getSelectedVisibleLayers: (visibleLayers) => {
     const keys = get().selectedKeys;
-    return visibleLayers.filter((l) =>
-      keys.has(buildSelectionKey(l.groupId, l.layerSelectionId)),
-    );
+    return visibleLayers.filter((l) => keys.has(buildSelectionKey(l.groupId, l.layerSelectionId)));
   },
 
   getSelectedRanges: (visibleLayers) => {

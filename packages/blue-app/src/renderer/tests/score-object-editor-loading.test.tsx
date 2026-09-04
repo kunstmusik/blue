@@ -14,7 +14,9 @@ import ScoreObjectEditorPanel from '../components/workbench/panels/ScoreObjectEd
 import { useProjectStore } from '../stores/project-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const originalProjectState = useProjectStore.getState();
 const originalBlueAPI = window.blueAPI;
@@ -91,14 +93,16 @@ describe('ScoreObjectEditorPanel selection loading', () => {
       name: 'Root',
       layerCount: 1,
       isOpenableContainer: true,
-      layers: [{
-        layerId: 'layer-1',
-        name: 'Layer 1',
-        height: 44,
-        muted: false,
-        solo: false,
-        items: [item(firstTarget), item(secondTarget)],
-      }],
+      layers: [
+        {
+          layerId: 'layer-1',
+          name: 'Layer 1',
+          height: 44,
+          muted: false,
+          solo: false,
+          items: [item(firstTarget), item(secondTarget)],
+        },
+      ],
     };
 
     useProjectStore.setState({
@@ -108,7 +112,9 @@ describe('ScoreObjectEditorPanel selection loading', () => {
       applyProjectDocumentPatch: vi.fn().mockResolvedValue(undefined),
       flushPendingPatches: vi.fn().mockResolvedValue(undefined),
     } as Partial<ReturnType<typeof useProjectStore.getState>>);
-    useScoreSelectionStore.getState().setSelection([{ objectId: 'first', editorTarget: firstTarget }]);
+    useScoreSelectionStore
+      .getState()
+      .setSelection([{ objectId: 'first', editorTarget: firstTarget }]);
 
     container = document.createElement('div');
     document.body.appendChild(container);
@@ -134,11 +140,13 @@ describe('ScoreObjectEditorPanel selection loading', () => {
     const secondTarget = target('second', 1);
     let resolveSecond!: (document: ScoreObjectEditorDocumentSnapshot) => void;
     window.blueAPI = {
-      getScoreObjectEditorDocument: vi.fn(({ target: requestedTarget }) => (
+      getScoreObjectEditorDocument: vi.fn(({ target: requestedTarget }) =>
         requestedTarget.selectionId === 'first'
           ? Promise.resolve(editorDocument(firstTarget, 'First editor'))
-          : new Promise<ScoreObjectEditorDocumentSnapshot>((resolve) => { resolveSecond = resolve; })
-      )),
+          : new Promise<ScoreObjectEditorDocumentSnapshot>((resolve) => {
+              resolveSecond = resolve;
+            }),
+      ),
     } as typeof window.blueAPI;
 
     await act(async () => {
@@ -150,7 +158,9 @@ describe('ScoreObjectEditorPanel selection loading', () => {
     const mountedEditor = container.querySelector('.max-w-sm');
 
     await act(async () => {
-      useScoreSelectionStore.getState().setSelection([{ objectId: 'second', editorTarget: secondTarget }]);
+      useScoreSelectionStore
+        .getState()
+        .setSelection([{ objectId: 'second', editorTarget: secondTarget }]);
       await Promise.resolve();
     });
 

@@ -11,7 +11,9 @@ import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 import type { AutomationParameterSnapshot } from '../../shared/project-editor';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 class MockResizeObserver {
   observe(): void {}
@@ -19,7 +21,8 @@ class MockResizeObserver {
   disconnect(): void {}
 }
 
-(globalThis as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver = MockResizeObserver;
+(globalThis as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver =
+  MockResizeObserver;
 
 const { mockScorePathState } = vi.hoisted(() => ({
   mockScorePathState: {
@@ -146,7 +149,9 @@ describe('SoundLayerHeader automation parameter display and tooltip', () => {
     expect(paramSpan.className).toContain('min-w-0');
     expect(paramSpan.className).toContain('truncate');
 
-    const prevButton = header.querySelector<HTMLButtonElement>('button[title="Previous Parameter"]')!;
+    const prevButton = header.querySelector<HTMLButtonElement>(
+      'button[title="Previous Parameter"]',
+    )!;
     const nextButton = header.querySelector<HTMLButtonElement>('button[title="Next Parameter"]')!;
     expect(prevButton).toBeTruthy();
     expect(nextButton).toBeTruthy();

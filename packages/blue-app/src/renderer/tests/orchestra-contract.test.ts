@@ -61,9 +61,7 @@ describe('Orchestra project document contract', () => {
         },
       }),
     ).toBe(true);
-    expect(data.getArrangement().getInstrumentById('1')?.getComment()).toBe(
-      'edited comment',
-    );
+    expect(data.getArrangement().getInstrumentById('1')?.getComment()).toBe('edited comment');
 
     expect(
       applyProjectDocumentPatch(data, {
@@ -74,9 +72,7 @@ describe('Orchestra project document contract', () => {
         },
       }),
     ).toBe(true);
-    expect(data.getArrangement().getInstrumentById('1')).toBeInstanceOf(
-      JavaScriptInstrument,
-    );
+    expect(data.getArrangement().getInstrumentById('1')).toBeInstanceOf(JavaScriptInstrument);
   });
 
   it('converts GenericInstrument assignments to BlueSynthBuilder assignments', () => {
@@ -152,9 +148,12 @@ describe('Orchestra project document contract', () => {
       }),
     ).toBe(true);
 
-    expect(data.getArrangement().getArrangement().map((assignment) => assignment.arrangementId)).toEqual([
-      '1', '3', '2',
-    ]);
+    expect(
+      data
+        .getArrangement()
+        .getArrangement()
+        .map((assignment) => assignment.arrangementId),
+    ).toEqual(['1', '3', '2']);
   });
 });
 
@@ -197,7 +196,13 @@ describe('BSB Interface Parity contract', () => {
 
     expect(bsb.type).toBe('blueSynthBuilder');
     expect(bsb.editEnabled).toBe(true);
-    expect(bsb.gridSettings).toEqual({ enabled: true, snapEnabled: true, width: 10, height: 10, gridStyle: 'DOT' });
+    expect(bsb.gridSettings).toEqual({
+      enabled: true,
+      snapEnabled: true,
+      width: 10,
+      height: 10,
+      gridStyle: 'DOT',
+    });
     expect(bsb.widgetTree).not.toBeNull();
     expect(bsb.widgetTree!.children).toHaveLength(1);
     expect(bsb.widgetTree!.children![0].objectName).toBe('amp');

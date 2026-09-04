@@ -8,11 +8,11 @@ import type {
   AutomationTargetSnapshot,
   ScoreLayerAutomationSnapshot,
 } from '../../../../../../shared/project-editor';
+import { classifyTargets, getAllTargetsFromGroups } from './automation-selection-utils';
 import {
-  classifyTargets,
-  getAllTargetsFromGroups,
-} from './automation-selection-utils';
-import { PopoutDropdownMenuPortal, portalEventIsolationProps } from '../../../../../hooks/host-portals';
+  PopoutDropdownMenuPortal,
+  portalEventIsolationProps,
+} from '../../../../../hooks/host-portals';
 
 interface Props {
   /** The element that opens the menu (typically the "A" button). */
@@ -40,13 +40,15 @@ export default function AutomationTargetMenu({
     targetGroups: [],
     missingParameterIds: [],
   };
-  const missingTargets: AutomationTargetSnapshot[] = safeAutomation.missingParameterIds.map((parameterId) => ({
-    parameterId,
-    label: parameterId,
-    sourceKind: 'unknown',
-    automationEnabled: false,
-    assignmentState: 'missing',
-  }));
+  const missingTargets: AutomationTargetSnapshot[] = safeAutomation.missingParameterIds.map(
+    (parameterId) => ({
+      parameterId,
+      label: parameterId,
+      sourceKind: 'unknown',
+      automationEnabled: false,
+      assignmentState: 'missing',
+    }),
+  );
   const allTargets = [...getAllTargetsFromGroups(safeAutomation.targetGroups), ...missingTargets];
   const { current, missing } = useMemo(
     () => classifyTargets(safeAutomation, allTargets),
@@ -110,22 +112,19 @@ export default function AutomationTargetMenu({
     >
       <DropdownMenu.Trigger asChild>{trigger}</DropdownMenu.Trigger>
       <PopoutDropdownMenuPortal>
-        <DropdownMenu.Content className="editor-context-menu" sideOffset={4} {...portalEventIsolationProps}>
+        <DropdownMenu.Content
+          className="editor-context-menu"
+          sideOffset={4}
+          {...portalEventIsolationProps}
+        >
           {safeAutomation.targetGroups.map((group) => (
-            <TargetGroupItem
-              key={group.groupId}
-              group={group}
-              onSelect={handleSelect}
-            />
+            <TargetGroupItem key={group.groupId} group={group} onSelect={handleSelect} />
           ))}
 
           {current.length > 0 && (
             <>
               <DropdownMenu.Separator className="editor-context-menu__separator" />
-              <DropdownMenu.Item
-                className="editor-context-menu__item"
-                onSelect={handleClearAll}
-              >
+              <DropdownMenu.Item className="editor-context-menu__item" onSelect={handleClearAll}>
                 Clear All
               </DropdownMenu.Item>
             </>
@@ -196,7 +195,12 @@ function TargetGroupItem({
         <ChevronRight className="w-3.5 h-3.5 opacity-60" />
       </DropdownMenu.SubTrigger>
       <PopoutDropdownMenuPortal>
-        <DropdownMenu.SubContent className="editor-context-menu" sideOffset={-2} alignOffset={-4} {...portalEventIsolationProps}>
+        <DropdownMenu.SubContent
+          className="editor-context-menu"
+          sideOffset={-2}
+          alignOffset={-4}
+          {...portalEventIsolationProps}
+        >
           {group.subGroups.map((sub) => (
             <TargetGroupItem key={sub.groupId} group={sub} onSelect={onSelect} depth={depth + 1} />
           ))}
@@ -217,10 +221,7 @@ function TargetItem({
   onSelect: (target: AutomationTargetSnapshot) => void;
 }) {
   return (
-    <DropdownMenu.Item
-      className="editor-context-menu__item"
-      onSelect={() => onSelect(target)}
-    >
+    <DropdownMenu.Item className="editor-context-menu__item" onSelect={() => onSelect(target)}>
       <span
         style={{
           width: 8,

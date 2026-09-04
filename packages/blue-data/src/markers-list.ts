@@ -39,7 +39,7 @@ export class MarkersList implements BlueDataObject {
 
   constructor(other?: MarkersList) {
     if (other) {
-      this._rawChildren = other._rawChildren.map(e => e.clone());
+      this._rawChildren = other._rawChildren.map((e) => e.clone());
     }
   }
 
@@ -77,7 +77,8 @@ export class MarkersList implements BlueDataObject {
       return position.getValue();
     }
 
-    const timeText = timeElement?.getTextString() ?? elem.getTextString() ?? elem.getAttribute('time') ?? '0';
+    const timeText =
+      timeElement?.getTextString() ?? elem.getTextString() ?? elem.getAttribute('time') ?? '0';
     return parseFloat(timeText) || 0;
   }
 

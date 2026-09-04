@@ -14,7 +14,9 @@ const formatterCallCounts = vi.hoisted(() => ({
   selection: 0,
 }));
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 vi.mock('../components/menu-bar/toolbar-formatters', async () => {
   const actual = await vi.importActual<any>('../components/menu-bar/toolbar-formatters');
@@ -116,7 +118,9 @@ describe('Toolbar display render isolation', () => {
     const tree = renderRoot(<ToolbarDisplays />);
 
     act(() => {
-      usePlaybackStore.getState().setStatus({ status: 'starting', message: 'Preparing playback...' });
+      usePlaybackStore
+        .getState()
+        .setStatus({ status: 'starting', message: 'Preparing playback...' });
       usePlaybackStore.getState().acceptPlaybackClock({
         sessionId: 1,
         sampleFrames: 0,
@@ -124,7 +128,9 @@ describe('Toolbar display render isolation', () => {
         sampleRate: 44100,
         ksmps: 64,
       });
-      usePlaybackStore.getState().setStatus({ status: 'playing', message: 'Playing via blue-engine' });
+      usePlaybackStore
+        .getState()
+        .setStatus({ status: 'playing', message: 'Playing via blue-engine' });
     });
 
     const playhead = tree.container.querySelector('.toolbar-display-main--playhead');
@@ -134,7 +140,9 @@ describe('Toolbar display render isolation', () => {
       vi.advanceTimersByTime(1000);
     });
 
-    const updatedText = tree.container.querySelector('.toolbar-display-main--playhead')?.textContent;
+    const updatedText = tree.container.querySelector(
+      '.toolbar-display-main--playhead',
+    )?.textContent;
     expect(initialText).toBe('8.00');
     expect(updatedText).toBe('10.00');
 
@@ -154,10 +162,14 @@ describe('Toolbar display render isolation', () => {
           ...useProjectStore.getState().transport,
           tempoMap: {
             ...useProjectStore.getState().transport.tempoMap,
-            points: useProjectStore.getState().transport.tempoMap.points.map((point) => ({ ...point })),
+            points: useProjectStore
+              .getState()
+              .transport.tempoMap.points.map((point) => ({ ...point })),
           },
           meterMap: {
-            entries: useProjectStore.getState().transport.meterMap.entries.map((entry) => ({ ...entry })),
+            entries: useProjectStore
+              .getState()
+              .transport.meterMap.entries.map((entry) => ({ ...entry })),
           },
         },
         clock: {
@@ -176,7 +188,9 @@ describe('Toolbar display render isolation', () => {
       }));
     });
 
-    expect(tree.container.querySelector('.toolbar-display-main--playhead')?.textContent).toBe('10.00');
+    expect(tree.container.querySelector('.toolbar-display-main--playhead')?.textContent).toBe(
+      '10.00',
+    );
 
     act(() => {
       const current = useProjectStore.getState();
@@ -198,7 +212,9 @@ describe('Toolbar display render isolation', () => {
       });
     });
 
-    expect(tree.container.querySelector('.toolbar-display-main--playhead')?.textContent).toBe('10.00');
+    expect(tree.container.querySelector('.toolbar-display-main--playhead')?.textContent).toBe(
+      '10.00',
+    );
 
     tree.unmount();
   });

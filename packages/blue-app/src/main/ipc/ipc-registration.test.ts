@@ -43,9 +43,11 @@ describe('IPC registration lease', () => {
     });
     const handleCount = ipcMain.handles.size;
 
-    expect(() => registerIpcTransaction(ipcMain, 'domain', (scope) => {
-      scope.handle('second', vi.fn());
-    })).toThrow('IPC registrar already initialized: domain');
+    expect(() =>
+      registerIpcTransaction(ipcMain, 'domain', (scope) => {
+        scope.handle('second', vi.fn());
+      }),
+    ).toThrow('IPC registrar already initialized: domain');
     expect(ipcMain.handles.size).toBe(handleCount);
     expect(ipcMain.handles.has('second')).toBe(false);
     first();
@@ -53,12 +55,14 @@ describe('IPC registration lease', () => {
 
   it('rolls back partial registration in reverse order and preserves the initiating error', () => {
     const ipcMain = new FakeIpcMain();
-    expect(() => registerIpcTransaction(ipcMain, 'partial', (scope) => {
-      scope.handle('one', vi.fn());
-      scope.on('two', vi.fn());
-      ipcMain.failOnHandle = 'three';
-      scope.handle('three', vi.fn());
-    })).toThrow('cannot register three');
+    expect(() =>
+      registerIpcTransaction(ipcMain, 'partial', (scope) => {
+        scope.handle('one', vi.fn());
+        scope.on('two', vi.fn());
+        ipcMain.failOnHandle = 'three';
+        scope.handle('three', vi.fn());
+      }),
+    ).toThrow('cannot register three');
 
     expect(ipcMain.handles.size).toBe(0);
     expect(ipcMain.listeners.size).toBe(0);

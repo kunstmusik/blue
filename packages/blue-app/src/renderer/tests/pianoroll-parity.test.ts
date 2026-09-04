@@ -10,7 +10,10 @@ import {
   type PianoRollPayload,
   formatPianoRollPitch,
 } from '../components/workbench/panels/score-object/editors/pianoroll/types';
-import { NoteCanvasMouseListener, type NoteCanvasListenerCallbacks } from '../components/workbench/panels/score-object/editors/pianoroll/NoteCanvasMouseListener';
+import {
+  NoteCanvasMouseListener,
+  type NoteCanvasListenerCallbacks,
+} from '../components/workbench/panels/score-object/editors/pianoroll/NoteCanvasMouseListener';
 
 function createFieldDefinition(overrides: Partial<FieldDefSnapshot> = {}): FieldDefSnapshot {
   return {
@@ -44,14 +47,16 @@ function createPayload(overrides: Partial<PianoRollPayload> = {}): PianoRollPayl
       ratios: Array.from({ length: 12 }, (_, index) => Math.pow(Math.pow(2, 1 / 12), index)),
     },
     fieldDefinitions: [createFieldDefinition()],
-    notes: [{
-      octave: CENTER_OCTAVE,
-      scaleDegree: 0,
-      start: 1,
-      duration: 1,
-      fieldValues: [0.5],
-      noteTemplate: null,
-    }],
+    notes: [
+      {
+        octave: CENTER_OCTAVE,
+        scaleDegree: 0,
+        start: 1,
+        duration: 1,
+        fieldValues: [0.5],
+        noteTemplate: null,
+      },
+    ],
     capabilities: {
       fieldEditor: true,
       clipboard: true,
@@ -63,7 +68,18 @@ function createPayload(overrides: Partial<PianoRollPayload> = {}): PianoRollPayl
   };
 }
 
-function createMouseEvent(overrides: Partial<MouseEventInit & { button: number; shiftKey: boolean; ctrlKey: boolean; metaKey: boolean; clientX: number; clientY: number }> = {}) {
+function createMouseEvent(
+  overrides: Partial<
+    MouseEventInit & {
+      button: number;
+      shiftKey: boolean;
+      ctrlKey: boolean;
+      metaKey: boolean;
+      clientX: number;
+      clientY: number;
+    }
+  > = {},
+) {
   return {
     button: 0,
     shiftKey: false,
@@ -95,16 +111,21 @@ function createRect() {
 }
 
 function getMidiNoteY(octave: number, scaleDegree: number, noteHeight: number): number {
-  return (127 - ((octave * 12) + scaleDegree)) * noteHeight;
+  return (127 - (octave * 12 + scaleDegree)) * noteHeight;
 }
 
-function createListenerHarness(overrides: {
-  notes?: PianoRollPayload['notes'];
-  selectedIndices?: Set<number>;
-  selectedFieldDef?: FieldDefSnapshot | null;
-  snapEnabled?: boolean;
-} = {}) {
-  const payload = createPayload({ notes: overrides.notes ?? createPayload().notes, snapEnabled: overrides.snapEnabled ?? false });
+function createListenerHarness(
+  overrides: {
+    notes?: PianoRollPayload['notes'];
+    selectedIndices?: Set<number>;
+    selectedFieldDef?: FieldDefSnapshot | null;
+    snapEnabled?: boolean;
+  } = {},
+) {
+  const payload = createPayload({
+    notes: overrides.notes ?? createPayload().notes,
+    snapEnabled: overrides.snapEnabled ?? false,
+  });
   const calls = {
     addNote: [] as Array<[number, number, number, number | undefined]>,
     commitNoteTimeEdit: [] as Array<Parameters<NoteCanvasListenerCallbacks['commitNoteTimeEdit']>>,
@@ -116,25 +137,55 @@ function createListenerHarness(overrides: {
   let pasteTarget: { startBeat: number; octave: number; scaleDegree: number } | null = null;
 
   const callbacks: NoteCanvasListenerCallbacks = {
-    get notes() { return payload.notes; },
-    get scale() { return payload.scale; },
-    get fieldDefinitions() { return payload.fieldDefinitions; },
-    get selectedIndices() { return selectedIndices; },
-    get pixelSecond() { return payload.pixelSecond; },
-    get noteHeight() { return payload.noteHeight; },
-    get snapEnabled() { return payload.snapEnabled; },
-    get snapBeats() { return 0; },
-    get durationBeats() { return 8; },
-    get selectedFieldDef() { return overrides.selectedFieldDef ?? payload.fieldDefinitions[0] ?? null; },
-    get pchGenerationMethod() { return payload.pchGenerationMethod; },
-    addNote: (...args) => { calls.addNote.push(args); },
-    commitNoteTimeEdit: (...args) => { calls.commitNoteTimeEdit.push(args); },
-    commitFieldEdit: (...args) => { calls.commitFieldEdit.push(args); },
+    get notes() {
+      return payload.notes;
+    },
+    get scale() {
+      return payload.scale;
+    },
+    get fieldDefinitions() {
+      return payload.fieldDefinitions;
+    },
+    get selectedIndices() {
+      return selectedIndices;
+    },
+    get pixelSecond() {
+      return payload.pixelSecond;
+    },
+    get noteHeight() {
+      return payload.noteHeight;
+    },
+    get snapEnabled() {
+      return payload.snapEnabled;
+    },
+    get snapBeats() {
+      return 0;
+    },
+    get durationBeats() {
+      return 8;
+    },
+    get selectedFieldDef() {
+      return overrides.selectedFieldDef ?? payload.fieldDefinitions[0] ?? null;
+    },
+    get pchGenerationMethod() {
+      return payload.pchGenerationMethod;
+    },
+    addNote: (...args) => {
+      calls.addNote.push(args);
+    },
+    commitNoteTimeEdit: (...args) => {
+      calls.commitNoteTimeEdit.push(args);
+    },
+    commitFieldEdit: (...args) => {
+      calls.commitFieldEdit.push(args);
+    },
     removeSelectedNotes() {},
     copySelectedNotes() {},
     cutSelectedNotes() {},
     pasteNotesAt() {},
-    setPasteTarget(target) { pasteTarget = target; },
+    setPasteTarget(target) {
+      pasteTarget = target;
+    },
     setSelection(indices) {
       selectedIndices = new Set(indices);
       calls.setSelection.push([...indices]);
@@ -149,10 +200,18 @@ function createListenerHarness(overrides: {
       selectedIndices = new Set();
     },
     requestRedraw() {},
-    getCanvasRect() { return createRect(); },
-    getViewportRect() { return createRect(); },
-    getScrollPosition() { return { scrollLeft: 0, scrollTop: 0 }; },
-    getViewportSize() { return { width: 800, height: 600 }; },
+    getCanvasRect() {
+      return createRect();
+    },
+    getViewportRect() {
+      return createRect();
+    },
+    getScrollPosition() {
+      return { scrollLeft: 0, scrollTop: 0 };
+    },
+    getViewportSize() {
+      return { width: 800, height: 600 };
+    },
     setScrollPosition() {},
   };
 
@@ -175,16 +234,24 @@ describe('PianoRoll editor parity helpers', () => {
     const payload = createPayload();
 
     const updated = applyPianoRollPatchToPayload(payload, {
-      addFieldDef: createFieldDefinition({ fieldName: 'PAN', fieldType: 'DISCRETE', minValue: 0, maxValue: 8, defaultValue: 5 }),
+      addFieldDef: createFieldDefinition({
+        fieldName: 'PAN',
+        fieldType: 'DISCRETE',
+        minValue: 0,
+        maxValue: 8,
+        defaultValue: 5,
+      }),
       pianoRollNoteBatch: {
-        operations: [{
-          kind: 'update',
-          noteIndex: 0,
-          note: {
-            ...payload.notes[0]!,
-            noteTemplate: 'i2 <START> <DUR> <FREQ> <AMP> <PAN>',
+        operations: [
+          {
+            kind: 'update',
+            noteIndex: 0,
+            note: {
+              ...payload.notes[0]!,
+              noteTemplate: 'i2 <START> <DUR> <FREQ> <AMP> <PAN>',
+            },
           },
-        }],
+        ],
       },
     });
 
@@ -203,20 +270,30 @@ describe('PianoRoll editor parity helpers', () => {
         ratios: [1, 1.5],
       },
       fieldDefinitions: [
-        createFieldDefinition({ fieldName: 'PAN', fieldType: 'DISCRETE', minValue: 0, maxValue: 8, defaultValue: 6 }),
+        createFieldDefinition({
+          fieldName: 'PAN',
+          fieldType: 'DISCRETE',
+          minValue: 0,
+          maxValue: 8,
+          defaultValue: 6,
+        }),
       ],
       pianoRollNoteBatch: {
-        operations: [{
-          kind: 'replace',
-          notes: [{
-            octave: CENTER_OCTAVE,
-            scaleDegree: 4,
-            start: 3,
-            duration: 2,
-            fieldValues: [6],
-            noteTemplate: 'i2 0 1 60 6',
-          }],
-        }],
+        operations: [
+          {
+            kind: 'replace',
+            notes: [
+              {
+                octave: CENTER_OCTAVE,
+                scaleDegree: 4,
+                start: 3,
+                duration: 2,
+                fieldValues: [6],
+                noteTemplate: 'i2 0 1 60 6',
+              },
+            ],
+          },
+        ],
       },
     });
 
@@ -240,18 +317,24 @@ describe('NoteCanvasMouseListener', () => {
     expect(harness.calls.addNote[0]![1]).toBe(0);
     expect(harness.calls.addNote[0]![2]).toBe(CENTER_OCTAVE);
     expect(harness.calls.addNote[0]![3]).toBeCloseTo(1.125);
-    expect(harness.getPasteTarget()).toEqual({ startBeat: 2, octave: CENTER_OCTAVE, scaleDegree: 0 });
+    expect(harness.getPasteTarget()).toEqual({
+      startBeat: 2,
+      octave: CENTER_OCTAVE,
+      scaleDegree: 0,
+    });
   });
 
   it('commits moved note timing and pitch from drag gestures', () => {
     const note = createPayload().notes[0]!;
     const harness = createListenerHarness({ notes: [note], selectedIndices: new Set([0]) });
-    const startX = (note.start * harness.payload.pixelSecond) + 10;
+    const startX = note.start * harness.payload.pixelSecond + 10;
     const startY = getMidiNoteY(note.octave, note.scaleDegree, harness.payload.noteHeight) + 5;
 
     harness.listener.mousePressed(createMouseEvent({ clientX: startX, clientY: startY }));
     harness.listener.mouseDragged(createMouseEvent({ clientX: startX + 40, clientY: startY - 20 }));
-    harness.listener.mouseReleased(createMouseEvent({ clientX: startX + 40, clientY: startY - 20 }));
+    harness.listener.mouseReleased(
+      createMouseEvent({ clientX: startX + 40, clientY: startY - 20 }),
+    );
 
     expect(harness.calls.commitNoteTimeEdit).toHaveLength(1);
     expect(harness.calls.commitNoteTimeEdit[0]![1][0]).toMatchObject({
@@ -266,12 +349,18 @@ describe('NoteCanvasMouseListener', () => {
   it('commits field edits for the selected note set', () => {
     const note = createPayload().notes[0]!;
     const harness = createListenerHarness({ notes: [note], selectedIndices: new Set([0]) });
-    const startX = (note.start * harness.payload.pixelSecond) + 10;
+    const startX = note.start * harness.payload.pixelSecond + 10;
     const startY = getMidiNoteY(note.octave, note.scaleDegree, harness.payload.noteHeight) + 5;
 
-    harness.listener.mousePressed(createMouseEvent({ clientX: startX, clientY: startY, ctrlKey: true }));
-    harness.listener.mouseDragged(createMouseEvent({ clientX: startX, clientY: startY - 50, ctrlKey: true }));
-    harness.listener.mouseReleased(createMouseEvent({ clientX: startX, clientY: startY - 50, ctrlKey: true }));
+    harness.listener.mousePressed(
+      createMouseEvent({ clientX: startX, clientY: startY, ctrlKey: true }),
+    );
+    harness.listener.mouseDragged(
+      createMouseEvent({ clientX: startX, clientY: startY - 50, ctrlKey: true }),
+    );
+    harness.listener.mouseReleased(
+      createMouseEvent({ clientX: startX, clientY: startY - 50, ctrlKey: true }),
+    );
 
     expect(harness.calls.commitFieldEdit).toHaveLength(1);
     expect(harness.calls.commitFieldEdit[0]![0]).toEqual([0]);
@@ -283,7 +372,14 @@ describe('NoteCanvasMouseListener', () => {
     const payload = createPayload({
       notes: [
         createPayload().notes[0]!,
-        { octave: CENTER_OCTAVE, scaleDegree: 4, start: 5, duration: 1, fieldValues: [0.25], noteTemplate: null },
+        {
+          octave: CENTER_OCTAVE,
+          scaleDegree: 4,
+          start: 5,
+          duration: 1,
+          fieldValues: [0.25],
+          noteTemplate: null,
+        },
       ],
     });
     const harness = createListenerHarness({ notes: payload.notes });

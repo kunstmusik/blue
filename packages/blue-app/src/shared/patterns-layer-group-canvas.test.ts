@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  BlueData,
-  GenericScore,
-  PatternsLayerGroup,
-  TimeDuration,
-  TimePosition,
-} from '@blue/data';
+import { BlueData, GenericScore, PatternsLayerGroup, TimeDuration, TimePosition } from '@blue/data';
 import {
   applyProjectDocumentPatch,
   createProjectEditorSnapshot,
@@ -52,9 +46,7 @@ function buildPatternProject(patternBeatsLength = 4): BlueData {
 
 function getPatternGroupSnapshot(data: BlueData): PatternsLayerGroupSnapshot {
   const snapshot = createProjectEditorSnapshot(data, null, 1);
-  const group = snapshot.score.layerGroups.find(
-    (candidate) => candidate.groupType === 'patterns',
-  );
+  const group = snapshot.score.layerGroups.find((candidate) => candidate.groupType === 'patterns');
   if (!group || group.groupType !== 'patterns') {
     throw new Error('patterns layer group snapshot missing');
   }
@@ -100,7 +92,9 @@ describe('patterns layer-group snapshot', () => {
       first.layers.map((layer) => layer.layerId),
     );
 
-    applyProjectDocumentPatch(data, { score: { type: 'moveLayer', groupId: first.groupId, layerIndex: 0, targetIndex: 1 } });
+    applyProjectDocumentPatch(data, {
+      score: { type: 'moveLayer', groupId: first.groupId, layerIndex: 0, targetIndex: 1 },
+    });
     const reordered = getPatternGroupSnapshot(data);
     expect(reordered.layers[0]!.layerId).toBe(first.layers[1]!.layerId);
     expect(reordered.layers[1]!.layerId).toBe(first.layers[0]!.layerId);
@@ -108,7 +102,9 @@ describe('patterns layer-group snapshot', () => {
 
   it('uses a positive display fallback for malformed raw step lengths without rewriting data', () => {
     const data = buildPatternProject();
-    const group = data.getScore().find((candidate) => candidate instanceof PatternsLayerGroup) as PatternsLayerGroup;
+    const group = data
+      .getScore()
+      .find((candidate) => candidate instanceof PatternsLayerGroup) as PatternsLayerGroup;
     // Simulates malformed legacy data (e.g. non-numeric XML text parsed to NaN).
     group.setPatternBeatsLength(Number.NaN);
 
@@ -125,7 +121,9 @@ describe('pattern source-object target resolution', () => {
     const group = getPatternGroupSnapshot(data);
     const rowA = group.layers[0]!;
 
-    const document = createScoreObjectEditorDocument(data, { target: rowA.sourceObject.editorTarget });
+    const document = createScoreObjectEditorDocument(data, {
+      target: rowA.sourceObject.editorTarget,
+    });
     expect(document).not.toBeNull();
     expect(document!.shared.name).toBe('Source A');
     expect(document!.target.patternSource?.sourceObjectId).toBe(rowA.sourceObject.objectId);
@@ -180,14 +178,16 @@ describe('pattern source-object target resolution', () => {
         score: {
           type: 'addScoreObjects',
           groupId: group.groupId,
-          objects: [{
-            layerIndex: 0,
-            objectType: 'GenericScore',
-            name: 'x',
-            startBeats: 0,
-            durationBeats: 1,
-            backgroundColor: 0,
-          }],
+          objects: [
+            {
+              layerIndex: 0,
+              objectType: 'GenericScore',
+              name: 'x',
+              startBeats: 0,
+              durationBeats: 1,
+              backgroundColor: 0,
+            },
+          ],
         },
       }),
     ).toBe(false);
@@ -197,7 +197,9 @@ describe('pattern source-object target resolution', () => {
     ).toBe(false);
 
     expect(
-      applyProjectDocumentPatch(data, { score: { type: 'convertScoreObjectToObjectBuilder', target } }),
+      applyProjectDocumentPatch(data, {
+        score: { type: 'convertScoreObjectToObjectBuilder', target },
+      }),
     ).toBe(false);
 
     // The pattern group and its rows survive all rejected operations.
@@ -242,7 +244,9 @@ describe('updatePatternCells patch contract', () => {
     });
     expect(getPatternGroupSnapshot(data).layers[0]!.activeCellIndices).toEqual([0, 3, 40]);
 
-    const dataGroup = data.getScore().find((candidate) => candidate instanceof PatternsLayerGroup) as PatternsLayerGroup;
+    const dataGroup = data
+      .getScore()
+      .find((candidate) => candidate instanceof PatternsLayerGroup) as PatternsLayerGroup;
     const patternData = dataGroup[0]!.getPatternData();
     expect(patternData.isPatternSet(40)).toBe(true);
 
@@ -279,9 +283,7 @@ describe('updatePatternCells patch contract', () => {
         score: {
           type: 'updatePatternCells',
           groupId: group.groupId,
-          changes: [
-            { layerId: group.layers[0]!.layerId, cellIndex: 1.5, active: true },
-          ],
+          changes: [{ layerId: group.layers[0]!.layerId, cellIndex: 1.5, active: true }],
         },
       }),
     ).toBe(false);
@@ -292,16 +294,18 @@ describe('updatePatternCells patch contract', () => {
         score: {
           type: 'updatePatternCells',
           groupId: group.groupId,
-          changes: [
-            { layerId: group.layers[0]!.layerId, cellIndex: -1, active: true },
-          ],
+          changes: [{ layerId: group.layers[0]!.layerId, cellIndex: -1, active: true }],
         },
       }),
     ).toBe(false);
 
     expect(
       applyProjectDocumentPatch(data, {
-        score: { type: 'updatePatternCells', groupId: 'lg-unknown', changes: [{ layerId: 'pl-1', cellIndex: 0, active: true }] },
+        score: {
+          type: 'updatePatternCells',
+          groupId: 'lg-unknown',
+          changes: [{ layerId: 'pl-1', cellIndex: 0, active: true }],
+        },
       }),
     ).toBe(false);
 
@@ -370,7 +374,11 @@ describe('updatePatternBeatsLength patch contract', () => {
     for (const invalid of [0, -2, 1.5, Number.POSITIVE_INFINITY, Number.NaN]) {
       expect(
         applyProjectDocumentPatch(data, {
-          score: { type: 'updatePatternBeatsLength', groupId: group.groupId, patternBeatsLength: invalid },
+          score: {
+            type: 'updatePatternBeatsLength',
+            groupId: group.groupId,
+            patternBeatsLength: invalid,
+          },
         }),
       ).toBe(false);
     }
@@ -394,14 +402,20 @@ describe('updatePatternBeatsLength patch contract', () => {
 
   it('replaces a malformed raw value only through an explicit valid resize', () => {
     const data = buildPatternProject();
-    const dataGroup = data.getScore().find((candidate) => candidate instanceof PatternsLayerGroup) as PatternsLayerGroup;
+    const dataGroup = data
+      .getScore()
+      .find((candidate) => candidate instanceof PatternsLayerGroup) as PatternsLayerGroup;
     dataGroup.setPatternBeatsLength(Number.NaN);
 
     expect(getPatternGroupSnapshot(data).effectivePatternBeatsLength).toBeGreaterThan(0);
 
     expect(
       applyProjectDocumentPatch(data, {
-        score: { type: 'updatePatternBeatsLength', groupId: getPatternGroupSnapshot(data).groupId, patternBeatsLength: 8 },
+        score: {
+          type: 'updatePatternBeatsLength',
+          groupId: getPatternGroupSnapshot(data).groupId,
+          patternBeatsLength: 8,
+        },
       }),
     ).toBe(true);
     expect(getPatternGroupSnapshot(data).patternBeatsLength).toBe(8);
@@ -442,9 +456,9 @@ describe('pattern .blue XML round-trip', () => {
     expect(reopenedGroup.layers[0]!.sourceObject.name).toBe('Source A');
     expect(reopenedGroup.layers[0]!.sourceObject.serializedXml).toContain('i1 0 1');
 
-    const reopenedDataGroup = reopened.getScore().find(
-      (candidate) => candidate instanceof PatternsLayerGroup,
-    ) as PatternsLayerGroup;
+    const reopenedDataGroup = reopened
+      .getScore()
+      .find((candidate) => candidate instanceof PatternsLayerGroup) as PatternsLayerGroup;
     expect(reopenedDataGroup.getNoteProcessorChain().getProcessors()).toHaveLength(
       chain.getProcessors().length,
     );
@@ -468,7 +482,9 @@ describe('pattern .blue XML round-trip', () => {
 });
 
 function dataGroup(data: BlueData): PatternsLayerGroup {
-  return data.getScore().find((candidate) => candidate instanceof PatternsLayerGroup) as PatternsLayerGroup;
+  return data
+    .getScore()
+    .find((candidate) => candidate instanceof PatternsLayerGroup) as PatternsLayerGroup;
 }
 
 describe('pattern snapshot preserves unknown XML data', () => {
@@ -503,7 +519,9 @@ describe('pattern snapshot preserves unknown XML data', () => {
     expect(group.patternBeatsLength).toBe(2);
     expect(group.layers[0]!.activeCellIndices).toEqual([0, 2]);
     expect(group.layers[0]!.sourceObject.name).toBe('Legacy Source');
-    expect(group.layers[0]!.sourceObject.editorTarget.patternSource?.layerId).toBe(group.layers[0]!.layerId);
+    expect(group.layers[0]!.sourceObject.editorTarget.patternSource?.layerId).toBe(
+      group.layers[0]!.layerId,
+    );
 
     // Editing through the canvas contract and re-saving keeps the known
     // pattern content intact end to end.

@@ -127,7 +127,9 @@ describe('Hardware vs Virtual Keyboard routing parity (SPEC 058 US3)', () => {
 
   it('unmapped channel produces a non-disruptive diagnostic (no held-note debt)', async () => {
     const trigger = vi.fn(async (req: { type: 'noteOn' | 'noteOff' }) =>
-      req.type === 'noteOn' ? { ok: false, message: 'No instrument mapped to that channel' } : { ok: true },
+      req.type === 'noteOn'
+        ? { ok: false, message: 'No instrument mapped to that channel' }
+        : { ok: true },
     );
     const router = new MidiNoteRouter({
       trigger,
@@ -196,7 +198,11 @@ describe('Focused target hardware/Virtual Keyboard parity (Spec 067 US1/US2)', (
       source: 'hardware' | 'mouse' | 'computer';
       target?: { kind: string; [k: string]: unknown };
     }) => {
-      captured.push({ type: req.type, target: req.target as { kind: string } | undefined, source: req.source });
+      captured.push({
+        type: req.type,
+        target: req.target as { kind: string } | undefined,
+        source: req.source,
+      });
       return { ok: true };
     };
     const router = new MidiNoteRouter({
@@ -211,12 +217,24 @@ describe('Focused target hardware/Virtual Keyboard parity (Spec 067 US1/US2)', (
   it('hardware and Virtual Keyboard resolve the same focused Track target', async () => {
     const { router, captured } = makeFocusRouter();
     await router.routeNote({
-      type: 'noteOn', sourceKind: 'hardware', sourceId: 'midi:k', deviceId: 'k',
-      channel: 0, midiNote: 60, velocity: 100, timestamp: 0,
+      type: 'noteOn',
+      sourceKind: 'hardware',
+      sourceId: 'midi:k',
+      deviceId: 'k',
+      channel: 0,
+      midiNote: 60,
+      velocity: 100,
+      timestamp: 0,
     });
     await router.routeNote({
-      type: 'noteOn', sourceKind: 'mouse', sourceId: 'virtual-keyboard:mouse:mouse', deviceId: null,
-      channel: 0, midiNote: 60, velocity: 100, timestamp: 0,
+      type: 'noteOn',
+      sourceKind: 'mouse',
+      sourceId: 'virtual-keyboard:mouse:mouse',
+      deviceId: null,
+      channel: 0,
+      midiNote: 60,
+      velocity: 100,
+      timestamp: 0,
     });
     expect(captured).toHaveLength(1); // aggregate: same target/pitch → one note-on
     expect(captured[0]?.target).toEqual({ kind: 'track', trackId: 'focused-track' });
@@ -228,16 +246,34 @@ describe('Focused target hardware/Virtual Keyboard parity (Spec 067 US1/US2)', (
       assignmentId: 'named-lead',
     });
     await router.routeNote({
-      type: 'noteOn', sourceKind: 'hardware', sourceId: 'midi:k', deviceId: 'k',
-      channel: 3, midiNote: 64, velocity: 88, timestamp: 0,
+      type: 'noteOn',
+      sourceKind: 'hardware',
+      sourceId: 'midi:k',
+      deviceId: 'k',
+      channel: 3,
+      midiNote: 64,
+      velocity: 88,
+      timestamp: 0,
     });
     await router.routeNote({
-      type: 'noteOff', sourceKind: 'hardware', sourceId: 'midi:k', deviceId: 'k',
-      channel: 3, midiNote: 64, velocity: 0, timestamp: 1,
+      type: 'noteOff',
+      sourceKind: 'hardware',
+      sourceId: 'midi:k',
+      deviceId: 'k',
+      channel: 3,
+      midiNote: 64,
+      velocity: 0,
+      timestamp: 1,
     });
     await router.routeNote({
-      type: 'noteOn', sourceKind: 'mouse', sourceId: 'virtual-keyboard:mouse:mouse', deviceId: null,
-      channel: 3, midiNote: 64, velocity: 88, timestamp: 2,
+      type: 'noteOn',
+      sourceKind: 'mouse',
+      sourceId: 'virtual-keyboard:mouse:mouse',
+      deviceId: null,
+      channel: 3,
+      midiNote: 64,
+      velocity: 88,
+      timestamp: 2,
     });
 
     const noteOns = captured.filter((request) => request.type === 'noteOn');
@@ -258,8 +294,14 @@ describe('Focused target hardware/Virtual Keyboard parity (Spec 067 US1/US2)', (
       resolveTarget: () => null, // no resolved target (focused but unavailable)
     });
     const r = await router.routeNote({
-      type: 'noteOn', sourceKind: 'hardware', sourceId: 'midi:k', deviceId: 'k',
-      channel: 0, midiNote: 60, velocity: 100, timestamp: 0,
+      type: 'noteOn',
+      sourceKind: 'hardware',
+      sourceId: 'midi:k',
+      deviceId: 'k',
+      channel: 0,
+      midiNote: 60,
+      velocity: 100,
+      timestamp: 0,
     });
     expect(r.accepted).toBe(false);
     expect(router.heldCount).toBe(0);

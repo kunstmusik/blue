@@ -15,8 +15,9 @@ import {
 } from '../components/workbench/auxiliary-drag';
 import { useWorkbenchStore } from '../stores/workbench-store';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
-  true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const capturedErrors: string[] = [];
 
@@ -169,34 +170,28 @@ describe('workbench shell move wiring', () => {
     },
   );
 
-  it(
-    'minimizes Libraries after moving it to the left edge',
-    { timeout: 60_000 },
-    async () => {
-      api = await setupWorkbench();
+  it('minimizes Libraries after moving it to the left edge', { timeout: 60_000 }, async () => {
+    api = await setupWorkbench();
 
-      await act(async () => {
-        useWorkbenchStore.getState().movePanelToEdge('LibrariesTopComponent', 'left');
-      });
-      await act(async () => {});
-      await new Promise((resolve) => setTimeout(resolve, 30));
+    await act(async () => {
+      useWorkbenchStore.getState().movePanelToEdge('LibrariesTopComponent', 'left');
+    });
+    await act(async () => {});
+    await new Promise((resolve) => setTimeout(resolve, 30));
 
-      const afterMove = useWorkbenchStore.getState().auxiliary;
-      expect(
-        getGroupInstanceForPanel(afterMove, 'LibrariesTopComponent')?.edge,
-      ).toBe('left');
+    const afterMove = useWorkbenchStore.getState().auxiliary;
+    expect(getGroupInstanceForPanel(afterMove, 'LibrariesTopComponent')?.edge).toBe('left');
 
-      await act(async () => {
-        useWorkbenchStore.getState().minimizeAuxiliaryPanel('LibrariesTopComponent');
-      });
-      await act(async () => {});
-      await new Promise((resolve) => setTimeout(resolve, 30));
+    await act(async () => {
+      useWorkbenchStore.getState().minimizeAuxiliaryPanel('LibrariesTopComponent');
+    });
+    await act(async () => {});
+    await new Promise((resolve) => setTimeout(resolve, 30));
 
-      const afterMinimize = useWorkbenchStore.getState().auxiliary;
-      const librariesInstance = getGroupInstanceForPanel(afterMinimize, 'LibrariesTopComponent');
-      expect(librariesInstance?.dockedPanelIds).not.toContain('LibrariesTopComponent');
-      expect(api.getPanel('LibrariesTopComponent')).toBeUndefined();
-      expect(api.groups.find((group) => group.id === 'blue-aux-edge-left')).toBeUndefined();
-    },
-  );
+    const afterMinimize = useWorkbenchStore.getState().auxiliary;
+    const librariesInstance = getGroupInstanceForPanel(afterMinimize, 'LibrariesTopComponent');
+    expect(librariesInstance?.dockedPanelIds).not.toContain('LibrariesTopComponent');
+    expect(api.getPanel('LibrariesTopComponent')).toBeUndefined();
+    expect(api.groups.find((group) => group.id === 'blue-aux-edge-left')).toBeUndefined();
+  });
 });

@@ -17,14 +17,14 @@ export class BSBCheckBox extends BSBWidget {
   }
 
   override setPresetValue(val: string): void {
-    if (val.startsWith("ver2:")) {
+    if (val.startsWith('ver2:')) {
       const parsed = parseFloat(val.substring(5));
       if (Number.isFinite(parsed)) {
         this.setValue(parsed);
       }
     } else {
       // Legacy Java Blue: "true" or "false"
-      this.setValue(val.toLowerCase() === "true" ? 1 : 0);
+      this.setValue(val.toLowerCase() === 'true' ? 1 : 0);
     }
   }
 
@@ -33,10 +33,7 @@ export class BSBCheckBox extends BSBWidget {
     this.selected = val > 0;
   }
 
-  override collectReplacements(
-    unit: BSBCompilationUnit,
-    parameters?: Parameter[],
-  ): void {
+  override collectReplacements(unit: BSBCompilationUnit, parameters?: Parameter[]): void {
     this.addCompilationReplacement(unit, this.objectName, this.selected ? '1' : '0', parameters);
   }
 

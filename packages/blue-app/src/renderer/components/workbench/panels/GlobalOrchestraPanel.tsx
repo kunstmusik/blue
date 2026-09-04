@@ -20,16 +20,13 @@ export default function GlobalOrchestraPanel(): React.ReactElement {
     [projectUdos],
   );
 
-  const handleEvaluateCode = useCallback(
-    (text: string) => {
-      window.blueAPI?.evaluateCode({
-        editorKind: 'orc',
-        text,
-        sourcePanelId: 'GlobalOrchestraTopComponent',
-      });
-    },
-    [],
-  );
+  const handleEvaluateCode = useCallback((text: string) => {
+    window.blueAPI?.evaluateCode({
+      editorKind: 'orc',
+      text,
+      sourcePanelId: 'GlobalOrchestraTopComponent',
+    });
+  }, []);
 
   if (!loaded) {
     return (

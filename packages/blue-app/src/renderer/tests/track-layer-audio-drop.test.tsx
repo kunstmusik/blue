@@ -5,7 +5,10 @@ import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ScoreLayerGroupSnapshot, TrackLayerGroupSnapshot } from '../../shared/project-editor';
-import type { ScoreLayerSnapshot, ScoreRowObjectSnapshot } from '../components/workbench/panels/score/types';
+import type {
+  ScoreLayerSnapshot,
+  ScoreRowObjectSnapshot,
+} from '../components/workbench/panels/score/types';
 import TrackLayerGroupCanvas from '../components/workbench/panels/score/layer-groups/TrackLayerGroupCanvas';
 import { useProjectStore } from '../stores/project-store';
 import { useLibraryStore } from '../stores/library-store';
@@ -21,7 +24,9 @@ import {
   setCachedAudioFileDuration,
 } from '../components/workbench/panels/score/layer-groups/audio-file-duration-cache';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 import { toast } from 'sonner';
@@ -128,32 +133,43 @@ describe('Track audio-layer file drop target', () => {
     document.body.appendChild(host);
     root = createRoot(host);
     act(() => {
-      root.render(<TrackLayerGroupCanvas
-        group={group}
-        allLayerGroups={[group, makeUnusedSoundGroup()]}
-        projectSessionId={7}
-        projectRevision={3}
-        scoreRootGroupId={group.groupId}
-        scoreContainerPath={[]}
-        totalBeats={16}
-        pixelsPerBeat={25}
-        snapEnabled={false}
-        snapValue="BEAT"
-        tempo={120}
-        tempoMap={{
-          enabled: false,
-          visible: false,
-          points: [{ beat: 0, tempo: 120, curveType: 'constant' }],
-        }}
-        smpteFrameRate={30}
-        meterMap={{ entries: [{ measure: 0, numBeats: 4, beatLength: 4, startBeat: 0 }] }}
-      />);
+      root.render(
+        <TrackLayerGroupCanvas
+          group={group}
+          allLayerGroups={[group, makeUnusedSoundGroup()]}
+          projectSessionId={7}
+          projectRevision={3}
+          scoreRootGroupId={group.groupId}
+          scoreContainerPath={[]}
+          totalBeats={16}
+          pixelsPerBeat={25}
+          snapEnabled={false}
+          snapValue="BEAT"
+          tempo={120}
+          tempoMap={{
+            enabled: false,
+            visible: false,
+            points: [{ beat: 0, tempo: 120, curveType: 'constant' }],
+          }}
+          smpteFrameRate={30}
+          meterMap={{ entries: [{ measure: 0, numBeats: 4, beatLength: 4, startBeat: 0 }] }}
+        />,
+      );
     });
     surface = host.querySelector('[data-track-layer-group="true"]') as HTMLDivElement;
-    Object.defineProperty(surface, 'getBoundingClientRect', { value: () => ({
-      left: 0, top: 0, right: 400, bottom: 44, width: 400, height: 44, x: 0, y: 0,
-      toJSON: () => undefined,
-    }) });
+    Object.defineProperty(surface, 'getBoundingClientRect', {
+      value: () => ({
+        left: 0,
+        top: 0,
+        right: 400,
+        bottom: 44,
+        width: 400,
+        height: 44,
+        x: 0,
+        y: 0,
+        toJSON: () => undefined,
+      }),
+    });
 
     useProjectStore.setState({
       applyProjectDocumentPatch: vi.fn().mockResolvedValue(undefined),
@@ -162,9 +178,19 @@ describe('Track audio-layer file drop target', () => {
     } as Partial<ReturnType<typeof useProjectStore.getState>>);
     useScoreSelectionStore.setState({ select: originalSelect });
     useLibraryStore.setState({ captureScoreSoundObject: vi.fn().mockResolvedValue(true) });
-    useWorkbenchStore.setState({ openPanel: vi.fn() } as Partial<ReturnType<typeof useWorkbenchStore.getState>>);
-    commitAudioFileDrop.mockResolvedValue({ status: 'created', objectName: 'a.wav', storedPath: 'media/a.wav', copiedToMedia: true, receipt: { revision: 4, sessionId: 7, changed: true } });
-    getPathForFile.mockImplementation((file: { name?: string }) => `/Dropped/${file?.name ?? 'file'}`);
+    useWorkbenchStore.setState({ openPanel: vi.fn() } as Partial<
+      ReturnType<typeof useWorkbenchStore.getState>
+    >);
+    commitAudioFileDrop.mockResolvedValue({
+      status: 'created',
+      objectName: 'a.wav',
+      storedPath: 'media/a.wav',
+      copiedToMedia: true,
+      receipt: { revision: 4, sessionId: 7, changed: true },
+    });
+    getPathForFile.mockImplementation(
+      (file: { name?: string }) => `/Dropped/${file?.name ?? 'file'}`,
+    );
     window.blueAPI = {
       ...window.blueAPI,
       commitAudioFileDrop,
@@ -182,13 +208,17 @@ describe('Track audio-layer file drop target', () => {
     host = null;
     root = null;
     surface = null;
-    useProjectStore.setState(originalProjectActions as Partial<ReturnType<typeof useProjectStore.getState>>);
+    useProjectStore.setState(
+      originalProjectActions as Partial<ReturnType<typeof useProjectStore.getState>>,
+    );
     useLibraryStore.setState({ captureScoreSoundObject: originalCapture });
     useScoreSelectionStore.setState({ select: originalSelect });
     useScoreSelectionStore.getState().clearSelection();
     useScoreSelectionStore.getState().clearClipboard();
     useMidiRoutingStore.getState().clearFocusForProjectSession();
-    useWorkbenchStore.setState({ openPanel: originalOpenPanel } as Partial<ReturnType<typeof useWorkbenchStore.getState>>);
+    useWorkbenchStore.setState({ openPanel: originalOpenPanel } as Partial<
+      ReturnType<typeof useWorkbenchStore.getState>
+    >);
     useScoreSelectionStore.getState().setAudioDropGuideBeat(null);
     clearAudioFileDurationCache();
     window.blueAPI = originalBlueAPI;
@@ -199,7 +229,10 @@ describe('Track audio-layer file drop target', () => {
     const dataTransfer = makeDataTransfer({
       payloadByType: {
         [BLUE_FILE_MANAGER_DRAG_MIME]: serializeFileManagerDragPayload({
-          version: 1, kind: 'file', path: '/Users/me/a.wav', name: 'a.wav',
+          version: 1,
+          kind: 'file',
+          path: '/Users/me/a.wav',
+          name: 'a.wav',
         }),
       },
     });
@@ -243,17 +276,24 @@ describe('Track audio-layer file drop target', () => {
     });
 
     expect(commitAudioFileDrop).toHaveBeenCalledOnce();
-    expect(commitAudioFileDrop).toHaveBeenCalledWith(expect.objectContaining({
-      sourcePath: '/Dropped/ext.wav',
-      sourceKind: 'external-os',
-      startBeats: 1,
-    }));
+    expect(commitAudioFileDrop).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourcePath: '/Dropped/ext.wav',
+        sourceKind: 'external-os',
+        startBeats: 1,
+      }),
+    );
   });
 
   it('rejects a directory payload without a commit', async () => {
     const dataTransfer = makeDataTransfer({
       payloadByType: {
-        [BLUE_FILE_MANAGER_DRAG_MIME]: JSON.stringify({ version: 1, kind: 'directory', path: '/Users/me/dir', name: 'dir' }),
+        [BLUE_FILE_MANAGER_DRAG_MIME]: JSON.stringify({
+          version: 1,
+          kind: 'directory',
+          path: '/Users/me/dir',
+          name: 'dir',
+        }),
       },
     });
 
@@ -293,7 +333,10 @@ describe('Track audio-layer file drop target', () => {
     const dataTransfer = makeDataTransfer({
       payloadByType: {
         [BLUE_FILE_MANAGER_DRAG_MIME]: serializeFileManagerDragPayload({
-          version: 1, kind: 'file', path: '/Users/me/readme.txt', name: 'readme.txt',
+          version: 1,
+          kind: 'file',
+          path: '/Users/me/readme.txt',
+          name: 'readme.txt',
         }),
       },
     });
@@ -309,7 +352,10 @@ describe('Track audio-layer file drop target', () => {
     const dataTransfer = makeDataTransfer({
       payloadByType: {
         [BLUE_FILE_MANAGER_DRAG_MIME]: serializeFileManagerDragPayload({
-          version: 1, kind: 'file', path: '/Users/me/readme.txt', name: 'readme.txt',
+          version: 1,
+          kind: 'file',
+          path: '/Users/me/readme.txt',
+          name: 'readme.txt',
         }),
       },
     });
@@ -337,7 +383,10 @@ describe('Track audio-layer file drop target', () => {
     const dataTransfer = makeDataTransfer({
       payloadByType: {
         [BLUE_FILE_MANAGER_DRAG_MIME]: serializeFileManagerDragPayload({
-          version: 1, kind: 'file', path: '/Users/me/a.wav', name: 'a.wav',
+          version: 1,
+          kind: 'file',
+          path: '/Users/me/a.wav',
+          name: 'a.wav',
         }),
       },
     });
@@ -357,7 +406,10 @@ describe('Track audio-layer file drop target', () => {
     const dataTransfer = makeDataTransfer({
       payloadByType: {
         [BLUE_FILE_MANAGER_DRAG_MIME]: serializeFileManagerDragPayload({
-          version: 1, kind: 'file', path: '/Users/me/a.wav', name: 'a.wav',
+          version: 1,
+          kind: 'file',
+          path: '/Users/me/a.wav',
+          name: 'a.wav',
         }),
       },
     });
@@ -366,7 +418,9 @@ describe('Track audio-layer file drop target', () => {
       surface!.dispatchEvent(dragEvent('drop', dataTransfer, 50, 22));
     });
     expect(commitAudioFileDrop).toHaveBeenCalledOnce();
-    expect(toast.error).toHaveBeenCalledWith('The score changed while dragging. Drop again to retry.');
+    expect(toast.error).toHaveBeenCalledWith(
+      'The score changed while dragging. Drop again to retry.',
+    );
   });
 
   it('does not claim unrelated drag payloads', () => {
@@ -415,7 +469,10 @@ describe('Track audio-layer file drop target', () => {
     const dataTransfer = makeDataTransfer({
       payloadByType: {
         [BLUE_FILE_MANAGER_DRAG_MIME]: serializeFileManagerDragPayload({
-          version: 1, kind: 'file', path: '/Users/me/a.wav', name: 'a.wav',
+          version: 1,
+          kind: 'file',
+          path: '/Users/me/a.wav',
+          name: 'a.wav',
         }),
       },
     });
@@ -424,8 +481,12 @@ describe('Track audio-layer file drop target', () => {
       surface!.dispatchEvent(dragEvent('dragover', dataTransfer, 50, 22));
     });
 
-    const guideLine = surface!.querySelector('[data-audio-drop-guide-line="true"]') as HTMLDivElement | null;
-    const ghostRect = surface!.querySelector('[data-audio-drop-ghost-rect="true"]') as HTMLDivElement | null;
+    const guideLine = surface!.querySelector(
+      '[data-audio-drop-guide-line="true"]',
+    ) as HTMLDivElement | null;
+    const ghostRect = surface!.querySelector(
+      '[data-audio-drop-ghost-rect="true"]',
+    ) as HTMLDivElement | null;
 
     expect(guideLine).not.toBeNull();
     expect(guideLine?.style.left).toBe('50px');
@@ -448,7 +509,10 @@ describe('Track audio-layer file drop target', () => {
     const dataTransfer = makeDataTransfer({
       payloadByType: {
         [BLUE_FILE_MANAGER_DRAG_MIME]: serializeFileManagerDragPayload({
-          version: 1, kind: 'file', path: '/Users/me/a.wav', name: 'a.wav',
+          version: 1,
+          kind: 'file',
+          path: '/Users/me/a.wav',
+          name: 'a.wav',
         }),
       },
     });
@@ -457,7 +521,9 @@ describe('Track audio-layer file drop target', () => {
       surface!.dispatchEvent(dragEvent('dragover', dataTransfer, 50, 22));
     });
 
-    const ghostRect = surface!.querySelector('[data-audio-drop-ghost-rect="true"]') as HTMLDivElement | null;
+    const ghostRect = surface!.querySelector(
+      '[data-audio-drop-ghost-rect="true"]',
+    ) as HTMLDivElement | null;
     expect(ghostRect).not.toBeNull();
     expect(ghostRect?.style.width).toBe('75px');
   });
@@ -466,7 +532,10 @@ describe('Track audio-layer file drop target', () => {
     const dataTransfer = makeDataTransfer({
       payloadByType: {
         [BLUE_FILE_MANAGER_DRAG_MIME]: serializeFileManagerDragPayload({
-          version: 1, kind: 'file', path: '/Users/me/a.wav', name: 'a.wav',
+          version: 1,
+          kind: 'file',
+          path: '/Users/me/a.wav',
+          name: 'a.wav',
         }),
       },
     });
@@ -495,7 +564,10 @@ describe('Track audio-layer file drop target', () => {
     const dataTransfer = makeDataTransfer({
       payloadByType: {
         [BLUE_FILE_MANAGER_DRAG_MIME]: serializeFileManagerDragPayload({
-          version: 1, kind: 'file', path: '/Users/me/a.wav', name: 'a.wav',
+          version: 1,
+          kind: 'file',
+          path: '/Users/me/a.wav',
+          name: 'a.wav',
         }),
       },
     });
@@ -518,7 +590,10 @@ describe('Track audio-layer file drop target', () => {
     const dataTransfer = makeDataTransfer({
       payloadByType: {
         [BLUE_FILE_MANAGER_DRAG_MIME]: serializeFileManagerDragPayload({
-          version: 1, kind: 'file', path: '/Users/me/readme.txt', name: 'readme.txt',
+          version: 1,
+          kind: 'file',
+          path: '/Users/me/readme.txt',
+          name: 'readme.txt',
         }),
       },
     });

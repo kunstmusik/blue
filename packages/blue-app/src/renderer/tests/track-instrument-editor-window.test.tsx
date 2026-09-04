@@ -61,7 +61,9 @@ vi.mock('../components/workbench/panels/orchestra/InstrumentEditorPanel', () => 
 
 import TrackInstrumentEditorPage from '../components/track-instrument-editor/TrackInstrumentEditorPage';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 function makeSnapshot(): TrackInstrumentEditorSnapshot {
   return {
@@ -96,12 +98,14 @@ function makeBlueX7Snapshot(): TrackInstrumentEditorSnapshot {
       enabled: true,
       comment: '',
       voice: createDefaultBlueX7Voice(),
-      parameters: [{
-        parameterId: 'gain-id',
-        semanticKey: 'common.feedback',
-        fixedValue: 0,
-        automationEnabled: true,
-      }],
+      parameters: [
+        {
+          parameterId: 'gain-id',
+          semanticKey: 'common.feedback',
+          fixedValue: 0,
+          automationEnabled: true,
+        },
+      ],
     },
   };
 }
@@ -154,17 +158,21 @@ describe('Track instrument editor window page', () => {
       await Promise.resolve();
     });
 
-    expect(container.querySelector('[data-testid="instrument-editor"]')?.textContent).toBe('Initial Instrument');
+    expect(container.querySelector('[data-testid="instrument-editor"]')?.textContent).toBe(
+      'Initial Instrument',
+    );
     expect(onProjectDocumentUpdated).toHaveBeenCalledTimes(1);
 
     await act(async () => {
       (container.querySelector('[data-testid="instrument-editor"]') as HTMLButtonElement).click();
       await Promise.resolve();
     });
-    expect(update).toHaveBeenCalledWith(expect.objectContaining({
-      track: expect.objectContaining({ rootGroupId: 'editor-group', trackId: 'editor-track' }),
-      patch: { name: 'Updated' },
-    }));
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        track: expect.objectContaining({ rootGroupId: 'editor-group', trackId: 'editor-track' }),
+        patch: { name: 'Updated' },
+      }),
+    );
 
     act(() => root.unmount());
   });
@@ -176,7 +184,8 @@ describe('Track instrument editor window page', () => {
       '/track-instrument-editor.html?rootGroupId=editor-group&trackId=editor-track&projectSessionId=2&projectRevision=3',
     );
     const firstUpdate = deferred<TrackInstrumentEditorPatchResult>();
-    const update = vi.fn()
+    const update = vi
+      .fn()
       .mockImplementationOnce(() => firstUpdate.promise)
       .mockResolvedValue({
         status: 'applied',
@@ -218,15 +227,17 @@ describe('Track instrument editor window page', () => {
       payload: { value: 0.75 },
     });
     expect(update).toHaveBeenCalledTimes(1);
-    expect(update).toHaveBeenLastCalledWith(expect.objectContaining({
-      patch: {
-        bsbInterface: {
-          type: 'updateWidgetProperties',
-          widgetId: 'gain-slider',
-          properties: { value: 0.25 },
+    expect(update).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        patch: {
+          bsbInterface: {
+            type: 'updateWidgetProperties',
+            widgetId: 'gain-slider',
+            properties: { value: 0.25 },
+          },
         },
-      },
-    }));
+      }),
+    );
 
     await act(async () => {
       firstUpdate.resolve({
@@ -241,16 +252,18 @@ describe('Track instrument editor window page', () => {
     });
 
     expect(update).toHaveBeenCalledTimes(2);
-    expect(update).toHaveBeenLastCalledWith(expect.objectContaining({
-      track: expect.objectContaining({ projectRevision: 4 }),
-      patch: {
-        bsbInterface: {
-          type: 'updateWidgetProperties',
-          widgetId: 'gain-slider',
-          properties: { value: 0.75 },
+    expect(update).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        track: expect.objectContaining({ projectRevision: 4 }),
+        patch: {
+          bsbInterface: {
+            type: 'updateWidgetProperties',
+            widgetId: 'gain-slider',
+            properties: { value: 0.75 },
+          },
         },
-      },
-    }));
+      }),
+    );
     expect(container.textContent).not.toContain('changed elsewhere');
 
     act(() => root.unmount());
@@ -262,7 +275,8 @@ describe('Track instrument editor window page', () => {
       '',
       '/track-instrument-editor.html?rootGroupId=editor-group&trackId=editor-track&projectSessionId=2&projectRevision=3',
     );
-    const update = vi.fn()
+    const update = vi
+      .fn()
       .mockResolvedValueOnce({
         status: 'stale',
         snapshot: {
@@ -339,11 +353,9 @@ describe('Track instrument editor window page', () => {
       '',
       '/track-instrument-editor.html?rootGroupId=editor-group&trackId=editor-track&projectSessionId=2&projectRevision=3',
     );
-    let runtimeCallback: ((status: {
-      sequence: number;
-      playbackRunning: boolean;
-      blueLiveRunning: boolean;
-    }) => void) | undefined;
+    let runtimeCallback:
+      | ((status: { sequence: number; playbackRunning: boolean; blueLiveRunning: boolean }) => void)
+      | undefined;
     const unsubscribe = vi.fn(async () => undefined);
     window.blueAPI = {
       getTrackInstrumentEditorDocument: vi.fn().mockResolvedValue(makeBlueX7Snapshot()),

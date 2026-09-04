@@ -1,8 +1,5 @@
 import React from 'react';
-import type {
-  MidiImportPreview,
-  MidiImportSettings,
-} from '../../../../shared/midi-import';
+import type { MidiImportPreview, MidiImportSettings } from '../../../../shared/midi-import';
 
 interface MidiImportStreamTableProps {
   preview: MidiImportPreview;
@@ -11,7 +8,9 @@ interface MidiImportStreamTableProps {
 }
 
 function formatBeat(value: number): string {
-  return Number.isInteger(value) ? `${value}.0` : value.toFixed(4).replace(/0+$/, '').replace(/\.$/, '');
+  return Number.isInteger(value)
+    ? `${value}.0`
+    : value.toFixed(4).replace(/0+$/, '').replace(/\.$/, '');
 }
 
 export default function MidiImportStreamTable({
@@ -53,13 +52,16 @@ export default function MidiImportStreamTable({
                 </td>
                 <td className="px-2 py-2">{stream.channel + 1}</td>
                 <td className="whitespace-nowrap px-2 py-2 text-app-text-muted">
-                  {stream.noteCount} · {formatBeat(stream.firstBeat)}–{formatBeat(stream.lastBeat)} beats
+                  {stream.noteCount} · {formatBeat(stream.firstBeat)}–{formatBeat(stream.lastBeat)}{' '}
+                  beats
                 </td>
                 <td className="px-2 py-2">
                   <input
                     className="w-24 rounded border border-app-border/30 bg-app-field px-2 py-1 text-role-body text-app-text outline-none focus:border-app-border/60"
                     value={row.instrumentId}
-                    onChange={(event) => onUpdate(stream.streamKey, { instrumentId: event.target.value })}
+                    onChange={(event) =>
+                      onUpdate(stream.streamKey, { instrumentId: event.target.value })
+                    }
                     aria-label={`Instrument ID for ${stream.streamKey}`}
                   />
                 </td>
@@ -67,7 +69,9 @@ export default function MidiImportStreamTable({
                   <input
                     className="w-full rounded border border-app-border/30 bg-app-field px-2 py-1 font-mono text-role-body text-app-text outline-none focus:border-app-border/60"
                     value={row.noteTemplate}
-                    onChange={(event) => onUpdate(stream.streamKey, { noteTemplate: event.target.value })}
+                    onChange={(event) =>
+                      onUpdate(stream.streamKey, { noteTemplate: event.target.value })
+                    }
                     aria-label={`Note template for ${stream.streamKey}`}
                   />
                 </td>
@@ -75,7 +79,9 @@ export default function MidiImportStreamTable({
                   <input
                     type="checkbox"
                     checked={row.trimTime}
-                    onChange={(event) => onUpdate(stream.streamKey, { trimTime: event.target.checked })}
+                    onChange={(event) =>
+                      onUpdate(stream.streamKey, { trimTime: event.target.checked })
+                    }
                     aria-label={`Trim time for ${stream.streamKey}`}
                   />
                 </td>

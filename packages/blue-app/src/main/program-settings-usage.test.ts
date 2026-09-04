@@ -5,7 +5,10 @@ import {
   buildRealtimeEngineOptions,
   FEATURE_PARITY_NOTES,
 } from './program-settings-usage';
-import { createDefaultProgramSettings, type ProgramSettingsSnapshot } from '../shared/program-settings';
+import {
+  createDefaultProgramSettings,
+  type ProgramSettingsSnapshot,
+} from '../shared/program-settings';
 
 describe('program-settings-usage matrix', () => {
   it('has entries for every panel', () => {
@@ -98,7 +101,9 @@ describe('program-settings-usage matrix', () => {
   });
 
   it('marks Csound error warnings as consumed by terminal playback errors', () => {
-    const entry = buildUsageMatrix().find((item) => item.settingKey === 'general.csoundErrorWarningEnabled');
+    const entry = buildUsageMatrix().find(
+      (item) => item.settingKey === 'general.csoundErrorWarningEnabled',
+    );
 
     expect(entry).toMatchObject({
       currentStatus: 'used-by-workflow',

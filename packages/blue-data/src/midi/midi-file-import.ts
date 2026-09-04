@@ -91,8 +91,7 @@ export interface MidiImportBuildOptions {
   layerGroupType?: MidiImportLayerGroupType;
 }
 
-export const MIDI_IMPORT_DEFAULT_NOTE_TEMPLATE =
-  'i<INSTR_ID> <START> <DUR> <KEY> <VELOCITY>';
+export const MIDI_IMPORT_DEFAULT_NOTE_TEMPLATE = 'i<INSTR_ID> <START> <DUR> <KEY> <VELOCITY>';
 
 export const MIDI_IMPORT_DEFAULT_TEMPO_BPM = 120;
 
@@ -131,7 +130,9 @@ function getStreamMap(document: MidiImportDocument): Map<string, MidiImportStrea
 
 function validateDocument(document: MidiImportDocument): void {
   if (document.format !== 0 && document.format !== 1) {
-    throw new Error(`Unsupported MIDI format ${document.format}; only formats 0 and 1 are supported.`);
+    throw new Error(
+      `Unsupported MIDI format ${document.format}; only formats 0 and 1 are supported.`,
+    );
   }
 
   if (
@@ -193,18 +194,20 @@ function createMidiImportScoreText(
   ticksPerBeat: number,
   firstStartBeats: number,
 ): string {
-  return notes.map((note) => {
-    const rawStartBeats = note.startTick / ticksPerBeat;
-    const startBeats = setting.trimTime ? rawStartBeats - firstStartBeats : rawStartBeats;
-    const durationBeats = (note.endTick - note.startTick) / ticksPerBeat;
-    return expandMidiNoteTemplate(
-      setting.noteTemplate,
-      setting.instrumentId,
-      note,
-      startBeats,
-      durationBeats,
-    );
-  }).join('\n');
+  return notes
+    .map((note) => {
+      const rawStartBeats = note.startTick / ticksPerBeat;
+      const startBeats = setting.trimTime ? rawStartBeats - firstStartBeats : rawStartBeats;
+      const durationBeats = (note.endTick - note.startTick) / ticksPerBeat;
+      return expandMidiNoteTemplate(
+        setting.noteTemplate,
+        setting.instrumentId,
+        note,
+        startBeats,
+        durationBeats,
+      );
+    })
+    .join('\n');
 }
 
 function configureMidiImportTempoMap(
@@ -246,9 +249,7 @@ export function buildMidiImportProject(
   score.length = 0;
   configureMidiImportTempoMap(score, document, ticksPerBeat);
 
-  const root = options.layerGroupType === 'TRACK'
-    ? new TrackLayerGroup()
-    : new PolyObject(true);
+  const root = options.layerGroupType === 'TRACK' ? new TrackLayerGroup() : new PolyObject(true);
   root.setName('MIDI Import');
   const warnings: MidiImportWarning[] = [];
   let rootDuration = 0;

@@ -1,7 +1,10 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, it, expect } from 'vitest';
-import { getAudioFadeValue, buildFadePolygon } from '../components/workbench/panels/score/bar-renderers/audio-fade-renderer';
+import {
+  getAudioFadeValue,
+  buildFadePolygon,
+} from '../components/workbench/panels/score/bar-renderers/audio-fade-renderer';
 import AudioClipBar from '../components/workbench/panels/score/bar-renderers/AudioClipBar';
 import AudioFileScoreObjectBar from '../components/workbench/panels/score/bar-renderers/AudioFileScoreObjectBar';
 import FrozenSoundObjectBar from '../components/workbench/panels/score/bar-renderers/FrozenSoundObjectBar';
@@ -118,11 +121,7 @@ describe('AudioClip bar renderer', () => {
 
   describe('waveform helpers', () => {
     it('summarizes channel samples into min/max buckets', () => {
-      const channels = summarizeWaveformChannels(
-        [Float32Array.from([-1, -0.5, 0, 0.5, 1])],
-        5,
-        5,
-      );
+      const channels = summarizeWaveformChannels([Float32Array.from([-1, -0.5, 0, 0.5, 1])], 5, 5);
 
       expect(channels).toHaveLength(1);
       expect(channels[0]!.min).toEqual([-1, -0.5, 0, 0.5, 1]);
@@ -223,10 +222,7 @@ describe('AudioClip bar renderer', () => {
         },
       );
 
-      expect(paths).toEqual([
-        'M0.5 0 L0.5 20',
-        'M0.5 20 L0.5 40',
-      ]);
+      expect(paths).toEqual(['M0.5 0 L0.5 20', 'M0.5 20 L0.5 40']);
     });
   });
 
@@ -279,7 +275,9 @@ describe('AudioClip bar renderer', () => {
     );
 
     expect(html).toContain('data-waveform-key="aclp:clip.wav"');
-    expect(html).toContain('background:linear-gradient(180deg, rgba(145,218,145,0.761) 0%, rgba(102,153,102,0.761) 6px)');
+    expect(html).toContain(
+      'background:linear-gradient(180deg, rgba(145,218,145,0.761) 0%, rgba(102,153,102,0.761) 6px)',
+    );
     expect(html).toContain('<svg');
     expect(html).toContain('<path');
   });
@@ -332,7 +330,9 @@ describe('AudioClip bar renderer', () => {
       />,
     );
 
-    expect(html).toContain('background:linear-gradient(180deg, rgba(255,255,255,0.502) 0%, rgba(255,255,255,0.502) 6px)');
+    expect(html).toContain(
+      'background:linear-gradient(180deg, rgba(255,255,255,0.502) 0%, rgba(255,255,255,0.502) 6px)',
+    );
     expect(html).toContain('background-color:#000000');
     expect(html).toContain('stroke="rgba(255,255,255,0.502)"');
   });

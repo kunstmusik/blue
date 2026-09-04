@@ -63,8 +63,8 @@ export function loadProgramSettings(platform: string = process.platform): Progra
   const saved = readFromFile(filePath);
   const merged = mergeWithDefaults(saved ?? {}, platform);
   const containsRemovedAlphaMarqueeSetting = Boolean(
-    saved?.general
-    && Object.prototype.hasOwnProperty.call(saved.general, 'drawAlphaBackgroundOnMarquee'),
+    saved?.general &&
+    Object.prototype.hasOwnProperty.call(saved.general, 'drawAlphaBackgroundOnMarquee'),
   );
 
   if (saved && (saved.version !== PROGRAM_SETTINGS_VERSION || containsRemovedAlphaMarqueeSetting)) {
@@ -151,11 +151,14 @@ export function updatePlaybackPreferences(
   if (!isValidPlaybackPreferencePatch(patch)) {
     return {
       ok: false,
-      validationIssues: [{
-        path: 'playback',
-        message: 'Playback preference patch must contain at least one boolean field (followPlayback, followPlaybackOnStart)',
-        severity: 'error',
-      }],
+      validationIssues: [
+        {
+          path: 'playback',
+          message:
+            'Playback preference patch must contain at least one boolean field (followPlayback, followPlaybackOnStart)',
+          severity: 'error',
+        },
+      ],
     };
   }
 
@@ -165,7 +168,9 @@ export function updatePlaybackPreferences(
     playback: {
       ...current.playback,
       ...(patch.followPlayback !== undefined ? { followPlayback: patch.followPlayback } : {}),
-      ...(patch.followPlaybackOnStart !== undefined ? { followPlaybackOnStart: patch.followPlaybackOnStart } : {}),
+      ...(patch.followPlaybackOnStart !== undefined
+        ? { followPlaybackOnStart: patch.followPlaybackOnStart }
+        : {}),
     },
   };
 

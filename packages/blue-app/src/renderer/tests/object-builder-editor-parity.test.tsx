@@ -10,10 +10,18 @@ import ObjectBuilderScoreObjectEditor from '../components/workbench/panels/score
 import { resolveEditorComponent } from '../components/workbench/panels/score-object/editor-registry';
 import { chooseAppSelectOption, getAppSelectOptionLabels } from './app-select-test-utils';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 vi.mock('../components/workbench/panels/editors/SelectedCodeEditor', () => ({
-  default: ({ value, mode, readOnly, javaBlueCompletionOptions, onChange }: {
+  default: ({
+    value,
+    mode,
+    readOnly,
+    javaBlueCompletionOptions,
+    onChange,
+  }: {
     value: string;
     mode: string;
     readOnly: boolean;
@@ -23,10 +31,14 @@ vi.mock('../components/workbench/panels/editors/SelectedCodeEditor', () => ({
     <textarea
       aria-label="ObjectBuilder code"
       data-mode={mode}
-      data-bsb-keys={javaBlueCompletionOptions?.bsbReplacementKeys?.map((item) => item.key).join(',')}
+      data-bsb-keys={javaBlueCompletionOptions?.bsbReplacementKeys
+        ?.map((item) => item.key)
+        .join(',')}
       readOnly={readOnly}
       value={value}
-      onChange={(event) => { onChange(event.target.value); }}
+      onChange={(event) => {
+        onChange(event.target.value);
+      }}
     />
   ),
 }));
@@ -101,9 +113,19 @@ function createDocument(): ScoreObjectEditorDocumentSnapshot {
         editEnabled: true,
         gridSettings: { enabled: true, snapEnabled: true, width: 10, height: 10, gridStyle: 'DOT' },
         widgetTree: {
-          id: 'root', type: 'BSBRootGroup', objectName: '', x: 0, y: 0,
-          width: 0, height: 0, value: 0, minimum: 0, maximum: 0,
-          editable: true, properties: {}, children: [],
+          id: 'root',
+          type: 'BSBRootGroup',
+          objectName: '',
+          x: 0,
+          y: 0,
+          width: 0,
+          height: 0,
+          value: 0,
+          minimum: 0,
+          maximum: 0,
+          editable: true,
+          properties: {},
+          children: [],
         },
       },
     },
@@ -120,7 +142,9 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  act(() => { root.unmount(); });
+  act(() => {
+    root.unmount();
+  });
   container.remove();
 });
 
@@ -156,7 +180,9 @@ describe('ObjectBuilder editor parity', () => {
       comment: 'updated',
     });
     expect(next.editor.bsbInstrument?.gridSettings.width).toBe(24);
-    expect(doc.editor.kind === 'code' ? doc.editor.bsbInstrument?.gridSettings.width : undefined).toBe(10);
+    expect(
+      doc.editor.kind === 'code' ? doc.editor.bsbInstrument?.gridSettings.width : undefined,
+    ).toBe(10);
   });
 
   it('exposes all Java language choices and enables command line only for External', async () => {
@@ -170,21 +196,32 @@ describe('ObjectBuilder editor parity', () => {
       container.querySelector<HTMLButtonElement>('[data-object-builder-tab="code"]')?.click();
     });
 
-    const language = container.querySelector<HTMLButtonElement>('[aria-label="ObjectBuilder language"]');
-    const commandLine = container.querySelector<HTMLInputElement>('[aria-label="ObjectBuilder command line"]');
-    const codeEditor = container.querySelector<HTMLTextAreaElement>('[aria-label="ObjectBuilder code"]');
+    const language = container.querySelector<HTMLButtonElement>(
+      '[aria-label="ObjectBuilder language"]',
+    );
+    const commandLine = container.querySelector<HTMLInputElement>(
+      '[aria-label="ObjectBuilder command line"]',
+    );
+    const codeEditor = container.querySelector<HTMLTextAreaElement>(
+      '[aria-label="ObjectBuilder code"]',
+    );
     expect(await getAppSelectOptionLabels(language!)).toEqual([
-      'Python', 'JavaScript', 'Clojure', 'External',
+      'Python',
+      'JavaScript',
+      'Clojure',
+      'External',
     ]);
     expect(commandLine?.disabled).toBe(true);
     expect(codeEditor?.dataset.bsbKeys).toBe('amp');
 
     await chooseAppSelectOption(language!, 'External');
 
-    expect(onPatch).toHaveBeenCalledWith(expect.objectContaining({
-      type: 'updateTypeSpecificEditor',
-      patch: { languageType: 'EXTERNAL' },
-    }));
+    expect(onPatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'updateTypeSpecificEditor',
+        patch: { languageType: 'EXTERNAL' },
+      }),
+    );
 
     const externalDocument = applyPatchToDocument(createDocument(), {
       type: 'updateTypeSpecificEditor',
@@ -194,6 +231,9 @@ describe('ObjectBuilder editor parity', () => {
     await act(async () => {
       root.render(<ObjectBuilderScoreObjectEditor document={externalDocument} onPatch={onPatch} />);
     });
-    expect(container.querySelector<HTMLInputElement>('[aria-label="ObjectBuilder command line"]')?.disabled).toBe(false);
+    expect(
+      container.querySelector<HTMLInputElement>('[aria-label="ObjectBuilder command line"]')
+        ?.disabled,
+    ).toBe(false);
   });
 });

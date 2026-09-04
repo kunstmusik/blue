@@ -26,7 +26,13 @@ export function formatAudioDuration(seconds: number): string {
   return `${hours}:${String(minutes).padStart(2, '0')}:${String(wholeSecs).padStart(2, '0')}.${String(millis).padStart(3, '0')}`;
 }
 
-function FieldRow({ label, children }: { label: string; children: React.ReactNode }): React.ReactElement {
+function FieldRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}): React.ReactElement {
   return (
     <div className={BLUE_INSPECTOR_ROW_CLASS}>
       <label className={BLUE_INSPECTOR_FIELD_LABEL_CLASS}>{label}</label>
@@ -44,7 +50,10 @@ interface LocalAudioMetadata {
   metadata: AudioFileMetadataSnapshot;
 }
 
-export default function FileBackedScoreObjectEditor({ document, onPatch }: ScoreObjectEditorComponentProps): React.ReactElement {
+export default function FileBackedScoreObjectEditor({
+  document,
+  onPatch,
+}: ScoreObjectEditorComponentProps): React.ReactElement {
   const editor = document.editor;
   const targetKey = JSON.stringify(document.target);
   const [activeTab, setActiveTab] = useState<'audioFile' | 'csound'>('audioFile');
@@ -53,17 +62,18 @@ export default function FileBackedScoreObjectEditor({ document, onPatch }: Score
   const [localMetadata, setLocalMetadata] = useState<LocalAudioMetadata | null>(null);
 
   useEffect(() => {
-    setLocalMetadata((current) => current?.targetKey === targetKey ? current : null);
+    setLocalMetadata((current) => (current?.targetKey === targetKey ? current : null));
     setActionError(null);
     setSaveSuccessMessage(null);
   }, [targetKey]);
 
   // ─── AudioFile Editor ───
   if (editor.kind === 'audioFile') {
-    const metadataOverride = localMetadata?.targetKey === targetKey
-      && (localMetadata.sourcePath === editor.filePath || localMetadata.storedPath === editor.filePath)
-      ? localMetadata.metadata
-      : null;
+    const metadataOverride =
+      localMetadata?.targetKey === targetKey &&
+      (localMetadata.sourcePath === editor.filePath || localMetadata.storedPath === editor.filePath)
+        ? localMetadata.metadata
+        : null;
     const metadataState: AudioFileMetadataState = metadataOverride
       ? {
           status: 'available',
@@ -86,7 +96,9 @@ export default function FileBackedScoreObjectEditor({ document, onPatch }: Score
       setActionError(null);
       if (!window.blueAPI?.selectScoreObjectAudioFile) return;
       try {
-        const result = await window.blueAPI.selectScoreObjectAudioFile({ currentPath: editor.filePath });
+        const result = await window.blueAPI.selectScoreObjectAudioFile({
+          currentPath: editor.filePath,
+        });
         if (result.status === 'selected') {
           setLocalMetadata({
             targetKey,
@@ -116,16 +128,15 @@ export default function FileBackedScoreObjectEditor({ document, onPatch }: Score
       });
     };
 
-    const channelVariablesInfo = metadataState.status === 'available'
-      && !metadataState.unavailableFields.includes('channels')
-      ? `Channels mapped to: ${metadataState.channelVariables || 'aChannel1'}`
-      : 'Channel variables unavailable';
+    const channelVariablesInfo =
+      metadataState.status === 'available' && !metadataState.unavailableFields.includes('channels')
+        ? `Channels mapped to: ${metadataState.channelVariables || 'aChannel1'}`
+        : 'Channel variables unavailable';
 
-    const metadataValue = (field: string, value: React.ReactNode): React.ReactNode => (
+    const metadataValue = (field: string, value: React.ReactNode): React.ReactNode =>
       metadataState.status === 'available' && metadataState.unavailableFields.includes(field)
         ? 'Unavailable'
-        : value
-    );
+        : value;
 
     return (
       <div className="flex h-full min-h-0 flex-col bg-blue-bg">
@@ -138,7 +149,7 @@ export default function FileBackedScoreObjectEditor({ document, onPatch }: Score
                 'border-b-2 px-3 py-2 text-role-body',
                 activeTab === 'audioFile'
                   ? 'border-blue-accent text-app-text-strong font-medium'
-                  : 'border-transparent text-blue-muted hover:text-app-text-strong'
+                  : 'border-transparent text-blue-muted hover:text-app-text-strong',
               )}
               onClick={() => setActiveTab('audioFile')}
             >
@@ -151,7 +162,7 @@ export default function FileBackedScoreObjectEditor({ document, onPatch }: Score
                 'border-b-2 px-3 py-2 text-role-body',
                 activeTab === 'csound'
                   ? 'border-blue-accent text-app-text-strong font-medium'
-                  : 'border-transparent text-blue-muted hover:text-app-text-strong'
+                  : 'border-transparent text-blue-muted hover:text-app-text-strong',
               )}
               onClick={() => setActiveTab('csound')}
             >
@@ -198,51 +209,77 @@ export default function FileBackedScoreObjectEditor({ document, onPatch }: Score
             {metadataState.status === 'missing' && (
               <div className="mx-3 my-2 p-2 rounded bg-amber-950/40 border border-amber-800/60 text-amber-200 text-role-body">
                 <div className="font-semibold">Audio File Not Found</div>
-                <div className="text-amber-300/80 text-role-callout mt-0.5">{metadataState.message}</div>
+                <div className="text-amber-300/80 text-role-callout mt-0.5">
+                  {metadataState.message}
+                </div>
               </div>
             )}
 
             {metadataState.status === 'unreadable' && (
               <div className="mx-3 my-2 p-2 rounded bg-red-950/40 border border-red-800/60 text-red-200 text-role-body">
                 <div className="font-semibold">Audio File Unreadable</div>
-                <div className="text-red-300/80 text-role-callout mt-0.5">{metadataState.message}</div>
+                <div className="text-red-300/80 text-role-callout mt-0.5">
+                  {metadataState.message}
+                </div>
               </div>
             )}
 
             {metadataState.status === 'unsupported' && (
               <div className="mx-3 my-2 p-2 rounded bg-amber-950/40 border border-amber-800/60 text-amber-200 text-role-body">
                 <div className="font-semibold">Unsupported Audio Format</div>
-                <div className="text-amber-300/80 text-role-callout mt-0.5">{metadataState.message}</div>
+                <div className="text-amber-300/80 text-role-callout mt-0.5">
+                  {metadataState.message}
+                </div>
               </div>
             )}
 
             {metadataState.status === 'available' && (
-              <div className="mt-2 pt-2 border-t border-blue-border/40" data-testid="audio-file-metadata-grid">
+              <div
+                className="mt-2 pt-2 border-t border-blue-border/40"
+                data-testid="audio-file-metadata-grid"
+              >
                 <FieldRow label="Duration">
                   <span className={BLUE_INSPECTOR_VALUE_TEXT_CLASS}>
-                    {metadataValue('durationSeconds', formatAudioDuration(metadataState.durationSeconds))}
+                    {metadataValue(
+                      'durationSeconds',
+                      formatAudioDuration(metadataState.durationSeconds),
+                    )}
                   </span>
                 </FieldRow>
                 <FieldRow label="Format Type">
-                  <span className={BLUE_INSPECTOR_VALUE_TEXT_CLASS}>{metadataValue('formatType', metadataState.formatType)}</span>
+                  <span className={BLUE_INSPECTOR_VALUE_TEXT_CLASS}>
+                    {metadataValue('formatType', metadataState.formatType)}
+                  </span>
                 </FieldRow>
                 <FieldRow label="Byte Length">
-                  <span className={BLUE_INSPECTOR_VALUE_TEXT_CLASS}>{metadataValue('byteLength', metadataState.byteLength)}</span>
+                  <span className={BLUE_INSPECTOR_VALUE_TEXT_CLASS}>
+                    {metadataValue('byteLength', metadataState.byteLength)}
+                  </span>
                 </FieldRow>
                 <FieldRow label="Encoding Type">
-                  <span className={BLUE_INSPECTOR_VALUE_TEXT_CLASS}>{metadataValue('encodingType', metadataState.encodingType)}</span>
+                  <span className={BLUE_INSPECTOR_VALUE_TEXT_CLASS}>
+                    {metadataValue('encodingType', metadataState.encodingType)}
+                  </span>
                 </FieldRow>
                 <FieldRow label="Sample Rate">
-                  <span className={BLUE_INSPECTOR_VALUE_TEXT_CLASS}>{metadataValue('sampleRate', metadataState.sampleRate.toFixed(1))}</span>
+                  <span className={BLUE_INSPECTOR_VALUE_TEXT_CLASS}>
+                    {metadataValue('sampleRate', metadataState.sampleRate.toFixed(1))}
+                  </span>
                 </FieldRow>
                 <FieldRow label="Sample Size">
-                  <span className={BLUE_INSPECTOR_VALUE_TEXT_CLASS}>{metadataValue('sampleSizeInBits', metadataState.sampleSizeInBits)}</span>
+                  <span className={BLUE_INSPECTOR_VALUE_TEXT_CLASS}>
+                    {metadataValue('sampleSizeInBits', metadataState.sampleSizeInBits)}
+                  </span>
                 </FieldRow>
                 <FieldRow label="Channels">
-                  <span className={BLUE_INSPECTOR_VALUE_TEXT_CLASS}>{metadataValue('channels', metadataState.channels)}</span>
+                  <span className={BLUE_INSPECTOR_VALUE_TEXT_CLASS}>
+                    {metadataValue('channels', metadataState.channels)}
+                  </span>
                 </FieldRow>
                 <FieldRow label="Is Big Endian">
-                  <span className={BLUE_INSPECTOR_VALUE_TEXT_CLASS}>{metadataValue('isBigEndian', String(metadataState.isBigEndian))}</span>
+                  <span className={BLUE_INSPECTOR_VALUE_TEXT_CLASS}>
+                    {metadataValue('isBigEndian', String(metadataState.isBigEndian))}
+                  </span>
                 </FieldRow>
               </div>
             )}
@@ -251,7 +288,10 @@ export default function FileBackedScoreObjectEditor({ document, onPatch }: Score
 
         {activeTab === 'csound' && (
           <div className="flex-1 flex flex-col min-h-0" data-testid="csound-tab-content">
-            <div className="px-3 py-1.5 border-b border-blue-border bg-app-surface-subtle text-role-body text-gray-300 shrink-0" data-testid="channel-variables-info">
+            <div
+              className="px-3 py-1.5 border-b border-blue-border bg-app-surface-subtle text-role-body text-gray-300 shrink-0"
+              data-testid="channel-variables-info"
+            >
               {channelVariablesInfo}
             </div>
             <div className="flex-1 min-h-0 overflow-hidden">
@@ -317,10 +357,14 @@ export default function FileBackedScoreObjectEditor({ document, onPatch }: Score
         )}
 
         <FieldRow label="Object Name">
-          <span className={BLUE_INSPECTOR_VALUE_TEXT_CLASS}>{editor.sourceName || '(Unnamed)'}</span>
+          <span className={BLUE_INSPECTOR_VALUE_TEXT_CLASS}>
+            {editor.sourceName || '(Unnamed)'}
+          </span>
         </FieldRow>
         <FieldRow label="Type">
-          <span className={BLUE_INSPECTOR_VALUE_TEXT_CLASS}>{editor.sourceType || 'SoundObject'}</span>
+          <span className={BLUE_INSPECTOR_VALUE_TEXT_CLASS}>
+            {editor.sourceType || 'SoundObject'}
+          </span>
         </FieldRow>
         <FieldRow label="Wave File">
           <span className={BLUE_INSPECTOR_VALUE_TEXT_CLASS}>{editor.frozenWaveFileName}</span>
@@ -332,7 +376,9 @@ export default function FileBackedScoreObjectEditor({ document, onPatch }: Score
         </FieldRow>
         {editor.sourceDurationBeats !== null && (
           <FieldRow label="Duration">
-            <span className={BLUE_INSPECTOR_VALUE_TEXT_CLASS}>{editor.sourceDurationBeats} beats</span>
+            <span className={BLUE_INSPECTOR_VALUE_TEXT_CLASS}>
+              {editor.sourceDurationBeats} beats
+            </span>
           </FieldRow>
         )}
 

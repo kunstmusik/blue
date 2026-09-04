@@ -17,24 +17,21 @@ export interface MidiPermissionContext {
 export function decideMidiPermission(ctx: MidiPermissionContext): boolean {
   if (ctx.permission === 'local-fonts') return true;
   return (
-    ctx.isPrimary
-    && ctx.isTrustedLocation
-    && (ctx.permission === 'midi' || ctx.permission === 'midiSysex')
+    ctx.isPrimary &&
+    ctx.isTrustedLocation &&
+    (ctx.permission === 'midi' || ctx.permission === 'midiSysex')
   );
 }
 
-export function isSameApplicationLocation(
-  requestingUrl: string,
-  applicationUrl: string,
-): boolean {
+export function isSameApplicationLocation(requestingUrl: string, applicationUrl: string): boolean {
   try {
     const requesting = new URL(requestingUrl);
     const application = new URL(applicationUrl);
     if (application.protocol === 'file:') {
       return (
-        requesting.protocol === 'file:'
-        && requesting.hostname === application.hostname
-        && requesting.pathname === application.pathname
+        requesting.protocol === 'file:' &&
+        requesting.hostname === application.hostname &&
+        requesting.pathname === application.pathname
       );
     }
     return requesting.origin === application.origin;

@@ -1,9 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
-import type {
-  LibrarySupportStatus,
-  LibraryType,
-} from '../../shared/unified-library';
+import type { LibrarySupportStatus, LibraryType } from '../../shared/unified-library';
 import { initializeUnifiedLibrarySchema } from './schema';
 import {
   classifyLibraryPayload,
@@ -143,18 +140,14 @@ function mapNode(row: Record<string, unknown>): RepositoryNode {
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
     createdByImportBatchId:
-      row.created_by_import_batch_id === null
-        ? null
-        : String(row.created_by_import_batch_id),
+      row.created_by_import_batch_id === null ? null : String(row.created_by_import_batch_id),
   };
 }
 
 export class UnifiedLibraryRepository {
   private closed = false;
 
-  private constructor(
-    private readonly database: DatabaseSync,
-  ) {}
+  private constructor(private readonly database: DatabaseSync) {}
 
   static open(databasePath: string): UnifiedLibraryRepository {
     const database = new DatabaseSync(databasePath);
@@ -196,7 +189,9 @@ export class UnifiedLibraryRepository {
       effect: 0,
     };
     for (const row of this.database
-      .prepare("SELECT library_type, COUNT(*) AS count FROM library_nodes WHERE node_kind = 'item' GROUP BY library_type")
+      .prepare(
+        "SELECT library_type, COUNT(*) AS count FROM library_nodes WHERE node_kind = 'item' GROUP BY library_type",
+      )
       .all()) {
       itemCounts[asLibraryType(row.library_type)] = Number(row.count);
     }
@@ -204,12 +199,16 @@ export class UnifiedLibraryRepository {
   }
 
   private refreshUnsupportedClassifications(): void {
-    const rows = this.database.prepare(`
+    const rows = this.database
+      .prepare(
+        `
       SELECT nodes.id, nodes.library_type, payload.*
       FROM library_nodes nodes
       JOIN library_item_payloads payload ON payload.node_id = nodes.id
       WHERE payload.support_status = 'unsupported'
-    `).all();
+    `,
+      )
+      .all();
     if (rows.length === 0) return;
 
     this.withTransaction(() => {
@@ -223,27 +222,36 @@ export class UnifiedLibraryRepository {
             parseRawXmlDocument(payloadXml).root,
           );
           if (
-            classified.supportStatus !== 'supported'
-            || classified.rawHash !== String(row.raw_hash)
-          ) continue;
-          this.database.prepare(`
+            classified.supportStatus !== 'supported' ||
+            classified.rawHash !== String(row.raw_hash)
+          )
+            continue;
+          this.database
+            .prepare(
+              `
             UPDATE library_item_payloads
             SET object_type = ?, support_status = 'supported',
                 support_reason_code = NULL, support_message = NULL,
                 preview_json = ?, dependency_json = ?,
                 metadata_revision = metadata_revision + 1
             WHERE node_id = ?
-          `).run(
-            classified.objectType,
-            JSON.stringify(classified.preview),
-            JSON.stringify(classified.dependencies),
-            String(row.id),
-          );
-          this.database.prepare(`
+          `,
+            )
+            .run(
+              classified.objectType,
+              JSON.stringify(classified.preview),
+              JSON.stringify(classified.dependencies),
+              String(row.id),
+            );
+          this.database
+            .prepare(
+              `
             UPDATE library_nodes
             SET revision = revision + 1, updated_at = ?
             WHERE id = ?
-          `).run(now, String(row.id));
+          `,
+            )
+            .run(now, String(row.id));
           updated += 1;
         } catch {
           // Preserved unsupported payloads remain untouched when they cannot be classified safely.
@@ -272,11 +280,13 @@ export class UnifiedLibraryRepository {
   listChildren(parentId: string): RepositoryNode[] {
     this.assertOpen();
     return this.database
-      .prepare(`
+      .prepare(
+        `
         SELECT * FROM library_nodes
         WHERE parent_id = ?
         ORDER BY CASE node_kind WHEN 'folder' THEN 0 ELSE 1 END, sort_index, id
-      `)
+      `,
+      )
       .all(parentId)
       .map(mapNode);
   }
@@ -286,12 +296,14 @@ export class UnifiedLibraryRepository {
     const boundedLimit = Math.max(1, Math.min(limit, 500));
     const boundedOffset = Math.max(0, Math.trunc(offset));
     const rows = this.database
-      .prepare(`
+      .prepare(
+        `
         SELECT * FROM library_nodes
         WHERE parent_id = ?
         ORDER BY CASE node_kind WHEN 'folder' THEN 0 ELSE 1 END, sort_index, id
         LIMIT ? OFFSET ?
-      `)
+      `,
+      )
       .all(parentId, boundedLimit + 1, boundedOffset);
     return {
       nodes: rows.slice(0, boundedLimit).map(mapNode),
@@ -301,15 +313,18 @@ export class UnifiedLibraryRepository {
 
   hasChildren(nodeId: string): boolean {
     this.assertOpen();
-    return Boolean(this.database
-      .prepare('SELECT 1 AS found FROM library_nodes WHERE parent_id = ? LIMIT 1')
-      .get(nodeId));
+    return Boolean(
+      this.database
+        .prepare('SELECT 1 AS found FROM library_nodes WHERE parent_id = ? LIMIT 1')
+        .get(nodeId),
+    );
   }
 
   getBreadcrumb(nodeId: string): string[] {
     this.assertOpen();
     const rows = this.database
-      .prepare(`
+      .prepare(
+        `
         WITH RECURSIVE ancestors(id, parent_id, display_name, depth) AS (
           SELECT id, parent_id, display_name, 0 FROM library_nodes WHERE id = ?
           UNION ALL
@@ -318,7 +333,8 @@ export class UnifiedLibraryRepository {
           JOIN ancestors ON ancestors.parent_id = parent.id
         )
         SELECT display_name FROM ancestors ORDER BY depth DESC
-      `)
+      `,
+      )
       .all(nodeId);
     return rows.map((row) => String(row.display_name));
   }
@@ -345,9 +361,10 @@ export class UnifiedLibraryRepository {
       ORDER BY nodes.library_type, nodes.search_name, nodes.id
       LIMIT ? OFFSET ?
     `;
-    const args = libraryType === 'all'
-      ? [`%${escaped}%`, boundedLimit + 1, boundedOffset]
-      : [`%${escaped}%`, libraryType, boundedLimit + 1, boundedOffset];
+    const args =
+      libraryType === 'all'
+        ? [`%${escaped}%`, boundedLimit + 1, boundedOffset]
+        : [`%${escaped}%`, libraryType, boundedLimit + 1, boundedOffset];
     const rows = this.database.prepare(sql).all(...args);
     const countSql = `
       SELECT COUNT(*) AS count
@@ -381,14 +398,12 @@ export class UnifiedLibraryRepository {
       embeddedName: row.embedded_name === null ? null : String(row.embedded_name),
       objectType: String(row.object_type),
       supportStatus: row.support_status === 'supported' ? 'supported' : 'unsupported',
-      supportReasonCode:
-        row.support_reason_code === null ? null : String(row.support_reason_code),
+      supportReasonCode: row.support_reason_code === null ? null : String(row.support_reason_code),
       supportMessage: row.support_message === null ? null : String(row.support_message),
       payloadXml: String(row.payload_xml),
       rawHash: String(row.raw_hash),
       canonicalContentHash: String(row.canonical_content_hash),
-      serializerRevision:
-        row.serializer_revision === null ? null : String(row.serializer_revision),
+      serializerRevision: row.serializer_revision === null ? null : String(row.serializer_revision),
       preview: JSON.parse(String(row.preview_json)) as Record<string, unknown>,
       dependencies: JSON.parse(String(row.dependency_json)) as Record<string, unknown>,
       metadataRevision: Number(row.metadata_revision),
@@ -398,12 +413,14 @@ export class UnifiedLibraryRepository {
   getItemSummary(nodeId: string): RepositoryItemSummary {
     this.assertOpen();
     const row = this.database
-      .prepare(`
+      .prepare(
+        `
         SELECT nodes.*, payload.object_type, payload.support_status
         FROM library_nodes nodes
         JOIN library_item_payloads payload ON payload.node_id = nodes.id
         WHERE nodes.id = ? AND nodes.node_kind = 'item'
-      `)
+      `,
+      )
       .get(nodeId);
     if (!row) throw new Error(`Library item not found: ${nodeId}`);
     return {
@@ -434,19 +451,13 @@ export class UnifiedLibraryRepository {
     };
   }
 
-  createClipboardSubtree(
-    parentId: string,
-    subtree: RepositoryClipboardNode,
-  ): RepositoryNode {
+  createClipboardSubtree(parentId: string, subtree: RepositoryClipboardNode): RepositoryNode {
     return this.withTransaction(() => {
       const parent = this.getNode(parentId);
       if (parent.nodeKind === 'item' || parent.libraryType !== subtree.libraryType) {
         throw new Error('Invalid clipboard destination');
       }
-      const insert = (
-        destinationId: string,
-        entry: RepositoryClipboardNode,
-      ): RepositoryNode => {
+      const insert = (destinationId: string, entry: RepositoryClipboardNode): RepositoryNode => {
         if (entry.libraryType !== subtree.libraryType) {
           throw new Error('Invalid mixed-type clipboard subtree');
         }
@@ -554,11 +565,13 @@ export class UnifiedLibraryRepository {
       const name = validateDisplayName(displayName);
       const now = new Date().toISOString();
       this.database
-        .prepare(`
+        .prepare(
+          `
           UPDATE library_nodes
           SET display_name = ?, search_name = ?, revision = revision + 1, updated_at = ?
           WHERE id = ? AND revision = ?
-        `)
+        `,
+        )
         .run(name, normalizeSearchName(name), now, nodeId, expectedRevision);
       this.incrementContentRevision();
       return this.getNode(nodeId);
@@ -586,11 +599,15 @@ export class UnifiedLibraryRepository {
       }
       const oldParentId = node.parentId;
       const now = new Date().toISOString();
-      this.database.prepare(`
+      this.database
+        .prepare(
+          `
         UPDATE library_nodes
         SET parent_id = ?, sort_index = ?, revision = revision + 1, updated_at = ?
         WHERE id = ? AND revision = ?
-      `).run(parentId, Math.max(0, Math.trunc(targetIndex)), now, node.id, expectedRevision);
+      `,
+        )
+        .run(parentId, Math.max(0, Math.trunc(targetIndex)), now, node.id, expectedRevision);
       if (oldParentId) this.normalizeSiblingOrder(oldParentId);
       this.normalizeSiblingOrder(parentId, node.id, targetIndex);
       this.incrementContentRevision();
@@ -604,10 +621,14 @@ export class UnifiedLibraryRepository {
       if (!node.parentId) throw new Error('Library roots cannot be reordered');
       this.normalizeSiblingOrder(node.parentId, node.id, targetIndex);
       const now = new Date().toISOString();
-      this.database.prepare(`
+      this.database
+        .prepare(
+          `
         UPDATE library_nodes SET revision = revision + 1, updated_at = ?
         WHERE id = ? AND revision = ?
-      `).run(now, node.id, expectedRevision);
+      `,
+        )
+        .run(now, node.id, expectedRevision);
       this.incrementContentRevision();
       return this.getNode(node.id);
     });
@@ -622,7 +643,8 @@ export class UnifiedLibraryRepository {
   ): RepositoryNode {
     return this.withTransaction(() => {
       const node = this.getNode(nodeId);
-      if (node.nodeKind === 'root' || node.parentId === null) throw new Error('Library roots cannot be duplicated');
+      if (node.nodeKind === 'root' || node.parentId === null)
+        throw new Error('Library roots cannot be duplicated');
       if (node.revision !== expectedRevision) throw new Error('Stale revision');
       const destinationId = parentId ?? node.parentId;
       const destination = this.getNode(destinationId);
@@ -633,7 +655,8 @@ export class UnifiedLibraryRepository {
         throw new Error('Invalid duplicate destination type');
       }
       const duplicate = this.duplicateSubtree(node, destinationId);
-      if (targetIndex !== undefined) this.normalizeSiblingOrder(destinationId, duplicate.id, targetIndex);
+      if (targetIndex !== undefined)
+        this.normalizeSiblingOrder(destinationId, duplicate.id, targetIndex);
       this.incrementContentRevision();
       return duplicate;
     });
@@ -654,14 +677,18 @@ export class UnifiedLibraryRepository {
 
   listDescendantNodeIds(nodeId: string): string[] {
     this.getNode(nodeId);
-    const rows = this.database.prepare(`
+    const rows = this.database
+      .prepare(
+        `
       WITH RECURSIVE descendants(id, depth) AS (
         SELECT id, 0 FROM library_nodes WHERE id = ?
         UNION ALL
         SELECT child.id, descendants.depth + 1
         FROM library_nodes child JOIN descendants ON child.parent_id = descendants.id
       ) SELECT id FROM descendants ORDER BY depth DESC
-    `).all(nodeId);
+    `,
+      )
+      .all(nodeId);
     return rows.map((row) => String(row.id));
   }
 
@@ -676,10 +703,14 @@ export class UnifiedLibraryRepository {
       this.database.prepare('DELETE FROM library_item_payloads WHERE node_id = ?').run(node.id);
       this.insertPayload(node.id, payload);
       const now = new Date().toISOString();
-      this.database.prepare(`
+      this.database
+        .prepare(
+          `
         UPDATE library_nodes SET revision = revision + 1, updated_at = ?
         WHERE id = ? AND revision = ?
-      `).run(now, node.id, expectedRevision);
+      `,
+        )
+        .run(now, node.id, expectedRevision);
       this.incrementContentRevision();
       return this.getNode(node.id);
     });
@@ -698,11 +729,15 @@ export class UnifiedLibraryRepository {
       this.database.prepare('DELETE FROM library_item_payloads WHERE node_id = ?').run(node.id);
       this.insertPayload(node.id, payload);
       const now = new Date().toISOString();
-      this.database.prepare(`
+      this.database
+        .prepare(
+          `
         UPDATE library_nodes
         SET display_name = ?, search_name = ?, revision = revision + 1, updated_at = ?
         WHERE id = ? AND revision = ?
-      `).run(name, normalizeSearchName(name), now, node.id, expectedRevision);
+      `,
+        )
+        .run(name, normalizeSearchName(name), now, node.id, expectedRevision);
       this.incrementContentRevision();
       return this.getNode(node.id);
     });
@@ -715,10 +750,14 @@ export class UnifiedLibraryRepository {
     readonly startedAt: string;
   }): void {
     this.withTransaction(() => {
-      this.database.prepare(`
+      this.database
+        .prepare(
+          `
         INSERT INTO import_batches (id, mode, status, started_at, source_count)
         VALUES (?, ?, 'running', ?, ?)
-      `).run(input.id, input.mode, input.startedAt, input.sourceCount);
+      `,
+        )
+        .run(input.id, input.mode, input.startedAt, input.sourceCount);
     });
   }
 
@@ -736,34 +775,52 @@ export class UnifiedLibraryRepository {
       const createdNodeIds: string[] = [];
       let exactDuplicateCount = 0;
       let aliasCount = 0;
-      this.database.prepare(`
+      this.database
+        .prepare(
+          `
         INSERT INTO import_sources (
           id, batch_id, library_type, source_kind, source_path,
           source_raw_hash, status, counts_json, diagnostics_json
         ) VALUES (?, ?, ?, ?, ?, ?, 'recognized', '{}', ?)
-      `).run(
-        input.sourceId, input.batchId, input.plan.libraryType, input.sourceKind,
-        input.sourcePath, input.plan.sourceRawHash, JSON.stringify(input.plan.diagnostics),
-      );
+      `,
+        )
+        .run(
+          input.sourceId,
+          input.batchId,
+          input.plan.libraryType,
+          input.sourceKind,
+          input.sourcePath,
+          input.plan.sourceRawHash,
+          JSON.stringify(input.plan.diagnostics),
+        );
       const recordChange = this.database.prepare(`
         INSERT INTO import_changes (source_id, node_id, action, recorded_revision, detail_json)
         VALUES (?, ?, ?, ?, ?)
       `);
-      const append = (parentId: string, child: LegacyLibraryTreeNode, sourceIndices: readonly number[]): void => {
+      const append = (
+        parentId: string,
+        child: LegacyLibraryTreeNode,
+        sourceIndices: readonly number[],
+      ): void => {
         if (child.kind === 'folder') {
           if (input.conflictPolicy === 'merge') {
-            const matches = this.listChildren(parentId).filter((candidate) => (
-              candidate.nodeKind === 'folder' && candidate.displayName === child.name
-            ));
+            const matches = this.listChildren(parentId).filter(
+              (candidate) =>
+                candidate.nodeKind === 'folder' && candidate.displayName === child.name,
+            );
             if (matches.length === 1) {
-              child.children.forEach((nested, index) => append(matches[0]!.id, nested, [...sourceIndices, index]));
+              child.children.forEach((nested, index) =>
+                append(matches[0]!.id, nested, [...sourceIndices, index]),
+              );
               return;
             }
             if (matches.length > 1) {
               const selectedNodeId = input.folderResolutions?.[sourceIndices.join('.')];
               const selected = matches.find((candidate) => candidate.id === selectedNodeId);
               if (!selected) throw new Error(`Ambiguous destination folder: ${child.name}`);
-              child.children.forEach((nested, index) => append(selected.id, nested, [...sourceIndices, index]));
+              child.children.forEach((nested, index) =>
+                append(selected.id, nested, [...sourceIndices, index]),
+              );
               return;
             }
           }
@@ -777,18 +834,27 @@ export class UnifiedLibraryRepository {
           });
           createdNodeIds.push(folder.id);
           recordChange.run(input.sourceId, folder.id, 'created', 1, '{}');
-          child.children.forEach((nested, index) => append(folder.id, nested, [...sourceIndices, index]));
+          child.children.forEach((nested, index) =>
+            append(folder.id, nested, [...sourceIndices, index]),
+          );
           return;
         }
         if (input.conflictPolicy === 'merge') {
-          const siblings = this.listChildren(parentId).filter((candidate) => candidate.nodeKind === 'item');
-          const duplicate = siblings.find((candidate) => (
-            this.getItemPayload(candidate.id).canonicalContentHash === child.payload.canonicalContentHash
-          ));
+          const siblings = this.listChildren(parentId).filter(
+            (candidate) => candidate.nodeKind === 'item',
+          );
+          const duplicate = siblings.find(
+            (candidate) =>
+              this.getItemPayload(candidate.id).canonicalContentHash ===
+              child.payload.canonicalContentHash,
+          );
           if (duplicate) {
             exactDuplicateCount += 1;
             recordChange.run(
-              input.sourceId, duplicate.id, 'exactDuplicateSkipped', duplicate.revision,
+              input.sourceId,
+              duplicate.id,
+              'exactDuplicateSkipped',
+              duplicate.revision,
               JSON.stringify({ sourceName: child.displayName }),
             );
             return;
@@ -796,7 +862,9 @@ export class UnifiedLibraryRepository {
         }
         let displayName = child.displayName;
         if (input.conflictPolicy === 'merge') {
-          const names = new Set(this.listChildren(parentId).map((candidate) => candidate.displayName));
+          const names = new Set(
+            this.listChildren(parentId).map((candidate) => candidate.displayName),
+          );
           if (names.has(displayName)) {
             let suffix = 2;
             while (names.has(`${child.displayName} (Imported ${suffix})`)) suffix += 1;
@@ -828,8 +896,17 @@ export class UnifiedLibraryRepository {
         });
         createdNodeIds.push(item.id);
         recordChange.run(
-          input.sourceId, item.id, aliasCount > 0 && displayName !== child.displayName ? 'aliasedConflictCreated' : 'created',
-          1, JSON.stringify(displayName === child.displayName ? {} : { embeddedName: child.displayName, alias: displayName }),
+          input.sourceId,
+          item.id,
+          aliasCount > 0 && displayName !== child.displayName
+            ? 'aliasedConflictCreated'
+            : 'created',
+          1,
+          JSON.stringify(
+            displayName === child.displayName
+              ? {}
+              : { embeddedName: child.displayName, alias: displayName },
+          ),
         );
       };
       input.plan.root.children.forEach((child, index) => append(root.id, child, [index]));
@@ -838,9 +915,13 @@ export class UnifiedLibraryRepository {
         items: input.plan.itemCount,
         unsupported: input.plan.unsupportedCount,
       };
-      this.database.prepare(`
+      this.database
+        .prepare(
+          `
         UPDATE import_sources SET status = 'imported', counts_json = ? WHERE id = ?
-      `).run(JSON.stringify(counts), input.sourceId);
+      `,
+        )
+        .run(JSON.stringify(counts), input.sourceId);
       this.incrementContentRevision();
       return {
         sourceId: input.sourceId,
@@ -856,39 +937,57 @@ export class UnifiedLibraryRepository {
 
   undoImportBatch(batchId: string): { readonly removedNodeIds: readonly string[] } {
     return this.withTransaction(() => {
-      const batch = this.database.prepare('SELECT status FROM import_batches WHERE id = ?').get(batchId);
+      const batch = this.database
+        .prepare('SELECT status FROM import_batches WHERE id = ?')
+        .get(batchId);
       if (!batch || batch.status === 'undone') throw new Error('Import batch is not undoable');
-      const rows = this.database.prepare(`
+      const rows = this.database
+        .prepare(
+          `
         SELECT changes.node_id, changes.recorded_revision, nodes.node_kind
         FROM import_changes changes
         LEFT JOIN library_nodes nodes ON nodes.id = changes.node_id
         WHERE changes.source_id IN (SELECT id FROM import_sources WHERE batch_id = ?)
           AND changes.action IN ('created', 'aliasedConflictCreated')
         ORDER BY changes.id DESC
-      `).all(batchId);
+      `,
+        )
+        .all(batchId);
       for (const row of rows) {
-        if (row.node_id === null || row.node_kind === null) throw new Error('Import undo is unavailable because an imported node changed');
+        if (row.node_id === null || row.node_kind === null)
+          throw new Error('Import undo is unavailable because an imported node changed');
         const node = this.getNode(String(row.node_id));
-        if (node.revision !== Number(row.recorded_revision)) throw new Error('Import undo is unavailable because an imported node changed');
+        if (node.revision !== Number(row.recorded_revision))
+          throw new Error('Import undo is unavailable because an imported node changed');
         if (node.nodeKind === 'folder') {
-          const laterChild = this.database.prepare(`
+          const laterChild = this.database
+            .prepare(
+              `
             SELECT 1 AS found FROM library_nodes
             WHERE parent_id = ? AND COALESCE(created_by_import_batch_id, '') <> ? LIMIT 1
-          `).get(node.id, batchId);
-          if (laterChild) throw new Error('Import undo is unavailable because a folder contains later content');
+          `,
+            )
+            .get(node.id, batchId);
+          if (laterChild)
+            throw new Error('Import undo is unavailable because a folder contains later content');
         }
       }
       const removedNodeIds: string[] = [];
       for (const row of rows) {
         const id = String(row.node_id);
-        if (!this.database.prepare('SELECT 1 AS found FROM library_nodes WHERE id = ?').get(id)) continue;
+        if (!this.database.prepare('SELECT 1 AS found FROM library_nodes WHERE id = ?').get(id))
+          continue;
         this.database.prepare('DELETE FROM library_nodes WHERE id = ?').run(id);
         removedNodeIds.push(id);
       }
-      this.database.prepare(`
+      this.database
+        .prepare(
+          `
         UPDATE import_batches SET status = 'undone', undo_eligible = 0,
           undo_blocked_reason = 'Batch was undone' WHERE id = ?
-      `).run(batchId);
+      `,
+        )
+        .run(batchId);
       this.incrementContentRevision();
       return { removedNodeIds };
     });
@@ -905,16 +1004,25 @@ export class UnifiedLibraryRepository {
     readonly diagnostic: string;
   }): void {
     this.withTransaction(() => {
-      this.database.prepare(`
+      this.database
+        .prepare(
+          `
         INSERT INTO import_sources (
           id, batch_id, library_type, source_kind, source_path,
           source_raw_hash, status, counts_json, diagnostics_json
         ) VALUES (?, ?, ?, ?, ?, ?, ?, '{}', ?)
-      `).run(
-        input.sourceId, input.batchId, input.libraryType ?? null, input.sourceKind,
-        input.sourcePath, input.sourceRawHash ?? null, input.status ?? 'failed',
-        JSON.stringify([input.diagnostic.slice(0, 1000)]),
-      );
+      `,
+        )
+        .run(
+          input.sourceId,
+          input.batchId,
+          input.libraryType ?? null,
+          input.sourceKind,
+          input.sourcePath,
+          input.sourceRawHash ?? null,
+          input.status ?? 'failed',
+          JSON.stringify([input.diagnostic.slice(0, 1000)]),
+        );
     });
   }
 
@@ -926,31 +1034,43 @@ export class UnifiedLibraryRepository {
     readonly report: Readonly<Record<string, unknown>>;
   }): void {
     this.withTransaction(() => {
-      this.database.prepare(`
+      this.database
+        .prepare(
+          `
         UPDATE import_batches
         SET status = ?, completed_at = ?, counts_json = ?, report_json = ?
         WHERE id = ?
-      `).run(
-        input.status, input.completedAt, JSON.stringify(input.counts),
-        JSON.stringify(input.report), input.batchId,
-      );
+      `,
+        )
+        .run(
+          input.status,
+          input.completedAt,
+          JSON.stringify(input.counts),
+          JSON.stringify(input.report),
+          input.batchId,
+        );
     });
   }
 
   listImportHistory(limit = 100): RepositoryImportHistoryEntry[] {
     this.assertOpen();
-    return this.database.prepare(`
+    return this.database
+      .prepare(
+        `
       SELECT * FROM import_batches ORDER BY started_at DESC, id LIMIT ?
-    `).all(Math.max(1, Math.min(500, Math.trunc(limit)))).map((row) => ({
-      id: String(row.id),
-      mode: row.mode as RepositoryImportHistoryEntry['mode'],
-      status: row.status as RepositoryImportHistoryEntry['status'],
-      startedAt: String(row.started_at),
-      completedAt: row.completed_at === null ? null : String(row.completed_at),
-      sourceCount: Number(row.source_count),
-      counts: JSON.parse(String(row.counts_json)) as Record<string, unknown>,
-      report: JSON.parse(String(row.report_json)) as Record<string, unknown>,
-    }));
+    `,
+      )
+      .all(Math.max(1, Math.min(500, Math.trunc(limit))))
+      .map((row) => ({
+        id: String(row.id),
+        mode: row.mode as RepositoryImportHistoryEntry['mode'],
+        status: row.status as RepositoryImportHistoryEntry['status'],
+        startedAt: String(row.started_at),
+        completedAt: row.completed_at === null ? null : String(row.completed_at),
+        sourceCount: Number(row.source_count),
+        counts: JSON.parse(String(row.counts_json)) as Record<string, unknown>,
+        report: JSON.parse(String(row.report_json)) as Record<string, unknown>,
+      }));
   }
 
   private insertNode(input: {
@@ -966,12 +1086,14 @@ export class UnifiedLibraryRepository {
     const sortIndex = input.sortIndex ?? this.nextSortIndex(input.parentId, input.nodeKind);
     const now = new Date().toISOString();
     this.database
-      .prepare(`
+      .prepare(
+        `
         INSERT INTO library_nodes (
           id, library_type, node_kind, parent_id, display_name, search_name,
           sort_index, revision, created_at, updated_at, created_by_import_batch_id
         ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)
-      `)
+      `,
+      )
       .run(
         id,
         input.libraryType,
@@ -989,14 +1111,16 @@ export class UnifiedLibraryRepository {
 
   private insertPayload(nodeId: string, payload: RepositoryItemPayloadInput): void {
     this.database
-      .prepare(`
+      .prepare(
+        `
         INSERT INTO library_item_payloads (
           node_id, embedded_name, object_type, support_status,
           support_reason_code, support_message, payload_xml, raw_hash,
           canonical_content_hash, serializer_revision, preview_json,
           dependency_json, metadata_revision
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `)
+      `,
+      )
       .run(
         nodeId,
         payload.embeddedName,
@@ -1022,13 +1146,19 @@ export class UnifiedLibraryRepository {
   }
 
   private isDescendant(candidateId: string, ancestorId: string): boolean {
-    return Boolean(this.database.prepare(`
+    return Boolean(
+      this.database
+        .prepare(
+          `
       WITH RECURSIVE descendants(id) AS (
         SELECT id FROM library_nodes WHERE parent_id = ?
         UNION ALL
         SELECT child.id FROM library_nodes child JOIN descendants ON child.parent_id = descendants.id
       ) SELECT 1 AS found FROM descendants WHERE id = ? LIMIT 1
-    `).get(ancestorId, candidateId));
+    `,
+        )
+        .get(ancestorId, candidateId),
+    );
   }
 
   private normalizeSiblingOrder(parentId: string, movingId?: string, targetIndex?: number): void {
@@ -1037,15 +1167,18 @@ export class UnifiedLibraryRepository {
       const from = nodes.findIndex((node) => node.id === movingId);
       if (from >= 0) {
         const [moving] = nodes.splice(from, 1);
-        nodes.splice(Math.max(0, Math.min(Math.trunc(targetIndex ?? nodes.length), nodes.length)), 0, moving);
+        nodes.splice(
+          Math.max(0, Math.min(Math.trunc(targetIndex ?? nodes.length), nodes.length)),
+          0,
+          moving,
+        );
       }
     }
     const update = this.database.prepare('UPDATE library_nodes SET sort_index = ? WHERE id = ?');
     const perKind = new Map<LibraryNodeKind, number>();
     nodes.forEach((node, mixedIndex) => {
-      const index = node.libraryType === 'soundObject'
-        ? mixedIndex
-        : perKind.get(node.nodeKind) ?? 0;
+      const index =
+        node.libraryType === 'soundObject' ? mixedIndex : (perKind.get(node.nodeKind) ?? 0);
       update.run(index, node.id);
       perKind.set(node.nodeKind, index + 1);
     });
@@ -1066,10 +1199,12 @@ export class UnifiedLibraryRepository {
 
   private nextSortIndex(parentId: string, nodeKind: Exclude<LibraryNodeKind, 'root'>): number {
     const row = this.database
-      .prepare(`
+      .prepare(
+        `
         SELECT COALESCE(MAX(sort_index), -1) + 1 AS next_index
         FROM library_nodes WHERE parent_id = ? AND node_kind = ?
-      `)
+      `,
+      )
       .get(parentId, nodeKind);
     return Number(row?.next_index ?? 0);
   }
@@ -1077,11 +1212,13 @@ export class UnifiedLibraryRepository {
   private incrementContentRevision(): void {
     const now = new Date().toISOString();
     this.database
-      .prepare(`
+      .prepare(
+        `
         UPDATE library_store_state
         SET content_revision = content_revision + 1, updated_at = ?
         WHERE singleton_id = 1
-      `)
+      `,
+      )
       .run(now);
   }
 

@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { TrackLayer, TrackLayerGroup, BlueData, Channel, Effect, GenericInstrument, Send } from '@blue/data';
+import {
+  TrackLayer,
+  TrackLayerGroup,
+  BlueData,
+  Channel,
+  Effect,
+  GenericInstrument,
+  Send,
+} from '@blue/data';
 import {
   applyProjectDocumentPatch,
   createProjectEditorSnapshot,
@@ -110,28 +118,31 @@ describe('Mixer contract', () => {
     expect(snapshot.mixer?.channelListGroups).toHaveLength(1);
     expect(snapshot.mixer?.channelListGroups[0]?.association).toBe(audioGroup.getUniqueId());
     expect(snapshot.mixer?.channelListGroups[0]?.listName).toBe(audioGroup.getName());
-    expect(snapshot.mixer?.channelListGroups[0]?.channels.map((channel) => ({
-      name: channel.name,
-      association: channel.association,
-    }))).toEqual([
+    expect(
+      snapshot.mixer?.channelListGroups[0]?.channels.map((channel) => ({
+        name: channel.name,
+        association: channel.association,
+      })),
+    ).toEqual([
       { name: 'Audio A', association: layerA.getUniqueId() },
       { name: 'Audio B', association: layerB.getUniqueId() },
     ]);
 
-    expect(snapshot.mixer?.channels.map((channel) => ({
-      name: channel.name,
-      association: channel.association,
-    }))).toEqual([
-      { name: 'Lead', association: '1' },
-    ]);
+    expect(
+      snapshot.mixer?.channels.map((channel) => ({
+        name: channel.name,
+        association: channel.association,
+      })),
+    ).toEqual([{ name: 'Lead', association: '1' }]);
 
     expect(
-      Array.from(
-        data.getMixer().getChannelListGroups()[0] ?? [],
-        (channel) => channel.getAssociation(),
+      Array.from(data.getMixer().getChannelListGroups()[0] ?? [], (channel) =>
+        channel.getAssociation(),
       ),
     ).toEqual([layerA.getUniqueId(), layerB.getUniqueId()]);
-    expect(Array.from(data.getMixer().getChannels(), (channel) => channel.getAssociation())).toEqual(['1']);
+    expect(
+      Array.from(data.getMixer().getChannels(), (channel) => channel.getAssociation()),
+    ).toEqual(['1']);
   });
 
   it('renames the bound audio layer when an audio mixer channel name changes canonically', () => {

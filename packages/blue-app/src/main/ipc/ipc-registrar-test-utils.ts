@@ -1,9 +1,5 @@
 import { vi } from 'vitest';
-import type {
-  IpcMainEventListener,
-  IpcMainInvokeHandler,
-  IpcMainLike,
-} from './ipc-registration';
+import type { IpcMainEventListener, IpcMainInvokeHandler, IpcMainLike } from './ipc-registration';
 
 export class FakeRegistrarIpcMain implements IpcMainLike {
   readonly handlers = new Map<string, IpcMainInvokeHandler>();
@@ -37,10 +33,9 @@ export class FakeRegistrarIpcMain implements IpcMainLike {
 export function createHandlerRecord<TChannel extends string>(
   channels: readonly TChannel[],
 ): Record<TChannel, IpcMainInvokeHandler> {
-  return Object.fromEntries(channels.map((channel) => [
-    channel,
-    vi.fn((...args: unknown[]) => ({ channel, args })),
-  ])) as unknown as Record<TChannel, IpcMainInvokeHandler>;
+  return Object.fromEntries(
+    channels.map((channel) => [channel, vi.fn((...args: unknown[]) => ({ channel, args }))]),
+  ) as unknown as Record<TChannel, IpcMainInvokeHandler>;
 }
 
 export function expectIdempotentReverseDisposal(

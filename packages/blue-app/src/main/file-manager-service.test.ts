@@ -48,7 +48,12 @@ describe('getFileManagerRoots', () => {
     });
 
     expect(roots.map((root) => root.kind)).toEqual(['static', 'static', 'favorite']);
-    expect(roots[0]).toMatchObject({ path: '/', kind: 'static', available: true, isDirectory: true });
+    expect(roots[0]).toMatchObject({
+      path: '/',
+      kind: 'static',
+      available: true,
+      isDirectory: true,
+    });
     expect(roots[1]).toMatchObject({ path: home, kind: 'static' });
     expect(roots[2]).toMatchObject({ path: favorite, kind: 'favorite' });
     expect(new Set(roots.map((root) => root.id)).size).toBe(3);
@@ -193,7 +198,12 @@ describe('listFileManagerDirectory', () => {
     if (result.status !== 'ok') return;
     const children = new Map(result.snapshot.children.map((child) => [child.name, child]));
 
-    expect(children.get('nested')).toMatchObject({ kind: 'directory', canExpand: true, isSymlink: false, parentPath: root });
+    expect(children.get('nested')).toMatchObject({
+      kind: 'directory',
+      canExpand: true,
+      isSymlink: false,
+      parentPath: root,
+    });
     expect(children.get('A-file.txt')).toMatchObject({ kind: 'file', canExpand: false });
     const expectedLinkIdentity = normalizeFileManagerHostIdentity(
       await fs.promises.realpath(linkPath),
@@ -295,9 +305,13 @@ describe('validateFileManagerDirectory', () => {
     fs.writeFileSync(file, 'x');
 
     expect(await validateFileManagerDirectory({ path: file })).toMatchObject({ ok: false });
-    expect(await validateFileManagerDirectory({ path: path.join(root, 'gone') })).toMatchObject({ ok: false });
+    expect(await validateFileManagerDirectory({ path: path.join(root, 'gone') })).toMatchObject({
+      ok: false,
+    });
     expect(await validateFileManagerDirectory({ path: '' })).toMatchObject({ ok: false });
-    expect(await validateFileManagerDirectory({ path: 'relative/path' })).toMatchObject({ ok: false });
+    expect(await validateFileManagerDirectory({ path: 'relative/path' })).toMatchObject({
+      ok: false,
+    });
   });
 });
 
@@ -309,7 +323,11 @@ describe('commitAudioFileDrop', () => {
     projectRevision: 1,
   };
 
-  function makeContext(overrides: Partial<AudioFileDropCommitContext['getCurrentProject'] extends () => infer P ? P : never> = {}) {
+  function makeContext(
+    overrides: Partial<
+      AudioFileDropCommitContext['getCurrentProject'] extends () => infer P ? P : never
+    > = {},
+  ) {
     const projectDirectory = makeTempDir();
     const commitProjectDocumentPatch = vi.fn().mockResolvedValue({
       revision: 2,
@@ -331,7 +349,10 @@ describe('commitAudioFileDrop', () => {
     return { context, commitProjectDocumentPatch, project };
   }
 
-  function makeSource(name: string, contents: string | Uint8Array = 'not-a-real-audio-header'): string {
+  function makeSource(
+    name: string,
+    contents: string | Uint8Array = 'not-a-real-audio-header',
+  ): string {
     const dir = makeTempDir();
     const source = path.join(dir, name);
     fs.writeFileSync(source, contents);
@@ -356,7 +377,11 @@ describe('commitAudioFileDrop', () => {
     });
     expect(commitProjectDocumentPatch).toHaveBeenCalledOnce();
     const patch = commitProjectDocumentPatch.mock.calls[0]![0] as {
-      score: { type: string; item: { objectType: string; name: string; serializedXml: string }; startBeats: number };
+      score: {
+        type: string;
+        item: { objectType: string; name: string; serializedXml: string };
+        startBeats: number;
+      };
     };
     expect(patch.score.type).toBe('addTrackItem');
     expect(patch.score.item.objectType).toBe('AudioClip');
@@ -431,7 +456,12 @@ describe('commitAudioFileDrop', () => {
     expect(directoryDrop).toMatchObject({ status: 'rejected', code: 'not-a-file' });
 
     const missingDrop = await commitAudioFileDrop(
-      { sourcePath: path.join(directory, 'gone.wav'), sourceKind: 'file-manager', track, startBeats: 0 },
+      {
+        sourcePath: path.join(directory, 'gone.wav'),
+        sourceKind: 'file-manager',
+        track,
+        startBeats: 0,
+      },
       context,
     );
     expect(missingDrop).toMatchObject({ status: 'rejected', code: 'not-a-file' });

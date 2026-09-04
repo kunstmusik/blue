@@ -18,7 +18,9 @@ declare global {
   interface Window {
     blueAPI: {
       getEffectEditorDocument: (request: unknown) => Promise<EffectEditorSnapshot | null>;
-      updateEffectEditorDocument: (request: EffectEditorPatchRequest) => Promise<EffectEditorSnapshot | null>;
+      updateEffectEditorDocument: (
+        request: EffectEditorPatchRequest,
+      ) => Promise<EffectEditorSnapshot | null>;
       openEffectEditor: (request: unknown) => Promise<unknown> | unknown;
       onProjectDocumentUpdated: (
         callback: (event: ProjectDocumentUpdatedEvent) => void,
@@ -27,7 +29,9 @@ declare global {
   }
 }
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 vi.mock('../components/workbench/panels/orchestra/bsb/BSBInterfaceEditor', () => ({
   default: ({ instrument }: { instrument: { name: string } }) => (
@@ -54,8 +58,12 @@ vi.mock('../components/workbench/panels/editors/SelectedCodeEditor', () => ({
       data-selected-code-editor
       data-aria-label={ariaLabel}
       data-udo-scope={`${javaBlueCompletionOptions?.contextUdos?.length ?? 0}:${javaBlueCompletionOptions?.projectUdos?.length ?? 0}`}
-      data-context-udo-names={javaBlueCompletionOptions?.contextUdos?.map((udo) => udo.name).join(',') ?? ''}
-      data-project-udo-names={javaBlueCompletionOptions?.projectUdos?.map((udo) => udo.name).join(',') ?? ''}
+      data-context-udo-names={
+        javaBlueCompletionOptions?.contextUdos?.map((udo) => udo.name).join(',') ?? ''
+      }
+      data-project-udo-names={
+        javaBlueCompletionOptions?.projectUdos?.map((udo) => udo.name).join(',') ?? ''
+      }
     >
       <label>
         <span>{ariaLabel}</span>
@@ -101,9 +109,7 @@ function udoSnapshot(name: string): UdoDefinitionSnapshot {
   };
 }
 
-let projectDocumentUpdatedListener:
-  | ((event: ProjectDocumentUpdatedEvent) => void)
-  | null = null;
+let projectDocumentUpdatedListener: ((event: ProjectDocumentUpdatedEvent) => void) | null = null;
 
 function createLoadedSnapshot(code = 'aout = ain'): EffectEditorSnapshot {
   const effect = new Effect();
@@ -149,16 +155,22 @@ beforeEach(() => {
   const snapshot = createLoadedSnapshot();
   let currentSnapshot = snapshot;
 
-  window.history.replaceState({}, '', '/effect-editor.html?ownerType=library&effectId=fx-1&libraryEffectId=fx-1');
+  window.history.replaceState(
+    {},
+    '',
+    '/effect-editor.html?ownerType=library&effectId=fx-1&libraryEffectId=fx-1',
+  );
   window.blueAPI = {
     getEffectEditorDocument: vi.fn().mockImplementation(async () => currentSnapshot),
-    updateEffectEditorDocument: vi.fn().mockImplementation(async (request: EffectEditorPatchRequest) => {
-      currentSnapshot = {
-        ...currentSnapshot,
-        ...request.patch,
-      } as EffectEditorSnapshot;
-      return currentSnapshot;
-    }),
+    updateEffectEditorDocument: vi
+      .fn()
+      .mockImplementation(async (request: EffectEditorPatchRequest) => {
+        currentSnapshot = {
+          ...currentSnapshot,
+          ...request.patch,
+        } as EffectEditorSnapshot;
+        return currentSnapshot;
+      }),
     openEffectEditor: vi.fn().mockResolvedValue(undefined),
     onProjectDocumentUpdated: vi.fn((callback) => {
       projectDocumentUpdatedListener = callback;
@@ -275,7 +287,9 @@ describe('EffectEditorPage', () => {
       await Promise.resolve();
     });
 
-    const codeEditor = container.querySelector('textarea[aria-label="Effect code editor"]') as HTMLTextAreaElement | null;
+    const codeEditor = container.querySelector(
+      'textarea[aria-label="Effect code editor"]',
+    ) as HTMLTextAreaElement | null;
     expect(codeEditor).toBeTruthy();
     const codeScope = container.querySelector(
       '[data-selected-code-editor][data-aria-label="Effect code editor"]',
@@ -365,7 +379,9 @@ describe('EffectEditorPage', () => {
       await Promise.resolve();
     });
 
-    const codeEditor = container.querySelector('[data-selected-code-editor][data-aria-label="Effect code editor"]');
+    const codeEditor = container.querySelector(
+      '[data-selected-code-editor][data-aria-label="Effect code editor"]',
+    );
     expect(codeEditor?.getAttribute('data-udo-scope')).toBe('1:1');
     expect(codeEditor?.getAttribute('data-context-udo-names')).toBe('EffectOwnerUDO');
     expect(codeEditor?.getAttribute('data-project-udo-names')).toBe('ProjectUDO');
@@ -385,9 +401,7 @@ describe('EffectEditorPage', () => {
     const refreshedCodeEditor = container.querySelector(
       '[data-selected-code-editor][data-aria-label="Effect code editor"]',
     );
-    expect(refreshedCodeEditor?.getAttribute('data-project-udo-names')).toBe(
-      'RenamedProjectUDO',
-    );
+    expect(refreshedCodeEditor?.getAttribute('data-project-udo-names')).toBe('RenamedProjectUDO');
 
     const udoTab = Array.from(container.querySelectorAll('button')).find(
       (button) => button.textContent === 'UDO',
@@ -413,7 +427,9 @@ describe('EffectEditorPage', () => {
       await flushFullEditorImport();
     });
 
-    const buttons = Array.from(container.querySelectorAll('nav button, header button, div.flex > button'));
+    const buttons = Array.from(
+      container.querySelectorAll('nav button, header button, div.flex > button'),
+    );
     expect(buttons.length).toBeGreaterThan(0);
     for (const btn of buttons) {
       expect(btn.className).toContain('text-role-body');

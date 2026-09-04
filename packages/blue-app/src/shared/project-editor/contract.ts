@@ -95,13 +95,26 @@ import {
   createNoteProcessorChainSnapshot as createNoteProcessorChainSnapshotFromData,
   reifyChainFromSnapshot,
 } from '@blue/data';
-import type { NoteProcessorChainSnapshot as DataNoteProcessorChainSnapshot, Parameter as BlueDataParameter, ScoreObject as BlueDataScoreObject, AutomatableLayer as BlueDataAutomatableLayer, Arrangement as BlueDataArrangement, Mixer as BlueDataMixer } from '@blue/data';
+import type {
+  NoteProcessorChainSnapshot as DataNoteProcessorChainSnapshot,
+  Parameter as BlueDataParameter,
+  ScoreObject as BlueDataScoreObject,
+  AutomatableLayer as BlueDataAutomatableLayer,
+  Arrangement as BlueDataArrangement,
+  Mixer as BlueDataMixer,
+} from '@blue/data';
 import { AutomationCurve as BlueDataAutomationCurve, LineColors } from '@blue/data';
 import { ParameterHelper } from '@blue/data';
-import type { SnapValueName, BlueX7Voice, BlueX7Common, BlueX7Lfo, BlueX7Operator, BlueX7EnvelopePoint } from '@blue/data';
+import type {
+  SnapValueName,
+  BlueX7Voice,
+  BlueX7Common,
+  BlueX7Lfo,
+  BlueX7Operator,
+  BlueX7EnvelopePoint,
+} from '@blue/data';
 import type { MissingAudioAssetsSession } from '../missing-audio-assets';
 import type { ScoreInsertionLocation } from '../unified-library';
-
 
 export interface ScoreTimeStateSnapshot {
   snapEnabled: boolean;
@@ -506,7 +519,12 @@ export interface TrackerColumnSnapshot {
   sourceIndex?: number | null;
 }
 
-export type AudioFileMetadataStatus = 'empty' | 'missing' | 'unreadable' | 'unsupported' | 'available';
+export type AudioFileMetadataStatus =
+  | 'empty'
+  | 'missing'
+  | 'unreadable'
+  | 'unsupported'
+  | 'available';
 
 export type AudioFileMetadataState =
   | { status: 'empty' }
@@ -749,7 +767,11 @@ export type TrackScorePatch =
   | { type: 'moveTrackItems'; moves: readonly TrackItemMove[] }
   | { type: 'resizeTrackItems'; resizes: readonly TrackItemResize[] }
   | { type: 'removeTrackItems'; targets: readonly TrackItemRef[] }
-  | { type: 'replaceTrackNoteProcessorChain'; track: TrackRef; chain: NoteProcessorChainSnapshot | null }
+  | {
+      type: 'replaceTrackNoteProcessorChain';
+      track: TrackRef;
+      chain: NoteProcessorChainSnapshot | null;
+    }
   | { type: 'createTrackInstrument'; track: TrackRef; instrumentType: SupportedNewInstrumentType }
   | { type: 'replaceTrackInstrument'; track: TrackRef; instrument: InstrumentSnapshot }
   | { type: 'clearTrackInstrument'; track: TrackRef }
@@ -919,7 +941,11 @@ export type ScorePatch =
     }
   | { type: 'renameLayer'; groupId: string; layerIndex: number; name: string }
   | { type: 'addMarker'; timeBeats: number; name?: string }
-  | { type: 'updateMarker'; sourceIndex: number; patch: { name?: string; timeBeats?: number; timeBase?: string } }
+  | {
+      type: 'updateMarker';
+      sourceIndex: number;
+      patch: { name?: string; timeBeats?: number; timeBase?: string };
+    }
   | { type: 'removeMarker'; sourceIndex: number }
   | { type: 'moveLayerGroup'; groupId: string; targetIndex: number }
   | { type: 'renameLayerGroup'; groupId: string; name: string }
@@ -1122,7 +1148,13 @@ export interface MeterEntryInput {
 
 export type MeterMapPatch =
   | { type: 'meter-map-set-entry'; measure: number; numBeats: number; beatLength: number }
-  | { type: 'meter-map-update-entry'; previousMeasure: number; measure: number; numBeats: number; beatLength: number }
+  | {
+      type: 'meter-map-update-entry';
+      previousMeasure: number;
+      measure: number;
+      numBeats: number;
+      beatLength: number;
+    }
   | { type: 'meter-map-remove-entry'; measure: number }
   | { type: 'meter-map-replace'; entries: MeterEntryInput[] };
 
@@ -1426,8 +1458,22 @@ export interface MixerEffectPatch {
 export type MixerFollowUpPatch =
   | { type: 'duplicateChainEntry'; channelId: string; chain: MixerChainKind; entryId: string }
   | { type: 'copyChainEntry'; channelId: string; chain: MixerChainKind; entryId: string }
-  | { type: 'pasteChainEntries'; channelId: string; chain: MixerChainKind; index?: number; payload: MixerChainClipboardPayload }
-  | { type: 'moveChainEntryAcrossChains'; fromChannelId: string; fromChain: MixerChainKind; toChannelId: string; toChain: MixerChainKind; entryId: string; index?: number };
+  | {
+      type: 'pasteChainEntries';
+      channelId: string;
+      chain: MixerChainKind;
+      index?: number;
+      payload: MixerChainClipboardPayload;
+    }
+  | {
+      type: 'moveChainEntryAcrossChains';
+      fromChannelId: string;
+      fromChain: MixerChainKind;
+      toChannelId: string;
+      toChain: MixerChainKind;
+      entryId: string;
+      index?: number;
+    };
 
 export interface MixerChainClipboardPayload {
   sourceKind: 'project';
@@ -1441,12 +1487,46 @@ export type MixerPatch =
   | { type: 'updateChannel'; channelId: string; patch: Partial<MixerChannelEditableFields> }
   | { type: 'addSubChannel'; name?: string; insertIndex?: number; channelId?: string }
   | { type: 'removeSubChannel'; channelId: string }
-  | { type: 'addEffectFromLibrary'; channelId: string; chain: MixerChainKind; libraryEffectId: string; effectXml?: string; insertIndex?: number; entryId?: string }
-  | { type: 'addSend'; channelId: string; chain: MixerChainKind; sendChannel?: string; level?: number; insertIndex?: number; entryId?: string }
-  | { type: 'updateSend'; channelId: string; chain: MixerChainKind; entryId: string; patch: { sendChannel?: string; level?: number; enabled?: boolean } }
-  | { type: 'updateEffect'; channelId: string; chain: MixerChainKind; entryId: string; patch: EffectEditablePatch }
+  | {
+      type: 'addEffectFromLibrary';
+      channelId: string;
+      chain: MixerChainKind;
+      libraryEffectId: string;
+      effectXml?: string;
+      insertIndex?: number;
+      entryId?: string;
+    }
+  | {
+      type: 'addSend';
+      channelId: string;
+      chain: MixerChainKind;
+      sendChannel?: string;
+      level?: number;
+      insertIndex?: number;
+      entryId?: string;
+    }
+  | {
+      type: 'updateSend';
+      channelId: string;
+      chain: MixerChainKind;
+      entryId: string;
+      patch: { sendChannel?: string; level?: number; enabled?: boolean };
+    }
+  | {
+      type: 'updateEffect';
+      channelId: string;
+      chain: MixerChainKind;
+      entryId: string;
+      patch: EffectEditablePatch;
+    }
   | { type: 'removeChainEntry'; channelId: string; chain: MixerChainKind; entryId: string }
-  | { type: 'reorderChainEntry'; channelId: string; chain: MixerChainKind; from: number; to: number }
+  | {
+      type: 'reorderChainEntry';
+      channelId: string;
+      chain: MixerChainKind;
+      from: number;
+      to: number;
+    }
   | MixerFollowUpPatch;
 
 export interface EffectsLibraryCategorySnapshot {
@@ -1469,8 +1549,21 @@ export interface EffectsLibrarySnapshot {
 }
 
 export type EffectsLibraryPatch =
-  | { type: 'addCategory'; parentCategoryId?: string; name?: string; insertIndex?: number; categoryId?: string }
-  | { type: 'addEffect'; parentCategoryId?: string; name?: string; insertIndex?: number; effectId?: string; style?: 'CLASSIC' | 'MODERN' }
+  | {
+      type: 'addCategory';
+      parentCategoryId?: string;
+      name?: string;
+      insertIndex?: number;
+      categoryId?: string;
+    }
+  | {
+      type: 'addEffect';
+      parentCategoryId?: string;
+      name?: string;
+      insertIndex?: number;
+      effectId?: string;
+      style?: 'CLASSIC' | 'MODERN';
+    }
   | { type: 'renameCategory'; categoryId: string; name: string }
   | { type: 'reorderCategory'; parentCategoryId?: string; from: number; to: number }
   | { type: 'removeCategory'; categoryId: string }
@@ -1478,7 +1571,11 @@ export type EffectsLibraryPatch =
   | { type: 'duplicateEffect'; effectId: string; insertIndex?: number; libraryEffectId?: string }
   | { type: 'removeEffect'; effectId: string }
   | { type: 'updateEffect'; effectId: string; patch: EffectEditablePatch }
-  | { type: 'pasteCategory'; parentCategoryId?: string; sourceSnapshot: EffectsLibraryCategorySnapshot }
+  | {
+      type: 'pasteCategory';
+      parentCategoryId?: string;
+      sourceSnapshot: EffectsLibraryCategorySnapshot;
+    }
   | { type: 'pasteEffect'; parentCategoryId?: string; sourceEffect: LibraryEffectSnapshot }
   | { type: 'moveNode'; nodeId: string; targetParentCategoryId?: string; targetIndex: number };
 
@@ -1548,13 +1645,15 @@ export function isValidLayerRange(
   endIndex: number,
   groupLength: number,
 ): boolean {
-  return Number.isInteger(startIndex)
-    && Number.isInteger(endIndex)
-    && Number.isInteger(groupLength)
-    && groupLength >= 0
-    && startIndex >= 0
-    && endIndex >= startIndex
-    && endIndex < groupLength;
+  return (
+    Number.isInteger(startIndex) &&
+    Number.isInteger(endIndex) &&
+    Number.isInteger(groupLength) &&
+    groupLength >= 0 &&
+    startIndex >= 0 &&
+    endIndex >= startIndex &&
+    endIndex < groupLength
+  );
 }
 
 export function isValidLayerRangeTarget(
@@ -1582,7 +1681,10 @@ export function areLayerRangesValid(
       return false;
     }
     const groupLength = getGroupLength(range.groupId);
-    if (groupLength === undefined || !isValidLayerRange(range.startIndex, range.endIndex, groupLength)) {
+    if (
+      groupLength === undefined ||
+      !isValidLayerRange(range.startIndex, range.endIndex, groupLength)
+    ) {
       return false;
     }
     const groupRanges = rangesByGroup.get(range.groupId) ?? [];
@@ -1603,8 +1705,16 @@ export function areLayerRangesValid(
 }
 
 export type BlueLivePatch =
-  | { type: 'updateOptions'; patch: Partial<Pick<BlueLiveProjectSnapshot, 'commandLine' | 'commandLineEnabled' | 'commandLineOverride'>> }
-  | { type: 'updateTempoRepeat'; patch: Partial<Pick<BlueLiveProjectSnapshot, 'tempo' | 'repeat' | 'repeatEnabled'>> }
+  | {
+      type: 'updateOptions';
+      patch: Partial<
+        Pick<BlueLiveProjectSnapshot, 'commandLine' | 'commandLineEnabled' | 'commandLineOverride'>
+      >;
+    }
+  | {
+      type: 'updateTempoRepeat';
+      patch: Partial<Pick<BlueLiveProjectSnapshot, 'tempo' | 'repeat' | 'repeatEnabled'>>;
+    }
   | { type: 'updateLiveCodeText'; text: string }
   | { type: 'setCellEnabled'; column: number; row: number; enabled: boolean }
   | { type: 'setCell'; column: number; row: number; cell: LiveObjectCellSnapshot | null }
@@ -1654,7 +1764,9 @@ export interface ProjectDocumentPatch {
   mixer?: MixerPatch;
   projectProperties?: Partial<ProjectPropertiesSnapshot>;
   clojureProject?: ClojureProjectSnapshot;
-  transport?: Partial<Pick<ToolbarProjectTransportSnapshot, 'renderStartTime' | 'renderEndTime' | 'loopRendering'>> & {
+  transport?: Partial<
+    Pick<ToolbarProjectTransportSnapshot, 'renderStartTime' | 'renderEndTime' | 'loopRendering'>
+  > & {
     tempoMap?: Partial<TempoMapSnapshot>;
     tempoMapPatch?: TempoMapPatch;
     meterMapPatch?: MeterMapPatch;
@@ -1683,7 +1795,7 @@ export interface ProjectDocumentCommitReceipt {
    * all-no-op or rejected batch returns `changed: false` with the unchanged
    * revision so live commands do not falsely treat a clean no-op as a fence
    * break.
-  */
+   */
   changed: boolean;
   /**
    * True when the corresponding patch mutated canonical project data. A
@@ -1799,9 +1911,9 @@ type BsbRealtimeControlValue =
   | { kind: 'xy'; payload: { xValue: number; yValue: number } }
   | { kind: 'sliderBank'; payload: { sliderIndex: number; value: number } };
 
-export type BsbRealtimeControlUpdate = BsbRealtimeControlTarget
-  & BsbRealtimeControlBase
-  & BsbRealtimeControlValue;
+export type BsbRealtimeControlUpdate = BsbRealtimeControlTarget &
+  BsbRealtimeControlBase &
+  BsbRealtimeControlValue;
 
 export function createBsbRealtimeControlUpdate(
   target: BsbRealtimeControlTarget,
@@ -1873,19 +1985,21 @@ export function isBsbRealtimeControlUpdate(value: unknown): value is BsbRealtime
   const hasTrackTarget = Object.prototype.hasOwnProperty.call(candidate, 'track');
   if (hasAssignmentTarget === hasTrackTarget) return false;
 
-  const hasValidAssignment = typeof candidate.assignmentId === 'string'
-    && candidate.assignmentId.trim() !== '';
-  const track = candidate.track && typeof candidate.track === 'object'
-    ? candidate.track as Record<string, unknown>
-    : null;
-  const hasValidTrack = track !== null
-    && typeof track.rootGroupId === 'string'
-    && track.rootGroupId.trim() !== ''
-    && typeof track.trackId === 'string'
-    && track.trackId.trim() !== ''
-    && typeof track.projectSessionId === 'number'
-    && Number.isInteger(track.projectSessionId)
-    && track.projectSessionId >= 0;
+  const hasValidAssignment =
+    typeof candidate.assignmentId === 'string' && candidate.assignmentId.trim() !== '';
+  const track =
+    candidate.track && typeof candidate.track === 'object'
+      ? (candidate.track as Record<string, unknown>)
+      : null;
+  const hasValidTrack =
+    track !== null &&
+    typeof track.rootGroupId === 'string' &&
+    track.rootGroupId.trim() !== '' &&
+    typeof track.trackId === 'string' &&
+    track.trackId.trim() !== '' &&
+    typeof track.projectSessionId === 'number' &&
+    Number.isInteger(track.projectSessionId) &&
+    track.projectSessionId >= 0;
   if (hasAssignmentTarget ? !hasValidAssignment : !hasValidTrack) return false;
 
   const payload = candidate.payload as Record<string, unknown>;
@@ -1897,14 +2011,20 @@ export function isBsbRealtimeControlUpdate(value: unknown): value is BsbRealtime
     case 'selectedIndex':
       return typeof payload.selectedIndex === 'number' && Number.isFinite(payload.selectedIndex);
     case 'xy':
-      return typeof payload.xValue === 'number' && Number.isFinite(payload.xValue)
-        && typeof payload.yValue === 'number' && Number.isFinite(payload.yValue);
+      return (
+        typeof payload.xValue === 'number' &&
+        Number.isFinite(payload.xValue) &&
+        typeof payload.yValue === 'number' &&
+        Number.isFinite(payload.yValue)
+      );
     case 'sliderBank':
-      return typeof payload.sliderIndex === 'number'
-        && Number.isInteger(payload.sliderIndex)
-        && payload.sliderIndex >= 0
-        && typeof payload.value === 'number'
-        && Number.isFinite(payload.value);
+      return (
+        typeof payload.sliderIndex === 'number' &&
+        Number.isInteger(payload.sliderIndex) &&
+        payload.sliderIndex >= 0 &&
+        typeof payload.value === 'number' &&
+        Number.isFinite(payload.value)
+      );
     default:
       return false;
   }
@@ -1976,7 +2096,12 @@ export type BlueX7Patch =
   | { type: 'setOperatorField'; operatorIndex: number; field: keyof BlueX7Operator; value: unknown }
   | { type: 'setSharedOscillatorSync'; value: number }
   | { type: 'setSharedPitchModulationSensitivity'; value: number }
-  | { type: 'setOperatorEnvelopePoint'; operatorIndex: number; stageIndex: number; point: BlueX7EnvelopePoint }
+  | {
+      type: 'setOperatorEnvelopePoint';
+      operatorIndex: number;
+      stageIndex: number;
+      point: BlueX7EnvelopePoint;
+    }
   | { type: 'setPitchEnvelopePoint'; stageIndex: number; point: BlueX7EnvelopePoint }
   | { type: 'setCsoundPostCode'; text: string }
   | { type: 'replaceVoice'; voice: BlueX7Voice };
@@ -2097,7 +2222,11 @@ export function isValidBlueX7Voice(value: unknown): value is BlueX7Voice {
     return false;
   }
   for (const operatorValue of value.operators) {
-    if (!isRecord(operatorValue) || !Array.isArray(operatorValue.envelope) || operatorValue.envelope.length !== 4) {
+    if (
+      !isRecord(operatorValue) ||
+      !Array.isArray(operatorValue.envelope) ||
+      operatorValue.envelope.length !== 4
+    ) {
       return false;
     }
     if (
@@ -2176,15 +2305,31 @@ export function isValidBlueX7Patch(patch: BlueX7Patch): boolean {
         inRange(patch.operatorIndex, 0, 5) &&
         inRange(patch.stageIndex, 0, 3) &&
         isRecord(patch.point) &&
-        inRange(patch.point.rate, BLUE_X7_OPERATOR_ENVELOPE_POINT_RANGES.rate[0], BLUE_X7_OPERATOR_ENVELOPE_POINT_RANGES.rate[1]) &&
-        inRange(patch.point.level, BLUE_X7_OPERATOR_ENVELOPE_POINT_RANGES.level[0], BLUE_X7_OPERATOR_ENVELOPE_POINT_RANGES.level[1])
+        inRange(
+          patch.point.rate,
+          BLUE_X7_OPERATOR_ENVELOPE_POINT_RANGES.rate[0],
+          BLUE_X7_OPERATOR_ENVELOPE_POINT_RANGES.rate[1],
+        ) &&
+        inRange(
+          patch.point.level,
+          BLUE_X7_OPERATOR_ENVELOPE_POINT_RANGES.level[0],
+          BLUE_X7_OPERATOR_ENVELOPE_POINT_RANGES.level[1],
+        )
       );
     case 'setPitchEnvelopePoint':
       return (
         inRange(patch.stageIndex, 0, 3) &&
         isRecord(patch.point) &&
-        inRange(patch.point.rate, BLUE_X7_PITCH_ENVELOPE_POINT_RANGES.rate[0], BLUE_X7_PITCH_ENVELOPE_POINT_RANGES.rate[1]) &&
-        inRange(patch.point.level, BLUE_X7_PITCH_ENVELOPE_POINT_RANGES.level[0], BLUE_X7_PITCH_ENVELOPE_POINT_RANGES.level[1])
+        inRange(
+          patch.point.rate,
+          BLUE_X7_PITCH_ENVELOPE_POINT_RANGES.rate[0],
+          BLUE_X7_PITCH_ENVELOPE_POINT_RANGES.rate[1],
+        ) &&
+        inRange(
+          patch.point.level,
+          BLUE_X7_PITCH_ENVELOPE_POINT_RANGES.level[0],
+          BLUE_X7_PITCH_ENVELOPE_POINT_RANGES.level[1],
+        )
       );
     case 'setCsoundPostCode':
       return typeof patch.text === 'string';
@@ -2433,11 +2578,7 @@ export interface TrackInstrumentEditorPatchRequest extends TrackInstrumentEditor
   readonly patch: InstrumentPatch;
 }
 
-export type TrackInstrumentEditorPatchStatus =
-  | 'applied'
-  | 'unchanged'
-  | 'stale'
-  | 'unavailable';
+export type TrackInstrumentEditorPatchStatus = 'applied' | 'unchanged' | 'stale' | 'unavailable';
 
 export interface TrackInstrumentEditorPatchResult {
   readonly status: TrackInstrumentEditorPatchStatus;
@@ -2618,7 +2759,9 @@ export function isBlueX7RuntimeTarget(value: unknown): value is BlueX7RuntimeTar
 }
 
 /** Validate a live single-control intent: valid target, ids, finite value. */
-export function isBlueX7RealtimeControlUpdate(value: unknown): value is BlueX7RealtimeControlUpdate {
+export function isBlueX7RealtimeControlUpdate(
+  value: unknown,
+): value is BlueX7RealtimeControlUpdate {
   if (!BLUE_X7_IS_RECORD(value)) {
     return false;
   }
@@ -2641,7 +2784,9 @@ export function isBlueX7RealtimeControlUpdate(value: unknown): value is BlueX7Re
 }
 
 /** Validate a readback request: valid target, bounded visible-controls list. */
-export function isBlueX7EffectiveValuesRequest(value: unknown): value is BlueX7EffectiveValuesRequest {
+export function isBlueX7EffectiveValuesRequest(
+  value: unknown,
+): value is BlueX7EffectiveValuesRequest {
   if (!BLUE_X7_IS_RECORD(value)) {
     return false;
   }

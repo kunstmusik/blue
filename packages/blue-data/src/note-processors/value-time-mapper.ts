@@ -5,7 +5,7 @@ export class ValueTimeMapper {
   constructor(src: ValueTimeMapper);
   constructor(src?: ValueTimeMapper) {
     if (src && src._timeMap.length > 0) {
-      this._timeMap = src._timeMap.map(p => {
+      this._timeMap = src._timeMap.map((p) => {
         const pair = new BeatValuePair();
         pair.beat = p.beat;
         pair.value = p.value;
@@ -59,7 +59,8 @@ export class ValueTimeMapper {
         const x2 = this._timeMap[i + 1].value;
 
         const m = x2 - x1;
-        const x = (beat - this._timeMap[i].beat) / (this._timeMap[i + 1].beat - this._timeMap[i].beat);
+        const x =
+          (beat - this._timeMap[i].beat) / (this._timeMap[i + 1].beat - this._timeMap[i].beat);
 
         return m * x + x1;
       }

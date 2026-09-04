@@ -15,10 +15,15 @@ import { CompileData } from '../../compile-data';
 import { ScoreGenerationException } from '../../score/score-generation-exception';
 import { Element } from '../../serialization/xml-reader';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../../serialization/obj-ref-map';
-import { normalizeScoreGenerationOptions, type ScoreGenerationOptionsOrSolo } from '../score-generation-options';
+import {
+  normalizeScoreGenerationOptions,
+  type ScoreGenerationOptionsOrSolo,
+} from '../score-generation-options';
 
 export class PatternsLayerGroup extends Array<PatternLayer> implements LayerGroup<PatternLayer> {
-  static get [Symbol.species](): ArrayConstructor { return Array; }
+  static get [Symbol.species](): ArrayConstructor {
+    return Array;
+  }
 
   private _name = 'Patterns Layer Group';
   private _patternBeatsLength = 4;
@@ -38,14 +43,26 @@ export class PatternsLayerGroup extends Array<PatternLayer> implements LayerGrou
 
   // ─── LayerGroup ───
 
-  getName(): string { return this._name; }
-  setName(name: string): void { this._name = name; }
+  getName(): string {
+    return this._name;
+  }
+  setName(name: string): void {
+    this._name = name;
+  }
 
-  getPatternBeatsLength(): number { return this._patternBeatsLength; }
-  setPatternBeatsLength(length: number): void { this._patternBeatsLength = length; }
+  getPatternBeatsLength(): number {
+    return this._patternBeatsLength;
+  }
+  setPatternBeatsLength(length: number): void {
+    this._patternBeatsLength = length;
+  }
 
-  getNoteProcessorChain(): NoteProcessorChain { return this._npc; }
-  setNoteProcessorChain(npc: NoteProcessorChain): void { this._npc = npc; }
+  getNoteProcessorChain(): NoteProcessorChain {
+    return this._npc;
+  }
+  setNoteProcessorChain(npc: NoteProcessorChain): void {
+    this._npc = npc;
+  }
 
   hasSoloLayers(): boolean {
     return this.some((layer) => layer.isSolo());
@@ -65,7 +82,11 @@ export class PatternsLayerGroup extends Array<PatternLayer> implements LayerGrou
       for (const patternLayer of this) {
         if (patternLayer.isSolo() && !patternLayer.isMuted()) {
           const nl = patternLayer.generateForCSD(
-            context, compileData, startTime, endTime, this._patternBeatsLength,
+            context,
+            compileData,
+            startTime,
+            endTime,
+            this._patternBeatsLength,
           );
           noteList.merge(nl);
         }
@@ -74,7 +95,11 @@ export class PatternsLayerGroup extends Array<PatternLayer> implements LayerGrou
       for (const patternLayer of this) {
         if (!patternLayer.isMuted()) {
           const nl = patternLayer.generateForCSD(
-            context, compileData, startTime, endTime, this._patternBeatsLength,
+            context,
+            compileData,
+            startTime,
+            endTime,
+            this._patternBeatsLength,
           );
           noteList.merge(nl);
         }

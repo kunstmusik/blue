@@ -163,21 +163,31 @@ describe('BlueX7 voice transport layout', () => {
 
 describe('BlueX7 operator mask', () => {
   it('uses bit (op - 1) for logical operator op', () => {
-    const t = buildBlueX7VoiceTransport(
-      createDefaultBlueX7Voice(),
-      [true, false, true, false, false, true],
-    );
+    const t = buildBlueX7VoiceTransport(createDefaultBlueX7Voice(), [
+      true,
+      false,
+      true,
+      false,
+      false,
+      true,
+    ]);
     expect(t.operatorMask).toBe(0b100101);
   });
 
   it('supports all-off and all-on masks', () => {
     expect(
-      buildBlueX7VoiceTransport(createDefaultBlueX7Voice(), [false, false, false, false, false, false])
-        .operatorMask,
+      buildBlueX7VoiceTransport(createDefaultBlueX7Voice(), [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+      ]).operatorMask,
     ).toBe(0);
-    expect(
-      buildBlueX7VoiceTransport(createDefaultBlueX7Voice(), ALL_ENABLED).operatorMask,
-    ).toBe(63);
+    expect(buildBlueX7VoiceTransport(createDefaultBlueX7Voice(), ALL_ENABLED).operatorMask).toBe(
+      63,
+    );
   });
 });
 

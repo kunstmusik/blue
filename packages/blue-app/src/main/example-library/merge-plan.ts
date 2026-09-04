@@ -1,8 +1,5 @@
 import { createHash } from 'crypto';
-import {
-  FactoryBaselineRecord,
-  deriveRevisionFromBaselines,
-} from './state-store';
+import { FactoryBaselineRecord, deriveRevisionFromBaselines } from './state-store';
 import type { FactoryManifest } from './manifest';
 
 /**
@@ -63,9 +60,7 @@ export class MergePlanError extends Error {
 }
 
 /** Canonical source-snapshot revision hash (sorted tuples). */
-export function deriveSourceUserRevision(
-  entries: readonly UserEntrySnapshot[],
-): string {
+export function deriveSourceUserRevision(entries: readonly UserEntrySnapshot[]): string {
   const sorted = [...entries].sort((a, b) =>
     a.relativePath < b.relativePath ? -1 : a.relativePath > b.relativePath ? 1 : 0,
   );
@@ -106,7 +101,12 @@ export function planExampleUpdate(inputs: PlannerInputs): ExampleUpdatePlan {
   const userByPath = new Map(userEntries.map((u) => [u.relativePath, u]));
   const installedByPath = new Map(installed.files.map((f) => [f.relativePath as string, f]));
 
-  const summary = { totalConflicts: 0, totalCollisions: 0, conflicts: [] as string[], collisions: [] as string[] };
+  const summary = {
+    totalConflicts: 0,
+    totalCollisions: 0,
+    conflicts: [] as string[],
+    collisions: [] as string[],
+  };
   const actions: ExampleMergeAction[] = [];
   const nextBaselineMap = new Map<string, FactoryBaselineRecord>();
   const appliedFactoryPaths = new Set<string>();
@@ -142,11 +142,7 @@ export function planExampleUpdate(inputs: PlannerInputs): ExampleUpdatePlan {
     return false;
   };
 
-  const emit = (
-    kind: ExampleMergeActionKind,
-    relativePath: string,
-    conflict: boolean,
-  ): void => {
+  const emit = (kind: ExampleMergeActionKind, relativePath: string, conflict: boolean): void => {
     actions.push({ kind, relativePath, conflict });
     if (conflict) {
       if (kind === 'preserve-collision' || kind === 'preserve-user-only') {
@@ -178,15 +174,15 @@ export function planExampleUpdate(inputs: PlannerInputs): ExampleUpdatePlan {
     }
 
     const matchesOldBytes =
-      baseline !== null
-      && userEntry !== null
-      && userEntry.kind === 'regular'
-      && userEntry.sha256 !== null
-      && userEntry.sha256 === baseline.factorySha256;
+      baseline !== null &&
+      userEntry !== null &&
+      userEntry.kind === 'regular' &&
+      userEntry.sha256 !== null &&
+      userEntry.sha256 === baseline.factorySha256;
 
     const factoryChangedFromBaseline =
-      baseline !== null
-      && (baseline.factorySha256 !== record.sha256 || baseline.factorySize !== record.size);
+      baseline !== null &&
+      (baseline.factorySha256 !== record.sha256 || baseline.factorySize !== record.size);
 
     if (baseline === null || !baseline.factoryPresent) {
       if (userEntry === null && baseline === null) {
@@ -276,9 +272,9 @@ export function planExampleUpdate(inputs: PlannerInputs): ExampleUpdatePlan {
 
     if (matchesOldBytes) {
       if (
-        userEntry.sha256 === baselineBytes.sha
-        && userEntry.size === baselineBytes.size
-        && !factoryChangedFromBaseline
+        userEntry.sha256 === baselineBytes.sha &&
+        userEntry.size === baselineBytes.size &&
+        !factoryChangedFromBaseline
       ) {
         emit('keep-unchanged', relativePath, false);
       } else {
@@ -352,9 +348,7 @@ export function planExampleUpdate(inputs: PlannerInputs): ExampleUpdatePlan {
 
   const recomputed = deriveRevisionFromBaselines(nextStateBaselines);
   if (recomputed !== installed.revision) {
-    throw new MergePlanError(
-      'Planned baselines do not reproduce the installed factory revision.',
-    );
+    throw new MergePlanError('Planned baselines do not reproduce the installed factory revision.');
   }
 
   // Bound reported lists deterministically.

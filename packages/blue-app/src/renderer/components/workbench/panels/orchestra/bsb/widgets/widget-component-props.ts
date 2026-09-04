@@ -1,4 +1,7 @@
-import type { BsbInterfacePatch, BsbWidgetNodeSnapshot } from '../../../../../../../shared/project-editor';
+import type {
+  BsbInterfacePatch,
+  BsbWidgetNodeSnapshot,
+} from '../../../../../../../shared/project-editor';
 import type { BSBWidgetResizeMeta } from '../bsb-widget-meta';
 
 export interface BSBWidgetComponentProps {
@@ -16,6 +19,9 @@ export interface BSBWidgetComponentProps {
   onWidgetAction?: (action: string) => void;
 }
 
-export interface BSBWidgetPatchComponentProps extends Omit<BSBWidgetComponentProps, 'onBsbInterfacePatch'> {
+export interface BSBWidgetPatchComponentProps extends Omit<
+  BSBWidgetComponentProps,
+  'onBsbInterfacePatch'
+> {
   onBsbInterfacePatch: (patch: BsbInterfacePatch) => void;
 }

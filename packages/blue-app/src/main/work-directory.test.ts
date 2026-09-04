@@ -1,10 +1,7 @@
 import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import {
-  normalizeWorkDirectory,
-  resolveWorkDirectoryDefaultPath,
-} from './work-directory';
+import { normalizeWorkDirectory, resolveWorkDirectoryDefaultPath } from './work-directory';
 
 describe('work-directory dialog defaults', () => {
   it('normalizes blank settings to no configured directory', () => {
@@ -22,6 +19,8 @@ describe('work-directory dialog defaults', () => {
 
   it('preserves an explicit filename when no work directory is configured', () => {
     expect(resolveWorkDirectoryDefaultPath('', 'project.blue')).toBe('project.blue');
-    expect(resolveWorkDirectoryDefaultPath('/tmp/work', '/explicit/project.blue')).toBe('/explicit/project.blue');
+    expect(resolveWorkDirectoryDefaultPath('/tmp/work', '/explicit/project.blue')).toBe(
+      '/explicit/project.blue',
+    );
   });
 });

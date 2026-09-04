@@ -29,7 +29,8 @@ export default function DiskRenderSettings({
       dependencyNote="These settings are used by Render to Disk, Render and Play, and Render and Open. Project settings supply the CSD header and advanced disk options."
     >
       <div className="mb-4 text-role-callout text-app-text-subtle">
-        Disk rendering runs through the managed Blue Engine Csound runtime. The legacy executable value remains preserved for downgrade compatibility.
+        Disk rendering runs through the managed Blue Engine Csound runtime. The legacy executable
+        value remains preserved for downgrade compatibility.
       </div>
 
       <SettingsSubsectionTitle>Project Setting Defaults</SettingsSubsectionTitle>
@@ -77,7 +78,11 @@ export default function DiskRenderSettings({
         value={settings.fileFormat}
         onChange={(value) => set('fileFormat', value)}
       >
-        {FILE_FORMAT_CHOICES.map((format) => <option key={format} value={format}>{format}</option>)}
+        {FILE_FORMAT_CHOICES.map((format) => (
+          <option key={format} value={format}>
+            {format}
+          </option>
+        ))}
       </SettingsSelectField>
 
       <SettingsCheckboxField
@@ -90,7 +95,11 @@ export default function DiskRenderSettings({
         value={settings.sampleFormat}
         onChange={(value) => set('sampleFormat', value)}
       >
-        {SAMPLE_FORMAT_CHOICES.map((format) => <option key={format} value={format}>{format}</option>)}
+        {SAMPLE_FORMAT_CHOICES.map((format) => (
+          <option key={format} value={format}>
+            {format}
+          </option>
+        ))}
       </SettingsSelectField>
 
       <SettingsCheckboxField

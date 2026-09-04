@@ -8,6 +8,8 @@
     "test": "pnpm -r run test && pnpm test:scripts",
     "test:scripts": "node --test scripts/audit-renderer-typography.test.mjs scripts/confirmation-dialog-lint.test.mjs scripts/release-metadata.test.mjs scripts/verify-package-inputs.test.mjs",
     "lint": "pnpm audit:renderer-typography && eslint . && pnpm -r run lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "fixtures:java-automation": "node scripts/generate-java-blue-automation-fixtures.mjs",
     "fixtures:java-automation:check": "node scripts/generate-java-blue-automation-fixtures.mjs --check",
     "audit:renderer-theme": "node scripts/audit-renderer-theme.mjs",

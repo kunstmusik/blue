@@ -2,10 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createDefaultBlueX7Voice } from '../blue-x7';
 import { BLUE_X7_PARAMETER_DESCRIPTORS } from './parameter-catalog';
 import { buildBlueX7VoiceTransport } from './voice-transport';
-import {
-  extractBlueX7VoiceBody,
-  generateBlueX7Target,
-} from './csound-target-generator';
+import { extractBlueX7VoiceBody, generateBlueX7Target } from './csound-target-generator';
 
 describe('BlueX7 Csound target generator', () => {
   it('emits a complete static direct-array target without live transport machinery', () => {
@@ -118,20 +115,24 @@ describe('BlueX7 Csound target generator', () => {
   it('rejects incomplete live bindings and invalid Csound symbols', () => {
     const voice = createDefaultBlueX7Voice();
     const transport = buildBlueX7VoiceTransport(voice, voice.common.operatorEnabled);
-    expect(() => generateBlueX7Target({
-      voice: transport.voice,
-      operatorMask: transport.operatorMask,
-      parameters: [{ key: 'common.algorithm', symbol: 'gk_valid' }],
-      epochSymbol: 'gk_epoch',
-      changeStrategy: 'epoch',
-    })).toThrow(/151 resolved parameters/);
-    expect(() => generateBlueX7Target({
-      voice: transport.voice,
-      operatorMask: transport.operatorMask,
-      parameters: BLUE_X7_PARAMETER_DESCRIPTORS.map((descriptor) => ({
-        key: descriptor.key,
-        symbol: 'gk-invalid',
-      })),
-    })).toThrow(/invalid Csound global symbol/);
+    expect(() =>
+      generateBlueX7Target({
+        voice: transport.voice,
+        operatorMask: transport.operatorMask,
+        parameters: [{ key: 'common.algorithm', symbol: 'gk_valid' }],
+        epochSymbol: 'gk_epoch',
+        changeStrategy: 'epoch',
+      }),
+    ).toThrow(/151 resolved parameters/);
+    expect(() =>
+      generateBlueX7Target({
+        voice: transport.voice,
+        operatorMask: transport.operatorMask,
+        parameters: BLUE_X7_PARAMETER_DESCRIPTORS.map((descriptor) => ({
+          key: descriptor.key,
+          symbol: 'gk-invalid',
+        })),
+      }),
+    ).toThrow(/invalid Csound global symbol/);
   });
 });

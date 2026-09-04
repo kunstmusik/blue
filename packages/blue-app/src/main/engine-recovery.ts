@@ -26,10 +26,7 @@ export class EngineRecoveryError extends Error {
   }
 }
 
-export function classifyEngineFailure(
-  error: unknown,
-  stderr = '',
-): EngineRecoveryFailureCategory {
+export function classifyEngineFailure(error: unknown, stderr = ''): EngineRecoveryFailureCategory {
   if (error instanceof EngineRecoveryError) {
     return error.failureCategory;
   }

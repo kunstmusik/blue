@@ -60,10 +60,7 @@ export const COLUMN_MAJOR_TARGET_ORDER: ReadonlyArray<{ column: number; row: num
  * The copy's TimeBehavior is left as the authored default; the trigger
  * service overrides it to NONE on the isolated copy.
  */
-export function createGenericScoreSoundObject(
-  name: string,
-  scoreText: string,
-): GenericScore {
+export function createGenericScoreSoundObject(name: string, scoreText: string): GenericScore {
   const obj = new GenericScore();
   obj.setName(name);
   obj.setScoreText(scoreText);
@@ -420,13 +417,7 @@ export const TEMPO_SCALING_CASES: ReadonlyArray<ExpectedScalingCase> = [
  * Invalid tempo values the trigger service must reject without engine
  * submission.
  */
-export const INVALID_TEMPO_VALUES: ReadonlyArray<number> = [
-  0,
-  -60,
-  NaN,
-  Infinity,
-  -Infinity,
-];
+export const INVALID_TEMPO_VALUES: ReadonlyArray<number> = [0, -60, NaN, Infinity, -Infinity];
 
 /**
  * Convenience helper: attach a saved enabled set to an existing Live Data

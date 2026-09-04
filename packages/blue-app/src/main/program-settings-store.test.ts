@@ -63,10 +63,13 @@ describe('program-settings-store', () => {
   });
 
   it('syncs legacy renderer settings', () => {
-    const reset = syncLegacyRendererSettings({
-      enginePath: '/my-engine',
-      recentFiles: ['/a.blue'],
-    }, 'darwin');
+    const reset = syncLegacyRendererSettings(
+      {
+        enginePath: '/my-engine',
+        recentFiles: ['/a.blue'],
+      },
+      'darwin',
+    );
     expect(reset.appSpecific.enginePath).toBe('/my-engine');
     expect(reset.appSpecific.recentFiles).toEqual(['/a.blue']);
   });
@@ -84,30 +87,38 @@ describe('program-settings-store', () => {
 
   it('removes the legacy alpha marquee setting from persisted snapshots', () => {
     const filePath = path.join(tempDir, 'program-settings.json');
-    fs.writeFileSync(filePath, JSON.stringify({
-      version: 2,
-      general: {
-        drawAlphaBackgroundOnMarquee: true,
-        messageColorsEnabled: true,
-      },
-    }));
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify({
+        version: 2,
+        general: {
+          drawAlphaBackgroundOnMarquee: true,
+          messageColorsEnabled: true,
+        },
+      }),
+    );
     clearSettingsCache();
 
     const settings = loadProgramSettings('darwin');
     expect(Object.hasOwn(settings.general, 'drawAlphaBackgroundOnMarquee')).toBe(false);
-    expect(JSON.parse(fs.readFileSync(filePath, 'utf8')).general.drawAlphaBackgroundOnMarquee).toBeUndefined();
+    expect(
+      JSON.parse(fs.readFileSync(filePath, 'utf8')).general.drawAlphaBackgroundOnMarquee,
+    ).toBeUndefined();
   });
 
   it('migrates a valid legacy OSC input port without treating output placeholders as live settings', () => {
     const filePath = path.join(tempDir, 'program-settings.json');
-    fs.writeFileSync(filePath, JSON.stringify({
-      version: 1,
-      appSpecific: {
-        oscInputPort: 9010,
-        oscOutputHost: 'controller.local',
-        oscOutputPort: 9020,
-      },
-    }));
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify({
+        version: 1,
+        appSpecific: {
+          oscInputPort: 9010,
+          oscOutputHost: 'controller.local',
+          oscOutputPort: 9020,
+        },
+      }),
+    );
     clearSettingsCache();
 
     const settings = loadProgramSettings('darwin');
@@ -190,9 +201,7 @@ describe('program-settings-store', () => {
   it('round-trips structured midiInput preferences through save/load', () => {
     const settings = loadProgramSettings('darwin');
     settings.midiInput = {
-      devices: [
-        { id: 'dev-1', name: 'Dev 1', manufacturer: 'M', version: '1', enabled: true },
-      ],
+      devices: [{ id: 'dev-1', name: 'Dev 1', manufacturer: 'M', version: '1', enabled: true }],
     };
     const result = saveProgramSettings(settings, 'darwin');
     expect(result.ok).toBe(true);
@@ -307,7 +316,9 @@ describe('program-settings-store appZoomPercent (SPEC 061)', () => {
     settings.appSpecific.appZoomPercent = 105;
     const result = saveProgramSettings(settings, 'darwin');
     expect(result.ok).toBe(false);
-    expect(result.validationIssues?.some((i) => i.path === 'appSpecific.appZoomPercent')).toBe(true);
+    expect(result.validationIssues?.some((i) => i.path === 'appSpecific.appZoomPercent')).toBe(
+      true,
+    );
   });
 });
 
@@ -317,7 +328,9 @@ describe('updatePlaybackPreferences', () => {
     expect(result.ok).toBe(true);
     const settings = loadProgramSettings('darwin');
     expect(settings.playback.followPlayback).toBe(false);
-    expect(settings.playback.followPlaybackOnStart).toBe(createDefaultProgramSettings('darwin').playback.followPlaybackOnStart);
+    expect(settings.playback.followPlaybackOnStart).toBe(
+      createDefaultProgramSettings('darwin').playback.followPlaybackOnStart,
+    );
   });
 
   it('updates only followPlaybackOnStart', () => {
@@ -325,11 +338,16 @@ describe('updatePlaybackPreferences', () => {
     expect(result.ok).toBe(true);
     const settings = loadProgramSettings('darwin');
     expect(settings.playback.followPlaybackOnStart).toBe(false);
-    expect(settings.playback.followPlayback).toBe(createDefaultProgramSettings('darwin').playback.followPlayback);
+    expect(settings.playback.followPlayback).toBe(
+      createDefaultProgramSettings('darwin').playback.followPlayback,
+    );
   });
 
   it('updates both followPlayback and followPlaybackOnStart', () => {
-    const result = updatePlaybackPreferences({ followPlayback: false, followPlaybackOnStart: false }, 'darwin');
+    const result = updatePlaybackPreferences(
+      { followPlayback: false, followPlaybackOnStart: false },
+      'darwin',
+    );
     expect(result.ok).toBe(true);
     const settings = loadProgramSettings('darwin');
     expect(settings.playback.followPlayback).toBe(false);

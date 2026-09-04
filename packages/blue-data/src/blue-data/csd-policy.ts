@@ -1,45 +1,45 @@
-import type { BlueData } from "../blue-data";
-import { BLUE_VERSION } from "../blue-constants";
-import { Arrangement } from "../arrangement";
-import { ProjectProperties } from "../project-properties";
-import { GlobalOrcSco } from "../global-orc-sco";
-import { Tables } from "../tables";
-import { Score } from "../score/score";
-import { Note } from "../sound-objects/note";
-import { NoteList } from "../sound-objects/note-list";
-import { Mixer } from "../mixer/mixer";
-import { OpcodeList } from "../opcodes/opcode-list";
-import { Parameter } from "../automation/parameter";
-import { Instrument } from "../instruments/instrument";
-import { GenericInstrument } from "../instruments/generic-instrument";
-import { CompileData } from "../compile-data";
-import type { CompiledBlueX7Binding, CompiledMidiInstrumentTarget } from "../compile-data";
-import { Effect } from "../mixer/effect";
-import { EffectsChain } from "../mixer/effects-chain";
-import { Channel } from "../mixer/channel";
-import { Send } from "../mixer/send";
-import { UDOStyle } from "../opcodes/udo-style";
-import { BSBCompilationUnit } from "../instruments/blue-synth-builder/bsb-compilation-unit";
-import { getAllParameters, assignParameterNames } from "../automation/parameter-helper";
+import type { BlueData } from '../blue-data';
+import { BLUE_VERSION } from '../blue-constants';
+import { Arrangement } from '../arrangement';
+import { ProjectProperties } from '../project-properties';
+import { GlobalOrcSco } from '../global-orc-sco';
+import { Tables } from '../tables';
+import { Score } from '../score/score';
+import { Note } from '../sound-objects/note';
+import { NoteList } from '../sound-objects/note-list';
+import { Mixer } from '../mixer/mixer';
+import { OpcodeList } from '../opcodes/opcode-list';
+import { Parameter } from '../automation/parameter';
+import { Instrument } from '../instruments/instrument';
+import { GenericInstrument } from '../instruments/generic-instrument';
+import { CompileData } from '../compile-data';
+import type { CompiledBlueX7Binding, CompiledMidiInstrumentTarget } from '../compile-data';
+import { Effect } from '../mixer/effect';
+import { EffectsChain } from '../mixer/effects-chain';
+import { Channel } from '../mixer/channel';
+import { Send } from '../mixer/send';
+import { UDOStyle } from '../opcodes/udo-style';
+import { BSBCompilationUnit } from '../instruments/blue-synth-builder/bsb-compilation-unit';
+import { getAllParameters, assignParameterNames } from '../automation/parameter-helper';
 import {
   appendParameterScoreJava,
   getParameterInstrumentTextJava,
-} from "../automation/csd-parameter-automation";
-import { formatBlueNumber } from "../utilities/number-format";
-import { disposeJavaScriptCompileState, setJavaScriptSession } from "../javascript-runtime";
-import type { JavaScriptSession } from "../javascript-runtime";
-import { setJavaRuntimeClient } from "../java-runtime";
-import type { JavaRuntimeClientContract } from "../java-runtime";
+} from '../automation/csd-parameter-automation';
+import { formatBlueNumber } from '../utilities/number-format';
+import { disposeJavaScriptCompileState, setJavaScriptSession } from '../javascript-runtime';
+import type { JavaScriptSession } from '../javascript-runtime';
+import { setJavaRuntimeClient } from '../java-runtime';
+import type { JavaRuntimeClientContract } from '../java-runtime';
 import {
   processCommandBlocks,
   preprocessSco,
   getTempoScore,
   getTempoMapFromScoreText,
-} from "../utilities/csd-render";
-import { getNotes } from "../utilities/score";
-import { TempoMap } from "../time/tempo-map";
+} from '../utilities/csd-render';
+import { getNotes } from '../utilities/score';
+import { TempoMap } from '../time/tempo-map';
 
-type CsdRenderProfile = "realtime" | "disk";
+type CsdRenderProfile = 'realtime' | 'disk';
 
 export type RenderCsdResult = {
   csdText: string;
@@ -47,9 +47,9 @@ export type RenderCsdResult = {
   stringChannels?: Array<{ objectName: string; value: string; channelName: string }>;
   /**
    * Spec 067 disposable compiled MIDI target catalog: the exact enabled base Track
-  * and Orchestra instruments compiled into this CSD snapshot, keyed by stable
-  * project identity. Derived render output only; never serialized to XML.
-  */
+   * and Orchestra instruments compiled into this CSD snapshot, keyed by stable
+   * project identity. Derived render output only; never serialized to XML.
+   */
   midiInstrumentTargets: readonly CompiledMidiInstrumentTarget[];
   /**
    * Spec 092 disposable compiled BlueX7 bindings for this render: owner
@@ -76,12 +76,19 @@ function getBlueDataState(blueData: BlueData): BlueDataCsdState {
   return blueData as unknown as BlueDataCsdState;
 }
 
-export function buildStandardCSD(blueData: BlueData, profile: CsdRenderProfile, session?: JavaScriptSession): RenderCsdResult {
-  const { arrangement: clonedArrangement, tables: clonedTables, mixer: clonedMixer, compileData } =
-    createRenderSnapshot(blueData, session);
+export function buildStandardCSD(
+  blueData: BlueData,
+  profile: CsdRenderProfile,
+  session?: JavaScriptSession,
+): RenderCsdResult {
+  const {
+    arrangement: clonedArrangement,
+    tables: clonedTables,
+    mixer: clonedMixer,
+    compileData,
+  } = createRenderSnapshot(blueData, session);
   let generationError: unknown = null;
-  const logPrefix =
-    profile === "disk" ? "[BlueData.toDiskCSD]" : "[BlueData.toCSD]";
+  const logPrefix = profile === 'disk' ? '[BlueData.toDiskCSD]' : '[BlueData.toCSD]';
 
   try {
     const channelIdAssignments = assignChannelIds(blueData, clonedMixer);
@@ -95,25 +102,22 @@ export function buildStandardCSD(blueData: BlueData, profile: CsdRenderProfile, 
     const nchnls = getNchnls(blueData, profile);
 
     // Global orchestra/sco from stored data
-    let globalOrc = getBlueDataState(blueData).globalOrcSco.getGlobalOrc() || "";
-    const baseGlobalSco = getBlueDataState(blueData).globalOrcSco.getGlobalSco() || "";
+    let globalOrc = getBlueDataState(blueData).globalOrcSco.getGlobalOrc() || '';
+    const baseGlobalSco = getBlueDataState(blueData).globalOrcSco.getGlobalSco() || '';
 
     const appendGlobalOrc = (section: string) => {
       if (!section) {
         return;
       }
-      if (globalOrc.length > 0 && !globalOrc.endsWith("\n")) {
-        globalOrc += "\n";
+      if (globalOrc.length > 0 && !globalOrc.endsWith('\n')) {
+        globalOrc += '\n';
       }
       globalOrc += section;
     };
 
     // Mixer init statements
     if (clonedMixer.isEnabled()) {
-      const mixerInits = clonedMixer.getInitStatements(
-        channelIdAssignments,
-        nchnls,
-      );
+      const mixerInits = clonedMixer.getInitStatements(channelIdAssignments, nchnls);
       if (mixerInits) {
         // Java appends an extra newline after mixer init statements before
         // adding them to GlobalOrcSco, which preserves a two-blank-line gap
@@ -138,16 +142,18 @@ export function buildStandardCSD(blueData: BlueData, profile: CsdRenderProfile, 
 
     // Score → score events
     const { startTime, endTime } = getRenderWindow(blueData, profile);
-    const noteList = getBlueDataState(blueData).score.generateForCSD(compileData, startTime, endTime);
+    const noteList = getBlueDataState(blueData).score.generateForCSD(
+      compileData,
+      startTime,
+      endTime,
+    );
     const allParameters = compileData.getOriginalParameters();
     const allStringChannels = compileData.getStringChannels();
     compileData.setHandleParametersAndChannels(false);
 
     if (endTime > 0 && endTime > startTime) {
-      const renderEndInstrument = createRenderEndInstrument(blueData, );
-      const renderEndInstrumentId = clonedArrangement.addInstrumentAtEnd(
-        renderEndInstrument,
-      );
+      const renderEndInstrument = createRenderEndInstrument(blueData);
+      const renderEndInstrumentId = clonedArrangement.addInstrumentAtEnd(renderEndInstrument);
 
       const renderEndNote = Note.createNoteFromText(
         `i${renderEndInstrumentId} ${endTime - startTime} 0.1`,
@@ -168,7 +174,7 @@ export function buildStandardCSD(blueData: BlueData, profile: CsdRenderProfile, 
       const tempoStatement = getTempoScore(scoreTempoMap, startTime, endTime);
       scoreGlobalPrefix = [baseGlobalSco, tempoStatement]
         .filter((section) => section.length > 0)
-        .join("\n");
+        .join('\n');
     } else {
       tempoMap = getTempoMapFromScoreText(baseGlobalSco);
     }
@@ -177,7 +183,7 @@ export function buildStandardCSD(blueData: BlueData, profile: CsdRenderProfile, 
     const totalDur = getNoteListDuration(blueData, noteList);
     const processingStart = startTime;
     const globalSco = preprocessSco(
-      [scoreGlobalPrefix, arrangementGlobalSco].filter(Boolean).join("\n"),
+      [scoreGlobalPrefix, arrangementGlobalSco].filter(Boolean).join('\n'),
       totalDur,
       startTime,
       processingStart,
@@ -191,7 +197,8 @@ export function buildStandardCSD(blueData: BlueData, profile: CsdRenderProfile, 
       globalDur += clonedMixer.getExtraRenderTime();
     }
 
-    const alwaysOnInstruments = collectAlwaysOnInstruments(blueData,
+    const alwaysOnInstruments = collectAlwaysOnInstruments(
+      blueData,
       clonedArrangement,
       clonedMixer,
       channelIdAssignments,
@@ -205,16 +212,17 @@ export function buildStandardCSD(blueData: BlueData, profile: CsdRenderProfile, 
         const instrId = clonedArrangement.addInstrumentAtEnd(instrument);
         addScoreNote(blueData, noteList, `i${instrId} 0 ${globalDur}`);
       } else {
-        const alwaysOnId = `${sourceId ?? "unknown"}_alwaysOn`;
+        const alwaysOnId = `${sourceId ?? 'unknown'}_alwaysOn`;
         clonedArrangement.addInstrumentWithId(instrument, alwaysOnId, false);
         addScoreNote(blueData, noteList, `i"${alwaysOnId}" 0 ${globalDur}`);
       }
     }
 
     let mixerEffectUDOs: string[] = [];
-    let mixerInstruments = "";
+    let mixerInstruments = '';
     if (clonedMixer.isEnabled()) {
-      const mixerOutput = generateMixerOrchestra(blueData,
+      const mixerOutput = generateMixerOrchestra(
+        blueData,
         channelIdAssignments,
         nchnls,
         udos,
@@ -225,8 +233,9 @@ export function buildStandardCSD(blueData: BlueData, profile: CsdRenderProfile, 
       addScoreNote(blueData, noteList, `i"BlueMixer" 0 ${globalDur}`);
     }
 
-    if (profile === "disk") {
-      appendParameterAutomationNotes(blueData,
+    if (profile === 'disk') {
+      appendParameterAutomationNotes(
+        blueData,
         allParameters,
         noteList,
         clonedArrangement,
@@ -239,7 +248,8 @@ export function buildStandardCSD(blueData: BlueData, profile: CsdRenderProfile, 
       clonedArrangement.generateGlobalOrc(compileData),
     );
 
-    const initStatements = buildRuntimeInitStatements(blueData,
+    const initStatements = buildRuntimeInitStatements(
+      blueData,
       allParameters,
       allStringChannels,
       profile,
@@ -262,45 +272,35 @@ export function buildStandardCSD(blueData: BlueData, profile: CsdRenderProfile, 
     if (mixerEffectUDOs.length > 0) {
       allUDOText.push(...mixerEffectUDOs);
     }
-    const udoText = allUDOText.length > 0 ? `${allUDOText.join("\n")}\n` : "";
+    const udoText = allUDOText.length > 0 ? `${allUDOText.join('\n')}\n` : '';
 
-    const orc = clonedArrangement.generateOrchestra(
-      compileData,
-      clonedMixer,
-      nchnls,
-      parameterMap,
-    );
+    const orc = clonedArrangement.generateOrchestra(compileData, clonedMixer, nchnls, parameterMap);
 
-    const scoreText = buildScoreText(blueData,
-      ftables,
-      globalSco,
-      noteList,
-    );
+    const scoreText = buildScoreText(blueData, ftables, globalSco, noteList);
 
     // Build project info comments
-    const projectInfo = buildProjectInfo(blueData, );
+    const projectInfo = buildProjectInfo(blueData);
 
     // Assemble CSD
-    const csdText = (
+    const csdText =
       projectInfo +
-      "<CsoundSynthesizer>\n\n" +
-      "<CsInstruments>\n" +
+      '<CsoundSynthesizer>\n\n' +
+      '<CsInstruments>\n' +
       orchestraHeader +
-      "\n\n" +
+      '\n\n' +
       globalOrc +
-      "\n\n" +
+      '\n\n' +
       arrangementGlobalOrc +
-      "\n\n" +
+      '\n\n' +
       udoText +
-      "\n\n" +
+      '\n\n' +
       orc +
       mixerInstruments +
-      "\n\n</CsInstruments>\n\n" +
-      "<CsScore>\n\n" +
+      '\n\n</CsInstruments>\n\n' +
+      '<CsScore>\n\n' +
       scoreText +
-      "</CsScore>\n\n" +
-      "</CsoundSynthesizer>"
-    );
+      '</CsScore>\n\n' +
+      '</CsoundSynthesizer>';
 
     return {
       csdText,
@@ -330,11 +330,14 @@ export async function buildStandardCSDAsync(
   session?: JavaScriptSession,
   runtimeClient?: JavaRuntimeClientContract | null,
 ): Promise<RenderCsdResult> {
-  const { arrangement: clonedArrangement, tables: clonedTables, mixer: clonedMixer, compileData } =
-    createRenderSnapshot(blueData, session, runtimeClient);
+  const {
+    arrangement: clonedArrangement,
+    tables: clonedTables,
+    mixer: clonedMixer,
+    compileData,
+  } = createRenderSnapshot(blueData, session, runtimeClient);
   let generationError: unknown = null;
-  const logPrefix =
-    profile === "disk" ? "[BlueData.toDiskCSDAsync]" : "[BlueData.toCSDAsync]";
+  const logPrefix = profile === 'disk' ? '[BlueData.toDiskCSDAsync]' : '[BlueData.toCSDAsync]';
 
   try {
     const channelIdAssignments = assignChannelIds(blueData, clonedMixer);
@@ -346,24 +349,21 @@ export async function buildStandardCSDAsync(
     const orchestraHeader = buildOrchestraHeader(blueData, profile);
     const nchnls = getNchnls(blueData, profile);
 
-    let globalOrc = getBlueDataState(blueData).globalOrcSco.getGlobalOrc() || "";
-    const baseGlobalSco = getBlueDataState(blueData).globalOrcSco.getGlobalSco() || "";
+    let globalOrc = getBlueDataState(blueData).globalOrcSco.getGlobalOrc() || '';
+    const baseGlobalSco = getBlueDataState(blueData).globalOrcSco.getGlobalSco() || '';
 
     const appendGlobalOrc = (section: string) => {
       if (!section) {
         return;
       }
-      if (globalOrc.length > 0 && !globalOrc.endsWith("\n")) {
-        globalOrc += "\n";
+      if (globalOrc.length > 0 && !globalOrc.endsWith('\n')) {
+        globalOrc += '\n';
       }
       globalOrc += section;
     };
 
     if (clonedMixer.isEnabled()) {
-      const mixerInits = clonedMixer.getInitStatements(
-        channelIdAssignments,
-        nchnls,
-      );
+      const mixerInits = clonedMixer.getInitStatements(channelIdAssignments, nchnls);
       if (mixerInits) {
         appendGlobalOrc(`${mixerInits}\n\n`);
       }
@@ -384,16 +384,18 @@ export async function buildStandardCSDAsync(
     const ftables = clonedTables.getAllTables();
 
     const { startTime, endTime } = getRenderWindow(blueData, profile);
-    const noteList = await getBlueDataState(blueData).score.generateForCSDAsync(compileData, startTime, endTime);
+    const noteList = await getBlueDataState(blueData).score.generateForCSDAsync(
+      compileData,
+      startTime,
+      endTime,
+    );
     const allParameters = compileData.getOriginalParameters();
     const allStringChannels = compileData.getStringChannels();
     compileData.setHandleParametersAndChannels(false);
 
     if (endTime > 0 && endTime > startTime) {
-      const renderEndInstrument = createRenderEndInstrument(blueData, );
-      const renderEndInstrumentId = clonedArrangement.addInstrumentAtEnd(
-        renderEndInstrument,
-      );
+      const renderEndInstrument = createRenderEndInstrument(blueData);
+      const renderEndInstrumentId = clonedArrangement.addInstrumentAtEnd(renderEndInstrument);
 
       const renderEndNote = Note.createNoteFromText(
         `i${renderEndInstrumentId} ${endTime - startTime} 0.1`,
@@ -414,7 +416,7 @@ export async function buildStandardCSDAsync(
       const tempoStatement = getTempoScore(scoreTempoMap, startTime, endTime);
       scoreGlobalPrefix = [baseGlobalSco, tempoStatement]
         .filter((section) => section.length > 0)
-        .join("\n");
+        .join('\n');
     } else {
       tempoMap = getTempoMapFromScoreText(baseGlobalSco);
     }
@@ -423,7 +425,7 @@ export async function buildStandardCSDAsync(
     const totalDur = getNoteListDuration(blueData, noteList);
     const processingStart = startTime;
     const globalSco = preprocessSco(
-      [scoreGlobalPrefix, arrangementGlobalSco].filter(Boolean).join("\n"),
+      [scoreGlobalPrefix, arrangementGlobalSco].filter(Boolean).join('\n'),
       totalDur,
       startTime,
       processingStart,
@@ -437,7 +439,8 @@ export async function buildStandardCSDAsync(
       globalDur += clonedMixer.getExtraRenderTime();
     }
 
-    const alwaysOnInstruments = collectAlwaysOnInstruments(blueData,
+    const alwaysOnInstruments = collectAlwaysOnInstruments(
+      blueData,
       clonedArrangement,
       clonedMixer,
       channelIdAssignments,
@@ -451,16 +454,17 @@ export async function buildStandardCSDAsync(
         const instrId = clonedArrangement.addInstrumentAtEnd(instrument);
         addScoreNote(blueData, noteList, `i${instrId} 0 ${globalDur}`);
       } else {
-        const alwaysOnId = `${sourceId ?? "unknown"}_alwaysOn`;
+        const alwaysOnId = `${sourceId ?? 'unknown'}_alwaysOn`;
         clonedArrangement.addInstrumentWithId(instrument, alwaysOnId, false);
         addScoreNote(blueData, noteList, `i"${alwaysOnId}" 0 ${globalDur}`);
       }
     }
 
     let mixerEffectUDOs: string[] = [];
-    let mixerInstruments = "";
+    let mixerInstruments = '';
     if (clonedMixer.isEnabled()) {
-      const mixerOutput = generateMixerOrchestra(blueData,
+      const mixerOutput = generateMixerOrchestra(
+        blueData,
         channelIdAssignments,
         nchnls,
         udos,
@@ -471,8 +475,9 @@ export async function buildStandardCSDAsync(
       addScoreNote(blueData, noteList, `i"BlueMixer" 0 ${globalDur}`);
     }
 
-    if (profile === "disk") {
-      appendParameterAutomationNotes(blueData,
+    if (profile === 'disk') {
+      appendParameterAutomationNotes(
+        blueData,
         allParameters,
         noteList,
         clonedArrangement,
@@ -485,7 +490,8 @@ export async function buildStandardCSDAsync(
       clonedArrangement.generateGlobalOrc(compileData),
     );
 
-    const initStatements = buildRuntimeInitStatements(blueData,
+    const initStatements = buildRuntimeInitStatements(
+      blueData,
       allParameters,
       allStringChannels,
       profile,
@@ -508,7 +514,7 @@ export async function buildStandardCSDAsync(
     if (mixerEffectUDOs.length > 0) {
       allUDOText.push(...mixerEffectUDOs);
     }
-    const udoText = allUDOText.length > 0 ? `${allUDOText.join("\n")}\n` : "";
+    const udoText = allUDOText.length > 0 ? `${allUDOText.join('\n')}\n` : '';
 
     const orc = await clonedArrangement.generateOrchestraAsync(
       compileData,
@@ -517,34 +523,29 @@ export async function buildStandardCSDAsync(
       parameterMap,
     );
 
-    const scoreText = buildScoreText(blueData,
-      ftables,
-      globalSco,
-      noteList,
-    );
+    const scoreText = buildScoreText(blueData, ftables, globalSco, noteList);
 
-    const projectInfo = buildProjectInfo(blueData, );
+    const projectInfo = buildProjectInfo(blueData);
 
-    const csdText = (
+    const csdText =
       projectInfo +
-      "<CsoundSynthesizer>\n\n" +
-      "<CsInstruments>\n" +
+      '<CsoundSynthesizer>\n\n' +
+      '<CsInstruments>\n' +
       orchestraHeader +
-      "\n\n" +
+      '\n\n' +
       globalOrc +
-      "\n\n" +
+      '\n\n' +
       arrangementGlobalOrc +
-      "\n\n" +
+      '\n\n' +
       udoText +
-      "\n\n" +
+      '\n\n' +
       orc +
       mixerInstruments +
-      "\n\n</CsInstruments>\n\n" +
-      "<CsScore>\n\n" +
+      '\n\n</CsInstruments>\n\n' +
+      '<CsScore>\n\n' +
       scoreText +
-      "</CsScore>\n\n" +
-      "</CsoundSynthesizer>"
-    );
+      '</CsScore>\n\n' +
+      '</CsoundSynthesizer>';
 
     return {
       csdText,
@@ -569,8 +570,12 @@ export async function buildStandardCSDAsync(
 }
 
 export function toBlueLiveCSD(blueData: BlueData, session?: JavaScriptSession): RenderCsdResult {
-  const { arrangement: clonedArrangement, tables: clonedTables, mixer: clonedMixer, compileData } =
-    createRenderSnapshot(blueData, session);
+  const {
+    arrangement: clonedArrangement,
+    tables: clonedTables,
+    mixer: clonedMixer,
+    compileData,
+  } = createRenderSnapshot(blueData, session);
   let generationError: unknown = null;
 
   try {
@@ -580,11 +585,11 @@ export function toBlueLiveCSD(blueData: BlueData, session?: JavaScriptSession): 
     }
     compileData.setMixerEnabled(clonedMixer.isEnabled());
 
-    const orchestraHeader = buildOrchestraHeader(blueData, );
-    const nchnls = getNchnls(blueData, );
+    const orchestraHeader = buildOrchestraHeader(blueData);
+    const nchnls = getNchnls(blueData);
 
-    let globalOrc = getBlueDataState(blueData).globalOrcSco.getGlobalOrc() || "";
-    let globalSco = getBlueDataState(blueData).globalOrcSco.getGlobalSco() || "";
+    let globalOrc = getBlueDataState(blueData).globalOrcSco.getGlobalOrc() || '';
+    let globalSco = getBlueDataState(blueData).globalOrcSco.getGlobalSco() || '';
 
     const appendGlobalOrc = (section: string) => {
       if (!section) return;
@@ -606,15 +611,16 @@ export function toBlueLiveCSD(blueData: BlueData, session?: JavaScriptSession): 
     const stringChannels = collectStringChannels(blueData, clonedArrangement);
     compileData.registerExistingAutomationState(parameters, stringChannels);
     const stringInits = buildStringChannelInits(blueData, compileData.getStringChannels());
-    const paramInits = buildParameterInits(blueData,
+    const paramInits = buildParameterInits(
+      blueData,
       compileData.getOriginalParameters(),
-      "realtime",
+      'realtime',
       getBlueDataState(blueData).renderStartTime,
       false,
     );
     const runtimeInitStatements = [stringInits, paramInits]
       .filter((section) => section.length > 0)
-      .join("\n");
+      .join('\n');
     if (runtimeInitStatements) {
       appendGlobalOrc(`${runtimeInitStatements}\n`);
     }
@@ -635,7 +641,8 @@ export function toBlueLiveCSD(blueData: BlueData, session?: JavaScriptSession): 
 
     const midiInstrumentTargets = compileData.getCompiledMidiInstrumentTargets();
 
-    const alwaysOnInstruments = collectAlwaysOnInstruments(blueData,
+    const alwaysOnInstruments = collectAlwaysOnInstruments(
+      blueData,
       clonedArrangement,
       clonedMixer,
       channelIdAssignments,
@@ -650,16 +657,17 @@ export function toBlueLiveCSD(blueData: BlueData, session?: JavaScriptSession): 
         const instrId = clonedArrangement.addInstrumentAtEnd(instrument);
         blueLiveSco += `i${instrId} 0 ${totalDur}\n`;
       } else {
-        const alwaysOnId = `${sourceId ?? "unknown"}_alwaysOn`;
+        const alwaysOnId = `${sourceId ?? 'unknown'}_alwaysOn`;
         clonedArrangement.addInstrumentWithId(instrument, alwaysOnId, false);
         blueLiveSco += `i "${alwaysOnId}" 0 ${totalDur}\n`;
       }
     }
 
     let mixerEffectUDOs: string[] = [];
-    let mixerInstruments = "";
+    let mixerInstruments = '';
     if (clonedMixer.isEnabled()) {
-      const mixerOutput = generateMixerOrchestra(blueData,
+      const mixerOutput = generateMixerOrchestra(
+        blueData,
         channelIdAssignments,
         nchnls,
         udos,
@@ -678,45 +686,42 @@ export function toBlueLiveCSD(blueData: BlueData, session?: JavaScriptSession): 
     if (mixerEffectUDOs.length > 0) {
       allUDOText.push(...mixerEffectUDOs);
     }
-    const udoText = allUDOText.length > 0 ? `${allUDOText.join("\n")}\n` : "";
+    const udoText = allUDOText.length > 0 ? `${allUDOText.join('\n')}\n` : '';
 
-    const orc = clonedArrangement.generateOrchestra(
-      compileData,
-      clonedMixer,
-      nchnls,
-      parameterMap,
-    );
+    const orc = clonedArrangement.generateOrchestra(compileData, clonedMixer, nchnls, parameterMap);
 
     let blueLiveOrc = orc + mixerInstruments;
-    blueLiveOrc += "\n\n" + createAllNotesOffInstrument(blueData, baseInstrIds);
+    blueLiveOrc += '\n\n' + createAllNotesOffInstrument(blueData, baseInstrIds);
 
     if (clonedMixer.isEnabled()) {
       blueLiveSco += `i "BlueMixer" 0 ${totalDur}\n`;
     }
 
-    const projectInfo = buildProjectInfo(blueData, );
+    const projectInfo = buildProjectInfo(blueData);
 
     const csdText =
       projectInfo +
-      "<CsoundSynthesizer>\n\n" +
-      "<CsInstruments>\n" +
+      '<CsoundSynthesizer>\n\n' +
+      '<CsInstruments>\n' +
       orchestraHeader +
-      "\n\n" +
+      '\n\n' +
       globalOrc +
-      "\n\n" +
+      '\n\n' +
       arrangementGlobalOrc +
-      "\n\n" +
+      '\n\n' +
       udoText +
-      "\n\n" +
+      '\n\n' +
       blueLiveOrc +
-      "\n\n</CsInstruments>\n\n" +
-      "<CsScore>\n\n" +
+      '\n\n</CsInstruments>\n\n' +
+      '<CsScore>\n\n' +
       ftables +
-      "\n\n" +
+      '\n\n' +
       blueLiveSco +
-      "e " + totalDur + "\n\n" +
-      "</CsScore>\n\n" +
-      "</CsoundSynthesizer>";
+      'e ' +
+      totalDur +
+      '\n\n' +
+      '</CsScore>\n\n' +
+      '</CsoundSynthesizer>';
 
     return {
       csdText,
@@ -735,7 +740,10 @@ export function toBlueLiveCSD(blueData: BlueData, session?: JavaScriptSession): 
       if (generationError === null) {
         throw cleanupError;
       }
-      console.warn('[BlueData.toBlueLiveCSD] Failed to dispose JavaScript runtime state:', cleanupError);
+      console.warn(
+        '[BlueData.toBlueLiveCSD] Failed to dispose JavaScript runtime state:',
+        cleanupError,
+      );
     }
   }
 }
@@ -748,7 +756,10 @@ function createAllNotesOffInstrument(blueData: BlueData, instrIds: string[]): st
 
   for (let i = 0; i < instrIds.length; i++) {
     const id = instrIds[i] ?? '';
-    const parts = id.split(',').map((part) => part.trim()).filter((part) => part.length > 0);
+    const parts = id
+      .split(',')
+      .map((part) => part.trim())
+      .filter((part) => part.length > 0);
 
     for (let j = 0; j < parts.length; j++) {
       const part = parts[j] ?? '';
@@ -776,9 +787,9 @@ function createAllNotesOffInstrument(blueData: BlueData, instrIds: string[]): st
 /**
  * Build the orchestra header (sr/ksmps/nchnls/0dbfs).
  */
-function buildOrchestraHeader(blueData: BlueData, profile: CsdRenderProfile = "realtime"): string {
+function buildOrchestraHeader(blueData: BlueData, profile: CsdRenderProfile = 'realtime'): string {
   const props = getBlueDataState(blueData).projectProperties;
-  const isDisk = profile === "disk";
+  const isDisk = profile === 'disk';
   const nchnls = getNchnls(blueData, profile);
 
   const lines: string[] = [];
@@ -796,15 +807,15 @@ function buildOrchestraHeader(blueData: BlueData, profile: CsdRenderProfile = "r
     lines.push(`0dbfs=${props.zeroDbFS}`);
   }
 
-  return lines.join("\n");
+  return lines.join('\n');
 }
 
 /**
  * Get the number of channels for real-time playback.
  */
-function getNchnls(blueData: BlueData, profile: CsdRenderProfile = "realtime"): number {
+function getNchnls(blueData: BlueData, profile: CsdRenderProfile = 'realtime'): number {
   const props = getBlueDataState(blueData).projectProperties;
-  const channels = profile === "disk" ? props.diskChannels : props.channels;
+  const channels = profile === 'disk' ? props.diskChannels : props.channels;
   if (channels) {
     const n = parseInt(channels, 10);
     if (!isNaN(n)) return n;
@@ -812,8 +823,14 @@ function getNchnls(blueData: BlueData, profile: CsdRenderProfile = "realtime"): 
   return 2; // Default stereo
 }
 
-function getRenderWindow(blueData: BlueData, profile: CsdRenderProfile): { startTime: number; endTime: number } {
-  if (profile === "disk" && getBlueDataState(blueData).projectProperties.diskAlwaysRenderEntireProject) {
+function getRenderWindow(
+  blueData: BlueData,
+  profile: CsdRenderProfile,
+): { startTime: number; endTime: number } {
+  if (
+    profile === 'disk' &&
+    getBlueDataState(blueData).projectProperties.diskAlwaysRenderEntireProject
+  ) {
     return { startTime: 0, endTime: -1 };
   }
 
@@ -827,7 +844,10 @@ function getRenderWindow(blueData: BlueData, profile: CsdRenderProfile): { start
  * Assign channel IDs for mixer init statements.
  * Mirrors Java's assignChannelIds().
  */
-function assignChannelIds(blueData: BlueData, mixer: Mixer = getBlueDataState(blueData).mixer): Map<Channel, number> {
+function assignChannelIds(
+  blueData: BlueData,
+  mixer: Mixer = getBlueDataState(blueData).mixer,
+): Map<Channel, number> {
   const assignments = new Map<Channel, number>();
   let i = 0;
 
@@ -849,7 +869,8 @@ function assignChannelIds(blueData: BlueData, mixer: Mixer = getBlueDataState(bl
 /**
  * Build the score section with F-tables, globalSco, and generated score notes.
  */
-export function buildScoreText(blueData: BlueData,
+export function buildScoreText(
+  blueData: BlueData,
   ftables: string,
   globalSco: string,
   noteList: NoteList,
@@ -865,26 +886,26 @@ export function buildScoreText(blueData: BlueData,
 
   const scoreGlobalText = globalSco.trimEnd();
 
-  const scoreNotesText = noteLines.length > 0 ? `${noteLines.join("\n")}\n` : "";
+  const scoreNotesText = noteLines.length > 0 ? `${noteLines.join('\n')}\n` : '';
 
   return `${ftables}\n\n${scoreGlobalText}\n\n${scoreNotesText}e\n\n`;
 }
 
-function buildRuntimeInitStatements(blueData: BlueData,
+function buildRuntimeInitStatements(
+  blueData: BlueData,
   parameters: Parameter[],
   stringChannels: Array<{ objectName: string; value: string; channelName: string }>,
-  profile: CsdRenderProfile = "realtime",
+  profile: CsdRenderProfile = 'realtime',
   renderStartTime: number = getBlueDataState(blueData).renderStartTime,
 ): string {
   const stringInits = buildStringChannelInits(blueData, stringChannels, profile);
   const paramInits = buildParameterInits(blueData, parameters, profile, renderStartTime);
 
-  return [stringInits, paramInits]
-    .filter((section) => section.length > 0)
-    .join("\n");
+  return [stringInits, paramInits].filter((section) => section.length > 0).join('\n');
 }
 
-function collectAlwaysOnInstruments(blueData: BlueData,
+function collectAlwaysOnInstruments(
+  blueData: BlueData,
   arrangement: Arrangement,
   mixer: Mixer,
   channelIdAssignments: Map<Channel, number>,
@@ -901,21 +922,21 @@ function collectAlwaysOnInstruments(blueData: BlueData,
     }
 
     const instr = ia.instr as any;
-    let compiled = "";
+    let compiled = '';
     const instrParams = parameterMap.get(ia.instr);
 
-    if (typeof instr.generateAlwaysOnInstrument === "function") {
-      compiled = instr.generateAlwaysOnInstrument(instrParams) ?? "";
+    if (typeof instr.generateAlwaysOnInstrument === 'function') {
+      compiled = instr.generateAlwaysOnInstrument(instrParams) ?? '';
     }
 
-    if (!compiled && typeof instr.getAlwaysOnInstrumentText === "function") {
+    if (!compiled && typeof instr.getAlwaysOnInstrumentText === 'function') {
       const alwaysOnText = instr.getAlwaysOnInstrumentText();
       if (!alwaysOnText) {
         continue;
       }
 
       const unit = new BSBCompilationUnit();
-      if (typeof instr.getGraphicInterface === "function") {
+      if (typeof instr.getGraphicInterface === 'function') {
         instr.getGraphicInterface().collectReplacements(unit, instrParams);
       }
       compiled = unit.replaceBSBValues(alwaysOnText);
@@ -925,12 +946,8 @@ function collectAlwaysOnInstruments(blueData: BlueData,
       continue;
     }
 
-    const sourceChannel = sourceChannels.find(
-      (channel) => channel.getName() === ia.arrangementId,
-    );
-    const channelId = sourceChannel
-      ? channelIdAssignments.get(sourceChannel)
-      : undefined;
+    const sourceChannel = sourceChannels.find((channel) => channel.getName() === ia.arrangementId);
+    const channelId = sourceChannel ? channelIdAssignments.get(sourceChannel) : undefined;
 
     if (channelId !== undefined) {
       compiled = compiled.replace(
@@ -952,7 +969,8 @@ function collectAlwaysOnInstruments(blueData: BlueData,
   return alwaysOnInstruments;
 }
 
-function appendParameterAutomationNotes(blueData: BlueData,
+function appendParameterAutomationNotes(
+  blueData: BlueData,
   parameters: Parameter[],
   notes: NoteList,
   arrangement: Arrangement,
@@ -979,17 +997,12 @@ function appendParameterAutomationNotes(blueData: BlueData,
     instr.setText(getParameterInstrumentTextJava(compilationVarName, param.getResolution()));
 
     const instrId = arrangement.addInstrumentAtEnd(instr);
-    appendParameterScore(blueData,
-      param,
-      instrId,
-      notes,
-      renderStart,
-      renderEnd,
-    );
+    appendParameterScore(blueData, param, instrId, notes, renderStart, renderEnd);
   }
 }
 
-function appendParameterScore(blueData: BlueData,
+function appendParameterScore(
+  blueData: BlueData,
   param: Parameter,
   instrId: number,
   notes: NoteList,
@@ -1020,22 +1033,23 @@ function addScoreNote(blueData: BlueData, notes: NoteList, noteText: string): vo
  * Build project info comments for the top of the CSD.
  * Mirrors Java's appendProjectInfo().
  */
-function buildProjectInfo(blueData: BlueData, ): string {
+function buildProjectInfo(blueData: BlueData): string {
   const props = getBlueDataState(blueData).projectProperties;
-  const notes = (props.notes || "").replace(/\n/g, "\n; ");
+  const notes = (props.notes || '').replace(/\n/g, '\n; ');
 
   return (
-    ";\n" +
-    `; "${props.title || ""}"\n` +
-    `; by ${props.author || ""}\n` +
-    ";\n" +
+    ';\n' +
+    `; "${props.title || ''}"\n` +
+    `; by ${props.author || ''}\n` +
+    ';\n' +
     `; ${notes}\n;\n` +
     `; Generated by blue ${BLUE_VERSION} (http://blue.kunstmusik.com)\n` +
-    ";\n\n"
+    ';\n\n'
   );
 }
 
-function createRenderSnapshot(blueData: BlueData,
+function createRenderSnapshot(
+  blueData: BlueData,
   session?: JavaScriptSession,
   runtimeClient?: JavaRuntimeClientContract | null,
 ): {
@@ -1068,7 +1082,7 @@ function createRenderSnapshot(blueData: BlueData,
   };
 }
 
-function createRenderEndInstrument(blueData: BlueData, ): GenericInstrument {
+function createRenderEndInstrument(blueData: BlueData): GenericInstrument {
   const instr = new GenericInstrument();
   instr.setText('event "e", 0, 0, 0.1');
   return instr;
@@ -1100,9 +1114,10 @@ function getNoteListDurationFromText(blueData: BlueData, scoreText: string): num
  *   gk_blue_auto0 chnexport "gk_blue_auto0", 3
  *   ...
  */
-function buildParameterInits(blueData: BlueData,
+function buildParameterInits(
+  blueData: BlueData,
   parameters: Parameter[],
-  profile: CsdRenderProfile = "realtime",
+  profile: CsdRenderProfile = 'realtime',
   renderStartTime: number = getBlueDataState(blueData).renderStartTime,
   useRenderStartValue: boolean = true,
 ): string {
@@ -1120,20 +1135,23 @@ function buildParameterInits(blueData: BlueData,
     // Init statement
     lines.push(`${varName} init ${formatBlueNumber(initialVal)}`);
 
-    if (profile !== "disk") {
+    if (profile !== 'disk') {
       // Standard Csound channel export for engine-side channel bridging
       lines.push(`${varName} chnexport "${varName}", 3`);
     }
   }
 
-  return lines.join("\n");
+  return lines.join('\n');
 }
 
 /**
  * Collect all StringChannels from BSB instruments in the arrangement.
  * Mirrors Java's getStringChannels() method.
  */
-function collectStringChannels(blueData: BlueData, arrangement?: Arrangement): Array<{
+function collectStringChannels(
+  blueData: BlueData,
+  arrangement?: Arrangement,
+): Array<{
   objectName: string;
   value: string;
   channelName: string;
@@ -1150,7 +1168,7 @@ function collectStringChannels(blueData: BlueData, arrangement?: Arrangement): A
   for (const ia of arr.getArrangement()) {
     if (!ia.enabled || !ia.instr) continue;
     const instr = ia.instr as any;
-    if (typeof instr.getStringChannels === "function") {
+    if (typeof instr.getStringChannels === 'function') {
       for (const sc of instr.getStringChannels()) {
         const channelName = `gS_blue_str${idx++}`;
         sc.channelName = channelName;
@@ -1171,20 +1189,19 @@ function collectStringChannels(blueData: BlueData, arrangement?: Arrangement): A
  * Each instrument gets its own Parameter[] with compilationVarName set.
  * This is used by generateInstrument() to replace widget values with gk_blue_autoN.
  */
-function buildParameterMap(blueData: BlueData, arrangement?: Arrangement): Map<Instrument, Parameter[]> {
+function buildParameterMap(
+  blueData: BlueData,
+  arrangement?: Arrangement,
+): Map<Instrument, Parameter[]> {
   const map = new Map<Instrument, Parameter[]>();
   const arr = arrangement ?? getBlueDataState(blueData).arrangement;
 
   for (const ia of arr.getArrangement()) {
     if (!ia.enabled || !ia.instr) continue;
     const instr = ia.instr as any;
-    if (typeof instr.getParameters === "function") {
+    if (typeof instr.getParameters === 'function') {
       const instrParams = instr.getParameters();
-      if (
-        instrParams &&
-        Array.isArray(instrParams) &&
-        instrParams.length > 0
-      ) {
+      if (instrParams && Array.isArray(instrParams) && instrParams.length > 0) {
         map.set(ia.instr, instrParams);
       }
     }
@@ -1202,20 +1219,21 @@ function buildParameterMap(blueData: BlueData, arrangement?: Arrangement): Map<I
  *   gS_blue_str0 chnexport "gS_blue_str0", 3
  *   ...
  */
-function buildStringChannelInits(blueData: BlueData,
+function buildStringChannelInits(
+  blueData: BlueData,
   channels: Array<{ objectName: string; value: string; channelName: string }>,
-  profile: CsdRenderProfile = "realtime",
+  profile: CsdRenderProfile = 'realtime',
 ): string {
   const lines: string[] = [];
 
   for (const sc of channels) {
     lines.push(`${sc.channelName} = "${sc.value}"`);
-    if (profile !== "disk") {
+    if (profile !== 'disk') {
       lines.push(`${sc.channelName} chnexport "${sc.channelName}", 3`);
     }
   }
 
-  return lines.join("\n");
+  return lines.join('\n');
 }
 
 /**
@@ -1231,7 +1249,8 @@ function buildStringChannelInits(blueData: BlueData,
  *   ...
  *   endin
  */
-function generateMixerOrchestra(blueData: BlueData,
+function generateMixerOrchestra(
+  blueData: BlueData,
   channelIdAssignments: Map<Channel, number>,
   nchnls: number,
   udos: OpcodeList,
@@ -1239,9 +1258,7 @@ function generateMixerOrchestra(blueData: BlueData,
 ): { effectUDOs: string[]; instrumentsText: string; effectIdMap: Map<Effect, number> } {
   const instrBuffer: string[] = [];
   const sourceChannels = mixer.getAllSourceChannels();
-  const subChannels = sortSubChannelsForRendering(blueData,
-    Array.from(mixer.getSubChannels()),
-  );
+  const subChannels = sortSubChannelsForRendering(blueData, Array.from(mixer.getSubChannels()));
 
   let effectId = 0;
   const effectUDOs: string[] = [];
@@ -1253,11 +1270,7 @@ function generateMixerOrchestra(blueData: BlueData,
         continue;
       }
 
-      const udo = item.generateUDO(
-        effectId,
-        item.getParameters(),
-        udos,
-      );
+      const udo = item.generateUDO(effectId, item.getParameters(), udos);
       if (!udo) {
         continue;
       }
@@ -1282,7 +1295,8 @@ function generateMixerOrchestra(blueData: BlueData,
   registerEffects(mixer.getMaster().getPostEffects());
 
   // Generate BlueMixer instrument
-  const blueMixerCode = generateBlueMixer(blueData,
+  const blueMixerCode = generateBlueMixer(
+    blueData,
     sourceChannels,
     subChannels,
     channelIdAssignments,
@@ -1294,7 +1308,7 @@ function generateMixerOrchestra(blueData: BlueData,
 
   return {
     effectUDOs,
-    instrumentsText: instrBuffer.join("\n"),
+    instrumentsText: instrBuffer.join('\n'),
     effectIdMap,
   };
 }
@@ -1303,7 +1317,8 @@ function generateMixerOrchestra(blueData: BlueData,
  * Generate the BlueMixer instrument.
  * Routes audio through volumes, sends, effect UDOs, and outputs via outc.
  */
-function generateBlueMixer(blueData: BlueData,
+function generateBlueMixer(
+  blueData: BlueData,
   sourceChannels: Channel[],
   subChannels: Channel[],
   channelIdAssignments: Map<Channel, number>,
@@ -1313,7 +1328,7 @@ function generateBlueMixer(blueData: BlueData,
 ): string {
   const lines: string[] = [];
 
-  lines.push("\tinstr BlueMixer\t;Blue Mixer Instrument");
+  lines.push('\tinstr BlueMixer\t;Blue Mixer Instrument');
 
   // Process each source channel
   for (const channel of sourceChannels) {
@@ -1332,17 +1347,35 @@ function generateBlueMixer(blueData: BlueData,
     const signalVars = getSubChannelSignalVars(blueData, subChannel.getName(), nchnls);
 
     applyEffectsChain(blueData, subChannel.getPreEffects(), signalVars, effectIdMap, lines);
-    applyChannelLevel(blueData, signalVars, subChannel.getLevelParameter(), subChannel.getLevel(), lines);
+    applyChannelLevel(
+      blueData,
+      signalVars,
+      subChannel.getLevelParameter(),
+      subChannel.getLevel(),
+      lines,
+    );
     applyEffectsChain(blueData, subChannel.getPostEffects(), signalVars, effectIdMap, lines);
-    routeChannelOutput(blueData, signalVars, subChannel.getOutChannel(), subChannel.getName(), lines);
+    routeChannelOutput(
+      blueData,
+      signalVars,
+      subChannel.getOutChannel(),
+      subChannel.getName(),
+      lines,
+    );
   }
 
   const masterChannel = mixer.getMaster();
-  const masterVars = getSubChannelSignalVars(blueData, "Master", nchnls);
+  const masterVars = getSubChannelSignalVars(blueData, 'Master', nchnls);
   applyEffectsChain(blueData, masterChannel.getPreEffects(), masterVars, effectIdMap, lines);
-  applyChannelLevel(blueData, masterVars, masterChannel.getLevelParameter(), masterChannel.getLevel(), lines);
+  applyChannelLevel(
+    blueData,
+    masterVars,
+    masterChannel.getLevelParameter(),
+    masterChannel.getLevel(),
+    lines,
+  );
   applyEffectsChain(blueData, masterChannel.getPostEffects(), masterVars, effectIdMap, lines);
-  lines.push(`outc ${masterVars.join(", ")}`);
+  lines.push(`outc ${masterVars.join(', ')}`);
 
   // Clear all audio variables
   for (const channel of sourceChannels) {
@@ -1361,14 +1394,15 @@ function generateBlueMixer(blueData: BlueData,
     lines.push(`${signalVar} = 0`);
   }
 
-  lines.push("");
-  lines.push("\tendin");
-  lines.push("");
+  lines.push('');
+  lines.push('\tendin');
+  lines.push('');
 
-  return lines.join("\n");
+  return lines.join('\n');
 }
 
-function applyEffectsChain(blueData: BlueData,
+function applyEffectsChain(
+  blueData: BlueData,
   chain: EffectsChain,
   signalVars: string[],
   effectIdMap: Map<Effect, number>,
@@ -1386,9 +1420,9 @@ function applyEffectsChain(blueData: BlueData,
       }
 
       if (item.getStyle() === UDOStyle.MODERN) {
-        lines.push(`${signalVars.join(", ")} = blueEffect${effectId}(${signalVars.join(", ")})`);
+        lines.push(`${signalVars.join(', ')} = blueEffect${effectId}(${signalVars.join(', ')})`);
       } else {
-        lines.push(`${signalVars.join(", ")}\tblueEffect${effectId}\t${signalVars.join(", ")}`);
+        lines.push(`${signalVars.join(', ')}\tblueEffect${effectId}\t${signalVars.join(', ')}`);
       }
       continue;
     }
@@ -1397,7 +1431,7 @@ function applyEffectsChain(blueData: BlueData,
       continue;
     }
 
-    const targetName = item.getSendChannel() || "Master";
+    const targetName = item.getSendChannel() || 'Master';
     const amountExpr = getSendAmountExpression(blueData, item);
 
     for (let i = 0; i < signalVars.length; i++) {
@@ -1407,7 +1441,8 @@ function applyEffectsChain(blueData: BlueData,
   }
 }
 
-function applyChannelLevel(blueData: BlueData,
+function applyChannelLevel(
+  blueData: BlueData,
   signalVars: string[],
   levelParam: Parameter,
   fallbackLevel: number,
@@ -1432,13 +1467,14 @@ function applyChannelLevel(blueData: BlueData,
   }
 }
 
-function routeChannelOutput(blueData: BlueData,
+function routeChannelOutput(
+  blueData: BlueData,
   signalVars: string[],
   outChannel: string,
   channelName: string,
   lines: string[],
 ): void {
-  const resolvedOutChannel = outChannel || "Master";
+  const resolvedOutChannel = outChannel || 'Master';
   if (resolvedOutChannel === channelName) {
     return;
   }
@@ -1459,7 +1495,7 @@ function getSendAmountExpression(blueData: BlueData, send: Send): string {
 }
 
 function scaleSignal(blueData: BlueData, signalVar: string, amountExpr: string): string {
-  if (amountExpr === "1" || amountExpr === "1.0") {
+  if (amountExpr === '1' || amountExpr === '1.0') {
     return signalVar;
   }
 
@@ -1474,7 +1510,11 @@ function getSourceSignalVars(blueData: BlueData, channelId: number, nchnls: numb
   return signalVars;
 }
 
-function getSubChannelSignalVars(blueData: BlueData, channelName: string, nchnls: number): string[] {
+function getSubChannelSignalVars(
+  blueData: BlueData,
+  channelName: string,
+  nchnls: number,
+): string[] {
   const signalVars: string[] = [];
   for (let i = 0; i < nchnls; i++) {
     signalVars.push(getSubChannelVar(blueData, channelName, i));
@@ -1483,16 +1523,12 @@ function getSubChannelSignalVars(blueData: BlueData, channelName: string, nchnls
 }
 
 function getSubChannelVar(blueData: BlueData, channelName: string, outputIndex: number): string {
-  const safeName = channelName === "Master"
-    ? "Master"
-    : channelName.replace(/\s+/g, "_");
+  const safeName = channelName === 'Master' ? 'Master' : channelName.replace(/\s+/g, '_');
   return `ga_bluesub_${safeName}_${outputIndex}`;
 }
 
-function sortSubChannelsForRendering(blueData: BlueData,
-  subChannels: Channel[],
-): Channel[] {
-  const byName = new Map(subChannels.map(channel => [channel.getName(), channel]));
+function sortSubChannelsForRendering(blueData: BlueData, subChannels: Channel[]): Channel[] {
+  const byName = new Map(subChannels.map((channel) => [channel.getName(), channel]));
   const visited = new Set<string>();
   const visiting = new Set<string>();
   const ordered: Channel[] = [];
@@ -1507,13 +1543,13 @@ function sortSubChannelsForRendering(blueData: BlueData,
 
     const targets = new Set<string>();
     const outChannel = channel.getOutChannel();
-    if (outChannel && outChannel !== "Master" && outChannel !== name && byName.has(outChannel)) {
+    if (outChannel && outChannel !== 'Master' && outChannel !== name && byName.has(outChannel)) {
       targets.add(outChannel);
     }
 
     for (const send of channel.getSends()) {
       const target = send.getSendChannel();
-      if (target && target !== "Master" && target !== name && byName.has(target)) {
+      if (target && target !== 'Master' && target !== name && byName.has(target)) {
         targets.add(target);
       }
     }

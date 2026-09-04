@@ -44,26 +44,42 @@ for (let i = 2; i < process.argv.length; ++i) {
 // 1. Configure and build benchmark_engine in Release mode
 process.stdout.write(`Configuring and building benchmark_engine in ${buildType} mode...\n`);
 run(process.execPath, ['scripts/build.mjs', '--build-type', buildType, '--no-stage']);
-run('cmake', ['--build', buildDir, '--target', 'benchmark_engine', '--config', buildType, '--parallel']);
+run('cmake', [
+  '--build',
+  buildDir,
+  '--target',
+  'benchmark_engine',
+  '--config',
+  buildType,
+  '--parallel',
+]);
 
 const benchmarkExecutable = join(
   buildDir,
   target.platform === 'win32' ? buildType : '',
-  target.platform === 'win32' ? 'benchmark_engine.exe' : 'benchmark_engine'
+  target.platform === 'win32' ? 'benchmark_engine.exe' : 'benchmark_engine',
 );
 
 // 2. Execute benchmark_engine --json. The native CLI owns the actual engine
 // path, warmup window, metadata, and optional baseline comparison contract.
 process.stdout.write(`Executing benchmark harness (${numTrials} trials, ${numCycles} cycles)...\n`);
-const result = run(benchmarkExecutable, [
-  '--json',
-  '--trials', String(numTrials),
-  '--warmup-cycles', '1024',
-  '--measure-cycles', String(numCycles),
-  '--scenario', 'all',
-  ...(baselinePath ? ['--compare', baselinePath] : []),
-  ...(outputPath ? ['--output', outputPath] : []),
-], { capture: true });
+const result = run(
+  benchmarkExecutable,
+  [
+    '--json',
+    '--trials',
+    String(numTrials),
+    '--warmup-cycles',
+    '1024',
+    '--measure-cycles',
+    String(numCycles),
+    '--scenario',
+    'all',
+    ...(baselinePath ? ['--compare', baselinePath] : []),
+    ...(outputPath ? ['--output', outputPath] : []),
+  ],
+  { capture: true },
+);
 
 const rawOutput = result.stdout.toString('utf-8');
 const benchmarkData = JSON.parse(rawOutput);
@@ -83,7 +99,7 @@ if (baselinePath) {
     const baselineRaw = await readFile(baselinePath, 'utf-8');
     const baselineData = JSON.parse(baselineRaw);
 
-    const baselineScenarios = new Map(baselineData.scenarios.map(s => [s.name, s]));
+    const baselineScenarios = new Map(baselineData.scenarios.map((s) => [s.name, s]));
 
     let foundCommonPath = false;
     for (const scenario of benchmarkData.scenarios) {
@@ -102,21 +118,23 @@ if (baselinePath) {
       const curMed = scenario.medianSummary;
       const baseMed = baseScenario.medianSummary;
 
-      const hostCycleAvgDeltaPct = baseMed.hostCycleAvgUs > 0
-        ? ((curMed.hostCycleAvgUs - baseMed.hostCycleAvgUs) / baseMed.hostCycleAvgUs) * 100
-        : 0;
+      const hostCycleAvgDeltaPct =
+        baseMed.hostCycleAvgUs > 0
+          ? ((curMed.hostCycleAvgUs - baseMed.hostCycleAvgUs) / baseMed.hostCycleAvgUs) * 100
+          : 0;
 
-      const hostCycleP95DeltaPct = baseMed.hostCycleP95Us > 0
-        ? ((curMed.hostCycleP95Us - baseMed.hostCycleP95Us) / baseMed.hostCycleP95Us) * 100
-        : 0;
+      const hostCycleP95DeltaPct =
+        baseMed.hostCycleP95Us > 0
+          ? ((curMed.hostCycleP95Us - baseMed.hostCycleP95Us) / baseMed.hostCycleP95Us) * 100
+          : 0;
 
-      const autoAvgDeltaPct = baseMed.autoAvgUs > 0
-        ? ((curMed.autoAvgUs - baseMed.autoAvgUs) / baseMed.autoAvgUs) * 100
-        : 0;
+      const autoAvgDeltaPct =
+        baseMed.autoAvgUs > 0
+          ? ((curMed.autoAvgUs - baseMed.autoAvgUs) / baseMed.autoAvgUs) * 100
+          : 0;
 
-      const shmAvgDeltaPct = baseMed.shmAvgUs > 0
-        ? ((curMed.shmAvgUs - baseMed.shmAvgUs) / baseMed.shmAvgUs) * 100
-        : 0;
+      const shmAvgDeltaPct =
+        baseMed.shmAvgUs > 0 ? ((curMed.shmAvgUs - baseMed.shmAvgUs) / baseMed.shmAvgUs) * 100 : 0;
 
       scenario.comparisonToBaseline = {
         hostCycleAvgDeltaPct,
@@ -130,8 +148,7 @@ if (baselinePath) {
         if (hostCycleAvgDeltaPct > 5.0) {
           primaryImprovementMet = false;
         }
-      } else if (!scenario.name.startsWith('quantized_exact') &&
-                 hostCycleP95DeltaPct > 5.0) {
+      } else if (!scenario.name.startsWith('quantized_exact') && hostCycleP95DeltaPct > 5.0) {
         // Regression on p95 must be <= 5% for unaffected scenarios.
         unaffectedRegressionMet = false;
       }

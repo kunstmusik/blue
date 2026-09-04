@@ -15,7 +15,10 @@ import {
   TimeDuration,
   timePositionToBeats,
 } from '@blue/data';
-import { applyProjectDocumentPatch, createScoreDocumentSnapshot } from '../../shared/project-editor';
+import {
+  applyProjectDocumentPatch,
+  createScoreDocumentSnapshot,
+} from '../../shared/project-editor';
 import MultiLineOverlay from '../components/workbench/panels/score/automation/MultiLineOverlay';
 import type { ScoreLayerGroupSnapshot } from '../components/workbench/panels/score/types';
 import {
@@ -35,7 +38,10 @@ function automationWithParams(...parameterIds: string[]) {
     layerKind: 'soundObject' as const,
     parameterIds,
     selectedParameterId: parameterIds[0],
-    parameters: parameterIds.map((parameterId) => ({ parameterId, points: [{ time: 0, value: 0 }] })),
+    parameters: parameterIds.map((parameterId) => ({
+      parameterId,
+      points: [{ time: 0, value: 0 }],
+    })),
     targetGroups: [],
     missingParameterIds: [],
   };
@@ -105,7 +111,7 @@ describe('multi-line layer geometry', () => {
         isOpenableContainer: false,
         layers: [
           layerSnapshot('l0', 44, ['p0']),
-          layerSnapshot('l1', 44),           // polyObject, no params → still automatable
+          layerSnapshot('l1', 44), // polyObject, no params → still automatable
           layerSnapshot('l2', 44, ['p2']),
           layerSnapshot('l3', 44, [], false), // patterns-style → not automatable
         ],
@@ -129,7 +135,7 @@ describe('multi-line layer geometry', () => {
         isOpenableContainer: false,
         layers: [
           layerSnapshot('l0', 44, ['p0', 'p1']),
-          layerSnapshot('l1', 44),           // no params, but automatable
+          layerSnapshot('l1', 44), // no params, but automatable
           layerSnapshot('l2', 44, [], false), // patterns → excluded entirely
         ],
       },
@@ -165,7 +171,13 @@ describe('multi-line preview computation', () => {
               parameterIds: ['p0'],
               selectedParameterId: 'p0',
               parameters: [
-                { parameterId: 'p0', points: [{ time: 0, value: 0 }, { time: 2, value: 1 }] },
+                {
+                  parameterId: 'p0',
+                  points: [
+                    { time: 0, value: 0 },
+                    { time: 2, value: 1 },
+                  ],
+                },
               ],
               targetGroups: [],
               missingParameterIds: [],
@@ -183,7 +195,10 @@ describe('multi-line preview computation', () => {
   });
 });
 
-function startBeats(obj: { getStartTime(): ReturnType<typeof TimePosition.beats> }, data: BlueData): number {
+function startBeats(
+  obj: { getStartTime(): ReturnType<typeof TimePosition.beats> },
+  data: BlueData,
+): number {
   return timePositionToBeats(obj.getStartTime(), data.getScore().getTimeContext());
 }
 
@@ -194,14 +209,16 @@ function dispatchMouseEvent(
   clientY: number,
   init: MouseEventInit = {},
 ): void {
-  target.dispatchEvent(new MouseEvent(type, {
-    bubbles: true,
-    cancelable: true,
-    button: 0,
-    clientX,
-    clientY,
-    ...init,
-  }));
+  target.dispatchEvent(
+    new MouseEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      button: 0,
+      clientX,
+      clientY,
+      ...init,
+    }),
+  );
 }
 
 describe('multi-line range patches across layers', () => {
@@ -215,9 +232,12 @@ describe('multi-line range patches across layers', () => {
     poly.newLayerAt(2);
     score.push(poly);
 
-    const ch0 = new Channel(); ch0.setName('C0');
-    const ch1 = new Channel(); ch1.setName('C1');
-    const ch2 = new Channel(); ch2.setName('C2');
+    const ch0 = new Channel();
+    ch0.setName('C0');
+    const ch1 = new Channel();
+    ch1.setName('C1');
+    const ch2 = new Channel();
+    ch2.setName('C2');
     data.getMixer().getChannels().splice(0, 0, ch0, ch1, ch2);
 
     const p0 = ch0.getLevelParameter().getUniqueId();
@@ -252,10 +272,25 @@ describe('multi-line range patches across layers', () => {
 
     // Anchored transform: boundary points at 1 (sel start), 3 (trans start),
     // 5 (moved point from 3), discontinuity pair at 7 (trans end = 5+2).
-    expect(ch0.getLevelParameter().getPoints().map((p) => p.time)).toEqual([0, 1, 3, 5, 7, 7]);
-    expect(ch1.getLevelParameter().getPoints().map((p) => p.time)).toEqual([0, 1, 3, 5, 7, 7]);
+    expect(
+      ch0
+        .getLevelParameter()
+        .getPoints()
+        .map((p) => p.time),
+    ).toEqual([0, 1, 3, 5, 7, 7]);
+    expect(
+      ch1
+        .getLevelParameter()
+        .getPoints()
+        .map((p) => p.time),
+    ).toEqual([0, 1, 3, 5, 7, 7]);
     // Layer 2 was not in the selection — its points are untouched.
-    expect(ch2.getLevelParameter().getPoints().map((p) => p.time)).toEqual([0, 3, 6]);
+    expect(
+      ch2
+        .getLevelParameter()
+        .getPoints()
+        .map((p) => p.time),
+    ).toEqual([0, 3, 6]);
   });
 });
 
@@ -300,7 +335,12 @@ describe('multi-line object / clip alignment (FR-014)', () => {
 
     // Anchored transform: boundary at 1 (sel start), 3 (trans start), moved
     // point 2→4, discontinuity pair at 6 (trans end = 4+2).
-    expect(channel.getLevelParameter().getPoints().map((p) => p.time)).toEqual([0, 1, 3, 4, 6, 6]);
+    expect(
+      channel
+        .getLevelParameter()
+        .getPoints()
+        .map((p) => p.time),
+    ).toEqual([0, 1, 3, 4, 6, 6]);
     expect(startBeats(obj, data)).toBeCloseTo(4, 5);
   });
 
@@ -346,7 +386,12 @@ describe('multi-line object / clip alignment (FR-014)', () => {
 
     // Anchored transform: boundary at 1 (domain start), 3 (scaled point 2→3),
     // discontinuity pair at 7 (scaled end 4→7).
-    expect(channel.getLevelParameter().getPoints().map((p) => p.time)).toEqual([0, 1, 3, 7, 7]);
+    expect(
+      channel
+        .getLevelParameter()
+        .getPoints()
+        .map((p) => p.time),
+    ).toEqual([0, 1, 3, 7, 7]);
     expect(startBeats(obj, data)).toBeCloseTo(3, 5);
   });
 
@@ -440,7 +485,12 @@ describe('multi-line object / clip alignment (FR-014)', () => {
 
     // Anchored transform: boundary at 1, 3 (transition start), moved point 2→4,
     // discontinuity pair at 6 (trans end = 4+2).
-    expect(channel.getLevelParameter().getPoints().map((p) => p.time)).toEqual([0, 1, 3, 4, 6, 6]);
+    expect(
+      channel
+        .getLevelParameter()
+        .getPoints()
+        .map((p) => p.time),
+    ).toEqual([0, 1, 3, 4, 6, 6]);
     expect(startBeats(clip, data)).toBeCloseTo(4, 5);
   });
 });
@@ -543,7 +593,13 @@ describe('shift-gated object selection via explicit objectIds (B3)', () => {
               parameterIds: ['p0'],
               selectedParameterId: 'p0',
               parameters: [
-                { parameterId: 'p0', points: [{ time: 0, value: 0 }, { time: 2, value: 0.5 }] },
+                {
+                  parameterId: 'p0',
+                  points: [
+                    { time: 0, value: 0 },
+                    { time: 2, value: 0.5 },
+                  ],
+                },
               ],
               targetGroups: [],
               missingParameterIds: [],
@@ -615,7 +671,9 @@ describe('shift-gated object selection via explicit objectIds (B3)', () => {
       container.remove();
       useScoreAutomationStore.getState().clearAutomationState();
       useScoreSelectionStore.getState().clearSelection();
-      useProjectStore.setState(originalProjectActions as Partial<ReturnType<typeof useProjectStore.getState>>);
+      useProjectStore.setState(
+        originalProjectActions as Partial<ReturnType<typeof useProjectStore.getState>>,
+      );
       globalThis.requestAnimationFrame = originalRequestAnimationFrame;
       globalThis.cancelAnimationFrame = originalCancelAnimationFrame;
     }

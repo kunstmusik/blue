@@ -233,8 +233,7 @@ function describePopoutAssignment(api: Pick<DockviewApi, 'groups'>): {
   const popoutPanelIds: string[] = [];
   const gridPanelIds: string[] = [];
   for (const group of api.groups) {
-    const destination =
-      group.api.location.type === 'popout' ? popoutPanelIds : gridPanelIds;
+    const destination = group.api.location.type === 'popout' ? popoutPanelIds : gridPanelIds;
     for (const panel of group.panels) destination.push(panel.id);
   }
   return { popoutPanelIds: popoutPanelIds.sort(), gridPanelIds: gridPanelIds.sort() };
@@ -252,9 +251,8 @@ export function collectExpectedPopoutPanelIds(dockview: unknown): Set<string> {
   const popoutGroups = (dockview as { popoutGroups?: unknown } | null)?.popoutGroups;
   if (!Array.isArray(popoutGroups)) return expected;
   for (const entry of popoutGroups) {
-    for (const id of collectSerializedGroupPanelIds(
-      (entry as { data?: unknown } | null)?.data,
-    )) expected.add(id);
+    for (const id of collectSerializedGroupPanelIds((entry as { data?: unknown } | null)?.data))
+      expected.add(id);
   }
   return expected;
 }
@@ -318,16 +316,12 @@ export function prepareDockviewForExplicitPopoutRestore(
   const serializedPopouts = layout.popoutGroups ?? [];
   delete layout.popoutGroups;
 
-  const gridLeaves = collectSerializedGridLeaves(
-    layout.grid.root as unknown as SerializedGridNode,
-  );
+  const gridLeaves = collectSerializedGridLeaves(layout.grid.root as unknown as SerializedGridNode);
   const gridGroups = gridLeaves.map((leaf) => leaf.data);
   const gridPanelIds = new Set(gridGroups.flatMap((group) => group.views));
   const intents = serializedPopouts.map((popout) => ({
     serializedGroupId: popout.data.id,
-    ...(popout.gridReferenceGroup
-      ? { gridReferenceGroupId: popout.gridReferenceGroup }
-      : {}),
+    ...(popout.gridReferenceGroup ? { gridReferenceGroupId: popout.gridReferenceGroup } : {}),
     panelIds: collectSerializedGroupPanelIds(popout.data),
     position: popout.position,
     ...(popout.url ? { url: popout.url } : {}),
@@ -338,9 +332,7 @@ export function prepareDockviewForExplicitPopoutRestore(
     const targetGroupId = origin?.originGroupId ?? intent.gridReferenceGroupId;
     const targetLeaf =
       gridLeaves.find((leaf) => leaf.data.id === targetGroupId) ??
-      gridLeaves.find((leaf) =>
-        leaf.data.views.some((id) => !isAuxiliaryPanelId(id)),
-      ) ??
+      gridLeaves.find((leaf) => leaf.data.views.some((id) => !isAuxiliaryPanelId(id))) ??
       gridLeaves[0];
     if (!targetLeaf) {
       throw new Error('Saved popout has no docked group to restore into');
@@ -402,9 +394,7 @@ export async function restorePreparedPopoutGroups(
     }
     if (!opened) throw new Error('Saved popout window failed to open');
 
-    const popoutGroup = api.getPanel(intent.panelIds[0]!)?.group as
-      | DockviewGroupPanel
-      | undefined;
+    const popoutGroup = api.getPanel(intent.panelIds[0]!)?.group as DockviewGroupPanel | undefined;
     const actualPanelIds = popoutGroup?.panels.map((panel) => panel.id).sort() ?? [];
     if (
       popoutGroup?.api.location.type !== 'popout' ||
@@ -423,9 +413,7 @@ function remapRestoredFloatingOrigins(
   restoredGroupIds: Record<string, string>,
 ): Record<string, DockingOrigin> {
   const remapped = { ...origins };
-  for (const [serializedGroupId, restoredGroupId] of Object.entries(
-    restoredGroupIds,
-  )) {
+  for (const [serializedGroupId, restoredGroupId] of Object.entries(restoredGroupIds)) {
     const origin = remapped[serializedGroupId];
     if (!origin || serializedGroupId === restoredGroupId) continue;
     remapped[restoredGroupId] = origin;
@@ -470,7 +458,9 @@ export function enforcePopoutPanelIntent(
  * disposes the window and detaches the grid element correctly. Any group that
  * still refuses removal is skipped rather than blocking layout recovery.
  */
-export function clearDockviewSafely(api: Pick<DockviewApi, 'groups' | 'clear' | 'removeGroup'>): void {
+export function clearDockviewSafely(
+  api: Pick<DockviewApi, 'groups' | 'clear' | 'removeGroup'>,
+): void {
   for (const group of [...api.groups]) {
     if (group.api.location.type === 'popout') {
       try {
@@ -1353,10 +1343,7 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()((se
         let restoredFloatingOrigins = parsed.floatingOrigins ?? {};
         if (prepared.intents.length > 0) {
           try {
-            const restoredGroupIds = await restorePreparedPopoutGroups(
-              api,
-              prepared.intents,
-            );
+            const restoredGroupIds = await restorePreparedPopoutGroups(api, prepared.intents);
             if (loadToken !== workbenchLoadSequence) return;
             restoredFloatingOrigins = remapRestoredFloatingOrigins(
               restoredFloatingOrigins,
@@ -1364,10 +1351,7 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()((se
             );
           } catch (error) {
             if (loadToken !== workbenchLoadSequence) return;
-            console.error(
-              '[workbench-restore] popout failed; keeping panels docked',
-              error,
-            );
+            console.error('[workbench-restore] popout failed; keeping panels docked', error);
             clearDockviewSafely(api);
             api.fromJSON(prepared.layout);
             expectedPopoutPanelIds.clear();
@@ -1869,9 +1853,7 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()((se
 
         set({
           auxiliary:
-            result.status === 'applied'
-              ? result.state
-              : cloneAuxiliaryLayoutState(auxiliary),
+            result.status === 'applied' ? result.state : cloneAuxiliaryLayoutState(auxiliary),
           floatingOrigins: removeFloatingOriginMap(floatingOrigins, groupId),
         });
         return;

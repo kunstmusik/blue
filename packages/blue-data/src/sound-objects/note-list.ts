@@ -9,16 +9,30 @@ export class NoteList {
     }
   }
 
-  get length(): number { return this._notes.length; }
-  get size(): number { return this._notes.length; }
+  get length(): number {
+    return this._notes.length;
+  }
+  get size(): number {
+    return this._notes.length;
+  }
 
-  get(index: number): Note { return this._notes[index]; }
-  getNote(index: number): Note { return this._notes[index]; }
+  get(index: number): Note {
+    return this._notes[index];
+  }
+  getNote(index: number): Note {
+    return this._notes[index];
+  }
 
-  add(note: Note): void { this._notes.push(note); }
-  push(note: Note): void { this._notes.push(note); }
+  add(note: Note): void {
+    this._notes.push(note);
+  }
+  push(note: Note): void {
+    this._notes.push(note);
+  }
 
-  clear(): void { this._notes = []; }
+  clear(): void {
+    this._notes = [];
+  }
 
   merge(other: NoteList): void {
     for (let i = 0; i < other.length; i++) {
@@ -30,7 +44,9 @@ export class NoteList {
     this._notes.sort((a, b) => a.getStartTime() - b.getStartTime());
   }
 
-  sortByStartTime(): void { this.sort(); }
+  sortByStartTime(): void {
+    this.sort();
+  }
 
   removeIf(predicate: (note: Note) => boolean): void {
     this._notes = this._notes.filter((n) => !predicate(n));

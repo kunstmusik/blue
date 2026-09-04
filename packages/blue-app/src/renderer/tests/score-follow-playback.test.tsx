@@ -14,7 +14,9 @@ import { useLayerSelectionStore } from '../stores/layer-selection-store';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 import type { ProgramSettingsSaveResult } from '../../shared/program-settings';
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 class MockResizeObserver {
   observe(): void {}
@@ -22,7 +24,8 @@ class MockResizeObserver {
   disconnect(): void {}
 }
 
-(globalThis as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver = MockResizeObserver;
+(globalThis as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver =
+  MockResizeObserver;
 
 // ─── ScorePanel harness (T002) ────────────────────────────────────────────────
 
@@ -142,13 +145,13 @@ function advancePlayhead(elapsedSeconds: number): void {
     clock: clock
       ? { ...clock, sampleFrames: frames, receivedAtMs: Date.now() }
       : {
-        sessionId: 1,
-        sampleFrames: frames,
-        sequence: 1,
-        sampleRate: SAMPLE_RATE,
-        ksmps: 10,
-        receivedAtMs: Date.now(),
-      },
+          sessionId: 1,
+          sampleFrames: frames,
+          sequence: 1,
+          sampleRate: SAMPLE_RATE,
+          ksmps: 10,
+          receivedAtMs: Date.now(),
+        },
     display: {
       sampleFrames: frames,
       elapsedSeconds,
@@ -226,8 +229,7 @@ beforeEach(() => {
     scrollByGroupId: {},
   } as any;
   syncFollowPlaybackState = vi.fn();
-  updatePlaybackPreferences = vi.fn().mockImplementation(() =>
-    Promise.resolve(okSettingsResult()));
+  updatePlaybackPreferences = vi.fn().mockImplementation(() => Promise.resolve(okSettingsResult()));
   (window as any).blueAPI = {
     commitProjectDocumentPatches: vi.fn().mockResolvedValue({ revision: 1, sessionId: 1 }),
     getNestedPolyObjectSnapshot: vi.fn().mockResolvedValue(null),
@@ -266,9 +268,7 @@ describe('getFollowScrollTarget pure decision', () => {
   it('jumps to the playhead x-coordinate at or beyond the right edge', () => {
     expect(getFollowScrollTarget({ ...base, pointerPixel: 1000 })).toBe(1000);
     expect(getFollowScrollTarget({ ...base, pointerPixel: 1234 })).toBe(1234);
-    expect(
-      getFollowScrollTarget({ ...base, scrollLeft: 2000, pointerPixel: 3500 }),
-    ).toBe(3500);
+    expect(getFollowScrollTarget({ ...base, scrollLeft: 2000, pointerPixel: 3500 })).toBe(3500);
   });
 
   it('catches up backward when the playhead is behind the left edge', () => {
@@ -290,9 +290,15 @@ describe('getFollowScrollTarget pure decision', () => {
   it('returns no target for invalid geometry', () => {
     expect(getFollowScrollTarget({ ...base, clientWidth: 0, pointerPixel: 500 })).toBeNull();
     expect(getFollowScrollTarget({ ...base, scrollWidth: 0, pointerPixel: 500 })).toBeNull();
-    expect(getFollowScrollTarget({ ...base, scrollLeft: Number.NaN, pointerPixel: 500 })).toBeNull();
-    expect(getFollowScrollTarget({ ...base, scrollLeft: Number.POSITIVE_INFINITY, pointerPixel: 500 })).toBeNull();
-    expect(getFollowScrollTarget({ ...base, clientWidth: Number.NaN, pointerPixel: 500 })).toBeNull();
+    expect(
+      getFollowScrollTarget({ ...base, scrollLeft: Number.NaN, pointerPixel: 500 }),
+    ).toBeNull();
+    expect(
+      getFollowScrollTarget({ ...base, scrollLeft: Number.POSITIVE_INFINITY, pointerPixel: 500 }),
+    ).toBeNull();
+    expect(
+      getFollowScrollTarget({ ...base, clientWidth: Number.NaN, pointerPixel: 500 }),
+    ).toBeNull();
     expect(
       getFollowScrollTarget({ ...base, clientWidth: -10, scrollWidth: -1, pointerPixel: 500 }),
     ).toBeNull();
@@ -336,7 +342,10 @@ describe('ScorePanel follow playback page scrolling', () => {
   it('advances exactly one instant page jump per boundary crossing', () => {
     seedLoadedProject();
     const rendered = renderPanel();
-    const { body, header } = getScoreSurface(rendered.container, { clientWidth: 1000, scrollWidth: 10000 });
+    const { body, header } = getScoreSurface(rendered.container, {
+      clientWidth: 1000,
+      scrollWidth: 10000,
+    });
 
     act(() => seedPlayingClock(2));
     expect(body.scrollLeft).toBe(0);
@@ -434,7 +443,11 @@ describe('ScorePanel follow playback page scrolling', () => {
       activeGroupId: 'nested-group',
       segments: [
         { groupId: null, label: 'Root' },
-        { groupId: 'nested-group', label: 'Nested', location: { rootGroupIndex: 0, containerPath: [], layerIndex: 0, objectIndex: 0 } },
+        {
+          groupId: 'nested-group',
+          label: 'Nested',
+          location: { rootGroupIndex: 0, containerPath: [], layerIndex: 0, objectIndex: 0 },
+        },
       ],
       scrollByGroupId: {},
     } as any;
@@ -482,7 +495,10 @@ describe('ScorePanel manual navigation suspends follow', () => {
   it('suspends follow on unmatched header horizontal scroll', () => {
     seedLoadedProject();
     const rendered = renderPanel();
-    const { header } = getScoreSurface(rendered.container, { clientWidth: 1000, scrollWidth: 10000 });
+    const { header } = getScoreSurface(rendered.container, {
+      clientWidth: 1000,
+      scrollWidth: 10000,
+    });
 
     act(() => seedPlayingClock(2));
     act(() => header.dispatchEvent(new Event('scroll')));
@@ -548,7 +564,14 @@ describe('ScorePanel manual navigation suspends follow', () => {
     act(() => seedPlayingClock(2));
     await act(async () => {
       body.dispatchEvent(
-        new WheelEvent('wheel', { ctrlKey: true, deltaY: -15, clientX: 300, clientY: 10, bubbles: true, cancelable: true }),
+        new WheelEvent('wheel', {
+          ctrlKey: true,
+          deltaY: -15,
+          clientX: 300,
+          clientY: 10,
+          bubbles: true,
+          cancelable: true,
+        }),
       );
       // The zoom path queues an updateTimeState patch; flush it inside this
       // test so its commit cannot leak into a later one.
@@ -584,19 +607,24 @@ describe('ScorePanel manual navigation suspends follow', () => {
   it('suspends follow on time-ruler navigation', () => {
     seedLoadedProject();
     const rendered = renderPanel();
-    const { header } = getScoreSurface(rendered.container, { clientWidth: 1000, scrollWidth: 10000 });
+    const { header } = getScoreSurface(rendered.container, {
+      clientWidth: 1000,
+      scrollWidth: 10000,
+    });
     const ruler = header.querySelector('[data-score-time-ruler="primary"]') as HTMLElement;
     expect(ruler).toBeTruthy();
 
     act(() => seedPlayingClock(2));
     act(() => {
-      ruler.dispatchEvent(new MouseEvent('mousedown', {
-        bubbles: true,
-        cancelable: true,
-        button: 0,
-        clientX: 300,
-        clientY: 10,
-      }));
+      ruler.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          cancelable: true,
+          button: 0,
+          clientX: 300,
+          clientY: 10,
+        }),
+      );
     });
 
     expect(usePlaybackStore.getState().followPlayback).toBe(false);
@@ -608,7 +636,10 @@ describe('ScorePanel manual navigation suspends follow', () => {
   it('suspends follow on marker navigation during playback and keeps alignment', () => {
     seedLoadedProject();
     const rendered = renderPanel();
-    const { body, header } = getScoreSurface(rendered.container, { clientWidth: 1000, scrollWidth: 10000 });
+    const { body, header } = getScoreSurface(rendered.container, {
+      clientWidth: 1000,
+      scrollWidth: 10000,
+    });
 
     act(() => seedPlayingClock(2));
     act(() => {

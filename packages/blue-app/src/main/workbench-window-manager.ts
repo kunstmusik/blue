@@ -40,9 +40,10 @@ export interface WorkbenchWindowEntry {
  * not close and whether a user prompt is required. Injected per window so the
  * registry does not hard-code panel close policy.
  */
-export type WorkbenchClosePolicy = (
-  panelIds: string[],
-) => { blockedPanelIds: string[]; requiresPrompt: boolean };
+export type WorkbenchClosePolicy = (panelIds: string[]) => {
+  blockedPanelIds: string[];
+  requiresPrompt: boolean;
+};
 
 export interface RegisterWorkbenchWindowOptions {
   role: WorkbenchWindowRole;
@@ -132,14 +133,12 @@ export class WorkbenchWindowManager {
    * A close is allowed only when no hosted panel blocks it. The caller is
    * responsible for the actual removal once allowed.
    */
-  requestClose(
-    request: {
-      windowId: string;
-      panelIds: string[];
-      source?: WorkbenchCloseSource;
-      policy?: WorkbenchClosePolicy;
-    },
-  ): RequestCloseResult {
+  requestClose(request: {
+    windowId: string;
+    panelIds: string[];
+    source?: WorkbenchCloseSource;
+    policy?: WorkbenchClosePolicy;
+  }): RequestCloseResult {
     const entry = this.entries.get(request.windowId);
     // Use the entry's panelIds if available; fall back to the request's list.
     const panelIds = entry

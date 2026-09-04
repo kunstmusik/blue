@@ -98,7 +98,9 @@ describe('project-editor layerSelectionId identity and serialization invariants'
   });
 
   it('falls back to layerId if layerSelectionId is undefined in older snapshots', () => {
-    expect(getLayerSelectionId({ layerId: 'legacy-1', name: 'Legacy', height: 44, items: [] })).toBe('legacy-1');
+    expect(
+      getLayerSelectionId({ layerId: 'legacy-1', name: 'Legacy', height: 44, items: [] }),
+    ).toBe('legacy-1');
     expect(
       getLayerSelectionId({
         layerId: 'poly-layer-0',
@@ -145,7 +147,12 @@ describe('project-editor moveLayerRange and removeLayerRanges patches', () => {
 
     const afterSnap = createScoreDocumentSnapshot(data);
     expect(afterSnap.layerGroups[0]!.layers.map((l) => l.name)).toEqual(['L1', 'L2', 'L0', 'L3']);
-    expect(afterSnap.layerGroups[0]!.layers.map((l) => l.layerSelectionId)).toEqual([selIds[1], selIds[2], selIds[0], selIds[3]]);
+    expect(afterSnap.layerGroups[0]!.layers.map((l) => l.layerSelectionId)).toEqual([
+      selIds[1],
+      selIds[2],
+      selIds[0],
+      selIds[3],
+    ]);
   });
 
   it('moves ranges through the shared LayerGroup operations for every managed group type', () => {
@@ -178,9 +185,11 @@ describe('project-editor moveLayerRange and removeLayerRanges patches', () => {
     const groupIds = createScoreDocumentSnapshot(data).layerGroups.map((group) => group.groupId);
 
     for (const groupId of groupIds) {
-      expect(applyProjectDocumentPatch(data, {
-        score: { type: 'moveLayerRange', groupId, startIndex: 1, endIndex: 2, targetIndex: 0 },
-      })).toBe(true);
+      expect(
+        applyProjectDocumentPatch(data, {
+          score: { type: 'moveLayerRange', groupId, startIndex: 1, endIndex: 2, targetIndex: 0 },
+        }),
+      ).toBe(true);
     }
 
     expect(Array.from(polyGroup, (layer) => layer.getName())).toEqual(['P1', 'P2', 'P0', 'P3']);
@@ -188,9 +197,11 @@ describe('project-editor moveLayerRange and removeLayerRanges patches', () => {
     expect(Array.from(patternGroup, (layer) => layer.getName())).toEqual(['R1', 'R2', 'R0', 'R3']);
 
     for (const groupId of groupIds) {
-      expect(applyProjectDocumentPatch(data, {
-        score: { type: 'moveLayerRange', groupId, startIndex: 0, endIndex: 1, targetIndex: 1 },
-      })).toBe(true);
+      expect(
+        applyProjectDocumentPatch(data, {
+          score: { type: 'moveLayerRange', groupId, startIndex: 0, endIndex: 1, targetIndex: 1 },
+        }),
+      ).toBe(true);
     }
 
     expect(Array.from(polyGroup, (layer) => layer.getName())).toEqual(['P0', 'P1', 'P2', 'P3']);
@@ -286,17 +297,23 @@ describe('project-editor moveLayerRange and removeLayerRanges patches', () => {
     const initialSnap = createScoreDocumentSnapshot(data);
     const groupId = initialSnap.layerGroups[0]!.groupId;
 
-    expect(applyProjectDocumentPatch(data, {
-      score: { type: 'moveLayerRange', groupId, startIndex: -1, endIndex: 0, targetIndex: 0 },
-    })).toBe(false);
+    expect(
+      applyProjectDocumentPatch(data, {
+        score: { type: 'moveLayerRange', groupId, startIndex: -1, endIndex: 0, targetIndex: 0 },
+      }),
+    ).toBe(false);
 
-    expect(applyProjectDocumentPatch(data, {
-      score: { type: 'moveLayerRange', groupId, startIndex: 0, endIndex: 5, targetIndex: 0 },
-    })).toBe(false);
+    expect(
+      applyProjectDocumentPatch(data, {
+        score: { type: 'moveLayerRange', groupId, startIndex: 0, endIndex: 5, targetIndex: 0 },
+      }),
+    ).toBe(false);
 
-    expect(applyProjectDocumentPatch(data, {
-      score: { type: 'moveLayerRange', groupId, startIndex: 0, endIndex: 0, targetIndex: 2 },
-    })).toBe(false);
+    expect(
+      applyProjectDocumentPatch(data, {
+        score: { type: 'moveLayerRange', groupId, startIndex: 0, endIndex: 0, targetIndex: 2 },
+      }),
+    ).toBe(false);
   });
 
   it('removes ranges across multiple layer groups in descending order and removes empty groups when requested', () => {
@@ -306,15 +323,20 @@ describe('project-editor moveLayerRange and removeLayerRanges patches', () => {
 
     const polyGroup = new PolyObject();
     polyGroup.setName('Poly');
-    const p0 = new SoundLayer(); p0.setName('P0');
-    const p1 = new SoundLayer(); p1.setName('P1');
-    const p2 = new SoundLayer(); p2.setName('P2');
+    const p0 = new SoundLayer();
+    p0.setName('P0');
+    const p1 = new SoundLayer();
+    p1.setName('P1');
+    const p2 = new SoundLayer();
+    p2.setName('P2');
     polyGroup.push(p0, p1, p2);
 
     const trackGroup = new TrackLayerGroup();
     trackGroup.setName('Tracks');
-    const t0 = new TrackLayer(); t0.setName('T0');
-    const t1 = new TrackLayer(); t1.setName('T1');
+    const t0 = new TrackLayer();
+    t0.setName('T0');
+    const t1 = new TrackLayer();
+    t1.setName('T1');
     trackGroup.push(t0, t1);
 
     score.push(polyGroup, trackGroup);
@@ -351,7 +373,8 @@ describe('project-editor moveLayerRange and removeLayerRanges patches', () => {
     score.length = 0;
 
     const polyGroup = new PolyObject();
-    const p0 = new SoundLayer(); p0.setName('P0');
+    const p0 = new SoundLayer();
+    p0.setName('P0');
     polyGroup.push(p0);
     score.push(polyGroup);
 
@@ -384,16 +407,18 @@ describe('project-editor moveLayerRange and removeLayerRanges patches', () => {
     score.push(polyGroup);
 
     const groupId = createScoreDocumentSnapshot(data).layerGroups[0]!.groupId;
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'removeLayerRanges',
-        ranges: [
-          { groupId, startIndex: 0, endIndex: 1 },
-          { groupId, startIndex: 1, endIndex: 2 },
-        ],
-        deleteEmptyLayerGroups: true,
-      },
-    })).toBe(false);
+    expect(
+      applyProjectDocumentPatch(data, {
+        score: {
+          type: 'removeLayerRanges',
+          ranges: [
+            { groupId, startIndex: 0, endIndex: 1 },
+            { groupId, startIndex: 1, endIndex: 2 },
+          ],
+          deleteEmptyLayerGroups: true,
+        },
+      }),
+    ).toBe(false);
     expect(polyGroup).toHaveLength(3);
   });
 
@@ -414,13 +439,15 @@ describe('project-editor moveLayerRange and removeLayerRanges patches', () => {
     const selectedGroupId = snapshot.layerGroups[0]!.groupId;
     const unrelatedGroupId = snapshot.layerGroups[1]!.groupId;
 
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'removeLayerRanges',
-        ranges: [{ groupId: selectedGroupId, startIndex: 0, endIndex: 0 }],
-        deleteEmptyLayerGroups: true,
-      },
-    })).toBe(true);
+    expect(
+      applyProjectDocumentPatch(data, {
+        score: {
+          type: 'removeLayerRanges',
+          ranges: [{ groupId: selectedGroupId, startIndex: 0, endIndex: 0 }],
+          deleteEmptyLayerGroups: true,
+        },
+      }),
+    ).toBe(true);
 
     expect(Array.from(score, (group) => group === unrelatedEmptyGroup)).toEqual([true]);
     expect(createScoreDocumentSnapshot(data).layerGroups[0]?.groupId).toBe(unrelatedGroupId);
@@ -448,13 +475,15 @@ describe('project-editor moveLayerRange and removeLayerRanges patches', () => {
     });
     expect(nestedSnapshot?.layers).toHaveLength(1);
 
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'removeLayerRanges',
-        ranges: [{ groupId: nestedSnapshot!.groupId, startIndex: 0, endIndex: 0 }],
-        deleteEmptyLayerGroups: true,
-      },
-    })).toBe(true);
+    expect(
+      applyProjectDocumentPatch(data, {
+        score: {
+          type: 'removeLayerRanges',
+          ranges: [{ groupId: nestedSnapshot!.groupId, startIndex: 0, endIndex: 0 }],
+          deleteEmptyLayerGroups: true,
+        },
+      }),
+    ).toBe(true);
 
     expect(rootLayer).toHaveLength(0);
   });
@@ -489,16 +518,18 @@ describe('project-editor moveLayerRange and removeLayerRanges patches', () => {
     expect(nestedSnapshotA?.groupId).toBeDefined();
     expect(nestedSnapshotB?.groupId).toBeDefined();
 
-    expect(applyProjectDocumentPatch(data, {
-      score: {
-        type: 'removeLayerRanges',
-        ranges: [
-          { groupId: nestedSnapshotA!.groupId, startIndex: 0, endIndex: 0 },
-          { groupId: nestedSnapshotB!.groupId, startIndex: 0, endIndex: 0 },
-        ],
-        deleteEmptyLayerGroups: true,
-      },
-    })).toBe(true);
+    expect(
+      applyProjectDocumentPatch(data, {
+        score: {
+          type: 'removeLayerRanges',
+          ranges: [
+            { groupId: nestedSnapshotA!.groupId, startIndex: 0, endIndex: 0 },
+            { groupId: nestedSnapshotB!.groupId, startIndex: 0, endIndex: 0 },
+          ],
+          deleteEmptyLayerGroups: true,
+        },
+      }),
+    ).toBe(true);
 
     expect(rootLayer).toHaveLength(0);
   });

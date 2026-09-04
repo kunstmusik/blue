@@ -1,18 +1,18 @@
-import type { BlueData } from "../blue-data";
-import { ClojureObject } from "../sound-objects/clojure-object";
-import { Instance } from "../sound-objects/instance";
-import { JavaScriptObject } from "../sound-objects/javascript-object";
-import { ObjectBuilder } from "../sound-objects/object-builder";
-import { PolyObject } from "../sound-objects/poly-object";
-import { PythonObject } from "../sound-objects/python-object";
-import type { SoundObject } from "../sound-objects/sound-object";
-import { PythonInstrument } from "../instruments/python-instrument";
-import { PythonProcessor } from "../note-processors/python-processor";
-import type { NoteProcessorChain } from "../note-processors/note-processor-chain";
-import { TrackLayerGroup } from "../score/track/track-layer-group";
-import { TimeContext } from "../time/time-context";
-import type { JavaScriptSession } from "../javascript-runtime";
-import type { JavaRuntimeClientContract } from "../java-runtime";
+import type { BlueData } from '../blue-data';
+import { ClojureObject } from '../sound-objects/clojure-object';
+import { Instance } from '../sound-objects/instance';
+import { JavaScriptObject } from '../sound-objects/javascript-object';
+import { ObjectBuilder } from '../sound-objects/object-builder';
+import { PolyObject } from '../sound-objects/poly-object';
+import { PythonObject } from '../sound-objects/python-object';
+import type { SoundObject } from '../sound-objects/sound-object';
+import { PythonInstrument } from '../instruments/python-instrument';
+import { PythonProcessor } from '../note-processors/python-processor';
+import type { NoteProcessorChain } from '../note-processors/note-processor-chain';
+import { TrackLayerGroup } from '../score/track/track-layer-group';
+import { TimeContext } from '../time/time-context';
+import type { JavaScriptSession } from '../javascript-runtime';
+import type { JavaRuntimeClientContract } from '../java-runtime';
 
 export function processOnLoad(blueData: BlueData, session?: JavaScriptSession): void {
   const score = blueData.getScore();
@@ -66,102 +66,102 @@ async function processLiveDataOnLoadAsync(
 }
 
 export function usesJavaRuntime(blueData: BlueData): boolean {
-const seen = new Set<SoundObject>();
+  const seen = new Set<SoundObject>();
 
-const chainUsesJavaRuntime = (chain: NoteProcessorChain | null | undefined): boolean => {
-  if (!chain) {
-    return false;
-  }
+  const chainUsesJavaRuntime = (chain: NoteProcessorChain | null | undefined): boolean => {
+    if (!chain) {
+      return false;
+    }
 
-  return chain.getProcessors().some((processor) => processor instanceof PythonProcessor);
-};
+    return chain.getProcessors().some((processor) => processor instanceof PythonProcessor);
+  };
 
-const visit = (soundObject: SoundObject | null | undefined): boolean => {
-  if (!soundObject || seen.has(soundObject)) {
-    return false;
-  }
+  const visit = (soundObject: SoundObject | null | undefined): boolean => {
+    if (!soundObject || seen.has(soundObject)) {
+      return false;
+    }
 
-  seen.add(soundObject);
+    seen.add(soundObject);
 
-  if (chainUsesJavaRuntime(soundObject.getNoteProcessorChain())) {
-    return true;
-  }
+    if (chainUsesJavaRuntime(soundObject.getNoteProcessorChain())) {
+      return true;
+    }
 
-  if (soundObject instanceof ClojureObject || soundObject instanceof PythonObject) {
-    return true;
-  }
+    if (soundObject instanceof ClojureObject || soundObject instanceof PythonObject) {
+      return true;
+    }
 
-  if (soundObject instanceof ObjectBuilder && soundObject.usesJavaRuntime()) {
-    return true;
-  }
+    if (soundObject instanceof ObjectBuilder && soundObject.usesJavaRuntime()) {
+      return true;
+    }
 
-  if (soundObject instanceof Instance) {
-    return visit(soundObject.getSoundObject());
-  }
+    if (soundObject instanceof Instance) {
+      return visit(soundObject.getSoundObject());
+    }
 
-  if (soundObject instanceof PolyObject) {
-    for (const layer of soundObject) {
-      if (chainUsesJavaRuntime(layer.getNoteProcessorChain())) {
-        return true;
-      }
-
-      for (const nested of layer) {
-        if (visit(nested)) {
+    if (soundObject instanceof PolyObject) {
+      for (const layer of soundObject) {
+        if (chainUsesJavaRuntime(layer.getNoteProcessorChain())) {
           return true;
+        }
+
+        for (const nested of layer) {
+          if (visit(nested)) {
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
+  };
+
+  if (chainUsesJavaRuntime(blueData.getScore().getNoteProcessorChain())) {
+    return true;
+  }
+
+  for (const layerGroup of blueData.getScore()) {
+    if (layerGroup instanceof PolyObject && visit(layerGroup)) {
+      return true;
+    }
+    if (layerGroup instanceof TrackLayerGroup) {
+      for (const track of layerGroup) {
+        const instrument = track.getInstrument();
+        if (instrument instanceof PythonInstrument) return true;
+        if (chainUsesJavaRuntime(track.getNoteProcessorChain())) return true;
+        for (const item of track) {
+          if ('generateForCSD' in item && visit(item as SoundObject)) return true;
         }
       }
     }
   }
 
-  return false;
-};
-
-if (chainUsesJavaRuntime(blueData.getScore().getNoteProcessorChain())) {
-  return true;
-}
-
-for (const layerGroup of blueData.getScore()) {
-  if (layerGroup instanceof PolyObject && visit(layerGroup)) {
-    return true;
-  }
-  if (layerGroup instanceof TrackLayerGroup) {
-    for (const track of layerGroup) {
-      const instrument = track.getInstrument();
-      if (instrument instanceof PythonInstrument) return true;
-      if (chainUsesJavaRuntime(track.getNoteProcessorChain())) return true;
-      for (const item of track) {
-        if ('generateForCSD' in item && visit(item as SoundObject)) return true;
-      }
-    }
-  }
-}
-
-for (const soundObject of blueData.getSoundObjectLibrary().getAllObjects()) {
-  if (visit(soundObject)) {
-    return true;
-  }
-}
-
-for (const assignment of blueData.getArrangement().getArrangement()) {
-  if (assignment.instr instanceof PythonInstrument) {
-    return true;
-  }
-}
-
-// Include Live Space content: a LiveObject whose SoundObject requires a
-// host runtime makes the whole project Java-runtime-dependent for trigger
-// preparation.
-const liveBins = blueData.getLiveData().getLiveObjectBins();
-for (let c = 0; c < liveBins.getColumnCount(); c++) {
-  for (let r = 0; r < liveBins.getRowCount(); r++) {
-    const liveObject = liveBins.getLiveObject(c, r);
-    if (liveObject && visit(liveObject.getSoundObject())) {
+  for (const soundObject of blueData.getSoundObjectLibrary().getAllObjects()) {
+    if (visit(soundObject)) {
       return true;
     }
   }
-}
 
-return false;
+  for (const assignment of blueData.getArrangement().getArrangement()) {
+    if (assignment.instr instanceof PythonInstrument) {
+      return true;
+    }
+  }
+
+  // Include Live Space content: a LiveObject whose SoundObject requires a
+  // host runtime makes the whole project Java-runtime-dependent for trigger
+  // preparation.
+  const liveBins = blueData.getLiveData().getLiveObjectBins();
+  for (let c = 0; c < liveBins.getColumnCount(); c++) {
+    for (let r = 0; r < liveBins.getRowCount(); r++) {
+      const liveObject = liveBins.getLiveObject(c, r);
+      if (liveObject && visit(liveObject.getSoundObject())) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 function resolveOnLoadSoundObject(soundObject: SoundObject): SoundObject | null {

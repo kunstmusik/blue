@@ -31,10 +31,7 @@ export default function ClojureProjectTab({
     void updateClojureProject({ libraryEntries });
   };
 
-  const handleEntryChange = (
-    index: number,
-    patch: Partial<ClojureLibraryEntrySnapshot>,
-  ): void => {
+  const handleEntryChange = (index: number, patch: Partial<ClojureLibraryEntrySnapshot>): void => {
     const libraryEntries = cloneEntries(clojureProject.libraryEntries);
     libraryEntries[index] = {
       ...libraryEntries[index],
@@ -48,9 +45,7 @@ export default function ClojureProjectTab({
   };
 
   const handleRemoveEntry = (index: number): void => {
-    updateEntries(
-      clojureProject.libraryEntries.filter((_, entryIndex) => entryIndex !== index),
-    );
+    updateEntries(clojureProject.libraryEntries.filter((_, entryIndex) => entryIndex !== index));
   };
 
   const handleMoveEntry = (from: number, to: number): void => {
@@ -73,7 +68,8 @@ export default function ClojureProjectTab({
         <div>
           <div className="text-role-body font-medium text-app-text-strong">Project Libraries</div>
           <div className="mt-1 text-role-body text-app-text-muted">
-            Dependencies listed here are loaded by the project-level Clojure plugin before evaluation and render.
+            Dependencies listed here are loaded by the project-level Clojure plugin before
+            evaluation and render.
           </div>
         </div>
         <button
@@ -87,7 +83,12 @@ export default function ClojureProjectTab({
       </div>
 
       <div className="overflow-hidden rounded-xl border border-app-border bg-app-overlay">
-        <div className={cn('hidden grid-cols-[minmax(0,1.5fr)_180px_182px] gap-3 border-b border-app-border/80 bg-app-surface px-4 py-3 lg:grid', APP_INSPECTOR_LABEL_TEXT_CLASS)}>
+        <div
+          className={cn(
+            'hidden grid-cols-[minmax(0,1.5fr)_180px_182px] gap-3 border-b border-app-border/80 bg-app-surface px-4 py-3 lg:grid',
+            APP_INSPECTOR_LABEL_TEXT_CLASS,
+          )}
+        >
           <span>Library Coordinates</span>
           <span>Version</span>
           <span>Actions</span>
@@ -119,9 +120,7 @@ export default function ClojureProjectTab({
                   />
                 </div>
                 <div className="space-y-2">
-                  <div className={cn('lg:hidden', APP_INSPECTOR_LABEL_TEXT_CLASS)}>
-                    Version
-                  </div>
+                  <div className={cn('lg:hidden', APP_INSPECTOR_LABEL_TEXT_CLASS)}>Version</div>
                   <InputBase
                     disabled={disabled}
                     value={entry.version}

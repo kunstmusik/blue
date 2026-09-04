@@ -1,10 +1,5 @@
-import type {
-  PlaybackStatus,
-} from '../../stores/playback-store';
-import type {
-  MeterMapSnapshot,
-  TempoMapSnapshot,
-} from '../../../shared/project-editor';
+import type { PlaybackStatus } from '../../stores/playback-store';
+import type { MeterMapSnapshot, TempoMapSnapshot } from '../../../shared/project-editor';
 import { TimeBase } from '../../../shared/time-base';
 
 interface TransportFormatAdapter {
@@ -96,8 +91,8 @@ function createTempoMapAdapter(snapshot: TempoMapSnapshot): TempoMapAdapter {
 
   if (!snapshot.enabled) {
     const adapter = {
-    beatsToSeconds: (beat: number) => beat,
-    secondsToBeats: (seconds: number) => seconds,
+      beatsToSeconds: (beat: number) => beat,
+      secondsToBeats: (seconds: number) => seconds,
     };
     tempoMapAdapterCache.set(snapshot, adapter);
     return adapter;
@@ -106,8 +101,8 @@ function createTempoMapAdapter(snapshot: TempoMapSnapshot): TempoMapAdapter {
   const points = normalizeTempoPoints(snapshot);
   if (points.length === 0) {
     const adapter = {
-    beatsToSeconds: (beat: number) => beat,
-    secondsToBeats: (seconds: number) => seconds,
+      beatsToSeconds: (beat: number) => beat,
+      secondsToBeats: (seconds: number) => seconds,
     };
     tempoMapAdapterCache.set(snapshot, adapter);
     return adapter;
@@ -132,7 +127,9 @@ function createTempoMapAdapter(snapshot: TempoMapSnapshot): TempoMapAdapter {
 
     const factor1 = 60 / prev.tempo;
     const acceleration = (60 / current.tempo - factor1) / deltaBeats;
-    cumulativeSeconds.push(previousSeconds + (factor1 * deltaBeats) + (0.5 * acceleration * deltaBeats * deltaBeats));
+    cumulativeSeconds.push(
+      previousSeconds + factor1 * deltaBeats + 0.5 * acceleration * deltaBeats * deltaBeats,
+    );
   }
 
   const beatsToSeconds = (beat: number): number => {
@@ -169,7 +166,7 @@ function createTempoMapAdapter(snapshot: TempoMapSnapshot): TempoMapAdapter {
 
     const factor1 = 60 / t0;
     const acceleration = (60 / t1 - factor1) / segmentBeats;
-    return currentSeconds + (factor1 * deltaBeats) + (0.5 * acceleration * deltaBeats * deltaBeats);
+    return currentSeconds + factor1 * deltaBeats + 0.5 * acceleration * deltaBeats * deltaBeats;
   };
 
   const secondsToBeats = (seconds: number): number => {
@@ -225,13 +222,16 @@ function normalizeMeterEntries(snapshot: MeterMapSnapshot): Array<MeterTimelineE
     return cachedTimeline;
   }
 
-  const entries = snapshot.entries.length > 0 ? snapshot.entries : [
-    {
-      measure: 1,
-      numBeats: 4,
-      beatLength: 4,
-    },
-  ];
+  const entries =
+    snapshot.entries.length > 0
+      ? snapshot.entries
+      : [
+          {
+            measure: 1,
+            numBeats: 4,
+            beatLength: 4,
+          },
+        ];
 
   const sortedEntries = [...entries].sort((a, b) => a.measure - b.measure);
   const timeline: MeterTimelineEntry[] = [];
@@ -239,10 +239,11 @@ function normalizeMeterEntries(snapshot: MeterMapSnapshot): Array<MeterTimelineE
   sortedEntries.forEach((entry, index) => {
     const beatsPerMeasure = entry.numBeats * (4 / entry.beatLength);
     const beatScale = 4 / entry.beatLength;
-    const startBeat = index === 0
-      ? 0
-      : timeline[index - 1].startBeat
-        + (entry.measure - sortedEntries[index - 1].measure) * timeline[index - 1].beatsPerMeasure;
+    const startBeat =
+      index === 0
+        ? 0
+        : timeline[index - 1].startBeat +
+          (entry.measure - sortedEntries[index - 1].measure) * timeline[index - 1].beatsPerMeasure;
 
     timeline.push({
       measure: entry.measure,
@@ -456,24 +457,20 @@ export function buildPlayheadDisplayState(
   preferences: ToolbarPlayheadDisplayPreferences = {},
 ): ToolbarPlayheadDisplayState {
   const tempoMap = createTempoMapAdapter(transport.tempoMap);
-  const primaryFormat = resolveDisplayMode(
-    preferences.primaryMode,
-    DEFAULT_PRIMARY_FORMAT,
-  ) ?? DEFAULT_PRIMARY_FORMAT;
-  const secondaryFormat = resolveDisplayMode(
-    preferences.secondaryMode,
-    DEFAULT_SECONDARY_FORMAT,
-  );
+  const primaryFormat =
+    resolveDisplayMode(preferences.primaryMode, DEFAULT_PRIMARY_FORMAT) ?? DEFAULT_PRIMARY_FORMAT;
+  const secondaryFormat = resolveDisplayMode(preferences.secondaryMode, DEFAULT_SECONDARY_FORMAT);
   const anchorBeat = transport.renderStartTime;
   const anchorSeconds = tempoMap.beatsToSeconds(anchorBeat);
   const hasLiveClock =
-    (playback.status === 'playing' || playback.status === 'stopping') &&
-    playback.hasClock;
+    (playback.status === 'playing' || playback.status === 'stopping') && playback.hasClock;
 
   if (!hasLiveClock) {
     return {
       primaryText: formatToolbarPosition(anchorBeat, primaryFormat, transport),
-      secondaryText: secondaryFormat ? formatToolbarPosition(anchorBeat, secondaryFormat, transport) : null,
+      secondaryText: secondaryFormat
+        ? formatToolbarPosition(anchorBeat, secondaryFormat, transport)
+        : null,
       displayBeat: anchorBeat,
       displaySeconds: anchorSeconds,
       source: 'idle-anchor',
@@ -485,7 +482,9 @@ export function buildPlayheadDisplayState(
 
   return {
     primaryText: formatToolbarPosition(displayBeat, primaryFormat, transport),
-    secondaryText: secondaryFormat ? formatToolbarPosition(displayBeat, secondaryFormat, transport) : null,
+    secondaryText: secondaryFormat
+      ? formatToolbarPosition(displayBeat, secondaryFormat, transport)
+      : null,
     displayBeat,
     displaySeconds,
     source: playback.source,

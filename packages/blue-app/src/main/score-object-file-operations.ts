@@ -8,11 +8,7 @@
  */
 import * as fs from 'fs';
 import * as path from 'path';
-import {
-  parseAudioFileMetadata,
-  AudioFileMetadataError,
-  type AudioFileMetadata,
-} from '@blue/data';
+import { parseAudioFileMetadata, AudioFileMetadataError, type AudioFileMetadata } from '@blue/data';
 import type {
   AudioFileMetadataSnapshot,
   AudioFileMetadataState,
@@ -279,7 +275,12 @@ export function copySourceToProjectMediaFolder(
         const candidate = path.join(mediaDir, `${nameWithoutExt}-${indexStr}${ext}`);
         if (!probe.isFile(candidate)) {
           copyFile(sourcePath, candidate);
-          return { status: 'ok', finalPath: candidate, copiedToMedia: true, createdMediaPath: candidate };
+          return {
+            status: 'ok',
+            finalPath: candidate,
+            copiedToMedia: true,
+            createdMediaPath: candidate,
+          };
         }
       }
       return {
@@ -290,7 +291,12 @@ export function copySourceToProjectMediaFolder(
     }
 
     copyFile(sourcePath, targetPath);
-    return { status: 'ok', finalPath: targetPath, copiedToMedia: true, createdMediaPath: targetPath };
+    return {
+      status: 'ok',
+      finalPath: targetPath,
+      copiedToMedia: true,
+      createdMediaPath: targetPath,
+    };
   } catch (err) {
     return {
       status: 'error',
@@ -314,7 +320,8 @@ export async function selectScoreObjectAudioFile(
     };
   }
 
-  const defaultDir = context.projectDirectory ?? (currentPath ? path.dirname(currentPath) : undefined);
+  const defaultDir =
+    context.projectDirectory ?? (currentPath ? path.dirname(currentPath) : undefined);
   const selectedPath = await deps.showOpenDialog(defaultDir);
   if (!selectedPath) {
     return { status: 'cancelled' };

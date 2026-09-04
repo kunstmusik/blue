@@ -9,9 +9,7 @@ const TEMPO_60: TempoMapSnapshot = {
   points: [{ beat: 0, tempo: 60, curveType: 'constant' }],
 };
 
-const METERS_4_4: MeterSnapshot[] = [
-  { measure: 1, numBeats: 4, beatLength: 4, startBeat: 0 },
-];
+const METERS_4_4: MeterSnapshot[] = [{ measure: 1, numBeats: 4, beatLength: 4, startBeat: 0 }];
 
 function majorLabels(marks: ReturnType<typeof __testOnly.computeMarks>): string[] {
   return marks
@@ -21,15 +19,7 @@ function majorLabels(marks: ReturnType<typeof __testOnly.computeMarks>): string[
 
 describe('Score ruler parity with Java TimeBar', () => {
   it('formats TIME labels with integer minutes/hours (no decimal minute bug)', () => {
-    const marks = __testOnly.computeMarks(
-      TimeBase.TIME,
-      12,
-      100,
-      TEMPO_60,
-      METERS_4_4,
-      24,
-      44100,
-    );
+    const marks = __testOnly.computeMarks(TimeBase.TIME, 12, 100, TEMPO_60, METERS_4_4, 24, 44100);
 
     const labels = majorLabels(marks);
     expect(labels).toContain('0:02');
@@ -38,13 +28,7 @@ describe('Score ruler parity with Java TimeBar', () => {
   });
 
   it('uses major ticks only for BEATS/TIME/SECONDS/SMPTE/SAMPLES like Java TimeBar', () => {
-    const bases = [
-      TimeBase.BEATS,
-      TimeBase.TIME,
-      TimeBase.SECONDS,
-      TimeBase.SMPTE,
-      TimeBase.FRAME,
-    ];
+    const bases = [TimeBase.BEATS, TimeBase.TIME, TimeBase.SECONDS, TimeBase.SMPTE, TimeBase.FRAME];
 
     for (const base of bases) {
       const marks = __testOnly.computeMarks(base, 16, 80, TEMPO_60, METERS_4_4, 24, 44100);

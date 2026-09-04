@@ -362,7 +362,11 @@ function encodeAutomation(
   if (name.length === 0 || name.includes('\0')) {
     throw new RangeError('Automation channel name must be non-empty and must not contain NUL');
   }
-  if (!Number.isInteger(curve) || curve < AutomationCurveCode.STEP || curve > AutomationCurveCode.EXPONENTIAL) {
+  if (
+    !Number.isInteger(curve) ||
+    curve < AutomationCurveCode.STEP ||
+    curve > AutomationCurveCode.EXPONENTIAL
+  ) {
     throw new RangeError(`Unsupported automation curve code: ${curve}`);
   }
   if (typeof resolutionDecimal !== 'string' || resolutionDecimal.length === 0) {
@@ -373,11 +377,15 @@ function encodeAutomation(
     throw new RangeError(`Invalid automation resolution text: ${resolutionDecimal}`);
   }
   if (canonicalResolution !== resolutionDecimal) {
-    throw new RangeError(`Automation resolution must use canonical Java decimal text: ${resolutionDecimal}`);
+    throw new RangeError(
+      `Automation resolution must use canonical Java decimal text: ${resolutionDecimal}`,
+    );
   }
   const resolutionBuf = Buffer.from(resolutionDecimal, 'ascii');
-  if (resolutionBuf.toString('ascii') !== resolutionDecimal ||
-      [...resolutionBuf].some((byte) => byte < 0x20 || byte > 0x7e)) {
+  if (
+    resolutionBuf.toString('ascii') !== resolutionDecimal ||
+    [...resolutionBuf].some((byte) => byte < 0x20 || byte > 0x7e)
+  ) {
     throw new RangeError('Automation resolution must contain printable ASCII only');
   }
   if (points.length > 0xffff_ffff) {

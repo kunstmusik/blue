@@ -9,7 +9,11 @@ import { BSBHSlider } from './bsb-hslider';
 import { Parameter } from '../../automation/parameter';
 import { formatBlueNumber } from '../../utilities/number-format';
 import { JavaDecimal } from '../../automation/java-decimal';
-import { defaultBsbResolution, parseExactBsbResolution, parseLegacyBsbResolution } from './bsb-resolution';
+import {
+  defaultBsbResolution,
+  parseExactBsbResolution,
+  parseLegacyBsbResolution,
+} from './bsb-resolution';
 import { snapToResolutionJava } from '../../automation/java-decimal';
 
 export class BSBHSliderBank extends BSBWidget {
@@ -35,13 +39,15 @@ export class BSBHSliderBank extends BSBWidget {
     }
   }
 
-  override collectReplacements(
-    unit: BSBCompilationUnit,
-    parameters?: Parameter[],
-  ): void {
+  override collectReplacements(unit: BSBCompilationUnit, parameters?: Parameter[]): void {
     for (let i = 0; i < this.sliders.length; i++) {
       const key = `${this.objectName}_${i}`;
-      this.addCompilationReplacement(unit, key, formatBlueNumber(this.sliders[i].value), parameters);
+      this.addCompilationReplacement(
+        unit,
+        key,
+        formatBlueNumber(this.sliders[i].value),
+        parameters,
+      );
     }
   }
 
@@ -94,13 +100,23 @@ export class BSBHSliderBank extends BSBWidget {
         if (Number.isFinite(rawValue)) slider.value = rawValue;
       }
       slider.resolutionDecimal = loadedResolution;
-      slider.value = snapToResolutionJava(slider.value, this.minimum, this.maximum, loadedResolution);
+      slider.value = snapToResolutionJava(
+        slider.value,
+        this.minimum,
+        this.maximum,
+        loadedResolution,
+      );
       this.sliders.push(slider);
     }
     if (this.sliders.length === 0) {
       const slider = new BSBHSlider();
       slider.resolutionDecimal = loadedResolution;
-      slider.value = snapToResolutionJava(slider.value, this.minimum, this.maximum, loadedResolution);
+      slider.value = snapToResolutionJava(
+        slider.value,
+        this.minimum,
+        this.maximum,
+        loadedResolution,
+      );
       this.sliders.push(slider);
     }
   }
@@ -110,12 +126,16 @@ export class BSBHSliderBank extends BSBWidget {
     for (const s of this.sliders) s.randomize();
   }
 
-  get resolution(): number { return this.resolutionDecimal.doubleValue; }
+  get resolution(): number {
+    return this.resolutionDecimal.doubleValue;
+  }
   set resolution(value: number) {
     this.setResolutionText(parseLegacyBsbResolution(String(value)).canonicalText);
   }
 
-  getResolutionText(): string { return this.resolutionDecimal.canonicalText; }
+  getResolutionText(): string {
+    return this.resolutionDecimal.canonicalText;
+  }
   setResolutionText(text: string): void {
     const next = parseExactBsbResolution(text);
     this.resolutionDecimal = next;

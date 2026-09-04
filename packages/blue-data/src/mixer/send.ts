@@ -22,10 +22,16 @@ export class Send implements BlueDataObject {
     this._parameter.setResolution(-1.0);
   }
 
-  getSendChannel(): string { return this._sendChannel; }
-  setSendChannel(sendChannel: string): void { this._sendChannel = sendChannel; }
+  getSendChannel(): string {
+    return this._sendChannel;
+  }
+  setSendChannel(sendChannel: string): void {
+    this._sendChannel = sendChannel;
+  }
 
-  getLevel(): number { return this._level; }
+  getLevel(): number {
+    return this._level;
+  }
   setLevel(level: number): void {
     this._level = level;
     if (!this._parameter.isAutomationEnabled()) {
@@ -33,12 +39,22 @@ export class Send implements BlueDataObject {
     }
   }
 
-  isEnabled(): boolean { return this._enabled; }
-  setEnabled(enabled: boolean): void { this._enabled = enabled; }
+  isEnabled(): boolean {
+    return this._enabled;
+  }
+  setEnabled(enabled: boolean): void {
+    this._enabled = enabled;
+  }
 
-  getParameter(): Parameter { return this._parameter; }
-  getLevelParameter(): Parameter { return this._parameter; }
-  getParameters(): Parameter[] { return [this._parameter]; }
+  getParameter(): Parameter {
+    return this._parameter;
+  }
+  getLevelParameter(): Parameter {
+    return this._parameter;
+  }
+  getParameters(): Parameter[] {
+    return [this._parameter];
+  }
 
   saveAsXML(): Element {
     const elem = new Element('send');

@@ -30,7 +30,10 @@ export default function ZakLineObjectEditor({
     lines: ZakLineData[];
   };
   const [selectedLineIndex, setSelectedLineIndex] = useState(0);
-  const { ref: canvasHostRef, size: canvasSize } = useMeasuredElementSize<HTMLDivElement>({ width: 720, height: 360 });
+  const { ref: canvasHostRef, size: canvasSize } = useMeasuredElementSize<HTMLDivElement>({
+    width: 720,
+    height: 360,
+  });
 
   useEffect(() => {
     if (selectedLineIndex >= lines.length) {
@@ -38,32 +41,41 @@ export default function ZakLineObjectEditor({
     }
   }, [lines.length, selectedLineIndex]);
 
-  const patch = useCallback((nextPatch: Record<string, unknown>) => {
-    onPatch({
-      type: 'updateTypeSpecificEditor',
-      target: document.target,
-      patch: nextPatch,
-    });
-  }, [document.target, onPatch]);
+  const patch = useCallback(
+    (nextPatch: Record<string, unknown>) => {
+      onPatch({
+        type: 'updateTypeSpecificEditor',
+        target: document.target,
+        patch: nextPatch,
+      });
+    },
+    [document.target, onPatch],
+  );
 
-  const patchLines = useCallback((nextLines: ZakLineData[]) => {
-    patch({ lines: nextLines });
-  }, [patch]);
+  const patchLines = useCallback(
+    (nextLines: ZakLineData[]) => {
+      patch({ lines: nextLines });
+    },
+    [patch],
+  );
 
   const handleAddLine = useCallback(() => {
     const maxChannel = lines.reduce((highest, line) => Math.max(highest, line.channel), 0);
-    const nextLines = [...lines, {
-      channel: maxChannel + 1,
-      min: 0,
-      max: 1,
-      color: getJavaLineColor(lines.length),
-      rightBound: true,
-      endPointsLinked: false,
-      points: [
-        { x: 0, y: 0.5 },
-        { x: 1, y: 0.5 },
-      ],
-    } satisfies ZakLineData];
+    const nextLines = [
+      ...lines,
+      {
+        channel: maxChannel + 1,
+        min: 0,
+        max: 1,
+        color: getJavaLineColor(lines.length),
+        rightBound: true,
+        endPointsLinked: false,
+        points: [
+          { x: 0, y: 0.5 },
+          { x: 1, y: 0.5 },
+        ],
+      } satisfies ZakLineData,
+    ];
     patchLines(nextLines);
     setSelectedLineIndex(nextLines.length - 1);
   }, [lines, patchLines]);
@@ -78,11 +90,14 @@ export default function ZakLineObjectEditor({
     setSelectedLineIndex(Math.max(0, Math.min(selectedLineIndex, nextLines.length - 1)));
   }, [lines, patchLines, selectedLineIndex]);
 
-  const handleChannelChange = useCallback((channel: number) => {
-    patchLines(lines.map((line, index) => (
-      index === selectedLineIndex ? { ...line, channel } : line
-    )));
-  }, [lines, patchLines, selectedLineIndex]);
+  const handleChannelChange = useCallback(
+    (channel: number) => {
+      patchLines(
+        lines.map((line, index) => (index === selectedLineIndex ? { ...line, channel } : line)),
+      );
+    },
+    [lines, patchLines, selectedLineIndex],
+  );
 
   const selectedLine = lines[selectedLineIndex] ?? null;
   const selectedLineLabel = selectedLine ? `zak${selectedLine.channel}` : null;
@@ -155,9 +170,7 @@ export default function ZakLineObjectEditor({
                 className="inline-block h-2.5 w-2.5 rounded-full"
                 style={{ backgroundColor: colorSwatch(selectedLine.color) }}
               />
-              <span className="font-mono text-role-body text-gray-300">
-                {selectedLineLabel}
-              </span>
+              <span className="font-mono text-role-body text-gray-300">{selectedLineLabel}</span>
               <span className="text-role-callout text-blue-muted">
                 channel {selectedLine.channel}
               </span>

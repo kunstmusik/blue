@@ -10,18 +10,28 @@ import type { EngineRecoveryStatus } from '../shared/engine-recovery';
 describe('EngineRecoveryCoordinator', () => {
   it('classifies unrecoverable missing runtime and engine binaries correctly', () => {
     expect(classifyEngineFailure(new Error('Csound 7 was not found'))).toBe('runtime-unavailable');
-    expect(classifyEngineFailure(new Error('blue-engine not found in PATH'))).toBe('engine-unavailable');
+    expect(classifyEngineFailure(new Error('blue-engine not found in PATH'))).toBe(
+      'engine-unavailable',
+    );
     expect(isRecoverableFailure('runtime-unavailable')).toBe(false);
     expect(isRecoverableFailure('engine-unavailable')).toBe(false);
   });
 
   it('classifies recoverable failures correctly', () => {
-    expect(classifyEngineFailure(new Error('EADDRINUSE: address already in use'))).toBe('address-contention');
-    expect(classifyEngineFailure(new Error('timed out waiting for engine readiness'))).toBe('readiness-timeout');
+    expect(classifyEngineFailure(new Error('EADDRINUSE: address already in use'))).toBe(
+      'address-contention',
+    );
+    expect(classifyEngineFailure(new Error('timed out waiting for engine readiness'))).toBe(
+      'readiness-timeout',
+    );
     expect(classifyEngineFailure(new Error('ECONNREFUSED'))).toBe('session-unresponsive');
-    expect(classifyEngineFailure(
-      new Error('No isolated TCP endpoint pair available (address-contention): Exhausted available TCP endpoint pairs after 20 attempts starting from port 5555'),
-    )).toBe('address-contention');
+    expect(
+      classifyEngineFailure(
+        new Error(
+          'No isolated TCP endpoint pair available (address-contention): Exhausted available TCP endpoint pairs after 20 attempts starting from port 5555',
+        ),
+      ),
+    ).toBe('address-contention');
     expect(isRecoverableFailure('address-contention')).toBe(true);
     expect(isRecoverableFailure('readiness-timeout')).toBe(true);
     expect(isRecoverableFailure('session-unresponsive')).toBe(true);
@@ -122,7 +132,11 @@ describe('EngineRecoveryCoordinator', () => {
     await Promise.resolve();
 
     // Concurrent request while recovery is underway
-    const run2 = await coordinator.runWithRecovery('realtime', async () => 'op2', async () => {});
+    const run2 = await coordinator.runWithRecovery(
+      'realtime',
+      async () => 'op2',
+      async () => {},
+    );
 
     expect(run2.ok).toBe(false);
     expect(run2.errorMessage).toContain('already in progress');
@@ -167,7 +181,8 @@ describe('EngineRecoveryCoordinator', () => {
 
   describe('diagnostic privacy and Csound output sanitization', () => {
     it('redacts user home directories from diagnostics', () => {
-      const raw = 'Error in /Users/stevenyi/work/blue-electron/project.csd at line 10\nWindows error in C:\\Users\\stevenyi\\AppData\\Local';
+      const raw =
+        'Error in /Users/stevenyi/work/blue-electron/project.csd at line 10\nWindows error in C:\\Users\\stevenyi\\AppData\\Local';
       const sanitized = sanitizeEngineDiagnostics(raw);
 
       expect(sanitized).not.toContain('stevenyi');
@@ -176,7 +191,8 @@ describe('EngineRecoveryCoordinator', () => {
     });
 
     it('excludes project XML and CSD tags from diagnostics', () => {
-      const raw = '<CsoundSynthesizer>\n<CsOptions>\n-odac\n</CsOptions>\ncsound error: invalid table length\n</CsoundSynthesizer>';
+      const raw =
+        '<CsoundSynthesizer>\n<CsOptions>\n-odac\n</CsOptions>\ncsound error: invalid table length\n</CsoundSynthesizer>';
       const sanitized = sanitizeEngineDiagnostics(raw);
 
       expect(sanitized).not.toContain('<CsoundSynthesizer>');

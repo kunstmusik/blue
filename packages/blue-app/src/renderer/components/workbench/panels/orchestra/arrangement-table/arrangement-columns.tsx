@@ -44,9 +44,7 @@ export function createArrangementColumns({
           defaultValue={info.getValue()}
           aria-label="Instrument ID"
           onClick={(event) => event.stopPropagation()}
-          onBlur={(event) =>
-            onCommitAssignmentId(info.row.original, event.currentTarget.value)
-          }
+          onBlur={(event) => onCommitAssignmentId(info.row.original, event.currentTarget.value)}
           onKeyDown={(event) => {
             if (event.key === 'Enter') {
               event.currentTarget.blur();
@@ -67,9 +65,7 @@ export function createArrangementColumns({
           placeholder="(unnamed)"
           aria-label="Instrument Name"
           onClick={(event) => event.stopPropagation()}
-          onBlur={(event) =>
-            onCommitInstrumentName(info.row.original, event.currentTarget.value)
-          }
+          onBlur={(event) => onCommitInstrumentName(info.row.original, event.currentTarget.value)}
           onKeyDown={(event) => {
             if (event.key === 'Enter') {
               event.currentTarget.blur();

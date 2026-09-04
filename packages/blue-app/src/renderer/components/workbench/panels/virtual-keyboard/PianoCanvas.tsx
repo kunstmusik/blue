@@ -30,12 +30,7 @@ function midiValForWhiteKey(whiteKeyNum: number): number {
   return 3 + oct * 12 + WHITE_KEY_SEMITONES[key];
 }
 
-function getMidiKeyFromPosition(
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-): number {
+function getMidiKeyFromPosition(x: number, y: number, width: number, height: number): number {
   if (x >= width) return 87;
   if (x < 0) return 0;
 
@@ -203,20 +198,17 @@ export function PianoCanvas({
     ctx.restore();
   }, [pressedKeys]);
 
-  const getKeyIndex = useCallback(
-    (e: MouseEvent): number => {
-      const canvas = canvasRef.current;
-      if (!canvas) return -1;
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const dpr = window.devicePixelRatio || 1;
-      const w = canvas.width / dpr;
-      const h = canvas.height / dpr;
-      return getMidiKeyFromPosition(x, y, w, h);
-    },
-    [],
-  );
+  const getKeyIndex = useCallback((e: MouseEvent): number => {
+    const canvas = canvasRef.current;
+    if (!canvas) return -1;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.width / dpr;
+    const h = canvas.height / dpr;
+    return getMidiKeyFromPosition(x, y, w, h);
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -267,11 +259,7 @@ export function PianoCanvas({
   }, [getKeyIndex, onNoteOn, onNoteOff]);
 
   return (
-    <div
-      ref={containerRef}
-      className="flex-1 min-h-0 min-w-0"
-      style={{ minHeight: 100 }}
-    >
+    <div ref={containerRef} className="flex-1 min-h-0 min-w-0" style={{ minHeight: 100 }}>
       <canvas
         ref={canvasRef}
         className="block h-full w-full cursor-pointer"

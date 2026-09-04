@@ -17,8 +17,12 @@ export class TimeWarpProcessor extends NoteProcessor {
     }
   }
 
-  getTimeWarpString(): string { return this._timeWarpString; }
-  setTimeWarpString(timeWarpString: string): void { this._timeWarpString = timeWarpString; }
+  getTimeWarpString(): string {
+    return this._timeWarpString;
+  }
+  setTimeWarpString(timeWarpString: string): void {
+    this._timeWarpString = timeWarpString;
+  }
 
   override process(notes: NoteList): NoteList {
     const tm = TempoMap.createTempoMap(this._timeWarpString);
@@ -44,7 +48,9 @@ export class TimeWarpProcessor extends NoteProcessor {
     return notes;
   }
 
-  override getDisplayName(): string { return 'TimeWarpProcessor'; }
+  override getDisplayName(): string {
+    return 'TimeWarpProcessor';
+  }
 
   override deepCopy(): TimeWarpProcessor {
     return new TimeWarpProcessor(this);

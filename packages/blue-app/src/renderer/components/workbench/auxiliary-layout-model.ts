@@ -742,7 +742,6 @@ function normalizeSeededInstance(
   };
 }
 
-
 export function clampSlideoutSize(edge: AuxiliaryEdge, value: number): number {
   const viewportWidth = typeof window === 'undefined' ? 1440 : Math.max(window.innerWidth, 480);
   const viewportHeight = typeof window === 'undefined' ? 900 : Math.max(window.innerHeight, 320);
@@ -776,7 +775,10 @@ function clampNumber(value: number, options: { minimum: number; maximum: number 
   return Math.min(Math.max(value, options.minimum), options.maximum);
 }
 
-export function sortPanelIdsBySeedOrder(seedGroupId: AuxiliarySeedGroupId, panelIds: string[]): string[] {
+export function sortPanelIdsBySeedOrder(
+  seedGroupId: AuxiliarySeedGroupId,
+  panelIds: string[],
+): string[] {
   const order = AUXILIARY_SEED_DEFINITIONS[seedGroupId].panelIds;
   return unique(panelIds)
     .filter((panelId) => order.includes(panelId))

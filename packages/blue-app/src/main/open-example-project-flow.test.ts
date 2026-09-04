@@ -9,10 +9,7 @@ import {
   OpenExampleFlowDependencies,
   UpdateOfferChoice,
 } from './open-example-project-flow';
-import {
-  createExampleLibraryService,
-  ExampleLibraryInspection,
-} from './example-library/service';
+import { createExampleLibraryService, ExampleLibraryInspection } from './example-library/service';
 import { createFactoryManifestProvider } from './example-library/manifest';
 
 let tempRoot = '';
@@ -25,10 +22,7 @@ interface HarnessConfig {
   openCurrentWithoutUpdateCheck?: boolean;
   /** False simulates an unsaved active example blocking the library swap. */
   activeExampleSafe?: boolean;
-  pickerSelection?:
-    | string
-    | null
-    | ((defaultRoot: string) => string | null);
+  pickerSelection?: string | null | ((defaultRoot: string) => string | null);
   pickerSelectionOutsideRoot?: boolean;
   loadProjectFails?: boolean;
   libraryDraftConfirms?: boolean;
@@ -77,7 +71,11 @@ function createFlowHarness(config: HarnessConfig = {}) {
     runRecoveryAndInspect: async () => {
       calls.push('recover-inspect');
       const outcome = await service.inspect();
-      if (!outcome.ok || outcome.value.status === 'invalid-user-library' || outcome.value.status === 'unavailable') {
+      if (
+        !outcome.ok ||
+        outcome.value.status === 'invalid-user-library' ||
+        outcome.value.status === 'unavailable'
+      ) {
         return { ok: false as const, kind: 'inspection-blocked' as const, diagnostic: 'blocked' };
       }
       lastInspection = outcome.value;
@@ -88,7 +86,12 @@ function createFlowHarness(config: HarnessConfig = {}) {
       if (lastInspection.status !== 'needs-initialization') throw new Error('bad state');
       const prepared = await service.prepareInitialCopy(lastInspection.factory);
       if (!prepared.ok) {
-        return { ok: false as const, code: prepared.code, message: prepared.message, retryable: prepared.retryable };
+        return {
+          ok: false as const,
+          code: prepared.code,
+          message: prepared.message,
+          retryable: prepared.retryable,
+        };
       }
       liveCandidate = prepared.value;
       return { ok: true as const, candidate: prepared.value };
@@ -105,7 +108,12 @@ function createFlowHarness(config: HarnessConfig = {}) {
       }
       const outcome = await service.prepareUpdate();
       if (!outcome.ok) {
-        return { ok: false as const, code: outcome.code, message: outcome.message, retryable: outcome.retryable };
+        return {
+          ok: false as const,
+          code: outcome.code,
+          message: outcome.message,
+          retryable: outcome.retryable,
+        };
       }
       liveCandidate = outcome.value;
       return { ok: true as const, candidate: outcome.value };
@@ -134,7 +142,9 @@ function createFlowHarness(config: HarnessConfig = {}) {
         return { ok: true };
       }
       const result = await service.commit(candidate);
-      return result.ok ? { ok: true } : { ok: false, message: result.message, retryable: result.retryable };
+      return result.ok
+        ? { ok: true }
+        : { ok: false, message: result.message, retryable: result.retryable };
     },
     discardCandidate: async (candidate) => {
       calls.push('discard');
@@ -165,7 +175,9 @@ function createFlowHarness(config: HarnessConfig = {}) {
       return config.activeExampleSafe ?? true;
     },
     showProjectPicker: (defaultRoot) => {
-      calls.push(`picker:${defaultRoot.includes(nodePath.join('examples', 'current')) ? 'current' : 'candidate'}`);
+      calls.push(
+        `picker:${defaultRoot.includes(nodePath.join('examples', 'current')) ? 'current' : 'candidate'}`,
+      );
       if (config.pickerSelectionOutsideRoot) {
         return Promise.resolve(outsideProject);
       }
@@ -174,9 +186,7 @@ function createFlowHarness(config: HarnessConfig = {}) {
       }
       if (config.pickerSelection === undefined || config.pickerSelection === null) {
         return Promise.resolve(
-          config.pickerSelection === null
-            ? null
-            : nodePath.join(defaultRoot, 'demos', 'sine.blue'),
+          config.pickerSelection === null ? null : nodePath.join(defaultRoot, 'demos', 'sine.blue'),
         );
       }
       return Promise.resolve(config.pickerSelection);
@@ -190,9 +200,9 @@ function createFlowHarness(config: HarnessConfig = {}) {
           const resolvedRoot = fs.realpathSync(possibleRoot);
           const relativePath = nodePath.relative(resolvedRoot, resolvedSelected);
           if (
-            relativePath !== ''
-            && !relativePath.startsWith('..')
-            && !nodePath.isAbsolute(relativePath)
+            relativePath !== '' &&
+            !relativePath.startsWith('..') &&
+            !nodePath.isAbsolute(relativePath)
           ) {
             const filePath = nodePath.join(offeredRoot, relativePath);
             if (fs.statSync(filePath).isFile()) {
@@ -227,7 +237,9 @@ function createFlowHarness(config: HarnessConfig = {}) {
     },
     getCurrentContentRoot: () => contentRoot,
     installParsedProject: (_project, finalContentPath) => {
-      calls.push(`install:${nodePath.relative(contentRoot, finalContentPath).split(nodePath.sep).join('/')}`);
+      calls.push(
+        `install:${nodePath.relative(contentRoot, finalContentPath).split(nodePath.sep).join('/')}`,
+      );
       if (installThrowsActive) {
         throw new Error('install pipeline exploded');
       }
@@ -292,15 +304,11 @@ function createFlowHarness(config: HarnessConfig = {}) {
       delete (config as { pickerSelectionOutsideRoot?: boolean }).pickerSelectionOutsideRoot;
     },
     /** Force the next picker to hand back a path derived from its root. */
-    setDynamicSelection: (
-      choose: (defaultRoot: string) => string | null,
-    ): void => {
+    setDynamicSelection: (choose: (defaultRoot: string) => string | null): void => {
       config.pickerSelection = choose;
     },
     /** Register the same-file predicate used by the no-op check. */
-    setSameFileAsCurrent: (
-      predicate: (finalContentPath: string) => boolean,
-    ): void => {
+    setSameFileAsCurrent: (predicate: (finalContentPath: string) => boolean): void => {
       deps.isSameFileAsCurrent = (finalContentPath) => {
         calls.push('same-file-check');
         return predicate(finalContentPath);
@@ -364,9 +372,7 @@ describe('open-example flow · first use', () => {
       'discard',
     ]);
 
-    expect(
-      fs.existsSync(nodePath.join(h.contentRoot, 'media', 'loop.wav')),
-    ).toBe(true);
+    expect(fs.existsSync(nodePath.join(h.contentRoot, 'media', 'loop.wav'))).toBe(true);
     h.expectNoStagingLeft();
 
     // The installed path mapping points into the user-owned content root.
@@ -397,14 +403,17 @@ describe('open-example flow · first use', () => {
   it.each([
     ['library-draft gate', { libraryDraftConfirms: false }, 'blocked'],
     ['save gate', { saveConfirms: false }, 'blocked'],
-  ] as const)('blocks at the %s and aborts the uncommitted candidate', async (_label, overrides, expectedStatus) => {
-    const h = createFlowHarness({ ...overrides });
-    const result = await runOpenExampleProjectFlow(h.deps);
+  ] as const)(
+    'blocks at the %s and aborts the uncommitted candidate',
+    async (_label, overrides, expectedStatus) => {
+      const h = createFlowHarness({ ...overrides });
+      const result = await runOpenExampleProjectFlow(h.deps);
 
-    expect(result.status).toBe(expectedStatus);
-    expect(fs.existsSync(nodePath.join(h.libraryRoot, 'current'))).toBe(false);
-    h.expectNoStagingLeft();
-  });
+      expect(result.status).toBe(expectedStatus);
+      expect(fs.existsSync(nodePath.join(h.libraryRoot, 'current'))).toBe(false);
+      h.expectNoStagingLeft();
+    },
+  );
 
   it('guides, re-opens the picker after an out-of-root pick, and cancels cleanly', async () => {
     const h = createFlowHarness({ pickerSelectionOutsideRoot: true });
@@ -443,7 +452,9 @@ describe('open-example flow · first use', () => {
 
     expect(result.status).toBe('cancelled');
     expect(
-      h.calls.some((call) => call.startsWith('post-commit-install-failure:install pipeline exploded')),
+      h.calls.some((call) =>
+        call.startsWith('post-commit-install-failure:install pipeline exploded'),
+      ),
     ).toBe(true);
     // The accepted example-library update stands and is recoverable.
     expect(fs.existsSync(nodePath.join(h.contentRoot, 'media', 'loop.wav'))).toBe(true);
@@ -453,8 +464,9 @@ describe('open-example flow · first use', () => {
     h.writeUserCopyEdit();
     h.setInstallThrows(false);
     h.setSelection(nodePath.join(h.contentRoot, 'demos', 'sine.blue'));
-    h.setSameFileAsCurrent((finalContentPath) =>
-      finalContentPath === nodePath.join(h.contentRoot, 'demos', 'sine.blue'));
+    h.setSameFileAsCurrent(
+      (finalContentPath) => finalContentPath === nodePath.join(h.contentRoot, 'demos', 'sine.blue'),
+    );
     const reopen = await runOpenExampleProjectFlow(h.deps);
     expect(reopen.status).toBe('no-op');
   });
@@ -468,9 +480,7 @@ describe('open-example flow · persistent user copy preference (US2)', () => {
 
     h.writeUserCopyEdit();
     h.setSelection(nodePath.join(h.contentRoot, 'demos', 'sine.blue'));
-    h.setSameFileAsCurrent(
-      (final) => final === nodePath.join(h.contentRoot, 'demos', 'sine.blue'),
-    );
+    h.setSameFileAsCurrent((final) => final === nodePath.join(h.contentRoot, 'demos', 'sine.blue'));
 
     // Clear stage log so assertions read only the REOPEN actions.
     h.calls.length = 0;
@@ -482,9 +492,9 @@ describe('open-example flow · persistent user copy preference (US2)', () => {
 
     // Exactly one generation remains; the edited example is intact on disk.
     h.expectNoStagingLeft();
-    expect(
-      fs.readFileSync(nodePath.join(h.contentRoot, 'demos', 'sine.blue'), 'utf8'),
-    ).toBe('<project>edited-by-user</project>');
+    expect(fs.readFileSync(nodePath.join(h.contentRoot, 'demos', 'sine.blue'), 'utf8')).toBe(
+      '<project>edited-by-user</project>',
+    );
   });
 
   it('keeps the packaged factory byte-identical through reopen, edit, and beside-project render work', async () => {
@@ -515,21 +525,20 @@ describe('open-example flow · persistent user copy preference (US2)', () => {
     // application-created artifacts appeared there during any of this.
     const factoryBase = nodePath.join(tempRoot, 'installation', 'examples');
     function listInstallation(rootDir: string): string[] {
-      return fs.readdirSync(rootDir, { withFileTypes: true }).flatMap((entry) =>
-        entry.isDirectory()
-          ? listInstallation(nodePath.join(rootDir, entry.name))
-          : [
-              nodePath
-                .relative(factoryBase, nodePath.join(rootDir, entry.name))
-                .split(nodePath.sep)
-                .join('/'),
-            ],
-      );
+      return fs
+        .readdirSync(rootDir, { withFileTypes: true })
+        .flatMap((entry) =>
+          entry.isDirectory()
+            ? listInstallation(nodePath.join(rootDir, entry.name))
+            : [
+                nodePath
+                  .relative(factoryBase, nodePath.join(rootDir, entry.name))
+                  .split(nodePath.sep)
+                  .join('/'),
+              ],
+        );
     }
-    expect(listInstallation(factoryBase).sort()).toEqual([
-      'demos/sine.blue',
-      'media/loop.wav',
-    ]);
+    expect(listInstallation(factoryBase).sort()).toEqual(['demos/sine.blue', 'media/loop.wav']);
   });
 
   it('suppresses repeated update offers after declining once, still opening silently (SC-004 seed)', async () => {
@@ -563,13 +572,14 @@ describe('open-example flow · updates and declines (US3)', () => {
     expect(h.calls).toContain('resolve-selection');
     expect(h.calls.some((call) => call.startsWith('rejected-selection:'))).toBe(false);
     expect(h.calls).toContain('install:demos/sine.blue');
-    expect(h.calls.indexOf('commit-candidate')).toBeGreaterThan(
-      h.calls.indexOf('load-project'),
-    );
+    expect(h.calls.indexOf('commit-candidate')).toBeGreaterThan(h.calls.indexOf('load-project'));
   }, 20000);
 
   it('Update and Open makes newly added examples selectable in the same session (SC-007)', async () => {
-    const h = createFlowHarness({ updateOfferChoice: 'update-and-open', continueDespiteConflicts: true });
+    const h = createFlowHarness({
+      updateOfferChoice: 'update-and-open',
+      continueDespiteConflicts: true,
+    });
     expect((await runOpenExampleProjectFlow(h.deps)).status).toBe('committed');
 
     // A user edit + changed factory bytes yields a preserved-conflict case.
@@ -579,9 +589,7 @@ describe('open-example flow · updates and declines (US3)', () => {
     // The picker reads the complete staged tree, then the accepted selection
     // commits to the stable current root (SC-007).
     h.calls.length = 0;
-    h.setDynamicSelection(
-      (defaultRoot) => nodePath.join(defaultRoot, 'brand-new', 'welcome.blue'),
-    );
+    h.setDynamicSelection((defaultRoot) => nodePath.join(defaultRoot, 'brand-new', 'welcome.blue'));
     h.setSameFileAsCurrent(() => false);
     const result = await runOpenExampleProjectFlow(h.deps);
 
@@ -596,12 +604,10 @@ describe('open-example flow · updates and declines (US3)', () => {
 
     // User-modified media survives even though revision B changed it too
     // (SC-005); the newly added example arrives regardless (SC-007).
-    expect(
-      fs.readFileSync(nodePath.join(h.contentRoot, 'media', 'loop.wav'), 'utf8'),
-    ).toBe('RIFF-MY-EDIT');
-    expect(
-      fs.existsSync(nodePath.join(h.contentRoot, 'brand-new', 'welcome.blue')),
-    ).toBe(true);
+    expect(fs.readFileSync(nodePath.join(h.contentRoot, 'media', 'loop.wav'), 'utf8')).toBe(
+      'RIFF-MY-EDIT',
+    );
+    expect(fs.existsSync(nodePath.join(h.contentRoot, 'brand-new', 'welcome.blue'))).toBe(true);
 
     // The accepted revision stops prompting afterwards.
     h.calls.length = 0;
@@ -623,9 +629,7 @@ describe('open-example flow · updates and declines (US3)', () => {
     expect(h.calls).toContain('record-keep-current');
     expect(h.calls.some((call) => call.startsWith('picker:current'))).toBe(true);
     // Existing generation untouched by Keep Current.
-    expect(
-      fs.readFileSync(nodePath.join(h.contentRoot, 'media', 'loop.wav'), 'utf8'),
-    ).toBe('RIFF');
+    expect(fs.readFileSync(nodePath.join(h.contentRoot, 'media', 'loop.wav'), 'utf8')).toBe('RIFF');
 
     // Reopen at the SAME revision: silent fast path, no second offer.
     h.calls.length = 0;
@@ -663,9 +667,7 @@ describe('open-example flow · updates and declines (US3)', () => {
     expect(h.calls).toContain('choose-update-offer');
     expect(h.calls.some((call) => call.startsWith('prepare-copy'))).toBe(false);
     expect(h.calls).not.toContain('record-keep-current');
-    expect(
-      fs.readFileSync(nodePath.join(h.contentRoot, 'media', 'loop.wav'), 'utf8'),
-    ).toBe('RIFF');
+    expect(fs.readFileSync(nodePath.join(h.contentRoot, 'media', 'loop.wav'), 'utf8')).toBe('RIFF');
     h.expectNoStagingLeft();
   }, 20000);
 
@@ -688,9 +690,9 @@ describe('open-example flow · updates and declines (US3)', () => {
       samples: ['media/loop.wav'],
     });
     expect(h.calls.filter((call) => call === 'discard').length).toBeGreaterThanOrEqual(1);
-    expect(
-      fs.readFileSync(nodePath.join(h.contentRoot, 'media', 'loop.wav'), 'utf8'),
-    ).toBe('RIFF-MY-EDIT');
+    expect(fs.readFileSync(nodePath.join(h.contentRoot, 'media', 'loop.wav'), 'utf8')).toBe(
+      'RIFF-MY-EDIT',
+    );
     h.expectNoStagingLeft();
   }, 20000);
 
@@ -708,9 +710,9 @@ describe('open-example flow · updates and declines (US3)', () => {
     h.calls.length = 0;
     expect(await runOpenExampleProjectFlow(h.deps)).toMatchObject({ status: 'blocked' });
     expect(h.calls.some((call) => call.startsWith('blocked:'))).toBe(true);
-    expect(
-      fs.readFileSync(nodePath.join(h.contentRoot, 'demos', 'sine.blue'), 'utf8'),
-    ).toBe('<project>edited-by-user</project>');
+    expect(fs.readFileSync(nodePath.join(h.contentRoot, 'demos', 'sine.blue'), 'utf8')).toBe(
+      '<project>edited-by-user</project>',
+    );
   }, 20000);
 });
 
@@ -750,10 +752,12 @@ describe('open-example flow · bounded recovery retries', () => {
 
 describe('open-example flow · conflict detail', () => {
   it('formats a deterministic bounded path list and total', () => {
-    expect(formatExampleConflictDetail({
-      total: 11,
-      samples: ['a/example.blue', 'b/media.wav'],
-    })).toBe('11 files need attention.\n\na/example.blue\nb/media.wav\n…and 9 more.');
+    expect(
+      formatExampleConflictDetail({
+        total: 11,
+        samples: ['a/example.blue', 'b/media.wav'],
+      }),
+    ).toBe('11 files need attention.\n\na/example.blue\nb/media.wav\n…and 9 more.');
   });
 
   it('wires the formatted report into the native confirmation detail', () => {
@@ -780,9 +784,7 @@ describe('open-example flow · active-example safety before library swaps (spec 
     expect(h.calls).toContain('active-example-safety');
     expect(h.calls).not.toContain('commit-candidate');
     // Library untouched by the aborted swap.
-    expect(
-      fs.readFileSync(nodePath.join(h.contentRoot, 'media', 'loop.wav'), 'utf8'),
-    ).toBe('RIFF');
+    expect(fs.readFileSync(nodePath.join(h.contentRoot, 'media', 'loop.wav'), 'utf8')).toBe('RIFF');
     h.expectNoStagingLeft();
   }, 20000);
 
@@ -804,9 +806,9 @@ describe('open-example flow · active-example safety before library swaps (spec 
     expect(h.calls).toContain('active-example-safety');
     expect(h.calls).toContain('commit-candidate');
     // Factory revision B landed in the user library.
-    expect(
-      fs.readFileSync(nodePath.join(h.contentRoot, 'media', 'loop.wav'), 'utf8'),
-    ).toBe('RIFF-B2');
+    expect(fs.readFileSync(nodePath.join(h.contentRoot, 'media', 'loop.wav'), 'utf8')).toBe(
+      'RIFF-B2',
+    );
   }, 20000);
 });
 

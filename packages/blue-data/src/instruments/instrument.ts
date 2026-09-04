@@ -58,8 +58,13 @@ export abstract class Instrument implements DeepCopyable<Instrument> {
     _compileData?: CompileData,
     parameters?: Parameter[],
   ): Promise<string> {
-    if (parameters && typeof (this as { generateInstrument?: unknown }).generateInstrument === 'function') {
-      return (this as unknown as { generateInstrument: (parameters: Parameter[]) => string }).generateInstrument(parameters);
+    if (
+      parameters &&
+      typeof (this as { generateInstrument?: unknown }).generateInstrument === 'function'
+    ) {
+      return (
+        this as unknown as { generateInstrument: (parameters: Parameter[]) => string }
+      ).generateInstrument(parameters);
     }
 
     return this.generateInstrument();

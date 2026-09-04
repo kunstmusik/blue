@@ -1,8 +1,4 @@
-import type {
-  ScoreLayerGroupSnapshot,
-  ScoreLayerSnapshot,
-  ScoreRowObjectSnapshot,
-} from '../types';
+import type { ScoreLayerGroupSnapshot, ScoreLayerSnapshot, ScoreRowObjectSnapshot } from '../types';
 
 export interface TimelineGlobalLayer {
   groupId: string;
@@ -79,10 +75,12 @@ export function selectionIntersectsTimelineItem(
 ): boolean {
   const itemLeft = item.startBeats;
   const itemRight = item.startBeats + Math.max(item.durationBeats, 0);
-  return itemRight >= selection.left
-    && itemLeft <= selection.right
-    && itemLayerTop + itemLayerHeight >= selection.top
-    && itemLayerTop <= selection.bottom;
+  return (
+    itemRight >= selection.left &&
+    itemLeft <= selection.right &&
+    itemLayerTop + itemLayerHeight >= selection.top &&
+    itemLayerTop <= selection.bottom
+  );
 }
 
 export function snapTimelineBeat(
@@ -188,13 +186,17 @@ export function collectTimelineBoundarySelection(
   beats: number,
   mode: 'before' | 'after',
 ): Array<{ objectId: string; editorTarget?: ScoreRowObjectSnapshot['editorTarget'] }> {
-  const entries: Array<{ objectId: string; editorTarget?: ScoreRowObjectSnapshot['editorTarget'] }> = [];
+  const entries: Array<{
+    objectId: string;
+    editorTarget?: ScoreRowObjectSnapshot['editorTarget'];
+  }> = [];
   for (const group of groups) {
     for (const layer of group.layers) {
       for (const item of layer.items) {
-        const include = mode === 'before'
-          ? item.startBeats + item.durationBeats <= beats
-          : item.startBeats >= beats;
+        const include =
+          mode === 'before'
+            ? item.startBeats + item.durationBeats <= beats
+            : item.startBeats >= beats;
         if (include) entries.push({ objectId: item.objectId, editorTarget: item.editorTarget });
       }
     }

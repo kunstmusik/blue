@@ -46,22 +46,22 @@ function hasOnlyKeys(value: Record<string, unknown>, keys: readonly string[]): b
 export function isTrackInstrumentRuntimeStatus(
   value: unknown,
 ): value is TrackInstrumentRuntimeStatus {
-  if (!isObject(value) || !hasOnlyKeys(value, [
-    'sequence',
-    'playbackRunning',
-    'blueLiveRunning',
-  ])) return false;
-  return isNonNegativeInteger(value.sequence)
-    && typeof value.playbackRunning === 'boolean'
-    && typeof value.blueLiveRunning === 'boolean';
+  if (!isObject(value) || !hasOnlyKeys(value, ['sequence', 'playbackRunning', 'blueLiveRunning']))
+    return false;
+  return (
+    isNonNegativeInteger(value.sequence) &&
+    typeof value.playbackRunning === 'boolean' &&
+    typeof value.blueLiveRunning === 'boolean'
+  );
 }
 
 export function isNewerTrackInstrumentRuntimeStatus(
   next: unknown,
   previous: TrackInstrumentRuntimeStatus | null,
 ): next is TrackInstrumentRuntimeStatus {
-  return isTrackInstrumentRuntimeStatus(next)
-    && (previous === null || next.sequence > previous.sequence);
+  return (
+    isTrackInstrumentRuntimeStatus(next) && (previous === null || next.sequence > previous.sequence)
+  );
 }
 
 export function isJsonSerializable(value: unknown): boolean {
@@ -84,38 +84,40 @@ export function isTrackInstrumentEditorRequest(
     projectSessionId?: unknown;
     projectRevision?: unknown;
   };
-  return isNonEmptyString(candidate.rootGroupId)
-    && isNonEmptyString(candidate.trackId)
-    && isNonNegativeInteger(candidate.projectSessionId)
-    && isNonNegativeInteger(candidate.projectRevision);
+  return (
+    isNonEmptyString(candidate.rootGroupId) &&
+    isNonEmptyString(candidate.trackId) &&
+    isNonNegativeInteger(candidate.projectSessionId) &&
+    isNonNegativeInteger(candidate.projectRevision)
+  );
 }
 
 export function isEffectEditorRequest(value: unknown): value is EffectEditorRequest {
-  if (!isObject(value) || !hasOnlyKeys(value, [
-    'effectId',
-    'ownerType',
-    'projectRef',
-    'libraryRef',
-  ]) || !isNonEmptyString(value.effectId)) return false;
+  if (
+    !isObject(value) ||
+    !hasOnlyKeys(value, ['effectId', 'ownerType', 'projectRef', 'libraryRef']) ||
+    !isNonEmptyString(value.effectId)
+  )
+    return false;
 
   if (value.ownerType === 'project') {
-    if (!isObject(value.projectRef) || !hasOnlyKeys(value.projectRef, [
-      'channelId',
-      'chain',
-      'entryId',
-    ])) return false;
-    return isNonEmptyString(value.projectRef.channelId)
-      && (value.projectRef.chain === 'pre' || value.projectRef.chain === 'post')
-      && isNonEmptyString(value.projectRef.entryId)
-      && value.libraryRef === undefined;
+    if (
+      !isObject(value.projectRef) ||
+      !hasOnlyKeys(value.projectRef, ['channelId', 'chain', 'entryId'])
+    )
+      return false;
+    return (
+      isNonEmptyString(value.projectRef.channelId) &&
+      (value.projectRef.chain === 'pre' || value.projectRef.chain === 'post') &&
+      isNonEmptyString(value.projectRef.entryId) &&
+      value.libraryRef === undefined
+    );
   }
 
   if (value.ownerType === 'library') {
-    if (!isObject(value.libraryRef) || !hasOnlyKeys(value.libraryRef, [
-      'libraryEffectId',
-    ])) return false;
-    return isNonEmptyString(value.libraryRef.libraryEffectId)
-      && value.projectRef === undefined;
+    if (!isObject(value.libraryRef) || !hasOnlyKeys(value.libraryRef, ['libraryEffectId']))
+      return false;
+    return isNonEmptyString(value.libraryRef.libraryEffectId) && value.projectRef === undefined;
   }
 
   return false;
@@ -124,7 +126,9 @@ export function isEffectEditorRequest(value: unknown): value is EffectEditorRequ
 export function isTrackInstrumentEditorPatchRequest(
   value: unknown,
 ): value is TrackInstrumentEditorPatchRequest {
-  return isTrackInstrumentEditorRequest(value)
-    && typeof (value as { patch?: unknown }).patch === 'object'
-    && (value as { patch?: unknown }).patch !== null;
+  return (
+    isTrackInstrumentEditorRequest(value) &&
+    typeof (value as { patch?: unknown }).patch === 'object' &&
+    (value as { patch?: unknown }).patch !== null
+  );
 }

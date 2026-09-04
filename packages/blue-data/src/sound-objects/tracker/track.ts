@@ -69,14 +69,26 @@ export class Track {
     return this._trackerNotes[rowIndex];
   }
 
-  setName(name: string): void { this._name = name; }
-  getName(): string { return this._name; }
+  setName(name: string): void {
+    this._name = name;
+  }
+  getName(): string {
+    return this._name;
+  }
 
-  getNoteTemplate(): string { return this._noteTemplate; }
-  setNoteTemplate(template: string): void { this._noteTemplate = template; }
+  getNoteTemplate(): string {
+    return this._noteTemplate;
+  }
+  setNoteTemplate(template: string): void {
+    this._noteTemplate = template;
+  }
 
-  getInstrumentId(): string { return this._instrumentId; }
-  setInstrumentId(id: string): void { this._instrumentId = id; }
+  getInstrumentId(): string {
+    return this._instrumentId;
+  }
+  setInstrumentId(id: string): void {
+    this._instrumentId = id;
+  }
 
   addColumn(col: Column): void {
     this._columns.push(col);

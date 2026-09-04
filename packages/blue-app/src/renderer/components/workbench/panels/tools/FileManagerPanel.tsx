@@ -1,12 +1,12 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { RotateCw } from "lucide-react";
-import { toast } from "sonner";
-import type { FileManagerRootSnapshot } from "../../../../../../shared/file-manager";
-import { emitPendingAudioFile } from "../audio-player/audio-player-bus";
-import { emitPendingSoundFontFile } from "./soundfont-viewer-bus";
-import { isAudioFilePlayerSourcePath } from "../audio-player/audio-player-formats";
-import { useWorkbenchStore } from "../../../../stores/workbench-store";
-import FileManagerTree from "./file-manager/FileManagerTree";
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { RotateCw } from 'lucide-react';
+import { toast } from 'sonner';
+import type { FileManagerRootSnapshot } from '../../../../../../shared/file-manager';
+import { emitPendingAudioFile } from '../audio-player/audio-player-bus';
+import { emitPendingSoundFontFile } from './soundfont-viewer-bus';
+import { isAudioFilePlayerSourcePath } from '../audio-player/audio-player-formats';
+import { useWorkbenchStore } from '../../../../stores/workbench-store';
+import FileManagerTree from './file-manager/FileManagerTree';
 
 /**
  * File Manager workbench panel (SPEC 076). Loads the main-owned root list
@@ -40,9 +40,7 @@ export default function FileManagerPanel(): React.ReactElement {
         path,
       });
       if (!validation.ok || !validation.normalizedPath) {
-        toast.error(
-          validation.message ?? "Selected path is not a valid directory.",
-        );
+        toast.error(validation.message ?? 'Selected path is not a valid directory.');
         return;
       }
       const candidate = validation.normalizedPath;
@@ -63,9 +61,7 @@ export default function FileManagerPanel(): React.ReactElement {
         },
       });
       if (!result.ok) {
-        toast.error(
-          "Could not save the favorite. Program settings were not changed.",
-        );
+        toast.error('Could not save the favorite. Program settings were not changed.');
         return;
       }
       await loadRoots();
@@ -79,8 +75,7 @@ export default function FileManagerPanel(): React.ReactElement {
       const remaining = settings.appSpecific.fileManagerFavorites.filter(
         (entry) => entry !== path && entry !== rootId,
       );
-      if (remaining.length === settings.appSpecific.fileManagerFavorites.length)
-        return;
+      if (remaining.length === settings.appSpecific.fileManagerFavorites.length) return;
 
       const result = await window.blueAPI.saveProgramSettings({
         ...settings,
@@ -90,9 +85,7 @@ export default function FileManagerPanel(): React.ReactElement {
         },
       });
       if (!result.ok) {
-        toast.error(
-          "Could not save the favorite. Program settings were not changed.",
-        );
+        toast.error('Could not save the favorite. Program settings were not changed.');
         return;
       }
       await loadRoots();
@@ -123,9 +116,7 @@ export default function FileManagerPanel(): React.ReactElement {
         },
       });
       if (!result.ok) {
-        toast.error(
-          "Could not save root label. Program settings were not changed.",
-        );
+        toast.error('Could not save root label. Program settings were not changed.');
         return;
       }
       await loadRoots();
@@ -143,8 +134,8 @@ export default function FileManagerPanel(): React.ReactElement {
    * else does nothing.
    */
   const openFile = useCallback(async (path: string) => {
-    if (path.toLowerCase().endsWith(".sf2")) {
-      useWorkbenchStore.getState().openPanel("SoundFontViewerTopComponent");
+    if (path.toLowerCase().endsWith('.sf2')) {
+      useWorkbenchStore.getState().openPanel('SoundFontViewerTopComponent');
       emitPendingSoundFontFile(path);
       return;
     }
@@ -159,7 +150,7 @@ export default function FileManagerPanel(): React.ReactElement {
       toast.error(`Could not open audio file: ${path}`);
       return;
     }
-    useWorkbenchStore.getState().openPanel("AudioFilePlayerTopComponent");
+    useWorkbenchStore.getState().openPanel('AudioFilePlayerTopComponent');
     emitPendingAudioFile(path);
   }, []);
 
@@ -183,9 +174,7 @@ export default function FileManagerPanel(): React.ReactElement {
           </p>
         )}
         {error === null && roots === null && (
-          <p className="px-1 py-2 text-role-callout text-app-text-muted">
-            Loading roots…
-          </p>
+          <p className="px-1 py-2 text-role-callout text-app-text-muted">Loading roots…</p>
         )}
         {error === null && roots !== null && roots.length === 0 && (
           <p className="px-1 py-2 text-role-callout text-app-text-muted">

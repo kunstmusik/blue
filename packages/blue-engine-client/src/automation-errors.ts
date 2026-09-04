@@ -32,7 +32,6 @@ export const AUTOMATION_DIAGNOSTIC_CODES: readonly AutomationDiagnosticCode[] = 
 
 export function isAutomationDiagnosticCode(value: unknown): value is AutomationDiagnosticCode {
   return (
-    typeof value === 'string' &&
-    (AUTOMATION_DIAGNOSTIC_CODES as readonly string[]).includes(value)
+    typeof value === 'string' && (AUTOMATION_DIAGNOSTIC_CODES as readonly string[]).includes(value)
   );
 }

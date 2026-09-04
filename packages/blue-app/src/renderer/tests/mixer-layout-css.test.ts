@@ -1,10 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-const mixerCss = readFileSync(
-  new URL('../styles/index.css', import.meta.url),
-  'utf8',
-);
+const mixerCss = readFileSync(new URL('../styles/index.css', import.meta.url), 'utf8');
 
 function rule(selector: string): string {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

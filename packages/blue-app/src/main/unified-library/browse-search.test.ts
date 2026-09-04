@@ -124,12 +124,14 @@ describe('Unified Library browse, search, and preview', () => {
       });
       expect(payloadSpy).toHaveBeenCalledTimes(1);
 
-      await client.runForTesting((repository) => repository.createItem({
-        libraryType: 'instrument',
-        parentId: rootId,
-        displayName: 'Gamma Pad',
-        payload: payload('Gamma Pad'),
-      }));
+      await client.runForTesting((repository) =>
+        repository.createItem({
+          libraryType: 'instrument',
+          parentId: rootId,
+          displayName: 'Gamma Pad',
+          payload: payload('Gamma Pad'),
+        }),
+      );
       const stale = await service.searchLibraries({
         query: 'pad',
         typeFilter: 'all',

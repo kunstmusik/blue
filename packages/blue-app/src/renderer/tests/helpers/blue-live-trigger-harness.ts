@@ -227,7 +227,10 @@ export interface FakeCanonicalProject {
   replaceData(data: BlueData | null): void;
 }
 
-export function createFakeCanonicalProject(data: BlueData | null, sessionId = 1): FakeCanonicalProject {
+export function createFakeCanonicalProject(
+  data: BlueData | null,
+  sessionId = 1,
+): FakeCanonicalProject {
   const state = { sessionId, revision: 0, data };
   return {
     get sessionId() {
@@ -351,9 +354,7 @@ export interface BlueLiveTriggerHarness {
   reset(): void;
 }
 
-export function createBlueLiveTriggerHarness(
-  data: BlueData | null,
-): BlueLiveTriggerHarness {
+export function createBlueLiveTriggerHarness(data: BlueData | null): BlueLiveTriggerHarness {
   return {
     canonicalProject: createFakeCanonicalProject(data),
     engine: new FakeBlueLiveEngine(),

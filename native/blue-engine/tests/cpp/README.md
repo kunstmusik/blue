@@ -31,6 +31,7 @@ The test client demonstrates:
 4. **EXPONENTIAL Curve Automation**: Exponential frequency curve from 220Hz to 880Hz
 
 All automation tests:
+
 - Create automation in disabled state
 - Play for 2 seconds with steady frequency
 - Enable automation (starts at engine time 2.0 seconds)

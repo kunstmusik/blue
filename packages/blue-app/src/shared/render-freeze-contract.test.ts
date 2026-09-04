@@ -111,7 +111,9 @@ describe('render-freeze-contract', () => {
   describe('runtime IPC validation', () => {
     it('accepts only supported render action requests', () => {
       expect(isRenderToDiskRequest({ action: 'render' })).toBe(true);
-      expect(isRenderToDiskRequest({ action: 'render', operationId: 'disk-renderer-1' })).toBe(true);
+      expect(isRenderToDiskRequest({ action: 'render', operationId: 'disk-renderer-1' })).toBe(
+        true,
+      );
       expect(isRenderToDiskRequest({ action: 'render', operationId: '' })).toBe(false);
       expect(isRenderToDiskRequest({ action: 'delete-project' })).toBe(false);
       expect(isRenderToDiskRequest(null)).toBe(false);
@@ -119,7 +121,9 @@ describe('render-freeze-contract', () => {
 
     it('requires a target array for freeze and a non-empty operation id for cancellation', () => {
       expect(isFreezeScoreObjectsRequest({ targets: [] })).toBe(true);
-      expect(isFreezeScoreObjectsRequest({ targets: [], operationId: 'freeze-renderer-1' })).toBe(true);
+      expect(isFreezeScoreObjectsRequest({ targets: [], operationId: 'freeze-renderer-1' })).toBe(
+        true,
+      );
       expect(isFreezeScoreObjectsRequest({ targets: [], operationId: '' })).toBe(false);
       expect(isFreezeScoreObjectsRequest({ targets: 'all' })).toBe(false);
       expect(isCancelRenderOperationRequest({ operationId: 'freeze-1' })).toBe(true);
@@ -128,7 +132,9 @@ describe('render-freeze-contract', () => {
 
     it('rejects malformed render status payloads', () => {
       expect(isRenderOperationStatus(createStatus('op', 'freeze', 'completed', 'Done'))).toBe(true);
-      expect(isRenderOperationStatus({ operationId: 'op', kind: 'freeze', phase: 'unknown' })).toBe(false);
+      expect(isRenderOperationStatus({ operationId: 'op', kind: 'freeze', phase: 'unknown' })).toBe(
+        false,
+      );
     });
 
     it('accepts an optional valid disk render action and rejects invalid ones', () => {
@@ -145,12 +151,16 @@ describe('render-freeze-contract', () => {
       for (const phase of ['pending', 'running', 'rendered', 'complete', 'failed'] as const) {
         expect(isFreezeItemStatus(freezeItem({ phase }))).toBe(true);
       }
-      expect(isFreezeItemStatus(freezeItem({
-        action: 'unfreeze',
-        freezeFile: 'freeze0.aif',
-        outputAppend: 'rendering...\n',
-        outputType: 'stderr',
-      }))).toBe(true);
+      expect(
+        isFreezeItemStatus(
+          freezeItem({
+            action: 'unfreeze',
+            freezeFile: 'freeze0.aif',
+            outputAppend: 'rendering...\n',
+            outputType: 'stderr',
+          }),
+        ),
+      ).toBe(true);
       expect(isFreezeItemStatus(freezeItem({ reason: 'Freeze failed: boom' }))).toBe(true);
     });
 

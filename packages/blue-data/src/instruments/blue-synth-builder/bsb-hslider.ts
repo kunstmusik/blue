@@ -5,7 +5,11 @@
 import { Element } from '../../serialization/xml-reader';
 import { BSBWidget } from './bsb-widget';
 import { JavaDecimal } from '../../automation/java-decimal';
-import { defaultBsbResolution, parseExactBsbResolution, parseLegacyBsbResolution } from './bsb-resolution';
+import {
+  defaultBsbResolution,
+  parseExactBsbResolution,
+  parseLegacyBsbResolution,
+} from './bsb-resolution';
 import { snapToResolutionJava } from '../../automation/java-decimal';
 
 export class BSBHSlider extends BSBWidget {
@@ -21,7 +25,8 @@ export class BSBHSlider extends BSBWidget {
     const exactResolution = data.getTextString('bdresolution');
     const legacyResolution = data.getTextString('resolution');
     if (exactResolution) this.setResolutionText(exactResolution);
-    else if (legacyResolution) this.setResolutionText(parseLegacyBsbResolution(legacyResolution).canonicalText);
+    else if (legacyResolution)
+      this.setResolutionText(parseLegacyBsbResolution(legacyResolution).canonicalText);
     const vde = data.getElement('valueDisplayEnabled');
     if (vde) this.valueDisplayEnabled = vde.getTextString() === 'true';
     const rand = data.getElement('randomizable');
@@ -35,13 +40,17 @@ export class BSBHSlider extends BSBWidget {
     this.value = this.minimum + snapToResolutionJava(raw, 0, range, this.resolutionDecimal);
   }
 
-  get resolution(): number { return this.resolutionDecimal.doubleValue; }
+  get resolution(): number {
+    return this.resolutionDecimal.doubleValue;
+  }
   set resolution(value: number) {
     const parsed = parseLegacyBsbResolution(String(value));
     this.setResolutionText(parsed.canonicalText);
   }
 
-  getResolutionText(): string { return this.resolutionDecimal.canonicalText; }
+  getResolutionText(): string {
+    return this.resolutionDecimal.canonicalText;
+  }
   setResolutionText(text: string): void {
     const next = parseExactBsbResolution(text);
     this.resolutionDecimal = next;

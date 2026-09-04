@@ -13,10 +13,7 @@ function combineMessage(prefix: string, detail?: string): string {
   return `${prefix}: ${trimmedDetail}`;
 }
 
-function formatJavaRuntimeErrorMessage(
-  action: string,
-  error?: JavaRuntimeErrorEnvelope,
-): string {
+function formatJavaRuntimeErrorMessage(action: string, error?: JavaRuntimeErrorEnvelope): string {
   if (!error) {
     return `${action} failed`;
   }
