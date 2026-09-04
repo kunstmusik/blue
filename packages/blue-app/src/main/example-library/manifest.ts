@@ -2,6 +2,7 @@ import { createHash } from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Readable } from 'stream';
+import { finished } from 'stream/promises';
 import {
   hostCollisionKey,
   parsePortableExamplePath,
@@ -77,15 +78,12 @@ async function hashSingleFile(
   const hash = createHash('sha256');
   let size = 0;
 
-  await new Promise<void>((resolve, reject) => {
-    const stream = readFileStream(filePath);
-    stream.on('data', (chunk: Buffer | string) => {
-      hash.update(chunk);
-      size += typeof chunk === 'string' ? Buffer.byteLength(chunk) : chunk.length;
-    });
-    stream.on('end', () => resolve());
-    stream.on('error', reject);
+  const stream = readFileStream(filePath);
+  stream.on('data', (chunk: Buffer | string) => {
+    hash.update(chunk);
+    size += typeof chunk === 'string' ? Buffer.byteLength(chunk) : chunk.length;
   });
+  await finished(stream);
 
   return { sha256: hash.digest('hex'), size };
 }

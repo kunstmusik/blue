@@ -60,6 +60,27 @@ function digestTree(root: string): string {
   return hash.digest('hex');
 }
 
+function renameDirectorySync(fromPath: string, toPath: string): void {
+  try {
+    fs.renameSync(fromPath, toPath);
+  } catch (err: unknown) {
+    const code = (err as NodeJS.ErrnoException | undefined)?.code;
+    if (code === 'EPERM' || code === 'EBUSY') {
+      let retries = 10;
+      while (retries > 0) {
+        try {
+          Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 25);
+          fs.renameSync(fromPath, toPath);
+          return;
+        } catch {
+          retries--;
+        }
+      }
+    }
+    throw err;
+  }
+}
+
 interface HarnessOptions {
   fsSeams?: ServiceFsSeams;
 }
@@ -389,7 +410,7 @@ describe('example-library service · inspections beyond first use', () => {
     expect((await h.service.commit(prepared.value)).ok).toBe(true);
 
     // External unmanaged backup appears between sessions.
-    fs.renameSync(
+    renameDirectorySync(
       nodePath.join(h.libraryRoot, 'current'),
       nodePath.join(h.libraryRoot, 'backup-unknown-source'),
     );
@@ -713,7 +734,7 @@ describe('example-library service · safe updates (US3)', () => {
       env.writeFactoryV2();
       const candidate = await env.prepareUpdateCandidate();
       const backupName = `backup-${candidate.operationId}`;
-      fs.renameSync(
+      renameDirectorySync(
         nodePath.join(env.libraryRoot, 'current'),
         nodePath.join(env.libraryRoot, backupName),
       );
@@ -752,7 +773,7 @@ describe('example-library service · safe updates (US3)', () => {
       // journal recorded at `backup-created`, staging still in place.
       const backupName = `backup-${candidate.operationId}`;
       const stagingName = nodePath.basename(candidate.rootPath);
-      fs.renameSync(
+      renameDirectorySync(
         nodePath.join(env.libraryRoot, 'current'),
         nodePath.join(env.libraryRoot, backupName),
       );
@@ -790,11 +811,11 @@ describe('example-library service · safe updates (US3)', () => {
       env.writeFactoryV2();
       const candidate = await env.prepareUpdateCandidate();
       const backupName = `backup-${candidate.operationId}`;
-      fs.renameSync(
+      renameDirectorySync(
         nodePath.join(env.libraryRoot, 'current'),
         nodePath.join(env.libraryRoot, backupName),
       );
-      fs.renameSync(candidate.rootPath, nodePath.join(env.libraryRoot, 'current'));
+      renameDirectorySync(candidate.rootPath, nodePath.join(env.libraryRoot, 'current'));
       fs.writeFileSync(
         nodePath.join(env.libraryRoot, 'operation.json'),
         serializeOperationJournal({
@@ -828,7 +849,7 @@ describe('example-library service · safe updates (US3)', () => {
 
       const backupName = `backup-${candidate.operationId}`;
       const stagingName = nodePath.basename(candidate.rootPath);
-      fs.renameSync(
+      renameDirectorySync(
         nodePath.join(env.libraryRoot, 'current'),
         nodePath.join(env.libraryRoot, backupName),
       );

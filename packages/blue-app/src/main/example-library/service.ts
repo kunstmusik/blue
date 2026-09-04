@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { createHash, randomUUID } from 'crypto';
+import { finished, pipeline } from 'stream/promises';
 import {
   buildFactoryManifest,
   createFactoryManifestProvider,
@@ -513,15 +514,12 @@ export function createExampleLibraryService(options: ExampleLibraryServiceOption
   async function hashLocalFileStreaming(nativePath: string): Promise<{ sha256: string; size: number }> {
     const hash = createHash('sha256');
     let size = 0;
-    await new Promise<void>((resolve, reject) => {
-      const input = fsImpl.createReadStream(nativePath);
-      input.on('data', (chunk: Buffer | string) => {
-        hash.update(chunk);
-        size += typeof chunk === 'string' ? Buffer.byteLength(chunk) : chunk.length;
-      });
-      input.on('end', () => resolve());
-      input.on('error', reject);
+    const input = fsImpl.createReadStream(nativePath);
+    input.on('data', (chunk: Buffer | string) => {
+      hash.update(chunk);
+      size += typeof chunk === 'string' ? Buffer.byteLength(chunk) : chunk.length;
     });
+    await finished(input);
     return { sha256: hash.digest('hex'), size };
   }
 
@@ -608,14 +606,9 @@ export function createExampleLibraryService(options: ExampleLibraryServiceOption
 
     async function copyLocalFile(sourceFile: string, destinationFile: string): Promise<void> {
       await fs.promises.mkdir(path.dirname(destinationFile), { recursive: true });
-      await new Promise<void>((resolve, reject) => {
-        const input = fsImpl.createReadStream(sourceFile);
-        const output = fs.createWriteStream(destinationFile);
-        input.on('error', reject);
-        output.on('error', reject);
-        output.on('finish', () => resolve());
-        input.pipe(output);
-      });
+      const input = fsImpl.createReadStream(sourceFile);
+      const output = fs.createWriteStream(destinationFile);
+      await pipeline(input, output);
     }
 
     await fs.promises.mkdir(destinationContentRoot, { recursive: true });
@@ -860,14 +853,9 @@ export function createExampleLibraryService(options: ExampleLibraryServiceOption
       throw new Error('the packaged example source disappeared during preparation');
     }
     const sourceFile = path.join(factoryRoot, relativePortion);
-    await new Promise<void>((resolve, reject) => {
-      const input = fsImpl.createReadStream(sourceFile);
-      const output = fs.createWriteStream(destinationFile);
-      input.on('error', reject);
-      output.on('error', reject);
-      output.on('finish', () => resolve());
-      input.pipe(output);
-    });
+    const input = fsImpl.createReadStream(sourceFile);
+    const output = fs.createWriteStream(destinationFile);
+    await pipeline(input, output);
   }
 
   function preparationFailure(error: unknown): LibraryFailure {
