@@ -283,5 +283,30 @@ endop</udo>
       expect(reloaded.getScratchPadData().getScratchText()).toBe('Notes');
       expect(reloaded.getMidiInputProcessor().getKeyMapping()).toBe('MIDI');
     });
+
+    it('preserves unknown pluginData and legacy XML structures through round-trip', () => {
+      const xml = `<blueData version="5.0.0">
+        <projectProperties>
+          <title>Legacy XML Test</title>
+        </projectProperties>
+        <pluginData>
+          <legacyEffectManager enabled="true">
+            <effectId>echo-1</effectId>
+          </legacyEffectManager>
+          <parameterTimeManager version="1">
+            <mapping name="cutoff" time="0.5"/>
+          </parameterTimeManager>
+        </pluginData>
+      </blueData>`;
+      const data = BlueData.loadFromString(xml);
+      const saved = data.saveToString();
+      const reloaded = BlueData.loadFromString(saved);
+
+      expect(reloaded.getProjectProperties().title).toBe('Legacy XML Test');
+      expect(saved).toContain('<legacyEffectManager enabled="true">');
+      expect(saved).toContain('<effectId>echo-1</effectId>');
+      expect(saved).toContain('<parameterTimeManager version="1">');
+      expect(reloaded.saveToString()).toContain('<legacyEffectManager enabled="true">');
+    });
   });
 });

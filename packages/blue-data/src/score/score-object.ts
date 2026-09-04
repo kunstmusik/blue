@@ -8,7 +8,6 @@
 import { TimePosition } from '../time/time-position';
 import { TimeDuration } from '../time/time-duration';
 import { TimeContext } from '../time/time-context';
-import { ScoreObjectListener } from './score-object-event';
 
 export interface ScoreObject {
   /** Get the name of this score object. */
@@ -42,11 +41,6 @@ export interface ScoreObject {
   resizeLeft(context: TimeContext, newStartTime: number): void;
   /** Resize the right edge to the new end time. */
   resizeRight(context: TimeContext, newEndTime: number): void;
-
-  /** Add a listener for score object events. */
-  addScoreObjectListener(listener: ScoreObjectListener): void;
-  /** Remove a listener for score object events. */
-  removeScoreObjectListener(listener: ScoreObjectListener): void;
 
   /** Get the clone source hash code (for copy tracking). */
   getCloneSourceHashCode(): number;

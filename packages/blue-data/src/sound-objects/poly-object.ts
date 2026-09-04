@@ -26,7 +26,6 @@ import {
   setScoreStart,
 } from '../utilities/score';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
-import { ScoreObjectListener, ScoreObjectEvent, ScoreEventType } from '../score/score-object-event';
 import { Layer } from '../score/layers/layer';
 import { getBasicXML, initBasicFromXML } from './sound-object-utilities';
 import { loadSoundObjectFromXML } from './sound-object-registry';
@@ -74,7 +73,6 @@ export class PolyObject extends Array<SoundLayer>
   private _timeBehavior = TimeBehavior.SCALE;
   private _repeatPoint: TimeDuration | null = null;
   private _npc = new NoteProcessorChain();
-  private _listeners: ScoreObjectListener[] = [];
 
   // LayerGroup properties
   private _defaultHeightIndex = 0;
@@ -118,13 +116,6 @@ export class PolyObject extends Array<SoundLayer>
   resizeLeft(_ctx: TimeContext, _newStart: number): void {}
   resizeRight(_ctx: TimeContext, _newEnd: number): void {}
 
-  addScoreObjectListener(listener: ScoreObjectListener): void {
-    if (!this._listeners.includes(listener)) this._listeners.push(listener);
-  }
-  removeScoreObjectListener(listener: ScoreObjectListener): void {
-    const i = this._listeners.indexOf(listener);
-    if (i !== -1) this._listeners.splice(i, 1);
-  }
   getCloneSourceHashCode(): number { return this._cloneSourceHashCode; }
 
   // ─── SoundObject ───

@@ -11,6 +11,9 @@ import { TimeDuration } from '../time/time-duration';
 import { CompileData } from '../compile-data';
 import { Element } from '../serialization/xml-reader';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
+import { AudioClip } from './audio/audio-clip';
+import { TimePosition } from '../time/time-position';
+import { TimeContext } from '../time/time-context';
 
 function createSingleNoteScore(instr: number): GenericScore {
   const score = new GenericScore();
@@ -366,6 +369,70 @@ i1 2 1 440</scoreText>
 
       const sObjElem = layerElem.getElement('soundObject')!;
       expect(sObjElem.getTextString('backgroundColor')).toBe('-16711936');
+    });
+  });
+
+  describe('ScoreObject mutation, resizing, copying, and observation without listeners', () => {
+    it('mutates and observes GenericScore properties without listeners', () => {
+      const gs = new GenericScore();
+      gs.setName('Test Score');
+      gs.setStartTime(TimePosition.beats(2));
+      gs.setSubjectiveDuration(TimeDuration.beats(4));
+      gs.setBackgroundColor(-16777216);
+      gs.setRepeatPoint(TimeDuration.beats(2));
+      gs.setTimeBehavior(TimeBehavior.SCALE);
+
+      const context = new TimeContext();
+
+      expect(gs.getName()).toBe('Test Score');
+      expect(gs.getStartTime().toBeats(context)).toBe(2);
+      expect(gs.getSubjectiveDuration().toBeats(context)).toBe(4);
+      expect(gs.getBackgroundColor()).toBe(-16777216);
+      expect(gs.getRepeatPoint()?.toBeats(context)).toBe(2);
+      expect(gs.getTimeBehavior()).toBe(TimeBehavior.SCALE);
+
+      const copy = gs.deepCopy() as GenericScore;
+      expect(copy.getName()).toBe('Test Score');
+      expect(copy.getStartTime().toBeats(context)).toBe(2);
+      expect(copy.getSubjectiveDuration().toBeats(context)).toBe(4);
+      expect(copy.getBackgroundColor()).toBe(-16777216);
+      expect(copy.getRepeatPoint()?.toBeats(context)).toBe(2);
+      expect(copy.getTimeBehavior()).toBe(TimeBehavior.SCALE);
+
+      copy.setName('Copy Score');
+      expect(gs.getName()).toBe('Test Score');
+      expect(copy.getName()).toBe('Copy Score');
+    });
+
+    it('mutates, resizes, and copies AudioClip properties without listeners', () => {
+      const context = new TimeContext();
+      const clip = new AudioClip();
+      clip.setName('Sample');
+      clip.setStartTime(TimePosition.beats(1));
+      clip.setSubjectiveDuration(TimeDuration.beats(3));
+      clip.setBackgroundColor(0xff0000);
+
+      expect(clip.getName()).toBe('Sample');
+      expect(clip.getStartTime().toBeats(context)).toBe(1);
+      expect(clip.getSubjectiveDuration().toBeats(context)).toBe(3);
+      expect(clip.getBackgroundColor()).toBe(0xff0000);
+
+      clip.resizeRight(context, 6);
+      expect(clip.getSubjectiveDuration().toBeats(context)).toBe(5);
+
+      clip.resizeLeft(context, 0);
+      expect(clip.getStartTime().toBeats(context)).toBe(0);
+      expect(clip.getSubjectiveDuration().toBeats(context)).toBe(6);
+
+      const copy = AudioClip.copyFrom(clip);
+      expect(copy.getName()).toBe('Sample');
+      expect(copy.getStartTime().toBeats(context)).toBe(0);
+      expect(copy.getSubjectiveDuration().toBeats(context)).toBe(6);
+      expect(copy.getBackgroundColor()).toBe(0xff0000);
+
+      copy.setName('Copied Clip');
+      expect(clip.getName()).toBe('Sample');
+      expect(copy.getName()).toBe('Copied Clip');
     });
   });
 });

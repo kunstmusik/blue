@@ -6,7 +6,6 @@
  * duration, color) and common listener management.
  */
 import { SoundObject } from './sound-object';
-import { ScoreObjectListener, ScoreObjectEvent, ScoreEventType } from '../score/score-object-event';
 import { TimePosition } from '../time/time-position';
 import { TimeDuration } from '../time/time-duration';
 import { TimeContext } from '../time/time-context';
@@ -26,7 +25,6 @@ export abstract class AbstractSoundObject implements SoundObject {
   protected _repeatPoint: TimeDuration | null = null;
   protected _npc = new NoteProcessorChain();
   protected _cloneSourceHashCode = 0;
-  private _listeners: ScoreObjectListener[] = [];
 
   constructor() {}
 
@@ -49,9 +47,7 @@ export abstract class AbstractSoundObject implements SoundObject {
   }
 
   setName(value: string): void {
-    const old = this._name;
     this._name = value;
-    this.fireEvent(ScoreEventType.NAME);
   }
 
   getStartTime(): TimePosition {
@@ -59,9 +55,7 @@ export abstract class AbstractSoundObject implements SoundObject {
   }
 
   setStartTime(value: TimePosition): void {
-    const old = this._startTime;
     this._startTime = value;
-    this.fireEvent(ScoreEventType.START_TIME);
   }
 
   getSubjectiveDuration(): TimeDuration {
@@ -69,9 +63,7 @@ export abstract class AbstractSoundObject implements SoundObject {
   }
 
   setSubjectiveDuration(value: TimeDuration): void {
-    const old = this._subjectiveDuration;
     this._subjectiveDuration = value;
-    this.fireEvent(ScoreEventType.DURATION);
   }
 
   getBackgroundColor(): number {
@@ -79,9 +71,7 @@ export abstract class AbstractSoundObject implements SoundObject {
   }
 
   setBackgroundColor(color: number): void {
-    const old = this._backgroundColor;
     this._backgroundColor = color;
-    this.fireEvent(ScoreEventType.COLOR);
   }
 
   getResizeLeftLimits(_context: TimeContext): number[] {
@@ -98,19 +88,6 @@ export abstract class AbstractSoundObject implements SoundObject {
 
   resizeRight(_context: TimeContext, _newEndTime: number): void {
     // Default: no-op
-  }
-
-  addScoreObjectListener(listener: ScoreObjectListener): void {
-    if (!this._listeners.includes(listener)) {
-      this._listeners.push(listener);
-    }
-  }
-
-  removeScoreObjectListener(listener: ScoreObjectListener): void {
-    const idx = this._listeners.indexOf(listener);
-    if (idx !== -1) {
-      this._listeners.splice(idx, 1);
-    }
   }
 
   getCloneSourceHashCode(): number {
@@ -133,7 +110,6 @@ export abstract class AbstractSoundObject implements SoundObject {
 
   setTimeBehavior(behavior: TimeBehavior): void {
     this._timeBehavior = behavior;
-    this.fireEvent(ScoreEventType.TIME_BEHAVIOR);
   }
 
   getRepeatPoint(): TimeDuration | null {
@@ -142,7 +118,6 @@ export abstract class AbstractSoundObject implements SoundObject {
 
   setRepeatPoint(repeatPoint: TimeDuration | null): void {
     this._repeatPoint = repeatPoint;
-    this.fireEvent(ScoreEventType.REPEAT_POINT);
   }
 
   // ─── Abstract methods ───
@@ -157,13 +132,4 @@ export abstract class AbstractSoundObject implements SoundObject {
   abstract saveAsXML(objRefMap?: ObjRefSaveMap): Element;
 
   abstract deepCopy(): SoundObject;
-
-  // ─── Event firing ───
-
-  protected fireEvent(type: ScoreEventType): void {
-    const event = new ScoreObjectEvent(type);
-    for (const listener of this._listeners) {
-      listener.scoreObjectChanged(event);
-    }
-  }
 }

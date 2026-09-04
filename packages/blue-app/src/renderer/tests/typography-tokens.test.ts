@@ -93,7 +93,6 @@ describe('Typography Tokens and System Contracts', () => {
     const fontChooserSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/orchestra/bsb/FontChooserDialog.tsx'), 'utf8');
     const gridSettingsSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/orchestra/bsb/BSBGridSettingsPanel.tsx'), 'utf8');
     const propertySheetSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/orchestra/bsb/BSBPropertySheet.tsx'), 'utf8');
-    const bsbWidgetEditorSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/orchestra/bsb/BSBWidgetEditor.tsx'), 'utf8');
     const bsbInterfaceEditorSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/orchestra/bsb/BSBInterfaceEditor.tsx'), 'utf8');
     const udoEditorSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/udo/UdoEditor.tsx'), 'utf8');
     const noteProcessorSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/score-object/note-processors/NoteProcessorChainEditor.tsx'), 'utf8');
@@ -107,8 +106,6 @@ describe('Typography Tokens and System Contracts', () => {
     expect(gridSettingsSource).toContain('text-role-body text-app-text-muted');
     expect(propertySheetSource).toContain('text-role-headline font-bold');
     expect(propertySheetSource).not.toContain('text-role-subheadline');
-    expect(bsbWidgetEditorSource).toContain('text-role-headline font-bold');
-    expect(bsbWidgetEditorSource).toContain('text-role-callout text-blue-muted');
     expect(bsbInterfaceEditorSource).not.toContain('text-role-subheadline');
     expect(udoEditorSource).not.toContain('text-role-subheadline');
     expect(noteProcessorSource).toContain('text-role-callout border border-blue-border');

@@ -24,15 +24,6 @@ export default tseslint.config(
     files: ['packages/**/*.{ts,tsx}'],
     plugins: {
       '@typescript-eslint': tseslint.plugin,
-      'react-hooks': {
-        rules: {
-          'exhaustive-deps': {
-            create() {
-              return {};
-            },
-          },
-        },
-      },
     },
     languageOptions: {
       parser: tseslint.parser,

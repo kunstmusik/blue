@@ -6,7 +6,6 @@
  * fade in/out, and looping settings. During CSD generation, it produces a
  * diskin2-based score event.
  */
-import { ScoreObjectListener, ScoreObjectEvent, ScoreEventType } from '../../score/score-object-event';
 import { ScoreObject } from '../../score/score-object';
 import { TimePosition } from '../../time/time-position';
 import { TimeDuration } from '../../time/time-duration';
@@ -47,7 +46,6 @@ export class AudioClip implements ScoreObject {
   private _looping = true;
 
   private _cloneSourceHashCode = 0;
-  private _listeners: ScoreObjectListener[] = [];
 
   constructor() {}
 
@@ -75,27 +73,22 @@ export class AudioClip implements ScoreObject {
 
   getName(): string { return this._name; }
   setName(value: string): void {
-    const old = this._name;
     this._name = value;
-    this._fireEvent(ScoreEventType.NAME);
   }
 
   getStartTime(): TimePosition { return this._startTimePosition; }
   setStartTime(value: TimePosition): void {
     this._startTimePosition = value;
-    this._fireEvent(ScoreEventType.START_TIME);
   }
 
   getSubjectiveDuration(): TimeDuration { return this._durationUnit; }
   setSubjectiveDuration(value: TimeDuration): void {
     this._durationUnit = value;
-    this._fireEvent(ScoreEventType.DURATION);
   }
 
   getBackgroundColor(): number { return this._color; }
   setBackgroundColor(color: number): void {
     this._color = color;
-    this._fireEvent(ScoreEventType.COLOR);
   }
 
   getResizeLeftLimits(context: TimeContext): number[] {
@@ -134,15 +127,6 @@ export class AudioClip implements ScoreObject {
   resizeRight(context: TimeContext, newEndTime: number): void {
     const currentStart = this._startTimePosition.toBeats(context);
     this._durationUnit = TimeDuration.beats(newEndTime - currentStart);
-  }
-
-  addScoreObjectListener(listener: ScoreObjectListener): void {
-    if (!this._listeners.includes(listener)) this._listeners.push(listener);
-  }
-
-  removeScoreObjectListener(listener: ScoreObjectListener): void {
-    const i = this._listeners.indexOf(listener);
-    if (i !== -1) this._listeners.splice(i, 1);
   }
 
   getCloneSourceHashCode(): number { return this._cloneSourceHashCode; }
@@ -289,13 +273,6 @@ export class AudioClip implements ScoreObject {
   }
 
   // ─── Helpers ───
-
-  private _fireEvent(type: ScoreEventType): void {
-    const event = new ScoreObjectEvent(type);
-    for (const listener of this._listeners) {
-      listener.scoreObjectChanged(event);
-    }
-  }
 
   hashCode(): number {
     return this._cloneSourceHashCode || 0;

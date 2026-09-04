@@ -208,7 +208,7 @@ const xml = data.saveToString();
 | Category | Types |
 |----------|-------|
 | Mixer | `Mixer`, `Channel`, `Effect`, `EffectsChain`, `Send` |
-| Automation | `Parameter`, `ParameterList`, `ParameterTimeManager` |
+| Automation | `Parameter`, `ParameterList` |
 | Note Processors | `AddProcessor`, `MultiplyProcessor`, `Code`, `PythonProcessor` |
 | Live | `LiveObject`, `LiveObjectSet`, `LiveObjectSetList` |
 | MIDI | `MidiKeyMapping`, `MidiVelocityMapping` |

@@ -193,8 +193,6 @@ export type {
 export { replaceTrackInstrumentP1, applyTrackInstrumentOverride } from './score/score-generation-options';
 export type { ScoreGenerationOptions, InstrumentTargetCollector, InstrumentTargetBehavior, ScoreGenerationOptionsOrSolo } from './score/score-generation-options';
 export type { ScoreObject } from './score/score-object';
-export { ScoreObjectEvent, ScoreEventType } from './score/score-object-event';
-export type { ScoreObjectListener } from './score/score-object-event';
 export { ScoreGenerationException } from './score/score-generation-exception';
 
 // ─── Score Layers ───
@@ -322,10 +320,8 @@ export { Mixer } from './mixer/mixer';
 export { Channel } from './mixer/channel';
 export { ChannelList } from './mixer/channel-list';
 export { Effect } from './mixer/effect';
-export { EffectManager } from './mixer/effect-manager';
 export { EffectsChain } from './mixer/effects-chain';
 export { Send } from './mixer/send';
-export { MixerNode } from './mixer/mixer-node';
 
 // ─── Automation ───
 export { Parameter } from './automation/parameter';
@@ -339,8 +335,6 @@ export {
 } from './automation/csd-parameter-automation';
 export { ParameterList } from './automation/parameter-list';
 export { ParameterIdList } from './automation/parameter-id-list';
-export { ParameterNameManager } from './automation/parameter-name-manager';
-export { ParameterTimeManager } from './automation/parameter-time-manager';
 export { ParameterHelper } from './automation/parameter-helper';
 export {
   getProjectParameterCatalog,
