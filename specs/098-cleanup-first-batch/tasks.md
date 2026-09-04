@@ -9,6 +9,8 @@ description: "Actionable task list for the validated cleanup first batch"
 
 **Prerequisites**: `plan.md`, `spec.md`, `research.md`, `data-model.md`, `contracts/cleanup-compatibility.md`, and `quickstart.md`
 
+**Status**: Complete — T001 through T042 are implemented and the final convergence audit found no remaining gaps.
+
 **Organization**: Tasks are grouped by user story so each increment can be implemented and tested independently. The implementation is divided into four reviewable slices: behavioral cleanup, styling/dependencies, formatter setup/baseline, and enforcement/closure.
 
 **Verification**: Compatibility, state ownership, boundary contracts, serialization, CSD, runtime, UI, packaging, cross-platform, formatter, and quickstart verification are included because they are required by the project constitution and feature plan.
@@ -234,3 +236,10 @@ After T031 and T032, run together:
 
 - [X] T041 Add explicit nested `test-fixtures`, `.agents/skills`, and `.claude/skills` exclusions to `.prettierignore`, then verify temporary files in each excluded surface remain byte-identical after `pnpm format` per FR-013 and T028 (partial)
 - [X] T042 Restore fixture and skill-bundle files changed by the Prettier baseline commit to their pre-baseline bytes, retain the valid supported-corpus formatting changes, and rerun `pnpm format:check`, `pnpm lint`, `pnpm test`, and `git diff --check` per SC-005 and `contracts/cleanup-compatibility.md` (contradicts)
+
+## Closure
+
+All tasks T001–T042 are complete. The final convergence audit found no remaining requirement,
+acceptance, plan, contract, or constitution gaps. Final automated evidence is recorded in
+[quickstart.md](quickstart.md); supported-platform packaging remains enforced by the existing CI
+workflows.

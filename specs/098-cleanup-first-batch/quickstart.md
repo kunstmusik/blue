@@ -94,3 +94,23 @@ git diff --check
 ```
 
 Expected: all required checks pass with no new failures or whitespace errors. Cross-platform PR packaging must subsequently pass on macOS arm64, Windows x64, and Linux x64.
+
+## Closure Validation — 2026-09-04
+
+- `pnpm format:check`: passed; fixture and agent-skill paths report as ignored.
+- `pnpm lint`: passed, including the formatter gate.
+- `pnpm test`: passed across the workspace. `@blue/data` passed 1,772 tests with 1 skipped;
+  `@blue/app` passed 4,052 tests with 2 skipped; `@blue/engine-client` passed 42 tests;
+  `blue-cli` passed 5 tests; repository script tests passed 38 tests; Java and native engine
+  suites passed.
+- `pnpm build`: passed, including all six renderer HTML outputs and the main-process build.
+- `pnpm verify`: passed; unavailable local release-signing credentials remain an expected
+  advisory rather than a feature failure.
+- `git diff --check`: passed.
+- Removal/protection and dependency audits passed. Historical research references remain by
+  design, and transitive tool-owned PostCSS/AJV packages remain valid.
+
+The final convergence audit found zero remaining gaps across the feature requirements,
+acceptance scenarios, plan decisions, tasks, compatibility contract, and constitution. No
+additional implementation pass is required. Supported-platform packaging remains enforced by
+the existing macOS arm64, Windows x64, and Linux x64 CI workflows.

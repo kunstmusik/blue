@@ -4,7 +4,9 @@
 
 **Created**: 2026-09-04
 
-**Status**: Draft
+**Status**: Complete — implementation and final convergence closed; supported-platform packaging remains CI-gated
+
+**Completed**: 2026-09-04
 
 **Input**: User description: "Apply the reviewed first cleanup batch: remove confirmed dead code and obsolete migration enforcement, migrate Tailwind CSS v4 to its Vite integration, remove unused dependencies, and establish an intentional Prettier workflow."
 
@@ -112,3 +114,15 @@ As a contributor, I can format supported repository files and verify formatting 
 - The first formatting baseline may require a repository-wide formatting change, but that change will not be mixed with functional cleanup.
 - Adding genuine React Hooks lint enforcement is outside this feature; only the current no-op placeholder is removed.
 - No broader component consolidation, store-action pruning, IPC redesign, worker removal, public barrel reduction, or typography-linter rewrite is included.
+
+## Closure
+
+All implementation and convergence tasks T001–T042 are complete. The final convergence audit
+found no remaining gaps against the functional requirements, acceptance scenarios, plan
+decisions, compatibility contract, or constitution.
+
+The approved dead surfaces and obsolete enforcement are removed, Tailwind CSS v4 now uses its
+Vite integration, redundant direct dependencies are gone, and Prettier is an intentional,
+lint-gated repository workflow. The formatting exclusions added during convergence protect
+fixtures and agent skill bundles, and files touched by the initial baseline outside the supported
+corpus were restored. Validation evidence is recorded in [quickstart.md](quickstart.md).

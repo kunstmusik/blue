@@ -2,6 +2,8 @@
 
 **Branch**: `098-cleanup-first-batch` | **Date**: 2026-09-04 | **Spec**: [spec.md](./spec.md)
 
+**Status**: Complete | **Closed**: 2026-09-04
+
 **Input**: Feature specification from `specs/098-cleanup-first-batch/spec.md`
 
 ## Summary
