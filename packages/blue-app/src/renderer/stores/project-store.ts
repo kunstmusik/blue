@@ -2743,19 +2743,7 @@ function applyTrackPatchToSnapshot(
 }
 
 function cloneSnapshotValue<T>(value: T): T {
-  if (value === null || value === undefined || typeof value !== 'object') {
-    return value;
-  }
-
-  if (Array.isArray(value)) {
-    return value.map((item) => cloneSnapshotValue(item)) as T;
-  }
-
-  const next: Record<string, unknown> = {};
-  for (const [key, item] of Object.entries(value as Record<string, unknown>)) {
-    next[key] = cloneSnapshotValue(item);
-  }
-  return next as T;
+  return structuredClone(value);
 }
 
 function cloneInstrumentSnapshotForMutation<T extends InstrumentSnapshot>(instrument: T): T {

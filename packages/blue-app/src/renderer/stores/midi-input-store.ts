@@ -23,12 +23,9 @@ interface MidiInputStoreState {
   draftMidiInput: MidiInputPreferences;
   /** True when the draft differs from the most recently saved preferences. */
   draftDirty: boolean;
-  /** Saved preferences echo so we can compute dirty state on Apply. */
-  savedMidiInput: MidiInputPreferences;
 
   setSnapshot: (snapshot: MidiInputServiceSnapshot | null) => void;
   setSavedPreferences: (preferences: MidiInputPreferences) => void;
-  beginDraftFromSaved: () => void;
   updateDraftDevice: (id: string, patch: Partial<MidiInputDevicePreference>) => void;
   setDraftDeviceEnabled: (id: string, enabled: boolean) => void;
   /**
@@ -41,7 +38,6 @@ interface MidiInputStoreState {
     runtime: Pick<MidiInputDeviceRuntime, 'id' | 'name' | 'manufacturer' | 'version'>,
     patch: Partial<MidiInputDevicePreference>,
   ) => void;
-  resetDraftToSaved: () => void;
   reset: () => void;
 }
 
@@ -49,15 +45,10 @@ function sortDevices(devices: MidiInputDevicePreference[]): MidiInputDevicePrefe
   return [...devices].sort(compareMidiInputDevicePreference);
 }
 
-function defaultRuntimeDevices(): MidiInputDeviceRuntime[] {
-  return [];
-}
-
 export const useMidiInputStore = create<MidiInputStoreState>((set, get) => ({
   snapshot: null,
   draftMidiInput: { devices: [] },
   draftDirty: false,
-  savedMidiInput: { devices: [] },
 
   setSnapshot: (snapshot) => {
     set({ snapshot });
@@ -66,16 +57,7 @@ export const useMidiInputStore = create<MidiInputStoreState>((set, get) => ({
   setSavedPreferences: (preferences) => {
     const devices = sortDevices(preferences.devices);
     set({
-      savedMidiInput: { devices },
       draftMidiInput: { devices: devices.map(cloneDevice) },
-      draftDirty: false,
-    });
-  },
-
-  beginDraftFromSaved: () => {
-    const saved = get().savedMidiInput;
-    set({
-      draftMidiInput: { devices: saved.devices.map(cloneDevice) },
       draftDirty: false,
     });
   },
@@ -121,20 +103,11 @@ export const useMidiInputStore = create<MidiInputStoreState>((set, get) => ({
     });
   },
 
-  resetDraftToSaved: () => {
-    const saved = get().savedMidiInput;
-    set({
-      draftMidiInput: { devices: saved.devices.map(cloneDevice) },
-      draftDirty: false,
-    });
-  },
-
   reset: () => {
     set({
       snapshot: null,
       draftMidiInput: { devices: [] },
       draftDirty: false,
-      savedMidiInput: { devices: [] },
     });
   },
 }));
@@ -142,6 +115,3 @@ export const useMidiInputStore = create<MidiInputStoreState>((set, get) => ({
 function cloneDevice(d: MidiInputDevicePreference): MidiInputDevicePreference {
   return { ...d };
 }
-
-// Helper exported for tests / diagnostic callers.
-export { defaultRuntimeDevices };

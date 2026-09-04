@@ -1,14 +1,9 @@
 import { create } from 'zustand';
-import type { ScoreLayerGroupSnapshot } from '../../shared/project-editor';
 import {
-  buildLayerRemovalPlan,
   buildSelectionKey,
   deriveSelectedLayerRanges,
   getInclusiveGlobalRange,
-  getLayerOperationAvailability,
   reconcileSelectionState,
-  type LayerOperationAvailability,
-  type LayerRemovalPlan,
   type LayerSelectionSnapshotState,
   type SelectedLayerRange,
   type VisibleLayerRef,
@@ -28,17 +23,7 @@ export interface LayerSelectionState extends LayerSelectionSnapshotState {
   clear: () => void;
   reconcile: (scopeKey: string, visibleLayers: VisibleLayerRef[]) => void;
   setKeyboardFocus: (keyboardFocus: boolean) => void;
-  isSelected: (key: string) => boolean;
-  getSelectedVisibleLayers: (visibleLayers: VisibleLayerRef[]) => VisibleLayerRef[];
   getSelectedRanges: (visibleLayers: VisibleLayerRef[]) => SelectedLayerRange[];
-  getOperationAvailability: (
-    layerGroups: ScoreLayerGroupSnapshot[],
-    visibleLayers: VisibleLayerRef[],
-  ) => LayerOperationAvailability;
-  getRemovalPlan: (
-    layerGroups: ScoreLayerGroupSnapshot[],
-    visibleLayers: VisibleLayerRef[],
-  ) => LayerRemovalPlan;
 }
 
 export const useLayerSelectionStore = create<LayerSelectionState>((set, get) => ({
@@ -144,26 +129,7 @@ export const useLayerSelectionStore = create<LayerSelectionState>((set, get) => 
     set({ keyboardFocus });
   },
 
-  isSelected: (key) => {
-    return get().selectedKeys.has(key);
-  },
-
-  getSelectedVisibleLayers: (visibleLayers) => {
-    const keys = get().selectedKeys;
-    return visibleLayers.filter((l) => keys.has(buildSelectionKey(l.groupId, l.layerSelectionId)));
-  },
-
   getSelectedRanges: (visibleLayers) => {
     return deriveSelectedLayerRanges(visibleLayers, get().selectedKeys);
-  },
-
-  getOperationAvailability: (layerGroups, visibleLayers) => {
-    const ranges = get().getSelectedRanges(visibleLayers);
-    return getLayerOperationAvailability(layerGroups, ranges);
-  },
-
-  getRemovalPlan: (layerGroups, visibleLayers) => {
-    const ranges = get().getSelectedRanges(visibleLayers);
-    return buildLayerRemovalPlan(layerGroups, ranges);
   },
 }));

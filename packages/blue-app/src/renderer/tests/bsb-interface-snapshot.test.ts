@@ -230,4 +230,54 @@ describe('BSB interface snapshot reducer', () => {
     expect(selected.widgetTree.children![0].properties.sliders).toEqual([{ value: 0.25 }]);
     expect(other.widgetTree.children![0].value).toBe(0.5);
   });
+
+  it('clones pasted widget nodes with deep equality, nested mutation independence, and native error on non-serializable values', () => {
+    const target = instrument();
+    const pastedNode: BsbWidgetNodeSnapshot = {
+      id: 'pasted-raw-id',
+      type: 'BSBKnob',
+      objectName: 'knob1',
+      x: 15,
+      y: 25,
+      width: 50,
+      height: 50,
+      value: 0.3,
+      minimum: 0,
+      maximum: 1,
+      editable: true,
+      properties: {
+        customArray: [10, 20, 30],
+        nestedConfig: { theme: 'dark', sensitivity: 1.5 },
+        optionalProp: undefined,
+      },
+    };
+
+    applyBsbInterfacePatchToSnapshot(target, {
+      type: 'pasteWidgets',
+      widgetData: JSON.stringify([pastedNode]),
+    });
+
+    const added = target.widgetTree.children!.find((c) => c.objectName === 'knob1')!;
+    expect(added).toBeDefined();
+    expect(added.properties.customArray).toEqual([10, 20, 30]);
+    expect(added.properties.nestedConfig).toEqual({ theme: 'dark', sensitivity: 1.5 });
+    expect(added.properties.customArray).not.toBe(pastedNode.properties.customArray);
+    expect(added.properties.nestedConfig).not.toBe(pastedNode.properties.nestedConfig);
+
+    // Independent nested mutation
+    const initialChildCount = target.widgetTree.children!.length;
+    (target.widgetTree.children![initialChildCount - 1].properties.customArray as number[]).push(
+      999,
+    );
+    expect(pastedNode.properties.customArray).toEqual([10, 20, 30]);
+
+    // Native clone failure surfaces on non-serializable values
+    (target.widgetTree as any).badProp = () => 'not serializable';
+    expect(() => {
+      applyBsbInterfacePatchToSnapshot(target, {
+        type: 'pasteWidgets',
+        widgetData: JSON.stringify([pastedNode]),
+      });
+    }).toThrow();
+  });
 });

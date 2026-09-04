@@ -7,8 +7,7 @@ namespace blue {
 /**
  * Stable recoverable diagnostic categories for exact-decimal automation.
  *
- * These categories (not Java exception text) cross the engine boundary and are
- * mirrored by @blue/engine-client's automation-errors module. Control-plane
+ * These categories (not Java exception text) cross the engine boundary. Control-plane
  * diagnostics reject the requested mutation; audio-time diagnostics preserve
  * the last written channel value and increment a preallocated counter without
  * allocating, blocking, throwing, or logging.

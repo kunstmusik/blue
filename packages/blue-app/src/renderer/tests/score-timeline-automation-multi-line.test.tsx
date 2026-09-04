@@ -669,7 +669,12 @@ describe('shift-gated object selection via explicit objectIds (B3)', () => {
     } finally {
       root.unmount();
       container.remove();
-      useScoreAutomationStore.getState().clearAutomationState();
+      useScoreAutomationStore.setState({
+        selectedPoint: null,
+        rangeSelection: null,
+        multiLinePreview: null,
+        multiLineObjectPreview: null,
+      });
       useScoreSelectionStore.getState().clearSelection();
       useProjectStore.setState(
         originalProjectActions as Partial<ReturnType<typeof useProjectStore.getState>>,

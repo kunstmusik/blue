@@ -87,13 +87,11 @@ interface WorkbenchActions {
   setApi: (api: DockviewApi | null) => void;
   openPanel: (panelId: string) => void;
   openLibraryEditorPanel: (session: LibraryEditorSessionSnapshot) => void;
-  focusPanel: (panelId: string) => void;
   toggleAuxiliaryPanel: (panelId: string) => void;
   minimizeAuxiliaryPanel: (panelId: string) => void;
   closeAuxiliaryPanel: (panelId: string) => void;
   closePanel: (panelId: string) => void;
   closeGroup: (panelId: string) => void;
-  isPanelOpen: (panelId: string) => boolean;
   saveLayout: () => string | null;
   loadLayout: (json: string | null, workAreas?: DisplayWorkArea[]) => Promise<void>;
   syncAuxiliaryLayout: () => void;
@@ -1134,24 +1132,6 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()((se
     });
   },
 
-  focusPanel: (panelId) => {
-    const { api } = get();
-    if (!api) return;
-
-    if (isAuxiliaryPanelId(panelId)) {
-      set({
-        auxiliary: revealAuxiliaryPanel(api, get().auxiliary, panelId),
-      });
-      return;
-    }
-
-    const panel = api.getPanel(panelId);
-    if (panel) {
-      panel.api.setActive();
-      panel.group.focus();
-    }
-  },
-
   toggleAuxiliaryPanel: (panelId) => {
     if (!isAuxiliaryPanelId(panelId)) {
       get().openPanel(panelId);
@@ -1273,12 +1253,6 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()((se
     }
 
     cleanupEmptyFloatingGroup(api, group, popoutWindow);
-  },
-
-  isPanelOpen: (panelId) => {
-    const { api } = get();
-    if (!api) return false;
-    return api.getPanel(panelId) != null;
   },
 
   saveLayout: () => {

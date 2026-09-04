@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { OutputLine, OutputTab, OutputType } from '../../shared/io-provider';
+import type { OutputLine, OutputTab } from '../../shared/io-provider';
 
 /** Maximum number of lines kept per tab. Oldest lines are discarded when exceeded. */
 export const MAX_LINES = 10_000;
@@ -10,11 +10,9 @@ export interface OutputWindowState {
   activeTabId: string | null;
 
   getOrCreateTab: (name: string, newIO?: boolean) => OutputTab;
-  closeTab: (name: string) => void;
   appendToTab: (name: string, text: string, type?: 'stdout' | 'stderr') => void;
   resetTab: (name: string) => void;
   selectTab: (name: string) => void;
-  setTabColor: (name: string, outputType: OutputType, color: string) => void;
 }
 
 function ensureTab(state: OutputWindowState, name: string): OutputTab {
@@ -63,20 +61,6 @@ export const useOutputStore = create<OutputWindowState>((set) => ({
       };
     });
     return tab!;
-  },
-
-  closeTab(name) {
-    set((state) => {
-      const { [name]: _, ...rest } = state.tabs;
-      return {
-        tabs: rest,
-        tabOrder: state.tabOrder.filter((t) => t !== name),
-        activeTabId:
-          state.activeTabId === name
-            ? (state.tabOrder.find((t) => t !== name) ?? null)
-            : state.activeTabId,
-      };
-    });
   },
 
   appendToTab(name, text, type = 'stdout') {
@@ -141,21 +125,5 @@ export const useOutputStore = create<OutputWindowState>((set) => ({
 
   selectTab(name) {
     set({ activeTabId: name });
-  },
-
-  setTabColor(name, outputType, color) {
-    set((state) => {
-      const tab = state.tabs[name];
-      if (!tab) return state;
-      return {
-        tabs: {
-          ...state.tabs,
-          [name]: {
-            ...tab,
-            colorOverrides: { ...tab.colorOverrides, [outputType]: color },
-          },
-        },
-      };
-    });
   },
 }));

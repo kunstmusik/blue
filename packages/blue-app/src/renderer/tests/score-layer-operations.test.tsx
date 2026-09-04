@@ -8,6 +8,7 @@ import ScorePanel from '../components/workbench/panels/ScorePanel';
 import { useProjectStore } from '../stores/project-store';
 import { useLayerSelectionStore } from '../stores/layer-selection-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
+import { getLayerOperationAvailability } from '../components/workbench/panels/score/layer-selection-utils';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 
 (
@@ -438,9 +439,10 @@ describe('Score layer operations (US3)', () => {
     ];
 
     const ranges = useLayerSelectionStore.getState().getSelectedRanges(currentVisibleLayers);
-    const availability = useLayerSelectionStore
-      .getState()
-      .getOperationAvailability(useProjectStore.getState().score.layerGroups, currentVisibleLayers);
+    const availability = getLayerOperationAvailability(
+      useProjectStore.getState().score.layerGroups,
+      ranges,
+    );
 
     expect(availability.canPushUp).toBe(false);
     expect(availability.pushUpDisabledReason).toBe('at-group-start');
@@ -489,9 +491,11 @@ describe('Score layer operations (US3)', () => {
       },
     ];
 
-    const availability = useLayerSelectionStore
-      .getState()
-      .getOperationAvailability(useProjectStore.getState().score.layerGroups, currentVisibleLayers);
+    const ranges = useLayerSelectionStore.getState().getSelectedRanges(currentVisibleLayers);
+    const availability = getLayerOperationAvailability(
+      useProjectStore.getState().score.layerGroups,
+      ranges,
+    );
 
     expect(availability.canPushUp).toBe(false);
     expect(availability.pushUpDisabledReason).toBe('selection-spans-groups');

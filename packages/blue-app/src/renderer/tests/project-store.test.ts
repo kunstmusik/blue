@@ -650,4 +650,72 @@ describe('project-store — pattern layer optimistic projection', () => {
     ).toEqual(['L0', 'L1']);
     await useProjectStore.getState().flushPendingPatches();
   });
+
+  it('clones replacement instrument snapshots with deep equality and nested mutation independence', async () => {
+    const snapshot = createEmptyProjectEditorSnapshot();
+    snapshot.loaded = true;
+    snapshot.score!.layerGroups = [
+      {
+        groupId: 'track-grp',
+        groupType: 'track',
+        name: 'Tracks',
+        defaultHeightIndex: 1,
+        layerCount: 1,
+        isOpenableContainer: false,
+        layers: [
+          {
+            layerId: 'layer-1',
+            layerKind: 'track',
+            name: 'Track 1',
+            height: 44,
+            items: [],
+            instrument: null,
+          },
+        ],
+      },
+    ];
+    useProjectStore.getState().applyMissingAudioResolvedSnapshot(snapshot);
+
+    const replacementInstrument = {
+      type: 'generic' as const,
+      instrumentType: 'generic',
+      name: 'Custom Synth',
+      comment: 'A test comment',
+      enabled: true,
+      instrumentText: 'aout oscili 0.5, 440',
+      nestedRecord: { key: 'val', deep: [1, 2, 3] },
+      optionalVal: undefined,
+    };
+
+    await useProjectStore.getState().applyProjectDocumentPatch({
+      score: {
+        type: 'replaceTrackInstrument',
+        track: {
+          rootGroupId: 'track-grp',
+          trackId: 'layer-1',
+        },
+        instrument: replacementInstrument as any,
+      },
+    });
+
+    const storedLayer = useProjectStore.getState().score.layerGroups[0]!.layers[0]!;
+    expect(storedLayer.instrument).not.toBeNull();
+    const storedSnapshot = (storedLayer.instrument as any).snapshot;
+
+    // Structural equality
+    expect(storedSnapshot).toEqual(replacementInstrument);
+    // Not same reference
+    expect(storedSnapshot).not.toBe(replacementInstrument);
+    expect(storedSnapshot.nestedRecord).not.toBe(replacementInstrument.nestedRecord);
+    expect(storedSnapshot.nestedRecord.deep).not.toBe(replacementInstrument.nestedRecord.deep);
+
+    // Independent nested mutation: mutate the input object
+    replacementInstrument.nestedRecord.key = 'mutated';
+    replacementInstrument.nestedRecord.deep.push(999);
+
+    expect(storedSnapshot.nestedRecord.key).toBe('val');
+    expect(storedSnapshot.nestedRecord.deep).toEqual([1, 2, 3]);
+
+    await useProjectStore.getState().flushPendingPatches();
+  });
 });

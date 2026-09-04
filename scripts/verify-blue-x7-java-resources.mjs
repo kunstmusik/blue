@@ -12,30 +12,41 @@ export function verifyBlueX7Resources(root = repoRoot) {
   // 1. Verify algorithm orchestra file and 32 algorithms
   const orcPath = path.join(
     root,
-    'packages/blue-data/src/instruments/blue-x7/algorithm-orchestra.ts',
+    'packages/blue-data/src/instruments/blue-x7/modern-orchestra.generated.ts',
   );
   if (!fs.existsSync(orcPath)) {
     errors.push(`Missing algorithm orchestra file: ${orcPath}`);
   } else {
     const orcContent = fs.readFileSync(orcPath, 'utf-8');
     for (let i = 1; i <= 32; i++) {
-      if (
-        !orcContent.includes(`  ${i}: `) &&
-        !orcContent.includes(`"${i}":`) &&
-        !orcContent.includes(`${i}: "`)
-      ) {
-        errors.push(`Missing algorithm ${i} ORC definition in algorithm-orchestra.ts`);
+      const num = i < 10 ? `0${i}` : `${i}`;
+      if (!orcContent.includes(`opcode dx7_algo_${num}`)) {
+        errors.push(
+          `Missing algorithm ${i} (dx7_algo_${num}) ORC definition in modern-orchestra.generated.ts`,
+        );
       }
     }
   }
 
-  // 2. Verify 32 algorithm GIF diagrams
+  // 2. Verify 32 algorithm SVG diagrams and explicit manifest
   const assetDir = path.join(root, 'packages/blue-app/src/renderer/assets/blue-x7');
-  for (let i = 1; i <= 32; i++) {
-    const num = i < 10 ? `0${i}` : `${i}`;
-    const gifPath = path.join(assetDir, `algo${num}.gif`);
-    if (!fs.existsSync(gifPath)) {
-      errors.push(`Missing algorithm diagram: ${gifPath}`);
+  const manifestPath = path.join(assetDir, 'algorithm-images.ts');
+  if (!fs.existsSync(manifestPath)) {
+    errors.push(`Missing algorithm images manifest: ${manifestPath}`);
+  } else {
+    const manifestContent = fs.readFileSync(manifestPath, 'utf-8');
+    for (let i = 1; i <= 32; i++) {
+      const num = i < 10 ? `0${i}` : `${i}`;
+      const svgPath = path.join(assetDir, `algo${num}.svg`);
+      if (!fs.existsSync(svgPath)) {
+        errors.push(`Missing algorithm diagram: ${svgPath}`);
+      }
+      if (
+        !manifestContent.includes(`import algo${num} from './algo${num}.svg'`) ||
+        !manifestContent.includes(`${i}: algo${num}`)
+      ) {
+        errors.push(`Missing algorithm ${i} explicit entry in algorithm-images.ts`);
+      }
     }
   }
 
@@ -68,6 +79,8 @@ if (process.argv[1] === __filename) {
     result.errors.forEach((e) => console.error(` - ${e}`));
     process.exit(1);
   } else {
-    console.log('BlueX7 Resources Verified: all 32 ORCs, diagrams, and fixtures are intact.');
+    console.log(
+      'BlueX7 Resources Verified: all 32 ORCs, diagrams, manifest entries, and fixtures are intact.',
+    );
   }
 }

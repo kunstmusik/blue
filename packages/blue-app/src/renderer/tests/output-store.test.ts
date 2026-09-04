@@ -131,44 +131,13 @@ describe('output-store', () => {
     });
   });
 
-  describe('closeTab', () => {
-    it('removes tab from store', () => {
+  describe('colorOverrides preservation', () => {
+    it('preserves existing color overrides across getOrCreateTab with newIO', () => {
       const store = useOutputStore.getState();
-      store.getOrCreateTab('Csound');
-      store.closeTab('Csound');
-
-      expect(useOutputStore.getState().tabs['Csound']).toBeUndefined();
-      expect(useOutputStore.getState().tabOrder).not.toContain('Csound');
-    });
-
-    it('switches active tab if closed tab was active', () => {
-      const store = useOutputStore.getState();
-      store.getOrCreateTab('Tab1');
-      store.getOrCreateTab('Tab2');
-      store.selectTab('Tab1');
-      store.closeTab('Tab1');
-
-      expect(useOutputStore.getState().activeTabId).toBe('Tab2');
-    });
-  });
-
-  describe('setTabColor', () => {
-    it('sets color override for output type', () => {
-      const store = useOutputStore.getState();
-      store.getOrCreateTab('Csound');
-      store.setTabColor('Csound', 'error', '#ff0000');
-
-      expect(useOutputStore.getState().tabs['Csound'].colorOverrides.error).toBe('#ff0000');
-    });
-
-    it('preserves other color overrides', () => {
-      const store = useOutputStore.getState();
-      store.getOrCreateTab('Csound');
-      store.setTabColor('Csound', 'output', '#ffffff');
-      store.setTabColor('Csound', 'error', '#ff0000');
-
-      expect(useOutputStore.getState().tabs['Csound'].colorOverrides.output).toBe('#ffffff');
-      expect(useOutputStore.getState().tabs['Csound'].colorOverrides.error).toBe('#ff0000');
+      const tab1 = store.getOrCreateTab('Csound');
+      tab1.colorOverrides.error = '#ff0000';
+      const tab2 = store.getOrCreateTab('Csound', true);
+      expect(tab2.colorOverrides.error).toBe('#ff0000');
     });
   });
 

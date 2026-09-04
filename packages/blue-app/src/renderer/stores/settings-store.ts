@@ -17,16 +17,8 @@ interface SettingsActions {
   openFile: () => Promise<void>;
   openRecentFile: (path: string) => Promise<void>;
   newProject: () => Promise<void>;
-  setEnginePath: (path: string) => void;
   addRecentFile: (path: string) => void;
   removeRecentFile: (path: string) => void;
-  getRecentFiles: () => string[];
-  setWindowBounds: (bounds: SettingsState['windowBounds']) => void;
-  setMidiInputDevice: (device: string) => void;
-  setMidiOutputDevice: (device: string) => void;
-  setOscInputPort: (port: number) => void;
-  setOscOutputPort: (port: number) => void;
-  setOscOutputHost: (host: string) => void;
   rehydrate: () => void;
 }
 
@@ -92,8 +84,6 @@ export const useSettingsStore = create<SettingsState & SettingsActions>()(
         }
       },
 
-      setEnginePath: (enginePath) => set({ enginePath }),
-
       addRecentFile: (path: string) =>
         set((state) => {
           const files = [path, ...state.recentFiles.filter((f) => f !== path)].slice(0, 10);
@@ -104,16 +94,6 @@ export const useSettingsStore = create<SettingsState & SettingsActions>()(
         set((state) => ({
           recentFiles: state.recentFiles.filter((f) => f !== path),
         })),
-
-      getRecentFiles: () => get().recentFiles.slice(),
-
-      setWindowBounds: (windowBounds) => set({ windowBounds }),
-
-      setMidiInputDevice: (midiInputDevice) => set({ midiInputDevice }),
-      setMidiOutputDevice: (midiOutputDevice) => set({ midiOutputDevice }),
-      setOscInputPort: (oscInputPort) => set({ oscInputPort }),
-      setOscOutputPort: (oscOutputPort) => set({ oscOutputPort }),
-      setOscOutputHost: (oscOutputHost) => set({ oscOutputHost }),
 
       rehydrate: () => {
         const api = useSettingsStore.persist;

@@ -89,24 +89,4 @@ describe('MixerTopComponent workbench routing', () => {
     expect(existingPanel.group.focus).toHaveBeenCalledTimes(1);
     expect(addPanel).not.toHaveBeenCalled();
   });
-
-  it('focuses an existing MixerTopComponent panel when focused directly', () => {
-    const { api, existingPanel, getPanel, addPanel } = createMixerPanelApiStub();
-    useWorkbenchStore.setState({
-      api,
-      auxiliary: createDefaultAuxiliaryLayoutState(),
-    });
-    const outputGroup = useWorkbenchStore
-      .getState()
-      .auxiliary.groups.find((group) => group.seedGroupId === 'output-main')!;
-    outputGroup.panelIds = ['MixerTopComponent'];
-    outputGroup.dockedPanelIds = ['MixerTopComponent'];
-
-    useWorkbenchStore.getState().focusPanel('MixerTopComponent');
-
-    expect(getPanel).toHaveBeenCalledWith('MixerTopComponent');
-    expect(existingPanel.api.setActive).toHaveBeenCalledTimes(1);
-    expect(existingPanel.group.focus).toHaveBeenCalledTimes(1);
-    expect(addPanel).not.toHaveBeenCalled();
-  });
 });

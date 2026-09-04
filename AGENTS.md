@@ -71,9 +71,13 @@ Do not manually create worktrees beside the repository or in a tool-specific def
 
 ## Import discipline
 
-Use top-level static ES imports in `@blue/data` production source. Keep any host-specific or
-test-only import exceptions outside that package boundary and document them when they affect
-runtime behavior.
+- Use top-level static ES imports in `@blue/data` production source. Keep any host-specific or
+  test-only import exceptions outside that package boundary and document them when they affect
+  runtime behavior.
+- Fixed application-owned asset and module sets use explicit static imports.
+- `import.meta.glob` is prohibited by default. An exception requires an explicit feature
+  specification for automatic discovery and deterministic validation of missing, duplicate,
+  malformed, unexpected-member, and naming conditions.
 
 ## UI and typography guidance
 

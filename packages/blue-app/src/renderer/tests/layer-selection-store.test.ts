@@ -48,8 +48,8 @@ describe('layer-selection-store', () => {
     expect([...state.selectedKeys]).toEqual(['grp-sound:sel-s-1']);
     expect(state.anchorKey).toBe('grp-sound:sel-s-1');
     expect(state.focusKey).toBe('grp-sound:sel-s-1');
-    expect(state.isSelected('grp-sound:sel-s-1')).toBe(true);
-    expect(state.isSelected('grp-sound:sel-s-0')).toBe(false);
+    expect(state.selectedKeys.has('grp-sound:sel-s-1')).toBe(true);
+    expect(state.selectedKeys.has('grp-sound:sel-s-0')).toBe(false);
   });
 
   it('handles extendTo for same-group and cross-group ranges', () => {

@@ -84,8 +84,7 @@ blue-electron/
 │
 ├── package.json              # Workspace root (pnpm)
 ├── pnpm-workspace.yaml
-├── tsconfig.base.json        # Shared TypeScript config
-└── vitest.workspace.ts       # Vitest workspace config
+└── tsconfig.base.json        # Shared TypeScript config
 ```
 
 ### Packages

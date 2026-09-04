@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { parseArgs } from 'node:util';
 import { Client } from 'node-osc';
 import { OSC_COMMAND_REGISTRY, OSC_DEFAULT_PREFERRED_PORT } from '../src/shared/osc-control.ts';
 
@@ -28,14 +29,6 @@ function fail(message) {
   throw new Error(`${message}\n\n${HELP}`);
 }
 
-function readOptionValue(argumentsList, index, option) {
-  const value = argumentsList[index + 1];
-  if (!value || value.startsWith('--')) {
-    fail(`${option} requires a value.`);
-  }
-  return value;
-}
-
 function parsePort(value) {
   const port = Number(value);
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
@@ -45,46 +38,41 @@ function parsePort(value) {
 }
 
 function parseOptions(argumentsList) {
-  const options = {
-    address: null,
-    commandId: null,
-    host: '127.0.0.1',
-    list: false,
-    port: OSC_DEFAULT_PREFERRED_PORT,
-  };
+  const normalizedArgs = argumentsList.filter((arg) => arg !== '--');
 
-  for (let index = 0; index < argumentsList.length; index++) {
-    const argument = argumentsList[index];
-    switch (argument) {
-      case '--':
-        break;
-      case '--address':
-        options.address = readOptionValue(argumentsList, index, argument);
-        index++;
-        break;
-      case '--command':
-        options.commandId = readOptionValue(argumentsList, index, argument);
-        index++;
-        break;
-      case '--host':
-        options.host = readOptionValue(argumentsList, index, argument);
-        index++;
-        break;
-      case '--port':
-        options.port = parsePort(readOptionValue(argumentsList, index, argument));
-        index++;
-        break;
-      case '--list':
-        options.list = true;
-        break;
-      case '--help':
-      case '-h':
-        console.log(HELP);
-        return null;
-      default:
-        fail(`Unknown option: ${argument}`);
-    }
+  let parsed;
+  try {
+    parsed = parseArgs({
+      args: normalizedArgs,
+      options: {
+        command: { type: 'string' },
+        address: { type: 'string' },
+        host: { type: 'string' },
+        port: { type: 'string' },
+        list: { type: 'boolean', default: false },
+        help: { type: 'boolean', short: 'h', default: false },
+      },
+      strict: true,
+      allowPositionals: false,
+    });
+  } catch (err) {
+    fail(err instanceof Error ? err.message : String(err));
   }
+
+  const { values } = parsed;
+
+  if (values.help) {
+    console.log(HELP);
+    return null;
+  }
+
+  const options = {
+    address: values.address ?? null,
+    commandId: values.command ?? null,
+    host: values.host ?? '127.0.0.1',
+    list: values.list ?? false,
+    port: values.port !== undefined ? parsePort(values.port) : OSC_DEFAULT_PREFERRED_PORT,
+  };
 
   if (options.list) return options;
   if (options.address && options.commandId) {

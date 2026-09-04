@@ -9,6 +9,16 @@ vi.mock('../stores/settings-store', async () => {
 });
 
 beforeEach(() => {
+  useSettingsStore.setState({
+    enginePath: 'blue-engine',
+    recentFiles: [],
+    windowBounds: null,
+    midiInputDevice: '',
+    midiOutputDevice: '',
+    oscInputPort: 0,
+    oscOutputPort: 0,
+    oscOutputHost: 'localhost',
+  });
   vi.stubGlobal('localStorage', {
     getItem: (key: string) => localStorageStore[key] ?? null,
     setItem: (key: string, value: string) => {
@@ -37,11 +47,6 @@ describe('Settings store (T066)', () => {
     expect(state.enginePath).toBe('blue-engine');
   });
 
-  it('setEnginePath updates value', () => {
-    useSettingsStore.getState().setEnginePath('/usr/local/bin/csound');
-    expect(useSettingsStore.getState().enginePath).toBe('/usr/local/bin/csound');
-  });
-
   it('has default MIDI/OSC fields', () => {
     const state = useSettingsStore.getState();
     expect(state.midiInputDevice).toBe('');
@@ -51,14 +56,24 @@ describe('Settings store (T066)', () => {
     expect(state.oscOutputHost).toBe('localhost');
   });
 
-  it('setMidiInputDevice updates value', () => {
-    useSettingsStore.getState().setMidiInputDevice('MIDI Device 1');
-    expect(useSettingsStore.getState().midiInputDevice).toBe('MIDI Device 1');
-  });
-
-  it('setOscOutputHost updates value', () => {
-    useSettingsStore.getState().setOscOutputHost('192.168.1.100');
-    expect(useSettingsStore.getState().oscOutputHost).toBe('192.168.1.100');
+  it('preserves synchronized legacy settings fields on state updates', () => {
+    useSettingsStore.setState({
+      enginePath: '/usr/local/bin/csound',
+      windowBounds: { x: 10, y: 20, width: 800, height: 600 },
+      midiInputDevice: 'MIDI Device 1',
+      midiOutputDevice: 'MIDI Out 1',
+      oscInputPort: 8000,
+      oscOutputPort: 9000,
+      oscOutputHost: '192.168.1.100',
+    });
+    const state = useSettingsStore.getState();
+    expect(state.enginePath).toBe('/usr/local/bin/csound');
+    expect(state.windowBounds).toEqual({ x: 10, y: 20, width: 800, height: 600 });
+    expect(state.midiInputDevice).toBe('MIDI Device 1');
+    expect(state.midiOutputDevice).toBe('MIDI Out 1');
+    expect(state.oscInputPort).toBe(8000);
+    expect(state.oscOutputPort).toBe(9000);
+    expect(state.oscOutputHost).toBe('192.168.1.100');
   });
 
   it('addRecentFile adds and deduplicates', () => {
