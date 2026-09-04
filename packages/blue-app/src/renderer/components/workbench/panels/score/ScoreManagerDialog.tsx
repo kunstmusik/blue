@@ -20,6 +20,7 @@ import {
   type SelectedLayerRange,
 } from './layer-selection-utils';
 import { PopoutDropdownMenuPortal, portalEventIsolationProps } from '../../../../hooks/host-portals';
+import { cn } from '../../../../lib/cn';
 
 interface Props {
   score: ScoreDocumentSnapshot;
@@ -353,9 +354,10 @@ function GroupRow({ group, index, selected, editing, editValue, onEditValueChang
 
   return (
     <div
-      className={`cursor-pointer truncate border-b border-app-border/10 px-2 py-1 text-role-body ${
-        selected ? 'bg-app-accent/20 text-app-text' : 'text-app-text-muted hover:bg-app-surface/40'
-      }`}
+      className={cn(
+        'cursor-pointer truncate border-b border-app-border/10 px-2 py-1 text-role-body',
+        selected ? 'bg-app-accent/20 text-app-text' : 'text-app-text-muted hover:bg-app-surface/40',
+      )}
       onClick={onSelect}
       onDoubleClick={onDoubleClick}
     >
@@ -398,13 +400,14 @@ function LayerRow({ layer, index, selected, editing, editValue, onEditValueChang
 
   return (
     <tr
-      className={`cursor-pointer ${
+      className={cn(
+        'cursor-pointer',
         selected
           ? 'bg-app-accent/25 text-app-text'
           : index % 2 === 0
             ? 'bg-app-bg/50 text-app-text-muted hover:bg-app-surface/40'
-            : 'bg-app-surface/40 text-app-text-muted hover:bg-app-surface/60'
-      }`}
+            : 'bg-app-surface/40 text-app-text-muted hover:bg-app-surface/60',
+      )}
       onClick={onSelect}
       onDoubleClick={onDoubleClick}
     >

@@ -21,6 +21,7 @@ import {
   routeVirtualKeyboardNote,
 } from '../../../hooks/use-midi-input-service';
 import { AppSelect } from '../../AppSelect';
+import { cn } from '../../../lib/cn';
 
 function clampMidiNote(note: number): number {
   return Math.min(127, Math.max(0, Math.trunc(note)));
@@ -248,10 +249,10 @@ export default function VirtualKeyboardPanel(): ReactElement {
             min={0}
             max={127}
             disabled={!velocityOverride}
-            className={[
+            className={cn(
               'w-14 rounded border border-blue-border bg-blue-bg px-1.5 py-1 text-center text-role-body outline-none focus:border-blue-accent',
-              velocityOverride ? 'text-gray-100' : 'text-blue-muted opacity-50',
-            ].join(' ')}
+              velocityOverride ? 'text-gray-100' : 'text-blue-muted opacity-50'
+            )}
             value={velocity}
             onChange={(e) => setVelocity(Number.parseInt(e.target.value, 10))}
           />

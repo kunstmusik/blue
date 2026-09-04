@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { cn } from '../../../../../lib/cn';
 import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../../hooks/host-portals';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { X, ArrowUp, ArrowDown, HelpCircle } from 'lucide-react';
@@ -66,8 +67,8 @@ const TRACKER_MODAL_FOOTER_CLASS = 'flex justify-end gap-2 border-t border-app-b
 const TRACKER_PRIMARY_BUTTON_CLASS = 'rounded bg-app-accent px-4 py-1.5 text-role-body text-app-text-strong hover:bg-app-accent-hover';
 const TRACKER_SECONDARY_BUTTON_CLASS = 'rounded border border-app-border bg-app-surface px-4 py-1.5 text-role-body text-app-text transition-colors hover:bg-app-hover';
 const TRACKER_SECTION_LABEL_CLASS = 'text-role-headline font-bold uppercase tracking-wider text-app-text-muted';
-const TRACKER_FIELD_CLASS = 'rounded border border-app-border bg-app-input px-2 py-1 text-role-body text-app-text-strong focus:border-app-accent focus:outline-none';
-const TRACKER_MONO_FIELD_CLASS = `${TRACKER_FIELD_CLASS} font-mono`;
+export const TRACKER_FIELD_CLASS = 'rounded border border-app-border bg-app-input px-2 py-1 text-role-body text-app-text-strong focus:border-app-accent focus:outline-none';
+export const TRACKER_MONO_FIELD_CLASS = cn(TRACKER_FIELD_CLASS, 'font-mono');
 const TRACKER_CHECKBOX_CLASS = 'rounded border-app-border bg-app-input accent-app-accent focus:ring-0';
 const TRACKER_PANEL_ACTIVE_CLASS = 'border-app-border bg-app-canvas';
 const TRACKER_PANEL_INACTIVE_CLASS = 'border-app-border/40 bg-app-overlay opacity-60';
@@ -199,7 +200,7 @@ function ShortcutHelpModal({ onClose }: { onClose: () => void }): React.ReactEle
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className={`${TRACKER_MODAL_PANEL_CLASS} w-105`}>
+      <div className={cn(TRACKER_MODAL_PANEL_CLASS, 'w-105')}>
         <div className={TRACKER_MODAL_HEADER_CLASS}>
           <h2 className={TRACKER_MODAL_TITLE_CLASS}>Keyboard Shortcuts</h2>
           <button
@@ -425,7 +426,7 @@ function ColumnConfigModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className={`${TRACKER_MODAL_PANEL_CLASS} w-130`}>
+      <div className={cn(TRACKER_MODAL_PANEL_CLASS, 'w-130')}>
         <div className={TRACKER_MODAL_HEADER_CLASS}>
           <h3 className={TRACKER_MODAL_TITLE_CLASS}>Column Configuration</h3>
           <button
@@ -443,11 +444,12 @@ function ColumnConfigModal({
               {COLUMN_TYPES.map((typeOption) => (
                 <label
                   key={typeOption.value}
-                  className={`flex items-center gap-2 rounded border px-2 py-1.5 text-role-body ${
+                  className={cn(
+                    'flex items-center gap-2 rounded border px-2 py-1.5 text-role-body',
                     draft.type === typeOption.value
                       ? 'border-app-accent bg-app-accent/10 text-app-text-strong'
-                      : 'border-app-border bg-app-overlay text-app-text-muted'
-                  }`}
+                      : 'border-app-border bg-app-overlay text-app-text-muted',
+                  )}
                 >
                   <input
                     type="radio"
@@ -463,12 +465,12 @@ function ColumnConfigModal({
             </div>
           </div>
 
-          <div className={`flex flex-col gap-2 rounded border p-3 ${isBluePch ? TRACKER_PANEL_ACTIVE_CLASS : TRACKER_PANEL_INACTIVE_CLASS}`}>
+          <div className={cn('flex flex-col gap-2 rounded border p-3', isBluePch ? TRACKER_PANEL_ACTIVE_CLASS : TRACKER_PANEL_INACTIVE_CLASS)}>
             <div className={TRACKER_SECTION_LABEL_CLASS}>Blue PCH</div>
             <div className="flex items-center gap-2">
               <span className="w-20 text-role-body text-app-text-muted">Scale</span>
               <input
-                className={`flex-1 ${TRACKER_FIELD_CLASS}`}
+                className={cn('flex-1', TRACKER_FIELD_CLASS)}
                 value={scale.scaleName}
                 readOnly
                 disabled={!isBluePch}
@@ -484,7 +486,7 @@ function ColumnConfigModal({
             <div className="flex items-center gap-2">
               <span className="w-20 text-role-body text-app-text-muted">Base Freq</span>
               <input
-                className={`flex-1 ${TRACKER_FIELD_CLASS} disabled:opacity-50`}
+                className={cn('flex-1', TRACKER_FIELD_CLASS, 'disabled:opacity-50')}
                 value={baseFreqText}
                 disabled={!isBluePch}
                 onChange={(e) => setBaseFreqText(e.target.value)}
@@ -508,7 +510,7 @@ function ColumnConfigModal({
             </label>
           </div>
 
-          <div className={`flex flex-col gap-2 rounded border p-3 ${isNumber ? TRACKER_PANEL_ACTIVE_CLASS : TRACKER_PANEL_INACTIVE_CLASS}`}>
+          <div className={cn('flex flex-col gap-2 rounded border p-3', isNumber ? TRACKER_PANEL_ACTIVE_CLASS : TRACKER_PANEL_INACTIVE_CLASS)}>
             <div className={TRACKER_SECTION_LABEL_CLASS}>Number</div>
             <label className="flex items-center gap-2 text-role-body text-app-text">
               <input
@@ -544,7 +546,7 @@ function ColumnConfigModal({
                 type="number"
                 step={draft.restrictedToInteger ? 1 : 'any'}
                 disabled={!rangeEnabled}
-                className={`${TRACKER_FIELD_CLASS} disabled:opacity-50`}
+                className={cn(TRACKER_FIELD_CLASS, 'disabled:opacity-50')}
                 value={draft.rangeMin}
                 onChange={(e) => {
                   const next = Number(e.target.value);
@@ -558,7 +560,7 @@ function ColumnConfigModal({
                 type="number"
                 step={draft.restrictedToInteger ? 1 : 'any'}
                 disabled={!rangeEnabled}
-                className={`${TRACKER_FIELD_CLASS} disabled:opacity-50`}
+                className={cn(TRACKER_FIELD_CLASS, 'disabled:opacity-50')}
                 value={draft.rangeMax}
                 onChange={(e) => {
                   const next = Number(e.target.value);
@@ -589,7 +591,7 @@ function ColumnConfigModal({
   );
 }
 
-function TrackPropertiesModal({
+export function TrackPropertiesModal({
   track,
   onClose,
   onSave,
@@ -670,7 +672,7 @@ function TrackPropertiesModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className={`${TRACKER_MODAL_PANEL_CLASS} w-190`}>
+      <div className={cn(TRACKER_MODAL_PANEL_CLASS, 'w-190')}>
         <div className={TRACKER_MODAL_HEADER_CLASS}>
           <h2 className={TRACKER_MODAL_TITLE_CLASS}>Track Properties</h2>
           <button
@@ -687,7 +689,7 @@ function TrackPropertiesModal({
               <label className={TRACKER_SECTION_LABEL_CLASS}>Name</label>
               <input
                 type="text"
-                className={`w-full ${TRACKER_FIELD_CLASS} py-1.5`}
+                className={cn('w-full', TRACKER_FIELD_CLASS, 'py-1.5')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 autoFocus
@@ -697,7 +699,7 @@ function TrackPropertiesModal({
               <label className={TRACKER_SECTION_LABEL_CLASS}>Instrument ID</label>
               <input
                 type="text"
-                className={`w-full ${TRACKER_FIELD_CLASS} py-1.5`}
+                className={cn('w-full', TRACKER_FIELD_CLASS, 'py-1.5')}
                 value={instrumentId}
                 onChange={(e) => setInstrumentId(e.target.value)}
               />
@@ -707,7 +709,7 @@ function TrackPropertiesModal({
           <div className="flex flex-col gap-1.5">
             <label className={TRACKER_SECTION_LABEL_CLASS}>Note Template</label>
             <textarea
-              className={`h-16 w-full ${TRACKER_MONO_FIELD_CLASS} resize-none py-1.5`}
+              className={cn('h-16 w-full', TRACKER_MONO_FIELD_CLASS, 'resize-none py-1.5')}
               value={noteTemplate}
               onChange={(e) => setNoteTemplate(e.target.value)}
             />
@@ -1530,11 +1532,12 @@ export default function TrackerScoreObjectEditor({
                     <ContextMenu.Trigger asChild>
                       <th
                         colSpan={1 + (track.columns?.length ?? 0)}
-                        className={`cursor-pointer select-none overflow-hidden text-ellipsis whitespace-nowrap border-r border-app-border/40 px-1 py-1.5 text-center font-bold transition-colors ${
+                        className={cn(
+                          'cursor-pointer select-none overflow-hidden text-ellipsis whitespace-nowrap border-r border-app-border/40 px-1 py-1.5 text-center font-bold transition-colors',
                           ti === selectedTrack
                             ? 'bg-app-accent/5 text-app-accent'
-                            : 'text-app-text-muted hover:bg-app-outline-strong'
-                        }`}
+                            : 'text-app-text-muted hover:bg-app-outline-strong',
+                        )}
                         onClick={() => handleSelectTrack(ti)}
                         title={`${track.trackName} (Right-click for options)`}
                       >
@@ -1597,16 +1600,18 @@ export default function TrackerScoreObjectEditor({
                 return (
                   <tr
                     key={ri}
-                    className={`group ${
+                    className={cn(
+                      'group',
                       isBeatStart
                         ? 'border-t border-app-border/30 bg-app-accent/5'
-                        : 'border-b border-app-border/5 hover:bg-app-outline-strong'
-                    }`}
+                        : 'border-b border-app-border/5 hover:bg-app-outline-strong',
+                    )}
                   >
                     <td
-                      className={`sticky left-0 z-10 border-r border-app-border/40 bg-app-input px-1 py-0.5 text-center font-mono text-role-body ${
-                        isBeatStart ? 'font-bold text-app-text-strong' : 'text-app-text-subtle'
-                      }`}
+                      className={cn(
+                        'sticky left-0 z-10 border-r border-app-border/40 bg-app-input px-1 py-0.5 text-center font-mono text-role-body',
+                        isBeatStart ? 'font-bold text-app-text-strong' : 'text-app-text-subtle',
+                      )}
                     >
                       {ri < 10 ? `0${ri}` : ri}
                     </td>
@@ -1620,13 +1625,14 @@ export default function TrackerScoreObjectEditor({
                               data-track={ti}
                               data-col={-1}
                               data-step={ri}
-                              className={`w-full border-0 bg-transparent px-0 py-0.5 text-center font-mono text-role-body font-bold focus:bg-app-accent/20 focus:outline-none ${
+                              className={cn(
+                                'w-full border-0 bg-transparent px-0 py-0.5 text-center font-mono text-role-body font-bold focus:bg-app-accent/20 focus:outline-none',
                                 statusVal === '-'
                                   ? 'text-app-accent'
                                   : statusVal === 'OFF'
                                   ? 'text-app-danger'
-                                  : 'text-app-text-subtle'
-                              }`}
+                                  : 'text-app-text-subtle',
+                              )}
                               value={statusVal}
                               placeholder="."
                               readOnly
@@ -1652,7 +1658,10 @@ export default function TrackerScoreObjectEditor({
                                   data-track={ti}
                                   data-col={ci}
                                   data-step={ri}
-                                  className={`w-full border-0 bg-transparent px-1 py-0.5 text-center font-mono text-role-body text-app-text focus:bg-app-accent/20 focus:outline-none ${isInvalid ? 'outline-1 outline-app-danger' : ''}`}
+                                  className={cn(
+                                    'w-full border-0 bg-transparent px-1 py-0.5 text-center font-mono text-role-body text-app-text focus:bg-app-accent/20 focus:outline-none',
+                                    isInvalid && 'outline-1 outline-app-danger',
+                                  )}
                                   value={shownValue}
                                   placeholder={ci === 0 ? '...' : '---'}
                                   readOnly={statusVal === 'OFF'}

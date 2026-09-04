@@ -4,6 +4,7 @@ import BSBCodeEditor from './bsb/BSBCodeEditor';
 import BSBInterfaceEditor from './bsb/BSBInterfaceEditor';
 import BSBUDOPanel from './bsb/BSBUDOPanel';
 import type { SelectedInstrumentEditorProps } from './types';
+import { cn } from '../../../../lib/cn';
 
 type BsbEditorTab = 'interface' | 'code' | 'udo';
 
@@ -25,12 +26,12 @@ function BlueSynthBuilderEditor({
           <button
             type="button"
             data-bsb-editor-tab="interface"
-            className={[
+            className={cn(
               'border-b-2 px-3 py-2 text-role-body',
               activeTab === 'interface'
                 ? 'border-blue-accent text-app-text-strong'
-                : 'border-transparent text-blue-muted hover:text-app-text-strong',
-            ].join(' ')}
+                : 'border-transparent text-blue-muted hover:text-app-text-strong'
+            )}
             onClick={() => setActiveTab('interface')}
           >
             Interface
@@ -38,12 +39,12 @@ function BlueSynthBuilderEditor({
           <button
             type="button"
             data-bsb-editor-tab="code"
-            className={[
+            className={cn(
               'border-b-2 px-3 py-2 text-role-body',
               activeTab === 'code'
                 ? 'border-blue-accent text-gray-100'
-                : 'border-transparent text-blue-muted hover:text-gray-100',
-            ].join(' ')}
+                : 'border-transparent text-blue-muted hover:text-gray-100'
+            )}
             onClick={() => setActiveTab('code')}
           >
             Code
@@ -51,12 +52,12 @@ function BlueSynthBuilderEditor({
           <button
             type="button"
             data-bsb-editor-tab="udo"
-            className={[
+            className={cn(
               'border-b-2 px-3 py-2 text-role-body',
               activeTab === 'udo'
                 ? 'border-blue-accent text-gray-100'
-                : 'border-transparent text-blue-muted hover:text-gray-100',
-            ].join(' ')}
+                : 'border-transparent text-blue-muted hover:text-gray-100'
+            )}
             onClick={() => setActiveTab('udo')}
           >
             UDO

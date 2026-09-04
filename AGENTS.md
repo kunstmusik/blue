@@ -91,6 +91,17 @@ runtime behavior.
 - Keep `docs/typography.md` up to date in the same change whenever typography roles, metrics,
   ownership boundaries, or exception policies are updated.
 
+### Class styling and composition
+
+- **Composition rule**: All `className` attributes built from multiple sources (conditionals, constants, caller overrides) MUST use `cn()` from `packages/blue-app/src/renderer/lib/cn.ts` (alias `@/lib/cn`). Never use template literals (`` `...` ``) or array joins (`[...].join(' ')`) for `className`. Plain static strings (e.g. `className="flex"`) do not require `cn()`.
+- **Precedence rule**: Components exposing a `className` prop must compose it last: `cn(BASE_CLASS, ..., className)` so caller utilities deterministically win conflicts.
+- **Styling boundary**:
+  1. **Component styling**: Use Tailwind utilities in `className`. Do NOT add new BEM/custom CSS classes to `renderer/styles/index.css`.
+  2. **Dynamic layout values**: Continuous/runtime-calculated pixel coordinates, widths, and heights belong in `style={{ ... }}` rather than dynamic Tailwind classes.
+  3. **Global and third-party overrides**: Plain CSS in `renderer/styles/index.css` is reserved for: `@theme` tokens, third-party library overrides (`.dv-*` for Dockview, `.cm-*` for CodeMirror), keyframe animations, scrollbars, and pseudo-elements.
+  4. **Retained custom classes**: Pre-existing structural/theming BEM classes (`editor-context-menu*`, `workbench-shell`, `workbench-aux-slideout`, `workbench-edge-rail`) are deliberately retained. Port existing BEM blocks to utilities only opportunistically when already modifying a component (strangler policy); never perform batch cleanup.
+- Consult `specs/097-cn-classname-migration/contracts/classname-composition.md` for the canonical composition contract and ESLint rule details.
+
 ## Confirmation dialog guidance
 
 - Never use raw browser blocking dialogs (`window.confirm`, `window.prompt`, `window.alert`, or bare `confirm`, `prompt`, `alert`) in application source.

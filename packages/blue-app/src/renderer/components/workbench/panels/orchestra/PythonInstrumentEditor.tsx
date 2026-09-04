@@ -6,6 +6,7 @@ import EmbeddedUdoPanel from './EmbeddedUdoPanel';
 import GeneratedInstrumentModal from './GeneratedInstrumentModal';
 import JythonRuntimeStatusIndicator from '../score-object/editors/JythonRuntimeStatusIndicator';
 import type { SelectedInstrumentEditorProps } from './types';
+import { cn } from '../../../../lib/cn';
 
 type PythonTab = 'instrument' | 'udo' | 'globalOrc' | 'globalSco';
 
@@ -120,12 +121,12 @@ export default function PythonInstrumentEditor({
           <button
             key={tab.key}
             type="button"
-            className={[
+            className={cn(
               'border-b-2 px-3 py-2 text-role-body',
               activeTab === tab.key
                 ? 'border-blue-accent text-app-text-strong'
-                : 'border-transparent text-blue-muted hover:text-app-text-strong',
-            ].join(' ')}
+                : 'border-transparent text-blue-muted hover:text-app-text-strong'
+            )}
             onClick={() => setActiveTab(tab.key)}
           >
             {tab.label}

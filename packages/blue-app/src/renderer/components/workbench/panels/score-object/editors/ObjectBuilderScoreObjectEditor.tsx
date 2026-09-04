@@ -9,6 +9,7 @@ import JavaScriptRuntimeStatusIndicator from './JavaScriptRuntimeStatusIndicator
 import JythonRuntimeStatusIndicator from './JythonRuntimeStatusIndicator';
 import { useScoreObjectTest } from './useScoreObjectTest';
 import { AppSelect } from '../../../../AppSelect';
+import { cn } from '../../../../../lib/cn';
 
 type ObjectBuilderLanguage = 'PYTHON' | 'JAVASCRIPT' | 'CLOJURE' | 'EXTERNAL';
 type ObjectBuilderTab = 'interface' | 'code' | 'comments';
@@ -90,12 +91,12 @@ export default function ObjectBuilderScoreObjectEditor({
               key={tab}
               type="button"
               data-object-builder-tab={tab}
-              className={[
+              className={cn(
                 'border-b-2 px-3 py-2 text-role-body capitalize',
                 activeTab === tab
                   ? 'border-app-accent text-app-text-strong'
-                  : 'border-transparent text-app-text-muted hover:text-app-text-strong',
-              ].join(' ')}
+                  : 'border-transparent text-app-text-muted hover:text-app-text-strong'
+              )}
               onClick={() => { setActiveTab(tab); }}
             >
               {tab}

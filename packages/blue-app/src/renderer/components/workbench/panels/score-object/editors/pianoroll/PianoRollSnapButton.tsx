@@ -4,6 +4,7 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import type { SnapValueName } from '@blue/data';
 import { getSnapValue } from '@blue/data';
 import { PopoutDropdownMenuPortal, portalEventIsolationProps } from '../../../../../../hooks/host-portals';
+import { cn } from '../../../../../../lib/cn';
 
 interface PianoRollSnapButtonProps {
   snapEnabled: boolean;
@@ -35,11 +36,12 @@ export default function PianoRollSnapButton({
   return (
     <div className="flex items-stretch h-[22px]">
       <button
-        className={`px-1.5 text-role-body border rounded-l transition-colors cursor-pointer flex items-center ${
+        className={cn(
+          'px-1.5 text-role-body border rounded-l transition-colors cursor-pointer flex items-center',
           snapEnabled
             ? 'bg-blue-accent/20 text-blue-text border-blue-accent/40'
             : 'bg-transparent text-blue-muted border-blue-border/40 hover:bg-blue-hover'
-        }`}
+        )}
         onClick={onToggleSnap}
         title="Toggle snap on/off"
       >
@@ -48,11 +50,12 @@ export default function PianoRollSnapButton({
       <DropdownMenu.Root>
         <DropdownMenu.Trigger asChild>
           <button
-            className={`px-1 border border-l-0 rounded-r transition-colors cursor-pointer flex items-center ${
+            className={cn(
+              'px-1 border border-l-0 rounded-r transition-colors cursor-pointer flex items-center',
               snapEnabled
                 ? 'bg-blue-accent/20 text-blue-text border-blue-accent/40'
                 : 'bg-transparent text-blue-muted border-blue-border/40 hover:bg-blue-hover'
-            }`}
+            )}
             title="Configure snap value"
           >
             <ChevronDown className="w-3 h-3" />
@@ -147,7 +150,10 @@ function SnapItem({
   const def = getSnapValue(value);
   return (
     <DropdownMenu.Item
-      className={`${itemClass} ${snapValue === value ? 'bg-blue-accent/20 text-blue-text font-medium' : ''}`}
+      className={cn(
+        itemClass,
+        snapValue === value && 'bg-blue-accent/20 text-blue-text font-medium'
+      )}
       onSelect={() => onChangeSnapValue(value)}
     >
       {def.displayName}

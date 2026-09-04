@@ -3,6 +3,7 @@ import * as ContextMenu from '@radix-ui/react-context-menu';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { ChevronDown, ChevronRight, Import, Plus } from 'lucide-react';
 import { PopoutContextMenuPortal, PopoutDropdownMenuPortal } from '../../../../hooks/host-portals';
+import { cn } from '../../../../lib/cn';
 
 import type { UdoDefinitionSnapshot } from '../../../../../shared/project-editor';
 import type {
@@ -236,21 +237,21 @@ export default function UdoTable({
                         aria-selected={isSelected}
                         onClick={(event) => handleRowClick(index, event)}
                         onContextMenu={() => onContextSelectIndex(index)}
-                        className={[
+                        className={cn(
                           'cursor-pointer border-b border-app-border hover:bg-app-accent/10',
-                          active ? 'ring-1 ring-inset ring-app-accent' : '',
-                          isSelected ? 'bg-app-accent/20' : '',
-                        ].join(' ')}
+                          active && 'ring-1 ring-inset ring-app-accent',
+                          isSelected && 'bg-app-accent/20',
+                        )}
                       >
                         <td className="px-3 py-2 text-app-text-strong">{udo.name}</td>
                         <td className="px-3 py-2">
                           <span
-                            className={[
+                            className={cn(
                               'rounded px-1.5 py-0.5 text-role-callout font-medium',
                               udo.style === 'CLASSIC'
                                 ? 'bg-app-accent/20 text-app-accent'
                                 : 'bg-app-surface-raised text-app-text-strong',
-                            ].join(' ')}
+                            )}
                           >
                             {udo.style}
                           </span>

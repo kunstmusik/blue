@@ -5,6 +5,7 @@ import type { BlueX7RuntimeTarget } from '../../../../../shared/project-editor/c
 import InstrumentCommentsPanel from './InstrumentCommentsPanel';
 import type { OrchestraMutationProps } from './types';
 import type { UdoLibraryDropTarget } from '../udo/UdoTable';
+import { cn } from '../../../../lib/cn';
 
 const BlueSynthBuilderEditor = React.lazy(() => import('./BlueSynthBuilderEditor'));
 const BlueX7Editor = React.lazy(() => import('../../../instruments/blue-x7-editor'));
@@ -163,24 +164,24 @@ function InstrumentEditorPanel({
       <div className="flex items-center gap-1 border-b border-blue-border bg-app-surface-strong px-2">
         <button
           type="button"
-          className={[
+          className={cn(
             'border-b-2 px-3 py-2 text-role-body',
             activeTab === 'editor'
               ? 'border-blue-accent text-app-text-strong'
-              : 'border-transparent text-blue-muted hover:text-app-text-strong',
-          ].join(' ')}
+              : 'border-transparent text-blue-muted hover:text-app-text-strong'
+          )}
           onClick={() => setActiveTab('editor')}
         >
           Instrument Editor
         </button>
         <button
           type="button"
-          className={[
+          className={cn(
             'border-b-2 px-3 py-2 text-role-body',
             activeTab === 'comments'
               ? 'border-blue-accent text-app-text-strong'
-              : 'border-transparent text-blue-muted hover:text-app-text-strong',
-          ].join(' ')}
+              : 'border-transparent text-blue-muted hover:text-app-text-strong'
+          )}
           onClick={() => setActiveTab('comments')}
         >
           Comments

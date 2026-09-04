@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
+import { cn } from '../../lib/cn';
 import type { LibraryBrowseNode, LibraryDragDescriptor, LibraryInteractionClipboard, LibraryItemKey } from '../../../shared/unified-library';
 import { LibraryContextMenu } from './LibraryContextMenu';
 import { BLUE_LIBRARY_DRAG_MIME, beginLibraryNodeDrag, cancelLibraryNodeDrag, readLibraryDragDescriptor, writeLibraryDragDescriptor } from './library-drag-drop';
@@ -349,7 +350,14 @@ export function LibraryTree({
               aria-selected={index === resolvedActiveIndex}
               aria-expanded={canExpand ? expanded.has(node.nodeId) : undefined}
               title={tooltip}
-              className={`flex min-h-7 items-center gap-1 rounded px-1 text-role-body [contain-intrinsic-size:auto_28px] [content-visibility:auto] ${dropTargetId === node.nodeId ? 'ring-1 ring-inset ring-app-accent' : index === resolvedActiveIndex ? 'bg-app-selection' : 'hover:bg-app-hover'}`}
+              className={cn(
+                'flex min-h-7 items-center gap-1 rounded px-1 text-role-body [contain-intrinsic-size:auto_28px] [content-visibility:auto]',
+                dropTargetId === node.nodeId
+                  ? 'ring-1 ring-inset ring-app-accent'
+                  : index === resolvedActiveIndex
+                    ? 'bg-app-selection'
+                    : 'hover:bg-app-hover',
+              )}
               style={{ paddingLeft: `${(level - 1) * 14 + 4}px` }}
               onMouseDown={() => markActive(index)}
               onContextMenu={() => markActive(index)}

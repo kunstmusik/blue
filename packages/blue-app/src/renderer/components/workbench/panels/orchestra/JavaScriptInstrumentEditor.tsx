@@ -4,6 +4,7 @@ import SelectedCodeEditor from '../editors/SelectedCodeEditor';
 import { toUdoCompletionDefinitions } from '../editors/udo-completion-scope';
 import EmbeddedUdoPanel from './EmbeddedUdoPanel';
 import type { SelectedInstrumentEditorProps } from './types';
+import { cn } from '../../../../lib/cn';
 
 type JavaScriptTab = 'instrument' | 'udo' | 'globalOrc' | 'globalSco';
 
@@ -39,12 +40,12 @@ export default function JavaScriptInstrumentEditor({
           <button
             key={tab.key}
             type="button"
-            className={[
+            className={cn(
               'border-b-2 px-3 py-2 text-role-body',
               activeTab === tab.key
                 ? 'border-blue-accent text-app-text-strong'
-                : 'border-transparent text-blue-muted hover:text-app-text-strong',
-            ].join(' ')}
+                : 'border-transparent text-blue-muted hover:text-app-text-strong'
+            )}
             onClick={() => setActiveTab(tab.key)}
           >
             {tab.label}

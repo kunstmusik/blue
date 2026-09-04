@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { cn } from '../../../lib/cn';
 
 export interface BlueX7TabItem<T extends string = string> {
   key: T;
@@ -98,7 +99,10 @@ export function BlueX7TabList<T extends string = string>({
     <div
       role="tablist"
       aria-label={ariaLabel}
-      className={`flex flex-row flex-nowrap items-center gap-1 overflow-x-auto min-w-0 scrollbar-thin ${className}`}
+      className={cn(
+        'flex flex-row flex-nowrap items-center gap-1 overflow-x-auto min-w-0 scrollbar-thin',
+        className,
+      )}
     >
       {tabs.map((tab, idx) => {
         const isActive = tab.key === activeTab;
@@ -127,7 +131,10 @@ export function BlueX7TabList<T extends string = string>({
             tabIndex={isFocused ? 0 : -1}
             title={tab.title}
             data-testid={tab.testId}
-            className={`flex items-center gap-1.5 shrink-0 rounded px-3 py-1.5 text-role-body transition-colors cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-400 ${customClasses}`}
+            className={cn(
+              'flex items-center gap-1.5 shrink-0 rounded px-3 py-1.5 text-role-body transition-colors cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-400',
+              customClasses,
+            )}
             onClick={() => {
               setFocusedKey(tab.key);
               onSelectTab(tab.key);

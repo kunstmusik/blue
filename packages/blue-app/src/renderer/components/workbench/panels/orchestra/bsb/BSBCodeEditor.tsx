@@ -7,6 +7,7 @@ import SelectedCodeEditor from '../../editors/SelectedCodeEditor';
 import { toUdoCompletionDefinitions } from '../../editors/udo-completion-scope';
 import { createBsbReplacementKeys } from './bsb-completions';
 import type { SelectedInstrumentEditorProps } from '../types';
+import { cn } from '../../../../../lib/cn';
 
 type BsbCodeTab = 'instrumentText' | 'alwaysOnInstrumentText' | 'globalOrc' | 'globalSco';
 
@@ -78,12 +79,12 @@ export default function BSBCodeEditor({
               key={tab.key}
               type="button"
               data-bsb-code-tab={tab.key}
-              className={[
+              className={cn(
                 'border-t-2 px-3 py-2 text-role-body',
                 activeTab === tab.key
                   ? 'border-blue-accent text-gray-100'
-                  : 'border-transparent text-blue-muted hover:text-gray-100',
-              ].join(' ')}
+                  : 'border-transparent text-blue-muted hover:text-gray-100'
+              )}
               onClick={() => setActiveTab(tab.key)}
             >
               {tab.label}

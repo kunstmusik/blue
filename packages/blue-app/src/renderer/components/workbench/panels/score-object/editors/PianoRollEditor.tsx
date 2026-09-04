@@ -23,6 +23,7 @@ import FieldSelectorView from './pianoroll/FieldSelectorView';
 import NotePropertiesEditor from './pianoroll/NotePropertiesEditor';
 import PianoRollSnapButton from './pianoroll/PianoRollSnapButton';
 import PianoRollPropertiesEditor from './pianoroll/PianoRollPropertiesEditor';
+import { cn } from '../../../../../lib/cn';
 import PianoRollRulerConfigDialog, { type PianoRollRulerConfigChanges } from './pianoroll/PianoRollRulerConfigDialog';
 import SplitPane from '../../orchestra/SplitPane';
 import { NoteCanvasMouseListener } from './pianoroll/NoteCanvasMouseListener';
@@ -510,11 +511,17 @@ export default function PianoRollEditor({ document: scoreDocument, onPatch }: Sc
         >
           <div className="flex border-b border-blue-border shrink-0">
             <button
-              className={`px-4 py-1.5 text-role-body font-medium ${activeTab === 'notes' ? 'text-blue-accent border-b-2 border-blue-accent' : 'text-blue-muted hover:text-gray-200'}`}
+              className={cn(
+                'px-4 py-1.5 text-role-body font-medium',
+                activeTab === 'notes' ? 'text-blue-accent border-b-2 border-blue-accent' : 'text-blue-muted hover:text-gray-200',
+              )}
               onClick={() => setActiveTab('notes')}
             >Notes</button>
             <button
-              className={`px-4 py-1.5 text-role-body font-medium ${activeTab === 'properties' ? 'text-blue-accent border-b-2 border-blue-accent' : 'text-blue-muted hover:text-gray-200'}`}
+              className={cn(
+                'px-4 py-1.5 text-role-body font-medium',
+                activeTab === 'properties' ? 'text-blue-accent border-b-2 border-blue-accent' : 'text-blue-muted hover:text-gray-200',
+              )}
               onClick={() => setActiveTab('properties')}
             >Properties</button>
           </div>

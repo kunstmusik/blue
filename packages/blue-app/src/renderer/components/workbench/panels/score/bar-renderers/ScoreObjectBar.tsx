@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { cn } from '../../../../../lib/cn';
 import { computeRepeatMarkers } from './repeat-marker-utils';
 
 interface ScoreObjectBarProps {
@@ -55,7 +56,7 @@ export default function ScoreObjectBar({
 
   return (
     <div
-      className={`absolute overflow-hidden ${className ?? ''}`}
+      className={cn('absolute overflow-hidden', className)}
       style={{
         left,
         width,

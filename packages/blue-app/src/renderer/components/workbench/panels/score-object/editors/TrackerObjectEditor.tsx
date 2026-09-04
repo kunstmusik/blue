@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import { cn } from '../../../../../lib/cn';
 import type { ScoreObjectEditorComponentProps } from '../editor-registry';
 import {
   BLUE_INSPECTOR_CONTROL_CLASS,
@@ -49,7 +50,7 @@ export default function TrackerObjectEditor({ document, onPatch }: ScoreObjectEd
             type="number"
             min={1}
             max={64}
-            className={`w-16 ${BLUE_INSPECTOR_CONTROL_CLASS}`}
+            className={cn('w-16', BLUE_INSPECTOR_CONTROL_CLASS)}
             value={stepsPerBeat}
             onChange={(e) => patch({ stepsPerBeat: parseInt(e.target.value, 10) || 1 })}
           />

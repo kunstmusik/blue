@@ -9,6 +9,7 @@ import RealtimeRenderTab from './project-properties/RealtimeRenderTab';
 import DiskRenderTab from './project-properties/DiskRenderTab';
 import MediaTab from './project-properties/MediaTab';
 import ClojureProjectTab from './project-properties/ClojureProjectTab';
+import { cn } from '../../../lib/cn';
 
 type ProjectPropertiesTabKey =
   | 'information'
@@ -68,12 +69,12 @@ function SectionButton({
     <button
       type="button"
       aria-current={active ? 'page' : undefined}
-      className={[
+      className={cn(
         'block w-full border-l-2 px-4 py-2 text-left text-role-body transition-colors',
         active
           ? 'border-l-blue-accent bg-blue-accent/[0.08] text-gray-100'
-          : 'border-l-transparent text-blue-muted hover:text-gray-100',
-      ].join(' ')}
+          : 'border-l-transparent text-blue-muted hover:text-gray-100'
+      )}
       onClick={onClick}
     >
       {label}

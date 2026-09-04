@@ -4,6 +4,7 @@ import type {
   MinimizedTabState,
 } from './auxiliary-layout';
 import { getAuxiliaryRailLabel } from './auxiliary-layout';
+import { cn } from '../../lib/cn';
 
 interface AuxiliaryRailProps {
   edge: AuxiliaryEdge;
@@ -33,17 +34,17 @@ export default function AuxiliaryRail({
 
   return (
     <nav
-      className={`workbench-edge-rail workbench-edge-rail--${edge}`}
+      className={cn('workbench-edge-rail', `workbench-edge-rail--${edge}`)}
       aria-label={`${edge} minimized auxiliary tabs`}
       data-auxiliary-rail="true"
     >
       {tabs.length > 0 ? (
         <button
           type="button"
-          className={[
+          className={cn(
             'workbench-edge-rail__group-action',
-            `workbench-edge-rail__group-action--${edge}`,
-          ].join(' ')}
+            `workbench-edge-rail__group-action--${edge}`
+          )}
           title="Restore minimized tool windows on this edge"
           aria-label="Restore minimized tool windows on this edge"
           onClick={onRestoreGroup}
@@ -56,13 +57,11 @@ export default function AuxiliaryRail({
         <button
           key={`${tab.groupInstanceId}:${tab.panelId}`}
           type="button"
-          className={[
+          className={cn(
             'workbench-edge-rail__button',
             `workbench-edge-rail__button--${edge}`,
-            tab.isActivePanel ? 'is-active' : '',
-          ]
-            .filter(Boolean)
-            .join(' ')}
+            tab.isActivePanel && 'is-active'
+          )}
           onClick={() => onSelect(tab.panelId)}
           title={getAuxiliaryRailLabel(tab.panelId)}
           aria-pressed={tab.isActivePanel}

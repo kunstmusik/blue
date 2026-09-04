@@ -3,6 +3,7 @@ import type { PianoRollPayload } from './types';
 import { PCH_LABELS } from './types';
 import ScaleSelectionPanel from './ScaleSelectionPanel';
 import FieldDefinitionsEditor from './FieldDefinitionsEditor';
+import { cn } from '../../../../../../lib/cn';
 import {
   BLUE_INSPECTOR_FIELD_LABEL_CLASS,
   BLUE_INSPECTOR_INPUT_CLASS,
@@ -44,7 +45,7 @@ export default function PianoRollPropertiesEditor({
         </FieldRow>
         <FieldRow label="Note Template">
           <div className="flex items-center gap-1">
-            <input type="text" className={`${inputCls} font-mono`} value={noteTemplate}
+            <input type="text" className={cn(inputCls, 'font-mono')} value={noteTemplate}
               onChange={(e) => onPatch({ noteTemplate: e.target.value })} />
           </div>
         </FieldRow>

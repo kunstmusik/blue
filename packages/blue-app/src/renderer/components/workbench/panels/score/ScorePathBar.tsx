@@ -1,4 +1,5 @@
 import type { ScorePathSegment } from './types';
+import { cn } from '../../../../lib/cn';
 
 interface Props {
   segments: ScorePathSegment[];
@@ -13,9 +14,10 @@ export default function ScorePathBar({ segments, onNavigateToSegment, onNavigate
         <span key={segment.groupId ?? 'root'} className="flex items-center gap-1 whitespace-nowrap">
           {i > 0 && <span className="text-blue-muted">/</span>}
           <button
-            className={`px-1 py-0.5 rounded hover:bg-blue-hover text-blue-text ${
-              i === segments.length - 1 ? 'font-medium bg-blue-surface/80' : 'text-blue-muted'
-            }`}
+            className={cn(
+              'px-1 py-0.5 rounded hover:bg-blue-hover text-blue-text',
+              i === segments.length - 1 ? 'font-medium bg-blue-surface/80' : 'text-blue-muted',
+            )}
             onClick={() => (i === 0 ? onNavigateToRoot() : onNavigateToSegment(i))}
           >
             {segment.label}

@@ -9,6 +9,7 @@ import {
   normalizeLineColor,
 } from './EditableLineCanvas';
 import ColorPickerButton from '../../../../ColorPicker';
+import { cn } from '../../../../../lib/cn';
 
 export interface ScoreEditorLineLike extends EditableLineLike {
   color: number;
@@ -104,9 +105,10 @@ export function LineDefinitionTable<TLine extends ScoreEditorLineLike>({
           return (
             <div
               key={`${label}-${index}`}
-              className={`grid min-w-90 items-center border-b border-app-border/30 text-role-subheadline last:border-b-0 ${
-                selected ? 'bg-app-accent/15' : 'hover:bg-app-bg/40'
-              }`}
+              className={cn(
+                'grid min-w-90 items-center border-b border-app-border/30 text-role-subheadline last:border-b-0',
+                selected ? 'bg-app-accent/15' : 'hover:bg-app-bg/40',
+              )}
               style={{ gridTemplateColumns: '36px minmax(96px, 1fr) 72px 72px 48px' }}
               onMouseDown={() => onSelectedLineIndexChange(index)}
               onFocusCapture={() => onSelectedLineIndexChange(index)}

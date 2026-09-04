@@ -2,6 +2,7 @@ import { useRef, useCallback, useState, useEffect, useLayoutEffect, useMemo } fr
 import { toast } from 'sonner';
 import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../hooks/host-portals';
 import { isEventInsidePortalPopup } from '../../../utils/cross-realm-dom';
+import { cn } from '../../../lib/cn';
 import * as ContextMenu from "@radix-ui/react-context-menu";
 import { Check, ChevronRight, ChevronDown, ChevronLeft, Plus } from "lucide-react";
 import { getProjectDocumentRevision, useProjectStore } from "../../../stores/project-store";
@@ -1129,7 +1130,11 @@ function RowHeader({
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>
         <div
-          className={`h-5 border-b border-app-border-muted flex items-center ${center ? 'justify-center' : 'justify-end pr-2'} bg-blue-surface/30 ${borderLeft ? 'border-l-2 border-l-blue-border/30' : !center ? 'gap-1' : ''}`}
+          className={cn(
+            'h-5 border-b border-app-border-muted flex items-center bg-blue-surface/30',
+            center ? 'justify-center' : 'justify-end pr-2',
+            borderLeft ? 'border-l-2 border-l-blue-border/30' : !center && 'gap-1',
+          )}
         >
           {children}
         </div>
@@ -1477,12 +1482,12 @@ function SoundLayerHeader({
           data-keyboard-focused={isFocusKey && keyboardFocus ? 'true' : undefined}
           aria-selected={isLayerSelected ? 'true' : 'false'}
           data-selected-layer={isLayerSelected ? 'true' : undefined}
-          className={[
+          className={cn(
             'relative flex items-start overflow-hidden border-b border-l-2 border-app-border-muted select-none focus:outline-none',
             isLayerSelected ? 'border-l-app-accent bg-app-selection' : 'border-l-transparent',
-            midiFocused ? 'ring-1 ring-inset ring-app-accent/70' : '',
-            isFocusKey && keyboardFocus ? 'ring-1 ring-app-accent/80' : '',
-          ].filter(Boolean).join(' ')}
+            midiFocused && 'ring-1 ring-inset ring-app-accent/70',
+            isFocusKey && keyboardFocus && 'ring-1 ring-app-accent/80',
+          )}
           style={{ height }}
           onDoubleClick={startEdit}
           onMouseDown={(event) => {
@@ -1531,7 +1536,12 @@ function SoundLayerHeader({
               onBlur={commitEdit}
             />
           ) : (
-            <span className={`flex-1 min-w-0 px-1.5 text-role-body text-blue-text truncate pointer-events-none mt-0.5 ${isLayerSelected ? 'text-app-text-strong' : ''}`}>
+            <span
+              className={cn(
+                'flex-1 min-w-0 px-1.5 text-role-body text-blue-text truncate pointer-events-none mt-0.5',
+                isLayerSelected && 'text-app-text-strong',
+              )}
+            >
               {layer.name}
             </span>
           )}
@@ -1599,11 +1609,12 @@ function SoundLayerHeader({
             </button>
             {showNoteProcessorButton && (
               <button
-                className={`relative w-5 h-4 text-role-callout font-bold rounded-sm border flex items-center justify-center ${
+                className={cn(
+                  'relative w-5 h-4 text-role-callout font-bold rounded-sm border flex items-center justify-center',
                   noteProcessorChain && noteProcessorChain.processors.length > 0
                     ? 'bg-red-600 border-red-500 text-white'
-                    : 'bg-transparent border-app-border/30 text-app-text-muted hover:text-app-text'
-                }`}
+                    : 'bg-transparent border-app-border/30 text-app-text-muted hover:text-app-text',
+                )}
                 title="Note Processors"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -1752,7 +1763,7 @@ function SoundLayerHeader({
               <ContextMenu.Separator className="editor-context-menu__separator" />
               <ContextMenu.Sub>
                 <ContextMenu.SubTrigger
-                  className={`${ctxItemClass} editor-context-menu__subtrigger`}
+                  className={cn(ctxItemClass, 'editor-context-menu__subtrigger')}
                 >
                   <span>Layer Height</span>
                   <ChevronRight className="w-3.5 h-3.5 opacity-60" />

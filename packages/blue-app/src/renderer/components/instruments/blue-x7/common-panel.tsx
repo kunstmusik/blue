@@ -4,6 +4,7 @@ import type { BlueX7Patch } from '../../../../shared/project-editor';
 import { AlgorithmTopology } from './algorithm-topology';
 import { AppSelect } from '../../AppSelect';
 import { blueX7WidgetDomain } from './catalog-domains';
+import { cn } from '../../../lib/cn';
 
 const ALGORITHM_DOMAIN = blueX7WidgetDomain('common.algorithm');
 const TRANSPOSE_DOMAIN = blueX7WidgetDomain('common.transpose');
@@ -241,11 +242,12 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
                 aria-label={`Toggle Operator ${i + 1}`}
                 aria-pressed={isEnabled}
                 onClick={() => handleOperatorToggle(i)}
-                className={`rounded px-3 py-1 text-role-body font-medium transition-colors ${
+                className={cn(
+                  'rounded px-3 py-1 text-role-body font-medium transition-colors',
                   isEnabled
                     ? 'bg-blue-accent text-white hover:bg-blue-accent/80'
-                    : 'bg-blue-bg text-gray-400 border border-blue-border hover:bg-blue-surface'
-                }`}
+                    : 'border border-blue-border bg-blue-bg text-gray-400 hover:bg-blue-surface',
+                )}
               >
                 Op {i + 1}: {isEnabled ? 'ON' : 'OFF'}
               </button>

@@ -5,6 +5,7 @@ import GeneratedScoreModal from './GeneratedScoreModal';
 import { useScoreObjectTest } from './useScoreObjectTest';
 import SplitPane from '../../orchestra/SplitPane';
 import { DEFAULT_SPLIT_SIZE_PX } from '../../../../../../shared/window-layout-settings';
+import { cn } from '../../../../../lib/cn';
 
 const PATTERN_LAYERS_SPLIT_ID = 'pattern-object.layers' as const;
 const PATTERN_SCORE_SPLIT_ID = 'pattern-object.score' as const;
@@ -414,11 +415,10 @@ export default function PatternObjectEditor({
                     {patterns.map((pat, pi) => (
                       <div
                         key={pi}
-                        className={`flex items-center shrink-0 border-b border-blue-border/20 cursor-pointer ${
-                          pi === selectedIdx
-                            ? 'bg-blue-accent/15'
-                            : ''
-                        }`}
+                        className={cn(
+                          'flex items-center shrink-0 border-b border-blue-border/20 cursor-pointer',
+                          pi === selectedIdx && 'bg-blue-accent/15'
+                        )}
                         style={{
                           height: CELL,
                           backgroundColor:
@@ -445,11 +445,12 @@ export default function PatternObjectEditor({
                         </div>
                         <div className="flex items-center justify-center shrink-0" style={{ width: 28 }}>
                           <button
-                            className={`w-4 h-4 text-role-subheadline rounded border shrink-0 flex items-center justify-center ${
+                            className={cn(
+                              'w-4 h-4 text-role-subheadline rounded border shrink-0 flex items-center justify-center',
                               pat.muted
                                 ? 'bg-red-800/70 border-red-600 text-red-200'
                                 : 'border-blue-border/40 text-blue-muted/40'
-                            }`}
+                            )}
                             onClick={(e) => {
                               e.stopPropagation();
                               patch({ toggleMute: pi });

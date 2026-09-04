@@ -2,6 +2,7 @@ import React from 'react';
 import { X } from 'lucide-react';
 import { AlgorithmSvg } from './algorithm-svg';
 import { useDialogFocus } from '../../dialogs/use-dialog-focus';
+import { cn } from '../../../lib/cn';
 
 export interface AlgorithmDialogProps {
   currentAlgorithm: number;
@@ -60,11 +61,12 @@ export const AlgorithmDialog: React.FC<AlgorithmDialogProps> = ({
                   onSelectAlgorithm(alg);
                   onClose();
                 }}
-                className={`flex flex-col items-center justify-between rounded p-2 border transition-all ${
+                className={cn(
+                  'flex flex-col items-center justify-between rounded p-2 border transition-all',
                   isSelected
                     ? 'border-blue-accent bg-blue-accent/15 ring-2 ring-blue-accent'
-                    : 'border-blue-border bg-blue-surface/30 hover:border-gray-400 hover:bg-blue-surface'
-                }`}
+                    : 'border-blue-border bg-blue-surface/30 hover:border-gray-400 hover:bg-blue-surface',
+                )}
               >
                 <div className="flex items-center justify-center bg-blue-surface/40 border border-blue-border/40 rounded p-1 w-full aspect-square">
                   <AlgorithmSvg

@@ -15,6 +15,7 @@ import UdoWorkspacePanel from '../workbench/panels/udo/UdoWorkspacePanel';
 import { useUdoCallbacks } from '../../hooks/use-udo-callbacks';
 import { cloneUdoSnapshot, formatUdoListAsOpcodeText } from '../workbench/panels/udo/udo-snapshot-utils';
 import { AppSelect } from '../AppSelect';
+import { cn } from '../../lib/cn';
 
 type EffectEditorTab = 'interface' | 'code' | 'udo' | 'comments';
 
@@ -154,7 +155,7 @@ export default function EffectEditorPanel({
 
   if (interfaceOnly) {
     return (
-      <div className={['flex h-full min-h-0 flex-col overflow-hidden', className].filter(Boolean).join(' ')}>
+      <div className={cn('flex h-full min-h-0 flex-col overflow-hidden', className)}>
         <div className="min-h-0 flex-1 overflow-hidden">
           <BSBInterfaceEditor
             instrument={{ ...fakeInstrument, editEnabled: false }}
@@ -167,7 +168,7 @@ export default function EffectEditorPanel({
   }
 
   return (
-    <div className={['flex h-full min-h-0 flex-col overflow-hidden', className].filter(Boolean).join(' ')}>
+    <div className={cn('flex h-full min-h-0 flex-col overflow-hidden', className)}>
       <div className="flex flex-none flex-wrap items-center gap-3 border-b border-app-border bg-app-surface-strong px-3 py-2">
         {showNameField && (
           <input
@@ -223,12 +224,12 @@ export default function EffectEditorPanel({
             <button
               key={tab}
               type="button"
-              className={[
+              className={cn(
                 'border-b-2 px-3 py-2 text-role-body',
                 activeTab === tab
                   ? 'border-app-accent text-app-text-strong'
-                  : 'border-transparent text-app-text-muted hover:text-app-text-strong',
-              ].join(' ')}
+                  : 'border-transparent text-app-text-muted hover:text-app-text-strong'
+              )}
               onClick={() => setActiveTab(tab)}
             >
               {label}

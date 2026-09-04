@@ -137,6 +137,23 @@ export default tseslint.config(
       ],
     },
   },
+  // Renderer restriction on hand-rolled className template literals and array joins
+  {
+    files: ['packages/blue-app/src/renderer/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "JSXAttribute[name.name='className'] > JSXExpressionContainer > TemplateLiteral",
+          message: 'Use cn() from src/renderer/lib/cn.ts instead of template literals for className.',
+        },
+        {
+          selector: "JSXAttribute[name.name='className'] JSXExpressionContainer CallExpression[callee.property.name='join']",
+          message: 'Use cn() from src/renderer/lib/cn.ts instead of array join for className.',
+        },
+      ],
+    },
+  },
   // Test files exception: allow mocking/asserting globals and properties in tests
   {
     files: [

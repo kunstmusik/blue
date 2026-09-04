@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Check, X } from 'lucide-react';
 
 import type { AppMetadata } from '../../../shared/app-metadata';
+import { cn } from '../../lib/cn';
 
 interface AboutAppProps {
   iconUrl: string;
@@ -39,7 +40,7 @@ function MetadataRow({ label, value, breakValue = false }: {
   return (
     <div className="grid grid-cols-[5.75rem_minmax(0,1fr)] items-baseline gap-4 border-b border-app-border/60 py-1.5 last:border-b-0">
       <dt className="text-role-body text-app-text-muted">{label}</dt>
-      <dd className={`min-w-0 text-right text-role-body text-app-text-soft ${breakValue ? 'break-all font-mono' : ''}`}>
+      <dd className={cn('min-w-0 text-right text-role-body text-app-text-soft', breakValue && 'break-all font-mono')}>
         {value}
       </dd>
     </div>

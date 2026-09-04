@@ -23,6 +23,7 @@ import type { ArrangementPanelProps } from './types';
 import { LibraryDropZone, LibraryTableDropMarker } from '../../../libraries/LibraryDropMarker';
 import { ProjectLibraryDragSource } from '../../../libraries/ProjectLibraryDragSource';
 import { useProjectLibraryNodes } from '../../../libraries/use-project-library-nodes';
+import { cn } from '../../../../lib/cn';
 import { HostSurfacePortal } from '../../../host-surface/HostSurfacePortal';
 import { useHostSurface } from '../../../host-surface/use-host-surface';
 
@@ -362,12 +363,12 @@ function ArrangementPanel({
                         data-assignment-id={row.original.assignmentId}
                         data-midi-focused={midiFocused ? 'true' : undefined}
                         data-library-drop-target={canInsertAfter ? 'orchestra-row' : undefined}
-                        className={[
+                        className={cn(
                           'cursor-default border-b border-l-2 border-l-transparent border-app-border/50 text-app-text-soft',
-                          active ? 'ring-1 ring-inset ring-app-accent' : '',
-                          midiFocused ? 'border-l-app-accent ring-1 ring-inset ring-app-accent/70' : '',
-                          selected ? 'bg-app-accent/20 text-app-text-strong' : 'hover:bg-app-hover',
-                        ].join(' ')}
+                          active && 'ring-1 ring-inset ring-app-accent',
+                          midiFocused && 'border-l-app-accent ring-1 ring-inset ring-app-accent/70',
+                          selected ? 'bg-app-accent/20 text-app-text-strong' : 'hover:bg-app-hover'
+                        )}
                         onClick={() => {
                           const clicked = row.original;
                           onSelectAssignment(clicked.assignmentId);

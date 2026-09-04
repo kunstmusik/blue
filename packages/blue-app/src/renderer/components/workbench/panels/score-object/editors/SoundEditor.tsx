@@ -19,6 +19,7 @@ import {
 import GeneratedScoreModal from './GeneratedScoreModal';
 import { useScoreObjectTest } from './useScoreObjectTest';
 import { AppSelect } from '../../../../AppSelect';
+import { cn } from '../../../../../lib/cn';
 
 type SoundTabId = 'interface' | 'automation' | 'code' | 'udo' | 'comments';
 
@@ -107,12 +108,12 @@ export default function SoundEditor({ document, onPatch, projectUdos }: ScoreObj
                 key={tab.key}
                 type="button"
                 data-sound-editor-tab={tab.key}
-                className={[
+                className={cn(
                   'border-b-2 px-3 py-2 text-role-body',
                   activeTab === tab.key
                     ? 'border-app-accent text-app-text-strong'
-                    : 'border-transparent text-app-text-muted hover:text-app-text-strong',
-                ].join(' ')}
+                    : 'border-transparent text-app-text-muted hover:text-app-text-strong'
+                )}
                 onClick={() => setActiveTab(tab.key)}
               >
                 {tab.label}
@@ -407,7 +408,10 @@ function SoundAutomationPanel({
             <span>Resolution</span>
             <input
               aria-label="Exact automation resolution"
-              className={`w-24 rounded border bg-app-surface px-2 py-1 text-role-body text-app-text-strong focus:border-app-accent focus:outline-none ${resolutionError ? 'border-app-danger' : 'border-app-border'}`}
+              className={cn(
+                'w-24 rounded border bg-app-surface px-2 py-1 text-role-body text-app-text-strong focus:border-app-accent focus:outline-none',
+                resolutionError ? 'border-app-danger' : 'border-app-border'
+              )}
               value={resolutionDraft}
               onChange={(event) => {
                 setResolutionDraft(event.target.value);

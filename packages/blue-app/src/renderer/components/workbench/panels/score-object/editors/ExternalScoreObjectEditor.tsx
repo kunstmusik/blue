@@ -4,6 +4,7 @@ import SelectedCodeEditor from '../../editors/SelectedCodeEditor';
 import GeneratedScoreModal from './GeneratedScoreModal';
 import { useScoreObjectTest } from './useScoreObjectTest';
 import { BLUE_INSPECTOR_LABEL_TEXT_CLASS } from '../../shared/compactFieldStyles';
+import { cn } from '../../../../../lib/cn';
 
 export default function ExternalScoreObjectEditor({ document, onPatch }: ScoreObjectEditorComponentProps): React.ReactElement {
   const editor = document.editor;
@@ -50,7 +51,7 @@ export default function ExternalScoreObjectEditor({ document, onPatch }: ScoreOb
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2 px-3 py-2 border-b border-blue-border shrink-0">
-        <label className={`shrink-0 ${BLUE_INSPECTOR_LABEL_TEXT_CLASS}`}>Command Line:</label>
+        <label className={cn('shrink-0', BLUE_INSPECTOR_LABEL_TEXT_CLASS)}>Command Line:</label>
         <input
           type="text"
           className="flex-1 min-w-0 rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 font-mono focus:border-blue-accent focus:outline-none"

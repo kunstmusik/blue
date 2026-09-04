@@ -4,6 +4,7 @@ import type { NodeRendererProps, NodeApi } from 'react-arborist';
 import { BlueTree } from '../../../tree/BlueTree';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { ChevronRight, FolderOpen, Folder, FileAudio } from 'lucide-react';
+import { cn } from '../../../../lib/cn';
 
 import type {
   EffectsLibraryCategorySnapshot,
@@ -222,10 +223,10 @@ function Node({
     <div
       ref={dragHandle}
       style={style}
-      className={[
+      className={cn(
         'flex items-center gap-1.5 pr-2 text-role-body select-none cursor-pointer',
         isSelected ? 'bg-blue-accent/20 text-gray-100' : 'text-gray-300 hover:bg-white/5',
-      ].join(' ')}
+      )}
       onClick={(e) => {
         node.handleClick(e);
         if (isCategory) {
@@ -235,10 +236,10 @@ function Node({
     >
       {isCategory && (
         <ChevronRight
-          className={[
+          className={cn(
             'h-3 w-3 flex-none transition-transform',
-            node.isOpen ? 'rotate-90' : '',
-          ].join(' ')}
+            node.isOpen && 'rotate-90',
+          )}
           onClick={(e) => {
             e.stopPropagation();
             node.toggle();

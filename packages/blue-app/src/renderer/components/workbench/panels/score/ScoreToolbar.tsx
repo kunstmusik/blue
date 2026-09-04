@@ -5,6 +5,7 @@ import type { ScorePathSegment } from './types';
 import type { NoteProcessorChainSnapshot } from '../../../../../shared/project-editor';
 import { PopoutDropdownMenuPortal, portalEventIsolationProps } from '../../../../hooks/host-portals';
 import { useScoreColorHistoryStore } from '../../../../stores/score-color-history-store';
+import { cn } from '../../../../lib/cn';
 
 type ScoreMode = 'score' | 'singleLine' | 'multiLine';
 
@@ -64,11 +65,12 @@ export default function ScoreToolbar({
         {MODE_OPTIONS.map((opt) => (
           <button
             key={opt.value}
-            className={`px-2 py-0.5 text-role-callout transition-colors cursor-pointer ${
+            className={cn(
+              'px-2 py-0.5 text-role-callout transition-colors cursor-pointer',
               mode === opt.value
                 ? 'bg-app-accent/20 text-app-text font-medium'
-                : 'bg-transparent text-app-text-muted hover:bg-app-hover hover:text-app-text'
-            }`}
+                : 'bg-transparent text-app-text-muted hover:bg-app-hover hover:text-app-text',
+            )}
             onClick={() => onModeChange(opt.value)}
           >
             {opt.label}
@@ -87,11 +89,12 @@ export default function ScoreToolbar({
             <span key={segment.groupId ?? 'root'} className="flex items-center gap-0 whitespace-nowrap">
               {i > 0 && <span className="mr-1 text-app-text-muted">/</span>}
               <button
-                className={`px-1 py-0.5 rounded text-role-callout cursor-pointer ${
+                className={cn(
+                  'px-1 py-0.5 rounded text-role-callout cursor-pointer',
                   i === pathSegments.length - 1
                     ? 'font-medium bg-app-surface/80 text-app-text'
-                    : 'text-app-text-muted hover:bg-app-hover hover:text-app-text'
-                }`}
+                    : 'text-app-text-muted hover:bg-app-hover hover:text-app-text',
+                )}
                 onClick={() => (i === 0 ? onNavigateToRoot() : onNavigateToSegment(i))}
               >
                 {segment.label}
@@ -143,11 +146,12 @@ export default function ScoreToolbar({
       {/* Snap button with dropdown */}
       <div className="flex items-stretch mr-1.5 h-[22px]">
         <button
-          className={`px-1.5 text-role-callout border rounded-l transition-colors cursor-pointer flex items-center ${
+          className={cn(
+            'px-1.5 text-role-callout border rounded-l transition-colors cursor-pointer flex items-center',
             snapEnabled
               ? 'bg-app-accent/20 text-app-text border-app-accent/40'
-              : 'bg-transparent text-app-text-muted border-app-border/40 hover:bg-app-hover'
-          }`}
+              : 'bg-transparent text-app-text-muted border-app-border/40 hover:bg-app-hover',
+          )}
           onClick={() => onSnapToggle(!snapEnabled)}
           title="Toggle snap on/off"
         >
@@ -156,11 +160,12 @@ export default function ScoreToolbar({
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
             <button
-              className={`px-1 border border-l-0 rounded-r transition-colors cursor-pointer flex items-center ${
+              className={cn(
+                'px-1 border border-l-0 rounded-r transition-colors cursor-pointer flex items-center',
                 snapEnabled
                   ? 'bg-app-accent/20 text-app-text border-app-accent/40'
-                  : 'bg-transparent text-app-text-muted border-app-border/40 hover:bg-app-hover'
-              }`}
+                  : 'bg-transparent text-app-text-muted border-app-border/40 hover:bg-app-hover',
+              )}
               title="Configure snap value"
             >
               <ChevronDown className="w-3 h-3" />
@@ -191,11 +196,12 @@ export default function ScoreToolbar({
                         return (
                           <DropdownMenu.Item
                             key={name}
-                            className={`rounded-sm px-3 py-1 text-role-callout outline-none cursor-pointer data-[highlighted]:bg-app-highlight ${
+                            className={cn(
+                              'rounded-sm px-3 py-1 text-role-callout outline-none cursor-pointer data-[highlighted]:bg-app-highlight',
                               snapValue === name
                                 ? 'bg-app-accent/20 text-app-text font-medium'
-                                : 'text-app-text'
-                            }`}
+                                : 'text-app-text',
+                            )}
                             onSelect={() => onSnapValueChange(name)}
                           >
                             {def.displayName}
@@ -208,11 +214,12 @@ export default function ScoreToolbar({
               ))}
               <DropdownMenu.Separator className="my-1 h-px bg-app-border/30" />
               <DropdownMenu.Item
-                className={`rounded-sm px-3 py-1 text-role-callout outline-none cursor-pointer data-[highlighted]:bg-app-highlight ${
+                className={cn(
+                  'rounded-sm px-3 py-1 text-role-callout outline-none cursor-pointer data-[highlighted]:bg-app-highlight',
                   snapValue === 'AUTO'
                     ? 'bg-app-accent/20 text-app-text font-medium'
-                    : 'text-app-text'
-                }`}
+                    : 'text-app-text',
+                )}
                 onSelect={() => onSnapValueChange('AUTO')}
               >
                 Auto

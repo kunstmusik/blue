@@ -3,6 +3,7 @@ import type { ClojureLibraryEntrySnapshot } from '../../../../../shared/project-
 import { APP_INSPECTOR_LABEL_TEXT_CLASS } from '../shared/compactFieldStyles';
 import { InputBase } from './ProjectPropertyFields';
 import type { ClojureProjectTabProps } from './types';
+import { cn } from '../../../../lib/cn';
 
 const BUTTON_CLASSES =
   'rounded-md border border-app-border bg-app-surface px-3 py-2 text-role-body font-medium text-app-text-strong transition hover:border-app-accent hover:text-app-text-strong disabled:cursor-not-allowed disabled:opacity-45';
@@ -86,7 +87,7 @@ export default function ClojureProjectTab({
       </div>
 
       <div className="overflow-hidden rounded-xl border border-app-border bg-app-overlay">
-        <div className={`hidden grid-cols-[minmax(0,1.5fr)_180px_182px] gap-3 border-b border-app-border/80 bg-app-surface px-4 py-3 lg:grid ${APP_INSPECTOR_LABEL_TEXT_CLASS}`}>
+        <div className={cn('hidden grid-cols-[minmax(0,1.5fr)_180px_182px] gap-3 border-b border-app-border/80 bg-app-surface px-4 py-3 lg:grid', APP_INSPECTOR_LABEL_TEXT_CLASS)}>
           <span>Library Coordinates</span>
           <span>Version</span>
           <span>Actions</span>
@@ -104,7 +105,7 @@ export default function ClojureProjectTab({
                 className="grid gap-3 px-4 py-4 lg:grid-cols-[minmax(0,1.5fr)_180px_182px] lg:items-start"
               >
                 <div className="space-y-2">
-                  <div className={`lg:hidden ${APP_INSPECTOR_LABEL_TEXT_CLASS}`}>
+                  <div className={cn('lg:hidden', APP_INSPECTOR_LABEL_TEXT_CLASS)}>
                     Library Coordinates
                   </div>
                   <InputBase
@@ -118,7 +119,7 @@ export default function ClojureProjectTab({
                   />
                 </div>
                 <div className="space-y-2">
-                  <div className={`lg:hidden ${APP_INSPECTOR_LABEL_TEXT_CLASS}`}>
+                  <div className={cn('lg:hidden', APP_INSPECTOR_LABEL_TEXT_CLASS)}>
                     Version
                   </div>
                   <InputBase

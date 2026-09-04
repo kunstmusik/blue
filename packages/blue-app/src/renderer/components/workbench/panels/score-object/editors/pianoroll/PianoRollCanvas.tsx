@@ -8,6 +8,7 @@ import {
   formatPianoRollPitch,
 } from './types';
 import type { NoteCanvasMouseListener } from './NoteCanvasMouseListener';
+import { cn } from '../../../../../../lib/cn';
 
 interface PianoRollCanvasProps {
   notes: NoteSnapshot[];
@@ -209,7 +210,10 @@ export default function PianoRollCanvas({
         const isSelected = selectedIndices.has(i);
         return (
           <div key={`note-${i}`}
-            className={`absolute border select-none ${isSelected ? 'bg-white border-gray-300' : 'bg-gray-500 border-gray-600'}`}
+            className={cn(
+              'absolute border select-none',
+              isSelected ? 'bg-white border-gray-300' : 'bg-gray-500 border-gray-600'
+            )}
             style={{
               left: x,
               top: y + 1,

@@ -3,6 +3,7 @@ import * as ContextMenu from '@radix-ui/react-context-menu';
 import { useId } from 'react';
 import { useLibraryDropTarget } from './use-library-drop-target';
 import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../hooks/host-portals';
+import { cn } from '../../lib/cn';
 
 export type LibraryDropZoneState = ReturnType<typeof useLibraryDropTarget>;
 
@@ -56,7 +57,10 @@ export function LibraryTableDropMarker({
               tabIndex={0}
               aria-label={`${label}; paste a Library item here`}
               aria-describedby={feedbackId}
-              className={`relative h-2 outline-none focus-visible:h-3 focus-visible:bg-app-accent/35 ${active ? 'h-3 bg-app-accent' : ''}`}
+              className={cn(
+                'relative h-2 outline-none focus-visible:h-3 focus-visible:bg-app-accent/35',
+                active && 'h-3 bg-app-accent',
+              )}
             />
             <span id={feedbackId} role="status" aria-live="polite" className="sr-only">{feedback}</span>
           </div>
@@ -89,17 +93,15 @@ export function LibraryBlockDropMarker({
         tabIndex={0}
         aria-label={`${label}; paste a Library item here`}
         aria-describedby={feedbackId}
-        className={[
+        className={cn(
           'rounded outline-none',
           fillRemaining
             ? 'min-h-8 flex-1 focus-visible:bg-app-accent/20 focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-app-accent'
             : 'h-2 focus-visible:h-3 focus-visible:bg-app-accent/35',
-          active
-            ? fillRemaining
-              ? 'bg-app-accent/20 ring-1 ring-inset ring-app-accent'
-              : 'h-3 bg-app-accent'
-            : '',
-        ].join(' ')}
+          active && (fillRemaining
+            ? 'bg-app-accent/20 ring-1 ring-inset ring-app-accent'
+            : 'h-3 bg-app-accent'),
+        )}
       />
       <span id={feedbackId} role="status" aria-live="polite" className="sr-only">{feedback}</span>
     </div>

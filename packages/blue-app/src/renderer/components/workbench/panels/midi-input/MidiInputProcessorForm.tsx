@@ -5,6 +5,7 @@ import type { MidiInputProcessorSnapshot, MidiScaleSnapshot } from '../../../../
 import { BLUE_INSPECTOR_LABEL_TEXT_CLASS } from '../shared/compactFieldStyles';
 import { PopoutContextMenuPortal } from '../../../../hooks/host-portals';
 import { AppSelect } from '../../../AppSelect';
+import { cn } from '../../../../lib/cn';
 
 const KEY_MAPPING_OPTIONS = [
   { value: 'MIDI', label: 'MIDI' },
@@ -31,7 +32,7 @@ function ensureOption(options: ReadonlyArray<{ value: string; label: string }>, 
 function FormRow({ label, children }: { label: string; children: ReactElement }): ReactElement {
   return (
     <div className="flex items-center gap-3">
-      <span className={`w-24 flex-none text-right ${BLUE_INSPECTOR_LABEL_TEXT_CLASS}`}>{label}</span>
+      <span className={cn('w-24 flex-none text-right', BLUE_INSPECTOR_LABEL_TEXT_CLASS)}>{label}</span>
       <div className="flex-1 min-w-0">{children}</div>
     </div>
   );

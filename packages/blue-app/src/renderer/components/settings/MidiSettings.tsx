@@ -2,6 +2,7 @@ import React from 'react';
 import { useMidiInputStore } from '../../stores/midi-input-store';
 import SettingsSection from './SettingsSection';
 import type { MidiInputDeviceRuntime } from '../../../shared/midi-input';
+import { cn } from '../../lib/cn';
 
 function phaseBadgeClass(phase: string): string {
   switch (phase) {
@@ -153,7 +154,7 @@ export default function MidiSettings(): React.ReactElement {
     <SettingsSection title="MIDI">
       <div className="mb-3 flex items-center gap-3">
         <span
-          className={`inline-flex items-center rounded-full px-2 py-0.5 text-role-callout ${phaseBadgeClass(phase)}`}
+          className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-role-callout', phaseBadgeClass(phase))}
         >
           {phase}
         </span>
@@ -209,7 +210,7 @@ export default function MidiSettings(): React.ReactElement {
                   </td>
                   <td className="px-3 py-2">
                     <span
-                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-role-callout ${connectionBadgeClass(row.connection, row.availability)}`}
+                      className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-role-callout', connectionBadgeClass(row.connection, row.availability))}
                     >
                       {row.availability === 'unavailable' ? 'unavailable' : row.connection}
                     </span>

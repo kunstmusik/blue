@@ -8,6 +8,7 @@ import {
 } from '../../../shared/osc-control';
 import SettingsField from './SettingsField';
 import SettingsSection from './SettingsSection';
+import { cn } from '../../lib/cn';
 
 interface OscSettingsProps {
   settings: OscServerPreferences;
@@ -74,7 +75,7 @@ export default function OscSettings({
 
       <div className="rounded-md border border-app-border bg-app-surface p-4 text-role-body">
         <div className="mb-3 flex items-center gap-3">
-          <span className={`inline-flex items-center rounded-full px-2 py-0.5 ${phaseClass(runtime)}`}>
+          <span className={cn('inline-flex items-center rounded-full px-2 py-0.5', phaseClass(runtime))}>
             {phaseLabel(runtime)}
           </span>
           {activePort !== null && (

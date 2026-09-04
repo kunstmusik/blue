@@ -5,6 +5,7 @@ import TableEditor from './TableEditor';
 import CommitNumberInput, { CommitNumberField } from './CommitNumberInput';
 import { renderProbabilitySubEditor } from './probability-editors';
 import { AppSelect } from '../../../../../AppSelect';
+import { cn } from '../../../../../../lib/cn';
 
 type OnChange = (gen: GeneratorSnapshot) => void;
 
@@ -129,7 +130,14 @@ export function ItemListEditor({ gen, onChange }: { gen: GeneratorSnapshot; onCh
         <table className="w-full text-role-body">
           <tbody>
             {listItems.map((item, i) => (
-              <tr key={i} className={`cursor-pointer ${selectedIdx === i ? 'bg-blue-accent/30' : 'hover:bg-blue-border/30'}`} onClick={() => setSelectedIdx(i)}>
+              <tr
+                key={i}
+                className={cn(
+                  'cursor-pointer',
+                  selectedIdx === i ? 'bg-blue-accent/30' : 'hover:bg-blue-border/30'
+                )}
+                onClick={() => setSelectedIdx(i)}
+              >
                 <td className="px-1 py-0.5">
                   <CommitNumberInput
                     value={item}

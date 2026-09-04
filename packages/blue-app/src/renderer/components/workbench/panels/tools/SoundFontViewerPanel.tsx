@@ -9,6 +9,7 @@ import { DEFAULT_SPLIT_SIZE_PX } from '../../../../../shared/window-layout-setti
 import type { SoundFontInfo } from '../../../../../shared/soundfont-viewer';
 import { subscribePendingSoundFontFile } from './soundfont-viewer-bus';
 import SplitPane from '../orchestra/SplitPane';
+import { cn } from '../../../../lib/cn';
 
 const WIDE_PANEL_BREAKPOINT = 640;
 
@@ -193,11 +194,12 @@ export default function SoundFontViewerPanel(): React.ReactElement {
     <div ref={panelRef} data-soundfont-panel="true" className="relative flex h-full min-h-0 flex-col overflow-hidden bg-app-bg/15 text-app-text">
       <section
         data-soundfont-drop-target="true"
-        className={`shrink-0 border-b px-3 py-3 transition-colors ${
+        className={cn(
+          'shrink-0 border-b px-3 py-3 transition-colors',
           isDragging
             ? 'border-app-accent/60 bg-app-accent/10 ring-1 ring-inset ring-app-accent/60'
-            : 'border-app-border/30 bg-app-surface/30'
-        }`}
+            : 'border-app-border/30 bg-app-surface/30',
+        )}
         onDragEnter={handleDragEnter}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -330,7 +332,10 @@ function SoundFontTable({
                 {row.map((value, columnIndex) => (
                   <td
                     key={`${columnIndex}-${value}`}
-                    className={`px-2.5 py-1.5 text-app-text ${columnIndex === 0 ? 'w-8 tabular-nums text-app-text-muted' : ''}`}
+                    className={cn(
+                      'px-2.5 py-1.5 text-app-text',
+                      columnIndex === 0 && 'w-8 tabular-nums text-app-text-muted',
+                    )}
                   >
                     {value}
                   </td>

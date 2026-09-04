@@ -21,6 +21,7 @@ import {
 } from './automation-line-utils';
 import { snapValueToBeats, type SnapValueName } from '@blue/data';
 import { useScoreAutomationStore } from '../../../../../stores/score-automation-store';
+import { cn } from '../../../../../lib/cn';
 
 interface Props {
   automation: ScoreLayerAutomationSnapshot;
@@ -654,7 +655,7 @@ export default function AutomationLayerOverlay({
   return (
     <div
       ref={containerRef}
-      className={`absolute inset-0 z-10 ${interactive ? 'pointer-events-auto' : 'pointer-events-none'}`}
+      className={cn('absolute inset-0 z-10', interactive ? 'pointer-events-auto' : 'pointer-events-none')}
       onMouseDown={handleMouseDown}
       onMouseMove={handleHoverMove}
       onMouseLeave={() => {

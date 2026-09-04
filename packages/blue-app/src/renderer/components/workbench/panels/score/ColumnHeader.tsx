@@ -17,6 +17,7 @@ import TempoRegionBar from './TempoRegionBar';
 import TempoLineView from './TempoLineView';
 import TempoPointDialog from './TempoPointDialog';
 import MeterEntryDialog from './MeterEntryDialog';
+import { cn } from '../../../../lib/cn';
 
 interface Props {
   timeState: ScoreTimeStateSnapshot;
@@ -191,7 +192,11 @@ function TimeBar({ timeDisplay, totalBeats, pixelsPerBeat, tempoMap, meters, smp
   return (
     <div
       data-score-time-ruler={onMouseDown ? 'primary' : undefined}
-      className={`relative overflow-hidden border-b border-blue-border/20 ${secondary ? 'bg-blue-surface' : 'bg-blue-bg'} ${onMouseDown ? 'cursor-crosshair select-none' : ''}`}
+      className={cn(
+        'relative overflow-hidden border-b border-blue-border/20',
+        secondary ? 'bg-blue-surface' : 'bg-blue-bg',
+        onMouseDown && 'cursor-crosshair select-none',
+      )}
       style={{ height: ROW_HEIGHT, minWidth: totalBeats * pixelsPerBeat }}
       onMouseDown={onMouseDown}
     >

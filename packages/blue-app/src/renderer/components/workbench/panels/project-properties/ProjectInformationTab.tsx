@@ -2,6 +2,7 @@ import React from 'react';
 import { APP_INSPECTOR_LABEL_TEXT_CLASS } from '../shared/compactFieldStyles';
 import { FieldRow, InputBase, TextAreaBase } from './ProjectPropertyFields';
 import type { ProjectPropertiesTabProps } from './types';
+import { cn } from '../../../../lib/cn';
 
 export default function ProjectInformationTab({
   disabled,
@@ -27,7 +28,7 @@ export default function ProjectInformationTab({
         </FieldRow>
       </div>
       <div className="mt-4 flex min-h-0 flex-1 flex-col">
-        <span className={`mb-2 ${APP_INSPECTOR_LABEL_TEXT_CLASS}`}>
+        <span className={cn('mb-2', APP_INSPECTOR_LABEL_TEXT_CLASS)}>
           Notes
         </span>
         <TextAreaBase

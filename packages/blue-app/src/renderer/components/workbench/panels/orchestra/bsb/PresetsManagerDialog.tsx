@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmationDialog } from '../../../../dialogs/ConfirmationDialog';
+import { cn } from '../../../../../lib/cn';
 import type {
   BsbInterfacePatch,
   PresetGroupSnapshot,
@@ -285,14 +286,14 @@ function PresetNode({
       ref={dragHandle}
       style={style}
       data-drop-target={isActiveDropTarget ? 'true' : undefined}
-      className={[
+      className={cn(
         'flex items-center gap-1.5 pr-2 text-role-body select-none cursor-pointer',
         isActiveDropTarget
           ? 'bg-blue-accent/25 text-gray-100 ring-1 ring-inset ring-blue-accent/80'
           : node.isSelected
             ? 'bg-blue-accent/20 text-gray-100'
-            : 'text-gray-300 hover:bg-white/5',
-      ].join(' ')}
+            : 'text-gray-300 hover:bg-white/5'
+      )}
       onClick={(event) => {
         node.handleClick(event);
         if (isGroup) node.toggle();
@@ -304,10 +305,10 @@ function PresetNode({
     >
       {isGroup ? (
         <ChevronRight
-          className={[
+          className={cn(
             'h-3 w-3 flex-none transition-transform',
-            node.isOpen ? 'rotate-90' : '',
-          ].join(' ')}
+            node.isOpen && 'rotate-90'
+          )}
           aria-hidden="true"
           onClick={(event) => {
             event.stopPropagation();

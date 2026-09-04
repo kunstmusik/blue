@@ -3,6 +3,7 @@ import * as ContextMenu from '@radix-ui/react-context-menu';
 import type { EditorView } from '@codemirror/view';
 import { ChevronRight } from 'lucide-react';
 import React, { type MutableRefObject, type ReactNode } from 'react';
+import { cn } from '../../../../lib/cn';
 
 import {
   copySelectionToClipboard,
@@ -52,9 +53,7 @@ function isSeparatorItem(item: CsoundEditorMenuItem): item is CsoundEditorSepara
 }
 
 function getMenuItemClassName(disabled?: boolean): string {
-  return ['editor-context-menu__item', disabled ? 'editor-context-menu__item--disabled' : '']
-    .filter(Boolean)
-    .join(' ');
+  return cn('editor-context-menu__item', disabled && 'editor-context-menu__item--disabled');
 }
 
 function renderMenuItem(
@@ -73,7 +72,7 @@ function renderMenuItem(
     return (
       <ContextMenu.Sub key={item.id}>
         <ContextMenu.SubTrigger
-          className={[getMenuItemClassName(item.disabled), 'editor-context-menu__subtrigger'].filter(Boolean).join(' ')}
+          className={cn(getMenuItemClassName(item.disabled), 'editor-context-menu__subtrigger')}
           disabled={item.disabled}
           title={item.disabledReason}
         >

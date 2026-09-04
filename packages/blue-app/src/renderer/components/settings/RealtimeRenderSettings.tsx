@@ -14,6 +14,7 @@ import SettingsField, {
   SETTINGS_NARROW_FIELD_CLASS,
 } from './SettingsField';
 import RuntimeDeviceField from './RuntimeDeviceField';
+import { cn } from '../../lib/cn';
 
 interface RealtimeRenderSettingsProps {
   settings: RealtimeRenderSettingsSnapshot;
@@ -191,11 +192,12 @@ export default function RealtimeRenderSettings({
       {probeResult && (
         <div
           role="status"
-          className={`mb-4 rounded-md border px-3 py-2 text-role-body ${
+          className={cn(
+            'mb-4 rounded-md border px-3 py-2 text-role-body',
             probeResult.ok
               ? 'border-app-success/40 bg-app-success/10 text-app-text'
-              : 'border-app-danger/40 bg-app-danger/10 text-app-danger'
-          }`}
+              : 'border-app-danger/40 bg-app-danger/10 text-app-danger',
+          )}
         >
           <div>{probeResult.message}</div>
           {probeResult.selection && (

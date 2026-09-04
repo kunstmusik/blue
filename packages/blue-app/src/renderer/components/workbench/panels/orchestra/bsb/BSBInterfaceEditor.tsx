@@ -15,6 +15,7 @@ import BSBGridSettingsPanel from './BSBGridSettingsPanel';
 import BSBPresetBar from './BSBPresetBar';
 import SplitPane from '../SplitPane';
 import { isTextEditingTarget } from '../../../../../hooks/use-keyboard-shortcuts';
+import { cn } from '../../../../../lib/cn';
 
 interface BSBInterfaceEditorProps {
   instrument: BlueSynthBuilderInstrumentSnapshot;
@@ -135,24 +136,24 @@ function BSBInterfaceEditor({
                 <div className="flex">
                   <button
                     type="button"
-                    className={[
+                    className={cn(
                       'flex-1 border-b-2 px-2 py-1.5 text-role-body uppercase tracking-[0.12em]',
                       rightTab === 'properties'
                         ? 'border-blue-accent text-gray-100'
-                        : 'border-transparent text-blue-muted hover:text-gray-100',
-                    ].join(' ')}
+                        : 'border-transparent text-blue-muted hover:text-gray-100'
+                    )}
                     onClick={() => setRightTab('properties')}
                   >
                     Properties
                   </button>
                   <button
                     type="button"
-                    className={[
+                    className={cn(
                       'flex-1 border-b-2 px-2 py-1.5 text-role-body uppercase tracking-[0.12em]',
                       rightTab === 'grid'
                         ? 'border-blue-accent text-gray-100'
-                        : 'border-transparent text-blue-muted hover:text-gray-100',
-                    ].join(' ')}
+                        : 'border-transparent text-blue-muted hover:text-gray-100'
+                    )}
                     onClick={() => setRightTab('grid')}
                   >
                     Grid

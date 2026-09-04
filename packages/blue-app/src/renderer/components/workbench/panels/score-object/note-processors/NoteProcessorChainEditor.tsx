@@ -11,6 +11,7 @@ import { useNoteProcessorClipboardStore } from '../../../../../stores/note-proce
 import { HostSurfacePortal } from '../../../../host-surface/HostSurfacePortal';
 import { useHostSurface } from '../../../../host-surface/use-host-surface';
 import NoteProcessorCodeModal from './NoteProcessorCodeModal';
+import { cn } from '../../../../../lib/cn';
 
 const CATALOG = getNoteProcessorCatalog();
 
@@ -286,9 +287,10 @@ export default function NoteProcessorChainEditor({ chain, onCommit, namedChainNa
           local.processors.map((proc, idx) => (
             <div
               key={proc.id}
-              className={`flex items-center gap-2 px-2 py-1 text-role-body cursor-pointer ${
+              className={cn(
+                'flex items-center gap-2 px-2 py-1 text-role-body cursor-pointer',
                 idx === selectedIdx ? 'bg-blue-accent/20 text-white' : 'hover:bg-blue-border/20'
-              }`}
+              )}
               onClick={() => setSelectedIdx(idx)}
             >
               <span className={proc.supported ? (proc.deferred ? 'text-orange-400' : 'text-gray-200') : 'text-yellow-400'}>
@@ -383,7 +385,10 @@ function NoteProcessorParameterEditor({
               />
             ) : param.valueType === 'multilineText' ? (
               <textarea
-                className={`flex-1 min-h-16 rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none min-w-0 resize-y ${isReadOnly ? 'opacity-60 cursor-default' : ''}`}
+                className={cn(
+                  'flex-1 min-h-16 rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none min-w-0 resize-y',
+                  isReadOnly && 'opacity-60 cursor-default'
+                )}
                 value={String(value ?? param.defaultValue)}
                 onChange={(e) => onChange(param.name, e.target.value)}
                 readOnly={isReadOnly}

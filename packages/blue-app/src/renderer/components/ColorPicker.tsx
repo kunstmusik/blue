@@ -10,6 +10,7 @@ import {
 import { useHostDocument } from '../hooks/use-host-document';
 import { HostSurfacePortal } from './host-surface/HostSurfacePortal';
 import { useHostSurface } from './host-surface/use-host-surface';
+import { cn } from '../lib/cn';
 import {
   COLOR_PICKER_MARGIN,
   hexToHsl,
@@ -56,7 +57,7 @@ function ColorSlider({
   last?: boolean;
 }): ReactElement {
   return (
-    <label className={`${last ? 'mb-3' : 'mb-2'} grid grid-cols-[54px_1fr_34px] items-center gap-2`}>
+    <label className={cn(last ? 'mb-3' : 'mb-2', 'grid grid-cols-[54px_1fr_34px] items-center gap-2')}>
       <span>{label}</span>
       <input
         aria-label={label}
@@ -222,7 +223,7 @@ export default function ColorPickerButton({
         aria-haspopup="dialog"
         aria-expanded={open}
         title={title}
-        className={`cursor-pointer ${className}`}
+        className={cn('cursor-pointer', className)}
         style={{ backgroundColor: normalizeHex(value), ...style }}
         onMouseDown={(event) => event.stopPropagation()}
         onClick={(event) => {

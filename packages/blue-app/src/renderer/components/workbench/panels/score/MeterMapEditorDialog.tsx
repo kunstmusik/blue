@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import type { MeterMapSnapshot, MeterMapPatch, MeterEntryInput } from '../../../../../shared/project-editor';
 import { parseMeterSignature, isPowerOfTwo } from './meter-map-utils';
+import { cn } from '../../../../lib/cn';
 
 const SECONDARY_BUTTON_CLASS = 'rounded border border-app-border/40 bg-app-surface px-3 py-1 text-role-body text-app-text transition-colors hover:bg-app-hover';
 
@@ -248,7 +249,10 @@ export default function MeterMapEditorDialog({
                   </td>
                   <td className="py-1 text-center">
                     <button
-                      className={`rounded px-1.5 py-0.5 text-role-callout ${canDelete ? 'text-app-danger hover:bg-app-outline-strong' : 'cursor-not-allowed text-app-text-muted'}`}
+                      className={cn(
+                        'rounded px-1.5 py-0.5 text-role-callout',
+                        canDelete ? 'text-app-danger hover:bg-app-outline-strong' : 'cursor-not-allowed text-app-text-muted',
+                      )}
                       disabled={!canDelete}
                       onClick={() => handleRemove(i)}
                     >

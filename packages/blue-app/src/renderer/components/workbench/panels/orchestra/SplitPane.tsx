@@ -6,6 +6,7 @@ import {
   type SplitOrientation,
 } from '../../../../../shared/window-layout-settings';
 import { useLayoutSettingsStore } from '../../../../stores/layout-settings-store';
+import { cn } from '../../../../lib/cn';
 
 const HANDLE_SIZE = 12;
 const KEYBOARD_STEP_PX = 24;
@@ -293,13 +294,11 @@ export default function SplitPane({
     setSplitRatio(Math.min(Math.max(nextRatio, minFirstBound / availableSize), maxFirstSize / availableSize));
   };
 
-  const containerClasses = [
+  const containerClasses = cn(
     'flex h-full min-h-0 w-full overflow-hidden',
     orientation === 'horizontal' ? 'flex-row' : 'flex-col',
-    className,
-  ]
-    .filter(Boolean)
-    .join(' ');
+    className
+  );
 
   const accessibleControlledSize =
     controlledPane === 'first' ? firstSize : Math.max(0, availableSize - firstSize);
@@ -312,19 +311,15 @@ export default function SplitPane({
       ? { width: `${firstSize}px` }
       : { height: `${firstSize}px` };
 
-  const handleClasses = [
+  const handleClasses = cn(
     'group flex flex-none items-center justify-center border-blue-border bg-app-surface-strong transition-colors hover:bg-app-hover focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-app-accent',
-    orientation === 'horizontal' ? 'h-full w-3 cursor-col-resize' : 'h-3 w-full cursor-row-resize',
-  ]
-    .filter(Boolean)
-    .join(' ');
+    orientation === 'horizontal' ? 'h-full w-3 cursor-col-resize' : 'h-3 w-full cursor-row-resize'
+  );
 
-  const handleGripClasses = [
+  const handleGripClasses = cn(
     'rounded-full bg-blue-border/80 transition-colors group-hover:bg-blue-accent',
-    orientation === 'horizontal' ? 'h-10 w-px' : 'h-px w-10',
-  ]
-    .filter(Boolean)
-    .join(' ');
+    orientation === 'horizontal' ? 'h-10 w-px' : 'h-px w-10'
+  );
 
   const firstPaneDataset = splitId
     ? { 'data-split-pane': 'first', 'data-split-id': splitId }
@@ -333,7 +328,7 @@ export default function SplitPane({
   return (
     <div ref={containerRef} className={containerClasses}>
       <div
-        className={[paneClasses, 'flex-none', firstClassName].filter(Boolean).join(' ')}
+        className={cn(paneClasses, 'flex-none', firstClassName)}
         style={firstPaneStyle}
         {...firstPaneDataset}
       >
@@ -348,13 +343,13 @@ export default function SplitPane({
         aria-valuemin={Math.round(accessibleControlledMin)}
         aria-valuemax={Math.round(accessibleControlledMax)}
         aria-valuenow={Math.round(accessibleControlledSize)}
-        className={[handleClasses, separatorClassName].filter(Boolean).join(' ')}
+        className={cn(handleClasses, separatorClassName)}
         onKeyDown={handleKeyDown}
         onPointerDown={startDrag}
       >
         <div className={handleGripClasses} />
       </button>
-      <div className={[paneClasses, 'flex-1', secondClassName].filter(Boolean).join(' ')}>
+      <div className={cn(paneClasses, 'flex-1', secondClassName)}>
         {second}
       </div>
     </div>

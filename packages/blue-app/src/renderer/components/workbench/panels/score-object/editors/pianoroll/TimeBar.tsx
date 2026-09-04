@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { TimeBase } from '@blue/data';
+import { cn } from '../../../../../../lib/cn';
 
 export const PIANO_ROLL_RULER_ROW_HEIGHT = 20;
 
@@ -100,7 +101,10 @@ function RulerRow({
 
   return (
     <div
-      className={`relative overflow-hidden border-b border-blue-border/20 ${secondary ? 'bg-app-input' : 'bg-app-surface-strong'}`}
+      className={cn(
+        'relative overflow-hidden border-b border-blue-border/20',
+        secondary ? 'bg-app-input' : 'bg-app-surface-strong'
+      )}
       style={{ width: totalBeats * pixelSecond, height: PIANO_ROLL_RULER_ROW_HEIGHT }}
     >
       {marks.map((mark, i) => (

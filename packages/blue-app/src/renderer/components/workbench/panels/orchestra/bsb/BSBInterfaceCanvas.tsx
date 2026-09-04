@@ -28,6 +28,7 @@ import {
   PreservedWidget,
 } from './widgets';
 import { getCanvasDisplaySize, getWidgetDisplaySize } from './widgets/utils';
+import { cn } from '../../../../../lib/cn';
 import { useKeyboardShortcutScope } from '../../../../../hooks/use-keyboard-shortcut-scope';
 import { isTextEditingTarget } from '../../../../../hooks/use-keyboard-shortcuts';
 import {
@@ -787,11 +788,12 @@ function resolveCurrentChildren(root: BsbWidgetNodeSnapshot, stack: GroupStackEn
 function BreadcrumbItem({ label, onClick, active }: { label: string; onClick: () => void; active: boolean }) {
   return (
     <button
-      className={`rounded px-1.5 py-0.5 text-role-body ${
+      className={cn(
+        'rounded px-1.5 py-0.5 text-role-body',
         active
           ? 'text-gray-300'
           : 'text-blue-muted hover:bg-blue-border hover:text-gray-200'
-      }`}
+      )}
       onClick={(e) => { e.stopPropagation(); if (!active) onClick(); }}
     >
       {label}

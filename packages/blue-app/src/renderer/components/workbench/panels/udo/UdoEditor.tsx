@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Play } from 'lucide-react';
+import { cn } from '../../../../lib/cn';
 
 import type { UdoDefinitionSnapshot } from '../../../../../shared/project-editor';
 import SelectedCodeEditor from '../editors/SelectedCodeEditor';
@@ -191,24 +192,24 @@ export default function UdoEditor({
           <button
             type="button"
             onClick={() => setActiveTab('code')}
-            className={[
+            className={cn(
               'border-b-2 px-3 py-2 text-role-body',
               activeTab === 'code'
                 ? 'border-app-accent text-app-text-strong'
                 : 'border-transparent text-app-text-muted hover:text-app-text-strong',
-            ].join(' ')}
+            )}
           >
             Code
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('comments')}
-            className={[
+            className={cn(
               'border-b-2 px-3 py-2 text-role-body',
               activeTab === 'comments'
                 ? 'border-app-accent text-app-text-strong'
                 : 'border-transparent text-app-text-muted hover:text-app-text-strong',
-            ].join(' ')}
+            )}
           >
             Comments
           </button>

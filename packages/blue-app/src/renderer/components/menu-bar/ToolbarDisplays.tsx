@@ -30,14 +30,15 @@ import {
   type ToolbarDisplayMode,
 } from './toolbar-formatters';
 import { TimeBase } from '../../../shared/time-base';
+import { cn } from '../../lib/cn';
 
-const ToolbarDisplayCard = forwardRef<HTMLElement, ComponentPropsWithoutRef<'section'> & {
+export const ToolbarDisplayCard = forwardRef<HTMLElement, ComponentPropsWithoutRef<'section'> & {
   title: string;
 }>(
-  ({ title, children, className = '', ...props }, ref): React.ReactElement => (
+  ({ title, children, className, ...props }, ref): React.ReactElement => (
     <section
       ref={ref}
-      className={`toolbar-display-card ${className}`.trim()}
+      className={cn('toolbar-display-card', className)}
       {...props}
     >
       <div className="toolbar-display-label mb-0.5">{title}</div>

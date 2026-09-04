@@ -23,6 +23,7 @@ import {
 import { useKeyboardShortcutScope } from '../../../../../hooks/use-keyboard-shortcut-scope';
 import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../../hooks/host-portals';
 import { isTextEditingTarget } from '../../../../../hooks/use-keyboard-shortcuts';
+import { cn } from '../../../../../lib/cn';
 import { useFreezeOperationStore } from '../../../../../stores/freeze-operation-store';
 import { snapValueToBeats } from '@blue/data';
 import type { SnapValueName } from '@blue/data';
@@ -1948,7 +1949,7 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
         Reverse
       </ContextMenu.Item>
       <ContextMenu.Sub>
-        <ContextMenu.SubTrigger className={`${menuItemClass} editor-context-menu__subtrigger`}>
+        <ContextMenu.SubTrigger className={cn(menuItemClass, 'editor-context-menu__subtrigger')}>
           <span>Align</span>
           <ChevronRight className="w-3.5 h-3.5 opacity-60" />
         </ContextMenu.SubTrigger>
@@ -2046,7 +2047,7 @@ function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, libraryClipb
   return (
     <>
       <ContextMenu.Sub>
-        <ContextMenu.SubTrigger className={`${menuItemClass} editor-context-menu__subtrigger`}>
+        <ContextMenu.SubTrigger className={cn(menuItemClass, 'editor-context-menu__subtrigger')}>
           <span>Add SoundObject</span>
           <ChevronRight className="w-3.5 h-3.5 opacity-60" />
         </ContextMenu.SubTrigger>

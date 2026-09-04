@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useRef } from 'react';
 import { ChevronRight, FileCode, Folder, FolderOpen } from 'lucide-react';
+import { cn } from '../../../../lib/cn';
 import type { NodeRendererProps } from 'react-arborist';
 import { BlueTree } from '../../../tree/BlueTree';
 import * as ContextMenu from '@radix-ui/react-context-menu';
@@ -137,10 +138,10 @@ function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<RepoTreeNod
     <div
       ref={dragHandle}
       style={style}
-      className={[
+      className={cn(
         'flex items-center gap-1.5 pr-2 text-role-body select-none cursor-pointer',
         isSelected ? 'bg-app-accent/20 text-app-text-bright' : 'text-app-text hover:bg-app-hover',
-      ].join(' ')}
+      )}
       onClick={(e) => {
         node.handleClick(e);
         if (isContainer) node.toggle();
@@ -153,7 +154,7 @@ function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<RepoTreeNod
       {isContainer && (
         <ChevronRight
           aria-hidden="true"
-          className={['h-3 w-3 flex-none transition-transform', node.isOpen ? 'rotate-90' : ''].join(' ')}
+          className={cn('h-3 w-3 flex-none transition-transform', node.isOpen && 'rotate-90')}
         />
       )}
       {!isContainer && <span className="w-3 flex-none" />}

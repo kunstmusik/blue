@@ -23,6 +23,7 @@ import {
 import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../hooks/host-portals';
 import ColorPickerButton from '../../../ColorPicker';
 import { DEFAULT_LAYER_COLOR, formatLayerColorToHex, normalizeLayerColor } from '@blue/data';
+import { cn } from '../../../../lib/cn';
 import { useScoreColorHistoryStore } from '../../../../stores/score-color-history-store';
 import { buildApplyLayerColorToAllClipsPatch } from './score-color-actions';
 
@@ -192,11 +193,11 @@ export default function PatternLayerHeader({
           data-keyboard-focused={isFocusKey && keyboardFocus ? 'true' : undefined}
           aria-selected={isLayerSelected ? 'true' : 'false'}
           data-selected-layer={isLayerSelected ? 'true' : undefined}
-          className={[
+          className={cn(
             'relative flex items-start overflow-hidden border-b border-app-border-muted border-l-2 select-none focus:outline-none',
             isLayerSelected ? 'border-l-app-accent bg-app-selection' : 'border-l-transparent',
-            isFocusKey && keyboardFocus ? 'ring-1 ring-app-accent/80' : '',
-          ].filter(Boolean).join(' ')}
+            isFocusKey && keyboardFocus && 'ring-1 ring-app-accent/80',
+          )}
           style={{ height }}
           onMouseDown={handleMouseDown}
           onDoubleClick={startEdit}
@@ -216,7 +217,10 @@ export default function PatternLayerHeader({
             />
           ) : (
             <span
-              className={`flex-1 min-w-0 truncate px-1.5 text-role-body pointer-events-none mt-0.5 ${isLayerSelected ? 'text-app-text-strong' : 'text-blue-text'}`}
+              className={cn(
+                'flex-1 min-w-0 truncate px-1.5 text-role-body pointer-events-none mt-0.5',
+                isLayerSelected ? 'text-app-text-strong' : 'text-blue-text',
+              )}
               title={layer.name || undefined}
             >
               {layer.name}

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties } from 're
 import { DockviewReact, DockviewReadyEvent, type DockviewApi } from 'dockview';
 import 'dockview/dist/styles/dockview.css';
 import { ChevronRight } from 'lucide-react';
+import { cn } from '../../lib/cn';
 import AuxiliaryRail from './AuxiliaryRail';
 import AuxiliaryHeaderActions from './AuxiliaryHeaderActions';
 import AuxiliarySlideout from './AuxiliarySlideout';
@@ -664,33 +665,24 @@ export default function WorkbenchShell() {
       {activeDrag ? (
         <>
           <div
-            className={[
-              'workbench-aux-edge-drop-target',
-              'workbench-aux-edge-drop-target--left',
-              activeDrag.targetEdge === 'left' ? 'is-active' : '',
-            ]
-              .filter(Boolean)
-              .join(' ')}
+            className={cn(
+              'workbench-aux-edge-drop-target workbench-aux-edge-drop-target--left',
+              activeDrag.targetEdge === 'left' && 'is-active'
+            )}
             aria-hidden="true"
           />
           <div
-            className={[
-              'workbench-aux-edge-drop-target',
-              'workbench-aux-edge-drop-target--right',
-              activeDrag.targetEdge === 'right' ? 'is-active' : '',
-            ]
-              .filter(Boolean)
-              .join(' ')}
+            className={cn(
+              'workbench-aux-edge-drop-target workbench-aux-edge-drop-target--right',
+              activeDrag.targetEdge === 'right' && 'is-active'
+            )}
             aria-hidden="true"
           />
           <div
-            className={[
-              'workbench-aux-edge-drop-target',
-              'workbench-aux-edge-drop-target--bottom',
-              activeDrag.targetEdge === 'bottom' ? 'is-active' : '',
-            ]
-              .filter(Boolean)
-              .join(' ')}
+            className={cn(
+              'workbench-aux-edge-drop-target workbench-aux-edge-drop-target--bottom',
+              activeDrag.targetEdge === 'bottom' && 'is-active'
+            )}
             aria-hidden="true"
           />
         </>

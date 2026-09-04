@@ -8,6 +8,7 @@ import {
 import type { AuxiliarySlideoutView } from './auxiliary-layout';
 import { getAuxiliaryRailLabel } from './auxiliary-layout';
 import { getPanel } from './panel-registry';
+import { cn } from '../../lib/cn';
 import WorkbenchPanelContent from './WorkbenchPanelContent';
 import { libraryEditorSessionIdFromPanel } from '../../stores/library-editor-store';
 
@@ -83,19 +84,19 @@ export default function AuxiliarySlideout({
 
   return (
     <section
-      className={[
+      className={cn(
         'workbench-aux-slideout',
-        `workbench-aux-slideout--${slideout.edge}`,
-      ].join(' ')}
+        `workbench-aux-slideout--${slideout.edge}`
+      )}
       style={style}
       data-auxiliary-slideout="true"
       aria-label={`${title} slideout`}
     >
       <div
-        className={[
+        className={cn(
           'workbench-aux-slideout__resize-handle',
-          `workbench-aux-slideout__resize-handle--${slideout.edge}`,
-        ].join(' ')}
+          `workbench-aux-slideout__resize-handle--${slideout.edge}`
+        )}
         onPointerDown={handleResizeStart}
       />
 

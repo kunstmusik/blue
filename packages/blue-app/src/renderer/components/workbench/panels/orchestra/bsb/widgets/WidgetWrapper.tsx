@@ -6,6 +6,7 @@ import type { BsbWidgetNodeSnapshot, BsbInterfacePatch } from '../../../../../..
 import type { BSBWidgetResizeMeta } from '../bsb-widget-meta';
 import { getWidgetDisplaySize } from './utils';
 import { PopoutContextMenuPortal, PopoutTooltipPortal, portalEventIsolationProps } from '../../../../../../hooks/host-portals';
+import { cn } from '../../../../../../lib/cn';
 
 const HANDLE_SIZE = 5;
 
@@ -143,13 +144,11 @@ function WidgetWrapper({
       key={node.id}
       data-widget-id={node.id}
       data-widget-type={node.type}
-      className={[
+      className={cn(
         'absolute cursor-default select-none',
-        isSelected && editEnabled ? 'ring-2 ring-blue-accent' : '',
-        node.preservedOnly ? 'opacity-60' : '',
-      ]
-        .filter(Boolean)
-        .join(' ')}
+        isSelected && editEnabled && 'ring-2 ring-blue-accent',
+        node.preservedOnly && 'opacity-60'
+      )}
       style={{
         left: node.x,
         top: node.y,

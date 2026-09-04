@@ -25,6 +25,7 @@ import {
   validateOutputTarget,
   validateSendTarget,
 } from '../../../../../shared/mixer-routing-validation';
+import { cn } from '../../../../lib/cn';
 import EffectEditorPanel from '../../../effect-editor/EffectEditorPanel';
 import { createDefaultEffectXml } from '../../../../utils/program-settings-defaults';
 import EffectsChainContextMenu from './EffectsChainContextMenu';
@@ -126,14 +127,14 @@ function applyEffectPatchToSnapshot(
 function ChainEntry({ entry }: { entry: MixerChainEntrySnapshot }): React.ReactElement {
   if (entry.kind === 'send') {
     return (
-      <div className={`mixer-chain-entry ${!entry.enabled ? 'mixer-chain-entry--disabled' : ''}`}>
+      <div className={cn('mixer-chain-entry', !entry.enabled && 'mixer-chain-entry--disabled')}>
         <span className="mixer-chain-entry__send-icon">S</span>
         <span className="mixer-chain-entry__name">{entry.sendChannel}</span>
       </div>
     );
   }
   return (
-    <div className={`mixer-chain-entry ${!entry.enabled ? 'mixer-chain-entry--disabled' : ''}`}>
+    <div className={cn('mixer-chain-entry', !entry.enabled && 'mixer-chain-entry--disabled')}>
       <span className="mixer-chain-entry__name">{entry.name || 'Unnamed'}</span>
     </div>
   );
@@ -523,7 +524,11 @@ function ChainList({
                   <div
                     {...dropProps}
                     data-library-drop-target="effect-row"
-                    className={`mixer-chain-entry-wrapper ${index === selectedIndex ? 'mixer-chain-entry-wrapper--selected' : ''} ${active ? 'ring-1 ring-inset ring-app-accent' : ''}`}
+                    className={cn(
+                      'mixer-chain-entry-wrapper',
+                      index === selectedIndex && 'mixer-chain-entry-wrapper--selected',
+                      active && 'ring-1 ring-inset ring-app-accent'
+                    )}
                     onClick={() => handleItemClick(index)}
                     onDoubleClick={() => handleItemDoubleClick(index)}
                     role="option"
@@ -720,11 +725,11 @@ export default function ChannelStrip({
   const hasExplicitName = channel.name.trim().length > 0;
   const displayName = hasExplicitName ? channel.name : (unnamedDisplayName ?? 'Unnamed');
   const isUsingUnnamedDisplayName = !hasExplicitName && unnamedDisplayName !== undefined;
-  const channelNameClassName = [
+  const channelNameClassName = cn(
     'mixer-channel-name',
-    canRename ? 'mixer-channel-name--editable' : '',
-    isUsingUnnamedDisplayName ? 'mixer-channel-name--fallback' : '',
-  ].filter(Boolean).join(' ');
+    canRename && 'mixer-channel-name--editable',
+    isUsingUnnamedDisplayName && 'mixer-channel-name--fallback'
+  );
 
   const validOutputTargets = useMemo(
     () => getValidOutputTargets(mixer, channel.id),

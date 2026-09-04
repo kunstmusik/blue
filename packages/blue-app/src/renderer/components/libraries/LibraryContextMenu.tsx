@@ -5,6 +5,7 @@ import {
   type LibraryInteractionClipboard,
 } from '../../../shared/unified-library';
 import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../hooks/host-portals';
+import { cn } from '../../lib/cn';
 
 interface LibraryContextMenuProps {
   node: LibraryBrowseNode;
@@ -113,7 +114,7 @@ export function LibraryContextMenu({
           {onDelete && node.nodeKind !== 'root' && (
             <>
               <ContextMenu.Separator className="editor-context-menu__separator" />
-              <ContextMenu.Item className={`${ITEM_CLASS} text-red-300`} onSelect={() => onDelete(node)}>Delete…</ContextMenu.Item>
+              <ContextMenu.Item className={cn(ITEM_CLASS, 'text-red-300')} onSelect={() => onDelete(node)}>Delete…</ContextMenu.Item>
             </>
           )}
         </ContextMenu.Content>

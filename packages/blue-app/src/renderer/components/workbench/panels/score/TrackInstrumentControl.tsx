@@ -8,6 +8,7 @@ import { useLibraryStore } from '../../../../stores/library-store';
 import { useMidiRoutingStore } from '../../../../stores/midi-routing-store';
 import { useLibraryDropTarget } from '../../../libraries/use-library-drop-target';
 import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../hooks/host-portals';
+import { cn } from '../../../../lib/cn';
 
 interface Props {
   groupId: string;
@@ -122,7 +123,10 @@ export default function TrackInstrumentControl({
       <ContextMenu.Trigger asChild>
         <div
           {...libraryDrop.dropProps}
-          className={`flex shrink-0 items-center gap-px pt-0.5 ${libraryDrop.active ? 'rounded-sm bg-app-accent/20 ring-1 ring-app-accent' : ''}`}
+          className={cn(
+            'flex shrink-0 items-center gap-px pt-0.5',
+            libraryDrop.active && 'rounded-sm bg-app-accent/20 ring-1 ring-app-accent',
+          )}
           data-track-instrument-control={trackId}
           title={libraryDrop.feedback || undefined}
           onContextMenu={(event) => {
@@ -131,7 +135,10 @@ export default function TrackInstrumentControl({
         >
           <button
             type="button"
-            className={`flex h-5 w-5 items-center justify-center rounded-sm border border-app-border/30 ${instrument ? 'bg-app-accent/20 text-app-text' : 'text-app-text-muted hover:text-app-text'}`}
+            className={cn(
+              'flex h-5 w-5 items-center justify-center rounded-sm border border-app-border/30',
+              instrument ? 'bg-app-accent/20 text-app-text' : 'text-app-text-muted hover:text-app-text',
+            )}
             title={instrument ? `Track Instrument: ${label}` : 'Track Instrument: None'}
             aria-label={instrument ? `Track Instrument: ${label}` : 'Assign Track Instrument'}
             onClick={(event) => {

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { cn } from '../../../../../../lib/cn';
 
 const INPUT_CLASS = 'w-20 rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none';
 
@@ -54,7 +55,7 @@ export default function CommitNumberInput({
       step={step}
       min={min}
       max={max}
-      className={`${INPUT_CLASS}${className ? ` ${className}` : ''}`}
+      className={cn(INPUT_CLASS, className)}
       value={localValue}
       onChange={(e) => setLocalValue(e.target.value)}
       onFocus={() => setFocused(true)}

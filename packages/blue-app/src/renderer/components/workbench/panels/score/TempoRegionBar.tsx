@@ -13,6 +13,7 @@ import {
   TEMPO_REGION_BAR_HEIGHT,
 } from './tempo-map-utils';
 import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../hooks/host-portals';
+import { cn } from '../../../../lib/cn';
 
 const BEAT_EPSILON = 0.001;
 
@@ -81,7 +82,7 @@ export default function TempoRegionBar({
   return (
     <div
       ref={barRef}
-      className={`relative select-none overflow-hidden ${enabled ? 'cursor-pointer' : 'cursor-default'}`}
+      className={cn('relative select-none overflow-hidden', enabled ? 'cursor-pointer' : 'cursor-default')}
       style={{ height: TEMPO_REGION_BAR_HEIGHT, minWidth: contentWidth }}
       onDoubleClick={handleDoubleClick}
       onMouseMove={handleMouseMove}
@@ -119,7 +120,7 @@ export default function TempoRegionBar({
               >
                 {showLabel && (
                   <span
-                    className={`relative z-10 pl-1 text-role-subheadline whitespace-nowrap ${enabled ? 'text-white' : 'text-gray-600'}`}
+                    className={cn('relative z-10 pl-1 text-role-subheadline whitespace-nowrap', enabled ? 'text-white' : 'text-gray-600')}
                   >
                     {'\u2669'} {Math.round(region.tempo)}
                   </span>

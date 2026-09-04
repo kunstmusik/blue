@@ -11,6 +11,7 @@ import {
   BLUE_INSPECTOR_ROW_CLASS,
   BLUE_INSPECTOR_VALUE_TEXT_CLASS,
 } from '../../shared/compactFieldStyles';
+import { cn } from '../../../../../lib/cn';
 
 export function formatAudioDuration(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 0) return '0:00:00.000';
@@ -133,12 +134,12 @@ export default function FileBackedScoreObjectEditor({ document, onPatch }: Score
             <button
               type="button"
               data-audio-file-tab="audioFile"
-              className={[
+              className={cn(
                 'border-b-2 px-3 py-2 text-role-body',
                 activeTab === 'audioFile'
                   ? 'border-blue-accent text-app-text-strong font-medium'
-                  : 'border-transparent text-blue-muted hover:text-app-text-strong',
-              ].join(' ')}
+                  : 'border-transparent text-blue-muted hover:text-app-text-strong'
+              )}
               onClick={() => setActiveTab('audioFile')}
             >
               Audio File
@@ -146,12 +147,12 @@ export default function FileBackedScoreObjectEditor({ document, onPatch }: Score
             <button
               type="button"
               data-audio-file-tab="csound"
-              className={[
+              className={cn(
                 'border-b-2 px-3 py-2 text-role-body',
                 activeTab === 'csound'
                   ? 'border-blue-accent text-app-text-strong font-medium'
-                  : 'border-transparent text-blue-muted hover:text-app-text-strong',
-              ].join(' ')}
+                  : 'border-transparent text-blue-muted hover:text-app-text-strong'
+              )}
               onClick={() => setActiveTab('csound')}
             >
               Csound
@@ -180,7 +181,7 @@ export default function FileBackedScoreObjectEditor({ document, onPatch }: Score
                   type="text"
                   readOnly
                   aria-label="Sound File"
-                  className={`${inputCls} bg-app-surface-subtle cursor-default`}
+                  className={cn(inputCls, 'bg-app-surface-subtle cursor-default')}
                   value={editor.filePath}
                 />
                 <button
@@ -395,7 +396,7 @@ export default function FileBackedScoreObjectEditor({ document, onPatch }: Score
         {isAudioFile && (
           <FieldRow label="Post Code">
             <textarea
-              className={`${inputCls} font-mono`}
+              className={cn(inputCls, 'font-mono')}
               rows={4}
               value={editor.csoundPostCode ?? ''}
               onChange={(e) => patchField({ csoundPostCode: e.target.value })}

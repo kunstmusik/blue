@@ -5,6 +5,7 @@ import { subscribePendingAudioFile } from "./audio-player-bus";
 import { formatAudioTime } from "./audio-time";
 import AudioPlayerWaveform from "./AudioPlayerWaveform";
 import AudioPlayerMetadata from "./AudioPlayerMetadata";
+import { cn } from "../../../../lib/cn";
 
 interface AudioMetadata {
   sampleRate: number | null;
@@ -181,11 +182,12 @@ export default function AudioPlayerPanel(): React.ReactElement {
       >
         <button
           type="button"
-          className={`inline-flex h-7 w-7 items-center justify-center rounded border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-accent disabled:opacity-40 ${
+          className={cn(
+            'inline-flex h-7 w-7 items-center justify-center rounded border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-accent disabled:opacity-40',
             isPlaying
-              ? "border-blue-accent bg-blue-accent text-white"
-              : "border-blue-border bg-blue-surface text-blue-fg hover:bg-blue-surface-hover"
-          }`}
+              ? 'border-blue-accent bg-blue-accent text-white'
+              : 'border-blue-border bg-blue-surface text-blue-fg hover:bg-blue-surface-hover'
+          )}
           onClick={togglePlay}
           disabled={!filePath}
           aria-label={isPlaying ? "Pause" : "Play"}
@@ -199,11 +201,12 @@ export default function AudioPlayerPanel(): React.ReactElement {
         </button>
         <button
           type="button"
-          className={`inline-flex h-7 w-7 items-center justify-center rounded border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-accent disabled:opacity-40 ${
+          className={cn(
+            'inline-flex h-7 w-7 items-center justify-center rounded border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-accent disabled:opacity-40',
             isLooping
-              ? "border-blue-accent bg-blue-accent text-white"
-              : "border-blue-border bg-blue-surface text-blue-fg hover:bg-blue-surface-hover"
-          }`}
+              ? 'border-blue-accent bg-blue-accent text-white'
+              : 'border-blue-border bg-blue-surface text-blue-fg hover:bg-blue-surface-hover'
+          )}
           onClick={toggleLoop}
           disabled={!filePath}
           aria-pressed={isLooping}

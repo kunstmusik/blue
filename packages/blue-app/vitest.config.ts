@@ -11,6 +11,7 @@ export default defineConfig({
       'src/shared/**/*.test.ts',
       'src/renderer/tests/**/*.test.{ts,tsx}',
       'src/renderer/components/**/*.test.{ts,tsx}',
+      'src/renderer/lib/**/*.test.ts',
     ],
     globals: true,
     ...createPackageReporterConfig('@blue/app', GithubActionsReporter),

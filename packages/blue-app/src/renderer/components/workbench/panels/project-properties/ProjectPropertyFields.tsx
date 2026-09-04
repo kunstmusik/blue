@@ -4,6 +4,7 @@ import {
   APP_INSPECTOR_LABEL_TEXT_CLASS,
   COMPACT_FIELD_VALUE_CLASS,
 } from '../shared/compactFieldStyles';
+import { cn } from '../../../../lib/cn';
 
 function FieldRow({
   label,
@@ -14,7 +15,7 @@ function FieldRow({
 }): React.ReactElement {
   return (
     <label className="grid gap-2 md:grid-cols-[200px_minmax(0,1fr)] md:items-start md:gap-5">
-      <span className={`pt-1 ${APP_INSPECTOR_LABEL_TEXT_CLASS}`}>
+      <span className={cn('pt-1', APP_INSPECTOR_LABEL_TEXT_CLASS)}>
         {label}
       </span>
       {children}
@@ -40,12 +41,12 @@ function InputBase({
   return (
     <input
       type={type}
-      className={[
-        `w-full rounded-lg border border-app-border bg-app-input ${COMPACT_FIELD_VALUE_CLASS} text-app-text shadow-inner outline-none transition-colors placeholder:text-app-text-muted focus:border-app-accent disabled:cursor-not-allowed disabled:opacity-60`,
-        className,
-      ]
-        .filter(Boolean)
-        .join(' ')}
+      className={cn(
+        'w-full rounded-lg border border-app-border bg-app-input',
+        COMPACT_FIELD_VALUE_CLASS,
+        'text-app-text shadow-inner outline-none transition-colors placeholder:text-app-text-muted focus:border-app-accent disabled:cursor-not-allowed disabled:opacity-60',
+        className
+      )}
       value={value}
       placeholder={placeholder}
       disabled={disabled}
@@ -69,12 +70,12 @@ function TextAreaBase({
 }): React.ReactElement {
   return (
     <textarea
-      className={[
-        `min-h-28 w-full rounded-lg border border-app-border bg-app-input ${COMPACT_FIELD_VALUE_CLASS} text-app-text shadow-inner outline-none transition-colors placeholder:text-app-text-muted focus:border-app-accent disabled:cursor-not-allowed disabled:opacity-60`,
-        className,
-      ]
-        .filter(Boolean)
-        .join(' ')}
+      className={cn(
+        'min-h-28 w-full rounded-lg border border-app-border bg-app-input',
+        COMPACT_FIELD_VALUE_CLASS,
+        'text-app-text shadow-inner outline-none transition-colors placeholder:text-app-text-muted focus:border-app-accent disabled:cursor-not-allowed disabled:opacity-60',
+        className
+      )}
       value={value}
       placeholder={placeholder}
       disabled={disabled}

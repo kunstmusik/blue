@@ -12,6 +12,7 @@ import {
   isTerminalOperationPhase,
   operationDialogTitle,
 } from './operation-dialog-shared';
+import { cn } from '../../../lib/cn';
 
 /**
  * Global modal tracking a freeze/unfreeze operation: one row per ScoreObject
@@ -140,9 +141,10 @@ export default function FreezeOperationDialog(): React.ReactElement | null {
                   key={row.selectionId}
                   data-testid={`freeze-row-${row.selectionId}`}
                   aria-selected={row.selectionId === selectedSelectionId}
-                  className={`cursor-pointer border-b border-app-hover/60 ${
+                  className={cn(
+                    'cursor-pointer border-b border-app-hover/60',
                     row.selectionId === selectedSelectionId ? 'bg-app-selection' : 'hover:bg-app-hover/40'
-                  }`}
+                  )}
                   onClick={() => selectRow(row.selectionId)}
                 >
                   <td className="px-2 py-2 align-middle">{row.name}</td>

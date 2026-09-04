@@ -4,6 +4,7 @@ import { Clipboard, MousePointerClick, Trash2 } from 'lucide-react';
 import { useOutputStore } from '../../../../stores/output-store';
 import { PopoutContextMenuPortal } from '../../../../hooks/host-portals';
 import { useHostDocument } from '../../../../hooks/use-host-document';
+import { cn } from '../../../../lib/cn';
 
 export default function OutputPanel() {
   const tabs = useOutputStore((s) => s.tabs);
@@ -137,9 +138,10 @@ export default function OutputPanel() {
             <button
               key={tab.id}
               onClick={() => selectTab(tab.id)}
-              className={`output-panel__tab${
-                tab.id === activeTabId ? ' output-panel__tab--active' : ''
-              }`}
+              className={cn(
+                'output-panel__tab',
+                tab.id === activeTabId && 'output-panel__tab--active'
+              )}
             >
               {tab.name}
             </button>

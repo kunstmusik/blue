@@ -3,6 +3,7 @@ import { clamp } from '@blue/data';
 import { useHostDocument } from '../../../../../hooks/use-host-document';
 import { HostSurfacePortal } from '../../../../host-surface/HostSurfacePortal';
 import { useHostSurface } from '../../../../host-surface/use-host-surface';
+import { cn } from '../../../../../lib/cn';
 
 export interface EditableLinePoint {
   x: number;
@@ -937,11 +938,12 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
                             <input
                               type="number"
                               step="0.001"
-                              className={`w-full border-0 bg-transparent px-2 py-1 text-role-body text-app-text-strong outline-none ${
+                              className={cn(
+                                'w-full border-0 bg-transparent px-2 py-1 text-role-body text-app-text-strong outline-none',
                                 xReadOnly
                                   ? 'cursor-default text-app-text-muted'
-                                  : 'focus:bg-app-surface-raised focus:ring-1 focus:ring-inset focus:ring-app-accent'
-                              }`}
+                                  : 'focus:bg-app-surface-raised focus:ring-1 focus:ring-inset focus:ring-app-accent',
+                              )}
                               value={xDisplay}
                               readOnly={xReadOnly}
                               onChange={(event) => setPointEdits((prev) => ({ ...prev, [xKey]: event.target.value }))}

@@ -14,6 +14,7 @@ import {
   TEMPO_MAX_BPM,
 } from './tempo-map-utils';
 import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../hooks/host-portals';
+import { cn } from '../../../../lib/cn';
 
 const BEAT_EPSILON = 0.001;
 
@@ -244,7 +245,7 @@ export default function TempoLineView({
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>
         <div
-          className={`block ${enabled && rootTimelineOnly ? 'cursor-crosshair' : 'cursor-default'}`}
+          className={cn('block', enabled && rootTimelineOnly ? 'cursor-crosshair' : 'cursor-default')}
           style={{ width: contentWidth, height: TEMPO_LINE_VIEW_HEIGHT, minWidth: contentWidth }}
         >
           <svg

@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import type { TempoMapSnapshot, TempoPointSnapshot, TempoMapPatch, TimeConversionContext } from '../../../../../shared/project-editor';
 import { TIME_BASE_OPTIONS, formatForBase, parseForBase } from '../../../../time/time-unit-logic';
 import { AppSelect } from '../../../AppSelect';
+import { cn } from '../../../../lib/cn';
 
 interface TempoMapEditorDialogProps {
   tempoMap: TempoMapSnapshot;
@@ -342,7 +343,10 @@ export default function TempoMapEditorDialog({
                     </td>
                     <td className="py-1 text-center">
                       <button
-                        className={`rounded px-1.5 py-0.5 text-role-callout ${canDeleteRow ? 'text-app-danger hover:bg-app-outline-strong' : 'cursor-not-allowed text-app-text-muted'}`}
+                        className={cn(
+                          'rounded px-1.5 py-0.5 text-role-callout',
+                          canDeleteRow ? 'text-app-danger hover:bg-app-outline-strong' : 'cursor-not-allowed text-app-text-muted',
+                        )}
                         disabled={!canDeleteRow}
                         onClick={() => handleRemove(i)}
                       >
