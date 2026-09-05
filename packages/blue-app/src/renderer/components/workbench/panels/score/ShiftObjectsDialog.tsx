@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { DraftNumberInput } from '../../../CommitNumberInput';
 
 const SECONDARY_BUTTON_CLASS =
   'rounded border border-app-border/40 bg-app-surface px-3 py-1 text-role-body text-app-text transition-colors hover:bg-app-hover';
@@ -72,15 +73,20 @@ export default function ShiftObjectsDialog({
             <label className="text-role-body text-app-text-muted whitespace-nowrap">
               Shift by beats:
             </label>
-            <input
+            <DraftNumberInput
               ref={inputRef}
-              type="number"
               step="any"
-              className="flex-1 rounded border border-app-border/30 bg-app-field px-2 py-1 text-role-body text-app-text outline-none focus:border-app-border/60"
+              stepBase={0}
+              className="w-full rounded border border-app-border/30 bg-app-field px-2 py-1 text-role-body text-app-text outline-none focus:border-app-border/60"
+              containerClassName="flex-1"
               value={shiftText}
-              onChange={(e) => {
-                setShiftText(e.target.value);
+              onChange={(val) => {
+                setShiftText(val);
                 setError(null);
+              }}
+              resolveStep={(text) => {
+                const amount = Number(text);
+                return Number.isFinite(amount) ? amount : 0;
               }}
             />
           </div>

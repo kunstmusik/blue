@@ -9,6 +9,7 @@ import {
 import SettingsSection from './SettingsSection';
 import SettingsField, {
   SettingsCheckboxField,
+  SettingsNumberField,
   SettingsSelectField,
   SettingsSubsectionTitle,
   SETTINGS_NARROW_FIELD_CLASS,
@@ -411,11 +412,11 @@ export default function RealtimeRenderSettings({
         checked={settings.softwareBufferEnabled}
         onChange={(checked) => set('softwareBufferEnabled', checked)}
       />
-      <SettingsField
+      <SettingsNumberField
         label="Software Buffer Size"
-        type="number"
         value={settings.softwareBufferSize}
-        onChange={(value) => set('softwareBufferSize', Number.parseInt(value, 10) || 1024)}
+        onChange={(value) => set('softwareBufferSize', value)}
+        resolveValue={(text) => Number.parseInt(text, 10) || 1024}
         disabled={!settings.softwareBufferEnabled}
         inputClassName={SETTINGS_NARROW_FIELD_CLASS}
       />
@@ -425,11 +426,11 @@ export default function RealtimeRenderSettings({
         checked={settings.hardwareBufferEnabled}
         onChange={(checked) => set('hardwareBufferEnabled', checked)}
       />
-      <SettingsField
+      <SettingsNumberField
         label="Hardware Buffer Size"
-        type="number"
         value={settings.hardwareBufferSize}
-        onChange={(value) => set('hardwareBufferSize', Number.parseInt(value, 10) || 4096)}
+        onChange={(value) => set('hardwareBufferSize', value)}
+        resolveValue={(text) => Number.parseInt(text, 10) || 4096}
         disabled={!settings.hardwareBufferEnabled}
         inputClassName={SETTINGS_NARROW_FIELD_CLASS}
       />

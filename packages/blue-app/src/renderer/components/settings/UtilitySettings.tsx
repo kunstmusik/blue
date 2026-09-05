@@ -5,7 +5,10 @@ import {
   type UtilitySettingsSnapshot,
 } from '../../../shared/program-settings';
 import SettingsSection from './SettingsSection';
-import SettingsField, { SETTINGS_NARROW_FIELD_CLASS } from './SettingsField';
+import SettingsField, {
+  SettingsDraftNumberField,
+  SETTINGS_NARROW_FIELD_CLASS,
+} from './SettingsField';
 
 interface UtilitySettingsProps {
   settings: UtilitySettingsSnapshot;
@@ -53,12 +56,13 @@ export default function UtilitySettings({
         description="Csound flags for SoundObject freeze rendering."
       />
 
-      <SettingsField
+      <SettingsDraftNumberField
         label="Maximum Freeze Jobs"
-        type="number"
         min={FREEZE_MAX_JOBS_MIN}
         max={FREEZE_MAX_JOBS_MAX}
-        value={settings.freezeMaxJobs}
+        step={1}
+        stepBase={4}
+        value={String(settings.freezeMaxJobs)}
         onChange={setFreezeMaxJobsDraft}
         inputClassName={SETTINGS_NARROW_FIELD_CLASS}
         description="Maximum number of Csound renders to run at once when freezing multiple objects (1–32)."

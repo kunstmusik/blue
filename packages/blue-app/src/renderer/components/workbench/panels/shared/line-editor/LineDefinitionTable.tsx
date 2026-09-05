@@ -9,6 +9,7 @@ import {
   normalizeLineColor,
 } from './EditableLineCanvas';
 import ColorPickerButton from '../../../../ColorPicker';
+import CommitNumberInput from '../../../../CommitNumberInput';
 import { cn } from '../../../../../lib/cn';
 
 export interface ScoreEditorLineLike extends EditableLineLike {
@@ -151,14 +152,13 @@ export function LineDefinitionTable<TLine extends ScoreEditorLineLike>({
                 </div>
               )}
 
-              <input
+              <CommitNumberInput
                 className="h-8 w-full border-0 border-r border-app-border/30 bg-transparent px-1 text-right text-role-subheadline text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-app-accent"
-                type="number"
                 step="any"
                 value={lineMinimum(line)}
-                onChange={(event) => {
+                resolveValue={(text) => parseField(text, lineMinimum(line))}
+                onChange={(nextMin) => {
                   updateLineAt(index, (currentLine) => {
-                    const nextMin = parseField(event.target.value, lineMinimum(currentLine));
                     if (nextMin >= lineMaximum(currentLine)) {
                       return currentLine;
                     }
@@ -167,14 +167,13 @@ export function LineDefinitionTable<TLine extends ScoreEditorLineLike>({
                 }}
               />
 
-              <input
+              <CommitNumberInput
                 className="h-8 w-full border-0 border-r border-app-border/30 bg-transparent px-1 text-right text-role-subheadline text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-app-accent"
-                type="number"
                 step="any"
                 value={lineMaximum(line)}
-                onChange={(event) => {
+                resolveValue={(text) => parseField(text, lineMaximum(line))}
+                onChange={(nextMax) => {
                   updateLineAt(index, (currentLine) => {
-                    const nextMax = parseField(event.target.value, lineMaximum(currentLine));
                     if (nextMax <= lineMinimum(currentLine)) {
                       return currentLine;
                     }

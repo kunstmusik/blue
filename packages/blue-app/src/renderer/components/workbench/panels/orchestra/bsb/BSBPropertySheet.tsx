@@ -8,6 +8,7 @@ import type {
 import { getBsbObjectNameValidationKeysFromSnapshot } from '../../../../../../shared/bsb-widget-keys';
 import FontChooserDialog, { type FontChoice } from './FontChooserDialog';
 import ColorPickerButton from '../../../../ColorPicker';
+import CommitNumberInput from '../../../../CommitNumberInput';
 
 interface BSBPropertySheetProps {
   widget: BsbWidgetNodeSnapshot | null;
@@ -1058,23 +1059,19 @@ function LineObjectEditor({
               placeholder={`line${i}`}
               onChange={(event) => updateLine(i, { varName: event.target.value })}
             />
-            <input
+            <CommitNumberInput
               className="h-8 w-full border-0 border-r border-app-border/30 bg-transparent px-1 text-right text-role-body text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-app-accent"
-              type="number"
               step="any"
-              value={line.min}
-              onChange={(event) =>
-                updateLine(i, { min: parseFloatField(event.target.value, line.min) })
-              }
+              value={line.min ?? 0}
+              resolveValue={(text) => parseFloatField(text, line.min)}
+              onChange={(val) => updateLine(i, { min: val })}
             />
-            <input
+            <CommitNumberInput
               className="h-8 w-full border-0 border-r border-app-border/30 bg-transparent px-1 text-right text-role-body text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-app-accent"
-              type="number"
               step="any"
-              value={line.max}
-              onChange={(event) =>
-                updateLine(i, { max: parseFloatField(event.target.value, line.max) })
-              }
+              value={line.max ?? 1}
+              resolveValue={(text) => parseFloatField(text, line.max)}
+              onChange={(val) => updateLine(i, { max: val })}
             />
             <label className="flex h-8 items-center justify-center border-r border-app-border/30">
               <span className="sr-only">Link First/Last</span>

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { TempoMapSnapshot, TempoMapPatch } from '../../../../../shared/project-editor';
+import { DraftNumberInput } from '../../../CommitNumberInput';
 
 const BEAT_EPSILON = 0.001;
 const SECONDARY_BUTTON_CLASS =
@@ -79,27 +80,39 @@ export default function TempoPointDialog({
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <label className="w-14 text-role-body text-app-text-muted">Beat</label>
-            <input
-              type="number"
-              className="flex-1 rounded border border-app-border/30 bg-app-field px-2 py-1 text-role-body text-app-text outline-none focus:border-app-border/60"
+            <DraftNumberInput
               value={beat}
-              onChange={(e) => setBeat(e.target.value)}
+              onChange={setBeat}
               disabled={isTimeZero}
               min={prevBeat}
               max={isTimeZero ? 0 : nextBeat === Infinity ? undefined : nextBeat}
               step={0.001}
+              stepBase={point.beat}
+              resolveStep={(text) => {
+                const val = parseFloat(text);
+                if (!Number.isFinite(val)) return point.beat;
+                return isTimeZero ? 0 : Math.max(prevBeat, Math.min(nextBeat, val));
+              }}
+              className="w-full rounded border border-app-border/30 bg-app-field px-2 py-1 text-role-body text-app-text outline-none focus:border-app-border/60"
+              containerClassName="flex-1"
             />
           </div>
           <div className="flex items-center gap-2">
             <label className="w-14 text-role-body text-app-text-muted">Tempo</label>
-            <input
-              type="number"
-              className="flex-1 rounded border border-app-border/30 bg-app-field px-2 py-1 text-role-body text-app-text outline-none focus:border-app-border/60"
+            <DraftNumberInput
               value={tempo}
-              onChange={(e) => setTempo(e.target.value)}
+              onChange={setTempo}
               min={1}
               max={999}
               step={1}
+              stepBase={Math.round(point.tempo)}
+              resolveStep={(text) => {
+                const val = parseFloat(text);
+                if (!Number.isFinite(val)) return Math.round(point.tempo);
+                return Math.max(1, Math.min(999, Math.round(val)));
+              }}
+              className="w-full rounded border border-app-border/30 bg-app-field px-2 py-1 text-role-body text-app-text outline-none focus:border-app-border/60"
+              containerClassName="flex-1"
             />
             <span className="text-role-callout text-app-text-muted">BPM</span>
           </div>

@@ -8,6 +8,7 @@ import { useBlueLiveStore } from '../../../stores/blue-live-store';
 import { deriveMixerPlaybackUiState } from '../../../stores/mixer-playback-ui';
 import ChannelStrip, { type MixerChainSelection } from './mixer/ChannelStrip';
 import { useProjectLibraryNodes } from '../../libraries/use-project-library-nodes';
+import CommitNumberInput from '../../CommitNumberInput';
 
 export default function MixerPanel(): React.ReactElement {
   const loaded = useProjectStore((state) => state.loaded);
@@ -134,13 +135,18 @@ export default function MixerPanel(): React.ReactElement {
           </label>
           <label className="mixer-toolbar__field">
             <span>Extra render time</span>
-            <input
-              type="number"
+            <CommitNumberInput
               value={mixer.extraRenderTime}
-              onChange={(event) =>
+              step="any"
+              min={0}
+              resolveValue={(text) => {
+                const parsed = parseFloat(text);
+                return Number.isFinite(parsed) && parsed >= 0 ? parsed : mixer.extraRenderTime;
+              }}
+              onChange={(val) =>
                 handleMixerPatch({
                   type: 'updateExtraRenderTime',
-                  value: Number(event.target.value),
+                  value: val,
                 })
               }
               className="mixer-toolbar__input"

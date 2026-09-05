@@ -1297,5 +1297,21 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
 
       expect(getBlueX7EffectiveValues).not.toHaveBeenCalled();
     });
+
+    it('renders mixed placeholder for shared PMS and rejects invalid non-numeric input (T030)', () => {
+      renderEditor({ sharedPitchModulationSensitivity: 'mixed' });
+
+      const sharedPmsInput = container?.querySelector('#bluex7-shared-pms') as HTMLInputElement;
+      expect(sharedPmsInput).not.toBeNull();
+      expect(sharedPmsInput.placeholder).toBe('mixed');
+      expect(sharedPmsInput.value).toBe('');
+
+      // Non-numeric input does not dispatch invalid patch
+      lastPatch = null;
+      act(() => {
+        setInputValue(sharedPmsInput, 'abc');
+      });
+      expect(lastPatch).toBeNull();
+    });
   });
 });

@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import CommitNumberInput from '../../../../CommitNumberInput';
 import { cn } from '../../../../../lib/cn';
 import type { ScoreObjectEditorComponentProps } from '../editor-registry';
 import {
@@ -61,13 +62,14 @@ export default function TrackerObjectEditor({
     <div className="flex flex-col h-full">
       <div className="flex gap-3 px-3 py-2 border-b border-blue-border shrink-0">
         <FieldRow label="Steps/Beat">
-          <input
-            type="number"
+          <CommitNumberInput
             min={1}
             max={64}
+            step={1}
             className={cn('w-16', BLUE_INSPECTOR_CONTROL_CLASS)}
             value={stepsPerBeat}
-            onChange={(e) => patch({ stepsPerBeat: parseInt(e.target.value, 10) || 1 })}
+            onChange={(val) => patch({ stepsPerBeat: val })}
+            resolveValue={(text) => parseInt(text, 10) || 1}
           />
         </FieldRow>
         <FieldRow label="Tracks">

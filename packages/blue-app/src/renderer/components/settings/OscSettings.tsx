@@ -6,7 +6,7 @@ import {
   type OscServerPreferences,
   type OscServerRuntimeSnapshot,
 } from '../../../shared/osc-control';
-import SettingsField from './SettingsField';
+import { SettingsDraftNumberField } from './SettingsField';
 import SettingsSection from './SettingsSection';
 import { cn } from '../../lib/cn';
 
@@ -58,7 +58,7 @@ export default function OscSettings({
       title="OSC"
       dependencyNote="Blue accepts unauthenticated OSC on all IPv4 interfaces. Use it only on a trusted network and manage exposure with your host firewall."
     >
-      <SettingsField
+      <SettingsDraftNumberField
         label="Preferred Server Port"
         value={Number.isFinite(preferredPort) ? String(preferredPort) : ''}
         onChange={(value) =>
@@ -66,10 +66,10 @@ export default function OscSettings({
             preferredPort: value.trim() === '' ? 0 : Number(value),
           })
         }
-        type="number"
         min={1}
         max={65535}
         step={1}
+        stepBase={8000}
         inputMode="numeric"
         placeholder="8000"
         description="Blue tries this inbound UDP port first. If it is already in use, it scans upward to the first available port without changing this preference."

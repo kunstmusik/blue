@@ -5,7 +5,7 @@ import type { ScoreObjectEditorComponentProps } from '../editor-registry';
 import type { FieldSnapshot, ParameterSnapshot } from './jmask/jmask-utils';
 import { getParameters, cloneField } from './jmask/jmask-utils';
 import ParameterRow from './jmask/ParameterRow';
-import CommitNumberInput from './jmask/CommitNumberInput';
+import CommitNumberInput from '../../../../CommitNumberInput';
 import GeneratedScoreModal from './GeneratedScoreModal';
 import { useScoreObjectTest } from './useScoreObjectTest';
 import { HostSurfacePortal } from '../../../../host-surface/HostSurfacePortal';

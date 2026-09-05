@@ -1,9 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import type {
   MeterMapSnapshot,
   MeterMapPatch,
   MeterEntryInput,
 } from '../../../../../shared/project-editor';
+import { DraftNumberInput } from '../../../CommitNumberInput';
 import { parseMeterSignature, isPowerOfTwo } from './meter-map-utils';
 import { cn } from '../../../../lib/cn';
 
@@ -18,6 +19,7 @@ interface MeterMapEditorDialogProps {
 
 interface TableRow {
   measure: string;
+  acceptedMeasure: number;
   signatureText: string;
   numBeats: number;
   beatLength: number;
@@ -39,6 +41,7 @@ export default function MeterMapEditorDialog({
   const [rows, setRows] = useState<TableRow[]>(() =>
     meterMap.entries.map((e) => ({
       measure: e.measure.toString(),
+      acceptedMeasure: e.measure,
       signatureText: `${e.numBeats}/${e.beatLength}`,
       numBeats: e.numBeats,
       beatLength: e.beatLength,
@@ -48,11 +51,13 @@ export default function MeterMapEditorDialog({
   const handleAdd = useCallback(() => {
     setRows((prev) => {
       const last = prev[prev.length - 1];
-      const lastMeasure = last ? (parseMeasureText(last.measure) ?? 1) : 1;
+      const lastMeasure = last ? (parseMeasureText(last.measure) ?? last.acceptedMeasure ?? 1) : 1;
+      const nextMeasure = lastMeasure + 8;
       return [
         ...prev,
         {
-          measure: (lastMeasure + 8).toString(),
+          measure: nextMeasure.toString(),
+          acceptedMeasure: nextMeasure,
           signatureText: '4/4',
           numBeats: 4,
           beatLength: 4,
@@ -122,6 +127,20 @@ export default function MeterMapEditorDialog({
     });
   }, []);
 
+  const revertMeasure = useCallback((index: number) => {
+    setRows((prev) => {
+      const row = prev[index];
+      if (!row) return prev;
+      const next = [...prev];
+      next[index] = {
+        ...row,
+        measure: row.acceptedMeasure.toString(),
+      };
+      return next;
+    });
+    setError(null);
+  }, []);
+
   const commitMeasure = useCallback(
     (index: number, value?: string): boolean => {
       const row = rows[index];
@@ -130,7 +149,11 @@ export default function MeterMapEditorDialog({
       if (measure == null) return false;
       setRows((prev) => {
         const next = [...prev];
-        next[index] = { ...next[index], measure: measure.toString() };
+        next[index] = {
+          ...next[index],
+          measure: measure.toString(),
+          acceptedMeasure: measure,
+        };
         return next;
       });
       return true;
@@ -249,21 +272,22 @@ export default function MeterMapEditorDialog({
               {rows.map((row, i) => (
                 <tr key={i} className="border-t border-app-border/10">
                   <td className="py-1 pr-2">
-                    <input
-                      type="number"
+                    <DraftNumberInput
                       className="w-full rounded border border-app-border/30 bg-app-field px-1.5 py-0.5 text-role-body text-app-text outline-none focus:border-app-border/60"
+                      containerClassName="w-full"
                       value={row.measure}
-                      onChange={(e) => handleMeasureChange(i, e.target.value)}
-                      onBlur={(e) => commitMeasure(i, e.currentTarget.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          commitMeasure(i, e.currentTarget.value);
-                        }
-                      }}
+                      onChange={(val) => handleMeasureChange(i, val)}
+                      onFinish={(text) => commitMeasure(i, text)}
+                      onCancel={() => revertMeasure(i)}
                       disabled={i === 0}
                       min={1}
                       step={1}
+                      stepBase={row.acceptedMeasure}
+                      resolveStep={(text) => {
+                        const val = parseInt(text, 10);
+                        if (!Number.isFinite(val) || val < 1) return null;
+                        return val;
+                      }}
                     />
                   </td>
                   <td className="py-1 pr-2">

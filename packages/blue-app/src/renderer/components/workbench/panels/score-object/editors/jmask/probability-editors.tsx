@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import type { GeneratorSnapshot } from './jmask-utils';
 import TableEditor from './TableEditor';
-import CommitNumberInput, { CommitNumberField } from './CommitNumberInput';
+import CommitNumberInput, { CommitNumberField } from '../../../../../CommitNumberInput';
 import { AppSelect } from '../../../../../AppSelect';
 
 type OnChange = (gen: GeneratorSnapshot) => void;

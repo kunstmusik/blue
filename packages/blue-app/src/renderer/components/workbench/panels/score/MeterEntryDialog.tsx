@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { MeterMapSnapshot, MeterMapPatch } from '../../../../../shared/project-editor';
+import { DraftNumberInput } from '../../../CommitNumberInput';
 import { parseMeterSignature, isPowerOfTwo } from './meter-map-utils';
 
 const SECONDARY_BUTTON_CLASS =
@@ -108,15 +109,21 @@ export default function MeterEntryDialog({
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <label className="w-20 text-role-body text-app-text-muted">Measure</label>
-            <input
-              type="number"
-              className="flex-1 rounded border border-app-border/30 bg-app-field px-2 py-1 text-role-body text-app-text outline-none focus:border-app-border/60"
+            <DraftNumberInput
               value={measure}
-              onChange={(e) => setMeasure(e.target.value)}
+              onChange={setMeasure}
               disabled={isFirst}
               min={isFirst ? 1 : prevMeasure}
               max={nextMeasure}
               step={1}
+              stepBase={entry.measure}
+              resolveStep={(text) => {
+                const val = parseInt(text, 10);
+                if (!Number.isFinite(val)) return entry.measure;
+                return isFirst ? 1 : Math.max(prevMeasure, Math.min(nextMeasure, val));
+              }}
+              className="w-full rounded border border-app-border/30 bg-app-field px-2 py-1 text-role-body text-app-text outline-none focus:border-app-border/60"
+              containerClassName="flex-1"
             />
           </div>
           <div className="flex items-center gap-2">

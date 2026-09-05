@@ -3,6 +3,7 @@ import type { PianoRollPayload } from './types';
 import { PCH_LABELS } from './types';
 import ScaleSelectionPanel from './ScaleSelectionPanel';
 import FieldDefinitionsEditor from './FieldDefinitionsEditor';
+import CommitNumberInput from '../../../../../CommitNumberInput';
 import { cn } from '../../../../../../lib/cn';
 import {
   BLUE_INSPECTOR_FIELD_LABEL_CLASS,
@@ -93,12 +94,12 @@ export default function PianoRollPropertiesEditor({
           </div>
         </FieldRow>
         <FieldRow label="Transposition">
-          <input
-            type="number"
+          <CommitNumberInput
             className={inputCls}
             value={transposition}
             step={1}
-            onChange={(e) => onPatch({ transposition: parseInt(e.target.value, 10) || 0 })}
+            resolveValue={(text) => parseInt(text, 10) || 0}
+            onChange={(val) => onPatch({ transposition: val })}
           />
         </FieldRow>
         <div className="px-3 py-2">

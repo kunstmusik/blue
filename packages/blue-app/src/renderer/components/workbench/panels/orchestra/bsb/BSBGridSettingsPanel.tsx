@@ -4,6 +4,7 @@ import type {
   BsbInterfacePatch,
 } from '../../../../../../shared/project-editor';
 import { AppSelect } from '../../../../AppSelect';
+import CommitNumberInput from '../../../../CommitNumberInput';
 
 interface BSBGridSettingsPanelProps {
   gridSettings: GridSettingsSnapshot;
@@ -53,23 +54,25 @@ export default function BSBGridSettingsPanel({
 
       <div className="grid grid-cols-[80px_1fr] items-center gap-2">
         <label className="text-role-body text-app-text-muted">Width</label>
-        <input
+        <CommitNumberInput
           className="w-full rounded border border-app-border bg-app-input px-2 py-1 text-role-body text-app-text outline-none focus:border-app-accent"
-          type="number"
           value={gridSettings.width}
           min={1}
-          onChange={(e) => update({ width: parseInt(e.target.value, 10) || 10 })}
+          step={1}
+          onChange={(val) => update({ width: val })}
+          resolveValue={(text) => parseInt(text, 10) || 10}
         />
       </div>
 
       <div className="grid grid-cols-[80px_1fr] items-center gap-2">
         <label className="text-role-body text-app-text-muted">Height</label>
-        <input
+        <CommitNumberInput
           className="w-full rounded border border-app-border bg-app-input px-2 py-1 text-role-body text-app-text outline-none focus:border-app-accent"
-          type="number"
           value={gridSettings.height}
           min={1}
-          onChange={(e) => update({ height: parseInt(e.target.value, 10) || 10 })}
+          step={1}
+          onChange={(val) => update({ height: val })}
+          resolveValue={(text) => parseInt(text, 10) || 10}
         />
       </div>
     </div>

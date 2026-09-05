@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import CommitNumberInput from '../../../../../CommitNumberInput';
 import type { TableSnapshot } from './jmask-utils';
-import CommitNumberInput from './CommitNumberInput';
 import { resolveTypographyRoleFont } from '../../../../../../lib/typography';
 import { AppSelect } from '../../../../../AppSelect';
 

@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import ColorPickerButton from '../components/ColorPicker';
 import ScoreObjectBar from '../components/workbench/panels/score/bar-renderers/ScoreObjectBar';
-import CommitNumberInput from '../components/workbench/panels/score-object/editors/jmask/CommitNumberInput';
+import CommitNumberInput from '../components/CommitNumberInput';
 import { ToolbarDisplayCard } from '../components/menu-bar/ToolbarDisplays';
 import { BlueX7TabList } from '../components/instruments/blue-x7/tab-list';
 

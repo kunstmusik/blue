@@ -3,6 +3,7 @@ import { ChevronDown } from 'lucide-react';
 import { HostSurfacePortal } from '../../../../host-surface/HostSurfacePortal';
 import { useHostSurface } from '../../../../host-surface/use-host-surface';
 import { AppSelect } from '../../../../AppSelect';
+import { DraftNumberInput } from '../../../../CommitNumberInput';
 
 export interface FontChoice {
   name: string;
@@ -61,7 +62,6 @@ async function getSystemFontFamilies(): Promise<string[]> {
     'SF Mono',
   ];
 }
-
 interface FontChooserDialogProps {
   open: boolean;
   font: FontChoice;
@@ -76,7 +76,7 @@ export default function FontChooserDialog({
   onCancel,
 }: FontChooserDialogProps): React.ReactElement | null {
   const [name, setName] = useState(font.name);
-  const [size, setSize] = useState(font.size);
+  const [size, setSize] = useState(String(font.size));
   const [style, setStyle] = useState(font.style);
   const [fontFamilies, setFontFamilies] = useState<string[]>([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -99,7 +99,7 @@ export default function FontChooserDialog({
   useEffect(() => {
     if (open) {
       setName(font.name);
-      setSize(font.size);
+      setSize(String(font.size));
       setStyle(font.style);
       setFilter('');
       setDropdownOpen(false);
@@ -108,7 +108,11 @@ export default function FontChooserDialog({
   }, [open, font.name, font.size, font.style]);
 
   const handleConfirm = useCallback(() => {
-    onConfirm({ name: name.trim() || 'Roboto', size: Math.max(1, Math.round(size)), style });
+    const parsed = parseFloat(size);
+    const resolvedSize = Number.isFinite(parsed)
+      ? Math.max(1, Math.min(200, Math.round(parsed)))
+      : 12;
+    onConfirm({ name: name.trim() || 'Roboto', size: resolvedSize, style });
   }, [name, size, style, onConfirm]);
 
   const handleKeyDown = useCallback(
@@ -242,23 +246,20 @@ export default function FontChooserDialog({
             <label className="text-role-body uppercase tracking-wider text-app-text-muted">
               Size
             </label>
-            <input
-              className="w-full rounded border border-app-border bg-app-surface-raised px-2 py-1.5 text-role-body text-app-text-strong outline-none focus:border-app-accent"
-              type="number"
+            <DraftNumberInput
               min={1}
               max={200}
+              step={1}
+              stepBase={12}
               value={size}
-              onChange={(e) => setSize(e.target.value === '' ? 12 : parseFloat(e.target.value))}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleConfirm();
-                }
-                if (e.key === 'Escape') {
-                  e.stopPropagation();
-                  onCancel();
-                }
+              onChange={setSize}
+              resolveStep={(text) => {
+                const val = parseFloat(text);
+                if (!Number.isFinite(val)) return 12;
+                return Math.max(1, Math.min(200, Math.round(val)));
               }}
+              className="w-full rounded border border-app-border bg-app-surface-raised px-2 py-1.5 text-role-body text-app-text-strong outline-none focus:border-app-accent"
+              containerClassName="w-full"
             />
           </div>
 
@@ -287,7 +288,7 @@ export default function FontChooserDialog({
             className="flex h-16 items-center justify-center rounded border border-app-border bg-app-surface-raised"
             style={{
               fontFamily: `'${name}', sans-serif`,
-              fontSize: `${size}px`,
+              fontSize: `${Number.isFinite(parseFloat(size)) ? Math.max(1, Math.min(200, Math.round(parseFloat(size)))) : 12}px`,
               fontWeight,
               fontStyle: fontStyleStr,
             }}

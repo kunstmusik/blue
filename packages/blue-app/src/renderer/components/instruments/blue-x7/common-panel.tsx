@@ -3,6 +3,7 @@ import type { BlueX7Common } from '@blue/data';
 import type { BlueX7Patch } from '../../../../shared/project-editor';
 import { AlgorithmTopology } from './algorithm-topology';
 import { AppSelect } from '../../AppSelect';
+import { LiveNumberInput } from '../../CommitNumberInput';
 import { blueX7WidgetDomain } from './catalog-domains';
 import { cn } from '../../../lib/cn';
 
@@ -49,7 +50,7 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
   );
   const displayedOperatorEnabled = common.operatorEnabled.map(
     (enabled, index) => effective(`operator.${index + 1}.enabled`, enabled ? 1 : 0) >= 0.5,
-  );
+  ) as BlueX7Common['operatorEnabled'];
 
   const handleAlgorithmChange = (value: string) => {
     const val = parseInt(value, 10);
@@ -60,28 +61,25 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
     });
   };
 
-  const handleTransposeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const semitones = parseInt(e.target.value, 10);
-    if (!Number.isNaN(semitones)) {
-      const clamped = Math.max(TRANSPOSE_SEMITONE_MIN, Math.min(TRANSPOSE_SEMITONE_MAX, semitones));
-      onApplyPatch(`Change Key Transpose to ${clamped}`, {
-        type: 'setCommonField',
-        field: 'keyTranspose',
-        value: clamped + TRANSPOSE_CENTER_OFFSET,
-      });
-    }
+  const handleTransposeChange = (val: number) => {
+    const clamped = Math.max(
+      TRANSPOSE_SEMITONE_MIN,
+      Math.min(TRANSPOSE_SEMITONE_MAX, Math.round(val)),
+    );
+    onApplyPatch(`Change Key Transpose to ${clamped}`, {
+      type: 'setCommonField',
+      field: 'keyTranspose',
+      value: clamped + TRANSPOSE_CENTER_OFFSET,
+    });
   };
 
-  const handleFeedbackChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseInt(e.target.value, 10);
-    if (!Number.isNaN(val)) {
-      const clamped = Math.max(FEEDBACK_DOMAIN.min, Math.min(FEEDBACK_DOMAIN.max, val));
-      onApplyPatch(`Change Feedback to ${clamped}`, {
-        type: 'setCommonField',
-        field: 'feedback',
-        value: clamped,
-      });
-    }
+  const handleFeedbackChange = (val: number) => {
+    const clamped = Math.max(FEEDBACK_DOMAIN.min, Math.min(FEEDBACK_DOMAIN.max, Math.round(val)));
+    onApplyPatch(`Change Feedback to ${clamped}`, {
+      type: 'setCommonField',
+      field: 'feedback',
+      value: clamped,
+    });
   };
 
   const handleOperatorToggle = (index: number) => {
@@ -101,15 +99,15 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
     });
   };
 
-  const handleSharedPmsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseInt(e.target.value, 10);
-    if (!Number.isNaN(val)) {
-      const clamped = Math.max(SHARED_PMS_DOMAIN.min, Math.min(SHARED_PMS_DOMAIN.max, val));
-      onApplyPatch(`Set All PMS to ${clamped}`, {
-        type: 'setSharedPitchModulationSensitivity',
-        value: clamped,
-      });
-    }
+  const handleSharedPmsChange = (val: number) => {
+    const clamped = Math.max(
+      SHARED_PMS_DOMAIN.min,
+      Math.min(SHARED_PMS_DOMAIN.max, Math.round(val)),
+    );
+    onApplyPatch(`Set All PMS to ${clamped}`, {
+      type: 'setSharedPitchModulationSensitivity',
+      value: clamped,
+    });
   };
 
   return (
@@ -173,15 +171,24 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
                 Key Transpose ({displayTranspose >= 0 ? `+${displayTranspose}` : displayTranspose}{' '}
                 st)
               </label>
-              <input
+              <LiveNumberInput
                 id="bluex7-key-transpose"
                 aria-label="Key Transpose"
-                type="number"
+                step={1}
                 min={TRANSPOSE_SEMITONE_MIN}
                 max={TRANSPOSE_SEMITONE_MAX}
                 value={displayTranspose}
                 onChange={handleTransposeChange}
+                resolveValue={(text) => {
+                  const semitones = parseInt(text, 10);
+                  if (Number.isNaN(semitones)) return null;
+                  return Math.max(
+                    TRANSPOSE_SEMITONE_MIN,
+                    Math.min(TRANSPOSE_SEMITONE_MAX, semitones),
+                  );
+                }}
                 className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+                containerClassName="w-full"
               />
             </div>
 
@@ -190,15 +197,21 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
               <label htmlFor="bluex7-feedback" className="text-role-body text-blue-muted">
                 Feedback ({FEEDBACK_DOMAIN.min}–{FEEDBACK_DOMAIN.max})
               </label>
-              <input
+              <LiveNumberInput
                 id="bluex7-feedback"
                 aria-label="Feedback"
-                type="number"
+                step={1}
                 min={FEEDBACK_DOMAIN.min}
                 max={FEEDBACK_DOMAIN.max}
                 value={displayedFeedback}
                 onChange={handleFeedbackChange}
+                resolveValue={(text) => {
+                  const val = parseInt(text, 10);
+                  if (Number.isNaN(val)) return null;
+                  return Math.max(FEEDBACK_DOMAIN.min, Math.min(FEEDBACK_DOMAIN.max, val));
+                }}
                 className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+                containerClassName="w-full"
               />
             </div>
 
@@ -223,12 +236,13 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
                   <label htmlFor="bluex7-shared-pms" className="text-role-body text-blue-muted">
                     PMS
                   </label>
-                  <input
+                  <LiveNumberInput
                     id="bluex7-shared-pms"
                     aria-label="Shared Pitch Modulation Sensitivity"
-                    type="number"
+                    step={1}
                     min={SHARED_PMS_DOMAIN.min}
                     max={SHARED_PMS_DOMAIN.max}
+                    stepBase={SHARED_PMS_DOMAIN.min}
                     placeholder={
                       sharedPms === 'mixed' &&
                       !effectiveValues?.has('lfo.pitchModulationSensitivity')
@@ -239,10 +253,16 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
                       effectiveValues?.has('lfo.pitchModulationSensitivity') ||
                       typeof sharedPms === 'number'
                         ? displayedPms
-                        : ''
+                        : null
                     }
                     onChange={handleSharedPmsChange}
+                    resolveValue={(text) => {
+                      const val = parseInt(text, 10);
+                      if (Number.isNaN(val)) return null;
+                      return Math.max(SHARED_PMS_DOMAIN.min, Math.min(SHARED_PMS_DOMAIN.max, val));
+                    }}
                     className="w-14 rounded border border-blue-border bg-blue-bg px-1 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+                    containerClassName="w-14"
                   />
                 </div>
               </div>

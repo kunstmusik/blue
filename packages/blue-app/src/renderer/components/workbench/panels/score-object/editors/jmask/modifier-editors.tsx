@@ -6,7 +6,7 @@ import type {
   AccumulatorSnapshot,
 } from './jmask-utils';
 import TableEditor from './TableEditor';
-import CommitNumberInput, { CommitNumberField } from './CommitNumberInput';
+import CommitNumberInput, { CommitNumberField } from '../../../../../CommitNumberInput';
 import { AppSelect } from '../../../../../AppSelect';
 
 function ConstantOrTable({

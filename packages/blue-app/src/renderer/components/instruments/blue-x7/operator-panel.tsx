@@ -4,6 +4,7 @@ import type { BlueX7Patch } from '../../../../shared/project-editor';
 import { EnvelopeEditor } from './envelope-editor';
 import { BlueX7TabList, type BlueX7TabItem } from './tab-list';
 import { AppSelect } from '../../AppSelect';
+import { LiveNumberInput } from '../../CommitNumberInput';
 import { blueX7WidgetDomain, type BlueX7WidgetDomain } from './catalog-domains';
 
 export interface OperatorPanelProps {
@@ -95,22 +96,25 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
     }
   }, [active]);
 
+  const integerDomainResolver = (domain: BlueX7WidgetDomain) => (text: string) => {
+    const val = parseInt(text, 10);
+    if (Number.isNaN(val)) return null;
+    return Math.max(domain.min, Math.min(domain.max, val));
+  };
+
   const handleFieldChange = (
     field: keyof BlueX7Operator,
     label: string,
     domain: BlueX7WidgetDomain,
   ) => {
-    return (e: React.ChangeEvent<HTMLInputElement>) => {
-      const val = parseInt(e.target.value, 10);
-      if (!Number.isNaN(val)) {
-        const clamped = Math.max(domain.min, Math.min(domain.max, val));
-        onApplyPatch(`Change Op ${selectedOpIndex + 1} ${label} to ${clamped}`, {
-          type: 'setOperatorField',
-          operatorIndex: selectedOpIndex,
-          field,
-          value: clamped,
-        });
-      }
+    return (val: number) => {
+      const clamped = Math.max(domain.min, Math.min(domain.max, Math.round(val)));
+      onApplyPatch(`Change Op ${selectedOpIndex + 1} ${label} to ${clamped}`, {
+        type: 'setOperatorField',
+        operatorIndex: selectedOpIndex,
+        field,
+        value: clamped,
+      });
     };
   };
 
@@ -135,15 +139,15 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
     });
   };
 
-  const handlePitchModulationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseInt(e.target.value, 10);
-    if (!Number.isNaN(val)) {
-      const clamped = Math.max(SHARED_PMS_DOMAIN.min, Math.min(SHARED_PMS_DOMAIN.max, val));
-      onApplyPatch(`Set All PMS to ${clamped}`, {
-        type: 'setSharedPitchModulationSensitivity',
-        value: clamped,
-      });
-    }
+  const handlePitchModulationChange = (val: number) => {
+    const clamped = Math.max(
+      SHARED_PMS_DOMAIN.min,
+      Math.min(SHARED_PMS_DOMAIN.max, Math.round(val)),
+    );
+    onApplyPatch(`Set All PMS to ${clamped}`, {
+      type: 'setSharedPitchModulationSensitivity',
+      value: clamped,
+    });
   };
 
   const displayedSync = effective(
@@ -160,33 +164,30 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
     rateOrLevel: 'rate' | 'level',
     domain: BlueX7WidgetDomain,
   ) => {
-    return (e: React.ChangeEvent<HTMLInputElement>) => {
-      const val = parseInt(e.target.value, 10);
-      if (!Number.isNaN(val)) {
-        const clamped = Math.max(domain.min, Math.min(domain.max, val));
-        const currentPt = currentLocalEnvelope[stage] ?? { rate: 0, level: 0 };
-        const nextPt = {
-          ...currentPt,
-          [rateOrLevel]: clamped,
-        };
-        setLocalEnvelopes((prev) => {
-          const next = [...prev] as typeof localEnvelopes;
-          const opEnv = next[selectedOpIndex];
-          if (opEnv) {
-            next[selectedOpIndex] = opEnv.map((pt, i) => (i === stage ? nextPt : pt)) as any;
-          }
-          return next;
-        });
-        onApplyPatch(
-          `Change Op ${selectedOpIndex + 1} Env ${rateOrLevel.toUpperCase()}${stage + 1} to ${clamped}`,
-          {
-            type: 'setOperatorEnvelopePoint',
-            operatorIndex: selectedOpIndex,
-            stageIndex: stage,
-            point: nextPt,
-          },
-        );
-      }
+    return (val: number) => {
+      const clamped = Math.max(domain.min, Math.min(domain.max, Math.round(val)));
+      const currentPt = currentLocalEnvelope[stage] ?? { rate: 0, level: 0 };
+      const nextPt = {
+        ...currentPt,
+        [rateOrLevel]: clamped,
+      };
+      setLocalEnvelopes((prev) => {
+        const next = [...prev] as typeof localEnvelopes;
+        const opEnv = next[selectedOpIndex];
+        if (opEnv) {
+          next[selectedOpIndex] = opEnv.map((pt, i) => (i === stage ? nextPt : pt)) as any;
+        }
+        return next;
+      });
+      onApplyPatch(
+        `Change Op ${selectedOpIndex + 1} Env ${rateOrLevel.toUpperCase()}${stage + 1} to ${clamped}`,
+        {
+          type: 'setOperatorEnvelopePoint',
+          operatorIndex: selectedOpIndex,
+          stageIndex: stage,
+          point: nextPt,
+        },
+      );
     };
   };
 
@@ -295,15 +296,17 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
             <label htmlFor="bluex7-op-coarse" className="text-role-body text-blue-muted">
               Freq Coarse ({domainOf('frequencyCoarse').min}–{domainOf('frequencyCoarse').max})
             </label>
-            <input
+            <LiveNumberInput
               id="bluex7-op-coarse"
               aria-label="Frequency Coarse"
-              type="number"
+              step={1}
               min={domainOf('frequencyCoarse').min}
               max={domainOf('frequencyCoarse').max}
               value={effectiveOperator('frequencyCoarse', currentOp.freqCoarse)}
               onChange={handleFieldChange('freqCoarse', 'Freq Coarse', domainOf('frequencyCoarse'))}
+              resolveValue={integerDomainResolver(domainOf('frequencyCoarse'))}
               className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+              containerClassName="w-full"
             />
           </div>
 
@@ -311,15 +314,17 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
             <label htmlFor="bluex7-op-fine" className="text-role-body text-blue-muted">
               Freq Fine ({domainOf('frequencyFine').min}–{domainOf('frequencyFine').max})
             </label>
-            <input
+            <LiveNumberInput
               id="bluex7-op-fine"
               aria-label="Frequency Fine"
-              type="number"
+              step={1}
               min={domainOf('frequencyFine').min}
               max={domainOf('frequencyFine').max}
               value={effectiveOperator('frequencyFine', currentOp.freqFine)}
               onChange={handleFieldChange('freqFine', 'Freq Fine', domainOf('frequencyFine'))}
+              resolveValue={integerDomainResolver(domainOf('frequencyFine'))}
               className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+              containerClassName="w-full"
             />
           </div>
 
@@ -327,15 +332,17 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
             <label htmlFor="bluex7-op-detune" className="text-role-body text-blue-muted">
               Detune ({domainOf('detune').min}..+{domainOf('detune').max})
             </label>
-            <input
+            <LiveNumberInput
               id="bluex7-op-detune"
               aria-label="Detune"
-              type="number"
+              step={1}
               min={domainOf('detune').min}
               max={domainOf('detune').max}
               value={effectiveOperator('detune', currentOp.detune)}
               onChange={handleFieldChange('detune', 'Detune', domainOf('detune'))}
+              resolveValue={integerDomainResolver(domainOf('detune'))}
               className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+              containerClassName="w-full"
             />
           </div>
 
@@ -365,15 +372,17 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
             <label htmlFor="bluex7-op-output-level" className="text-role-body text-blue-muted">
               Output Level ({domainOf('outputLevel').min}–{domainOf('outputLevel').max})
             </label>
-            <input
+            <LiveNumberInput
               id="bluex7-op-output-level"
               aria-label="Output Level"
-              type="number"
+              step={1}
               min={domainOf('outputLevel').min}
               max={domainOf('outputLevel').max}
               value={effectiveOperator('outputLevel', currentOp.outputLevel)}
               onChange={handleFieldChange('outputLevel', 'Output Level', domainOf('outputLevel'))}
+              resolveValue={integerDomainResolver(domainOf('outputLevel'))}
               className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+              containerClassName="w-full"
             />
           </div>
 
@@ -382,10 +391,10 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
               Velocity Sens ({domainOf('velocitySensitivity').min}–
               {domainOf('velocitySensitivity').max})
             </label>
-            <input
+            <LiveNumberInput
               id="bluex7-op-velocity-sens"
               aria-label="Velocity Sensitivity"
-              type="number"
+              step={1}
               min={domainOf('velocitySensitivity').min}
               max={domainOf('velocitySensitivity').max}
               value={effectiveOperator('velocitySensitivity', currentOp.velocitySensitivity)}
@@ -394,7 +403,9 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                 'Velocity Sensitivity',
                 domainOf('velocitySensitivity'),
               )}
+              resolveValue={integerDomainResolver(domainOf('velocitySensitivity'))}
               className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+              containerClassName="w-full"
             />
           </div>
 
@@ -403,10 +414,10 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
               AM Sensitivity ({domainOf('amplitudeModulationSensitivity').min}–
               {domainOf('amplitudeModulationSensitivity').max})
             </label>
-            <input
+            <LiveNumberInput
               id="bluex7-op-ams"
               aria-label="Amplitude Modulation Sensitivity"
-              type="number"
+              step={1}
               min={domainOf('amplitudeModulationSensitivity').min}
               max={domainOf('amplitudeModulationSensitivity').max}
               value={effectiveOperator(
@@ -418,7 +429,9 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                 'AM Sensitivity',
                 domainOf('amplitudeModulationSensitivity'),
               )}
+              resolveValue={integerDomainResolver(domainOf('amplitudeModulationSensitivity'))}
               className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+              containerClassName="w-full"
             />
           </div>
 
@@ -426,20 +439,31 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
             <label htmlFor="bluex7-op-pms" className="text-role-body text-blue-muted">
               PM Sensitivity ({SHARED_PMS_DOMAIN.min}–{SHARED_PMS_DOMAIN.max})
             </label>
-            <input
+            <LiveNumberInput
               id="bluex7-op-pms"
               aria-label="Pitch Modulation Sensitivity"
-              type="number"
+              step={1}
               min={SHARED_PMS_DOMAIN.min}
               max={SHARED_PMS_DOMAIN.max}
-              value={displayedPms}
+              stepBase={SHARED_PMS_DOMAIN.min}
+              value={
+                sharedPms === 'mixed' && !effectiveValues?.has('lfo.pitchModulationSensitivity')
+                  ? null
+                  : displayedPms
+              }
               placeholder={
                 sharedPms === 'mixed' && !effectiveValues?.has('lfo.pitchModulationSensitivity')
                   ? 'mixed'
                   : undefined
               }
               onChange={handlePitchModulationChange}
+              resolveValue={(text) => {
+                const val = parseInt(text, 10);
+                if (Number.isNaN(val)) return null;
+                return Math.max(SHARED_PMS_DOMAIN.min, Math.min(SHARED_PMS_DOMAIN.max, val));
+              }}
               className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+              containerClassName="w-full"
             />
           </div>
         </div>
@@ -454,15 +478,17 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
               <label htmlFor="bluex7-op-breakpoint" className="text-role-body text-blue-muted">
                 Breakpoint ({domainOf('breakpoint').min}–{domainOf('breakpoint').max})
               </label>
-              <input
+              <LiveNumberInput
                 id="bluex7-op-breakpoint"
                 aria-label="Breakpoint"
-                type="number"
+                step={1}
                 min={domainOf('breakpoint').min}
                 max={domainOf('breakpoint').max}
                 value={effectiveOperator('breakpoint', currentOp.breakpoint)}
                 onChange={handleFieldChange('breakpoint', 'Breakpoint', domainOf('breakpoint'))}
+                resolveValue={integerDomainResolver(domainOf('breakpoint'))}
                 className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+                containerClassName="w-full"
               />
             </div>
 
@@ -484,15 +510,17 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
               <label htmlFor="bluex7-op-depth-left" className="text-role-body text-blue-muted">
                 Depth Left ({domainOf('depthLeft').min}–{domainOf('depthLeft').max})
               </label>
-              <input
+              <LiveNumberInput
                 id="bluex7-op-depth-left"
                 aria-label="Depth Left"
-                type="number"
+                step={1}
                 min={domainOf('depthLeft').min}
                 max={domainOf('depthLeft').max}
                 value={effectiveOperator('depthLeft', currentOp.depthLeft)}
                 onChange={handleFieldChange('depthLeft', 'Depth Left', domainOf('depthLeft'))}
+                resolveValue={integerDomainResolver(domainOf('depthLeft'))}
                 className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+                containerClassName="w-full"
               />
             </div>
 
@@ -514,15 +542,17 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
               <label htmlFor="bluex7-op-depth-right" className="text-role-body text-blue-muted">
                 Depth Right ({domainOf('depthRight').min}–{domainOf('depthRight').max})
               </label>
-              <input
+              <LiveNumberInput
                 id="bluex7-op-depth-right"
                 aria-label="Depth Right"
-                type="number"
+                step={1}
                 min={domainOf('depthRight').min}
                 max={domainOf('depthRight').max}
                 value={effectiveOperator('depthRight', currentOp.depthRight)}
                 onChange={handleFieldChange('depthRight', 'Depth Right', domainOf('depthRight'))}
+                resolveValue={integerDomainResolver(domainOf('depthRight'))}
                 className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+                containerClassName="w-full"
               />
             </div>
 
@@ -531,10 +561,10 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                 Rate Scaling ({domainOf('keyboardRateScaling').min}–
                 {domainOf('keyboardRateScaling').max})
               </label>
-              <input
+              <LiveNumberInput
                 id="bluex7-op-krs"
                 aria-label="Keyboard Rate Scaling"
-                type="number"
+                step={1}
                 min={domainOf('keyboardRateScaling').min}
                 max={domainOf('keyboardRateScaling').max}
                 value={effectiveOperator('keyboardRateScaling', currentOp.keyboardRateScaling)}
@@ -543,7 +573,9 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                   'Rate Scaling',
                   domainOf('keyboardRateScaling'),
                 )}
+                resolveValue={integerDomainResolver(domainOf('keyboardRateScaling'))}
                 className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+                containerClassName="w-full"
               />
             </div>
           </div>
@@ -594,10 +626,10 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                       >
                         R{stage + 1}
                       </label>
-                      <input
+                      <LiveNumberInput
                         id={`bluex7-op-r${stage + 1}`}
                         aria-label={`Operator Rate ${stage + 1}`}
-                        type="number"
+                        step={1}
                         min={domainOf(`envelope.${stage + 1}.rate`).min}
                         max={domainOf(`envelope.${stage + 1}.rate`).max}
                         value={displayRate}
@@ -606,7 +638,9 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                           'rate',
                           domainOf(`envelope.${stage + 1}.rate`),
                         )}
+                        resolveValue={integerDomainResolver(domainOf(`envelope.${stage + 1}.rate`))}
                         className="w-full rounded border border-blue-border bg-blue-bg px-1 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+                        containerClassName="w-full"
                       />
                     </div>
                     <div className="flex-1 flex flex-col gap-0.5">
@@ -616,10 +650,10 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                       >
                         L{stage + 1}
                       </label>
-                      <input
+                      <LiveNumberInput
                         id={`bluex7-op-l${stage + 1}`}
                         aria-label={`Operator Level ${stage + 1}`}
-                        type="number"
+                        step={1}
                         min={domainOf(`envelope.${stage + 1}.level`).min}
                         max={domainOf(`envelope.${stage + 1}.level`).max}
                         value={displayLevel}
@@ -628,7 +662,11 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                           'level',
                           domainOf(`envelope.${stage + 1}.level`),
                         )}
+                        resolveValue={integerDomainResolver(
+                          domainOf(`envelope.${stage + 1}.level`),
+                        )}
                         className="w-full rounded border border-blue-border bg-blue-bg px-1 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+                        containerClassName="w-full"
                       />
                     </div>
                   </div>

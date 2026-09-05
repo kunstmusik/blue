@@ -1,8 +1,8 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { ChevronDown, ChevronUp, Minus, Plus } from 'lucide-react';
 import type { GeneratorSnapshot } from './jmask-utils';
 import TableEditor from './TableEditor';
-import CommitNumberInput, { CommitNumberField } from './CommitNumberInput';
+import CommitNumberInput, { CommitNumberField } from '../../../../../CommitNumberInput';
 import { renderProbabilitySubEditor } from './probability-editors';
 import { AppSelect } from '../../../../../AppSelect';
 import { cn } from '../../../../../../lib/cn';

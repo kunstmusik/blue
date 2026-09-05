@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import type { BlueX7EnvelopePoint } from '@blue/data';
 import type { BlueX7Patch } from '../../../../shared/project-editor';
 import { EnvelopeEditor } from './envelope-editor';
+import { LiveNumberInput } from '../../CommitNumberInput';
 
 export interface PitchEnvelopePanelProps {
   pitchEnvelope: [
@@ -51,25 +52,22 @@ export const PitchEnvelopePanel: React.FC<PitchEnvelopePanelProps> = ({
     min: number,
     max: number,
   ) => {
-    return (e: React.ChangeEvent<HTMLInputElement>) => {
-      const val = parseInt(e.target.value, 10);
-      if (!Number.isNaN(val)) {
-        const clamped = Math.max(min, Math.min(max, val));
-        const currentPt = localEnvelope[stage] ?? { rate: 0, level: 0 };
-        const nextPt = {
-          ...currentPt,
-          [rateOrLevel]: clamped,
-        };
-        const nextEnvelope = localEnvelope.map((pt, i) =>
-          i === stage ? nextPt : pt,
-        ) as typeof pitchEnvelope;
-        setLocalEnvelope(nextEnvelope);
-        onApplyPatch(`Change Pitch Env ${rateOrLevel.toUpperCase()}${stage + 1} to ${clamped}`, {
-          type: 'setPitchEnvelopePoint',
-          stageIndex: stage,
-          point: nextPt,
-        });
-      }
+    return (val: number) => {
+      const clamped = Math.max(min, Math.min(max, Math.round(val)));
+      const currentPt = localEnvelope[stage] ?? { rate: 0, level: 0 };
+      const nextPt = {
+        ...currentPt,
+        [rateOrLevel]: clamped,
+      };
+      const nextEnvelope = localEnvelope.map((pt, i) =>
+        i === stage ? nextPt : pt,
+      ) as typeof pitchEnvelope;
+      setLocalEnvelope(nextEnvelope);
+      onApplyPatch(`Change Pitch Env ${rateOrLevel.toUpperCase()}${stage + 1} to ${clamped}`, {
+        type: 'setPitchEnvelopePoint',
+        stageIndex: stage,
+        point: nextPt,
+      });
     };
   };
 
@@ -155,15 +153,21 @@ export const PitchEnvelopePanel: React.FC<PitchEnvelopePanelProps> = ({
                     >
                       R{stage + 1}
                     </label>
-                    <input
+                    <LiveNumberInput
                       id={`bluex7-peg-r${stage + 1}`}
                       aria-label={`Pitch Rate ${stage + 1}`}
-                      type="number"
+                      step={1}
                       min={0}
                       max={99}
                       value={displayRate}
                       onChange={handlePointChange(stage, 'rate', 0, 99)}
+                      resolveValue={(text) => {
+                        const val = parseInt(text, 10);
+                        if (Number.isNaN(val)) return null;
+                        return Math.max(0, Math.min(99, val));
+                      }}
                       className="w-full rounded border border-blue-border bg-blue-bg px-1 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+                      containerClassName="w-full"
                     />
                   </div>
                   <div className="flex-1 flex flex-col gap-0.5">
@@ -173,15 +177,21 @@ export const PitchEnvelopePanel: React.FC<PitchEnvelopePanelProps> = ({
                     >
                       L{stage + 1}
                     </label>
-                    <input
+                    <LiveNumberInput
                       id={`bluex7-peg-l${stage + 1}`}
                       aria-label={`Pitch Level ${stage + 1}`}
-                      type="number"
+                      step={1}
                       min={0}
                       max={99}
                       value={displayLevel}
                       onChange={handlePointChange(stage, 'level', 0, 99)}
+                      resolveValue={(text) => {
+                        const val = parseInt(text, 10);
+                        if (Number.isNaN(val)) return null;
+                        return Math.max(0, Math.min(99, val));
+                      }}
                       className="w-full rounded border border-blue-border bg-blue-bg px-1 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+                      containerClassName="w-full"
                     />
                   </div>
                 </div>

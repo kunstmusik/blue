@@ -11,6 +11,7 @@ import type { TrackerColumnSnapshot } from '../../../../../../shared/project-edi
 import GeneratedScoreModal from './GeneratedScoreModal';
 import { useScoreObjectTest } from './useScoreObjectTest';
 import { useHostDocument } from '../../../../../hooks/use-host-document';
+import CommitNumberInput from '../../../../CommitNumberInput';
 
 const COLUMN_TYPES = [
   { label: 'PCH', value: 0 },
@@ -582,32 +583,28 @@ function ColumnConfigModal({
             </label>
             <div className="grid grid-cols-[auto_1fr] items-center gap-x-2 gap-y-1">
               <span className="text-role-body text-app-text-muted">Min</span>
-              <input
-                type="number"
+              <CommitNumberInput
                 step={draft.restrictedToInteger ? 1 : 'any'}
                 disabled={!rangeEnabled}
                 className={cn(TRACKER_FIELD_CLASS, 'disabled:opacity-50')}
                 value={draft.rangeMin}
-                onChange={(e) => {
-                  const next = Number(e.target.value);
-                  if (Number.isFinite(next)) {
-                    setDraft((prev) => ({ ...prev, rangeMin: next }));
-                  }
+                resolveValue={(text) => {
+                  const next = Number(text);
+                  return Number.isFinite(next) ? next : draft.rangeMin;
                 }}
+                onChange={(next) => setDraft((prev) => ({ ...prev, rangeMin: next }))}
               />
               <span className="text-role-body text-app-text-muted">Max</span>
-              <input
-                type="number"
+              <CommitNumberInput
                 step={draft.restrictedToInteger ? 1 : 'any'}
                 disabled={!rangeEnabled}
                 className={cn(TRACKER_FIELD_CLASS, 'disabled:opacity-50')}
                 value={draft.rangeMax}
-                onChange={(e) => {
-                  const next = Number(e.target.value);
-                  if (Number.isFinite(next)) {
-                    setDraft((prev) => ({ ...prev, rangeMax: next }));
-                  }
+                resolveValue={(text) => {
+                  const next = Number(text);
+                  return Number.isFinite(next) ? next : draft.rangeMax;
                 }}
+                onChange={(next) => setDraft((prev) => ({ ...prev, rangeMax: next }))}
               />
             </div>
           </div>
@@ -868,7 +865,6 @@ export default function TrackerScoreObjectEditor({
   const [selectedTrack, setSelectedTrack] = useState<number>(0);
   const [editingTrackIndex, setEditingTrackIndex] = useState<number | null>(null);
   const [showShortcutHelp, setShowShortcutHelp] = useState(false);
-  const [localSteps, setLocalSteps] = useState<string>(String(editor.steps));
   const [useKeyboardNotes, setUseKeyboardNotes] = useState(editor.showNoteNames);
   const [draftCells, setDraftCells] = useState<Record<string, string>>({});
   const { testing, testOutput, testError, runTest, clearTestOutput, clearTestError } =
@@ -882,12 +878,6 @@ export default function TrackerScoreObjectEditor({
   const activeCellRef = useRef({ trackIndex: 0, columnIndex: -1, stepIndex: 0 });
   const draftCellsRef = useRef<Record<string, string>>({});
   const noteCopyBuffer = useRef<NoteSnapshot[]>([]);
-
-  const lastStepsRef = useRef(editor.steps);
-  if (lastStepsRef.current !== editor.steps) {
-    lastStepsRef.current = editor.steps;
-    setLocalSteps(String(editor.steps));
-  }
 
   const lastShowNoteNamesRef = useRef(editor.showNoteNames);
   if (lastShowNoteNamesRef.current !== editor.showNoteNames) {
@@ -924,27 +914,6 @@ export default function TrackerScoreObjectEditor({
     },
     [scoreDocument.target, onPatch],
   );
-
-  const handleStepsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLocalSteps(e.target.value);
-  };
-
-  const handleStepsBlur = () => {
-    const v = parseInt(localSteps, 10);
-    if (!isNaN(v) && v >= 1 && v <= 2048) {
-      if (v !== editor.steps) {
-        patch({ steps: v });
-      }
-    } else {
-      setLocalSteps(String(editor.steps));
-    }
-  };
-
-  const handleStepsKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      (e.target as HTMLInputElement).blur();
-    }
-  };
 
   const setDraftCellValue = useCallback((key: string, value: string) => {
     setDraftCells((prev) => {
@@ -1034,22 +1003,6 @@ export default function TrackerScoreObjectEditor({
   const handleClearTrack = useCallback(
     (index: number) => {
       patch({ clearTrack: index });
-    },
-    [patch],
-  );
-
-  const handleStepsPerBeatChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const v = parseInt(e.target.value, 10);
-      if (!isNaN(v) && v >= 1 && v <= 64) patch({ stepsPerBeat: v });
-    },
-    [patch],
-  );
-
-  const handleOctaveChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const v = parseInt(e.target.value, 10);
-      if (!isNaN(v) && v >= -8 && v <= 8) patch({ octave: v });
     },
     [patch],
   );
@@ -1492,27 +1445,39 @@ export default function TrackerScoreObjectEditor({
         <div className="h-4 w-px bg-app-border" />
         <label className="flex items-center gap-1.5 text-role-body font-medium text-app-text-muted">
           <span>STEPS</span>
-          <input
-            type="number"
+          <CommitNumberInput
             min={1}
             max={2048}
+            step={1}
             className="w-16 rounded border border-app-border bg-app-input px-1.5 py-0.5 text-role-body font-mono text-app-text-strong focus:border-app-accent focus:outline-none"
-            value={localSteps}
-            onChange={handleStepsChange}
-            onBlur={handleStepsBlur}
-            onKeyDown={handleStepsKeyDown}
+            value={editor.steps}
+            resolveValue={(text) => {
+              const v = parseInt(text, 10);
+              if (!isNaN(v) && v >= 1 && v <= 2048) return v;
+              return editor.steps;
+            }}
+            onChange={(v) => {
+              if (v !== editor.steps) {
+                patch({ steps: v });
+              }
+            }}
           />
         </label>
         <div className="h-4 w-px bg-app-border" />
         <label className="flex items-center gap-1.5 text-role-body font-medium text-app-text-muted">
           <span>Steps per beat</span>
-          <input
-            type="number"
+          <CommitNumberInput
             min={1}
             max={64}
+            step={1}
             className="w-12 rounded border border-app-border bg-app-input px-1.5 py-0.5 text-role-body font-mono text-app-text-strong focus:border-app-accent focus:outline-none"
             value={spb}
-            onChange={handleStepsPerBeatChange}
+            resolveValue={(text) => {
+              const v = parseInt(text, 10);
+              if (!isNaN(v) && v >= 1 && v <= 64) return v;
+              return spb;
+            }}
+            onChange={(val) => patch({ stepsPerBeat: val })}
             title="STEPS PER BEAT"
           />
         </label>
@@ -1531,13 +1496,18 @@ export default function TrackerScoreObjectEditor({
         </label>
         <label className="flex items-center gap-1.5 text-role-body font-medium text-app-text-muted">
           <span>OCTAVE</span>
-          <input
-            type="number"
+          <CommitNumberInput
             min={-8}
             max={8}
+            step={1}
             className="w-12 rounded border border-app-border bg-app-input px-1.5 py-0.5 text-role-body font-mono text-app-text-strong focus:border-app-accent focus:outline-none"
             value={editor.octave}
-            onChange={handleOctaveChange}
+            resolveValue={(text) => {
+              const v = parseInt(text, 10);
+              if (!isNaN(v) && v >= -8 && v <= 8) return v;
+              return editor.octave;
+            }}
+            onChange={(val) => patch({ octave: val })}
           />
         </label>
         <div className="h-4 w-px bg-app-border" />

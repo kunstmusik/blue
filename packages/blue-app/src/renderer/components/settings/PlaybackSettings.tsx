@@ -1,7 +1,11 @@
 import React from 'react';
 import type { PlaybackSettingsSnapshot } from '../../../shared/program-settings';
 import SettingsSection from './SettingsSection';
-import SettingsField, { SettingsCheckboxField, SETTINGS_NARROW_FIELD_CLASS } from './SettingsField';
+import {
+  SettingsCheckboxField,
+  SettingsNumberField,
+  SETTINGS_NARROW_FIELD_CLASS,
+} from './SettingsField';
 
 interface PlaybackSettingsProps {
   settings: PlaybackSettingsSnapshot;
@@ -19,24 +23,25 @@ export default function PlaybackSettings({
 
   return (
     <SettingsSection title="Playback">
-      <SettingsField
+      <SettingsNumberField
         label="Time Pointer Animation FPS"
         description="Frames per second for playhead animation (1-120)."
-        type="number"
         min={1}
         max={120}
+        step={1}
         value={settings.playbackFps}
-        onChange={(value) => set('playbackFps', Number.parseInt(value, 10) || 24)}
+        resolveValue={(text) => (text.trim() === '' ? 24 : Number.parseInt(text, 10) || 24)}
+        onChange={(value) => set('playbackFps', value)}
         inputClassName={SETTINGS_NARROW_FIELD_CLASS}
       />
 
-      <SettingsField
+      <SettingsNumberField
         label="Latency Correction (seconds)"
         description="Offset applied to playhead position for display latency."
-        type="number"
         step={0.01}
         value={settings.playbackLatencyCorrection}
-        onChange={(value) => set('playbackLatencyCorrection', Number.parseFloat(value) || 0)}
+        resolveValue={(text) => (text.trim() === '' ? 0 : Number.parseFloat(text) || 0)}
+        onChange={(value) => set('playbackLatencyCorrection', value)}
         inputClassName={SETTINGS_NARROW_FIELD_CLASS}
       />
 

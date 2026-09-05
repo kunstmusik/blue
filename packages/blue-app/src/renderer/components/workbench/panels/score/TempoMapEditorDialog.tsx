@@ -7,6 +7,7 @@ import type {
 } from '../../../../../shared/project-editor';
 import { TIME_BASE_OPTIONS, formatForBase, parseForBase } from '../../../../time/time-unit-logic';
 import { AppSelect } from '../../../AppSelect';
+import { DraftNumberInput } from '../../../CommitNumberInput';
 import { cn } from '../../../../lib/cn';
 
 interface TempoMapEditorDialogProps {
@@ -372,21 +373,21 @@ export default function TempoMapEditorDialog({
                       />
                     </td>
                     <td className="py-1 pr-2">
-                      <input
-                        type="number"
+                      <DraftNumberInput
                         className="w-full rounded border border-app-border/30 bg-app-field px-1.5 py-0.5 text-role-body text-app-text outline-none focus:border-app-border/60"
+                        containerClassName="w-full"
                         value={row.tempoText}
-                        onChange={(e) => handleTempoChange(i, e.target.value)}
-                        onBlur={(e) => commitTempo(i, e.currentTarget.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            commitTempo(i, e.currentTarget.value);
-                          }
-                        }}
+                        onChange={(val) => handleTempoChange(i, val)}
+                        onFinish={(text) => commitTempo(i, text)}
+                        onCancel={() => revertTempo(i)}
                         min={1}
                         max={999}
                         step={1}
+                        stepBase={row.tempo}
+                        resolveStep={(text) => {
+                          const tempo = validateTempo(text);
+                          return tempo != null ? tempo : null;
+                        }}
                       />
                     </td>
                     <td className="py-1 text-center">

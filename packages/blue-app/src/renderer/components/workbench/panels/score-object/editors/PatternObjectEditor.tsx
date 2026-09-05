@@ -5,6 +5,7 @@ import GeneratedScoreModal from './GeneratedScoreModal';
 import { useScoreObjectTest } from './useScoreObjectTest';
 import SplitPane from '../../orchestra/SplitPane';
 import { DEFAULT_SPLIT_SIZE_PX } from '../../../../../../shared/window-layout-settings';
+import CommitNumberInput from '../../../../CommitNumberInput';
 import { cn } from '../../../../../lib/cn';
 
 const PATTERN_LAYERS_SPLIT_ID = 'pattern-object.layers' as const;
@@ -235,22 +236,6 @@ export default function PatternObjectEditor({
     [patterns, patch],
   );
 
-  const handleBeatsChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const val = parseInt(e.target.value, 10);
-      if (val > 0 && val <= 64) patch({ beats: val });
-    },
-    [patch],
-  );
-
-  const handleSubDivisionsChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const val = parseInt(e.target.value, 10);
-      if (val > 0 && val <= 64) patch({ subDivisions: val });
-    },
-    [patch],
-  );
-
   const handlePatternScoreChange = useCallback(
     (patternIndex: number, patternScore: string) => {
       patch({ updatePatternScore: { patternIndex, patternScore } });
@@ -325,24 +310,34 @@ export default function PatternObjectEditor({
       <div className="flex items-center gap-3 px-3 py-1 border-b border-blue-border shrink-0 bg-blue-bg/30">
         <div className="flex items-center gap-1.5">
           <label className="text-role-body text-app-text">Beats</label>
-          <input
-            type="number"
+          <CommitNumberInput
             min={1}
             max={64}
+            step={1}
             className="w-12 rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
             value={beats}
-            onChange={handleBeatsChange}
+            resolveValue={(text) => {
+              const val = parseInt(text, 10);
+              if (val > 0 && val <= 64) return val;
+              return beats;
+            }}
+            onChange={(val) => patch({ beats: val })}
           />
         </div>
         <div className="flex items-center gap-1.5">
           <label className="text-role-body text-app-text">Sub</label>
-          <input
-            type="number"
+          <CommitNumberInput
             min={1}
             max={64}
+            step={1}
             className="w-12 rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
             value={subDivisions}
-            onChange={handleSubDivisionsChange}
+            resolveValue={(text) => {
+              const val = parseInt(text, 10);
+              if (val > 0 && val <= 64) return val;
+              return subDivisions;
+            }}
+            onChange={(val) => patch({ subDivisions: val })}
           />
         </div>
         <span className="text-role-body text-app-text">{numSteps} steps</span>

@@ -1,6 +1,11 @@
 import React from 'react';
 import { cn } from '../../lib/cn';
 import { AppSelect, type AppSelectOption } from '../AppSelect';
+import CommitNumberInput, {
+  DraftNumberInput,
+  type CommitNumberInputProps,
+  type DraftNumberInputProps,
+} from '../CommitNumberInput';
 
 const FIELD_CONTAINER_CLASS = 'mb-4';
 const FIELD_LABEL_CLASS = 'mb-1 block text-role-body font-medium text-app-text-muted';
@@ -51,6 +56,82 @@ export default function SettingsField({
         value={value}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
         className={cn(FIELD_INPUT_CLASS, inputClassName)}
+      />
+    </div>
+  );
+}
+
+export type SettingsNumberFieldProps = {
+  label: string;
+  description?: string;
+  containerClassName?: string;
+  inputClassName?: string;
+  inputRef?: React.Ref<HTMLInputElement>;
+} & CommitNumberInputProps;
+
+export function SettingsNumberField(props: SettingsNumberFieldProps): React.ReactElement {
+  const {
+    label,
+    description,
+    containerClassName,
+    inputClassName,
+    className,
+    id: explicitId,
+    inputRef,
+    ...rest
+  } = props;
+  const generatedId = React.useId();
+  const inputId = explicitId || generatedId;
+
+  return (
+    <div className={cn(FIELD_CONTAINER_CLASS, containerClassName)}>
+      <label htmlFor={inputId} className={FIELD_LABEL_CLASS}>
+        {label}
+      </label>
+      {description && <div className={FIELD_DESCRIPTION_CLASS}>{description}</div>}
+      <CommitNumberInput
+        ref={inputRef}
+        id={inputId}
+        className={cn(FIELD_INPUT_CLASS, inputClassName, className)}
+        {...rest}
+      />
+    </div>
+  );
+}
+
+export type SettingsDraftNumberFieldProps = {
+  label: string;
+  description?: string;
+  containerClassName?: string;
+  inputClassName?: string;
+  inputRef?: React.Ref<HTMLInputElement>;
+} & DraftNumberInputProps;
+
+export function SettingsDraftNumberField(props: SettingsDraftNumberFieldProps): React.ReactElement {
+  const {
+    label,
+    description,
+    containerClassName,
+    inputClassName,
+    className,
+    id: explicitId,
+    inputRef,
+    ...rest
+  } = props;
+  const generatedId = React.useId();
+  const inputId = explicitId || generatedId;
+
+  return (
+    <div className={cn(FIELD_CONTAINER_CLASS, containerClassName)}>
+      <label htmlFor={inputId} className={FIELD_LABEL_CLASS}>
+        {label}
+      </label>
+      {description && <div className={FIELD_DESCRIPTION_CLASS}>{description}</div>}
+      <DraftNumberInput
+        ref={inputRef}
+        id={inputId}
+        className={cn(FIELD_INPUT_CLASS, inputClassName, className)}
+        {...rest}
       />
     </div>
   );

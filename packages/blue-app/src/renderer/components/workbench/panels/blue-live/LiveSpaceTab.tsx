@@ -26,6 +26,7 @@ import { getLibraryTransferSourceType } from '../../../../../shared/unified-libr
 import { PopoutContextMenuPortal } from '../../../../hooks/host-portals';
 import { isNodeLike } from '../../../../utils/cross-realm-dom';
 import { useHostDocument } from '../../../../hooks/use-host-document';
+import CommitNumberInput from '../../../CommitNumberInput';
 
 export default function LiveSpaceTab(): React.ReactElement {
   const loaded = useProjectStore((state) => state.loaded);
@@ -328,35 +329,41 @@ export default function LiveSpaceTab(): React.ReactElement {
       >
         <label style={toolbarLabelStyle}>
           Tempo
-          <input
-            type="number"
+          <CommitNumberInput
             min={1}
             max={300}
             step={1}
             value={tempo}
-            onChange={(e) =>
+            onChange={(val) =>
               applyBlueLivePatch({
                 type: 'updateTempoRepeat',
-                patch: { tempo: Number(e.target.value) },
+                patch: { tempo: val },
               })
             }
+            resolveValue={(text) => {
+              const parsed = parseInt(text, 10);
+              return Number.isFinite(parsed) ? parsed : tempo;
+            }}
             style={spinnerStyle}
           />
         </label>
         <label style={toolbarLabelStyle}>
           Repeat
-          <input
-            type="number"
+          <CommitNumberInput
             min={1}
             max={256}
             step={1}
             value={repeat}
-            onChange={(e) =>
+            onChange={(val) =>
               applyBlueLivePatch({
                 type: 'updateTempoRepeat',
-                patch: { repeat: Number(e.target.value) },
+                patch: { repeat: val },
               })
             }
+            resolveValue={(text) => {
+              const parsed = parseInt(text, 10);
+              return Number.isFinite(parsed) ? parsed : repeat;
+            }}
             style={spinnerStyle}
           />
         </label>

@@ -63,6 +63,10 @@ function pressEnter(input: HTMLInputElement): void {
   input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
 }
 
+function pressEscape(input: HTMLInputElement): void {
+  input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+}
+
 describe('MeterMapEditorDialog', () => {
   it('renders a table with Measure and Time Signature columns', () => {
     const { container } = renderModal(MIXED_METER_MAP);
@@ -220,5 +224,34 @@ describe('MeterMapEditorDialog', () => {
 
     expect(onCommit).not.toHaveBeenCalled();
     expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('Escape on numeric measure row restores accepted measure without finishing, committing, or closing (T046)', () => {
+    const { container, onCommit, onClose } = renderModal(MIXED_METER_MAP);
+    const measureInputs = Array.from(
+      container.querySelectorAll('input[type="number"]'),
+    ) as HTMLInputElement[];
+
+    // Row 1 initially has measure 5
+    expect(measureInputs[1]!.value).toBe('5');
+
+    // Focus and type '99'
+    act(() => {
+      measureInputs[1]!.focus();
+      setInputValue(measureInputs[1]!, '99');
+    });
+    expect(measureInputs[1]!.value).toBe('99');
+
+    // Press Escape
+    act(() => {
+      pressEscape(measureInputs[1]!);
+    });
+
+    // Escape restores accepted measure '5'
+    expect(measureInputs[1]!.value).toBe('5');
+    // Dialog remains open (onClose not called)
+    expect(onClose).not.toHaveBeenCalled();
+    // No commit occurred
+    expect(onCommit).not.toHaveBeenCalled();
   });
 });

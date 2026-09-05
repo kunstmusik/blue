@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import { X } from 'lucide-react';
 import type { FieldDefSnapshot } from './types';
 import { AppSelect } from '../../../../../AppSelect';
+import CommitNumberInput from '../../../../../CommitNumberInput';
 
 interface FieldDefinitionsEditorProps {
   fieldDefinitions: FieldDefSnapshot[];
@@ -76,40 +77,40 @@ export default function FieldDefinitionsEditor({
                   />
                 </td>
                 <td className="py-0.5 px-1">
-                  <input
-                    type="number"
+                  <CommitNumberInput
                     className="w-12 bg-transparent text-gray-200 focus:outline-none"
                     value={fd.minValue}
                     step="any"
-                    onChange={(e) =>
+                    resolveValue={(text) => parseFloat(text) || 0}
+                    onChange={(val) =>
                       onPatch({
-                        updateFieldDef: { index, minValue: parseFloat(e.target.value) || 0 },
+                        updateFieldDef: { index, minValue: val },
                       })
                     }
                   />
                 </td>
                 <td className="py-0.5 px-1">
-                  <input
-                    type="number"
+                  <CommitNumberInput
                     className="w-12 bg-transparent text-gray-200 focus:outline-none"
                     value={fd.maxValue}
                     step="any"
-                    onChange={(e) =>
+                    resolveValue={(text) => parseFloat(text) || 0}
+                    onChange={(val) =>
                       onPatch({
-                        updateFieldDef: { index, maxValue: parseFloat(e.target.value) || 0 },
+                        updateFieldDef: { index, maxValue: val },
                       })
                     }
                   />
                 </td>
                 <td className="py-0.5 px-1">
-                  <input
-                    type="number"
+                  <CommitNumberInput
                     className="w-12 bg-transparent text-gray-200 focus:outline-none"
                     value={fd.defaultValue}
                     step="any"
-                    onChange={(e) =>
+                    resolveValue={(text) => parseFloat(text) || 0}
+                    onChange={(val) =>
                       onPatch({
-                        updateFieldDef: { index, defaultValue: parseFloat(e.target.value) || 0 },
+                        updateFieldDef: { index, defaultValue: val },
                       })
                     }
                   />

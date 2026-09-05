@@ -1,7 +1,11 @@
 import React from 'react';
 import type { GeneralSettingsSnapshot } from '../../../shared/program-settings';
 import SettingsSection from './SettingsSection';
-import SettingsField, { SettingsCheckboxField, SETTINGS_NARROW_FIELD_CLASS } from './SettingsField';
+import SettingsField, {
+  SettingsCheckboxField,
+  SettingsNumberField,
+  SETTINGS_NARROW_FIELD_CLASS,
+} from './SettingsField';
 
 interface GeneralSettingsProps {
   settings: GeneralSettingsSnapshot;
@@ -45,12 +49,13 @@ export default function GeneralSettings({
         onChange={(checked) => set('csoundErrorWarningEnabled', checked)}
       />
 
-      <SettingsField
+      <SettingsNumberField
         label="Max Temp Files per Directory"
-        type="number"
         min={1}
+        step={1}
         value={settings.directoryTempFileLimit}
-        onChange={(value) => set('directoryTempFileLimit', Number.parseInt(value, 10) || 3)}
+        resolveValue={(text) => (text.trim() === '' ? 3 : Number.parseInt(text, 10) || 3)}
+        onChange={(value) => set('directoryTempFileLimit', value)}
         inputClassName={SETTINGS_NARROW_FIELD_CLASS}
       />
     </SettingsSection>

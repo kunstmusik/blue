@@ -3,6 +3,7 @@ import { clamp } from '@blue/data';
 import { useHostDocument } from '../../../../../hooks/use-host-document';
 import { HostSurfacePortal } from '../../../../host-surface/HostSurfacePortal';
 import { useHostSurface } from '../../../../host-surface/use-host-surface';
+import CommitNumberInput from '../../../../CommitNumberInput';
 import { cn } from '../../../../../lib/cn';
 
 export interface EditableLinePoint {
@@ -322,7 +323,6 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
   // window that hosts this canvas, not the module-global one.
   const hostDocument = useHostDocument();
   const hostWindow = hostDocument?.defaultView ?? null;
-  const [pointEdits, setPointEdits] = useState<Record<string, string>>({});
   // Context menu runs on the shared host-surface policy: host-realm portal,
   // measured flip/shift inside the host viewport, host-bound dismissal, and
   // close-on-host-scroll (spec FR-003/FR-005/FR-006).
@@ -348,7 +348,6 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
     }
     setContextMenuPosition(null);
     setShowPointEditor(false);
-    setPointEdits({});
   }, [locked]);
 
   useEffect(() => {
@@ -359,7 +358,6 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setShowPointEditor(false);
-        setPointEdits({});
       }
     };
 
@@ -449,7 +447,6 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
     if (locked) {
       return;
     }
-    setPointEdits({});
     setShowPointEditor(true);
   }, [locked]);
 
@@ -477,21 +474,12 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
   }, [commitLines, locked]);
 
   const commitCell = useCallback(
-    (sortedIndex: number, field: 'x' | 'y', rawValue: string) => {
+    (sortedIndex: number, field: 'x' | 'y', parsed: number) => {
       if (locked) return;
       const line = linesRef.current[selectedLineIndexRef.current];
       if (!line) return;
-      const key = `${sortedIndex}-${field}`;
-      const parsed = Number.parseFloat(rawValue);
 
-      if (!Number.isFinite(parsed)) {
-        setPointEdits((prev) => {
-          const next = { ...prev };
-          delete next[key];
-          return next;
-        });
-        return;
-      }
+      if (!Number.isFinite(parsed)) return;
 
       const currentSorted = getSortedPointEntries(line);
       const entry = currentSorted[sortedIndex];
@@ -500,11 +488,6 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
       if (field === 'x') {
         const isRightBound = line.rightBound ?? false;
         if (sortedIndex === 0 || (isRightBound && sortedIndex === currentSorted.length - 1)) {
-          setPointEdits((prev) => {
-            const next = { ...prev };
-            delete next[key];
-            return next;
-          });
           return;
         }
         const prevX = sortedIndex > 0 ? currentSorted[sortedIndex - 1]!.point.x : 0;
@@ -526,11 +509,6 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
         const min = lineMinimum(line);
         const max = lineMaximum(line);
         if (parsed < min || parsed > max) {
-          setPointEdits((prev) => {
-            const next = { ...prev };
-            delete next[key];
-            return next;
-          });
           return;
         }
 
@@ -545,24 +523,9 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
         );
         commitLines(nextLines);
       }
-
-      setPointEdits((prev) => {
-        const next = { ...prev };
-        delete next[key];
-        return next;
-      });
     },
     [commitLines, locked],
   );
-
-  const revertCell = useCallback((sortedIndex: number, field: 'x' | 'y') => {
-    const key = `${sortedIndex}-${field}`;
-    setPointEdits((prev) => {
-      const next = { ...prev };
-      delete next[key];
-      return next;
-    });
-  }, []);
 
   const handleCanvasMouseDown = useCallback(
     (event: React.MouseEvent<SVGSVGElement>) => {
@@ -999,7 +962,6 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
           const isRightBound = currentLine.rightBound ?? false;
           const closeEditor = () => {
             setShowPointEditor(false);
-            setPointEdits({});
           };
 
           return (
@@ -1028,54 +990,48 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
                         const xReadOnly =
                           sortedIndex === 0 ||
                           (isRightBound && sortedIndex === sortedEntries.length - 1);
-                        const xKey = `${sortedIndex}-x`;
-                        const yKey = `${sortedIndex}-y`;
-                        const xDisplay = pointEdits[xKey] ?? String(entry.point.x);
-                        const yDisplay = pointEdits[yKey] ?? String(entry.point.y);
+                        const prevX = sortedIndex > 0 ? sortedEntries[sortedIndex - 1]!.point.x : 0;
+                        const nextX =
+                          sortedIndex < sortedEntries.length - 1
+                            ? sortedEntries[sortedIndex + 1]!.point.x
+                            : 1;
+                        const min = lineMinimum(currentLine);
+                        const max = lineMaximum(currentLine);
                         return (
                           <tr key={entry.index} className="border-b border-app-border/30">
                             <td className="p-0">
-                              <input
-                                type="number"
-                                step="0.001"
+                              <CommitNumberInput
+                                step={0.001}
                                 className={cn(
                                   'w-full border-0 bg-transparent px-2 py-1 text-role-body text-app-text-strong outline-none',
                                   xReadOnly
                                     ? 'cursor-default text-app-text-muted'
                                     : 'focus:bg-app-surface-raised focus:ring-1 focus:ring-inset focus:ring-app-accent',
                                 )}
-                                value={xDisplay}
+                                value={entry.point.x}
                                 readOnly={xReadOnly}
-                                onChange={(event) =>
-                                  setPointEdits((prev) => ({ ...prev, [xKey]: event.target.value }))
-                                }
-                                onBlur={() => commitCell(sortedIndex, 'x', xDisplay)}
-                                onKeyDown={(event) => {
-                                  if (event.key === 'Enter') {
-                                    commitCell(sortedIndex, 'x', xDisplay);
-                                    (event.target as HTMLInputElement).blur();
-                                  }
-                                  if (event.key === 'Escape') revertCell(sortedIndex, 'x');
+                                resolveValue={(text) => {
+                                  const parsed = Number.parseFloat(text);
+                                  if (!Number.isFinite(parsed)) return entry.point.x;
+                                  return clamp(parsed, prevX, nextX);
                                 }}
+                                onChange={(val) => commitCell(sortedIndex, 'x', val)}
                               />
                             </td>
                             <td className="p-0">
-                              <input
-                                type="number"
-                                step="0.001"
+                              <CommitNumberInput
+                                step={0.001}
                                 className="w-full border-0 bg-transparent px-2 py-1 text-role-body text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-inset focus:ring-app-accent"
-                                value={yDisplay}
-                                onChange={(event) =>
-                                  setPointEdits((prev) => ({ ...prev, [yKey]: event.target.value }))
-                                }
-                                onBlur={() => commitCell(sortedIndex, 'y', yDisplay)}
-                                onKeyDown={(event) => {
-                                  if (event.key === 'Enter') {
-                                    commitCell(sortedIndex, 'y', yDisplay);
-                                    (event.target as HTMLInputElement).blur();
+                                value={entry.point.y}
+                                readOnly={locked}
+                                resolveValue={(text) => {
+                                  const parsed = Number.parseFloat(text);
+                                  if (!Number.isFinite(parsed) || parsed < min || parsed > max) {
+                                    return null;
                                   }
-                                  if (event.key === 'Escape') revertCell(sortedIndex, 'y');
+                                  return parsed;
                                 }}
+                                onChange={(val) => commitCell(sortedIndex, 'y', val)}
                               />
                             </td>
                           </tr>

@@ -10,6 +10,7 @@ import {
   routeVirtualKeyboardNote,
 } from '../../../hooks/use-midi-input-service';
 import { AppSelect } from '../../AppSelect';
+import CommitNumberInput from '../../CommitNumberInput';
 import { cn } from '../../../lib/cn';
 
 function clampMidiNote(note: number): number {
@@ -217,13 +218,14 @@ export default function VirtualKeyboardPanel(): ReactElement {
         ) : (
           <label className="flex items-center gap-1.5 text-app-text">
             <span className="text-role-body text-blue-muted">Channel</span>
-            <input
-              type="number"
+            <CommitNumberInput
               min={1}
               max={16}
+              step={1}
               className="w-12 rounded border border-blue-border bg-blue-bg px-1.5 py-1 text-center text-role-body text-app-text outline-none focus:border-blue-accent"
               value={displayChannel}
-              onChange={(e) => setChannel(Number.parseInt(e.target.value, 10) - 1)}
+              onChange={(val) => setChannel(val - 1)}
+              resolveValue={(text) => Number.parseInt(text, 10) || 1}
             />
           </label>
         )}
@@ -236,29 +238,31 @@ export default function VirtualKeyboardPanel(): ReactElement {
             title="Enable Velocity Override"
           />
           <span className="text-role-body text-blue-muted">Velocity</span>
-          <input
-            type="number"
+          <CommitNumberInput
             min={0}
             max={127}
+            step={1}
             disabled={!velocityOverride}
             className={cn(
               'w-14 rounded border border-blue-border bg-blue-bg px-1.5 py-1 text-center text-role-body outline-none focus:border-blue-accent',
               velocityOverride ? 'text-gray-100' : 'text-blue-muted opacity-50',
             )}
             value={velocity}
-            onChange={(e) => setVelocity(Number.parseInt(e.target.value, 10))}
+            onChange={(val) => setVelocity(val)}
+            resolveValue={(text) => Number.parseInt(text, 10) || 0}
           />
         </label>
 
         <label className="flex items-center gap-1.5 text-gray-100">
           <span className="text-role-body text-blue-muted">Octave</span>
-          <input
-            type="number"
+          <CommitNumberInput
             min={0}
             max={7}
+            step={1}
             className="w-12 rounded border border-blue-border bg-blue-bg px-1.5 py-1 text-center text-role-body text-gray-100 outline-none focus:border-blue-accent"
             value={octave}
-            onChange={(e) => setOctave(Number.parseInt(e.target.value, 10))}
+            onChange={(val) => setOctave(val)}
+            resolveValue={(text) => Number.parseInt(text, 10) || 0}
           />
         </label>
 

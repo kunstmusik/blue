@@ -18,6 +18,7 @@ import {
   formatUdoListAsOpcodeText,
 } from '../workbench/panels/udo/udo-snapshot-utils';
 import { AppSelect } from '../AppSelect';
+import CommitNumberInput from '../CommitNumberInput';
 import { cn } from '../../lib/cn';
 
 type EffectEditorTab = 'interface' | 'code' | 'udo' | 'comments';
@@ -166,21 +167,23 @@ export default function EffectEditorPanel({
         )}
         <label className="flex items-center gap-1 text-role-body text-app-text-muted">
           In
-          <input
-            type="number"
+          <CommitNumberInput
             min={0}
+            step={1}
             value={snapshot.numIns}
-            onChange={(event) => handleNumInsChange(Number.parseInt(event.target.value, 10) || 0)}
+            onChange={handleNumInsChange}
+            resolveValue={(text) => Number.parseInt(text, 10) || 0}
             className="w-14 rounded border border-app-border bg-app-input px-1.5 py-1 text-role-body text-app-text-strong outline-none focus:border-app-accent"
           />
         </label>
         <label className="flex items-center gap-1 text-role-body text-app-text-muted">
           Out
-          <input
-            type="number"
+          <CommitNumberInput
             min={0}
+            step={1}
             value={snapshot.numOuts}
-            onChange={(event) => handleNumOutsChange(Number.parseInt(event.target.value, 10) || 0)}
+            onChange={handleNumOutsChange}
+            resolveValue={(text) => Number.parseInt(text, 10) || 0}
             className="w-14 rounded border border-app-border bg-app-input px-1.5 py-1 text-role-body text-app-text-strong outline-none focus:border-app-accent"
           />
         </label>

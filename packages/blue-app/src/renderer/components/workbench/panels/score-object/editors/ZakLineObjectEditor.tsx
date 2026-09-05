@@ -8,6 +8,7 @@ import {
 } from '../../shared/line-editor/EditableLineCanvas';
 import { LineDefinitionTable } from '../../shared/line-editor/LineDefinitionTable';
 import SplitPane from '../../orchestra/SplitPane';
+import CommitNumberInput from '../../../../CommitNumberInput';
 import { DEFAULT_SPLIT_SIZE_PX } from '../../../../../../shared/window-layout-settings';
 
 const ZAK_LINE_OBJECT_SPLIT_ID = 'zak-line-object.lines' as const;
@@ -137,12 +138,13 @@ export default function ZakLineObjectEditor({
                 <label className="mb-0.5 block text-role-body uppercase tracking-wider text-blue-muted">
                   Zak Channel
                 </label>
-                <input
-                  type="number"
+                <CommitNumberInput
                   min={0}
+                  step={1}
                   className="w-full rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 font-mono text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
                   value={selectedLine.channel}
-                  onChange={(event) => handleChannelChange(parseInt(event.target.value, 10) || 0)}
+                  onChange={handleChannelChange}
+                  resolveValue={(text) => parseInt(text, 10) || 0}
                 />
               </div>
             )}
@@ -151,12 +153,13 @@ export default function ZakLineObjectEditor({
               <label className="mb-0.5 block text-role-body uppercase tracking-wider text-blue-muted">
                 Zak Space
               </label>
-              <input
-                type="number"
+              <CommitNumberInput
                 min={0}
+                step={1}
                 className="w-full rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 font-mono text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
                 value={zakSpace}
-                onChange={(event) => patch({ zakSpace: parseInt(event.target.value, 10) || 0 })}
+                onChange={(val) => patch({ zakSpace: val })}
+                resolveValue={(text) => parseInt(text, 10) || 0}
               />
             </div>
           </div>
