@@ -146,8 +146,8 @@ pnpm --filter @blue/app test
 | `--color-app-accent`             | Accent fill / text | Primary action buttons, active tab indicators, selected item fills   | >= 4.75:1 on background, fill       |
 | `--color-app-accent-foreground`  | On-fill text       | Text or icon displayed inside an `--color-app-accent` container      | >= 4.75:1 on accent fill            |
 | `--color-app-accent-hover`       | Accent hover       | Hover state of primary action buttons                                | Fill                                |
-| `--color-app-border`             | Essential boundary | Input borders, panel separator rules, dialog boundaries              | >= 3.25:1 non-text boundary         |
-| `--color-app-border-strong`      | Boundary           | Active container boundary, high-contrast modal borders               | >= 3.25:1 non-text boundary         |
+| `--color-app-border`             | Quiet boundary     | Structural separators and non-essential resting boundaries           | Visually subordinate                |
+| `--color-app-border-strong`      | Essential boundary | Required control edges, active containers, high-contrast modal edges | >= 3.25:1 non-text boundary         |
 | `--color-app-focus`              | Focus indicator    | Author-supplied `:focus-visible` rings and outlines                  | >= 3.25:1 against surface & control |
 | `--color-app-warning`            | Status fill / text | Warning alerts, Solo active button fill, warning icons               | >= 4.75:1 on background, fill       |
 | `--color-app-warning-foreground` | On-fill text       | Text/icons inside `--color-app-warning` badges (Solo active text)    | >= 4.75:1 on warning fill           |

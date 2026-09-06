@@ -85,9 +85,9 @@ export const SEMANTIC_COLOR_ROLES = Object.freeze({
   },
   'app-border': {
     name: 'app-border',
-    purpose: 'control-boundary',
+    purpose: 'structural-boundary',
     category: 'boundary',
-    description: 'Standard control and panel separator border',
+    description: 'Quiet structural and non-essential control boundary',
     ownership: 'application-owned',
   },
   'app-border-muted': {
@@ -413,7 +413,7 @@ export const GOVERNED_CONTRAST_PAIRS = Object.freeze([
   // Non-text essential boundaries (WCAG 1.4.11)
   {
     id: 'border-against-bg',
-    foregroundToken: 'app-border',
+    foregroundToken: 'app-border-strong',
     backgroundToken: 'app-bg',
     usage: 'essential-boundary',
     minRatio: CONTRAST_FLOORS.nonText,
@@ -422,7 +422,7 @@ export const GOVERNED_CONTRAST_PAIRS = Object.freeze([
   },
   {
     id: 'border-against-surface',
-    foregroundToken: 'app-border',
+    foregroundToken: 'app-border-strong',
     backgroundToken: 'app-surface',
     usage: 'essential-boundary',
     minRatio: CONTRAST_FLOORS.nonText,
