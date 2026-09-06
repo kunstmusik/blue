@@ -27,7 +27,7 @@ export default function LayerRemovalConfirmationDialog({ plan, onCancel, onConfi
         {
           id: 'remove',
           label: 'Remove',
-          intent: 'primary',
+          intent: 'destructive',
           dataAttributes: { 'data-layer-removal-confirm': true },
         },
       ]}

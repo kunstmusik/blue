@@ -63,6 +63,7 @@ export default function TrackerObjectEditor({
       <div className="flex gap-3 px-3 py-2 border-b border-blue-border shrink-0">
         <FieldRow label="Steps/Beat">
           <CommitNumberInput
+            aria-label="Steps per beat"
             min={1}
             max={64}
             step={1}

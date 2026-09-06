@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { TIME_DISPLAY_OPTIONS } from './types';
-import { useHostDocument } from '../../../../../../hooks/use-host-document';
 import { AppSelect } from '../../../../../AppSelect';
+import { useDialogFocus } from '../../../../../dialogs/use-dialog-focus';
 
 const SECONDARY_BUTTON_CLASS =
-  'px-3 py-1 text-role-body text-blue-text bg-blue-surface/40 hover:bg-blue-surface/70 rounded border border-blue-border/40 transition-colors cursor-pointer';
+  'px-3 py-1 text-role-body text-blue-text bg-blue-surface/40 hover:bg-blue-surface/70 rounded border border-blue-border/40 transition-colors cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus';
 
 export interface PianoRollRulerConfigChanges {
   useGlobalRuler: boolean;
@@ -35,16 +35,7 @@ export default function PianoRollRulerConfigDialog({
   const [secondaryRulerEnabled, setSecondaryRulerEnabled] = useState(initialSecondaryRulerEnabled);
   const [secondaryTimeDisplay, setSecondaryTimeDisplay] = useState(initialSecondaryTimeDisplay);
 
-  const hostWindow = useHostDocument()?.defaultView ?? null;
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    if (!hostWindow) return undefined;
-    hostWindow.addEventListener('keydown', handleKeyDown);
-    return () => hostWindow.removeEventListener('keydown', handleKeyDown);
-  }, [onClose, hostWindow]);
+  const dialogRef = useDialogFocus(true, onClose);
 
   const handleOk = () => {
     onApply({
@@ -64,11 +55,18 @@ export default function PianoRollRulerConfigDialog({
       }}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="pianoroll-ruler-config-title"
         className="w-full max-w-sm rounded-lg border border-blue-border/50 bg-app-menu text-blue-text shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4 space-y-4">
-          <h2 className="text-role-title-2 font-bold border-b border-blue-border/30 pb-2">
+          <h2
+            id="pianoroll-ruler-config-title"
+            className="text-role-title-2 font-bold border-b border-blue-border/30 pb-2"
+          >
             PianoRoll Ruler Configuration
           </h2>
 
@@ -96,6 +94,7 @@ export default function PianoRollRulerConfigDialog({
                   value={primaryTimeDisplay}
                   onValueChange={setPrimaryTimeDisplay}
                   options={TIME_DISPLAY_OPTIONS}
+                  aria-label="Primary ruler format"
                   disabled={useGlobalRuler}
                 />
               </div>
@@ -120,6 +119,7 @@ export default function PianoRollRulerConfigDialog({
                   value={secondaryTimeDisplay}
                   onValueChange={setSecondaryTimeDisplay}
                   options={TIME_DISPLAY_OPTIONS}
+                  aria-label="Secondary ruler format"
                   disabled={useGlobalRuler || !secondaryRulerEnabled}
                 />
               </div>
@@ -131,7 +131,7 @@ export default function PianoRollRulerConfigDialog({
               Cancel
             </button>
             <button
-              className="px-3 py-1 text-role-body text-blue-text bg-blue-accent/20 hover:bg-blue-accent/30 rounded transition-colors font-medium cursor-pointer"
+              className="px-3 py-1 text-role-body text-blue-text bg-blue-accent/20 hover:bg-blue-accent/30 rounded transition-colors font-medium cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
               onClick={handleOk}
             >
               OK

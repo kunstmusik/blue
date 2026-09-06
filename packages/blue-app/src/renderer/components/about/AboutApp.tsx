@@ -157,7 +157,7 @@ export default function AboutApp({ iconUrl }: AboutAppProps) {
           onClick={() => {
             void window.blueAPI.closeAboutWindow();
           }}
-          className="inline-flex items-center gap-2 rounded border border-app-accent bg-app-accent px-4 py-1.5 text-role-body font-medium text-app-text-strong transition-colors hover:bg-app-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-focus"
+          className="inline-flex items-center gap-2 rounded border border-app-accent bg-app-accent px-4 py-1.5 text-role-body font-medium text-app-accent-foreground transition-colors hover:bg-app-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-focus"
         >
           <X size={14} strokeWidth={2.25} aria-hidden="true" />
           Close

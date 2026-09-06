@@ -1,7 +1,7 @@
 import React, { useCallback, useRef } from 'react';
 import { BSB_XY_READOUT_HEIGHT } from '../../../../../../../shared/bsb-widget-layout';
 import WidgetWrapper from './WidgetWrapper';
-import { getWidgetDisplaySize } from './utils';
+import { computeKeyboardSteppedValue, getWidgetDisplaySize } from './utils';
 import type { BSBWidgetComponentProps } from './widget-component-props';
 
 type BSBXYControllerWidgetProps = BSBWidgetComponentProps;
@@ -54,6 +54,64 @@ function BSBXYControllerWidget({
     });
   }, []);
 
+  const handleXKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (editEnabled) return;
+      const resolution =
+        typeof node.properties.resolution === 'number' && node.properties.resolution > 0
+          ? node.properties.resolution
+          : null;
+      const nextVal = computeKeyboardSteppedValue({
+        current: xValue,
+        min: xMin,
+        max: xMax,
+        resolution,
+        key: e.key,
+        shiftKey: e.shiftKey,
+        axis: 'x',
+      });
+      if (nextVal !== null) {
+        e.preventDefault();
+        e.stopPropagation();
+        patchRef.current?.({
+          type: 'updateWidgetProperties',
+          widgetId: node.id,
+          properties: { xValue: nextVal },
+        });
+      }
+    },
+    [editEnabled, node.id, node.properties.resolution, xMax, xMin, xValue],
+  );
+
+  const handleYKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (editEnabled) return;
+      const resolution =
+        typeof node.properties.resolution === 'number' && node.properties.resolution > 0
+          ? node.properties.resolution
+          : null;
+      const nextVal = computeKeyboardSteppedValue({
+        current: yValue,
+        min: yMin,
+        max: yMax,
+        resolution,
+        key: e.key,
+        shiftKey: e.shiftKey,
+        axis: 'y',
+      });
+      if (nextVal !== null) {
+        e.preventDefault();
+        e.stopPropagation();
+        patchRef.current?.({
+          type: 'updateWidgetProperties',
+          widgetId: node.id,
+          properties: { yValue: nextVal },
+        });
+      }
+    },
+    [editEnabled, node.id, node.properties.resolution, yMax, yMin, yValue],
+  );
+
   return (
     <WidgetWrapper
       node={node}
@@ -82,29 +140,48 @@ function BSBXYControllerWidget({
               : (e) => {
                   e.stopPropagation();
                   updateFromPointer(e.clientX, e.clientY);
+                  const ownerWindow = padRef.current?.ownerDocument?.defaultView || window;
                   const onMove = (ev: MouseEvent) => {
                     ev.preventDefault();
                     updateFromPointer(ev.clientX, ev.clientY);
                   };
                   const onUp = () => {
-                    window.removeEventListener('mousemove', onMove);
-                    window.removeEventListener('mouseup', onUp);
+                    ownerWindow.removeEventListener('mousemove', onMove);
+                    ownerWindow.removeEventListener('mouseup', onUp);
                   };
-                  window.addEventListener('mousemove', onMove);
-                  window.addEventListener('mouseup', onUp);
+                  ownerWindow.addEventListener('mousemove', onMove);
+                  ownerWindow.addEventListener('mouseup', onUp);
                 }
           }
         >
           <div
-            className="absolute h-px w-full bg-blue-border/20"
-            style={{ top: `${yPct * 100}%` }}
-          />
-          <div
-            className="absolute h-full w-px bg-blue-border/20"
+            role="slider"
+            aria-orientation="horizontal"
+            tabIndex={editEnabled ? -1 : 0}
+            aria-label={node.objectName ? `${node.objectName} X` : 'X'}
+            aria-valuemin={xMin}
+            aria-valuemax={xMax}
+            aria-valuenow={xValue}
+            aria-valuetext={xValue.toFixed(2)}
+            className="absolute h-full w-px bg-blue-border/20 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
             style={{ left: `${xPct * 100}%` }}
+            onKeyDown={handleXKeyDown}
           />
           <div
-            className="absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-accent"
+            role="slider"
+            aria-orientation="vertical"
+            tabIndex={editEnabled ? -1 : 0}
+            aria-label={node.objectName ? `${node.objectName} Y` : 'Y'}
+            aria-valuemin={yMin}
+            aria-valuemax={yMax}
+            aria-valuenow={yValue}
+            aria-valuetext={yValue.toFixed(2)}
+            className="absolute h-px w-full bg-blue-border/20 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
+            style={{ top: `${yPct * 100}%` }}
+            onKeyDown={handleYKeyDown}
+          />
+          <div
+            className="absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-accent pointer-events-none"
             style={{ left: `${xPct * 100}%`, top: `${yPct * 100}%` }}
           />
         </div>

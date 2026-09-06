@@ -9,6 +9,7 @@ import { TIME_BASE_OPTIONS, formatForBase, parseForBase } from '../../../../time
 import { AppSelect } from '../../../AppSelect';
 import { DraftNumberInput } from '../../../CommitNumberInput';
 import { cn } from '../../../../lib/cn';
+import { useDialogFocus } from '../../../dialogs/use-dialog-focus';
 
 interface TempoMapEditorDialogProps {
   tempoMap: TempoMapSnapshot;
@@ -28,7 +29,7 @@ interface TableRow {
 
 const BEAT_EPSILON = 0.001;
 const SECONDARY_BUTTON_CLASS =
-  'rounded border border-app-border/40 bg-app-surface px-3 py-1 text-role-body text-app-text transition-colors hover:bg-app-hover';
+  'rounded border border-app-border/40 bg-app-surface px-3 py-1 text-role-body text-app-text transition-colors hover:bg-app-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus';
 
 function formatNumber(value: number): string {
   return value.toString();
@@ -52,6 +53,7 @@ export default function TempoMapEditorDialog({
   onClose,
 }: TempoMapEditorDialogProps) {
   const [error, setError] = useState<string | null>(null);
+  const dialogRef = useDialogFocus(true, onClose);
   const [rows, setRows] = useState<TableRow[]>(() =>
     tempoMap.points.map((p) => {
       const timeBase = p.timeBase ?? 'BEATS';
@@ -302,16 +304,6 @@ export default function TempoMapEditorDialog({
     onClose();
   }, [rows, timeContext, tempoMap.enabled, tempoMap.visible, onCommit, onClose]);
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onClose();
-      }
-    },
-    [onClose],
-  );
-
   const canDelete = rows.length > 1;
 
   return (
@@ -320,12 +312,18 @@ export default function TempoMapEditorDialog({
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="tempo-map-editor-title"
         className="rounded-lg border border-app-border/40 bg-app-menu shadow-xl"
         style={{ minWidth: 440 }}
         onClick={(e) => e.stopPropagation()}
-        onKeyDown={handleKeyDown}
       >
-        <h3 className="px-4 pb-2 pt-3 text-role-title-3 font-semibold text-app-text">
+        <h3
+          id="tempo-map-editor-title"
+          className="px-4 pb-2 pt-3 text-role-title-3 font-semibold text-app-text"
+        >
           Edit Tempo Map
         </h3>
 
@@ -350,6 +348,7 @@ export default function TempoMapEditorDialog({
                   <tr key={i} className="border-t border-app-border/10">
                     <td className="py-1 pr-2">
                       <AppSelect
+                        aria-label={`Time unit for tempo point ${i + 1}`}
                         className="w-full rounded border border-app-border/30 bg-app-field px-1.5 py-0.5 text-role-body text-app-text outline-none focus:border-app-border/60"
                         value={row.timeBase}
                         onValueChange={(value) => handleTimeBaseChange(i, value)}
@@ -359,6 +358,7 @@ export default function TempoMapEditorDialog({
                     <td className="py-1 pr-2">
                       <input
                         type="text"
+                        aria-label={`Start time for tempo point ${i + 1}`}
                         className="w-full rounded border border-app-border/30 bg-app-field px-1.5 py-0.5 text-role-body text-app-text outline-none focus:border-app-border/60"
                         value={row.beatText}
                         onChange={(e) => handleBeatChange(i, e.target.value)}
@@ -374,6 +374,7 @@ export default function TempoMapEditorDialog({
                     </td>
                     <td className="py-1 pr-2">
                       <DraftNumberInput
+                        aria-label={`Tempo BPM for tempo point ${i + 1}`}
                         className="w-full rounded border border-app-border/30 bg-app-field px-1.5 py-0.5 text-role-body text-app-text outline-none focus:border-app-border/60"
                         containerClassName="w-full"
                         value={row.tempoText}
@@ -392,8 +393,9 @@ export default function TempoMapEditorDialog({
                     </td>
                     <td className="py-1 text-center">
                       <button
+                        aria-label={`Delete tempo point ${i + 1}`}
                         className={cn(
-                          'rounded px-1.5 py-0.5 text-role-callout',
+                          'rounded px-1.5 py-0.5 text-role-callout focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus',
                           canDeleteRow
                             ? 'text-app-danger hover:bg-app-outline-strong'
                             : 'cursor-not-allowed text-app-text-muted',
@@ -414,7 +416,7 @@ export default function TempoMapEditorDialog({
 
         <div className="flex items-center justify-between border-t border-app-border/20 px-4 py-2">
           <button
-            className="rounded border border-app-border/30 bg-app-surface px-3 py-1 text-role-body text-app-text hover:bg-app-hover"
+            className="rounded border border-app-border/30 bg-app-surface px-3 py-1 text-role-body text-app-text hover:bg-app-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
             onClick={handleAdd}
           >
             Add
@@ -424,7 +426,7 @@ export default function TempoMapEditorDialog({
               Cancel
             </button>
             <button
-              className="rounded border border-app-border/30 bg-app-surface px-3 py-1 text-role-body text-app-text hover:bg-app-hover"
+              className="rounded border border-app-border/30 bg-app-surface px-3 py-1 text-role-body text-app-text hover:bg-app-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
               onClick={handleOk}
             >
               OK

@@ -91,7 +91,7 @@ The audit script reads the JSON array between the markers below. Keep entries ex
 	},
 	{
 		"path": "packages/blue-app/src/renderer/components/workbench/panels/editors/SelectedCodeEditor.tsx",
-		"value": "#637777",
+		"value": "#8ca0a0",
 		"kind": "syntax-palette",
 		"reason": "CodeMirror syntax token color for comments remains language syntax, not app chrome.",
 		"ownerSurface": "Selected code editor syntax palette",

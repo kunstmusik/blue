@@ -770,30 +770,39 @@ function pressKey(init: KeyboardEventInit & { code?: string; key?: string }): Ke
   return event;
 }
 
-describe('F shortcut toggles follow playback', () => {
-  it('toggles follow on unmodified F while a project is loaded', () => {
+describe('Command/Control+Shift+F shortcut toggles follow playback', () => {
+  it('toggles follow on Command/Control+Shift+F while a project is loaded', () => {
     seedLoadedProject();
     usePlaybackStore.setState({ savedFollowPlayback: true, followPlayback: true });
     const rendered = renderProbe();
 
-    const event = pressKey({});
+    const event = pressKey({ metaKey: true, shiftKey: true });
     expect(event.defaultPrevented).toBe(true);
     expect(usePlaybackStore.getState().followPlayback).toBe(false);
     expect(usePlaybackStore.getState().savedFollowPlayback).toBe(false);
     expect(updatePlaybackPreferences).toHaveBeenCalledWith({ followPlayback: false });
 
+    const secondEvent = pressKey({ ctrlKey: true, shiftKey: true });
+    expect(secondEvent.defaultPrevented).toBe(true);
+    expect(usePlaybackStore.getState().followPlayback).toBe(true);
+    expect(usePlaybackStore.getState().savedFollowPlayback).toBe(true);
+    expect(updatePlaybackPreferences).toHaveBeenCalledWith({ followPlayback: true });
+
     cleanupPanel(rendered);
   });
 
-  it('ignores F with modifier keys', () => {
+  it('ignores unmodified F and partial or incompatible modifier combinations', () => {
     seedLoadedProject();
     const rendered = renderProbe();
 
     for (const init of [
+      {},
       { metaKey: true },
       { ctrlKey: true },
       { altKey: true },
       { shiftKey: true },
+      { metaKey: true, altKey: true, shiftKey: true },
+      { ctrlKey: true, altKey: true, shiftKey: true },
     ]) {
       const event = pressKey(init);
       expect(event.defaultPrevented).toBe(false);
@@ -804,13 +813,13 @@ describe('F shortcut toggles follow playback', () => {
     cleanupPanel(rendered);
   });
 
-  it('ignores repeated F keydown events from key auto-repeat', () => {
+  it('ignores repeated KeyF keydown events from key auto-repeat', () => {
     seedLoadedProject();
     const rendered = renderProbe();
 
-    pressKey({});
-    pressKey({ repeat: true });
-    pressKey({ repeat: true });
+    pressKey({ metaKey: true, shiftKey: true });
+    pressKey({ metaKey: true, shiftKey: true, repeat: true });
+    pressKey({ metaKey: true, shiftKey: true, repeat: true });
 
     expect(usePlaybackStore.getState().followPlayback).toBe(false);
     expect(updatePlaybackPreferences).toHaveBeenCalledTimes(1);
@@ -819,10 +828,10 @@ describe('F shortcut toggles follow playback', () => {
     cleanupPanel(rendered);
   });
 
-  it('ignores F when no project is loaded', () => {
+  it('ignores KeyF when no project is loaded', () => {
     const rendered = renderProbe();
 
-    const event = pressKey({});
+    const event = pressKey({ metaKey: true, shiftKey: true });
     expect(event.defaultPrevented).toBe(false);
     expect(usePlaybackStore.getState().followPlayback).toBe(true);
     expect(updatePlaybackPreferences).not.toHaveBeenCalled();
@@ -830,7 +839,7 @@ describe('F shortcut toggles follow playback', () => {
     cleanupPanel(rendered);
   });
 
-  it('does not toggle or intercept F from editing surfaces', () => {
+  it('does not toggle or intercept KeyF from editing surfaces', () => {
     seedLoadedProject();
     const rendered = renderProbe();
 
@@ -839,7 +848,9 @@ describe('F shortcut toggles follow playback', () => {
     const dispatchFrom = (el: HTMLElement): KeyboardEvent => {
       const event = new KeyboardEvent('keydown', {
         code: 'KeyF',
-        key: 'f',
+        key: 'F',
+        metaKey: true,
+        shiftKey: true,
         bubbles: true,
         cancelable: true,
       });

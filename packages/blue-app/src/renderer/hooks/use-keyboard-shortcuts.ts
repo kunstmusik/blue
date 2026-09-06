@@ -53,9 +53,9 @@ export function useKeyboardShortcuts(): void {
 
       if (
         e.code === 'KeyF' &&
-        !meta &&
+        meta &&
+        e.shiftKey &&
         !e.altKey &&
-        !e.shiftKey &&
         !e.repeat &&
         hasProject &&
         !editingText

@@ -584,6 +584,7 @@ function ColumnConfigModal({
             <div className="grid grid-cols-[auto_1fr] items-center gap-x-2 gap-y-1">
               <span className="text-role-body text-app-text-muted">Min</span>
               <CommitNumberInput
+                aria-label="Range minimum"
                 step={draft.restrictedToInteger ? 1 : 'any'}
                 disabled={!rangeEnabled}
                 className={cn(TRACKER_FIELD_CLASS, 'disabled:opacity-50')}
@@ -596,6 +597,7 @@ function ColumnConfigModal({
               />
               <span className="text-role-body text-app-text-muted">Max</span>
               <CommitNumberInput
+                aria-label="Range maximum"
                 step={draft.restrictedToInteger ? 1 : 'any'}
                 disabled={!rangeEnabled}
                 className={cn(TRACKER_FIELD_CLASS, 'disabled:opacity-50')}
@@ -1446,6 +1448,7 @@ export default function TrackerScoreObjectEditor({
         <label className="flex items-center gap-1.5 text-role-body font-medium text-app-text-muted">
           <span>STEPS</span>
           <CommitNumberInput
+            aria-label="Steps"
             min={1}
             max={2048}
             step={1}
@@ -1467,6 +1470,7 @@ export default function TrackerScoreObjectEditor({
         <label className="flex items-center gap-1.5 text-role-body font-medium text-app-text-muted">
           <span>Steps per beat</span>
           <CommitNumberInput
+            aria-label="Steps per beat"
             min={1}
             max={64}
             step={1}
@@ -1497,6 +1501,7 @@ export default function TrackerScoreObjectEditor({
         <label className="flex items-center gap-1.5 text-role-body font-medium text-app-text-muted">
           <span>OCTAVE</span>
           <CommitNumberInput
+            aria-label="Octave"
             min={-8}
             max={8}
             step={1}

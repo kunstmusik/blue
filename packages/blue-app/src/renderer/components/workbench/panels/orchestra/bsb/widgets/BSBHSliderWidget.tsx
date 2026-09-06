@@ -5,7 +5,7 @@ import {
 } from '../../../../../../../shared/bsb-widget-layout';
 import WidgetWrapper from './WidgetWrapper';
 import { ValuePanel, formatValue } from './ValuePanel';
-import { getWidgetDisplaySize } from './utils';
+import { computeKeyboardSteppedValue, getWidgetDisplaySize } from './utils';
 import type { BSBWidgetPatchComponentProps } from './widget-component-props';
 
 type BSBHSliderWidgetProps = BSBWidgetPatchComponentProps;
@@ -52,6 +52,7 @@ function BSBHSliderWidget({
 
   useEffect(() => {
     if (editEnabled) return;
+    const ownerWindow = svgRef.current?.ownerDocument?.defaultView || window;
     const onMouseMove = (e: MouseEvent) => {
       if (!dragging.current || !svgRef.current) return;
       e.preventDefault();
@@ -71,11 +72,11 @@ function BSBHSliderWidget({
     const onMouseUp = () => {
       dragging.current = false;
     };
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
+    ownerWindow.addEventListener('mousemove', onMouseMove);
+    ownerWindow.addEventListener('mouseup', onMouseUp);
     return () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
+      ownerWindow.removeEventListener('mousemove', onMouseMove);
+      ownerWindow.removeEventListener('mouseup', onMouseUp);
     };
   }, [editEnabled]);
 
@@ -100,6 +101,35 @@ function BSBHSliderWidget({
     [editEnabled],
   );
 
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<SVGSVGElement>) => {
+      if (editEnabled) return;
+      const resolution =
+        typeof node.properties.resolution === 'number' && node.properties.resolution > 0
+          ? node.properties.resolution
+          : null;
+      const nextVal = computeKeyboardSteppedValue({
+        current: value,
+        min: minimum,
+        max: maximum,
+        resolution,
+        key: e.key,
+        shiftKey: e.shiftKey,
+        axis: 'horizontal',
+      });
+      if (nextVal !== null) {
+        e.preventDefault();
+        e.stopPropagation();
+        patchRef.current({
+          type: 'updateWidgetProperties',
+          widgetId: node.id,
+          properties: { value: nextVal },
+        });
+      }
+    },
+    [editEnabled, node.properties.resolution, value, minimum, maximum, node.id],
+  );
+
   return (
     <WidgetWrapper
       node={node}
@@ -122,9 +152,18 @@ function BSBHSliderWidget({
           ref={svgRef}
           width={sliderWidth}
           height={totalHeight}
-          className="block"
+          className="block focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus rounded-sm"
           style={{ cursor: editEnabled ? 'default' : 'pointer' }}
           onMouseDown={handleMouseDown}
+          onKeyDown={handleKeyDown}
+          tabIndex={editEnabled ? -1 : 0}
+          role="slider"
+          aria-orientation="horizontal"
+          aria-label={node.objectName || 'Horizontal Slider'}
+          aria-valuemin={minimum}
+          aria-valuemax={maximum}
+          aria-valuenow={value}
+          aria-valuetext={showValue ? displayVal : String(value)}
         >
           <rect
             x={THUMB_R}

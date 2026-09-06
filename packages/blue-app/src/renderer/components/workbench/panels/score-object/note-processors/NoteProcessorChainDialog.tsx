@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import type { NoteProcessorChainSnapshot } from '../../../../../../shared/project-editor';
 import { useProjectStore } from '../../../../../stores/project-store';
 import NoteProcessorChainEditor from './NoteProcessorChainEditor';
+import { useDialogFocus } from '../../../../dialogs/use-dialog-focus';
 
 interface NoteProcessorChainDialogProps {
   title: string;
@@ -20,6 +21,7 @@ export default function NoteProcessorChainDialog({
   const [localChain, setLocalChain] = useState<NoteProcessorChainSnapshot>(chain);
   const [namedChainNames, setNamedChainNames] = useState<string[]>([]);
   const applyProjectDocumentPatch = useProjectStore((s) => s.applyProjectDocumentPatch);
+  const dialogRef = useDialogFocus(true, onClose);
 
   useEffect(() => {
     window.blueAPI
@@ -67,13 +69,22 @@ export default function NoteProcessorChainDialog({
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="note-processor-chain-dialog-title"
         className="bg-blue-bg border border-blue-border rounded-lg shadow-xl w-[420px] max-h-[80vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-blue-border">
-          <h3 className="text-role-title-3 font-semibold text-gray-200">{title}</h3>
+          <h3
+            id="note-processor-chain-dialog-title"
+            className="text-role-title-3 font-semibold text-gray-200"
+          >
+            {title}
+          </h3>
           <button
-            className="text-gray-400 hover:text-gray-200"
+            className="rounded p-1 text-gray-400 hover:text-gray-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
             onClick={onClose}
             aria-label="Close"
           >
@@ -91,13 +102,13 @@ export default function NoteProcessorChainDialog({
         </div>
         <div className="flex justify-end gap-2 px-4 py-3 border-t border-blue-border">
           <button
-            className="px-3 py-1.5 text-role-body rounded border border-blue-border text-gray-300 hover:bg-blue-border/40"
+            className="px-3 py-1.5 text-role-body rounded border border-blue-border text-gray-300 hover:bg-blue-border/40 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
             onClick={onClose}
           >
             Cancel
           </button>
           <button
-            className="px-3 py-1.5 text-role-body rounded bg-blue-accent text-white hover:bg-blue-accent/80"
+            className="px-3 py-1.5 text-role-body rounded bg-blue-accent text-white hover:bg-blue-accent/80 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
             onClick={handleSave}
           >
             Save

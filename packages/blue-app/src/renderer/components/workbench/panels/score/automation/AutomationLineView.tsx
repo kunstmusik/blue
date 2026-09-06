@@ -138,12 +138,7 @@ export default function AutomationLineView({
         <HostSurfacePortal
           session={readoutSurface}
           interactive={false}
-          className="z-50 px-[3px] py-[3px] font-mono text-role-subheadline text-white"
-          style={{
-            background: 'rgba(5, 7, 13, 0.82)',
-            border: '1px solid rgba(255, 255, 255, 0.14)',
-            borderRadius: 2,
-          }}
+          className="z-50 rounded-[2px] border border-app-border bg-app-overlay/90 px-[3px] py-[3px] font-mono text-role-subheadline text-app-text-strong shadow-md"
         >
           <div>{readoutXText}</div>
           <div>{readoutYText}</div>

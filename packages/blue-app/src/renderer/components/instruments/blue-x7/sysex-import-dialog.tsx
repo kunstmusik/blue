@@ -35,12 +35,14 @@ export const SysexImportDialog: React.FC<SysexImportDialogProps> = ({
       <div
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
         data-testid="sysex-import-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="sysex-single-title"
+        onClick={onClose}
       >
         <div
           ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="sysex-single-title"
+          onClick={(e) => e.stopPropagation()}
           className="flex flex-col w-full max-w-md rounded-lg border border-blue-border bg-blue-bg shadow-xl overflow-hidden"
         >
           <div className="flex items-center justify-between border-b border-blue-border px-4 py-3 bg-blue-surface/40">
@@ -51,7 +53,7 @@ export const SysexImportDialog: React.FC<SysexImportDialogProps> = ({
               type="button"
               aria-label="Close SysEx Dialog"
               onClick={onClose}
-              className="rounded p-1 text-gray-400 hover:bg-blue-surface hover:text-gray-100"
+              className="rounded p-1 text-gray-400 hover:bg-blue-surface hover:text-gray-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
             >
               <X className="h-4 w-4" />
             </button>
@@ -73,7 +75,7 @@ export const SysexImportDialog: React.FC<SysexImportDialogProps> = ({
               type="button"
               aria-label="Cancel SysEx Import"
               onClick={onClose}
-              className="rounded border border-blue-border bg-blue-surface px-3 py-1.5 text-role-body text-gray-200 hover:bg-blue-surface/80"
+              className="rounded border border-blue-border bg-blue-surface px-3 py-1.5 text-role-body text-gray-200 hover:bg-blue-surface/80 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
             >
               Cancel
             </button>
@@ -84,7 +86,7 @@ export const SysexImportDialog: React.FC<SysexImportDialogProps> = ({
                 onImportVoice(state.voice, state.name);
                 onClose();
               }}
-              className="rounded bg-blue-accent px-4 py-1.5 text-role-body font-semibold text-white hover:bg-blue-accent/80"
+              className="rounded bg-blue-accent px-4 py-1.5 text-role-body font-semibold text-white hover:bg-blue-accent/80 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
             >
               Import Voice
             </button>
@@ -99,12 +101,14 @@ export const SysexImportDialog: React.FC<SysexImportDialogProps> = ({
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
       data-testid="sysex-import-dialog"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="sysex-bank-title"
+      onClick={onClose}
     >
       <div
         ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="sysex-bank-title"
+        onClick={(e) => e.stopPropagation()}
         className="flex flex-col max-h-[90vh] w-full max-w-2xl rounded-lg border border-blue-border bg-blue-bg shadow-xl overflow-hidden"
       >
         <div className="flex items-center justify-between border-b border-blue-border px-4 py-3 bg-blue-surface/40">
@@ -120,7 +124,7 @@ export const SysexImportDialog: React.FC<SysexImportDialogProps> = ({
             type="button"
             aria-label="Close SysEx Dialog"
             onClick={onClose}
-            className="rounded p-1 text-gray-400 hover:bg-blue-surface hover:text-gray-100"
+            className="rounded p-1 text-gray-400 hover:bg-blue-surface hover:text-gray-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
           >
             <X className="h-4 w-4" />
           </button>
@@ -153,7 +157,7 @@ export const SysexImportDialog: React.FC<SysexImportDialogProps> = ({
                     onClose();
                   }
                 }}
-                className="flex items-center justify-between rounded border border-blue-border bg-blue-surface/30 p-2.5 text-left text-role-body text-gray-200 transition-colors hover:border-blue-accent hover:bg-blue-accent/15 focus:outline-none focus:ring-2 focus:ring-blue-accent"
+                className="flex items-center justify-between rounded border border-blue-border bg-blue-surface/30 p-2.5 text-left text-role-body text-gray-200 transition-colors hover:border-blue-accent hover:bg-blue-accent/15 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
               >
                 <span className="font-medium truncate">{label}</span>
                 <span className="text-role-callout text-blue-muted ml-2">Slot {idx + 1}</span>
@@ -167,7 +171,7 @@ export const SysexImportDialog: React.FC<SysexImportDialogProps> = ({
             type="button"
             aria-label="Cancel SysEx Bank Import"
             onClick={onClose}
-            className="rounded border border-blue-border bg-blue-surface px-4 py-1.5 text-role-body text-gray-200 hover:bg-blue-surface/80"
+            className="rounded border border-blue-border bg-blue-surface px-4 py-1.5 text-role-body text-gray-200 hover:bg-blue-surface/80 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
           >
             Cancel
           </button>

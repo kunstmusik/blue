@@ -7,8 +7,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 import NoteProcessorChainEditor from '../components/workbench/panels/score-object/note-processors/NoteProcessorChainEditor';
 import RulerConfigDialog from '../components/workbench/panels/score/RulerConfigDialog';
+import ShiftObjectsDialog from '../components/workbench/panels/score/ShiftObjectsDialog';
+import MeterEntryDialog from '../components/workbench/panels/score/MeterEntryDialog';
+import { FileManagerRootRenameDialog } from '../components/workbench/panels/tools/file-manager/FileManagerRootRenameDialog';
 import { HostDocumentContext } from '../hooks/use-host-document';
 import type {
+  MeterMapSnapshot,
   NoteProcessorChainSnapshot,
   ScoreTimeStateSnapshot,
 } from '../../shared/project-editor';
@@ -27,6 +31,10 @@ const EMPTY_CHAIN: NoteProcessorChainSnapshot = {
   processors: [],
   hasUnsupportedProcessors: false,
   hasDeferredProcessors: false,
+};
+
+const MOCK_METER_MAP: MeterMapSnapshot = {
+  entries: [{ measure: 1, numBeats: 4, beatLength: 4, startBeat: 0 }],
 };
 
 const TIME_STATE: ScoreTimeStateSnapshot = {
@@ -121,5 +129,103 @@ describe('panel dialogs and inline menus in a floated (popout) panel', () => {
     });
     expect(onClose).toHaveBeenCalledTimes(1);
     void onApply;
+  });
+
+  it('ShiftObjectsDialog: modal state, backdrop dismissal, and popout Escape routing', async () => {
+    const onClose = vi.fn();
+    const onConfirm = vi.fn();
+    renderUnderPopout(<ShiftObjectsDialog onConfirm={onConfirm} onClose={onClose} />);
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    const dialog = host.querySelector('[role="dialog"]');
+    expect(dialog).toBeTruthy();
+    expect(dialog?.getAttribute('aria-modal')).toBe('true');
+
+    // Main-window Escape must NOT close
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    });
+    expect(onClose).not.toHaveBeenCalled();
+
+    // Clicking dialog content does not close
+    act(() => {
+      dialog?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    expect(onClose).not.toHaveBeenCalled();
+
+    // Popout-window Escape closes
+    act(() => {
+      popout.window.dispatchEvent(new PopoutKeyboardEvent('keydown', { key: 'Escape' }));
+    });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('MeterEntryDialog: traps focus, honors popout Escape, and dismisses on backdrop click', async () => {
+    const onClose = vi.fn();
+    const onMeterPatch = vi.fn();
+    renderUnderPopout(
+      <MeterEntryDialog
+        entryIndex={0}
+        meterMap={MOCK_METER_MAP}
+        onMeterPatch={onMeterPatch}
+        onClose={onClose}
+      />,
+    );
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    const dialog = host.querySelector('[role="dialog"]');
+    expect(dialog).toBeTruthy();
+    expect(dialog?.getAttribute('aria-modal')).toBe('true');
+
+    // Main-window Escape must NOT close
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    });
+    expect(onClose).not.toHaveBeenCalled();
+
+    // Popout-window Escape closes
+    act(() => {
+      popout.window.dispatchEvent(new PopoutKeyboardEvent('keydown', { key: 'Escape' }));
+    });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('FileManagerRootRenameDialog: modal state and popout Escape routing', async () => {
+    const onCancel = vi.fn();
+    const onSubmit = vi.fn();
+    renderUnderPopout(
+      <FileManagerRootRenameDialog
+        initialLabel="Samples"
+        path="/audio/samples"
+        onCancel={onCancel}
+        onSubmit={onSubmit}
+      />,
+    );
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    const dialog = host.querySelector('[role="dialog"]');
+    expect(dialog).toBeTruthy();
+    expect(dialog?.getAttribute('aria-modal')).toBe('true');
+
+    // Main-window Escape must NOT cancel
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    });
+    expect(onCancel).not.toHaveBeenCalled();
+
+    // Popout-window Escape cancels
+    act(() => {
+      popout.window.dispatchEvent(new PopoutKeyboardEvent('keydown', { key: 'Escape' }));
+    });
+    expect(onCancel).toHaveBeenCalledTimes(1);
   });
 });

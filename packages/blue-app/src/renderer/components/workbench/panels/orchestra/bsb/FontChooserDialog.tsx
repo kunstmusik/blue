@@ -4,6 +4,7 @@ import { HostSurfacePortal } from '../../../../host-surface/HostSurfacePortal';
 import { useHostSurface } from '../../../../host-surface/use-host-surface';
 import { AppSelect } from '../../../../AppSelect';
 import { DraftNumberInput } from '../../../../CommitNumberInput';
+import { useDialogFocus } from '../../../../dialogs/use-dialog-focus';
 
 export interface FontChoice {
   name: string;
@@ -129,6 +130,8 @@ export default function FontChooserDialog({
     [onCancel, handleConfirm],
   );
 
+  const dialogRef = useDialogFocus(open, onCancel);
+
   if (!open) return null;
 
   const fontWeight = style === 1 || style === 3 ? 'bold' : 'normal';
@@ -148,10 +151,16 @@ export default function FontChooserDialog({
       }}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="font-chooser-title"
         className="flex w-[420px] flex-col gap-4 rounded-lg border border-app-border bg-app-surface p-5 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="text-role-title-2 font-bold text-app-text-strong">Choose Font</div>
+        <h2 id="font-chooser-title" className="text-role-title-2 font-bold text-app-text-strong">
+          Choose Font
+        </h2>
 
         <div className="grid grid-cols-[1fr_80px_100px] gap-3">
           <div className="flex flex-col gap-1">
@@ -243,10 +252,15 @@ export default function FontChooserDialog({
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-role-body uppercase tracking-wider text-app-text-muted">
+            <label
+              htmlFor="font-chooser-size"
+              className="text-role-body uppercase tracking-wider text-app-text-muted"
+            >
               Size
             </label>
             <DraftNumberInput
+              id="font-chooser-size"
+              aria-label="Font size"
               min={1}
               max={200}
               step={1}
@@ -303,13 +317,13 @@ export default function FontChooserDialog({
           </span>
           <div className="flex gap-2">
             <button
-              className="rounded border border-app-border bg-app-surface px-3 py-1 text-role-body text-app-text transition-colors hover:bg-app-hover"
+              className="rounded border border-app-border bg-app-surface px-3 py-1 text-role-body text-app-text transition-colors hover:bg-app-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
               onClick={onCancel}
             >
               Cancel
             </button>
             <button
-              className="rounded bg-app-accent px-3 py-1 text-role-body text-app-text-strong hover:bg-app-accent-hover"
+              className="rounded bg-app-accent px-3 py-1 text-role-body text-app-text-strong hover:bg-app-accent-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
               onClick={handleConfirm}
             >
               OK

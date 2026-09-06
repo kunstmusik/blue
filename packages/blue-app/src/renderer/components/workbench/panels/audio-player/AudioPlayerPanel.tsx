@@ -129,7 +129,7 @@ export default function AudioPlayerPanel(): React.ReactElement {
   };
 
   return (
-    <div className="flex h-full flex-col gap-2 overflow-auto bg-blue-bg p-2">
+    <div className="flex h-full flex-col gap-2 overflow-auto bg-app-bg p-2">
       <audio
         ref={audioRef}
         src={filePath ? encodeAudioPath(filePath) : undefined}
@@ -156,7 +156,7 @@ export default function AudioPlayerPanel(): React.ReactElement {
       <div className="flex items-center">
         <button
           type="button"
-          className="rounded border border-blue-border bg-blue-surface px-2 py-1 text-role-body hover:bg-blue-surface-hover"
+          className="rounded border border-app-border bg-app-surface px-2 py-1 text-role-body text-app-text hover:bg-app-hover"
           onClick={handleOpen}
         >
           Open
@@ -174,10 +174,10 @@ export default function AudioPlayerPanel(): React.ReactElement {
         <button
           type="button"
           className={cn(
-            'inline-flex h-7 w-7 items-center justify-center rounded border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-accent disabled:opacity-40',
+            'inline-flex h-7 w-7 items-center justify-center rounded border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-focus disabled:opacity-40',
             isPlaying
-              ? 'border-blue-accent bg-blue-accent text-white'
-              : 'border-blue-border bg-blue-surface text-blue-fg hover:bg-blue-surface-hover',
+              ? 'border-app-accent bg-app-accent text-app-accent-foreground'
+              : 'border-app-border bg-app-surface text-app-text hover:bg-app-hover',
           )}
           onClick={togglePlay}
           disabled={!filePath}
@@ -193,10 +193,10 @@ export default function AudioPlayerPanel(): React.ReactElement {
         <button
           type="button"
           className={cn(
-            'inline-flex h-7 w-7 items-center justify-center rounded border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-accent disabled:opacity-40',
+            'inline-flex h-7 w-7 items-center justify-center rounded border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-focus disabled:opacity-40',
             isLooping
-              ? 'border-blue-accent bg-blue-accent text-white'
-              : 'border-blue-border bg-blue-surface text-blue-fg hover:bg-blue-surface-hover',
+              ? 'border-app-accent bg-app-accent text-app-accent-foreground'
+              : 'border-app-border bg-app-surface text-app-text hover:bg-app-hover',
           )}
           onClick={toggleLoop}
           disabled={!filePath}
@@ -206,13 +206,13 @@ export default function AudioPlayerPanel(): React.ReactElement {
         >
           <Repeat className="h-4 w-4" aria-hidden="true" />
         </button>
-        <span className="ml-auto font-mono text-role-callout tabular-nums text-blue-muted">
+        <span className="ml-auto font-mono text-role-callout tabular-nums text-app-text-muted">
           {formatAudioTime(currentTime)} / {formatAudioTime(duration)}
         </span>
       </div>
 
       {error && (
-        <div className="rounded border border-red-400 bg-red-50 px-2 py-1 text-role-callout text-red-700">
+        <div className="rounded border border-app-danger/40 bg-app-surface-raised px-2 py-1 text-role-callout text-app-error">
           {error}
         </div>
       )}

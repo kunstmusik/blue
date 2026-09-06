@@ -3,11 +3,12 @@ import { X } from 'lucide-react';
 import { isMidiImportInstrumentIdZero } from '@blue/data';
 import type { MidiImportPreview, MidiImportSettings } from '../../../../shared/midi-import';
 import MidiImportStreamTable from './MidiImportStreamTable';
+import { useDialogFocus } from '../../dialogs/use-dialog-focus';
 
 const PRIMARY_BUTTON_CLASS =
-  'rounded border border-app-border/40 bg-app-accent/20 px-4 py-1.5 text-role-body font-medium text-app-text hover:bg-app-accent/30 active:bg-app-accent/40 transition-colors disabled:cursor-not-allowed disabled:opacity-50';
+  'rounded border border-app-border/40 bg-app-accent/20 px-4 py-1.5 text-role-body font-medium text-app-text hover:bg-app-accent/30 active:bg-app-accent/40 transition-colors disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus';
 const SECONDARY_BUTTON_CLASS =
-  'rounded border border-app-border/40 bg-app-surface px-3 py-1.5 text-role-body text-app-text transition-colors hover:bg-app-hover disabled:cursor-not-allowed disabled:opacity-50';
+  'rounded border border-app-border/40 bg-app-surface px-3 py-1.5 text-role-body text-app-text transition-colors hover:bg-app-hover disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus';
 
 function createDefaultRows(preview: MidiImportPreview): MidiImportSettings[] {
   return preview.streams.map((stream) => ({ ...stream.defaults }));
@@ -21,6 +22,24 @@ export default function MidiImportDialog(): React.ReactElement | null {
   const [preview, setPreview] = useState<MidiImportPreview | null>(null);
   const [rows, setRows] = useState<MidiImportSettings[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  const close = useCallback(() => {
+    const currentToken = token;
+    setIsOpen(false);
+    setIsLoading(false);
+    setIsSubmitting(false);
+    setToken(null);
+    setPreview(null);
+    setRows([]);
+    setError(null);
+    if (currentToken && window.blueAPI?.cancelMidiImport) {
+      void window.blueAPI.cancelMidiImport(currentToken);
+    }
+  }, [token]);
+
+  const dialogRef = useDialogFocus(isOpen, () => {
+    if (!isSubmitting) close();
+  });
 
   const beginImport = useCallback(async () => {
     if (!window.blueAPI?.startMidiImport) return;
@@ -61,20 +80,6 @@ export default function MidiImportDialog(): React.ReactElement | null {
     window.addEventListener('blue-open-midi-import', handleOpen);
     return () => window.removeEventListener('blue-open-midi-import', handleOpen);
   }, [beginImport]);
-
-  const close = useCallback(() => {
-    const currentToken = token;
-    setIsOpen(false);
-    setIsLoading(false);
-    setIsSubmitting(false);
-    setToken(null);
-    setPreview(null);
-    setRows([]);
-    setError(null);
-    if (currentToken && window.blueAPI?.cancelMidiImport) {
-      void window.blueAPI.cancelMidiImport(currentToken);
-    }
-  }, [token]);
 
   const updateRow = useCallback((streamKey: string, patch: Partial<MidiImportSettings>) => {
     setRows((currentRows) =>
@@ -120,16 +125,6 @@ export default function MidiImportDialog(): React.ReactElement | null {
     setIsSubmitting(false);
   }, [rows, token]);
 
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent) => {
-      if (event.key === 'Escape' && !isSubmitting) {
-        event.preventDefault();
-        close();
-      }
-    },
-    [close, isSubmitting],
-  );
-
   if (!isOpen) return null;
 
   return (
@@ -138,12 +133,17 @@ export default function MidiImportDialog(): React.ReactElement | null {
       onClick={(event) => {
         if (event.target === event.currentTarget && !isSubmitting) close();
       }}
-      onKeyDown={handleKeyDown}
     >
-      <div className="flex max-h-[85vh] w-[960px] max-w-[94vw] flex-col rounded-lg border border-app-border/40 bg-app-menu p-4 shadow-2xl">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="midi-import-title"
+        className="flex max-h-[85vh] w-[960px] max-w-[94vw] flex-col rounded-lg border border-app-border/40 bg-app-menu p-4 shadow-2xl"
+      >
         <div className="mb-3 flex items-center justify-between">
           <div>
-            <h2 className="text-role-title-2 font-bold text-app-text-bright">
+            <h2 id="midi-import-title" className="text-role-title-2 font-bold text-app-text-bright">
               MIDI Import Settings
             </h2>
             {preview ? (

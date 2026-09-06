@@ -1650,7 +1650,7 @@ export default function TrackLayerGroupCanvas({
           tabIndex={0}
           data-group-id={group.groupId}
           data-track-layer-group="true"
-          className="relative select-none focus:outline-none"
+          className="relative select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-app-focus focus-visible:ring-inset"
           style={{
             minHeight: rows.reduce((height, row) => height + row.height, 0),
             width: contentWidth,
@@ -1934,7 +1934,7 @@ export default function TrackLayerGroupCanvas({
             <>
               <div
                 data-audio-drop-guide-line="true"
-                className="pointer-events-none absolute top-0 bottom-0 z-20 w-0.5 bg-blue-400/90 shadow-[0_0_2px_rgba(0,0,0,0.5)]"
+                className="pointer-events-none absolute top-0 bottom-0 z-20 w-0.5 bg-app-accent shadow-xs"
                 style={{ left: audioDropGhost.left }}
               />
               <div

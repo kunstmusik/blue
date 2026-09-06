@@ -219,6 +219,7 @@ export default function VirtualKeyboardPanel(): ReactElement {
           <label className="flex items-center gap-1.5 text-app-text">
             <span className="text-role-body text-blue-muted">Channel</span>
             <CommitNumberInput
+              aria-label="MIDI Channel"
               min={1}
               max={16}
               step={1}
@@ -239,6 +240,7 @@ export default function VirtualKeyboardPanel(): ReactElement {
           />
           <span className="text-role-body text-blue-muted">Velocity</span>
           <CommitNumberInput
+            aria-label="MIDI Velocity"
             min={0}
             max={127}
             step={1}
@@ -256,6 +258,7 @@ export default function VirtualKeyboardPanel(): ReactElement {
         <label className="flex items-center gap-1.5 text-gray-100">
           <span className="text-role-body text-blue-muted">Octave</span>
           <CommitNumberInput
+            aria-label="MIDI Octave"
             min={0}
             max={7}
             step={1}

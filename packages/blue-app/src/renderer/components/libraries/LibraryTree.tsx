@@ -222,7 +222,7 @@ export function LibraryTree({
           ? `library-node-${visible[resolvedActiveIndex].node.nodeId}`
           : undefined
       }
-      className="outline-none focus-visible:ring-1 focus-visible:ring-app-accent"
+      className="outline-none focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus rounded-sm"
       onDragOver={(event) => {
         if (!event.dataTransfer.types.includes(BLUE_LIBRARY_DRAG_MIME)) return;
         const transferredDescriptor = readLibraryDragDescriptor(event.dataTransfer);
@@ -392,7 +392,7 @@ export function LibraryTree({
                 dropTargetId === node.nodeId
                   ? 'ring-1 ring-inset ring-app-accent'
                   : index === resolvedActiveIndex
-                    ? 'bg-app-selection'
+                    ? 'bg-app-selection ring-1 ring-app-focus'
                     : 'hover:bg-app-hover',
               )}
               style={{ paddingLeft: `${(level - 1) * 14 + 4}px` }}

@@ -135,10 +135,15 @@ export default function ZakLineObjectEditor({
           <div className="space-y-1.5 border-t border-blue-border px-2 py-1.5">
             {selectedLine && (
               <div>
-                <label className="mb-0.5 block text-role-body uppercase tracking-wider text-blue-muted">
+                <label
+                  htmlFor="zak-channel-input"
+                  className="mb-0.5 block text-role-body uppercase tracking-wider text-blue-muted"
+                >
                   Zak Channel
                 </label>
                 <CommitNumberInput
+                  id="zak-channel-input"
+                  aria-label="Zak Channel"
                   min={0}
                   step={1}
                   className="w-full rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 font-mono text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
@@ -150,10 +155,15 @@ export default function ZakLineObjectEditor({
             )}
 
             <div>
-              <label className="mb-0.5 block text-role-body uppercase tracking-wider text-blue-muted">
+              <label
+                htmlFor="zak-space-input"
+                className="mb-0.5 block text-role-body uppercase tracking-wider text-blue-muted"
+              >
                 Zak Space
               </label>
               <CommitNumberInput
+                id="zak-space-input"
+                aria-label="Zak Space"
                 min={0}
                 step={1}
                 className="w-full rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 font-mono text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"

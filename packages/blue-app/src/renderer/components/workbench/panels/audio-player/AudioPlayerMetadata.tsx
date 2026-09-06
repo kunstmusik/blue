@@ -55,8 +55,8 @@ export default function AudioPlayerMetadata({
     <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 px-3 py-2 text-role-callout">
       {rows.map((row) => (
         <Fragment key={row.label}>
-          <dt className="font-medium text-blue-muted whitespace-nowrap">{row.label}</dt>
-          <dd className="text-blue-fg truncate" title={row.value}>
+          <dt className="font-medium text-app-text-muted whitespace-nowrap">{row.label}</dt>
+          <dd className="truncate text-app-text" title={row.value}>
             {row.value}
           </dd>
         </Fragment>

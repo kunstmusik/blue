@@ -1,6 +1,6 @@
 import React from 'react';
 import { SkipBack, SkipForward, Rewind, Play, Square, Repeat } from 'lucide-react';
-import clsx from 'clsx';
+import { cn } from '../../lib/cn';
 import { usePlaybackStore } from '../../stores/playback-store';
 import { useProjectStore } from '../../stores/project-store';
 
@@ -20,9 +20,10 @@ function ToolbarIconButton({
   return (
     <button
       type="button"
-      className={clsx('toolbar-icon-button', active && 'is-active')}
+      className={cn('toolbar-icon-button', active && 'is-active')}
       disabled={disabled}
       title={title}
+      aria-label={title}
       aria-pressed={active}
       onClick={() => {
         void onClick?.();
@@ -59,6 +60,9 @@ export default function PlaybackControls(): React.ReactElement {
     await togglePlay();
   };
 
+  const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+  const followPlaybackShortcut = isMac ? 'Command+Shift+F' : 'Control+Shift+F';
+
   return (
     <div className="toolbar-group" aria-label="Transport controls">
       <ToolbarIconButton
@@ -93,7 +97,7 @@ export default function PlaybackControls(): React.ReactElement {
         </ToolbarIconButton>
       )}
       <ToolbarIconButton
-        title={followPlayback ? 'Follow playback on' : 'Follow playback off'}
+        title={`${followPlayback ? 'Follow playback on' : 'Follow playback off'} (${followPlaybackShortcut})`}
         active={followPlayback}
         disabled={!hasProject}
         onClick={toggleFollowPlayback}

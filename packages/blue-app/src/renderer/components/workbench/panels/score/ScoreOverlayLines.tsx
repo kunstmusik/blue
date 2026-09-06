@@ -78,7 +78,7 @@ export default function ScoreOverlayLines({
         {guidePixel >= 0 && (
           <div
             data-score-overlay-audio-drop-line
-            className="absolute top-0 bottom-0 w-0.5 bg-blue-400/90 shadow-[0_0_2px_rgba(0,0,0,0.5)] z-20"
+            className="absolute top-0 bottom-0 z-20 w-0.5 bg-app-accent shadow-xs"
             style={{ left: guidePixel }}
           />
         )}

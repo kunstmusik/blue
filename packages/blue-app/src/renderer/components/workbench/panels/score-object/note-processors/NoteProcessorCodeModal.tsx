@@ -1,7 +1,7 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { X } from 'lucide-react';
 import SelectedCodeEditor from '../../editors/SelectedCodeEditor';
-import { useHostDocument } from '../../../../../hooks/use-host-document';
+import { useDialogFocus } from '../../../../dialogs/use-dialog-focus';
 
 interface NoteProcessorCodeModalProps {
   title?: string;
@@ -17,27 +17,12 @@ export default function NoteProcessorCodeModal({
   onSave,
 }: NoteProcessorCodeModalProps): React.ReactElement {
   const [localCode, setLocalCode] = useState<string>(code);
+  const dialogRef = useDialogFocus(true, onClose);
 
   const handleSave = useCallback(() => {
     onSave(localCode);
     onClose();
   }, [localCode, onSave, onClose]);
-
-  const hostWindow = useHostDocument()?.defaultView ?? null;
-  useEffect(() => {
-    const onWindowKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onClose();
-      } else if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-        e.preventDefault();
-        handleSave();
-      }
-    };
-    if (!hostWindow) return undefined;
-    hostWindow.addEventListener('keydown', onWindowKeyDown);
-    return () => hostWindow.removeEventListener('keydown', onWindowKeyDown);
-  }, [onClose, handleSave, hostWindow]);
 
   return (
     <div
@@ -45,13 +30,20 @@ export default function NoteProcessorCodeModal({
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="note-processor-code-title"
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="note-processor-code-title"
         className="flex h-[75vh] min-h-[420px] max-h-[85vh] w-[760px] max-w-[calc(100vw-32px)] flex-col rounded-lg border border-blue-border bg-blue-bg shadow-2xl"
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+            e.preventDefault();
+            handleSave();
+          }
+        }}
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-blue-border px-4 py-3">
@@ -60,7 +52,7 @@ export default function NoteProcessorCodeModal({
           </h2>
           <button
             type="button"
-            className="text-gray-400 hover:text-gray-200"
+            className="rounded p-1 text-gray-400 hover:text-gray-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
             onClick={onClose}
             aria-label="Close"
           >
@@ -83,14 +75,14 @@ export default function NoteProcessorCodeModal({
         <div className="flex justify-end gap-2 border-t border-blue-border px-4 py-3">
           <button
             type="button"
-            className="rounded border border-blue-border px-3 py-1.5 text-role-body text-gray-300 hover:bg-blue-border/40"
+            className="rounded border border-blue-border px-3 py-1.5 text-role-body text-gray-300 hover:bg-blue-border/40 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
             onClick={onClose}
           >
             Cancel
           </button>
           <button
             type="button"
-            className="rounded bg-blue-accent px-3 py-1.5 text-role-body text-white hover:bg-blue-accent/80"
+            className="rounded bg-blue-accent px-3 py-1.5 text-role-body text-white hover:bg-blue-accent/80 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
             onClick={handleSave}
           >
             Save

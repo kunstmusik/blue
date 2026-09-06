@@ -248,13 +248,14 @@ export function PianoCanvas({
       }
     };
 
+    const ownerWindow = canvas.ownerDocument?.defaultView || window;
     canvas.addEventListener('mousedown', handleMouseDown);
-    window.addEventListener('mouseup', handleMouseUp);
-    window.addEventListener('mousemove', handleMouseMove);
+    ownerWindow.addEventListener('mouseup', handleMouseUp);
+    ownerWindow.addEventListener('mousemove', handleMouseMove);
     return () => {
       canvas.removeEventListener('mousedown', handleMouseDown);
-      window.removeEventListener('mouseup', handleMouseUp);
-      window.removeEventListener('mousemove', handleMouseMove);
+      ownerWindow.removeEventListener('mouseup', handleMouseUp);
+      ownerWindow.removeEventListener('mousemove', handleMouseMove);
     };
   }, [getKeyIndex, onNoteOn, onNoteOff]);
 
@@ -262,8 +263,7 @@ export function PianoCanvas({
     <div ref={containerRef} className="flex-1 min-h-0 min-w-0" style={{ minHeight: 100 }}>
       <canvas
         ref={canvasRef}
-        className="block h-full w-full cursor-pointer"
-        style={{ outline: 'none' }}
+        className="block h-full w-full cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus focus-visible:ring-inset"
         tabIndex={0}
         onKeyDown={onKeyDown}
         onKeyUp={onKeyUp}

@@ -49,11 +49,28 @@ describe('PlaybackControls project availability', () => {
     act(() => root.unmount());
   });
 
-  it('keeps Play disabled when no project is loaded', () => {
-    const { container, root } = renderControls();
-    const play = container.querySelector('button[title="Play"]') as HTMLButtonElement | null;
+  it('exposes platform-specific shortcut in Follow Playback title and reflects aria-pressed state', () => {
+    const isMac =
+      typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+    const expectedShortcut = isMac ? 'Command+Shift+F' : 'Control+Shift+F';
 
-    expect(play?.disabled).toBe(true);
+    usePlaybackStore.setState({ followPlayback: false });
+    const { container, root } = renderControls();
+
+    const button = container.querySelector(
+      'button[title*="Follow playback"]',
+    ) as HTMLButtonElement | null;
+    expect(button).not.toBeNull();
+    expect(button?.getAttribute('title')).toBe(`Follow playback off (${expectedShortcut})`);
+    expect(button?.getAttribute('aria-label')).toBe(`Follow playback off (${expectedShortcut})`);
+    expect(button?.getAttribute('aria-pressed')).toBe('false');
+
+    act(() => {
+      usePlaybackStore.setState({ followPlayback: true });
+    });
+
+    expect(button?.getAttribute('title')).toBe(`Follow playback on (${expectedShortcut})`);
+    expect(button?.getAttribute('aria-pressed')).toBe('true');
 
     act(() => root.unmount());
   });

@@ -7,6 +7,7 @@
   --color-app-surface: #16213e;
   --color-app-surface-strong: #10192a;
   --color-app-surface-raised: #111a2d;
+  --color-app-surface-subtle: #141d33;
   --color-app-canvas: #0d0d1a;
   --color-app-overlay: #0d1524;
   --color-app-input: #0a0f1a;
@@ -18,28 +19,34 @@
   --color-app-menu: #1e1e3a;
   --color-app-field: #12122a;
   --color-app-hover: #1d2c45;
-  --color-app-border: #0f3460;
+  --color-app-border: #537cb5;
   --color-app-border-muted: rgba(84, 108, 155, 0.28);
+  --color-app-border-strong: #6fa6e6;
   --color-app-border-subtle: rgba(94, 119, 168, 0.24);
-  /* Sampled from Java Blue's active toolbar/tab controls. */
-  --color-app-accent: #5a85c3;
-  --color-app-accent-hover: #4772ad;
+  /* Sampled from Java Blue's active toolbar/tab controls with accessible contrast */
+  --color-app-accent: #6b9ee8;
+  --color-app-accent-hover: #598cd6;
+  --color-app-accent-foreground: #08101e;
   --color-app-accent-soft: rgba(90, 133, 195, 0.1);
   --color-app-accent-muted: rgba(90, 133, 195, 0.16);
   --color-app-tab-active-edge: #6fa6e6;
   --color-app-highlight: rgba(86, 119, 182, 0.46);
   --color-app-selection: rgba(93, 135, 210, 0.38);
-  --color-app-success: #00b200;
-  --color-app-focus: #4a9eff;
-  --color-app-text: #c8c8d8;
+  --color-app-success: #22c55e;
+  --color-app-success-foreground: #02260f;
+  --color-app-focus: #60a5fa;
+  --color-app-text: #dbe2ef;
   --color-app-text-strong: #ffffff;
   --color-app-text-bright: #eef4ff;
-  --color-app-text-soft: #d9e2f1;
-  --color-app-text-muted: #888888;
-  --color-app-text-subtle: #666666;
+  --color-app-text-soft: #cbd5e1;
+  --color-app-text-muted: #9aa8c2;
+  --color-app-text-subtle: #8a99b5;
   --color-app-text-disabled: rgba(154, 167, 193, 0.54);
-  --color-app-warning: #cc8800;
-  --color-app-danger: #ff6666;
+  --color-app-warning: #f59e0b;
+  --color-app-warning-foreground: #261600;
+  --color-app-danger: #f87171;
+  --color-app-danger-foreground: #1c0505;
+  --color-app-error: #fca5a5;
   --color-app-clear: transparent;
   --color-app-shadow: rgba(3, 7, 18, 0.3);
   --color-app-shadow-soft: rgba(2, 6, 14, 0.18);
@@ -90,20 +97,21 @@
     line-height: var(--text-role-body--line-height);
   }
 
-  /* Editor shells and panel roots carry tabindex so keyboard shortcuts keep
-     working after clicks; the UA outline that follows them around (rendered
-     with the OS accent color) is visual noise. Native form controls do not
-     set the attribute and keep their own styled focus indicators. */
-  [tabindex]:focus,
-  [tabindex]:focus-visible {
+  /* Programmatic-focus shells and panel roots carry tabindex="-1" so keyboard
+     shortcuts keep working after pointer clicks; non-keyboard focus does not
+     render an outline, but keyboard focus-visible remains visible. */
+  [tabindex='-1']:focus:not(:focus-visible) {
     outline: none;
   }
 
-  /* Splitter handles are buttons used as panel chrome; hover already signals
-     interactivity, and the system-accent ring reads as noise here too. */
-  button[role='separator']:focus,
-  button[role='separator']:focus-visible {
+  /* Splitter handles are buttons used as panel chrome; pointer focus suppresses outline
+     while keyboard navigation retains focus-visible ring. */
+  button[role='separator']:focus:not(:focus-visible) {
     outline: none;
+  }
+  button[role='separator']:focus-visible {
+    outline: 2px solid var(--color-app-focus);
+    outline-offset: 1px;
   }
 }
 
@@ -124,7 +132,7 @@
   }
 
   .toolbar-icon-button.is-active {
-    @apply bg-app-accent text-app-text-strong border-app-accent hover:bg-app-accent-hover;
+    @apply bg-app-accent text-app-accent-foreground border-app-accent hover:bg-app-accent-hover;
   }
 
   .toolbar-text-button {
@@ -135,7 +143,7 @@
   }
 
   .toolbar-text-button.is-active {
-    @apply bg-app-accent text-app-text-strong border-app-accent hover:bg-app-accent-hover;
+    @apply bg-app-accent text-app-accent-foreground border-app-accent hover:bg-app-accent-hover;
   }
 
   .toolbar-display-card {
@@ -413,6 +421,14 @@
   --dv-icon-hover-background-color: var(--color-app-accent-soft);
   --dv-floating-box-shadow: 0 20px 48px
     color-mix(in srgb, var(--color-app-shadow) 100%, var(--color-app-clear));
+}
+
+/* Panel tabs are operable dockview-generated controls; keyboard focus on them
+   must stay visible (dockview's own DOM carries tabindex but no focus style). */
+.dv-dockview .dv-tab:focus-visible,
+.dv-dockview .dv-tab .dv-default-tab:focus-visible {
+  outline: 2px solid var(--color-app-focus);
+  outline-offset: -2px;
 }
 
 .dv-dockview .dv-tab .dv-default-tab .dv-default-tab-action {
@@ -917,7 +933,7 @@
   padding: 0 10px;
   border: 0;
   border-radius: 7px;
-  background: transparent;
+  background: var(--color-app-clear);
   outline: none;
   font-size: var(--text-role-body);
   font-family: inherit;
@@ -1305,7 +1321,7 @@
   height: 50px;
   overflow-y: auto;
   overflow-x: hidden;
-  background: #000000;
+  background: var(--color-app-canvas);
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--color-app-text-strong) 12%, var(--color-app-clear))
     var(--color-app-clear);

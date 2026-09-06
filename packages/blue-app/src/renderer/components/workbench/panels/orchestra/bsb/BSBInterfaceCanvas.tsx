@@ -765,7 +765,7 @@ function BSBInterfaceCanvas({
     <div
       ref={canvasRef}
       data-shortcut-scope="bsb-interface-canvas"
-      className="relative flex-1 overflow-auto bg-app-bsb-canvas focus:outline-none"
+      className="relative flex-1 overflow-auto bg-app-bsb-canvas focus:outline-none focus-visible:ring-2 focus-visible:ring-app-focus focus-visible:ring-inset"
       {...canvasShortcutScope}
       onClick={onCanvasClick}
       onContextMenu={(e) => {

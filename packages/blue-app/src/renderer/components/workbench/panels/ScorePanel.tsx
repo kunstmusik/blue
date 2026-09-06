@@ -1077,7 +1077,7 @@ function LeftPanel({
         ref={leftHeaderRef}
         data-layer-headers-list
         tabIndex={0}
-        className="flex-1 min-h-0 overflow-y-scroll overflow-x-hidden focus:outline-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        className="flex-1 min-h-0 overflow-y-scroll overflow-x-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-app-focus focus-visible:ring-inset [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
         onScroll={onLeftScroll}
         onFocus={() => useLayerSelectionStore.getState().setKeyboardFocus(true)}
         onBlur={() => useLayerSelectionStore.getState().setKeyboardFocus(false)}
@@ -1475,8 +1475,13 @@ function SoundLayerHeader({
     [layer.name],
   );
 
-  const btnClass = (active: boolean, activeBg: string) =>
-    `w-5 h-4 text-role-callout font-bold rounded-sm border border-app-border/30 flex items-center justify-center ${active ? activeBg + ' text-black' : 'bg-transparent text-app-text-muted hover:text-app-text'}`;
+  const btnClass = (active: boolean, activeBg = '', activeFg = '') =>
+    cn(
+      'w-5 h-4 text-role-callout font-bold rounded-sm border flex items-center justify-center transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus',
+      active
+        ? cn(activeBg, activeFg, 'border-transparent shadow-xs')
+        : 'bg-transparent border-app-border/30 text-app-text-muted hover:text-app-text hover:border-app-border/60',
+    );
 
   const ctxItemClass = 'editor-context-menu__item';
 
@@ -1593,10 +1598,10 @@ function SoundLayerHeader({
             aria-selected={isLayerSelected ? 'true' : 'false'}
             data-selected-layer={isLayerSelected ? 'true' : undefined}
             className={cn(
-              'relative flex items-start overflow-hidden border-b border-l-2 border-app-border-muted select-none focus:outline-none',
+              'relative flex items-start overflow-hidden border-b border-l-2 border-app-border-muted select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-app-focus focus-visible:ring-inset',
               isLayerSelected ? 'border-l-app-accent bg-app-selection' : 'border-l-transparent',
               midiFocused && 'ring-1 ring-inset ring-app-accent/70',
-              isFocusKey && keyboardFocus && 'ring-1 ring-app-accent/80',
+              isFocusKey && keyboardFocus && 'ring-2 ring-app-focus',
             )}
             style={{ height }}
             onDoubleClick={startEdit}
@@ -1696,9 +1701,11 @@ function SoundLayerHeader({
                 className="w-4 h-4 rounded-sm border border-app-border/40 shrink-0 cursor-pointer mr-0.5"
               />
               <button
-                className={btnClass(!!layer.muted, 'bg-app-warning')}
+                type="button"
+                className={btnClass(!!layer.muted, 'bg-app-warning', 'text-app-warning-foreground')}
                 title="Mute"
-                style={layer.muted ? { color: 'var(--color-app-text-strong)' } : {}}
+                aria-label={layer.muted ? `Unmute layer ${layer.name}` : `Mute layer ${layer.name}`}
+                aria-pressed={!!layer.muted}
                 onClick={(e) => {
                   e.stopPropagation();
                   setLayerMute(groupId, layerIndex, !(layer.muted ?? false));
@@ -1707,9 +1714,11 @@ function SoundLayerHeader({
                 M
               </button>
               <button
-                className={btnClass(!!layer.solo, 'bg-app-success')}
+                type="button"
+                className={btnClass(!!layer.solo, 'bg-app-success', 'text-app-success-foreground')}
                 title="Solo"
-                style={layer.solo ? { color: 'var(--color-app-text-strong)' } : {}}
+                aria-label={layer.solo ? `Unsolo layer ${layer.name}` : `Solo layer ${layer.name}`}
+                aria-pressed={!!layer.solo}
                 onClick={(e) => {
                   e.stopPropagation();
                   setLayerSolo(groupId, layerIndex, !(layer.solo ?? false));
@@ -1719,13 +1728,15 @@ function SoundLayerHeader({
               </button>
               {showNoteProcessorButton && (
                 <button
+                  type="button"
                   className={cn(
-                    'relative w-5 h-4 text-role-callout font-bold rounded-sm border flex items-center justify-center',
+                    'relative w-5 h-4 text-role-callout font-bold rounded-sm border flex items-center justify-center focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus',
                     noteProcessorChain && noteProcessorChain.processors.length > 0
                       ? 'bg-red-600 border-red-500 text-white'
                       : 'bg-transparent border-app-border/30 text-app-text-muted hover:text-app-text',
                   )}
                   title="Note Processors"
+                  aria-label="Note Processors"
                   onClick={(e) => {
                     e.stopPropagation();
                     if (onNoteProcessorChain) {
@@ -1740,8 +1751,10 @@ function SoundLayerHeader({
                 <AutomationTargetMenu
                   trigger={
                     <button
+                      type="button"
                       className={btnClass(false, '')}
                       title="Automation"
+                      aria-label="Automation"
                       onClick={(e) => {
                         e.stopPropagation();
                       }}
@@ -1761,7 +1774,7 @@ function SoundLayerHeader({
               <div className="absolute left-1 right-1 top-5 flex h-4 items-center gap-1 text-role-callout text-app-text-muted">
                 <ColorPickerButton
                   value={selectedAutomationColor}
-                  className="h-3.5 w-3.5 shrink-0 cursor-pointer border-0 bg-transparent p-0"
+                  className="h-3.5 w-3.5 shrink-0 cursor-pointer border-0 bg-transparent p-0 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
                   title="Automation line color"
                   ariaLabel="Automation line color"
                   onChange={handleAutomationColorChange}
@@ -1779,8 +1792,10 @@ function SoundLayerHeader({
                   {selectedAutomationParameter.displayName || selectedAutomationParameter.name}
                 </span>
                 <button
-                  className="w-3.5 h-3.5 shrink-0 bg-blue-surface/40 hover:bg-blue-surface/80 rounded border border-blue-border/30 flex items-center justify-center text-role-callout"
+                  type="button"
+                  className="w-3.5 h-3.5 shrink-0 bg-blue-surface/40 hover:bg-blue-surface/80 rounded border border-blue-border/30 flex items-center justify-center text-role-callout focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
                   title="Previous Parameter"
+                  aria-label="Previous Parameter"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleAutomationPrevNext(-1);
@@ -1789,8 +1804,10 @@ function SoundLayerHeader({
                   <ChevronLeft className="h-2.5 w-2.5" />
                 </button>
                 <button
-                  className="w-3.5 h-3.5 shrink-0 bg-blue-surface/40 hover:bg-blue-surface/80 rounded border border-blue-border/30 flex items-center justify-center text-role-callout"
+                  type="button"
+                  className="w-3.5 h-3.5 shrink-0 bg-blue-surface/40 hover:bg-blue-surface/80 rounded border border-blue-border/30 flex items-center justify-center text-role-callout focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
                   title="Next Parameter"
+                  aria-label="Next Parameter"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleAutomationPrevNext(1);

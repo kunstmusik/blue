@@ -28,10 +28,10 @@ interface AppSelectProps extends Omit<
 }
 
 const TRIGGER_CLASS =
-  'inline-flex min-w-0 items-center justify-between gap-1 rounded border border-app-border bg-app-input px-2 py-1 text-left text-role-body text-app-text-strong outline-none transition-colors hover:border-app-accent focus-visible:border-app-accent disabled:cursor-not-allowed disabled:opacity-50';
+  'inline-flex min-w-0 items-center justify-between gap-1 rounded border border-app-border bg-app-input px-2 py-1 text-left text-role-body text-app-text-strong outline-none transition-colors hover:border-app-accent focus-visible:border-app-accent focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus disabled:cursor-not-allowed disabled:opacity-50';
 
 const ITEM_CLASS =
-  'relative flex cursor-default select-none items-center rounded px-2 py-1 pr-7 text-role-body text-app-text-strong outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-app-accent/20';
+  'relative flex cursor-default select-none items-center rounded px-2 py-1 pr-7 text-role-body text-app-text-strong outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-app-accent/20 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-app-focus';
 
 const EMPTY_OPTION_VALUE = '__blue_app_select_empty_option__';
 

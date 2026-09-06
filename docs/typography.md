@@ -108,9 +108,10 @@ Assign typography roles based on **semantic purpose**, never container dimension
 
 ### Contrast and Opacity
 
-- **Contrast ratio**: Enabled, information-bearing text must meet at least **4.5:1** contrast against its rendered background.
+- **Contrast authority**: Contrast thresholds, non-text contrast, alpha compositing, and semantic color ownership are governed by [`docs/color-accessibility.md`](color-accessibility.md).
+- **Contrast ratio**: Normal text across all approved roles below 26 px (Caption, Metadata, Callout, Body, Title, Section Header) must meet at least **4.5:1** (target >= **4.75:1**) against its rendered background. The 26 px Large Title role must meet at least **3:1** (target >= **3.25:1**). Thresholds are never rounded up.
 - **Opacity**: Secondary text must not use opacity below **50%** to communicate hierarchy.
-- **State cues**: Disabled/inactive states must remain distinguishable without using font-size reductions or low contrast as the sole differentiator.
+- **State cues**: Disabled/inactive states must remain distinguishable without using font-size reductions or low contrast as the sole differentiator. Color must not be the only visual indicator (see [`docs/color-accessibility.md`](color-accessibility.md)).
 
 ---
 

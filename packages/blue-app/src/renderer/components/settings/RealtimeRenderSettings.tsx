@@ -195,7 +195,7 @@ export default function RealtimeRenderSettings({
           onClick={() => {
             void checkEngine();
           }}
-          className="rounded-md bg-app-accent px-3 py-1.5 text-role-body text-white disabled:opacity-50"
+          className="rounded-md bg-app-accent px-3 py-1.5 text-role-body text-app-accent-foreground font-medium disabled:opacity-50"
         >
           {probing ? 'Checking…' : 'Check Engine and Csound'}
         </button>
@@ -203,6 +203,8 @@ export default function RealtimeRenderSettings({
       {probeResult && (
         <div
           role="status"
+          aria-live="polite"
+          data-testid="probe-status"
           className={cn(
             'mb-4 rounded-md border px-3 py-2 text-role-body',
             probeResult.ok
@@ -210,7 +212,11 @@ export default function RealtimeRenderSettings({
               : 'border-app-danger/40 bg-app-danger/10 text-app-danger',
           )}
         >
-          <div>{probeResult.message}</div>
+          <div className="flex items-center gap-2 font-medium">
+            <span aria-hidden="true">{probeResult.ok ? '✓' : '⚠'}</span>
+            <span>{probeResult.ok ? 'Success: ' : 'Error: '}</span>
+            <span>{probeResult.message}</span>
+          </div>
           {probeResult.selection && (
             <div>
               Source: {probeResult.selection.source} — {probeResult.selection.executablePath}
@@ -397,7 +403,7 @@ export default function RealtimeRenderSettings({
         devices={midiInputs}
       />
 
-      <div role="status" className="mb-3 text-role-callout text-app-text-muted">
+      <div role="status" aria-live="polite" className="mb-3 text-role-callout text-app-text-muted">
         {selectedStatus ??
           'Runtime modules and devices load automatically for the selected audio and MIDI modules. Use Rescan when devices are attached or detached.'}
         {savedAudioModuleUnavailable ? ' — saved audio module is currently unavailable' : ''}

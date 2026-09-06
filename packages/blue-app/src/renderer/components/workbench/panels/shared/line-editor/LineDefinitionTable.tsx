@@ -135,6 +135,7 @@ export function LineDefinitionTable<TLine extends ScoreEditorLineLike>({
 
               {updateLineLabel ? (
                 <input
+                  aria-label={`Line ${index + 1} name`}
                   className="h-8 w-full border-0 border-r border-app-border/30 bg-transparent px-1 font-mono text-role-subheadline text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-app-accent"
                   value={label}
                   onChange={(event) => {
@@ -153,6 +154,7 @@ export function LineDefinitionTable<TLine extends ScoreEditorLineLike>({
               )}
 
               <CommitNumberInput
+                aria-label={`${label} minimum`}
                 className="h-8 w-full border-0 border-r border-app-border/30 bg-transparent px-1 text-right text-role-subheadline text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-app-accent"
                 step="any"
                 value={lineMinimum(line)}
@@ -168,6 +170,7 @@ export function LineDefinitionTable<TLine extends ScoreEditorLineLike>({
               />
 
               <CommitNumberInput
+                aria-label={`${label} maximum`}
                 className="h-8 w-full border-0 border-r border-app-border/30 bg-transparent px-1 text-right text-role-subheadline text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-app-accent"
                 step="any"
                 value={lineMaximum(line)}

@@ -167,6 +167,7 @@ export default function JMaskEditor({
         </label>
         {payload?.seedUsed && (
           <CommitNumberInput
+            aria-label="Random seed"
             value={payload.seed ?? 0}
             step={1}
             className="w-24 rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"

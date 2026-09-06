@@ -142,12 +142,13 @@ export default function PatternLayerHeader({
     [effectiveVisibleLayers, extendTo, scopeKey, selectSingle, selectSource, selectionKey],
   );
 
-  const buttonClass = (active: boolean, activeBackground: string) =>
-    `h-4 w-5 rounded-sm border border-app-border/30 text-role-callout font-bold flex items-center justify-center ${
+  const buttonClass = (active: boolean, activeBackground: string, activeForeground: string) =>
+    cn(
+      'h-4 w-5 rounded-sm border text-role-callout font-bold flex items-center justify-center transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus',
       active
-        ? `${activeBackground} text-black`
-        : 'bg-transparent text-app-text-muted hover:text-app-text'
-    }`;
+        ? cn(activeBackground, activeForeground, 'border-transparent shadow-xs')
+        : 'bg-transparent border-app-border/30 text-app-text-muted hover:text-app-text hover:border-app-border/60',
+    );
   const menuItemClass = 'editor-context-menu__item';
   const isFocusKey = useLayerSelectionStore((state) => state.focusKey === selectionKey);
   const keyboardFocus = useLayerSelectionStore((state) => state.keyboardFocus);
@@ -208,9 +209,9 @@ export default function PatternLayerHeader({
             aria-selected={isLayerSelected ? 'true' : 'false'}
             data-selected-layer={isLayerSelected ? 'true' : undefined}
             className={cn(
-              'relative flex items-start overflow-hidden border-b border-app-border-muted border-l-2 select-none focus:outline-none',
+              'relative flex items-start overflow-hidden border-b border-app-border-muted border-l-2 select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-app-focus focus-visible:ring-inset',
               isLayerSelected ? 'border-l-app-accent bg-app-selection' : 'border-l-transparent',
-              isFocusKey && keyboardFocus && 'ring-1 ring-app-accent/80',
+              isFocusKey && keyboardFocus && 'ring-2 ring-app-focus',
             )}
             style={{ height }}
             onMouseDown={handleMouseDown}
@@ -220,7 +221,7 @@ export default function PatternLayerHeader({
               <input
                 ref={inputRef}
                 data-pattern-layer-name-input
-                className="mx-1 mt-0.5 min-w-0 flex-1 rounded-sm border border-blue-accent/40 bg-blue-surface/60 px-1 text-role-body text-blue-text outline-none"
+                className="mx-1 mt-0.5 min-w-0 flex-1 rounded-sm border border-blue-accent/40 bg-blue-surface/60 px-1 text-role-body text-blue-text outline-none focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
                 value={editValue}
                 onChange={(event) => setEditValue(event.target.value)}
                 onKeyDown={(event) => {
@@ -278,11 +279,22 @@ export default function PatternLayerHeader({
                 }}
                 ariaLabel={`Layer color for ${layer.name}`}
                 title={`Layer color: ${layer.name}`}
-                className="w-4 h-4 rounded-sm border border-app-border/40 shrink-0 cursor-pointer mr-0.5"
+                className="w-4 h-4 rounded-sm border border-app-border/40 shrink-0 cursor-pointer mr-0.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
               />
               <button
-                className={buttonClass(!!layer.muted, 'bg-app-warning')}
+                type="button"
+                className={buttonClass(
+                  !!layer.muted,
+                  'bg-app-warning',
+                  'text-app-warning-foreground',
+                )}
                 title="Mute pattern layer"
+                aria-label={
+                  layer.muted
+                    ? `Unmute pattern layer ${layer.name}`
+                    : `Mute pattern layer ${layer.name}`
+                }
+                aria-pressed={!!layer.muted}
                 onClick={(event) => {
                   event.stopPropagation();
                   setLayerMute(groupId, layerIndex, !(layer.muted ?? false));
@@ -291,9 +303,19 @@ export default function PatternLayerHeader({
                 M
               </button>
               <button
-                className={buttonClass(!!layer.solo, 'bg-app-success')}
+                type="button"
+                className={buttonClass(
+                  !!layer.solo,
+                  'bg-app-success',
+                  'text-app-success-foreground',
+                )}
                 title="Solo pattern layer"
-                style={layer.solo ? { color: 'var(--color-app-text-strong)' } : undefined}
+                aria-label={
+                  layer.solo
+                    ? `Unsolo pattern layer ${layer.name}`
+                    : `Solo pattern layer ${layer.name}`
+                }
+                aria-pressed={!!layer.solo}
                 onClick={(event) => {
                   event.stopPropagation();
                   setLayerSolo(groupId, layerIndex, !(layer.solo ?? false));

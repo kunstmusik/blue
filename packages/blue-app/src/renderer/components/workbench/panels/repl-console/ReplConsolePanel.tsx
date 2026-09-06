@@ -210,7 +210,19 @@ export default function ReplConsolePanel({ language }: ReplConsolePanelProps): R
       data-testid={`${language}-repl-console`}
     >
       <div className="flex shrink-0 items-center justify-between border-b border-app-border bg-app-surface px-3 py-1.5">
-        <span className="text-role-callout font-medium text-app-text-strong">{config.title}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-role-callout font-medium text-app-text-strong">{config.title}</span>
+          <span
+            role="status"
+            aria-live="polite"
+            className="inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-role-callout text-app-text-muted"
+          >
+            <span aria-hidden="true">
+              {runtime === 'ready' ? '●' : runtime === 'error' ? '⚠' : '○'}
+            </span>
+            <span>{statusText}</span>
+          </span>
+        </div>
         <div className="flex items-center gap-1">
           <button
             type="button"
@@ -258,7 +270,7 @@ export default function ReplConsolePanel({ language }: ReplConsolePanelProps): R
             <span
               className={
                 line.kind === 'error'
-                  ? 'text-app-error'
+                  ? 'text-app-danger'
                   : line.kind === 'system'
                     ? 'text-app-text-muted'
                     : line.kind === 'input'
@@ -266,6 +278,11 @@ export default function ReplConsolePanel({ language }: ReplConsolePanelProps): R
                       : 'text-app-text'
               }
             >
+              {line.kind === 'error' && (
+                <span aria-hidden="true" className="mr-1 font-bold">
+                  ⚠
+                </span>
+              )}
               {line.text}
             </span>
           </div>

@@ -60,6 +60,7 @@ export default function PianoRollPropertiesEditor({
         <FieldRow label="Instrument ID">
           <input
             type="text"
+            aria-label="Instrument ID"
             className={inputCls}
             value={instrumentId}
             onChange={(e) => onPatch({ instrumentId: e.target.value })}
@@ -69,6 +70,7 @@ export default function PianoRollPropertiesEditor({
           <div className="flex items-center gap-1">
             <input
               type="text"
+              aria-label="Note Template"
               className={cn(inputCls, 'font-mono')}
               value={noteTemplate}
               onChange={(e) => onPatch({ noteTemplate: e.target.value })}
@@ -95,6 +97,7 @@ export default function PianoRollPropertiesEditor({
         </FieldRow>
         <FieldRow label="Transposition">
           <CommitNumberInput
+            aria-label="Transposition"
             className={inputCls}
             value={transposition}
             step={1}

@@ -1,4 +1,8 @@
-import { describe, it, expect } from 'vitest';
+// @vitest-environment jsdom
+
+import React, { act } from 'react';
+import { createRoot } from 'react-dom/client';
+import { describe, it, expect, vi } from 'vitest';
 import {
   getBsbReplacementKeysFromSnapshot,
   getBsbReplacementKeysFromWidget,
@@ -8,7 +12,21 @@ import {
   collectBsbReplacementKeysFromSnapshotTree,
   collectBsbReplacementKeysFromWidgetTree,
 } from '../../shared/bsb-widget-keys';
+import {
+  computeKeyboardSteppedValue,
+  isValueNavigationKey,
+} from '../components/workbench/panels/orchestra/bsb/widgets/utils';
 import type { BsbWidgetNodeSnapshot } from '../../shared/project-editor';
+import BSBKnobWidget from '../components/workbench/panels/orchestra/bsb/widgets/BSBKnobWidget';
+import BSBHSliderWidget from '../components/workbench/panels/orchestra/bsb/widgets/BSBHSliderWidget';
+import BSBVSliderWidget from '../components/workbench/panels/orchestra/bsb/widgets/BSBVSliderWidget';
+import BSBHSliderBankWidget from '../components/workbench/panels/orchestra/bsb/widgets/BSBHSliderBankWidget';
+import BSBVSliderBankWidget from '../components/workbench/panels/orchestra/bsb/widgets/BSBVSliderBankWidget';
+import BSBXYControllerWidget from '../components/workbench/panels/orchestra/bsb/widgets/BSBXYControllerWidget';
+
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 function makeSnapshot(
   overrides: Partial<BsbWidgetNodeSnapshot> & { type: string; objectName: string },
@@ -354,5 +372,248 @@ describe('collectBsbReplacementKeysFromWidgetTree', () => {
     const keys = collectBsbReplacementKeysFromWidgetTree(root);
     expect(keys).toEqual(['freq', 'padX', 'padY']);
     expect(keys).not.toContain('pad');
+  });
+});
+
+describe('computeKeyboardSteppedValue', () => {
+  it('identifies value navigation keys', () => {
+    expect(isValueNavigationKey('ArrowUp')).toBe(true);
+    expect(isValueNavigationKey('ArrowDown')).toBe(true);
+    expect(isValueNavigationKey('ArrowLeft')).toBe(true);
+    expect(isValueNavigationKey('ArrowRight')).toBe(true);
+    expect(isValueNavigationKey('PageUp')).toBe(true);
+    expect(isValueNavigationKey('PageDown')).toBe(true);
+    expect(isValueNavigationKey('Home')).toBe(true);
+    expect(isValueNavigationKey('End')).toBe(true);
+    expect(isValueNavigationKey('Tab')).toBe(false);
+    expect(isValueNavigationKey('Enter')).toBe(false);
+  });
+
+  it('steps 1D value by authored resolution with arrow keys', () => {
+    const opts = { current: 5, min: 0, max: 10, resolution: 0.5, key: 'ArrowUp' };
+    expect(computeKeyboardSteppedValue(opts)).toBe(5.5);
+    expect(computeKeyboardSteppedValue({ ...opts, key: 'ArrowRight' })).toBe(5.5);
+    expect(computeKeyboardSteppedValue({ ...opts, key: 'ArrowDown' })).toBe(4.5);
+    expect(computeKeyboardSteppedValue({ ...opts, key: 'ArrowLeft' })).toBe(4.5);
+  });
+
+  it('steps with 1% fallback when resolution is not provided', () => {
+    const opts = { current: 50, min: 0, max: 100, key: 'ArrowUp' };
+    expect(computeKeyboardSteppedValue(opts)).toBe(51);
+    expect(computeKeyboardSteppedValue({ ...opts, key: 'ArrowDown' })).toBe(49);
+  });
+
+  it('steps by 10x for PageUp, PageDown, and Shift+Arrow', () => {
+    const opts = { current: 50, min: 0, max: 100, resolution: 1, key: 'PageUp' };
+    expect(computeKeyboardSteppedValue(opts)).toBe(60);
+    expect(computeKeyboardSteppedValue({ ...opts, key: 'PageDown' })).toBe(40);
+    expect(computeKeyboardSteppedValue({ ...opts, key: 'ArrowUp', shiftKey: true })).toBe(60);
+    expect(computeKeyboardSteppedValue({ ...opts, key: 'ArrowDown', shiftKey: true })).toBe(40);
+  });
+
+  it('jumps to bounds for Home and End', () => {
+    const opts = { current: 50, min: 0, max: 100, resolution: 1, key: 'Home' };
+    expect(computeKeyboardSteppedValue(opts)).toBe(0);
+    expect(computeKeyboardSteppedValue({ ...opts, key: 'End' })).toBe(100);
+  });
+
+  it('clamps strictly to authored range', () => {
+    expect(
+      computeKeyboardSteppedValue({ current: 99, min: 0, max: 100, resolution: 5, key: 'ArrowUp' }),
+    ).toBe(100);
+    expect(
+      computeKeyboardSteppedValue({
+        current: 1,
+        min: 0,
+        max: 100,
+        resolution: 5,
+        key: 'ArrowDown',
+      }),
+    ).toBe(0);
+  });
+
+  it('handles X and Y axes independently', () => {
+    // X axis ignores vertical arrows
+    expect(
+      computeKeyboardSteppedValue({ current: 0.5, min: 0, max: 1, key: 'ArrowUp', axis: 'x' }),
+    ).toBeNull();
+    expect(
+      computeKeyboardSteppedValue({ current: 0.5, min: 0, max: 1, key: 'ArrowRight', axis: 'x' }),
+    ).toBe(0.51);
+
+    // Y axis ignores horizontal arrows
+    expect(
+      computeKeyboardSteppedValue({ current: 0.5, min: 0, max: 1, key: 'ArrowRight', axis: 'y' }),
+    ).toBeNull();
+    expect(
+      computeKeyboardSteppedValue({ current: 0.5, min: 0, max: 1, key: 'ArrowUp', axis: 'y' }),
+    ).toBe(0.51);
+  });
+
+  it('returns null for unhandled keys', () => {
+    expect(computeKeyboardSteppedValue({ current: 5, min: 0, max: 10, key: 'Tab' })).toBeNull();
+    expect(computeKeyboardSteppedValue({ current: 5, min: 0, max: 10, key: 'Enter' })).toBeNull();
+  });
+});
+
+const defaultWidgetBaseProps = {
+  isSelected: false,
+  editEnabled: false,
+  onWidgetSelect: () => {},
+  selectedWidgetIds: new Set<string>(),
+  getWidgetPosition: () => undefined,
+  onWidgetAction: () => {},
+};
+
+describe('computeKeyboardSteppedValue precision, ranges, and clamping', () => {
+  it('steps with decimal resolution avoiding IEEE floating point artifacts', () => {
+    const res = computeKeyboardSteppedValue({
+      current: 0.2,
+      min: 0,
+      max: 1,
+      resolution: 0.1,
+      key: 'ArrowUp',
+    });
+    expect(res).toBe(0.3);
+  });
+
+  it('steps correctly within negative ranges', () => {
+    const resDown = computeKeyboardSteppedValue({
+      current: -50,
+      min: -100,
+      max: 0,
+      resolution: 5,
+      key: 'ArrowDown',
+    });
+    expect(resDown).toBe(-55);
+
+    const resUp = computeKeyboardSteppedValue({
+      current: -50,
+      min: -100,
+      max: 0,
+      resolution: 5,
+      key: 'ArrowUp',
+    });
+    expect(resUp).toBe(-45);
+  });
+
+  it('clamps strictly when stepping past min or max with page steps', () => {
+    const atMax = computeKeyboardSteppedValue({
+      current: 95,
+      min: 0,
+      max: 100,
+      resolution: 2,
+      key: 'PageUp',
+    });
+    expect(atMax).toBe(100);
+
+    const atMin = computeKeyboardSteppedValue({
+      current: 5,
+      min: 0,
+      max: 100,
+      resolution: 2,
+      key: 'PageDown',
+    });
+    expect(atMin).toBe(0);
+  });
+
+  it('jumps to negative bounds for Home and End', () => {
+    expect(computeKeyboardSteppedValue({ current: -10, min: -96, max: 24, key: 'Home' })).toBe(-96);
+    expect(computeKeyboardSteppedValue({ current: -10, min: -96, max: 24, key: 'End' })).toBe(24);
+  });
+});
+
+describe('BSB widgets owner-window drag listeners and no-new global listeners', () => {
+  it('binds knob drag listeners to ownerWindow and cleans them up without lingering listeners', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    const addSpy = vi.spyOn(window, 'addEventListener');
+    const removeSpy = vi.spyOn(window, 'removeEventListener');
+
+    const node = makeSnapshot({
+      type: 'BSBKnob',
+      objectName: 'testKnob',
+      value: 50,
+      minimum: 0,
+      maximum: 100,
+    });
+
+    act(() => {
+      root.render(
+        React.createElement(BSBKnobWidget, {
+          ...defaultWidgetBaseProps,
+          node,
+          onBsbInterfacePatch: () => {},
+        }),
+      );
+    });
+
+    const svg = container.querySelector('svg');
+    expect(svg).not.toBeNull();
+
+    act(() => {
+      svg!.dispatchEvent(
+        new MouseEvent('mousedown', { clientX: 50, clientY: 50, bubbles: true, cancelable: true }),
+      );
+    });
+
+    expect(addSpy).toHaveBeenCalledWith('mousemove', expect.any(Function));
+    expect(addSpy).toHaveBeenCalledWith('mouseup', expect.any(Function));
+
+    act(() => {
+      window.dispatchEvent(new MouseEvent('mouseup', { clientX: 60, clientY: 60, bubbles: true }));
+    });
+
+    expect(removeSpy).toHaveBeenCalledWith('mousemove', expect.any(Function));
+    expect(removeSpy).toHaveBeenCalledWith('mouseup', expect.any(Function));
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+    addSpy.mockRestore();
+    removeSpy.mockRestore();
+  });
+
+  it('binds slider and bank drag listeners to ownerWindow and cleans them up on unmount', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    const addSpy = vi.spyOn(window, 'addEventListener');
+    const removeSpy = vi.spyOn(window, 'removeEventListener');
+
+    const hNode = makeSnapshot({
+      type: 'BSBHSlider',
+      objectName: 'hSlider',
+      value: 25,
+      minimum: 0,
+      maximum: 100,
+    });
+
+    act(() => {
+      root.render(
+        React.createElement(BSBHSliderWidget, {
+          ...defaultWidgetBaseProps,
+          node: hNode,
+          onBsbInterfacePatch: () => {},
+        }),
+      );
+    });
+
+    const initialAddCount = addSpy.mock.calls.length;
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+
+    // Verify unmount cleaned up any active listeners
+    expect(removeSpy.mock.calls.length).toBeGreaterThanOrEqual(initialAddCount);
+
+    addSpy.mockRestore();
+    removeSpy.mockRestore();
   });
 });

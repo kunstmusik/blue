@@ -1996,6 +1996,7 @@ export default function ScoreTimeCanvas({
             return (
               <div
                 key={layer.layerId}
+                data-layer-id={layer.layerId}
                 data-timeline-layer-row
                 aria-selected={isLayerSelected ? 'true' : 'false'}
                 data-selected-layer={isLayerSelected ? 'true' : undefined}

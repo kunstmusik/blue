@@ -313,7 +313,7 @@ export default function SettingsApp(): React.ReactElement {
             type="button"
             onClick={handleApply}
             disabled={(!dirty && !midiDraftDirty) || hasInvalidOscDraft}
-            className="inline-flex items-center rounded-md bg-app-accent px-4 py-1.5 text-role-body text-white transition-colors enabled:hover:bg-app-accent-hover disabled:cursor-default disabled:bg-app-surface-strong disabled:text-app-text-subtle"
+            className="inline-flex items-center rounded-md bg-app-accent px-4 py-1.5 text-role-body text-app-accent-foreground transition-colors enabled:hover:bg-app-accent-hover disabled:cursor-default disabled:bg-app-surface-strong disabled:text-app-text-subtle"
           >
             Apply
           </button>

@@ -136,6 +136,7 @@ export default function MixerPanel(): React.ReactElement {
           <label className="mixer-toolbar__field">
             <span>Extra render time</span>
             <CommitNumberInput
+              aria-label="Extra render time"
               value={mixer.extraRenderTime}
               step="any"
               min={0}

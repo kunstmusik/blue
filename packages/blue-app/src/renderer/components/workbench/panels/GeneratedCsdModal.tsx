@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 
 import { useProjectStore } from '../../../stores/project-store';
 import SelectedCodeEditor from './editors/SelectedCodeEditor';
+import { useDialogFocus } from '../../dialogs/use-dialog-focus';
 
 export default function GeneratedCsdModal(): React.ReactElement | null {
   const generatedCsd = useProjectStore((state) => state.generatedCsd);
@@ -11,6 +12,8 @@ export default function GeneratedCsdModal(): React.ReactElement | null {
   const closeModal = useCallback(() => {
     setGeneratedCsd(null);
   }, [setGeneratedCsd]);
+
+  const dialogRef = useDialogFocus(Boolean(generatedCsd), closeModal);
 
   if (!generatedCsd) {
     return null;
@@ -25,11 +28,19 @@ export default function GeneratedCsdModal(): React.ReactElement | null {
         }
       }}
     >
-      <div className="flex h-[80vh] w-[80vw] flex-col rounded-lg border border-app-hover bg-app-overlay shadow-2xl">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="generated-csd-title"
+        className="flex h-[80vh] w-[80vw] flex-col rounded-lg border border-app-hover bg-app-overlay shadow-2xl"
+      >
         <div className="flex items-center justify-between border-b border-app-hover px-4 py-3">
-          <h2 className="text-role-title-2 font-bold text-app-text-bright">{generatedCsd.title}</h2>
+          <h2 id="generated-csd-title" className="text-role-title-2 font-bold text-app-text-bright">
+            {generatedCsd.title}
+          </h2>
           <button
-            className="p-1 text-role-body text-app-text-muted hover:text-app-text-bright"
+            className="rounded p-1 text-role-body text-app-text-muted hover:text-app-text-bright focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
             onClick={closeModal}
             aria-label="Close"
           >

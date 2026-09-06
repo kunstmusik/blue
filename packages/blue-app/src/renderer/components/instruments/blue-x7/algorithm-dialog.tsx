@@ -29,9 +29,13 @@ export const AlgorithmDialog: React.FC<AlgorithmDialogProps> = ({
       aria-modal="true"
       aria-label="Select DX7 Algorithm"
       aria-labelledby="algorithm-dialog-title"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div
         ref={dialogRef}
+        onClick={(e) => e.stopPropagation()}
         className="flex flex-col max-h-[90vh] w-full max-w-4xl rounded-lg border border-blue-border bg-blue-bg shadow-xl overflow-hidden"
       >
         {/* Header */}
@@ -43,7 +47,7 @@ export const AlgorithmDialog: React.FC<AlgorithmDialogProps> = ({
             type="button"
             aria-label="Close Algorithm Dialog"
             onClick={onClose}
-            className="rounded p-1 text-gray-400 hover:bg-blue-surface hover:text-gray-100"
+            className="rounded p-1 text-gray-400 hover:bg-blue-surface hover:text-gray-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
           >
             <X className="h-4 w-4" />
           </button>
@@ -85,7 +89,7 @@ export const AlgorithmDialog: React.FC<AlgorithmDialogProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="rounded border border-blue-border bg-blue-surface px-4 py-1.5 text-role-body text-gray-200 hover:bg-blue-surface/80"
+            className="rounded border border-blue-border bg-blue-surface px-4 py-1.5 text-role-body text-gray-200 hover:bg-blue-surface/80 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
           >
             Close
           </button>

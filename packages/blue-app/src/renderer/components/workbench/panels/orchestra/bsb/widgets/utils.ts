@@ -16,6 +16,8 @@ import {
   stripBsbSwingHtmlText,
 } from '../../../../../../../shared/bsb-swing-html';
 
+export { stripBsbSwingHtmlText };
+
 let sharedCanvas: HTMLCanvasElement | null = null;
 let sharedHtmlMeasureEl: HTMLDivElement | null = null;
 
@@ -591,4 +593,92 @@ function cacheMeasurement(key: string, value: { width: number; height: number })
     htmlMeasurementCache.clear();
   }
   htmlMeasurementCache.set(key, value);
+}
+
+export function isValueNavigationKey(key: string): boolean {
+  return [
+    'ArrowUp',
+    'ArrowDown',
+    'ArrowLeft',
+    'ArrowRight',
+    'PageUp',
+    'PageDown',
+    'Home',
+    'End',
+  ].includes(key);
+}
+
+export interface SteppedValueOptions {
+  current: number;
+  min: number;
+  max: number;
+  resolution?: number | null;
+  key: string;
+  shiftKey?: boolean;
+  axis?: '1d' | 'horizontal' | 'vertical' | 'x' | 'y';
+}
+
+export function computeKeyboardSteppedValue({
+  current,
+  min,
+  max,
+  resolution,
+  key,
+  shiftKey = false,
+  axis = '1d',
+}: SteppedValueOptions): number | null {
+  const trueMin = Math.min(min, max);
+  const trueMax = Math.max(min, max);
+  const range = trueMax - trueMin;
+
+  if (key === 'Home') {
+    return min;
+  }
+  if (key === 'End') {
+    return max;
+  }
+
+  let delta = 0;
+  if (axis === 'x') {
+    if (key === 'ArrowRight') delta = 1;
+    else if (key === 'ArrowLeft') delta = -1;
+    else if (key === 'PageUp') delta = 1;
+    else if (key === 'PageDown') delta = -1;
+    else return null;
+  } else if (axis === 'y') {
+    if (key === 'ArrowUp') delta = 1;
+    else if (key === 'ArrowDown') delta = -1;
+    else if (key === 'PageUp') delta = 1;
+    else if (key === 'PageDown') delta = -1;
+    else return null;
+  } else {
+    // '1d', 'horizontal', 'vertical'
+    if (key === 'ArrowUp' || key === 'ArrowRight') delta = 1;
+    else if (key === 'ArrowDown' || key === 'ArrowLeft') delta = -1;
+    else if (key === 'PageUp') delta = 1;
+    else if (key === 'PageDown') delta = -1;
+    else return null;
+  }
+
+  const multiplier = shiftKey || key === 'PageUp' || key === 'PageDown' ? 10 : 1;
+  const effectiveStep =
+    typeof resolution === 'number' && Number.isFinite(resolution) && resolution > 0
+      ? resolution
+      : range !== 0
+        ? range * 0.01
+        : 1;
+
+  let next = current + delta * effectiveStep * multiplier;
+
+  if (typeof resolution === 'number' && Number.isFinite(resolution) && resolution > 0) {
+    const steps = Math.round((next - trueMin) / resolution);
+    next = trueMin + steps * resolution;
+    const decimalParts = resolution.toString().split('.')[1];
+    const decimalPlaces = decimalParts ? decimalParts.length : 0;
+    next = Number(next.toFixed(Math.min(10, decimalPlaces)));
+  } else {
+    next = Number(next.toFixed(4));
+  }
+
+  return Math.max(trueMin, Math.min(trueMax, next));
 }

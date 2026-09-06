@@ -53,8 +53,12 @@ export default function BSBGridSettingsPanel({
       </div>
 
       <div className="grid grid-cols-[80px_1fr] items-center gap-2">
-        <label className="text-role-body text-app-text-muted">Width</label>
+        <label htmlFor="bsb-grid-width" className="text-role-body text-app-text-muted">
+          Width
+        </label>
         <CommitNumberInput
+          id="bsb-grid-width"
+          aria-label="Grid width"
           className="w-full rounded border border-app-border bg-app-input px-2 py-1 text-role-body text-app-text outline-none focus:border-app-accent"
           value={gridSettings.width}
           min={1}
@@ -65,8 +69,12 @@ export default function BSBGridSettingsPanel({
       </div>
 
       <div className="grid grid-cols-[80px_1fr] items-center gap-2">
-        <label className="text-role-body text-app-text-muted">Height</label>
+        <label htmlFor="bsb-grid-height" className="text-role-body text-app-text-muted">
+          Height
+        </label>
         <CommitNumberInput
+          id="bsb-grid-height"
+          aria-label="Grid height"
           className="w-full rounded border border-app-border bg-app-input px-2 py-1 text-role-body text-app-text outline-none focus:border-app-accent"
           value={gridSettings.height}
           min={1}

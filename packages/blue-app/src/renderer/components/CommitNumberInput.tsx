@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } 
 import { cn } from '../lib/cn';
 
 const BASE_INPUT_CLASS =
-  'w-20 rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 pr-6 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none';
+  'w-20 rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 pr-6 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none';
 
 interface NumberInputCommonProps extends Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
@@ -515,7 +515,7 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
         />
         <div
           className={cn(
-            'absolute right-1 inset-y-0 my-auto flex h-4 w-[15px] flex-col overflow-hidden rounded-[2px] border border-black/15 bg-[#f1f1f1] shadow-xs transition-opacity duration-150',
+            'absolute right-1 inset-y-0 my-auto flex h-4 w-[15px] flex-col overflow-hidden rounded-[2px] border border-app-border bg-app-surface-raised shadow-xs transition-opacity duration-150',
             'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto',
             (disabled || readOnly) && 'hidden',
           )}
@@ -525,7 +525,7 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
             tabIndex={-1}
             aria-label="Increase"
             disabled={disabled || readOnly}
-            className="flex flex-1 w-full items-center justify-center text-role-body text-[#505050] transition-colors hover:bg-[#d2d2d2] active:bg-[#b8b8b8] disabled:pointer-events-none disabled:opacity-30"
+            className="flex flex-1 w-full items-center justify-center text-role-body text-app-text-muted transition-colors hover:bg-app-hover hover:text-app-text-strong active:bg-app-accent/20 disabled:pointer-events-none disabled:opacity-30"
             onPointerDown={(e) => e.preventDefault()}
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => handleStep(1)}
@@ -544,7 +544,7 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
             tabIndex={-1}
             aria-label="Decrease"
             disabled={disabled || readOnly}
-            className="flex flex-1 w-full items-center justify-center text-role-body text-[#505050] transition-colors hover:bg-[#d2d2d2] active:bg-[#b8b8b8] disabled:pointer-events-none disabled:opacity-30"
+            className="flex flex-1 w-full items-center justify-center text-role-body text-app-text-muted transition-colors hover:bg-app-hover hover:text-app-text-strong active:bg-app-accent/20 disabled:pointer-events-none disabled:opacity-30"
             onPointerDown={(e) => e.preventDefault()}
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => handleStep(-1)}

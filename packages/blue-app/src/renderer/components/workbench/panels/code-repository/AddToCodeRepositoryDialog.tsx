@@ -6,11 +6,12 @@ import type { CodeRepositoryNode } from '@blue/data';
 import SelectedCodeEditor from '../editors/SelectedCodeEditor';
 import { createBasicTextEditorMenuItems } from '../editors/csound-editor-menu';
 import { AppSelect } from '../../../AppSelect';
+import { useDialogFocus } from '../../../dialogs/use-dialog-focus';
 
 const PRIMARY_BUTTON_CLASS =
-  'rounded border border-app-border/40 bg-app-accent/20 px-4 py-1.5 text-role-body font-medium text-app-text hover:bg-app-accent/30 active:bg-app-accent/40 transition-colors disabled:opacity-40';
+  'rounded border border-app-border/40 bg-app-accent/20 px-4 py-1.5 text-role-body font-medium text-app-text hover:bg-app-accent/30 active:bg-app-accent/40 transition-colors disabled:opacity-40 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus';
 const SECONDARY_BUTTON_CLASS =
-  'rounded border border-app-border/40 bg-app-surface px-3 py-1.5 text-role-body text-app-text transition-colors hover:bg-app-hover disabled:opacity-40';
+  'rounded border border-app-border/40 bg-app-surface px-3 py-1.5 text-role-body text-app-text transition-colors hover:bg-app-hover disabled:opacity-40 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus';
 
 interface AddToCodeRepositoryDialogProps {
   /** Canonical snapshot used to choose the destination group. */
@@ -76,15 +77,7 @@ export default function AddToCodeRepositoryDialog({
     if (!submitting) onClose();
   }, [onClose, submitting]);
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        requestClose();
-      }
-    },
-    [requestClose],
-  );
+  const dialogRef = useDialogFocus(true, requestClose);
 
   const handleAdd = useCallback(async () => {
     const trimmed = name.trim();
@@ -115,9 +108,9 @@ export default function AddToCodeRepositoryDialog({
       onClick={requestClose}
     >
       <div
+        ref={dialogRef}
         className="flex h-[72vh] min-h-[420px] max-h-[90vh] w-[760px] max-w-[94vw] flex-col rounded-lg border border-app-border/40 bg-app-menu p-5 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
-        onKeyDown={handleKeyDown}
         role="dialog"
         aria-modal="true"
         aria-labelledby="add-code-repository-title"
@@ -131,7 +124,7 @@ export default function AddToCodeRepositoryDialog({
           </h2>
           <button
             type="button"
-            className="p-1 text-role-body text-app-text-muted hover:text-app-text-bright"
+            className="rounded p-1 text-role-body text-app-text-muted hover:text-app-text-bright focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
             onClick={requestClose}
             aria-label="Close"
             autoFocus={!root}

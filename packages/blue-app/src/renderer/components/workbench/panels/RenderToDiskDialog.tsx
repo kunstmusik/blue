@@ -49,7 +49,11 @@ export default function RenderToDiskDialog(): React.ReactElement | null {
 
   const terminal = isTerminalOperationPhase(phase);
   const dialogRef = useDialogFocus(open, () => {
-    close();
+    if (terminal) {
+      close();
+    } else if (!cancelRequested) {
+      cancel();
+    }
   });
   const okButtonRef = useRef<HTMLButtonElement | null>(null);
 
@@ -206,7 +210,7 @@ export default function RenderToDiskDialog(): React.ReactElement | null {
             <button
               type="button"
               data-testid="render-dialog-cancel"
-              className="rounded border border-app-hover px-3 py-1.5 text-role-body text-app-text hover:bg-app-hover disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded border border-app-hover px-3 py-1.5 text-role-body text-app-text hover:bg-app-hover disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
               onClick={cancel}
               disabled={terminal || cancelRequested}
             >
@@ -216,7 +220,7 @@ export default function RenderToDiskDialog(): React.ReactElement | null {
               ref={okButtonRef}
               type="button"
               data-testid="render-dialog-ok"
-              className="rounded bg-blue-accent px-3 py-1.5 text-role-body text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded bg-blue-accent px-3 py-1.5 text-role-body text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
               onClick={close}
               disabled={!terminal}
             >

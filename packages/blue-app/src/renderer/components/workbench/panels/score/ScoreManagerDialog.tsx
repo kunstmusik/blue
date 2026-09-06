@@ -24,6 +24,7 @@ import {
   portalEventIsolationProps,
 } from '../../../../hooks/host-portals';
 import { cn } from '../../../../lib/cn';
+import { useDialogFocus } from '../../../dialogs/use-dialog-focus';
 
 interface Props {
   score: ScoreDocumentSnapshot;
@@ -61,6 +62,7 @@ function createSingleLayerRange(
 export default function ScoreManagerDialog({ score, onClose }: Props) {
   const applyPatch = useProjectStore((s) => s.applyProjectDocumentPatch);
   const addLayer = useProjectStore((s) => s.addLayer);
+  const dialogRef = useDialogFocus(true, onClose);
 
   const [selectedGroupIndex, setSelectedGroupIndex] = useState(0);
   const [selectedLayerIndex, setSelectedLayerIndex] = useState(-1);
@@ -218,7 +220,7 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
   );
 
   const btnClass =
-    'min-w-[28px] rounded border border-app-border/40 bg-app-surface px-1.5 py-0.5 text-role-body text-app-text hover:bg-app-hover disabled:opacity-40';
+    'min-w-[28px] rounded border border-app-border/40 bg-app-surface px-1.5 py-0.5 text-role-body text-app-text hover:bg-app-hover disabled:opacity-40 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus';
 
   return (
     <div
@@ -226,14 +228,20 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="score-manager-dialog-title"
         className="flex flex-col rounded-lg border border-app-border/50 bg-app-bg shadow-2xl"
         style={{ width: 760, height: 400 }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-app-border/30 px-4 py-3">
-          <span className="text-role-title-2 font-bold text-app-text">Score Manager</span>
+          <h2 id="score-manager-dialog-title" className="text-role-title-2 font-bold text-app-text">
+            Score Manager
+          </h2>
           <button
-            className="text-app-text-muted hover:text-app-text"
+            className="rounded p-1 text-app-text-muted hover:text-app-text focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
             onClick={onClose}
             aria-label="Close"
           >
@@ -249,6 +257,7 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
                 onClick={handlePushGroupUp}
                 disabled={selectedGroupIndex <= 0}
                 title="Push Up"
+                aria-label="Push Group Up"
               >
                 &#9650;
               </button>
@@ -257,6 +266,7 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
                 onClick={handlePushGroupDown}
                 disabled={selectedGroupIndex >= groups.length - 1}
                 title="Push Down"
+                aria-label="Push Group Down"
               >
                 &#9660;
               </button>
@@ -290,6 +300,7 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
                 onClick={handleRemoveLayerGroup}
                 disabled={!selectedGroup}
                 title="Remove Layer Group"
+                aria-label="Remove Layer Group"
               >
                 -
               </button>
@@ -325,6 +336,7 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
                 onClick={handlePushLayerUp}
                 disabled={!layerAvailability.canPushUp}
                 title="Push Up"
+                aria-label="Push Layer Up"
               >
                 &#9650;
               </button>
@@ -333,6 +345,7 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
                 onClick={handlePushLayerDown}
                 disabled={!layerAvailability.canPushDown}
                 title="Push Down"
+                aria-label="Push Layer Down"
               >
                 &#9660;
               </button>
@@ -341,6 +354,7 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
                 onClick={handleAddLayer}
                 disabled={!selectedGroup}
                 title="Add Layer"
+                aria-label="Add Layer"
               >
                 +
               </button>
@@ -349,6 +363,7 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
                 onClick={handleRemoveLayer}
                 disabled={!layerAvailability.canRemove}
                 title="Remove Layer"
+                aria-label="Remove Layer"
               >
                 -
               </button>

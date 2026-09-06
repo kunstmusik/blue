@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { ManualLibraryImportPreview } from '../../../shared/unified-library';
 import { AppSelect } from '../AppSelect';
+import { useDialogFocus } from '../dialogs/use-dialog-focus';
 
 interface LibraryImportDialogProps {
   preview: ManualLibraryImportPreview;
@@ -19,14 +20,21 @@ export function LibraryImportDialog({
   const allConflictsResolved = conflicts.every((conflict) =>
     Boolean(folderSelections[conflict.conflictId]),
   );
+  const dialogRef = useDialogFocus(true, onCancel);
+
   return (
     <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="library-import-title"
+      onClick={onCancel}
       className="absolute inset-0 z-30 grid place-items-center bg-black/50 p-4"
     >
-      <div className="max-h-[80vh] w-full max-w-xl overflow-auto rounded border border-app-border bg-app-overlay p-4 shadow-xl">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="library-import-title"
+        onClick={(e) => e.stopPropagation()}
+        className="max-h-[80vh] w-full max-w-xl overflow-auto rounded border border-app-border bg-app-overlay p-4 shadow-xl"
+      >
         <h2 id="library-import-title" className="text-role-title-2 font-semibold">
           Review Library Import
         </h2>
@@ -85,7 +93,7 @@ export function LibraryImportDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="rounded border border-app-border px-3 py-1 text-role-body"
+            className="rounded border border-app-border px-3 py-1 text-role-body focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
           >
             Cancel
           </button>
@@ -93,7 +101,7 @@ export function LibraryImportDialog({
             type="button"
             disabled={validCount === 0 || !allConflictsResolved}
             onClick={() => onImport(folderSelections)}
-            className="rounded bg-app-accent px-3 py-1 text-role-body text-white disabled:opacity-40"
+            className="rounded bg-app-accent px-3 py-1 text-role-body text-app-accent-foreground disabled:opacity-40 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
           >
             Import
           </button>

@@ -1,6 +1,7 @@
 import React, { useEffect, useId, useRef } from 'react';
 import type { InAppConfirmationAction } from '../../../shared/confirmation-dialog';
 import { useDialogFocus } from './use-dialog-focus';
+import { cn } from '../../lib/cn';
 
 export interface ConfirmationDialogProps {
   open: boolean;
@@ -14,6 +15,7 @@ export interface ConfirmationDialogProps {
   children?: React.ReactNode;
   'data-testid'?: string;
   surfaceAttributes?: Record<string, string | boolean>;
+  className?: string;
 }
 
 export function ConfirmationDialog({
@@ -28,6 +30,7 @@ export function ConfirmationDialog({
   children,
   'data-testid': dataTestId,
   surfaceAttributes,
+  className,
 }: ConfirmationDialogProps): React.ReactElement | null {
   const resolvedRef = useRef(false);
   const titleId = useId();
@@ -68,17 +71,23 @@ export function ConfirmationDialog({
 
   const getActionButtonClass = (action: InAppConfirmationAction) => {
     const base =
-      'rounded px-3 py-1 text-role-body transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-app-accent';
+      'rounded px-3 py-1 text-role-body transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus';
     switch (action.intent) {
       case 'destructive':
-        return `${base} bg-red-600 text-white hover:bg-red-700`;
+        return cn(
+          base,
+          'bg-app-danger text-app-danger-foreground font-medium hover:bg-app-danger/90',
+        );
       case 'primary':
-        return `${base} bg-app-accent text-white hover:bg-app-accent/80`;
+        return cn(
+          base,
+          'bg-app-accent text-app-accent-foreground font-medium hover:bg-app-accent-hover',
+        );
       case 'secondary':
-        return `${base} border border-app-border text-app-text hover:bg-app-hover`;
+        return cn(base, 'border border-app-border text-app-text hover:bg-app-hover');
       case 'cancel':
       default:
-        return `${base} border border-app-border/50 text-app-text-muted hover:bg-app-hover`;
+        return cn(base, 'border border-app-border/50 text-app-text-muted hover:bg-app-hover');
     }
   };
 
@@ -99,7 +108,10 @@ export function ConfirmationDialog({
         aria-labelledby={titleId}
         aria-describedby={description ? descriptionId : undefined}
         ref={dialogRef}
-        className="w-full max-w-md rounded border border-app-border bg-app-overlay p-4 text-app-text shadow-2xl"
+        className={cn(
+          'w-full max-w-md rounded border border-app-border bg-app-overlay p-4 text-app-text shadow-2xl',
+          className,
+        )}
         onClick={(e) => e.stopPropagation()}
         tabIndex={-1}
         {...surfaceAttributes}

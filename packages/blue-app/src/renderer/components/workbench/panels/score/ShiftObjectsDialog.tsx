@@ -1,8 +1,9 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { DraftNumberInput } from '../../../CommitNumberInput';
+import { useDialogFocus } from '../../../dialogs/use-dialog-focus';
 
 const SECONDARY_BUTTON_CLASS =
-  'rounded border border-app-border/40 bg-app-surface px-3 py-1 text-role-body text-app-text transition-colors hover:bg-app-hover';
+  'rounded border border-app-border/40 bg-app-surface px-3 py-1 text-role-body text-app-text transition-colors hover:bg-app-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus';
 
 interface ShiftObjectsDialogProps {
   onConfirm: (amountBeats: number) => void;
@@ -18,6 +19,9 @@ export default function ShiftObjectsDialog({
   const [shiftText, setShiftText] = useState('0');
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useDialogFocus(true, onClose, {
+    initialFocusSelector: '#shift-by-beats-input',
+  });
 
   useEffect(() => {
     if (inputRef.current) {
@@ -46,12 +50,9 @@ export default function ShiftObjectsDialog({
       if (e.key === 'Enter') {
         e.preventDefault();
         handleOk();
-      } else if (e.key === 'Escape') {
-        e.preventDefault();
-        onClose();
       }
     },
-    [handleOk, onClose],
+    [handleOk],
   );
 
   return (
@@ -60,20 +61,32 @@ export default function ShiftObjectsDialog({
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="shift-objects-dialog-title"
         className="min-w-64 rounded-lg border border-app-border/40 bg-app-menu p-4 shadow-xl"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
-        <h3 className="mb-3 text-role-title-3 font-semibold text-app-text">
+        <h3
+          id="shift-objects-dialog-title"
+          className="mb-3 text-role-title-3 font-semibold text-app-text"
+        >
           Shift Selected Objects
         </h3>
 
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <label className="text-role-body text-app-text-muted whitespace-nowrap">
+            <label
+              htmlFor="shift-by-beats-input"
+              className="text-role-body text-app-text-muted whitespace-nowrap"
+            >
               Shift by beats:
             </label>
             <DraftNumberInput
+              id="shift-by-beats-input"
+              aria-label="Shift by beats"
               ref={inputRef}
               step="any"
               stepBase={0}
@@ -98,7 +111,7 @@ export default function ShiftObjectsDialog({
             Cancel
           </button>
           <button
-            className="rounded border border-app-border/30 bg-app-surface px-3 py-1 text-role-body text-app-text hover:bg-app-hover"
+            className="rounded border border-app-border/30 bg-app-surface px-3 py-1 text-role-body text-app-text hover:bg-app-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
             onClick={handleOk}
           >
             OK

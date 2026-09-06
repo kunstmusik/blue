@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmationDialog } from '../../../../dialogs/ConfirmationDialog';
+import { useDialogFocus } from '../../../../dialogs/use-dialog-focus';
 import { cn } from '../../../../../lib/cn';
 import type {
   BsbInterfacePatch,
@@ -466,22 +467,6 @@ export default function PresetsManagerDialog({
     return () => observer.disconnect();
   }, []);
 
-  const hostWindow = useHostDocument()?.defaultView ?? null;
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        // Cross-realm safe check: instanceof HTMLInputElement fails for
-        // popout-realm targets.
-        if ((event.target as HTMLElement | null)?.tagName === 'INPUT') return;
-        event.preventDefault();
-        onClose();
-      }
-    };
-    if (!hostWindow) return undefined;
-    hostWindow.addEventListener('keydown', handleKeyDown);
-    return () => hostWindow.removeEventListener('keydown', handleKeyDown);
-  }, [onClose, hostWindow]);
-
   const dispatch = useCallback(
     (patch: BsbInterfacePatch) => {
       onBsbInterfacePatch(patch);
@@ -733,18 +718,23 @@ export default function PresetsManagerDialog({
   );
 
   const selectedLabel = selectedNode?.name ?? 'Preset tree';
+  const dialogRef = useDialogFocus(true, onClose);
 
   return (
     <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="presets-manager-title"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-      onMouseDown={(event) => {
+      onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div className="flex h-[min(560px,80vh)] w-full max-w-2xl flex-col rounded-lg border border-app-border/40 bg-app-menu shadow-2xl">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="presets-manager-title"
+        onClick={(e) => e.stopPropagation()}
+        className="flex h-[min(560px,80vh)] w-full max-w-2xl flex-col rounded-lg border border-app-border/40 bg-app-menu shadow-2xl"
+      >
         <div className="flex items-center justify-between border-b border-app-border/30 px-4 py-3">
           <div>
             <h2
@@ -759,7 +749,7 @@ export default function PresetsManagerDialog({
           </div>
           <button
             type="button"
-            className="rounded p-1 text-app-text-muted hover:bg-app-hover hover:text-app-text-bright focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-app-accent"
+            className="rounded p-1 text-app-text-muted hover:bg-app-hover hover:text-app-text-bright focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
             onClick={onClose}
             aria-label="Close Presets Manager"
           >
@@ -819,7 +809,7 @@ export default function PresetsManagerDialog({
         <div className="flex justify-end border-t border-app-border/30 px-4 py-3">
           <button
             type="button"
-            className="rounded border border-app-border/40 bg-app-surface px-3 py-1.5 text-role-body text-app-text transition-colors hover:bg-app-hover focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-app-accent"
+            className="rounded border border-app-border/40 bg-app-surface px-3 py-1.5 text-role-body text-app-text transition-colors hover:bg-app-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
             onClick={onClose}
           >
             Close

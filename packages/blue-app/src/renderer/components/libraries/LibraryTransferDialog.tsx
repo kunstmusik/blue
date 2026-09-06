@@ -1,4 +1,5 @@
 import type { LibraryInsertionMode, LibraryTransferPreview } from '../../../shared/unified-library';
+import { useDialogFocus } from '../dialogs/use-dialog-focus';
 
 interface LibraryTransferDialogProps {
   preview: LibraryTransferPreview;
@@ -11,14 +12,21 @@ export function LibraryTransferDialog({
   onApply,
   onCancel,
 }: LibraryTransferDialogProps): React.ReactElement {
+  const dialogRef = useDialogFocus(true, onCancel);
+
   return (
     <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="library-transfer-title"
+      onClick={onCancel}
       className="fixed inset-0 z-[70] grid place-items-center bg-black/45 p-4"
     >
-      <div className="w-full max-w-sm rounded border border-app-border bg-app-overlay p-4 shadow-2xl">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="library-transfer-title"
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-sm rounded border border-app-border bg-app-overlay p-4 shadow-2xl"
+      >
         <h2 id="library-transfer-title" className="text-role-title-2 font-semibold">
           Add {preview.item.displayName}
         </h2>
@@ -35,7 +43,7 @@ export function LibraryTransferDialog({
         <div className="mt-4 flex flex-wrap justify-end gap-2">
           <button
             type="button"
-            className="rounded border border-app-border px-3 py-1 text-role-body"
+            className="rounded border border-app-border px-3 py-1 text-role-body focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
             onClick={onCancel}
           >
             Cancel
@@ -43,7 +51,7 @@ export function LibraryTransferDialog({
           {preview.allowedModes.includes('independent') && (
             <button
               type="button"
-              className="rounded border border-app-border px-3 py-1 text-role-body"
+              className="rounded border border-app-border px-3 py-1 text-role-body focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
               onClick={() => onApply('independent')}
             >
               Copy Independent
@@ -52,7 +60,7 @@ export function LibraryTransferDialog({
           {preview.allowedModes.includes('sharedInstance') && (
             <button
               type="button"
-              className="rounded bg-app-accent px-3 py-1 text-role-body text-white"
+              className="rounded bg-app-accent px-3 py-1 text-role-body text-app-accent-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
               onClick={() => onApply('sharedInstance')}
             >
               Copy Instance

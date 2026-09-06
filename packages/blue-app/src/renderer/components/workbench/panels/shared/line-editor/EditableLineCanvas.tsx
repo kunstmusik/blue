@@ -1001,6 +1001,7 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
                           <tr key={entry.index} className="border-b border-app-border/30">
                             <td className="p-0">
                               <CommitNumberInput
+                                aria-label={`Point ${entry.index + 1} X`}
                                 step={0.001}
                                 className={cn(
                                   'w-full border-0 bg-transparent px-2 py-1 text-role-body text-app-text-strong outline-none',
@@ -1020,6 +1021,7 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
                             </td>
                             <td className="p-0">
                               <CommitNumberInput
+                                aria-label={`Point ${entry.index + 1} Y`}
                                 step={0.001}
                                 className="w-full border-0 bg-transparent px-2 py-1 text-role-body text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-inset focus:ring-app-accent"
                                 value={entry.point.y}

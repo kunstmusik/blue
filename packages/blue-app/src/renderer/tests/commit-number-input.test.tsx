@@ -142,7 +142,7 @@ describe('CommitNumberInput Contract & Regression (US1)', () => {
       expect(classList).toContain('group-hover:pointer-events-auto');
       expect(classList).toContain('group-focus-within:opacity-100');
       expect(classList).toContain('group-focus-within:pointer-events-auto');
-      expect(classList).toContain('bg-[#f1f1f1]');
+      expect(classList).toContain('bg-app-surface-raised');
 
       const increaseSvg = container.querySelector('button[aria-label="Increase"] svg polygon');
       const decreaseSvg = container.querySelector('button[aria-label="Decrease"] svg polygon');
@@ -152,8 +152,8 @@ describe('CommitNumberInput Contract & Regression (US1)', () => {
       const increaseBtn = container.querySelector(
         'button[aria-label="Increase"]',
       ) as HTMLButtonElement;
-      expect(increaseBtn.className).toContain('hover:bg-[#d2d2d2]');
-      expect(increaseBtn.className).toContain('text-[#505050]');
+      expect(increaseBtn.className).toContain('hover:bg-app-hover');
+      expect(increaseBtn.className).toContain('text-app-text-muted');
       expect(increaseBtn.className).not.toContain('hover:text-black');
     });
 

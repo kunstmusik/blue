@@ -301,14 +301,19 @@ export default function TableEditor({
         />
       </div>
       <div className="flex items-center gap-2 text-role-body text-gray-300">
-        <label className="shrink-0">Interp</label>
+        <label className="shrink-0" htmlFor="table-interp-select">
+          Interp
+        </label>
         <AppSelect
+          id="table-interp-select"
+          aria-label="Interpolation type"
           className="rounded border border-blue-border bg-blue-bg px-1 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           value={interpolationType}
           onValueChange={handleInterpolationTypeChange}
           options={TABLE_INTERPOLATION_TYPES.map((label, value) => ({ value, label }))}
         />
         <CommitNumberInput
+          aria-label="Interpolation value"
           value={interpolation}
           step={0.1}
           className="w-14 rounded border border-blue-border bg-blue-bg px-1 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
@@ -318,6 +323,7 @@ export default function TableEditor({
           <>
             <label className="shrink-0">Min</label>
             <CommitNumberInput
+              aria-label="Minimum value"
               value={min}
               step={0.1}
               className="w-14 rounded border border-blue-border bg-blue-bg px-1 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
@@ -325,6 +331,7 @@ export default function TableEditor({
             />
             <label className="shrink-0">Max</label>
             <CommitNumberInput
+              aria-label="Maximum value"
               value={max}
               step={0.1}
               className="w-14 rounded border border-blue-border bg-blue-bg px-1 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"

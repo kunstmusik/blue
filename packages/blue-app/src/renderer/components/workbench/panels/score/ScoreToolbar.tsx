@@ -75,9 +75,11 @@ export default function ScoreToolbar({
       <div className="flex items-center mr-2 border border-app-border/40 rounded overflow-hidden">
         {MODE_OPTIONS.map((opt) => (
           <button
+            type="button"
             key={opt.value}
+            aria-pressed={mode === opt.value}
             className={cn(
-              'px-2 py-0.5 text-role-callout transition-colors cursor-pointer',
+              'px-2 py-0.5 text-role-callout transition-colors cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus',
               mode === opt.value
                 ? 'bg-app-accent/20 text-app-text font-medium'
                 : 'bg-transparent text-app-text-muted hover:bg-app-hover hover:text-app-text',
@@ -162,8 +164,10 @@ export default function ScoreToolbar({
       {/* Snap button with dropdown */}
       <div className="flex items-stretch mr-1.5 h-[22px]">
         <button
+          type="button"
+          aria-pressed={snapEnabled}
           className={cn(
-            'px-1.5 text-role-callout border rounded-l transition-colors cursor-pointer flex items-center',
+            'px-1.5 text-role-callout border rounded-l transition-colors cursor-pointer flex items-center focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus',
             snapEnabled
               ? 'bg-app-accent/20 text-app-text border-app-accent/40'
               : 'bg-transparent text-app-text-muted border-app-border/40 hover:bg-app-hover',
@@ -176,13 +180,15 @@ export default function ScoreToolbar({
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
             <button
+              type="button"
               className={cn(
-                'px-1 border border-l-0 rounded-r transition-colors cursor-pointer flex items-center',
+                'px-1 border border-l-0 rounded-r transition-colors cursor-pointer flex items-center focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus',
                 snapEnabled
                   ? 'bg-app-accent/20 text-app-text border-app-accent/40'
                   : 'bg-transparent text-app-text-muted border-app-border/40 hover:bg-app-hover',
               )}
               title="Configure snap value"
+              aria-label="Configure snap value"
             >
               <ChevronDown className="w-3 h-3" />
             </button>
@@ -196,7 +202,7 @@ export default function ScoreToolbar({
             >
               {SNAP_GROUPS.map((group) => (
                 <DropdownMenu.Sub key={group.label}>
-                  <DropdownMenu.SubTrigger className="flex w-full items-center justify-between rounded-sm px-3 py-1 text-role-callout text-app-text outline-none cursor-pointer data-[highlighted]:bg-app-highlight">
+                  <DropdownMenu.SubTrigger className="flex w-full items-center justify-between rounded-sm px-3 py-1 text-role-callout text-app-text outline-none cursor-pointer data-[highlighted]:bg-app-highlight focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus">
                     {group.label}
                     <ChevronRight className="w-3.5 h-3.5 opacity-60 ml-2" />
                   </DropdownMenu.SubTrigger>
@@ -213,7 +219,7 @@ export default function ScoreToolbar({
                           <DropdownMenu.Item
                             key={name}
                             className={cn(
-                              'rounded-sm px-3 py-1 text-role-callout outline-none cursor-pointer data-[highlighted]:bg-app-highlight',
+                              'rounded-sm px-3 py-1 text-role-callout outline-none cursor-pointer data-[highlighted]:bg-app-highlight focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus',
                               snapValue === name
                                 ? 'bg-app-accent/20 text-app-text font-medium'
                                 : 'text-app-text',
@@ -231,7 +237,7 @@ export default function ScoreToolbar({
               <DropdownMenu.Separator className="my-1 h-px bg-app-border/30" />
               <DropdownMenu.Item
                 className={cn(
-                  'rounded-sm px-3 py-1 text-role-callout outline-none cursor-pointer data-[highlighted]:bg-app-highlight',
+                  'rounded-sm px-3 py-1 text-role-callout outline-none cursor-pointer data-[highlighted]:bg-app-highlight focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus',
                   snapValue === 'AUTO'
                     ? 'bg-app-accent/20 text-app-text font-medium'
                     : 'text-app-text',
@@ -247,7 +253,8 @@ export default function ScoreToolbar({
 
       {/* Ruler config button */}
       <button
-        className="rounded border border-app-border/40 bg-app-surface px-2 py-0.5 text-role-callout text-app-text cursor-pointer transition-colors hover:bg-app-hover"
+        type="button"
+        className="rounded border border-app-border/40 bg-app-surface px-2 py-0.5 text-role-callout text-app-text cursor-pointer transition-colors hover:bg-app-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
         onClick={onRulerConfig}
         title="Ruler configuration"
       >
@@ -257,7 +264,8 @@ export default function ScoreToolbar({
       {/* Score color history undo/redo */}
       <div className="flex items-center gap-1 ml-2">
         <button
-          className="rounded border border-app-border/40 bg-app-surface px-2 py-0.5 text-role-callout text-app-text cursor-pointer transition-colors hover:bg-app-hover disabled:opacity-40 disabled:cursor-not-allowed"
+          type="button"
+          className="rounded border border-app-border/40 bg-app-surface px-2 py-0.5 text-role-callout text-app-text cursor-pointer transition-colors hover:bg-app-hover disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
           disabled={!canUndoColor}
           onClick={() => void undoColor()}
           aria-label="Undo score color change"
@@ -266,7 +274,8 @@ export default function ScoreToolbar({
           Undo Color
         </button>
         <button
-          className="rounded border border-app-border/40 bg-app-surface px-2 py-0.5 text-role-callout text-app-text cursor-pointer transition-colors hover:bg-app-hover disabled:opacity-40 disabled:cursor-not-allowed"
+          type="button"
+          className="rounded border border-app-border/40 bg-app-surface px-2 py-0.5 text-role-callout text-app-text cursor-pointer transition-colors hover:bg-app-hover disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
           disabled={!canRedoColor}
           onClick={() => void redoColor()}
           aria-label="Redo score color change"

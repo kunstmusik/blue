@@ -309,8 +309,12 @@ export default function PatternObjectEditor({
     <div className="pattern-root flex flex-col h-full select-none">
       <div className="flex items-center gap-3 px-3 py-1 border-b border-blue-border shrink-0 bg-blue-bg/30">
         <div className="flex items-center gap-1.5">
-          <label className="text-role-body text-app-text">Beats</label>
+          <label htmlFor="pattern-beats-input" className="text-role-body text-app-text">
+            Beats
+          </label>
           <CommitNumberInput
+            id="pattern-beats-input"
+            aria-label="Beats"
             min={1}
             max={64}
             step={1}
@@ -325,8 +329,12 @@ export default function PatternObjectEditor({
           />
         </div>
         <div className="flex items-center gap-1.5">
-          <label className="text-role-body text-app-text">Sub</label>
+          <label htmlFor="pattern-subdivisions-input" className="text-role-body text-app-text">
+            Sub
+          </label>
           <CommitNumberInput
+            id="pattern-subdivisions-input"
+            aria-label="Subdivisions per beat"
             min={1}
             max={64}
             step={1}

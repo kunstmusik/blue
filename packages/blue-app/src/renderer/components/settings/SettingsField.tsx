@@ -11,13 +11,13 @@ const FIELD_CONTAINER_CLASS = 'mb-4';
 const FIELD_LABEL_CLASS = 'mb-1 block text-role-body font-medium text-app-text-muted';
 const FIELD_DESCRIPTION_CLASS = 'mb-1.5 text-role-callout text-app-text-subtle';
 const FIELD_INPUT_CLASS =
-  'w-full max-w-[400px] rounded-md border border-app-border bg-app-canvas px-2.5 py-1.5 text-role-body text-app-text outline-none transition-colors placeholder:text-app-text-muted focus:border-app-accent disabled:cursor-not-allowed disabled:opacity-50';
+  'w-full max-w-[400px] rounded-md border border-app-border bg-app-canvas px-2.5 py-1.5 text-role-body text-app-text outline-none transition-colors placeholder:text-app-text-muted focus:border-app-accent focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus disabled:cursor-not-allowed disabled:opacity-50';
 const FIELD_SELECT_CLASS =
-  'min-w-[140px] max-w-[400px] rounded-md border border-app-border bg-app-canvas px-2.5 py-1.5 text-role-body text-app-text outline-none transition-colors focus:border-app-accent disabled:cursor-not-allowed disabled:opacity-50';
+  'min-w-[140px] max-w-[400px] rounded-md border border-app-border bg-app-canvas px-2.5 py-1.5 text-role-body text-app-text outline-none transition-colors focus:border-app-accent focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus disabled:cursor-not-allowed disabled:opacity-50';
 const FIELD_CHECKBOX_CLASS =
   'mb-3 flex cursor-pointer items-start gap-2 text-role-body text-app-text';
 const FIELD_CHECKBOX_INPUT_CLASS =
-  'mt-0.5 h-4 w-4 rounded border-app-border bg-app-canvas accent-app-accent disabled:cursor-not-allowed';
+  'mt-0.5 h-4 w-4 rounded border-app-border bg-app-canvas accent-app-accent focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus disabled:cursor-not-allowed';
 
 export const SETTINGS_NARROW_FIELD_CLASS = 'w-[120px] max-w-none';
 export const SETTINGS_MEDIUM_FIELD_CLASS = 'max-w-[300px]';
@@ -44,14 +44,27 @@ export default function SettingsField({
   containerClassName,
   inputClassName,
   inputRef,
+  id: explicitId,
   ...inputProps
 }: SettingsFieldProps): React.ReactElement {
+  const generatedId = React.useId();
+  const inputId = explicitId || generatedId;
+  const descriptionId = description ? `${inputId}-desc` : undefined;
+
   return (
     <div className={cn(FIELD_CONTAINER_CLASS, containerClassName)}>
-      <label className={FIELD_LABEL_CLASS}>{label}</label>
-      {description && <div className={FIELD_DESCRIPTION_CLASS}>{description}</div>}
+      <label htmlFor={inputId} className={FIELD_LABEL_CLASS}>
+        {label}
+      </label>
+      {description && (
+        <div id={descriptionId} className={FIELD_DESCRIPTION_CLASS}>
+          {description}
+        </div>
+      )}
       <input
         ref={inputRef}
+        id={inputId}
+        aria-describedby={descriptionId}
         {...inputProps}
         value={value}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
@@ -82,16 +95,22 @@ export function SettingsNumberField(props: SettingsNumberFieldProps): React.Reac
   } = props;
   const generatedId = React.useId();
   const inputId = explicitId || generatedId;
+  const descriptionId = description ? `${inputId}-desc` : undefined;
 
   return (
     <div className={cn(FIELD_CONTAINER_CLASS, containerClassName)}>
       <label htmlFor={inputId} className={FIELD_LABEL_CLASS}>
         {label}
       </label>
-      {description && <div className={FIELD_DESCRIPTION_CLASS}>{description}</div>}
+      {description && (
+        <div id={descriptionId} className={FIELD_DESCRIPTION_CLASS}>
+          {description}
+        </div>
+      )}
       <CommitNumberInput
         ref={inputRef}
         id={inputId}
+        aria-describedby={descriptionId}
         className={cn(FIELD_INPUT_CLASS, inputClassName, className)}
         {...rest}
       />
@@ -120,16 +139,22 @@ export function SettingsDraftNumberField(props: SettingsDraftNumberFieldProps): 
   } = props;
   const generatedId = React.useId();
   const inputId = explicitId || generatedId;
+  const descriptionId = description ? `${inputId}-desc` : undefined;
 
   return (
     <div className={cn(FIELD_CONTAINER_CLASS, containerClassName)}>
       <label htmlFor={inputId} className={FIELD_LABEL_CLASS}>
         {label}
       </label>
-      {description && <div className={FIELD_DESCRIPTION_CLASS}>{description}</div>}
+      {description && (
+        <div id={descriptionId} className={FIELD_DESCRIPTION_CLASS}>
+          {description}
+        </div>
+      )}
       <DraftNumberInput
         ref={inputRef}
         id={inputId}
+        aria-describedby={descriptionId}
         className={cn(FIELD_INPUT_CLASS, inputClassName, className)}
         {...rest}
       />
@@ -163,6 +188,10 @@ export function SettingsSelectField({
   children,
   ...selectProps
 }: SettingsSelectFieldProps): React.ReactElement {
+  const generatedId = React.useId();
+  const inputId = selectProps.id || generatedId;
+  const descriptionId = description ? `${inputId}-desc` : undefined;
+
   const options = React.Children.toArray(children).flatMap((child): AppSelectOption[] => {
     if (
       !React.isValidElement<{
@@ -181,10 +210,18 @@ export function SettingsSelectField({
 
   return (
     <div className={cn(FIELD_CONTAINER_CLASS, containerClassName)}>
-      <label className={FIELD_LABEL_CLASS}>{label}</label>
-      {description ? <div className={FIELD_DESCRIPTION_CLASS}>{description}</div> : null}
+      <label htmlFor={inputId} className={FIELD_LABEL_CLASS}>
+        {label}
+      </label>
+      {description ? (
+        <div id={descriptionId} className={FIELD_DESCRIPTION_CLASS}>
+          {description}
+        </div>
+      ) : null}
       <AppSelect
         {...selectProps}
+        id={inputId}
+        aria-describedby={descriptionId}
         value={value}
         onValueChange={onChange}
         options={options}
@@ -212,10 +249,16 @@ export function SettingsCheckboxField({
   description,
   containerClassName,
   disabled,
+  id: explicitId,
   ...inputProps
 }: SettingsCheckboxFieldProps): React.ReactElement {
+  const generatedId = React.useId();
+  const inputId = explicitId || generatedId;
+  const descriptionId = description ? `${inputId}-desc` : undefined;
+
   return (
     <label
+      htmlFor={inputId}
       className={cn(
         FIELD_CHECKBOX_CLASS,
         disabled && 'cursor-default opacity-50',
@@ -224,6 +267,8 @@ export function SettingsCheckboxField({
     >
       <input
         {...inputProps}
+        id={inputId}
+        aria-describedby={descriptionId}
         type="checkbox"
         checked={checked}
         disabled={disabled}
@@ -232,7 +277,11 @@ export function SettingsCheckboxField({
       />
       <span className="flex flex-col gap-0.5">
         <span>{label}</span>
-        {description ? <span className={FIELD_DESCRIPTION_CLASS}>{description}</span> : null}
+        {description ? (
+          <span id={descriptionId} className={FIELD_DESCRIPTION_CLASS}>
+            {description}
+          </span>
+        ) : null}
       </span>
     </label>
   );

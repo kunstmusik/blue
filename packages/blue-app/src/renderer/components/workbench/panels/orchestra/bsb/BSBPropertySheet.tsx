@@ -1054,12 +1054,14 @@ function LineObjectEditor({
               />
             </label>
             <input
+              aria-label={`BSB line ${i + 1} variable name`}
               className="h-8 w-full border-0 border-r border-app-border/30 bg-transparent px-1 text-role-body text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-app-accent"
               value={line.varName}
               placeholder={`line${i}`}
               onChange={(event) => updateLine(i, { varName: event.target.value })}
             />
             <CommitNumberInput
+              aria-label={`BSB line ${i + 1} minimum value`}
               className="h-8 w-full border-0 border-r border-app-border/30 bg-transparent px-1 text-right text-role-body text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-app-accent"
               step="any"
               value={line.min ?? 0}
@@ -1067,6 +1069,7 @@ function LineObjectEditor({
               onChange={(val) => updateLine(i, { min: val })}
             />
             <CommitNumberInput
+              aria-label={`BSB line ${i + 1} maximum value`}
               className="h-8 w-full border-0 border-r border-app-border/30 bg-transparent px-1 text-right text-role-body text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-app-accent"
               step="any"
               value={line.max ?? 1}
@@ -1076,6 +1079,7 @@ function LineObjectEditor({
             <label className="flex h-8 items-center justify-center border-r border-app-border/30">
               <span className="sr-only">Link First/Last</span>
               <input
+                aria-label={`BSB line ${i + 1} link first and last end points`}
                 type="checkbox"
                 className="accent-app-accent"
                 checked={line.endPointsLinked === true}

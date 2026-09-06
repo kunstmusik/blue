@@ -1,13 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { convertFTableToFtgen } from './ftable-converter';
+import { useDialogFocus } from '../../../dialogs/use-dialog-focus';
 
 const SECONDARY_BUTTON_CLASS =
-  'rounded border border-app-border/40 bg-app-surface px-3 py-1 text-role-body text-app-text transition-colors hover:bg-app-hover';
+  'rounded border border-app-border/40 bg-app-surface px-3 py-1 text-role-body text-app-text transition-colors hover:bg-app-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus';
 
 export default function FTableConverterModal(): React.ReactElement | null {
   const [isOpen, setIsOpen] = useState(false);
   const [fStatementText, setFStatementText] = useState('');
   const [ftgenText, setFtgenText] = useState('');
+
+  const handleClose = useCallback(() => {
+    setIsOpen(false);
+  }, []);
+
+  const dialogRef = useDialogFocus(isOpen, handleClose);
 
   useEffect(() => {
     const handleOpen = () => setIsOpen(true);
@@ -19,20 +26,6 @@ export default function FTableConverterModal(): React.ReactElement | null {
     setFtgenText(convertFTableToFtgen(fStatementText));
   }, [fStatementText]);
 
-  const handleClose = useCallback(() => {
-    setIsOpen(false);
-  }, []);
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        handleClose();
-      }
-    },
-    [handleClose],
-  );
-
   if (!isOpen) return null;
 
   return (
@@ -41,14 +34,22 @@ export default function FTableConverterModal(): React.ReactElement | null {
       onClick={handleClose}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ftable-converter-title"
         className="flex h-[75vh] w-[700px] max-w-[90vw] flex-col rounded-lg border border-app-border/40 bg-app-menu p-4 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
-        onKeyDown={handleKeyDown}
       >
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-role-title-2 font-bold text-app-text-bright">FTable Converter</h2>
+          <h2
+            id="ftable-converter-title"
+            className="text-role-title-2 font-bold text-app-text-bright"
+          >
+            FTable Converter
+          </h2>
           <button
-            className="px-2 text-role-title-2 text-app-text-muted hover:text-app-text-bright"
+            className="rounded px-2 text-role-title-2 text-app-text-muted hover:text-app-text-bright focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
             onClick={handleClose}
             aria-label="Close"
           >
@@ -58,10 +59,15 @@ export default function FTableConverterModal(): React.ReactElement | null {
 
         <div className="flex flex-1 flex-col gap-3 min-h-0">
           <div className="flex flex-1 flex-col min-h-0">
-            <label className="mb-1 text-role-callout text-app-text-muted font-medium">
+            <label
+              htmlFor="ftable-input"
+              className="mb-1 text-role-callout text-app-text-muted font-medium"
+            >
               f-Statements (Input)
             </label>
             <textarea
+              id="ftable-input"
+              aria-label="f-Statements input"
               className="flex-1 rounded border border-app-border/30 bg-app-field p-2 font-mono text-role-body text-app-text outline-none focus:border-app-border/60 resize-none"
               placeholder="e.g. f 1 0 1024 10 1"
               value={fStatementText}
@@ -71,7 +77,7 @@ export default function FTableConverterModal(): React.ReactElement | null {
 
           <div className="flex justify-end">
             <button
-              className="rounded border border-app-border/30 bg-app-surface px-4 py-1.5 text-role-body font-medium text-app-text hover:bg-app-hover active:bg-app-hover/80 transition-colors"
+              className="rounded border border-app-border/30 bg-app-surface px-4 py-1.5 text-role-body font-medium text-app-text hover:bg-app-hover active:bg-app-hover/80 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
               onClick={handleConvert}
             >
               Convert to FTGEN
@@ -79,10 +85,15 @@ export default function FTableConverterModal(): React.ReactElement | null {
           </div>
 
           <div className="flex flex-1 flex-col min-h-0">
-            <label className="mb-1 text-role-callout text-app-text-muted font-medium">
+            <label
+              htmlFor="ftable-output"
+              className="mb-1 text-role-callout text-app-text-muted font-medium"
+            >
               ftgen Statements (Output)
             </label>
             <textarea
+              id="ftable-output"
+              aria-label="ftgen statements output"
               className="flex-1 rounded border border-app-border/30 bg-app-field p-2 font-mono text-role-body text-app-text outline-none focus:border-app-border/60 resize-none"
               placeholder="gi_ ftgen 0, 0, 1024, 10, 1"
               value={ftgenText}

@@ -7,9 +7,10 @@ import type {
 import { DraftNumberInput } from '../../../CommitNumberInput';
 import { parseMeterSignature, isPowerOfTwo } from './meter-map-utils';
 import { cn } from '../../../../lib/cn';
+import { useDialogFocus } from '../../../dialogs/use-dialog-focus';
 
 const SECONDARY_BUTTON_CLASS =
-  'rounded border border-app-border/40 bg-app-surface px-3 py-1 text-role-body text-app-text transition-colors hover:bg-app-hover';
+  'rounded border border-app-border/40 bg-app-surface px-3 py-1 text-role-body text-app-text transition-colors hover:bg-app-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus';
 
 interface MeterMapEditorDialogProps {
   meterMap: MeterMapSnapshot;
@@ -38,6 +39,7 @@ export default function MeterMapEditorDialog({
   onClose,
 }: MeterMapEditorDialogProps) {
   const [error, setError] = useState<string | null>(null);
+  const dialogRef = useDialogFocus(true, onClose);
   const [rows, setRows] = useState<TableRow[]>(() =>
     meterMap.entries.map((e) => ({
       measure: e.measure.toString(),
@@ -232,16 +234,6 @@ export default function MeterMapEditorDialog({
     onClose();
   }, [rows, onCommit, onClose]);
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onClose();
-      }
-    },
-    [onClose],
-  );
-
   const canDelete = rows.length > 1;
 
   return (
@@ -250,12 +242,18 @@ export default function MeterMapEditorDialog({
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="meter-map-editor-title"
         className="rounded-lg border border-app-border/40 bg-app-menu shadow-xl"
         style={{ minWidth: 320 }}
         onClick={(e) => e.stopPropagation()}
-        onKeyDown={handleKeyDown}
       >
-        <h3 className="px-4 pb-2 pt-3 text-role-title-3 font-semibold text-app-text">
+        <h3
+          id="meter-map-editor-title"
+          className="px-4 pb-2 pt-3 text-role-title-3 font-semibold text-app-text"
+        >
           Edit Time Signature Map
         </h3>
 
@@ -273,6 +271,7 @@ export default function MeterMapEditorDialog({
                 <tr key={i} className="border-t border-app-border/10">
                   <td className="py-1 pr-2">
                     <DraftNumberInput
+                      aria-label={`Measure for entry ${i + 1}`}
                       className="w-full rounded border border-app-border/30 bg-app-field px-1.5 py-0.5 text-role-body text-app-text outline-none focus:border-app-border/60"
                       containerClassName="w-full"
                       value={row.measure}
@@ -293,6 +292,7 @@ export default function MeterMapEditorDialog({
                   <td className="py-1 pr-2">
                     <input
                       type="text"
+                      aria-label={`Time signature for entry ${i + 1}`}
                       className="w-full rounded border border-app-border/30 bg-app-field px-1.5 py-0.5 text-role-body text-app-text outline-none focus:border-app-border/60"
                       value={row.signatureText}
                       onChange={(e) => handleSignatureChange(i, e.target.value)}
@@ -307,8 +307,9 @@ export default function MeterMapEditorDialog({
                   </td>
                   <td className="py-1 text-center">
                     <button
+                      aria-label={`Delete meter entry ${i + 1}`}
                       className={cn(
-                        'rounded px-1.5 py-0.5 text-role-callout',
+                        'rounded px-1.5 py-0.5 text-role-callout focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus',
                         canDelete
                           ? 'text-app-danger hover:bg-app-outline-strong'
                           : 'cursor-not-allowed text-app-text-muted',
@@ -328,7 +329,7 @@ export default function MeterMapEditorDialog({
 
         <div className="flex items-center justify-between border-t border-app-border/20 px-4 py-2">
           <button
-            className="rounded border border-app-border/30 bg-app-surface px-3 py-1 text-role-body text-app-text hover:bg-app-hover"
+            className="rounded border border-app-border/30 bg-app-surface px-3 py-1 text-role-body text-app-text hover:bg-app-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
             onClick={handleAdd}
           >
             Add
@@ -338,7 +339,7 @@ export default function MeterMapEditorDialog({
               Cancel
             </button>
             <button
-              className="rounded border border-app-border/30 bg-app-surface px-3 py-1 text-role-body text-app-text hover:bg-app-hover"
+              className="rounded border border-app-border/30 bg-app-surface px-3 py-1 text-role-body text-app-text hover:bg-app-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
               onClick={handleOk}
             >
               OK

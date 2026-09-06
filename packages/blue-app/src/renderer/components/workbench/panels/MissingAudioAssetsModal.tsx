@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useProjectStore } from '../../../stores/project-store';
 import type { MissingAudioAssetRow } from '../../../../shared/missing-audio-assets';
+import { useDialogFocus } from '../../dialogs/use-dialog-focus';
 
 /**
  * Renders the Java Blue "Locate Missing Audio Files" repair table when a
@@ -19,6 +20,22 @@ export default function MissingAudioAssetsModal(): React.ReactElement | null {
   const [resolving, setResolving] = useState(false);
   const okButtonRef = useRef<HTMLButtonElement | null>(null);
 
+  const closeWithoutChanges = useCallback(
+    (sessionId: string) => {
+      void window.blueAPI.dismissMissingAudioAssets({ sessionId }).catch(() => {});
+      setMissingAudioSession(null);
+    },
+    [setMissingAudioSession],
+  );
+
+  const dialogRef = useDialogFocus(
+    Boolean(session),
+    () => {
+      if (session) closeWithoutChanges(session.sessionId);
+    },
+    { initialFocusElement: okButtonRef.current },
+  );
+
   useEffect(() => {
     if (!session) {
       setReplacements({});
@@ -32,14 +49,6 @@ export default function MissingAudioAssetsModal(): React.ReactElement | null {
     setResolving(false);
     okButtonRef.current?.focus();
   }, [session]);
-
-  const closeWithoutChanges = useCallback(
-    (sessionId: string) => {
-      void window.blueAPI.dismissMissingAudioAssets({ sessionId }).catch(() => {});
-      setMissingAudioSession(null);
-    },
-    [setMissingAudioSession],
-  );
 
   const handleBrowse = useCallback(
     async (originalPath: string) => {
@@ -100,17 +109,6 @@ export default function MissingAudioAssetsModal(): React.ReactElement | null {
     [closeWithoutChanges, session],
   );
 
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLDivElement>) => {
-      if (!session) return;
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        closeWithoutChanges(session.sessionId);
-      }
-    },
-    [closeWithoutChanges, session],
-  );
-
   if (!session) {
     return null;
   }
@@ -119,10 +117,16 @@ export default function MissingAudioAssetsModal(): React.ReactElement | null {
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
       onClick={handleOverlayClick}
-      onKeyDown={handleKeyDown}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          closeWithoutChanges(session.sessionId);
+        }
+      }}
       role="presentation"
     >
       <div
+        ref={dialogRef}
         className="flex max-h-[80vh] w-[80vw] flex-col rounded-lg border border-app-hover bg-app-overlay shadow-2xl"
         role="dialog"
         aria-modal="true"
@@ -187,7 +191,7 @@ export default function MissingAudioAssetsModal(): React.ReactElement | null {
         <div className="flex items-center justify-end gap-2 border-t border-app-hover px-4 py-3">
           <button
             type="button"
-            className="rounded border border-app-hover px-3 py-1.5 text-role-body text-app-text hover:bg-app-hover"
+            className="rounded border border-app-hover px-3 py-1.5 text-role-body text-app-text hover:bg-app-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
             onClick={() => closeWithoutChanges(session.sessionId)}
           >
             Cancel
@@ -195,7 +199,7 @@ export default function MissingAudioAssetsModal(): React.ReactElement | null {
           <button
             ref={okButtonRef}
             type="button"
-            className="rounded bg-blue-accent px-3 py-1.5 text-role-body text-white hover:opacity-90 disabled:opacity-50"
+            className="rounded bg-blue-accent px-3 py-1.5 text-role-body text-white hover:opacity-90 disabled:opacity-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
             onClick={() => void handleConfirm()}
             disabled={resolving}
           >

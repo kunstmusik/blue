@@ -168,6 +168,7 @@ export default function EffectEditorPanel({
         <label className="flex items-center gap-1 text-role-body text-app-text-muted">
           In
           <CommitNumberInput
+            aria-label="Input channels"
             min={0}
             step={1}
             value={snapshot.numIns}
@@ -179,6 +180,7 @@ export default function EffectEditorPanel({
         <label className="flex items-center gap-1 text-role-body text-app-text-muted">
           Out
           <CommitNumberInput
+            aria-label="Output channels"
             min={0}
             step={1}
             value={snapshot.numOuts}
@@ -190,6 +192,7 @@ export default function EffectEditorPanel({
         <label className="flex items-center gap-1 text-role-body text-app-text-muted">
           Style
           <AppSelect
+            aria-label="Effect style"
             value={snapshot.style}
             onValueChange={(value) => handleStyleChange(value as 'CLASSIC' | 'MODERN')}
             options={[

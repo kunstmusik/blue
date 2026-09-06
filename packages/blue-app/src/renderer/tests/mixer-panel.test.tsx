@@ -310,4 +310,131 @@ describe('MixerPanel', () => {
     });
     container.remove();
   });
+
+  it('exposes accessible slider semantics on channel faders and supports keyboard stepping', async () => {
+    seedLoadedProject();
+    const { container, root } = renderPanel();
+
+    const rangeInputs = Array.from(
+      container.querySelectorAll<HTMLInputElement>(
+        '.mixer-level-slider-wrapper input[type="range"]',
+      ),
+    );
+    expect(rangeInputs.length).toBeGreaterThanOrEqual(1);
+    const fader = rangeInputs[0]!;
+
+    expect(fader.getAttribute('role')).toBe('slider');
+    expect(fader.getAttribute('aria-label')).toBe('Level for Lead Channel');
+    expect(fader.getAttribute('aria-valuemin')).toBe('-960');
+    expect(fader.getAttribute('aria-valuemax')).toBe('240');
+    expect(fader.getAttribute('aria-valuenow')).not.toBeNull();
+    expect(fader.getAttribute('aria-valuetext')).toMatch(/dB/);
+
+    // Test ArrowUp keydown
+    mockProjectState.applyProjectDocumentPatch.mockClear();
+    act(() => {
+      fader.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+    });
+    expect(mockProjectState.applyProjectDocumentPatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mixer: expect.objectContaining({
+          type: 'updateChannel',
+          channelId: '1',
+          patch: expect.objectContaining({
+            level: expect.any(Number),
+          }),
+        }),
+      }),
+    );
+
+    // Test Shift+ArrowUp accelerated stepping
+    mockProjectState.applyProjectDocumentPatch.mockClear();
+    act(() => {
+      fader.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowUp', shiftKey: true, bubbles: true }),
+      );
+    });
+    expect(mockProjectState.applyProjectDocumentPatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mixer: expect.objectContaining({
+          type: 'updateChannel',
+          channelId: '1',
+          patch: expect.objectContaining({
+            level: expect.any(Number),
+          }),
+        }),
+      }),
+    );
+
+    // Test Home and End bounds
+    mockProjectState.applyProjectDocumentPatch.mockClear();
+    act(() => {
+      fader.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
+    });
+    expect(mockProjectState.applyProjectDocumentPatch).toHaveBeenCalledWith({
+      mixer: {
+        type: 'updateChannel',
+        channelId: '1',
+        patch: {
+          level: -96,
+        },
+      },
+    });
+
+    mockProjectState.applyProjectDocumentPatch.mockClear();
+    act(() => {
+      fader.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+    });
+    expect(mockProjectState.applyProjectDocumentPatch).toHaveBeenCalledWith({
+      mixer: {
+        type: 'updateChannel',
+        channelId: '1',
+        patch: {
+          level: 12,
+        },
+      },
+    });
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('binds pointer drag listeners to the owner window and cleans them up without lingering global listeners', () => {
+    seedLoadedProject();
+    const { container, root } = renderPanel();
+
+    const addListenerSpy = vi.spyOn(window, 'addEventListener');
+    const removeListenerSpy = vi.spyOn(window, 'removeEventListener');
+
+    const sliderWrapper = container.querySelector<HTMLDivElement>('.mixer-level-slider-wrapper');
+    expect(sliderWrapper).toBeTruthy();
+
+    // Trigger mousedown to start drag
+    act(() => {
+      sliderWrapper!.dispatchEvent(
+        new MouseEvent('mousedown', { clientY: 100, bubbles: true, cancelable: true }),
+      );
+    });
+
+    expect(addListenerSpy).toHaveBeenCalledWith('mousemove', expect.any(Function));
+    expect(addListenerSpy).toHaveBeenCalledWith('mouseup', expect.any(Function));
+
+    // Trigger mouseup to end drag
+    act(() => {
+      window.dispatchEvent(new MouseEvent('mouseup', { clientY: 80, bubbles: true }));
+    });
+
+    expect(removeListenerSpy).toHaveBeenCalledWith('mousemove', expect.any(Function));
+    expect(removeListenerSpy).toHaveBeenCalledWith('mouseup', expect.any(Function));
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+
+    addListenerSpy.mockRestore();
+    removeListenerSpy.mockRestore();
+  });
 });

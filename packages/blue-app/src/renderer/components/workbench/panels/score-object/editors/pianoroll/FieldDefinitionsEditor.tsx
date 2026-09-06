@@ -56,7 +56,8 @@ export default function FieldDefinitionsEditor({
                 <td className="py-0.5 px-1">
                   <input
                     type="text"
-                    className="w-full bg-transparent text-gray-200 focus:outline-none"
+                    aria-label={`Field name for field ${index + 1}`}
+                    className="w-20 bg-transparent text-gray-200 focus:outline-none"
                     value={fd.fieldName}
                     onChange={(e) =>
                       onPatch({ updateFieldDef: { index, fieldName: e.target.value } })
@@ -65,6 +66,7 @@ export default function FieldDefinitionsEditor({
                 </td>
                 <td className="py-0.5 px-1">
                   <AppSelect
+                    aria-label={`Field type for ${fd.fieldName || `field ${index + 1}`}`}
                     className="bg-transparent text-gray-200 focus:outline-none"
                     value={fd.fieldType}
                     onValueChange={(value) =>
@@ -78,6 +80,7 @@ export default function FieldDefinitionsEditor({
                 </td>
                 <td className="py-0.5 px-1">
                   <CommitNumberInput
+                    aria-label={`Min value for ${fd.fieldName || `field ${index + 1}`}`}
                     className="w-12 bg-transparent text-gray-200 focus:outline-none"
                     value={fd.minValue}
                     step="any"
@@ -91,6 +94,7 @@ export default function FieldDefinitionsEditor({
                 </td>
                 <td className="py-0.5 px-1">
                   <CommitNumberInput
+                    aria-label={`Max value for ${fd.fieldName || `field ${index + 1}`}`}
                     className="w-12 bg-transparent text-gray-200 focus:outline-none"
                     value={fd.maxValue}
                     step="any"
@@ -104,6 +108,7 @@ export default function FieldDefinitionsEditor({
                 </td>
                 <td className="py-0.5 px-1">
                   <CommitNumberInput
+                    aria-label={`Default value for ${fd.fieldName || `field ${index + 1}`}`}
                     className="w-12 bg-transparent text-gray-200 focus:outline-none"
                     value={fd.defaultValue}
                     step="any"
@@ -120,7 +125,7 @@ export default function FieldDefinitionsEditor({
                     className="text-red-400 hover:text-red-300 flex items-center justify-center"
                     onClick={() => handleRemove(index)}
                     title="Remove Field"
-                    aria-label="Remove Field"
+                    aria-label={`Remove field ${fd.fieldName || index + 1}`}
                   >
                     <X className="h-3 w-3" />
                   </button>

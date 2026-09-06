@@ -2,9 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import type { MeterMapSnapshot, MeterMapPatch } from '../../../../../shared/project-editor';
 import { DraftNumberInput } from '../../../CommitNumberInput';
 import { parseMeterSignature, isPowerOfTwo } from './meter-map-utils';
+import { useDialogFocus } from '../../../dialogs/use-dialog-focus';
 
 const SECONDARY_BUTTON_CLASS =
-  'rounded border border-app-border/40 bg-app-surface px-3 py-1 text-role-body text-app-text transition-colors hover:bg-app-hover';
+  'rounded border border-app-border/40 bg-app-surface px-3 py-1 text-role-body text-app-text transition-colors hover:bg-app-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus';
 
 interface MeterEntryDialogProps {
   entryIndex: number;
@@ -29,6 +30,7 @@ export default function MeterEntryDialog({
   const [measure, setMeasure] = useState(entry.measure.toString());
   const [signatureText, setSignatureText] = useState(`${entry.numBeats}/${entry.beatLength}`);
   const [error, setError] = useState<string | null>(null);
+  const dialogRef = useDialogFocus(true, onClose);
 
   useEffect(() => {
     setMeasure(entry.measure.toString());
@@ -82,12 +84,9 @@ export default function MeterEntryDialog({
       if (e.key === 'Enter') {
         e.preventDefault();
         handleOk();
-      } else if (e.key === 'Escape') {
-        e.preventDefault();
-        onClose();
       }
     },
-    [handleOk, onClose],
+    [handleOk],
   );
 
   return (
@@ -96,11 +95,18 @@ export default function MeterEntryDialog({
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="meter-entry-dialog-title"
         className="min-w-60 rounded-lg border border-app-border/40 bg-app-menu p-4 shadow-xl"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
-        <h3 className="mb-3 text-role-title-3 font-semibold text-app-text">
+        <h3
+          id="meter-entry-dialog-title"
+          className="mb-3 text-role-title-3 font-semibold text-app-text"
+        >
           {isFirst
             ? 'Edit Initial Time Signature'
             : `Edit Time Signature at Measure ${entry.measure}`}
@@ -110,6 +116,7 @@ export default function MeterEntryDialog({
           <div className="flex items-center gap-2">
             <label className="w-20 text-role-body text-app-text-muted">Measure</label>
             <DraftNumberInput
+              aria-label="Measure"
               value={measure}
               onChange={setMeasure}
               disabled={isFirst}
@@ -130,6 +137,7 @@ export default function MeterEntryDialog({
             <label className="w-20 text-role-body text-app-text-muted">Time Signature</label>
             <input
               type="text"
+              aria-label="Time signature"
               className="flex-1 rounded border border-app-border/30 bg-app-field px-2 py-1 text-role-body text-app-text outline-none focus:border-app-border/60"
               value={signatureText}
               onChange={(e) => setSignatureText(e.target.value)}
@@ -144,7 +152,7 @@ export default function MeterEntryDialog({
             Cancel
           </button>
           <button
-            className="rounded border border-app-border/30 bg-app-surface px-3 py-1 text-role-body text-app-text hover:bg-app-hover"
+            className="rounded border border-app-border/30 bg-app-surface px-3 py-1 text-role-body text-app-text hover:bg-app-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
             onClick={handleOk}
           >
             OK

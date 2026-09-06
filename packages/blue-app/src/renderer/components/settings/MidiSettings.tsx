@@ -7,34 +7,66 @@ import { cn } from '../../lib/cn';
 function phaseBadgeClass(phase: string): string {
   switch (phase) {
     case 'ready':
-      return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200';
+      return 'border border-app-success/40 bg-app-success/20 text-app-text font-medium';
     case 'partial':
-      return 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200';
+      return 'border border-app-warning/40 bg-app-warning/20 text-app-text font-medium';
     case 'denied':
     case 'error':
-      return 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200';
+      return 'border border-app-danger/40 bg-app-danger/20 text-app-text font-medium';
     case 'unsupported':
-      return 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200';
+      return 'border border-app-border/40 bg-app-surface text-app-text-muted';
     default:
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200';
+      return 'border border-app-accent/40 bg-app-accent/20 text-app-text font-medium';
   }
 }
 
 function connectionBadgeClass(connection: string, availability: string): string {
   if (availability === 'unavailable') {
-    return 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200';
+    return 'border border-app-border/40 bg-app-surface text-app-text-muted';
   }
   switch (connection) {
     case 'connected':
-      return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200';
+      return 'border border-app-success/40 bg-app-success/20 text-app-text font-medium';
     case 'connecting':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200';
+      return 'border border-app-accent/40 bg-app-accent/20 text-app-text font-medium';
     case 'disconnecting':
-      return 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200';
+      return 'border border-app-warning/40 bg-app-warning/20 text-app-text font-medium';
     case 'error':
-      return 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200';
+      return 'border border-app-danger/40 bg-app-danger/20 text-app-text font-medium';
     default:
-      return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200';
+      return 'border border-app-border/40 bg-app-surface text-app-text-muted';
+  }
+}
+
+function phaseIcon(phase: string): string {
+  switch (phase) {
+    case 'ready':
+      return '✓';
+    case 'partial':
+      return '▲';
+    case 'denied':
+    case 'error':
+      return '⚠';
+    case 'unsupported':
+      return '✕';
+    default:
+      return '●';
+  }
+}
+
+function connectionIcon(connection: string, availability: string): string {
+  if (availability === 'unavailable') return '○';
+  switch (connection) {
+    case 'connected':
+      return '✓';
+    case 'connecting':
+      return '●';
+    case 'disconnecting':
+      return '▲';
+    case 'error':
+      return '⚠';
+    default:
+      return '○';
   }
 }
 
@@ -160,14 +192,15 @@ export default function MidiSettings(): React.ReactElement {
 
   return (
     <SettingsSection title="MIDI">
-      <div className="mb-3 flex items-center gap-3">
+      <div className="mb-3 flex items-center gap-3" role="status" aria-live="polite">
         <span
           className={cn(
-            'inline-flex items-center rounded-full px-2 py-0.5 text-role-callout',
+            'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-role-callout',
             phaseBadgeClass(phase),
           )}
         >
-          {phase}
+          <span aria-hidden="true">{phaseIcon(phase)}</span>
+          <span>{phase}</span>
         </span>
         {(aggregateMessage || phaseHelp) && (
           <span className="text-role-body text-app-text-muted">
@@ -224,11 +257,16 @@ export default function MidiSettings(): React.ReactElement {
                   <td className="px-3 py-2">
                     <span
                       className={cn(
-                        'inline-flex items-center rounded-full px-2 py-0.5 text-role-callout',
+                        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-role-callout',
                         connectionBadgeClass(row.connection, row.availability),
                       )}
                     >
-                      {row.availability === 'unavailable' ? 'unavailable' : row.connection}
+                      <span aria-hidden="true">
+                        {connectionIcon(row.connection, row.availability)}
+                      </span>
+                      <span>
+                        {row.availability === 'unavailable' ? 'unavailable' : row.connection}
+                      </span>
                     </span>
                   </td>
                   <td className="px-3 py-2 text-app-text-muted">{row.lastError || '—'}</td>

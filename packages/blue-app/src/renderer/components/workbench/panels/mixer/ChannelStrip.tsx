@@ -147,6 +147,8 @@ function ChainEntry({ entry }: { entry: MixerChainEntrySnapshot }): React.ReactE
 }
 
 function MixerLevelSlider({
+  channelName,
+  levelDb,
   value,
   min,
   max,
@@ -154,6 +156,8 @@ function MixerLevelSlider({
   onInput,
   onDoubleClick,
 }: {
+  channelName?: string;
+  levelDb?: number;
   value: number;
   min: number;
   max: number;
@@ -223,29 +227,66 @@ function MixerLevelSlider({
         onInput(fakeInputEvent);
       };
 
+      const ownerWindow = sliderWrapperRef.current?.ownerDocument?.defaultView || window;
       const onMouseUp = () => {
-        window.removeEventListener('mousemove', onMouseMove);
-        window.removeEventListener('mouseup', onMouseUp);
+        ownerWindow.removeEventListener('mousemove', onMouseMove);
+        ownerWindow.removeEventListener('mouseup', onMouseUp);
       };
 
-      window.addEventListener('mousemove', onMouseMove);
-      window.addEventListener('mouseup', onMouseUp);
+      ownerWindow.addEventListener('mousemove', onMouseMove);
+      ownerWindow.addEventListener('mouseup', onMouseUp);
     },
     [value, min, max, range, sliderHeight, onChange, onInput],
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      let delta = 0;
+      if (e.key === 'ArrowUp' || e.key === 'ArrowRight') {
+        delta = e.shiftKey ? 10 : 1;
+      } else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') {
+        delta = e.shiftKey ? -10 : -1;
+      } else if (e.key === 'PageUp') {
+        delta = 10;
+      } else if (e.key === 'PageDown') {
+        delta = -10;
+      } else if (e.key === 'Home') {
+        delta = min - value;
+      } else if (e.key === 'End') {
+        delta = max - value;
+      }
+      if (delta !== 0) {
+        e.preventDefault();
+        const nextVal = Math.max(min, Math.min(max, value + delta));
+        if (hiddenInputRef.current) {
+          hiddenInputRef.current.value = String(nextVal);
+        }
+        const fakeEvent = {
+          target: { value: String(nextVal) },
+          currentTarget: { value: String(nextVal) },
+        } as unknown as React.ChangeEvent<HTMLInputElement>;
+        onChange(fakeEvent);
+        const fakeInputEvent = {
+          target: hiddenInputRef.current,
+        } as unknown as React.FormEvent<HTMLInputElement>;
+        onInput(fakeInputEvent);
+      }
+    },
+    [max, min, onChange, onInput, value],
   );
 
   return (
     <div
       ref={sliderWrapperRef}
-      className="mixer-level-slider-wrapper"
+      className="mixer-level-slider-wrapper rounded-xs has-[:focus-visible]:outline-hidden has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-app-focus"
       style={{ width: MIXER_SLIDER_WIDTH }}
+      onMouseDown={handleMouseDown}
     >
       <svg
         ref={svgRef}
         width={MIXER_SLIDER_WIDTH}
         height={sliderHeight}
         className="block cursor-pointer"
-        onMouseDown={handleMouseDown}
         onDoubleClick={onDoubleClick}
       >
         <rect
@@ -282,14 +323,22 @@ function MixerLevelSlider({
       <input
         ref={hiddenInputRef}
         type="range"
+        role="slider"
         min={min}
         max={max}
+        step={1}
         value={value}
         onChange={onChange}
         onInput={onInput}
-        className="sr-only"
-        aria-hidden
-        tabIndex={-1}
+        onKeyDown={handleKeyDown}
+        aria-label={channelName ? `Level for ${channelName}` : 'Channel level'}
+        aria-valuemin={min}
+        aria-valuemax={max}
+        aria-valuenow={value}
+        aria-valuetext={
+          levelDb !== undefined ? getLevelDisplay(levelDb) : getLevelDisplay(sliderToLevel(value))
+        }
+        className="sr-only focus:outline-none"
       />
     </div>
   );
@@ -518,7 +567,9 @@ function ChainList({
         onProjectClipboardCapture={captureSelectedEffect}
       >
         <div
-          className="mixer-chain-list"
+          className={cn(
+            'mixer-chain-list focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus focus-visible:ring-inset',
+          )}
           tabIndex={0}
           onKeyDown={handleKeyDown}
           role="listbox"
@@ -683,6 +734,11 @@ function SendEditorDialog({
                   patch: { level: Number(e.target.value) / 100 },
                 })
               }
+              aria-label={send.sendChannel ? `Send amount for ${send.sendChannel}` : 'Send amount'}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={levelPercent}
+              aria-valuetext={send.level.toFixed(2)}
               className="mixer-send-editor__slider"
             />
             <span className="mixer-send-editor__slider-bound">1.0</span>
@@ -1011,6 +1067,8 @@ export default function ChannelStrip({
       <div className="mixer-level-section">
         <div className="mixer-level-label">Level</div>
         <MixerLevelSlider
+          channelName={displayName}
+          levelDb={channel.level}
           value={sliderValue}
           min={-960}
           max={240}

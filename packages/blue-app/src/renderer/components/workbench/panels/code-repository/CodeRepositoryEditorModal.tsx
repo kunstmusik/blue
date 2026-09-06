@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { toast } from 'sonner';
 import CodeRepositoryDialog from './CodeRepositoryDialog';
 import { useCodeRepositoryStore } from '../../../../stores/code-repository-store';
+import { useDialogFocus } from '../../../dialogs/use-dialog-focus';
 
 /**
  * Self-opening modal wrapper for the Code Repository Editor. Listens for the
@@ -41,6 +42,13 @@ export default function CodeRepositoryEditorModal(): React.ReactElement | null {
     }
   }, []);
 
+  const handleClose = useCallback(() => {
+    setIsOpen(false);
+    closeEditor();
+  }, [closeEditor]);
+
+  const unavailableDialogRef = useDialogFocus(isOpen && !snapshot, handleClose);
+
   useEffect(() => {
     const handleOpen = () => {
       // Open immediately so the user sees feedback, then refresh the snapshot.
@@ -53,11 +61,6 @@ export default function CodeRepositoryEditorModal(): React.ReactElement | null {
     window.addEventListener('blue-open-code-repository-editor', handleOpen);
     return () => window.removeEventListener('blue-open-code-repository-editor', handleOpen);
   }, [loadNewSnippetDefault, openEditor]);
-
-  const handleClose = useCallback(() => {
-    setIsOpen(false);
-    closeEditor();
-  }, [closeEditor]);
 
   const handleSave = useCallback(
     async (root: Parameters<React.ComponentProps<typeof CodeRepositoryDialog>['onSave']>[0]) => {
@@ -112,14 +115,12 @@ export default function CodeRepositoryEditorModal(): React.ReactElement | null {
         onClick={handleClose}
       >
         <div
+          ref={unavailableDialogRef}
           className="flex w-[440px] max-w-[90vw] flex-col rounded-lg border border-app-border/40 bg-app-menu p-6 shadow-2xl"
           onClick={(e) => e.stopPropagation()}
           role="dialog"
           aria-modal="true"
           aria-labelledby="code-repository-unavailable-title"
-          onKeyDown={(event) => {
-            if (event.key === 'Escape') handleClose();
-          }}
         >
           <div className="mb-3 flex items-center justify-between">
             <h2
@@ -130,7 +131,7 @@ export default function CodeRepositoryEditorModal(): React.ReactElement | null {
             </h2>
             <button
               type="button"
-              className="p-1 text-role-body text-app-text-muted hover:text-app-text-bright"
+              className="rounded p-1 text-role-body text-app-text-muted hover:text-app-text-bright focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
               onClick={handleClose}
               aria-label="Close"
               autoFocus
@@ -147,7 +148,7 @@ export default function CodeRepositoryEditorModal(): React.ReactElement | null {
             {!loading && (
               <button
                 type="button"
-                className="rounded border border-app-border/40 bg-app-surface px-3 py-1.5 text-role-body text-app-text hover:bg-app-hover"
+                className="rounded border border-app-border/40 bg-app-surface px-3 py-1.5 text-role-body text-app-text hover:bg-app-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
                 onClick={() => void handleImport()}
               >
                 Recover from XML…
@@ -156,7 +157,7 @@ export default function CodeRepositoryEditorModal(): React.ReactElement | null {
             {!loading && (
               <button
                 type="button"
-                className="rounded border border-app-border/40 bg-app-surface px-3 py-1.5 text-role-body text-app-text hover:bg-app-hover"
+                className="rounded border border-app-border/40 bg-app-surface px-3 py-1.5 text-role-body text-app-text hover:bg-app-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
                 onClick={() => void handleRetry()}
               >
                 Retry
@@ -164,7 +165,7 @@ export default function CodeRepositoryEditorModal(): React.ReactElement | null {
             )}
             <button
               type="button"
-              className="rounded border border-app-border/40 bg-app-surface px-3 py-1.5 text-role-body text-app-text hover:bg-app-hover"
+              className="rounded border border-app-border/40 bg-app-surface px-3 py-1.5 text-role-body text-app-text hover:bg-app-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
               onClick={handleClose}
             >
               Close

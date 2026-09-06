@@ -2,7 +2,13 @@ import React, { useCallback, useRef } from 'react';
 import WidgetWrapper from './WidgetWrapper';
 import { formatValue } from './ValuePanel';
 import BsbTextLabel from './BsbTextLabel';
-import { getFontString, getWidgetDisplaySize, measureTextContent } from './utils';
+import {
+  computeKeyboardSteppedValue,
+  getFontString,
+  getWidgetDisplaySize,
+  measureTextContent,
+  stripBsbSwingHtmlText,
+} from './utils';
 import type { BSBWidgetPatchComponentProps } from './widget-component-props';
 
 type BSBKnobWidgetProps = BSBWidgetPatchComponentProps;
@@ -77,6 +83,8 @@ function BSBKnobWidget({
       const svg = svgRef.current;
       if (!svg) return;
 
+      const ownerWindow = svg.ownerDocument?.defaultView || window;
+
       const computeValue = (clientX: number, clientY: number): number => {
         const rect = svg.getBoundingClientRect();
         const cx = rect.left + rect.width / 2;
@@ -112,15 +120,47 @@ function BSBKnobWidget({
       };
 
       const onMouseUp = () => {
-        window.removeEventListener('mousemove', onMouseMove);
-        window.removeEventListener('mouseup', onMouseUp);
+        ownerWindow.removeEventListener('mousemove', onMouseMove);
+        ownerWindow.removeEventListener('mouseup', onMouseUp);
       };
 
-      window.addEventListener('mousemove', onMouseMove);
-      window.addEventListener('mouseup', onMouseUp);
+      ownerWindow.addEventListener('mousemove', onMouseMove);
+      ownerWindow.addEventListener('mouseup', onMouseUp);
     },
     [editEnabled],
   );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<SVGSVGElement>) => {
+      if (editEnabled) return;
+      const resolution =
+        typeof node.properties.resolution === 'number' && node.properties.resolution > 0
+          ? node.properties.resolution
+          : null;
+      const nextVal = computeKeyboardSteppedValue({
+        current: value,
+        min: minimum,
+        max: maximum,
+        resolution,
+        key: e.key,
+        shiftKey: e.shiftKey,
+        axis: '1d',
+      });
+      if (nextVal !== null) {
+        e.preventDefault();
+        e.stopPropagation();
+        patchRef.current({
+          type: 'updateWidgetProperties',
+          widgetId: node.id,
+          properties: { value: nextVal },
+        });
+      }
+    },
+    [editEnabled, node.properties.resolution, value, minimum, maximum, node.id],
+  );
+
+  const accessibleLabel =
+    (labelText ? stripBsbSwingHtmlText(labelText) : '') || node.objectName || 'Knob';
 
   return (
     <WidgetWrapper
@@ -167,6 +207,14 @@ function BSBKnobWidget({
           value={knobVal}
           interactive={!editEnabled}
           onMouseDown={handleMouseDown}
+          onKeyDown={handleKeyDown}
+          tabIndex={editEnabled ? -1 : 0}
+          role="slider"
+          aria-label={accessibleLabel}
+          aria-valuemin={minimum}
+          aria-valuemax={maximum}
+          aria-valuenow={value}
+          aria-valuetext={showValue ? displayVal : String(value)}
         />
         {showValue && (
           <div
@@ -199,66 +247,100 @@ const KnobSVG = React.forwardRef<
     value: number;
     interactive: boolean;
     onMouseDown: (e: React.MouseEvent<SVGSVGElement>) => void;
+    onKeyDown?: (e: React.KeyboardEvent<SVGSVGElement>) => void;
+    tabIndex?: number;
+    role?: string;
+    'aria-label'?: string;
+    'aria-valuemin'?: number;
+    'aria-valuemax'?: number;
+    'aria-valuenow'?: number;
+    'aria-valuetext'?: string;
   }
->(({ size, value, interactive, onMouseDown }, ref) => {
-  const drawSize = size - 2;
-  const mid = drawSize / 2;
-  const cx = mid + 1;
-  const cy = mid + 1;
+>(
+  (
+    {
+      size,
+      value,
+      interactive,
+      onMouseDown,
+      onKeyDown,
+      tabIndex,
+      role,
+      'aria-label': ariaLabel,
+      'aria-valuemin': ariaValueMin,
+      'aria-valuemax': ariaValueMax,
+      'aria-valuenow': ariaValueNow,
+      'aria-valuetext': ariaValueText,
+    },
+    ref,
+  ) => {
+    const drawSize = size - 2;
+    const mid = drawSize / 2;
+    const cx = mid + 1;
+    const cy = mid + 1;
 
-  const trackPath = describePieArc(cx, cy, mid, ARC_START, -ARC_LENGTH);
-  const valueSweep = ARC_LENGTH * value;
-  const valPath = value > 0.001 ? describePieArc(cx, cy, mid, ARC_START, -valueSweep) : '';
+    const trackPath = describePieArc(cx, cy, mid, ARC_START, -ARC_LENGTH);
+    const valueSweep = ARC_LENGTH * value;
+    const valPath = value > 0.001 ? describePieArc(cx, cy, mid, ARC_START, -valueSweep) : '';
 
-  const knobCenterSize = drawSize * 0.65;
-  const knobR = knobCenterSize / 2;
+    const knobCenterSize = drawSize * 0.65;
+    const knobR = knobCenterSize / 2;
 
-  const rotation = Math.PI * 2.0 * (-0.625 + value * 0.75);
-  const notchAdj = drawSize / 18;
-  const notchW = 2 * notchAdj;
-  const notchLen = knobCenterSize / 2 + notchW;
-  const lineStart = mid / 2;
-  const lineEnd = mid - 2;
-  const lineW = Math.max(1.5, drawSize / 30);
+    const rotation = Math.PI * 2.0 * (-0.625 + value * 0.75);
+    const notchAdj = drawSize / 18;
+    const notchW = 2 * notchAdj;
+    const notchLen = knobCenterSize / 2 + notchW;
+    const lineStart = mid / 2;
+    const lineEnd = mid - 2;
+    const lineW = Math.max(1.5, drawSize / 30);
 
-  return (
-    <svg
-      ref={ref}
-      width={size}
-      height={size}
-      className="block"
-      style={{ cursor: interactive ? 'pointer' : 'default' }}
-      onMouseDown={interactive ? onMouseDown : undefined}
-    >
-      <path d={trackPath} fill="rgba(0,0,0,0.25)" />
-      {valPath && <path d={valPath} fill={TRACK_COLOR} />}
-      <path d={trackPath} fill="none" stroke="black" strokeWidth={0.5} />
-      <circle cx={cx} cy={cy} r={knobR} fill="black" />
-      <g transform={`translate(${cx},${cy}) rotate(${(rotation * 180) / Math.PI})`}>
-        <line
-          x1={lineStart}
-          y1={0}
-          x2={lineEnd}
-          y2={0}
-          stroke={TRACK_COLOR_BRIGHT}
-          strokeWidth={lineW}
-          strokeLinecap="round"
-        />
-        <rect
-          x={-notchAdj}
-          y={-notchAdj}
-          width={notchLen}
-          height={notchW}
-          rx={notchW}
-          ry={notchW}
-          fill={TRACK_COLOR}
-          stroke="rgb(16,16,16)"
-          strokeWidth={Math.max(0.5, drawSize / 40)}
-        />
-      </g>
-    </svg>
-  );
-});
+    return (
+      <svg
+        ref={ref}
+        width={size}
+        height={size}
+        className="block focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus rounded-full"
+        style={{ cursor: interactive ? 'pointer' : 'default' }}
+        onMouseDown={interactive ? onMouseDown : undefined}
+        onKeyDown={interactive ? onKeyDown : undefined}
+        tabIndex={tabIndex}
+        role={role}
+        aria-label={ariaLabel}
+        aria-valuemin={ariaValueMin}
+        aria-valuemax={ariaValueMax}
+        aria-valuenow={ariaValueNow}
+        aria-valuetext={ariaValueText}
+      >
+        <path d={trackPath} fill="rgba(0,0,0,0.25)" />
+        {valPath && <path d={valPath} fill={TRACK_COLOR} />}
+        <path d={trackPath} fill="none" stroke="black" strokeWidth={0.5} />
+        <circle cx={cx} cy={cy} r={knobR} fill="black" />
+        <g transform={`translate(${cx},${cy}) rotate(${(rotation * 180) / Math.PI})`}>
+          <line
+            x1={lineStart}
+            y1={0}
+            x2={lineEnd}
+            y2={0}
+            stroke={TRACK_COLOR_BRIGHT}
+            strokeWidth={lineW}
+            strokeLinecap="round"
+          />
+          <rect
+            x={-notchAdj}
+            y={-notchAdj}
+            width={notchLen}
+            height={notchW}
+            rx={notchW}
+            ry={notchW}
+            fill={TRACK_COLOR}
+            stroke="rgb(16,16,16)"
+            strokeWidth={Math.max(0.5, drawSize / 40)}
+          />
+        </g>
+      </svg>
+    );
+  },
+);
 
 KnobSVG.displayName = 'KnobSVG';
 

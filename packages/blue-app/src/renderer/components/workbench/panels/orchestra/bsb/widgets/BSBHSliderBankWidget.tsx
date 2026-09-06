@@ -6,7 +6,7 @@ import {
 } from '../../../../../../../shared/bsb-widget-layout';
 import WidgetWrapper from './WidgetWrapper';
 import { ValuePanel, formatValue } from './ValuePanel';
-import { getWidgetDisplaySize } from './utils';
+import { computeKeyboardSteppedValue, getWidgetDisplaySize } from './utils';
 import type { BSBWidgetComponentProps } from './widget-component-props';
 
 type BSBHSliderBankWidgetProps = BSBWidgetComponentProps;
@@ -78,6 +78,8 @@ function BSBHSliderBankWidget({
   useEffect(() => {
     if (editEnabled) return;
 
+    const ownerWindow = sliderRefs.current[0]?.ownerDocument?.defaultView || window;
+
     const handleMouseMove = (event: MouseEvent) => {
       if (!dragRef.current) return;
       event.preventDefault();
@@ -88,13 +90,43 @@ function BSBHSliderBankWidget({
       dragRef.current = null;
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    ownerWindow.addEventListener('mousemove', handleMouseMove);
+    ownerWindow.addEventListener('mouseup', handleMouseUp);
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      ownerWindow.removeEventListener('mousemove', handleMouseMove);
+      ownerWindow.removeEventListener('mouseup', handleMouseUp);
     };
   }, [editEnabled, updateSliderValue]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<SVGSVGElement>, sliderIndex: number, currentVal: number) => {
+      if (editEnabled) return;
+      const resolution =
+        typeof node.properties.resolution === 'number' && node.properties.resolution > 0
+          ? node.properties.resolution
+          : null;
+      const nextVal = computeKeyboardSteppedValue({
+        current: currentVal,
+        min: minimum,
+        max: maximum,
+        resolution,
+        key: e.key,
+        shiftKey: e.shiftKey,
+        axis: 'horizontal',
+      });
+      if (nextVal !== null) {
+        e.preventDefault();
+        e.stopPropagation();
+        onBsbInterfacePatch?.({
+          type: 'updateSliderBankValue',
+          widgetId: node.id,
+          sliderIndex,
+          value: nextVal,
+        });
+      }
+    },
+    [editEnabled, maximum, minimum, node.id, node.properties.resolution, onBsbInterfacePatch],
+  );
 
   return (
     <WidgetWrapper
@@ -135,7 +167,7 @@ function BSBHSliderBankWidget({
                 }}
                 width={sliderWidth}
                 height={BSB_VALUE_PANEL_HEIGHT}
-                className="block shrink-0"
+                className="block shrink-0 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus rounded-sm"
                 onMouseDown={(event) => {
                   if (editEnabled) return;
                   event.preventDefault();
@@ -143,6 +175,17 @@ function BSBHSliderBankWidget({
                   dragRef.current = { sliderIndex: i };
                   updateSliderValue(i, event.clientX);
                 }}
+                onKeyDown={(e) => handleKeyDown(e, i, val)}
+                tabIndex={editEnabled ? -1 : 0}
+                role="slider"
+                aria-orientation="horizontal"
+                aria-label={
+                  node.objectName ? `${node.objectName} Slider ${i + 1}` : `Slider ${i + 1}`
+                }
+                aria-valuemin={minimum}
+                aria-valuemax={maximum}
+                aria-valuenow={val}
+                aria-valuetext={displayValue}
                 style={{ cursor: editEnabled ? 'default' : 'pointer', width: sliderWidth }}
               >
                 <rect

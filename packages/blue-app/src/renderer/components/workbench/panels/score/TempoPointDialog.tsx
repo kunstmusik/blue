@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { TempoMapSnapshot, TempoMapPatch } from '../../../../../shared/project-editor';
 import { DraftNumberInput } from '../../../CommitNumberInput';
+import { useDialogFocus } from '../../../dialogs/use-dialog-focus';
 
 const BEAT_EPSILON = 0.001;
 const SECONDARY_BUTTON_CLASS =
-  'rounded border border-app-border/40 bg-app-surface px-3 py-1 text-role-body text-app-text transition-colors hover:bg-app-hover';
+  'rounded border border-app-border/40 bg-app-surface px-3 py-1 text-role-body text-app-text transition-colors hover:bg-app-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus';
 
 interface TempoPointDialogProps {
   pointIndex: number;
@@ -29,6 +30,7 @@ export default function TempoPointDialog({
 
   const [beat, setBeat] = useState(point.beat.toString());
   const [tempo, setTempo] = useState(Math.round(point.tempo).toString());
+  const dialogRef = useDialogFocus(true, onClose);
 
   useEffect(() => {
     setBeat(point.beat.toString());
@@ -55,12 +57,9 @@ export default function TempoPointDialog({
       if (e.key === 'Enter') {
         e.preventDefault();
         handleOk();
-      } else if (e.key === 'Escape') {
-        e.preventDefault();
-        onClose();
       }
     },
-    [handleOk, onClose],
+    [handleOk],
   );
 
   return (
@@ -69,11 +68,18 @@ export default function TempoPointDialog({
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="tempo-point-dialog-title"
         className="min-w-60 rounded-lg border border-app-border/40 bg-app-menu p-4 shadow-xl"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
-        <h3 className="mb-3 text-role-title-3 font-semibold text-app-text">
+        <h3
+          id="tempo-point-dialog-title"
+          className="mb-3 text-role-title-3 font-semibold text-app-text"
+        >
           {isTimeZero ? 'Edit Initial Tempo' : `Edit Tempo Point ${pointIndex + 1}`}
         </h3>
 
@@ -81,6 +87,7 @@ export default function TempoPointDialog({
           <div className="flex items-center gap-2">
             <label className="w-14 text-role-body text-app-text-muted">Beat</label>
             <DraftNumberInput
+              aria-label="Beat"
               value={beat}
               onChange={setBeat}
               disabled={isTimeZero}
@@ -100,6 +107,7 @@ export default function TempoPointDialog({
           <div className="flex items-center gap-2">
             <label className="w-14 text-role-body text-app-text-muted">Tempo</label>
             <DraftNumberInput
+              aria-label="Tempo BPM"
               value={tempo}
               onChange={setTempo}
               min={1}
@@ -123,7 +131,7 @@ export default function TempoPointDialog({
             Cancel
           </button>
           <button
-            className="rounded border border-app-border/30 bg-app-surface px-3 py-1 text-role-body text-app-text hover:bg-app-hover"
+            className="rounded border border-app-border/30 bg-app-surface px-3 py-1 text-role-body text-app-text hover:bg-app-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
             onClick={handleOk}
           >
             OK

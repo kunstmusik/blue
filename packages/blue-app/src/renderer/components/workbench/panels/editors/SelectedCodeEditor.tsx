@@ -124,7 +124,7 @@ const blueSyntaxHighlight = syntaxHighlighting(
     { tag: t.bracket, color: '#89ddff' },
     { tag: t.regexp, color: '#89ddff' },
     { tag: t.escape, color: '#89ddff' },
-    { tag: t.comment, color: '#637777', fontStyle: 'italic' },
+    { tag: t.comment, color: '#8ca0a0', fontStyle: 'italic' },
     { tag: t.meta, color: '#ffcb6b' },
     { tag: t.tagName, color: '#f07178' },
     { tag: t.attributeName, color: '#c792ea' },

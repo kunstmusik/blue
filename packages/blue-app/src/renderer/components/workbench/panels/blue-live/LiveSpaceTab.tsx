@@ -330,6 +330,7 @@ export default function LiveSpaceTab(): React.ReactElement {
         <label style={toolbarLabelStyle}>
           Tempo
           <CommitNumberInput
+            aria-label="Tempo"
             min={1}
             max={300}
             step={1}
@@ -350,6 +351,7 @@ export default function LiveSpaceTab(): React.ReactElement {
         <label style={toolbarLabelStyle}>
           Repeat
           <CommitNumberInput
+            aria-label="Repeat"
             min={1}
             max={256}
             step={1}
@@ -427,25 +429,39 @@ export default function LiveSpaceTab(): React.ReactElement {
         </button>
         {triggerFeedback.status !== 'idle' && (
           <span
+            role="status"
+            aria-live="polite"
+            className="inline-flex items-center gap-1.5"
             style={{
               fontSize: 'var(--text-role-callout)',
               lineHeight: 'var(--text-role-callout--line-height)',
               color:
                 triggerFeedback.status === 'error'
-                  ? 'var(--color-app-error)'
+                  ? 'var(--color-app-danger)'
                   : triggerFeedback.status === 'submitted'
-                    ? 'var(--color-app-success, var(--color-app-text-muted))'
+                    ? 'var(--color-app-success)'
                     : 'var(--color-app-text-muted)',
             }}
           >
-            {triggerFeedback.message ||
-              (triggerFeedback.status === 'busy'
-                ? 'Triggering…'
+            <span aria-hidden="true">
+              {triggerFeedback.status === 'error'
+                ? '⚠'
                 : triggerFeedback.status === 'submitted'
-                  ? 'Submitted'
-                  : triggerFeedback.status === 'empty'
-                    ? 'No targets'
-                    : '')}
+                  ? '✓'
+                  : triggerFeedback.status === 'busy'
+                    ? '●'
+                    : '○'}
+            </span>
+            <span>
+              {triggerFeedback.message ||
+                (triggerFeedback.status === 'busy'
+                  ? 'Triggering…'
+                  : triggerFeedback.status === 'submitted'
+                    ? 'Submitted'
+                    : triggerFeedback.status === 'empty'
+                      ? 'No targets'
+                      : '')}
+            </span>
           </span>
         )}
       </div>
@@ -476,7 +492,7 @@ export default function LiveSpaceTab(): React.ReactElement {
           >
             Saved Sets
           </div>
-          <div style={{ flex: 1, overflow: 'auto', background: '#000000' }}>
+          <div style={{ flex: 1, overflow: 'auto', background: 'var(--color-app-canvas)' }}>
             {sets.length === 0 && (
               <div
                 style={{
@@ -613,7 +629,14 @@ export default function LiveSpaceTab(): React.ReactElement {
           </div>
 
           {/* Grid rows */}
-          <div style={{ flex: 1, overflow: 'auto', padding: '0 4px', background: '#000000' }}>
+          <div
+            style={{
+              flex: 1,
+              overflow: 'auto',
+              padding: '0 4px',
+              background: 'var(--color-app-canvas)',
+            }}
+          >
             <div
               style={{
                 display: 'grid',
@@ -670,9 +693,9 @@ export default function LiveSpaceTab(): React.ReactElement {
                                 ? 'var(--color-app-warning)'
                                 : isHoveredSet
                                   ? 'var(--color-app-outline-strong)'
-                                  : '#000000',
+                                  : 'var(--color-app-canvas)',
                               color: cell?.enabled
-                                ? 'var(--color-app-canvas)'
+                                ? 'var(--color-app-warning-foreground)'
                                 : 'var(--color-app-text-subtle)',
                               fontWeight: cell?.enabled ? 500 : 400,
                               overflow: 'hidden',

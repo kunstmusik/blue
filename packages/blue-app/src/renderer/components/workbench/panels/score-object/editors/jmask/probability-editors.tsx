@@ -53,6 +53,7 @@ function ConstantOrTable({
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-2">
         <AppSelect
+          aria-label={`${label} mode`}
           className="rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           value={tableEnabled ? 1 : 0}
           onValueChange={(value) => onTableToggle(value === '1')}
@@ -62,7 +63,12 @@ function ConstantOrTable({
           ]}
         />
         {!tableEnabled && (
-          <CommitNumberInput value={constantValue} step={0.1} onChange={onConstantChange} />
+          <CommitNumberInput
+            aria-label={`${label} constant value`}
+            value={constantValue}
+            step={0.1}
+            onChange={onConstantChange}
+          />
         )}
       </div>
       {tableEnabled && (

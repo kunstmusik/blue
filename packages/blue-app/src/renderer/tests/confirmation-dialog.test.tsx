@@ -3,7 +3,9 @@
 import React, { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { JSDOM } from 'jsdom';
 import { ConfirmationDialog } from '../components/dialogs/ConfirmationDialog';
+import { HostDocumentContext } from '../hooks/use-host-document';
 import type { InAppConfirmationAction } from '../../shared/confirmation-dialog';
 
 (
@@ -277,6 +279,141 @@ describe('ConfirmationDialog component', () => {
       disabledBtn.click();
     });
     expect(onDecision).not.toHaveBeenCalled();
+  });
+
+  describe('foreign-document focus and native-host vs contextual confirmation split', () => {
+    const popout = new JSDOM(
+      '<!doctype html><html><body><div id="popout-root"></div></body></html>',
+    );
+    const popoutDoc = popout.window.document;
+    const PopoutKeyboardEvent = popout.window.KeyboardEvent;
+
+    it('defaults to role="dialog" for non-destructive actions, but accepts role="alertdialog"', () => {
+      act(() => {
+        root.render(
+          <ConfirmationDialog
+            open={true}
+            title="Non-destructive"
+            actions={[
+              { id: 'cancel', label: 'Cancel', intent: 'cancel' },
+              { id: 'ok', label: 'OK', intent: 'primary' },
+            ]}
+            cancelActionId="cancel"
+            onDecision={vi.fn()}
+          />,
+        );
+      });
+
+      const dialog = container.querySelector('[role="dialog"]');
+      expect(dialog).not.toBeNull();
+      expect(dialog?.getAttribute('aria-modal')).toBe('true');
+    });
+
+    it('associates aria-labelledby and aria-describedby with heading and paragraph IDs', () => {
+      act(() => {
+        root.render(
+          <ConfirmationDialog
+            open={true}
+            title="Linked Dialog"
+            description="Linked description text"
+            actions={defaultActions}
+            cancelActionId="cancel"
+            onDecision={vi.fn()}
+          />,
+        );
+      });
+
+      const dialog = container.querySelector('[role="alertdialog"]')!;
+      const labelledBy = dialog.getAttribute('aria-labelledby');
+      const describedBy = dialog.getAttribute('aria-describedby');
+
+      expect(labelledBy).toBeTruthy();
+      expect(describedBy).toBeTruthy();
+
+      const heading = container.querySelector(`[id="${labelledBy}"]`);
+      const desc = container.querySelector(`[id="${describedBy}"]`);
+
+      expect(heading?.textContent).toBe('Linked Dialog');
+      expect(desc?.textContent).toBe('Linked description text');
+    });
+
+    it('operates in a foreign popout document: traps Escape to host window and restores foreign opener', async () => {
+      popoutDoc.body.innerHTML = '<div id="popout-root"></div>';
+      const popoutOpener = popoutDoc.createElement('button');
+      popoutOpener.id = 'popout-opener';
+      popoutDoc.body.appendChild(popoutOpener);
+      popoutOpener.focus();
+      expect(popoutDoc.activeElement).toBe(popoutOpener);
+
+      const onDecision = vi.fn();
+
+      function HostUnderForeignDoc({ isOpen }: { isOpen: boolean }) {
+        return (
+          <HostDocumentContext.Provider value={popoutDoc}>
+            <ConfirmationDialog
+              open={isOpen}
+              title="Popout Confirmation"
+              actions={defaultActions}
+              cancelActionId="cancel"
+              onDecision={onDecision}
+            />
+          </HostDocumentContext.Provider>
+        );
+      }
+
+      act(() => {
+        root.render(<HostUnderForeignDoc isOpen={true} />);
+      });
+
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+
+      // Main window Escape must NOT trigger onDecision
+      act(() => {
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      });
+      expect(onDecision).not.toHaveBeenCalled();
+
+      // Foreign window Escape triggers fail-closed cancel
+      act(() => {
+        popout.window.dispatchEvent(
+          new PopoutKeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+        );
+      });
+      expect(onDecision).toHaveBeenCalledWith('cancel');
+
+      // Closing restores focus to popout opener
+      act(() => {
+        root.render(<HostUnderForeignDoc isOpen={false} />);
+      });
+      expect(popoutDoc.activeElement).toBe(popoutOpener);
+      popoutOpener.remove();
+    });
+
+    it('enforces contextual confirmation split: destructive defaults focus to cancel to prevent accidental execution', () => {
+      act(() => {
+        root.render(
+          <ConfirmationDialog
+            open={true}
+            title="Delete Layer"
+            description="Permanently delete this score layer?"
+            actions={[
+              { id: 'cancel', label: 'Cancel', intent: 'cancel' },
+              { id: 'delete', label: 'Delete', intent: 'destructive' },
+            ]}
+            cancelActionId="cancel"
+            onDecision={vi.fn()}
+          />,
+        );
+      });
+
+      const cancelBtn = container.querySelector<HTMLButtonElement>('[data-action-id="cancel"]')!;
+      const deleteBtn = container.querySelector<HTMLButtonElement>('[data-action-id="delete"]')!;
+
+      expect(deleteBtn.classList.contains('bg-app-danger')).toBe(true);
+      expect(document.activeElement).toBe(cancelBtn);
+    });
   });
 
   function dialogElement(): HTMLElement | null {

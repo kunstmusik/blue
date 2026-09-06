@@ -41,7 +41,12 @@ function ConstantOrTable({
           ]}
         />
         {!tableEnabled && (
-          <CommitNumberInput value={constantValue} step={0.1} onChange={onConstantChange} />
+          <CommitNumberInput
+            aria-label={`${label} constant value`}
+            value={constantValue}
+            step={0.1}
+            onChange={onConstantChange}
+          />
         )}
       </div>
       {tableEnabled && <TableEditor table={table} duration={duration} onChange={onTableChange} />}
@@ -67,7 +72,13 @@ export function ConstantEditor({
   return (
     <div className="flex items-center gap-2 px-2 py-1.5">
       <label className="shrink-0 text-role-headline text-gray-300 font-bold">Constant</label>
-      <CommitNumberInput value={value} step={0.1} className="w-24" onChange={handleChange} />
+      <CommitNumberInput
+        aria-label="Constant value"
+        value={value}
+        step={0.1}
+        className="w-24"
+        onChange={handleChange}
+      />
     </div>
   );
 }
@@ -190,6 +201,7 @@ export function ItemListEditor({
               >
                 <td className="px-1 py-0.5">
                   <CommitNumberInput
+                    aria-label={`List item ${i + 1}`}
                     value={item}
                     step={0.1}
                     className="w-full bg-transparent text-role-body text-gray-100 focus:outline-none"
