@@ -44,6 +44,24 @@ try {
   await mainPage.waitForTimeout(1_000);
   await mainPage.screenshot({ path: path.join(outputRoot, 'score-mixer-project.png') });
 
+  await electronApp.evaluate(({ BrowserWindow }) => {
+    BrowserWindow.getAllWindows()[0]?.webContents.send('native-menu-command', {
+      type: 'focus-panel',
+      panelId: 'ScoreTopComponent',
+    });
+  });
+  await mainPage.waitForTimeout(500);
+  await mainPage.screenshot({ path: path.join(outputRoot, 'score.png') });
+
+  await electronApp.evaluate(({ BrowserWindow }) => {
+    BrowserWindow.getAllWindows()[0]?.webContents.send('native-menu-command', {
+      type: 'focus-panel',
+      panelId: 'MixerTopComponent',
+    });
+  });
+  await mainPage.waitForTimeout(500);
+  await mainPage.screenshot({ path: path.join(outputRoot, 'mixer.png') });
+
   const settingsWindow = electronApp.waitForEvent('window');
   await mainPage.evaluate(() => window.blueAPI.openSettingsWindow());
   const settingsPage = await settingsWindow;
@@ -54,3 +72,5 @@ try {
   electronApp.process().kill();
   fs.rmSync(profilePath, { recursive: true, force: true });
 }
+
+process.exit(0);
