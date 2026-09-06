@@ -110,3 +110,15 @@ The existing `pnpm audit:renderer-theme` currently fails with 9 unapproved arbit
 **Rationale**: BSB widget colors, score-object colors, and imported fonts are canonical project content. Accessibility changes apply to app-owned chrome, semantic operation, and automatic foreground selection without rewriting stored user values.
 
 **Alternatives considered**: Normalizing saved colors was rejected because it would violate project compatibility and user intent.
+
+### Decision: Prefer minimum compliant contrast with restrained hierarchy
+
+**Rationale**: Contrast compliance is a floor, not a requirement to maximize the prominence of every boundary and state. Blue is a dense creative workstation; keeping ordinary inactive chrome quiet makes focus, selection, warnings, and primary actions easier to locate while retaining accessible text and essential controls.
+
+**Alternatives considered**: A uniformly higher-contrast theme was rejected because it makes unrelated controls compete for attention. Broadly reverting the accessibility implementation was rejected because it would discard independent semantic, keyboard, modal, and compatibility improvements.
+
+### Decision: Review representative behavior categories with controlled A/B evidence
+
+**Rationale**: A 101-file diff is not a useful perceptual review unit. Controlled before/candidate screenshots reveal visual hierarchy changes on representative surfaces, while keyboard, accessibility-tree, and automated checks provide better evidence for non-visual behavior.
+
+**Alternatives considered**: Reviewing every file or capturing every changed component was rejected as noisy and expensive. Screenshot-only review was rejected because it cannot verify names, roles, values, focus containment, or keyboard behavior.

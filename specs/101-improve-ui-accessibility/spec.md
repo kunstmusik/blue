@@ -4,9 +4,15 @@
 
 **Created**: 2026-09-05
 
-**Status**: Draft
+**Status**: Revision Review
 
 **Input**: User description: "Review the existing color contrast and WCAG reports, perform an independent audit, and plan work to improve contrast and accessibility."
+
+## Clarifications
+
+### Session 2026-09-06
+
+- Q: What visual-intensity target should govern the accessibility revision? → A: Minimum compliant contrast with restrained hierarchy.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -23,6 +29,7 @@ A user with low vision or reduced contrast sensitivity can read enabled applicat
 1. **Given** enabled application-owned text smaller than large text, **When** its rendered foreground and background are measured, **Then** the contrast ratio is at least 4.5:1 without rounding up.
 2. **Given** an essential control boundary, icon, state indicator, or focus indicator, **When** it is measured against adjacent colors, **Then** it has at least 3:1 contrast where WCAG requires non-text contrast.
 3. **Given** a raised, recessed, or overlaid surface, **When** it appears in the default dark theme, **Then** its visual relationship is consistent and controls do not rely on a barely perceptible surface difference for identification.
+4. **Given** an ordinary inactive surface or boundary that does not convey essential state, **When** it is displayed beside focused, selected, warning, or primary-action content, **Then** it uses the quietest semantic treatment that satisfies its applicable accessibility requirement and remains visibly subordinate.
 
 ---
 
@@ -96,7 +103,7 @@ A user with color-vision deficiency can distinguish success, warning, danger, co
 
 - **FR-001**: All enabled, information-bearing, application-owned text MUST meet WCAG 2.2 AA contrast of at least 4.5:1 against every rendered background on which it is intentionally used, except qualifying large text, which MUST meet at least 3:1.
 - **FR-002**: Essential visual information in application-owned controls, boundaries, graphical objects, selected states, and keyboard focus indicators MUST meet WCAG 2.2 AA non-text contrast requirements of at least 3:1 where applicable.
-- **FR-003**: The default dark theme MUST use coherent semantic roles for base, surface, raised, recessed, input, border, focus, text, status, and text-accent colors, and each role MUST document its permitted uses and contrast floor.
+- **FR-003**: The default dark theme MUST use coherent semantic roles for base, surface, raised, recessed, input, border, focus, text, status, and text-accent colors. Each role MUST document its permitted uses and contrast floor, and ordinary inactive surfaces and boundaries MUST use the lowest-intensity role that satisfies the applicable requirement so stronger contrast remains reserved for focus, selection, warnings, essential state, and primary actions.
 - **FR-004**: Application-owned text and state styling MUST use semantic color roles rather than ungoverned palette colors when the styling communicates shared meaning; established project-authored and data-visualization colors MUST remain exempt at their explicit ownership boundary.
 - **FR-005**: Every keyboard-focusable, operable application control MUST present a visible focus indicator when focus is keyboard-originated; generic focus suppression MUST NOT remove the only visible indicator.
 - **FR-006**: Every in-scope pointer-adjustable value control MUST also be operable through a keyboard interface without requiring specific timing, except where the underlying function depends on the path of movement rather than its endpoints.
@@ -131,6 +138,7 @@ A user with color-vision deficiency can distinguish success, warning, danger, co
 - **SC-006**: Grayscale and common color-vision simulations leave all tested success, warning, danger, connection, mute, solo, and error states distinguishable by at least one non-color cue.
 - **SC-007**: The accessibility regression checks and affected application test suite complete with zero newly introduced failures, and the validation guide records any pre-existing unrelated failures separately.
 - **SC-008**: At 100%, 200%, and 300% application zoom, every tested workflow retains readable content, visible focus, and operable controls without focus being obscured.
+- **SC-009**: In a controlled before/candidate review of the representative workbench, score, mixer, settings, modal, status, and Blue Synth Builder surfaces, ordinary inactive boundaries and surfaces remain subordinate to focus, selection, warning, essential-state, and primary-action treatments; each reviewed category receives an explicit keep, soften, revert, or redesign disposition.
 
 ## Assumptions
 

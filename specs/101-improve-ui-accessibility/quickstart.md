@@ -6,6 +6,24 @@
 - Run commands from the repository root.
 - Use the default Blue dark theme at 100% application zoom unless a matrix step specifies another zoom.
 
+## Controlled Visual Review
+
+Use pre-feature commit `74cd10f7` as baseline A and accessibility checkpoint `d2a1ea4` as candidate B. Capture both with identical project content, window dimensions, zoom, device scale factor, open panels, control values, and focus/selection/status state.
+
+Review these representative surfaces rather than every changed file:
+
+| Set | Surface | Required states |
+|---|---|---|
+| 1 | Main workbench and Dockview tabs | resting, selected, keyboard focus |
+| 2 | Score layer controls | resting, selected layer, Mute, Solo, keyboard focus |
+| 3 | Mixer channel | resting, active value, keyboard focus |
+| 4 | Settings | labels, inputs, disabled control, keyboard focus |
+| 5 | Representative modal | resting, destructive action, keyboard focus |
+| 6 | Status/toast | success, warning, error |
+| 7 | Blue Synth Builder controls | resting, selected control, keyboard focus |
+
+Record `keep`, `soften`, `revert`, or `redesign` for theme hierarchy, visible focus, and status cues. Judge text and essential-control contrast from computed colors; screenshots judge hierarchy and distraction, not numeric WCAG conformance. Use keyboard/accessibility-tree tests for semantics, keyboard value controls, and modal behavior.
+
 ## Automated Validation
 
 Run the focused static audits first:

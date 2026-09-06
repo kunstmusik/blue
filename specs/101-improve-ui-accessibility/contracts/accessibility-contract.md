@@ -13,6 +13,7 @@ This contract governs the application-owned UI listed in [remediation-inventory.
 5. Every semantic fill containing text must declare a passing on-fill foreground; passing as a foreground on a dark surface does not imply that the reverse pairing passes.
 6. Disabled, decorative, user-authored, and platform-native exceptions must be explicit and must not hide operable or information-bearing application UI.
 7. State meaning may use color, but color must not be the only visual cue. Where the state is programmatically determinable, it must also be exposed through the appropriate semantic state.
+8. Ordinary inactive surfaces and boundaries use the lowest-intensity semantic role that passes their applicable requirement. Stronger contrast is reserved for focus, selection, warnings, essential state, and primary actions.
 
 For Blue's approved typography catalog, only the 26 px Large Title role qualifies for the 3:1 large-text floor; all other roles use the 4.5:1 normal-text floor. Governed new or changed pairs target at least 4.75:1 for normal text and 3.25:1 for applicable large text/non-text information so rounding, compositing, and future surface adjustments do not leave a threshold-edge design.
 
@@ -62,3 +63,4 @@ Host/system confirmations remain routed through `showNativeConfirmation`. Contex
 - Focused tests for shared label, dialog, toggle, shortcut, and slider behavior.
 - Browser-rendered keyboard/focus validation for representative custom controls.
 - Manual matrix for main window and hosted popout at 100%, 200%, and 300% zoom.
+- Controlled baseline/candidate screenshots for representative workbench, score, mixer, settings, modal, status/toast, and Blue Synth Builder surfaces, with a recorded `keep`, `soften`, `revert`, or `redesign` disposition for each visual category.

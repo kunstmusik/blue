@@ -82,6 +82,19 @@ Represents an explicit exclusion from application-owned color governance.
 
 Exceptions must be exact, auditable, and must not exempt enabled information-bearing application text or essential control state.
 
+## Review Disposition
+
+Represents the decision for one behavior category during the controlled revision review.
+
+- **category**: theme hierarchy, focus, status cues, accessible semantics, keyboard value controls, modal behavior, or validation infrastructure
+- **evidence**: controlled screenshots for visual categories; keyboard, accessibility-tree, or automated results for behavioral categories
+- **decision**: keep, soften, revert, or redesign
+- **observed issue**
+- **shared seam**, when a revision is required
+- **validation required after revision**
+
+Every category receives exactly one disposition before final validation. A disposition does not create persisted application state.
+
 ## Keyboard Value Step
 
 Represents the deterministic adjustment unit for an in-scope value control.

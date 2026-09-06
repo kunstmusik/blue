@@ -140,6 +140,20 @@ packages/blue-app/src/renderer/
 
 **Structure Decision**: Extend the existing renderer theme, field, dialog, keyboard, and test seams. Add one documentation authority and focused audit tests; do not add a new package, state store, runtime service, or accessibility component framework.
 
+## Revision Review Strategy
+
+The implementation checkpoint at `d2a1ea4` is a review candidate, not the final visual baseline. Reassess it without reopening semantic behavior that already satisfies the contract unless the review finds a regression.
+
+1. Compare the pre-feature baseline (`74cd10f7`) with checkpoint `d2a1ea4` under identical content, window size, zoom, and interaction state.
+2. Review seven behavior categories rather than files: theme hierarchy, focus, status cues, accessible semantics, keyboard value controls, modal behavior, and validation infrastructure.
+3. Use screenshots only for theme hierarchy, visible focus, and status cues. Use accessibility-tree, keyboard, and automated evidence for non-visual categories.
+4. Cover representative workbench, score, mixer, settings, modal, status/toast, and Blue Synth Builder surfaces. Do not create an exhaustive per-file screenshot suite.
+5. Record one disposition per category: `keep`, `soften`, `revert`, or `redesign`, with the observed issue and intended shared seam.
+6. Revise shared semantic tokens and shared component styles before touching individual call sites. Preserve semantic, keyboard, modal, and compatibility fixes unless evidence shows they are incorrect.
+7. Re-run focused contrast checks after every visual batch, then complete the full automated and human validation matrix only after all category dispositions are resolved.
+
+The preferred outcome is minimum compliant contrast with restrained hierarchy. Ordinary inactive surfaces and boundaries use the quietest passing role; stronger contrast is reserved for focus, selection, warnings, essential state, and primary actions.
+
 ## Complexity Tracking
 
 No constitution violations or additional complexity exceptions are required.
