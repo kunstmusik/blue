@@ -19,14 +19,14 @@ export default function WelcomeScreen(): React.ReactElement {
 
       <div className="flex gap-4">
         <button
-          className="inline-flex items-center justify-center gap-2 rounded-md border border-app-accent bg-app-accent px-8 py-3 text-role-body font-medium text-white transition-colors hover:bg-app-accent-hover"
+          className="inline-flex items-center justify-center gap-2 rounded-md border border-app-accent bg-app-accent px-8 py-3 text-role-body font-medium text-white transition-colors hover:bg-app-accent-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
           onClick={newProject}
         >
           <FilePlus className="w-5 h-5" />
           New Project
         </button>
         <button
-          className="inline-flex items-center justify-center gap-2 rounded-md border border-app-accent bg-app-accent px-8 py-3 text-role-body font-medium text-white transition-colors hover:bg-app-accent-hover"
+          className="inline-flex items-center justify-center gap-2 rounded-md border border-app-accent bg-app-accent px-8 py-3 text-role-body font-medium text-white transition-colors hover:bg-app-accent-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
           onClick={openFile}
         >
           <FolderOpen className="w-5 h-5" />

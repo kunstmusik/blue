@@ -44,7 +44,12 @@ try {
   await mainPage.waitForTimeout(500);
   await mainPage.screenshot({ path: path.join(outputRoot, 'workbench.png') });
 
-  if (capture === 'bsb') {
+  if (capture === 'focus') {
+    await mainPage.keyboard.press('Tab');
+    await mainPage.getByRole('button', { name: 'New Project' }).focus();
+    await mainPage.waitForTimeout(150);
+    await mainPage.screenshot({ path: path.join(outputRoot, 'focus-toolbar.png') });
+  } else if (capture === 'bsb') {
     await mainPage.evaluate((filePath) => window.blueAPI.openFilePath(filePath), bsbProjectPath);
     await mainPage.waitForTimeout(750);
     await electronApp.evaluate(({ BrowserWindow }) => {
