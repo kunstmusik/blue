@@ -262,7 +262,7 @@ export default function PatternsLayerGroupCanvas({ group, totalBeats, pixelsPerB
           data-pattern-content-width={contentWidth}
           data-shortcut-scope="pattern-layer-canvas"
           className="relative select-none focus:outline-none"
-          style={{ minWidth: contentWidth, width: contentWidth }}
+          style={{ minWidth: contentWidth, width: '100%' }}
           onMouseDown={handleMouseDown}
           onContextMenu={handleContextMenu}
         >

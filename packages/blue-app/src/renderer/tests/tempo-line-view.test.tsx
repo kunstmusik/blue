@@ -91,6 +91,21 @@ afterEach(() => {
 });
 
 describe('TempoLineView', () => {
+  it('fills its host while preserving the timeline coordinate width', () => {
+    const { svg, root } = renderTempoLineView({ totalBeats: 16, pixelsPerBeat: 20 });
+    const host = svg.parentElement;
+
+    expect(host?.style.width).toBe('100%');
+    expect(svg.style.width).toBe('100%');
+    expect(svg.style.minWidth).toBe('320px');
+    expect(svg.getAttribute('viewBox')).toBe('0 0 320 80');
+    expect(svg.getAttribute('preserveAspectRatio')).toBe('none');
+
+    act(() => {
+      root.unmount();
+    });
+  });
+
   it('renders the snap grid when snapping is enabled', () => {
     const { svg, root } = renderTempoLineView({ snapEnabled: true, snapValue: 'BEAT' });
 

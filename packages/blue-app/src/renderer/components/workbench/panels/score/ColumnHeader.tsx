@@ -86,7 +86,7 @@ export default function ColumnHeader({
 
   return (
     <div
-      className="bg-blue-bg border-b border-blue-border/40 overflow-hidden"
+      className="bg-blue-bg border-b border-blue-border/40 overflow-hidden min-w-full"
       style={{ minWidth: contentWidth }}
     >
       {timeState.tempoRowVisible && (

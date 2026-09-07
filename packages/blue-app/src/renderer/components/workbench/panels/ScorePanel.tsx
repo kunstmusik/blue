@@ -415,19 +415,24 @@ export default function ScorePanel() {
 
   // Track the scroll container width so totalBeats can fill the visible area when zoomed out.
   useLayoutEffect(() => {
-    const el = scrollContainerRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(([entry]) => {
-      setContainerWidth(entry.contentBoxSize?.[0]?.inlineSize ?? entry.contentRect.width);
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [scrollContainerRef]);
+    if (!loaded) return;
+    const update = () => {
+      const width =
+        scrollContainerRef.current?.clientWidth || timelineHeaderRef.current?.clientWidth || 0;
+      if (width > 0) {
+        setContainerWidth(width);
+      }
+    };
+    update();
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(update);
+    if (scrollContainerRef.current) observer.observe(scrollContainerRef.current);
+    if (timelineHeaderRef.current) observer.observe(timelineHeaderRef.current);
+    return () => observer.disconnect();
+  }, [loaded, scrollContainerRef]);
 
-  const totalBeats = Math.max(
-    computeTotalBeats(score),
-    containerWidth > 0 ? Math.ceil(containerWidth / pixelsPerBeat) + 16 : 0,
-  );
+  const visibleBeats = containerWidth > 0 ? containerWidth / pixelsPerBeat : 0;
+  const totalBeats = Math.max(computeTotalBeats(effectiveLayerGroups), visibleBeats);
   const initialTempo = transport.tempoMap.points[0]?.tempo ?? 60;
 
   const isRootTimeline = !session.activeGroupId;
@@ -1965,9 +1970,9 @@ function SoundLayerHeader({
   );
 }
 
-function computeTotalBeats(score: ScoreDocumentSnapshot): number {
+function computeTotalBeats(layerGroups: ScoreLayerGroupSnapshot[]): number {
   let maxBeat = 64;
-  for (const lg of score.layerGroups) {
+  for (const lg of layerGroups) {
     if (lg.groupType === 'patterns') {
       // Active pattern cells live outside the generic items envelope; keep
       // their derived extent horizontally reachable on the shared timeline.

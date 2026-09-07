@@ -83,6 +83,18 @@ export default function TempoLineView({
     [points, pixelsPerBeat],
   );
 
+  const getContentPoint = useCallback(
+    (clientX: number, clientY: number) => {
+      const rect = svgRef.current!.getBoundingClientRect();
+      const scaleX = rect.width > 0 ? contentWidth / rect.width : 1;
+      return {
+        x: (clientX - rect.left) * scaleX,
+        y: clientY - rect.top,
+      };
+    },
+    [contentWidth],
+  );
+
   const findSegmentAt = useCallback(
     (beat: number): number => {
       for (let i = points.length - 1; i >= 0; i--) {
@@ -96,9 +108,7 @@ export default function TempoLineView({
   const handleMouseDown = useCallback(
     (e: React.MouseEvent<SVGSVGElement>) => {
       if (!enabled || !rootTimelineOnly || e.button !== 0) return;
-      const rect = svgRef.current!.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      const { x, y } = getContentPoint(e.clientX, e.clientY);
       const beat = screenXToBeat(x, pixelsPerBeat);
 
       const pointIdx = findPointAt(x, y);
@@ -145,6 +155,7 @@ export default function TempoLineView({
       rootTimelineOnly,
       pixelsPerBeat,
       findPointAt,
+      getContentPoint,
       snapEnabled,
       snapValue,
       meterMap,
@@ -157,9 +168,7 @@ export default function TempoLineView({
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<SVGSVGElement>) => {
       if (!dragState) {
-        const rect = svgRef.current!.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        const { x, y } = getContentPoint(e.clientX, e.clientY);
         const idx = findPointAt(x, y);
         if (idx >= 0) {
           setSelectedPoint(idx);
@@ -169,9 +178,7 @@ export default function TempoLineView({
         return;
       }
 
-      const rect = svgRef.current!.getBoundingClientRect();
-      const rawX = e.clientX - rect.left;
-      const rawY = e.clientY - rect.top;
+      const { x: rawX, y: rawY } = getContentPoint(e.clientX, e.clientY);
 
       let newBeat = screenXToBeat(rawX, pixelsPerBeat);
       let newTempo = screenYToTempo(rawY, TEMPO_LINE_VIEW_HEIGHT);
@@ -227,6 +234,7 @@ export default function TempoLineView({
       snapValue,
       meterMap,
       findPointAt,
+      getContentPoint,
       selectedPoint,
       onTempoPatch,
     ],
@@ -240,9 +248,7 @@ export default function TempoLineView({
     (e: React.MouseEvent<SVGSVGElement>) => {
       if (!enabled || !rootTimelineOnly) return;
       e.preventDefault();
-      const rect = svgRef.current!.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      const { x, y } = getContentPoint(e.clientX, e.clientY);
 
       const pointIdx = findPointAt(x, y);
       if (pointIdx > 0) {
@@ -259,7 +265,7 @@ export default function TempoLineView({
         setContextMenuTarget(null);
       }
     },
-    [enabled, rootTimelineOnly, findPointAt, findSegmentAt, pixelsPerBeat],
+    [enabled, rootTimelineOnly, findPointAt, findSegmentAt, getContentPoint, pixelsPerBeat],
   );
 
   useEffect(() => {
@@ -310,12 +316,14 @@ export default function TempoLineView({
             'block',
             enabled && rootTimelineOnly ? 'cursor-crosshair' : 'cursor-default',
           )}
-          style={{ width: contentWidth, height: TEMPO_LINE_VIEW_HEIGHT, minWidth: contentWidth }}
+          style={{ width: '100%', height: TEMPO_LINE_VIEW_HEIGHT, minWidth: contentWidth }}
         >
           <svg
             ref={svgRef}
             className="block"
-            style={{ width: contentWidth, height: TEMPO_LINE_VIEW_HEIGHT, minWidth: contentWidth }}
+            style={{ width: '100%', height: TEMPO_LINE_VIEW_HEIGHT, minWidth: contentWidth }}
+            viewBox={`0 0 ${contentWidth} ${TEMPO_LINE_VIEW_HEIGHT}`}
+            preserveAspectRatio="none"
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}

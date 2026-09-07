@@ -1653,7 +1653,8 @@ export default function TrackLayerGroupCanvas({
           className="relative select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-app-focus focus-visible:ring-inset"
           style={{
             minHeight: rows.reduce((height, row) => height + row.height, 0),
-            width: contentWidth,
+            minWidth: contentWidth,
+            width: '100%',
             ...(cursorOverride ? { cursor: cursorOverride } : {}),
           }}
           onMouseDown={handleMouseDown}
