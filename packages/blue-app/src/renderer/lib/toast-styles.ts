@@ -16,10 +16,10 @@ export const rendererToastOptions: NonNullable<ToasterProps['toastOptions']> = {
       'bg-app-accent text-app-accent-foreground rounded px-2.5 py-1 text-role-callout font-medium hover:bg-app-accent-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus',
     cancelButton:
       'bg-app-surface border border-app-border text-app-text rounded px-2.5 py-1 text-role-callout hover:bg-app-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus',
-    success: '!border-app-success/50 !bg-app-surface text-app-text',
-    error: '!border-app-danger/50 !bg-app-surface text-app-text',
-    warning: '!border-app-warning/50 !bg-app-surface text-app-text',
-    info: '!border-app-accent/50 !bg-app-surface text-app-text',
+    success: '!border-app-border-strong/60 !bg-app-surface text-app-text',
+    error: '!border-app-border-strong/60 !bg-app-surface text-app-text',
+    warning: '!border-app-border-strong/60 !bg-app-surface text-app-text',
+    info: '!border-app-border-strong/60 !bg-app-surface text-app-text',
     icon: 'shrink-0 text-role-body',
   },
 };
