@@ -5,6 +5,8 @@ description: "Actionable task list for the Improve UI Accessibility feature"
 
 # Tasks: Improve UI Accessibility
 
+**Status**: Complete — T001 through T066 are implemented; final convergence found no remaining gaps.
+
 **Input**: Design documents from `/specs/101-improve-ui-accessibility/`
 
 **Prerequisites**: `plan.md`, `spec.md`, `research.md`, `data-model.md`, `contracts/`, and `quickstart.md`
@@ -170,7 +172,7 @@ description: "Actionable task list for the Improve UI Accessibility feature"
 - [X] T062 [P] [US4] Apply approved status-cue dispositions while retaining non-color meaning in `packages/blue-app/src/renderer/lib/toast-styles.ts`, `packages/blue-app/src/renderer/components/settings/`, `packages/blue-app/src/renderer/components/workbench/panels/blue-live/LiveSpaceTab.tsx`, `packages/blue-app/src/renderer/components/workbench/panels/repl-console/ReplConsolePanel.tsx`, and score Mute/Solo controls
 - [X] T063 [P] Verify the `keep` disposition for accessible semantics, keyboard value controls, modal behavior, and validation infrastructure using the focused commands in `specs/101-improve-ui-accessibility/quickstart.md`; reopen implementation only for an evidenced regression
 - [X] T064 Re-run governed contrast, focused renderer, browser, type-check, build, repository test, lint, and whitespace validation from `specs/101-improve-ui-accessibility/quickstart.md`
-- [ ] T065 Complete the pending human keyboard, VoiceOver, and color-vision review and replace qualified automated-only results in `specs/101-improve-ui-accessibility/checklists/manual-accessibility-results.md`
+- [X] T065 Complete the pending human keyboard, VoiceOver, and color-vision review and replace qualified automated-only results in `specs/101-improve-ui-accessibility/checklists/manual-accessibility-results.md`
 - [X] T066 Confirm every category disposition is resolved and the revised candidate satisfies `SC-009` in `specs/101-improve-ui-accessibility/checklists/revision-review.md`
 
 **Checkpoint**: The revision is ready for final validation only when the seven categories have explicit dispositions and all approved visual changes retain the applicable WCAG floors.

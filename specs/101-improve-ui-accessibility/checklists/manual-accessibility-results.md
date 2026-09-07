@@ -6,10 +6,10 @@
 
 ## Environment
 
-- **Commit**: 74cd10f7 (branch `101-improve-ui-accessibility`, working tree) 
+- **Accepted candidate**: 681f5773 (branch `101-improve-ui-accessibility`)
 - **Operating system/version**: macOS (darwin 23.2.0, arm64)
 - **Electron/Chromium version**: Electron 35.7.5 / Chromium 134.0.6998.205
-- **Assistive technology/version**: Chromium accessibility tree via Playwright over `_electron` (VoiceOver listening pass still pending — see Exceptions)
+- **Assistive technology/version**: Chromium accessibility tree via Playwright over `_electron`; macOS VoiceOver manually checked by the project owner
 - **Display**: device scale factor 1 and 2 (forced via `--force-device-scale-factor`)
 - **Application zoom**: 100% / 200% / 300% (set via the same `webContents` zoom API the View menu drives; verified `getZoomFactor()` 1/2/3)
 
@@ -60,9 +60,8 @@ Record the simulator/tool and confirm the named status states retain a visible n
    divider used by generic and pattern rows. All score grid row separators now use the shared
    gray `app-timeline-divider`; the focused row test, theme audit, renderer build, and a fresh
    Electron screenshot passed.
-4. **Pending human pass**: the VoiceOver listening pass (announcement phrasing/order) and the
-   grayscale/protanopia/deuteranopia simulator spot checks were validated analytically and by
-   automated assertion only; a human assistive-technology pass should confirm before closing
-   the feature's evidence obligations. The effect-editor and track-instrument-editor entry
-   points were covered by the automated suites; a live keyboard-only walk in a follow-up
-   session would complete the matrix literally.
+4. **Project-owner acceptance (2026-09-07)**: the owner completed a VoiceOver check and manual
+   application testing, reviewed the corrected score-grid rendering, and accepted the feature
+   for closure. Automated accessibility-tree, keyboard, contrast, grayscale, protanopia, and
+   deuteranopia evidence remains the recorded coverage for deep entry points and the full state
+   matrix; the owner accepted that evidence without requiring another manual simulator pass.
