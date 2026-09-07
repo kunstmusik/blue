@@ -30,6 +30,7 @@ import {
   type ToolbarDisplayMode,
 } from './toolbar-formatters';
 import { TimeBase } from '../../../shared/time-base';
+import { usePortalContainer } from '../../hooks/use-host-document';
 import { cn } from '../../lib/cn';
 
 export const ToolbarDisplayCard = forwardRef<
@@ -107,130 +108,141 @@ function useInterpolatedPlaybackDisplay(
   return display;
 }
 
-const PlayheadDisplayCard = memo(function PlayheadDisplayCard({
-  primaryMode,
-  secondaryMode,
-}: {
-  primaryMode: ToolbarDisplayMode;
-  secondaryMode: ToolbarDisplayMode;
-}): React.ReactElement {
-  const renderStartTime = useProjectStore((state) => state.transport.renderStartTime);
-  const tempoMap = useProjectStore((state) => state.transport.tempoMap);
-  const meterMap = useProjectStore((state) => state.transport.meterMap);
-  const smpteFrameRate = useProjectStore((state) => state.transport.smpteFrameRate);
-  const sampleRate = useProjectStore((state) => state.transport.sampleRate);
-  const status = usePlaybackStore((state) => state.status);
-  const clock = usePlaybackStore((state) => state.clock);
-  const authoritativeDisplay = usePlaybackStore((state) => state.display);
-  const transportAnchor = usePlaybackStore((state) => state.transportAnchor);
-  const display = useInterpolatedPlaybackDisplay(status, clock, authoritativeDisplay);
+const PlayheadDisplayCard = memo(
+  forwardRef<
+    HTMLElement,
+    ComponentPropsWithoutRef<'section'> & {
+      primaryMode: ToolbarDisplayMode;
+      secondaryMode: ToolbarDisplayMode;
+      syncPrimaryFormat?: TimeBase;
+      syncSecondaryFormat?: TimeBase;
+    }
+  >(function PlayheadDisplayCard(
+    { primaryMode, secondaryMode, syncPrimaryFormat, syncSecondaryFormat, ...props },
+    ref,
+  ): React.ReactElement {
+    const renderStartTime = useProjectStore((state) => state.transport.renderStartTime);
+    const tempoMap = useProjectStore((state) => state.transport.tempoMap);
+    const meterMap = useProjectStore((state) => state.transport.meterMap);
+    const smpteFrameRate = useProjectStore((state) => state.transport.smpteFrameRate);
+    const sampleRate = useProjectStore((state) => state.transport.sampleRate);
+    const status = usePlaybackStore((state) => state.status);
+    const clock = usePlaybackStore((state) => state.clock);
+    const authoritativeDisplay = usePlaybackStore((state) => state.display);
+    const transportAnchor = usePlaybackStore((state) => state.transportAnchor);
+    const display = useInterpolatedPlaybackDisplay(status, clock, authoritativeDisplay);
 
-  const playhead = useMemo(() => {
-    const playheadTransport = transportAnchor ?? {
+    const playhead = useMemo(() => {
+      const playheadTransport = transportAnchor ?? {
+        renderStartTime,
+        tempoMap,
+        meterMap,
+        smpteFrameRate,
+        sampleRate,
+      };
+
+      return buildPlayheadDisplayState(
+        playheadTransport,
+        {
+          status,
+          hasClock: clock !== null,
+          elapsedSeconds: display.elapsedSeconds,
+          source: display.source,
+        },
+        {
+          primaryMode,
+          secondaryMode,
+          syncPrimaryFormat,
+          syncSecondaryFormat,
+        },
+      );
+    }, [
+      transportAnchor,
       renderStartTime,
       tempoMap,
       meterMap,
       smpteFrameRate,
       sampleRate,
-    };
+      status,
+      clock,
+      display.elapsedSeconds,
+      display.source,
+      primaryMode,
+      secondaryMode,
+      syncPrimaryFormat,
+      syncSecondaryFormat,
+    ]);
 
-    return buildPlayheadDisplayState(
-      playheadTransport,
-      {
-        status,
-        hasClock: clock !== null,
-        elapsedSeconds: display.elapsedSeconds,
-        source: display.source,
-      },
-      {
-        primaryMode,
-        secondaryMode,
-      },
-    );
-  }, [
-    transportAnchor,
-    renderStartTime,
-    tempoMap,
-    meterMap,
-    smpteFrameRate,
-    sampleRate,
-    status,
-    clock,
-    display.elapsedSeconds,
-    display.source,
-    primaryMode,
-    secondaryMode,
-  ]);
-
-  return (
-    <ToolbarDisplayCard title="Playhead" className="w-59">
-      <div className="toolbar-display-values toolbar-display-values--playhead">
-        <div className="toolbar-display-main toolbar-display-main--playhead">
-          {playhead.primaryText}
-        </div>
-        {playhead.secondaryText ? (
-          <div className="toolbar-display-secondary toolbar-display-secondary--playhead">
-            {playhead.secondaryText}
+    return (
+      <ToolbarDisplayCard ref={ref} title="Playhead" className="w-59" {...props}>
+        <div className="toolbar-display-values toolbar-display-values--playhead">
+          <div className="toolbar-display-main toolbar-display-main--playhead">
+            {playhead.primaryText}
           </div>
-        ) : null}
-      </div>
-    </ToolbarDisplayCard>
-  );
-});
-
-const SelectionDisplayCard = memo(function SelectionDisplayCard({
-  format,
-}: {
-  format: TimeBase;
-}): React.ReactElement {
-  const renderStartTime = useProjectStore((state) => state.transport.renderStartTime);
-  const renderEndTime = useProjectStore((state) => state.transport.renderEndTime);
-  const tempoMap = useProjectStore((state) => state.transport.tempoMap);
-  const meterMap = useProjectStore((state) => state.transport.meterMap);
-  const smpteFrameRate = useProjectStore((state) => state.transport.smpteFrameRate);
-  const sampleRate = useProjectStore((state) => state.transport.sampleRate);
-
-  const selection = useMemo(
-    () =>
-      buildSelectionDisplayState(
-        {
-          renderStartTime,
-          renderEndTime,
-          tempoMap,
-          meterMap,
-          smpteFrameRate,
-          sampleRate,
-        },
-        format,
-      ),
-    [renderStartTime, renderEndTime, tempoMap, meterMap, smpteFrameRate, sampleRate, format],
-  );
-
-  return (
-    <ToolbarDisplayCard title="Selection" className="w-64">
-      <div className="toolbar-display-values toolbar-display-values--selection">
-        <div
-          className="toolbar-display-secondary toolbar-display-secondary--selection"
-          title="Selection Start"
-        >
-          {selection.startText}
+          {playhead.secondaryText ? (
+            <div className="toolbar-display-secondary toolbar-display-secondary--playhead">
+              {playhead.secondaryText}
+            </div>
+          ) : null}
         </div>
-        <div
-          className="toolbar-display-secondary toolbar-display-secondary--selection"
-          title="Selection End"
-        >
-          {selection.endText}
-        </div>
-        <div
-          className="toolbar-display-secondary toolbar-display-secondary--selection"
-          title="Selection Duration"
-        >
-          {selection.durationText}
-        </div>
-      </div>
-    </ToolbarDisplayCard>
-  );
-});
+      </ToolbarDisplayCard>
+    );
+  }),
+);
+
+const SelectionDisplayCard = memo(
+  forwardRef<HTMLElement, ComponentPropsWithoutRef<'section'> & { format: TimeBase }>(
+    function SelectionDisplayCard({ format, ...props }, ref): React.ReactElement {
+      const renderStartTime = useProjectStore((state) => state.transport.renderStartTime);
+      const renderEndTime = useProjectStore((state) => state.transport.renderEndTime);
+      const tempoMap = useProjectStore((state) => state.transport.tempoMap);
+      const meterMap = useProjectStore((state) => state.transport.meterMap);
+      const smpteFrameRate = useProjectStore((state) => state.transport.smpteFrameRate);
+      const sampleRate = useProjectStore((state) => state.transport.sampleRate);
+
+      const selection = useMemo(
+        () =>
+          buildSelectionDisplayState(
+            {
+              renderStartTime,
+              renderEndTime,
+              tempoMap,
+              meterMap,
+              smpteFrameRate,
+              sampleRate,
+            },
+            format,
+          ),
+        [renderStartTime, renderEndTime, tempoMap, meterMap, smpteFrameRate, sampleRate, format],
+      );
+
+      return (
+        <ToolbarDisplayCard ref={ref} title="Selection" className="w-64" {...props}>
+          <div className="toolbar-display-values toolbar-display-values--selection">
+            <div
+              className="toolbar-display-secondary toolbar-display-secondary--selection"
+              title="Selection Start"
+            >
+              {selection.startText}
+            </div>
+            <div
+              className="toolbar-display-secondary toolbar-display-secondary--selection"
+              title="Selection End"
+            >
+              {selection.endText}
+            </div>
+            <div
+              className="toolbar-display-secondary toolbar-display-secondary--selection"
+              title="Selection Duration"
+            >
+              {selection.durationText}
+            </div>
+          </div>
+        </ToolbarDisplayCard>
+      );
+    },
+  ),
+);
 
 function ContextMenuCheckItem({
   checked,
@@ -328,7 +340,7 @@ function ToolbarPlayheadMenu({
   onPrimaryModeChange: (mode: ToolbarDisplayMode) => void;
   onSecondaryModeChange: (mode: ToolbarDisplayMode) => void;
 }): React.ReactElement {
-  const portalContainer = typeof document !== 'undefined' ? document.body : undefined;
+  const portalContainer = usePortalContainer();
 
   return (
     <ContextMenu.Root>
@@ -368,7 +380,7 @@ function ToolbarSelectionMenu({
   format: ToolbarDisplayMode;
   onFormatChange: (mode: ToolbarDisplayMode) => void;
 }): React.ReactElement {
-  const portalContainer = typeof document !== 'undefined' ? document.body : undefined;
+  const portalContainer = usePortalContainer();
 
   return (
     <ContextMenu.Root>
@@ -408,6 +420,9 @@ export default function ToolbarDisplays(): React.ReactElement {
   );
   const [selectionMode, setSelectionMode] = useState<ToolbarDisplayMode>('sync');
   const primaryTimeDisplay = useProjectStore((state) => state.score.timeState.primaryTimeDisplay);
+  const secondaryTimeDisplay = useProjectStore(
+    (state) => state.score.timeState.secondaryTimeDisplay,
+  );
 
   const selectionFormat: TimeBase =
     selectionMode === 'sync' ? (primaryTimeDisplay as TimeBase) : (selectionMode as TimeBase);
@@ -421,7 +436,12 @@ export default function ToolbarDisplays(): React.ReactElement {
           onPrimaryModeChange={setPrimaryMode}
           onSecondaryModeChange={setSecondaryMode}
         >
-          <PlayheadDisplayCard primaryMode={primaryMode} secondaryMode={secondaryMode} />
+          <PlayheadDisplayCard
+            primaryMode={primaryMode}
+            secondaryMode={secondaryMode}
+            syncPrimaryFormat={primaryTimeDisplay as TimeBase}
+            syncSecondaryFormat={secondaryTimeDisplay as TimeBase}
+          />
         </ToolbarPlayheadMenu>
 
         <ToolbarSelectionMenu format={selectionMode} onFormatChange={setSelectionMode}>

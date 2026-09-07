@@ -60,6 +60,9 @@ export interface ToolbarPlaybackSnapshot {
 export interface ToolbarPlayheadDisplayPreferences {
   primaryMode?: ToolbarDisplayMode;
   secondaryMode?: ToolbarDisplayMode;
+  /** Project ruler formats that the `sync` modes resolve to. */
+  syncPrimaryFormat?: TimeBase;
+  syncSecondaryFormat?: TimeBase;
 }
 
 interface TempoMapAdapter {
@@ -458,8 +461,14 @@ export function buildPlayheadDisplayState(
 ): ToolbarPlayheadDisplayState {
   const tempoMap = createTempoMapAdapter(transport.tempoMap);
   const primaryFormat =
-    resolveDisplayMode(preferences.primaryMode, DEFAULT_PRIMARY_FORMAT) ?? DEFAULT_PRIMARY_FORMAT;
-  const secondaryFormat = resolveDisplayMode(preferences.secondaryMode, DEFAULT_SECONDARY_FORMAT);
+    resolveDisplayMode(
+      preferences.primaryMode,
+      preferences.syncPrimaryFormat ?? DEFAULT_PRIMARY_FORMAT,
+    ) ?? DEFAULT_PRIMARY_FORMAT;
+  const secondaryFormat = resolveDisplayMode(
+    preferences.secondaryMode,
+    preferences.syncSecondaryFormat ?? DEFAULT_SECONDARY_FORMAT,
+  );
   const anchorBeat = transport.renderStartTime;
   const anchorSeconds = tempoMap.beatsToSeconds(anchorBeat);
   const hasLiveClock =
