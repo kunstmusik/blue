@@ -80,7 +80,7 @@ export default function MeterRegionBar({
 
   return (
     <div
-      className="relative select-none overflow-hidden cursor-pointer"
+      className="relative select-none overflow-hidden cursor-pointer min-w-full"
       style={{ height: METER_REGION_BAR_HEIGHT, minWidth: contentWidth }}
       onDoubleClick={handleDoubleClick}
       onMouseMove={handleMouseMove}

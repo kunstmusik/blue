@@ -74,7 +74,7 @@ export default function LayerPanel({
   const contentWidth = Math.max(totalBeats, maxPatternExtentBeats) * pixelsPerBeat;
 
   return (
-    <div style={{ minWidth: contentWidth }} className="relative bg-app-canvas">
+    <div style={{ minWidth: contentWidth }} className="relative bg-app-canvas min-w-full">
       {visibleGroups.map((group, gi) => {
         const spacer = (
           <div

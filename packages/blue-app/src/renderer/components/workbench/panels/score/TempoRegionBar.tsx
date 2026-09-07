@@ -113,7 +113,7 @@ export default function TempoRegionBar({
     <div
       ref={barRef}
       className={cn(
-        'relative select-none overflow-hidden',
+        'relative select-none overflow-hidden min-w-full',
         enabled ? 'cursor-pointer' : 'cursor-default',
       )}
       style={{ height: TEMPO_REGION_BAR_HEIGHT, minWidth: contentWidth }}
