@@ -1806,7 +1806,7 @@ export default function TrackLayerGroupCanvas({
                 data-timeline-layer-row
                 aria-selected={isLayerSelected ? 'true' : 'false'}
                 data-selected-layer={isLayerSelected ? 'true' : undefined}
-                className="relative border-b border-app-border/30"
+                className="relative border-b border-app-timeline-divider"
                 style={{ height, backgroundColor: 'var(--color-app-canvas)' }}
               >
                 {layer.items.map((item) => {

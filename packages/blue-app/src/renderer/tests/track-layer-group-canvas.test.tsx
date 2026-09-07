@@ -835,6 +835,7 @@ describe('Track layer timeline gestures', () => {
     expect(row).toBeTruthy();
     expect(row.getAttribute('aria-selected')).toBe('false');
     expect(row.style.backgroundColor).toBe('var(--color-app-canvas)');
+    expect(row.className).toContain('border-app-timeline-divider');
     expect(row.className).not.toContain('bg-app-selection');
 
     // Layer select the track row

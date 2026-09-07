@@ -55,7 +55,12 @@ Record the simulator/tool and confirm the named status states retain a visible n
    (`.dv-tab`, library DOM with `tabindex`) received keyboard focus with no visible indicator.
    A `:focus-visible` outline override was added through the approved `.dv-*` third-party
    override seam in `renderer/styles/index.css` and verified live (2px solid app-focus outline).
-3. **Pending human pass**: the VoiceOver listening pass (announcement phrasing/order) and the
+3. **Defect found during final visual review and fixed**: Track timeline rows and the aligned
+   score layer/group headers used the blue application border instead of the neutral timeline
+   divider used by generic and pattern rows. All score grid row separators now use the shared
+   gray `app-timeline-divider`; the focused row test, theme audit, renderer build, and a fresh
+   Electron screenshot passed.
+4. **Pending human pass**: the VoiceOver listening pass (announcement phrasing/order) and the
    grayscale/protanopia/deuteranopia simulator spot checks were validated analytically and by
    automated assertion only; a human assistive-technology pass should confirm before closing
    the feature's evidence obligations. The effect-editor and track-instrument-editor entry

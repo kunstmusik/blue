@@ -1044,7 +1044,7 @@ function LeftPanel({
             </RowHeader>
             {tempoMapVisible && (
               <div
-                className="border-b border-app-border-muted bg-blue-surface/30"
+                className="border-b border-app-timeline-divider bg-blue-surface/30"
                 style={{ height: 80 }}
               />
             )}
@@ -1069,7 +1069,7 @@ function LeftPanel({
           </button>
         </RowHeader>
         {timeState.secondaryRulerEnabled && (
-          <div className="h-5 border-b border-app-border-muted bg-blue-surface/30" />
+          <div className="h-5 border-b border-app-timeline-divider bg-blue-surface/30" />
         )}
       </div>
 
@@ -1230,7 +1230,7 @@ function RowHeader({
       <ContextMenu.Trigger asChild>
         <div
           className={cn(
-            'h-5 border-b border-app-border-muted flex items-center bg-blue-surface/30',
+            'h-5 border-b border-app-timeline-divider flex items-center bg-blue-surface/30',
             center ? 'justify-center' : 'justify-end pr-2',
             borderLeft ? 'border-l-2 border-l-blue-border/30' : !center && 'gap-1',
           )}
@@ -1302,7 +1302,7 @@ function SpacerPanel({
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>
         <div
-          className="group relative flex items-center justify-center border-b border-app-border-muted bg-blue-surface/10 hover:bg-blue-surface/30 cursor-pointer"
+          className="group relative flex items-center justify-center border-b border-app-timeline-divider bg-blue-surface/10 hover:bg-blue-surface/30 cursor-pointer"
           style={{ height: GROUP_SPACER }}
           onDoubleClick={() => addLayer(groupId, layerCount - 1)}
         >
@@ -1598,7 +1598,7 @@ function SoundLayerHeader({
             aria-selected={isLayerSelected ? 'true' : 'false'}
             data-selected-layer={isLayerSelected ? 'true' : undefined}
             className={cn(
-              'relative flex items-start overflow-hidden border-b border-l-2 border-app-border-muted select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-app-focus focus-visible:ring-inset',
+              'relative flex items-start overflow-hidden border-b border-l-2 border-app-timeline-divider select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-app-focus focus-visible:ring-inset',
               isLayerSelected ? 'border-l-app-accent bg-app-selection' : 'border-l-transparent',
               midiFocused && 'ring-1 ring-inset ring-app-accent/70',
               isFocusKey && keyboardFocus && 'ring-2 ring-app-focus',
