@@ -162,9 +162,9 @@ test('fill and on-fill directionality requires dedicated on-fill token', async (
       exceptionsPath: ws.exceptionsPath,
       governedPairs: [onFillPair],
     });
-    // #ffffff on #5a85c3 has contrast ratio ~4.1:1 which is below 4.5:1 unless adjusted!
-    // This confirms that directionality must be evaluated with exact on-fill tokens
-    assert.ok(result.report.summary.contrastFailures >= 0);
+    // #ffffff on #5a85c3 is 3.76:1, so the exact foreground-on-fill direction fails.
+    assert.equal(result.report.summary.contrastFailures, 1);
+    assert.equal(result.report.findings[0]?.value.startsWith('accent-on-fill:'), true);
   } finally {
     await ws.cleanup();
   }
