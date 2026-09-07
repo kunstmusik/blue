@@ -44,7 +44,38 @@ try {
   await mainPage.waitForTimeout(500);
   await mainPage.screenshot({ path: path.join(outputRoot, 'workbench.png') });
 
-  if (capture === 'focus') {
+  if (capture === 'status-repl') {
+    await electronApp.evaluate(({ BrowserWindow }) => {
+      BrowserWindow.getAllWindows()[0]?.webContents.send('native-menu-command', {
+        type: 'focus-panel',
+        panelId: 'JavaScriptConsoleTopComponent',
+      });
+    });
+    await mainPage.waitForTimeout(500);
+    await mainPage.screenshot({ path: path.join(outputRoot, 'status-repl.png') });
+  } else if (capture === 'status-midi') {
+    const settingsWindow = electronApp.waitForEvent('window');
+    await mainPage.evaluate(() => window.blueAPI.openSettingsWindow());
+    const settingsPage = await settingsWindow;
+    await settingsPage.waitForLoadState('domcontentloaded');
+    await settingsPage.getByRole('button', { name: 'MIDI' }).click();
+    await settingsPage.waitForTimeout(300);
+    await settingsPage.screenshot({ path: path.join(outputRoot, 'status-midi.png') });
+    await settingsPage.close();
+  } else if (capture === 'status-muted') {
+    await mainPage.evaluate((filePath) => window.blueAPI.openFilePath(filePath), projectPath);
+    await mainPage.waitForTimeout(750);
+    await electronApp.evaluate(({ BrowserWindow }) => {
+      BrowserWindow.getAllWindows()[0]?.webContents.send('native-menu-command', {
+        type: 'focus-panel',
+        panelId: 'ScoreTopComponent',
+      });
+    });
+    await mainPage.waitForTimeout(300);
+    await mainPage.getByTitle('Mute').first().click();
+    await mainPage.waitForTimeout(300);
+    await mainPage.screenshot({ path: path.join(outputRoot, 'status-muted-layer.png') });
+  } else if (capture === 'focus') {
     await mainPage.keyboard.press('Tab');
     await mainPage.getByRole('button', { name: 'New Project' }).focus();
     await mainPage.waitForTimeout(150);
