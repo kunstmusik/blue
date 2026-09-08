@@ -240,4 +240,57 @@ describe('SelectedCodeEditor completion reconfigure', () => {
     ).toBe(true);
     expect(document.body.textContent).toContain('selected');
   });
+
+  it('owns caret help through the host surface lifecycle', async () => {
+    const openCsoundManual = vi.fn().mockResolvedValue({
+      disposition: 'fallback',
+      availability: 'missing',
+      reason: 'missing',
+    });
+    Object.defineProperty(window, 'blueAPI', {
+      configurable: true,
+      value: { openCsoundManual },
+    });
+    renderWith({}, 'a1 oscili 0.5, 440');
+    const view = getView()!;
+    act(() => view.dispatch({ selection: { anchor: 5 } }));
+    const trigger = container.querySelector('.selected-code-editor') as HTMLElement;
+
+    const openMenuAndChooseManual = async () => {
+      act(() =>
+        trigger.dispatchEvent(
+          new MouseEvent('contextmenu', {
+            bubbles: true,
+            cancelable: true,
+            clientX: 12,
+            clientY: 12,
+          }),
+        ),
+      );
+      await act(async () => Promise.resolve());
+      const item = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(
+        (candidate) => candidate.textContent === 'Open Manual',
+      );
+      expect(item).toBeTruthy();
+      await act(async () => {
+        item!.click();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+    };
+
+    await openMenuAndChooseManual();
+    expect(document.querySelectorAll('[data-host-surface="true"]')).toHaveLength(1);
+    expect(document.body.textContent).toContain('oscili');
+    expect(openCsoundManual).toHaveBeenCalledWith({ manualId: 'oscili' });
+
+    await openMenuAndChooseManual();
+    expect(document.querySelectorAll('[data-host-surface="true"]')).toHaveLength(1);
+
+    act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })));
+    expect(document.querySelector('[data-host-surface="true"]')).toBeNull();
+
+    await openMenuAndChooseManual();
+    act(() => root.unmount());
+    expect(document.querySelector('[data-host-surface="true"]')).toBeNull();
+  });
 });

@@ -369,4 +369,41 @@ describe('Java Blue UDO completion adapter', () => {
       expect(p95).toBeLessThan(100);
     });
   });
+
+  describe('opcode completion regressions (US1, T008)', () => {
+    it('matches prefixes without case sensitivity while preserving labels', () => {
+      const lower = complete('osci', {});
+      const mixed = complete('Osci', {});
+      const upper = complete('OSCI', {});
+
+      expect(lower?.options.some((c) => c.label === 'oscili')).toBe(true);
+      expect(mixed?.options.some((c) => c.label === 'oscili')).toBe(true);
+      expect(upper?.options.some((c) => c.label === 'oscili')).toBe(true);
+    });
+
+    it('returns completion candidates on explicit invocation without prefix', () => {
+      const explicitEmpty = complete('', {}, true);
+      expect(explicitEmpty).not.toBeNull();
+      expect(explicitEmpty?.options.length).toBeGreaterThan(0);
+
+      const implicitEmpty = complete('', {}, false);
+      expect(implicitEmpty).toBeNull();
+    });
+
+    it('suppresses orchestra opcodes in score-only mode while preserving UDO completions', () => {
+      const scoreResult = complete('Osc', {
+        mode: 'sco',
+        contextUdos: [udo('OscUDO', { inTypes: 'k', outTypes: 'a' })],
+      });
+      expect(scoreResult?.options.some((c) => c.label === 'oscili')).toBe(false);
+      expect(scoreResult?.options.some((c) => c.label === 'OscUDO')).toBe(true);
+
+      const orcResult = complete('Osc', {
+        mode: 'orc',
+        contextUdos: [udo('OscUDO', { inTypes: 'k', outTypes: 'a' })],
+      });
+      expect(orcResult?.options.some((c) => c.label === 'oscili')).toBe(true);
+      expect(orcResult?.options.some((c) => c.label === 'OscUDO')).toBe(true);
+    });
+  });
 });

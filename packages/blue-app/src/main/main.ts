@@ -78,6 +78,7 @@ import {
 } from '../shared/file-manager';
 import type { ProgramSettingsSnapshot } from '../shared/program-settings';
 import { normalizeDefaultLayerGroupType } from '../shared/program-settings';
+import { createCsoundManualService } from './csound-manual-service';
 import {
   isEffectEditorRequest,
   isTrackInstrumentEditorPatchRequest,
@@ -4870,6 +4871,14 @@ ipcRegistration.handle(
 
 ipcRegistration.handle('window-layout:reset', () => {
   return resetWindowLayout();
+});
+
+const csoundManualService = createCsoundManualService({
+  getProgramSettings: () => loadProgramSettings(),
+});
+
+ipcRegistration.handle('csound-manual:open', async (_event, request: unknown) => {
+  return await csoundManualService.openManual(request);
 });
 
 ipcRegistration.handle('open-effect-editor', async (_event, request: EffectEditorRequest) => {

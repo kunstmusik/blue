@@ -13,6 +13,8 @@ import {
   type CsoundEditorClipboardBridge,
   insertTextAtSelection,
 } from './csound-editor-actions';
+import { resolveOpcodeInsertionPlan, applyOpcodeInsertion } from './csound-opcode-insertion';
+import { handleOpenManualAtCaret } from './csound-opcode-help';
 import type {
   CsoundEditorCommandItem,
   CsoundEditorDisabledItem,
@@ -29,6 +31,7 @@ interface CsoundEditorContextMenuProps {
   clipboardBridge?: CsoundEditorClipboardBridge;
   onEvaluateCode?: () => void;
   onAddToCodeRepository?: (selectedText: string) => void;
+  onOpenManualAtCaret?: () => void;
 }
 
 function isSubmenuItem(item: CsoundEditorMenuItem): item is CsoundEditorSubmenuItem {
@@ -61,6 +64,7 @@ function renderMenuItem(
   clipboardBridge: CsoundEditorClipboardBridge | undefined,
   onEvaluateCode?: () => void,
   onAddToCodeRepository?: (selectedText: string) => void,
+  onOpenManualAtCaret?: () => void,
 ): ReactNode {
   if (isSeparatorItem(item)) {
     return <ContextMenu.Separator key={item.id} className="editor-context-menu__separator" />;
@@ -91,6 +95,7 @@ function renderMenuItem(
                 clipboardBridge,
                 onEvaluateCode,
                 onAddToCodeRepository,
+                onOpenManualAtCaret,
               ),
             )}
           </ContextMenu.SubContent>
@@ -119,7 +124,15 @@ function renderMenuItem(
         return;
       }
 
-      insertTextAtSelection(editorView, item.insertText);
+      if (item.opcodeMetadata) {
+        const from = editorView.state.selection.main.from;
+        const to = editorView.state.selection.main.to;
+        const docText = editorView.state.doc.toString();
+        const plan = resolveOpcodeInsertionPlan(docText, from, to, item.opcodeMetadata);
+        applyOpcodeInsertion(editorView, plan);
+      } else {
+        insertTextAtSelection(editorView, item.insertText);
+      }
     };
 
     return (
@@ -162,6 +175,13 @@ function renderMenuItem(
           }
           break;
         }
+        case 'open-manual':
+          if (onOpenManualAtCaret) {
+            onOpenManualAtCaret();
+          } else {
+            void handleOpenManualAtCaret(editorView);
+          }
+          break;
       }
     };
 
@@ -191,6 +211,7 @@ export default function CsoundEditorContextMenu({
   clipboardBridge,
   onEvaluateCode,
   onAddToCodeRepository,
+  onOpenManualAtCaret,
 }: CsoundEditorContextMenuProps): React.ReactElement {
   return (
     <ContextMenu.Root>
@@ -205,6 +226,7 @@ export default function CsoundEditorContextMenu({
               clipboardBridge,
               onEvaluateCode,
               onAddToCodeRepository,
+              onOpenManualAtCaret,
             ),
           )}
         </ContextMenu.Content>

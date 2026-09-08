@@ -19,7 +19,7 @@ const HANDLER_CHANNELS = APPLICATION_IPC_CHANNELS.filter(
 );
 
 describe('application IPC registrar', () => {
-  it('registers the exact 23-channel invoke/listener sequence and exact teardown', () => {
+  it('registers the exact 24-channel invoke/listener sequence and exact teardown', () => {
     const ipcMain = new FakeRegistrarIpcMain();
     const listeners = { 'settings:close-response': vi.fn() } satisfies Record<
       ApplicationListenerChannel,
@@ -41,7 +41,7 @@ describe('application IPC registrar', () => {
     expectIdempotentReverseDisposal(ipcMain, dispose);
   });
 
-  it('preserves fail-closed decisions, settings/OSC results, native paths, layout targets, and listeners', async () => {
+  it('preserves fail-closed decisions, settings/OSC results, native paths, layout targets, manual targets, and listeners', async () => {
     const ipcMain = new FakeRegistrarIpcMain();
     const handlers = createHandlerRecord(HANDLER_CHANNELS);
     handlers['blue:native-confirmation:show'] = vi.fn(async () => ({ outcome: 'cancelled' }));
@@ -54,6 +54,11 @@ describe('application IPC registrar', () => {
     handlers['window-layout:reset'] = vi.fn((_event, request) => ({
       ok: true,
       targetWindowId: request.targetWindowId,
+    }));
+    handlers['csound-manual:open'] = vi.fn(async (_event, request) => ({
+      disposition: 'opened',
+      availability: 'available',
+      targetUrl: `https://csound.com/manual/opcodes/${request.manualId}/`,
     }));
     const closeResponses: unknown[] = [];
     registerApplicationIpc({
@@ -79,6 +84,13 @@ describe('application IPC registrar', () => {
       ok: true,
       targetWindowId: 17,
     });
+    await expect(
+      ipcMain.handlers.get('csound-manual:open')?.({}, { manualId: 'oscili' }),
+    ).resolves.toEqual({
+      disposition: 'opened',
+      availability: 'available',
+      targetUrl: 'https://csound.com/manual/opcodes/oscili/',
+    });
     ipcMain.listeners.get('settings:close-response')?.({}, { outcome: 'cancelled' });
     expect(closeResponses).toEqual([{ outcome: 'cancelled' }]);
   });
@@ -97,5 +109,34 @@ describe('application IPC registrar', () => {
     expect(() => ipcMain.handlers.get('program-settings:save')?.({}, null)).toThrow(
       'invalid settings',
     );
+  });
+
+  it('guarantees non-throwing safe structured fallback for malformed csound-manual:open payloads', async () => {
+    const ipcMain = new FakeRegistrarIpcMain();
+    const handlers = createHandlerRecord(HANDLER_CHANNELS);
+    handlers['csound-manual:open'] = vi.fn(async (_event, request) => {
+      if (!request || typeof request !== 'object' || !('manualId' in request)) {
+        return {
+          disposition: 'fallback',
+          availability: 'indeterminate',
+          reason: 'invalid-request',
+          message: 'Invalid request: manualId is required',
+        };
+      }
+      return { disposition: 'opened', availability: 'available' };
+    });
+    registerApplicationIpc({
+      ipcMain,
+      handlers,
+      listeners: { 'settings:close-response': vi.fn() },
+    });
+
+    await expect(
+      ipcMain.handlers.get('csound-manual:open')?.({}, { manualId: '\uD800' }),
+    ).resolves.toBeDefined();
+    await expect(ipcMain.handlers.get('csound-manual:open')?.({}, null)).resolves.toMatchObject({
+      disposition: 'fallback',
+      reason: 'invalid-request',
+    });
   });
 });

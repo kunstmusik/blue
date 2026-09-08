@@ -15,10 +15,18 @@ import {
   type NormalizedUdoCallableSignature,
 } from '@blue/data';
 
+import type { EditorView } from '@codemirror/view';
+
 import type {
   JavaBlueCsoundCompletionOptions,
   JavaBlueUdoCompletionDefinition,
 } from './editor-adapter-types';
+import {
+  normalizeCatalogOpcode,
+  resolveOpcodeInsertionPlan,
+  applyOpcodeInsertion,
+} from './csound-opcode-insertion';
+import { renderOpcodeHelpHtml } from './csound-opcode-help';
 
 const wordCompletionPattern = /[A-Za-z_][A-Za-z0-9_]*(?::[A-Za-z_][A-Za-z0-9_]*)?/;
 const wordCompletionValidFor = /^[A-Za-z_][A-Za-z0-9_]*(?::[A-Za-z_][A-Za-z0-9_]*)?$/;
@@ -84,24 +92,30 @@ const blueOpcodeCompletions: Completion[] = [
 ];
 
 const opcodeNameSet = new Set(csoundRichOpcodeCatalog.opcodes.map((entry) => entry.name));
-const opcodeCompletions = csoundRichOpcodeCatalog.opcodes
-  .map(createOpcodeCompletion)
-  .sort((left, right) => left.label.localeCompare(right.label));
 
-function createOpcodeCompletion(entry: RichOpcodeCatalogEntry): Completion {
-  return {
-    label: entry.name,
-    type: 'function',
-    detail: 'opcode',
-    apply: getOpcodeInsertText(entry),
-    info: getOpcodeInfoText(entry),
-    boost: 5,
-  };
-}
+const normalizedOpcodeEntries = csoundRichOpcodeCatalog.opcodes.map((entry) => ({
+  entry,
+  metadata: normalizeCatalogOpcode(entry),
+}));
 
-function getOpcodeInsertText(entry: RichOpcodeCatalogEntry): string {
-  const syntax = entry.syntax?.find((candidate) => !candidate.includes(' = ')) ?? entry.syntax?.[0];
-  return syntax?.trim() ?? entry.name;
+function getOpcodeCompletions(hostDocument?: Document): Completion[] {
+  return normalizedOpcodeEntries
+    .map(({ entry, metadata }) => ({
+      label: entry.name,
+      type: 'function' as const,
+      detail: 'opcode',
+      apply: (view: EditorView, completion: Completion, from: number, to: number) => {
+        const docText = view.state.doc.toString();
+        const plan = resolveOpcodeInsertionPlan(docText, from, to, metadata);
+        applyOpcodeInsertion(view, plan);
+      },
+      info: () =>
+        hostDocument
+          ? renderOpcodeHelpHtml(metadata, { ownerDocument: hostDocument })
+          : getOpcodeInfoText(entry),
+      boost: 5,
+    }))
+    .sort((left, right) => left.label.localeCompare(right.label));
 }
 
 function getOpcodeInfoText(entry: RichOpcodeCatalogEntry): string {
@@ -395,7 +409,8 @@ function filterWordCompletions(completions: Completion[], filter: string): Compl
     return completions;
   }
 
-  return completions.filter((completion) => completion.label.startsWith(filter));
+  const lowerFilter = filter.toLowerCase();
+  return completions.filter((completion) => completion.label.toLowerCase().startsWith(lowerFilter));
 }
 
 function createWordCompletionResult(
@@ -411,11 +426,18 @@ function createWordCompletionResult(
   const from = word?.from ?? context.pos;
   const documentText = context.state.doc.toString();
   const documentTextBeforeWord = context.state.doc.sliceString(0, from);
+  const hostDoc =
+    context.view?.dom?.ownerDocument ??
+    options.ownerDocument ??
+    (typeof document !== 'undefined' ? document : undefined);
+  const isScoreMode = options.mode === 'sco';
+  const orchestraOpcodes = isScoreMode
+    ? []
+    : [...blueOpcodeCompletions, ...getOpcodeCompletions(hostDoc)];
   const completions = dedupeCompletions([
     ...findDocumentLocalCsoundVariables(documentTextBeforeWord, filter),
     ...createUdoCompletions(options.contextUdos, options.projectUdos, documentText),
-    ...blueOpcodeCompletions,
-    ...opcodeCompletions,
+    ...orchestraOpcodes,
   ]);
   const filteredCompletions = filterWordCompletions(completions, filter);
 

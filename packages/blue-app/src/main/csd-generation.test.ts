@@ -81,4 +81,19 @@ describe('screen CSD generation', () => {
     expect(original.toDiskCSDAsync).toHaveBeenCalledOnce();
     expect(replacement.toDiskCSDAsync).toHaveBeenCalledOnce();
   });
+
+  it('generates CSD output deterministically regardless of manual configuration', async () => {
+    const session = {} as JavaScriptSession;
+    const csdText =
+      '<CsoundSynthesizer>\n<CsInstruments>\ninstr 1\n  a1 oscili 0.5, 440\nendin\n</CsInstruments>\n</CsoundSynthesizer>';
+    const toCSD = vi.fn(() => csdText);
+    const toCSDAsync = vi.fn(async () => csdText);
+
+    const first = await generateRealtimeCsdForScreen({ toCSD, toCSDAsync }, session, null);
+    const second = await generateRealtimeCsdForScreen({ toCSD, toCSDAsync }, session, null);
+
+    expect(first).toBe(csdText);
+    expect(second).toBe(csdText);
+    expect(first).toBe(second);
+  });
 });

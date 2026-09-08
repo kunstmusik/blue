@@ -9,6 +9,7 @@ import type {
   CsoundEditorSubmenuItem,
 } from './editor-adapter-types';
 import type { CsoundEditorMenuOptions } from './csound-editor-menu';
+import { normalizeCatalogOpcode } from './csound-opcode-insertion';
 
 interface OpcodeCategoryTreeNode {
   readonly name: string;
@@ -124,6 +125,7 @@ function toInsertionItem(
     detail: 'opcode',
     disabled: readOnly,
     disabledReason: readOnly ? 'Editor is read-only' : undefined,
+    opcodeMetadata: normalizeCatalogOpcode(entry),
   };
 }
 

@@ -720,4 +720,88 @@ describe('program-settings utility.freezeMaxJobs (SPEC 085)', () => {
     expect(reset.utility.freezeMaxJobs).toBe(FREEZE_MAX_JOBS_DEFAULT);
     expect(reset.utility.freezeFlags).toBe('-Ado');
   });
+
+  describe('general.csoundManualUrl settings compatibility', () => {
+    it('supplies the default manual URL for legacy snapshots missing the field', () => {
+      const legacy = {
+        version: 3,
+        general: {
+          workDirectory: '/legacy',
+          newUserDefaultsEnabled: true,
+          messageColorsEnabled: false,
+          csoundErrorWarningEnabled: true,
+          directoryTempFileLimit: 3,
+        },
+      };
+      const merged = mergeWithDefaults(legacy as any, 'darwin');
+      expect(merged.general.csoundManualUrl).toBe('https://csound.com/manual');
+    });
+
+    it('preserves and normalizes valid configured manual roots', () => {
+      const custom = {
+        general: {
+          csoundManualUrl: '  https://custom.csound.org/manual/  ',
+        },
+      };
+      const merged = mergeWithDefaults(custom as any, 'darwin');
+      expect(merged.general.csoundManualUrl).toBe('https://custom.csound.org/manual');
+    });
+
+    it('preserves valid file: manual roots', () => {
+      const local = {
+        general: {
+          csoundManualUrl: 'file:///opt/csound/manual/',
+        },
+      };
+      const merged = mergeWithDefaults(local as any, 'darwin');
+      expect(merged.general.csoundManualUrl).toBe('file:///opt/csound/manual');
+    });
+
+    it('validateProgramSettings flags invalid manual URLs', () => {
+      for (const invalidUrl of [
+        'http://insecure.com',
+        '/relative/path',
+        'https://csound.com/manual?query=1',
+        'https://csound.com/manual#hash',
+        'https://user:pass@csound.com',
+        'not a url',
+        '',
+      ]) {
+        const snapshot = createDefaultProgramSettings('darwin');
+        snapshot.general.csoundManualUrl = invalidUrl;
+        const issues = validateProgramSettings(snapshot).filter(
+          (issue) => issue.path === 'general.csoundManualUrl',
+        );
+        expect(issues.length).toBeGreaterThanOrEqual(1);
+        expect(issues[0].severity).toBe('error');
+      }
+    });
+
+    it('validateProgramSettings accepts valid https: and file: URLs', () => {
+      for (const validUrl of [
+        'https://csound.com/manual',
+        'https://csound.com/manual/',
+        'file:///home/user/csound-manual',
+        'file:///C:/Csound/manual',
+      ]) {
+        const snapshot = createDefaultProgramSettings('darwin');
+        snapshot.general.csoundManualUrl = validUrl;
+        const issues = validateProgramSettings(snapshot).filter(
+          (issue) => issue.path === 'general.csoundManualUrl',
+        );
+        expect(issues).toHaveLength(0);
+      }
+    });
+
+    it('resetting the general panel restores csoundManualUrl to default while preserving other panels', () => {
+      const snapshot = createDefaultProgramSettings('darwin');
+      snapshot.general.csoundManualUrl = 'file:///custom/path';
+      snapshot.general.workDirectory = '/custom/work';
+      snapshot.playback.playbackFps = 60;
+      const reset = resetProgramSettingsPanel(snapshot, 'general', 'darwin');
+      expect(reset.general.csoundManualUrl).toBe('https://csound.com/manual');
+      expect(reset.general.workDirectory).toBe('');
+      expect(reset.playback.playbackFps).toBe(60);
+    });
+  });
 });

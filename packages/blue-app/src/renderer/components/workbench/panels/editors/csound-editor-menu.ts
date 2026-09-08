@@ -1,5 +1,6 @@
 import type { CodeRepositoryNode } from '@blue/data';
 import type {
+  CsoundDocumentMode,
   CsoundEditorDisabledItem,
   CsoundEditorInsertionItem,
   CsoundEditorMenuItem,
@@ -10,6 +11,7 @@ import { createOpcodesSubmenu } from './csound-opcode-menu';
 export { createOpcodesSubmenu };
 
 export interface CsoundEditorMenuOptions {
+  mode?: CsoundDocumentMode;
   readOnly?: boolean;
   showEvaluateCode?: boolean;
   evaluateCodeEnabled?: boolean;
@@ -245,15 +247,28 @@ export function createAddToCodeRepositoryItem(
   };
 }
 
+export function createOpenManualItem(): CsoundEditorCommandItem {
+  return {
+    kind: 'command',
+    id: 'open-manual',
+    label: 'Open Manual',
+    command: 'open-manual',
+  };
+}
+
 export function createJavaBlueCsoundEditorMenuItems(
   options: CsoundEditorMenuOptions = {},
 ): CsoundEditorMenuItem[] {
   const readOnly = Boolean(options.readOnly);
+  const isScoreMode = options.mode === 'sco';
 
-  return [
-    createBlueVariablesSubmenu(options),
-    createOpcodesSubmenu(options),
-    createBlueOpcodesSubmenu(options),
+  const items: CsoundEditorMenuItem[] = [createBlueVariablesSubmenu(options)];
+
+  if (!isScoreMode) {
+    items.push(createOpcodesSubmenu(options), createBlueOpcodesSubmenu(options));
+  }
+
+  items.push(
     {
       kind: 'separator',
       id: 'editor-menu-separator-1',
@@ -264,6 +279,7 @@ export function createJavaBlueCsoundEditorMenuItems(
       kind: 'separator',
       id: 'editor-menu-separator-2',
     },
+    createOpenManualItem(),
     {
       kind: 'command',
       id: 'cut',
@@ -308,7 +324,9 @@ export function createJavaBlueCsoundEditorMenuItems(
           } satisfies CsoundEditorMenuItem,
         ]
       : []),
-  ];
+  );
+
+  return items;
 }
 
 export function createBasicTextEditorMenuItems(
