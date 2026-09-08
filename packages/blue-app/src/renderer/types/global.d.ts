@@ -525,6 +525,9 @@ declare global {
       ) => Promise<import('../../shared/program-settings').ProgramSettingsSaveResult>;
       probeEngineRuntime: (request?: EngineProbeRequest) => Promise<EngineProbeResult>;
       queryCsoundIo: (request?: CsoundIoQueryRequest) => Promise<CsoundIoQueryResult>;
+      openCsoundManual: (
+        request: import('../../shared/csound-manual').OpenCsoundManualRequest,
+      ) => Promise<import('../../shared/csound-manual').OpenCsoundManualResult>;
 
       // OSC Control
       getOscServerSnapshot: () => Promise<OscServerRuntimeSnapshot>;

@@ -23,6 +23,15 @@ import {
 import AddToCodeRepositoryDialog from '../code-repository/AddToCodeRepositoryDialog';
 import { useCodeRepositoryStore } from '../../../../stores/code-repository-store';
 import { getSelectedText } from './csound-editor-actions';
+import {
+  getOpcodeAtCaret,
+  handleOpenManualAtCaret,
+  renderOpcodeHelpHtml,
+} from './csound-opcode-help';
+import { normalizeCatalogOpcode } from './csound-opcode-insertion';
+import { HostSurfacePortal } from '../../../host-surface/HostSurfacePortal';
+import { useHostSurface } from '../../../host-surface/use-host-surface';
+import type { RichOpcodeCatalogEntry } from '@kunstmusik/codemirror-lang-csound/rich';
 import type {
   DynamicCsoundCompletionProvider,
   JavaBlueCsoundCompletionOptions,
@@ -157,6 +166,8 @@ export default function SelectedCodeEditor({
   const viewRef = useRef<EditorView | null>(null);
   const [selectedText, setSelectedText] = useState('');
   const [pendingRepositoryText, setPendingRepositoryText] = useState<string | null>(null);
+  const [helpEntry, setHelpEntry] = useState<RichOpcodeCatalogEntry | null>(null);
+  const helpContentRef = useRef<HTMLDivElement | null>(null);
   const repositorySnapshot = useCodeRepositoryStore((state) => state.snapshot);
   const effectiveRepositoryRoot = codeRepositoryRoot ?? repositorySnapshot?.root ?? null;
   // Holds the autocompletion extension so it can be reconfigured (updated in
@@ -168,6 +179,36 @@ export default function SelectedCodeEditor({
   const editorMetadata = getSelectedEditorMetadata(mode);
   const hasEvaluateCodeHandler = Boolean(onEvaluateCode);
   const usesCsoundMenu = mode === 'orc' || mode === 'sco' || mode === 'csd';
+  const helpAnchor =
+    helpEntry && viewRef.current?.dom
+      ? { type: 'element' as const, element: viewRef.current.dom }
+      : null;
+  const helpSurface = useHostSurface(helpAnchor, {
+    kind: 'popover',
+    placement: 'right',
+    align: 'start',
+    hostDocument: helpAnchor?.element.ownerDocument ?? null,
+    onDismiss: (reason) => {
+      if (reason !== 'host-unmount') setHelpEntry(null);
+    },
+  });
+
+  useEffect(() => {
+    const target = helpContentRef.current;
+    if (!target || !helpEntry || !helpSurface.hostDocument) return;
+    const content = renderOpcodeHelpHtml(normalizeCatalogOpcode(helpEntry), {
+      ownerDocument: helpSurface.hostDocument,
+    });
+    target.replaceChildren(content);
+    return () => content.remove();
+  }, [helpEntry, helpSurface.hostDocument, helpSurface.phase]);
+
+  const handleOpenManual = useCallback(() => {
+    const view = viewRef.current;
+    if (!view) return;
+    setHelpEntry(getOpcodeAtCaret(view) ?? null);
+    void handleOpenManualAtCaret(view, { presentHelp: false });
+  }, []);
 
   useEffect(() => {
     if (!usesCsoundMenu) return;
@@ -274,7 +315,10 @@ export default function SelectedCodeEditor({
       completionCompartment.of(
         createCsoundCompletionExtension(
           dynamicCompletionProviders,
-          javaBlueCompletionOptions,
+          {
+            ...javaBlueCompletionOptions,
+            ownerDocument: container.ownerDocument,
+          },
           mode,
         ),
       ),
@@ -315,7 +359,10 @@ export default function SelectedCodeEditor({
       effects: completionCompartment.reconfigure(
         createCsoundCompletionExtension(
           dynamicCompletionProviders,
-          javaBlueCompletionOptions,
+          {
+            ...javaBlueCompletionOptions,
+            ownerDocument: view.dom.ownerDocument,
+          },
           mode,
         ),
       ),
@@ -374,6 +421,7 @@ export default function SelectedCodeEditor({
         menuItems={menuItems}
         onEvaluateCode={onEvaluateCode ? handleEvaluateCode : undefined}
         onAddToCodeRepository={handleAddToCodeRepository}
+        onOpenManualAtCaret={handleOpenManual}
       >
         <div
           className="selected-code-editor selected-code-editor--codemirror"
@@ -388,6 +436,14 @@ export default function SelectedCodeEditor({
           </pre>
         </div>
       </CsoundEditorContextMenu>
+      <HostSurfacePortal
+        session={helpSurface}
+        role="dialog"
+        ariaLabel={helpEntry ? `${helpEntry.name} help` : 'Csound opcode help'}
+        className="z-50 max-w-lg rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-xl"
+      >
+        <div ref={helpContentRef} />
+      </HostSurfacePortal>
       {pendingRepositoryText !== null && (
         <AddToCodeRepositoryDialog
           root={effectiveRepositoryRoot}

@@ -67,7 +67,7 @@ importers:
         specifier: ^5.2.10
         version: 5.2.10
       '@kunstmusik/codemirror-lang-csound':
-        specifier: ^1.0.2
+        specifier: 1.0.2
         version: 1.0.2
       '@lezer/highlight':
         specifier: ^1.2.3

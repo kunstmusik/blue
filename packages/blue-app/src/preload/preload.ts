@@ -59,6 +59,11 @@ import {
   type NativeConfirmationResult,
 } from '../shared/confirmation-dialog';
 import {
+  CSOUND_MANUAL_OPEN_CHANNEL,
+  type OpenCsoundManualRequest,
+  type OpenCsoundManualResult,
+} from '../shared/csound-manual';
+import {
   SOUND_FONT_FILE_SELECT_CHANNEL,
   SOUND_FONT_INSPECT_CHANNEL,
   type SoundFontInfo,
@@ -1074,6 +1079,8 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke('engine-runtime:probe', request) as Promise<EngineProbeResult>,
   queryCsoundIo: (request?: CsoundIoQueryRequest) =>
     ipcRenderer.invoke('engine-runtime:query-csound-io', request) as Promise<CsoundIoQueryResult>,
+  openCsoundManual: (request: OpenCsoundManualRequest) =>
+    ipcRenderer.invoke(CSOUND_MANUAL_OPEN_CHANNEL, request) as Promise<OpenCsoundManualResult>,
 
   // OSC Control
   getOscServerSnapshot: () =>

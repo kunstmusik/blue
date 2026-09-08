@@ -29,6 +29,7 @@ export const APPLICATION_IPC_CHANNELS = [
   'window-layout:get-display-work-areas',
   'window-layout:update',
   'window-layout:reset',
+  'csound-manual:open',
 ] as const;
 
 export type ApplicationIpcChannel = (typeof APPLICATION_IPC_CHANNELS)[number];

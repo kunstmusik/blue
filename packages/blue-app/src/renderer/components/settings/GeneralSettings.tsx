@@ -1,5 +1,6 @@
 import React from 'react';
 import type { GeneralSettingsSnapshot } from '../../../shared/program-settings';
+import { DEFAULT_CSOUND_MANUAL_URL } from '../../../shared/csound-manual';
 import SettingsSection from './SettingsSection';
 import SettingsField, {
   SettingsCheckboxField,
@@ -29,6 +30,25 @@ export default function GeneralSettings({
         onChange={(value) => set('workDirectory', value)}
         placeholder="(default user directory)"
         description="Default directory for file choosers and import/export operations."
+      />
+
+      <SettingsField
+        label="Csound Manual URL"
+        value={settings.csoundManualUrl}
+        onChange={(value) => set('csoundManualUrl', value)}
+        placeholder={DEFAULT_CSOUND_MANUAL_URL}
+        description="Base URL for Csound 7 manual documentation (https: or local file: URL)."
+        action={
+          <button
+            type="button"
+            aria-label="Reset Csound Manual URL to default"
+            disabled={settings.csoundManualUrl === DEFAULT_CSOUND_MANUAL_URL}
+            onClick={() => set('csoundManualUrl', DEFAULT_CSOUND_MANUAL_URL)}
+            className="rounded-md border border-app-border bg-app-surface px-3 py-1.5 text-role-body text-app-text transition-colors hover:border-app-accent disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Reset
+          </button>
+        }
       />
 
       <SettingsCheckboxField

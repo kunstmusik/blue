@@ -21,6 +21,7 @@ import {
   normalizeAppZoomPercent,
 } from './app-zoom';
 import { normalizeFileManagerFavorites, normalizeFileManagerRootLabels } from './file-manager';
+import { DEFAULT_CSOUND_MANUAL_URL, validateAndNormalizeCsoundManualRoot } from './csound-manual';
 
 export type ProgramSettingsPanelId =
   | 'general'
@@ -38,6 +39,7 @@ export interface GeneralSettingsSnapshot {
   messageColorsEnabled: boolean;
   csoundErrorWarningEnabled: boolean;
   directoryTempFileLimit: number;
+  csoundManualUrl: string;
 }
 
 export type DefaultLayerGroupType = 'TRACK' | 'SOUND_OBJECT';
@@ -435,6 +437,7 @@ export function createDefaultGeneralSettings(): GeneralSettingsSnapshot {
     messageColorsEnabled: false,
     csoundErrorWarningEnabled: true,
     directoryTempFileLimit: 3,
+    csoundManualUrl: DEFAULT_CSOUND_MANUAL_URL,
   };
 }
 
@@ -595,6 +598,15 @@ export function validateProgramSettings(
     issues.push({
       path: 'general.directoryTempFileLimit',
       message: 'Must be at least 1',
+      severity: 'error',
+    });
+  }
+
+  const manualValidation = validateAndNormalizeCsoundManualRoot(snapshot.general.csoundManualUrl);
+  if (!manualValidation.valid) {
+    issues.push({
+      path: 'general.csoundManualUrl',
+      message: manualValidation.error ?? 'Csound manual URL must be a valid https: or file: URL',
       severity: 'error',
     });
   }
@@ -839,6 +851,11 @@ export function mergeWithDefaults(
         saved.general?.csoundErrorWarningEnabled ?? defaults.general.csoundErrorWarningEnabled,
       directoryTempFileLimit:
         saved.general?.directoryTempFileLimit ?? defaults.general.directoryTempFileLimit,
+      csoundManualUrl:
+        saved.general?.csoundManualUrl !== undefined
+          ? (validateAndNormalizeCsoundManualRoot(saved.general.csoundManualUrl).normalizedUrl ??
+            saved.general.csoundManualUrl)
+          : defaults.general.csoundManualUrl,
     },
     projectDefaults: {
       ...defaults.projectDefaults,

@@ -399,4 +399,70 @@ describe('updatePlaybackPreferences', () => {
     settings = loadProgramSettings('darwin');
     expect(settings.general.workDirectory).toBe('/my/valid/dir');
   });
+
+  it('persists and reloads general.csoundManualUrl', () => {
+    let settings = loadProgramSettings('darwin');
+    expect(settings.general.csoundManualUrl).toBe('https://csound.com/manual');
+
+    settings.general.csoundManualUrl = 'file:///opt/csound/manual';
+    const result = saveProgramSettings(settings, 'darwin');
+    expect(result.ok).toBe(true);
+
+    clearSettingsCache();
+    const reloaded = loadProgramSettings('darwin');
+    expect(reloaded.general.csoundManualUrl).toBe('file:///opt/csound/manual');
+  });
+
+  it('rejects invalid csoundManualUrl and preserves last valid snapshot on disk and in cache', () => {
+    let settings = loadProgramSettings('darwin');
+    settings.general.csoundManualUrl = 'https://valid.csound.org/manual';
+    saveProgramSettings(settings, 'darwin');
+
+    const invalidRoots = [
+      'http://insecure.url',
+      'file:relative/manual',
+      'https:example.com/manual',
+      'FILE:relative/manual',
+      'HTTPS:example.com/manual',
+      'https://example.com/%ZZ',
+      'https://csound.com/\uD800',
+    ];
+
+    for (const invalidRoot of invalidRoots) {
+      settings.general.csoundManualUrl = invalidRoot;
+      const result = saveProgramSettings(settings, 'darwin');
+      expect(result.ok, `Expected rejection for: ${invalidRoot}`).toBe(false);
+      expect(
+        result.validationIssues?.some((issue) => issue.path === 'general.csoundManualUrl'),
+      ).toBe(true);
+
+      clearSettingsCache();
+      const reloaded = loadProgramSettings('darwin');
+      expect(reloaded.general.csoundManualUrl).toBe('https://valid.csound.org/manual');
+    }
+  });
+
+  it('persists valid file URLs with encoded spaces and platform formats', () => {
+    let settings = loadProgramSettings('darwin');
+    settings.general.csoundManualUrl = 'file:///opt/my%20csound%20manual';
+    const result = saveProgramSettings(settings, 'darwin');
+    expect(result.ok).toBe(true);
+
+    clearSettingsCache();
+    const reloaded = loadProgramSettings('darwin');
+    expect(reloaded.general.csoundManualUrl).toBe('file:///opt/my%20csound%20manual');
+  });
+
+  it('resetting the general panel restores default csoundManualUrl', () => {
+    let settings = loadProgramSettings('darwin');
+    settings.general.csoundManualUrl = 'file:///my/custom/manual';
+    saveProgramSettings(settings, 'darwin');
+
+    const reset = resetPanel('general', 'darwin');
+    expect(reset.general.csoundManualUrl).toBe('https://csound.com/manual');
+
+    clearSettingsCache();
+    const reloaded = loadProgramSettings('darwin');
+    expect(reloaded.general.csoundManualUrl).toBe('https://csound.com/manual');
+  });
 });

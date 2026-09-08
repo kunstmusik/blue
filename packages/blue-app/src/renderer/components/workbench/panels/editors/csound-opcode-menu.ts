@@ -9,6 +9,7 @@ import type {
   CsoundEditorSubmenuItem,
 } from './editor-adapter-types';
 import type { CsoundEditorMenuOptions } from './csound-editor-menu';
+import { normalizeCatalogOpcode } from './csound-opcode-insertion';
 
 interface OpcodeCategoryTreeNode {
   readonly name: string;
@@ -110,6 +111,9 @@ function buildOpcodeCategoryTree(
 }
 
 const STATIC_OPCODE_TREE = buildOpcodeCategoryTree(csoundRichOpcodeCatalog.opcodes);
+const STATIC_OPCODE_METADATA = new Map(
+  csoundRichOpcodeCatalog.opcodes.map((entry) => [entry, normalizeCatalogOpcode(entry)]),
+);
 
 function toInsertionItem(
   entry: RichOpcodeCatalogEntry,
@@ -124,6 +128,7 @@ function toInsertionItem(
     detail: 'opcode',
     disabled: readOnly,
     disabledReason: readOnly ? 'Editor is read-only' : undefined,
+    opcodeMetadata: STATIC_OPCODE_METADATA.get(entry),
   };
 }
 

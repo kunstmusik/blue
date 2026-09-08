@@ -72,7 +72,12 @@ export function createCsoundCompletionExtension(
     return [];
   }
 
-  const completionSources = [createJavaBlueCsoundCompletionSource(javaBlueCompletionOptions)];
+  const mergedOptions: JavaBlueCsoundCompletionOptions = {
+    ...javaBlueCompletionOptions,
+    mode,
+  };
+
+  const completionSources = [createJavaBlueCsoundCompletionSource(mergedOptions)];
   if (dynamicCompletionProviders.length > 0) {
     completionSources.push(createDynamicCsoundCompletionSource(dynamicCompletionProviders));
   }

@@ -27,7 +27,8 @@ export type CsoundEditorCommand =
   | 'copy'
   | 'paste'
   | 'evaluate-code'
-  | 'add-to-code-repository';
+  | 'add-to-code-repository'
+  | 'open-manual';
 
 export interface CsoundEditorSeparatorItem {
   kind: 'separator';
@@ -52,6 +53,7 @@ export interface CsoundEditorInsertionItem {
   detail?: string;
   disabled?: boolean;
   disabledReason?: string;
+  opcodeMetadata?: NormalizedOpcodeMetadata;
 }
 
 export interface CsoundEditorSubmenuItem {
@@ -98,6 +100,8 @@ export interface JavaBlueUdoCompletionDefinition {
 }
 
 export interface JavaBlueCsoundCompletionOptions {
+  mode?: CsoundDocumentMode;
+  ownerDocument?: Document;
   bsbReplacementKeys?: JavaBlueBsbReplacementKey[];
   /** UDO definitions owned by the active instrument, Sound, or effect context. */
   contextUdos?: readonly JavaBlueUdoCompletionDefinition[];
@@ -128,4 +132,39 @@ export interface SelectedEditorMetadata {
   kind: SelectedEditorKind;
   languageId: string;
   mode: CsoundDocumentMode;
+}
+
+export type OpcodeKind = 'call' | 'statement' | 'declaration';
+
+export interface OpcodeSignatureInfo {
+  outTypes: string;
+  inTypes: string;
+}
+
+export interface NormalizedOpcodeMetadata {
+  name: string;
+  manualId?: string;
+  kind: OpcodeKind;
+  catalogSyntax?: string[];
+  modernSyntax?: string[];
+  classicSyntax?: string[];
+  signatures?: OpcodeSignatureInfo[];
+  shortDescription?: string;
+  category?: string;
+  status?: string;
+  examples?: string[];
+}
+
+export type OpcodeInsertionForm =
+  | 'expression'
+  | 'classic-statement'
+  | 'modern-statement'
+  | 'name-only';
+
+export interface OpcodeInsertionPlan {
+  from: number;
+  to: number;
+  template: string;
+  isSnippet: boolean;
+  form: OpcodeInsertionForm;
 }

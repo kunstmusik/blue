@@ -34,6 +34,7 @@ interface SettingsFieldProps extends Omit<
   containerClassName?: string;
   inputClassName?: string;
   inputRef?: React.Ref<HTMLInputElement>;
+  action?: React.ReactNode;
 }
 
 export default function SettingsField({
@@ -44,6 +45,7 @@ export default function SettingsField({
   containerClassName,
   inputClassName,
   inputRef,
+  action,
   id: explicitId,
   ...inputProps
 }: SettingsFieldProps): React.ReactElement {
@@ -61,15 +63,18 @@ export default function SettingsField({
           {description}
         </div>
       )}
-      <input
-        ref={inputRef}
-        id={inputId}
-        aria-describedby={descriptionId}
-        {...inputProps}
-        value={value}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
-        className={cn(FIELD_INPUT_CLASS, inputClassName)}
-      />
+      <div className={cn(action ? 'flex max-w-[520px] items-center gap-2' : 'contents')}>
+        <input
+          ref={inputRef}
+          id={inputId}
+          aria-describedby={descriptionId}
+          {...inputProps}
+          value={value}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
+          className={cn(FIELD_INPUT_CLASS, action && 'min-w-0 flex-1 max-w-none', inputClassName)}
+        />
+        {action}
+      </div>
     </div>
   );
 }

@@ -108,6 +108,243 @@ describe('CsoundEditorContextMenu opcode insertion', () => {
       await Promise.resolve();
     });
 
-    expect(view.state.doc.toString()).toBe('ares oscil xamp, xcps [, ifn, iphs]');
+    expect(view.state.doc.toString()).toBe('ares = oscil(xamp, xcps)');
+  });
+
+  it('triggers Open Manual for opcode at caret via context menu command', async () => {
+    const openCsoundManual = vi.fn().mockResolvedValue({
+      disposition: 'opened',
+      availability: 'available',
+      targetUrl: 'https://csound.com/manual/opcodes/oscili/',
+    });
+    window.blueAPI = {
+      ...(window.blueAPI ?? {}),
+      openCsoundManual,
+    } as unknown as typeof window.blueAPI;
+
+    view.dispatch({
+      changes: { from: 0, to: view.state.doc.length, insert: 'a1 oscili 0.5, 440' },
+      selection: { anchor: 5, head: 5 }, // Inside 'oscili'
+    });
+
+    const editorViewRef = { current: view };
+    act(() => {
+      root.render(
+        <CsoundEditorContextMenu
+          editorViewRef={editorViewRef}
+          menuItems={[
+            {
+              kind: 'command',
+              id: 'open-manual',
+              label: 'Open Manual',
+              command: 'open-manual',
+            },
+          ]}
+        >
+          <button type="button">Editor</button>
+        </CsoundEditorContextMenu>,
+      );
+    });
+
+    const trigger = container.querySelector('button');
+    await act(async () => {
+      trigger!.dispatchEvent(
+        new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          button: 2,
+          clientX: 10,
+          clientY: 10,
+        }),
+      );
+      await Promise.resolve();
+    });
+
+    const openManualItem = findMenuItem('Open Manual');
+    expect(openManualItem).not.toBeUndefined();
+    await act(async () => {
+      openManualItem!.click();
+      await Promise.resolve();
+    });
+
+    expect(openCsoundManual).toHaveBeenCalledWith({ manualId: 'oscili' });
+    expect(view.state.doc.toString()).toBe('a1 oscili 0.5, 440');
+    expect(view.state.selection.main.head).toBe(5);
+  });
+
+  it('handles display-name/manual-id differences (e.g. opcode a uses manualId opa)', async () => {
+    const openCsoundManual = vi.fn().mockResolvedValue({
+      disposition: 'opened',
+      availability: 'available',
+      targetUrl: 'https://csound.com/manual/opcodes/opa/',
+    });
+    window.blueAPI = {
+      ...(window.blueAPI ?? {}),
+      openCsoundManual,
+    } as unknown as typeof window.blueAPI;
+
+    view.dispatch({
+      changes: { from: 0, to: view.state.doc.length, insert: 'a1 a k1' },
+      selection: { anchor: 3, head: 4 }, // Selected 'a'
+    });
+
+    const editorViewRef = { current: view };
+    act(() => {
+      root.render(
+        <CsoundEditorContextMenu
+          editorViewRef={editorViewRef}
+          menuItems={[
+            {
+              kind: 'command',
+              id: 'open-manual',
+              label: 'Open Manual',
+              command: 'open-manual',
+            },
+          ]}
+        >
+          <button type="button">Editor</button>
+        </CsoundEditorContextMenu>,
+      );
+    });
+
+    const trigger = container.querySelector('button');
+    await act(async () => {
+      trigger!.dispatchEvent(
+        new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          button: 2,
+          clientX: 10,
+          clientY: 10,
+        }),
+      );
+      await Promise.resolve();
+    });
+
+    const openManualItem = findMenuItem('Open Manual');
+    await act(async () => {
+      openManualItem!.click();
+      await Promise.resolve();
+    });
+
+    expect(openCsoundManual).toHaveBeenCalledWith({ manualId: 'opa' });
+  });
+
+  it('performs no navigation when caret is on an unrecognized identifier', async () => {
+    const openCsoundManual = vi.fn();
+    window.blueAPI = {
+      ...(window.blueAPI ?? {}),
+      openCsoundManual,
+    } as unknown as typeof window.blueAPI;
+
+    view.dispatch({
+      changes: { from: 0, to: view.state.doc.length, insert: 'myCustomVariable = 123' },
+      selection: { anchor: 5, head: 5 },
+    });
+
+    const editorViewRef = { current: view };
+    act(() => {
+      root.render(
+        <CsoundEditorContextMenu
+          editorViewRef={editorViewRef}
+          menuItems={[
+            {
+              kind: 'command',
+              id: 'open-manual',
+              label: 'Open Manual',
+              command: 'open-manual',
+            },
+          ]}
+        >
+          <button type="button">Editor</button>
+        </CsoundEditorContextMenu>,
+      );
+    });
+
+    const trigger = container.querySelector('button');
+    await act(async () => {
+      trigger!.dispatchEvent(
+        new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          button: 2,
+          clientX: 10,
+          clientY: 10,
+        }),
+      );
+      await Promise.resolve();
+    });
+
+    const openManualItem = findMenuItem('Open Manual');
+    await act(async () => {
+      openManualItem!.click();
+      await Promise.resolve();
+    });
+
+    expect(openCsoundManual).not.toHaveBeenCalled();
+    expect(view.state.doc.toString()).toBe('myCustomVariable = 123');
+    expect(view.state.selection.main.head).toBe(5);
+  });
+
+  it('shows non-blocking toast and leaves editor unchanged when open manual returns fallback', async () => {
+    const openCsoundManual = vi.fn().mockResolvedValue({
+      disposition: 'fallback',
+      availability: 'missing',
+      reason: 'missing',
+      targetUrl: 'https://csound.com/manual/opcodes/oscili/',
+      message: 'Csound manual entry not found (404)',
+    });
+    window.blueAPI = {
+      ...(window.blueAPI ?? {}),
+      openCsoundManual,
+    } as unknown as typeof window.blueAPI;
+
+    view.dispatch({
+      changes: { from: 0, to: view.state.doc.length, insert: 'a1 = oscili(0.5, 440)' },
+      selection: { anchor: 7, head: 7 },
+    });
+
+    const editorViewRef = { current: view };
+    act(() => {
+      root.render(
+        <CsoundEditorContextMenu
+          editorViewRef={editorViewRef}
+          menuItems={[
+            {
+              kind: 'command',
+              id: 'open-manual',
+              label: 'Open Manual',
+              command: 'open-manual',
+            },
+          ]}
+        >
+          <button type="button">Editor</button>
+        </CsoundEditorContextMenu>,
+      );
+    });
+
+    const trigger = container.querySelector('button');
+    await act(async () => {
+      trigger!.dispatchEvent(
+        new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          button: 2,
+          clientX: 10,
+          clientY: 10,
+        }),
+      );
+      await Promise.resolve();
+    });
+
+    const openManualItem = findMenuItem('Open Manual');
+    await act(async () => {
+      openManualItem!.click();
+      await Promise.resolve();
+    });
+
+    expect(openCsoundManual).toHaveBeenCalledWith({ manualId: 'oscili' });
+    expect(view.state.doc.toString()).toBe('a1 = oscili(0.5, 440)');
+    expect(view.state.selection.main.head).toBe(7);
   });
 });

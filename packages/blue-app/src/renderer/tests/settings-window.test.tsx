@@ -512,4 +512,172 @@ describe('settings renderer (044)', () => {
       expect(btn.className).toContain('text-role-body');
     }
   });
+
+  describe('Csound Manual URL setting (SPEC 102)', () => {
+    it('displays Csound Manual URL field in General settings with default value and placeholder', async () => {
+      await act(async () => {
+        root.render(<SettingsApp />);
+      });
+
+      const manualInput = container.querySelector(
+        'input[placeholder="https://csound.com/manual"]',
+      ) as HTMLInputElement;
+      expect(manualInput).toBeInstanceOf(HTMLInputElement);
+      expect(manualInput.value).toBe('https://csound.com/manual');
+      expect(container.textContent).toContain('Csound Manual URL');
+      expect(container.textContent).toContain('Base URL for Csound 7 manual documentation');
+    });
+
+    it('edits Csound Manual URL and calls saveProgramSettings on Apply', async () => {
+      await act(async () => {
+        root.render(<SettingsApp />);
+      });
+
+      const manualInput = container.querySelector(
+        'input[placeholder="https://csound.com/manual"]',
+      ) as HTMLInputElement;
+      expect(manualInput).toBeTruthy();
+
+      const newUrl = 'file:///Users/stevenyi/csound-manual/';
+      await act(() => {
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(
+          manualInput,
+          newUrl,
+        );
+        manualInput.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+
+      const applyButton = Array.from(container.querySelectorAll('button')).find(
+        (b) => b.textContent === 'Apply',
+      );
+      await act(async () => {
+        applyButton?.click();
+      });
+
+      expect(mockBlueAPI.saveProgramSettings).toHaveBeenCalledWith(
+        expect.objectContaining({
+          general: expect.objectContaining({
+            csoundManualUrl: newUrl,
+          }),
+        }),
+      );
+    });
+
+    it('resets only the Csound Manual URL draft to the online default', async () => {
+      await act(async () => {
+        root.render(<SettingsApp />);
+      });
+
+      const manualInput = container.querySelector(
+        'input[placeholder="https://csound.com/manual"]',
+      ) as HTMLInputElement;
+      await act(() => {
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(
+          manualInput,
+          'file:///custom/manual',
+        );
+        manualInput.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+
+      const resetButton = container.querySelector(
+        'button[aria-label="Reset Csound Manual URL to default"]',
+      ) as HTMLButtonElement;
+      expect(resetButton).toBeTruthy();
+      expect(resetButton.disabled).toBe(false);
+
+      await act(() => resetButton.click());
+      expect(manualInput.value).toBe('https://csound.com/manual');
+      expect(resetButton.disabled).toBe(true);
+
+      const applyButton = Array.from(container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'Apply',
+      );
+      await act(async () => applyButton?.click());
+      expect(mockBlueAPI.saveProgramSettings).toHaveBeenCalledWith(
+        expect.objectContaining({
+          general: expect.objectContaining({
+            csoundManualUrl: 'https://csound.com/manual',
+          }),
+        }),
+      );
+    });
+
+    it('displays validation error banner when manual URL is rejected', async () => {
+      mockBlueAPI.saveProgramSettings.mockResolvedValueOnce({
+        ok: false,
+        validationIssues: [
+          {
+            path: 'general.csoundManualUrl',
+            message: 'Csound manual URL must use https: or file: protocol',
+            severity: 'error',
+          },
+        ],
+      });
+
+      await act(async () => {
+        root.render(<SettingsApp />);
+      });
+
+      const manualInput = container.querySelector(
+        'input[placeholder="https://csound.com/manual"]',
+      ) as HTMLInputElement;
+
+      await act(() => {
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(
+          manualInput,
+          'http://insecure.example.com',
+        );
+        manualInput.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+
+      const applyButton = Array.from(container.querySelectorAll('button')).find(
+        (b) => b.textContent === 'Apply',
+      );
+      await act(async () => {
+        applyButton?.click();
+      });
+
+      expect(container.textContent).toContain(
+        'general.csoundManualUrl: Csound manual URL must use https: or file: protocol',
+      );
+    });
+
+    it('resets Csound Manual URL on Reset Panel', async () => {
+      mockBlueAPI.resetProgramSettingsPanel.mockResolvedValueOnce({
+        ...defaultSettings,
+        general: {
+          ...defaultSettings.general,
+          csoundManualUrl: 'https://csound.com/manual',
+        },
+      });
+
+      await act(async () => {
+        root.render(<SettingsApp />);
+      });
+
+      const manualInput = container.querySelector(
+        'input[placeholder="https://csound.com/manual"]',
+      ) as HTMLInputElement;
+
+      // First change to a custom local URL
+      await act(() => {
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(
+          manualInput,
+          'file:///custom/path',
+        );
+        manualInput.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+
+      // Now click Reset Panel
+      const resetButton = Array.from(container.querySelectorAll('button')).find(
+        (b) => b.textContent === 'Reset Panel',
+      );
+      await act(async () => {
+        resetButton?.click();
+      });
+
+      expect(mockBlueAPI.resetProgramSettingsPanel).toHaveBeenCalledWith('general');
+      expect(manualInput.value).toBe('https://csound.com/manual');
+    });
+  });
 });
