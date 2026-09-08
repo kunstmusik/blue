@@ -3,11 +3,13 @@
 import React from 'react';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
+import { startCompletion } from '@codemirror/autocomplete';
 import { EditorView } from 'codemirror';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import SelectedCodeEditor from '../components/workbench/panels/editors/SelectedCodeEditor';
 import type { JavaBlueCsoundCompletionOptions } from '../components/workbench/panels/editors/editor-adapter-types';
 import { useCodeRepositoryStore } from '../stores/code-repository-store';
+import { HostDocumentContext } from '../hooks/use-host-document';
 import { CODE_REPOSITORY_ROOT_ID } from '@blue/data';
 
 (
@@ -239,5 +241,92 @@ describe('SelectedCodeEditor completion reconfigure', () => {
       ),
     ).toBe(true);
     expect(document.body.textContent).toContain('selected');
+  });
+
+  it('mounts the CodeMirror tooltip container into the hosting document body instead of inside the editor', () => {
+    const bodyChildrenBefore = Array.from(document.body.children);
+    renderWith({});
+
+    const view = getView();
+    expect(view).not.toBeNull();
+
+    // The tooltip container was created by CodeMirror and appended to document.body
+    const bodyChildrenAfter = Array.from(document.body.children);
+    const newBodyElements = bodyChildrenAfter.filter((el) => !bodyChildrenBefore.includes(el));
+
+    const tooltipContainer = newBodyElements.find(
+      (el) =>
+        el !== container &&
+        el.tagName === 'DIV' &&
+        (el as HTMLElement).style.position === 'relative',
+    );
+    expect(tooltipContainer).toBeDefined();
+
+    // And .cm-editor itself should not contain a tooltip container
+    const editorEl = container.querySelector('.cm-editor') as HTMLElement;
+    expect(editorEl.querySelector('.cm-tooltip')).toBeNull();
+
+    // When the component unmounts, the tooltip container is cleaned up from document.body
+    act(() => root.unmount());
+    expect(document.body.contains(tooltipContainer!)).toBe(false);
+  });
+
+  it('reconfigures the tooltip container to the popout document when HostDocumentContext updates', async () => {
+    const popoutDoc = document.implementation.createHTMLDocument('popout');
+    expect(popoutDoc.body).toBeDefined();
+
+    const Wrapper = ({ hostDoc }: { hostDoc: Document | null }) =>
+      React.createElement(
+        HostDocumentContext.Provider,
+        { value: hostDoc },
+        React.createElement(SelectedCodeEditor, {
+          value: 'instr 1\nendin',
+          ariaLabel: 'test editor',
+          onChange: () => undefined,
+        }),
+      );
+
+    act(() => {
+      root.render(React.createElement(Wrapper, { hostDoc: document }));
+    });
+
+    const view = getView();
+    expect(view).not.toBeNull();
+    const initialContainer = [...document.body.children].find(
+      (el) =>
+        el !== container &&
+        el.tagName === 'DIV' &&
+        (el as HTMLElement).style.position === 'relative',
+    );
+    expect(initialContainer).toBeDefined();
+    expect(popoutDoc.body.children.length).toBe(0);
+
+    act(() => {
+      expect(startCompletion(view!)).toBe(true);
+    });
+    const completionTooltip = await vi.waitFor(() => {
+      const tooltip = document.body.querySelector('.cm-tooltip-autocomplete');
+      expect(tooltip).not.toBeNull();
+      return tooltip;
+    });
+    expect(initialContainer!.contains(completionTooltip)).toBe(true);
+
+    // Simulate floating the panel to a popout window: HostDocumentContext updates to popoutDoc
+    act(() => {
+      root.render(React.createElement(Wrapper, { hostDoc: popoutDoc }));
+    });
+
+    // The old container in document.body should be removed, and a new container added to popoutDoc.body
+    expect(document.body.contains(initialContainer!)).toBe(false);
+    const popoutContainer = [...popoutDoc.body.children].find(
+      (el) => el.tagName === 'DIV' && (el as HTMLElement).style.position === 'relative',
+    );
+    expect(popoutContainer).toBeDefined();
+    expect(document.body.contains(completionTooltip)).toBe(false);
+    expect(popoutContainer!.contains(completionTooltip)).toBe(true);
+    expect(popoutDoc.querySelector('.cm-tooltip-autocomplete')).toBe(completionTooltip);
+
+    act(() => root.unmount());
+    expect(popoutDoc.body.contains(popoutContainer!)).toBe(false);
   });
 });
