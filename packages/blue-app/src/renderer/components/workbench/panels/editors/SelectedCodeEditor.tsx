@@ -3,8 +3,9 @@ import { basicSetup, EditorView } from 'codemirror';
 import { Compartment, EditorState, type Extension } from '@codemirror/state';
 import { syntaxHighlighting, HighlightStyle, type TagStyle } from '@codemirror/language';
 import { tags as t } from '@lezer/highlight';
-import { placeholder as editorPlaceholder } from '@codemirror/view';
+import { placeholder as editorPlaceholder, tooltips } from '@codemirror/view';
 
+import { usePortalContainer } from '../../../../hooks/use-host-document';
 import CsoundEditorContextMenu from './CsoundEditorContextMenu';
 import {
   createCsoundCompletionExtension,
@@ -170,10 +171,14 @@ export default function SelectedCodeEditor({
   const helpContentRef = useRef<HTMLDivElement | null>(null);
   const repositorySnapshot = useCodeRepositoryStore((state) => state.snapshot);
   const effectiveRepositoryRoot = codeRepositoryRoot ?? repositorySnapshot?.root ?? null;
+  const portalContainer = usePortalContainer();
   // Holds the autocompletion extension so it can be reconfigured (updated in
   // place) when completion options change, without destroying the EditorView.
   // Destroying the view on every options change resets the cursor/selection.
   const completionCompartment = useRef(new Compartment()).current;
+  // Holds the tooltip configuration extension so its mounting parent can be
+  // reconfigured when the hosting window/document changes (e.g. popout panels).
+  const tooltipCompartment = useRef(new Compartment()).current;
   const onChangeRef = useRef(onChange);
   const syncingFromPropsRef = useRef(false);
   const editorMetadata = getSelectedEditorMetadata(mode);
@@ -284,6 +289,7 @@ export default function SelectedCodeEditor({
       return undefined;
     }
 
+    const targetTooltipParent = portalContainer ?? container.ownerDocument?.body;
     const extensions: Extension[] = [
       basicSetup,
       blueCodeMirrorTheme,
@@ -291,6 +297,11 @@ export default function SelectedCodeEditor({
       EditorView.lineWrapping,
       evaluationFlashPlugin,
       editorPlaceholder(placeholder ?? ''),
+      tooltipCompartment.of(
+        tooltips({
+          parent: targetTooltipParent ?? undefined,
+        }),
+      ),
       ...(hasEvaluateCodeHandler
         ? [
             createEvaluateCodeKeymapExtension(
@@ -345,7 +356,30 @@ export default function SelectedCodeEditor({
     // Completion options/providers are intentionally excluded: they are applied
     // via completionCompartment.reconfigure() in the effect below so changing
     // them never destroys the EditorView (which would reset the cursor).
-  }, [completionCompartment, hasEvaluateCodeHandler, mode, placeholder, readOnly]);
+  }, [
+    completionCompartment,
+    hasEvaluateCodeHandler,
+    mode,
+    placeholder,
+    readOnly,
+    tooltipCompartment,
+  ]);
+
+  // Reconfigure tooltips parent when the hosting window or portal container changes (e.g. popout/floating panels)
+  useEffect(() => {
+    const view = viewRef.current;
+    const targetParent = portalContainer ?? view?.dom?.ownerDocument?.body;
+    if (!view || !targetParent) {
+      return;
+    }
+    view.dispatch({
+      effects: tooltipCompartment.reconfigure(
+        tooltips({
+          parent: targetParent,
+        }),
+      ),
+    });
+  }, [portalContainer, tooltipCompartment]);
 
   // Reconfigure only the autocompletion extension when completion inputs change.
   // Non-destructive: the EditorView, document, selection, and undo history are
