@@ -29,28 +29,48 @@ export interface BlueX7EngineSyncDeps {
   ): Promise<{ ok: true; values: number[] } | { ok: false; message: string }>;
 }
 
-let activeBindings = new Map<string, CompiledBlueX7Binding>();
+const generationBindings = new Map<number, Map<string, CompiledBlueX7Binding>>();
+let defaultGeneration = 1;
 let engineSequence = 0;
 
 /** Capture the compiled bindings of the render that just started. */
 export function setActiveBlueX7Bindings(
   bindings: readonly CompiledBlueX7Binding[] | undefined,
+  generation = 1,
 ): void {
-  activeBindings = new Map(bindings?.map((binding) => [binding.ownerIdentity, binding]) ?? []);
+  defaultGeneration = generation;
+  generationBindings.set(
+    generation,
+    new Map(bindings?.map((binding) => [binding.ownerIdentity, binding]) ?? []),
+  );
 }
 
 /** Forget the render-scoped bindings (stop, rebuild, project close). */
-export function clearActiveBlueX7Bindings(): void {
-  activeBindings = new Map();
+export function clearActiveBlueX7Bindings(generation?: number): void {
+  if (generation !== undefined) {
+    generationBindings.delete(generation);
+  } else {
+    generationBindings.clear();
+  }
 }
 
 /** Invalidate one owner without disturbing independent live bindings. */
-export function invalidateActiveBlueX7Binding(ownerIdentity: string): void {
-  activeBindings.delete(ownerIdentity);
+export function invalidateActiveBlueX7Binding(ownerIdentity: string, generation?: number): void {
+  if (generation !== undefined) {
+    generationBindings.get(generation)?.delete(ownerIdentity);
+  } else {
+    for (const registry of generationBindings.values()) {
+      registry.delete(ownerIdentity);
+    }
+  }
 }
 
-export function getActiveBlueX7Binding(ownerIdentity: string): CompiledBlueX7Binding | undefined {
-  return activeBindings.get(ownerIdentity);
+export function getActiveBlueX7Binding(
+  ownerIdentity: string,
+  generation?: number,
+): CompiledBlueX7Binding | undefined {
+  const gen = generation ?? defaultGeneration;
+  return generationBindings.get(gen)?.get(ownerIdentity);
 }
 
 /** Resolve a live runtime target against the current canonical project. */

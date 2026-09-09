@@ -10,6 +10,7 @@ import { BSBCompilationUnit } from './bsb-compilation-unit';
 import { Parameter } from '../../automation/parameter';
 import { formatBlueNumber } from '../../utilities/number-format';
 import { generatePrefixedUuid } from '../../utilities/uuid';
+import type { CopyMode } from '../../deep-copyable';
 
 export abstract class BSBWidget {
   objectName = '';
@@ -113,7 +114,7 @@ export abstract class BSBWidget {
     BSBWidget.loadCommonFromXML(this, data);
   }
 
-  private cloneWidget(): this {
+  private cloneWidget(mode: CopyMode = 'duplication'): this {
     const Ctor = this.constructor as new () => this;
     const clone = new Ctor();
 
@@ -123,7 +124,7 @@ export abstract class BSBWidget {
       }
 
       if (val instanceof BSBWidget) {
-        return val.deepCopy();
+        return val.deepCopy(mode);
       }
 
       if (Array.isArray(val)) {
@@ -146,20 +147,24 @@ export abstract class BSBWidget {
       }
     }
 
-    clone.id = this.id ? generatePrefixedUuid('w') : '';
+    if (mode === 'history') {
+      clone.id = this.id;
+    } else {
+      clone.id = this.id ? generatePrefixedUuid('w') : '';
 
-    const dropdownItems = (clone as unknown as { dropdownItems?: Array<{ uniqueId?: string }> })
-      .dropdownItems;
-    if (Array.isArray(dropdownItems)) {
-      for (const item of dropdownItems) {
-        item.uniqueId = generatePrefixedUuid('dropdown');
+      const dropdownItems = (clone as unknown as { dropdownItems?: Array<{ uniqueId?: string }> })
+        .dropdownItems;
+      if (Array.isArray(dropdownItems)) {
+        for (const item of dropdownItems) {
+          item.uniqueId = generatePrefixedUuid('dropdown');
+        }
       }
     }
 
     return clone;
   }
 
-  deepCopy(): this {
-    return this.cloneWidget();
+  deepCopy(mode: CopyMode = 'duplication'): this {
+    return this.cloneWidget(mode);
   }
 }

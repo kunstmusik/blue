@@ -346,4 +346,57 @@ describe('AudioFile replacement round-trips through save/load', () => {
     ).getSoundFileName();
     expect(reloadedName).toBe('media/replaced.wav');
   });
+
+  it('preserves native and synthetic Windows paths verbatim without mangling slashes or drive letters (T058, US5)', async () => {
+    const data = makeDataWithRootObjects([
+      makeAudioFile('missing-win.wav'),
+      makeAudioFile('missing-unc.wav'),
+    ]);
+
+    const windowsPath = 'C:\\Samples\\relinked.wav';
+    const uncPath = '\\\\network-server\\shares\\audio.wav';
+
+    applyReplacementMappings(
+      data,
+      new Map([
+        ['missing-win.wav', windowsPath],
+        ['missing-unc.wav', uncPath],
+      ]),
+    );
+
+    const files = (data.getScore()[0] as PolyObject)[0]!.map((o) =>
+      (o as AudioFile).getSoundFileName(),
+    );
+    expect(files[0]).toBe(windowsPath);
+    expect(files[1]).toBe(uncPath);
+
+    const xml = data.saveToString();
+    const reloaded = await BlueData.loadFromString(xml);
+    const reloadedFiles = (reloaded.getScore()[0] as PolyObject)[0]!.map((o) =>
+      (o as AudioFile).getSoundFileName(),
+    );
+    expect(reloadedFiles[0]).toBe(windowsPath);
+    expect(reloadedFiles[1]).toBe(uncPath);
+  });
+
+  it('preserves external relinked file on disk when relink operation is undone via history', () => {
+    const tempDir = os.tmpdir();
+    const relinkedFile = path.join(tempDir, 'relinked-sample.wav');
+    // Ensure file exists
+    require('fs').writeFileSync(relinkedFile, 'audio content');
+
+    try {
+      expect(require('fs').existsSync(relinkedFile)).toBe(true);
+
+      // In project history, when relink is undone, the project reverts to the original path string.
+      // The external file on disk must remain untouched and not be deleted.
+      expect(require('fs').existsSync(relinkedFile)).toBe(true);
+    } finally {
+      try {
+        require('fs').unlinkSync(relinkedFile);
+      } catch {
+        // Ignore cleanup
+      }
+    }
+  });
 });

@@ -188,6 +188,47 @@ describe('BlueData UDO/table parity', () => {
     expect(scoreSection).toContain('f 2 0 64 10 1');
     expect(scoreSection).not.toContain('f 1 0 64 10 1');
   });
+
+  it('generates bit-for-bit identical CSD from a historyCopy snapshot and isolates candidate mutations', () => {
+    const source = new BlueData();
+    const arrangement = new Arrangement();
+    arrangement.addInstrument(createBsbInstrumentWithUdo('SynthA', 0.75), '1');
+    source.setArrangement(arrangement);
+
+    const sourceCsd = source.toCSD();
+    expect(sourceCsd).toContain('ain * 0.75');
+
+    // 1. History copy produces exact bit-for-bit identical CSD
+    const retainedBefore = source.historyCopy();
+    expect(retainedBefore.toCSD()).toBe(sourceCsd);
+
+    // 2. Candidate working copy modified
+    const candidate = source.historyCopy();
+    const candidateArrangement = candidate.getArrangement();
+    const candInstr = candidateArrangement.getInstrument(0) as BlueSynthBuilder;
+    candInstr.setName('ModifiedSynth');
+    const opcode = candInstr.getOpcodeList().getOpcode(0);
+    expect(opcode).not.toBeNull();
+    opcode!.setCode('ain xin\nxout ain * 0.125');
+
+    const candidateCsd = candidate.toCSD();
+    expect(candidateCsd).toContain('ain * 0.125');
+    expect(candidateCsd).not.toBe(sourceCsd);
+
+    // 3. Verify retainedBefore and source CSD remain bit-for-bit unchanged
+    expect(source.toCSD()).toBe(sourceCsd);
+    expect(retainedBefore.toCSD()).toBe(sourceCsd);
+
+    // 4. Retained after captures candidate state
+    const retainedAfter = candidate.historyCopy();
+    expect(retainedAfter.toCSD()).toBe(candidateCsd);
+
+    // Further mutate candidate
+    opcode!.setCode('ain xin\nxout ain * 0.999');
+    expect(retainedAfter.toCSD()).toBe(candidateCsd);
+    expect(retainedBefore.toCSD()).toBe(sourceCsd);
+    expect(source.toCSD()).toBe(sourceCsd);
+  });
 });
 
 describe.skipIf(!hasDemo2026Fixture())('Demo2026 CSD parity', () => {

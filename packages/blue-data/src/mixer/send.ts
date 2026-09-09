@@ -4,6 +4,7 @@
  */
 import { Element } from '../serialization/xml-reader';
 import { BlueDataObject } from '../blue-data-object';
+import { CopyMode } from '../deep-copyable';
 import { Parameter } from '../automation/parameter';
 import { Channel } from './channel';
 
@@ -86,12 +87,12 @@ export class Send implements BlueDataObject {
     return send;
   }
 
-  deepCopy(): BlueDataObject {
+  deepCopy(mode: CopyMode = 'duplication'): BlueDataObject {
     const copy = new Send();
     copy._sendChannel = this._sendChannel;
     copy._level = this._level;
     copy._enabled = this._enabled;
-    copy._parameter = this._parameter.deepCopy() as Parameter;
+    copy._parameter = this._parameter.deepCopy(mode) as Parameter;
     return copy;
   }
 }

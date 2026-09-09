@@ -42,3 +42,14 @@ export function normalizeWhitespace(line: string): string {
     })
     .join(' ');
 }
+
+export function extractCsdSection(
+  csd: string,
+  tag: 'CsOptions' | 'CsInstruments' | 'CsScore',
+): string {
+  const match = csd.match(new RegExp(`<${tag}>([\\s\\S]*?)<\\/${tag}>`));
+  if (!match) {
+    throw new Error(`CSD is missing a <${tag}> section`);
+  }
+  return match[1];
+}

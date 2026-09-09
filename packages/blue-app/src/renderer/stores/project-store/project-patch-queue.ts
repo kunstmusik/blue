@@ -4,21 +4,53 @@ import type {
   ProjectEditorSnapshot,
   ScorePatch,
 } from '../../../shared/project-editor';
+import type {
+  PrepareHistoryBoundaryAck,
+  PrepareHistoryBoundaryEvent,
+  ProjectDocumentCommitMetadata,
+  ReleaseHistoryBoundaryEvent,
+} from '../../../shared/project-history';
 
 const PATCH_FLUSH_DELAY_MS = 100;
 
+export interface ProjectPatchQueueCommitContext {
+  barrierId?: string;
+  metadata?: ProjectDocumentCommitMetadata;
+}
+
 export interface ProjectPatchQueueDependencies {
-  commit(patches: readonly ProjectDocumentPatch[]): Promise<ProjectDocumentCommitReceipt>;
+  commit(
+    patches: readonly ProjectDocumentPatch[],
+    context?: ProjectPatchQueueCommitContext,
+  ): Promise<ProjectDocumentCommitReceipt>;
   fetchCanonicalSnapshot(): Promise<ProjectEditorSnapshot | null>;
   applyCanonicalSnapshot(snapshot: ProjectEditorSnapshot, preserveDirty: boolean): void;
   setDirty(dirty: boolean): void;
   reportBackgroundError(error: unknown): void;
   logRefreshError(error: unknown): void;
   onStructuralScoreEdit?: () => void;
+  /** Callback invoked when a patch submission returns an oversize history proposal. */
+  onOversizeProposal?: (proposal: {
+    token: string;
+    estimatedBytes: number;
+    limitBytes: number;
+    explanation: string;
+    documentId: string;
+    revision: number;
+    patches: readonly ProjectDocumentPatch[];
+  }) => void;
+  /** Participant identity for settlement boundary acknowledgements. */
+  participantContextId?: string;
+  /** Acknowledges zero outstanding prefix work for a settlement barrier. */
+  acknowledgeBoundary?: (ack: PrepareHistoryBoundaryAck) => void;
 }
 
 export interface ProjectPatchQueue {
-  enqueue(patch: ProjectDocumentPatch, dirtyBaseline: boolean): void;
+  enqueue(
+    patch: ProjectDocumentPatch,
+    dirtyBaseline: boolean,
+    metadata?: ProjectDocumentCommitMetadata,
+  ): void;
   flush(): Promise<void>;
   reset(sessionId?: number): void;
   acceptRevision(sessionId: number, revision: number): void;
@@ -26,6 +58,14 @@ export interface ProjectPatchQueue {
   getSessionId(): number;
   awaitPending(): Promise<void>;
   clearPending(): void;
+  /** Captures the pending prefix, pauses durable submissions, drains, and acknowledges. */
+  handlePrepareBoundary(event: PrepareHistoryBoundaryEvent): Promise<void>;
+  /** Resumes draft submissions after the settlement boundary releases. */
+  handleReleaseBoundary(event: ReleaseHistoryBoundaryEvent): void;
+  isSettlementPaused(): boolean;
+  getContextSequence(): number;
+  /** True when any of the given operation ids were submitted by this queue. */
+  ownsOperationIds(operationIds: readonly string[]): boolean;
 }
 
 export function isStructuralScorePatch(patch: ScorePatch): boolean {
@@ -186,6 +226,22 @@ export function createProjectPatchQueue(
   let inFlight: Promise<void> | null = null;
   let dirtyBaseline: boolean | null = null;
   let sequenceChanged = false;
+  let contextSequence = 0;
+  let boundary: { barrierId: string } | null = null;
+  let boundaryDrain: Promise<void> | null = null;
+  let pendingMetadata: ProjectDocumentCommitMetadata | undefined;
+  // Operation ids this queue submitted (in flight or recently acknowledged),
+  // used to suppress echoes of our own operations in canonical publications.
+  const trackedOperationIds = new Set<string>();
+  const MAX_TRACKED_OPERATION_IDS = 256;
+
+  const trackOperationId = (operationId: string): void => {
+    trackedOperationIds.add(operationId);
+    if (trackedOperationIds.size > MAX_TRACKED_OPERATION_IDS) {
+      const oldest = trackedOperationIds.values().next().value;
+      if (oldest !== undefined) trackedOperationIds.delete(oldest);
+    }
+  };
 
   const finishDirtySequenceIfSettled = (): void => {
     if (pending.length > 0 || dirtyBaseline === null) return;
@@ -212,7 +268,26 @@ export function createProjectPatchQueue(
     }
 
     try {
-      const receipt = await dependencies.commit(patches);
+      const metadata: ProjectDocumentCommitMetadata = {
+        ...pendingMetadata,
+        operationId: pendingMetadata?.operationId ?? `op-${crypto.randomUUID()}`,
+      };
+      pendingMetadata = undefined;
+      trackOperationId(metadata.operationId!);
+      const receipt = await dependencies.commit(patches, { metadata });
+      if (receipt.oversizeProposal) {
+        dependencies.onOversizeProposal?.({
+          token: receipt.oversizeProposal.token,
+          estimatedBytes: receipt.oversizeProposal.estimatedBytes,
+          limitBytes: receipt.oversizeProposal.limitBytes,
+          explanation: receipt.oversizeProposal.explanation,
+          documentId: receipt.documentId ?? '',
+          revision: receipt.revision,
+          patches,
+        });
+        finishDirtySequenceIfSettled();
+        return;
+      }
       sequenceChanged = sequenceChanged || receipt.changed !== false;
       if (receipt.sessionId === currentSessionId && Number.isInteger(receipt.revision)) {
         currentRevision = Math.max(currentRevision, receipt.revision);
@@ -264,14 +339,128 @@ export function createProjectPatchQueue(
   };
 
   const flush = async (): Promise<void> => {
+    if (boundary) {
+      throw new Error(
+        'Project patch queue is paused for a history settlement boundary; submission rejected',
+      );
+    }
     clearTimer();
     while (inFlight || pending.length > 0) {
       await (inFlight ?? start());
     }
   };
 
+  const handlePrepareBoundary = (event: PrepareHistoryBoundaryEvent): Promise<void> => {
+    if (boundary) return boundaryDrain ?? Promise.resolve();
+    clearTimer();
+    const active = { barrierId: event.barrierId };
+    boundary = active;
+    boundaryDrain = (async () => {
+      // Let the pre-boundary submission settle so the captured prefix keeps
+      // its submission order relative to work already sent to main.
+      await inFlight?.catch(() => undefined);
+      if (boundary !== active) return;
+
+      const patches = pending;
+      pending = [];
+      const drainedMetadata: ProjectDocumentCommitMetadata = {
+        ...pendingMetadata,
+        operationId: pendingMetadata?.operationId ?? `op-${crypto.randomUUID()}`,
+      };
+      pendingMetadata = undefined;
+      trackOperationId(drainedMetadata.operationId!);
+      let drained = true;
+      if (patches.length > 0) {
+        try {
+          contextSequence += 1;
+          const receipt = await dependencies.commit(patches, {
+            barrierId: active.barrierId,
+            metadata: drainedMetadata,
+          });
+          if (boundary !== active) return;
+          if (receipt.oversizeProposal) {
+            dependencies.onOversizeProposal?.({
+              token: receipt.oversizeProposal.token,
+              estimatedBytes: receipt.oversizeProposal.estimatedBytes,
+              limitBytes: receipt.oversizeProposal.limitBytes,
+              explanation: receipt.oversizeProposal.explanation,
+              documentId: receipt.documentId ?? '',
+              revision: receipt.revision,
+              patches,
+            });
+            drained = false;
+            return;
+          }
+          sequenceChanged = sequenceChanged || receipt.changed !== false;
+          if (receipt.sessionId === currentSessionId && Number.isInteger(receipt.revision)) {
+            currentRevision = Math.max(currentRevision, receipt.revision);
+          }
+          if (hasUnacknowledgedMutation(patches, receipt)) {
+            const message = patches.some(isScoreColorPatch)
+              ? 'Score object color change was not applied; the project may have changed. Please try again.'
+              : 'Track instrument change was not applied; the project may have changed. Please try again.';
+            throw new Error(message);
+          }
+          if (patchesRequireCanonicalProjectRefresh(patches)) {
+            try {
+              const snapshot = await dependencies.fetchCanonicalSnapshot();
+              if (boundary !== active) return;
+              if (snapshot) dependencies.applyCanonicalSnapshot(snapshot, true);
+            } catch (error) {
+              dependencies.logRefreshError(error);
+            }
+          }
+        } catch (error) {
+          drained = false;
+          try {
+            const snapshot = await dependencies.fetchCanonicalSnapshot();
+            if (boundary !== active) return;
+            if (snapshot) dependencies.applyCanonicalSnapshot(snapshot, true);
+          } catch (refreshError) {
+            dependencies.logRefreshError(refreshError);
+          }
+          if (boundary !== active) return;
+          // Conflicting prefix work becomes a retained draft; the nonzero
+          // outstanding count keeps the barrier from resolving on this ack.
+          pending.push(...patches);
+          dependencies.reportBackgroundError(
+            error instanceof Error ? error : new Error(String(error)),
+          );
+        }
+      }
+
+      dependencies.acknowledgeBoundary?.({
+        barrierId: active.barrierId,
+        contextId: dependencies.participantContextId ?? '',
+        lastAcknowledgedRevision: currentRevision,
+        lastAcknowledgedSequence: contextSequence,
+        outstandingPrefixCount: drained ? 0 : patches.length,
+      });
+    })();
+
+    return boundaryDrain;
+  };
+
+  const handleReleaseBoundary = (event: ReleaseHistoryBoundaryEvent): void => {
+    if (!boundary || boundary.barrierId !== event.barrierId) return;
+    boundary = null;
+    boundaryDrain = null;
+    if (pending.length > 0) {
+      // Drafts accumulated during the pause resume through the normal flush
+      // timer so main revalidates them against the released revision base.
+      schedule();
+    } else {
+      finishDirtySequenceIfSettled();
+    }
+  };
+
+  const clearBoundary = (): void => {
+    boundary = null;
+    boundaryDrain = null;
+  };
+
   return {
-    enqueue(patch, baseline) {
+    enqueue(patch, baseline, metadata) {
       if (dirtyBaseline === null) {
         dirtyBaseline = baseline;
         sequenceChanged = false;
@@ -279,15 +468,23 @@ export function createProjectPatchQueue(
       if (patch.score && isStructuralScorePatch(patch.score)) {
         dependencies.onStructuralScoreEdit?.();
       }
+      // The most recent semantic metadata wins for the flushed batch: a
+      // gesture's completed action label describes the batch it closes.
+      pendingMetadata = metadata ?? pendingMetadata;
       pending.push(patch);
-      schedule();
+      if (!boundary) {
+        schedule();
+      }
     },
 
     flush,
 
     reset(sessionId) {
       clearTimer();
+      clearBoundary();
       pending = [];
+      pendingMetadata = undefined;
+      trackedOperationIds.clear();
       dirtyBaseline = null;
       sequenceChanged = false;
       if (sessionId !== undefined) {
@@ -306,7 +503,10 @@ export function createProjectPatchQueue(
         return;
       if (sessionId !== currentSessionId) {
         clearTimer();
+        clearBoundary();
         pending = [];
+        pendingMetadata = undefined;
+        trackedOperationIds.clear();
         dirtyBaseline = null;
         sequenceChanged = false;
         currentSessionId = sessionId;
@@ -324,16 +524,33 @@ export function createProjectPatchQueue(
     },
 
     async awaitPending() {
-      while (inFlight) {
-        await inFlight.catch(() => undefined);
+      while (inFlight || boundaryDrain) {
+        await (inFlight ?? boundaryDrain)!.catch(() => undefined);
       }
     },
 
     clearPending() {
       clearTimer();
       pending = [];
+      pendingMetadata = undefined;
       dirtyBaseline = null;
       sequenceChanged = false;
+    },
+
+    handlePrepareBoundary,
+
+    handleReleaseBoundary,
+
+    isSettlementPaused() {
+      return boundary !== null;
+    },
+
+    getContextSequence() {
+      return contextSequence;
+    },
+
+    ownsOperationIds(operationIds) {
+      return operationIds?.some((id) => trackedOperationIds.has(id)) ?? false;
     },
   };
 }

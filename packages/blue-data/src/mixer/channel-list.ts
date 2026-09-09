@@ -5,6 +5,7 @@
 import { Channel } from './channel';
 import { Element } from '../serialization/xml-reader';
 import { BlueDataObject } from '../blue-data-object';
+import type { CopyMode } from '../deep-copyable';
 
 export class ChannelList extends Array<Channel> implements BlueDataObject {
   private _association: string | null = null;
@@ -72,13 +73,13 @@ export class ChannelList extends Array<Channel> implements BlueDataObject {
     return list;
   }
 
-  deepCopy(): BlueDataObject {
+  deepCopy(mode: CopyMode = 'duplication'): BlueDataObject {
     const copy = new ChannelList();
     copy._association = this._association;
     copy._listName = this._listName;
     copy._listNameEditSupported = this._listNameEditSupported;
     for (const ch of this) {
-      copy.push(ch.deepCopy() as Channel);
+      copy.push(ch.deepCopy(mode) as Channel);
     }
     return copy;
   }

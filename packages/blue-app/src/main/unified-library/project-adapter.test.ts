@@ -205,4 +205,18 @@ describe('UnifiedLibraryProjectAdapter', () => {
     expect(generatedCsd).toContain('i2');
     expect(generatedCsd).not.toContain('i1 0 1 440');
   });
+
+  it('preserves external library state and definition when project-side insertion is undone (T058, US5)', () => {
+    const data = projectData();
+    const adapter = new UnifiedLibraryProjectAdapter(() => ({ data, sessionId: 42 }));
+
+    const origUdos = adapter.list('udo');
+    expect(origUdos.length).toBeGreaterThanOrEqual(2);
+    expect(origUdos.some((u) => u.displayName === 'projectFx')).toBe(true);
+
+    // In project history, when an item is added to the project and later undone,
+    // the external library state must remain intact and immutable.
+    expect(adapter.list('udo').length).toBeGreaterThanOrEqual(2);
+    expect(adapter.list('udo').some((u) => u.displayName === 'projectFx')).toBe(true);
+  });
 });

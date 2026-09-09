@@ -1,5 +1,6 @@
 import { Track } from './track';
 import { LayerGroup } from '../layers/layer-group';
+import type { CopyMode } from '../../deep-copyable';
 import { NoteProcessorChain } from '../../note-processors/note-processor-chain';
 import { NoteList } from '../../sound-objects/note-list';
 import { PythonObject } from '../../sound-objects/python-object';
@@ -31,7 +32,7 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
   private _tracksAttributes = new Map<string, string>();
   private _unknownTracksChildren: Element[] = [];
 
-  constructor(other?: TrackLayerGroup | number) {
+  constructor(other?: TrackLayerGroup | number, mode: CopyMode = 'duplication') {
     super(typeof other === 'number' ? other : 0);
     if (other instanceof TrackLayerGroup) {
       this._name = other._name;
@@ -41,7 +42,7 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
       this._unknownChildren = other._unknownChildren.map((child) => child.clone());
       this._tracksAttributes = new Map(other._tracksAttributes);
       this._unknownTracksChildren = other._unknownTracksChildren.map((child) => child.clone());
-      for (const track of other) this.push(track.deepCopy());
+      for (const track of other) this.push(track.deepCopy(mode));
     }
   }
 
@@ -236,8 +237,8 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
 
   onLoadComplete(_context: TimeContext): void {}
 
-  deepCopy(): TrackLayerGroup {
-    return new TrackLayerGroup(this);
+  deepCopy(mode: CopyMode = 'duplication'): TrackLayerGroup {
+    return new TrackLayerGroup(this, mode);
   }
   getTotalHeight(): number {
     return this.reduce((height, track) => height + track.getLayerHeight(), 0);

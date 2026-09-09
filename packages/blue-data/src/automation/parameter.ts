@@ -8,6 +8,7 @@
  */
 import { Element } from '../serialization/xml-reader';
 import { BlueDataObject } from '../blue-data-object';
+import type { CopyMode } from '../deep-copyable';
 import { clamp } from '../utilities/math-utils';
 import { generatePrefixedUuid } from '../utilities/uuid';
 import {
@@ -628,8 +629,11 @@ export class Parameter implements BlueDataObject {
     return param;
   }
 
-  deepCopy(): BlueDataObject {
+  deepCopy(mode: CopyMode = 'duplication'): BlueDataObject {
     const copy = new Parameter();
+    if (mode === 'history') {
+      copy._uniqueId = this._uniqueId;
+    }
     copy._name = this._name;
     copy._label = this._label;
     copy._minimum = this._minimum;

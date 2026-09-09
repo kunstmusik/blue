@@ -1,8 +1,10 @@
 import { create } from 'zustand';
 import type {
   ScoreObjectEditorTargetSnapshot,
+  ScoreDocumentSnapshot,
   ScoreRowObjectSnapshot,
 } from '../../shared/project-editor';
+import type { ProjectHistorySelectionHint } from '../../shared/project-history';
 
 export interface ScoreObjectClipboardEntry {
   objectId: string;
@@ -310,3 +312,43 @@ export const useScoreSelectionStore = create<ScoreSelectionState>((set) => ({
     set({ audioDropGuideBeat: beat });
   },
 }));
+
+/**
+ * Applies canonical-restoration selection hints from another view's edit or
+ * history command. Only hints whose score objects still exist are restored;
+ * a hint set with no surviving targets reconciles to an empty selection.
+ * Selection metadata never enters project XML — it rides only on
+ * publications and lives in renderer state.
+ */
+export function reconcileExternalSelectionHints(
+  hints: readonly ProjectHistorySelectionHint[],
+  score: ScoreDocumentSnapshot | undefined,
+): void {
+  const objectIds = hints
+    .filter((hint) => hint.targetType === 'scoreObject')
+    .map((hint) => hint.targetId);
+  if (objectIds.length === 0) return;
+
+  const existing = new Set<string>();
+  if (score) {
+    for (const group of score.layerGroups) {
+      for (const layer of group.layers) {
+        for (const item of layer.items) {
+          existing.add(item.objectId);
+        }
+      }
+    }
+  }
+
+  const store = useScoreSelectionStore.getState();
+  const restored = objectIds.filter((id) => existing.has(id));
+  if (restored.length === 0) {
+    store.clearSelection();
+    return;
+  }
+
+  store.select(restored[0]!, false, undefined);
+  for (const objectId of restored.slice(1)) {
+    store.select(objectId, true, undefined);
+  }
+}

@@ -89,6 +89,19 @@ import {
   isValidLayerRangeTarget,
 } from '../../shared/project-editor';
 import type { MissingAudioAssetsSession } from '../../shared/missing-audio-assets';
+import type {
+  PrepareHistoryBoundaryEvent,
+  ProjectDocumentCommitMetadata,
+  ProjectRuntimeOutcome,
+  ReleaseHistoryBoundaryEvent,
+} from '../../shared/project-history';
+
+/**
+ * Stable participant identity for this renderer JS context. Dockview popouts
+ * share the main renderer context; dedicated editor windows get their own.
+ */
+const RENDERER_PARTICIPANT_CONTEXT_ID = `renderer-${crypto.randomUUID()}`;
+import { orchestraPatchActionLabel } from '../../shared/project-editor';
 import {
   BSB_LINE_SELECTOR_HEIGHT,
   getHSliderBankDisplaySize,
@@ -119,6 +132,7 @@ interface ProjectState {
   version: string;
   filePath: string | null;
   sessionId: number;
+  documentId: string | null;
   isLoading: boolean;
   isDirty: boolean;
   lastScorePatch: ScorePatch | null;
@@ -140,6 +154,19 @@ interface ProjectState {
   scrollToBeatTarget: number | null;
   audioClipEditorPreviewByObjectId: Record<string, AudioClipEditorPreview>;
   missingAudioSession: MissingAudioAssetsSession | null;
+  runtimeOutcomes: ProjectRuntimeOutcome[];
+  runtimeOutcomeStatusText: string;
+  activeOversizeProposal: OversizeProposalInfo | null;
+}
+
+export interface OversizeProposalInfo {
+  token: string;
+  estimatedBytes: number;
+  limitBytes: number;
+  explanation: string;
+  documentId: string;
+  revision: number;
+  patches: readonly ProjectDocumentPatch[];
 }
 
 interface AudioClipEditorPreview {
@@ -153,14 +180,31 @@ interface ProjectActions {
   saveProject: () => Promise<void>;
   saveProjectAs: () => Promise<void>;
   setProjectInfo: (info: ProjectLoadedPayload | null) => void;
+  confirmOversizeProposal: () => Promise<void>;
+  cancelOversizeProposal: () => Promise<void>;
+  clearOversizeProposal: () => void;
+  /**
+   * Applies a canonical publication from main (other contexts, undo/redo
+   * replays) without the load/reset semantics: pending local overlays and
+   * selections survive, and the dirty projection comes from the event's
+   * authoritative saved-checkpoint state rather than being reset.
+   */
+  refreshFromCanonical: (info: ProjectLoadedPayload, dirtyProjection: boolean) => void;
+  handleRuntimeOutcomes: (outcomes: ProjectRuntimeOutcome[]) => void;
   setLoading: (loading: boolean) => void;
   markDirty: () => void;
   markClean: () => void;
   clearProject: () => void;
-  applyProjectDocumentPatch: (patch: ProjectDocumentPatch) => Promise<void>;
+  applyProjectDocumentPatch: (
+    patch: ProjectDocumentPatch,
+    metadata?: ProjectDocumentCommitMetadata,
+  ) => Promise<void>;
   updateGlobalOrc: (globalOrc: string) => Promise<void>;
   updateGlobalSco: (globalSco: string) => Promise<void>;
-  updateOrchestra: (orchestra: OrchestraPatch) => Promise<void>;
+  updateOrchestra: (
+    orchestra: OrchestraPatch,
+    metadata?: ProjectDocumentCommitMetadata,
+  ) => Promise<void>;
   updateProjectProperties: (patch: Partial<ProjectPropertiesSnapshot>) => Promise<void>;
   updateScratchPad: (patch: ScratchPadPatch) => Promise<void>;
   updateClojureProject: (clojureProject: ClojureProjectSnapshot) => Promise<void>;
@@ -469,7 +513,17 @@ function findAddScoreObjectsTargetGroupIndex(
 function getProjectPatchQueue(): ProjectPatchQueue {
   if (!projectPatchQueue) {
     projectPatchQueue = createProjectPatchQueue({
-      commit: (patches) => window.blueAPI.commitProjectDocumentPatches([...patches]),
+      participantContextId: RENDERER_PARTICIPANT_CONTEXT_ID,
+      acknowledgeBoundary: (ack) => {
+        void window.blueAPI.acknowledgeHistoryBoundary(ack).catch((error: unknown) => {
+          console.error('[project-store] Failed to acknowledge history boundary:', error);
+        });
+      },
+      commit: (patches, context) =>
+        window.blueAPI.commitProjectDocumentPatches([...patches], {
+          ...context?.metadata,
+          barrierId: context?.barrierId,
+        }),
       fetchCanonicalSnapshot: () => window.blueAPI.getProjectDocument(),
       applyCanonicalSnapshot: (snapshot, preserveDirty) =>
         applyProjectInfoToState(snapshot, preserveDirty),
@@ -485,6 +539,9 @@ function getProjectPatchQueue(): ProjectPatchQueue {
       onStructuralScoreEdit: () => {
         useScoreColorHistoryStore.getState().reset();
       },
+      onOversizeProposal: (proposal) => {
+        storeSet({ activeOversizeProposal: proposal });
+      },
     });
   }
   return projectPatchQueue;
@@ -494,8 +551,34 @@ export function getProjectDocumentRevision(): number {
   return getProjectPatchQueue().getRevision();
 }
 
+export function getProjectDocumentId(): string | null {
+  const state = useProjectStore.getState();
+  return state.documentId;
+}
+
 export function acceptProjectDocumentRevision(sessionId: number, revision: number): void {
   getProjectPatchQueue().acceptRevision(sessionId, revision);
+}
+
+/**
+ * True when any of the given operation ids were submitted from this renderer
+ * context, so a canonical publication acknowledging them must not be applied
+ * over fresher optimistic state.
+ */
+export function ownsProjectDocumentOperationIds(operationIds: readonly string[]): boolean {
+  return getProjectPatchQueue().ownsOperationIds(operationIds);
+}
+
+export function handleProjectHistoryBoundary(event: PrepareHistoryBoundaryEvent): Promise<void> {
+  return getProjectPatchQueue().handlePrepareBoundary(event);
+}
+
+export function handleProjectHistoryRelease(event: ReleaseHistoryBoundaryEvent): void {
+  getProjectPatchQueue().handleReleaseBoundary(event);
+}
+
+export function getProjectHistoryParticipantContextId(): string {
+  return RENDERER_PARTICIPANT_CONTEXT_ID;
 }
 
 export const __testFlushPendingPatches = (): void => {
@@ -560,6 +643,7 @@ function applyProjectInfoToState(info: ProjectLoadedPayload | null, preserveDirt
   let reconciliation: MidiRoutingReconciliation | undefined;
   storeSet((state: ProjectState) => {
     const incomingSessionId = info.sessionId ?? state.sessionId;
+    const incomingDocumentId = info.documentId ?? state.documentId;
     if (incomingSessionId !== getProjectPatchQueue().getSessionId()) {
       getProjectPatchQueue().reset(incomingSessionId);
       useLayerSelectionStore.getState().clear();
@@ -595,6 +679,7 @@ function applyProjectInfoToState(info: ProjectLoadedPayload | null, preserveDirt
       version: info.version ?? state.version,
       filePath: info.filePath ?? state.filePath,
       sessionId: incomingSessionId,
+      documentId: incomingDocumentId,
       loaded:
         info.loaded ??
         (info.filePath !== undefined
@@ -680,6 +765,7 @@ function buildInitialState(): ProjectState {
     version: snapshot.version,
     filePath: snapshot.filePath,
     sessionId: snapshot.sessionId,
+    documentId: snapshot.documentId ?? null,
     isLoading: false,
     isDirty: false,
     lastScorePatch: null,
@@ -701,6 +787,9 @@ function buildInitialState(): ProjectState {
     scrollToBeatTarget: null,
     audioClipEditorPreviewByObjectId: {},
     missingAudioSession: null,
+    runtimeOutcomes: [],
+    runtimeOutcomeStatusText: '',
+    activeOversizeProposal: null,
   };
 }
 
@@ -3350,6 +3439,79 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       applyProjectInfoToState(info, false);
     },
 
+    confirmOversizeProposal: async () => {
+      const proposal = get().activeOversizeProposal;
+      if (!proposal) return;
+      const currentDocId = get().documentId;
+      const currentRev = getProjectDocumentRevision();
+      if (proposal.documentId !== currentDocId || proposal.revision !== currentRev) {
+        // Stale confirmation: reject and cancel
+        await window.blueAPI.cancelOversizeProposal({ proposalToken: proposal.token });
+        set({ activeOversizeProposal: null });
+        return;
+      }
+      set({ activeOversizeProposal: null });
+      await window.blueAPI.commitProjectDocumentPatches([...proposal.patches], {
+        proposalToken: proposal.token,
+      });
+    },
+
+    cancelOversizeProposal: async () => {
+      const proposal = get().activeOversizeProposal;
+      if (!proposal) return;
+      set({ activeOversizeProposal: null });
+      await window.blueAPI.cancelOversizeProposal({ proposalToken: proposal.token });
+    },
+
+    clearOversizeProposal: () => {
+      set({ activeOversizeProposal: null });
+    },
+
+    refreshFromCanonical: (info, dirtyProjection) => {
+      applyProjectInfoToState(info, true);
+      set({ isDirty: dirtyProjection });
+    },
+
+    handleRuntimeOutcomes: (outcomes) => {
+      if (!outcomes || outcomes.length === 0) return;
+      set((state) => {
+        const map = new Map<string, ProjectRuntimeOutcome>();
+        for (const o of state.runtimeOutcomes) {
+          map.set(o.performanceKind, o);
+        }
+        for (const o of outcomes) {
+          map.set(o.performanceKind, o);
+        }
+        const updatedOutcomes = Array.from(map.values());
+
+        let statusText = '';
+        const hasFailed = updatedOutcomes.find((o) => o.status === 'failed');
+        const hasRestart = updatedOutcomes.find((o) => o.status === 'restart-required');
+        const hasPending = updatedOutcomes.find((o) => o.status === 'pending');
+        const allApplied =
+          updatedOutcomes.length > 0 && updatedOutcomes.every((o) => o.status === 'applied');
+
+        if (hasFailed) {
+          statusText = hasFailed.message
+            ? `Live synchronization failed: ${hasFailed.message}`
+            : 'Live synchronization failed';
+          toast.error(statusText);
+        } else if (hasRestart) {
+          statusText = 'Restart required for playback to reflect all changes';
+          toast.warning(statusText);
+        } else if (hasPending) {
+          statusText = 'Applying live changes...';
+        } else if (allApplied) {
+          statusText = 'Live changes applied';
+        }
+
+        return {
+          runtimeOutcomes: updatedOutcomes,
+          runtimeOutcomeStatusText: statusText,
+        };
+      });
+    },
+
     setLoading: (isLoading) => set({ isLoading }),
 
     markDirty: () => set({ isDirty: true }),
@@ -3377,7 +3539,7 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       }
     },
 
-    applyProjectDocumentPatch: async (patch) => {
+    applyProjectDocumentPatch: async (patch, metadata) => {
       const normalizedPatch = normalizeProjectDocumentPatch(patch);
 
       if (!get().loaded) {
@@ -3552,7 +3714,7 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
         });
       }
 
-      getProjectPatchQueue().enqueue(normalizedPatch, dirtyBaseline);
+      getProjectPatchQueue().enqueue(normalizedPatch, dirtyBaseline, metadata);
     },
 
     updateGlobalOrc: async (globalOrc) => {
@@ -3563,8 +3725,11 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       await get().applyProjectDocumentPatch({ globalSco });
     },
 
-    updateOrchestra: async (orchestra) => {
-      await get().applyProjectDocumentPatch({ orchestra });
+    updateOrchestra: async (orchestra, metadata) => {
+      await get().applyProjectDocumentPatch(
+        { orchestra },
+        { label: orchestraPatchActionLabel(orchestra), ...metadata },
+      );
     },
 
     updateProjectProperties: async (patch) => {
@@ -3843,36 +4008,45 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
     },
 
     setLayerBackgroundColor: (groupId, layerIndex, color) => {
-      void get().applyProjectDocumentPatch({
-        score: {
-          type: 'updateLayerState',
-          groupId,
-          layerIndex,
-          patch: { backgroundColor: color },
+      void get().applyProjectDocumentPatch(
+        {
+          score: {
+            type: 'updateLayerState',
+            groupId,
+            layerIndex,
+            patch: { backgroundColor: color },
+          },
         },
-      });
+        { label: 'Set Layer Color' },
+      );
     },
 
     setLayerMute: (groupId, layerIndex, muted) => {
-      void get().applyProjectDocumentPatch({
-        score: {
-          type: 'updateLayerState',
-          groupId,
-          layerIndex,
-          patch: { muted },
+      void get().applyProjectDocumentPatch(
+        {
+          score: {
+            type: 'updateLayerState',
+            groupId,
+            layerIndex,
+            patch: { muted },
+          },
         },
-      });
+        { label: muted ? 'Mute Layer' : 'Unmute Layer' },
+      );
     },
 
     setLayerSolo: (groupId, layerIndex, solo) => {
-      void get().applyProjectDocumentPatch({
-        score: {
-          type: 'updateLayerState',
-          groupId,
-          layerIndex,
-          patch: { solo },
+      void get().applyProjectDocumentPatch(
+        {
+          score: {
+            type: 'updateLayerState',
+            groupId,
+            layerIndex,
+            patch: { solo },
+          },
         },
-      });
+        { label: solo ? 'Solo Layer' : 'Unsolo Layer' },
+      );
     },
 
     renameLayer: (layerId, name) => {
@@ -3896,25 +4070,31 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
         return;
       }
 
-      void get().applyProjectDocumentPatch({
-        score: {
-          type: 'renameLayer',
-          groupId: targetGroupId,
-          layerIndex: targetLayerIndex,
-          name: trimmedName,
+      void get().applyProjectDocumentPatch(
+        {
+          score: {
+            type: 'renameLayer',
+            groupId: targetGroupId,
+            layerIndex: targetLayerIndex,
+            name: trimmedName,
+          },
         },
-      });
+        { label: 'Rename Layer' },
+      );
     },
 
     setLayerHeight: (groupId, layerIndex, heightIndex) => {
-      void get().applyProjectDocumentPatch({
-        score: {
-          type: 'updateLayerState',
-          groupId,
-          layerIndex,
-          patch: { heightIndex },
+      void get().applyProjectDocumentPatch(
+        {
+          score: {
+            type: 'updateLayerState',
+            groupId,
+            layerIndex,
+            patch: { heightIndex },
+          },
         },
-      });
+        { label: 'Resize Layer' },
+      );
     },
 
     addLayer: (groupId, layerIndex) => {
@@ -3922,7 +4102,7 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
         score: { type: 'addLayer', groupId, layerIndex },
       };
       get()
-        .applyProjectDocumentPatch(patch)
+        .applyProjectDocumentPatch(patch, { label: 'Add Layer' })
         .then(() => {
           __testFlushPendingPatches();
         });
@@ -3933,7 +4113,7 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
         score: { type: 'removeLayer', groupId, layerIndex },
       };
       get()
-        .applyProjectDocumentPatch(patch)
+        .applyProjectDocumentPatch(patch, { label: 'Remove Layer' })
         .then(() => {
           __testFlushPendingPatches();
         });

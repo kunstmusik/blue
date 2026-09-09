@@ -8,6 +8,7 @@
  */
 import { Element } from '../serialization/xml-reader';
 import { BlueDataObject } from '../blue-data-object';
+import { CopyMode } from '../deep-copyable';
 import { Parameter, AutomationCurve } from '../automation/parameter';
 import { BSBGraphicInterface } from '../instruments/blue-synth-builder/bsb-graphic-interface';
 import { BSBCompilationUnit } from '../instruments/blue-synth-builder/bsb-compilation-unit';
@@ -84,6 +85,14 @@ export class Effect implements BlueDataObject {
 
   getParameters(): Parameter[] {
     return [...this._parameters];
+  }
+
+  setParameters(parameters: Parameter[]): void {
+    this._parameters = [...parameters];
+  }
+
+  addParameter(parameter: Parameter): void {
+    this._parameters.push(parameter);
   }
 
   getOpcodeList(): OpcodeList {
@@ -283,7 +292,7 @@ export class Effect implements BlueDataObject {
     return parameters;
   }
 
-  deepCopy(): BlueDataObject {
+  deepCopy(mode: CopyMode = 'duplication'): BlueDataObject {
     const copy = new Effect();
     copy._name = this._name;
     copy._enabled = this._enabled;
@@ -292,9 +301,8 @@ export class Effect implements BlueDataObject {
     copy._code = this._code;
     copy._style = this._style;
     copy._comments = this._comments;
-    copy._graphicInterface = new BSBGraphicInterface();
-    copy._graphicInterface.loadFromXML(this._graphicInterface.saveAsXML());
-    copy._parameters = this._parameters.map((param) => param.deepCopy() as Parameter);
+    copy._graphicInterface = this._graphicInterface.deepCopy(mode);
+    copy._parameters = this._parameters.map((param) => param.deepCopy(mode) as Parameter);
     copy._opcodeList = OpcodeList.loadFromXML(this._opcodeList.saveAsXML());
     return copy;
   }

@@ -128,6 +128,58 @@ describe('project-store — canonical acknowledgement barrier', () => {
     useProjectStore.getState().clearProject();
   });
 
+  it('keeps load and canonical refresh semantics separate (T032)', () => {
+    useProjectStore.getState().clearProject();
+    const snapshot = createEmptyProjectEditorSnapshot();
+
+    // Load semantics: dirty resets to a clean baseline.
+    useProjectStore.getState().setProjectInfo({
+      ...snapshot,
+      loaded: true,
+      filePath: '/tmp/load.blue',
+      sessionId: 2,
+      documentId: 'doc-load',
+      title: 'Loaded Title',
+    });
+    useProjectStore.getState().markDirty();
+    expect(useProjectStore.getState().isDirty).toBe(true);
+
+    // Canonical refresh: content and authoritative dirty projection apply,
+    // the session and document identity remain untouched, and overlay stores
+    // (layer selection) survive because no session change occurred.
+    useProjectStore.getState().refreshFromCanonical(
+      {
+        ...snapshot,
+        loaded: true,
+        filePath: '/tmp/load.blue',
+        sessionId: 2,
+        documentId: 'doc-load',
+        title: 'Remote Title',
+      } as never,
+      true,
+    );
+
+    expect(useProjectStore.getState().title).toBe('Remote Title');
+    expect(useProjectStore.getState().isDirty).toBe(true);
+    expect(useProjectStore.getState().documentId).toBe('doc-load');
+    expect(useProjectStore.getState().sessionId).toBe(2);
+
+    // Authoritative clean projection after a save elsewhere.
+    useProjectStore.getState().refreshFromCanonical(
+      {
+        ...snapshot,
+        loaded: true,
+        filePath: '/tmp/load.blue',
+        sessionId: 2,
+        documentId: 'doc-load',
+        title: 'Saved Title',
+      } as never,
+      false,
+    );
+    expect(useProjectStore.getState().title).toBe('Saved Title');
+    expect(useProjectStore.getState().isDirty).toBe(false);
+  });
+
   it('restores the prior dirty state after a changed:false acknowledgement', async () => {
     commitProjectDocumentPatches.mockResolvedValue({
       revision: 0,
@@ -717,5 +769,33 @@ describe('project-store — pattern layer optimistic projection', () => {
     expect(storedSnapshot.nestedRecord.deep).toEqual([1, 2, 3]);
 
     await useProjectStore.getState().flushPendingPatches();
+  });
+
+  it('canonical text refresh updates store text without queuing outgoing patches or echoing edits', async () => {
+    const commitSpy = vi.fn().mockResolvedValue({ changed: true });
+    (window as unknown as { blueAPI?: unknown }).blueAPI = {
+      commitProjectDocumentPatches: commitSpy,
+      getProjectDocument: async () => null,
+    };
+
+    const info = {
+      ...createEmptyProjectEditorSnapshot(),
+      loaded: true,
+      sessionId: 1,
+      documentId: 'doc-canonical',
+      globalOrc: 'instr 99\nendin',
+      globalSco: '; canonical score',
+    };
+
+    // Refresh from canonical publication
+    useProjectStore.getState().refreshFromCanonical(info, false);
+
+    expect(useProjectStore.getState().globalOrc).toBe('instr 99\nendin');
+    expect(useProjectStore.getState().globalSco).toBe('; canonical score');
+    expect(useProjectStore.getState().isDirty).toBe(false);
+
+    // Verify no patches were queued for commit
+    await useProjectStore.getState().flushPendingPatches();
+    expect(commitSpy).not.toHaveBeenCalled();
   });
 });

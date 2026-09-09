@@ -193,14 +193,17 @@ describe('Project Store', () => {
     __testFlushPendingPatches();
     await __testAwaitPendingPatches();
 
-    expect(mockBlueAPI.commitProjectDocumentPatches).toHaveBeenCalledWith([
-      {
-        globalOrc: 'instr 1\nendin',
-      },
-      {
-        projectProperties: { title: 'Edited Title' },
-      },
-    ]);
+    expect(mockBlueAPI.commitProjectDocumentPatches).toHaveBeenCalledWith(
+      [
+        {
+          globalOrc: 'instr 1\nendin',
+        },
+        {
+          projectProperties: { title: 'Edited Title' },
+        },
+      ],
+      expect.objectContaining({ operationId: expect.any(String) }),
+    );
     expect(mockBlueAPI.updateProjectDocument).not.toHaveBeenCalled();
     expect(useProjectStore.getState().title).toBe('Edited Title');
     expect(useProjectStore.getState().isDirty).toBe(true);
@@ -279,15 +282,18 @@ describe('Project Store', () => {
     __testFlushPendingPatches();
     await __testAwaitPendingPatches();
 
-    expect(mockBlueAPI.commitProjectDocumentPatches).toHaveBeenCalledWith([
-      {
-        score: {
-          type: 'addLayer',
-          groupId: 'audio-group',
-          layerIndex: 1,
+    expect(mockBlueAPI.commitProjectDocumentPatches).toHaveBeenCalledWith(
+      [
+        {
+          score: {
+            type: 'addLayer',
+            groupId: 'audio-group',
+            layerIndex: 1,
+          },
         },
-      },
-    ]);
+      ],
+      expect.objectContaining({ operationId: expect.any(String) }),
+    );
     expect(mockBlueAPI.getProjectDocument).toHaveBeenCalledOnce();
     expect(useProjectStore.getState().mixer.channels).toEqual(refreshed.mixer.channels);
   });
@@ -337,15 +343,18 @@ describe('Project Store', () => {
     __testFlushPendingPatches();
     await __testAwaitPendingPatches();
 
-    expect(mockBlueAPI.commitProjectDocumentPatches).toHaveBeenCalledWith([
-      {
-        score: {
-          type: 'renameLayerGroup',
-          groupId: 'audio-group',
-          name: 'Renamed Group',
+    expect(mockBlueAPI.commitProjectDocumentPatches).toHaveBeenCalledWith(
+      [
+        {
+          score: {
+            type: 'renameLayerGroup',
+            groupId: 'audio-group',
+            name: 'Renamed Group',
+          },
         },
-      },
-    ]);
+      ],
+      expect.objectContaining({ operationId: expect.any(String) }),
+    );
     expect(mockBlueAPI.getProjectDocument).toHaveBeenCalled();
   });
 
@@ -478,16 +487,19 @@ describe('Project Store', () => {
     __testFlushPendingPatches();
     await __testAwaitPendingPatches();
 
-    expect(mockBlueAPI.commitProjectDocumentPatches).toHaveBeenCalledWith([
-      {
-        score: {
-          type: 'renameLayer',
-          groupId: 'audio-group',
-          layerIndex: 0,
-          name: 'Renamed Layer',
+    expect(mockBlueAPI.commitProjectDocumentPatches).toHaveBeenCalledWith(
+      [
+        {
+          score: {
+            type: 'renameLayer',
+            groupId: 'audio-group',
+            layerIndex: 0,
+            name: 'Renamed Layer',
+          },
         },
-      },
-    ]);
+      ],
+      expect.objectContaining({ operationId: expect.any(String) }),
+    );
   });
 
   it('optimistically renames the bound audio layer when an audio mixer channel is renamed', async () => {
@@ -649,45 +661,48 @@ describe('Project Store', () => {
     __testFlushPendingPatches();
     await __testAwaitPendingPatches();
 
-    expect(mockBlueAPI.commitProjectDocumentPatches).toHaveBeenCalledWith([
-      {
-        transport: {
-          meterMapPatch: { type: 'meter-map-set-entry', measure: 5, numBeats: 3, beatLength: 4 },
-        },
-      },
-      {
-        transport: {
-          meterMapPatch: { type: 'meter-map-set-entry', measure: 9, numBeats: 7, beatLength: 8 },
-        },
-      },
-      {
-        transport: {
-          meterMapPatch: {
-            type: 'meter-map-update-entry',
-            previousMeasure: 5,
-            measure: 6,
-            numBeats: 5,
-            beatLength: 4,
+    expect(mockBlueAPI.commitProjectDocumentPatches).toHaveBeenCalledWith(
+      [
+        {
+          transport: {
+            meterMapPatch: { type: 'meter-map-set-entry', measure: 5, numBeats: 3, beatLength: 4 },
           },
         },
-      },
-      {
-        transport: {
-          meterMapPatch: { type: 'meter-map-remove-entry', measure: 6 },
-        },
-      },
-      {
-        transport: {
-          meterMapPatch: {
-            type: 'meter-map-replace',
-            entries: [
-              { measure: 1, numBeats: 4, beatLength: 4 },
-              { measure: 3, numBeats: 7, beatLength: 8 },
-            ],
+        {
+          transport: {
+            meterMapPatch: { type: 'meter-map-set-entry', measure: 9, numBeats: 7, beatLength: 8 },
           },
         },
-      },
-    ]);
+        {
+          transport: {
+            meterMapPatch: {
+              type: 'meter-map-update-entry',
+              previousMeasure: 5,
+              measure: 6,
+              numBeats: 5,
+              beatLength: 4,
+            },
+          },
+        },
+        {
+          transport: {
+            meterMapPatch: { type: 'meter-map-remove-entry', measure: 6 },
+          },
+        },
+        {
+          transport: {
+            meterMapPatch: {
+              type: 'meter-map-replace',
+              entries: [
+                { measure: 1, numBeats: 4, beatLength: 4 },
+                { measure: 3, numBeats: 7, beatLength: 8 },
+              ],
+            },
+          },
+        },
+      ],
+      expect.objectContaining({ operationId: expect.any(String) }),
+    );
     expect(useProjectStore.getState().isDirty).toBe(true);
   });
 
@@ -734,24 +749,27 @@ describe('Project Store', () => {
     __testFlushPendingPatches();
     await __testAwaitPendingPatches();
 
-    expect(mockBlueAPI.commitProjectDocumentPatches).toHaveBeenCalledWith([
-      {
-        mixer: {
-          type: 'addSubChannel',
-          channelId: subChannelId,
+    expect(mockBlueAPI.commitProjectDocumentPatches).toHaveBeenCalledWith(
+      [
+        {
+          mixer: {
+            type: 'addSubChannel',
+            channelId: subChannelId,
+          },
         },
-      },
-      {
-        mixer: {
-          type: 'addEffectFromLibrary',
-          channelId: subChannelId,
-          chain: 'pre',
-          libraryEffectId: '__new__',
-          effectXml: effect.saveAsXML().toXml(),
-          entryId: expect.any(String),
+        {
+          mixer: {
+            type: 'addEffectFromLibrary',
+            channelId: subChannelId,
+            chain: 'pre',
+            libraryEffectId: '__new__',
+            effectXml: effect.saveAsXML().toXml(),
+            entryId: expect.any(String),
+          },
         },
-      },
-    ]);
+      ],
+      expect.objectContaining({ operationId: expect.any(String) }),
+    );
   });
 
   it('optimistically updates audio clip fade types for type-specific editor patches', async () => {
@@ -886,24 +904,27 @@ describe('Project Store', () => {
     __testFlushPendingPatches();
     await __testAwaitPendingPatches();
 
-    expect(mockBlueAPI.commitProjectDocumentPatches).toHaveBeenCalledWith([
-      {
-        score: {
-          type: 'updateLayerState',
-          groupId,
-          layerIndex: 0,
-          patch: { muted: true },
+    expect(mockBlueAPI.commitProjectDocumentPatches).toHaveBeenCalledWith(
+      [
+        {
+          score: {
+            type: 'updateLayerState',
+            groupId,
+            layerIndex: 0,
+            patch: { muted: true },
+          },
         },
-      },
-      {
-        score: {
-          type: 'updateLayerState',
-          groupId,
-          layerIndex: 0,
-          patch: { solo: true },
+        {
+          score: {
+            type: 'updateLayerState',
+            groupId,
+            layerIndex: 0,
+            patch: { solo: true },
+          },
         },
-      },
-    ]);
+      ],
+      expect.objectContaining({ operationId: expect.any(String) }),
+    );
     expect(mockBlueAPI.updateProjectDocument).not.toHaveBeenCalled();
   });
 
@@ -1356,22 +1377,25 @@ describe('Project Store', () => {
     await __testAwaitPendingPatches();
 
     expect(mockBlueAPI.commitProjectDocumentPatches).toHaveBeenCalledOnce();
-    expect(mockBlueAPI.commitProjectDocumentPatches).toHaveBeenCalledWith([
-      {
-        orchestra: {
-          type: 'updateInstrument',
-          assignmentId: '1',
-          patch: { text: 'aout oscili p4, p6' },
+    expect(mockBlueAPI.commitProjectDocumentPatches).toHaveBeenCalledWith(
+      [
+        {
+          orchestra: {
+            type: 'updateInstrument',
+            assignmentId: '1',
+            patch: { text: 'aout oscili p4, p6' },
+          },
         },
-      },
-      {
-        orchestra: {
-          type: 'updateInstrument',
-          assignmentId: '1',
-          patch: { text: 'aout oscili p4, p7' },
+        {
+          orchestra: {
+            type: 'updateInstrument',
+            assignmentId: '1',
+            patch: { text: 'aout oscili p4, p7' },
+          },
         },
-      },
-    ]);
+      ],
+      expect.objectContaining({ operationId: expect.any(String) }),
+    );
 
     vi.useRealTimers();
   });
@@ -1423,11 +1447,14 @@ describe('Playback Store', () => {
     __testFlushPendingPatches();
     await __testAwaitPendingPatches();
 
-    expect(mockBlueAPI.commitProjectDocumentPatches).toHaveBeenCalledWith([
-      {
-        transport: { loopRendering: true },
-      },
-    ]);
+    expect(mockBlueAPI.commitProjectDocumentPatches).toHaveBeenCalledWith(
+      [
+        {
+          transport: { loopRendering: true },
+        },
+      ],
+      expect.objectContaining({ operationId: expect.any(String) }),
+    );
     expect(mockBlueAPI.updateProjectDocument).not.toHaveBeenCalled();
     expect(useProjectStore.getState().transport.loopRendering).toBe(true);
   });

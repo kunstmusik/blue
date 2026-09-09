@@ -2,7 +2,7 @@
  * Instrument — abstract base for Csound instruments.
  * Mirrors the Java Instrument class.
  */
-import { DeepCopyable } from '../deep-copyable';
+import { DeepCopyable, type CopyMode } from '../deep-copyable';
 import { Element } from '../serialization/xml-reader';
 import type { CompileData } from '../compile-data';
 import type { Parameter } from '../automation/parameter';
@@ -85,7 +85,7 @@ export abstract class Instrument implements DeepCopyable<Instrument> {
     // Default: no-op
   }
 
-  abstract deepCopy(): Instrument;
+  abstract deepCopy(mode?: CopyMode): Instrument;
 
   abstract saveAsXML(): Element;
 }

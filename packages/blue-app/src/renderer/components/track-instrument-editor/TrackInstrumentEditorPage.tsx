@@ -220,9 +220,15 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
 
   const persistPatch = useCallback(
     async (patch: InstrumentPatch): Promise<boolean> => {
-      while (requestRef.current) {
+      // Bounded precondition-aware resolution: a stale snapshot is refreshed
+      // and retried a bounded number of times; exhaustion retains the patch
+      // as a pending draft instead of retrying forever.
+      const MAX_STALE_RETRIES = 3;
+      for (let attempt = 0; attempt <= MAX_STALE_RETRIES; attempt += 1) {
+        const request = requestRef.current;
+        if (!request) return false;
         const result = await window.blueAPI.updateTrackInstrumentEditorDocument({
-          ...requestRef.current,
+          ...request,
           patch,
         });
         if (!result.snapshot || result.status === 'unavailable') {
@@ -244,9 +250,16 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
 
     try {
       while (pendingPatchesRef.current.length > 0) {
-        const persisted = await persistPatch(pendingPatchesRef.current.shift()!);
+        const patch = pendingPatchesRef.current.shift()!;
+        const persisted = await persistPatch(patch);
         if (!persisted) {
-          pendingPatchesRef.current = [];
+          // Retain the unresolved patch as a draft for the next gesture; a
+          // deleted instrument surfaces the unavailable state instead.
+          if (requestRef.current && mountedRef.current) {
+            pendingPatchesRef.current.unshift(patch);
+          } else {
+            pendingPatchesRef.current = [];
+          }
           break;
         }
       }

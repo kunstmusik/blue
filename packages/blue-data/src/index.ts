@@ -1,7 +1,7 @@
 // ─── Core ───
 export { BlueData } from './blue-data';
 export type { BlueDataObject, BlueDataObjectStatic } from './blue-data-object';
-export type { DeepCopyable } from './deep-copyable';
+export type { CopyMode, DeepCopyable, HistoryCopyable } from './deep-copyable';
 export { BLUE_VERSION } from './blue-constants';
 export { CompileData } from './compile-data';
 export type { CompiledBlueX7Binding } from './compile-data';

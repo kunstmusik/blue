@@ -78,9 +78,10 @@ describe('ScratchPadPanel', () => {
     });
 
     expect(useProjectStore.getState().scratchPad.wordWrapEnabled).toBe(true);
-    expect(commitProjectDocumentPatches).toHaveBeenCalledWith([
-      { scratchPad: { wordWrapEnabled: true } },
-    ]);
+    expect(commitProjectDocumentPatches).toHaveBeenCalledWith(
+      [{ scratchPad: { wordWrapEnabled: true } }],
+      expect.objectContaining({ operationId: expect.any(String) }),
+    );
 
     act(() => {
       root.unmount();

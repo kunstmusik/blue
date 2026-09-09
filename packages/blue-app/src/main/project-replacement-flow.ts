@@ -125,7 +125,7 @@ export interface ReplacementSaveDecisionDependencies {
   hasCurrentProject: () => boolean;
   hasCurrentPath: () => boolean;
   /** Durable save to the current path; false on write failure. */
-  saveCurrent: () => boolean;
+  saveCurrent: () => boolean | Promise<boolean>;
   /** Transactional Save As; false on cancel, overwrite decline, or failure. */
   saveAs: () => Promise<boolean> | boolean;
 }
@@ -151,7 +151,7 @@ export async function resolveReplacementSaveDecision(
   }
 
   if (dependencies.hasCurrentPath()) {
-    return dependencies.saveCurrent() ? 'saved' : 'blocked';
+    return (await dependencies.saveCurrent()) ? 'saved' : 'blocked';
   }
   return (await dependencies.saveAs()) ? 'saved' : 'blocked';
 }
@@ -160,9 +160,11 @@ export interface TransactionalSaveAsDependencies {
   /** Save dialog; null when cancelled or an overwrite is declined. */
   chooseDestination: () => Promise<string | null> | string | null;
   /** Durable write of the current project; false on failure. */
-  writeProject: (filePath: string) => boolean;
+  writeProject: (filePath: string) => boolean | Promise<boolean>;
   /** Publishes the new current path; only called after a successful write. */
   publishPath: (filePath: string) => void;
+  /** Optional checkpoint hook called only after a successful write. */
+  checkpointSave?: (filePath: string) => void | Promise<void>;
 }
 
 /**
@@ -178,10 +180,12 @@ export async function runTransactionalSaveAs(
     return false;
   }
 
-  if (!dependencies.writeProject(destination)) {
+  const written = await dependencies.writeProject(destination);
+  if (!written) {
     return false;
   }
 
   dependencies.publishPath(destination);
+  await dependencies.checkpointSave?.(destination);
   return true;
 }

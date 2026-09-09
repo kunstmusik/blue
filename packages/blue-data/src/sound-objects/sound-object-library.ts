@@ -11,6 +11,7 @@ import { PolyObject } from './poly-object';
 import { Element } from '../serialization/xml-reader';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { BlueDataObject } from '../blue-data-object';
+import type { CopyMode } from '../deep-copyable';
 import { loadSoundObjectFromXML } from './sound-object-registry';
 
 export interface SoundObjectLibraryEntry {
@@ -38,10 +39,10 @@ export class SoundObjectLibrary implements BlueDataObject {
   private _idMap = new Map<SoundObject, string>();
   private _nextId = 0;
 
-  constructor(other?: SoundObjectLibrary) {
+  constructor(other?: SoundObjectLibrary, mode: CopyMode = 'duplication') {
     if (other) {
       for (const obj of other._objects) {
-        const copy = obj.deepCopy();
+        const copy = obj.deepCopy(mode);
         this._objects.push(copy);
         const id = other._idMap.get(obj);
         if (id) {
@@ -226,8 +227,8 @@ export class SoundObjectLibrary implements BlueDataObject {
     return lib;
   }
 
-  deepCopy(): BlueDataObject {
-    return new SoundObjectLibrary(this);
+  deepCopy(mode: CopyMode = 'duplication'): BlueDataObject {
+    return new SoundObjectLibrary(this, mode);
   }
 }
 

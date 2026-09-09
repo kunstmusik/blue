@@ -129,6 +129,7 @@ describe('Score Layer Color Controls', () => {
           }),
         }),
       }),
+      { label: 'Set Layer Color' },
     );
   });
 
@@ -196,6 +197,7 @@ describe('Score Layer Color Controls', () => {
           }),
         }),
       }),
+      { label: 'Set Layer Color' },
     );
   });
 
@@ -244,6 +246,7 @@ describe('Score Layer Color Controls', () => {
           }),
         }),
       }),
+      { label: 'Set Layer Color' },
     );
   });
 });

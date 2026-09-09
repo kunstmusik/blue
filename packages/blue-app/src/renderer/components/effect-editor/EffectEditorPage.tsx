@@ -79,6 +79,7 @@ export default function EffectEditorPage(): React.ReactElement {
         return;
       }
 
+      snapshotRef.current = loaded;
       setSnapshot(loaded);
       setLiveProjectUdos(loaded.projectUdos);
       document.title = `${loaded.name || 'Effect'} - ${mode === 'interface' ? 'Interface' : 'Effect Editor'}`;
@@ -105,12 +106,31 @@ export default function EffectEditorPage(): React.ReactElement {
 
   // Reuse the canonical project-document event. The main process routes it only
   // to project-owned effect windows; library effects never subscribe.
+  const snapshotRef = useRef<EffectEditorSnapshot | null>(null);
   useEffect(() => {
     if (!isProjectEffect) return;
     return window.blueAPI.onProjectDocumentUpdated((event) => {
       setLiveProjectUdos(event.snapshot.projectUdos);
+      // Refresh the actually edited effect after a canonical publication so
+      // undo/redo from any window is visible here. A deleted effect marks the
+      // window unavailable instead of forcing it to reopen.
+      if (!request) return;
+      void window.blueAPI
+        .getEffectEditorDocument(request)
+        .then((next) => {
+          if (!next) {
+            setError('This effect no longer exists in the project.');
+            return;
+          }
+          const serialized = JSON.stringify(next);
+          if (serialized !== JSON.stringify(snapshotRef.current)) {
+            snapshotRef.current = next;
+            setSnapshot(next);
+          }
+        })
+        .catch(() => undefined);
     });
-  }, [isProjectEffect]);
+  }, [isProjectEffect, request]);
 
   const snapshotWithLiveUdos = useMemo<EffectEditorSnapshot | null>(() => {
     if (!snapshot) return null;
@@ -127,6 +147,7 @@ export default function EffectEditorPage(): React.ReactElement {
         patch,
       });
       if (next) {
+        snapshotRef.current = next;
         setSnapshot(next);
         document.title = `${next.name || 'Effect'} - ${mode === 'interface' ? 'Interface' : 'Effect Editor'}`;
       }

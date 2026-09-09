@@ -4,6 +4,7 @@ import type { EditorView } from '@codemirror/view';
 import { ChevronRight } from 'lucide-react';
 import React, { type MutableRefObject, type ReactNode } from 'react';
 import { cn } from '../../../../lib/cn';
+import { dispatchHistoryAction } from '../../../../lib/history-scope-router';
 
 import {
   copySelectionToClipboard,
@@ -164,6 +165,12 @@ function renderMenuItem(
           break;
         case 'paste':
           void pasteClipboardText(editorView, clipboardBridge);
+          break;
+        case 'undo':
+          void dispatchHistoryAction('undo', editorView.dom.ownerDocument);
+          break;
+        case 'redo':
+          void dispatchHistoryAction('redo', editorView.dom.ownerDocument);
           break;
         case 'evaluate-code':
           onEvaluateCode?.();

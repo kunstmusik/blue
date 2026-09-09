@@ -2,6 +2,7 @@ import { Instrument } from '../../instruments/instrument';
 import { loadInstrumentFromXML } from '../../instruments/instrument-registry';
 import { ParameterIdList } from '../../automation/parameter-id-list';
 import type { Parameter } from '../../automation/parameter';
+import type { CopyMode } from '../../deep-copyable';
 import { CompileData } from '../../compile-data';
 import { NoteList } from '../../sound-objects/note-list';
 import type { SoundObject } from '../../sound-objects/sound-object';
@@ -96,7 +97,7 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
   private _unknownAttributes = new Map<string, string>();
   private _unknownChildren: Element[] = [];
 
-  constructor(other?: Track | number) {
+  constructor(other?: Track | number, mode: CopyMode = 'duplication') {
     super(typeof other === 'number' ? other : 0);
     if (other instanceof Track) {
       this._name = other._name;
@@ -106,16 +107,19 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
       this._heightIndex = other._heightIndex;
       this._backgroundColor = other._backgroundColor;
       this._npc = new NoteProcessorChain(other._npc);
-      this._instrument = other._instrument?.deepCopy() ?? null;
-      this._automationParameters = remapCopiedInstrumentParameterIds(
-        other._automationParameters,
-        other._instrument,
-        this._instrument,
-      );
+      this._instrument = other._instrument?.deepCopy(mode) ?? null;
+      this._automationParameters =
+        mode === 'history'
+          ? other._automationParameters.deepCopy()
+          : remapCopiedInstrumentParameterIds(
+              other._automationParameters,
+              other._instrument,
+              this._instrument,
+            );
       this._unknownAttributes = new Map(other._unknownAttributes);
       this._unknownChildren = other._unknownChildren.map((child) => child.clone());
       for (const item of other) {
-        this.push(item instanceof AudioClip ? AudioClip.copyFrom(item) : item.deepCopy());
+        this.push(item instanceof AudioClip ? AudioClip.copyFrom(item) : item.deepCopy(mode));
       }
     }
   }
@@ -209,8 +213,8 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
   clearScoreObjects(): void {
     this.length = 0;
   }
-  deepCopy(): Track {
-    return new Track(this);
+  deepCopy(mode: CopyMode = 'duplication'): Track {
+    return new Track(this, mode);
   }
 
   generateForCSD(

@@ -1,5 +1,6 @@
 import { Element } from '../serialization/xml-reader';
 import { Instrument } from './instrument';
+import type { CopyMode } from '../deep-copyable';
 import { Tables } from '../tables';
 import type { CompileData } from '../compile-data';
 import { Parameter } from '../automation/parameter';
@@ -515,7 +516,7 @@ export class BlueX7 extends Instrument {
   private _sourceXmlTemplate?: Element;
   public operatorTableNums: number[] | null = null;
 
-  constructor(other?: BlueX7) {
+  constructor(other?: BlueX7, mode: CopyMode = 'duplication') {
     super();
     this.setName('BlueX7');
     if (other) {
@@ -523,8 +524,8 @@ export class BlueX7 extends Instrument {
       this._enabled = other._enabled;
       this._comment = other._comment;
       this._voice = cloneBlueX7Voice(other._voice);
-      // A new ownership boundary regenerates all Parameter identities.
-      this._parameters = reconcileBlueX7Parameters(this._voice, other._parameters.deepCopy());
+      // A new ownership boundary regenerates all Parameter identities in duplication mode.
+      this._parameters = reconcileBlueX7Parameters(this._voice, other._parameters.deepCopy(mode));
       if (other._sourceXmlTemplate) {
         this._sourceXmlTemplate = Element.parse(other._sourceXmlTemplate.toXml());
       }
@@ -991,7 +992,7 @@ export class BlueX7 extends Instrument {
     return instr;
   }
 
-  deepCopy(): BlueX7 {
-    return new BlueX7(this);
+  override deepCopy(mode: CopyMode = 'duplication'): BlueX7 {
+    return new BlueX7(this, mode);
   }
 }

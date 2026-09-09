@@ -559,12 +559,16 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
       await Promise.resolve();
     });
 
-    expect(applyPatch).toHaveBeenNthCalledWith(1, {
-      score: {
-        type: 'removeScoreObjects',
-        targets: [item.editorTarget],
+    expect(applyPatch).toHaveBeenNthCalledWith(
+      1,
+      {
+        score: {
+          type: 'removeScoreObjects',
+          targets: [item.editorTarget],
+        },
       },
-    });
+      { label: 'Convert Score Objects' },
+    );
     expect(applyPatch).toHaveBeenNthCalledWith(2, {
       score: {
         type: 'addScoreObjects',

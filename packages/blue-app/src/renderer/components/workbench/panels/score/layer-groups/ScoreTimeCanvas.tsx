@@ -363,8 +363,10 @@ export default function ScoreTimeCanvas({
     endX: number;
     endY: number;
   } | null>(null);
+  const gestureIdCounterRef = useRef(0);
   const gestureRef = useRef<{
     mode: GestureMode;
+    gestureId: string;
     startClientX: number;
     startClientY: number;
     startBeats: number;
@@ -637,8 +639,10 @@ export default function ScoreTimeCanvas({
           clearSelection();
           clearLayerSelection();
         }
+        gestureIdCounterRef.current += 1;
         gestureRef.current = {
           mode: 'marquee',
+          gestureId: `score-gesture-${gestureIdCounterRef.current}`,
           startClientX: e.clientX,
           startClientY: e.clientY,
           startBeats: 0,
@@ -748,8 +752,10 @@ export default function ScoreTimeCanvas({
       }
 
       if (onLeftEdge || onRightEdge) {
+        gestureIdCounterRef.current += 1;
         gestureRef.current = {
           mode: onLeftEdge ? 'resizeLeft' : 'resizeRight',
+          gestureId: `score-gesture-${gestureIdCounterRef.current}`,
           startClientX: e.clientX,
           startClientY: e.clientY,
           startBeats: xBeats,
@@ -764,8 +770,10 @@ export default function ScoreTimeCanvas({
           originalPositions: origPositions,
         };
       } else {
+        gestureIdCounterRef.current += 1;
         gestureRef.current = {
           mode: 'move',
+          gestureId: `score-gesture-${gestureIdCounterRef.current}`,
           startClientX: e.clientX,
           startClientY: e.clientY,
           startBeats: xBeats,
@@ -1136,12 +1144,22 @@ export default function ScoreTimeCanvas({
     pendingMovePatchRef.current = [];
 
     if (pendingMovePatch.length > 0 && g.mode === 'move') {
-      void applyProjectDocumentPatch({
-        score: {
-          type: 'moveScoreObjects',
-          moves: pendingMovePatch,
+      void applyProjectDocumentPatch(
+        {
+          score: {
+            type: 'moveScoreObjects',
+            moves: pendingMovePatch,
+          },
         },
-      });
+        {
+          label:
+            pendingMovePatch.length > 1
+              ? `Move ${pendingMovePatch.length} Score Objects`
+              : 'Move Score Object',
+          gestureId: g.gestureId,
+          phase: 'end',
+        },
+      );
     }
 
     if (pendingPatches.length > 0 && g.mode !== 'marquee') {
@@ -1174,13 +1192,20 @@ export default function ScoreTimeCanvas({
             };
           }
           if (Object.keys(patch).length === 0) continue;
-          await applyProjectDocumentPatch({
-            score: {
-              type: 'updateSharedProperties',
-              target,
-              patch,
+          await applyProjectDocumentPatch(
+            {
+              score: {
+                type: 'updateSharedProperties',
+                target,
+                patch,
+              },
             },
-          });
+            {
+              label: 'Resize Score Object',
+              gestureId: g.gestureId,
+              phase: 'end',
+            },
+          );
         }
       })();
     }
@@ -1275,12 +1300,15 @@ export default function ScoreTimeCanvas({
         .filter((target): target is ScoreObjectEditorTargetSnapshot => target !== undefined);
       const removeTargets = (): void => {
         if (targets.length > 0) {
-          void applyProjectDocumentPatch({
-            score: {
-              type: 'removeScoreObjects',
-              targets,
+          void applyProjectDocumentPatch(
+            {
+              score: {
+                type: 'removeScoreObjects',
+                targets,
+              },
             },
-          });
+            { label: 'Cut Score Objects' },
+          );
         }
         clearSelection();
       };
@@ -1335,12 +1363,15 @@ export default function ScoreTimeCanvas({
         .map((entry) => entry.editorTarget)
         .filter((target): target is ScoreObjectEditorTargetSnapshot => target !== undefined);
       if (targets.length > 0) {
-        void applyProjectDocumentPatch({
-          score: {
-            type: 'removeScoreObjects',
-            targets,
+        void applyProjectDocumentPatch(
+          {
+            score: {
+              type: 'removeScoreObjects',
+              targets,
+            },
           },
-        });
+          { label: 'Delete Score Objects' },
+        );
       }
       clearSelection();
     }
@@ -1385,9 +1416,10 @@ export default function ScoreTimeCanvas({
       .filter((target): target is ScoreObjectEditorTargetSnapshot => target !== undefined);
     void (async () => {
       if (removeTargets.length > 0) {
-        await applyProjectDocumentPatch({
-          score: { type: 'removeScoreObjects', targets: removeTargets },
-        });
+        await applyProjectDocumentPatch(
+          { score: { type: 'removeScoreObjects', targets: removeTargets } },
+          { label: 'Convert Score Objects' },
+        );
       }
       for (const entry of selected) {
         await applyProjectDocumentPatch({

@@ -60,6 +60,8 @@ export default function BSBCodeEditor({
                 value={instrument[tab.key]}
                 placeholder="Enter BlueSynthBuilder Csound code"
                 ariaLabel={`${instrument.name || 'BlueSynthBuilder'} ${tab.label} code editor`}
+                historyScope="project"
+                typingGroupingMs={500}
                 javaBlueCompletionOptions={
                   tab.key === 'globalSco' ? scoreCompletionOptions : orchestraCompletionOptions
                 }

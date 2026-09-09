@@ -12,6 +12,7 @@ import {
 } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
+import { randomUUID } from 'node:crypto';
 
 import {
   BlueData,
@@ -105,6 +106,10 @@ import {
   isBlueX7EffectiveValuesRequest,
   type BlueX7EffectiveValuesRequest,
 } from '../shared/project-editor/contract';
+import {
+  getKnownMixerChannelSnapshotId,
+  transferProjectEditorIdentities,
+} from '../shared/project-editor/identity';
 import { BlueLiveEngineSession, type BlueLiveStatusSnapshot } from './blue-live-engine';
 import {
   BlueLiveTriggerController,
@@ -197,7 +202,14 @@ import {
   type PythonInstrumentTestResult,
 } from './python-instrument-test';
 import { auditionSelectedScoreObjects } from './audition-score-objects';
-import { syncCompiledRuntimeParameterNames } from './runtime-parameter-sync';
+import {
+  buildRuntimeBindingRegistry,
+  syncCompiledRuntimeParameterNames,
+} from './runtime-parameter-sync';
+import {
+  ProjectRuntimeReconciliation,
+  type AcknowledgedRuntimeClient,
+} from './project-runtime-reconciliation';
 import { syncRuntimeChannel } from './runtime-channel-sync';
 import {
   syncBsbInstrumentRuntimeChannels,
@@ -211,6 +223,7 @@ import {
   registerFloatingWindow,
   registerMainWindow,
   routeFocusPanel,
+  sendToFocusedWorkbenchWindow,
 } from './workbench-window-host';
 import { getWindowTitle } from '../shared/window-title';
 import {
@@ -376,7 +389,33 @@ import type {
   IpcMainLike,
 } from './ipc/ipc-registration';
 import { createProjectLifecycle } from './project-lifecycle';
+import { createProjectHistory } from './project-history';
 import { ProjectSession } from './project-session';
+import {
+  PROJECT_HISTORY_COMMIT_CHANNEL,
+  PROJECT_HISTORY_UNDO_CHANNEL,
+  PROJECT_HISTORY_REDO_CHANNEL,
+  PROJECT_HISTORY_READ_CHANNEL,
+  PROJECT_HISTORY_REGISTER_PARTICIPANT_CHANNEL,
+  PROJECT_HISTORY_UNREGISTER_PARTICIPANT_CHANNEL,
+  PROJECT_HISTORY_BOUNDARY_ACK_CHANNEL,
+  PROJECT_HISTORY_BOUNDARY_PREPARE_CHANNEL,
+  PROJECT_HISTORY_BOUNDARY_RELEASE_CHANNEL,
+  PROJECT_HISTORY_CANCEL_OVERSIZE_CHANNEL,
+  PROJECT_RUNTIME_OUTCOME_CHANNEL,
+  type ProjectHistoryCommitRequest,
+  type ProjectHistoryUndoRequest,
+  type ProjectHistoryRedoRequest,
+  type ProjectHistoryReadRequest,
+  type ProjectHistoryOrigin,
+  type ProjectHistoryActionPhase,
+  type RegisterHistoryParticipantRequest,
+  type UnregisterHistoryParticipantRequest,
+  type PrepareHistoryBoundaryAck,
+  type CancelOversizeProposalRequest,
+  type ProjectRuntimeOutcomeEvent,
+  type ProjectDocumentCommitMetadata,
+} from '../shared/project-history';
 import { createStartupLifecycle } from './startup-lifecycle';
 import {
   runPackagedMetadataVerificationAndExit,
@@ -387,6 +426,55 @@ import {
 let mainWindow: BrowserWindow | null = null;
 const exampleFactoryManifestProvider = createFactoryManifestProvider();
 const projectSession = new ProjectSession();
+let timelinePerformanceGeneration = 0;
+let blueLivePerformanceGeneration = 0;
+
+const projectRuntimeReconciliation = new ProjectRuntimeReconciliation({
+  onOutcome: (outcome) => {
+    const current = projectSession.read();
+    const event: ProjectRuntimeOutcomeEvent = {
+      documentId: current.documentId ?? '',
+      revision: current.revision,
+      outcomes: [outcome],
+    };
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (!win.isDestroyed()) {
+        win.webContents.send(PROJECT_RUNTIME_OUTCOME_CHANNEL, event);
+      }
+    }
+  },
+});
+
+const projectHistory = createProjectHistory({
+  session: projectSession,
+  reconciliation: projectRuntimeReconciliation,
+  publishUpdated: async (event) => {
+    const fullEvent = event.snapshot
+      ? event
+      : {
+          ...event,
+          snapshot: getCurrentProjectDocument(),
+        };
+    broadcastToWorkbenchWindows(PROJECT_DOCUMENT_UPDATED_CHANNEL, fullEvent);
+    broadcastProjectDocumentUpdateToEffectWindows(fullEvent as never);
+    broadcastProjectDocumentUpdateToTrackInstrumentWindows(fullEvent as never);
+    rebuildApplicationMenu();
+  },
+  broadcastPrepareBoundary: async (event) => {
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (!win.isDestroyed()) {
+        win.webContents.send(PROJECT_HISTORY_BOUNDARY_PREPARE_CHANNEL, event);
+      }
+    }
+  },
+  broadcastReleaseBoundary: async (event) => {
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (!win.isDestroyed()) {
+        win.webContents.send(PROJECT_HISTORY_BOUNDARY_RELEASE_CHANNEL, event);
+      }
+    }
+  },
+});
 
 const collectedIpcHandlers = new Map<string, IpcMainInvokeHandler>();
 const collectedIpcListeners = new Map<string, IpcMainEventListener>();
@@ -431,6 +519,10 @@ function getCurrentProjectRevision(): number {
 
 function getCurrentProjectSessionId(): number {
   return projectSession.read().sessionId;
+}
+
+function getCurrentProjectSessionDocumentId(): string {
+  return projectSession.read().documentId ?? '';
 }
 let canAuditionScoreObjects = false;
 let unifiedLibraryService: UnifiedLibraryService | null = null;
@@ -627,6 +719,7 @@ function getCurrentProjectDocument() {
     getCurrentData(),
     getCurrentFilePath(),
     getCurrentProjectSessionId(),
+    getCurrentProjectSessionDocumentId(),
   );
 }
 
@@ -782,17 +875,16 @@ async function applyTrackInstrumentEditorPatch(
       patch: request.patch,
     },
   };
-  const changed = applyProjectDocumentPatch(data, patch, {
-    projectSessionId: getCurrentProjectSessionId(),
-    projectRevision: getCurrentProjectRevision(),
-    defaultLayerGroupType: loadProgramSettings().projectDefaults.defaultLayerGroupType,
+
+  const receipt = await commitProjectDocumentPatchBatch([patch], {
+    label: 'Update Track Instrument',
+    expectedRevision: request.track.projectRevision,
   });
-  if (!changed) {
+
+  if (!receipt.changed) {
     return { status: 'unchanged', snapshot: currentSnapshot };
   }
 
-  projectSession.recordMutation({ changed: true });
-  broadcastProjectDocumentUpdate();
   const directRealtimeUpdate = request.patch.bsbInterface
     ? createBsbRealtimeControlUpdate(
         {
@@ -810,7 +902,7 @@ async function applyTrackInstrumentEditorPatch(
     (engineBridge?.isCurrentlyPlaying() || blueLiveSession?.isRunning())
   ) {
     try {
-      await syncEngineWithProjectPatch(data, patch);
+      await syncEngineWithProjectPatch(getCurrentData(), patch);
     } catch (error) {
       console.error('[main] Failed to sync Track instrument editor patch:', error);
     }
@@ -881,7 +973,7 @@ function getWidgetSize(widget: BSBWidget, ctor: string): { width: number; height
   }
 }
 
-function applyProjectEffectEditorPatch(request: EffectEditorPatchRequest) {
+async function applyProjectEffectEditorPatch(request: EffectEditorPatchRequest) {
   if (!getCurrentData()) {
     return null;
   }
@@ -891,14 +983,31 @@ function applyProjectEffectEditorPatch(request: EffectEditorPatchRequest) {
   }
 
   const effectEntry = getProjectEffectEntryByRequest(request);
-  if (!effectEntry) {
+  if (!effectEntry || !request.projectRef) {
     return null;
   }
 
-  applyEffectEditablePatchToEffect(effectEntry.entry, request.patch);
+  const patch: ProjectDocumentPatch = {
+    mixer: {
+      type: 'updateEffect',
+      channelId: request.projectRef.channelId,
+      chain: request.projectRef.chain,
+      entryId: request.projectRef.entryId,
+      patch: request.patch,
+    },
+  };
+
+  await commitProjectDocumentPatchBatch([patch], {
+    label: 'Update Effect',
+  });
+
+  const updatedEntry = getProjectEffectEntryByRequest(request);
+  if (!updatedEntry) {
+    return null;
+  }
 
   if (engineBridge?.isCurrentlyPlaying() && request.patch.bsbInterface) {
-    const params = effectEntry.entry.getParameters();
+    const params = updatedEntry.entry.getParameters();
     for (const param of params) {
       const varName = param.getCompilationVarName();
       if (varName) {
@@ -907,7 +1016,7 @@ function applyProjectEffectEditorPatch(request: EffectEditorPatchRequest) {
     }
   }
 
-  return createEffectEditorSnapshot(effectEntry.entry, effectEntry.effectId, 'project', {
+  return createEffectEditorSnapshot(updatedEntry.entry, updatedEntry.effectId, 'project', {
     projectRef: request.projectRef,
     projectUdos: getCurrentData() ? createProjectUdoListSnapshot(getCurrentData()) : [],
   });
@@ -1374,6 +1483,11 @@ async function handleFreezeScoreObjects(
   activeRenderAbortController = new AbortController();
   rebuildApplicationMenu();
 
+  const initialDocumentId = getCurrentProjectSessionDocumentId();
+  const initialSessionId = getCurrentProjectSessionId();
+  const beforeMemento = getCurrentData().historyCopy();
+  transferProjectEditorIdentities(getCurrentData(), beforeMemento);
+
   try {
     const settings = loadProgramSettings();
     const seam = createCsoundExecutionSeam(cancellationSignal);
@@ -1405,9 +1519,29 @@ async function handleFreezeScoreObjects(
       },
     );
 
+    // Fence against project replacement/closure during render execution
+    if (
+      getCurrentProjectSessionDocumentId() !== initialDocumentId ||
+      getCurrentProjectSessionId() !== initialSessionId
+    ) {
+      return result;
+    }
+
     // Broadcast updated project if any mutations occurred
     if (result.frozenCount > 0 || result.unfrozenCount > 0) {
-      projectSession.recordMutation({ changed: true });
+      const label =
+        result.frozenCount > 0 && result.unfrozenCount > 0
+          ? 'Freeze/Unfreeze Score Objects'
+          : result.frozenCount > 0
+            ? 'Freeze Score Objects'
+            : 'Unfreeze Score Objects';
+      const afterMemento = getCurrentData().historyCopy();
+      transferProjectEditorIdentities(getCurrentData(), afterMemento);
+      projectHistory.recordDirectStructureMutation({
+        label,
+        beforeMemento,
+        afterMemento,
+      });
       broadcastProjectDocumentUpdate();
     }
 
@@ -1581,6 +1715,7 @@ async function confirmSaveBeforeReplace(
 }
 
 function rebuildApplicationMenu(): void {
+  const historyState = projectHistory.read();
   const menu = Menu.buildFromTemplate(
     buildApplicationMenuTemplate({
       hasLoadedProject: hasLoadedProject(),
@@ -1591,6 +1726,16 @@ function rebuildApplicationMenu(): void {
       canRevertProject: Boolean(getCurrentFilePath()),
       followPlaybackEnabled: currentFollowPlaybackEnabled,
       followPlaybackOnStartEnabled: currentFollowPlaybackOnStartEnabled,
+      canUndo: historyState.canUndo,
+      canRedo: historyState.canRedo,
+      undoLabel: historyState.undoLabel ?? undefined,
+      redoLabel: historyState.redoLabel ?? undefined,
+      onUndo: () => {
+        sendToFocusedWorkbenchWindow('native-menu-command', { type: 'undo' });
+      },
+      onRedo: () => {
+        sendToFocusedWorkbenchWindow('native-menu-command', { type: 'redo' });
+      },
       onNewFile: () => {
         void handleNewFile();
       },
@@ -2216,7 +2361,12 @@ function buildAndSendProjectLoaded(data: BlueData, filePath: string | null): voi
 
   const projectProperties = data.getProjectProperties();
   const payload: ProjectLoadedPayload = {
-    ...createProjectEditorSnapshot(data, filePath, getCurrentProjectSessionId()),
+    ...createProjectEditorSnapshot(
+      data,
+      filePath,
+      getCurrentProjectSessionId(),
+      getCurrentProjectSessionDocumentId(),
+    ),
     title: filePath ? projectProperties.title || path.basename(filePath) : 'Untitled',
     author: projectProperties.author,
     sampleRate: projectProperties.sampleRate,
@@ -2258,6 +2408,7 @@ function scanMissingAudioAssets(
 
 const projectLifecycle = createProjectLifecycle({
   session: projectSession,
+  history: projectHistory,
   stopProjectRuntimes: async () => {
     await stopActiveBlueLiveBeforeProjectReplacement();
     await disposeJavaRuntimeSession();
@@ -3768,6 +3919,32 @@ async function startPlayback(
       return false;
     }
 
+    timelinePerformanceGeneration += 1;
+    const timelineGeneration = timelinePerformanceGeneration;
+    const timelineClient: AcknowledgedRuntimeClient = {
+      async applyOperation(operation) {
+        if (operation.kind === 'channel-value') {
+          try {
+            await engineBridge!.setChannel(operation.channel, operation.value);
+            return { status: 'applied' };
+          } catch (err) {
+            return {
+              status: 'rejected',
+              message: err instanceof Error ? err.message : String(err),
+            };
+          }
+        }
+        return { status: 'applied' };
+      },
+    };
+    const timelineBindings = buildRuntimeBindingRegistry(data, parameters, render.blueX7Bindings);
+    projectRuntimeReconciliation.registerPerformance(
+      'timeline',
+      timelineGeneration,
+      timelineClient,
+      timelineBindings,
+    );
+
     return true;
   } catch (err: unknown) {
     activeAuditionPlayback = false;
@@ -3889,8 +4066,37 @@ async function auditionScoreObjects(objectIds: unknown): Promise<boolean> {
 
 async function stopPlayback(): Promise<void> {
   activeAuditionPlayback = false;
+  projectRuntimeReconciliation.stopPerformance('timeline');
   if (!engineBridge) return;
   await engineBridge.stopPlayback();
+}
+
+function registerBlueLivePerformance(): void {
+  if (!blueLiveSession || !blueLiveSession.isRunning() || !getCurrentData()) return;
+  blueLivePerformanceGeneration += 1;
+  const generation = blueLivePerformanceGeneration;
+  const client: AcknowledgedRuntimeClient = {
+    async applyOperation(operation) {
+      if (operation.kind === 'channel-value') {
+        try {
+          await blueLiveSession!.setChannel(operation.channel, operation.value);
+          return { status: 'applied' };
+        } catch (err) {
+          return {
+            status: 'rejected',
+            message: err instanceof Error ? err.message : String(err),
+          };
+        }
+      }
+      return { status: 'applied' };
+    },
+  };
+  const bindings = buildRuntimeBindingRegistry(
+    getCurrentData()!,
+    blueLiveSession.getParameters?.() ?? [],
+    blueLiveSession.getBlueX7Bindings(),
+  );
+  projectRuntimeReconciliation.registerPerformance('blueLive', generation, client, bindings);
 }
 
 async function blueLiveToggle(): Promise<
@@ -3902,6 +4108,7 @@ async function blueLiveToggle(): Promise<
   }
 
   if (blueLiveSession.isRunning()) {
+    projectRuntimeReconciliation.stopPerformance('blueLive');
     const stopped = await blueLiveSession.stop();
     if (!engineBridge?.isCurrentlyPlaying()) clearActiveBlueX7Bindings();
     return stopped;
@@ -3956,7 +4163,10 @@ async function blueLiveToggle(): Promise<
     }
   }
 
-  if (blueLiveSession.isRunning()) setActiveBlueX7Bindings(blueLiveSession.getBlueX7Bindings());
+  if (blueLiveSession.isRunning()) {
+    setActiveBlueX7Bindings(blueLiveSession.getBlueX7Bindings());
+    registerBlueLivePerformance();
+  }
   return startSnapshot!;
 }
 
@@ -3972,7 +4182,10 @@ async function blueLiveRecompile(): Promise<void> {
     getCurrentProjectDirectory(),
     javaScriptSession ?? undefined,
   );
-  if (blueLiveSession.isRunning()) setActiveBlueX7Bindings(blueLiveSession.getBlueX7Bindings());
+  if (blueLiveSession.isRunning()) {
+    setActiveBlueX7Bindings(blueLiveSession.getBlueX7Bindings());
+    registerBlueLivePerformance();
+  }
 }
 
 async function blueLiveAllNotesOff(): Promise<void> {
@@ -3987,6 +4200,7 @@ async function blueLiveAllNotesOff(): Promise<void> {
  * full active lifecycle must be awaited — not just `isRunning()`.
  */
 async function stopActiveBlueLiveBeforeProjectReplacement(): Promise<void> {
+  projectRuntimeReconciliation.stopPerformance('blueLive');
   await stopBlueLiveForProjectReplacement(getBlueLiveTriggerController(), blueLiveSession);
 }
 
@@ -4122,18 +4336,21 @@ async function resolveMissingAudioAssets(
     return { ok: true, changed: false };
   }
 
-  const changed = applyReplacementMappings(getCurrentData(), mappings);
+  const receipt = await projectHistory.commitDirectMutation({
+    label: 'Relink Missing Audio',
+    mutator: (candidate) => applyReplacementMappings(candidate, mappings),
+  });
   clearMissingAudioSession(session.sessionId);
 
-  if (!changed) {
+  if (!receipt.changed) {
     return { ok: true, changed: false };
   }
 
-  projectSession.recordMutation({ changed: true });
   const project = createProjectEditorSnapshot(
     getCurrentData(),
     getCurrentFilePath(),
     getCurrentProjectSessionId(),
+    getCurrentProjectSessionDocumentId(),
   );
   return { ok: true, changed: true, project };
 }
@@ -5063,8 +5280,16 @@ ipcRegistration.handle(
 /**
  * Synchronize real-time parameter changes to active engine sessions.
  */
-function syncActiveRuntimeChannel(name: string, value: number): Promise<void> {
-  return syncRuntimeChannel(name, value, engineBridge, blueLiveSession);
+async function syncActiveRuntimeChannel(
+  name: string,
+  value: number,
+  gestureId?: string,
+): Promise<void> {
+  await projectRuntimeReconciliation.previewChannelValue({
+    channel: name,
+    value,
+    gestureId,
+  });
 }
 
 function getBlueX7EngineSyncDeps(): BlueX7EngineSyncDeps {
@@ -5200,6 +5425,9 @@ ipcRegistration.handle('get-project-document', () => {
 
 async function commitProjectDocumentPatchBatch(
   patches: ProjectDocumentPatch[],
+  options?: ProjectDocumentCommitMetadata & {
+    expectedRevision?: number;
+  },
 ): Promise<ProjectDocumentCommitReceipt> {
   if (!getCurrentData()) {
     throw new Error('No project loaded');
@@ -5209,10 +5437,50 @@ async function commitProjectDocumentPatchBatch(
     throw new Error('Empty project document patch batch');
   }
 
+  const res = await projectHistory.commit({
+    documentId: getCurrentProjectSessionDocumentId(),
+    operationId: options?.operationId ?? randomUUID(),
+    expectedRevision: options?.expectedRevision ?? getCurrentProjectRevision(),
+    contextSequence: 0,
+    patches,
+    label: options?.label ?? 'Edit Project',
+    gestureId: options?.gestureId,
+    fieldId: options?.fieldId,
+    phase: options?.phase ?? 'single',
+    origin: options?.origin,
+    barrierId: options?.barrierId,
+    proposalToken: options?.proposalToken,
+  });
+
+  if (res.status === 'stale') {
+    throw new Error('Stale project document commit: expected revision mismatch');
+  }
+  if (res.status === 'invalid') {
+    throw new Error(`Invalid project document patch: ${res.reason}`);
+  }
+  if (res.status === 'busy') {
+    throw new Error(`Project history busy: ${res.reason}`);
+  }
+  if (res.status === 'failed') {
+    throw new Error(`Project document commit failed: ${res.error}`);
+  }
+  if (res.status === 'oversize') {
+    return {
+      revision: getCurrentProjectRevision(),
+      sessionId: getCurrentProjectSessionId(),
+      changed: false,
+      documentId: getCurrentProjectSessionDocumentId(),
+      oversizeProposal: {
+        token: res.proposalToken,
+        estimatedBytes: res.estimatedBytes,
+        limitBytes: res.limitBytes,
+        explanation: res.explanation,
+      },
+    };
+  }
+
+  const isCommitted = res.status === 'committed';
   let javaRuntimeDependenciesChanged = false;
-  let anyCanonicalMutation = false;
-  const patchChanged: boolean[] = [];
-  const patchAccepted: boolean[] = [];
 
   for (const patch of patches) {
     const blueX7BindingsToInvalidate = collectBlueX7BindingsToInvalidate(getCurrentData(), patch);
@@ -5225,60 +5493,44 @@ async function commitProjectDocumentPatchBatch(
     );
     maybeCloseRemovedProjectEffectEditors(patch);
     maybeCloseRemovedTrackInstrumentEditors(patch);
-    const colorPatchAccepted = patch.score
-      ? isScoreColorPatchAccepted(getCurrentData(), patch.score)
-      : false;
-    const changed = applyProjectDocumentPatch(getCurrentData(), patch, {
-      projectSessionId: getCurrentProjectSessionId(),
-      projectRevision: getCurrentProjectRevision(),
-      defaultLayerGroupType: loadProgramSettings().projectDefaults.defaultLayerGroupType,
-    });
-    patchChanged.push(changed);
-    patchAccepted.push(colorPatchAccepted || changed);
-    if (changed) {
-      anyCanonicalMutation = true;
+
+    if (isCommitted) {
       for (const ownerIdentity of blueX7BindingsToInvalidate) {
         invalidateActiveBlueX7Binding(ownerIdentity);
       }
       for (const id of collectAffectedProjectScoreAutomationParameterIds(getCurrentData(), patch)) {
         scoreAutomationParameterIds.add(id);
       }
-    } else {
-      scoreAutomationParameterIds.clear();
+      if (engineBridge?.isCurrentlyPlaying() || blueLiveSession?.isRunning()) {
+        void syncEngineWithProjectPatch(getCurrentData(), patch, scoreAutomationParameterIds).catch(
+          (error) => {
+            console.error('[main] Failed to sync engine with project patch:', error);
+          },
+        );
+      }
     }
     javaRuntimeDependenciesChanged =
-      javaRuntimeDependenciesChanged || (changed && clojureDependenciesChanged);
-    if (changed && (engineBridge?.isCurrentlyPlaying() || blueLiveSession?.isRunning())) {
-      void syncEngineWithProjectPatch(getCurrentData(), patch, scoreAutomationParameterIds).catch(
-        (error) => {
-          console.error('[main] Failed to sync engine with project patch:', error);
-        },
-      );
-    }
+      javaRuntimeDependenciesChanged || (isCommitted && clojureDependenciesChanged);
   }
 
-  if (anyCanonicalMutation) {
-    projectSession.recordMutation({
-      changed: true,
-      invalidateSession: javaRuntimeDependenciesChanged,
-    });
-  }
   if (javaRuntimeDependenciesChanged) {
     midiImportService.clearAll();
     await disposeJavaRuntimeSession();
   }
-  if (anyCanonicalMutation) {
-    broadcastProjectDocumentUpdate();
+  if (isCommitted) {
     unifiedLibraryService?.publishProjectChanged();
   }
-  const receipt: ProjectDocumentCommitReceipt = {
-    revision: getCurrentProjectRevision(),
-    sessionId: getCurrentProjectSessionId(),
-    changed: anyCanonicalMutation,
-    patchChanged,
-    patchAccepted,
-  };
-  return receipt;
+
+  return (
+    res.receipt ?? {
+      revision: getCurrentProjectRevision(),
+      sessionId: getCurrentProjectSessionId(),
+      changed: isCommitted,
+      patchChanged: patches.map(() => isCommitted),
+      patchAccepted: patches.map(() => true),
+      documentId: getCurrentProjectSessionDocumentId(),
+    }
+  );
 }
 
 function collectBlueX7BindingsToInvalidate(
@@ -5336,8 +5588,53 @@ function collectBlueX7BindingsToInvalidate(
 
 ipcRegistration.handle(
   'commit-project-document-patches',
-  async (_event, patches: ProjectDocumentPatch[]) => {
-    return commitProjectDocumentPatchBatch(patches);
+  async (_event, patches: ProjectDocumentPatch[], options?: ProjectDocumentCommitMetadata) => {
+    return commitProjectDocumentPatchBatch(patches, options);
+  },
+);
+
+ipcRegistration.handle(PROJECT_HISTORY_COMMIT_CHANNEL, async (_event, request: unknown) => {
+  return projectHistory.commit(request as ProjectHistoryCommitRequest);
+});
+
+ipcRegistration.handle(PROJECT_HISTORY_UNDO_CHANNEL, async (_event, request: unknown) => {
+  return projectHistory.undo(request as ProjectHistoryUndoRequest);
+});
+
+ipcRegistration.handle(PROJECT_HISTORY_REDO_CHANNEL, async (_event, request: unknown) => {
+  return projectHistory.redo(request as ProjectHistoryRedoRequest);
+});
+
+ipcRegistration.handle(PROJECT_HISTORY_READ_CHANNEL, async (_event, request: unknown) => {
+  return projectHistory.read(request as ProjectHistoryReadRequest);
+});
+
+ipcRegistration.handle(
+  PROJECT_HISTORY_REGISTER_PARTICIPANT_CHANNEL,
+  async (event, request: unknown) => {
+    const req = request as RegisterHistoryParticipantRequest;
+    event.sender.once('destroyed', () => {
+      projectHistory.unregisterParticipant({ contextId: req.contextId });
+    });
+    return projectHistory.registerParticipant(req);
+  },
+);
+
+ipcRegistration.handle(
+  PROJECT_HISTORY_UNREGISTER_PARTICIPANT_CHANNEL,
+  async (_event, request: unknown) => {
+    projectHistory.unregisterParticipant(request as UnregisterHistoryParticipantRequest);
+  },
+);
+
+ipcRegistration.handle(PROJECT_HISTORY_BOUNDARY_ACK_CHANNEL, async (_event, request: unknown) => {
+  projectHistory.acknowledgeBoundary(request as PrepareHistoryBoundaryAck);
+});
+
+ipcRegistration.handle(
+  PROJECT_HISTORY_CANCEL_OVERSIZE_CHANNEL,
+  async (_event, request: unknown) => {
+    projectHistory.cancelOversizeProposal(request as CancelOversizeProposalRequest);
   },
 );
 
@@ -5730,11 +6027,18 @@ ipcRegistration.handle(
       return;
     }
 
+    const gestureId = (update as unknown as { gestureId?: string }).gestureId;
     void syncBsbRealtimeControlUpdate(
       getCurrentData(),
       update,
       getCurrentProjectSessionId(),
-      syncActiveRuntimeChannel,
+      async (name: string, value: number) => {
+        await projectRuntimeReconciliation.previewChannelValue({
+          channel: name,
+          value,
+          gestureId,
+        });
+      },
     ).catch((error) => {
       console.error('[main] Failed to sync realtime BSB control update:', error);
     });
@@ -5743,30 +6047,29 @@ ipcRegistration.handle(
 
 ipcRegistration.handle(
   'send-mixer-realtime-level-update',
-  (_event, update: import('../shared/project-editor').MixerRealtimeLevelUpdate) => {
-    if (!getCurrentData() || !engineBridge || !engineBridge.isCurrentlyPlaying()) {
+  async (_event, update: import('../shared/project-editor').MixerRealtimeLevelUpdate) => {
+    if (!getCurrentData()) {
       return;
     }
 
     const channel = getProjectMixerChannelBySnapshotId(update.channelId);
     if (!channel) return;
 
-    const varName = channel.getLevelParameter().getCompilationVarName();
-    if (varName) {
-      void engineBridge.setChannel(varName, update.level).catch(() => {});
-    }
+    const ownerKey = getKnownMixerChannelSnapshotId(channel) ?? channel.getName();
+    const gestureId = (update as unknown as { gestureId?: string }).gestureId;
+    await projectRuntimeReconciliation.previewChannelValue({
+      ownerKey,
+      parameterId: 'level',
+      value: update.level,
+      gestureId,
+    });
   },
 );
 
 ipcRegistration.handle(
   'send-effect-realtime-update',
-  (_event, update: import('../shared/project-editor').EffectRealtimeUpdate) => {
-    if (
-      !getCurrentData() ||
-      !engineBridge ||
-      !engineBridge.isCurrentlyPlaying() ||
-      !update.bsbWidgetValues
-    ) {
+  async (_event, update: import('../shared/project-editor').EffectRealtimeUpdate) => {
+    if (!getCurrentData() || !update.bsbWidgetValues) {
       return;
     }
 
@@ -5777,17 +6080,23 @@ ipcRegistration.handle(
     });
     if (!effectEntry) return;
 
+    const gestureId = (update as unknown as { gestureId?: string }).gestureId;
     const params = effectEntry.entry.getParameters();
     for (const [objectName, value] of Object.entries(update.bsbWidgetValues)) {
       const param = params.find((p) => p.getName() === objectName);
-      if (param?.getCompilationVarName()) {
-        void engineBridge.setChannel(param.getCompilationVarName()!, value).catch(() => {});
+      const varName = param?.getCompilationVarName();
+      if (varName) {
+        void projectRuntimeReconciliation.previewChannelValue({
+          channel: varName,
+          value,
+          gestureId,
+        });
       }
     }
   },
 );
 
-ipcRegistration.handle('update-project-document', (_event, patch) => {
+ipcRegistration.handle('update-project-document', async (_event, patch) => {
   if (!getCurrentData()) {
     throw new Error('No project loaded');
   }
@@ -5796,31 +6105,7 @@ ipcRegistration.handle('update-project-document', (_event, patch) => {
     throw new Error('Empty project document patch');
   }
 
-  maybeCloseRemovedProjectEffectEditors(patch);
-  maybeCloseRemovedTrackInstrumentEditors(patch);
-  const scoreAutomationParameterIds = collectAffectedProjectScoreAutomationParameterIds(
-    getCurrentData(),
-    patch,
-  );
-  const changed = applyProjectDocumentPatch(getCurrentData(), patch, {
-    projectSessionId: getCurrentProjectSessionId(),
-    projectRevision: getCurrentProjectRevision(),
-    defaultLayerGroupType: loadProgramSettings().projectDefaults.defaultLayerGroupType,
-  });
-  if (changed) {
-    for (const id of collectAffectedProjectScoreAutomationParameterIds(getCurrentData(), patch)) {
-      scoreAutomationParameterIds.add(id);
-    }
-    // Sync with each active real-time engine.
-    if (engineBridge?.isCurrentlyPlaying() || blueLiveSession?.isRunning()) {
-      void syncEngineWithProjectPatch(getCurrentData(), patch, scoreAutomationParameterIds);
-    }
-    projectSession.recordMutation({ changed: true });
-    broadcastProjectDocumentUpdate();
-  } else {
-    scoreAutomationParameterIds.clear();
-  }
-
+  await commitProjectDocumentPatchBatch([patch], { label: 'Update Project' });
   return getCurrentProjectDocument();
 });
 
@@ -5957,20 +6242,36 @@ async function startUnifiedLibraryStage(): Promise<void> {
     unifiedLibraryService = new UnifiedLibraryService(
       path.join(app.getPath('userData'), 'blue_libraries.sqlite'),
       undefined,
-      new UnifiedLibraryProjectAdapter(() =>
-        getCurrentData()
-          ? {
-              data: getCurrentData(),
-              sessionId: getCurrentProjectSessionId(),
-              revision: getCurrentProjectRevision(),
-              commit: () => {
-                const receipt = projectSession.recordMutation({ changed: true });
-                broadcastProjectDocumentUpdate();
-                return receipt.revision;
-              },
+      new UnifiedLibraryProjectAdapter(() => {
+        const data = getCurrentData();
+        if (!data) return null;
+        const initialDocId = getCurrentProjectSessionDocumentId();
+        const initialSessionId = getCurrentProjectSessionId();
+        const beforeMemento = data.historyCopy();
+        transferProjectEditorIdentities(data, beforeMemento);
+        return {
+          data,
+          sessionId: initialSessionId,
+          revision: getCurrentProjectRevision(),
+          commit: (label?: string) => {
+            if (
+              getCurrentProjectSessionDocumentId() !== initialDocId ||
+              getCurrentProjectSessionId() !== initialSessionId
+            ) {
+              return getCurrentProjectRevision();
             }
-          : null,
-      ),
+            const afterMemento = getCurrentData().historyCopy();
+            transferProjectEditorIdentities(getCurrentData(), afterMemento);
+            const receipt = projectHistory.recordDirectStructureMutation({
+              label: label ?? 'Library Transfer',
+              beforeMemento,
+              afterMemento,
+            });
+            broadcastProjectDocumentUpdate();
+            return receipt.revision;
+          },
+        };
+      }),
       {
         legacyConfigurationDirectory: path.join(app.getPath('home'), '.blue'),
         migrationStatePath: path.join(app.getPath('userData'), 'blue-libraries-state.json'),

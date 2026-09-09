@@ -1768,3 +1768,52 @@ export function reconcileMixerWithArrangement(data: BlueData): boolean {
 
   return changed;
 }
+
+/**
+ * Human-readable history label for a durable orchestra patch so arrangement
+ * instrument changes enter project history as meaningful actions.
+ */
+export function orchestraPatchActionLabel(patch: OrchestraPatch): string {
+  switch (patch.type) {
+    case 'addInstrument':
+      return 'Add Instrument';
+    case 'removeAssignment':
+      return 'Remove Instrument';
+    case 'duplicateAssignment':
+      return 'Duplicate Instrument';
+    case 'pasteInstrument':
+      return 'Paste Instrument';
+    case 'updateAssignment':
+      return patch.enabled === undefined
+        ? 'Reorder Instrument'
+        : patch.enabled
+          ? 'Enable Instrument'
+          : 'Disable Instrument';
+    case 'replaceInstrument':
+      return 'Replace Instrument';
+    case 'convertGenericToBsb':
+      return 'Convert Instrument to Blue Synth Builder';
+    case 'updateInstrument': {
+      const keys = Object.keys(patch.patch);
+      if (keys.length === 1) {
+        switch (keys[0]) {
+          case 'name':
+            return 'Rename Instrument';
+          case 'comment':
+            return 'Edit Instrument Comment';
+          case 'enabled':
+            return patch.patch.enabled ? 'Enable Instrument' : 'Disable Instrument';
+          case 'alwaysOnInstrumentText':
+          case 'globalOrc':
+          case 'globalSco':
+            return 'Edit Blue Synth Builder Code';
+          case 'blueX7':
+            return 'Edit BlueX7 Voice';
+        }
+      }
+      return 'Edit Instrument';
+    }
+    case 'updateInstrumentComment':
+      return 'Edit Instrument Comment';
+  }
+}

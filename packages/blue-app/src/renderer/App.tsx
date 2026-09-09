@@ -18,6 +18,7 @@ import FreezeOperationDialog from './components/workbench/panels/FreezeOperation
 import RenderToDiskDialog from './components/workbench/panels/RenderToDiskDialog';
 import ErrorBoundary from './components/notifications/ErrorBoundary';
 import { LibraryTransferDialog } from './components/libraries/LibraryTransferDialog';
+import { OversizeProposalDialog } from './components/dialogs/OversizeProposalDialog';
 import { useLibraryStore } from './stores/library-store';
 import { useCodeRepositoryStore } from './stores/code-repository-store';
 
@@ -72,6 +73,7 @@ export default function App(): React.ReactElement {
         <MidiImportDialog />
         <FreezeOperationDialog />
         <RenderToDiskDialog />
+        <OversizeProposalDialog />
         {transferPreview && (
           <LibraryTransferDialog
             preview={transferPreview}

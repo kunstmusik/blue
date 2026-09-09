@@ -54,7 +54,7 @@ export interface ActiveLibraryProject {
   readonly data: BlueData;
   readonly sessionId: number;
   readonly revision?: number;
-  readonly commit?: () => number;
+  readonly commit?: (label?: string) => number;
 }
 
 export type ActiveLibraryProjectProvider = () => ActiveLibraryProject | null;
@@ -271,7 +271,8 @@ export class UnifiedLibraryProjectAdapter {
     instance.setSubjectiveDuration(definition.getSubjectiveDuration());
     layer[objectIndex] = instance;
 
-    const projectRevision = project.commit?.() ?? (project.revision ?? 0) + 1;
+    const projectRevision =
+      project.commit?.('Insert Shared Sound Object') ?? (project.revision ?? 0) + 1;
     return {
       projectSessionId: project.sessionId,
       projectRevision,
@@ -715,7 +716,7 @@ export class UnifiedLibraryProjectAdapter {
       }
     }
     if (!changed) return null;
-    project.commit?.();
+    project.commit?.('Update Project Item from Library');
 
     const displayName =
       key.locator.kind === 'instrument'
@@ -781,7 +782,7 @@ export class UnifiedLibraryProjectAdapter {
     const project = this.requireCurrentTarget(input.target, input.key.libraryType);
     const source = this.resolveInsertionSource(project, input);
     const insertedIdentity = this.insertResolvedSource(project, input, source);
-    const projectRevision = project.commit?.() ?? (project.revision ?? 0) + 1;
+    const projectRevision = project.commit?.('Insert Library Item') ?? (project.revision ?? 0) + 1;
     return {
       projectSessionId: project.sessionId,
       projectRevision,
@@ -894,7 +895,8 @@ export class UnifiedLibraryProjectAdapter {
       changed = project.data.getSoundObjectLibrary().removeObjectById(identity) || changed;
     }
     if (!changed) throw new Error('Project library item not found');
-    const projectRevision = project.commit?.() ?? (project.revision ?? 0) + 1;
+    const projectRevision =
+      project.commit?.('Delete Project Library Item') ?? (project.revision ?? 0) + 1;
     return {
       projectSessionId: project.sessionId,
       projectRevision,

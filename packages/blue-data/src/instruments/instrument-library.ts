@@ -9,6 +9,7 @@ import { Instrument } from './instrument';
 import { InstrumentCategory } from './instrument-category';
 import { GenericInstrument } from './generic-instrument';
 import { Element } from '../serialization/xml-reader';
+import type { CopyMode } from '../deep-copyable';
 
 export class InstrumentLibrary {
   private _rootCategory: InstrumentCategory;
@@ -104,9 +105,9 @@ export class InstrumentLibrary {
    * references with the original. Delegates to
    * {@link InstrumentCategory.deepCopy} for the recursive tree copy.
    */
-  deepCopy(): InstrumentLibrary {
+  deepCopy(mode: CopyMode = 'duplication'): InstrumentLibrary {
     const copy = new InstrumentLibrary();
-    copy._rootCategory = this._rootCategory.deepCopy();
+    copy._rootCategory = this._rootCategory.deepCopy(mode);
     return copy;
   }
 }

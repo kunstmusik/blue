@@ -2060,12 +2060,14 @@ export function createProjectEditorSnapshot(
   data: BlueData,
   filePath: string | null,
   sessionId = 0,
+  documentId?: string,
 ): ProjectEditorSnapshot {
   reconcileMixerWithArrangement(data);
   return {
     filePath,
     version: data.getVersion(),
     sessionId,
+    documentId,
     globalOrc: data.getGlobalOrcSco().getGlobalOrc(),
     globalSco: data.getGlobalOrcSco().getGlobalSco(),
     orchestra: createOrchestraSnapshot(data),

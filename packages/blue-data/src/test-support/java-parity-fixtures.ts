@@ -9,6 +9,22 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { BlueData } from '../blue-data';
+import { PolyObject } from '../sound-objects/poly-object';
+import { SoundLayer } from '../sound-objects/sound-layer';
+import { GenericScore } from '../sound-objects/generic-score';
+import { TimePosition } from '../time/time-position';
+import { TimeDuration } from '../time/time-duration';
+import { Channel } from '../mixer/channel';
+import { GenericInstrument } from '../instruments/generic-instrument';
+import { BlueSynthBuilder } from '../instruments/blue-synth-builder';
+import { BSBKnob } from '../instruments/blue-synth-builder/bsb-knob';
+import { BSBDropdown } from '../instruments/blue-synth-builder/bsb-dropdown';
+import { PianoRoll } from '../sound-objects/piano-roll';
+import { PianoNote } from '../sound-objects/piano-roll/piano-note';
+import { FrozenSoundObject } from '../sound-objects/frozen-sound-object';
+import { buildBlueX7PopSongProject } from '../instruments/blue-x7/pop-song-fixture';
+import { Element } from '../serialization/xml-reader';
 
 export interface JavaParityManifest {
   schemaVersion: number;
@@ -350,5 +366,222 @@ export function assertManifestInvariants(
         `origin count mismatch for ${origin}: manifest ${count}, actual ${originCounts.get(origin) ?? 0}`,
       );
     }
+  }
+}
+
+export type HistoryFixtureKind =
+  | 'score'
+  | 'mixer'
+  | 'instrument'
+  | 'bsb'
+  | 'blueX7'
+  | 'pianoRoll'
+  | 'freeze'
+  | 'unknownData';
+
+export function resolveRepoRoot(): string {
+  const candidates = [
+    process.cwd(),
+    path.resolve(process.cwd(), '..'),
+    path.resolve(process.cwd(), '..', '..'),
+    path.resolve(__dirname, '..', '..', '..', '..'),
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(path.join(candidate, 'fixtures', 'smoke-test.blue'))) {
+      return candidate;
+    }
+  }
+  return process.cwd();
+}
+
+export function loadHistoryFixtureFile(relativePath: string): BlueData {
+  const fullPath = path.join(resolveRepoRoot(), relativePath);
+  const text = fs.readFileSync(fullPath, 'utf8');
+  return BlueData.loadFromString(text);
+}
+
+export function createRepresentativeScoreProject(): BlueData {
+  const data = new BlueData();
+  data.getProjectProperties().title = 'Representative Score Project';
+  const root = data.getScore()[0] as PolyObject;
+  root.setName('Root');
+  const layer = root[0];
+  layer.setName('Sound Layer 1');
+  const scoreObj1 = new GenericScore();
+  scoreObj1.setName('Score Object 1');
+  scoreObj1.setScoreText('i1 0 2 440 0.5');
+  scoreObj1.setStartTime(TimePosition.beats(0));
+  scoreObj1.setSubjectiveDuration(TimeDuration.beats(2));
+
+  const scoreObj2 = new GenericScore();
+  scoreObj2.setName('Score Object 2');
+  scoreObj2.setScoreText('i1 2 2 880 0.5');
+  scoreObj2.setStartTime(TimePosition.beats(2));
+  scoreObj2.setSubjectiveDuration(TimeDuration.beats(2));
+
+  layer.push(scoreObj1);
+  layer.push(scoreObj2);
+  return data;
+}
+
+export function createRepresentativeMixerProject(): BlueData {
+  const data = new BlueData();
+  data.getProjectProperties().title = 'Representative Mixer Project';
+  const mixer = data.getMixer();
+  mixer.setEnabled(true);
+  const ch1 = new Channel();
+  ch1.setName('Channel 1');
+  ch1.setLevel(0.8);
+  const ch2 = new Channel();
+  ch2.setName('Channel 2');
+  ch2.setLevel(0.6);
+  mixer.getChannels().push(ch1);
+  mixer.getChannels().push(ch2);
+  mixer.getMaster().setLevel(0.9);
+  return data;
+}
+
+export function createRepresentativeInstrumentProject(): BlueData {
+  const data = new BlueData();
+  data.getProjectProperties().title = 'Representative Instrument Project';
+  const arrangement = data.getArrangement();
+  const instr1 = new GenericInstrument();
+  instr1.setName('SineSynth');
+  instr1.setText('ain oscili 0.2, 440\nblueMixerOut ain, ain');
+  arrangement.addInstrument(instr1);
+  return data;
+}
+
+export function createRepresentativeBsbProject(): BlueData {
+  const data = new BlueData();
+  data.getProjectProperties().title = 'Representative BSB Project';
+  const arrangement = data.getArrangement();
+  const bsb = new BlueSynthBuilder();
+  bsb.setName('BSB Instrument');
+  bsb.setInstrumentText('aout oscili <gain>, <freq>\nblueMixerOut aout, aout');
+
+  const knob = new BSBKnob();
+  knob.objectName = 'gain';
+  knob.setValue(0.5);
+  knob.minimum = 0;
+  knob.maximum = 1;
+  bsb.getGraphicInterface().getRootGroup().addChild(knob);
+
+  const dropdown = new BSBDropdown();
+  dropdown.objectName = 'freq';
+  dropdown.dropdownItems = [
+    { name: '440', value: '440', uniqueId: 'freq-440' },
+    { name: '880', value: '880', uniqueId: 'freq-880' },
+  ];
+  dropdown.selectedIndex = 0;
+  bsb.getGraphicInterface().getRootGroup().addChild(dropdown);
+
+  arrangement.addInstrument(bsb);
+  return data;
+}
+
+export function createRepresentativeBlueX7Project(): BlueData {
+  const candidatePath = path.join(resolveRepoRoot(), 'fixtures', 'blue-x7-pop-song.blue');
+  if (fs.existsSync(candidatePath)) {
+    return loadHistoryFixtureFile('fixtures/blue-x7-pop-song.blue');
+  }
+  return buildBlueX7PopSongProject();
+}
+
+export function createRepresentativePianoRollProject(): BlueData {
+  const data = new BlueData();
+  data.getProjectProperties().title = 'Representative PianoRoll Project';
+  const root = data.getScore()[0] as PolyObject;
+  root.setName('Root');
+  const layer = root[0];
+  layer.setName('PianoRoll Layer');
+
+  const roll = new PianoRoll();
+  roll.setName('Lead Roll');
+  roll.setStartTime(TimePosition.beats(0));
+  roll.setSubjectiveDuration(TimeDuration.beats(8));
+
+  const note1 = new PianoNote();
+  note1.setOctave(8);
+  note1.setScaleDegree(0);
+  note1.setStart(0);
+  note1.setDuration(1);
+
+  const note2 = new PianoNote();
+  note2.setOctave(8);
+  note2.setScaleDegree(4);
+  note2.setStart(1);
+  note2.setDuration(1);
+
+  roll.addNote(note1);
+  roll.addNote(note2);
+
+  layer.push(roll);
+  return data;
+}
+
+export function createRepresentativeFreezeProject(): BlueData {
+  const data = new BlueData();
+  data.getProjectProperties().title = 'Representative Freeze Project';
+  const root = data.getScore()[0] as PolyObject;
+  root.setName('Root');
+  const layer = root[0];
+  layer.setName('Freeze Layer');
+
+  const fso = new FrozenSoundObject();
+  fso.setName('Frozen Audio');
+  fso.setStartTime(TimePosition.beats(0));
+  fso.setSubjectiveDuration(TimeDuration.beats(4));
+  fso.setNumChannels(2);
+  fso.setFrozenWaveFileName('freeze_01.wav');
+
+  const source = new GenericScore();
+  source.setName('Original Source');
+  source.setScoreText('i1 0 4 440 0.5');
+  fso.setFrozenSoundObject(source);
+
+  layer.push(fso);
+  return data;
+}
+
+export function createRepresentativeUnknownDataProject(): BlueData {
+  const data = new BlueData();
+  data.getProjectProperties().title = 'Representative Unknown Data Project';
+
+  const pluginElement = new Element('legacyPlugin');
+  pluginElement.setAttribute('id', 'custom-plugin-123');
+  pluginElement.setText('custom-plugin-data-value');
+  data.getPluginDataXml().push(pluginElement);
+
+  const root = data.getScore()[0] as PolyObject;
+  root.setName('Root');
+  const layer = root[0];
+  layer.setName('Unknown XML Layer');
+  layer.setUnknownAttribute('customAuthoredAttr', 'testValue');
+  const unknownChild = new Element('customElement');
+  unknownChild.setText('unknownText');
+  layer.addUnknownChild(unknownChild);
+
+  return data;
+}
+
+export function createHistoryFixtureProject(kind: HistoryFixtureKind): BlueData {
+  switch (kind) {
+    case 'score':
+      return createRepresentativeScoreProject();
+    case 'mixer':
+      return createRepresentativeMixerProject();
+    case 'instrument':
+      return createRepresentativeInstrumentProject();
+    case 'bsb':
+      return createRepresentativeBsbProject();
+    case 'blueX7':
+      return createRepresentativeBlueX7Project();
+    case 'pianoRoll':
+      return createRepresentativePianoRollProject();
+    case 'freeze':
+      return createRepresentativeFreezeProject();
+    case 'unknownData':
+      return createRepresentativeUnknownDataProject();
   }
 }

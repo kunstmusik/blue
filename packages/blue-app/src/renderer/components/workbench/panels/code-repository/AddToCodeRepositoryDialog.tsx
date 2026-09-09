@@ -213,6 +213,7 @@ export default function AddToCodeRepositoryDialog({
                 value={code}
                 ariaLabel="Code Repository snippet ORC code"
                 mode="orc"
+                historyScope="draft"
                 contextMenuItems={editorContextMenuItems}
                 onChange={setCode}
               />

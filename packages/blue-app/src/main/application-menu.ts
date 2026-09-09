@@ -59,6 +59,12 @@ export interface ApplicationMenuTemplateOptions {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onActualSize: () => void;
+  undoLabel?: string;
+  redoLabel?: string;
+  canUndo?: boolean;
+  canRedo?: boolean;
+  onUndo?: () => void;
+  onRedo?: () => void;
 }
 
 function buildWorkbenchMenuItems(
@@ -327,6 +333,52 @@ function buildWindowMenuTemplate(
   ];
 }
 
+function buildEditMenuTemplate(
+  options: ApplicationMenuTemplateOptions,
+): MenuItemConstructorOptions[] {
+  const undoItem: MenuItemConstructorOptions = {
+    label: options.undoLabel ? `Undo ${options.undoLabel}` : 'Undo',
+    accelerator: 'CmdOrCtrl+Z',
+    enabled: Boolean(options.canUndo),
+    click: () => options.onUndo?.(),
+  };
+
+  const redoItems: MenuItemConstructorOptions[] = options.isDarwin
+    ? [
+        {
+          label: options.redoLabel ? `Redo ${options.redoLabel}` : 'Redo',
+          accelerator: 'Shift+Cmd+Z',
+          enabled: Boolean(options.canRedo),
+          click: () => options.onRedo?.(),
+        },
+      ]
+    : [
+        {
+          label: options.redoLabel ? `Redo ${options.redoLabel}` : 'Redo',
+          accelerator: 'Ctrl+Y',
+          enabled: Boolean(options.canRedo),
+          click: () => options.onRedo?.(),
+        },
+        {
+          label: options.redoLabel ? `Redo ${options.redoLabel}` : 'Redo',
+          accelerator: 'Ctrl+Shift+Z',
+          visible: false,
+          enabled: Boolean(options.canRedo),
+          click: () => options.onRedo?.(),
+        },
+      ];
+
+  return [
+    undoItem,
+    ...redoItems,
+    { type: 'separator' },
+    { role: 'cut' },
+    { role: 'copy' },
+    { role: 'paste' },
+    { role: 'selectAll' },
+  ];
+}
+
 export function buildApplicationMenuTemplate(
   options: ApplicationMenuTemplateOptions,
 ): MenuItemConstructorOptions[] {
@@ -366,15 +418,7 @@ export function buildApplicationMenuTemplate(
 
   template.push({
     label: 'Edit',
-    submenu: [
-      { role: 'undo' },
-      { role: 'redo' },
-      { type: 'separator' },
-      { role: 'cut' },
-      { role: 'copy' },
-      { role: 'paste' },
-      { role: 'selectAll' },
-    ],
+    submenu: buildEditMenuTemplate(options),
   });
 
   template.push({

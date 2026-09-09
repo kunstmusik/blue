@@ -759,4 +759,89 @@ describe('application menu follow playback mirror (SPEC 079)', () => {
     expect(handlers.onToggleFollowPlayback).toHaveBeenCalledOnce();
     expect(handlers.onToggleFollowPlaybackOnStart).toHaveBeenCalledOnce();
   });
+
+  describe('Edit menu undo and redo (US4, T048/T050)', () => {
+    it('configures macOS Undo and Redo with dynamic labels, accelerators, and handlers', () => {
+      const handlers = createHandlers();
+      const onUndo = vi.fn();
+      const onRedo = vi.fn();
+
+      const template = buildApplicationMenuTemplate({
+        hasLoadedProject: true,
+        isDarwin: true,
+        recentProjects: [],
+        canRevertProject: false,
+        followPlaybackEnabled: false,
+        followPlaybackOnStartEnabled: false,
+        canUndo: true,
+        canRedo: true,
+        undoLabel: 'Move Clip',
+        redoLabel: 'Move Clip',
+        onUndo,
+        onRedo,
+        ...handlers,
+      });
+
+      const editMenu = getSubmenu(template.find((item) => item.label === 'Edit'));
+      const undoItem = editMenu.find((item) => item.label === 'Undo Move Clip');
+      const redoItem = editMenu.find((item) => item.label === 'Redo Move Clip');
+
+      expect(undoItem).toBeDefined();
+      expect(undoItem?.accelerator).toBe('CmdOrCtrl+Z');
+      expect(undoItem?.enabled).toBe(true);
+
+      expect(redoItem).toBeDefined();
+      expect(redoItem?.accelerator).toBe('Shift+Cmd+Z');
+      expect(redoItem?.enabled).toBe(true);
+
+      undoItem?.click?.();
+      expect(onUndo).toHaveBeenCalledOnce();
+
+      redoItem?.click?.();
+      expect(onRedo).toHaveBeenCalledOnce();
+
+      // Ensure no raw roles exist
+      expect(editMenu.some((item) => item.role === 'undo')).toBe(false);
+      expect(editMenu.some((item) => item.role === 'redo')).toBe(false);
+    });
+
+    it('configures Windows/Linux Redo with Ctrl+Y and hidden Ctrl+Shift+Z accelerator', () => {
+      const handlers = createHandlers();
+      const onUndo = vi.fn();
+      const onRedo = vi.fn();
+
+      const template = buildApplicationMenuTemplate({
+        hasLoadedProject: true,
+        isDarwin: false,
+        recentProjects: [],
+        canRevertProject: false,
+        followPlaybackEnabled: false,
+        followPlaybackOnStartEnabled: false,
+        canUndo: false,
+        canRedo: false,
+        onUndo,
+        onRedo,
+        ...handlers,
+      });
+
+      const editMenu = getSubmenu(template.find((item) => item.label === 'Edit'));
+      const undoItem = editMenu.find((item) => item.label === 'Undo');
+      const redoYItem = editMenu.find(
+        (item) => item.label === 'Redo' && item.accelerator === 'Ctrl+Y',
+      );
+      const redoShiftItem = editMenu.find(
+        (item) => item.label === 'Redo' && item.accelerator === 'Ctrl+Shift+Z',
+      );
+
+      expect(undoItem?.enabled).toBe(false);
+      expect(redoYItem?.enabled).toBe(false);
+      expect(redoShiftItem?.enabled).toBe(false);
+      expect(redoShiftItem?.visible).toBe(false);
+
+      // Trigger clicks
+      redoYItem?.click?.();
+      redoShiftItem?.click?.();
+      expect(onRedo).toHaveBeenCalledTimes(2);
+    });
+  });
 });

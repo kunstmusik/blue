@@ -11,6 +11,8 @@ vi.mock('sonner', () => ({
     loading: vi.fn(),
     success: vi.fn(),
     error: vi.fn(),
+    warning: vi.fn(),
+    info: vi.fn(),
     message: vi.fn(),
   },
 }));
@@ -141,6 +143,9 @@ describe('useIPCListeners', () => {
     ),
     onProjectDocumentUpdated: vi.fn((cb: (...args: unknown[]) => void) =>
       addListener(listeners, 'project-document-updated', cb),
+    ),
+    onProjectRuntimeOutcome: vi.fn((cb: (...args: unknown[]) => void) =>
+      addListener(listeners, 'project-runtime-outcome', cb),
     ),
     getProgramSettings: vi.fn(),
     updateWindowLayout: vi.fn(),
@@ -391,6 +396,279 @@ describe('useIPCListeners', () => {
     expect(getProjectDocumentRevision()).toBe(2);
   });
 
+  it('ignores canonical project updates from a different document lifetime', () => {
+    useProjectStore.setState({
+      sessionId: 7,
+      documentId: 'doc-current',
+      loaded: true,
+      title: 'Current document',
+    });
+    act(() => {
+      root.render(<Harness />);
+    });
+
+    const projectUpdatedHandler = listeners.get('project-document-updated')!.values().next()
+      .value as (...args: unknown[]) => void;
+    act(() => {
+      projectUpdatedHandler({
+        documentId: 'doc-replaced',
+        sessionId: 7,
+        revision: 50,
+        snapshot: { sessionId: 7, title: 'Replaced document leakage' },
+      });
+    });
+
+    expect(useProjectStore.getState().title).toBe('Current document');
+    expect(getProjectDocumentRevision()).toBe(0);
+  });
+
+  it('rejects older and equal revisions from other contexts', () => {
+    useProjectStore.setState({ sessionId: 7, documentId: 'doc-1', loaded: true });
+    act(() => {
+      root.render(<Harness />);
+    });
+    const projectUpdatedHandler = listeners.get('project-document-updated')!.values().next()
+      .value as (...args: unknown[]) => void;
+
+    // Establish the local revision base, then send an equal-revision event.
+    act(() => {
+      projectUpdatedHandler({
+        documentId: 'doc-1',
+        sessionId: 7,
+        revision: 4,
+        snapshot: { sessionId: 7, title: 'Rev 4' },
+      });
+    });
+    expect(useProjectStore.getState().title).toBe('Rev 4');
+
+    act(() => {
+      projectUpdatedHandler({
+        documentId: 'doc-1',
+        sessionId: 7,
+        revision: 4,
+        snapshot: { sessionId: 7, title: 'Echoed rev 4' },
+      });
+    });
+    act(() => {
+      projectUpdatedHandler({
+        documentId: 'doc-1',
+        sessionId: 7,
+        revision: 3,
+        snapshot: { sessionId: 7, title: 'Stale rev 3' },
+      });
+    });
+
+    expect(useProjectStore.getState().title).toBe('Rev 4');
+  });
+
+  it('accepts revision-zero snapshots on initial registration', () => {
+    useProjectStore.setState({ sessionId: 0, documentId: null, loaded: false });
+    act(() => {
+      root.render(<Harness />);
+    });
+
+    const projectUpdatedHandler = listeners.get('project-document-updated')!.values().next()
+      .value as (...args: unknown[]) => void;
+    act(() => {
+      projectUpdatedHandler({
+        documentId: 'doc-initial',
+        sessionId: 0,
+        revision: 0,
+        stateId: 'state-0',
+        isDirty: false,
+        history: {
+          canUndo: false,
+          canRedo: false,
+          undoLabel: null,
+          redoLabel: null,
+          cursor: 0,
+          length: 0,
+          retainedBytes: 0,
+          savedStateId: null,
+          stateId: 'state-0',
+        },
+        acceptedOperationIds: [],
+        snapshot: { sessionId: 0, documentId: 'doc-initial', title: 'Initial' },
+      });
+    });
+
+    expect(useProjectStore.getState().title).toBe('Initial');
+    expect(useProjectStore.getState().documentId).toBe('doc-initial');
+  });
+
+  it('projects the authoritative dirty state from other-context publications', () => {
+    useProjectStore.setState({ sessionId: 7, documentId: 'doc-1', loaded: true, isDirty: false });
+    act(() => {
+      root.render(<Harness />);
+    });
+    const projectUpdatedHandler = listeners.get('project-document-updated')!.values().next()
+      .value as (...args: unknown[]) => void;
+
+    act(() => {
+      projectUpdatedHandler({
+        documentId: 'doc-1',
+        sessionId: 7,
+        revision: 5,
+        isDirty: true,
+        snapshot: { sessionId: 7, title: 'Remote edit' },
+      });
+    });
+    expect(useProjectStore.getState().isDirty).toBe(true);
+
+    act(() => {
+      projectUpdatedHandler({
+        documentId: 'doc-1',
+        sessionId: 7,
+        revision: 6,
+        isDirty: false,
+        snapshot: { sessionId: 7, title: 'Saved elsewhere' },
+      });
+    });
+    expect(useProjectStore.getState().isDirty).toBe(false);
+  });
+
+  it('restores selection hints from other-view publications and reconciles invalid targets', () => {
+    useProjectStore.setState({
+      sessionId: 7,
+      documentId: 'doc-1',
+      loaded: true,
+      score: {
+        ...useProjectStore.getState().score,
+        layerGroups: [
+          {
+            groupId: 'g1',
+            groupType: 'soundObject' as const,
+            layers: [
+              {
+                layerId: 'l1',
+                name: 'Layer',
+                height: 40,
+                muted: false,
+                solo: false,
+                items: [
+                  {
+                    objectId: 'obj-alive',
+                    objectType: 'GenericScore',
+                    name: 'Alive',
+                    startBeats: 0,
+                    durationBeats: 2,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    });
+    useScoreSelectionStore.getState().clearSelection();
+    act(() => {
+      root.render(<Harness />);
+    });
+
+    const projectUpdatedHandler = listeners.get('project-document-updated')!.values().next()
+      .value as (...args: unknown[]) => void;
+
+    // A publication from another view restores its stable origin selection.
+    act(() => {
+      projectUpdatedHandler({
+        documentId: 'doc-1',
+        sessionId: 7,
+        revision: 3,
+        isDirty: true,
+        originViewId: 'other-view',
+        selectionHints: [{ targetType: 'scoreObject', targetId: 'obj-alive' }],
+        snapshot: { sessionId: 7, title: 'Restored' },
+      });
+    });
+    expect(useScoreSelectionStore.getState().selectedObjectIds.has('obj-alive')).toBe(true);
+
+    // After the object is deleted elsewhere, hints referencing it reconcile
+    // to a cleared selection instead of pointing at nothing.
+    act(() => {
+      projectUpdatedHandler({
+        documentId: 'doc-1',
+        sessionId: 7,
+        revision: 4,
+        isDirty: true,
+        originViewId: 'other-view',
+        selectionHints: [
+          { targetType: 'scoreObject', targetId: 'obj-alive' },
+          { targetType: 'scoreObject', targetId: 'obj-deleted' },
+        ],
+        snapshot: { sessionId: 7, title: 'Restored 2' },
+      });
+    });
+    expect(useScoreSelectionStore.getState().selectedObjectIds.has('obj-alive')).toBe(true);
+
+    act(() => {
+      projectUpdatedHandler({
+        documentId: 'doc-1',
+        sessionId: 7,
+        revision: 5,
+        isDirty: true,
+        originViewId: 'other-view',
+        selectionHints: [{ targetType: 'scoreObject', targetId: 'obj-gone' }],
+        snapshot: { sessionId: 7, title: 'Restored 3' },
+      });
+    });
+    expect(useScoreSelectionStore.getState().selectedObjectIds.size).toBe(0);
+  });
+
+  it('suppresses replay of acknowledged own operations', async () => {
+    vi.useFakeTimers();
+    try {
+      const blueApiWithCommit = window.blueAPI as typeof window.blueAPI & {
+        commitProjectDocumentPatches: ReturnType<typeof vi.fn>;
+      };
+      blueApiWithCommit.commitProjectDocumentPatches = vi.fn(async () => ({
+        changed: true,
+        revision: 1,
+        sessionId: 7,
+      }));
+      useProjectStore.setState({
+        sessionId: 7,
+        documentId: 'doc-1',
+        loaded: true,
+        title: 'Optimistic',
+      });
+      act(() => {
+        root.render(<Harness />);
+      });
+
+      // Submit an own operation through the patch queue so it is tracked.
+      await act(async () => {
+        void useProjectStore.getState().applyProjectDocumentPatch({
+          projectProperties: { title: 'Local edit' },
+        });
+        await vi.advanceTimersByTimeAsync(200);
+      });
+      const commitCall = blueApiWithCommit.commitProjectDocumentPatches.mock.calls[0];
+      const metadata = commitCall?.[1] as { operationId?: string } | undefined;
+      const operationId = metadata?.operationId;
+      expect(operationId).toMatch(/^op-/);
+
+      const projectUpdatedHandler = listeners.get('project-document-updated')!.values().next()
+        .value as (...args: unknown[]) => void;
+      // The canonical echo acknowledges our own operation with a snapshot
+      // captured from before the local optimistic application; it must not be
+      // replayed over fresher local state.
+      act(() => {
+        projectUpdatedHandler({
+          documentId: 'doc-1',
+          sessionId: 7,
+          revision: 1,
+          acceptedOperationIds: [operationId],
+          snapshot: { sessionId: 7, title: 'Stale canonical echo' },
+        });
+      });
+
+      expect(useProjectStore.getState().title).toBe('Local edit');
+      expect(getProjectDocumentRevision()).toBe(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('ignores canonical project updates from a stale session', () => {
     useProjectStore.setState({ sessionId: 7, loaded: true, title: 'Current project' });
     act(() => {
@@ -535,5 +813,33 @@ describe('useIPCListeners', () => {
     });
 
     expect(usePlaybackStore.getState().followPlaybackOnStart).toBe(false);
+  });
+
+  it('handles project runtime outcomes and updates project store status', async () => {
+    await act(async () => {
+      root.render(<Harness />);
+    });
+
+    const runtimeOutcomeHandler = listeners.get('project-runtime-outcome')?.values().next()
+      .value as ((event: { outcomes: unknown[] }) => void) | undefined;
+    expect(runtimeOutcomeHandler).toBeDefined();
+
+    act(() => {
+      runtimeOutcomeHandler!({
+        outcomes: [
+          {
+            performanceKind: 'timeline',
+            status: 'restart-required',
+            generation: 1,
+          },
+        ],
+      });
+    });
+
+    expect(useProjectStore.getState().runtimeOutcomes).toHaveLength(1);
+    expect(useProjectStore.getState().runtimeOutcomes[0].status).toBe('restart-required');
+    expect(useProjectStore.getState().runtimeOutcomeStatusText).toBe(
+      'Restart required for playback to reflect all changes',
+    );
   });
 });

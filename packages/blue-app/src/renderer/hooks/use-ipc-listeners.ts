@@ -1,6 +1,17 @@
 import { useEffect } from 'react';
 import { toast } from 'sonner';
-import { acceptProjectDocumentRevision, useProjectStore } from '../stores/project-store';
+import { reconcileExternalSelectionHints } from '../stores/score-selection-store';
+import { setProjectHistoryProjection } from './use-project-history';
+import {
+  acceptProjectDocumentRevision,
+  getProjectDocumentId,
+  getProjectDocumentRevision,
+  getProjectHistoryParticipantContextId,
+  handleProjectHistoryBoundary,
+  handleProjectHistoryRelease,
+  ownsProjectDocumentOperationIds,
+  useProjectStore,
+} from '../stores/project-store';
 import { usePlaybackStore } from '../stores/playback-store';
 import { useUIStore } from '../stores/ui-store';
 import { useSettingsStore } from '../stores/settings-store';
@@ -151,6 +162,15 @@ export function useIPCListeners(): void {
       resetBlueLive();
       useScoreSelectionStore.getState().clearSelection();
       setProjectInfo(info);
+      // Re-register this context's history participant against the freshly
+      // loaded document lifetime.
+      void window.blueAPI
+        .registerHistoryParticipant?.({
+          contextId: getProjectHistoryParticipantContextId(),
+          documentId: info.documentId ?? '',
+          acceptedRevision: getProjectDocumentRevision(),
+        })
+        ?.catch(() => undefined);
       useProjectStore.getState().setMissingAudioSession(info.missingAudioAssets ?? null);
       setActivePanel('project');
       if (info.filePath) {
@@ -256,16 +276,73 @@ export function useIPCListeners(): void {
     // already applied locally. This subscription handles the case where
     // floating windows are in a separate context (FR-010, T039).
     const unsubProjectDocumentUpdated = window.blueAPI.onProjectDocumentUpdated?.((event) => {
-      // Ignore stale sessions.
+      // Ignore stale sessions and publications from a previous document
+      // lifetime (project replacement must never touch the new document).
       const currentSession = useProjectStore.getState().sessionId;
       if (event.sessionId !== currentSession) return;
-      // Apply newer revisions idempotently — the snapshot is already the
-      // latest state from the canonical main-process document.
+      const knownDocumentId = getProjectDocumentId();
+      if (knownDocumentId && event.documentId !== knownDocumentId) return;
+      // The projection is display state: every valid publication refreshes
+      // undo/redo availability, including own-operation acknowledgements.
+      setProjectHistoryProjection(event.history);
+
+      // Acknowledgement of our own submission: the optimistic application in
+      // this context is already current, so replaying the canonical snapshot
+      // here would clobber fresher local state and never creates a second
+      // history entry. Only the revision fence and dirty projection advance.
+      if (ownsProjectDocumentOperationIds(event.acceptedOperationIds)) {
+        acceptProjectDocumentRevision(event.sessionId, event.revision);
+        return;
+      }
+
+      // Apply strictly newer revisions from other contexts idempotently — the
+      // snapshot is authoritative state from the canonical main-process
+      // document. Older or equal revisions carry nothing new, except the
+      // initial registration snapshot which is accepted even at revision zero.
+      const currentRevision = getProjectDocumentRevision();
+      const isInitialRegistration = currentRevision === 0 && !useProjectStore.getState().loaded;
+      if (event.revision <= currentRevision && !isInitialRegistration) return;
       if (event.snapshot) {
         acceptProjectDocumentRevision(event.sessionId, event.revision);
-        useProjectStore.getState().setProjectInfo(event.snapshot as never);
+        // Canonical refresh keeps pending local overlays and takes the dirty
+        // projection straight from the publication's saved checkpoint.
+        useProjectStore.getState().refreshFromCanonical(event.snapshot as never, event.isDirty);
+        // Restorations from other views reveal the origin selection here;
+        // hints whose targets no longer exist reconcile to a clear state.
+        // Own-context acknowledgements keep the local selection untouched.
+        if (event.selectionHints && event.selectionHints.length > 0) {
+          reconcileExternalSelectionHints(event.selectionHints, useProjectStore.getState().score);
+        }
+      }
+      if (event.runtimeOutcomes && event.runtimeOutcomes.length > 0) {
+        useProjectStore.getState().handleRuntimeOutcomes(event.runtimeOutcomes);
       }
     });
+
+    const unsubRuntimeOutcome = window.blueAPI.onProjectRuntimeOutcome?.((event) => {
+      if (event.outcomes && event.outcomes.length > 0) {
+        useProjectStore.getState().handleRuntimeOutcomes(event.outcomes);
+      }
+    });
+
+    // Settlement boundary participation: pause durable submissions, drain the
+    // captured prefix, and acknowledge zero outstanding work so main-owned
+    // undo/redo/save execute at a settled boundary.
+    const unsubPrepareBoundary = window.blueAPI.onPrepareHistoryBoundary?.((event) => {
+      void handleProjectHistoryBoundary(event);
+    });
+    const unsubReleaseBoundary = window.blueAPI.onReleaseHistoryBoundary?.((event) => {
+      handleProjectHistoryRelease(event);
+    });
+    void window.blueAPI
+      .registerHistoryParticipant?.({
+        contextId: getProjectHistoryParticipantContextId(),
+        documentId: getProjectDocumentId() ?? '',
+        acceptedRevision: getProjectDocumentRevision(),
+      })
+      ?.catch((error: unknown) => {
+        console.error('[use-ipc-listeners] Failed to register history participant:', error);
+      });
 
     const handleStorage = (e: StorageEvent) => {
       if (e.key === 'blue-settings') {
@@ -292,6 +369,12 @@ export function useIPCListeners(): void {
       unsubCsdErr();
       unsubBlueLiveStatus();
       unsubProjectDocumentUpdated?.();
+      unsubRuntimeOutcome?.();
+      unsubPrepareBoundary?.();
+      unsubReleaseBoundary?.();
+      void window.blueAPI
+        .unregisterHistoryParticipant?.({ contextId: getProjectHistoryParticipantContextId() })
+        ?.catch(() => undefined);
       window.removeEventListener('storage', handleStorage);
     };
   }, [

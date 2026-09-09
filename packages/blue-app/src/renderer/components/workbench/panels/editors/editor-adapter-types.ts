@@ -26,6 +26,8 @@ export type CsoundEditorCommand =
   | 'cut'
   | 'copy'
   | 'paste'
+  | 'undo'
+  | 'redo'
   | 'evaluate-code'
   | 'add-to-code-repository'
   | 'open-manual';
@@ -124,7 +126,10 @@ export interface SelectedCodeEditorProps {
   /** Repository root for the Custom submenu; null disables it. */
   codeRepositoryRoot?: CodeRepositoryNode | null;
   /** Callback invoked when the user adds the current selection to the repository. */
-  onAddToCodeRepository?: (selectedText: string) => void;
+  /** History scope for undo/redo routing. Defaults to 'project'. */
+  historyScope?: 'project' | 'draft' | 'none';
+  /** Typing grouping interval in milliseconds (e.g. 500ms). Defaults to 0 (immediate). */
+  typingGroupingMs?: number;
   onChange: (value: string) => void | Promise<void>;
 }
 

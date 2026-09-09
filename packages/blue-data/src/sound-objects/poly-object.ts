@@ -10,6 +10,7 @@ import { SoundObject } from './sound-object';
 import { SoundLayer } from './sound-layer';
 import { normalizeXmlLayerColor } from '../score/layers/layer-color';
 import { LayerGroup } from '../score/layers/layer-group';
+import type { CopyMode } from '../deep-copyable';
 import { NoteProcessorChain } from '../note-processors/note-processor-chain';
 import { TimeBehavior } from './time-behavior';
 import { TimePosition } from '../time/time-position';
@@ -574,7 +575,7 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
     return pObj;
   }
 
-  deepCopy(): PolyObject {
+  deepCopy(mode: CopyMode = 'duplication'): PolyObject {
     const copy = new PolyObject(false);
     copy._name = this._name;
     copy._startTime = this._startTime;
@@ -584,7 +585,7 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
     copy._npc = new NoteProcessorChain(this._npc);
     // Deep copy layers
     for (const layer of this) {
-      copy.push(layer.deepCopy());
+      copy.push(layer.deepCopy(mode));
     }
     return copy;
   }

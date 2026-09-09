@@ -73,9 +73,20 @@ export {
   reconcileMixerSnapshotWithArrangement,
   reconcileMixerWithArrangement,
   createNestedPolyObjectSnapshot,
+  mixerPatchActionLabel,
 } from './patch-mixer-bluelive';
 
-export { applyProjectDocumentPatch, isEmptyProjectDocumentPatch } from './patch-document';
+export { orchestraPatchActionLabel } from './snapshot-mixer-orchestra';
+
+export {
+  applyProjectDocumentPatch,
+  isEmptyProjectDocumentPatch,
+  isScalarProjectDocumentPatch,
+  classifyProjectDocumentPatch,
+  validateProjectDocumentPatch,
+  KNOWN_PROJECT_DOCUMENT_PATCH_KEYS,
+  type KnownProjectDocumentPatchKey,
+} from './patch-document';
 
 export {
   collectBsbReplacementKeysFromSnapshotTree,

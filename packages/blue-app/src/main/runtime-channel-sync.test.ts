@@ -29,7 +29,7 @@ describe('syncRuntimeChannel', () => {
     const timelineSetChannel = vi.fn().mockResolvedValue(undefined);
     const blueLiveSetChannel = vi.fn().mockResolvedValue(undefined);
 
-    await syncRuntimeChannel(
+    const result = await syncRuntimeChannel(
       'gk_blue_auto2',
       0.5,
       {
@@ -44,5 +44,56 @@ describe('syncRuntimeChannel', () => {
 
     expect(timelineSetChannel).not.toHaveBeenCalled();
     expect(blueLiveSetChannel).not.toHaveBeenCalled();
+    // Skipped engines are reported, not silently ignored (T042).
+    expect(result.routedTo).toEqual([]);
+    expect(result.outcomes).toEqual([
+      { target: 'timeline', ok: false, message: 'Timeline engine not playing' },
+      { target: 'blueLive', ok: false, message: 'Blue Live not running' },
+    ]);
+  });
+
+  it('reports a rejected write as failed instead of successful (T042)', async () => {
+    const result = await syncRuntimeChannel(
+      'gk_gain',
+      0.4,
+      {
+        isCurrentlyPlaying: () => true,
+        setChannel: vi.fn().mockRejectedValue(new Error('Engine rejected channel assignment')),
+      },
+      {
+        isRunning: () => true,
+        setChannel: vi.fn().mockResolvedValue(undefined),
+      },
+    );
+
+    expect(result.routedTo).toEqual(['timeline', 'blueLive']);
+    expect(result.outcomes).toEqual([
+      {
+        target: 'timeline',
+        ok: false,
+        message: 'Engine rejected channel assignment',
+      },
+      { target: 'blueLive', ok: true, message: '' },
+    ]);
+  });
+
+  it('keeps partial outcomes distinguishable when one engine times out', async () => {
+    const result = await syncRuntimeChannel(
+      'gk_gain',
+      0.6,
+      {
+        isCurrentlyPlaying: () => true,
+        setChannel: vi.fn().mockRejectedValue('setChannel timed out'),
+      },
+      {
+        isRunning: () => false,
+        setChannel: vi.fn(),
+      },
+    );
+
+    expect(result.outcomes).toEqual([
+      { target: 'timeline', ok: false, message: 'setChannel timed out' },
+      { target: 'blueLive', ok: false, message: 'Blue Live not running' },
+    ]);
   });
 });

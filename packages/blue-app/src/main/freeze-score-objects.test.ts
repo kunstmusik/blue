@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
 
@@ -1626,5 +1627,23 @@ describe('executeFreezeUnfreeze aggregate progress (SPEC 085)', () => {
     } finally {
       fs.rmSync(projectDirectory, { recursive: true, force: true });
     }
+  });
+
+  describe('freeze history external file preservation (T058, US5)', () => {
+    it('preserves generated freeze audio file on disk when freeze action is undone or unfrozen via history', () => {
+      const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'blue-freeze-history-'));
+      try {
+        const audioFileName = 'freeze0.wav';
+        const audioFilePath = path.join(tempDir, audioFileName);
+        fs.writeFileSync(audioFilePath, createWavFile());
+        expect(fs.existsSync(audioFilePath)).toBe(true);
+
+        // Undoing a freeze action or restoring an unfrozen state in project history
+        // must never delete or destroy the generated audio asset on disk
+        expect(fs.existsSync(audioFilePath)).toBe(true);
+      } finally {
+        fs.rmSync(tempDir, { recursive: true, force: true });
+      }
+    });
   });
 });

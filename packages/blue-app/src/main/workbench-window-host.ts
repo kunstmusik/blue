@@ -254,6 +254,28 @@ export function sendToMainWindow(channel: string, payload: unknown): void {
 }
 
 /**
+ * Sends a message to the focused registered workbench window, falling back to
+ * the main window when no registered window is focused.
+ */
+export function sendToFocusedWorkbenchWindow(channel: string, payload: unknown): void {
+  const focused = BrowserWindow.getFocusedWindow();
+  if (focused && !focused.isDestroyed()) {
+    const m = getManager();
+    const entry = m.getAll().find((e) => e.browserWindowId === focused.id);
+    if (entry?.role === 'floating') {
+      sendToMainWindow(channel, payload);
+      return;
+    }
+    const contents = focused.webContents;
+    if (contents && !contents.isDestroyed()) {
+      contents.send(channel, payload);
+      return;
+    }
+  }
+  sendToMainWindow(channel, payload);
+}
+
+/**
  * Wires the workbench-window IPC channels. Duplicate initialization fails
  * before side effects; handlers delegate to the registry.
  */

@@ -6,6 +6,7 @@ import { Channel } from './channel';
 import { ChannelList } from './channel-list';
 import { Element } from '../serialization/xml-reader';
 import { BlueDataObject } from '../blue-data-object';
+import type { CopyMode } from '../deep-copyable';
 import { writeBoolean, writeDouble } from '../utilities/xml';
 
 export class Mixer implements BlueDataObject {
@@ -234,13 +235,13 @@ export class Mixer implements BlueDataObject {
     return mixer;
   }
 
-  deepCopy(): BlueDataObject {
+  deepCopy(mode: CopyMode = 'duplication'): BlueDataObject {
     const copy = new Mixer();
     copy._enabled = this._enabled;
-    copy._channelListGroups = this._channelListGroups.map((cl) => cl.deepCopy() as ChannelList);
-    copy._channels = this._channels.deepCopy() as ChannelList;
-    copy._subChannels = this._subChannels.deepCopy() as ChannelList;
-    copy._master = this._master.deepCopy() as Channel;
+    copy._channelListGroups = this._channelListGroups.map((cl) => cl.deepCopy(mode) as ChannelList);
+    copy._channels = this._channels.deepCopy(mode) as ChannelList;
+    copy._subChannels = this._subChannels.deepCopy(mode) as ChannelList;
+    copy._master = this._master.deepCopy(mode) as Channel;
     copy._extraRenderTime = this._extraRenderTime;
     copy._subChannelDependencies = new Set(this._subChannelDependencies);
     return copy;

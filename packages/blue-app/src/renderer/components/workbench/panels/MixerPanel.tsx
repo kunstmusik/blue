@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Plus } from 'lucide-react';
 
-import type { MixerPatch } from '../../../../shared/project-editor';
+import { mixerPatchActionLabel, type MixerPatch } from '../../../../shared/project-editor';
 import { getProjectDocumentRevision, useProjectStore } from '../../../stores/project-store';
 import { usePlaybackStore } from '../../../stores/playback-store';
 import { useBlueLiveStore } from '../../../stores/blue-live-store';
@@ -42,7 +42,13 @@ export default function MixerPanel(): React.ReactElement {
 
   const handleMixerPatch = useCallback(
     (patch: Record<string, unknown>) => {
-      void applyProjectDocumentPatch({ mixer: patch as MixerPatch });
+      const mixerPatch = patch as MixerPatch;
+      void applyProjectDocumentPatch(
+        { mixer: mixerPatch },
+        {
+          label: mixerPatchActionLabel(mixerPatch),
+        },
+      );
     },
     [applyProjectDocumentPatch],
   );

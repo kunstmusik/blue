@@ -170,6 +170,37 @@ import {
   type WorkbenchWindowRegisterResponse,
 } from '../shared/workbench-window-contract';
 import {
+  PROJECT_HISTORY_COMMIT_CHANNEL,
+  PROJECT_HISTORY_UNDO_CHANNEL,
+  PROJECT_HISTORY_REDO_CHANNEL,
+  PROJECT_HISTORY_READ_CHANNEL,
+  PROJECT_HISTORY_REGISTER_PARTICIPANT_CHANNEL,
+  PROJECT_HISTORY_UNREGISTER_PARTICIPANT_CHANNEL,
+  PROJECT_HISTORY_BOUNDARY_PREPARE_CHANNEL,
+  PROJECT_HISTORY_BOUNDARY_ACK_CHANNEL,
+  PROJECT_HISTORY_BOUNDARY_RELEASE_CHANNEL,
+  PROJECT_HISTORY_CANCEL_OVERSIZE_CHANNEL,
+  PROJECT_RUNTIME_OUTCOME_CHANNEL,
+  type ProjectHistoryCommitRequest,
+  type ProjectHistoryUndoRequest,
+  type ProjectHistoryRedoRequest,
+  type ProjectHistoryReadRequest,
+  type ProjectHistoryResponse,
+  type ProjectHistoryStateProjection,
+  type RegisterHistoryParticipantRequest,
+  type RegisterHistoryParticipantResponse,
+  type UnregisterHistoryParticipantRequest,
+  type PrepareHistoryBoundaryEvent,
+  type ProjectDocumentCommitMetadata,
+  type PrepareHistoryBoundaryAck,
+  type ReleaseHistoryBoundaryEvent,
+  type CancelOversizeProposalRequest,
+  type ProjectRuntimeOutcomeEvent,
+  isPrepareHistoryBoundaryEvent,
+  isReleaseHistoryBoundaryEvent,
+  isProjectRuntimeOutcomeEvent,
+} from '../shared/project-history';
+import {
   MIDI_INPUT_COMMAND_ACK_CHANNEL,
   MIDI_INPUT_GET_SNAPSHOT_CHANNEL,
   MIDI_INPUT_INITIALIZE_CHANNEL,
@@ -735,11 +766,43 @@ contextBridge.exposeInMainWorld('blueAPI', {
       'update-effect-editor-document',
       request,
     ) as Promise<EffectEditorSnapshot | null>,
-  commitProjectDocumentPatches: (patches: ProjectDocumentPatch[]) =>
+  commitProjectDocumentPatches: (
+    patches: ProjectDocumentPatch[],
+    metadata?: ProjectDocumentCommitMetadata,
+  ) =>
     ipcRenderer.invoke(
       'commit-project-document-patches',
       patches,
+      metadata,
     ) as Promise<ProjectDocumentCommitReceipt>,
+
+  // Project History
+  commitProjectHistory: (request: ProjectHistoryCommitRequest): Promise<ProjectHistoryResponse> =>
+    ipcRenderer.invoke(PROJECT_HISTORY_COMMIT_CHANNEL, request) as Promise<ProjectHistoryResponse>,
+  undoProjectHistory: (request: ProjectHistoryUndoRequest): Promise<ProjectHistoryResponse> =>
+    ipcRenderer.invoke(PROJECT_HISTORY_UNDO_CHANNEL, request) as Promise<ProjectHistoryResponse>,
+  redoProjectHistory: (request: ProjectHistoryRedoRequest): Promise<ProjectHistoryResponse> =>
+    ipcRenderer.invoke(PROJECT_HISTORY_REDO_CHANNEL, request) as Promise<ProjectHistoryResponse>,
+  readProjectHistory: (
+    request?: ProjectHistoryReadRequest,
+  ): Promise<ProjectHistoryStateProjection> =>
+    ipcRenderer.invoke(
+      PROJECT_HISTORY_READ_CHANNEL,
+      request,
+    ) as Promise<ProjectHistoryStateProjection>,
+  registerHistoryParticipant: (
+    request: RegisterHistoryParticipantRequest,
+  ): Promise<RegisterHistoryParticipantResponse> =>
+    ipcRenderer.invoke(
+      PROJECT_HISTORY_REGISTER_PARTICIPANT_CHANNEL,
+      request,
+    ) as Promise<RegisterHistoryParticipantResponse>,
+  unregisterHistoryParticipant: (request: UnregisterHistoryParticipantRequest): Promise<void> =>
+    ipcRenderer.invoke(PROJECT_HISTORY_UNREGISTER_PARTICIPANT_CHANNEL, request) as Promise<void>,
+  acknowledgeHistoryBoundary: (ack: PrepareHistoryBoundaryAck): Promise<void> =>
+    ipcRenderer.invoke(PROJECT_HISTORY_BOUNDARY_ACK_CHANNEL, ack) as Promise<void>,
+  cancelOversizeProposal: (request: CancelOversizeProposalRequest): Promise<void> =>
+    ipcRenderer.invoke(PROJECT_HISTORY_CANCEL_OVERSIZE_CHANNEL, request) as Promise<void>,
 
   // Spec 092: visible-only BlueX7 effective-value readback. The main
   // process fails closed for stale sessions, stopped playback, and missing
@@ -1150,6 +1213,33 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.on(PROJECT_DOCUMENT_UPDATED_CHANNEL, handler);
     return () => {
       ipcRenderer.removeListener(PROJECT_DOCUMENT_UPDATED_CHANNEL, handler);
+    };
+  },
+  onPrepareHistoryBoundary: (callback: (event: PrepareHistoryBoundaryEvent) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, payload: unknown) => {
+      if (isPrepareHistoryBoundaryEvent(payload)) callback(payload);
+    };
+    ipcRenderer.on(PROJECT_HISTORY_BOUNDARY_PREPARE_CHANNEL, handler);
+    return () => {
+      ipcRenderer.removeListener(PROJECT_HISTORY_BOUNDARY_PREPARE_CHANNEL, handler);
+    };
+  },
+  onReleaseHistoryBoundary: (callback: (event: ReleaseHistoryBoundaryEvent) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, payload: unknown) => {
+      if (isReleaseHistoryBoundaryEvent(payload)) callback(payload);
+    };
+    ipcRenderer.on(PROJECT_HISTORY_BOUNDARY_RELEASE_CHANNEL, handler);
+    return () => {
+      ipcRenderer.removeListener(PROJECT_HISTORY_BOUNDARY_RELEASE_CHANNEL, handler);
+    };
+  },
+  onProjectRuntimeOutcome: (callback: (event: ProjectRuntimeOutcomeEvent) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, payload: unknown) => {
+      if (isProjectRuntimeOutcomeEvent(payload)) callback(payload);
+    };
+    ipcRenderer.on(PROJECT_RUNTIME_OUTCOME_CHANNEL, handler);
+    return () => {
+      ipcRenderer.removeListener(PROJECT_RUNTIME_OUTCOME_CHANNEL, handler);
     };
   },
   // Evaluate Code

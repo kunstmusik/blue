@@ -145,20 +145,23 @@ describe('Score object properties store updates', () => {
     __testFlushPendingPatches();
     await __testAwaitPendingPatches();
 
-    expect(mockBlueAPI.commitProjectDocumentPatches).toHaveBeenCalledWith([
-      {
-        score: {
-          type: 'updateSharedProperties',
-          target,
-          patch: {
-            name: 'Renamed PianoRoll',
-            backgroundColor: 0xff8833,
-            startTime: { value: 2.5, timeBase: 'TIME' },
-            subjectiveDuration: { value: 6.25, timeBase: 'SECONDS' },
+    expect(mockBlueAPI.commitProjectDocumentPatches).toHaveBeenCalledWith(
+      [
+        {
+          score: {
+            type: 'updateSharedProperties',
+            target,
+            patch: {
+              name: 'Renamed PianoRoll',
+              backgroundColor: 0xff8833,
+              startTime: { value: 2.5, timeBase: 'TIME' },
+              subjectiveDuration: { value: 6.25, timeBase: 'SECONDS' },
+            },
           },
         },
-      },
-    ]);
+      ],
+      expect.objectContaining({ operationId: expect.any(String) }),
+    );
   });
 
   it('optimistically applies PianoRoll timeBehavior and repeatPoint edits', async () => {
@@ -219,35 +222,38 @@ describe('Score object properties store updates', () => {
     __testFlushPendingPatches();
     await __testAwaitPendingPatches();
 
-    expect(mockBlueAPI.commitProjectDocumentPatches).toHaveBeenCalledWith([
-      {
-        score: {
-          type: 'updateSoundObjectBehavior',
-          target,
-          patch: {
-            timeBehavior: 'REPEAT',
-            repeatPoint: { value: 1.5, timeBase: 'BEATS' },
+    expect(mockBlueAPI.commitProjectDocumentPatches).toHaveBeenCalledWith(
+      [
+        {
+          score: {
+            type: 'updateSoundObjectBehavior',
+            target,
+            patch: {
+              timeBehavior: 'REPEAT',
+              repeatPoint: { value: 1.5, timeBase: 'BEATS' },
+            },
           },
         },
-      },
-      {
-        score: {
-          type: 'updateSoundObjectBehavior',
-          target,
-          patch: {
-            timeBehavior: 'NONE',
+        {
+          score: {
+            type: 'updateSoundObjectBehavior',
+            target,
+            patch: {
+              timeBehavior: 'NONE',
+            },
           },
         },
-      },
-      {
-        score: {
-          type: 'updateSoundObjectBehavior',
-          target,
-          patch: {
-            timeBehavior: 'REPEAT_CLASSIC',
+        {
+          score: {
+            type: 'updateSoundObjectBehavior',
+            target,
+            patch: {
+              timeBehavior: 'REPEAT_CLASSIC',
+            },
           },
         },
-      },
-    ]);
+      ],
+      expect.objectContaining({ operationId: expect.any(String) }),
+    );
   });
 });
