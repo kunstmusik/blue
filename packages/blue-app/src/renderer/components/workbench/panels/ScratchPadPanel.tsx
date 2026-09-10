@@ -1,11 +1,20 @@
 import React from 'react';
+import type { ProjectDocumentCommitMetadata } from '../../../../shared/project-history';
 import { useProjectStore } from '../../../stores/project-store';
 import { cn } from '../../../lib/cn';
+import { useBatchedTextEditor } from '../../../hooks/use-batched-text-editor';
 
 export default function ScratchPadPanel(): React.ReactElement {
   const loaded = useProjectStore((state) => state.loaded);
   const scratchPad = useProjectStore((state) => state.scratchPad);
   const updateScratchPad = useProjectStore((state) => state.updateScratchPad);
+  const editor = useBatchedTextEditor({
+    value: scratchPad.text,
+    onChange: (text, metadata?: ProjectDocumentCommitMetadata) =>
+      updateScratchPad({ text }, metadata),
+    fieldId: 'scratch-pad.text',
+    label: 'Edit Scratch Pad',
+  });
 
   if (!loaded) {
     return (
@@ -27,11 +36,28 @@ export default function ScratchPadPanel(): React.ReactElement {
           disabled={!loaded}
           placeholder="Write project notes…"
           spellCheck={false}
-          value={scratchPad.text}
+          value={editor.text}
           wrap={scratchPad.wordWrapEnabled ? 'soft' : 'off'}
+          data-history-scope="project"
           onChange={(event) => {
-            void updateScratchPad({ text: event.target.value });
+            const inputEvent = event.nativeEvent as InputEvent;
+            editor.handleTextChange(event.target.value, {
+              inputType: inputEvent.inputType,
+              insertedText: typeof inputEvent.data === 'string' ? inputEvent.data : undefined,
+              isComposing: inputEvent.isComposing,
+              selectionStart: event.target.selectionStart,
+              selectionEnd: event.target.selectionEnd,
+            });
           }}
+          onSelect={(event) =>
+            editor.handleSelectionChange(
+              event.currentTarget.selectionStart,
+              event.currentTarget.selectionEnd,
+            )
+          }
+          onCompositionStart={editor.handleCompositionStart}
+          onCompositionEnd={editor.handleCompositionEnd}
+          onBlur={editor.flush}
         />
       </div>
 
@@ -42,7 +68,15 @@ export default function ScratchPadPanel(): React.ReactElement {
             className="accent-app-accent"
             type="checkbox"
             onChange={(event) => {
-              void updateScratchPad({ wordWrapEnabled: event.target.checked });
+              void updateScratchPad(
+                { wordWrapEnabled: event.target.checked },
+                {
+                  label: event.target.checked
+                    ? 'Enable Scratch Pad Word Wrap'
+                    : 'Disable Scratch Pad Word Wrap',
+                  phase: 'single',
+                },
+              );
             }}
           />
           Word Wrap

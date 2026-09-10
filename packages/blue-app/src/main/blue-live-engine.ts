@@ -82,6 +82,7 @@ export class BlueLiveEngineSession {
    * completes successfully and after cleanup; resolves focus-routing targets.
    */
   private targetCatalog: CompiledMidiTargetCatalog | null = null;
+  private parameters: readonly Parameter[] = [];
   private blueX7Bindings: readonly CompiledBlueX7Binding[] = [];
   private statePollingTimer: ReturnType<typeof setInterval> | null = null;
   private engineStateUnsubscribe: (() => void) | null = null;
@@ -480,6 +481,7 @@ export class BlueLiveEngineSession {
         return this.getSnapshot();
       }
       this.targetCatalog = targetCatalog;
+      this.parameters = csd.parameters ?? [];
       this.blueX7Bindings = csd.blueX7Bindings;
       this.beginTerminalStateMonitoring();
       this.setStatus('running', 'Blue Live running');
@@ -748,6 +750,10 @@ export class BlueLiveEngineSession {
     return this.blueX7Bindings;
   }
 
+  getParameters(): readonly Parameter[] {
+    return this.parameters;
+  }
+
   private async cleanup(): Promise<void> {
     if (this.cleanupPromise) {
       return this.cleanupPromise;
@@ -757,6 +763,7 @@ export class BlueLiveEngineSession {
       this.clearStateMonitoring();
       this.namedInstrumentNumbers.clear();
       this.targetCatalog = null;
+      this.parameters = [];
       this.blueX7Bindings = [];
       this.projectData = null;
       if (this.bridge) {

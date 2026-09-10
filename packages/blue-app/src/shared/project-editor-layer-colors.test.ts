@@ -11,8 +11,6 @@ describe('Project Editor Layer Colors Canonical Bridge', () => {
       const priorItemColor = existingObj.getBackgroundColor();
 
       const patch: ProjectDocumentPatch = {
-        projectSessionId: 0,
-        projectRevision: 0,
         score: {
           type: 'updateLayerState',
           groupId: polyGroupId,
@@ -36,8 +34,6 @@ describe('Project Editor Layer Colors Canonical Bridge', () => {
       const priorItemColor = existingItem.getBackgroundColor();
 
       const patch: ProjectDocumentPatch = {
-        projectSessionId: 0,
-        projectRevision: 0,
         score: {
           type: 'updateLayerState',
           groupId: trackGroupId,
@@ -60,8 +56,6 @@ describe('Project Editor Layer Colors Canonical Bridge', () => {
       const priorSourceColor = sourceObj.getBackgroundColor();
 
       const patch: ProjectDocumentPatch = {
-        projectSessionId: 0,
-        projectRevision: 0,
         score: {
           type: 'updateLayerState',
           groupId: patternGroupId,
@@ -85,8 +79,6 @@ describe('Project Editor Layer Colors Canonical Bridge', () => {
 
       for (const invalidColor of [NaN, Infinity, 1.5, 4294967296, -2147483649]) {
         const patch: ProjectDocumentPatch = {
-          projectSessionId: 0,
-          projectRevision: 0,
           score: {
             type: 'updateLayerState',
             groupId: polyGroupId,
@@ -110,8 +102,6 @@ describe('Project Editor Layer Colors Canonical Bridge', () => {
       soundLayer.setBackgroundColor(0x00ff00); // Green: -16711936
 
       const patch: ProjectDocumentPatch = {
-        projectSessionId: 0,
-        projectRevision: 0,
         score: {
           type: 'addScoreObjects',
           groupId: polyGroupId,
@@ -140,8 +130,6 @@ describe('Project Editor Layer Colors Canonical Bridge', () => {
       soundLayer.setBackgroundColor(0x00ff00); // Green
 
       const patch: ProjectDocumentPatch = {
-        projectSessionId: 0,
-        projectRevision: 0,
         score: {
           type: 'addScoreObjects',
           groupId: polyGroupId,
@@ -169,8 +157,6 @@ describe('Project Editor Layer Colors Canonical Bridge', () => {
       track.setBackgroundColor(0xff0000); // Red: -65536
 
       const patch: ProjectDocumentPatch = {
-        projectSessionId: 0,
-        projectRevision: 0,
         score: {
           type: 'addTrackItem',
           track: {
@@ -209,8 +195,6 @@ describe('Project Editor Layer Colors Canonical Bridge', () => {
       const serializedXml = existingSource.saveAsXML().toXml();
 
       const patch: ProjectDocumentPatch = {
-        projectSessionId: 0,
-        projectRevision: 0,
         score: {
           type: 'addScoreObjects',
           groupId: polyGroupId,

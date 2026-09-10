@@ -21,7 +21,7 @@ import { TimeBehavior } from './time-behavior';
 import { TimeDuration } from '../time/time-duration';
 import { Element } from '../serialization/xml-reader';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
-import { DeepCopyable } from '../deep-copyable';
+import { DeepCopyable, type CopyMode } from '../deep-copyable';
 import type { ScoreGenerationOptions } from '../score/score-generation-options';
 
 export interface SoundObject extends ScoreObject, DeepCopyable<SoundObject> {
@@ -62,7 +62,7 @@ export interface SoundObject extends ScoreObject, DeepCopyable<SoundObject> {
   saveAsXML(objRefMap?: ObjRefSaveMap): Element;
 
   /** Deep copy this sound object. */
-  deepCopy(): SoundObject;
+  deepCopy(mode?: CopyMode): SoundObject;
 }
 
 /**

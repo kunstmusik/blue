@@ -560,14 +560,6 @@ export default function PianoRollEditor({
         e.preventDefault();
         e.stopPropagation();
         setSelectedIndices(new Set(notes.map((_, i) => i)));
-      } else if (mod && e.key === 'z' && !e.shiftKey) {
-        e.preventDefault();
-        e.stopPropagation();
-        undo();
-      } else if (mod && e.key === 'z' && e.shiftKey) {
-        e.preventDefault();
-        e.stopPropagation();
-        redo();
       } else if (!mod && !e.altKey && (e.key === 'Delete' || e.key === 'Backspace')) {
         e.preventDefault();
         e.stopPropagation();
@@ -612,8 +604,6 @@ export default function PianoRollEditor({
       noteHeight,
       patch,
       pixelSecond,
-      redo,
-      undo,
     ],
   );
 

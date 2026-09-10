@@ -15,16 +15,21 @@ import { Element } from './serialization/xml-reader';
 import { Mixer } from './mixer/mixer';
 import { Channel } from './mixer/channel';
 import { Tables } from './tables';
+import type { CopyMode } from './deep-copyable';
 
 export class Arrangement {
   private arrangement: InstrumentAssignment[] = [];
 
-  constructor(other?: Arrangement) {
+  constructor(other?: Arrangement, mode: CopyMode = 'duplication') {
     if (other) {
       for (const ia of other.arrangement) {
-        this.arrangement.push(new InstrumentAssignment(ia));
+        this.arrangement.push(new InstrumentAssignment(ia, mode));
       }
     }
+  }
+
+  deepCopy(mode: CopyMode = 'duplication'): Arrangement {
+    return new Arrangement(this, mode);
   }
 
   // ─── Instrument management ───

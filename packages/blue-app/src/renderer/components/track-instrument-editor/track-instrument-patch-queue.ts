@@ -4,11 +4,17 @@ import type {
   InstrumentPatch,
   OrchestraPatch,
 } from '../../../shared/project-editor';
+import type {
+  PrepareHistoryBoundaryAck,
+  PrepareHistoryBoundaryEvent,
+  ReleaseHistoryBoundaryEvent,
+} from '../../../shared/project-history';
 
 const LATEST_VALUE_PATCH_KEYS = new Set<keyof InstrumentPatch>([
   'name',
   'enabled',
   'comment',
+  'comments',
   'text',
   'instrumentText',
   'alwaysOnInstrumentText',
@@ -111,4 +117,71 @@ export function toInstrumentPatch(patch: OrchestraPatch): InstrumentPatch | null
   if (patch.type === 'updateInstrument') return patch.patch;
   if (patch.type === 'updateInstrumentComment') return { comment: patch.comment };
   return null;
+}
+
+export interface InstrumentPatchBoundaryControllerDependencies {
+  participantContextId: string;
+  /** Removes and returns the durable patches that were pending before the boundary. */
+  capturePendingPatches(): InstrumentPatch[];
+  /**
+   * Persists the captured prefix in order for the settling barrier. On
+   * rejection the implementation must retain unsent patches as drafts.
+   */
+  drainPrefix(patches: readonly InstrumentPatch[], barrierId: string): Promise<void>;
+  acknowledgeBoundary(ack: PrepareHistoryBoundaryAck): void;
+  getAcknowledgedRevision(): number;
+  reportError?(error: unknown): void;
+  /** Called when the boundary releases so paused drafts can resume draining. */
+  onReleased?(): void;
+}
+
+export interface InstrumentPatchBoundaryController {
+  handlePrepareBoundary(event: PrepareHistoryBoundaryEvent): Promise<void>;
+  handleReleaseBoundary(event: ReleaseHistoryBoundaryEvent): void;
+  isSettlementPaused(): boolean;
+}
+
+export function createInstrumentPatchBoundaryController(
+  dependencies: InstrumentPatchBoundaryControllerDependencies,
+): InstrumentPatchBoundaryController {
+  let activeBarrierId: string | null = null;
+  let acknowledgedSequence = 0;
+
+  return {
+    isSettlementPaused() {
+      return activeBarrierId !== null;
+    },
+
+    async handlePrepareBoundary(event) {
+      if (activeBarrierId !== null) return;
+      activeBarrierId = event.barrierId;
+
+      let prefix: InstrumentPatch[] = [];
+      let drained = true;
+      try {
+        prefix = dependencies.capturePendingPatches();
+        if (prefix.length > 0) {
+          acknowledgedSequence += 1;
+          await dependencies.drainPrefix(prefix, event.barrierId);
+        }
+      } catch (error) {
+        drained = false;
+        dependencies.reportError?.(error);
+      }
+
+      dependencies.acknowledgeBoundary({
+        barrierId: event.barrierId,
+        contextId: dependencies.participantContextId,
+        lastAcknowledgedRevision: dependencies.getAcknowledgedRevision(),
+        lastAcknowledgedSequence: acknowledgedSequence,
+        outstandingPrefixCount: drained ? 0 : prefix.length,
+      });
+    },
+
+    handleReleaseBoundary(event) {
+      if (activeBarrierId === null || activeBarrierId !== event.barrierId) return;
+      activeBarrierId = null;
+      dependencies.onReleased?.();
+    },
+  };
 }

@@ -1,6 +1,7 @@
 import { type MenuItemConstructorOptions } from 'electron';
 import * as path from 'path';
 import { getPanelsByMode, type PanelMode } from '../shared/workbench-menu';
+import type { FocusedHistoryAvailability } from '../shared/project-history';
 
 export interface ApplicationMenuTemplateOptions {
   hasLoadedProject: boolean;
@@ -59,6 +60,19 @@ export interface ApplicationMenuTemplateOptions {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onActualSize: () => void;
+  undoLabel?: string;
+  redoLabel?: string;
+  canUndo?: boolean;
+  canRedo?: boolean;
+  /** Local editor history can remain available when project history is empty. */
+  draftUndoLabel?: string;
+  draftRedoLabel?: string;
+  draftCanUndo?: boolean;
+  draftCanRedo?: boolean;
+  /** The renderer-owned history scope for the currently focused window. */
+  focusedHistory?: FocusedHistoryAvailability;
+  onUndo?: () => void;
+  onRedo?: () => void;
 }
 
 function buildWorkbenchMenuItems(
@@ -327,6 +341,68 @@ function buildWindowMenuTemplate(
   ];
 }
 
+function buildEditMenuTemplate(
+  options: ApplicationMenuTemplateOptions,
+): MenuItemConstructorOptions[] {
+  const canUndo = options.focusedHistory
+    ? options.focusedHistory.canUndo
+    : Boolean(options.canUndo || options.draftCanUndo);
+  const canRedo = options.focusedHistory
+    ? options.focusedHistory.canRedo
+    : Boolean(options.canRedo || options.draftCanRedo);
+  const undoLabel = options.focusedHistory
+    ? (options.focusedHistory.undoLabel ?? undefined)
+    : options.canUndo
+      ? options.undoLabel
+      : options.draftUndoLabel;
+  const redoLabel = options.focusedHistory
+    ? (options.focusedHistory.redoLabel ?? undefined)
+    : options.canRedo
+      ? options.redoLabel
+      : options.draftRedoLabel;
+  const undoItem: MenuItemConstructorOptions = {
+    label: undoLabel ? `Undo ${undoLabel}` : 'Undo',
+    accelerator: 'CmdOrCtrl+Z',
+    enabled: canUndo,
+    click: () => options.onUndo?.(),
+  };
+
+  const redoItems: MenuItemConstructorOptions[] = options.isDarwin
+    ? [
+        {
+          label: redoLabel ? `Redo ${redoLabel}` : 'Redo',
+          accelerator: 'Shift+Cmd+Z',
+          enabled: canRedo,
+          click: () => options.onRedo?.(),
+        },
+      ]
+    : [
+        {
+          label: redoLabel ? `Redo ${redoLabel}` : 'Redo',
+          accelerator: 'Ctrl+Y',
+          enabled: canRedo,
+          click: () => options.onRedo?.(),
+        },
+        {
+          label: redoLabel ? `Redo ${redoLabel}` : 'Redo',
+          accelerator: 'Ctrl+Shift+Z',
+          visible: false,
+          enabled: canRedo,
+          click: () => options.onRedo?.(),
+        },
+      ];
+
+  return [
+    undoItem,
+    ...redoItems,
+    { type: 'separator' },
+    { role: 'cut' },
+    { role: 'copy' },
+    { role: 'paste' },
+    { role: 'selectAll' },
+  ];
+}
+
 export function buildApplicationMenuTemplate(
   options: ApplicationMenuTemplateOptions,
 ): MenuItemConstructorOptions[] {
@@ -366,15 +442,7 @@ export function buildApplicationMenuTemplate(
 
   template.push({
     label: 'Edit',
-    submenu: [
-      { role: 'undo' },
-      { role: 'redo' },
-      { type: 'separator' },
-      { role: 'cut' },
-      { role: 'copy' },
-      { role: 'paste' },
-      { role: 'selectAll' },
-    ],
+    submenu: buildEditMenuTemplate(options),
   });
 
   template.push({

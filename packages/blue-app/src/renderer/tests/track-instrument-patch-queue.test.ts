@@ -1,5 +1,132 @@
-import { describe, expect, it } from 'vitest';
-import { mergePendingInstrumentPatch } from '../components/track-instrument-editor/track-instrument-patch-queue';
+import { describe, expect, it, vi } from 'vitest';
+import {
+  createInstrumentPatchBoundaryController,
+  mergePendingInstrumentPatch,
+  type InstrumentPatchBoundaryControllerDependencies,
+} from '../components/track-instrument-editor/track-instrument-patch-queue';
+import type { InstrumentPatch } from '../../shared/project-editor';
+
+function makePatch(text: string): InstrumentPatch {
+  return { instrumentText: text };
+}
+
+function makeDependencies(
+  overrides: Partial<InstrumentPatchBoundaryControllerDependencies> = {},
+): InstrumentPatchBoundaryControllerDependencies & {
+  acknowledgeBoundary: ReturnType<typeof vi.fn>;
+  drainPrefix: ReturnType<typeof vi.fn>;
+} {
+  return {
+    participantContextId: 'ctx-track-editor',
+    capturePendingPatches: vi.fn(() => [] as InstrumentPatch[]),
+    drainPrefix: vi.fn().mockResolvedValue(undefined),
+    acknowledgeBoundary: vi.fn(),
+    getAcknowledgedRevision: vi.fn(() => 0),
+    ...overrides,
+  } as InstrumentPatchBoundaryControllerDependencies & {
+    acknowledgeBoundary: ReturnType<typeof vi.fn>;
+    drainPrefix: ReturnType<typeof vi.fn>;
+  };
+}
+
+describe('Track instrument settlement boundary participant (T016)', () => {
+  it('captures the pending prefix, drains it with the barrier id, and acknowledges zero outstanding', async () => {
+    const dependencies = makeDependencies({
+      capturePendingPatches: vi.fn(() => [makePatch('a'), makePatch('b')]),
+      drainPrefix: vi.fn().mockResolvedValue(undefined),
+      getAcknowledgedRevision: vi.fn(() => 7),
+    });
+    const controller = createInstrumentPatchBoundaryController(dependencies);
+
+    await controller.handlePrepareBoundary({ barrierId: 'barrier-1', reason: 'undo' });
+
+    expect(dependencies.drainPrefix).toHaveBeenCalledWith(
+      [makePatch('a'), makePatch('b')],
+      'barrier-1',
+    );
+    expect(dependencies.acknowledgeBoundary).toHaveBeenCalledWith({
+      barrierId: 'barrier-1',
+      contextId: 'ctx-track-editor',
+      lastAcknowledgedRevision: 7,
+      lastAcknowledgedSequence: 1,
+      outstandingPrefixCount: 0,
+    });
+    expect(controller.isSettlementPaused()).toBe(true);
+  });
+
+  it('acknowledges an empty prefix without draining', async () => {
+    const dependencies = makeDependencies({
+      capturePendingPatches: vi.fn(() => [] as InstrumentPatch[]),
+    });
+    const controller = createInstrumentPatchBoundaryController(dependencies);
+
+    await controller.handlePrepareBoundary({ barrierId: 'barrier-1', reason: 'save' });
+
+    expect(dependencies.drainPrefix).not.toHaveBeenCalled();
+    expect(dependencies.acknowledgeBoundary).toHaveBeenCalledWith({
+      barrierId: 'barrier-1',
+      contextId: 'ctx-track-editor',
+      lastAcknowledgedRevision: 0,
+      lastAcknowledgedSequence: 0,
+      outstandingPrefixCount: 0,
+    });
+  });
+
+  it('reports conflicting prefix work with a nonzero outstanding count', async () => {
+    const reportError = vi.fn();
+    const dependencies = makeDependencies({
+      capturePendingPatches: vi.fn(() => [makePatch('a')]),
+      drainPrefix: vi.fn().mockRejectedValue(new Error('stale instrument snapshot')),
+      reportError,
+    });
+    const controller = createInstrumentPatchBoundaryController(dependencies);
+
+    await controller.handlePrepareBoundary({ barrierId: 'barrier-1', reason: 'undo' });
+
+    expect(reportError).toHaveBeenCalledWith(expect.any(Error));
+    expect(dependencies.acknowledgeBoundary).toHaveBeenCalledWith({
+      barrierId: 'barrier-1',
+      contextId: 'ctx-track-editor',
+      lastAcknowledgedRevision: 0,
+      lastAcknowledgedSequence: 1,
+      outstandingPrefixCount: 1,
+    });
+  });
+
+  it('ignores a second prepare while a boundary is already active', async () => {
+    let drainCount = 0;
+    const dependencies = makeDependencies({
+      capturePendingPatches: vi.fn(() => {
+        drainCount += 1;
+        return [makePatch(`a${drainCount}`)];
+      }),
+    });
+    const controller = createInstrumentPatchBoundaryController(dependencies);
+
+    const first = controller.handlePrepareBoundary({ barrierId: 'barrier-1', reason: 'undo' });
+    await controller.handlePrepareBoundary({ barrierId: 'barrier-2', reason: 'save' });
+    await first;
+
+    expect(dependencies.capturePendingPatches).toHaveBeenCalledTimes(1);
+    expect(dependencies.acknowledgeBoundary).toHaveBeenCalledTimes(1);
+    expect(controller.isSettlementPaused()).toBe(true);
+  });
+
+  it('resumes on release for the active barrier and ignores stale barrier ids', async () => {
+    const onReleased = vi.fn();
+    const dependencies = makeDependencies({ onReleased });
+    const controller = createInstrumentPatchBoundaryController(dependencies);
+
+    await controller.handlePrepareBoundary({ barrierId: 'barrier-1', reason: 'undo' });
+    controller.handleReleaseBoundary({ barrierId: 'barrier-stale', status: 'ready' });
+    expect(controller.isSettlementPaused()).toBe(true);
+    expect(onReleased).not.toHaveBeenCalled();
+
+    controller.handleReleaseBoundary({ barrierId: 'barrier-1', status: 'ready' });
+    expect(controller.isSettlementPaused()).toBe(false);
+    expect(onReleased).toHaveBeenCalledTimes(1);
+  });
+});
 
 describe('Track instrument durable patch coalescing', () => {
   it('keeps only the latest scalar replacement value', () => {

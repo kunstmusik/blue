@@ -15,6 +15,8 @@ import { PolyObject } from './sound-objects/poly-object';
 import { SoundLayer } from './sound-objects/sound-layer';
 import { TimePosition } from './time/time-position';
 import { TimeDuration } from './time/time-duration';
+import { Effect } from './mixer/effect';
+import { Parameter } from './automation/parameter';
 import {
   createLibraryInstanceLiveData,
   createModernProject,
@@ -256,5 +258,101 @@ describe('BlueData.deepCopy forbidden static boundary', () => {
         expect(pattern.test(contents), `${file} matches forbidden pattern ${pattern}`).toBe(false);
       }
     }
+  });
+
+  describe('four-state detached memento isolation across nested structures', () => {
+    it('isolates nested score objects, library instances, effects chains, and parameters', () => {
+      const source = new BlueData();
+
+      // 1. Library and Instance
+      const libScore = new GenericScore();
+      libScore.setName('Lib Sound');
+      libScore.setScoreText('i1 0 2 440');
+      source.getSoundObjectLibrary().addObject(libScore);
+
+      const inst = new Instance();
+      inst.setSoundObject(libScore);
+      inst.setStartTime(TimePosition.beats(1));
+
+      // 2. Nested PolyObject in Score (use default root PolyObject and its layer)
+      const root = source.getScore()[0] as PolyObject;
+      const soundLayer = root[0];
+      soundLayer.push(inst);
+
+      // 3. Effect on Master Channel
+      const effect = new Effect();
+      effect.setName('Master Reverb');
+      const param = new Parameter();
+      param.setName('DryWet');
+      param.setFixedValue(0.3);
+      effect.addParameter(param);
+      source.getMixer().getMaster().getEffectsChain().push(effect);
+
+      // 4-state lifecycle: source -> retainedBefore -> candidate -> retainedAfter
+      const retainedBefore = source.historyCopy();
+      const candidate = source.historyCopy();
+
+      // Ensure distinct instances
+      expect(new Set([source, retainedBefore, candidate]).size).toBe(3);
+
+      // Mutate candidate nested objects
+      const candRoot = candidate.getScore()[0] as PolyObject;
+      const candLayer = candRoot[0];
+      const candInst = candLayer[0] as Instance;
+      candInst.setStartTime(TimePosition.beats(5));
+
+      const candEffect = candidate.getMixer().getMaster().getEffectsChain()[0] as Effect;
+      candEffect.setName('Mutated Master Reverb');
+      candEffect.getParameters()[0].setFixedValue(0.9);
+
+      // Mutate candidate library object
+      candidate.getSoundObjectLibrary().getObject(0)!.setName('Mutated Lib Sound');
+
+      // Assert source and retainedBefore are untouched
+      const origRoot = source.getScore()[0] as PolyObject;
+      const origInst = origRoot[0][0] as Instance;
+      expect(origInst.getStartTime().getCsoundBeats()).toBe(1);
+
+      const beforeRoot = retainedBefore.getScore()[0] as PolyObject;
+      const beforeInst = beforeRoot[0][0] as Instance;
+      expect(beforeInst.getStartTime().getCsoundBeats()).toBe(1);
+
+      const origEffect = source.getMixer().getMaster().getEffectsChain()[0] as Effect;
+      expect(origEffect.getName()).toBe('Master Reverb');
+      expect(origEffect.getParameters()[0].getFixedValue()).toBe(0.3);
+
+      const beforeEffect = retainedBefore.getMixer().getMaster().getEffectsChain()[0] as Effect;
+      expect(beforeEffect.getName()).toBe('Master Reverb');
+      expect(beforeEffect.getParameters()[0].getFixedValue()).toBe(0.3);
+
+      expect(source.getSoundObjectLibrary().getObject(0)!.getName()).toBe('Lib Sound');
+      expect(retainedBefore.getSoundObjectLibrary().getObject(0)!.getName()).toBe('Lib Sound');
+
+      // Capture retainedAfter
+      const retainedAfter = candidate.historyCopy();
+      expect(new Set([source, retainedBefore, candidate, retainedAfter]).size).toBe(4);
+
+      // Mutate candidate further
+      candInst.setStartTime(TimePosition.beats(10));
+      candEffect.setName('Further Mutated Reverb');
+      candEffect.getParameters()[0].setFixedValue(1.0);
+
+      // Verify retainedAfter is preserved at commit state
+      const afterRoot = retainedAfter.getScore()[0] as PolyObject;
+      const afterInst = afterRoot[0][0] as Instance;
+      expect(afterInst.getStartTime().getCsoundBeats()).toBe(5);
+
+      const afterEffect = retainedAfter.getMixer().getMaster().getEffectsChain()[0] as Effect;
+      expect(afterEffect.getName()).toBe('Mutated Master Reverb');
+      expect(afterEffect.getParameters()[0].getFixedValue()).toBe(0.9);
+      expect(retainedAfter.getSoundObjectLibrary().getObject(0)!.getName()).toBe(
+        'Mutated Lib Sound',
+      );
+
+      // Verify before states remain intact
+      expect(beforeInst.getStartTime().getCsoundBeats()).toBe(1);
+      expect(beforeEffect.getName()).toBe('Master Reverb');
+      expect(beforeEffect.getParameters()[0].getFixedValue()).toBe(0.3);
+    });
   });
 });

@@ -19,7 +19,11 @@ import {
   PROJECT_ARTIFACTS_IPC_CHANNELS,
   registerProjectArtifactsIpc,
 } from './project-artifacts-ipc';
-import { PROJECT_DOCUMENT_IPC_CHANNELS, registerProjectDocumentIpc } from './project-document-ipc';
+import {
+  PROJECT_DOCUMENT_IPC_CHANNELS,
+  PROJECT_DOCUMENT_LISTENER_CHANNELS,
+  registerProjectDocumentIpc,
+} from './project-document-ipc';
 import {
   PROJECT_LIFECYCLE_IPC_CHANNELS,
   registerProjectLifecycleIpc,
@@ -115,6 +119,7 @@ export function registerMainProcessDomainIpc(options: MainProcessDomainIpcOption
       registerProjectDocumentIpc({
         ipcMain: options.ipcMain,
         handlers: extractHandlers(PROJECT_DOCUMENT_IPC_CHANNELS, options.handlers),
+        listeners: extractListeners(PROJECT_DOCUMENT_LISTENER_CHANNELS, options.listeners),
       }),
     );
   } catch (error) {

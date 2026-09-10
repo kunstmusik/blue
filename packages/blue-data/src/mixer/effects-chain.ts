@@ -6,6 +6,7 @@ import { Effect } from './effect';
 import { Send } from './send';
 import { Element } from '../serialization/xml-reader';
 import { BlueDataObject } from '../blue-data-object';
+import type { CopyMode } from '../deep-copyable';
 
 export type EffectsChainItem = Effect | Send;
 
@@ -38,13 +39,13 @@ export class EffectsChain extends Array<EffectsChainItem> implements BlueDataObj
     return chain;
   }
 
-  deepCopy(): BlueDataObject {
+  deepCopy(mode: CopyMode = 'duplication'): BlueDataObject {
     const copy = new EffectsChain();
     for (const item of this) {
       if (item instanceof Effect) {
-        copy.push(item.deepCopy() as Effect);
+        copy.push(item.deepCopy(mode) as Effect);
       } else {
-        copy.push(item.deepCopy() as Send);
+        copy.push(item.deepCopy(mode) as Send);
       }
     }
     return copy;

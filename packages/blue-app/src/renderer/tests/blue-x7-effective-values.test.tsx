@@ -92,6 +92,7 @@ describe('useBlueX7EffectiveValues (Spec 092 FR-014)', () => {
   const baseProps: ProbeProps = {
     target: assignmentTarget,
     projectSessionId: 5,
+    performanceKind: 'timeline',
     parameterIds: ['param-a', 'param-b'],
     enabled: true,
   };
@@ -112,6 +113,7 @@ describe('useBlueX7EffectiveValues (Spec 092 FR-014)', () => {
     expect(getBlueX7EffectiveValues).toHaveBeenCalledWith({
       target: assignmentTarget,
       projectSessionId: 5,
+      performanceKind: 'timeline',
       parameterIds: ['param-a', 'param-b'],
     });
     await act(async () => {
@@ -293,6 +295,66 @@ describe('useBlueX7EffectiveValues (Spec 092 FR-014)', () => {
     // the stale response must never be shown
     expect(container?.querySelector('[data-testid="hook-probe"]')?.getAttribute('data-size')).toBe(
       '0',
+    );
+  });
+
+  it('discards late responses when only the performance kind changes', async () => {
+    const resolvers: Array<(value: unknown) => void> = [];
+    getBlueX7EffectiveValues.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolvers.push(resolve);
+        }),
+    );
+
+    await act(async () => {
+      root?.render(React.createElement(HookProbe, baseProps));
+      await Promise.resolve();
+    });
+    expect(getBlueX7EffectiveValues).toHaveBeenCalledWith(
+      expect.objectContaining({ performanceKind: 'timeline' }),
+    );
+
+    await act(async () => {
+      root?.render(
+        React.createElement(HookProbe, {
+          ...baseProps,
+          performanceKind: 'blueLive',
+        }),
+      );
+      await Promise.resolve();
+    });
+    expect(resolvers.length).toBeGreaterThanOrEqual(2);
+    expect(getBlueX7EffectiveValues).toHaveBeenLastCalledWith(
+      expect.objectContaining({ performanceKind: 'blueLive' }),
+    );
+
+    await act(async () => {
+      resolvers[0]({
+        ok: true,
+        projectSessionId: 5,
+        ownerIdentity: 'arrangement:1',
+        engineSequence: 9,
+        values: [{ parameterId: 'param-a', value: 99 }],
+      });
+      await Promise.resolve();
+    });
+    expect(container?.querySelector('[data-testid="hook-probe"]')?.getAttribute('data-size')).toBe(
+      '0',
+    );
+
+    await act(async () => {
+      resolvers[1]({
+        ok: true,
+        projectSessionId: 5,
+        ownerIdentity: 'arrangement:1',
+        engineSequence: 10,
+        values: [{ parameterId: 'param-a', value: 88 }],
+      });
+      await Promise.resolve();
+    });
+    expect(container?.querySelector('[data-testid="hook-probe"]')?.getAttribute('data-size')).toBe(
+      '1',
     );
   });
 

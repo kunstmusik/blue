@@ -193,18 +193,21 @@ describe('ScorePanel sound-object automation in a popout', () => {
     });
 
     expect(popout.window.document.querySelector('[role="menu"]')).toBeNull();
-    expect(window.blueAPI.commitProjectDocumentPatches).toHaveBeenCalledWith([
-      expect.objectContaining({
-        score: expect.objectContaining({
-          type: 'assignAutomationToLayer',
-          parameterId: 'synth-frequency',
-          layer: expect.objectContaining({
-            groupId: 'sound-group',
-            layerId: 'sound-layer-0',
-            layerKind: 'soundObject',
+    expect(window.blueAPI.commitProjectDocumentPatches).toHaveBeenCalledWith(
+      [
+        expect.objectContaining({
+          score: expect.objectContaining({
+            type: 'assignAutomationToLayer',
+            parameterId: 'synth-frequency',
+            layer: expect.objectContaining({
+              groupId: 'sound-group',
+              layerId: 'sound-layer-0',
+              layerKind: 'soundObject',
+            }),
           }),
         }),
-      }),
-    ]);
+      ],
+      expect.objectContaining({ operationId: expect.any(String) }),
+    );
   });
 });

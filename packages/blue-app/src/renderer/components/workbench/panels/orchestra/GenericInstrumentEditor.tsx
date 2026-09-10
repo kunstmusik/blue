@@ -4,6 +4,7 @@ import SelectedCodeEditor from '../editors/SelectedCodeEditor';
 import { toUdoCompletionDefinitions } from '../editors/udo-completion-scope';
 import EmbeddedUdoPanel from './EmbeddedUdoPanel';
 import type { SelectedInstrumentEditorProps } from './types';
+import type { ProjectDocumentCommitMetadata } from '../../../../../shared/project-history';
 import { cn } from '../../../../lib/cn';
 
 type GenericTab = 'instrument' | 'udo' | 'globalOrc' | 'globalSco';
@@ -96,16 +97,23 @@ export default function GenericInstrumentEditor({
                   value={getTabValue(instrument, tab.key)}
                   placeholder="Enter instrument Csound code"
                   ariaLabel={`${instrument.name || 'Generic Instrument'} ${tab.label} code editor`}
+                  typingGroupingMs={500}
+                  historyMetadata={{
+                    fieldId: `instrument:${instrument.assignmentId}:${tab.key}`,
+                    gestureId: `project-text:instrument:${instrument.assignmentId}:${tab.key}`,
+                    label: `Edit ${tab.label}`,
+                    phase: 'update',
+                  }}
                   javaBlueCompletionOptions={
                     tab.key === 'globalSco' ? undefined : orchestraCompletionOptions
                   }
-                  onChange={(nextValue) => {
+                  onChange={(nextValue, metadata?: ProjectDocumentCommitMetadata) => {
                     if (tab.key === 'instrument') {
-                      void onInstrumentPatch({ text: nextValue });
+                      void onInstrumentPatch({ text: nextValue }, metadata);
                     } else if (tab.key === 'globalOrc') {
-                      void onInstrumentPatch({ globalOrc: nextValue });
+                      void onInstrumentPatch({ globalOrc: nextValue }, metadata);
                     } else {
-                      void onInstrumentPatch({ globalSco: nextValue });
+                      void onInstrumentPatch({ globalSco: nextValue }, metadata);
                     }
                   }}
                 />

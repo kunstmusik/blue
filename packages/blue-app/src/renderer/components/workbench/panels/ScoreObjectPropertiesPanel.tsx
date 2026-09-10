@@ -6,6 +6,7 @@ import type {
   ScoreObjectEditorTargetSnapshot,
   ScorePatch,
 } from '../../../../shared/project-editor';
+import type { ProjectDocumentCommitMetadata } from '../../../../shared/project-history';
 import { createScoreObjectPropertiesTarget } from '../../../../shared/project-editor';
 import ScoreObjectPropertiesForm from './score-object/ScoreObjectPropertiesForm';
 
@@ -233,8 +234,8 @@ export default function ScoreObjectPropertiesPanel(): React.ReactElement {
   }, [selectedLiveShared?.startBeats, selectedLiveShared?.durationBeats]);
 
   const handlePatch = useCallback(
-    (patch: ScorePatch): void => {
-      applyProjectDocumentPatch({ score: patch });
+    (patch: ScorePatch, metadata?: ProjectDocumentCommitMetadata): void => {
+      applyProjectDocumentPatch({ score: patch }, metadata);
       setDocument((currentDocument) =>
         currentDocument ? applyPatchToDocument(currentDocument, patch) : currentDocument,
       );

@@ -19,6 +19,7 @@ import { NoteProcessorChain } from '../note-processors/note-processor-chain';
 import { applyNoteProcessorChain, applyNoteProcessorChainAsync } from '../utilities/score';
 import { DEFAULT_LAYER_COLOR, normalizeLayerColor } from '../score/layers/layer-color';
 import { Element } from '../serialization/xml-reader';
+import type { CopyMode } from '../deep-copyable';
 
 export class SoundLayer extends Array<SoundObject> implements Layer, AutomatableLayer {
   private _name = '';
@@ -31,7 +32,7 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
   private _unknownAttributes = new Map<string, string>();
   private _unknownChildren: Element[] = [];
 
-  constructor(other?: SoundLayer | number) {
+  constructor(other?: SoundLayer | number, mode: CopyMode = 'duplication') {
     if (typeof other === 'number') {
       super(other);
       return;
@@ -53,7 +54,7 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
       this._unknownChildren = other._unknownChildren.map((c) => c.clone());
 
       for (const sObj of other) {
-        this.push(sObj.deepCopy());
+        this.push(sObj.deepCopy(mode));
       }
     }
   }
@@ -254,7 +255,7 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
     return applyNoteProcessorChainAsync(noteList, this._npc, compileData);
   }
 
-  deepCopy(): SoundLayer {
-    return new SoundLayer(this);
+  deepCopy(mode: CopyMode = 'duplication'): SoundLayer {
+    return new SoundLayer(this, mode);
   }
 }

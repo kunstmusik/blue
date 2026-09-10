@@ -278,13 +278,16 @@ describe('MixerPanel', () => {
       input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
     });
 
-    expect(mockProjectState.applyProjectDocumentPatch).toHaveBeenCalledWith({
-      mixer: {
-        type: 'renameChannelListGroup',
-        association: 'audio-group-unique',
-        name: 'Renamed From Mixer Header',
+    expect(mockProjectState.applyProjectDocumentPatch).toHaveBeenCalledWith(
+      {
+        mixer: {
+          type: 'renameChannelListGroup',
+          association: 'audio-group-unique',
+          name: 'Renamed From Mixer Header',
+        },
       },
-    });
+      { label: 'Rename Channel List Group' },
+    );
 
     act(() => {
       root.unmount();
@@ -345,6 +348,7 @@ describe('MixerPanel', () => {
           }),
         }),
       }),
+      { label: 'Set Channel Level' },
     );
 
     // Test Shift+ArrowUp accelerated stepping
@@ -364,6 +368,7 @@ describe('MixerPanel', () => {
           }),
         }),
       }),
+      { label: 'Set Channel Level' },
     );
 
     // Test Home and End bounds
@@ -371,29 +376,35 @@ describe('MixerPanel', () => {
     act(() => {
       fader.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
     });
-    expect(mockProjectState.applyProjectDocumentPatch).toHaveBeenCalledWith({
-      mixer: {
-        type: 'updateChannel',
-        channelId: '1',
-        patch: {
-          level: -96,
+    expect(mockProjectState.applyProjectDocumentPatch).toHaveBeenCalledWith(
+      {
+        mixer: {
+          type: 'updateChannel',
+          channelId: '1',
+          patch: {
+            level: -96,
+          },
         },
       },
-    });
+      { label: 'Set Channel Level' },
+    );
 
     mockProjectState.applyProjectDocumentPatch.mockClear();
     act(() => {
       fader.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
     });
-    expect(mockProjectState.applyProjectDocumentPatch).toHaveBeenCalledWith({
-      mixer: {
-        type: 'updateChannel',
-        channelId: '1',
-        patch: {
-          level: 12,
+    expect(mockProjectState.applyProjectDocumentPatch).toHaveBeenCalledWith(
+      {
+        mixer: {
+          type: 'updateChannel',
+          channelId: '1',
+          patch: {
+            level: 12,
+          },
         },
       },
-    });
+      { label: 'Set Channel Level' },
+    );
 
     act(() => {
       root.unmount();

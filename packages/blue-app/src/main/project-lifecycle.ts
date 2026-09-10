@@ -2,8 +2,15 @@ import type { BlueData } from '@blue/data';
 import { type ProjectDocumentCommitReceipt } from '../shared/project-editor';
 import { type ProjectSession, type ProjectSessionSnapshot } from './project-session';
 
+export interface ProjectLifecycleHistoryCoordinator {
+  checkpointSave(savedStateId?: string): void;
+  clear(): void;
+  closeGroup(): void;
+}
+
 export interface ProjectLifecycleDependencies {
   readonly session: ProjectSession;
+  readonly history?: ProjectLifecycleHistoryCoordinator;
   readonly stopProjectRuntimes?: () => void | Promise<void>;
   readonly closeProjectEditors?: () => void | Promise<void>;
   readonly clearProjectServices?: () => void | Promise<void>;
@@ -55,7 +62,9 @@ export function createProjectLifecycle(
     async replace(candidate) {
       await stopProjectRuntimes();
       await closeProjectEditors();
+      dependencies.history?.clear();
       const snapshot = dependencies.session.replace(candidate.data, candidate.filePath);
+      dependencies.history?.checkpointSave(snapshot.stateId ?? undefined);
       await clearProjectServices();
       await dependencies.publishProjectChanged?.(snapshot);
       await dependencies.publishProjectLoaded?.(snapshot);
@@ -71,17 +80,31 @@ export function createProjectLifecycle(
     async save(write) {
       const snapshot = dependencies.session.read();
       if (!snapshot.data || !snapshot.filePath) return false;
+      dependencies.history?.closeGroup();
+      const stateIdToSave = dependencies.session.read().stateId;
+      const documentIdToSave = dependencies.session.read().documentId;
       await write(snapshot.data, snapshot.filePath);
-      await dependencies.publishProjectChanged?.(snapshot);
+      if (dependencies.session.read().documentId === documentIdToSave && stateIdToSave) {
+        dependencies.history?.checkpointSave(stateIdToSave);
+        await dependencies.publishProjectChanged?.(dependencies.session.read());
+      }
       return true;
     },
 
     async saveAs(filePath, write) {
       const snapshot = dependencies.session.read();
       if (!snapshot.data) return false;
+      dependencies.history?.closeGroup();
+      const stateIdToSave = dependencies.session.read().stateId;
+      const documentIdToSave = dependencies.session.read().documentId;
       await write(snapshot.data, filePath);
-      const next = dependencies.session.publishPath(filePath);
-      await dependencies.publishProjectChanged?.(next);
+      if (dependencies.session.read().documentId === documentIdToSave) {
+        const next = dependencies.session.publishPath(filePath);
+        if (stateIdToSave) {
+          dependencies.history?.checkpointSave(stateIdToSave);
+        }
+        await dependencies.publishProjectChanged?.(next);
+      }
       return true;
     },
 
@@ -94,7 +117,9 @@ export function createProjectLifecycle(
     async close() {
       await stopProjectRuntimes();
       await closeProjectEditors();
+      dependencies.history?.clear();
       const snapshot = dependencies.session.close();
+      dependencies.history?.checkpointSave(undefined);
       await clearProjectServices();
       await dependencies.publishProjectClosed?.(snapshot);
       return snapshot;

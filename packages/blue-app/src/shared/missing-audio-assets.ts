@@ -34,12 +34,23 @@ export interface MissingAudioAssetReplacement {
 export interface MissingAudioAssetsResolveRequest {
   sessionId: string;
   replacements: MissingAudioAssetReplacement[];
+  /** One-use confirmation token returned when the history payload is oversized. */
+  historyProposalToken?: string;
+}
+
+export interface MissingAudioHistoryOversizeProposal {
+  token: string;
+  estimatedBytes: number;
+  limitBytes: number;
+  explanation: string;
 }
 
 export interface MissingAudioAssetsResolveResult {
   ok: boolean;
   changed: boolean;
   stale?: boolean;
+  error?: string;
+  historyOversizeProposal?: MissingAudioHistoryOversizeProposal;
   project?: ProjectEditorSnapshot;
 }
 

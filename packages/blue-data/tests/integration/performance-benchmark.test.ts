@@ -9,6 +9,7 @@ import { AudioClip } from '../../src/score/audio/audio-clip';
 import { TimePosition } from '../../src/time/time-position';
 import { TimeDuration } from '../../src/time/time-duration';
 import { Score } from '../../src/score/score';
+import { buildDeterministicPerformanceProject } from '../../src/test-support/performance-fixtures';
 
 describe('Performance', () => {
   it('loads a project with 100 audio clips in under 500ms', async () => {
@@ -124,5 +125,63 @@ describe('Performance', () => {
 
     expect(saveTime).toBeLessThan(100);
     expect(xml.length).toBeGreaterThan(10000);
+  });
+
+  it('builds, clones, and round-trips deterministic 1,000-clip, 32-instrument, 128-parameter workload', async () => {
+    const buildStart = performance.now();
+    const data = buildDeterministicPerformanceProject();
+    const buildTime = performance.now() - buildStart;
+    expect(buildTime).toBeLessThan(1000);
+
+    // Verify 32 instrument assignments
+    const arrangements = data.getArrangement().getArrangement();
+    expect(arrangements).toHaveLength(32);
+    for (let i = 0; i < 32; i++) {
+      expect(arrangements[i].arrangementId).toBe(String(i + 1));
+    }
+
+    // Verify 128 parameters across the 32 instruments
+    let totalParams = 0;
+    for (const item of arrangements) {
+      const bsb = item.instr as any;
+      const params = bsb.getParameters();
+      expect(params).toHaveLength(4);
+      totalParams += params.length;
+    }
+    expect(totalParams).toBe(128);
+
+    // Verify 1,000 clips with fixed IDs across layers
+    const group = data.getScore()[0] as TrackLayerGroup;
+    let totalClips = 0;
+    for (let l = 0; l < 10; l++) {
+      totalClips += group[l].length;
+      for (const obj of group[l]) {
+        expect((obj as any).uniqueId).toMatch(/^clip-\d+$/);
+        expect(obj.getName()).toMatch(/^Clip \d+$/);
+      }
+    }
+    expect(totalClips).toBe(1000);
+
+    // History-copy clone performance
+    const cloneStart = performance.now();
+    const cloned = data.historyCopy();
+    const cloneTime = performance.now() - cloneStart;
+    expect(cloneTime).toBeLessThan(500);
+    expect(cloned.getArrangement().getArrangement()).toHaveLength(32);
+    expect((cloned.getScore()[0] as TrackLayerGroup)[0].length).toBe(100);
+
+    // XML Save performance
+    const saveStart = performance.now();
+    const xml = data.saveToString();
+    const saveTime = performance.now() - saveStart;
+    expect(saveTime).toBeLessThan(1000);
+    expect(xml.length).toBeGreaterThan(50000);
+
+    // XML Load performance
+    const loadStart = performance.now();
+    const reloaded = await BlueData.loadFromString(xml);
+    const loadTime = performance.now() - loadStart;
+    expect(loadTime).toBeLessThan(2000);
+    expect(reloaded.getArrangement().getArrangement()).toHaveLength(32);
   });
 });

@@ -53,15 +53,22 @@ export function usePortalContainer(): HTMLElement | null {
  * panel api's location-change event and on first interaction within the shell
  * (capture phase — ahead of bubble-phase popup handlers in the same gesture).
  */
+import { registerHostDocument } from '../lib/history-scope-router';
+
 export function useShellHostDocument(
   ref: { current: HTMLElement | null },
   subscribeLocationChange?: (cb: () => void) => { dispose: () => void },
 ): Document | null {
   const [hostDocument, setHostDocument] = useState<Document | null>(null);
   useEffect(() => {
+    let unregisterDoc: (() => void) | undefined;
     const resolve = () => {
       const doc = ref.current?.ownerDocument ?? null;
       setHostDocument((prev) => (prev === doc ? prev : doc));
+      if (doc) {
+        unregisterDoc?.();
+        unregisterDoc = registerHostDocument(doc);
+      }
     };
     resolve();
     const disposable = subscribeLocationChange?.(() => resolve());
@@ -70,6 +77,7 @@ export function useShellHostDocument(
     shell?.addEventListener('contextmenu', resolve, true);
     shell?.addEventListener('focusin', resolve, true);
     return () => {
+      unregisterDoc?.();
       disposable?.dispose();
       shell?.removeEventListener('pointerdown', resolve, true);
       shell?.removeEventListener('contextmenu', resolve, true);

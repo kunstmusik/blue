@@ -3,6 +3,7 @@ import { useProjectStore } from '../../../../stores/project-store';
 import { useBlueLiveStore } from '../../../../stores/blue-live-store';
 import { usePlaybackStore } from '../../../../stores/playback-store';
 import SelectedCodeEditor from '../editors/SelectedCodeEditor';
+import type { ProjectDocumentCommitMetadata } from '../../../../../shared/project-history';
 
 export default function LiveCodeTab(): React.ReactElement {
   const loaded = useProjectStore((state) => state.loaded);
@@ -37,7 +38,16 @@ export default function LiveCodeTab(): React.ReactElement {
           placeholder="Enter Blue Live orchestra code"
           ariaLabel="Blue Live code editor"
           mode="orc"
-          onChange={(text) => applyBlueLivePatch({ type: 'updateLiveCodeText', text })}
+          typingGroupingMs={500}
+          historyMetadata={{
+            fieldId: 'blueLive:liveCodeText',
+            gestureId: 'project-text:blueLive:liveCodeText',
+            label: 'Edit Blue Live Code',
+            phase: 'update',
+          }}
+          onChange={(text, metadata?: ProjectDocumentCommitMetadata) =>
+            applyBlueLivePatch({ type: 'updateLiveCodeText', text }, metadata)
+          }
           evaluateCodeEnabled={evaluateEnabled}
           onEvaluateCode={(text) => {
             window.blueAPI?.evaluateCode({

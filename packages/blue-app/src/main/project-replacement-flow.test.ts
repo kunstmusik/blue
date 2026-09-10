@@ -684,6 +684,43 @@ describe('runTransactionalSaveAs', () => {
     expect(calls).toEqual(['chooseDestination', 'write']);
     expect(getPublishedPath()).toBeNull();
   });
+
+  it('invokes checkpointSave only after a successful write', async () => {
+    const checkpointSave = vi.fn();
+    const deps = {
+      chooseDestination: vi.fn(async () => '/work/checkpoint.blue'),
+      writeProject: vi.fn(async () => true),
+      publishPath: vi.fn(),
+      checkpointSave,
+    };
+
+    await expect(runTransactionalSaveAs(deps)).resolves.toBe(true);
+    expect(deps.publishPath).toHaveBeenCalledWith('/work/checkpoint.blue');
+    expect(checkpointSave).toHaveBeenCalledWith('/work/checkpoint.blue');
+  });
+
+  it('does not invoke checkpointSave when write fails or dialog is cancelled', async () => {
+    const checkpointSave = vi.fn();
+    const failingDeps = {
+      chooseDestination: vi.fn(async () => '/work/failed.blue'),
+      writeProject: vi.fn(async () => false),
+      publishPath: vi.fn(),
+      checkpointSave,
+    };
+
+    await expect(runTransactionalSaveAs(failingDeps)).resolves.toBe(false);
+    expect(checkpointSave).not.toHaveBeenCalled();
+
+    const cancelledDeps = {
+      chooseDestination: vi.fn(async () => null),
+      writeProject: vi.fn(async () => true),
+      publishPath: vi.fn(),
+      checkpointSave,
+    };
+
+    await expect(runTransactionalSaveAs(cancelledDeps)).resolves.toBe(false);
+    expect(checkpointSave).not.toHaveBeenCalled();
+  });
 });
 
 describe('CSD and ORC/SCO import matrix (US2: spec FR-006/FR-007)', () => {

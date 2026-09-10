@@ -66,7 +66,6 @@ import {
   collectTimelineLayerSelection,
 } from './score-timeline-gesture-utils';
 import { buildSetSelectionToLayerColorPatch } from '../score-color-actions';
-import { useScoreColorHistoryStore } from '../../../../../stores/score-color-history-store';
 
 interface Props {
   group: PolyObjectLayerGroupSnapshot;
@@ -363,8 +362,10 @@ export default function ScoreTimeCanvas({
     endX: number;
     endY: number;
   } | null>(null);
+  const gestureIdCounterRef = useRef(0);
   const gestureRef = useRef<{
     mode: GestureMode;
+    gestureId: string;
     startClientX: number;
     startClientY: number;
     startBeats: number;
@@ -637,8 +638,10 @@ export default function ScoreTimeCanvas({
           clearSelection();
           clearLayerSelection();
         }
+        gestureIdCounterRef.current += 1;
         gestureRef.current = {
           mode: 'marquee',
+          gestureId: `score-gesture-${gestureIdCounterRef.current}`,
           startClientX: e.clientX,
           startClientY: e.clientY,
           startBeats: 0,
@@ -748,8 +751,10 @@ export default function ScoreTimeCanvas({
       }
 
       if (onLeftEdge || onRightEdge) {
+        gestureIdCounterRef.current += 1;
         gestureRef.current = {
           mode: onLeftEdge ? 'resizeLeft' : 'resizeRight',
+          gestureId: `score-gesture-${gestureIdCounterRef.current}`,
           startClientX: e.clientX,
           startClientY: e.clientY,
           startBeats: xBeats,
@@ -764,8 +769,10 @@ export default function ScoreTimeCanvas({
           originalPositions: origPositions,
         };
       } else {
+        gestureIdCounterRef.current += 1;
         gestureRef.current = {
           mode: 'move',
+          gestureId: `score-gesture-${gestureIdCounterRef.current}`,
           startClientX: e.clientX,
           startClientY: e.clientY,
           startBeats: xBeats,
@@ -1136,12 +1143,22 @@ export default function ScoreTimeCanvas({
     pendingMovePatchRef.current = [];
 
     if (pendingMovePatch.length > 0 && g.mode === 'move') {
-      void applyProjectDocumentPatch({
-        score: {
-          type: 'moveScoreObjects',
-          moves: pendingMovePatch,
+      void applyProjectDocumentPatch(
+        {
+          score: {
+            type: 'moveScoreObjects',
+            moves: pendingMovePatch,
+          },
         },
-      });
+        {
+          label:
+            pendingMovePatch.length > 1
+              ? `Move ${pendingMovePatch.length} Score Objects`
+              : 'Move Score Object',
+          gestureId: g.gestureId,
+          phase: 'end',
+        },
+      );
     }
 
     if (pendingPatches.length > 0 && g.mode !== 'marquee') {
@@ -1174,13 +1191,20 @@ export default function ScoreTimeCanvas({
             };
           }
           if (Object.keys(patch).length === 0) continue;
-          await applyProjectDocumentPatch({
-            score: {
-              type: 'updateSharedProperties',
-              target,
-              patch,
+          await applyProjectDocumentPatch(
+            {
+              score: {
+                type: 'updateSharedProperties',
+                target,
+                patch,
+              },
             },
-          });
+            {
+              label: 'Resize Score Object',
+              gestureId: g.gestureId,
+              phase: 'end',
+            },
+          );
         }
       })();
     }
@@ -1275,12 +1299,15 @@ export default function ScoreTimeCanvas({
         .filter((target): target is ScoreObjectEditorTargetSnapshot => target !== undefined);
       const removeTargets = (): void => {
         if (targets.length > 0) {
-          void applyProjectDocumentPatch({
-            score: {
-              type: 'removeScoreObjects',
-              targets,
+          void applyProjectDocumentPatch(
+            {
+              score: {
+                type: 'removeScoreObjects',
+                targets,
+              },
             },
-          });
+            { label: 'Cut Score Objects' },
+          );
         }
         clearSelection();
       };
@@ -1335,12 +1362,15 @@ export default function ScoreTimeCanvas({
         .map((entry) => entry.editorTarget)
         .filter((target): target is ScoreObjectEditorTargetSnapshot => target !== undefined);
       if (targets.length > 0) {
-        void applyProjectDocumentPatch({
-          score: {
-            type: 'removeScoreObjects',
-            targets,
+        void applyProjectDocumentPatch(
+          {
+            score: {
+              type: 'removeScoreObjects',
+              targets,
+            },
           },
-        });
+          { label: 'Delete Score Objects' },
+        );
       }
       clearSelection();
     }
@@ -1385,9 +1415,10 @@ export default function ScoreTimeCanvas({
       .filter((target): target is ScoreObjectEditorTargetSnapshot => target !== undefined);
     void (async () => {
       if (removeTargets.length > 0) {
-        await applyProjectDocumentPatch({
-          score: { type: 'removeScoreObjects', targets: removeTargets },
-        });
+        await applyProjectDocumentPatch(
+          { score: { type: 'removeScoreObjects', targets: removeTargets } },
+          { label: 'Convert Score Objects' },
+        );
       }
       for (const entry of selected) {
         await applyProjectDocumentPatch({
@@ -1463,18 +1494,15 @@ export default function ScoreTimeCanvas({
     });
     if (pair) {
       try {
-        await applyProjectDocumentPatch(pair.forward);
-        await flushPendingPatches();
-        useScoreColorHistoryStore.getState().pushEntry({
+        await applyProjectDocumentPatch(pair, {
           label: 'Set to Layer Color',
-          forward: pair.forward,
-          inverse: pair.inverse,
+          phase: 'single',
         });
       } catch {
         // Rejection reconciliation - do not record history entry
       }
     }
-  }, [getSelectedEntries, interactionLayerGroups, applyProjectDocumentPatch, flushPendingPatches]);
+  }, [getSelectedEntries, interactionLayerGroups, applyProjectDocumentPatch]);
 
   const handleExport = useCallback(async () => {
     const entries = getSelectedEntries();
@@ -1675,7 +1703,10 @@ export default function ScoreTimeCanvas({
   }, [contextMenuPos, interactionLayerGroups, setSelection]);
 
   const commitMoves = useCallback(
-    (moves: Array<{ entry: ScoreObjectClipboardEntry; targetStartBeats: number }>) => {
+    (
+      moves: Array<{ entry: ScoreObjectClipboardEntry; targetStartBeats: number }>,
+      label = 'Move Score Objects',
+    ) => {
       if (moves.length === 0) return;
       const optimisticMoves = moves.map(({ entry, targetStartBeats }) => ({
         objectId: entry.objectId,
@@ -1697,9 +1728,12 @@ export default function ScoreTimeCanvas({
           : [],
       );
       if (canonicalMoves.length > 0) {
-        void applyProjectDocumentPatch({
-          score: { type: 'moveScoreObjects', moves: canonicalMoves },
-        });
+        void applyProjectDocumentPatch(
+          {
+            score: { type: 'moveScoreObjects', moves: canonicalMoves },
+          },
+          { label, phase: 'single' },
+        );
       }
     },
     [applyProjectDocumentPatch, moveScoreObjects],
@@ -1709,7 +1743,10 @@ export default function ScoreTimeCanvas({
     const entries = getSelectedEntries();
     if (entries.length < 2) return;
     const minStart = Math.min(...entries.map((e) => e.startBeats));
-    commitMoves(entries.map((entry) => ({ entry, targetStartBeats: minStart })));
+    commitMoves(
+      entries.map((entry) => ({ entry, targetStartBeats: minStart })),
+      'Align Left',
+    );
   }, [commitMoves, getSelectedEntries]);
 
   const handleAlignCenter = useCallback(() => {
@@ -1722,6 +1759,7 @@ export default function ScoreTimeCanvas({
         entry,
         targetStartBeats: Math.max(0, mid - entry.durationBeats / 2),
       })),
+      'Align Center',
     );
   }, [commitMoves, getSelectedEntries]);
 
@@ -1734,6 +1772,7 @@ export default function ScoreTimeCanvas({
         entry,
         targetStartBeats: Math.max(0, maxEnd - entry.durationBeats),
       })),
+      'Align Right',
     );
   }, [commitMoves, getSelectedEntries]);
 
@@ -1748,6 +1787,7 @@ export default function ScoreTimeCanvas({
         cursor += entry.durationBeats;
         return { entry, targetStartBeats };
       }),
+      'Follow The Leader',
     );
   }, [commitMoves, getSelectedEntries]);
 
@@ -1761,6 +1801,7 @@ export default function ScoreTimeCanvas({
         entry,
         targetStartBeats: reversed[i].startBeats,
       })),
+      'Reverse Score Objects',
     );
   }, [commitMoves, getSelectedEntries]);
 
@@ -1779,6 +1820,7 @@ export default function ScoreTimeCanvas({
           entry,
           targetStartBeats: entry.startBeats + amount,
         })),
+        'Shift Score Objects',
       );
     },
     [commitMoves, getSelectedEntries],

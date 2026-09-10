@@ -65,6 +65,7 @@ export default function NoteProcessorCodeModal({
           <SelectedCodeEditor
             value={localCode}
             onChange={setLocalCode}
+            historyScope="draft"
             mode="python"
             placeholder="Enter Python code..."
             ariaLabel="Python code editor"

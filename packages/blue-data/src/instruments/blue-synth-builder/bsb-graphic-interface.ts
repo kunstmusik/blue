@@ -5,6 +5,7 @@
  * Holds the root BSBGroup and delegates replacement collection to it.
  */
 import { Element } from '../../serialization/xml-reader';
+import type { CopyMode } from '../../deep-copyable';
 import { BSBCompilationUnit } from './bsb-compilation-unit';
 import { BSBGroup, loadBsbWidgetFromXML } from './bsb-group';
 import { BSBKnob } from './bsb-knob';
@@ -161,10 +162,12 @@ export class BSBGraphicInterface {
     return elem;
   }
 
-  deepCopy(): BSBGraphicInterface {
+  deepCopy(mode: CopyMode = 'duplication'): BSBGraphicInterface {
     const copy = new BSBGraphicInterface();
-    copy.rootGroup = this.rootGroup.deepCopy();
-    normalizeBsbWidgetIds(copy.rootGroup);
+    copy.rootGroup = this.rootGroup.deepCopy(mode);
+    if (mode !== 'history') {
+      normalizeBsbWidgetIds(copy.rootGroup);
+    }
     copy.gridSettingsRaw = this.gridSettingsRaw;
     copy.gridSettingsData = { ...this.gridSettingsData };
     copy.editEnabled = this.editEnabled;

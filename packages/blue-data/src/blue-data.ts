@@ -29,6 +29,7 @@ import { GenericInstrument } from './instruments/generic-instrument';
 import { CompileData } from './compile-data';
 import type { CompiledMidiInstrumentTarget } from './compile-data';
 import { BlueDataObject } from './blue-data-object';
+import type { CopyMode, DeepCopyable, HistoryCopyable } from './deep-copyable';
 import { NoteList } from './sound-objects/note-list';
 import { Note } from './sound-objects/note';
 import { Mixer } from './mixer/mixer';
@@ -88,7 +89,7 @@ import {
 import type { RenderCsdResult } from './blue-data/csd-policy';
 import { processOnLoad, processOnLoadAsync, usesJavaRuntime } from './blue-data/runtime-policy';
 
-export class BlueData implements BlueDataObject {
+export class BlueData implements BlueDataObject, DeepCopyable<BlueData>, HistoryCopyable<BlueData> {
   // Version
   private version = BLUE_VERSION;
 
@@ -342,16 +343,16 @@ export class BlueData implements BlueDataObject {
 
   // ─── DeepCopy ───
 
-  deepCopy(): BlueDataObject {
+  deepCopy(mode: CopyMode = 'duplication'): BlueData {
     const copy = new BlueData();
     copy.version = this.version;
-    copy.arrangement = new Arrangement(this.arrangement);
+    copy.arrangement = new Arrangement(this.arrangement, mode);
     copy.projectProperties = new ProjectProperties(this.projectProperties);
 
     // Deep-copy the SoundObject library and seed an original→copy map so that
     // copied Instance references can be remapped to copied library objects.
     const originalLibraryObjects = this.sObjLib.getAllObjects();
-    copy.sObjLib = new SoundObjectLibrary(this.sObjLib);
+    copy.sObjLib = new SoundObjectLibrary(this.sObjLib, mode);
     const copiedLibraryObjects = copy.sObjLib.getAllObjects();
     const libraryRemap = new Map<SoundObject, SoundObject>();
     for (let i = 0; i < originalLibraryObjects.length; i++) {
@@ -359,11 +360,11 @@ export class BlueData implements BlueDataObject {
     }
 
     // Deep-copy instrument library (was previously aliased by reference).
-    copy.instrumentLibrary = this.instrumentLibrary ? this.instrumentLibrary.deepCopy() : null;
+    copy.instrumentLibrary = this.instrumentLibrary ? this.instrumentLibrary.deepCopy(mode) : null;
 
     copy.globalOrcSco = new GlobalOrcSco(this.globalOrcSco);
     copy.tableSet = new Tables(this.tableSet);
-    copy.score = new Score(this.score);
+    copy.score = new Score(this.score, mode);
 
     // Deep-copy Live Data (was previously aliased by reference).
     copy.liveData = this.liveData.deepCopy() as LiveData;
@@ -372,7 +373,7 @@ export class BlueData implements BlueDataObject {
     copy.noteProcessorChainMap = new NoteProcessorChainMap(this.noteProcessorChainMap);
     copy.markersList = new MarkersList(this.markersList);
     copy.midiInputProcessor = new MidiInputProcessor(this.midiInputProcessor);
-    copy.mixer = this.mixer.deepCopy() as Mixer;
+    copy.mixer = this.mixer.deepCopy(mode) as Mixer;
 
     // Deep-copy opcode definitions (was previously aliased by reference).
     copy.opcodeList = new OpcodeList(this.opcodeList);
@@ -401,6 +402,10 @@ export class BlueData implements BlueDataObject {
       .setSampleRate(parseInt(copy.projectProperties.sampleRate, 10) || 44100);
 
     return copy;
+  }
+
+  historyCopy(): BlueData {
+    return this.deepCopy('history') as BlueData;
   }
 }
 

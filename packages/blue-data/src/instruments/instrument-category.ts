@@ -7,6 +7,7 @@
 import { Instrument } from './instrument';
 import { loadInstrumentFromXML } from './instrument-registry';
 import { Element } from '../serialization/xml-reader';
+import type { CopyMode } from '../deep-copyable';
 
 export class InstrumentCategory {
   private _categoryName: string;
@@ -134,13 +135,13 @@ export class InstrumentCategory {
    * implementations so the copy shares no mutable references with the
    * original.
    */
-  deepCopy(): InstrumentCategory {
+  deepCopy(mode: CopyMode = 'duplication'): InstrumentCategory {
     const copy = new InstrumentCategory(this._categoryName, this._isRoot);
     for (const subCat of this._subCategories) {
-      copy._subCategories.push(subCat.deepCopy());
+      copy._subCategories.push(subCat.deepCopy(mode));
     }
     for (const instr of this._instruments) {
-      copy._instruments.push(instr.deepCopy());
+      copy._instruments.push(instr.deepCopy(mode));
     }
     return copy;
   }

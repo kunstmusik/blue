@@ -78,6 +78,7 @@ describe('BlueX7 effective-values request contract', () => {
   const base = {
     target: trackTarget,
     projectSessionId: 1,
+    performanceKind: 'timeline' as const,
     parameterIds: ['param-1', 'param-2'],
   };
 
@@ -85,6 +86,7 @@ describe('BlueX7 effective-values request contract', () => {
     expect(isBlueX7EffectiveValuesRequest(base)).toBe(true);
     expect(isBlueX7EffectiveValuesRequest({ ...base, target: assignmentTarget })).toBe(true);
     expect(isBlueX7EffectiveValuesRequest({ ...base, projectSessionId: 0 })).toBe(true);
+    expect(isBlueX7EffectiveValuesRequest({ ...base, performanceKind: 'blueLive' })).toBe(true);
     expect(
       isBlueX7EffectiveValuesRequest({
         ...base,
@@ -124,6 +126,7 @@ describe('BlueX7 effective-values request contract', () => {
     expect(isBlueX7EffectiveValuesRequest({ ...base, target: { assignmentId: '' } })).toBe(false);
     expect(isBlueX7EffectiveValuesRequest({ ...base, projectSessionId: -3 })).toBe(false);
     expect(isBlueX7EffectiveValuesRequest({ ...base, projectSessionId: 1.5 })).toBe(false);
+    expect(isBlueX7EffectiveValuesRequest({ ...base, performanceKind: 'unknown' })).toBe(false);
     expect(isBlueX7EffectiveValuesRequest({ ...base, projectSessionId: Number.NaN })).toBe(false);
     expect(
       isBlueX7EffectiveValuesRequest({ ...base, projectSessionId: Number.POSITIVE_INFINITY }),

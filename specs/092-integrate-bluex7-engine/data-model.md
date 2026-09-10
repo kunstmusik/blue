@@ -209,6 +209,7 @@ At note start, the voice captures all next-note fields directly from their globa
 interface BlueX7EffectiveValuesRequest {
   projectSessionId: number;
   owner: BlueX7OwnerRef;
+  performanceKind: 'timeline' | 'blueLive';
   parameterIds: readonly string[]; // visible controls only
 }
 
@@ -221,7 +222,7 @@ interface BlueX7EffectiveValuesSnapshot {
 }
 ```
 
-Responses are accepted only when session and owner still match the open editor. Missing channels, stopped playback, or stale owners return an explicit unavailable result; they never substitute values from another instance. Samples are clamped for display but do not mutate the project.
+Readback is scoped to the selected performance and its current engine generation. Responses are accepted only when performance kind, session, and owner still match the open editor. Missing channels, stopped playback, or stale owners return an explicit unavailable result; they never substitute values from another instance. Samples are clamped for display but do not mutate the project.
 
 ## 9. Engine batch channel message
 

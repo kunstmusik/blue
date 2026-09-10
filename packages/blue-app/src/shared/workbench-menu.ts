@@ -215,6 +215,8 @@ export type NativeMenuCommand =
   | { type: 'audition-score-objects' }
   | { type: 'edit-tempo-map' }
   | { type: 'edit-meter-map' }
+  | { type: 'undo' }
+  | { type: 'redo' }
   | { type: 'show-not-yet-implemented' };
 
 export function getPanel(id: string): PanelDescriptor | undefined {

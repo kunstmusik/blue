@@ -1,20 +1,33 @@
 import React from 'react';
 import type { BlueX7Voice } from '@blue/data';
 import type { BlueX7Patch } from '../../../../shared/project-editor';
+import type { ProjectDocumentCommitMetadata } from '../../../../shared/project-history';
 import SelectedCodeEditor from '../../workbench/panels/editors/SelectedCodeEditor';
 
 export interface CsoundPanelProps {
   voice: BlueX7Voice;
+  historyIdentity?: string;
   active?: boolean;
-  onApplyPatch: (description: string, patch: BlueX7Patch) => void;
+  onApplyPatch: (
+    description: string,
+    patch: BlueX7Patch,
+    metadata?: ProjectDocumentCommitMetadata,
+  ) => void;
 }
 
-export const CsoundPanel: React.FC<CsoundPanelProps> = ({ voice, active = true, onApplyPatch }) => {
-  const handlePostCodeChange = (text: string) => {
-    onApplyPatch('Edit Csound Post-Code', {
-      type: 'setCsoundPostCode',
-      text,
-    });
+export const CsoundPanel: React.FC<CsoundPanelProps> = ({
+  voice,
+  historyIdentity = 'bluex7',
+  active = true,
+  onApplyPatch,
+}) => {
+  const handlePostCodeChange = (text: string, metadata?: ProjectDocumentCommitMetadata) => {
+    const patch = { type: 'setCsoundPostCode' as const, text };
+    if (metadata) {
+      onApplyPatch('Edit Csound Post-Code', patch, metadata);
+    } else {
+      onApplyPatch('Edit Csound Post-Code', patch);
+    }
   };
 
   return (
@@ -39,6 +52,13 @@ export const CsoundPanel: React.FC<CsoundPanelProps> = ({ voice, active = true, 
             active={active}
             value={voice.csoundPostCode ?? ''}
             mode="orc"
+            typingGroupingMs={500}
+            historyMetadata={{
+              fieldId: `instrument:${historyIdentity}:csoundPostCode`,
+              gestureId: `project-text:instrument:${historyIdentity}:csoundPostCode`,
+              label: 'Edit Csound Post-Code',
+              phase: 'update',
+            }}
             ariaLabel="Csound Post Code"
             onChange={handlePostCodeChange}
           />

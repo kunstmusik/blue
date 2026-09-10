@@ -910,16 +910,16 @@ export class UnifiedLibraryService {
     }
   }
 
-  deleteProjectLibraryItem(
+  async deleteProjectLibraryItem(
     key: LibraryItemKey,
     confirmationToken: string,
-  ): LibraryResult<ProjectMutationReceipt> {
+  ): Promise<LibraryResult<ProjectMutationReceipt>> {
     try {
       const matchingSessions = this.editorSessions?.getSessionsForKey(key) ?? [];
       if (matchingSessions.some((session) => session.dirty)) {
         throw new Error('Save or discard dirty Library Item editors before deleting this item.');
       }
-      const receipt = this.projectAdapter.deleteProjectItem(key, confirmationToken);
+      const receipt = await this.projectAdapter.deleteProjectItem(key, confirmationToken);
       // A Library Item editor is a view of this canonical definition. Do not leave
       // it open after the definition is removed from the project library.
       const closedEditorSessionIds = this.editorSessions?.closeDeletedKey(key) ?? [];
@@ -1056,7 +1056,7 @@ export class UnifiedLibraryService {
           children: [],
         };
         preview = itemPreview;
-        this.projectAdapter.deleteProjectItem(request.source.key, request.confirmationToken);
+        await this.projectAdapter.deleteProjectItem(request.source.key, request.confirmationToken);
         closedEditorSessionIds = this.editorSessions?.closeDeletedKey(request.source.key) ?? [];
         this.publishProjectChanged();
       }
@@ -1188,12 +1188,12 @@ export class UnifiedLibraryService {
     return clipboard;
   }
 
-  addScoreSoundObjectToProjectLibrary(
+  async addScoreSoundObjectToProjectLibrary(
     request: ScoreTimelineSoundObjectRequest,
-  ): LibraryResult<ProjectMutationReceipt> {
+  ): Promise<LibraryResult<ProjectMutationReceipt>> {
     if (!this.getReadyClient()) return this.notReady();
     try {
-      const receipt = this.projectAdapter.addTimelineSoundObjectToProjectLibrary(request);
+      const receipt = await this.projectAdapter.addTimelineSoundObjectToProjectLibrary(request);
       this.publishProjectChanged();
       return { ok: true, value: receipt };
     } catch (error) {
@@ -1645,7 +1645,7 @@ export class UnifiedLibraryService {
       );
       if (targetError) throw new Error(targetError);
       const target = this.toInsertionTarget(pending.target, pending.key.libraryType);
-      const receipt = this.projectAdapter.applyInsertion({
+      const receipt = await this.projectAdapter.applyInsertion({
         key: pending.key,
         payloadXml: pending.payloadXml,
         target,
@@ -1691,7 +1691,7 @@ export class UnifiedLibraryService {
       };
     }
     try {
-      const receipt = this.projectAdapter.applyInsertion({
+      const receipt = await this.projectAdapter.applyInsertion({
         key: pending.input.key,
         payloadXml: pending.payloadXml,
         target,

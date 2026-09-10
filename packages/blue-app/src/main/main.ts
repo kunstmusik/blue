@@ -12,6 +12,7 @@ import {
 } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
+import { randomUUID } from 'node:crypto';
 
 import {
   BlueData,
@@ -22,6 +23,7 @@ import {
   BSBGroup,
   BSBWidget,
   TrackLayerGroup,
+  type BlueX7Voice,
   setExternalCommandExecutor,
   convertCSDtoBlue,
   convertOrcScoToBlue,
@@ -80,6 +82,7 @@ import type { ProgramSettingsSnapshot } from '../shared/program-settings';
 import { normalizeDefaultLayerGroupType } from '../shared/program-settings';
 import { createCsoundManualService } from './csound-manual-service';
 import {
+  isEffectEditorPatchRequest,
   isEffectEditorRequest,
   isTrackInstrumentEditorPatchRequest,
   isTrackInstrumentEditorRequest,
@@ -95,6 +98,7 @@ import { EngineBridge } from './engine-bridge';
 import {
   clearActiveBlueX7Bindings,
   createBlueX7RuntimeEnvironment,
+  getActiveBlueX7Binding,
   invalidateActiveBlueX7Binding,
   setActiveBlueX7Bindings,
   syncBlueX7InstrumentPatchToRuntime,
@@ -103,8 +107,13 @@ import {
 import { requestBlueX7EffectiveValues } from './blue-x7-runtime-sync';
 import {
   isBlueX7EffectiveValuesRequest,
+  type BlueX7PerformanceKind,
   type BlueX7EffectiveValuesRequest,
 } from '../shared/project-editor/contract';
+import {
+  getKnownMixerChannelSnapshotId,
+  transferProjectEditorIdentities,
+} from '../shared/project-editor/identity';
 import { BlueLiveEngineSession, type BlueLiveStatusSnapshot } from './blue-live-engine';
 import {
   BlueLiveTriggerController,
@@ -197,7 +206,16 @@ import {
   type PythonInstrumentTestResult,
 } from './python-instrument-test';
 import { auditionSelectedScoreObjects } from './audition-score-objects';
-import { syncCompiledRuntimeParameterNames } from './runtime-parameter-sync';
+import {
+  buildRuntimeBindingRegistry,
+  syncCompiledRuntimeParameterNames,
+} from './runtime-parameter-sync';
+import {
+  ProjectRuntimeReconciliation,
+  type AcknowledgedRuntimeClient,
+  type RuntimeOperationAck,
+  type RuntimeWorkOperation,
+} from './project-runtime-reconciliation';
 import { syncRuntimeChannel } from './runtime-channel-sync';
 import {
   syncBsbInstrumentRuntimeChannels,
@@ -211,6 +229,7 @@ import {
   registerFloatingWindow,
   registerMainWindow,
   routeFocusPanel,
+  sendToFocusedWorkbenchWindow,
 } from './workbench-window-host';
 import { getWindowTitle } from '../shared/window-title';
 import {
@@ -376,7 +395,40 @@ import type {
   IpcMainLike,
 } from './ipc/ipc-registration';
 import { createProjectLifecycle } from './project-lifecycle';
+import { createProjectHistory } from './project-history';
 import { ProjectSession } from './project-session';
+import {
+  PROJECT_HISTORY_COMMIT_CHANNEL,
+  PROJECT_HISTORY_UNDO_CHANNEL,
+  PROJECT_HISTORY_REDO_CHANNEL,
+  PROJECT_HISTORY_READ_CHANNEL,
+  PROJECT_HISTORY_REGISTER_PARTICIPANT_CHANNEL,
+  PROJECT_HISTORY_UNREGISTER_PARTICIPANT_CHANNEL,
+  PROJECT_HISTORY_BOUNDARY_ACK_CHANNEL,
+  PROJECT_HISTORY_BOUNDARY_PREPARE_CHANNEL,
+  PROJECT_HISTORY_BOUNDARY_RELEASE_CHANNEL,
+  PROJECT_HISTORY_CANCEL_OVERSIZE_CHANNEL,
+  PROJECT_HISTORY_AVAILABILITY_CHANNEL,
+  PROJECT_RUNTIME_OUTCOME_CHANNEL,
+  type ProjectHistoryInvalidResponse,
+  type ProjectHistoryOrigin,
+  type ProjectHistoryActionPhase,
+  type ProjectRuntimeOutcomeEvent,
+  type ProjectDocumentCommitMetadata,
+  type ProjectHistoryReadResponse,
+  type ProjectHistoryControlResponse,
+  type FocusedHistoryAvailability,
+  isFocusedHistoryAvailability,
+  validateProjectHistoryCommitRequest,
+  validateProjectHistoryUndoRequest,
+  validateProjectHistoryRedoRequest,
+  validateProjectDocumentPatchBatchRequest,
+  validateProjectHistoryReadRequest,
+  validateRegisterHistoryParticipantRequest,
+  validateUnregisterHistoryParticipantRequest,
+  validatePrepareHistoryBoundaryAck,
+  validateCancelOversizeProposalRequest,
+} from '../shared/project-history';
 import { createStartupLifecycle } from './startup-lifecycle';
 import {
   runPackagedMetadataVerificationAndExit,
@@ -387,9 +439,78 @@ import {
 let mainWindow: BrowserWindow | null = null;
 const exampleFactoryManifestProvider = createFactoryManifestProvider();
 const projectSession = new ProjectSession();
+let timelinePerformanceGeneration = 0;
+let blueLivePerformanceGeneration = 0;
+
+const projectRuntimeReconciliation = new ProjectRuntimeReconciliation({
+  onOutcome: (outcome, context) => {
+    const current = projectSession.read();
+    const event: ProjectRuntimeOutcomeEvent = {
+      documentId: context?.documentId ?? current.documentId ?? '',
+      revision: outcome.desiredRevision,
+      outcomes: [outcome],
+    };
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (!win.isDestroyed()) {
+        win.webContents.send(PROJECT_RUNTIME_OUTCOME_CHANNEL, event);
+      }
+    }
+  },
+});
+
+function broadcastRuntimePerformanceCleared(
+  performanceKind: ProjectRuntimeOutcomeEvent['clearPerformanceKind'],
+): void {
+  const current = projectSession.read();
+  if (!current.documentId || !performanceKind) return;
+  const event: ProjectRuntimeOutcomeEvent = {
+    documentId: current.documentId,
+    revision: current.revision,
+    outcomes: [],
+    clearPerformanceKind: performanceKind,
+  };
+  for (const win of BrowserWindow.getAllWindows()) {
+    if (!win.isDestroyed() && !win.webContents.isDestroyed()) {
+      win.webContents.send(PROJECT_RUNTIME_OUTCOME_CHANNEL, event);
+    }
+  }
+}
+
+const projectHistory = createProjectHistory({
+  session: projectSession,
+  captureSnapshot: getCurrentProjectDocument,
+  reconciliation: projectRuntimeReconciliation,
+  publishUpdated: async (event) => {
+    if (event.snapshot === null) {
+      console.error('[project-history] Refusing to publish an event without a canonical snapshot');
+      return;
+    }
+    const fullEvent = event;
+    broadcastToWorkbenchWindows(PROJECT_DOCUMENT_UPDATED_CHANNEL, fullEvent);
+    broadcastProjectDocumentUpdateToEffectWindows(fullEvent as never);
+    broadcastProjectDocumentUpdateToTrackInstrumentWindows(fullEvent as never);
+    rebuildApplicationMenu();
+  },
+  broadcastPrepareBoundary: async (event) => {
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (!win.isDestroyed()) {
+        win.webContents.send(PROJECT_HISTORY_BOUNDARY_PREPARE_CHANNEL, event);
+      }
+    }
+  },
+  broadcastReleaseBoundary: async (event) => {
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (!win.isDestroyed()) {
+        win.webContents.send(PROJECT_HISTORY_BOUNDARY_RELEASE_CHANNEL, event);
+      }
+    }
+  },
+});
 
 const collectedIpcHandlers = new Map<string, IpcMainInvokeHandler>();
 const collectedIpcListeners = new Map<string, IpcMainEventListener>();
+const historyParticipantSenders = new Map<string, unknown>();
+const historyAvailabilityBySender = new Map<number, FocusedHistoryAvailability>();
 
 /**
  * Keeps the legacy handler bodies close to their existing owners while the
@@ -431,6 +552,10 @@ function getCurrentProjectRevision(): number {
 
 function getCurrentProjectSessionId(): number {
   return projectSession.read().sessionId;
+}
+
+function getCurrentProjectSessionDocumentId(): string {
+  return projectSession.read().documentId ?? '';
 }
 let canAuditionScoreObjects = false;
 let unifiedLibraryService: UnifiedLibraryService | null = null;
@@ -627,6 +752,7 @@ function getCurrentProjectDocument() {
     getCurrentData(),
     getCurrentFilePath(),
     getCurrentProjectSessionId(),
+    getCurrentProjectSessionDocumentId(),
   );
 }
 
@@ -658,27 +784,6 @@ function initializeOscControlService(): void {
     onCommand: dispatchOscCommand,
   });
   void oscControlService.start(preferences);
-}
-
-/**
- * Broadcasts the current project document snapshot to every registered
- * workbench renderer so floating windows see the same mutations as the main
- * workbench (SPEC 055 FR-010). Callers are responsible for incrementing
- * {@link getCurrentProjectRevision()} before invoking this so the broadcast carries
- * a fresh revision. Requires a non-null `getCurrentData()`.
- */
-function broadcastProjectDocumentUpdate(sourceWindowId?: string): void {
-  const snapshot = getCurrentProjectDocument();
-  if (!snapshot) return;
-  const event: ProjectDocumentUpdatedEvent = {
-    sessionId: getCurrentProjectSessionId(),
-    revision: getCurrentProjectRevision(),
-    snapshot,
-    ...(sourceWindowId ? { sourceWindowId } : {}),
-  };
-  broadcastToWorkbenchWindows(PROJECT_DOCUMENT_UPDATED_CHANNEL, event);
-  broadcastProjectDocumentUpdateToEffectWindows(event);
-  broadcastProjectDocumentUpdateToTrackInstrumentWindows(event);
 }
 
 function getProjectMixerChannelBySnapshotId(channelId: string) {
@@ -782,17 +887,29 @@ async function applyTrackInstrumentEditorPatch(
       patch: request.patch,
     },
   };
-  const changed = applyProjectDocumentPatch(data, patch, {
-    projectSessionId: getCurrentProjectSessionId(),
-    projectRevision: getCurrentProjectRevision(),
-    defaultLayerGroupType: loadProgramSettings().projectDefaults.defaultLayerGroupType,
+
+  const receipt = await commitProjectDocumentPatchBatch([patch], {
+    label: request.historyContext?.label ?? 'Update Track Instrument',
+    gestureId: request.historyContext?.gestureId,
+    fieldId: request.historyContext?.fieldId,
+    phase: request.historyContext?.phase,
+    expectedRevision: request.track.projectRevision,
+    operationId: request.historyContext?.operationId,
+    contextSequence: request.historyContext?.contextSequence,
+    barrierId: request.historyContext?.barrierId,
+    origin: request.historyContext
+      ? {
+          contextId: request.historyContext.contextId,
+          viewId: request.historyContext.viewId,
+          selection: request.historyContext.selection,
+        }
+      : undefined,
   });
-  if (!changed) {
+
+  if (!receipt.changed) {
     return { status: 'unchanged', snapshot: currentSnapshot };
   }
 
-  projectSession.recordMutation({ changed: true });
-  broadcastProjectDocumentUpdate();
   const directRealtimeUpdate = request.patch.bsbInterface
     ? createBsbRealtimeControlUpdate(
         {
@@ -810,7 +927,7 @@ async function applyTrackInstrumentEditorPatch(
     (engineBridge?.isCurrentlyPlaying() || blueLiveSession?.isRunning())
   ) {
     try {
-      await syncEngineWithProjectPatch(data, patch);
+      await syncEngineWithProjectPatch(getCurrentData(), patch);
     } catch (error) {
       console.error('[main] Failed to sync Track instrument editor patch:', error);
     }
@@ -881,7 +998,7 @@ function getWidgetSize(widget: BSBWidget, ctor: string): { width: number; height
   }
 }
 
-function applyProjectEffectEditorPatch(request: EffectEditorPatchRequest) {
+async function applyProjectEffectEditorPatch(request: EffectEditorPatchRequest) {
   if (!getCurrentData()) {
     return null;
   }
@@ -891,14 +1008,45 @@ function applyProjectEffectEditorPatch(request: EffectEditorPatchRequest) {
   }
 
   const effectEntry = getProjectEffectEntryByRequest(request);
-  if (!effectEntry) {
+  if (!effectEntry || !request.projectRef) {
     return null;
   }
 
-  applyEffectEditablePatchToEffect(effectEntry.entry, request.patch);
+  const patch: ProjectDocumentPatch = {
+    mixer: {
+      type: 'updateEffect',
+      channelId: request.projectRef.channelId,
+      chain: request.projectRef.chain,
+      entryId: request.projectRef.entryId,
+      patch: request.patch,
+    },
+  };
+
+  await commitProjectDocumentPatchBatch([patch], {
+    label: request.historyContext?.label ?? 'Update Effect',
+    gestureId: request.historyContext?.gestureId,
+    fieldId: request.historyContext?.fieldId,
+    phase: request.historyContext?.phase,
+    expectedRevision: request.historyContext?.expectedRevision,
+    operationId: request.historyContext?.operationId,
+    contextSequence: request.historyContext?.contextSequence,
+    barrierId: request.historyContext?.barrierId,
+    origin: request.historyContext
+      ? {
+          contextId: request.historyContext.contextId,
+          viewId: request.historyContext.viewId,
+          selection: request.historyContext.selection,
+        }
+      : undefined,
+  });
+
+  const updatedEntry = getProjectEffectEntryByRequest(request);
+  if (!updatedEntry) {
+    return null;
+  }
 
   if (engineBridge?.isCurrentlyPlaying() && request.patch.bsbInterface) {
-    const params = effectEntry.entry.getParameters();
+    const params = updatedEntry.entry.getParameters();
     for (const param of params) {
       const varName = param.getCompilationVarName();
       if (varName) {
@@ -907,7 +1055,7 @@ function applyProjectEffectEditorPatch(request: EffectEditorPatchRequest) {
     }
   }
 
-  return createEffectEditorSnapshot(effectEntry.entry, effectEntry.effectId, 'project', {
+  return createEffectEditorSnapshot(updatedEntry.entry, updatedEntry.effectId, 'project', {
     projectRef: request.projectRef,
     projectUdos: getCurrentData() ? createProjectUdoListSnapshot(getCurrentData()) : [],
   });
@@ -1374,6 +1522,12 @@ async function handleFreezeScoreObjects(
   activeRenderAbortController = new AbortController();
   rebuildApplicationMenu();
 
+  const initialDocumentId = getCurrentProjectSessionDocumentId();
+  const initialSessionId = getCurrentProjectSessionId();
+  const initialRevision = getCurrentProjectRevision();
+  const stagedProject = getCurrentData().historyCopy();
+  transferProjectEditorIdentities(getCurrentData(), stagedProject);
+
   try {
     const settings = loadProgramSettings();
     const seam = createCsoundExecutionSeam(cancellationSignal);
@@ -1381,7 +1535,10 @@ async function handleFreezeScoreObjects(
 
     const result = await executeFreezeUnfreeze(
       {
-        data: getCurrentData(),
+        // Freeze renders and applies replacements only to this detached
+        // candidate. The live session remains available for edits while the
+        // asynchronous render/Java work is in progress.
+        data: stagedProject,
         projectDirectory,
         utility: settings.utility,
         platform: process.platform,
@@ -1405,10 +1562,49 @@ async function handleFreezeScoreObjects(
       },
     );
 
+    // Fence against project replacement/closure during render execution
+    if (
+      getCurrentProjectSessionDocumentId() !== initialDocumentId ||
+      getCurrentProjectSessionId() !== initialSessionId ||
+      getCurrentProjectRevision() !== initialRevision
+    ) {
+      result.ok = false;
+      result.frozenCount = 0;
+      result.unfrozenCount = 0;
+      result.error = 'Freeze result was discarded because the project changed while rendering.';
+      return result;
+    }
+
     // Broadcast updated project if any mutations occurred
     if (result.frozenCount > 0 || result.unfrozenCount > 0) {
-      projectSession.recordMutation({ changed: true });
-      broadcastProjectDocumentUpdate();
+      const label =
+        result.frozenCount > 0 && result.unfrozenCount > 0
+          ? 'Freeze/Unfreeze Score Objects'
+          : result.frozenCount > 0
+            ? 'Freeze Score Objects'
+            : 'Unfreeze Score Objects';
+      const receipt = await projectHistory.commitPreparedStructuralMutation({
+        label,
+        candidate: stagedProject,
+        expectedDocumentId: initialDocumentId,
+        expectedSessionId: initialSessionId,
+        expectedRevision: initialRevision,
+        proposalToken: request.historyProposalToken,
+      });
+      if (receipt.changed) {
+        result.project = getCurrentProjectDocument();
+      } else {
+        result.ok = false;
+        result.frozenCount = 0;
+        result.unfrozenCount = 0;
+        result.error =
+          receipt.oversizeProposal?.explanation ??
+          receipt.error ??
+          'Freeze result was not committed to project history.';
+        if (receipt.oversizeProposal) {
+          result.historyOversizeProposal = receipt.oversizeProposal;
+        }
+      }
     }
 
     return result;
@@ -1544,7 +1740,11 @@ async function confirmSaveBeforeReplace(
     if (result.actionId === 'save' && result.outcome === 'selected') {
       pendingQuit = true;
       if (getCurrentFilePath()) {
-        doSave(getCurrentFilePath());
+        const saved = await saveCurrentProject();
+        if (!saved) {
+          pendingQuit = false;
+          return false;
+        }
       } else {
         const saved = await saveFileAs();
         if (!saved) {
@@ -1574,13 +1774,34 @@ async function confirmSaveBeforeReplace(
           : 'cancel',
     hasCurrentProject: () => getCurrentData() !== null,
     hasCurrentPath: () => getCurrentFilePath() !== null,
-    saveCurrent: () => getCurrentFilePath() !== null && doSave(getCurrentFilePath()),
+    saveCurrent: () => saveCurrentProject(),
     saveAs: () => saveFileAs(),
   });
   return outcome === 'saved' || outcome === 'discarded';
 }
 
+function sendHistoryCommandToFocusedWindow(command: { type: 'undo' | 'redo' }): void {
+  const focused = BrowserWindow.getFocusedWindow();
+  if (focused && !focused.isDestroyed() && !focused.webContents.isDestroyed()) {
+    focused.webContents.send('native-menu-command', command);
+    return;
+  }
+  sendToFocusedWorkbenchWindow('native-menu-command', command);
+}
+
 function rebuildApplicationMenu(): void {
+  const historyState = projectHistory.read();
+  const focusedWindow = BrowserWindow.getFocusedWindow();
+  const focusedProjection = focusedWindow
+    ? historyAvailabilityBySender.get(focusedWindow.webContents.id)
+    : undefined;
+  const fallbackFocusedHistory: FocusedHistoryAvailability = {
+    scope: hasLoadedProject() ? 'project' : 'none',
+    canUndo: hasLoadedProject() && historyState.canUndo,
+    canRedo: hasLoadedProject() && historyState.canRedo,
+    undoLabel: hasLoadedProject() ? historyState.undoLabel : null,
+    redoLabel: hasLoadedProject() ? historyState.redoLabel : null,
+  };
   const menu = Menu.buildFromTemplate(
     buildApplicationMenuTemplate({
       hasLoadedProject: hasLoadedProject(),
@@ -1591,6 +1812,17 @@ function rebuildApplicationMenu(): void {
       canRevertProject: Boolean(getCurrentFilePath()),
       followPlaybackEnabled: currentFollowPlaybackEnabled,
       followPlaybackOnStartEnabled: currentFollowPlaybackOnStartEnabled,
+      canUndo: historyState.canUndo,
+      canRedo: historyState.canRedo,
+      undoLabel: historyState.undoLabel ?? undefined,
+      redoLabel: historyState.redoLabel ?? undefined,
+      focusedHistory: focusedProjection ?? fallbackFocusedHistory,
+      onUndo: () => {
+        sendHistoryCommandToFocusedWindow({ type: 'undo' });
+      },
+      onRedo: () => {
+        sendHistoryCommandToFocusedWindow({ type: 'redo' });
+      },
       onNewFile: () => {
         void handleNewFile();
       },
@@ -1957,7 +2189,7 @@ function createWindow(): void {
   });
 
   engineBridge.setPlaybackCompleteCallback((stopReason) => {
-    clearActiveBlueX7Bindings();
+    clearActiveBlueX7Bindings(timelinePerformanceGeneration);
     if (activeAuditionPlayback) {
       activeAuditionPlayback = false;
       return;
@@ -2216,7 +2448,12 @@ function buildAndSendProjectLoaded(data: BlueData, filePath: string | null): voi
 
   const projectProperties = data.getProjectProperties();
   const payload: ProjectLoadedPayload = {
-    ...createProjectEditorSnapshot(data, filePath, getCurrentProjectSessionId()),
+    ...createProjectEditorSnapshot(
+      data,
+      filePath,
+      getCurrentProjectSessionId(),
+      getCurrentProjectSessionDocumentId(),
+    ),
     title: filePath ? projectProperties.title || path.basename(filePath) : 'Untitled',
     author: projectProperties.author,
     sampleRate: projectProperties.sampleRate,
@@ -2258,6 +2495,7 @@ function scanMissingAudioAssets(
 
 const projectLifecycle = createProjectLifecycle({
   session: projectSession,
+  history: projectHistory,
   stopProjectRuntimes: async () => {
     await stopActiveBlueLiveBeforeProjectReplacement();
     await disposeJavaRuntimeSession();
@@ -2275,10 +2513,12 @@ const projectLifecycle = createProjectLifecycle({
     unifiedLibraryService?.publishProjectChanged();
   },
   publishProjectLoaded: () => {
+    historyAvailabilityBySender.clear();
     rebuildApplicationMenu();
     updateWindowTitle();
   },
   publishProjectClosed: () => {
+    historyAvailabilityBySender.clear();
     rebuildApplicationMenu();
     updateWindowTitle();
     broadcastToWorkbenchWindows('project-closed', null);
@@ -2946,10 +3186,22 @@ async function saveFile(): Promise<void> {
     await saveFileAs();
     return;
   }
-  doSave(getCurrentFilePath());
+  await saveCurrentProject();
 }
 
 async function saveFileAs(): Promise<boolean> {
+  try {
+    return await projectHistory.runSettlementBarrier('save', () => saveFileAsInternal());
+  } catch (error) {
+    mainWindow?.webContents.send(
+      'save-error',
+      error instanceof Error ? error.message : String(error),
+    );
+    return false;
+  }
+}
+
+async function saveFileAsInternal(): Promise<boolean> {
   if (!mainWindow || !getCurrentData()) return false;
 
   const previousProjectDir = getCurrentFilePath() ? path.dirname(getCurrentFilePath()) : null;
@@ -2987,6 +3239,20 @@ async function saveFileAs(): Promise<boolean> {
   }
 
   return true;
+}
+
+async function saveCurrentProject(): Promise<boolean> {
+  const filePath = getCurrentFilePath();
+  if (!getCurrentData() || !filePath) return false;
+  try {
+    return await projectHistory.runSettlementBarrier('save', async () => doSave(filePath));
+  } catch (error) {
+    mainWindow?.webContents.send(
+      'save-error',
+      error instanceof Error ? error.message : String(error),
+    );
+    return false;
+  }
 }
 
 function normalizeBsbSelectedPath(filePath: string): string {
@@ -3651,6 +3917,91 @@ async function restartPlayback(): Promise<boolean> {
   return playbackStartPromise;
 }
 
+function resolveBsbInstrumentByOwnerKey(data: BlueData, ownerKey: string): BlueSynthBuilder | null {
+  if (ownerKey.startsWith('arrangement:')) {
+    const assignmentId = ownerKey.slice('arrangement:'.length);
+    const instrument = data.getArrangement().getInstrumentById(assignmentId);
+    return instrument instanceof BlueSynthBuilder ? instrument : null;
+  }
+  if (ownerKey.startsWith('track:')) {
+    const [, rootGroupId, trackId] = ownerKey.split(':');
+    const group = data
+      .getScore()
+      .find(
+        (candidate): candidate is TrackLayerGroup =>
+          candidate instanceof TrackLayerGroup && candidate.getUniqueId() === rootGroupId,
+      );
+    const instrument = group?.find((track) => track.getUniqueId() === trackId)?.getInstrument();
+    return instrument instanceof BlueSynthBuilder ? instrument : null;
+  }
+  return null;
+}
+
+async function applyRuntimeWorkOperation(
+  operation: RuntimeWorkOperation,
+  setChannel: (channel: string, value: number) => Promise<unknown>,
+  blueX7Deps: BlueX7EngineSyncDeps,
+): Promise<RuntimeOperationAck> {
+  if (operation.kind === 'channel-value') {
+    try {
+      await setChannel(operation.channel, operation.value);
+      return { status: 'applied' };
+    } catch (err) {
+      return {
+        status: 'rejected',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  if (operation.kind === 'automation' && operation.parameterId === 'bluex7:voice') {
+    try {
+      const payload = operation.payload as { voice?: BlueX7Voice };
+      if (!payload?.voice) {
+        return { status: 'rejected', message: 'BlueX7 voice payload is missing' };
+      }
+      return syncBlueX7InstrumentPatchToRuntime(blueX7Deps, getCurrentData(), operation.ownerKey, {
+        blueX7: { type: 'replaceVoice', voice: payload.voice },
+      });
+    } catch (err) {
+      return {
+        status: 'rejected',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  if (operation.kind === 'preset') {
+    try {
+      const data = getCurrentData();
+      if (data) {
+        const instrument = resolveBsbInstrumentByOwnerKey(data, operation.ownerKey);
+        if (instrument) {
+          // Write through the plan's own channel writer. Routing these through
+          // syncActiveRuntimeChannel would re-enter the performance chain that
+          // is currently executing this plan and deadlock until the watchdog
+          // fences the performance.
+          await syncBsbInstrumentRuntimeChannels(
+            instrument,
+            { bsbInterface: { type: 'applyPreset', presetUniqueId: operation.presetUniqueId } },
+            async (channel, value) => {
+              await setChannel(channel, value);
+            },
+          );
+        }
+      }
+      return { status: 'applied' };
+    } catch (err) {
+      return {
+        status: 'rejected',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  return { status: 'applied' };
+}
+
 async function startPlayback(
   data: BlueData | null = getCurrentData(),
   forceProcessOnLoad = false,
@@ -3679,9 +4030,6 @@ async function startPlayback(
       : data.toRealtimePlaybackCSD(javaScriptSession ?? undefined);
     const csd = render.csdText;
     const parameters = render.parameters;
-    // Spec 092: keep this render's compiled BlueX7 bindings for live sync;
-    // they are disposable and replaced at the next playback start.
-    setActiveBlueX7Bindings(render.blueX7Bindings);
     const runtimeParameterSync = syncCompiledRuntimeParameterNames(
       data.getArrangement(),
       data.getMixer(),
@@ -3767,6 +4115,36 @@ async function startPlayback(
       activeAuditionPlayback = false;
       return false;
     }
+
+    timelinePerformanceGeneration += 1;
+    const timelineGeneration = timelinePerformanceGeneration;
+    setActiveBlueX7Bindings(render.blueX7Bindings, timelineGeneration);
+    const timelineBlueX7Bindings = new Map(
+      render.blueX7Bindings.map((binding) => [binding.ownerIdentity, binding]),
+    );
+    const timelineBlueX7Deps = getBlueX7EngineSyncDeps('timeline', {
+      isPlaying: () => engineBridge?.isCurrentlyPlaying() ?? false,
+      getBinding: (ownerIdentity) => timelineBlueX7Bindings.get(ownerIdentity),
+      writeChannels: (entries) => engineBridge!.setChannels(entries),
+      readChannels: (names) => engineBridge!.getChannels(names),
+    });
+    const timelineClient: AcknowledgedRuntimeClient = {
+      applyOperation(operation) {
+        return applyRuntimeWorkOperation(
+          operation,
+          (channel, value) => engineBridge!.setChannel(channel, value),
+          timelineBlueX7Deps,
+        );
+      },
+    };
+    const timelineBindings = buildRuntimeBindingRegistry(data, parameters, render.blueX7Bindings);
+    projectRuntimeReconciliation.registerPerformance(
+      'timeline',
+      timelineGeneration,
+      timelineClient,
+      timelineBindings,
+    );
+    broadcastRuntimePerformanceCleared('timeline');
 
     return true;
   } catch (err: unknown) {
@@ -3889,8 +4267,42 @@ async function auditionScoreObjects(objectIds: unknown): Promise<boolean> {
 
 async function stopPlayback(): Promise<void> {
   activeAuditionPlayback = false;
+  projectRuntimeReconciliation.stopPerformance('timeline');
+  broadcastRuntimePerformanceCleared('timeline');
+  clearActiveBlueX7Bindings(timelinePerformanceGeneration);
   if (!engineBridge) return;
   await engineBridge.stopPlayback();
+}
+
+function registerBlueLivePerformance(): void {
+  if (!blueLiveSession || !blueLiveSession.isRunning() || !getCurrentData()) return;
+  blueLivePerformanceGeneration += 1;
+  const generation = blueLivePerformanceGeneration;
+  const blueLiveBindings = blueLiveSession.getBlueX7Bindings();
+  setActiveBlueX7Bindings(blueLiveBindings, generation);
+  const blueLiveBlueX7Deps = getBlueX7EngineSyncDeps('blueLive', {
+    isPlaying: () => blueLiveSession?.isRunning() ?? false,
+    getBinding: (ownerIdentity) =>
+      blueLiveBindings.find((binding) => binding.ownerIdentity === ownerIdentity),
+    writeChannels: (entries) => blueLiveSession!.setChannels(entries),
+    readChannels: (names) => blueLiveSession!.getChannels(names),
+  });
+  const client: AcknowledgedRuntimeClient = {
+    applyOperation(operation) {
+      return applyRuntimeWorkOperation(
+        operation,
+        (channel, value) => blueLiveSession!.setChannel(channel, value),
+        blueLiveBlueX7Deps,
+      );
+    },
+  };
+  const bindings = buildRuntimeBindingRegistry(
+    getCurrentData()!,
+    blueLiveSession.getParameters?.() ?? [],
+    blueLiveBindings,
+  );
+  projectRuntimeReconciliation.registerPerformance('blueLive', generation, client, bindings);
+  broadcastRuntimePerformanceCleared('blueLive');
 }
 
 async function blueLiveToggle(): Promise<
@@ -3902,8 +4314,10 @@ async function blueLiveToggle(): Promise<
   }
 
   if (blueLiveSession.isRunning()) {
+    projectRuntimeReconciliation.stopPerformance('blueLive');
+    broadcastRuntimePerformanceCleared('blueLive');
     const stopped = await blueLiveSession.stop();
-    if (!engineBridge?.isCurrentlyPlaying()) clearActiveBlueX7Bindings();
+    clearActiveBlueX7Bindings(blueLivePerformanceGeneration);
     return stopped;
   }
 
@@ -3956,7 +4370,9 @@ async function blueLiveToggle(): Promise<
     }
   }
 
-  if (blueLiveSession.isRunning()) setActiveBlueX7Bindings(blueLiveSession.getBlueX7Bindings());
+  if (blueLiveSession.isRunning()) {
+    registerBlueLivePerformance();
+  }
   return startSnapshot!;
 }
 
@@ -3964,6 +4380,12 @@ async function blueLiveRecompile(): Promise<void> {
   if (!blueLiveSession || !getCurrentData()) return;
   // Start/recompile is a runtime lifecycle change, not a project edit: do not
   // advance the document revision.
+  // Fence the old generation before stopping/rebuilding the engine. A delayed
+  // project history outcome must not target the performance while its client
+  // is being torn down, and a failed recompile should leave no stale action
+  // enabled for the stopped generation.
+  projectRuntimeReconciliation.stopPerformance('blueLive');
+  broadcastRuntimePerformanceCleared('blueLive');
   mainWindow?.webContents.send('engine-output-reset', { tabName: 'Csound (Blue Live)' });
   mainWindow?.webContents.send('engine-output-select', { tabName: 'Csound (Blue Live)' });
   await blueLiveSession.recompile(
@@ -3972,7 +4394,9 @@ async function blueLiveRecompile(): Promise<void> {
     getCurrentProjectDirectory(),
     javaScriptSession ?? undefined,
   );
-  if (blueLiveSession.isRunning()) setActiveBlueX7Bindings(blueLiveSession.getBlueX7Bindings());
+  if (blueLiveSession.isRunning()) {
+    registerBlueLivePerformance();
+  }
 }
 
 async function blueLiveAllNotesOff(): Promise<void> {
@@ -3987,6 +4411,8 @@ async function blueLiveAllNotesOff(): Promise<void> {
  * full active lifecycle must be awaited — not just `isRunning()`.
  */
 async function stopActiveBlueLiveBeforeProjectReplacement(): Promise<void> {
+  projectRuntimeReconciliation.stopPerformance('blueLive');
+  broadcastRuntimePerformanceCleared('blueLive');
   await stopBlueLiveForProjectReplacement(getBlueLiveTriggerController(), blueLiveSession);
 }
 
@@ -4122,18 +4548,34 @@ async function resolveMissingAudioAssets(
     return { ok: true, changed: false };
   }
 
-  const changed = applyReplacementMappings(getCurrentData(), mappings);
-  clearMissingAudioSession(session.sessionId);
+  const receipt = await projectHistory.commitDirectMutation({
+    label: 'Relink Missing Audio',
+    mutator: (candidate) => applyReplacementMappings(candidate, mappings),
+    proposalToken: request.historyProposalToken,
+  });
 
-  if (!changed) {
-    return { ok: true, changed: false };
+  if (!receipt.changed) {
+    if (receipt.oversizeProposal) {
+      return {
+        ok: false,
+        changed: false,
+        historyOversizeProposal: receipt.oversizeProposal,
+      };
+    }
+    return {
+      ok: false,
+      changed: false,
+      error: receipt.error ?? 'The missing-audio changes were not committed.',
+    };
   }
 
-  projectSession.recordMutation({ changed: true });
+  clearMissingAudioSession(session.sessionId);
+
   const project = createProjectEditorSnapshot(
     getCurrentData(),
     getCurrentFilePath(),
     getCurrentProjectSessionId(),
+    getCurrentProjectSessionDocumentId(),
   );
   return { ok: true, changed: true, project };
 }
@@ -4554,6 +4996,8 @@ ipcRegistration.handle('blue-live:stop', async () => {
   if (!blueLiveSession) {
     return { status: 'idle', running: false, sessionId: 0 };
   }
+  projectRuntimeReconciliation.stopPerformance('blueLive');
+  broadcastRuntimePerformanceCleared('blueLive');
   return blueLiveSession.stop();
 });
 
@@ -4564,12 +5008,12 @@ ipcRegistration.handle('blue-live:recompile', async () => {
   // Recompile is a runtime lifecycle change, not a project edit.
   mainWindow?.webContents.send('engine-output-reset', { tabName: 'Csound (Blue Live)' });
   mainWindow?.webContents.send('engine-output-select', { tabName: 'Csound (Blue Live)' });
-  return blueLiveSession.recompile(
-    getCurrentData(),
-    getCurrentProjectRevision(),
-    getCurrentProjectDirectory(),
-    javaScriptSession ?? undefined,
-  );
+  await blueLiveRecompile();
+  return {
+    status: blueLiveSession.isRunning() ? 'running' : 'idle',
+    running: blueLiveSession.isRunning(),
+    sessionId: blueLiveSession.getStatus().sessionId,
+  };
 });
 
 ipcRegistration.handle('blue-live:all-notes-off', async () => {
@@ -4920,7 +5364,15 @@ ipcRegistration.handle('get-effect-editor-document', (_event, request: EffectEdi
 
 ipcRegistration.handle(
   'update-effect-editor-document',
-  (_event, request: EffectEditorPatchRequest) => {
+  (event, request: EffectEditorPatchRequest) => {
+    if (!isEffectEditorPatchRequest(request)) return null;
+    if (request.ownerType === 'project') {
+      const senderError = validateHistoryRequestSender(
+        event,
+        request.historyContext ? { contextId: request.historyContext.contextId } : undefined,
+      );
+      if (senderError) return null;
+    }
     return applyProjectEffectEditorPatch(request);
   },
 );
@@ -4981,8 +5433,15 @@ ipcRegistration.handle(
 
 ipcRegistration.handle(
   'update-track-instrument-editor-document',
-  (_event, request: TrackInstrumentEditorPatchRequest) => {
+  (event, request: TrackInstrumentEditorPatchRequest) => {
     if (!isTrackInstrumentEditorPatchRequest(request)) {
+      return { status: 'unavailable', snapshot: null } satisfies TrackInstrumentEditorPatchResult;
+    }
+    const senderError = validateHistoryRequestSender(
+      event,
+      request.historyContext ? { contextId: request.historyContext.contextId } : undefined,
+    );
+    if (senderError) {
       return { status: 'unavailable', snapshot: null } satisfies TrackInstrumentEditorPatchResult;
     }
     return applyTrackInstrumentEditorPatch(request);
@@ -5063,30 +5522,54 @@ ipcRegistration.handle(
 /**
  * Synchronize real-time parameter changes to active engine sessions.
  */
-function syncActiveRuntimeChannel(name: string, value: number): Promise<void> {
-  return syncRuntimeChannel(name, value, engineBridge, blueLiveSession);
+async function syncActiveRuntimeChannel(
+  name: string,
+  value: number,
+  gestureId?: string,
+): Promise<void> {
+  await projectRuntimeReconciliation.previewChannelValue({
+    channel: name,
+    value,
+    gestureId,
+  });
 }
 
-function getBlueX7EngineSyncDeps(): BlueX7EngineSyncDeps {
+function getBlueX7EngineSyncDeps(
+  performanceKind: BlueX7PerformanceKind,
+  overrides: Partial<
+    Pick<BlueX7EngineSyncDeps, 'isPlaying' | 'getBinding' | 'writeChannels' | 'readChannels'>
+  > = {},
+): BlueX7EngineSyncDeps {
   return {
     getData: getCurrentData,
     getSessionId: getCurrentProjectSessionId,
     getRevision: getCurrentProjectRevision,
-    isPlaying: () => !!(engineBridge?.isCurrentlyPlaying() || blueLiveSession?.isRunning()),
-    writeChannels: async (entries) => {
-      const writes: Promise<{ ok: boolean; message: string }>[] = [];
-      if (engineBridge?.isCurrentlyPlaying()) writes.push(engineBridge.setChannels(entries));
-      if (blueLiveSession?.isRunning()) writes.push(blueLiveSession.setChannels(entries));
-      if (writes.length === 0) return { ok: false, message: 'no-active-engine-session' };
-      const results = await Promise.all(writes);
-      const failure = results.find((result) => !result.ok);
-      return failure ?? { ok: true, message: 'OK' };
-    },
-    readChannels: (names) => {
-      if (engineBridge?.isCurrentlyPlaying()) return engineBridge.getChannels(names);
-      if (blueLiveSession?.isRunning()) return blueLiveSession.getChannels(names);
-      return Promise.resolve({ ok: false as const, message: 'no-active-engine-session' });
-    },
+    isPlaying:
+      overrides.isPlaying ??
+      (performanceKind === 'timeline'
+        ? () => engineBridge?.isCurrentlyPlaying() ?? false
+        : () => blueLiveSession?.isRunning() ?? false),
+    getBinding:
+      overrides.getBinding ??
+      ((ownerIdentity) =>
+        getActiveBlueX7Binding(
+          ownerIdentity,
+          performanceKind === 'timeline'
+            ? timelinePerformanceGeneration
+            : blueLivePerformanceGeneration,
+        )),
+    writeChannels:
+      overrides.writeChannels ??
+      ((entries) =>
+        performanceKind === 'timeline'
+          ? engineBridge!.setChannels(entries)
+          : blueLiveSession!.setChannels(entries)),
+    readChannels:
+      overrides.readChannels ??
+      ((names) =>
+        performanceKind === 'timeline'
+          ? engineBridge!.getChannels(names)
+          : blueLiveSession!.getChannels(names)),
   };
 }
 
@@ -5143,37 +5626,11 @@ async function syncEngineWithProjectPatch(
           syncActiveRuntimeChannel,
         );
       }
-      if (instrument instanceof BlueX7) {
-        await syncBlueX7InstrumentPatchToRuntime(
-          getBlueX7EngineSyncDeps(),
-          data,
-          `arrangement:${orchestraPatch.assignmentId}`,
-          orchestraPatch.patch,
-        );
-      }
     }
   }
 
   const scorePatch = patch.score;
   if (scorePatch?.type === 'updateTrackInstrument') {
-    if (
-      data
-        .getScore()
-        .some(
-          (candidate): candidate is TrackLayerGroup =>
-            candidate instanceof TrackLayerGroup &&
-            candidate.getUniqueId() === scorePatch.track.rootGroupId,
-        )
-    ) {
-      await syncBlueX7InstrumentPatchToRuntime(
-        getBlueX7EngineSyncDeps(),
-        data,
-        `track:${scorePatch.track.rootGroupId}:${scorePatch.track.trackId}`,
-        scorePatch.patch,
-      ).catch((error) => {
-        console.error('[main] BlueX7 Track instrument runtime sync failed:', error);
-      });
-    }
     const group = data
       .getScore()
       .find(
@@ -5200,7 +5657,15 @@ ipcRegistration.handle('get-project-document', () => {
 
 async function commitProjectDocumentPatchBatch(
   patches: ProjectDocumentPatch[],
+  options?: ProjectDocumentCommitMetadata & {
+    expectedRevision?: number;
+  },
 ): Promise<ProjectDocumentCommitReceipt> {
+  const validation = validateProjectDocumentPatchBatchRequest(patches, options);
+  if (!validation.valid) {
+    throw new Error(validation.reason);
+  }
+
   if (!getCurrentData()) {
     throw new Error('No project loaded');
   }
@@ -5209,10 +5674,50 @@ async function commitProjectDocumentPatchBatch(
     throw new Error('Empty project document patch batch');
   }
 
+  const res = await projectHistory.commit({
+    documentId: getCurrentProjectSessionDocumentId(),
+    operationId: options?.operationId ?? randomUUID(),
+    expectedRevision: options?.expectedRevision ?? getCurrentProjectRevision(),
+    contextSequence: options?.contextSequence ?? 0,
+    patches,
+    label: options?.label ?? 'Edit Project',
+    gestureId: options?.gestureId,
+    fieldId: options?.fieldId,
+    phase: options?.phase ?? 'single',
+    origin: options?.origin,
+    barrierId: options?.barrierId,
+    proposalToken: options?.proposalToken,
+  });
+
+  if (res.status === 'stale') {
+    throw new Error('Stale project document commit: expected revision mismatch');
+  }
+  if (res.status === 'invalid') {
+    throw new Error(`Invalid project document patch: ${res.reason}`);
+  }
+  if (res.status === 'busy') {
+    throw new Error(`Project history busy: ${res.reason}`);
+  }
+  if (res.status === 'failed') {
+    throw new Error(`Project document commit failed: ${res.error}`);
+  }
+  if (res.status === 'oversize') {
+    return {
+      revision: getCurrentProjectRevision(),
+      sessionId: getCurrentProjectSessionId(),
+      changed: false,
+      documentId: getCurrentProjectSessionDocumentId(),
+      oversizeProposal: {
+        token: res.proposalToken,
+        estimatedBytes: res.estimatedBytes,
+        limitBytes: res.limitBytes,
+        explanation: res.explanation,
+      },
+    };
+  }
+
+  const isCommitted = res.status === 'committed';
   let javaRuntimeDependenciesChanged = false;
-  let anyCanonicalMutation = false;
-  const patchChanged: boolean[] = [];
-  const patchAccepted: boolean[] = [];
 
   for (const patch of patches) {
     const blueX7BindingsToInvalidate = collectBlueX7BindingsToInvalidate(getCurrentData(), patch);
@@ -5225,60 +5730,44 @@ async function commitProjectDocumentPatchBatch(
     );
     maybeCloseRemovedProjectEffectEditors(patch);
     maybeCloseRemovedTrackInstrumentEditors(patch);
-    const colorPatchAccepted = patch.score
-      ? isScoreColorPatchAccepted(getCurrentData(), patch.score)
-      : false;
-    const changed = applyProjectDocumentPatch(getCurrentData(), patch, {
-      projectSessionId: getCurrentProjectSessionId(),
-      projectRevision: getCurrentProjectRevision(),
-      defaultLayerGroupType: loadProgramSettings().projectDefaults.defaultLayerGroupType,
-    });
-    patchChanged.push(changed);
-    patchAccepted.push(colorPatchAccepted || changed);
-    if (changed) {
-      anyCanonicalMutation = true;
+
+    if (isCommitted) {
       for (const ownerIdentity of blueX7BindingsToInvalidate) {
         invalidateActiveBlueX7Binding(ownerIdentity);
       }
       for (const id of collectAffectedProjectScoreAutomationParameterIds(getCurrentData(), patch)) {
         scoreAutomationParameterIds.add(id);
       }
-    } else {
-      scoreAutomationParameterIds.clear();
+      if (engineBridge?.isCurrentlyPlaying() || blueLiveSession?.isRunning()) {
+        void syncEngineWithProjectPatch(getCurrentData(), patch, scoreAutomationParameterIds).catch(
+          (error) => {
+            console.error('[main] Failed to sync engine with project patch:', error);
+          },
+        );
+      }
     }
     javaRuntimeDependenciesChanged =
-      javaRuntimeDependenciesChanged || (changed && clojureDependenciesChanged);
-    if (changed && (engineBridge?.isCurrentlyPlaying() || blueLiveSession?.isRunning())) {
-      void syncEngineWithProjectPatch(getCurrentData(), patch, scoreAutomationParameterIds).catch(
-        (error) => {
-          console.error('[main] Failed to sync engine with project patch:', error);
-        },
-      );
-    }
+      javaRuntimeDependenciesChanged || (isCommitted && clojureDependenciesChanged);
   }
 
-  if (anyCanonicalMutation) {
-    projectSession.recordMutation({
-      changed: true,
-      invalidateSession: javaRuntimeDependenciesChanged,
-    });
-  }
   if (javaRuntimeDependenciesChanged) {
     midiImportService.clearAll();
     await disposeJavaRuntimeSession();
   }
-  if (anyCanonicalMutation) {
-    broadcastProjectDocumentUpdate();
+  if (isCommitted) {
     unifiedLibraryService?.publishProjectChanged();
   }
-  const receipt: ProjectDocumentCommitReceipt = {
-    revision: getCurrentProjectRevision(),
-    sessionId: getCurrentProjectSessionId(),
-    changed: anyCanonicalMutation,
-    patchChanged,
-    patchAccepted,
-  };
-  return receipt;
+
+  return (
+    res.receipt ?? {
+      revision: getCurrentProjectRevision(),
+      sessionId: getCurrentProjectSessionId(),
+      changed: isCommitted,
+      patchChanged: patches.map(() => isCommitted),
+      patchAccepted: patches.map(() => true),
+      documentId: getCurrentProjectSessionDocumentId(),
+    }
+  );
 }
 
 function collectBlueX7BindingsToInvalidate(
@@ -5334,10 +5823,182 @@ function collectBlueX7BindingsToInvalidate(
   return owners;
 }
 
+function invalidProjectHistoryRequest(
+  request: unknown,
+  reason: string,
+): ProjectHistoryInvalidResponse {
+  const candidate =
+    typeof request === 'object' && request !== null
+      ? (request as { operationId?: unknown; documentId?: unknown })
+      : {};
+  return {
+    status: 'invalid',
+    operationId:
+      typeof candidate.operationId === 'string' && candidate.operationId.length > 0
+        ? candidate.operationId
+        : 'invalid-history-request',
+    documentId: typeof candidate.documentId === 'string' ? candidate.documentId : '',
+    reason,
+  };
+}
+
+function invalidProjectDocumentCommit(reason: string): ProjectDocumentCommitReceipt {
+  return {
+    revision: getCurrentProjectRevision(),
+    sessionId: getCurrentProjectSessionId(),
+    changed: false,
+    documentId: getCurrentProjectSessionDocumentId(),
+    error: reason,
+  };
+}
+
+/**
+ * Durable history requests must come from the renderer context that first
+ * registered the supplied context id. The payload can describe that context,
+ * but it cannot assign ownership to itself.
+ */
+function validateHistoryRequestSender(
+  event: unknown,
+  origin: ProjectHistoryOrigin | undefined,
+): string | null {
+  const contextId = origin?.contextId;
+  if (!contextId) {
+    return 'History request requires a registered participant context';
+  }
+  const sender =
+    typeof event === 'object' && event !== null
+      ? (event as { sender?: unknown }).sender
+      : undefined;
+  if (historyParticipantSenders.get(contextId) !== sender) {
+    return 'History request context is unknown or owned by another window';
+  }
+  return null;
+}
+
+ipcRegistration.on(PROJECT_HISTORY_AVAILABILITY_CHANNEL, (event, payload: unknown) => {
+  if (!isFocusedHistoryAvailability(payload)) return;
+  const sender = event.sender as {
+    id?: unknown;
+    once?: (name: string, listener: () => void) => void;
+  };
+  if (typeof sender.id !== 'number') return;
+  const senderId = sender.id;
+  historyAvailabilityBySender.set(senderId, payload);
+  sender.once?.('destroyed', () => {
+    historyAvailabilityBySender.delete(senderId);
+  });
+  rebuildApplicationMenu();
+});
+
 ipcRegistration.handle(
   'commit-project-document-patches',
-  async (_event, patches: ProjectDocumentPatch[]) => {
-    return commitProjectDocumentPatchBatch(patches);
+  async (event, patches: unknown, options?: unknown) => {
+    const validation = validateProjectDocumentPatchBatchRequest(patches, options);
+    if (!validation.valid) return invalidProjectDocumentCommit(validation.reason);
+    const senderError = validateHistoryRequestSender(event, validation.value.options?.origin);
+    if (senderError) return invalidProjectDocumentCommit(senderError);
+    return commitProjectDocumentPatchBatch(validation.value.patches, validation.value.options);
+  },
+);
+
+ipcRegistration.handle(PROJECT_HISTORY_COMMIT_CHANNEL, async (event, request: unknown) => {
+  const validation = validateProjectHistoryCommitRequest(request);
+  if (!validation.valid) return invalidProjectHistoryRequest(request, validation.reason);
+  const senderError = validateHistoryRequestSender(event, validation.value.origin);
+  if (senderError) return invalidProjectHistoryRequest(request, senderError);
+  return projectHistory.commit(validation.value);
+});
+
+ipcRegistration.handle(PROJECT_HISTORY_UNDO_CHANNEL, async (event, request: unknown) => {
+  const validation = validateProjectHistoryUndoRequest(request);
+  if (!validation.valid) return invalidProjectHistoryRequest(request, validation.reason);
+  const senderError = validateHistoryRequestSender(event, validation.value.origin);
+  if (senderError) return invalidProjectHistoryRequest(request, senderError);
+  return projectHistory.undo(validation.value);
+});
+
+ipcRegistration.handle(PROJECT_HISTORY_REDO_CHANNEL, async (event, request: unknown) => {
+  const validation = validateProjectHistoryRedoRequest(request);
+  if (!validation.valid) return invalidProjectHistoryRequest(request, validation.reason);
+  const senderError = validateHistoryRequestSender(event, validation.value.origin);
+  if (senderError) return invalidProjectHistoryRequest(request, senderError);
+  return projectHistory.redo(validation.value);
+});
+
+ipcRegistration.handle(PROJECT_HISTORY_READ_CHANNEL, async (_event, request: unknown) => {
+  const validation = validateProjectHistoryReadRequest(request);
+  if (!validation.valid) return invalidProjectHistoryRequest(request, validation.reason);
+  const requestedDocumentId = validation.value?.documentId;
+  const activeDocumentId = getCurrentProjectSessionDocumentId();
+  if (requestedDocumentId !== undefined && requestedDocumentId !== activeDocumentId) {
+    return invalidProjectHistoryRequest(
+      request,
+      'History read request does not match the active project document',
+    );
+  }
+  return projectHistory.read(validation.value) as ProjectHistoryReadResponse;
+});
+
+ipcRegistration.handle(
+  PROJECT_HISTORY_REGISTER_PARTICIPANT_CHANNEL,
+  async (event, request: unknown) => {
+    const validation = validateRegisterHistoryParticipantRequest(request);
+    if (!validation.valid) return { ok: false, reason: validation.reason };
+    const req = validation.value;
+    const currentSender = historyParticipantSenders.get(req.contextId);
+    if (currentSender !== undefined && currentSender !== event.sender) {
+      return { ok: false, reason: 'History participant context is owned by another window' };
+    }
+    const response = projectHistory.registerParticipant(req);
+    if (!response.ok) return response;
+    historyParticipantSenders.set(req.contextId, event.sender);
+    event.sender.once('destroyed', () => {
+      if (historyParticipantSenders.get(req.contextId) === event.sender) {
+        historyParticipantSenders.delete(req.contextId);
+        projectHistory.unregisterParticipant({ contextId: req.contextId });
+      }
+    });
+    return response;
+  },
+);
+
+ipcRegistration.handle(
+  PROJECT_HISTORY_UNREGISTER_PARTICIPANT_CHANNEL,
+  async (event, request: unknown): Promise<ProjectHistoryControlResponse> => {
+    const validation = validateUnregisterHistoryParticipantRequest(request);
+    if (!validation.valid) return { ok: false, reason: validation.reason };
+    const req = validation.value;
+    const currentSender = historyParticipantSenders.get(req.contextId);
+    if (currentSender !== undefined && currentSender !== event.sender) {
+      return { ok: false, reason: 'History participant context is owned by another window' };
+    }
+    projectHistory.unregisterParticipant(req);
+    historyParticipantSenders.delete(req.contextId);
+    return { ok: true };
+  },
+);
+
+ipcRegistration.handle(
+  PROJECT_HISTORY_BOUNDARY_ACK_CHANNEL,
+  async (event, request: unknown): Promise<ProjectHistoryControlResponse> => {
+    const validation = validatePrepareHistoryBoundaryAck(request);
+    if (!validation.valid) return { ok: false, reason: validation.reason };
+    const req = validation.value;
+    const currentSender = historyParticipantSenders.get(req.contextId);
+    if (currentSender !== event.sender) {
+      return { ok: false, reason: 'Unknown or foreign history participant context' };
+    }
+    return projectHistory.acknowledgeBoundary(req);
+  },
+);
+
+ipcRegistration.handle(
+  PROJECT_HISTORY_CANCEL_OVERSIZE_CHANNEL,
+  async (event, request: unknown): Promise<ProjectHistoryControlResponse> => {
+    void event;
+    const validation = validateCancelOversizeProposalRequest(request);
+    if (!validation.valid) return { ok: false, reason: validation.reason };
+    return projectHistory.cancelOversizeProposal(validation.value);
   },
 );
 
@@ -5349,7 +6010,7 @@ ipcRegistration.handle('blue-x7-effective-values', async (_event, request: unkno
     return { ok: false, reason: 'channel-unavailable' } as const;
   }
   return requestBlueX7EffectiveValues(
-    createBlueX7RuntimeEnvironment(getBlueX7EngineSyncDeps()),
+    createBlueX7RuntimeEnvironment(getBlueX7EngineSyncDeps(request.performanceKind)),
     request as BlueX7EffectiveValuesRequest,
   );
 });
@@ -5730,11 +6391,18 @@ ipcRegistration.handle(
       return;
     }
 
+    const gestureId = (update as unknown as { gestureId?: string }).gestureId;
     void syncBsbRealtimeControlUpdate(
       getCurrentData(),
       update,
       getCurrentProjectSessionId(),
-      syncActiveRuntimeChannel,
+      async (name: string, value: number) => {
+        await projectRuntimeReconciliation.previewChannelValue({
+          channel: name,
+          value,
+          gestureId,
+        });
+      },
     ).catch((error) => {
       console.error('[main] Failed to sync realtime BSB control update:', error);
     });
@@ -5743,30 +6411,29 @@ ipcRegistration.handle(
 
 ipcRegistration.handle(
   'send-mixer-realtime-level-update',
-  (_event, update: import('../shared/project-editor').MixerRealtimeLevelUpdate) => {
-    if (!getCurrentData() || !engineBridge || !engineBridge.isCurrentlyPlaying()) {
+  async (_event, update: import('../shared/project-editor').MixerRealtimeLevelUpdate) => {
+    if (!getCurrentData()) {
       return;
     }
 
     const channel = getProjectMixerChannelBySnapshotId(update.channelId);
     if (!channel) return;
 
-    const varName = channel.getLevelParameter().getCompilationVarName();
-    if (varName) {
-      void engineBridge.setChannel(varName, update.level).catch(() => {});
-    }
+    const ownerKey = getKnownMixerChannelSnapshotId(channel) ?? channel.getName();
+    const gestureId = (update as unknown as { gestureId?: string }).gestureId;
+    await projectRuntimeReconciliation.previewChannelValue({
+      ownerKey,
+      parameterId: 'level',
+      value: update.level,
+      gestureId,
+    });
   },
 );
 
 ipcRegistration.handle(
   'send-effect-realtime-update',
-  (_event, update: import('../shared/project-editor').EffectRealtimeUpdate) => {
-    if (
-      !getCurrentData() ||
-      !engineBridge ||
-      !engineBridge.isCurrentlyPlaying() ||
-      !update.bsbWidgetValues
-    ) {
+  async (_event, update: import('../shared/project-editor').EffectRealtimeUpdate) => {
+    if (!getCurrentData() || !update.bsbWidgetValues) {
       return;
     }
 
@@ -5777,17 +6444,23 @@ ipcRegistration.handle(
     });
     if (!effectEntry) return;
 
+    const gestureId = (update as unknown as { gestureId?: string }).gestureId;
     const params = effectEntry.entry.getParameters();
     for (const [objectName, value] of Object.entries(update.bsbWidgetValues)) {
       const param = params.find((p) => p.getName() === objectName);
-      if (param?.getCompilationVarName()) {
-        void engineBridge.setChannel(param.getCompilationVarName()!, value).catch(() => {});
+      const varName = param?.getCompilationVarName();
+      if (varName) {
+        void projectRuntimeReconciliation.previewChannelValue({
+          channel: varName,
+          value,
+          gestureId,
+        });
       }
     }
   },
 );
 
-ipcRegistration.handle('update-project-document', (_event, patch) => {
+ipcRegistration.handle('update-project-document', async (_event, patch) => {
   if (!getCurrentData()) {
     throw new Error('No project loaded');
   }
@@ -5796,31 +6469,7 @@ ipcRegistration.handle('update-project-document', (_event, patch) => {
     throw new Error('Empty project document patch');
   }
 
-  maybeCloseRemovedProjectEffectEditors(patch);
-  maybeCloseRemovedTrackInstrumentEditors(patch);
-  const scoreAutomationParameterIds = collectAffectedProjectScoreAutomationParameterIds(
-    getCurrentData(),
-    patch,
-  );
-  const changed = applyProjectDocumentPatch(getCurrentData(), patch, {
-    projectSessionId: getCurrentProjectSessionId(),
-    projectRevision: getCurrentProjectRevision(),
-    defaultLayerGroupType: loadProgramSettings().projectDefaults.defaultLayerGroupType,
-  });
-  if (changed) {
-    for (const id of collectAffectedProjectScoreAutomationParameterIds(getCurrentData(), patch)) {
-      scoreAutomationParameterIds.add(id);
-    }
-    // Sync with each active real-time engine.
-    if (engineBridge?.isCurrentlyPlaying() || blueLiveSession?.isRunning()) {
-      void syncEngineWithProjectPatch(getCurrentData(), patch, scoreAutomationParameterIds);
-    }
-    projectSession.recordMutation({ changed: true });
-    broadcastProjectDocumentUpdate();
-  } else {
-    scoreAutomationParameterIds.clear();
-  }
-
+  await commitProjectDocumentPatchBatch([patch], { label: 'Update Project' });
   return getCurrentProjectDocument();
 });
 
@@ -5957,20 +6606,49 @@ async function startUnifiedLibraryStage(): Promise<void> {
     unifiedLibraryService = new UnifiedLibraryService(
       path.join(app.getPath('userData'), 'blue_libraries.sqlite'),
       undefined,
-      new UnifiedLibraryProjectAdapter(() =>
-        getCurrentData()
-          ? {
-              data: getCurrentData(),
-              sessionId: getCurrentProjectSessionId(),
-              revision: getCurrentProjectRevision(),
-              commit: () => {
-                const receipt = projectSession.recordMutation({ changed: true });
-                broadcastProjectDocumentUpdate();
-                return receipt.revision;
-              },
+      new UnifiedLibraryProjectAdapter(() => {
+        const data = getCurrentData();
+        if (!data) return null;
+        const initialDocId = getCurrentProjectSessionDocumentId();
+        const initialSessionId = getCurrentProjectSessionId();
+        const initialRevision = getCurrentProjectRevision();
+        // Library adapters historically mutated the live graph and then
+        // reported a revision. Give each operation a detached candidate so a
+        // paused save/undo barrier never observes an uncommitted library edit.
+        const candidate = data.historyCopy();
+        transferProjectEditorIdentities(data, candidate);
+        return {
+          data: candidate,
+          sessionId: initialSessionId,
+          revision: initialRevision,
+          commit: async (label?: string) => {
+            if (
+              getCurrentProjectSessionDocumentId() !== initialDocId ||
+              getCurrentProjectSessionId() !== initialSessionId ||
+              getCurrentProjectRevision() !== initialRevision
+            ) {
+              throw new Error(
+                'The project changed before the library mutation could be committed.',
+              );
             }
-          : null,
-      ),
+            const receipt = await projectHistory.commitPreparedStructuralMutation({
+              label: label ?? 'Library Transfer',
+              candidate,
+              expectedDocumentId: initialDocId,
+              expectedSessionId: initialSessionId,
+              expectedRevision: initialRevision,
+            });
+            if (!receipt.changed) {
+              throw new Error(
+                receipt.oversizeProposal?.explanation ??
+                  receipt.error ??
+                  'Library transfer was not committed to project history',
+              );
+            }
+            return receipt.revision;
+          },
+        };
+      }),
       {
         legacyConfigurationDirectory: path.join(app.getPath('home'), '.blue'),
         migrationStatePath: path.join(app.getPath('userData'), 'blue-libraries-state.json'),

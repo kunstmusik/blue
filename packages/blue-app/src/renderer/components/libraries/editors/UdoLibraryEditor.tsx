@@ -35,6 +35,7 @@ export function UdoLibraryEditor({ snapshot, onPatch }: UdoLibraryEditorProps): 
       onUpdateUdo={update}
       onConvertStyle={convert}
       onTestOpcode={() => undefined}
+      historyScope="draft"
     />
   );
 }

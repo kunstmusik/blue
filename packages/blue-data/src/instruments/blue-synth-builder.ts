@@ -41,6 +41,7 @@ import { BSBLineObject, normalizeBsbLinePatch } from './blue-synth-builder/bsb-l
 import { replaceOpcodeNames } from '../utilities/text';
 import { generatePrefixedUuid } from '../utilities/uuid';
 import { collectBsbWidgets } from './blue-synth-builder/bsb-identity';
+import type { CopyMode } from '../deep-copyable';
 
 function parseUdoBlock(
   block: string,
@@ -286,7 +287,7 @@ export class BlueSynthBuilder extends Instrument {
   private _presetGroup: PresetGroup | null = null;
   private _udoReplacementValues: Map<string, string> | null = null;
 
-  constructor(other?: BlueSynthBuilder) {
+  constructor(other?: BlueSynthBuilder, mode: CopyMode = 'duplication') {
     super();
     if (other) {
       const previousRootGroup = other._graphicInterface.getRootGroup();
@@ -299,18 +300,20 @@ export class BlueSynthBuilder extends Instrument {
       this._globalSco = other._globalSco;
       this._editEnabled = other._editEnabled;
       this._opcodeList = new OpcodeList(other._opcodeList);
-      this._graphicInterface = other._graphicInterface.deepCopy();
+      this._graphicInterface = other._graphicInterface.deepCopy(mode);
       this._graphicInterfaceXML = null;
-      this._parameters = other._parameters.deepCopy();
+      this._parameters = other._parameters.deepCopy(mode);
       if (other._presetGroup) {
-        this._presetGroup = other._presetGroup.deepCopy();
-        rewriteDuplicateDropdownPresetReferences(
-          this._presetGroup,
-          collectDuplicateDropdownItemIdMap(
-            previousRootGroup,
-            this._graphicInterface.getRootGroup(),
-          ),
-        );
+        this._presetGroup = other._presetGroup.deepCopy(mode);
+        if (mode !== 'history') {
+          rewriteDuplicateDropdownPresetReferences(
+            this._presetGroup,
+            collectDuplicateDropdownItemIdMap(
+              previousRootGroup,
+              this._graphicInterface.getRootGroup(),
+            ),
+          );
+        }
       }
     } else {
       this.setName('untitled');
@@ -1241,7 +1244,7 @@ export class BlueSynthBuilder extends Instrument {
     return rendered;
   }
 
-  override deepCopy(): BlueSynthBuilder {
-    return new BlueSynthBuilder(this);
+  override deepCopy(mode: CopyMode = 'duplication'): BlueSynthBuilder {
+    return new BlueSynthBuilder(this, mode);
   }
 }

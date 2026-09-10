@@ -89,6 +89,24 @@ import {
   isValidLayerRangeTarget,
 } from '../../shared/project-editor';
 import type { MissingAudioAssetsSession } from '../../shared/missing-audio-assets';
+import type {
+  PrepareHistoryBoundaryEvent,
+  ProjectDocumentCommitMetadata,
+  ProjectHistorySelectionHint,
+  ProjectRuntimeOutcome,
+  ReleaseHistoryBoundaryEvent,
+} from '../../shared/project-history';
+
+/**
+ * Stable participant identity for this renderer JS context. Dockview popouts
+ * share the main renderer context; dedicated editor windows get their own.
+ */
+const RENDERER_PARTICIPANT_CONTEXT_ID = `renderer-${crypto.randomUUID()}`;
+import {
+  bsbInterfaceActionLabel,
+  type BsbActionLabelContext,
+  orchestraPatchActionLabel,
+} from '../../shared/project-editor';
 import {
   BSB_LINE_SELECTOR_HEIGHT,
   getHSliderBankDisplaySize,
@@ -103,7 +121,7 @@ import {
 } from '../components/workbench/panels/udo/udo-snapshot-utils';
 import { useMidiRoutingStore, type MidiRoutingReconciliation } from './midi-routing-store';
 import { useLayerSelectionStore } from './layer-selection-store';
-import { useScoreColorHistoryStore } from './score-color-history-store';
+import { useScoreSelectionStore } from './score-selection-store';
 import {
   createProjectPatchQueue,
   type ProjectPatchQueue,
@@ -119,6 +137,7 @@ interface ProjectState {
   version: string;
   filePath: string | null;
   sessionId: number;
+  documentId: string | null;
   isLoading: boolean;
   isDirty: boolean;
   lastScorePatch: ScorePatch | null;
@@ -140,6 +159,19 @@ interface ProjectState {
   scrollToBeatTarget: number | null;
   audioClipEditorPreviewByObjectId: Record<string, AudioClipEditorPreview>;
   missingAudioSession: MissingAudioAssetsSession | null;
+  runtimeOutcomes: ProjectRuntimeOutcome[];
+  runtimeOutcomeStatusText: string;
+  activeOversizeProposal: OversizeProposalInfo | null;
+}
+
+export interface OversizeProposalInfo {
+  token: string;
+  estimatedBytes: number;
+  limitBytes: number;
+  explanation: string;
+  documentId: string;
+  revision: number;
+  patches: readonly ProjectDocumentPatch[];
 }
 
 interface AudioClipEditorPreview {
@@ -153,23 +185,63 @@ interface ProjectActions {
   saveProject: () => Promise<void>;
   saveProjectAs: () => Promise<void>;
   setProjectInfo: (info: ProjectLoadedPayload | null) => void;
+  confirmOversizeProposal: () => Promise<void>;
+  cancelOversizeProposal: () => Promise<void>;
+  clearOversizeProposal: () => void;
+  /**
+   * Applies a canonical publication from main (other contexts, undo/redo
+   * replays) without the load/reset semantics: pending local overlays and
+   * selections survive, and the dirty projection comes from the event's
+   * authoritative saved-checkpoint state rather than being reset.
+   */
+  refreshFromCanonical: (info: ProjectLoadedPayload, dirtyProjection: boolean) => void;
+  handleRuntimeOutcomes: (
+    outcomes: ProjectRuntimeOutcome[],
+    context?: {
+      documentId?: string;
+      revision?: number;
+      resetObsolete?: boolean;
+      clearPerformanceKind?: ProjectRuntimeOutcome['performanceKind'];
+    },
+  ) => void;
   setLoading: (loading: boolean) => void;
   markDirty: () => void;
   markClean: () => void;
   clearProject: () => void;
-  applyProjectDocumentPatch: (patch: ProjectDocumentPatch) => Promise<void>;
-  updateGlobalOrc: (globalOrc: string) => Promise<void>;
-  updateGlobalSco: (globalSco: string) => Promise<void>;
-  updateOrchestra: (orchestra: OrchestraPatch) => Promise<void>;
-  updateProjectProperties: (patch: Partial<ProjectPropertiesSnapshot>) => Promise<void>;
-  updateScratchPad: (patch: ScratchPadPatch) => Promise<void>;
+  applyProjectDocumentPatch: (
+    patch: ProjectDocumentPatch,
+    metadata?: ProjectDocumentCommitMetadata,
+  ) => Promise<void>;
+  updateGlobalOrc: (globalOrc: string, metadata?: ProjectDocumentCommitMetadata) => Promise<void>;
+  updateGlobalSco: (globalSco: string, metadata?: ProjectDocumentCommitMetadata) => Promise<void>;
+  updateOrchestra: (
+    orchestra: OrchestraPatch,
+    metadata?: ProjectDocumentCommitMetadata,
+  ) => Promise<void>;
+  updateProjectProperties: (
+    patch: Partial<ProjectPropertiesSnapshot>,
+    metadata?: ProjectDocumentCommitMetadata,
+  ) => Promise<void>;
+  updateScratchPad: (
+    patch: ScratchPadPatch,
+    metadata?: ProjectDocumentCommitMetadata,
+  ) => Promise<void>;
   updateClojureProject: (clojureProject: ClojureProjectSnapshot) => Promise<void>;
-  setLoopRendering: (loopRendering: boolean) => Promise<void>;
-  addMarkerAtTime: (timeBeats: number) => void;
+  setLoopRendering: (
+    loopRendering: boolean,
+    metadata?: ProjectDocumentCommitMetadata,
+  ) => Promise<void>;
+  addMarkerAtTime: (timeBeats: number, metadata?: ProjectDocumentCommitMetadata) => void;
   addMarkerAtRenderStart: () => void;
-  updateTablesText: (tablesText: string) => Promise<void>;
-  applyProjectUdoPatch: (patch: ProjectUdoPatch) => Promise<void>;
-  applyBlueLivePatch: (patch: BlueLivePatch) => Promise<void>;
+  updateTablesText: (tablesText: string, metadata?: ProjectDocumentCommitMetadata) => Promise<void>;
+  applyProjectUdoPatch: (
+    patch: ProjectUdoPatch,
+    metadata?: ProjectDocumentCommitMetadata,
+  ) => Promise<void>;
+  applyBlueLivePatch: (
+    patch: BlueLivePatch,
+    metadata?: ProjectDocumentCommitMetadata,
+  ) => Promise<void>;
   setGeneratedCsd: (csd: { text: string; title: string } | null) => void;
   generateCsdToScreen: () => Promise<void>;
   generateRealtimeCsdToScreen: () => Promise<void>;
@@ -234,6 +306,17 @@ function normalizeMixerPatchIdentifiers(patch: MixerPatch): MixerPatch {
       return patch.entryId ? patch : { ...patch, entryId: crypto.randomUUID() };
     case 'addSend':
       return patch.entryId ? patch : { ...patch, entryId: crypto.randomUUID() };
+    case 'duplicateChainEntry':
+      return patch.newEntryId?.trim() ? patch : { ...patch, newEntryId: crypto.randomUUID() };
+    case 'pasteChainEntries':
+      return patch.newEntryIds?.length === patch.payload.entries.length &&
+        new Set(patch.newEntryIds).size === patch.newEntryIds.length &&
+        patch.newEntryIds.every((entryId) => entryId.trim().length > 0)
+        ? patch
+        : {
+            ...patch,
+            newEntryIds: patch.payload.entries.map(() => crypto.randomUUID()),
+          };
     default:
       return patch;
   }
@@ -469,7 +552,31 @@ function findAddScoreObjectsTargetGroupIndex(
 function getProjectPatchQueue(): ProjectPatchQueue {
   if (!projectPatchQueue) {
     projectPatchQueue = createProjectPatchQueue({
-      commit: (patches) => window.blueAPI.commitProjectDocumentPatches([...patches]),
+      participantContextId: RENDERER_PARTICIPANT_CONTEXT_ID,
+      acknowledgeBoundary: (ack) => {
+        void window.blueAPI.acknowledgeHistoryBoundary(ack).catch((error: unknown) => {
+          console.error('[project-store] Failed to acknowledge history boundary:', error);
+        });
+      },
+      commit: (patches, context) => {
+        const metadata = context?.metadata;
+        const selectedObjectIds = [...useScoreSelectionStore.getState().selectedObjectIds];
+        const selection: ProjectHistorySelectionHint[] | undefined =
+          metadata?.origin?.selection ??
+          (patches.some((patch) => patch.score !== undefined)
+            ? selectedObjectIds.map((targetId) => ({ targetType: 'scoreObject', targetId }))
+            : undefined);
+        return window.blueAPI.commitProjectDocumentPatches([...patches], {
+          ...metadata,
+          origin: {
+            ...metadata?.origin,
+            contextId: metadata?.origin?.contextId ?? RENDERER_PARTICIPANT_CONTEXT_ID,
+            viewId: metadata?.origin?.viewId ?? 'workbench',
+            ...(selection ? { selection } : {}),
+          },
+          barrierId: context?.barrierId,
+        });
+      },
       fetchCanonicalSnapshot: () => window.blueAPI.getProjectDocument(),
       applyCanonicalSnapshot: (snapshot, preserveDirty) =>
         applyProjectInfoToState(snapshot, preserveDirty),
@@ -482,8 +589,8 @@ function getProjectPatchQueue(): ProjectPatchQueue {
       logRefreshError: (error) => {
         console.error('[project-store] Failed to refresh canonical project state:', error);
       },
-      onStructuralScoreEdit: () => {
-        useScoreColorHistoryStore.getState().reset();
+      onOversizeProposal: (proposal) => {
+        storeSet({ activeOversizeProposal: proposal });
       },
     });
   }
@@ -494,8 +601,52 @@ export function getProjectDocumentRevision(): number {
   return getProjectPatchQueue().getRevision();
 }
 
+export async function flushProjectDocumentPatches(): Promise<number> {
+  const queue = getProjectPatchQueue();
+  await queue.flush();
+  return queue.getRevision();
+}
+
+export function getProjectDocumentId(): string | null {
+  const state = useProjectStore.getState();
+  return state.documentId;
+}
+
 export function acceptProjectDocumentRevision(sessionId: number, revision: number): void {
   getProjectPatchQueue().acceptRevision(sessionId, revision);
+}
+
+/**
+ * True when any of the given operation ids were submitted from this renderer
+ * context, so a canonical publication acknowledging them must not be applied
+ * over fresher optimistic state.
+ */
+export function ownsProjectDocumentOperationIds(operationIds: readonly string[]): boolean {
+  return getProjectPatchQueue().ownsOperationIds(operationIds);
+}
+
+export function handleProjectHistoryBoundary(
+  event: PrepareHistoryBoundaryEvent,
+  settle?: () => Promise<void> | void,
+): Promise<void> {
+  return getProjectPatchQueue().handlePrepareBoundary(event, settle);
+}
+
+export function handleProjectHistoryRelease(event: ReleaseHistoryBoundaryEvent): void {
+  getProjectPatchQueue().handleReleaseBoundary(event);
+}
+
+export function getProjectHistoryParticipantContextId(): string {
+  return RENDERER_PARTICIPANT_CONTEXT_ID;
+}
+
+/**
+ * Allocates the same monotonic sequence used by the durable patch queue for a
+ * project history command. Undo/redo therefore cannot be mistaken for a
+ * stale submission when a text editor has already committed a later prefix.
+ */
+export function reserveProjectHistoryContextSequence(): number {
+  return getProjectPatchQueue().reserveContextSequence();
 }
 
 export const __testFlushPendingPatches = (): void => {
@@ -552,7 +703,6 @@ function applyProjectInfoToState(info: ProjectLoadedPayload | null, preserveDirt
       storeSet(buildInitialState());
       useMidiRoutingStore.getState().clearFocusForProjectSession();
       useLayerSelectionStore.getState().clear();
-      useScoreColorHistoryStore.getState().reset();
     }
     return;
   }
@@ -560,10 +710,10 @@ function applyProjectInfoToState(info: ProjectLoadedPayload | null, preserveDirt
   let reconciliation: MidiRoutingReconciliation | undefined;
   storeSet((state: ProjectState) => {
     const incomingSessionId = info.sessionId ?? state.sessionId;
+    const incomingDocumentId = info.documentId ?? state.documentId;
     if (incomingSessionId !== getProjectPatchQueue().getSessionId()) {
       getProjectPatchQueue().reset(incomingSessionId);
       useLayerSelectionStore.getState().clear();
-      useScoreColorHistoryStore.getState().reset();
     }
 
     const nextProjectProperties = info.projectProperties
@@ -595,6 +745,7 @@ function applyProjectInfoToState(info: ProjectLoadedPayload | null, preserveDirt
       version: info.version ?? state.version,
       filePath: info.filePath ?? state.filePath,
       sessionId: incomingSessionId,
+      documentId: incomingDocumentId,
       loaded:
         info.loaded ??
         (info.filePath !== undefined
@@ -680,6 +831,7 @@ function buildInitialState(): ProjectState {
     version: snapshot.version,
     filePath: snapshot.filePath,
     sessionId: snapshot.sessionId,
+    documentId: snapshot.documentId ?? null,
     isLoading: false,
     isDirty: false,
     lastScorePatch: null,
@@ -701,6 +853,9 @@ function buildInitialState(): ProjectState {
     scrollToBeatTarget: null,
     audioClipEditorPreviewByObjectId: {},
     missingAudioSession: null,
+    runtimeOutcomes: [],
+    runtimeOutcomeStatusText: '',
+    activeOversizeProposal: null,
   };
 }
 
@@ -1398,18 +1553,19 @@ function applyMixerPatchToSnapshot(
             if (dupIndex < 0) return entries;
             const original = entries[dupIndex];
             const nextEntries = [...entries];
+            const newEntryId = patch.newEntryId ?? crypto.randomUUID();
             const clone: MixerChainEntrySnapshot =
               original.kind === 'effect'
-                ? createEffectEntrySnapshotFromXml(original.effectXml, crypto.randomUUID(), {
+                ? createEffectEntrySnapshotFromXml(original.effectXml, newEntryId, {
                     projectRef: {
                       channelId: patch.channelId,
                       chain: patch.chain,
-                      entryId: crypto.randomUUID(),
+                      entryId: newEntryId,
                     },
                   })
                 : {
                     ...original,
-                    entryId: crypto.randomUUID(),
+                    entryId: newEntryId,
                   };
             nextEntries.splice(dupIndex + 1, 0, clone);
             return nextEntries;
@@ -1421,20 +1577,17 @@ function applyMixerPatchToSnapshot(
             const insertIndex = patch.index ?? nextEntries.length;
             for (let i = 0; i < patch.payload.entries.length; i++) {
               const entry = patch.payload.entries[i];
+              const newEntryId = patch.newEntryIds?.[i] ?? crypto.randomUUID();
               const pasted: MixerChainEntrySnapshot =
                 entry.kind === 'effect'
-                  ? createEffectEntrySnapshotFromXml(
-                      entry.effectXml,
-                      entry.entryId + '-paste-' + i,
-                      {
-                        projectRef: {
-                          channelId: patch.channelId,
-                          chain: patch.chain,
-                          entryId: entry.entryId + '-paste-' + i,
-                        },
+                  ? createEffectEntrySnapshotFromXml(entry.effectXml, newEntryId, {
+                      projectRef: {
+                        channelId: patch.channelId,
+                        chain: patch.chain,
+                        entryId: newEntryId,
                       },
-                    )
-                  : { ...entry, entryId: entry.entryId + '-paste-' + i };
+                    })
+                  : { ...entry, entryId: newEntryId };
               nextEntries.splice(Math.min(insertIndex + i, nextEntries.length), 0, pasted);
             }
             return nextEntries;
@@ -2792,6 +2945,56 @@ function cloneOrchestraSnapshot(orchestra: OrchestraSnapshot): OrchestraSnapshot
   };
 }
 
+function findPresetNameInGroup(
+  group: PresetGroupSnapshot | undefined,
+  presetUniqueId: string,
+): string | undefined {
+  if (!group) return undefined;
+  for (const preset of group.presets) {
+    if (preset.uniqueId === presetUniqueId) return preset.name;
+  }
+  for (const subGroup of group.subGroups) {
+    const found = findPresetNameInGroup(subGroup, presetUniqueId);
+    if (found !== undefined) return found;
+  }
+  return undefined;
+}
+
+function findWidgetObjectNameInTree(
+  node: BsbWidgetNodeSnapshot | null | undefined,
+  widgetId: string,
+): string | undefined {
+  if (!node) return undefined;
+  if (node.id === widgetId) {
+    const objectName = node.objectName.trim();
+    return objectName.length > 0 ? objectName : undefined;
+  }
+  for (const child of node.children ?? []) {
+    const found = findWidgetObjectNameInTree(child, widgetId);
+    if (found !== undefined) return found;
+  }
+  return undefined;
+}
+
+/**
+ * Resolves preset and widget display names from the current orchestra snapshot
+ * so BSB undo entries read like "Apply Preset Ocarina" instead of a generic
+ * "Edit Instrument".
+ */
+function bsbActionLabelContext(
+  orchestra: OrchestraSnapshot,
+  assignmentId: string,
+): BsbActionLabelContext | undefined {
+  const instrument = orchestra.instruments.find(
+    (candidate) => candidate.assignmentId === assignmentId,
+  );
+  if (instrument?.type !== 'blueSynthBuilder') return undefined;
+  return {
+    presetName: (presetUniqueId) => findPresetNameInGroup(instrument.presetGroup, presetUniqueId),
+    widgetName: (widgetId) => findWidgetObjectNameInTree(instrument.widgetTree, widgetId),
+  };
+}
+
 function cloneArrangementRowsForMutation(orchestra: OrchestraSnapshot): ArrangementRowSnapshot[] {
   const nextRows = orchestra.arrangement.rows.slice();
   orchestra.arrangement.rows = nextRows;
@@ -3350,6 +3553,111 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       applyProjectInfoToState(info, false);
     },
 
+    confirmOversizeProposal: async () => {
+      const proposal = get().activeOversizeProposal;
+      if (!proposal) return;
+      const currentDocId = get().documentId;
+      const currentRev = getProjectDocumentRevision();
+      if (proposal.documentId !== currentDocId || proposal.revision !== currentRev) {
+        // Stale confirmation: reject and cancel
+        await window.blueAPI.cancelOversizeProposal({ proposalToken: proposal.token });
+        set({ activeOversizeProposal: null });
+        return;
+      }
+      set({ activeOversizeProposal: null });
+      await window.blueAPI.commitProjectDocumentPatches([...proposal.patches], {
+        proposalToken: proposal.token,
+        contextSequence: reserveProjectHistoryContextSequence(),
+        origin: { contextId: RENDERER_PARTICIPANT_CONTEXT_ID, viewId: 'workbench' },
+      });
+    },
+
+    cancelOversizeProposal: async () => {
+      const proposal = get().activeOversizeProposal;
+      if (!proposal) return;
+      set({ activeOversizeProposal: null });
+      await window.blueAPI.cancelOversizeProposal({ proposalToken: proposal.token });
+    },
+
+    clearOversizeProposal: () => {
+      set({ activeOversizeProposal: null });
+    },
+
+    refreshFromCanonical: (info, dirtyProjection) => {
+      applyProjectInfoToState(info, true);
+      set({ isDirty: dirtyProjection });
+    },
+
+    handleRuntimeOutcomes: (outcomes, context) => {
+      if (
+        !outcomes ||
+        (outcomes.length === 0 && !context?.resetObsolete && !context?.clearPerformanceKind)
+      )
+        return;
+      const currentState = get();
+      if (context?.documentId && currentState.documentId !== context.documentId) return;
+      const currentRevision = getProjectDocumentRevision();
+      if (context?.revision !== undefined && context.revision !== currentRevision) return;
+      set((state) => {
+        const map = new Map<string, ProjectRuntimeOutcome>();
+        for (const o of state.runtimeOutcomes) {
+          map.set(o.performanceKind, o);
+        }
+        if (context?.resetObsolete && context.revision !== undefined) {
+          const incomingKinds = new Set(outcomes.map((outcome) => outcome.performanceKind));
+          for (const [kind, outcome] of map) {
+            // A canonical revision can be cosmetic or otherwise have no work
+            // for a performance. Preserve unresolved state for those kinds;
+            // only an incoming outcome for the same kind supersedes it.
+            if (incomingKinds.has(kind) && outcome.desiredRevision < context.revision) {
+              map.delete(kind);
+            }
+          }
+        }
+        if (context?.clearPerformanceKind) {
+          map.delete(context.clearPerformanceKind);
+        }
+        for (const o of outcomes) {
+          const previous = map.get(o.performanceKind);
+          if (
+            previous &&
+            (o.generation < previous.generation ||
+              (o.generation === previous.generation &&
+                o.desiredRevision < previous.desiredRevision))
+          ) {
+            continue;
+          }
+          map.set(o.performanceKind, o);
+        }
+        const updatedOutcomes = Array.from(map.values());
+
+        let statusText = '';
+        const hasFailed = updatedOutcomes.find((o) => o.status === 'failed');
+        const hasRestart = updatedOutcomes.find((o) => o.status === 'restart-required');
+        const hasPending = updatedOutcomes.find((o) => o.status === 'pending');
+        const allApplied =
+          updatedOutcomes.length > 0 && updatedOutcomes.every((o) => o.status === 'applied');
+
+        if (hasFailed) {
+          statusText = hasFailed.message
+            ? `Live synchronization failed: ${hasFailed.message}`
+            : 'Live synchronization failed';
+          toast.error(statusText);
+        } else if (hasRestart) {
+          statusText = 'Restart required for playback to reflect all changes';
+        } else if (hasPending) {
+          statusText = 'Applying live changes...';
+        } else if (allApplied) {
+          statusText = 'Live changes applied';
+        }
+
+        return {
+          runtimeOutcomes: updatedOutcomes,
+          runtimeOutcomeStatusText: statusText,
+        };
+      });
+    },
+
     setLoading: (isLoading) => set({ isLoading }),
 
     markDirty: () => set({ isDirty: true }),
@@ -3361,7 +3669,6 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       set(buildInitialState());
       useMidiRoutingStore.getState().clearFocusForProjectSession();
       useLayerSelectionStore.getState().clear();
-      useScoreColorHistoryStore.getState().reset();
     },
 
     revertProject: async () => {
@@ -3377,7 +3684,7 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       }
     },
 
-    applyProjectDocumentPatch: async (patch) => {
+    applyProjectDocumentPatch: async (patch, metadata) => {
       const normalizedPatch = normalizeProjectDocumentPatch(patch);
 
       if (!get().loaded) {
@@ -3552,43 +3859,65 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
         });
       }
 
-      getProjectPatchQueue().enqueue(normalizedPatch, dirtyBaseline);
+      getProjectPatchQueue().enqueue(normalizedPatch, dirtyBaseline, metadata);
     },
 
-    updateGlobalOrc: async (globalOrc) => {
-      await get().applyProjectDocumentPatch({ globalOrc });
+    updateGlobalOrc: async (globalOrc, metadata) => {
+      await get().applyProjectDocumentPatch({ globalOrc }, metadata);
     },
 
-    updateGlobalSco: async (globalSco) => {
-      await get().applyProjectDocumentPatch({ globalSco });
+    updateGlobalSco: async (globalSco, metadata) => {
+      await get().applyProjectDocumentPatch({ globalSco }, metadata);
     },
 
-    updateOrchestra: async (orchestra) => {
-      await get().applyProjectDocumentPatch({ orchestra });
+    updateOrchestra: async (orchestra, metadata) => {
+      const bsbPatch =
+        orchestra.type === 'updateInstrument' ? orchestra.patch.bsbInterface : undefined;
+      const label = bsbPatch
+        ? bsbInterfaceActionLabel(
+            bsbPatch,
+            bsbActionLabelContext(get().orchestra, orchestra.assignmentId),
+          )
+        : orchestraPatchActionLabel(orchestra);
+      await get().applyProjectDocumentPatch({ orchestra }, { label, ...metadata });
     },
 
-    updateProjectProperties: async (patch) => {
-      await get().applyProjectDocumentPatch({ projectProperties: patch });
+    updateProjectProperties: async (patch, metadata) => {
+      await get().applyProjectDocumentPatch({ projectProperties: patch }, metadata);
     },
 
-    updateScratchPad: async (patch) => {
-      await get().applyProjectDocumentPatch({ scratchPad: patch });
+    updateScratchPad: async (patch, metadata) => {
+      await get().applyProjectDocumentPatch({ scratchPad: patch }, metadata);
     },
 
     updateClojureProject: async (clojureProject) => {
       await get().applyProjectDocumentPatch({ clojureProject });
     },
 
-    setLoopRendering: async (loopRendering) => {
-      await get().applyProjectDocumentPatch({
-        transport: { loopRendering },
-      });
+    setLoopRendering: async (loopRendering, metadata) => {
+      await get().applyProjectDocumentPatch(
+        {
+          transport: { loopRendering },
+        },
+        {
+          label: loopRendering ? 'Enable Loop Rendering' : 'Disable Loop Rendering',
+          phase: 'single',
+          ...metadata,
+        },
+      );
     },
 
-    addMarkerAtTime: (timeBeats) => {
-      get().applyProjectDocumentPatch({
-        score: { type: 'addMarker', timeBeats: Math.max(0, timeBeats) },
-      });
+    addMarkerAtTime: (timeBeats, metadata) => {
+      void get().applyProjectDocumentPatch(
+        {
+          score: { type: 'addMarker', timeBeats: Math.max(0, timeBeats) },
+        },
+        {
+          label: 'Add Marker',
+          phase: 'single',
+          ...metadata,
+        },
+      );
     },
 
     addMarkerAtRenderStart: () => {
@@ -3687,17 +4016,17 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       set({ scrollToBeatTarget: 0 });
     },
 
-    updateTablesText: async (tablesText) => {
+    updateTablesText: async (tablesText, metadata) => {
       set({ tablesText });
-      await get().applyProjectDocumentPatch({ tablesText });
+      await get().applyProjectDocumentPatch({ tablesText }, metadata);
     },
 
-    applyProjectUdoPatch: async (patch) => {
-      await get().applyProjectDocumentPatch({ projectUdo: patch });
+    applyProjectUdoPatch: async (patch, metadata) => {
+      await get().applyProjectDocumentPatch({ projectUdo: patch }, metadata);
     },
 
-    applyBlueLivePatch: async (patch) => {
-      await get().applyProjectDocumentPatch({ blueLive: patch });
+    applyBlueLivePatch: async (patch, metadata) => {
+      await get().applyProjectDocumentPatch({ blueLive: patch }, metadata);
     },
 
     setGeneratedCsd: (csd: { text: string; title: string } | null) => {
@@ -3843,36 +4172,45 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
     },
 
     setLayerBackgroundColor: (groupId, layerIndex, color) => {
-      void get().applyProjectDocumentPatch({
-        score: {
-          type: 'updateLayerState',
-          groupId,
-          layerIndex,
-          patch: { backgroundColor: color },
+      void get().applyProjectDocumentPatch(
+        {
+          score: {
+            type: 'updateLayerState',
+            groupId,
+            layerIndex,
+            patch: { backgroundColor: color },
+          },
         },
-      });
+        { label: 'Set Layer Color' },
+      );
     },
 
     setLayerMute: (groupId, layerIndex, muted) => {
-      void get().applyProjectDocumentPatch({
-        score: {
-          type: 'updateLayerState',
-          groupId,
-          layerIndex,
-          patch: { muted },
+      void get().applyProjectDocumentPatch(
+        {
+          score: {
+            type: 'updateLayerState',
+            groupId,
+            layerIndex,
+            patch: { muted },
+          },
         },
-      });
+        { label: muted ? 'Mute Layer' : 'Unmute Layer' },
+      );
     },
 
     setLayerSolo: (groupId, layerIndex, solo) => {
-      void get().applyProjectDocumentPatch({
-        score: {
-          type: 'updateLayerState',
-          groupId,
-          layerIndex,
-          patch: { solo },
+      void get().applyProjectDocumentPatch(
+        {
+          score: {
+            type: 'updateLayerState',
+            groupId,
+            layerIndex,
+            patch: { solo },
+          },
         },
-      });
+        { label: solo ? 'Solo Layer' : 'Unsolo Layer' },
+      );
     },
 
     renameLayer: (layerId, name) => {
@@ -3896,25 +4234,31 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
         return;
       }
 
-      void get().applyProjectDocumentPatch({
-        score: {
-          type: 'renameLayer',
-          groupId: targetGroupId,
-          layerIndex: targetLayerIndex,
-          name: trimmedName,
+      void get().applyProjectDocumentPatch(
+        {
+          score: {
+            type: 'renameLayer',
+            groupId: targetGroupId,
+            layerIndex: targetLayerIndex,
+            name: trimmedName,
+          },
         },
-      });
+        { label: 'Rename Layer' },
+      );
     },
 
     setLayerHeight: (groupId, layerIndex, heightIndex) => {
-      void get().applyProjectDocumentPatch({
-        score: {
-          type: 'updateLayerState',
-          groupId,
-          layerIndex,
-          patch: { heightIndex },
+      void get().applyProjectDocumentPatch(
+        {
+          score: {
+            type: 'updateLayerState',
+            groupId,
+            layerIndex,
+            patch: { heightIndex },
+          },
         },
-      });
+        { label: 'Resize Layer' },
+      );
     },
 
     addLayer: (groupId, layerIndex) => {
@@ -3922,7 +4266,7 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
         score: { type: 'addLayer', groupId, layerIndex },
       };
       get()
-        .applyProjectDocumentPatch(patch)
+        .applyProjectDocumentPatch(patch, { label: 'Add Layer' })
         .then(() => {
           __testFlushPendingPatches();
         });
@@ -3933,7 +4277,7 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
         score: { type: 'removeLayer', groupId, layerIndex },
       };
       get()
-        .applyProjectDocumentPatch(patch)
+        .applyProjectDocumentPatch(patch, { label: 'Remove Layer' })
         .then(() => {
           __testFlushPendingPatches();
         });

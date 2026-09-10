@@ -388,6 +388,7 @@ function ChainList({
     () => entries.map((candidate) => candidate.entryId).join(':'),
     [entries],
   );
+  const libraryTargetChannelId = channel.channelKind === 'subChannel' ? channel.name : channel.id;
   const libraryEffectAvailable = libraryClipboard
     ? getLibraryTransferSourceType(libraryClipboard.source) === 'effect'
     : false;
@@ -401,7 +402,7 @@ function ChainList({
           kind: 'effectChain',
           projectSessionId,
           projectRevision,
-          channelId: channel.id,
+          channelId: libraryTargetChannelId,
           chain,
           insertIndex,
           chainRevision,
@@ -411,7 +412,7 @@ function ChainList({
     [
       chain,
       chainRevision,
-      channel.id,
+      libraryTargetChannelId,
       libraryClipboard,
       projectRevision,
       projectSessionId,
@@ -597,7 +598,7 @@ function ChainList({
                       kind: 'effectChain',
                       projectSessionId,
                       projectRevision,
-                      channelId: channel.id,
+                      channelId: libraryTargetChannelId,
                       chain,
                       insertIndex: index,
                       chainRevision,
@@ -611,7 +612,7 @@ function ChainList({
                     kind: 'effectChain',
                     projectSessionId,
                     projectRevision,
-                    channelId: channel.id,
+                    channelId: libraryTargetChannelId,
                     chain,
                     insertIndex: index + 1,
                     chainRevision,
@@ -659,7 +660,7 @@ function ChainList({
                 kind: 'effectChain',
                 projectSessionId,
                 projectRevision,
-                channelId: channel.id,
+                channelId: libraryTargetChannelId,
                 chain,
                 insertIndex: entries.length,
                 chainRevision,

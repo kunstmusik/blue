@@ -72,6 +72,25 @@ import type {
 } from '../../shared/midi-import';
 import type { AppMetadata } from '../../shared/app-metadata';
 import type {
+  ProjectHistoryCommitRequest,
+  ProjectHistoryUndoRequest,
+  ProjectHistoryRedoRequest,
+  ProjectHistoryReadRequest,
+  ProjectHistoryResponse,
+  ProjectHistoryReadResponse,
+  ProjectHistoryControlResponse,
+  RegisterHistoryParticipantRequest,
+  RegisterHistoryParticipantResponse,
+  UnregisterHistoryParticipantRequest,
+  PrepareHistoryBoundaryEvent,
+  PrepareHistoryBoundaryAck,
+  ReleaseHistoryBoundaryEvent,
+  CancelOversizeProposalRequest,
+  ProjectRuntimeOutcomeEvent,
+  FocusedHistoryAvailability,
+  ProjectDocumentCommitMetadata,
+} from '../../shared/project-history';
+import type {
   NativeConfirmationRequest,
   NativeConfirmationResult,
 } from '../../shared/confirmation-dialog';
@@ -372,7 +391,38 @@ declare global {
       ) => () => void;
       commitProjectDocumentPatches: (
         patches: ProjectDocumentPatch[],
+        metadata?: ProjectDocumentCommitMetadata,
       ) => Promise<ProjectDocumentCommitReceipt>;
+      syncHistoryAvailability: (projection: FocusedHistoryAvailability) => void;
+      commitProjectHistory: (
+        request: ProjectHistoryCommitRequest,
+      ) => Promise<ProjectHistoryResponse>;
+      undoProjectHistory: (request: ProjectHistoryUndoRequest) => Promise<ProjectHistoryResponse>;
+      redoProjectHistory: (request: ProjectHistoryRedoRequest) => Promise<ProjectHistoryResponse>;
+      readProjectHistory: (
+        request?: ProjectHistoryReadRequest,
+      ) => Promise<ProjectHistoryReadResponse>;
+      registerHistoryParticipant: (
+        request: RegisterHistoryParticipantRequest,
+      ) => Promise<RegisterHistoryParticipantResponse>;
+      unregisterHistoryParticipant: (
+        request: UnregisterHistoryParticipantRequest,
+      ) => Promise<ProjectHistoryControlResponse>;
+      acknowledgeHistoryBoundary: (
+        ack: PrepareHistoryBoundaryAck,
+      ) => Promise<ProjectHistoryControlResponse>;
+      cancelOversizeProposal: (
+        request: CancelOversizeProposalRequest,
+      ) => Promise<ProjectHistoryControlResponse>;
+      onPrepareHistoryBoundary: (
+        callback: (event: PrepareHistoryBoundaryEvent) => void,
+      ) => () => void;
+      onReleaseHistoryBoundary: (
+        callback: (event: ReleaseHistoryBoundaryEvent) => void,
+      ) => () => void;
+      onProjectRuntimeOutcome: (
+        callback: (event: ProjectRuntimeOutcomeEvent) => void,
+      ) => () => void;
       getBlueX7EffectiveValues: (
         request: BlueX7EffectiveValuesRequest,
       ) => Promise<BlueX7EffectiveValuesResult>;

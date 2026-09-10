@@ -1,6 +1,9 @@
 import React from 'react';
 import type { BlueX7InstrumentSnapshot } from '../../../../../shared/project-editor';
-import type { BlueX7RuntimeTarget } from '../../../../../shared/project-editor/contract';
+import type {
+  BlueX7PerformanceKind,
+  BlueX7RuntimeTarget,
+} from '../../../../../shared/project-editor/contract';
 import type { SelectedInstrumentEditorProps } from './types';
 import { BlueX7Editor as BlueX7EditorComponent } from '../../../instruments/blue-x7-editor';
 
@@ -14,6 +17,7 @@ export default function BlueX7Editor({
   effectiveValues?: {
     target: BlueX7RuntimeTarget;
     projectSessionId: number;
+    performanceKind?: BlueX7PerformanceKind;
     enabled: boolean;
   };
 }): React.ReactElement {

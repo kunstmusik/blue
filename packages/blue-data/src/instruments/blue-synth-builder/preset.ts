@@ -1,5 +1,6 @@
 import { Element } from '../../serialization/xml-reader';
 import { generatePrefixedUuid } from '../../utilities/uuid';
+import type { CopyMode } from '../../deep-copyable';
 import type { BSBGraphicInterface } from './bsb-graphic-interface';
 import type { BSBWidget } from './bsb-widget';
 import { BSBGroup } from './bsb-group';
@@ -140,10 +141,12 @@ export class Preset {
     return preset;
   }
 
-  deepCopy(presetIdMap?: Map<string, string>): Preset {
+  deepCopy(presetIdMap?: Map<string, string>, mode: CopyMode = 'duplication'): Preset {
     const copy = new Preset();
     copy.presetName = this.presetName;
-    if (this.uniqueId) {
+    if (mode === 'history') {
+      copy.uniqueId = this.uniqueId;
+    } else if (this.uniqueId) {
       presetIdMap?.set(this.uniqueId, copy.uniqueId);
     }
     copy._valuesMap = new Map(this._valuesMap);

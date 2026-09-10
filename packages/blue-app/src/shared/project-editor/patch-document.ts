@@ -321,6 +321,14 @@ import {
   isBsbRealtimeControlUpdate,
   isValidBlueX7Voice,
   isValidBlueX7Patch,
+  BLUE_LIVE_PATCH_PREPARATION_CLASS,
+  MIDI_INPUT_PATCH_PREPARATION_CLASS,
+  MIXER_CHANNEL_FIELD_PREPARATION_CLASS,
+  MIXER_PATCH_PREPARATION_CLASS,
+  ORCHESTRA_PATCH_PREPARATION_CLASS,
+  PROJECT_UDO_PATCH_PREPARATION_CLASS,
+  SCORE_PATCH_PREPARATION_CLASS,
+  TRANSPORT_PATCH_FIELD_PREPARATION_CLASS,
 } from './contract';
 import {
   applyBlueLivePatch,
@@ -350,6 +358,13 @@ export function applyProjectDocumentPatch(
   patch: ProjectDocumentPatch,
   context?: ProjectDocumentPatchContext,
 ): boolean {
+  const validation = validateProjectDocumentPatch(patch);
+  if (!validation.valid) {
+    throw new Error(
+      `Invalid project document patch: unexpected property key(s) [${validation.unexpectedKeys?.join(', ')}]`,
+    );
+  }
+
   let changed = false;
 
   if (patch.globalOrc !== undefined) {
@@ -607,7 +622,44 @@ function applyProjectUdoPatch(data: BlueData, patch: ProjectUdoPatch): boolean {
   }
 }
 
+export const KNOWN_PROJECT_DOCUMENT_PATCH_KEYS = [
+  'globalOrc',
+  'globalSco',
+  'tablesText',
+  'scratchPad',
+  'projectUdo',
+  'projectProperties',
+  'clojureProject',
+  'orchestra',
+  'transport',
+  'mixer',
+  'score',
+  'blueLive',
+  'midiInput',
+] as const;
+
+export type KnownProjectDocumentPatchKey = (typeof KNOWN_PROJECT_DOCUMENT_PATCH_KEYS)[number];
+
+export function validateProjectDocumentPatch(patch: ProjectDocumentPatch): {
+  valid: boolean;
+  unexpectedKeys?: string[];
+} {
+  const keys = Object.keys(patch);
+  const unexpectedKeys = keys.filter(
+    (key) => !KNOWN_PROJECT_DOCUMENT_PATCH_KEYS.includes(key as KnownProjectDocumentPatchKey),
+  );
+  if (unexpectedKeys.length > 0) {
+    return { valid: false, unexpectedKeys };
+  }
+  return { valid: true };
+}
+
 export function isEmptyProjectDocumentPatch(patch: ProjectDocumentPatch): boolean {
+  const validation = validateProjectDocumentPatch(patch);
+  if (!validation.valid) {
+    return false;
+  }
+
   const hasProjectProperties =
     patch.projectProperties !== undefined && Object.keys(patch.projectProperties).length > 0;
   const hasTransport = patch.transport !== undefined && Object.keys(patch.transport).length > 0;
@@ -633,4 +685,69 @@ export function isEmptyProjectDocumentPatch(patch: ProjectDocumentPatch): boolea
     !hasMixer &&
     !hasScore
   );
+}
+
+export function isScalarProjectDocumentPatch(patch: ProjectDocumentPatch): boolean {
+  const validation = validateProjectDocumentPatch(patch);
+  if (!validation.valid) return false;
+  if (isEmptyProjectDocumentPatch(patch)) return false;
+
+  if (patch.score !== undefined && SCORE_PATCH_PREPARATION_CLASS[patch.score.type] !== 'scalar') {
+    return false;
+  }
+  if (
+    patch.orchestra !== undefined &&
+    ORCHESTRA_PATCH_PREPARATION_CLASS[patch.orchestra.type] !== 'scalar'
+  ) {
+    return false;
+  }
+  if (
+    patch.blueLive !== undefined &&
+    BLUE_LIVE_PATCH_PREPARATION_CLASS[patch.blueLive.type] !== 'scalar'
+  ) {
+    return false;
+  }
+  if (
+    patch.midiInput !== undefined &&
+    MIDI_INPUT_PATCH_PREPARATION_CLASS[patch.midiInput.type] !== 'scalar'
+  ) {
+    return false;
+  }
+  if (patch.clojureProject !== undefined) return false;
+  if (
+    patch.projectUdo !== undefined &&
+    PROJECT_UDO_PATCH_PREPARATION_CLASS[patch.projectUdo.type] !== 'scalar'
+  ) {
+    return false;
+  }
+
+  if (patch.transport !== undefined) {
+    for (const key of Object.keys(patch.transport) as Array<
+      keyof NonNullable<ProjectDocumentPatch['transport']>
+    >) {
+      if (TRANSPORT_PATCH_FIELD_PREPARATION_CLASS[key] !== 'scalar') return false;
+    }
+  }
+
+  if (patch.mixer !== undefined) {
+    const m = patch.mixer;
+    if (MIXER_PATCH_PREPARATION_CLASS[m.type] !== 'scalar') return false;
+    if (m.type === 'updateChannel') {
+      for (const key of Object.keys(m.patch) as Array<keyof MixerChannelEditableFields>) {
+        if (MIXER_CHANNEL_FIELD_PREPARATION_CLASS[key] !== 'scalar') return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+export function classifyProjectDocumentPatch(
+  patch: ProjectDocumentPatch,
+): 'empty' | 'scalar' | 'structural' | 'invalid' {
+  const validation = validateProjectDocumentPatch(patch);
+  if (!validation.valid) return 'invalid';
+  if (isEmptyProjectDocumentPatch(patch)) return 'empty';
+  if (isScalarProjectDocumentPatch(patch)) return 'scalar';
+  return 'structural';
 }

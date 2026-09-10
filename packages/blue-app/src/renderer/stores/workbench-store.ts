@@ -61,6 +61,7 @@ import {
 } from '../components/workbench/panel-registry';
 import { buildPlayheadDisplayState } from '../components/menu-bar/toolbar-formatters';
 import type { NativeMenuCommand } from '../../shared/workbench-menu';
+import { dispatchHistoryAction } from '../lib/history-scope-router';
 import { useLibraryStore } from './library-store';
 import { useUIStore } from './ui-store';
 import type { LibraryEditorSessionSnapshot } from '../../shared/unified-library';
@@ -2017,6 +2018,12 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()((se
         return;
       case 'edit-meter-map':
         window.dispatchEvent(new CustomEvent('blue-edit-meter-map'));
+        return;
+      case 'undo':
+        void dispatchHistoryAction('undo');
+        return;
+      case 'redo':
+        void dispatchHistoryAction('redo');
         return;
     }
   },

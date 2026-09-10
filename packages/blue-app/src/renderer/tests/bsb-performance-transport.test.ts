@@ -135,10 +135,10 @@ describe('BSB performance transport', () => {
     await __testAwaitPendingPatches();
 
     expect(mockBlueAPI.commitProjectDocumentPatches).toHaveBeenCalledOnce();
-    expect(mockBlueAPI.commitProjectDocumentPatches).toHaveBeenCalledWith([
-      { globalOrc: 'instr 1\nendin' },
-      { projectProperties: { title: 'Edited Title' } },
-    ]);
+    expect(mockBlueAPI.commitProjectDocumentPatches).toHaveBeenCalledWith(
+      [{ globalOrc: 'instr 1\nendin' }, { projectProperties: { title: 'Edited Title' } }],
+      expect.objectContaining({ operationId: expect.any(String) }),
+    );
     expect(mockBlueAPI.getProjectDocument).not.toHaveBeenCalled();
     expect(mockBlueAPI.updateProjectDocument).not.toHaveBeenCalled();
     expect(useProjectStore.getState().isDirty).toBe(true);

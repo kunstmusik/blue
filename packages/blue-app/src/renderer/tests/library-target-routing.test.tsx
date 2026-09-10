@@ -152,6 +152,6 @@ describe('direct Library transfer routing', () => {
     );
     expect(applied).toBe(false);
     expect(applyLibraryTransfer).not.toHaveBeenCalled();
-    expect(useLibraryStore.getState().error).toMatch(/dependencies/i);
+    expect(useLibraryStore.getState().error).toBeNull();
   });
 });

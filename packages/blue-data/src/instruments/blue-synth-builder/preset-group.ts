@@ -1,4 +1,5 @@
 import { Element } from '../../serialization/xml-reader';
+import type { CopyMode } from '../../deep-copyable';
 import type { BSBGraphicInterface } from './bsb-graphic-interface';
 import { Preset } from './preset';
 
@@ -103,13 +104,16 @@ export class PresetGroup {
     return group;
   }
 
-  private cloneForDuplicate(presetIdMap: Map<string, string>): PresetGroup {
+  private cloneForDuplicate(
+    presetIdMap: Map<string, string>,
+    mode: CopyMode = 'duplication',
+  ): PresetGroup {
     const copy = new PresetGroup();
     copy.presetGroupName = this.presetGroupName;
     copy.currentPresetUniqueId = this.currentPresetUniqueId;
     copy.currentPresetModified = this.currentPresetModified;
-    copy.presets = this.presets.map((preset) => preset.deepCopy(presetIdMap));
-    copy.subGroups = this.subGroups.map((group) => group.cloneForDuplicate(presetIdMap));
+    copy.presets = this.presets.map((preset) => preset.deepCopy(presetIdMap, mode));
+    copy.subGroups = this.subGroups.map((group) => group.cloneForDuplicate(presetIdMap, mode));
     return copy;
   }
 
@@ -124,9 +128,18 @@ export class PresetGroup {
     }
   }
 
-  deepCopy(): PresetGroup {
+  deepCopy(mode: CopyMode = 'duplication'): PresetGroup {
+    if (mode === 'history') {
+      const copy = new PresetGroup();
+      copy.presetGroupName = this.presetGroupName;
+      copy.currentPresetUniqueId = this.currentPresetUniqueId;
+      copy.currentPresetModified = this.currentPresetModified;
+      copy.presets = this.presets.map((preset) => preset.deepCopy(undefined, 'history'));
+      copy.subGroups = this.subGroups.map((group) => group.deepCopy('history'));
+      return copy;
+    }
     const presetIdMap = new Map<string, string>();
-    const copy = this.cloneForDuplicate(presetIdMap);
+    const copy = this.cloneForDuplicate(presetIdMap, 'duplication');
     copy.rewriteCurrentPresetIds(presetIdMap);
     return copy;
   }

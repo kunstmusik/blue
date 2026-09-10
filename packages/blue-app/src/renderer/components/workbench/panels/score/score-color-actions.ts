@@ -5,19 +5,16 @@ import type {
   ScoreObjectEditorTargetSnapshot,
 } from '../../../../shared/project-editor';
 
-export interface ScoreColorPatchPair {
-  forward: ProjectDocumentPatch;
-  inverse: ProjectDocumentPatch;
-}
+export type ScoreColorPatch = ProjectDocumentPatch;
 
 /**
- * Build forward and inverse patches to set selected score objects to their containing layer's background color.
+ * Build a patch to set selected score objects to their containing layer's background color.
  * Returns null if the selection is empty or all selected items already match their layer color.
  */
 export function buildSetSelectionToLayerColorPatch(args: {
   selection: ScoreRowObjectSnapshot[];
   layerGroups: ScoreLayerGroupSnapshot[];
-}): ScoreColorPatchPair | null {
+}): ScoreColorPatch | null {
   const { selection, layerGroups } = args;
   if (!Array.isArray(selection) || selection.length === 0) {
     return null;
@@ -36,10 +33,6 @@ export function buildSetSelectionToLayerColorPatch(args: {
   }
 
   const forwardUpdates: Array<{
-    target: ScoreObjectEditorTargetSnapshot;
-    backgroundColor: number;
-  }> = [];
-  const inverseUpdates: Array<{
     target: ScoreObjectEditorTargetSnapshot;
     backgroundColor: number;
   }> = [];
@@ -71,10 +64,6 @@ export function buildSetSelectionToLayerColorPatch(args: {
         target: item.editorTarget,
         backgroundColor: layerColor,
       });
-      inverseUpdates.push({
-        target: item.editorTarget,
-        backgroundColor: item.backgroundColor,
-      });
     }
   }
 
@@ -83,30 +72,22 @@ export function buildSetSelectionToLayerColorPatch(args: {
   }
 
   return {
-    forward: {
-      score: {
-        type: 'setScoreObjectBackgroundColors',
-        updates: forwardUpdates,
-      },
-    },
-    inverse: {
-      score: {
-        type: 'setScoreObjectBackgroundColors',
-        updates: inverseUpdates,
-      },
+    score: {
+      type: 'setScoreObjectBackgroundColors',
+      updates: forwardUpdates,
     },
   };
 }
 
 /**
- * Build forward and inverse patches to apply a layer's background color to all items on that layer.
+ * Build a patch to apply a layer's background color to all items on that layer.
  * Returns null if the layer has no items or all items already match the layer color.
  */
 export function buildApplyLayerColorToAllClipsPatch(args: {
   groupId: string;
   layerIndex: number;
   layerGroups: ScoreLayerGroupSnapshot[];
-}): ScoreColorPatchPair | null {
+}): ScoreColorPatch | null {
   const { groupId, layerIndex, layerGroups } = args;
   const group = layerGroups.find((g) => g.groupId === groupId);
   if (!group) return null;
@@ -116,10 +97,6 @@ export function buildApplyLayerColorToAllClipsPatch(args: {
 
   const layerColor = layer.backgroundColor;
   const forwardUpdates: Array<{
-    target: ScoreObjectEditorTargetSnapshot;
-    backgroundColor: number;
-  }> = [];
-  const inverseUpdates: Array<{
     target: ScoreObjectEditorTargetSnapshot;
     backgroundColor: number;
   }> = [];
@@ -141,7 +118,6 @@ export function buildApplyLayerColorToAllClipsPatch(args: {
         },
       };
       forwardUpdates.push({ target, backgroundColor: layerColor });
-      inverseUpdates.push({ target, backgroundColor: patternLayer.sourceObject.backgroundColor });
     }
   } else {
     for (const item of layer.items) {
@@ -150,10 +126,6 @@ export function buildApplyLayerColorToAllClipsPatch(args: {
         forwardUpdates.push({
           target: item.editorTarget,
           backgroundColor: layerColor,
-        });
-        inverseUpdates.push({
-          target: item.editorTarget,
-          backgroundColor: item.backgroundColor,
         });
       }
     }
@@ -164,17 +136,9 @@ export function buildApplyLayerColorToAllClipsPatch(args: {
   }
 
   return {
-    forward: {
-      score: {
-        type: 'setScoreObjectBackgroundColors',
-        updates: forwardUpdates,
-      },
-    },
-    inverse: {
-      score: {
-        type: 'setScoreObjectBackgroundColors',
-        updates: inverseUpdates,
-      },
+    score: {
+      type: 'setScoreObjectBackgroundColors',
+      updates: forwardUpdates,
     },
   };
 }

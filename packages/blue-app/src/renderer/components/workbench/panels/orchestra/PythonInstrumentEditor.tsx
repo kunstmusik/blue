@@ -6,6 +6,7 @@ import EmbeddedUdoPanel from './EmbeddedUdoPanel';
 import GeneratedInstrumentModal from './GeneratedInstrumentModal';
 import JythonRuntimeStatusIndicator from '../score-object/editors/JythonRuntimeStatusIndicator';
 import type { SelectedInstrumentEditorProps } from './types';
+import type { ProjectDocumentCommitMetadata } from '../../../../../shared/project-history';
 import { cn } from '../../../../lib/cn';
 
 type PythonTab = 'instrument' | 'udo' | 'globalOrc' | 'globalSco';
@@ -156,7 +157,16 @@ export default function PythonInstrumentEditor({
                   mode="python"
                   placeholder="Enter Python instrument code"
                   ariaLabel={`${instrument.name || 'Python Instrument'} Python code editor`}
-                  onChange={(nextValue) => void onInstrumentPatch({ text: nextValue })}
+                  typingGroupingMs={500}
+                  historyMetadata={{
+                    fieldId: `instrument:${instrument.assignmentId}:text`,
+                    gestureId: `project-text:instrument:${instrument.assignmentId}:text`,
+                    label: 'Edit Instrument',
+                    phase: 'update',
+                  }}
+                  onChange={(nextValue, metadata?: ProjectDocumentCommitMetadata) =>
+                    void onInstrumentPatch({ text: nextValue }, metadata)
+                  }
                 />
               ) : tab.key === 'udo' ? (
                 <EmbeddedUdoPanel
@@ -173,12 +183,20 @@ export default function PythonInstrumentEditor({
                   mode={tab.key === 'globalOrc' ? 'orc' : 'sco'}
                   placeholder={`Enter ${tab.label} code`}
                   ariaLabel={`${instrument.name || 'Python Instrument'} ${tab.label} code editor`}
+                  typingGroupingMs={500}
+                  historyMetadata={{
+                    fieldId: `instrument:${instrument.assignmentId}:${tab.key}`,
+                    gestureId: `project-text:instrument:${instrument.assignmentId}:${tab.key}`,
+                    label: `Edit ${tab.label}`,
+                    phase: 'update',
+                  }}
                   javaBlueCompletionOptions={
                     tab.key === 'globalOrc' ? orchestraCompletionOptions : undefined
                   }
-                  onChange={(nextValue) =>
+                  onChange={(nextValue, metadata?: ProjectDocumentCommitMetadata) =>
                     void onInstrumentPatch(
                       tab.key === 'globalOrc' ? { globalOrc: nextValue } : { globalSco: nextValue },
+                      metadata,
                     )
                   }
                 />

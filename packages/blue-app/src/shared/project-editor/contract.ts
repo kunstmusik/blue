@@ -115,6 +115,7 @@ import type {
 } from '@blue/data';
 import type { MissingAudioAssetsSession } from '../missing-audio-assets';
 import type { ScoreInsertionLocation } from '../unified-library';
+import type { ProjectHistoryContext } from '../project-history';
 
 export interface ScoreTimeStateSnapshot {
   snapEnabled: boolean;
@@ -1359,6 +1360,7 @@ export interface EffectEditorRequest {
 
 export interface EffectEditorPatchRequest extends EffectEditorRequest {
   patch: EffectEditablePatch;
+  historyContext?: ProjectHistoryContext;
 }
 
 export interface ProjectEffectRef {
@@ -1456,7 +1458,13 @@ export interface MixerEffectPatch {
 }
 
 export type MixerFollowUpPatch =
-  | { type: 'duplicateChainEntry'; channelId: string; chain: MixerChainKind; entryId: string }
+  | {
+      type: 'duplicateChainEntry';
+      channelId: string;
+      chain: MixerChainKind;
+      entryId: string;
+      newEntryId?: string;
+    }
   | { type: 'copyChainEntry'; channelId: string; chain: MixerChainKind; entryId: string }
   | {
       type: 'pasteChainEntries';
@@ -1464,6 +1472,7 @@ export type MixerFollowUpPatch =
       chain: MixerChainKind;
       index?: number;
       payload: MixerChainClipboardPayload;
+      newEntryIds?: string[];
     }
   | {
       type: 'moveChainEntryAcrossChains';
@@ -1732,6 +1741,8 @@ export interface ProjectEditorSnapshot {
   filePath: string | null;
   version: string;
   sessionId: number;
+  /** Main-owned document lifetime identity; absent in older snapshots. */
+  documentId?: string;
   globalOrc: string;
   globalSco: string;
   orchestra: OrchestraSnapshot;
@@ -1779,6 +1790,178 @@ export interface ProjectDocumentPatch {
   score?: ScorePatch;
 }
 
+// ─── Patch preparation classification (Spec 103) ───
+
+/**
+ * Canonical preparation classification for durable patch variants. `scalar`
+ * variants are captured field-by-field with exact no-throw rollback; every
+ * other variant is `structural` and is applied to a detached history-copy
+ * candidate restored from a memento. Each table is compile-time exhaustive
+ * over its union's `type` discriminants: a newly added variant fails the type
+ * check until it receives an explicit classification, and the
+ * project-history-patch-classification test rejects variants that reach the
+ * preparation boundary unclassified instead of silently bypassing history.
+ */
+export type ProjectPatchPreparationClass = 'scalar' | 'structural';
+
+export const SCORE_PATCH_PREPARATION_CLASS: Readonly<
+  Record<ScorePatch['type'], ProjectPatchPreparationClass>
+> = {
+  addLayer: 'structural',
+  addLayerGroup: 'structural',
+  addMarker: 'structural',
+  addScoreObjects: 'structural',
+  addTrackItem: 'structural',
+  clearTrackInstrument: 'structural',
+  convertScoreObjectToObjectBuilder: 'structural',
+  convertToPolyObject: 'structural',
+  createTrackInstrument: 'structural',
+  deleteNamedNoteProcessorChain: 'structural',
+  moveLayer: 'structural',
+  moveLayerGroup: 'structural',
+  moveLayerRange: 'structural',
+  moveScoreObjects: 'structural',
+  moveTrackItems: 'structural',
+  removeLayer: 'structural',
+  removeLayerGroup: 'structural',
+  removeLayerRanges: 'structural',
+  removeMarker: 'structural',
+  removeScoreObjects: 'structural',
+  removeTrackItems: 'structural',
+  renameLayer: 'structural',
+  renameLayerGroup: 'structural',
+  replaceAudioFileSource: 'structural',
+  replaceNoteProcessorChain: 'structural',
+  replaceScopedNoteProcessorChain: 'structural',
+  replaceTrackInstrument: 'structural',
+  replaceTrackNoteProcessorChain: 'structural',
+  resizeTrackItems: 'structural',
+  saveNamedNoteProcessorChain: 'structural',
+  setScoreObjectBackgroundColors: 'structural',
+  setSubjectiveDurationToObjective: 'structural',
+  updateAudioFilePostCode: 'structural',
+  updateLayerState: 'structural',
+  updateMarker: 'structural',
+  updatePatternBeatsLength: 'structural',
+  updatePatternCells: 'structural',
+  updateSharedProperties: 'structural',
+  updateSoundObjectBehavior: 'structural',
+  updateTimeState: 'structural',
+  updateTrackInstrument: 'structural',
+  updateTypeSpecificEditor: 'structural',
+  assignAutomationToLayer: 'structural',
+  removeAutomationFromLayer: 'structural',
+  moveAutomationToLayer: 'structural',
+  clearLayerAutomations: 'structural',
+  cleanupLayerAutomation: 'structural',
+  selectLayerAutomation: 'structural',
+  setAutomationLineColor: 'structural',
+  setAutomationPoints: 'structural',
+  insertAutomationPoint: 'structural',
+  deleteAutomationPoint: 'structural',
+  moveAutomationPoint: 'structural',
+  setAutomationResolution: 'structural',
+  moveAutomationRange: 'structural',
+  scaleAutomationRange: 'structural',
+};
+
+export const MIXER_PATCH_PREPARATION_CLASS: Readonly<
+  Record<MixerPatch['type'], ProjectPatchPreparationClass>
+> = {
+  setMixerEnabled: 'scalar',
+  updateExtraRenderTime: 'scalar',
+  updateChannel: 'scalar',
+  renameChannelListGroup: 'structural',
+  addSubChannel: 'structural',
+  removeSubChannel: 'structural',
+  addEffectFromLibrary: 'structural',
+  addSend: 'structural',
+  updateSend: 'structural',
+  updateEffect: 'structural',
+  removeChainEntry: 'structural',
+  reorderChainEntry: 'structural',
+  duplicateChainEntry: 'structural',
+  copyChainEntry: 'structural',
+  pasteChainEntries: 'structural',
+  moveChainEntryAcrossChains: 'structural',
+};
+
+export const MIXER_CHANNEL_FIELD_PREPARATION_CLASS: Readonly<
+  Record<keyof MixerChannelEditableFields, ProjectPatchPreparationClass>
+> = {
+  name: 'structural',
+  outChannel: 'structural',
+  muted: 'scalar',
+  solo: 'scalar',
+  level: 'scalar',
+  volume: 'scalar',
+  pan: 'scalar',
+};
+
+export const ORCHESTRA_PATCH_PREPARATION_CLASS: Readonly<
+  Record<OrchestraPatch['type'], ProjectPatchPreparationClass>
+> = {
+  addInstrument: 'structural',
+  removeAssignment: 'structural',
+  duplicateAssignment: 'structural',
+  pasteInstrument: 'structural',
+  updateAssignment: 'structural',
+  replaceInstrument: 'structural',
+  convertGenericToBsb: 'structural',
+  updateInstrument: 'structural',
+  updateInstrumentComment: 'structural',
+};
+
+export const BLUE_LIVE_PATCH_PREPARATION_CLASS: Readonly<
+  Record<BlueLivePatch['type'], ProjectPatchPreparationClass>
+> = {
+  updateOptions: 'structural',
+  updateTempoRepeat: 'structural',
+  updateLiveCodeText: 'structural',
+  setCellEnabled: 'structural',
+  setCell: 'structural',
+  insertRow: 'structural',
+  removeRow: 'structural',
+  insertColumn: 'structural',
+  removeColumn: 'structural',
+  captureEnabledSet: 'structural',
+  renameSet: 'structural',
+  removeSet: 'structural',
+  moveSet: 'structural',
+  applySet: 'structural',
+};
+
+export const MIDI_INPUT_PATCH_PREPARATION_CLASS: Readonly<
+  Record<MidiInputPatch['type'], ProjectPatchPreparationClass>
+> = {
+  updateKeyMapping: 'structural',
+  updateVelocityMapping: 'structural',
+  updatePitchConstant: 'structural',
+  updateAmpConstant: 'structural',
+  updateScale: 'structural',
+};
+
+export const PROJECT_UDO_PATCH_PREPARATION_CLASS: Readonly<
+  Record<ProjectUdoPatch['type'], ProjectPatchPreparationClass>
+> = {
+  add: 'structural',
+  remove: 'structural',
+  update: 'structural',
+  reorder: 'structural',
+  convertStyle: 'structural',
+};
+
+export const TRANSPORT_PATCH_FIELD_PREPARATION_CLASS: Readonly<
+  Record<keyof NonNullable<ProjectDocumentPatch['transport']>, ProjectPatchPreparationClass>
+> = {
+  renderStartTime: 'scalar',
+  renderEndTime: 'scalar',
+  loopRendering: 'scalar',
+  tempoMap: 'structural',
+  tempoMapPatch: 'structural',
+  meterMapPatch: 'structural',
+};
+
 export interface ScratchPadSnapshot {
   text: string;
   wordWrapEnabled: boolean;
@@ -1810,6 +1993,16 @@ export interface ProjectDocumentCommitReceipt {
    * operation behind an unrelated successful edit.
    */
   patchAccepted?: boolean[];
+  documentId?: string;
+  stateId?: string;
+  oversizeProposal?: {
+    token: string;
+    estimatedBytes: number;
+    limitBytes: number;
+    explanation: string;
+  };
+  /** Present when a direct mutation proposal could not be consumed. */
+  error?: string;
 }
 
 export interface ProjectDocumentPatchContext {
@@ -2547,6 +2740,7 @@ export type InstrumentPatch = Partial<{
   name: string;
   enabled: boolean;
   comment: string;
+  comments: string;
   text: string;
   instrumentText: string;
   alwaysOnInstrumentText: string;
@@ -2576,6 +2770,7 @@ export interface TrackInstrumentEditorSnapshot {
 
 export interface TrackInstrumentEditorPatchRequest extends TrackInstrumentEditorRequest {
   readonly patch: InstrumentPatch;
+  readonly historyContext?: ProjectHistoryContext;
 }
 
 export type TrackInstrumentEditorPatchStatus = 'applied' | 'unchanged' | 'stale' | 'unavailable';
@@ -2629,6 +2824,7 @@ export type ProjectLoadedPayload = ProjectSummarySnapshot &
     Pick<
       ProjectEditorSnapshot,
       | 'sessionId'
+      | 'documentId'
       | 'globalOrc'
       | 'globalSco'
       | 'orchestra'
@@ -2703,9 +2899,12 @@ export interface BlueX7RuntimeUpdateBatch {
 }
 
 /** Effective-value readback request; only visible controls for open editors. */
+export type BlueX7PerformanceKind = 'timeline' | 'blueLive';
+
 export interface BlueX7EffectiveValuesRequest {
   target: BlueX7RuntimeTarget;
   projectSessionId: number;
+  performanceKind: BlueX7PerformanceKind;
   parameterIds: string[];
 }
 
@@ -2793,6 +2992,7 @@ export function isBlueX7EffectiveValuesRequest(
   return (
     isBlueX7RuntimeTarget(value.target) &&
     BLUE_X7_SESSION_ID(value.projectSessionId) &&
+    (value.performanceKind === 'timeline' || value.performanceKind === 'blueLive') &&
     Array.isArray(value.parameterIds) &&
     value.parameterIds.length > 0 &&
     value.parameterIds.length <= 151 &&

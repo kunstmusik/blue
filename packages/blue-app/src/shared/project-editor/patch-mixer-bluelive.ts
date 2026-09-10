@@ -812,7 +812,7 @@ function generateUniqueSubChannelName(existingNames: ReadonlySet<string>): strin
 }
 
 export function findMixerChannelById(mixer: Mixer, channelId: string): Channel | null {
-  if (channelId === 'master') {
+  if (channelId === 'master' || channelId === 'Master') {
     return mixer.getMaster();
   }
 
@@ -828,7 +828,10 @@ export function findMixerChannelById(mixer: Mixer, channelId: string): Channel |
 
   const subChannel = mixer
     .getSubChannels()
-    .find((channel) => getMixerChannelSnapshotId(channel) === channelId);
+    .find(
+      (channel) =>
+        channel.getName() === channelId || getMixerChannelSnapshotId(channel) === channelId,
+    );
   if (subChannel) {
     return subChannel;
   }
@@ -1137,14 +1140,14 @@ function applyMixerPatchToChain(
       const original = chain[dupIndex];
       if (original instanceof Effect) {
         const clone = createEffectFromXml(original.saveAsXML().toXml());
-        getMixerEntrySnapshotId(clone, crypto.randomUUID());
+        getMixerEntrySnapshotId(clone, patch.newEntryId ?? crypto.randomUUID());
         chain.splice(dupIndex + 1, 0, clone);
       } else if (original instanceof Send) {
         const clone = new Send();
         clone.setSendChannel(original.getSendChannel());
         clone.setLevel(original.getLevel());
         clone.setEnabled(original.isEnabled());
-        getMixerEntrySnapshotId(clone, crypto.randomUUID());
+        getMixerEntrySnapshotId(clone, patch.newEntryId ?? crypto.randomUUID());
         chain.splice(dupIndex + 1, 0, clone);
       }
       return true;
@@ -1156,16 +1159,17 @@ function applyMixerPatchToChain(
       const insertIndex = patch.index ?? chain.length;
       for (let i = 0; i < patch.payload.entries.length; i++) {
         const entry = patch.payload.entries[i];
+        const newEntryId = patch.newEntryIds?.[i] ?? crypto.randomUUID();
         if (entry.kind === 'effect') {
           const effect = createEffectFromXml(entry.effectXml);
-          getMixerEntrySnapshotId(effect, entry.entryId + '-paste-' + i);
+          getMixerEntrySnapshotId(effect, newEntryId);
           chain.splice(Math.min(insertIndex + i, chain.length), 0, effect);
         } else if (entry.kind === 'send') {
           const send = new Send();
           send.setSendChannel(entry.sendChannel);
           send.setLevel(entry.level);
           send.setEnabled(entry.enabled);
-          getMixerEntrySnapshotId(send, entry.entryId + '-paste-' + i);
+          getMixerEntrySnapshotId(send, newEntryId);
           chain.splice(Math.min(insertIndex + i, chain.length), 0, send);
         }
       }
@@ -1421,6 +1425,68 @@ export function createNestedPolyObjectSnapshot(
         ? createNoteProcessorChainSnapshot(groupChain)
         : undefined,
   };
+}
+
+/**
+ * Human-readable history label for a durable mixer patch. Every MixerPatch
+ * variant has an explicit label so mixer edits enter project history as
+ * meaningful actions instead of a generic edit label.
+ */
+export function mixerPatchActionLabel(patch: MixerPatch): string {
+  switch (patch.type) {
+    case 'setMixerEnabled':
+      return patch.value ? 'Enable Mixer' : 'Disable Mixer';
+    case 'updateExtraRenderTime':
+      return 'Set Extra Render Time';
+    case 'renameChannelListGroup':
+      return 'Rename Channel List Group';
+    case 'updateChannel': {
+      const fields = Object.keys(patch.patch);
+      if (fields.length === 1) {
+        switch (fields[0]) {
+          case 'level':
+            return 'Set Channel Level';
+          case 'volume':
+            return 'Set Channel Volume';
+          case 'pan':
+            return 'Set Channel Pan';
+          case 'muted':
+            return patch.patch.muted ? 'Mute Channel' : 'Unmute Channel';
+          case 'solo':
+            return patch.patch.solo ? 'Solo Channel' : 'Unsolo Channel';
+          case 'name':
+            return 'Rename Channel';
+          case 'outChannel':
+            return 'Set Channel Output';
+        }
+      }
+      return 'Update Mixer Channel';
+    }
+    case 'addSubChannel':
+      return 'Add Sub Channel';
+    case 'removeSubChannel':
+      return 'Remove Sub Channel';
+    case 'addEffectFromLibrary':
+      return 'Add Mixer Effect';
+    case 'addSend':
+      return 'Add Send';
+    case 'updateSend':
+      return 'Update Send';
+    case 'updateEffect':
+      return 'Update Mixer Effect';
+    case 'removeChainEntry':
+      return 'Remove Mixer Chain Entry';
+    case 'reorderChainEntry':
+      return 'Reorder Mixer Chain Entry';
+    case 'duplicateChainEntry':
+      return 'Duplicate Mixer Chain Entry';
+    case 'copyChainEntry':
+      return 'Copy Mixer Chain Entry';
+    case 'pasteChainEntries':
+      return 'Paste Mixer Chain Entries';
+    case 'moveChainEntryAcrossChains':
+      return 'Move Mixer Chain Entry';
+  }
 }
 
 export {

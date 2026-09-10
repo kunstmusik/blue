@@ -1,8 +1,10 @@
 import { create } from 'zustand';
 import type {
   ScoreObjectEditorTargetSnapshot,
+  ScoreDocumentSnapshot,
   ScoreRowObjectSnapshot,
 } from '../../shared/project-editor';
+import type { ProjectHistorySelectionHint } from '../../shared/project-history';
 
 export interface ScoreObjectClipboardEntry {
   objectId: string;
@@ -26,6 +28,19 @@ export interface ScoreObjectClipboardEntry {
 export interface ScoreSelectionEntry {
   objectId: string;
   editorTarget?: ScoreObjectEditorTargetSnapshot;
+}
+
+export interface ExternalSelectionReconciliationOptions {
+  /** Identity of the view that produced the replay publication. */
+  originViewId?: string;
+  /** Identity of the context that produced the replay publication. */
+  originContextId?: string;
+  /** Identity of this renderer view, when it is known. */
+  currentViewId?: string;
+  /** Identity of this renderer context, when it is known. */
+  currentContextId?: string;
+  /** Set false when the origin view/context has already been closed. */
+  originIsOpen?: boolean;
 }
 
 /** Transient relative shape used by pattern cut/copy/paste; never persisted. */
@@ -310,3 +325,84 @@ export const useScoreSelectionStore = create<ScoreSelectionState>((set) => ({
     set({ audioDropGuideBeat: beat });
   },
 }));
+
+/**
+ * Applies canonical-restoration selection hints from another view's edit or
+ * history command. Only hints whose score objects still exist are restored;
+ * a hint set with no surviving targets reconciles to an empty selection.
+ * Selection metadata never enters project XML — it rides only on
+ * publications and lives in renderer state.
+ */
+export function reconcileExternalSelectionHints(
+  hints: readonly ProjectHistorySelectionHint[],
+  score: ScoreDocumentSnapshot | undefined,
+  options: ExternalSelectionReconciliationOptions = {},
+): void {
+  reconcileSelectionWithCanonicalScore(score);
+
+  const hasOriginIdentity =
+    options.originViewId !== undefined || options.originContextId !== undefined;
+  const originMatchesCurrentView =
+    options.originViewId === undefined ||
+    options.currentViewId === undefined ||
+    options.originViewId === options.currentViewId;
+  const originMatchesCurrentContext =
+    options.originContextId === undefined ||
+    options.currentContextId === undefined ||
+    options.originContextId === options.currentContextId;
+  if (
+    options.originIsOpen === false ||
+    (hasOriginIdentity && (!originMatchesCurrentView || !originMatchesCurrentContext))
+  ) {
+    return;
+  }
+
+  const objectIds = hints
+    .filter((hint) => hint.targetType === 'scoreObject')
+    .map((hint) => hint.targetId);
+  if (objectIds.length === 0) return;
+
+  const existing = getScoreObjectIds(score);
+
+  const store = useScoreSelectionStore.getState();
+  const restored = objectIds.filter((id) => existing.has(id));
+  if (restored.length === 0) {
+    store.clearSelection();
+    return;
+  }
+
+  store.select(restored[0]!, false, undefined);
+  for (const objectId of restored.slice(1)) {
+    store.select(objectId, true, undefined);
+  }
+}
+
+/** Removes selections that no longer resolve in the newly published Score. */
+export function reconcileSelectionWithCanonicalScore(
+  score: ScoreDocumentSnapshot | undefined,
+): void {
+  const existing = getScoreObjectIds(score);
+  const state = useScoreSelectionStore.getState();
+  const surviving = [...state.selectedObjectIds].filter((objectId) => existing.has(objectId));
+  if (surviving.length === state.selectedObjectIds.size) return;
+
+  state.setSelection(
+    surviving.map((objectId) => ({
+      objectId,
+      editorTarget: state.selectedObjectTargets[objectId],
+    })),
+  );
+}
+
+function getScoreObjectIds(score: ScoreDocumentSnapshot | undefined): Set<string> {
+  const existing = new Set<string>();
+  if (!score) return existing;
+  for (const group of score.layerGroups) {
+    for (const layer of group.layers) {
+      for (const item of layer.items) {
+        existing.add(item.objectId);
+      }
+    }
+  }
+  return existing;
+}

@@ -162,5 +162,18 @@ describe('path-boundary', () => {
         fs.rmSync(tempDir, { recursive: true, force: true });
       }
     });
+
+    it('preserves native and synthetic Windows path strings without path normalization corruption (T058, US5)', () => {
+      const windowsNative = 'C:\\Projects\\Piece1\\project.blue';
+      const posixNative = '/home/user/projects/piece.blue';
+
+      // Ensure that lexical containment correctly handles native host separators
+      expect(lexicalNativeContains('C:\\Projects', windowsNative, { platform: 'win32' })).toBe(
+        true,
+      );
+      expect(lexicalNativeContains('C:\\Other', windowsNative, { platform: 'win32' })).toBe(false);
+      expect(lexicalNativeContains('/home/user', posixNative, { platform: 'linux' })).toBe(true);
+      expect(lexicalNativeContains('/var/other', posixNative, { platform: 'linux' })).toBe(false);
+    });
   });
 });

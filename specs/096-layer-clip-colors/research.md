@@ -104,3 +104,9 @@ Expose score-scoped undo/redo controls in the score toolbar. Do not take over El
 
 - Encode layer color in names or unrelated Java fields: rejected as corrupting semantics.
 - Block Java opening: rejected because the extra layer child can remain forward-compatible and item content remains readable.
+
+## Decision 9: Use the existing global project history for color actions
+
+**Superseding decision (2026-09-10)**: Decision 6's renderer-local score-color history is retired. Score and layer color actions submit forward `ProjectDocumentPatch` values through the existing main-owned project-history coordinator, which supplies the single chronological undo/redo entry, exact before/after restoration, retention, and semantic labels. The renderer keeps optimistic color state and picker presentation only.
+
+**Rationale**: A second inverse-patch stack made committed color edits bypass the global chronology and duplicated failure/reconciliation behavior. The global history already owns the required settlement and replay guarantees.

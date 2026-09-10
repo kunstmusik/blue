@@ -111,6 +111,7 @@ export default function ClojureProjectTab({
                   </div>
                   <InputBase
                     disabled={disabled}
+                    historyScope="none"
                     value={entry.dependencyCoordinates}
                     onChange={(dependencyCoordinates) =>
                       handleEntryChange(index, { dependencyCoordinates })
@@ -123,6 +124,7 @@ export default function ClojureProjectTab({
                   <div className={cn('lg:hidden', APP_INSPECTOR_LABEL_TEXT_CLASS)}>Version</div>
                   <InputBase
                     disabled={disabled}
+                    historyScope="none"
                     value={entry.version}
                     onChange={(version) => handleEntryChange(index, { version })}
                     className="font-mono text-role-body"

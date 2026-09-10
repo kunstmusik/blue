@@ -89,6 +89,7 @@ export default function OrchestraPanel(): React.ReactElement {
                     target: { assignmentId: selectedInstrument.assignmentId },
                     projectSessionId,
                     enabled: playbackRunning || blueLiveRunning,
+                    performanceKind: playbackRunning ? 'timeline' : 'blueLive',
                   }
                 : undefined
             }

@@ -7,6 +7,7 @@ import type {
   EmbeddedOpcodeListPatch,
   InstrumentPatch,
 } from '../../../shared/project-editor';
+import type { ProjectDocumentCommitMetadata } from '../../../shared/project-history';
 import { createBsbReplacementKeys } from '../workbench/panels/orchestra/bsb/bsb-completions';
 import BSBInterfaceEditor from '../workbench/panels/orchestra/bsb/BSBInterfaceEditor';
 import SelectedCodeEditor from '../workbench/panels/editors/SelectedCodeEditor';
@@ -25,7 +26,7 @@ type EffectEditorTab = 'interface' | 'code' | 'udo' | 'comments';
 
 export interface EffectEditorPanelProps {
   snapshot: EffectEditorSnapshot;
-  onPatch: (patch: EffectEditablePatch) => void;
+  onPatch: (patch: EffectEditablePatch, metadata?: ProjectDocumentCommitMetadata) => void;
   className?: string;
   showNameField?: boolean;
   initialTab?: EffectEditorTab;
@@ -73,16 +74,22 @@ export default function EffectEditorPanel({
   }, [onEditorUsable]);
 
   const handleInstrumentPatch = useCallback(
-    (patch: InstrumentPatch) => {
+    (patch: InstrumentPatch, metadata?: ProjectDocumentCommitMetadata) => {
       if (!patch.bsbInterface) return;
-      onPatch({ bsbInterface: patch.bsbInterface });
+      onPatch({ bsbInterface: patch.bsbInterface }, metadata);
     },
     [onPatch],
   );
 
-  const handleCodeChange = useCallback((code: string) => onPatch({ code }), [onPatch]);
+  const handleCodeChange = useCallback(
+    (code: string, metadata?: ProjectDocumentCommitMetadata) => onPatch({ code }, metadata),
+    [onPatch],
+  );
 
-  const handleCommentsChange = useCallback((comments: string) => onPatch({ comments }), [onPatch]);
+  const handleCommentsChange = useCallback(
+    (comments: string, metadata?: ProjectDocumentCommitMetadata) => onPatch({ comments }, metadata),
+    [onPatch],
+  );
 
   const handleNameChange = useCallback((name: string) => onPatch({ name }), [onPatch]);
 
@@ -96,8 +103,8 @@ export default function EffectEditorPanel({
   );
 
   const udoDispatch = useCallback(
-    (patch: Record<string, unknown>) => {
-      onPatch({ opcodeList: patch as EmbeddedOpcodeListPatch });
+    (patch: Record<string, unknown>, metadata?: ProjectDocumentCommitMetadata) => {
+      onPatch({ opcodeList: patch as EmbeddedOpcodeListPatch }, metadata);
     },
     [onPatch],
   );
@@ -243,6 +250,13 @@ export default function EffectEditorPanel({
                 onChange={handleCodeChange}
                 ariaLabel="Effect code editor"
                 mode="orc"
+                typingGroupingMs={500}
+                historyMetadata={{
+                  fieldId: `effect:${snapshot.effectId}:code`,
+                  gestureId: `project-text:effect:${snapshot.effectId}:code`,
+                  label: 'Edit Effect Code',
+                  phase: 'update',
+                }}
                 javaBlueCompletionOptions={javaBlueCompletionOptions}
               />
             </div>
@@ -272,6 +286,13 @@ export default function EffectEditorPanel({
             ariaLabel="Effect comments editor"
             mode="text"
             placeholder="Add notes for this effect..."
+            typingGroupingMs={500}
+            historyMetadata={{
+              fieldId: `effect:${snapshot.effectId}:comments`,
+              gestureId: `project-text:effect:${snapshot.effectId}:comments`,
+              label: 'Edit Effect Comments',
+              phase: 'update',
+            }}
           />
         )}
       </div>

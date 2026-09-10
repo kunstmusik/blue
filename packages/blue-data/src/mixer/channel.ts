@@ -7,6 +7,7 @@ import { Send } from './send';
 import { Element } from '../serialization/xml-reader';
 import { BlueDataObject } from '../blue-data-object';
 import { Parameter } from '../automation/parameter';
+import type { CopyMode } from '../deep-copyable';
 import { writeDouble, writeBoolean } from '../utilities/xml';
 
 export class Channel implements BlueDataObject {
@@ -210,7 +211,7 @@ export class Channel implements BlueDataObject {
     return channel;
   }
 
-  deepCopy(): BlueDataObject {
+  deepCopy(mode: CopyMode = 'duplication'): BlueDataObject {
     const copy = new Channel();
     copy._name = this._name;
     copy._muted = this._muted;
@@ -220,10 +221,10 @@ export class Channel implements BlueDataObject {
     copy._association = this._association;
     copy._level = this._level;
     copy._outChannel = this._outChannel;
-    copy._preEffects = this._preEffects.deepCopy() as EffectsChain;
-    copy._postEffects = this._postEffects.deepCopy() as EffectsChain;
-    copy._effectsChain = this._effectsChain.deepCopy() as EffectsChain;
-    copy._levelParameter = this._levelParameter.deepCopy() as Parameter;
+    copy._preEffects = this._preEffects.deepCopy(mode) as EffectsChain;
+    copy._postEffects = this._postEffects.deepCopy(mode) as EffectsChain;
+    copy._effectsChain = this._effectsChain.deepCopy(mode) as EffectsChain;
+    copy._levelParameter = this._levelParameter.deepCopy(mode) as Parameter;
     return copy;
   }
 }

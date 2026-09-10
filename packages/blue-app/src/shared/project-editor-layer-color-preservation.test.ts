@@ -10,8 +10,6 @@ describe('Project Editor Layer Color Preservation (US2)', () => {
     item.setBackgroundColor(0xabcdef);
 
     const patch: ProjectDocumentPatch = {
-      projectSessionId: 0,
-      projectRevision: 0,
       score: {
         type: 'updateLayerState',
         groupId: polyGroupId,
@@ -38,8 +36,6 @@ describe('Project Editor Layer Color Preservation (US2)', () => {
     item.setBackgroundColor(0x123456); // Custom blue
 
     const patch: ProjectDocumentPatch = {
-      projectSessionId: 0,
-      projectRevision: 0,
       score: {
         type: 'moveScoreObjects',
         moves: [
@@ -81,8 +77,6 @@ describe('Project Editor Layer Color Preservation (US2)', () => {
     const serializedXml = existing.saveAsXML().toXml();
 
     const patch: ProjectDocumentPatch = {
-      projectSessionId: 0,
-      projectRevision: 0,
       score: {
         type: 'addScoreObjects',
         groupId: polyGroupId,
@@ -116,8 +110,6 @@ describe('Project Editor Layer Color Preservation (US2)', () => {
     destLayer.setBackgroundColor(0xff0000); // Red
 
     const patch: ProjectDocumentPatch = {
-      projectSessionId: 0,
-      projectRevision: 0,
       score: {
         type: 'addScoreObjects',
         groupId: polyGroupId,

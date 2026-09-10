@@ -24,7 +24,6 @@ import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../
 import ColorPickerButton from '../../../ColorPicker';
 import { DEFAULT_LAYER_COLOR, formatLayerColorToHex, normalizeLayerColor } from '@blue/data';
 import { cn } from '../../../../lib/cn';
-import { useScoreColorHistoryStore } from '../../../../stores/score-color-history-store';
 import { buildApplyLayerColorToAllClipsPatch } from './score-color-actions';
 
 interface Props {
@@ -49,10 +48,8 @@ export default function PatternLayerHeader({
   const setLayerMute = useProjectStore((state) => state.setLayerMute);
   const setLayerSolo = useProjectStore((state) => state.setLayerSolo);
   const setLayerBackgroundColor = useProjectStore((state) => state.setLayerBackgroundColor);
-  const pushColorHistoryEntry = useScoreColorHistoryStore((state) => state.pushEntry);
   const addLayer = useProjectStore((state) => state.addLayer);
   const applyProjectDocumentPatch = useProjectStore((state) => state.applyProjectDocumentPatch);
-  const flushPendingPatches = useProjectStore((state) => state.flushPendingPatches);
   const select = useScoreSelectionStore((state) => state.select);
   const selectedObjectIds = useScoreSelectionStore((state) => state.selectedObjectIds);
   const openPanel = useWorkbenchStore((state) => state.openPanel);
@@ -248,35 +245,6 @@ export default function PatternLayerHeader({
                   const color = normalizeLayerColor(parseInt(hex.replace('#', ''), 16));
                   setLayerBackgroundColor(groupId, layerIndex, color);
                 }}
-                onGestureComplete={async ({ initialValue, finalValue }) => {
-                  const initial = normalizeLayerColor(parseInt(initialValue.replace('#', ''), 16));
-                  const final = normalizeLayerColor(parseInt(finalValue.replace('#', ''), 16));
-                  if (initial === final) return;
-                  try {
-                    await flushPendingPatches();
-                    pushColorHistoryEntry({
-                      label: `Change ${layer.name} Color`,
-                      forward: {
-                        score: {
-                          type: 'updateLayerState',
-                          groupId,
-                          layerIndex,
-                          patch: { backgroundColor: final },
-                        },
-                      },
-                      inverse: {
-                        score: {
-                          type: 'updateLayerState',
-                          groupId,
-                          layerIndex,
-                          patch: { backgroundColor: initial },
-                        },
-                      },
-                    });
-                  } catch {
-                    // Rejection reconciliation - do not record history entry
-                  }
-                }}
                 ariaLabel={`Layer color for ${layer.name}`}
                 title={`Layer color: ${layer.name}`}
                 className="w-4 h-4 rounded-sm border border-app-border/40 shrink-0 cursor-pointer mr-0.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
@@ -414,24 +382,17 @@ export default function PatternLayerHeader({
             <ContextMenu.Separator className="editor-context-menu__separator" />
             <ContextMenu.Item
               className={menuItemClass}
-              onSelect={async () => {
+              onSelect={() => {
                 const pair = buildApplyLayerColorToAllClipsPatch({
                   groupId,
                   layerIndex,
                   layerGroups: effectiveLayerGroups,
                 });
                 if (pair) {
-                  try {
-                    await applyProjectDocumentPatch(pair.forward);
-                    await flushPendingPatches();
-                    pushColorHistoryEntry({
-                      label: `Apply Layer Color to All Clips (${layer.name})`,
-                      forward: pair.forward,
-                      inverse: pair.inverse,
-                    });
-                  } catch {
-                    // Rejection reconciliation - do not record history entry
-                  }
+                  void applyProjectDocumentPatch(pair, {
+                    label: `Apply Layer Color to All Clips (${layer.name})`,
+                    phase: 'single',
+                  });
                 }
               }}
             >

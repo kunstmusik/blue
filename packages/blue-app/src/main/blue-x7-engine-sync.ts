@@ -21,6 +21,7 @@ export interface BlueX7EngineSyncDeps {
   getSessionId(): number | null;
   getRevision(): number | undefined;
   isPlaying(): boolean;
+  getBinding?(ownerIdentity: string): CompiledBlueX7Binding | undefined;
   writeChannels(
     entries: readonly { name: string; value: number }[],
   ): Promise<{ ok: boolean; message: string }>;
@@ -29,28 +30,48 @@ export interface BlueX7EngineSyncDeps {
   ): Promise<{ ok: true; values: number[] } | { ok: false; message: string }>;
 }
 
-let activeBindings = new Map<string, CompiledBlueX7Binding>();
+const generationBindings = new Map<number, Map<string, CompiledBlueX7Binding>>();
+let defaultGeneration = 1;
 let engineSequence = 0;
 
 /** Capture the compiled bindings of the render that just started. */
 export function setActiveBlueX7Bindings(
   bindings: readonly CompiledBlueX7Binding[] | undefined,
+  generation = 1,
 ): void {
-  activeBindings = new Map(bindings?.map((binding) => [binding.ownerIdentity, binding]) ?? []);
+  defaultGeneration = generation;
+  generationBindings.set(
+    generation,
+    new Map(bindings?.map((binding) => [binding.ownerIdentity, binding]) ?? []),
+  );
 }
 
 /** Forget the render-scoped bindings (stop, rebuild, project close). */
-export function clearActiveBlueX7Bindings(): void {
-  activeBindings = new Map();
+export function clearActiveBlueX7Bindings(generation?: number): void {
+  if (generation !== undefined) {
+    generationBindings.delete(generation);
+  } else {
+    generationBindings.clear();
+  }
 }
 
 /** Invalidate one owner without disturbing independent live bindings. */
-export function invalidateActiveBlueX7Binding(ownerIdentity: string): void {
-  activeBindings.delete(ownerIdentity);
+export function invalidateActiveBlueX7Binding(ownerIdentity: string, generation?: number): void {
+  if (generation !== undefined) {
+    generationBindings.get(generation)?.delete(ownerIdentity);
+  } else {
+    for (const registry of generationBindings.values()) {
+      registry.delete(ownerIdentity);
+    }
+  }
 }
 
-export function getActiveBlueX7Binding(ownerIdentity: string): CompiledBlueX7Binding | undefined {
-  return activeBindings.get(ownerIdentity);
+export function getActiveBlueX7Binding(
+  ownerIdentity: string,
+  generation?: number,
+): CompiledBlueX7Binding | undefined {
+  const gen = generation ?? defaultGeneration;
+  return generationBindings.get(gen)?.get(ownerIdentity);
 }
 
 /** Resolve a live runtime target against the current canonical project. */
@@ -98,7 +119,7 @@ export function createBlueX7RuntimeEnvironment(
     isPlaying: deps.isPlaying,
     resolveOwner: (target) =>
       resolveBlueX7OwnerFromData(deps.getData(), target, deps.getSessionId()),
-    getBinding: getActiveBlueX7Binding,
+    getBinding: deps.getBinding ?? getActiveBlueX7Binding,
     writeChannels: deps.writeChannels,
     readChannels: deps.readChannels,
     nextEngineSequence: () => ++engineSequence,
@@ -142,6 +163,12 @@ function targetForOwner(
   return { track: { projectSessionId: sessionId ?? -1, rootGroupId, trackId } };
 }
 
+function normalizeBlueX7OwnerIdentity(ownerIdentity: string): string {
+  return ownerIdentity.startsWith('arrangement:') || ownerIdentity.startsWith('track:')
+    ? ownerIdentity
+    : `arrangement:${ownerIdentity}`;
+}
+
 /**
  * Route an already-applied arrangement or Track BlueX7 instrument patch to
  * the running engine. Fixed deltas go through the authority-checked live
@@ -153,39 +180,61 @@ export async function syncBlueX7InstrumentPatchToRuntime(
   data: BlueData | null,
   ownerIdentity: string,
   patch: InstrumentPatch,
-): Promise<void> {
-  if (!data || !patch.blueX7 || !deps.isPlaying()) return;
-  const instrument = findBlueX7InstrumentByOwner(data, ownerIdentity);
-  if (!instrument) return;
-  const target = targetForOwner(data, ownerIdentity, deps.getSessionId());
-  if (!target) return;
+): Promise<{ status: 'applied' } | { status: 'rejected'; message: string }> {
+  if (!data) return { status: 'rejected', message: 'No project is loaded' };
+  if (!patch.blueX7) return { status: 'applied' };
+  if (!deps.isPlaying()) return { status: 'rejected', message: 'No active engine session' };
+
+  const normalizedOwnerIdentity = normalizeBlueX7OwnerIdentity(ownerIdentity);
+  const instrument = findBlueX7InstrumentByOwner(data, normalizedOwnerIdentity);
+  if (!instrument) {
+    return { status: 'rejected', message: `BlueX7 owner not found: ${normalizedOwnerIdentity}` };
+  }
+  const target = targetForOwner(data, normalizedOwnerIdentity, deps.getSessionId());
+  if (!target) {
+    return { status: 'rejected', message: `Invalid BlueX7 owner: ${normalizedOwnerIdentity}` };
+  }
 
   const env = createBlueX7RuntimeEnvironment(deps);
   const intent = blueX7PatchToRuntimeIntent(patch.blueX7);
 
-  if (intent.kind === 'none') return;
+  if (intent.kind === 'none') return { status: 'applied' };
 
   if (intent.kind === 'complete-voice') {
-    const parameters = instrument.getParameters();
+    const canonicalParameters = instrument.getParameters();
+    let runtimeParameters = canonicalParameters;
+    if (patch.blueX7.type === 'replaceVoice') {
+      const detachedInstrument = new BlueX7(instrument);
+      detachedInstrument.replaceVoice(structuredClone(patch.blueX7.voice));
+      runtimeParameters = detachedInstrument.getParameters();
+    }
+    const runtimeValuesByName = new Map(
+      runtimeParameters.map((parameter) => [parameter.getName(), parameter.getFixedValue()]),
+    );
     const result = await applyBlueX7CompleteVoiceBatch(env, {
       projectSessionId: deps.getSessionId() ?? -1,
       owner: target,
       mode: 'complete-voice',
-      values: parameters.map((parameter) => ({
+      values: canonicalParameters.map((parameter) => ({
         parameterId: parameter.getUniqueId(),
-        value: parameter.getFixedValue(),
+        value: runtimeValuesByName.get(parameter.getName()) ?? Number.NaN,
       })),
     });
     if (!result.ok) {
-      console.warn(`[BlueX7] complete-voice runtime sync failed: ${result.message}`);
+      return { status: 'rejected', message: result.message };
     }
-    return;
+    return { status: 'applied' };
   }
 
   const parameters = instrument.getParameters();
   for (const change of intent.changes) {
     const parameter = parameters.find((candidate) => candidate.getName() === change.semanticKey);
-    if (!parameter) continue;
+    if (!parameter) {
+      return {
+        status: 'rejected',
+        message: `BlueX7 parameter not found: ${change.semanticKey}`,
+      };
+    }
     const result = await applyBlueX7LiveUpdate(env, {
       target,
       projectSessionId: deps.getSessionId() ?? -1,
@@ -193,8 +242,12 @@ export async function syncBlueX7InstrumentPatchToRuntime(
       semanticKey: change.semanticKey,
       value: change.value,
     });
-    if (result.status === 'error') {
-      console.warn(`[BlueX7] live update ${change.semanticKey} failed: ${result.message}`);
+    if (result.status !== 'ok') {
+      return {
+        status: 'rejected',
+        message: result.message ?? `BlueX7 runtime sync failed: ${result.status}`,
+      };
     }
   }
+  return { status: 'applied' };
 }

@@ -4,6 +4,7 @@
  */
 import { Parameter } from './parameter';
 import { Element } from '../serialization/xml-reader';
+import type { CopyMode } from '../deep-copyable';
 
 export class ParameterList extends Array<Parameter> {
   saveAsXML(): Element {
@@ -23,10 +24,10 @@ export class ParameterList extends Array<Parameter> {
     return list;
   }
 
-  deepCopy(): ParameterList {
+  deepCopy(mode: CopyMode = 'duplication'): ParameterList {
     const copy = new ParameterList();
     for (const parameter of this) {
-      copy.push(parameter.deepCopy() as Parameter);
+      copy.push(parameter.deepCopy(mode) as Parameter);
     }
     return copy;
   }

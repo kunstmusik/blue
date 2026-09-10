@@ -45,7 +45,6 @@ import { useLayerSelectionStore } from '../../../stores/layer-selection-store';
 import { useScoreRulerSelection } from './score/useScoreRulerSelection';
 import { getFollowScrollTarget } from './score/follow-playback';
 import { usePlaybackStore } from '../../../stores/playback-store';
-import { useScoreColorHistoryStore } from '../../../stores/score-color-history-store';
 import ScoreOverlayLines from './score/ScoreOverlayLines';
 import NoteProcessorChainDialog from './score-object/note-processors/NoteProcessorChainDialog';
 import TrackInstrumentControl from './score/TrackInstrumentControl';
@@ -237,7 +236,6 @@ export default function ScorePanel() {
 
   useEffect(() => {
     resetSession();
-    useScoreColorHistoryStore.getState().reset();
   }, [sessionId, resetSession]);
 
   useEffect(() => {
@@ -1399,7 +1397,6 @@ function SoundLayerHeader({
   const setLayerMute = useProjectStore((s) => s.setLayerMute);
   const setLayerSolo = useProjectStore((s) => s.setLayerSolo);
   const setLayerBackgroundColor = useProjectStore((s) => s.setLayerBackgroundColor);
-  const pushColorHistoryEntry = useScoreColorHistoryStore((s) => s.pushEntry);
   const renameLayer = useProjectStore((s) => s.renameLayer);
   const setLayerHeight = useProjectStore((s) => s.setLayerHeight);
   const addLayer = useProjectStore((s) => s.addLayer);
@@ -1672,35 +1669,6 @@ function SoundLayerHeader({
                   const color = normalizeLayerColor(parseInt(hex.replace('#', ''), 16));
                   setLayerBackgroundColor(groupId, layerIndex, color);
                 }}
-                onGestureComplete={async ({ initialValue, finalValue }) => {
-                  const initial = normalizeLayerColor(parseInt(initialValue.replace('#', ''), 16));
-                  const final = normalizeLayerColor(parseInt(finalValue.replace('#', ''), 16));
-                  if (initial === final) return;
-                  try {
-                    await flushPendingPatches();
-                    pushColorHistoryEntry({
-                      label: `Change ${layer.name} Color`,
-                      forward: {
-                        score: {
-                          type: 'updateLayerState',
-                          groupId,
-                          layerIndex,
-                          patch: { backgroundColor: final },
-                        },
-                      },
-                      inverse: {
-                        score: {
-                          type: 'updateLayerState',
-                          groupId,
-                          layerIndex,
-                          patch: { backgroundColor: initial },
-                        },
-                      },
-                    });
-                  } catch {
-                    // Rejection reconciliation - do not record history entry
-                  }
-                }}
                 ariaLabel={`Layer color for ${layer.name}`}
                 title={`Layer color: ${layer.name}`}
                 className="w-4 h-4 rounded-sm border border-app-border/40 shrink-0 cursor-pointer mr-0.5"
@@ -1932,7 +1900,7 @@ function SoundLayerHeader({
             <ContextMenu.Separator className="editor-context-menu__separator" />
             <ContextMenu.Item
               className={ctxItemClass}
-              onSelect={async () => {
+              onSelect={() => {
                 const groups = layerGroups ?? [];
                 const pair = buildApplyLayerColorToAllClipsPatch({
                   groupId,
@@ -1940,17 +1908,10 @@ function SoundLayerHeader({
                   layerGroups: groups,
                 });
                 if (pair) {
-                  try {
-                    await applyProjectDocumentPatch(pair.forward);
-                    await flushPendingPatches();
-                    pushColorHistoryEntry({
-                      label: `Apply Layer Color to All Clips (${layer.name})`,
-                      forward: pair.forward,
-                      inverse: pair.inverse,
-                    });
-                  } catch {
-                    // Rejection reconciliation - do not record history entry
-                  }
+                  void applyProjectDocumentPatch(pair, {
+                    label: `Apply Layer Color to All Clips (${layer.name})`,
+                    phase: 'single',
+                  });
                 }
               }}
             >

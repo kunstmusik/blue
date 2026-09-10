@@ -7,6 +7,7 @@ import SelectedCodeEditor from '../../editors/SelectedCodeEditor';
 import { toUdoCompletionDefinitions } from '../../editors/udo-completion-scope';
 import { createBsbReplacementKeys } from './bsb-completions';
 import type { SelectedInstrumentEditorProps } from '../types';
+import type { ProjectDocumentCommitMetadata } from '../../../../../../shared/project-history';
 import { cn } from '../../../../../lib/cn';
 
 type BsbCodeTab = 'instrumentText' | 'alwaysOnInstrumentText' | 'globalOrc' | 'globalSco';
@@ -60,11 +61,19 @@ export default function BSBCodeEditor({
                 value={instrument[tab.key]}
                 placeholder="Enter BlueSynthBuilder Csound code"
                 ariaLabel={`${instrument.name || 'BlueSynthBuilder'} ${tab.label} code editor`}
+                historyScope="project"
+                typingGroupingMs={500}
                 javaBlueCompletionOptions={
                   tab.key === 'globalSco' ? scoreCompletionOptions : orchestraCompletionOptions
                 }
-                onChange={(nextValue) =>
-                  void onInstrumentPatch({ [tab.key]: nextValue } as InstrumentPatch)
+                historyMetadata={{
+                  fieldId: `instrument:${instrument.assignmentId}:${tab.key}`,
+                  gestureId: `project-text:instrument:${instrument.assignmentId}:${tab.key}`,
+                  label: `Edit ${tab.label}`,
+                  phase: 'update',
+                }}
+                onChange={(nextValue, metadata?: ProjectDocumentCommitMetadata) =>
+                  void onInstrumentPatch({ [tab.key]: nextValue } as InstrumentPatch, metadata)
                 }
               />
             </div>

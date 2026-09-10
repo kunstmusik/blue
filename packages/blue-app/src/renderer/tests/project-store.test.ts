@@ -12,6 +12,7 @@ import {
 } from '../stores/project-store';
 import { useMidiRoutingStore } from '../stores/midi-routing-store';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
+import type { MixerChainClipboardPayload } from '../../shared/project-editor';
 import type { MissingAudioAssetsSession } from '../../shared/missing-audio-assets';
 
 function createFocusSnapshot(sessionId: number) {
@@ -126,6 +127,58 @@ describe('project-store — canonical acknowledgement barrier', () => {
   afterEach(() => {
     __testClearPendingPatches();
     useProjectStore.getState().clearProject();
+  });
+
+  it('keeps load and canonical refresh semantics separate (T032)', () => {
+    useProjectStore.getState().clearProject();
+    const snapshot = createEmptyProjectEditorSnapshot();
+
+    // Load semantics: dirty resets to a clean baseline.
+    useProjectStore.getState().setProjectInfo({
+      ...snapshot,
+      loaded: true,
+      filePath: '/tmp/load.blue',
+      sessionId: 2,
+      documentId: 'doc-load',
+      title: 'Loaded Title',
+    });
+    useProjectStore.getState().markDirty();
+    expect(useProjectStore.getState().isDirty).toBe(true);
+
+    // Canonical refresh: content and authoritative dirty projection apply,
+    // the session and document identity remain untouched, and overlay stores
+    // (layer selection) survive because no session change occurred.
+    useProjectStore.getState().refreshFromCanonical(
+      {
+        ...snapshot,
+        loaded: true,
+        filePath: '/tmp/load.blue',
+        sessionId: 2,
+        documentId: 'doc-load',
+        title: 'Remote Title',
+      } as never,
+      true,
+    );
+
+    expect(useProjectStore.getState().title).toBe('Remote Title');
+    expect(useProjectStore.getState().isDirty).toBe(true);
+    expect(useProjectStore.getState().documentId).toBe('doc-load');
+    expect(useProjectStore.getState().sessionId).toBe(2);
+
+    // Authoritative clean projection after a save elsewhere.
+    useProjectStore.getState().refreshFromCanonical(
+      {
+        ...snapshot,
+        loaded: true,
+        filePath: '/tmp/load.blue',
+        sessionId: 2,
+        documentId: 'doc-load',
+        title: 'Saved Title',
+      } as never,
+      false,
+    );
+    expect(useProjectStore.getState().title).toBe('Saved Title');
+    expect(useProjectStore.getState().isDirty).toBe(false);
   });
 
   it('restores the prior dirty state after a changed:false acknowledgement', async () => {
@@ -371,6 +424,113 @@ describe('project-store — stable façade contract', () => {
     expect(useProjectStore.getState().score.layerGroups[0]?.layers[0]?.name).toBe('Renamed Track');
     await useProjectStore.getState().flushPendingPatches();
     expect(getProjectDocument).toHaveBeenCalledTimes(1);
+  });
+
+  it('normalizes fresh mixer duplicate and paste identities before optimistic and durable apply', async () => {
+    const channelId = useProjectStore.getState().mixer.master.id;
+    await useProjectStore.getState().applyProjectDocumentPatch({
+      mixer: {
+        type: 'addSend',
+        channelId,
+        chain: 'pre',
+        sendChannel: 'Master',
+        level: 0.5,
+        entryId: 'source-send',
+      },
+    });
+    await useProjectStore.getState().flushPendingPatches();
+    commitProjectDocumentPatches.mockClear();
+
+    await useProjectStore.getState().applyProjectDocumentPatch({
+      mixer: {
+        type: 'duplicateChainEntry',
+        channelId,
+        chain: 'pre',
+        entryId: 'source-send',
+      },
+    });
+    const afterDuplicate = useProjectStore.getState().mixer.master.preChain;
+    const duplicate = afterDuplicate[1];
+    expect(duplicate?.entryId).not.toBe('source-send');
+    await useProjectStore.getState().flushPendingPatches();
+
+    expect(commitProjectDocumentPatches).toHaveBeenCalledWith(
+      [
+        {
+          mixer: expect.objectContaining({
+            type: 'duplicateChainEntry',
+            newEntryId: duplicate?.entryId,
+          }),
+        },
+      ],
+      expect.anything(),
+    );
+
+    const payload: MixerChainClipboardPayload = {
+      sourceKind: 'project',
+      entries: [
+        {
+          entryId: 'clipboard-send',
+          kind: 'send',
+          sendChannel: 'Master',
+          level: 0.25,
+          enabled: true,
+        },
+      ],
+    };
+    commitProjectDocumentPatches.mockClear();
+    await useProjectStore.getState().applyProjectDocumentPatch({
+      mixer: {
+        type: 'pasteChainEntries',
+        channelId,
+        chain: 'pre',
+        index: 1,
+        payload,
+      },
+    });
+    const afterPaste = useProjectStore.getState().mixer.master.preChain;
+    const pasted = afterPaste[1];
+    expect(pasted?.entryId).not.toBe('clipboard-send');
+    await useProjectStore.getState().flushPendingPatches();
+
+    expect(commitProjectDocumentPatches).toHaveBeenCalledWith(
+      [
+        {
+          mixer: expect.objectContaining({
+            type: 'pasteChainEntries',
+            newEntryIds: [pasted?.entryId],
+          }),
+        },
+      ],
+      expect.anything(),
+    );
+
+    const firstPastedId = pasted?.entryId;
+    commitProjectDocumentPatches.mockClear();
+    await useProjectStore.getState().applyProjectDocumentPatch({
+      mixer: {
+        type: 'pasteChainEntries',
+        channelId,
+        chain: 'pre',
+        payload,
+      },
+    });
+    const secondPastedId = useProjectStore.getState().mixer.master.preChain.at(-1)?.entryId;
+    expect(secondPastedId).not.toBe(firstPastedId);
+    expect(secondPastedId).not.toBe('clipboard-send');
+    await useProjectStore.getState().flushPendingPatches();
+
+    expect(commitProjectDocumentPatches).toHaveBeenCalledWith(
+      [
+        {
+          mixer: expect.objectContaining({
+            type: 'pasteChainEntries',
+            newEntryIds: [secondPastedId],
+          }),
+        },
+      ],
+      expect.anything(),
+    );
   });
 });
 
@@ -717,5 +877,33 @@ describe('project-store — pattern layer optimistic projection', () => {
     expect(storedSnapshot.nestedRecord.deep).toEqual([1, 2, 3]);
 
     await useProjectStore.getState().flushPendingPatches();
+  });
+
+  it('canonical text refresh updates store text without queuing outgoing patches or echoing edits', async () => {
+    const commitSpy = vi.fn().mockResolvedValue({ changed: true });
+    (window as unknown as { blueAPI?: unknown }).blueAPI = {
+      commitProjectDocumentPatches: commitSpy,
+      getProjectDocument: async () => null,
+    };
+
+    const info = {
+      ...createEmptyProjectEditorSnapshot(),
+      loaded: true,
+      sessionId: 1,
+      documentId: 'doc-canonical',
+      globalOrc: 'instr 99\nendin',
+      globalSco: '; canonical score',
+    };
+
+    // Refresh from canonical publication
+    useProjectStore.getState().refreshFromCanonical(info, false);
+
+    expect(useProjectStore.getState().globalOrc).toBe('instr 99\nendin');
+    expect(useProjectStore.getState().globalSco).toBe('; canonical score');
+    expect(useProjectStore.getState().isDirty).toBe(false);
+
+    // Verify no patches were queued for commit
+    await useProjectStore.getState().flushPendingPatches();
+    expect(commitSpy).not.toHaveBeenCalled();
   });
 });

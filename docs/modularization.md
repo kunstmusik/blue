@@ -214,6 +214,32 @@ shutdown order; failed startup uses a separate reverse-order rollback stack.
   session/lifecycle modules, lease adoption, or domain registrar composition without changing
   unrelated reducer families or host services.
 
+### Seam 5 — global project history and transaction coordination (103-global-undo-redo)
+
+- **Façade:** `packages/blue-app/src/shared/project-history.ts` exposes serializable request/response
+  contracts, IPC channel tokens, selection hints, and barrier events. `ProjectSession` remains the
+  canonical active project document owner.
+- **Responsibility/dependencies:**
+  - `packages/blue-app/src/main/project-history.ts` owns transaction and history coordination
+    (commit, undo, redo, read, adjacent gesture grouping, deduplication, 200-action / 64 MiB
+    accounting, whole-entry eviction, and settlement barrier orchestration).
+  - `packages/blue-app/src/main/project-history-memento.ts` owns detached canonical capture/restore
+    and identity sidecar remapping.
+  - `packages/blue-app/src/main/project-runtime-reconciliation.ts` owns generation-scoped,
+    acknowledged live runtime outcomes per performance.
+  - Renderer history client and patch queues consume shared contracts via typed preload contracts
+    without back-imports.
+- **Canonical state owner:** `ProjectSession` owns live in-memory project data and `.blue` XML is the
+  canonical project format. Retained history mementos are detached main-only state; renderers own
+  uncommitted drafts and local presentation state.
+- **Lowest test seam:**
+  - `@blue/data` history-copy and identity tests (`packages/blue-data/src/blue-data-history-copy.test.ts`).
+  - Unit tests for coordinator, memento, barrier settlement, and runtime reconciliation in
+    `packages/blue-app/src/main/*.test.ts`.
+  - Renderer queue, listener, and bridge tests in `packages/blue-app/src/renderer/tests/*.test.ts`.
+- **Rollback boundary:** Revert the history coordinator, history-copy/memento support, and history
+  integration calls as one feature unit; project XML persistence remains unchanged.
+
 ## Deferred inventory
 
 Each item has a candidate seam and a concrete reason to defer it. Revisit only when the stated

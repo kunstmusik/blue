@@ -11,6 +11,7 @@ import { TimeState } from '../time/time-state';
 import { NoteProcessorChain } from '../note-processors/note-processor-chain';
 import { LayerGroup } from './layers/layer-group';
 import { Layer } from './layers/layer';
+import type { CopyMode } from '../deep-copyable';
 import { Element } from '../serialization/xml-reader';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { ScoreGenerationException } from './score-generation-exception';
@@ -29,21 +30,24 @@ export class Score extends Array<LayerGroup<Layer>> {
   private timeState = new TimeState();
   private npc = new NoteProcessorChain();
 
-  constructor(other?: Score) {
+  constructor(other?: Score, mode: CopyMode = 'duplication') {
     super();
     if (other instanceof Score) {
       this.timeContext = new TimeContext(other.timeContext);
       this.timeState = new TimeState(other.timeState);
       this.npc = new NoteProcessorChain(other.npc);
       for (const layerGroup of other) {
-        this.push(layerGroup.deepCopy() as LayerGroup<Layer>);
+        this.push(layerGroup.deepCopy(mode) as LayerGroup<Layer>);
       }
-      this.timeContext.setSmpteFrameRate(this.timeState.getSmpteFrameRate());
     } else if (!other) {
       const rootPolyObject = new PolyObject(true);
       rootPolyObject.newLayerAt(-1);
       this.push(rootPolyObject);
     }
+  }
+
+  deepCopy(mode: CopyMode = 'duplication'): Score {
+    return new Score(this, mode);
   }
 
   getTimeContext(): TimeContext {

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { ScoreObjectEditorComponentProps } from '../editor-registry';
+import type { ProjectDocumentCommitMetadata } from '../../../../../../shared/project-history';
 import SelectedCodeEditor from '../../editors/SelectedCodeEditor';
 import GeneratedScoreModal from './GeneratedScoreModal';
 import { useScoreObjectTest } from './useScoreObjectTest';
@@ -26,19 +27,22 @@ export default function ClojureObjectEditor({
   }, [document.target.selectionId, clearTestError, clearTestOutput]);
 
   const patch = useCallback(
-    (p: Record<string, unknown>) => {
-      onPatch({
-        type: 'updateTypeSpecificEditor',
-        target: document.target,
-        patch: p,
-      });
+    (p: Record<string, unknown>, metadata?: ProjectDocumentCommitMetadata) => {
+      onPatch(
+        {
+          type: 'updateTypeSpecificEditor',
+          target: document.target,
+          patch: p,
+        },
+        metadata,
+      );
     },
     [document.target, onPatch],
   );
 
   const handleChange = useCallback(
-    (text: string) => {
-      patch({ text });
+    (text: string, metadata?: ProjectDocumentCommitMetadata) => {
+      patch({ text }, metadata);
     },
     [patch],
   );
@@ -146,6 +150,13 @@ export default function ClojureObjectEditor({
           active={true}
           readOnly={false}
           ariaLabel="Clojure code editor"
+          typingGroupingMs={500}
+          historyMetadata={{
+            fieldId: `score-object:${document.target.selectionId}:text`,
+            gestureId: `project-text:score-object:${document.target.selectionId}:text`,
+            label: 'Edit Clojure Code',
+            phase: 'update',
+          }}
           onChange={handleChange}
         />
       </div>

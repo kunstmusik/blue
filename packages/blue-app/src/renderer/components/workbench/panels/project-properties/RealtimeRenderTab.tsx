@@ -13,21 +13,27 @@ export default function RealtimeRenderTab({
         <InputBase
           disabled={disabled}
           value={properties.sampleRate}
-          onChange={(sampleRate) => updateProjectProperties({ sampleRate })}
+          label="Sample Rate"
+          fieldId="project-properties:sampleRate"
+          onChange={(sampleRate, metadata) => updateProjectProperties({ sampleRate }, metadata)}
         />
       </FieldRow>
       <FieldRow label="Ksmps">
         <InputBase
           disabled={disabled}
           value={properties.ksmps}
-          onChange={(ksmps) => updateProjectProperties({ ksmps })}
+          label="Ksmps"
+          fieldId="project-properties:ksmps"
+          onChange={(ksmps, metadata) => updateProjectProperties({ ksmps }, metadata)}
         />
       </FieldRow>
       <FieldRow label="Channels">
         <InputBase
           disabled={disabled}
           value={properties.nchnls}
-          onChange={(nchnls) => updateProjectProperties({ nchnls })}
+          label="Channels"
+          fieldId="project-properties:nchnls"
+          onChange={(nchnls, metadata) => updateProjectProperties({ nchnls }, metadata)}
         />
       </FieldRow>
       <FieldRow label="Use Audio Out">
@@ -99,14 +105,20 @@ export default function RealtimeRenderTab({
         <InputBase
           disabled={disabled}
           value={properties.zeroDbFS}
-          onChange={(zeroDbFS) => updateProjectProperties({ zeroDbFS })}
+          label="Zero dBFS Value"
+          fieldId="project-properties:zeroDbFS"
+          onChange={(zeroDbFS, metadata) => updateProjectProperties({ zeroDbFS }, metadata)}
         />
       </FieldRow>
       <FieldRow label="Advanced Settings">
         <TextAreaBase
           disabled={disabled}
           value={properties.advancedSettings}
-          onChange={(advancedSettings) => updateProjectProperties({ advancedSettings })}
+          label="Advanced Settings"
+          fieldId="project-properties:advancedSettings"
+          onChange={(advancedSettings, metadata) =>
+            updateProjectProperties({ advancedSettings }, metadata)
+          }
           placeholder="Csound command line flags"
         />
       </FieldRow>

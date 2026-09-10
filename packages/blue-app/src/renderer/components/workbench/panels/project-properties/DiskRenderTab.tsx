@@ -13,21 +13,29 @@ export default function DiskRenderTab({
         <InputBase
           disabled={disabled}
           value={properties.diskSampleRate}
-          onChange={(diskSampleRate) => updateProjectProperties({ diskSampleRate })}
+          label="Sample Rate"
+          fieldId="project-properties:diskSampleRate"
+          onChange={(diskSampleRate, metadata) =>
+            updateProjectProperties({ diskSampleRate }, metadata)
+          }
         />
       </FieldRow>
       <FieldRow label="Ksmps">
         <InputBase
           disabled={disabled}
           value={properties.diskKsmps}
-          onChange={(diskKsmps) => updateProjectProperties({ diskKsmps })}
+          label="Ksmps"
+          fieldId="project-properties:diskKsmps"
+          onChange={(diskKsmps, metadata) => updateProjectProperties({ diskKsmps }, metadata)}
         />
       </FieldRow>
       <FieldRow label="Channels">
         <InputBase
           disabled={disabled}
           value={properties.diskChannels}
-          onChange={(diskChannels) => updateProjectProperties({ diskChannels })}
+          label="Channels"
+          fieldId="project-properties:diskChannels"
+          onChange={(diskChannels, metadata) => updateProjectProperties({ diskChannels }, metadata)}
         />
       </FieldRow>
       <FieldRow label="Use Zero dBFS">
@@ -41,14 +49,18 @@ export default function DiskRenderTab({
         <InputBase
           disabled={disabled}
           value={properties.diskZeroDbFS}
-          onChange={(diskZeroDbFS) => updateProjectProperties({ diskZeroDbFS })}
+          label="Zero dBFS Value"
+          fieldId="project-properties:diskZeroDbFS"
+          onChange={(diskZeroDbFS, metadata) => updateProjectProperties({ diskZeroDbFS }, metadata)}
         />
       </FieldRow>
       <FieldRow label="File Name">
         <InputBase
           disabled={disabled}
           value={properties.fileName}
-          onChange={(fileName) => updateProjectProperties({ fileName })}
+          label="File Name"
+          fieldId="project-properties:fileName"
+          onChange={(fileName, metadata) => updateProjectProperties({ fileName }, metadata)}
         />
       </FieldRow>
       <FieldRow label="Ask on Render">
@@ -92,7 +104,11 @@ export default function DiskRenderTab({
         <TextAreaBase
           disabled={disabled}
           value={properties.diskAdvancedSettings}
-          onChange={(diskAdvancedSettings) => updateProjectProperties({ diskAdvancedSettings })}
+          label="Disk Advanced Settings"
+          fieldId="project-properties:diskAdvancedSettings"
+          onChange={(diskAdvancedSettings, metadata) =>
+            updateProjectProperties({ diskAdvancedSettings }, metadata)
+          }
           placeholder="Disk render command line flags"
         />
       </FieldRow>

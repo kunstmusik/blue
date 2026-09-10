@@ -62,26 +62,20 @@ describe('Score Color Action Builders (US3)', () => {
     },
   ];
 
-  it('buildSetSelectionToLayerColorPatch captures forward layer colors and inverse item colors', () => {
+  it('buildSetSelectionToLayerColorPatch captures forward layer colors', () => {
     const patchPair = buildSetSelectionToLayerColorPatch({
       selection: [item1, item2],
       layerGroups,
     });
 
     expect(patchPair).not.toBeNull();
-    expect(patchPair?.forward.score?.type).toBe('setScoreObjectBackgroundColors');
-    expect(patchPair?.inverse.score?.type).toBe('setScoreObjectBackgroundColors');
+    expect(patchPair?.score?.type).toBe('setScoreObjectBackgroundColors');
 
-    const fUpdates = (patchPair?.forward.score as any).updates;
-    const iUpdates = (patchPair?.inverse.score as any).updates;
+    const fUpdates = (patchPair?.score as any).updates;
 
     expect(fUpdates).toHaveLength(2);
     expect(fUpdates[0]).toEqual({ target: target1, backgroundColor: -65536 }); // Layer 0 is Red
     expect(fUpdates[1]).toEqual({ target: target2, backgroundColor: -16776961 }); // Layer 1 is Blue
-
-    expect(iUpdates).toHaveLength(2);
-    expect(iUpdates[0]).toEqual({ target: target1, backgroundColor: -16711936 }); // Original Green
-    expect(iUpdates[1]).toEqual({ target: target2, backgroundColor: -16711936 }); // Original Green
   });
 
   it('buildSetSelectionToLayerColorPatch returns null if all selected items already match layer color', () => {
@@ -101,14 +95,11 @@ describe('Score Color Action Builders (US3)', () => {
     });
 
     expect(patchPair).not.toBeNull();
-    const fUpdates = (patchPair?.forward.score as any).updates;
-    const iUpdates = (patchPair?.inverse.score as any).updates;
+    const fUpdates = (patchPair?.score as any).updates;
 
     // Item 1 changes from Green to Red; Item 3 is already Red so it may be included or excluded, but item 2 from layer 1 MUST be excluded
     const updatedTargetIds = fUpdates.map((u: any) => u.target.selectionId);
     expect(updatedTargetIds).toContain('item-1');
     expect(updatedTargetIds).not.toContain('item-2');
-
-    expect(iUpdates[0]).toEqual({ target: target1, backgroundColor: -16711936 });
   });
 });

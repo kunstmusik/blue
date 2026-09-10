@@ -362,3 +362,38 @@ export function createBasicTextEditorMenuItems(
     },
   ];
 }
+
+export function createHistoryMenuItems(
+  options: {
+    readOnly?: boolean;
+    canUndo?: boolean;
+    canRedo?: boolean;
+    undoLabel?: string | null;
+    redoLabel?: string | null;
+  } = {},
+): CsoundEditorMenuItem[] {
+  const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+  const undoShortcut = isMac ? 'Cmd-Z' : 'Ctrl-Z';
+  const redoShortcut = isMac ? 'Shift-Cmd-Z' : 'Ctrl-Y';
+
+  return [
+    {
+      kind: 'command',
+      id: 'undo',
+      label: options.undoLabel ? `Undo ${options.undoLabel}` : 'Undo',
+      command: 'undo',
+      shortcutLabel: undoShortcut,
+      disabled: Boolean(options.readOnly) || options.canUndo === false,
+      disabledReason: options.readOnly ? 'Editor is read-only' : undefined,
+    },
+    {
+      kind: 'command',
+      id: 'redo',
+      label: options.redoLabel ? `Redo ${options.redoLabel}` : 'Redo',
+      command: 'redo',
+      shortcutLabel: redoShortcut,
+      disabled: Boolean(options.readOnly) || options.canRedo === false,
+      disabledReason: options.readOnly ? 'Editor is read-only' : undefined,
+    },
+  ];
+}

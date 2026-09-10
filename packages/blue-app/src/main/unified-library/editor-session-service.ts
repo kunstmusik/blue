@@ -256,7 +256,7 @@ export class UnifiedLibraryEditorSessionService {
     const current = this.requireSession(sessionId);
     if (current.key.scope !== 'user') {
       try {
-        const savedSource = this.projectAdapter.saveEditorSource(
+        const savedSource = await this.projectAdapter.saveEditorSource(
           current.key,
           String(current.baseRevision),
           current.draftXml,

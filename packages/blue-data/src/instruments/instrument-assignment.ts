@@ -5,17 +5,18 @@
 import { Instrument } from './instrument';
 import { Element } from '../serialization/xml-reader';
 import { loadInstrumentFromXML } from './instrument-registry';
+import type { CopyMode } from '../deep-copyable';
 
 export class InstrumentAssignment {
   arrangementId = '0';
   instr!: Instrument;
   enabled = true;
 
-  constructor(other?: InstrumentAssignment) {
+  constructor(other?: InstrumentAssignment, mode: CopyMode = 'duplication') {
     if (other) {
       this.arrangementId = other.arrangementId;
       this.enabled = other.enabled;
-      this.instr = other.instr?.deepCopy();
+      this.instr = other.instr?.deepCopy(mode);
     }
   }
 

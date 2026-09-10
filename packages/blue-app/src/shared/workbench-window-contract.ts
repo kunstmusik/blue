@@ -12,6 +12,11 @@
  */
 
 import type { ProjectEditorSnapshot } from './project-editor';
+import type {
+  ProjectHistorySelectionHint,
+  ProjectHistoryStateProjection,
+  ProjectRuntimeOutcome,
+} from './project-history';
 
 /* -------------------------------------------------------------------------- */
 /* Primitive unions                                                           */
@@ -152,10 +157,19 @@ export interface DockFloatingGroupResult {
 }
 
 export interface ProjectDocumentUpdatedEvent {
+  documentId: string;
   sessionId: number;
   revision: number;
+  stateId: string;
+  isDirty: boolean;
+  history: ProjectHistoryStateProjection;
+  acceptedOperationIds: string[];
+  sourceSequence?: number;
   snapshot: ProjectEditorSnapshot;
   sourceWindowId?: string;
+  selectionHints?: ProjectHistorySelectionHint[];
+  originViewId?: string;
+  runtimeOutcomes?: ProjectRuntimeOutcome[];
 }
 
 /* -------------------------------------------------------------------------- */

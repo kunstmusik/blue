@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   BrowseLibraryRequest,
   CapturableLibraryTransferSource,
@@ -13,6 +13,11 @@ import { getLibraryTransferSourceType } from '../../shared/unified-library';
 import { useLibraryStore } from '../stores/library-store';
 import { useLibraryEditorStore } from '../stores/library-editor-store';
 import { useBsbClipboardStore } from '../stores/bsb-clipboard-store';
+import {
+  __testClearPendingPatches,
+  acceptProjectDocumentRevision,
+  useProjectStore,
+} from '../stores/project-store';
 
 const snapshot: LibraryServiceSnapshot = {
   phase: 'ready',
@@ -188,6 +193,7 @@ const setBsbClipboard = vi.fn(async () => true);
 
 beforeEach(() => {
   vi.useFakeTimers();
+  __testClearPendingPatches();
   snapshotListener = null;
   changedListener = null;
   browseLibraries.mockReset().mockImplementation(defaultBrowseLibraries);
@@ -253,7 +259,82 @@ beforeEach(() => {
   useBsbClipboardStore.getState().receiveClipboard(null);
 });
 
+afterEach(() => {
+  __testClearPendingPatches();
+  acceptProjectDocumentRevision(0, 0);
+  useProjectStore.setState({ loaded: false });
+});
+
 describe('library store', () => {
+  it('flushes pending project edits before previewing a project transfer', async () => {
+    const callOrder: string[] = [];
+    acceptProjectDocumentRevision(7, 2);
+    useProjectStore.setState({ loaded: true, sessionId: 7, documentId: 'doc-7', isDirty: false });
+    window.blueAPI.commitProjectDocumentPatches = vi.fn(async () => {
+      callOrder.push('commit');
+      return {
+        revision: 3,
+        sessionId: 7,
+        changed: true,
+        documentId: 'doc-7',
+        stateId: 'state-3',
+        patchChanged: [true],
+      };
+    });
+    previewLibraryTransfer.mockImplementationOnce(async (request) => {
+      callOrder.push('preview');
+      return {
+        ok: true as const,
+        value: {
+          ...(await previewLibraryTransfer()).value,
+          target: request.target,
+        },
+      };
+    });
+
+    await useProjectStore.getState().applyProjectDocumentPatch({
+      mixer: { type: 'addSubChannel', channelId: 'sub-1', name: 'SubChannel 1' },
+    });
+    await useProjectStore.getState().applyProjectDocumentPatch({
+      mixer: {
+        type: 'addSend',
+        channelId: useProjectStore.getState().mixer.master.id,
+        chain: 'pre',
+        sendChannel: 'SubChannel 1',
+      },
+    });
+    const applied = await useLibraryStore.getState().transferToProject(
+      {
+        kind: 'clipboard',
+        source: { kind: 'userNode', libraryType: 'effect', nodeId: 'effect-1', revision: 1 },
+      },
+      {
+        kind: 'effectChain',
+        projectSessionId: 7,
+        projectRevision: 2,
+        channelId: 'sub-1',
+        chain: 'pre',
+        insertIndex: 0,
+        chainRevision: '',
+      },
+    );
+
+    expect(applied).toBe(true);
+    expect(callOrder).toEqual(['commit', 'preview']);
+    expect(window.blueAPI.commitProjectDocumentPatches).toHaveBeenCalledWith(
+      [
+        expect.objectContaining({ mixer: expect.objectContaining({ type: 'addSubChannel' }) }),
+        expect.objectContaining({ mixer: expect.objectContaining({ type: 'addSend' }) }),
+      ],
+      expect.any(Object),
+    );
+    expect(previewLibraryTransfer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        target: expect.objectContaining({ channelId: 'sub-1', projectRevision: 3 }),
+      }),
+    );
+  });
+
   it('hydrates and follows the main-owned clipboard shared by renderer windows', async () => {
     const clipboard = {
       operation: 'copy' as const,

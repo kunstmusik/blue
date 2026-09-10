@@ -1,11 +1,13 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 
+import type { InAppConfirmationAction } from '../../../../shared/confirmation-dialog';
 import type {
   FreezeItemStatus,
   RenderOperationStatus,
 } from '../../../../shared/render-freeze-contract';
 import { useFreezeOperationStore } from '../../../stores/freeze-operation-store';
+import { ConfirmationDialog } from '../../dialogs/ConfirmationDialog';
 import { useDialogFocus } from '../../dialogs/use-dialog-focus';
 import {
   OperationStatusCell,
@@ -32,10 +34,17 @@ export default function FreezeOperationDialog(): React.ReactElement | null {
   const result = useFreezeOperationStore((state) => state.result);
   const error = useFreezeOperationStore((state) => state.error);
   const cancelRequested = useFreezeOperationStore((state) => state.cancelRequested);
+  const historyOversizeProposal = useFreezeOperationStore((state) => state.historyOversizeProposal);
   const cancel = useFreezeOperationStore((state) => state.cancel);
   const close = useFreezeOperationStore((state) => state.close);
+  const confirmHistoryProposal = useFreezeOperationStore((state) => state.confirmHistoryProposal);
   const selectRow = useFreezeOperationStore((state) => state.selectRow);
   const toggleOutput = useFreezeOperationStore((state) => state.toggleOutput);
+  const [showHistoryConfirmation, setShowHistoryConfirmation] = useState(false);
+
+  useEffect(() => {
+    if (!historyOversizeProposal) setShowHistoryConfirmation(false);
+  }, [historyOversizeProposal]);
 
   // Isolated renderer tests and early startup can intentionally expose only a
   // partial preload bridge; freeze actions still require the full bridge.
@@ -54,7 +63,7 @@ export default function FreezeOperationDialog(): React.ReactElement | null {
   }, []);
 
   const terminal = isTerminalOperationPhase(phase);
-  const dialogRef = useDialogFocus(open, () => {
+  const dialogRef = useDialogFocus(open && !showHistoryConfirmation, () => {
     if (terminal) {
       close();
     } else if (!cancelRequested) {
@@ -113,154 +122,193 @@ export default function FreezeOperationDialog(): React.ReactElement | null {
     summary = message + (progress === null ? '' : ` (${Math.round(progress)}%)`);
   }
 
+  const historyConfirmationActions: InAppConfirmationAction[] = [
+    { id: 'cancel', label: 'Cancel', intent: 'cancel' },
+    {
+      id: 'confirm',
+      label: 'Keep Action and Clear History',
+      intent: 'destructive',
+    },
+  ];
+
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
-      onClick={(event) => {
-        if (event.target === event.currentTarget && terminal) close();
-      }}
-      role="presentation"
-    >
+    <>
       <div
-        ref={dialogRef}
-        className="flex max-h-[80vh] w-[70vw] flex-col rounded-lg border border-app-hover bg-app-overlay shadow-2xl"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="freeze-operation-title"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+        onClick={(event) => {
+          if (event.target === event.currentTarget && terminal && !showHistoryConfirmation) {
+            close();
+          }
+        }}
+        role="presentation"
       >
-        <div className="flex items-center justify-between border-b border-app-hover px-4 py-3">
-          <h2
-            id="freeze-operation-title"
-            className="text-role-title-2 font-bold text-app-text-bright"
-            data-testid="freeze-dialog-title"
-          >
-            {operationDialogTitle(verb, phase)}
-          </h2>
-        </div>
-
-        <div className="min-h-0 flex-1 overflow-auto px-4 py-3">
-          <table
-            className="w-full border-collapse text-left text-role-body text-app-text"
-            data-testid="freeze-items-table"
-          >
-            <thead>
-              <tr className="text-app-text-muted">
-                <th
-                  scope="col"
-                  className="sticky top-0 bg-app-surface px-2 py-2 text-role-headline font-bold"
-                >
-                  Object
-                </th>
-                <th
-                  scope="col"
-                  className="sticky top-0 bg-app-surface px-2 py-2 text-role-headline font-bold"
-                >
-                  Freeze File
-                </th>
-                <th
-                  scope="col"
-                  className="sticky top-0 bg-app-surface px-2 py-2 text-role-headline font-bold"
-                >
-                  Status
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr
-                  key={row.selectionId}
-                  data-testid={`freeze-row-${row.selectionId}`}
-                  aria-selected={row.selectionId === selectedSelectionId}
-                  className={cn(
-                    'cursor-pointer border-b border-app-hover/60',
-                    row.selectionId === selectedSelectionId
-                      ? 'bg-app-selection'
-                      : 'hover:bg-app-hover/40',
-                  )}
-                  onClick={() => selectRow(row.selectionId)}
-                >
-                  <td className="px-2 py-2 align-middle">{row.name}</td>
-                  <td className="break-all px-2 py-2 align-middle font-mono text-role-body">
-                    {row.freezeFile ?? <span className="font-sans text-app-text-muted">—</span>}
-                  </td>
-                  <td className="px-2 py-2 align-middle" title={row.reason ?? undefined}>
-                    <OperationStatusCell status={row.status} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {error !== null && (
-          <div
-            role="alert"
-            data-testid="freeze-dialog-error"
-            className="max-h-24 overflow-auto border-t border-app-hover px-4 py-2 text-role-callout whitespace-pre-wrap text-red-400"
-          >
-            {error}
+        <div
+          ref={dialogRef}
+          className="flex max-h-[80vh] w-[70vw] flex-col rounded-lg border border-app-hover bg-app-overlay shadow-2xl"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="freeze-operation-title"
+        >
+          <div className="flex items-center justify-between border-b border-app-hover px-4 py-3">
+            <h2
+              id="freeze-operation-title"
+              className="text-role-title-2 font-bold text-app-text-bright"
+              data-testid="freeze-dialog-title"
+            >
+              {operationDialogTitle(verb, phase)}
+            </h2>
           </div>
-        )}
 
-        <div className="border-t border-app-hover">
-          <button
-            type="button"
-            data-testid="freeze-output-toggle"
-            className="flex w-full items-center gap-1.5 px-4 py-2 text-role-callout text-app-text-muted hover:text-app-text"
-            aria-expanded={outputExpanded}
-            aria-controls="freeze-output-console"
-            onClick={toggleOutput}
-          >
-            {outputExpanded ? (
-              <ChevronDown size={14} strokeWidth={2.5} aria-hidden="true" />
-            ) : (
-              <ChevronRight size={14} strokeWidth={2.5} aria-hidden="true" />
-            )}
-            <span>Output{selectedRow ? ` — ${selectedRow.name}` : ''}</span>
-          </button>
-          {outputExpanded && (
-            <pre
-              id="freeze-output-console"
-              ref={outputRef}
-              onScroll={handleOutputScroll}
-              data-testid="freeze-output-text"
-              className="m-0 max-h-40 overflow-auto whitespace-pre-wrap break-all border-t border-app-border-muted bg-black px-3 py-2 font-mono text-role-callout text-app-text"
+          <div className="min-h-0 flex-1 overflow-auto px-4 py-3">
+            <table
+              className="w-full border-collapse text-left text-role-body text-app-text"
+              data-testid="freeze-items-table"
             >
-              {selectedOutput}
-            </pre>
+              <thead>
+                <tr className="text-app-text-muted">
+                  <th
+                    scope="col"
+                    className="sticky top-0 bg-app-surface px-2 py-2 text-role-headline font-bold"
+                  >
+                    Object
+                  </th>
+                  <th
+                    scope="col"
+                    className="sticky top-0 bg-app-surface px-2 py-2 text-role-headline font-bold"
+                  >
+                    Freeze File
+                  </th>
+                  <th
+                    scope="col"
+                    className="sticky top-0 bg-app-surface px-2 py-2 text-role-headline font-bold"
+                  >
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr
+                    key={row.selectionId}
+                    data-testid={`freeze-row-${row.selectionId}`}
+                    aria-selected={row.selectionId === selectedSelectionId}
+                    className={cn(
+                      'cursor-pointer border-b border-app-hover/60',
+                      row.selectionId === selectedSelectionId
+                        ? 'bg-app-selection'
+                        : 'hover:bg-app-hover/40',
+                    )}
+                    onClick={() => selectRow(row.selectionId)}
+                  >
+                    <td className="px-2 py-2 align-middle">{row.name}</td>
+                    <td className="break-all px-2 py-2 align-middle font-mono text-role-body">
+                      {row.freezeFile ?? <span className="font-sans text-app-text-muted">—</span>}
+                    </td>
+                    <td className="px-2 py-2 align-middle" title={row.reason ?? undefined}>
+                      <OperationStatusCell status={row.status} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {error !== null && (
+            <div
+              role="alert"
+              data-testid="freeze-dialog-error"
+              className="max-h-24 overflow-auto border-t border-app-hover px-4 py-2 text-role-callout whitespace-pre-wrap text-red-400"
+            >
+              {error}
+            </div>
           )}
-        </div>
 
-        <div className="flex items-center justify-between gap-4 border-t border-app-hover px-4 py-3">
-          <span
-            className="min-w-0 truncate text-role-callout text-app-text-muted"
-            data-testid="freeze-dialog-summary"
-          >
-            {summary}
-          </span>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="border-t border-app-hover">
             <button
               type="button"
-              data-testid="freeze-dialog-cancel"
-              className="rounded border border-app-hover px-3 py-1.5 text-role-body text-app-text hover:bg-app-hover disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
-              onClick={cancel}
-              disabled={terminal || cancelRequested}
+              data-testid="freeze-output-toggle"
+              className="flex w-full items-center gap-1.5 px-4 py-2 text-role-callout text-app-text-muted hover:text-app-text"
+              aria-expanded={outputExpanded}
+              aria-controls="freeze-output-console"
+              onClick={toggleOutput}
             >
-              Cancel
+              {outputExpanded ? (
+                <ChevronDown size={14} strokeWidth={2.5} aria-hidden="true" />
+              ) : (
+                <ChevronRight size={14} strokeWidth={2.5} aria-hidden="true" />
+              )}
+              <span>Output{selectedRow ? ` — ${selectedRow.name}` : ''}</span>
             </button>
-            <button
-              ref={okButtonRef}
-              type="button"
-              data-testid="freeze-dialog-ok"
-              className="rounded bg-blue-accent px-3 py-1.5 text-role-body text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
-              onClick={close}
-              disabled={!terminal}
+            {outputExpanded && (
+              <pre
+                id="freeze-output-console"
+                ref={outputRef}
+                onScroll={handleOutputScroll}
+                data-testid="freeze-output-text"
+                className="m-0 max-h-40 overflow-auto whitespace-pre-wrap break-all border-t border-app-border-muted bg-black px-3 py-2 font-mono text-role-callout text-app-text"
+              >
+                {selectedOutput}
+              </pre>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between gap-4 border-t border-app-hover px-4 py-3">
+            <span
+              className="min-w-0 truncate text-role-callout text-app-text-muted"
+              data-testid="freeze-dialog-summary"
             >
-              OK
-            </button>
+              {summary}
+            </span>
+            <div className="flex shrink-0 items-center gap-2">
+              {historyOversizeProposal && (
+                <button
+                  type="button"
+                  data-testid="freeze-history-confirm"
+                  className="rounded bg-blue-accent px-3 py-1.5 text-role-body text-white hover:opacity-90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
+                  onClick={() => setShowHistoryConfirmation(true)}
+                >
+                  Keep Action and Clear History
+                </button>
+              )}
+              <button
+                type="button"
+                data-testid="freeze-dialog-cancel"
+                className="rounded border border-app-hover px-3 py-1.5 text-role-body text-app-text hover:bg-app-hover disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
+                onClick={cancel}
+                disabled={terminal || cancelRequested}
+              >
+                Cancel
+              </button>
+              <button
+                ref={okButtonRef}
+                type="button"
+                data-testid="freeze-dialog-ok"
+                className="rounded bg-blue-accent px-3 py-1.5 text-role-body text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
+                onClick={close}
+                disabled={!terminal}
+              >
+                OK
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+      <ConfirmationDialog
+        open={showHistoryConfirmation && historyOversizeProposal !== null}
+        title="Keep Oversized Freeze Action?"
+        description={`${historyOversizeProposal?.explanation ?? 'This action is too large to retain.'} Keeping it clears the retained project undo history. Cancel leaves the document and existing redo branch unchanged.`}
+        actions={historyConfirmationActions}
+        cancelActionId="cancel"
+        onDecision={(actionId) => {
+          setShowHistoryConfirmation(false);
+          if (actionId === 'confirm') {
+            void confirmHistoryProposal();
+          } else {
+            close();
+          }
+        }}
+        data-testid="freeze-history-confirmation"
+      />
+    </>
   );
 }

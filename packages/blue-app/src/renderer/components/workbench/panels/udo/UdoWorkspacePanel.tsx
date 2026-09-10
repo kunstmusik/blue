@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { UdoDefinitionSnapshot } from '../../../../../shared/project-editor';
+import type { ProjectDocumentCommitMetadata } from '../../../../../shared/project-history';
 import { useUdoImportExport } from '../../../../hooks/use-udo-actions';
 import { createDefaultUdoSnapshot } from '../../../../utils/program-settings-defaults';
 import SplitPane from '../orchestra/SplitPane';
@@ -21,7 +22,11 @@ interface UdoWorkspacePanelProps {
   onInsertUdos: (definitions: UdoDefinitionSnapshot[], index?: number) => void;
   onRemoveIndices: (indices: number[]) => void;
   onReorder: (from: number, to: number) => void;
-  onUpdateUdo: (index: number, patch: Partial<UdoDefinitionSnapshot>) => void;
+  onUpdateUdo: (
+    index: number,
+    patch: Partial<UdoDefinitionSnapshot>,
+    metadata?: ProjectDocumentCommitMetadata,
+  ) => void;
   onConvertStyle: (index: number, style: 'CLASSIC' | 'MODERN') => void;
   libraryDropTarget?: UdoLibraryDropTarget;
   /**
@@ -37,6 +42,7 @@ interface UdoWorkspacePanelProps {
    * owner definitions belong exclusively to project scope.
    */
   completionContextUdos?: readonly UdoDefinitionSnapshot[];
+  historyScope?: 'project' | 'draft' | 'none';
 }
 
 function createRange(start: number, end: number): number[] {
@@ -66,6 +72,7 @@ export default function UdoWorkspacePanel({
   libraryDropTarget,
   projectUdos,
   completionContextUdos = udos,
+  historyScope = 'project',
 }: UdoWorkspacePanelProps): React.ReactElement {
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
   const anchorIndexRef = useRef<number | null>(null);
@@ -240,7 +247,7 @@ export default function UdoWorkspacePanel({
   }, [onReorder, selectedIndices, udos.length]);
 
   const handleUpdateSelectedUdo = useCallback(
-    (patch: Partial<UdoDefinitionSnapshot>) => {
+    (patch: Partial<UdoDefinitionSnapshot>, metadata?: ProjectDocumentCommitMetadata) => {
       if (selectedIndices.length !== 1) {
         return;
       }
@@ -250,7 +257,7 @@ export default function UdoWorkspacePanel({
         return;
       }
 
-      onUpdateUdo(selectedIndex, patch);
+      onUpdateUdo(selectedIndex, patch, metadata);
     },
     [onUpdateUdo, selectedIndices],
   );
@@ -328,6 +335,7 @@ export default function UdoWorkspacePanel({
           onUpdateUdo={handleUpdateSelectedUdo}
           onConvertStyle={handleConvertSelectedStyle}
           onTestOpcode={handleTestSelectedUdo}
+          historyScope={historyScope}
         />
       }
     />

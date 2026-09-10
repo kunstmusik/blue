@@ -23,6 +23,7 @@ import {
   getActiveBlueX7Binding,
   invalidateActiveBlueX7Binding,
   setActiveBlueX7Bindings,
+  syncBlueX7InstrumentPatchToRuntime,
 } from './blue-x7-engine-sync';
 
 /** Duck-typed parameter access for instruments stored as base `Instrument`. */
@@ -201,6 +202,76 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
     expect(env.writeLog).toHaveLength(1);
   });
 
+  it('normalizes arrangement owners and applies detached voice values without mutating canonical data', async () => {
+    const env = createEnvironment({ data, bindings, sessionId: 7 });
+    const instrument = data.getArrangement().getInstrumentById('1') as BlueX7;
+    const originalVoice = structuredClone(instrument.getVoice());
+    const replacementVoice = structuredClone(originalVoice);
+    replacementVoice.common.algorithm = originalVoice.common.algorithm === 32 ? 1 : 32;
+
+    const result = await syncBlueX7InstrumentPatchToRuntime(
+      {
+        getData: () => data,
+        getSessionId: () => 7,
+        getRevision: () => 1,
+        isPlaying: () => true,
+        getBinding: (ownerIdentity) => bindings.get(ownerIdentity),
+        writeChannels: env.writeChannels,
+        readChannels: env.readChannels,
+      },
+      data,
+      '1',
+      { blueX7: { type: 'replaceVoice', voice: replacementVoice } },
+    );
+
+    expect(result).toEqual({ status: 'applied' });
+    expect(instrument.getVoice()).toEqual(originalVoice);
+    const algorithmChannel = bindings
+      .get('arrangement:1')!
+      .parameterChannels.get('common.algorithm');
+    expect(env.writeLog[0]).toContainEqual({
+      name: algorithmChannel,
+      value: replacementVoice.common.algorithm,
+    });
+  });
+
+  it('propagates engine rejection instead of acknowledging a failed voice write', async () => {
+    const binding = bindings.get('arrangement:1')!;
+    const env = createEnvironment({
+      data,
+      bindings,
+      sessionId: 7,
+      failWritesFor: [binding.parameterChannels.get('common.algorithm')!],
+    });
+
+    const result = await syncBlueX7InstrumentPatchToRuntime(
+      {
+        getData: () => data,
+        getSessionId: () => 7,
+        getRevision: () => 1,
+        isPlaying: () => true,
+        getBinding: (ownerIdentity) => bindings.get(ownerIdentity),
+        writeChannels: env.writeChannels,
+        readChannels: env.readChannels,
+      },
+      data,
+      'arrangement:1',
+      {
+        blueX7: {
+          type: 'replaceVoice',
+          voice: structuredClone(
+            (data.getArrangement().getInstrumentById('1') as BlueX7).getVoice(),
+          ),
+        },
+      },
+    );
+
+    expect(result.status).toBe('rejected');
+    if (result.status === 'rejected') {
+      expect(result.message).toContain('engine write failed');
+    }
+  });
+
   it('fails closed on stale session, stale revision, removed owner, malformed target, and ID/key mismatch', async () => {
     const env = createEnvironment({ data, bindings, sessionId: 7 });
     expect(
@@ -281,6 +352,7 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
     const readback = await requestBlueX7EffectiveValues(env, {
       target: assignmentTarget('1'),
       projectSessionId: 7,
+      performanceKind: 'timeline',
       parameterIds: [liveParameterId(data, 'common.feedback')],
     });
     expect(readback.ok).toBe(false);
@@ -472,6 +544,7 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
     const ok = await requestBlueX7EffectiveValues(env, {
       target: assignmentTarget('1'),
       projectSessionId: 7,
+      performanceKind: 'timeline',
       parameterIds: [parameterId],
     });
     expect(ok.ok).toBe(true);
@@ -487,6 +560,7 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
       await requestBlueX7EffectiveValues(notPlaying, {
         target: assignmentTarget('1'),
         projectSessionId: 7,
+        performanceKind: 'timeline',
         parameterIds: [parameterId],
       }),
     ).toEqual({ ok: false, reason: 'not-playing' });
@@ -495,6 +569,7 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
       await requestBlueX7EffectiveValues(env, {
         target: assignmentTarget('1'),
         projectSessionId: 9,
+        performanceKind: 'timeline',
         parameterIds: [parameterId],
       }),
     ).toEqual({ ok: false, reason: 'stale-session' });
@@ -503,6 +578,7 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
       await requestBlueX7EffectiveValues(env, {
         target: assignmentTarget('404'),
         projectSessionId: 7,
+        performanceKind: 'timeline',
         parameterIds: [parameterId],
       }),
     ).toEqual({ ok: false, reason: 'owner-not-found' });
@@ -511,6 +587,7 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
       await requestBlueX7EffectiveValues(env, {
         target: assignmentTarget('1'),
         projectSessionId: 7,
+        performanceKind: 'timeline',
         parameterIds: ['missing-parameter'],
       }),
     ).toEqual({ ok: false, reason: 'channel-unavailable' });
@@ -528,6 +605,7 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
       requestBlueX7EffectiveValues(env, {
         target: assignmentTarget('1'),
         projectSessionId: 7,
+        performanceKind: 'timeline',
         parameterIds,
       }),
     ).resolves.toEqual({ ok: false, reason: 'channel-unavailable' });
@@ -537,6 +615,7 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
       requestBlueX7EffectiveValues(env, {
         target: assignmentTarget('1'),
         projectSessionId: 7,
+        performanceKind: 'timeline',
         parameterIds,
       }),
     ).resolves.toEqual({ ok: false, reason: 'channel-unavailable' });
@@ -651,6 +730,7 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
       const result = await requestBlueX7EffectiveValues(readEnv, {
         target: ownerTargets[index]!,
         projectSessionId: 3,
+        performanceKind: 'timeline',
         parameterIds: [parameter.getUniqueId()],
       });
       expect(result.ok && result.values[0]!.value).toBe(20 + index);

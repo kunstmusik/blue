@@ -6,7 +6,7 @@
  * a list of LayerGroups, which can be of different types (audio, patterns, poly).
  */
 import { Layer } from './layer';
-import { DeepCopyable } from '../../deep-copyable';
+import { DeepCopyable, type CopyMode } from '../../deep-copyable';
 import { NoteProcessorChain } from '../../note-processors/note-processor-chain';
 import { NoteList } from '../../sound-objects/note-list';
 import { TimeContext } from '../../time/time-context';
@@ -63,5 +63,5 @@ export interface LayerGroup<T extends Layer> extends Array<T>, DeepCopyable<Laye
   onLoadComplete(context: TimeContext): void;
 
   /** Produce a deep copy of this layer group. */
-  deepCopy(): LayerGroup<T>;
+  deepCopy(mode?: CopyMode): LayerGroup<T>;
 }

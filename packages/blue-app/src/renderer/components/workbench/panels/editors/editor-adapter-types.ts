@@ -1,5 +1,6 @@
 import type { Completion } from '@codemirror/autocomplete';
 import type { CodeRepositoryNode } from '@blue/data';
+import type { ProjectDocumentCommitMetadata } from '../../../../shared/project-history';
 
 export type SelectedEditorKind = 'codemirror';
 
@@ -26,6 +27,8 @@ export type CsoundEditorCommand =
   | 'cut'
   | 'copy'
   | 'paste'
+  | 'undo'
+  | 'redo'
   | 'evaluate-code'
   | 'add-to-code-repository'
   | 'open-manual';
@@ -124,8 +127,16 @@ export interface SelectedCodeEditorProps {
   /** Repository root for the Custom submenu; null disables it. */
   codeRepositoryRoot?: CodeRepositoryNode | null;
   /** Callback invoked when the user adds the current selection to the repository. */
-  onAddToCodeRepository?: (selectedText: string) => void;
-  onChange: (value: string) => void | Promise<void>;
+  /** History scope for undo/redo routing. Defaults to 'project'. */
+  historyScope?: 'project' | 'draft' | 'none';
+  /** Typing grouping interval in milliseconds (e.g. 500ms). Defaults to 0 (immediate). */
+  typingGroupingMs?: number;
+  /** Stable project-history identity carried with text submissions. */
+  historyMetadata?: Pick<
+    ProjectDocumentCommitMetadata,
+    'label' | 'gestureId' | 'fieldId' | 'phase' | 'origin'
+  >;
+  onChange: (value: string, metadata?: ProjectDocumentCommitMetadata) => void | Promise<void>;
 }
 
 export interface SelectedEditorMetadata {

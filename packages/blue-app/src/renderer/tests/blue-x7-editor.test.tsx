@@ -1169,6 +1169,7 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
       expect(getBlueX7EffectiveValues).toHaveBeenCalledWith({
         target: { assignmentId: 'x7-1' },
         projectSessionId: 10,
+        performanceKind: 'timeline',
         parameterIds: ['pitch-rate-1', 'pitch-level-1'],
       });
       expect(
