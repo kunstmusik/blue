@@ -21,7 +21,6 @@ import { useLibraryStore } from '../../../../../stores/library-store';
 import { useProjectStore } from '../../../../../stores/project-store';
 import { useMidiRoutingStore } from '../../../../../stores/midi-routing-store';
 import { useWorkbenchStore } from '../../../../../stores/workbench-store';
-import { useScoreColorHistoryStore } from '../../../../../stores/score-color-history-store';
 import { buildSetSelectionToLayerColorPatch } from '../score-color-actions';
 import { RenderBar } from '../bar-renderers/renderer-registry';
 import AutomationLayerOverlay from '../automation/AutomationLayerOverlay';
@@ -503,7 +502,10 @@ export default function TrackLayerGroupCanvas({
   ]);
 
   const commitMoves = useCallback(
-    (moves: Array<{ entry: ScoreObjectClipboardEntry; targetStartBeats: number }>) => {
+    (
+      moves: Array<{ entry: ScoreObjectClipboardEntry; targetStartBeats: number }>,
+      label = 'Move Track Objects',
+    ) => {
       const optimisticMoves = moves.map(({ entry, targetStartBeats }) => ({
         objectId: entry.objectId,
         targetStartBeats,
@@ -524,9 +526,12 @@ export default function TrackLayerGroupCanvas({
           : [],
       );
       if (canonicalMoves.length > 0) {
-        void applyProjectDocumentPatch({
-          score: { type: 'moveScoreObjects', moves: canonicalMoves },
-        });
+        void applyProjectDocumentPatch(
+          {
+            score: { type: 'moveScoreObjects', moves: canonicalMoves },
+          },
+          { label, phase: 'single' },
+        );
       }
     },
     [applyProjectDocumentPatch, moveScoreObjects],
@@ -542,6 +547,7 @@ export default function TrackLayerGroupCanvas({
         cursor += entry.durationBeats;
         return { entry, targetStartBeats };
       }),
+      'Follow The Leader',
     );
   }, [commitMoves, getSelectedEntries]);
 
@@ -555,6 +561,7 @@ export default function TrackLayerGroupCanvas({
         entry,
         targetStartBeats: start + end - (entry.startBeats + entry.durationBeats),
       })),
+      'Reverse Track Objects',
     );
   }, [commitMoves, getSelectedEntries]);
 
@@ -564,7 +571,10 @@ export default function TrackLayerGroupCanvas({
       if (entries.length < 2) return;
       if (alignment === 'left') {
         const start = Math.min(...entries.map((entry) => entry.startBeats));
-        commitMoves(entries.map((entry) => ({ entry, targetStartBeats: start })));
+        commitMoves(
+          entries.map((entry) => ({ entry, targetStartBeats: start })),
+          'Align Left',
+        );
       } else if (alignment === 'right') {
         const end = Math.max(...entries.map((entry) => entry.startBeats + entry.durationBeats));
         commitMoves(
@@ -572,6 +582,7 @@ export default function TrackLayerGroupCanvas({
             entry,
             targetStartBeats: Math.max(0, end - entry.durationBeats),
           })),
+          'Align Right',
         );
       } else {
         const start = Math.min(...entries.map((entry) => entry.startBeats));
@@ -582,6 +593,7 @@ export default function TrackLayerGroupCanvas({
             entry,
             targetStartBeats: Math.max(0, center - entry.durationBeats / 2),
           })),
+          'Align Center',
         );
       }
     },
@@ -598,7 +610,10 @@ export default function TrackLayerGroupCanvas({
     (amount: number) => {
       const entries = getSelectedEntries();
       if (entries.length === 0) return;
-      commitMoves(entries.map((entry) => ({ entry, targetStartBeats: entry.startBeats + amount })));
+      commitMoves(
+        entries.map((entry) => ({ entry, targetStartBeats: entry.startBeats + amount })),
+        'Shift Track Objects',
+      );
     },
     [commitMoves, getSelectedEntries],
   );
@@ -664,18 +679,15 @@ export default function TrackLayerGroupCanvas({
     });
     if (pair) {
       try {
-        await applyProjectDocumentPatch(pair.forward);
-        await flushPendingPatches();
-        useScoreColorHistoryStore.getState().pushEntry({
+        await applyProjectDocumentPatch(pair, {
           label: 'Set to Layer Color',
-          forward: pair.forward,
-          inverse: pair.inverse,
+          phase: 'single',
         });
       } catch {
         // Rejection reconciliation - do not record history entry
       }
     }
-  }, [getSelectedEntries, allLayerGroups, applyProjectDocumentPatch, flushPendingPatches]);
+  }, [getSelectedEntries, allLayerGroups, applyProjectDocumentPatch]);
 
   const handleReplaceWithBuffer = useCallback(() => {
     const selected = getSelectedEntries();

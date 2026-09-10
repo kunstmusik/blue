@@ -1,6 +1,7 @@
 import { type MenuItemConstructorOptions } from 'electron';
 import * as path from 'path';
 import { getPanelsByMode, type PanelMode } from '../shared/workbench-menu';
+import type { FocusedHistoryAvailability } from '../shared/project-history';
 
 export interface ApplicationMenuTemplateOptions {
   hasLoadedProject: boolean;
@@ -63,6 +64,13 @@ export interface ApplicationMenuTemplateOptions {
   redoLabel?: string;
   canUndo?: boolean;
   canRedo?: boolean;
+  /** Local editor history can remain available when project history is empty. */
+  draftUndoLabel?: string;
+  draftRedoLabel?: string;
+  draftCanUndo?: boolean;
+  draftCanRedo?: boolean;
+  /** The renderer-owned history scope for the currently focused window. */
+  focusedHistory?: FocusedHistoryAvailability;
   onUndo?: () => void;
   onRedo?: () => void;
 }
@@ -336,34 +344,50 @@ function buildWindowMenuTemplate(
 function buildEditMenuTemplate(
   options: ApplicationMenuTemplateOptions,
 ): MenuItemConstructorOptions[] {
+  const canUndo = options.focusedHistory
+    ? options.focusedHistory.canUndo
+    : Boolean(options.canUndo || options.draftCanUndo);
+  const canRedo = options.focusedHistory
+    ? options.focusedHistory.canRedo
+    : Boolean(options.canRedo || options.draftCanRedo);
+  const undoLabel = options.focusedHistory
+    ? (options.focusedHistory.undoLabel ?? undefined)
+    : options.canUndo
+      ? options.undoLabel
+      : options.draftUndoLabel;
+  const redoLabel = options.focusedHistory
+    ? (options.focusedHistory.redoLabel ?? undefined)
+    : options.canRedo
+      ? options.redoLabel
+      : options.draftRedoLabel;
   const undoItem: MenuItemConstructorOptions = {
-    label: options.undoLabel ? `Undo ${options.undoLabel}` : 'Undo',
+    label: undoLabel ? `Undo ${undoLabel}` : 'Undo',
     accelerator: 'CmdOrCtrl+Z',
-    enabled: Boolean(options.canUndo),
+    enabled: canUndo,
     click: () => options.onUndo?.(),
   };
 
   const redoItems: MenuItemConstructorOptions[] = options.isDarwin
     ? [
         {
-          label: options.redoLabel ? `Redo ${options.redoLabel}` : 'Redo',
+          label: redoLabel ? `Redo ${redoLabel}` : 'Redo',
           accelerator: 'Shift+Cmd+Z',
-          enabled: Boolean(options.canRedo),
+          enabled: canRedo,
           click: () => options.onRedo?.(),
         },
       ]
     : [
         {
-          label: options.redoLabel ? `Redo ${options.redoLabel}` : 'Redo',
+          label: redoLabel ? `Redo ${redoLabel}` : 'Redo',
           accelerator: 'Ctrl+Y',
-          enabled: Boolean(options.canRedo),
+          enabled: canRedo,
           click: () => options.onRedo?.(),
         },
         {
-          label: options.redoLabel ? `Redo ${options.redoLabel}` : 'Redo',
+          label: redoLabel ? `Redo ${redoLabel}` : 'Redo',
           accelerator: 'Ctrl+Shift+Z',
           visible: false,
-          enabled: Boolean(options.canRedo),
+          enabled: canRedo,
           click: () => options.onRedo?.(),
         },
       ];

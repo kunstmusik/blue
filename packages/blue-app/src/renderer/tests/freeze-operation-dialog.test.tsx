@@ -144,6 +144,8 @@ describe('FreezeOperationDialog', () => {
       result: null,
       error: null,
       cancelRequested: false,
+      historyOversizeProposal: null,
+      historyProposalEntries: null,
     });
   });
 
@@ -579,6 +581,59 @@ describe('FreezeOperationDialog', () => {
       void useFreezeOperationStore.getState().start([entryWithoutTarget]);
       await Promise.resolve();
     });
+    expect(useFreezeOperationStore.getState().open).toBe(false);
+    expect(freezeScoreObjects).not.toHaveBeenCalled();
+  });
+
+  it('requires destructive confirmation before clearing history for an oversized action', async () => {
+    act(() => {
+      useFreezeOperationStore.setState({
+        open: true,
+        operationId: 'freeze-oversize',
+        phase: 'failed',
+        message: 'Freeze action is too large to retain.',
+        rows: [
+          {
+            selectionId: 'score-1',
+            name: 'Pattern 1',
+            action: 'freeze',
+            freezeFile: null,
+            status: 'notApplied',
+            reason: 'History limit',
+            output: '',
+          },
+        ],
+        selectedSelectionId: 'score-1',
+        historyOversizeProposal: {
+          token: 'freeze-proposal-1',
+          estimatedBytes: 70 * 1024 * 1024,
+          limitBytes: 64 * 1024 * 1024,
+          explanation: 'Action exceeds the 64 MiB history limit',
+        },
+        historyProposalEntries: [entry({ selectionId: 'score-1', name: 'Pattern 1' })],
+      });
+    });
+
+    const confirmButton = container.querySelector(
+      '[data-testid="freeze-history-confirm"]',
+    ) as HTMLButtonElement;
+    expect(confirmButton).not.toBeNull();
+
+    await act(async () => {
+      confirmButton.click();
+    });
+
+    const confirmation = container.querySelector('[data-testid="freeze-history-confirmation"]');
+    expect(confirmation?.getAttribute('role')).toBe('presentation');
+    expect(confirmation?.textContent).toContain('Action exceeds the 64 MiB history limit');
+    expect(document.querySelector('[role="alertdialog"]')).not.toBeNull();
+    expect(document.activeElement).toBe(document.querySelector('[data-action-id="cancel"]'));
+    expect(freezeScoreObjects).not.toHaveBeenCalled();
+
+    await act(async () => {
+      (document.querySelector('[data-action-id="cancel"]') as HTMLButtonElement).click();
+    });
+
     expect(useFreezeOperationStore.getState().open).toBe(false);
     expect(freezeScoreObjects).not.toHaveBeenCalled();
   });

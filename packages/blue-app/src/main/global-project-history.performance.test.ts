@@ -245,5 +245,15 @@ describe('Deterministic large project history performance benchmark (T066 / SC-0
       `  Retained Bytes:       ${(historyProjection.retainedBytes / (1024 * 1024)).toFixed(2)} MiB (${historyProjection.retainedBytes} bytes)`,
     );
     console.log(`  Heap Used Delta:      ${(heapDelta / (1024 * 1024)).toFixed(2)} MB`);
+    console.log(
+      `[T087 coordinator metrics] ${JSON.stringify({
+        samples: 100,
+        commitMs: { p50: commitP50, p95: commitP95, max: commitMax },
+        undoMs: { p50: undoP50, p95: undoP95, max: undoMax },
+        redoMs: { p50: redoP50, p95: redoP95, max: redoMax },
+        retainedBytes: historyProjection.retainedBytes,
+        heapDeltaBytes: heapDelta,
+      })}`,
+    );
   });
 });

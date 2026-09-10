@@ -26,6 +26,8 @@ export interface RenderToDiskRequest {
 export interface FreezeScoreObjectsRequest {
   targets: ScoreObjectEditorTargetSnapshot[];
   operationId?: string;
+  /** One-use confirmation returned when retaining the action exceeds history limits. */
+  historyProposalToken?: string;
 }
 
 export interface CancelRenderOperationRequest {
@@ -52,10 +54,15 @@ export function isRenderToDiskRequest(value: unknown): value is RenderToDiskRequ
 export function isFreezeScoreObjectsRequest(value: unknown): value is FreezeScoreObjectsRequest {
   return (
     isRecord(value) &&
+    Object.keys(value).every((key) =>
+      ['targets', 'operationId', 'historyProposalToken'].includes(key),
+    ) &&
     Array.isArray(value.targets) &&
     value.targets.every((target) => isRecord(target)) &&
     (value.operationId === undefined ||
-      (typeof value.operationId === 'string' && value.operationId.length > 0))
+      (typeof value.operationId === 'string' && value.operationId.length > 0)) &&
+    (value.historyProposalToken === undefined ||
+      (typeof value.historyProposalToken === 'string' && value.historyProposalToken.length > 0))
   );
 }
 
@@ -188,6 +195,13 @@ export interface FreezeRejectedTarget {
   reason: string;
 }
 
+export interface FreezeHistoryOversizeProposal {
+  token: string;
+  estimatedBytes: number;
+  limitBytes: number;
+  explanation: string;
+}
+
 export interface FreezeOperationResult {
   ok: boolean;
   operationId: string;
@@ -198,6 +212,7 @@ export interface FreezeOperationResult {
   rejectedTargets: FreezeRejectedTarget[];
   error: string | null;
   project: ProjectEditorSnapshot | null;
+  historyOversizeProposal?: FreezeHistoryOversizeProposal;
 }
 
 // ─── Operation lifecycle invariants ───

@@ -54,7 +54,7 @@ export interface ActiveLibraryProject {
   readonly data: BlueData;
   readonly sessionId: number;
   readonly revision?: number;
-  readonly commit?: (label?: string) => number;
+  readonly commit?: (label?: string) => number | Promise<number>;
 }
 
 export type ActiveLibraryProjectProvider = () => ActiveLibraryProject | null;
@@ -167,6 +167,25 @@ function unavailable(reason: string) {
   return { state: 'unavailable' as const, reason };
 }
 
+function withProjectRevision<T>(
+  project: ActiveLibraryProject,
+  label: string,
+  fallbackRevision: number,
+  createReceipt: (projectRevision: number) => T,
+): T | Promise<T> {
+  const committedRevision = project.commit?.(label);
+  if (
+    typeof committedRevision === 'object' &&
+    committedRevision !== null &&
+    typeof committedRevision.then === 'function'
+  ) {
+    return Promise.resolve(committedRevision as Promise<number>).then(createReceipt);
+  }
+  return createReceipt(
+    typeof committedRevision === 'number' ? committedRevision : fallbackRevision,
+  );
+}
+
 export class UnifiedLibraryProjectAdapter {
   private readonly deleteConfirmations = new Map<
     string,
@@ -271,15 +290,18 @@ export class UnifiedLibraryProjectAdapter {
     instance.setSubjectiveDuration(definition.getSubjectiveDuration());
     layer[objectIndex] = instance;
 
-    const projectRevision =
-      project.commit?.('Insert Shared Sound Object') ?? (project.revision ?? 0) + 1;
-    return {
-      projectSessionId: project.sessionId,
-      projectRevision,
-      libraryType: 'soundObject',
-      insertedIdentity: libraryId,
-      message: `${definition.getName()} was added to Project SoundObjects.`,
-    };
+    return withProjectRevision(
+      project,
+      'Insert Shared Sound Object',
+      (project.revision ?? 0) + 1,
+      (projectRevision) => ({
+        projectSessionId: project.sessionId,
+        projectRevision,
+        libraryType: 'soundObject',
+        insertedIdentity: libraryId,
+        message: `${definition.getName()} was added to Project SoundObjects.`,
+      }),
+    ) as ProjectMutationReceipt;
   }
 
   validateTransferTarget(
@@ -353,7 +375,9 @@ export class UnifiedLibraryProjectAdapter {
       ];
       const channel = channels.find(
         (candidate) =>
-          candidate.id === target.channelId || candidate.association === target.channelId,
+          candidate.id === target.channelId ||
+          candidate.association === target.channelId ||
+          candidate.name === target.channelId,
       );
       if (!channel) return 'The mixer channel changed.';
       const chain = target.chain === 'pre' ? channel.preChain : channel.postChain;
@@ -716,8 +740,6 @@ export class UnifiedLibraryProjectAdapter {
       }
     }
     if (!changed) return null;
-    project.commit?.('Update Project Item from Library');
-
     const displayName =
       key.locator.kind === 'instrument'
         ? (project.data.getArrangement().getInstrumentById(key.locator.assignmentId)?.getName() ??
@@ -744,7 +766,7 @@ export class UnifiedLibraryProjectAdapter {
             },
           }
         : key;
-    return {
+    const savedSource: ProjectLibraryEditorSource = {
       key: nextKey,
       displayName,
       objectType: key.locator.kind === 'udo' ? 'OpcodeDefinition' : current.objectType,
@@ -752,6 +774,12 @@ export class UnifiedLibraryProjectAdapter {
       revision: hashText(payloadXml),
       payloadXml,
     };
+    return withProjectRevision(
+      project,
+      'Update Project Item from Library',
+      (project.revision ?? 0) + 1,
+      () => savedSource,
+    ) as ProjectLibraryEditorSource;
   }
 
   createContextTarget(
@@ -782,14 +810,18 @@ export class UnifiedLibraryProjectAdapter {
     const project = this.requireCurrentTarget(input.target, input.key.libraryType);
     const source = this.resolveInsertionSource(project, input);
     const insertedIdentity = this.insertResolvedSource(project, input, source);
-    const projectRevision = project.commit?.('Insert Library Item') ?? (project.revision ?? 0) + 1;
-    return {
-      projectSessionId: project.sessionId,
-      projectRevision,
-      libraryType: input.key.libraryType,
-      insertedIdentity,
-      message: `${source.displayName} was inserted into ${input.target.label}.`,
-    };
+    return withProjectRevision(
+      project,
+      'Insert Library Item',
+      (project.revision ?? 0) + 1,
+      (projectRevision) => ({
+        projectSessionId: project.sessionId,
+        projectRevision,
+        libraryType: input.key.libraryType,
+        insertedIdentity,
+        message: `${source.displayName} was inserted into ${input.target.label}.`,
+      }),
+    ) as ProjectMutationReceipt;
   }
 
   getUsage(key: LibraryItemKey): { linkedInstanceCount: number; locations: readonly string[] } {
@@ -895,15 +927,18 @@ export class UnifiedLibraryProjectAdapter {
       changed = project.data.getSoundObjectLibrary().removeObjectById(identity) || changed;
     }
     if (!changed) throw new Error('Project library item not found');
-    const projectRevision =
-      project.commit?.('Delete Project Library Item') ?? (project.revision ?? 0) + 1;
-    return {
-      projectSessionId: project.sessionId,
-      projectRevision,
-      libraryType: key.libraryType,
-      insertedIdentity: identity,
-      message: 'Project library item and linked usages were removed.',
-    };
+    return withProjectRevision(
+      project,
+      'Delete Project Library Item',
+      (project.revision ?? 0) + 1,
+      (projectRevision) => ({
+        projectSessionId: project.sessionId,
+        projectRevision,
+        libraryType: key.libraryType,
+        insertedIdentity: identity,
+        message: 'Project library item and linked usages were removed.',
+      }),
+    ) as ProjectMutationReceipt;
   }
 
   async copyProjectItemToUser(

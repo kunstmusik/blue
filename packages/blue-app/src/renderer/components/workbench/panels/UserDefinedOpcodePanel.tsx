@@ -1,6 +1,7 @@
 import React from 'react';
 
 import type { ProjectUdoPatch } from '../../../../shared/project-editor';
+import type { ProjectDocumentCommitMetadata } from '../../../../shared/project-history';
 import { useUdoCallbacks } from '../../../hooks/use-udo-callbacks';
 import { getProjectDocumentRevision, useProjectStore } from '../../../stores/project-store';
 import UdoWorkspacePanel from './udo/UdoWorkspacePanel';
@@ -13,8 +14,8 @@ export default function UserDefinedOpcodePanel(): React.ReactElement {
   const applyProjectUdoPatch = useProjectStore((state) => state.applyProjectUdoPatch);
   const projectRevision = getProjectDocumentRevision();
 
-  const dispatch = (patch: Record<string, unknown>) => {
-    void applyProjectUdoPatch(patch as ProjectUdoPatch);
+  const dispatch = (patch: Record<string, unknown>, metadata?: ProjectDocumentCommitMetadata) => {
+    void applyProjectUdoPatch(patch as ProjectUdoPatch, metadata);
   };
 
   const callbacks = useUdoCallbacks('project', dispatch);

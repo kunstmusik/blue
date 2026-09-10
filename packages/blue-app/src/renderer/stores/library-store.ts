@@ -28,7 +28,7 @@ import {
 import { libraryEditorPanelId, useLibraryEditorStore } from './library-editor-store';
 import { useWorkbenchStore } from './workbench-store';
 import { useBsbClipboardStore } from './bsb-clipboard-store';
-import { getProjectDocumentRevision } from './project-store';
+import { flushProjectDocumentPatches, getProjectDocumentRevision } from './project-store';
 import { toast } from 'sonner';
 
 const EMPTY_NODES: Record<LibraryType, LibraryBrowseNode[]> = {
@@ -752,15 +752,39 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   },
 
   transferToProject: async (source, target, mode = 'independent') => {
-    const result = await window.blueAPI.previewLibraryTransfer({ source, target, mode });
+    let settledRevision: number;
+    try {
+      settledRevision = await flushProjectDocumentPatches();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to save project changes.';
+      set({ error: null, transferPreview: null, transferSource: null });
+      toast.error(message);
+      return false;
+    }
+    const settledTarget =
+      settledRevision > target.projectRevision
+        ? {
+            ...target,
+            projectRevision: settledRevision,
+            ...(target.kind === 'score' &&
+            target.timeContextRevision === String(target.projectRevision)
+              ? { timeContextRevision: String(settledRevision) }
+              : {}),
+          }
+        : target;
+    const result = await window.blueAPI.previewLibraryTransfer({
+      source,
+      target: settledTarget,
+      mode,
+    });
     if (!result.ok) {
-      set({ error: result.error.message, transferPreview: null, transferSource: null });
+      set({ error: null, transferPreview: null, transferSource: null });
       toast.error(result.error.message);
       return false;
     }
     if (!result.value.canApply) {
       set({
-        error: result.value.blockingReasons.join(' '),
+        error: null,
         transferPreview: null,
         transferSource: null,
       });
@@ -773,7 +797,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     }
     const applyResult = await window.blueAPI.applyLibraryTransfer(result.value.previewToken);
     if (!applyResult.ok) {
-      set({ error: applyResult.error.message, transferPreview: null, transferSource: null });
+      set({ error: null, transferPreview: null, transferSource: null });
       toast.error(applyResult.error.message);
       return false;
     }

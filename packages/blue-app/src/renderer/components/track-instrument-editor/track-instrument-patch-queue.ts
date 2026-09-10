@@ -14,6 +14,7 @@ const LATEST_VALUE_PATCH_KEYS = new Set<keyof InstrumentPatch>([
   'name',
   'enabled',
   'comment',
+  'comments',
   'text',
   'instrumentText',
   'alwaysOnInstrumentText',

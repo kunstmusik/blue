@@ -5,13 +5,17 @@ import type {
   InstrumentPatch,
   UdoDefinitionSnapshot,
 } from '../../../../../../shared/project-editor';
+import type { ProjectDocumentCommitMetadata } from '../../../../../../shared/project-history';
 import { useUdoCallbacks } from '../../../../../hooks/use-udo-callbacks';
 import UdoWorkspacePanel from '../../udo/UdoWorkspacePanel';
 import type { UdoLibraryDropTarget } from '../../udo/UdoTable';
 
 interface BSBUDOPanelProps {
   instrument: BlueSynthBuilderInstrumentSnapshot;
-  onInstrumentPatch: (patch: InstrumentPatch) => void | Promise<void>;
+  onInstrumentPatch: (
+    patch: InstrumentPatch,
+    metadata?: ProjectDocumentCommitMetadata,
+  ) => void | Promise<void>;
   libraryDropTarget?: UdoLibraryDropTarget;
   /** Project-global UDOs available to the embedded BSB UDO body editor. */
   projectUdos?: readonly UdoDefinitionSnapshot[];
@@ -26,8 +30,8 @@ export default function BSBUDOPanel({
   const udolist = instrument.udolist ?? [];
 
   const dispatch = useCallback(
-    (patch: Record<string, unknown>) => {
-      void onInstrumentPatch({ bsbInterface: patch as any });
+    (patch: Record<string, unknown>, metadata?: ProjectDocumentCommitMetadata) => {
+      void onInstrumentPatch({ bsbInterface: patch as any }, metadata);
     },
     [onInstrumentPatch],
   );

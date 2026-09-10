@@ -242,6 +242,48 @@ afterEach(() => {
 });
 
 describe('mixer Library drop targets', () => {
+  it('uses the stable subchannel name for a Library effect target', async () => {
+    const subChannel: MixerChannelSnapshot = {
+      ...channel,
+      id: 'ephemeral-subchannel-id',
+      name: 'Reverb Bus',
+      channelKind: 'subChannel',
+      association: undefined,
+      preChain: [],
+    };
+    act(() => {
+      root.render(
+        <ChannelStrip
+          mixer={{ ...mixer, channels: [], subChannels: [subChannel] }}
+          channel={subChannel}
+          isMaster={false}
+          isSubChannel
+          onPatch={onPatch}
+          projectSessionId={4}
+          projectRevision={9}
+          onOpenEffectInterface={vi.fn()}
+          projectEffectNodes={[]}
+        />,
+      );
+    });
+    const preEnd = container.querySelector(
+      '[aria-label="Insert Effect at end of Pre chain; paste a Library item here"]',
+    ) as HTMLElement;
+    await act(async () => {
+      preEnd.dispatchEvent(
+        new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'v', ctrlKey: true }),
+      );
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(previewLibraryTransfer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        target: expect.objectContaining({ channelId: 'Reverb Bus', chain: 'pre' }),
+      }),
+    );
+  });
+
   it('offers every pre/post gap and pastes against the exact chain revision', async () => {
     expect(container.querySelectorAll('[aria-label*="Insert Effect"]')).toHaveLength(3);
     const preEnd = container.querySelector(
@@ -285,7 +327,7 @@ describe('mixer Library drop targets', () => {
       await Promise.resolve();
     });
     expect(applyLibraryTransfer).not.toHaveBeenCalled();
-    expect(useLibraryStore.getState().error).toMatch(/chain changed/i);
+    expect(useLibraryStore.getState().error).toBeNull();
   });
 
   it('accepts direct effect drop and Library paste from the chain menu', async () => {

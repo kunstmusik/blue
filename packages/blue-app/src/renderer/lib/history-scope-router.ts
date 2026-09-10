@@ -1,9 +1,16 @@
 import { EditorView } from 'codemirror';
-import { undo as cmUndo, redo as cmRedo } from '@codemirror/commands';
+import { undo as cmUndo, redo as cmRedo, undoDepth, redoDepth } from '@codemirror/commands';
+import { toast } from 'sonner';
+import type {
+  FocusedHistoryAvailability,
+  ProjectHistoryStateProjection,
+} from '../../shared/project-history';
 import {
   acceptProjectDocumentRevision,
   getProjectDocumentId,
   getProjectDocumentRevision,
+  getProjectHistoryParticipantContextId,
+  reserveProjectHistoryContextSequence,
   useProjectStore,
 } from '../stores/project-store';
 
@@ -17,6 +24,7 @@ export type HistoryScopeResolution =
   | { scope: 'project' };
 
 const registeredHostDocuments = new Set<Document>();
+const editorSettlements = new Map<Document, Set<() => Promise<void> | void>>();
 
 /**
  * Registers an active host document (e.g. from a popout window) so focus
@@ -29,10 +37,42 @@ export function registerHostDocument(doc: Document): () => void {
   };
 }
 
+/** Registers pending editor input that must settle before a project command. */
+export function registerHistoryEditorSettlement(
+  doc: Document,
+  settle: () => Promise<void> | void,
+): () => void {
+  let settlements = editorSettlements.get(doc);
+  if (!settlements) {
+    settlements = new Set();
+    editorSettlements.set(doc, settlements);
+  }
+  settlements.add(settle);
+  return () => {
+    settlements?.delete(settle);
+    if (settlements?.size === 0) editorSettlements.delete(doc);
+  };
+}
+
+/** Waits for registered editors in the selected host document to settle. */
+export async function settleHistoryEditors(preferredDocument?: Document): Promise<void> {
+  const documents = preferredDocument
+    ? [preferredDocument]
+    : [
+        ...new Set([
+          ...(typeof document === 'undefined' ? [] : [document]),
+          ...registeredHostDocuments,
+        ]),
+      ];
+  const settlements = documents.flatMap((doc) => [...(editorSettlements.get(doc) ?? [])]);
+  await Promise.all(settlements.map((settle) => settle()));
+}
+
 /**
  * Returns the currently focused host document across main and popout windows.
  */
-export function getActiveHostDocument(): Document | null {
+export function getActiveHostDocument(preferredDocument?: Document): Document | null {
+  if (preferredDocument) return preferredDocument;
   if (typeof document === 'undefined') return null;
 
   for (const doc of registeredHostDocuments) {
@@ -47,31 +87,60 @@ export function getActiveHostDocument(): Document | null {
 /**
  * Resolves the currently focused DOM element across all known host documents.
  */
-export function getActiveHostElement(): Element | null {
-  const doc = getActiveHostDocument();
+export function getActiveHostElement(preferredDocument?: Document): Element | null {
+  const doc = getActiveHostDocument(preferredDocument);
   return doc?.activeElement ?? null;
 }
 
-let commandSequence = 0;
+function isNativeTextInput(element: Element): boolean {
+  const tagName = element.tagName.toLowerCase();
+  return tagName === 'input' || tagName === 'textarea';
+}
 
-function nextCommandSequence(): number {
-  commandSequence += 1;
-  return commandSequence;
+export function flushFocusedProjectEditor(preferredDocument?: Document): void {
+  const activeElement = getActiveHostElement(preferredDocument);
+  const ownerWindow = activeElement?.ownerDocument?.defaultView;
+  const CustomEventConstructor = ownerWindow?.CustomEvent ?? globalThis.CustomEvent;
+  if (!activeElement || !CustomEventConstructor) return;
+
+  activeElement.dispatchEvent(
+    new CustomEventConstructor('blue-history-before-command', { bubbles: true }),
+  );
+}
+
+/**
+ * Surfaces a non-committed history command outcome. Undo and redo must never
+ * fail silently: a barrier timeout or rejected command otherwise presents as a
+ * dead Cmd-Z with no feedback.
+ */
+function reportHistoryCommandFailure(
+  action: 'undo' | 'redo',
+  response: { status: string; reason?: string; error?: string },
+): void {
+  if (response.status !== 'failed' && response.status !== 'invalid' && response.status !== 'busy') {
+    return;
+  }
+  const detail = response.reason ?? response.error;
+  toast.error(`${action === 'undo' ? 'Undo' : 'Redo'} failed${detail ? `: ${detail}` : ''}`);
 }
 
 /**
  * Executes a project-scoped undo through the canonical IPC bridge.
  */
-export async function executeProjectUndo(): Promise<void> {
+export async function executeProjectUndo(hostDocument?: Document): Promise<void> {
   const documentId = getProjectDocumentId();
   const sessionId = useProjectStore.getState().sessionId;
   if (!documentId || !window.blueAPI?.undoProjectHistory) return;
+
+  await settleHistoryEditors(hostDocument);
+  flushFocusedProjectEditor(hostDocument);
 
   const response = await window.blueAPI.undoProjectHistory({
     documentId,
     operationId: `undo-${crypto.randomUUID()}`,
     expectedRevision: getProjectDocumentRevision(),
-    contextSequence: nextCommandSequence(),
+    contextSequence: reserveProjectHistoryContextSequence(),
+    origin: { contextId: getProjectHistoryParticipantContextId(), viewId: 'workbench' },
   });
 
   if (response.status === 'committed') {
@@ -81,21 +150,26 @@ export async function executeProjectUndo(): Promise<void> {
   } else if (response.status === 'unchanged') {
     acceptProjectDocumentRevision(sessionId, response.revision);
   }
+  reportHistoryCommandFailure('undo', response);
 }
 
 /**
  * Executes a project-scoped redo through the canonical IPC bridge.
  */
-export async function executeProjectRedo(): Promise<void> {
+export async function executeProjectRedo(hostDocument?: Document): Promise<void> {
   const documentId = getProjectDocumentId();
   const sessionId = useProjectStore.getState().sessionId;
   if (!documentId || !window.blueAPI?.redoProjectHistory) return;
+
+  await settleHistoryEditors(hostDocument);
+  flushFocusedProjectEditor(hostDocument);
 
   const response = await window.blueAPI.redoProjectHistory({
     documentId,
     operationId: `redo-${crypto.randomUUID()}`,
     expectedRevision: getProjectDocumentRevision(),
-    contextSequence: nextCommandSequence(),
+    contextSequence: reserveProjectHistoryContextSequence(),
+    origin: { contextId: getProjectHistoryParticipantContextId(), viewId: 'workbench' },
   });
 
   if (response.status === 'committed') {
@@ -105,13 +179,14 @@ export async function executeProjectRedo(): Promise<void> {
   } else if (response.status === 'unchanged') {
     acceptProjectDocumentRevision(sessionId, response.revision);
   }
+  reportHistoryCommandFailure('redo', response);
 }
 
 /**
  * Resolves the history scope of the currently focused editable element.
  */
-export function resolveHistoryScope(): HistoryScopeResolution {
-  const activeEl = getActiveHostElement();
+export function resolveHistoryScope(hostDocument?: Document): HistoryScopeResolution {
+  const activeEl = getActiveHostElement(hostDocument);
   if (!activeEl) {
     return { scope: 'project' };
   }
@@ -141,11 +216,7 @@ export function resolveHistoryScope(): HistoryScopeResolution {
   }
 
   if (explicitScope === 'draft') {
-    if (
-      activeEl instanceof HTMLInputElement ||
-      activeEl instanceof HTMLTextAreaElement ||
-      (activeEl as HTMLElement).isContentEditable
-    ) {
+    if (isNativeTextInput(activeEl) || (activeEl as HTMLElement).isContentEditable) {
       return { scope: 'draft', type: 'native', element: activeEl as HTMLElement };
     }
     return { scope: 'draft', type: 'custom' };
@@ -156,15 +227,62 @@ export function resolveHistoryScope(): HistoryScopeResolution {
   }
 
   // Native input elements outside CodeMirror default to draft (search bars, text fields, etc.)
-  if (
-    activeEl instanceof HTMLInputElement ||
-    activeEl instanceof HTMLTextAreaElement ||
-    (activeEl as HTMLElement).isContentEditable
-  ) {
+  if (isNativeTextInput(activeEl) || (activeEl as HTMLElement).isContentEditable) {
     return { scope: 'draft', type: 'native', element: activeEl as HTMLElement };
   }
 
   return { scope: 'project' };
+}
+
+/** Derives the native-menu projection from the currently focused scope. */
+export function getFocusedHistoryAvailability(
+  hostDocument?: Document,
+  projectProjection?: ProjectHistoryStateProjection | null,
+): FocusedHistoryAvailability {
+  const resolution = resolveHistoryScope(hostDocument);
+  if (resolution.scope === 'project') {
+    return {
+      scope: 'project',
+      canUndo: projectProjection?.canUndo ?? false,
+      canRedo: projectProjection?.canRedo ?? false,
+      undoLabel: projectProjection?.undoLabel ?? null,
+      redoLabel: projectProjection?.redoLabel ?? null,
+    };
+  }
+  if (resolution.scope === 'draft' && resolution.type === 'codemirror') {
+    return {
+      scope: 'draft',
+      canUndo: undoDepth(resolution.view.state) > 0,
+      canRedo: redoDepth(resolution.view.state) > 0,
+      undoLabel: 'Local Draft',
+      redoLabel: 'Local Draft',
+    };
+  }
+  if (resolution.scope === 'draft' && resolution.type === 'native') {
+    return {
+      scope: 'draft',
+      canUndo: true,
+      canRedo: true,
+      undoLabel: 'Local Draft',
+      redoLabel: 'Local Draft',
+    };
+  }
+  return {
+    scope: resolution.scope,
+    canUndo: false,
+    canRedo: false,
+    undoLabel: null,
+    redoLabel: null,
+  };
+}
+
+export function publishFocusedHistoryAvailability(
+  projectProjection?: ProjectHistoryStateProjection | null,
+  hostDocument?: Document,
+): void {
+  window.blueAPI?.syncHistoryAvailability?.(
+    getFocusedHistoryAvailability(hostDocument, projectProjection),
+  );
 }
 
 /**
@@ -174,8 +292,9 @@ export function resolveHistoryScope(): HistoryScopeResolution {
  */
 export async function dispatchHistoryAction(
   action: 'undo' | 'redo',
+  hostDocument?: Document,
 ): Promise<{ handled: boolean; scope: HistoryScope }> {
-  const resolution = resolveHistoryScope();
+  const resolution = resolveHistoryScope(hostDocument);
 
   if (resolution.scope === 'none') {
     return { handled: true, scope: 'none' };
@@ -202,9 +321,9 @@ export async function dispatchHistoryAction(
 
   // Project scope
   if (action === 'undo') {
-    await executeProjectUndo();
+    await executeProjectUndo(hostDocument);
   } else {
-    await executeProjectRedo();
+    await executeProjectRedo(hostDocument);
   }
 
   return { handled: true, scope: 'project' };

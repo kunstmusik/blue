@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { InstrumentPatch } from '../../../../../../shared/project-editor';
+import type { ProjectDocumentCommitMetadata } from '../../../../../../shared/project-history';
 import type { ScoreObjectEditorComponentProps } from '../editor-registry';
 import SelectedCodeEditor from '../../editors/SelectedCodeEditor';
 import BSBInterfaceEditor from '../../orchestra/bsb/BSBInterfaceEditor';
@@ -45,12 +46,17 @@ export default function ObjectBuilderScoreObjectEditor({
     useScoreObjectTest(document.target);
 
   const patch = useCallback(
-    (value: Record<string, unknown>) => {
-      onPatch({
-        type: 'updateTypeSpecificEditor',
+    (value: Record<string, unknown>, metadata?: ProjectDocumentCommitMetadata) => {
+      const nextPatch = {
+        type: 'updateTypeSpecificEditor' as const,
         target: document.target,
         patch: value,
-      });
+      };
+      if (metadata) {
+        onPatch(nextPatch, metadata);
+      } else {
+        onPatch(nextPatch);
+      }
     },
     [document.target, onPatch],
   );
@@ -189,8 +195,15 @@ export default function ObjectBuilderScoreObjectEditor({
                 readOnly={!editEnabled}
                 ariaLabel={`ObjectBuilder ${languageType} code editor`}
                 javaBlueCompletionOptions={completionOptions}
-                onChange={(text) => {
-                  patch({ text });
+                typingGroupingMs={500}
+                historyMetadata={{
+                  fieldId: `score-object:${document.target.selectionId}:text`,
+                  gestureId: `project-text:score-object:${document.target.selectionId}:text`,
+                  label: 'Edit ObjectBuilder Code',
+                  phase: 'update',
+                }}
+                onChange={(text, metadata?: ProjectDocumentCommitMetadata) => {
+                  patch({ text }, metadata);
                 }}
               />
             </div>

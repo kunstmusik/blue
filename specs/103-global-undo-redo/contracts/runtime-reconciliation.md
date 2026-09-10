@@ -2,21 +2,24 @@
 
 Document publication is authoritative. Runtime work is an independently acknowledged projection of the committed before/after transition, including structural undo. Failed engine work never changes the history cursor or rolls canonical data back.
 
+Presentation revision (manual-testing feedback, 2026-09-09): retain the outcome tracking below, but do not display a persistent runtime-status strip or routine restart-required toasts. Genuine errors remain visible; recovery uses existing playback/Blue Live controls. This overrides earlier status-strip/restart-notification presentation requirements without changing reconciliation semantics.
+
 ## Capability matrix
 
 | Changed content | Timeline | Blue Live | Preconditions/fallback |
 | --- | --- | --- | --- |
 | Color, name, presentation-only values | No work | No work | Classification depends on semantic field, not broad patch name |
 | Mixer level | Live | Live | Valid per-performance level binding; fix current timeline-only gate |
-| BSB numeric/selection/XY/slider-bank/preset values | Live | Live | All changed channels have valid bindings; preset may require complete batch |
-| BlueX7 fixed values/complete voice | Live | Live | Preserve automation authority and complete-voice rules; acknowledged batch |
+| BlueX7 fixed values/complete voice (arrangement & track) | Live | Live | Preserve automation authority and complete-voice rules; structural undo uses inverted replaceVoice patch |
+| BSB numeric/selection/XY/slider-bank/preset values (arrangement & track) | Live | Live | All changed channels have valid bindings; structural undo re-applies previous preset channel values |
+| Score track instrument parameter / voice updates (`updateTrackInstrument`) | Live for BSB/BlueX7 | Live for BSB/BlueX7 | Dispatches via instrument patch classification; ownerKey `track:rootGroupId:trackId` |
 | Automation points, resolution, assignment | Live where compiled target supports create/update/delete | Same | Immutable acknowledged automation operations; absent/obsolete targets require restart |
 | Effect numeric parameters | Live | Live | Add shared acknowledged route replacing timeline-only preview; missing binding requires restart |
 | Code, UDOs, tables, instrument/effect replacement, routing, score/timing compiled structure | Restart required | Restart required | No automatic interruption; next compile uses restored document |
 | Unclassified runtime-relevant field | Restart required | Restart required | Never assume no engine work |
 | Stopped performance | Next compile | Next compile | No writes and no fake live acknowledgement |
 
-A structurally invalidated owner is not live-authorized merely because undo restores its ID. Restart and a fresh compiled binding are required. While restart-required remains for an owner, later scalar changes to it also await restart. Cosmetic changes to unrelated owners do not clear that status.
+A structurally invalidated owner is not live-authorized merely because undo restores its ID. Restart and a fresh compiled binding are required. While restart-required remains for an owner, later scalar changes to it also await restart. Cosmetic changes to unrelated owners do not clear that status. Structural history entries that represent live-capable instrument modifications (such as DX7 voice replacement or BSB control updates) MUST record concrete structural inverse patches so global undo restores the prior voice/parameter values to the engine live with an `applied` outcome rather than falling back to `restart-required`.
 
 ## Work and outcomes
 

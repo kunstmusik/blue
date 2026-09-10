@@ -1,12 +1,23 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { BlueData } from '@blue/data';
 import { ProjectSession } from './project-session';
 import { ProjectHistory } from './project-history';
-import { MockHistoryContext, FakePublicationRecorder } from './project-history-test-support';
+import {
+  MockHistoryContext,
+  FakePublicationRecorder,
+  createDeferred,
+} from './project-history-test-support';
 import type {
   PrepareHistoryBoundaryEvent,
   ReleaseHistoryBoundaryEvent,
 } from '../shared/project-history';
+import {
+  createProjectPatchQueue,
+  type ProjectPatchQueue,
+  type ProjectPatchQueueDependencies,
+} from '../renderer/stores/project-store/project-patch-queue';
 
 describe('Project history settlement barrier (T015)', () => {
   function setupTest(barrierTimeoutMs = 100) {
@@ -62,6 +73,54 @@ describe('Project history settlement barrier (T015)', () => {
 
       history.unregisterParticipant({ contextId: 'ctx-1' });
       expect(history.getParticipants()).toHaveLength(0);
+    });
+
+    it('rejects future revisions and preserves a registered sequence watermark', async () => {
+      const { session, history, contextA } = setupTest();
+      const docId = session.read().documentId!;
+
+      expect(
+        history.registerParticipant({
+          contextId: contextA.contextId,
+          documentId: docId,
+          acceptedRevision: 1,
+        }),
+      ).toEqual({
+        ok: false,
+        reason: 'History participant revision is ahead of the active document',
+      });
+
+      expect(
+        history.registerParticipant({
+          contextId: contextA.contextId,
+          documentId: docId,
+          acceptedRevision: 0,
+        }).ok,
+      ).toBe(true);
+      const firstCommit = await history.commit({
+        ...contextA.nextCommitRequest(docId, 0, 'First edit', [
+          { projectProperties: { title: 'First edit' } },
+        ]),
+        contextSequence: 2,
+      });
+      expect(firstCommit.status).toBe('committed');
+
+      expect(
+        history.registerParticipant({
+          contextId: contextA.contextId,
+          documentId: docId,
+          acceptedRevision: 1,
+        }).ok,
+      ).toBe(true);
+
+      const replay = await history.commit({
+        ...contextA.nextCommitRequest(docId, 1, 'Replay', [
+          { projectProperties: { title: 'Replay' } },
+        ]),
+        contextSequence: 1,
+      });
+      expect(replay.status).toBe('unchanged');
+      expect(session.read().data?.getProjectProperties().title).toBe('First edit');
     });
 
     it('returns active barrier in registration response if barrier is already in progress', async () => {
@@ -151,6 +210,115 @@ describe('Project history settlement barrier (T015)', () => {
   });
 
   describe('Pause, drain, execute, and release barrier flow', () => {
+    it.each([false, true])(
+      'settles an ordinary edit racing prepare delivery (main already prepared: %s)',
+      async (alreadyPrepared) => {
+        const contextId = 'editor';
+        const session = new ProjectSession();
+        session.replace(new BlueData(), join(tmpdir(), 'project.blue'));
+        const documentId = session.read().documentId!;
+        const prepared = createDeferred<PrepareHistoryBoundaryEvent>();
+        const releases: ReleaseHistoryBoundaryEvent[] = [];
+        const history = new ProjectHistory({
+          session,
+          barrierTimeoutMs: 100,
+          broadcastPrepareBoundary: (event) => prepared.resolve(event),
+          broadcastReleaseBoundary: (event) => {
+            releases.push(event);
+          },
+        });
+        await history.commit({
+          documentId,
+          operationId: 'seed',
+          expectedRevision: 0,
+          contextSequence: 0,
+          label: 'Seed',
+          patches: [{ projectProperties: { title: 'Seed' } }],
+        });
+        const context = new MockHistoryContext(contextId);
+        history.registerParticipant({ contextId, documentId, acceptedRevision: 1 });
+
+        const undo = history.undo({
+          documentId,
+          operationId: 'undo',
+          expectedRevision: 1,
+          contextSequence: 0,
+        });
+        // Main may have broadcast prepare while the renderer has not received
+        // it yet. Both sides of that asynchronous delivery must settle.
+        if (alreadyPrepared) await prepared.promise;
+        const request = context.nextCommitRequest(documentId, 1, 'In-flight edit', [
+          { projectProperties: { title: 'In-flight edit' } },
+        ]);
+        const submitted = history.commit(request);
+        const duplicate = history.commit(request);
+        const participant = (async () => {
+          const event = await prepared.promise;
+          // Both production participant queues await their ordinary in-flight
+          // submission before acknowledging prepare. It must not wait for undo.
+          const receipt = await submitted;
+          return history.acknowledgeBoundary({
+            ...context.acknowledgeBarrier(event.barrierId, session.read().revision),
+            failedPrefixCount: receipt.status === 'committed' ? 0 : 1,
+          });
+        })();
+
+        expect((await undo).status).toBe('committed');
+        expect(await participant).toEqual({ ok: true });
+        expect((await submitted).status).toBe('committed');
+        expect(await duplicate).toEqual(await submitted);
+        expect(releases).toEqual([expect.objectContaining({ status: 'ready' })]);
+        expect(session.read().data?.getProjectProperties().title).toBe('Seed');
+        expect(session.read().revision).toBe(3);
+        expect(history.getEntries()).toHaveLength(2);
+        expect(history.getCursor()).toBe(1);
+      },
+    );
+
+    it.each(['document', 'revision', 'sequence'] as const)(
+      'keeps the %s fence when capturing an already-submitted prefix',
+      async (fence) => {
+        const { session, history, contextA, prepareEvents } = setupTest();
+        const documentId = session.read().documentId!;
+        history.registerParticipant({
+          contextId: contextA.contextId,
+          documentId,
+          acceptedRevision: 0,
+        });
+        await history.commit(
+          contextA.nextCommitRequest(
+            documentId,
+            0,
+            'Seed',
+            [{ projectProperties: { title: 'Seed' } }],
+            { contextSequence: 3 },
+          ),
+        );
+        const undo = history.undo({
+          documentId,
+          operationId: 'undo',
+          expectedRevision: 1,
+          contextSequence: 0,
+        });
+        const submitted = history.commit(
+          contextA.nextCommitRequest(
+            fence === 'document' ? 'obsolete-document' : documentId,
+            fence === 'revision' ? 0 : 1,
+            'Invalid prefix',
+            [{ projectProperties: { title: 'Must not apply' } }],
+            { contextSequence: fence === 'sequence' ? 2 : 4 },
+          ),
+        );
+        const receipt = await submitted;
+        expect(receipt.status).toBe(fence === 'sequence' ? 'unchanged' : 'stale');
+        expect(session.read().revision).toBe(1);
+        expect(session.read().data?.getProjectProperties().title).toBe('Seed');
+        history.abortBoundary(prepareEvents[0]!.barrierId, 'Retain unresolved draft');
+        expect(await undo).toMatchObject({ status: 'failed', error: 'Retain unresolved draft' });
+        expect(session.read().revision).toBe(1);
+      },
+    );
+
     it('executes pause/drain/release lifecycle and undoes the settled top action', async () => {
       const { session, history, prepareEvents, releaseEvents, contextA, contextB } = setupTest();
       const docId = session.read().documentId!;
@@ -266,6 +434,82 @@ describe('Project history settlement barrier (T015)', () => {
       // Because undo changed the revision to 2, and unrelated commit had expectedRevision 1 without preconditions,
       // it returns stale with canonical revision
       expect(unrelatedRes.status).toBe('stale');
+    });
+
+    it('does not capture ordinary input from an already-acknowledged participant', async () => {
+      const { session, history, prepareEvents, contextA, contextB } = setupTest();
+      const documentId = session.read().documentId!;
+      for (const context of [contextA, contextB]) {
+        history.registerParticipant({
+          contextId: context.contextId,
+          documentId,
+          acceptedRevision: 0,
+        });
+      }
+      await history.commit(
+        contextA.nextCommitRequest(documentId, 0, 'Seed', [
+          { projectProperties: { title: 'Seed' } },
+        ]),
+      );
+      const undo = history.undo(contextA.nextUndoRequest(documentId, 1));
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      const barrierId = prepareEvents[0]!.barrierId;
+      expect(history.acknowledgeBoundary(contextA.acknowledgeBarrier(barrierId, 1)).ok).toBe(true);
+      const submitted = history.commit(
+        contextA.nextCommitRequest(documentId, 1, 'Later input', [
+          { projectProperties: { title: 'Must not become prefix' } },
+        ]),
+      );
+      expect(session.read().revision).toBe(1);
+      expect(history.acknowledgeBoundary(contextB.acknowledgeBarrier(barrierId, 1)).ok).toBe(true);
+      expect((await undo).status).toBe('committed');
+      expect((await submitted).status).toBe('stale');
+      expect(session.read().revision).toBe(2);
+      expect(history.getEntries()).toHaveLength(1);
+    });
+
+    it('fences a prepared structural candidate that becomes stale behind replay', async () => {
+      const { session, history, prepareEvents, contextA } = setupTest(200);
+      const documentId = session.read().documentId!;
+      const sessionId = session.read().sessionId;
+
+      history.registerParticipant({
+        contextId: contextA.contextId,
+        documentId,
+        acceptedRevision: 0,
+      });
+      await history.commit(
+        contextA.nextCommitRequest(documentId, 0, 'Base edit', [
+          { projectProperties: { title: 'Base' } },
+        ]),
+      );
+
+      const candidate = session.read().data!.historyCopy();
+      candidate.getProjectProperties().author = 'Prepared candidate';
+
+      const undoPromise = history.undo(contextA.nextUndoRequest(documentId, 1));
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      const barrierId = prepareEvents[0]!.barrierId;
+
+      const preparedPromise = history.commitPreparedStructuralMutation({
+        label: 'Prepared after undo',
+        candidate,
+        expectedDocumentId: documentId,
+        expectedSessionId: sessionId,
+        expectedRevision: 1,
+      });
+
+      history.acknowledgeBoundary(contextA.acknowledgeBarrier(barrierId, 1, 0));
+
+      const undo = await undoPromise;
+      const prepared = await preparedPromise;
+      expect(undo.status).toBe('committed');
+      expect(prepared.changed).toBe(false);
+      expect(prepared.error).toContain('stale');
+      expect(session.read().data?.getProjectProperties().title).toBe('Initial Title');
+      expect(session.read().data?.getProjectProperties().author).toBe('');
+      expect(history.read().length).toBe(1);
+      expect(history.read().cursor).toBe(0);
     });
   });
 
@@ -533,6 +777,108 @@ describe('Project history settlement barrier (T015)', () => {
       expect(releaseEvents).toHaveLength(1);
       expect(releaseEvents[0]!.status).toBe('aborted');
     });
+
+    it('aborts immediately when a participant reports unresolved prefix input', async () => {
+      const { session, history, prepareEvents, releaseEvents, contextA } = setupTest(500);
+      const docId = session.read().documentId!;
+
+      history.registerParticipant({
+        contextId: contextA.contextId,
+        documentId: docId,
+        acceptedRevision: 0,
+      });
+      await history.commit(
+        contextA.nextCommitRequest(docId, 0, 'Action 1', [
+          { projectProperties: { title: 'Title 1' } },
+        ]),
+      );
+
+      const undoPromise = history.undo(contextA.nextUndoRequest(docId, 1));
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      const barrierId = prepareEvents[0]!.barrierId;
+
+      const acknowledgement = history.acknowledgeBoundary({
+        barrierId,
+        contextId: contextA.contextId,
+        lastAcknowledgedRevision: 1,
+        lastAcknowledgedSequence: 2,
+        outstandingPrefixCount: 1,
+        failedPrefixCount: 1,
+        unresolvedPrefixCount: 1,
+      });
+      expect(acknowledgement).toEqual({
+        ok: false,
+        reason: 'History participant still has outstanding prefix edits',
+      });
+
+      const undoResult = await undoPromise;
+      expect(undoResult.status).toBe('failed');
+      expect((undoResult as { error: string }).error).toContain('outstanding prefix edits');
+      expect(releaseEvents[0]!.status).toBe('aborted');
+      expect(session.read().revision).toBe(1);
+    });
+
+    it('aborts the real barrier when the renderer receives an error-bearing prefix receipt', async () => {
+      const session = new ProjectSession();
+      session.replace(new BlueData(), '/tmp/project-with-receipt-error.blue');
+      const releaseEvents: ReleaseHistoryBoundaryEvent[] = [];
+      let queue!: ProjectPatchQueue;
+      const history = new ProjectHistory({
+        session,
+        barrierTimeoutMs: 500,
+        broadcastPrepareBoundary: (event) => queue.handlePrepareBoundary(event),
+        broadcastReleaseBoundary: (event) => {
+          releaseEvents.push(event);
+          queue.handleReleaseBoundary(event);
+        },
+      });
+      const contextA = new MockHistoryContext('ctx-a');
+      const documentId = session.read().documentId!;
+
+      await history.commit(
+        contextA.nextCommitRequest(documentId, 0, 'Action 1', [
+          { projectProperties: { title: 'Title 1' } },
+        ]),
+      );
+      history.registerParticipant({
+        contextId: contextA.contextId,
+        documentId,
+        acceptedRevision: 1,
+      });
+
+      const dependencies: ProjectPatchQueueDependencies = {
+        participantContextId: contextA.contextId,
+        commit: vi.fn().mockResolvedValue({
+          changed: false,
+          revision: session.read().revision,
+          sessionId: session.read().sessionId,
+          error: 'prefix rejected by canonical history',
+        }),
+        fetchCanonicalSnapshot: vi.fn().mockResolvedValue(null),
+        applyCanonicalSnapshot: vi.fn(),
+        setDirty: vi.fn(),
+        reportBackgroundError: vi.fn(),
+        logRefreshError: vi.fn(),
+        acknowledgeBoundary: vi.fn((ack) => {
+          const result = history.acknowledgeBoundary(ack);
+          expect(result.ok).toBe(false);
+        }),
+      };
+      queue = createProjectPatchQueue(dependencies);
+      queue.acceptRevision(session.read().sessionId, session.read().revision);
+      queue.enqueue({ projectProperties: { title: 'Unresolved prefix' } }, false);
+      queue.reserveContextSequence();
+
+      const undoPromise = history.undo(contextA.nextUndoRequest(documentId, 1));
+      const undoResult = await undoPromise;
+      expect(undoResult.status).toBe('failed');
+      expect((undoResult as { error: string }).error).toContain('outstanding prefix edits');
+      expect(releaseEvents).toHaveLength(1);
+      expect(releaseEvents[0]!.status).toBe('aborted');
+      expect(session.read().revision).toBe(1);
+      expect(queue.isSettlementPaused()).toBe(false);
+      queue.clearPending();
+    });
   });
 
   describe('Queued rapid commands', () => {
@@ -592,6 +938,53 @@ describe('Project history settlement barrier (T015)', () => {
       // Both barriers completed and released
       expect(releaseEvents).toHaveLength(2);
       expect(releaseEvents.every((e) => e.status === 'ready')).toBe(true);
+    });
+  });
+
+  describe('In-flight operation deduplication', () => {
+    it('shares concurrent duplicate undo execution and rejects conflicting reuse', async () => {
+      const session = new ProjectSession();
+      const data = new BlueData();
+      data.getProjectProperties().title = 'Initial Title';
+      session.replace(data, '/tmp/project.blue');
+
+      const publicationGate = createDeferred<void>();
+      let blockPublication = false;
+      const history = new ProjectHistory({
+        session,
+        publishUpdated: () => (blockPublication ? publicationGate.promise : undefined),
+      });
+      const context = new MockHistoryContext('ctx-dedup');
+      const documentId = session.read().documentId!;
+
+      await history.commit(
+        context.nextCommitRequest(documentId, 0, 'Edit 1', [
+          { projectProperties: { title: 'Title 1' } },
+        ]),
+      );
+      blockPublication = true;
+
+      const request = context.nextUndoRequest(documentId, 1);
+      const first = history.undo(request);
+      const duplicate = history.undo(request);
+      const conflicting = history.undo({
+        ...request,
+        origin: { contextId: context.contextId, viewId: 'other-window' },
+      });
+
+      expect(duplicate).toBe(first);
+      const conflictingResult = await conflicting;
+      expect(conflictingResult.status).toBe('invalid');
+      expect(session.read().revision).toBe(2);
+      expect(session.read().data?.getProjectProperties().title).toBe('Initial Title');
+
+      publicationGate.resolve();
+      const firstResult = await first;
+      expect(firstResult.status).toBe('committed');
+
+      const completedDuplicateResult = await history.undo(request);
+      expect(completedDuplicateResult).toBe(firstResult);
+      expect(session.read().revision).toBe(2);
     });
   });
 });

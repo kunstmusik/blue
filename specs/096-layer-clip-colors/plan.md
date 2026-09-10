@@ -6,7 +6,7 @@
 
 ## Summary
 
-Add a concrete, project-persisted background color to ordinary sound layers, Tracks, and Pattern layers. Newly created items copy their destination layer color once; existing, copied, imported, duplicated, and moved items retain their concrete colors. Users can explicitly recolor a selection or every item on a layer through one atomic score patch. The existing color picker is reused in layer headers, and a bounded score-color history provides one-step undo/redo without introducing a general project-history framework.
+Add a concrete, project-persisted background color to ordinary sound layers, Tracks, and Pattern layers. Newly created items copy their destination layer color once; existing, copied, imported, duplicated, and moved items retain their concrete colors. Users can explicitly recolor a selection or every item on a layer through one atomic score patch. The existing color picker is reused in layer headers, and the existing main-owned project history provides one-step undo/redo without a second renderer-local history stack.
 
 ## Technical Context
 
@@ -22,11 +22,11 @@ Add a concrete, project-persisted background color to ordinary sound layers, Tra
 
 **Project Type**: pnpm monorepo desktop application with a platform-neutral data package
 
-**Performance Goals**: A 1,000-item layer-color application is one atomic edit and one undo entry; routine color changes remain responsive in docked and floated score panels
+**Performance Goals**: A 1,000-item layer-color application is one atomic edit and one project-history entry; routine color changes remain responsive in docked and floated score panels
 
-**Constraints**: Preserve legacy item colors and unknown XML; use copy-on-create rather than live inheritance; keep Java-readable concrete item colors; do not add a project-wide undo system or palette subsystem
+**Constraints**: Preserve legacy item colors and unknown XML; use copy-on-create rather than live inheritance; keep Java-readable concrete item colors; use the existing project-wide history rather than adding a renderer-local color stack or palette subsystem
 
-**Scale/Scope**: Three layer implementations, their XML readers/writers and snapshots, score patch contracts and canonical handlers, optimistic renderer state, layer-header controls, explicit recolor actions, and focused score-color history
+**Scale/Scope**: Three layer implementations, their XML readers/writers and snapshots, score patch contracts and canonical handlers, optimistic renderer state, layer-header controls, explicit recolor actions, and canonical project-history integration
 
 ## Constitution Check
 
@@ -41,7 +41,7 @@ Add a concrete, project-persisted background color to ordinary sound layers, Tra
 
 ### Post-design re-check
 
-The Phase 1 artifacts retain the same boundaries: one shared color representation in `@blue/data`, one typed document-bridge extension, no host dependencies in the data package, no live-inheritance metadata, and no general undo architecture. No constitution exception is required.
+The Phase 1 artifacts retain the same boundaries: one shared color representation in `@blue/data`, one typed document-bridge extension, no host dependencies in the data package, no live-inheritance metadata, and no second undo architecture. Color actions consume the existing global project-history protocol. No constitution exception is required.
 
 ## Project Structure
 
@@ -85,23 +85,22 @@ packages/blue-app/src/
     │           ├── ScoreTimeCanvas.tsx
     │           └── TrackLayerGroupCanvas.tsx
     └── stores/
-        ├── project-store.ts
-        └── score-color-history-store.ts
+        └── project-store.ts
 ```
 
 Tests remain beside or within the existing test directories of the affected packages. New focused files should be preferred over enlarging already-large modules unless an existing test suite is the natural owner.
 
-**Structure Decision**: Extend the established `@blue/data` layer implementations and the existing shared project-editor document bridge. Renderer controls remain in the score UI; the narrowly scoped, disposable undo stack lives in a separate renderer store to avoid coupling color history to canonical project data or growing the main project store further.
+**Structure Decision**: Extend the established `@blue/data` layer implementations and the existing shared project-editor document bridge. Renderer controls remain in the score UI; committed color actions use the existing main-owned project history, while the renderer keeps only optimistic snapshots and temporary picker state.
 
 ## Implementation Strategy
 
 1. Add a shared opaque signed-ARGB default and normalization helper in `@blue/data`, then give all three layer implementations `getBackgroundColor()`/`setBackgroundColor()` behavior and compatible XML persistence.
 2. Extend layer snapshots and `updateLayerState` with background color. Make creation-time item color optional only at the document-bridge boundary, where absence means “use the destination layer color” for a genuinely new item; restored/imported/copied data must preserve or supply its concrete color.
 3. Add one atomic `setScoreObjectBackgroundColors` patch for both selected-item and whole-layer commands. Validate the complete request before mutating canonical data, and mirror it exactly in optimistic snapshots.
-4. Reuse `ColorPickerButton` in shared and Pattern layer headers. Add an optional picker commit lifecycle so continuous preview can produce one history record when the gesture completes. Use host-document portals and realm-safe dismissal behavior already provided by the picker.
-5. Add bounded, renderer-local score-color history entries containing forward and inverse document patches. Flush pending edits before undo/redo, clear invalid history on project replacement or structural score changes, and expose score-scoped undo/redo controls without intercepting native text-edit undo globally.
-6. Add direct actions for “Set to Layer Color” and “Apply Layer Color to All Clips,” deriving every target and prior color from the current snapshot and submitting one atomic patch/history entry.
+4. Reuse `ColorPickerButton` in shared and Pattern layer headers. Route committed picker changes through the existing project-history patch queue, preserving gesture grouping and the host-document portals and realm-safe dismissal behavior already provided by the picker.
+5. Keep score color actions as forward `ProjectDocumentPatch` builders. Let the main-owned project history capture exact before/after state, labels, retention, and undo/redo rather than maintaining a second renderer stack.
+6. Add direct actions for “Set to Layer Color” and “Apply Layer Color to All Clips,” deriving every target from the current snapshot and submitting one labeled atomic project-history patch.
 
 ## Complexity Tracking
 
-No constitution violations or additional subsystems are required. The only new stateful helper is a bounded, score-color-specific undo stack required by FR-017; it is deliberately not a general project command framework.
+No constitution violations or additional subsystems are required. Color actions reuse the existing project-history coordinator; no score-color-specific undo helper is required.

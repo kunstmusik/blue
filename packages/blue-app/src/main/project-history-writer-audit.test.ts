@@ -1,8 +1,16 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { BlueData, GenericInstrument, Channel, Effect, TrackLayerGroup } from '@blue/data';
 import { ProjectSession } from './project-session';
 import { ProjectHistory } from './project-history';
-import { MockHistoryContext, FakePublicationRecorder } from './project-history-test-support';
+import {
+  MockHistoryContext,
+  FakePublicationRecorder,
+  createDeferred,
+} from './project-history-test-support';
+import {
+  ProjectRuntimeReconciliation,
+  type RuntimeOperationAck,
+} from './project-runtime-reconciliation';
 import {
   classifyProjectDocumentPatch,
   validateProjectDocumentPatch,
@@ -12,7 +20,9 @@ import {
 import { prepareTransaction } from './project-history-memento';
 
 describe('Project history canonical writer audit (T014)', () => {
-  function setupTest() {
+  function setupTest(
+    options: { bytesLimit?: number; reconciliation?: ProjectRuntimeReconciliation } = {},
+  ) {
     const session = new ProjectSession();
     const data = new BlueData();
     data.getProjectProperties().title = 'Original Project';
@@ -40,6 +50,8 @@ describe('Project history canonical writer audit (T014)', () => {
     const history = new ProjectHistory({
       session,
       publishUpdated: (evt) => recorder.record(evt),
+      retainedBytesLimit: options.bytesLimit,
+      reconciliation: options.reconciliation,
     });
 
     const context = new MockHistoryContext('ctx-audit');
@@ -284,6 +296,154 @@ describe('Project history canonical writer audit (T014)', () => {
       expect(receipt.changed).toBe(false);
       expect(receipt.revision).toBe(0);
       expect(history.read().length).toBe(0);
+    });
+
+    it('keeps direct publication behind replay runtime completion', async () => {
+      const runtimeGate = createDeferred<RuntimeOperationAck>();
+      const applyOperation = vi.fn(() => runtimeGate.promise);
+      const reconciliation = new ProjectRuntimeReconciliation();
+      const { session, history, context } = setupTest({ reconciliation });
+      const documentId = session.read().documentId!;
+
+      const baseline = await history.commit(
+        context.nextCommitRequest(documentId, 0, 'Baseline level', [
+          { mixer: { type: 'updateChannel', channelId: 'Master', patch: { level: 0.5 } } },
+        ]),
+      );
+      expect(baseline.status).toBe('committed');
+
+      reconciliation.registerPerformance(
+        'timeline',
+        1,
+        { applyOperation },
+        new Map([['Master::level', { kind: 'channel', channel: 'gkMasterLevel' }]]),
+      );
+
+      const undoPromise = history.undo({
+        documentId,
+        operationId: 'delayed-replay-undo',
+        expectedRevision: 1,
+        contextSequence: 2,
+      });
+      await vi.waitFor(() => expect(applyOperation).toHaveBeenCalledOnce());
+
+      let directRan = false;
+      const directPromise = history.commitDirectMutation({
+        label: 'Direct publication after replay',
+        mutator: (candidate) => {
+          directRan = true;
+          candidate.getProjectProperties().author = 'After replay';
+          return true;
+        },
+      });
+      await Promise.resolve();
+      expect(directRan).toBe(false);
+
+      runtimeGate.resolve({ status: 'applied' });
+      const undo = await undoPromise;
+      const direct = await directPromise;
+      expect(undo.status).toBe('committed');
+      expect(direct.changed).toBe(true);
+      expect(directRan).toBe(true);
+      expect(session.read().data?.getProjectProperties().author).toBe('After replay');
+    });
+
+    it('proposes an oversized prepared direct action before publication and cancels without changing state', async () => {
+      const { session, history } = setupTest({ bytesLimit: 500 });
+      const beforeXml = session.read().data!.saveToString();
+
+      const receipt = await history.commitDirectMutation({
+        label: 'Oversized Direct Edit',
+        mutator: (candidate) => {
+          candidate.getGlobalOrcSco().setGlobalOrc('x'.repeat(2_000));
+          return true;
+        },
+      });
+
+      expect(receipt.changed).toBe(false);
+      expect(receipt.oversizeProposal?.token).toBeTruthy();
+      expect(session.read().data!.saveToString()).toBe(beforeXml);
+      expect(history.read().length).toBe(0);
+
+      const cancelResult = history.cancelOversizeProposal({
+        proposalToken: receipt.oversizeProposal!.token,
+      });
+      expect(cancelResult).toEqual({ ok: true });
+      expect(session.read().data!.saveToString()).toBe(beforeXml);
+      expect(history.read().length).toBe(0);
+    });
+
+    it('rolls back oversized already-applied direct mutations and preserves a redo branch on cancel', async () => {
+      const { session, history, context, recorder } = setupTest({ bytesLimit: 500 });
+      const documentId = session.read().documentId!;
+
+      await history.commit(
+        context.nextCommitRequest(documentId, 0, 'Branching Edit', [
+          { projectProperties: { title: 'Branch' } },
+        ]),
+      );
+      await history.undo(context.nextUndoRequest(documentId, 1));
+      const beforeXml = session.read().data!.saveToString();
+      const beforeMemento = session.read().data!.historyCopy();
+      session.read().data!.getGlobalOrcSco().setGlobalOrc('y'.repeat(2_000));
+      const afterMemento = session.read().data!.historyCopy();
+
+      const receipt = history.recordDirectStructureMutation({
+        label: 'Oversized Applied Direct Edit',
+        beforeMemento,
+        afterMemento,
+      });
+
+      expect(receipt.changed).toBe(false);
+      expect(receipt.oversizeProposal?.token).toBeTruthy();
+      expect(session.read().data!.saveToString()).toBe(beforeXml);
+      expect(history.read().canRedo).toBe(true);
+      expect(history.read().length).toBe(1);
+      expect(recorder.latest()?.history.canRedo).toBe(true);
+
+      const cancelResult = history.cancelOversizeProposal({
+        proposalToken: receipt.oversizeProposal!.token,
+      });
+      expect(cancelResult).toEqual({ ok: true });
+      expect(session.read().data!.saveToString()).toBe(beforeXml);
+      expect(history.read().canRedo).toBe(true);
+    });
+
+    it('consumes one direct oversize proposal exactly once when explicitly confirmed', async () => {
+      const { session, history } = setupTest({ bytesLimit: 500 });
+      const beforeMemento = session.read().data!.historyCopy();
+      const afterMemento = beforeMemento.historyCopy();
+      afterMemento.getGlobalOrcSco().setGlobalOrc('z'.repeat(2_000));
+      session.read().data!.getGlobalOrcSco().setGlobalOrc('z'.repeat(2_000));
+
+      const proposal = history.recordDirectStructureMutation({
+        label: 'Confirm Oversized Direct Edit',
+        beforeMemento,
+        afterMemento,
+      });
+      const token = proposal.oversizeProposal!.token;
+
+      const confirmed = history.recordDirectStructureMutation({
+        label: 'Confirm Oversized Direct Edit',
+        beforeMemento,
+        afterMemento,
+        proposalToken: token,
+      });
+      expect(confirmed.changed).toBe(true);
+      // Explicit confirmation authorizes the documented history reset. The
+      // oversized action is applied, but cannot be retained under the limit.
+      expect(history.read().length).toBe(0);
+      expect(history.read().canUndo).toBe(false);
+      expect(session.read().data!.getGlobalOrcSco().getGlobalOrc()).toBe('z'.repeat(2_000));
+
+      const reused = history.recordDirectStructureMutation({
+        label: 'Confirm Oversized Direct Edit',
+        beforeMemento,
+        afterMemento,
+        proposalToken: token,
+      });
+      expect(reused.changed).toBe(false);
+      expect(reused.error).toMatch(/invalid|stale|consumed/i);
     });
   });
 });

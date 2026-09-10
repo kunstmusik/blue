@@ -5,7 +5,11 @@ import {
   BlueData,
   BlueX7,
   BlueSynthBuilder,
+  BSBCheckBox,
+  BSBDropdown,
+  BSBHSliderBank,
   BSBKnob,
+  BSBXYController,
   GenericInstrument,
 } from '@blue/data';
 import { createProjectEditorSnapshot } from '../shared/project-editor';
@@ -245,5 +249,55 @@ describe('buildRuntimeBindingRegistry (T044, US3)', () => {
       supportsUpdate: true,
       supportsDelete: true,
     });
+  });
+
+  it('registers aliases for BSB XY, slider-bank, checkbox, and dropdown values', () => {
+    const data = new BlueData();
+    const bsb = new BlueSynthBuilder();
+    const xy = new BSBXYController();
+    xy.id = 'xy-widget';
+    xy.objectName = 'pad';
+    const bank = new BSBHSliderBank();
+    bank.id = 'bank-widget';
+    bank.objectName = 'mix';
+    bank.numberOfSliders = 2;
+    const checkbox = new BSBCheckBox();
+    checkbox.id = 'gate-widget';
+    checkbox.objectName = 'gate';
+    const dropdown = new BSBDropdown();
+    dropdown.id = 'mode-widget';
+    dropdown.objectName = 'mode';
+    bsb.setInstrumentText(
+      'aout oscili <padX> + <padY> + <mix_0> + <mix_1> + <gate> + <mode>, 440\nout aout',
+    );
+    const root = bsb.getGraphicInterface().getRootGroup();
+    root.addChild(xy);
+    root.addChild(bank);
+    root.addChild(checkbox);
+    root.addChild(dropdown);
+    data.getArrangement().addInstrument(bsb, 'alias-test');
+
+    const render = data.toBlueLiveCSD();
+    const registry = buildRuntimeBindingRegistry(data, render.parameters);
+    const owner = 'alias-test';
+
+    expect(registry.get(`${owner}::bsb:xy-widget:xValue`)).toEqual(
+      registry.get(`${owner}::bsb:padX`),
+    );
+    expect(registry.get(`${owner}::bsb:xy-widget:yValue`)).toEqual(
+      registry.get(`${owner}::bsb:padY`),
+    );
+    expect(registry.get(`${owner}::bsb:bank-widget[0]`)).toEqual(
+      registry.get(`${owner}::bsb:mix_0`),
+    );
+    expect(registry.get(`${owner}::bsb:bank-widget[1]`)).toEqual(
+      registry.get(`${owner}::bsb:mix_1`),
+    );
+    expect(registry.get(`${owner}::bsb:gate-widget:selected`)).toEqual(
+      registry.get(`${owner}::bsb:gate`),
+    );
+    expect(registry.get(`${owner}::bsb:mode-widget:selectedIndex`)).toEqual(
+      registry.get(`${owner}::bsb:mode`),
+    );
   });
 });

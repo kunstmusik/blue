@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  bsbInterfaceActionLabel,
   mixerPatchActionLabel,
   orchestraPatchActionLabel,
+  type BsbActionLabelContext,
+  type BsbInterfacePatch,
   type MixerPatch,
   type OrchestraPatch,
 } from './project-editor';
@@ -130,5 +133,51 @@ describe('orchestra patch action labels (T023)', () => {
         comment: 'note',
       }),
     ).toBe('Edit Instrument Comment');
+  });
+
+  it('labels BSB interface edits by their action instead of a generic edit', () => {
+    const bsbLabel = (patch: BsbInterfacePatch): string =>
+      orchestraPatchActionLabel({
+        type: 'updateInstrument',
+        assignmentId: '1',
+        patch: { bsbInterface: patch },
+      });
+
+    expect(bsbLabel({ type: 'applyPreset', presetUniqueId: 'p1' })).toBe('Apply Preset');
+    expect(bsbLabel({ type: 'addPreset', presetName: 'My Groove' })).toBe('Add Preset My Groove');
+    expect(bsbLabel({ type: 'updatePreset', presetUniqueId: 'p1' })).toBe('Update Preset');
+    expect(bsbLabel({ type: 'synchronizePresets' })).toBe('Synchronize Presets');
+    expect(
+      bsbLabel({ type: 'updateWidgetProperties', widgetId: 'w1', properties: { value: 0.5 } }),
+    ).toBe('Edit Blue Synth Builder Widget');
+    expect(bsbLabel({ type: 'randomize' })).toBe('Randomize Blue Synth Builder Interface');
+  });
+
+  it('labels BSB interface edits directly with resolved display names', () => {
+    const context: BsbActionLabelContext = {
+      presetName: (id) => (id === 'p1' ? 'Ocarina' : undefined),
+      widgetName: (id) => (id === 'w1' ? 'Vol' : undefined),
+    };
+    expect(bsbInterfaceActionLabel({ type: 'applyPreset', presetUniqueId: 'p1' }, context)).toBe(
+      'Apply Preset Ocarina',
+    );
+    expect(
+      bsbInterfaceActionLabel({ type: 'applyPreset', presetUniqueId: 'missing' }, context),
+    ).toBe('Apply Preset');
+    expect(
+      bsbInterfaceActionLabel(
+        { type: 'updateWidgetProperties', widgetId: 'w1', properties: { value: 0.5 } },
+        context,
+      ),
+    ).toBe('Edit Blue Synth Builder Widget Vol');
+    expect(
+      bsbInterfaceActionLabel(
+        { type: 'updateWidgetProperties', widgetId: 'missing', properties: { value: 0.5 } },
+        context,
+      ),
+    ).toBe('Edit Blue Synth Builder Widget');
+    expect(bsbInterfaceActionLabel({ type: 'removePreset', presetUniqueId: 'p1' }, context)).toBe(
+      'Remove Preset Ocarina',
+    );
   });
 });

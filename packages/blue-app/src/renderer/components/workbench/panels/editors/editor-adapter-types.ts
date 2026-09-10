@@ -1,5 +1,6 @@
 import type { Completion } from '@codemirror/autocomplete';
 import type { CodeRepositoryNode } from '@blue/data';
+import type { ProjectDocumentCommitMetadata } from '../../../../shared/project-history';
 
 export type SelectedEditorKind = 'codemirror';
 
@@ -130,7 +131,12 @@ export interface SelectedCodeEditorProps {
   historyScope?: 'project' | 'draft' | 'none';
   /** Typing grouping interval in milliseconds (e.g. 500ms). Defaults to 0 (immediate). */
   typingGroupingMs?: number;
-  onChange: (value: string) => void | Promise<void>;
+  /** Stable project-history identity carried with text submissions. */
+  historyMetadata?: Pick<
+    ProjectDocumentCommitMetadata,
+    'label' | 'gestureId' | 'fieldId' | 'phase' | 'origin'
+  >;
+  onChange: (value: string, metadata?: ProjectDocumentCommitMetadata) => void | Promise<void>;
 }
 
 export interface SelectedEditorMetadata {

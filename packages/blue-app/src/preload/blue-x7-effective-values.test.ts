@@ -37,6 +37,7 @@ describe('BlueX7 effective-values preload surface (Spec 092)', () => {
     const request = {
       target: { assignmentId: '1' },
       projectSessionId: 3,
+      performanceKind: 'timeline',
       parameterIds: ['param-a', 'param-b'],
     };
     const result = {
@@ -60,6 +61,7 @@ describe('BlueX7 effective-values preload surface (Spec 092)', () => {
       bridge.getBlueX7EffectiveValues({
         target: { track: { projectSessionId: 1, rootGroupId: 'g', trackId: 't' } },
         projectSessionId: 1,
+        performanceKind: 'blueLive',
         parameterIds: ['param-a'],
       }),
     ).resolves.toEqual({ ok: false, reason: 'stale-session' });

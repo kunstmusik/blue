@@ -13,12 +13,14 @@
 import { useEffect, useRef, useState } from 'react';
 import type {
   BlueX7EffectiveValuesResult,
+  BlueX7PerformanceKind,
   BlueX7RuntimeTarget,
 } from '../../../../shared/project-editor/contract';
 
 export interface BlueX7EffectiveValuesOptions {
   target: BlueX7RuntimeTarget | null;
   projectSessionId: number | null;
+  performanceKind?: BlueX7PerformanceKind;
   /** Visible controls only (maximum 151). */
   parameterIds: readonly string[];
   /** Poll only while the editor is live (playback or Blue Live running). */
@@ -47,13 +49,14 @@ const EMPTY_STATE: BlueX7EffectiveValuesState = {
 function requestIdentity(
   target: BlueX7RuntimeTarget | null,
   projectSessionId: number | null,
+  performanceKind: BlueX7PerformanceKind,
 ): string {
-  if (!target || projectSessionId === null) return 'none';
+  if (!target || projectSessionId === null) return `none:${performanceKind}`;
   const owner =
     target.assignmentId !== undefined
       ? `arrangement:${target.assignmentId}`
       : `track:${target.track.rootGroupId}:${target.track.trackId}`;
-  return `${projectSessionId}:${owner}`;
+  return `${projectSessionId}:${performanceKind}:${owner}`;
 }
 
 function ownerIdentity(target: BlueX7RuntimeTarget): string {
@@ -69,6 +72,7 @@ export function useBlueX7EffectiveValues(
   const {
     target,
     projectSessionId,
+    performanceKind = 'timeline',
     parameterIds,
     enabled,
     pollHz = 20,
@@ -82,8 +86,8 @@ export function useBlueX7EffectiveValues(
   const onObservationResultRef = useRef(onObservationResult);
   onObservationStartRef.current = onObservationStart;
   onObservationResultRef.current = onObservationResult;
-  const identityRef = useRef(requestIdentity(target, projectSessionId));
-  identityRef.current = requestIdentity(target, projectSessionId);
+  const identityRef = useRef(requestIdentity(target, projectSessionId, performanceKind));
+  identityRef.current = requestIdentity(target, projectSessionId, performanceKind);
 
   const parameterSignature = parameterIds.join(',');
 
@@ -118,12 +122,14 @@ export function useBlueX7EffectiveValues(
         const result: BlueX7EffectiveValuesResult = await window.blueAPI.getBlueX7EffectiveValues({
           target,
           projectSessionId,
+          performanceKind,
           parameterIds: requestParameterIds,
         });
         if (disposed || generation !== currentGenerationRef.current) return;
         // Late-response rejection: accept only while the session and owner
         // still match this open editor.
-        if (identityRef.current !== requestIdentity(target, projectSessionId)) return;
+        if (identityRef.current !== requestIdentity(target, projectSessionId, performanceKind))
+          return;
         if (!result.ok) {
           setState({
             values: new Map(),
@@ -185,7 +191,7 @@ export function useBlueX7EffectiveValues(
         inFlightGenerationRef.current = null;
       }
     };
-  }, [enabled, target, projectSessionId, parameterSignature, pollHz]);
+  }, [enabled, target, projectSessionId, performanceKind, parameterSignature, pollHz]);
 
   return state;
 }

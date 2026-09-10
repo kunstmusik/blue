@@ -1,12 +1,17 @@
 import { useCallback } from 'react';
 
 import type { UdoDefinitionSnapshot } from '../../shared/project-editor';
+import type { ProjectDocumentCommitMetadata } from '../../shared/project-history';
 
 export interface UdoCallbacks {
   onInsertUdos: (definitions: UdoDefinitionSnapshot[], index?: number) => void;
   onRemoveIndices: (indices: number[]) => void;
   onReorder: (from: number, to: number) => void;
-  onUpdateUdo: (index: number, patch: Partial<UdoDefinitionSnapshot>) => void;
+  onUpdateUdo: (
+    index: number,
+    patch: Partial<UdoDefinitionSnapshot>,
+    metadata?: ProjectDocumentCommitMetadata,
+  ) => void;
   onConvertStyle: (index: number, style: 'CLASSIC' | 'MODERN') => void;
 }
 
@@ -44,7 +49,7 @@ const VARIANT_CONVERT: Record<UdoPatchVariant, string> = {
 
 export function useUdoCallbacks(
   variant: UdoPatchVariant,
-  dispatch: (patch: Record<string, unknown>) => void,
+  dispatch: (patch: Record<string, unknown>, metadata?: ProjectDocumentCommitMetadata) => void,
 ): UdoCallbacks {
   const handleInsertUdos = useCallback(
     (definitions: UdoDefinitionSnapshot[], index?: number) => {
@@ -78,8 +83,12 @@ export function useUdoCallbacks(
   );
 
   const handleUpdateUdo = useCallback(
-    (index: number, patch: Partial<UdoDefinitionSnapshot>) => {
-      dispatch({ type: VARIANT_UPDATE[variant], index, patch });
+    (
+      index: number,
+      patch: Partial<UdoDefinitionSnapshot>,
+      metadata?: ProjectDocumentCommitMetadata,
+    ) => {
+      dispatch({ type: VARIANT_UPDATE[variant], index, patch }, metadata);
     },
     [variant, dispatch],
   );

@@ -1,12 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { BlueData } from '@blue/data';
+import {
+  BSBKnob,
+  BlueData,
+  BlueSynthBuilder,
+  BlueX7,
+  Effect,
+  Parameter,
+  ScoreTrack,
+  TrackLayerGroup,
+  cloneBlueX7Voice,
+} from '@blue/data';
 import { ProjectSession } from './project-session';
 import {
   ProjectHistory,
   DEFAULT_RETAINED_ENTRY_LIMIT,
   DEFAULT_RETAINED_BYTES_LIMIT,
+  computeStructuralInversePatches,
 } from './project-history';
 import { MockHistoryContext, FakePublicationRecorder } from './project-history-test-support';
+import type { BlueX7Patch } from '../shared/project-editor/contract';
+import { getMixerEntrySnapshotId } from '../shared/project-editor/identity';
 
 describe('ProjectHistory coordinator', () => {
   function setupHistory(options: { entryLimit?: number; bytesLimit?: number } = {}) {
@@ -102,6 +115,28 @@ describe('ProjectHistory coordinator', () => {
 
       // Check publication events
       expect(recorder.events.length).toBe(5);
+    });
+
+    it('preserves semantic renderer action labels in canonical history', async () => {
+      const { session, history, context } = setupHistory();
+      const docId = session.read().documentId!;
+
+      const commit = await history.commit(
+        context.nextCommitRequest(docId, 0, 'Enable Loop Rendering', [
+          { transport: { loopRendering: true } },
+        ]),
+      );
+      expect(commit.status).toBe('committed');
+      expect(history.read().undoLabel).toBe('Enable Loop Rendering');
+
+      const undo = await history.undo({
+        documentId: docId,
+        operationId: 'undo-semantic-label',
+        expectedRevision: 1,
+        contextSequence: 2,
+      });
+      expect(undo.status).toBe('committed');
+      expect(history.read().redoLabel).toBe('Enable Loop Rendering');
     });
 
     it('truncates redo stack on new commit (chronological branch semantics)', async () => {
@@ -381,6 +416,110 @@ describe('ProjectHistory coordinator', () => {
       expect(session.read().data?.getProjectProperties().title).toBe('Initial Title');
       expect(history.read().length).toBe(0);
     });
+
+    it('groups a scalar edit followed by a structural edit with exact XML replay', async () => {
+      const { session, history, context } = setupHistory();
+      const docId = session.read().documentId!;
+      const initialXml = session.read().data!.saveToString();
+
+      await history.commit(
+        context.nextCommitRequest(
+          docId,
+          0,
+          'Mixed Gesture',
+          [{ projectProperties: { title: 'During Gesture' } }],
+          { gestureId: 'g-mixed-scalar-structure', phase: 'begin' },
+        ),
+      );
+      await history.commit(
+        context.nextCommitRequest(
+          docId,
+          1,
+          'Mixed Gesture',
+          [{ orchestra: { type: 'addInstrument', instrumentType: 'generic' } }],
+          { gestureId: 'g-mixed-scalar-structure', phase: 'update' },
+        ),
+      );
+
+      const finalXml = session.read().data!.saveToString();
+      expect(history.read().length).toBe(1);
+      expect(session.read().data?.getProjectProperties().title).toBe('During Gesture');
+      expect(session.read().data?.getArrangement().size()).toBe(1);
+
+      const undo = await history.undo({
+        documentId: docId,
+        operationId: 'undo-mixed-scalar-structure',
+        expectedRevision: 2,
+        contextSequence: 3,
+      });
+      expect(undo.status).toBe('committed');
+      expect(session.read().data?.getProjectProperties().title).toBe('Initial Title');
+      expect(session.read().data?.getArrangement().size()).toBe(0);
+      expect(session.read().data!.saveToString()).toBe(initialXml);
+
+      const redo = await history.redo({
+        documentId: docId,
+        operationId: 'redo-mixed-scalar-structure',
+        expectedRevision: 3,
+        contextSequence: 4,
+      });
+      expect(redo.status).toBe('committed');
+      expect(session.read().data?.getProjectProperties().title).toBe('During Gesture');
+      expect(session.read().data?.getArrangement().size()).toBe(1);
+      expect(session.read().data!.saveToString()).toBe(finalXml);
+    });
+
+    it('groups a structural edit followed by a scalar edit with exact XML replay', async () => {
+      const { session, history, context } = setupHistory();
+      const docId = session.read().documentId!;
+      const initialXml = session.read().data!.saveToString();
+
+      await history.commit(
+        context.nextCommitRequest(
+          docId,
+          0,
+          'Mixed Gesture',
+          [{ orchestra: { type: 'addInstrument', instrumentType: 'generic' } }],
+          { gestureId: 'g-mixed-structure-scalar', phase: 'begin' },
+        ),
+      );
+      await history.commit(
+        context.nextCommitRequest(
+          docId,
+          1,
+          'Mixed Gesture',
+          [{ projectProperties: { title: 'After Structure' } }],
+          { gestureId: 'g-mixed-structure-scalar', phase: 'update' },
+        ),
+      );
+
+      const finalXml = session.read().data!.saveToString();
+      expect(history.read().length).toBe(1);
+      expect(session.read().data?.getProjectProperties().title).toBe('After Structure');
+      expect(session.read().data?.getArrangement().size()).toBe(1);
+
+      const undo = await history.undo({
+        documentId: docId,
+        operationId: 'undo-mixed-structure-scalar',
+        expectedRevision: 2,
+        contextSequence: 3,
+      });
+      expect(undo.status).toBe('committed');
+      expect(session.read().data?.getProjectProperties().title).toBe('Initial Title');
+      expect(session.read().data?.getArrangement().size()).toBe(0);
+      expect(session.read().data!.saveToString()).toBe(initialXml);
+
+      const redo = await history.redo({
+        documentId: docId,
+        operationId: 'redo-mixed-structure-scalar',
+        expectedRevision: 3,
+        contextSequence: 4,
+      });
+      expect(redo.status).toBe('committed');
+      expect(session.read().data?.getProjectProperties().title).toBe('After Structure');
+      expect(session.read().data?.getArrangement().size()).toBe(1);
+      expect(session.read().data!.saveToString()).toBe(finalXml);
+    });
   });
 
   describe('retention limits and oversize proposal tokens', () => {
@@ -596,6 +735,421 @@ describe('ProjectHistory coordinator', () => {
     it('verifies DEFAULT_RETAINED_ENTRY_LIMIT is 200 and DEFAULT_RETAINED_BYTES_LIMIT is 64 MiB', () => {
       expect(DEFAULT_RETAINED_ENTRY_LIMIT).toBe(200);
       expect(DEFAULT_RETAINED_BYTES_LIMIT).toBe(64 * 1024 * 1024);
+    });
+  });
+
+  describe('computeStructuralInversePatches', () => {
+    it('inverts Track updateTrackInstrument with BlueX7 replaceVoice', () => {
+      const data = new BlueData();
+      const group = new TrackLayerGroup();
+      const track = new ScoreTrack();
+      const blueX7 = new BlueX7();
+      const initialVoice = cloneBlueX7Voice(blueX7.getVoice());
+      initialVoice.common.algorithm = 7;
+      blueX7.setVoice(cloneBlueX7Voice(initialVoice));
+      track.setInstrument(blueX7);
+      group.push(track);
+      data.getScore().push(group);
+
+      const newVoice = cloneBlueX7Voice(initialVoice);
+      newVoice.common.algorithm = 21;
+
+      const inverse = computeStructuralInversePatches(data, [
+        {
+          score: {
+            type: 'updateTrackInstrument',
+            track: {
+              rootGroupId: group.getUniqueId(),
+              trackId: track.getUniqueId(),
+              projectSessionId: 1,
+              projectRevision: 0,
+            },
+            patch: {
+              blueX7: {
+                type: 'replaceVoice',
+                voice: newVoice,
+              },
+            },
+          },
+        },
+      ]);
+
+      expect(inverse).not.toBeNull();
+      expect(inverse).toHaveLength(1);
+      const invScore = inverse![0]?.score;
+      expect(invScore?.type).toBe('updateTrackInstrument');
+      if (invScore?.type === 'updateTrackInstrument') {
+        const bx7 = invScore.patch.blueX7;
+        expect(bx7?.type).toBe('replaceVoice');
+        if (bx7?.type === 'replaceVoice') {
+          expect(bx7.voice.common.algorithm).toBe(7);
+        }
+      }
+    });
+
+    it('inverts Arrangement updateInstrument with BlueX7 replaceVoice', () => {
+      const data = new BlueData();
+      const blueX7 = new BlueX7();
+      const initialVoice = cloneBlueX7Voice(blueX7.getVoice());
+      initialVoice.common.algorithm = 11;
+      blueX7.setVoice(cloneBlueX7Voice(initialVoice));
+      data.getArrangement().addInstrument(blueX7, 'instr-1');
+
+      const newVoice = cloneBlueX7Voice(initialVoice);
+      newVoice.common.algorithm = 32;
+
+      const inverse = computeStructuralInversePatches(data, [
+        {
+          orchestra: {
+            type: 'updateInstrument',
+            assignmentId: 'instr-1',
+            patch: {
+              blueX7: {
+                type: 'replaceVoice',
+                voice: newVoice,
+              },
+            },
+          },
+        },
+      ]);
+
+      expect(inverse).not.toBeNull();
+      expect(inverse).toHaveLength(1);
+      const invOrc = inverse![0]?.orchestra;
+      expect(invOrc?.type).toBe('updateInstrument');
+      if (invOrc?.type === 'updateInstrument') {
+        const bx7 = invOrc.patch.blueX7;
+        expect(bx7?.type).toBe('replaceVoice');
+        if (bx7?.type === 'replaceVoice') {
+          expect(bx7.voice.common.algorithm).toBe(11);
+        }
+      }
+    });
+
+    it('inverts every voice-affecting BlueX7 patch from the pre-mutation voice', () => {
+      const data = new BlueData();
+      const blueX7 = new BlueX7();
+      const initialVoice = cloneBlueX7Voice(blueX7.getVoice());
+      initialVoice.common.feedback = 3;
+      blueX7.setVoice(cloneBlueX7Voice(initialVoice));
+      data.getArrangement().addInstrument(blueX7, 'instr-voice');
+
+      const voicePatches: BlueX7Patch[] = [
+        { type: 'setCommonField', field: 'feedback', value: 6 },
+        { type: 'setOperatorEnabled', operatorIndex: 0, enabled: false },
+        { type: 'setLfoField', field: 'speed', value: 4 },
+        { type: 'setOperatorField', operatorIndex: 0, field: 'outputLevel', value: 80 },
+        { type: 'setSharedOscillatorSync', value: 1 },
+        { type: 'setSharedPitchModulationSensitivity', value: 2 },
+        {
+          type: 'setOperatorEnvelopePoint',
+          operatorIndex: 0,
+          stageIndex: 0,
+          point: { rate: 4, level: 5 },
+        },
+        { type: 'setPitchEnvelopePoint', stageIndex: 0, point: { rate: 4, level: 5 } },
+        {
+          type: 'replaceVoice',
+          voice: {
+            ...cloneBlueX7Voice(initialVoice),
+            common: { ...initialVoice.common, feedback: 7 },
+          },
+        },
+      ];
+
+      for (const blueX7Patch of voicePatches) {
+        const inverse = computeStructuralInversePatches(data, [
+          {
+            orchestra: {
+              type: 'updateInstrument',
+              assignmentId: 'instr-voice',
+              patch: { blueX7: blueX7Patch },
+            },
+          },
+        ]);
+
+        expect(inverse).not.toBeNull();
+        const inversePatch = inverse?.[0]?.orchestra;
+        expect(inversePatch?.type).toBe('updateInstrument');
+        if (inversePatch?.type !== 'updateInstrument') continue;
+        expect(inversePatch.patch.blueX7).toEqual({
+          type: 'replaceVoice',
+          voice: initialVoice,
+        });
+      }
+    });
+
+    it('inverts BlueX7 post-code without replacing the voice snapshot', () => {
+      const data = new BlueData();
+      const blueX7 = new BlueX7();
+      blueX7.setCsoundPostCode('; previous post code');
+      data.getArrangement().addInstrument(blueX7, 'instr-code');
+
+      const inverse = computeStructuralInversePatches(data, [
+        {
+          orchestra: {
+            type: 'updateInstrument',
+            assignmentId: 'instr-code',
+            patch: { blueX7: { type: 'setCsoundPostCode', text: '; next post code' } },
+          },
+        },
+      ]);
+
+      expect(inverse?.[0]?.orchestra).toEqual({
+        type: 'updateInstrument',
+        assignmentId: 'instr-code',
+        patch: { blueX7: { type: 'setCsoundPostCode', text: '; previous post code' } },
+      });
+    });
+
+    it('inverts every Track BlueX7 field patch from the pre-mutation state', () => {
+      const data = new BlueData();
+      const group = new TrackLayerGroup();
+      const track = new ScoreTrack();
+      const blueX7 = new BlueX7();
+      blueX7.setCsoundPostCode('; previous post code');
+      const initialVoice = cloneBlueX7Voice(blueX7.getVoice());
+      initialVoice.common.feedback = 3;
+      blueX7.setVoice(cloneBlueX7Voice(initialVoice));
+      track.setInstrument(blueX7);
+      group.push(track);
+      data.getScore().push(group);
+
+      const trackTarget = {
+        rootGroupId: group.getUniqueId(),
+        trackId: track.getUniqueId(),
+        projectSessionId: 1,
+        projectRevision: 0,
+      };
+      const voicePatches: BlueX7Patch[] = [
+        { type: 'setCommonField', field: 'feedback', value: 6 },
+        { type: 'setOperatorEnabled', operatorIndex: 0, enabled: false },
+        { type: 'setLfoField', field: 'speed', value: 4 },
+        { type: 'setOperatorField', operatorIndex: 0, field: 'outputLevel', value: 80 },
+        { type: 'setSharedOscillatorSync', value: 1 },
+        { type: 'setSharedPitchModulationSensitivity', value: 2 },
+        {
+          type: 'setOperatorEnvelopePoint',
+          operatorIndex: 0,
+          stageIndex: 0,
+          point: { rate: 4, level: 5 },
+        },
+        { type: 'setPitchEnvelopePoint', stageIndex: 0, point: { rate: 4, level: 5 } },
+        {
+          type: 'replaceVoice',
+          voice: {
+            ...cloneBlueX7Voice(initialVoice),
+            common: { ...initialVoice.common, feedback: 7 },
+          },
+        },
+      ];
+
+      for (const blueX7Patch of voicePatches) {
+        const inverse = computeStructuralInversePatches(data, [
+          {
+            score: {
+              type: 'updateTrackInstrument',
+              track: trackTarget,
+              patch: { blueX7: blueX7Patch },
+            },
+          },
+        ]);
+
+        expect(inverse).not.toBeNull();
+        expect(inverse?.[0]?.score).toMatchObject({
+          type: 'updateTrackInstrument',
+          track: trackTarget,
+        });
+        const inversePatch = inverse?.[0]?.score;
+        if (inversePatch?.type !== 'updateTrackInstrument') continue;
+        expect(inversePatch.patch.blueX7).toEqual({
+          type: 'replaceVoice',
+          voice: initialVoice,
+        });
+      }
+
+      const postCodeInverse = computeStructuralInversePatches(data, [
+        {
+          score: {
+            type: 'updateTrackInstrument',
+            track: trackTarget,
+            patch: { blueX7: { type: 'setCsoundPostCode', text: '; next post code' } },
+          },
+        },
+      ]);
+      expect(postCodeInverse?.[0]?.score).toEqual({
+        type: 'updateTrackInstrument',
+        track: trackTarget,
+        patch: { blueX7: { type: 'setCsoundPostCode', text: '; previous post code' } },
+      });
+    });
+
+    it('keeps Track name, comment, and voice inverses separate and ordered', () => {
+      const data = new BlueData();
+      const group = new TrackLayerGroup();
+      const track = new ScoreTrack();
+      const blueX7 = new BlueX7();
+      blueX7.setName('Before');
+      blueX7.setComment('Before comment');
+      track.setInstrument(blueX7);
+      group.push(track);
+      data.getScore().push(group);
+
+      const trackTarget = {
+        rootGroupId: group.getUniqueId(),
+        trackId: track.getUniqueId(),
+        projectSessionId: 1,
+        projectRevision: 0,
+      };
+      const inverse = computeStructuralInversePatches(data, [
+        {
+          score: {
+            type: 'updateTrackInstrument',
+            track: trackTarget,
+            patch: { name: 'After' },
+          },
+        },
+        {
+          score: {
+            type: 'updateTrackInstrument',
+            track: trackTarget,
+            patch: { comment: 'After comment' },
+          },
+        },
+        {
+          score: {
+            type: 'updateTrackInstrument',
+            track: trackTarget,
+            patch: { blueX7: { type: 'setCommonField', field: 'feedback', value: 6 } },
+          },
+        },
+      ]);
+
+      expect(inverse?.map((patch) => patch.score)).toEqual([
+        { type: 'updateTrackInstrument', track: trackTarget, patch: { name: 'Before' } },
+        {
+          type: 'updateTrackInstrument',
+          track: trackTarget,
+          patch: { comment: 'Before comment' },
+        },
+        {
+          type: 'updateTrackInstrument',
+          track: trackTarget,
+          patch: {
+            blueX7: { type: 'replaceVoice', voice: cloneBlueX7Voice(blueX7.getVoice()) },
+          },
+        },
+      ]);
+    });
+
+    it('inverts BSB control and preset edits from the pre-mutation interface', () => {
+      const data = new BlueData();
+      const instrument = new BlueSynthBuilder();
+      const knob = new BSBKnob();
+      knob.id = 'gain-widget';
+      knob.objectName = 'gain';
+      knob.value = 0.25;
+      instrument.setInstrumentText('aout oscili <gain>, 440\nout aout');
+      instrument.getGraphicInterface().getRootGroup().addChild(knob);
+      data.getArrangement().addInstrument(instrument, 'instr-bsb');
+
+      const valueInverse = computeStructuralInversePatches(data, [
+        {
+          orchestra: {
+            type: 'updateInstrument',
+            assignmentId: 'instr-bsb',
+            patch: {
+              bsbInterface: {
+                type: 'updateWidgetProperties',
+                widgetId: 'gain-widget',
+                properties: { value: 0.8 },
+              },
+            },
+          },
+        },
+      ]);
+
+      expect(valueInverse?.[0]?.orchestra).toEqual({
+        type: 'updateInstrument',
+        assignmentId: 'instr-bsb',
+        patch: {
+          bsbInterface: {
+            type: 'updateWidgetProperties',
+            widgetId: 'gain-widget',
+            properties: { value: 0.25 },
+          },
+        },
+      });
+
+      const presetInverse = computeStructuralInversePatches(data, [
+        {
+          orchestra: {
+            type: 'updateInstrument',
+            assignmentId: 'instr-bsb',
+            patch: { bsbInterface: { type: 'applyPreset', presetUniqueId: 'preset-2' } },
+          },
+        },
+      ]);
+
+      expect(presetInverse?.[0]?.orchestra).toEqual({
+        type: 'updateInstrument',
+        assignmentId: 'instr-bsb',
+        patch: {
+          bsbInterface: {
+            type: 'updateWidgetProperties',
+            widgetId: 'gain-widget',
+            properties: { value: 0.25 },
+          },
+        },
+      });
+    });
+
+    it('inverts editable mixer effect BSB parameters from the pre-mutation effect', () => {
+      const data = new BlueData();
+      const effect = new Effect();
+      const parameter = new Parameter();
+      parameter.setName('mix');
+      parameter.setFixedValue(0.2);
+      effect.addParameter(parameter);
+      const knob = new BSBKnob();
+      knob.id = 'effect-mix-widget';
+      knob.objectName = 'mix';
+      knob.value = 0.2;
+      effect.getGraphicInterface().getRootGroup().addChild(knob);
+      data.getMixer().getMaster().getPreEffects().push(effect);
+      const entryId = getMixerEntrySnapshotId(effect, 'fx-1');
+
+      const inverse = computeStructuralInversePatches(data, [
+        {
+          mixer: {
+            type: 'updateEffect',
+            channelId: 'Master',
+            chain: 'pre',
+            entryId,
+            patch: {
+              bsbInterface: {
+                type: 'updateWidgetProperties',
+                widgetId: 'effect-mix-widget',
+                properties: { value: 0.9 },
+              },
+            },
+          },
+        },
+      ]);
+
+      expect(inverse?.[0]?.mixer).toEqual({
+        type: 'updateEffect',
+        channelId: 'Master',
+        chain: 'pre',
+        entryId: 'fx-1',
+        patch: {
+          bsbInterface: {
+            type: 'updateWidgetProperties',
+            widgetId: 'effect-mix-widget',
+            properties: { value: 0.2 },
+          },
+        },
+      });
     });
   });
 });

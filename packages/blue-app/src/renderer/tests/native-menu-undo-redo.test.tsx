@@ -24,11 +24,18 @@ describe('native menu undo/redo and scope routing (US4, T048/T051)', () => {
   let root: Root;
   let undoProjectHistoryMock: ReturnType<typeof vi.fn>;
   let redoProjectHistoryMock: ReturnType<typeof vi.fn>;
+  let rangeRectsDescriptor: PropertyDescriptor | undefined;
 
   beforeEach(() => {
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
+
+    rangeRectsDescriptor = Object.getOwnPropertyDescriptor(Range.prototype, 'getClientRects');
+    Object.defineProperty(Range.prototype, 'getClientRects', {
+      configurable: true,
+      value: () => ({ length: 0, item: () => null }),
+    });
 
     document.execCommand = vi.fn();
 
@@ -64,6 +71,11 @@ describe('native menu undo/redo and scope routing (US4, T048/T051)', () => {
       root.unmount();
     });
     container.remove();
+    if (rangeRectsDescriptor) {
+      Object.defineProperty(Range.prototype, 'getClientRects', rangeRectsDescriptor);
+    } else {
+      delete (Range.prototype as { getClientRects?: unknown }).getClientRects;
+    }
   });
 
   it('routes to project undo when no draft/input element is focused', async () => {
@@ -216,5 +228,56 @@ describe('native menu undo/redo and scope routing (US4, T048/T051)', () => {
     expect(undoProjectHistoryMock).not.toHaveBeenCalled();
 
     unregister();
+  });
+
+  it('keeps input and textarea commands local in an actual secondary document', async () => {
+    const popoutDoc = document.implementation.createHTMLDocument('Popout Native Inputs');
+    const popoutInput = popoutDoc.createElement('input');
+    const popoutTextarea = popoutDoc.createElement('textarea');
+    popoutTextarea.setAttribute('data-history-scope', 'draft');
+    popoutDoc.body.append(popoutInput, popoutTextarea);
+
+    const originalDocumentHasFocus = Object.getOwnPropertyDescriptor(document, 'hasFocus');
+    Object.defineProperty(popoutDoc, 'hasFocus', {
+      value: () => true,
+      configurable: true,
+    });
+    Object.defineProperty(document, 'hasFocus', {
+      value: () => false,
+      configurable: true,
+    });
+    popoutDoc.execCommand = vi.fn();
+    const unregister = registerHostDocument(popoutDoc);
+
+    try {
+      Object.defineProperty(popoutDoc, 'activeElement', {
+        value: popoutInput,
+        configurable: true,
+      });
+      await act(async () => {
+        await dispatchHistoryAction('undo');
+      });
+      expect(resolveHistoryScope()).toMatchObject({ scope: 'draft', type: 'native' });
+
+      Object.defineProperty(popoutDoc, 'activeElement', {
+        value: popoutTextarea,
+        configurable: true,
+      });
+      await act(async () => {
+        await dispatchHistoryAction('redo');
+      });
+
+      expect(popoutDoc.execCommand).toHaveBeenNthCalledWith(1, 'undo');
+      expect(popoutDoc.execCommand).toHaveBeenNthCalledWith(2, 'redo');
+      expect(undoProjectHistoryMock).not.toHaveBeenCalled();
+      expect(redoProjectHistoryMock).not.toHaveBeenCalled();
+    } finally {
+      unregister();
+      if (originalDocumentHasFocus) {
+        Object.defineProperty(document, 'hasFocus', originalDocumentHasFocus);
+      } else {
+        delete (document as Document & { hasFocus?: () => boolean }).hasFocus;
+      }
+    }
   });
 });

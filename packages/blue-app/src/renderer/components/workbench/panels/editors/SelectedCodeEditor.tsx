@@ -28,6 +28,7 @@ import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
 import { closeBrackets, closeBracketsKeymap, completionKeymap } from '@codemirror/autocomplete';
 import { lintKeymap } from '@codemirror/lint';
 import { Compartment, EditorState, Transaction, type Extension } from '@codemirror/state';
+import type { ViewUpdate } from '@codemirror/view';
 import { tags as t } from '@lezer/highlight';
 
 import { usePortalContainer } from '../../../../hooks/use-host-document';
@@ -58,6 +59,11 @@ import {
 import { normalizeCatalogOpcode } from './csound-opcode-insertion';
 import { HostSurfacePortal } from '../../../host-surface/HostSurfacePortal';
 import { useHostSurface } from '../../../host-surface/use-host-surface';
+import {
+  publishFocusedHistoryAvailability,
+  registerHistoryEditorSettlement,
+} from '../../../../lib/history-scope-router';
+import { getProjectHistoryProjection } from '../../../../hooks/use-project-history';
 import type { RichOpcodeCatalogEntry } from '@kunstmusik/codemirror-lang-csound/rich';
 import type {
   DynamicCsoundCompletionProvider,
@@ -67,6 +73,49 @@ import type {
 
 const EMPTY_DYNAMIC_COMPLETION_PROVIDERS: DynamicCsoundCompletionProvider[] = [];
 const EMPTY_JAVA_BLUE_COMPLETION_OPTIONS: JavaBlueCsoundCompletionOptions = {};
+const EDITOR_SETTLEMENT_TIMEOUT_MS = 1000;
+
+type CodeMirrorTextOperationKind = 'insert' | 'delete' | 'mutation';
+
+interface CodeMirrorTextOperation {
+  kind: CodeMirrorTextOperationKind;
+  insertedText: string;
+}
+
+function classifyCodeMirrorTextOperation(update: ViewUpdate): CodeMirrorTextOperation | null {
+  const transaction = update.transactions.find((candidate) => candidate.docChanged);
+  if (!transaction) return null;
+
+  let deletedLength = 0;
+  let insertedText = '';
+  update.changes.iterChanges((_fromA, toA, _fromB, _toB, inserted) => {
+    deletedLength += toA - _fromA;
+    insertedText += inserted.toString();
+  });
+
+  if (deletedLength === 0 && insertedText.length === 0) return null;
+
+  const atomicInput =
+    transaction.isUserEvent('input.paste') ||
+    transaction.isUserEvent('input.drop') ||
+    transaction.isUserEvent('input.complete') ||
+    transaction.isUserEvent('delete.cut') ||
+    transaction.isUserEvent('move.drop');
+  if (atomicInput || (deletedLength > 0 && insertedText.length > 0)) {
+    return { kind: 'mutation', insertedText };
+  }
+  if (insertedText.length > 0 || transaction.isUserEvent('input')) {
+    return { kind: 'insert', insertedText };
+  }
+  return { kind: 'delete', insertedText: '' };
+}
+
+interface RetainedProjectDraft {
+  value: string;
+  baseValue: string;
+}
+
+const retainedProjectDrafts = new Map<string, RetainedProjectDraft>();
 
 const blueCodeMirrorTheme = EditorView.theme(
   {
@@ -227,6 +276,7 @@ export default function SelectedCodeEditor({
   onAddToCodeRepository,
   historyScope = 'project',
   typingGroupingMs = 0,
+  historyMetadata,
   onChange,
 }: SelectedCodeEditorProps): React.ReactElement {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -246,17 +296,79 @@ export default function SelectedCodeEditor({
   // reconfigured when the hosting window/document changes (e.g. popout panels).
   const tooltipCompartment = useRef(new Compartment()).current;
   const onChangeRef = useRef(onChange);
+  const historyMetadataRef = useRef(historyMetadata);
   const syncingFromPropsRef = useRef(false);
   const typingGroupingMsRef = useRef(typingGroupingMs);
   useEffect(() => {
     typingGroupingMsRef.current = typingGroupingMs;
   }, [typingGroupingMs]);
 
+  useEffect(() => {
+    historyMetadataRef.current = historyMetadata;
+  }, [historyMetadata]);
+
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingValueRef = useRef<string | null>(null);
   const isComposingRef = useRef(false);
+  const compositionWaitersRef = useRef(new Set<() => void>());
+  const hasSubmittedRef = useRef(false);
+  const selectionBoundaryRef = useRef(false);
+  const activeOperationRef = useRef<CodeMirrorTextOperationKind | null>(null);
+  const activeGestureIdRef = useRef<string | null>(null);
+  const gestureSequenceRef = useRef(0);
+
+  const historyDraftKey = historyMetadata?.fieldId ?? ariaLabel;
+
+  const resetOperation = useCallback(() => {
+    activeOperationRef.current = null;
+    activeGestureIdRef.current = null;
+    hasSubmittedRef.current = false;
+    selectionBoundaryRef.current = true;
+  }, []);
+
+  const startOperation = useCallback((kind: CodeMirrorTextOperationKind) => {
+    activeOperationRef.current = kind;
+    gestureSequenceRef.current += 1;
+    const baseGestureId = historyMetadataRef.current?.gestureId ?? 'editor-text';
+    activeGestureIdRef.current = `${baseGestureId}:${gestureSequenceRef.current}`;
+    hasSubmittedRef.current = false;
+    selectionBoundaryRef.current = false;
+  }, []);
+
+  const submitValue = useCallback(
+    (nextValue: string, phaseOverride?: 'single' | 'begin' | 'update' | 'end') => {
+      const metadata = historyMetadataRef.current;
+      if (!metadata) {
+        void onChangeRef.current(nextValue);
+        return;
+      }
+      const phase =
+        phaseOverride ??
+        (selectionBoundaryRef.current || !hasSubmittedRef.current
+          ? 'begin'
+          : (metadata.phase ?? 'update'));
+      selectionBoundaryRef.current = false;
+      hasSubmittedRef.current = true;
+      void onChangeRef.current(nextValue, {
+        ...metadata,
+        ...(activeGestureIdRef.current ? { gestureId: activeGestureIdRef.current } : {}),
+        phase,
+      });
+    },
+    [],
+  );
+
+  const cancelPendingChange = useCallback(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
+    pendingValueRef.current = null;
+    resetOperation();
+  }, [resetOperation]);
 
   const flushPendingChange = useCallback(() => {
+    if (isComposingRef.current) return;
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
       debounceTimerRef.current = null;
@@ -264,28 +376,77 @@ export default function SelectedCodeEditor({
     if (pendingValueRef.current !== null) {
       const pendingVal = pendingValueRef.current;
       pendingValueRef.current = null;
-      void onChangeRef.current(pendingVal);
+      submitValue(pendingVal, hasSubmittedRef.current ? 'end' : 'single');
     }
-  }, []);
+    resetOperation();
+  }, [resetOperation, submitValue]);
+
+  const settlePendingInput = useCallback(async () => {
+    if (isComposingRef.current) {
+      await new Promise<void>((resolve, reject) => {
+        let settled = false;
+        let timeout: ReturnType<typeof setTimeout> | null = null;
+        const finish = () => {
+          if (settled) return;
+          settled = true;
+          compositionWaitersRef.current.delete(finish);
+          if (timeout) clearTimeout(timeout);
+          resolve();
+        };
+        const fail = () => {
+          if (settled) return;
+          settled = true;
+          compositionWaitersRef.current.delete(finish);
+          reject(new Error('Editor composition did not settle before the history boundary'));
+        };
+        compositionWaitersRef.current.add(finish);
+        timeout = setTimeout(fail, EDITOR_SETTLEMENT_TIMEOUT_MS);
+      });
+    }
+    if (isComposingRef.current) {
+      throw new Error('Editor composition is still active');
+    }
+    flushPendingChange();
+  }, [flushPendingChange]);
+
+  const publishHistoryAvailability = useCallback(() => {
+    const ownerDocument = containerRef.current?.ownerDocument;
+    if (!ownerDocument) return;
+    if (typeof ownerDocument.hasFocus === 'function' && !ownerDocument.hasFocus()) return;
+    const projection = getProjectHistoryProjection();
+    // A project editor must never overwrite an authoritative projection with
+    // the empty module default while a dedicated window is still registering.
+    if (historyScope === 'project' && !projection) return;
+    publishFocusedHistoryAvailability(projection, ownerDocument);
+  }, [historyScope]);
 
   useEffect(() => {
     return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-        debounceTimerRef.current = null;
+      if (historyScope === 'project') {
+        if (isComposingRef.current) {
+          if (pendingValueRef.current !== null) {
+            retainedProjectDrafts.set(historyDraftKey, {
+              value: pendingValueRef.current,
+              baseValue: lastSyncedValueRef.current,
+            });
+          }
+          cancelPendingChange();
+        } else {
+          // The callback still owns the original target during cleanup, so
+          // settle its pending prefix before the view is disposed.
+          flushPendingChange();
+        }
+        return;
       }
-      if (pendingValueRef.current !== null) {
-        const pendingVal = pendingValueRef.current;
-        pendingValueRef.current = null;
-        void onChangeRef.current(pendingVal);
-      }
+      cancelPendingChange();
     };
-  }, []);
+  }, [cancelPendingChange, flushPendingChange, historyDraftKey, historyScope]);
   // Draft-conflict resolution (T036): the last value this editor loaded from
   // canonical props, and any incoming canonical value that conflicts with
   // un-submitted local edits. Conflict resolution is explicit — the editor
   // never silently clobbers a local draft and never re-submits it blindly.
   const lastSyncedValueRef = useRef(value);
+  const restoredDraftBaseRef = useRef<string | null>(null);
   const resolvedIncomingRef = useRef<string | null>(null);
   const [draftConflict, setDraftConflict] = useState<{
     incomingValue: string;
@@ -422,6 +583,7 @@ export default function SelectedCodeEditor({
         : []),
       EditorView.domEventHandlers({
         compositionstart: () => {
+          flushPendingChange();
           isComposingRef.current = true;
           if (debounceTimerRef.current) {
             clearTimeout(debounceTimerRef.current);
@@ -431,19 +593,37 @@ export default function SelectedCodeEditor({
         },
         compositionend: () => {
           isComposingRef.current = false;
+          const settlingCommand = compositionWaitersRef.current.size > 0;
+          for (const waiter of compositionWaitersRef.current) waiter();
           if (typingGroupingMsRef.current > 0 && pendingValueRef.current !== null) {
-            debounceTimerRef.current = setTimeout(() => {
-              debounceTimerRef.current = null;
-              if (pendingValueRef.current !== null) {
-                const val = pendingValueRef.current;
-                pendingValueRef.current = null;
-                void onChangeRef.current(val);
-              }
-            }, typingGroupingMsRef.current);
+            if (settlingCommand) {
+              flushPendingChange();
+            } else {
+              debounceTimerRef.current = setTimeout(() => {
+                debounceTimerRef.current = null;
+                if (pendingValueRef.current !== null) {
+                  flushPendingChange();
+                }
+              }, typingGroupingMsRef.current);
+            }
+          } else if (settlingCommand || pendingValueRef.current !== null) {
+            flushPendingChange();
           }
           return false;
         },
         blur: () => {
+          flushPendingChange();
+          publishHistoryAvailability();
+          return false;
+        },
+        focus: () => {
+          publishHistoryAvailability();
+          return false;
+        },
+        'blue-history-before-command': () => {
+          // Native menu/accelerator commands do not necessarily blur the
+          // editor first. Flush the local debounce synchronously so the
+          // settlement barrier can include the completed text edit.
           flushPendingChange();
           return false;
         },
@@ -451,30 +631,57 @@ export default function SelectedCodeEditor({
       EditorView.updateListener.of((update) => {
         if (update.selectionSet) {
           setSelectedText(getSelectedText(update.state));
+          if (!update.docChanged && !syncingFromPropsRef.current) {
+            selectionBoundaryRef.current = true;
+            flushPendingChange();
+          }
         }
         if (!update.docChanged || syncingFromPropsRef.current) {
+          if (update.selectionSet) publishHistoryAvailability();
           return;
         }
 
         const nextDocString = update.state.doc.toString();
-        if (typingGroupingMsRef.current > 0) {
+        const operation = classifyCodeMirrorTextOperation(update);
+        if (!operation) {
+          publishHistoryAvailability();
+          return;
+        }
+
+        if (isComposingRef.current) {
           pendingValueRef.current = nextDocString;
+          activeOperationRef.current = operation.kind;
+          publishHistoryAvailability();
+          return;
+        }
+
+        if (activeOperationRef.current !== null && activeOperationRef.current !== operation.kind) {
+          flushPendingChange();
+        }
+        if (selectionBoundaryRef.current) {
+          flushPendingChange();
+        }
+        pendingValueRef.current = nextDocString;
+        if (activeOperationRef.current === null) {
+          startOperation(operation.kind);
+        }
+
+        if (operation.kind === 'mutation') {
+          flushPendingChange();
+        } else if (operation.kind === 'insert' && /\s/.test(operation.insertedText)) {
+          flushPendingChange();
+        } else if (typingGroupingMsRef.current > 0) {
           if (debounceTimerRef.current) {
             clearTimeout(debounceTimerRef.current);
           }
-          if (!isComposingRef.current) {
-            debounceTimerRef.current = setTimeout(() => {
-              debounceTimerRef.current = null;
-              if (pendingValueRef.current !== null) {
-                const val = pendingValueRef.current;
-                pendingValueRef.current = null;
-                void onChangeRef.current(val);
-              }
-            }, typingGroupingMsRef.current);
-          }
+          debounceTimerRef.current = setTimeout(() => {
+            debounceTimerRef.current = null;
+            flushPendingChange();
+          }, typingGroupingMsRef.current);
         } else {
-          void onChangeRef.current(nextDocString);
+          flushPendingChange();
         }
+        publishHistoryAvailability();
       }),
       // Autocompletion is held in a Compartment so its options can be updated
       // via reconfigure() (see the effect below) without rebuilding the view.
@@ -496,13 +703,26 @@ export default function SelectedCodeEditor({
     }
 
     const view = new EditorView({
-      doc: value,
+      doc: (() => {
+        if (historyScope !== 'project') return value;
+        const retainedDraft = retainedProjectDrafts.get(historyDraftKey);
+        if (!retainedDraft) return value;
+        retainedProjectDrafts.delete(historyDraftKey);
+        pendingValueRef.current = retainedDraft.value;
+        restoredDraftBaseRef.current = retainedDraft.baseValue;
+        return retainedDraft.value;
+      })(),
       extensions,
       parent: container,
     });
     viewRef.current = view;
+    const unregisterHistorySettlement =
+      historyScope === 'project'
+        ? registerHistoryEditorSettlement(container.ownerDocument ?? document, settlePendingInput)
+        : () => undefined;
 
     return () => {
+      unregisterHistorySettlement();
       view.destroy();
       if (viewRef.current === view) {
         viewRef.current = null;
@@ -513,11 +733,17 @@ export default function SelectedCodeEditor({
     // them never destroys the EditorView (which would reset the cursor).
   }, [
     completionCompartment,
+    flushPendingChange,
     hasEvaluateCodeHandler,
     historyScope,
+    historyDraftKey,
     mode,
     placeholder,
     readOnly,
+    startOperation,
+    submitValue,
+    settlePendingInput,
+    publishHistoryAvailability,
     tooltipCompartment,
   ]);
 
@@ -572,6 +798,11 @@ export default function SelectedCodeEditor({
       return;
     }
 
+    if (restoredDraftBaseRef.current !== null && value === restoredDraftBaseRef.current) {
+      restoredDraftBaseRef.current = null;
+      return;
+    }
+
     if (currentValue !== lastSyncedValueRef.current && value !== resolvedIncomingRef.current) {
       // A canonical change from elsewhere arrived while this editor holds
       // un-submitted local edits. Surface an explicit conflict instead of
@@ -579,6 +810,7 @@ export default function SelectedCodeEditor({
       // previous state object when the value is unchanged prevents a
       // render loop through this effect's dependencies, and a value the
       // user already resolved (kept/applied) never re-conflicts.
+      cancelPendingChange();
       setDraftConflict((prev) =>
         prev && prev.incomingValue === value ? prev : { incomingValue: value },
       );
@@ -606,7 +838,7 @@ export default function SelectedCodeEditor({
       syncingFromPropsRef.current = false;
     }
     lastSyncedValueRef.current = value;
-  }, [value, draftConflict]);
+  }, [cancelPendingChange, draftConflict, value]);
 
   useEffect(() => {
     if (!active) {
@@ -620,6 +852,7 @@ export default function SelectedCodeEditor({
     (decision: 'keep' | 'apply' | 'discard') => {
       const view = viewRef.current;
       const conflict = draftConflict;
+      cancelPendingChange();
       setDraftConflict(null);
       if (!view || !conflict) return;
 
@@ -656,7 +889,7 @@ export default function SelectedCodeEditor({
         // without a submit path behave like keep.
         resolvedIncomingRef.current = conflict.incomingValue;
         if (typeof onChangeRef.current === 'function') {
-          void onChangeRef.current(view.state.doc.toString());
+          submitValue(view.state.doc.toString(), 'end');
         }
         return;
       }
@@ -666,7 +899,7 @@ export default function SelectedCodeEditor({
       // changes still surface a fresh conflict.
       resolvedIncomingRef.current = conflict.incomingValue;
     },
-    [draftConflict],
+    [cancelPendingChange, draftConflict, submitValue],
   );
 
   const menuItems =

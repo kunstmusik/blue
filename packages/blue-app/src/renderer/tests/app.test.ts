@@ -1453,10 +1453,37 @@ describe('Playback Store', () => {
           transport: { loopRendering: true },
         },
       ],
-      expect.objectContaining({ operationId: expect.any(String) }),
+      expect.objectContaining({
+        operationId: expect.any(String),
+        label: 'Enable Loop Rendering',
+        phase: 'single',
+      }),
     );
     expect(mockBlueAPI.updateProjectDocument).not.toHaveBeenCalled();
     expect(useProjectStore.getState().transport.loopRendering).toBe(true);
+  });
+
+  it('addMarkerAtTime sends a semantic canonical history label', async () => {
+    mockBlueAPI.commitProjectDocumentPatches.mockResolvedValue({ revision: 1 });
+    const snapshot = createEmptyProjectEditorSnapshot();
+    useProjectStore.getState().setProjectInfo({
+      ...snapshot,
+      loaded: true,
+      filePath: '/path/to/test.blue',
+    });
+
+    useProjectStore.getState().addMarkerAtTime(4.5);
+
+    __testFlushPendingPatches();
+    await __testAwaitPendingPatches();
+
+    expect(mockBlueAPI.commitProjectDocumentPatches).toHaveBeenCalledWith(
+      [{ score: { type: 'addMarker', timeBeats: 4.5 } }],
+      expect.objectContaining({
+        label: 'Add Marker',
+        phase: 'single',
+      }),
+    );
   });
 
   it('T350: togglePlay sets starting state while playback is preparing', async () => {

@@ -5,6 +5,7 @@ import type {
   BlueX7Patch,
   InstrumentPatch,
 } from '../../../../shared/project-editor';
+import type { ProjectDocumentCommitMetadata } from '../../../../shared/project-history';
 
 interface HistoryEntry {
   description: string;
@@ -88,6 +89,7 @@ export interface UseBlueX7HistoryResult {
     description: string,
     patch: BlueX7Patch,
     extraPatch?: Partial<InstrumentPatch>,
+    metadata?: ProjectDocumentCommitMetadata,
   ) => void;
   undo: () => void;
   redo: () => void;
@@ -95,7 +97,7 @@ export interface UseBlueX7HistoryResult {
 
 export function useBlueX7History(
   instrument: BlueX7InstrumentSnapshot,
-  onInstrumentPatch: (patch: InstrumentPatch) => void,
+  onInstrumentPatch: (patch: InstrumentPatch, metadata?: ProjectDocumentCommitMetadata) => void,
 ): UseBlueX7HistoryResult {
   const [undoStack, setUndoStack] = useState<HistoryEntry[]>([]);
   const [redoStack, setRedoStack] = useState<HistoryEntry[]>([]);
@@ -131,7 +133,12 @@ export function useBlueX7History(
   }, [currentVoiceSignature, instrument.voice, ownerIdentity]);
 
   const applyPatch = useCallback(
-    (description: string, patch: BlueX7Patch, extraPatch?: Partial<InstrumentPatch>) => {
+    (
+      description: string,
+      patch: BlueX7Patch,
+      extraPatch?: Partial<InstrumentPatch>,
+      metadata?: ProjectDocumentCommitMetadata,
+    ) => {
       if (instrument.voice && patch.type !== 'setCsoundPostCode') {
         setUndoStack((prev) => {
           const next = [...prev, { description, voice: cloneBlueX7Voice(instrument.voice!) }];
@@ -150,7 +157,12 @@ export function useBlueX7History(
           projectedLocalVoiceRef.current = null;
         }
       }
-      onInstrumentPatch({ ...extraPatch, blueX7: patch });
+      const nextPatch = { ...extraPatch, blueX7: patch };
+      if (metadata) {
+        onInstrumentPatch(nextPatch, metadata);
+      } else {
+        onInstrumentPatch(nextPatch);
+      }
     },
     [instrument.voice, onInstrumentPatch],
   );

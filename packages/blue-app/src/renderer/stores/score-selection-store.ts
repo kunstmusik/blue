@@ -30,6 +30,19 @@ export interface ScoreSelectionEntry {
   editorTarget?: ScoreObjectEditorTargetSnapshot;
 }
 
+export interface ExternalSelectionReconciliationOptions {
+  /** Identity of the view that produced the replay publication. */
+  originViewId?: string;
+  /** Identity of the context that produced the replay publication. */
+  originContextId?: string;
+  /** Identity of this renderer view, when it is known. */
+  currentViewId?: string;
+  /** Identity of this renderer context, when it is known. */
+  currentContextId?: string;
+  /** Set false when the origin view/context has already been closed. */
+  originIsOpen?: boolean;
+}
+
 /** Transient relative shape used by pattern cut/copy/paste; never persisted. */
 export interface PatternClipboardShape {
   cells: ReadonlyArray<{ rowOffset: number; cellOffset: number }>;
@@ -323,22 +336,33 @@ export const useScoreSelectionStore = create<ScoreSelectionState>((set) => ({
 export function reconcileExternalSelectionHints(
   hints: readonly ProjectHistorySelectionHint[],
   score: ScoreDocumentSnapshot | undefined,
+  options: ExternalSelectionReconciliationOptions = {},
 ): void {
+  reconcileSelectionWithCanonicalScore(score);
+
+  const hasOriginIdentity =
+    options.originViewId !== undefined || options.originContextId !== undefined;
+  const originMatchesCurrentView =
+    options.originViewId === undefined ||
+    options.currentViewId === undefined ||
+    options.originViewId === options.currentViewId;
+  const originMatchesCurrentContext =
+    options.originContextId === undefined ||
+    options.currentContextId === undefined ||
+    options.originContextId === options.currentContextId;
+  if (
+    options.originIsOpen === false ||
+    (hasOriginIdentity && (!originMatchesCurrentView || !originMatchesCurrentContext))
+  ) {
+    return;
+  }
+
   const objectIds = hints
     .filter((hint) => hint.targetType === 'scoreObject')
     .map((hint) => hint.targetId);
   if (objectIds.length === 0) return;
 
-  const existing = new Set<string>();
-  if (score) {
-    for (const group of score.layerGroups) {
-      for (const layer of group.layers) {
-        for (const item of layer.items) {
-          existing.add(item.objectId);
-        }
-      }
-    }
-  }
+  const existing = getScoreObjectIds(score);
 
   const store = useScoreSelectionStore.getState();
   const restored = objectIds.filter((id) => existing.has(id));
@@ -351,4 +375,34 @@ export function reconcileExternalSelectionHints(
   for (const objectId of restored.slice(1)) {
     store.select(objectId, true, undefined);
   }
+}
+
+/** Removes selections that no longer resolve in the newly published Score. */
+export function reconcileSelectionWithCanonicalScore(
+  score: ScoreDocumentSnapshot | undefined,
+): void {
+  const existing = getScoreObjectIds(score);
+  const state = useScoreSelectionStore.getState();
+  const surviving = [...state.selectedObjectIds].filter((objectId) => existing.has(objectId));
+  if (surviving.length === state.selectedObjectIds.size) return;
+
+  state.setSelection(
+    surviving.map((objectId) => ({
+      objectId,
+      editorTarget: state.selectedObjectTargets[objectId],
+    })),
+  );
+}
+
+function getScoreObjectIds(score: ScoreDocumentSnapshot | undefined): Set<string> {
+  const existing = new Set<string>();
+  if (!score) return existing;
+  for (const group of score.layerGroups) {
+    for (const layer of group.layers) {
+      for (const item of layer.items) {
+        existing.add(item.objectId);
+      }
+    }
+  }
+  return existing;
 }

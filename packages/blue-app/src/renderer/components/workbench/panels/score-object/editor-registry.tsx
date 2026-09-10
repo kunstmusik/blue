@@ -5,6 +5,7 @@ import type {
   TypeSpecificScoreObjectEditorSnapshot,
   UdoDefinitionSnapshot,
 } from '../../../../../shared/project-editor';
+import type { ProjectDocumentCommitMetadata } from '../../../../../shared/project-history';
 import ClojureObjectEditor from './editors/ClojureObjectEditor';
 import CodeBackedScoreObjectEditor from './editors/CodeBackedScoreObjectEditor';
 import JavaScriptObjectEditor from './editors/JavaScriptObjectEditor';
@@ -27,7 +28,7 @@ import UnsupportedScoreObjectEditor from './editors/UnsupportedScoreObjectEditor
 
 export interface ScoreObjectEditorComponentProps {
   document: ScoreObjectEditorDocumentSnapshot;
-  onPatch: (patch: ScorePatch) => void;
+  onPatch: (patch: ScorePatch, metadata?: ProjectDocumentCommitMetadata) => void;
   /**
    * Project-global UDO definitions available to score-object editors whose
    * underlying instrument exposes orchestra-code fields (e.g. a Sound's BSB).

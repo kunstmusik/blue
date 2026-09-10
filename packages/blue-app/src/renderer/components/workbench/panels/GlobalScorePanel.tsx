@@ -36,6 +36,13 @@ export default function GlobalScorePanel(): React.ReactElement {
         placeholder="Enter global score code"
         ariaLabel="Global Score Csound editor"
         mode="sco"
+        typingGroupingMs={500}
+        historyMetadata={{
+          fieldId: 'globalSco',
+          gestureId: 'project-text:globalSco',
+          label: 'Edit Global Score',
+          phase: 'update',
+        }}
         onChange={updateGlobalSco}
         evaluateCodeEnabled={evaluateEnabled}
         onEvaluateCode={handleEvaluateCode}

@@ -1,8 +1,10 @@
 import {
   registerIpcTransaction,
+  type IpcMainEventListener,
   type IpcMainInvokeHandler,
   type IpcMainLike,
 } from './ipc-registration';
+import { PROJECT_HISTORY_AVAILABILITY_CHANNEL } from '../../shared/project-history';
 import {
   PROJECT_HISTORY_COMMIT_CHANNEL,
   PROJECT_HISTORY_UNDO_CHANNEL,
@@ -56,17 +58,25 @@ export const PROJECT_DOCUMENT_IPC_CHANNELS = [
   PROJECT_HISTORY_CANCEL_OVERSIZE_CHANNEL,
 ] as const;
 
+export const PROJECT_DOCUMENT_LISTENER_CHANNELS = [PROJECT_HISTORY_AVAILABILITY_CHANNEL] as const;
+
 export type ProjectDocumentIpcChannel = (typeof PROJECT_DOCUMENT_IPC_CHANNELS)[number];
+export type ProjectDocumentListenerChannel = (typeof PROJECT_DOCUMENT_LISTENER_CHANNELS)[number];
 
 export interface ProjectDocumentIpcOptions {
   readonly ipcMain: IpcMainLike;
   readonly handlers: Readonly<Record<ProjectDocumentIpcChannel, IpcMainInvokeHandler>>;
+  readonly listeners?: Readonly<Record<ProjectDocumentListenerChannel, IpcMainEventListener>>;
 }
 
 export function registerProjectDocumentIpc(options: ProjectDocumentIpcOptions): () => void {
   return registerIpcTransaction(options.ipcMain, 'project-document', (scope) => {
     for (const channel of PROJECT_DOCUMENT_IPC_CHANNELS) {
       scope.handle(channel, options.handlers[channel]);
+    }
+    for (const channel of PROJECT_DOCUMENT_LISTENER_CHANNELS) {
+      const listener = options.listeners?.[channel];
+      if (listener) scope.on(channel, listener);
     }
   });
 }

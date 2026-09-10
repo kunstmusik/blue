@@ -35,6 +35,7 @@ interface BlueApiMock {
   chooseMissingAudioReplacement: ReturnType<typeof vi.fn>;
   resolveMissingAudioAssets: ReturnType<typeof vi.fn>;
   dismissMissingAudioAssets: ReturnType<typeof vi.fn>;
+  cancelOversizeProposal: ReturnType<typeof vi.fn>;
 }
 
 function makeSession(
@@ -64,6 +65,7 @@ describe('MissingAudioAssetsModal', () => {
       chooseMissingAudioReplacement: vi.fn(),
       resolveMissingAudioAssets: vi.fn(),
       dismissMissingAudioAssets: vi.fn().mockResolvedValue({ ok: true }),
+      cancelOversizeProposal: vi.fn().mockResolvedValue({ ok: true }),
     };
     Object.assign(window, { blueAPI });
     container = document.createElement('div');
@@ -266,5 +268,52 @@ describe('MissingAudioAssetsModal', () => {
         { originalPath: 'two.wav', replacementPath: '' },
       ],
     });
+  });
+
+  it('requires one-use confirmation before keeping an oversized relink and clearing history', async () => {
+    mockProjectState.missingAudioSession = makeSession([{ originalPath: 'a.wav' }]);
+    blueAPI.resolveMissingAudioAssets
+      .mockResolvedValueOnce({
+        ok: false,
+        changed: false,
+        historyOversizeProposal: {
+          token: 'oversize-relink-1',
+          estimatedBytes: 70 * 1024 * 1024,
+          limitBytes: 64 * 1024 * 1024,
+          explanation: 'Relink exceeds the retained history limit.',
+        },
+      })
+      .mockResolvedValueOnce({ ok: true, changed: true, project: { sessionId: 1 } });
+    renderModal();
+
+    await act(async () => {
+      [...container.querySelectorAll('button')]
+        .find((button) => button.textContent === 'OK')
+        ?.click();
+      await Promise.resolve();
+    });
+
+    expect(container.querySelector('[data-testid="missing-audio-history-confirmation"]')).not.toBe(
+      null,
+    );
+    expect(blueAPI.resolveMissingAudioAssets).toHaveBeenCalledWith({
+      sessionId: 'sess-1',
+      replacements: [{ originalPath: 'a.wav', replacementPath: '' }],
+    });
+
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('[data-action-id="keep"]')?.click();
+      await Promise.resolve();
+    });
+
+    expect(blueAPI.resolveMissingAudioAssets).toHaveBeenCalledWith({
+      sessionId: 'sess-1',
+      replacements: [{ originalPath: 'a.wav', replacementPath: '' }],
+      historyProposalToken: 'oversize-relink-1',
+    });
+    expect(mockProjectState.applyMissingAudioResolvedSnapshot).toHaveBeenCalledWith({
+      sessionId: 1,
+    });
+    expect(mockProjectState.setMissingAudioSession).toHaveBeenCalledWith(null);
   });
 });

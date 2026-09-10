@@ -12,6 +12,7 @@ import {
 } from '../stores/project-store';
 import { useMidiRoutingStore } from '../stores/midi-routing-store';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
+import type { MixerChainClipboardPayload } from '../../shared/project-editor';
 import type { MissingAudioAssetsSession } from '../../shared/missing-audio-assets';
 
 function createFocusSnapshot(sessionId: number) {
@@ -423,6 +424,113 @@ describe('project-store — stable façade contract', () => {
     expect(useProjectStore.getState().score.layerGroups[0]?.layers[0]?.name).toBe('Renamed Track');
     await useProjectStore.getState().flushPendingPatches();
     expect(getProjectDocument).toHaveBeenCalledTimes(1);
+  });
+
+  it('normalizes fresh mixer duplicate and paste identities before optimistic and durable apply', async () => {
+    const channelId = useProjectStore.getState().mixer.master.id;
+    await useProjectStore.getState().applyProjectDocumentPatch({
+      mixer: {
+        type: 'addSend',
+        channelId,
+        chain: 'pre',
+        sendChannel: 'Master',
+        level: 0.5,
+        entryId: 'source-send',
+      },
+    });
+    await useProjectStore.getState().flushPendingPatches();
+    commitProjectDocumentPatches.mockClear();
+
+    await useProjectStore.getState().applyProjectDocumentPatch({
+      mixer: {
+        type: 'duplicateChainEntry',
+        channelId,
+        chain: 'pre',
+        entryId: 'source-send',
+      },
+    });
+    const afterDuplicate = useProjectStore.getState().mixer.master.preChain;
+    const duplicate = afterDuplicate[1];
+    expect(duplicate?.entryId).not.toBe('source-send');
+    await useProjectStore.getState().flushPendingPatches();
+
+    expect(commitProjectDocumentPatches).toHaveBeenCalledWith(
+      [
+        {
+          mixer: expect.objectContaining({
+            type: 'duplicateChainEntry',
+            newEntryId: duplicate?.entryId,
+          }),
+        },
+      ],
+      expect.anything(),
+    );
+
+    const payload: MixerChainClipboardPayload = {
+      sourceKind: 'project',
+      entries: [
+        {
+          entryId: 'clipboard-send',
+          kind: 'send',
+          sendChannel: 'Master',
+          level: 0.25,
+          enabled: true,
+        },
+      ],
+    };
+    commitProjectDocumentPatches.mockClear();
+    await useProjectStore.getState().applyProjectDocumentPatch({
+      mixer: {
+        type: 'pasteChainEntries',
+        channelId,
+        chain: 'pre',
+        index: 1,
+        payload,
+      },
+    });
+    const afterPaste = useProjectStore.getState().mixer.master.preChain;
+    const pasted = afterPaste[1];
+    expect(pasted?.entryId).not.toBe('clipboard-send');
+    await useProjectStore.getState().flushPendingPatches();
+
+    expect(commitProjectDocumentPatches).toHaveBeenCalledWith(
+      [
+        {
+          mixer: expect.objectContaining({
+            type: 'pasteChainEntries',
+            newEntryIds: [pasted?.entryId],
+          }),
+        },
+      ],
+      expect.anything(),
+    );
+
+    const firstPastedId = pasted?.entryId;
+    commitProjectDocumentPatches.mockClear();
+    await useProjectStore.getState().applyProjectDocumentPatch({
+      mixer: {
+        type: 'pasteChainEntries',
+        channelId,
+        chain: 'pre',
+        payload,
+      },
+    });
+    const secondPastedId = useProjectStore.getState().mixer.master.preChain.at(-1)?.entryId;
+    expect(secondPastedId).not.toBe(firstPastedId);
+    expect(secondPastedId).not.toBe('clipboard-send');
+    await useProjectStore.getState().flushPendingPatches();
+
+    expect(commitProjectDocumentPatches).toHaveBeenCalledWith(
+      [
+        {
+          mixer: expect.objectContaining({
+            type: 'pasteChainEntries',
+            newEntryIds: [secondPastedId],
+          }),
+        },
+      ],
+      expect.anything(),
+    );
   });
 });
 

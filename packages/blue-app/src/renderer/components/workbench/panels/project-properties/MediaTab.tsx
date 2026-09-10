@@ -13,7 +13,9 @@ export default function MediaTab({
         <InputBase
           disabled={disabled}
           value={properties.mediaFolder}
-          onChange={(mediaFolder) => updateProjectProperties({ mediaFolder })}
+          label="Media Folder"
+          fieldId="project-properties:mediaFolder"
+          onChange={(mediaFolder, metadata) => updateProjectProperties({ mediaFolder }, metadata)}
           placeholder="media"
         />
       </FieldRow>

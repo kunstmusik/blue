@@ -76,7 +76,11 @@ export {
   mixerPatchActionLabel,
 } from './patch-mixer-bluelive';
 
-export { orchestraPatchActionLabel } from './snapshot-mixer-orchestra';
+export {
+  orchestraPatchActionLabel,
+  bsbInterfaceActionLabel,
+  type BsbActionLabelContext,
+} from './snapshot-mixer-orchestra';
 
 export {
   applyProjectDocumentPatch,

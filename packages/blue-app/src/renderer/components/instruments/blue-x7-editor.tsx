@@ -12,7 +12,11 @@ import type {
   InstrumentPatch,
   OrchestraMutationProps,
 } from '../../../shared/project-editor';
-import type { BlueX7RuntimeTarget } from '../../../shared/project-editor/contract';
+import type {
+  BlueX7PerformanceKind,
+  BlueX7RuntimeTarget,
+} from '../../../shared/project-editor/contract';
+import type { ProjectDocumentCommitMetadata } from '../../../shared/project-history';
 import { validateBlueX7SysexReadResult } from '../../../shared/blue-x7-sysex';
 import { useBlueX7History } from './blue-x7/use-blue-x7-history';
 import { useBlueX7EffectiveValues } from './blue-x7/use-blue-x7-effective-values';
@@ -36,7 +40,7 @@ const TOP_LEVEL_TABS: readonly BlueX7TabItem<BlueX7TopTab>[] = [
 
 export interface BlueX7EditorProps extends OrchestraMutationProps {
   instrument: BlueX7InstrumentSnapshot;
-  onInstrumentPatch: (patch: InstrumentPatch) => void;
+  onInstrumentPatch: (patch: InstrumentPatch, metadata?: ProjectDocumentCommitMetadata) => void;
   onOpenAlgorithmModal?: () => void;
   sysExActions?: React.ReactNode;
   onImportSysEx?: () => Promise<import('../../../shared/blue-x7-sysex').BlueX7SysexReadResult>;
@@ -49,6 +53,7 @@ export interface BlueX7EditorProps extends OrchestraMutationProps {
   effectiveValues?: {
     target: BlueX7RuntimeTarget;
     projectSessionId: number;
+    performanceKind?: BlueX7PerformanceKind;
     enabled: boolean;
     parameterIds?: readonly string[];
     onObservationStart?: () => void;
@@ -144,6 +149,7 @@ export const BlueX7Editor: React.FC<BlueX7EditorProps> = ({
   const effective = useBlueX7EffectiveValues({
     target: effectiveValues?.target ?? null,
     projectSessionId: effectiveValues?.projectSessionId ?? null,
+    performanceKind: effectiveValues?.performanceKind,
     parameterIds: visibleParameterIds,
     enabled: effectiveValues?.enabled ?? false,
     onObservationStart: effectiveValues?.onObservationStart,
@@ -456,7 +462,14 @@ export const BlueX7Editor: React.FC<BlueX7EditorProps> = ({
           }
           data-testid="bluex7-panel-csound"
         >
-          <CsoundPanel active={activeTab === 'csound'} voice={voice} onApplyPatch={applyPatch} />
+          <CsoundPanel
+            active={activeTab === 'csound'}
+            voice={voice}
+            historyIdentity={instrument.assignmentId}
+            onApplyPatch={(description, patch, metadata) =>
+              applyPatch(description, patch, undefined, metadata)
+            }
+          />
         </div>
       </div>
 

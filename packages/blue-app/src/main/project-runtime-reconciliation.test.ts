@@ -96,6 +96,21 @@ describe('Runtime capability classification (T017)', () => {
           type: 'updateInstrument',
           assignmentId: 'a1',
           patch: {
+            bsbInterface: {
+              type: 'updateWidgetProperties',
+              widgetId: 'xy1',
+              properties: { xValue: 0.25, yValue: 0.75, selected: true, selectedIndex: 2 },
+            },
+          },
+        },
+      }),
+    ).toBe('live');
+    expect(
+      classifyPatchRuntimeCapability({
+        orchestra: {
+          type: 'updateInstrument',
+          assignmentId: 'a1',
+          patch: {
             bsbInterface: { type: 'moveWidget', widgetId: 'w1', x: 4, y: 6 },
           },
         },
@@ -119,6 +134,65 @@ describe('Runtime capability classification (T017)', () => {
           type: 'updateInstrument',
           assignmentId: 'a1',
           patch: { blueX7: { type: 'setCsoundPostCode', text: 'outs aout' } },
+        },
+      }),
+    ).toBe('restart-required');
+  });
+
+  it('classifies track instrument BlueX7 voice edits as live and comments as none', () => {
+    const trackRef = {
+      rootGroupId: 'g1',
+      trackId: 't1',
+      projectSessionId: 1,
+      projectRevision: 0,
+    };
+    expect(
+      classifyPatchRuntimeCapability({
+        score: {
+          type: 'updateTrackInstrument',
+          track: trackRef,
+          patch: {
+            blueX7: {
+              type: 'replaceVoice',
+              voice: {
+                common: { algorithm: 1 } as never,
+                lfo: {} as never,
+                operators: [] as never,
+                pitchEnvelope: [] as never,
+                csoundPostCode: '',
+              },
+            },
+          },
+        },
+      }),
+    ).toBe('live');
+
+    expect(
+      classifyPatchRuntimeCapability({
+        score: {
+          type: 'updateTrackInstrument',
+          track: trackRef,
+          patch: { comment: 'test comment' },
+        },
+      }),
+    ).toBe('none');
+
+    expect(
+      classifyPatchRuntimeCapability({
+        score: {
+          type: 'updateTrackInstrument',
+          track: trackRef,
+          patch: { comments: 'test comments plural' },
+        },
+      }),
+    ).toBe('none');
+
+    expect(
+      classifyPatchRuntimeCapability({
+        score: {
+          type: 'updateTrackInstrument',
+          track: trackRef,
+          patch: { unknownProperty: 'foo' } as never,
         },
       }),
     ).toBe('restart-required');
@@ -295,6 +369,81 @@ describe('Runtime work plans (T017)', () => {
       },
     ]);
   });
+
+  it('plans BlueX7 operator and envelope edits against compiled semantic keys', () => {
+    const ownerKey = 'arrangement:a1';
+    const reconciliation = new ProjectRuntimeReconciliation();
+    reconciliation.registerPerformance(
+      'timeline',
+      1,
+      makeClient(),
+      new Map<string, RuntimeBinding>([
+        [`${ownerKey}::bluex7:operator.2.outputLevel`, { kind: 'channel', channel: 'op2-level' }],
+        [`${ownerKey}::bluex7:pitchEnvelope.1.rate`, { kind: 'channel', channel: 'pitch-rate' }],
+        [`${ownerKey}::bluex7:pitchEnvelope.1.level`, { kind: 'channel', channel: 'pitch-level' }],
+      ]),
+    );
+
+    const plans = reconciliation.planCommit({
+      documentId: 'doc-1',
+      revision: 2,
+      patches: [
+        {
+          orchestra: {
+            type: 'updateInstrument',
+            assignmentId: 'a1',
+            patch: {
+              blueX7: {
+                type: 'setOperatorField',
+                operatorIndex: 1,
+                field: 'outputLevel',
+                value: 80,
+              },
+            },
+          },
+        },
+        {
+          orchestra: {
+            type: 'updateInstrument',
+            assignmentId: 'a1',
+            patch: {
+              blueX7: {
+                type: 'setPitchEnvelopePoint',
+                stageIndex: 0,
+                point: { rate: 4, level: 5 },
+              },
+            },
+          },
+        },
+      ],
+    });
+
+    expect(plans).toHaveLength(1);
+    expect(plans[0]?.restartRequiredOwnerIds).toEqual([]);
+    expect(plans[0]?.operations).toEqual([
+      {
+        kind: 'channel-value',
+        ownerKey,
+        parameterId: 'bluex7:operator.2.outputLevel',
+        channel: 'op2-level',
+        value: 80,
+      },
+      {
+        kind: 'channel-value',
+        ownerKey,
+        parameterId: 'bluex7:pitchEnvelope.1.rate',
+        channel: 'pitch-rate',
+        value: 4,
+      },
+      {
+        kind: 'channel-value',
+        ownerKey,
+        parameterId: 'bluex7:pitchEnvelope.1.level',
+        channel: 'pitch-level',
+        value: 5,
+      },
+    ]);
+  });
 });
 
 describe('Per-performance ordered queues and outcomes (T017)', () => {
@@ -428,6 +577,163 @@ describe('Per-performance ordered queues and outcomes (T017)', () => {
     void reconciliation;
   });
 
+  it('applies preset plan operations without routing nested writes through the queue', async () => {
+    const reconciliation = new ProjectRuntimeReconciliation({ operationTimeoutMs: 300 });
+    const client = makeClient();
+    reconciliation.registerPerformance('timeline', 1, client);
+
+    const result = await reconciliation.reconcileCommit({
+      documentId: 'doc-1',
+      revision: 3,
+      patches: [
+        {
+          orchestra: {
+            type: 'updateInstrument',
+            assignmentId: '1',
+            patch: { bsbInterface: { type: 'applyPreset', presetUniqueId: 'preset-1' } },
+          },
+        },
+      ],
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0]!.status).toBe('applied');
+    expect(client.applied).toEqual([
+      { kind: 'preset', ownerKey: 'arrangement:1', presetUniqueId: 'preset-1' },
+    ]);
+  });
+
+  it.each(['timeline', 'blueLive'] as const)(
+    'serializes concurrent %s previews behind a plan and before replay',
+    async (performanceKind) => {
+      const applied: RuntimeWorkOperation[] = [];
+      let planStarted = false;
+      let previewStarted = false;
+      let releasePlan!: (ack: RuntimeOperationAck) => void;
+      let releasePreview!: (ack: RuntimeOperationAck) => void;
+      const client = makeClient({
+        async applyOperation(operation) {
+          applied.push(operation);
+          if (operation.kind !== 'channel-value') return { status: 'applied' };
+          if (operation.value === 0.1) {
+            planStarted = true;
+            return new Promise<RuntimeOperationAck>((resolve) => {
+              releasePlan = resolve;
+            });
+          }
+          if (operation.value === 0.2) {
+            previewStarted = true;
+            return new Promise<RuntimeOperationAck>((resolve) => {
+              releasePreview = resolve;
+            });
+          }
+          return { status: 'applied' };
+        },
+      });
+      const reconciliation = new ProjectRuntimeReconciliation({ operationTimeoutMs: 0 });
+      reconciliation.registerPerformance(
+        performanceKind,
+        1,
+        client,
+        new Map([['Master::level', { kind: 'channel', channel: 'gkMasterLevel' }]]),
+      );
+
+      const planPromise = reconciliation.reconcileCommit({
+        documentId: 'doc-1',
+        revision: 1,
+        patches: [mixerLevelPatch(0.1)],
+      });
+      await vi.waitFor(() => expect(planStarted).toBe(true));
+
+      const previewPromise = reconciliation.previewChannelValue({
+        ownerKey: 'Master',
+        parameterId: 'level',
+        value: 0.2,
+      });
+      let drained = false;
+      const drainPromise = reconciliation.drainPreviews().then(() => {
+        drained = true;
+      });
+
+      await Promise.resolve();
+      expect(previewStarted).toBe(false);
+      expect(drained).toBe(false);
+
+      releasePlan({ status: 'applied' });
+      await planPromise;
+      await vi.waitFor(() => expect(previewStarted).toBe(true));
+
+      // Replay is submitted while the preview is still in flight. It must
+      // remain behind that preview, and drain must not resolve early.
+      const replayPromise = reconciliation.reconcileCommit({
+        documentId: 'doc-1',
+        revision: 2,
+        patches: [mixerLevelPatch(0.3)],
+      });
+      await Promise.resolve();
+      expect(drained).toBe(false);
+      expect(applied.filter((operation) => operation.kind === 'channel-value')).toHaveLength(2);
+
+      releasePreview({ status: 'applied' });
+      await previewPromise;
+      await drainPromise;
+      await replayPromise;
+
+      expect(
+        applied
+          .filter(
+            (operation): operation is Extract<RuntimeWorkOperation, { kind: 'channel-value' }> =>
+              operation.kind === 'channel-value',
+          )
+          .map((operation) => operation.value),
+      ).toEqual([0.1, 0.2, 0.3]);
+    },
+  );
+
+  it('publishes restart-required outcomes for plans skipped while fenced', async () => {
+    const outcomes: ProjectRuntimeOutcome[] = [];
+    const reconciliation = new ProjectRuntimeReconciliation({
+      operationTimeoutMs: 30,
+      onOutcome: (outcome) => outcomes.push(outcome),
+    });
+    let first = true;
+    const client = makeClient({
+      applyOperation() {
+        if (first) {
+          first = false;
+          // Never settles: the watchdog times this operation out and fences
+          // the performance.
+          return new Promise<RuntimeOperationAck>(() => undefined);
+        }
+        return Promise.resolve({ status: 'applied' as const });
+      },
+    });
+    reconciliation.registerPerformance(
+      'timeline',
+      1,
+      client,
+      new Map([['Master::level', { kind: 'channel', channel: 'gkMasterLevel' }]]),
+    );
+
+    const timedOut = await reconciliation.reconcileCommit({
+      documentId: 'doc-1',
+      revision: 1,
+      patches: [mixerLevelPatch(0.5)],
+    });
+    expect(timedOut.map((o) => o.status)).toEqual(['failed']);
+
+    const skipped = await reconciliation.reconcileCommit({
+      documentId: 'doc-1',
+      revision: 2,
+      patches: [mixerLevelPatch(0.7)],
+    });
+    expect(skipped).toHaveLength(0);
+    expect(outcomes.some((o) => o.status === 'restart-required')).toBe(true);
+    expect(reconciliation.getOutcome('timeline')).toEqual(
+      expect.objectContaining({ status: 'restart-required' }),
+    );
+  });
+
   it('keeps no-work commits from clearing existing outcome state', async () => {
     const reconciliation = new ProjectRuntimeReconciliation();
     reconciliation.registerPerformance('timeline', 1, makeClient());
@@ -445,6 +751,44 @@ describe('Per-performance ordered queues and outcomes (T017)', () => {
       patches: [{ scratchPad: { text: 'note' } }],
     });
     expect(reconciliation.getAggregateStatus()).toBe('restart-required');
+    expect(reconciliation.getOutcome('timeline')).toEqual(
+      expect.objectContaining({
+        status: 'restart-required',
+        desiredRevision: 1,
+      }),
+    );
+  });
+
+  it('keeps failed live work unresolved across a later no-work commit', async () => {
+    const reconciliation = new ProjectRuntimeReconciliation();
+    reconciliation.registerPerformance(
+      'timeline',
+      1,
+      makeClient({
+        async applyOperation() {
+          return { status: 'rejected', message: 'live update rejected' };
+        },
+      }),
+      new Map([['Master::level', { kind: 'channel', channel: 'master-level' }]]),
+    );
+
+    await reconciliation.reconcileCommit({
+      documentId: 'doc-1',
+      revision: 1,
+      patches: [mixerLevelPatch(0.4)],
+    });
+    expect(reconciliation.getOutcome('timeline')).toEqual(
+      expect.objectContaining({ status: 'failed', desiredRevision: 1 }),
+    );
+
+    await reconciliation.reconcileCommit({
+      documentId: 'doc-1',
+      revision: 2,
+      patches: [{ projectProperties: { title: 'Cosmetic title' } }],
+    });
+    expect(reconciliation.getOutcome('timeline')).toEqual(
+      expect.objectContaining({ status: 'failed', desiredRevision: 1 }),
+    );
   });
 
   it('aggregates statuses with failed > restart-required > pending > applied precedence', async () => {
@@ -884,5 +1228,108 @@ describe('Generation-scoped fencing (T017)', () => {
     await previewPromise;
     await drainPromise;
     expect(drained).toBe(true);
+  });
+
+  it.each(['timeline', 'blueLive'] as const)(
+    'does not send a delayed preview to a replacement %s generation',
+    async (performanceKind) => {
+      let releaseOldPreview: ((ack: RuntimeOperationAck) => void) | null = null;
+      let oldPreviewStarted = false;
+      const oldClient = makeClient({
+        applyOperation: async (operation) => {
+          oldClient.applied.push(operation);
+          oldPreviewStarted = true;
+          return new Promise<RuntimeOperationAck>((resolve) => {
+            releaseOldPreview = resolve;
+          });
+        },
+      });
+      const bindings = new Map([
+        ['Master::level', { kind: 'channel' as const, channel: 'gkMasterLevel' }],
+      ]);
+      const reconciliation = new ProjectRuntimeReconciliation({ operationTimeoutMs: 0 });
+      reconciliation.registerPerformance(performanceKind, 1, oldClient, new Map(bindings));
+
+      const delayedPreview = reconciliation.previewChannelValue({
+        ownerKey: 'Master',
+        parameterId: 'level',
+        value: 0.4,
+      });
+      await vi.waitFor(() => expect(oldPreviewStarted).toBe(true));
+
+      const replacement = makeClient();
+      reconciliation.registerPerformance(performanceKind, 2, replacement, new Map(bindings));
+      releaseOldPreview!({ status: 'applied' });
+
+      expect(await delayedPreview).toEqual({
+        status: 'rejected',
+        message: 'No active performance accepted the preview',
+      });
+      expect(replacement.applied).toHaveLength(0);
+
+      const freshPreview = await reconciliation.previewChannelValue({
+        ownerKey: 'Master',
+        parameterId: 'level',
+        value: 0.6,
+      });
+      expect(freshPreview.status).toBe('applied');
+      expect(replacement.applied).toHaveLength(1);
+      expect((replacement.applied[0] as { value?: number }).value).toBe(0.6);
+    },
+  );
+
+  it('does not leak a preview across project-replacement disposal and re-registration', async () => {
+    let releaseTimelinePreview: ((ack: RuntimeOperationAck) => void) | null = null;
+    const oldTimeline = makeClient({
+      applyOperation: async (operation) => {
+        oldTimeline.applied.push(operation);
+        return new Promise<RuntimeOperationAck>((resolve) => {
+          releaseTimelinePreview = resolve;
+        });
+      },
+    });
+    const oldBlueLive = makeClient();
+    const bindings = new Map([
+      ['Master::level', { kind: 'channel' as const, channel: 'gkMasterLevel' }],
+    ]);
+    const reconciliation = new ProjectRuntimeReconciliation({ operationTimeoutMs: 0 });
+    reconciliation.registerPerformance('timeline', 1, oldTimeline, new Map(bindings));
+    reconciliation.registerPerformance('blueLive', 1, oldBlueLive, new Map(bindings));
+
+    const delayedPreview = reconciliation.previewChannelValue({
+      ownerKey: 'Master',
+      parameterId: 'level',
+      value: 0.2,
+    });
+    await vi.waitFor(() => expect(releaseTimelinePreview).not.toBeNull());
+
+    // A project replacement disposes every old performance before the new
+    // project starts its replacement generations.
+    reconciliation.stopPerformance('timeline');
+    reconciliation.stopPerformance('blueLive');
+    const newTimeline = makeClient();
+    const newBlueLive = makeClient();
+    reconciliation.registerPerformance('timeline', 2, newTimeline, new Map(bindings));
+    reconciliation.registerPerformance('blueLive', 2, newBlueLive, new Map(bindings));
+    releaseTimelinePreview!({ status: 'applied' });
+
+    expect(await delayedPreview).toEqual({
+      status: 'rejected',
+      message: 'No active performance accepted the preview',
+    });
+    expect(oldBlueLive.applied).toHaveLength(0);
+    expect(newTimeline.applied).toHaveLength(0);
+    expect(newBlueLive.applied).toHaveLength(0);
+
+    const freshPreview = await reconciliation.previewChannelValue({
+      ownerKey: 'Master',
+      parameterId: 'level',
+      value: 0.8,
+    });
+    expect(freshPreview.status).toBe('applied');
+    expect(newTimeline.applied).toHaveLength(1);
+    expect(newBlueLive.applied).toHaveLength(1);
+    expect((newTimeline.applied[0] as { value?: number }).value).toBe(0.8);
+    expect((newBlueLive.applied[0] as { value?: number }).value).toBe(0.8);
   });
 });

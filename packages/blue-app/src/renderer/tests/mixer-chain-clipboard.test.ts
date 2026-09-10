@@ -83,6 +83,7 @@ describe('Mixer chain clipboard patches', () => {
           channelId,
           chain: 'pre',
           entryId: 'effect-1',
+          newEntryId: 'effect-duplicate-1',
         },
       }),
     ).toBe(true);
@@ -102,7 +103,12 @@ describe('Mixer chain clipboard patches', () => {
         name: 'Delay',
       }),
     );
-    expect(snapshot.mixer?.channels[0]?.preChain[1]?.entryId).not.toBe('effect-1');
+    expect(snapshot.mixer?.channels[0]?.preChain[1]?.entryId).toBe('effect-duplicate-1');
+    expect(snapshot.mixer?.channels[0]?.preChain[1]).toEqual(
+      expect.objectContaining({
+        projectRef: expect.objectContaining({ entryId: 'effect-duplicate-1' }),
+      }),
+    );
   });
 
   it('duplicateChainEntry duplicates a send entry', () => {
@@ -126,6 +132,7 @@ describe('Mixer chain clipboard patches', () => {
           channelId,
           chain: 'pre',
           entryId: 'send-1',
+          newEntryId: 'send-duplicate-1',
         },
       }),
     ).toBe(true);
@@ -147,7 +154,7 @@ describe('Mixer chain clipboard patches', () => {
         level: 0.5,
       }),
     );
-    expect(snapshot.mixer?.channels[0]?.preChain[1]?.entryId).not.toBe('send-1');
+    expect(snapshot.mixer?.channels[0]?.preChain[1]?.entryId).toBe('send-duplicate-1');
   });
 
   it('duplicateChainEntry returns false for non-existent entry', () => {
@@ -265,6 +272,7 @@ describe('Mixer chain clipboard patches', () => {
           chain: 'pre',
           index: 1,
           payload,
+          newEntryIds: ['paste-effect-1', 'paste-effect-2'],
         },
       }),
     ).toBe(true);
@@ -286,8 +294,20 @@ describe('Mixer chain clipboard patches', () => {
     );
     expect(snapshot.mixer?.channels[0]?.preChain[2]).toEqual(
       expect.objectContaining({
+        entryId: 'paste-effect-2',
         kind: 'effect',
         name: 'Phaser',
+      }),
+    );
+    expect(snapshot.mixer?.channels[0]?.preChain[1]).toEqual(
+      expect.objectContaining({
+        entryId: 'paste-effect-1',
+        projectRef: expect.objectContaining({ entryId: 'paste-effect-1' }),
+      }),
+    );
+    expect(snapshot.mixer?.channels[0]?.preChain[2]).toEqual(
+      expect.objectContaining({
+        projectRef: expect.objectContaining({ entryId: 'paste-effect-2' }),
       }),
     );
   });
@@ -315,6 +335,7 @@ describe('Mixer chain clipboard patches', () => {
           channelId,
           chain: 'post',
           payload,
+          newEntryIds: ['paste-send-1'],
         },
       }),
     ).toBe(true);
@@ -324,6 +345,7 @@ describe('Mixer chain clipboard patches', () => {
     expect(snapshot.mixer?.channels[0]?.postChain[0]).toEqual(
       expect.objectContaining({
         kind: 'send',
+        entryId: 'paste-send-1',
         sendChannel: 'master',
         level: 0.75,
         enabled: true,

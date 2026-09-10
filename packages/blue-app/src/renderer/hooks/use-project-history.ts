@@ -9,6 +9,10 @@ import { executeProjectRedo, executeProjectUndo } from '../lib/history-scope-rou
 let currentProjection: ProjectHistoryStateProjection | null = null;
 const projectionListeners = new Set<() => void>();
 
+export function getProjectHistoryProjection(): ProjectHistoryStateProjection | null {
+  return currentProjection;
+}
+
 export function setProjectHistoryProjection(
   projection: ProjectHistoryStateProjection | null,
 ): void {
@@ -37,6 +41,7 @@ export interface UseProjectHistoryResult {
   cursor: number;
   length: number;
   maxEntries?: number;
+  retentionStatus: ProjectHistoryStateProjection['retentionStatus'];
   undo(): Promise<void>;
   redo(): Promise<void>;
   refresh(): Promise<void>;
@@ -65,7 +70,9 @@ export function useProjectHistory(): UseProjectHistoryResult {
   }, []);
 
   const refresh = useCallback(async (): Promise<void> => {
-    setProjectHistoryProjection(await window.blueAPI.readProjectHistory());
+    const result = await window.blueAPI.readProjectHistory();
+    if ('status' in result) return;
+    setProjectHistoryProjection(result);
   }, []);
 
   return {
@@ -78,6 +85,7 @@ export function useProjectHistory(): UseProjectHistoryResult {
     cursor: projection?.cursor ?? 0,
     length: projection?.length ?? 0,
     maxEntries: projection?.maxEntries,
+    retentionStatus: projection?.retentionStatus,
     undo,
     redo,
     refresh,

@@ -828,7 +828,10 @@ export function findMixerChannelById(mixer: Mixer, channelId: string): Channel |
 
   const subChannel = mixer
     .getSubChannels()
-    .find((channel) => getMixerChannelSnapshotId(channel) === channelId);
+    .find(
+      (channel) =>
+        channel.getName() === channelId || getMixerChannelSnapshotId(channel) === channelId,
+    );
   if (subChannel) {
     return subChannel;
   }
@@ -1137,14 +1140,14 @@ function applyMixerPatchToChain(
       const original = chain[dupIndex];
       if (original instanceof Effect) {
         const clone = createEffectFromXml(original.saveAsXML().toXml());
-        getMixerEntrySnapshotId(clone, crypto.randomUUID());
+        getMixerEntrySnapshotId(clone, patch.newEntryId ?? crypto.randomUUID());
         chain.splice(dupIndex + 1, 0, clone);
       } else if (original instanceof Send) {
         const clone = new Send();
         clone.setSendChannel(original.getSendChannel());
         clone.setLevel(original.getLevel());
         clone.setEnabled(original.isEnabled());
-        getMixerEntrySnapshotId(clone, crypto.randomUUID());
+        getMixerEntrySnapshotId(clone, patch.newEntryId ?? crypto.randomUUID());
         chain.splice(dupIndex + 1, 0, clone);
       }
       return true;
@@ -1156,16 +1159,17 @@ function applyMixerPatchToChain(
       const insertIndex = patch.index ?? chain.length;
       for (let i = 0; i < patch.payload.entries.length; i++) {
         const entry = patch.payload.entries[i];
+        const newEntryId = patch.newEntryIds?.[i] ?? crypto.randomUUID();
         if (entry.kind === 'effect') {
           const effect = createEffectFromXml(entry.effectXml);
-          getMixerEntrySnapshotId(effect, entry.entryId + '-paste-' + i);
+          getMixerEntrySnapshotId(effect, newEntryId);
           chain.splice(Math.min(insertIndex + i, chain.length), 0, effect);
         } else if (entry.kind === 'send') {
           const send = new Send();
           send.setSendChannel(entry.sendChannel);
           send.setLevel(entry.level);
           send.setEnabled(entry.enabled);
-          getMixerEntrySnapshotId(send, entry.entryId + '-paste-' + i);
+          getMixerEntrySnapshotId(send, newEntryId);
           chain.splice(Math.min(insertIndex + i, chain.length), 0, send);
         }
       }

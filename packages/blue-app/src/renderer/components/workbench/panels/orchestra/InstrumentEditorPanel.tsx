@@ -4,7 +4,11 @@ import type {
   UdoDefinitionSnapshot,
 } from '../../../../../shared/project-editor';
 import type { InstrumentPatch } from '../../../../../shared/project-editor';
-import type { BlueX7RuntimeTarget } from '../../../../../shared/project-editor/contract';
+import type {
+  BlueX7PerformanceKind,
+  BlueX7RuntimeTarget,
+} from '../../../../../shared/project-editor/contract';
+import type { ProjectDocumentCommitMetadata } from '../../../../../shared/project-history';
 import InstrumentCommentsPanel from './InstrumentCommentsPanel';
 import type { OrchestraMutationProps } from './types';
 import type { UdoLibraryDropTarget } from '../udo/UdoTable';
@@ -24,6 +28,7 @@ interface InstrumentEditorPanelProps extends OrchestraMutationProps {
   blueX7Runtime?: {
     target: BlueX7RuntimeTarget;
     projectSessionId: number;
+    performanceKind?: BlueX7PerformanceKind;
     enabled: boolean;
     onObservationStart?: () => void;
     onObservationResult?: () => void;
@@ -50,12 +55,17 @@ const EditorSurface = React.memo(function EditorSurface({
   }, [instrument.assignmentId, instrument.type, onEditorUsable]);
 
   const dispatchInstrumentPatch = useCallback(
-    (patch: InstrumentPatch) =>
-      onOrchestraPatch({
-        type: 'updateInstrument',
+    (patch: InstrumentPatch, metadata?: ProjectDocumentCommitMetadata) => {
+      const nextPatch = {
+        type: 'updateInstrument' as const,
         assignmentId: instrument.assignmentId,
         patch,
-      }),
+      };
+      if (metadata) {
+        return onOrchestraPatch(nextPatch, metadata);
+      }
+      return onOrchestraPatch(nextPatch);
+    },
     [instrument.assignmentId, onOrchestraPatch],
   );
 
@@ -135,16 +145,19 @@ function InstrumentEditorPanel({
   const [activeTab, setActiveTab] = useState<'editor' | 'comments'>('editor');
   const assignmentId = instrument?.assignmentId;
   const handleCommentChange = useCallback(
-    (comment: string) => {
+    (comment: string, metadata?: ProjectDocumentCommitMetadata) => {
       if (!assignmentId) {
         return;
       }
 
-      onOrchestraPatch({
-        type: 'updateInstrumentComment',
-        assignmentId,
-        comment,
-      });
+      onOrchestraPatch(
+        {
+          type: 'updateInstrumentComment',
+          assignmentId,
+          comment,
+        },
+        metadata,
+      );
     },
     [assignmentId, onOrchestraPatch],
   );
@@ -228,6 +241,8 @@ function InstrumentEditorPanel({
           <InstrumentCommentsPanel
             comment={instrument.comment}
             onCommentChange={handleCommentChange}
+            fieldId={`instrument-comment:${assignmentId}`}
+            label={`Edit ${instrument.name || 'Instrument'} Comments`}
           />
         </div>
       </div>

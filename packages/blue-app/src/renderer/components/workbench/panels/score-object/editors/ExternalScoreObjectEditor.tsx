@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import type { ScoreObjectEditorComponentProps } from '../editor-registry';
+import type { ProjectDocumentCommitMetadata } from '../../../../../../shared/project-history';
 import SelectedCodeEditor from '../../editors/SelectedCodeEditor';
 import GeneratedScoreModal from './GeneratedScoreModal';
 import { useScoreObjectTest } from './useScoreObjectTest';
@@ -24,19 +25,22 @@ export default function ExternalScoreObjectEditor({
   };
 
   const patch = useCallback(
-    (p: Record<string, unknown>) => {
-      onPatch({
-        type: 'updateTypeSpecificEditor',
-        target: document.target,
-        patch: p,
-      });
+    (p: Record<string, unknown>, metadata?: ProjectDocumentCommitMetadata) => {
+      onPatch(
+        {
+          type: 'updateTypeSpecificEditor',
+          target: document.target,
+          patch: p,
+        },
+        metadata,
+      );
     },
     [document.target, onPatch],
   );
 
   const handleCodeChange = useCallback(
-    (text: string) => {
-      patch({ scoreText: text });
+    (text: string, metadata?: ProjectDocumentCommitMetadata) => {
+      patch({ scoreText: text }, metadata);
     },
     [patch],
   );
@@ -92,6 +96,13 @@ export default function ExternalScoreObjectEditor({
           active={true}
           readOnly={false}
           ariaLabel="External code editor"
+          typingGroupingMs={500}
+          historyMetadata={{
+            fieldId: `score-object:${document.target.selectionId}:scoreText`,
+            gestureId: `project-text:score-object:${document.target.selectionId}:scoreText`,
+            label: 'Edit External Score',
+            phase: 'update',
+          }}
           onChange={handleCodeChange}
         />
       </div>

@@ -8,7 +8,12 @@ import { undo as cmUndo } from '@codemirror/commands';
 import SelectedCodeEditor, {
   createEditorSetupExtensions,
 } from '../components/workbench/panels/editors/SelectedCodeEditor';
-import { dispatchHistoryAction, registerHostDocument } from '../lib/history-scope-router';
+import {
+  dispatchHistoryAction,
+  registerHistoryEditorSettlement,
+  registerHostDocument,
+  settleHistoryEditors,
+} from '../lib/history-scope-router';
 
 (
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -229,6 +234,83 @@ describe('SelectedCodeEditor history and scope integration', () => {
     expect(onChange).toHaveBeenCalledWith('ab');
   });
 
+  it('classifies CodeMirror insert, delete, replacement, and boundary transactions', () => {
+    const onChange = vi.fn();
+
+    act(() => {
+      root?.render(
+        <SelectedCodeEditor
+          value=""
+          onChange={onChange}
+          ariaLabel="Operation Editor"
+          typingGroupingMs={500}
+          historyMetadata={{
+            fieldId: 'project-code:operation-test',
+            label: 'Edit Code',
+          }}
+        />,
+      );
+    });
+
+    const cmEl = container?.querySelector('.cm-editor') as HTMLElement;
+    const view = EditorView.findFromDOM(cmEl)!;
+
+    act(() => {
+      view.dispatch({ changes: { from: 0, to: 0, insert: 'a' }, userEvent: 'input.type' });
+      view.dispatch({ changes: { from: 1, to: 1, insert: 'b' }, userEvent: 'input.type' });
+    });
+    expect(onChange).not.toHaveBeenCalled();
+
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange.mock.calls[0]).toEqual([
+      'ab',
+      expect.objectContaining({
+        fieldId: 'project-code:operation-test',
+        phase: 'single',
+      }),
+    ]);
+    const firstGestureId = onChange.mock.calls[0]?.[1]?.gestureId;
+
+    // Moving the caret is an operation boundary, so the next insertion gets a
+    // fresh gesture even though it is still an insertion.
+    act(() => {
+      view.dispatch({ selection: { anchor: 0, head: 0 } });
+      view.dispatch({ changes: { from: 0, to: 0, insert: 'c' }, userEvent: 'input.type' });
+      view.dispatch({ changes: { from: 1, to: 1, insert: ' ' }, userEvent: 'input.type' });
+    });
+    expect(onChange).toHaveBeenCalledTimes(2);
+    expect(onChange.mock.calls[1]).toEqual(['c ab', expect.objectContaining({ phase: 'single' })]);
+    expect(onChange.mock.calls[1]?.[1]?.gestureId).not.toBe(firstGestureId);
+
+    // A paste/replacement is atomic and flushes immediately rather than being
+    // merged into the surrounding typing run.
+    act(() => {
+      view.dispatch({
+        changes: { from: 0, to: 1, insert: 'XYZ' },
+        userEvent: 'input.paste',
+      });
+    });
+    expect(onChange).toHaveBeenCalledTimes(3);
+    expect(onChange.mock.calls[2]).toEqual([
+      'XYZ ab',
+      expect.objectContaining({ phase: 'single' }),
+    ]);
+
+    // Deletions form their own grouped operation.
+    act(() => {
+      view.dispatch({ changes: { from: 5, to: 6, insert: '' }, userEvent: 'delete.backward' });
+    });
+    expect(onChange).toHaveBeenCalledTimes(3);
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+    expect(onChange).toHaveBeenCalledTimes(4);
+    expect(onChange.mock.calls[3]).toEqual(['XYZ a', expect.objectContaining({ phase: 'single' })]);
+  });
+
   it('immediately flushes pending typing changes on blur without waiting for 500 ms', () => {
     const onChange = vi.fn();
 
@@ -261,6 +343,37 @@ describe('SelectedCodeEditor history and scope integration', () => {
     // Flushed immediately
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(onChange).toHaveBeenCalledWith('xyz');
+  });
+
+  it('settles pending project text before the editor is torn down', () => {
+    const onChange = vi.fn();
+
+    act(() => {
+      root?.render(
+        <SelectedCodeEditor
+          value=""
+          onChange={onChange}
+          ariaLabel="Teardown Editor"
+          historyScope="project"
+          typingGroupingMs={500}
+        />,
+      );
+    });
+
+    const cmEl = container?.querySelector('.cm-editor') as HTMLElement;
+    const view = EditorView.findFromDOM(cmEl)!;
+    act(() => {
+      view.dispatch({ changes: { from: 0, to: 0, insert: 'pending' }, userEvent: 'input.type' });
+    });
+    expect(onChange).not.toHaveBeenCalled();
+
+    act(() => {
+      root?.unmount();
+    });
+    root = null;
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenCalledWith('pending');
   });
 
   it('preserves entire IME composition without triggering intermediate debounced commits', () => {
@@ -312,6 +425,56 @@ describe('SelectedCodeEditor history and scope integration', () => {
     });
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(onChange).toHaveBeenCalledWith('你');
+  });
+
+  it('fails a history settlement after one second but preserves the composition draft', async () => {
+    const onChange = vi.fn();
+
+    act(() => {
+      root?.render(
+        <SelectedCodeEditor
+          value=""
+          onChange={onChange}
+          ariaLabel="Long IME Editor"
+          typingGroupingMs={500}
+        />,
+      );
+    });
+
+    const cmEl = container?.querySelector('.cm-editor') as HTMLElement;
+    const content = container?.querySelector('.cm-content') as HTMLElement;
+    const view = EditorView.findFromDOM(cmEl)!;
+
+    act(() => {
+      content.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
+      view.dispatch({ changes: { from: 0, to: 0, insert: 'ni' }, userEvent: 'input.type' });
+    });
+
+    const settling = expect(settleHistoryEditors(document)).rejects.toThrow(/did not settle/i);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000);
+    });
+    await settling;
+    expect(onChange).not.toHaveBeenCalled();
+
+    act(() => {
+      content.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true }));
+    });
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+    expect(onChange).toHaveBeenCalledWith('ni');
+  });
+
+  it('propagates editor settlement failures to the history router', async () => {
+    const unregister = registerHistoryEditorSettlement(document, () =>
+      Promise.reject(new Error('editor failed to settle')),
+    );
+    try {
+      await expect(settleHistoryEditors(document)).rejects.toThrow('editor failed to settle');
+    } finally {
+      unregister();
+    }
   });
 
   it('clamps selection on canonical value refresh and does not echo onChange', () => {

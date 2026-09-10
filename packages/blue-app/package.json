@@ -22,6 +22,7 @@
     "test:browser": "vitest --config vitest.browser.config.ts --run",
     "test:browser:x7": "vitest --config vitest.browser.x7.config.ts --run",
     "verify:app-zoom": "node scripts/verify-app-zoom.mjs",
+    "verify:global-history": "node scripts/verify-global-project-history.mjs",
     "release:metadata": "node ../../scripts/release-metadata.mjs --out release-metadata.json",
     "verify:package-inputs": "node ../../scripts/verify-package-inputs.mjs",
     "verify:packaged-app": "node scripts/verify-packaged-app.mjs",

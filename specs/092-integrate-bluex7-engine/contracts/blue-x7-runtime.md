@@ -82,6 +82,7 @@ Failure before enqueue changes no live channel. Once accepted, the batch is appl
 interface BlueX7EffectiveValuesRequest {
   target: BlueX7RuntimeTarget;
   projectSessionId: number;
+  performanceKind: 'timeline' | 'blueLive';
   parameterIds: string[];
 }
 
@@ -101,8 +102,8 @@ type BlueX7EffectiveValuesResult =
 
 - Request only visible controls for open editors; maximum count is 151.
 - Renderer polls no faster than needed for the 20 Hz requirement and allows only one in-flight request per editor.
-- Main batch-reads resolved compilation channels and preserves request order.
-- Renderer accepts a result only if session and owner still match; late responses are discarded.
+- Main batch-reads resolved compilation channels for the selected performance generation and preserves request order.
+- Renderer accepts a result only if performance kind, session, and owner still match; late responses are discarded.
 - Effective values are disposable display state. They do not dispatch patches, update fixed values, move automation points, or enter undo history.
 
 ## Project Parameter catalog

@@ -180,13 +180,15 @@ import {
   PROJECT_HISTORY_BOUNDARY_ACK_CHANNEL,
   PROJECT_HISTORY_BOUNDARY_RELEASE_CHANNEL,
   PROJECT_HISTORY_CANCEL_OVERSIZE_CHANNEL,
+  PROJECT_HISTORY_AVAILABILITY_CHANNEL,
   PROJECT_RUNTIME_OUTCOME_CHANNEL,
   type ProjectHistoryCommitRequest,
   type ProjectHistoryUndoRequest,
   type ProjectHistoryRedoRequest,
   type ProjectHistoryReadRequest,
   type ProjectHistoryResponse,
-  type ProjectHistoryStateProjection,
+  type ProjectHistoryReadResponse,
+  type ProjectHistoryControlResponse,
   type RegisterHistoryParticipantRequest,
   type RegisterHistoryParticipantResponse,
   type UnregisterHistoryParticipantRequest,
@@ -196,8 +198,10 @@ import {
   type ReleaseHistoryBoundaryEvent,
   type CancelOversizeProposalRequest,
   type ProjectRuntimeOutcomeEvent,
+  type FocusedHistoryAvailability,
   isPrepareHistoryBoundaryEvent,
   isReleaseHistoryBoundaryEvent,
+  isProjectDocumentUpdatedEvent,
   isProjectRuntimeOutcomeEvent,
 } from '../shared/project-history';
 import {
@@ -777,19 +781,19 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ) as Promise<ProjectDocumentCommitReceipt>,
 
   // Project History
+  syncHistoryAvailability: (projection: FocusedHistoryAvailability) =>
+    ipcRenderer.send(PROJECT_HISTORY_AVAILABILITY_CHANNEL, projection),
   commitProjectHistory: (request: ProjectHistoryCommitRequest): Promise<ProjectHistoryResponse> =>
     ipcRenderer.invoke(PROJECT_HISTORY_COMMIT_CHANNEL, request) as Promise<ProjectHistoryResponse>,
   undoProjectHistory: (request: ProjectHistoryUndoRequest): Promise<ProjectHistoryResponse> =>
     ipcRenderer.invoke(PROJECT_HISTORY_UNDO_CHANNEL, request) as Promise<ProjectHistoryResponse>,
   redoProjectHistory: (request: ProjectHistoryRedoRequest): Promise<ProjectHistoryResponse> =>
     ipcRenderer.invoke(PROJECT_HISTORY_REDO_CHANNEL, request) as Promise<ProjectHistoryResponse>,
-  readProjectHistory: (
-    request?: ProjectHistoryReadRequest,
-  ): Promise<ProjectHistoryStateProjection> =>
+  readProjectHistory: (request?: ProjectHistoryReadRequest): Promise<ProjectHistoryReadResponse> =>
     ipcRenderer.invoke(
       PROJECT_HISTORY_READ_CHANNEL,
       request,
-    ) as Promise<ProjectHistoryStateProjection>,
+    ) as Promise<ProjectHistoryReadResponse>,
   registerHistoryParticipant: (
     request: RegisterHistoryParticipantRequest,
   ): Promise<RegisterHistoryParticipantResponse> =>
@@ -797,12 +801,27 @@ contextBridge.exposeInMainWorld('blueAPI', {
       PROJECT_HISTORY_REGISTER_PARTICIPANT_CHANNEL,
       request,
     ) as Promise<RegisterHistoryParticipantResponse>,
-  unregisterHistoryParticipant: (request: UnregisterHistoryParticipantRequest): Promise<void> =>
-    ipcRenderer.invoke(PROJECT_HISTORY_UNREGISTER_PARTICIPANT_CHANNEL, request) as Promise<void>,
-  acknowledgeHistoryBoundary: (ack: PrepareHistoryBoundaryAck): Promise<void> =>
-    ipcRenderer.invoke(PROJECT_HISTORY_BOUNDARY_ACK_CHANNEL, ack) as Promise<void>,
-  cancelOversizeProposal: (request: CancelOversizeProposalRequest): Promise<void> =>
-    ipcRenderer.invoke(PROJECT_HISTORY_CANCEL_OVERSIZE_CHANNEL, request) as Promise<void>,
+  unregisterHistoryParticipant: (
+    request: UnregisterHistoryParticipantRequest,
+  ): Promise<ProjectHistoryControlResponse> =>
+    ipcRenderer.invoke(
+      PROJECT_HISTORY_UNREGISTER_PARTICIPANT_CHANNEL,
+      request,
+    ) as Promise<ProjectHistoryControlResponse>,
+  acknowledgeHistoryBoundary: (
+    ack: PrepareHistoryBoundaryAck,
+  ): Promise<ProjectHistoryControlResponse> =>
+    ipcRenderer.invoke(
+      PROJECT_HISTORY_BOUNDARY_ACK_CHANNEL,
+      ack,
+    ) as Promise<ProjectHistoryControlResponse>,
+  cancelOversizeProposal: (
+    request: CancelOversizeProposalRequest,
+  ): Promise<ProjectHistoryControlResponse> =>
+    ipcRenderer.invoke(
+      PROJECT_HISTORY_CANCEL_OVERSIZE_CHANNEL,
+      request,
+    ) as Promise<ProjectHistoryControlResponse>,
 
   // Spec 092: visible-only BlueX7 effective-value readback. The main
   // process fails closed for stale sessions, stopped playback, and missing
@@ -1209,7 +1228,7 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ) as Promise<DockFloatingGroupResult>,
   onProjectDocumentUpdated: (callback: (event: ProjectDocumentUpdatedEvent) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, payload: unknown) =>
-      callback(payload as ProjectDocumentUpdatedEvent);
+      isProjectDocumentUpdatedEvent<ProjectEditorSnapshot>(payload) && callback(payload);
     ipcRenderer.on(PROJECT_DOCUMENT_UPDATED_CHANNEL, handler);
     return () => {
       ipcRenderer.removeListener(PROJECT_DOCUMENT_UPDATED_CHANNEL, handler);

@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import React from 'react';
 import SelectedCodeEditor from './editors/SelectedCodeEditor';
 import { useProjectStore } from '../../../stores/project-store';
 
@@ -6,20 +6,6 @@ export default function TablesPanel(): React.ReactElement {
   const tablesText = useProjectStore((s) => s.tablesText);
   const loaded = useProjectStore((s) => s.loaded);
   const updateTablesText = useProjectStore((s) => s.updateTablesText);
-  const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const handleChange = useCallback(
-    (value: string) => {
-      if (flushTimerRef.current) {
-        clearTimeout(flushTimerRef.current);
-      }
-      flushTimerRef.current = setTimeout(() => {
-        void updateTablesText(value);
-      }, 300);
-    },
-    [updateTablesText],
-  );
-
   return (
     <div className="workbench-panel-shell">
       <div className="workbench-panel-shell__content">
@@ -30,8 +16,15 @@ export default function TablesPanel(): React.ReactElement {
         ) : (
           <SelectedCodeEditor
             value={tablesText}
-            onChange={handleChange}
+            onChange={updateTablesText}
             ariaLabel="Tables editor"
+            typingGroupingMs={500}
+            historyMetadata={{
+              fieldId: 'tablesText',
+              gestureId: 'project-text:tablesText',
+              label: 'Edit Tables',
+              phase: 'update',
+            }}
             readOnly={!loaded}
           />
         )}

@@ -91,17 +91,9 @@ Validation before mutation:
 
 If any entry fails, the patch returns an error and no item changes. After validation, all updates apply within the single canonical patch operation.
 
-### Score-color history entry
+### Score-color history ownership
 
-```ts
-type ScoreColorHistoryEntry = {
-  label: string;
-  forward: UpdateLayerStatePatch | SetScoreObjectBackgroundColorsPatch;
-  inverse: UpdateLayerStatePatch | SetScoreObjectBackgroundColorsPatch;
-};
-```
-
-History is renderer-session state, bounded to a small fixed maximum (proposed: 100 entries), and never serialized. The inverse captures concrete prior colors at action time. A no-op is not recorded.
+There is no renderer-local `ScoreColorHistoryEntry` or score-color undo store. Score and layer color actions build a forward `ProjectDocumentPatch` and submit it through the existing project document bridge. The main-owned project history captures the exact before/after state, semantic label, retention metadata, and undo/redo behavior. A no-op is not recorded.
 
 ## Relationships
 
@@ -110,7 +102,7 @@ BlueData project
 ├── layer (owns concrete backgroundColor)
 │   └── item(s) (each owns independent concrete backgroundColor)
 └── renderer snapshot (required copies of canonical values)
-    └── score-color history (disposable forward/inverse edit intents)
+    └── project history (main-owned committed action and replay state)
 ```
 
 The relationship from layer color to item color exists only during genuine item creation or an explicit apply command. There is no persistent inheritance edge.
@@ -119,9 +111,9 @@ The relationship from layer color to item color exists only during genuine item 
 
 ### Layer color edit
 
-1. Capture prior layer color when the picker gesture begins.
-2. Submit partial layer-state color patches during preview.
-3. On gesture completion, if changed, record one forward/inverse history entry.
+1. Capture the current layer color for picker display and optimistic updates.
+2. Submit layer-state color patches through the canonical project document bridge.
+3. Let semantic gesture metadata and the main project history group accepted changes into the user-visible action.
 4. Future new items copy the current canonical layer color; existing items remain unchanged.
 
 ### New item
@@ -134,16 +126,15 @@ The relationship from layer color to item color exists only during genuine item 
 ### Explicit apply
 
 1. Resolve intended selected targets or all colorable targets on one layer from the current snapshot.
-2. Build forward updates using each containing layer's color and inverse updates using each item's prior color.
+2. Build forward updates using each containing layer's color from the current snapshot.
 3. Submit one atomic patch.
-4. Record one history entry for the accepted optimistic action.
+4. Let the canonical project history record one labeled action after acceptance.
 
 ### Undo/redo
 
-1. Flush pending project edits so patch order is stable.
-2. Undo submits the inverse patch, then moves the history cursor.
-3. Redo submits the forward patch, then advances the cursor.
-4. A failed canonical application refreshes authoritative state and does not silently advance history.
+1. Route Undo/Redo through the focused project-history scope so pending project edits settle first.
+2. The main-owned history restores the detached before/after state and publishes the canonical snapshot.
+3. A failed canonical application refreshes authoritative state and does not silently advance history.
 
 ## XML mapping
 

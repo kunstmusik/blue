@@ -1167,8 +1167,9 @@ export function applyInstrumentPatch(instrument: Instrument, patch: InstrumentPa
     instrument.setEnabled(patch.enabled);
     changed = true;
   }
-  if (patch.comment !== undefined && instrument.getComment() !== patch.comment) {
-    instrument.setComment(patch.comment);
+  const nextComment = patch.comment !== undefined ? patch.comment : patch.comments;
+  if (nextComment !== undefined && instrument.getComment() !== nextComment) {
+    instrument.setComment(nextComment);
     changed = true;
   }
 
@@ -1773,6 +1774,100 @@ export function reconcileMixerWithArrangement(data: BlueData): boolean {
  * Human-readable history label for a durable orchestra patch so arrangement
  * instrument changes enter project history as meaningful actions.
  */
+export interface BsbActionLabelContext {
+  /** Resolves a preset's display name for a more specific undo label. */
+  presetName?: (presetUniqueId: string) => string | undefined;
+  /** Resolves a widget's object name for a more specific undo label. */
+  widgetName?: (widgetId: string) => string | undefined;
+}
+
+function withResolvedName(label: string, name: string | undefined): string {
+  return name ? `${label} ${name}` : label;
+}
+
+/**
+ * Human-readable action label for a Blue Synth Builder interface patch. The
+ * optional context resolves preset and widget display names so project history
+ * entries read like "Apply Preset Ocarina" instead of "Edit Instrument".
+ */
+export function bsbInterfaceActionLabel(
+  patch: BsbInterfacePatch,
+  context?: BsbActionLabelContext,
+): string {
+  switch (patch.type) {
+    case 'setEditEnabled':
+      return patch.value
+        ? 'Enable Blue Synth Builder Edit Mode'
+        : 'Disable Blue Synth Builder Edit Mode';
+    case 'selectWidget':
+      return 'Select Blue Synth Builder Widget';
+    case 'updateWidgetProperties': {
+      const name = context?.widgetName?.(patch.widgetId);
+      return withResolvedName('Edit Blue Synth Builder Widget', name);
+    }
+    case 'updateSliderBankValue': {
+      const name = context?.widgetName?.(patch.widgetId);
+      return withResolvedName('Edit Blue Synth Builder Slider Bank', name);
+    }
+    case 'moveWidget':
+      return 'Move Blue Synth Builder Widget';
+    case 'resizeWidget':
+      return 'Resize Blue Synth Builder Widget';
+    case 'addWidget':
+      return `Add ${patch.widgetType} Widget`;
+    case 'removeWidget':
+      return 'Remove Blue Synth Builder Widget';
+    case 'updateGridSettings':
+      return 'Edit Blue Synth Builder Grid';
+    case 'applyPreset':
+      return withResolvedName('Apply Preset', context?.presetName?.(patch.presetUniqueId));
+    case 'updatePreset':
+      return withResolvedName('Update Preset', context?.presetName?.(patch.presetUniqueId));
+    case 'addPreset':
+      return `Add Preset ${patch.presetName}`;
+    case 'addPresetGroup':
+      return `Add Preset Group ${patch.groupName}`;
+    case 'addPresetFromSnapshot':
+      return withResolvedName('Add Preset', patch.preset.name);
+    case 'addPresetGroupFromSnapshot':
+      return withResolvedName('Add Preset Group', patch.group.name);
+    case 'renamePreset':
+      return withResolvedName('Rename Preset', context?.presetName?.(patch.presetUniqueId));
+    case 'renamePresetGroup':
+      return `Rename Preset Group ${patch.name}`;
+    case 'removePreset':
+      return withResolvedName('Remove Preset', context?.presetName?.(patch.presetUniqueId));
+    case 'removePresetGroup':
+      return 'Remove Preset Group';
+    case 'movePreset':
+      return 'Reorder Preset';
+    case 'movePresetGroup':
+      return 'Reorder Preset Group';
+    case 'synchronizePresets':
+      return 'Synchronize Presets';
+    case 'updateEmbeddedOpcodeList':
+      return 'Edit Embedded Opcodes';
+    case 'addUdo':
+      return 'Add Opcode';
+    case 'removeUdo':
+      return 'Remove Opcode';
+    case 'updateUdo':
+      return 'Edit Opcode';
+    case 'convertUdoStyle':
+      return 'Convert Opcode Style';
+    case 'reorderUdo':
+      return 'Reorder Opcode';
+    case 'randomize':
+      return 'Randomize Blue Synth Builder Interface';
+    case 'makeGroup':
+      return 'Group Blue Synth Builder Widgets';
+    case 'breakGroup':
+      return 'Ungroup Blue Synth Builder Widgets';
+    case 'pasteWidgets':
+      return 'Paste Blue Synth Builder Widgets';
+  }
+}
+
 export function orchestraPatchActionLabel(patch: OrchestraPatch): string {
   switch (patch.type) {
     case 'addInstrument':
@@ -1809,6 +1904,8 @@ export function orchestraPatchActionLabel(patch: OrchestraPatch): string {
             return 'Edit Blue Synth Builder Code';
           case 'blueX7':
             return 'Edit BlueX7 Voice';
+          case 'bsbInterface':
+            return bsbInterfaceActionLabel(patch.patch.bsbInterface!);
         }
       }
       return 'Edit Instrument';

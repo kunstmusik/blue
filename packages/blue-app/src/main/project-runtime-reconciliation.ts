@@ -1,5 +1,6 @@
 import type { BsbInterfacePatch, ProjectDocumentPatch } from '../shared/project-editor/contract';
 import type { ProjectRuntimeOutcome, ProjectRuntimeOutcomeStatus } from '../shared/project-history';
+import { blueX7PatchToRuntimeIntent } from '../shared/blue-x7-patch-intents';
 
 export type PerformanceKind = 'timeline' | 'blueLive';
 
@@ -81,7 +82,7 @@ export interface AcknowledgedRuntimeClient {
 }
 
 export interface ProjectRuntimeReconciliationOptions {
-  onOutcome?: (outcome: ProjectRuntimeOutcome) => void;
+  onOutcome?: (outcome: ProjectRuntimeOutcome, context?: RuntimeOutcomeContext) => void;
   /**
    * Acknowledgement timeout for a single runtime operation. A timed-out
    * request is failed and recoverable, and fences the performance queue so
@@ -89,6 +90,11 @@ export interface ProjectRuntimeReconciliationOptions {
    * execute engine-side.
    */
   operationTimeoutMs?: number;
+}
+
+/** Immutable document identity carried with delayed runtime notifications. */
+export interface RuntimeOutcomeContext {
+  readonly documentId: string;
 }
 
 interface PatchRuntimeWork {
@@ -111,7 +117,11 @@ const OUTCOME_PRECEDENCE: Record<ProjectRuntimeOutcomeStatus, number> = {
   failed: 3,
 };
 
-const BSB_VALUE_PROPERTY_KEYS = new Set(['value', 'xValue', 'yValue']);
+const BSB_VALUE_PROPERTY_KEYS = new Set(['value', 'selected', 'selectedIndex', 'xValue', 'yValue']);
+
+function bsbPropertyParameterId(widgetId: string, propertyKey: string): string {
+  return propertyKey === 'value' ? `bsb:${widgetId}` : `bsb:${widgetId}:${propertyKey}`;
+}
 
 function mergeCapability(a: RuntimeCapability, b: RuntimeCapability): RuntimeCapability {
   return CAPABILITY_PRECEDENCE[b] > CAPABILITY_PRECEDENCE[a] ? b : a;
@@ -167,7 +177,13 @@ function classifyBsbInterfacePatch(
       const works: PatchRuntimeWork[] = [];
       for (const [propertyKey, propertyValue] of Object.entries(bsbPatch.properties)) {
         if (BSB_VALUE_PROPERTY_KEYS.has(propertyKey)) {
-          works.push(channelValueOperation(ownerKey, `bsb:${bsbPatch.widgetId}`, propertyValue));
+          works.push(
+            channelValueOperation(
+              ownerKey,
+              bsbPropertyParameterId(bsbPatch.widgetId, propertyKey),
+              typeof propertyValue === 'boolean' ? (propertyValue ? 1 : 0) : propertyValue,
+            ),
+          );
         } else {
           works.push(restartWork(ownerKey));
         }
@@ -202,6 +218,7 @@ function classifyInstrumentPatch(patch: InstrumentUpdatePatch, ownerKey: string)
     switch (key) {
       case 'name':
       case 'comment':
+      case 'comments':
         works.push(emptyPatchWork());
         break;
       case 'bsbWidgetValues': {
@@ -234,58 +251,32 @@ function classifyBlueX7Patch(
 ): PatchRuntimeWork {
   if (!patch) return emptyPatchWork();
 
-  switch (patch.type) {
-    case 'setCommonField':
-      return channelValueOperation(ownerKey, `bluex7:common:${patch.field}`, patch.value);
-    case 'setOperatorEnabled':
-      return channelValueOperation(
-        ownerKey,
-        `bluex7:op${patch.operatorIndex}:enabled`,
-        patch.enabled ? 1 : 0,
-      );
-    case 'setOperatorField':
-      return channelValueOperation(
-        ownerKey,
-        `bluex7:op${patch.operatorIndex}:${patch.field}`,
-        patch.value,
-      );
-    case 'setLfoField':
-      return channelValueOperation(ownerKey, `bluex7:lfo:${patch.field}`, patch.value);
-    case 'setPitchEnvelopePoint':
-      return channelValueOperation(
-        ownerKey,
-        `bluex7:pitchenv:${patch.stageIndex}`,
-        patch.point.level,
-      );
-    case 'setOperatorEnvelopePoint':
-      return channelValueOperation(
-        ownerKey,
-        `bluex7:op${patch.operatorIndex}:env:${patch.stageIndex}`,
-        patch.point.level,
-      );
-    case 'setSharedOscillatorSync':
-      return channelValueOperation(ownerKey, 'bluex7:shared:oscillatorSync', patch.value);
-    case 'setSharedPitchModulationSensitivity':
-      return channelValueOperation(ownerKey, 'bluex7:shared:pms', patch.value);
-    case 'replaceVoice':
-      return {
-        capability: 'live',
-        operations: [
-          {
-            kind: 'automation',
-            ownerKey,
-            parameterId: 'bluex7:voice',
-            operation: 'update',
-            payload: { voice: structuredClone(patch.voice) },
-          },
-        ],
-        restartRequiredOwnerIds: [],
-      };
-    case 'setCsoundPostCode':
-      return restartWork(ownerKey);
-    default:
-      return restartWork(ownerKey);
+  if (patch.type === 'setCsoundPostCode') return restartWork(ownerKey);
+
+  const intent = blueX7PatchToRuntimeIntent(patch);
+  if (intent.kind === 'fixed-delta') {
+    return combinePatchWork(
+      intent.changes.map((change) =>
+        channelValueOperation(ownerKey, `bluex7:${change.semanticKey}`, change.value),
+      ),
+    );
   }
+  if (intent.kind === 'complete-voice' && patch.type === 'replaceVoice') {
+    return {
+      capability: 'live',
+      operations: [
+        {
+          kind: 'automation',
+          ownerKey,
+          parameterId: 'bluex7:voice',
+          operation: 'update',
+          payload: { voice: structuredClone(patch.voice) },
+        },
+      ],
+      restartRequiredOwnerIds: [],
+    };
+  }
+  return restartWork(ownerKey);
 }
 
 type MixerChannelUpdatePatch = Extract<
@@ -350,7 +341,7 @@ function classifyOrchestraPatch(patch: OrchestraUpdatePatch): PatchRuntimeWork {
     case 'updateInstrumentComment':
       return emptyPatchWork();
     case 'updateInstrument':
-      return classifyInstrumentPatch(patch.patch, patch.assignmentId);
+      return classifyInstrumentPatch(patch.patch, `arrangement:${patch.assignmentId}`);
     default:
       return restartWork('orchestra');
   }
@@ -450,6 +441,11 @@ function classifyScorePatch(patch: ScoreUpdatePatch): PatchRuntimeWork {
         parameterId: patch.parameterId,
         resolutionDecimal: patch.resolutionDecimal,
       });
+    case 'updateTrackInstrument':
+      return classifyInstrumentPatch(
+        patch.patch,
+        `track:${patch.track.rootGroupId}:${patch.track.trackId}`,
+      );
     default:
       return restartWork('score');
   }
@@ -558,7 +554,10 @@ function createOwnerRestartMemory(): Map<PerformanceKind, Set<string>> {
 
 export class ProjectRuntimeReconciliation {
   private readonly performances = new Map<PerformanceKind, ActivePerformance>();
-  private readonly onOutcome: (outcome: ProjectRuntimeOutcome) => void;
+  private readonly onOutcome: (
+    outcome: ProjectRuntimeOutcome,
+    context?: RuntimeOutcomeContext,
+  ) => void;
   private readonly operationTimeoutMs: number;
   private readonly restartRequiredOwners = createOwnerRestartMemory();
   private readonly closedGestures = new Set<string>();
@@ -626,8 +625,25 @@ export class ProjectRuntimeReconciliation {
     if (gestureId) {
       this.closeGesture(gestureId);
     }
-    const chains = Array.from(this.performances.values()).map((p) => p.chain);
-    await Promise.all(chains);
+
+    // A preview can be appended after the first snapshot while a plan is
+    // settling. Observe each active chain until no chain changed during the
+    // wait, so replay cannot overtake a preview that was already submitted.
+    while (true) {
+      const performances = Array.from(this.performances.values());
+      const chains = performances.map((performance) => performance.chain);
+      await Promise.all(chains);
+      if (
+        performances.length === this.performances.size &&
+        performances.every(
+          (performance, index) =>
+            this.performances.get(performance.kind) === performance &&
+            performance.chain === chains[index],
+        )
+      ) {
+        return;
+      }
+    }
   }
 
   /**
@@ -646,7 +662,12 @@ export class ProjectRuntimeReconciliation {
     }
 
     let anyApplied = false;
-    for (const performance of this.performances.values()) {
+    const submittedPerformances = Array.from(this.performances.values()).map((performance) => ({
+      performance,
+      generation: performance.generation,
+    }));
+    for (const submitted of submittedPerformances) {
+      const { performance, generation } = submitted;
       if (performance.fenced) continue;
       let channel = request.channel;
       const ownerKey = request.ownerKey ?? '';
@@ -671,6 +692,13 @@ export class ProjectRuntimeReconciliation {
         if (request.gestureId && this.closedGestures.has(request.gestureId)) {
           return { status: 'rejected' as const, message: 'Gesture is closed' };
         }
+        if (
+          this.performances.get(performance.kind) !== performance ||
+          performance.generation !== generation ||
+          performance.fenced
+        ) {
+          return { status: 'rejected' as const, message: 'Performance is no longer active' };
+        }
         return this.applyWithTimeout(performance, operation);
       });
 
@@ -680,12 +708,17 @@ export class ProjectRuntimeReconciliation {
       );
 
       const ack = await execution;
-      if (ack.status === 'applied') {
+      if (
+        ack.status === 'applied' &&
+        this.performances.get(performance.kind) === performance &&
+        performance.generation === generation &&
+        !performance.fenced
+      ) {
         anyApplied = true;
       }
     }
 
-    return anyApplied || this.performances.size === 0
+    return anyApplied || submittedPerformances.length === 0
       ? { status: 'applied' }
       : { status: 'rejected', message: 'No active performance accepted the preview' };
   }
@@ -811,13 +844,26 @@ export class ProjectRuntimeReconciliation {
 
     const pendingOutcome = outcomeFor(plan, 'pending', [...plan.restartRequiredOwnerIds]);
     performance.lastOutcome = pendingOutcome;
-    this.onOutcome(pendingOutcome);
+    this.onOutcome(pendingOutcome, { documentId: plan.documentId });
 
-    const execution = performance.chain.then(() =>
-      this.isObsolete(performance, plan) || performance.fenced
-        ? null
-        : this.processPlan(performance, plan),
-    );
+    const execution = performance.chain.then(async () => {
+      if (this.isObsolete(performance, plan)) return null;
+      if (performance.fenced) {
+        // A prior watchdog timeout left engine state ambiguous. Skip the
+        // work, but say so: silently dropping plans made every later live
+        // edit look applied while the performance never received it.
+        const skippedOutcome = outcomeFor(
+          plan,
+          'restart-required',
+          [],
+          'Live synchronization is paused for this performance; restart playback to apply changes',
+        );
+        performance.lastOutcome = skippedOutcome;
+        this.onOutcome(skippedOutcome, { documentId: plan.documentId });
+        return null as ProjectRuntimeOutcome | null;
+      }
+      return this.processPlan(performance, plan);
+    });
     performance.chain = execution.then(
       () => undefined,
       () => undefined,
@@ -918,7 +964,7 @@ export class ProjectRuntimeReconciliation {
         owners?.add(ownerId);
       }
     }
-    this.onOutcome(outcome);
+    this.onOutcome(outcome, { documentId: plan.documentId });
     return outcome;
   }
 }

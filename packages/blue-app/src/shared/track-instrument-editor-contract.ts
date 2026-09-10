@@ -1,8 +1,10 @@
 import type {
+  EffectEditorPatchRequest,
   EffectEditorRequest,
   TrackInstrumentEditorPatchRequest,
   TrackInstrumentEditorRequest,
 } from './project-editor';
+import { isProjectHistoryContext } from './project-history';
 
 export const TRACK_INSTRUMENT_RUNTIME_STATUS_QUERY_CHANNEL =
   'track-instrument-editor:runtime-status:get';
@@ -88,7 +90,9 @@ export function isTrackInstrumentEditorRequest(
     isNonEmptyString(candidate.rootGroupId) &&
     isNonEmptyString(candidate.trackId) &&
     isNonNegativeInteger(candidate.projectSessionId) &&
-    isNonNegativeInteger(candidate.projectRevision)
+    isNonNegativeInteger(candidate.projectRevision) &&
+    ((value as { historyContext?: unknown }).historyContext === undefined ||
+      isProjectHistoryContext((value as { historyContext?: unknown }).historyContext))
   );
 }
 
@@ -130,5 +134,32 @@ export function isTrackInstrumentEditorPatchRequest(
     isTrackInstrumentEditorRequest(value) &&
     typeof (value as { patch?: unknown }).patch === 'object' &&
     (value as { patch?: unknown }).patch !== null
+  );
+}
+
+const EFFECT_EDITOR_PATCH_KEYS = new Set([
+  'effectXml',
+  'name',
+  'enabled',
+  'numIns',
+  'numOuts',
+  'style',
+  'code',
+  'comments',
+  'bsbInterface',
+  'opcodeList',
+]);
+
+export function isEffectEditorPatchRequest(value: unknown): value is EffectEditorPatchRequest {
+  if (!isObject(value)) return false;
+  const candidate = value as Record<string, unknown>;
+  const { patch, historyContext, ...baseRequest } = candidate;
+  if (!isEffectEditorRequest(baseRequest)) return false;
+  if (!isObject(patch) || Object.keys(patch).some((key) => !EFFECT_EDITOR_PATCH_KEYS.has(key))) {
+    return false;
+  }
+  return (
+    isJsonSerializable(patch) &&
+    (historyContext === undefined || isProjectHistoryContext(historyContext))
   );
 }

@@ -59,6 +59,10 @@ git diff --check
 
 Capture the focused test names/results for creation, preservation, atomicity, history, accessibility, and XML compatibility. If Java Blue behavior differs from the compatibility expectation, record the exact fixture and output before changing the TypeScript design.
 
+### Superseding ownership disposition (2026-09-10)
+
+The original renderer-local score-color history evidence below is historical. The store and its tests were removed under global undo/redo task T121/T062; current score/layer/item color actions submit canonical patches to the main-owned project history, which supplies the single undo/redo chronology and semantic labels. The layer-color persistence and atomicity evidence remains applicable.
+
 ## Recorded Validation Evidence
 
 ### Automated Scenarios Verification
@@ -93,11 +97,10 @@ Capture the focused test names/results for creation, preservation, atomicity, hi
    - `packages/blue-app/src/renderer/tests/project-store-score-color-application.test.ts` (6 tests passed, including selection/location and Pattern-source alias rejection, T060)
    - Pre-validates all targets; rejects invalid target, duplicate target, invalid color input, or read-only scope before applying mutations.
 9. **Undo and redo layer picker gestures and recolor actions**:
-   - `packages/blue-app/src/renderer/tests/score-color-history-store.test.ts` (10 tests passed)
    - `packages/blue-app/src/renderer/tests/project-patch-queue.test.ts` (10 tests passed)
    - `packages/blue-app/src/renderer/tests/color-picker.test.tsx` (7 tests passed)
-   - `packages/blue-app/src/renderer/tests/score-layer-color-actions.test.tsx` (2 tests passed)
-   - Changes and applications are recorded only after canonical acceptance; valid no-op layer/item patches report acceptance separately from mutation, stale or invalid targets fail closed even in mixed batches, picker previews that round back to the initial color do not create history, and undo/redo advances cursor only upon acknowledged forward/inverse commits (T054, T056, T057, T058).
+   - Current canonical color-action coverage: `packages/blue-app/src/renderer/tests/score-color-actions.test.ts`, `score-layer-color-controls.test.tsx`, `project-store-score-color-application.test.ts`, and the global project-history suites.
+   - The superseded local-stack behaviors are retained only as historical evidence in the original T013/T021/T054 records; current project history owns acceptance, no-op handling, stale-target reconciliation, and undo/redo (T054, T056, T057, T058, T062).
 10. **Layer color picker popout in docked and floated panels**:
     - `packages/blue-app/src/renderer/tests/score-layer-color-popout.test.tsx` (2 tests passed)
     - Portals into `HostDocumentContext` for floated windows; handles keyboard interaction (Escape, Enter) and accessible labels.

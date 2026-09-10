@@ -548,6 +548,46 @@ describe('project library transfer', () => {
     expect((channel.getPreEffects()[1] as Effect).getName()).toBe('Existing');
   });
 
+  it('resolves a subchannel Effect target by its stable name', () => {
+    const project = activeProject();
+    const subChannel = new Channel();
+    subChannel.setName('Reverb Bus');
+    subChannel.setAssociation('');
+    project.data.getMixer().getSubChannels().push(subChannel);
+    const effect = new Effect();
+    effect.setName('Library Reverb');
+    const adapter = new UnifiedLibraryProjectAdapter(project.provider);
+
+    expect(
+      adapter.validateTransferTarget(
+        {
+          kind: 'effectChain',
+          projectSessionId: 11,
+          projectRevision: project.revision,
+          channelId: 'Reverb Bus',
+          chain: 'pre',
+          insertIndex: 0,
+          chainRevision: '',
+        },
+        'effect',
+      ),
+    ).toBeNull();
+    adapter.applyInsertion({
+      key: { scope: 'user', libraryType: 'effect', nodeId: 'effect-1' },
+      payloadXml: effect.saveAsXML().toXml(),
+      target: {
+        ...target('effect', project.revision),
+        channelId: 'Reverb Bus',
+        chain: 'pre',
+        insertIndex: 0,
+      },
+      mode: 'independent',
+    });
+
+    expect(subChannel.getPreEffects()).toHaveLength(1);
+    expect((subChannel.getPreEffects()[0] as Effect).getName()).toBe('Library Reverb');
+  });
+
   it('lists project Effects with stable locators and copies one between chains', () => {
     const project = activeProject();
     const channel = new Channel();

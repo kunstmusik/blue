@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import type { ScoreObjectEditorComponentProps } from '../editor-registry';
+import type { ProjectDocumentCommitMetadata } from '../../../../../../shared/project-history';
 import SelectedCodeEditor from '../../editors/SelectedCodeEditor';
 import GeneratedScoreModal from './GeneratedScoreModal';
 import JavaScriptRuntimeStatusIndicator from './JavaScriptRuntimeStatusIndicator';
@@ -30,12 +31,15 @@ export default function CodeBackedScoreObjectEditor({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleChange = useCallback(
-    (text: string) => {
-      onPatch({
-        type: 'updateTypeSpecificEditor',
-        target: document.target,
-        patch: { text },
-      });
+    (text: string, metadata?: ProjectDocumentCommitMetadata) => {
+      onPatch(
+        {
+          type: 'updateTypeSpecificEditor',
+          target: document.target,
+          patch: { text },
+        },
+        metadata,
+      );
     },
     [document.target, onPatch],
   );
@@ -115,6 +119,13 @@ export default function CodeBackedScoreObjectEditor({
         active={true}
         readOnly={false}
         ariaLabel={`Score object code editor (${editor.syntax})`}
+        typingGroupingMs={500}
+        historyMetadata={{
+          fieldId: `score-object:${document.target.selectionId}:text`,
+          gestureId: `project-text:score-object:${document.target.selectionId}:text`,
+          label: 'Edit Score Object Code',
+          phase: 'update',
+        }}
         onChange={handleChange}
       />
       {testOutput !== null && <GeneratedScoreModal text={testOutput} onClose={clearTestOutput} />}

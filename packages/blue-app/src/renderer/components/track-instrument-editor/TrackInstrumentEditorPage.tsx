@@ -7,6 +7,7 @@ import {
   type TrackInstrumentEditorRequest,
   type TrackInstrumentEditorSnapshot,
 } from '../../../shared/project-editor';
+import type { ProjectDocumentCommitMetadata } from '../../../shared/project-history';
 import {
   isNewerTrackInstrumentRuntimeStatus,
   type TrackInstrumentRuntimeStatus,
@@ -14,6 +15,11 @@ import {
 import InstrumentEditorPanel from '../workbench/panels/orchestra/InstrumentEditorPanel';
 import { useLibraryStore } from '../../stores/library-store';
 import { mergePendingInstrumentPatch, toInstrumentPatch } from './track-instrument-patch-queue';
+import {
+  useDedicatedProjectHistory,
+  type DedicatedProjectHistoryClient,
+  type DedicatedHistoryDrainResult,
+} from '../../hooks/use-dedicated-project-history';
 
 function closeWindow(): void {
   window.close();
@@ -24,6 +30,11 @@ const INACTIVE_RUNTIME_STATUS: TrackInstrumentRuntimeStatus = {
   playbackRunning: false,
   blueLiveRunning: false,
 };
+
+interface PendingInstrumentPatch {
+  patch: InstrumentPatch;
+  metadata?: ProjectDocumentCommitMetadata;
+}
 
 function parseRequestFromLocation(): TrackInstrumentEditorRequest | null {
   const params = new URLSearchParams(window.location.search);
@@ -92,10 +103,12 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
   const requestRef = useRef<TrackInstrumentEditorRequest | null>(parsedRequest);
   const runtimeStatusSequenceRef = useRef<number | null>(null);
   const runtimeUnsubscribeRef = useRef<(() => Promise<void>) | null>(null);
-  const pendingPatchesRef = useRef<InstrumentPatch[]>([]);
+  const pendingPatchesRef = useRef<PendingInstrumentPatch[]>([]);
   const drainingPatchesRef = useRef(false);
+  const drainPromiseRef = useRef<Promise<DedicatedHistoryDrainResult> | null>(null);
   const mountedRef = useRef(true);
   const editorIdentityRef = useRef<string | null>(null);
+  const historyRef = useRef<DedicatedProjectHistoryClient | null>(null);
 
   const handleEditorUsable = useCallback(() => {
     setEditorUsable(true);
@@ -123,6 +136,7 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
       return;
     }
     requestRef.current = { track: next.track };
+    historyRef.current?.setRevision(next.track.projectRevision);
     if (!mountedRef.current) return;
     setSnapshot(next);
     setError(null);
@@ -207,7 +221,17 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
 
   useEffect(() => {
     if (!parsedRequest) return;
+    const historyClient = historyRef.current;
     return window.blueAPI.onProjectDocumentUpdated((event) => {
+      if (historyClient) {
+        const currentDocumentId = historyClient.getDocumentIdentity();
+        if (currentDocumentId && event.documentId && event.documentId !== currentDocumentId) return;
+        if (event.documentId) {
+          historyClient.setDocumentIdentity(event.documentId, event.revision);
+        } else {
+          historyClient.setRevision(event.revision);
+        }
+      }
       const currentRequest = requestRef.current ?? parsedRequest;
       const next = projectSnapshotToTrackInstrument(currentRequest, event);
       if (!next) {
@@ -219,7 +243,11 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
   }, [acceptSnapshot, parsedRequest]);
 
   const persistPatch = useCallback(
-    async (patch: InstrumentPatch): Promise<boolean> => {
+    async (
+      patch: InstrumentPatch,
+      metadata?: ProjectDocumentCommitMetadata,
+      allowPaused = false,
+    ): Promise<boolean> => {
       // Bounded precondition-aware resolution: a stale snapshot is refreshed
       // and retried a bounded number of times; exhaustion retains the patch
       // as a pending draft instead of retrying forever.
@@ -227,9 +255,18 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
       for (let attempt = 0; attempt <= MAX_STALE_RETRIES; attempt += 1) {
         const request = requestRef.current;
         if (!request) return false;
+        const history = historyRef.current;
+        if (history?.isPaused() && !allowPaused) return false;
+        const historyContext = history
+          ? {
+              ...history.nextContext(metadata),
+              expectedRevision: request.track.projectRevision,
+            }
+          : undefined;
         const result = await window.blueAPI.updateTrackInstrumentEditorDocument({
           ...request,
           patch,
+          ...(historyContext ? { historyContext } : {}),
         });
         if (!result.snapshot || result.status === 'unavailable') {
           if (mountedRef.current) setError('The Track instrument is no longer available.');
@@ -244,38 +281,83 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
     [acceptSnapshot],
   );
 
-  const drainPatchQueue = useCallback(async () => {
-    if (drainingPatchesRef.current) return;
-    drainingPatchesRef.current = true;
-
-    try {
-      while (pendingPatchesRef.current.length > 0) {
-        const patch = pendingPatchesRef.current.shift()!;
-        const persisted = await persistPatch(patch);
-        if (!persisted) {
-          // Retain the unresolved patch as a draft for the next gesture; a
-          // deleted instrument surfaces the unavailable state instead.
-          if (requestRef.current && mountedRef.current) {
-            pendingPatchesRef.current.unshift(patch);
-          } else {
-            pendingPatchesRef.current = [];
-          }
-          break;
+  const drainPatchQueue = useCallback(
+    async (allowPaused = false): Promise<DedicatedHistoryDrainResult> => {
+      const previousDrain = drainPromiseRef.current;
+      if (previousDrain) {
+        await previousDrain.catch(() => undefined);
+        if (!allowPaused) {
+          return {
+            outstandingPrefixCount: 0,
+            failedPrefixCount: 0,
+            unresolvedPrefixCount: 0,
+          };
         }
       }
-    } catch (patchError) {
-      console.error('[track-instrument-editor] Failed to save instrument patch:', patchError);
-      pendingPatchesRef.current = [];
-      if (mountedRef.current) {
-        setError('Unable to save the Track instrument change.');
+      if (drainingPatchesRef.current) {
+        return {
+          outstandingPrefixCount: 0,
+          failedPrefixCount: 0,
+          unresolvedPrefixCount: 0,
+        };
       }
-    } finally {
-      drainingPatchesRef.current = false;
-    }
-  }, [persistPatch]);
+      drainingPatchesRef.current = true;
+      const prefix = allowPaused ? pendingPatchesRef.current.splice(0) : null;
+      const run = (async (): Promise<DedicatedHistoryDrainResult> => {
+        let unresolved: PendingInstrumentPatch | undefined;
+        let failedPrefixCount = 0;
+        let currentPending: PendingInstrumentPatch | undefined;
+        let outstandingPrefixCount = 0;
+        try {
+          while ((prefix ? prefix.length : pendingPatchesRef.current.length) > 0) {
+            currentPending = (prefix ? prefix.shift() : pendingPatchesRef.current.shift())!;
+            const persisted = await persistPatch(
+              currentPending.patch,
+              currentPending.metadata,
+              allowPaused,
+            );
+            if (!persisted) {
+              unresolved = currentPending;
+              failedPrefixCount += allowPaused ? 1 : 0;
+              break;
+            }
+            currentPending = undefined;
+          }
+        } catch (patchError) {
+          console.error('[track-instrument-editor] Failed to save instrument patch:', patchError);
+          failedPrefixCount += allowPaused ? 1 : 0;
+          unresolved = currentPending;
+          if (mountedRef.current) {
+            setError('Unable to save the Track instrument change.');
+          }
+        } finally {
+          if (prefix) {
+            if (unresolved) prefix.unshift(unresolved);
+            outstandingPrefixCount = prefix.length;
+            pendingPatchesRef.current.unshift(...prefix);
+          } else if (unresolved && requestRef.current && mountedRef.current) {
+            pendingPatchesRef.current.unshift(unresolved);
+          }
+        }
+        return {
+          outstandingPrefixCount: allowPaused ? outstandingPrefixCount : 0,
+          failedPrefixCount,
+          unresolvedPrefixCount: allowPaused ? outstandingPrefixCount : 0,
+        };
+      })();
+      drainPromiseRef.current = run;
+      try {
+        return await run;
+      } finally {
+        if (drainPromiseRef.current === run) drainPromiseRef.current = null;
+        drainingPatchesRef.current = false;
+      }
+    },
+    [persistPatch],
+  );
 
   const applyPatch = useCallback(
-    (patch: OrchestraPatch) => {
+    (patch: OrchestraPatch, metadata?: ProjectDocumentCommitMetadata) => {
       const instrumentPatch = toInstrumentPatch(patch);
       if (!instrumentPatch) return;
 
@@ -305,16 +387,40 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
 
       const pending = pendingPatchesRef.current;
       const previous = pending[pending.length - 1];
-      const merged = previous ? mergePendingInstrumentPatch(previous, instrumentPatch) : null;
+      const merged = previous ? mergePendingInstrumentPatch(previous.patch, instrumentPatch) : null;
       if (merged) {
-        pending[pending.length - 1] = merged;
+        let mergedMetadata = metadata ?? previous?.metadata;
+        if (
+          previous?.metadata?.gestureId &&
+          metadata?.gestureId &&
+          previous.metadata.gestureId === metadata.gestureId
+        ) {
+          if (previous.metadata.phase === 'begin' && metadata.phase === 'update') {
+            mergedMetadata = { ...metadata, phase: 'begin' };
+          } else if (previous.metadata.phase === 'begin' && metadata.phase === 'end') {
+            mergedMetadata = { ...metadata, phase: 'single' };
+          }
+        }
+        pending[pending.length - 1] = {
+          patch: merged,
+          metadata: mergedMetadata,
+        };
       } else {
-        pending.push(instrumentPatch);
+        pending.push({ patch: instrumentPatch, metadata });
       }
-      void drainPatchQueue();
+      if (!historyRef.current?.isPaused()) void drainPatchQueue();
     },
     [drainPatchQueue],
   );
+
+  const history = useDedicatedProjectHistory({
+    enabled: parsedRequest !== null,
+    viewId: parsedRequest
+      ? `track-instrument:${parsedRequest.track.rootGroupId}:${parsedRequest.track.trackId}`
+      : 'track-instrument:unavailable',
+    drain: drainPatchQueue,
+  });
+  historyRef.current = history;
 
   if (error) {
     return (
@@ -356,6 +462,7 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
                 projectSessionId: snapshot.track.projectSessionId,
                 enabled:
                   editorUsable && (runtimeStatus.playbackRunning || runtimeStatus.blueLiveRunning),
+                performanceKind: runtimeStatus.playbackRunning ? 'timeline' : 'blueLive',
               }
             : undefined
         }

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useProjectStore } from '../../../stores/project-store';
 import type { MissingAudioAssetRow } from '../../../../shared/missing-audio-assets';
 import { useDialogFocus } from '../../dialogs/use-dialog-focus';
+import { ConfirmationDialog } from '../../dialogs/ConfirmationDialog';
 
 /**
  * Renders the Java Blue "Locate Missing Audio Files" repair table when a
@@ -18,14 +19,25 @@ export default function MissingAudioAssetsModal(): React.ReactElement | null {
 
   const [replacements, setReplacements] = useState<Record<string, string>>({});
   const [resolving, setResolving] = useState(false);
+  const [resolutionError, setResolutionError] = useState<string | null>(null);
+  const [historyOversizeProposal, setHistoryOversizeProposal] = useState<{
+    token: string;
+    estimatedBytes: number;
+    limitBytes: number;
+    explanation: string;
+  } | null>(null);
   const okButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const closeWithoutChanges = useCallback(
     (sessionId: string) => {
+      const proposal = historyOversizeProposal;
+      if (proposal) {
+        void window.blueAPI.cancelOversizeProposal?.({ proposalToken: proposal.token });
+      }
       void window.blueAPI.dismissMissingAudioAssets({ sessionId }).catch(() => {});
       setMissingAudioSession(null);
     },
-    [setMissingAudioSession],
+    [historyOversizeProposal, setMissingAudioSession],
   );
 
   const dialogRef = useDialogFocus(
@@ -47,12 +59,15 @@ export default function MissingAudioAssetsModal(): React.ReactElement | null {
     }
     setReplacements(initial);
     setResolving(false);
+    setResolutionError(null);
+    setHistoryOversizeProposal(null);
     okButtonRef.current?.focus();
   }, [session]);
 
   const handleBrowse = useCallback(
     async (originalPath: string) => {
       if (!session) return;
+      if (historyOversizeProposal) return;
       const currentReplacementPath = replacements[originalPath];
       const selected = await window.blueAPI.chooseMissingAudioReplacement({
         sessionId: session.sessionId,
@@ -64,12 +79,16 @@ export default function MissingAudioAssetsModal(): React.ReactElement | null {
       }
       setReplacements((prev) => ({ ...prev, [originalPath]: selected }));
     },
-    [replacements, session],
+    [historyOversizeProposal, replacements, session],
   );
 
-  const handleClear = useCallback((originalPath: string) => {
-    setReplacements((prev) => ({ ...prev, [originalPath]: '' }));
-  }, []);
+  const handleClear = useCallback(
+    (originalPath: string) => {
+      if (historyOversizeProposal) return;
+      setReplacements((prev) => ({ ...prev, [originalPath]: '' }));
+    },
+    [historyOversizeProposal],
+  );
 
   const handleConfirm = useCallback(async () => {
     if (!session || resolving) return;
@@ -83,6 +102,7 @@ export default function MissingAudioAssetsModal(): React.ReactElement | null {
       const result = await window.blueAPI.resolveMissingAudioAssets({
         sessionId: session.sessionId,
         replacements: replacementRows,
+        ...(historyOversizeProposal ? { historyProposalToken: historyOversizeProposal.token } : {}),
       });
 
       if (result.stale) {
@@ -90,14 +110,45 @@ export default function MissingAudioAssetsModal(): React.ReactElement | null {
         return;
       }
 
+      if (result.historyOversizeProposal) {
+        setHistoryOversizeProposal(result.historyOversizeProposal);
+        setResolutionError(null);
+        return;
+      }
+
+      if (!result.ok) {
+        setResolutionError(result.error ?? 'The missing-audio changes were not committed.');
+        setHistoryOversizeProposal(null);
+        return;
+      }
+
       if (result.changed && result.project) {
         applyMissingAudioResolvedSnapshot(result.project);
       }
+      setHistoryOversizeProposal(null);
       setMissingAudioSession(null);
     } finally {
       setResolving(false);
     }
-  }, [applyMissingAudioResolvedSnapshot, replacements, resolving, session, setMissingAudioSession]);
+  }, [
+    applyMissingAudioResolvedSnapshot,
+    historyOversizeProposal,
+    replacements,
+    resolving,
+    session,
+    setMissingAudioSession,
+  ]);
+
+  const handleCancelHistoryProposal = useCallback(() => {
+    const proposal = historyOversizeProposal;
+    if (!proposal) return;
+    void window.blueAPI.cancelOversizeProposal?.({ proposalToken: proposal.token });
+    setHistoryOversizeProposal(null);
+  }, [historyOversizeProposal]);
+
+  const handleConfirmHistoryProposal = useCallback(() => {
+    void handleConfirm();
+  }, [handleConfirm]);
 
   const handleOverlayClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
@@ -168,6 +219,7 @@ export default function MissingAudioAssetsModal(): React.ReactElement | null {
                         type="button"
                         className="rounded border border-app-hover px-2 py-1 text-role-callout text-app-text hover:bg-app-hover"
                         onClick={() => void handleBrowse(row.originalPath)}
+                        disabled={resolving || historyOversizeProposal !== null}
                       >
                         Browse
                       </button>
@@ -176,6 +228,7 @@ export default function MissingAudioAssetsModal(): React.ReactElement | null {
                           type="button"
                           className="ml-1 rounded border border-app-hover px-2 py-1 text-role-callout text-app-text hover:bg-app-hover"
                           onClick={() => handleClear(row.originalPath)}
+                          disabled={resolving || historyOversizeProposal !== null}
                         >
                           Clear
                         </button>
@@ -201,12 +254,43 @@ export default function MissingAudioAssetsModal(): React.ReactElement | null {
             type="button"
             className="rounded bg-blue-accent px-3 py-1.5 text-role-body text-white hover:opacity-90 disabled:opacity-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
             onClick={() => void handleConfirm()}
-            disabled={resolving}
+            disabled={resolving || historyOversizeProposal !== null}
           >
             OK
           </button>
         </div>
       </div>
+      <ConfirmationDialog
+        open={historyOversizeProposal !== null}
+        title="History limit reached"
+        description={`${historyOversizeProposal?.explanation ?? 'This action is too large to retain.'} Keeping it clears the retained project undo history. Cancel leaves the document and existing redo branch unchanged.`}
+        actions={[
+          { id: 'cancel', label: 'Cancel', intent: 'cancel' },
+          {
+            id: 'keep',
+            label: 'Keep Action and Clear History',
+            intent: 'destructive',
+          },
+        ]}
+        cancelActionId="cancel"
+        initialFocusActionId="cancel"
+        onDecision={(actionId) => {
+          if (actionId === 'keep') {
+            handleConfirmHistoryProposal();
+          } else {
+            handleCancelHistoryProposal();
+          }
+        }}
+        data-testid="missing-audio-history-confirmation"
+      />
+      {resolutionError && (
+        <div
+          role="alert"
+          className="fixed bottom-4 left-1/2 z-[90] -translate-x-1/2 rounded border border-app-danger/60 bg-app-overlay px-3 py-2 text-role-callout text-app-danger-foreground shadow-xl"
+        >
+          {resolutionError}
+        </div>
+      )}
     </div>
   );
 }

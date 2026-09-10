@@ -843,5 +843,107 @@ describe('application menu follow playback mirror (SPEC 079)', () => {
       redoShiftItem?.click?.();
       expect(onRedo).toHaveBeenCalledTimes(2);
     });
+
+    it('keeps local draft undo available and labels it when project history is empty', () => {
+      const handlers = createHandlers();
+      const template = buildApplicationMenuTemplate({
+        hasLoadedProject: true,
+        isDarwin: true,
+        recentProjects: [],
+        canRevertProject: false,
+        followPlaybackEnabled: false,
+        followPlaybackOnStartEnabled: false,
+        canUndo: false,
+        canRedo: false,
+        draftCanUndo: true,
+        draftCanRedo: true,
+        draftUndoLabel: 'Local Draft',
+        draftRedoLabel: 'Local Draft',
+        ...handlers,
+      });
+
+      const editMenu = getSubmenu(template.find((item) => item.label === 'Edit'));
+      const undoItem = editMenu.find((item) => item.label === 'Undo Local Draft');
+      const redoItem = editMenu.find((item) => item.label === 'Redo Local Draft');
+
+      expect(undoItem?.enabled).toBe(true);
+      expect(undoItem?.accelerator).toBe('CmdOrCtrl+Z');
+      expect(redoItem?.enabled).toBe(true);
+      expect(redoItem?.accelerator).toBe('Shift+Cmd+Z');
+    });
+
+    it('uses the focused renderer scope instead of combining project and draft availability', () => {
+      const handlers = createHandlers();
+      const projectFocused = buildApplicationMenuTemplate({
+        hasLoadedProject: true,
+        isDarwin: true,
+        recentProjects: [],
+        canRevertProject: false,
+        followPlaybackEnabled: false,
+        followPlaybackOnStartEnabled: false,
+        canUndo: true,
+        draftCanUndo: true,
+        draftUndoLabel: 'Local Draft',
+        focusedHistory: {
+          scope: 'project',
+          canUndo: false,
+          canRedo: false,
+          undoLabel: null,
+          redoLabel: null,
+        },
+        ...handlers,
+      });
+      const projectUndo = getSubmenu(projectFocused.find((item) => item.label === 'Edit')).find(
+        (item) => item.accelerator === 'CmdOrCtrl+Z',
+      );
+      expect(projectUndo?.enabled).toBe(false);
+      expect(projectUndo?.label).toBe('Undo');
+
+      const draftFocused = buildApplicationMenuTemplate({
+        hasLoadedProject: true,
+        isDarwin: true,
+        recentProjects: [],
+        canRevertProject: false,
+        followPlaybackEnabled: false,
+        followPlaybackOnStartEnabled: false,
+        canUndo: true,
+        undoLabel: 'Project edit',
+        focusedHistory: {
+          scope: 'draft',
+          canUndo: true,
+          canRedo: false,
+          undoLabel: 'Local Draft',
+          redoLabel: null,
+        },
+        ...handlers,
+      });
+      const draftUndo = getSubmenu(draftFocused.find((item) => item.label === 'Edit')).find(
+        (item) => item.accelerator === 'CmdOrCtrl+Z',
+      );
+      expect(draftUndo?.enabled).toBe(true);
+      expect(draftUndo?.label).toBe('Undo Local Draft');
+
+      const noneFocused = buildApplicationMenuTemplate({
+        hasLoadedProject: true,
+        isDarwin: true,
+        recentProjects: [],
+        canRevertProject: false,
+        followPlaybackEnabled: false,
+        followPlaybackOnStartEnabled: false,
+        canUndo: true,
+        focusedHistory: {
+          scope: 'none',
+          canUndo: false,
+          canRedo: false,
+          undoLabel: null,
+          redoLabel: null,
+        },
+        ...handlers,
+      });
+      const noneUndo = getSubmenu(noneFocused.find((item) => item.label === 'Edit')).find(
+        (item) => item.accelerator === 'CmdOrCtrl+Z',
+      );
+      expect(noneUndo?.enabled).toBe(false);
+    });
   });
 });

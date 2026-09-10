@@ -261,7 +261,7 @@ describe('global project history retention & oversize confirmation (T057, US5)',
 
     expect(commitPatchesSpy).toHaveBeenCalledWith(
       [{ projectProperties: { title: 'New Big Title' } }],
-      { proposalToken: 'token-store-abc' },
+      expect.objectContaining({ proposalToken: 'token-store-abc' }),
     );
     expect(useProjectStore.getState().activeOversizeProposal).toBeNull();
   });

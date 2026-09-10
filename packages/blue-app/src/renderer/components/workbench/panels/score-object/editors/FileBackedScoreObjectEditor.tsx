@@ -4,6 +4,7 @@ import type {
   AudioFileMetadataState,
   AudioFileMetadataSnapshot,
 } from '../../../../../shared/project-editor';
+import type { ProjectDocumentCommitMetadata } from '../../../../../../shared/project-history';
 import SelectedCodeEditor from '../../editors/SelectedCodeEditor';
 import {
   BLUE_INSPECTOR_FIELD_LABEL_CLASS,
@@ -120,12 +121,15 @@ export default function FileBackedScoreObjectEditor({
       }
     };
 
-    const handlePostCodeChange = (text: string) => {
-      onPatch({
-        type: 'updateAudioFilePostCode',
-        target: document.target,
-        csoundPostCode: text,
-      });
+    const handlePostCodeChange = (text: string, metadata?: ProjectDocumentCommitMetadata) => {
+      onPatch(
+        {
+          type: 'updateAudioFilePostCode',
+          target: document.target,
+          csoundPostCode: text,
+        },
+        metadata,
+      );
     };
 
     const channelVariablesInfo =
@@ -301,6 +305,13 @@ export default function FileBackedScoreObjectEditor({
                 active={true}
                 readOnly={false}
                 ariaLabel="Csound Post Code Editor"
+                typingGroupingMs={500}
+                historyMetadata={{
+                  fieldId: `score-object:${document.target.selectionId}:csoundPostCode`,
+                  gestureId: `project-text:score-object:${document.target.selectionId}:csoundPostCode`,
+                  label: 'Edit Csound Post Code',
+                  phase: 'update',
+                }}
                 onChange={handlePostCodeChange}
               />
             </div>

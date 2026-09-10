@@ -77,7 +77,8 @@ import type {
   ProjectHistoryRedoRequest,
   ProjectHistoryReadRequest,
   ProjectHistoryResponse,
-  ProjectHistoryStateProjection,
+  ProjectHistoryReadResponse,
+  ProjectHistoryControlResponse,
   RegisterHistoryParticipantRequest,
   RegisterHistoryParticipantResponse,
   UnregisterHistoryParticipantRequest,
@@ -86,6 +87,7 @@ import type {
   ReleaseHistoryBoundaryEvent,
   CancelOversizeProposalRequest,
   ProjectRuntimeOutcomeEvent,
+  FocusedHistoryAvailability,
   ProjectDocumentCommitMetadata,
 } from '../../shared/project-history';
 import type {
@@ -391,6 +393,7 @@ declare global {
         patches: ProjectDocumentPatch[],
         metadata?: ProjectDocumentCommitMetadata,
       ) => Promise<ProjectDocumentCommitReceipt>;
+      syncHistoryAvailability: (projection: FocusedHistoryAvailability) => void;
       commitProjectHistory: (
         request: ProjectHistoryCommitRequest,
       ) => Promise<ProjectHistoryResponse>;
@@ -398,13 +401,19 @@ declare global {
       redoProjectHistory: (request: ProjectHistoryRedoRequest) => Promise<ProjectHistoryResponse>;
       readProjectHistory: (
         request?: ProjectHistoryReadRequest,
-      ) => Promise<ProjectHistoryStateProjection>;
+      ) => Promise<ProjectHistoryReadResponse>;
       registerHistoryParticipant: (
         request: RegisterHistoryParticipantRequest,
       ) => Promise<RegisterHistoryParticipantResponse>;
-      unregisterHistoryParticipant: (request: UnregisterHistoryParticipantRequest) => Promise<void>;
-      acknowledgeHistoryBoundary: (ack: PrepareHistoryBoundaryAck) => Promise<void>;
-      cancelOversizeProposal: (request: CancelOversizeProposalRequest) => Promise<void>;
+      unregisterHistoryParticipant: (
+        request: UnregisterHistoryParticipantRequest,
+      ) => Promise<ProjectHistoryControlResponse>;
+      acknowledgeHistoryBoundary: (
+        ack: PrepareHistoryBoundaryAck,
+      ) => Promise<ProjectHistoryControlResponse>;
+      cancelOversizeProposal: (
+        request: CancelOversizeProposalRequest,
+      ) => Promise<ProjectHistoryControlResponse>;
       onPrepareHistoryBoundary: (
         callback: (event: PrepareHistoryBoundaryEvent) => void,
       ) => () => void;

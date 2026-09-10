@@ -640,19 +640,22 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
     const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<
       typeof vi.fn
     >;
-    expect(applyPatch).toHaveBeenCalledWith({
-      score: {
-        type: 'moveScoreObjects',
-        moves: [
-          {
-            target: item.editorTarget,
-            targetStartBeats: 5.5,
-            targetLayerIndex: 0,
-            targetGroupId: 'sound-group',
-          },
-        ],
+    expect(applyPatch).toHaveBeenCalledWith(
+      {
+        score: {
+          type: 'moveScoreObjects',
+          moves: [
+            {
+              target: item.editorTarget,
+              targetStartBeats: 5.5,
+              targetLayerIndex: 0,
+              targetGroupId: 'sound-group',
+            },
+          ],
+        },
       },
-    });
+      expect.objectContaining({ label: 'Shift Score Objects', phase: 'single' }),
+    );
 
     act(() => {
       root.unmount();

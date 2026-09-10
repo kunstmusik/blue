@@ -66,7 +66,6 @@ import {
   collectTimelineLayerSelection,
 } from './score-timeline-gesture-utils';
 import { buildSetSelectionToLayerColorPatch } from '../score-color-actions';
-import { useScoreColorHistoryStore } from '../../../../../stores/score-color-history-store';
 
 interface Props {
   group: PolyObjectLayerGroupSnapshot;
@@ -1495,18 +1494,15 @@ export default function ScoreTimeCanvas({
     });
     if (pair) {
       try {
-        await applyProjectDocumentPatch(pair.forward);
-        await flushPendingPatches();
-        useScoreColorHistoryStore.getState().pushEntry({
+        await applyProjectDocumentPatch(pair, {
           label: 'Set to Layer Color',
-          forward: pair.forward,
-          inverse: pair.inverse,
+          phase: 'single',
         });
       } catch {
         // Rejection reconciliation - do not record history entry
       }
     }
-  }, [getSelectedEntries, interactionLayerGroups, applyProjectDocumentPatch, flushPendingPatches]);
+  }, [getSelectedEntries, interactionLayerGroups, applyProjectDocumentPatch]);
 
   const handleExport = useCallback(async () => {
     const entries = getSelectedEntries();
@@ -1707,7 +1703,10 @@ export default function ScoreTimeCanvas({
   }, [contextMenuPos, interactionLayerGroups, setSelection]);
 
   const commitMoves = useCallback(
-    (moves: Array<{ entry: ScoreObjectClipboardEntry; targetStartBeats: number }>) => {
+    (
+      moves: Array<{ entry: ScoreObjectClipboardEntry; targetStartBeats: number }>,
+      label = 'Move Score Objects',
+    ) => {
       if (moves.length === 0) return;
       const optimisticMoves = moves.map(({ entry, targetStartBeats }) => ({
         objectId: entry.objectId,
@@ -1729,9 +1728,12 @@ export default function ScoreTimeCanvas({
           : [],
       );
       if (canonicalMoves.length > 0) {
-        void applyProjectDocumentPatch({
-          score: { type: 'moveScoreObjects', moves: canonicalMoves },
-        });
+        void applyProjectDocumentPatch(
+          {
+            score: { type: 'moveScoreObjects', moves: canonicalMoves },
+          },
+          { label, phase: 'single' },
+        );
       }
     },
     [applyProjectDocumentPatch, moveScoreObjects],
@@ -1741,7 +1743,10 @@ export default function ScoreTimeCanvas({
     const entries = getSelectedEntries();
     if (entries.length < 2) return;
     const minStart = Math.min(...entries.map((e) => e.startBeats));
-    commitMoves(entries.map((entry) => ({ entry, targetStartBeats: minStart })));
+    commitMoves(
+      entries.map((entry) => ({ entry, targetStartBeats: minStart })),
+      'Align Left',
+    );
   }, [commitMoves, getSelectedEntries]);
 
   const handleAlignCenter = useCallback(() => {
@@ -1754,6 +1759,7 @@ export default function ScoreTimeCanvas({
         entry,
         targetStartBeats: Math.max(0, mid - entry.durationBeats / 2),
       })),
+      'Align Center',
     );
   }, [commitMoves, getSelectedEntries]);
 
@@ -1766,6 +1772,7 @@ export default function ScoreTimeCanvas({
         entry,
         targetStartBeats: Math.max(0, maxEnd - entry.durationBeats),
       })),
+      'Align Right',
     );
   }, [commitMoves, getSelectedEntries]);
 
@@ -1780,6 +1787,7 @@ export default function ScoreTimeCanvas({
         cursor += entry.durationBeats;
         return { entry, targetStartBeats };
       }),
+      'Follow The Leader',
     );
   }, [commitMoves, getSelectedEntries]);
 
@@ -1793,6 +1801,7 @@ export default function ScoreTimeCanvas({
         entry,
         targetStartBeats: reversed[i].startBeats,
       })),
+      'Reverse Score Objects',
     );
   }, [commitMoves, getSelectedEntries]);
 
@@ -1811,6 +1820,7 @@ export default function ScoreTimeCanvas({
           entry,
           targetStartBeats: entry.startBeats + amount,
         })),
+        'Shift Score Objects',
       );
     },
     [commitMoves, getSelectedEntries],

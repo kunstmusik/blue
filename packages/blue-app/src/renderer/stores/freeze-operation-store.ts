@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import type {
   FreezeItemAction,
   FreezeItemStatus,
+  FreezeHistoryOversizeProposal,
   FreezeOperationResult,
   RenderOperationPhase,
   RenderOperationStatus,
@@ -114,12 +115,15 @@ export interface FreezeOperationState {
   result: FreezeOperationResult | null;
   error: string | null;
   cancelRequested: boolean;
+  historyOversizeProposal: FreezeHistoryOversizeProposal | null;
+  historyProposalEntries: ScoreObjectClipboardEntry[] | null;
 
-  start: (entries: ScoreObjectClipboardEntry[]) => Promise<void>;
+  start: (entries: ScoreObjectClipboardEntry[], historyProposalToken?: string) => Promise<void>;
   handleStatus: (status: RenderOperationStatus) => void;
   handleItemEvent: (event: FreezeItemStatus) => void;
   cancel: () => void;
   close: () => void;
+  confirmHistoryProposal: () => Promise<void>;
   selectRow: (selectionId: string) => void;
   toggleOutput: () => void;
 }
@@ -136,12 +140,14 @@ const initialState = {
   result: null,
   error: null,
   cancelRequested: false,
+  historyOversizeProposal: null,
+  historyProposalEntries: null,
 };
 
 export const useFreezeOperationStore = create<FreezeOperationState>((set, get) => ({
   ...initialState,
 
-  async start(entries) {
+  async start(entries, historyProposalToken) {
     if (get().open && !isTerminalPhase(get().phase)) return;
 
     const rows = optimisticRows(entries);
@@ -183,7 +189,11 @@ export const useFreezeOperationStore = create<FreezeOperationState>((set, get) =
         });
         return;
       }
-      const result = await window.blueAPI.freezeScoreObjects({ targets, operationId });
+      const result = await window.blueAPI.freezeScoreObjects({
+        targets,
+        operationId,
+        ...(historyProposalToken ? { historyProposalToken } : {}),
+      });
       const outcome: RenderOperationPhase = result.ok
         ? 'completed'
         : result.cancelled
@@ -196,6 +206,8 @@ export const useFreezeOperationStore = create<FreezeOperationState>((set, get) =
           return {
             result,
             error: result.ok ? state.error : rejectedReasons || result.error || state.error,
+            historyOversizeProposal: result.historyOversizeProposal ?? null,
+            historyProposalEntries: result.historyOversizeProposal ? entries : null,
           };
         }
         return {
@@ -204,6 +216,8 @@ export const useFreezeOperationStore = create<FreezeOperationState>((set, get) =
           rows: settleRows(state.rows, outcome),
           result,
           error: result.ok ? null : rejectedReasons || result.error,
+          historyOversizeProposal: result.historyOversizeProposal ?? null,
+          historyProposalEntries: result.historyOversizeProposal ? entries : null,
         };
       });
     } catch (error) {
@@ -274,7 +288,24 @@ export const useFreezeOperationStore = create<FreezeOperationState>((set, get) =
 
   close() {
     if (!isTerminalPhase(get().phase)) return;
+    const proposal = get().historyOversizeProposal;
+    if (proposal) {
+      const cancellation = window.blueAPI?.cancelOversizeProposal?.({
+        proposalToken: proposal.token,
+      });
+      if (cancellation) {
+        void cancellation.catch(() => {
+          // Closing the dialog is fail-closed; an invalidated token cannot commit later.
+        });
+      }
+    }
     set({ ...initialState });
+  },
+
+  async confirmHistoryProposal() {
+    const { historyOversizeProposal, historyProposalEntries } = get();
+    if (!historyOversizeProposal || !historyProposalEntries) return;
+    await get().start(historyProposalEntries, historyOversizeProposal.token);
   },
 
   selectRow(selectionId) {

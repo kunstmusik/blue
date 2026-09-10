@@ -10,6 +10,7 @@ import {
   PROJECT_DOCUMENT_UPDATED_CHANNEL,
   isProjectHistoryResponse,
   isProjectDocumentUpdatedEvent,
+  isProjectRuntimeOutcomeEvent,
   type ProjectHistoryCommitRequest,
   type ProjectHistoryCommittedResponse,
   type ProjectHistoryStaleResponse,
@@ -18,6 +19,13 @@ import {
   type PrepareHistoryBoundaryEvent,
   type PrepareHistoryBoundaryAck,
   type ReleaseHistoryBoundaryEvent,
+  validateProjectHistoryCommitRequest,
+  validateProjectDocumentPatchBatchRequest,
+  validateProjectHistoryUndoRequest,
+  validateProjectHistoryReadRequest,
+  validateRegisterHistoryParticipantRequest,
+  validatePrepareHistoryBoundaryAck,
+  validateCancelOversizeProposalRequest,
 } from './project-history';
 
 describe('project-history shared contracts', () => {
@@ -143,6 +151,9 @@ describe('project-history shared contracts', () => {
         retainedBytes: 4096,
         savedStateId: 'state-3',
         stateId: 'state-3',
+        limitBytes: 64 * 1024 * 1024,
+        maxEntries: 200,
+        retentionStatus: 'within-limit',
       },
       acceptedOperationIds: ['op-1', 'op-2'],
       sourceSequence: 5,
@@ -157,6 +168,26 @@ describe('project-history shared contracts', () => {
     const serialized = JSON.parse(JSON.stringify(event));
     expect(isProjectDocumentUpdatedEvent(serialized)).toBe(true);
     expect(serialized).toEqual(event);
+    expect(
+      isProjectDocumentUpdatedEvent({
+        ...event,
+        history: { ...event.history, retentionStatus: 'unknown' },
+      }),
+    ).toBe(false);
+    expect(
+      isProjectDocumentUpdatedEvent({
+        ...event,
+        runtimeOutcomes: [
+          {
+            performanceKind: 'timeline',
+            generation: 1,
+            desiredRevision: 3,
+            status: 'failed',
+            unexpected: true,
+          },
+        ],
+      }),
+    ).toBe(false);
   });
 
   it('verifies settlement boundary events and acks are serializable', () => {
@@ -179,5 +210,138 @@ describe('project-history shared contracts', () => {
     expect(JSON.parse(JSON.stringify(prepare))).toEqual(prepare);
     expect(JSON.parse(JSON.stringify(ack))).toEqual(ack);
     expect(JSON.parse(JSON.stringify(release))).toEqual(release);
+  });
+
+  it('rejects malformed history requests before they reach the coordinator', () => {
+    const validCommit = {
+      documentId: 'doc-1',
+      operationId: 'op-1',
+      expectedRevision: 0,
+      contextSequence: 1,
+      label: 'Edit',
+      patches: [{ globalOrc: 'sr = 44100' }],
+    };
+
+    expect(validateProjectHistoryCommitRequest(validCommit).valid).toBe(true);
+    expect(validateProjectHistoryCommitRequest({ ...validCommit, contextSequence: -1 }).valid).toBe(
+      false,
+    );
+    expect(validateProjectHistoryCommitRequest({ ...validCommit, unexpected: true }).valid).toBe(
+      false,
+    );
+    expect(
+      validateProjectHistoryCommitRequest({
+        ...validCommit,
+        patches: [{ globalOrc: () => 'not serializable' }],
+      }).valid,
+    ).toBe(false);
+    expect(
+      validateProjectHistoryUndoRequest({
+        documentId: 'doc-1',
+        operationId: 'undo-1',
+        expectedRevision: 0,
+        contextSequence: 1,
+        extra: 'foreign field',
+      }).valid,
+    ).toBe(false);
+    expect(validateProjectHistoryReadRequest({ documentId: '' }).valid).toBe(false);
+    expect(
+      validateRegisterHistoryParticipantRequest({
+        contextId: 'ctx-1',
+        documentId: 'doc-1',
+        acceptedRevision: Number.POSITIVE_INFINITY,
+      }).valid,
+    ).toBe(false);
+    expect(
+      validatePrepareHistoryBoundaryAck({
+        barrierId: 'barrier-1',
+        contextId: 'ctx-1',
+        lastAcknowledgedRevision: 0,
+        lastAcknowledgedSequence: 0,
+        outstandingPrefixCount: 0,
+        foreign: true,
+      }).valid,
+    ).toBe(false);
+    expect(validateCancelOversizeProposalRequest({ proposalToken: '' }).valid).toBe(false);
+  });
+
+  it('accepts patches whose optional fields are explicitly undefined', () => {
+    // UI patch builders legitimately spell out optional fields as `undefined`
+    // (for example MixerPanel's `{ type: 'addSubChannel', name: undefined }`).
+    // Structured clone preserves those keys, and every patch applier treats
+    // `field === undefined` as "not provided", so they must stay valid;
+    // rejecting them silently dropped whole commits from the project.
+    const addSubChannel = {
+      mixer: { type: 'addSubChannel', name: undefined, channelId: 'channel-1' },
+    };
+    expect(validateProjectDocumentPatchBatchRequest([addSubChannel]).valid).toBe(true);
+    expect(
+      validateProjectDocumentPatchBatchRequest([{ mixer: addSubChannel.mixer, score: undefined }])
+        .valid,
+    ).toBe(true);
+    // Genuinely non-serializable values must still be rejected.
+    expect(
+      validateProjectDocumentPatchBatchRequest([
+        { mixer: { type: 'addSubChannel', name: () => 'function' } },
+      ]).valid,
+    ).toBe(false);
+  });
+
+  it('rejects malformed publication events instead of accepting partial projections', () => {
+    const event: ProjectDocumentUpdatedEvent = {
+      documentId: 'doc-1',
+      sessionId: 1,
+      revision: 2,
+      stateId: 'state-2',
+      isDirty: true,
+      history: {
+        canUndo: true,
+        canRedo: false,
+        undoLabel: 'Edit',
+        redoLabel: null,
+        cursor: 1,
+        length: 1,
+        retainedBytes: 256,
+        savedStateId: null,
+        stateId: 'state-2',
+      },
+      acceptedOperationIds: [],
+      snapshot: null,
+    };
+
+    expect(isProjectDocumentUpdatedEvent(event)).toBe(true);
+    expect(
+      isProjectDocumentUpdatedEvent({
+        ...event,
+        history: { ...event.history, retainedBytes: -1 },
+      }),
+    ).toBe(false);
+    expect(isProjectDocumentUpdatedEvent({ ...event, acceptedOperationIds: [''] })).toBe(false);
+    expect(isProjectDocumentUpdatedEvent({ ...event, snapshot: undefined })).toBe(false);
+    const missingSnapshot = { ...event } as Partial<ProjectDocumentUpdatedEvent>;
+    delete missingSnapshot.snapshot;
+    expect(isProjectDocumentUpdatedEvent(missingSnapshot)).toBe(false);
+
+    expect(
+      isProjectRuntimeOutcomeEvent({
+        documentId: 'doc-1',
+        revision: 2,
+        outcomes: [
+          {
+            performanceKind: 'blueLive',
+            generation: 4,
+            desiredRevision: 2,
+            status: 'applied',
+          },
+        ],
+      }),
+    ).toBe(true);
+    expect(
+      isProjectRuntimeOutcomeEvent({
+        documentId: 'doc-1',
+        revision: 2,
+        outcomes: [{ performanceKind: 'timeline', generation: -1 }],
+      }),
+    ).toBe(false);
   });
 });

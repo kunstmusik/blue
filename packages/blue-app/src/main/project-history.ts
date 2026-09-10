@@ -1,5 +1,20 @@
 import { randomUUID } from 'node:crypto';
-import type { BlueData } from '@blue/data';
+import {
+  BSBCheckBox,
+  BSBGroup,
+  BSBHSliderBank,
+  BSBDropdown,
+  BSBVSliderBank,
+  BSBWidget,
+  BSBXYController,
+  BlueSynthBuilder,
+  BlueX7,
+  cloneBlueX7Voice,
+  Effect,
+  Instrument,
+  TrackLayerGroup,
+  type BlueData,
+} from '@blue/data';
 import type {
   ProjectHistoryCommitRequest,
   ProjectHistoryUndoRequest,
@@ -23,12 +38,23 @@ import type {
   UnregisterHistoryParticipantRequest,
   CancelOversizeProposalRequest,
   ProjectRuntimeOutcome,
+  ProjectHistorySelectionHint,
+  ProjectHistoryControlResponse,
+  ProjectHistoryOrigin,
 } from '../shared/project-history';
 import type {
+  BsbInterfacePatch,
+  EffectEditablePatch,
+  InstrumentPatch,
+  MixerChainKind,
   ProjectDocumentCommitReceipt,
   ProjectDocumentPatch,
 } from '../shared/project-editor/contract';
-import { transferProjectEditorIdentities } from '../shared/project-editor/identity';
+import {
+  getKnownMixerChannelSnapshotId,
+  getMixerEntrySnapshotId,
+  transferProjectEditorIdentities,
+} from '../shared/project-editor/identity';
 import type { ProjectSession, ProjectSessionSnapshot } from './project-session';
 import type { ProjectRuntimeReconciliation } from './project-runtime-reconciliation';
 import {
@@ -39,7 +65,6 @@ import {
   validatePreconditions,
   type PreparedTransaction,
   type PreparedScalarTransaction,
-  type PreparedStructuralTransaction,
   type ScalarFieldRecord,
 } from './project-history-memento';
 
@@ -56,6 +81,7 @@ export interface HistoryEntry {
   readonly label: string;
   readonly sourceContextId?: string;
   readonly originViewId?: string;
+  readonly originSelectionHints?: readonly ProjectHistorySelectionHint[];
   readonly gestureId?: string;
   readonly fieldId?: string;
   readonly timestamp: number;
@@ -164,12 +190,15 @@ interface ActiveBarrierState {
   readonly barrierId: string;
   readonly reason: ProjectHistoryBarrierReason;
   readonly pendingContextIds: Set<string>;
+  readonly participantSequences: ReadonlyMap<string, number>;
   readonly resolve: (result: { ok: boolean; reason?: string }) => void;
   readonly timeoutHandle: ReturnType<typeof setTimeout>;
 }
 
 export interface ProjectHistoryDependencies {
   readonly session: ProjectSession;
+  /** Captures an immutable renderer-safe snapshot at publication time. */
+  readonly captureSnapshot?: () => unknown;
   readonly publishUpdated?: (event: ProjectDocumentUpdatedEvent) => void | Promise<void>;
   readonly retainedEntryLimit?: number;
   readonly retainedBytesLimit?: number;
@@ -303,6 +332,378 @@ export function scalarRecordsToForwardPatches(
   return patches;
 }
 
+export function hasConcreteInversePatches(
+  patches: readonly ProjectDocumentPatch[] | undefined,
+): patches is readonly ProjectDocumentPatch[] {
+  if (!patches || patches.length === 0) return false;
+  return !(
+    patches.length === 1 &&
+    (patches[0].orchestra as unknown as { type?: string })?.type === 'structuralChange'
+  );
+}
+
+interface BsbEditableOwner {
+  getGraphicInterface(): {
+    findWidgetById(id: string): BSBWidget | null;
+    getRootGroup(): BSBGroup;
+  };
+  getParameters(): Array<{ getName(): string }>;
+}
+
+function findBsbWidgetByObjectName(owner: BsbEditableOwner, objectName: string): BSBWidget | null {
+  let result: BSBWidget | null = null;
+  const visit = (widget: BSBWidget): void => {
+    if (result || widget.objectName === objectName) {
+      result = widget;
+      return;
+    }
+    if (widget instanceof BSBGroup) {
+      for (const child of widget.getChildren()) visit(child);
+    }
+  };
+  visit(owner.getGraphicInterface().getRootGroup());
+  return result;
+}
+
+function previousBsbPropertyValue(widget: BSBWidget, key: string): unknown | undefined {
+  switch (key) {
+    case 'value':
+      return widget instanceof BSBXYController ||
+        widget instanceof BSBHSliderBank ||
+        widget instanceof BSBVSliderBank
+        ? undefined
+        : widget.value;
+    case 'selected':
+      return widget instanceof BSBCheckBox ? widget.selected : undefined;
+    case 'selectedIndex':
+      return widget instanceof BSBDropdown ? widget.selectedIndex : undefined;
+    case 'xValue':
+      return widget instanceof BSBXYController ? widget.xValue : undefined;
+    case 'yValue':
+      return widget instanceof BSBXYController ? widget.yValue : undefined;
+    default:
+      return undefined;
+  }
+}
+
+function getBsbParameterNames(owner: BsbEditableOwner): Set<string> {
+  return new Set(owner.getParameters().map((parameter) => parameter.getName()));
+}
+
+function invertBsbInterfacePatch(
+  owner: BsbEditableOwner,
+  patch: BsbInterfacePatch,
+): BsbInterfacePatch[] | null {
+  const graphicInterface = owner.getGraphicInterface();
+  const parameterNames = getBsbParameterNames(owner);
+
+  switch (patch.type) {
+    case 'selectWidget':
+      // Selection is renderer state; this keeps the inverse concrete without
+      // turning a cosmetic action into a restart-required placeholder.
+      return [{ type: 'selectWidget' }];
+    case 'updateWidgetProperties': {
+      const widget = graphicInterface.findWidgetById(patch.widgetId);
+      if (!widget || Object.keys(patch.properties).length === 0) return null;
+      const properties: Record<string, unknown> = {};
+      for (const key of Object.keys(patch.properties)) {
+        const previousValue = previousBsbPropertyValue(widget, key);
+        if (previousValue === undefined) return null;
+        const parameterName =
+          key === 'xValue'
+            ? `${widget.objectName}X`
+            : key === 'yValue'
+              ? `${widget.objectName}Y`
+              : widget.objectName;
+        if (!parameterNames.has(parameterName)) return null;
+        properties[key] = previousValue;
+      }
+      return [{ type: 'updateWidgetProperties', widgetId: patch.widgetId, properties }];
+    }
+    case 'updateSliderBankValue': {
+      const widget = graphicInterface.findWidgetById(patch.widgetId);
+      if (
+        (!(widget instanceof BSBHSliderBank) && !(widget instanceof BSBVSliderBank)) ||
+        patch.sliderIndex < 0 ||
+        patch.sliderIndex >= widget.sliders.length ||
+        !parameterNames.has(`${widget.objectName}_${patch.sliderIndex}`)
+      ) {
+        return null;
+      }
+      return [
+        {
+          type: 'updateSliderBankValue',
+          widgetId: patch.widgetId,
+          sliderIndex: patch.sliderIndex,
+          value: widget.sliders[patch.sliderIndex]!.value,
+        },
+      ];
+    }
+    case 'applyPreset': {
+      const inverse: BsbInterfacePatch[] = [];
+      const visit = (widget: BSBWidget): void => {
+        if (widget instanceof BSBGroup) {
+          for (const child of widget.getChildren()) visit(child);
+          return;
+        }
+        if (widget instanceof BSBXYController) {
+          if (
+            parameterNames.has(`${widget.objectName}X`) &&
+            parameterNames.has(`${widget.objectName}Y`)
+          ) {
+            inverse.push({
+              type: 'updateWidgetProperties',
+              widgetId: widget.id,
+              properties: { xValue: widget.xValue, yValue: widget.yValue },
+            });
+          }
+          return;
+        }
+        if (widget instanceof BSBHSliderBank || widget instanceof BSBVSliderBank) {
+          for (const [sliderIndex, slider] of widget.sliders.entries()) {
+            if (parameterNames.has(`${widget.objectName}_${sliderIndex}`)) {
+              inverse.push({
+                type: 'updateSliderBankValue',
+                widgetId: widget.id,
+                sliderIndex,
+                value: slider.value,
+              });
+            }
+          }
+          return;
+        }
+        if (!widget.objectName || !parameterNames.has(widget.objectName)) return;
+        if (widget instanceof BSBDropdown) {
+          inverse.push({
+            type: 'updateWidgetProperties',
+            widgetId: widget.id,
+            properties: { selectedIndex: widget.selectedIndex },
+          });
+        } else if (widget instanceof BSBCheckBox) {
+          inverse.push({
+            type: 'updateWidgetProperties',
+            widgetId: widget.id,
+            properties: { selected: widget.selected },
+          });
+        } else {
+          inverse.push({
+            type: 'updateWidgetProperties',
+            widgetId: widget.id,
+            properties: { value: widget.value },
+          });
+        }
+      };
+      visit(graphicInterface.getRootGroup());
+      return inverse.length > 0 ? inverse : [{ type: 'selectWidget' }];
+    }
+    default:
+      return null;
+  }
+}
+
+function invertEditableInstrumentPatches(
+  instrument: Instrument,
+  patch: InstrumentPatch,
+): InstrumentPatch[] | null {
+  const inverse: InstrumentPatch[] = [];
+  if (patch.blueX7) {
+    if (!(instrument instanceof BlueX7)) return null;
+    inverse.push({
+      blueX7:
+        patch.blueX7.type === 'setCsoundPostCode'
+          ? { type: 'setCsoundPostCode', text: instrument.getCsoundPostCode() }
+          : { type: 'replaceVoice', voice: cloneBlueX7Voice(instrument.getVoice()) },
+    });
+  }
+  if (patch.comment !== undefined || patch.comments !== undefined) {
+    inverse.push({ comment: instrument.getComment() });
+  }
+  if (patch.name !== undefined) {
+    inverse.push({ name: instrument.getName() });
+  }
+  if (patch.bsbWidgetValues) {
+    if (!(instrument instanceof BlueSynthBuilder)) return null;
+    const values: Record<string, number> = {};
+    for (const objectName of Object.keys(patch.bsbWidgetValues)) {
+      const widget = findBsbWidgetByObjectName(instrument, objectName);
+      if (!widget || !getBsbParameterNames(instrument).has(objectName)) return null;
+      values[objectName] = widget.value;
+    }
+    inverse.push({ bsbWidgetValues: values });
+  }
+  if (patch.bsbInterface) {
+    if (!(instrument instanceof BlueSynthBuilder)) return null;
+    const interfaceInverses = invertBsbInterfacePatch(instrument, patch.bsbInterface);
+    if (!interfaceInverses) return null;
+    inverse.push(...interfaceInverses.map((bsbInterface) => ({ bsbInterface })));
+  }
+
+  const handledKeys = new Set([
+    'blueX7',
+    'comment',
+    'comments',
+    'name',
+    'bsbWidgetValues',
+    'bsbInterface',
+  ]);
+  return Object.keys(patch).every((key) => handledKeys.has(key)) ? inverse : null;
+}
+
+function findMixerEffect(
+  data: BlueData,
+  channelId: string,
+  chainKind: MixerChainKind,
+  entryId: string,
+): Effect | null {
+  const mixer = data.getMixer();
+  const channels = [mixer.getMaster(), ...mixer.getAllSourceChannels(), ...mixer.getSubChannels()];
+  const channel = channels.find(
+    (candidate) =>
+      candidate.getName() === channelId ||
+      candidate.getAssociation() === channelId ||
+      getKnownMixerChannelSnapshotId(candidate) === channelId,
+  );
+  if (!channel) return null;
+  const chain = chainKind === 'pre' ? channel.getPreEffects() : channel.getPostEffects();
+  const entry = chain.find(
+    (candidate) =>
+      candidate instanceof Effect &&
+      (getMixerEntrySnapshotId(candidate) === entryId ||
+        (candidate as Effect & { getUniqueId?: () => string }).getUniqueId?.() === entryId),
+  );
+  return entry instanceof Effect ? entry : null;
+}
+
+function invertEditableEffectPatches(
+  effect: Effect,
+  patch: EffectEditablePatch,
+): EffectEditablePatch[] | null {
+  const inverse: EffectEditablePatch[] = [];
+  if (patch.effectXml !== undefined) return null;
+  if (patch.name !== undefined) inverse.push({ name: effect.getName() });
+  if (patch.enabled !== undefined) inverse.push({ enabled: effect.isEnabled() });
+  if (patch.numIns !== undefined) inverse.push({ numIns: effect.getNumIns() });
+  if (patch.numOuts !== undefined) inverse.push({ numOuts: effect.getNumOuts() });
+  if (patch.style !== undefined) inverse.push({ style: effect.getStyle() });
+  if (patch.code !== undefined) inverse.push({ code: effect.getCode() });
+  if (patch.comments !== undefined) inverse.push({ comments: effect.getComments() });
+  if (patch.bsbInterface) {
+    const interfaceInverses = invertBsbInterfacePatch(effect, patch.bsbInterface);
+    if (!interfaceInverses) return null;
+    inverse.push(...interfaceInverses.map((bsbInterface) => ({ bsbInterface })));
+  }
+  if (patch.opcodeList !== undefined) return null;
+  return inverse;
+}
+
+/**
+ * Inverts structural patches that target editable instrument fields (such as
+ * BlueX7 voice settings, comments, or names) by reading the pre-mutation
+ * canonical values from the project data. Returns null if any patch cannot be
+ * inverted into a concrete live-reconcilable inverse patch.
+ */
+export function computeStructuralInversePatches(
+  data: BlueData,
+  patches: readonly ProjectDocumentPatch[] | undefined,
+): ProjectDocumentPatch[] | null {
+  if (!patches || patches.length === 0) return null;
+  const inverse: ProjectDocumentPatch[] = [];
+
+  for (const patch of patches) {
+    const scorePatch = patch.score;
+    if (scorePatch?.type === 'updateTrackInstrument') {
+      const group = data
+        .getScore()
+        .find(
+          (candidate): candidate is TrackLayerGroup =>
+            candidate instanceof TrackLayerGroup &&
+            candidate.getUniqueId() === scorePatch.track.rootGroupId,
+        );
+      const track = group?.find(
+        (candidate) => candidate.getUniqueId() === scorePatch.track.trackId,
+      );
+      const instrument = track?.getInstrument();
+      if (!instrument) return null;
+
+      const subPatch = scorePatch.patch;
+      const invertedInstrumentPatches = invertEditableInstrumentPatches(instrument, subPatch);
+      if (!invertedInstrumentPatches) return null;
+      for (const invertedInstrumentPatch of invertedInstrumentPatches) {
+        inverse.push({
+          score: {
+            type: 'updateTrackInstrument',
+            track: scorePatch.track,
+            patch: invertedInstrumentPatch,
+          },
+        });
+      }
+      continue;
+    }
+
+    const orchestraPatch = patch.orchestra;
+    if (orchestraPatch?.type === 'updateInstrument') {
+      const instrument = data.getArrangement().getInstrumentById(orchestraPatch.assignmentId);
+      if (!instrument) return null;
+
+      const subPatch = orchestraPatch.patch;
+      const invertedInstrumentPatches = invertEditableInstrumentPatches(instrument, subPatch);
+      if (!invertedInstrumentPatches) return null;
+      for (const invertedInstrumentPatch of invertedInstrumentPatches) {
+        inverse.push({
+          orchestra: {
+            type: 'updateInstrument',
+            assignmentId: orchestraPatch.assignmentId,
+            patch: invertedInstrumentPatch,
+          },
+        });
+      }
+      continue;
+    }
+
+    if (orchestraPatch?.type === 'updateInstrumentComment') {
+      const instrument = data.getArrangement().getInstrumentById(orchestraPatch.assignmentId);
+      if (!instrument) return null;
+      inverse.push({
+        orchestra: {
+          type: 'updateInstrumentComment',
+          assignmentId: orchestraPatch.assignmentId,
+          comment: instrument.getComment(),
+        },
+      });
+      continue;
+    }
+
+    const mixerPatch = patch.mixer;
+    if (mixerPatch?.type === 'updateEffect') {
+      const effect = findMixerEffect(
+        data,
+        mixerPatch.channelId,
+        mixerPatch.chain,
+        mixerPatch.entryId,
+      );
+      if (!effect) return null;
+      const invertedEffectPatches = invertEditableEffectPatches(effect, mixerPatch.patch);
+      if (!invertedEffectPatches) return null;
+      for (const invertedEffectPatch of invertedEffectPatches) {
+        inverse.push({
+          mixer: {
+            type: 'updateEffect',
+            channelId: mixerPatch.channelId,
+            chain: mixerPatch.chain,
+            entryId: mixerPatch.entryId,
+            patch: invertedEffectPatch,
+          },
+        });
+      }
+      continue;
+    }
+
+    return null;
+  }
+
+  return inverse.length > 0 ? inverse : null;
+}
+
 function estimateEntryBytes(record: HistoryRecord): number {
   const baseOverhead = 256;
   if (record.kind === 'values') {
@@ -331,6 +732,7 @@ function estimateEntryBytes(record: HistoryRecord): number {
 
 export class ProjectHistory {
   private readonly session: ProjectSession;
+  private readonly captureSnapshot?: () => unknown;
   private readonly publishUpdated?: (event: ProjectDocumentUpdatedEvent) => void | Promise<void>;
   private readonly retainedEntryLimit: number;
   private readonly retainedBytesLimit: number;
@@ -349,11 +751,29 @@ export class ProjectHistory {
   private activeGroup: ActiveGroupState | null = null;
   private receiptCache = new Map<string, ProjectHistoryResponse>();
   private receiptFingerprints = new Map<string, string>();
+  private inFlightOperations = new Map<
+    string,
+    { fingerprint: string; promise: Promise<ProjectHistoryResponse> }
+  >();
   private pendingOversizeProposal: {
     token: string;
     documentId: string;
     expectedRevision: number;
     payloadFingerprint: string;
+  } | null = null;
+  private pendingDirectOversizeProposal: {
+    token: string;
+    documentId: string;
+    expectedRevision: number;
+    payloadFingerprint: string;
+    beforeMemento: BlueData;
+    afterMemento: BlueData;
+    label: string;
+    origin?: {
+      contextId?: string;
+      viewId?: string;
+      selection?: ProjectHistorySelectionHint[];
+    };
   } | null = null;
 
   private readonly participants = new Map<string, HistoryParticipantInfo>();
@@ -361,9 +781,17 @@ export class ProjectHistory {
   private barrierReleasePromise: Promise<void> | null = null;
   private notifyBarrierReleased: (() => void) | null = null;
   private barrierExecutionQueue: Promise<unknown> = Promise.resolve();
+  /** Serializes every asynchronous mutation, including direct adapters. */
+  private orderedMutationQueue: Promise<void> = Promise.resolve();
+  private orderedMutationPending = 0;
+  private readonly queuedParticipantCommits = new Map<
+    ProjectHistoryCommitRequest,
+    (barrierId?: string) => Promise<ProjectHistoryResponse>
+  >();
 
   constructor(dependencies: ProjectHistoryDependencies) {
     this.session = dependencies.session;
+    this.captureSnapshot = dependencies.captureSnapshot;
     this.publishUpdated = dependencies.publishUpdated;
     this.retainedEntryLimit = dependencies.retainedEntryLimit ?? DEFAULT_RETAINED_ENTRY_LIMIT;
     this.retainedBytesLimit = dependencies.retainedBytesLimit ?? DEFAULT_RETAINED_BYTES_LIMIT;
@@ -371,6 +799,35 @@ export class ProjectHistory {
     this.broadcastReleaseBoundary = dependencies.broadcastReleaseBoundary;
     this.barrierTimeoutMs = dependencies.barrierTimeoutMs ?? 5000;
     this.reconciliation = dependencies.reconciliation;
+  }
+
+  private enqueueOrderedMutation<T>(operation: () => Promise<T> | T): Promise<T> {
+    const previous = this.orderedMutationQueue;
+    const startsImmediately = this.orderedMutationPending === 0;
+    let release!: () => void;
+    this.orderedMutationQueue = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    this.orderedMutationPending += 1;
+
+    let run: Promise<T>;
+    if (startsImmediately) {
+      try {
+        run = Promise.resolve(operation());
+      } catch (error) {
+        run = Promise.reject(error);
+      }
+    } else {
+      run = previous.catch(() => undefined).then(operation);
+    }
+    return run.finally(() => {
+      this.orderedMutationPending = Math.max(0, this.orderedMutationPending - 1);
+      release();
+    });
+  }
+
+  private capturePublishedSnapshot(): unknown {
+    return this.captureSnapshot?.() ?? null;
   }
 
   getCursor(): number {
@@ -412,6 +869,7 @@ export class ProjectHistory {
     this.receiptCache.clear();
     this.receiptFingerprints.clear();
     this.pendingOversizeProposal = null;
+    this.pendingDirectOversizeProposal = null;
   }
 
   closeGroup(): void {
@@ -440,8 +898,17 @@ export class ProjectHistory {
       retainedBytes,
       savedStateId: this.savedStateId,
       stateId: current.stateId ?? '',
+      revision: current.revision,
       limitBytes: this.retainedBytesLimit,
       maxEntries: this.retainedEntryLimit,
+      retentionStatus:
+        this.entries.length === 0
+          ? 'empty'
+          : this.entries.length >= this.retainedEntryLimit
+            ? 'at-entry-limit'
+            : retainedBytes >= this.retainedBytesLimit
+              ? 'at-byte-limit'
+              : 'within-limit',
     };
   }
 
@@ -462,14 +929,93 @@ export class ProjectHistory {
    * different payload is a conflict and must be rejected, never reapplied.
    */
   private static commitFingerprint(request: ProjectHistoryCommitRequest): string {
-    return JSON.stringify([
-      request.documentId,
-      request.label,
-      request.gestureId ?? null,
-      request.fieldId ?? null,
-      request.phase ?? 'single',
-      request.patches ?? [],
-    ]);
+    return JSON.stringify(request);
+  }
+
+  private static directMutationFingerprint(
+    label: string,
+    beforeMemento: BlueData,
+    afterMemento: BlueData,
+  ): string {
+    try {
+      return JSON.stringify([label, beforeMemento.saveToString(), afterMemento.saveToString()]);
+    } catch {
+      return `${label}:${beforeMemento.constructor.name}:${afterMemento.constructor.name}`;
+    }
+  }
+
+  private createDirectReceipt(
+    current: ProjectSessionSnapshot,
+    changed: boolean,
+    stateId = current.stateId ?? '',
+    extra: Partial<ProjectDocumentCommitReceipt> = {},
+  ): ProjectDocumentCommitReceipt {
+    return {
+      revision: current.revision,
+      sessionId: current.sessionId,
+      changed,
+      documentId: current.documentId ?? undefined,
+      stateId,
+      ...extra,
+    };
+  }
+
+  private runIdempotentOperation(
+    kind: 'commit' | 'undo' | 'redo',
+    operationId: string,
+    documentId: string,
+    fingerprint: string,
+    operation: () => Promise<ProjectHistoryResponse>,
+  ): Promise<ProjectHistoryResponse> {
+    const knownFingerprint = this.receiptFingerprints.get(operationId);
+    if (knownFingerprint !== undefined && knownFingerprint !== fingerprint) {
+      return Promise.resolve({
+        status: 'invalid',
+        operationId,
+        documentId,
+        reason: `Conflicting reuse of operationId ${operationId}: ${kind} payload differs from the already-processed submission`,
+      });
+    }
+
+    const cached = this.receiptCache.get(operationId);
+    if (cached) return Promise.resolve(cached);
+
+    const inFlight = this.inFlightOperations.get(operationId);
+    if (inFlight) {
+      return inFlight.fingerprint === fingerprint
+        ? inFlight.promise
+        : Promise.resolve({
+            status: 'invalid',
+            operationId,
+            documentId,
+            reason: `Conflicting reuse of operationId ${operationId}: ${kind} payload differs from the in-flight submission`,
+          });
+    }
+
+    this.receiptFingerprints.set(operationId, fingerprint);
+    let operationPromise: Promise<ProjectHistoryResponse>;
+    try {
+      operationPromise = operation();
+    } catch (error) {
+      operationPromise = Promise.reject(error);
+    }
+    const promise = operationPromise.then((response) => {
+      // Individual execution paths cache their richer responses as they
+      // settle. Cache every remaining response here as well so an oversize,
+      // unchanged, or otherwise early return is still idempotent after the
+      // in-flight promise has completed.
+      if (!this.receiptCache.has(operationId)) {
+        this.cacheReceipt(operationId, response);
+      }
+      return response;
+    });
+    this.inFlightOperations.set(operationId, { fingerprint, promise });
+    const cleanup = (): void => {
+      const current = this.inFlightOperations.get(operationId);
+      if (current?.promise === promise) this.inFlightOperations.delete(operationId);
+    };
+    void promise.then(cleanup, cleanup);
+    return promise;
   }
 
   private enforceLimits(): void {
@@ -503,12 +1049,36 @@ export class ProjectHistory {
   registerParticipant(
     request: RegisterHistoryParticipantRequest,
   ): RegisterHistoryParticipantResponse {
-    this.participants.set(request.contextId, {
-      contextId: request.contextId,
-      documentId: request.documentId,
-      acceptedRevision: request.acceptedRevision,
-      lastSequence: 0,
-    });
+    const current = this.session.read();
+    if (!current.data || !current.documentId) {
+      return { ok: false, reason: 'No active project document in session' };
+    }
+    if (current.documentId !== request.documentId) {
+      return {
+        ok: false,
+        reason: 'History participant document does not match the active project',
+      };
+    }
+    if (request.acceptedRevision > current.revision) {
+      return {
+        ok: false,
+        reason: 'History participant revision is ahead of the active document',
+      };
+    }
+
+    const existing = this.participants.get(request.contextId);
+    if (existing?.documentId === request.documentId) {
+      // Registration is idempotent for a live context. Preserve its sequence
+      // high-watermark so a repeated registration cannot replay old work.
+      existing.acceptedRevision = Math.max(existing.acceptedRevision, request.acceptedRevision);
+    } else {
+      this.participants.set(request.contextId, {
+        contextId: request.contextId,
+        documentId: request.documentId,
+        acceptedRevision: request.acceptedRevision,
+        lastSequence: 0,
+      });
+    }
 
     if (this.activeBarrier) {
       this.activeBarrier.pendingContextIds.add(request.contextId);
@@ -534,34 +1104,81 @@ export class ProjectHistory {
     }
   }
 
-  acknowledgeBoundary(ack: PrepareHistoryBoundaryAck): void {
+  private recordBoundaryCommandSequence(
+    request: ProjectHistoryUndoRequest | ProjectHistoryRedoRequest,
+  ): void {
+    const contextId = request.origin?.contextId;
+    if (!contextId) return;
+    const participant = this.participants.get(contextId);
+    if (!participant) return;
+    participant.lastSequence = Math.max(participant.lastSequence, request.contextSequence);
+  }
+
+  acknowledgeBoundary(ack: PrepareHistoryBoundaryAck): ProjectHistoryControlResponse {
     const participant = this.participants.get(ack.contextId);
-    if (participant) {
-      participant.lastSequence = Math.max(participant.lastSequence, ack.lastAcknowledgedSequence);
-      participant.acceptedRevision = Math.max(
-        participant.acceptedRevision,
-        ack.lastAcknowledgedRevision,
-      );
+    if (!participant) {
+      return { ok: false, reason: 'Unknown history participant context' };
     }
 
     if (!this.activeBarrier || this.activeBarrier.barrierId !== ack.barrierId) {
-      return;
+      return { ok: false, reason: 'History boundary is not active' };
+    }
+
+    const current = this.session.read();
+    if (participant.documentId !== current.documentId) {
+      return { ok: false, reason: 'History participant document is no longer active' };
+    }
+    if (ack.lastAcknowledgedRevision > current.revision) {
+      return { ok: false, reason: 'History boundary revision is ahead of the active document' };
+    }
+    const sequenceAtBoundary = this.activeBarrier.participantSequences.get(ack.contextId) ?? 0;
+    if (ack.lastAcknowledgedSequence < sequenceAtBoundary) {
+      return { ok: false, reason: 'History boundary acknowledgement sequence is stale' };
+    }
+    // The boundary command itself is allocated a context sequence before its
+    // prefix is drained. Permit that one in-flight sequence, while still
+    // rejecting acknowledgements that claim multiple unsubmitted operations.
+    if (ack.lastAcknowledgedSequence > participant.lastSequence + 1) {
+      return {
+        ok: false,
+        reason: 'History boundary acknowledgement sequence is ahead of submitted work',
+      };
     }
 
     if (ack.outstandingPrefixCount > 0) {
-      return;
+      const reason = 'History participant still has outstanding prefix edits';
+      this.activeBarrier.resolve({ ok: false, reason });
+      return { ok: false, reason };
     }
+    if ((ack.failedPrefixCount ?? 0) > 0 || (ack.unresolvedPrefixCount ?? 0) > 0) {
+      const reason = 'History participant reported failed or unresolved prefix edits';
+      this.activeBarrier.resolve({ ok: false, reason });
+      return { ok: false, reason };
+    }
+
+    participant.lastSequence = Math.max(participant.lastSequence, ack.lastAcknowledgedSequence);
+    participant.acceptedRevision = Math.max(
+      participant.acceptedRevision,
+      ack.lastAcknowledgedRevision,
+    );
 
     this.activeBarrier.pendingContextIds.delete(ack.contextId);
     if (this.activeBarrier.pendingContextIds.size === 0) {
       this.activeBarrier.resolve({ ok: true });
     }
+    return { ok: true };
   }
 
-  cancelOversizeProposal(request: CancelOversizeProposalRequest): void {
+  cancelOversizeProposal(request: CancelOversizeProposalRequest): ProjectHistoryControlResponse {
     if (this.pendingOversizeProposal?.token === request.proposalToken) {
       this.pendingOversizeProposal = null;
+      return { ok: true };
     }
+    if (this.pendingDirectOversizeProposal?.token === request.proposalToken) {
+      this.pendingDirectOversizeProposal = null;
+      return { ok: true };
+    }
+    return { ok: false, reason: 'Oversize proposal token is invalid or already consumed' };
   }
 
   abortBoundary(barrierId: string, reason = 'Settlement barrier aborted'): void {
@@ -637,9 +1254,21 @@ export class ProjectHistory {
           barrierId,
           reason,
           pendingContextIds: new Set(contexts),
+          participantSequences: new Map(
+            contexts.map((contextId) => [
+              contextId,
+              this.participants.get(contextId)?.lastSequence ?? 0,
+            ]),
+          ),
           resolve: resolveBarrier,
           timeoutHandle,
         };
+
+        // A participant may already be awaiting a submission queued behind
+        // this command. Include it in the prefix before asking it to drain.
+        for (const [request, run] of this.queuedParticipantCommits) {
+          if (this.isPendingParticipantCommit(request)) void run(barrierId);
+        }
 
         const prepEvt: PrepareHistoryBoundaryEvent = { barrierId, reason };
         try {
@@ -691,25 +1320,52 @@ export class ProjectHistory {
     }
   }
 
-  async commit(request: ProjectHistoryCommitRequest): Promise<ProjectHistoryResponse> {
-    // Deduplication check: an identical retry replays the cached receipt; a
-    // reused operationId with different content is a conflicting submission.
+  commit(request: ProjectHistoryCommitRequest): Promise<ProjectHistoryResponse> {
     const fingerprint = ProjectHistory.commitFingerprint(request);
-    if (this.receiptCache.has(request.operationId)) {
-      const knownFingerprint = this.receiptFingerprints.get(request.operationId);
-      if (knownFingerprint !== undefined && knownFingerprint !== fingerprint) {
-        const conflict: ProjectHistoryInvalidResponse = {
-          status: 'invalid',
-          operationId: request.operationId,
-          documentId: request.documentId,
-          reason: `Conflicting reuse of operationId ${request.operationId}: payload differs from the already-processed submission`,
-        };
-        return conflict;
-      }
-      return this.receiptCache.get(request.operationId)!;
-    }
-    this.receiptFingerprints.set(request.operationId, fingerprint);
+    const isActiveBarrierPrefix =
+      request.barrierId !== undefined && request.barrierId === this.activeBarrier?.barrierId;
+    return this.runIdempotentOperation(
+      'commit',
+      request.operationId,
+      request.documentId,
+      fingerprint,
+      () => {
+        if (isActiveBarrierPrefix || this.isPendingParticipantCommit(request)) {
+          return this.commitInternal({ ...request, barrierId: this.activeBarrier!.barrierId });
+        }
+        return new Promise<ProjectHistoryResponse>((resolve, reject) => {
+          let execution: Promise<ProjectHistoryResponse> | undefined;
+          const run = (barrierId?: string): Promise<ProjectHistoryResponse> => {
+            if (!execution) {
+              this.queuedParticipantCommits.delete(request);
+              execution = this.commitInternal(barrierId ? { ...request, barrierId } : request);
+              // Resolve the submission when its prefix finishes, not when its
+              // original queue slot is reached after the boundary command.
+              void execution.then(resolve, reject);
+            }
+            return execution;
+          };
+          this.queuedParticipantCommits.set(request, run);
+          void this.enqueueOrderedMutation(() => run()).catch(reject);
+        });
+      },
+    );
+  }
 
+  private isPendingParticipantCommit(request: ProjectHistoryCommitRequest): boolean {
+    const contextId = request.origin?.contextId;
+    // Until this context acknowledges prepare, its untagged arrivals were
+    // submitted before it paused. After acknowledgement, ordinary writes wait.
+    return (
+      request.barrierId === undefined &&
+      contextId !== undefined &&
+      this.activeBarrier?.pendingContextIds.has(contextId) === true
+    );
+  }
+
+  private async commitInternal(
+    request: ProjectHistoryCommitRequest,
+  ): Promise<ProjectHistoryResponse> {
     if (this.activeBarrier) {
       const isPrefix = request.barrierId === this.activeBarrier.barrierId;
       if (!isPrefix) {
@@ -815,6 +1471,8 @@ export class ProjectHistory {
 
         const updatedSnap = this.session.read();
         const projection = this.read();
+        const publishedIsDirty = this.isDirty();
+        const publishedSnapshot = this.capturePublishedSnapshot();
 
         const inversePatches =
           entry.inversePatches ??
@@ -822,8 +1480,8 @@ export class ProjectHistory {
             ? scalarRecordsToInversePatches(entry.record.records)
             : [{ orchestra: { type: 'structuralChange' } as never }]);
 
-        const runtimeOutcomes = this.reconciliation
-          ? await this.reconciliation.reconcileCommit({
+        const reconciliationPromise = this.reconciliation
+          ? this.reconciliation.reconcileCommit({
               documentId: updatedSnap.documentId!,
               revision: updatedSnap.revision,
               patches: inversePatches,
@@ -835,15 +1493,16 @@ export class ProjectHistory {
           sessionId: updatedSnap.sessionId,
           revision: updatedSnap.revision,
           stateId: updatedSnap.stateId!,
-          isDirty: this.isDirty(),
+          isDirty: publishedIsDirty,
           history: projection,
           acceptedOperationIds: [request.operationId],
           sourceSequence: request.contextSequence,
-          snapshot: null,
+          snapshot: publishedSnapshot,
           originViewId: request.origin?.viewId,
-          runtimeOutcomes,
+          originContextId: request.origin?.contextId,
         };
         await this.publishUpdated?.(updatedEvent);
+        const runtimeOutcomes = reconciliationPromise ? await reconciliationPromise : undefined;
 
         const resp: ProjectHistoryCommittedResponse = {
           status: 'committed',
@@ -851,7 +1510,7 @@ export class ProjectHistory {
           documentId: updatedSnap.documentId!,
           revision: updatedSnap.revision,
           stateId: updatedSnap.stateId!,
-          isDirty: this.isDirty(),
+          isDirty: publishedIsDirty,
           history: projection,
           runtimeOutcomes,
         };
@@ -1028,11 +1687,15 @@ export class ProjectHistory {
     const inversePatches =
       historyRecord.kind === 'values'
         ? scalarRecordsToInversePatches(historyRecord.records)
-        : [{ orchestra: { type: 'structuralChange' } as never }];
+        : (computeStructuralInversePatches(current.data, request.patches) ?? [
+            { orchestra: { type: 'structuralChange' } as never },
+          ]);
 
     // Check adjacent gesture grouping
     const now = Date.now();
     const canGroup =
+      request.phase !== 'begin' &&
+      request.phase !== 'single' &&
       this.activeGroup !== null &&
       this.cursor > 0 &&
       now - this.activeGroup.lastTimestamp <= GESTURE_GROUPING_TIMEOUT_MS &&
@@ -1054,10 +1717,17 @@ export class ProjectHistory {
       } else {
         const beforeMem =
           top.record.kind === 'structure' ? top.record.beforeMemento : current.data.historyCopy();
+        if (top.record.kind === 'values') {
+          transferProjectEditorIdentities(current.data, beforeMem);
+          rollbackScalarRecords(beforeMem, top.record.records);
+        }
         const afterMem =
           historyRecord.kind === 'structure'
             ? historyRecord.afterMemento
-            : (transaction as PreparedStructuralTransaction).candidate;
+            : current.data.historyCopy();
+        if (historyRecord.kind === 'values') {
+          transferProjectEditorIdentities(current.data, afterMem);
+        }
         mergedRecord = {
           kind: 'structure',
           beforeMemento: beforeMem,
@@ -1073,6 +1743,7 @@ export class ProjectHistory {
         label: request.label || top.label,
         sourceContextId: request.origin?.contextId ?? top.sourceContextId,
         originViewId: request.origin?.viewId ?? top.originViewId,
+        originSelectionHints: request.origin?.selection ?? top.originSelectionHints,
         gestureId: request.gestureId ?? top.gestureId,
         fieldId: request.fieldId ?? top.fieldId,
         timestamp: now,
@@ -1088,7 +1759,12 @@ export class ProjectHistory {
         inversePatches:
           mergedRecord.kind === 'values'
             ? scalarRecordsToInversePatches(mergedRecord.records)
-            : [{ orchestra: { type: 'structuralChange' } as never }],
+            : hasConcreteInversePatches(top.inversePatches)
+              ? top.inversePatches
+              : (computeStructuralInversePatches(
+                  top.record.kind === 'structure' ? top.record.beforeMemento : current.data,
+                  request.patches,
+                ) ?? [{ orchestra: { type: 'structuralChange' } as never }]),
       };
 
       this.entries[this.cursor - 1] = mergedEntry;
@@ -1108,6 +1784,7 @@ export class ProjectHistory {
         label: request.label,
         sourceContextId: request.origin?.contextId,
         originViewId: request.origin?.viewId,
+        originSelectionHints: request.origin?.selection,
         gestureId: request.gestureId,
         fieldId: request.fieldId,
         timestamp: now,
@@ -1153,9 +1830,11 @@ export class ProjectHistory {
 
     const updatedSnap = this.session.read();
     const projection = this.read();
+    const publishedIsDirty = this.isDirty();
+    const publishedSnapshot = this.capturePublishedSnapshot();
 
-    const runtimeOutcomes = this.reconciliation
-      ? await this.reconciliation.reconcileCommit({
+    const reconciliationPromise = this.reconciliation
+      ? this.reconciliation.reconcileCommit({
           documentId: updatedSnap.documentId!,
           revision: updatedSnap.revision,
           patches: request.patches ?? [],
@@ -1167,16 +1846,17 @@ export class ProjectHistory {
       sessionId: updatedSnap.sessionId,
       revision: updatedSnap.revision,
       stateId: updatedSnap.stateId!,
-      isDirty: this.isDirty(),
+      isDirty: publishedIsDirty,
       history: projection,
       acceptedOperationIds: [request.operationId],
       sourceSequence: request.contextSequence,
-      snapshot: null,
-      selectionHints: request.origin?.selection,
+      snapshot: publishedSnapshot,
+      selectionHints: request.origin?.selection ? [...request.origin.selection] : undefined,
       originViewId: request.origin?.viewId,
-      runtimeOutcomes,
+      originContextId: request.origin?.contextId,
     };
     await this.publishUpdated?.(updatedEvent);
+    const runtimeOutcomes = reconciliationPromise ? await reconciliationPromise : undefined;
 
     const resp: ProjectHistoryCommittedResponse = {
       status: 'committed',
@@ -1184,7 +1864,7 @@ export class ProjectHistory {
       documentId: updatedSnap.documentId!,
       revision: updatedSnap.revision,
       stateId: updatedSnap.stateId!,
-      isDirty: this.isDirty(),
+      isDirty: publishedIsDirty,
       history: projection,
       changedTargets: [...(this.entries[this.cursor - 1]?.changedTargets ?? [])],
       runtimeOutcomes,
@@ -1206,26 +1886,89 @@ export class ProjectHistory {
     return resp;
   }
 
+  /**
+   * Publishes a structure prepared outside the history coordinator only when
+   * its document/session/revision fence is still current. This keeps delayed
+   * filesystem or Java work from absorbing edits made while it was running.
+   */
+  async commitPreparedStructuralMutation(options: {
+    label: string;
+    candidate: BlueData;
+    expectedDocumentId: string;
+    expectedSessionId: number;
+    expectedRevision: number;
+    proposalToken?: string;
+    origin?: ProjectHistoryOrigin;
+  }): Promise<ProjectDocumentCommitReceipt> {
+    return this.enqueueOrderedMutation(async () => {
+      const current = this.session.read();
+      if (
+        !current.data ||
+        !current.documentId ||
+        current.documentId !== options.expectedDocumentId ||
+        current.sessionId !== options.expectedSessionId ||
+        current.revision !== options.expectedRevision
+      ) {
+        return this.createDirectReceipt(current, false, current.stateId ?? '', {
+          error: 'Prepared structural mutation is stale and was discarded',
+        });
+      }
+
+      return this.commitDirectMutationInternal({
+        label: options.label,
+        preparedCandidate: options.candidate,
+        expectedRevision: options.expectedRevision,
+        proposalToken: options.proposalToken,
+        origin: options.origin,
+        mutator: () => true,
+      });
+    });
+  }
+
   async commitDirectMutation(options: {
     label: string;
     mutator: (candidate: BlueData) => boolean;
+    preparedCandidate?: BlueData;
+    expectedRevision?: number;
+    proposalToken?: string;
+    origin?: ProjectHistoryOrigin;
   }): Promise<ProjectDocumentCommitReceipt> {
+    return this.enqueueOrderedMutation(() => this.commitDirectMutationInternal(options));
+  }
+
+  private async commitDirectMutationInternal(options: {
+    label: string;
+    mutator: (candidate: BlueData) => boolean;
+    preparedCandidate?: BlueData;
+    expectedRevision?: number;
+    proposalToken?: string;
+    origin?: ProjectHistoryOrigin;
+  }): Promise<ProjectDocumentCommitReceipt> {
+    await this.waitForBarrierToRelease();
     this.closeGroup();
     const current = this.session.read();
     if (!current.data || !current.documentId) {
       throw new Error('No active project session');
     }
 
+    if (options.expectedRevision !== undefined && options.expectedRevision !== current.revision) {
+      return this.createDirectReceipt(current, false, current.stateId ?? '', {
+        error: `Revision mismatch (expected ${options.expectedRevision}, current ${current.revision})`,
+      });
+    }
+
     const beforeStateId = current.stateId ?? `state-${randomUUID()}`;
     const nextStateId = `state-${randomUUID()}`;
 
-    const candidate = current.data.historyCopy();
-    transferProjectEditorIdentities(current.data, candidate);
+    const candidate = options.preparedCandidate ?? current.data.historyCopy();
+    if (!options.preparedCandidate) {
+      transferProjectEditorIdentities(current.data, candidate);
+    }
 
     const beforeMemento = current.data.historyCopy();
     transferProjectEditorIdentities(current.data, beforeMemento);
 
-    const changed = options.mutator(candidate);
+    const changed = options.preparedCandidate ? true : options.mutator(candidate);
     if (!changed) {
       return {
         revision: current.revision,
@@ -1239,6 +1982,58 @@ export class ProjectHistory {
     const afterMemento = candidate.historyCopy();
     transferProjectEditorIdentities(candidate, afterMemento);
 
+    const historyRecord: HistoryRecord = {
+      kind: 'structure',
+      beforeMemento,
+      afterMemento,
+    };
+    const estimatedBytes = estimateEntryBytes(historyRecord);
+    const payloadFingerprint = ProjectHistory.directMutationFingerprint(
+      options.label,
+      beforeMemento,
+      afterMemento,
+    );
+    const expectedRevision = current.revision;
+
+    if (options.proposalToken) {
+      const proposal = this.pendingDirectOversizeProposal;
+      if (
+        !proposal ||
+        proposal.token !== options.proposalToken ||
+        proposal.documentId !== current.documentId ||
+        proposal.expectedRevision !== expectedRevision ||
+        proposal.payloadFingerprint !== payloadFingerprint
+      ) {
+        return this.createDirectReceipt(current, false, current.stateId ?? '', {
+          error: 'Oversize proposal token is invalid, stale, or already consumed',
+        });
+      }
+      this.pendingDirectOversizeProposal = null;
+      // The confirmation is a one-use branch reset. It is safe to discard all
+      // retained history because the proposal explicitly exceeded the limit.
+      this.clear();
+    } else if (estimatedBytes > this.retainedBytesLimit) {
+      const token = `oversize-${randomUUID()}`;
+      this.pendingDirectOversizeProposal = {
+        token,
+        documentId: current.documentId,
+        expectedRevision,
+        payloadFingerprint,
+        beforeMemento,
+        afterMemento,
+        label: options.label,
+        origin: options.origin,
+      };
+      return this.createDirectReceipt(current, false, current.stateId ?? '', {
+        oversizeProposal: {
+          token,
+          estimatedBytes,
+          limitBytes: this.retainedBytesLimit,
+          explanation: `Action of ${Math.round(estimatedBytes / (1024 * 1024))} MiB exceeds the ${Math.round(this.retainedBytesLimit / (1024 * 1024))} MiB history limit`,
+        },
+      });
+    }
+
     // Truncate redo stack on new commit (chronological branch semantics)
     if (this.cursor < this.entries.length) {
       this.entries.splice(this.cursor);
@@ -1250,9 +2045,12 @@ export class ProjectHistory {
       beforeStateId,
       afterStateId: nextStateId,
       label: options.label,
+      sourceContextId: options.origin?.contextId,
+      originViewId: options.origin?.viewId,
+      originSelectionHints: options.origin?.selection,
       timestamp: Date.now(),
-      retainedBytes: estimateEntryBytes({ kind: 'structure', beforeMemento, afterMemento }),
-      record: { kind: 'structure', beforeMemento, afterMemento },
+      retainedBytes: estimatedBytes,
+      record: historyRecord,
       forwardPatches: [{ orchestra: { type: 'structuralChange' } as never }],
       inversePatches: [{ orchestra: { type: 'structuralChange' } as never }],
     };
@@ -1266,9 +2064,11 @@ export class ProjectHistory {
 
     const updatedSnap = this.session.read();
     const projection = this.read();
+    const publishedIsDirty = this.isDirty();
+    const publishedSnapshot = this.capturePublishedSnapshot();
 
-    const runtimeOutcomes = this.reconciliation
-      ? await this.reconciliation.reconcileCommit({
+    const reconciliationPromise = this.reconciliation
+      ? this.reconciliation.reconcileCommit({
           documentId: updatedSnap.documentId!,
           revision: updatedSnap.revision,
           patches: [{ orchestra: { type: 'structuralChange' } as never }],
@@ -1280,13 +2080,16 @@ export class ProjectHistory {
       sessionId: updatedSnap.sessionId,
       revision: updatedSnap.revision,
       stateId: updatedSnap.stateId!,
-      isDirty: this.isDirty(),
+      isDirty: publishedIsDirty,
       history: projection,
       acceptedOperationIds: [],
-      snapshot: null,
-      runtimeOutcomes,
+      snapshot: publishedSnapshot,
+      selectionHints: options.origin?.selection,
+      originViewId: options.origin?.viewId,
+      originContextId: options.origin?.contextId,
     };
     await this.publishUpdated?.(updatedEvent);
+    const runtimeOutcomes = reconciliationPromise ? await reconciliationPromise : undefined;
 
     return {
       revision: updatedSnap.revision,
@@ -1301,6 +2104,9 @@ export class ProjectHistory {
     label: string;
     beforeMemento: BlueData;
     afterMemento: BlueData;
+    expectedRevision?: number;
+    proposalToken?: string;
+    origin?: ProjectHistoryOrigin;
   }): ProjectDocumentCommitReceipt {
     this.closeGroup();
     const current = this.session.read();
@@ -1308,8 +2114,95 @@ export class ProjectHistory {
       throw new Error('No active project session');
     }
 
+    if (this.orderedMutationPending > 0 || this.activeBarrier) {
+      return this.createDirectReceipt(current, false, current.stateId ?? '', {
+        error: 'Direct structural mutation deferred while another history operation is settling',
+      });
+    }
+
+    if (options.expectedRevision !== undefined && options.expectedRevision !== current.revision) {
+      return this.createDirectReceipt(current, false, current.stateId ?? '', {
+        error: `Revision mismatch (expected ${options.expectedRevision}, current ${current.revision})`,
+      });
+    }
+
     const beforeStateId = current.stateId ?? `state-${randomUUID()}`;
     const nextStateId = `state-${randomUUID()}`;
+
+    const historyRecord: HistoryRecord = {
+      kind: 'structure',
+      beforeMemento: options.beforeMemento,
+      afterMemento: options.afterMemento,
+    };
+    const estimatedBytes = estimateEntryBytes(historyRecord);
+    const payloadFingerprint = ProjectHistory.directMutationFingerprint(
+      options.label,
+      options.beforeMemento,
+      options.afterMemento,
+    );
+    const expectedRevision = current.revision;
+
+    if (options.proposalToken) {
+      const proposal = this.pendingDirectOversizeProposal;
+      if (
+        !proposal ||
+        proposal.token !== options.proposalToken ||
+        proposal.documentId !== current.documentId ||
+        proposal.expectedRevision !== expectedRevision ||
+        proposal.payloadFingerprint !== payloadFingerprint
+      ) {
+        return this.createDirectReceipt(current, false, current.stateId ?? '', {
+          error: 'Oversize proposal token is invalid, stale, or already consumed',
+        });
+      }
+      this.pendingDirectOversizeProposal = null;
+      this.clear();
+      // The first attempt was rolled back below; the confirmed attempt now
+      // publishes the staged after-state as the single retained entry.
+      restoreStructuralMemento(this.session, options.afterMemento, { stateId: nextStateId });
+    } else if (estimatedBytes > this.retainedBytesLimit) {
+      const token = `oversize-${randomUUID()}`;
+      this.pendingDirectOversizeProposal = {
+        token,
+        documentId: current.documentId,
+        expectedRevision: current.revision + 1,
+        payloadFingerprint,
+        beforeMemento: options.beforeMemento,
+        afterMemento: options.afterMemento,
+        label: options.label,
+        origin: options.origin,
+      };
+      // Direct callers have already changed the live object. Restore the
+      // before-state before exposing the proposal so cancel leaves both the
+      // document and redo branch untouched.
+      restoreStructuralMemento(this.session, options.beforeMemento, {
+        stateId: beforeStateId,
+      });
+      const rolledBack = this.session.read();
+      const rollbackProjection = this.read();
+      const rollbackSnapshot = this.capturePublishedSnapshot();
+      void this.publishUpdated?.({
+        documentId: rolledBack.documentId!,
+        sessionId: rolledBack.sessionId,
+        revision: rolledBack.revision,
+        stateId: rolledBack.stateId!,
+        isDirty: this.isDirty(),
+        history: rollbackProjection,
+        acceptedOperationIds: [],
+        snapshot: rollbackSnapshot,
+        selectionHints: options.origin?.selection,
+        originViewId: options.origin?.viewId,
+        originContextId: options.origin?.contextId,
+      });
+      return this.createDirectReceipt(rolledBack, false, rolledBack.stateId ?? '', {
+        oversizeProposal: {
+          token,
+          estimatedBytes,
+          limitBytes: this.retainedBytesLimit,
+          explanation: `Action of ${Math.round(estimatedBytes / (1024 * 1024))} MiB exceeds the ${Math.round(this.retainedBytesLimit / (1024 * 1024))} MiB history limit`,
+        },
+      });
+    }
 
     // Truncate redo stack on new commit (chronological branch semantics)
     if (this.cursor < this.entries.length) {
@@ -1322,17 +2215,12 @@ export class ProjectHistory {
       beforeStateId,
       afterStateId: nextStateId,
       label: options.label,
+      sourceContextId: options.origin?.contextId,
+      originViewId: options.origin?.viewId,
+      originSelectionHints: options.origin?.selection,
       timestamp: Date.now(),
-      retainedBytes: estimateEntryBytes({
-        kind: 'structure',
-        beforeMemento: options.beforeMemento,
-        afterMemento: options.afterMemento,
-      }),
-      record: {
-        kind: 'structure',
-        beforeMemento: options.beforeMemento,
-        afterMemento: options.afterMemento,
-      },
+      retainedBytes: estimatedBytes,
+      record: historyRecord,
       forwardPatches: [{ orchestra: { type: 'structuralChange' } as never }],
       inversePatches: [{ orchestra: { type: 'structuralChange' } as never }],
     };
@@ -1341,11 +2229,30 @@ export class ProjectHistory {
     this.cursor = this.entries.length;
     this.activeGroup = null;
 
-    const receipt = this.session.recordMutation({ changed: true, stateId: nextStateId });
+    const receipt = options.proposalToken
+      ? this.createDirectReceipt(this.session.read(), true, nextStateId)
+      : this.session.recordMutation({ changed: true, stateId: nextStateId });
     this.enforceLimits();
 
     const updatedSnap = this.session.read();
     const projection = this.read();
+    const publishedIsDirty = this.isDirty();
+    const publishedSnapshot = this.capturePublishedSnapshot();
+
+    const updatedEvent: ProjectDocumentUpdatedEvent = {
+      documentId: updatedSnap.documentId!,
+      sessionId: updatedSnap.sessionId,
+      revision: updatedSnap.revision,
+      stateId: updatedSnap.stateId!,
+      isDirty: publishedIsDirty,
+      history: projection,
+      acceptedOperationIds: [],
+      snapshot: publishedSnapshot,
+      selectionHints: options.origin?.selection,
+      originViewId: options.origin?.viewId,
+      originContextId: options.origin?.contextId,
+    };
+    void this.publishUpdated?.(updatedEvent);
 
     if (this.reconciliation) {
       void this.reconciliation
@@ -1359,26 +2266,20 @@ export class ProjectHistory {
         });
     }
 
-    const updatedEvent: ProjectDocumentUpdatedEvent = {
-      documentId: updatedSnap.documentId!,
-      sessionId: updatedSnap.sessionId,
-      revision: updatedSnap.revision,
-      stateId: updatedSnap.stateId!,
-      isDirty: this.isDirty(),
-      history: projection,
-      acceptedOperationIds: [],
-      snapshot: null,
-    };
-    void this.publishUpdated?.(updatedEvent);
-
     return receipt;
   }
 
-  async undo(request: ProjectHistoryUndoRequest): Promise<ProjectHistoryResponse> {
-    if (this.receiptCache.has(request.operationId)) {
-      return this.receiptCache.get(request.operationId)!;
-    }
+  undo(request: ProjectHistoryUndoRequest): Promise<ProjectHistoryResponse> {
+    return this.runIdempotentOperation(
+      'undo',
+      request.operationId,
+      request.documentId,
+      JSON.stringify(request),
+      () => this.enqueueOrderedMutation(() => this.undoInternal(request)),
+    );
+  }
 
+  private async undoInternal(request: ProjectHistoryUndoRequest): Promise<ProjectHistoryResponse> {
     const initial = this.session.read();
     if (!initial.data || !initial.documentId) {
       const resp: ProjectHistoryInvalidResponse = {
@@ -1405,6 +2306,7 @@ export class ProjectHistory {
     }
 
     const expectedRevisionBeforeBarrier = initial.revision;
+    this.recordBoundaryCommandSequence(request);
 
     try {
       return await this.runSettlementBarrier('undo', async () => {
@@ -1502,6 +2404,8 @@ export class ProjectHistory {
 
     const updatedSnap = this.session.read();
     const projection = this.read();
+    const publishedIsDirty = this.isDirty();
+    const publishedSnapshot = this.capturePublishedSnapshot();
 
     const inversePatches =
       entry.inversePatches ??
@@ -1509,8 +2413,8 @@ export class ProjectHistory {
         ? scalarRecordsToInversePatches(entry.record.records)
         : [{ orchestra: { type: 'structuralChange' } as never }]);
 
-    const runtimeOutcomes = this.reconciliation
-      ? await this.reconciliation.reconcileCommit({
+    const reconciliationPromise = this.reconciliation
+      ? this.reconciliation.reconcileCommit({
           documentId: updatedSnap.documentId!,
           revision: updatedSnap.revision,
           patches: inversePatches,
@@ -1522,16 +2426,21 @@ export class ProjectHistory {
       sessionId: updatedSnap.sessionId,
       revision: updatedSnap.revision,
       stateId: updatedSnap.stateId!,
-      isDirty: this.isDirty(),
+      isDirty: publishedIsDirty,
       history: projection,
       acceptedOperationIds: [request.operationId],
       sourceSequence: request.contextSequence,
-      snapshot: null,
-      selectionHints: request.origin?.selection,
-      originViewId: request.origin?.viewId,
-      runtimeOutcomes,
+      snapshot: publishedSnapshot,
+      selectionHints: request.origin?.selection
+        ? [...request.origin.selection]
+        : entry.originSelectionHints
+          ? [...entry.originSelectionHints]
+          : undefined,
+      originViewId: request.origin?.viewId ?? entry.originViewId,
+      originContextId: request.origin?.contextId ?? entry.sourceContextId,
     };
     await this.publishUpdated?.(updatedEvent);
+    const runtimeOutcomes = reconciliationPromise ? await reconciliationPromise : undefined;
 
     const resp: ProjectHistoryCommittedResponse = {
       status: 'committed',
@@ -1539,7 +2448,7 @@ export class ProjectHistory {
       documentId: updatedSnap.documentId!,
       revision: updatedSnap.revision,
       stateId: updatedSnap.stateId!,
-      isDirty: this.isDirty(),
+      isDirty: publishedIsDirty,
       history: projection,
       changedTargets: [...(entry.changedTargets ?? [])],
       runtimeOutcomes,
@@ -1548,11 +2457,17 @@ export class ProjectHistory {
     return resp;
   }
 
-  async redo(request: ProjectHistoryRedoRequest): Promise<ProjectHistoryResponse> {
-    if (this.receiptCache.has(request.operationId)) {
-      return this.receiptCache.get(request.operationId)!;
-    }
+  redo(request: ProjectHistoryRedoRequest): Promise<ProjectHistoryResponse> {
+    return this.runIdempotentOperation(
+      'redo',
+      request.operationId,
+      request.documentId,
+      JSON.stringify(request),
+      () => this.enqueueOrderedMutation(() => this.redoInternal(request)),
+    );
+  }
 
+  private async redoInternal(request: ProjectHistoryRedoRequest): Promise<ProjectHistoryResponse> {
     const initial = this.session.read();
     if (!initial.data || !initial.documentId) {
       const resp: ProjectHistoryInvalidResponse = {
@@ -1579,6 +2494,7 @@ export class ProjectHistory {
     }
 
     const expectedRevisionBeforeBarrier = initial.revision;
+    this.recordBoundaryCommandSequence(request);
 
     try {
       return await this.runSettlementBarrier('redo', async () => {
@@ -1678,6 +2594,8 @@ export class ProjectHistory {
 
     const updatedSnap = this.session.read();
     const projection = this.read();
+    const publishedIsDirty = this.isDirty();
+    const publishedSnapshot = this.capturePublishedSnapshot();
 
     const forwardPatches =
       entry.forwardPatches ??
@@ -1685,8 +2603,8 @@ export class ProjectHistory {
         ? scalarRecordsToForwardPatches(entry.record.records)
         : [{ orchestra: { type: 'structuralChange' } as never }]);
 
-    const runtimeOutcomes = this.reconciliation
-      ? await this.reconciliation.reconcileCommit({
+    const reconciliationPromise = this.reconciliation
+      ? this.reconciliation.reconcileCommit({
           documentId: updatedSnap.documentId!,
           revision: updatedSnap.revision,
           patches: forwardPatches,
@@ -1698,16 +2616,21 @@ export class ProjectHistory {
       sessionId: updatedSnap.sessionId,
       revision: updatedSnap.revision,
       stateId: updatedSnap.stateId!,
-      isDirty: this.isDirty(),
+      isDirty: publishedIsDirty,
       history: projection,
       acceptedOperationIds: [request.operationId],
       sourceSequence: request.contextSequence,
-      snapshot: null,
-      selectionHints: request.origin?.selection,
-      originViewId: request.origin?.viewId,
-      runtimeOutcomes,
+      snapshot: publishedSnapshot,
+      selectionHints: request.origin?.selection
+        ? [...request.origin.selection]
+        : entry.originSelectionHints
+          ? [...entry.originSelectionHints]
+          : undefined,
+      originViewId: request.origin?.viewId ?? entry.originViewId,
+      originContextId: request.origin?.contextId ?? entry.sourceContextId,
     };
     await this.publishUpdated?.(updatedEvent);
+    const runtimeOutcomes = reconciliationPromise ? await reconciliationPromise : undefined;
 
     const resp: ProjectHistoryCommittedResponse = {
       status: 'committed',
@@ -1715,7 +2638,7 @@ export class ProjectHistory {
       documentId: updatedSnap.documentId!,
       revision: updatedSnap.revision,
       stateId: updatedSnap.stateId!,
-      isDirty: this.isDirty(),
+      isDirty: publishedIsDirty,
       history: projection,
       changedTargets: [...(entry.changedTargets ?? [])],
       runtimeOutcomes,

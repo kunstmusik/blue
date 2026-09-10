@@ -5,15 +5,22 @@ import type {
   OrchestraPatch,
   UdoDefinitionSnapshot,
 } from '../../../../../shared/project-editor';
+import type { ProjectDocumentCommitMetadata } from '../../../../../shared/project-history';
 import type { UdoLibraryDropTarget } from '../udo/UdoTable';
 
 export interface OrchestraMutationProps {
-  onOrchestraPatch: (patch: OrchestraPatch) => void | Promise<void>;
+  onOrchestraPatch: (
+    patch: OrchestraPatch,
+    metadata?: ProjectDocumentCommitMetadata,
+  ) => void | Promise<void>;
 }
 
 export interface SelectedInstrumentEditorProps extends OrchestraMutationProps {
   instrument: InstrumentSnapshot;
-  onInstrumentPatch: (patch: InstrumentPatch) => void | Promise<void>;
+  onInstrumentPatch: (
+    patch: InstrumentPatch,
+    metadata?: ProjectDocumentCommitMetadata,
+  ) => void | Promise<void>;
   /**
    * Project-global UDO definitions available to the instrument's orchestra-code
    * fields. Standalone library hosts omit this (or pass `[]`) so project UDOs

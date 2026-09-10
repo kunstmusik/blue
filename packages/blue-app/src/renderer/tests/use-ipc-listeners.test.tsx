@@ -18,7 +18,11 @@ vi.mock('sonner', () => ({
 }));
 
 import { useIPCListeners } from '../hooks/use-ipc-listeners';
-import { getProjectDocumentRevision, useProjectStore } from '../stores/project-store';
+import {
+  getProjectDocumentRevision,
+  getProjectHistoryParticipantContextId,
+  useProjectStore,
+} from '../stores/project-store';
 import { usePlaybackStore } from '../stores/playback-store';
 import { useUIStore } from '../stores/ui-store';
 import { useSettingsStore } from '../stores/settings-store';
@@ -614,6 +618,91 @@ describe('useIPCListeners', () => {
     expect(useScoreSelectionStore.getState().selectedObjectIds.size).toBe(0);
   });
 
+  it('preserves unrelated selections for closed or non-origin views and prunes deleted selections without hints', () => {
+    const aliveScore = {
+      layerGroups: [
+        {
+          groupId: 'g1',
+          groupType: 'soundObject' as const,
+          layers: [
+            {
+              layerId: 'l1',
+              name: 'Layer',
+              height: 40,
+              muted: false,
+              solo: false,
+              items: [
+                {
+                  objectId: 'obj-alive',
+                  objectType: 'GenericScore',
+                  name: 'Alive',
+                  startBeats: 0,
+                  durationBeats: 2,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    useProjectStore.setState({
+      sessionId: 7,
+      documentId: 'doc-1',
+      loaded: true,
+      score: aliveScore,
+    });
+    useScoreSelectionStore.getState().setSelection(['obj-alive']);
+    act(() => {
+      root.render(<Harness />);
+    });
+
+    const projectUpdatedHandler = listeners.get('project-document-updated')!.values().next()
+      .value as (...args: unknown[]) => void;
+
+    // A dedicated view is not allowed to replace the workbench selection.
+    act(() => {
+      projectUpdatedHandler({
+        documentId: 'doc-1',
+        sessionId: 7,
+        revision: 1,
+        isDirty: true,
+        originContextId: 'dedicated-track-context',
+        originViewId: 'track-instrument',
+        selectionHints: [{ targetType: 'scoreObject', targetId: 'obj-deleted' }],
+        snapshot: { sessionId: 7, score: aliveScore },
+      });
+    });
+    expect(useScoreSelectionStore.getState().selectedObjectIds).toEqual(new Set(['obj-alive']));
+
+    // A closed origin also leaves a valid unrelated workbench selection alone.
+    act(() => {
+      projectUpdatedHandler({
+        documentId: 'doc-1',
+        sessionId: 7,
+        revision: 2,
+        isDirty: true,
+        originContextId: 'dedicated-closed-context',
+        originViewId: 'effect-editor',
+        selectionHints: [{ targetType: 'scoreObject', targetId: 'obj-deleted' }],
+        snapshot: { sessionId: 7, score: aliveScore },
+      });
+    });
+    expect(useScoreSelectionStore.getState().selectedObjectIds).toEqual(new Set(['obj-alive']));
+
+    // Selection reconciliation is independent of replay hints: deleting the
+    // selected object clears it even when the publication carries no hints.
+    act(() => {
+      projectUpdatedHandler({
+        documentId: 'doc-1',
+        sessionId: 7,
+        revision: 3,
+        isDirty: true,
+        snapshot: { sessionId: 7, score: { layerGroups: [] } },
+      });
+    });
+    expect(useScoreSelectionStore.getState().selectedObjectIds.size).toBe(0);
+  });
+
   it('suppresses replay of acknowledged own operations', async () => {
     vi.useFakeTimers();
     try {
@@ -816,6 +905,8 @@ describe('useIPCListeners', () => {
   });
 
   it('handles project runtime outcomes and updates project store status', async () => {
+    const warning = vi.spyOn(toast, 'warning');
+    useProjectStore.setState({ sessionId: 7, documentId: 'doc-runtime', loaded: true });
     await act(async () => {
       root.render(<Harness />);
     });
@@ -826,11 +917,14 @@ describe('useIPCListeners', () => {
 
     act(() => {
       runtimeOutcomeHandler!({
+        documentId: 'doc-runtime',
+        revision: 0,
         outcomes: [
           {
             performanceKind: 'timeline',
             status: 'restart-required',
             generation: 1,
+            desiredRevision: 0,
           },
         ],
       });
@@ -841,5 +935,192 @@ describe('useIPCListeners', () => {
     expect(useProjectStore.getState().runtimeOutcomeStatusText).toBe(
       'Restart required for playback to reflect all changes',
     );
+    expect(warning).not.toHaveBeenCalled();
+  });
+
+  it('fences runtime outcomes by revision and preserves unresolved outcomes across cosmetic commits', async () => {
+    useProjectStore.setState({
+      sessionId: 7,
+      documentId: 'doc-runtime-fence',
+      loaded: true,
+      runtimeOutcomes: [],
+      runtimeOutcomeStatusText: '',
+    });
+    await act(async () => {
+      root.render(<Harness />);
+    });
+
+    const projectUpdatedHandler = listeners.get('project-document-updated')!.values().next()
+      .value as (...args: unknown[]) => void;
+
+    act(() => {
+      projectUpdatedHandler({
+        documentId: 'doc-runtime-fence',
+        sessionId: 7,
+        revision: 2,
+        isDirty: true,
+        runtimeOutcomes: [
+          {
+            performanceKind: 'timeline',
+            status: 'failed',
+            generation: 3,
+            desiredRevision: 2,
+            message: 'late engine failure',
+          },
+        ],
+        snapshot: { sessionId: 7, documentId: 'doc-runtime-fence', title: 'Revision 2' },
+      });
+    });
+
+    expect(getProjectDocumentRevision()).toBe(2);
+    expect(useProjectStore.getState().runtimeOutcomes).toHaveLength(1);
+
+    act(() => {
+      projectUpdatedHandler({
+        documentId: 'doc-runtime-fence',
+        sessionId: 7,
+        revision: 1,
+        isDirty: true,
+        runtimeOutcomes: [
+          {
+            performanceKind: 'timeline',
+            status: 'applied',
+            generation: 4,
+            desiredRevision: 1,
+          },
+        ],
+        snapshot: { sessionId: 7, documentId: 'doc-runtime-fence', title: 'Stale' },
+      });
+    });
+
+    expect(useProjectStore.getState().runtimeOutcomes[0].status).toBe('failed');
+
+    act(() => {
+      projectUpdatedHandler({
+        documentId: 'doc-runtime-fence',
+        sessionId: 7,
+        revision: 3,
+        isDirty: true,
+        runtimeOutcomes: [],
+        snapshot: { sessionId: 7, documentId: 'doc-runtime-fence', title: 'Revision 3' },
+      });
+    });
+
+    expect(useProjectStore.getState().runtimeOutcomes).toEqual([
+      expect.objectContaining({
+        performanceKind: 'timeline',
+        status: 'failed',
+        desiredRevision: 2,
+      }),
+    ]);
+    expect(useProjectStore.getState().runtimeOutcomeStatusText).toContain(
+      'Live synchronization failed',
+    );
+  });
+
+  it('preserves a failed live update after a later cosmetic canonical publication', async () => {
+    useProjectStore.setState({
+      sessionId: 7,
+      documentId: 'doc-runtime-cosmetic',
+      loaded: true,
+      runtimeOutcomes: [],
+      runtimeOutcomeStatusText: '',
+    });
+    await act(async () => {
+      root.render(<Harness />);
+    });
+
+    const runtimeOutcomeHandler = listeners.get('project-runtime-outcome')?.values().next()
+      .value as ((event: unknown) => void) | undefined;
+    const projectUpdatedHandler = listeners.get('project-document-updated')!.values().next()
+      .value as (...args: unknown[]) => void;
+    expect(runtimeOutcomeHandler).toBeDefined();
+
+    act(() => {
+      runtimeOutcomeHandler!({
+        documentId: 'doc-runtime-cosmetic',
+        revision: 0,
+        outcomes: [
+          {
+            performanceKind: 'blueLive',
+            status: 'failed',
+            generation: 4,
+            desiredRevision: 0,
+            message: 'live update rejected',
+          },
+        ],
+      });
+    });
+
+    act(() => {
+      projectUpdatedHandler({
+        documentId: 'doc-runtime-cosmetic',
+        sessionId: 7,
+        revision: 1,
+        isDirty: true,
+        runtimeOutcomes: [],
+        snapshot: { sessionId: 7, documentId: 'doc-runtime-cosmetic', title: 'Cosmetic edit' },
+      });
+    });
+
+    expect(useProjectStore.getState().runtimeOutcomes).toEqual([
+      expect.objectContaining({
+        performanceKind: 'blueLive',
+        status: 'failed',
+        desiredRevision: 0,
+      }),
+    ]);
+  });
+
+  it('clears only the stopped performance outcome', async () => {
+    useProjectStore.setState({
+      sessionId: 7,
+      documentId: 'doc-runtime-clear',
+      loaded: true,
+      runtimeOutcomes: [],
+      runtimeOutcomeStatusText: '',
+    });
+    await act(async () => {
+      root.render(<Harness />);
+    });
+
+    const runtimeOutcomeHandler = listeners.get('project-runtime-outcome')?.values().next()
+      .value as ((event: unknown) => void) | undefined;
+    expect(runtimeOutcomeHandler).toBeDefined();
+
+    act(() => {
+      runtimeOutcomeHandler!({
+        documentId: 'doc-runtime-clear',
+        revision: 0,
+        outcomes: [
+          {
+            performanceKind: 'timeline',
+            status: 'failed',
+            generation: 1,
+            desiredRevision: 0,
+          },
+          {
+            performanceKind: 'blueLive',
+            status: 'restart-required',
+            generation: 2,
+            desiredRevision: 0,
+          },
+        ],
+      });
+    });
+    expect(useProjectStore.getState().runtimeOutcomes).toHaveLength(2);
+
+    act(() => {
+      runtimeOutcomeHandler!({
+        documentId: 'doc-runtime-clear',
+        revision: 0,
+        outcomes: [],
+        clearPerformanceKind: 'timeline',
+      });
+    });
+
+    expect(useProjectStore.getState().runtimeOutcomes).toEqual([
+      expect.objectContaining({ performanceKind: 'blueLive', status: 'restart-required' }),
+    ]);
   });
 });

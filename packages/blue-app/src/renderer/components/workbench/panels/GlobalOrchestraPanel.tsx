@@ -43,6 +43,13 @@ export default function GlobalOrchestraPanel(): React.ReactElement {
         placeholder="Enter global orchestra code"
         ariaLabel="Global Orchestra Csound editor"
         javaBlueCompletionOptions={javaBlueCompletionOptions}
+        typingGroupingMs={500}
+        historyMetadata={{
+          fieldId: 'globalOrc',
+          gestureId: 'project-text:globalOrc',
+          label: 'Edit Global Orchestra',
+          phase: 'update',
+        }}
         onChange={updateGlobalOrc}
         evaluateCodeEnabled={evaluateEnabled}
         onEvaluateCode={handleEvaluateCode}

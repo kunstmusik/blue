@@ -1,4 +1,9 @@
 import {
+  BSBGroup,
+  BSBHSliderBank,
+  BSBVSliderBank,
+  BSBWidget,
+  BSBXYController,
   BlueSynthBuilder,
   Channel,
   Effect,
@@ -120,6 +125,45 @@ export function buildRuntimeBindingRegistry(
     );
   };
 
+  const registerBsbWidgetAliases = (
+    ownerKeys: readonly string[],
+    owner: BlueSynthBuilder | Effect,
+  ): void => {
+    const visit = (widget: BSBWidget): void => {
+      if (widget instanceof BSBGroup) {
+        for (const child of widget.getChildren()) visit(child);
+        return;
+      }
+      if (!widget.objectName || !widget.id) return;
+
+      const aliases: Array<[string, string]> = [[`bsb:${widget.id}`, widget.objectName]];
+      if (widget instanceof BSBXYController) {
+        aliases.push(
+          [`bsb:${widget.id}:xValue`, `${widget.objectName}X`],
+          [`bsb:${widget.id}:yValue`, `${widget.objectName}Y`],
+        );
+      } else if (widget instanceof BSBHSliderBank || widget instanceof BSBVSliderBank) {
+        for (let index = 0; index < widget.sliders.length; index += 1) {
+          aliases.push([`bsb:${widget.id}[${index}]`, `${widget.objectName}_${index}`]);
+        }
+      } else {
+        aliases.push(
+          [`bsb:${widget.id}:selected`, widget.objectName],
+          [`bsb:${widget.id}:selectedIndex`, widget.objectName],
+        );
+      }
+
+      for (const ownerKey of ownerKeys) {
+        for (const [alias, parameterName] of aliases) {
+          const binding = registry.get(`${ownerKey}::bsb:${parameterName}`);
+          if (binding) registry.set(`${ownerKey}::${alias}`, binding);
+        }
+      }
+    };
+
+    visit(owner.getGraphicInterface().getRootGroup());
+  };
+
   // 1. Mixer Channels, Sends, Effects
   const mixer = data.getMixer();
   if (mixer.isEnabled()) {
@@ -183,6 +227,11 @@ export function buildRuntimeBindingRegistry(
                 }
               }
             }
+            const ownerKeys = entrySnapshotId ? [`${channelId}:${entrySnapshotId}`] : [];
+            if (entryUniqueId && entryUniqueId !== entrySnapshotId) {
+              ownerKeys.push(`${channelId}:${entryUniqueId}`);
+            }
+            registerBsbWidgetAliases(ownerKeys, entry);
           }
         }
       };
@@ -219,26 +268,19 @@ export function buildRuntimeBindingRegistry(
     if (!ia.enabled || !ia.instr) continue;
     const assignmentId = ia.arrangementId;
     if (ia.instr instanceof BlueSynthBuilder) {
+      const ownerKeys = [assignmentId, `arrangement:${assignmentId}`];
       for (const param of ia.instr.getParameters()) {
         const pVar = resolveVarName(param);
         if (pVar) {
-          registry.set(`${assignmentId}::bsb:${param.getName()}`, {
-            kind: 'channel',
-            channel: pVar,
-          });
-        }
-      }
-      const gi = ia.instr.getGraphicInterface();
-      if (gi) {
-        for (const widget of gi.getRootGroup().getChildren()) {
-          if (widget.objectName) {
-            const binding = registry.get(`${assignmentId}::bsb:${widget.objectName}`);
-            if (binding) {
-              registry.set(`${assignmentId}::bsb:${widget.id}`, binding);
-            }
+          for (const ownerKey of ownerKeys) {
+            registry.set(`${ownerKey}::bsb:${param.getName()}`, {
+              kind: 'channel',
+              channel: pVar,
+            });
           }
         }
       }
+      registerBsbWidgetAliases(ownerKeys, ia.instr);
     }
   }
 
@@ -260,17 +302,7 @@ export function buildRuntimeBindingRegistry(
             });
           }
         }
-        const gi = instr.getGraphicInterface();
-        if (gi) {
-          for (const widget of gi.getRootGroup().getChildren()) {
-            if (widget.objectName) {
-              const binding = registry.get(`${ownerKey}::bsb:${widget.objectName}`);
-              if (binding) {
-                registry.set(`${ownerKey}::bsb:${widget.id}`, binding);
-              }
-            }
-          }
-        }
+        registerBsbWidgetAliases([ownerKey], instr);
       }
     }
   }

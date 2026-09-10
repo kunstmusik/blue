@@ -34,7 +34,7 @@ Extend existing preload exports, shared types, renderer declarations and IPC reg
 ## Settlement barrier
 
 1. Main queues the undo/redo/save/replacement request and sends `prepare-history-boundary` with barrier ID to all registered independent contexts.
-2. Each context pauses new durable submissions, captures its queue watermark, finishes composition/grouping, and drains that prefix in sequence. Main still accepts only tagged prefix commits during drainage; unrelated new commands wait.
+2. Each context pauses new durable submissions, captures its queue watermark, finishes composition/grouping, and drains that prefix in sequence. Main captures ordinary submissions already queued behind the boundary command, and ordinary arrivals from a participant still awaiting acknowledgement, as that participant's pre-pause prefix. They settle through the same document, sequence, and revision validation as explicitly tagged prefix commits. A captured submission resolves before the boundary command without executing again when its original ordered-queue slot is reached. Once a context acknowledges, its ordinary submissions wait, as do unrelated commands.
 3. On ordinary stale prefix work, exact preconditions permit a bounded retry for unchanged targets; conflicting work becomes a retained draft and causes barrier failure. No unbounded retries.
 4. Each participant acknowledges after its captured prefix is committed or explicitly resolved, supplying last acknowledged revision/sequence and zero outstanding prefix work. Clean context closure is acknowledged by host; disappearance with unknown work aborts.
 5. Once all acknowledge, main selects the current top history action and executes once. It publishes the canonical result before `release-history-boundary`.
@@ -73,7 +73,7 @@ Every project-modifying write path must participate in canonical history prepara
 | Code & Text Editors | `commitProjectDocumentPatchBatch` (orchestra / udo / properties / global) | `ProjectHistory.commit(request)` | Scalar (text properties) or Structural |
 | PianoRoll Note Stack | `pianoroll-undo-store.ts` via patch batch | `ProjectHistory.commit(request)` | Structural |
 | BlueX7 Parameter Stack | `use-blue-x7-history.ts` via patch batch | `ProjectHistory.commit(request)` | Structural |
-| Score Color History Store | `score-color-history-store.ts` via patch batch | `ProjectHistory.commit(request)` | Structural |
+| Score and Layer Color Actions | `score-color-actions.ts` and score UI via patch batch | `ProjectHistory.commit(request)` | Structural |
 
 ### FR-002 Coverage Matrix: Patch Union Members & Classification
 

@@ -41,7 +41,7 @@ Run these in order after the affected suites pass. Native Windows coverage is re
 | Transactions/checkpoints | New main project-history tests; project-session/project-lifecycle tests | All-or-nothing failure, exact replay, save race, eviction and oversize cancellation |
 | Queue/barrier | project-patch-queue tests; new history settlement tests | No delayed edit after undo; timeout/disconnection preserves work |
 | UI consistency | project-store, use-ipc-listeners, effect-editor-window, track-instrument-editor-window tests | Actual edited content refreshes, no stale snapshot/dirty reset, bounded stale handling |
-| Text/local stack migration | selected-code-editor-reconfigure, blue-x7-undo, score-color-history and PianoRoll tests | One global committed action; drafts remain local; no replay echo |
+| Text/local stack migration | selected-code-editor-reconfigure, blue-x7-undo, score-color-actions and PianoRoll tests | One global committed action; drafts remain local; no replay echo |
 | Runtime | runtime-channel-sync, runtime-parameter-sync, bsb-instrument-runtime-sync, blue-x7-runtime-sync, score-automation-runtime-sync | Negative acknowledgement is failure; generations and previews cannot overwrite newer state |
 | Real browser views | New global-history browser scenario; score-canvas-popout-menus harness | Two-document selection, menus, typing and restored values |
 
@@ -133,7 +133,7 @@ Repeat menu and shortcut scenarios on macOS, Windows and Linux: Cmd+Z/Cmd+Shift+
 Use `fixtures/blue-x7-pop-song.blue` for BlueX7 and a disposable smoke project with a sustained instrument, mixer channel, effect numeric parameter and automation line. Run each case in normal playback and separately in Blue Live; where simultaneous operation is supported, test different compiled binding layouts together. Otherwise inject two independent performance adapters to verify isolation.
 
 - Change and undo mixer level, BSB values/preset, BlueX7 fixed/complete voice, numeric effect parameter and automation points. Verify engine readback where supported plus audible change, positive acknowledgement and current revision status.
-- Remove/replace an instrument/effect or alter code, then undo. UI says restart required; playback continues. Restart and compare generated CSD/current values against the restored document. Restored IDs alone must not reauthorize obsolete bindings.
+- Remove/replace an instrument/effect or alter code, then undo. Playback continues without a restart toast or persistent status strip. Restart using the existing controls and compare generated CSD/current values against the restored document. Restored IDs alone must not reauthorize obsolete bindings.
 - Inject rejection, missing client and delayed acknowledgement. Document/history remain restored; status is failed, not applied. Retry uses latest canonical desired values. Stop/restart while an old channel or automation timer is pending; it cannot write into the new performance.
 - Delay a gesture preview until after Undo. Closed-gesture preview is rejected or completed before reversal; audible/readback final value is restored, not the late preview value.
 - Simulate a timeout with an operation that later reaches the engine. The affected queue remains failed/invalidated until drained or generation stopped; no false newer success. Verify one performance's success does not conceal another's failure.
@@ -146,58 +146,130 @@ Reference machine: the current maintainer macOS development machine running a pr
 
 Workloads: `fixtures/smoke-test.blue`, `fixtures/blue-x7-pop-song.blue`, and a deterministic large project produced by extending the existing `packages/blue-data/tests/integration/performance-benchmark.test.ts` 100-clip generator to 1,000 clips with fixed IDs. Add 32 instrument assignments and 128 automation parameters in that generated workload. Keep the 100-action retention scenario below its byte limit. Use a separate oversized project for retention testing.
 
-After five warmup actions, measure 100 ordinary score moves/mixer changes per workload. Timestamp physical command receipt through the next painted canonical view in all affected windows, excluding trials with pre-existing pending work; report p50/p95/max. SC-003 requires p95 ≤200 ms. Measure command receipt to positive live acknowledgement for 100 supported single-parameter reversals on a responsive engine; SC-004 requires p95 ≤250 ms. Also report status-render latency ≤1 second from failure/restart determination, retained accounted bytes, and actual heap delta after repeat runs.
+After five warmup actions, measure 100 ordinary score moves/mixer changes per workload. Timestamp physical command receipt through the next painted canonical view in all affected windows, excluding trials with pre-existing pending work; report p50/p95/max. SC-003 requires p95 ≤200 ms. Measure command receipt to positive live acknowledgement for 100 supported single-parameter reversals on a responsive engine; SC-004 requires p95 ≤250 ms. Also report error-render latency ≤1 second from failure determination, retained accounted bytes, and actual heap delta after repeat runs. Routine restart-required notifications are intentionally absent following manual-testing feedback.
 
 Do not waive failed targets by reclassifying ordinary edits as structural. Investigate full-graph copying/refresh or queue overhead. Large structural operations report separate latency and visible pending behavior; exact restoration remains mandatory.
 
 ## Handoff evidence
 
+### Manual checklist for T085
+
+Manual-feedback revision (2026-09-09): removed the persistent history-usage and runtime-status strips and suppressed routine restart-required toasts. Internal retention/runtime tracking, oversize confirmation, and genuine error toasts remain. Validation after this change: app 457 test files / 4,544 passed / 2 skipped; renderer build, repository lint, and whitespace checks passed. Earlier evidence describing the removed strips is historical, not an instruction to restore them.
+
+Use a disposable project copy and the built application, not only Vitest. Record OS, app revision, project, actions, expected/actual result, and any console error for each scenario. macOS results satisfy only the macOS portion; Windows/Linux need their own runs.
+
+1. Open a workbench editor, a detached panel, and a dedicated effect or track-instrument editor. Alternate edits between them, undo/redo from each, and check canonical values, dirty state, valid selections, and no unexpected focus change. Deleting/restoring a target must update surviving views without reopening closed windows.
+2. Type in one editor and immediately undo from another while its debounce is pending. Repeat during IME composition. The pending edit must settle before reversal or produce an explicit retained-draft failure; it must not reappear after a delay. Repeat with rapid undo/redo and a dedicated editor.
+3. Test Cmd+Z/Cmd+Shift+Z on macOS and Ctrl+Z/Ctrl+Y/Ctrl+Shift+Z on Windows/Linux. One press must reverse one action. A search field or unapplied draft must undo locally, without changing the project.
+4. During timeline playback, change then undo/redo a live-supported mixer/BSB/effect value. Confirm the audible reversal, not just the control redraw. Repeat in Blue Live. With playback stopped, edit/undo, then start and confirm the restored value is used.
+5. During playback, make a compilation-dependent code/instrument/effect change and undo/redo it. Playback must continue without the removed strips or restart toasts. Stop/start or recompile using the existing controls; generated CSD and playback must reflect the current canonical document.
+6. Save, edit, undo to the saved state (clean), redo (dirty), close an editor, and restart playback; history must survive. Open a different project; old edits must not affect it. Repeat freeze/relink restoration with disposable files on each native platform; undo must not delete generated audio.
+
+These manual results are useful acceptance evidence, but do not alone finish T085: its production-listener/real-document automated coverage, versioned-client engine readback, and injected rejection/timeout/late-result cases remain engineering work. Do not induce failures by modifying important projects or terminating unrelated processes.
+
+### Measuring T087
+
+T087 is an instrumented performance gate, not a subjective responsiveness check. The coordinator benchmark reports history retention and heap evidence. The older browser and runtime measurements are retained as component benchmarks; they use test seams and are not sufficient end-to-end acceptance evidence by themselves. T116 adds the production boundary measurements below.
+
+Use the reference workloads above, five warmups, then 100 measured actions. The historical component-only browser benchmark logs `[T087 component browser benchmark]`. For the production browser boundary, run `pnpm --filter @blue/app exec vitest --config vitest.browser.config.ts --run src/renderer/browser/global-project-history.browser.test.tsx --reporter=verbose`; it mounts the production IPC listener and Project Properties panel, routes native-menu Undo/Redo through the project patch queue and history barrier, checks two renderer views after two paints, and injects a runtime failure through the production outcome listener. For the running-engine boundary, run `BLUE_RUN_REAL_ENGINE=1 pnpm --filter @blue/app exec vitest run src/main/global-history-engine.integration.test.ts --reporter=verbose`; it uses real ProjectHistory commit/undo/redo calls with separate timeline and Blue Live sessions and positive set/get readback polling. For the packaged native-menu boundary, run `pnpm --filter @blue/app verify:global-history` (pass `--binary` or set `BLUE_ELECTRON_BINARY` when the packaged app is elsewhere). Correlate each command with its canonical revision and record command receipt, paint completion in every affected window, and positive engine acknowledgement. Report p50/p95/max: painted restoration p95 ≤200 ms; live acknowledgement p95 ≤250 ms. Measure genuine error determination-to-visible-error within one second, retained bytes, and heap delta. Do not time only the IPC Promise, knob change, or main coordinator; those omit required boundaries. A screen recording can help diagnose slow UI updates but cannot prove positive engine acknowledgement.
+
 Attach package/build/lint results, the per-domain coverage matrix, native OS checks, identity/XML/CSD comparisons, engine outcome cases, and reference timing/heap measurements to implementation review. Record any unavailable runtime/environment with the exact unexecuted scenario; absence of environment is not a passed check.
 
-## Implementation evidence (recorded 2026-09-08, branch `codex/103-global-undo-redo`)
+## Implementation evidence (recorded 2026-09-09, branch `codex/103-global-undo-redo`)
 
-Environment: macOS (arm64, Darwin 23.2.0), repository workspace pnpm; native engine protocol client; browser tests on the configured Chromium channel.
+Environment: macOS arm64 (Darwin), repository workspace pnpm. The Phase 9, Phase 10, and Phase 11 convergence work is implemented through shared IPC validation, dedicated-window history clients and settlement barriers, prepared/direct structural commits, focused history availability, oversize proposals, idempotent operations, stable editor grouping and IME settlement, realm-safe scope routing, immutable publication/runtime fences, performance-kind recovery, identity-aware selection replay, synchronous workbench queue pausing, fail-closed composition settlement, dedicated projection refresh, and per-performance runtime-state preservation.
 
-### Package, build, and lint gates — all passing
+### Package, build, and lint gates
 
 | Gate | Result |
 | --- | --- |
-| `pnpm --filter @blue/data test` | 183 files, 1809 passed, 1 skipped |
-| `pnpm --filter @blue/app test` | 456 files, 4508 passed, 2 skipped |
-| Browser suite (`vitest.browser.config.ts`) | 13 files passed |
-| `pnpm --filter @blue/data build` (ESM + CJS) | success |
-| `pnpm --filter @blue/engine-client build` | success |
-| `pnpm --filter @blue/app build:main` / `build:preload` | 0 type errors |
-| `pnpm --filter @blue/app build:renderer` | success |
-| Repository-wide `pnpm test` | exit 0 (all packages) |
-| `pnpm lint` | clean (Prettier gate passing) |
+| `pnpm --filter @blue/data build` | passed |
+| `pnpm --filter @blue/engine-client build` | passed |
+| `pnpm --filter @blue/app build:main` / `build:preload` / `build:renderer` | passed |
+| `pnpm --filter @blue/app test` | 457 files, 4539 passed, 2 skipped |
+| `pnpm test` | passed: native engine/CTest, Java, data (183 files / 1809 passed / 1 skipped), engine-client (42), app (457 / 4539 / 2 skipped), CLI, and scripts |
+| `pnpm lint` | passed; typography audit and Prettier clean |
 | `git diff --check` | clean |
 
-One transient unhandled-rejection failure was observed in a single parallel `pnpm test` run of `@blue/app` (all 456 files passed in that run; the error did not identify a failing test) and did not reproduce across two subsequent full runs, including the repository-wide gate above.
+Focused Phase 9/10/11 regressions also passed, including shared IPC availability, synchronous queue and dedicated settlement barriers, fail-closed composition/router settlement, dedicated projection refresh, direct-writer ordering, freeze/relink, editor grouping/IME, menu scope, runtime fences and per-performance cosmetic preservation, mixed scalar/structural XML replay, selection reconciliation, and retention status suites (104 tests in the Phase 11-focused command; the prior Phase 9/10 focused set also passed with 108 tests).
 
-### Per-domain coverage
+### Browser and native-platform status
 
-- Canonical-writer coverage matrix: implemented as compile-time-exhaustive preparation tables in `packages/blue-app/src/shared/project-editor/contract.ts` (`*_PATCH_PREPARATION_CLASS`), enumerated end-to-end by `project-history-patch-classification.test.ts` (18 tests) and the writer audit in `project-history-writer-audit.test.ts`. Every `ProjectDocumentPatch` member maps to scalar/structural preparation; unexpected keys reject at the preparation boundary.
-- History identity/XML/CSD: `blue-data-history-copy.test.ts`, `blue-data-deep-copy.test.ts`, `blue-data-csd-parity.test.ts`, `tests/integration/global-history-roundtrip.test.ts`, `tests/integration/global-history-runtime-artifacts.test.ts` — no mutable cross-aliases, IDs preserved, undo regenerates the pre-edit CSD byte-for-byte.
-- Transactions/checkpoints/barrier: `project-history.test.ts` (26+ tests incl. retention 200/64 MiB, oversize tokens, dedup conflict detection), `project-history-settlement.test.ts` (12), `project-history-memento.test.ts`, lifecycle/session/replacement suites.
-- Views/drafts/selection: `project-store.test.ts`, `use-ipc-listeners.test.tsx`, `global-project-history-drafts.test.tsx`, `global-project-history-views.test.tsx`, `global-project-history.browser.test.tsx`, effect/track editor window tests.
-- Text/menu scope: `csound-editor-history.test.tsx` (typing grouping, IME boundaries, scope isolation, selection clamping), `native-menu-undo-redo.test.tsx`, `application-menu.test.ts`, `history-scope-router.ts`.
-- Runtime outcomes: `project-runtime-reconciliation.test.ts` (26 tests — capability matrix, negative ack, transport error, timeout with late completion, fenced queue recovery, partial success, topology invalidation memory, generation isolation), `runtime-channel-sync.test.ts` (distinguishable skipped/failed/applied outcomes), `global-history-engine.integration.test.ts` (engine-client protocol readback).
+The browser suite was attempted with `pnpm --filter @blue/app test:browser`, but the configured Chrome binary aborted with `SIGABRT` before test execution; Vitest reported 13 files with no tests run and a follow-on `kill EPERM`. This is an environment failure, not a product pass. The main history-engine integration suite uses a recording client/test adapter rather than a running engine.
 
-### Runtime-outcome status
+macOS package/native tests ran. Windows and Linux native menu, real drive/UNC permission, and audio smoke scenarios were not available on this host. Real-engine timeline/Blue Live replay, painted-view receipt timing, and acoustic readback therefore remain open manual gates; synthetic Windows path fixtures and coordinator/runtime test doubles remain covered.
 
-Outcomes (pending/applied/restart-required/failed) are produced per performance by the coordinator with precedence failed > restart-required > pending > applied, and published through `PROJECT_RUNTIME_OUTCOME_CHANNEL`; live preview/replay handlers route through the acknowledged generation-fenced coordinator. Stop-playback scenarios and readback use the engine-client protocol channel store; audible-acoustic verification on real hardware was not executed in this environment and remains a manual native-platform step.
+### Coordinator performance evidence
 
-### Native-platform status
+The deterministic 1,000-clip / 32-instrument / 128-parameter workload ran 100 actions after five warmups through `global-project-history.performance.test.ts`:
 
-macOS executed. Windows and Linux native menu, path (real `C:\`/UNC permissions), and audio smoke scenarios were NOT executed in this environment and remain open manual gates per the checklist above; synthetic Windows path coverage exists in `example-library/path-boundary.test.ts`, `missing-audio-assets.test.ts`, and `freeze-score-objects.test.ts`.
+- Commit: p50 0.01 ms, p95 0.06 ms, max 0.61 ms
+- Undo: p50 0.01 ms, p95 0.03 ms, max 0.29 ms
+- Redo: p50 0.01 ms, p95 0.03 ms, max 0.18 ms
+- Retained history: 35,500 bytes (0.03 MiB)
+- Heap-used delta: 30.27 MB
 
-### Performance measurements (coordinator-level, this machine)
+The SC-003/SC-004 thresholds are met at the coordinator level. End-to-end painted-view latency, status-render latency, and positive live-engine acknowledgement were not measurable without the browser/native runtime gates above.
 
-100 mixed actions on the deterministic 1,000-clip / 32-assignment / 128-parameter workload, 5 warmups, via `global-project-history.performance.test.ts`:
+### Phase 12 follow-up (T103, 2026-09-09)
 
-- Commit: p50 0.02 ms, p95 0.15 ms, max 0.81 ms
-- Undo: p50 0.01 ms, p95 0.04 ms, max 0.35 ms
-- Redo: p50 0.01 ms, p95 0.04 ms, max 0.26 ms
+Fixed the ordinary-submission/undo queue dependency cycle in the main coordinator. Before prepare, queued participant submissions are captured as prefix work; ordinary arrivals remain eligible until their participant acknowledges. Their original queue slots reuse the completed execution, preventing duplicate or delayed application. Unrelated and already-acknowledged participants' ordinary writes still wait. Existing document, revision, sequence, and operation-id validation remains in force; no renderer queue rewrite or new dependency was required.
 
-SC-003 (p95 ≤ 200 ms) and SC-004 (p95 ≤ 250 ms) headroom is large at the history-coordinator level; end-to-end painted-view latency and acoustic readback on production builds remain the manual native gate described above.
+The regression reproduced timeout before the fix. Coverage now checks arrivals before and after main broadcasts prepare, duplicate submissions, stale document/revision/sequence fences, post-acknowledgement input, the production workbench patch queue, and the production dedicated-window history hook against a real `ProjectHistory` instance. These are automated in-process integration checks, not native multi-window evidence.
+
+- `pnpm test`: passed, including app 457 files / 4,547 passed / 2 skipped, data 1,809 passed / 1 skipped, native engine 14 CTest checks, Java, engine-client, CLI, and 49 script checks.
+- `pnpm lint`: passed, including typography and Prettier checks.
+- Main, preload, and renderer builds: passed. `git diff --check`: clean.
+- `pnpm --filter @blue/app test:browser`: Chrome again exited before execution inside the sandbox; the same command **passed outside the sandbox**, 13 files / 60 tests. This supersedes the earlier browser-launch blocker.
+
+T085 is considered complete by the explicit 2026-09-09 acceptance disposition recorded in tasks.md; this does not add running-engine or native Windows/Linux evidence. T087 remains open. The history-engine suite still uses a recording adapter; running-engine timeline/Blue Live replay and physical-command-to-paint/live-acknowledgement measurement harnesses/results remain outstanding. Native engine CTest success is not equivalent to those application-level engine scenarios.
+
+### Phase 13 follow-up (T104–T109, 2026-09-09)
+
+The remaining convergence implementation is now covered by concrete BSB/effect inverse patches and generation-scoped runtime aliases, project-property scope and metadata wiring, transaction-aware CodeMirror grouping, native InputEvent inserted-text propagation, fail-closed composition settlement, and project-editor teardown settlement/draft retention. Focused coverage includes BSB edit/undo/redo readback on timeline and Blue Live test performances, effect and preset inverse capture, project-property and instrument-comment InputEvent flows, CodeMirror insert/delete/mutation/selection boundaries, composition timeout/late completion, and close-without-blur lifecycle behavior.
+
+- Focused main and renderer suites: 6 files / 100 passed.
+- `pnpm --filter @blue/app test`: 458 files / 4,581 passed / 2 skipped.
+- `pnpm --filter @blue/app build:main` and `build:renderer`: passed.
+- `pnpm lint`: passed; `git diff --check`: clean.
+
+The Phase 13 in-process tests did not claim physical command-to-paint or positive acknowledgement timing; those measurements are recorded below.
+
+### Phase 14 follow-up (historical T087 component evidence, 2026-09-09)
+
+These figures are retained for comparison only. The browser test used a mocked commit function with empty patches and fabricated publications, and the runtime test called reconciliation directly while timing its channel operation. They do not establish the production command-to-restoration or ProjectHistory-to-engine acceptance boundaries; those are recorded in Phase 16. The coordinator benchmark remains the deterministic retention/heap component measurement.
+
+- Historical browser component benchmark: 100 samples; canonical paint p50 32.8 ms / p95 34.8 ms / max 36.0 ms; status render p50 32.8 ms / p95 34.8 ms / max 36.2 ms; heap delta -484,293 bytes.
+- Historical direct runtime component benchmark: timeline p50 0.22 ms / p95 0.26 ms / max 0.36 ms; Blue Live p50 0.24 ms / p95 0.28 ms / max 0.36 ms; 100 direct positive readbacks per performance kind.
+- Coordinator retention/heap evidence: commit p50 0.01 ms / p95 0.10 ms / max 0.69 ms; undo p50 0.01 ms / p95 0.03 ms / max 0.37 ms; redo p50 0.01 ms / p95 0.03 ms / max 0.22 ms; retained bytes 35,500; heap delta 27,642,784 bytes.
+- The historical focused browser and opt-in runtime commands passed on the macOS arm64 host, but their component-only boundary is not a substitute for Phase 16.
+
+The existing T087 completion marker is preserved; its end-to-end acceptance interpretation is supplied by T116 below. Native Windows/Linux shortcut and path gates remain outside this host’s evidence, as documented under T085.
+
+### Phase 15 follow-up (T110–T114, 2026-09-09)
+
+Completed the final convergence fixes for rejected settlement receipts, serialized runtime preview draining, mixer insertion identity allocation, project-scoped Scratch Pad history, and semantic action labels.
+
+- Focused convergence suites: 9 files / 206 passed / 2 skipped.
+- `pnpm --filter @blue/app test`: 458 files / 4,598 passed / 2 skipped.
+- `pnpm test`: passed, including native engine 14 CTest checks, engine-client, data 183 files / 1,809 passed / 1 skipped, Java, CLI, app, and 49 script checks.
+- `pnpm --filter @blue/app build:main` and `build:renderer`: passed.
+- Targeted Prettier checks and `git diff --check`: clean.
+- `pnpm lint`: the code, lint, typography, and package validation stages passed; the final repository format check remains blocked only by the pre-existing `HANDOFF-103-undo-redo.md` formatting warning.
+
+Native Windows/Linux and manual real-platform gates remain as previously documented.
+
+### Phase 16 follow-up (T115–T116, 2026-09-10)
+
+Completed the delayed-preview generation fence and replaced the remaining T087 component-only acceptance paths with production-boundary measurements. T115 now snapshots the performance instances and generations at preview submission, fences delayed acknowledgements against the current instance/generation, and covers both replacement and project-disposal timelines. T116 measures five warmups followed by 100 Undo/Redo pairs, records p50/p95/max, retained bytes, heap delta, and injected runtime-error visibility, and does not reopen T085's accepted native-platform disposition.
+
+- Runtime generation fence: `pnpm --filter @blue/app exec vitest run src/main/project-runtime-reconciliation.test.ts --reporter=dot` passed, 38 tests.
+- Production browser boundary: `pnpm --filter @blue/app exec vitest run --config vitest.browser.config.ts src/renderer/browser/global-project-history.browser.test.tsx --reporter=verbose` passed, 1 file / 6 tests. It mounted the production `useIPCListeners` and `ProjectPropertiesPanel` in two renderer roots, used the production project patch queue and native-menu command route, awaited history-boundary acknowledgements and canonical publications, and verified both views after two paints. Browser metrics: Undo p50 32.8 ms / p95 34.7 ms / max 35.8 ms; Redo p50 33.2 ms / p95 34.9 ms / max 35.3 ms; retained bytes 446,634; heap delta 1,268,729 bytes; injected failure determination-to-visible-error 0.2 ms. The two roots share one browser realm; the packaged Electron run below covers the actual host window and native application-menu dispatch.
+- Running-engine boundary: `BLUE_RUN_REAL_ENGINE=1 pnpm --filter @blue/app exec vitest run src/main/global-history-engine.integration.test.ts --reporter=dot` passed, 8 tests. The measured path uses `ProjectHistory.commit`, `ProjectHistory.undo`, and `ProjectHistory.redo` against independent timeline and Blue Live sessions; each timer ends only after the operation response and both positive engine readbacks. Engine metrics: Undo p50 0.265 ms / p95 0.402 ms / max 6.547 ms; Redo p50 0.266 ms / p95 0.414 ms / max 8.750 ms; 210 positive readbacks per performance kind; retained bytes 36,252; heap delta 4,778,496 bytes.
+- Native Electron boundary: `pnpm --filter @blue/app verify:global-history` passed against a freshly rebuilt `release/mac-arm64` directory package. The driver opens the fixture through `window.blueAPI.openFilePath`, edits through the production Project Properties input, and invokes the actual native application-menu Undo/Redo items in the packaged main process before checking the painted host window. Metrics: Undo p50 48.826 ms / p95 50.788 ms / max 56.609 ms; Redo p50 40.662 ms / p95 42.553 ms / max 51.323 ms; retained bytes 44,828; heap delta 0 bytes. OS-level physical accelerator delivery remains a manual-platform check from the checklist above, not an automated Playwright claim.
+- `pnpm --filter @blue/app test` passed: 458 files / 4,602 tests passed / 2 skipped. `pnpm test` also passed, including 14 native CTest checks, 183 data files / 1,809 tests, engine-client, Java, CLI, and 49 script checks.
+- `pnpm --filter @blue/app build:main`, `pnpm --filter @blue/app build:renderer`, `node --check packages/blue-app/scripts/verify-global-project-history.mjs`, targeted Prettier, and `git diff --check` passed. `pnpm lint` passed its audit, ESLint, package-lint, and typography stages; its final repository format check remains affected only by the pre-existing `HANDOFF-103-undo-redo.md` warning documented above.
+
+### Phase 17 planned follow-up (T117–T125, 2026-09-10)
+
+The handoff review added the remaining coverage and UX follow-ups to `tasks.md`. T121 is complete: score/layer/item color actions now submit canonical patches to the main-owned project history, and the obsolete renderer-local score-color store and its tests were removed. T117–T120 and T122–T125 remain planned; the native Windows/Linux and physical accelerator gates remain covered by T085's existing acceptance disposition.

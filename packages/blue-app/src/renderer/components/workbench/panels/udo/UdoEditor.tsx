@@ -3,13 +3,17 @@ import { Play } from 'lucide-react';
 import { cn } from '../../../../lib/cn';
 
 import type { UdoDefinitionSnapshot } from '../../../../../shared/project-editor';
+import type { ProjectDocumentCommitMetadata } from '../../../../../shared/project-history';
 import SelectedCodeEditor from '../editors/SelectedCodeEditor';
 import type { JavaBlueCsoundCompletionOptions } from '../editors/editor-adapter-types';
 import { AppSelect } from '../../../AppSelect';
 
 interface UdoEditorProps {
   udo: UdoDefinitionSnapshot | null;
-  onUpdateUdo: (patch: Partial<UdoDefinitionSnapshot>) => void;
+  onUpdateUdo: (
+    patch: Partial<UdoDefinitionSnapshot>,
+    metadata?: ProjectDocumentCommitMetadata,
+  ) => void;
   onConvertStyle: (style: 'CLASSIC' | 'MODERN') => void;
   onTestOpcode: () => void;
   /**
@@ -18,6 +22,7 @@ interface UdoEditorProps {
    * the project-global UDOs. Standalone library UDO editors omit this.
    */
   javaBlueCompletionOptions?: JavaBlueCsoundCompletionOptions;
+  historyScope?: 'project' | 'draft' | 'none';
 }
 
 type EditorTab = 'code' | 'comments';
@@ -28,6 +33,7 @@ export default function UdoEditor({
   onConvertStyle,
   onTestOpcode,
   javaBlueCompletionOptions,
+  historyScope = 'project',
 }: UdoEditorProps): React.ReactElement {
   const [activeTab, setActiveTab] = useState<EditorTab>('code');
   const [localCode, setLocalCode] = useState('');
@@ -80,17 +86,17 @@ export default function UdoEditor({
   );
 
   const handleCodeChange = useCallback(
-    (code: string) => {
+    (code: string, metadata?: ProjectDocumentCommitMetadata) => {
       setLocalCode(code);
-      onUpdateUdo({ code });
+      onUpdateUdo({ code }, metadata);
     },
     [onUpdateUdo],
   );
 
   const handleCommentsChange = useCallback(
-    (comments: string) => {
+    (comments: string, metadata?: ProjectDocumentCommitMetadata) => {
       setLocalComments(comments);
-      onUpdateUdo({ comments });
+      onUpdateUdo({ comments }, metadata);
     },
     [onUpdateUdo],
   );
@@ -224,6 +230,18 @@ export default function UdoEditor({
             ariaLabel="UDO code editor"
             mode="orc"
             javaBlueCompletionOptions={javaBlueCompletionOptions}
+            historyScope={historyScope}
+            typingGroupingMs={historyScope === 'project' ? 500 : 0}
+            historyMetadata={
+              historyScope === 'project'
+                ? {
+                    fieldId: `udo:${udo.name}:code`,
+                    gestureId: `project-text:udo:${udo.name}:code`,
+                    label: 'Edit UDO Code',
+                    phase: 'update',
+                  }
+                : undefined
+            }
           />
         ) : (
           <SelectedCodeEditor
@@ -232,6 +250,18 @@ export default function UdoEditor({
             ariaLabel="UDO comments editor"
             mode="text"
             placeholder="Add comments about this UDO..."
+            historyScope={historyScope}
+            typingGroupingMs={historyScope === 'project' ? 500 : 0}
+            historyMetadata={
+              historyScope === 'project'
+                ? {
+                    fieldId: `udo:${udo.name}:comments`,
+                    gestureId: `project-text:udo:${udo.name}:comments`,
+                    label: 'Edit UDO Comments',
+                    phase: 'update',
+                  }
+                : undefined
+            }
           />
         )}
       </div>

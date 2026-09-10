@@ -115,6 +115,7 @@ import type {
 } from '@blue/data';
 import type { MissingAudioAssetsSession } from '../missing-audio-assets';
 import type { ScoreInsertionLocation } from '../unified-library';
+import type { ProjectHistoryContext } from '../project-history';
 
 export interface ScoreTimeStateSnapshot {
   snapEnabled: boolean;
@@ -1359,6 +1360,7 @@ export interface EffectEditorRequest {
 
 export interface EffectEditorPatchRequest extends EffectEditorRequest {
   patch: EffectEditablePatch;
+  historyContext?: ProjectHistoryContext;
 }
 
 export interface ProjectEffectRef {
@@ -1456,7 +1458,13 @@ export interface MixerEffectPatch {
 }
 
 export type MixerFollowUpPatch =
-  | { type: 'duplicateChainEntry'; channelId: string; chain: MixerChainKind; entryId: string }
+  | {
+      type: 'duplicateChainEntry';
+      channelId: string;
+      chain: MixerChainKind;
+      entryId: string;
+      newEntryId?: string;
+    }
   | { type: 'copyChainEntry'; channelId: string; chain: MixerChainKind; entryId: string }
   | {
       type: 'pasteChainEntries';
@@ -1464,6 +1472,7 @@ export type MixerFollowUpPatch =
       chain: MixerChainKind;
       index?: number;
       payload: MixerChainClipboardPayload;
+      newEntryIds?: string[];
     }
   | {
       type: 'moveChainEntryAcrossChains';
@@ -1992,6 +2001,8 @@ export interface ProjectDocumentCommitReceipt {
     limitBytes: number;
     explanation: string;
   };
+  /** Present when a direct mutation proposal could not be consumed. */
+  error?: string;
 }
 
 export interface ProjectDocumentPatchContext {
@@ -2729,6 +2740,7 @@ export type InstrumentPatch = Partial<{
   name: string;
   enabled: boolean;
   comment: string;
+  comments: string;
   text: string;
   instrumentText: string;
   alwaysOnInstrumentText: string;
@@ -2758,6 +2770,7 @@ export interface TrackInstrumentEditorSnapshot {
 
 export interface TrackInstrumentEditorPatchRequest extends TrackInstrumentEditorRequest {
   readonly patch: InstrumentPatch;
+  readonly historyContext?: ProjectHistoryContext;
 }
 
 export type TrackInstrumentEditorPatchStatus = 'applied' | 'unchanged' | 'stale' | 'unavailable';
@@ -2886,9 +2899,12 @@ export interface BlueX7RuntimeUpdateBatch {
 }
 
 /** Effective-value readback request; only visible controls for open editors. */
+export type BlueX7PerformanceKind = 'timeline' | 'blueLive';
+
 export interface BlueX7EffectiveValuesRequest {
   target: BlueX7RuntimeTarget;
   projectSessionId: number;
+  performanceKind: BlueX7PerformanceKind;
   parameterIds: string[];
 }
 
@@ -2976,6 +2992,7 @@ export function isBlueX7EffectiveValuesRequest(
   return (
     isBlueX7RuntimeTarget(value.target) &&
     BLUE_X7_SESSION_ID(value.projectSessionId) &&
+    (value.performanceKind === 'timeline' || value.performanceKind === 'blueLive') &&
     Array.isArray(value.parameterIds) &&
     value.parameterIds.length > 0 &&
     value.parameterIds.length <= 151 &&

@@ -16,14 +16,18 @@ export default function ProjectInformationTab({
           <InputBase
             disabled={disabled}
             value={properties.title}
-            onChange={(title) => updateProjectProperties({ title })}
+            label="Title"
+            fieldId="project-properties:title"
+            onChange={(title, metadata) => updateProjectProperties({ title }, metadata)}
           />
         </FieldRow>
         <FieldRow label="Author">
           <InputBase
             disabled={disabled}
             value={properties.author}
-            onChange={(author) => updateProjectProperties({ author })}
+            label="Author"
+            fieldId="project-properties:author"
+            onChange={(author, metadata) => updateProjectProperties({ author }, metadata)}
           />
         </FieldRow>
       </div>
@@ -34,7 +38,9 @@ export default function ProjectInformationTab({
           placeholder="Project notes"
           disabled={disabled}
           className="min-h-0 flex-1 resize-none"
-          onChange={(notes) => updateProjectProperties({ notes })}
+          label="Notes"
+          fieldId="project-properties:notes"
+          onChange={(notes, metadata) => updateProjectProperties({ notes }, metadata)}
         />
       </div>
     </div>
