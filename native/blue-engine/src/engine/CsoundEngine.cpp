@@ -1348,8 +1348,9 @@ bool CsoundEngine::rebuildControlChannelCache() {
       continue;
     }
 
+    const bool isMeter = isMeterChannelName(channel.name);
     ChannelEntry *sharedMemoryEntry = nullptr;
-    if (shm_) {
+    if (shm_ && !isMeter) {
       sharedMemoryEntry = shm_->getOrCreateChannelEntry(
           channel.name, *static_cast<double *>(pointer));
     }

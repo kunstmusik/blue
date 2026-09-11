@@ -39,6 +39,7 @@ import { isTextEditingTarget } from '../../../../hooks/use-keyboard-shortcuts';
 import { ProjectLibraryDragSource } from '../../../libraries/ProjectLibraryDragSource';
 import { PopoutContextMenuPortal } from '../../../../hooks/host-portals';
 import { AppSelect } from '../../../AppSelect';
+import { MeterCanvas } from './MeterCanvas';
 
 const BLUE_MIXER_EFFECT_DRAG_MIME = 'application/x-blue-mixer-effect';
 
@@ -152,6 +153,7 @@ function MixerLevelSlider({
   value,
   min,
   max,
+  sliderHeight = MIXER_SLIDER_MIN_H,
   onChange,
   onInput,
   onDoubleClick,
@@ -161,6 +163,7 @@ function MixerLevelSlider({
   value: number;
   min: number;
   max: number;
+  sliderHeight?: number;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onInput: (e: React.FormEvent<HTMLInputElement>) => void;
   onDoubleClick: () => void;
@@ -168,28 +171,6 @@ function MixerLevelSlider({
   const svgRef = useRef<SVGSVGElement>(null);
   const hiddenInputRef = useRef<HTMLInputElement>(null);
   const sliderWrapperRef = useRef<HTMLDivElement>(null);
-  const [sliderHeight, setSliderHeight] = useState(MIXER_SLIDER_MIN_H);
-
-  useEffect(() => {
-    const sliderWrapper = sliderWrapperRef.current;
-    if (!sliderWrapper) return;
-
-    const updateSliderHeight = () => {
-      const nextHeight = Math.max(
-        MIXER_SLIDER_MIN_H,
-        Math.round(sliderWrapper.getBoundingClientRect().height),
-      );
-      setSliderHeight((currentHeight) =>
-        currentHeight === nextHeight ? currentHeight : nextHeight,
-      );
-    };
-
-    updateSliderHeight();
-    if (typeof ResizeObserver === 'undefined') return;
-    const resizeObserver = new ResizeObserver(updateSliderHeight);
-    resizeObserver.observe(sliderWrapper);
-    return () => resizeObserver.disconnect();
-  }, []);
 
   const range = max - min || 1;
   const pct = Math.max(0, Math.min(1, (value - min) / range));
@@ -278,8 +259,8 @@ function MixerLevelSlider({
   return (
     <div
       ref={sliderWrapperRef}
-      className="mixer-level-slider-wrapper rounded-xs has-[:focus-visible]:outline-hidden has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-app-focus"
-      style={{ width: MIXER_SLIDER_WIDTH }}
+      className="mixer-level-slider-wrapper flex-none rounded-xs has-[:focus-visible]:outline-hidden has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-app-focus"
+      style={{ width: MIXER_SLIDER_WIDTH, height: sliderHeight }}
       onMouseDown={handleMouseDown}
     >
       <svg
@@ -826,6 +807,29 @@ export default function ChannelStrip({
   const [sendEditorChain, setSendEditorChain] = useState<MixerChainKind>('pre');
   const [effectDialog, setEffectDialog] = useState<EffectDialogState | null>(null);
   const nameRef = useRef<HTMLDivElement>(null);
+  const levelControlsRef = useRef<HTMLDivElement>(null);
+  const [sliderHeight, setSliderHeight] = useState(MIXER_SLIDER_MIN_H);
+
+  useEffect(() => {
+    const el = levelControlsRef.current;
+    if (!el) return;
+
+    const updateSliderHeight = () => {
+      const nextHeight = Math.max(
+        MIXER_SLIDER_MIN_H,
+        Math.round(el.getBoundingClientRect().height),
+      );
+      setSliderHeight((currentHeight) =>
+        currentHeight === nextHeight ? currentHeight : nextHeight,
+      );
+    };
+
+    updateSliderHeight();
+    if (typeof ResizeObserver === 'undefined') return;
+    const resizeObserver = new ResizeObserver(updateSliderHeight);
+    resizeObserver.observe(el);
+    return () => resizeObserver.disconnect();
+  }, []);
 
   const sliderValue = getSliderValue(channel.level);
   const canRename = isSubChannel || channel.association != null;
@@ -1067,16 +1071,23 @@ export default function ChannelStrip({
 
       <div className="mixer-level-section">
         <div className="mixer-level-label">Level</div>
-        <MixerLevelSlider
-          channelName={displayName}
-          levelDb={channel.level}
-          value={sliderValue}
-          min={-960}
-          max={240}
-          onChange={handleLevelChange}
-          onInput={handleLevelInput}
-          onDoubleClick={handleSliderDoubleClick}
-        />
+        <div
+          ref={levelControlsRef}
+          className="mixer-level-controls flex flex-row items-center justify-center gap-1.5 flex-1 min-h-[60px] w-full overflow-hidden"
+        >
+          <MixerLevelSlider
+            channelName={displayName}
+            levelDb={channel.level}
+            sliderHeight={sliderHeight}
+            value={sliderValue}
+            min={-960}
+            max={240}
+            onChange={handleLevelChange}
+            onInput={handleLevelInput}
+            onDoubleClick={handleSliderDoubleClick}
+          />
+          <MeterCanvas height={sliderHeight} stripId={channel.id} isMaster={isMaster} />
+        </div>
         <div
           className="mixer-level-value"
           onDoubleClick={handleLevelDoubleClick}

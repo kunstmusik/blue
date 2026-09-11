@@ -24,6 +24,7 @@ import { useOutputStore } from '../stores/output-store';
 import { useBlueLiveStore } from '../stores/blue-live-store';
 import { useRenderToDiskStore } from '../stores/render-to-disk-store';
 import { useLayoutSettingsStore } from '../stores/layout-settings-store';
+import { meterStore } from '../stores/meter-store';
 import {
   hasAuditionEligibleSelection,
   reconcileSelectionWithCanonicalScore,
@@ -175,6 +176,7 @@ export function useIPCListeners(): void {
 
   useEffect(() => {
     if (!window.blueAPI) return;
+    const unsubMeter = meterStore.init();
     const pendingRuntimeOutcomes = new Map<string, ProjectRuntimeOutcomeEvent[]>();
     const runtimeKey = (documentId: string, revision: number) => `${documentId}:${revision}`;
     const applyRuntimeOutcomeEvent = (event: ProjectRuntimeOutcomeEvent) => {
@@ -233,6 +235,7 @@ export function useIPCListeners(): void {
     const unsubProjectClosed = window.blueAPI.onProjectClosed(() => {
       resetPlayback();
       resetBlueLive();
+      meterStore.reset();
       pendingRuntimeOutcomes.clear();
       useScoreSelectionStore.getState().clearSelection();
       useProjectStore.getState().clearProject();
@@ -243,6 +246,16 @@ export function useIPCListeners(): void {
 
     const unsubPlaybackStatus = window.blueAPI.onPlaybackStatus((status) => {
       setStatus(status);
+      if (
+        status === 'stopped' ||
+        status === 'error' ||
+        (typeof status === 'object' &&
+          status !== null &&
+          'playbackRunning' in status &&
+          !(status as { playbackRunning: boolean }).playbackRunning)
+      ) {
+        meterStore.reset();
+      }
     });
 
     const unsubPlaybackClock = window.blueAPI.onPlaybackClock((clock) => {
@@ -481,6 +494,7 @@ export function useIPCListeners(): void {
       unsubRuntimeOutcome?.();
       unsubPrepareBoundary?.();
       unsubReleaseBoundary?.();
+      unsubMeter();
       void window.blueAPI
         .unregisterHistoryParticipant?.({ contextId: getProjectHistoryParticipantContextId() })
         ?.catch(() => undefined);

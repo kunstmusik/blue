@@ -89,6 +89,7 @@ import {
   APP_METADATA_GET_CHANNEL,
   type AppMetadata,
 } from '../shared/app-metadata';
+import type { MeterBindingMapPayload, MeterFramePayload } from '../shared/meter-types';
 import type { EngineOutputPayload } from '../shared/io-provider';
 import {
   REPL_CONSOLE_CLOSE_CHANNEL,
@@ -1025,6 +1026,29 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.on('playback-error', handler);
     return () => {
       ipcRenderer.removeListener('playback-error', handler);
+    };
+  },
+  onMeterBindingMap: (callback: (map: MeterBindingMapPayload) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, map: unknown) =>
+      callback(map as MeterBindingMapPayload);
+    ipcRenderer.on('meter-binding-map', handler);
+    return () => {
+      ipcRenderer.removeListener('meter-binding-map', handler);
+    };
+  },
+  onMeterFrame: (callback: (frame: MeterFramePayload) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, frame: unknown) =>
+      callback(frame as MeterFramePayload);
+    ipcRenderer.on('meter-frame', handler);
+    return () => {
+      ipcRenderer.removeListener('meter-frame', handler);
+    };
+  },
+  onMeterReset: (callback: () => void) => {
+    const handler = () => callback();
+    ipcRenderer.on('meter-reset', handler);
+    return () => {
+      ipcRenderer.removeListener('meter-reset', handler);
     };
   },
   onNativeMenuCommand: (callback: (command: NativeMenuCommand) => void) => {

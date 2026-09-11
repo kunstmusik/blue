@@ -47,6 +47,24 @@ export interface CompiledBlueX7Binding {
   domainEpoch: string;
 }
 
+/**
+ * Disposable compiled mixer meter binding (Spec 104).
+ * Connects compile-time CSD channel key to Channel object, UI strip ID, and category.
+ * Derived render output only; never serialized into `.blue` XML.
+ */
+export interface CompiledMeterChannelBinding {
+  readonly kind: 'source' | 'sub' | 'master';
+  readonly csdKey: string;
+  readonly stripId: string;
+  readonly displayName: string;
+  readonly channel: Channel;
+}
+
+export interface MeterBindingMap {
+  readonly entries: readonly CompiledMeterChannelBinding[];
+  readonly nchnls: number;
+}
+
 /** Render-scoped registry key for compiled BlueX7 bindings. */
 export const BLUE_X7_BINDINGS_KEY = Symbol('blueX7.bindings');
 

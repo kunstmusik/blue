@@ -26,7 +26,12 @@ export interface EngineControlTrafficObservation {
   readonly writeCommands: number;
   readonly writeEntries: number;
 }
-import { hasEngineFeature, OWNER_LIVENESS_FEATURE } from '@blue/engine-client/capabilities';
+import {
+  hasEngineFeature,
+  OWNER_LIVENESS_FEATURE,
+  MIXER_METERING_FEATURE,
+} from '@blue/engine-client/capabilities';
+import type { MeterBindingMapPayload } from '../shared/meter-types';
 import {
   allocateTcpEndpointPair,
   type EndpointAllocationOptions,
@@ -229,6 +234,8 @@ export class EngineBridge {
   private workingDirectory: string | null = null;
   private lastDiagnosticReport: string | null = null;
   private ownerLivenessSupported = false;
+  private mixerMeteringSupported = false;
+  private unsubscribeMeters: (() => void) | null = null;
   private readonly engineSessionKind: EngineSessionKind;
   private readonly engineRuntime: EngineRuntimeService | null;
   private readonly automationSyncIntervalMs = 33;
@@ -298,7 +305,29 @@ export class EngineBridge {
   private setPlayingState(running: boolean): void {
     if (this.isPlaying === running) return;
     this.isPlaying = running;
+    if (!running) {
+      this.unsubscribeMeters?.();
+      this.unsubscribeMeters = null;
+      broadcastToWorkbenchWindows('meter-reset', {});
+    }
     this.playbackStateChangeCallback?.(running);
+  }
+
+  async probeMixerMeteringSupport(): Promise<boolean> {
+    if (this.engineRuntime) {
+      const probeResult = await this.engineRuntime.probe();
+      if (probeResult.ok && probeResult.report) {
+        this.mixerMeteringSupported = hasEngineFeature(
+          probeResult.report.engine,
+          MIXER_METERING_FEATURE,
+        );
+      }
+    }
+    return this.mixerMeteringSupported;
+  }
+
+  isMixerMeteringSupported(): boolean {
+    return this.mixerMeteringSupported;
   }
 
   setWorkingDirectory(directory?: string | null): void {
@@ -335,6 +364,8 @@ export class EngineBridge {
     this.awaitingPlaybackTerminalState = false;
     this.pendingPolledTerminalState = null;
     this.lastEngineStateSequence = 0;
+    this.unsubscribeMeters?.();
+    this.unsubscribeMeters = null;
   }
 
   private startStatePolling(sessionId: number): void {
@@ -568,8 +599,12 @@ export class EngineBridge {
       this.ownerLivenessSupported = Boolean(
         probeResult.report && hasEngineFeature(probeResult.report.engine, OWNER_LIVENESS_FEATURE),
       );
+      this.mixerMeteringSupported = Boolean(
+        probeResult.report && hasEngineFeature(probeResult.report.engine, MIXER_METERING_FEATURE),
+      );
     } else {
       this.ownerLivenessSupported = false;
+      this.mixerMeteringSupported = false;
       enginePath = this.findEngine();
     }
 
@@ -900,6 +935,7 @@ export class EngineBridge {
     automationTiming?: AutomationTimingContext,
     workingDirectory?: string | null,
     extraOptions: string[] = [],
+    meterBindingMap?: MeterBindingMapPayload,
   ): Promise<EngineOperationResult> {
     if (this.playbackLock) {
       console.warn('[EngineBridge] Playback already in progress, ignoring');
@@ -1022,6 +1058,17 @@ export class EngineBridge {
       this.pendingPolledTerminalState = null;
       this.lastEngineStateSequence = 0;
       this.startStatePolling(this.playbackSessionId);
+
+      if (this.mixerMeteringSupported) {
+        if (meterBindingMap) {
+          broadcastToWorkbenchWindows('meter-binding-map', meterBindingMap);
+        }
+        this.unsubscribeMeters?.();
+        this.unsubscribeMeters = client.onEngineMeters((frame) => {
+          broadcastToWorkbenchWindows('meter-frame', frame);
+        });
+      }
+
       this.sendPlaybackClock({
         sessionId: this.playbackSessionId,
         sampleFrames: 0,

@@ -87,6 +87,8 @@ import {
   toBlueLiveCSD,
 } from './blue-data/csd-policy';
 import type { RenderCsdResult } from './blue-data/csd-policy';
+export type { RenderCsdResult };
+export type { CompiledMeterChannelBinding, MeterBindingMap } from './compile-data';
 import { processOnLoad, processOnLoadAsync, usesJavaRuntime } from './blue-data/runtime-policy';
 
 export class BlueData implements BlueDataObject, DeepCopyable<BlueData>, HistoryCopyable<BlueData> {
@@ -307,19 +309,20 @@ export class BlueData implements BlueDataObject, DeepCopyable<BlueData>, History
     return (await buildStandardCSDAsync(this, 'disk', session, runtimeClient)).csdText;
   }
 
-  toRealtimePlaybackCSD(session?: JavaScriptSession): RenderCsdResult {
-    return buildStandardCSD(this, 'realtime', session);
+  toRealtimePlaybackCSD(session?: JavaScriptSession, emitMetering = false): RenderCsdResult {
+    return buildStandardCSD(this, 'realtime', session, emitMetering);
   }
 
   async toRealtimePlaybackCSDAsync(
     session?: JavaScriptSession,
     runtimeClient?: JavaRuntimeClientContract | null,
+    emitMetering = false,
   ): Promise<RenderCsdResult> {
-    return buildStandardCSDAsync(this, 'realtime', session, runtimeClient);
+    return buildStandardCSDAsync(this, 'realtime', session, runtimeClient, emitMetering);
   }
 
-  toBlueLiveCSD(session?: JavaScriptSession): RenderCsdResult {
-    return toBlueLiveCSD(this, session);
+  toBlueLiveCSD(session?: JavaScriptSession, emitMetering = false): RenderCsdResult {
+    return toBlueLiveCSD(this, session, emitMetering);
   }
 
   processOnLoad(session?: JavaScriptSession): void {

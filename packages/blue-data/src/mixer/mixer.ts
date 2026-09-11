@@ -103,7 +103,11 @@ export class Mixer implements BlueDataObject {
    *   ...
    *   ga_bluesub_Master_0 init 0
    */
-  getInitStatements(channelIdAssignments: Map<Channel, number>, nchnls: number): string {
+  getInitStatements(
+    channelIdAssignments: Map<Channel, number>,
+    nchnls: number,
+    emitMetering = false,
+  ): string {
     const lines: string[] = [];
 
     // Source channels: ga_bluemix_{id}_{ch}
@@ -128,6 +132,34 @@ export class Mixer implements BlueDataObject {
     // Master channel: ga_bluesub_Master_{ch}
     for (let ch = 0; ch < nchnls; ch++) {
       lines.push(`ga_bluesub_Master_${ch}\tinit\t0`);
+    }
+
+    if (emitMetering) {
+      for (const channel of this.getAllSourceChannels()) {
+        const id = channelIdAssignments.get(channel);
+        if (id === undefined) continue;
+        for (let ch = 0; ch < nchnls; ch++) {
+          lines.push(`chn_k\t"bm_meter_rms_${id}_${ch}", 2`);
+          lines.push(`chn_k\t"bm_meter_peak_${id}_${ch}", 2`);
+        }
+      }
+
+      const subMeterKeys = buildSubChannelMeterKeys(Array.from(this._subChannels));
+      for (const subChannel of this._subChannels) {
+        const id = channelIdAssignments.get(subChannel);
+        if (id === undefined) continue;
+        const key =
+          subMeterKeys.get(subChannel) ?? `sub_${subChannel.getName().replace(/\s+/g, '_')}`;
+        for (let ch = 0; ch < nchnls; ch++) {
+          lines.push(`chn_k\t"bm_meter_rms_${key}_${ch}", 2`);
+          lines.push(`chn_k\t"bm_meter_peak_${key}_${ch}", 2`);
+        }
+      }
+
+      for (let ch = 0; ch < nchnls; ch++) {
+        lines.push(`chn_k\t"bm_meter_rms_sub_Master_${ch}", 2`);
+        lines.push(`chn_k\t"bm_meter_peak_sub_Master_${ch}", 2`);
+      }
     }
 
     return lines.join('\n');
@@ -246,4 +278,20 @@ export class Mixer implements BlueDataObject {
     copy._subChannelDependencies = new Set(this._subChannelDependencies);
     return copy;
   }
+}
+
+export function buildSubChannelMeterKeys(subChannels: Channel[]): Map<Channel, string> {
+  const map = new Map<Channel, string>();
+  const usedKeys = new Set<string>();
+  for (const subChannel of subChannels) {
+    const base = `sub_${subChannel.getName().replace(/\s+/g, '_')}`;
+    let key = base;
+    let counter = 2;
+    while (usedKeys.has(key)) {
+      key = `${base}_${counter++}`;
+    }
+    usedKeys.add(key);
+    map.set(subChannel, key);
+  }
+  return map;
 }

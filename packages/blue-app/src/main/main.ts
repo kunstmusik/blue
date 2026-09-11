@@ -29,7 +29,9 @@ import {
   convertOrcScoToBlue,
   CSDImportMode,
   buildMidiImportProject,
+  type MeterBindingMap,
 } from '@blue/data';
+import type { MeterBindingMapPayload } from '../shared/meter-types';
 import { openSettingsWindow, resolveSettingsWindowClose } from './settings-window';
 import { closeAboutWindow, openAboutWindow, syncAboutWindowZoom } from './about-window';
 import { resolveAppMetadata } from './app-metadata';
@@ -4002,6 +4004,43 @@ async function applyRuntimeWorkOperation(
   return { status: 'applied' };
 }
 
+function buildMeterBindingMapPayload(
+  data: BlueData,
+  meterBindingMap: MeterBindingMap,
+): MeterBindingMapPayload {
+  const liveMixer = data.getMixer();
+  const liveSubChannels = liveMixer.getSubChannels();
+  const liveSourceChannels = liveMixer.getAllSourceChannels();
+
+  const entries = meterBindingMap.entries.map((entry) => {
+    let stripId = entry.stripId;
+    if (entry.kind === 'master') {
+      stripId = 'master';
+    } else if (entry.kind === 'sub') {
+      const matchingSub = liveSubChannels.find((c) => c.getName() === entry.displayName);
+      if (matchingSub) {
+        stripId = getMixerChannelSnapshotId(matchingSub);
+      }
+    } else if (entry.kind === 'source') {
+      const matchingSource = liveSourceChannels.find((c) => c.getName() === entry.displayName);
+      if (matchingSource) {
+        stripId = getMixerChannelSnapshotId(matchingSource);
+      }
+    }
+    return {
+      kind: entry.kind,
+      csdKey: entry.csdKey,
+      stripId,
+      displayName: entry.displayName,
+    };
+  });
+
+  return {
+    entries,
+    nchnls: meterBindingMap.nchnls,
+  };
+}
+
 async function startPlayback(
   data: BlueData | null = getCurrentData(),
   forceProcessOnLoad = false,
@@ -4024,12 +4063,21 @@ async function startPlayback(
 
     await ensureJavaScriptEngine();
 
+    const emitMetering = (await engineBridge?.probeMixerMeteringSupport()) ?? false;
     const javaRuntimeClient = await runProjectOnLoad(data, forceProcessOnLoad);
     const render = javaRuntimeClient
-      ? await data.toRealtimePlaybackCSDAsync(javaScriptSession ?? undefined, javaRuntimeClient)
-      : data.toRealtimePlaybackCSD(javaScriptSession ?? undefined);
+      ? await data.toRealtimePlaybackCSDAsync(
+          javaScriptSession ?? undefined,
+          javaRuntimeClient,
+          emitMetering,
+        )
+      : data.toRealtimePlaybackCSD(javaScriptSession ?? undefined, emitMetering);
     const csd = render.csdText;
     const parameters = render.parameters;
+    const meterBindingMapPayload =
+      render.meterBindingMap && emitMetering
+        ? buildMeterBindingMapPayload(data, render.meterBindingMap)
+        : undefined;
     const runtimeParameterSync = syncCompiledRuntimeParameterNames(
       data.getArrangement(),
       data.getMixer(),
@@ -4068,6 +4116,7 @@ async function startPlayback(
         automationTiming,
         projectDirectory,
         extraRealtimeOptions,
+        meterBindingMapPayload,
       );
       if (!result.ok) {
         // Invalid orchestra/score is a project-source error. The engine has

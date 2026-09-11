@@ -16,6 +16,8 @@ export const AUTOMATION_DECIMAL_FEATURE = 'automation-decimal-v1';
 export const OWNER_LIVENESS_FEATURE = 'owner-liveness-v1';
 /** Declared by engines supporting bounded batch channel set/get commands. */
 export const BATCH_CHANNELS_FEATURE = 'batch-channels-v1';
+/** Declared by engines supporting realtime mixer audio metering publication. */
+export const MIXER_METERING_FEATURE = 'mixer-metering-v1';
 
 export interface EngineCapabilities {
   schemaVersion: 1;

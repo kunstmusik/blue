@@ -23,6 +23,11 @@ constexpr size_t CHANNEL_NAME_SIZE = 64;
 constexpr size_t MAX_CHANNELS = 256;
 constexpr uint32_t SHM_MAGIC = 0x454C5542;  // "BLUE"
 constexpr uint32_t SHM_VERSION = 1;
+constexpr const char* METER_CHANNEL_PREFIX = "bm_meter_";
+
+inline bool isMeterChannelName(const char* name) {
+    return name != nullptr && std::strncmp(name, METER_CHANNEL_PREFIX, 9) == 0;
+}
 
 struct ShmHeader {
     uint32_t magic;

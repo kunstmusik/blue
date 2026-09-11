@@ -202,7 +202,10 @@ describe('MixerPanel', () => {
     const heightSpy = vi
       .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
       .mockImplementation(function (this: HTMLElement) {
-        if (this.classList.contains('mixer-level-slider-wrapper')) {
+        if (
+          this.classList.contains('mixer-level-slider-wrapper') ||
+          this.classList.contains('mixer-level-controls')
+        ) {
           return { height: 180 } as DOMRect;
         }
         return { height: 0 } as DOMRect;
@@ -220,6 +223,11 @@ describe('MixerPanel', () => {
           slider.getAttribute('height'),
         ),
       ).toEqual(['180', '180']);
+      expect(
+        [...container.querySelectorAll('.mixer-level-controls canvas')].map(
+          (canvas) => (canvas as HTMLElement).style.height,
+        ),
+      ).toEqual(['180px', '180px']);
     } finally {
       act(() => {
         root.unmount();

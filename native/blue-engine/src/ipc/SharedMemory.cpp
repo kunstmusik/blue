@@ -279,6 +279,10 @@ ChannelEntry* SharedMemory::findChannel(const std::string& name) {
 }
 
 ChannelEntry* SharedMemory::findOrCreateChannel(const std::string& name) {
+    if (isMeterChannelName(name.c_str())) {
+        return nullptr;
+    }
+
     ChannelEntry* entry = findChannel(name);
     if (entry) return entry;
 

@@ -10,6 +10,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <map>
 #include <string>
 #include <utility>
 #include <vector>
@@ -119,6 +120,29 @@ void appendDoubleLE(std::string& output, double value) {
     uint64_t bits = 0;
     std::memcpy(&bits, &value, sizeof(bits));
     appendUint64LE(output, bits);
+}
+
+void writeUint16LE(char* dst, uint16_t value) {
+    auto* u = reinterpret_cast<unsigned char*>(dst);
+    u[0] = static_cast<unsigned char>(value & 0xffu);
+    u[1] = static_cast<unsigned char>((value >> 8) & 0xffu);
+}
+
+void writeUint32LE(char* dst, uint32_t value) {
+    auto* u = reinterpret_cast<unsigned char*>(dst);
+    u[0] = static_cast<unsigned char>(value & 0xffu);
+    u[1] = static_cast<unsigned char>((value >> 8) & 0xffu);
+    u[2] = static_cast<unsigned char>((value >> 16) & 0xffu);
+    u[3] = static_cast<unsigned char>((value >> 24) & 0xffu);
+}
+
+void writeDoubleLE(char* dst, double value) {
+    uint64_t bits = 0;
+    std::memcpy(&bits, &value, sizeof(bits));
+    auto* u = reinterpret_cast<unsigned char*>(dst);
+    for (size_t i = 0; i < 8; ++i) {
+        u[i] = static_cast<unsigned char>((bits >> (i * 8)) & 0xffu);
+    }
 }
 
 // Documented protocol maximums for batch channel commands (batch-channels-v1).
@@ -270,6 +294,7 @@ bool ZmqHandler::bind(const std::string& controlEndpoint, const std::string& pub
 
 bool ZmqHandler::processOne() {
     publishPendingStateSnapshots();
+    publishMetersIfDue();
 
     if (shutdownRequested_.load(std::memory_order_relaxed)) {
         return false;
@@ -283,11 +308,12 @@ bool ZmqHandler::processOne() {
 
     // ZeroMQ sockets are thread-affine. A bounded poll keeps requestShutdown
     // safe from signal and owner-monitor threads without sending on an
-    // inproc socket owned by this thread.
-    int rc = zmq_poll(&item, 1, 50);
+    // inproc socket owned by this thread. A 25ms poll ensures ~35Hz meter pacing.
+    int rc = zmq_poll(&item, 1, 25);
     if (rc == -1) {
         if (zmq_errno() == EINTR) {
             publishPendingStateSnapshots();
+            publishMetersIfDue();
             return !shutdownRequested_.load(std::memory_order_relaxed);
         }
         return false;
@@ -295,6 +321,7 @@ bool ZmqHandler::processOne() {
 
     if (!(item.revents & ZMQ_POLLIN)) {
         publishPendingStateSnapshots();
+        publishMetersIfDue();
         return !shutdownRequested_.load(std::memory_order_relaxed);
     }
 
@@ -307,6 +334,7 @@ bool ZmqHandler::processOne() {
         zmq_msg_close(&msg);
         if (zmq_errno() == EAGAIN) {
             publishPendingStateSnapshots();
+            publishMetersIfDue();
             return !shutdownRequested_.load(std::memory_order_relaxed);
         }
         std::fprintf(stderr, "Receive error: %s\n", zmq_strerror(zmq_errno()));
@@ -850,6 +878,176 @@ std::string ZmqHandler::escapeJsonString(const std::string &value) {
     }
 
     return escaped;
+}
+
+void ZmqHandler::publishMetersIfDue() {
+    if (!pubSocket_) {
+        return;
+    }
+
+    const auto snapshot = engine_.getStateSnapshot();
+    if (snapshot.state != EngineLifecycleState::RUNNING || snapshot.sampleRate <= 0.0) {
+        lastMeterSampleFrames_ = -1;
+        return;
+    }
+
+    const int64_t currentSamples = snapshot.sampleFrames;
+    // Pace meter updates at ~35 Hz based on audio time (sample count)
+    const int64_t minSampleInterval = static_cast<int64_t>(snapshot.sampleRate / 35.0);
+
+    if (lastMeterSampleFrames_ >= 0 && (currentSamples - lastMeterSampleFrames_) < minSampleInterval) {
+        return;
+    }
+    lastMeterSampleFrames_ = currentSamples;
+
+    const auto bindings = engine_.getChannelBindings();
+    if (!bindings) {
+        return;
+    }
+
+    if (bindings->bindingGeneration != lastMeterBindingGeneration_) {
+        rebuildMeterChannelCache(bindings.get());
+        lastMeterBindingGeneration_ = bindings->bindingGeneration;
+    }
+
+    if (cachedMeterGroups_.empty() || cachedMeterNchnls_ <= 0) {
+        return;
+    }
+
+    publishMeterFrame();
+}
+
+void ZmqHandler::rebuildMeterChannelCache(const RuntimeChannelBindingSnapshot* bindings) {
+    cachedMeterGroups_.clear();
+    cachedMeterNchnls_ = 0;
+    if (!bindings) {
+        return;
+    }
+
+    static constexpr const char* RMS_PREFIX = "bm_meter_rms_";
+    static constexpr const char* PEAK_PREFIX = "bm_meter_peak_";
+    static constexpr size_t RMS_LEN = 13;
+    static constexpr size_t PEAK_LEN = 14;
+
+    struct ChannelSlot {
+        bool isPeak = false;
+        int ch = 0;
+        double* pointer = nullptr;
+    };
+    std::map<std::string, std::vector<ChannelSlot>> groups;
+    int maxCh = 0;
+
+    for (const auto& [name, state] : bindings->controlChannels) {
+        if (!state.pointer) {
+            continue;
+        }
+
+        bool isPeak = false;
+        size_t prefixLen = 0;
+        if (name.rfind(RMS_PREFIX, 0) == 0) {
+            isPeak = false;
+            prefixLen = RMS_LEN;
+        } else if (name.rfind(PEAK_PREFIX, 0) == 0) {
+            isPeak = true;
+            prefixLen = PEAK_LEN;
+        } else {
+            continue;
+        }
+
+        const size_t lastUnderscore = name.rfind('_');
+        if (lastUnderscore == std::string::npos || lastUnderscore <= prefixLen) {
+            continue;
+        }
+
+        const std::string csdKey = name.substr(prefixLen, lastUnderscore - prefixLen);
+        int ch = 0;
+        try {
+            ch = std::stoi(name.substr(lastUnderscore + 1));
+        } catch (...) {
+            continue;
+        }
+        if (ch < 0 || ch >= 64) {
+            continue;
+        }
+
+        if (ch > maxCh) {
+            maxCh = ch;
+        }
+
+        groups[csdKey].push_back(ChannelSlot{isPeak, ch, state.pointer});
+    }
+
+    if (groups.empty()) {
+        return;
+    }
+
+    cachedMeterNchnls_ = maxCh + 1;
+    cachedMeterGroups_.reserve(groups.size());
+
+    for (auto& [csdKey, slots] : groups) {
+        MeterChannelGroup group;
+        group.csdKey = csdKey;
+        group.rmsPointers.assign(cachedMeterNchnls_, nullptr);
+        group.peakPointers.assign(cachedMeterNchnls_, nullptr);
+
+        for (const auto& slot : slots) {
+            if (slot.ch < cachedMeterNchnls_) {
+                if (slot.isPeak) {
+                    group.peakPointers[slot.ch] = slot.pointer;
+                } else {
+                    group.rmsPointers[slot.ch] = slot.pointer;
+                }
+            }
+        }
+        cachedMeterGroups_.push_back(std::move(group));
+    }
+}
+
+void ZmqHandler::publishMeterFrame() {
+    const uint16_t channelCount = static_cast<uint16_t>(cachedMeterGroups_.size());
+    const uint16_t nchnls = static_cast<uint16_t>(cachedMeterNchnls_);
+    const size_t entrySize = 64 + nchnls * 8 * 2;
+    const size_t totalSize = 8 + channelCount * entrySize;
+
+    std::vector<char> buffer(totalSize, 0);
+    const uint32_t seq = ++meterSequence_;
+
+    writeUint32LE(buffer.data() + 0, seq);
+    writeUint16LE(buffer.data() + 4, channelCount);
+    writeUint16LE(buffer.data() + 6, nchnls);
+
+    size_t offset = 8;
+    for (const auto& group : cachedMeterGroups_) {
+        std::strncpy(buffer.data() + offset, group.csdKey.c_str(), 63);
+        buffer[offset + 63] = '\0';
+
+        size_t valOffset = offset + 64;
+        // RMS values
+        for (int c = 0; c < nchnls; ++c) {
+            double v = group.rmsPointers[c] ? *group.rmsPointers[c] : 0.0;
+            if (!std::isfinite(v) || v < 0.0) {
+                v = 0.0;
+            }
+            writeDoubleLE(buffer.data() + valOffset, v);
+            valOffset += 8;
+        }
+
+        // Peak values
+        for (int c = 0; c < nchnls; ++c) {
+            double v = group.peakPointers[c] ? *group.peakPointers[c] : 0.0;
+            if (!std::isfinite(v) || v < 0.0) {
+                v = 0.0;
+            }
+            writeDoubleLE(buffer.data() + valOffset, v);
+            valOffset += 8;
+        }
+
+        offset += entrySize;
+    }
+
+    static constexpr const char* METER_TOPIC = "engine.meters";
+    zmq_send(pubSocket_, METER_TOPIC, std::strlen(METER_TOPIC), ZMQ_SNDMORE);
+    zmq_send(pubSocket_, buffer.data(), buffer.size(), 0);
 }
 
 }  // namespace blue

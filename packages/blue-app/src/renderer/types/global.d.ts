@@ -520,6 +520,13 @@ declare global {
       ) => () => void;
       onPlaybackClock: (cb: (clock: PlaybackClockSnapshot) => void) => () => void;
       onPlaybackError: (cb: (error: string) => void) => () => void;
+      onMeterBindingMap: (
+        cb: (map: import('../../shared/meter-types').MeterBindingMapPayload) => void,
+      ) => () => void;
+      onMeterFrame: (
+        cb: (frame: import('../../shared/meter-types').MeterFramePayload) => void,
+      ) => () => void;
+      onMeterReset: (cb: () => void) => () => void;
       onNativeMenuCommand: (cb: (command: NativeMenuCommand) => void) => () => void;
       onSaveComplete: (cb: (info: { filePath: string }) => void) => () => void;
       onSaveError: (cb: (error: string) => void) => () => void;

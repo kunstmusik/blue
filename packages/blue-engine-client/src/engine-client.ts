@@ -9,10 +9,12 @@ import {
   BLUE_ENGINE_PROTOCOL_VERSION,
   AUTOMATION_DECIMAL_FEATURE,
   BATCH_CHANNELS_FEATURE,
+  MIXER_METERING_FEATURE,
   decodeEngineCapabilitiesJson,
   EngineCapabilities,
   hasEngineFeature,
 } from './capabilities';
+import { decodeMeterFrame, type DecodedMeterFrame } from './meter-codec';
 import {
   encodeSetChannel,
   encodeGetChannel,
@@ -27,6 +29,7 @@ import {
   AutomationListEntry,
   EngineStateSnapshot,
   ENGINE_STATE_TOPIC,
+  ENGINE_METERS_TOPIC,
   CMD_CREATE_ENGINE,
   CMD_COMPILE_ORC,
   CMD_READ_SCORE,
@@ -69,6 +72,7 @@ export interface EngineClientOptions {
 }
 
 export type EngineStateListener = (snapshot: EngineStateSnapshot) => void;
+export type EngineMeterListener = (frame: DecodedMeterFrame) => void;
 
 interface EngineResponse {
   ok: boolean;
@@ -83,6 +87,7 @@ export class EngineClient {
   private pubEndpoint: string;
   private timeout: number;
   private stateListeners = new Set<EngineStateListener>();
+  private meterListeners = new Set<EngineMeterListener>();
   private subscriptionLoop: Promise<void> | null = null;
   private subscriptionClosed = false;
   private subscriptionError: Error | null = null;
@@ -305,6 +310,9 @@ export class EngineClient {
         };
       }
       this.verifiedCapabilities = capabilityResult.capabilities;
+      if (hasEngineFeature(capabilityResult.capabilities, MIXER_METERING_FEATURE)) {
+        this.subscribeMeters();
+      }
     }
 
     // If engine already exists, destroy it first
@@ -376,6 +384,25 @@ export class EngineClient {
     return () => {
       this.stateListeners.delete(listener);
     };
+  }
+
+  onEngineMeters(listener: EngineMeterListener): () => void {
+    this.meterListeners.add(listener);
+    return () => {
+      this.meterListeners.delete(listener);
+    };
+  }
+
+  subscribeMeters(): void {
+    if (this.subscriber && !this.subscriptionClosed) {
+      this.subscriber.subscribe(ENGINE_METERS_TOPIC);
+    }
+  }
+
+  unsubscribeMeters(): void {
+    if (this.subscriber && !this.subscriptionClosed) {
+      this.subscriber.unsubscribe(ENGINE_METERS_TOPIC);
+    }
   }
 
   /**
@@ -606,17 +633,32 @@ export class EngineClient {
         }
 
         const topic = topicFrame.toString('utf-8');
-        if (topic !== ENGINE_STATE_TOPIC) {
-          continue;
-        }
-
-        const snapshot = decodeEngineStatePayload(payloadFrame);
-        for (const listener of this.stateListeners) {
+        if (topic === ENGINE_STATE_TOPIC) {
+          const snapshot = decodeEngineStatePayload(payloadFrame);
+          for (const listener of this.stateListeners) {
+            try {
+              listener(snapshot);
+            } catch (error: unknown) {
+              console.warn(
+                `[EngineClient] engine.state listener failed: ${error instanceof Error ? error.message : String(error)}`,
+              );
+            }
+          }
+        } else if (topic === ENGINE_METERS_TOPIC) {
           try {
-            listener(snapshot);
+            const frame = decodeMeterFrame(payloadFrame);
+            for (const listener of this.meterListeners) {
+              try {
+                listener(frame);
+              } catch (error: unknown) {
+                console.warn(
+                  `[EngineClient] engine.meters listener failed: ${error instanceof Error ? error.message : String(error)}`,
+                );
+              }
+            }
           } catch (error: unknown) {
             console.warn(
-              `[EngineClient] engine.state listener failed: ${error instanceof Error ? error.message : String(error)}`,
+              `[EngineClient] Failed to decode meter frame: ${error instanceof Error ? error.message : String(error)}`,
             );
           }
         }

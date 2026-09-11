@@ -207,5 +207,43 @@ describe('Mixer', () => {
       expect(init).toContain('ga_bluemix_0_0\tinit\t0');
       expect(init).toContain('ga_bluemix_0_1\tinit\t0');
     });
+
+    it('emits metering chn_k statements with stable sanitized subchannel keys and collision resolution', () => {
+      const mixer = new Mixer();
+      const sub1 = new Channel();
+      sub1.setName('My Drums');
+      const sub2 = new Channel();
+      sub2.setName('My_Drums');
+      mixer.getSubChannels().push(sub1);
+      mixer.getSubChannels().push(sub2);
+
+      const src = new Channel();
+      src.setName('Synth');
+      mixer.getChannels().push(src);
+
+      const assignments = new Map<Channel, number>();
+      assignments.set(src, 0);
+      assignments.set(sub1, 1);
+      assignments.set(sub2, 2);
+      assignments.set(mixer.getMaster(), 3);
+
+      const init = mixer.getInitStatements(assignments, 2, true);
+
+      // Source channel
+      expect(init).toContain('chn_k\t"bm_meter_rms_0_0", 2');
+      expect(init).toContain('chn_k\t"bm_meter_peak_0_1", 2');
+
+      // Subchannel 1 (whitespace replaced by underscore)
+      expect(init).toContain('chn_k\t"bm_meter_rms_sub_My_Drums_0", 2');
+      expect(init).toContain('chn_k\t"bm_meter_peak_sub_My_Drums_1", 2');
+
+      // Subchannel 2 (resolved collision)
+      expect(init).toContain('chn_k\t"bm_meter_rms_sub_My_Drums_2_0", 2');
+      expect(init).toContain('chn_k\t"bm_meter_peak_sub_My_Drums_2_1", 2');
+
+      // Master channel
+      expect(init).toContain('chn_k\t"bm_meter_rms_sub_Master_0", 2');
+      expect(init).toContain('chn_k\t"bm_meter_peak_sub_Master_1", 2');
+    });
   });
 });

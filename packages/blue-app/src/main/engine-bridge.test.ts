@@ -667,4 +667,56 @@ describe('EngineBridge runtime selection and lifecycle', () => {
 
     expect(bridge.getLastDiagnosticReport()?.trim()).toBe(report?.trim());
   });
+
+  it('probes mixer-metering-v1 capability and falls back gracefully when unsupported', async () => {
+    // 1. Engine without mixer-metering-v1 feature
+    const runtimeWithoutMetering = {
+      probe: vi.fn(async () => ({
+        ok: true,
+        report: {
+          engine: {
+            features: ['realtime-csound-v1'],
+          },
+        },
+      })),
+    } as unknown as EngineRuntimeService;
+
+    const bridge1 = new EngineBridge(
+      windowStub(),
+      undefined,
+      undefined,
+      undefined,
+      'realtime',
+      runtimeWithoutMetering,
+    );
+
+    const supported1 = await bridge1.probeMixerMeteringSupport();
+    expect(supported1).toBe(false);
+    expect(bridge1.isMixerMeteringSupported()).toBe(false);
+
+    // 2. Engine with mixer-metering-v1 feature
+    const runtimeWithMetering = {
+      probe: vi.fn(async () => ({
+        ok: true,
+        report: {
+          engine: {
+            features: ['realtime-csound-v1', 'mixer-metering-v1'],
+          },
+        },
+      })),
+    } as unknown as EngineRuntimeService;
+
+    const bridge2 = new EngineBridge(
+      windowStub(),
+      undefined,
+      undefined,
+      undefined,
+      'realtime',
+      runtimeWithMetering,
+    );
+
+    const supported2 = await bridge2.probeMixerMeteringSupport();
+    expect(supported2).toBe(true);
+    expect(bridge2.isMixerMeteringSupported()).toBe(true);
+  });
 });

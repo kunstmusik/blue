@@ -172,4 +172,18 @@ describe.skipIf(!hasRhythmicFixture())('disk CSD parity', () => {
     expect(renderWindowEvents[0]).toMatch(/^i\d+\t0(\.0+)?\t/);
     expect(fullProjectEvents[0]).toMatch(/^i\d+\t4(\.0+)?\t/);
   });
+
+  it('strictly omits mixer metering taps and chn_k statements from toDiskCSD and toCSD', () => {
+    const data = createRenderWindowProject(false);
+    const disk = data.toDiskCSD();
+    const screen = data.toCSD();
+
+    expect(disk).not.toContain('bm_meter_');
+    expect(disk).not.toContain('kMeter');
+    expect(disk).not.toContain('maxk');
+
+    expect(screen).not.toContain('bm_meter_');
+    expect(screen).not.toContain('kMeter');
+    expect(screen).not.toContain('maxk');
+  });
 });

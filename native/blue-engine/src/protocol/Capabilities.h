@@ -17,6 +17,7 @@ constexpr const char* BLUE_ENGINE_AUTOMATION_DECIMAL_FEATURE = "automation-decim
 constexpr const char* BLUE_ENGINE_OWNER_LIVENESS_FEATURE = "owner-liveness-v1";
 // Batch channel set/get commands (Protocol.h BATCH_SET/BATCH_GET_CHANNELS).
 constexpr const char* BLUE_ENGINE_BATCH_CHANNELS_FEATURE = "batch-channels-v1";
+constexpr const char* BLUE_ENGINE_MIXER_METERING_FEATURE = "mixer-metering-v1";
 
 std::string engineCapabilitiesJson();
 std::string csoundProbeJson(const CsoundLoadReport &report);

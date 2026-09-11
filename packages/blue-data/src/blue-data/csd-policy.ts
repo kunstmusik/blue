@@ -7,13 +7,18 @@ import { Tables } from '../tables';
 import { Score } from '../score/score';
 import { Note } from '../sound-objects/note';
 import { NoteList } from '../sound-objects/note-list';
-import { Mixer } from '../mixer/mixer';
+import { Mixer, buildSubChannelMeterKeys } from '../mixer/mixer';
 import { OpcodeList } from '../opcodes/opcode-list';
 import { Parameter } from '../automation/parameter';
 import { Instrument } from '../instruments/instrument';
 import { GenericInstrument } from '../instruments/generic-instrument';
 import { CompileData } from '../compile-data';
-import type { CompiledBlueX7Binding, CompiledMidiInstrumentTarget } from '../compile-data';
+import type {
+  CompiledBlueX7Binding,
+  CompiledMidiInstrumentTarget,
+  CompiledMeterChannelBinding,
+  MeterBindingMap,
+} from '../compile-data';
 import { Effect } from '../mixer/effect';
 import { EffectsChain } from '../mixer/effects-chain';
 import { Channel } from '../mixer/channel';
@@ -58,6 +63,7 @@ export type RenderCsdResult = {
    * when the project has no BlueX7 instruments.
    */
   blueX7Bindings: readonly CompiledBlueX7Binding[];
+  meterBindingMap?: MeterBindingMap;
 };
 
 type BlueDataCsdState = {
@@ -80,6 +86,7 @@ export function buildStandardCSD(
   blueData: BlueData,
   profile: CsdRenderProfile,
   session?: JavaScriptSession,
+  emitMetering = false,
 ): RenderCsdResult {
   const {
     arrangement: clonedArrangement,
@@ -89,6 +96,7 @@ export function buildStandardCSD(
   } = createRenderSnapshot(blueData, session);
   let generationError: unknown = null;
   const logPrefix = profile === 'disk' ? '[BlueData.toDiskCSD]' : '[BlueData.toCSD]';
+  const actualEmitMetering = profile === 'realtime' && emitMetering;
 
   try {
     const channelIdAssignments = assignChannelIds(blueData, clonedMixer);
@@ -117,7 +125,11 @@ export function buildStandardCSD(
 
     // Mixer init statements
     if (clonedMixer.isEnabled()) {
-      const mixerInits = clonedMixer.getInitStatements(channelIdAssignments, nchnls);
+      const mixerInits = clonedMixer.getInitStatements(
+        channelIdAssignments,
+        nchnls,
+        actualEmitMetering,
+      );
       if (mixerInits) {
         // Java appends an extra newline after mixer init statements before
         // adding them to GlobalOrcSco, which preserves a two-blank-line gap
@@ -227,6 +239,7 @@ export function buildStandardCSD(
         nchnls,
         udos,
         clonedMixer,
+        actualEmitMetering,
       );
       mixerEffectUDOs = mixerOutput.effectUDOs;
       mixerInstruments = mixerOutput.instrumentsText;
@@ -308,6 +321,10 @@ export function buildStandardCSD(
       stringChannels: allStringChannels,
       midiInstrumentTargets: [],
       blueX7Bindings: compileData.getBlueX7Bindings(),
+      meterBindingMap:
+        actualEmitMetering && clonedMixer.isEnabled()
+          ? buildMeterBindingMap(clonedMixer, channelIdAssignments, nchnls)
+          : undefined,
     };
   } catch (error) {
     generationError = error;
@@ -329,6 +346,7 @@ export async function buildStandardCSDAsync(
   profile: CsdRenderProfile,
   session?: JavaScriptSession,
   runtimeClient?: JavaRuntimeClientContract | null,
+  emitMetering = false,
 ): Promise<RenderCsdResult> {
   const {
     arrangement: clonedArrangement,
@@ -338,6 +356,7 @@ export async function buildStandardCSDAsync(
   } = createRenderSnapshot(blueData, session, runtimeClient);
   let generationError: unknown = null;
   const logPrefix = profile === 'disk' ? '[BlueData.toDiskCSDAsync]' : '[BlueData.toCSDAsync]';
+  const actualEmitMetering = profile === 'realtime' && emitMetering;
 
   try {
     const channelIdAssignments = assignChannelIds(blueData, clonedMixer);
@@ -363,7 +382,11 @@ export async function buildStandardCSDAsync(
     };
 
     if (clonedMixer.isEnabled()) {
-      const mixerInits = clonedMixer.getInitStatements(channelIdAssignments, nchnls);
+      const mixerInits = clonedMixer.getInitStatements(
+        channelIdAssignments,
+        nchnls,
+        actualEmitMetering,
+      );
       if (mixerInits) {
         appendGlobalOrc(`${mixerInits}\n\n`);
       }
@@ -469,6 +492,7 @@ export async function buildStandardCSDAsync(
         nchnls,
         udos,
         clonedMixer,
+        actualEmitMetering,
       );
       mixerEffectUDOs = mixerOutput.effectUDOs;
       mixerInstruments = mixerOutput.instrumentsText;
@@ -553,6 +577,10 @@ export async function buildStandardCSDAsync(
       stringChannels: allStringChannels,
       midiInstrumentTargets: [],
       blueX7Bindings: compileData.getBlueX7Bindings(),
+      meterBindingMap:
+        actualEmitMetering && clonedMixer.isEnabled()
+          ? buildMeterBindingMap(clonedMixer, channelIdAssignments, nchnls)
+          : undefined,
     };
   } catch (error) {
     generationError = error;
@@ -569,7 +597,11 @@ export async function buildStandardCSDAsync(
   }
 }
 
-export function toBlueLiveCSD(blueData: BlueData, session?: JavaScriptSession): RenderCsdResult {
+export function toBlueLiveCSD(
+  blueData: BlueData,
+  session?: JavaScriptSession,
+  emitMetering = false,
+): RenderCsdResult {
   const {
     arrangement: clonedArrangement,
     tables: clonedTables,
@@ -597,7 +629,7 @@ export function toBlueLiveCSD(blueData: BlueData, session?: JavaScriptSession): 
     };
 
     if (clonedMixer.isEnabled()) {
-      const mixerInits = clonedMixer.getInitStatements(channelIdAssignments, nchnls);
+      const mixerInits = clonedMixer.getInitStatements(channelIdAssignments, nchnls, emitMetering);
       if (mixerInits) {
         appendGlobalOrc(`${mixerInits}\n\n`);
       }
@@ -672,6 +704,7 @@ export function toBlueLiveCSD(blueData: BlueData, session?: JavaScriptSession): 
         nchnls,
         udos,
         clonedMixer,
+        emitMetering,
       );
       mixerEffectUDOs = mixerOutput.effectUDOs;
       mixerInstruments = mixerOutput.instrumentsText;
@@ -729,6 +762,10 @@ export function toBlueLiveCSD(blueData: BlueData, session?: JavaScriptSession): 
       stringChannels: compileData.getStringChannels(),
       midiInstrumentTargets,
       blueX7Bindings: compileData.getBlueX7Bindings(),
+      meterBindingMap:
+        emitMetering && clonedMixer.isEnabled()
+          ? buildMeterBindingMap(clonedMixer, channelIdAssignments, nchnls)
+          : undefined,
     };
   } catch (error) {
     generationError = error;
@@ -1255,6 +1292,7 @@ function generateMixerOrchestra(
   nchnls: number,
   udos: OpcodeList,
   mixer: Mixer = getBlueDataState(blueData).mixer,
+  emitMetering = false,
 ): { effectUDOs: string[]; instrumentsText: string; effectIdMap: Map<Effect, number> } {
   const instrBuffer: string[] = [];
   const sourceChannels = mixer.getAllSourceChannels();
@@ -1303,6 +1341,7 @@ function generateMixerOrchestra(
     nchnls,
     effectIdMap,
     mixer,
+    emitMetering,
   );
   instrBuffer.push(blueMixerCode);
 
@@ -1310,6 +1349,73 @@ function generateMixerOrchestra(
     effectUDOs,
     instrumentsText: instrBuffer.join('\n'),
     effectIdMap,
+  };
+}
+
+function emitMeterTaps(
+  csdKey: string,
+  signalVars: string[],
+  lines: string[],
+  nextVarId: () => number,
+): void {
+  for (let ch = 0; ch < signalVars.length; ch++) {
+    const vid = nextVarId();
+    lines.push(`kMeter_rms_${vid} rms ${signalVars[ch]}`);
+    lines.push(`kMeter_peak_${vid} maxk ${signalVars[ch]}, kMeterTrig, 1`);
+    lines.push('if kMeterTrig == 1 then');
+    lines.push(`  chnset kMeter_rms_${vid}, "bm_meter_rms_${csdKey}_${ch}"`);
+    lines.push(`  chnset kMeter_peak_${vid}, "bm_meter_peak_${csdKey}_${ch}"`);
+    lines.push('endif');
+  }
+}
+
+function buildMeterBindingMap(
+  mixer: Mixer,
+  channelIdAssignments: Map<Channel, number>,
+  nchnls: number,
+): MeterBindingMap {
+  const entries: CompiledMeterChannelBinding[] = [];
+
+  for (const channel of mixer.getAllSourceChannels()) {
+    const id = channelIdAssignments.get(channel);
+    if (id === undefined) continue;
+    const csdKey = String(id);
+    const stripId = channel.getAssociation().trim() || csdKey;
+    entries.push({
+      kind: 'source',
+      csdKey,
+      stripId,
+      displayName: channel.getName(),
+      channel,
+    });
+  }
+
+  const subMeterKeys = buildSubChannelMeterKeys(Array.from(mixer.getSubChannels()));
+  for (const subChannel of mixer.getSubChannels()) {
+    const name = subChannel.getName();
+    const csdKey = subMeterKeys.get(subChannel) ?? `sub_${name.replace(/\s+/g, '_')}`;
+    const stripId = subChannel.getAssociation().trim() || name;
+    entries.push({
+      kind: 'sub',
+      csdKey,
+      stripId,
+      displayName: name,
+      channel: subChannel,
+    });
+  }
+
+  const master = mixer.getMaster();
+  entries.push({
+    kind: 'master',
+    csdKey: 'sub_Master',
+    stripId: 'master',
+    displayName: 'Master',
+    channel: master,
+  });
+
+  return {
+    entries,
+    nchnls,
   };
 }
 
@@ -1325,10 +1431,26 @@ function generateBlueMixer(
   nchnls: number,
   effectIdMap: Map<Effect, number>,
   mixer: Mixer = getBlueDataState(blueData).mixer,
+  emitMetering = false,
 ): string {
   const lines: string[] = [];
 
   lines.push('\tinstr BlueMixer\t;Blue Mixer Instrument');
+
+  let meterVarCounter = 0;
+  const nextMeterVarId = () => meterVarCounter++;
+
+  if (emitMetering) {
+    lines.push('kMeterSamples init 0');
+    lines.push('kMeterWindow = sr / 30');
+    lines.push('kMeterSamples += ksmps');
+    lines.push('if kMeterSamples >= kMeterWindow then');
+    lines.push('  kMeterTrig = 1');
+    lines.push('  kMeterSamples = 0');
+    lines.push('else');
+    lines.push('  kMeterTrig = 0');
+    lines.push('endif');
+  }
 
   // Process each source channel
   for (const channel of sourceChannels) {
@@ -1339,10 +1461,14 @@ function generateBlueMixer(
     applyEffectsChain(blueData, channel.getPreEffects(), signalVars, effectIdMap, lines);
     applyChannelLevel(blueData, signalVars, channel.getLevelParameter(), channel.getLevel(), lines);
     applyEffectsChain(blueData, channel.getPostEffects(), signalVars, effectIdMap, lines);
+    if (emitMetering) {
+      emitMeterTaps(String(channelId), signalVars, lines, nextMeterVarId);
+    }
     routeChannelOutput(blueData, signalVars, channel.getOutChannel(), channel.getName(), lines);
   }
 
   // Process sub-channels
+  const subMeterKeys = emitMetering ? buildSubChannelMeterKeys(subChannels) : null;
   for (const subChannel of subChannels) {
     const signalVars = getSubChannelSignalVars(blueData, subChannel.getName(), nchnls);
 
@@ -1355,6 +1481,11 @@ function generateBlueMixer(
       lines,
     );
     applyEffectsChain(blueData, subChannel.getPostEffects(), signalVars, effectIdMap, lines);
+    if (emitMetering && subMeterKeys) {
+      const subKey =
+        subMeterKeys.get(subChannel) ?? `sub_${subChannel.getName().replace(/\s+/g, '_')}`;
+      emitMeterTaps(subKey, signalVars, lines, nextMeterVarId);
+    }
     routeChannelOutput(
       blueData,
       signalVars,
@@ -1375,6 +1506,9 @@ function generateBlueMixer(
     lines,
   );
   applyEffectsChain(blueData, masterChannel.getPostEffects(), masterVars, effectIdMap, lines);
+  if (emitMetering) {
+    emitMeterTaps('sub_Master', masterVars, lines, nextMeterVarId);
+  }
   lines.push(`outc ${masterVars.join(', ')}`);
 
   // Clear all audio variables

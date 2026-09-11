@@ -163,16 +163,26 @@ the detached window; re-dock and confirm they continue.
 - What about auditioning instruments or other secondary engine uses? Out of scope for this
   feature: meters serve the project playback session only (see Assumptions).
 
+## Clarifications
+
+### Session 2026-09-10
+
+- Q: How should meter bars handle non-stereo channel configurations (mono, surround)? → A: Show `nchnls` bars per strip — meter bar count matches the project's `nchnls` setting (mono=1, stereo=2, surround=6, etc.), consistent with Pro Tools/Cubase/Logic convention and Blue's uniform per-channel signal architecture where every mixer channel carries exactly `nchnls` signals.
+- Q: Where should the meter tap point be in the signal chain? → A: After the channel's own effects chain and level/pan stage, before accumulation into the output route — the standard post-fader channel-strip meter position.
+- Q: Should the engine send raw windowed RMS/peak values, with ballistics applied renderer-side? → A: Yes, the engine sends raw windowed RMS and peak values per update; the renderer owns all ballistics processing (decay smoothing, peak hold, clip latch), consistent with MeterDisplayState's role as disposable derived display state.
+
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
 - **FR-001**: During realtime playback, the system MUST display a live level meter in every
   mixer channel strip — each source channel, each subchannel, and the master — showing one bar
-  per project output channel.
+  per project output channel (determined by the project's `nchnls` setting: e.g. 1 bar for
+  mono, 2 for stereo, 6 for 5.1 surround).
 - **FR-002**: Meter values MUST represent the post-fader, post-effects signal the channel
-  delivers to its output route (the signal actually mixed onward), computed from the audio
-  engine's own synthesis, not from host-side approximation.
+  delivers to its output route (the signal actually mixed onward): tapped after the channel's
+  own effects chain and level/pan stage, before accumulation into the destination bus. Values
+  MUST be computed from the audio engine's own synthesis, not from host-side approximation.
 - **FR-003**: Each meter MUST provide both average (RMS) level and peak level indication: a bar
   tracking the recent average level and a distinct peak-hold marker that holds the recent
   maximum for about one second before decaying.
@@ -181,7 +191,8 @@ the detached window; re-dock and confirm they continue.
   persistent clip indication when a channel exceeds full scale, holding for about 2 seconds.
 - **FR-005**: Meter motion MUST follow standard console ballistics: effectively instantaneous
   rise and smooth decay (on the order of 15–25 dB per second), so levels read naturally at
-  music tempo.
+  music tempo. Ballistics (decay smoothing, peak hold, clip latch) are applied renderer-side
+  from the raw windowed RMS and peak values delivered by the engine.
 - **FR-006**: Meter updates MUST arrive during playback at a sustained rate of at least 30 Hz
   per channel while the engine is producing audio, paced by audio time rather than control-cycle
   counts.
@@ -243,13 +254,15 @@ the detached window; re-dock and confirm they continue.
 
 - **ChannelMeterReading**: Per-channel meter observation for one playback session instant:
   the channel's compile-time identity, one average (RMS) and one peak value per project output
-  channel, plus a session sequence/sample position.
+  channel (`nchnls` pairs total), plus a session sequence/sample position.
 - **MeterFrame**: A time-sampled snapshot of ChannelMeterReadings for all metered channels at
   one instant, with a monotonically increasing sequence so consumers can drop stale frames.
 - **MeterBindingMap**: The playback-session mapping from compile-time channel identity to the
   mixer strip identity shown in the UI, rebuilt each time playback compiles.
-- **MeterDisplayState**: Renderer-side disposable state per strip (smoothed bar level, peak
-  hold, clip latch) derived from MeterFrames.
+- **MeterDisplayState**: Renderer-side disposable state per strip derived from raw
+  MeterFrame values: applies all ballistics processing (decay smoothing from raw windowed
+  RMS, peak-hold timing, clip-latch duration) to produce the visual bar level, peak marker
+  position, and clip indicator state. Reset on playback stop.
 
 ## Success Criteria *(mandatory)*
 
