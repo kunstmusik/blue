@@ -4,6 +4,7 @@ import {
   PROJECT_HISTORY_UNDO_CHANNEL,
   PROJECT_HISTORY_REDO_CHANNEL,
   PROJECT_HISTORY_READ_CHANNEL,
+  PROJECT_HISTORY_ENTRIES_CHANNEL,
   PROJECT_HISTORY_REGISTER_PARTICIPANT_CHANNEL,
   PROJECT_HISTORY_UNREGISTER_PARTICIPANT_CHANNEL,
   PROJECT_HISTORY_BOUNDARY_PREPARE_CHANNEL,
@@ -43,6 +44,7 @@ type PreloadBridge = {
   undoProjectHistory: (request: ProjectHistoryUndoRequest) => Promise<unknown>;
   redoProjectHistory: (request: ProjectHistoryRedoRequest) => Promise<unknown>;
   readProjectHistory: (request?: ProjectHistoryReadRequest) => Promise<unknown>;
+  readProjectHistoryEntries: (request?: ProjectHistoryReadRequest) => Promise<unknown>;
   registerHistoryParticipant: (request: RegisterHistoryParticipantRequest) => Promise<unknown>;
   unregisterHistoryParticipant: (request: { contextId: string }) => Promise<void>;
   acknowledgeHistoryBoundary: (ack: PrepareHistoryBoundaryAck) => Promise<void>;
@@ -131,6 +133,22 @@ describe('Project history preload bridge (T013)', () => {
     const result = await bridge.readProjectHistory(request);
     expect(invokeMock).toHaveBeenCalledWith(PROJECT_HISTORY_READ_CHANNEL, request);
     expect(result).toEqual(projection);
+  });
+
+  it('invokes project-history:entries with typed summary snapshot response', async () => {
+    const bridge = await loadBridge();
+    const request: ProjectHistoryReadRequest = { documentId: 'doc-1' };
+    const snapshot = {
+      documentId: 'doc-1',
+      revision: 2,
+      cursor: 1,
+      entries: [{ entryId: 'entry-1', label: 'Edit 1', timestamp: 1, afterStateId: 'state-1' }],
+    };
+    invokeMock.mockResolvedValueOnce(snapshot);
+
+    const result = await bridge.readProjectHistoryEntries(request);
+    expect(invokeMock).toHaveBeenCalledWith(PROJECT_HISTORY_ENTRIES_CHANNEL, request);
+    expect(result).toEqual(snapshot);
   });
 
   it('invokes participant registration and unregistration channels', async () => {

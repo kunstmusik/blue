@@ -78,6 +78,7 @@ import type {
   ProjectHistoryReadRequest,
   ProjectHistoryResponse,
   ProjectHistoryReadResponse,
+  ProjectHistoryEntriesResponse,
   ProjectHistoryControlResponse,
   RegisterHistoryParticipantRequest,
   RegisterHistoryParticipantResponse,
@@ -402,6 +403,9 @@ declare global {
       readProjectHistory: (
         request?: ProjectHistoryReadRequest,
       ) => Promise<ProjectHistoryReadResponse>;
+      readProjectHistoryEntries: (
+        request?: ProjectHistoryReadRequest,
+      ) => Promise<ProjectHistoryEntriesResponse>;
       registerHistoryParticipant: (
         request: RegisterHistoryParticipantRequest,
       ) => Promise<RegisterHistoryParticipantResponse>;

@@ -210,7 +210,7 @@ function collectedDomainHandlers(): {
 }
 
 describe('main-process IPC inventory oracle', () => {
-  it('executes the full 191-endpoint composition in startup order with exact teardown', async () => {
+  it('executes the full 192-endpoint composition in startup order with exact teardown', async () => {
     const ipcMain = new CapturingIpcMain();
     const collected = collectedDomainHandlers();
     const expected = expectedProcessWideRegistrations(collected);
@@ -218,9 +218,9 @@ describe('main-process IPC inventory oracle', () => {
 
     try {
       expect(ipcMain.registrations).toEqual(expected);
-      expect(ipcMain.registrations).toHaveLength(191);
-      expect(new Set(ipcMain.registrations).size).toBe(191);
-      expect(ipcMain.handlers.size).toBe(184);
+      expect(ipcMain.registrations).toHaveLength(192);
+      expect(new Set(ipcMain.registrations).size).toBe(192);
+      expect(ipcMain.handlers.size).toBe(185);
       expect(ipcMain.listeners.size).toBe(7);
 
       expect(ipcMain.handlers.get('open-file')?.({ sender: {} })).toEqual({
@@ -260,7 +260,7 @@ describe('main-process IPC inventory oracle', () => {
     expect(ipcMain.listeners.size).toBe(0);
   });
 
-  it('executes all 126 domain registrations in the documented baseline order and tears them down exactly', () => {
+  it('executes all 127 domain registrations in the documented baseline order and tears them down exactly', () => {
     const ipcMain = new CapturingIpcMain();
     const collected = collectedDomainHandlers();
     const dispose = registerMainProcessDomainIpc({ ipcMain, ...collected });
@@ -270,7 +270,7 @@ describe('main-process IPC inventory oracle', () => {
         collected.listeners.has(channel) ? `on:${channel}` : `handle:${channel}`,
       ),
     );
-    expect(ipcMain.handlers.size).toBe(122);
+    expect(ipcMain.handlers.size).toBe(123);
     expect(ipcMain.listeners.size).toBe(4);
 
     dispose();
@@ -312,18 +312,18 @@ describe('main-process IPC inventory oracle', () => {
     const domainChannels = DOMAIN_CHANNELS;
 
     expect(directMain).toHaveLength(0);
-    expect(collected).toHaveLength(124);
-    expect(collectedInvoke).toHaveLength(120);
+    expect(collected).toHaveLength(125);
+    expect(collectedInvoke).toHaveLength(121);
     expect(collectedListeners).toHaveLength(4);
-    expect(collectedExpandedCount).toBe(126);
-    expect(domainChannels).toHaveLength(126);
-    expect(new Set(domainChannels).size).toBe(126);
+    expect(collectedExpandedCount).toBe(127);
+    expect(domainChannels).toHaveLength(127);
+    expect(new Set(domainChannels).size).toBe(127);
     expect(unified).toHaveLength(44);
     expect(code).toHaveLength(11);
     expect(workbench).toHaveLength(5);
     expect(midi).toHaveLength(5);
     expect(existing).toHaveLength(65);
-    expect(domainChannels.length + existing.length).toBe(191);
+    expect(domainChannels.length + existing.length).toBe(192);
   });
 
   it('keeps registration expressions unique by mode and records listener identity sites', async () => {

@@ -408,6 +408,11 @@ describe('application menu template', () => {
     ]);
     editorsMenu[0]?.click?.();
     expect(handlers.onFocusPanel).toHaveBeenCalledWith('ScoreTopComponent');
+
+    const propertiesMenu = getSubmenu(windowMenu.find((item) => item.label === 'Properties'));
+    expect(propertiesMenu.map((item) => item.label)).toContain('Undo History');
+    propertiesMenu.find((item) => item.label === 'Undo History')?.click?.();
+    expect(handlers.onFocusPanel).toHaveBeenCalledWith('UndoHistoryTopComponent');
   });
 
   it('keeps Blue Share visible but disabled without a placeholder handler', () => {

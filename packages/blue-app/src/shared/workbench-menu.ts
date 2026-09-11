@@ -112,6 +112,14 @@ export const WORKBENCH_PANEL_REGISTRY: PanelDescriptor[] = [
     auxiliaryRailLabel: 'Markers',
   },
   {
+    id: 'UndoHistoryTopComponent',
+    title: 'Undo History',
+    mode: 'properties',
+    openAtStartup: false,
+    auxiliaryGroupId: 'properties-main',
+    auxiliaryRailLabel: 'Undo History',
+  },
+  {
     id: 'MidiInputPanelTopComponent',
     title: 'MIDI Input',
     mode: 'properties',

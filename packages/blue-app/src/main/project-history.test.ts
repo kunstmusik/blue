@@ -178,6 +178,142 @@ describe('ProjectHistory coordinator', () => {
     });
   });
 
+  describe('readEntries', () => {
+    it('returns oldest-first lightweight summaries matching commit order', async () => {
+      const { session, history, context } = setupHistory();
+      const docId = session.read().documentId!;
+      await history.commit(
+        context.nextCommitRequest(docId, 0, 'Edit One', [{ projectProperties: { title: 'T1' } }]),
+      );
+      await history.commit(
+        context.nextCommitRequest(docId, 1, 'Edit Two', [{ projectProperties: { title: 'T2' } }]),
+      );
+
+      const snapshot = history.readEntries({ documentId: docId });
+      expect(snapshot.documentId).toBe(docId);
+      expect(snapshot.revision).toBe(session.read().revision);
+      expect(snapshot.cursor).toBe(2);
+      expect(snapshot.entries.map((entry) => entry.label)).toEqual(['Edit One', 'Edit Two']);
+      for (const entry of snapshot.entries) {
+        expect(Object.keys(entry).sort()).toEqual([
+          'afterStateId',
+          'entryId',
+          'label',
+          'timestamp',
+        ]);
+        expect(entry.entryId.length).toBeGreaterThan(0);
+        expect(entry.timestamp).toBeGreaterThan(0);
+        expect(entry.afterStateId.length).toBeGreaterThan(0);
+      }
+      // Summaries must never carry mementos, patches, or origin metadata.
+      const serialized = JSON.stringify(snapshot);
+      expect(serialized).not.toContain('record');
+      expect(serialized).not.toContain('forwardPatches');
+      expect(serialized).not.toContain('inversePatches');
+      expect(serialized).not.toContain('origin');
+    });
+
+    it('keeps every entry listed while the cursor moves through undo and redo', async () => {
+      const { session, history, context } = setupHistory();
+      const docId = session.read().documentId!;
+      await history.commit(
+        context.nextCommitRequest(docId, 0, 'Edit One', [{ projectProperties: { title: 'T1' } }]),
+      );
+      await history.commit(
+        context.nextCommitRequest(docId, 1, 'Edit Two', [{ projectProperties: { title: 'T2' } }]),
+      );
+
+      await history.undo(context.nextUndoRequest(docId, 2));
+      let snapshot = history.readEntries();
+      expect(snapshot.cursor).toBe(1);
+      expect(snapshot.entries).toHaveLength(2);
+
+      await history.redo(context.nextRedoRequest(docId, 3));
+      snapshot = history.readEntries();
+      expect(snapshot.cursor).toBe(2);
+      expect(snapshot.entries).toHaveLength(2);
+    });
+
+    it('reflects branch discard by dropping the discarded redo entries', async () => {
+      const { session, history, context } = setupHistory();
+      const docId = session.read().documentId!;
+      await history.commit(
+        context.nextCommitRequest(docId, 0, 'Edit One', [{ projectProperties: { title: 'T1' } }]),
+      );
+      await history.commit(
+        context.nextCommitRequest(docId, 1, 'Edit Two', [{ projectProperties: { title: 'T2' } }]),
+      );
+      await history.undo(context.nextUndoRequest(docId, 2));
+
+      await history.commit(
+        context.nextCommitRequest(docId, 3, 'Edit Three', [{ projectProperties: { title: 'T3' } }]),
+      );
+
+      const snapshot = history.readEntries();
+      expect(snapshot.entries.map((entry) => entry.label)).toEqual(['Edit One', 'Edit Three']);
+      expect(snapshot.cursor).toBe(2);
+    });
+
+    it('reflects retention eviction of the oldest entries', async () => {
+      const { session, history, context } = setupHistory({ entryLimit: 2 });
+      const docId = session.read().documentId!;
+      await history.commit(
+        context.nextCommitRequest(docId, 0, 'Edit One', [{ projectProperties: { title: 'T1' } }]),
+      );
+      await history.commit(
+        context.nextCommitRequest(docId, 1, 'Edit Two', [{ projectProperties: { title: 'T2' } }]),
+      );
+      await history.commit(
+        context.nextCommitRequest(docId, 2, 'Edit Three', [{ projectProperties: { title: 'T3' } }]),
+      );
+
+      const snapshot = history.readEntries();
+      expect(snapshot.entries.map((entry) => entry.label)).toEqual(['Edit Two', 'Edit Three']);
+      expect(snapshot.cursor).toBe(2);
+    });
+
+    it('lists a merged gesture as a single entry', async () => {
+      const { session, history, context } = setupHistory();
+      const docId = session.read().documentId!;
+      const gestureId = 'gesture-type-title';
+      await history.commit(
+        context.nextCommitRequest(docId, 0, 'Type Title', [{ projectProperties: { title: 'A' } }], {
+          gestureId,
+          phase: 'begin',
+        }),
+      );
+      await history.commit(
+        context.nextCommitRequest(
+          docId,
+          1,
+          'Type Title',
+          [{ projectProperties: { title: 'Ab' } }],
+          {
+            gestureId,
+            phase: 'update',
+          },
+        ),
+      );
+      await history.commit(
+        context.nextCommitRequest(
+          docId,
+          2,
+          'Type Title',
+          [{ projectProperties: { title: 'Abc' } }],
+          {
+            gestureId,
+            phase: 'end',
+          },
+        ),
+      );
+
+      const snapshot = history.readEntries();
+      expect(snapshot.entries).toHaveLength(1);
+      expect(snapshot.entries[0]?.label).toBe('Type Title');
+      expect(snapshot.cursor).toBe(1);
+    });
+  });
+
   describe('deduplication and unchanged/stale handling', () => {
     it('returns cached response for duplicate operationId without applying twice', async () => {
       const { session, history, context } = setupHistory();

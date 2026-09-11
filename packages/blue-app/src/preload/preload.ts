@@ -175,6 +175,7 @@ import {
   PROJECT_HISTORY_UNDO_CHANNEL,
   PROJECT_HISTORY_REDO_CHANNEL,
   PROJECT_HISTORY_READ_CHANNEL,
+  PROJECT_HISTORY_ENTRIES_CHANNEL,
   PROJECT_HISTORY_REGISTER_PARTICIPANT_CHANNEL,
   PROJECT_HISTORY_UNREGISTER_PARTICIPANT_CHANNEL,
   PROJECT_HISTORY_BOUNDARY_PREPARE_CHANNEL,
@@ -189,6 +190,7 @@ import {
   type ProjectHistoryReadRequest,
   type ProjectHistoryResponse,
   type ProjectHistoryReadResponse,
+  type ProjectHistoryEntriesResponse,
   type ProjectHistoryControlResponse,
   type RegisterHistoryParticipantRequest,
   type RegisterHistoryParticipantResponse,
@@ -795,6 +797,13 @@ contextBridge.exposeInMainWorld('blueAPI', {
       PROJECT_HISTORY_READ_CHANNEL,
       request,
     ) as Promise<ProjectHistoryReadResponse>,
+  readProjectHistoryEntries: (
+    request?: ProjectHistoryReadRequest,
+  ): Promise<ProjectHistoryEntriesResponse> =>
+    ipcRenderer.invoke(
+      PROJECT_HISTORY_ENTRIES_CHANNEL,
+      request,
+    ) as Promise<ProjectHistoryEntriesResponse>,
   registerHistoryParticipant: (
     request: RegisterHistoryParticipantRequest,
   ): Promise<RegisterHistoryParticipantResponse> =>

@@ -17,6 +17,7 @@ import ScorePanel from './panels/ScorePanel';
 import ScoreObjectPropertiesPanel from './panels/ScoreObjectPropertiesPanel';
 import ScoreObjectEditorPanel from './panels/ScoreObjectEditorPanel';
 import MarkersPanel from './panels/MarkersPanel';
+import UndoHistoryPanel from './panels/UndoHistoryPanel';
 import AudioPlayerPanel from './panels/audio-player/AudioPlayerPanel';
 import LibrariesPanel from './panels/LibrariesPanel';
 import SoundObjectLibraryPanel from './panels/SoundObjectLibraryPanel';
@@ -78,6 +79,8 @@ export default function WorkbenchPanelContent({
       return <ScoreObjectEditorPanel />;
     case 'MarkersTopComponent':
       return <MarkersPanel />;
+    case 'UndoHistoryTopComponent':
+      return <UndoHistoryPanel />;
     case 'AudioFilePlayerTopComponent':
       return <AudioPlayerPanel />;
     case 'SoundFontViewerTopComponent':

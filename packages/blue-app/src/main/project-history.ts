@@ -30,6 +30,7 @@ import type {
   ProjectHistoryOversizeResponse,
   ProjectHistoryFailedResponse,
   ProjectHistoryBarrierReason,
+  ProjectHistoryEntriesSnapshot,
   PrepareHistoryBoundaryEvent,
   PrepareHistoryBoundaryAck,
   ReleaseHistoryBoundaryEvent,
@@ -909,6 +910,26 @@ export class ProjectHistory {
             : retainedBytes >= this.retainedBytesLimit
               ? 'at-byte-limit'
               : 'within-limit',
+    };
+  }
+
+  /**
+   * Serializable per-entry projection for read-only history views (spec 106).
+   * Excludes mementos, patches, and origin metadata; order matches
+   * getEntries() (oldest-first) so renderers only derive display order.
+   */
+  readEntries(request?: ProjectHistoryReadRequest): ProjectHistoryEntriesSnapshot {
+    const current = this.session.read();
+    return {
+      documentId: request?.documentId ?? current.documentId ?? '',
+      revision: current.revision,
+      cursor: this.cursor,
+      entries: this.entries.map((entry) => ({
+        entryId: entry.entryId,
+        label: entry.label,
+        timestamp: entry.timestamp,
+        afterStateId: entry.afterStateId,
+      })),
     };
   }
 

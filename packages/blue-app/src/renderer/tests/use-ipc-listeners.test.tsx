@@ -19,6 +19,10 @@ vi.mock('sonner', () => ({
 
 import { useIPCListeners } from '../hooks/use-ipc-listeners';
 import {
+  getProjectHistoryEntries,
+  getProjectHistoryProjection,
+} from '../hooks/use-project-history';
+import {
   getProjectDocumentRevision,
   getProjectHistoryParticipantContextId,
   useProjectStore,
@@ -153,6 +157,8 @@ describe('useIPCListeners', () => {
     ),
     getProgramSettings: vi.fn(),
     updateWindowLayout: vi.fn(),
+    readProjectHistory: vi.fn(),
+    readProjectHistoryEntries: vi.fn(),
   };
 
   function Harness(): React.ReactElement {
@@ -1122,5 +1128,59 @@ describe('useIPCListeners', () => {
     expect(useProjectStore.getState().runtimeOutcomes).toEqual([
       expect.objectContaining({ performanceKind: 'blueLive', status: 'restart-required' }),
     ]);
+  });
+
+  it('seeds and clears project history entries with the projection lifecycle (spec 106)', async () => {
+    act(() => {
+      root.render(<Harness />);
+    });
+
+    const projectLoadedHandler = listeners.get('project-loaded')!.values().next().value as (
+      ...args: unknown[]
+    ) => void;
+    const projectClosedHandler = listeners.get('project-closed')!.values().next().value as (
+      ...args: unknown[]
+    ) => void;
+
+    const loadedSnapshot = {
+      documentId: 'doc-history-1',
+      revision: 1,
+      cursor: 1,
+      entries: [{ entryId: 'e1', label: 'Edit One', timestamp: 100, afterStateId: 's1' }],
+    };
+    blueAPI.readProjectHistory.mockResolvedValue({
+      canUndo: true,
+      canRedo: false,
+      undoLabel: 'Edit One',
+      redoLabel: null,
+      cursor: 1,
+      length: 1,
+      retainedBytes: 16,
+      savedStateId: null,
+      stateId: 's1',
+      revision: 1,
+    });
+    blueAPI.readProjectHistoryEntries.mockResolvedValue(loadedSnapshot);
+
+    await act(async () => {
+      projectLoadedHandler({
+        documentId: 'doc-history-1',
+        title: 'History Project',
+        missingAudioAssets: null,
+      });
+    });
+
+    expect(blueAPI.readProjectHistoryEntries).toHaveBeenCalledWith({
+      documentId: 'doc-history-1',
+    });
+    expect(getProjectHistoryEntries()).toEqual(loadedSnapshot);
+    expect(getProjectHistoryProjection()?.undoLabel).toBe('Edit One');
+
+    act(() => {
+      projectClosedHandler();
+    });
+
+    expect(getProjectHistoryEntries()).toBeNull();
+    expect(getProjectHistoryProjection()).toBeNull();
   });
 });

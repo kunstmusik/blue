@@ -1,5 +1,8 @@
 import { useCallback, useSyncExternalStore } from 'react';
-import type { ProjectHistoryStateProjection } from '../../shared/project-history';
+import type {
+  ProjectHistoryEntriesSnapshot,
+  ProjectHistoryStateProjection,
+} from '../../shared/project-history';
 import { executeProjectRedo, executeProjectUndo } from '../lib/history-scope-router';
 
 /**
@@ -31,6 +34,83 @@ function getProjectionSnapshot(): ProjectHistoryStateProjection | null {
   return currentProjection;
 }
 
+/**
+ * Latest per-entry history snapshot fetched from main (spec 106). Like the
+ * projection this is main-owned display state; renderers only read it.
+ */
+let currentEntriesSnapshot: ProjectHistoryEntriesSnapshot | null = null;
+const entriesListeners = new Set<() => void>();
+
+export function getProjectHistoryEntries(): ProjectHistoryEntriesSnapshot | null {
+  return currentEntriesSnapshot;
+}
+
+export function setProjectHistoryEntries(snapshot: ProjectHistoryEntriesSnapshot | null): void {
+  currentEntriesSnapshot = snapshot;
+  for (const listener of entriesListeners) {
+    listener();
+  }
+}
+
+function subscribeEntries(listener: () => void): () => void {
+  entriesListeners.add(listener);
+  return () => entriesListeners.delete(listener);
+}
+
+function getEntriesSnapshot(): ProjectHistoryEntriesSnapshot | null {
+  return currentEntriesSnapshot;
+}
+
+let entriesFetchInFlight = false;
+let entriesFetchQueued = false;
+
+/**
+ * Fetch the current entry summaries. Concurrent callers coalesce: while a
+ * fetch is in flight one queued re-fetch runs afterward, so a publication
+ * landing mid-flight cannot leave the store on an older revision.
+ */
+export async function refreshProjectHistoryEntries(): Promise<void> {
+  if (entriesFetchInFlight) {
+    entriesFetchQueued = true;
+    return;
+  }
+  entriesFetchInFlight = true;
+  try {
+    do {
+      entriesFetchQueued = false;
+      const result = await window.blueAPI.readProjectHistoryEntries();
+      if (!('status' in result)) {
+        setProjectHistoryEntries(result);
+      }
+    } while (entriesFetchQueued);
+  } catch {
+    // Keep the last snapshot; the next projection change retriggers.
+  } finally {
+    entriesFetchInFlight = false;
+  }
+}
+
+export interface UseProjectHistoryEntriesResult {
+  snapshot: ProjectHistoryEntriesSnapshot | null;
+  refreshEntries: () => Promise<void>;
+}
+
+/**
+ * Per-entry history view state for the Undo History panel. The panel keys its
+ * refresh effect on the projection fingerprint (revision/cursor/length) so
+ * every canonical publication — including edits from other windows — keeps
+ * the list current without a dedicated push channel.
+ */
+export function useProjectHistoryEntries(): UseProjectHistoryEntriesResult {
+  const snapshot = useSyncExternalStore(subscribeEntries, getEntriesSnapshot, getEntriesSnapshot);
+
+  const refreshEntries = useCallback((): Promise<void> => {
+    return refreshProjectHistoryEntries();
+  }, []);
+
+  return { snapshot, refreshEntries };
+}
+
 export interface UseProjectHistoryResult {
   canUndo: boolean;
   canRedo: boolean;
@@ -40,6 +120,8 @@ export interface UseProjectHistoryResult {
   limitBytes?: number;
   cursor: number;
   length: number;
+  revision: number;
+  savedStateId: string | null;
   maxEntries?: number;
   retentionStatus: ProjectHistoryStateProjection['retentionStatus'];
   undo(): Promise<void>;
@@ -84,6 +166,8 @@ export function useProjectHistory(): UseProjectHistoryResult {
     limitBytes: projection?.limitBytes,
     cursor: projection?.cursor ?? 0,
     length: projection?.length ?? 0,
+    revision: projection?.revision ?? 0,
+    savedStateId: projection?.savedStateId ?? null,
     maxEntries: projection?.maxEntries,
     retentionStatus: projection?.retentionStatus,
     undo,

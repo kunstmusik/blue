@@ -56,6 +56,12 @@ describe('project document IPC registrar', () => {
       canRedo: false,
       cursor: 1,
     }));
+    handlers['project-history:entries'] = vi.fn(() => ({
+      documentId: 'doc-1',
+      revision: 2,
+      cursor: 1,
+      entries: [{ entryId: 'entry-1', label: 'Edit 1', timestamp: 1, afterStateId: 'state-1' }],
+    }));
     registerProjectDocumentIpc({ ipcMain, handlers });
 
     await expect(
@@ -86,6 +92,12 @@ describe('project document IPC registrar', () => {
       canUndo: true,
       canRedo: false,
       cursor: 1,
+    });
+    expect(ipcMain.handlers.get('project-history:entries')?.({}, {})).toEqual({
+      documentId: 'doc-1',
+      revision: 2,
+      cursor: 1,
+      entries: [{ entryId: 'entry-1', label: 'Edit 1', timestamp: 1, afterStateId: 'state-1' }],
     });
   });
 

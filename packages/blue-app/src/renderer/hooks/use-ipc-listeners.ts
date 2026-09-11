@@ -1,7 +1,11 @@
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 import { reconcileExternalSelectionHints } from '../stores/score-selection-store';
-import { getProjectHistoryProjection, setProjectHistoryProjection } from './use-project-history';
+import {
+  getProjectHistoryProjection,
+  setProjectHistoryEntries,
+  setProjectHistoryProjection,
+} from './use-project-history';
 import {
   publishFocusedHistoryAvailability,
   settleHistoryEditors,
@@ -201,6 +205,7 @@ export function useIPCListeners(): void {
       // status cannot remain actionable in the new project.
       useProjectStore.setState({ runtimeOutcomes: [], runtimeOutcomeStatusText: '' });
       setProjectHistoryProjection(null);
+      setProjectHistoryEntries(null);
       publishFocusedHistoryAvailability(null);
       setProjectInfo(info);
       // Re-register this context's history participant against the freshly
@@ -229,6 +234,17 @@ export function useIPCListeners(): void {
           })
           .catch(() => undefined);
       }
+      if (info.documentId && window.blueAPI.readProjectHistoryEntries) {
+        const loadedDocumentId = info.documentId;
+        void window.blueAPI
+          .readProjectHistoryEntries({ documentId: loadedDocumentId })
+          .then((snapshot) => {
+            if ('status' in snapshot) return;
+            if (getProjectDocumentId() !== loadedDocumentId) return;
+            setProjectHistoryEntries(snapshot);
+          })
+          .catch(() => undefined);
+      }
       toast.success(`Loaded: ${info.title || 'Project'}`);
     });
 
@@ -240,6 +256,7 @@ export function useIPCListeners(): void {
       useScoreSelectionStore.getState().clearSelection();
       useProjectStore.getState().clearProject();
       setProjectHistoryProjection(null);
+      setProjectHistoryEntries(null);
       publishFocusedHistoryAvailability(null);
       setActivePanel('welcome');
     });

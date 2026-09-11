@@ -405,6 +405,7 @@ import {
   PROJECT_HISTORY_UNDO_CHANNEL,
   PROJECT_HISTORY_REDO_CHANNEL,
   PROJECT_HISTORY_READ_CHANNEL,
+  PROJECT_HISTORY_ENTRIES_CHANNEL,
   PROJECT_HISTORY_REGISTER_PARTICIPANT_CHANNEL,
   PROJECT_HISTORY_UNREGISTER_PARTICIPANT_CHANNEL,
   PROJECT_HISTORY_BOUNDARY_ACK_CHANNEL,
@@ -419,6 +420,7 @@ import {
   type ProjectRuntimeOutcomeEvent,
   type ProjectDocumentCommitMetadata,
   type ProjectHistoryReadResponse,
+  type ProjectHistoryEntriesResponse,
   type ProjectHistoryControlResponse,
   type FocusedHistoryAvailability,
   isFocusedHistoryAvailability,
@@ -5950,6 +5952,23 @@ ipcRegistration.handle(PROJECT_HISTORY_READ_CHANNEL, async (_event, request: unk
     );
   }
   return projectHistory.read(validation.value) as ProjectHistoryReadResponse;
+});
+
+// Read-only entry summaries for the Undo History panel (spec 106). Like the
+// read channel it requires no participant-sender ownership and must never
+// mutate history, document state, or revisions.
+ipcRegistration.handle(PROJECT_HISTORY_ENTRIES_CHANNEL, async (_event, request: unknown) => {
+  const validation = validateProjectHistoryReadRequest(request);
+  if (!validation.valid) return invalidProjectHistoryRequest(request, validation.reason);
+  const requestedDocumentId = validation.value?.documentId;
+  const activeDocumentId = getCurrentProjectSessionDocumentId();
+  if (requestedDocumentId !== undefined && requestedDocumentId !== activeDocumentId) {
+    return invalidProjectHistoryRequest(
+      request,
+      'History entries request does not match the active project document',
+    );
+  }
+  return projectHistory.readEntries(validation.value) as ProjectHistoryEntriesResponse;
 });
 
 ipcRegistration.handle(

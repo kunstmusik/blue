@@ -4,6 +4,7 @@ export const PROJECT_HISTORY_COMMIT_CHANNEL = 'project-history:commit';
 export const PROJECT_HISTORY_UNDO_CHANNEL = 'project-history:undo';
 export const PROJECT_HISTORY_REDO_CHANNEL = 'project-history:redo';
 export const PROJECT_HISTORY_READ_CHANNEL = 'project-history:read';
+export const PROJECT_HISTORY_ENTRIES_CHANNEL = 'project-history:entries';
 export const PROJECT_HISTORY_REGISTER_PARTICIPANT_CHANNEL = 'project-history:participant:register';
 export const PROJECT_HISTORY_UNREGISTER_PARTICIPANT_CHANNEL =
   'project-history:participant:unregister';
@@ -261,6 +262,30 @@ export type ProjectHistoryResponse =
 
 export type ProjectHistoryReadResponse =
   | ProjectHistoryStateProjection
+  | ProjectHistoryInvalidResponse;
+
+/**
+ * Renderer-facing summary of one committed history entry for read-only
+ * history views (spec 106). Deliberately excludes `record` mementos,
+ * patches, and origin metadata so the panel IPC payload stays lightweight.
+ */
+export interface ProjectHistoryEntrySummary {
+  readonly entryId: string;
+  readonly label: string;
+  readonly timestamp: number;
+  readonly afterStateId: string;
+}
+
+export interface ProjectHistoryEntriesSnapshot {
+  readonly documentId: string;
+  readonly revision: number;
+  readonly cursor: number;
+  /** Oldest-first, identical to ProjectHistory.getEntries() order. */
+  readonly entries: readonly ProjectHistoryEntrySummary[];
+}
+
+export type ProjectHistoryEntriesResponse =
+  | ProjectHistoryEntriesSnapshot
   | ProjectHistoryInvalidResponse;
 
 export interface ProjectHistoryControlResponse {

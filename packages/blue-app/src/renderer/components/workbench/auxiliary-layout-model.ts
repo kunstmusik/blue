@@ -78,6 +78,7 @@ export const AUXILIARY_SEED_DEFINITIONS: Record<AuxiliarySeedGroupId, AuxiliaryS
       'SoundFontViewerTopComponent',
       'MarkersTopComponent',
       'MidiInputPanelTopComponent',
+      'UndoHistoryTopComponent',
     ],
     defaultActivePanelId: 'SoundObjectPropertiesTopComponent',
     // 200px controlled-pane default mirrors Java Blue's

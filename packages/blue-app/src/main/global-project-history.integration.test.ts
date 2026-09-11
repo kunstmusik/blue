@@ -123,4 +123,37 @@ describe('global project history integration (T027, US1)', () => {
     expect(history.read().canRedo).toBe(false);
     expect(session.read().data?.getProjectProperties().author).toBe('Branch Author');
   });
+
+  it('summarizes the workload for the undo panel without side effects (spec 106)', async () => {
+    const { session, history, contextA, contextB } = setup();
+    const docId = session.read().documentId!;
+
+    const requests = generate100ActionWorkload(docId, contextA, contextB, 0);
+    for (const request of requests) {
+      await history.commit(request);
+    }
+
+    const before = {
+      revision: session.read().revision,
+      projection: history.read(),
+    };
+    const snapshot = history.readEntries({ documentId: docId });
+    const snapshotAgain = history.readEntries({ documentId: docId });
+
+    // Snapshot correctness over the full workload.
+    expect(snapshot.documentId).toBe(docId);
+    expect(snapshot.revision).toBe(before.revision);
+    expect(snapshot.cursor).toBe(100);
+    expect(snapshot.entries).toHaveLength(100);
+    expect(snapshot.entries.map((entry) => entry.label)).toEqual(
+      requests.map((request) => request.label),
+    );
+
+    // Read-only guarantee: repeated reads leave document, history, and dirty
+    // state untouched (FR-007).
+    expect(snapshotAgain).toEqual(snapshot);
+    expect(session.read().revision).toBe(before.revision);
+    expect(history.read()).toEqual(before.projection);
+    expect(history.getEntries()).toHaveLength(100);
+  });
 });
