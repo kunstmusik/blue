@@ -72,9 +72,11 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] T004 Identify Java reference behavior and fixtures in [exact reference path]
 - [ ] T005 [P] Define canonical state ownership and typed boundary contracts in [exact file path]
 - [ ] T006 [P] Add migration, preservation, and failure-recovery scaffolding in [exact file path]
-- [ ] T007 Create shared models or utilities required by all stories in [exact file path]
-- [ ] T008 Add focused regression or contract test fixtures in [exact test path]
-- [ ] T009 Configure diagnostics for recoverable host/runtime failures in [exact file path]
+- [ ] T007 [P] Define `ProjectHistory` routes, semantic labels, and commit→undo→redo coverage for
+      every durable project mutation in [exact file paths], or document why the feature has none
+- [ ] T008 Create shared models or utilities required by all stories in [exact file path]
+- [ ] T009 Add focused regression or contract test fixtures in [exact test path]
+- [ ] T010 Configure diagnostics for recoverable host/runtime failures in [exact file path]
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -90,17 +92,17 @@ Examples of foundational tasks (adjust based on your project):
 
 > **NOTE: For a bug or behavior change, reproduce the failure before implementation when the harness supports it.**
 
-- [ ] T010 [P] [US1] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T011 [P] [US1] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T011 [P] [US1] Contract test for [endpoint] in tests/contract/test_[name].py
+- [ ] T012 [P] [US1] Integration test for [user journey] in tests/integration/test_[name].py
 
 ### Implementation for User Story 1
 
-- [ ] T012 [P] [US1] Create [Entity1] model in src/models/[entity1].py
-- [ ] T013 [P] [US1] Create [Entity2] model in src/models/[entity2].py
-- [ ] T014 [US1] Implement [Service] in src/services/[service].py (depends on T012, T013)
-- [ ] T015 [US1] Implement [endpoint/feature] in src/[location]/[file].py
-- [ ] T016 [US1] Add validation and error handling
-- [ ] T017 [US1] Add logging for user story 1 operations
+- [ ] T013 [P] [US1] Create [Entity1] model in src/models/[entity1].py
+- [ ] T014 [P] [US1] Create [Entity2] model in src/models/[entity2].py
+- [ ] T015 [US1] Implement [Service] in src/services/[service].py (depends on T013, T014)
+- [ ] T016 [US1] Implement [endpoint/feature] in src/[location]/[file].py
+- [ ] T017 [US1] Add validation and error handling
+- [ ] T018 [US1] Add logging for user story 1 operations
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 
@@ -114,15 +116,15 @@ Examples of foundational tasks (adjust based on your project):
 
 ### Verification for User Story 2
 
-- [ ] T018 [P] [US2] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T019 [P] [US2] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T019 [P] [US2] Contract test for [endpoint] in tests/contract/test_[name].py
+- [ ] T020 [P] [US2] Integration test for [user journey] in tests/integration/test_[name].py
 
 ### Implementation for User Story 2
 
-- [ ] T020 [P] [US2] Create [Entity] model in src/models/[entity].py
-- [ ] T021 [US2] Implement [Service] in src/services/[service].py
-- [ ] T022 [US2] Implement [endpoint/feature] in src/[location]/[file].py
-- [ ] T023 [US2] Integrate with User Story 1 components (if needed)
+- [ ] T021 [P] [US2] Create [Entity] model in src/models/[entity].py
+- [ ] T022 [US2] Implement [Service] in src/services/[service].py
+- [ ] T023 [US2] Implement [endpoint/feature] in src/[location]/[file].py
+- [ ] T024 [US2] Integrate with User Story 1 components (if needed)
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
 
@@ -136,14 +138,14 @@ Examples of foundational tasks (adjust based on your project):
 
 ### Verification for User Story 3
 
-- [ ] T024 [P] [US3] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T025 [P] [US3] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T025 [P] [US3] Contract test for [endpoint] in tests/contract/test_[name].py
+- [ ] T026 [P] [US3] Integration test for [user journey] in tests/integration/test_[name].py
 
 ### Implementation for User Story 3
 
-- [ ] T026 [P] [US3] Create [Entity] model in src/models/[entity].py
-- [ ] T027 [US3] Implement [Service] in src/services/[service].py
-- [ ] T028 [US3] Implement [endpoint/feature] in src/[location]/[file].py
+- [ ] T027 [P] [US3] Create [Entity] model in src/models/[entity].py
+- [ ] T028 [US3] Implement [Service] in src/services/[service].py
+- [ ] T029 [US3] Implement [endpoint/feature] in src/[location]/[file].py
 
 **Checkpoint**: All user stories should now be independently functional
 
@@ -187,6 +189,8 @@ Examples of foundational tasks (adjust based on your project):
 ### Within Each User Story
 
 - Constitution-required regression tests MUST accompany behavior and data changes
+- New or modified durable project mutations MUST route through `ProjectHistory` and include focused
+  commit→undo→redo coverage; transient previews MUST restore canonical state on cancellation
 - Bug regressions MUST fail before implementation when the harness supports it
 - Models before services
 - Services before endpoints

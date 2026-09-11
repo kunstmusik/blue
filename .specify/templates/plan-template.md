@@ -46,6 +46,9 @@
   generated fixture, `.blue`/CSD impact, preservation requirements, and any intentional divergence]
 - **Canonical ownership and contracts**: [PASS/FAIL/N/A — name each state owner, persistence
   location, typed IPC/preload/runtime contract, and migration or recovery path]
+- **Project history and undo/redo**: [PASS/FAIL/N/A — identify every new or modified durable
+  project writer, its `ProjectHistory` route and semantic label, commit→undo→redo coverage,
+  preview cancellation behavior, and runtime reconciliation; justify any approved exception]
 - **Runtime and engine isolation**: [PASS/FAIL/N/A — explain host-owned Java, filesystem,
   process, and ZeroMQ work and confirm renderer/data layers remain isolated]
 - **Host-path portability**: [PASS/FAIL/N/A — identify native path, canonical identity, and

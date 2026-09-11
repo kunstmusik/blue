@@ -69,8 +69,9 @@ You **MUST** consider the user input before proceeding (if not empty).
    - If contracts/ exists: Map interface contracts to user stories
    - If research.md exists: Extract decisions for setup tasks
    - Generate tasks organized by user story (see Task Generation Rules below)
-   - Generate compatibility, state-ownership, boundary-contract, and verification tasks
-     required by `.specify/memory/constitution.md`, even when the feature does not request TDD
+   - Generate compatibility, state-ownership, boundary-contract, project-history/undo-redo, and
+     verification tasks required by `.specify/memory/constitution.md`, even when the feature does
+     not request TDD
    - Generate dependency graph showing user story completion order
    - Create parallel execution examples per user story
    - Validate task completeness (each user story has all needed tasks, independently testable)
@@ -142,8 +143,9 @@ The tasks.md should be immediately executable - each task must be specific enoug
 **CRITICAL**: Tasks MUST be organized by user story to enable independent implementation and testing.
 
 **Verification is constitution-driven**: Generate automated regression, serialization, contract,
-runtime, UI, and quickstart tasks whenever the constitution or plan requires them. For unrelated
-behavior with no constitutional verification obligation, additional TDD tasks remain optional.
+runtime, UI, project-history commit→undo→redo, and quickstart tasks whenever the constitution or
+plan requires them. For unrelated behavior with no constitutional verification obligation,
+additional TDD tasks remain optional.
 
 ### Checklist Format (REQUIRED)
 

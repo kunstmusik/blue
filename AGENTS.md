@@ -56,6 +56,20 @@ Do not manually create worktrees beside the repository or in a tool-specific def
 - Compare Java-generated artifacts such as `~/work/blue/demo2026/01.csd`; document any
   intentional TypeScript divergence and cover it with a focused test.
 
+## Project history and undo/redo
+
+- Every user-visible action that changes active `BlueData` project content must use the canonical
+  `ProjectHistory` path through typed document patches or an approved direct structural mutation
+  adapter. Do not add direct project-model writes that bypass history preparation.
+- New or modified project mutations must provide a semantic history label and focused
+  commit→undo→redo tests covering canonical state, stable identities/references, dirty state, and
+  runtime reconciliation when the edit affects a running engine.
+- Transient previews and disposable renderer/runtime state are not history entries. If a preview
+  produces a durable edit, commit its final value through project history and restore canonical
+  document/runtime state on cancellation.
+- A deliberately non-undoable project mutation requires an explicit rationale and project-owner
+  approval in the feature spec and plan.
+
 ## Host filesystem and embedded-text paths
 
 - Keep native OS paths unchanged for `fs`, `path`, `os`, and process APIs. Do not globally

@@ -110,6 +110,8 @@
 - **Compatibility Requirements**: [Observable behavior and data that MUST remain compatible or preserved]
 - **Intentional Divergences**: [None, or each approved divergence with user-visible rationale]
 - **State Ownership**: [Canonical owner and persistence location for every affected state domain]
+- **Undo/Redo Impact**: [For each new or modified durable project mutation, require undo/redo and
+  name observable restoration expectations; otherwise state N/A because no project content changes]
 
 ### Key Entities *(include if feature involves data)*
 

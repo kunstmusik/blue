@@ -1,4 +1,22 @@
 <!--
+Sync Impact Report (2026-09-11)
+- Version change: 2.1.0 → 2.2.0
+- Modified principles:
+  - III. Canonical State Ownership and Explicit Contracts (expanded with project-history rules)
+- Added sections: none
+- Removed sections: none
+- Templates and guidance:
+  - ✅ updated: .specify/templates/plan-template.md
+  - ✅ updated: .specify/templates/spec-template.md
+  - ✅ updated: .specify/templates/tasks-template.md
+  - ✅ updated: .agents/skills/speckit-tasks/SKILL.md
+  - ✅ updated: AGENTS.md
+  - ✅ reviewed/no change: remaining .agents/skills/speckit-*/SKILL.md files, README.md,
+    and docs/modularization.md
+- Follow-up TODOs: none
+-->
+
+<!--
 Sync Impact Report (2026-08-17)
 - Version change: 2.0.0 → 2.1.0
 - Modified principles: none
@@ -73,6 +91,18 @@ app-wide settings MUST NOT enter `.blue` XML unless the project model explicitly
 IPC, preload, engine, and Java-runtime boundaries MUST use typed, serializable, validated
 contracts with explicit failure behavior. This prevents split-brain state and accidental changes
 to project persistence.
+
+Every user-visible action that changes active `BlueData` project content MUST participate in the
+canonical `ProjectHistory` commit path, either through typed document patches or an approved direct
+structural mutation adapter. Each action MUST have a semantic history label and support undo and
+redo without losing identities, ordering, references, dirty-state accuracy, canonical publication,
+or required runtime reconciliation. New or modified project writers MUST include focused
+commit→undo→redo coverage at the lowest practical boundary. Transient previews, selection, hover,
+playback telemetry, caches, and other disposable session state are not history entries; however, a
+preview that results in a durable project edit MUST commit its final value through project history
+and MUST restore canonical document/runtime state when cancelled. A deliberately non-undoable
+project mutation requires an explicit rationale and project-owner approval in the feature spec and
+plan.
 
 ### IV. Host-Owned External Runtimes and Engine Isolation
 `@blue/data` MAY define abstract execution contracts but MUST NOT launch Java, access files, or
@@ -164,4 +194,4 @@ Code review MUST treat an unexplained MUST violation as blocking. A necessary ex
 documented in the plan's Complexity Tracking section with the rejected compliant alternative and
 MUST receive explicit project-owner approval.
 
-**Version**: 2.1.0 | **Ratified**: 2026-04-11 | **Last Amended**: 2026-08-17
+**Version**: 2.2.0 | **Ratified**: 2026-04-11 | **Last Amended**: 2026-09-11
