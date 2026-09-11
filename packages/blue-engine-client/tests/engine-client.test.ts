@@ -68,6 +68,10 @@ vi.mock('zeromq', () => {
       this.subscriptions.push(...prefixes);
     }
 
+    unsubscribe(...prefixes: Array<string | Buffer>): void {
+      this.subscriptions = this.subscriptions.filter((p) => !prefixes.includes(p));
+    }
+
     close = vi.fn(() => {
       this.closed = true;
       while (this.waiters.length > 0) {
@@ -378,5 +382,24 @@ describe('EngineClient', () => {
     });
     expect(request.sent.map((message) => message.readUInt8(0))).toEqual([CMD_GET_CAPABILITIES]);
     expect(request.close).toHaveBeenCalledOnce();
+  });
+
+  it('manages ENGINE_METERS_TOPIC subscription with onEngineMeters lifecycle', async () => {
+    const client = new EngineClient({ endpoint: 'tcp://localhost:5555' });
+    await client.connect();
+    const subscriber = mockState.subscriberInstances[0];
+
+    // Initially only engine.state is subscribed
+    expect(subscriber.subscriptions).toEqual(['engine.state']);
+
+    const listener = vi.fn();
+    const unsubscribe = client.onEngineMeters(listener);
+
+    // Subscribed to engine.meters
+    expect(subscriber.subscriptions).toContain('engine.meters');
+
+    unsubscribe();
+    // Unsubscribed when all listeners removed
+    expect(subscriber.subscriptions).not.toContain('engine.meters');
   });
 });

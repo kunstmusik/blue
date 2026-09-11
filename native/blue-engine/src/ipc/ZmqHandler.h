@@ -47,24 +47,17 @@ private:
     std::mutex pendingStateMutex_;
     std::vector<EngineStateSnapshot> pendingStateSnapshots_;
 
-    struct MeterChannelGroup {
-        std::string csdKey;
-        std::vector<double*> rmsPointers;
-        std::vector<double*> peakPointers;
-    };
-
+    // Meter frame sequencing and audio-time pacing. Values come from the
+    // engine's race-safe perform-thread snapshots; this class never reads
+    // Csound channel memory directly.
     uint32_t meterSequence_ = 0;
     int64_t lastMeterSampleFrames_ = -1;
-    uint64_t lastMeterBindingGeneration_ = 0;
-    int cachedMeterNchnls_ = 0;
-    std::vector<MeterChannelGroup> cachedMeterGroups_;
 
     void enqueueStateSnapshot(const EngineStateSnapshot &snapshot);
     void publishPendingStateSnapshots();
     void publishStateSnapshot(const EngineStateSnapshot &snapshot);
     void publishMetersIfDue();
-    void rebuildMeterChannelCache(const RuntimeChannelBindingSnapshot* bindings);
-    void publishMeterFrame();
+    void publishMeterFrame(const MeterValuesSnapshot &values);
     static std::string serializeStateSnapshot(const EngineStateSnapshot &snapshot);
     static const char* stateToString(EngineLifecycleState state);
     static const char* stopReasonToString(EngineStopReason stopReason);

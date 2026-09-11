@@ -15,6 +15,7 @@
 #include <cmath>
 #include <cstring>
 #include <functional>
+#include <map>
 #include <utility>
 #include <vector>
 
@@ -299,6 +300,12 @@ void CsoundEngine::destroy() {
   sampleNumber_.store(0);
   pendingChannelValues_.clear();
   channelMailbox_->reset();
+  {
+    std::lock_guard<std::mutex> lock(meterReaderMutex_);
+    cachedReaderSnapshot_ = nullptr;
+  }
+  meterChannelsPresent_.store(false, std::memory_order_release);
+  captureHotPathAllocationCount_.store(0, std::memory_order_relaxed);
 
   {
     std::lock_guard<std::mutex> lock(stateMutex_);
@@ -621,6 +628,9 @@ void CsoundEngine::joinPerformThread(bool preservePerformanceState) {
     preservePerformanceState_.store(false, std::memory_order_release);
   }
 
+  meterChannelsPresent_.store(false, std::memory_order_release);
+  meterLayout_.clear();
+
   // A batch accepted immediately before stop may not have reached a perform
   // boundary. Its latest values remain in pendingChannelValues_ and are
   // re-applied by start()/compileOrc(); discard stale pointer envelopes only
@@ -647,6 +657,13 @@ void CsoundEngine::performThread() {
   int64_t localSample = sampleNumber_.load(std::memory_order_relaxed);
   std::shared_ptr<const RuntimeChannelBindingSnapshot> cachedBindings;
   uint64_t cachedBindingGeneration = 0;
+
+  // Meter layout and pacing are perform-thread-owned; reset both so a fresh
+  // performance rebuilds pointers from the current channel bindings.
+  meterLayout_.clear();
+  meterLayoutNchnls_ = 0;
+  lastMeterCaptureSampleFrames_ = -1;
+  lastMeterLayoutGeneration_ = 0;
 
 #if BLUE_ENGINE_USE_PERFORMANCE_TRACKING
   using Clock = std::chrono::steady_clock;
@@ -915,6 +932,14 @@ void CsoundEngine::performThread() {
 
     syncSharedMemoryFromChannels(cachedBindings, cachedBindingGeneration);
 
+    // Sample meter taps on this thread (the same thread that executes the
+    // Csound k-cycle) and hand an immutable value snapshot to the
+    // publication threads. Bounded by the capture-rate gate inside. The
+    // capture cost lands in the shared-memory-sync window so metering
+    // overhead stays visible in the perform diagnostics.
+    captureMeterValuesIfDue(localSample, sampleRate, cachedBindings,
+                            cachedBindingGeneration);
+
 #if BLUE_ENGINE_USE_PERFORMANCE_TRACKING
     const auto afterSharedMemorySync = Clock::now();
     const auto autoNs = static_cast<uint64_t>(
@@ -1055,6 +1080,13 @@ void CsoundEngine::performThread() {
 
   // Flush one final snapshot so observers catch the latest values before reset.
   syncSharedMemoryFromChannels(cachedBindings, cachedBindingGeneration);
+
+  // Drop meter channel pointers before Csound resets; publication threads
+  // keep reading the last immutable value snapshot, never these pointers.
+  meterLayout_.clear();
+  meterLayoutNchnls_ = 0;
+  lastMeterCaptureSampleFrames_ = -1;
+  meterChannelsPresent_.store(false, std::memory_order_release);
 
   const bool preservePerformanceState =
       preservePerformanceState_.load(std::memory_order_acquire);
@@ -1375,6 +1407,10 @@ bool CsoundEngine::rebuildControlChannelCache() {
   snapshot->mirrorBindings = std::move(newMirrorBindings);
 
   snapshot->controlChannels = std::move(newChannels);
+
+  rebuildMeterLayout(snapshot.get());
+  lastMeterLayoutGeneration_ = nextGen;
+
   std::atomic_store_explicit(
       &runtimeChannelBindings_,
       std::shared_ptr<const RuntimeChannelBindingSnapshot>(std::move(snapshot)),
@@ -1471,6 +1507,221 @@ void CsoundEngine::syncSharedMemoryFromBindings(
       binding.sharedMemoryEntry->value.store(newValue, std::memory_order_relaxed);
     }
   }
+}
+
+void CsoundEngine::rebuildMeterLayout(
+    const RuntimeChannelBindingSnapshot *bindings) {
+  meterLayout_.clear();
+  meterLayoutNchnls_ = 0;
+  meterChannelsPresent_.store(false, std::memory_order_release);
+  if (!bindings) {
+    return;
+  }
+
+  static constexpr const char *RMS_PREFIX = "bm_meter_rms_";
+  static constexpr const char *PEAK_PREFIX = "bm_meter_peak_";
+  static constexpr size_t RMS_LEN = 13;
+  static constexpr size_t PEAK_LEN = 14;
+
+  struct ChannelSlot {
+    bool isPeak = false;
+    int ch = 0;
+    double *pointer = nullptr;
+  };
+  std::map<std::string, std::vector<ChannelSlot>> groups;
+  int maxCh = 0;
+
+  for (const auto &[name, state] : bindings->controlChannels) {
+    if (!state.pointer) {
+      continue;
+    }
+
+    bool isPeak = false;
+    size_t prefixLen = 0;
+    if (name.rfind(RMS_PREFIX, 0) == 0) {
+      isPeak = false;
+      prefixLen = RMS_LEN;
+    } else if (name.rfind(PEAK_PREFIX, 0) == 0) {
+      isPeak = true;
+      prefixLen = PEAK_LEN;
+    } else {
+      continue;
+    }
+
+    const size_t lastUnderscore = name.rfind('_');
+    if (lastUnderscore == std::string::npos || lastUnderscore <= prefixLen) {
+      continue;
+    }
+
+    const std::string csdKey = name.substr(prefixLen, lastUnderscore - prefixLen);
+    int ch = 0;
+    try {
+      ch = std::stoi(name.substr(lastUnderscore + 1));
+    } catch (...) {
+      continue;
+    }
+    if (ch < 0 || ch >= 64) {
+      continue;
+    }
+
+    if (ch > maxCh) {
+      maxCh = ch;
+    }
+
+    groups[csdKey].push_back(ChannelSlot{isPeak, ch, state.pointer});
+  }
+
+  if (groups.empty()) {
+    return;
+  }
+
+  meterLayoutNchnls_ = maxCh + 1;
+  meterLayout_.reserve(groups.size());
+
+  for (auto &[csdKey, slots] : groups) {
+    MeterChannelPointerGroup group;
+    group.csdKey = csdKey;
+    group.rmsPointers.assign(meterLayoutNchnls_, nullptr);
+    group.peakPointers.assign(meterLayoutNchnls_, nullptr);
+
+    for (const auto &slot : slots) {
+      if (slot.ch < meterLayoutNchnls_) {
+        if (slot.isPeak) {
+          group.peakPointers[slot.ch] = slot.pointer;
+        } else {
+          group.rmsPointers[slot.ch] = slot.pointer;
+        }
+      }
+    }
+    meterLayout_.push_back(std::move(group));
+  }
+
+  // Preallocate bounded triple-buffer slots with sized vectors and keys (FR-014, T050)
+  for (size_t i = 0; i < kMeterBufferSlots; ++i) {
+    meterBufferSlots_[i].captureCount = 0;
+    meterBufferSlots_[i].sampleFrames = -1;
+    meterBufferSlots_[i].nchnls = meterLayoutNchnls_;
+    meterBufferSlots_[i].channels.resize(meterLayout_.size());
+    for (size_t g = 0; g < meterLayout_.size(); ++g) {
+      meterBufferSlots_[i].channels[g].csdKey = meterLayout_[g].csdKey;
+      meterBufferSlots_[i].channels[g].rms.assign(static_cast<size_t>(meterLayoutNchnls_), 0.0);
+      meterBufferSlots_[i].channels[g].peak.assign(static_cast<size_t>(meterLayoutNchnls_), 0.0);
+    }
+  }
+  meterWriteSlot_ = 0;
+  meterReadSlot_ = 1;
+  meterBufferState_.store(2, std::memory_order_release); // middle = 2, hasNew = 0
+  meterCaptureCount_ = 0;
+  {
+    std::lock_guard<std::mutex> lock(meterReaderMutex_);
+    cachedReaderSnapshot_ = nullptr;
+  }
+
+  meterChannelsPresent_.store(true, std::memory_order_release);
+}
+
+void CsoundEngine::captureMeterValuesIfDue(
+    int64_t localSample, double sampleRate,
+    std::shared_ptr<const RuntimeChannelBindingSnapshot> &cachedBindings,
+    uint64_t &cachedGeneration) {
+  const uint64_t currentGeneration =
+      channelBindingGeneration_.load(std::memory_order_acquire);
+  if (cachedGeneration != currentGeneration || !cachedBindings) {
+    cachedBindings = std::atomic_load_explicit(
+        &runtimeChannelBindings_, std::memory_order_acquire);
+    cachedGeneration = currentGeneration;
+  }
+  const RuntimeChannelBindingSnapshot *bindings = cachedBindings.get();
+  if (!bindings) {
+    return;
+  }
+
+  if (bindings->bindingGeneration != lastMeterLayoutGeneration_) {
+    rebuildMeterLayout(bindings);
+    lastMeterLayoutGeneration_ = bindings->bindingGeneration;
+  }
+
+  if (meterLayout_.empty() || meterLayoutNchnls_ <= 0) {
+    return;
+  }
+
+  // Capture at twice the ~35 Hz publication rate so the publication thread
+  // always finds a fresh snapshot at its audio-time boundary; the bounded
+  // rate keeps processing minimal on the perform thread.
+  static constexpr double kCaptureRateHz = 72.0;
+  const int64_t minInterval =
+      static_cast<int64_t>(sampleRate / kCaptureRateHz);
+  if (lastMeterCaptureSampleFrames_ >= 0 &&
+      localSample - lastMeterCaptureSampleFrames_ < minInterval) {
+    return;
+  }
+  lastMeterCaptureSampleFrames_ = localSample;
+
+  // Preallocated bounded lock-free meter-value handoff (FR-014, T050):
+  // Zero heap allocation, zero string/vector copying, zero mutex locking,
+  // zero atomic shared-pointer operations, and zero snapshot destruction.
+  t_trapCaptureAllocations = true;
+  t_trappedCaptureAllocations = 0;
+
+  MeterValuesSnapshot &slot = meterBufferSlots_[meterWriteSlot_];
+  slot.sampleFrames = localSample;
+  slot.captureCount = ++meterCaptureCount_;
+  slot.nchnls = meterLayoutNchnls_;
+
+  const size_t numGroups = meterLayout_.size();
+  const int nchnls = meterLayoutNchnls_;
+  for (size_t g = 0; g < numGroups; ++g) {
+    const auto &group = meterLayout_[g];
+    auto &channel = slot.channels[g];
+    for (int c = 0; c < nchnls; ++c) {
+      double r = group.rmsPointers[c] ? *group.rmsPointers[c] : 0.0;
+      if (!std::isfinite(r) || r < 0.0) {
+        r = 0.0;
+      }
+      channel.rms[c] = r;
+      double p = group.peakPointers[c] ? *group.peakPointers[c] : 0.0;
+      if (!std::isfinite(p) || p < 0.0) {
+        p = 0.0;
+      }
+      channel.peak[c] = p;
+    }
+  }
+
+  // Atomic release-swap of write slot into middle slot with hasNew = 1
+  uint32_t current = meterBufferState_.load(std::memory_order_relaxed);
+  uint32_t desired = 0;
+  do {
+    desired = (meterWriteSlot_ & 0x3) | 0x4;
+  } while (!meterBufferState_.compare_exchange_weak(
+               current, desired,
+               std::memory_order_release,
+               std::memory_order_relaxed));
+  meterWriteSlot_ = current & 0x3;
+
+  t_trapCaptureAllocations = false;
+  if (t_trappedCaptureAllocations > 0) {
+    captureHotPathAllocationCount_.fetch_add(t_trappedCaptureAllocations, std::memory_order_relaxed);
+  }
+}
+
+std::shared_ptr<const MeterValuesSnapshot> CsoundEngine::getMeterValuesSnapshot() const {
+  std::lock_guard<std::mutex> lock(meterReaderMutex_);
+  uint32_t current = meterBufferState_.load(std::memory_order_acquire);
+  if (current & 0x4) {
+    while (current & 0x4) {
+      uint32_t middle = current & 0x3;
+      uint32_t desired = meterReadSlot_ & 0x3; // hasNew = 0, old readSlot becomes middle
+      if (meterBufferState_.compare_exchange_weak(
+              current, desired,
+              std::memory_order_acq_rel,
+              std::memory_order_acquire)) {
+        meterReadSlot_ = middle;
+        break;
+      }
+    }
+    cachedReaderSnapshot_ = std::make_shared<MeterValuesSnapshot>(meterBufferSlots_[meterReadSlot_]);
+  }
+  return cachedReaderSnapshot_;
 }
 
 void CsoundEngine::mirrorChannelValue(const std::string &name, double value) {

@@ -11,8 +11,8 @@ export interface MeterCanvasProps {
   className?: string;
 }
 
-const DEFAULT_METER_WIDTH = 12;
-const DEFAULT_METER_HEIGHT = 80;
+export const DEFAULT_METER_WIDTH = 12;
+export const DEFAULT_METER_HEIGHT = 80;
 const CLIP_BOX_Y = 3;
 const CLIP_BOX_HEIGHT = 4;
 const METER_TRACK_TOP = 10;
@@ -20,10 +20,16 @@ const METER_BOTTOM_PADDING = 10;
 const BAR_GAP = 1;
 const PADDING = 1;
 
+export function getMeterWidth(nchnls: number): number {
+  if (nchnls <= 1) return 10;
+  if (nchnls === 2) return 12;
+  return Math.min(36, Math.max(12, 2 * PADDING + nchnls * 3 + (nchnls - 1) * BAR_GAP));
+}
+
 export function MeterCanvas({
   stripId,
   isMaster = false,
-  width = DEFAULT_METER_WIDTH,
+  width: widthProp,
   height: heightProp,
   className,
 }: MeterCanvasProps): React.ReactElement {
@@ -31,8 +37,36 @@ export function MeterCanvas({
   const hostDocument = useHostDocument({ fallbackToGlobal: true });
   const hostWindow = hostDocument?.defaultView ?? (typeof window !== 'undefined' ? window : null);
 
+  const [storeNchnls, setStoreNchnls] = useState(
+    () => meterStore.getStripState(stripId)?.nchnls ?? 2,
+  );
+
+  useEffect(() => {
+    return meterStore.onBindingMapChange(() => {
+      const currentNchnls = meterStore.getStripState(stripId)?.nchnls ?? 2;
+      setStoreNchnls((prev) => (prev === currentNchnls ? prev : currentNchnls));
+    });
+  }, [stripId]);
+
+  const width = widthProp ?? getMeterWidth(storeNchnls);
   const [measuredHeight, setMeasuredHeight] = useState(heightProp ?? DEFAULT_METER_HEIGHT);
   const height = heightProp ?? measuredHeight;
+
+  const isVisibleRef = useRef(true);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || typeof IntersectionObserver === 'undefined') return;
+
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        isVisibleRef.current = entry.isIntersecting;
+      }
+    });
+
+    observer.observe(canvas);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (heightProp !== undefined) return;
@@ -66,11 +100,17 @@ export function MeterCanvas({
     let wasParkedAtSilence = false;
 
     const draw = (nowMs: number) => {
-      // Advance meterStore physics
+      // Advance meterStore physics (guarded to run at most once per frame)
       meterStore.update(nowMs);
 
+      // Skip off-screen rendering
+      if (!isVisibleRef.current) {
+        animFrameId = hostWindow.requestAnimationFrame(draw);
+        return;
+      }
+
       const stripState = meterStore.getStripState(stripId);
-      const nchnls = stripState ? stripState.nchnls : 2;
+      const nchnls = stripState ? stripState.nchnls : storeNchnls;
 
       // Check if all channels are at silence floor and not clipped
       let isAllSilent = true;
@@ -112,9 +152,17 @@ export function MeterCanvas({
         const meterTop = METER_TRACK_TOP;
         const meterHeight = Math.max(0, height - METER_TRACK_TOP - METER_BOTTOM_PADDING);
 
-        // Compute bar width based on channel count
-        const availableW = Math.max(0, width - 2 * PADDING - (nchnls - 1) * BAR_GAP);
-        const barW = Math.max(2, Math.floor(availableW / nchnls));
+        // Compute bar width and gap based on channel count and available width
+        // Support subpixel bars so every channel fits strictly inside [PADDING, width - PADDING] without clipping
+        let barGap = nchnls > 1 ? BAR_GAP : 0;
+        let availableW = width - 2 * PADDING - (nchnls - 1) * barGap;
+
+        if (availableW < nchnls * 1 && nchnls > 1) {
+          barGap = Math.max(0, ((width - 2 * PADDING) * 0.1) / (nchnls - 1));
+          availableW = width - 2 * PADDING - (nchnls - 1) * barGap;
+        }
+
+        const barW = Math.max(0.5, availableW / nchnls);
 
         // Create linear gradient for dB scale
         const gradient = ctx.createLinearGradient(0, meterTop + meterHeight, 0, meterTop);
@@ -127,7 +175,7 @@ export function MeterCanvas({
         const dbRange = MAX_DB - MIN_DB;
 
         for (let ch = 0; ch < nchnls; ch++) {
-          const x = PADDING + ch * (barW + BAR_GAP);
+          const x = PADDING + ch * (barW + barGap);
 
           // 1. Clip Box
           const isClipped = stripState?.clipFlags[ch] ?? false;
@@ -173,7 +221,7 @@ export function MeterCanvas({
         hostWindow.cancelAnimationFrame(animFrameId);
       }
     };
-  }, [hostWindow, stripId, width, height]);
+  }, [hostWindow, stripId, width, height, storeNchnls]);
 
   return (
     <canvas

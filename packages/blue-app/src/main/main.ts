@@ -32,6 +32,7 @@ import {
   type MeterBindingMap,
 } from '@blue/data';
 import type { MeterBindingMapPayload } from '../shared/meter-types';
+import { buildMeterBindingMapPayload } from './meter-binding';
 import { openSettingsWindow, resolveSettingsWindowClose } from './settings-window';
 import { closeAboutWindow, openAboutWindow, syncAboutWindowZoom } from './about-window';
 import { resolveAppMetadata } from './app-metadata';
@@ -4002,43 +4003,6 @@ async function applyRuntimeWorkOperation(
   }
 
   return { status: 'applied' };
-}
-
-function buildMeterBindingMapPayload(
-  data: BlueData,
-  meterBindingMap: MeterBindingMap,
-): MeterBindingMapPayload {
-  const liveMixer = data.getMixer();
-  const liveSubChannels = liveMixer.getSubChannels();
-  const liveSourceChannels = liveMixer.getAllSourceChannels();
-
-  const entries = meterBindingMap.entries.map((entry) => {
-    let stripId = entry.stripId;
-    if (entry.kind === 'master') {
-      stripId = 'master';
-    } else if (entry.kind === 'sub') {
-      const matchingSub = liveSubChannels.find((c) => c.getName() === entry.displayName);
-      if (matchingSub) {
-        stripId = getMixerChannelSnapshotId(matchingSub);
-      }
-    } else if (entry.kind === 'source') {
-      const matchingSource = liveSourceChannels.find((c) => c.getName() === entry.displayName);
-      if (matchingSource) {
-        stripId = getMixerChannelSnapshotId(matchingSource);
-      }
-    }
-    return {
-      kind: entry.kind,
-      csdKey: entry.csdKey,
-      stripId,
-      displayName: entry.displayName,
-    };
-  });
-
-  return {
-    entries,
-    nchnls: meterBindingMap.nchnls,
-  };
 }
 
 async function startPlayback(

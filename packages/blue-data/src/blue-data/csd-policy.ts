@@ -1376,6 +1376,7 @@ function buildMeterBindingMap(
 ): MeterBindingMap {
   const entries: CompiledMeterChannelBinding[] = [];
 
+  let sourceIndex = 0;
   for (const channel of mixer.getAllSourceChannels()) {
     const id = channelIdAssignments.get(channel);
     if (id === undefined) continue;
@@ -1387,10 +1388,12 @@ function buildMeterBindingMap(
       stripId,
       displayName: channel.getName(),
       channel,
+      channelIndex: sourceIndex++,
     });
   }
 
   const subMeterKeys = buildSubChannelMeterKeys(Array.from(mixer.getSubChannels()));
+  let subIndex = 0;
   for (const subChannel of mixer.getSubChannels()) {
     const name = subChannel.getName();
     const csdKey = subMeterKeys.get(subChannel) ?? `sub_${name.replace(/\s+/g, '_')}`;
@@ -1401,6 +1404,7 @@ function buildMeterBindingMap(
       stripId,
       displayName: name,
       channel: subChannel,
+      channelIndex: subIndex++,
     });
   }
 

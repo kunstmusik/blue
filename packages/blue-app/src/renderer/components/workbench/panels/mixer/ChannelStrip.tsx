@@ -68,6 +68,7 @@ interface ChannelStripProps {
   selection?: MixerChainSelection | null;
   onSelectionChange?: (selection: MixerChainSelection | null) => void;
   projectEffectNodes?: readonly LibraryBrowseNode[];
+  renderMeter?: boolean;
 }
 
 interface EffectDialogState {
@@ -794,6 +795,7 @@ export default function ChannelStrip({
   selection: controlledSelection,
   onSelectionChange: controlledOnSelectionChange,
   projectEffectNodes = [],
+  renderMeter = true,
 }: ChannelStripProps): React.ReactElement {
   const [localSelection, setLocalSelection] = useState<MixerChainSelection | null>(null);
   const selection = controlledSelection === undefined ? localSelection : controlledSelection;
@@ -1086,7 +1088,9 @@ export default function ChannelStrip({
             onInput={handleLevelInput}
             onDoubleClick={handleSliderDoubleClick}
           />
-          <MeterCanvas height={sliderHeight} stripId={channel.id} isMaster={isMaster} />
+          {renderMeter && (
+            <MeterCanvas height={sliderHeight} stripId={channel.id} isMaster={isMaster} />
+          )}
         </div>
         <div
           className="mixer-level-value"

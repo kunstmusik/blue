@@ -226,6 +226,74 @@ set_tests_properties(CsoundLifecycleStress PROPERTIES
     TIMEOUT 30
 )
 
+# Race-safe meter sampling coverage: a real Csound performance with active
+# meter taps, concurrent perform-thread snapshot handoffs, and sustained
+# engine.meters publication (Spec 104 T048). Sanitizer-capable like the
+# lifecycle stress target above.
+add_executable(test_meter_sampling
+    test_meter_sampling.cpp
+    ${CMAKE_SOURCE_DIR}/src/ipc/ZmqHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/ipc/SharedMemory.cpp
+    ${CMAKE_SOURCE_DIR}/src/engine/CsoundEngine.cpp
+    ${CMAKE_SOURCE_DIR}/src/csound/CsoundLoader.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/AutomationStore.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/JavaBigDecimal.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/ExactDecimalQuantizer.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/AutomationManager.cpp
+    ${CMAKE_SOURCE_DIR}/src/protocol/Capabilities.cpp
+)
+target_include_directories(test_meter_sampling PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_meter_sampling PRIVATE Boost::boost libzmq-static)
+set_target_properties(test_meter_sampling PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
+if(UNIX AND NOT APPLE)
+    target_link_libraries(test_meter_sampling PRIVATE dl)
+endif()
+if(ENABLE_SANITIZERS)
+    target_compile_options(test_meter_sampling PRIVATE -fsanitize=address,undefined -fno-omit-frame-pointer)
+    target_link_options(test_meter_sampling PRIVATE -fsanitize=address,undefined)
+endif()
+if(ENABLE_TSAN)
+    target_compile_options(test_meter_sampling PRIVATE -fsanitize=thread -fno-omit-frame-pointer)
+    target_link_options(test_meter_sampling PRIVATE -fsanitize=thread)
+endif()
+add_test(NAME MeterSamplingTests COMMAND test_meter_sampling --duration-seconds 2)
+set_tests_properties(MeterSamplingTests PROPERTIES
+    LABELS "integration;requires-csound;stress"
+    SKIP_RETURN_CODE 77
+    TIMEOUT 60
+)
+
+# Paired metering-enabled vs metering-disabled playback soak with
+# underrun/dropout diagnostics from the engine's realtime instrumentation
+# (Spec 104 T046, FR-014, SC-004). Requires performance tracking for the
+# spike/gap summaries.
+add_executable(test_metering_benchmark
+    test_metering_benchmark.cpp
+    ${CMAKE_SOURCE_DIR}/src/ipc/ZmqHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/ipc/SharedMemory.cpp
+    ${CMAKE_SOURCE_DIR}/src/engine/CsoundEngine.cpp
+    ${CMAKE_SOURCE_DIR}/src/csound/CsoundLoader.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/AutomationStore.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/JavaBigDecimal.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/ExactDecimalQuantizer.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/AutomationManager.cpp
+    ${CMAKE_SOURCE_DIR}/src/protocol/Capabilities.cpp
+)
+target_include_directories(test_metering_benchmark PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_metering_benchmark PRIVATE Boost::boost libzmq-static)
+target_compile_definitions(test_metering_benchmark PRIVATE
+    BLUE_ENGINE_USE_PERFORMANCE_TRACKING=1)
+set_target_properties(test_metering_benchmark PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
+if(UNIX AND NOT APPLE)
+    target_link_libraries(test_metering_benchmark PRIVATE dl)
+endif()
+add_test(NAME MeteringBenchmarkSoak COMMAND test_metering_benchmark --duration-seconds 3 --rounds 4)
+set_tests_properties(MeteringBenchmarkSoak PROPERTIES
+    LABELS "integration;requires-csound;benchmark"
+    SKIP_RETURN_CODE 77
+    TIMEOUT 120
+)
+
 # Control-plane idle behavior does not require Csound or a bound TCP port.
 add_executable(test_zmq_idle_wakeup
     test_zmq_idle_wakeup.cpp

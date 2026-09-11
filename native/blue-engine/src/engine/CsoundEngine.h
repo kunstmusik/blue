@@ -3,6 +3,7 @@
 #include "csound/CsoundTypes.h"
 #include "EditorOpenGapDiagnostics.h"
 #include "RealtimeChannelMailbox.h"
+#include <array>
 #include <atomic>
 #include <cstdint>
 #include <functional>
@@ -93,6 +94,26 @@ struct RuntimeChannelBindingSnapshot {
   explicit RuntimeChannelBindingSnapshot(uint64_t gen) : bindingGeneration(gen) {}
 };
 
+// Sanitized per-channel meter values captured from the Csound control
+// channels. Immutable once published; publication threads only ever read
+// these value copies, never the live channel memory.
+struct MeterChannelValues {
+  std::string csdKey;
+  std::vector<double> rms;
+  std::vector<double> peak;
+};
+
+// Race-safe meter telemetry handoff: the perform thread samples the meter
+// control channels after each completed k-cycle (on the same thread as the
+// Csound writes, so no unsynchronized read of the audio path exists) and
+// swaps an immutable snapshot in for publication threads at a bounded rate.
+struct MeterValuesSnapshot {
+  uint64_t captureCount = 0;
+  int64_t sampleFrames = -1;
+  int32_t nchnls = 0;
+  std::vector<MeterChannelValues> channels;
+};
+
 class CsoundEngine {
 public:
   using StateChangeCallback = std::function<void(const EngineStateSnapshot &)>;
@@ -112,6 +133,16 @@ public:
   }
   std::shared_ptr<const RuntimeChannelBindingSnapshot> getChannelBindings() const {
     return std::atomic_load_explicit(&runtimeChannelBindings_, std::memory_order_acquire);
+  }
+
+  // Latest sanitized meter value snapshot captured by the perform thread, or
+  // null when no metered performance has run. Safe to call from any thread.
+  std::shared_ptr<const MeterValuesSnapshot> getMeterValuesSnapshot() const;
+
+  // True while the current channel bindings contain meter tap channels.
+  // Mirrors the perform-thread layout state for cheap cross-thread polling.
+  bool hasMeterChannels() const {
+    return meterChannelsPresent_.load(std::memory_order_acquire);
   }
 
   // Non-copyable
@@ -155,7 +186,15 @@ public:
   EngineNativeGapSummary getLastNativeGapSummary() const;
   void setStateChangeCallback(StateChangeCallback callback);
 
+  // Hot-path allocation assertion hook for tests/verification (FR-014, T050).
+  inline static thread_local bool t_trapCaptureAllocations = false;
+  inline static thread_local uint64_t t_trappedCaptureAllocations = 0;
+  uint64_t getCaptureHotPathAllocationCount() const {
+    return captureHotPathAllocationCount_.load(std::memory_order_relaxed);
+  }
+
 private:
+  std::atomic<uint64_t> captureHotPathAllocationCount_{0};
   void performThread();
   bool rebuildControlChannelCache();
   void clearControlChannelCache();
@@ -170,6 +209,11 @@ private:
   void mirrorChannelValue(const std::string &name, double value);
   double *findControlChannelPointer(const std::string &name);
   bool hasActiveAutomation(const std::string &name) const;
+  void rebuildMeterLayout(const RuntimeChannelBindingSnapshot *bindings);
+  void captureMeterValuesIfDue(
+      int64_t localSample, double sampleRate,
+      std::shared_ptr<const RuntimeChannelBindingSnapshot> &cachedBindings,
+      uint64_t &cachedGeneration);
   void resumePerformThread();
   void joinPerformThread(bool preservePerformanceState);
   void setLastError(const std::string &message);
@@ -193,6 +237,33 @@ private:
   mutable std::mutex lifecycleMutex_;
   std::atomic<uint64_t> channelBindingGeneration_{1};
   std::shared_ptr<const RuntimeChannelBindingSnapshot> runtimeChannelBindings_;
+
+  // Meter telemetry layout and bounded lock-free handoff (FR-014, T050).
+  // The layout setup and slot preallocation happen on the control thread
+  // before perform starts; capture on the perform thread writes into the
+  // preallocated triple-buffer slot and swaps via atomic CAS with zero
+  // allocations, zero locking, zero reclamation, and zero string/vector copies.
+  struct MeterChannelPointerGroup {
+    std::string csdKey;
+    std::vector<double *> rmsPointers;
+    std::vector<double *> peakPointers;
+  };
+  std::vector<MeterChannelPointerGroup> meterLayout_;
+  static constexpr size_t kMeterBufferSlots = 3;
+  std::array<MeterValuesSnapshot, kMeterBufferSlots> meterBufferSlots_;
+  // Lock-free triple-buffer state:
+  // Bits 0-1: middle slot index (0..2)
+  // Bit 2: hasNew flag (1 if middle slot has new unread data)
+  mutable std::atomic<uint32_t> meterBufferState_{2};
+  uint32_t meterWriteSlot_ = 0;
+  mutable uint32_t meterReadSlot_ = 1;
+  uint64_t meterCaptureCount_ = 0;
+  mutable std::mutex meterReaderMutex_;
+  mutable std::shared_ptr<const MeterValuesSnapshot> cachedReaderSnapshot_;
+  std::atomic<bool> meterChannelsPresent_{false};
+  int32_t meterLayoutNchnls_ = 0;
+  int64_t lastMeterCaptureSampleFrames_ = -1;
+  uint64_t lastMeterLayoutGeneration_ = 0;
   std::unordered_map<std::string, double> pendingChannelValues_;
   std::unique_ptr<RealtimeChannelMailbox> channelMailbox_;
   mutable std::mutex stateMutex_;

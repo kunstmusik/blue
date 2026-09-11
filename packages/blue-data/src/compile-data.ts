@@ -58,6 +58,7 @@ export interface CompiledMeterChannelBinding {
   readonly stripId: string;
   readonly displayName: string;
   readonly channel: Channel;
+  readonly channelIndex?: number;
 }
 
 export interface MeterBindingMap {

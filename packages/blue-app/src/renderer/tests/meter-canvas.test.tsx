@@ -197,4 +197,124 @@ describe('MeterCanvas', () => {
     // Should have drawn background, bars, and peak markers
     expect(ctx.fillRect).toHaveBeenCalled();
   });
+
+  it('renders mono, stereo, and 6-channel surround without clipping', () => {
+    const testCases = [
+      { nchnls: 1, expectedDerivedWidth: 10 },
+      { nchnls: 2, expectedDerivedWidth: 12 },
+      { nchnls: 6, expectedDerivedWidth: 25 },
+    ];
+
+    for (const { nchnls, expectedDerivedWidth } of testCases) {
+      // Configure binding map for target channel count
+      meterStore.setBindingMap({
+        nchnls,
+        entries: [
+          {
+            kind: 'source',
+            csdKey: '0',
+            stripId: `track-${nchnls}`,
+            displayName: `Track ${nchnls}`,
+          },
+        ],
+      });
+
+      act(() => {
+        root.render(<MeterCanvas stripId={`track-${nchnls}`} height={80} />);
+      });
+
+      const canvas = host.querySelector('canvas')!;
+      expect(canvas.style.width).toBe(`${expectedDerivedWidth}px`);
+
+      const ctx = canvas.getContext('2d') as unknown as {
+        fillRect: ReturnType<typeof vi.fn>;
+      };
+
+      // Feed active levels across all channels
+      const rms = new Array(nchnls).fill(0.5);
+      const peak = new Array(nchnls).fill(0.8);
+      meterStore.processMeterFrame(
+        {
+          sequence: nchnls,
+          channels: [{ csdKey: '0', rms, peak }],
+        },
+        2000 + nchnls * 100,
+      );
+
+      ctx.fillRect.mockClear();
+
+      const cb = rafCallbacks[rafCallbacks.length - 1]!;
+      act(() => {
+        cb(2050 + nchnls * 100);
+      });
+
+      // Capture all fillRect calls: (x, y, w, h)
+      const calls = ctx.fillRect.mock.calls as Array<[number, number, number, number]>;
+      expect(calls.length).toBeGreaterThanOrEqual(nchnls * 3); // clip box, track background, active bar, peak marker
+
+      // Assert that every drawn rectangle fits strictly within [0, expectedDerivedWidth]
+      for (const [x, , w] of calls) {
+        expect(x).toBeGreaterThanOrEqual(0);
+        expect(x + w).toBeLessThanOrEqual(expectedDerivedWidth + 0.001);
+      }
+
+      // Cleanup for next case
+      act(() => {
+        root.unmount();
+      });
+      host = document.createElement('div');
+      document.body.appendChild(host);
+      root = createRoot(host);
+    }
+  });
+
+  it('renders subpixel bars without clipping when nchnls=6 is constrained to narrow width', () => {
+    meterStore.setBindingMap({
+      nchnls: 6,
+      entries: [
+        { kind: 'source', csdKey: '0', stripId: 'track-surround', displayName: 'Surround' },
+      ],
+    });
+
+    const forcedWidth = 12;
+    act(() => {
+      root.render(<MeterCanvas stripId="track-surround" width={forcedWidth} height={80} />);
+    });
+
+    const canvas = host.querySelector('canvas')!;
+    expect(canvas.style.width).toBe(`${forcedWidth}px`);
+
+    const ctx = canvas.getContext('2d') as unknown as {
+      fillRect: ReturnType<typeof vi.fn>;
+    };
+
+    meterStore.processMeterFrame(
+      {
+        sequence: 10,
+        channels: [
+          {
+            csdKey: '0',
+            rms: [0.6, 0.6, 0.6, 0.6, 0.6, 0.6],
+            peak: [0.9, 0.9, 0.9, 0.9, 0.9, 0.9],
+          },
+        ],
+      },
+      3000,
+    );
+
+    ctx.fillRect.mockClear();
+
+    const cb = rafCallbacks[rafCallbacks.length - 1]!;
+    act(() => {
+      cb(3050);
+    });
+
+    const calls = ctx.fillRect.mock.calls as Array<[number, number, number, number]>;
+    expect(calls.length).toBeGreaterThanOrEqual(18); // 6 * (clip + track + bar)
+
+    for (const [x, , w] of calls) {
+      expect(x).toBeGreaterThanOrEqual(0);
+      expect(x + w).toBeLessThanOrEqual(forcedWidth + 0.001);
+    }
+  });
 });

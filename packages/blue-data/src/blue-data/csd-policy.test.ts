@@ -130,4 +130,43 @@ describe('CSD meter emission and MeterBindingMap', () => {
     expect(diskCsd).not.toContain('kMeterSamples');
     expect(diskCsd).not.toContain('kMeterTrig');
   });
+
+  it('carries stable compile-time identity across duplicate names, renames, and reorders', () => {
+    const data = createProjectWithMixer();
+    const mixer = data.getMixer();
+
+    // Add another source channel with the identical default name "Track 1"
+    const channel2 = new Channel();
+    channel2.setName('Track 1');
+    channel2.setAssociation('track-2-layer-1');
+    mixer.getChannels().push(channel2);
+
+    // Add duplicate subchannel named "Reverb"
+    const sub2 = new Channel();
+    sub2.setName('Reverb');
+    mixer.getSubChannels().push(sub2);
+
+    const result = data.toRealtimePlaybackCSD(undefined, true);
+    expect(result.meterBindingMap).toBeDefined();
+
+    const map = result.meterBindingMap!;
+    // 2 sources + 2 subs + 1 master = 5
+    expect(map.entries.length).toBe(5);
+
+    const sources = map.entries.filter((e) => e.kind === 'source');
+    expect(sources.length).toBe(2);
+    expect(sources[0].channelIndex).toBe(0);
+    expect(sources[0].stripId).toBe('track-1-layer-1');
+    expect(sources[0].csdKey).toBe('0');
+    expect(sources[1].channelIndex).toBe(1);
+    expect(sources[1].stripId).toBe('track-2-layer-1');
+    expect(sources[1].csdKey).toBe('1');
+
+    const subs = map.entries.filter((e) => e.kind === 'sub');
+    expect(subs.length).toBe(2);
+    expect(subs[0].channelIndex).toBe(0);
+    expect(subs[0].csdKey).toBe('sub_Reverb');
+    expect(subs[1].channelIndex).toBe(1);
+    expect(subs[1].csdKey).toBe('sub_Reverb_2');
+  });
 });

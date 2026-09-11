@@ -122,6 +122,9 @@ export class EngineClient {
     this.subscriber = new Subscriber();
     this.subscriber.linger = 0;
     this.subscriber.subscribe(ENGINE_STATE_TOPIC);
+    if (this.meterListeners.size > 0) {
+      this.subscriber.subscribe(ENGINE_METERS_TOPIC);
+    }
     this.subscriber.connect(this.pubEndpoint);
     this.subscriptionClosed = false;
     this.subscriptionError = null;
@@ -387,9 +390,16 @@ export class EngineClient {
   }
 
   onEngineMeters(listener: EngineMeterListener): () => void {
+    const shouldSubscribe = this.meterListeners.size === 0;
     this.meterListeners.add(listener);
+    if (shouldSubscribe) {
+      this.subscribeMeters();
+    }
     return () => {
       this.meterListeners.delete(listener);
+      if (this.meterListeners.size === 0) {
+        this.unsubscribeMeters();
+      }
     };
   }
 

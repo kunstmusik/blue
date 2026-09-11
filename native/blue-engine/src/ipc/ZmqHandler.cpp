@@ -308,8 +308,29 @@ bool ZmqHandler::processOne() {
 
     // ZeroMQ sockets are thread-affine. A bounded poll keeps requestShutdown
     // safe from signal and owner-monitor threads without sending on an
-    // inproc socket owned by this thread. A 25ms poll ensures ~35Hz meter pacing.
-    int rc = zmq_poll(&item, 1, 25);
+    // inproc socket owned by this thread. When meters are active during playback,
+    // pace poll timeout dynamically to ensure sustained ~35Hz meter delivery.
+    int pollTimeout = 25;
+    if (pubSocket_ && engine_.hasMeterChannels()) {
+        const auto snapshot = engine_.getStateSnapshot();
+        if (snapshot.state == EngineLifecycleState::RUNNING && snapshot.sampleRate > 0.0) {
+            const int64_t minSampleInterval = static_cast<int64_t>(snapshot.sampleRate / 36.0);
+            if (lastMeterSampleFrames_ >= 0) {
+                const int64_t elapsedSamples = snapshot.sampleFrames - lastMeterSampleFrames_;
+                const int64_t remainingSamples = minSampleInterval - elapsedSamples;
+                if (remainingSamples > 0) {
+                    const int remainingMs = static_cast<int>((remainingSamples * 1000) / snapshot.sampleRate);
+                    pollTimeout = std::max(2, std::min(25, remainingMs));
+                } else {
+                    pollTimeout = 2;
+                }
+            } else {
+                pollTimeout = 10;
+            }
+        }
+    }
+
+    int rc = zmq_poll(&item, 1, pollTimeout);
     if (rc == -1) {
         if (zmq_errno() == EINTR) {
             publishPendingStateSnapshots();
@@ -892,120 +913,27 @@ void ZmqHandler::publishMetersIfDue() {
     }
 
     const int64_t currentSamples = snapshot.sampleFrames;
-    // Pace meter updates at ~35 Hz based on audio time (sample count)
-    const int64_t minSampleInterval = static_cast<int64_t>(snapshot.sampleRate / 35.0);
+    // Pace meter updates at ~35-36 Hz based on audio time (sample count)
+    const int64_t minSampleInterval = static_cast<int64_t>(snapshot.sampleRate / 36.0);
 
     if (lastMeterSampleFrames_ >= 0 && (currentSamples - lastMeterSampleFrames_) < minSampleInterval) {
         return;
     }
+
+    // Values are sampled by the engine's perform thread and handed over as an
+    // immutable snapshot; this thread only encodes and publishes the copy.
+    const auto values = engine_.getMeterValuesSnapshot();
+    if (!values || values->channels.empty() || values->nchnls <= 0) {
+        return;
+    }
+
     lastMeterSampleFrames_ = currentSamples;
-
-    const auto bindings = engine_.getChannelBindings();
-    if (!bindings) {
-        return;
-    }
-
-    if (bindings->bindingGeneration != lastMeterBindingGeneration_) {
-        rebuildMeterChannelCache(bindings.get());
-        lastMeterBindingGeneration_ = bindings->bindingGeneration;
-    }
-
-    if (cachedMeterGroups_.empty() || cachedMeterNchnls_ <= 0) {
-        return;
-    }
-
-    publishMeterFrame();
+    publishMeterFrame(*values);
 }
 
-void ZmqHandler::rebuildMeterChannelCache(const RuntimeChannelBindingSnapshot* bindings) {
-    cachedMeterGroups_.clear();
-    cachedMeterNchnls_ = 0;
-    if (!bindings) {
-        return;
-    }
-
-    static constexpr const char* RMS_PREFIX = "bm_meter_rms_";
-    static constexpr const char* PEAK_PREFIX = "bm_meter_peak_";
-    static constexpr size_t RMS_LEN = 13;
-    static constexpr size_t PEAK_LEN = 14;
-
-    struct ChannelSlot {
-        bool isPeak = false;
-        int ch = 0;
-        double* pointer = nullptr;
-    };
-    std::map<std::string, std::vector<ChannelSlot>> groups;
-    int maxCh = 0;
-
-    for (const auto& [name, state] : bindings->controlChannels) {
-        if (!state.pointer) {
-            continue;
-        }
-
-        bool isPeak = false;
-        size_t prefixLen = 0;
-        if (name.rfind(RMS_PREFIX, 0) == 0) {
-            isPeak = false;
-            prefixLen = RMS_LEN;
-        } else if (name.rfind(PEAK_PREFIX, 0) == 0) {
-            isPeak = true;
-            prefixLen = PEAK_LEN;
-        } else {
-            continue;
-        }
-
-        const size_t lastUnderscore = name.rfind('_');
-        if (lastUnderscore == std::string::npos || lastUnderscore <= prefixLen) {
-            continue;
-        }
-
-        const std::string csdKey = name.substr(prefixLen, lastUnderscore - prefixLen);
-        int ch = 0;
-        try {
-            ch = std::stoi(name.substr(lastUnderscore + 1));
-        } catch (...) {
-            continue;
-        }
-        if (ch < 0 || ch >= 64) {
-            continue;
-        }
-
-        if (ch > maxCh) {
-            maxCh = ch;
-        }
-
-        groups[csdKey].push_back(ChannelSlot{isPeak, ch, state.pointer});
-    }
-
-    if (groups.empty()) {
-        return;
-    }
-
-    cachedMeterNchnls_ = maxCh + 1;
-    cachedMeterGroups_.reserve(groups.size());
-
-    for (auto& [csdKey, slots] : groups) {
-        MeterChannelGroup group;
-        group.csdKey = csdKey;
-        group.rmsPointers.assign(cachedMeterNchnls_, nullptr);
-        group.peakPointers.assign(cachedMeterNchnls_, nullptr);
-
-        for (const auto& slot : slots) {
-            if (slot.ch < cachedMeterNchnls_) {
-                if (slot.isPeak) {
-                    group.peakPointers[slot.ch] = slot.pointer;
-                } else {
-                    group.rmsPointers[slot.ch] = slot.pointer;
-                }
-            }
-        }
-        cachedMeterGroups_.push_back(std::move(group));
-    }
-}
-
-void ZmqHandler::publishMeterFrame() {
-    const uint16_t channelCount = static_cast<uint16_t>(cachedMeterGroups_.size());
-    const uint16_t nchnls = static_cast<uint16_t>(cachedMeterNchnls_);
+void ZmqHandler::publishMeterFrame(const MeterValuesSnapshot &values) {
+    const uint16_t channelCount = static_cast<uint16_t>(values.channels.size());
+    const uint16_t nchnls = static_cast<uint16_t>(values.nchnls);
     const size_t entrySize = 64 + nchnls * 8 * 2;
     const size_t totalSize = 8 + channelCount * entrySize;
 
@@ -1017,14 +945,14 @@ void ZmqHandler::publishMeterFrame() {
     writeUint16LE(buffer.data() + 6, nchnls);
 
     size_t offset = 8;
-    for (const auto& group : cachedMeterGroups_) {
-        std::strncpy(buffer.data() + offset, group.csdKey.c_str(), 63);
+    for (const auto &channel : values.channels) {
+        std::strncpy(buffer.data() + offset, channel.csdKey.c_str(), 63);
         buffer[offset + 63] = '\0';
 
         size_t valOffset = offset + 64;
-        // RMS values
+        // RMS values (already sanitized at capture; clamp defensively)
         for (int c = 0; c < nchnls; ++c) {
-            double v = group.rmsPointers[c] ? *group.rmsPointers[c] : 0.0;
+            double v = static_cast<size_t>(c) < channel.rms.size() ? channel.rms[c] : 0.0;
             if (!std::isfinite(v) || v < 0.0) {
                 v = 0.0;
             }
@@ -1034,7 +962,7 @@ void ZmqHandler::publishMeterFrame() {
 
         // Peak values
         for (int c = 0; c < nchnls; ++c) {
-            double v = group.peakPointers[c] ? *group.peakPointers[c] : 0.0;
+            double v = static_cast<size_t>(c) < channel.peak.size() ? channel.peak[c] : 0.0;
             if (!std::isfinite(v) || v < 0.0) {
                 v = 0.0;
             }

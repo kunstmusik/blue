@@ -41,30 +41,49 @@ export class MeterStore {
   private lastSequence = 0;
   private lastUpdateTime = 0;
   private unsubs: Array<() => void> = [];
+  private bindingListeners: Array<() => void> = [];
 
   constructor() {
     this.reset();
   }
 
+  onBindingMapChange(cb: () => void): () => void {
+    this.bindingListeners.push(cb);
+    return () => {
+      this.bindingListeners = this.bindingListeners.filter((l) => l !== cb);
+    };
+  }
+
   init(): () => void {
-    if (typeof window !== 'undefined' && window.blueAPI) {
-      if (window.blueAPI.onMeterBindingMap) {
+    const win =
+      typeof window !== 'undefined'
+        ? (window as unknown as {
+            blueAPI?: {
+              onMeterBindingMap?: (cb: (map: MeterBindingMapPayload) => void) => () => void;
+              onMeterFrame?: (cb: (frame: MeterFramePayload) => void) => () => void;
+              onMeterReset?: (cb: () => void) => () => void;
+            };
+          })
+        : undefined;
+
+    if (win?.blueAPI) {
+      if (win.blueAPI.onMeterBindingMap) {
         this.unsubs.push(
-          window.blueAPI.onMeterBindingMap((map) => {
+          win.blueAPI.onMeterBindingMap((map: MeterBindingMapPayload) => {
             this.setBindingMap(map);
           }),
         );
       }
-      if (window.blueAPI.onMeterFrame) {
+      if (win.blueAPI.onMeterFrame) {
         this.unsubs.push(
-          window.blueAPI.onMeterFrame((frame) => {
+          win.blueAPI.onMeterFrame((frame: MeterFramePayload) => {
             this.processMeterFrame(frame);
           }),
         );
       }
-      if (window.blueAPI.onMeterReset) {
+      if (win.blueAPI.onMeterReset) {
         this.unsubs.push(
-          window.blueAPI.onMeterReset(() => {
+          win.blueAPI.onMeterReset(() => {
             this.reset();
           }),
         );
@@ -114,9 +133,13 @@ export class MeterStore {
 
       this.uniqueStrips.push(stripState);
       this.strips.set(entry.stripId, stripState);
-      if (entry.displayName && entry.displayName !== entry.stripId) {
-        // Also index by display name for fallback
-        this.strips.set(entry.displayName, stripState);
+    }
+
+    for (const listener of this.bindingListeners) {
+      try {
+        listener();
+      } catch {
+        // Safe listener dispatch
       }
     }
   }
@@ -168,6 +191,9 @@ export class MeterStore {
   }
 
   update(nowMs = performance.now()): void {
+    if (this.lastUpdateTime > 0 && nowMs <= this.lastUpdateTime) {
+      return;
+    }
     const dt = this.lastUpdateTime > 0 ? Math.max(0, (nowMs - this.lastUpdateTime) / 1000) : 0;
     this.lastUpdateTime = nowMs;
 
@@ -239,6 +265,10 @@ export class MeterStore {
         strip.clipTimers[ch] = 0;
       }
     }
+  }
+
+  getLastUpdateTime(): number {
+    return this.lastUpdateTime;
   }
 
   reset(): void {

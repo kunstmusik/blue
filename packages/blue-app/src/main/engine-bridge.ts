@@ -1436,7 +1436,7 @@ export class EngineBridge {
   }
 }
 
-function parseCSD(csd: string): { orchestra: string; score: string; options: string[] } {
+export function parseCSD(csd: string): { orchestra: string; score: string; options: string[] } {
   const options: string[] = [];
   let orchestra = '';
   let score = '';

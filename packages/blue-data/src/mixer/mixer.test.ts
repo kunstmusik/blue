@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Mixer } from './mixer';
+import { Mixer, buildSubChannelMeterKeys } from './mixer';
 import { Element } from '../serialization/xml-reader';
 import { ChannelList } from './channel-list';
 import { Channel } from './channel';
@@ -244,6 +244,62 @@ describe('Mixer', () => {
       // Master channel
       expect(init).toContain('chn_k\t"bm_meter_rms_sub_Master_0", 2');
       expect(init).toContain('chn_k\t"bm_meter_peak_sub_Master_1", 2');
+    });
+
+    it('enforces 42-UTF-8-byte budget and resolves truncation collisions for long names', () => {
+      const longName1 = 'VeryLongSubChannelNameThatExceedsTheBudgetAndHasExtraCharsOne';
+      const longName2 = 'VeryLongSubChannelNameThatExceedsTheBudgetAndHasExtraCharsTwo';
+
+      const sub1 = new Channel();
+      sub1.setName(longName1);
+      const sub2 = new Channel();
+      sub2.setName(longName2);
+
+      const keys = buildSubChannelMeterKeys([sub1, sub2]);
+      const key1 = keys.get(sub1)!;
+      const key2 = keys.get(sub2)!;
+
+      const encoder = new TextEncoder();
+      expect(encoder.encode(key1).length).toBeLessThanOrEqual(42);
+      expect(encoder.encode(key2).length).toBeLessThanOrEqual(42);
+      expect(key1).not.toBe(key2);
+      expect(key2).toContain('_2');
+    });
+
+    it('handles long multibyte Unicode subchannel names safely within budget', () => {
+      // 3 bytes per Japanese character
+      const unicodeName = 'ミックスサブチャンネル超ロング名称サンプルテストトラック';
+      const sub1 = new Channel();
+      sub1.setName(unicodeName);
+      const sub2 = new Channel();
+      sub2.setName(unicodeName);
+
+      const keys = buildSubChannelMeterKeys([sub1, sub2]);
+      const key1 = keys.get(sub1)!;
+      const key2 = keys.get(sub2)!;
+
+      const encoder = new TextEncoder();
+      expect(encoder.encode(key1).length).toBeLessThanOrEqual(42);
+      expect(encoder.encode(key2).length).toBeLessThanOrEqual(42);
+      expect(key1).not.toBe(key2);
+
+      // Verify valid UTF-8 string decoding without broken characters
+      expect(key1).not.toContain('\uFFFD');
+      expect(key2).not.toContain('\uFFFD');
+    });
+
+    it('handles duplicate channel names without collisions', () => {
+      const sub1 = new Channel();
+      sub1.setName('Reverb');
+      const sub2 = new Channel();
+      sub2.setName('Reverb');
+      const sub3 = new Channel();
+      sub3.setName('Reverb');
+
+      const keys = buildSubChannelMeterKeys([sub1, sub2, sub3]);
+      expect(keys.get(sub1)).toBe('sub_Reverb');
+      expect(keys.get(sub2)).toBe('sub_Reverb_2');
+      expect(keys.get(sub3)).toBe('sub_Reverb_3');
     });
   });
 });
