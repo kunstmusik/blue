@@ -22,6 +22,7 @@ interface MockProjectState {
   projectUdos: import('../../shared/project-editor').UdoDefinitionSnapshot[];
   projectProperties: ProjectPropertiesSnapshot;
   clojureProject: ClojureProjectSnapshot;
+  clojureFieldConflicts: [];
   updateGlobalOrc: (value: string) => void | Promise<void>;
   updateGlobalSco: (value: string) => void | Promise<void>;
   updateProjectProperties: (patch: Partial<ProjectPropertiesSnapshot>) => void | Promise<void>;
@@ -81,6 +82,7 @@ const { BASE_PROJECT_PROPERTIES, BASE_CLOJURE_PROJECT, mockProjectState } = vi.h
       projectUdos: [],
       projectProperties: { ...BASE_PROJECT_PROPERTIES },
       clojureProject: { ...BASE_CLOJURE_PROJECT },
+      clojureFieldConflicts: [],
       updateGlobalOrc: vi.fn(),
       updateGlobalSco: vi.fn(),
       updateProjectProperties: vi.fn(),

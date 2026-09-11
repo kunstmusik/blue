@@ -512,6 +512,33 @@ export class BlueSynthBuilder extends Instrument {
     return [];
   }
 
+  /**
+   * Java AutomatableBSBObject.updateParameter(RESOLUTION) parity: a widget
+   * resolution property edit explicitly pushes the new value to the backing
+   * parameters, since syncParametersFromWidgets no longer overwrites the
+   * resolution of existing parameters.
+   */
+  private pushWidgetResolutionToParameters(
+    widget: BSBHSlider | BSBVSlider | BSBHSliderBank | BSBVSliderBank,
+  ): void {
+    const objectName = widget.objectName.trim();
+    if (!objectName) {
+      return;
+    }
+
+    const parameterNames =
+      widget instanceof BSBHSliderBank || widget instanceof BSBVSliderBank
+        ? widget.sliders.map((_, index) => `${objectName}_${index}`)
+        : [objectName];
+    const text = widget.getResolutionText();
+    for (const name of parameterNames) {
+      const parameter = this._parameters.find((candidate) => candidate.getName() === name);
+      if (parameter) {
+        parameter.setResolutionText(text);
+      }
+    }
+  }
+
   private syncParametersFromWidgets(): void {
     const existingByName = new Map<string, Parameter>();
     for (const parameter of this._parameters) {
@@ -556,16 +583,31 @@ export class BlueSynthBuilder extends Instrument {
           continue;
         }
 
-        const parameter = existingByName.get(spec.name) ?? new Parameter();
-        parameter.setName(spec.name);
-        parameter.setMinimum(spec.minimum);
-        parameter.setMaximum(spec.maximum);
-        parameter.setResolutionDecimal(spec.resolution);
-        if (!parameter.isAutomationEnabled()) {
-          parameter.setFixedValue(spec.fixedValue);
+        const parameter = existingByName.get(spec.name);
+        if (parameter) {
+          // Java initializeParameters() parity: an existing parameter keeps its
+          // resolution, which is durable user-edited state serialized with the
+          // parameter; only a newly created parameter takes the widget-derived
+          // default. Widget resolution edits reach existing parameters through
+          // the explicit push in setWidgetProperty.
+          parameter.setName(spec.name);
+          parameter.setMinimum(spec.minimum);
+          parameter.setMaximum(spec.maximum);
+          if (!parameter.isAutomationEnabled()) {
+            parameter.setFixedValue(spec.fixedValue);
+          }
+          nextParameters.push(parameter);
+        } else {
+          const created = new Parameter();
+          created.setName(spec.name);
+          created.setMinimum(spec.minimum);
+          created.setMaximum(spec.maximum);
+          created.setResolutionDecimal(spec.resolution);
+          if (!created.isAutomationEnabled()) {
+            created.setFixedValue(spec.fixedValue);
+          }
+          nextParameters.push(created);
         }
-
-        nextParameters.push(parameter);
         seenNames.add(spec.name);
       }
     };
@@ -992,6 +1034,7 @@ export class BlueSynthBuilder extends Instrument {
             } else if (typeof value === 'number') {
               widget.resolution = value;
             }
+            this.pushWidgetResolutionToParameters(widget);
           }
           break;
         case 'resolutionDecimal':
@@ -1003,6 +1046,7 @@ export class BlueSynthBuilder extends Instrument {
               widget instanceof BSBVSliderBank)
           ) {
             widget.setResolutionText(value);
+            this.pushWidgetResolutionToParameters(widget);
           }
           break;
         default:

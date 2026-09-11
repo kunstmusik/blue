@@ -342,13 +342,14 @@ import {
   buildWidgetTreeSnapshotFromGraphicInterface,
 } from './bsb-widgets';
 import {
+  assignClojureLibraryEntrySnapshotId,
   getArrangementInstrumentOwnerIdentity,
   getMixerChannelSnapshotId,
   getMixerEntrySnapshotId,
   getTrackInstrumentOwnerIdentity,
+  getClojureProjectEntrySnapshotIds,
+  setClojureProjectEntrySnapshotIds,
 } from './identity';
-
-let nextClojureLibraryEntrySnapshotId = 1;
 
 interface MeterMapLike {
   getEntries(): ReadonlyArray<{
@@ -749,7 +750,7 @@ function createClojureLibraryEntrySnapshot(
   entry: ClojureLibraryEntry,
 ): ClojureLibraryEntrySnapshot {
   return {
-    entryId: `clj-lib-${nextClojureLibraryEntrySnapshotId++}`,
+    entryId: assignClojureLibraryEntrySnapshotId(entry),
     dependencyCoordinates: entry.getDependencyCoordinates(),
     version: entry.getVersion(),
   };
@@ -757,15 +758,28 @@ function createClojureLibraryEntrySnapshot(
 
 export function createClojureProjectSnapshot(
   projectData: ClojureProjectData | null | undefined,
+  identityOwner?: object,
 ): ClojureProjectSnapshot {
   if (!projectData) {
+    if (identityOwner) {
+      setClojureProjectEntrySnapshotIds(identityOwner, []);
+    }
     return createDefaultClojureProjectSnapshot();
   }
 
+  const owner = identityOwner ?? projectData;
+  const knownIds = getClojureProjectEntrySnapshotIds(owner);
+  const libraryEntries = projectData.getLibraryEntries();
+  const entryIds = libraryEntries.map((entry, index) =>
+    assignClojureLibraryEntrySnapshotId(entry, knownIds?.[index]),
+  );
+  setClojureProjectEntrySnapshotIds(owner, entryIds);
+
   return {
-    libraryEntries: projectData
-      .getLibraryEntries()
-      .map((entry) => createClojureLibraryEntrySnapshot(entry)),
+    libraryEntries: libraryEntries.map((entry, index) => ({
+      ...createClojureLibraryEntrySnapshot(entry),
+      entryId: entryIds[index]!,
+    })),
   };
 }
 

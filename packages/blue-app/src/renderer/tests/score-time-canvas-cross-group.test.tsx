@@ -402,12 +402,15 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
       convertBtn.click();
     });
 
-    expect(applyPatch).toHaveBeenCalledWith({
-      score: {
-        type: 'convertScoreObjectToObjectBuilder',
-        target: item.editorTarget,
+    expect(applyPatch).toHaveBeenCalledWith(
+      {
+        score: {
+          type: 'convertScoreObjectToObjectBuilder',
+          target: item.editorTarget,
+        },
       },
-    });
+      { label: 'Convert to Object Builder' },
+    );
 
     act(() => {
       root.unmount();
@@ -569,25 +572,29 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
       },
       { label: 'Convert Score Objects' },
     );
-    expect(applyPatch).toHaveBeenNthCalledWith(2, {
-      score: {
-        type: 'addScoreObjects',
-        groupId: 'sound-group',
-        objects: [
-          {
-            layerIndex: 0,
-            objectType: 'GenericScore',
-            name: 'Replacement',
-            startBeats: 1,
-            durationBeats: 2,
-            startTimeBase: 'BEATS',
-            durationTimeBase: 'BEATS',
-            backgroundColor: replacement.backgroundColor,
-            serializedXml: '<soundObject />',
-          },
-        ],
+    expect(applyPatch).toHaveBeenNthCalledWith(
+      2,
+      {
+        score: {
+          type: 'addScoreObjects',
+          groupId: 'sound-group',
+          objects: [
+            {
+              layerIndex: 0,
+              objectType: 'GenericScore',
+              name: 'Replacement',
+              startBeats: 1,
+              durationBeats: 2,
+              startTimeBase: 'BEATS',
+              durationTimeBase: 'BEATS',
+              backgroundColor: replacement.backgroundColor,
+              serializedXml: '<soundObject />',
+            },
+          ],
+        },
       },
-    });
+      { label: 'Convert Score Objects' },
+    );
     expect(useScoreSelectionStore.getState().selectedObjectIds).toEqual(new Set());
 
     act(() => {
@@ -789,25 +796,28 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
     const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<
       typeof vi.fn
     >;
-    expect(applyPatch).toHaveBeenCalledWith({
-      score: {
-        type: 'addScoreObjects',
-        groupId: 'sound-group',
-        objects: [
-          expect.objectContaining({
-            layerIndex: 0,
-            objectType: 'GenericScore',
-            name: 'Imported BBF',
-            startBeats: 4,
-            durationBeats: 9,
-            startTimeBase: 'BBF',
-            durationTimeBase: 'BBF',
-            backgroundColor: 0x336699,
-            serializedXml,
-          }),
-        ],
+    expect(applyPatch).toHaveBeenCalledWith(
+      {
+        score: {
+          type: 'addScoreObjects',
+          groupId: 'sound-group',
+          objects: [
+            expect.objectContaining({
+              layerIndex: 0,
+              objectType: 'GenericScore',
+              name: 'Imported BBF',
+              startBeats: 4,
+              durationBeats: 9,
+              startTimeBase: 'BBF',
+              durationTimeBase: 'BBF',
+              backgroundColor: 0x336699,
+              serializedXml,
+            }),
+          ],
+        },
       },
-    });
+      { label: 'Add Score Objects' },
+    );
 
     act(() => root.unmount());
   });

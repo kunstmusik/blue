@@ -361,7 +361,8 @@ export function applyProjectDocumentPatch(
   const validation = validateProjectDocumentPatch(patch);
   if (!validation.valid) {
     throw new Error(
-      `Invalid project document patch: unexpected property key(s) [${validation.unexpectedKeys?.join(', ')}]`,
+      validation.reason ??
+        `Invalid project document patch: unexpected property key(s) [${validation.unexpectedKeys?.join(', ')}]`,
     );
   }
 
@@ -643,6 +644,7 @@ export type KnownProjectDocumentPatchKey = (typeof KNOWN_PROJECT_DOCUMENT_PATCH_
 export function validateProjectDocumentPatch(patch: ProjectDocumentPatch): {
   valid: boolean;
   unexpectedKeys?: string[];
+  reason?: string;
 } {
   const keys = Object.keys(patch);
   const unexpectedKeys = keys.filter(
@@ -651,6 +653,22 @@ export function validateProjectDocumentPatch(patch: ProjectDocumentPatch): {
   if (unexpectedKeys.length > 0) {
     return { valid: false, unexpectedKeys };
   }
+
+  const clojureEntries = patch.clojureProject?.libraryEntries;
+  if (Array.isArray(clojureEntries)) {
+    const entryIds = clojureEntries.map((entry) =>
+      typeof entry?.entryId === 'string' ? entry.entryId.trim() : '',
+    );
+    if (
+      entryIds.some((entryId, index) => entryId.length > 0 && entryIds.indexOf(entryId) !== index)
+    ) {
+      return {
+        valid: false,
+        reason: 'Clojure library entry IDs must be unique',
+      };
+    }
+  }
+
   return { valid: true };
 }
 
@@ -662,6 +680,10 @@ export function isEmptyProjectDocumentPatch(patch: ProjectDocumentPatch): boolea
 
   const hasProjectProperties =
     patch.projectProperties !== undefined && Object.keys(patch.projectProperties).length > 0;
+  // A supplied replacement list is a candidate edit even when empty: removing
+  // the final Clojure dependency must reach the applier's canonical no-op
+  // detection instead of being classified away as an empty patch.
+  const hasClojureProject = patch.clojureProject !== undefined;
   const hasTransport = patch.transport !== undefined && Object.keys(patch.transport).length > 0;
   const hasOrchestra = patch.orchestra !== undefined && Object.keys(patch.orchestra).length > 0;
   const hasProjectUdo = patch.projectUdo !== undefined && Object.keys(patch.projectUdo).length > 0;
@@ -676,6 +698,7 @@ export function isEmptyProjectDocumentPatch(patch: ProjectDocumentPatch): boolea
     patch.globalSco === undefined &&
     patch.tablesText === undefined &&
     !hasProjectProperties &&
+    !hasClojureProject &&
     !hasTransport &&
     !hasOrchestra &&
     !hasProjectUdo &&

@@ -16,5 +16,8 @@ export interface ProjectPropertiesTabProps {
 export interface ClojureProjectTabProps {
   disabled: boolean;
   clojureProject: ClojureProjectSnapshot;
-  updateClojureProject: (clojureProject: ClojureProjectSnapshot) => void | Promise<void>;
+  updateClojureProject: (
+    clojureProject: ClojureProjectSnapshot,
+    metadata?: ProjectDocumentCommitMetadata,
+  ) => void | Promise<void>;
 }

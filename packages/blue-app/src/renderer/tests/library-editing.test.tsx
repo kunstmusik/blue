@@ -427,6 +427,12 @@ describe('library editing UI', () => {
     dispatchDragEvent(marker, 'dragover', transfer);
     expect(container.querySelector('[role="status"]')?.textContent).toMatch(/invalid drop/i);
     expect(marker.className).not.toContain('bg-app-accent ');
+
+    // The announcement is transient: once the drag leaves the target, the
+    // stale incompatible-drop text must not linger in the panel (T124).
+    dispatchDragEvent(marker, 'dragleave', transfer);
+    expect(container.querySelector('[role="status"]')?.textContent).toBe('');
+
     act(() => root.unmount());
     container.remove();
   });

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 import {
   createBsbRealtimeControlUpdate,
@@ -276,6 +277,11 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
         acceptSnapshot(result.snapshot);
         if (result.status !== 'stale') return true;
       }
+      // Stale retries exhausted: the edit stays a pending draft (fail-closed),
+      // but the user must see that the save did not go through.
+      toast.error(
+        'Unable to save the Track instrument change: the document changed elsewhere. The edit is retained as a pending draft.',
+      );
       return false;
     },
     [acceptSnapshot],
@@ -380,6 +386,9 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
               console.error(
                 '[track-instrument-editor] Failed to send realtime control update:',
                 realtimeError,
+              );
+              toast.error(
+                'Unable to send the live control update to the engine. The change is still saved with the project.',
               );
             });
         }

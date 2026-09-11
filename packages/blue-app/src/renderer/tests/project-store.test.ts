@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 
+import { act, createElement } from 'react';
+import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   __testAwaitPendingPatches,
@@ -11,9 +13,14 @@ import {
   useProjectStore,
 } from '../stores/project-store';
 import { useMidiRoutingStore } from '../stores/midi-routing-store';
+import ClojureProjectTab from '../components/workbench/panels/project-properties/ClojureProjectTab';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 import type { MixerChainClipboardPayload } from '../../shared/project-editor';
 import type { MissingAudioAssetsSession } from '../../shared/missing-audio-assets';
+
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 function createFocusSnapshot(sessionId: number) {
   const snapshot = createEmptyProjectEditorSnapshot();
@@ -311,6 +318,80 @@ describe('project-store — canonical acknowledgement barrier', () => {
     expect(getProjectDocument).toHaveBeenCalledTimes(1);
   });
 
+  it('submits the final Clojure entry removal durably and cannot mask canonical rejection (T126)', async () => {
+    const canonicalWithEntry = createEmptyProjectEditorSnapshot();
+    canonicalWithEntry.clojureProject = {
+      libraryEntries: [
+        { entryId: 'clj-1', dependencyCoordinates: 'org.clojure/clojure', version: '1.11.0' },
+      ],
+    };
+    getProjectDocument.mockResolvedValue(canonicalWithEntry);
+
+    useProjectStore.getState().setProjectInfo({
+      ...canonicalWithEntry,
+      loaded: true,
+      filePath: '/tmp/clojure-removal.blue',
+    });
+    expect(useProjectStore.getState().clojureProject.libraryEntries).toHaveLength(1);
+
+    // Drive the removal through the actual tab component so the exercised
+    // intent is the one ClojureProjectTab dispatches.
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    act(() => {
+      root.render(
+        createElement(ClojureProjectTab, {
+          disabled: false,
+          clojureProject: useProjectStore.getState().clojureProject,
+          updateClojureProject: (clojureProject) =>
+            useProjectStore.getState().updateClojureProject(clojureProject),
+        }),
+      );
+    });
+
+    const removeButton = [...container.querySelectorAll('button')].find(
+      (button) => button.textContent === 'Remove',
+    );
+    expect(removeButton).toBeDefined();
+    await act(async () => {
+      removeButton?.click();
+    });
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+
+    // The optimistic snapshot drops the entry while the durable submission is
+    // still pending.
+    expect(useProjectStore.getState().clojureProject.libraryEntries).toHaveLength(0);
+    expect(useProjectStore.getState().isDirty).toBe(true);
+
+    // Main reports the canonical document unchanged (rejected/no-op): the
+    // clojure patch family must refresh from canonical instead of letting the
+    // optimistic removal mask the rejection.
+    commitProjectDocumentPatches.mockResolvedValue({
+      revision: 0,
+      sessionId: 1,
+      changed: false,
+    });
+
+    await useProjectStore.getState().flushPendingPatches();
+
+    expect(commitProjectDocumentPatches).toHaveBeenCalledTimes(1);
+    expect(commitProjectDocumentPatches.mock.calls[0]?.[0]).toEqual([
+      { clojureProject: { libraryEntries: [] } },
+    ]);
+    expect(commitProjectDocumentPatches.mock.calls[0]?.[1]).toMatchObject({
+      label: 'Update Clojure Project',
+    });
+
+    expect(getProjectDocument).toHaveBeenCalledTimes(1);
+    expect(useProjectStore.getState().clojureProject.libraryEntries).toEqual([
+      { entryId: 'clj-1', dependencyCoordinates: 'org.clojure/clojure', version: '1.11.0' },
+    ]);
+  });
+
   it('rejects a stale in-flight receipt after a project reset', async () => {
     let resolveCommit!: (value: { revision: number; sessionId: number; changed: boolean }) => void;
     commitProjectDocumentPatches.mockReturnValueOnce(
@@ -530,6 +611,122 @@ describe('project-store — stable façade contract', () => {
         },
       ],
       expect.anything(),
+    );
+  });
+
+  it('keeps renderer-issued insertion identities usable for removal before acknowledgement (T119)', async () => {
+    const channelId = useProjectStore.getState().mixer.master.id;
+    await useProjectStore.getState().applyProjectDocumentPatch({
+      mixer: {
+        type: 'addEffectFromLibrary',
+        channelId,
+        chain: 'pre',
+        libraryEffectId: 'library-effect-1',
+        effectXml: '<effect/>',
+        entryId: 'source-effect',
+      },
+    });
+    await useProjectStore.getState().flushPendingPatches();
+    commitProjectDocumentPatches.mockClear();
+
+    // Duplicate without flushing: the optimistic snapshot already contains
+    // the insertion while the canonical document does not yet.
+    await useProjectStore.getState().applyProjectDocumentPatch({
+      mixer: { type: 'duplicateChainEntry', channelId, chain: 'pre', entryId: 'source-effect' },
+    });
+    const duplicateId = useProjectStore.getState().mixer.master.preChain.at(-1)?.entryId;
+    expect(duplicateId).toBeTruthy();
+
+    // Remove it by the optimistic id BEFORE the duplicate is acknowledged.
+    await useProjectStore.getState().applyProjectDocumentPatch({
+      mixer: { type: 'removeChainEntry', channelId, chain: 'pre', entryId: duplicateId! },
+    });
+    expect(
+      useProjectStore
+        .getState()
+        .mixer.master.preChain.some((entry) => entry.entryId === duplicateId),
+    ).toBe(false);
+
+    // One flush settles both patches; the durable duplicate must carry the
+    // very id the renderer removed, so main converges on the same state.
+    await useProjectStore.getState().flushPendingPatches();
+    expect(commitProjectDocumentPatches).toHaveBeenCalledTimes(1);
+    const [patches] = commitProjectDocumentPatches.mock.calls[0]!;
+    expect(patches).toEqual([
+      {
+        mixer: expect.objectContaining({
+          type: 'duplicateChainEntry',
+          newEntryId: duplicateId,
+        }),
+      },
+      {
+        mixer: expect.objectContaining({
+          type: 'removeChainEntry',
+          entryId: duplicateId,
+        }),
+      },
+    ]);
+    expect(
+      useProjectStore
+        .getState()
+        .mixer.master.preChain.some((entry) => entry.entryId === duplicateId),
+    ).toBe(false);
+  });
+
+  it('labels unlabeled mixer submissions at the queue choke point and preserves caller labels (T123)', async () => {
+    const channelId = useProjectStore.getState().mixer.master.id;
+    await useProjectStore.getState().applyProjectDocumentPatch({
+      mixer: {
+        type: 'addSend',
+        channelId,
+        chain: 'pre',
+        sendChannel: 'Master',
+        level: 0.5,
+        entryId: 'send-1',
+      },
+    });
+    await useProjectStore.getState().flushPendingPatches();
+    expect(commitProjectDocumentPatches).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ label: 'Add Send' }),
+    );
+
+    commitProjectDocumentPatches.mockClear();
+    await useProjectStore
+      .getState()
+      .applyProjectDocumentPatch(
+        { mixer: { type: 'setMixerEnabled', value: false } },
+        { label: 'Custom Caller Label' },
+      );
+    await useProjectStore.getState().flushPendingPatches();
+    expect(commitProjectDocumentPatches).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ label: 'Custom Caller Label' }),
+    );
+  });
+
+  it('labels transport navigation commands with semantic actions (T123)', async () => {
+    useProjectStore.setState({
+      transport: { ...useProjectStore.getState().transport, renderStartTime: 0 },
+      score: {
+        ...useProjectStore.getState().score,
+        markers: [{ id: 'm1', name: 'A', time: 8 } as never],
+      },
+    });
+
+    useProjectStore.getState().rewindToStart();
+    await useProjectStore.getState().flushPendingPatches();
+    expect(commitProjectDocumentPatches).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ label: 'Rewind to Start' }),
+    );
+
+    commitProjectDocumentPatches.mockClear();
+    useProjectStore.getState().navigateToNextMarker();
+    await useProjectStore.getState().flushPendingPatches();
+    expect(commitProjectDocumentPatches).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ label: 'Move Render Start to Next Marker' }),
     );
   });
 });

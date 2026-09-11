@@ -2073,7 +2073,7 @@ export function createProjectEditorSnapshot(
     orchestra: createOrchestraSnapshot(data),
     mixer: createMixerSnapshot(data.getMixer()),
     projectProperties: createProjectPropertiesSnapshot(data.getProjectProperties()),
-    clojureProject: createClojureProjectSnapshot(data.getClojureProjectData()),
+    clojureProject: createClojureProjectSnapshot(data.getClojureProjectData(), data),
     transport: createToolbarProjectTransportSnapshot(data),
     tablesText: data.getTableSet().getTables(),
     scratchPad: createScratchPadSnapshot(data.getScratchPadData()),

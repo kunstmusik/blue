@@ -19,6 +19,7 @@ import {
   BSBDropdown,
   PresetGroup,
   Parameter,
+  ClojureLibraryEntry,
 } from '@blue/data';
 
 // ─── Arrangement & Track Owner Identities ───
@@ -280,6 +281,50 @@ export function getLibraryReferenceSnapshotId(ref: object): string | undefined {
   return LIBRARY_REFERENCE_ID_MAP.get(ref);
 }
 
+const CLOJURE_LIBRARY_ENTRY_ID_MAP = new WeakMap<object, string>();
+let nextClojureLibraryEntryId = 1;
+const CLOJURE_PROJECT_ENTRY_IDS_MAP = new WeakMap<object, string[]>();
+
+export function assignClojureLibraryEntrySnapshotId(
+  entry: ClojureLibraryEntry,
+  preferredId?: string,
+): string {
+  const existing = CLOJURE_LIBRARY_ENTRY_ID_MAP.get(entry);
+  if (existing) return existing;
+  const id =
+    preferredId && preferredId.trim().length > 0
+      ? preferredId.trim()
+      : `clj-lib-${nextClojureLibraryEntryId++}`;
+  CLOJURE_LIBRARY_ENTRY_ID_MAP.set(entry, id);
+  return id;
+}
+
+export function assignExplicitClojureLibraryEntrySnapshotId(
+  entry: ClojureLibraryEntry,
+  id: string,
+): void {
+  CLOJURE_LIBRARY_ENTRY_ID_MAP.set(entry, id);
+}
+
+export function getClojureLibraryEntrySnapshotId(entry: ClojureLibraryEntry): string | undefined {
+  return CLOJURE_LIBRARY_ENTRY_ID_MAP.get(entry);
+}
+
+export function getClojureProjectEntrySnapshotIds(owner: object): readonly string[] | undefined {
+  return CLOJURE_PROJECT_ENTRY_IDS_MAP.get(owner);
+}
+
+export function setClojureProjectEntrySnapshotIds(owner: object, ids: readonly string[]): void {
+  CLOJURE_PROJECT_ENTRY_IDS_MAP.set(owner, [...ids]);
+}
+
+export function transferClojureProjectEntrySnapshotIds(source: object, target: object): void {
+  const ids = CLOJURE_PROJECT_ENTRY_IDS_MAP.get(source);
+  if (ids) {
+    CLOJURE_PROJECT_ENTRY_IDS_MAP.set(target, [...ids]);
+  }
+}
+
 // ─── Identity Transfer Mapping ───
 
 export interface IdentityTransferMap {
@@ -295,7 +340,8 @@ export interface IdentityTransferMap {
  * Traverse corresponding subtrees of `source` and `target` in parallel, recording
  * bidirectional object references and transferring all non-XML identity sidecars
  * so that score objects, layers, mixer entries, parameters, BSB widgets, presets,
- * dropdown links, and library references survive history capture and replay.
+ * dropdown links, library references, and Clojure project entries survive history
+ * capture and replay.
  */
 export function transferProjectEditorIdentities(
   source: BlueData,
@@ -354,6 +400,10 @@ export function transferProjectEditorIdentities(
     }
     if (LIBRARY_REFERENCE_ID_MAP.has(src)) {
       LIBRARY_REFERENCE_ID_MAP.set(tgt, LIBRARY_REFERENCE_ID_MAP.get(src)!);
+      transferredCount++;
+    }
+    if (CLOJURE_LIBRARY_ENTRY_ID_MAP.has(src)) {
+      CLOJURE_LIBRARY_ENTRY_ID_MAP.set(tgt, CLOJURE_LIBRARY_ENTRY_ID_MAP.get(src)!);
       transferredCount++;
     }
   }
@@ -545,6 +595,18 @@ export function transferProjectEditorIdentities(
 
   // 1. Root & Score
   pair(source, target);
+  transferClojureProjectEntrySnapshotIds(source, target);
+
+  // Clojure library entries are not serialized with IDs. Keep their
+  // session-only identities aligned by position across detached copies; the
+  // patch applier adopts explicit incoming IDs for replacements and reorders.
+  const sourceClojureEntries = source.getClojureProjectData()?.getLibraryEntries() ?? [];
+  const targetClojureEntries = target.getClojureProjectData()?.getLibraryEntries() ?? [];
+  const clojureEntryCount = Math.min(sourceClojureEntries.length, targetClojureEntries.length);
+  for (let index = 0; index < clojureEntryCount; index++) {
+    pair(sourceClojureEntries[index], targetClojureEntries[index]);
+  }
+
   pair(source.getScore(), target.getScore());
   const srcScore = source.getScore();
   const tgtScore = target.getScore();

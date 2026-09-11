@@ -172,7 +172,7 @@ describe('Mixer chain clipboard patches', () => {
     ).toBe(false);
   });
 
-  it('copyChainEntry returns true without mutating', () => {
+  it('copyChainEntry reports unchanged without mutating (T127)', () => {
     const { data, channelId } = createMixerProject();
 
     applyProjectDocumentPatch(data, {
@@ -188,6 +188,9 @@ describe('Mixer chain clipboard patches', () => {
 
     const beforeSnapshot = createProjectEditorSnapshot(data, null);
 
+    // Clipboard-only intent: the renderer owns the captured payload, the
+    // canonical document never changes, and the patch reports unchanged so
+    // history stays neutral (no dirty state, no empty undo entry).
     expect(
       applyProjectDocumentPatch(data, {
         mixer: {
@@ -197,7 +200,7 @@ describe('Mixer chain clipboard patches', () => {
           entryId: 'effect-1',
         },
       }),
-    ).toBe(true);
+    ).toBe(false);
 
     const afterSnapshot = createProjectEditorSnapshot(data, null);
     expect(afterSnapshot.mixer?.channels[0]?.preChain).toHaveLength(
@@ -411,5 +414,144 @@ describe('Mixer chain clipboard patches', () => {
         },
       }),
     ).toBe(false);
+  });
+
+  it('removeChainEntry targets an adopted duplicate id for effects and sends (T119)', () => {
+    const { data, channel1Id } = createTwoChannelMixerProject();
+
+    applyProjectDocumentPatch(data, {
+      mixer: {
+        type: 'addEffectFromLibrary',
+        channelId: channel1Id,
+        chain: 'pre',
+        libraryEffectId: 'library-effect-1',
+        effectXml: createLibraryEffectXml('Reverb'),
+        entryId: 'source-effect',
+      },
+    });
+    applyProjectDocumentPatch(data, {
+      mixer: {
+        type: 'addSend',
+        channelId: channel1Id,
+        chain: 'pre',
+        sendChannel: 'Master',
+        level: 0.4,
+        entryId: 'source-send',
+      },
+    });
+    applyProjectDocumentPatch(data, {
+      mixer: {
+        type: 'duplicateChainEntry',
+        channelId: channel1Id,
+        chain: 'pre',
+        entryId: 'source-effect',
+        newEntryId: 'dup-effect-1',
+      },
+    });
+    applyProjectDocumentPatch(data, {
+      mixer: {
+        type: 'duplicateChainEntry',
+        channelId: channel1Id,
+        chain: 'pre',
+        entryId: 'source-send',
+        newEntryId: 'dup-send-1',
+      },
+    });
+
+    const snapshot = createProjectEditorSnapshot(data, null);
+    const ids = snapshot.mixer?.channels[0]?.preChain.map((entry) => entry.entryId);
+    expect(ids).toEqual(['source-effect', 'dup-effect-1', 'source-send', 'dup-send-1']);
+
+    // Remove the insertions by the very ids the intents allocated.
+    expect(
+      applyProjectDocumentPatch(data, {
+        mixer: {
+          type: 'removeChainEntry',
+          channelId: channel1Id,
+          chain: 'pre',
+          entryId: 'dup-effect-1',
+        },
+      }),
+    ).toBe(true);
+    expect(
+      applyProjectDocumentPatch(data, {
+        mixer: {
+          type: 'removeChainEntry',
+          channelId: channel1Id,
+          chain: 'pre',
+          entryId: 'dup-send-1',
+        },
+      }),
+    ).toBe(true);
+
+    const after = createProjectEditorSnapshot(data, null);
+    expect(after.mixer?.channels[0]?.preChain.map((entry) => entry.entryId)).toEqual([
+      'source-effect',
+      'source-send',
+    ]);
+  });
+
+  it('removeChainEntry targets adopted ids from a repeated paste (T119)', () => {
+    const { data, channel1Id } = createTwoChannelMixerProject();
+
+    const payload: MixerChainClipboardPayload = {
+      sourceKind: 'project',
+      entries: [
+        {
+          entryId: 'clipboard-echo',
+          kind: 'effect',
+          effectXml: createLibraryEffectXml('Echo'),
+          name: 'Echo',
+          enabled: true,
+          numIns: 1,
+          numOuts: 1,
+          style: 'CLASSIC',
+          code: 'aout = ain',
+          comments: '',
+          editEnabled: false,
+          gridSettings: { xMin: 0, xMax: 1, yMin: 0, yMax: 1 },
+          objectNames: [],
+          widgets: [],
+          widgetTree: { type: 'bsbCanvas', children: [] },
+          udos: [],
+        },
+      ],
+    };
+
+    applyProjectDocumentPatch(data, {
+      mixer: {
+        type: 'pasteChainEntries',
+        channelId: channel1Id,
+        chain: 'pre',
+        payload,
+        newEntryIds: ['paste-first'],
+      },
+    });
+    applyProjectDocumentPatch(data, {
+      mixer: {
+        type: 'pasteChainEntries',
+        channelId: channel1Id,
+        chain: 'pre',
+        payload,
+        newEntryIds: ['paste-second'],
+      },
+    });
+
+    // Both pastes received distinct ids; remove the second by its own id and
+    // the first must be untouched.
+    expect(
+      applyProjectDocumentPatch(data, {
+        mixer: {
+          type: 'removeChainEntry',
+          channelId: channel1Id,
+          chain: 'pre',
+          entryId: 'paste-second',
+        },
+      }),
+    ).toBe(true);
+
+    const snapshot = createProjectEditorSnapshot(data, null);
+    const ids = snapshot.mixer?.channels[0]?.preChain.map((entry) => entry.entryId);
+    expect(ids).toEqual(['paste-first']);
   });
 });

@@ -287,6 +287,83 @@ describe('project-history shared contracts', () => {
     ).toBe(false);
   });
 
+  describe('structured-clone patch value policy (T120)', () => {
+    // Type-level regression: patch contracts must keep accepting object
+    // literals that spell out optional fields as explicit `undefined`, so UI
+    // builders never need to conditionally omit keys.
+    type Expect<T extends true> = T;
+    type ExplicitUndefinedSubChannel = {
+      mixer: { type: 'addSubChannel'; name: undefined; channelId: string };
+    };
+    type _PatchContractAcceptsExplicitUndefined = Expect<
+      ExplicitUndefinedSubChannel extends { mixer: { type: 'addSubChannel' } } ? true : false
+    >;
+    void (0 as unknown as undefined | _PatchContractAcceptsExplicitUndefined);
+
+    it('accepts explicit undefined optional fields at any depth of a patch batch', () => {
+      const patch = {
+        mixer: {
+          type: 'updateChannel',
+          channelId: 'channel-1',
+          patch: { name: undefined, level: 0.5 },
+        },
+        score: undefined,
+      };
+      expect(validateProjectDocumentPatchBatchRequest([patch]).valid).toBe(true);
+
+      const withNestedUndefineds = {
+        mixer: { type: 'addSubChannel', name: undefined, insertIndex: undefined },
+        projectProperties: { title: 'Title', author: undefined },
+      };
+      expect(validateProjectDocumentPatchBatchRequest([withNestedUndefineds]).valid).toBe(true);
+
+      const commitWithUndefineds: Partial<ProjectHistoryCommitRequest> = {
+        documentId: 'doc-1',
+        operationId: 'op-1',
+        expectedRevision: 0,
+        contextSequence: 1,
+        label: 'Edit',
+        gestureId: undefined,
+        patches: [{ scratchPad: { text: 'hello', wordWrapEnabled: undefined } }],
+        preconditions: undefined,
+      };
+      expect(validateProjectHistoryCommitRequest(commitWithUndefineds).valid).toBe(true);
+    });
+
+    it('rejects non-JSON values the patch appliers could never interpret', () => {
+      const functionValued = {
+        mixer: { type: 'addSubChannel', name: () => 'generated' },
+      };
+      expect(validateProjectDocumentPatchBatchRequest([functionValued]).valid).toBe(false);
+
+      const symbolValued = {
+        globalOrc: Symbol('not serializable'),
+      };
+      expect(validateProjectDocumentPatchBatchRequest([symbolValued]).valid).toBe(false);
+
+      const bigintValue = { tablesText: { toString: () => 'x', __brand: 10n } } as never;
+      expect(
+        validateProjectDocumentPatchBatchRequest([bigintValue as { tablesText: string }]).valid,
+      ).toBe(false);
+
+      const dateValued = {
+        projectProperties: { title: new Date('2026-01-01T00:00:00Z') },
+      } as unknown as { projectProperties: { title: string } };
+      expect(validateProjectDocumentPatchBatchRequest([dateValued]).valid).toBe(false);
+    });
+
+    it('structured clone preserves explicit undefined keys so main validates the same shape', () => {
+      const patch = { mixer: { type: 'addSubChannel', name: undefined, channelId: 'channel-1' } };
+      const cloned = structuredClone(patch) as typeof patch;
+
+      // JSON.stringify would drop the key; structured clone keeps it, so the
+      // main-process validator observes exactly what the renderer sent.
+      expect(Object.keys(cloned.mixer)).toContain('name');
+      expect(cloned.mixer.name).toBeUndefined();
+      expect(validateProjectDocumentPatchBatchRequest([cloned]).valid).toBe(true);
+    });
+  });
+
   it('rejects malformed publication events instead of accepting partial projections', () => {
     const event: ProjectDocumentUpdatedEvent = {
       documentId: 'doc-1',

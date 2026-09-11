@@ -574,7 +574,8 @@ export function prepareTransaction(
       const validation = validateProjectDocumentPatch(patch);
       return {
         status: 'invalid',
-        reason: `Unexpected patch key(s): ${validation.unexpectedKeys?.join(', ')}`,
+        reason:
+          validation.reason ?? `Unexpected patch key(s): ${validation.unexpectedKeys?.join(', ')}`,
       };
     }
   }

@@ -323,12 +323,14 @@ import {
   isValidBlueX7Patch,
 } from './contract';
 import {
+  assignClojureLibraryEntrySnapshotId,
   assignLayerGroupId,
   assignLayerSelectionId,
   assignScoreObjectId,
   getScoreObjectId,
   getMixerChannelSnapshotId,
   getMixerEntrySnapshotId,
+  setClojureProjectEntrySnapshotIds,
 } from './identity';
 import { applyBsbInterfacePatch, applyEmbeddedOpcodeListPatch } from './bsb-widgets';
 import {
@@ -419,6 +421,7 @@ function areClojureProjectSnapshotsEqual(
   return left.libraryEntries.every((entry, index) => {
     const other = right.libraryEntries[index];
     return (
+      entry.entryId === other?.entryId &&
       entry.dependencyCoordinates === other?.dependencyCoordinates &&
       entry.version === other?.version
     );
@@ -426,21 +429,24 @@ function areClojureProjectSnapshotsEqual(
 }
 
 export function applyClojureProjectPatch(data: BlueData, patch: ClojureProjectSnapshot): boolean {
-  const currentSnapshot = createClojureProjectSnapshot(data.getClojureProjectData());
+  const currentSnapshot = createClojureProjectSnapshot(data.getClojureProjectData(), data);
   if (areClojureProjectSnapshotsEqual(currentSnapshot, patch)) {
     return false;
   }
 
   const nextProjectData = new ClojureProjectData();
-  nextProjectData.setLibraryEntries(
-    patch.libraryEntries.map((entrySnapshot) => {
-      const entry = new ClojureLibraryEntry();
-      entry.setDependencyCoordinates(entrySnapshot.dependencyCoordinates);
-      entry.setVersion(entrySnapshot.version);
-      return entry;
-    }),
+  const entries = patch.libraryEntries.map((entrySnapshot) => {
+    const entry = new ClojureLibraryEntry();
+    entry.setDependencyCoordinates(entrySnapshot.dependencyCoordinates);
+    entry.setVersion(entrySnapshot.version);
+    return entry;
+  });
+  const entryIds = entries.map((entry, index) =>
+    assignClojureLibraryEntrySnapshotId(entry, patch.libraryEntries[index]?.entryId),
   );
+  nextProjectData.setLibraryEntries(entries);
   data.setClojureProjectData(nextProjectData);
+  setClojureProjectEntrySnapshotIds(data, entryIds);
   return true;
 }
 
@@ -1153,7 +1159,10 @@ function applyMixerPatchToChain(
       return true;
     }
     case 'copyChainEntry': {
-      return true;
+      // Clipboard-only intent: the renderer owns the captured payload and the
+      // canonical document never changes, so this reports unchanged and stays
+      // history-neutral (no dirty state, no empty undo entry, redo preserved).
+      return false;
     }
     case 'pasteChainEntries': {
       const insertIndex = patch.index ?? chain.length;

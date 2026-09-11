@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { toast } from 'sonner';
+import { getProjectHistoryProjection } from '../hooks/use-project-history';
 import {
   BlueSynthBuilder,
   BlueX7,
@@ -106,6 +107,7 @@ import {
   bsbInterfaceActionLabel,
   type BsbActionLabelContext,
   orchestraPatchActionLabel,
+  mixerPatchActionLabel,
 } from '../../shared/project-editor';
 import {
   BSB_LINE_SELECTOR_HEIGHT,
@@ -125,6 +127,9 @@ import { useScoreSelectionStore } from './score-selection-store';
 import {
   createProjectPatchQueue,
   type ProjectPatchQueue,
+  type ProjectPatchQueueClojureFieldIntent,
+  type ProjectPatchQueuePendingPatch,
+  type ClojureFieldConflict,
 } from './project-store/project-patch-queue';
 import { applyBsbInstrumentPatchToSnapshot } from './project-store/bsb-interface-snapshot';
 
@@ -149,6 +154,7 @@ interface ProjectState {
   projectProperties: ProjectPropertiesSnapshot;
   scratchPad: ScratchPadSnapshot;
   clojureProject: ClojureProjectSnapshot;
+  clojureFieldConflicts: readonly ClojureFieldConflict[];
   transport: ToolbarProjectTransportSnapshot;
   tablesText: string;
   projectUdos: UdoDefinitionSnapshot[];
@@ -226,7 +232,10 @@ interface ProjectActions {
     patch: ScratchPadPatch,
     metadata?: ProjectDocumentCommitMetadata,
   ) => Promise<void>;
-  updateClojureProject: (clojureProject: ClojureProjectSnapshot) => Promise<void>;
+  updateClojureProject: (
+    clojureProject: ClojureProjectSnapshot,
+    metadata?: ProjectDocumentCommitMetadata,
+  ) => Promise<void>;
   setLoopRendering: (
     loopRendering: boolean,
     metadata?: ProjectDocumentCommitMetadata,
@@ -575,12 +584,27 @@ function getProjectPatchQueue(): ProjectPatchQueue {
             ...(selection ? { selection } : {}),
           },
           barrierId: context?.barrierId,
+          ...(context?.expectedRevision !== undefined
+            ? { expectedRevision: context.expectedRevision }
+            : {}),
         });
       },
       fetchCanonicalSnapshot: () => window.blueAPI.getProjectDocument(),
-      applyCanonicalSnapshot: (snapshot, preserveDirty) =>
-        applyProjectInfoToState(snapshot, preserveDirty),
+      fetchCanonicalHistoryProjection: async () => {
+        const documentId = getProjectDocumentId();
+        if (!documentId || typeof window.blueAPI.readProjectHistory !== 'function') return null;
+        const projection = await window.blueAPI.readProjectHistory({ documentId });
+        return 'status' in projection ? null : projection;
+      },
+      applyCanonicalSnapshot: (snapshot, preserveDirty, pendingPatches) =>
+        applyProjectInfoToState(snapshot, preserveDirty, pendingPatches),
       setDirty: (dirty) => storeSet({ isDirty: dirty }),
+      getCanonicalDirty: () => {
+        const history = getProjectHistoryProjection();
+        if (!history || history.revision !== projectPatchQueue?.getRevision()) return undefined;
+        return history.stateId !== history.savedStateId;
+      },
+      onClojureConflictsChanged: (clojureFieldConflicts) => storeSet({ clojureFieldConflicts }),
       reportBackgroundError: (error) => {
         toast.error(
           `Failed to save project changes: ${error instanceof Error ? error.message : String(error)}`,
@@ -599,6 +623,16 @@ function getProjectPatchQueue(): ProjectPatchQueue {
 
 export function getProjectDocumentRevision(): number {
   return getProjectPatchQueue().getRevision();
+}
+
+export function reviewClojureFieldConflict(id: string) {
+  return getProjectPatchQueue().reviewClojureConflict(id);
+}
+
+export function resolveClojureFieldConflict(
+  ...args: Parameters<ProjectPatchQueue['resolveClojureConflict']>
+): Promise<void> {
+  return getProjectPatchQueue().resolveClojureConflict(...args);
 }
 
 export async function flushProjectDocumentPatches(): Promise<number> {
@@ -696,7 +730,100 @@ function syncSummaryFromProperties(
   };
 }
 
-function applyProjectInfoToState(info: ProjectLoadedPayload | null, preserveDirty: boolean): void {
+function parseClojureFieldId(
+  fieldId: string | undefined,
+): { entryId: string; field: 'dependencyCoordinates' | 'version' } | null {
+  if (!fieldId?.startsWith('clojure-library:')) return null;
+
+  for (const field of ['dependencyCoordinates', 'version'] as const) {
+    const suffix = `:${field === 'dependencyCoordinates' ? 'coordinates' : 'version'}`;
+    if (!fieldId.endsWith(suffix)) continue;
+    const entryId = fieldId.slice('clojure-library:'.length, -suffix.length);
+    return entryId.length > 0 ? { entryId, field } : null;
+  }
+
+  return null;
+}
+
+function createClojureFieldIntent(
+  patch: ProjectDocumentPatch,
+  metadata: ProjectDocumentCommitMetadata | undefined,
+  currentProject: ClojureProjectSnapshot,
+): ProjectPatchQueueClojureFieldIntent | undefined {
+  if (!patch.clojureProject) return undefined;
+  const fieldIntent = parseClojureFieldId(metadata?.fieldId);
+  if (!fieldIntent) return undefined;
+
+  const currentEntry = currentProject.libraryEntries.find(
+    (entry) => entry.entryId === fieldIntent.entryId,
+  );
+  const nextEntry = patch.clojureProject.libraryEntries.find(
+    (entry) => entry.entryId === fieldIntent.entryId,
+  );
+  if (!currentEntry || !nextEntry) return undefined;
+
+  return {
+    ...fieldIntent,
+    baseValue: currentEntry[fieldIntent.field],
+    value: nextEntry[fieldIntent.field],
+  };
+}
+
+function mergePendingClojureProjectPatches(
+  canonical: ClojureProjectSnapshot,
+  pendingPatches: readonly ProjectPatchQueuePendingPatch[],
+): ClojureProjectSnapshot {
+  let libraryEntries = canonical.libraryEntries.map((entry) => ({ ...entry }));
+  const fieldIntents = new Map<
+    string,
+    { entryId: string; field: 'dependencyCoordinates' | 'version'; value: string }
+  >();
+
+  // Apply structural intents by identity while collecting text intents for a
+  // final pass. A full replacement-list text patch contains other rows too;
+  // only its declared field may overlay canonical content.
+  for (const pending of pendingPatches) {
+    const nextProject = pending.patch.clojureProject;
+    if (!nextProject) continue;
+
+    const fieldIntent =
+      pending.clojureFieldIntent ?? parseClojureFieldId(pending.metadata?.fieldId);
+    if (fieldIntent) {
+      const entry = nextProject.libraryEntries.find(
+        (candidate) => candidate.entryId === fieldIntent.entryId,
+      );
+      if (entry) {
+        fieldIntents.set(`${fieldIntent.entryId}:${fieldIntent.field}`, {
+          ...fieldIntent,
+          value: pending.clojureFieldIntent?.value ?? entry[fieldIntent.field],
+        });
+      }
+      continue;
+    }
+
+    const canonicalById = new Map(libraryEntries.map((entry) => [entry.entryId, entry]));
+    libraryEntries = nextProject.libraryEntries.map((entry) => {
+      const canonicalEntry = canonicalById.get(entry.entryId);
+      return canonicalEntry ? { ...canonicalEntry } : { ...entry };
+    });
+  }
+
+  for (const intent of fieldIntents.values()) {
+    const index = libraryEntries.findIndex((entry) => entry.entryId === intent.entryId);
+    if (index < 0) continue;
+    const entry = libraryEntries[index];
+    if (!entry) continue;
+    libraryEntries[index] = { ...entry, [intent.field]: intent.value };
+  }
+
+  return { libraryEntries };
+}
+
+function applyProjectInfoToState(
+  info: ProjectLoadedPayload | null,
+  preserveDirty: boolean,
+  pendingPatches: readonly ProjectPatchQueuePendingPatch[] = [],
+): void {
   if (!info) {
     if (!preserveDirty) {
       resetTransientProjectMutationState();
@@ -711,8 +838,10 @@ function applyProjectInfoToState(info: ProjectLoadedPayload | null, preserveDirt
   storeSet((state: ProjectState) => {
     const incomingSessionId = info.sessionId ?? state.sessionId;
     const incomingDocumentId = info.documentId ?? state.documentId;
-    if (incomingSessionId !== getProjectPatchQueue().getSessionId()) {
-      getProjectPatchQueue().reset(incomingSessionId);
+    const queue = getProjectPatchQueue();
+    const preservesPendingSession = incomingSessionId === queue.getSessionId();
+    if (!preservesPendingSession) {
+      queue.reset(incomingSessionId);
       useLayerSelectionStore.getState().clear();
     }
 
@@ -736,6 +865,12 @@ function applyProjectInfoToState(info: ProjectLoadedPayload | null, preserveDirt
           sampleRate: state.sampleRate,
         };
     reconciliation = buildMidiRoutingReconciliation(nextScore, nextOrchestra, incomingSessionId);
+    const nextClojureProject = info.clojureProject
+      ? mergePendingClojureProjectPatches(
+          info.clojureProject,
+          preservesPendingSession ? pendingPatches : [],
+        )
+      : state.clojureProject;
 
     return {
       ...state,
@@ -763,9 +898,7 @@ function applyProjectInfoToState(info: ProjectLoadedPayload | null, preserveDirt
           : state.mixer,
       projectProperties: nextProjectProperties,
       scratchPad: info.scratchPad ? { ...info.scratchPad } : state.scratchPad,
-      clojureProject: info.clojureProject
-        ? cloneClojureProjectSnapshot(info.clojureProject)
-        : state.clojureProject,
+      clojureProject: nextClojureProject,
       transport: nextTransport,
       tablesText: info.tablesText ?? state.tablesText,
       projectUdos: info.projectUdos ?? state.projectUdos,
@@ -843,6 +976,7 @@ function buildInitialState(): ProjectState {
     projectProperties: snapshot.projectProperties,
     scratchPad: snapshot.scratchPad ?? createEmptyScratchPadSnapshot(),
     clojureProject: snapshot.clojureProject,
+    clojureFieldConflicts: [],
     transport: snapshot.transport,
     tablesText: snapshot.tablesText,
     projectUdos: snapshot.projectUdos,
@@ -3584,7 +3718,7 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
     },
 
     refreshFromCanonical: (info, dirtyProjection) => {
-      applyProjectInfoToState(info, true);
+      applyProjectInfoToState(info, true, getProjectPatchQueue().getPendingPatches());
       set({ isDirty: dirtyProjection });
     },
 
@@ -3712,6 +3846,11 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       }
 
       const dirtyBaseline = get().isDirty;
+      const clojureFieldIntent = createClojureFieldIntent(
+        normalizedPatch,
+        metadata,
+        get().clojureProject,
+      );
 
       set((state) => {
         const next: ProjectState = {
@@ -3859,7 +3998,19 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
         });
       }
 
-      getProjectPatchQueue().enqueue(normalizedPatch, dirtyBaseline, metadata);
+      // The queue is the single choke point for durable patches: a mixer
+      // patch submitted without an explicit label still gets a semantic
+      // action label instead of the generic "Edit Project" fallback.
+      const effectiveMetadata =
+        metadata?.label || normalizedPatch.mixer === undefined
+          ? metadata
+          : { ...metadata, label: mixerPatchActionLabel(normalizedPatch.mixer) };
+      getProjectPatchQueue().enqueue(
+        normalizedPatch,
+        dirtyBaseline,
+        effectiveMetadata,
+        clojureFieldIntent,
+      );
     },
 
     updateGlobalOrc: async (globalOrc, metadata) => {
@@ -3890,8 +4041,11 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       await get().applyProjectDocumentPatch({ scratchPad: patch }, metadata);
     },
 
-    updateClojureProject: async (clojureProject) => {
-      await get().applyProjectDocumentPatch({ clojureProject });
+    updateClojureProject: async (clojureProject, metadata) => {
+      await get().applyProjectDocumentPatch(
+        { clojureProject },
+        { label: 'Update Clojure Project', ...metadata },
+      );
     },
 
     setLoopRendering: async (loopRendering, metadata) => {
@@ -3988,7 +4142,10 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       const endOfScore = computeEndOfScore(score);
       const newStartTime = selected ? selected.time : endOfScore;
       if (newStartTime > currentStartTime) {
-        get().applyProjectDocumentPatch({ transport: { renderStartTime: newStartTime } });
+        get().applyProjectDocumentPatch(
+          { transport: { renderStartTime: newStartTime } },
+          { label: 'Move Render Start to Next Marker' },
+        );
         set({ scrollToBeatTarget: newStartTime });
       }
     },
@@ -4005,14 +4162,18 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
         }
       }
       const newStartTime = selected ? selected.time : 0;
-      get().applyProjectDocumentPatch({ transport: { renderStartTime: newStartTime } });
+      get().applyProjectDocumentPatch(
+        { transport: { renderStartTime: newStartTime } },
+        { label: 'Move Render Start to Previous Marker' },
+      );
       set({ scrollToBeatTarget: newStartTime });
     },
 
     rewindToStart: () => {
-      get().applyProjectDocumentPatch({
-        transport: { renderStartTime: 0, renderEndTime: -1 },
-      });
+      get().applyProjectDocumentPatch(
+        { transport: { renderStartTime: 0, renderEndTime: -1 } },
+        { label: 'Rewind to Start' },
+      );
       set({ scrollToBeatTarget: 0 });
     },
 
@@ -4161,13 +4322,16 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       });
 
       get()
-        .applyProjectDocumentPatch({
-          score: {
-            type: 'addScoreObjects',
-            groupId: objects[0].groupId,
-            objects: patchObjects,
+        .applyProjectDocumentPatch(
+          {
+            score: {
+              type: 'addScoreObjects',
+              groupId: objects[0].groupId,
+              objects: patchObjects,
+            },
           },
-        })
+          { label: 'Add Score Objects' },
+        )
         .then(() => __testFlushPendingPatches());
     },
 

@@ -678,6 +678,58 @@ describe('Project history settlement barrier (T015)', () => {
   });
 
   describe('Timeout and disconnect handling', () => {
+    it('fails the barrier when one participant never acknowledges while the others settle, then recovers', async () => {
+      const { session, history, prepareEvents, releaseEvents, contextA, contextB } = setupTest(60);
+      const docId = session.read().documentId!;
+
+      history.registerParticipant({
+        contextId: contextA.contextId,
+        documentId: docId,
+        acceptedRevision: 0,
+      });
+      history.registerParticipant({
+        contextId: 'ctx-dead',
+        documentId: docId,
+        acceptedRevision: 0,
+      });
+
+      await history.commit(
+        contextA.nextCommitRequest(docId, 0, 'Action 1', [
+          { projectProperties: { title: 'Original 1' } },
+        ]),
+      );
+
+      const undoPromise = history.undo(contextA.nextUndoRequest(docId, 1));
+      await new Promise((resolve) => setTimeout(resolve, 5));
+
+      const barrierId = prepareEvents[0]!.barrierId;
+
+      // The live participant settles its prefix and acknowledges; the
+      // "ctx-dead" participant never responds.
+      history.acknowledgeBoundary(contextA.acknowledgeBarrier(barrierId, 1, 0));
+
+      const undoRes = await undoPromise;
+      expect(undoRes.status).toBe('failed');
+      expect((undoRes as { error: string }).error).toContain('timed out');
+
+      // No undo was performed and every participant was released.
+      expect(session.read().revision).toBe(1);
+      expect(session.read().data?.getProjectProperties().title).toBe('Original 1');
+      expect(releaseEvents).toHaveLength(1);
+      expect(releaseEvents[0]!.status).toBe('aborted');
+      expect(history.getActiveBarrier()).toBeNull();
+
+      // After the dead window unregisters, history commands work again.
+      history.unregisterParticipant({ contextId: 'ctx-dead' });
+      const retryPromise = history.undo(contextA.nextUndoRequest(docId, 1));
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      const retryBarrierId = prepareEvents[1]!.barrierId;
+      history.acknowledgeBoundary(contextA.acknowledgeBarrier(retryBarrierId, 1, 0));
+      const retry = await retryPromise;
+      expect(retry.status).toBe('committed');
+      expect(session.read().data?.getProjectProperties().title).toBe('Initial Title');
+    });
+
     it('aborts barrier and returns failed after timeout without performing undo', async () => {
       // Use 30ms timeout for test speed
       const { session, history, releaseEvents, contextA } = setupTest(30);

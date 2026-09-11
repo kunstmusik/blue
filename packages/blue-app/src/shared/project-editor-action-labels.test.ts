@@ -82,6 +82,33 @@ describe('mixer patch action labels (T023)', () => {
       mixerPatchActionLabel({ type: 'setMixerEnabled', value: false } satisfies MixerPatch),
     ).toBe('Disable Mixer');
   });
+
+  it('labels duplicate, copy, and paste intents consumed by the renderer queue choke point (T123)', () => {
+    expect(
+      mixerPatchActionLabel({
+        type: 'duplicateChainEntry',
+        channelId: 'c',
+        chain: 'pre',
+        entryId: 'e',
+      } satisfies MixerPatch),
+    ).toBe('Duplicate Mixer Chain Entry');
+    expect(
+      mixerPatchActionLabel({
+        type: 'copyChainEntry',
+        channelId: 'c',
+        chain: 'pre',
+        entryId: 'e',
+      } satisfies MixerPatch),
+    ).toBe('Copy Mixer Chain Entry');
+    expect(
+      mixerPatchActionLabel({
+        type: 'pasteChainEntries',
+        channelId: 'c',
+        chain: 'pre',
+        payload: { sourceKind: 'project', entries: [] },
+      } satisfies MixerPatch),
+    ).toBe('Paste Mixer Chain Entries');
+  });
 });
 
 describe('orchestra patch action labels (T023)', () => {

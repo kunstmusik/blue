@@ -490,20 +490,23 @@ describe('score multigroup object identity', () => {
     expect(optimisticItem.barRenderer.kind).toBe('audioClip');
     expect(optimisticItem.editorTarget?.supportsTimeBehavior).toBe(false);
     expect(optimisticItem.editorTarget?.supportsRepeatPoint).toBe(false);
-    expect(applyPatchSpy).toHaveBeenCalledWith({
-      score: {
-        type: 'addScoreObjects',
-        groupId,
-        objects: [
-          expect.objectContaining({
-            selectionId: optimisticItem.objectId,
-            layerIndex: 0,
-            objectType: 'AudioClip',
-            serializedXml: expect.stringContaining('/tmp/optimistic.wav'),
-          }),
-        ],
+    expect(applyPatchSpy).toHaveBeenCalledWith(
+      {
+        score: {
+          type: 'addScoreObjects',
+          groupId,
+          objects: [
+            expect.objectContaining({
+              selectionId: optimisticItem.objectId,
+              layerIndex: 0,
+              objectType: 'AudioClip',
+              serializedXml: expect.stringContaining('/tmp/optimistic.wav'),
+            }),
+          ],
+        },
       },
-    });
+      { label: 'Add Score Objects' },
+    );
   });
 
   it('preserves explicit selection ids when canonically adding audio clips', () => {

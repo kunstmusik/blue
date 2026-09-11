@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-08
 
-**Status**: Draft
+**Status**: Complete — implementation converged and project-owner manual testing accepted (2026-09-11)
 
 **Input**: Provide a global project undo/redo system that reliably restores project content, updates every affected view, and reconciles the audio engine. Prefer a coherent project-wide experience over Java Blue's separate tab histories.
 
