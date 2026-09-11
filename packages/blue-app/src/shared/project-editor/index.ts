@@ -3,6 +3,12 @@ export * from './contract';
 export {
   getMixerChannelSnapshotId,
   getMixerEntrySnapshotId,
+  assignClojureLibraryEntrySnapshotId,
+  assignExplicitClojureLibraryEntrySnapshotId,
+  getClojureLibraryEntrySnapshotId,
+  getClojureProjectEntrySnapshotIds,
+  setClojureProjectEntrySnapshotIds,
+  transferClojureProjectEntrySnapshotIds,
   assignLayerSelectionId,
   getArrangementInstrumentOwnerIdentity,
   getTrackInstrumentOwnerIdentity,

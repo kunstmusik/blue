@@ -39,6 +39,33 @@ Replace canonical positional compilation-name copying with stable owner/paramete
 
 Retry reconciles the latest desired canonical state for current performance generation, not historical failed values. Restart rebuilds bindings and acknowledges the revision actually compiled; if edits arrive during compilation, classify remaining differences before marking synchronized.
 
+## Fenced-performance recovery decision (T125, 2026-09-10)
+
+**Decision: keep `restart-required` as the fenced-performance recovery model. No automatic resynchronization.**
+
+Rationale:
+
+1. The fenced class is compilation-dependent change (code, UDOs, tables, instrument/effect
+   replacement, compiled structure). No live channel exists for those values; the only
+   synchronization is a fresh compile, which means restarting playback or recompiling Blue Live.
+   Automating that would interrupt playback, which the plan forbids ("no automatic playback
+   interruption") and which remains a user-owned action.
+2. Auto-resynchronization would widen the exact stale-write hazard the generation fences were
+   built to close (T111/T115): an automated retry loop iterating the live performances map across
+   awaited writes is how obsolete values reached replacement performances. Keeping recovery
+   manual keeps that invariant trivially enforced by a human-paced action.
+3. Recovery already exists through existing controls (T094): the status surface routes restart
+   (timeline) or recompile (Blue Live) to the affected performance kind, and the 2026-09-09
+   presentation revision keeps these states quiet but actionable. Live-capable edits (mixer
+   values, BSB presets, BlueX7 voices, effect parameters, automation) are not fenced at all —
+   they replay live with concrete inverse patches (T104).
+
+Escalation path: if fenced states prove common in practice, the follow-up is generation-scoped
+automatic resynchronization limited to live-capable classifications, which must re-prove the
+T115 fencing invariants (submitted target/generation snapshots; obsolete acknowledgements never
+counted as synchronization of a replacement performance) before replacing the manual restart
+prompt.
+
 ## Required evidence
 
 Tests must inject negative channel acknowledgement, missing client, delayed automation timer, timeout with late completion, preview after undo, topology invalidation, differing timeline/Blue Live channel layouts and partial success. Real-engine smoke tests verify control readback/audible reversal and regenerated CSD after restart; a resolved Promise or updated renderer knob alone is insufficient.

@@ -251,19 +251,25 @@ describe('ScoreTimeCanvas double-click editor parity', () => {
     expect(document.querySelector('[role="dialog"]')).toBeTruthy();
 
     expect([...useScoreSelectionStore.getState().selectedObjectIds]).toEqual(['a']);
-    expect(useProjectStore.getState().applyProjectDocumentPatch).toHaveBeenCalledWith({
-      score: {
-        type: 'updateSharedProperties',
-        target: item.editorTarget,
-        patch: { backgroundColor: 0x654321 },
+    expect(useProjectStore.getState().applyProjectDocumentPatch).toHaveBeenCalledWith(
+      {
+        score: {
+          type: 'updateSharedProperties',
+          target: item.editorTarget,
+          patch: { backgroundColor: 0x654321 },
+        },
       },
-    });
-    expect(useProjectStore.getState().applyProjectDocumentPatch).toHaveBeenCalledWith({
-      score: {
-        type: 'updateSharedProperties',
-        target: item.editorTarget,
-        patch: { backgroundColor: 0x123456 },
+      { label: 'Set Score Object Color' },
+    );
+    expect(useProjectStore.getState().applyProjectDocumentPatch).toHaveBeenCalledWith(
+      {
+        score: {
+          type: 'updateSharedProperties',
+          target: item.editorTarget,
+          patch: { backgroundColor: 0x123456 },
+        },
       },
-    });
+      { label: 'Set Score Object Color' },
+    );
   });
 });

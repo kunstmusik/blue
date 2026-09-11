@@ -273,3 +273,97 @@ Completed the delayed-preview generation fence and replaced the remaining T087 c
 ### Phase 17 planned follow-up (T117–T125, 2026-09-10)
 
 The handoff review added the remaining coverage and UX follow-ups to `tasks.md`. T121 is complete: score/layer/item color actions now submit canonical patches to the main-owned project history, and the obsolete renderer-local score-color store and its tests were removed. T117–T120 and T122–T125 remain planned; the native Windows/Linux and physical accelerator gates remain covered by T085's existing acceptance disposition.
+
+### Phase 19 follow-up (T129–T130, 2026-09-10)
+
+Completed the remaining Clojure project-properties history gaps. Session-only library row IDs now live on the persistent `BlueData` owner and transfer across history copies without adding metadata to `.blue` XML; canonical replacements adopt incoming IDs, including distinct rows with identical coordinates and versions. The production tab now uses stable row keys and entry-targeted updates, forwards semantic field metadata through the project text queue, and keeps add/remove/reorder as separate structural actions. Focused coverage verifies repeated canonical reads, history-copy/replay identity, focused selection preservation, project scope/field metadata, and removal cleanup.
+
+- Focused main and renderer suites: 2 files / 130 passed.
+- `pnpm --filter @blue/app test`: 460 files / 4,746 passed / 2 skipped.
+- `pnpm --filter @blue/app build:main` and `build:renderer`: passed after the final test typing guard.
+- `git diff --check`: clean. The repository lint result remains as previously recorded: all audit, ESLint, package, and typography stages passed; the final format stage reports only the pre-existing `HANDOFF-103-undo-redo.md` warning.
+
+### Phase 20 follow-up (T131–T133, 2026-09-10)
+
+Completed the remaining Clojure acknowledgement, identity, and reorder convergence work.
+The renderer patch queue now retains in-flight and queued Clojure patches while canonical
+snapshots refresh; the store overlays field intents by stable row identity and replays
+structural intents by identity/order. Renderer insertions use UUID identities, and the shared
+patch boundary rejects duplicate replacement-list IDs before candidate preparation. Clojure
+no-op comparison now includes identity and order, so equal-valued row reorders are durable
+history actions while IDs remain absent from `.blue` XML.
+
+- Focused Clojure/queue/store/history suites: 4 files / 189 passed.
+- `pnpm --filter @blue/app test`: 460 files / 4,751 passed / 2 skipped.
+- `pnpm test`: passed, including 183 data files / 1,812 passed / 1 skipped, 460 app files / 4,751 passed / 2 skipped, native engine checks, Java, engine-client, CLI, and script checks.
+- `pnpm --filter @blue/app build:main`, `pnpm --filter @blue/app build:renderer`, `pnpm lint`, and `git diff --check`: passed.
+
+The focused integration test uses a real `ProjectHistory` with controlled delayed acknowledgements
+to verify interleaved `aaax`/`bbby`/`aaaxx` edits converge to `aaaxx`/`bbby`; real history tests
+cover duplicate-ID rejection, unique insertion undo/redo, and identity-aware equal-row reorder
+undo/redo. Existing project text grouping and composition-settlement suites remain green. Native
+Windows/Linux and physical accelerator checks remain outside this macOS host's automated evidence.
+
+### Phase 21–22 follow-up (T134–T135, 2026-09-10)
+
+Completed the final Clojure submission-intent and BSB slider-history-copy convergence fixes.
+
+- T134: the project queue carries stable Clojure entry/field intents through normal and settlement drains, prepares field submissions against the latest canonical snapshot, fences structural replacements, retains conflict/removal drafts, and overlays them on canonical refreshes. Real renderer coverage uses two `ProjectHistory` contexts to publish B=`bbby` while local A=`aaax` is queued and verifies displayed and canonical convergence.
+- T135: slider and slider-bank history copies forward `CopyMode`, preserving widget/child IDs and exact resolution while retaining fresh IDs for duplication. Model, real ProjectHistory/XML round-trip, and runtime-binding tests cover slider → dropdown → slider, bank values, preview-vs-durable behavior, undo/redo, timeline/Blue Live outcomes, and no restart/fence.
+- Focused T134/T135 suites: app 5 files / 182 tests; data 3 files / 17 tests.
+- `pnpm --filter @blue/data build`, `pnpm --filter @blue/app build:main`, and `pnpm --filter @blue/app build:renderer`: passed.
+- `pnpm test`: passed, including app 460 files / 4,759 passed / 2 skipped, data 184 files / 1,822 passed / 1 skipped, native 14 CTest checks, Java, engine-client, CLI, and script checks.
+- `pnpm lint` and `git diff --check`: passed.
+
+Native Windows/Linux, manual native audio, and physical accelerator checks remain outstanding as documented; the reported user fixture was not modified.
+
+### BSB parameter-control coverage follow-up (2026-09-10)
+
+Added focused regression coverage for the T135 copy-mode defect and the parameter-modifying BSB control path.
+
+- `bsb-slider-history-copy.test.ts` now covers all nine parameter-backed model types: horizontal/vertical sliders, horizontal/vertical slider banks, knob, checkbox, dropdown, BSB value, and XY controller. History copies must retain identity and state; duplication copies must allocate fresh widget and child IDs.
+- `bsb-instrument-runtime-sync.test.ts` covers durable routing for all nine types and the five realtime update shapes, including checkbox, dropdown, XY, and slider-bank payloads.
+- `bsb-parameter-controls.test.tsx` drives the production renderer widgets with keyboard/pointer input and verifies their exact patches, including the production `BSBInterfaceEditor` instrument-patch envelope.
+- `track-instrument-editor-contract.test.ts` verifies the typed patch-to-realtime mapping for scalar, checkbox, dropdown, XY, and slider-bank updates.
+
+BSB text/file/line controls remain outside this numeric parameter matrix because they use separate text, file, or replacement contracts; BSB value is included for model/runtime identity even though its runtime widget is display-only.
+
+### Phase 23 follow-up (T136–T137, 2026-09-11)
+
+Clojure field preparation now captures its revision fence before reading canonical data and checks queue generation and boundary ownership immediately before submission. A stale read is rejected by main rather than labelled with a newer revision. Reset/replacement and clear invalidate unsent work; releasing a boundary returns its unsent prefix without allowing the obsolete continuation to submit or clear the new queue.
+
+Retained field conflicts appear under Project Properties → Clojure with **Review draft**. Review reads the current canonical value. **Use project value** discards only the selected field draft; **Apply draft** explicitly approves the edited draft after identity/value/revision revalidation. Both decisions default to Cancel. A removed library can only have its draft discarded, never silently recreated. Other conflicts and unrelated pending work survive; resolved fields no longer leave stale overlays or permanently block Save/Undo. Dirty-state restoration uses the matching authoritative history projection when available.
+
+Focused regression commands:
+
+```sh
+pnpm --filter @blue/app test src/renderer/tests/project-patch-queue.test.ts src/renderer/tests/clojure-project-tab-history.test.tsx src/renderer/tests/project-store.test.ts src/renderer/tests/project-store-score-color-application.test.ts src/renderer/tests/project-editor-panels.test.ts src/main/project-history-roundtrip.test.ts src/main/bsb-instrument-runtime-sync.test.ts src/main/runtime-parameter-sync.test.ts
+```
+
+The tests hold snapshot responses while another context updates/removes rows using one real `ProjectHistory`; cover ordinary and settlement drains, replacement/reset, clear, and ready/aborted releases; retain a second conflict and mixed-transaction work; and drive the production editor/store through Cancel, discard, revised apply, zero-outstanding Save/Undo settlement, and canonical undo. A second document verifies dialog placement and host-only Escape handling. Existing grouped replay and the original T134 sequence remain regression controls.
+
+Final validation: `pnpm test` passed (app: 461 files / 4,804 passed / 2 skipped; data: 1,830 passed / 1 skipped; engine-client: 42; native: 14 CTest checks; Java, CLI, and 49 script checks). `pnpm lint`, main/preload/renderer builds, and `git diff --check` passed.
+
+The optional whole-app check `pnpm exec tsc -p packages/blue-app/tsconfig.json --noEmit` is not a clean gate: existing missing snapshot fields, invalid imports, and test-fixture typing errors remain throughout the renderer/tests. No diagnostics were reported in the new conflict controls, queue implementation, or Clojure integration tests. Main/preload TypeScript builds are the scoped compile gates; this change does not claim to repair the unrelated whole-renderer typing debt.
+
+No user project files were changed. T085 remains accepted and the existing T087/T116 evidence is unchanged. Native Windows/Linux, physical accelerator, manual audio, and performance measurements were not rerun for this renderer-queue fix.
+
+### Phase 24 completion (T138–T139, 2026-09-11)
+
+T138 is implemented: Clojure conflict discard now reads a revision-matched canonical history projection from the authoritative project owner before completing. Missing or stale projections fail closed without inferring cleanliness from the rejected draft's baseline. Production store wiring uses `readProjectHistory({ documentId })`, with queue and editor/store coverage for absent, stale, current-clean, and current-dirty projections plus subsequent Save/Undo settlement.
+
+T139 is implemented: retained Clojure field conflicts carry transaction identity, so separately blocked same-field drafts remain independently reviewable. A resolution removes only the represented transaction/field and preserves sibling and unrelated work. Queue and production editor coverage exercises Cancel, stale review revalidation, keep-canonical, revised Apply, ordinary and settlement recovery, zero-outstanding boundary settlement, and undo/redo history labels/content.
+
+Validation: `pnpm --filter @blue/app test` passed (461 files / 4,812 passed / 2 skipped); `pnpm test` passed; `pnpm --filter @blue/data build`, app main/renderer builds, `pnpm lint`, and `git diff --check` passed. No user project files were changed. Native Windows/Linux, physical accelerator, manual audio, and whole-renderer TypeScript debt remain as previously documented.
+
+### Phase 25 completion (T140, 2026-09-11)
+
+T140 is implemented: Clojure conflict discard now fails before mutating the retained draft when the authoritative history projection is unavailable, rejected, or stale. The visible conflict and dirty baseline remain retryable, and history boundaries continue to report an unresolved prefix until a revision-matched clean or dirty projection allows discard to finish.
+
+Queue and production Clojure editor regressions cover absent, rejected, stale-then-current-clean, and stale-then-current-dirty reads, including retained conflict visibility, blocked boundary settlement, retry, canonical/display agreement, and final dirty-state parity with main.
+
+Validation: focused coverage passed (2 files / 70 tests); `pnpm test`, `pnpm lint`, `pnpm --filter @blue/data build`, all app builds, and `git diff --check` passed. No user project files were changed.
+
+### Final owner acceptance (2026-09-11)
+
+After the final implementation and clean convergence pass, the project owner reported that further manual testing looked good and accepted the feature for its specified scope. This closes the feature without claiming additional native Windows/Linux, physical-accelerator, or manual native-audio evidence beyond the limitations documented above.

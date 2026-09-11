@@ -4,6 +4,8 @@ import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
+  BSBDropdown,
+  BSBHSlider,
   BSBKnob,
   BlueData,
   BlueSynthBuilder,
@@ -21,6 +23,10 @@ import { developmentEnginePath } from './engine-runtime';
 import { EngineSession } from './engine-session';
 import { allocateTcpEndpointPair } from './engine-endpoints';
 import { createProjectEditorSnapshot } from '../shared/project-editor';
+import {
+  buildRuntimeBindingRegistry,
+  syncCompiledRuntimeParameterNames,
+} from './runtime-parameter-sync';
 
 interface RecordingClient {
   applied: RuntimeWorkOperation[];
@@ -520,6 +526,182 @@ describe('global history engine integration (T040, US3)', () => {
       'channel-value',
     ]);
     expect(blueLive.applied).toHaveLength(3);
+  });
+
+  it('keeps compiled BSB slider bindings through dropdown history replay (T135)', async () => {
+    const data = new BlueData();
+    const instrument = new BlueSynthBuilder();
+    const slider = new BSBHSlider();
+    slider.id = 'history-cutoff-slider';
+    slider.objectName = 'cutoff';
+    slider.value = 0.37;
+    const dropdown = new BSBDropdown();
+    dropdown.id = 'history-mode-dropdown';
+    dropdown.objectName = 'mode';
+    dropdown.dropdownItems = [
+      { name: 'Gate', value: 'gate', uniqueId: 'mode-gate' },
+      { name: 'Envelope', value: 'envelope', uniqueId: 'mode-envelope' },
+    ];
+    dropdown.setValue(0);
+    instrument.setInstrumentText('aout oscili <cutoff> + <mode>, 440\nout aout');
+    instrument.getGraphicInterface().getRootGroup().addChild(slider);
+    instrument.getGraphicInterface().getRootGroup().addChild(dropdown);
+    data.getArrangement().addInstrument(instrument, 'arr-bsb-slider-history');
+
+    const render = data.toRealtimePlaybackCSD();
+    syncCompiledRuntimeParameterNames(data.getArrangement(), data.getMixer(), render.parameters);
+    const bindings = buildRuntimeBindingRegistry(data, render.parameters);
+    const ownerKey = 'arrangement:arr-bsb-slider-history';
+    const sliderBinding = bindings.get(`${ownerKey}::bsb:history-cutoff-slider`);
+    const dropdownBinding = bindings.get(`${ownerKey}::bsb:history-mode-dropdown:selectedIndex`);
+    if (sliderBinding?.kind !== 'channel' || dropdownBinding?.kind !== 'channel') {
+      throw new Error('Expected compiled BSB slider and dropdown bindings');
+    }
+
+    const session = new ProjectSession();
+    session.replace(data, '/tmp/test-bsb-slider-runtime-history.blue', {
+      documentId: 'doc-bsb-slider-runtime-history',
+    });
+    const reconciliation = new ProjectRuntimeReconciliation();
+    const timeline = makeEngineClient();
+    const blueLive = makeEngineClient();
+    reconciliation.registerPerformance('timeline', 1, timeline, bindings);
+    reconciliation.registerPerformance('blueLive', 1, blueLive, bindings);
+    const history = new ProjectHistory({ session, reconciliation });
+    const documentId = session.read().documentId!;
+
+    const liveState = () => {
+      const current = session
+        .read()
+        .data?.getArrangement()
+        .getInstrumentById('arr-bsb-slider-history');
+      if (!(current instanceof BlueSynthBuilder)) throw new Error('BSB fixture missing');
+      const children = current.getGraphicInterface().getRootGroup().getChildren();
+      const currentSlider = children.find((child) => child.id === slider.id) as BSBHSlider;
+      const currentDropdown = children.find((child) => child.id === dropdown.id) as BSBDropdown;
+      return {
+        sliderId: currentSlider?.id,
+        sliderValue: currentSlider?.value,
+        dropdownId: currentDropdown?.id,
+        dropdownIndex: currentDropdown?.selectedIndex,
+      };
+    };
+
+    const preview = await reconciliation.previewChannelValue({
+      ownerKey,
+      parameterId: 'bsb:history-cutoff-slider',
+      value: 0.91,
+      gestureId: 'bsb-slider-preview',
+    });
+    expect(preview.status).toBe('applied');
+    expect(timeline.channelValues.get(sliderBinding.channel)).toBe(0.91);
+    expect(liveState()).toMatchObject({ sliderValue: 0.37 });
+    await reconciliation.drainPreviews('bsb-slider-preview');
+    timeline.applied.length = 0;
+    blueLive.applied.length = 0;
+
+    const dropdownPatch = {
+      orchestra: {
+        type: 'updateInstrument' as const,
+        assignmentId: 'arr-bsb-slider-history',
+        patch: {
+          bsbInterface: {
+            type: 'updateWidgetProperties' as const,
+            widgetId: dropdown.id,
+            properties: { selectedIndex: 1 },
+          },
+        },
+      },
+    };
+    const dropdownCommit = await history.commit({
+      documentId,
+      operationId: 'bsb-slider-dropdown',
+      expectedRevision: session.read().revision,
+      contextSequence: 1,
+      label: 'Select BSB Mode',
+      patches: [dropdownPatch],
+    });
+    expect(dropdownCommit.status).toBe('committed');
+    expect(liveState()).toMatchObject({
+      sliderId: slider.id,
+      sliderValue: 0.37,
+      dropdownId: dropdown.id,
+      dropdownIndex: 1,
+    });
+    expect(timeline.channelValues.get(dropdownBinding.channel)).toBe(1);
+
+    const sliderPatch = {
+      orchestra: {
+        type: 'updateInstrument' as const,
+        assignmentId: 'arr-bsb-slider-history',
+        patch: {
+          bsbInterface: {
+            type: 'updateWidgetProperties' as const,
+            widgetId: slider.id,
+            properties: { value: 0.73 },
+          },
+        },
+      },
+    };
+    const sliderCommit = await history.commit({
+      documentId,
+      operationId: 'bsb-slider-value',
+      expectedRevision: session.read().revision,
+      contextSequence: 2,
+      label: 'Adjust BSB Cutoff',
+      patches: [sliderPatch],
+    });
+    expect(sliderCommit.status).toBe('committed');
+    expect(liveState()).toMatchObject({ sliderId: slider.id, sliderValue: 0.73, dropdownIndex: 1 });
+    expect(timeline.channelValues.get(sliderBinding.channel)).toBe(0.73);
+    expect(reconciliation.getOutcome('timeline')?.status).toBe('applied');
+    expect(reconciliation.getOutcome('blueLive')?.status).toBe('applied');
+
+    const undoSlider = await history.undo({
+      documentId,
+      operationId: 'bsb-slider-undo',
+      expectedRevision: session.read().revision,
+      contextSequence: 3,
+    });
+    expect(undoSlider.status).toBe('committed');
+    expect(liveState()).toMatchObject({ sliderValue: 0.37, dropdownIndex: 1 });
+    expect(timeline.channelValues.get(sliderBinding.channel)).toBe(0.37);
+
+    const undoDropdown = await history.undo({
+      documentId,
+      operationId: 'bsb-dropdown-undo',
+      expectedRevision: session.read().revision,
+      contextSequence: 4,
+    });
+    expect(undoDropdown.status).toBe('committed');
+    expect(liveState()).toMatchObject({ sliderValue: 0.37, dropdownIndex: 0 });
+    expect(timeline.channelValues.get(dropdownBinding.channel)).toBe(0);
+
+    const redoDropdown = await history.redo({
+      documentId,
+      operationId: 'bsb-dropdown-redo',
+      expectedRevision: session.read().revision,
+      contextSequence: 5,
+    });
+    expect(redoDropdown.status).toBe('committed');
+    expect(liveState()).toMatchObject({ sliderValue: 0.37, dropdownIndex: 1 });
+    expect(timeline.channelValues.get(dropdownBinding.channel)).toBe(1);
+
+    const redoSlider = await history.redo({
+      documentId,
+      operationId: 'bsb-slider-redo',
+      expectedRevision: session.read().revision,
+      contextSequence: 6,
+    });
+    expect(redoSlider.status).toBe('committed');
+    expect(liveState()).toMatchObject({
+      sliderId: slider.id,
+      sliderValue: 0.73,
+      dropdownId: dropdown.id,
+      dropdownIndex: 1,
+    });
+    expect(timeline.channelValues.get(sliderBinding.channel)).toBe(0.73);
+    expect(blueLive.channelValues.get(sliderBinding.channel)).toBe(0.73);
   });
 });
 

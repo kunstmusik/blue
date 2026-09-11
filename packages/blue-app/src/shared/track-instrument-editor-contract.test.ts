@@ -8,6 +8,7 @@ import {
   isTrackInstrumentEditorRequest,
 } from './track-instrument-editor-contract';
 import { createBsbRealtimeControlUpdate, isBsbRealtimeControlUpdate } from './project-editor';
+import type { BsbInterfacePatch } from './project-editor';
 
 describe('Track instrument editor request validation', () => {
   const valid = {
@@ -81,6 +82,78 @@ describe('Track instrument realtime control contract', () => {
     });
     expect(isBsbRealtimeControlUpdate(update)).toBe(true);
   });
+
+  const controlCases: Array<{
+    name: string;
+    patch: BsbInterfacePatch;
+    expected: { kind: string; payload: Record<string, number | boolean> };
+  }> = [
+    {
+      name: 'scalar value',
+      patch: {
+        type: 'updateWidgetProperties',
+        widgetId: 'slider-1',
+        properties: { value: 0.4 },
+      },
+      expected: { kind: 'value', payload: { value: 0.4 } },
+    },
+    {
+      name: 'checkbox selection',
+      patch: {
+        type: 'updateWidgetProperties',
+        widgetId: 'checkbox-1',
+        properties: { selected: true },
+      },
+      expected: { kind: 'selected', payload: { selected: true } },
+    },
+    {
+      name: 'dropdown selection',
+      patch: {
+        type: 'updateWidgetProperties',
+        widgetId: 'dropdown-1',
+        properties: { selectedIndex: 2 },
+      },
+      expected: { kind: 'selectedIndex', payload: { selectedIndex: 2 } },
+    },
+    {
+      name: 'XY coordinates',
+      patch: {
+        type: 'updateWidgetProperties',
+        widgetId: 'xy-1',
+        properties: { xValue: 0.25, yValue: 0.75 },
+      },
+      expected: { kind: 'xy', payload: { xValue: 0.25, yValue: 0.75 } },
+    },
+    {
+      name: 'slider-bank value',
+      patch: {
+        type: 'updateSliderBankValue',
+        widgetId: 'bank-1',
+        sliderIndex: 1,
+        value: 0.9,
+      },
+      expected: { kind: 'sliderBank', payload: { sliderIndex: 1, value: 0.9 } },
+    },
+  ];
+
+  it.each(controlCases)(
+    'maps $name to the matching realtime update kind',
+    ({ patch, expected }) => {
+      const update = createBsbRealtimeControlUpdate(
+        {
+          assignmentId: 'assignment-1',
+        },
+        patch,
+      );
+
+      expect(update).toEqual({
+        assignmentId: 'assignment-1',
+        widgetId: patch.widgetId,
+        ...expected,
+      });
+      expect(isBsbRealtimeControlUpdate(update)).toBe(true);
+    },
+  );
 
   it('rejects ambiguous and malformed realtime targets', () => {
     const payload = {

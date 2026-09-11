@@ -1421,25 +1421,28 @@ export default function ScoreTimeCanvas({
         );
       }
       for (const entry of selected) {
-        await applyProjectDocumentPatch({
-          score: {
-            type: 'addScoreObjects',
-            groupId: entry.groupId,
-            objects: [
-              {
-                layerIndex: entry.layerIndex,
-                objectType: replacement.objectType,
-                name: replacement.name,
-                startBeats: entry.startBeats,
-                durationBeats: entry.durationBeats,
-                startTimeBase: entry.startTimeBase,
-                durationTimeBase: entry.durationTimeBase,
-                backgroundColor: replacement.backgroundColor,
-                serializedXml: replacement.serializedXml,
-              },
-            ],
+        await applyProjectDocumentPatch(
+          {
+            score: {
+              type: 'addScoreObjects',
+              groupId: entry.groupId,
+              objects: [
+                {
+                  layerIndex: entry.layerIndex,
+                  objectType: replacement.objectType,
+                  name: replacement.name,
+                  startBeats: entry.startBeats,
+                  durationBeats: entry.durationBeats,
+                  startTimeBase: entry.startTimeBase,
+                  durationTimeBase: entry.durationTimeBase,
+                  backgroundColor: replacement.backgroundColor,
+                  serializedXml: replacement.serializedXml,
+                },
+              ],
+            },
           },
-        });
+          { label: 'Convert Score Objects' },
+        );
       }
       clearSelection();
     })();
@@ -1456,13 +1459,16 @@ export default function ScoreTimeCanvas({
       const targets = pendingColorTargetsRef.current;
       void Promise.all(
         targets.map((target) =>
-          applyProjectDocumentPatch({
-            score: {
-              type: 'updateSharedProperties',
-              target,
-              patch: { backgroundColor },
+          applyProjectDocumentPatch(
+            {
+              score: {
+                type: 'updateSharedProperties',
+                target,
+                patch: { backgroundColor },
+              },
             },
-          }),
+            { label: 'Set Score Object Color' },
+          ),
         ),
       );
     },
@@ -1607,15 +1613,18 @@ export default function ScoreTimeCanvas({
 
     const selectionId = `poly_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     void (async () => {
-      await applyProjectDocumentPatch({
-        score: {
-          type: 'convertToPolyObject',
-          targets,
-          targetGroupId: group.groupId,
-          targetLayerIndex: contextMenuPos.layerIndex,
-          selectionId,
+      await applyProjectDocumentPatch(
+        {
+          score: {
+            type: 'convertToPolyObject',
+            targets,
+            targetGroupId: group.groupId,
+            targetLayerIndex: contextMenuPos.layerIndex,
+            selectionId,
+          },
         },
-      });
+        { label: 'Convert to Poly Object' },
+      );
       await flushPendingPatches();
       select(selectionId, false);
     })();
@@ -2085,7 +2094,10 @@ export default function ScoreTimeCanvas({
                     mode={mode}
                     onPatch={(patch: ScoreAutomationPatch) => {
                       void (async () => {
-                        await applyProjectDocumentPatch({ score: patch });
+                        await applyProjectDocumentPatch(
+                          { score: patch },
+                          { label: 'Edit Score Automation' },
+                        );
                         await flushPendingPatches();
                       })();
                     }}
@@ -2212,9 +2224,10 @@ export default function ScoreTimeCanvas({
                 currentTarget?.selectionId === pendingConvertTarget.target.selectionId &&
                 sameTarget(currentTarget, pendingConvertTarget.target)
               ) {
-                void applyProjectDocumentPatch({
-                  score: { type: 'convertScoreObjectToObjectBuilder', target: currentTarget },
-                });
+                void applyProjectDocumentPatch(
+                  { score: { type: 'convertScoreObjectToObjectBuilder', target: currentTarget } },
+                  { label: 'Convert to Object Builder' },
+                );
               }
             }
             setPendingConvertTarget(null);

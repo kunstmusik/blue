@@ -1,18 +1,19 @@
 import React from 'react';
 import type { ClojureLibraryEntrySnapshot } from '../../../../../shared/project-editor';
+import type { ProjectDocumentCommitMetadata } from '../../../../../shared/project-history';
 import { APP_INSPECTOR_LABEL_TEXT_CLASS } from '../shared/compactFieldStyles';
 import { InputBase } from './ProjectPropertyFields';
 import type { ClojureProjectTabProps } from './types';
 import { cn } from '../../../../lib/cn';
+import { useProjectStore } from '../../../../stores/project-store';
+import { ClojureConflictControls } from './ClojureConflictControls';
 
 const BUTTON_CLASSES =
   'rounded-md border border-app-border bg-app-surface px-3 py-2 text-role-body font-medium text-app-text-strong transition hover:border-app-accent hover:text-app-text-strong disabled:cursor-not-allowed disabled:opacity-45';
 
-let nextDraftClojureLibraryEntryId = 1;
-
 function createDefaultEntry(): ClojureLibraryEntrySnapshot {
   return {
-    entryId: `draft-clj-lib-${nextDraftClojureLibraryEntryId++}`,
+    entryId: `draft-clj-lib-${crypto.randomUUID()}`,
     dependencyCoordinates: 'org/library-name',
     version: '1.0.0',
   };
@@ -27,43 +28,72 @@ export default function ClojureProjectTab({
   clojureProject,
   updateClojureProject,
 }: ClojureProjectTabProps): React.ReactElement {
-  const updateEntries = (libraryEntries: ClojureLibraryEntrySnapshot[]): void => {
-    void updateClojureProject({ libraryEntries });
+  const conflicts = useProjectStore((state) => state.clojureFieldConflicts);
+  const clojureProjectRef = React.useRef(clojureProject);
+  clojureProjectRef.current = clojureProject;
+
+  const updateEntries = (
+    libraryEntries: ClojureLibraryEntrySnapshot[],
+    metadata?: ProjectDocumentCommitMetadata,
+  ): void => {
+    const nextProject = { libraryEntries };
+    // Keep target lookup current before React delivers the parent render; an
+    // unmount cleanup after removal must not re-add the removed entry.
+    clojureProjectRef.current = nextProject;
+    void updateClojureProject(nextProject, metadata);
   };
 
-  const handleEntryChange = (index: number, patch: Partial<ClojureLibraryEntrySnapshot>): void => {
-    const libraryEntries = cloneEntries(clojureProject.libraryEntries);
+  const handleEntryChange = (
+    entryId: string,
+    patch: Partial<ClojureLibraryEntrySnapshot>,
+    metadata?: ProjectDocumentCommitMetadata,
+  ): void => {
+    const currentEntries = clojureProjectRef.current.libraryEntries;
+    const index = currentEntries.findIndex((entry) => entry.entryId === entryId);
+    if (index < 0) return;
+
+    const libraryEntries = cloneEntries(currentEntries);
+    const currentEntry = libraryEntries[index];
+    if (!currentEntry) return;
     libraryEntries[index] = {
-      ...libraryEntries[index],
+      ...currentEntry,
       ...patch,
     };
-    updateEntries(libraryEntries);
+    updateEntries(libraryEntries, metadata);
   };
 
   const handleAddEntry = (): void => {
-    updateEntries([...cloneEntries(clojureProject.libraryEntries), createDefaultEntry()]);
+    updateEntries(
+      [...cloneEntries(clojureProjectRef.current.libraryEntries), createDefaultEntry()],
+      { phase: 'single' },
+    );
   };
 
   const handleRemoveEntry = (index: number): void => {
-    updateEntries(clojureProject.libraryEntries.filter((_, entryIndex) => entryIndex !== index));
+    updateEntries(
+      clojureProjectRef.current.libraryEntries.filter((_, entryIndex) => entryIndex !== index),
+      { phase: 'single' },
+    );
   };
 
   const handleMoveEntry = (from: number, to: number): void => {
-    if (to < 0 || to >= clojureProject.libraryEntries.length) {
+    const currentEntries = clojureProjectRef.current.libraryEntries;
+    if (to < 0 || to >= currentEntries.length) {
       return;
     }
 
-    const libraryEntries = cloneEntries(clojureProject.libraryEntries);
+    const libraryEntries = cloneEntries(currentEntries);
     const [entry] = libraryEntries.splice(from, 1);
     if (!entry) {
       return;
     }
     libraryEntries.splice(to, 0, entry);
-    updateEntries(libraryEntries);
+    updateEntries(libraryEntries, { phase: 'single' });
   };
 
   return (
     <div className="space-y-5">
+      <ClojureConflictControls />
       <div className="flex flex-col gap-3 rounded-xl border border-app-border bg-gradient-to-b from-app-surface to-app-overlay px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="text-role-body font-medium text-app-text-strong">Project Libraries</div>
@@ -110,11 +140,20 @@ export default function ClojureProjectTab({
                     Library Coordinates
                   </div>
                   <InputBase
-                    disabled={disabled}
-                    historyScope="none"
+                    disabled={
+                      disabled ||
+                      conflicts.some(
+                        (conflict) =>
+                          conflict.entryId === entry.entryId &&
+                          conflict.field === 'dependencyCoordinates',
+                      )
+                    }
+                    historyScope="project"
+                    fieldId={`clojure-library:${entry.entryId}:coordinates`}
+                    label="Edit Clojure Library Coordinates"
                     value={entry.dependencyCoordinates}
-                    onChange={(dependencyCoordinates) =>
-                      handleEntryChange(index, { dependencyCoordinates })
+                    onChange={(dependencyCoordinates, metadata) =>
+                      handleEntryChange(entry.entryId, { dependencyCoordinates }, metadata)
                     }
                     className="font-mono text-role-body"
                     placeholder="org.clojure/data.json"
@@ -123,10 +162,20 @@ export default function ClojureProjectTab({
                 <div className="space-y-2">
                   <div className={cn('lg:hidden', APP_INSPECTOR_LABEL_TEXT_CLASS)}>Version</div>
                   <InputBase
-                    disabled={disabled}
-                    historyScope="none"
+                    disabled={
+                      disabled ||
+                      conflicts.some(
+                        (conflict) =>
+                          conflict.entryId === entry.entryId && conflict.field === 'version',
+                      )
+                    }
+                    historyScope="project"
+                    fieldId={`clojure-library:${entry.entryId}:version`}
+                    label="Edit Clojure Library Version"
                     value={entry.version}
-                    onChange={(version) => handleEntryChange(index, { version })}
+                    onChange={(version, metadata) =>
+                      handleEntryChange(entry.entryId, { version }, metadata)
+                    }
                     className="font-mono text-role-body"
                     placeholder="1.0.0"
                   />

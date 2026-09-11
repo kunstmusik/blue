@@ -3,6 +3,7 @@
  * Mirrors the Java BSBHSliderBank class.
  */
 import { Element } from '../../serialization/xml-reader';
+import type { CopyMode } from '../../deep-copyable';
 import { BSBWidget } from './bsb-widget';
 import { BSBCompilationUnit } from './bsb-compilation-unit';
 import { BSBHSlider } from './bsb-hslider';
@@ -145,8 +146,8 @@ export class BSBHSliderBank extends BSBWidget {
     }
   }
 
-  override deepCopy(): this {
-    const copy = super.deepCopy();
+  override deepCopy(mode: CopyMode = 'duplication'): this {
+    const copy = super.deepCopy(mode);
     copy.resolutionDecimal = this.resolutionDecimal;
     return copy;
   }

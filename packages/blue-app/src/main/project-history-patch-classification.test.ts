@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { BlueData, BlueSynthBuilder, BSBKnob } from '@blue/data';
+import {
+  BlueData,
+  BlueSynthBuilder,
+  BSBKnob,
+  ClojureLibraryEntry,
+  ClojureProjectData,
+} from '@blue/data';
 import {
   applyProjectDocumentPatch,
   classifyProjectDocumentPatch,
@@ -104,6 +110,54 @@ describe('Exhaustive project patch preparation classification (T018)', () => {
         /unexpected property key/i,
       );
       expect(prepareTransaction(new BlueData(), [smuggled]).status).toBe('invalid');
+    });
+
+    it('treats a clojureProject patch with library entries as non-empty (T117 round-trip finding)', () => {
+      const patch: ProjectDocumentPatch = {
+        clojureProject: {
+          libraryEntries: [
+            { entryId: 'clj-1', dependencyCoordinates: 'org.clojure/clojure', version: '1.11.0' },
+          ],
+        },
+      };
+
+      // A clojure-only patch used to classify as "empty", so ProjectHistory
+      // silently dropped the edit while optimistic renderer state applied it.
+      expect(classifyProjectDocumentPatch(patch)).toBe('structural');
+      const prepared = prepareTransaction(new BlueData(), [patch]);
+      expect(prepared.status).toBe('prepared');
+      if (prepared.status !== 'prepared') return;
+      expect(prepared.transaction.changed).toBe(true);
+    });
+
+    it('treats an empty clojureProject replacement list as a real candidate edit (T126)', () => {
+      const removal: ProjectDocumentPatch = { clojureProject: { libraryEntries: [] } };
+
+      // Removing the final dependency is a candidate edit, not an empty patch;
+      // canonical no-op detection stays with the applier.
+      expect(classifyProjectDocumentPatch(removal)).toBe('structural');
+
+      const withDependency = new BlueData();
+      const entry = new ClojureLibraryEntry();
+      entry.setDependencyCoordinates('org.clojure/clojure');
+      entry.setVersion('1.11.0');
+      const clojureData = new ClojureProjectData();
+      clojureData.setLibraryEntries([entry]);
+      withDependency.setClojureProjectData(clojureData);
+
+      const applied = prepareTransaction(withDependency, [removal]);
+      expect(applied.status).toBe('prepared');
+      if (applied.status !== 'prepared') return;
+      expect(applied.transaction.kind).toBe('structure');
+      expect(applied.transaction.changed).toBe(true);
+
+      // The already-empty document keeps canonical no-op detection: the same
+      // replacement reports unchanged instead of creating a history entry.
+      const alreadyEmpty = new BlueData();
+      const noOp = prepareTransaction(alreadyEmpty, [removal]);
+      expect(noOp.status).toBe('prepared');
+      if (noOp.status !== 'prepared') return;
+      expect(noOp.transaction.changed).toBe(false);
     });
   });
 

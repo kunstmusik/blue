@@ -129,6 +129,8 @@ export interface ProjectDocumentCommitMetadata {
   /** Tags the batch as a settlement-barrier prefix drain. */
   barrierId?: string;
   proposalToken?: string;
+  /** Optional revision fence for callers that prepared a patch against a known base. */
+  expectedRevision?: number;
 }
 
 export interface ProjectHistoryReadRequest {
@@ -451,6 +453,13 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+/** True for plain data records only; class instances (Date, Map, …) fail. */
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  if (!isRecord(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
 function hasOnlyKeys(value: Record<string, unknown>, keys: readonly string[]): boolean {
   const allowed = new Set(keys);
   return Object.keys(value).every((key) => allowed.has(key));
@@ -464,16 +473,32 @@ function isSafeNonNegativeInteger(value: unknown): value is number {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
 }
 
+/**
+ * Patch-contract value policy for the structured-clone IPC transport (T120).
+ *
+ * History requests and patch batches cross the renderer/main boundary via
+ * structured clone, which preserves property keys whose value is explicitly
+ * `undefined` (unlike JSON.stringify, which drops them). Patch builders
+ * legitimately spell out optional fields as `undefined` — for example
+ * MixerPanel's `{ type: 'addSubChannel', name: undefined }` meaning
+ * "auto-generate the name" — and every patch applier interprets
+ * `field === undefined` as "not provided".
+ *
+ * Therefore:
+ * - Explicit `undefined` property values, at any depth, are VALID and are
+ *   treated as absent optional fields.
+ * - Values the structured clone cannot carry or that no patch applier can
+ *   interpret — functions, symbols, BigInts, class instances such as Date —
+ *   are REJECTED up front with an explicit validation failure instead of
+ *   being silently dropped or thrown across IPC.
+ */
 function isJsonValue(value: unknown, depth = 0): boolean {
   if (depth > 32) return false;
-  // Explicit `undefined` property values are semantically absent optional
-  // fields: structured clone preserves the key, JSON serialization drops it,
-  // and every patch applier treats `field === undefined` as "not provided".
   if (value === undefined || value === null || typeof value === 'string') return true;
   if (typeof value === 'boolean') return true;
   if (typeof value === 'number') return Number.isFinite(value);
   if (Array.isArray(value)) return value.every((item) => isJsonValue(item, depth + 1));
-  return isRecord(value) && Object.values(value).every((item) => isJsonValue(item, depth + 1));
+  return isPlainRecord(value) && Object.values(value).every((item) => isJsonValue(item, depth + 1));
 }
 
 function validateOrigin(value: unknown): boolean {

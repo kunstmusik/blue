@@ -3,11 +3,21 @@
 import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { toast } from 'sonner';
 import type {
   TrackInstrumentEditorPatchResult,
   TrackInstrumentEditorSnapshot,
 } from '../../shared/project-editor';
 import { createDefaultBlueX7Voice } from '@blue/data';
+
+vi.mock('sonner', () => ({
+  toast: {
+    loading: vi.fn(),
+    success: vi.fn(),
+    error: vi.fn(),
+    message: vi.fn(),
+  },
+}));
 
 vi.mock('../components/workbench/panels/orchestra/InstrumentEditorPanel', () => ({
   default: ({
@@ -344,6 +354,97 @@ describe('Track instrument editor window page', () => {
     expect(loadingShell?.className).toContain('bg-app-bg');
     expect(loadingShell?.getAttribute('aria-hidden')).toBe('true');
     expect(container.textContent).not.toContain('Loading');
+    act(() => root.unmount());
+  });
+
+  it('surfaces exhausted stale save retries as visible feedback while retaining the draft (T122)', async () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/track-instrument-editor.html?rootGroupId=editor-group&trackId=editor-track&projectSessionId=2&projectRevision=3',
+    );
+    vi.mocked(toast.error).mockClear();
+
+    let revision = 3;
+    const update = vi.fn().mockImplementation(async () => {
+      revision += 1;
+      return {
+        status: 'stale',
+        snapshot: {
+          ...makeSnapshot(),
+          track: { ...makeSnapshot().track, projectRevision: revision },
+        },
+      };
+    });
+    window.blueAPI = {
+      getTrackInstrumentEditorDocument: vi.fn().mockResolvedValue(makeSnapshot()),
+      updateTrackInstrumentEditorDocument: update,
+      onProjectDocumentUpdated: vi.fn(() => () => undefined),
+      sendBsbRealtimeControlUpdate: vi.fn().mockResolvedValue(undefined),
+    } as never;
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    await act(async () => {
+      root.render(<TrackInstrumentEditorPage />);
+      await Promise.resolve();
+    });
+    await act(async () => {
+      (container.querySelector('[data-testid="instrument-editor"]') as HTMLButtonElement).click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    // 1 attempt + MAX_STALE_RETRIES retries, then visible failure feedback.
+    expect(update).toHaveBeenCalledTimes(4);
+    expect(toast.error).toHaveBeenCalledWith(
+      expect.stringContaining('Unable to save the Track instrument change'),
+    );
+    expect(container.textContent).not.toContain('no longer available');
+
+    act(() => root.unmount());
+  });
+
+  it('surfaces realtime control update failures as visible feedback (T122)', async () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/track-instrument-editor.html?rootGroupId=editor-group&trackId=editor-track&projectSessionId=2&projectRevision=3',
+    );
+    vi.mocked(toast.error).mockClear();
+
+    const realtime = vi.fn().mockRejectedValue(new Error('engine unreachable'));
+    window.blueAPI = {
+      getTrackInstrumentEditorDocument: vi.fn().mockResolvedValue(makeSnapshot()),
+      updateTrackInstrumentEditorDocument: vi.fn().mockResolvedValue({
+        status: 'applied',
+        snapshot: makeSnapshot(),
+      }),
+      onProjectDocumentUpdated: vi.fn(() => () => undefined),
+      sendBsbRealtimeControlUpdate: realtime,
+    } as never;
+
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    await act(async () => {
+      root.render(<TrackInstrumentEditorPage />);
+      await Promise.resolve();
+    });
+    await act(async () => {
+      (container.querySelector('[data-testid="rapid-control"]') as HTMLButtonElement).click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(realtime).toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalledWith(
+      expect.stringContaining('Unable to send the live control update'),
+    );
+    consoleError.mockRestore();
     act(() => root.unmount());
   });
 

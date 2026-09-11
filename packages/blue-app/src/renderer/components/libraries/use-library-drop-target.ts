@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   getLibraryTransferSourceType,
   type LibraryExactTransferTarget,
@@ -21,23 +21,48 @@ function targetLibraryType(target: LibraryExactTransferTarget): LibraryType {
 export function useLibraryDropTarget(target: LibraryExactTransferTarget, enabled = true) {
   const [active, setActive] = useState(false);
   const [feedback, setFeedback] = useState('');
+  // Drag-sourced feedback ("invalid drop", "insertion point") is transient:
+  // it clears as soon as the drag leaves this target so stale text cannot
+  // linger in the panel. Transfer/paste results persist until the next
+  // interaction.
+  const feedbackFromDragRef = useRef(false);
   const transferToProject = useLibraryStore((state) => state.transferToProject);
   const cancelTransfer = useLibraryStore((state) => state.cancelTransfer);
   const clipboard = useLibraryStore((state) => state.clipboard);
+
+  const setDragFeedback = useCallback((message: string) => {
+    feedbackFromDragRef.current = true;
+    setFeedback(message);
+  }, []);
+
+  const clearDragFeedback = useCallback(() => {
+    if (feedbackFromDragRef.current) {
+      feedbackFromDragRef.current = false;
+      setFeedback('');
+    }
+  }, []);
+
+  const setResultFeedback = useCallback((message: string) => {
+    feedbackFromDragRef.current = false;
+    setFeedback(message);
+  }, []);
 
   const expectedType = targetLibraryType(target);
   const clipboardCompatible =
     enabled && clipboard ? getLibraryTransferSourceType(clipboard.source) === expectedType : false;
 
   useEffect(() => {
-    const clearActiveDropTarget = () => setActive(false);
+    const clearActiveDropTarget = () => {
+      setActive(false);
+      clearDragFeedback();
+    };
     window.addEventListener('drop', clearActiveDropTarget, true);
     window.addEventListener('dragend', clearActiveDropTarget, true);
     return () => {
       window.removeEventListener('drop', clearActiveDropTarget, true);
       window.removeEventListener('dragend', clearActiveDropTarget, true);
     };
-  }, []);
+  }, [clearDragFeedback]);
 
   const paste = useCallback(async () => {
     if (!enabled || !clipboard) return;
@@ -49,12 +74,20 @@ export function useLibraryDropTarget(target: LibraryExactTransferTarget, enabled
       { kind: 'clipboard', source: clipboard.source },
       target,
     );
-    setFeedback(
+    setResultFeedback(
       transferred
         ? 'Library transfer accepted.'
         : (useLibraryStore.getState().error ?? 'Library transfer was rejected.'),
     );
-  }, [clipboard, clipboardCompatible, enabled, expectedType, target, transferToProject]);
+  }, [
+    clipboard,
+    clipboardCompatible,
+    enabled,
+    expectedType,
+    setResultFeedback,
+    target,
+    transferToProject,
+  ]);
 
   const onDragOver = useCallback(
     (event: React.DragEvent<HTMLElement>) => {
@@ -65,12 +98,12 @@ export function useLibraryDropTarget(target: LibraryExactTransferTarget, enabled
       if (descriptor && descriptor.libraryType !== expectedType) {
         event.dataTransfer.dropEffect = 'none';
         setActive(false);
-        setFeedback(`Invalid drop: this destination accepts ${expectedType} Library items.`);
+        setDragFeedback(`Invalid drop: this destination accepts ${expectedType} Library items.`);
         return;
       }
       event.dataTransfer.dropEffect = 'copy';
       setActive(true);
-      setFeedback('Compatible Library insertion point.');
+      setDragFeedback('Compatible Library insertion point.');
       const scroller = event.currentTarget.closest('[data-library-autoscroll]');
       if (scroller instanceof HTMLElement) {
         const rect = scroller.getBoundingClientRect();
@@ -88,7 +121,7 @@ export function useLibraryDropTarget(target: LibraryExactTransferTarget, enabled
       if (descriptor && descriptor.libraryType !== expectedType) {
         event.preventDefault();
         setActive(false);
-        setFeedback(`Invalid drop: this destination accepts ${expectedType} Library items.`);
+        setDragFeedback(`Invalid drop: this destination accepts ${expectedType} Library items.`);
         return;
       }
       const source = readLibraryDragSource(event.dataTransfer);
@@ -97,13 +130,13 @@ export function useLibraryDropTarget(target: LibraryExactTransferTarget, enabled
       event.dataTransfer.dropEffect = 'copy';
       setActive(false);
       const transferred = await transferToProject(source, target);
-      setFeedback(
+      setResultFeedback(
         transferred
           ? 'Library transfer accepted.'
           : (useLibraryStore.getState().error ?? 'Library transfer was rejected.'),
       );
     },
-    [enabled, expectedType, target, transferToProject],
+    [enabled, expectedType, setResultFeedback, target, transferToProject],
   );
 
   const onKeyDown = useCallback(
@@ -121,7 +154,7 @@ export function useLibraryDropTarget(target: LibraryExactTransferTarget, enabled
         event.stopPropagation();
         setActive(false);
         cancelTransfer();
-        setFeedback('Library transfer cancelled.');
+        setResultFeedback('Library transfer cancelled.');
       }
     },
     [cancelTransfer, clipboard, enabled, paste],
@@ -135,7 +168,10 @@ export function useLibraryDropTarget(target: LibraryExactTransferTarget, enabled
     dropProps: {
       onDragOver,
       onDragEnter: onDragOver,
-      onDragLeave: () => setActive(false),
+      onDragLeave: () => {
+        setActive(false);
+        clearDragFeedback();
+      },
       onDrop,
       onKeyDown,
     },
