@@ -112,25 +112,25 @@ export default function UndoHistoryPanel(): React.ReactElement {
       <div className="flex flex-none items-center gap-2 border-b border-blue-border/20 px-2 py-1.5">
         <button
           type="button"
+          className="toolbar-text-button"
           disabled={!canUndo}
           onClick={() => {
             void undo();
           }}
           title={undoLabel ? `Undo ${undoLabel}` : 'Undo'}
           aria-label={undoLabel ? `Undo ${undoLabel}` : 'Undo'}
-          className="rounded border border-blue-border/30 px-2 py-0.5 text-role-body text-blue-text enabled:hover:bg-blue-surface disabled:cursor-not-allowed disabled:opacity-50"
         >
           Undo
         </button>
         <button
           type="button"
+          className="toolbar-text-button"
           disabled={!canRedo}
           onClick={() => {
             void redo();
           }}
           title={redoLabel ? `Redo ${redoLabel}` : 'Redo'}
           aria-label={redoLabel ? `Redo ${redoLabel}` : 'Redo'}
-          className="rounded border border-blue-border/30 px-2 py-0.5 text-role-body text-blue-text enabled:hover:bg-blue-surface disabled:cursor-not-allowed disabled:opacity-50"
         >
           Redo
         </button>
