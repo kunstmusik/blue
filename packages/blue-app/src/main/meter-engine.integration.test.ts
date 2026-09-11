@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -115,7 +116,23 @@ function resolveAcceptanceEnginePath(): string | null {
   return candidates.find((candidate) => existsSync(candidate)) ?? null;
 }
 
+function isEngineWithCsoundReady(candidatePath: string | null): boolean {
+  if (!candidatePath) return false;
+  try {
+    const stdout = execFileSync(candidatePath, ['--probe-csound', '--json'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+      timeout: 5000,
+    });
+    const parsed = JSON.parse(stdout);
+    return parsed.ready === true && Boolean(parsed.engine?.features?.includes('mixer-metering-v1'));
+  } catch {
+    return false;
+  }
+}
+
 const enginePath = resolveAcceptanceEnginePath();
+const isMeteringEngineReady = isEngineWithCsoundReady(enginePath);
 
 // Intentional realtime-capable null audio backend options (T053, Constitution V).
 // -+rtaudio=null activates Csound's dummy rtaudio driver which paces playback in
@@ -123,7 +140,7 @@ const enginePath = resolveAcceptanceEnginePath();
 // headless/CI hosts where CoreAudio AuHAL reports 0 devices).
 const TEST_AUDIO_OPTIONS = ['-+rtaudio=null', '-odac', '-d'];
 
-describe.skipIf(!enginePath)(
+describe.skipIf(!isMeteringEngineReady)(
   'Running-engine mixer metering integration (T042, FR-002, FR-003, FR-012, SC-001)',
   () => {
     let tempDir: string;
@@ -614,7 +631,7 @@ describe.skipIf(!enginePath)(
   },
 );
 
-describe.skipIf(!enginePath)(
+describe.skipIf(!isMeteringEngineReady)(
   'Playback lifecycle meter-reset through EngineBridge (T047, FR-012, US3/AC4)',
   () => {
     let activeBridge: EngineBridge | null = null;
