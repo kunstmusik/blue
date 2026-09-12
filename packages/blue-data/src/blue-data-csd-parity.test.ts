@@ -256,4 +256,99 @@ describe.skipIf(!hasDemo2026Fixture())('Demo2026 CSD parity', () => {
       referenceScoreEvents.slice(-6).map(normalizeWhitespace),
     );
   });
+
+  it('generates byte-identical CSD regardless of meter presentation settings (T022)', async () => {
+    const xml = fs.readFileSync(DEMO2026_BLUE_PATH, 'utf-8');
+    const data = await BlueData.loadFromString(xml);
+    const baselineCsd = data.toCSD();
+
+    data.getMixer().setEnableMeters(false);
+    expect(data.toCSD()).toBe(baselineCsd);
+
+    data.getMixer().setEnableMeters(true);
+    for (const key of [
+      'peak-rms-linear-plus-6',
+      'peak-rms-mixing-plus-6',
+      'k20-rms-peak',
+      'k14-rms-peak',
+      'k12-rms-peak',
+    ] as const) {
+      data.getMixer().setMeterProfileKey(key);
+      expect(data.toCSD()).toBe(baselineCsd);
+    }
+  });
+});
+
+describe('CSD parity across meter presentation settings with legacy fixture (T037)', () => {
+  const legacyXml = [
+    '<blueData version="2.8.0">',
+    '  <projectProperties>',
+    '    <title>Legacy CSD Parity</title>',
+    '    <sampleRate>44100</sampleRate>',
+    '    <ksmps>100</ksmps>',
+    '    <channels>2</channels>',
+    '    <useZeroDbFS>true</useZeroDbFS>',
+    '    <zeroDbFS>1</zeroDbFS>',
+    '  </projectProperties>',
+    '  <arrangement>',
+    '    <instrument assignment="1">',
+    '      <name>Sine</name>',
+    '      <comment>Simple sine</comment>',
+    '      <text>aout oscili 0.2, 440\nblueMixerOut aout, aout</text>',
+    '    </instrument>',
+    '  </arrangement>',
+    '  <mixer>',
+    '    <enabled>true</enabled>',
+    '    <channelList list="channels">',
+    '      <channel association="1">',
+    '        <name>Sine</name>',
+    '        <outChannel>Master</outChannel>',
+    '        <level>0.0</level>',
+    '      </channel>',
+    '    </channelList>',
+    '    <channelList list="subChannels"/>',
+    '    <channel><name>Master</name><level>0.0</level></channel>',
+    '  </mixer>',
+    '  <score>',
+    '    <scoreRoot>',
+    '      <trackLayerGroup>',
+    '        <trackLayer>',
+    '          <soundObject soundObjectType="blue.soundObjects.GenericScore">',
+    '            <name>Note</name>',
+    '            <startTime>0.0</startTime>',
+    '            <subjectiveDuration>2.0</subjectiveDuration>',
+    '            <scoreText>i 1 0 2</scoreText>',
+    '          </soundObject>',
+    '        </trackLayer>',
+    '      </trackLayerGroup>',
+    '    </scoreRoot>',
+    '  </score>',
+    '</blueData>',
+  ].join('\n');
+
+  it('produces byte-identical toCSD output across all 5 profiles and both visibility values (T037)', () => {
+    const data = BlueData.loadFromString(legacyXml);
+    // Legacy load resolves enableMeters to false and profile to peak-rms-linear-plus-6
+    expect(data.getMixer().isEnableMeters()).toBe(false);
+    expect(data.getMixer().getMeterProfileKey()).toBe('peak-rms-linear-plus-6');
+
+    const baselineCsd = data.toCSD();
+
+    const profiles = [
+      'peak-rms-linear-plus-6',
+      'peak-rms-mixing-plus-6',
+      'k20-rms-peak',
+      'k14-rms-peak',
+      'k12-rms-peak',
+    ] as const;
+
+    for (const enabled of [false, true]) {
+      data.getMixer().setEnableMeters(enabled);
+      for (const profile of profiles) {
+        data.getMixer().setMeterProfileKey(profile);
+        const generatedCsd = data.toCSD();
+        expect(generatedCsd).toBe(baselineCsd);
+      }
+    }
+  });
 });

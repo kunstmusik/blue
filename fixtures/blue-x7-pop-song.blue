@@ -46,6 +46,8 @@ Tempo map is enabled at 112 BPM; mixer is enabled with one channel per track.</n
   <arrangement/>
   <mixer>
     <enabled>true</enabled>
+    <enableMeters>true</enableMeters>
+    <meterProfile>peak-rms-mixing-plus-6</meterProfile>
     <channelList listName="Orchestra" list="channels">
       <channel association="313b80ef-a098-404e-b957-cc88ac030af5">
         <name>E Piano</name>

@@ -153,12 +153,14 @@ endop</udo>
   });
 
   describe('omitted mixer semantics', () => {
-    it('disables mixer when mixer element is absent', () => {
+    it('disables mixer and sets legacy meter defaults when mixer element is absent', () => {
       const xml = `<blueData version="5.0.0">
         <projectProperties/>
       </blueData>`;
       const data = BlueData.loadFromString(xml);
       expect(data.getMixer().isEnabled()).toBe(false);
+      expect(data.getMixer().isEnableMeters()).toBe(false);
+      expect(data.getMixer().getMeterProfileKey()).toBe('peak-rms-linear-plus-6');
     });
 
     it('keeps mixer enabled when mixer element is present', () => {
@@ -167,6 +169,8 @@ endop</udo>
       </blueData>`;
       const data = BlueData.loadFromString(xml);
       expect(data.getMixer().isEnabled()).toBe(true);
+      expect(data.getMixer().isEnableMeters()).toBe(false);
+      expect(data.getMixer().getMeterProfileKey()).toBe('peak-rms-linear-plus-6');
     });
   });
 
@@ -320,6 +324,99 @@ endop</udo>
       expect(saved).toContain('<effectId>echo-1</effectId>');
       expect(saved).toContain('<parameterTimeManager version="1">');
       expect(reloaded.saveToString()).toContain('<legacyEffectManager enabled="true">');
+    });
+
+    it('round-trips legacy mixer with missing meter fields to legacy defaults while preserving unrelated fields', () => {
+      const xml = `<blueData version="5.0.0">
+        <projectProperties>
+          <title>Legacy Mixer Roundtrip</title>
+        </projectProperties>
+        <mixer>
+          <enabled>true</enabled>
+          <channelList list="channels">
+            <channel><name>Lead</name><level>-3.0</level><outChannel>Master</outChannel></channel>
+          </channelList>
+          <channelList list="subChannels"/>
+          <channel><name>Master</name><level>0.0</level></channel>
+          <extraRenderTime>2.5</extraRenderTime>
+        </mixer>
+      </blueData>`;
+      const data = BlueData.loadFromString(xml);
+      expect(data.getMixer().isEnableMeters()).toBe(false);
+      expect(data.getMixer().getMeterProfileKey()).toBe('peak-rms-linear-plus-6');
+      expect(data.getMixer().getExtraRenderTime()).toBe(2.5);
+
+      const saved = data.saveToString();
+      expect(saved).toContain('<enableMeters>false</enableMeters>');
+      expect(saved).toContain('<meterProfile>peak-rms-linear-plus-6</meterProfile>');
+      expect(saved).toContain('<extraRenderTime>2.5</extraRenderTime>');
+
+      const reloaded = BlueData.loadFromString(saved);
+      expect(reloaded.getMixer().isEnableMeters()).toBe(false);
+      expect(reloaded.getMixer().getMeterProfileKey()).toBe('peak-rms-linear-plus-6');
+      expect(reloaded.getMixer().getExtraRenderTime()).toBe(2.5);
+      expect(reloaded.getProjectProperties().title).toBe('Legacy Mixer Roundtrip');
+      expect(reloaded.getMixer().getChannels()[0]?.getName()).toBe('Lead');
+    });
+
+    it('round-trips explicit meter settings and verifies only stable keys appear in XML', () => {
+      const xml = `<blueData version="5.0.0">
+        <projectProperties>
+          <title>Explicit Mixer</title>
+        </projectProperties>
+        <mixer>
+          <enabled>true</enabled>
+          <enableMeters>true</enableMeters>
+          <meterProfile>k14-rms-peak</meterProfile>
+          <channelList list="channels"/>
+          <channelList list="subChannels"/>
+          <channel><name>Master</name><level>0.0</level></channel>
+        </mixer>
+      </blueData>`;
+      const data = BlueData.loadFromString(xml);
+      expect(data.getMixer().isEnableMeters()).toBe(true);
+      expect(data.getMixer().getMeterProfileKey()).toBe('k14-rms-peak');
+
+      const saved = data.saveToString();
+      expect(saved).toContain('<enableMeters>true</enableMeters>');
+      expect(saved).toContain('<meterProfile>k14-rms-peak</meterProfile>');
+      // Stable non-display key only; visual labels must never appear in XML
+      expect(saved).not.toContain('K14 (RMS + Peak)');
+      expect(saved).not.toContain('K-14');
+
+      const reloaded = BlueData.loadFromString(saved);
+      expect(reloaded.getMixer().isEnableMeters()).toBe(true);
+      expect(reloaded.getMixer().getMeterProfileKey()).toBe('k14-rms-peak');
+    });
+
+    it('handles unrecognized future meter profile key safely without corrupting project data', () => {
+      const xml = `<blueData version="5.0.0">
+        <projectProperties>
+          <title>Future Curve Project</title>
+        </projectProperties>
+        <mixer>
+          <enabled>true</enabled>
+          <enableMeters>true</enableMeters>
+          <meterProfile>future-custom-curve-v3</meterProfile>
+          <channelList list="channels">
+            <channel><name>Ch1</name><level>-12.0</level><outChannel>Master</outChannel></channel>
+          </channelList>
+          <channelList list="subChannels"/>
+          <channel><name>Master</name><level>0.0</level></channel>
+          <unknownMixerTag>survives-or-ignored</unknownMixerTag>
+        </mixer>
+      </blueData>`;
+      // Should not throw, should fall back safely to peak-rms-linear-plus-6
+      const data = BlueData.loadFromString(xml);
+      expect(data.getMixer().isEnableMeters()).toBe(true);
+      expect(data.getMixer().getMeterProfileKey()).toBe('peak-rms-linear-plus-6');
+      expect(data.getMixer().getChannels()[0]?.getName()).toBe('Ch1');
+      expect(data.getProjectProperties().title).toBe('Future Curve Project');
+
+      const saved = data.saveToString();
+      expect(saved).toContain('<meterProfile>peak-rms-linear-plus-6</meterProfile>');
+      const reloaded = BlueData.loadFromString(saved);
+      expect(reloaded.getMixer().getChannels()[0]?.getName()).toBe('Ch1');
     });
   });
 });

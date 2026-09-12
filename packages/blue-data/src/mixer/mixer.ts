@@ -9,10 +9,37 @@ import { BlueDataObject } from '../blue-data-object';
 import type { CopyMode } from '../deep-copyable';
 import { writeBoolean, writeDouble } from '../utilities/xml';
 
+export type MeterProfileKey =
+  | 'peak-rms-mixing-plus-6'
+  | 'peak-rms-linear-plus-6'
+  | 'k20-rms-peak'
+  | 'k14-rms-peak'
+  | 'k12-rms-peak';
+
+export const METER_PROFILE_KEYS: readonly MeterProfileKey[] = [
+  'peak-rms-mixing-plus-6',
+  'peak-rms-linear-plus-6',
+  'k20-rms-peak',
+  'k14-rms-peak',
+  'k12-rms-peak',
+] as const;
+
+export const DEFAULT_NEW_METER_ENABLED = true;
+export const DEFAULT_NEW_METER_PROFILE_KEY: MeterProfileKey = 'peak-rms-mixing-plus-6';
+
+export const DEFAULT_LEGACY_METER_ENABLED = false;
+export const DEFAULT_LEGACY_METER_PROFILE_KEY: MeterProfileKey = 'peak-rms-linear-plus-6';
+
+export function isMeterProfileKey(value: unknown): value is MeterProfileKey {
+  return typeof value === 'string' && METER_PROFILE_KEYS.includes(value as MeterProfileKey);
+}
+
 export class Mixer implements BlueDataObject {
   static readonly MASTER_CHANNEL = 'Master';
 
   private _enabled = true;
+  private _enableMeters = DEFAULT_NEW_METER_ENABLED;
+  private _meterProfileKey: MeterProfileKey = DEFAULT_NEW_METER_PROFILE_KEY;
   private _channelListGroups: ChannelList[] = [];
   private _channels = new ChannelList();
   private _subChannels = new ChannelList();
@@ -33,6 +60,20 @@ export class Mixer implements BlueDataObject {
   }
   setEnabled(e: boolean): void {
     this._enabled = e;
+  }
+
+  isEnableMeters(): boolean {
+    return this._enableMeters;
+  }
+  setEnableMeters(enable: boolean): void {
+    this._enableMeters = enable;
+  }
+
+  getMeterProfileKey(): MeterProfileKey {
+    return this._meterProfileKey;
+  }
+  setMeterProfileKey(key: MeterProfileKey): void {
+    this._meterProfileKey = isMeterProfileKey(key) ? key : DEFAULT_LEGACY_METER_PROFILE_KEY;
   }
 
   getExtraRenderTime(): number {
@@ -175,6 +216,8 @@ export class Mixer implements BlueDataObject {
   saveAsXML(): Element {
     const elem = new Element('mixer');
     elem.addElement(writeBoolean('enabled', this._enabled));
+    elem.addElement(writeBoolean('enableMeters', this._enableMeters));
+    elem.addElement('meterProfile').setText(this._meterProfileKey);
 
     if (this._channelListGroups.length > 0) {
       const groupsElem = elem.addElement('channelListGroups');
@@ -208,6 +251,23 @@ export class Mixer implements BlueDataObject {
     const enabledElem = data.getElement('enabled');
     if (enabledElem) {
       mixer._enabled = enabledElem.getTextString() !== 'false';
+    }
+
+    const enableMetersElem = data.getElement('enableMeters');
+    if (enableMetersElem) {
+      mixer._enableMeters = enableMetersElem.getTextString().trim().toLowerCase() === 'true';
+    } else {
+      mixer._enableMeters = DEFAULT_LEGACY_METER_ENABLED;
+    }
+
+    const meterProfileElem = data.getElement('meterProfile');
+    if (meterProfileElem) {
+      const rawKey = meterProfileElem.getTextString().trim();
+      mixer._meterProfileKey = isMeterProfileKey(rawKey)
+        ? rawKey
+        : DEFAULT_LEGACY_METER_PROFILE_KEY;
+    } else {
+      mixer._meterProfileKey = DEFAULT_LEGACY_METER_PROFILE_KEY;
     }
 
     const channelListGroups = data.getElement('channelListGroups');
@@ -270,6 +330,8 @@ export class Mixer implements BlueDataObject {
   deepCopy(mode: CopyMode = 'duplication'): BlueDataObject {
     const copy = new Mixer();
     copy._enabled = this._enabled;
+    copy._enableMeters = this._enableMeters;
+    copy._meterProfileKey = this._meterProfileKey;
     copy._channelListGroups = this._channelListGroups.map((cl) => cl.deepCopy(mode) as ChannelList);
     copy._channels = this._channels.deepCopy(mode) as ChannelList;
     copy._subChannels = this._subChannels.deepCopy(mode) as ChannelList;

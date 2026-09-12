@@ -14,6 +14,7 @@ import {
   Instrument,
   TrackLayerGroup,
   type BlueData,
+  type MeterProfileKey,
 } from '@blue/data';
 import type {
   ProjectHistoryCommitRequest,
@@ -116,7 +117,12 @@ function collectChangedTargets(patches: readonly ProjectDocumentPatch[]): string
       const m = patch.mixer;
       if (m.type === 'updateChannel') {
         targets.add(`mixerChannel:${m.channelId}`);
-      } else if (m.type === 'setMixerEnabled' || m.type === 'updateExtraRenderTime') {
+      } else if (
+        m.type === 'setMixerEnabled' ||
+        m.type === 'setMeterEnabled' ||
+        m.type === 'setMeterProfile' ||
+        m.type === 'updateExtraRenderTime'
+      ) {
         targets.add('mixerChannel:mixer');
       } else if (
         m.type === 'updateEffect' ||
@@ -250,6 +256,12 @@ export function scalarRecordsToInversePatches(
         if (rec.targetId === 'mixer') {
           if (rec.field === 'enabled') {
             patches.push({ mixer: { type: 'setMixerEnabled', value: Boolean(rec.beforeValue) } });
+          } else if (rec.field === 'enableMeters') {
+            patches.push({ mixer: { type: 'setMeterEnabled', value: Boolean(rec.beforeValue) } });
+          } else if (rec.field === 'meterProfileKey') {
+            patches.push({
+              mixer: { type: 'setMeterProfile', value: rec.beforeValue as MeterProfileKey },
+            });
           } else if (rec.field === 'extraRenderTime') {
             patches.push({
               mixer: { type: 'updateExtraRenderTime', value: Number(rec.beforeValue) },
@@ -311,6 +323,12 @@ export function scalarRecordsToForwardPatches(
         if (rec.targetId === 'mixer') {
           if (rec.field === 'enabled') {
             patches.push({ mixer: { type: 'setMixerEnabled', value: Boolean(rec.afterValue) } });
+          } else if (rec.field === 'enableMeters') {
+            patches.push({ mixer: { type: 'setMeterEnabled', value: Boolean(rec.afterValue) } });
+          } else if (rec.field === 'meterProfileKey') {
+            patches.push({
+              mixer: { type: 'setMeterProfile', value: rec.afterValue as MeterProfileKey },
+            });
           } else if (rec.field === 'extraRenderTime') {
             patches.push({
               mixer: { type: 'updateExtraRenderTime', value: Number(rec.afterValue) },

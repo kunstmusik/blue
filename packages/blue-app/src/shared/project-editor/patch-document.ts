@@ -21,6 +21,7 @@ import {
   ProjectProperties,
   PythonInstrument,
   Mixer,
+  isMeterProfileKey,
   Scale,
   TempoMap,
   TempoPoint,
@@ -665,6 +666,15 @@ export function validateProjectDocumentPatch(patch: ProjectDocumentPatch): {
       return {
         valid: false,
         reason: 'Clojure library entry IDs must be unique',
+      };
+    }
+  }
+
+  if (patch.mixer?.type === 'setMeterProfile') {
+    if (!isMeterProfileKey(patch.mixer.value)) {
+      return {
+        valid: false,
+        reason: `Invalid meter profile key: ${String(patch.mixer.value)}`,
       };
     }
   }

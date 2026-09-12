@@ -21,6 +21,8 @@ import {
   ProjectProperties,
   PythonInstrument,
   Mixer,
+  DEFAULT_NEW_METER_ENABLED,
+  DEFAULT_NEW_METER_PROFILE_KEY,
   Scale,
   TempoMap,
   TempoPoint,
@@ -567,6 +569,8 @@ export function createEmptyMixerSnapshot(): MixerSnapshot {
   master.setName(Mixer.MASTER_CHANNEL);
   return {
     enabled: true,
+    enableMeters: DEFAULT_NEW_METER_ENABLED,
+    meterProfileKey: DEFAULT_NEW_METER_PROFILE_KEY,
     extraRenderTime: 0,
     channelListGroups: [],
     channels: [],
@@ -589,6 +593,8 @@ function createMixerChannelListSnapshot(channelList: ChannelList): MixerChannelL
 export function createMixerSnapshot(mixer: Mixer): MixerSnapshot {
   return {
     enabled: mixer.isEnabled(),
+    enableMeters: mixer.isEnableMeters(),
+    meterProfileKey: mixer.getMeterProfileKey(),
     extraRenderTime: mixer.getExtraRenderTime(),
     channelListGroups: mixer
       .getChannelListGroups()

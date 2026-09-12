@@ -185,4 +185,69 @@ describe('Accessibility Contrast Browser Spot Checks (T012)', () => {
     const focusRing = parseRgb(window.getComputedStyle(input).outlineColor);
     expect(contrastRatio(focusRing, bg)).toBeGreaterThanOrEqual(3.0);
   });
+
+  it('renders meter scale labels and numeric peak readout with passing text contrast (T041)', () => {
+    act(() => {
+      root.render(
+        <div style={{ backgroundColor: '#1a1a2e', padding: '16px' }}>
+          {/* Scale labels alongside meter */}
+          <span id="meter-scale-label" style={{ color: '#c8c8d8', fontSize: '9px' }}>
+            +6
+          </span>
+          {/* Numeric peak readout text */}
+          <div
+            id="meter-peak-readout"
+            style={{ backgroundColor: '#0f172a', color: '#f8fafc', padding: '2px 4px' }}
+          >
+            -12.4
+          </div>
+        </div>,
+      );
+    });
+
+    const scaleLabel = container.querySelector('#meter-scale-label') as HTMLElement;
+    const scaleBg = parseRgb(window.getComputedStyle(scaleLabel.parentElement!).backgroundColor);
+    const scaleFg = parseRgb(window.getComputedStyle(scaleLabel).color);
+    expect(contrastRatio(scaleFg, scaleBg)).toBeGreaterThanOrEqual(4.5);
+
+    const peakReadout = container.querySelector('#meter-peak-readout') as HTMLElement;
+    const peakBg = parseRgb(window.getComputedStyle(peakReadout).backgroundColor);
+    const peakFg = parseRgb(window.getComputedStyle(peakReadout).color);
+    expect(contrastRatio(peakFg, peakBg)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('renders overload indicator and gear button focus ring with passing contrast (T041)', () => {
+    act(() => {
+      root.render(
+        <div style={{ backgroundColor: '#1e293b', padding: '16px' }}>
+          {/* Overload clip pip */}
+          <div id="clip-pip" style={{ backgroundColor: '#ef4444', width: '12px', height: '4px' }} />
+          {/* Mixer Settings gear button with focus outline */}
+          <button
+            id="mixer-settings-btn"
+            aria-label="Mixer settings"
+            style={{
+              backgroundColor: 'transparent',
+              color: '#94a3b8',
+              outlineColor: '#38bdf8',
+              outlineWidth: '2px',
+              outlineStyle: 'solid',
+            }}
+          >
+            ⚙
+          </button>
+        </div>,
+      );
+    });
+
+    const clipPip = container.querySelector('#clip-pip') as HTMLElement;
+    const clipBg = parseRgb(window.getComputedStyle(clipPip.parentElement!).backgroundColor);
+    const clipFg = parseRgb(window.getComputedStyle(clipPip).backgroundColor);
+    expect(contrastRatio(clipFg, clipBg)).toBeGreaterThanOrEqual(3.0);
+
+    const gearBtn = container.querySelector('#mixer-settings-btn') as HTMLElement;
+    const gearParentBg = parseRgb(window.getComputedStyle(gearBtn.parentElement!).backgroundColor);
+    const gearOutline = parseRgb(window.getComputedStyle(gearBtn).outlineColor);
+    expect(contrastRatio(gearOutline, gearParentBg)).toBeGreaterThanOrEqual(3.0);
+  });
 });

@@ -12,6 +12,7 @@ import {
   type MixerPatch,
   type MixerSnapshot,
 } from '../../shared/project-editor';
+import { meterStore } from '../stores/meter-store';
 
 declare global {
   interface Window {
@@ -455,5 +456,384 @@ describe('MixerPanel', () => {
 
     addListenerSpy.mockRestore();
     removeListenerSpy.mockRestore();
+  });
+
+  describe('User Story 1: Numeric peak readout and clear behavior (T015)', () => {
+    it('displays -inf for numeric peak readout at silence and renders scale ruler when enabled', () => {
+      seedLoadedProject();
+      const { container, root } = renderPanel();
+
+      const readouts = container.querySelectorAll('.mixer-peak-readout');
+      expect(readouts.length).toBeGreaterThan(0);
+      for (const readout of readouts) {
+        expect(readout.textContent).toBe('-inf');
+      }
+
+      const ruler = container.querySelector('.mixer-scale-ruler');
+      expect(ruler).not.toBeNull();
+
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    });
+
+    it('updates readout to maximum held sample peak across channels when telemetry arrives', () => {
+      seedLoadedProject();
+      const leadChannelId = mockProjectState.mixer.channels[0]!.id;
+
+      meterStore.setBindingMap({
+        nchnls: 2,
+        entries: [
+          { kind: 'source', csdKey: '0', stripId: leadChannelId, displayName: 'Lead Channel' },
+        ],
+      });
+
+      const { container, root } = renderPanel();
+
+      // Feed telemetry: ch0 peak = 0.3 (-10.5 dBFS), ch1 peak = 0.7 (-3.1 dBFS)
+      act(() => {
+        meterStore.processMeterFrame(
+          {
+            sequence: 1,
+            channels: [{ csdKey: '0', rms: [0.2, 0.4], peak: [0.3, 0.7] }],
+          },
+          1000,
+        );
+      });
+
+      const readouts = container.querySelectorAll('.mixer-peak-readout');
+      expect(readouts[0]?.textContent).toBe('-3.1');
+
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    });
+
+    it('clears held peak and resets readout to -inf when either readout or canvas is clicked', () => {
+      seedLoadedProject();
+      const leadChannelId = mockProjectState.mixer.channels[0]!.id;
+
+      meterStore.setBindingMap({
+        nchnls: 2,
+        entries: [
+          { kind: 'source', csdKey: '0', stripId: leadChannelId, displayName: 'Lead Channel' },
+        ],
+      });
+
+      const { container, root } = renderPanel();
+
+      // Feed active audio
+      act(() => {
+        meterStore.processMeterFrame(
+          {
+            sequence: 1,
+            channels: [{ csdKey: '0', rms: [0.5, 0.5], peak: [0.8, 0.8] }],
+          },
+          1000,
+        );
+      });
+
+      const readout = container.querySelector<HTMLButtonElement>('.mixer-peak-readout')!;
+      expect(readout.textContent).toBe('-1.9');
+
+      // Click readout
+      act(() => {
+        readout.click();
+      });
+      expect(readout.textContent).toBe('-inf');
+      expect(meterStore.getStripState(leadChannelId)!.maxHeldSamplePeak).toBe(-Infinity);
+
+      // Feed audio again
+      act(() => {
+        meterStore.processMeterFrame(
+          {
+            sequence: 2,
+            channels: [{ csdKey: '0', rms: [0.5, 0.5], peak: [0.8, 0.8] }],
+          },
+          2000,
+        );
+      });
+      expect(readout.textContent).toBe('-1.9');
+
+      // Click canvas
+      const canvas = container.querySelector<HTMLCanvasElement>('canvas')!;
+      act(() => {
+        canvas.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      });
+      expect(meterStore.getStripState(leadChannelId)!.maxHeldSamplePeak).toBe(-Infinity);
+
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    });
+  });
+
+  describe('User Story 2: Meter profile selection (T020)', () => {
+    it('keeps profile selection in the meter interaction surface and out of Mixer Settings', () => {
+      seedLoadedProject();
+      const { container, root } = renderPanel();
+
+      const canvas = container.querySelector('canvas')!;
+      act(() => {
+        canvas.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+      });
+
+      const profileItems = Array.from(
+        document.body.querySelectorAll<HTMLElement>('[role="menuitemcheckbox"]'),
+      );
+      expect(profileItems).toHaveLength(5);
+      expect(profileItems.map((item) => item.textContent?.trim())).toEqual([
+        'Peak/RMS (+6 dBFS)',
+        'Peak/RMS Linear (+6 dBFS)',
+        'K20 (RMS + Peak)',
+        'K14 (RMS + Peak)',
+        'K12 (RMS + Peak)',
+      ]);
+      expect(profileItems[3]?.getAttribute('aria-label')).toContain(
+        'does not calibrate monitor SPL',
+      );
+
+      const gearBtn = container.querySelector<HTMLButtonElement>(
+        'button[aria-label="Mixer Settings"]',
+      )!;
+      act(() => {
+        gearBtn.click();
+      });
+
+      const dialog = document.body.querySelector('[role="dialog"]')!;
+      expect(dialog.querySelector('select')).toBeNull();
+      expect(dialog.textContent).not.toContain('Meter Profile');
+
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    });
+
+    it('dispatches setMeterProfile from the meter context menu', () => {
+      seedLoadedProject();
+      const { container, root } = renderPanel();
+
+      act(() => {
+        container
+          .querySelector('canvas')!
+          .dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+      });
+
+      const k14Item = Array.from(
+        document.body.querySelectorAll<HTMLElement>('[role="menuitemcheckbox"]'),
+      ).find((item) => item.textContent?.includes('K14'))!;
+      mockProjectState.applyProjectDocumentPatch.mockClear();
+
+      act(() => {
+        k14Item.click();
+      });
+
+      expect(mockProjectState.applyProjectDocumentPatch).toHaveBeenCalledTimes(1);
+      expect(mockProjectState.applyProjectDocumentPatch).toHaveBeenCalledWith(
+        {
+          mixer: {
+            type: 'setMeterProfile',
+            value: 'k14-rms-peak',
+          },
+        },
+        { label: 'Set Meter Profile' },
+      );
+
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    });
+
+    it('provides meter context menu with Disable Meters and checkmark on selected profile', () => {
+      seedLoadedProject();
+      const { container, root } = renderPanel();
+
+      const canvas = container.querySelector('canvas')!;
+      expect(canvas).not.toBeNull();
+
+      // Open context menu on meter canvas
+      act(() => {
+        canvas.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+      });
+
+      const menu = document.body.querySelector('.editor-context-menu')!;
+      expect(menu).not.toBeNull();
+
+      // Check for Clear Meter and Disable Meters
+      const items = Array.from(menu.querySelectorAll('.editor-context-menu__item'));
+      const clearItem = items.find((i) => i.textContent?.includes('Clear Meter'));
+      const disableItem = items.find((i) => i.textContent?.includes('Disable Meters'));
+      expect(clearItem).not.toBeUndefined();
+      expect(disableItem).not.toBeUndefined();
+
+      // Profile options: active profile has checked state and item indicator
+      const profileItems = Array.from(
+        menu.querySelectorAll<HTMLElement>('[role="menuitemcheckbox"]'),
+      );
+      expect(profileItems.length).toBe(5);
+      expect(profileItems[0].textContent).toContain('Peak/RMS (+6 dBFS)');
+      expect(profileItems[1].textContent).toContain('Peak/RMS Linear (+6 dBFS)');
+
+      const checkedItem = profileItems.find((p) => p.getAttribute('data-state') === 'checked')!;
+      expect(checkedItem).not.toBeUndefined();
+      expect(checkedItem.textContent).toContain('Peak/RMS (+6 dBFS)');
+      expect(checkedItem.querySelector('.editor-context-menu__item-indicator')).not.toBeNull();
+
+      // Selecting Disable Meters dispatches setMeterEnabled: false
+      mockProjectState.applyProjectDocumentPatch.mockClear();
+      act(() => {
+        disableItem?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      });
+
+      expect(mockProjectState.applyProjectDocumentPatch).toHaveBeenCalledTimes(1);
+      expect(mockProjectState.applyProjectDocumentPatch).toHaveBeenCalledWith(
+        {
+          mixer: {
+            type: 'setMeterEnabled',
+            value: false,
+          },
+        },
+        { label: 'Disable Meters' },
+      );
+
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    });
+  });
+
+  describe('User Story 3: Enable or Disable Meters Safely (T026)', () => {
+    it('places the Mixer Settings gear at the far right of the toolbar and opens dialog on click', () => {
+      seedLoadedProject();
+      const { container, root } = renderPanel();
+
+      const toolbar = container.querySelector('.mixer-toolbar')!;
+      expect(toolbar).not.toBeNull();
+
+      const addSubchannelBtn = toolbar.querySelector('button.toolbar-text-button')!;
+      expect(addSubchannelBtn).not.toBeNull();
+      expect(addSubchannelBtn.textContent).toContain('Add Subchannel');
+
+      const gearBtn = toolbar.querySelector<HTMLButtonElement>(
+        'button[aria-label="Mixer Settings"]',
+      )!;
+      expect(gearBtn).not.toBeNull();
+      expect(addSubchannelBtn.nextElementSibling).toBe(gearBtn);
+      expect(gearBtn.nextElementSibling).toBeNull();
+
+      // Click gear button to open dialog
+      act(() => {
+        gearBtn.click();
+      });
+
+      const dialog = document.body.querySelector(
+        '[role="dialog"][aria-labelledby="mixer-settings-dialog-title"]',
+      )!;
+      expect(dialog).not.toBeNull();
+      expect(dialog.querySelector('#mixer-settings-dialog-title')?.textContent).toBe(
+        'Mixer Settings',
+      );
+      expect(dialog.textContent).toContain(
+        'Settings apply to this project and persist in the project file.',
+      );
+
+      const checkbox = dialog.querySelector<HTMLInputElement>(
+        'input[type="checkbox"][aria-label="Enable Meters"]',
+      )!;
+      expect(checkbox).not.toBeNull();
+      expect(checkbox.checked).toBe(true);
+
+      // Close dialog via Close button (no-op)
+      mockProjectState.applyProjectDocumentPatch.mockClear();
+      const closeBtn = Array.from(dialog.querySelectorAll<HTMLButtonElement>('button')).find(
+        (b) => b.textContent?.trim() === 'Close',
+      )!;
+      expect(closeBtn).not.toBeNull();
+      act(() => {
+        closeBtn.click();
+      });
+
+      expect(mockProjectState.applyProjectDocumentPatch).not.toHaveBeenCalled();
+      expect(document.body.querySelector('[role="dialog"]')).toBeNull();
+
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    });
+
+    it('toggles enableMeters immediately with semantic label Disable Meters', () => {
+      seedLoadedProject();
+      const { container, root } = renderPanel();
+
+      const gearBtn = container.querySelector<HTMLButtonElement>(
+        'button[aria-label="Mixer Settings"]',
+      )!;
+      act(() => {
+        gearBtn.click();
+      });
+
+      const dialog = document.body.querySelector('[role="dialog"]')!;
+      const checkbox = dialog.querySelector<HTMLInputElement>(
+        'input[type="checkbox"][aria-label="Enable Meters"]',
+      )!;
+
+      mockProjectState.applyProjectDocumentPatch.mockClear();
+      act(() => {
+        checkbox.click();
+      });
+
+      expect(mockProjectState.applyProjectDocumentPatch).toHaveBeenCalledTimes(1);
+      expect(mockProjectState.applyProjectDocumentPatch).toHaveBeenCalledWith(
+        {
+          mixer: {
+            type: 'setMeterEnabled',
+            value: false,
+          },
+        },
+        { label: 'Disable Meters' },
+      );
+
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    });
+
+    it('derives meter visibility from enableMeters=false while keeping faders and settings', () => {
+      seedLoadedProject();
+      mockProjectState.mixer = {
+        ...mockProjectState.mixer,
+        enableMeters: false,
+      };
+      const { container, root } = renderPanel();
+
+      expect(container.querySelector('canvas')).toBeNull();
+      expect(container.querySelector('.mixer-peak-readout')).toBeNull();
+      expect(container.querySelector('.mixer-scale-ruler')).toBeNull();
+      const gearBtn = container.querySelector<HTMLButtonElement>(
+        'button[aria-label="Mixer Settings"]',
+      )!;
+      act(() => {
+        gearBtn.click();
+      });
+      const dialog = document.body.querySelector('[role="dialog"]')!;
+      expect(dialog.querySelector('select')).toBeNull();
+
+      // Faders and strips still present
+      expect(container.querySelectorAll('.mixer-channel-strip').length).toBeGreaterThan(0);
+      expect(container.querySelectorAll('.mixer-level-slider-wrapper').length).toBeGreaterThan(0);
+
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    });
   });
 });

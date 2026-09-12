@@ -186,4 +186,100 @@ describe.skipIf(!hasRhythmicFixture())('disk CSD parity', () => {
     expect(screen).not.toContain('kMeter');
     expect(screen).not.toContain('maxk');
   });
+
+  it('generates byte-identical toDiskCSD regardless of meter presentation settings (T022)', () => {
+    const data = createRenderWindowProject(false);
+    const baselineDisk = data.toDiskCSD();
+
+    data.getMixer().setEnableMeters(false);
+    expect(data.toDiskCSD()).toBe(baselineDisk);
+
+    data.getMixer().setEnableMeters(true);
+    for (const key of [
+      'peak-rms-linear-plus-6',
+      'peak-rms-mixing-plus-6',
+      'k20-rms-peak',
+      'k14-rms-peak',
+      'k12-rms-peak',
+    ] as const) {
+      data.getMixer().setMeterProfileKey(key);
+      expect(data.toDiskCSD()).toBe(baselineDisk);
+    }
+  });
+
+  it('generates byte-identical toDiskCSD across all 5 profiles and both visibility values from legacy fixture (T037)', () => {
+    const legacyXml = [
+      '<blueData version="2.8.0">',
+      '  <projectProperties>',
+      '    <title>Legacy Disk CSD Parity</title>',
+      '    <sampleRate>48000</sampleRate>',
+      '    <ksmps>64</ksmps>',
+      '    <channels>2</channels>',
+      '    <useZeroDbFS>true</useZeroDbFS>',
+      '    <zeroDbFS>1</zeroDbFS>',
+      '    <diskSampleRate>96000</diskSampleRate>',
+      '    <diskKsmps>32</diskKsmps>',
+      '    <diskChannels>2</diskChannels>',
+      '    <diskUseZeroDbFS>true</diskUseZeroDbFS>',
+      '    <diskZeroDbFS>1</diskZeroDbFS>',
+      '    <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>',
+      '  </projectProperties>',
+      '  <arrangement>',
+      '    <instrument assignment="1">',
+      '      <name>Sine</name>',
+      '      <comment>Simple sine</comment>',
+      '      <text>aout oscili 0.2, 440\nout aout, aout</text>',
+      '    </instrument>',
+      '  </arrangement>',
+      '  <mixer>',
+      '    <enabled>true</enabled>',
+      '    <channelList list="channels">',
+      '      <channel association="1">',
+      '        <name>Sine</name>',
+      '        <outChannel>Master</outChannel>',
+      '        <level>0.0</level>',
+      '      </channel>',
+      '    </channelList>',
+      '    <channelList list="subChannels"/>',
+      '    <channel><name>Master</name><level>0.0</level></channel>',
+      '  </mixer>',
+      '  <score>',
+      '    <scoreRoot>',
+      '      <trackLayerGroup>',
+      '        <trackLayer>',
+      '          <soundObject soundObjectType="blue.soundObjects.GenericScore">',
+      '            <name>Note</name>',
+      '            <startTime>0.0</startTime>',
+      '            <subjectiveDuration>2.0</subjectiveDuration>',
+      '            <scoreText>i 1 0 2</scoreText>',
+      '          </soundObject>',
+      '        </trackLayer>',
+      '      </trackLayerGroup>',
+      '    </scoreRoot>',
+      '  </score>',
+      '</blueData>',
+    ].join('\n');
+
+    const data = BlueData.loadFromString(legacyXml);
+    expect(data.getMixer().isEnableMeters()).toBe(false);
+    expect(data.getMixer().getMeterProfileKey()).toBe('peak-rms-linear-plus-6');
+
+    const baselineDisk = data.toDiskCSD();
+
+    const profiles = [
+      'peak-rms-linear-plus-6',
+      'peak-rms-mixing-plus-6',
+      'k20-rms-peak',
+      'k14-rms-peak',
+      'k12-rms-peak',
+    ] as const;
+
+    for (const enabled of [false, true]) {
+      data.getMixer().setEnableMeters(enabled);
+      for (const profile of profiles) {
+        data.getMixer().setMeterProfileKey(profile);
+        expect(data.toDiskCSD()).toBe(baselineDisk);
+      }
+    }
+  });
 });

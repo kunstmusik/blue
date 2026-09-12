@@ -173,6 +173,135 @@ describe('MeterStore', () => {
     const state = store.getStripState('track-1');
     expect(state!.barLevels).toEqual([-Infinity, -Infinity]);
     expect(state!.peakHoldLevels).toEqual([-Infinity, -Infinity]);
+    expect(state!.heldSamplePeaks).toEqual([-Infinity, -Infinity]);
+    expect(state!.maxHeldSamplePeak).toBe(-Infinity);
+    expect(state!.numericPeak).toBe('-inf');
     expect(state!.clipFlags).toEqual([false, false]);
+  });
+
+  describe('Held sample peak and numeric readout (T013, T016)', () => {
+    it('initializes held sample peaks to -Infinity and numericPeak to -inf', () => {
+      const state = store.getStripState('track-1');
+      expect(state!.heldSamplePeaks).toEqual([-Infinity, -Infinity]);
+      expect(state!.maxHeldSamplePeak).toBe(-Infinity);
+      expect(state!.numericPeak).toBe('-inf');
+      expect(store.getMaxHeldPeak('track-1')).toBe(-Infinity);
+      expect(store.getNumericPeak('track-1')).toBe('-inf');
+    });
+
+    it('tracks maximum held sample peak across multiple outputs indefinitely until cleared', () => {
+      // Channel 0: 0.5 (-6.02 dBFS), Channel 1: 0.8 (-1.94 dBFS)
+      store.processMeterFrame(
+        {
+          sequence: 1,
+          channels: [{ csdKey: '0', rms: [0.3, 0.4], peak: [0.5, 0.8] }],
+        },
+        1000,
+      );
+
+      const state1 = store.getStripState('track-1')!;
+      expect(state1.heldSamplePeaks[0]).toBeCloseTo(20 * Math.log10(0.5), 1);
+      expect(state1.heldSamplePeaks[1]).toBeCloseTo(20 * Math.log10(0.8), 1);
+      expect(state1.maxHeldSamplePeak).toBeCloseTo(20 * Math.log10(0.8), 1);
+      expect(state1.numericPeak).toBe('-1.9');
+      expect(store.getNumericPeak('track-1')).toBe('-1.9');
+
+      // Subsequent frame with quieter signal should NOT lower the held peak
+      store.processMeterFrame(
+        {
+          sequence: 2,
+          channels: [{ csdKey: '0', rms: [0.05, 0.05], peak: [0.1, 0.1] }],
+        },
+        1500,
+      );
+      store.update(2500); // 1.0s later; decaying markers decay, but heldSamplePeaks stay
+
+      const state2 = store.getStripState('track-1')!;
+      expect(state2.maxHeldSamplePeak).toBeCloseTo(20 * Math.log10(0.8), 1);
+      expect(state2.numericPeak).toBe('-1.9');
+
+      // Higher peak on channel 0 (1.0 = 0 dBFS) raises the held peak
+      store.processMeterFrame(
+        {
+          sequence: 3,
+          channels: [{ csdKey: '0', rms: [0.5, 0.5], peak: [1.0, 0.5] }],
+        },
+        3000,
+      );
+      const state3 = store.getStripState('track-1')!;
+      expect(state3.heldSamplePeaks[0]).toBeCloseTo(0.0, 1);
+      expect(state3.maxHeldSamplePeak).toBeCloseTo(0.0, 1);
+      expect(state3.numericPeak).toBe('0.0');
+    });
+
+    it('atomically clears all held peaks, markers, and clips for ONLY the targeted strip', () => {
+      // Put both track-1 and master into active and clipped states
+      store.processMeterFrame(
+        {
+          sequence: 1,
+          channels: [
+            { csdKey: '0', rms: [0.5, 0.5], peak: [1.2, 1.2] },
+            { csdKey: 'sub_Master', rms: [0.6, 0.6], peak: [1.5, 1.5] },
+          ],
+        },
+        1000,
+      );
+
+      expect(store.getStripState('track-1')!.clipFlags[0]).toBe(true);
+      expect(store.getStripState('master')!.clipFlags[0]).toBe(true);
+      expect(store.getStripState('track-1')!.numericPeak).not.toBe('-inf');
+      expect(store.getStripState('master')!.numericPeak).not.toBe('-inf');
+
+      // Clear ONLY track-1
+      store.clearStrip('track-1');
+
+      const trackState = store.getStripState('track-1')!;
+      expect(trackState.heldSamplePeaks).toEqual([-Infinity, -Infinity]);
+      expect(trackState.maxHeldSamplePeak).toBe(-Infinity);
+      expect(trackState.numericPeak).toBe('-inf');
+      expect(trackState.peakHoldLevels).toEqual([-Infinity, -Infinity]);
+      expect(trackState.clipFlags).toEqual([false, false]);
+
+      // master must remain UNCHANGED
+      const masterState = store.getStripState('master')!;
+      expect(masterState.clipFlags[0]).toBe(true);
+      expect(masterState.numericPeak).not.toBe('-inf');
+      expect(masterState.maxHeldSamplePeak).toBeGreaterThan(0);
+    });
+
+    it('sanitizes non-finite telemetry (NaN, Infinity, negative) and keeps numericPeak at -inf', () => {
+      store.processMeterFrame(
+        {
+          sequence: 1,
+          channels: [{ csdKey: '0', rms: [NaN, -1], peak: [Infinity, NaN] }],
+        },
+        1000,
+      );
+
+      const state = store.getStripState('track-1')!;
+      expect(state.heldSamplePeaks).toEqual([-Infinity, -Infinity]);
+      expect(state.maxHeldSamplePeak).toBe(-Infinity);
+      expect(state.numericPeak).toBe('-inf');
+    });
+
+    it('clears all strips on clearAll without reviving stale peaks', () => {
+      store.processMeterFrame(
+        {
+          sequence: 1,
+          channels: [
+            { csdKey: '0', rms: [0.5, 0.5], peak: [1.1, 1.1] },
+            { csdKey: 'sub_Master', rms: [0.6, 0.6], peak: [1.2, 1.2] },
+          ],
+        },
+        1000,
+      );
+
+      store.clearAll();
+
+      expect(store.getStripState('track-1')!.numericPeak).toBe('-inf');
+      expect(store.getStripState('master')!.numericPeak).toBe('-inf');
+      expect(store.getStripState('track-1')!.clipFlags).toEqual([false, false]);
+      expect(store.getStripState('master')!.clipFlags).toEqual([false, false]);
+    });
   });
 });

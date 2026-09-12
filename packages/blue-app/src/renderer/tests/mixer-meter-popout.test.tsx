@@ -6,6 +6,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 import { MeterCanvas } from '../components/workbench/panels/mixer/MeterCanvas';
+import { MixerSettingsDialog } from '../components/workbench/panels/mixer/MixerSettingsDialog';
 import { HostDocumentContext } from '../hooks/use-host-document';
 import { meterStore } from '../stores/meter-store';
 
@@ -102,5 +103,124 @@ describe('MeterCanvas in popout and re-dock lifecycle', () => {
     expect(popoutCaf).toHaveBeenCalled();
     // Main window rAF must resume
     expect(mainRaf.mock.calls.length).toBeGreaterThan(1);
+  });
+
+  it('mounts MixerSettingsDialog in docked vs popout document based on HostDocumentContext (T027)', () => {
+    const handleToggle = vi.fn();
+    const handleClose = vi.fn();
+
+    // 1. Render dialog in main window document
+    act(() => {
+      root.render(
+        <HostDocumentContext.Provider value={document}>
+          <MixerSettingsDialog
+            isOpen={true}
+            enableMeters={true}
+            onToggleEnableMeters={handleToggle}
+            onClose={handleClose}
+          />
+        </HostDocumentContext.Provider>,
+      );
+    });
+
+    expect(document.body.querySelector('[role="dialog"]')).not.toBeNull();
+    expect(popoutDoc.body.querySelector('[role="dialog"]')).toBeNull();
+
+    const mainCheckbox = document.body.querySelector<HTMLInputElement>(
+      'input[type="checkbox"][aria-label="Enable Meters"]',
+    )!;
+    expect(mainCheckbox.checked).toBe(true);
+    expect(document.body.querySelector('[role="dialog"] select')).toBeNull();
+
+    act(() => {
+      mainCheckbox.click();
+    });
+    expect(handleToggle).toHaveBeenCalledWith(false);
+
+    // 2. Render dialog in popout window document
+    act(() => {
+      root.render(
+        <HostDocumentContext.Provider value={popoutDoc}>
+          <MixerSettingsDialog
+            isOpen={true}
+            enableMeters={false}
+            onToggleEnableMeters={handleToggle}
+            onClose={handleClose}
+          />
+        </HostDocumentContext.Provider>,
+      );
+    });
+
+    expect(document.body.querySelector('[role="dialog"]')).toBeNull();
+    expect(popoutDoc.body.querySelector('[role="dialog"]')).not.toBeNull();
+
+    const popoutCheckbox = popoutDoc.body.querySelector<HTMLInputElement>(
+      'input[type="checkbox"][aria-label="Enable Meters"]',
+    )!;
+    expect(popoutCheckbox.checked).toBe(false);
+    expect(popoutDoc.body.querySelector('[role="dialog"] select')).toBeNull();
+
+    // Close in popout
+    const closeBtn = Array.from(popoutDoc.body.querySelectorAll<HTMLButtonElement>('button')).find(
+      (b) => b.textContent?.trim() === 'Close',
+    )!;
+    act(() => {
+      closeBtn.click();
+    });
+    expect(handleClose).toHaveBeenCalled();
+  });
+
+  it('selects correct presentation in detached view via stable key regardless of display labels (T038)', () => {
+    // Render MeterCanvas in popout window with stable key
+    act(() => {
+      root.render(
+        <HostDocumentContext.Provider value={popoutDoc}>
+          <MeterCanvas
+            stripId="channel-1"
+            channelCount={2}
+            width={14}
+            height={80}
+            profileKey="k14-rms-peak"
+          />
+        </HostDocumentContext.Provider>,
+      );
+    });
+
+    const canvas = host.querySelector<HTMLCanvasElement>('canvas.meter-canvas')!;
+    expect(canvas).not.toBeNull();
+    expect(canvas.getAttribute('data-profile')).toBe('k14-rms-peak');
+
+    // Register strip and update telemetry in meter store
+    act(() => {
+      meterStore.setBindingMap({
+        nchnls: 2,
+        entries: [{ csdKey: 'ch_1', stripId: 'channel-1' }],
+      });
+      meterStore.processMeterFrame({
+        sequence: 1,
+        channels: [{ csdKey: 'ch_1', peak: [0.5, 0.5], rms: [0.25, 0.25] }],
+      });
+    });
+
+    // Verify peak readout / held peak on meterStore (-6.0)
+    expect(meterStore.getNumericPeak('channel-1')).toBe('-6.0');
+
+    // Switch profile key in popout view
+    act(() => {
+      root.render(
+        <HostDocumentContext.Provider value={popoutDoc}>
+          <MeterCanvas
+            stripId="channel-1"
+            channelCount={2}
+            width={14}
+            height={80}
+            profileKey="peak-rms-mixing-plus-6"
+          />
+        </HostDocumentContext.Provider>,
+      );
+    });
+
+    const updatedCanvas = host.querySelector<HTMLCanvasElement>('canvas.meter-canvas')!;
+    expect(updatedCanvas.getAttribute('data-profile')).toBe('peak-rms-mixing-plus-6');
   });
 });

@@ -14,7 +14,11 @@ import { NoteProcessorChainMap } from '../note-processors/note-processor-chain-m
 import { MarkersList } from '../markers-list';
 import { MidiInputProcessor } from '../midi/midi-input-processor';
 import { InstrumentLibrary } from '../instruments/instrument-library';
-import { Mixer } from '../mixer/mixer';
+import {
+  Mixer,
+  DEFAULT_LEGACY_METER_ENABLED,
+  DEFAULT_LEGACY_METER_PROFILE_KEY,
+} from '../mixer/mixer';
 import { OpcodeList } from '../opcodes/opcode-list';
 import { parseUDOText } from '../opcodes/udo-utilities';
 import { TimeContext } from '../time/time-context';
@@ -164,9 +168,11 @@ export function loadFromString(xmlString: string, createBlueData: () => BlueData
     state.instrumentLibrary = InstrumentLibrary.loadFromXML(instrumentLibraryNode);
   }
 
-  // Post-loop: if no mixer element was present, disable mixer (Java parity)
+  // Post-loop: if no mixer element was present, disable mixer and apply legacy meter defaults
   if (!mixerLoaded) {
     state.mixer.setEnabled(false);
+    state.mixer.setEnableMeters(DEFAULT_LEGACY_METER_ENABLED);
+    state.mixer.setMeterProfileKey(DEFAULT_LEGACY_METER_PROFILE_KEY);
   }
 
   // Post-loop: wire projectProperties into score.timeContext (Java parity)

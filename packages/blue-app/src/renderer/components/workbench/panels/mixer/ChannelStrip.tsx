@@ -1,5 +1,13 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
+import { Check } from 'lucide-react';
 import { Effect, Element } from '@blue/data';
 import type {
   EffectEditorRequest,
@@ -38,8 +46,118 @@ import { useProjectStore } from '../../../../stores/project-store';
 import { isTextEditingTarget } from '../../../../hooks/use-keyboard-shortcuts';
 import { ProjectLibraryDragSource } from '../../../libraries/ProjectLibraryDragSource';
 import { PopoutContextMenuPortal } from '../../../../hooks/host-portals';
+import { useHostDocument } from '../../../../hooks/use-host-document';
+import { meterStore } from '../../../../stores/meter-store';
 import { AppSelect } from '../../../AppSelect';
 import { MeterCanvas } from './MeterCanvas';
+import { METER_PROFILES, type MeterProfileKey } from './meter-profiles';
+
+export const PeakReadout = React.memo(function PeakReadout({
+  stripId,
+}: {
+  stripId: string;
+}): React.ReactElement {
+  const numericPeak = useSyncExternalStore(
+    useCallback((cb) => meterStore.subscribeStrip(stripId, cb), [stripId]),
+    () => meterStore.getStripState(stripId)?.numericPeak ?? '-inf',
+  );
+  const isClipped = useSyncExternalStore(
+    useCallback((cb) => meterStore.subscribeStrip(stripId, cb), [stripId]),
+    () => meterStore.getStripState(stripId)?.clipFlags.some(Boolean) ?? false,
+  );
+
+  const handleClick = useCallback(() => {
+    meterStore.clearStrip(stripId);
+  }, [stripId]);
+
+  return (
+    <button
+      type="button"
+      className={cn(
+        'mixer-peak-readout text-role-subheadline font-mono px-1 py-0.5 my-0.5 rounded cursor-pointer select-none text-center min-w-[36px] transition-colors',
+        isClipped
+          ? 'bg-red-900/80 text-red-200 font-bold border border-red-500/70'
+          : 'bg-blue-surface/70 text-blue-muted hover:text-blue-text hover:bg-blue-surface border border-blue-border/40',
+      )}
+      onClick={handleClick}
+      title="Held peak in dBFS (Click to clear)"
+      aria-label={`Held peak readout ${numericPeak} dBFS${isClipped ? ' clipped' : ''}`}
+    >
+      {numericPeak}
+    </button>
+  );
+});
+
+interface StripMeterAreaProps {
+  stripId: string;
+  isMaster: boolean;
+  height: number;
+  profileKey?: MeterProfileKey;
+  onSelectProfile: (key: MeterProfileKey) => void;
+  onDisableMeters?: () => void;
+}
+
+const StripMeterArea = React.memo(function StripMeterArea({
+  stripId,
+  isMaster,
+  height,
+  profileKey,
+  onSelectProfile,
+  onDisableMeters,
+}: StripMeterAreaProps): React.ReactElement {
+  const handleClear = useCallback(() => {
+    meterStore.clearStrip(stripId);
+  }, [stripId]);
+
+  return (
+    <ContextMenu.Root>
+      <ContextMenu.Trigger asChild>
+        <div>
+          <MeterCanvas
+            height={height}
+            stripId={stripId}
+            isMaster={isMaster}
+            profileKey={profileKey}
+          />
+        </div>
+      </ContextMenu.Trigger>
+      <PopoutContextMenuPortal>
+        <ContextMenu.Content className="editor-context-menu">
+          <ContextMenu.Item className="editor-context-menu__item" onSelect={handleClear}>
+            Clear Meter
+          </ContextMenu.Item>
+          {onDisableMeters && (
+            <ContextMenu.Item className="editor-context-menu__item" onSelect={onDisableMeters}>
+              Disable Meters
+            </ContextMenu.Item>
+          )}
+          <ContextMenu.Separator className="editor-context-menu__separator" />
+          <ContextMenu.Label className="editor-context-menu__label px-2 py-1 text-role-subheadline font-semibold text-blue-muted">
+            Meter Profile
+          </ContextMenu.Label>
+          {Object.values(METER_PROFILES).map((p) => {
+            const isSelected = p.key === (profileKey ?? 'peak-rms-mixing-plus-6');
+            return (
+              <ContextMenu.CheckboxItem
+                key={p.key}
+                className="editor-context-menu__item"
+                checked={isSelected}
+                onSelect={() => onSelectProfile(p.key)}
+                aria-label={`${p.label}. ${p.description}`}
+                title={p.description}
+              >
+                <span>{p.label}</span>
+                <ContextMenu.ItemIndicator className="editor-context-menu__item-indicator">
+                  <Check size={12} strokeWidth={2.5} />
+                </ContextMenu.ItemIndicator>
+              </ContextMenu.CheckboxItem>
+            );
+          })}
+        </ContextMenu.Content>
+      </PopoutContextMenuPortal>
+    </ContextMenu.Root>
+  );
+});
 
 const BLUE_MIXER_EFFECT_DRAG_MIME = 'application/x-blue-mixer-effect';
 
@@ -1027,6 +1145,26 @@ export default function ChannelStrip({
       ) ?? null)
     : null;
 
+  const handleSelectMeterProfile = useCallback(
+    (key: MeterProfileKey) => {
+      const current = mixer.meterProfileKey ?? 'peak-rms-mixing-plus-6';
+      if (key !== current) {
+        onPatch({
+          type: 'setMeterProfile',
+          value: key,
+        });
+      }
+    },
+    [mixer.meterProfileKey, onPatch],
+  );
+
+  const handleDisableMeters = useCallback(() => {
+    onPatch({
+      type: 'setMeterEnabled',
+      value: false,
+    });
+  }, [onPatch]);
+
   const stripContent = (
     <>
       <div
@@ -1073,6 +1211,7 @@ export default function ChannelStrip({
 
       <div className="mixer-level-section">
         <div className="mixer-level-label">Level</div>
+        {renderMeter && mixer.enableMeters !== false && <PeakReadout stripId={channel.id} />}
         <div
           ref={levelControlsRef}
           className="mixer-level-controls flex flex-row items-center justify-center gap-1.5 flex-1 min-h-[60px] w-full overflow-hidden"
@@ -1088,8 +1227,15 @@ export default function ChannelStrip({
             onInput={handleLevelInput}
             onDoubleClick={handleSliderDoubleClick}
           />
-          {renderMeter && (
-            <MeterCanvas height={sliderHeight} stripId={channel.id} isMaster={isMaster} />
+          {renderMeter && mixer.enableMeters !== false && (
+            <StripMeterArea
+              stripId={channel.id}
+              isMaster={isMaster}
+              height={sliderHeight}
+              profileKey={mixer.meterProfileKey}
+              onSelectProfile={handleSelectMeterProfile}
+              onDisableMeters={handleDisableMeters}
+            />
           )}
         </div>
         <div

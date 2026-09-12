@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useHostDocument } from '../../../../hooks/use-host-document';
 import { meterStore, MIN_DB, MAX_DB } from '../../../../stores/meter-store';
 import { cn } from '../../../../lib/cn';
+import type { MeterProfileKey } from '@blue/data';
+import { getMeterProfile } from './meter-profiles';
 
 export interface MeterCanvasProps {
   stripId: string;
@@ -9,6 +11,7 @@ export interface MeterCanvasProps {
   width?: number;
   height?: number;
   className?: string;
+  profileKey?: MeterProfileKey;
 }
 
 export const DEFAULT_METER_WIDTH = 12;
@@ -26,12 +29,13 @@ export function getMeterWidth(nchnls: number): number {
   return Math.min(36, Math.max(12, 2 * PADDING + nchnls * 3 + (nchnls - 1) * BAR_GAP));
 }
 
-export function MeterCanvas({
+export const MeterCanvas = React.memo(function MeterCanvas({
   stripId,
   isMaster = false,
   width: widthProp,
   height: heightProp,
   className,
+  profileKey,
 }: MeterCanvasProps): React.ReactElement {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const hostDocument = useHostDocument({ fallbackToGlobal: true });
@@ -87,7 +91,7 @@ export function MeterCanvas({
   }, [heightProp]);
 
   const handleClick = useCallback(() => {
-    meterStore.clearClip(stripId);
+    meterStore.clearStrip(stripId);
   }, [stripId]);
 
   useEffect(() => {
@@ -96,6 +100,7 @@ export function MeterCanvas({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    const profile = getMeterProfile(profileKey);
     let animFrameId: number | null = null;
     let wasParkedAtSilence = false;
 
@@ -117,8 +122,8 @@ export function MeterCanvas({
       if (stripState) {
         for (let ch = 0; ch < nchnls; ch++) {
           if (
-            (stripState.barLevels[ch] ?? -Infinity) > MIN_DB ||
-            (stripState.peakHoldLevels[ch] ?? -Infinity) > MIN_DB ||
+            (stripState.barLevels[ch] ?? -Infinity) > profile.minimumDb ||
+            (stripState.peakHoldLevels[ch] ?? -Infinity) > profile.minimumDb ||
             stripState.clipFlags[ch]
           ) {
             isAllSilent = false;
@@ -164,15 +169,11 @@ export function MeterCanvas({
 
         const barW = Math.max(0.5, availableW / nchnls);
 
-        // Create linear gradient for dB scale
+        // Create linear gradient from profile color stops
         const gradient = ctx.createLinearGradient(0, meterTop + meterHeight, 0, meterTop);
-        gradient.addColorStop(0.0, '#22c55e');
-        gradient.addColorStop(0.727, '#22c55e'); // -12 dB
-        gradient.addColorStop(0.864, '#eab308'); // -3 dB
-        gradient.addColorStop(0.909, '#f97316'); // 0 dB
-        gradient.addColorStop(1.0, '#ef4444'); // +6 dB
-
-        const dbRange = MAX_DB - MIN_DB;
+        for (const stop of profile.colorStops) {
+          gradient.addColorStop(stop.fraction, stop.color);
+        }
 
         for (let ch = 0; ch < nchnls; ch++) {
           const x = PADDING + ch * (barW + barGap);
@@ -182,24 +183,61 @@ export function MeterCanvas({
           ctx.fillStyle = isClipped ? '#ef4444' : '#27272a';
           ctx.fillRect(x, CLIP_BOX_Y, barW, CLIP_BOX_HEIGHT);
 
+          // Non-color overload indicator: white notch inside clip box
+          if (isClipped) {
+            ctx.fillStyle = '#ffffff';
+            const notchW = Math.max(1, Math.min(2, barW - 2));
+            const notchX = x + Math.floor((barW - notchW) / 2);
+            ctx.fillRect(notchX, CLIP_BOX_Y + 1, notchW, CLIP_BOX_HEIGHT - 2);
+          }
+
           // 2. Track background
           ctx.fillStyle = '#18181b';
           ctx.fillRect(x, meterTop, barW, meterHeight);
 
-          // 3. Active RMS Bar
+          // 3. Ticks on track background
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+          for (const tick of profile.minorTicks) {
+            const frac = profile.dbToFraction(tick.db);
+            if (frac > 0 && frac < 1) {
+              const tickY = Math.round(meterTop + meterHeight - frac * meterHeight);
+              ctx.fillRect(x, tickY, barW, 1);
+            }
+          }
+
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.28)';
+          for (const tick of profile.majorTicks) {
+            const frac = profile.dbToFraction(tick.db);
+            if (frac > 0 && frac < 1) {
+              const tickY = Math.round(meterTop + meterHeight - frac * meterHeight);
+              ctx.fillRect(x, tickY, barW, 1);
+            }
+          }
+
+          // Reference mark highlight for K-systems
+          if (profile.zeroReferenceDb !== 0) {
+            const refFrac = profile.dbToFraction(profile.zeroReferenceDb);
+            if (refFrac > 0 && refFrac < 1) {
+              const refY = Math.round(meterTop + meterHeight - refFrac * meterHeight);
+              ctx.fillStyle = '#eab308';
+              ctx.fillRect(x, refY, barW, 1.5);
+            }
+          }
+
+          // 4. Active RMS Bar
           const barDb = stripState?.barLevels[ch] ?? -Infinity;
-          if (barDb > MIN_DB) {
-            const frac = Math.max(0, Math.min(1, (barDb - MIN_DB) / dbRange));
-            const activeH = Math.round(frac * meterHeight);
+          const barFrac = profile.dbToFraction(barDb);
+          if (barFrac > 0) {
+            const activeH = Math.round(barFrac * meterHeight);
             const activeY = meterTop + meterHeight - activeH;
             ctx.fillStyle = gradient;
             ctx.fillRect(x, activeY, barW, activeH);
           }
 
-          // 4. Peak Hold Marker
+          // 5. Peak Hold Marker
           const peakDb = stripState?.peakHoldLevels[ch] ?? -Infinity;
-          if (peakDb > MIN_DB) {
-            const peakFrac = Math.max(0, Math.min(1, (peakDb - MIN_DB) / dbRange));
+          const peakFrac = profile.dbToFraction(peakDb);
+          if (peakFrac > 0) {
             const peakY = Math.round(meterTop + meterHeight - peakFrac * meterHeight);
             const clampedY = Math.max(meterTop, Math.min(meterTop + meterHeight - 1, peakY));
             ctx.fillStyle = '#ffffff';
@@ -221,15 +259,20 @@ export function MeterCanvas({
         hostWindow.cancelAnimationFrame(animFrameId);
       }
     };
-  }, [hostWindow, stripId, width, height, storeNchnls]);
+  }, [hostWindow, stripId, width, height, storeNchnls, profileKey]);
+
+  const stripState = meterStore.getStripState(stripId);
+  const isClipped = stripState?.clipFlags.some(Boolean) ?? false;
 
   return (
     <canvas
       ref={canvasRef}
-      className={cn('block select-none cursor-pointer', className)}
+      className={cn('meter-canvas block select-none cursor-pointer', className)}
+      data-profile={profileKey}
       style={{ width, height }}
       onClick={handleClick}
-      title="Level Meter (Click to clear clip)"
+      title={isClipped ? 'Level Meter (Clipped - click to clear)' : 'Level Meter (Click to clear)'}
+      aria-label={`Level meter for ${stripId}${isClipped ? ', overload clipped' : ''}`}
     />
   );
-}
+});
