@@ -246,6 +246,8 @@ describe('Exhaustive project patch preparation classification (T018)', () => {
     it('agrees with isScalarProjectDocumentPatch for every mixer variant fixture', () => {
       const fixtures: Array<Extract<ProjectDocumentPatch['mixer'], { type: string }>> = [
         { type: 'setMixerEnabled', value: true },
+        { type: 'setMeterEnabled', value: true },
+        { type: 'setMeterProfile', value: 'peak-rms-mixing-plus-6' },
         { type: 'updateExtraRenderTime', value: 500 },
         { type: 'updateChannel', channelId: 'c1', patch: { level: 0.5 } },
         { type: 'renameChannelListGroup', association: 'a', name: 'n' },
@@ -283,6 +285,14 @@ describe('Exhaustive project patch preparation classification (T018)', () => {
           `mixer variant "${fixture.type}" disagrees with its table class "${tableClass}"`,
         ).toBe(tableClass === 'scalar');
       }
+    });
+
+    it('classifies invalid setMeterProfile patch key as invalid', () => {
+      const invalidPatch = {
+        mixer: { type: 'setMeterProfile', value: 'invalid-curve-profile' as any },
+      } as ProjectDocumentPatch;
+      expect(classifyProjectDocumentPatch(invalidPatch)).toBe('invalid');
+      expect(isScalarProjectDocumentPatch(invalidPatch)).toBe(false);
     });
 
     it('classifies structural-only families so no variant reaches the scalar path', () => {

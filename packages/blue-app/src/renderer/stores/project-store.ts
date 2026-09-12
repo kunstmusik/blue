@@ -34,6 +34,7 @@ import {
   type BlueSynthBuilderInstrumentSnapshot,
   type BlueX7InstrumentSnapshot,
   isValidBlueX7Patch,
+  isValidMeterProfileKey,
   type BsbInterfacePatch,
   type BsbRealtimeControlUpdate,
   type BsbWidgetNodeSnapshot,
@@ -1488,6 +1489,14 @@ function applyMixerPatchToSnapshot(
   switch (patch.type) {
     case 'setMixerEnabled':
       next.enabled = patch.value;
+      break;
+    case 'setMeterEnabled':
+      next.enableMeters = patch.value;
+      break;
+    case 'setMeterProfile':
+      if (isValidMeterProfileKey(patch.value)) {
+        next.meterProfileKey = patch.value;
+      }
       break;
     case 'updateExtraRenderTime':
       next.extraRenderTime = patch.value;

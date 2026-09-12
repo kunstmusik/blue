@@ -369,7 +369,16 @@ export type {
 } from './note-processors/note-processor-snapshot';
 
 // ─── Mixer ───
-export { Mixer } from './mixer/mixer';
+export {
+  Mixer,
+  METER_PROFILE_KEYS,
+  DEFAULT_NEW_METER_ENABLED,
+  DEFAULT_NEW_METER_PROFILE_KEY,
+  DEFAULT_LEGACY_METER_ENABLED,
+  DEFAULT_LEGACY_METER_PROFILE_KEY,
+  isMeterProfileKey,
+} from './mixer/mixer';
+export type { MeterProfileKey } from './mixer/mixer';
 export { Channel } from './mixer/channel';
 export { ChannelList } from './mixer/channel-list';
 export { Effect } from './mixer/effect';

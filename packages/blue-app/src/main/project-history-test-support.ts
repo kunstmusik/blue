@@ -290,3 +290,33 @@ export function generate100ActionWorkload(
 
   return requests;
 }
+
+export interface StableMixerHistoryFixture {
+  documentId: string;
+  channelIds: {
+    master: string;
+    subChannel1: string;
+    channel1: string;
+  };
+  initialSnapshots: {
+    enableMeters: boolean;
+    meterProfileKey: string;
+  };
+}
+
+export function createStableMixerHistoryFixture(
+  documentId = 'doc-mixer-history',
+): StableMixerHistoryFixture {
+  return {
+    documentId,
+    channelIds: {
+      master: 'Master',
+      subChannel1: 'SubChannel-1',
+      channel1: 'Channel-1',
+    },
+    initialSnapshots: {
+      enableMeters: true,
+      meterProfileKey: 'peak-rms-mixing-plus-6',
+    },
+  };
+}

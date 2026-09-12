@@ -21,6 +21,7 @@ import {
   ProjectProperties,
   PythonInstrument,
   Mixer,
+  isMeterProfileKey,
   Scale,
   TempoMap,
   TempoPoint,
@@ -1199,6 +1200,22 @@ export function applyMixerPatchToData(data: BlueData, patch: MixerPatch): boolea
         return true;
       }
       return false;
+    case 'setMeterEnabled':
+      if (mixer.isEnableMeters() !== patch.value) {
+        mixer.setEnableMeters(patch.value);
+        return true;
+      }
+      return false;
+    case 'setMeterProfile': {
+      if (!isMeterProfileKey(patch.value)) {
+        return false;
+      }
+      if (mixer.getMeterProfileKey() !== patch.value) {
+        mixer.setMeterProfileKey(patch.value);
+        return true;
+      }
+      return false;
+    }
     case 'updateExtraRenderTime':
       if (mixer.getExtraRenderTime() !== patch.value) {
         mixer.setExtraRenderTime(patch.value);
@@ -1445,6 +1462,10 @@ export function mixerPatchActionLabel(patch: MixerPatch): string {
   switch (patch.type) {
     case 'setMixerEnabled':
       return patch.value ? 'Enable Mixer' : 'Disable Mixer';
+    case 'setMeterEnabled':
+      return patch.value ? 'Enable Meters' : 'Disable Meters';
+    case 'setMeterProfile':
+      return 'Set Meter Profile';
     case 'updateExtraRenderTime':
       return 'Set Extra Render Time';
     case 'renameChannelListGroup':

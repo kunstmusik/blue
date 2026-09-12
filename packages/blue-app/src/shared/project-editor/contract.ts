@@ -22,6 +22,10 @@ import {
   ProjectProperties,
   PythonInstrument,
   Mixer,
+  type MeterProfileKey,
+  isMeterProfileKey,
+  DEFAULT_NEW_METER_ENABLED,
+  DEFAULT_NEW_METER_PROFILE_KEY,
   Scale,
   TempoMap,
   TempoPoint,
@@ -1414,6 +1418,8 @@ export interface MixerChannelListSnapshot {
 
 export interface MixerSnapshot {
   enabled: boolean;
+  enableMeters: boolean;
+  meterProfileKey: MeterProfileKey;
   extraRenderTime: number;
   channelListGroups: MixerChannelListSnapshot[];
   channels: MixerChannelSnapshot[];
@@ -1491,6 +1497,8 @@ export interface MixerChainClipboardPayload {
 
 export type MixerPatch =
   | { type: 'setMixerEnabled'; value: boolean }
+  | { type: 'setMeterEnabled'; value: boolean }
+  | { type: 'setMeterProfile'; value: MeterProfileKey }
   | { type: 'updateExtraRenderTime'; value: number }
   | { type: 'renameChannelListGroup'; association: string; name: string }
   | { type: 'updateChannel'; channelId: string; patch: Partial<MixerChannelEditableFields> }
@@ -1869,6 +1877,8 @@ export const MIXER_PATCH_PREPARATION_CLASS: Readonly<
   Record<MixerPatch['type'], ProjectPatchPreparationClass>
 > = {
   setMixerEnabled: 'scalar',
+  setMeterEnabled: 'scalar',
+  setMeterProfile: 'scalar',
   updateExtraRenderTime: 'scalar',
   updateChannel: 'scalar',
   renameChannelListGroup: 'structural',
@@ -2531,6 +2541,10 @@ export function isValidBlueX7Patch(patch: BlueX7Patch): boolean {
     default:
       return false;
   }
+}
+
+export function isValidMeterProfileKey(value: unknown): value is MeterProfileKey {
+  return isMeterProfileKey(value);
 }
 
 export interface BlueX7InstrumentSnapshot extends InstrumentSnapshotBase {

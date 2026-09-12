@@ -6,6 +6,7 @@ import {
   Parameter,
   Send,
   TrackLayerGroup,
+  type MeterProfileKey,
 } from '@blue/data';
 import type {
   ProjectDocumentPatch,
@@ -418,6 +419,22 @@ export function captureScalarFieldRecords(
         beforeValue: data.getMixer().isEnabled(),
         afterValue: m.value,
       });
+    } else if (m.type === 'setMeterEnabled') {
+      records.push({
+        targetType: 'mixerChannel',
+        targetId: 'mixer',
+        field: 'enableMeters',
+        beforeValue: data.getMixer().isEnableMeters(),
+        afterValue: m.value,
+      });
+    } else if (m.type === 'setMeterProfile') {
+      records.push({
+        targetType: 'mixerChannel',
+        targetId: 'mixer',
+        field: 'meterProfileKey',
+        beforeValue: data.getMixer().getMeterProfileKey(),
+        afterValue: m.value,
+      });
     } else if (m.type === 'updateExtraRenderTime') {
       records.push({
         targetType: 'mixerChannel',
@@ -525,6 +542,10 @@ export function applyScalarFieldRecord(
       if (record.targetId === 'mixer') {
         if (record.field === 'enabled') {
           data.getMixer().setEnabled(Boolean(value));
+        } else if (record.field === 'enableMeters') {
+          data.getMixer().setEnableMeters(Boolean(value));
+        } else if (record.field === 'meterProfileKey') {
+          data.getMixer().setMeterProfileKey(value as MeterProfileKey);
         } else if (record.field === 'extraRenderTime') {
           data.getMixer().setExtraRenderTime(Number(value));
         }

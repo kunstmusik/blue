@@ -538,4 +538,105 @@ describe('Mixer contract', () => {
       expect.objectContaining({ kind: 'send', sendChannel: 'Master' }),
     );
   });
+
+  describe('meter presentation calibration contract', () => {
+    it('captures enableMeters and meterProfileKey in project snapshot', () => {
+      const data = new BlueData();
+      const snapshot = createProjectEditorSnapshot(data, '/tmp/test.blue');
+
+      expect(snapshot.mixer?.enableMeters).toBe(true);
+      expect(snapshot.mixer?.meterProfileKey).toBe('peak-rms-mixing-plus-6');
+    });
+
+    it('applies setMeterEnabled and setMeterProfile patches and projects into snapshot', () => {
+      const data = new BlueData();
+
+      expect(
+        applyProjectDocumentPatch(data, {
+          mixer: { type: 'setMeterEnabled', value: false },
+        }),
+      ).toBe(true);
+      expect(data.getMixer().isEnableMeters()).toBe(false);
+
+      expect(
+        applyProjectDocumentPatch(data, {
+          mixer: { type: 'setMeterProfile', value: 'k20-rms-peak' },
+        }),
+      ).toBe(true);
+      expect(data.getMixer().getMeterProfileKey()).toBe('k20-rms-peak');
+
+      const snapshot = createProjectEditorSnapshot(data, '/tmp/test.blue');
+      expect(snapshot.mixer?.enableMeters).toBe(false);
+      expect(snapshot.mixer?.meterProfileKey).toBe('k20-rms-peak');
+    });
+
+    it('rejects invalid meterProfileKey patch', () => {
+      const data = new BlueData();
+      expect(() =>
+        applyProjectDocumentPatch(data, {
+          mixer: { type: 'setMeterProfile', value: 'invalid-profile' as any },
+        }),
+      ).toThrow();
+      expect(data.getMixer().getMeterProfileKey()).toBe('peak-rms-mixing-plus-6');
+    });
+
+    it('ensures setMeterProfile does not alter channel levels, faders, automation, routing, or subchannels (T022)', () => {
+      const { data, channel } = createMixerProject();
+      channel.setLevel(0.75);
+      channel.setMuted(false);
+      channel.setOutChannel('SubChannel 1');
+
+      const snapshotBefore = createProjectEditorSnapshot(data, '/tmp/test.blue');
+
+      expect(
+        applyProjectDocumentPatch(data, {
+          mixer: { type: 'setMeterProfile', value: 'k14-rms-peak' },
+        }),
+      ).toBe(true);
+
+      const snapshotAfter = createProjectEditorSnapshot(data, '/tmp/test.blue');
+
+      // Only meterProfileKey should differ in the mixer snapshot
+      expect(snapshotAfter.mixer?.meterProfileKey).toBe('k14-rms-peak');
+      expect(snapshotAfter.mixer?.channels[0]?.level).toBe(
+        snapshotBefore.mixer?.channels[0]?.level,
+      );
+      expect(snapshotAfter.mixer?.channels[0]?.outChannel).toBe(
+        snapshotBefore.mixer?.channels[0]?.outChannel,
+      );
+      expect(snapshotAfter.mixer?.channels[0]?.preChain).toEqual(
+        snapshotBefore.mixer?.channels[0]?.preChain,
+      );
+      expect(snapshotAfter.mixer?.master).toEqual(snapshotBefore.mixer?.master);
+    });
+
+    it('proves profile labels can change without migration while persisted stable keys remain intact across load/save (T038)', () => {
+      const { data } = createMixerProject();
+      data.getMixer().setMeterProfileKey('k14-rms-peak');
+
+      // 1. Saved XML contains only the stable key
+      const xml = data.saveToString();
+      expect(xml).toContain('<meterProfile>k14-rms-peak</meterProfile>');
+      expect(xml).not.toContain('K14 (RMS + Peak)');
+      expect(xml).not.toContain('K-14');
+
+      // 2. Snapshots contain only the stable key
+      const snapshot = createProjectEditorSnapshot(data, '/tmp/test.blue');
+      expect(snapshot.mixer?.meterProfileKey).toBe('k14-rms-peak');
+
+      // 3. Patches accept and emit only stable keys
+      expect(
+        applyProjectDocumentPatch(data, {
+          mixer: { type: 'setMeterProfile', value: 'k20-rms-peak' },
+        }),
+      ).toBe(true);
+      expect(data.getMixer().getMeterProfileKey()).toBe('k20-rms-peak');
+      const updatedSnapshot = createProjectEditorSnapshot(data, '/tmp/test.blue');
+      expect(updatedSnapshot.mixer?.meterProfileKey).toBe('k20-rms-peak');
+
+      // 4. Loading original XML restores the stable key without migration
+      const reloaded = BlueData.loadFromString(xml);
+      expect(reloaded.getMixer().getMeterProfileKey()).toBe('k14-rms-peak');
+    });
+  });
 });

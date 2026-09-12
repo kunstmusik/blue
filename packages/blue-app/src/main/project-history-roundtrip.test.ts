@@ -454,6 +454,30 @@ const cases: RoundTripCase[] = [
   },
   {
     family: 'mixer',
+    type: 'setMeterEnabled',
+    patches: () => [{ mixer: { type: 'setMeterEnabled', value: false } }],
+    identity: (data) => ({
+      channelId: mixerChannelEntryId(data),
+      channels: data
+        .getMixer()
+        .getChannels()
+        .map((c) => getMixerChannelSnapshotId(c)),
+    }),
+  },
+  {
+    family: 'mixer',
+    type: 'setMeterProfile',
+    patches: () => [{ mixer: { type: 'setMeterProfile', value: 'k14-rms-peak' } }],
+    identity: (data) => ({
+      channelId: mixerChannelEntryId(data),
+      channels: data
+        .getMixer()
+        .getChannels()
+        .map((c) => getMixerChannelSnapshotId(c)),
+    }),
+  },
+  {
+    family: 'mixer',
     type: 'updateExtraRenderTime',
     patches: () => [{ mixer: { type: 'updateExtraRenderTime', value: 500 } }],
   },
@@ -2075,6 +2099,88 @@ describe('Project patch round trips through real ProjectHistory (T117)', () => {
       expect(entry.identity?.(live())).toEqual(identityAfterCommit);
     });
   }
+
+  it('commit→undo→redo publishes mixer snapshot with updated presentation values and unchanged channel identities (T036)', async () => {
+    const session = new ProjectSession();
+    session.replace(buildProject(), '/tmp/roundtrip-meter.blue');
+    const recorder = new FakePublicationRecorder();
+    const history = new ProjectHistory({
+      session,
+      captureSnapshot: () =>
+        createProjectEditorSnapshot(session.read().data!, '/tmp/roundtrip-meter.blue'),
+      publishUpdated: (evt) => recorder.record(evt),
+    });
+    const context = new MockHistoryContext('ctx-meter-roundtrip');
+    const docId = session.read().documentId!;
+
+    const baselineSnapshot = createProjectEditorSnapshot(
+      session.read().data!,
+      '/tmp/roundtrip-meter.blue',
+    ).mixer!;
+    const channelIdsBefore = baselineSnapshot.channels.map((c) => c.id);
+    expect(baselineSnapshot.enableMeters).toBe(true);
+    expect(baselineSnapshot.meterProfileKey).toBe('peak-rms-mixing-plus-6');
+
+    const lastMixerSnapshot = () => (recorder.latest()?.snapshot as any)?.mixer;
+
+    // 1. Commit setMeterEnabled (false)
+    const commitEnabled = await history.commit(
+      context.nextCommitRequest(docId, 0, 'Disable Meters', [
+        { mixer: { type: 'setMeterEnabled', value: false } },
+      ]),
+    );
+    expect(commitEnabled.status).toBe('committed');
+    if (commitEnabled.status !== 'committed') return;
+    const pubEnabled = lastMixerSnapshot();
+    expect(pubEnabled?.enableMeters).toBe(false);
+    expect(pubEnabled?.meterProfileKey).toBe('peak-rms-mixing-plus-6');
+    expect(pubEnabled?.channels.map((c: any) => c.id)).toEqual(channelIdsBefore);
+
+    // 2. Commit setMeterProfile ('k14-rms-peak')
+    const commitProfile = await history.commit(
+      context.nextCommitRequest(docId, commitEnabled.revision, 'Set Meter Profile', [
+        { mixer: { type: 'setMeterProfile', value: 'k14-rms-peak' } },
+      ]),
+    );
+    expect(commitProfile.status).toBe('committed');
+    if (commitProfile.status !== 'committed') return;
+    const pubProfile = lastMixerSnapshot();
+    expect(pubProfile?.enableMeters).toBe(false);
+    expect(pubProfile?.meterProfileKey).toBe('k14-rms-peak');
+    expect(pubProfile?.channels.map((c: any) => c.id)).toEqual(channelIdsBefore);
+
+    // 3. Undo profile
+    const undoProfile = await history.undo(context.nextUndoRequest(docId, commitProfile.revision));
+    expect(undoProfile.status).toBe('committed');
+    if (undoProfile.status !== 'committed') return;
+    const pubUndoProfile = lastMixerSnapshot();
+    expect(pubUndoProfile?.enableMeters).toBe(false);
+    expect(pubUndoProfile?.meterProfileKey).toBe('peak-rms-mixing-plus-6');
+    expect(pubUndoProfile?.channels.map((c: any) => c.id)).toEqual(channelIdsBefore);
+
+    // 4. Undo enabled
+    const undoEnabled = await history.undo(context.nextUndoRequest(docId, undoProfile.revision));
+    expect(undoEnabled.status).toBe('committed');
+    if (undoEnabled.status !== 'committed') return;
+    const pubUndoEnabled = lastMixerSnapshot();
+    expect(pubUndoEnabled?.enableMeters).toBe(true);
+    expect(pubUndoEnabled?.meterProfileKey).toBe('peak-rms-mixing-plus-6');
+    expect(pubUndoEnabled?.channels.map((c: any) => c.id)).toEqual(channelIdsBefore);
+
+    // 5. Redo enabled
+    const redoEnabled = await history.redo(context.nextRedoRequest(docId, undoEnabled.revision));
+    expect(redoEnabled.status).toBe('committed');
+    if (redoEnabled.status !== 'committed') return;
+    expect(lastMixerSnapshot()?.enableMeters).toBe(false);
+    expect(lastMixerSnapshot()?.channels.map((c: any) => c.id)).toEqual(channelIdsBefore);
+
+    // 6. Redo profile
+    const redoProfile = await history.redo(context.nextRedoRequest(docId, redoEnabled.revision));
+    expect(redoProfile.status).toBe('committed');
+    if (redoProfile.status !== 'committed') return;
+    expect(lastMixerSnapshot()?.meterProfileKey).toBe('k14-rms-peak');
+    expect(lastMixerSnapshot()?.channels.map((c: any) => c.id)).toEqual(channelIdsBefore);
+  });
 
   it('commit→undo→redo round-trips removing the final Clojure dependency (T126)', async () => {
     const session = new ProjectSession();

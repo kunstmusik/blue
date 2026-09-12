@@ -258,7 +258,8 @@
     background: var(--color-app-border-subtle);
   }
 
-  .toolbar-context-menu__item-indicator {
+  .toolbar-context-menu__item-indicator,
+  .editor-context-menu__item-indicator {
     @apply inline-flex h-3 w-3 items-center justify-center flex-none;
   }
 
@@ -1188,6 +1189,21 @@
   border-color: var(--color-app-focus);
 }
 
+.mixer-toolbar__select {
+  padding: 2px 6px;
+  border: 1px solid var(--color-app-border);
+  border-radius: 3px;
+  background: var(--color-app-input);
+  color: var(--color-app-text-soft);
+  font-size: var(--text-role-body);
+  line-height: var(--text-role-body--line-height);
+  outline: none;
+}
+
+.mixer-toolbar__select:focus {
+  border-color: var(--color-app-focus);
+}
+
 .mixer-main {
   display: flex;
   flex: 1;
@@ -1235,6 +1251,36 @@
   flex-shrink: 0;
   border-left: 2px solid var(--color-app-focus);
   min-height: 300px;
+}
+
+.mixer-settings-button {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--color-app-accent) 20%, transparent);
+  border-radius: 6px;
+  background: var(--color-app-border);
+  color: var(--color-app-text-strong);
+  cursor: pointer;
+  transition:
+    color 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease;
+}
+
+.mixer-settings-button:hover {
+  color: var(--color-app-text-strong);
+  background: color-mix(in srgb, var(--color-app-accent) 20%, transparent);
+  border-color: color-mix(in srgb, var(--color-app-accent) 40%, transparent);
+}
+
+.mixer-settings-button:focus-visible {
+  outline: none;
+  border-color: var(--color-app-focus);
 }
 
 /* ── Channel Strip ────────────────────────────── */
@@ -1536,17 +1582,6 @@
   color: var(--color-app-warning);
   margin-top: 1px;
   cursor: help;
-}
-
-.mixer-playback-badge {
-  font-size: var(--text-role-subheadline);
-  line-height: var(--text-role-subheadline--line-height);
-  padding: 2px 6px;
-  border-radius: 3px;
-  background: color-mix(in srgb, var(--color-app-focus) 20%, var(--color-app-clear));
-  color: var(--color-app-focus);
-  border: 1px solid color-mix(in srgb, var(--color-app-focus) 30%, var(--color-app-clear));
-  white-space: nowrap;
 }
 
 /* ── Send Editor Dialog ──────────────────── */

@@ -79,7 +79,7 @@ function setupHistory(data: BlueData) {
   const context = new MockHistoryContext('ctx-mixer-identity');
   const docId = session.read().documentId!;
   const live = () => session.read().data!;
-  return { session, history, context, docId, live };
+  return { session, history, context, docId, live, recorder };
 }
 
 describe('mixer duplicate/paste identity adoption through project history (T119)', () => {
@@ -358,5 +358,94 @@ describe('mixer duplicate/paste identity adoption through project history (T119)
 
     await history.undo(context.nextUndoRequest(docId, 2));
     expect(preChainEntries(live())[0]?.entryId).toBe('paste-send-1');
+  });
+
+  describe('meter presentation patches (T010)', () => {
+    it('applies setMeterEnabled and returns false on same value', () => {
+      const data = new BlueData();
+      expect(data.getMixer().isEnableMeters()).toBe(true);
+
+      // Same value no-op
+      expect(
+        applyProjectDocumentPatch(data, { mixer: { type: 'setMeterEnabled', value: true } }),
+      ).toBe(false);
+      expect(data.getMixer().isEnableMeters()).toBe(true);
+
+      // Value change
+      expect(
+        applyProjectDocumentPatch(data, { mixer: { type: 'setMeterEnabled', value: false } }),
+      ).toBe(true);
+      expect(data.getMixer().isEnableMeters()).toBe(false);
+    });
+
+    it('applies setMeterProfile and returns false on same value or invalid key', () => {
+      const data = new BlueData();
+      expect(data.getMixer().getMeterProfileKey()).toBe('peak-rms-mixing-plus-6');
+
+      // Same value no-op
+      expect(
+        applyProjectDocumentPatch(data, {
+          mixer: { type: 'setMeterProfile', value: 'peak-rms-mixing-plus-6' },
+        }),
+      ).toBe(false);
+
+      // Change value
+      expect(
+        applyProjectDocumentPatch(data, {
+          mixer: { type: 'setMeterProfile', value: 'k14-rms-peak' },
+        }),
+      ).toBe(true);
+      expect(data.getMixer().getMeterProfileKey()).toBe('k14-rms-peak');
+
+      // Invalid key rejection throws Error from validateProjectDocumentPatch
+      expect(() =>
+        applyProjectDocumentPatch(data, {
+          mixer: { type: 'setMeterProfile', value: 'invalid-key' as any },
+        }),
+      ).toThrow();
+      expect(data.getMixer().getMeterProfileKey()).toBe('k14-rms-peak');
+    });
+
+    it('round-trips setMeterEnabled and setMeterProfile through ProjectHistory', async () => {
+      const { data } = createMixerProject();
+      const { history, context, docId, live } = setupHistory(data);
+
+      expect(live().getMixer().isEnableMeters()).toBe(true);
+      expect(live().getMixer().getMeterProfileKey()).toBe('peak-rms-mixing-plus-6');
+
+      // Commit Disable Meters
+      const commitDisable = await history.commit(
+        context.nextCommitRequest(docId, 0, 'Disable Meters', [
+          { mixer: { type: 'setMeterEnabled', value: false } },
+        ]),
+      );
+      expect(commitDisable.status).toBe('committed');
+      expect(live().getMixer().isEnableMeters()).toBe(false);
+
+      // Commit Set Meter Profile
+      const commitProfile = await history.commit(
+        context.nextCommitRequest(docId, 1, 'Set Meter Profile', [
+          { mixer: { type: 'setMeterProfile', value: 'k20-rms-peak' } },
+        ]),
+      );
+      expect(commitProfile.status).toBe('committed');
+      expect(live().getMixer().getMeterProfileKey()).toBe('k20-rms-peak');
+
+      // Undo Set Meter Profile
+      const undoProfile = await history.undo(context.nextUndoRequest(docId, 2));
+      expect(undoProfile.status).toBe('committed');
+      expect(live().getMixer().getMeterProfileKey()).toBe('peak-rms-mixing-plus-6');
+      expect(live().getMixer().isEnableMeters()).toBe(false);
+
+      // Undo Disable Meters
+      const undoDisable = await history.undo(context.nextUndoRequest(docId, 3));
+      expect(undoDisable.status).toBe('committed');
+      expect(live().getMixer().isEnableMeters()).toBe(true);
+
+      // Redo Disable Meters
+      const redoDisable = await history.redo(context.nextRedoRequest(docId, 4));
+      expect(redoDisable.status).toBe('committed');
+      expect(live().getMixer().isEnableMeters()).toBe(false);
+    });
   });
 });

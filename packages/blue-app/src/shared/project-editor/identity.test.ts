@@ -380,5 +380,39 @@ describe('project-editor identity sidecars and transfer mappings', () => {
       expect(state2Clip).not.toBe(state1.getScore()[0][0][0]);
       expect(state2Clip).not.toBe(state0.clip);
     });
+
+    it('preserves canonical meter presentation settings and unchanged channel identities through copy and identity transfer (T036)', () => {
+      const project = new BlueData();
+      project.getMixer().setEnableMeters(false);
+      project.getMixer().setMeterProfileKey('k14-rms-peak');
+
+      const ch = new Channel();
+      ch.setName('Audio 1');
+      assignExplicitMixerChannelSnapshotId(ch, 'ch-explicit-42');
+      const send = new Send();
+      assignExplicitMixerEntrySnapshotId(send, 'send-explicit-99');
+      ch.getEffectsChain().push(send);
+      project.getMixer().getChannels().push(ch);
+
+      // 1. History copy & deepCopy preserve presentation values
+      const copy = project.historyCopy();
+      expect(copy.getMixer().isEnableMeters()).toBe(false);
+      expect(copy.getMixer().getMeterProfileKey()).toBe('k14-rms-peak');
+
+      // 2. Transfer identities retains stable channel IDs
+      transferProjectEditorIdentities(project, copy);
+      const copyCh = copy.getMixer().getChannels()[0];
+      expect(getKnownMixerChannelSnapshotId(copyCh)).toBe('ch-explicit-42');
+      expect(getKnownMixerEntrySnapshotId(copyCh.getEffectsChain()[0])).toBe('send-explicit-99');
+
+      // 3. Mutating presentation on copy does not affect original or channel identities
+      copy.getMixer().setEnableMeters(true);
+      copy.getMixer().setMeterProfileKey('k20-rms-peak');
+
+      expect(project.getMixer().isEnableMeters()).toBe(false);
+      expect(project.getMixer().getMeterProfileKey()).toBe('k14-rms-peak');
+      expect(getKnownMixerChannelSnapshotId(ch)).toBe('ch-explicit-42');
+      expect(getKnownMixerChannelSnapshotId(copyCh)).toBe('ch-explicit-42');
+    });
   });
 });

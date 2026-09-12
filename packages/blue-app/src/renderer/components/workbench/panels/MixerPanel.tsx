@@ -1,12 +1,12 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Plus } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Plus, Settings } from 'lucide-react';
 
 import { mixerPatchActionLabel, type MixerPatch } from '../../../../shared/project-editor';
 import { getProjectDocumentRevision, useProjectStore } from '../../../stores/project-store';
-import { usePlaybackStore } from '../../../stores/playback-store';
-import { useBlueLiveStore } from '../../../stores/blue-live-store';
-import { deriveMixerPlaybackUiState } from '../../../stores/mixer-playback-ui';
+import { meterStore } from '../../../stores/meter-store';
 import ChannelStrip, { type MixerChainSelection } from './mixer/ChannelStrip';
+import { MeterScaleRuler } from './mixer/MeterScaleRuler';
+import { MixerSettingsDialog } from './mixer/MixerSettingsDialog';
 import { useProjectLibraryNodes } from '../../libraries/use-project-library-nodes';
 import CommitNumberInput from '../../CommitNumberInput';
 
@@ -25,20 +25,19 @@ export default function MixerPanel(): React.ReactElement {
   );
   const [chainSelection, setChainSelection] = useState<MixerChainSelection | null>(null);
 
-  const playbackStatus = usePlaybackStore((s) => s.status);
-  const blueLiveStatus = useBlueLiveStore((s) => s.status);
-
-  const playbackUi = useMemo(
-    () => deriveMixerPlaybackUiState({ playbackStatus, blueLiveStatus }),
-    [playbackStatus, blueLiveStatus],
-  );
-
   const [groupRenameDialog, setGroupRenameDialog] = useState<{
     association: string;
     name: string;
   } | null>(null);
   const groupRenameInputRef = useRef<HTMLInputElement>(null);
   const isGroupRenameDialogOpen = groupRenameDialog !== null;
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    if (mixer.enableMeters === false) {
+      meterStore.clearAll();
+    }
+  }, [mixer.enableMeters]);
 
   const handleMixerPatch = useCallback(
     (patch: Record<string, unknown>) => {
@@ -167,11 +166,15 @@ export default function MixerPanel(): React.ReactElement {
             <Plus className="h-3.5 w-3.5" />
             Add Subchannel
           </button>
-          {playbackUi.isPlaying || playbackUi.isBlueLiveActive ? (
-            <span className="mixer-playback-badge" title={playbackUi.statusLabel}>
-              {playbackUi.statusLabel}
-            </span>
-          ) : null}
+          <button
+            type="button"
+            className="mixer-settings-button"
+            onClick={() => setIsSettingsOpen(true)}
+            aria-label="Mixer Settings"
+            title="Mixer Settings"
+          >
+            <Settings className="h-3.5 w-3.5" />
+          </button>
         </div>
 
         <div className="mixer-main">
@@ -268,6 +271,8 @@ export default function MixerPanel(): React.ReactElement {
             )}
           </div>
 
+          {mixer.enableMeters !== false && <MeterScaleRuler profileKey={mixer.meterProfileKey} />}
+
           <div className="mixer-master-strip">
             <ChannelStrip
               mixer={mixer}
@@ -285,6 +290,20 @@ export default function MixerPanel(): React.ReactElement {
           </div>
         </div>
       </div>
+
+      <MixerSettingsDialog
+        isOpen={isSettingsOpen}
+        enableMeters={mixer.enableMeters !== false}
+        onToggleEnableMeters={(enabled) => {
+          const current = mixer.enableMeters !== false;
+          if (enabled === current) return;
+          handleMixerPatch({
+            type: 'setMeterEnabled',
+            value: enabled,
+          });
+        }}
+        onClose={() => setIsSettingsOpen(false)}
+      />
 
       {groupRenameDialog && (
         <div

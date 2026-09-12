@@ -8,6 +8,11 @@ import SettingsField from '../components/settings/SettingsField';
 import { ConfirmationDialog } from '../components/dialogs/ConfirmationDialog';
 import AboutApp from '../components/about/AboutApp';
 import blueIconUrl from '../../../assets/blueIcon.png';
+import { MixerSettingsDialog } from '../components/workbench/panels/mixer/MixerSettingsDialog';
+import { MeterCanvas } from '../components/workbench/panels/mixer/MeterCanvas';
+import { MeterScaleRuler } from '../components/workbench/panels/mixer/MeterScaleRuler';
+import { PeakReadout } from '../components/workbench/panels/mixer/ChannelStrip';
+import { meterStore } from '../stores/meter-store';
 
 (
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -175,5 +180,114 @@ describe('Accessibility Focus Traversal Browser Tests (T020)', () => {
 
     shell.focus();
     expect(document.activeElement).toBe(shell);
+  });
+
+  it('provides keyboard operation, accessible labels, and focus traversal for mixer controls (T041)', () => {
+    act(() => {
+      root.render(
+        <div className="flex items-center gap-4 p-4">
+          <select
+            id="mixer-profile-select"
+            aria-label="Meter profile"
+            className="mixer-toolbar__select"
+            defaultValue="peak-rms-mixing-plus-6"
+          >
+            <option value="peak-rms-mixing-plus-6">Peak/RMS (+6 dBFS)</option>
+            <option value="k14-rms-peak">K14 (RMS + Peak)</option>
+          </select>
+          <PeakReadout stripId="master" />
+          <MeterCanvas
+            stripId="master"
+            width={14}
+            height={80}
+            profileKey="peak-rms-mixing-plus-6"
+          />
+          <MeterScaleRuler profileKey="peak-rms-mixing-plus-6" />
+          <button
+            id="mixer-settings-gear"
+            type="button"
+            aria-label="Mixer settings"
+            className="mixer-settings-button"
+          >
+            Settings
+          </button>
+        </div>,
+      );
+    });
+
+    const select = container.querySelector('#mixer-profile-select') as HTMLSelectElement;
+    const peakReadout = container.querySelector('.mixer-peak-readout') as HTMLButtonElement;
+    const canvas = container.querySelector('canvas') as HTMLCanvasElement;
+    const scaleRuler = container.querySelector('.mixer-scale-ruler') as HTMLElement;
+    const gearBtn = container.querySelector('#mixer-settings-gear') as HTMLButtonElement;
+
+    expect(select).not.toBeNull();
+    expect(peakReadout).not.toBeNull();
+    expect(canvas).not.toBeNull();
+    expect(scaleRuler).not.toBeNull();
+    expect(gearBtn).not.toBeNull();
+
+    // Focus profile selector via keyboard
+    select.focus();
+    expect(document.activeElement).toBe(select);
+    expect(select.getAttribute('aria-label')).toBe('Meter profile');
+
+    // Focus peak readout button via keyboard
+    peakReadout.focus();
+    expect(document.activeElement).toBe(peakReadout);
+    expect(peakReadout.getAttribute('aria-label')).toContain('Held peak readout');
+
+    // Canvas accessible name
+    expect(canvas.getAttribute('aria-label')).toContain('Level meter for master');
+
+    // Focus gear button via keyboard
+    gearBtn.focus();
+    expect(document.activeElement).toBe(gearBtn);
+    expect(gearBtn.getAttribute('aria-label')).toBe('Mixer settings');
+  });
+
+  it('provides initial focus, focus trap, and keyboard toggle in MixerSettingsDialog (T041)', () => {
+    const handleToggle = vi.fn();
+    const handleClose = vi.fn();
+
+    act(() => {
+      root.render(
+        <MixerSettingsDialog
+          isOpen={true}
+          enableMeters={true}
+          onToggleEnableMeters={handleToggle}
+          onClose={handleClose}
+        />,
+      );
+    });
+
+    const dialog = document.body.querySelector('[role="dialog"]') as HTMLElement;
+    expect(dialog).not.toBeNull();
+    expect(dialog.getAttribute('aria-modal')).toBe('true');
+
+    // Initial focus lands on checkbox
+    const checkbox = dialog.querySelector('input[type="checkbox"]') as HTMLInputElement;
+    expect(checkbox).not.toBeNull();
+    expect(document.activeElement).toBe(checkbox);
+
+    // Toggle via click / space
+    act(() => {
+      checkbox.click();
+    });
+    expect(handleToggle).toHaveBeenCalledWith(false);
+
+    // Focus Close button
+    const closeBtn = Array.from(dialog.querySelectorAll<HTMLButtonElement>('button')).find(
+      (b) => b.textContent?.trim() === 'Close',
+    )!;
+    expect(closeBtn).not.toBeNull();
+    closeBtn.focus();
+    expect(document.activeElement).toBe(closeBtn);
+
+    // Escape closes dialog
+    act(() => {
+      dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    expect(handleClose).toHaveBeenCalled();
   });
 });

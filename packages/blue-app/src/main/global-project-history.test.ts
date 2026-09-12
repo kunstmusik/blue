@@ -431,4 +431,78 @@ describe('Global project history — User Story 1 regressions (T019)', () => {
     expect(session.read().revision).toBe(1);
     expect(layerCount(session.read().data!, 1)).toBe(1);
   });
+
+  it('commits, undoes, and redoes setMeterProfile with exact values and unchanged identities', async () => {
+    const { session, history, contextA } = setupHistory();
+    const docId = session.read().documentId!;
+    const initialMaster = session.read().data!.getMixer().getMaster();
+    const initialProfile = session.read().data!.getMixer().getMeterProfileKey();
+
+    const res = await history.commit(
+      contextA.nextCommitRequest(docId, 0, 'Set Meter Profile', [
+        { mixer: { type: 'setMeterProfile', value: 'k14-rms-peak' } },
+      ]),
+    );
+    expect(res.status).toBe('committed');
+    expect(session.read().data!.getMixer().getMeterProfileKey()).toBe('k14-rms-peak');
+    expect(session.read().data!.getMixer().getMaster()).toBe(initialMaster);
+
+    const undoRes = await history.undo({
+      documentId: docId,
+      operationId: 'undo-meter-profile',
+      expectedRevision: 1,
+      contextSequence: contextA.sequence + 1,
+    });
+    expect(undoRes.status).toBe('committed');
+    expect(session.read().data!.getMixer().getMeterProfileKey()).toBe(initialProfile);
+    expect(session.read().data!.getMixer().getMaster()).toBe(initialMaster);
+
+    const redoRes = await history.redo({
+      documentId: docId,
+      operationId: 'redo-meter-profile',
+      expectedRevision: 2,
+      contextSequence: contextA.sequence + 2,
+    });
+    expect(redoRes.status).toBe('committed');
+    expect(session.read().data!.getMixer().getMeterProfileKey()).toBe('k14-rms-peak');
+    expect(session.read().data!.getMixer().getMaster()).toBe(initialMaster);
+  });
+
+  it('commits, undoes, and redoes setMeterEnabled with exact values and unchanged identities (T028)', async () => {
+    const { session, history, contextA } = setupHistory();
+    const docId = session.read().documentId!;
+    const initialMaster = session.read().data!.getMixer().getMaster();
+
+    // Disable meters
+    const resDisable = await history.commit(
+      contextA.nextCommitRequest(docId, 0, 'Disable Meters', [
+        { mixer: { type: 'setMeterEnabled', value: false } },
+      ]),
+    );
+    expect(resDisable.status).toBe('committed');
+    expect(session.read().data!.getMixer().isEnableMeters()).toBe(false);
+    expect(session.read().data!.getMixer().getMaster()).toBe(initialMaster);
+
+    // Undo -> re-enables meters
+    const undoRes = await history.undo({
+      documentId: docId,
+      operationId: 'undo-disable-meters',
+      expectedRevision: 1,
+      contextSequence: contextA.sequence + 1,
+    });
+    expect(undoRes.status).toBe('committed');
+    expect(session.read().data!.getMixer().isEnableMeters()).toBe(true);
+    expect(session.read().data!.getMixer().getMaster()).toBe(initialMaster);
+
+    // Redo -> disables meters again
+    const redoRes = await history.redo({
+      documentId: docId,
+      operationId: 'redo-disable-meters',
+      expectedRevision: 2,
+      contextSequence: contextA.sequence + 2,
+    });
+    expect(redoRes.status).toBe('committed');
+    expect(session.read().data!.getMixer().isEnableMeters()).toBe(false);
+    expect(session.read().data!.getMixer().getMaster()).toBe(initialMaster);
+  });
 });

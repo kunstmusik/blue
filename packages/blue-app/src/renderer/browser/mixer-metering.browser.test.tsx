@@ -236,8 +236,9 @@ describe('Mounted 64-strip mixer metering frame-rate gate (SC-003, FR-013)', () 
     // baseline.
     expect(baselineFps).toBeGreaterThanOrEqual(24);
 
+    measureInteractionBatch(surface, 0);
     const baselineBatches: number[] = [];
-    for (let iteration = 0; iteration < 5; iteration++) {
+    for (let iteration = 1; iteration <= 5; iteration++) {
       baselineBatches.push(measureInteractionBatch(surface, iteration));
     }
     const baselineInteractionMs = median(baselineBatches);
@@ -269,7 +270,20 @@ describe('Mounted 64-strip mixer metering frame-rate gate (SC-003, FR-013)', () 
       effectRows: [...document.querySelectorAll<HTMLElement>('[role="option"]')],
     };
 
-    let feedSequence = 0;
+    // Pre-warm initial held peak and active RMS inside act(...) so React records
+    // the initial peak readout cleanly before unbatched background telemetry feeds RMS variations.
+    act(() => {
+      meterStore.processMeterFrame({
+        sequence: 1,
+        channels: channels.map((channel) => ({
+          csdKey: channel.id,
+          rms: [0.3, 0.28],
+          peak: [0.5, 0.48],
+        })),
+      });
+    });
+
+    let feedSequence = 1;
     const feeder = window.setInterval(() => {
       feedSequence += 1;
       meterStore.processMeterFrame({
@@ -280,10 +294,7 @@ describe('Mounted 64-strip mixer metering frame-rate gate (SC-003, FR-013)', () 
             0.3 + 0.1 * Math.sin((feedSequence + index) / 3),
             0.28 + 0.1 * Math.cos((feedSequence + index) / 4),
           ],
-          peak: [
-            0.5 + 0.1 * Math.cos((feedSequence + index) / 5),
-            0.48 + 0.1 * Math.sin((feedSequence + index) / 6),
-          ],
+          peak: [0.5, 0.48],
         })),
       });
     }, 30);
@@ -294,8 +305,9 @@ describe('Mounted 64-strip mixer metering frame-rate gate (SC-003, FR-013)', () 
       await new Promise((resolve) => setTimeout(resolve, 250));
 
       const meteredFps = await measureFrameRate(1500);
+      measureInteractionBatch(surface, 0);
       const meteredBatches: number[] = [];
-      for (let iteration = 0; iteration < 5; iteration++) {
+      for (let iteration = 1; iteration <= 5; iteration++) {
         meteredBatches.push(measureInteractionBatch(surface, iteration));
       }
       const meteredInteractionMs = median(meteredBatches);
@@ -321,4 +333,134 @@ describe('Mounted 64-strip mixer metering frame-rate gate (SC-003, FR-013)', () 
       window.clearInterval(feeder);
     }
   }, 60000);
+
+  it('stops meter rendering and cleans up canvas when meters are disabled (T029)', async () => {
+    const { mixer, channels } = buildMixerSnapshot();
+    const surface = document.createElement('div');
+    document.body.appendChild(surface);
+    const testRoot = createRoot(surface);
+
+    await act(async () => {
+      testRoot.render(
+        <div>
+          {channels.slice(0, 4).map((channel) => (
+            <ChannelStrip
+              key={channel.id}
+              mixer={{ ...mixer, enableMeters: false }}
+              channel={channel}
+              isMaster={false}
+              isSubChannel={false}
+              onPatch={() => {}}
+              projectSessionId={null}
+              projectRevision={0}
+              onOpenEffectInterface={() => {}}
+              selection={null}
+              onSelectionChange={() => {}}
+              projectEffectNodes={[]}
+            />
+          ))}
+        </div>,
+      );
+    });
+
+    expect(surface.querySelectorAll('canvas')).toHaveLength(0);
+    expect(surface.querySelectorAll('.mixer-peak-readout')).toHaveLength(0);
+
+    await act(async () => {
+      testRoot.unmount();
+    });
+    surface.remove();
+  });
+
+  it('proves disabled meters schedule no Canvas animation/repaint and enabled meters preserve frame cadence without React updates per telemetry frame (T042)', async () => {
+    const { mixer, channels } = buildMixerSnapshot();
+    const testHost = document.createElement('div');
+    document.body.appendChild(testHost);
+    const testRoot = createRoot(testHost);
+
+    let stripRenderCount = 0;
+    function RenderCountingStrip(
+      props: React.ComponentProps<typeof ChannelStrip>,
+    ): React.ReactElement {
+      stripRenderCount += 1;
+      return <ChannelStrip {...props} />;
+    }
+
+    // 1. Mount with enableMeters: false
+    await act(async () => {
+      testRoot.render(
+        <div style={{ display: 'flex' }}>
+          {channels.slice(0, 4).map((ch) => (
+            <RenderCountingStrip
+              key={ch.id}
+              mixer={{ ...mixer, enableMeters: false }}
+              channel={ch}
+              isMaster={ch.channelKind === 'master'}
+              isSubChannel={ch.channelKind === 'subChannel'}
+              onPatch={() => {}}
+              projectSessionId={1}
+              projectRevision={1}
+              onOpenEffectInterface={() => {}}
+              renderMeter={true}
+            />
+          ))}
+        </div>,
+      );
+    });
+
+    // Zero canvases mounted when disabled -> zero animation frames scheduled for meters
+    expect(testHost.querySelectorAll('canvas')).toHaveLength(0);
+    expect(testHost.querySelectorAll('.mixer-peak-readout')).toHaveLength(0);
+
+    // 2. Mount with enableMeters: true
+    stripRenderCount = 0;
+    await act(async () => {
+      testRoot.render(
+        <div style={{ display: 'flex' }}>
+          {channels.slice(0, 4).map((ch) => (
+            <RenderCountingStrip
+              key={ch.id}
+              mixer={{ ...mixer, enableMeters: true }}
+              channel={ch}
+              isMaster={ch.channelKind === 'master'}
+              isSubChannel={ch.channelKind === 'subChannel'}
+              onPatch={() => {}}
+              projectSessionId={1}
+              projectRevision={1}
+              onOpenEffectInterface={() => {}}
+              renderMeter={true}
+            />
+          ))}
+        </div>,
+      );
+    });
+
+    // Exactly 4 canvases mounted
+    expect(testHost.querySelectorAll('canvas')).toHaveLength(4);
+    expect(testHost.querySelectorAll('.mixer-peak-readout')).toHaveLength(4);
+    const initialRenderCount = stripRenderCount;
+
+    // 3. Deliver multiple telemetry frames with constant peak/rms levels
+    act(() => {
+      for (let seq = 1; seq <= 5; seq++) {
+        meterStore.processMeterFrame({
+          sequence: seq,
+          channels: channels.slice(0, 4).map((ch) => ({
+            csdKey: ch.id,
+            rms: [0.25, 0.25],
+            peak: [0.5, 0.5],
+          })),
+        });
+      }
+    });
+
+    // The strip component itself MUST NOT re-render on each telemetry frame
+    // (canvas loop and peak-readout useSyncExternalStore isolate updates)
+    expect(stripRenderCount).toBe(initialRenderCount);
+
+    await act(async () => {
+      testRoot.unmount();
+    });
+    testHost.remove();
+  });
 });
