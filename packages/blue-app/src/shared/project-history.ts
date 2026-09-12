@@ -326,6 +326,13 @@ export interface ProjectDocumentUpdatedEvent<TSnapshot = unknown> {
   isDirty: boolean;
   history: ProjectHistoryStateProjection;
   acceptedOperationIds: string[];
+  /**
+   * Kind of publication. Mutation publications carry document changes;
+   * checkpoint publications (successful save) advance the history checkpoint
+   * at an unchanged revision so renderers can refresh the saved-state marker
+   * and dirty projection without a document mutation.
+   */
+  publicationKind?: 'mutation' | 'checkpoint';
   sourceSequence?: number;
   snapshot: TSnapshot;
   selectionHints?: ProjectHistorySelectionHint[];
@@ -361,6 +368,9 @@ export function isProjectDocumentUpdatedEvent<TSnapshot = unknown>(
     typeof candidate.stateId === 'string' &&
     typeof candidate.isDirty === 'boolean' &&
     isProjectHistoryStateProjection(candidate.history) &&
+    (candidate.publicationKind === undefined ||
+      candidate.publicationKind === 'mutation' ||
+      candidate.publicationKind === 'checkpoint') &&
     Array.isArray(candidate.acceptedOperationIds) &&
     candidate.acceptedOperationIds.every((operationId) => isNonEmptyString(operationId)) &&
     hasSnapshot &&

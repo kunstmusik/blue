@@ -1,5 +1,9 @@
 import React, { useEffect } from 'react';
-import { useProjectHistory, useProjectHistoryEntries } from '../../../hooks/use-project-history';
+import {
+  scheduleProjectHistoryEntriesRefresh,
+  useProjectHistory,
+  useProjectHistoryEntries,
+} from '../../../hooks/use-project-history';
 import { cn } from '../../../lib/cn';
 import { useProjectStore } from '../../../stores/project-store';
 import type { ProjectHistoryEntrySummary } from '../../../../shared/project-history';
@@ -87,14 +91,15 @@ export default function UndoHistoryPanel(): React.ReactElement {
     savedStateId,
     retentionStatus,
   } = useProjectHistory();
-  const { snapshot, refreshEntries } = useProjectHistoryEntries();
+  const { snapshot } = useProjectHistoryEntries();
 
-  // Refetch on mount and whenever the projection fingerprint changes, so
-  // commits, undos, redos, evictions, and edits from other windows all keep
-  // the list current without a dedicated push channel.
+  // Refetch (debounced) on mount and whenever the projection fingerprint
+  // changes, so commits, undos, redos, evictions, and edits from other
+  // windows keep the list current without a dedicated push channel. The
+  // trailing debounce coalesces gesture publications into one fetch.
   useEffect(() => {
-    void refreshEntries();
-  }, [refreshEntries, revision, cursor, length]);
+    scheduleProjectHistoryEntriesRefresh();
+  }, [revision, cursor, length]);
 
   const hasUndoneEntries = snapshot !== null && snapshot.cursor < snapshot.entries.length;
   const dividerIndex = snapshot ? snapshot.cursor - 1 : -1;

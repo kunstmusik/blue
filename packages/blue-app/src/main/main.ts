@@ -421,6 +421,7 @@ import {
   type ProjectDocumentCommitMetadata,
   type ProjectHistoryReadResponse,
   type ProjectHistoryEntriesResponse,
+  type ProjectDocumentUpdatedEvent as ProjectHistoryDocumentUpdatedEvent,
   type ProjectHistoryControlResponse,
   type FocusedHistoryAvailability,
   isFocusedHistoryAvailability,
@@ -511,6 +512,34 @@ const projectHistory = createProjectHistory({
     }
   },
 });
+
+/**
+ * Publishes the history checkpoint taken by a successful save. The document
+ * and revision are unchanged, so the event is marked as a checkpoint
+ * publication; renderers use it to advance the saved-state marker and dirty
+ * projection without a mutation (spec 106 FR-009 / T035).
+ */
+function publishHistoryCheckpoint(): void {
+  const current = projectSession.read();
+  if (!current.documentId) return;
+  const snapshot = getCurrentProjectDocument();
+  if (!snapshot) return;
+  const event: ProjectHistoryDocumentUpdatedEvent = {
+    documentId: current.documentId,
+    sessionId: current.sessionId,
+    revision: current.revision,
+    stateId: current.stateId ?? '',
+    isDirty: projectHistory.isDirty(),
+    history: projectHistory.read(),
+    acceptedOperationIds: [],
+    publicationKind: 'checkpoint',
+    snapshot,
+  };
+  broadcastToWorkbenchWindows(PROJECT_DOCUMENT_UPDATED_CHANNEL, event);
+  broadcastProjectDocumentUpdateToEffectWindows(event as never);
+  broadcastProjectDocumentUpdateToTrackInstrumentWindows(event as never);
+  rebuildApplicationMenu();
+}
 
 const collectedIpcHandlers = new Map<string, IpcMainInvokeHandler>();
 const collectedIpcListeners = new Map<string, IpcMainEventListener>();
@@ -3229,6 +3258,11 @@ async function saveFileAsInternal(): Promise<boolean> {
 
   if (!saved) return false;
 
+  // Save As succeeds against the same document content, so it takes the same
+  // history checkpoint and fenced projection publication as a regular save
+  // (spec 106 FR-009 / T035).
+  projectHistory.checkpointSave();
+  publishHistoryCheckpoint();
   updateWindowTitle();
   rebuildApplicationMenu();
   mainWindow?.webContents.send('save-complete', { filePath: getCurrentFilePath() });
@@ -3399,6 +3433,11 @@ function doSave(filePath: string): boolean {
   if (!getCurrentData()) return false;
   if (!writeProjectToDisk(filePath)) return false;
 
+  // A successful save checkpoints the history (saved-state marker, closed
+  // gesture groups) and publishes the fresh projection at the unchanged
+  // revision to every workbench renderer (spec 106 FR-009 / T035).
+  projectHistory.checkpointSave();
+  publishHistoryCheckpoint();
   updateWindowTitle();
   rebuildApplicationMenu();
   if (mainWindow) {

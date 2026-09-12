@@ -108,6 +108,26 @@ Append per-scenario results (command output tails + screenshots) under
 
 ### Native application scenarios
 
-Pending project-owner validation (requires the running app GUI). Run
-`pnpm --filter @blue/app dev` from the worktree and walk scenarios 1–12 above;
-record results/screenshots here.
+Status 2026-09-11 (phase 8): the automated environment cannot drive the GUI — the
+session's computer-use helper lacks macOS Accessibility (input) and Screen Recording
+(vision) grants, so menu/window interaction is blocked. The dev app was verified to
+launch cleanly from the worktree (`pnpm --filter @blue/app dev`; main/preload build,
+window created). **Remaining for the project owner:** either grant Accessibility +
+Screen Recording to "ZCode Computer Use.app" (System Settings → Privacy & Security,
+then restart ZCode) and re-run, or walk scenarios 1–12 by hand with
+`pnpm --filter @blue/app dev`; scenario 9 (retention limit) additionally requires a
+temporarily lowered entry limit via the existing history configuration. An initial
+screenshot of the attempted session is at `evidence/01-initial-state.png`.
+
+## Implementation evidence — phase 8 convergence (2026-09-11)
+
+| Task | Result |
+|------|--------|
+| T035 Save checkpoint publication | `doSave` and `saveFileAsInternal` now run `projectHistory.checkpointSave()` and broadcast a `publicationKind: 'checkpoint'` `project-document-updated` event (shared type + window-contract mirror + validator). The renderer's equal-revision fence accepts checkpoint publications only. Tests: checkpoint applied at unchanged revision (saved marker + dirty flip) and non-checkpoint equal-revision echo still dropped (`use-ipc-listeners.test.tsx`). |
+| T036 Document-lifetime fencing | `refreshProjectHistoryEntries` sends the active `documentId` and re-checks it after every await. Tests: in-flight old-document response dropped on switch; request carries documentId (`use-project-history-entries.test.ts`). |
+| T038 Gesture refresh coalescing | Trailing 150 ms debounce (`scheduleProjectHistoryEntriesRefresh`) used by the panel; tests: 5-call burst → 1 fetch; burst during in-flight fetch re-fetches and lands the newer snapshot. |
+| T039 100-action workload | `undo-history-panel-workload.test.tsx`: 100 commits asserted after every publication (labels/order/all-applied), 100 undos (muted counts + divider per step), 50 redos, branch discard → 51 rows, no divider, no duplicates/reordering/stale rows. |
+| T040 Cross-context refresh | `use-ipc-listeners.test.tsx`: real `project-document-updated` event with `originContextId: 'ctx-popout'` flows through the listener and the mounted panel refreshes its rows without manual refresh (debounce advanced); different-document events leave the panel and fetch count untouched. |
+
+Gates after phase 8: affected suites green (73 tests across 6 files), `build:main`
+clean; full package/repo gates recorded below in this section per run.

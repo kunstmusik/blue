@@ -185,3 +185,14 @@ Each story lands as an independently testable increment; quickstart scenarios 1â
 - All work happens in `.worktrees/106-implement-undo-panel` on branch `106-implement-undo-panel`.
 - Auto-commit hooks are disabled for pre/post specify/plan/tasks events in `.specify/extensions/git/git-config.yml` (only `after_implement` is enabled); commit per task or logical group per repo convention.
 - Out of scope (do not add): click-to-jump multi-step undo/redo, entry grouping/filtering, label editing, Window-menu restructuring, persistence of history.
+
+---
+
+## Phase 8: Convergence
+
+- [x] T035 Route successful regular Save and Save As paths through the main-owned history checkpoint and publish a fenced projection update to all active workbench renderers, with tests proving the Saved marker and dirty state update immediately (per spec.md FR-009 and quickstart.md scenario 6) (partial)
+- [x] T036 Add document-lifetime fencing to renderer history-entry refreshes: pass the active `documentId`, ignore responses after close or replacement, and cover an in-flight old-project response with a project-switch test (per spec.md FR-011 and the project-switch edge case) (partial)
+- [ ] T037 Complete the 12 native application scenarios in quickstart.md and record per-scenario pass/fail results and screenshots under Implementation evidence (per tasks.md T032 and spec.md SC-001/SC-003/SC-004/SC-006) â€” blocked in automated session: computer-use helper lacks macOS Accessibility/Screen Recording grants; dev app launches cleanly; needs owner to grant permissions and re-run, or walk by hand
+- [x] T038 Coalesce or defer gesture-merge refreshes so a continuous typing gesture updates the final single summary without issuing one entries IPC read per revision, and add an invocation-count test (per plan.md Performance Goals and spec.md FR-006) (partial)
+- [x] T039 Add a renderer-facing 100-action mixed commit/undo/redo/branch-discard test that asserts displayed rows and position after every publication and guards against duplicates, reordering, and stale snapshots (per spec.md SC-002 and quickstart.md automated coverage) (missing)
+- [x] T040 Exercise a real `project-document-updated` event from a second context or popout through the listener and panel refresh, including no manual refresh and document-identity checks (per spec.md SC-003 and tasks.md T027) (missing)

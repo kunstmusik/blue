@@ -164,11 +164,18 @@ export interface ProjectDocumentUpdatedEvent {
   isDirty: boolean;
   history: ProjectHistoryStateProjection;
   acceptedOperationIds: string[];
+  /**
+   * Mirrors the shared project-history event: checkpoint publications
+   * (successful save) advance the history checkpoint at an unchanged
+   * revision without a document mutation.
+   */
+  publicationKind?: 'mutation' | 'checkpoint';
   sourceSequence?: number;
   snapshot: ProjectEditorSnapshot;
   sourceWindowId?: string;
   selectionHints?: ProjectHistorySelectionHint[];
   originViewId?: string;
+  originContextId?: string;
   runtimeOutcomes?: ProjectRuntimeOutcome[];
 }
 

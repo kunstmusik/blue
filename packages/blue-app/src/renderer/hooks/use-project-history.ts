@@ -4,6 +4,7 @@ import type {
   ProjectHistoryStateProjection,
 } from '../../shared/project-history';
 import { executeProjectRedo, executeProjectUndo } from '../lib/history-scope-router';
+import { getProjectDocumentId } from '../stores/project-store';
 
 /**
  * Latest authoritative history projection published by main. Availability is
@@ -65,9 +66,13 @@ let entriesFetchInFlight = false;
 let entriesFetchQueued = false;
 
 /**
- * Fetch the current entry summaries. Concurrent callers coalesce: while a
- * fetch is in flight one queued re-fetch runs afterward, so a publication
- * landing mid-flight cannot leave the store on an older revision.
+ * Fetch the current entry summaries for the active document lifetime. The
+ * request carries the active `documentId` and every response is re-checked
+ * after the await, so a fetch that was in flight across a project close or
+ * replacement can never store another document's entries (spec 106 FR-011).
+ * Concurrent callers coalesce: while a fetch is in flight one queued
+ * re-fetch runs afterward, so a publication landing mid-flight cannot leave
+ * the store on an older revision.
  */
 export async function refreshProjectHistoryEntries(): Promise<void> {
   if (entriesFetchInFlight) {
@@ -78,8 +83,11 @@ export async function refreshProjectHistoryEntries(): Promise<void> {
   try {
     do {
       entriesFetchQueued = false;
-      const result = await window.blueAPI.readProjectHistoryEntries();
-      if (!('status' in result)) {
+      const requestDocumentId = getProjectDocumentId();
+      const result = await window.blueAPI.readProjectHistoryEntries(
+        requestDocumentId ? { documentId: requestDocumentId } : undefined,
+      );
+      if (!('status' in result) && result.documentId === getProjectDocumentId()) {
         setProjectHistoryEntries(result);
       }
     } while (entriesFetchQueued);
@@ -87,6 +95,31 @@ export async function refreshProjectHistoryEntries(): Promise<void> {
     // Keep the last snapshot; the next projection change retriggers.
   } finally {
     entriesFetchInFlight = false;
+  }
+}
+
+const ENTRIES_REFRESH_DEBOUNCE_MS = 150;
+let entriesRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+
+/**
+ * Trailing-debounced refresh for publication-driven updates. Gesture merges
+ * publish once per keystroke with rising revisions; the debounce coalesces a
+ * typing burst into one summary fetch while the trailing refresh always
+ * reflects the latest projection (spec 106 FR-006).
+ */
+export function scheduleProjectHistoryEntriesRefresh(): void {
+  if (entriesRefreshTimer !== null) return;
+  entriesRefreshTimer = setTimeout(() => {
+    entriesRefreshTimer = null;
+    void refreshProjectHistoryEntries();
+  }, ENTRIES_REFRESH_DEBOUNCE_MS);
+}
+
+/** Cancels a pending debounced refresh (tests and document teardown). */
+export function cancelScheduledProjectHistoryEntriesRefresh(): void {
+  if (entriesRefreshTimer !== null) {
+    clearTimeout(entriesRefreshTimer);
+    entriesRefreshTimer = null;
   }
 }
 

@@ -6,6 +6,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import UndoHistoryPanel from '../components/workbench/panels/UndoHistoryPanel';
 import {
+  cancelScheduledProjectHistoryEntriesRefresh,
   setProjectHistoryEntries,
   setProjectHistoryProjection,
 } from '../hooks/use-project-history';
@@ -92,6 +93,11 @@ async function renderPanel(): Promise<HTMLDivElement> {
   await act(async () => {
     root.render(<UndoHistoryPanel />);
   });
+  // The panel refreshes entries on a trailing debounce; advance past it so
+  // mount-time fetches are observable.
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(200);
+  });
 
   return container;
 }
@@ -113,7 +119,9 @@ function rowLabels(container: HTMLDivElement): string[] {
 let currentSnapshot: ProjectHistoryEntriesSnapshot = makeSnapshot(3);
 
 beforeEach(() => {
+  vi.useFakeTimers();
   useProjectStore.getState().clearProject();
+  useProjectStore.setState({ documentId: 'doc-1' });
   setProjectHistoryProjection(null);
   setProjectHistoryEntries(null);
   currentSnapshot = makeSnapshot(3);
@@ -132,6 +140,8 @@ afterEach(() => {
     });
     entry?.container.remove();
   }
+  cancelScheduledProjectHistoryEntriesRefresh();
+  vi.useRealTimers();
   const state = useProjectStore.getState();
   if (state.loaded) {
     state.clearProject();

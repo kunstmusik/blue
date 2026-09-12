@@ -2,10 +2,13 @@
 
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  cancelScheduledProjectHistoryEntriesRefresh,
   getProjectHistoryEntries,
   refreshProjectHistoryEntries,
+  scheduleProjectHistoryEntriesRefresh,
   setProjectHistoryEntries,
 } from '../hooks/use-project-history';
+import { useProjectStore } from '../stores/project-store';
 import type { ProjectHistoryEntriesSnapshot } from '../../shared/project-history';
 
 interface Deferred<T> {
@@ -43,22 +46,27 @@ const invokeMock = vi.fn();
 beforeEach(() => {
   invokeMock.mockReset();
   setProjectHistoryEntries(null);
+  useProjectStore.setState({ documentId: 'doc-1' });
   (window as unknown as { blueAPI: unknown }).blueAPI = {
     readProjectHistoryEntries: invokeMock,
   };
 });
 
 afterEach(() => {
+  cancelScheduledProjectHistoryEntriesRefresh();
+  vi.useRealTimers();
   setProjectHistoryEntries(null);
+  useProjectStore.setState({ documentId: null });
 });
 
 describe('project history entries store (spec 106)', () => {
-  it('stores a successful snapshot from a single fetch', async () => {
+  it('stores a successful snapshot and sends the active documentId', async () => {
     invokeMock.mockResolvedValueOnce(SNAPSHOT_B);
 
     await refreshProjectHistoryEntries();
 
     expect(invokeMock).toHaveBeenCalledTimes(1);
+    expect(invokeMock).toHaveBeenCalledWith({ documentId: 'doc-1' });
     expect(getProjectHistoryEntries()).toEqual(SNAPSHOT_B);
   });
 
@@ -107,5 +115,62 @@ describe('project history entries store (spec 106)', () => {
     setProjectHistoryEntries(null);
 
     expect(getProjectHistoryEntries()).toBeNull();
+  });
+
+  it('drops an in-flight response after the document switches (FR-011)', async () => {
+    const inFlight = createDeferred<ProjectHistoryEntriesSnapshot>();
+    invokeMock.mockReturnValueOnce(inFlight.promise);
+
+    const pending = refreshProjectHistoryEntries();
+
+    // The project is replaced while the fetch for the old document is pending.
+    useProjectStore.setState({ documentId: 'doc-2' });
+    inFlight.resolve(SNAPSHOT_A);
+    await pending;
+
+    expect(getProjectHistoryEntries()).toBeNull();
+  });
+
+  it('coalesces a burst of scheduled refreshes into one trailing fetch (FR-006)', async () => {
+    vi.useFakeTimers();
+    invokeMock.mockResolvedValue(SNAPSHOT_B);
+
+    scheduleProjectHistoryEntriesRefresh();
+    scheduleProjectHistoryEntriesRefresh();
+    scheduleProjectHistoryEntriesRefresh();
+    scheduleProjectHistoryEntriesRefresh();
+    scheduleProjectHistoryEntriesRefresh();
+    expect(invokeMock).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(150);
+
+    expect(invokeMock).toHaveBeenCalledTimes(1);
+    expect(getProjectHistoryEntries()).toEqual(SNAPSHOT_B);
+
+    // A later burst after the window schedules a fresh fetch.
+    await vi.advanceTimersByTimeAsync(500);
+    scheduleProjectHistoryEntriesRefresh();
+    await vi.advanceTimersByTimeAsync(150);
+
+    expect(invokeMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('re-fetches when a burst lands while a fetch is in flight', async () => {
+    vi.useFakeTimers();
+    const slow = createDeferred<ProjectHistoryEntriesSnapshot>();
+    invokeMock.mockReturnValueOnce(slow.promise).mockResolvedValueOnce(SNAPSHOT_B);
+
+    scheduleProjectHistoryEntriesRefresh();
+    await vi.advanceTimersByTimeAsync(150);
+    expect(invokeMock).toHaveBeenCalledTimes(1);
+
+    // A new publication lands while the first fetch is still pending: the
+    // scheduled refresh queues behind it and must land the newer snapshot.
+    scheduleProjectHistoryEntriesRefresh();
+    slow.resolve(SNAPSHOT_A);
+    await vi.advanceTimersByTimeAsync(150);
+
+    expect(invokeMock).toHaveBeenCalledTimes(2);
+    expect(getProjectHistoryEntries()).toEqual(SNAPSHOT_B);
   });
 });

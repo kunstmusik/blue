@@ -373,8 +373,18 @@ export function useIPCListeners(): void {
       // A publication can only update projections after its document/revision
       // fence is accepted. This prevents an out-of-order history projection
       // from rewinding the menu while a newer snapshot is already visible.
+      // Checkpoint publications (successful save) legitimately carry the same
+      // revision: they advance only the saved-state marker and dirty
+      // projection, so the equal-revision drop must not discard them.
       if (event.revision < currentRevision) return;
-      if (event.revision === currentRevision && !ownsOperation && !isInitialRegistration) return;
+      if (
+        event.revision === currentRevision &&
+        !ownsOperation &&
+        !isInitialRegistration &&
+        event.publicationKind !== 'checkpoint'
+      ) {
+        return;
+      }
 
       // Acknowledgement of our own submission: the optimistic application in
       // this context is already current, so replaying the canonical snapshot

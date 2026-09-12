@@ -19,9 +19,13 @@ vi.mock('sonner', () => ({
 
 import { useIPCListeners } from '../hooks/use-ipc-listeners';
 import {
+  cancelScheduledProjectHistoryEntriesRefresh,
   getProjectHistoryEntries,
   getProjectHistoryProjection,
+  setProjectHistoryEntries,
+  setProjectHistoryProjection,
 } from '../hooks/use-project-history';
+import UndoHistoryPanel from '../components/workbench/panels/UndoHistoryPanel';
 import {
   getProjectDocumentRevision,
   getProjectHistoryParticipantContextId,
@@ -534,6 +538,76 @@ describe('useIPCListeners', () => {
         snapshot: { sessionId: 7, title: 'Saved elsewhere' },
       });
     });
+    expect(useProjectStore.getState().isDirty).toBe(false);
+  });
+
+  it('applies save checkpoint publications at an unchanged revision (spec 106 FR-009)', () => {
+    useProjectStore.setState({
+      sessionId: 7,
+      documentId: 'doc-1',
+      loaded: true,
+      isDirty: true,
+    });
+    act(() => {
+      root.render(<Harness />);
+    });
+    const projectUpdatedHandler = listeners.get('project-document-updated')!.values().next()
+      .value as (...args: unknown[]) => void;
+
+    // Establish the local revision base with a newer-revision publication.
+    act(() => {
+      projectUpdatedHandler({
+        documentId: 'doc-1',
+        sessionId: 7,
+        revision: 4,
+        isDirty: true,
+        acceptedOperationIds: [],
+        snapshot: { sessionId: 7, title: 'Rev 4' },
+      });
+    });
+    expect(useProjectStore.getState().title).toBe('Rev 4');
+    expect(getProjectDocumentRevision()).toBe(4);
+
+    // A successful save publishes at the SAME revision as a checkpoint.
+    act(() => {
+      projectUpdatedHandler({
+        documentId: 'doc-1',
+        sessionId: 7,
+        revision: 4,
+        stateId: 'state-4',
+        isDirty: false,
+        history: {
+          canUndo: true,
+          canRedo: false,
+          undoLabel: 'Edit One',
+          redoLabel: null,
+          cursor: 1,
+          length: 1,
+          retainedBytes: 8,
+          savedStateId: 'state-4',
+          stateId: 'state-4',
+        },
+        acceptedOperationIds: [],
+        publicationKind: 'checkpoint',
+        snapshot: { sessionId: 7, title: 'Rev 4' },
+      });
+    });
+
+    expect(getProjectHistoryProjection()?.savedStateId).toBe('state-4');
+    expect(useProjectStore.getState().isDirty).toBe(false);
+
+    // Equal-revision mutation publications without ownership stay dropped.
+    act(() => {
+      projectUpdatedHandler({
+        documentId: 'doc-1',
+        sessionId: 7,
+        revision: 4,
+        isDirty: true,
+        acceptedOperationIds: [],
+        snapshot: { sessionId: 7, title: 'Echoed rev 4' },
+      });
+    });
+    expect(useProjectStore.getState().title).toBe('Rev 4');
     expect(useProjectStore.getState().isDirty).toBe(false);
   });
 
@@ -1182,5 +1256,107 @@ describe('useIPCListeners', () => {
 
     expect(getProjectHistoryEntries()).toBeNull();
     expect(getProjectHistoryProjection()).toBeNull();
+  });
+
+  it('refreshes the undo panel from a cross-context publication without manual refresh (spec 106 SC-003)', async () => {
+    vi.useFakeTimers();
+    const panelContainer = document.createElement('div');
+    document.body.appendChild(panelContainer);
+    const panelRoot = createRoot(panelContainer);
+    try {
+      useProjectStore.setState({ sessionId: 7, documentId: 'doc-1', loaded: true });
+      blueAPI.readProjectHistory.mockResolvedValue({
+        canUndo: false,
+        canRedo: false,
+        undoLabel: null,
+        redoLabel: null,
+        cursor: 0,
+        length: 0,
+        retainedBytes: 0,
+        savedStateId: null,
+        stateId: 's0',
+      });
+      blueAPI.readProjectHistoryEntries.mockResolvedValue({
+        documentId: 'doc-1',
+        revision: 1,
+        cursor: 0,
+        entries: [],
+      });
+
+      act(() => {
+        root.render(<Harness />);
+        panelRoot.render(<UndoHistoryPanel />);
+      });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(200);
+      });
+      expect(panelContainer.textContent).toContain('No edits yet');
+
+      // An edit committed by another context (e.g. a floated popout) arrives
+      // through the canonical publication channel.
+      blueAPI.readProjectHistoryEntries.mockResolvedValue({
+        documentId: 'doc-1',
+        revision: 2,
+        cursor: 1,
+        entries: [{ entryId: 'e1', label: 'Popout Edit', timestamp: 500, afterStateId: 's1' }],
+      });
+      const projectUpdatedHandler = listeners.get('project-document-updated')!.values().next()
+        .value as (...args: unknown[]) => void;
+      await act(async () => {
+        projectUpdatedHandler({
+          documentId: 'doc-1',
+          sessionId: 7,
+          revision: 2,
+          stateId: 's1',
+          isDirty: true,
+          history: {
+            canUndo: true,
+            canRedo: false,
+            undoLabel: 'Popout Edit',
+            redoLabel: null,
+            cursor: 1,
+            length: 1,
+            retainedBytes: 8,
+            savedStateId: 's0',
+            stateId: 's1',
+          },
+          acceptedOperationIds: [],
+          originContextId: 'ctx-popout',
+          snapshot: { sessionId: 7, title: 'Cross context' },
+        });
+      });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(200);
+      });
+
+      expect(panelContainer.textContent).toContain('Popout Edit');
+
+      // Publications from a different document lifetime must not touch it.
+      const fetchCallsBefore = blueAPI.readProjectHistoryEntries.mock.calls.length;
+      await act(async () => {
+        projectUpdatedHandler({
+          documentId: 'doc-other',
+          sessionId: 7,
+          revision: 9,
+          acceptedOperationIds: [],
+          snapshot: { sessionId: 7, title: 'Other document' },
+        });
+      });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(200);
+      });
+
+      expect(panelContainer.textContent).toContain('Popout Edit');
+      expect(blueAPI.readProjectHistoryEntries.mock.calls.length).toBe(fetchCallsBefore);
+    } finally {
+      cancelScheduledProjectHistoryEntriesRefresh();
+      vi.useRealTimers();
+      act(() => {
+        panelRoot.unmount();
+      });
+      panelContainer.remove();
+      setProjectHistoryEntries(null);
+      setProjectHistoryProjection(null);
+    }
   });
 });
