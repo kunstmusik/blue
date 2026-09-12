@@ -8,6 +8,7 @@ ALLOW_EXISTING=false
 SHORT_NAME=""
 BRANCH_NUMBER=""
 USE_TIMESTAMP=false
+NUMBER_EXPLICIT=false
 ARGS=()
 i=1
 while [ $i -le $# ]; do
@@ -48,6 +49,9 @@ while [ $i -le $# ]; do
                 exit 1
             fi
             BRANCH_NUMBER="$next_arg"
+            if [ -n "$BRANCH_NUMBER" ]; then
+                NUMBER_EXPLICIT=true
+            fi
             ;;
         --timestamp)
             USE_TIMESTAMP=true
@@ -60,7 +64,7 @@ while [ $i -le $# ]; do
             echo "  --dry-run           Compute feature name and paths without creating directories or files"
             echo "  --allow-existing-branch  Reuse an existing feature directory if it already exists"
             echo "  --short-name <name> Provide a custom short name (2-4 words) for the feature"
-            echo "  --number N          Specify branch number manually (overrides auto-detection)"
+            echo "  --number N          Prefer a feature number (auto-corrected if its specs prefix exists)"
             echo "  --timestamp         Use timestamp prefix (YYYYMMDD-HHMMSS) instead of sequential numbering"
             echo "  --help, -h          Show this help message"
             echo ""
@@ -91,6 +95,7 @@ if [ -z "$FEATURE_DESCRIPTION" ]; then
 fi
 
 MAX_FEATURE_NUMBER=9223372036854775807
+MAX_BRANCH_LENGTH=244
 
 is_feature_number_in_range() {
     local value="$1"
@@ -128,10 +133,47 @@ get_highest_from_specs() {
     echo "$highest"
 }
 
+# Return success when a spec directory owns the given numeric prefix.
+spec_prefix_exists() {
+    local specs_dir="$1"
+    local feature_num="$2"
+
+    for spec_path in "$specs_dir/${feature_num}-"*; do
+        [ -d "$spec_path" ] && return 0
+    done
+    return 1
+}
+
 # Function to clean and format a branch name
+#
+# Three details keep this byte-identical to the Python and PowerShell twins:
+#   * LC_ALL=C -- in a UTF-8 locale glibc resolves the a-z *range* through
+#     collation, so [^a-z0-9] keeps accented lowercase letters that
+#     re.sub(r"[^a-z0-9]", ...) and .NET's -replace both strip.
+#   * `--*` instead of the GNU-only `\+`, which POSIX/BSD sed reads as a literal
+#     '+', leaving repeated separators uncollapsed on macOS.
+#   * printf instead of echo, so a name of "-n"/"-e"/"-E" is text, not options.
 clean_branch_name() {
     local name="$1"
-    echo "$name" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/-\+/-/g' | sed 's/^-//' | sed 's/-$//'
+    local -x LC_ALL=C
+    printf '%s\n' "$name" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | sed 's/^-//' | sed 's/-$//'
+}
+
+# Fit a feature prefix and suffix within GitHub's branch-name limit.
+fit_branch_name() {
+    local feature_num="$1"
+    local branch_suffix="$2"
+    local branch_name="${feature_num}-${branch_suffix}"
+
+    if [ ${#branch_name} -gt $MAX_BRANCH_LENGTH ]; then
+        local prefix_length=$(( ${#feature_num} + 1 ))
+        local max_suffix_length=$((MAX_BRANCH_LENGTH - prefix_length))
+        local truncated_suffix
+        truncated_suffix=$(printf '%s' "$branch_suffix" | cut -c "1-$max_suffix_length" | sed 's/-$//')
+        branch_name="${feature_num}-${truncated_suffix}"
+    fi
+
+    printf '%s' "$branch_name"
 }
 
 # Quote a value for POSIX shell reuse, byte-identical to Python's shlex.quote
@@ -167,7 +209,11 @@ generate_branch_name() {
     # Common stop words to filter out
     local stop_words="^(i|a|an|the|to|for|of|in|on|at|by|with|from|is|are|was|were|be|been|being|have|has|had|do|does|did|will|would|should|could|can|may|might|must|shall|this|that|these|those|my|your|our|their|want|need|add|get|set)$"
 
-    # Convert to lowercase and split into words
+    # Convert to lowercase and split into words. LC_ALL=C for the same
+    # collation reason documented on clean_branch_name, and so the `grep -qw`
+    # acronym probe below uses ASCII word boundaries like the Python twin's
+    # (?<![0-9A-Za-z_]) lookarounds.
+    local -x LC_ALL=C
     local clean_name=$(printf '%s' "$description" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/ /g')
 
     # Filter words: remove stop words and words shorter than 3 chars (unless they're uppercase acronyms in original)
@@ -253,26 +299,41 @@ else
 
     # Force base-10 interpretation to prevent octal conversion (e.g., 010 → 8 in octal, but should be 10 in decimal)
     FEATURE_NUM=$(printf "%03d" "$((10#$BRANCH_NUMBER))")
-    BRANCH_NAME="${FEATURE_NUM}-${BRANCH_SUFFIX}"
+
+    # Treat an explicit number as a preference when its prefix is already used
+    # by a feature directory. Auto-detected numbers are already conflict-free.
+    if [ "$NUMBER_EXPLICIT" = true ]; then
+        SPEC_CONFLICT=false
+        REQUESTED_BRANCH_NAME=$(fit_branch_name "$FEATURE_NUM" "$BRANCH_SUFFIX")
+        REQUESTED_DIR="$SPECS_DIR/$REQUESTED_BRANCH_NAME"
+        if [ "$ALLOW_EXISTING" != true ] || [ ! -d "$REQUESTED_DIR" ]; then
+            spec_prefix_exists "$SPECS_DIR" "$FEATURE_NUM" && SPEC_CONFLICT=true
+        fi
+
+        if [ "$SPEC_CONFLICT" = true ]; then
+            REQUESTED_NUM="$FEATURE_NUM"
+            HIGHEST=$(get_highest_from_specs "$SPECS_DIR")
+            BRANCH_NUMBER=$HIGHEST
+            while true; do
+                if [ "$BRANCH_NUMBER" -eq "$MAX_FEATURE_NUMBER" ]; then
+                    echo "Error: feature number must be between 0 and $MAX_FEATURE_NUMBER, got '9223372036854775808'" >&2
+                    exit 1
+                fi
+                BRANCH_NUMBER=$((BRANCH_NUMBER + 1))
+                FEATURE_NUM=$(printf "%03d" "$((10#$BRANCH_NUMBER))")
+                spec_prefix_exists "$SPECS_DIR" "$FEATURE_NUM" || break
+            done
+            >&2 echo "[specify] Warning: --number $REQUESTED_NUM conflicts with an existing spec directory; using $FEATURE_NUM instead"
+        fi
+    fi
+
 fi
 
 # GitHub enforces a 244-byte limit on branch names
 # Validate and truncate if necessary
-MAX_BRANCH_LENGTH=244
-if [ ${#BRANCH_NAME} -gt $MAX_BRANCH_LENGTH ]; then
-    # Calculate how much we need to trim from suffix
-    # Account for prefix length: timestamp (15) + hyphen (1) = 16, or sequential (3) + hyphen (1) = 4
-    PREFIX_LENGTH=$(( ${#FEATURE_NUM} + 1 ))
-    MAX_SUFFIX_LENGTH=$((MAX_BRANCH_LENGTH - PREFIX_LENGTH))
-
-    # Truncate suffix at word boundary if possible
-    TRUNCATED_SUFFIX=$(echo "$BRANCH_SUFFIX" | cut -c1-$MAX_SUFFIX_LENGTH)
-    # Remove trailing hyphen if truncation created one
-    TRUNCATED_SUFFIX=$(echo "$TRUNCATED_SUFFIX" | sed 's/-$//')
-
-    ORIGINAL_BRANCH_NAME="$BRANCH_NAME"
-    BRANCH_NAME="${FEATURE_NUM}-${TRUNCATED_SUFFIX}"
-
+ORIGINAL_BRANCH_NAME="${FEATURE_NUM}-${BRANCH_SUFFIX}"
+BRANCH_NAME=$(fit_branch_name "$FEATURE_NUM" "$BRANCH_SUFFIX")
+if [ "$BRANCH_NAME" != "$ORIGINAL_BRANCH_NAME" ]; then
     >&2 echo "[specify] Warning: Branch name exceeded GitHub's 244-byte limit"
     >&2 echo "[specify] Original: $ORIGINAL_BRANCH_NAME (${#ORIGINAL_BRANCH_NAME} bytes)"
     >&2 echo "[specify] Truncated to: $BRANCH_NAME (${#BRANCH_NAME} bytes)"
@@ -291,12 +352,27 @@ if [ "$DRY_RUN" != true ]; then
         exit 1
     fi
 
+    NEEDS_SPEC=false
+    SPEC_TEMPLATE_FOUND=false
+    SPEC_TEMPLATE_CONTENT=""
+    if [ ! -f "$SPEC_FILE" ]; then
+        NEEDS_SPEC=true
+        if SPEC_TEMPLATE_CONTENT=$(resolve_template_content "spec-template" "$REPO_ROOT"; status=$?; printf x; exit "$status"); then
+            SPEC_TEMPLATE_CONTENT="${SPEC_TEMPLATE_CONTENT%x}"
+            SPEC_TEMPLATE_FOUND=true
+        else
+            resolve_status=$?
+            if [ "$resolve_status" -ne 1 ]; then
+                exit "$resolve_status"
+            fi
+        fi
+    fi
+
     mkdir -p "$FEATURE_DIR"
 
-    if [ ! -f "$SPEC_FILE" ]; then
-        TEMPLATE=$(resolve_template "spec-template" "$REPO_ROOT") || true
-        if [ -n "$TEMPLATE" ] && [ -f "$TEMPLATE" ]; then
-            cp "$TEMPLATE" "$SPEC_FILE"
+    if [ "$NEEDS_SPEC" = true ]; then
+        if [ "$SPEC_TEMPLATE_FOUND" = true ]; then
+            printf '%s' "$SPEC_TEMPLATE_CONTENT" > "$SPEC_FILE"
         else
             echo "Warning: Spec template not found; created empty spec file" >&2
             touch "$SPEC_FILE"

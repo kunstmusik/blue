@@ -3,11 +3,11 @@ name: speckit-git-initialize
 description: Initialize a Git repository with an initial commit
 compatibility: Requires spec-kit project structure with .specify/ directory
 metadata:
-  author: github-spec-kit
-  source: git:commands/speckit.git.initialize.md
-user-invocable: true
-disable-model-invocation: true
+  author: spec-kit-core
+  source: extension:git
 ---
+
+# Git Initialize Skill
 
 # Initialize Git Repository
 

@@ -5,5 +5,5 @@
   "here": true,
   "integration": "codex",
   "script": "sh",
-  "speckit_version": "0.13.2"
+  "speckit_version": "1.0.6"
 }
