@@ -2,6 +2,8 @@
 
 **Branch**: `codex/107-channel-strip-layout` | **Date**: 2026-09-12 | **Spec**: [spec.md](spec.md)
 
+**Status**: Complete — implementation and validation finished
+
 **Input**: Feature specification from `specs/107-channel-strip-layout/spec.md`, including the project owner's approved taper change.
 
 ## Summary
@@ -161,7 +163,7 @@ History tests exercise many pointer previews followed by exactly one canonical c
 
 ## Post-Design Gate
 
-All Constitution Check rows remain passing. Phase 1 defines observable UI and IPC contracts, state ownership, precise taper math, compatibility obligations, and executable validation. No unresolved design clarification remains. Native engine and data-model production changes are unnecessary. Implementation has not started.
+All Constitution Check rows remain passing. The implementation and validation are complete, with no unresolved design clarification. Native engine and data-model production changes were unnecessary.
 
 ## Complexity Tracking
 

@@ -1,6 +1,6 @@
 # Quickstart Validation: Channel Strip Layout and Fader Taper
 
-This is the implementation validation guide. The plan/specification are complete; production code and the newly named tests below have not yet been implemented.
+This is the completed implementation validation guide. The executed results are recorded in the Handoff evidence section below.
 
 ## Prerequisites
 

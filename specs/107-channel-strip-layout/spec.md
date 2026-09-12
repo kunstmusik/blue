@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-12
 
-**Status**: Draft — implementation plan complete, ready for task generation
+**Status**: Complete — implemented and validated
 
 **Scope update (2026-09-12)**: The project owner prioritizes established mixing ergonomics over Java fader parity and approved one improved fixed taper. Saved gain, automation, and audio semantics remain unchanged; the finite -96 dB endpoint remains in this feature.
 
