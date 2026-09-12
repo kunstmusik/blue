@@ -142,7 +142,7 @@ describe('project history entries store (spec 106)', () => {
     scheduleProjectHistoryEntriesRefresh();
     expect(invokeMock).not.toHaveBeenCalled();
 
-    await vi.advanceTimersByTimeAsync(150);
+    await vi.advanceTimersByTimeAsync(500);
 
     expect(invokeMock).toHaveBeenCalledTimes(1);
     expect(getProjectHistoryEntries()).toEqual(SNAPSHOT_B);
@@ -150,7 +150,7 @@ describe('project history entries store (spec 106)', () => {
     // A later burst after the window schedules a fresh fetch.
     await vi.advanceTimersByTimeAsync(500);
     scheduleProjectHistoryEntriesRefresh();
-    await vi.advanceTimersByTimeAsync(150);
+    await vi.advanceTimersByTimeAsync(500);
 
     expect(invokeMock).toHaveBeenCalledTimes(2);
   });
@@ -161,16 +161,72 @@ describe('project history entries store (spec 106)', () => {
     invokeMock.mockReturnValueOnce(slow.promise).mockResolvedValueOnce(SNAPSHOT_B);
 
     scheduleProjectHistoryEntriesRefresh();
-    await vi.advanceTimersByTimeAsync(150);
+    await vi.advanceTimersByTimeAsync(500);
     expect(invokeMock).toHaveBeenCalledTimes(1);
 
     // A new publication lands while the first fetch is still pending: the
     // scheduled refresh queues behind it and must land the newer snapshot.
     scheduleProjectHistoryEntriesRefresh();
     slow.resolve(SNAPSHOT_A);
-    await vi.advanceTimersByTimeAsync(150);
+    await vi.advanceTimersByTimeAsync(500);
 
     expect(invokeMock).toHaveBeenCalledTimes(2);
+    expect(getProjectHistoryEntries()).toEqual(SNAPSHOT_B);
+  });
+
+  it('drops a deferred response from an older revision for the same document (T042)', async () => {
+    // Newer snapshot already applied.
+    setProjectHistoryEntries(SNAPSHOT_B);
+
+    // A slow hydration from revision 1 arrives after revision 2 is stored.
+    setProjectHistoryEntries(SNAPSHOT_A);
+
+    // Revision 2 must survive: the older response was dropped.
+    expect(getProjectHistoryEntries()).toEqual(SNAPSHOT_B);
+  });
+
+  it('allows a different document to overwrite regardless of revision (T042)', async () => {
+    // Newer snapshot for doc-1 already applied.
+    setProjectHistoryEntries(SNAPSHOT_B);
+
+    // Snapshot for a different document at revision 1 — not same-document fencing.
+    const otherDoc: ProjectHistoryEntriesSnapshot = {
+      ...SNAPSHOT_A,
+      documentId: 'doc-2',
+    };
+    setProjectHistoryEntries(otherDoc);
+    expect(getProjectHistoryEntries()).toEqual(otherDoc);
+  });
+
+  it('coalesces spaced keystrokes within the gesture window into one fetch (T043)', async () => {
+    vi.useFakeTimers();
+    invokeMock.mockResolvedValue(SNAPSHOT_B);
+
+    // Simulate keystrokes spaced 200ms apart — well within the 500ms gesture
+    // grouping window. The trailing debounce must reset on each call, so no
+    // IPC read fires until 500ms after the last keystroke.
+    scheduleProjectHistoryEntriesRefresh(); // t=0
+    await vi.advanceTimersByTimeAsync(200);
+    expect(invokeMock).not.toHaveBeenCalled();
+
+    scheduleProjectHistoryEntriesRefresh(); // t=200
+    await vi.advanceTimersByTimeAsync(200);
+    expect(invokeMock).not.toHaveBeenCalled();
+
+    scheduleProjectHistoryEntriesRefresh(); // t=400
+    await vi.advanceTimersByTimeAsync(200);
+    expect(invokeMock).not.toHaveBeenCalled();
+
+    scheduleProjectHistoryEntriesRefresh(); // t=600
+    await vi.advanceTimersByTimeAsync(200);
+    expect(invokeMock).not.toHaveBeenCalled();
+
+    scheduleProjectHistoryEntriesRefresh(); // t=800 — last keystroke
+    // Advance past the full debounce window (500ms from last call).
+    await vi.advanceTimersByTimeAsync(500);
+
+    // Only one IPC read for the entire typing gesture.
+    expect(invokeMock).toHaveBeenCalledTimes(1);
     expect(getProjectHistoryEntries()).toEqual(SNAPSHOT_B);
   });
 });

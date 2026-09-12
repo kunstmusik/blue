@@ -93,10 +93,10 @@ async function renderPanel(): Promise<HTMLDivElement> {
   await act(async () => {
     root.render(<UndoHistoryPanel />);
   });
-  // The panel refreshes entries on a trailing debounce; advance past it so
-  // mount-time fetches are observable.
+  // The panel refreshes entries on a trailing debounce (500ms); advance past
+  // it so mount-time fetches are observable.
   await act(async () => {
-    await vi.advanceTimersByTimeAsync(200);
+    await vi.advanceTimersByTimeAsync(500);
   });
 
   return container;

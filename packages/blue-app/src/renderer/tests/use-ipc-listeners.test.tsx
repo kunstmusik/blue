@@ -1288,7 +1288,7 @@ describe('useIPCListeners', () => {
         panelRoot.render(<UndoHistoryPanel />);
       });
       await act(async () => {
-        await vi.advanceTimersByTimeAsync(200);
+        await vi.advanceTimersByTimeAsync(500);
       });
       expect(panelContainer.textContent).toContain('No edits yet');
 
@@ -1326,7 +1326,7 @@ describe('useIPCListeners', () => {
         });
       });
       await act(async () => {
-        await vi.advanceTimersByTimeAsync(200);
+        await vi.advanceTimersByTimeAsync(500);
       });
 
       expect(panelContainer.textContent).toContain('Popout Edit');
@@ -1343,7 +1343,7 @@ describe('useIPCListeners', () => {
         });
       });
       await act(async () => {
-        await vi.advanceTimersByTimeAsync(200);
+        await vi.advanceTimersByTimeAsync(500);
       });
 
       expect(panelContainer.textContent).toContain('Popout Edit');

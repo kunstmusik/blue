@@ -46,7 +46,21 @@ export function getProjectHistoryEntries(): ProjectHistoryEntriesSnapshot | null
   return currentEntriesSnapshot;
 }
 
+/**
+ * Update the entries snapshot store. Applies revision fencing for the same
+ * document so a deferred hydration or scheduled fetch response from an older
+ * revision cannot overwrite a newer snapshot (T042 / FR-006). The `null`
+ * sentinel (project close/replace) is always applied unconditionally.
+ */
 export function setProjectHistoryEntries(snapshot: ProjectHistoryEntriesSnapshot | null): void {
+  if (
+    snapshot !== null &&
+    currentEntriesSnapshot !== null &&
+    currentEntriesSnapshot.documentId === snapshot.documentId &&
+    snapshot.revision < currentEntriesSnapshot.revision
+  ) {
+    return; // Older revision — drop to prevent overwriting newer state.
+  }
   currentEntriesSnapshot = snapshot;
   for (const listener of entriesListeners) {
     listener();
@@ -98,17 +112,20 @@ export async function refreshProjectHistoryEntries(): Promise<void> {
   }
 }
 
-const ENTRIES_REFRESH_DEBOUNCE_MS = 150;
+const ENTRIES_REFRESH_DEBOUNCE_MS = 500;
 let entriesRefreshTimer: ReturnType<typeof setTimeout> | null = null;
 
 /**
- * Trailing-debounced refresh for publication-driven updates. Gesture merges
- * publish once per keystroke with rising revisions; the debounce coalesces a
- * typing burst into one summary fetch while the trailing refresh always
- * reflects the latest projection (spec 106 FR-006).
+ * Trailing-debounced refresh for publication-driven updates. Each call resets
+ * the timer so that spaced keystrokes within the engine's gesture-grouping
+ * window (500 ms) coalesce into a single summary fetch that fires only once
+ * typing pauses — no per-keystroke IPC reads (T043 / plan.md Performance
+ * Goals / spec 106 FR-006).
  */
 export function scheduleProjectHistoryEntriesRefresh(): void {
-  if (entriesRefreshTimer !== null) return;
+  if (entriesRefreshTimer !== null) {
+    clearTimeout(entriesRefreshTimer);
+  }
   entriesRefreshTimer = setTimeout(() => {
     entriesRefreshTimer = null;
     void refreshProjectHistoryEntries();

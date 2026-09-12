@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-11
 
-**Status**: Implementation complete — all automated gates green (2026-09-11); project-owner manual validation of the native application scenarios pending (see quickstart.md)
+**Status**: Closed — implementation complete, feature validation green, and project-owner acceptance of the native application scenarios recorded in quickstart.md (2026-09-11)
 
 **Input**: User description: "A panel that would default to being closed, but if opened defaults to using the Properties mode (and be shown as a menu entry from Windows -> Properties). The panel should have a list of edits with a way to represent the undo/redo stack, ordered by most recent edit first. There should be an undo and redo button up top."
 

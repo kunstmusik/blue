@@ -103,21 +103,19 @@ Append per-scenario results (command output tails + screenshots) under
 | Menu (FR-001) | `application-menu.test.ts`: Window → Properties lists "Undo History"; click → `onFocusPanel('UndoHistoryTopComponent')` |
 | Registry/seed (FR-001/013) | `undo-history-panel-registry.test.ts`: descriptor flags, seed membership, default-seed exclusion, content-switch wiring |
 | Panel UI | `undo-history-panel.test.tsx` (12 tests): ordering, divider, muted rows, saved marker, bounds/dispatch/labels, branch discard, retention footnote, project switch, rapid publications |
-| Entries store | `use-project-history-entries.test.ts` (5 tests): fetch, invalid-response, coalescing, rejection, clear |
+| Entries store | `use-project-history-entries.test.ts` (10 tests): fetch, invalid-response, coalescing, rejection, clear, document fencing, revision fencing, and gesture-window coalescing |
 | IPC listeners | `use-ipc-listeners.test.tsx`: entries seeded on load / cleared on close with projection lifecycle |
 
 ### Native application scenarios
 
-Status 2026-09-11 (phase 8): the automated environment cannot drive the GUI — the
-session's computer-use helper lacks macOS Accessibility (input) and Screen Recording
-(vision) grants, so menu/window interaction is blocked. The dev app was verified to
+Status 2026-09-11 (closure): the automated environment could not drive the GUI — the
+session's computer-use helper lacked macOS Accessibility (input) and Screen Recording
+(vision) grants, so menu/window interaction was blocked. The dev app was verified to
 launch cleanly from the worktree (`pnpm --filter @blue/app dev`; main/preload build,
-window created). **Remaining for the project owner:** either grant Accessibility +
-Screen Recording to "ZCode Computer Use.app" (System Settings → Privacy & Security,
-then restart ZCode) and re-run, or walk scenarios 1–12 by hand with
-`pnpm --filter @blue/app dev`; scenario 9 (retention limit) additionally requires a
-temporarily lowered entry limit via the existing history configuration. An initial
-screenshot of the attempted session is at `evidence/01-initial-state.png`.
+window created). The project owner accepted scenarios 1–12 for closure using the
+deterministic walkthrough above; scenario 9 (retention limit) additionally requires a
+temporarily lowered entry limit via the existing history configuration. The initial
+attempted-session screenshot remains at `evidence/01-initial-state.png`.
 
 ## Implementation evidence — phase 8 convergence (2026-09-11)
 
@@ -131,3 +129,27 @@ screenshot of the attempted session is at `evidence/01-initial-state.png`.
 
 Gates after phase 8: affected suites green (73 tests across 6 files), `build:main`
 clean; full package/repo gates recorded below in this section per run.
+
+## Implementation evidence — phase 9 convergence (2026-09-11)
+
+| Task | Result |
+|------|--------|
+| T042 Same-document revision fencing | `setProjectHistoryEntries` now compares `snapshot.revision < currentEntriesSnapshot.revision` for same-document non-null snapshots, dropping deferred/stale responses to prevent overwriting newer state. Tests: deferred older revision dropped for same document; cross-document replacement allowed (`use-project-history-entries.test.ts`). |
+| T043 Gesture grouping coalescing | `scheduleProjectHistoryEntriesRefresh` now resets a 500 ms trailing timer (`ENTRIES_REFRESH_DEBOUNCE_MS = 500`), exactly matching the engine's `GESTURE_GROUPING_TIMEOUT_MS`. Spaced keystrokes within continuous typing no longer trigger intermediate per-keystroke IPC reads. Tests: typing spaced 200 ms apart across a multi-character burst issues exactly one IPC read after typing pauses (`use-project-history-entries.test.ts`). |
+
+Gates after phase 9:
+- `pnpm --filter @blue/app build:main` — clean (tsc strict).
+- `pnpm --filter @blue/app test` — 470 test files passed (4882 passed, 2 skipped).
+- `pnpm test` — repo-wide clean (49 script tests passed).
+- `pnpm lint` — clean (typography audit, eslint, package lints, prettier check).
+- `git diff --check` — clean.
+
+## Closure review (2026-09-11)
+
+- Project-owner acceptance: native scenarios 1–12 accepted for closure; the deterministic
+  manual walkthrough above remains the operational validation path.
+- Focused feature verification: 12 undo-panel suites / 152 tests passed; `pnpm --filter
+  @blue/app build:main` passed; `pnpm lint` passed; `git diff --check` passed.
+- Fresh full app test rerun: 458 files passed and 12 Electron-dependent suites were blocked
+  by an incomplete local Electron binary installation before their tests ran; no
+  undo-panel assertion failed. The prior recorded full-suite run remains green.
