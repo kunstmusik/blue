@@ -909,7 +909,10 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke('send-bsb-realtime-control-update', update) as Promise<void>,
   sendMixerRealtimeLevelUpdate: (
     update: import('../shared/project-editor').MixerRealtimeLevelUpdate,
-  ) => ipcRenderer.invoke('send-mixer-realtime-level-update', update) as Promise<void>,
+  ) =>
+    ipcRenderer.invoke('send-mixer-realtime-level-update', update) as Promise<
+      import('../shared/project-editor').MixerRealtimeLevelResult
+    >,
   sendEffectRealtimeUpdate: (update: import('../shared/project-editor').EffectRealtimeUpdate) =>
     ipcRenderer.invoke('send-effect-realtime-update', update) as Promise<void>,
 

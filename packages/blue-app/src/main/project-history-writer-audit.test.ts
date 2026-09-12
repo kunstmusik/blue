@@ -15,6 +15,7 @@ import {
   classifyProjectDocumentPatch,
   validateProjectDocumentPatch,
   getMixerEntrySnapshotId,
+  getMixerChannelSnapshotId,
   type ProjectDocumentPatch,
 } from '../shared/project-editor';
 import { prepareTransaction } from './project-history-memento';
@@ -444,6 +445,125 @@ describe('Project history canonical writer audit (T014)', () => {
       });
       expect(reused.changed).toBe(false);
       expect(reused.error).toMatch(/invalid|stale|consumed/i);
+    });
+  });
+
+  describe('Mixer channel strip mutations and history audit (T022, T033, T036)', () => {
+    it('commits channel gain patch with Set Channel Level and supports undo/redo (T022)', async () => {
+      const { session, history, context } = setupTest();
+      const docId = session.read().documentId!;
+      const data = session.read().data!;
+
+      const ch = new Channel();
+      ch.setName('Lead');
+      ch.setLevel(0);
+      data.getMixer().getChannels().push(ch);
+      const channelId = getMixerChannelSnapshotId(ch);
+
+      const gainPatch: ProjectDocumentPatch = {
+        mixer: {
+          type: 'updateChannel',
+          channelId,
+          patch: { level: -6.0 },
+        },
+      };
+
+      const req = context.nextCommitRequest(docId, 0, 'Set Channel Level', [gainPatch]);
+      const res = await history.commit(req);
+      expect(res.status).toBe('committed');
+      expect(session.read().revision).toBe(1);
+      expect(history.read().undoLabel).toBe('Set Channel Level');
+      expect(session.read().data!.getMixer().getChannels()[0]?.getLevel()).toBe(-6.0);
+
+      // Undo
+      const undoRes = await history.undo(context.nextUndoRequest(docId, 1));
+      expect(undoRes.status).toBe('committed');
+      expect(session.read().data!.getMixer().getChannels()[0]?.getLevel()).toBe(0);
+
+      // Redo
+      const redoRes = await history.redo(context.nextRedoRequest(docId, 2));
+      expect(redoRes.status).toBe('committed');
+      expect(session.read().data!.getMixer().getChannels()[0]?.getLevel()).toBe(-6.0);
+    });
+
+    it('commits channel output patch with Set Channel Output and supports undo/redo (T033)', async () => {
+      const { session, history, context } = setupTest();
+      const docId = session.read().documentId!;
+      const data = session.read().data!;
+
+      const sub = new Channel();
+      sub.setName('Sub 1');
+      data.getMixer().getSubChannels().push(sub);
+
+      const ch = new Channel();
+      ch.setName('Synth');
+      ch.setOutChannel('Sub 1');
+      data.getMixer().getChannels().push(ch);
+      const channelId = getMixerChannelSnapshotId(ch);
+
+      const outputPatch: ProjectDocumentPatch = {
+        mixer: {
+          type: 'updateChannel',
+          channelId,
+          patch: { outChannel: 'Master' },
+        },
+      };
+
+      const req = context.nextCommitRequest(docId, 0, 'Set Channel Output', [outputPatch]);
+      const res = await history.commit(req);
+      expect(res.status).toBe('committed');
+      expect(session.read().revision).toBe(1);
+      expect(history.read().undoLabel).toBe('Set Channel Output');
+      expect(session.read().data!.getMixer().getChannels()[0]?.getOutChannel()).toBe('Master');
+
+      // Undo restores Sub 1
+      const undoRes = await history.undo(context.nextUndoRequest(docId, 1));
+      expect(undoRes.status).toBe('committed');
+      expect(session.read().data!.getMixer().getChannels()[0]?.getOutChannel()).toBe('Sub 1');
+
+      // Redo restores Master
+      const redoRes = await history.redo(context.nextRedoRequest(docId, 2));
+      expect(redoRes.status).toBe('committed');
+      expect(session.read().data!.getMixer().getChannels()[0]?.getOutChannel()).toBe('Master');
+    });
+
+    it('commits meter profile and visibility changes and supports undo/redo (T036)', async () => {
+      const { session, history, context } = setupTest();
+      const docId = session.read().documentId!;
+
+      // Change meter profile
+      const profilePatch: ProjectDocumentPatch = {
+        mixer: {
+          type: 'setMeterProfile',
+          value: 'k14-rms-peak',
+        },
+      };
+
+      const req1 = context.nextCommitRequest(docId, 0, 'Set Meter Profile', [profilePatch]);
+      const res1 = await history.commit(req1);
+      expect(res1.status).toBe('committed');
+      expect(session.read().data!.getMixer().getMeterProfileKey()).toBe('k14-rms-peak');
+
+      // Undo profile change
+      await history.undo(context.nextUndoRequest(docId, 1));
+      expect(session.read().data!.getMixer().getMeterProfileKey()).not.toBe('k14-rms-peak');
+
+      // Disable meters
+      const disablePatch: ProjectDocumentPatch = {
+        mixer: {
+          type: 'setMeterEnabled',
+          value: false,
+        },
+      };
+
+      const req2 = context.nextCommitRequest(docId, 2, 'Disable Meters', [disablePatch]);
+      const res2 = await history.commit(req2);
+      expect(res2.status).toBe('committed');
+      expect(session.read().data!.getMixer().isEnableMeters()).toBe(false);
+
+      // Undo disable
+      await history.undo(context.nextUndoRequest(docId, 3));
+      expect(session.read().data!.getMixer().isEnableMeters()).toBe(true);
     });
   });
 });

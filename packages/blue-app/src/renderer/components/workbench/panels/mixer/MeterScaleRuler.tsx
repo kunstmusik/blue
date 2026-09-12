@@ -1,78 +1,68 @@
 import React, { useMemo } from 'react';
 import type { MeterProfileKey } from '@blue/data';
 import { getMeterProfile } from './meter-profiles';
+import { selectVisibleMeterLabels, DEFAULT_METER_LINE_HEIGHT } from './meter-layout';
 import { cn } from '../../../../lib/cn';
 
 export interface MeterScaleRulerProps {
   profileKey?: MeterProfileKey;
+  height?: number;
   className?: string;
+  lineHeight?: number;
 }
 
-export function MeterScaleRuler({
+export const MeterScaleRuler = React.memo(function MeterScaleRuler({
   profileKey,
+  height = 120,
   className,
+  lineHeight = DEFAULT_METER_LINE_HEIGHT,
 }: MeterScaleRulerProps): React.ReactElement {
   const profile = useMemo(() => getMeterProfile(profileKey), [profileKey]);
+
+  const labels = useMemo(
+    () => selectVisibleMeterLabels({ profile, totalHeight: height, lineHeight }),
+    [profile, height, lineHeight],
+  );
+
+  const accessibleContext = useMemo(() => {
+    if (profile.key === 'k20-rms-peak') {
+      return 'K-20 reference (-20 dBFS offset)';
+    }
+    if (profile.key === 'k14-rms-peak') {
+      return 'K-14 reference (-14 dBFS offset)';
+    }
+    if (profile.key === 'k12-rms-peak') {
+      return 'K-12 reference (-12 dBFS offset)';
+    }
+    return 'dBFS signal scale';
+  }, [profile.key]);
 
   return (
     <div
       className={cn(
-        'mixer-scale-ruler select-none flex flex-col items-stretch shrink-0 border-r border-blue-border/40 bg-blue-overlay/30 text-blue-muted',
+        'mixer-scale-ruler mixer-scale-ruler--local select-none relative shrink-0 w-[22px] overflow-hidden pointer-events-none',
         className,
       )}
-      style={{ width: 32, minWidth: 32 }}
-      aria-label="Meter scale ruler"
+      style={{ height, width: 22, minWidth: 22, maxWidth: 22 }}
+      aria-label={`Meter scale for ${profile.label} (${accessibleContext})`}
+      title={`${profile.label} (${accessibleContext})`}
     >
-      {/* Spacer to align with channel strip name and pre chain */}
-      <div className="mixer-scale-ruler__top shrink-0 border-b border-blue-border/30 h-[100px] flex items-center justify-center text-role-subheadline font-semibold tracking-wider text-blue-muted/60">
-        dB
-      </div>
-
-      {/* Flexible scale section matching mixer-level-section */}
-      <div className="mixer-scale-ruler__level-section flex-1 min-h-[96px] flex flex-col items-stretch py-2 relative">
-        <div className="h-4 text-role-subheadline text-center text-blue-muted/60 uppercase font-mono">
-          dB
-        </div>
-        {/* Track container with relative positioning matching MeterCanvas */}
-        <div className="relative flex-1 min-h-[60px] w-full">
-          {profile.majorTicks.map((tick) => {
-            if (!tick.label) return null;
-            const frac = profile.dbToFraction(tick.db);
-            if (frac < 0 || frac > 1) return null;
-            const isZero = tick.db === profile.zeroReferenceDb;
-
-            return (
-              <div
-                key={tick.db}
-                className="absolute right-0 flex items-center justify-end gap-1 -translate-y-1/2 pr-1 w-full"
-                style={{
-                  top: `calc(10px + ${(1 - frac).toFixed(4)} * (100% - 20px))`,
-                }}
-              >
-                <span
-                  className={cn(
-                    'text-role-subheadline font-mono tracking-tight',
-                    isZero ? 'text-amber-400 font-bold' : 'text-blue-muted/80',
-                  )}
-                >
-                  {tick.label}
-                </span>
-                <span
-                  className={cn(
-                    'h-[1px] w-1.5 shrink-0',
-                    isZero ? 'bg-amber-400' : 'bg-blue-border/70',
-                  )}
-                />
-              </div>
-            );
-          })}
-        </div>
-        {/* Spacer to match mixer-level-value at bottom */}
-        <div className="h-5" />
-      </div>
-
-      {/* Spacer to match post chain and output section */}
-      <div className="mixer-scale-ruler__bottom shrink-0 h-[60px] border-t border-blue-border/30" />
+      {labels.map((label) => (
+        <span
+          key={label.db}
+          className={cn(
+            'absolute right-0 text-role-subheadline font-mono pr-0.5 text-right select-none',
+            label.isZero ? 'text-amber-400 font-bold' : 'text-blue-muted/80',
+          )}
+          style={{
+            top: `${(label.centerY - lineHeight / 2).toFixed(2)}px`,
+            height: `${lineHeight}px`,
+            lineHeight: `${lineHeight}px`,
+          }}
+        >
+          {label.label}
+        </span>
+      ))}
     </div>
   );
-}
+});

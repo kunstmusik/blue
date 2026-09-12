@@ -1,5 +1,7 @@
 import type { MeterProfileKey } from '@blue/data';
 
+export type { MeterProfileKey };
+
 export interface MeterTick {
   readonly db: number;
   readonly label?: string;

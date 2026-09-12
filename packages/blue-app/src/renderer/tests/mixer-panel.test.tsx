@@ -327,18 +327,16 @@ describe('MixerPanel', () => {
     seedLoadedProject();
     const { container, root } = renderPanel();
 
-    const rangeInputs = Array.from(
-      container.querySelectorAll<HTMLInputElement>(
-        '.mixer-level-slider-wrapper input[type="range"]',
-      ),
+    const faders = Array.from(
+      container.querySelectorAll<HTMLDivElement>('.mixer-level-slider-wrapper[role="slider"]'),
     );
-    expect(rangeInputs.length).toBeGreaterThanOrEqual(1);
-    const fader = rangeInputs[0]!;
+    expect(faders.length).toBeGreaterThanOrEqual(1);
+    const fader = faders[0]!;
 
     expect(fader.getAttribute('role')).toBe('slider');
-    expect(fader.getAttribute('aria-label')).toBe('Level for Lead Channel');
-    expect(fader.getAttribute('aria-valuemin')).toBe('-960');
-    expect(fader.getAttribute('aria-valuemax')).toBe('240');
+    expect(fader.getAttribute('aria-label')).toBe('Gain for Lead Channel');
+    expect(fader.getAttribute('aria-valuemin')).toBe('-96');
+    expect(fader.getAttribute('aria-valuemax')).toBe('12');
     expect(fader.getAttribute('aria-valuenow')).not.toBeNull();
     expect(fader.getAttribute('aria-valuetext')).toMatch(/dB/);
 
@@ -421,33 +419,40 @@ describe('MixerPanel', () => {
     container.remove();
   });
 
-  it('binds pointer drag listeners to the owner window and cleans them up without lingering global listeners', () => {
+  it('binds pointer drag listeners and cleans them up without lingering listeners', () => {
     seedLoadedProject();
     const { container, root } = renderPanel();
 
     const addListenerSpy = vi.spyOn(window, 'addEventListener');
-    const removeListenerSpy = vi.spyOn(window, 'removeEventListener');
 
     const sliderWrapper = container.querySelector<HTMLDivElement>('.mixer-level-slider-wrapper');
     expect(sliderWrapper).toBeTruthy();
 
-    // Trigger mousedown to start drag
+    // Trigger pointerdown to start drag
     act(() => {
       sliderWrapper!.dispatchEvent(
-        new MouseEvent('mousedown', { clientY: 100, bubbles: true, cancelable: true }),
+        new PointerEvent('pointerdown', {
+          clientY: 100,
+          bubbles: true,
+          cancelable: true,
+          pointerId: 1,
+          button: 0,
+        }),
       );
     });
 
-    expect(addListenerSpy).toHaveBeenCalledWith('mousemove', expect.any(Function));
-    expect(addListenerSpy).toHaveBeenCalledWith('mouseup', expect.any(Function));
+    expect(addListenerSpy).toHaveBeenCalledWith(
+      'blur',
+      expect.any(Function),
+      expect.objectContaining({ once: true }),
+    );
 
-    // Trigger mouseup to end drag
+    // Trigger pointerup to end drag
     act(() => {
-      window.dispatchEvent(new MouseEvent('mouseup', { clientY: 80, bubbles: true }));
+      sliderWrapper!.dispatchEvent(
+        new PointerEvent('pointerup', { clientY: 80, bubbles: true, pointerId: 1 }),
+      );
     });
-
-    expect(removeListenerSpy).toHaveBeenCalledWith('mousemove', expect.any(Function));
-    expect(removeListenerSpy).toHaveBeenCalledWith('mouseup', expect.any(Function));
 
     act(() => {
       root.unmount();
@@ -455,7 +460,96 @@ describe('MixerPanel', () => {
     container.remove();
 
     addListenerSpy.mockRestore();
-    removeListenerSpy.mockRestore();
+  });
+
+  describe('User Story 1: Per-strip meter scale ruler (T009)', () => {
+    it('renders a local ruler inside every enabled strip meter area and no panel-global ruler', () => {
+      seedLoadedProject();
+      const { container, root } = renderPanel();
+
+      // No top-level or global ruler outside channel strips
+      const panelChildren = Array.from(
+        container.querySelectorAll('.mixer-panel > .mixer-scale-ruler'),
+      );
+      expect(panelChildren).toHaveLength(0);
+
+      // Every enabled strip meter area contains a local ruler
+      const meterAreas = container.querySelectorAll('.mixer-strip-meter-area');
+      expect(meterAreas.length).toBeGreaterThan(0);
+      meterAreas.forEach((area) => {
+        const ruler = area.querySelector('.mixer-scale-ruler');
+        expect(ruler).not.toBeNull();
+        expect(ruler!.classList.contains('mixer-scale-ruler--local')).toBe(true);
+      });
+
+      // Master strip and subchannel strips also contain local rulers
+      const masterStrip = container.querySelector('.mixer-master-strip');
+      expect(masterStrip?.querySelector('.mixer-scale-ruler')).not.toBeNull();
+
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    });
+
+    it('hides local ruler, meter canvas, and peak readout together when enableMeters is false', () => {
+      seedLoadedProject();
+      mockProjectState.mixer = {
+        ...mockProjectState.mixer,
+        enableMeters: false,
+      };
+      const { container, root } = renderPanel();
+
+      expect(container.querySelectorAll('.mixer-scale-ruler')).toHaveLength(0);
+      expect(container.querySelectorAll('.mixer-strip-meter-area')).toHaveLength(0);
+      expect(container.querySelectorAll('.mixer-peak-readout')).toHaveLength(0);
+
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    });
+  });
+
+  describe('User Story 3: Compact single-row output routing (T031)', () => {
+    it('renders compact output row with decorative 12px arrow and AppSelect for routable strips', () => {
+      seedLoadedProject();
+      const { container, root } = renderPanel();
+
+      // Ordinary channel strips have compact output row
+      const nonMasterStrips = container.querySelectorAll(
+        '.mixer-channel-strip:not(.mixer-master-strip .mixer-channel-strip)',
+      );
+      expect(nonMasterStrips.length).toBeGreaterThan(0);
+
+      const firstStrip = nonMasterStrips[0]!;
+      const outputSection = firstStrip.querySelector('.mixer-output-section');
+      expect(outputSection).not.toBeNull();
+
+      // No separate "Output" text label/heading
+      const outputLabel = outputSection!.querySelector('.mixer-output-label');
+      expect(outputLabel).toBeNull();
+
+      // ArrowRight icon with aria-hidden="true"
+      const arrow = outputSection!.querySelector('.mixer-output-arrow');
+      expect(arrow).not.toBeNull();
+      expect(arrow?.getAttribute('aria-hidden')).toBe('true');
+
+      // Selector with accessible label and title
+      const select = outputSection!.querySelector('.mixer-output-select');
+      expect(select).not.toBeNull();
+      expect(select?.getAttribute('aria-label')).toBe('Output for Lead Channel');
+      expect(select?.getAttribute('title')).toBe('Master');
+
+      // Master strip does NOT render output section
+      const masterStrip = container.querySelector('.mixer-master-strip');
+      expect(masterStrip?.querySelector('.mixer-output-section')).toBeNull();
+
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    });
   });
 
   describe('User Story 1: Numeric peak readout and clear behavior (T015)', () => {

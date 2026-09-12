@@ -1288,6 +1288,7 @@
 .mixer-channel-strip {
   width: 88px;
   min-width: 88px;
+  max-width: 88px;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -1295,6 +1296,7 @@
   background: var(--color-app-overlay);
   overflow: hidden;
   height: 100%;
+  box-sizing: border-box;
 }
 
 .mixer-channel-name {
@@ -1504,11 +1506,50 @@
 }
 
 .mixer-level-slider-wrapper {
-  flex: 1 1 0;
+  width: 24px;
+  min-width: 24px;
+  max-width: 24px;
   min-height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+}
+
+.mixer-fader-unity-tick {
+  color: var(--color-app-text-muted);
+}
+
+.mixer-fader-cap {
+  fill: var(--color-app-text-soft);
+  fill: url(#mixer-fader-cap-gradient);
+  stroke: var(--color-app-input);
+}
+
+.mixer-fader-cap-line {
+  color: var(--color-app-input);
+  transition: color 100ms ease;
+}
+
+.mixer-level-slider-wrapper:hover .mixer-fader-cap-line,
+.mixer-level-slider-wrapper:focus-visible .mixer-fader-cap-line {
+  color: var(--color-app-focus);
+}
+
+.mixer-level-controls {
+  padding: 0 1px;
+  box-sizing: border-box;
+}
+
+.mixer-strip-meter-area {
+  width: 59px;
+  min-width: 59px;
+  max-width: 59px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1px;
+  box-sizing: border-box;
 }
 
 .mixer-level-value {
@@ -1543,24 +1584,27 @@
 
 .mixer-output-section {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
+  gap: 4px;
   border-top: 1px solid color-mix(in srgb, var(--color-app-border) 40%, var(--color-app-clear));
-  padding: 2px 0;
+  padding: 3px 4px;
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 24px;
+}
+
+.mixer-output-arrow {
+  width: 12px;
+  height: 12px;
   flex-shrink: 0;
 }
 
-.mixer-output-label {
-  font-size: var(--text-role-subheadline);
-  line-height: var(--text-role-subheadline--line-height);
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  color: var(--color-app-text-subtle);
-  user-select: none;
-}
-
 .mixer-output-select {
-  width: 80px;
+  flex: 1;
+  min-width: 0;
+  width: auto;
   padding: 1px 2px;
   border: 1px solid var(--color-app-border);
   border-radius: 3px;
@@ -1570,6 +1614,9 @@
   line-height: var(--text-role-subheadline--line-height);
   outline: none;
   cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mixer-output-select:focus {
@@ -1580,8 +1627,8 @@
   font-size: var(--text-role-subheadline);
   line-height: var(--text-role-subheadline--line-height);
   color: var(--color-app-warning);
-  margin-top: 1px;
   cursor: help;
+  flex-shrink: 0;
 }
 
 /* ── Send Editor Dialog ──────────────────── */

@@ -5,7 +5,6 @@ import { mixerPatchActionLabel, type MixerPatch } from '../../../../shared/proje
 import { getProjectDocumentRevision, useProjectStore } from '../../../stores/project-store';
 import { meterStore } from '../../../stores/meter-store';
 import ChannelStrip, { type MixerChainSelection } from './mixer/ChannelStrip';
-import { MeterScaleRuler } from './mixer/MeterScaleRuler';
 import { MixerSettingsDialog } from './mixer/MixerSettingsDialog';
 import { useProjectLibraryNodes } from '../../libraries/use-project-library-nodes';
 import CommitNumberInput from '../../CommitNumberInput';
@@ -270,8 +269,6 @@ export default function MixerPanel(): React.ReactElement {
               </div>
             )}
           </div>
-
-          {mixer.enableMeters !== false && <MeterScaleRuler profileKey={mixer.meterProfileKey} />}
 
           <div className="mixer-master-strip">
             <ChannelStrip

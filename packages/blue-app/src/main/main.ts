@@ -158,6 +158,7 @@ import {
   EngineRecoveryCoordinator,
   EngineRecoveryError,
 } from './engine-recovery';
+import { MixerGainPreviewAdapter } from './mixer-gain-preview';
 import { showEngineRecoveryFailureDialog } from './engine-recovery-dialog';
 import type { EngineRecoverySessionKind } from '../shared/engine-recovery';
 import {
@@ -6480,26 +6481,28 @@ ipcRegistration.handle(
   },
 );
 
-ipcRegistration.handle(
-  'send-mixer-realtime-level-update',
-  async (_event, update: import('../shared/project-editor').MixerRealtimeLevelUpdate) => {
-    if (!getCurrentData()) {
-      return;
-    }
+const mixerGainPreviewAdapter = new MixerGainPreviewAdapter({
+  getCurrentDocumentId: () => getCurrentProjectSessionDocumentId() || null,
+  getCurrentRevision: () => getCurrentProjectRevision(),
+  getChannel: (channelId) => getProjectMixerChannelBySnapshotId(channelId),
+  getChannelOwnerKey: (channel) =>
+    getKnownMixerChannelSnapshotId(channel as import('@blue/data').Channel) ?? channel.getName(),
+  previewChannelValue: (args) => projectRuntimeReconciliation.previewChannelValue(args),
+  drainPreviews: (gestureId) => projectRuntimeReconciliation.drainPreviews(gestureId),
+  getActivePerformanceGenerations: () => [
+    timelinePerformanceGeneration,
+    blueLivePerformanceGeneration,
+  ],
+});
 
-    const channel = getProjectMixerChannelBySnapshotId(update.channelId);
-    if (!channel) return;
-
-    const ownerKey = getKnownMixerChannelSnapshotId(channel) ?? channel.getName();
-    const gestureId = (update as unknown as { gestureId?: string }).gestureId;
-    await projectRuntimeReconciliation.previewChannelValue({
-      ownerKey,
-      parameterId: 'level',
-      value: update.level,
-      gestureId,
+ipcRegistration.handle('send-mixer-realtime-level-update', async (event, update: unknown) => {
+  if (!event.sender.isDestroyed()) {
+    event.sender.once('destroyed', () => {
+      mixerGainPreviewAdapter.onSenderDestroyed(event.sender.id);
     });
-  },
-);
+  }
+  return mixerGainPreviewAdapter.handleUpdate(event.sender.id, update);
+});
 
 ipcRegistration.handle(
   'send-effect-realtime-update',

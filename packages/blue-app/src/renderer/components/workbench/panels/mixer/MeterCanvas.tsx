@@ -4,10 +4,12 @@ import { meterStore, MIN_DB, MAX_DB } from '../../../../stores/meter-store';
 import { cn } from '../../../../lib/cn';
 import type { MeterProfileKey } from '@blue/data';
 import { getMeterProfile } from './meter-profiles';
+import { getMeterTrackGeometry } from './meter-layout';
 
 export interface MeterCanvasProps {
   stripId: string;
   isMaster?: boolean;
+  channelCount?: number;
   width?: number;
   height?: number;
   className?: string;
@@ -18,8 +20,6 @@ export const DEFAULT_METER_WIDTH = 12;
 export const DEFAULT_METER_HEIGHT = 80;
 const CLIP_BOX_Y = 3;
 const CLIP_BOX_HEIGHT = 4;
-const METER_TRACK_TOP = 10;
-const METER_BOTTOM_PADDING = 10;
 const BAR_GAP = 1;
 const PADDING = 1;
 
@@ -32,6 +32,7 @@ export function getMeterWidth(nchnls: number): number {
 export const MeterCanvas = React.memo(function MeterCanvas({
   stripId,
   isMaster = false,
+  channelCount: channelCountProp,
   width: widthProp,
   height: heightProp,
   className,
@@ -42,7 +43,7 @@ export const MeterCanvas = React.memo(function MeterCanvas({
   const hostWindow = hostDocument?.defaultView ?? (typeof window !== 'undefined' ? window : null);
 
   const [storeNchnls, setStoreNchnls] = useState(
-    () => meterStore.getStripState(stripId)?.nchnls ?? 2,
+    () => meterStore.getStripState(stripId)?.nchnls ?? channelCountProp ?? 2,
   );
 
   useEffect(() => {
@@ -101,6 +102,17 @@ export const MeterCanvas = React.memo(function MeterCanvas({
     if (!canvas) return;
 
     const profile = getMeterProfile(profileKey);
+    const { trackTop: meterTop, trackHeight: meterHeight } = getMeterTrackGeometry(height);
+    const minorTickFractions = profile.minorTicks
+      .map((t) => profile.dbToFraction(t.db))
+      .filter((f) => f > 0 && f < 1);
+    const majorTickFractions = profile.majorTicks
+      .map((t) => profile.dbToFraction(t.db))
+      .filter((f) => f > 0 && f < 1);
+    const zeroRefFraction =
+      profile.zeroReferenceDb !== 0 ? profile.dbToFraction(profile.zeroReferenceDb) : null;
+
+    let cachedGradient: CanvasGradient | null = null;
     let animFrameId: number | null = null;
     let wasParkedAtSilence = false;
 
@@ -147,15 +159,13 @@ export const MeterCanvas = React.memo(function MeterCanvas({
         if (canvas.width !== targetW || canvas.height !== targetH) {
           canvas.width = targetW;
           canvas.height = targetH;
+          cachedGradient = null;
         }
 
         ctx.save();
         ctx.scale(dpr, dpr);
 
         ctx.clearRect(0, 0, width, height);
-
-        const meterTop = METER_TRACK_TOP;
-        const meterHeight = Math.max(0, height - METER_TRACK_TOP - METER_BOTTOM_PADDING);
 
         // Compute bar width and gap based on channel count and available width
         // Support subpixel bars so every channel fits strictly inside [PADDING, width - PADDING] without clipping
@@ -170,9 +180,12 @@ export const MeterCanvas = React.memo(function MeterCanvas({
         const barW = Math.max(0.5, availableW / nchnls);
 
         // Create linear gradient from profile color stops
-        const gradient = ctx.createLinearGradient(0, meterTop + meterHeight, 0, meterTop);
-        for (const stop of profile.colorStops) {
-          gradient.addColorStop(stop.fraction, stop.color);
+        if (!cachedGradient) {
+          const gradient = ctx.createLinearGradient(0, meterTop + meterHeight, 0, meterTop);
+          for (const stop of profile.colorStops) {
+            gradient.addColorStop(stop.fraction, stop.color);
+          }
+          cachedGradient = gradient;
         }
 
         for (let ch = 0; ch < nchnls; ch++) {
@@ -197,31 +210,22 @@ export const MeterCanvas = React.memo(function MeterCanvas({
 
           // 3. Ticks on track background
           ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
-          for (const tick of profile.minorTicks) {
-            const frac = profile.dbToFraction(tick.db);
-            if (frac > 0 && frac < 1) {
-              const tickY = Math.round(meterTop + meterHeight - frac * meterHeight);
-              ctx.fillRect(x, tickY, barW, 1);
-            }
+          for (const frac of minorTickFractions) {
+            const tickY = Math.round(meterTop + meterHeight - frac * meterHeight);
+            ctx.fillRect(x, tickY, barW, 1);
           }
 
           ctx.fillStyle = 'rgba(255, 255, 255, 0.28)';
-          for (const tick of profile.majorTicks) {
-            const frac = profile.dbToFraction(tick.db);
-            if (frac > 0 && frac < 1) {
-              const tickY = Math.round(meterTop + meterHeight - frac * meterHeight);
-              ctx.fillRect(x, tickY, barW, 1);
-            }
+          for (const frac of majorTickFractions) {
+            const tickY = Math.round(meterTop + meterHeight - frac * meterHeight);
+            ctx.fillRect(x, tickY, barW, 1);
           }
 
           // Reference mark highlight for K-systems
-          if (profile.zeroReferenceDb !== 0) {
-            const refFrac = profile.dbToFraction(profile.zeroReferenceDb);
-            if (refFrac > 0 && refFrac < 1) {
-              const refY = Math.round(meterTop + meterHeight - refFrac * meterHeight);
-              ctx.fillStyle = '#eab308';
-              ctx.fillRect(x, refY, barW, 1.5);
-            }
+          if (zeroRefFraction !== null && zeroRefFraction > 0 && zeroRefFraction < 1) {
+            const refY = Math.round(meterTop + meterHeight - zeroRefFraction * meterHeight);
+            ctx.fillStyle = '#eab308';
+            ctx.fillRect(x, refY, barW, 1.5);
           }
 
           // 4. Active RMS Bar
@@ -230,7 +234,7 @@ export const MeterCanvas = React.memo(function MeterCanvas({
           if (barFrac > 0) {
             const activeH = Math.round(barFrac * meterHeight);
             const activeY = meterTop + meterHeight - activeH;
-            ctx.fillStyle = gradient;
+            ctx.fillStyle = cachedGradient;
             ctx.fillRect(x, activeY, barW, activeH);
           }
 

@@ -7,7 +7,8 @@ import React, {
   useSyncExternalStore,
 } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
-import { Check } from 'lucide-react';
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import { Check, ArrowRight } from 'lucide-react';
 import { Effect, Element } from '@blue/data';
 import type {
   EffectEditorRequest,
@@ -42,14 +43,21 @@ import { createDefaultEffectXml } from '../../../../utils/program-settings-defau
 import EffectsChainContextMenu from './EffectsChainContextMenu';
 import { LibraryBlockDropMarker, LibraryDropZone } from '../../../libraries/LibraryDropMarker';
 import { useLibraryStore } from '../../../../stores/library-store';
-import { useProjectStore } from '../../../../stores/project-store';
+import {
+  useProjectStore,
+  getProjectDocumentId,
+  getProjectDocumentRevision,
+} from '../../../../stores/project-store';
+import { registerHistoryEditorSettlement } from '../../../../lib/history-scope-router';
 import { isTextEditingTarget } from '../../../../hooks/use-keyboard-shortcuts';
 import { ProjectLibraryDragSource } from '../../../libraries/ProjectLibraryDragSource';
-import { PopoutContextMenuPortal } from '../../../../hooks/host-portals';
+import { PopoutContextMenuPortal, PopoutDropdownMenuPortal } from '../../../../hooks/host-portals';
 import { useHostDocument } from '../../../../hooks/use-host-document';
 import { meterStore } from '../../../../stores/meter-store';
 import { AppSelect } from '../../../AppSelect';
 import { MeterCanvas } from './MeterCanvas';
+import { MeterScaleRuler } from './MeterScaleRuler';
+import { MixerLevelSlider } from './MixerLevelSlider';
 import { METER_PROFILES, type MeterProfileKey } from './meter-profiles';
 
 export const PeakReadout = React.memo(function PeakReadout({
@@ -59,11 +67,11 @@ export const PeakReadout = React.memo(function PeakReadout({
 }): React.ReactElement {
   const numericPeak = useSyncExternalStore(
     useCallback((cb) => meterStore.subscribeStrip(stripId, cb), [stripId]),
-    () => meterStore.getStripState(stripId)?.numericPeak ?? '-inf',
+    () => meterStore.getNumericPeak(stripId),
   );
   const isClipped = useSyncExternalStore(
     useCallback((cb) => meterStore.subscribeStrip(stripId, cb), [stripId]),
-    () => meterStore.getStripState(stripId)?.clipFlags.some(Boolean) ?? false,
+    () => meterStore.getIsClipped(stripId),
   );
 
   const handleClick = useCallback(() => {
@@ -105,57 +113,84 @@ const StripMeterArea = React.memo(function StripMeterArea({
   onSelectProfile,
   onDisableMeters,
 }: StripMeterAreaProps): React.ReactElement {
+  const [open, setOpen] = useState(false);
+  const [menuPoint, setMenuPoint] = useState({ x: 0, y: 0 });
+
   const handleClear = useCallback(() => {
     meterStore.clearStrip(stripId);
   }, [stripId]);
 
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setMenuPoint({ x: e.clientX, y: e.clientY });
+    setOpen(true);
+  }, []);
+
   return (
-    <ContextMenu.Root>
-      <ContextMenu.Trigger asChild>
-        <div>
-          <MeterCanvas
-            height={height}
-            stripId={stripId}
-            isMaster={isMaster}
-            profileKey={profileKey}
-          />
-        </div>
-      </ContextMenu.Trigger>
-      <PopoutContextMenuPortal>
-        <ContextMenu.Content className="editor-context-menu">
-          <ContextMenu.Item className="editor-context-menu__item" onSelect={handleClear}>
-            Clear Meter
-          </ContextMenu.Item>
-          {onDisableMeters && (
-            <ContextMenu.Item className="editor-context-menu__item" onSelect={onDisableMeters}>
-              Disable Meters
-            </ContextMenu.Item>
-          )}
-          <ContextMenu.Separator className="editor-context-menu__separator" />
-          <ContextMenu.Label className="editor-context-menu__label px-2 py-1 text-role-subheadline font-semibold text-blue-muted">
-            Meter Profile
-          </ContextMenu.Label>
-          {Object.values(METER_PROFILES).map((p) => {
-            const isSelected = p.key === (profileKey ?? 'peak-rms-mixing-plus-6');
-            return (
-              <ContextMenu.CheckboxItem
-                key={p.key}
-                className="editor-context-menu__item"
-                checked={isSelected}
-                onSelect={() => onSelectProfile(p.key)}
-                aria-label={`${p.label}. ${p.description}`}
-                title={p.description}
-              >
-                <span>{p.label}</span>
-                <ContextMenu.ItemIndicator className="editor-context-menu__item-indicator">
-                  <Check size={12} strokeWidth={2.5} />
-                </ContextMenu.ItemIndicator>
-              </ContextMenu.CheckboxItem>
-            );
-          })}
-        </ContextMenu.Content>
-      </PopoutContextMenuPortal>
-    </ContextMenu.Root>
+    <>
+      <div
+        className="mixer-strip-meter-area flex flex-row items-center gap-[1px] cursor-pointer"
+        onContextMenu={handleContextMenu}
+      >
+        <MeterScaleRuler height={height} profileKey={profileKey} />
+        <MeterCanvas
+          height={height}
+          stripId={stripId}
+          isMaster={isMaster}
+          profileKey={profileKey}
+        />
+      </div>
+      {open && (
+        <DropdownMenu.Root open={true} onOpenChange={setOpen}>
+          <DropdownMenu.Trigger asChild>
+            <div
+              style={{
+                position: 'fixed',
+                left: menuPoint.x,
+                top: menuPoint.y,
+                width: 1,
+                height: 1,
+                pointerEvents: 'none',
+              }}
+            />
+          </DropdownMenu.Trigger>
+          <PopoutDropdownMenuPortal>
+            <DropdownMenu.Content className="editor-context-menu" align="start">
+              <DropdownMenu.Item className="editor-context-menu__item" onSelect={handleClear}>
+                Clear Meter
+              </DropdownMenu.Item>
+              {onDisableMeters && (
+                <DropdownMenu.Item className="editor-context-menu__item" onSelect={onDisableMeters}>
+                  Disable Meters
+                </DropdownMenu.Item>
+              )}
+              <DropdownMenu.Separator className="editor-context-menu__separator" />
+              <DropdownMenu.Label className="editor-context-menu__label px-2 py-1 text-role-subheadline font-semibold text-blue-muted">
+                Meter Profile
+              </DropdownMenu.Label>
+              {Object.values(METER_PROFILES).map((p) => {
+                const isSelected = p.key === (profileKey ?? 'peak-rms-mixing-plus-6');
+                return (
+                  <DropdownMenu.CheckboxItem
+                    key={p.key}
+                    className="editor-context-menu__item"
+                    checked={isSelected}
+                    onSelect={() => onSelectProfile(p.key)}
+                    aria-label={`${p.label}. ${p.description}`}
+                    title={p.description}
+                  >
+                    <span>{p.label}</span>
+                    <DropdownMenu.ItemIndicator className="editor-context-menu__item-indicator">
+                      <Check size={12} strokeWidth={2.5} />
+                    </DropdownMenu.ItemIndicator>
+                  </DropdownMenu.CheckboxItem>
+                );
+              })}
+            </DropdownMenu.Content>
+          </PopoutDropdownMenuPortal>
+        </DropdownMenu.Root>
+      )}
+    </>
   );
 });
 
@@ -198,14 +233,6 @@ interface EffectDialogState {
 
 function getLevelDisplay(level: number): string {
   return `${level.toFixed(2)} dB`;
-}
-
-function getSliderValue(level: number): number {
-  return level > 0 ? level * 20 : level * 10;
-}
-
-function sliderToLevel(rawValue: number): number {
-  return rawValue > 0 ? rawValue / 20 : rawValue / 10;
 }
 
 function buildEffectRequest(
@@ -262,184 +289,6 @@ function ChainEntry({ entry }: { entry: MixerChainEntrySnapshot }): React.ReactE
   return (
     <div className={cn('mixer-chain-entry', !entry.enabled && 'mixer-chain-entry--disabled')}>
       <span className="mixer-chain-entry__name">{entry.name || 'Unnamed'}</span>
-    </div>
-  );
-}
-
-function MixerLevelSlider({
-  channelName,
-  levelDb,
-  value,
-  min,
-  max,
-  sliderHeight = MIXER_SLIDER_MIN_H,
-  onChange,
-  onInput,
-  onDoubleClick,
-}: {
-  channelName?: string;
-  levelDb?: number;
-  value: number;
-  min: number;
-  max: number;
-  sliderHeight?: number;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onInput: (e: React.FormEvent<HTMLInputElement>) => void;
-  onDoubleClick: () => void;
-}): React.ReactElement {
-  const svgRef = useRef<SVGSVGElement>(null);
-  const hiddenInputRef = useRef<HTMLInputElement>(null);
-  const sliderWrapperRef = useRef<HTMLDivElement>(null);
-
-  const range = max - min || 1;
-  const pct = Math.max(0, Math.min(1, (value - min) / range));
-  const trackX = MIXER_SLIDER_WIDTH / 2 - MIXER_TRACK_W / 2;
-  const thumbCy = MIXER_THUMB_R + (sliderHeight - 2 * MIXER_THUMB_R) * (1 - pct);
-
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      if (!hiddenInputRef.current) return;
-      hiddenInputRef.current.focus();
-      hiddenInputRef.current.value = String(value);
-
-      const startY = e.clientY;
-      const startVal = value;
-
-      const onMouseMove = (me: MouseEvent) => {
-        const dy = startY - me.clientY;
-        const newVal = Math.max(
-          min,
-          Math.min(max, startVal + dy * (range / (sliderHeight - 2 * MIXER_THUMB_R))),
-        );
-        const clamped = Math.round(newVal);
-        if (hiddenInputRef.current) {
-          hiddenInputRef.current.value = String(clamped);
-        }
-        const fakeEvent = {
-          target: { value: String(clamped) },
-          currentTarget: { value: String(clamped) },
-        } as unknown as React.ChangeEvent<HTMLInputElement>;
-        onChange(fakeEvent);
-        const fakeInputEvent = {
-          target: hiddenInputRef.current,
-        } as unknown as React.FormEvent<HTMLInputElement>;
-        onInput(fakeInputEvent);
-      };
-
-      const ownerWindow = sliderWrapperRef.current?.ownerDocument?.defaultView || window;
-      const onMouseUp = () => {
-        ownerWindow.removeEventListener('mousemove', onMouseMove);
-        ownerWindow.removeEventListener('mouseup', onMouseUp);
-      };
-
-      ownerWindow.addEventListener('mousemove', onMouseMove);
-      ownerWindow.addEventListener('mouseup', onMouseUp);
-    },
-    [value, min, max, range, sliderHeight, onChange, onInput],
-  );
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      let delta = 0;
-      if (e.key === 'ArrowUp' || e.key === 'ArrowRight') {
-        delta = e.shiftKey ? 10 : 1;
-      } else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') {
-        delta = e.shiftKey ? -10 : -1;
-      } else if (e.key === 'PageUp') {
-        delta = 10;
-      } else if (e.key === 'PageDown') {
-        delta = -10;
-      } else if (e.key === 'Home') {
-        delta = min - value;
-      } else if (e.key === 'End') {
-        delta = max - value;
-      }
-      if (delta !== 0) {
-        e.preventDefault();
-        const nextVal = Math.max(min, Math.min(max, value + delta));
-        if (hiddenInputRef.current) {
-          hiddenInputRef.current.value = String(nextVal);
-        }
-        const fakeEvent = {
-          target: { value: String(nextVal) },
-          currentTarget: { value: String(nextVal) },
-        } as unknown as React.ChangeEvent<HTMLInputElement>;
-        onChange(fakeEvent);
-        const fakeInputEvent = {
-          target: hiddenInputRef.current,
-        } as unknown as React.FormEvent<HTMLInputElement>;
-        onInput(fakeInputEvent);
-      }
-    },
-    [max, min, onChange, onInput, value],
-  );
-
-  return (
-    <div
-      ref={sliderWrapperRef}
-      className="mixer-level-slider-wrapper flex-none rounded-xs has-[:focus-visible]:outline-hidden has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-app-focus"
-      style={{ width: MIXER_SLIDER_WIDTH, height: sliderHeight }}
-      onMouseDown={handleMouseDown}
-    >
-      <svg
-        ref={svgRef}
-        width={MIXER_SLIDER_WIDTH}
-        height={sliderHeight}
-        className="block cursor-pointer"
-        onDoubleClick={onDoubleClick}
-      >
-        <rect
-          x={trackX}
-          y={MIXER_THUMB_R}
-          width={MIXER_TRACK_W}
-          height={sliderHeight - 2 * MIXER_THUMB_R}
-          rx={2}
-          ry={2}
-          fill="rgb(63,102,150)"
-        />
-        <rect
-          x={trackX}
-          y={thumbCy}
-          width={MIXER_TRACK_W}
-          height={sliderHeight - MIXER_THUMB_R - thumbCy}
-          rx={2}
-          ry={2}
-          fill="rgb(102,177,253)"
-        />
-        <circle
-          cx={MIXER_SLIDER_WIDTH / 2}
-          cy={thumbCy}
-          r={MIXER_THUMB_R}
-          fill="rgb(102,177,253)"
-        />
-        <circle
-          cx={MIXER_SLIDER_WIDTH / 2}
-          cy={thumbCy}
-          r={MIXER_THUMB_R - 2}
-          fill="rgb(38,51,76)"
-        />
-      </svg>
-      <input
-        ref={hiddenInputRef}
-        type="range"
-        role="slider"
-        min={min}
-        max={max}
-        step={1}
-        value={value}
-        onChange={onChange}
-        onInput={onInput}
-        onKeyDown={handleKeyDown}
-        aria-label={channelName ? `Level for ${channelName}` : 'Channel level'}
-        aria-valuemin={min}
-        aria-valuemax={max}
-        aria-valuenow={value}
-        aria-valuetext={
-          levelDb !== undefined ? getLevelDisplay(levelDb) : getLevelDisplay(sliderToLevel(value))
-        }
-        className="sr-only focus:outline-none"
-      />
     </div>
   );
 }
@@ -899,7 +748,9 @@ function MixerEffectEditorDialog({
   );
 }
 
-export default function ChannelStrip({
+let nextMixerGestureSequence = 1;
+
+export default React.memo(function ChannelStrip({
   mixer,
   channel,
   unnamedDisplayName,
@@ -919,6 +770,9 @@ export default function ChannelStrip({
   const selection = controlledSelection === undefined ? localSelection : controlledSelection;
   const onSelectionChange = controlledOnSelectionChange ?? setLocalSelection;
   const projectUdos = useProjectStore((state) => state.projectUdos);
+  const applyProjectDocumentPatch = useProjectStore((state) => state.applyProjectDocumentPatch);
+  const flushPendingPatches = useProjectStore((state) => state.flushPendingPatches);
+  const hostDocument = useHostDocument({ fallbackToGlobal: true });
   const [editingLevel, setEditingLevel] = useState(false);
   const [levelInput, setLevelInput] = useState('');
   const [editingName, setEditingName] = useState(false);
@@ -929,6 +783,14 @@ export default function ChannelStrip({
   const nameRef = useRef<HTMLDivElement>(null);
   const levelControlsRef = useRef<HTMLDivElement>(null);
   const [sliderHeight, setSliderHeight] = useState(MIXER_SLIDER_MIN_H);
+  const activeGestureRef = useRef<{
+    gestureId: string;
+    gestureSequence: number;
+    baseRevision: number;
+    documentId: string;
+  } | null>(null);
+  const [previewLevel, setPreviewLevel] = useState<number | null>(null);
+  const [isSettling, setIsSettling] = useState(false);
 
   useEffect(() => {
     const el = levelControlsRef.current;
@@ -951,7 +813,6 @@ export default function ChannelStrip({
     return () => resizeObserver.disconnect();
   }, []);
 
-  const sliderValue = getSliderValue(channel.level);
   const canRename = isSubChannel || channel.association != null;
   const hasExplicitName = channel.name.trim().length > 0;
   const displayName = hasExplicitName ? channel.name : (unnamedDisplayName ?? 'Unnamed');
@@ -977,28 +838,137 @@ export default function ChannelStrip({
     [mixer, channel.id],
   );
 
-  const handleLevelChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const raw = Number(e.target.value);
-      onPatch({
-        type: 'updateChannel',
-        channelId: channel.id,
-        patch: { level: sliderToLevel(raw) },
-      });
-    },
-    [channel.id, onPatch],
-  );
+  const handleSliderPreview = useCallback(
+    (levelDb: number) => {
+      setPreviewLevel(levelDb);
+      const docId = getProjectDocumentId();
+      if (!docId) return;
 
-  const handleLevelInput = useCallback(
-    (e: React.FormEvent<HTMLInputElement>) => {
-      const raw = Number((e.target as HTMLInputElement).value);
-      const level = sliderToLevel(raw);
-      void window.blueAPI.sendMixerRealtimeLevelUpdate({ channelId: channel.id, level });
+      if (!activeGestureRef.current) {
+        activeGestureRef.current = {
+          gestureId: crypto.randomUUID(),
+          gestureSequence: nextMixerGestureSequence++,
+          baseRevision: getProjectDocumentRevision(),
+          documentId: docId,
+        };
+      }
+
+      const gesture = activeGestureRef.current;
+      void window.blueAPI.sendMixerRealtimeLevelUpdate({
+        documentId: gesture.documentId,
+        channelId: channel.id,
+        gestureId: gesture.gestureId,
+        gestureSequence: gesture.gestureSequence,
+        baseRevision: gesture.baseRevision,
+        phase: 'preview',
+        level: levelDb,
+      });
     },
     [channel.id],
   );
 
+  const handleSliderCancel = useCallback(async () => {
+    setPreviewLevel(null);
+    const gesture = activeGestureRef.current;
+    if (!gesture) return;
+    activeGestureRef.current = null;
+
+    try {
+      await window.blueAPI.sendMixerRealtimeLevelUpdate({
+        documentId: gesture.documentId,
+        channelId: channel.id,
+        gestureId: gesture.gestureId,
+        gestureSequence: gesture.gestureSequence,
+        baseRevision: gesture.baseRevision,
+        phase: 'cancel',
+      });
+    } catch {
+      // Safe fallback
+    }
+  }, [channel.id]);
+
+  const handleSliderCommit = useCallback(
+    (levelDb: number) => {
+      const gesture = activeGestureRef.current;
+      if (!gesture) {
+        setPreviewLevel(null);
+        onPatch({
+          type: 'updateChannel',
+          channelId: channel.id,
+          patch: { level: levelDb },
+        });
+        return;
+      }
+
+      activeGestureRef.current = null;
+      setIsSettling(true);
+      void (async () => {
+        try {
+          const finishResult = await window.blueAPI.sendMixerRealtimeLevelUpdate({
+            documentId: gesture.documentId,
+            channelId: channel.id,
+            gestureId: gesture.gestureId,
+            gestureSequence: gesture.gestureSequence,
+            baseRevision: gesture.baseRevision,
+            phase: 'finish',
+          });
+
+          if (finishResult.status === 'applied') {
+            await applyProjectDocumentPatch(
+              {
+                mixer: {
+                  type: 'updateChannel',
+                  channelId: channel.id,
+                  patch: { level: levelDb },
+                },
+              },
+              {
+                label: 'Set Channel Level',
+                gestureId: gesture.gestureId,
+                fieldId: `mixer:channel:${channel.id}:level`,
+                phase: 'end',
+                expectedRevision: gesture.baseRevision,
+              },
+            );
+            await flushPendingPatches();
+          } else {
+            try {
+              await window.blueAPI.sendMixerRealtimeLevelUpdate({
+                documentId: gesture.documentId,
+                channelId: channel.id,
+                gestureId: gesture.gestureId,
+                gestureSequence: gesture.gestureSequence,
+                baseRevision: gesture.baseRevision,
+                phase: 'cancel',
+              });
+            } catch {
+              // Safe fallback
+            }
+          }
+        } catch {
+          try {
+            await window.blueAPI.sendMixerRealtimeLevelUpdate({
+              documentId: gesture.documentId,
+              channelId: channel.id,
+              gestureId: gesture.gestureId,
+              gestureSequence: gesture.gestureSequence,
+              baseRevision: gesture.baseRevision,
+              phase: 'cancel',
+            });
+          } catch {
+            // Safe fallback
+          }
+        } finally {
+          setPreviewLevel(null);
+          setIsSettling(false);
+        }
+      })();
+    },
+    [applyProjectDocumentPatch, channel.id, flushPendingPatches, onPatch],
+  );
+
   const handleSliderDoubleClick = useCallback(() => {
+    setPreviewLevel(null);
     onPatch({ type: 'updateChannel', channelId: channel.id, patch: { level: 0 } });
   }, [channel.id, onPatch]);
 
@@ -1008,16 +978,32 @@ export default function ChannelStrip({
   }, [channel.level]);
 
   const commitLevelEdit = useCallback(() => {
-    const val = parseFloat(levelInput);
-    if (!isNaN(val)) {
-      onPatch({
-        type: 'updateChannel',
-        channelId: channel.id,
-        patch: { level: Math.max(-96, Math.min(12, val)) },
-      });
-    }
-    setEditingLevel(false);
+    setEditingLevel((prev) => {
+      if (!prev) return false;
+      const val = parseFloat(levelInput);
+      if (!isNaN(val)) {
+        onPatch({
+          type: 'updateChannel',
+          channelId: channel.id,
+          patch: { level: Math.max(-96, Math.min(12, val)) },
+        });
+      }
+      return false;
+    });
   }, [channel.id, levelInput, onPatch]);
+
+  useEffect(() => {
+    const doc = hostDocument ?? (typeof document !== 'undefined' ? document : null);
+    if (!doc) return;
+    return registerHistoryEditorSettlement(doc, async () => {
+      if (editingLevel) {
+        commitLevelEdit();
+      }
+      if (activeGestureRef.current) {
+        await handleSliderCancel();
+      }
+    });
+  }, [hostDocument, editingLevel, commitLevelEdit, handleSliderCancel]);
 
   const handleOutChannelChange = useCallback(
     (target: string) => {
@@ -1218,14 +1204,13 @@ export default function ChannelStrip({
         >
           <MixerLevelSlider
             channelName={displayName}
-            levelDb={channel.level}
+            levelDb={previewLevel ?? channel.level}
             sliderHeight={sliderHeight}
-            value={sliderValue}
-            min={-960}
-            max={240}
-            onChange={handleLevelChange}
-            onInput={handleLevelInput}
-            onDoubleClick={handleSliderDoubleClick}
+            disabled={isSettling}
+            onPreview={handleSliderPreview}
+            onCommit={handleSliderCommit}
+            onCancel={handleSliderCancel}
+            onDoubleClickReset={handleSliderDoubleClick}
           />
           {renderMeter && mixer.enableMeters !== false && (
             <StripMeterArea
@@ -1257,7 +1242,7 @@ export default function ChannelStrip({
               autoFocus
             />
           ) : (
-            getLevelDisplay(channel.level)
+            getLevelDisplay(previewLevel ?? channel.level)
           )}
         </div>
       </div>
@@ -1282,11 +1267,17 @@ export default function ChannelStrip({
 
       {!isMaster && (
         <div className="mixer-output-section">
-          <div className="mixer-output-label">Output</div>
+          <ArrowRight
+            className="mixer-output-arrow text-blue-muted flex-shrink-0"
+            size={12}
+            aria-hidden="true"
+          />
           <AppSelect
             className="mixer-output-select"
             value={channel.outChannel}
             onValueChange={handleOutChannelChange}
+            title={channel.outChannel}
+            aria-label={`Output for ${displayName}`}
             options={validOutputTargets.map((target) => ({
               value: target.name,
               label: target.name,
@@ -1347,4 +1338,4 @@ export default function ChannelStrip({
       )}
     </>
   );
-}
+});

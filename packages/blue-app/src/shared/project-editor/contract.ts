@@ -2233,9 +2233,68 @@ export function isBsbRealtimeControlUpdate(value: unknown): value is BsbRealtime
   }
 }
 
-export interface MixerRealtimeLevelUpdate {
+export type MixerRealtimeLevelPhase = 'preview' | 'finish' | 'cancel';
+
+export interface MixerRealtimeLevelBaseRequest {
+  documentId: string;
   channelId: string;
+  gestureId: string;
+  gestureSequence: number;
+  baseRevision: number;
+}
+
+export interface MixerRealtimeLevelPreviewRequest extends MixerRealtimeLevelBaseRequest {
+  phase: 'preview';
   level: number;
+}
+
+export interface MixerRealtimeLevelFinishRequest extends MixerRealtimeLevelBaseRequest {
+  phase: 'finish';
+}
+
+export interface MixerRealtimeLevelCancelRequest extends MixerRealtimeLevelBaseRequest {
+  phase: 'cancel';
+}
+
+export type MixerRealtimeLevelUpdate =
+  | MixerRealtimeLevelPreviewRequest
+  | MixerRealtimeLevelFinishRequest
+  | MixerRealtimeLevelCancelRequest;
+
+export interface MixerRealtimeLevelResult {
+  status: 'applied' | 'rejected';
+  reason?: string;
+  revision?: number;
+}
+
+export function isMixerRealtimeLevelUpdate(value: unknown): value is MixerRealtimeLevelUpdate {
+  if (typeof value !== 'object' || value === null) return false;
+  const update = value as Record<string, unknown>;
+  if (
+    typeof update.documentId !== 'string' ||
+    update.documentId.trim() === '' ||
+    typeof update.channelId !== 'string' ||
+    update.channelId.trim() === '' ||
+    typeof update.gestureId !== 'string' ||
+    update.gestureId.trim() === '' ||
+    typeof update.gestureSequence !== 'number' ||
+    !Number.isInteger(update.gestureSequence) ||
+    update.gestureSequence < 0 ||
+    typeof update.baseRevision !== 'number' ||
+    !Number.isInteger(update.baseRevision) ||
+    update.baseRevision < 0
+  ) {
+    return false;
+  }
+  if (update.phase === 'preview') {
+    return (
+      typeof update.level === 'number' &&
+      Number.isFinite(update.level) &&
+      update.level >= -96 &&
+      update.level <= 12
+    );
+  }
+  return update.phase === 'finish' || update.phase === 'cancel';
 }
 
 export interface EffectRealtimeUpdate {

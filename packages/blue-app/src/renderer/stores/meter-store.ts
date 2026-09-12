@@ -303,12 +303,12 @@ export class MeterStore {
     const numericPeak = formatPeakDb(maxHeldSamplePeak);
 
     return {
-      barLevels: [...strip.barLevels],
-      peakHoldLevels: [...strip.peakHoldLevels],
-      heldSamplePeaks: [...strip.heldSamplePeaks],
+      barLevels: strip.barLevels,
+      peakHoldLevels: strip.peakHoldLevels,
+      heldSamplePeaks: strip.heldSamplePeaks,
       maxHeldSamplePeak,
       numericPeak,
-      clipFlags: [...strip.clipFlags],
+      clipFlags: strip.clipFlags,
       nchnls: strip.nchnls,
     };
   }
@@ -355,6 +355,15 @@ export class MeterStore {
 
   getNumericPeak(stripId: string): string {
     return formatPeakDb(this.getMaxHeldPeak(stripId));
+  }
+
+  getIsClipped(stripId: string): boolean {
+    const strip = this.strips.get(stripId);
+    if (!strip) return false;
+    for (let ch = 0; ch < strip.nchnls; ch++) {
+      if (strip.clipFlags[ch]) return true;
+    }
+    return false;
   }
 
   clearClip(stripId: string, channelIndex?: number): void {

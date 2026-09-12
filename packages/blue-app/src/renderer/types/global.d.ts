@@ -9,6 +9,7 @@ import type {
   TrackInstrumentEditorRequest,
   TrackInstrumentEditorSnapshot,
   BsbRealtimeControlUpdate,
+  MixerRealtimeLevelResult,
   MixerRealtimeLevelUpdate,
   EffectRealtimeUpdate,
   BlueLiveNoteTriggerRequest,
@@ -467,7 +468,9 @@ declare global {
         location: ScoreObjectLocationRef,
       ) => Promise<PolyObjectLayerGroupSnapshot | null>;
       sendBsbRealtimeControlUpdate: (update: BsbRealtimeControlUpdate) => Promise<void>;
-      sendMixerRealtimeLevelUpdate: (update: MixerRealtimeLevelUpdate) => Promise<void>;
+      sendMixerRealtimeLevelUpdate: (
+        update: MixerRealtimeLevelUpdate,
+      ) => Promise<MixerRealtimeLevelResult>;
       sendEffectRealtimeUpdate: (update: EffectRealtimeUpdate) => Promise<void>;
       readClipboardText: () => Promise<string>;
       writeClipboardText: (text: string) => Promise<void>;

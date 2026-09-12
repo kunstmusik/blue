@@ -120,7 +120,7 @@ async function measureFrameRate(durationMs: number): Promise<number> {
 }
 
 interface InteractionSurface {
-  sliders: HTMLInputElement[];
+  sliders: HTMLElement[];
   effectRows: HTMLElement[];
 }
 
@@ -210,7 +210,7 @@ describe('Mounted 64-strip mixer metering frame-rate gate (SC-003, FR-013)', () 
     });
 
     surface = {
-      sliders: [...document.querySelectorAll<HTMLInputElement>('input[type="range"]')],
+      sliders: [...document.querySelectorAll<HTMLElement>('[role="slider"]')],
       effectRows: [...document.querySelectorAll<HTMLElement>('[role="option"]')],
     };
     expect(surface.sliders.length).toBe(64);
@@ -266,7 +266,7 @@ describe('Mounted 64-strip mixer metering frame-rate gate (SC-003, FR-013)', () 
     });
     expect(document.querySelectorAll('canvas').length).toBe(64);
     surface = {
-      sliders: [...document.querySelectorAll<HTMLInputElement>('input[type="range"]')],
+      sliders: [...document.querySelectorAll<HTMLElement>('[role="slider"]')],
       effectRows: [...document.querySelectorAll<HTMLElement>('[role="option"]')],
     };
 
