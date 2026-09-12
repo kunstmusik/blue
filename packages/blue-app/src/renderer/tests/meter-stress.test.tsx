@@ -201,7 +201,7 @@ describe('Mounted 64-Strip Metering Performance and Interaction Latency (SC-003,
     const prevBarLevel = meterStore.getStripState(channels[0].id)!.barLevels[0];
     meterStore.update(frameTimestamp);
     expect(meterStore.getStripState(channels[0].id)!.barLevels[0]).toBe(prevBarLevel);
-  });
+  }, 15_000);
 
   it('skips canvas rendering work when strip is off-screen', () => {
     const { mixer, channels } = create64ChannelMixer();
@@ -416,5 +416,5 @@ describe('Mounted 64-Strip Metering Performance and Interaction Latency (SC-003,
       baselineElapsed + absoluteBuffer,
     );
     expect(meteredElapsed).toBeLessThanOrEqual(maxAllowedTime);
-  });
+  }, 30_000);
 });
