@@ -79,7 +79,6 @@
   "devDependencies": {
     "@blue/engine-native": "workspace:*",
     "@electron/rebuild": "^4.0.1",
-    "@electron/remote": "^2.1.0",
     "@tailwindcss/vite": "^4.2.2",
     "@types/jsdom": "^30.0.0",
     "@types/react": "^19.2.8",
