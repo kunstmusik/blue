@@ -19,13 +19,14 @@ import {
   normalizeScoreGenerationOptions,
   type ScoreGenerationOptionsOrSolo,
 } from '../score-generation-options';
+import { generateUuid } from '../../utilities/uuid';
 
 export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
   static get [Symbol.species](): ArrayConstructor {
     return Array;
   }
   private _name = 'Track Layer Group';
-  private _uniqueId = generateUniqueId();
+  private _uniqueId = generateUuid();
   private _defaultHeightIndex = 0;
   private _unknownAttributes = new Map<string, string>();
   private _unknownChildren: Element[] = [];
@@ -275,9 +276,4 @@ function resolveTrackOnLoadTarget(item: unknown): TrackOnLoadTarget | null {
 function getTrackInstrumentId(compileData: CompileData, trackId: string): string | undefined {
   const value = compileData.getCompilationVariable(`track-instrument:${trackId}`);
   return typeof value === 'number' || typeof value === 'string' ? String(value) : undefined;
-}
-
-function generateUniqueId(): string {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
-  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }

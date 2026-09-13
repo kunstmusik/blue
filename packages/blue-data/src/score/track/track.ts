@@ -31,6 +31,7 @@ import {
 import { generateTrackAudioPlaybackNotes } from './track-audio-playback';
 import { loadSoundObjectFromXML } from '../../sound-objects/sound-object-registry';
 import { rebaseScoreToRenderStart } from '../../utilities/score';
+import { generateUuid } from '../../utilities/uuid';
 
 export type TrackItem = AudioClip | SoundObject;
 
@@ -88,7 +89,7 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
   private _name = '';
   private _muted = false;
   private _solo = false;
-  private _uniqueId = generateUniqueId();
+  private _uniqueId = generateUuid();
   private _heightIndex = 0;
   private _backgroundColor = DEFAULT_LAYER_COLOR;
   private _automationParameters = new ParameterIdList();
@@ -468,9 +469,4 @@ function getSoundObjectLoader(): (data: Element, objRefMap?: ObjRefLoadMap) => S
 function getTrackInstrumentId(compileData: CompileData, trackId: string): string | undefined {
   const value = compileData.getCompilationVariable(`track-instrument:${trackId}`);
   return typeof value === 'string' || typeof value === 'number' ? String(value) : undefined;
-}
-
-function generateUniqueId(): string {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
-  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
