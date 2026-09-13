@@ -6,7 +6,7 @@
     "app:package": "pnpm --filter @blue/app package:current",
     "clean": "node scripts/clean.mjs",
     "test": "pnpm -r run test && pnpm test:scripts",
-    "test:scripts": "node --test scripts/audit-renderer-theme.test.mjs scripts/audit-renderer-typography.test.mjs scripts/confirmation-dialog-lint.test.mjs scripts/release-metadata.test.mjs scripts/verify-package-inputs.test.mjs",
+    "test:scripts": "node --test scripts/audit-renderer-theme.test.mjs scripts/audit-renderer-typography.test.mjs scripts/confirmation-dialog-lint.test.mjs scripts/parse-cli-flags.test.mjs scripts/release-metadata.test.mjs scripts/verify-package-inputs.test.mjs",
     "lint": "pnpm audit:renderer-typography && eslint . && pnpm -r run lint && pnpm format:check",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

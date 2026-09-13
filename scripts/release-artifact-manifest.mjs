@@ -60,6 +60,7 @@ import {
 import { basename, dirname, join, resolve } from 'node:path';
 import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { parseFlags } from './parse-cli-flags.mjs';
 
 const require = createRequire(import.meta.url);
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
@@ -144,31 +145,6 @@ function detectSourceRevision() {
   } catch {
     return 'unknown';
   }
-}
-
-/**
- * Parse argv into a flag map.
- *
- * @param {string[]} argv
- * @returns {Record<string, string>}
- */
-function parseFlags(argv) {
-  /** @type {Record<string, string>} */
-  const flags = {};
-  for (let i = 0; i < argv.length; i += 1) {
-    const arg = argv[i];
-    if (arg.startsWith('--')) {
-      const key = arg.slice(2);
-      const next = argv[i + 1];
-      if (next !== undefined && !next.startsWith('--')) {
-        flags[key] = next;
-        i += 1;
-      } else {
-        flags[key] = 'true';
-      }
-    }
-  }
-  return flags;
 }
 
 /**

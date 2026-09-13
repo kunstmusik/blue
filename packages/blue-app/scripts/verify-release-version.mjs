@@ -32,35 +32,13 @@ import { existsSync, readFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { resolve, join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseFlags } from '../../../scripts/parse-cli-flags.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, '..', '..', '..');
 const appPkgPath = join(repoRoot, 'packages', 'blue-app', 'package.json');
 
 const VERSION_PATTERN = /^v(\d+)\.(\d+)\.(\d+)$/;
-
-/**
- * @param {string[]} argv
- * @returns {Record<string, string>}
- */
-function parseFlags(argv) {
-  /** @type {Record<string, string>} */
-  const flags = {};
-  for (let i = 0; i < argv.length; i += 1) {
-    const arg = argv[i];
-    if (arg.startsWith('--')) {
-      const key = arg.slice(2);
-      const next = argv[i + 1];
-      if (next !== undefined && !next.startsWith('--')) {
-        flags[key] = next;
-        i += 1;
-      } else {
-        flags[key] = 'true';
-      }
-    }
-  }
-  return flags;
-}
 
 function readAppVersion() {
   if (!existsSync(appPkgPath)) {

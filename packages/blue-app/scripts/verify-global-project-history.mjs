@@ -19,6 +19,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright';
+import { parseFlags } from '../../../scripts/parse-cli-flags.mjs';
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(scriptDirectory, '..', '..', '..');
@@ -26,23 +27,6 @@ const appRoot = join(repositoryRoot, 'packages', 'blue-app');
 const releaseRoot = join(appRoot, 'release');
 const defaultProject = join(repositoryRoot, 'fixtures', 'smoke-test.blue');
 const timeoutMs = 60_000;
-
-function parseFlags(argv) {
-  const flags = {};
-  for (let index = 0; index < argv.length; index += 1) {
-    const argument = argv[index];
-    if (!argument?.startsWith('--')) continue;
-    const key = argument.slice(2);
-    const value = argv[index + 1];
-    if (value && !value.startsWith('--')) {
-      flags[key] = value;
-      index += 1;
-    } else {
-      flags[key] = 'true';
-    }
-  }
-  return flags;
-}
 
 function isExecutableFile(filePath) {
   try {
@@ -214,7 +198,7 @@ function percentile(values, percent) {
 }
 
 async function run() {
-  const flags = parseFlags(process.argv.slice(2));
+  const flags = parseFlags(process.argv.slice(2), { acceptEmptyValues: false });
   const binary = resolveBinary(flags.binary);
   const projectPath = resolve(flags['blue-file'] ?? defaultProject);
   if (!existsSync(projectPath)) throw new Error(`Project file does not exist: ${projectPath}`);
