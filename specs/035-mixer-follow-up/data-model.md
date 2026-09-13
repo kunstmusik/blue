@@ -2,7 +2,7 @@
 
 ## Overview
 
-Spec 035 builds on the Spec 034 models by adding routing-validation results, richer chain clipboard and movement payloads, and session-workspace state for the effects library. It does not introduce new durable storage.
+Spec 035 builds on the Spec 034 models by adding routing-validation results, richer chain clipboard and movement payloads, and session-workspace state for the effects library. It does not introduce new durable storage or playback/windowing state.
 
 ## Routing Validation
 
@@ -62,19 +62,6 @@ type LibraryClipboardPayload =
 ```
 
 This workspace snapshot is still session-local and still derived from the in-memory library session. `hasSessionMutations` supports reload-discard prompts without implying persistence.
-
-## Playback-Aware UI State
-
-```ts
-interface MixerPlaybackUiState {
-  isPlaying: boolean;
-  isBlueLiveActive: boolean;
-  canEvaluateEffects: boolean;
-  statusLabel: string;
-}
-```
-
-This is derived from existing renderer store state. It is not a new canonical document field.
 
 ## Validation Focus
 

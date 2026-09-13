@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Define the follow-up boundaries for routing validation, advanced chain editing, no-save library workflow polish, and playback-aware window behavior.
+Define the follow-up boundaries for routing validation, advanced chain editing, and no-save library workflow polish.
 
 ## 1. Routing Validation Contract
 
@@ -52,27 +52,9 @@ Rules:
 - No command writes session mutations back to `~/.blue`.
 - Reload discards session-local changes after an explicit user confirmation path.
 
-## 4. Playback-Aware UI Contract
+## 4. Existing Window Ownership Boundary
 
-Playback-aware mixer UI consumes existing store state rather than a new project-document field.
-
-Possible sources:
-
-- `usePlaybackStore`
-- project-store Blue Live status
-- existing main-process playback status events already exposed through preload
-
-Rules:
-
-- Playback-aware polish must remain presentational unless a follow-up patch is explicitly required.
-- If true meter data is unavailable, the UI may fall back to status badges or disabled-state messaging rather than fabricating meters.
-
-## 5. Window And Shortcut Contract
-
-The effect-editor window manager from Spec 034 remains authoritative.
-
-Follow-up responsibilities:
-
-- focus existing windows from menu or keyboard commands
-- expose clearer missing-owner handling
-- preserve one-window-per-owner semantics across repeated focus/open actions
+Spec 035 adds no playback-aware status, effect-window focus, shortcut, or
+missing-owner behavior. Existing one-window-per-owner behavior from Spec 034
+remains a compatibility invariant for the retained library workflow. Later
+window and editor specifications own any new behavior in that area.

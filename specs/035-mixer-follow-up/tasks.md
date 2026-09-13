@@ -3,9 +3,11 @@
 **Input**: Design documents from `/specs/035-mixer-follow-up/`  
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/  
 
-**Tests**: Tests are required by FR-010. Write validation, library workflow, and window-focus coverage before or alongside the implementation they protect.
+**Tests**: Tests are required by FR-010. Write validation and library workflow coverage before or alongside the implementation they protect.
 
-**Organization**: Tasks are grouped by user story so routing safety, library workflow polish, and playback-aware/window polish can be implemented and validated incrementally.
+**Organization**: Tasks are grouped by user story so routing safety and library workflow polish can be implemented and validated incrementally.
+
+> **Scope disposition (2026-09-13):** The former playback-aware/windowing phase is withdrawn. Tasks T003, T008, T014, and T031-T037 are not implementation targets for Spec 035; later specifications own those concerns.
 
 ## Phase 1: Setup (Shared Context)
 
@@ -13,14 +15,13 @@
 
 - [x] T001 Review the follow-up parity anchors listed in `/Users/stevenyi/work/blue-electron/specs/035-mixer-follow-up/research.md`
 - [x] T002 [P] Inventory Spec 034 mixer snapshot, library session, and effect-window seams in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/shared/project-editor.ts`, `/Users/stevenyi/work/blue-electron/packages/blue-app/src/main/mixer-effects-library.ts`, and `/Users/stevenyi/work/blue-electron/packages/blue-app/src/main/effect-editor-window-manager.ts`
-- [x] T003 [P] Inventory current playback and Blue Live state seams in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/renderer/stores/playback-store.ts`, `/Users/stevenyi/work/blue-electron/packages/blue-app/src/renderer/stores/project-store.ts`, and `/Users/stevenyi/work/blue-electron/packages/blue-app/src/main/blue-live-engine.ts`
 - [x] T004 [P] Inventory current mixer/library renderer components in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/renderer/components/workbench/panels/MixerPanel.tsx`, `/Users/stevenyi/work/blue-electron/packages/blue-app/src/renderer/components/workbench/panels/EffectLibraryModal.tsx`, and `/Users/stevenyi/work/blue-electron/packages/blue-app/src/renderer/components/workbench/panels/effect-editor/`
 
 ---
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-**Purpose**: Establish routing validation, chain clipboard payloads, library import/export plumbing, and playback-aware selectors before story-specific UI work begins.
+**Purpose**: Establish routing validation, chain clipboard payloads, and library import/export plumbing before story-specific UI work begins.
 
 **Critical**: No user story work should begin until this phase is complete.
 
@@ -29,7 +30,6 @@
 - [x] T005 [P] Add routing-validation tests in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/renderer/tests/mixer-routing-validation.test.ts`
 - [x] T006 [P] Add chain clipboard and paste contract tests in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/renderer/tests/mixer-chain-clipboard.test.ts`
 - [x] T007 [P] Add effects-library import/export and reload tests in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/main/mixer-effects-library.test.ts`
-- [x] T008 [P] Add playback-aware mixer status tests in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/renderer/tests/mixer-playback-status.test.tsx`
 
 ### Implementation
 
@@ -38,9 +38,8 @@
 - [x] T011 Add renderer clipboard helpers for chain entries in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/renderer/components/workbench/panels/mixer/`
 - [x] T012 Extend the effects-library session service with reload and import/export plumbing in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/main/mixer-effects-library.ts`
 - [x] T013 Extend preload and renderer typing for the follow-up library commands in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/preload/preload.ts` and `/Users/stevenyi/work/blue-electron/packages/blue-app/src/renderer/types/global.d.ts`
-- [x] T014 Add playback-aware selector helpers in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/renderer/stores/`
 
-**Checkpoint**: Routing-validation, library workflow, and playback-aware contracts are ready for UI work.
+**Checkpoint**: Routing-validation and library workflow contracts are ready for UI work.
 
 ---
 
@@ -92,40 +91,17 @@
 
 ---
 
-## Phase 5: User Story 3 - Add Playback-Aware And Windowing Polish (Priority: P2)
-
-**Goal**: Refine playback cues, focus behavior, and missing-owner handling across the Mixer and effect-editor windows.
-
-**Independent Test**: Start and stop playback or Blue Live with Mixer and effect-editor surfaces open, use menu/shortcut focus commands, and verify existing windows are reused and degraded gracefully when their owner disappears.
-
-### Tests for User Story 3
-
-- [x] T031 [P] [US3] Add playback-aware Mixer UI tests in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/renderer/tests/mixer-playback-status.test.tsx`
-- [x] T032 [P] [US3] Add window focus and missing-owner tests in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/main/effect-editor-window-manager.test.ts`
-- [x] T033 [P] [US3] Add menu or shortcut focus tests in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/renderer/tests/workbench-mixer-panel.test.tsx`
-
-### Implementation for User Story 3
-
-- [x] T034 [US3] Add playback-aware status badges or disabled-state messaging in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/renderer/components/workbench/panels/MixerPanel.tsx` and effect-editor components
-- [x] T035 [US3] Extend menu or shortcut flows to focus mixer-related surfaces in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/shared/workbench-menu.ts` and the current native-command handlers
-- [x] T036 [US3] Refine missing-owner and focus behavior in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/main/effect-editor-window-manager.ts`
-- [x] T037 [US3] Add any required visual polish for the advanced workflow in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/renderer/styles.css`
-
-**Checkpoint**: The advanced mixer workflow feels coherent across playback, library, and window-management scenarios.
-
----
-
 ## Phase 6: Polish & Cross-Cutting Concerns
 
 **Purpose**: Final validation, documentation, and handoff preparation.
 
 - [x] T038 [P] Update `/Users/stevenyi/work/blue-electron/specs/035-mixer-follow-up/quickstart.md` with any implementation-specific validation notes discovered during development
-- [x] T039 [P] Update `/Users/stevenyi/work/blue-electron/STATUS.md` with Spec 035 implementation progress and any further deferrals
+- [x] T039 [P] Update the Spec 035 feature documentation with implementation progress and any further deferrals
 - [x] T040 Run `pnpm --filter @blue/app test` from `/Users/stevenyi/work/blue-electron`
 - [x] T041 Run `pnpm --filter @blue/app build` from `/Users/stevenyi/work/blue-electron`
 - [x] T042 Run `pnpm --filter @blue/data test` from `/Users/stevenyi/work/blue-electron` if routing validation helpers land in `@blue/data`
 - [x] T044 Run `git diff --check` from `/Users/stevenyi/work/blue-electron`
-- [x] T045 Perform the manual routing, library-workflow, and playback-aware scenarios from `/Users/stevenyi/work/blue-electron/specs/035-mixer-follow-up/quickstart.md`
+- [x] T045 Perform the manual routing and library-workflow scenarios from `/Users/stevenyi/work/blue-electron/specs/035-mixer-follow-up/quickstart.md`
 
 ---
 
@@ -137,22 +113,19 @@
 - **Foundational (Phase 2)**: Depends on Setup and blocks all user stories.
 - **User Story 1 (Phase 3)**: Depends on Foundational and is the MVP for this follow-up slice.
 - **User Story 2 (Phase 4)**: Depends on Foundational and benefits from US1 because library-to-mixer workflows share validation and clipboard behavior.
-- **User Story 3 (Phase 5)**: Depends on Foundational and the window/session model delivered in Spec 034.
 - **Polish (Phase 6)**: Depends on the desired user stories being complete.
 
 ### User Story Dependencies
 
 - **US1 (P1)**: No dependency on other stories after Foundational.
 - **US2 (P1)**: Depends on Foundational and the session-library baseline from Spec 034.
-- **US3 (P2)**: Depends on Foundational and the effect-editor window manager from Spec 034.
 
 ### Parallel Opportunities
 
 - Setup inventory tasks T002-T004 can run in parallel.
-- Foundational tests T005-T008 can run in parallel.
+- Foundational tests T005-T007 can run in parallel.
 - US1 tests T015-T017 can run in parallel.
 - US2 tests T023-T025 can run in parallel.
-- US3 tests T031-T033 can run in parallel.
 - Polish documentation tasks T038-T039 can run in parallel.
 
 ## Implementation Strategy
@@ -162,17 +135,16 @@
 1. Complete Setup and Foundational phases.
 2. Complete User Story 1 only.
 3. Validate routing safety and advanced chain editing.
-4. Stop and review before expanding into library workflow polish and playback-aware refinements.
+4. Stop and review before expanding into library workflow polish.
 
 ### Incremental Delivery
 
 1. Land pure routing validation plus chain clipboard operations.
 2. Land advanced Mixer chain UI.
 3. Land session-library import/export, reload, and reorganization polish.
-4. Land playback-aware and window-focus refinements.
 
 ### Handoff Notes
 
 - Keep persistence redesign out of scope even if the session workflow becomes more capable.
-- If true metering requires engine telemetry not already available, document it as a later slice instead of stretching this spec.
-- Preserve the one-window-per-owner model; this spec should refine it, not replace it.
+- Preserve the one-window-per-owner model from Spec 034; new window/editor behavior belongs in a later explicit specification.
+- Do not reopen the withdrawn playback-aware/windowing scope from this task list.

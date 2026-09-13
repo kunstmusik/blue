@@ -22,11 +22,12 @@
 
 ## Feature Readiness
 
-- [x] User scenarios cover routing safety, no-save library workflow polish, and playback-aware/window refinements
+- [x] User scenarios cover routing safety and no-save library workflow polish
 - [x] Functional requirements explicitly keep SQLite and durable library persistence out of scope
 - [x] The planning package aligns with Spec 034 as a prerequisite rather than duplicating the core mixer editor scope
-- [x] The feature is ready for implementation task breakdown once Spec 034 is complete
+- [x] The retained feature scope is implemented, and the withdrawn playback-aware/windowing proposal is explicitly recorded as superseded
 
 ## Notes
 
 - This follow-up slice is intentionally storage-agnostic. Durable user-library persistence remains a future initiative that should cover multiple library types together.
+- The former playback-aware/windowing scope is not an outstanding task for Spec 035. Future exploration requires a new explicit specification.

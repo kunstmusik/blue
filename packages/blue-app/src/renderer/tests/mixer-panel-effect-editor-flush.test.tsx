@@ -106,14 +106,6 @@ vi.mock('../stores/blue-live-store', () => ({
   useBlueLiveStore: () => 'idle',
 }));
 
-vi.mock('../stores/mixer-playback-ui', () => ({
-  deriveMixerPlaybackUiState: () => ({
-    isPlaying: false,
-    isBlueLiveActive: false,
-    statusLabel: 'Stopped',
-  }),
-}));
-
 vi.mock('../components/workbench/panels/mixer/ChannelStrip', () => ({
   default: ({
     onOpenEffectInterface,

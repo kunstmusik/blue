@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Manual verification flow for advanced mixer editing and no-save library workflow polish after Spec 034 is in place.
+Manual verification flow for advanced mixer editing and no-save library workflow polish after Spec 034 is in place. Playback-aware and windowing-polish scenarios are intentionally excluded; later specifications own those concerns.
 
 ## Preconditions
 
@@ -30,15 +30,6 @@ Manual verification flow for advanced mixer editing and no-save library workflow
 5. Export an effect file.
 6. Trigger reload and confirm the app explains that session-local changes will be discarded.
 7. Confirm none of these operations implicitly save back to `~/.blue`.
-
-### 3. Playback-aware and windowing polish
-
-1. Open the Mixer panel and at least one effect editor window.
-2. Start and stop playback or Blue Live.
-3. Confirm playback-aware status cues or disabled states update correctly.
-4. Reopen the same effect from the Mixer or library.
-5. Confirm the original window is focused.
-6. Remove the backing item and confirm the editor window transitions cleanly.
 
 ## Suggested Validation Commands
 
