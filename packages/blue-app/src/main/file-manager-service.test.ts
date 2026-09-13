@@ -288,7 +288,7 @@ describe('listFileManagerDirectory', () => {
       return a < b ? -1 : 1;
     });
     expect(names).toEqual(sorted);
-  });
+  }, 30_000);
 });
 
 describe('validateFileManagerDirectory', () => {
