@@ -55,7 +55,7 @@ if (target.platform === 'darwin') {
 }
 
 run('cmake', configureArgs);
-run('cmake', ['--build', buildDir, '--target', 'blue-engine', '--config', buildType, '--parallel']);
+run('cmake', ['--build', buildDir, '--target', 'blue-engine', '--config', buildType]);
 
 const executable = join(
   buildDir,

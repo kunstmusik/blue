@@ -22,7 +22,7 @@ if (tracking) {
   buildArgs.push('--performance-tracking');
 }
 run(process.execPath, buildArgs);
-run('cmake', ['--build', buildDir, '--config', buildType, '--parallel']);
+run('cmake', ['--build', buildDir, '--config', buildType]);
 
 const ctestArgs = ['--test-dir', buildDir, '--output-on-failure', '-C', buildType];
 if (mode === 'integration') {

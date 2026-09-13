@@ -53,6 +53,13 @@ runs:
         version: ${{ inputs.pnpm-version }}
         run_install: false
 
+    - name: Limit native build parallelism
+      shell: bash
+      run: |
+        if [[ -z "${CMAKE_BUILD_PARALLEL_LEVEL:-}" ]]; then
+          echo "CMAKE_BUILD_PARALLEL_LEVEL=2" >> "$GITHUB_ENV"
+        fi
+
     - name: Restore pinned vcpkg checkout
       id: vcpkg-cache
       uses: actions/cache@v5
