@@ -1,5 +1,10 @@
 import type { DockviewApi, DockviewGroupPanel, IDockviewPanel } from 'dockview';
-import { PANEL_REGISTRY, getDefaultEditorPanels, getPanel } from './panel-registry';
+import {
+  PANEL_REGISTRY,
+  getDefaultActiveEditorPanel,
+  getDefaultEditorPanels,
+  getPanel,
+} from './panel-registry';
 import { hasActiveTreeDrag } from '../tree/tree-dnd-domain';
 import type { DockingOrigin } from '../../../shared/workbench-window-contract';
 import {
@@ -161,6 +166,13 @@ export function buildDefaultWorkbenchLayout(api: DockviewApi): AuxiliaryLayoutSt
       component: 'default',
       title: descriptor.title,
     });
+  }
+
+  // Dockview activates each newly added panel, so the registry's last startup
+  // entry would otherwise win; restore the registry's designated default.
+  const defaultActive = getDefaultActiveEditorPanel();
+  if (defaultActive) {
+    api.getPanel(defaultActive.id)?.api.setActive();
   }
 
   return applyAuxiliaryLayout(api, createDefaultAuxiliaryLayoutState());

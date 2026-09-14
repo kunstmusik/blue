@@ -260,12 +260,15 @@ describe('workbench auxiliary layout helpers', () => {
     expect(properties.panelIds).toEqual([]);
     expect(properties.dockedPanelIds).toEqual([]);
     expect(properties.dockedSize).toBe(200);
-    expect(output.panelIds).toEqual(['OutputTopComponent']);
-    expect(output.dockedPanelIds).toEqual(['OutputTopComponent']);
-    expect(output.activePanelId).toBe('OutputTopComponent');
+    expect(output.panelIds).toEqual(['MixerTopComponent', 'OutputTopComponent']);
+    expect(output.dockedPanelIds).toEqual([]);
+    expect(output.activePanelId).toBe('MixerTopComponent');
     expect(output.dockedSize).toBe(200);
     expect(getMinimizedTabsForEdge(state, 'right')).toEqual([]);
-    expect(getMinimizedTabsForEdge(state, 'bottom')).toEqual([]);
+    expect(getMinimizedTabsForEdge(state, 'bottom').map((tab) => tab.panelId)).toEqual([
+      'MixerTopComponent',
+      'OutputTopComponent',
+    ]);
   });
 
   it('adds non-startup tools only after an explicit reveal', () => {
@@ -275,9 +278,28 @@ describe('workbench auxiliary layout helpers', () => {
     const revealed = revealAuxiliaryPanel(api, state, 'JavaScriptConsoleTopComponent');
     const output = findSeeded(revealed, 'output-main')!;
 
-    expect(output.panelIds).toEqual(['OutputTopComponent', 'JavaScriptConsoleTopComponent']);
-    expect(output.dockedPanelIds).toEqual(['OutputTopComponent', 'JavaScriptConsoleTopComponent']);
-    expect(getMinimizedTabsForEdge(revealed, 'bottom')).toEqual([]);
+    expect(output.panelIds).toEqual([
+      'MixerTopComponent',
+      'OutputTopComponent',
+      'JavaScriptConsoleTopComponent',
+    ]);
+    expect(output.dockedPanelIds).toEqual(['JavaScriptConsoleTopComponent']);
+    expect(getMinimizedTabsForEdge(revealed, 'bottom').map((tab) => tab.panelId)).toEqual([
+      'MixerTopComponent',
+      'OutputTopComponent',
+    ]);
+  });
+
+  it('builds the default layout from Score and Project Properties with Score active', () => {
+    const api = createDockviewApiStub();
+
+    buildDefaultWorkbenchLayout(api);
+
+    expect(api.getPanel('ScoreTopComponent')?.title).toBe('Score');
+    expect(api.getPanel('ProjectPropertiesTopComponent')?.title).toBe('Project Properties');
+    expect(api.getPanel('OrchestraTopComponent')).toBeUndefined();
+    expect(api.getPanel('BlueLiveTopComponent')).toBeUndefined();
+    expect(api.getPanel('ScoreTopComponent')?.group.activePanel?.id).toBe('ScoreTopComponent');
   });
 
   it('normalizes dockview panel titles to registry labels', () => {
@@ -286,15 +308,15 @@ describe('workbench auxiliary layout helpers', () => {
     buildDefaultWorkbenchLayout(api);
 
     expect(api.getPanel('ScoreTopComponent')?.title).toBe('Score');
-    expect(api.getPanel('OrchestraTopComponent')?.title).toBe('Orchestra');
-    expect(api.getPanel('GlobalOrchestraTopComponent')?.title).toBe('Global Orchestra');
-    expect(api.getPanel('GlobalScoreTopComponent')?.title).toBe('Global Score');
     expect(api.getPanel('ProjectPropertiesTopComponent')?.title).toBe('Project Properties');
   });
 
   it('anchors auxiliary grid groups to a grid editor when Score is popped out', () => {
     const api = createDockviewApiStub();
-    const state = buildDefaultWorkbenchLayout(api);
+    buildDefaultWorkbenchLayout(api);
+    const state = createDefaultAuxiliaryLayoutState();
+    const output = findSeeded(state, 'output-main')!;
+    output.dockedPanelIds = [...output.panelIds];
     api.getPanel('ScoreTopComponent').group.api.location = { type: 'popout' };
 
     const references: any[] = [];
@@ -306,7 +328,7 @@ describe('workbench auxiliary layout helpers', () => {
 
     applyAuxiliaryLayout(api, state);
 
-    expect(references.at(-1)?.id).toBe('OrchestraTopComponent');
+    expect(references.at(-1)?.id).toBe('ProjectPropertiesTopComponent');
     expect(references.at(-1)?.group.api.location.type).toBe('grid');
   });
 
@@ -966,11 +988,14 @@ describe('edge independence', () => {
     const rightTabs = getMinimizedTabsForEdge(moved, 'right');
     const bottomTabs = getMinimizedTabsForEdge(moved, 'bottom');
     expect(rightTabs).toHaveLength(0);
-    expect(bottomTabs).toHaveLength(0);
+    expect(bottomTabs.map((tab) => tab.panelId)).toEqual([
+      'MixerTopComponent',
+      'OutputTopComponent',
+    ]);
 
     const outputGroup = findSeeded(moved, 'output-main')!;
     expect(outputGroup.edge).toBe('bottom');
-    expect(outputGroup.panelIds).toEqual(['OutputTopComponent']);
+    expect(outputGroup.panelIds).toEqual(['MixerTopComponent', 'OutputTopComponent']);
   });
 
   it('moves all instances on a docked edge together', () => {

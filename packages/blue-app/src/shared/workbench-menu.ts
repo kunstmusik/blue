@@ -5,6 +5,8 @@ export interface PanelDescriptor {
   title: string;
   mode: PanelMode;
   openAtStartup: boolean;
+  /** The editor panel shown (active) when the default layout is built. */
+  activeAtStartup?: boolean;
   position?: number;
   icon?: string;
   auxiliaryGroupId?: 'properties-main' | 'output-main';
@@ -16,12 +18,19 @@ export interface PanelDescriptor {
 }
 
 export const WORKBENCH_PANEL_REGISTRY: PanelDescriptor[] = [
-  { id: 'ScoreTopComponent', title: 'Score', mode: 'editor', openAtStartup: true, icon: '♪' },
+  {
+    id: 'ScoreTopComponent',
+    title: 'Score',
+    mode: 'editor',
+    openAtStartup: true,
+    activeAtStartup: true,
+    icon: '♪',
+  },
   {
     id: 'OrchestraTopComponent',
     title: 'Orchestra',
     mode: 'editor',
-    openAtStartup: true,
+    openAtStartup: false,
     position: 200,
     icon: '🎻',
   },
@@ -29,15 +38,15 @@ export const WORKBENCH_PANEL_REGISTRY: PanelDescriptor[] = [
     id: 'GlobalOrchestraTopComponent',
     title: 'Global Orchestra',
     mode: 'editor',
-    openAtStartup: true,
+    openAtStartup: false,
   },
-  { id: 'GlobalScoreTopComponent', title: 'Global Score', mode: 'editor', openAtStartup: true },
-  { id: 'TablesTopComponent', title: 'Tables', mode: 'editor', openAtStartup: true },
+  { id: 'GlobalScoreTopComponent', title: 'Global Score', mode: 'editor', openAtStartup: false },
+  { id: 'TablesTopComponent', title: 'Tables', mode: 'editor', openAtStartup: false },
   {
     id: 'UserDefinedOpcodeTopComponent',
     title: 'UDOs',
     mode: 'editor',
-    openAtStartup: true,
+    openAtStartup: false,
     position: 300,
   },
   {
@@ -50,7 +59,7 @@ export const WORKBENCH_PANEL_REGISTRY: PanelDescriptor[] = [
     id: 'BlueLiveTopComponent',
     title: 'Blue Live',
     mode: 'editor',
-    openAtStartup: true,
+    openAtStartup: false,
     position: 800,
     icon: '🔴',
   },
@@ -140,7 +149,7 @@ export const WORKBENCH_PANEL_REGISTRY: PanelDescriptor[] = [
     id: 'MixerTopComponent',
     title: 'Mixer',
     mode: 'output',
-    openAtStartup: false,
+    openAtStartup: true,
     position: 200,
     icon: '🎛',
     auxiliaryGroupId: 'output-main',
@@ -237,6 +246,10 @@ export function getPanelsByMode(mode: PanelMode): PanelDescriptor[] {
 
 export function getDefaultEditorPanels(): PanelDescriptor[] {
   return getPanelsByMode('editor').filter((panel) => panel.openAtStartup);
+}
+
+export function getDefaultActiveEditorPanel(): PanelDescriptor | undefined {
+  return getPanelsByMode('editor').find((panel) => panel.activeAtStartup === true);
 }
 
 export function isAuxiliaryEligiblePanel(panelId: string): boolean {
