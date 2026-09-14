@@ -8,6 +8,8 @@
  * Electron dialogs and lifecycle callbacks.
  */
 
+import { projectSaveStateNeedsSaving, type ProjectSaveState } from '../shared/project-history';
+
 export type ReplacementFlowOutcome =
   | { status: 'committed' }
   | { status: 'no-op' }
@@ -32,12 +34,20 @@ export interface ReplacementFlowCallbacks<Target> {
   confirmSave: (target: Target) => Promise<boolean> | boolean;
   /** Install the prepared target through the existing lifecycle. */
   commit: (target: Target) => Promise<void> | void;
+  /**
+   * Optional boundary held around the accepted-target decisions and commit
+   * (library decision -> save decision -> terminal commit) so editor
+   * settlement, save-state evaluation, the settled save, and the terminal
+   * replacement action share one fence (spec 109 T029). Absent by default.
+   */
+  runDecisionBoundary?: <T>(action: () => Promise<T>) => Promise<T>;
 }
 
 /**
  * Run one interactive replacement request through the shared stage order:
  * preflight -> prepare -> no-op check -> preflight re-check -> library
- * decision -> save decision -> single commit.
+ * decision -> save decision -> single commit. When runDecisionBoundary is
+ * supplied, the decisions and commit run inside it.
  */
 export async function runReplacementFlow<Target>(
   flow: ReplacementFlowCallbacks<Target>,
@@ -59,16 +69,20 @@ export async function runReplacementFlow<Target>(
     return { status: 'cancelled' };
   }
 
-  if (!(await flow.confirmLibraryDraft(target))) {
-    return { status: 'blocked' };
-  }
+  const inDecisionBoundary =
+    flow.runDecisionBoundary ?? ((action: () => Promise<ReplacementFlowOutcome>) => action());
+  return inDecisionBoundary(async () => {
+    if (!(await flow.confirmLibraryDraft(target))) {
+      return { status: 'blocked' as const };
+    }
 
-  if (!(await flow.confirmSave(target))) {
-    return { status: 'blocked' };
-  }
+    if (!(await flow.confirmSave(target))) {
+      return { status: 'blocked' as const };
+    }
 
-  await flow.commit(target);
-  return { status: 'committed' };
+    await flow.commit(target);
+    return { status: 'committed' as const };
+  });
 }
 
 /**
@@ -88,6 +102,8 @@ export interface ProjectFileReplacementDependencies<Project> {
   confirmLibraryDraft: (filePath: string) => Promise<boolean> | boolean;
   confirmSave: (filePath: string) => Promise<boolean> | boolean;
   commit: (project: Project, filePath: string) => Promise<void> | void;
+  /** Boundary held around the accepted-target decisions and commit (T029). */
+  runDecisionBoundary?: <T>(action: () => Promise<T>) => Promise<T>;
 }
 
 interface PreparedProjectFile<Project> {
@@ -113,47 +129,66 @@ export async function runProjectFileReplacement<Project>(
     confirmLibraryDraft: (target) => dependencies.confirmLibraryDraft(target.filePath),
     confirmSave: (target) => dependencies.confirmSave(target.filePath),
     commit: (target) => dependencies.commit(target.project, target.filePath),
+    runDecisionBoundary: dependencies.runDecisionBoundary,
   });
 }
 
 export type ReplacementSaveChoice = 'save' | 'discard' | 'cancel';
 export type ReplacementSaveOutcome = 'saved' | 'discarded' | 'cancelled' | 'blocked';
 
-export interface ReplacementSaveDecisionDependencies {
+export interface ProjectSaveDecisionDependencies {
+  /**
+   * Holds the single settlement boundary through state evaluation, the save
+   * decision, and the settled save (spec 109). Rejects on settlement timeout
+   * or failure, which blocks the transition.
+   */
+  runSettlementBarrier: <T>(action: () => Promise<T>) => Promise<T>;
+  /** Authoritative save state of the active project. */
+  getSaveState: () => ProjectSaveState;
   /** Presents the Save Changes decision dialog. */
   choose: () => Promise<ReplacementSaveChoice> | ReplacementSaveChoice;
-  hasCurrentProject: () => boolean;
   hasCurrentPath: () => boolean;
-  /** Durable save to the current path; false on write failure. */
+  /** Durable save to the current path inside the boundary; false on write failure. */
   saveCurrent: () => boolean | Promise<boolean>;
-  /** Transactional Save As; false on cancel, overwrite decline, or failure. */
+  /** Transactional Save As inside the boundary; false on cancel, overwrite decline, or failure. */
   saveAs: () => Promise<boolean> | boolean;
 }
 
 /**
- * Resolve the replacement save decision. Replacement proceeds only on
- * 'saved' (durable write, including a successful Save As) or 'discarded';
- * 'cancelled' and 'blocked' leave the current project session intact.
+ * Resolve the project save decision from the authoritative save state
+ * (spec 109). 'none' and 'saved' bypass the dialog entirely; 'unsaved' and
+ * 'modified' present the existing Save / Don't Save / Cancel choices. The
+ * transition proceeds only on 'saved' (durable write, including a successful
+ * Save As) or 'discarded'; 'cancelled' and 'blocked' leave the current
+ * project session intact. Never performs application shutdown — the caller
+ * that owns the terminal action decides what a proceeding outcome means.
  */
-export async function resolveReplacementSaveDecision(
-  dependencies: ReplacementSaveDecisionDependencies,
+export async function resolveProjectSaveDecision(
+  dependencies: ProjectSaveDecisionDependencies,
 ): Promise<ReplacementSaveOutcome> {
-  if (!dependencies.hasCurrentProject()) {
-    return 'discarded';
+  try {
+    return await dependencies.runSettlementBarrier(async () => {
+      const state = dependencies.getSaveState();
+      if (!projectSaveStateNeedsSaving(state)) {
+        return 'discarded' as const;
+      }
+      const choice = await dependencies.choose();
+      if (choice === 'cancel') {
+        return 'cancelled' as const;
+      }
+      if (choice === 'discard') {
+        return 'discarded' as const;
+      }
+      const saved = dependencies.hasCurrentPath()
+        ? await dependencies.saveCurrent()
+        : await dependencies.saveAs();
+      return saved ? ('saved' as const) : ('blocked' as const);
+    });
+  } catch {
+    // A settlement timeout or failure must retain the project and abort the
+    // close/quit/replacement transition instead of proceeding on stale state.
+    return 'blocked';
   }
-
-  const choice = await dependencies.choose();
-  if (choice === 'cancel') {
-    return 'cancelled';
-  }
-  if (choice === 'discard') {
-    return 'discarded';
-  }
-
-  if (dependencies.hasCurrentPath()) {
-    return (await dependencies.saveCurrent()) ? 'saved' : 'blocked';
-  }
-  return (await dependencies.saveAs()) ? 'saved' : 'blocked';
 }
 
 export interface TransactionalSaveAsDependencies {

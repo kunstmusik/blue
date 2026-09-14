@@ -11,6 +11,8 @@ import {
   isProjectHistoryResponse,
   isProjectDocumentUpdatedEvent,
   isProjectRuntimeOutcomeEvent,
+  isProjectSaveState,
+  projectSaveStateNeedsSaving,
   type ProjectHistoryCommitRequest,
   type ProjectHistoryCommittedResponse,
   type ProjectHistoryStaleResponse,
@@ -420,5 +422,42 @@ describe('project-history shared contracts', () => {
         outcomes: [{ performanceKind: 'timeline', generation: -1 }],
       }),
     ).toBe(false);
+  });
+
+  describe('project save state (spec 109)', () => {
+    it('accepts exactly the four authoritative save states', () => {
+      expect(isProjectSaveState('none')).toBe(true);
+      expect(isProjectSaveState('unsaved')).toBe(true);
+      expect(isProjectSaveState('saved')).toBe(true);
+      expect(isProjectSaveState('modified')).toBe(true);
+    });
+
+    it('rejects invalid values', () => {
+      expect(isProjectSaveState('dirty')).toBe(false);
+      expect(isProjectSaveState('NONE')).toBe(false);
+      expect(isProjectSaveState('')).toBe(false);
+      expect(isProjectSaveState(null)).toBe(false);
+      expect(isProjectSaveState(undefined)).toBe(false);
+      expect(isProjectSaveState(42)).toBe(false);
+      expect(isProjectSaveState({ state: 'saved' })).toBe(false);
+      expect(isProjectSaveState(['saved'])).toBe(false);
+    });
+
+    it('round-trips each state through JSON unchanged', () => {
+      for (const state of ['none', 'unsaved', 'saved', 'modified'] as const) {
+        const decoded = JSON.parse(JSON.stringify(state)) as unknown;
+        expect(isProjectSaveState(decoded)).toBe(true);
+        if (isProjectSaveState(decoded)) {
+          expect(decoded).toBe(state);
+        }
+      }
+    });
+
+    it('derives needsSaving from the state instead of storing it', () => {
+      expect(projectSaveStateNeedsSaving('none')).toBe(false);
+      expect(projectSaveStateNeedsSaving('saved')).toBe(false);
+      expect(projectSaveStateNeedsSaving('unsaved')).toBe(true);
+      expect(projectSaveStateNeedsSaving('modified')).toBe(true);
+    });
   });
 });

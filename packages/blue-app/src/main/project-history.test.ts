@@ -874,6 +874,202 @@ describe('ProjectHistory coordinator', () => {
     });
   });
 
+  describe('save state matrix (spec 109)', () => {
+    it('derives none, unsaved, saved, and modified through the lifecycle transitions', async () => {
+      // No document at all -> none.
+      const emptySession = new ProjectSession();
+      const emptyHistory = new ProjectHistory({ session: emptySession });
+      expect(emptyHistory.getSaveState()).toBe('none');
+      expect(emptyHistory.isDirty()).toBe(false);
+
+      // Created project without a file path -> unsaved even with clean history.
+      const { session, data, history, context } = setupHistory();
+      session.replace(data, null);
+      history.clear();
+      history.checkpointSave();
+      expect(history.getSaveState()).toBe('unsaved');
+      expect(history.isDirty()).toBe(false);
+
+      const docId = session.read().documentId!;
+      await history.commit(
+        context.nextCommitRequest(docId, 0, 'Edit 1', [{ projectProperties: { title: 'T1' } }]),
+      );
+      expect(history.getSaveState()).toBe('unsaved');
+
+      // Opened (or saved-to-disk) project: path plus matching checkpoint -> saved.
+      session.replace(data, '/tmp/project.blue', { preserveDocumentId: true });
+      history.clear();
+      history.checkpointSave();
+      expect(history.getSaveState()).toBe('saved');
+
+      // Durable commit moves away from the checkpoint -> modified.
+      await history.commit(
+        context.nextCommitRequest(docId, 0, 'Edit 2', [{ projectProperties: { title: 'T2' } }]),
+      );
+      expect(history.getSaveState()).toBe('modified');
+
+      // Undo restores the checkpointed stateId -> saved again.
+      const undoRes = await history.undo({
+        documentId: docId,
+        operationId: 'save-state-undo-1',
+        expectedRevision: 1,
+        contextSequence: 3,
+      });
+      expect(undoRes.status).toBe('committed');
+      expect(history.getSaveState()).toBe('saved');
+
+      // Redo reapplies the post-save change -> modified again.
+      const redoRes = await history.redo({
+        documentId: docId,
+        operationId: 'save-state-redo-1',
+        expectedRevision: 2,
+        contextSequence: 4,
+      });
+      expect(redoRes.status).toBe('committed');
+      expect(history.getSaveState()).toBe('modified');
+
+      // A successful save checkpoints the current state -> saved.
+      history.checkpointSave();
+      expect(history.getSaveState()).toBe('saved');
+
+      // Close -> none.
+      session.close();
+      expect(history.getSaveState()).toBe('none');
+    });
+
+    it('keeps a never-saved project unsaved across edits, undo, and redo', async () => {
+      const { session, data, history, context } = setupHistory();
+      session.replace(data, null);
+      history.clear();
+      history.checkpointSave();
+      const docId = session.read().documentId!;
+
+      await history.commit(
+        context.nextCommitRequest(docId, 0, 'Edit 1', [{ projectProperties: { title: 'T1' } }]),
+      );
+      expect(history.getSaveState()).toBe('unsaved');
+
+      await history.undo({
+        documentId: docId,
+        operationId: 'unsaved-undo-1',
+        expectedRevision: 1,
+        contextSequence: 2,
+      });
+      expect(history.getSaveState()).toBe('unsaved');
+      expect(history.isDirty()).toBe(false);
+    });
+
+    it('derives modified from state identity rather than cursor position on branch/prune', async () => {
+      const { session, history, context } = setupHistory();
+      const docId = session.read().documentId!;
+      history.checkpointSave();
+      expect(history.getSaveState()).toBe('saved');
+
+      await history.commit(
+        context.nextCommitRequest(docId, 0, 'Edit 1', [{ projectProperties: { title: 'T1' } }]),
+      );
+      await history.commit(
+        context.nextCommitRequest(docId, 1, 'Edit 2', [{ projectProperties: { title: 'T2' } }]),
+      );
+      expect(history.getSaveState()).toBe('modified');
+
+      // Undo twice returns exactly to the saved baseline stateId.
+      await history.undo({
+        documentId: docId,
+        operationId: 'branch-undo-1',
+        expectedRevision: 2,
+        contextSequence: 3,
+      });
+      await history.undo({
+        documentId: docId,
+        operationId: 'branch-undo-2',
+        expectedRevision: 3,
+        contextSequence: 4,
+      });
+      expect(history.getSaveState()).toBe('saved');
+
+      // A new commit prunes the redo stack and creates a modified branch.
+      const branchRes = await history.commit(
+        context.nextCommitRequest(docId, 4, 'Branched Edit', [
+          { projectProperties: { title: 'B1' } },
+        ]),
+      );
+      expect(branchRes.status).toBe('committed');
+      expect(history.read().canRedo).toBe(false);
+      expect(history.getSaveState()).toBe('modified');
+    });
+
+    it('tracks a save before the redo tip so only the saved revision is clean', async () => {
+      const { session, history, context } = setupHistory();
+      const docId = session.read().documentId!;
+      history.checkpointSave();
+
+      await history.commit(
+        context.nextCommitRequest(docId, 0, 'Edit 1', [{ projectProperties: { title: 'T1' } }]),
+      );
+      await history.commit(
+        context.nextCommitRequest(docId, 1, 'Edit 2', [{ projectProperties: { title: 'T2' } }]),
+      );
+      await history.undo({
+        documentId: docId,
+        operationId: 'tip-undo-1',
+        expectedRevision: 2,
+        contextSequence: 3,
+      });
+      expect(history.read().canRedo).toBe(true);
+
+      // Saving here checkpoints the state at the cursor, before the redo tip.
+      const savedAtCursor = session.read().stateId;
+      history.checkpointSave(savedAtCursor ?? undefined);
+      expect(history.getSaveState()).toBe('saved');
+
+      // Redo past the new save point -> modified.
+      await history.redo({
+        documentId: docId,
+        operationId: 'tip-redo-1',
+        expectedRevision: 3,
+        contextSequence: 4,
+      });
+      expect(history.getSaveState()).toBe('modified');
+
+      // Undo back to the save point -> saved again.
+      await history.undo({
+        documentId: docId,
+        operationId: 'tip-undo-2',
+        expectedRevision: 4,
+        contextSequence: 5,
+      });
+      expect(history.getSaveState()).toBe('saved');
+    });
+
+    it('is read-only: querying never mutates the session, history, cursor, or publications', async () => {
+      const { session, history, recorder, context } = setupHistory();
+      const docId = session.read().documentId!;
+      history.checkpointSave();
+      await history.commit(
+        context.nextCommitRequest(docId, 0, 'Edit 1', [{ projectProperties: { title: 'T1' } }]),
+      );
+
+      const sessionBefore = { ...session.read() };
+      const projectionBefore = history.read();
+      const eventsBefore = recorder.events.length;
+
+      expect(history.getSaveState()).toBe('modified');
+      expect(history.getSaveState()).toBe('modified');
+
+      const sessionAfter = session.read();
+      expect(sessionAfter.data).toBe(sessionBefore.data);
+      expect(sessionAfter.filePath).toBe(sessionBefore.filePath);
+      expect(sessionAfter.revision).toBe(sessionBefore.revision);
+      expect(sessionAfter.sessionId).toBe(sessionBefore.sessionId);
+      expect(sessionAfter.documentId).toBe(sessionBefore.documentId);
+      expect(sessionAfter.stateId).toBe(sessionBefore.stateId);
+      expect(history.read()).toEqual(projectionBefore);
+      expect(history.read().cursor).toBe(projectionBefore.cursor);
+      expect(recorder.events.length).toBe(eventsBefore);
+    });
+  });
+
   describe('computeStructuralInversePatches', () => {
     it('inverts Track updateTrackInstrument with BlueX7 replaceVoice', () => {
       const data = new BlueData();

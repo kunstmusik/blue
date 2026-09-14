@@ -141,9 +141,10 @@ import {
   type UpdateOfferChoice,
 } from './open-example-project-flow';
 import {
-  resolveReplacementSaveDecision,
+  resolveProjectSaveDecision,
   runProjectFileReplacement,
   runTransactionalSaveAs,
+  type ReplacementSaveChoice,
 } from './project-replacement-flow';
 import {
   runCsdImportReplacement,
@@ -497,6 +498,7 @@ const projectHistory = createProjectHistory({
     broadcastProjectDocumentUpdateToEffectWindows(fullEvent as never);
     broadcastProjectDocumentUpdateToTrackInstrumentWindows(fullEvent as never);
     rebuildApplicationMenu();
+    updateWindowTitle();
   },
   broadcastPrepareBoundary: async (event) => {
     for (const win of BrowserWindow.getAllWindows()) {
@@ -540,6 +542,7 @@ function publishHistoryCheckpoint(): void {
   broadcastProjectDocumentUpdateToEffectWindows(event as never);
   broadcastProjectDocumentUpdateToTrackInstrumentWindows(event as never);
   rebuildApplicationMenu();
+  updateWindowTitle();
 }
 
 const collectedIpcHandlers = new Map<string, IpcMainInvokeHandler>();
@@ -638,7 +641,6 @@ function getBlueLiveTriggerController(): BlueLiveTriggerController {
 }
 let engineRuntimeService: EngineRuntimeService | null = null;
 let isQuitting = false;
-let pendingQuit = false;
 let shutdownPromise: Promise<void> | null = null;
 let playbackStartPromise: Promise<boolean> | null = null;
 const engineRecoveryCoordinator = new EngineRecoveryCoordinator();
@@ -1204,7 +1206,7 @@ function findTrackLayerGroupById(
 
 function updateWindowTitle(): void {
   if (mainWindow) {
-    mainWindow.setTitle(getWindowTitle(getCurrentFilePath()));
+    mainWindow.setTitle(getWindowTitle(getCurrentFilePath(), projectHistory.getSaveState()));
   }
 }
 
@@ -1745,13 +1747,12 @@ async function canReplaceProjectWhileRenderActive(): Promise<boolean> {
   return false;
 }
 
-async function confirmSaveBeforeReplace(
-  options: { quitAfterSave?: boolean } = {},
-): Promise<boolean> {
-  if (!(await canReplaceProjectWhileRenderActive())) return false;
-  if (!getCurrentData()) return true;
-  if (!mainWindow || mainWindow.isDestroyed()) return false;
-
+/**
+ * Presents the native Save Changes decision for the active project. Only
+ * reached when the authoritative save state requires a decision (spec 109).
+ */
+async function chooseProjectSaveDecision(): Promise<ReplacementSaveChoice> {
+  if (!mainWindow || mainWindow.isDestroyed()) return 'cancel';
   const result = await showNativeConfirmation(mainWindow, {
     id: 'confirm-save-before-replace',
     type: 'question',
@@ -1768,50 +1769,67 @@ async function confirmSaveBeforeReplace(
     defaultActionId: 'save',
     cancelActionId: 'cancel',
   });
+  if (result.actionId === 'save' && result.outcome === 'selected') return 'save';
+  if (result.actionId === 'discard' && result.outcome === 'selected') return 'discard';
+  return 'cancel';
+}
 
-  if (options.quitAfterSave) {
-    // Quit keeps its immediate policy: Save writes then quits, Don't Save
-    // quits without writing, and a cancelled or failed save aborts the quit.
-    if (result.actionId === 'save' && result.outcome === 'selected') {
-      pendingQuit = true;
-      if (getCurrentFilePath()) {
-        const saved = await saveCurrentProject();
-        if (!saved) {
-          pendingQuit = false;
-          return false;
-        }
-      } else {
-        const saved = await saveFileAs();
-        if (!saved) {
-          pendingQuit = false;
-          return false;
-        }
-      }
-      return true;
-    }
+/**
+ * Resolve the save decision for a close, quit, or replacement transition
+ * from the authoritative save state (spec 109). One settlement boundary is
+ * held through state evaluation, the decision, and the settled save, so
+ * buffered editor commits are counted before the state is read. Clean
+ * projects ('none'/'saved') proceed without a dialog; 'unsaved'/'modified'
+ * keep the existing Save / Don't Save / Cancel outcomes. Never quits: the
+ * caller that owns the terminal action decides what proceeding means.
+ */
+function projectSaveDecisionDependencies(
+  runSettlementBarrier: <T>(action: () => Promise<T>) => Promise<T>,
+) {
+  return {
+    runSettlementBarrier,
+    getSaveState: () => projectHistory.getSaveState(),
+    choose: chooseProjectSaveDecision,
+    hasCurrentPath: () => Boolean(getCurrentFilePath()),
+    saveCurrent: () => (getCurrentFilePath() ? doSave(getCurrentFilePath()) : false),
+    saveAs: () => saveFileAsInternal(),
+  };
+}
 
-    if (result.actionId === 'discard' && result.outcome === 'selected') {
-      doQuit();
-      return true;
-    }
+async function confirmSaveBeforeReplace(): Promise<boolean> {
+  if (!(await canReplaceProjectWhileRenderActive())) return false;
 
-    return false;
-  }
+  const outcome = await resolveProjectSaveDecision(
+    projectSaveDecisionDependencies((action) =>
+      projectHistory.runSettlementBarrier('replacement', action),
+    ),
+  );
+  return outcome === 'saved' || outcome === 'discarded';
+}
 
-  // Replacement consent requires a durable save: a cancelled Save As,
-  // declined overwrite, or failed write blocks the replacement (FR-011).
-  const outcome = await resolveReplacementSaveDecision({
-    choose: () =>
-      result.actionId === 'save' && result.outcome === 'selected'
-        ? 'save'
-        : result.actionId === 'discard' && result.outcome === 'selected'
-          ? 'discard'
-          : 'cancel',
-    hasCurrentProject: () => getCurrentData() !== null,
-    hasCurrentPath: () => getCurrentFilePath() !== null,
-    saveCurrent: () => saveCurrentProject(),
-    saveAs: () => saveFileAs(),
-  });
+/**
+ * The terminal-transition boundary (spec 109 T029): one settlement barrier
+ * held from editor settlement and save-state evaluation through the library
+ * guard, Save/Save As, and the terminal close/quit/replacement action, so no
+ * editor commit can land unprotected between the decision and the terminal
+ * action. Saves inside it use the internal helpers; never nest the
+ * barrier-owning public save wrappers or this confirm inside another barrier.
+ */
+async function runTerminalProjectTransition<T>(transition: () => Promise<T>): Promise<T> {
+  return projectHistory.runSettlementBarrier('replacement', transition);
+}
+
+/**
+ * Save-decision confirm for use inside {@link runTerminalProjectTransition}:
+ * the boundary is already held, so the coordinator runs settled instead of
+ * opening a second (deadlocking) barrier.
+ */
+async function confirmSaveBeforeReplaceInsideBoundary(): Promise<boolean> {
+  if (!(await canReplaceProjectWhileRenderActive())) return false;
+
+  const outcome = await resolveProjectSaveDecision(
+    projectSaveDecisionDependencies(async (action) => await action()),
+  );
   return outcome === 'saved' || outcome === 'discarded';
 }
 
@@ -1859,7 +1877,7 @@ function rebuildApplicationMenu(): void {
         sendHistoryCommandToFocusedWindow({ type: 'redo' });
       },
       onNewFile: () => {
-        void handleNewFile();
+        void newFile();
       },
       onOpenFile: () => {
         void handleOpenFile();
@@ -2087,7 +2105,7 @@ function createWindow(): void {
     width: 1200,
     height: 800,
     backgroundColor: '#1a1a2e',
-    title: getWindowTitle(getCurrentFilePath()),
+    title: getWindowTitle(getCurrentFilePath(), projectHistory.getSaveState()),
     icon: getAppIcon(),
     show: false,
     webPreferences: {
@@ -2333,29 +2351,44 @@ async function confirmLibraryDraftTransition(
 }
 
 /**
- * Request app exit — shows save prompt if project is dirty.
+ * Request app exit — prompts only when the authoritative save state requires
+ * a decision (spec 109). requestQuit owns the single terminal shutdown
+ * action: a clean project, a successful save, and an explicit discard all
+ * reach doQuit here once, while cancel, settlement failure, and write
+ * failures abort the quit and leave the project open and protected. The
+ * library guard, save decision, and terminal shutdown share one settlement
+ * boundary (T029).
  */
 async function requestQuit(): Promise<void> {
   isQuitting = true;
 
-  if (!(await confirmLibraryDraftTransition('quit'))) {
+  let mayQuit = false;
+  try {
+    mayQuit = await runTerminalProjectTransition(async () => {
+      if (!(await confirmLibraryDraftTransition('quit'))) {
+        return false;
+      }
+
+      // Stop engine first
+      if (engineBridge && engineBridge.isCurrentlyPlaying()) {
+        await engineBridge.stopPlayback();
+      }
+
+      if (!(await confirmSaveBeforeReplaceInsideBoundary())) {
+        return false;
+      }
+
+      await doQuit();
+      return true;
+    });
+  } catch {
+    // A failed transition (e.g. settlement timeout) must abort the quit
+    // without wedging isQuitting — the app has to stay usable and quit-able.
+    mayQuit = false;
+  }
+
+  if (!mayQuit) {
     isQuitting = false;
-    return;
-  }
-
-  // Stop engine first
-  if (engineBridge && engineBridge.isCurrentlyPlaying()) {
-    await engineBridge.stopPlayback();
-  }
-
-  if (!getCurrentData()) {
-    doQuit();
-    return;
-  }
-
-  if (!(await confirmSaveBeforeReplace({ quitAfterSave: true }))) {
-    isQuitting = false;
-    return;
   }
 }
 
@@ -2466,11 +2499,6 @@ async function doQuit(): Promise<void> {
 
 async function handleOpenFile(): Promise<void> {
   await openFile();
-}
-
-async function handleNewFile(): Promise<void> {
-  if (!(await confirmSaveBeforeReplace())) return;
-  await newFile();
 }
 
 /**
@@ -2924,8 +2952,9 @@ async function importCsdFile(): Promise<boolean> {
       readSource: (filePath) => fs.readFileSync(filePath, 'utf-8'),
       convert: (csdText, modeType) => convertCSDtoBlue(csdText, modeType),
       confirmLibraryDraft: () => confirmLibraryDraftTransition('switchProject'),
-      confirmSave: () => confirmSaveBeforeReplace(),
+      confirmSave: () => confirmSaveBeforeReplaceInsideBoundary(),
       commit: (data) => installProjectData(data, null),
+      runDecisionBoundary: runTerminalProjectTransition,
     });
 
     return outcome.status === 'committed';
@@ -2990,8 +3019,9 @@ async function importOrcSco(): Promise<boolean> {
       readSource: (filePath) => fs.readFileSync(filePath, 'utf-8'),
       convert: (orcText, scoText, modeType) => convertOrcScoToBlue(orcText, scoText, modeType),
       confirmLibraryDraft: () => confirmLibraryDraftTransition('switchProject'),
-      confirmSave: () => confirmSaveBeforeReplace(),
+      confirmSave: () => confirmSaveBeforeReplaceInsideBoundary(),
       commit: (data) => installProjectData(data, null),
+      runDecisionBoundary: runTerminalProjectTransition,
     });
 
     return outcome.status === 'committed';
@@ -3075,8 +3105,9 @@ async function openProjectFile(filePath: string): Promise<boolean> {
       isSameFile: isCurrentProjectFilePath,
       preflight: () => canReplaceProjectWhileRenderActive(),
       confirmLibraryDraft: () => confirmLibraryDraftTransition('switchProject'),
-      confirmSave: () => confirmSaveBeforeReplace(),
+      confirmSave: () => confirmSaveBeforeReplaceInsideBoundary(),
       commit: (data, sourcePath) => installProjectData(data, sourcePath),
+      runDecisionBoundary: runTerminalProjectTransition,
     });
     return outcome.status === 'committed';
   } catch (err: unknown) {
@@ -3183,32 +3214,40 @@ async function runPackagedEngineMismatchVerificationAndExit(): Promise<never> {
 async function newFile(): Promise<void> {
   if (!mainWindow) return;
   if (!(await canReplaceProjectWhileRenderActive())) return;
-  if (!(await confirmLibraryDraftTransition('switchProject'))) return;
 
-  const data = new BlueData();
-  const settings = loadProgramSettings();
-  applyProgramSettingsToNewProject(data, settings);
-  await installProjectData(data, null);
+  await runTerminalProjectTransition(async () => {
+    if (!(await confirmSaveBeforeReplaceInsideBoundary())) return;
+    if (!(await confirmLibraryDraftTransition('switchProject'))) return;
+
+    const data = new BlueData();
+    const settings = loadProgramSettings();
+    applyProgramSettingsToNewProject(data, settings);
+    await installProjectData(data, null);
+  });
 }
 
 async function closeProject(): Promise<void> {
   if (!mainWindow) return;
 
-  if (!(await confirmSaveBeforeReplace())) return;
-  if (!(await confirmLibraryDraftTransition('closeProject'))) return;
+  await runTerminalProjectTransition(async () => {
+    if (!(await confirmSaveBeforeReplaceInsideBoundary())) return;
+    if (!(await confirmLibraryDraftTransition('closeProject'))) return;
 
-  // Stop any non-idle Blue Live session before clearing the canonical project.
-  disposeJavaScriptSession();
-  await projectLifecycle.close();
-  canAuditionScoreObjects = false;
+    // Stop any non-idle Blue Live session before clearing the canonical project.
+    disposeJavaScriptSession();
+    await projectLifecycle.close();
+    canAuditionScoreObjects = false;
+  });
 }
 
 async function revertProject(): Promise<void> {
   if (!getCurrentFilePath()) return;
   const filePath = getCurrentFilePath();
-  if (!(await confirmSaveBeforeReplace())) return;
-  if (!(await confirmLibraryDraftTransition('switchProject'))) return;
-  await loadProjectFromDisk(filePath);
+  await runTerminalProjectTransition(async () => {
+    if (!(await confirmSaveBeforeReplaceInsideBoundary())) return;
+    if (!(await confirmLibraryDraftTransition('switchProject'))) return;
+    await loadProjectFromDisk(filePath);
+  });
 }
 
 async function openRecentProject(filePath: string): Promise<void> {
@@ -3271,11 +3310,6 @@ async function saveFileAsInternal(): Promise<boolean> {
   const nextProjectDir = getCurrentFilePath() ? path.dirname(getCurrentFilePath()) : null;
   if (previousProjectDir !== nextProjectDir) {
     await disposeJavaRuntimeSession();
-  }
-
-  if (pendingQuit) {
-    pendingQuit = false;
-    doQuit();
   }
 
   return true;
@@ -3409,7 +3443,7 @@ async function copyBsbFileSelectorToMediaFolder(currentValue?: string): Promise<
 /**
  * Durable write of the current project. Returns false (and reports the
  * save error) when the write fails; callers must treat false as a blocked
- * replacement rather than discard consent.
+ * replacement rather than discard consent. Never performs shutdown.
  */
 function writeProjectToDisk(filePath: string): boolean {
   if (!getCurrentData()) return false;
@@ -3420,11 +3454,6 @@ function writeProjectToDisk(filePath: string): boolean {
   } catch (err: unknown) {
     if (mainWindow) {
       mainWindow.webContents.send('save-error', err instanceof Error ? err.message : String(err));
-    }
-    // If save failed during quit, still quit
-    if (pendingQuit) {
-      pendingQuit = false;
-      doQuit();
     }
     return false;
   }
@@ -3443,11 +3472,6 @@ function doSave(filePath: string): boolean {
   rebuildApplicationMenu();
   if (mainWindow) {
     mainWindow.webContents.send('save-complete', { filePath });
-  }
-  // If we were waiting to quit after save, do it now
-  if (pendingQuit) {
-    pendingQuit = false;
-    doQuit();
   }
   return true;
 }
@@ -4681,7 +4705,8 @@ ipcRegistration.handle(
           return data;
         },
         confirmLibraryDraft: () => confirmLibraryDraftTransition('switchProject'),
-        confirmSave: () => confirmSaveBeforeReplace(),
+        confirmSave: () => confirmSaveBeforeReplaceInsideBoundary(),
+        runDecisionBoundary: runTerminalProjectTransition,
         revalidate: () => {
           const currentValidation = midiImportService.validateCommit(token, settings);
           if (!currentValidation.ok) {
@@ -4720,7 +4745,7 @@ ipcRegistration.handle('open-file-path', async (_event, filePath: string) => {
 });
 
 ipcRegistration.handle('new-file', async () => {
-  await handleNewFile();
+  await newFile();
   return getCurrentFilePath();
 });
 

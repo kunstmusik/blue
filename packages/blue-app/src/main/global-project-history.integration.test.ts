@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { BlueData } from '@blue/data';
 import { ProjectSession } from './project-session';
 import { ProjectHistory } from './project-history';
+import { resolveProjectSaveDecision } from './project-replacement-flow';
 import {
   MockHistoryContext,
   captureProjectStateXml,
@@ -155,5 +156,51 @@ describe('global project history integration (T027, US1)', () => {
     expect(session.read().revision).toBe(before.revision);
     expect(history.read()).toEqual(before.projection);
     expect(history.getEntries()).toHaveLength(100);
+  });
+  it('keeps canonical references and order intact after a blocked exit (spec 109)', async () => {
+    const { session, history, contextA, contextB } = setup();
+    const docId = session.read().documentId!;
+    history.checkpointSave();
+
+    for (const request of generate100ActionWorkload(docId, contextA, contextB, 0).slice(0, 5)) {
+      const res = await history.commit(request);
+      expect(res.status).toBe('committed');
+    }
+    expect(history.getSaveState()).toBe('modified');
+
+    const xmlBefore = captureProjectStateXml(session);
+    const projectionBefore = history.read();
+    const revisionBefore = session.read().revision;
+
+    // The user cancels the quit save decision: the exit is blocked and every
+    // canonical fact must survive unchanged.
+    const outcome = await resolveProjectSaveDecision({
+      runSettlementBarrier: (action) => history.runSettlementBarrier('replacement', action),
+      getSaveState: () => history.getSaveState(),
+      choose: () => 'cancel',
+      hasCurrentPath: () => true,
+      saveCurrent: () => {
+        throw new Error('cancel must not save');
+      },
+      saveAs: () => false,
+    });
+    expect(outcome).toBe('cancelled');
+    expect(captureProjectStateXml(session)).toBe(xmlBefore);
+    expect(history.read()).toEqual(projectionBefore);
+    expect(session.read().revision).toBe(revisionBefore);
+    expect(session.read().documentId).toBe(docId);
+
+    // Commit -> undo -> redo still reconciles after the blocked exit.
+    const commit = await history.commit(
+      contextA.nextCommitRequest(docId, revisionBefore, 'After Blocked Exit', [
+        { projectProperties: { title: 'Resumed' } },
+      ]),
+    );
+    expect(commit.status).toBe('committed');
+    const undo = await history.undo(contextB.nextUndoRequest(docId, session.read().revision));
+    expect(undo.status).toBe('committed');
+    const redo = await history.redo(contextA.nextRedoRequest(docId, session.read().revision));
+    expect(redo.status).toBe('committed');
+    expect(session.read().data?.getProjectProperties().title).toBe('Resumed');
   });
 });

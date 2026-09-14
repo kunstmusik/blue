@@ -182,4 +182,39 @@ describe('project document IPC registrar', () => {
       await expect(commit({}, { operationId: response.operationId })).resolves.toEqual(response);
     }
   });
+
+  it('adds no save-state channel or event field (spec 109)', async () => {
+    // Save state is derived main-side from session facts and the save
+    // checkpoint; it must not appear in the channel inventory.
+    expect(PROJECT_DOCUMENT_IPC_CHANNELS.filter((c) => c.includes('save-state'))).toEqual([]);
+
+    // Checkpoint publications (successful save) still cross the bridge with
+    // the existing projection contract and no save-state payload.
+    const checkpointEvent = {
+      status: 'committed' as const,
+      operationId: 'op-save',
+      documentId: 'doc-1',
+      revision: 7,
+      stateId: 'state-7',
+      isDirty: false,
+      history: {
+        canUndo: true,
+        canRedo: true,
+        undoLabel: 'Edit',
+        redoLabel: 'Later Edit',
+        cursor: 6,
+        length: 7,
+        retainedBytes: 128,
+        savedStateId: 'state-7',
+        stateId: 'state-7',
+      },
+    };
+    const ipcMain = new FakeRegistrarIpcMain();
+    const handlers = createHandlerRecord(PROJECT_DOCUMENT_IPC_CHANNELS);
+    handlers['project-history:commit'] = vi.fn(async () => checkpointEvent);
+    registerProjectDocumentIpc({ ipcMain, handlers });
+    const commit = ipcMain.handlers.get('project-history:commit')!;
+    await expect(commit({}, { operationId: 'op-save' })).resolves.toEqual(checkpointEvent);
+    expect(Object.keys(checkpointEvent)).not.toContain('saveState');
+  });
 });

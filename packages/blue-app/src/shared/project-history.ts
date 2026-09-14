@@ -169,6 +169,23 @@ export interface ProjectHistoryStateProjection {
 
 export type FocusedHistoryScope = 'project' | 'draft' | 'none';
 
+/**
+ * Authoritative project save state derived by the main process from the
+ * active document, its on-disk path, and the most recent successful save
+ * checkpoint (spec 109). Session-only metadata: it is never serialized
+ * into `.blue` XML and crosses no IPC boundary of its own.
+ */
+export type ProjectSaveState = 'none' | 'unsaved' | 'saved' | 'modified';
+
+/** True when the state requires a save decision before close or exit. */
+export function projectSaveStateNeedsSaving(state: ProjectSaveState): boolean {
+  return state === 'unsaved' || state === 'modified';
+}
+
+export function isProjectSaveState(value: unknown): value is ProjectSaveState {
+  return value === 'none' || value === 'unsaved' || value === 'saved' || value === 'modified';
+}
+
 /** Renderer-owned, focused-scope projection used to build the native menu. */
 export interface FocusedHistoryAvailability {
   scope: FocusedHistoryScope;

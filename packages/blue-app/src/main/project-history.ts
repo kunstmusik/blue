@@ -43,6 +43,7 @@ import type {
   ProjectHistorySelectionHint,
   ProjectHistoryControlResponse,
   ProjectHistoryOrigin,
+  ProjectSaveState,
 } from '../shared/project-history';
 import type {
   BsbInterfacePatch,
@@ -881,6 +882,18 @@ export class ProjectHistory {
     return current.stateId !== this.savedStateId;
   }
 
+  /**
+   * Authoritative save state for the active project (spec 109): read-only,
+   * constant-time, and derived from the session facts plus the save
+   * checkpoint. Never mutates history, the session, or the checkpoint.
+   */
+  getSaveState(): ProjectSaveState {
+    const current = this.session.read();
+    if (!current.data) return 'none';
+    if (!current.filePath) return 'unsaved';
+    return current.stateId === this.savedStateId ? 'saved' : 'modified';
+  }
+
   clear(): void {
     this.entries = [];
     this.cursor = 0;
@@ -1268,6 +1281,20 @@ export class ProjectHistory {
 
     try {
       const barrierId = `barrier-${randomUUID()}`;
+
+      // Participants fence transitions for the document they registered
+      // against. Renderers never unregister, so after a close or replacement
+      // their stale registrations would fence every later barrier waiting for
+      // an acknowledgement that can never arrive (spec 109 smoke regression).
+      // Drop registrations whose document identity is gone before collecting
+      // the contexts to wait on.
+      const currentDocumentId = this.session.read().documentId;
+      for (const [contextId, info] of this.participants) {
+        if (info.documentId !== currentDocumentId) {
+          this.participants.delete(contextId);
+        }
+      }
+
       const contexts = Array.from(this.participants.keys());
 
       this.closeGroup();

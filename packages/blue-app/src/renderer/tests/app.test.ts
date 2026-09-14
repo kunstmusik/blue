@@ -1756,8 +1756,14 @@ describe('Toolbar Shell', () => {
 
 describe('Window title', () => {
   it('formats the app title from the current project file name', () => {
-    expect(getWindowTitle(null)).toBe('Blue');
-    expect(getWindowTitle('/Users/stevenyi/work/demo/project.blue')).toBe('Blue - project.blue');
+    expect(getWindowTitle(null, 'none')).toBe('Blue');
+    expect(getWindowTitle('/Users/stevenyi/work/demo/project.blue', 'saved')).toBe(
+      'Blue - project.blue',
+    );
+    expect(getWindowTitle('/Users/stevenyi/work/demo/project.blue', 'modified')).toBe(
+      'Blue - project.blue - [modified]',
+    );
+    expect(getWindowTitle(null, 'unsaved')).toBe('Blue - New Project - [UNSAVED PROJECT]');
   });
 });
 

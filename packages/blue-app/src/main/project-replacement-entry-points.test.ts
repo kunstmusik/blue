@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { BlueData } from '@blue/data';
 import {
   runCsdImportReplacement,
@@ -8,6 +10,8 @@ import {
 } from './project-replacement-entry-points';
 import { createProjectLifecycle } from './project-lifecycle';
 import { ProjectSession } from './project-session';
+import { ProjectHistory } from './project-history';
+import { resolveProjectSaveDecision } from './project-replacement-flow';
 
 describe('CSD replacement entry point', () => {
   it('runs the native chooser, mode choice, conversion, decisions, and commit in order', async () => {
@@ -503,5 +507,451 @@ describe('project lifecycle compatibility workflow', () => {
       'clear',
       'closed:null:5',
     ]);
+  });
+
+  it('derives save state without serializing it into .blue XML (spec 109)', async () => {
+    const sourceXml = `<blueData version="5.0.0">
+      <projectProperties><title>Save State Project</title></projectProperties>
+      <pluginData><futurePlugin mode="unknown"><payload>keep-me</payload></futurePlugin></pluginData>
+    </blueData>`;
+    const writes: string[] = [];
+    const session = new ProjectSession();
+    const history = new ProjectHistory({ session });
+    const lifecycle = createProjectLifecycle({
+      session,
+      history,
+      stopProjectRuntimes: () => {},
+      closeProjectEditors: () => {},
+      clearProjectServices: () => {},
+    });
+    const write = (data: BlueData): void => {
+      writes.push(data.saveToString());
+    };
+
+    await lifecycle.open(() => ({
+      data: BlueData.loadFromString(sourceXml),
+      filePath: '/native/opened.blue',
+    }));
+    expect(history.getSaveState()).toBe('saved');
+
+    // Save As of the opened document writes the loaded content unchanged.
+    expect(await lifecycle.saveAs('/native/copy.blue', write)).toBe(true);
+    expect(history.getSaveState()).toBe('saved');
+
+    await lifecycle.replace({ data: new BlueData(), filePath: null });
+    expect(history.getSaveState()).toBe('unsaved');
+    expect(history.isDirty()).toBe(false);
+
+    expect(await lifecycle.saveAs('/native/created.blue', write)).toBe(true);
+    expect(history.getSaveState()).toBe('saved');
+    session.recordMutation({ changed: true });
+    expect(history.getSaveState()).toBe('modified');
+    expect(await lifecycle.save(write)).toBe(true);
+    expect(history.getSaveState()).toBe('saved');
+
+    await lifecycle.close();
+    expect(history.getSaveState()).toBe('none');
+
+    expect(writes).toHaveLength(3);
+    const copiedXml = writes[0]!;
+    expect(copiedXml).toContain('<futurePlugin mode="unknown">');
+    expect(copiedXml).toContain('<payload>keep-me</payload>');
+    for (const xml of writes) {
+      expect(xml).not.toContain('saveState');
+      expect(xml).not.toContain('savedStateId');
+      expect(xml).not.toContain('UNSAVED');
+      expect(xml).not.toContain('[modified]');
+      // Re-parsing the written document must reproduce identical serialization,
+      // proving identities, ordering, and references round-trip unchanged.
+      expect(BlueData.loadFromString(xml).saveToString()).toBe(xml);
+    }
+  });
+});
+
+describe('close and quit protection workflow (spec 109 US1)', () => {
+  interface ProtectionHarness {
+    session: ProjectSession;
+    history: ProjectHistory;
+    chooseCalls: () => number;
+    writes: () => string[];
+    setWriteSucceeds(value: boolean): void;
+    setChoice(choice: 'save' | 'discard' | 'cancel'): void;
+    setSaveAsDestination(destination: string | null): void;
+    /** Mirrors main.ts closeProject: proceed only when the decision allows. */
+    runClose(): Promise<boolean>;
+    /** Mirrors main.ts requestQuit: the quit owner performs the one shutdown. */
+    runQuit(): Promise<{ quitCalled: boolean }>;
+  }
+
+  function createProtectionHarness(initial: {
+    filePath: string | null;
+    modifyBefore?: boolean;
+  }): ProtectionHarness {
+    const session = new ProjectSession();
+    const data = new BlueData();
+    data.getProjectProperties().title = 'Protection Project';
+    session.replace(data, initial.filePath);
+    const history = new ProjectHistory({ session });
+    const lifecycle = createProjectLifecycle({
+      session,
+      history,
+      stopProjectRuntimes: () => {},
+      closeProjectEditors: () => {},
+      clearProjectServices: () => {},
+    });
+
+    let choice: 'save' | 'discard' | 'cancel' = 'discard';
+    let writeSucceeds = true;
+    let saveAsDestination: string | null = '/work/chosen.blue';
+    let chooseCalls = 0;
+    const writes: string[] = [];
+
+    const decision = () =>
+      resolveProjectSaveDecision({
+        runSettlementBarrier: (action) => history.runSettlementBarrier('replacement', action),
+        getSaveState: () => history.getSaveState(),
+        choose: () => {
+          chooseCalls += 1;
+          return choice;
+        },
+        hasCurrentPath: () => Boolean(session.read().filePath),
+        saveCurrent: () => {
+          // Internal-save shape from main.ts doSave: write, then checkpoint
+          // only on success; no barrier and no shutdown of its own.
+          const dataToWrite = session.read().data;
+          if (!dataToWrite || !session.read().filePath) return false;
+          if (!writeSucceeds) return false;
+          writes.push(session.read().filePath!);
+          history.checkpointSave();
+          return true;
+        },
+        saveAs: () => {
+          if (!saveAsDestination) return false;
+          if (!writeSucceeds) return false;
+          writes.push(saveAsDestination);
+          session.publishPath(saveAsDestination);
+          history.checkpointSave();
+          return true;
+        },
+      });
+
+    if (initial.modifyBefore) {
+      session.recordMutation({ changed: true });
+    } else {
+      history.checkpointSave();
+    }
+
+    return {
+      session,
+      history,
+      chooseCalls: () => chooseCalls,
+      writes: () => writes,
+      setWriteSucceeds: (value) => {
+        writeSucceeds = value;
+      },
+      setChoice: (next) => {
+        choice = next;
+      },
+      setSaveAsDestination: (destination) => {
+        saveAsDestination = destination;
+      },
+      runClose: async () => {
+        const outcome = await decision();
+        if (outcome !== 'saved' && outcome !== 'discarded') return false;
+        await lifecycle.close();
+        return true;
+      },
+      runQuit: async () => {
+        const outcome = await decision();
+        if (outcome !== 'saved' && outcome !== 'discarded') return { quitCalled: false };
+        return { quitCalled: true };
+      },
+    };
+  }
+
+  it('prompts for an untouched new project even with clean history', async () => {
+    const harness = createProtectionHarness({ filePath: null });
+    expect(harness.history.isDirty()).toBe(false);
+    harness.setChoice('discard');
+    expect(await harness.runClose()).toBe(true);
+    expect(harness.chooseCalls()).toBe(1);
+    expect(harness.history.getSaveState()).toBe('none');
+  });
+
+  it('closes a clean opened project without any prompt', async () => {
+    const harness = createProtectionHarness({ filePath: '/work/opened.blue' });
+    expect(await harness.runClose()).toBe(true);
+    expect(harness.chooseCalls()).toBe(0);
+    expect(harness.writes()).toEqual([]);
+    expect(harness.history.getSaveState()).toBe('none');
+  });
+
+  it('prompts a modified project and proceeds after a successful save', async () => {
+    const harness = createProtectionHarness({
+      filePath: '/work/modified.blue',
+      modifyBefore: true,
+    });
+    harness.setChoice('save');
+    expect(await harness.runClose()).toBe(true);
+    expect(harness.chooseCalls()).toBe(1);
+    expect(harness.writes()).toEqual(['/work/modified.blue']);
+    expect(harness.history.getSaveState()).toBe('none');
+  });
+
+  it('blocks a quit on write failure, then completes after a successful retry', async () => {
+    const harness = createProtectionHarness({
+      filePath: '/work/flaky.blue',
+      modifyBefore: true,
+    });
+    harness.setChoice('save');
+    harness.setWriteSucceeds(false);
+
+    const first = await harness.runQuit();
+    expect(first.quitCalled).toBe(false);
+    expect(harness.history.getSaveState()).toBe('modified');
+    expect(harness.session.read().documentId).not.toBeNull();
+
+    harness.setWriteSucceeds(true);
+    const retry = await harness.runQuit();
+    expect(retry.quitCalled).toBe(true);
+    expect(harness.writes()).toEqual(['/work/flaky.blue']);
+  });
+
+  it('blocks and stays open when Save As is cancelled for a new project', async () => {
+    const harness = createProtectionHarness({ filePath: null });
+    harness.setChoice('save');
+    harness.setSaveAsDestination(null);
+
+    const result = await harness.runQuit();
+    expect(result.quitCalled).toBe(false);
+    expect(harness.chooseCalls()).toBe(1);
+    expect(harness.session.read().filePath).toBeNull();
+    expect(harness.history.getSaveState()).toBe('unsaved');
+  });
+
+  it('blocks a quit when the user cancels and preserves identity and history', async () => {
+    const harness = createProtectionHarness({
+      filePath: '/work/cancel.blue',
+      modifyBefore: true,
+    });
+    harness.setChoice('cancel');
+    const docIdBefore = harness.session.read().documentId;
+    const projectionBefore = harness.history.read();
+
+    const result = await harness.runQuit();
+    expect(result.quitCalled).toBe(false);
+    expect(harness.session.read().documentId).toBe(docIdBefore);
+    expect(harness.history.read()).toEqual(projectionBefore);
+    expect(harness.history.getSaveState()).toBe('modified');
+  });
+
+  it('quits a project closed earlier in the session without a prompt', async () => {
+    const harness = createProtectionHarness({ filePath: '/work/session.blue' });
+    harness.setChoice('discard');
+    expect(await harness.runClose()).toBe(true);
+
+    const result = await harness.runQuit();
+    expect(result.quitCalled).toBe(true);
+    expect(harness.chooseCalls()).toBe(0);
+  });
+
+  it('serializes a replacement request behind the in-flight close decision', async () => {
+    const harness = createProtectionHarness({
+      filePath: '/work/order.blue',
+      modifyBefore: true,
+    });
+    const order: string[] = [];
+    let resolveChoice!: () => void;
+    const choiceGate = new Promise<void>((resolve) => {
+      resolveChoice = resolve;
+    });
+
+    const closeDecision = resolveProjectSaveDecision({
+      runSettlementBarrier: (action) => harness.history.runSettlementBarrier('replacement', action),
+      getSaveState: () => harness.history.getSaveState(),
+      choose: async (): Promise<'discard'> => {
+        order.push('choose');
+        await choiceGate;
+        order.push('choice-resolved');
+        return 'discard';
+      },
+      hasCurrentPath: () => Boolean(harness.session.read().filePath),
+      saveCurrent: () => true,
+      saveAs: () => false,
+    }).then((outcome) => {
+      order.push(`close:${outcome}`);
+      return outcome;
+    });
+
+    // A replacement request arrives while the close decision is open. It
+    // queues behind the boundary and only runs once the decision settles.
+    const replacement = harness.history
+      .runSettlementBarrier('replacement', async () => {
+        order.push('replacement-ran');
+        harness.session.replace(new BlueData(), '/work/next.blue');
+        harness.history.clear();
+        harness.history.checkpointSave();
+      })
+      .then(() => order.push('replacement-done'));
+
+    await new Promise((r) => setTimeout(r, 10));
+    resolveChoice();
+
+    expect(await closeDecision).toBe('discarded');
+    await replacement;
+    // The replacement ran strictly after the open decision resolved, and the
+    // close decision settled before the replacement completed.
+    expect(order.indexOf('choice-resolved')).toBeLessThan(order.indexOf('replacement-ran'));
+    expect(order.indexOf('close:discarded')).toBeLessThan(order.indexOf('replacement-done'));
+    expect(harness.session.read().filePath).toBe('/work/next.blue');
+    expect(harness.history.getSaveState()).toBe('saved');
+  });
+});
+
+describe('terminal decision boundary pass-through (spec 109 T029)', () => {
+  function recordingBoundary(order: string[]) {
+    return async <T>(action: () => Promise<T>): Promise<T> => {
+      order.push('boundary-enter');
+      try {
+        return await action();
+      } finally {
+        order.push('boundary-exit');
+      }
+    };
+  }
+
+  it('CSD adapter holds the boundary around decisions and commit', async () => {
+    const order: string[] = [];
+    const outcome = await runCsdImportReplacement<{ converted: true }, number>({
+      preflight: () => true,
+      showSourceDialog: async () => ({ canceled: false, filePaths: ['/work/src.csd'] }),
+      showModeDialog: async () => ({ response: 0 }),
+      cancelModeResponse: 3,
+      readSource: () => {
+        order.push('read');
+        return 'csd';
+      },
+      convert: () => {
+        order.push('convert');
+        return { converted: true } as const;
+      },
+      confirmLibraryDraft: () => {
+        order.push('library');
+        return true;
+      },
+      confirmSave: () => {
+        order.push('save');
+        return true;
+      },
+      commit: () => {
+        order.push('commit');
+      },
+      runDecisionBoundary: recordingBoundary(order),
+    });
+
+    expect(outcome).toEqual({ status: 'committed' });
+    expect(order).toEqual([
+      'read',
+      'convert',
+      'boundary-enter',
+      'library',
+      'save',
+      'commit',
+      'boundary-exit',
+    ]);
+  });
+
+  it('ORC/SCO adapter holds the boundary around decisions and commit', async () => {
+    const order: string[] = [];
+    const outcome = await runOrcScoImportReplacement<{ converted: true }, number>({
+      preflight: () => true,
+      showOrcDialog: async () => ({ canceled: false, filePaths: ['/work/a.orc'] }),
+      showScoDialog: async () => ({ canceled: false, filePaths: ['/work/b.sco'] }),
+      showModeDialog: async () => ({ response: 0 }),
+      cancelModeResponse: 3,
+      readSource: () => 'text',
+      convert: () => ({ converted: true }) as const,
+      confirmLibraryDraft: () => true,
+      confirmSave: () => true,
+      commit: () => {
+        order.push('commit');
+      },
+      runDecisionBoundary: recordingBoundary(order),
+    });
+
+    expect(outcome).toEqual({ status: 'committed' });
+    expect(order).toEqual(['boundary-enter', 'commit', 'boundary-exit']);
+  });
+
+  it('MIDI adapter holds the boundary around decisions, revalidation, and commit', async () => {
+    const order: string[] = [];
+    const outcome = await runMidiImportReplacement<{ converted: true }>({
+      preflight: () => true,
+      prepare: () => ({ converted: true }) as const,
+      confirmLibraryDraft: () => true,
+      confirmSave: () => true,
+      revalidate: () => {
+        order.push('revalidate');
+      },
+      commit: () => {
+        order.push('commit');
+      },
+      runDecisionBoundary: recordingBoundary(order),
+    });
+
+    expect(outcome).toEqual({ status: 'committed' });
+    expect(order).toEqual(['boundary-enter', 'revalidate', 'commit', 'boundary-exit']);
+  });
+
+  it('main.ts wires every terminal transition through the shared boundary', () => {
+    const source = readFileSync(join(__dirname, 'main.ts'), 'utf8');
+
+    function bodyOf(marker: string, endMarker: string): string {
+      const start = source.indexOf(marker);
+      expect(start, `main.ts must define ${marker}`).toBeGreaterThan(-1);
+      const end = source.indexOf(endMarker, start);
+      return source.slice(start, end);
+    }
+
+    // Direct orchestrations: boundary wraps the save confirm, library guard,
+    // and terminal action (requestQuit, closeProject, revertProject, newFile).
+    const requestQuit = bodyOf('async function requestQuit()', 'async function doQuit()');
+    expect(requestQuit).toContain('runTerminalProjectTransition');
+    expect(requestQuit).toContain('confirmSaveBeforeReplaceInsideBoundary');
+    expect(requestQuit).toContain('await doQuit()');
+
+    const closeProject = bodyOf('async function closeProject()', 'async function revertProject()');
+    expect(closeProject).toContain('runTerminalProjectTransition');
+    expect(closeProject).toContain('confirmSaveBeforeReplaceInsideBoundary');
+    expect(closeProject).toContain('projectLifecycle.close()');
+
+    const revertProject = bodyOf(
+      'async function revertProject()',
+      'async function openRecentProject',
+    );
+    expect(revertProject).toContain('runTerminalProjectTransition');
+    expect(revertProject).toContain('confirmSaveBeforeReplaceInsideBoundary');
+
+    const newFile = bodyOf('async function newFile()', 'async function closeProject()');
+    expect(newFile).toContain('runTerminalProjectTransition');
+    expect(newFile).toContain('confirmSaveBeforeReplaceInsideBoundary');
+
+    // Flow-framework entry points pass the boundary through and use the
+    // settled save confirm inside it.
+    for (const marker of [
+      'runCsdImportReplacement<',
+      'runOrcScoImportReplacement<',
+      'runMidiImportReplacement<',
+      'runProjectFileReplacement<',
+    ]) {
+      const start = source.indexOf(marker);
+      expect(start, `main.ts must wire ${marker}`).toBeGreaterThan(-1);
+      const boundaryLine = 'runDecisionBoundary: runTerminalProjectTransition';
+      const boundaryAt = source.indexOf(boundaryLine, start);
+      expect(boundaryAt, `main.ts wiring for ${marker} must pass the boundary`).toBeGreaterThan(-1);
+      const wiring = source.slice(start, boundaryAt + boundaryLine.length);
+      expect(wiring).toContain('confirmSaveBeforeReplaceInsideBoundary');
+      expect(wiring).toContain(boundaryLine);
+    }
   });
 });

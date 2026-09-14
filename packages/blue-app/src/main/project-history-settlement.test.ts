@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { BlueData } from '@blue/data';
 import { ProjectSession } from './project-session';
 import { ProjectHistory } from './project-history';
+import { resolveProjectSaveDecision } from './project-replacement-flow';
 import {
   MockHistoryContext,
   FakePublicationRecorder,
@@ -1037,6 +1038,237 @@ describe('Project history settlement barrier (T015)', () => {
       const completedDuplicateResult = await history.undo(request);
       expect(completedDuplicateResult).toBe(firstResult);
       expect(session.read().revision).toBe(2);
+    });
+  });
+  describe('Save-state settlement for close and quit (spec 109)', () => {
+    it('settles buffered edits from multiple contexts before evaluating the close state', async () => {
+      const { session, history, prepareEvents, contextA, contextB } = setupTest(200);
+      const docId = session.read().documentId!;
+      history.checkpointSave();
+      expect(history.getSaveState()).toBe('saved');
+
+      history.registerParticipant({
+        contextId: contextA.contextId,
+        documentId: docId,
+        acceptedRevision: 0,
+      });
+      history.registerParticipant({
+        contextId: contextB.contextId,
+        documentId: docId,
+        acceptedRevision: 0,
+      });
+
+      // A buffered edit from context B is still in flight when close begins.
+      const buffered = history.commit(
+        contextB.nextCommitRequest(docId, 0, 'Buffered Edit', [
+          { projectProperties: { title: 'Buffered' } },
+        ]),
+      );
+
+      let observedState: string | null = null;
+      const decision = resolveProjectSaveDecision({
+        runSettlementBarrier: (action) => history.runSettlementBarrier('replacement', action),
+        getSaveState: () => {
+          observedState = history.getSaveState();
+          return history.getSaveState();
+        },
+        choose: () => 'discard',
+        hasCurrentPath: () => true,
+        saveCurrent: () => {
+          throw new Error('discard must not save');
+        },
+        saveAs: () => false,
+      });
+
+      await new Promise((r) => setTimeout(r, 5));
+      const bufferedRes = await buffered;
+      expect(bufferedRes.status).toBe('committed');
+      const barrierId = prepareEvents[0]!.barrierId;
+      history.acknowledgeBoundary(contextA.acknowledgeBarrier(barrierId, 1, 0));
+      history.acknowledgeBoundary(contextB.acknowledgeBarrier(barrierId, 1, 0));
+
+      const outcome = await decision;
+      expect(observedState).toBe('modified');
+      expect(outcome).toBe('discarded');
+    });
+
+    it('aborts the close and keeps the project open when settlement times out', async () => {
+      const { session, history, contextA } = setupTest(40);
+      const docId = session.read().documentId!;
+      history.checkpointSave();
+      session.recordMutation({ changed: true });
+      expect(history.getSaveState()).toBe('modified');
+
+      history.registerParticipant({
+        contextId: contextA.contextId,
+        documentId: docId,
+        acceptedRevision: 0,
+      });
+
+      let chooseCalled = false;
+      const outcome = await resolveProjectSaveDecision({
+        runSettlementBarrier: (action) => history.runSettlementBarrier('replacement', action),
+        getSaveState: () => history.getSaveState(),
+        choose: () => {
+          chooseCalled = true;
+          return 'discard';
+        },
+        hasCurrentPath: () => true,
+        saveCurrent: () => true,
+        saveAs: () => false,
+      });
+
+      expect(outcome).toBe('blocked');
+      expect(chooseCalled).toBe(false);
+      expect(session.read().documentId).toBe(docId);
+      expect(history.getSaveState()).toBe('modified');
+    });
+
+    it('fences commits between the save decision and the terminal action in one boundary (T029)', async () => {
+      const { session, history, data, prepareEvents, contextA, contextB } = setupTest(200);
+      const docId = session.read().documentId!;
+      history.checkpointSave();
+      session.recordMutation({ changed: true });
+      expect(history.getSaveState()).toBe('modified');
+
+      history.registerParticipant({
+        contextId: contextA.contextId,
+        documentId: docId,
+        acceptedRevision: 1,
+      });
+
+      const order: string[] = [];
+      let lateCommit: Promise<{ status: string }> | null = null;
+
+      // Mirrors main.ts runTerminalProjectTransition: one boundary around the
+      // settled save decision AND the terminal replacement action.
+      const transition = history.runSettlementBarrier('replacement', async () => {
+        const outcome = await resolveProjectSaveDecision({
+          runSettlementBarrier: async (action) => await action(),
+          getSaveState: () => history.getSaveState(),
+          choose: () => {
+            // An editor commit arrives while the decision is being made.
+            lateCommit = history.commit(
+              contextB.nextCommitRequest(docId, session.read().revision, 'Late Edit', [
+                { projectProperties: { title: 'Late' } },
+              ]),
+            ) as Promise<{ status: string }>;
+            return 'discard';
+          },
+          hasCurrentPath: () => true,
+          saveCurrent: () => {
+            throw new Error('discard must not save');
+          },
+          saveAs: () => false,
+        });
+        expect(outcome).toBe('discarded');
+
+        // Terminal action: replace the document while the boundary is held.
+        session.replace(data, '/work/replacement.blue');
+        history.clear();
+        history.checkpointSave();
+        order.push('terminal-done');
+      });
+
+      await new Promise((r) => setTimeout(r, 5));
+      const barrierId = prepareEvents[0]!.barrierId;
+      history.acknowledgeBoundary(contextA.acknowledgeBarrier(barrierId, 1, 0));
+
+      await transition;
+      // The terminal action completed before the late commit could apply.
+      expect(order).toEqual(['terminal-done']);
+      const late = await lateCommit!;
+      // The late commit resolved against the replaced document, not by
+      // interleaving before the terminal action.
+      expect(late.status).toBe('stale');
+      expect(session.read().filePath).toBe('/work/replacement.blue');
+      expect(history.getSaveState()).toBe('saved');
+    });
+
+    it('prunes participants of a closed document so later transitions do not deadlock (smoke regression)', async () => {
+      const { session, history, contextA } = setupTest(50);
+      const docId = session.read().documentId!;
+      history.registerParticipant({
+        contextId: contextA.contextId,
+        documentId: docId,
+        acceptedRevision: 0,
+      });
+
+      // Close Project: the document identity dies, but nothing unregisters
+      // the renderer participant (the renderer never does).
+      session.close();
+
+      // Any later transition (open/new/quit) must not wait on the stale
+      // participant: it can never acknowledge a boundary for a dead document.
+      await expect(history.runSettlementBarrier('replacement', async () => 'ran')).resolves.toBe(
+        'ran',
+      );
+      expect(history.getParticipants()).toHaveLength(0);
+    });
+
+    it('waits only on participants of the current document after a replacement', async () => {
+      const { session, history, prepareEvents, contextA } = setupTest(100);
+      const oldDocId = session.read().documentId!;
+      history.registerParticipant({
+        contextId: 'ctx-stale',
+        documentId: oldDocId,
+        acceptedRevision: 0,
+      });
+
+      session.replace(new BlueData(), '/work/next.blue');
+      const docId = session.read().documentId!;
+      history.registerParticipant({
+        contextId: contextA.contextId,
+        documentId: docId,
+        acceptedRevision: 0,
+      });
+
+      const done = history.runSettlementBarrier('replacement', async () => 'ran');
+      await new Promise((r) => setTimeout(r, 5));
+      // Only the live-document participant fences the barrier.
+      expect(prepareEvents).toHaveLength(1);
+      const barrierId = prepareEvents[0]!.barrierId;
+      history.acknowledgeBoundary(contextA.acknowledgeBarrier(barrierId, 0, 0));
+      await expect(done).resolves.toBe('ran');
+      expect(history.getParticipants().map((p) => p.contextId)).toEqual([contextA.contextId]);
+    });
+
+    it('runs the settled save inside the boundary without a second barrier', async () => {
+      const { session, history, prepareEvents, contextA } = setupTest(200);
+      const docId = session.read().documentId!;
+      history.checkpointSave();
+      const mutation = session.recordMutation({ changed: true });
+      expect(history.getSaveState()).toBe('modified');
+
+      history.registerParticipant({
+        contextId: contextA.contextId,
+        documentId: docId,
+        acceptedRevision: 1,
+      });
+
+      const decision = resolveProjectSaveDecision({
+        runSettlementBarrier: (action) => history.runSettlementBarrier('replacement', action),
+        getSaveState: () => history.getSaveState(),
+        choose: () => 'save',
+        hasCurrentPath: () => true,
+        // Internal save shape: checkpoint the written state without owning a
+        // second settlement barrier (main.ts doSave inside the boundary).
+        saveCurrent: () => {
+          history.checkpointSave(mutation.stateId ?? undefined);
+          return true;
+        },
+        saveAs: () => false,
+      });
+
+      await new Promise((r) => setTimeout(r, 5));
+      const barrierId = prepareEvents[0]!.barrierId;
+      history.acknowledgeBoundary(contextA.acknowledgeBarrier(barrierId, 1, 0));
+
+      const outcome = await decision;
+      expect(outcome).toBe('saved');
+      expect(history.getSaveState()).toBe('saved');
+      // Exactly one boundary was opened: the save ran inside it.
+      expect(prepareEvents).toHaveLength(1);
     });
   });
 });

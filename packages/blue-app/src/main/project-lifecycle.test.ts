@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { BlueData } from '@blue/data';
 import { createProjectLifecycle } from './project-lifecycle';
 import { ProjectSession } from './project-session';
+import { ProjectHistory } from './project-history';
 
 const data = {} as BlueData;
 
@@ -351,6 +352,92 @@ describe('ProjectLifecycle', () => {
       expect(historyMock.checkpointSave).toHaveBeenCalledWith(snapshot.stateId);
       expect(session.read().filePath).toBe('/tmp/second.blue');
       expect(session.read().data).toBe(nextData);
+    });
+  });
+
+  describe('save-state lifecycle (spec 109)', () => {
+    function setupSaveStateLifecycle() {
+      const session = new ProjectSession();
+      const history = new ProjectHistory({ session });
+      const lifecycle = createProjectLifecycle({ session, history });
+      return { session, history, lifecycle };
+    }
+
+    it('yields unsaved on create even with a clean initial history', async () => {
+      const { session, history, lifecycle } = setupSaveStateLifecycle();
+      await lifecycle.open(async () => ({ data, filePath: null }));
+      expect(session.read().filePath).toBeNull();
+      expect(history.isDirty()).toBe(false);
+      expect(history.getSaveState()).toBe('unsaved');
+    });
+
+    it('yields saved on a successful open', async () => {
+      const { history, lifecycle } = setupSaveStateLifecycle();
+      await lifecycle.open(async () => ({ data, filePath: '/tmp/opened.blue' }));
+      expect(history.getSaveState()).toBe('saved');
+    });
+
+    it('checkpoints the written stateId on successful save and save-as', async () => {
+      const { session, history, lifecycle } = setupSaveStateLifecycle();
+      await lifecycle.open(async () => ({ data, filePath: '/tmp/project.blue' }));
+      session.recordMutation({ changed: true });
+      expect(history.getSaveState()).toBe('modified');
+
+      expect(await lifecycle.save(vi.fn())).toBe(true);
+      expect(history.getSaveState()).toBe('saved');
+
+      session.recordMutation({ changed: true });
+      expect(history.getSaveState()).toBe('modified');
+      expect(await lifecycle.saveAs('/tmp/renamed.blue', vi.fn())).toBe(true);
+      expect(session.read().filePath).toBe('/tmp/renamed.blue');
+      expect(history.getSaveState()).toBe('saved');
+    });
+
+    it('preserves the prior path and checkpoint when a save fails or is cancelled', async () => {
+      const { session, history, lifecycle } = setupSaveStateLifecycle();
+      await lifecycle.open(async () => ({ data, filePath: '/tmp/project.blue' }));
+      const mutation = session.recordMutation({ changed: true });
+      const checkpointBefore = history.getSavedStateId();
+
+      await expect(
+        lifecycle.save(vi.fn().mockRejectedValue(new Error('Disk full'))),
+      ).rejects.toThrow('Disk full');
+      expect(session.read().filePath).toBe('/tmp/project.blue');
+      expect(history.getSavedStateId()).toBe(checkpointBefore);
+      expect(history.getSaveState()).toBe('modified');
+      expect(session.read().stateId).toBe(mutation.stateId);
+
+      await expect(
+        lifecycle.saveAs('/tmp/attempted.blue', vi.fn().mockRejectedValue(new Error('Nope'))),
+      ).rejects.toThrow('Nope');
+      expect(session.read().filePath).toBe('/tmp/project.blue');
+      expect(history.getSavedStateId()).toBe(checkpointBefore);
+    });
+
+    it('yields none after close', async () => {
+      const { history, lifecycle } = setupSaveStateLifecycle();
+      await lifecycle.open(async () => ({ data, filePath: '/tmp/project.blue' }));
+      await lifecycle.close();
+      expect(history.getSaveState()).toBe('none');
+    });
+
+    it('fences async save completion by document identity', async () => {
+      const { session, history, lifecycle } = setupSaveStateLifecycle();
+      await lifecycle.open(async () => ({ data, filePath: '/tmp/project.blue' }));
+      const mutation = session.recordMutation({ changed: true });
+      const checkpointBefore = history.getSavedStateId();
+
+      // The project is replaced by a different document while the write is in
+      // flight; the stale save must not checkpoint the replacement baseline.
+      const stalledWrite = vi.fn(async () => {
+        await lifecycle.replace({ data: {} as BlueData, filePath: '/tmp/other.blue' });
+      });
+      await lifecycle.save(stalledWrite);
+
+      expect(history.getSavedStateId()).not.toBe(mutation.stateId);
+      expect(history.getSavedStateId()).toBe(session.read().stateId);
+      expect(history.getSaveState()).toBe('saved');
+      expect(checkpointBefore).not.toBe(session.read().stateId);
     });
   });
 });

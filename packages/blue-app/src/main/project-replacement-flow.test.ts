@@ -2,7 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   runReplacementFlow,
   runProjectFileReplacement,
-  resolveReplacementSaveDecision,
+  resolveProjectSaveDecision,
+  type ProjectSaveDecisionDependencies,
   runTransactionalSaveAs,
   type ReplacementFlowCallbacks,
   type ReplacementFlowOutcome,
@@ -556,24 +557,28 @@ describe('Open Project entry-path matrix (US1: spec FR-003/FR-004/FR-005)', () =
   );
 });
 
-describe('resolveReplacementSaveDecision', () => {
+describe('resolveProjectSaveDecision (spec 109)', () => {
   function createSaveHarness(options: {
+    saveState?: 'none' | 'unsaved' | 'saved' | 'modified';
     choice?: 'save' | 'discard' | 'cancel';
-    hasProject?: boolean;
     hasPath?: boolean;
     saveCurrent?: boolean;
     saveAs?: boolean;
+    barrier?: <T>(action: () => Promise<T> | T) => Promise<T>;
   }) {
     const calls: string[] = [];
-    const deps = {
+    const passThroughBarrier = async <T>(action: () => Promise<T> | T): Promise<T> =>
+      await action();
+    const deps: ProjectSaveDecisionDependencies = {
+      runSettlementBarrier: options.barrier ?? passThroughBarrier,
+      getSaveState: () => {
+        calls.push('getSaveState');
+        return options.saveState ?? 'modified';
+      },
       choose: vi.fn(async () => {
         calls.push('choose');
         return options.choice ?? 'cancel';
       }),
-      hasCurrentProject: () => {
-        calls.push('hasCurrentProject');
-        return options.hasProject ?? true;
-      },
       hasCurrentPath: () => options.hasPath ?? true,
       saveCurrent: vi.fn((): boolean => {
         calls.push('saveCurrent');
@@ -587,58 +592,143 @@ describe('resolveReplacementSaveDecision', () => {
     return { deps, calls };
   }
 
-  it('proceeds after a durable save to the current path', async () => {
-    const { deps, calls } = createSaveHarness({
-      choice: 'save',
-      hasProject: true,
-      saveCurrent: true,
-    });
-    await expect(resolveReplacementSaveDecision(deps)).resolves.toBe('saved');
-    expect(calls).toEqual(['hasCurrentProject', 'choose', 'saveCurrent']);
+  it('bypasses the dialog for a saved project', async () => {
+    const { deps, calls } = createSaveHarness({ saveState: 'saved' });
+    await expect(resolveProjectSaveDecision(deps)).resolves.toBe('discarded');
+    expect(calls).toEqual(['getSaveState']);
+    expect(deps.choose).not.toHaveBeenCalled();
+    expect(deps.saveCurrent).not.toHaveBeenCalled();
     expect(deps.saveAs).not.toHaveBeenCalled();
   });
 
+  it('bypasses the dialog when no project is open', async () => {
+    const { deps, calls } = createSaveHarness({ saveState: 'none' });
+    await expect(resolveProjectSaveDecision(deps)).resolves.toBe('discarded');
+    expect(calls).toEqual(['getSaveState']);
+    expect(deps.choose).not.toHaveBeenCalled();
+  });
+
+  it('proceeds after a durable save to the current path for a modified project', async () => {
+    const { deps, calls } = createSaveHarness({
+      saveState: 'modified',
+      choice: 'save',
+      saveCurrent: true,
+    });
+    await expect(resolveProjectSaveDecision(deps)).resolves.toBe('saved');
+    expect(calls).toEqual(['getSaveState', 'choose', 'saveCurrent']);
+    expect(deps.saveAs).not.toHaveBeenCalled();
+  });
+
+  it('requires Save As to succeed for an unsaved project', async () => {
+    const { deps, calls } = createSaveHarness({
+      saveState: 'unsaved',
+      choice: 'save',
+      hasPath: false,
+      saveAs: true,
+    });
+    await expect(resolveProjectSaveDecision(deps)).resolves.toBe('saved');
+    expect(calls).toEqual(['getSaveState', 'choose', 'saveAs']);
+    expect(deps.saveCurrent).not.toHaveBeenCalled();
+  });
+
+  it('prompts for an unsaved project even with clean history', async () => {
+    const { deps, calls } = createSaveHarness({ saveState: 'unsaved', choice: 'discard' });
+    await expect(resolveProjectSaveDecision(deps)).resolves.toBe('discarded');
+    expect(calls).toEqual(['getSaveState', 'choose']);
+  });
+
   it('proceeds without saving when the user discards', async () => {
-    const { deps, calls } = createSaveHarness({ choice: 'discard' });
-    await expect(resolveReplacementSaveDecision(deps)).resolves.toBe('discarded');
-    expect(calls).toEqual(['hasCurrentProject', 'choose']);
+    const { deps, calls } = createSaveHarness({ saveState: 'modified', choice: 'discard' });
+    await expect(resolveProjectSaveDecision(deps)).resolves.toBe('discarded');
+    expect(calls).toEqual(['getSaveState', 'choose']);
   });
 
   it('returns cancelled when the user cancels the decision', async () => {
-    const { deps, calls } = createSaveHarness({ choice: 'cancel' });
-    await expect(resolveReplacementSaveDecision(deps)).resolves.toBe('cancelled');
-    expect(calls).toEqual(['hasCurrentProject', 'choose']);
-  });
-
-  it('requires Save As to succeed for an unsaved current project', async () => {
-    const { deps, calls } = createSaveHarness({ choice: 'save', hasProject: true, saveAs: true });
-    const unsaved = {
-      ...deps,
-      hasCurrentPath: () => false,
-      saveCurrent: (): boolean => {
-        throw new Error('saveCurrent must not be called without a current path');
-      },
-    };
-    await expect(resolveReplacementSaveDecision(unsaved)).resolves.toBe('saved');
-    expect(calls).toEqual(['hasCurrentProject', 'choose', 'saveAs']);
+    const { deps, calls } = createSaveHarness({ saveState: 'modified', choice: 'cancel' });
+    await expect(resolveProjectSaveDecision(deps)).resolves.toBe('cancelled');
+    expect(calls).toEqual(['getSaveState', 'choose']);
   });
 
   it('blocks when Save As is cancelled or declined', async () => {
-    const { deps } = createSaveHarness({ choice: 'save', saveAs: false });
-    const withNoPath = { ...deps, hasCurrentPath: () => false };
-    await expect(resolveReplacementSaveDecision(withNoPath)).resolves.toBe('blocked');
+    const { deps } = createSaveHarness({
+      saveState: 'unsaved',
+      choice: 'save',
+      hasPath: false,
+      saveAs: false,
+    });
+    await expect(resolveProjectSaveDecision(deps)).resolves.toBe('blocked');
   });
 
   it('blocks when the durable write fails', async () => {
-    const { deps } = createSaveHarness({ choice: 'save', saveCurrent: false });
-    await expect(resolveReplacementSaveDecision(deps)).resolves.toBe('blocked');
+    const { deps } = createSaveHarness({
+      saveState: 'modified',
+      choice: 'save',
+      saveCurrent: false,
+    });
+    await expect(resolveProjectSaveDecision(deps)).resolves.toBe('blocked');
   });
 
-  it('skips the decision entirely when no project is open', async () => {
-    const { deps, calls } = createSaveHarness({ hasProject: false });
-    await expect(resolveReplacementSaveDecision(deps)).resolves.toBe('discarded');
-    expect(calls).toEqual(['hasCurrentProject']);
+  it('blocks when editor settlement times out or fails before evaluation', async () => {
+    const { deps, calls } = createSaveHarness({
+      saveState: 'modified',
+      choice: 'save',
+      barrier: async () => {
+        calls.push('barrier-failed');
+        throw new Error('Settlement barrier timed out after 5ms');
+      },
+    });
+    await expect(resolveProjectSaveDecision(deps)).resolves.toBe('blocked');
+    expect(calls).toEqual(['barrier-failed']);
     expect(deps.choose).not.toHaveBeenCalled();
+    expect(deps.saveCurrent).not.toHaveBeenCalled();
+  });
+
+  it('holds one settlement boundary through state evaluation, decision, and save', async () => {
+    const boundary: string[] = [];
+    const recordingBarrier = async <T>(action: () => Promise<T> | T): Promise<T> => {
+      boundary.push('boundary-start');
+      try {
+        return await action();
+      } finally {
+        boundary.push('boundary-end');
+      }
+    };
+    const { deps, calls } = createSaveHarness({
+      saveState: 'modified',
+      choice: 'save',
+      saveCurrent: true,
+      barrier: recordingBarrier,
+    });
+    await expect(resolveProjectSaveDecision(deps)).resolves.toBe('saved');
+    expect(boundary).toEqual(['boundary-start', 'boundary-end']);
+    expect(calls).toEqual(['getSaveState', 'choose', 'saveCurrent']);
+    // Every step ran inside the single boundary, in order.
+    expect(boundary[0]).toBe('boundary-start');
+    expect(boundary[1]).toBe('boundary-end');
+  });
+
+  it('re-evaluates the save state inside the boundary so settled edits count', async () => {
+    const evaluatedStates: Array<'saved' | 'modified'> = [];
+    let state: 'saved' | 'modified' = 'saved';
+    const { deps } = createSaveHarness({
+      choice: 'discard',
+      barrier: async (action) => {
+        // Buffered editor commits settle when the boundary opens, flipping a
+        // clean project to modified before the state is read.
+        state = 'modified';
+        return action();
+      },
+    });
+    const withLiveState = {
+      ...deps,
+      getSaveState: () => {
+        evaluatedStates.push(state);
+        return state;
+      },
+    };
+    await expect(resolveProjectSaveDecision(withLiveState)).resolves.toBe('discarded');
+    expect(evaluatedStates).toEqual(['modified']);
+    expect(deps.choose).toHaveBeenCalled();
   });
 });
 
@@ -1047,9 +1137,10 @@ describe('Replacement transaction safety (US4: spec FR-010/FR-011/FR-015)', () =
           },
           confirmSave: async () => {
             calls.push('confirmSave');
-            const outcome = await resolveReplacementSaveDecision({
+            const outcome = await resolveProjectSaveDecision({
+              runSettlementBarrier: async (action) => await action(),
+              getSaveState: () => 'modified',
               choose: () => options.choice,
-              hasCurrentProject: () => true,
               hasCurrentPath: () => options.hasCurrentPath,
               saveCurrent: () => {
                 calls.push('saveCurrent');
@@ -1296,5 +1387,128 @@ describe('Library-draft timing and state integrity (FR-012/FR-017/FR-019)', () =
 
     expect(committed).toBe(parsed);
     expect(Object.keys(committed as object).sort()).toEqual(['layers', 'version']);
+  });
+});
+
+describe('terminal decision boundary (spec 109 T029)', () => {
+  it('wraps library, save, and commit in one boundary while prepare stays outside', async () => {
+    const order: string[] = [];
+    const outcome = await runReplacementFlow<{ prepared: true }>({
+      preflight: () => true,
+      prepare: () => {
+        order.push('prepare');
+        return { prepared: true };
+      },
+      confirmLibraryDraft: () => {
+        order.push('library');
+        return true;
+      },
+      confirmSave: () => {
+        order.push('save');
+        return true;
+      },
+      commit: () => {
+        order.push('commit');
+      },
+      runDecisionBoundary: async (action) => {
+        order.push('boundary-enter');
+        try {
+          return await action();
+        } finally {
+          order.push('boundary-exit');
+        }
+      },
+    });
+
+    expect(outcome).toEqual({ status: 'committed' });
+    expect(order).toEqual([
+      'prepare',
+      'boundary-enter',
+      'library',
+      'save',
+      'commit',
+      'boundary-exit',
+    ]);
+  });
+
+  it('releases the boundary when a decision blocks before commit', async () => {
+    const order: string[] = [];
+    const outcome = await runReplacementFlow<{ prepared: true }>({
+      preflight: () => true,
+      prepare: () => ({ prepared: true }),
+      confirmLibraryDraft: () => {
+        order.push('library');
+        return false;
+      },
+      confirmSave: () => {
+        order.push('save');
+        return true;
+      },
+      commit: () => {
+        order.push('commit');
+      },
+      runDecisionBoundary: async (action) => {
+        order.push('boundary-enter');
+        try {
+          return await action();
+        } finally {
+          order.push('boundary-exit');
+        }
+      },
+    });
+
+    expect(outcome).toEqual({ status: 'blocked' });
+    expect(order).toEqual(['boundary-enter', 'library', 'boundary-exit']);
+  });
+
+  it('keeps the chooser and parse outside the boundary in the project-file path', async () => {
+    const order: string[] = [];
+    const outcome = await runProjectFileReplacement<{ version: number }>({
+      selectFile: () => {
+        order.push('selectFile');
+        return '/work/incoming.blue';
+      },
+      readFile: (filePath) => {
+        order.push(`read:${filePath}`);
+        return '<blueData/>';
+      },
+      parseProject: (xml) => {
+        order.push('parse');
+        return { version: xml.length };
+      },
+      isSameFile: () => false,
+      preflight: () => true,
+      confirmLibraryDraft: () => {
+        order.push('library');
+        return true;
+      },
+      confirmSave: () => {
+        order.push('save');
+        return true;
+      },
+      commit: () => {
+        order.push('commit');
+      },
+      runDecisionBoundary: async (action) => {
+        order.push('boundary-enter');
+        try {
+          return await action();
+        } finally {
+          order.push('boundary-exit');
+        }
+      },
+    });
+
+    expect(outcome).toEqual({ status: 'committed' });
+    expect(order).toEqual([
+      'selectFile',
+      'read:/work/incoming.blue',
+      'parse',
+      'boundary-enter',
+      'library',
+      'save',
+      'commit',
+      'boundary-exit',
+    ]);
   });
 });

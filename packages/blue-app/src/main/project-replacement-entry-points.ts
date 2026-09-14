@@ -19,6 +19,8 @@ export interface CsdImportReplacementDependencies<Project, Mode> {
   confirmLibraryDraft: () => Promise<boolean> | boolean;
   confirmSave: () => Promise<boolean> | boolean;
   commit: (project: Project) => Promise<void> | void;
+  /** Boundary held around the accepted-target decisions and commit (T029). */
+  runDecisionBoundary?: <T>(action: () => Promise<T>) => Promise<T>;
 }
 
 /**
@@ -49,6 +51,7 @@ export async function runCsdImportReplacement<Project, Mode>(
     confirmLibraryDraft: () => dependencies.confirmLibraryDraft(),
     confirmSave: () => dependencies.confirmSave(),
     commit: dependencies.commit,
+    runDecisionBoundary: dependencies.runDecisionBoundary,
   });
 }
 
@@ -63,6 +66,8 @@ export interface OrcScoImportReplacementDependencies<Project, Mode> {
   confirmLibraryDraft: () => Promise<boolean> | boolean;
   confirmSave: () => Promise<boolean> | boolean;
   commit: (project: Project) => Promise<void> | void;
+  /** Boundary held around the accepted-target decisions and commit (T029). */
+  runDecisionBoundary?: <T>(action: () => Promise<T>) => Promise<T>;
 }
 
 /** Adapter for the two-file ORC/SCO import entry point. */
@@ -96,6 +101,7 @@ export async function runOrcScoImportReplacement<Project, Mode>(
     confirmLibraryDraft: () => dependencies.confirmLibraryDraft(),
     confirmSave: () => dependencies.confirmSave(),
     commit: dependencies.commit,
+    runDecisionBoundary: dependencies.runDecisionBoundary,
   });
 }
 
@@ -106,6 +112,8 @@ export interface MidiImportReplacementDependencies<Project> {
   confirmSave: () => Promise<boolean> | boolean;
   revalidate: () => Promise<void> | void;
   commit: (project: Project) => Promise<void> | void;
+  /** Boundary held around the accepted-target decisions and commit (T029). */
+  runDecisionBoundary?: <T>(action: () => Promise<T>) => Promise<T>;
 }
 
 /**
@@ -124,6 +132,7 @@ export async function runMidiImportReplacement<Project>(
       await dependencies.revalidate();
       await dependencies.commit(project);
     },
+    runDecisionBoundary: dependencies.runDecisionBoundary,
   });
 }
 

@@ -3012,3 +3012,54 @@ describe('Project patch round trips through real ProjectHistory (T117)', () => {
     });
   });
 });
+
+describe('save-state-aware serialization compatibility (spec 109)', () => {
+  it('keeps XML round-trip and identity stable while save state is queried and checkpointed', async () => {
+    const session = new ProjectSession();
+    session.replace(new BlueData(), '/tmp/save-state.blue');
+    const recorder = new FakePublicationRecorder();
+    const history = new ProjectHistory({
+      session,
+      publishUpdated: (evt) => recorder.record(evt),
+    });
+    const context = new MockHistoryContext('ctx-save-state');
+    const docId = session.read().documentId!;
+    const live = () => session.read().data!;
+
+    history.checkpointSave();
+    expect(history.getSaveState()).toBe('saved');
+    const baselineXml = live().saveToString();
+
+    const commit = await history.commit(
+      context.nextCommitRequest(docId, 0, 'Retitle', [
+        { projectProperties: { title: 'Retitled' } },
+      ]),
+    );
+    expect(commit.status).toBe('committed');
+    expect(history.getSaveState()).toBe('modified');
+    const modifiedXml = live().saveToString();
+    expect(modifiedXml).not.toBe(baselineXml);
+
+    // Undo restores both the baseline content and the saved state.
+    const undo = await history.undo(context.nextUndoRequest(docId, session.read().revision));
+    expect(undo.status).toBe('committed');
+    expect(history.getSaveState()).toBe('saved');
+    expect(live().saveToString()).toBe(baselineXml);
+
+    // Save-state queries and checkpoints never perturb the serialized form.
+    expect(history.getSaveState()).toBe('saved');
+    history.checkpointSave();
+    expect(live().saveToString()).toBe(baselineXml);
+
+    const redo = await history.redo(context.nextRedoRequest(docId, session.read().revision));
+    expect(redo.status).toBe('committed');
+    expect(history.getSaveState()).toBe('modified');
+    expect(live().saveToString()).toBe(modifiedXml);
+
+    for (const xml of [baselineXml, modifiedXml]) {
+      expect(xml).not.toContain('saveState');
+      expect(xml).not.toContain('savedStateId');
+      expect(BlueData.loadFromString(xml).saveToString()).toBe(xml);
+    }
+  });
+});
