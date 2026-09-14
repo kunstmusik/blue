@@ -57,6 +57,7 @@ import type { DisplayWorkArea } from '../../shared/window-layout-settings';
 import {
   getDefaultEditorPanels,
   getPanel,
+  getPanelsByMode,
   PANEL_REGISTRY,
 } from '../components/workbench/panel-registry';
 import { buildPlayheadDisplayState } from '../components/menu-bar/toolbar-formatters';
@@ -220,8 +221,10 @@ export function findLibraryEditorPanelsToClose(
   );
 }
 
-export function hasRestoredStartupEditorPanel(api: Pick<DockviewApi, 'getPanel'>): boolean {
-  return getDefaultEditorPanels().some((descriptor) => api.getPanel(descriptor.id) !== undefined);
+export function hasRestoredEditorPanel(api: Pick<DockviewApi, 'getPanel'>): boolean {
+  // A user may intentionally close panels that are no longer open by default;
+  // any restored editor still proves the Dockview snapshot hydrated.
+  return getPanelsByMode('editor').some((descriptor) => api.getPanel(descriptor.id) !== undefined);
 }
 
 /** Compact "which panels are where" summary for restore diagnostics. */
@@ -1261,7 +1264,7 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()((se
     if (!api) return null;
     // Never let a transient, unhydrated Dockview canvas overwrite the last
     // usable workbench layout in persistent settings.
-    if (!hasRestoredStartupEditorPanel(api)) return null;
+    if (!hasRestoredEditorPanel(api)) return null;
 
     const nextAuxiliary = syncAuxiliaryLayoutFromApi(api, auxiliary);
 
@@ -1366,7 +1369,7 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()((se
         // A persisted workbench without any primary editor is an incomplete
         // snapshot, not a usable user layout. This can occur when a prior
         // startup persisted Dockview before initial hydration completed.
-        if (!hasRestoredStartupEditorPanel(api)) {
+        if (!hasRestoredEditorPanel(api)) {
           clearDockviewSafely(api);
           set({
             auxiliary: buildDefaultWorkbenchLayout(api),

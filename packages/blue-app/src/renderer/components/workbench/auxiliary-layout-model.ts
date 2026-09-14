@@ -550,8 +550,9 @@ export function createDefaultSeededInstance(
   displayOrder: number,
 ): AuxiliaryGroupInstance {
   const def = AUXILIARY_SEED_DEFINITIONS[seedGroupId];
-  // Fresh layouts contain only Java Blue's startup components. Non-startup
-  // tools are added to this seeded group when explicitly revealed.
+  // Fresh layouts open only Java Blue's startup components, collapsed to the
+  // edge rail (minimized); they dock when explicitly revealed. Non-startup
+  // tools join this seeded group when revealed too.
   const startupPanelIds = def.panelIds.filter(
     (panelId) => getPanel(panelId)?.openAtStartup === true,
   );
@@ -562,7 +563,7 @@ export function createDefaultSeededInstance(
     kind: 'seeded',
     edge: def.defaultEdge,
     panelIds: [...startupPanelIds],
-    dockedPanelIds: [...startupPanelIds],
+    dockedPanelIds: [],
     activePanelId: startupPanelIds[0] ?? def.defaultActivePanelId,
     dockedSize: def.defaultDockedSize,
     slideoutSize: def.defaultSlideoutSize,

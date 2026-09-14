@@ -6,7 +6,7 @@ import {
   createDefaultAuxiliaryLayoutState,
 } from '../components/workbench/auxiliary-layout';
 import { acquireTreeDndManager } from '../components/tree/tree-dnd-domain';
-import { hasRestoredStartupEditorPanel, useWorkbenchStore } from '../stores/workbench-store';
+import { hasRestoredEditorPanel, useWorkbenchStore } from '../stores/workbench-store';
 import { useLibraryStore } from '../stores/library-store';
 import { usePlaybackStore } from '../stores/playback-store';
 import { useProjectStore } from '../stores/project-store';
@@ -585,7 +585,7 @@ const markerMenuTransport = {
 describe('restored workbench validation', () => {
   it('rejects a restored layout that contains only auxiliary panels', () => {
     expect(
-      hasRestoredStartupEditorPanel({
+      hasRestoredEditorPanel({
         getPanel: (panelId: string) =>
           panelId === 'OutputTopComponent' ? ({} as never) : undefined,
       }),
@@ -594,9 +594,18 @@ describe('restored workbench validation', () => {
 
   it('accepts a restored layout with a primary editor panel', () => {
     expect(
-      hasRestoredStartupEditorPanel({
+      hasRestoredEditorPanel({
         getPanel: (panelId: string) =>
           panelId === 'ScoreTopComponent' ? ({} as never) : undefined,
+      }),
+    ).toBe(true);
+  });
+
+  it('accepts a restored layout with an editor that is not open by default', () => {
+    expect(
+      hasRestoredEditorPanel({
+        getPanel: (panelId: string) =>
+          panelId === 'OrchestraTopComponent' ? ({} as never) : undefined,
       }),
     ).toBe(true);
   });
@@ -672,8 +681,15 @@ describe('workbench store layout persistence', () => {
 
     expect(api.fromJSON).toHaveBeenCalledWith(dockviewSnapshot);
     expect(api.getPanel('ScoreTopComponent')).toBeDefined();
-    expect(api.getPanel('BlueLiveTopComponent')).toBeDefined();
-    expect(api.getPanel('OutputTopComponent')).toBeDefined();
+    expect(api.getPanel('ProjectPropertiesTopComponent')).toBeDefined();
+    expect(api.getPanel('BlueLiveTopComponent')).toBeUndefined();
+    const output = useWorkbenchStore
+      .getState()
+      .auxiliary.groups.find(
+        (group) => group.kind === 'seeded' && group.seedGroupId === 'output-main',
+      );
+    expect(output?.panelIds).toEqual(['MixerTopComponent', 'OutputTopComponent']);
+    expect(output?.dockedPanelIds).toEqual([]);
   });
 });
 

@@ -133,6 +133,26 @@ As a maintainer, I need settings persistence covered by automated tests before a
 - **FR-025**: Automated tests MUST be written first for settings save/load, default merging, invalid value handling, legacy migration idempotence, window bounds save/restore, pixel-based split location save/restore, split clamping without overwrite, workbench layout reset, menu command routing, and Reset Windows persistence.
 - **FR-026**: The feature MUST preserve existing workbench panel behavior except for the requested persistence, 200px defaults, storage location, and Reset Windows behavior.
 
+### Post-Implementation Default Layout Contract
+
+The following clarification records the concrete default state used by a new
+workbench and by `Window > Reset Windows` (2026-09-14):
+
+- The editor area contains exactly `Score` and `Project Properties`.
+- `Score` is the active editor panel.
+- The auxiliary output seed contains `Mixer` and `Output` on the bottom edge,
+  but both start minimized on the bottom rail rather than open in the work
+  area. The bottom controlled-pane default remains 200px when the group is
+  revealed or docked.
+- A fresh workbench and Reset Windows use the same default-layout builder, so
+  reset behavior cannot drift from first-launch behavior.
+- A saved layout remains authoritative. In particular, a saved layout that
+  contains a non-default editor such as `Orchestra` must still restore it; the
+  startup-default list is not used to reject or replace a valid saved layout.
+- This narrower Electron startup layout is an intentional UI divergence from
+  Java Blue's broader editor startup set. Java Blue remains the reference for
+  split sizing and Reset Windows semantics.
+
 ### Key Entities *(include if feature involves data)*
 
 - **Window Layout Settings**: App-wide persisted data for user-adjustable window and workbench layout state, including a layout version.
