@@ -23,14 +23,15 @@ describe('Mounted 64-Strip Metering Performance and Interaction Latency (SC-003,
   let nextRafId = 1;
   let intersectionCallbacks: IntersectionObserverCallback[] = [];
 
-  const mockGetContext = vi.fn(() => ({
+  const mockCanvasContext = {
     clearRect: vi.fn(),
     fillRect: vi.fn(),
     createLinearGradient: vi.fn(() => ({ addColorStop: vi.fn() })),
     save: vi.fn(),
     restore: vi.fn(),
     scale: vi.fn(),
-  }));
+  };
+  const mockGetContext = vi.fn(() => mockCanvasContext);
 
   beforeEach(() => {
     rafCallbacks = [];
@@ -172,13 +173,15 @@ describe('Mounted 64-Strip Metering Performance and Interaction Latency (SC-003,
     const updateSpy = vi.spyOn(meterStore, 'update');
 
     // Feed a meter frame with audio
-    meterStore.processMeterFrame({
-      sequence: 1,
-      channels: channels.map((c) => ({
-        csdKey: c.id,
-        rms: [0.5, 0.5],
-        peak: [0.7, 0.7],
-      })),
+    act(() => {
+      meterStore.processMeterFrame({
+        sequence: 1,
+        channels: channels.map((c) => ({
+          csdKey: c.id,
+          rms: [0.5, 0.5],
+          peak: [0.7, 0.7],
+        })),
+      });
     });
 
     // Fire all 64 rAF callbacks with the exact same timestamp (as the browser does in a single tick)
@@ -301,9 +304,11 @@ describe('Mounted 64-Strip Metering Performance and Interaction Latency (SC-003,
     });
 
     // Provide audio so it's not parked at silence
-    meterStore.processMeterFrame({
-      sequence: 2,
-      channels: [{ csdKey: singleChannel.id, rms: [0.8, 0.8], peak: [0.9, 0.9] }],
+    act(() => {
+      meterStore.processMeterFrame({
+        sequence: 2,
+        channels: [{ csdKey: singleChannel.id, rms: [0.8, 0.8], peak: [0.9, 0.9] }],
+      });
     });
 
     const onscreenCbs = [...rafCallbacks];

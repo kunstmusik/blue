@@ -103,11 +103,14 @@ ResponseView roundTrip(
     const int timeoutMs = 2000;
     zmq_setsockopt(socket, ZMQ_RCVTIMEO, &timeoutMs, sizeof(timeoutMs));
     zmq_setsockopt(socket, ZMQ_SNDTIMEO, &timeoutMs, sizeof(timeoutMs));
+    const int immediate = 1;
+    zmq_setsockopt(socket, ZMQ_IMMEDIATE, &immediate, sizeof(immediate));
     zmq_connect(socket, endpoint.c_str());
+
+    const int sendResult = zmq_send(socket, request.data(), request.size(), 0);
 
     bool processed = false;
     std::thread control([&]() { processed = handler.processOne(); });
-    const int sendResult = zmq_send(socket, request.data(), request.size(), 0);
 
     std::vector<uint8_t> response(64 * 1024);
     const int responseSize = sendResult >= 0
