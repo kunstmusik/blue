@@ -188,7 +188,10 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
       const node = nodes.next();
       if (node.getName() === 'defaultHeightIndex') {
         const value = Number.parseInt(node.getTextString(), 10);
-        if (Number.isFinite(value)) group.setDefaultHeightIndex(value);
+        // Preserve imported values verbatim. Rendering/new layers fall back to
+        // 22px for an invalid value, but the original XML must not be rewritten
+        // until the user explicitly edits the default.
+        if (Number.isFinite(value)) group._defaultHeightIndex = value;
       } else if (node.getName() === 'tracks') {
         for (const name of node.getAttributeNames()) {
           group._tracksAttributes.set(name, node.getAttributeValue(name) ?? '');
@@ -211,7 +214,13 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
 
   newLayerAt(index: number): Track {
     const track = new Track();
-    track.setHeightIndex(this._defaultHeightIndex);
+    const defaultHeightIndex =
+      Number.isInteger(this._defaultHeightIndex) &&
+      this._defaultHeightIndex >= 0 &&
+      this._defaultHeightIndex <= Track.HEIGHT_MAX_INDEX
+        ? this._defaultHeightIndex
+        : 0;
+    track.setHeightIndex(defaultHeightIndex);
     const insertIndex = Math.min(Math.max(index, 0), this.length);
     this.splice(insertIndex, 0, track);
     return track;

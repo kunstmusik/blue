@@ -69,6 +69,7 @@ import { buildSetSelectionToLayerColorPatch } from '../score-color-actions';
 
 interface Props {
   group: PolyObjectLayerGroupSnapshot;
+  allLayerGroups?: ScoreLayerGroupSnapshot[];
   rootGroupIndex?: number;
   projectSessionId: number;
   projectRevision: number;
@@ -287,6 +288,7 @@ const MIN_SCORE_OBJECT_DURATION = 0.25;
 
 export default function ScoreTimeCanvas({
   group,
+  allLayerGroups,
   projectSessionId,
   projectRevision,
   scoreRootGroupId,
@@ -419,8 +421,8 @@ export default function ScoreTimeCanvas({
 
   const isNestedView = scoreContainerPath.length > 0;
   const interactionLayerGroups = useMemo<ScoreLayerGroupSnapshot[]>(
-    () => (isNestedView ? [group] : currentScore.layerGroups),
-    [isNestedView, group, currentScore.layerGroups],
+    () => (isNestedView ? [group] : (allLayerGroups ?? currentScore.layerGroups)),
+    [allLayerGroups, currentScore.layerGroups, isNestedView, group],
   );
 
   useEffect(() => {
@@ -2040,9 +2042,10 @@ export default function ScoreTimeCanvas({
           }}
         >
           <ScoreObjectColorPicker ref={colorPickerRef} onSelect={handleColorSelected} />
-          {group.layers.map((layer: ScoreLayerSnapshot) => {
+          {group.layers.map((layer: ScoreLayerSnapshot, li: number) => {
+            const layerSelectionId = getLayerSelectionId(layer);
             const isLayerSelected = selectedLayerKeys.has(
-              buildSelectionKey(group.groupId, getLayerSelectionId(layer)),
+              buildSelectionKey(group.groupId, layerSelectionId),
             );
             return (
               <div

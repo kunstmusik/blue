@@ -231,6 +231,8 @@ describe('Exhaustive project patch preparation classification (T018)', () => {
         { type: 'setAutomationResolution' },
         { type: 'moveAutomationRange' },
         { type: 'scaleAutomationRange' },
+        { type: 'setLayerHeights' },
+        { type: 'setLayerGroupDefaultHeight' },
       ];
 
       for (const fixture of fixtures) {

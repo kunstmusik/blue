@@ -317,7 +317,7 @@ describe('Score layer operations (US3)', () => {
 
     await openContextMenu(track0);
     expect(useLayerSelectionStore.getState().selectedKeys).toEqual(
-      new Set(['track-group:lsel-track-0']),
+      new Set(['sound-group:lsel-sound-0', 'sound-group:lsel-sound-1']),
     );
     expect(findMenuItem('Remove Layer')).toBeTruthy();
     act(() => {
@@ -329,6 +329,42 @@ describe('Score layer operations (US3)', () => {
     act(() => {
       container.querySelector<HTMLButtonElement>('[data-layer-removal-cancel]')?.click();
     });
+  });
+
+  it('exposes distinct group reset and apply-default actions', async () => {
+    seedProject();
+    act(() => {
+      root.render(<ScorePanel />);
+    });
+
+    const track0 = container.querySelector<HTMLElement>('[data-layer-id="track-layer-0"]')!;
+    await openContextMenu(track0);
+
+    const layerHeightMenu = findMenuItem('Layer Height')!;
+    act(() => {
+      const pointerMove = new Event('pointermove', { bubbles: true });
+      Object.defineProperty(pointerMove, 'pointerType', { value: 'mouse' });
+      layerHeightMenu.dispatchEvent(pointerMove);
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 120));
+    });
+
+    const groupMenu = document.body.querySelector<HTMLElement>('[data-layer-group-menu]')!;
+    act(() => {
+      const pointerMove = new Event('pointermove', { bubbles: true });
+      Object.defineProperty(pointerMove, 'pointerType', { value: 'mouse' });
+      groupMenu.dispatchEvent(pointerMove);
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 120));
+    });
+
+    const resetGroup = document.body.querySelector<HTMLElement>('[data-reset-group-height-action]');
+    const applyDefault = document.body.querySelector<HTMLElement>('[data-apply-default-action]');
+    expect(resetGroup?.textContent?.trim()).toBe('Reset Height to Default');
+    expect(applyDefault?.textContent?.trim()).toBe('Apply Default to Group');
+    expect(resetGroup).not.toBe(applyDefault);
   });
 
   it('confirms removal even when one layer is selected', () => {

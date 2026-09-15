@@ -1,6 +1,7 @@
 import { useRef, useCallback, useState, useEffect, useLayoutEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../hooks/host-portals';
+import { useHostDocument } from '../../../hooks/use-host-document';
 import { isEventInsidePortalPopup } from '../../../utils/cross-realm-dom';
 import { cn } from '../../../lib/cn';
 import * as ContextMenu from '@radix-ui/react-context-menu';
@@ -65,7 +66,19 @@ import {
   getPushDisabledReasonLabel,
   type LayerRemovalPlan,
   type VisibleLayerRef,
+  SOUND_LAYER_PRESET_HEIGHTS,
+  TRACK_PRESET_HEIGHTS,
+  getLayerHeightStatus,
+  resolveLayerHeightTargets,
 } from './score/layer-selection-utils';
+import { LayerHeightResizeHandle } from './score/LayerHeightResizeHandle';
+import {
+  useLayerHeightResize,
+  LayerHeightResizeContext,
+  useLayerHeightResizeContext,
+} from './score/useLayerHeightResize';
+import { LayerHeightCustomDialog } from './score/LayerHeightCustomDialog';
+import { LayerHeightContextMenuSub } from './score/LayerHeightContextMenu';
 
 type ChainDialogTarget =
   | { scope: 'soundLayer'; groupId: string; layerIndex: number }
@@ -177,6 +190,7 @@ type ScoreMode = 'score' | 'singleLine' | 'multiLine';
 const GROUP_SPACER = 36;
 
 export default function ScorePanel() {
+  const hostDocument = useHostDocument();
   const loaded = useProjectStore((s) => s.loaded);
   const score = useProjectStore((s) => s.score);
   const sessionId = useProjectStore((s) => s.sessionId);
@@ -389,10 +403,26 @@ export default function ScorePanel() {
     session.activeGroupId && nestedSnapshot ? [nestedSnapshot] : score.layerGroups;
 
   const scopeKey = `${sessionId}:${session.activeGroupId ?? 'root'}`;
-  const visibleLayers = useMemo(
+  const initialVisibleLayers = useMemo(
     () => flattenVisibleLayers(effectiveLayerGroups, scopeKey),
     [effectiveLayerGroups, scopeKey],
   );
+
+  const selectedKeys = useLayerSelectionStore((state) => state.selectedKeys);
+  const layerHeightResize = useLayerHeightResize({
+    layerGroups: effectiveLayerGroups,
+    scopeGroupId: session.activeGroupId ?? null,
+    projectSessionId: sessionId,
+    projectRevision: getProjectDocumentRevision(),
+    visibleLayers: initialVisibleLayers,
+    selectedKeys,
+    scrollContainerRef,
+    hostDocument,
+  });
+
+  const displayLayerGroups = layerHeightResize.projectedLayerGroups;
+
+  const visibleLayers = initialVisibleLayers;
 
   useEffect(() => {
     useLayerSelectionStore.getState().reconcile(scopeKey, visibleLayers);
@@ -407,8 +437,10 @@ export default function ScorePanel() {
     pixelsPerBeat,
     loaded,
     setTimeState,
-    effectiveLayerGroups,
+    displayLayerGroups,
     handleWheelScrollOrigin,
+    layerHeightResize.phase !== 'idle',
+    layerHeightResize.commitAbsoluteHeight,
   );
 
   // Track the scroll container width so totalBeats can fill the visible area when zoomed out.
@@ -434,6 +466,14 @@ export default function ScorePanel() {
   const initialTempo = transport.tempoMap.points[0]?.tempo ?? 60;
 
   const isRootTimeline = !session.activeGroupId;
+
+  const activeHeightTarget =
+    layerHeightResize.activeTarget ?? layerHeightResize.activeTargets[0] ?? null;
+  const activeHeightValue = activeHeightTarget
+    ? (layerHeightResize.projectedHeights.get(
+        `${activeHeightTarget.groupId}:${activeHeightTarget.layerIndex}`,
+      ) ?? activeHeightTarget.initialHeight)
+    : null;
 
   const { handleMouseDown: rulerMouseDown } = useScoreRulerSelection({
     pixelsPerBeat,
@@ -754,212 +794,238 @@ export default function ScorePanel() {
   }
 
   return (
-    <div className="h-full min-h-0 flex flex-col bg-app-bg text-app-text">
-      <ScoreToolbar
-        mode={mode}
-        onModeChange={setMode}
-        pathSegments={session.segments}
-        onNavigateToSegment={navigateToSegment}
-        onNavigateToRoot={navigateToRoot}
-        snapEnabled={snapEnabled}
-        snapValue={snapValue}
-        onSnapToggle={handleSnapToggle}
-        onSnapValueChange={handleSnapValueChange}
-        onRulerConfig={() => setRulerDialogOpen(true)}
-        onOpenNoteProcessorChain={(scope, groupId) => {
-          if (scope === 'rootScore') {
-            setChainDialogTarget({ scope: 'rootScore' });
-          } else if (groupId) {
-            setChainDialogTarget({ scope: 'layerGroup', groupId });
+    <LayerHeightResizeContext.Provider value={layerHeightResize}>
+      <div className="relative h-full min-h-0 flex flex-col bg-app-bg text-app-text">
+        {layerHeightResize.phase !== 'idle' && activeHeightTarget && activeHeightValue !== null && (
+          <div
+            data-layer-height-active-readout
+            aria-live="polite"
+            className="pointer-events-none absolute right-2 top-2 z-40 rounded border border-app-border bg-app-overlay px-2 py-1 text-role-callout font-mono font-medium text-app-text shadow-md"
+          >
+            {layerHeightResize.activeTargets.length > 1
+              ? `Selected layers (${layerHeightResize.activeTargets.length})`
+              : 'This layer'}{' '}
+            · {activeHeightValue}
+            px
+          </div>
+        )}
+        <ScoreToolbar
+          mode={mode}
+          onModeChange={setMode}
+          pathSegments={session.segments}
+          onNavigateToSegment={navigateToSegment}
+          onNavigateToRoot={navigateToRoot}
+          snapEnabled={snapEnabled}
+          snapValue={snapValue}
+          onSnapToggle={handleSnapToggle}
+          onSnapValueChange={handleSnapValueChange}
+          onRulerConfig={() => setRulerDialogOpen(true)}
+          onOpenNoteProcessorChain={(scope, groupId) => {
+            if (scope === 'rootScore') {
+              setChainDialogTarget({ scope: 'rootScore' });
+            } else if (groupId) {
+              setChainDialogTarget({ scope: 'layerGroup', groupId });
+            }
+          }}
+          getSegmentNoteProcessorChain={(index: number) => {
+            if (index === 0) return score.rootNoteProcessorChain;
+            const group = effectiveLayerGroups.find(
+              (g) => g.groupId === session.segments[index]?.groupId,
+            );
+            return group?.noteProcessorChain;
+          }}
+        />
+        <SplitPane
+          ariaLabel="Resize score layer headers and timeline"
+          className="flex-1 min-h-0 bg-app-canvas"
+          firstClassName="min-h-0"
+          secondClassName="min-w-0"
+          splitId="score.main"
+          controlledPane="first"
+          defaultSizePx={200}
+          minFirstSize={80}
+          minSecondSize={200}
+          orientation="horizontal"
+          first={
+            <LeftPanel
+              timeState={timeState}
+              tempoMapEnabled={transport.tempoMap.enabled}
+              tempoMapVisible={transport.tempoMap.visible}
+              onTempoEnabledChange={handleTempoEnabledChange}
+              onTempoVisibleChange={handleTempoVisibleChange}
+              onRowVisibilityChange={handleRowVisibilityChange}
+              layerGroups={displayLayerGroups}
+              visibleLayers={visibleLayers}
+              scopeKey={scopeKey}
+              scopeGroupId={session.activeGroupId ?? null}
+              projectSessionId={sessionId}
+              projectRevision={getProjectDocumentRevision()}
+              leftHeaderRef={leftHeaderRef}
+              onLeftScroll={handleLeftHeaderScroll}
+              onManage={() => setManageDialogOpen(true)}
+              onLayerGroupNoteProcessorChain={(groupId) =>
+                setChainDialogTarget({ scope: 'layerGroup', groupId })
+              }
+              onSoundLayerNoteProcessorChain={(groupId, layerIndex, trackId) =>
+                setChainDialogTarget(
+                  trackId
+                    ? { scope: 'track', groupId, trackId, layerIndex }
+                    : { scope: 'soundLayer', groupId, layerIndex },
+                )
+              }
+            />
           }
-        }}
-        getSegmentNoteProcessorChain={(index: number) => {
-          if (index === 0) return score.rootNoteProcessorChain;
-          const group = effectiveLayerGroups.find(
-            (g) => g.groupId === session.segments[index]?.groupId,
-          );
-          return group?.noteProcessorChain;
-        }}
-      />
-      <SplitPane
-        ariaLabel="Resize score layer headers and timeline"
-        className="flex-1 min-h-0 bg-app-canvas"
-        firstClassName="min-h-0"
-        secondClassName="min-w-0"
-        splitId="score.main"
-        controlledPane="first"
-        defaultSizePx={200}
-        minFirstSize={80}
-        minSecondSize={200}
-        orientation="horizontal"
-        first={
-          <LeftPanel
-            timeState={timeState}
-            tempoMapEnabled={transport.tempoMap.enabled}
-            tempoMapVisible={transport.tempoMap.visible}
-            onTempoEnabledChange={handleTempoEnabledChange}
-            onTempoVisibleChange={handleTempoVisibleChange}
-            onRowVisibilityChange={handleRowVisibilityChange}
-            layerGroups={effectiveLayerGroups}
-            visibleLayers={visibleLayers}
-            scopeKey={scopeKey}
-            projectSessionId={sessionId}
-            projectRevision={getProjectDocumentRevision()}
-            leftHeaderRef={leftHeaderRef}
-            onLeftScroll={handleLeftHeaderScroll}
-            onManage={() => setManageDialogOpen(true)}
-            onLayerGroupNoteProcessorChain={(groupId) =>
-              setChainDialogTarget({ scope: 'layerGroup', groupId })
-            }
-            onSoundLayerNoteProcessorChain={(groupId, layerIndex, trackId) =>
-              setChainDialogTarget(
-                trackId
-                  ? { scope: 'track', groupId, trackId, layerIndex }
-                  : { scope: 'soundLayer', groupId, layerIndex },
-              )
-            }
-          />
-        }
-        second={
-          <div className="h-full w-full flex flex-col">
-            <div
-              ref={timelineHeaderRef}
-              data-score-timeline-header
-              className="shrink-0 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-              onScroll={handleTimelineHeaderScroll}
-            >
-              <ColumnHeader
-                timeState={timeState}
-                markers={score.markers}
-                meters={transport.meterMap.entries}
-                meterMap={transport.meterMap}
-                tempoMap={transport.tempoMap}
-                totalBeats={totalBeats}
-                pixelsPerBeat={pixelsPerBeat}
-                sampleRate={transport.sampleRate}
-                renderStartTime={transport.renderStartTime}
-                renderEndTime={transport.renderEndTime}
-                snapEnabled={snapEnabled}
-                snapValue={snapValue}
-                timePointerBeats={timePointerBeats}
-                scrollContainerRef={scrollContainerRef}
-                rootTimelineOnly={isRootTimeline}
-                tempo={initialTempo}
-                rulerMouseDown={rulerMouseDown}
-                onTempoPatch={handleTempoPatch}
-                onMeterPatch={handleMeterPatch}
-              />
-            </div>
-            <div className="relative flex-1 min-h-0">
+          second={
+            <div className="h-full w-full flex flex-col">
               <div
-                ref={scrollContainerRef}
-                data-library-autoscroll
-                className="score-timeline-scroll absolute inset-0 overflow-auto"
-                onScroll={handleTimelineScroll}
-                onMouseDownCapture={(e) => {
-                  // Capture phase runs before portal-internal stopPropagation
-                  // guards, so presses inside the canvases' portaled context
-                  // menus must be exempted here explicitly.
-                  if (isEventInsidePortalPopup(e.target)) return;
-                  void stopAuditioning();
-                }}
-                onMouseDown={handleTimelineBackgroundMouseDown}
+                ref={timelineHeaderRef}
+                data-score-timeline-header
+                className="shrink-0 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                onScroll={handleTimelineHeaderScroll}
               >
-                <LayerPanel
-                  layerGroups={effectiveLayerGroups}
-                  onOpenNested={navigateToGroup}
-                  projectSessionId={sessionId}
-                  projectRevision={getProjectDocumentRevision()}
-                  scoreRootGroupId={activeSegment?.scorePath?.rootGroupId}
-                  scoreContainerPath={activeSegment?.scorePath?.containerPath}
-                  mode={mode}
-                  pixelsPerBeat={pixelsPerBeat}
-                  totalBeats={totalBeats}
-                  snapEnabled={snapEnabled}
-                  snapValue={snapValue}
+                <ColumnHeader
+                  timeState={timeState}
+                  markers={score.markers}
+                  meters={transport.meterMap.entries}
                   meterMap={transport.meterMap}
                   tempoMap={transport.tempoMap}
-                  tempo={
-                    transport.tempoMap.points.length > 0 ? transport.tempoMap.points[0].tempo : 60
-                  }
-                  smpteFrameRate={timeState.smpteFrameRate || 24}
+                  totalBeats={totalBeats}
+                  pixelsPerBeat={pixelsPerBeat}
+                  sampleRate={transport.sampleRate}
+                  renderStartTime={transport.renderStartTime}
+                  renderEndTime={transport.renderEndTime}
+                  snapEnabled={snapEnabled}
+                  snapValue={snapValue}
+                  timePointerBeats={timePointerBeats}
+                  scrollContainerRef={scrollContainerRef}
+                  rootTimelineOnly={isRootTimeline}
+                  tempo={initialTempo}
+                  rulerMouseDown={rulerMouseDown}
+                  onTempoPatch={handleTempoPatch}
+                  onMeterPatch={handleMeterPatch}
                 />
               </div>
-              <ScoreOverlayLines
-                renderStartTime={transport.renderStartTime}
-                renderEndTime={transport.renderEndTime}
-                timePointerBeats={timePointerBeats}
-                pixelsPerBeat={pixelsPerBeat}
-                totalBeats={totalBeats}
-                scrollLeft={scrollOverlayLeft}
-              />
-              {(() => {
-                if (!bgMarquee) return null;
-                const rect = scrollContainerRef.current?.getBoundingClientRect();
-                if (!rect) return null;
-                return (
-                  <div
-                    className="absolute pointer-events-none"
-                    style={{
-                      left: Math.min(bgMarquee.startClientX, bgMarquee.endClientX) - rect.left,
-                      top: Math.min(bgMarquee.startClientY, bgMarquee.endClientY) - rect.top,
-                      width: Math.abs(bgMarquee.endClientX - bgMarquee.startClientX),
-                      height: Math.abs(bgMarquee.endClientY - bgMarquee.startClientY),
-                      zIndex: 20,
-                      backgroundColor:
-                        'color-mix(in srgb, var(--color-app-text-strong) 6%, var(--color-app-clear))',
-                      border:
-                        '1px solid color-mix(in srgb, var(--color-app-text-strong) 50%, var(--color-app-clear))',
-                    }}
+              <div className="relative flex-1 min-h-0">
+                <div
+                  ref={scrollContainerRef}
+                  data-library-autoscroll
+                  className="score-timeline-scroll absolute inset-0 overflow-auto"
+                  onScroll={handleTimelineScroll}
+                  onMouseDownCapture={(e) => {
+                    // Capture phase runs before portal-internal stopPropagation
+                    // guards, so presses inside the canvases' portaled context
+                    // menus must be exempted here explicitly.
+                    if (
+                      isEventInsidePortalPopup(e.target) ||
+                      (e.target as HTMLElement)?.closest?.('[data-layer-resize-handle]')
+                    )
+                      return;
+                    void stopAuditioning();
+                  }}
+                  onMouseDown={(e) => {
+                    if ((e.target as HTMLElement)?.closest?.('[data-layer-resize-handle]')) return;
+                    handleTimelineBackgroundMouseDown(e);
+                  }}
+                >
+                  <LayerPanel
+                    layerGroups={displayLayerGroups}
+                    onOpenNested={navigateToGroup}
+                    projectSessionId={sessionId}
+                    projectRevision={getProjectDocumentRevision()}
+                    scoreRootGroupId={activeSegment?.scorePath?.rootGroupId}
+                    scoreContainerPath={activeSegment?.scorePath?.containerPath}
+                    mode={mode}
+                    pixelsPerBeat={pixelsPerBeat}
+                    totalBeats={totalBeats}
+                    snapEnabled={snapEnabled}
+                    snapValue={snapValue}
+                    meterMap={transport.meterMap}
+                    tempoMap={transport.tempoMap}
+                    tempo={
+                      transport.tempoMap.points.length > 0 ? transport.tempoMap.points[0].tempo : 60
+                    }
+                    smpteFrameRate={timeState.smpteFrameRate || 24}
                   />
-                );
-              })()}
+                </div>
+                <ScoreOverlayLines
+                  renderStartTime={transport.renderStartTime}
+                  renderEndTime={transport.renderEndTime}
+                  timePointerBeats={timePointerBeats}
+                  pixelsPerBeat={pixelsPerBeat}
+                  totalBeats={totalBeats}
+                  scrollLeft={scrollOverlayLeft}
+                />
+                {(() => {
+                  if (!bgMarquee) return null;
+                  const rect = scrollContainerRef.current?.getBoundingClientRect();
+                  if (!rect) return null;
+                  return (
+                    <div
+                      className="absolute pointer-events-none"
+                      style={{
+                        left: Math.min(bgMarquee.startClientX, bgMarquee.endClientX) - rect.left,
+                        top: Math.min(bgMarquee.startClientY, bgMarquee.endClientY) - rect.top,
+                        width: Math.abs(bgMarquee.endClientX - bgMarquee.startClientX),
+                        height: Math.abs(bgMarquee.endClientY - bgMarquee.startClientY),
+                        zIndex: 20,
+                        backgroundColor:
+                          'color-mix(in srgb, var(--color-app-text-strong) 6%, var(--color-app-clear))',
+                        border:
+                          '1px solid color-mix(in srgb, var(--color-app-text-strong) 50%, var(--color-app-clear))',
+                      }}
+                    />
+                  );
+                })()}
+              </div>
             </div>
-          </div>
-        }
-      />
-
-      {rulerDialogOpen && (
-        <RulerConfigDialog
-          timeState={timeState}
-          onApply={handleRulerConfigApply}
-          onClose={() => setRulerDialogOpen(false)}
+          }
         />
-      )}
 
-      {manageDialogOpen && (
-        <ScoreManagerDialog score={score} onClose={() => setManageDialogOpen(false)} />
-      )}
+        {rulerDialogOpen && (
+          <RulerConfigDialog
+            timeState={timeState}
+            onApply={handleRulerConfigApply}
+            onClose={() => setRulerDialogOpen(false)}
+          />
+        )}
 
-      {tempoMapEditorOpen && (
-        <TempoMapEditorDialog
-          tempoMap={transport.tempoMap}
-          timeContext={{
-            meterEntries: transport.meterMap.entries.map((entry) => ({
-              measure: entry.measure,
-              numBeats: entry.numBeats,
-              beatLength: entry.beatLength,
-            })),
-            tempoEnabled: transport.tempoMap.enabled,
-            initialTempo: transport.tempoMap.points[0]?.tempo ?? 60,
-            sampleRate: transport.sampleRate,
-          }}
-          onCommit={handleTempoPatch}
-          onClose={() => setTempoMapEditorOpen(false)}
-        />
-      )}
+        {manageDialogOpen && (
+          <ScoreManagerDialog score={score} onClose={() => setManageDialogOpen(false)} />
+        )}
 
-      {meterMapEditorOpen && (
-        <MeterMapEditorDialog
-          meterMap={transport.meterMap}
-          onCommit={handleMeterPatch}
-          onClose={() => setMeterMapEditorOpen(false)}
-        />
-      )}
-      {chainDialogTarget && (
-        <ChainDialogWrapper target={chainDialogTarget} onClose={() => setChainDialogTarget(null)} />
-      )}
-    </div>
+        {tempoMapEditorOpen && (
+          <TempoMapEditorDialog
+            tempoMap={transport.tempoMap}
+            timeContext={{
+              meterEntries: transport.meterMap.entries.map((entry) => ({
+                measure: entry.measure,
+                numBeats: entry.numBeats,
+                beatLength: entry.beatLength,
+              })),
+              tempoEnabled: transport.tempoMap.enabled,
+              initialTempo: transport.tempoMap.points[0]?.tempo ?? 60,
+              sampleRate: transport.sampleRate,
+            }}
+            onCommit={handleTempoPatch}
+            onClose={() => setTempoMapEditorOpen(false)}
+          />
+        )}
+
+        {meterMapEditorOpen && (
+          <MeterMapEditorDialog
+            meterMap={transport.meterMap}
+            onCommit={handleMeterPatch}
+            onClose={() => setMeterMapEditorOpen(false)}
+          />
+        )}
+        {chainDialogTarget && (
+          <ChainDialogWrapper
+            target={chainDialogTarget}
+            onClose={() => setChainDialogTarget(null)}
+          />
+        )}
+      </div>
+    </LayerHeightResizeContext.Provider>
   );
 }
 
@@ -976,6 +1042,7 @@ interface LeftPanelProps {
   layerGroups: ScoreLayerGroupSnapshot[];
   visibleLayers?: VisibleLayerRef[];
   scopeKey?: string;
+  scopeGroupId?: string | null;
   projectSessionId: number;
   projectRevision: number;
   leftHeaderRef: React.RefObject<HTMLDivElement | null>;
@@ -995,6 +1062,7 @@ function LeftPanel({
   layerGroups,
   visibleLayers,
   scopeKey,
+  scopeGroupId = null,
   projectSessionId,
   projectRevision,
   leftHeaderRef,
@@ -1185,6 +1253,7 @@ function LeftPanel({
                       projectRevision={projectRevision}
                       visibleLayers={visibleLayers}
                       scopeKey={scopeKey}
+                      scopeGroupId={scopeGroupId ?? null}
                       onNoteProcessorChain={(groupId, layerIndex) =>
                         onSoundLayerNoteProcessorChain(
                           groupId,
@@ -1377,6 +1446,7 @@ function SoundLayerHeader({
   projectRevision,
   visibleLayers,
   scopeKey,
+  scopeGroupId = null,
   onNoteProcessorChain,
   noteProcessorChain,
 }: {
@@ -1391,14 +1461,15 @@ function SoundLayerHeader({
   projectRevision: number;
   visibleLayers?: VisibleLayerRef[];
   scopeKey?: string;
+  scopeGroupId?: string | null;
   onNoteProcessorChain?: (groupId: string, layerIndex: number) => void;
   noteProcessorChain?: NoteProcessorChainSnapshot;
 }) {
+  const headerHostDocument = useHostDocument();
   const setLayerMute = useProjectStore((s) => s.setLayerMute);
   const setLayerSolo = useProjectStore((s) => s.setLayerSolo);
   const setLayerBackgroundColor = useProjectStore((s) => s.setLayerBackgroundColor);
   const renameLayer = useProjectStore((s) => s.renameLayer);
-  const setLayerHeight = useProjectStore((s) => s.setLayerHeight);
   const addLayer = useProjectStore((s) => s.addLayer);
   const applyProjectDocumentPatch = useProjectStore((s) => s.applyProjectDocumentPatch);
   const flushPendingPatches = useProjectStore((s) => s.flushPendingPatches);
@@ -1406,6 +1477,11 @@ function SoundLayerHeader({
   const layerSelectionId = getLayerSelectionId(layer);
   const selectionKey = buildSelectionKey(groupId, layerSelectionId);
   const selectedKeys = useLayerSelectionStore((state) => state.selectedKeys);
+  const [heightMenuSelectedKeys, setHeightMenuSelectedKeys] = useState<Set<string>>(
+    () => new Set(selectedKeys),
+  );
+  const [heightMenuRevision, setHeightMenuRevision] = useState<number | null>(null);
+  const [heightMenuHostDocument, setHeightMenuHostDocument] = useState<Document | null>(null);
   const isLayerSelected = selectedKeys.has(selectionKey);
   const selectSingle = useLayerSelectionStore((state) => state.selectSingle);
   const extendTo = useLayerSelectionStore((state) => state.extendTo);
@@ -1426,6 +1502,9 @@ function SoundLayerHeader({
     [groupId, groupType, layer, layerIndex, layerSelectionId, scopeKey],
   );
   const effectiveVisibleLayers = visibleLayers ?? fallbackVisibleLayers;
+  const selectedVisibleLayerCount = effectiveVisibleLayers.filter((vl) =>
+    selectedKeys.has(buildSelectionKey(vl.groupId, vl.layerSelectionId)),
+  ).length;
 
   const midiFocused = useMidiRoutingStore(
     (state) =>
@@ -1436,11 +1515,16 @@ function SoundLayerHeader({
       state.focusedTarget.trackId === layer.layerId,
   );
 
+  const resizeContext = useLayerHeightResizeContext();
+  const [customDialogOpen, setCustomDialogOpen] = useState(false);
+  const [customDialogScope, setCustomDialogScope] = useState<'single' | 'selected' | 'group'>(
+    'single',
+  );
+
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState(layer.name);
   const inputRef = useRef<HTMLInputElement>(null);
   const height = layer.height || 44;
-  const heightIndex = Math.round(height / 22) - 1;
   const showNoteProcessorButton = groupType === 'polyObject' || groupType === 'track';
   const showLayerHeightMenu = groupType === 'polyObject' || groupType === 'track';
   const showAutomationButton =
@@ -1544,6 +1628,7 @@ function SoundLayerHeader({
 
   const isFocusKey = useLayerSelectionStore((state) => state.focusKey === selectionKey);
   const keyboardFocus = useLayerSelectionStore((state) => state.keyboardFocus);
+  const isActiveSelection = isLayerSelected && isFocusKey;
 
   const singleLayerRange = {
     groupId,
@@ -1580,12 +1665,86 @@ function SoundLayerHeader({
     [applyProjectDocumentPatch, pendingRemovalPlan],
   );
 
+  const handleApplyCustomHeight = useCallback(
+    async (newHeight: number) => {
+      let updates: {
+        groupId: string;
+        layerIndex: number;
+        layerSelectionId: string;
+        layerId?: string;
+        height: number;
+      }[] = [];
+      let label = 'Set Layer Height';
+
+      if (customDialogScope === 'single') {
+        updates = [
+          { groupId, layerIndex, layerSelectionId, layerId: layer.layerId, height: newHeight },
+        ];
+        label = 'Set Layer Height';
+      } else if (customDialogScope === 'selected') {
+        const selectedLayers = effectiveVisibleLayers.filter((vl) =>
+          heightMenuSelectedKeys.has(buildSelectionKey(vl.groupId, vl.layerSelectionId)),
+        );
+        updates = selectedLayers.map((vl) => ({
+          groupId: vl.groupId,
+          layerIndex: vl.localIndex,
+          layerSelectionId: vl.layerSelectionId,
+          layerId: vl.layerId,
+          height: newHeight,
+        }));
+        label = 'Resize Selected Layers';
+      } else if (customDialogScope === 'group') {
+        const tg = effectiveLayerGroups.find((g) => g.groupId === groupId);
+        if (tg) {
+          updates = tg.layers.map((l, idx) => ({
+            groupId,
+            layerIndex: idx,
+            layerSelectionId: getLayerSelectionId(l),
+            layerId: l.layerId,
+            height: newHeight,
+          }));
+        }
+        label = 'Set Layer Group Heights';
+      }
+
+      if (updates.length > 0) {
+        await resizeContext?.commitAbsoluteHeight({
+          targets: updates.map(({ height: _height, ...target }) => target),
+          height: newHeight,
+          label,
+          revision: heightMenuRevision ?? undefined,
+          hostDocument: heightMenuHostDocument,
+        });
+      }
+      setCustomDialogOpen(false);
+      setHeightMenuRevision(null);
+      setHeightMenuHostDocument(null);
+    },
+    [
+      customDialogScope,
+      groupId,
+      layerIndex,
+      layerSelectionId,
+      effectiveVisibleLayers,
+      heightMenuSelectedKeys,
+      effectiveLayerGroups,
+      heightMenuRevision,
+      heightMenuHostDocument,
+      resizeContext,
+    ],
+  );
+
   return (
     <>
       <ContextMenu.Root
         onOpenChange={(open) => {
-          if (open && !isLayerSelected) {
-            selectSingle(selectionKey, effectiveVisibleLayers, scopeKey);
+          if (open) {
+            // Context-menu invocation is not a selection gesture. Capture the
+            // existing selection and revision for commands that may be
+            // confirmed after the menu has closed.
+            setHeightMenuSelectedKeys(new Set(useLayerSelectionStore.getState().selectedKeys));
+            setHeightMenuRevision(getProjectDocumentRevision());
+            setHeightMenuHostDocument(headerHostDocument);
           }
         }}
       >
@@ -1600,17 +1759,25 @@ function SoundLayerHeader({
             aria-selected={isLayerSelected ? 'true' : 'false'}
             data-selected-layer={isLayerSelected ? 'true' : undefined}
             className={cn(
-              'relative flex items-start overflow-hidden border-b border-l-2 border-app-timeline-divider select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-app-focus focus-visible:ring-inset',
+              'relative flex items-start overflow-hidden border-b border-l-2 border-app-timeline-divider select-none focus:outline-none',
               isLayerSelected ? 'border-l-app-accent bg-app-selection' : 'border-l-transparent',
-              midiFocused && 'ring-1 ring-inset ring-app-accent/70',
-              isFocusKey && keyboardFocus && 'ring-2 ring-app-focus',
+              midiFocused &&
+                !isLayerSelected &&
+                'border-l-app-accent ring-1 ring-inset ring-app-accent/70',
+              isActiveSelection &&
+                'shadow-[inset_0_1px_0_0_var(--color-app-accent),inset_-1px_0_0_0_var(--color-app-accent),inset_0_-1px_0_0_var(--color-app-accent)]',
             )}
             style={{ height }}
             onDoubleClick={startEdit}
             onMouseDown={(event) => {
               if (event.button !== 0) return;
               const target = event.target as HTMLElement;
-              if (target.closest('button, input, [data-track-instrument-control]')) return;
+              if (
+                target.closest(
+                  'button, input, [data-track-instrument-control], [data-layer-resize-handle]',
+                )
+              )
+                return;
               if (event.shiftKey) {
                 extendTo(selectionKey, effectiveVisibleLayers, scopeKey);
               } else {
@@ -1621,7 +1788,12 @@ function SoundLayerHeader({
             onPointerDown={(event) => {
               if (groupType !== 'track' || event.button !== 0) return;
               const target = event.target as HTMLElement;
-              if (target.closest('button, [data-track-instrument-control]')) return;
+              if (
+                target.closest(
+                  'button, [data-track-instrument-control], [data-layer-resize-handle]',
+                )
+              )
+                return;
               useMidiRoutingStore.getState().focusTrack({
                 projectSessionId,
                 rootGroupId: groupId,
@@ -1790,6 +1962,50 @@ function SoundLayerHeader({
                 </button>
               </div>
             )}
+            {showLayerHeightMenu && (
+              <LayerHeightResizeHandle
+                groupId={groupId}
+                layerIndex={layerIndex}
+                layerSelectionId={layerSelectionId}
+                layerName={layer.name}
+                currentHeight={height}
+                isActive={
+                  resizeContext !== null &&
+                  resizeContext.phase !== 'idle' &&
+                  resizeContext.activeTargets.some(
+                    (t) => t.groupId === groupId && t.layerIndex === layerIndex,
+                  )
+                }
+                activeHeight={
+                  resizeContext && resizeContext.phase !== 'idle'
+                    ? resizeContext.projectedHeights.get(`${groupId}:${layerIndex}`)
+                    : undefined
+                }
+                isSelected={isLayerSelected}
+                selectedCount={selectedVisibleLayerCount}
+                onStartResize={resizeContext?.startResize ?? (() => {})}
+                onUpdateResize={resizeContext?.updateResize}
+                onCommitResize={resizeContext?.commitResize}
+                onCancelResize={resizeContext?.cancelResize}
+                onKeyboardResize={(newHeight, ownerDocument) => {
+                  if (resizeContext) {
+                    void resizeContext.commitAbsoluteHeight({
+                      targets: [
+                        {
+                          groupId,
+                          layerIndex,
+                          layerSelectionId,
+                          layerId: layer.layerId,
+                        },
+                      ],
+                      height: newHeight,
+                      label: 'Resize Layer',
+                      hostDocument: ownerDocument,
+                    });
+                  }
+                }}
+              />
+            )}
           </div>
         </ContextMenu.Trigger>
         <PopoutContextMenuPortal>
@@ -1868,33 +2084,24 @@ function SoundLayerHeader({
             {showLayerHeightMenu && (
               <>
                 <ContextMenu.Separator className="editor-context-menu__separator" />
-                <ContextMenu.Sub>
-                  <ContextMenu.SubTrigger
-                    className={cn(ctxItemClass, 'editor-context-menu__subtrigger')}
-                  >
-                    <span>Layer Height</span>
-                    <ChevronRight className="w-3.5 h-3.5 opacity-60" />
-                  </ContextMenu.SubTrigger>
-                  <PopoutContextMenuPortal>
-                    <ContextMenu.SubContent
-                      className="editor-context-menu"
-                      {...portalEventIsolationProps}
-                    >
-                      {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((idx) => (
-                        <ContextMenu.Item
-                          key={idx}
-                          className={ctxItemClass}
-                          onSelect={() => setLayerHeight(groupId, layerIndex, idx)}
-                        >
-                          <span className="w-4 flex items-center justify-center mr-1">
-                            {heightIndex === idx && <Check className="w-3 h-3 text-app-accent" />}
-                          </span>
-                          <span>{idx + 1}</span>
-                        </ContextMenu.Item>
-                      ))}
-                    </ContextMenu.SubContent>
-                  </PopoutContextMenuPortal>
-                </ContextMenu.Sub>
+                <LayerHeightContextMenuSub
+                  layer={layer}
+                  groupId={groupId}
+                  groupType={groupType}
+                  layerIndex={layerIndex}
+                  height={height}
+                  effectiveVisibleLayers={effectiveVisibleLayers}
+                  selectedKeys={heightMenuSelectedKeys}
+                  effectiveLayerGroups={effectiveLayerGroups}
+                  onOpenCustomDialog={(scope) => {
+                    setCustomDialogScope(scope);
+                    setCustomDialogOpen(true);
+                  }}
+                  commandRevision={heightMenuRevision}
+                  commandHostDocument={heightMenuHostDocument}
+                  commitAbsoluteHeight={resizeContext?.commitAbsoluteHeight}
+                  commitHeightCommand={resizeContext?.commitHeightCommand}
+                />
               </>
             )}
             <ContextMenu.Separator className="editor-context-menu__separator" />
@@ -1925,6 +2132,48 @@ function SoundLayerHeader({
           plan={pendingRemovalPlan}
           onCancel={() => setPendingRemovalPlan(null)}
           onConfirm={handleRemovalConfirm}
+        />
+      )}
+      {customDialogOpen && (
+        <LayerHeightCustomDialog
+          initialHeight={
+            customDialogScope === 'single'
+              ? height
+              : customDialogScope === 'selected'
+                ? (() => {
+                    const sel = effectiveVisibleLayers.filter((vl) =>
+                      heightMenuSelectedKeys.has(
+                        buildSelectionKey(vl.groupId, vl.layerSelectionId),
+                      ),
+                    );
+                    const status = getLayerHeightStatus(
+                      sel.map((vl) => vl.layer.height || 44),
+                      sel.every((vl) => vl.groupType === 'track') ? 'track' : 'soundObject',
+                    );
+                    return status.status !== 'mixed' ? status.value : undefined;
+                  })()
+                : (() => {
+                    const tg = effectiveLayerGroups.find((g) => g.groupId === groupId);
+                    const status = getLayerHeightStatus(
+                      tg?.layers.map((l) => l.height || 44) ?? [],
+                      groupType,
+                    );
+                    return status.status !== 'mixed' ? status.value : undefined;
+                  })()
+          }
+          title={
+            customDialogScope === 'single'
+              ? `Set Height for ${layer.name}`
+              : customDialogScope === 'selected'
+                ? 'Set Height for Selected Layers'
+                : 'Set Height for Layer Group'
+          }
+          onConfirm={handleApplyCustomHeight}
+          onClose={() => {
+            setCustomDialogOpen(false);
+            setHeightMenuRevision(null);
+            setHeightMenuHostDocument(null);
+          }}
         />
       )}
     </>

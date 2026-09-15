@@ -90,6 +90,7 @@ export default function LayerPanel({
               <div key={group.groupId} className="not-last:border-b border-app-border/40">
                 <ScoreTimeCanvas
                   group={group}
+                  allLayerGroups={visibleGroups}
                   rootGroupIndex={gi}
                   projectSessionId={projectSessionId}
                   projectRevision={projectRevision}

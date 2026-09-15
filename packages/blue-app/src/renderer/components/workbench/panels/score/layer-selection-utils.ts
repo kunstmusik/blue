@@ -4,6 +4,17 @@ import type {
   ScoreLayerSnapshot,
   ScorePatch,
 } from '../../../../../shared/project-editor';
+import {
+  LAYER_HEIGHT_MIN,
+  LAYER_HEIGHT_MAX,
+  SOUND_LAYER_PRESET_HEIGHTS,
+  TRACK_PRESET_HEIGHTS,
+} from '@blue/data';
+
+export { LAYER_HEIGHT_MIN, LAYER_HEIGHT_MAX, SOUND_LAYER_PRESET_HEIGHTS, TRACK_PRESET_HEIGHTS };
+
+export const MIN_LAYER_HEIGHT = LAYER_HEIGHT_MIN;
+export const MAX_LAYER_HEIGHT = LAYER_HEIGHT_MAX;
 
 export interface VisibleLayerRef {
   scopeKey: string;
@@ -341,23 +352,29 @@ export function reconcileSelectionState(
     }
   }
 
-  if (nextSelectedKeys.size === 0) {
-    return {
-      scopeKey: currentScopeKey,
-      selectedKeys: nextSelectedKeys,
-      anchorKey: null,
-      focusKey: null,
-    };
+  let anchorKey: string | null = null;
+  let focusKey: string | null = null;
+
+  if (nextSelectedKeys.size > 0) {
+    anchorKey = currentState.anchorKey;
+    if (!anchorKey || !nextSelectedKeys.has(anchorKey)) {
+      anchorKey = nextSelectedKeys.values().next().value ?? null;
+    }
+
+    focusKey = currentState.focusKey;
+    if (!focusKey || !nextSelectedKeys.has(focusKey)) {
+      focusKey = anchorKey;
+    }
   }
 
-  let anchorKey = currentState.anchorKey;
-  if (!anchorKey || !nextSelectedKeys.has(anchorKey)) {
-    anchorKey = nextSelectedKeys.values().next().value ?? null;
-  }
-
-  let focusKey = currentState.focusKey;
-  if (!focusKey || !nextSelectedKeys.has(focusKey)) {
-    focusKey = anchorKey;
+  if (
+    currentState.scopeKey === currentScopeKey &&
+    currentState.selectedKeys.size === nextSelectedKeys.size &&
+    [...currentState.selectedKeys].every((k) => nextSelectedKeys.has(k)) &&
+    currentState.anchorKey === anchorKey &&
+    currentState.focusKey === focusKey
+  ) {
+    return currentState;
   }
 
   return {
@@ -366,4 +383,128 @@ export function reconcileSelectionState(
     anchorKey,
     focusKey,
   };
+}
+
+export interface LayerHeightTargetResolution {
+  ok: boolean;
+  disabledReason?: string;
+  targets: Array<{
+    groupId: string;
+    layerIndex: number;
+    layerSelectionId: string;
+    layerId: string;
+    initialHeight: number;
+    layerName: string;
+    groupType: ScoreLayerGroupType;
+  }>;
+  isMulti: boolean;
+}
+
+export function resolveLayerHeightTargets({
+  clickedGroupId,
+  clickedLayerIndex,
+  clickedLayerSelectionId,
+  visibleLayers,
+  selectedKeys,
+}: {
+  clickedGroupId: string;
+  clickedLayerIndex: number;
+  clickedLayerSelectionId: string;
+  visibleLayers: VisibleLayerRef[];
+  selectedKeys?: Set<string>;
+}): LayerHeightTargetResolution {
+  const clickedKey = buildSelectionKey(clickedGroupId, clickedLayerSelectionId);
+  const isClickedSelected = selectedKeys?.has(clickedKey) ?? false;
+
+  if (isClickedSelected) {
+    const selectedLayers = visibleLayers.filter((vl) =>
+      selectedKeys?.has(buildSelectionKey(vl.groupId, vl.layerSelectionId)),
+    );
+
+    if (selectedLayers.some((vl) => vl.groupType === 'patterns')) {
+      return {
+        ok: false,
+        disabledReason: 'Pattern layers cannot be resized',
+        targets: [],
+        isMulti: true,
+      };
+    }
+
+    return {
+      ok: true,
+      isMulti: selectedLayers.length > 1,
+      targets: selectedLayers.map((vl) => ({
+        groupId: vl.groupId,
+        layerIndex: vl.localIndex,
+        layerSelectionId: vl.layerSelectionId,
+        layerId: vl.layerId,
+        initialHeight: vl.layer.height || 44,
+        layerName: vl.layer.name,
+        groupType: vl.groupType,
+      })),
+    };
+  }
+
+  const hitLayer = visibleLayers.find(
+    (vl) => vl.groupId === clickedGroupId && vl.localIndex === clickedLayerIndex,
+  );
+  if (!hitLayer) {
+    return { ok: false, targets: [], isMulti: false };
+  }
+  if (hitLayer.groupType === 'patterns') {
+    return {
+      ok: false,
+      disabledReason: 'Pattern layers cannot be resized',
+      targets: [],
+      isMulti: false,
+    };
+  }
+
+  return {
+    ok: true,
+    isMulti: false,
+    targets: [
+      {
+        groupId: clickedGroupId,
+        layerIndex: clickedLayerIndex,
+        layerSelectionId: clickedLayerSelectionId,
+        layerId: hitLayer.layerId,
+        initialHeight: hitLayer.layer.height || 44,
+        layerName: hitLayer.layer.name,
+        groupType: hitLayer.groupType,
+      },
+    ],
+  };
+}
+
+export function getNextPresetHeight(
+  currentHeight: number,
+  direction: 1 | -1,
+  groupType: ScoreLayerGroupType,
+): number | null {
+  const presets = groupType === 'track' ? TRACK_PRESET_HEIGHTS : SOUND_LAYER_PRESET_HEIGHTS;
+  if (direction > 0) {
+    const higher = presets.find((p) => p > currentHeight);
+    return higher ?? null;
+  } else {
+    const lower = [...presets].reverse().find((p) => p < currentHeight);
+    return lower ?? null;
+  }
+}
+
+export function getLayerHeightStatus(
+  heights: number[],
+  groupType: ScoreLayerGroupType,
+): { status: 'preset' | 'custom' | 'mixed'; value?: number; presetIndex?: number } {
+  if (heights.length === 0) return { status: 'mixed' };
+  const first = heights[0];
+  const allSame = heights.every((h) => h === first);
+  if (!allSame) return { status: 'mixed' };
+
+  const presets = groupType === 'track' ? TRACK_PRESET_HEIGHTS : SOUND_LAYER_PRESET_HEIGHTS;
+  const idx = (presets as readonly number[]).indexOf(first);
+  if (idx !== -1) {
+    return { status: 'preset', value: first, presetIndex: idx };
+  }
+  return { status: 'custom', value: first };
 }

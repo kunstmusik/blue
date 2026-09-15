@@ -145,6 +145,35 @@ describe('ProjectPatchQueue', () => {
     );
   });
 
+  it('forwards an explicit revision fence for ordinary score transactions', async () => {
+    const dependencies = makeDependencies();
+    const queue = createProjectPatchQueue(dependencies);
+    const patch: ProjectDocumentPatch = {
+      score: {
+        type: 'setLayerHeights',
+        scopeGroupId: null,
+        updates: [{ groupId: 'group-1', layerIndex: 0, layerSelectionId: 'layer-1', height: 57 }],
+      },
+    };
+
+    queue.acceptRevision(1, 7);
+    queue.enqueue(patch, false, {
+      label: 'Resize Layer',
+      phase: 'single',
+      expectedRevision: 7,
+      operationId: 'height-operation-1',
+    });
+    await queue.flush();
+
+    expect(dependencies.commit).toHaveBeenCalledWith(
+      [patch],
+      expect.objectContaining({
+        expectedRevision: 7,
+        metadata: expect.objectContaining({ operationId: 'height-operation-1' }),
+      }),
+    );
+  });
+
   it('hands a normal oversize transaction to confirmation with its exact patches', async () => {
     const onOversizeProposal = vi.fn();
     const patch = makePatch(60);

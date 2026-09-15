@@ -200,6 +200,8 @@ export function isStructuralScorePatch(patch: ScorePatch): boolean {
     case 'convertScoreObjectToObjectBuilder':
     case 'removeTrackItems':
     case 'moveTrackItems':
+    case 'setLayerHeights':
+    case 'setLayerGroupDefaultHeight':
       return true;
     default:
       return false;
@@ -232,6 +234,8 @@ function scorePatchRequiresCanonicalProjectRefresh(patch: ScorePatch): boolean {
     case 'scaleAutomationRange':
     case 'convertScoreObjectToObjectBuilder':
     case 'convertToPolyObject':
+    case 'setLayerHeights':
+    case 'setLayerGroupDefaultHeight':
       return true;
     case 'addLayerGroup':
       return patch.groupType === 'track' || patch.groupType === 'patterns';
@@ -584,7 +588,12 @@ export function createProjectPatchQueue(
     transaction: PendingTransaction,
   ): Promise<{ patches: ProjectDocumentPatch[]; expectedRevision?: number }> => {
     if (!transactionHasClojurePatch(transaction)) {
-      return { patches: transaction.patches };
+      return {
+        patches: transaction.patches,
+        ...(transaction.metadata?.expectedRevision !== undefined
+          ? { expectedRevision: transaction.metadata.expectedRevision }
+          : {}),
+      };
     }
 
     if (!transactionHasClojureFieldIntent(transaction)) {

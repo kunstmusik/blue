@@ -120,6 +120,7 @@ export const useLayerSelectionStore = create<LayerSelectionState>((set, get) => 
   reconcile: (scopeKey, visibleLayers) => {
     const current = get();
     const reconciled = reconcileSelectionState(current, scopeKey, visibleLayers);
+    if (reconciled === current) return;
     set({
       ...reconciled,
     });

@@ -15,6 +15,7 @@ import {
   isValidLayerColorInput,
   loadSoundObjectFromXML,
   normalizeLayerColor,
+  resolveGroupDefaultHeight,
 } from '@blue/data';
 import {
   createEmptyProjectEditorSnapshot,
@@ -202,6 +203,8 @@ interface ProjectActions {
    * authoritative saved-checkpoint state rather than being reset.
    */
   refreshFromCanonical: (info: ProjectLoadedPayload, dirtyProjection: boolean) => void;
+  /** Fetches and reapplies the current canonical document without resetting dirty state. */
+  refreshCanonicalSnapshot: () => Promise<void>;
   handleRuntimeOutcomes: (
     outcomes: ProjectRuntimeOutcome[],
     context?: {
@@ -2448,6 +2451,45 @@ function applyScorePatchToSnapshot(
     return { ...score, layerGroups: nextLayerGroups };
   }
 
+  if (patch.type === 'setLayerHeights') {
+    const updateMap = new Map<string, number | 'default'>();
+    for (const u of patch.updates) {
+      updateMap.set(`${u.groupId}:${u.layerIndex}`, u.height);
+    }
+    const layerUnit = 22;
+    const nextLayerGroups = score.layerGroups.map((lg) => {
+      const hasGroupUpdate = patch.updates.some((u) => u.groupId === lg.groupId);
+      if (!hasGroupUpdate) return lg;
+
+      const layers = lg.layers.map((layer, index) => {
+        const heightVal = updateMap.get(`${lg.groupId}:${index}`);
+        if (heightVal === undefined) return layer;
+        if (heightVal === 'default') {
+          const defaultIndex = lg.defaultHeightIndex ?? 0;
+          const defaultHeight =
+            lg.groupType === 'track' || lg.groupType === 'polyObject'
+              ? resolveGroupDefaultHeight(
+                  defaultIndex,
+                  lg.groupType === 'track' ? 'track' : 'soundLayer',
+                )
+              : layerUnit;
+          return { ...layer, height: defaultHeight };
+        }
+        return { ...layer, height: heightVal };
+      });
+      return { ...lg, layers };
+    });
+    return { ...score, layerGroups: nextLayerGroups };
+  }
+
+  if (patch.type === 'setLayerGroupDefaultHeight') {
+    const nextLayerGroups = score.layerGroups.map((lg) => {
+      if (lg.groupId !== patch.groupId) return lg;
+      return { ...lg, defaultHeightIndex: patch.defaultHeightIndex };
+    });
+    return { ...score, layerGroups: nextLayerGroups };
+  }
+
   if (patch.type === 'renameLayer') {
     const nextLayerGroups = score.layerGroups.map((lg) => {
       if (lg.groupId !== patch.groupId) return lg;
@@ -3729,6 +3771,17 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
     refreshFromCanonical: (info, dirtyProjection) => {
       applyProjectInfoToState(info, true, getProjectPatchQueue().getPendingPatches());
       set({ isDirty: dirtyProjection });
+    },
+
+    refreshCanonicalSnapshot: async () => {
+      try {
+        const snapshot = await window.blueAPI.getProjectDocument();
+        if (snapshot) {
+          applyProjectInfoToState(snapshot, true, getProjectPatchQueue().getPendingPatches());
+        }
+      } catch (error: unknown) {
+        console.error('[project-store] Failed to refresh canonical project state:', error);
+      }
     },
 
     handleRuntimeOutcomes: (outcomes, context) => {

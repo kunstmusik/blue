@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react';
 import type { RefObject, Dispatch, SetStateAction } from 'react';
-import { useProjectStore } from '../../../../stores/project-store';
+import { getProjectDocumentRevision, useProjectStore } from '../../../../stores/project-store';
 import type {
   ScoreTimeStateSnapshot,
   ScoreLayerGroupSnapshot,
 } from '../../../../../shared/project-editor';
 import { DEFAULT_ROW_HEIGHT, GROUP_SPACER } from './types';
+import { getNextPresetHeight } from './layer-selection-utils';
 
 /**
  * Pixel-per-beat zoom formula matching Java Blue's TimeState:
@@ -31,9 +32,6 @@ export const PINCH_ZOOM_SENSITIVITY = 0.5;
  * Negative deltaY (wheel up) intentionally zooms in to match modern desktop applications.
  */
 export const WHEEL_ZOOM_SENSITIVITY = 0.04;
-
-/** Java Blue LAYER_HEIGHT constant used to derive heightIndex from pixel height. */
-const LAYER_HEIGHT = 22;
 
 /**
  * Normalizes wheel event deltaY to approximate pixels based on deltaMode.
@@ -86,6 +84,19 @@ export type ScoreWheelScrollOriginNotifier = (
   expectedScrollLeft?: number,
 ) => void;
 
+export type ScoreWheelHeightCommit = (params: {
+  targets: Array<{
+    groupId: string;
+    layerIndex: number;
+    layerSelectionId: string;
+    layerId?: string;
+  }>;
+  height: number;
+  label: string;
+  revision?: number;
+  hostDocument?: Document | null;
+}) => Promise<void> | void;
+
 export function useScoreWheelZoom(
   scrollContainerRef: RefObject<HTMLDivElement | null>,
   timelineHeaderRef: RefObject<HTMLDivElement | null>,
@@ -95,6 +106,8 @@ export function useScoreWheelZoom(
   setTimeState: Dispatch<SetStateAction<ScoreTimeStateSnapshot>>,
   effectiveLayerGroups: ScoreLayerGroupSnapshot[],
   onScrollOrigin?: ScoreWheelScrollOriginNotifier,
+  heightResizeActive = false,
+  onHeightCommand?: ScoreWheelHeightCommit,
 ): void {
   // Keep mutable refs so the handler always sees the latest values without
   // needing to re-attach the listener on every render.
@@ -116,6 +129,9 @@ export function useScoreWheelZoom(
   const layersRef = useRef(effectiveLayerGroups);
   layersRef.current = effectiveLayerGroups;
 
+  const heightResizeActiveRef = useRef(heightResizeActive);
+  heightResizeActiveRef.current = heightResizeActive;
+
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
@@ -123,6 +139,14 @@ export function useScoreWheelZoom(
     const header = timelineHeaderRef.current;
 
     const handleWheel = (e: WheelEvent) => {
+      // A drag owns the pointer and its preview projection. Wheel scrolling or
+      // zooming during that interval would invalidate the captured geometry.
+      if (heightResizeActiveRef.current) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+
       // Determine platform-specific modifier for layer height adjustment (Cmd on Mac, Ctrl on Win/Linux)
       const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
       const isHeightModifier = isMac ? e.metaKey : e.ctrlKey && !e.altKey;
@@ -142,9 +166,24 @@ export function useScoreWheelZoom(
         const localY = e.clientY - containerRect.top + container.scrollTop;
 
         let groupYOff = 0;
-        let targetLayer: { groupId: string; layerIndex: number; heightIndex: number } | null = null;
+        let targetLayer: {
+          groupId: string;
+          layerIndex: number;
+          layerSelectionId: string;
+          layerId: string;
+          height: number;
+          groupType: ScoreLayerGroupSnapshot['groupType'];
+        } | null = null;
 
         for (const lg of layersRef.current) {
+          if (lg.groupType === 'patterns') {
+            for (let li = 0; li < lg.layers.length; li++) {
+              groupYOff += lg.layers[li].height || DEFAULT_ROW_HEIGHT;
+            }
+            groupYOff += GROUP_SPACER;
+            continue;
+          }
+
           for (let li = 0; li < lg.layers.length; li++) {
             const layer = lg.layers[li];
             const h = layer.height || DEFAULT_ROW_HEIGHT;
@@ -154,11 +193,13 @@ export function useScoreWheelZoom(
             if (localY >= layerTop && localY <= layerBottom) {
               let rawHeight = typeof layer.height === 'number' ? layer.height : DEFAULT_ROW_HEIGHT;
               if (isNaN(rawHeight)) rawHeight = DEFAULT_ROW_HEIGHT;
-              const derivedHeightIndex = Math.max(0, Math.round(rawHeight / LAYER_HEIGHT) - 1);
               targetLayer = {
                 groupId: lg.groupId,
                 layerIndex: li,
-                heightIndex: derivedHeightIndex,
+                layerSelectionId: layer.layerSelectionId ?? layer.layerId,
+                layerId: layer.layerId,
+                height: rawHeight,
+                groupType: lg.groupType,
               };
               break;
             }
@@ -169,14 +210,29 @@ export function useScoreWheelZoom(
         }
 
         if (targetLayer) {
-          // Scrolling down -> increase height index (make taller)
-          // Scrolling up -> decrease height index (make shorter)
-          const direction = e.deltaY > 0 ? 1 : -1;
-          const newHeightIndex = Math.max(0, Math.min(targetLayer.heightIndex + direction, 8));
-          if (newHeightIndex !== targetLayer.heightIndex && !isNaN(newHeightIndex)) {
-            useProjectStore
-              .getState()
-              .setLayerHeight(targetLayer.groupId, targetLayer.layerIndex, newHeightIndex);
+          // Scrolling down -> increase height (make taller)
+          // Scrolling up -> decrease height (make shorter)
+          const direction = (e.deltaY > 0 ? 1 : -1) as 1 | -1;
+          const nextHeight = getNextPresetHeight(
+            targetLayer.height,
+            direction,
+            targetLayer.groupType,
+          );
+          if (nextHeight !== null && nextHeight !== targetLayer.height) {
+            void onHeightCommand?.({
+              targets: [
+                {
+                  groupId: targetLayer.groupId,
+                  layerIndex: targetLayer.layerIndex,
+                  layerSelectionId: targetLayer.layerSelectionId,
+                  layerId: targetLayer.layerId,
+                },
+              ],
+              height: nextHeight,
+              label: 'Resize Layer',
+              revision: getProjectDocumentRevision(),
+              hostDocument: container.ownerDocument,
+            });
           }
         }
         return;
@@ -248,5 +304,5 @@ export function useScoreWheelZoom(
       container.removeEventListener('wheel', handleWheel);
       headerCleanup?.();
     };
-  }, [scrollContainerRef.current, timelineHeaderRef.current, loaded]);
+  }, [loaded, onHeightCommand, scrollContainerRef.current, timelineHeaderRef.current]);
 }

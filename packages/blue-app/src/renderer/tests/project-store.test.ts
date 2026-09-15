@@ -188,6 +188,41 @@ describe('project-store — canonical acknowledgement barrier', () => {
     expect(useProjectStore.getState().isDirty).toBe(false);
   });
 
+  it('refreshCanonicalSnapshot reapplies canonical content without resetting dirty state', async () => {
+    const canonical = createEmptyProjectEditorSnapshot();
+    canonical.loaded = true;
+    canonical.sessionId = 1;
+    canonical.documentId = 'doc-load';
+    canonical.score!.layerGroups = [
+      {
+        groupId: 'canonical-group',
+        groupType: 'track',
+        name: 'Canonical Tracks',
+        defaultHeightIndex: 1,
+        layerCount: 1,
+        isOpenableContainer: true,
+        layers: [
+          {
+            layerId: 'canonical-layer',
+            layerKind: 'track',
+            name: 'Canonical Layer',
+            height: 88,
+            items: [],
+            instrument: null,
+          },
+        ],
+      },
+    ];
+    getProjectDocument.mockResolvedValue(canonical);
+    useProjectStore.getState().markDirty();
+
+    await useProjectStore.getState().refreshCanonicalSnapshot();
+
+    expect(getProjectDocument).toHaveBeenCalledOnce();
+    expect(useProjectStore.getState().score).toEqual(canonical.score);
+    expect(useProjectStore.getState().isDirty).toBe(true);
+  });
+
   it('restores the prior dirty state after a changed:false acknowledgement', async () => {
     commitProjectDocumentPatches.mockResolvedValue({
       revision: 0,

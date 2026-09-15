@@ -10,6 +10,7 @@ import { SoundObject } from './sound-object';
 import { SoundLayer } from './sound-layer';
 import { normalizeXmlLayerColor } from '../score/layers/layer-color';
 import { LayerGroup } from '../score/layers/layer-group';
+import { SOUND_LAYER_MAX_HEIGHT_INDEX, parseCustomHeight } from '../score/layer-height-policy';
 import type { CopyMode } from '../deep-copyable';
 import { NoteProcessorChain } from '../note-processors/note-processor-chain';
 import { TimeBehavior } from './time-behavior';
@@ -82,7 +83,7 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
   }
 
   setDefaultHeightIndex(index: number): void {
-    this._defaultHeightIndex = index;
+    this._defaultHeightIndex = Math.max(0, Math.min(SOUND_LAYER_MAX_HEIGHT_INDEX, index));
   }
 
   constructor(isRoot = false) {
@@ -359,7 +360,13 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
 
   newLayerAt(index: number): SoundLayer {
     const layer = new SoundLayer();
-    layer.setHeightIndex(this._defaultHeightIndex);
+    const defaultHeightIndex =
+      Number.isInteger(this._defaultHeightIndex) &&
+      this._defaultHeightIndex >= 0 &&
+      this._defaultHeightIndex <= SOUND_LAYER_MAX_HEIGHT_INDEX
+        ? this._defaultHeightIndex
+        : 0;
+    layer.setHeightIndex(defaultHeightIndex);
     const insertIdx = index < 0 ? this.length : Math.min(index, this.length);
     this.splice(insertIdx, 0, layer);
     return layer;
@@ -450,6 +457,9 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
       layerElem.setAttribute('muted', layer.isMuted().toString());
       layerElem.setAttribute('solo', layer.isSolo().toString());
       layerElem.setAttribute('heightIndex', layer.getHeightIndex().toString());
+      if (layer.getCustomHeight() !== undefined) {
+        layerElem.setAttribute('customHeight', layer.getCustomHeight()!.toString());
+      }
       layerElem.setAttribute(
         'automationSelectedIndex',
         layer.getAutomationParameters().getSelectedIndex().toString(),
@@ -512,18 +522,6 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
 
       if (nodeName === 'soundLayer') {
         const layer = new SoundLayer();
-        const knownAttrs = new Set([
-          'name',
-          'muted',
-          'solo',
-          'heightIndex',
-          'automationSelectedIndex',
-        ]);
-        for (const attrName of node.getAttributeNames()) {
-          if (!knownAttrs.has(attrName)) {
-            layer.setUnknownAttribute(attrName, node.getAttribute(attrName) ?? '');
-          }
-        }
         const layerName = node.getAttribute('name');
         if (layerName) layer.setName(layerName);
 
@@ -533,6 +531,27 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
         const heightIndex = node.getAttribute('heightIndex');
         if (heightIndex) {
           layer.setHeightIndex(parseInt(heightIndex, 10));
+        }
+
+        const rawCustomHeight = node.getAttribute('customHeight');
+        const parsedCustomHeight = parseCustomHeight(rawCustomHeight);
+        if (parsedCustomHeight !== null) {
+          layer.setCustomHeight(parsedCustomHeight);
+        }
+        const knownAttrs = new Set([
+          'name',
+          'muted',
+          'solo',
+          'heightIndex',
+          'automationSelectedIndex',
+        ]);
+        if (parsedCustomHeight !== null) {
+          knownAttrs.add('customHeight');
+        }
+        for (const attrName of node.getAttributeNames()) {
+          if (!knownAttrs.has(attrName)) {
+            layer.setUnknownAttribute(attrName, node.getAttribute(attrName) ?? '');
+          }
         }
         const automationSelectedIndex = node.getAttribute('automationSelectedIndex');
 
@@ -583,6 +602,7 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
     copy._backgroundColor = this._backgroundColor;
     copy._timeBehavior = this._timeBehavior;
     copy._npc = new NoteProcessorChain(this._npc);
+    copy._defaultHeightIndex = this._defaultHeightIndex;
     // Deep copy layers
     for (const layer of this) {
       copy.push(layer.deepCopy(mode));

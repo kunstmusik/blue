@@ -130,6 +130,7 @@ describe('useScoreWheelZoom hook', () => {
   let header: HTMLDivElement;
   const setTimeState = vi.fn();
   const applyPatch = vi.fn();
+  const commitHeight = vi.fn().mockResolvedValue(undefined);
   const setLayerHeight = vi.fn();
 
   const mockLayerGroups: ScoreLayerGroupSnapshot[] = [
@@ -146,9 +147,11 @@ describe('useScoreWheelZoom hook', () => {
   function TestComponent({
     zoomIterations = 0,
     layerGroups = mockLayerGroups,
+    heightResizeActive = false,
   }: {
     zoomIterations?: number;
     layerGroups?: ScoreLayerGroupSnapshot[];
+    heightResizeActive?: boolean;
   }) {
     const scrollContainerRef = React.useRef<HTMLDivElement | null>(scrollContainer);
     const timelineHeaderRef = React.useRef<HTMLDivElement | null>(header);
@@ -162,6 +165,9 @@ describe('useScoreWheelZoom hook', () => {
       true,
       setTimeState,
       layerGroups,
+      undefined,
+      heightResizeActive,
+      commitHeight,
     );
 
     return null;
@@ -375,7 +381,41 @@ describe('useScoreWheelZoom hook', () => {
 
     scrollContainer.dispatchEvent(heightEvent);
 
-    expect(setLayerHeight).toHaveBeenCalledWith('group-1', 0, 1);
+    expect(commitHeight).toHaveBeenCalledWith({
+      targets: [
+        {
+          groupId: 'group-1',
+          layerIndex: 0,
+          layerSelectionId: undefined,
+          layerId: undefined,
+        },
+      ],
+      height: 44,
+      label: 'Resize Layer',
+      revision: expect.any(Number),
+      hostDocument: document,
+    });
     expect(setTimeState).not.toHaveBeenCalled();
+  });
+
+  it('suppresses scrolling and zooming while a layer-height preview is active', () => {
+    act(() => {
+      root.render(<TestComponent heightResizeActive />);
+    });
+
+    const event = new WheelEvent('wheel', {
+      bubbles: true,
+      cancelable: true,
+      clientX: 100,
+      clientY: 10,
+      deltaY: -100,
+      altKey: true,
+    });
+    scrollContainer.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(setTimeState).not.toHaveBeenCalled();
+    expect(applyPatch).not.toHaveBeenCalled();
+    expect(scrollContainer.scrollLeft).toBe(100);
   });
 });

@@ -6,6 +6,7 @@ import {
   Parameter,
   Send,
   TrackLayerGroup,
+  PolyObject,
   type MeterProfileKey,
 } from '@blue/data';
 import type {
@@ -230,22 +231,51 @@ export function resolveTargetValue(
 
     case 'layer': {
       const score = data.getScore();
-      for (const lg of score) {
-        if (getLayerGroupId(lg) === targetId) {
-          return { found: true, value: lg, identity: getLayerGroupId(lg), target: lg };
+      const checkGroup = (
+        lg: unknown,
+      ): { found: true; value: unknown; identity: string; target: object } | null => {
+        if (!lg || typeof lg !== 'object') return null;
+        const lgId = getLayerGroupId(lg);
+        if (lgId === targetId) {
+          return { found: true, value: lg, identity: lgId, target: lg };
         }
         if (lg instanceof TrackLayerGroup) {
           for (const track of lg) {
-            if (getLayerSelectionId(track) === targetId) {
+            const selId = getLayerSelectionId(track);
+            if (selId === targetId) {
               return {
                 found: true,
                 value: track,
-                identity: getLayerSelectionId(track),
+                identity: selId,
                 target: track,
               };
             }
           }
+        } else if (lg instanceof PolyObject) {
+          for (const layer of lg) {
+            const selId = getLayerSelectionId(layer);
+            if (selId === targetId) {
+              return {
+                found: true,
+                value: layer,
+                identity: selId,
+                target: layer,
+              };
+            }
+            for (const sObj of layer) {
+              if (sObj instanceof PolyObject) {
+                const nested = checkGroup(sObj);
+                if (nested) return nested;
+              }
+            }
+          }
         }
+        return null;
+      };
+
+      for (const lg of score) {
+        const res = checkGroup(lg);
+        if (res) return res;
       }
       return { found: false };
     }

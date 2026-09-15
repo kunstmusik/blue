@@ -96,6 +96,12 @@ import {
   reifyChainFromSnapshot,
   isValidLayerColorInput,
   normalizeLayerColor,
+  LAYER_HEIGHT_MIN,
+  LAYER_HEIGHT_MAX,
+  SOUND_LAYER_MAX_HEIGHT_INDEX,
+  TRACK_MAX_HEIGHT_INDEX,
+  resolveEffectiveHeight,
+  resolveGroupDefaultHeight,
 } from '@blue/data';
 import type {
   NoteProcessorChainSnapshot as DataNoteProcessorChainSnapshot,
@@ -323,6 +329,8 @@ import {
   isBsbRealtimeControlUpdate,
   isValidBlueX7Voice,
   isValidBlueX7Patch,
+  SetLayerHeightsPatch,
+  SetLayerGroupDefaultHeightPatch,
 } from './contract';
 import {
   assignExplicitScoreObjectId,
@@ -330,6 +338,7 @@ import {
   assignLayerSelectionId,
   assignPatternLayerId,
   assignScoreObjectId,
+  getLayerSelectionId,
   getScoreObjectId,
   getMixerChannelSnapshotId,
   getMixerEntrySnapshotId,
@@ -551,6 +560,9 @@ export function isNonEmptyScorePatch(patch: ScorePatch): boolean {
   }
   if (patch.type === 'updatePatternCells') {
     return patch.changes.length > 0;
+  }
+  if (patch.type === 'setLayerHeights') {
+    return patch.updates.length > 0;
   }
   return true;
 }
@@ -880,13 +892,210 @@ function applyUpdateLayerStatePatch(
 
   if (patch.patch.heightIndex !== undefined && isLayerHeightManagedLayer(layer)) {
     const nextHeightIndex = Math.max(0, patch.patch.heightIndex);
-    if (layer.getHeightIndex() !== nextHeightIndex) {
+    const oldEffective =
+      'getLayerHeight' in layer && typeof layer.getLayerHeight === 'function'
+        ? layer.getLayerHeight()
+        : (layer.getHeightIndex() + 1) * 22;
+    const newEffective = (nextHeightIndex + 1) * 22;
+    if (oldEffective !== newEffective) {
       layer.setHeightIndex(nextHeightIndex);
       changed = true;
     }
   }
 
   return changed;
+}
+
+function applySetLayerHeightsPatch(data: BlueData, patch: SetLayerHeightsPatch): boolean {
+  if (patch.updates.length === 0) {
+    return false;
+  }
+
+  const score = data.getScore();
+
+  const scopeGroupId = patch.scopeGroupId ?? null;
+  let openedScopePoly: PolyObject | null = null;
+  if (scopeGroupId !== null) {
+    openedScopePoly = findPolyObjectByGroupId(score, scopeGroupId);
+    if (!openedScopePoly) {
+      throw new Error(`Scope group ${scopeGroupId} is not a reachable PolyObject`);
+    }
+  }
+
+  const getDirectRootGroup = (groupId: string): ManagedLayerGroup | null => {
+    for (let i = 0; i < score.length; i++) {
+      const g = score[i];
+      if (isManagedLayerGroup(g) && getManagedLayerGroupId(g) === groupId) {
+        return g;
+      }
+    }
+    return null;
+  };
+
+  // Phase 1: Full validation of all targets before any mutation
+  const seenTargets = new Set<string>();
+  const validated: Array<{
+    targetGroup: PolyObject | TrackLayerGroup;
+    layer: SoundLayer | TrackLayer;
+    height: number | 'default';
+  }> = [];
+
+  for (const update of patch.updates) {
+    const targetKey = `${update.groupId}:${update.layerIndex}`;
+    if (seenTargets.has(targetKey)) {
+      throw new Error(`Duplicate layer height target: ${targetKey}`);
+    }
+    seenTargets.add(targetKey);
+
+    let targetGroup: ManagedLayerGroup | null = null;
+    if (scopeGroupId === null) {
+      targetGroup = getDirectRootGroup(update.groupId);
+      if (!targetGroup) {
+        throw new Error(`Target group ${update.groupId} is not a direct root group`);
+      }
+    } else {
+      if (update.groupId !== scopeGroupId) {
+        throw new Error(
+          `Target group ${update.groupId} does not match scope group ${scopeGroupId}`,
+        );
+      }
+      targetGroup = openedScopePoly;
+    }
+
+    if (targetGroup instanceof PatternsLayerGroup) {
+      throw new Error(`Layer heights are not supported for Pattern groups: ${update.groupId}`);
+    }
+    if (!(targetGroup instanceof PolyObject || targetGroup instanceof TrackLayerGroup)) {
+      throw new Error(`Unsupported layer group type for layer heights: ${update.groupId}`);
+    }
+
+    if (
+      !Number.isInteger(update.layerIndex) ||
+      update.layerIndex < 0 ||
+      update.layerIndex >= targetGroup.length
+    ) {
+      throw new Error(
+        `Layer index ${update.layerIndex} out of bounds for group ${update.groupId} (length: ${targetGroup.length})`,
+      );
+    }
+
+    const layer = targetGroup[update.layerIndex];
+    if (!layer || !(layer instanceof SoundLayer || layer instanceof TrackLayer)) {
+      throw new Error(`Layer at index ${update.layerIndex} in group ${update.groupId} is invalid`);
+    }
+
+    const actualSelectionId = getLayerSelectionId(layer) ?? assignLayerSelectionId(layer);
+    if (actualSelectionId !== update.layerSelectionId) {
+      throw new Error(
+        `Layer selection ID mismatch for group ${update.groupId}, index ${update.layerIndex}: expected ${update.layerSelectionId}, found ${actualSelectionId}`,
+      );
+    }
+
+    if (update.height === 'default') {
+      // Valid default reset
+    } else if (
+      typeof update.height === 'number' &&
+      Number.isInteger(update.height) &&
+      update.height >= LAYER_HEIGHT_MIN &&
+      update.height <= LAYER_HEIGHT_MAX
+    ) {
+      // Valid numeric height
+    } else {
+      throw new Error(`Invalid layer height: ${String(update.height)}`);
+    }
+
+    validated.push({
+      targetGroup,
+      layer,
+      height: update.height,
+    });
+  }
+
+  // Phase 2: Mutation
+  let changed = false;
+  for (const { targetGroup, layer, height } of validated) {
+    if (height === 'default') {
+      const defaultIndex = targetGroup.getDefaultHeightIndex();
+      const layerType = targetGroup instanceof TrackLayerGroup ? 'track' : 'soundLayer';
+      const targetEffective = resolveGroupDefaultHeight(defaultIndex, layerType);
+      const validDefaultIndex = Math.round(targetEffective / 22) - 1;
+      if (layer.getLayerHeight() !== targetEffective) {
+        layer.setHeightIndex(validDefaultIndex);
+        changed = true;
+      }
+    } else {
+      const applied = layer.setExplicitHeight(height);
+      if (applied) {
+        changed = true;
+      }
+    }
+  }
+
+  return changed;
+}
+
+function applySetLayerGroupDefaultHeightPatch(
+  data: BlueData,
+  patch: SetLayerGroupDefaultHeightPatch,
+): boolean {
+  const score = data.getScore();
+  const scopeGroupId = patch.scopeGroupId ?? null;
+  let targetGroup: ManagedLayerGroup | null = null;
+  if (scopeGroupId === null) {
+    for (let i = 0; i < score.length; i++) {
+      const g = score[i];
+      if (isManagedLayerGroup(g) && getManagedLayerGroupId(g) === patch.groupId) {
+        targetGroup = g;
+        break;
+      }
+    }
+    if (!targetGroup) {
+      throw new Error(`Group ${patch.groupId} is not a direct root group`);
+    }
+  } else {
+    if (patch.groupId !== scopeGroupId) {
+      throw new Error(`Group ${patch.groupId} does not match scope group ${scopeGroupId}`);
+    }
+    targetGroup = findPolyObjectByGroupId(score, scopeGroupId);
+    if (!targetGroup) {
+      throw new Error(`Scope group ${scopeGroupId} is not a reachable PolyObject`);
+    }
+  }
+
+  if (targetGroup instanceof PatternsLayerGroup) {
+    throw new Error(`Default layer height is not supported for Pattern groups: ${patch.groupId}`);
+  }
+
+  if (targetGroup instanceof PolyObject) {
+    if (
+      !Number.isInteger(patch.defaultHeightIndex) ||
+      patch.defaultHeightIndex < 0 ||
+      patch.defaultHeightIndex > SOUND_LAYER_MAX_HEIGHT_INDEX
+    ) {
+      throw new Error(
+        `Invalid defaultHeightIndex for PolyObject: ${patch.defaultHeightIndex}. Must be 0..${SOUND_LAYER_MAX_HEIGHT_INDEX}`,
+      );
+    }
+  } else if (targetGroup instanceof TrackLayerGroup) {
+    if (
+      !Number.isInteger(patch.defaultHeightIndex) ||
+      patch.defaultHeightIndex < 0 ||
+      patch.defaultHeightIndex > TRACK_MAX_HEIGHT_INDEX
+    ) {
+      throw new Error(
+        `Invalid defaultHeightIndex for TrackLayerGroup: ${patch.defaultHeightIndex}. Must be 0..${TRACK_MAX_HEIGHT_INDEX}`,
+      );
+    }
+  } else {
+    throw new Error(`Unsupported layer group type for default height: ${patch.groupId}`);
+  }
+
+  if (targetGroup.getDefaultHeightIndex() !== patch.defaultHeightIndex) {
+    targetGroup.setDefaultHeightIndex(patch.defaultHeightIndex);
+    return true;
+  }
+
+  return false;
 }
 
 function applyAddScoreObjectsPatch(
@@ -2425,6 +2634,12 @@ export function applyScoreObjectPatch(
   }
   if (patch.type === 'updatePatternBeatsLength') {
     return applyUpdatePatternBeatsLengthPatch(data, patch);
+  }
+  if (patch.type === 'setLayerHeights') {
+    return applySetLayerHeightsPatch(data, patch);
+  }
+  if (patch.type === 'setLayerGroupDefaultHeight') {
+    return applySetLayerGroupDefaultHeightPatch(data, patch);
   }
   if (patch.type === 'setScoreObjectBackgroundColors') {
     return applySetScoreObjectBackgroundColorsPatch(data, patch);

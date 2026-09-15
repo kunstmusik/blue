@@ -149,6 +149,7 @@ export default function PatternLayerHeader({
   const menuItemClass = 'editor-context-menu__item';
   const isFocusKey = useLayerSelectionStore((state) => state.focusKey === selectionKey);
   const keyboardFocus = useLayerSelectionStore((state) => state.keyboardFocus);
+  const isActiveSelection = isLayerSelected && isFocusKey;
 
   const singleLayerRange = {
     groupId,
@@ -206,9 +207,10 @@ export default function PatternLayerHeader({
             aria-selected={isLayerSelected ? 'true' : 'false'}
             data-selected-layer={isLayerSelected ? 'true' : undefined}
             className={cn(
-              'relative flex items-start overflow-hidden border-b border-app-border-muted border-l-2 select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-app-focus focus-visible:ring-inset',
+              'relative flex items-start overflow-hidden border-b border-app-border-muted border-l-2 select-none focus:outline-none',
               isLayerSelected ? 'border-l-app-accent bg-app-selection' : 'border-l-transparent',
-              isFocusKey && keyboardFocus && 'ring-2 ring-app-focus',
+              isActiveSelection &&
+                'shadow-[inset_0_1px_0_0_var(--color-app-accent),inset_-1px_0_0_0_var(--color-app-accent),inset_0_-1px_0_0_var(--color-app-accent)]',
             )}
             style={{ height }}
             onMouseDown={handleMouseDown}

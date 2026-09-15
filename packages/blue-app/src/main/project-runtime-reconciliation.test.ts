@@ -58,6 +58,25 @@ describe('Runtime capability classification (T017)', () => {
     expect(classifyPatchRuntimeCapability({ projectProperties: { title: 'New Title' } })).toBe(
       'none',
     );
+    expect(
+      classifyPatchRuntimeCapability({
+        score: {
+          type: 'setLayerHeights',
+          scopeGroupId: null,
+          updates: [{ groupId: 'g1', layerIndex: 0, layerSelectionId: 'sel1', height: 66 }],
+        },
+      }),
+    ).toBe('none');
+    expect(
+      classifyPatchRuntimeCapability({
+        score: {
+          type: 'setLayerGroupDefaultHeight',
+          scopeGroupId: null,
+          groupId: 'g1',
+          defaultHeightIndex: 1,
+        },
+      }),
+    ).toBe('none');
   });
 
   it('classifies compiled structure and code content as restart-required', () => {

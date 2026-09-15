@@ -205,4 +205,31 @@ describe('PatternLayerHeader', () => {
     expect(header.className).toContain('bg-app-selection');
     expect(header.querySelector('span')?.className).not.toContain('font-semibold');
   });
+
+  it('applies a utility-composed active frame to the pattern layer and preserves it across context menu', () => {
+    act(() => {
+      root.render(
+        <PatternLayerHeader layer={makeLayer()} groupId="grp" layerIndex={0} layerCount={2} />,
+      );
+    });
+
+    const header = container.querySelector<HTMLElement>('[data-pattern-layer-header]')!;
+    act(() => {
+      header.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
+    });
+
+    expect(header.getAttribute('aria-selected')).toBe('true');
+    expect(header.className).toContain('shadow-[inset_0_1px_0_0_var(--color-app-accent)');
+    expect(header.className).not.toContain('score-layer-header--active-selection');
+    expect(header.className.split(' ')).not.toContain('ring-app-focus');
+
+    // Trigger context menu on selected header: active styling remains and does not disappear
+    act(() => {
+      header.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, button: 2 }));
+    });
+
+    expect(header.className).toContain('shadow-[inset_0_1px_0_0_var(--color-app-accent)');
+    expect(header.className).not.toContain('score-layer-header--active-selection');
+    expect(header.className.split(' ')).not.toContain('ring-app-focus');
+  });
 });

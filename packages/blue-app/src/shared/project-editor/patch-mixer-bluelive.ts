@@ -1445,6 +1445,7 @@ export function createNestedPolyObjectSnapshot(
     name: sObj.getName(),
     layerCount: sObj.length,
     isOpenableContainer: true,
+    defaultHeightIndex: sObj.getDefaultHeightIndex(),
     layers,
     noteProcessorChain:
       groupChain.getProcessors().length > 0

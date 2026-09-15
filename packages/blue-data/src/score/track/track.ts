@@ -9,7 +9,11 @@ import type { SoundObject } from '../../sound-objects/sound-object';
 import { AudioClip } from '../audio/audio-clip';
 import { ScoreObject } from '../score-object';
 import { AutomatableLayer } from '../layers/automatable-layer';
-import { LAYER_HEIGHT } from '../layers/layer';
+import {
+  parseCustomHeight,
+  resolveEffectiveHeight,
+  resolveExplicitHeight,
+} from '../layer-height-policy';
 import {
   DEFAULT_LAYER_COLOR,
   isValidLayerColorInput,
@@ -91,6 +95,7 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
   private _solo = false;
   private _uniqueId = generateUuid();
   private _heightIndex = 0;
+  private _customHeight?: number;
   private _backgroundColor = DEFAULT_LAYER_COLOR;
   private _automationParameters = new ParameterIdList();
   private _npc = new NoteProcessorChain();
@@ -106,6 +111,7 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
       this._solo = other._solo;
       this._uniqueId = other._uniqueId;
       this._heightIndex = other._heightIndex;
+      this._customHeight = other._customHeight;
       this._backgroundColor = other._backgroundColor;
       this._npc = new NoteProcessorChain(other._npc);
       this._instrument = other._instrument?.deepCopy(mode) ?? null;
@@ -132,7 +138,32 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
     this._name = name;
   }
   getLayerHeight(): number {
-    return LAYER_HEIGHT * (this._heightIndex + 1);
+    return resolveEffectiveHeight(this._heightIndex, this._customHeight);
+  }
+  getCustomHeight(): number | undefined {
+    return this._customHeight;
+  }
+  setCustomHeight(customHeight: number | undefined): void {
+    if (customHeight !== undefined) {
+      const parsed = parseCustomHeight(customHeight);
+      if (parsed !== null) {
+        this._customHeight = parsed;
+        this._unknownAttributes.delete('customHeight');
+        return;
+      }
+    }
+    this._customHeight = undefined;
+  }
+  setExplicitHeight(height: number): boolean {
+    const currentEffective = this.getLayerHeight();
+    const parsed = parseCustomHeight(height);
+    if (parsed === null) return false;
+    if (currentEffective === parsed) return false;
+    const { heightIndex, customHeight } = resolveExplicitHeight(parsed, 'track');
+    this._heightIndex = heightIndex;
+    this._customHeight = customHeight;
+    this._unknownAttributes.delete('customHeight');
+    return true;
   }
   getBackgroundColor(): number {
     return this._backgroundColor;
@@ -144,7 +175,14 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
     return this._heightIndex;
   }
   setHeightIndex(index: number): void {
-    this._heightIndex = Math.max(0, Math.min(Track.HEIGHT_MAX_INDEX, index));
+    const oldEffective = this.getLayerHeight();
+    const clamped = Math.max(0, Math.min(Track.HEIGHT_MAX_INDEX, index));
+    this._heightIndex = clamped;
+    const newEffective = resolveEffectiveHeight(clamped);
+    if (oldEffective !== newEffective) {
+      this._customHeight = undefined;
+      this._unknownAttributes.delete('customHeight');
+    }
   }
   getUniqueId(): string {
     return this._uniqueId;
@@ -364,6 +402,9 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
     root.setAttribute('muted', String(this._muted));
     root.setAttribute('solo', String(this._solo));
     root.setAttribute('heightIndex', String(this._heightIndex));
+    if (this._customHeight !== undefined) {
+      root.setAttribute('customHeight', String(this._customHeight));
+    }
     root.setAttribute('uniqueId', this._uniqueId);
     root.setAttribute(
       'automationSelectedIndex',
@@ -388,6 +429,11 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
     if (id) track._uniqueId = id;
     const height = Number.parseInt(data.getAttributeValue('heightIndex') ?? '0', 10);
     if (Number.isFinite(height)) track.setHeightIndex(height);
+    const rawCustomHeight = data.getAttributeValue('customHeight');
+    const parsedCustomHeight = parseCustomHeight(rawCustomHeight);
+    if (parsedCustomHeight !== null) {
+      track._customHeight = parsedCustomHeight;
+    }
     const selected = Number.parseInt(data.getAttributeValue('automationSelectedIndex') ?? '0', 10);
     const knownAttributes = new Set([
       'name',
@@ -397,6 +443,9 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
       'uniqueId',
       'automationSelectedIndex',
     ]);
+    if (parsedCustomHeight !== null) {
+      knownAttributes.add('customHeight');
+    }
     for (const name of data.getAttributeNames()) {
       if (!knownAttributes.has(name)) {
         track._unknownAttributes.set(name, data.getAttributeValue(name) ?? '');

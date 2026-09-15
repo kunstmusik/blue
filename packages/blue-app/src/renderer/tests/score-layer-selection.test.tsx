@@ -243,4 +243,117 @@ describe('Score layer selection visual and accessible state (US1)', () => {
     expect(trackHeader0.getAttribute('aria-selected')).toBe('false');
     expect(trackHeader0.className).not.toContain('bg-app-selection');
   });
+
+  it('renders a utility-composed three-sided frame for the active layer without left-border conflict', () => {
+    seedProjectWithAllLayerTypes();
+    act(() => {
+      root.render(<ScorePanel />);
+    });
+
+    const trackHeader0 = container.querySelector<HTMLElement>('[data-layer-id="track-layer-0"]')!;
+    const trackHeader1 = container.querySelector<HTMLElement>('[data-layer-id="track-layer-1"]')!;
+    expect(trackHeader0).toBeTruthy();
+    expect(trackHeader1).toBeTruthy();
+
+    // Select single track (Track 1)
+    act(() => {
+      trackHeader0.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
+    });
+
+    expect(trackHeader0.getAttribute('aria-selected')).toBe('true');
+    expect(trackHeader0.className).toContain('border-l-app-accent');
+    expect(trackHeader0.className).toContain('bg-app-selection');
+    // Single selection has the clean active selection frame without fat double left border.
+    expect(trackHeader0.className).toContain(
+      'shadow-[inset_0_1px_0_0_var(--color-app-accent),inset_-1px_0_0_0_var(--color-app-accent),inset_0_-1px_0_0_var(--color-app-accent)]',
+    );
+    expect(trackHeader0.className).not.toContain('score-layer-header--active-selection');
+    expect(trackHeader0.className.split(' ')).not.toContain('ring-app-focus');
+
+    // Trigger context menu on single selected layer: indicator remains visible and does not disappear
+    act(() => {
+      trackHeader0.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, button: 2 }));
+    });
+    expect(trackHeader0.className).toContain('shadow-[inset_0_1px_0_0_var(--color-app-accent)');
+    expect(trackHeader0.className).not.toContain('score-layer-header--active-selection');
+    expect(trackHeader0.className.split(' ')).not.toContain('ring-app-focus');
+
+    // Shift-click Track 2 to create a multi-layer selection (Track 1 and Track 2)
+    act(() => {
+      trackHeader1.dispatchEvent(
+        new MouseEvent('mousedown', { bubbles: true, button: 0, shiftKey: true }),
+      );
+    });
+
+    expect(trackHeader0.getAttribute('aria-selected')).toBe('true');
+    expect(trackHeader1.getAttribute('aria-selected')).toBe('true');
+
+    // Inactive selected layer (Track 1) has selection background and left accent, but no active frame
+    expect(trackHeader0.className).toContain('border-l-app-accent');
+    expect(trackHeader0.className).toContain('bg-app-selection');
+    expect(trackHeader0.className).not.toContain('score-layer-header--active-selection');
+    expect(trackHeader0.className.split(' ')).not.toContain('ring-app-focus');
+
+    // Active selected layer (Track 2) has the utility-composed frame.
+    expect(trackHeader1.className).toContain('border-l-app-accent');
+    expect(trackHeader1.className).toContain('bg-app-selection');
+    expect(trackHeader1.className).toContain('shadow-[inset_0_1px_0_0_var(--color-app-accent)');
+    expect(trackHeader1.className).not.toContain('score-layer-header--active-selection');
+    expect(trackHeader1.className.split(' ')).not.toContain('ring-app-focus');
+    expect(trackHeader1.className.split(' ')).not.toContain('ring-app-accent/70');
+
+    // Trigger context menu on active layer (Track 2): styling remains consistent and does not revert or flicker
+    act(() => {
+      trackHeader1.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, button: 2 }));
+    });
+
+    expect(trackHeader1.className).toContain('shadow-[inset_0_1px_0_0_var(--color-app-accent)');
+    expect(trackHeader1.className).not.toContain('score-layer-header--active-selection');
+    expect(trackHeader1.className.split(' ')).not.toContain('ring-app-focus');
+    expect(trackHeader1.className.split(' ')).not.toContain('ring-app-accent/70');
+  });
+
+  it('renders resize handles only in eligible headers and keeps score row geometry aligned', () => {
+    seedProjectWithAllLayerTypes();
+    act(() => {
+      root.render(<ScorePanel />);
+    });
+
+    const headerHandles = container.querySelectorAll<HTMLElement>(
+      '[data-score-layer-header] [data-layer-resize-handle]',
+    );
+    expect(headerHandles).toHaveLength(4);
+    expect(
+      [...headerHandles].every((handle) => handle.closest('[data-score-layer-header]') !== null),
+    ).toBe(true);
+    expect(container.querySelectorAll('[data-layer-resize-handle]')).toHaveLength(4);
+
+    expect(container.querySelector('[data-shortcut-scope="score-time-canvas"]')).not.toBeNull();
+    expect(container.querySelector('[data-track-layer-group="true"]')).not.toBeNull();
+    expect(
+      container.querySelectorAll(
+        '[data-shortcut-scope="score-time-canvas"] [data-layer-resize-handle], [data-track-layer-group="true"] [data-layer-resize-handle]',
+      ),
+    ).toHaveLength(0);
+
+    const soundHeaders = ['sound-layer-0', 'sound-layer-1'].map((layerId) =>
+      container.querySelector<HTMLElement>(`[data-layer-id="${layerId}"]`),
+    );
+    const soundRows = container.querySelectorAll<HTMLElement>(
+      '[data-shortcut-scope="score-time-canvas"] [data-timeline-layer-row]',
+    );
+    expect(Array.from(soundRows, (row) => row.style.height)).toEqual(
+      soundHeaders.map((header) => header?.style.height),
+    );
+
+    const trackHeaders = ['track-layer-0', 'track-layer-1'].map((layerId) =>
+      container.querySelector<HTMLElement>(`[data-layer-id="${layerId}"]`),
+    );
+    const trackRows = container.querySelectorAll<HTMLElement>(
+      '[data-track-layer-group="true"] [data-timeline-layer-row]',
+    );
+    expect(Array.from(trackRows, (row) => row.style.height)).toEqual(
+      trackHeaders.map((header) => header?.style.height),
+    );
+  });
 });

@@ -219,6 +219,23 @@ export { ScoreGenerationException } from './score/score-generation-exception';
 // ─── Score Layers ───
 export type { Layer } from './score/layers/layer';
 export { LAYER_HEIGHT } from './score/layers/layer';
+export {
+  LAYER_HEIGHT_MIN,
+  LAYER_HEIGHT_MAX,
+  SOUND_LAYER_MAX_HEIGHT_INDEX,
+  TRACK_MAX_HEIGHT_INDEX,
+  SOUND_LAYER_PRESET_HEIGHTS,
+  TRACK_PRESET_HEIGHTS,
+  COMMON_PRESET_HEIGHTS,
+  parseCustomHeight,
+  isValidCustomHeight,
+  isPresetHeight,
+  calculateNearestHeightIndex,
+  resolveExplicitHeight,
+  resolveEffectiveHeight,
+  resolveGroupDefaultHeight,
+} from './score/layer-height-policy';
+export type { LayerHeightType } from './score/layer-height-policy';
 export type { LayerGroup } from './score/layers/layer-group';
 export type { AutomatableLayer } from './score/layers/automatable-layer';
 export {

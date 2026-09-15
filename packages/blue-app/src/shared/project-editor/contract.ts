@@ -333,6 +333,7 @@ export interface PolyObjectLayerGroupSnapshot {
   groupId: string;
   groupType: 'polyObject';
   name: string;
+  defaultHeightIndex: number;
   layerCount: number;
   isOpenableContainer: boolean;
   layers: ScoreLayerSnapshot[];
@@ -983,7 +984,28 @@ export type ScorePatch =
       type: 'deleteNamedNoteProcessorChain';
       name: string;
     }
+  | SetLayerHeightsPatch
+  | SetLayerGroupDefaultHeightPatch
   | ScoreAutomationPatch;
+
+export interface LayerHeightTarget {
+  groupId: string;
+  layerIndex: number;
+  layerSelectionId: string;
+}
+
+export type SetLayerHeightsPatch = {
+  type: 'setLayerHeights';
+  scopeGroupId: string | null;
+  updates: Array<LayerHeightTarget & { height: number | 'default' }>;
+};
+
+export type SetLayerGroupDefaultHeightPatch = {
+  type: 'setLayerGroupDefaultHeight';
+  scopeGroupId: string | null;
+  groupId: string;
+  defaultHeightIndex: number;
+};
 
 // ─── Score Automation Patch Types ───
 
@@ -1845,6 +1867,8 @@ export const SCORE_PATCH_PREPARATION_CLASS: Readonly<
   replaceTrackNoteProcessorChain: 'structural',
   resizeTrackItems: 'structural',
   saveNamedNoteProcessorChain: 'structural',
+  setLayerGroupDefaultHeight: 'structural',
+  setLayerHeights: 'structural',
   setScoreObjectBackgroundColors: 'structural',
   setSubjectiveDurationToObjective: 'structural',
   updateAudioFilePostCode: 'structural',

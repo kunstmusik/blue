@@ -382,6 +382,8 @@ const SCORE_COSMETIC_TYPES = new Set([
   'setScoreObjectBackgroundColors',
   'selectLayerAutomation',
   'setAutomationLineColor',
+  'setLayerHeights',
+  'setLayerGroupDefaultHeight',
 ]);
 
 function classifyScorePatch(patch: ScoreUpdatePatch): PatchRuntimeWork {
@@ -391,6 +393,8 @@ function classifyScorePatch(patch: ScoreUpdatePatch): PatchRuntimeWork {
     case 'selectLayerAutomation':
     case 'setAutomationLineColor':
     case 'setScoreObjectBackgroundColors':
+    case 'setLayerHeights':
+    case 'setLayerGroupDefaultHeight':
       return emptyPatchWork();
     case 'updateLayerState': {
       const works: PatchRuntimeWork[] = [];

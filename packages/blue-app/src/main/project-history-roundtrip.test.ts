@@ -29,6 +29,7 @@ import { FakePublicationRecorder, MockHistoryContext } from './project-history-t
 import {
   assignExplicitScoreObjectId,
   assignLayerGroupId,
+  assignLayerSelectionId,
   assignPatternLayerId,
   getMixerChannelSnapshotId,
   getMixerEntrySnapshotId,
@@ -864,6 +865,38 @@ const cases: RoundTripCase[] = [
           groupId: groupId(data),
           layerIndex: 0,
           patch: { muted: true },
+        },
+      },
+    ],
+  },
+  {
+    family: 'score',
+    type: 'setLayerHeights',
+    patches: (data) => {
+      const gId = groupId(data);
+      const layer = scoreLayer(data, 0);
+      const selId = assignLayerSelectionId(layer);
+      return [
+        {
+          score: {
+            type: 'setLayerHeights',
+            scopeGroupId: null,
+            updates: [{ groupId: gId, layerIndex: 0, layerSelectionId: selId, height: 66 }],
+          },
+        },
+      ];
+    },
+  },
+  {
+    family: 'score',
+    type: 'setLayerGroupDefaultHeight',
+    patches: (data) => [
+      {
+        score: {
+          type: 'setLayerGroupDefaultHeight',
+          scopeGroupId: null,
+          groupId: groupId(data),
+          defaultHeightIndex: 2,
         },
       },
     ],

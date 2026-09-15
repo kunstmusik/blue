@@ -851,6 +851,7 @@ function createPolyObjectGroupSnapshot(
     groupId,
     groupType: 'polyObject',
     name: lg.getName(),
+    defaultHeightIndex: lg.getDefaultHeightIndex(),
     layerCount: lg.length,
     isOpenableContainer: true,
     layers,

@@ -1810,8 +1810,9 @@ export default function TrackLayerGroupCanvas({
         >
           <ScoreObjectColorPicker ref={colorPickerRef} onSelect={handleColorSelected} />
           {rows.map(({ layer, height }, layerIndex) => {
+            const layerSelectionId = getLayerSelectionId(layer);
             const isLayerSelected = selectedLayerKeys.has(
-              buildSelectionKey(group.groupId, getLayerSelectionId(layer)),
+              buildSelectionKey(group.groupId, layerSelectionId),
             );
             return (
               <div
@@ -1872,7 +1873,7 @@ export default function TrackLayerGroupCanvas({
                             style={{
                               position: 'absolute',
                               left: fadeInLeft,
-                              top: 2,
+                              top: 1,
                               width: FADE_HANDLE_SIZE,
                               height: FADE_HANDLE_SIZE,
                               backgroundColor: 'var(--color-app-text-strong)',
@@ -1890,7 +1891,7 @@ export default function TrackLayerGroupCanvas({
                             style={{
                               position: 'absolute',
                               left: fadeOutLeft,
-                              top: 2,
+                              top: 1,
                               width: FADE_HANDLE_SIZE,
                               height: FADE_HANDLE_SIZE,
                               backgroundColor: 'var(--color-app-text-strong)',

@@ -99,8 +99,8 @@ export default function AudioClipBar({
       style={{
         left,
         width,
-        top: 1,
-        height: barHeight - 2,
+        top: 0,
+        height: barHeight - 1,
         background: barFill,
         borderTop: `1px solid ${bl}`,
         borderLeft: `1px solid ${bl}`,

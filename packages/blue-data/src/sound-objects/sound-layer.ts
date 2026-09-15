@@ -7,7 +7,7 @@
  * without applying an additional offset (sound objects handle their own
  * start time internally).
  */
-import { Layer, LAYER_HEIGHT } from '../score/layers/layer';
+import { Layer } from '../score/layers/layer';
 import { AutomatableLayer } from '../score/layers/automatable-layer';
 import { ParameterIdList } from '../automation/parameter-id-list';
 import { ScoreObject } from '../score/score-object';
@@ -20,12 +20,18 @@ import { applyNoteProcessorChain, applyNoteProcessorChainAsync } from '../utilit
 import { DEFAULT_LAYER_COLOR, normalizeLayerColor } from '../score/layers/layer-color';
 import { Element } from '../serialization/xml-reader';
 import type { CopyMode } from '../deep-copyable';
+import {
+  parseCustomHeight,
+  resolveEffectiveHeight,
+  resolveExplicitHeight,
+} from '../score/layer-height-policy';
 
 export class SoundLayer extends Array<SoundObject> implements Layer, AutomatableLayer {
   private _name = '';
   private _muted = false;
   private _solo = false;
   private _heightIndex = 0;
+  private _customHeight?: number;
   private _backgroundColor = DEFAULT_LAYER_COLOR;
   private _npc = new NoteProcessorChain();
   private _automationParameters = new ParameterIdList();
@@ -44,6 +50,7 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
       this._muted = other._muted;
       this._solo = other._solo;
       this._heightIndex = other._heightIndex;
+      this._customHeight = other._customHeight;
       this._backgroundColor = other._backgroundColor;
       this._npc = new NoteProcessorChain(other._npc);
       this._automationParameters = other._automationParameters.deepCopy();
@@ -94,7 +101,35 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
   }
 
   getLayerHeight(): number {
-    return LAYER_HEIGHT * (this._heightIndex + 1);
+    return resolveEffectiveHeight(this._heightIndex, this._customHeight);
+  }
+
+  getCustomHeight(): number | undefined {
+    return this._customHeight;
+  }
+
+  setCustomHeight(customHeight: number | undefined): void {
+    if (customHeight !== undefined) {
+      const parsed = parseCustomHeight(customHeight);
+      if (parsed !== null) {
+        this._customHeight = parsed;
+        this._unknownAttributes.delete('customHeight');
+        return;
+      }
+    }
+    this._customHeight = undefined;
+  }
+
+  setExplicitHeight(height: number): boolean {
+    const currentEffective = this.getLayerHeight();
+    const parsed = parseCustomHeight(height);
+    if (parsed === null) return false;
+    if (currentEffective === parsed) return false;
+    const { heightIndex, customHeight } = resolveExplicitHeight(parsed, 'soundLayer');
+    this._heightIndex = heightIndex;
+    this._customHeight = customHeight;
+    this._unknownAttributes.delete('customHeight');
+    return true;
   }
 
   isMuted(): boolean {
@@ -118,7 +153,13 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
   }
 
   setHeightIndex(heightIndex: number): void {
+    const oldEffective = this.getLayerHeight();
     this._heightIndex = heightIndex;
+    const newEffective = resolveEffectiveHeight(heightIndex);
+    if (oldEffective !== newEffective) {
+      this._customHeight = undefined;
+      this._unknownAttributes.delete('customHeight');
+    }
   }
 
   getNoteProcessorChain(): NoteProcessorChain {
