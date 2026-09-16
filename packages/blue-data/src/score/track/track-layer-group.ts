@@ -4,6 +4,7 @@ import type { CopyMode } from '../../deep-copyable';
 import { NoteProcessorChain } from '../../note-processors/note-processor-chain';
 import { NoteList } from '../../sound-objects/note-list';
 import { PythonObject } from '../../sound-objects/python-object';
+import { AudioClip } from '../audio/audio-clip';
 import { ClojureObject } from '../../sound-objects/clojure-object';
 import { JavaScriptObject } from '../../sound-objects/javascript-object';
 import { Instance } from '../../sound-objects/instance';
@@ -17,6 +18,7 @@ import { writeInt } from '../../utilities/xml';
 import { LAYER_HEIGHT } from '../layers/layer';
 import {
   normalizeScoreGenerationOptions,
+  type ScoreGenerationOptions,
   type ScoreGenerationOptionsOrSolo,
 } from '../score-generation-options';
 import { generateUuid } from '../../utilities/uuid';
@@ -121,9 +123,18 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
   ): NoteList {
     const generationOptions = normalizeScoreGenerationOptions(options);
     const notes = new NoteList();
+    // Audio header authority (Spec 111): track event flags and event solo do
+    // not filter Track groups; mixer audio mute/solo handles audibility.
+    const audioMode = generationOptions.trackLayerMuteSoloMode === 'audio';
     for (const track of this) {
-      if (track.isMuted()) continue;
-      if (generationOptions.processWithSolo && !track.isSolo()) continue;
+      if (!audioMode) {
+        if (track.isMuted()) continue;
+        if (generationOptions.processWithSolo && !track.isSolo()) continue;
+      }
+      if (generationOptions.pruneInaudibleTracks?.has(track.getUniqueId())) {
+        reportPrunedTrackDurationBound(track, generationOptions, context, startTime, endTime);
+        continue;
+      }
       const trackId = getTrackInstrumentId(compileData, track.getUniqueId());
       notes.merge(
         track.generateForCSD(context, compileData, startTime, endTime, {
@@ -145,9 +156,16 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
   ): Promise<NoteList> {
     const generationOptions = normalizeScoreGenerationOptions(options);
     const notes = new NoteList();
+    const audioMode = generationOptions.trackLayerMuteSoloMode === 'audio';
     for (const track of this) {
-      if (track.isMuted()) continue;
-      if (generationOptions.processWithSolo && !track.isSolo()) continue;
+      if (!audioMode) {
+        if (track.isMuted()) continue;
+        if (generationOptions.processWithSolo && !track.isSolo()) continue;
+      }
+      if (generationOptions.pruneInaudibleTracks?.has(track.getUniqueId())) {
+        reportPrunedTrackDurationBound(track, generationOptions, context, startTime, endTime);
+        continue;
+      }
       const trackId = getTrackInstrumentId(compileData, track.getUniqueId());
       notes.merge(
         await track.generateForCSDAsync(context, compileData, startTime, endTime, {
@@ -260,6 +278,39 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
       if (running > y) return i;
     }
     return this.length - 1;
+  }
+}
+
+/**
+ * Spec 111 disk pruning: reports the duration the pruned track's clips would
+ * have contributed, using the exact scheduling/window math of
+ * generateTrackAudioPlaybackNotes so the export length never shrinks when the
+ * longest clip is pruned. No notes are generated.
+ */
+function reportPrunedTrackDurationBound(
+  track: Track,
+  options: ScoreGenerationOptions,
+  context: TimeContext,
+  startTime: number,
+  endTime: number,
+): void {
+  const sink = options.prunedDurationSink;
+  if (!sink) return;
+  const usesEndTime = endTime > startTime;
+  const adjustedEndTime = endTime - startTime;
+  for (const item of track) {
+    if (!(item instanceof AudioClip)) continue;
+    const clipStart = item.getStartTime().toBeats(context);
+    const clipDur = item.getSubjectiveDuration().toBeats(context);
+    const clipEnd = clipStart + clipDur;
+    if (clipEnd <= startTime || (usesEndTime && clipStart >= endTime)) continue;
+
+    const newStart = Math.max(clipStart - startTime, 0);
+    const newEnd = clipEnd - startTime;
+    const newDuration =
+      usesEndTime && newEnd > adjustedEndTime ? adjustedEndTime - newStart : newEnd - newStart;
+    const bound = newStart + newDuration;
+    if (bound > sink.value) sink.value = bound;
   }
 }
 

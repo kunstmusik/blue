@@ -106,6 +106,7 @@ import type {
 } from '@blue/data';
 import { AutomationCurve as BlueDataAutomationCurve, LineColors } from '@blue/data';
 import { ParameterHelper } from '@blue/data';
+import { isTrackLayerMuteSoloMode } from '@blue/data';
 import type {
   SnapValueName,
   BlueX7Voice,
@@ -401,6 +402,16 @@ export function applyProjectPropertiesPatch(
         if (propertyRecord[key] !== value) {
           propertyRecord[key] = value;
           changed = true;
+        }
+        break;
+      case 'trackLayerMuteSoloMode':
+        // Unsupported edits are rejected; raw legacy text survives until an
+        // explicit supported value replaces it (Spec 111).
+        if (isTrackLayerMuteSoloMode(value)) {
+          if (properties.trackLayerMuteSoloMode !== value) {
+            properties.trackLayerMuteSoloMode = value;
+            changed = true;
+          }
         }
         break;
       default:
@@ -1190,6 +1201,39 @@ function applyMixerPatchToChain(
   }
 }
 
+/**
+ * Spec 111 rejections that apply to every write path (structural apply and
+ * scalar history records alike): a master-solo edit rejects the whole patch
+ * before any companion field is applied, and a header intent must match the
+ * effective header mode and the channel's current track association.
+ */
+export function isRejectedMixerChannelUpdate(
+  data: BlueData,
+  patch: Extract<MixerPatch, { type: 'updateChannel' }>,
+): boolean {
+  const mixer = data.getMixer();
+  const channel = findMixerChannelById(mixer, patch.channelId);
+  if (!channel) return false;
+  if (patch.patch.solo !== undefined && mixer.getMaster() === channel) {
+    return true;
+  }
+  if (patch.headerIntent) {
+    const effectiveMode = mixer.isEnabled()
+      ? data.getProjectProperties().trackLayerMuteSoloMode
+      : 'event';
+    if (patch.headerIntent.expectedMode !== effectiveMode) {
+      return true;
+    }
+    if (
+      patch.headerIntent.association !== undefined &&
+      channel.getAssociation() !== patch.headerIntent.association
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export function applyMixerPatchToData(data: BlueData, patch: MixerPatch): boolean {
   const mixer = data.getMixer();
 
@@ -1250,6 +1294,12 @@ export function applyMixerPatchToData(data: BlueData, patch: MixerPatch): boolea
     case 'updateChannel': {
       const channel = findMixerChannelById(mixer, patch.channelId);
       if (!channel) {
+        return false;
+      }
+
+      // Spec 111 whole-patch rejection: master solo, stale header mode, or
+      // a moved association refuses the edit before any field is applied.
+      if (isRejectedMixerChannelUpdate(data, patch)) {
         return false;
       }
 

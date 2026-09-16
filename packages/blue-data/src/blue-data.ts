@@ -88,7 +88,15 @@ import {
 } from './blue-data/csd-policy';
 import type { RenderCsdResult } from './blue-data/csd-policy';
 export type { RenderCsdResult };
-export type { CompiledMeterChannelBinding, MeterBindingMap } from './compile-data';
+export type {
+  CompiledMeterChannelBinding,
+  CompiledMixerGateBinding,
+  CompiledMixerGateBindings,
+  CompiledMixerGateLocator,
+  MeterBindingMap,
+} from './compile-data';
+export type { TrackLayerMuteSoloMode } from './project-properties';
+export { isTrackLayerMuteSoloMode } from './project-properties';
 import { processOnLoad, processOnLoadAsync, usesJavaRuntime } from './blue-data/runtime-policy';
 
 export class BlueData implements BlueDataObject, DeepCopyable<BlueData>, HistoryCopyable<BlueData> {

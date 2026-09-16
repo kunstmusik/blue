@@ -30,6 +30,23 @@ ga_bluemix_1_1	init	0
 ga_bluesub_Master_0	init	0
 ga_bluesub_Master_1	init	0
 
+gk_blue_mixgate_0_0 init 1
+gk_blue_mixgate_0_0 chnexport "gk_blue_mixgate_0_0", 3
+gk_blue_mixgate_0_1 init 1
+gk_blue_mixgate_0_1 chnexport "gk_blue_mixgate_0_1", 3
+gk_blue_mixgate_1_0 init 1
+gk_blue_mixgate_1_0 chnexport "gk_blue_mixgate_1_0", 3
+gk_blue_mixgate_1_1 init 1
+gk_blue_mixgate_1_1 chnexport "gk_blue_mixgate_1_1", 3
+gk_blue_mixgate_2_0 init 1
+gk_blue_mixgate_2_0 chnexport "gk_blue_mixgate_2_0", 3
+gk_blue_mixgate_2_1 init 1
+gk_blue_mixgate_2_1 chnexport "gk_blue_mixgate_2_1", 3
+gk_blue_mixgate_commit init 0
+gk_blue_mixgate_commit chnexport "gk_blue_mixgate_commit", 3
+gk_blue_mixgate_applied init 0
+gk_blue_mixgate_applied chnexport "gk_blue_mixgate_applied", 3
+
 gk_blue_auto0 init 5
 gk_blue_auto0 chnexport "gk_blue_auto0", 3
 gk_blue_auto1 init 0
@@ -5041,20 +5058,36 @@ endif
 	endin
 
 	instr BlueMixer	;Blue Mixer Instrument
+kMixGateStep init ksmps / (0.005 * sr)
+kMixGateCommit = gk_blue_mixgate_commit
+kMixGateBank = (kMixGateCommit % 2)
+kMixGateState_0 init 1
+kMixGateState_0 += limit((kMixGateBank == 0 ? gk_blue_mixgate_0_0 : gk_blue_mixgate_0_1) - kMixGateState_0, -kMixGateStep, kMixGateStep)
+kMixGateState_1 init 1
+kMixGateState_1 += limit((kMixGateBank == 0 ? gk_blue_mixgate_1_0 : gk_blue_mixgate_1_1) - kMixGateState_1, -kMixGateStep, kMixGateStep)
+kMixGateState_2 init 1
+kMixGateState_2 += limit((kMixGateBank == 0 ? gk_blue_mixgate_2_0 : gk_blue_mixgate_2_1) - kMixGateState_2, -kMixGateStep, kMixGateStep)
 ktempdb = ampdb(gk_blue_auto302)
 ga_bluemix_0_0 *= ktempdb
 ga_bluemix_0_1 *= ktempdb
+ga_bluemix_0_0 = ga_bluemix_0_0 * kMixGateState_0
+ga_bluemix_0_1 = ga_bluemix_0_1 * kMixGateState_0
 ga_bluesub_Master_0	+=	ga_bluemix_0_0
 ga_bluesub_Master_1	+=	ga_bluemix_0_1
 ktempdb = ampdb(gk_blue_auto303)
 ga_bluemix_1_0 *= ktempdb
 ga_bluemix_1_1 *= ktempdb
+ga_bluemix_1_0 = ga_bluemix_1_0 * kMixGateState_1
+ga_bluemix_1_1 = ga_bluemix_1_1 * kMixGateState_1
 ga_bluesub_Master_0	+=	ga_bluemix_1_0
 ga_bluesub_Master_1	+=	ga_bluemix_1_1
 ktempdb = ampdb(gk_blue_auto304)
 ga_bluesub_Master_0 *= ktempdb
 ga_bluesub_Master_1 *= ktempdb
+ga_bluesub_Master_0 = ga_bluesub_Master_0 * kMixGateState_2
+ga_bluesub_Master_1 = ga_bluesub_Master_1 * kMixGateState_2
 outc ga_bluesub_Master_0, ga_bluesub_Master_1
+gk_blue_mixgate_applied = kMixGateCommit
 ga_bluemix_0_0 = 0
 ga_bluemix_0_1 = 0
 ga_bluemix_1_0 = 0

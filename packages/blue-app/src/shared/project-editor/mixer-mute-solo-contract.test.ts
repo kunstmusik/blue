@@ -1,0 +1,258 @@
+import { describe, expect, it } from 'vitest';
+import { BlueData } from '@blue/data';
+import { Channel } from '@blue/data';
+import { Send } from '@blue/data';
+import {
+  applyProjectDocumentPatch,
+  validateProjectDocumentPatch,
+  classifyProjectDocumentPatch,
+  isScalarProjectDocumentPatch,
+} from './patch-document';
+import { applyMixerPatchToData, mixerPatchActionLabel } from './patch-mixer-bluelive';
+import { createMixerSnapshot, createProjectPropertiesSnapshot } from './snapshot-mixer-orchestra';
+import {
+  effectiveTrackLayerMuteSoloMode,
+  type MixerPatch,
+  type ProjectDocumentPatch,
+} from './contract';
+
+function createProjectWithMasterSolo(): BlueData {
+  const data = new BlueData();
+  const mixer = data.getMixer();
+  mixer.setEnabled(true);
+  const master = mixer.getMaster();
+  master.setSolo(true); // legacy stored master solo
+  return data;
+}
+
+describe('mixer mute/solo contract boundary (Spec 111)', () => {
+  describe('serializable renderer intents', () => {
+    it('round-trips mixer channel M/S patches and header intents through JSON', () => {
+      const patch: ProjectDocumentPatch = {
+        mixer: {
+          type: 'updateChannel',
+          channelId: 'master',
+          patch: { muted: true },
+          headerIntent: { expectedMode: 'audio', association: 'track-abc' },
+        },
+        projectProperties: { trackLayerMuteSoloMode: 'audio' },
+      };
+      const serialized = JSON.stringify(patch);
+      const parsed = JSON.parse(serialized) as ProjectDocumentPatch;
+      expect(parsed.mixer).toEqual(patch.mixer);
+      expect(parsed.projectProperties).toEqual(patch.projectProperties);
+    });
+  });
+
+  describe('derived runtime state is never project state', () => {
+    it('snapshots carry no gate symbols, route masks, tokens, or applied revisions', () => {
+      const data = createProjectWithMasterSolo();
+      const mixer = data.getMixer();
+      const source = new Channel();
+      source.setName('S1');
+      mixer.getChannels().push(source);
+
+      const snapshot = createMixerSnapshot(mixer);
+      const text = JSON.stringify(snapshot);
+      expect(text).not.toContain('gk_blue_mixgate_');
+      expect(text).not.toContain('routeMask');
+      expect(text).not.toContain('commitToken');
+      expect(text).not.toContain('appliedRevision');
+    });
+
+    it('project XML never contains runtime gate symbols or route masks', () => {
+      const data = createProjectWithMasterSolo();
+      data.getMixer().getChannels()[0] ?? data.getMixer().getMaster();
+      const xml = data.saveToString();
+      expect(xml).not.toContain('gk_blue_mixgate_');
+      expect(xml).not.toContain('routeMask');
+      // Legacy master solo survives as inert compatibility data.
+      expect(xml).toContain('<solo>true</solo>');
+    });
+  });
+
+  describe('master solo rejection', () => {
+    it('rejects a master-solo patch without applying companion fields', () => {
+      const data = createProjectWithMasterSolo();
+      const before = data.getMixer().getMaster().getName();
+      const changed = applyMixerPatchToData(data, {
+        type: 'updateChannel',
+        channelId: 'master',
+        patch: { solo: true, name: 'Renamed' },
+      });
+      expect(changed).toBe(false);
+      expect(data.getMixer().getMaster().getName()).toBe(before);
+      expect(data.getMixer().getMaster().isSolo()).toBe(true);
+    });
+
+    it('still applies non-solo edits to the master channel', () => {
+      const data = createProjectWithMasterSolo();
+      const changed = applyMixerPatchToData(data, {
+        type: 'updateChannel',
+        channelId: 'master',
+        patch: { muted: true },
+      });
+      expect(changed).toBe(true);
+      expect(data.getMixer().getMaster().isMuted()).toBe(true);
+    });
+  });
+
+  describe('header authority guard', () => {
+    it('rejects a header intent whose expected mode no longer matches', () => {
+      const data = createProjectWithMasterSolo();
+      data.getMixer().setEnabled(true);
+      data.getProjectProperties().trackLayerMuteSoloMode = 'event';
+
+      const changed = applyMixerPatchToData(data, {
+        type: 'updateChannel',
+        channelId: data.getMixer().getMaster().getName(),
+        patch: { muted: true },
+        headerIntent: { expectedMode: 'audio' },
+      });
+      expect(changed).toBe(false);
+    });
+
+    it('rejects a header intent whose association moved', () => {
+      const data = createProjectWithMasterSolo();
+      data.getProjectProperties().trackLayerMuteSoloMode = 'audio';
+      const source = new Channel();
+      source.setName('S1');
+      source.setAssociation('track-1');
+      data.getMixer().getChannels().push(source);
+
+      const changed = applyMixerPatchToData(data, {
+        type: 'updateChannel',
+        channelId: 'track-1',
+        patch: { muted: true },
+        headerIntent: { expectedMode: 'audio', association: 'track-9' },
+      });
+      expect(changed).toBe(false);
+
+      const matched = applyMixerPatchToData(data, {
+        type: 'updateChannel',
+        channelId: 'track-1',
+        patch: { muted: true },
+        headerIntent: { expectedMode: 'audio', association: 'track-1' },
+      });
+      expect(matched).toBe(true);
+    });
+  });
+
+  describe('mode patches', () => {
+    it('applies supported mode values and rejects unsupported ones', () => {
+      const data = createProjectWithMasterSolo();
+      const changed = applyProjectDocumentPatch(data, {
+        projectProperties: { trackLayerMuteSoloMode: 'event' },
+      });
+      expect(changed).toBe(true);
+      expect(data.getProjectProperties().trackLayerMuteSoloMode).toBe('event');
+
+      const rejected = applyProjectDocumentPatch(data, {
+        projectProperties: { trackLayerMuteSoloMode: 'loud' as 'audio' },
+      });
+      expect(rejected).toBe(false);
+    });
+
+    it('classifies mode and M/S patches for history preparation', () => {
+      expect(
+        isScalarProjectDocumentPatch({
+          projectProperties: { trackLayerMuteSoloMode: 'audio' },
+        }),
+      ).toBe(true);
+      expect(
+        isScalarProjectDocumentPatch({
+          mixer: { type: 'updateChannel', channelId: 'A', patch: { muted: true } },
+        }),
+      ).toBe(true);
+      expect(
+        isScalarProjectDocumentPatch({
+          mixer: { type: 'updateChannel', channelId: 'A', patch: { solo: true } },
+        }),
+      ).toBe(true);
+      expect(
+        validateProjectDocumentPatch({ mixer: { type: 'setMixerEnabled', value: false } }).valid,
+      ).toBe(true);
+    });
+
+    it('supplies semantic action labels for every durable writer', () => {
+      expect(
+        mixerPatchActionLabel({ type: 'updateChannel', channelId: 'A', patch: { muted: true } }),
+      ).toBe('Mute Channel');
+      expect(
+        mixerPatchActionLabel({ type: 'updateChannel', channelId: 'A', patch: { muted: false } }),
+      ).toBe('Unmute Channel');
+      expect(
+        mixerPatchActionLabel({ type: 'updateChannel', channelId: 'A', patch: { solo: true } }),
+      ).toBe('Solo Channel');
+      expect(
+        mixerPatchActionLabel({ type: 'updateChannel', channelId: 'A', patch: { solo: false } }),
+      ).toBe('Unsolo Channel');
+      expect(mixerPatchActionLabel({ type: 'setMixerEnabled', value: false })).toBe(
+        'Disable Mixer',
+      );
+    });
+  });
+
+  describe('effective mode derivation', () => {
+    it('forces Event when the mixer is disabled and keeps the saved mode otherwise', () => {
+      expect(effectiveTrackLayerMuteSoloMode('audio', true)).toBe('audio');
+      expect(effectiveTrackLayerMuteSoloMode('audio', false)).toBe('event');
+      expect(effectiveTrackLayerMuteSoloMode('event', true)).toBe('event');
+    });
+
+    it('snapshots expose the parsed mode and unsupported raw text', () => {
+      const data = createProjectWithMasterSolo();
+      data.getProjectProperties().trackLayerMuteSoloMode = 'audio';
+      const snapshot = createProjectPropertiesSnapshot(data.getProjectProperties());
+      expect(snapshot.trackLayerMuteSoloMode).toBe('audio');
+      expect(snapshot.trackLayerMuteSoloModeRaw).toBeNull();
+    });
+  });
+
+  describe('route indicators in snapshots', () => {
+    it('exposes solo exclusion and send survival for the contract matrix', () => {
+      const data = new BlueData();
+      const mixer = data.getMixer();
+      mixer.setEnabled(true);
+      const a = new Channel();
+      a.setName('A');
+      const sendToR = new Send();
+      sendToR.setSendChannel('R');
+      a.getPostEffects().push(sendToR);
+      const b = new Channel();
+      b.setName('B');
+      const r = new Channel();
+      r.setName('R');
+      r.setOutChannel('Master');
+      mixer.getChannels().push(a, b);
+      mixer.getSubChannels().push(r);
+
+      const snapshot = createMixerSnapshot(mixer);
+      expect(snapshot.channels.find((c) => c.name === 'A')?.outputExcludedBySolo).toBe(false);
+      expect(snapshot.legacyActiveChannelStateNotice ?? false).toBe(false);
+
+      r.setSolo(true);
+      const soloSnapshot = createMixerSnapshot(mixer);
+      const aSnap = soloSnapshot.channels.find((c) => c.name === 'A');
+      expect(aSnap?.outputExcludedBySolo).toBe(true);
+      expect(aSnap?.hasIncludedSend).toBe(true);
+      // R's solo is an active non-master flag: the legacy notice applies.
+      expect(soloSnapshot.legacyActiveChannelStateNotice).toBe(true);
+
+      a.setMuted(true);
+      const mutedSnapshot = createMixerSnapshot(mixer);
+      expect(mutedSnapshot.legacyActiveChannelStateNotice).toBe(true);
+    });
+  });
+
+  describe('classification exhaustiveness', () => {
+    it('keeps mixer M/S classified as live-capable patch work', () => {
+      const patch: MixerPatch = {
+        type: 'updateChannel',
+        channelId: 'A',
+        patch: { muted: true },
+      };
+      expect(classifyProjectDocumentPatch({ mixer: patch })).toBe('scalar');
+    });
+  });
+});

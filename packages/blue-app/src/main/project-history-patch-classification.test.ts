@@ -3,6 +3,7 @@ import {
   BlueData,
   BlueSynthBuilder,
   BSBKnob,
+  Channel,
   ClojureLibraryEntry,
   ClojureProjectData,
 } from '@blue/data';
@@ -373,12 +374,18 @@ describe('Exhaustive project patch preparation classification (T018)', () => {
     it('captures scalar channel field patches with one record per changed field', () => {
       const data = new BlueData();
       data.getMixer().getMaster().setLevel(0.7);
+      // Spec 111: master solo edits are rejected wholesale, so this matrix
+      // uses an ordinary channel (all five fields remain freely editable).
+      const channel = new Channel();
+      channel.setName('Chan');
+      channel.setAssociation('chan-1');
+      data.getMixer().getChannels().push(channel);
 
       const result = prepareTransaction(data, [
         {
           mixer: {
             type: 'updateChannel',
-            channelId: 'Master',
+            channelId: 'chan-1',
             patch: { level: 0.2, pan: -0.5, muted: true, solo: false, volume: 0.8 },
           },
         },

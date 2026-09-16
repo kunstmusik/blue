@@ -22,6 +22,7 @@ import type {
   NoteProcessorChainSnapshot,
   ScoreAutomationPatch,
 } from '../../../../shared/project-editor';
+import { effectiveTrackLayerMuteSoloMode } from '../../../../shared/project-editor';
 import {
   type SnapValueName,
   DEFAULT_LAYER_COLOR,
@@ -1468,6 +1469,19 @@ function SoundLayerHeader({
   const headerHostDocument = useHostDocument();
   const setLayerMute = useProjectStore((s) => s.setLayerMute);
   const setLayerSolo = useProjectStore((s) => s.setLayerSolo);
+  const setTrackHeaderAudioMuteSolo = useProjectStore((s) => s.setTrackHeaderAudioMuteSolo);
+  const headerMixerEnabled = useProjectStore((s) => s.mixer?.enabled ?? true);
+  const headerModePreference = useProjectStore((s) => s.projectProperties.trackLayerMuteSoloMode);
+  const headerAssociatedChannel = useProjectStore((s) => {
+    if (groupType !== 'track') return undefined;
+    const mixer = s.mixer;
+    if (!mixer) return undefined;
+    return [
+      ...mixer.channelListGroups.flatMap((group) => group.channels),
+      ...mixer.channels,
+      ...mixer.subChannels,
+    ].find((candidate) => candidate.association === layer.layerId);
+  });
   const setLayerBackgroundColor = useProjectStore((s) => s.setLayerBackgroundColor);
   const renameLayer = useProjectStore((s) => s.renameLayer);
   const addLayer = useProjectStore((s) => s.addLayer);
@@ -1516,6 +1530,24 @@ function SoundLayerHeader({
   );
 
   const resizeContext = useLayerHeightResizeContext();
+  // Spec 111: track headers edit the associated mixer channel's audio state
+  // when the effective header mode is Audio and an association exists; they
+  // keep legacy event-layer semantics otherwise (including mixer bypass).
+  const headerAuthority = useMemo(() => {
+    if (
+      groupType !== 'track' ||
+      effectiveTrackLayerMuteSoloMode(headerModePreference, headerMixerEnabled) !== 'audio' ||
+      !headerAssociatedChannel
+    ) {
+      return { authority: 'event' as const };
+    }
+    return {
+      authority: 'audio' as const,
+      channelId: headerAssociatedChannel.id,
+      muted: headerAssociatedChannel.muted,
+      solo: headerAssociatedChannel.solo,
+    };
+  }, [groupType, headerModePreference, headerMixerEnabled, headerAssociatedChannel]);
   const [customDialogOpen, setCustomDialogOpen] = useState(false);
   const [customDialogScope, setCustomDialogScope] = useState<'single' | 'selected' | 'group'>(
     'single',
@@ -1847,26 +1879,80 @@ function SoundLayerHeader({
               />
               <button
                 type="button"
-                className={btnClass(!!layer.muted, 'bg-app-warning', 'text-app-warning-foreground')}
-                title="Mute"
-                aria-label={layer.muted ? `Unmute layer ${layer.name}` : `Mute layer ${layer.name}`}
-                aria-pressed={!!layer.muted}
+                className={btnClass(
+                  headerAuthority.authority === 'audio' ? headerAuthority.muted : !!layer.muted,
+                  'bg-app-warning',
+                  'text-app-warning-foreground',
+                )}
+                title={
+                  headerAuthority.authority === 'audio'
+                    ? `Mute (audio: controls mixer channel for ${layer.name})`
+                    : 'Mute'
+                }
+                aria-label={
+                  headerAuthority.authority === 'audio'
+                    ? headerAuthority.muted
+                      ? `Unmute mixer channel for ${layer.name}`
+                      : `Mute mixer channel for ${layer.name}`
+                    : layer.muted
+                      ? `Unmute layer ${layer.name}`
+                      : `Mute layer ${layer.name}`
+                }
+                aria-pressed={
+                  headerAuthority.authority === 'audio' ? headerAuthority.muted : !!layer.muted
+                }
                 onClick={(e) => {
                   e.stopPropagation();
-                  setLayerMute(groupId, layerIndex, !(layer.muted ?? false));
+                  if (headerAuthority.authority === 'audio') {
+                    setTrackHeaderAudioMuteSolo(
+                      groupId,
+                      layer.layerId,
+                      'muted',
+                      !headerAuthority.muted,
+                    );
+                  } else {
+                    setLayerMute(groupId, layerIndex, !(layer.muted ?? false));
+                  }
                 }}
               >
                 M
               </button>
               <button
                 type="button"
-                className={btnClass(!!layer.solo, 'bg-app-success', 'text-app-success-foreground')}
-                title="Solo"
-                aria-label={layer.solo ? `Unsolo layer ${layer.name}` : `Solo layer ${layer.name}`}
-                aria-pressed={!!layer.solo}
+                className={btnClass(
+                  headerAuthority.authority === 'audio' ? headerAuthority.solo : !!layer.solo,
+                  'bg-app-success',
+                  'text-app-success-foreground',
+                )}
+                title={
+                  headerAuthority.authority === 'audio'
+                    ? `Solo (audio: controls mixer channel for ${layer.name})`
+                    : 'Solo'
+                }
+                aria-label={
+                  headerAuthority.authority === 'audio'
+                    ? headerAuthority.solo
+                      ? `Unsolo mixer channel for ${layer.name}`
+                      : `Solo mixer channel for ${layer.name}`
+                    : layer.solo
+                      ? `Unsolo layer ${layer.name}`
+                      : `Solo layer ${layer.name}`
+                }
+                aria-pressed={
+                  headerAuthority.authority === 'audio' ? headerAuthority.solo : !!layer.solo
+                }
                 onClick={(e) => {
                   e.stopPropagation();
-                  setLayerSolo(groupId, layerIndex, !(layer.solo ?? false));
+                  if (headerAuthority.authority === 'audio') {
+                    setTrackHeaderAudioMuteSolo(
+                      groupId,
+                      layer.layerId,
+                      'solo',
+                      !headerAuthority.solo,
+                    );
+                  } else {
+                    setLayerSolo(groupId, layerIndex, !(layer.solo ?? false));
+                  }
                 }}
               >
                 S

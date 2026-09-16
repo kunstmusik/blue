@@ -411,6 +411,8 @@ function createDefaultProjectPropertiesSnapshot(): ProjectPropertiesSnapshot {
     diskAlwaysRenderEntireProject: false,
     mediaFolder: '',
     copyToMediaFileOnImport: true,
+    trackLayerMuteSoloMode: 'audio',
+    trackLayerMuteSoloModeRaw: null,
   };
 }
 

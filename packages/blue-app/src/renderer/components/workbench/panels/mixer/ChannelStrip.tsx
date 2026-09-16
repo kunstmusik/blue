@@ -1177,6 +1177,63 @@ export default React.memo(function ChannelStrip({
         )}
       </div>
 
+      <div className="mixer-strip-ms flex flex-row items-center justify-center gap-1">
+        <button
+          type="button"
+          className={cn(
+            'mixer-strip-mute rounded-sm border font-bold',
+            channel.muted && 'bg-app-warning text-app-warning-foreground',
+          )}
+          aria-pressed={channel.muted}
+          aria-label={`${displayName} Mute`}
+          title={
+            !mixer.enabled
+              ? 'Mixer is disabled; enable the mixer for mute to affect audio'
+              : channel.outputExcludedBySolo
+                ? channel.hasIncludedSend
+                  ? `${displayName} output is excluded by solo; its send is still audible`
+                  : `${displayName} output is excluded by solo`
+                : `${displayName} Mute`
+          }
+          disabled={!mixer.enabled}
+          onClick={() =>
+            onPatch({
+              type: 'updateChannel',
+              channelId: channel.id,
+              patch: { muted: !channel.muted },
+            })
+          }
+        >
+          M
+        </button>
+        {!isMaster && (
+          <button
+            type="button"
+            className={cn(
+              'mixer-strip-solo rounded-sm border font-bold',
+              channel.solo && 'bg-app-success text-app-success-foreground',
+            )}
+            aria-pressed={channel.solo}
+            aria-label={`${displayName} Solo`}
+            title={
+              !mixer.enabled
+                ? 'Mixer is disabled; enable the mixer for solo to affect audio'
+                : `${displayName} Solo`
+            }
+            disabled={!mixer.enabled}
+            onClick={() =>
+              onPatch({
+                type: 'updateChannel',
+                channelId: channel.id,
+                patch: { solo: !channel.solo },
+              })
+            }
+          >
+            S
+          </button>
+        )}
+      </div>
+
       <ChainList
         label="Pre"
         entries={channel.preChain}

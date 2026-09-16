@@ -1,3 +1,4 @@
+import { isRejectedMixerChannelUpdate } from '../shared/project-editor/patch-mixer-bluelive';
 import {
   BlueData,
   Channel,
@@ -474,7 +475,10 @@ export function captureScalarFieldRecords(
         afterValue: m.value,
       });
     } else if (m.type === 'updateChannel') {
-      const ch = findMixerChannelById(data.getMixer(), m.channelId);
+      // Spec 111: a rejected edit (master solo, stale header intent)
+      // captures no records, so nothing applies and no history entry exists.
+      const mixerChannelAccepted = !isRejectedMixerChannelUpdate(data, m);
+      const ch = mixerChannelAccepted ? findMixerChannelById(data.getMixer(), m.channelId) : null;
       if (ch) {
         if (m.patch.level !== undefined) {
           records.push({

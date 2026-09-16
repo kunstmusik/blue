@@ -66,6 +66,50 @@ export interface MeterBindingMap {
   readonly nchnls: number;
 }
 
+/**
+ * Disposable compiled mixer gate binding (Spec 111). Describes one mute/solo
+ * audio gate compiled into a realtime CSD: its deterministic ordinal, the two
+ * bank channels the engine stages values into, the initial 0/1 target, and a
+ * locator tying the gate back to the mixer route it gates. Derived render
+ * output only; never serialized into `.blue` XML.
+ */
+export interface CompiledMixerGateBinding {
+  readonly ordinal: number;
+  readonly bankSymbols: readonly [string, string];
+  readonly initial: 0 | 1;
+  readonly locator: CompiledMixerGateLocator;
+}
+
+export type CompiledMixerGateLocator =
+  | {
+      readonly route: 'output';
+      readonly channelOrdinal: number;
+      readonly channelKind: 'source' | 'sub' | 'master';
+      /** Track/instrument association of the gated channel, '' when unset. */
+      readonly association: string;
+    }
+  | {
+      readonly route: 'send';
+      readonly channelOrdinal: number;
+      readonly channelKind: 'source' | 'sub' | 'master';
+      readonly chainKind: 'pre' | 'post';
+      readonly chainIndex: number;
+      readonly targetName: string;
+      readonly association: string;
+    };
+
+/**
+ * Generation-scoped catalog of every mixer gate in one compiled CSD plus the
+ * commit/applied token channels used for staged two-bank publication.
+ */
+export interface CompiledMixerGateBindings {
+  /** Deterministic topology signature; live edits with a different topology are stale. */
+  readonly signature: string;
+  readonly commitChannel: string;
+  readonly appliedChannel: string;
+  readonly gates: readonly CompiledMixerGateBinding[];
+}
+
 /** Render-scoped registry key for compiled BlueX7 bindings. */
 export const BLUE_X7_BINDINGS_KEY = Symbol('blueX7.bindings');
 

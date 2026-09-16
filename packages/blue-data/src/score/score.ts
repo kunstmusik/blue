@@ -16,6 +16,10 @@ import { Element } from '../serialization/xml-reader';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { ScoreGenerationException } from './score-generation-exception';
 import { CompileData } from '../compile-data';
+import {
+  normalizeScoreGenerationOptions,
+  type ScoreGenerationOptionsOrSolo,
+} from './score-generation-options';
 import { NoteList } from '../sound-objects/note-list';
 import { PolyObject } from '../sound-objects/poly-object';
 import { TimeBehavior } from '../sound-objects/time-behavior';
@@ -100,26 +104,34 @@ export class Score extends Array<LayerGroup<Layer>> {
   /**
    * Generate the complete score output for CSD.
    * Iterates all LayerGroups and collects their NoteLists.
+   * `generationOptions.trackLayerMuteSoloMode === 'audio'` removes Track
+   * groups from event-flag filtering and global event-solo discovery.
    */
-  generateForCSD(compileData: CompileData, startTime: number, endTime: number): NoteList {
+  generateForCSD(
+    compileData: CompileData,
+    startTime: number,
+    endTime: number,
+    generationOptions?: ScoreGenerationOptionsOrSolo,
+  ): NoteList {
+    const options = normalizeScoreGenerationOptions(generationOptions);
+    const audioModeTracks = options.trackLayerMuteSoloMode === 'audio';
     const noteList = new NoteList();
     const context = this.timeContext;
-    const hasSolo = this.some((lg) => lg.hasSoloLayers());
+    const hasSolo = this.some((lg) => {
+      if (audioModeTracks && lg instanceof TrackLayerGroup) return false;
+      return lg.hasSoloLayers();
+    });
 
     for (let i = 0; i < this.length; i++) {
       const layerGroup = this[i];
 
-      if (!hasSolo) {
-        const nl = layerGroup.generateForCSD(context, compileData, startTime, endTime, {
-          processWithSolo: false,
-        });
-        noteList.merge(nl);
-      } else {
-        const nl = layerGroup.generateForCSD(context, compileData, startTime, endTime, {
-          processWithSolo: true,
-        });
-        noteList.merge(nl);
-      }
+      const processWithSolo =
+        hasSolo && !(audioModeTracks && layerGroup instanceof TrackLayerGroup);
+      const nl = layerGroup.generateForCSD(context, compileData, startTime, endTime, {
+        ...options,
+        processWithSolo,
+      });
+      noteList.merge(nl);
     }
     return this.npc.apply(noteList);
   }
@@ -128,17 +140,26 @@ export class Score extends Array<LayerGroup<Layer>> {
     compileData: CompileData,
     startTime: number,
     endTime: number,
+    generationOptions?: ScoreGenerationOptionsOrSolo,
   ): Promise<NoteList> {
+    const options = normalizeScoreGenerationOptions(generationOptions);
+    const audioModeTracks = options.trackLayerMuteSoloMode === 'audio';
     const noteList = new NoteList();
     const context = this.timeContext;
-    const hasSolo = this.some((lg) => lg.hasSoloLayers());
+    const hasSolo = this.some((lg) => {
+      if (audioModeTracks && lg instanceof TrackLayerGroup) return false;
+      return lg.hasSoloLayers();
+    });
 
     for (let i = 0; i < this.length; i++) {
       const layerGroup = this[i];
+      const processWithSolo =
+        hasSolo && !(audioModeTracks && layerGroup instanceof TrackLayerGroup);
 
       if (layerGroup instanceof PolyObject) {
         const nl = await layerGroup.generateForCSDAsync(context, compileData, startTime, endTime, {
-          processWithSolo: hasSolo,
+          ...options,
+          processWithSolo,
         });
         noteList.merge(nl);
         continue;
@@ -146,14 +167,16 @@ export class Score extends Array<LayerGroup<Layer>> {
 
       if (layerGroup instanceof TrackLayerGroup) {
         const nl = await layerGroup.generateForCSDAsync(context, compileData, startTime, endTime, {
-          processWithSolo: hasSolo,
+          ...options,
+          processWithSolo,
         });
         noteList.merge(nl);
         continue;
       }
 
       const nl = layerGroup.generateForCSD(context, compileData, startTime, endTime, {
-        processWithSolo: hasSolo,
+        ...options,
+        processWithSolo,
       });
       noteList.merge(nl);
     }

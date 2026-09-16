@@ -29,6 +29,7 @@ import {
   convertOrcScoToBlue,
   CSDImportMode,
   buildMidiImportProject,
+  resolveMixerGateIntent,
   type MeterBindingMap,
 } from '@blue/data';
 import type { MeterBindingMapPayload } from '../shared/meter-types';
@@ -218,9 +219,11 @@ import {
 import {
   ProjectRuntimeReconciliation,
   type AcknowledgedRuntimeClient,
+  type RuntimeMixerGatesOperation,
   type RuntimeOperationAck,
   type RuntimeWorkOperation,
 } from './project-runtime-reconciliation';
+import { MixerGatePublisher } from './mixer-mute-solo-runtime';
 import { syncRuntimeChannel } from './runtime-channel-sync';
 import {
   syncBsbInstrumentRuntimeChannels,
@@ -450,7 +453,33 @@ const projectSession = new ProjectSession();
 let timelinePerformanceGeneration = 0;
 let blueLivePerformanceGeneration = 0;
 
+const timelineGatePublisher = new MixerGatePublisher({
+  setChannels: (entries) =>
+    engineBridge
+      ? engineBridge.setChannels(entries)
+      : Promise.resolve({ ok: false, message: 'no-active-engine-session' }),
+  getChannels: (names) =>
+    engineBridge
+      ? engineBridge.getChannels(names)
+      : Promise.resolve({ ok: false, message: 'no-active-engine-session' }),
+});
+const blueLiveGatePublisher = new MixerGatePublisher({
+  setChannels: (entries) =>
+    blueLiveSession
+      ? blueLiveSession.setChannels(entries)
+      : Promise.resolve({ ok: false, message: 'no-active-blue-live-session' }),
+  getChannels: (names) =>
+    blueLiveSession
+      ? blueLiveSession.getChannels(names)
+      : Promise.resolve({ ok: false, message: 'no-active-blue-live-session' }),
+});
+
 const projectRuntimeReconciliation = new ProjectRuntimeReconciliation({
+  resolveMixerGates: () => {
+    const data = getCurrentData();
+    if (!data) return null;
+    return resolveMixerGateIntent(data.getMixer());
+  },
   onOutcome: (outcome, context) => {
     const current = projectSession.read();
     const event: ProjectRuntimeOutcomeEvent = {
@@ -4006,6 +4035,17 @@ function resolveBsbInstrumentByOwnerKey(data: BlueData, ownerKey: string): BlueS
   return null;
 }
 
+async function applyMixerGatesOperation(
+  publisher: MixerGatePublisher,
+  kind: 'timeline' | 'blueLive',
+  operation: RuntimeMixerGatesOperation,
+): Promise<RuntimeOperationAck> {
+  const result = await publisher.publish(kind, operation.signature, operation.values);
+  return result.ok
+    ? { status: 'applied' }
+    : { status: 'rejected', message: result.message ?? 'Mixer gate publication failed' };
+}
+
 async function applyRuntimeWorkOperation(
   operation: RuntimeWorkOperation,
   setChannel: (channel: string, value: number) => Promise<unknown>,
@@ -4209,6 +4249,9 @@ async function startPlayback(
     });
     const timelineClient: AcknowledgedRuntimeClient = {
       applyOperation(operation) {
+        if (operation.kind === 'mixer-gates') {
+          return applyMixerGatesOperation(timelineGatePublisher, 'timeline', operation);
+        }
         return applyRuntimeWorkOperation(
           operation,
           (channel, value) => engineBridge!.setChannel(channel, value),
@@ -4217,6 +4260,15 @@ async function startPlayback(
       },
     };
     const timelineBindings = buildRuntimeBindingRegistry(data, parameters, render.blueX7Bindings);
+    if (render.mixerGateBindings) {
+      timelineGatePublisher.setBindings('timeline', render.mixerGateBindings);
+      timelineBindings.set('mixer-gates::gates', {
+        kind: 'mixer-gates',
+        signature: render.mixerGateBindings.signature,
+      });
+    } else {
+      timelineGatePublisher.setBindings('timeline', null);
+    }
     projectRuntimeReconciliation.registerPerformance(
       'timeline',
       timelineGeneration,
@@ -4368,6 +4420,9 @@ function registerBlueLivePerformance(): void {
   });
   const client: AcknowledgedRuntimeClient = {
     applyOperation(operation) {
+      if (operation.kind === 'mixer-gates') {
+        return applyMixerGatesOperation(blueLiveGatePublisher, 'blueLive', operation);
+      }
       return applyRuntimeWorkOperation(
         operation,
         (channel, value) => blueLiveSession!.setChannel(channel, value),
@@ -4380,6 +4435,16 @@ function registerBlueLivePerformance(): void {
     blueLiveSession.getParameters?.() ?? [],
     blueLiveBindings,
   );
+  const blueLiveGateBindings = blueLiveSession.getMixerGateBindings();
+  if (blueLiveGateBindings) {
+    blueLiveGatePublisher.setBindings('blueLive', blueLiveGateBindings);
+    bindings.set('mixer-gates::gates', {
+      kind: 'mixer-gates',
+      signature: blueLiveGateBindings.signature,
+    });
+  } else {
+    blueLiveGatePublisher.setBindings('blueLive', null);
+  }
   projectRuntimeReconciliation.registerPerformance('blueLive', generation, client, bindings);
   broadcastRuntimePerformanceCleared('blueLive');
 }

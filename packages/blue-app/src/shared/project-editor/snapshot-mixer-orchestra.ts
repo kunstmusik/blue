@@ -107,6 +107,7 @@ import type {
 } from '@blue/data';
 import { AutomationCurve as BlueDataAutomationCurve, LineColors } from '@blue/data';
 import { ParameterHelper } from '@blue/data';
+import { computeMixerGateStateForMixer, type MixerChannelRouteIndicator } from '@blue/data';
 import type {
   SnapValueName,
   BlueX7Voice,
@@ -537,6 +538,7 @@ function createMixerChannelSnapshot(
   channelKind: MixerChannelKind,
   refs?: {
     libraryRef?: LibraryEffectRef;
+    indicator?: MixerChannelRouteIndicator;
   },
 ): MixerChannelSnapshot {
   const id = getMixerChannelSnapshotId(channel);
@@ -561,7 +563,27 @@ function createMixerChannelSnapshot(
       chain: 'post',
       libraryRef: refs?.libraryRef,
     }),
+    outputExcludedBySolo: refs?.indicator?.outputExcludedBySolo,
+    hasIncludedSend: refs?.indicator?.hasIncludedSend,
   };
+}
+
+/**
+ * Derives per-channel route indicators (Spec 111) matched back onto snapshot
+ * channels by kind and name. Sources are ordered exactly like the policy's
+ * node walk (channel list groups, then Orchestra); subchannels are matched
+ * through the same render-order sort the policy uses.
+ */
+function buildMixerRouteIndicatorIndex(mixer: Mixer): {
+  byKey: Map<string, MixerChannelRouteIndicator>;
+} {
+  const byKey = new Map<string, MixerChannelRouteIndicator>();
+  if (!mixer.isEnabled()) return { byKey };
+  const state = computeMixerGateStateForMixer(mixer);
+  for (const indicator of state.channels) {
+    byKey.set(`${indicator.kind}:${indicator.name}`, indicator);
+  }
+  return { byKey };
 }
 
 export function createEmptyMixerSnapshot(): MixerSnapshot {
@@ -579,18 +601,30 @@ export function createEmptyMixerSnapshot(): MixerSnapshot {
   };
 }
 
-function createMixerChannelListSnapshot(channelList: ChannelList): MixerChannelListSnapshot {
+function createMixerChannelListSnapshot(
+  channelList: ChannelList,
+  indicatorFor?: (channel: Channel) => MixerChannelRouteIndicator | undefined,
+): MixerChannelListSnapshot {
   return {
     association: channelList.getAssociation() ?? undefined,
     listName: channelList.getListName(),
     listNameEditSupported: channelList.isListNameEditSupported(),
     channels: Array.from(channelList, (channel) =>
-      createMixerChannelSnapshot(channel, 'instrument'),
+      createMixerChannelSnapshot(channel, 'instrument', {
+        indicator: indicatorFor?.(channel),
+      }),
     ),
   };
 }
 
 export function createMixerSnapshot(mixer: Mixer): MixerSnapshot {
+  const { byKey } = buildMixerRouteIndicatorIndex(mixer);
+  const hasLegacyActiveChannelState = [
+    ...mixer.getAllSourceChannels(),
+    ...mixer.getSubChannels(),
+  ].some((channel) => channel.isMuted() || channel.isSolo());
+  const indicatorFor = (kind: 'source' | 'sub' | 'master', channel: Channel) =>
+    byKey.get(`${kind}:${channel.getName()}`);
   return {
     enabled: mixer.isEnabled(),
     enableMeters: mixer.isEnableMeters(),
@@ -598,14 +632,23 @@ export function createMixerSnapshot(mixer: Mixer): MixerSnapshot {
     extraRenderTime: mixer.getExtraRenderTime(),
     channelListGroups: mixer
       .getChannelListGroups()
-      .map((channelList) => createMixerChannelListSnapshot(channelList)),
+      .map((channelList) =>
+        createMixerChannelListSnapshot(channelList, (channel) => indicatorFor('source', channel)),
+      ),
     channels: Array.from(mixer.getChannels(), (channel) =>
-      createMixerChannelSnapshot(channel, 'instrument'),
+      createMixerChannelSnapshot(channel, 'instrument', {
+        indicator: indicatorFor('source', channel),
+      }),
     ),
     subChannels: Array.from(mixer.getSubChannels(), (channel) =>
-      createMixerChannelSnapshot(channel, 'subChannel'),
+      createMixerChannelSnapshot(channel, 'subChannel', {
+        indicator: indicatorFor('sub', channel),
+      }),
     ),
-    master: createMixerChannelSnapshot(mixer.getMaster(), 'master'),
+    master: createMixerChannelSnapshot(mixer.getMaster(), 'master', {
+      indicator: indicatorFor('master', mixer.getMaster()),
+    }),
+    legacyActiveChannelStateNotice: hasLegacyActiveChannelState,
   };
 }
 
@@ -749,6 +792,8 @@ export function createProjectPropertiesSnapshot(
     diskAlwaysRenderEntireProject: properties.diskAlwaysRenderEntireProject,
     mediaFolder: properties.mediaFolder,
     copyToMediaFileOnImport: properties.copyToMediaFileOnImport,
+    trackLayerMuteSoloMode: properties.trackLayerMuteSoloMode,
+    trackLayerMuteSoloModeRaw: properties.trackLayerMuteSoloModeRaw,
   };
 }
 

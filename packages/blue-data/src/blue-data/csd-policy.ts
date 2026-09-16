@@ -5,6 +5,9 @@ import { ProjectProperties } from '../project-properties';
 import { GlobalOrcSco } from '../global-orc-sco';
 import { Tables } from '../tables';
 import { Score } from '../score/score';
+import { TrackLayerGroup } from '../score/track/track-layer-group';
+import { Track } from '../score/track/track';
+import { AudioClip } from '../score/audio/audio-clip';
 import { Note } from '../sound-objects/note';
 import { NoteList } from '../sound-objects/note-list';
 import { Mixer, buildSubChannelMeterKeys } from '../mixer/mixer';
@@ -17,8 +20,19 @@ import type {
   CompiledBlueX7Binding,
   CompiledMidiInstrumentTarget,
   CompiledMeterChannelBinding,
+  CompiledMixerGateBinding,
+  CompiledMixerGateBindings,
+  CompiledMixerGateLocator,
   MeterBindingMap,
 } from '../compile-data';
+import {
+  buildMixerRouteGraph,
+  computeMixerGateState,
+  getMixerRouteSignature,
+  sortSubChannelsForRendering,
+  type MixerGateState,
+  type MixerRouteGraph,
+} from '../mixer/mute-solo-policy';
 import { Effect } from '../mixer/effect';
 import { EffectsChain } from '../mixer/effects-chain';
 import { Channel } from '../mixer/channel';
@@ -64,6 +78,13 @@ export type RenderCsdResult = {
    */
   blueX7Bindings: readonly CompiledBlueX7Binding[];
   meterBindingMap?: MeterBindingMap;
+  /**
+   * Spec 111 disposable compiled mixer gate bindings for realtime/BlueLive
+   * renders: the deterministic mute/solo gate catalog staged through the
+   * engine batch channel API. Absent for disk renders and when the mixer is
+   * disabled. Derived render output only; never serialized to XML.
+   */
+  mixerGateBindings?: CompiledMixerGateBindings;
 };
 
 type BlueDataCsdState = {
@@ -104,6 +125,11 @@ export function buildStandardCSD(
       compileData.getChannelIdAssignments().set(channel, id);
     }
     compileData.setMixerEnabled(clonedMixer.isEnabled());
+    const gateContext = buildBlueMixerGateContext(
+      clonedMixer,
+      profile === 'disk' ? 'fixed' : 'live',
+    );
+    const gateBindings = gateContext ? buildCompiledMixerGateBindings(gateContext) : undefined;
 
     // Build CsInstruments header (sr/ksmps/nchnls/0dbfs go here, not in CsOptions)
     const orchestraHeader = buildOrchestraHeader(blueData, profile);
@@ -136,6 +162,12 @@ export function buildStandardCSD(
         // before parameter init statements.
         appendGlobalOrc(`${mixerInits}\n\n`);
       }
+      if (gateContext && gateBindings && gateContext.mode === 'live') {
+        const gateInits = buildMixerGateInitStatements(gateBindings);
+        if (gateInits) {
+          appendGlobalOrc(`${gateInits}\n\n`);
+        }
+      }
     }
 
     const udos = new OpcodeList(getBlueDataState(blueData).opcodeList);
@@ -154,10 +186,22 @@ export function buildStandardCSD(
 
     // Score → score events
     const { startTime, endTime } = getRenderWindow(blueData, profile);
+    const pruneInaudibleTracks =
+      gateContext?.mode === 'fixed' ? computeDiskPruningSet(blueData, gateContext) : undefined;
+    const prunedDurationSink = { value: 0 };
     const noteList = getBlueDataState(blueData).score.generateForCSD(
       compileData,
       startTime,
       endTime,
+      {
+        trackLayerMuteSoloMode: getEffectiveTrackLayerMuteSoloMode(
+          blueData,
+          clonedMixer.isEnabled(),
+        ),
+        pruneInaudibleTracks:
+          pruneInaudibleTracks && pruneInaudibleTracks.size > 0 ? pruneInaudibleTracks : undefined,
+        prunedDurationSink,
+      },
     );
     const allParameters = compileData.getOriginalParameters();
     const allStringChannels = compileData.getStringChannels();
@@ -192,7 +236,8 @@ export function buildStandardCSD(
     }
 
     const arrangementGlobalSco = clonedArrangement.generateGlobalSco(compileData);
-    const totalDur = getNoteListDuration(blueData, noteList);
+    // Pruned tracks still hold their scheduling share of the render length.
+    const totalDur = Math.max(getNoteListDuration(blueData, noteList), prunedDurationSink.value);
     const processingStart = startTime;
     const globalSco = preprocessSco(
       [scoreGlobalPrefix, arrangementGlobalSco].filter(Boolean).join('\n'),
@@ -240,6 +285,7 @@ export function buildStandardCSD(
         udos,
         clonedMixer,
         actualEmitMetering,
+        gateContext,
       );
       mixerEffectUDOs = mixerOutput.effectUDOs;
       mixerInstruments = mixerOutput.instrumentsText;
@@ -325,6 +371,7 @@ export function buildStandardCSD(
         actualEmitMetering && clonedMixer.isEnabled()
           ? buildMeterBindingMap(clonedMixer, channelIdAssignments, nchnls)
           : undefined,
+      mixerGateBindings: gateContext?.mode === 'live' ? gateBindings : undefined,
     };
   } catch (error) {
     generationError = error;
@@ -364,6 +411,11 @@ export async function buildStandardCSDAsync(
       compileData.getChannelIdAssignments().set(channel, id);
     }
     compileData.setMixerEnabled(clonedMixer.isEnabled());
+    const gateContext = buildBlueMixerGateContext(
+      clonedMixer,
+      profile === 'disk' ? 'fixed' : 'live',
+    );
+    const gateBindings = gateContext ? buildCompiledMixerGateBindings(gateContext) : undefined;
 
     const orchestraHeader = buildOrchestraHeader(blueData, profile);
     const nchnls = getNchnls(blueData, profile);
@@ -390,6 +442,12 @@ export async function buildStandardCSDAsync(
       if (mixerInits) {
         appendGlobalOrc(`${mixerInits}\n\n`);
       }
+      if (gateContext && gateBindings && gateContext.mode === 'live') {
+        const gateInits = buildMixerGateInitStatements(gateBindings);
+        if (gateInits) {
+          appendGlobalOrc(`${gateInits}\n\n`);
+        }
+      }
     }
 
     const udos = new OpcodeList(getBlueDataState(blueData).opcodeList);
@@ -407,10 +465,22 @@ export async function buildStandardCSDAsync(
     const ftables = clonedTables.getAllTables();
 
     const { startTime, endTime } = getRenderWindow(blueData, profile);
+    const pruneInaudibleTracks =
+      gateContext?.mode === 'fixed' ? computeDiskPruningSet(blueData, gateContext) : undefined;
+    const prunedDurationSink = { value: 0 };
     const noteList = await getBlueDataState(blueData).score.generateForCSDAsync(
       compileData,
       startTime,
       endTime,
+      {
+        trackLayerMuteSoloMode: getEffectiveTrackLayerMuteSoloMode(
+          blueData,
+          clonedMixer.isEnabled(),
+        ),
+        pruneInaudibleTracks:
+          pruneInaudibleTracks && pruneInaudibleTracks.size > 0 ? pruneInaudibleTracks : undefined,
+        prunedDurationSink,
+      },
     );
     const allParameters = compileData.getOriginalParameters();
     const allStringChannels = compileData.getStringChannels();
@@ -445,7 +515,8 @@ export async function buildStandardCSDAsync(
     }
 
     const arrangementGlobalSco = clonedArrangement.generateGlobalSco(compileData);
-    const totalDur = getNoteListDuration(blueData, noteList);
+    // Pruned tracks still hold their scheduling share of the render length.
+    const totalDur = Math.max(getNoteListDuration(blueData, noteList), prunedDurationSink.value);
     const processingStart = startTime;
     const globalSco = preprocessSco(
       [scoreGlobalPrefix, arrangementGlobalSco].filter(Boolean).join('\n'),
@@ -493,6 +564,7 @@ export async function buildStandardCSDAsync(
         udos,
         clonedMixer,
         actualEmitMetering,
+        gateContext,
       );
       mixerEffectUDOs = mixerOutput.effectUDOs;
       mixerInstruments = mixerOutput.instrumentsText;
@@ -581,6 +653,7 @@ export async function buildStandardCSDAsync(
         actualEmitMetering && clonedMixer.isEnabled()
           ? buildMeterBindingMap(clonedMixer, channelIdAssignments, nchnls)
           : undefined,
+      mixerGateBindings: gateContext?.mode === 'live' ? gateBindings : undefined,
     };
   } catch (error) {
     generationError = error;
@@ -616,6 +689,8 @@ export function toBlueLiveCSD(
       compileData.getChannelIdAssignments().set(channel, id);
     }
     compileData.setMixerEnabled(clonedMixer.isEnabled());
+    const gateContext = buildBlueMixerGateContext(clonedMixer, 'live');
+    const gateBindings = gateContext ? buildCompiledMixerGateBindings(gateContext) : undefined;
 
     const orchestraHeader = buildOrchestraHeader(blueData);
     const nchnls = getNchnls(blueData);
@@ -632,6 +707,12 @@ export function toBlueLiveCSD(
       const mixerInits = clonedMixer.getInitStatements(channelIdAssignments, nchnls, emitMetering);
       if (mixerInits) {
         appendGlobalOrc(`${mixerInits}\n\n`);
+      }
+      if (gateContext && gateBindings) {
+        const gateInits = buildMixerGateInitStatements(gateBindings);
+        if (gateInits) {
+          appendGlobalOrc(`${gateInits}\n\n`);
+        }
       }
     }
 
@@ -705,6 +786,7 @@ export function toBlueLiveCSD(
         udos,
         clonedMixer,
         emitMetering,
+        gateContext,
       );
       mixerEffectUDOs = mixerOutput.effectUDOs;
       mixerInstruments = mixerOutput.instrumentsText;
@@ -766,6 +848,7 @@ export function toBlueLiveCSD(
         emitMetering && clonedMixer.isEnabled()
           ? buildMeterBindingMap(clonedMixer, channelIdAssignments, nchnls)
           : undefined,
+      mixerGateBindings: gateBindings ?? undefined,
     };
   } catch (error) {
     generationError = error;
@@ -824,6 +907,93 @@ function createAllNotesOffInstrument(blueData: BlueData, instrIds: string[]): st
 /**
  * Build the orchestra header (sr/ksmps/nchnls/0dbfs).
  */
+
+// ─── Conservative disk pruning eligibility (Spec 111 US3) ───
+
+const NO_PRUNING: ReadonlySet<string> = new Set();
+
+/**
+ * Certifies a project for disk event pruning. Only built-in AudioClip-only
+ * Track projects qualify: no custom global orchestra/score, no project UDOs,
+ * no score/track note processors, no enabled arrangement instruments, no
+ * opaque enabled mixer effects, valid acyclic routing. Every uncertain case
+ * disables pruning entirely and falls back to ordinary gated rendering.
+ */
+function computeDiskPruningSet(
+  blueData: BlueData,
+  gateContext: BlueMixerGateContext,
+): ReadonlySet<string> {
+  const state = getBlueDataState(blueData);
+
+  if (!gateContext.state.acyclic || gateContext.state.hasUnresolvedRoutes) return NO_PRUNING;
+  if ((state.globalOrcSco.getGlobalOrc() ?? '').trim().length > 0) return NO_PRUNING;
+  if ((state.globalOrcSco.getGlobalSco() ?? '').trim().length > 0) return NO_PRUNING;
+  if (state.opcodeList.getOpcodes().length > 0) return NO_PRUNING;
+  if (state.score.getNoteProcessorChain().getProcessors().length > 0) return NO_PRUNING;
+  for (const group of state.score) {
+    if (!(group instanceof TrackLayerGroup)) {
+      return NO_PRUNING;
+    }
+  }
+  for (const ia of state.arrangement.getArrangement()) {
+    if (ia.enabled && ia.instr) return NO_PRUNING;
+  }
+
+  // No enabled effect anywhere in the mixer: effects are opaque code whose
+  // state or side effects cannot be proven irrelevant.
+  const chains = [
+    ...state.mixer.getAllSourceChannels(),
+    ...state.mixer.getSubChannels(),
+    state.mixer.getMaster(),
+  ].flatMap((channel) => [channel.getPreEffects(), channel.getPostEffects()]);
+  for (const chain of chains) {
+    for (const item of chain) {
+      if (item instanceof Effect && item.isEnabled()) return NO_PRUNING;
+    }
+  }
+
+  const prune = new Set<string>();
+  for (const group of state.score) {
+    if (!(group instanceof TrackLayerGroup)) continue;
+    for (const track of group as TrackLayerGroup & Track[]) {
+      const t = track as Track;
+      if (!isAudioClipOnlyTrack(t)) continue;
+      if (t.getNoteProcessorChain().getProcessors().length > 0) continue;
+      if (!isTrackInaudible(gateContext, t.getUniqueId())) continue;
+      prune.add(t.getUniqueId());
+    }
+  }
+  return prune;
+}
+
+function isAudioClipOnlyTrack(track: Track): boolean {
+  for (const item of track) {
+    if (!(item instanceof AudioClip)) return false;
+  }
+  return track.length > 0;
+}
+
+/**
+ * True when no permitted route from the track's associated channel reaches
+ * the master terminal output. Tracks without an associated channel bypass
+ * channel gates entirely and are never pruned (conservative fallback).
+ */
+function isTrackInaudible(gateContext: BlueMixerGateContext, trackId: string): boolean {
+  const channel = gateContext.orderedChannels.find(
+    (candidate) => candidate.getAssociation() === trackId,
+  );
+  if (!channel) return false;
+  const nodeOrdinal = gateContext.graph.nodes.findIndex(
+    (node) => gateContext.orderedChannels[node.ordinal] === channel,
+  );
+  if (nodeOrdinal < 0) return false;
+  const indicator = gateContext.state.channels.find(
+    (candidate) => candidate.ordinal === nodeOrdinal,
+  );
+  if (!indicator) return false;
+  return !indicator.reachesAudibleOutput;
+}
+
 function buildOrchestraHeader(blueData: BlueData, profile: CsdRenderProfile = 'realtime'): string {
   const props = getBlueDataState(blueData).projectProperties;
   const isDisk = profile === 'disk';
@@ -858,6 +1028,16 @@ function getNchnls(blueData: BlueData, profile: CsdRenderProfile = 'realtime'): 
     if (!isNaN(n)) return n;
   }
   return 2; // Default stereo
+}
+
+/**
+ * Effective track header authority (Spec 111): Event whenever the mixer is
+ * disabled, otherwise the parsed project preference (invalid values already
+ * parse as Event).
+ */
+function getEffectiveTrackLayerMuteSoloMode(blueData: BlueData, mixerEnabled: boolean) {
+  if (!mixerEnabled) return 'event' as const;
+  return getBlueDataState(blueData).projectProperties.trackLayerMuteSoloMode;
 }
 
 function getRenderWindow(
@@ -1293,10 +1473,11 @@ function generateMixerOrchestra(
   udos: OpcodeList,
   mixer: Mixer = getBlueDataState(blueData).mixer,
   emitMetering = false,
+  gateContext: BlueMixerGateContext | null = null,
 ): { effectUDOs: string[]; instrumentsText: string; effectIdMap: Map<Effect, number> } {
   const instrBuffer: string[] = [];
   const sourceChannels = mixer.getAllSourceChannels();
-  const subChannels = sortSubChannelsForRendering(blueData, Array.from(mixer.getSubChannels()));
+  const subChannels = sortSubChannelsForRendering(Array.from(mixer.getSubChannels()));
 
   let effectId = 0;
   const effectUDOs: string[] = [];
@@ -1342,6 +1523,7 @@ function generateMixerOrchestra(
     effectIdMap,
     mixer,
     emitMetering,
+    gateContext,
   );
   instrBuffer.push(blueMixerCode);
 
@@ -1423,9 +1605,204 @@ function buildMeterBindingMap(
   };
 }
 
+// ─── Mixer mute/solo audio gates (Spec 111) ───
+
+export const MIXER_GATE_SYMBOL_PREFIX = 'gk_blue_mixgate_';
+export const MIXER_GATE_COMMIT_CHANNEL = `${MIXER_GATE_SYMBOL_PREFIX}commit`;
+export const MIXER_GATE_APPLIED_CHANNEL = `${MIXER_GATE_SYMBOL_PREFIX}applied`;
+/** Shared transition ramp duration in seconds; initial values bypass the ramp. */
+export const MIXER_GATE_RAMP_SECONDS = 0.005;
+
+const GATE_RAMP_VAR = 'kMixGateStep';
+const GATE_COMMIT_VAR = 'kMixGateCommit';
+const GATE_BANK_VAR = 'kMixGateBank';
+
+export interface BlueMixerGateContext {
+  /** `live` emits engine-addressable two-bank gates; `fixed` bakes constants (disk). */
+  readonly mode: 'live' | 'fixed';
+  readonly state: MixerGateState;
+  readonly graph: MixerRouteGraph;
+  readonly signature: string;
+  /** Cloned Send object -> gate ordinal, aligned with graph edge walk order. */
+  readonly sendGateOrdinals: Map<Send, number>;
+  /** Route node ordinal -> final-output gate ordinal. */
+  readonly outputGateOrdinals: Map<number, number>;
+  /** Cloned channels in graph ordinal order (sources, render-ordered subs, master). */
+  readonly orderedChannels: Channel[];
+}
+
+/**
+ * Builds the compile-time gate context for a mixer: route graph, gate state,
+ * and the send/output ordinal maps the BlueMixer emitter uses. Returns null
+ * when the mixer is disabled (no gates exist).
+ */
+function buildBlueMixerGateContext(
+  mixer: Mixer,
+  mode: 'live' | 'fixed',
+): BlueMixerGateContext | null {
+  if (!mixer.isEnabled()) return null;
+  const graph = buildMixerRouteGraph(mixer);
+  const state = computeMixerGateState(graph);
+
+  const orderedChannels = [
+    ...mixer.getAllSourceChannels(),
+    ...sortSubChannelsForRendering(Array.from(mixer.getSubChannels())),
+    mixer.getMaster(),
+  ];
+  const sendGateOrdinals = new Map<Send, number>();
+  const outputGateOrdinals = new Map<number, number>();
+  for (const edge of graph.edges) {
+    const channel = orderedChannels[edge.sourceOrdinal];
+    if (!channel) continue;
+    if (edge.kind === 'send') {
+      const chain = edge.chainKind === 'pre' ? channel.getPreEffects() : channel.getPostEffects();
+      const item = chain[edge.chainIndex];
+      if (item instanceof Send) sendGateOrdinals.set(item, edge.gateOrdinal);
+    } else {
+      outputGateOrdinals.set(edge.sourceOrdinal, edge.gateOrdinal);
+    }
+  }
+
+  return {
+    mode,
+    state,
+    graph,
+    signature: getMixerRouteSignature(graph),
+    sendGateOrdinals,
+    outputGateOrdinals,
+    orderedChannels,
+  };
+}
+
+function buildCompiledMixerGateBindings(context: BlueMixerGateContext): CompiledMixerGateBindings {
+  const nodes = context.graph.nodes;
+  const gates: CompiledMixerGateBinding[] = context.graph.edges.map((edge) => {
+    const node = nodes[edge.sourceOrdinal];
+    const association = context.orderedChannels[edge.sourceOrdinal]?.getAssociation().trim() ?? '';
+    let locator: CompiledMixerGateLocator;
+    if (edge.kind === 'send') {
+      locator = {
+        route: 'send',
+        channelOrdinal: edge.sourceOrdinal,
+        channelKind: node.kind,
+        chainKind: edge.chainKind,
+        chainIndex: edge.chainIndex,
+        targetName: edge.targetName,
+        association,
+      };
+    } else {
+      locator = {
+        route: 'output',
+        channelOrdinal: edge.sourceOrdinal,
+        channelKind: node.kind,
+        association,
+      };
+    }
+    return {
+      ordinal: edge.gateOrdinal,
+      bankSymbols: [
+        `${MIXER_GATE_SYMBOL_PREFIX}${edge.gateOrdinal}_0`,
+        `${MIXER_GATE_SYMBOL_PREFIX}${edge.gateOrdinal}_1`,
+      ],
+      initial: context.state.gates[edge.gateOrdinal] ?? 1,
+      locator,
+    };
+  });
+  return {
+    signature: context.signature,
+    commitChannel: MIXER_GATE_COMMIT_CHANNEL,
+    appliedChannel: MIXER_GATE_APPLIED_CHANNEL,
+    gates,
+  };
+}
+
+/**
+ * Engine-addressable channel declarations for both gate banks and the
+ * commit/applied tokens. Both banks start at the desired initial targets so
+ * bank selection (commit token modulo two) is audible-safe from the first
+ * control cycle.
+ */
+function buildMixerGateInitStatements(bindings: CompiledMixerGateBindings): string {
+  const lines: string[] = [];
+  const declare = (name: string, value: number) => {
+    lines.push(`${name} init ${formatBlueNumber(value)}`);
+    lines.push(`${name} chnexport "${name}", 3`);
+  };
+  for (const gate of bindings.gates) {
+    declare(gate.bankSymbols[0], gate.initial);
+    declare(gate.bankSymbols[1], gate.initial);
+  }
+  declare(MIXER_GATE_COMMIT_CHANNEL, 0);
+  declare(MIXER_GATE_APPLIED_CHANNEL, 0);
+  return lines.join('\n');
+}
+
+/**
+ * Emits the per-cycle gate preamble for the BlueMixer instrument: the shared
+ * 5 ms ramp step, one-per-cycle bank selection from the commit token, and
+ * per-gate clamped linear transitions. Per-gate states are i-time
+ * initialized at their targets, so startup never ramps or leaks muted audio.
+ */
+function emitGatePreamble(context: BlueMixerGateContext, lines: string[]): void {
+  if (context.mode !== 'live') return;
+  lines.push(`${GATE_RAMP_VAR} init ksmps / (${MIXER_GATE_RAMP_SECONDS} * sr)`);
+  lines.push(`${GATE_COMMIT_VAR} = ${MIXER_GATE_COMMIT_CHANNEL}`);
+  lines.push(`${GATE_BANK_VAR} = (${GATE_COMMIT_VAR} % 2)`);
+  for (const edge of context.graph.edges) {
+    const stateVar = gateStateVar(edge.gateOrdinal);
+    const initial = context.state.gates[edge.gateOrdinal] ?? 1;
+    lines.push(`${stateVar} init ${initial}`);
+    lines.push(
+      `${stateVar} += limit((${GATE_BANK_VAR} == 0 ? ` +
+        `${MIXER_GATE_SYMBOL_PREFIX}${edge.gateOrdinal}_0 : ` +
+        `${MIXER_GATE_SYMBOL_PREFIX}${edge.gateOrdinal}_1) - ${stateVar}, ` +
+        `-${GATE_RAMP_VAR}, ${GATE_RAMP_VAR})`,
+    );
+  }
+}
+
+function gateStateVar(ordinal: number): string {
+  return `kMixGateState_${ordinal}`;
+}
+
+/** Signal multiplier expression for a gate; empty string when ungated. */
+function gateMultiplierExpr(context: BlueMixerGateContext, gateOrdinal: number): string {
+  if (context.mode === 'live') {
+    return ` * ${gateStateVar(gateOrdinal)}`;
+  }
+  // Fixed (disk) gates: bake the constant, and only when it silences the
+  // route so ordinary projects keep their exact legacy CSD text.
+  return (context.state.gates[gateOrdinal] ?? 1) === 1 ? '' : ' * 0';
+}
+
+/** In-place output gate lines; empty when the output route stays open. */
+function emitOutputGate(
+  context: BlueMixerGateContext,
+  channelOrdinal: number,
+  signalVars: string[],
+  lines: string[],
+): void {
+  const gateOrdinal = context.outputGateOrdinals.get(channelOrdinal);
+  if (gateOrdinal === undefined) return;
+  const multiplier = gateMultiplierExpr(context, gateOrdinal);
+  if (multiplier === '') return;
+  if (context.mode === 'live') {
+    const stateVar = gateStateVar(gateOrdinal);
+    for (const signalVar of signalVars) {
+      lines.push(`${signalVar} = ${signalVar} * ${stateVar}`);
+    }
+    return;
+  }
+  for (const signalVar of signalVars) {
+    lines.push(`${signalVar} = ${signalVar} * 0`);
+  }
+}
+
 /**
  * Generate the BlueMixer instrument.
  * Routes audio through volumes, sends, effect UDOs, and outputs via outc.
+ * With a gate context (Spec 111), every send tap and every channel output is
+ * gated after local processing, and output meters read the gated signal.
  */
 function generateBlueMixer(
   blueData: BlueData,
@@ -1436,6 +1813,7 @@ function generateBlueMixer(
   effectIdMap: Map<Effect, number>,
   mixer: Mixer = getBlueDataState(blueData).mixer,
   emitMetering = false,
+  gateContext: BlueMixerGateContext | null = null,
 ): string {
   const lines: string[] = [];
 
@@ -1456,15 +1834,36 @@ function generateBlueMixer(
     lines.push('endif');
   }
 
+  if (gateContext) {
+    emitGatePreamble(gateContext, lines);
+  }
+
   // Process each source channel
   for (const channel of sourceChannels) {
     const channelId = channelIdAssignments.get(channel);
     if (channelId === undefined) continue;
     const signalVars = getSourceSignalVars(blueData, channelId, nchnls);
 
-    applyEffectsChain(blueData, channel.getPreEffects(), signalVars, effectIdMap, lines);
+    applyEffectsChain(
+      blueData,
+      channel.getPreEffects(),
+      signalVars,
+      effectIdMap,
+      lines,
+      gateContext,
+    );
     applyChannelLevel(blueData, signalVars, channel.getLevelParameter(), channel.getLevel(), lines);
-    applyEffectsChain(blueData, channel.getPostEffects(), signalVars, effectIdMap, lines);
+    applyEffectsChain(
+      blueData,
+      channel.getPostEffects(),
+      signalVars,
+      effectIdMap,
+      lines,
+      gateContext,
+    );
+    if (gateContext) {
+      emitOutputGate(gateContext, channelOrdinalOf(gateContext, channel), signalVars, lines);
+    }
     if (emitMetering) {
       emitMeterTaps(String(channelId), signalVars, lines, nextMeterVarId);
     }
@@ -1476,7 +1875,14 @@ function generateBlueMixer(
   for (const subChannel of subChannels) {
     const signalVars = getSubChannelSignalVars(blueData, subChannel.getName(), nchnls);
 
-    applyEffectsChain(blueData, subChannel.getPreEffects(), signalVars, effectIdMap, lines);
+    applyEffectsChain(
+      blueData,
+      subChannel.getPreEffects(),
+      signalVars,
+      effectIdMap,
+      lines,
+      gateContext,
+    );
     applyChannelLevel(
       blueData,
       signalVars,
@@ -1484,7 +1890,17 @@ function generateBlueMixer(
       subChannel.getLevel(),
       lines,
     );
-    applyEffectsChain(blueData, subChannel.getPostEffects(), signalVars, effectIdMap, lines);
+    applyEffectsChain(
+      blueData,
+      subChannel.getPostEffects(),
+      signalVars,
+      effectIdMap,
+      lines,
+      gateContext,
+    );
+    if (gateContext) {
+      emitOutputGate(gateContext, channelOrdinalOf(gateContext, subChannel), signalVars, lines);
+    }
     if (emitMetering && subMeterKeys) {
       const subKey =
         subMeterKeys.get(subChannel) ?? `sub_${subChannel.getName().replace(/\s+/g, '_')}`;
@@ -1501,7 +1917,14 @@ function generateBlueMixer(
 
   const masterChannel = mixer.getMaster();
   const masterVars = getSubChannelSignalVars(blueData, 'Master', nchnls);
-  applyEffectsChain(blueData, masterChannel.getPreEffects(), masterVars, effectIdMap, lines);
+  applyEffectsChain(
+    blueData,
+    masterChannel.getPreEffects(),
+    masterVars,
+    effectIdMap,
+    lines,
+    gateContext,
+  );
   applyChannelLevel(
     blueData,
     masterVars,
@@ -1509,11 +1932,27 @@ function generateBlueMixer(
     masterChannel.getLevel(),
     lines,
   );
-  applyEffectsChain(blueData, masterChannel.getPostEffects(), masterVars, effectIdMap, lines);
+  applyEffectsChain(
+    blueData,
+    masterChannel.getPostEffects(),
+    masterVars,
+    effectIdMap,
+    lines,
+    gateContext,
+  );
+  if (gateContext) {
+    emitOutputGate(gateContext, channelOrdinalOf(gateContext, masterChannel), masterVars, lines);
+  }
   if (emitMetering) {
     emitMeterTaps('sub_Master', masterVars, lines, nextMeterVarId);
   }
   lines.push(`outc ${masterVars.join(', ')}`);
+
+  if (gateContext && gateContext.mode === 'live') {
+    // Echo the sampled commit token after bank selection so the engine can
+    // observe which values this control cycle actually used.
+    lines.push(`${MIXER_GATE_APPLIED_CHANNEL} = ${GATE_COMMIT_VAR}`);
+  }
 
   // Clear all audio variables
   for (const channel of sourceChannels) {
@@ -1539,12 +1978,18 @@ function generateBlueMixer(
   return lines.join('\n');
 }
 
+/** Graph ordinal of a cloned channel within the gate context. */
+function channelOrdinalOf(context: BlueMixerGateContext, channel: Channel): number {
+  return context.orderedChannels.indexOf(channel);
+}
+
 function applyEffectsChain(
   blueData: BlueData,
   chain: EffectsChain,
   signalVars: string[],
   effectIdMap: Map<Effect, number>,
   lines: string[],
+  gateContext: BlueMixerGateContext | null = null,
 ): void {
   for (const item of chain) {
     if (item instanceof Effect) {
@@ -1571,10 +2016,15 @@ function applyEffectsChain(
 
     const targetName = item.getSendChannel() || 'Master';
     const amountExpr = getSendAmountExpression(blueData, item);
+    const gateExpr = gateContext
+      ? gateMultiplierExpr(gateContext, gateContext.sendGateOrdinals.get(item) ?? -1)
+      : '';
 
     for (let i = 0; i < signalVars.length; i++) {
       const targetVar = getSubChannelVar(blueData, targetName, i);
-      lines.push(`${targetVar}\t+=\t${scaleSignal(blueData, signalVars[i], amountExpr)}`);
+      lines.push(
+        `${targetVar}\t+=\t${scaleSignal(blueData, signalVars[i], amountExpr)}${gateExpr}`,
+      );
     }
   }
 }
@@ -1663,49 +2113,6 @@ function getSubChannelSignalVars(
 function getSubChannelVar(blueData: BlueData, channelName: string, outputIndex: number): string {
   const safeName = channelName === 'Master' ? 'Master' : channelName.replace(/\s+/g, '_');
   return `ga_bluesub_${safeName}_${outputIndex}`;
-}
-
-function sortSubChannelsForRendering(blueData: BlueData, subChannels: Channel[]): Channel[] {
-  const byName = new Map(subChannels.map((channel) => [channel.getName(), channel]));
-  const visited = new Set<string>();
-  const visiting = new Set<string>();
-  const ordered: Channel[] = [];
-
-  const visit = (channel: Channel) => {
-    const name = channel.getName();
-    if (visited.has(name) || visiting.has(name)) {
-      return;
-    }
-
-    visiting.add(name);
-
-    const targets = new Set<string>();
-    const outChannel = channel.getOutChannel();
-    if (outChannel && outChannel !== 'Master' && outChannel !== name && byName.has(outChannel)) {
-      targets.add(outChannel);
-    }
-
-    for (const send of channel.getSends()) {
-      const target = send.getSendChannel();
-      if (target && target !== 'Master' && target !== name && byName.has(target)) {
-        targets.add(target);
-      }
-    }
-
-    for (const target of targets) {
-      visit(byName.get(target)!);
-    }
-
-    visiting.delete(name);
-    visited.add(name);
-    ordered.push(channel);
-  };
-
-  for (const channel of subChannels) {
-    visit(channel);
-  }
-
-  return ordered.reverse();
 }
 
 function appendFtgenTableNumbers(globalOrc: string, tables: Tables): void {

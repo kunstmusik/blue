@@ -12,6 +12,22 @@ export interface ScoreGenerationOptions {
   readonly trackId?: string;
   readonly instrumentOverrideId?: string;
   readonly instrumentTargetCollector?: InstrumentTargetCollector;
+  /**
+   * Track header authority (Spec 111). When 'audio', Track groups generate
+   * every event regardless of track event flags and take no part in global
+   * event-solo discovery; audio mute/solo handles audibility. Absent or
+   * 'event' preserves the legacy Java-compatible behavior.
+   */
+  readonly trackLayerMuteSoloMode?: 'audio' | 'event';
+  /**
+   * Spec 111 disk pruning: Track uniqueIds certified inaudible by the route
+   * policy. Pruned tracks generate no events; their scheduling contribution
+   * is reported through `prunedDurationSink` so the render duration is
+   * unchanged. Disk generation only.
+   */
+  readonly pruneInaudibleTracks?: ReadonlySet<string>;
+  /** Mutable sink collecting the unpruned duration bound of pruned tracks. */
+  readonly prunedDurationSink?: { value: number };
 }
 
 export type ScoreGenerationOptionsOrSolo = ScoreGenerationOptions | boolean;

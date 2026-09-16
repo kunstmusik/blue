@@ -20,11 +20,11 @@ import type { MeterBindingMapPayload } from '../../shared/meter-types';
 // threshold — at most a 20% regression — with no absolute-millisecond
 // escape hatch.
 //
-// Note on solo/mute: mixer channel strips have no solo/mute controls in the
-// current mixer UI (solo/mute live on score sound layers). The interactive
-// surface of a strip is the fader (pointer, keyboard, and range input),
-// the Pre/Post effect chain rows, the level value, and the output select;
-// this test exercises fader and effect-chain interactions on all strips.
+// Note on solo/mute: since Spec 111 mixer strips also carry M (and
+// non-master S) buttons; those controls are covered by
+// mixer-mute-solo.browser.test.tsx. This performance gate exercises the
+// fader (pointer, keyboard, and range input), the Pre/Post effect chain
+// rows, the level value, and the output select on all strips.
 
 (
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }

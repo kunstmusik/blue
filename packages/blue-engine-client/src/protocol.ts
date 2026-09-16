@@ -30,10 +30,11 @@ export const CMD_BATCH_SET_CHANNELS = 0x14;
 export const CMD_BATCH_GET_CHANNELS = 0x15;
 
 /**
- * Client-side batch bound: one BlueX7 owns exactly 151 Parameters, so the
- * BlueX7 caller never needs a larger batch. The engine may accept more.
+ * Client-side batch bound matching the engine mailbox limit
+ * (RealtimeChannelMailbox.kMaxBatchEntries = 256). Batching above this bound
+ * must be split by the caller; the engine rejects larger batches outright.
  */
-export const MAX_BATCH_CHANNELS = 151;
+export const MAX_BATCH_CHANNELS = 256;
 
 /**
  * Channel names must fit the engine's existing shared-memory bridge field

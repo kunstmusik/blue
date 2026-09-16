@@ -142,3 +142,108 @@ describe('ProjectProperties', () => {
     });
   });
 });
+
+describe('trackLayerMuteSoloMode (Spec 111)', () => {
+  it('defaults new projects to Audio and marks the property present', () => {
+    const props = new ProjectProperties();
+    expect(props.trackLayerMuteSoloMode).toBe('audio');
+    expect(props.trackLayerMuteSoloModePresent).toBe(true);
+    expect(props.trackLayerMuteSoloModeRaw).toBeNull();
+    expect(props.hasUnsupportedTrackLayerMuteSoloMode()).toBe(false);
+  });
+
+  it('writes the mode element for new projects', () => {
+    const props = new ProjectProperties();
+    const xml = props.saveAsXML().toXml();
+    expect(xml).toContain('<trackLayerMuteSoloMode>audio</trackLayerMuteSoloMode>');
+  });
+
+  it('falls back to Event with no presence when the element is missing', () => {
+    const props = ProjectProperties.loadFromXML(
+      Element.parse('<projectProperties></projectProperties>'),
+    );
+    expect(props.trackLayerMuteSoloMode).toBe('event');
+    expect(props.trackLayerMuteSoloModePresent).toBe(false);
+    expect(props.hasUnsupportedTrackLayerMuteSoloMode()).toBe(false);
+  });
+
+  it('keeps legacy omission omitted on save', () => {
+    const props = ProjectProperties.loadFromXML(
+      Element.parse('<projectProperties><title>Legacy</title></projectProperties>'),
+    );
+    const xml = props.saveAsXML().toXml();
+    expect(xml).not.toContain('trackLayerMuteSoloMode');
+    expect(xml).toContain('<title>Legacy</title>');
+  });
+
+  it('loads explicit Audio and Event values', () => {
+    const audio = ProjectProperties.loadFromXML(
+      Element.parse(
+        '<projectProperties><trackLayerMuteSoloMode>audio</trackLayerMuteSoloMode></projectProperties>',
+      ),
+    );
+    expect(audio.trackLayerMuteSoloMode).toBe('audio');
+    const event = ProjectProperties.loadFromXML(
+      Element.parse(
+        '<projectProperties><trackLayerMuteSoloMode>event</trackLayerMuteSoloMode></projectProperties>',
+      ),
+    );
+    expect(event.trackLayerMuteSoloMode).toBe('event');
+  });
+
+  it('uses Event for unsupported raw values but preserves the raw text', () => {
+    const props = ProjectProperties.loadFromXML(
+      Element.parse(
+        '<projectProperties><trackLayerMuteSoloMode>solo-all</trackLayerMuteSoloMode></projectProperties>',
+      ),
+    );
+    expect(props.trackLayerMuteSoloMode).toBe('event');
+    expect(props.trackLayerMuteSoloModeRaw).toBe('solo-all');
+    expect(props.hasUnsupportedTrackLayerMuteSoloMode()).toBe(true);
+
+    // The unsupported raw value round-trips untouched.
+    const xml = props.saveAsXML().toXml();
+    expect(xml).toContain('<trackLayerMuteSoloMode>solo-all</trackLayerMuteSoloMode>');
+  });
+
+  it('replaces an unsupported raw value only through an explicit edit', () => {
+    const props = ProjectProperties.loadFromXML(
+      Element.parse(
+        '<projectProperties><trackLayerMuteSoloMode>solo-all</trackLayerMuteSoloMode></projectProperties>',
+      ),
+    );
+    props.trackLayerMuteSoloMode = 'audio';
+    expect(props.trackLayerMuteSoloMode).toBe('audio');
+    expect(props.trackLayerMuteSoloModeRaw).toBeNull();
+    expect(props.hasUnsupportedTrackLayerMuteSoloMode()).toBe(false);
+    expect(props.saveAsXML().toXml()).toContain(
+      '<trackLayerMuteSoloMode>audio</trackLayerMuteSoloMode>',
+    );
+  });
+
+  it('ignores setter assignments of unsupported values', () => {
+    const props = new ProjectProperties();
+    // @ts-expect-error deliberate invalid assignment check
+    props.trackLayerMuteSoloMode = 'bogus';
+    expect(props.trackLayerMuteSoloMode).toBe('audio');
+  });
+
+  it('retains raw/presence metadata through the copy constructor', () => {
+    const original = ProjectProperties.loadFromXML(
+      Element.parse(
+        '<projectProperties><trackLayerMuteSoloMode>weird</trackLayerMuteSoloMode></projectProperties>',
+      ),
+    );
+    const copy = new ProjectProperties(original);
+    expect(copy.trackLayerMuteSoloModeRaw).toBe('weird');
+    expect(copy.trackLayerMuteSoloMode).toBe('event');
+    expect(copy.trackLayerMuteSoloModePresent).toBe(true);
+
+    const legacy = ProjectProperties.loadFromXML(
+      Element.parse('<projectProperties></projectProperties>'),
+    );
+    const legacyCopy = new ProjectProperties(legacy);
+    expect(legacyCopy.trackLayerMuteSoloModePresent).toBe(false);
+    expect(legacyCopy.trackLayerMuteSoloMode).toBe('event');
+  });
+});

@@ -8,6 +8,29 @@ export { CompileData } from './compile-data';
 export type { CompiledBlueX7Binding } from './compile-data';
 export type { CompiledMidiInstrumentTarget } from './compile-data';
 export type { CompiledMeterChannelBinding, MeterBindingMap } from './compile-data';
+export type {
+  CompiledMixerGateBinding,
+  CompiledMixerGateBindings,
+  CompiledMixerGateLocator,
+} from './compile-data';
+export type { TrackLayerMuteSoloMode } from './project-properties';
+export { isTrackLayerMuteSoloMode } from './project-properties';
+export {
+  buildMixerRouteGraph,
+  computeMixerGateState,
+  computeMixerGateStateForMixer,
+  getMixerRouteSignature,
+  resolveMixerGateIntent,
+  sortSubChannelsForRendering,
+} from './mixer/mute-solo-policy';
+export type {
+  MixerChannelRouteIndicator,
+  MixerGateState,
+  MixerRouteChannelKind,
+  MixerRouteEdge,
+  MixerRouteGraph,
+  MixerRouteNode,
+} from './mixer/mute-solo-policy';
 export { getJavaRuntimeClient, setJavaRuntimeClient } from './java-runtime';
 export type {
   ClojureEvalRequest,

@@ -36,10 +36,24 @@ export interface RuntimePresetOperation {
   readonly presetUniqueId: string;
 }
 
+/**
+ * Complete detached mixer gate vector (Spec 111). One operation replaces the
+ * whole audible gate set atomically via staged two-bank publication; the
+ * signature must match the compiled topology or the plan is stale.
+ */
+export interface RuntimeMixerGatesOperation {
+  readonly kind: 'mixer-gates';
+  readonly ownerKey: string;
+  readonly parameterId: string;
+  readonly signature: string;
+  readonly values: readonly number[];
+}
+
 export type RuntimeWorkOperation =
   | RuntimeChannelValueOperation
   | RuntimeAutomationOperation
-  | RuntimePresetOperation;
+  | RuntimePresetOperation
+  | RuntimeMixerGatesOperation;
 
 /**
  * Immutable per-performance unit of runtime work derived from one committed
@@ -63,6 +77,11 @@ export type RuntimeBinding =
       readonly supportsCreate: boolean;
       readonly supportsUpdate: boolean;
       readonly supportsDelete: boolean;
+    }
+  | {
+      /** Generation-scoped mixer gate catalog presence and topology signature. */
+      readonly kind: 'mixer-gates';
+      readonly signature: string;
     };
 
 /** Keyed by `${ownerKey}::${parameterId}`; valid only for one generation. */
@@ -90,6 +109,13 @@ export interface ProjectRuntimeReconciliationOptions {
    * execute engine-side.
    */
   operationTimeoutMs?: number;
+  /**
+   * Resolves the canonical mixer gate vector (signature + complete values)
+   * from committed state when a commit touches mixer mute/solo. Returning
+   * null (no compiled catalog, mixer disabled) makes those edits
+   * restart-required instead of silently skipped.
+   */
+  resolveMixerGates?: () => { signature: string; values: readonly number[] } | null;
 }
 
 /** Immutable document identity carried with delayed runtime notifications. */
@@ -284,7 +310,30 @@ type MixerChannelUpdatePatch = Extract<
   { type: 'updateChannel' }
 >['patch'];
 
-const MIXER_CHANNEL_LIVE_KEYS = new Set<keyof MixerChannelUpdatePatch>(['level', 'volume', 'pan']);
+const MIXER_CHANNEL_LIVE_KEYS = new Set<keyof MixerChannelUpdatePatch>([
+  'level',
+  'volume',
+  'pan',
+  'muted',
+  'solo',
+]);
+
+/** Placeholder op marking "this commit changes mixer audio gates". */
+function mixerGatesMarkerOperation(): RuntimeMixerGatesOperation {
+  return {
+    kind: 'mixer-gates',
+    ownerKey: 'mixer-gates',
+    parameterId: 'gates',
+    signature: '',
+    values: [],
+  };
+}
+
+function isMixerGatesMarker(
+  operation: RuntimeWorkOperation,
+): operation is RuntimeMixerGatesOperation {
+  return operation.kind === 'mixer-gates';
+}
 
 function classifyMixerPatch(patch: NonNullable<ProjectDocumentPatch['mixer']>): PatchRuntimeWork {
   switch (patch.type) {
@@ -293,7 +342,15 @@ function classifyMixerPatch(patch: NonNullable<ProjectDocumentPatch['mixer']>): 
     case 'updateChannel': {
       const works: PatchRuntimeWork[] = [];
       for (const key of Object.keys(patch.patch) as Array<keyof MixerChannelUpdatePatch>) {
-        if (MIXER_CHANNEL_LIVE_KEYS.has(key)) {
+        if (key === 'muted' || key === 'solo') {
+          // Live audio work: planCommit replaces the marker with the resolved
+          // complete gate vector derived from canonical state.
+          works.push({
+            capability: 'live',
+            operations: [mixerGatesMarkerOperation()],
+            restartRequiredOwnerIds: [],
+          });
+        } else if (MIXER_CHANNEL_LIVE_KEYS.has(key)) {
           works.push(channelValueOperation(patch.channelId, key, patch.patch[key]));
         } else if (key === 'name') {
           works.push(emptyPatchWork());
@@ -563,6 +620,9 @@ export class ProjectRuntimeReconciliation {
     context?: RuntimeOutcomeContext,
   ) => void;
   private readonly operationTimeoutMs: number;
+  private readonly resolveMixerGates:
+    | (() => { signature: string; values: readonly number[] } | null)
+    | null;
   private readonly restartRequiredOwners = createOwnerRestartMemory();
   private readonly closedGestures = new Set<string>();
   private planCounter = 0;
@@ -570,6 +630,7 @@ export class ProjectRuntimeReconciliation {
   constructor(options: ProjectRuntimeReconciliationOptions = {}) {
     this.onOutcome = options.onOutcome ?? (() => undefined);
     this.operationTimeoutMs = options.operationTimeoutMs ?? 1000;
+    this.resolveMixerGates = options.resolveMixerGates ?? null;
   }
 
   /** Registers (or replaces) a performance; newer generations clear obsolete work. */
@@ -753,12 +814,66 @@ export class ProjectRuntimeReconciliation {
     const capability = classifyPatchesRuntimeCapability(request.patches);
     if (capability === 'none') return [];
 
-    const batchWork = combinePatchWork(request.patches.map(extractPatchRuntimeWork));
+    const batchWork = this.resolveBatchWork(request.patches);
     const plans: RuntimeWorkPlan[] = [];
     for (const performance of this.performances.values()) {
       plans.push(this.buildPlan(performance, request.documentId, request.revision, batchWork));
     }
     return plans;
+  }
+
+  /**
+   * Combines per-patch runtime work and replaces mixer-gates markers with the
+   * single resolved complete-vector operation, or with restart-required work
+   * when no canonical catalog can be resolved.
+   */
+  private resolveBatchWork(patches: readonly ProjectDocumentPatch[]): PatchRuntimeWork {
+    const works = patches.map(extractPatchRuntimeWork);
+    const hasMarker = works.some((work) => work.operations.some(isMixerGatesMarker));
+    if (!hasMarker) {
+      return combinePatchWork(works);
+    }
+
+    const resolved = this.resolveMixerGates?.() ?? null;
+    const rewritten: PatchRuntimeWork[] = works.map((work) => {
+      if (!work.operations.some(isMixerGatesMarker)) return work;
+      if (!resolved) {
+        return {
+          capability: mergeCapability('none', 'restart-required'),
+          operations: work.operations.filter((operation) => !isMixerGatesMarker(operation)),
+          restartRequiredOwnerIds: ['mixer-gates'],
+        };
+      }
+      return {
+        capability: work.capability,
+        operations: work.operations.map((operation) =>
+          isMixerGatesMarker(operation)
+            ? { ...operation, signature: resolved.signature, values: resolved.values }
+            : operation,
+        ),
+        restartRequiredOwnerIds: work.restartRequiredOwnerIds,
+      };
+    });
+
+    // Deduplicate markers into one complete-vector operation.
+    const combined = combinePatchWork(rewritten);
+    const gateOperation = combined.operations.find(isMixerGatesMarker);
+    if (gateOperation) {
+      const withoutGates = combined.operations.filter(
+        (operation) => !isMixerGatesMarker(operation),
+      );
+      const seen = new Set(
+        combined.operations
+          .filter(isMixerGatesMarker)
+          .map((operation) => `${operation.signature}:${operation.values.join(',')}`),
+      );
+      if (seen.size <= 1) {
+        combined.operations = [...withoutGates, gateOperation];
+      }
+      // Conflicting vectors cannot occur: every marker is resolved from the
+      // same canonical snapshot within one commit.
+    }
+    return combined;
   }
 
   private buildPlan(
@@ -810,6 +925,15 @@ export class ProjectRuntimeReconciliation {
     operation: RuntimeWorkOperation,
   ): RuntimeWorkOperation | null {
     if (operation.kind === 'preset') return operation;
+
+    if (operation.kind === 'mixer-gates') {
+      const binding = performance.bindings.get(
+        bindingKey(operation.ownerKey, operation.parameterId),
+      );
+      return binding?.kind === 'mixer-gates' && binding.signature === operation.signature
+        ? operation
+        : null;
+    }
 
     const binding = performance.bindings.get(bindingKey(operation.ownerKey, operation.parameterId));
     if (operation.kind === 'channel-value') {

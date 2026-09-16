@@ -42,6 +42,7 @@ Tempo map is enabled at 112 BPM; mixer is enabled with one channel per track.</n
     <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
     <mediaFolder></mediaFolder>
     <copyToMediaFileOnImport>true</copyToMediaFileOnImport>
+    <trackLayerMuteSoloMode>audio</trackLayerMuteSoloMode>
   </projectProperties>
   <arrangement/>
   <mixer>

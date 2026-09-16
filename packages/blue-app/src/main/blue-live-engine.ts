@@ -1,7 +1,11 @@
 import { BrowserWindow } from 'electron';
 import { EngineBridge, EngineOutputCallback } from './engine-bridge';
 import type { BlueData, JavaScriptSession, Parameter } from '@blue/data';
-import type { CompiledBlueX7Binding, CompiledMidiInstrumentTarget } from '@blue/data';
+import type {
+  CompiledBlueX7Binding,
+  CompiledMidiInstrumentTarget,
+  CompiledMixerGateBindings,
+} from '@blue/data';
 import { LiveData, mapMidiTrigger } from '@blue/data';
 import type { EngineStateSnapshot } from '@blue/engine-client';
 import { formatRenderCommandLine, writeTempCsdSnapshot } from './render-command';
@@ -84,6 +88,7 @@ export class BlueLiveEngineSession {
   private targetCatalog: CompiledMidiTargetCatalog | null = null;
   private parameters: readonly Parameter[] = [];
   private blueX7Bindings: readonly CompiledBlueX7Binding[] = [];
+  private mixerGateBindings: CompiledMixerGateBindings | null = null;
   private statePollingTimer: ReturnType<typeof setInterval> | null = null;
   private engineStateUnsubscribe: (() => void) | null = null;
   private awaitingTerminalState = false;
@@ -483,6 +488,7 @@ export class BlueLiveEngineSession {
       this.targetCatalog = targetCatalog;
       this.parameters = csd.parameters ?? [];
       this.blueX7Bindings = csd.blueX7Bindings;
+      this.mixerGateBindings = csd.mixerGateBindings ?? null;
       this.beginTerminalStateMonitoring();
       this.setStatus('running', 'Blue Live running');
       return this.getSnapshot();
@@ -754,6 +760,11 @@ export class BlueLiveEngineSession {
     return this.parameters;
   }
 
+  /** Generation-scoped mixer gate catalog compiled into this session's CSD. */
+  getMixerGateBindings(): CompiledMixerGateBindings | null {
+    return this.mixerGateBindings;
+  }
+
   private async cleanup(): Promise<void> {
     if (this.cleanupPromise) {
       return this.cleanupPromise;
@@ -765,6 +776,7 @@ export class BlueLiveEngineSession {
       this.targetCatalog = null;
       this.parameters = [];
       this.blueX7Bindings = [];
+      this.mixerGateBindings = null;
       this.projectData = null;
       if (this.bridge) {
         const bridge = this.bridge;

@@ -351,9 +351,9 @@ describe('Batch Channel Protocol Encoding (batch-channels-v1)', () => {
     expect(() => encodeSetChannels([])).toThrow(RangeError);
     expect(() => encodeGetChannels([])).toThrow(RangeError);
     expect(() =>
-      encodeSetChannels(Array.from({ length: 152 }, (_, i) => ({ name: `c${i}`, value: 0 }))),
+      encodeSetChannels(Array.from({ length: 257 }, (_, i) => ({ name: `c${i}`, value: 0 }))),
     ).toThrow(RangeError);
-    expect(() => encodeGetChannels(Array.from({ length: 152 }, (_, i) => `c${i}`))).toThrow(
+    expect(() => encodeGetChannels(Array.from({ length: 257 }, (_, i) => `c${i}`))).toThrow(
       RangeError,
     );
     expect(() =>

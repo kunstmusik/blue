@@ -23,7 +23,9 @@ import {
   PythonInstrument,
   Mixer,
   type MeterProfileKey,
+  type TrackLayerMuteSoloMode,
   isMeterProfileKey,
+  isTrackLayerMuteSoloMode,
   DEFAULT_NEW_METER_ENABLED,
   DEFAULT_NEW_METER_PROFILE_KEY,
   Scale,
@@ -1259,6 +1261,10 @@ export interface ProjectPropertiesSnapshot {
   diskAlwaysRenderEntireProject: boolean;
   mediaFolder: string;
   copyToMediaFileOnImport: boolean;
+  /** Track header authority (Spec 111); loaded absence/invalid parses as Event. */
+  trackLayerMuteSoloMode: TrackLayerMuteSoloMode;
+  /** Raw stored text for an unsupported value; null when none is retained. */
+  trackLayerMuteSoloModeRaw: string | null;
 }
 
 export interface ClojureLibraryEntrySnapshot {
@@ -1429,6 +1435,25 @@ export interface MixerChannelSnapshot {
   pan: number;
   preChain: MixerChainEntrySnapshot[];
   postChain: MixerChainEntrySnapshot[];
+  /**
+   * Derived mixer-route indicator (Spec 111): the final output is gated by
+   * solo exclusion elsewhere, not by this channel's own mute. Undefined when
+   * the mixer is disabled (no route policy applies).
+   */
+  outputExcludedBySolo?: boolean;
+  /** Derived: at least one send route of this channel survives solo filtering. */
+  hasIncludedSend?: boolean;
+}
+
+/**
+ * Effective track header authority (Spec 111): the mixer-disabled override
+ * forces Event behavior regardless of the saved preference.
+ */
+export function effectiveTrackLayerMuteSoloMode(
+  mode: TrackLayerMuteSoloMode,
+  mixerEnabled: boolean,
+): TrackLayerMuteSoloMode {
+  return mixerEnabled ? mode : 'event';
 }
 
 export interface MixerChannelListSnapshot {
@@ -1447,6 +1472,12 @@ export interface MixerSnapshot {
   channels: MixerChannelSnapshot[];
   subChannels: MixerChannelSnapshot[];
   master: MixerChannelSnapshot;
+  /**
+   * Load-derived compatibility notice (Spec 111 FR-015): a loaded project
+   * carries active channel mute/non-master solo flags that now become
+   * audible. Disposable; never serialized.
+   */
+  legacyActiveChannelStateNotice?: boolean;
 }
 
 export interface MixerChannelEditableFields {
@@ -1523,7 +1554,20 @@ export type MixerPatch =
   | { type: 'setMeterProfile'; value: MeterProfileKey }
   | { type: 'updateExtraRenderTime'; value: number }
   | { type: 'renameChannelListGroup'; association: string; name: string }
-  | { type: 'updateChannel'; channelId: string; patch: Partial<MixerChannelEditableFields> }
+  | {
+      type: 'updateChannel';
+      channelId: string;
+      patch: Partial<MixerChannelEditableFields>;
+      /**
+       * Spec 111 header authority guard: when supplied, main verifies the
+       * effective header mode and the channel's track association before
+       * applying, rejecting a stale domain selection.
+       */
+      headerIntent?: {
+        expectedMode: TrackLayerMuteSoloMode;
+        association?: string;
+      };
+    }
   | { type: 'addSubChannel'; name?: string; insertIndex?: number; channelId?: string }
   | { type: 'removeSubChannel'; channelId: string }
   | {

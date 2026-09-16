@@ -110,6 +110,7 @@ import {
   type BsbActionLabelContext,
   orchestraPatchActionLabel,
   mixerPatchActionLabel,
+  effectiveTrackLayerMuteSoloMode,
 } from '../../shared/project-editor';
 import {
   BSB_LINE_SELECTOR_HEIGHT,
@@ -289,6 +290,23 @@ interface ProjectActions {
   setLayerBackgroundColor: (groupId: string, layerIndex: number, color: number) => void;
   setLayerMute: (groupId: string, layerIndex: number, muted: boolean) => void;
   setLayerSolo: (groupId: string, layerIndex: number, solo: boolean) => void;
+  /**
+   * Spec 111: resolves which state a track header edit controls. 'audio'
+   * targets the associated mixer channel; 'event' keeps layer-state patches.
+   */
+  resolveTrackHeaderAuthority: (
+    groupId: string,
+    layerId: string,
+  ) =>
+    | { authority: 'audio'; channelId: string; muted: boolean; solo: boolean }
+    | { authority: 'event' };
+  setTrackHeaderAudioMuteSolo: (
+    groupId: string,
+    layerId: string,
+    field: 'muted' | 'solo',
+    value: boolean,
+  ) => void;
+  setTrackHeaderMode: (mode: 'audio' | 'event') => void;
   renameLayer: (layerId: string, name: string) => void;
   setLayerHeight: (groupId: string, layerIndex: number, heightIndex: number) => void;
   addLayer: (groupId: string, layerIndex: number) => void;
@@ -1524,6 +1542,12 @@ function applyMixerPatchToSnapshot(
         next.subChannels.find((candidate) => candidate.id === patch.channelId) ??
         (next.master.id === patch.channelId ? next.master : null);
       if (!channel) {
+        break;
+      }
+
+      // Master solo has no active control (Spec 111); reject the whole patch
+      // so the optimistic view matches the canonical rejection.
+      if (patch.patch.solo !== undefined && next.master.id === channel.id) {
         break;
       }
 
@@ -4436,6 +4460,82 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
           },
         },
         { label: solo ? 'Solo Layer' : 'Unsolo Layer' },
+      );
+    },
+
+    resolveTrackHeaderAuthority: (groupId, layerId) => {
+      const state = get();
+      const mixer = state.mixer;
+      const mode = effectiveTrackLayerMuteSoloMode(
+        state.projectProperties.trackLayerMuteSoloMode,
+        mixer?.enabled ?? false,
+      );
+      if (mode !== 'audio' || !mixer) {
+        return { authority: 'event' as const };
+      }
+      const allChannels = [
+        ...mixer.channelListGroups.flatMap((group) => group.channels),
+        ...mixer.channels,
+        ...mixer.subChannels,
+      ];
+      const channel = allChannels.find((candidate) => candidate.association === layerId);
+      if (!channel) {
+        return { authority: 'event' as const };
+      }
+      return {
+        authority: 'audio' as const,
+        channelId: channel.id,
+        muted: channel.muted,
+        solo: channel.solo,
+      };
+    },
+
+    setTrackHeaderAudioMuteSolo: (groupId, layerId, field, value) => {
+      const state = get();
+      const mixer = state.mixer;
+      const effectiveMode = effectiveTrackLayerMuteSoloMode(
+        state.projectProperties.trackLayerMuteSoloMode,
+        mixer?.enabled ?? false,
+      );
+      const resolved = state.resolveTrackHeaderAuthority(groupId, layerId);
+      if (resolved.authority !== 'audio') {
+        // Missing association: refuse rather than silently editing event state.
+        toast.error(
+          'No mixer channel is associated with this track; its audio header cannot be edited. Reconnect the channel in the mixer first.',
+        );
+        return;
+      }
+      void state.applyProjectDocumentPatch(
+        {
+          mixer: {
+            type: 'updateChannel',
+            channelId: resolved.channelId,
+            patch: { [field]: value },
+            headerIntent: { expectedMode: effectiveMode, association: layerId },
+          },
+        },
+        {
+          label:
+            field === 'muted'
+              ? value
+                ? 'Mute Channel'
+                : 'Unmute Channel'
+              : value
+                ? 'Solo Channel'
+                : 'Unsolo Channel',
+        },
+      );
+    },
+
+    setTrackHeaderMode: (mode) => {
+      const current = get().projectProperties.trackLayerMuteSoloMode;
+      if (current === mode) return;
+      void get().applyProjectDocumentPatch(
+        { projectProperties: { trackLayerMuteSoloMode: mode } },
+        {
+          label:
+            mode === 'audio' ? 'Set Track Header Mode to Audio' : 'Set Track Header Mode to Event',
+        },
       );
     },
 
