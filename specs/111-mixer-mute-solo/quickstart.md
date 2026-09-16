@@ -22,15 +22,18 @@ commit→undo→redo incl. master-solo whole-patch rejection
 conservative disk pruning with preserved duration
 (`packages/blue-data/src/blue-data/csd-disk-pruning.test.ts`).
 
-Machine-verified on 2026-09-15 (darwin arm64, local release engine): all package suites
-(`@blue/data` 1927, `@blue/app` 5134, `@blue/engine-client` 47), the full browser suite, and
-`global-history-engine.integration.test.ts` with `BLUE_RUN_REAL_ENGINE=1` — including a
-300-gate two-bank staged publication (2 batches at the 256-entry bound) with applied-echo
-observation completing inside the 100 ms budget. Still required before release: the
-hardware-playback UI-to-audio latency measurement (the protocol-level publication latency is
-not a substitute), and the deterministic optimized/unoptimized float-render comparisons
-(T045) plus the manual stopped/running history matrices (T037/T054). The `blue-x7-pop-song`
-fixture CSD now contains the realtime gate machinery by design (regenerate with
+Machine-verified on 2026-09-15/16 (darwin arm64, local release engine): all package suites
+(`@blue/data` 1941, `@blue/app` 5143+, `@blue/engine-client` 47), the full browser suite, and
+`global-history-engine.integration.test.ts` plus `mixer-mute-solo.integration.test.ts` with
+`BLUE_RUN_REAL_ENGINE=1` — including a 300-gate two-bank staged publication with applied-echo
+observation inside the 100 ms budget, a running-performance mute commit→undo→redo gate
+reconciliation with engine readback (T054), and the deterministic optimized/unoptimized disk
+render comparison: identical sample counts, residual within the −120 dBFS bound (T045).
+
+Still required before release: the hardware-playback UI-to-audio latency measurement
+(T065 — the protocol-level publication latency is not a substitute; run the documented
+reference measurement on the target machine and record it here). The `blue-x7-pop-song`
+fixture CSD contains the realtime gate machinery by design (regenerate with
 `BLUE_X7_REGEN_FIXTURE=1`).
 
 ## Package validation

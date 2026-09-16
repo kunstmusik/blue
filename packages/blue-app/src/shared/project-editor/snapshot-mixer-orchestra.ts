@@ -107,7 +107,11 @@ import type {
 } from '@blue/data';
 import { AutomationCurve as BlueDataAutomationCurve, LineColors } from '@blue/data';
 import { ParameterHelper } from '@blue/data';
-import { computeMixerGateStateForMixer, type MixerChannelRouteIndicator } from '@blue/data';
+import {
+  computeMixerGateStateForMixer,
+  hasLegacyMixerStateAtLoad,
+  type MixerChannelRouteIndicator,
+} from '@blue/data';
 import type {
   SnapValueName,
   BlueX7Voice,
@@ -648,8 +652,21 @@ export function createMixerSnapshot(mixer: Mixer): MixerSnapshot {
     master: createMixerChannelSnapshot(mixer.getMaster(), 'master', {
       indicator: indicatorFor('master', mixer.getMaster()),
     }),
-    legacyActiveChannelStateNotice: hasLegacyActiveChannelState,
   };
+}
+
+/**
+ * Spec 111 FR-015 compatibility notice: true only when the loaded document
+ * carried active channel mute/non-master solo flags at load time (provenance
+ * recorded by the XML loader) and the flags are still active now. Flags set
+ * by live edits in this session never surface the notice.
+ */
+export function computeLegacyMixerStateNotice(data: BlueData): boolean {
+  if (!hasLegacyMixerStateAtLoad(data)) return false;
+  const mixer = data.getMixer();
+  return [...mixer.getAllSourceChannels(), ...mixer.getSubChannels()].some(
+    (channel) => channel.isMuted() || channel.isSolo(),
+  );
 }
 
 export function createEmptyOrchestraSnapshot(loaded = false): OrchestraSnapshot {
@@ -794,6 +811,7 @@ export function createProjectPropertiesSnapshot(
     copyToMediaFileOnImport: properties.copyToMediaFileOnImport,
     trackLayerMuteSoloMode: properties.trackLayerMuteSoloMode,
     trackLayerMuteSoloModeRaw: properties.trackLayerMuteSoloModeRaw,
+    trackLayerMuteSoloModePresent: properties.trackLayerMuteSoloModePresent,
   };
 }
 

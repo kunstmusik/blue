@@ -24,6 +24,22 @@ import { parseUDOText } from '../opcodes/udo-utilities';
 import { TimeContext } from '../time/time-context';
 import type { BlueData } from '../blue-data';
 
+/**
+ * Load provenance for the Spec 111 compatibility notice: only projects whose
+ * ACTIVE channel mute/non-master solo flags came from the loaded document
+ * (not from live edits afterwards) surface the legacy-mixer-state notice.
+ * Disposable, process-local, never serialized.
+ */
+const LEGACY_MIXER_STATE_AT_LOAD = new WeakMap<object, true>();
+
+export function markLegacyMixerStateAtLoad(data: BlueData): void {
+  LEGACY_MIXER_STATE_AT_LOAD.set(data, true);
+}
+
+export function hasLegacyMixerStateAtLoad(data: BlueData): boolean {
+  return LEGACY_MIXER_STATE_AT_LOAD.has(data);
+}
+
 type BlueDataXmlState = {
   projectProperties: ProjectProperties;
   instrumentLibrary: InstrumentLibrary | null;
@@ -69,6 +85,7 @@ export function loadFromString(xmlString: string, createBlueData: () => BlueData
   let instrumentLibraryNode: Element | null = null;
   let arrangementNode: Element | null = null;
   let mixerLoaded = false;
+  let projectPropertiesLoaded = false;
 
   const nodes = rootElement.getElements();
   while (nodes.hasMoreElements()) {
@@ -78,6 +95,7 @@ export function loadFromString(xmlString: string, createBlueData: () => BlueData
     switch (nodeName) {
       case 'projectProperties':
         state.projectProperties = ProjectProperties.loadFromXML(node);
+        projectPropertiesLoaded = true;
         break;
       case 'instrumentLibrary':
         // Store for deferred processing — arrangement needs it
@@ -173,6 +191,21 @@ export function loadFromString(xmlString: string, createBlueData: () => BlueData
     state.mixer.setEnabled(false);
     state.mixer.setEnableMeters(DEFAULT_LEGACY_METER_ENABLED);
     state.mixer.setMeterProfileKey(DEFAULT_LEGACY_METER_PROFILE_KEY);
+  }
+
+  // Post-loop (Spec 111 FR-007): a document with no projectProperties block
+  // never reached ProjectProperties.loadFromXML, so the fresh-project Audio
+  // default would survive. Legacy absence loads Event as omitted data.
+  if (!projectPropertiesLoaded) {
+    state.projectProperties.restoreTrackLayerMuteSoloMode('event', null, false);
+  }
+
+  // Post-loop (Spec 111 FR-015): record whether the loaded document carries
+  // active channel mute/non-master solo flags so the compatibility notice
+  // reflects load provenance rather than later live edits.
+  const mixerChannels = [...state.mixer.getAllSourceChannels(), ...state.mixer.getSubChannels()];
+  if (mixerChannels.some((channel) => channel.isMuted() || channel.isSolo())) {
+    markLegacyMixerStateAtLoad(blueData);
   }
 
   // Post-loop: wire projectProperties into score.timeContext (Java parity)

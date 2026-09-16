@@ -23,7 +23,11 @@ import { developmentEnginePath } from './engine-runtime';
 import { EngineSession } from './engine-session';
 import { allocateTcpEndpointPair } from './engine-endpoints';
 import { MixerGatePublisher, type MixerGateEngineIO } from './mixer-mute-solo-runtime';
-import { createTestGateCatalog, TEST_GATE_SIGNATURE, FakeMixerGateEngine } from './mixer-mute-solo-test-support';
+import {
+  createTestGateCatalog,
+  TEST_GATE_SIGNATURE,
+  FakeMixerGateEngine,
+} from './mixer-mute-solo-test-support';
 import type { CompiledMixerGateBindings } from '@blue/data';
 import { createProjectEditorSnapshot } from '../shared/project-editor';
 import {

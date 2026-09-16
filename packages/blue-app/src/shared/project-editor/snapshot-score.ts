@@ -346,6 +346,7 @@ import {
   createEmptyToolbarProjectTransportSnapshot,
   createInstrumentSnapshot,
   createMidiInputProcessorSnapshot,
+  computeLegacyMixerStateNotice,
   createMixerSnapshot,
   createOrchestraSnapshot,
   createProjectPropertiesSnapshot,
@@ -413,6 +414,7 @@ function createDefaultProjectPropertiesSnapshot(): ProjectPropertiesSnapshot {
     copyToMediaFileOnImport: true,
     trackLayerMuteSoloMode: 'audio',
     trackLayerMuteSoloModeRaw: null,
+    trackLayerMuteSoloModePresent: true,
   };
 }
 
@@ -2074,7 +2076,10 @@ export function createProjectEditorSnapshot(
     globalOrc: data.getGlobalOrcSco().getGlobalOrc(),
     globalSco: data.getGlobalOrcSco().getGlobalSco(),
     orchestra: createOrchestraSnapshot(data),
-    mixer: createMixerSnapshot(data.getMixer()),
+    mixer: {
+      ...createMixerSnapshot(data.getMixer()),
+      legacyActiveChannelStateNotice: computeLegacyMixerStateNotice(data),
+    },
     projectProperties: createProjectPropertiesSnapshot(data.getProjectProperties()),
     clojureProject: createClojureProjectSnapshot(data.getClojureProjectData(), data),
     transport: createToolbarProjectTransportSnapshot(data),

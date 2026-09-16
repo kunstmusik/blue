@@ -955,9 +955,13 @@ function computeDiskPruningSet(
   const prune = new Set<string>();
   for (const group of state.score) {
     if (!(group instanceof TrackLayerGroup)) continue;
+    // Preserved unknown data may hold executable extensions from newer or
+    // foreign documents: refuse certification rather than guess purity.
+    if (group.hasUnknownContent()) return NO_PRUNING;
     for (const track of group as TrackLayerGroup & Track[]) {
       const t = track as Track;
       if (!isAudioClipOnlyTrack(t)) continue;
+      if (t.hasUnknownContent()) continue;
       if (t.getNoteProcessorChain().getProcessors().length > 0) continue;
       if (!isTrackInaudible(gateContext, t.getUniqueId())) continue;
       prune.add(t.getUniqueId());

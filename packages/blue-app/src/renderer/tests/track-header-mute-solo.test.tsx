@@ -61,6 +61,7 @@ describe('Track header mute/solo authority (Spec 111)', () => {
     root = createRoot(host);
 
     const applyPatchSpy = vi.spyOn(useProjectStore.getState(), 'applyProjectDocumentPatch');
+    applyPatchSpy.mockClear();
     const snapshot = createEmptyProjectEditorSnapshot();
     snapshot.score.layerGroups = [
       {
@@ -180,18 +181,18 @@ describe('Track header mute/solo authority (Spec 111)', () => {
     );
   });
 
-  it('Audio mode without an associated channel falls back to event semantics', () => {
+  it('Audio mode without an associated channel reports and dispatches no patch', () => {
     const applyPatchSpy = setup({ mode: 'audio', withAssociation: false });
-    const mute = headerButton('Mute layer Bass Track');
+    const mute = headerButton('Mute (unlinked: no mixer channel for Bass Track)');
     expect(mute).toBeTruthy();
+    expect(mute!.hasAttribute('data-audio-unlinked')).toBe(true);
     act(() => {
       mute!.click();
     });
-    expect(applyPatchSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        score: expect.objectContaining({ type: 'updateLayerState' }),
-      }),
-      { label: 'Mute Layer' },
+    // No legacy event-layer patch and no mixer patch: the edit is refused.
+    const scorePatches = applyPatchSpy.mock.calls.filter(
+      (call) => 'score' in (call[0] as object) || 'mixer' in (call[0] as object),
     );
+    expect(scorePatches).toEqual([]);
   });
 });

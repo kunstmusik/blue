@@ -73,6 +73,15 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
   hasSoloLayers(): boolean {
     return this.some((track) => track.isSolo());
   }
+  /** Spec 111: unknown preserved data makes conservative certification refuse. */
+  hasUnknownContent(): boolean {
+    return (
+      this._unknownAttributes.size > 0 ||
+      this._unknownChildren.length > 0 ||
+      this._tracksAttributes.size > 0 ||
+      this._unknownTracksChildren.length > 0
+    );
+  }
 
   /**
    * Runs on-load processing for script SoundObjects placed directly on a

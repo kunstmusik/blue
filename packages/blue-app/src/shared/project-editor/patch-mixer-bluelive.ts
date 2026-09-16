@@ -406,9 +406,14 @@ export function applyProjectPropertiesPatch(
         break;
       case 'trackLayerMuteSoloMode':
         // Unsupported edits are rejected; raw legacy text survives until an
-        // explicit supported value replaces it (Spec 111).
+        // explicit supported value replaces it (Spec 111). Replacing with the
+        // same parsed mode still clears retained raw metadata.
         if (isTrackLayerMuteSoloMode(value)) {
-          if (properties.trackLayerMuteSoloMode !== value) {
+          if (
+            properties.trackLayerMuteSoloMode !== value ||
+            properties.trackLayerMuteSoloModeRaw !== null ||
+            !properties.trackLayerMuteSoloModePresent
+          ) {
             properties.trackLayerMuteSoloMode = value;
             changed = true;
           }

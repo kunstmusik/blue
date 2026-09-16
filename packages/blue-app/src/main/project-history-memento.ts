@@ -398,15 +398,31 @@ export function captureScalarFieldRecords(
   if (patch.projectProperties) {
     const props = data.getProjectProperties() as unknown as Record<string, unknown>;
     for (const [key, val] of Object.entries(patch.projectProperties)) {
-      if (val !== undefined) {
+      if (val === undefined) continue;
+      if (key === 'trackLayerMuteSoloMode') {
+        // Spec 111: capture full provenance so undo/redo reinstates omitted
+        // or invalid source metadata exactly (raw text and presence).
+        const source = data.getProjectProperties();
         records.push({
           targetType: 'property',
           targetId: 'projectProperties',
           field: key,
-          beforeValue: props[key],
-          afterValue: val,
+          beforeValue: {
+            mode: source.trackLayerMuteSoloMode,
+            raw: source.trackLayerMuteSoloModeRaw,
+            present: source.trackLayerMuteSoloModePresent,
+          },
+          afterValue: { mode: val, raw: null, present: true },
         });
+        continue;
       }
+      records.push({
+        targetType: 'property',
+        targetId: 'projectProperties',
+        field: key,
+        beforeValue: props[key],
+        afterValue: val,
+      });
     }
   }
 
@@ -557,6 +573,21 @@ export function applyScalarFieldRecord(
       break;
 
     case 'property': {
+      if (
+        record.field === 'trackLayerMuteSoloMode' &&
+        typeof value === 'object' &&
+        value !== null
+      ) {
+        const provenance = value as {
+          mode: 'audio' | 'event';
+          raw: string | null;
+          present: boolean;
+        };
+        data
+          .getProjectProperties()
+          .restoreTrackLayerMuteSoloMode(provenance.mode, provenance.raw, provenance.present);
+        break;
+      }
       const props = data.getProjectProperties() as unknown as Record<string, unknown>;
       props[record.field] = value;
       break;

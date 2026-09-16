@@ -418,7 +418,12 @@ describe('ScorePanel session resets', () => {
 
     act(() => {
       useMidiRoutingStore.getState().clearFocusForProjectSession();
-      const muteButton = trackHeader.querySelector('button[title="Mute"]') as HTMLButtonElement;
+      // Spec 111: header Mute buttons carry authority-specific titles; any
+      // header M/S button exercises the same pointerdown focus guard.
+      const muteButton =
+        (trackHeader.querySelector('button[title^="Mute"]') as HTMLButtonElement | null) ??
+        (trackHeader.querySelector('button[aria-pressed]') as HTMLButtonElement | null);
+      expect(muteButton).toBeTruthy();
       muteButton.dispatchEvent(
         new MouseEvent('pointerdown', {
           bubbles: true,

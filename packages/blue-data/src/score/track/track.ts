@@ -205,6 +205,11 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
   getAutomationParameters(): ParameterIdList {
     return this._automationParameters;
   }
+  /** Spec 111: unknown preserved data makes conservative certification refuse. */
+  hasUnknownContent(): boolean {
+    return this._unknownAttributes.size > 0 || this._unknownChildren.length > 0;
+  }
+
   getNoteProcessorChain(): NoteProcessorChain {
     return this._npc;
   }

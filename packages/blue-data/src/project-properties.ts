@@ -94,6 +94,22 @@ export class ProjectProperties {
     return this._trackLayerMuteSoloModeRaw !== null;
   }
 
+  /**
+   * Restores exact mode provenance (parsed value, retained raw text, and
+   * presence) — used by history rollback so undo/redo of a mode edit
+   * reinstates omitted/invalid source metadata exactly as loaded.
+   */
+  restoreTrackLayerMuteSoloMode(
+    mode: TrackLayerMuteSoloMode,
+    raw: string | null,
+    present: boolean,
+  ): void {
+    if (!isTrackLayerMuteSoloMode(mode)) return;
+    this._trackLayerMuteSoloMode = mode;
+    this._trackLayerMuteSoloModeRaw = raw;
+    this._trackLayerMuteSoloModePresent = present;
+  }
+
   // Legacy compatibility fields retained for existing callers and file formats.
   commandLine = '';
   diskCommandLine = '';

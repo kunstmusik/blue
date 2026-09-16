@@ -15,6 +15,7 @@ export type {
 } from './compile-data';
 export type { TrackLayerMuteSoloMode } from './project-properties';
 export { isTrackLayerMuteSoloMode } from './project-properties';
+export { hasLegacyMixerStateAtLoad, markLegacyMixerStateAtLoad } from './blue-data/xml-policy';
 export {
   buildMixerRouteGraph,
   computeMixerGateState,
@@ -31,6 +32,7 @@ export type {
   MixerRouteGraph,
   MixerRouteNode,
 } from './mixer/mute-solo-policy';
+export { buildStandardCSD, buildStandardCSDAsync } from './blue-data/csd-policy';
 export { getJavaRuntimeClient, setJavaRuntimeClient } from './java-runtime';
 export type {
   ClojureEvalRequest,

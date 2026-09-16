@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { BlueData, Channel } from '@blue/data';
+import { BlueData, Channel, TrackLayerGroup } from '@blue/data';
+import type { ScoreTrack } from '@blue/data';
 import { ProjectSession } from './project-session';
 import { ProjectHistory } from './project-history';
 import { MockHistoryContext, FakePublicationRecorder } from './project-history-test-support';
@@ -103,6 +104,69 @@ describe('project history: mixer mute/solo, mode, and enable (Spec 111)', () => 
     expect(session.read().data!.getMixer().getMaster().isSolo()).toBe(false);
     expect(session.read().data!.getMixer().getMaster().getVolume()).toBe(1.0);
     expect(history.read().length).toBe(0);
+  });
+
+  it('restores invalid raw mode provenance exactly through undo', async () => {
+    const { session, history, contextA } = setupHistory();
+    const docId = session.read().documentId!;
+    // Load provenance: an unsupported raw value parses Event but retains text.
+    const data = session.read().data!;
+    data.getProjectProperties().restoreTrackLayerMuteSoloMode('event', 'solo-all', true);
+
+    const res = await history.commit(
+      contextA.nextCommitRequest(docId, 0, 'Set Track Header Mode to Audio', [
+        { projectProperties: { trackLayerMuteSoloMode: 'audio' } },
+      ]),
+    );
+    expect(res.status).toBe('committed');
+    expect(data.getProjectProperties().trackLayerMuteSoloModeRaw).toBeNull();
+
+    await history.undo({
+      documentId: docId,
+      operationId: 'undo-mode-raw',
+      expectedRevision: 1,
+      contextSequence: contextA.sequence + 1,
+    });
+    // Undo reinstates the retained raw text, not just the parsed mode.
+    expect(data.getProjectProperties().trackLayerMuteSoloMode).toBe('event');
+    expect(data.getProjectProperties().trackLayerMuteSoloModeRaw).toBe('solo-all');
+    expect(data.getProjectProperties().trackLayerMuteSoloModePresent).toBe(true);
+  });
+
+  it('leaves both flag sets untouched by mode changes (no state copying)', async () => {
+    const { session, history, contextA } = setupHistory();
+    const docId = session.read().documentId!;
+    const data = session.read().data!;
+    data.getMixer().getMaster().setMuted(true);
+    const score = data.getScore();
+    score.length = 0;
+    const group = new TrackLayerGroup();
+    const track = new TrackLayerGroup().newLayerAt(0) as unknown as ScoreTrack;
+    track.setMuted(true);
+    track.setSolo(true);
+    group.push(track);
+    score.push(group);
+
+    const res = await history.commit(
+      contextA.nextCommitRequest(docId, 0, 'Set Track Header Mode to Event', [
+        { projectProperties: { trackLayerMuteSoloMode: 'event' } },
+      ]),
+    );
+    expect(res.status).toBe('committed');
+    // Neither the channel flags nor the track event flags moved.
+    const scoreTrack = (data.getScore()[0] as unknown as ScoreTrack[])[0]!;
+    expect(data.getMixer().getMaster().isMuted()).toBe(true);
+    expect(scoreTrack.isMuted()).toBe(true);
+    expect(scoreTrack.isSolo()).toBe(true);
+
+    await history.undo({
+      documentId: docId,
+      operationId: 'undo-mode-copy',
+      expectedRevision: 1,
+      contextSequence: contextA.sequence + 1,
+    });
+    expect(data.getMixer().getMaster().isMuted()).toBe(true);
+    expect((data.getScore()[0] as unknown as ScoreTrack[])[0]!.isMuted()).toBe(true);
   });
 
   it('commits, undoes, and redoes the track header mode', async () => {

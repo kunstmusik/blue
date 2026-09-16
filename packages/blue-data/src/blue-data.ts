@@ -80,6 +80,7 @@ import { getNotes } from './utilities/score';
 import './sound-objects/register-sound-object-types';
 
 import { loadFromString, saveAsXML, saveToString } from './blue-data/xml-policy';
+export { buildStandardCSD, buildStandardCSDAsync, toBlueLiveCSD } from './blue-data/csd-policy';
 import {
   buildStandardCSD,
   buildStandardCSDAsync,
@@ -97,6 +98,7 @@ export type {
 } from './compile-data';
 export type { TrackLayerMuteSoloMode } from './project-properties';
 export { isTrackLayerMuteSoloMode } from './project-properties';
+export { hasLegacyMixerStateAtLoad, markLegacyMixerStateAtLoad } from './blue-data/xml-policy';
 import { processOnLoad, processOnLoadAsync, usesJavaRuntime } from './blue-data/runtime-policy';
 
 export class BlueData implements BlueDataObject, DeepCopyable<BlueData>, HistoryCopyable<BlueData> {

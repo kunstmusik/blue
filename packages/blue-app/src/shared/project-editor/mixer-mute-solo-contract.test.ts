@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { BlueData } from '@blue/data';
 import { Channel } from '@blue/data';
 import { Send } from '@blue/data';
+import { hasLegacyMixerStateAtLoad, markLegacyMixerStateAtLoad } from '@blue/data';
+import {
+  computeLegacyMixerStateNotice,
+  createProjectEditorSnapshot,
+} from './snapshot-mixer-orchestra';
 import {
   applyProjectDocumentPatch,
   validateProjectDocumentPatch,
@@ -236,12 +241,84 @@ describe('mixer mute/solo contract boundary (Spec 111)', () => {
       const aSnap = soloSnapshot.channels.find((c) => c.name === 'A');
       expect(aSnap?.outputExcludedBySolo).toBe(true);
       expect(aSnap?.hasIncludedSend).toBe(true);
-      // R's solo is an active non-master flag: the legacy notice applies.
-      expect(soloSnapshot.legacyActiveChannelStateNotice).toBe(true);
+      // Load provenance (simulated with the loader's marker) is what makes
+      // the notice fire; live edits alone never do.
+      markLegacyMixerStateAtLoad(data);
+      expect(computeLegacyMixerStateNotice(data)).toBe(true);
 
-      a.setMuted(true);
-      const mutedSnapshot = createMixerSnapshot(mixer);
-      expect(mutedSnapshot.legacyActiveChannelStateNotice).toBe(true);
+      // Clearing the loaded flags retires the notice.
+      r.setSolo(false);
+      expect(computeLegacyMixerStateNotice(data)).toBe(false);
+    });
+  });
+
+  describe('association stability (Spec 111 T037)', () => {
+    it('keeps the track-channel association through channel and track renames', async () => {
+      const data = new BlueData();
+      data.getProjectProperties().trackLayerMuteSoloMode = 'audio';
+      const { TrackLayerGroup, ScoreTrack } = (await import('@blue/data')) as unknown as {
+        TrackLayerGroup: new () => unknown[];
+        ScoreTrack: new () => { setName: (n: string) => void; getUniqueId: () => string };
+      };
+      const group = new TrackLayerGroup();
+      const track = new ScoreTrack();
+      track.setName('Bass');
+      group.push(track);
+      data.getScore().length = 0;
+      data.getScore().push(group as never);
+
+      const channel = new Channel();
+      channel.setName('Bass Channel');
+      channel.setAssociation(track.getUniqueId());
+      data.getMixer().getChannels().push(channel);
+
+      // Rename the channel: the association key is untouched.
+      applyMixerPatchToData(data, {
+        type: 'updateChannel',
+        channelId: track.getUniqueId(),
+        patch: { name: 'Renamed Channel' },
+      });
+      expect(channel.getAssociation()).toBe(track.getUniqueId());
+
+      // Rename the track itself: association is by uniqueId, not name.
+      track.setName('Renamed Bass');
+      const found = data
+        .getMixer()
+        .getAllSourceChannels()
+        .find((candidate) => candidate.getAssociation() === track.getUniqueId());
+      expect(found).toBe(channel);
+    });
+
+    it('keeps the association through track reordering', async () => {
+      const data = new BlueData();
+      const { TrackLayerGroup, ScoreTrack } = (await import('@blue/data')) as unknown as {
+        TrackLayerGroup: new () => unknown[];
+        ScoreTrack: new () => { setName: (n: string) => void; getUniqueId: () => string };
+      };
+      const group = new TrackLayerGroup() as unknown as Array<{ getUniqueId: () => string }> & {
+        push: (t: unknown) => void;
+      };
+      const first = new ScoreTrack();
+      const second = new ScoreTrack();
+      group.push(first, second);
+      data.getScore().length = 0;
+      data.getScore().push(group as never);
+
+      const channel = new Channel();
+      channel.setName('Second');
+      channel.setAssociation(second.getUniqueId());
+      data.getMixer().getChannels().push(channel);
+
+      // Move the second track to the front (a reorder, not a rename).
+      const moved = group.splice(1, 1)[0]!;
+      group.unshift(moved);
+      expect(group[0]!.getUniqueId()).toBe(second.getUniqueId());
+
+      const found = data
+        .getMixer()
+        .getAllSourceChannels()
+        .find((candidate) => candidate.getAssociation() === second.getUniqueId());
+      expect(found).toBe(channel);
     });
   });
 

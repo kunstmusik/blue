@@ -1534,12 +1534,16 @@ function SoundLayerHeader({
   // when the effective header mode is Audio and an association exists; they
   // keep legacy event-layer semantics otherwise (including mixer bypass).
   const headerAuthority = useMemo(() => {
-    if (
-      groupType !== 'track' ||
-      effectiveTrackLayerMuteSoloMode(headerModePreference, headerMixerEnabled) !== 'audio' ||
-      !headerAssociatedChannel
-    ) {
+    if (groupType !== 'track') {
       return { authority: 'event' as const };
+    }
+    if (effectiveTrackLayerMuteSoloMode(headerModePreference, headerMixerEnabled) !== 'audio') {
+      return { authority: 'event' as const };
+    }
+    if (!headerAssociatedChannel) {
+      // Spec 111: under Audio authority a missing association must be
+      // reported, never silently converted into a legacy event-layer edit.
+      return { authority: 'audio-unlinked' as const };
     }
     return {
       authority: 'audio' as const,
@@ -1879,28 +1883,31 @@ function SoundLayerHeader({
               />
               <button
                 type="button"
+                data-audio-unlinked={headerAuthority.authority === 'audio-unlinked' || undefined}
                 className={btnClass(
-                  headerAuthority.authority === 'audio' ? headerAuthority.muted : !!layer.muted,
+                  headerAuthority.authority === 'audio' ? headerAuthority.muted : false,
                   'bg-app-warning',
                   'text-app-warning-foreground',
                 )}
                 title={
                   headerAuthority.authority === 'audio'
                     ? `Mute (audio: controls mixer channel for ${layer.name})`
-                    : 'Mute'
+                    : headerAuthority.authority === 'audio-unlinked'
+                      ? `No mixer channel is associated with ${layer.name}; connect one in the mixer to use audio mute`
+                      : 'Mute'
                 }
                 aria-label={
                   headerAuthority.authority === 'audio'
                     ? headerAuthority.muted
                       ? `Unmute mixer channel for ${layer.name}`
                       : `Mute mixer channel for ${layer.name}`
-                    : layer.muted
-                      ? `Unmute layer ${layer.name}`
-                      : `Mute layer ${layer.name}`
+                    : headerAuthority.authority === 'audio-unlinked'
+                      ? `Mute (unlinked: no mixer channel for ${layer.name})`
+                      : layer.muted
+                        ? `Unmute layer ${layer.name}`
+                        : `Mute layer ${layer.name}`
                 }
-                aria-pressed={
-                  headerAuthority.authority === 'audio' ? headerAuthority.muted : !!layer.muted
-                }
+                aria-pressed={headerAuthority.authority === 'audio' ? headerAuthority.muted : false}
                 onClick={(e) => {
                   e.stopPropagation();
                   if (headerAuthority.authority === 'audio') {
@@ -1910,6 +1917,9 @@ function SoundLayerHeader({
                       'muted',
                       !headerAuthority.muted,
                     );
+                  } else if (headerAuthority.authority === 'audio-unlinked') {
+                    // Reports the missing association; no project edit.
+                    setTrackHeaderAudioMuteSolo(groupId, layer.layerId, 'muted', true);
                   } else {
                     setLayerMute(groupId, layerIndex, !(layer.muted ?? false));
                   }
@@ -1919,28 +1929,31 @@ function SoundLayerHeader({
               </button>
               <button
                 type="button"
+                data-audio-unlinked={headerAuthority.authority === 'audio-unlinked' || undefined}
                 className={btnClass(
-                  headerAuthority.authority === 'audio' ? headerAuthority.solo : !!layer.solo,
+                  headerAuthority.authority === 'audio' ? headerAuthority.solo : false,
                   'bg-app-success',
                   'text-app-success-foreground',
                 )}
                 title={
                   headerAuthority.authority === 'audio'
                     ? `Solo (audio: controls mixer channel for ${layer.name})`
-                    : 'Solo'
+                    : headerAuthority.authority === 'audio-unlinked'
+                      ? `No mixer channel is associated with ${layer.name}; connect one in the mixer to use audio solo`
+                      : 'Solo'
                 }
                 aria-label={
                   headerAuthority.authority === 'audio'
                     ? headerAuthority.solo
                       ? `Unsolo mixer channel for ${layer.name}`
                       : `Solo mixer channel for ${layer.name}`
-                    : layer.solo
-                      ? `Unsolo layer ${layer.name}`
-                      : `Solo layer ${layer.name}`
+                    : headerAuthority.authority === 'audio-unlinked'
+                      ? `Solo (unlinked: no mixer channel for ${layer.name})`
+                      : layer.solo
+                        ? `Unsolo layer ${layer.name}`
+                        : `Solo layer ${layer.name}`
                 }
-                aria-pressed={
-                  headerAuthority.authority === 'audio' ? headerAuthority.solo : !!layer.solo
-                }
+                aria-pressed={headerAuthority.authority === 'audio' ? headerAuthority.solo : false}
                 onClick={(e) => {
                   e.stopPropagation();
                   if (headerAuthority.authority === 'audio') {
@@ -1950,6 +1963,9 @@ function SoundLayerHeader({
                       'solo',
                       !headerAuthority.solo,
                     );
+                  } else if (headerAuthority.authority === 'audio-unlinked') {
+                    // Reports the missing association; no project edit.
+                    setTrackHeaderAudioMuteSolo(groupId, layer.layerId, 'solo', true);
                   } else {
                     setLayerSolo(groupId, layerIndex, !(layer.solo ?? false));
                   }

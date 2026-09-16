@@ -7,7 +7,9 @@ import { GenericInstrument } from '../instruments/generic-instrument';
 import { TrackLayerGroup } from '../score/track/track-layer-group';
 import { Track } from '../score/track/track';
 import { AudioClip } from '../score/audio/audio-clip';
-import { buildStandardCSD } from './csd-policy';
+import { buildStandardCSD, buildStandardCSDAsync } from './csd-policy';
+import { AddProcessor } from '../note-processors/add-processor';
+import { GenericScore } from '../sound-objects/generic-score';
 import { TimePosition } from '../time/time-position';
 import { TimeDuration } from '../time/time-duration';
 
@@ -217,5 +219,181 @@ describe('disk pruning eligibility and route survival (Spec 111 US3)', () => {
     const result = buildStandardCSD(data, 'disk');
     const score = result.csdText.match(/<CsScore>([\s\S]*?)<\/CsScore>/)![1];
     expect(score).toContain('"test.wav"');
+  });
+});
+
+describe('disk pruning fallback matrix (Spec 111 T068)', () => {
+  it('refuses pruning for mixed content with a note SoundObject on a track', () => {
+    const { data, trackA, trackB } = createCertifiableProject();
+    addClip(trackA, 0, 4);
+    addClip(trackB, 0, 2);
+    data.getMixer().getChannels()[0].setMuted(true);
+    // Any non-clip item makes the project uncertified, not just its own track.
+    trackB.push(new GenericScore());
+
+    const result = buildStandardCSD(data, 'disk');
+    const score = result.csdText.match(/<CsScore>([\s\S]*?)<\/CsScore>/)![1];
+    expect(score).toContain('"test.wav"');
+  });
+
+  it('refuses pruning when a track carries a note processor', () => {
+    const { data, trackA, trackB } = createCertifiableProject();
+    addClip(trackA, 0, 4);
+    addClip(trackB, 0, 2);
+    data.getMixer().getChannels()[0].setMuted(true);
+    const group = data.getScore()[0] as TrackLayerGroup;
+    const processor = new AddProcessor();
+    processor.setPfield('2'); // numeric p-field: the chain still runs cleanly
+    (group[0] as unknown as { getNoteProcessorChain: () => { addProcessor: (p: unknown) => void } })
+      .getNoteProcessorChain()
+      .addProcessor(processor);
+
+    const result = buildStandardCSD(data, 'disk');
+    const score = result.csdText.match(/<CsScore>([\s\S]*?)<\/CsScore>/)![1];
+    expect(score).toContain('"test.wav"');
+  });
+
+  it('refuses pruning for unknown preserved track content', () => {
+    const { data, trackA, trackB } = createCertifiableProject();
+    addClip(trackA, 0, 4);
+    addClip(trackB, 0, 2);
+    data.getMixer().getChannels()[0].setMuted(true);
+    const reloaded = BlueData.loadFromString(
+      data.saveToString().replace('<track ', '<track futureExtension="enabled" '),
+    );
+    const result = buildStandardCSD(reloaded, 'disk');
+    const score = result.csdText.match(/<CsScore>([\s\S]*?)<\/CsScore>/)![1];
+    expect(score).toContain('"test.wav"');
+  });
+
+  it('keeps a pre-fader send feeder audible through a soloed return', () => {
+    const { data, trackA } = createCertifiableProject();
+    const reverb = new Channel();
+    reverb.setName('R');
+    reverb.setOutChannel('Master');
+    data.getMixer().getSubChannels().push(reverb);
+    const preSend = new Send();
+    preSend.setSendChannel('R');
+    data.getMixer().getChannels()[0].getPreEffects().push(preSend);
+    addClip(trackA, 0, 3);
+    reverb.setSolo(true);
+
+    const result = buildStandardCSD(data, 'disk');
+    const score = result.csdText.match(/<CsScore>([\s\S]*?)<\/CsScore>/)![1];
+    expect(score).toContain('"test.wav"');
+  });
+
+  it('refuses pruning when routing is unresolved', () => {
+    const { data, trackA, trackB } = createCertifiableProject();
+    addClip(trackA, 0, 4);
+    addClip(trackB, 0, 2);
+    data.getMixer().getChannels()[0].setMuted(true);
+    const ghost = new Send();
+    ghost.setSendChannel('NoSuchChannel');
+    data.getMixer().getChannels()[1].getPostEffects().push(ghost);
+
+    const result = buildStandardCSD(data, 'disk');
+    const score = result.csdText.match(/<CsScore>([\s\S]*?)<\/CsScore>/)![1];
+    expect(score).toContain('"test.wav"');
+  });
+
+  it('refuses pruning when subchannel routing is cyclic', () => {
+    const { data, trackA, trackB } = createCertifiableProject();
+    addClip(trackA, 0, 4);
+    addClip(trackB, 0, 2);
+    data.getMixer().getChannels()[0].setMuted(true);
+    const x = new Channel();
+    x.setName('X');
+    x.setOutChannel('Y');
+    const y = new Channel();
+    y.setName('Y');
+    y.setOutChannel('X');
+    data.getMixer().getSubChannels().push(x, y);
+
+    const result = buildStandardCSD(data, 'disk');
+    const score = result.csdText.match(/<CsScore>([\s\S]*?)<\/CsScore>/)![1];
+    expect(score).toContain('"test.wav"');
+  });
+});
+
+describe('disk pruning scheduling and parity (Spec 111 T069)', () => {
+  it('preserves a nonzero render window when the longest in-window clip is pruned', () => {
+    const { data, trackA, trackB } = createCertifiableProject();
+    addClip(trackA, 0, 10);
+    addClip(trackB, 0, 2);
+    data.getMixer().getChannels()[0].setMuted(true);
+    data.setRenderEndTime(6);
+
+    const pruned = buildStandardCSD(data, 'disk');
+    const mixerNote = pruned.csdText
+      .match(/<CsScore>([\s\S]*?)<\/CsScore>/)![1]
+      .split('\n')
+      .find((line) => line.includes('BlueMixer'));
+    expect(mixerNote).toBeTruthy();
+
+    // Same project, pruning disabled via a benign global-orc comment oracle:
+    // identical audio, uncertified, so every event renders.
+    const oracleData = createCertifiableProject();
+    addClip(oracleData.trackA, 0, 10);
+    addClip(oracleData.trackB, 0, 2);
+    oracleData.data.setRenderEndTime(6);
+    oracleData.data.getGlobalOrcSco().setGlobalOrc('; pruning-disable oracle\n');
+    const unpruned = buildStandardCSD(oracleData.data, 'disk');
+    const unprunedMixerNote = unpruned.csdText
+      .match(/<CsScore>([\s\S]*?)<\/CsScore>/)![1]
+      .split('\n')
+      .find((line) => line.includes('BlueMixer'));
+    expect(unprunedMixerNote).toBe(mixerNote);
+  });
+
+  it('keeps mixer extra render time and tempo-mapped clip bounds in the duration', () => {
+    const { data, trackA } = createCertifiableProject();
+    const clip = new AudioClip();
+    clip.setStartTime(TimePosition.beats(0));
+    clip.setSubjectiveDuration(TimeDuration.beats(4));
+    clip.setAudioFile('test.wav');
+    trackA.push(clip);
+    data.getMixer().setExtraRenderTime(2.5);
+    data.getMixer().getChannels()[0].setMuted(true);
+
+    const pruned = buildStandardCSD(data, 'disk');
+    const mixerNote = pruned.csdText
+      .match(/<CsScore>([\s\S]*?)<\/CsScore>/)![1]
+      .split('\n')
+      .find((line) => line.includes('BlueMixer'));
+    // 4-beat clip at the default 60 bpm tempo map = 4 s + 2.5 s extra.
+    expect(mixerNote).toMatch(/6\.5/);
+  });
+
+  it('produces identical CSD text through the sync and async paths', async () => {
+    const { data, trackA, trackB } = createCertifiableProject();
+    addClip(trackA, 0, 4);
+    addClip(trackB, 0, 2);
+    data.getMixer().getChannels()[0].setMuted(true);
+
+    const sync = buildStandardCSD(data, 'disk');
+    const async = await buildStandardCSDAsync(data, 'disk');
+    expect(async.csdText).toBe(sync.csdText);
+    expect(sync.csdText).not.toContain('8\t"test.wav"');
+  });
+
+  it('retains fades and looping flags on surviving events', () => {
+    const { data, trackA, trackB } = createCertifiableProject();
+    const clip = new AudioClip();
+    clip.setStartTime(TimePosition.beats(0));
+    clip.setSubjectiveDuration(TimeDuration.beats(4));
+    clip.setAudioFile('test.wav');
+    clip.setLooping(null, true);
+    clip.setFadeIn(0.5);
+    clip.setFadeOut(1);
+    trackA.push(clip);
+    addClip(trackB, 0, 2);
+    data.getMixer().getChannels()[0].setMuted(true);
+
+    const result = buildStandardCSD(data, 'disk');
+    const score = result.csdText.match(/<CsScore>([\s\S]*?)<\/CsScore>/)![1];
+    // The muted track's looping clip is pruned; the other track's is intact.
+    expect(score).not.toContain('4\t"test.wav"');
+    expect(score).toContain('"test.wav"\t0\t0\t2\t');
   });
 });

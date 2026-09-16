@@ -1265,6 +1265,8 @@ export interface ProjectPropertiesSnapshot {
   trackLayerMuteSoloMode: TrackLayerMuteSoloMode;
   /** Raw stored text for an unsupported value; null when none is retained. */
   trackLayerMuteSoloModeRaw: string | null;
+  /** False when the property was absent from the loaded document. */
+  trackLayerMuteSoloModePresent: boolean;
 }
 
 export interface ClojureLibraryEntrySnapshot {
