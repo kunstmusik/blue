@@ -16,6 +16,8 @@ import {
   resolveMixerGateIntent,
 } from '@blue/data';
 import type { CompiledMixerGateBindings } from '@blue/data';
+import { decodeWavFile, peakResidualDbfs } from '@blue/data/test-support';
+import type { DecodedWav } from '@blue/data/test-support';
 import { ProjectHistory } from './project-history';
 import { ProjectSession } from './project-session';
 import { MockHistoryContext, FakePublicationRecorder } from './project-history-test-support';
@@ -57,63 +59,6 @@ function writeSineWav(filePath: string, seconds: number, sampleRate = 44100): vo
   header.write('data', 36);
   header.writeUInt32LE(data.length, 40);
   writeFileSync(filePath, Buffer.concat([header, data]));
-}
-
-interface DecodedWav {
-  sampleRate: number;
-  channels: number;
-  bitsPerSample: number;
-  samples: Float64Array; // interleaved
-}
-
-function decodeWav(filePath: string): DecodedWav {
-  const buffer = require('node:fs').readFileSync(filePath) as Buffer;
-  expect(buffer.toString('ascii', 0, 4)).toBe('RIFF');
-  expect(buffer.toString('ascii', 8, 12)).toBe('WAVE');
-  let offset = 12;
-  let formatTag = 1;
-  let channels = 1;
-  let sampleRate = 44100;
-  let bitsPerSample = 16;
-  let dataStart = -1;
-  let dataLength = 0;
-  while (offset + 8 <= buffer.length) {
-    const chunkId = buffer.toString('ascii', offset, offset + 4);
-    const chunkSize = buffer.readUInt32LE(offset + 4);
-    if (chunkId === 'fmt ') {
-      formatTag = buffer.readUInt16LE(offset + 8);
-      channels = buffer.readUInt16LE(offset + 10);
-      sampleRate = buffer.readUInt32LE(offset + 12);
-      bitsPerSample = buffer.readUInt16LE(offset + 22);
-    } else if (chunkId === 'data') {
-      dataStart = offset + 8;
-      dataLength = chunkSize;
-    }
-    offset += 8 + chunkSize + (chunkSize % 2);
-  }
-  expect(dataStart).toBeGreaterThan(0);
-  const bytesPerSample = bitsPerSample / 8;
-  const count = Math.floor(dataLength / bytesPerSample);
-  const samples = new Float64Array(count);
-  for (let i = 0; i < count; i++) {
-    samples[i] =
-      bitsPerSample === 16
-        ? buffer.readInt16LE(dataStart + i * 2)
-        : buffer.readFloatLE(dataStart + i * 4);
-  }
-  void formatTag;
-  return { sampleRate, channels, bitsPerSample, samples };
-}
-
-/** Peak residual in dBFS between two interleaved buffers; -Infinity when identical. */
-function peakResidualDbfs(a: Float64Array, b: Float64Array): number {
-  if (a.length !== b.length) return 0;
-  let peak = 0;
-  for (let i = 0; i < a.length; i++) {
-    const delta = Math.abs(a[i] - b[i]);
-    if (delta > peak) peak = delta;
-  }
-  return peak === 0 ? Number.NEGATIVE_INFINITY : 20 * Math.log10(peak);
 }
 
 function findRepositoryRoot(): string {
@@ -302,8 +247,11 @@ async function renderCsdToWav(
     if (!client) throw new Error('render engine client unavailable');
 
     const setOption = await client.setOption(`-o${wavPath}`);
-    const wavFormat = await client.setOption('-W');
-    if (!wavFormat.ok) throw new Error(`-W failed: ${wavFormat.message}`);
+    // T072: float WAV output so quantization never fakes or masks a residual.
+    const wavContainer = await client.setOption('-W');
+    if (!wavContainer.ok) throw new Error(`-W failed: ${wavContainer.message}`);
+    const wavFloat = await client.setOption('-f');
+    if (!wavFloat.ok) throw new Error(`-f failed: ${wavFloat.message}`);
     const compiled = await client.compileOrc(instrumentsMatch![1]);
     const score = await client.readScore(scoreMatch![1]);
     const started = await client.start();
@@ -333,7 +281,7 @@ async function renderCsdToWav(
       }
     }
     expect(existsSync(wavPath)).toBe(true);
-    return decodeWav(wavPath);
+    return decodeWavFile(wavPath);
   } finally {
     await session.shutdown('t111-render-complete');
   }
@@ -388,6 +336,11 @@ if (process.env.BLUE_RUN_REAL_ENGINE === '1') {
         );
 
         expect(prunedWav.sampleRate).toBe(unprunedWav.sampleRate);
+        // The planned float-audio contract: matching 32-bit float output.
+        expect(prunedWav.bitsPerSample).toBe(32);
+        expect(prunedWav.isFloat).toBe(true);
+        expect(unprunedWav.bitsPerSample).toBe(32);
+        expect(unprunedWav.isFloat).toBe(true);
         expect(prunedWav.samples.length).toBe(unprunedWav.samples.length);
         expect(prunedWav.samples.length).toBeGreaterThan(0);
         const residual = peakResidualDbfs(prunedWav.samples, unprunedWav.samples);

@@ -202,9 +202,14 @@ export function loadFromString(xmlString: string, createBlueData: () => BlueData
 
   // Post-loop (Spec 111 FR-015): record whether the loaded document carries
   // active channel mute/non-master solo flags so the compatibility notice
-  // reflects load provenance rather than later live edits.
+  // reflects load provenance rather than later live edits. Only a document
+  // from before the feature (mode property omitted) is "legacy": one that
+  // explicitly persists the mode already knew its flags were audible.
   const mixerChannels = [...state.mixer.getAllSourceChannels(), ...state.mixer.getSubChannels()];
-  if (mixerChannels.some((channel) => channel.isMuted() || channel.isSolo())) {
+  if (
+    !state.projectProperties.trackLayerMuteSoloModePresent &&
+    mixerChannels.some((channel) => channel.isMuted() || channel.isSolo())
+  ) {
     markLegacyMixerStateAtLoad(blueData);
   }
 

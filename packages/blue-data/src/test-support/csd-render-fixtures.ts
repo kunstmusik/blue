@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import { Buffer as NodeBuffer } from 'buffer';
 
 export const DEMO2026_BLUE_PATH = '/Users/stevenyi/work/blue/demo2026/01.blue';
 export const DEMO2026_CSD_PATH = '/Users/stevenyi/work/blue/demo2026/01.csd';
@@ -130,4 +131,86 @@ export function assertEquivalentRenderAudio(
     );
   }
   return comparison;
+}
+
+// ─── WAV decode and render-comparison helpers (Spec 111 T072) ───
+
+export interface DecodedWav {
+  readonly sampleRate: number;
+  readonly channels: number;
+  readonly bitsPerSample: number;
+  readonly isFloat: boolean;
+  /** Interleaved samples as doubles. */
+  readonly samples: Float64Array;
+}
+
+/**
+ * Decodes a RIFF WAVE file (16-bit PCM or 32-bit float). The real-engine
+ * render comparison requires matching 32-bit float output so quantization
+ * never masks or fakes a residual.
+ */
+export function decodeWavBuffer(buffer: Uint8Array): DecodedWav {
+  const view = NodeBuffer.from(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+  if (view.toString('ascii', 0, 4) !== 'RIFF' || view.toString('ascii', 8, 12) !== 'WAVE') {
+    throw new Error('Not a RIFF WAVE file');
+  }
+  let offset = 12;
+  let channels = 1;
+  let sampleRate = 44100;
+  let bitsPerSample = 16;
+  let audioFormat = 1;
+  let dataStart = -1;
+  let dataLength = 0;
+  while (offset + 8 <= view.length) {
+    const chunkId = view.toString('ascii', offset, offset + 4);
+    const chunkSize = view.readUInt32LE(offset + 4);
+    if (chunkId === 'fmt ') {
+      audioFormat = view.readUInt16LE(offset + 8);
+      channels = view.readUInt16LE(offset + 10);
+      sampleRate = view.readUInt32LE(offset + 12);
+      bitsPerSample = view.readUInt16LE(offset + 22);
+    } else if (chunkId === 'data') {
+      dataStart = offset + 8;
+      dataLength = chunkSize;
+    }
+    offset += 8 + chunkSize + (chunkSize % 2);
+  }
+  if (dataStart < 0) {
+    throw new Error('WAV file has no data chunk');
+  }
+  const bytesPerSample = bitsPerSample / 8;
+  const count = Math.floor(dataLength / bytesPerSample);
+  const samples = new Float64Array(count);
+  for (let i = 0; i < count; i++) {
+    if (bitsPerSample === 32 && audioFormat === 3) {
+      samples[i] = view.readFloatLE(dataStart + i * 4);
+    } else if (bitsPerSample === 16) {
+      samples[i] = view.readInt16LE(dataStart + i * 2);
+    } else {
+      throw new Error(`Unsupported WAV sample format: ${bitsPerSample}-bit fmt=${audioFormat}`);
+    }
+  }
+  return {
+    sampleRate,
+    channels,
+    bitsPerSample,
+    isFloat: audioFormat === 3,
+    samples,
+  };
+}
+
+export function decodeWavFile(filePath: string): DecodedWav {
+  // Node-only test support: this module already hosts fs usage.
+  return decodeWavBuffer(fs.readFileSync(filePath));
+}
+
+/** Peak residual in dBFS between two interleaved buffers; -Infinity when identical. */
+export function peakResidualDbfs(a: Float64Array, b: Float64Array): number {
+  if (a.length !== b.length) return 0;
+  let peak = 0;
+  for (let i = 0; i < a.length; i++) {
+    const delta = Math.abs(a[i] - b[i]);
+    if (delta > peak) peak = delta;
+  }
+  return peak === 0 ? Number.NEGATIVE_INFINITY : 20 * Math.log10(peak);
 }

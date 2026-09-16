@@ -15,6 +15,16 @@
         "types": "./dist/cjs/index.d.ts",
         "default": "./dist/cjs/index.js"
       }
+    },
+    "./test-support": {
+      "import": {
+        "types": "./dist/esm/test-support/csd-comparison.d.ts",
+        "default": "./dist/esm/test-support/csd-comparison.js"
+      },
+      "require": {
+        "types": "./dist/cjs/test-support/csd-comparison.d.ts",
+        "default": "./dist/cjs/test-support/csd-comparison.js"
+      }
     }
   },
   "files": [

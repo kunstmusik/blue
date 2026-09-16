@@ -28,7 +28,10 @@ Machine-verified on 2026-09-15/16 (darwin arm64, local release engine): all pack
 `BLUE_RUN_REAL_ENGINE=1` — including a 300-gate two-bank staged publication with applied-echo
 observation inside the 100 ms budget, a running-performance mute commit→undo→redo gate
 reconciliation with engine readback (T054), and the deterministic optimized/unoptimized disk
-render comparison: identical sample counts, residual within the −120 dBFS bound (T045).
+render comparison (T045/T072): both renders request 32-bit float WAV output (`-W -f`), the
+test asserts the float format on both files, and the samples match with identical counts and
+a residual within the −120 dBFS bound. There is deliberately no fallback to quantized output:
+if the engine cannot produce float WAV the test fails instead of comparing masked residuals.
 
 Still required before release: the hardware-playback UI-to-audio latency measurement
 (T065 — the protocol-level publication latency is not a substitute; run the documented
