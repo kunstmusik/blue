@@ -84,10 +84,10 @@ describe('Mixer strip mute/solo controls (Spec 111)', () => {
     expect(mute).not.toBeNull();
     expect(solo).not.toBeNull();
     expect(mute!.getAttribute('aria-pressed')).toBe('false');
-    expect(mute!.className).toContain('px-1.5');
-    expect(solo!.className).toContain('px-1.5');
-    expect(mute!.className).toContain('min-w-6');
-    expect(solo!.className).toContain('min-w-6');
+    expect(mute!.className).toContain('w-5');
+    expect(solo!.className).toContain('w-5');
+    expect(mute!.className).toContain('h-4');
+    expect(solo!.className).toContain('h-4');
 
     act(() => {
       mute!.click();

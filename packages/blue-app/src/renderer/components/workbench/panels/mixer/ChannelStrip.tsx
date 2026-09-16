@@ -1181,8 +1181,10 @@ export default React.memo(function ChannelStrip({
         <button
           type="button"
           className={cn(
-            'mixer-strip-mute inline-flex min-w-6 items-center justify-center rounded-sm border px-1.5 py-0.5 font-bold',
-            channel.muted && 'bg-app-warning text-app-warning-foreground',
+            'mixer-strip-mute w-5 h-4 text-role-callout font-bold rounded-sm border flex items-center justify-center transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus disabled:opacity-40 disabled:cursor-not-allowed',
+            channel.muted
+              ? 'bg-app-warning text-app-warning-foreground border-transparent shadow-xs'
+              : 'bg-transparent border-app-border/30 text-app-text-muted hover:text-app-text hover:border-app-border/60',
           )}
           aria-pressed={channel.muted}
           aria-label={`${displayName} Mute`}
@@ -1210,8 +1212,10 @@ export default React.memo(function ChannelStrip({
           <button
             type="button"
             className={cn(
-              'mixer-strip-solo inline-flex min-w-6 items-center justify-center rounded-sm border px-1.5 py-0.5 font-bold',
-              channel.solo && 'bg-app-success text-app-success-foreground',
+              'mixer-strip-solo w-5 h-4 text-role-callout font-bold rounded-sm border flex items-center justify-center transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus disabled:opacity-40 disabled:cursor-not-allowed',
+              channel.solo
+                ? 'bg-app-success text-app-success-foreground border-transparent shadow-xs'
+                : 'bg-transparent border-app-border/30 text-app-text-muted hover:text-app-text hover:border-app-border/60',
             )}
             aria-pressed={channel.solo}
             aria-label={`${displayName} Solo`}
