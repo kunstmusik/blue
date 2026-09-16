@@ -10,6 +10,8 @@ import { AudioClip } from '../score/audio/audio-clip';
 import { buildStandardCSD, buildStandardCSDAsync } from './csd-policy';
 import { AddProcessor } from '../note-processors/add-processor';
 import { GenericScore } from '../sound-objects/generic-score';
+import { CurveType } from '../time/curve-type';
+import { TempoPoint } from '../time/tempo-point';
 import { TimePosition } from '../time/time-position';
 import { TimeDuration } from '../time/time-duration';
 
@@ -48,11 +50,11 @@ function createCertifiableProject(): {
   return { data, group, trackA, trackB };
 }
 
-function addClip(track: Track, start: number, duration: number): void {
+function addClip(track: Track, start: number, duration: number, audioFile = 'test.wav'): void {
   const clip = new AudioClip();
   clip.setStartTime(TimePosition.beats(start));
   clip.setSubjectiveDuration(TimeDuration.beats(duration));
-  clip.setAudioFile('test.wav');
+  clip.setAudioFile(audioFile);
   track.push(clip);
 }
 
@@ -314,29 +316,121 @@ describe('disk pruning fallback matrix (Spec 111 T068)', () => {
     const score = result.csdText.match(/<CsScore>([\s\S]*?)<\/CsScore>/)![1];
     expect(score).toContain('"test.wav"');
   });
+
+  it('retains a muted candidate when another track owns authored shared instrument code', async () => {
+    const { data, trackA, trackB } = createCertifiableProject();
+    addClip(trackA, 0, 4, 'muted-candidate.wav');
+    addClip(trackB, 0, 2, 'audible-track.wav');
+    data.getMixer().getChannels()[0].setMuted(true);
+    const instrument = new GenericInstrument();
+    instrument.setGlobalOrc('gk_track_shared init 1');
+    instrument.setText('a1 oscili 0.1, 220\n  outc a1, a1');
+    trackB.setOwnedInstrument(instrument);
+
+    const sync = buildStandardCSD(data, 'disk').csdText;
+    const asyncText = (await buildStandardCSDAsync(data, 'disk')).csdText;
+    for (const text of [sync, asyncText]) {
+      const score = text.match(/<CsScore>([\s\S]*?)<\/CsScore>/)![1];
+      expect(score.match(/"muted-candidate\.wav"/g)).toHaveLength(1);
+      expect(score.match(/"audible-track\.wav"/g)).toHaveLength(1);
+    }
+  });
 });
 
 describe('disk pruning scheduling and parity (Spec 111 T069)', () => {
   it('preserves a nonzero render window when the longest in-window clip is pruned', () => {
     const { data, trackA, trackB } = createCertifiableProject();
-    addClip(trackA, 0, 10);
-    addClip(trackB, 0, 2);
+    addClip(trackA, 0, 10, 'muted-window.wav');
+    addClip(trackB, 1, 6, 'surviving-window.wav');
     data.getMixer().getChannels()[0].setMuted(true);
+    const tempoMap = data.getScore().getTimeContext().getTempoMap();
+    tempoMap.setTempoPoint(0, 0, 120, CurveType.LINEAR);
+    tempoMap.addTempoPoint(new TempoPoint(4, 90, CurveType.CONSTANT));
+    tempoMap.setEnabled(true);
+    data.setRenderStartTime(2);
     data.setRenderEndTime(6);
+
+    const pruned = buildStandardCSD(data, 'disk');
+    const asyncPruned = buildStandardCSDAsync(data, 'disk');
+    const scoreLinesOf = (text: string): string[] =>
+      text
+        .match(/<CsScore>([\s\S]*?)<\/CsScore>/)![1]
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0);
+    const audioLineOf = (text: string, file: string): string[] =>
+      scoreLinesOf(text).filter((line) => line.includes(`"${file}"`));
+    const audioPayloadOf = (text: string, file: string): string[] =>
+      audioLineOf(text, file).map((line) => line.replace(/^i[^\t ]+\t/, 'i<track-audio>\t'));
+    const nonAudioLinesOf = (text: string): string[] =>
+      scoreLinesOf(text)
+        .filter((line) => !line.includes('.wav'))
+        .map((line) => line.replace(/^i\d+\t/, 'i<instrument>\t'));
+    const mixerNoteOf = (text: string): string | undefined =>
+      scoreLinesOf(text).find((line) => line.includes('BlueMixer'));
+
+    const mixerNote = mixerNoteOf(pruned.csdText);
+    expect(mixerNote).toBeTruthy();
+    expect(pruned.csdText).toContain('t 0 105.0 2.0 90.0 4.0 90.0');
+    expect(audioLineOf(pruned.csdText, 'muted-window.wav')).toHaveLength(0);
+    expect(audioLineOf(pruned.csdText, 'surviving-window.wav')).toHaveLength(1);
+
+    // Same project, pruning disabled via a benign global-orc comment oracle:
+    // identical audio, uncertified, so every event renders.
+    const oracleData = createCertifiableProject();
+    addClip(oracleData.trackA, 0, 10, 'muted-window.wav');
+    addClip(oracleData.trackB, 1, 6, 'surviving-window.wav');
+    oracleData.data.getMixer().getChannels()[0].setMuted(true);
+    const oracleTempoMap = oracleData.data.getScore().getTimeContext().getTempoMap();
+    oracleTempoMap.setTempoPoint(0, 0, 120, CurveType.LINEAR);
+    oracleTempoMap.addTempoPoint(new TempoPoint(4, 90, CurveType.CONSTANT));
+    oracleTempoMap.setEnabled(true);
+    oracleData.data.setRenderStartTime(2);
+    oracleData.data.setRenderEndTime(6);
+    oracleData.data.getGlobalOrcSco().setGlobalOrc('; pruning-disable oracle\n');
+    const unpruned = buildStandardCSD(oracleData.data, 'disk');
+    expect(audioLineOf(unpruned.csdText, 'muted-window.wav')).toHaveLength(1);
+    expect(audioPayloadOf(unpruned.csdText, 'surviving-window.wav')).toEqual(
+      audioPayloadOf(pruned.csdText, 'surviving-window.wav'),
+    );
+    expect(nonAudioLinesOf(unpruned.csdText)).toEqual(nonAudioLinesOf(pruned.csdText));
+    expect(mixerNoteOf(unpruned.csdText)).toBe(mixerNote);
+
+    return asyncPruned.then((asyncResult) => {
+      expect(asyncResult.csdText).toBe(pruned.csdText);
+    });
+  });
+
+  it('keeps mixer extra render time and tempo-mapped clip bounds in the duration', () => {
+    const { data, trackA, trackB } = createCertifiableProject();
+    addClip(trackA, 0, 4, 'muted-extra.wav');
+    addClip(trackB, 0, 2, 'surviving-extra.wav');
+    data.getMixer().setExtraRenderTime(2.5);
+    data.getMixer().getChannels()[0].setMuted(true);
+    const tempoMap = data.getScore().getTimeContext().getTempoMap();
+    tempoMap.setTempoPoint(0, 0, 96, CurveType.CONSTANT);
+    tempoMap.addTempoPoint(new TempoPoint(4, 144, CurveType.CONSTANT));
+    tempoMap.setEnabled(true);
 
     const pruned = buildStandardCSD(data, 'disk');
     const mixerNote = pruned.csdText
       .match(/<CsScore>([\s\S]*?)<\/CsScore>/)![1]
       .split('\n')
       .find((line) => line.includes('BlueMixer'));
-    expect(mixerNote).toBeTruthy();
+    // The tempo map is nonconstant, while the shared beat-domain duration is
+    // still four beats plus the mixer's extra render time.
+    expect(mixerNote).toMatch(/6\.5/);
+    expect(pruned.csdText).toContain('t 0 96.0 4.0 96.0 4.0 144.0');
 
-    // Same project, pruning disabled via a benign global-orc comment oracle:
-    // identical audio, uncertified, so every event renders.
     const oracleData = createCertifiableProject();
-    addClip(oracleData.trackA, 0, 10);
-    addClip(oracleData.trackB, 0, 2);
-    oracleData.data.setRenderEndTime(6);
+    addClip(oracleData.trackA, 0, 4, 'muted-extra.wav');
+    addClip(oracleData.trackB, 0, 2, 'surviving-extra.wav');
+    oracleData.data.getMixer().setExtraRenderTime(2.5);
+    oracleData.data.getMixer().getChannels()[0].setMuted(true);
+    const oracleTempoMap = oracleData.data.getScore().getTimeContext().getTempoMap();
+    oracleTempoMap.setTempoPoint(0, 0, 96, CurveType.CONSTANT);
+    oracleTempoMap.addTempoPoint(new TempoPoint(4, 144, CurveType.CONSTANT));
+    oracleTempoMap.setEnabled(true);
     oracleData.data.getGlobalOrcSco().setGlobalOrc('; pruning-disable oracle\n');
     const unpruned = buildStandardCSD(oracleData.data, 'disk');
     const unprunedMixerNote = unpruned.csdText
@@ -344,25 +438,6 @@ describe('disk pruning scheduling and parity (Spec 111 T069)', () => {
       .split('\n')
       .find((line) => line.includes('BlueMixer'));
     expect(unprunedMixerNote).toBe(mixerNote);
-  });
-
-  it('keeps mixer extra render time and tempo-mapped clip bounds in the duration', () => {
-    const { data, trackA } = createCertifiableProject();
-    const clip = new AudioClip();
-    clip.setStartTime(TimePosition.beats(0));
-    clip.setSubjectiveDuration(TimeDuration.beats(4));
-    clip.setAudioFile('test.wav');
-    trackA.push(clip);
-    data.getMixer().setExtraRenderTime(2.5);
-    data.getMixer().getChannels()[0].setMuted(true);
-
-    const pruned = buildStandardCSD(data, 'disk');
-    const mixerNote = pruned.csdText
-      .match(/<CsScore>([\s\S]*?)<\/CsScore>/)![1]
-      .split('\n')
-      .find((line) => line.includes('BlueMixer'));
-    // 4-beat clip at the default 60 bpm tempo map = 4 s + 2.5 s extra.
-    expect(mixerNote).toMatch(/6\.5/);
   });
 
   it('produces identical CSD text through the sync and async paths', async () => {
@@ -379,21 +454,34 @@ describe('disk pruning scheduling and parity (Spec 111 T069)', () => {
 
   it('retains fades and looping flags on surviving events', () => {
     const { data, trackA, trackB } = createCertifiableProject();
-    const clip = new AudioClip();
-    clip.setStartTime(TimePosition.beats(0));
-    clip.setSubjectiveDuration(TimeDuration.beats(4));
-    clip.setAudioFile('test.wav');
-    clip.setLooping(null, true);
-    clip.setFadeIn(0.5);
-    clip.setFadeOut(1);
-    trackA.push(clip);
-    addClip(trackB, 0, 2);
+    const mutedClip = new AudioClip();
+    mutedClip.setStartTime(TimePosition.beats(0));
+    mutedClip.setSubjectiveDuration(TimeDuration.beats(4));
+    mutedClip.setAudioFile('muted-fade-loop.wav');
+    mutedClip.setLooping(null, true);
+    mutedClip.setFadeIn(0.5);
+    mutedClip.setFadeOut(1);
+    trackA.push(mutedClip);
+
+    const survivingClip = new AudioClip();
+    survivingClip.setStartTime(TimePosition.beats(0));
+    survivingClip.setSubjectiveDuration(TimeDuration.beats(2));
+    survivingClip.setAudioFile('surviving-fade-loop.wav');
+    survivingClip.setLooping(null, true);
+    survivingClip.setFadeIn(0.25);
+    survivingClip.setFadeOut(0.75);
+    trackB.push(survivingClip);
     data.getMixer().getChannels()[0].setMuted(true);
 
     const result = buildStandardCSD(data, 'disk');
+    const asyncResult = buildStandardCSDAsync(data, 'disk');
     const score = result.csdText.match(/<CsScore>([\s\S]*?)<\/CsScore>/)![1];
-    // The muted track's looping clip is pruned; the other track's is intact.
-    expect(score).not.toContain('4\t"test.wav"');
-    expect(score).toContain('"test.wav"\t0\t0\t2\t');
+    // The muted track's looping clip is pruned; the distinct surviving event
+    // retains its fade and loop p-fields in both generation paths.
+    expect(score).not.toContain('"muted-fade-loop.wav"');
+    expect(score).toContain('"surviving-fade-loop.wav"\t0\t0\t2\t0\t0.25\t0\t0.75\t1');
+    return asyncResult.then((asyncCsd) => {
+      expect(asyncCsd.csdText).toBe(result.csdText);
+    });
   });
 });

@@ -18,6 +18,7 @@ import type {
 import { isBoundedTargetIdentity, isNonnegativeInteger } from '../shared/midi-input';
 import type { EngineRuntimeService } from './engine-runtime';
 import type { EngineControlTrafficObservation } from './engine-bridge';
+import type { MixerGateEngineIO } from './mixer-mute-solo-runtime';
 
 export type BlueLiveEngineStatus =
   | 'idle'
@@ -763,6 +764,16 @@ export class BlueLiveEngineSession {
   /** Generation-scoped mixer gate catalog compiled into this session's CSD. */
   getMixerGateBindings(): CompiledMixerGateBindings | null {
     return this.mixerGateBindings;
+  }
+
+  /** Captures the exact engine client owned by the current Blue Live generation. */
+  getMixerGateEngineIO(): MixerGateEngineIO | null {
+    const client = this.bridge?.getClient();
+    if (!client) return null;
+    return {
+      setChannels: (entries) => client.setChannels(entries),
+      getChannels: (names) => client.getChannels(names),
+    };
   }
 
   private async cleanup(): Promise<void> {

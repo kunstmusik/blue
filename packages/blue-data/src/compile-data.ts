@@ -85,6 +85,10 @@ export type CompiledMixerGateLocator =
       readonly route: 'output';
       readonly channelOrdinal: number;
       readonly channelKind: 'source' | 'sub' | 'master';
+      /** Stable channel identity captured from canonical mixer data. */
+      readonly channelIdentity: string;
+      /** Stable route-entry identity within that channel. */
+      readonly entryIdentity: string;
       /** Track/instrument association of the gated channel, '' when unset. */
       readonly association: string;
     }
@@ -92,6 +96,10 @@ export type CompiledMixerGateLocator =
       readonly route: 'send';
       readonly channelOrdinal: number;
       readonly channelKind: 'source' | 'sub' | 'master';
+      /** Stable channel identity captured from canonical mixer data. */
+      readonly channelIdentity: string;
+      /** Stable route-entry identity within that channel. */
+      readonly entryIdentity: string;
       readonly chainKind: 'pre' | 'post';
       readonly chainIndex: number;
       readonly targetName: string;

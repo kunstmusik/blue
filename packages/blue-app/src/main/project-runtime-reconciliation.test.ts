@@ -10,6 +10,12 @@ import {
   type RuntimeOperationAck,
   type RuntimeWorkOperation,
 } from './project-runtime-reconciliation';
+import { MixerGatePublisher } from './mixer-mute-solo-runtime';
+import {
+  createTestGateCatalog,
+  FakeMixerGateEngine,
+  TEST_GATE_SIGNATURE,
+} from './mixer-mute-solo-test-support';
 
 function makeClient(
   overrides: Partial<AcknowledgedRuntimeClient> = {},
@@ -31,6 +37,12 @@ function mixerLevelPatch(level: number): ProjectDocumentPatch {
 
 function globalOrcPatch(): ProjectDocumentPatch {
   return { globalOrc: '; restored orchestra\n' };
+}
+
+function mixerMutePatch(muted: boolean): ProjectDocumentPatch {
+  return {
+    mixer: { type: 'updateChannel', channelId: 'source', patch: { muted } },
+  };
 }
 
 describe('Runtime capability classification (T017)', () => {
@@ -387,6 +399,63 @@ describe('Runtime work plans (T017)', () => {
         payload: { parameterId: 'param-1', points: [{ time: 4, value: 0.5 }] },
       },
     ]);
+  });
+
+  it('requires a fresh generation when mixer gate ownership changes after reorder and rename', async () => {
+    let resolved = { signature: 'topology-before', values: [0] as readonly number[] };
+    const client = makeClient();
+    const reconciliation = new ProjectRuntimeReconciliation({
+      resolveMixerGates: () => resolved,
+    });
+    const oldBinding = new Map([
+      ['mixer-gates::gates', { kind: 'mixer-gates' as const, signature: resolved.signature }],
+    ]);
+    reconciliation.registerPerformance('timeline', 1, client, oldBinding);
+
+    const first = await reconciliation.reconcileCommit({
+      documentId: 'doc-1',
+      revision: 1,
+      patches: [mixerMutePatch(true)],
+    });
+    expect(first[0]?.status).toBe('applied');
+    expect(client.applied).toHaveLength(1);
+    expect(client.applied[0]).toEqual(
+      expect.objectContaining({ kind: 'mixer-gates', expectedGeneration: 1 }),
+    );
+
+    // Reorder plus a route/name edit changes the canonical compiled ownership.
+    // The still-running old CSD must not receive the new vector by ordinal.
+    resolved = { signature: 'topology-after-reorder-and-rename', values: [1] };
+    const stale = await reconciliation.reconcileCommit({
+      documentId: 'doc-1',
+      revision: 2,
+      patches: [mixerMutePatch(false)],
+    });
+    expect(stale[0]).toEqual(
+      expect.objectContaining({ status: 'restart-required', affectedOwnerIds: ['mixer-gates'] }),
+    );
+    expect(client.applied).toHaveLength(1);
+
+    // Undo/redo-style continuation is live only after a fresh generation has
+    // installed the replacement catalog.
+    reconciliation.registerPerformance(
+      'timeline',
+      2,
+      client,
+      new Map([
+        ['mixer-gates::gates', { kind: 'mixer-gates' as const, signature: resolved.signature }],
+      ]),
+    );
+    const fresh = await reconciliation.reconcileCommit({
+      documentId: 'doc-1',
+      revision: 3,
+      patches: [mixerMutePatch(true)],
+    });
+    expect(fresh[0]?.status).toBe('applied');
+    expect(client.applied).toHaveLength(2);
+    expect(client.applied[1]).toEqual(
+      expect.objectContaining({ kind: 'mixer-gates', expectedGeneration: 2 }),
+    );
   });
 
   it('plans BlueX7 operator and envelope edits against compiled semantic keys', () => {
@@ -917,6 +986,174 @@ describe('Generation-scoped fencing (T017)', () => {
     expect(reconciliation.getOutcome('timeline')).toBeNull();
   });
 
+  it.each(['timeline', 'blueLive'] as const)(
+    'does not let delayed mixer gate work write a replacement or report applied for %s',
+    async (performanceKind) => {
+      const oldEngine = new FakeMixerGateEngine();
+      const newEngine = new FakeMixerGateEngine();
+      let releaseStage!: () => void;
+      let stageStarted!: () => void;
+      const stageReady = new Promise<void>((resolve) => {
+        stageStarted = resolve;
+      });
+      const stageRelease = new Promise<void>((resolve) => {
+        releaseStage = resolve;
+      });
+      const oldIO = {
+        setChannels: async (entries: readonly { name: string; value: number }[]) => {
+          stageStarted();
+          await stageRelease;
+          return oldEngine.setChannels(entries);
+        },
+        getChannels: (names: readonly string[]) => oldEngine.getChannels(names),
+      };
+      const oldPublisher = new MixerGatePublisher(oldIO, { observeAttempts: 1 });
+      const newPublisher = new MixerGatePublisher(newEngine, { observeAttempts: 1 });
+      const catalog = createTestGateCatalog(1);
+      oldPublisher.setBindings(performanceKind, catalog, { generation: 1, io: oldIO });
+
+      let gateValues: readonly number[] = [0];
+      const reconciliation = new ProjectRuntimeReconciliation({
+        resolveMixerGates: () => ({ signature: TEST_GATE_SIGNATURE, values: gateValues }),
+      });
+      const oldClient = makeClient({
+        async applyOperation(operation) {
+          if (operation.kind !== 'mixer-gates') return { status: 'applied' };
+          const result = await oldPublisher.publish(
+            performanceKind,
+            operation.signature,
+            operation.values,
+            operation.expectedGeneration,
+          );
+          return result.ok
+            ? { status: 'applied' as const }
+            : { status: 'rejected' as const, message: result.message };
+        },
+      });
+      reconciliation.registerPerformance(
+        performanceKind,
+        1,
+        oldClient,
+        new Map([['mixer-gates::gates', { kind: 'mixer-gates', signature: TEST_GATE_SIGNATURE }]]),
+      );
+
+      const oldCommit = reconciliation.reconcileCommit({
+        documentId: 'doc-1',
+        revision: 1,
+        patches: [mixerMutePatch(true)],
+      });
+      await stageReady;
+
+      oldPublisher.reset(performanceKind);
+      const newClient = makeClient({
+        async applyOperation(operation) {
+          if (operation.kind !== 'mixer-gates') return { status: 'applied' };
+          const result = await newPublisher.publish(
+            performanceKind,
+            operation.signature,
+            operation.values,
+            operation.expectedGeneration,
+          );
+          return result.ok
+            ? { status: 'applied' as const }
+            : { status: 'rejected' as const, message: result.message };
+        },
+      });
+      newPublisher.setBindings(performanceKind, catalog, { generation: 2, io: newEngine });
+      reconciliation.registerPerformance(
+        performanceKind,
+        2,
+        newClient,
+        new Map([['mixer-gates::gates', { kind: 'mixer-gates', signature: TEST_GATE_SIGNATURE }]]),
+      );
+      releaseStage();
+
+      expect(await oldCommit).toHaveLength(0);
+      expect(newEngine.writes).toHaveLength(0);
+
+      gateValues = [1];
+      const replacementCommit = await reconciliation.reconcileCommit({
+        documentId: 'doc-1',
+        revision: 2,
+        patches: [mixerMutePatch(false)],
+      });
+      expect(replacementCommit[0]).toEqual(expect.objectContaining({ status: 'applied' }));
+      expect(newEngine.writes.length).toBeGreaterThan(0);
+    },
+  );
+
+  it.each(['timeline', 'blueLive'] as const)(
+    'stops a queued mixer gate retry after %s replacement',
+    async (performanceKind) => {
+      const oldEngine = new FakeMixerGateEngine();
+      const replacementEngine = new FakeMixerGateEngine();
+      let firstAttempt!: () => void;
+      const firstAttemptReady = new Promise<void>((resolve) => {
+        firstAttempt = resolve;
+      });
+      let first = true;
+      const oldIO = {
+        setChannels: async (entries: readonly { name: string; value: number }[]) => {
+          if (first) {
+            first = false;
+            firstAttempt();
+            oldEngine.writes.push([...entries]);
+            return { ok: false, message: 'engine-batch-queue-full' };
+          }
+          return oldEngine.setChannels(entries);
+        },
+        getChannels: (names: readonly string[]) => oldEngine.getChannels(names),
+      };
+      const publisher = new MixerGatePublisher(oldIO, {
+        stageRetryDelayMs: 20,
+        observeAttempts: 1,
+      });
+      const catalog = createTestGateCatalog(1);
+      publisher.setBindings(performanceKind, catalog, { generation: 1, io: oldIO });
+      const reconciliation = new ProjectRuntimeReconciliation({
+        resolveMixerGates: () => ({ signature: TEST_GATE_SIGNATURE, values: [0] }),
+      });
+      const oldClient = makeClient({
+        async applyOperation(operation) {
+          if (operation.kind !== 'mixer-gates') return { status: 'applied' };
+          const result = await publisher.publish(
+            performanceKind,
+            operation.signature,
+            operation.values,
+            operation.expectedGeneration,
+          );
+          return result.ok
+            ? { status: 'applied' as const }
+            : { status: 'rejected' as const, message: result.message };
+        },
+      });
+      reconciliation.registerPerformance(
+        performanceKind,
+        1,
+        oldClient,
+        new Map([['mixer-gates::gates', { kind: 'mixer-gates', signature: TEST_GATE_SIGNATURE }]]),
+      );
+
+      const oldCommit = reconciliation.reconcileCommit({
+        documentId: 'doc-1',
+        revision: 1,
+        patches: [mixerMutePatch(true)],
+      });
+      await firstAttemptReady;
+      publisher.reset(performanceKind);
+      reconciliation.registerPerformance(
+        performanceKind,
+        2,
+        makeClient(),
+        new Map([['mixer-gates::gates', { kind: 'mixer-gates', signature: TEST_GATE_SIGNATURE }]]),
+      );
+
+      expect(await oldCommit).toHaveLength(0);
+      expect(oldEngine.writes).toHaveLength(1);
+      expect(replacementEngine.writes).toHaveLength(0);
+    },
+  );
+
   it('rejects binding rebuilds for stale generations', () => {
     const reconciliation = new ProjectRuntimeReconciliation();
     reconciliation.registerPerformance('blueLive', 4, makeClient());
@@ -1116,9 +1353,106 @@ describe('Generation-scoped fencing (T017)', () => {
         revision: 3,
         patches: [{ mixer: { type: 'updateChannel', channelId: 'Other', patch: { level: 0.7 } } }],
       });
-      expect(reconciliation.getOutcome('timeline')!.status).toBe('applied');
+      expect(reconciliation.getOutcome('timeline')).toEqual(
+        expect.objectContaining({
+          status: 'restart-required',
+          desiredRevision: 3,
+          affectedOwnerIds: expect.arrayContaining(['Master', 'Other']),
+        }),
+      );
       expect(client.applied).toHaveLength(1);
       expect(client.applied[0]!.ownerKey).toBe('Other');
+    });
+
+    it('keeps timeline and Blue Live obligations independent while unrelated work still applies', async () => {
+      const timeline = makeClient();
+      let failBlueLiveOnce = true;
+      const blueLive = makeClient({
+        async applyOperation() {
+          if (failBlueLiveOnce) {
+            failBlueLiveOnce = false;
+            return { status: 'rejected', message: 'Blue Live gate transport failed' };
+          }
+          return { status: 'applied' };
+        },
+      });
+      const bindings = new Map<string, RuntimeBinding>([
+        ['Master::level', { kind: 'channel', channel: 'gkMasterLevel' }],
+        ['Other::level', { kind: 'channel', channel: 'gkOtherLevel' }],
+      ]);
+      const reconciliation = new ProjectRuntimeReconciliation();
+      reconciliation.registerPerformance('timeline', 1, timeline, new Map(bindings));
+      reconciliation.registerPerformance('blueLive', 1, blueLive, new Map(bindings));
+
+      const results = await reconciliation.reconcileCommit({
+        documentId: 'doc-1',
+        revision: 1,
+        patches: [mixerLevelPatch(0.4)],
+      });
+      expect(results.map((outcome) => [outcome.performanceKind, outcome.status])).toEqual([
+        ['timeline', 'applied'],
+        ['blueLive', 'failed'],
+      ]);
+
+      const followUp = await reconciliation.reconcileCommit({
+        documentId: 'doc-1',
+        revision: 2,
+        patches: [{ mixer: { type: 'updateChannel', channelId: 'Other', patch: { level: 0.7 } } }],
+      });
+      expect(followUp.find((outcome) => outcome.performanceKind === 'timeline')).toEqual(
+        expect.objectContaining({ status: 'applied', desiredRevision: 2 }),
+      );
+      expect(followUp.find((outcome) => outcome.performanceKind === 'blueLive')).toEqual(
+        expect.objectContaining({
+          status: 'failed',
+          desiredRevision: 2,
+          affectedOwnerIds: expect.arrayContaining(['Master', 'Other']),
+        }),
+      );
+      expect(timeline.applied).toHaveLength(2);
+      expect(blueLive.applied).toHaveLength(0);
+    });
+
+    it('clears a failed owner only after a later acknowledged operation for that owner', async () => {
+      let rejectMaster = true;
+      const client = makeClient({
+        async applyOperation(operation) {
+          if (operation.ownerKey === 'Master' && rejectMaster) {
+            return { status: 'rejected', message: 'Master update failed' };
+          }
+          return { status: 'applied' };
+        },
+      });
+      const reconciliation = new ProjectRuntimeReconciliation();
+      reconciliation.registerPerformance(
+        'timeline',
+        1,
+        client,
+        new Map([
+          ['Master::level', { kind: 'channel', channel: 'gkMasterLevel' }],
+          ['Other::level', { kind: 'channel', channel: 'gkOtherLevel' }],
+        ]),
+      );
+
+      await reconciliation.reconcileCommit({
+        documentId: 'doc-1',
+        revision: 1,
+        patches: [mixerLevelPatch(0.4)],
+      });
+      rejectMaster = false;
+      const unrelated = await reconciliation.reconcileCommit({
+        documentId: 'doc-1',
+        revision: 2,
+        patches: [{ mixer: { type: 'updateChannel', channelId: 'Other', patch: { level: 0.7 } } }],
+      });
+      expect(unrelated[0]).toEqual(expect.objectContaining({ status: 'failed' }));
+
+      const recovered = await reconciliation.reconcileCommit({
+        documentId: 'doc-1',
+        revision: 3,
+        patches: [mixerLevelPatch(0.6)],
+      });
+      expect(recovered[0]).toEqual(expect.objectContaining({ status: 'applied' }));
     });
   });
 

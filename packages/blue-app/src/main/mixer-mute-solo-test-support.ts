@@ -23,6 +23,8 @@ export function createTestGateCatalog(
         route: 'output' as const,
         channelOrdinal: ordinal,
         channelKind: 'source' as const,
+        channelIdentity: `test-source:${ordinal}`,
+        entryIdentity: `test-source:${ordinal}:output`,
         association: '',
       },
     })),
@@ -36,6 +38,8 @@ export type FakeGateFailureMode =
   | 'queue-full-always'
   | 'stage-failure'
   | 'commit-write-failure'
+  | 'commit-write-throws'
+  | 'applied-read-throws'
   | 'applied-echo-delayed'
   | 'applied-echo-never';
 
@@ -118,6 +122,9 @@ export class FakeMixerGateEngine implements MixerGateEngineIO {
         }
       }
     }
+    if (isCommitWrite && this.failureMode === 'commit-write-throws') {
+      throw new Error('commit transport disconnected after write');
+    }
     return { ok: true, message: 'ok' };
   }
 
@@ -125,6 +132,9 @@ export class FakeMixerGateEngine implements MixerGateEngineIO {
     names: readonly string[],
   ): Promise<{ ok: true; values: number[] } | { ok: false; message: string }> {
     this.reads.push([...names]);
+    if (this.failureMode === 'applied-read-throws') {
+      throw new Error('applied-token readback disconnected');
+    }
     if (this.failureMode === 'missing-capability') {
       return {
         ok: false,

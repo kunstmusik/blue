@@ -24,8 +24,18 @@ export interface MixerGatePublicationResult {
   readonly unconfirmed?: boolean;
 }
 
+export interface MixerGateBindingOptions {
+  /** Performance generation that owns this compiled catalog and transport. */
+  readonly generation?: number;
+  /** Exact engine client captured for this generation. */
+  readonly io?: MixerGateEngineIO;
+}
+
 interface MixerGatePerformanceState {
   catalog: CompiledMixerGateBindings | null;
+  io: MixerGateEngineIO;
+  generation?: number;
+  valid: boolean;
   /**
    * Last commit token known to be selected by the engine (initial 0 matches
    * the CSD-initialized banks). The audible bank is `commitToken % 2`.
@@ -89,12 +99,27 @@ export class MixerGatePublisher {
   }
 
   /** Installs the generation's compiled catalog; resets token state. */
-  setBindings(kind: PerformanceKind, catalog: CompiledMixerGateBindings | null): void {
-    this.states.set(kind, { catalog, commitToken: 0, pendingToken: null });
+  setBindings(
+    kind: PerformanceKind,
+    catalog: CompiledMixerGateBindings | null,
+    options: MixerGateBindingOptions = {},
+  ): void {
+    const previous = this.states.get(kind);
+    if (previous) previous.valid = false;
+    this.states.set(kind, {
+      catalog,
+      io: options.io ?? this.io,
+      generation: options.generation,
+      valid: true,
+      commitToken: 0,
+      pendingToken: null,
+    });
   }
 
   /** Clears state when the performance stops. */
   reset(kind: PerformanceKind): void {
+    const state = this.states.get(kind);
+    if (state) state.valid = false;
     this.states.delete(kind);
   }
 
@@ -111,9 +136,13 @@ export class MixerGatePublisher {
     kind: PerformanceKind,
     signature: string,
     values: readonly number[],
+    expectedGeneration?: number,
   ): Promise<MixerGatePublicationResult> {
     const state = this.states.get(kind);
-    if (!state?.catalog) {
+    if (!state?.catalog || !this.isCurrent(kind, state, expectedGeneration)) {
+      if (state && expectedGeneration !== undefined && state.generation !== expectedGeneration) {
+        return this.staleResult();
+      }
       return { ok: false, message: 'gate-bindings-unavailable' };
     }
     if (state.catalog.signature !== signature) {
@@ -128,51 +157,78 @@ export class MixerGatePublisher {
 
     // Settle a previous unconfirmed commit before reusing any bank.
     if (state.pendingToken !== null) {
-      const settled = await this.observeApplied(state, state.pendingToken);
-      if (!settled) {
+      const pendingToken = state.pendingToken;
+      const settled = await this.observeApplied(kind, state, pendingToken, expectedGeneration);
+      if (settled.stale) return this.staleResult();
+      if (!settled.observed) {
         return {
           ok: false,
           message: 'gate-commit-unconfirmed',
-          commitToken: state.pendingToken,
+          commitToken: pendingToken,
           unconfirmed: true,
         };
       }
+      if (!this.isCurrent(kind, state, expectedGeneration)) return this.staleResult();
+      state.commitToken = pendingToken;
       state.pendingToken = null;
     }
 
     const targetBank = (state.commitToken + 1) % 2;
-    const staged = await this.stageVector(state, targetBank, values);
+    const staged = await this.stageVector(kind, state, targetBank, values, expectedGeneration);
     if (!staged.ok) {
       // The inactive bank may be partially staged; the active bank still
       // carries the previous complete vector, so audio is unchanged.
-      return { ok: false, message: staged.message };
+      return staged.stale ? this.staleResult() : { ok: false, message: staged.message };
     }
 
     const commitToken = state.commitToken + 1;
-    const commitWrite = await this.writeWithRetry([
-      { name: state.catalog.commitChannel, value: commitToken },
-    ]);
+    if (!this.isCurrent(kind, state, expectedGeneration)) return this.staleResult();
+
+    // Keep the attempted token before awaiting transport. A rejected request
+    // is definite and clears this marker; a thrown/uncertain request keeps it
+    // so the next publication can recover by readback before reusing a bank.
+    state.pendingToken = commitToken;
+    const commitWrite = await this.writeWithRetry(
+      kind,
+      state,
+      [{ name: state.catalog.commitChannel, value: commitToken }],
+      expectedGeneration,
+      true,
+    );
+    if (commitWrite.stale) return this.staleResult();
     if (!commitWrite.ok) {
+      if (!commitWrite.uncertain && this.isCurrent(kind, state, expectedGeneration)) {
+        state.pendingToken = null;
+      }
+      if (commitWrite.uncertain) {
+        return {
+          ok: false,
+          message: 'gate-commit-unconfirmed',
+          commitToken,
+          unconfirmed: true,
+        };
+      }
       return { ok: false, message: commitWrite.message };
     }
 
-    // The commit write succeeded, so the engine will select the staged bank.
-    // From this point the token is authoritative even if the applied echo is
-    // not yet observable; only bank reuse waits on the echo.
-    const observed = await this.observeApplied(state, commitToken);
-    state.commitToken = commitToken;
-    if (!observed) {
-      state.pendingToken = commitToken;
+    const observed = await this.observeApplied(kind, state, commitToken, expectedGeneration);
+    if (observed.stale) return this.staleResult();
+    if (!observed.observed) {
       return { ok: false, message: 'gate-commit-unconfirmed', commitToken, unconfirmed: true };
     }
+    if (!this.isCurrent(kind, state, expectedGeneration)) return this.staleResult();
+    state.commitToken = commitToken;
+    state.pendingToken = null;
     return { ok: true, commitToken };
   }
 
   private async stageVector(
+    kind: PerformanceKind,
     state: MixerGatePerformanceState,
     bank: number,
     values: readonly number[],
-  ): Promise<{ ok: true } | { ok: false; message: string }> {
+    expectedGeneration?: number,
+  ): Promise<{ ok: true } | { ok: false; message: string; stale?: boolean }> {
     const catalog = state.catalog!;
     const entries = catalog.gates.map((gate, index) => ({
       name: gate.bankSymbols[bank],
@@ -181,23 +237,48 @@ export class MixerGatePublisher {
 
     for (let offset = 0; offset < entries.length; offset += this.maxBatchEntries) {
       const batch = entries.slice(offset, offset + this.maxBatchEntries);
-      const result = await this.writeWithRetry(batch);
+      const result = await this.writeWithRetry(kind, state, batch, expectedGeneration);
       if (!result.ok) {
-        return { ok: false, message: result.message };
+        return { ok: false, message: result.message, stale: result.stale };
       }
     }
     return { ok: true };
   }
 
   private async writeWithRetry(
+    kind: PerformanceKind,
+    state: MixerGatePerformanceState,
     entries: readonly { name: string; value: number }[],
-  ): Promise<{ ok: boolean; message: string }> {
+    expectedGeneration?: number,
+    uncertainOnError = false,
+  ): Promise<{ ok: boolean; message: string; uncertain?: boolean; stale?: boolean }> {
     let message = 'engine-write-failed';
     for (let attempt = 0; attempt <= this.stageRetryLimit; attempt++) {
       if (attempt > 0) {
         await delay(this.stageRetryDelayMs);
+        if (!this.isCurrent(kind, state, expectedGeneration)) {
+          return { ok: false, message: 'gate-publication-stale', stale: true };
+        }
       }
-      const result = await this.io.setChannels(entries);
+      if (!this.isCurrent(kind, state, expectedGeneration)) {
+        return { ok: false, message: 'gate-publication-stale', stale: true };
+      }
+      let result: { ok: boolean; message: string };
+      try {
+        result = await state.io.setChannels(entries);
+      } catch (error: unknown) {
+        if (!this.isCurrent(kind, state, expectedGeneration)) {
+          return { ok: false, message: 'gate-publication-stale', stale: true };
+        }
+        return {
+          ok: false,
+          message: error instanceof Error ? error.message : String(error),
+          uncertain: uncertainOnError,
+        };
+      }
+      if (!this.isCurrent(kind, state, expectedGeneration)) {
+        return { ok: false, message: 'gate-publication-stale', stale: true };
+      }
       if (result.ok) {
         return result;
       }
@@ -209,16 +290,56 @@ export class MixerGatePublisher {
     return { ok: false, message };
   }
 
-  private async observeApplied(state: MixerGatePerformanceState, token: number): Promise<boolean> {
+  private async observeApplied(
+    kind: PerformanceKind,
+    state: MixerGatePerformanceState,
+    token: number,
+    expectedGeneration?: number,
+  ): Promise<{ observed: boolean; stale: boolean }> {
     for (let attempt = 0; attempt < this.observeAttempts; attempt++) {
       if (attempt > 0) {
         await delay(this.observeDelayMs);
+        if (!this.isCurrent(kind, state, expectedGeneration)) {
+          return { observed: false, stale: true };
+        }
       }
-      const read = await this.io.getChannels([state.catalog!.appliedChannel]);
+      if (!this.isCurrent(kind, state, expectedGeneration)) {
+        return { observed: false, stale: true };
+      }
+      let read: { ok: true; values: number[] } | { ok: false; message: string };
+      try {
+        read = await state.io.getChannels([state.catalog!.appliedChannel]);
+      } catch {
+        if (!this.isCurrent(kind, state, expectedGeneration)) {
+          return { observed: false, stale: true };
+        }
+        continue;
+      }
+      if (!this.isCurrent(kind, state, expectedGeneration)) {
+        return { observed: false, stale: true };
+      }
       if (read.ok && read.values[0] === token) {
-        return true;
+        return { observed: true, stale: false };
       }
     }
-    return false;
+    return { observed: false, stale: false };
+  }
+
+  private isCurrent(
+    kind: PerformanceKind,
+    state: MixerGatePerformanceState,
+    expectedGeneration?: number,
+  ): boolean {
+    return (
+      state.valid &&
+      this.states.get(kind) === state &&
+      (state.generation === undefined
+        ? expectedGeneration === undefined
+        : state.generation === expectedGeneration)
+    );
+  }
+
+  private staleResult(): MixerGatePublicationResult {
+    return { ok: false, message: 'gate-publication-stale' };
   }
 }

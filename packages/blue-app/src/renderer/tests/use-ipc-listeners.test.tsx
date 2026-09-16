@@ -1152,6 +1152,77 @@ describe('useIPCListeners', () => {
     ]);
   });
 
+  it('keeps unresolved runtime obligations visible across unrelated successful edits', () => {
+    useProjectStore.setState({
+      runtimeOutcomes: [],
+      runtimeOutcomeStatusText: '',
+    });
+
+    useProjectStore.getState().handleRuntimeOutcomes([
+      {
+        performanceKind: 'timeline',
+        generation: 2,
+        desiredRevision: 4,
+        status: 'restart-required',
+        affectedOwnerIds: ['projectProperties'],
+      },
+    ]);
+    useProjectStore.getState().handleRuntimeOutcomes([
+      {
+        performanceKind: 'timeline',
+        generation: 2,
+        desiredRevision: 5,
+        status: 'applied',
+        affectedOwnerIds: ['mixer-gates'],
+      },
+    ]);
+
+    expect(useProjectStore.getState().runtimeOutcomes[0]).toEqual(
+      expect.objectContaining({
+        status: 'restart-required',
+        desiredRevision: 5,
+        affectedOwnerIds: expect.arrayContaining(['projectProperties', 'mixer-gates']),
+      }),
+    );
+    expect(useProjectStore.getState().runtimeOutcomeStatusText).toBe(
+      'Restart required for playback to reflect all changes',
+    );
+
+    useProjectStore.getState().handleRuntimeOutcomes([
+      {
+        performanceKind: 'blueLive',
+        generation: 3,
+        desiredRevision: 6,
+        status: 'failed',
+        affectedOwnerIds: ['Master'],
+        message: 'gate write failed',
+      },
+    ]);
+    useProjectStore.getState().handleRuntimeOutcomes([
+      {
+        performanceKind: 'blueLive',
+        generation: 3,
+        desiredRevision: 7,
+        status: 'applied',
+        affectedOwnerIds: ['Other'],
+      },
+    ]);
+
+    expect(useProjectStore.getState().runtimeOutcomes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          performanceKind: 'blueLive',
+          status: 'failed',
+          desiredRevision: 7,
+          affectedOwnerIds: expect.arrayContaining(['Master', 'Other']),
+        }),
+      ]),
+    );
+    expect(useProjectStore.getState().runtimeOutcomeStatusText).toContain(
+      'Live synchronization failed',
+    );
+  });
+
   it('clears only the stopped performance outcome', async () => {
     useProjectStore.setState({
       sessionId: 7,

@@ -126,6 +126,7 @@ import {
 } from './blue-live-trigger-controller';
 import { EngineRuntimeService } from './engine-runtime';
 import { buildApplicationMenuTemplate } from './application-menu';
+import type { NativeMenuCommand } from '../shared/workbench-menu';
 import {
   resolveExampleLibraryPickerSelection,
   resolveExampleProjectPath,
@@ -223,7 +224,7 @@ import {
   type RuntimeOperationAck,
   type RuntimeWorkOperation,
 } from './project-runtime-reconciliation';
-import { MixerGatePublisher } from './mixer-mute-solo-runtime';
+import { MixerGatePublisher, type MixerGateEngineIO } from './mixer-mute-solo-runtime';
 import { syncRuntimeChannel } from './runtime-channel-sync';
 import {
   syncBsbInstrumentRuntimeChannels,
@@ -671,6 +672,8 @@ function getBlueLiveTriggerController(): BlueLiveTriggerController {
 let engineRuntimeService: EngineRuntimeService | null = null;
 let isQuitting = false;
 let shutdownPromise: Promise<void> | null = null;
+type ShutdownTrigger = 'user' | 'signal';
+const SHUTDOWN_STEP_TIMEOUT_MS = 2_000;
 let playbackStartPromise: Promise<boolean> | null = null;
 const engineRecoveryCoordinator = new EngineRecoveryCoordinator();
 let activeAuditionPlayback = false;
@@ -1862,13 +1865,17 @@ async function confirmSaveBeforeReplaceInsideBoundary(): Promise<boolean> {
   return outcome === 'saved' || outcome === 'discarded';
 }
 
-function sendHistoryCommandToFocusedWindow(command: { type: 'undo' | 'redo' }): void {
+function sendNativeMenuCommandToFocusedWindow(command: NativeMenuCommand): void {
   const focused = BrowserWindow.getFocusedWindow();
   if (focused && !focused.isDestroyed() && !focused.webContents.isDestroyed()) {
     focused.webContents.send('native-menu-command', command);
     return;
   }
   sendToFocusedWorkbenchWindow('native-menu-command', command);
+}
+
+function sendHistoryCommandToFocusedWindow(command: { type: 'undo' | 'redo' }): void {
+  sendNativeMenuCommandToFocusedWindow(command);
 }
 
 function rebuildApplicationMenu(): void {
@@ -1939,13 +1946,13 @@ function rebuildApplicationMenu(): void {
         void saveFileAs();
       },
       onGenerateCsdToScreen: () => {
-        void generateCsdToScreen();
+        sendNativeMenuCommandToFocusedWindow({ type: 'generate-csd-to-screen' });
       },
       onGenerateRealtimeCsdToScreen: () => {
-        void generateRealtimeCsdToScreen();
+        sendNativeMenuCommandToFocusedWindow({ type: 'generate-realtime-csd-to-screen' });
       },
       onGenerateCsdToDisk: () => {
-        void generateCsdToDisk();
+        sendNativeMenuCommandToFocusedWindow({ type: 'generate-csd-to-disk' });
       },
       onRequestQuit: () => {
         void requestQuit();
@@ -2074,13 +2081,13 @@ function rebuildApplicationMenu(): void {
         mainWindow?.webContents.send('native-menu-command', { type: 'edit-meter-map' });
       },
       onRenderToDisk: () => {
-        void handleRenderToDisk('render');
+        sendNativeMenuCommandToFocusedWindow({ type: 'render-to-disk', action: 'render' });
       },
       onRenderToDiskAndPlay: () => {
-        void handleRenderToDisk('play');
+        sendNativeMenuCommandToFocusedWindow({ type: 'render-to-disk', action: 'play' });
       },
       onRenderToDiskAndOpen: () => {
-        void handleRenderToDisk('open');
+        sendNativeMenuCommandToFocusedWindow({ type: 'render-to-disk', action: 'open' });
       },
       onZoomIn: () => {
         appZoomController.execute('zoom-in');
@@ -2271,6 +2278,9 @@ function createWindow(): void {
   });
 
   engineBridge.setPlaybackCompleteCallback((stopReason) => {
+    projectRuntimeReconciliation.stopPerformance('timeline');
+    timelineGatePublisher.reset('timeline');
+    broadcastRuntimePerformanceCleared('timeline');
     clearActiveBlueX7Bindings(timelinePerformanceGeneration);
     if (activeAuditionPlayback) {
       activeAuditionPlayback = false;
@@ -2313,7 +2323,15 @@ function createWindow(): void {
     5561,
     engineRuntimeService,
   );
-  blueLiveSession.setRuntimeStateChangeCallback(() => publishTrackEditorRuntimeStatus());
+  blueLiveSession.setRuntimeStateChangeCallback(() => {
+    if (!blueLiveSession?.isRunning()) {
+      projectRuntimeReconciliation.stopPerformance('blueLive');
+      blueLiveGatePublisher.reset('blueLive');
+      broadcastRuntimePerformanceCleared('blueLive');
+      clearActiveBlueX7Bindings(blueLivePerformanceGeneration);
+    }
+    publishTrackEditorRuntimeStatus();
+  });
   javaRuntimeSessionManager = new JavaRuntimeSessionManager({
     isPackaged: app.isPackaged,
     mainModuleDir: __dirname,
@@ -2389,6 +2407,16 @@ async function confirmLibraryDraftTransition(
  * boundary (T029).
  */
 async function requestQuit(): Promise<void> {
+  // A signal-triggered shutdown may be waiting on a cleanup operation while
+  // the dev server still has the old Electron process open. Do not start a
+  // second history transition in that state; give the explicit user action a
+  // deterministic escape hatch.
+  if (shutdownPromise) {
+    app.exit(0);
+    return;
+  }
+  if (isQuitting) return;
+
   isQuitting = true;
 
   let mayQuit = false;
@@ -2421,10 +2449,42 @@ async function requestQuit(): Promise<void> {
   }
 }
 
+async function runShutdownStep(
+  label: string,
+  operation: () => void | Promise<void>,
+): Promise<void> {
+  let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+  try {
+    await Promise.race([
+      Promise.resolve().then(operation),
+      new Promise<void>((resolve) => {
+        timeoutHandle = setTimeout(() => {
+          console.warn(`[main] Shutdown step timed out: ${label}`);
+          resolve();
+        }, SHUTDOWN_STEP_TIMEOUT_MS);
+      }),
+    ]);
+  } catch (error: unknown) {
+    console.warn(
+      `[main] Shutdown step failed: ${label}`,
+      error instanceof Error ? error.message : String(error),
+    );
+  } finally {
+    if (timeoutHandle !== undefined) clearTimeout(timeoutHandle);
+  }
+}
+
+function clearHistoryParticipantsForShutdown(): void {
+  for (const participant of projectHistory.getParticipants()) {
+    projectHistory.unregisterParticipant({ contextId: participant.contextId });
+  }
+  historyParticipantSenders.clear();
+}
+
 /**
  * Actually quit the app — clean up engine and exit.
  */
-async function doQuit(): Promise<void> {
+async function doQuit(trigger: ShutdownTrigger = 'user'): Promise<void> {
   if (shutdownPromise) {
     return shutdownPromise;
   }
@@ -2432,90 +2492,125 @@ async function doQuit(): Promise<void> {
   const shutdown = (async () => {
     isQuitting = true;
 
-    await oscControlService?.shutdown();
-    oscControlService = null;
+    try {
+      // A renderer reload can leave its old history context registered until
+      // the asynchronous cleanup IPC completes. Shutdown owns the document,
+      // so no participant can safely fence this terminal transition.
+      clearHistoryParticipantsForShutdown();
 
-    unregisterDomainIpc?.();
-    unregisterDomainIpc = null;
+      await runShutdownStep('OSC control', async () => {
+        await oscControlService?.shutdown();
+      });
+      oscControlService = null;
 
-    // Settings persistence must survive domain teardown while renderer
-    // windows are still alive. Window beforeunload handlers persist the FINAL
-    // workbench layout, and a late React effect can still synchronize the
-    // recent-files list before final application shutdown closes the renderer.
-    // These handlers only touch program settings, so they are safe to keep
-    // alive after the engine/service-backed handlers have stopped.
-    //
-    // Late updates are DROPPED once quitting has begun: closing the popout
-    // windows makes dockview redock their groups into the main grid, which
-    // fires one last "everything docked" layout — persisting that would
-    // clobber the floated state the user quit with and un-restore it on the
-    // next launch. The in-session saves already captured the floated layout.
-    const layoutUpdateHandler = collectedIpcHandlers.get('window-layout:update');
-    const layoutGetHandler = collectedIpcHandlers.get('window-layout:get');
-    if (layoutUpdateHandler) {
-      electronIpcMain.handle('window-layout:update', (event, request) =>
-        isQuitting ? loadWindowLayoutSettings() : layoutUpdateHandler(event, request),
-      );
-    }
-    if (layoutGetHandler) {
-      electronIpcMain.handle('window-layout:get', layoutGetHandler);
-    }
-    for (const channel of ['set-recent-files', 'get-recent-files'] as const) {
-      const handler = collectedIpcHandlers.get(channel);
-      if (handler) electronIpcMain.handle(channel, handler);
-    }
+      await runShutdownStep('domain IPC teardown', () => {
+        try {
+          unregisterDomainIpc?.();
+        } finally {
+          unregisterDomainIpc = null;
+        }
+      });
 
-    unregisterUnifiedLibraryIpc?.();
-    unregisterUnifiedLibraryIpc = null;
-    await unifiedLibraryService?.stop();
-    unifiedLibraryService = null;
+      // Settings persistence must survive domain teardown while renderer
+      // windows are still alive. Window beforeunload handlers persist the FINAL
+      // workbench layout, and a late React effect can still synchronize the
+      // recent-files list before final application shutdown closes the renderer.
+      // These handlers only touch program settings, so they are safe to keep
+      // alive after the engine/service-backed handlers have stopped.
+      //
+      // Late updates are DROPPED once quitting has begun: closing the popout
+      // windows makes dockview redock their groups into the main grid, which
+      // fires one last "everything docked" layout — persisting that would
+      // clobber the floated state the user quit with and un-restore it on the
+      // next launch. The in-session saves already captured the floated layout.
+      await runShutdownStep('shutdown settings handlers', () => {
+        const layoutUpdateHandler = collectedIpcHandlers.get('window-layout:update');
+        const layoutGetHandler = collectedIpcHandlers.get('window-layout:get');
+        if (layoutUpdateHandler) {
+          electronIpcMain.handle('window-layout:update', (event, request) =>
+            isQuitting ? loadWindowLayoutSettings() : layoutUpdateHandler(event, request),
+          );
+        }
+        if (layoutGetHandler) {
+          electronIpcMain.handle('window-layout:get', layoutGetHandler);
+        }
+        for (const channel of ['set-recent-files', 'get-recent-files'] as const) {
+          const handler = collectedIpcHandlers.get(channel);
+          if (handler) electronIpcMain.handle(channel, handler);
+        }
+      });
 
-    unregisterCodeRepositoryIpc?.();
-    unregisterCodeRepositoryIpc = null;
-    await codeRepositoryService?.stop();
-    codeRepositoryService = null;
+      await runShutdownStep('unified library', async () => {
+        unregisterUnifiedLibraryIpc?.();
+        unregisterUnifiedLibraryIpc = null;
+        await unifiedLibraryService?.stop();
+      });
+      unifiedLibraryService = null;
 
-    await midiInputCoordinator?.requestShutdown();
-    midiInputCoordinator?.disposeIpcHandlers();
-    midiInputCoordinator = null;
+      await runShutdownStep('code repository', async () => {
+        unregisterCodeRepositoryIpc?.();
+        unregisterCodeRepositoryIpc = null;
+        await codeRepositoryService?.stop();
+      });
+      codeRepositoryService = null;
 
-    if (blueLiveSession) {
-      try {
-        await blueLiveSession.stop();
-      } catch {
-        // Ignore cleanup errors
-      }
-    }
+      await runShutdownStep('MIDI input', async () => {
+        try {
+          await midiInputCoordinator?.requestShutdown();
+        } finally {
+          midiInputCoordinator?.disposeIpcHandlers();
+        }
+      });
+      midiInputCoordinator = null;
 
-    // Gracefully stop engine
-    if (engineBridge) {
-      try {
-        await engineBridge.dispose();
-      } catch {
-        // Ignore cleanup errors
-      }
+      projectRuntimeReconciliation.stopPerformance('timeline');
+      projectRuntimeReconciliation.stopPerformance('blueLive');
+      timelineGatePublisher.reset('timeline');
+      blueLiveGatePublisher.reset('blueLive');
+
+      await runShutdownStep('Blue Live', async () => {
+        if (blueLiveSession) {
+          await blueLiveSession.stop();
+        }
+      });
+
+      // Gracefully stop engine
+      await runShutdownStep('engine', async () => {
+        if (engineBridge) {
+          await engineBridge.dispose();
+        }
+      });
       engineBridge = null;
+
+      trackEditorRuntimeStatusCoordinator?.dispose();
+      trackEditorRuntimeStatusCoordinator = null;
+
+      blueLiveSession = null;
+      await runShutdownStep('Java runtime', async () => {
+        await javaRuntimeSessionManager?.dispose();
+      });
+      javaRuntimeSessionManager = null;
+      disposeJavaScriptSession();
+
+      closeEffectEditorWindowsForOwner('project');
+      closeEffectEditorWindowsForOwner('library');
+      closeTrackInstrumentEditorWindows();
+      disposeWorkbenchWindowHost();
+      projectSession.resetForShutdown();
+      canAuditionScoreObjects = false;
+      setActiveMissingAudioSession(null);
+      rebuildApplicationMenu();
+      await runShutdownStep('temporary CSD cleanup', cleanupTempCsdSnapshots);
+    } finally {
+      // SIGTERM is how vite-plugin-electron asks the old main process to leave
+      // during a dev hot restart. app.exit bypasses another window-close pass,
+      // which could otherwise re-enter the quit path while cleanup is timed out.
+      if (trigger === 'signal') {
+        app.exit(0);
+      } else {
+        app.quit();
+      }
     }
-
-    trackEditorRuntimeStatusCoordinator?.dispose();
-    trackEditorRuntimeStatusCoordinator = null;
-
-    blueLiveSession = null;
-    await javaRuntimeSessionManager?.dispose();
-    javaRuntimeSessionManager = null;
-    disposeJavaScriptSession();
-
-    closeEffectEditorWindowsForOwner('project');
-    closeEffectEditorWindowsForOwner('library');
-    closeTrackInstrumentEditorWindows();
-    disposeWorkbenchWindowHost();
-    projectSession.resetForShutdown();
-    canAuditionScoreObjects = false;
-    setActiveMissingAudioSession(null);
-    rebuildApplicationMenu();
-    await cleanupTempCsdSnapshots();
-
-    app.quit();
   })().finally(() => {
     shutdownPromise = null;
   });
@@ -4040,7 +4135,12 @@ async function applyMixerGatesOperation(
   kind: 'timeline' | 'blueLive',
   operation: RuntimeMixerGatesOperation,
 ): Promise<RuntimeOperationAck> {
-  const result = await publisher.publish(kind, operation.signature, operation.values);
+  const result = await publisher.publish(
+    kind,
+    operation.signature,
+    operation.values,
+    operation.expectedGeneration,
+  );
   return result.ok
     ? { status: 'applied' }
     : { status: 'rejected', message: result.message ?? 'Mixer gate publication failed' };
@@ -4237,6 +4337,16 @@ async function startPlayback(
 
     timelinePerformanceGeneration += 1;
     const timelineGeneration = timelinePerformanceGeneration;
+    const timelineEngineClient = engineBridge.getClient();
+    const timelineGateIO: MixerGateEngineIO = timelineEngineClient
+      ? {
+          setChannels: (entries) => timelineEngineClient.setChannels(entries),
+          getChannels: (names) => timelineEngineClient.getChannels(names),
+        }
+      : {
+          setChannels: async () => ({ ok: false, message: 'no-active-engine-session' }),
+          getChannels: async () => ({ ok: false, message: 'no-active-engine-session' }),
+        };
     setActiveBlueX7Bindings(render.blueX7Bindings, timelineGeneration);
     const timelineBlueX7Bindings = new Map(
       render.blueX7Bindings.map((binding) => [binding.ownerIdentity, binding]),
@@ -4261,13 +4371,19 @@ async function startPlayback(
     };
     const timelineBindings = buildRuntimeBindingRegistry(data, parameters, render.blueX7Bindings);
     if (render.mixerGateBindings) {
-      timelineGatePublisher.setBindings('timeline', render.mixerGateBindings);
+      timelineGatePublisher.setBindings('timeline', render.mixerGateBindings, {
+        generation: timelineGeneration,
+        io: timelineGateIO,
+      });
       timelineBindings.set('mixer-gates::gates', {
         kind: 'mixer-gates',
         signature: render.mixerGateBindings.signature,
       });
     } else {
-      timelineGatePublisher.setBindings('timeline', null);
+      timelineGatePublisher.setBindings('timeline', null, {
+        generation: timelineGeneration,
+        io: timelineGateIO,
+      });
     }
     projectRuntimeReconciliation.registerPerformance(
       'timeline',
@@ -4399,6 +4515,7 @@ async function auditionScoreObjects(objectIds: unknown): Promise<boolean> {
 async function stopPlayback(): Promise<void> {
   activeAuditionPlayback = false;
   projectRuntimeReconciliation.stopPerformance('timeline');
+  timelineGatePublisher.reset('timeline');
   broadcastRuntimePerformanceCleared('timeline');
   clearActiveBlueX7Bindings(timelinePerformanceGeneration);
   if (!engineBridge) return;
@@ -4436,14 +4553,27 @@ function registerBlueLivePerformance(): void {
     blueLiveBindings,
   );
   const blueLiveGateBindings = blueLiveSession.getMixerGateBindings();
+  const blueLiveGateIO = blueLiveSession.getMixerGateEngineIO();
   if (blueLiveGateBindings) {
-    blueLiveGatePublisher.setBindings('blueLive', blueLiveGateBindings);
+    blueLiveGatePublisher.setBindings('blueLive', blueLiveGateBindings, {
+      generation,
+      io: blueLiveGateIO ?? {
+        setChannels: async () => ({ ok: false, message: 'no-active-blue-live-session' }),
+        getChannels: async () => ({ ok: false, message: 'no-active-blue-live-session' }),
+      },
+    });
     bindings.set('mixer-gates::gates', {
       kind: 'mixer-gates',
       signature: blueLiveGateBindings.signature,
     });
   } else {
-    blueLiveGatePublisher.setBindings('blueLive', null);
+    blueLiveGatePublisher.setBindings('blueLive', null, {
+      generation,
+      io: blueLiveGateIO ?? {
+        setChannels: async () => ({ ok: false, message: 'no-active-blue-live-session' }),
+        getChannels: async () => ({ ok: false, message: 'no-active-blue-live-session' }),
+      },
+    });
   }
   projectRuntimeReconciliation.registerPerformance('blueLive', generation, client, bindings);
   broadcastRuntimePerformanceCleared('blueLive');
@@ -4459,6 +4589,7 @@ async function blueLiveToggle(): Promise<
 
   if (blueLiveSession.isRunning()) {
     projectRuntimeReconciliation.stopPerformance('blueLive');
+    blueLiveGatePublisher.reset('blueLive');
     broadcastRuntimePerformanceCleared('blueLive');
     const stopped = await blueLiveSession.stop();
     clearActiveBlueX7Bindings(blueLivePerformanceGeneration);
@@ -4529,6 +4660,7 @@ async function blueLiveRecompile(): Promise<void> {
   // is being torn down, and a failed recompile should leave no stale action
   // enabled for the stopped generation.
   projectRuntimeReconciliation.stopPerformance('blueLive');
+  blueLiveGatePublisher.reset('blueLive');
   broadcastRuntimePerformanceCleared('blueLive');
   mainWindow?.webContents.send('engine-output-reset', { tabName: 'Csound (Blue Live)' });
   mainWindow?.webContents.send('engine-output-select', { tabName: 'Csound (Blue Live)' });
@@ -4555,7 +4687,9 @@ async function blueLiveAllNotesOff(): Promise<void> {
  * full active lifecycle must be awaited — not just `isRunning()`.
  */
 async function stopActiveBlueLiveBeforeProjectReplacement(): Promise<void> {
+  await stopPlayback();
   projectRuntimeReconciliation.stopPerformance('blueLive');
+  blueLiveGatePublisher.reset('blueLive');
   broadcastRuntimePerformanceCleared('blueLive');
   await stopBlueLiveForProjectReplacement(getBlueLiveTriggerController(), blueLiveSession);
 }
@@ -6706,11 +6840,15 @@ async function rollbackApplicationShellStage(): Promise<void> {
   midiInputCoordinator = null;
 
   if (blueLiveSession) {
+    projectRuntimeReconciliation.stopPerformance('blueLive');
+    blueLiveGatePublisher.reset('blueLive');
     await blueLiveSession.stop();
   }
   blueLiveSession = null;
   blueLiveTriggerController = null;
 
+  projectRuntimeReconciliation.stopPerformance('timeline');
+  timelineGatePublisher.reset('timeline');
   await engineBridge?.dispose();
   engineBridge = null;
   engineRuntimeService = null;
@@ -7019,9 +7157,15 @@ app.on('window-all-closed', () => {
 });
 
 process.once('SIGINT', () => {
-  void doQuit();
+  void doQuit('signal').catch((error: unknown) => {
+    console.error('[main] Signal shutdown failed:', error);
+    app.exit(1);
+  });
 });
 
 process.once('SIGTERM', () => {
-  void doQuit();
+  void doQuit('signal').catch((error: unknown) => {
+    console.error('[main] Signal shutdown failed:', error);
+    app.exit(1);
+  });
 });

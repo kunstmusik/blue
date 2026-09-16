@@ -1,5 +1,6 @@
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { userEvent } from 'vitest/browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BlueData, Channel } from '@blue/data';
 import {
@@ -83,6 +84,10 @@ describe('Mixer strip mute/solo controls (Spec 111)', () => {
     expect(mute).not.toBeNull();
     expect(solo).not.toBeNull();
     expect(mute!.getAttribute('aria-pressed')).toBe('false');
+    expect(mute!.className).toContain('px-1.5');
+    expect(solo!.className).toContain('px-1.5');
+    expect(mute!.className).toContain('min-w-6');
+    expect(solo!.className).toContain('min-w-6');
 
     act(() => {
       mute!.click();
@@ -106,21 +111,33 @@ describe('Mixer strip mute/solo controls (Spec 111)', () => {
   it('reflects pressed state from the snapshot and supports keyboard operation', () => {
     const { mixer, channel } = buildSnapshot();
     const mutedChannel = { ...channel, muted: true, solo: true };
-    mountStrip(mutedChannel, mixer, vi.fn());
+    const onPatch = vi.fn();
+    mountStrip(mutedChannel, mixer, onPatch);
 
     const mute = host.querySelector<HTMLButtonElement>('button[aria-label="A Mute"]');
     expect(mute!.getAttribute('aria-pressed')).toBe('true');
     expect(mute!.className).toContain('bg-app-warning');
 
     mute!.focus();
-    const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
-    let activated = false;
-    mute!.addEventListener('click', () => {
-      activated = true;
+    return act(async () => {
+      await userEvent.keyboard('{Enter}');
+      expect(document.activeElement).toBe(mute);
+      expect(onPatch).toHaveBeenCalledWith({
+        type: 'updateChannel',
+        channelId: channel.id,
+        patch: { muted: false },
+      });
+
+      const solo = host.querySelector<HTMLButtonElement>('button[aria-label="A Solo"]');
+      solo!.focus();
+      await userEvent.keyboard(' ');
+      expect(document.activeElement).toBe(solo);
+      expect(onPatch).toHaveBeenCalledWith({
+        type: 'updateChannel',
+        channelId: channel.id,
+        patch: { solo: false },
+      });
     });
-    mute!.dispatchEvent(event);
-    expect(document.activeElement).toBe(mute);
-    expect(activated).toBe(false); // Enter handled natively on click; focus proves keyboard reachability
   });
 
   it('gives the master a Mute but no Solo control', () => {

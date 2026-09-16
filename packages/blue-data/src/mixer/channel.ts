@@ -10,6 +10,8 @@ import { Parameter } from '../automation/parameter';
 import type { CopyMode } from '../deep-copyable';
 import { writeDouble, writeBoolean } from '../utilities/xml';
 
+let nextRuntimeIdentity = 1;
+
 export class Channel implements BlueDataObject {
   static readonly MASTER = 'Master';
   static readonly NAME = 'name';
@@ -30,6 +32,8 @@ export class Channel implements BlueDataObject {
   private _effectsChain = new EffectsChain();
   private _association = '';
   private _levelParameter: Parameter;
+  /** Disposable identity used to bind compiled route gates to this object. */
+  private _runtimeIdentity = `channel-${nextRuntimeIdentity++}`;
 
   constructor() {
     this._levelParameter = new Parameter();
@@ -116,6 +120,14 @@ export class Channel implements BlueDataObject {
   }
   setAssociation(a: string): void {
     this._association = a;
+  }
+
+  getRuntimeIdentity(): string {
+    return this._runtimeIdentity;
+  }
+
+  setRuntimeIdentity(identity: string): void {
+    this._runtimeIdentity = identity;
   }
 
   getLevelParameter(): Parameter {
@@ -225,6 +237,9 @@ export class Channel implements BlueDataObject {
     copy._postEffects = this._postEffects.deepCopy(mode) as EffectsChain;
     copy._effectsChain = this._effectsChain.deepCopy(mode) as EffectsChain;
     copy._levelParameter = this._levelParameter.deepCopy(mode) as Parameter;
+    if (mode === 'history') {
+      copy._runtimeIdentity = this._runtimeIdentity;
+    }
     return copy;
   }
 }

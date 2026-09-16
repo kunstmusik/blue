@@ -1181,7 +1181,7 @@ export default React.memo(function ChannelStrip({
         <button
           type="button"
           className={cn(
-            'mixer-strip-mute rounded-sm border font-bold',
+            'mixer-strip-mute inline-flex min-w-6 items-center justify-center rounded-sm border px-1.5 py-0.5 font-bold',
             channel.muted && 'bg-app-warning text-app-warning-foreground',
           )}
           aria-pressed={channel.muted}
@@ -1210,7 +1210,7 @@ export default React.memo(function ChannelStrip({
           <button
             type="button"
             className={cn(
-              'mixer-strip-solo rounded-sm border font-bold',
+              'mixer-strip-solo inline-flex min-w-6 items-center justify-center rounded-sm border px-1.5 py-0.5 font-bold',
               channel.solo && 'bg-app-success text-app-success-foreground',
             )}
             aria-pressed={channel.solo}

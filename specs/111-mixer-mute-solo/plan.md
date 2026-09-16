@@ -6,7 +6,9 @@
 
 ## Summary
 
-Add audio mute/solo to instrument, track, and subchannels; master gets Mute only. A pure mixer route policy drives CSD gates, editor indicators, live updates, and conservative disk pruning. Track headers select independent event state or associated channel audio state using a persisted project preference; mixer bypass forces event behavior. Preserve legacy XML, including inactive master solo, and use ProjectHistory for every durable edit.
+Add audio mute/solo to instrument, track, and subchannels; master gets Mute only. A pure mixer route policy drives CSD gates, editor indicators, live updates, and conservative disk pruning. Track headers select independent event state or associated channel audio state using a persisted project preference; mixer bypass forces event behavior. Expose that preference from an extensible Score Settings modal opened by the Score toolbar gear beside Ruler, while keeping Project Information focused on metadata. Preserve legacy XML, including inactive master solo, and use ProjectHistory for every durable edit.
+
+**Implementation review (2026-09-16)**: The planned code and automated validation are complete, including the Score Settings relocation and follow-up render/header regressions. The physical UI-to-audio latency measurement and native Windows validation remain open acceptance work; see [quickstart.md](quickstart.md) and the unchecked tasks in [tasks.md](tasks.md).
 
 No product clarification blocks planning. Send-mute conventions vary among DAWs; the selected all-send mute is explicit. Solo works on existing routes and cannot separate signals already summed into a bus. Industry evidence and limits are in [precedents.md](precedents.md).
 
@@ -81,6 +83,7 @@ packages/blue-app/src/
   main/mixer-mute-solo-runtime.ts            # new gate publication coordinator
   renderer/stores/project-store.ts
   renderer/components/workbench/panels/{ScorePanel,ProjectPropertiesPanel}.tsx
+  renderer/components/workbench/panels/score/ScoreSettingsDialog.tsx
   renderer/components/workbench/panels/mixer/ChannelStrip.tsx
 packages/blue-engine-client/src/engine-client.ts   # existing batch contract
 native/blue-engine/src/engine/RealtimeChannelMailbox.h # existing batch bounds
@@ -98,7 +101,7 @@ See [research.md](research.md). Repository and Java inspection covered routing/C
 2. **Pure routing (FR-001–006)**: Enumerate ordered output/send edges; derive permitted routes from non-master solos/mute. Keep output exclusion separate from send inclusion. Capture canonical editor identity before render cloning.
 3. **CSD gates (FR-002–005, 011–012)**: Gate sends at their current taps and final outputs after local effects, before meters. Keep effects/events running. Emit all realtime gate controls, including initially silent routes, across sync/async and BlueLive generation; disk uses the same policy with constant targets.
 4. **Live/history (FR-011, 013, 016)**: Add one typed mixer-gates reconciliation operation holding detached desired values. Use existing batch transport, inactive-bank staging above its limit, and applied-token verification. Scope updates to document/revision/performance generation; handle timeline and BlueLive separately. Topology, mode, and mixer-enable remain restart-required.
-5. **UI (FR-001, 006–009)**: Non-master M/S, master M; existing patch/history callback. Audio headers address associated channel; Event headers retain layer patches. Explain mode independence and bypass override. Expose saved versus unapplied runtime status.
+5. **UI (FR-001, 006–009)**: Non-master M/S, master M; existing patch/history callback. Audio headers address associated channel; Event headers retain layer patches. Put the Audio/Event authority control in an extensible Score Settings modal opened by the far-right gear beside Ruler, and remove it from Project Information. Explain mode independence and bypass override. Report runtime failures transiently; do not add a persistent status bar unless explicitly requested.
 6. **Disk optimization (FR-012)**: Certify only a small AudioClip-only subset without opaque executable effects/code/processors. Prune tracks with no surviving output path. Preserve duration from shared unpruned scheduling calculations; retain effects/gates. Ambiguous cases remain unpruned.
 7. **Validation**: Direct policy/XML tests, commit→undo→redo, UI, both real performance types, deterministic optimized/unoptimized render comparison and failure injection. Commands/scenarios in quickstart.
 

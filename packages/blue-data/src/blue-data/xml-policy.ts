@@ -26,7 +26,7 @@ import type { BlueData } from '../blue-data';
 
 /**
  * Load provenance for the Spec 111 compatibility notice: only projects whose
- * ACTIVE channel mute/non-master solo flags came from the loaded document
+ * ACTIVE channel mute/non-master solo flags (or master mute) came from the loaded document
  * (not from live edits afterwards) surface the legacy-mixer-state notice.
  * Disposable, process-local, never serialized.
  */
@@ -208,7 +208,8 @@ export function loadFromString(xmlString: string, createBlueData: () => BlueData
   const mixerChannels = [...state.mixer.getAllSourceChannels(), ...state.mixer.getSubChannels()];
   if (
     !state.projectProperties.trackLayerMuteSoloModePresent &&
-    mixerChannels.some((channel) => channel.isMuted() || channel.isSolo())
+    (mixerChannels.some((channel) => channel.isMuted() || channel.isSolo()) ||
+      state.mixer.getMaster().isMuted())
   ) {
     markLegacyMixerStateAtLoad(blueData);
   }

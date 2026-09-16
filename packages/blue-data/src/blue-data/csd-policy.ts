@@ -934,6 +934,18 @@ function computeDiskPruningSet(
     if (!(group instanceof TrackLayerGroup)) {
       return NO_PRUNING;
     }
+    // Certification is project-wide: a single opaque track makes the event
+    // set non-independent, even when that track is currently audible and
+    // another candidate is muted. Never prune only the apparently simple
+    // sibling while guessing about preserved or executable content elsewhere.
+    if (group.hasUnknownContent()) return NO_PRUNING;
+    for (const track of group as TrackLayerGroup & Track[]) {
+      const t = track as Track;
+      if (t.hasUnknownContent()) return NO_PRUNING;
+      if (t.getNoteProcessorChain().getProcessors().length > 0) return NO_PRUNING;
+      if (!isAudioClipOnlyTrack(t)) return NO_PRUNING;
+      if (trackInstrumentMakesPruningUnsafe(t)) return NO_PRUNING;
+    }
   }
   for (const ia of state.arrangement.getArrangement()) {
     if (ia.enabled && ia.instr) return NO_PRUNING;
@@ -955,19 +967,43 @@ function computeDiskPruningSet(
   const prune = new Set<string>();
   for (const group of state.score) {
     if (!(group instanceof TrackLayerGroup)) continue;
-    // Preserved unknown data may hold executable extensions from newer or
-    // foreign documents: refuse certification rather than guess purity.
-    if (group.hasUnknownContent()) return NO_PRUNING;
     for (const track of group as TrackLayerGroup & Track[]) {
       const t = track as Track;
       if (!isAudioClipOnlyTrack(t)) continue;
-      if (t.hasUnknownContent()) continue;
-      if (t.getNoteProcessorChain().getProcessors().length > 0) continue;
       if (!isTrackInaudible(gateContext, t.getUniqueId())) continue;
       prune.add(t.getUniqueId());
     }
   }
   return prune;
+}
+
+/**
+ * Track-owned instruments can contribute instrument text, global/always-on
+ * code, and user-defined opcodes to the shared generated orchestra. The
+ * generated code is intentionally inspected before the final conservative
+ * decision, but an enabled instrument remains an unsafe certification case
+ * even when those known accessors happen to be empty: instrument subclasses
+ * may add executable content through their generation hooks.
+ */
+function trackInstrumentMakesPruningUnsafe(track: Track): boolean {
+  const instrument = track.getInstrument();
+  if (!instrument || !instrument.isEnabled()) return false;
+
+  const globalOrc = instrument.generateGlobalOrc()?.trim() ?? '';
+  const globalSco = instrument.generateGlobalSco()?.trim() ?? '';
+  const alwaysOn = instrument.generateAlwaysOnInstrument()?.trim() ?? '';
+  const opcodeList = (
+    instrument as Instrument & { getOpcodeList?: () => OpcodeList }
+  ).getOpcodeList?.();
+  const hasAuthoredSharedCode =
+    globalOrc.length > 0 ||
+    globalSco.length > 0 ||
+    alwaysOn.length > 0 ||
+    (opcodeList?.getOpcodes().length ?? 0) > 0;
+
+  // Keep the variable explicit so future instrument-specific exemptions have
+  // one review point; for now every enabled Track instrument is opaque.
+  return hasAuthoredSharedCode || instrument.isEnabled();
 }
 
 function isAudioClipOnlyTrack(track: Track): boolean {
@@ -1282,7 +1318,9 @@ function createRenderSnapshot(
   const arrangement = new Arrangement(getBlueDataState(blueData).arrangement);
   arrangement.clearUnusedInstrAssignments();
   const tables = new Tables(getBlueDataState(blueData).tableSet);
-  const mixer = getBlueDataState(blueData).mixer.deepCopy() as Mixer;
+  const sourceMixer = getBlueDataState(blueData).mixer;
+  const mixer = sourceMixer.deepCopy() as Mixer;
+  copyMixerRuntimeIdentities(sourceMixer, mixer);
   const compileData = new CompileData(arrangement, tables, false);
   getBlueDataState(blueData).score.prepareTrackInstruments(compileData);
   compileData.setHandleParametersAndChannels(true);
@@ -1301,6 +1339,55 @@ function createRenderSnapshot(
     mixer,
     compileData,
   };
+}
+
+/**
+ * Render snapshots are ordinary duplication copies so model identity remains
+ * isolated from compilation. Route-gate catalogs nevertheless need to bind
+ * back to the canonical channel/send objects, so transfer only the disposable
+ * runtime identities captured before cloning.
+ */
+function copyMixerRuntimeIdentities(source: Mixer, target: Mixer): void {
+  const sourceChannels = [
+    ...source.getAllSourceChannels(),
+    ...source.getSubChannels(),
+    source.getMaster(),
+  ];
+  const targetChannels = [
+    ...target.getAllSourceChannels(),
+    ...target.getSubChannels(),
+    target.getMaster(),
+  ];
+
+  for (let index = 0; index < sourceChannels.length; index++) {
+    const sourceChannel = sourceChannels[index];
+    const targetChannel = targetChannels[index];
+    if (!sourceChannel || !targetChannel) continue;
+    targetChannel.setRuntimeIdentity(sourceChannel.getRuntimeIdentity());
+
+    const sourceChains = [
+      sourceChannel.getPreEffects(),
+      sourceChannel.getPostEffects(),
+      sourceChannel.getEffectsChain(),
+    ];
+    const targetChains = [
+      targetChannel.getPreEffects(),
+      targetChannel.getPostEffects(),
+      targetChannel.getEffectsChain(),
+    ];
+    for (let chainIndex = 0; chainIndex < sourceChains.length; chainIndex++) {
+      const sourceChain = sourceChains[chainIndex];
+      const targetChain = targetChains[chainIndex];
+      if (!sourceChain || !targetChain) continue;
+      for (let itemIndex = 0; itemIndex < sourceChain.length; itemIndex++) {
+        const sourceItem = sourceChain[itemIndex];
+        const targetItem = targetChain[itemIndex];
+        if (sourceItem instanceof Send && targetItem instanceof Send) {
+          targetItem.setRuntimeIdentity(sourceItem.getRuntimeIdentity());
+        }
+      }
+    }
+  }
 }
 
 function createRenderEndInstrument(blueData: BlueData): GenericInstrument {
@@ -1684,11 +1771,14 @@ function buildCompiledMixerGateBindings(context: BlueMixerGateContext): Compiled
     const node = nodes[edge.sourceOrdinal];
     const association = context.orderedChannels[edge.sourceOrdinal]?.getAssociation().trim() ?? '';
     let locator: CompiledMixerGateLocator;
+    const channelIdentity = node.identity;
     if (edge.kind === 'send') {
       locator = {
         route: 'send',
         channelOrdinal: edge.sourceOrdinal,
         channelKind: node.kind,
+        channelIdentity,
+        entryIdentity: edge.entryIdentity,
         chainKind: edge.chainKind,
         chainIndex: edge.chainIndex,
         targetName: edge.targetName,
@@ -1699,6 +1789,8 @@ function buildCompiledMixerGateBindings(context: BlueMixerGateContext): Compiled
         route: 'output',
         channelOrdinal: edge.sourceOrdinal,
         channelKind: node.kind,
+        channelIdentity,
+        entryIdentity: edge.entryIdentity,
         association,
       };
     }

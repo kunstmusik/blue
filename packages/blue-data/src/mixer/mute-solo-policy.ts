@@ -27,6 +27,8 @@ export interface MixerRouteNode {
   /** Compile ordinal: sources in mixer order, then render-ordered subs, then master. */
   readonly ordinal: number;
   readonly kind: MixerRouteChannelKind;
+  /** Stable channel identity captured before any render snapshot cloning. */
+  readonly identity: string;
   readonly name: string;
   readonly muted: boolean;
   /** Raw stored flag. Master solo is retained data, never discovery input. */
@@ -41,6 +43,8 @@ export interface MixerRouteEdge {
   readonly chainKind: 'pre' | 'post';
   /** Position of the send within its effects chain. */
   readonly chainIndex: number;
+  /** Stable identity of this output/send entry, independent of display names. */
+  readonly entryIdentity: string;
   /** Resolved target node ordinal, or null for the master terminal / unresolved name. */
   readonly targetOrdinal: number | null;
   /** Raw target name ('Master', a subchannel name, or an unresolved name). */
@@ -146,6 +150,13 @@ interface GraphChannel {
   readonly channel: Channel;
   readonly kind: MixerRouteChannelKind;
   readonly ordinal: number;
+  readonly identity: string;
+}
+
+function getChannelIdentity(channel: Channel, kind: MixerRouteChannelKind): string {
+  const association = channel.getAssociation().trim();
+  if (association.length > 0) return `association:${association}`;
+  return `channel:${kind}:${channel.getRuntimeIdentity()}`;
 }
 
 function collectEnabledSendEdges(
@@ -167,6 +178,7 @@ function collectEnabledSendEdges(
         kind: 'send',
         chainKind,
         chainIndex: index,
+        entryIdentity: `send:${item.getRuntimeIdentity()}`,
         targetOrdinal: nameToOrdinal.get(targetName) ?? null,
         targetName,
         enabled: true,
@@ -187,21 +199,28 @@ export function buildMixerRouteGraph(mixer: Mixer): MixerRouteGraph {
   const master = mixer.getMaster();
 
   const channels: GraphChannel[] = [
-    ...sourceChannels.map((channel, ordinal) => ({ channel, kind: 'source' as const, ordinal })),
+    ...sourceChannels.map((channel, ordinal) => ({
+      channel,
+      kind: 'source' as const,
+      ordinal,
+      identity: getChannelIdentity(channel, 'source'),
+    })),
     ...subChannels.map((channel, index) => ({
       channel,
       kind: 'sub' as const,
       ordinal: sourceChannels.length + index,
+      identity: getChannelIdentity(channel, 'sub'),
     })),
     {
       channel: master,
       kind: 'master' as const,
       ordinal: sourceChannels.length + subChannels.length,
+      identity: getChannelIdentity(master, 'master'),
     },
   ];
 
   const nameToOrdinal = new Map<string, number>();
-  for (const { channel, ordinal } of channels) {
+  for (const { channel, kind, ordinal } of channels) {
     nameToOrdinal.set(channel.getName(), ordinal);
   }
 
@@ -210,7 +229,7 @@ export function buildMixerRouteGraph(mixer: Mixer): MixerRouteGraph {
   const edges: MixerRouteEdge[] = [];
 
   let hasUnresolvedRoutes = false;
-  for (const { channel, ordinal } of channels) {
+  for (const { channel, kind, ordinal } of channels) {
     edges.push(...collectEnabledSendEdges(channel, ordinal, nameToOrdinal, nextGateOrdinal));
 
     const outChannel = channel.getOutChannel() || 'Master';
@@ -222,6 +241,10 @@ export function buildMixerRouteGraph(mixer: Mixer): MixerRouteGraph {
       kind: 'output',
       chainKind: 'post',
       chainIndex: -1,
+      entryIdentity:
+        channel.getAssociation().trim().length > 0
+          ? JSON.stringify({ channel: getChannelIdentity(channel, kind), route: 'output' })
+          : `output:${channel.getRuntimeIdentity()}`,
       targetOrdinal,
       targetName: outChannel,
       enabled: true,
@@ -233,9 +256,10 @@ export function buildMixerRouteGraph(mixer: Mixer): MixerRouteGraph {
   }
 
   return {
-    nodes: channels.map(({ channel, kind, ordinal }) => ({
+    nodes: channels.map(({ channel, kind, ordinal, identity }) => ({
       ordinal,
       kind,
+      identity,
       name: channel.getName(),
       muted: channel.isMuted(),
       solo: channel.isSolo(),
@@ -457,21 +481,35 @@ function selectReverse(
 }
 
 /**
- * Deterministic topology signature for a route graph: node kinds and the
- * ordered edge shape, without flags or amounts. Live gate publications whose
- * canonical signature differs from the compiled signature are stale and must
- * not be staged.
+ * Deterministic topology signature for a route graph: stable node identities,
+ * display/target names, and the ordered edge shape, without flags or amounts.
+ * Live gate publications whose canonical signature differs from the compiled
+ * signature are stale and must not be staged. Including identity prevents a
+ * reordered source list from making an ordinal appear to belong to its old
+ * channel; including names makes route renames require a fresh compile.
  */
 export function getMixerRouteSignature(graph: MixerRouteGraph): string {
-  const nodes = graph.nodes.map((node) => `${node.ordinal}:${node.kind}`).join(',');
-  const edges = graph.edges
-    .map(
-      (edge) =>
-        `${edge.gateOrdinal}:${edge.sourceOrdinal}:${edge.kind}:${edge.chainKind}` +
-        `:${edge.chainIndex}:${edge.targetName}`,
-    )
-    .join(';');
-  return `${nodes}|${edges}`;
+  return JSON.stringify({
+    nodes: graph.nodes.map((node) => ({
+      ordinal: node.ordinal,
+      kind: node.kind,
+      identity: node.identity,
+      name: node.name,
+    })),
+    edges: graph.edges.map((edge) => ({
+      gateOrdinal: edge.gateOrdinal,
+      sourceOrdinal: edge.sourceOrdinal,
+      sourceIdentity: graph.nodes[edge.sourceOrdinal]?.identity ?? '',
+      kind: edge.kind,
+      chainKind: edge.chainKind,
+      chainIndex: edge.chainIndex,
+      entryIdentity: edge.entryIdentity,
+      targetOrdinal: edge.targetOrdinal,
+      targetIdentity:
+        edge.targetOrdinal === null ? '' : (graph.nodes[edge.targetOrdinal]?.identity ?? ''),
+      targetName: edge.targetName,
+    })),
+  });
 }
 
 /**

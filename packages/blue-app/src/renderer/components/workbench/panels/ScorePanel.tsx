@@ -33,6 +33,7 @@ import type { RulerConfigChanges } from './score/RulerConfigDialog';
 import SplitPane from './orchestra/SplitPane';
 import ScoreToolbar from './score/ScoreToolbar';
 import RulerConfigDialog from './score/RulerConfigDialog';
+import ScoreSettingsDialog from './score/ScoreSettingsDialog';
 import ScoreManagerDialog from './score/ScoreManagerDialog';
 import AutomationTargetMenu from './score/automation/AutomationTargetMenu';
 import TempoMapEditorDialog from './score/TempoMapEditorDialog';
@@ -196,6 +197,10 @@ export default function ScorePanel() {
   const score = useProjectStore((s) => s.score);
   const sessionId = useProjectStore((s) => s.sessionId);
   const transport = useProjectStore((s) => s.transport);
+  const projectProperties = useProjectStore((s) => s.projectProperties);
+  const mixerEnabled = useProjectStore((s) => s.mixer?.enabled ?? true);
+  const legacyNotice = useProjectStore((s) => s.mixer?.legacyActiveChannelStateNotice ?? false);
+  const setTrackHeaderMode = useProjectStore((s) => s.setTrackHeaderMode);
   const lastScorePatch = useProjectStore((s) => s.lastScorePatch);
   const flushPendingPatches = useProjectStore((s) => s.flushPendingPatches);
 
@@ -205,6 +210,7 @@ export default function ScorePanel() {
     score.timeState.snapValue as SnapValueName,
   );
   const [rulerDialogOpen, setRulerDialogOpen] = useState(false);
+  const [scoreSettingsOpen, setScoreSettingsOpen] = useState(false);
   const [manageDialogOpen, setManageDialogOpen] = useState(false);
   const [tempoMapEditorOpen, setTempoMapEditorOpen] = useState(false);
   const [meterMapEditorOpen, setMeterMapEditorOpen] = useState(false);
@@ -821,6 +827,7 @@ export default function ScorePanel() {
           onSnapToggle={handleSnapToggle}
           onSnapValueChange={handleSnapValueChange}
           onRulerConfig={() => setRulerDialogOpen(true)}
+          onScoreSettings={() => setScoreSettingsOpen(true)}
           onOpenNoteProcessorChain={(scope, groupId) => {
             if (scope === 'rootScore') {
               setChainDialogTarget({ scope: 'rootScore' });
@@ -987,6 +994,16 @@ export default function ScorePanel() {
             timeState={timeState}
             onApply={handleRulerConfigApply}
             onClose={() => setRulerDialogOpen(false)}
+          />
+        )}
+
+        {scoreSettingsOpen && (
+          <ScoreSettingsDialog
+            properties={projectProperties}
+            mixerEnabled={mixerEnabled}
+            legacyNotice={legacyNotice}
+            onModeChange={setTrackHeaderMode}
+            onClose={() => setScoreSettingsOpen(false)}
           />
         )}
 
@@ -1552,6 +1569,18 @@ function SoundLayerHeader({
       solo: headerAssociatedChannel.solo,
     };
   }, [groupType, headerModePreference, headerMixerEnabled, headerAssociatedChannel]);
+  const headerMuteActive =
+    headerAuthority.authority === 'audio'
+      ? headerAuthority.muted
+      : headerAuthority.authority === 'event'
+        ? (layer.muted ?? false)
+        : false;
+  const headerSoloActive =
+    headerAuthority.authority === 'audio'
+      ? headerAuthority.solo
+      : headerAuthority.authority === 'event'
+        ? (layer.solo ?? false)
+        : false;
   const [customDialogOpen, setCustomDialogOpen] = useState(false);
   const [customDialogScope, setCustomDialogScope] = useState<'single' | 'selected' | 'group'>(
     'single',
@@ -1885,7 +1914,7 @@ function SoundLayerHeader({
                 type="button"
                 data-audio-unlinked={headerAuthority.authority === 'audio-unlinked' || undefined}
                 className={btnClass(
-                  headerAuthority.authority === 'audio' ? headerAuthority.muted : false,
+                  headerMuteActive,
                   'bg-app-warning',
                   'text-app-warning-foreground',
                 )}
@@ -1907,7 +1936,7 @@ function SoundLayerHeader({
                         ? `Unmute layer ${layer.name}`
                         : `Mute layer ${layer.name}`
                 }
-                aria-pressed={headerAuthority.authority === 'audio' ? headerAuthority.muted : false}
+                aria-pressed={headerMuteActive}
                 onClick={(e) => {
                   e.stopPropagation();
                   if (headerAuthority.authority === 'audio') {
@@ -1931,7 +1960,7 @@ function SoundLayerHeader({
                 type="button"
                 data-audio-unlinked={headerAuthority.authority === 'audio-unlinked' || undefined}
                 className={btnClass(
-                  headerAuthority.authority === 'audio' ? headerAuthority.solo : false,
+                  headerSoloActive,
                   'bg-app-success',
                   'text-app-success-foreground',
                 )}
@@ -1953,7 +1982,7 @@ function SoundLayerHeader({
                         ? `Unsolo layer ${layer.name}`
                         : `Solo layer ${layer.name}`
                 }
-                aria-pressed={headerAuthority.authority === 'audio' ? headerAuthority.solo : false}
+                aria-pressed={headerSoloActive}
                 onClick={(e) => {
                   e.stopPropagation();
                   if (headerAuthority.authority === 'audio') {

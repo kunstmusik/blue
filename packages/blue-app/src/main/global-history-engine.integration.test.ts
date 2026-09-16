@@ -4,15 +4,21 @@ import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
+  AudioClip,
   BSBDropdown,
   BSBHSlider,
   BSBKnob,
   BlueData,
   BlueSynthBuilder,
   BlueX7,
+  Channel,
+  GenericInstrument,
   ScoreTrack,
+  TimeDuration,
+  TimePosition,
   TrackLayerGroup,
   cloneBlueX7Voice,
+  resolveMixerGateIntent,
 } from '@blue/data';
 import { ProjectRuntimeReconciliation } from './project-runtime-reconciliation';
 import type { RuntimeOperationAck } from './project-runtime-reconciliation';
@@ -369,6 +375,147 @@ describe('global history engine integration (T040, US3)', () => {
     ]);
     expect(session.read().data?.getMixer().getMaster().getLevel()).toBe(0.8);
     expect(failureDeterminedAt - commandReceivedAt).toBeLessThanOrEqual(1000);
+  });
+
+  it('keeps generated timeline and Blue Live gate outcomes independent during history replay (T080)', async () => {
+    const data = new BlueData();
+    data.getMixer().setEnabled(true);
+    data.getScore().length = 0;
+    const group = new TrackLayerGroup();
+    const track = new ScoreTrack();
+    track.setUniqueId('track-a');
+    const clip = new AudioClip();
+    clip.setStartTime(TimePosition.beats(0));
+    clip.setSubjectiveDuration(TimeDuration.beats(1));
+    clip.setAudioFile('generated-history-source.wav');
+    track.push(clip);
+    group.push(track);
+    data.getScore().push(group);
+
+    const channel = new Channel();
+    channel.setName('Audio A');
+    channel.setAssociation('track-a');
+    data.getMixer().getChannels().push(channel);
+
+    const timelineCsd = data.toRealtimePlaybackCSD();
+    const blueLiveCsd = data.toBlueLiveCSD();
+    const catalog = timelineCsd.mixerGateBindings;
+    expect(catalog).toBeDefined();
+    expect(blueLiveCsd.mixerGateBindings?.signature).toBe(catalog?.signature);
+    expect(timelineCsd.csdText).toContain('generated-history-source.wav');
+    expect(timelineCsd.csdText).toContain('BlueMixer');
+    expect(blueLiveCsd.csdText).toContain('BlueMixer');
+    if (!catalog) return;
+
+    const timelineEngine = new FakeMixerGateEngine();
+    const timelinePublisher = new MixerGatePublisher(timelineEngine, {
+      observeAttempts: 20,
+      observeDelayMs: 1,
+    });
+    timelinePublisher.setBindings('timeline', catalog);
+    const timelineClient = {
+      applyOperation: async (operation: RuntimeWorkOperation): Promise<RuntimeOperationAck> => {
+        if (operation.kind !== 'mixer-gates') {
+          return { status: 'rejected', message: 'generated gate fixture only' };
+        }
+        const result = await timelinePublisher.publish(
+          'timeline',
+          operation.signature,
+          operation.values,
+        );
+        return result.ok ? { status: 'applied' } : { status: 'rejected', message: result.message };
+      },
+    };
+    const blueLiveClient = {
+      applyOperation: async (): Promise<RuntimeOperationAck> => ({
+        status: 'rejected',
+        message: 'Injected Blue Live gate failure',
+      }),
+    };
+    const reconciliation = new ProjectRuntimeReconciliation({
+      resolveMixerGates: () => resolveMixerGateIntent(data.getMixer()),
+    });
+    const bindings = new Map([
+      ['mixer-gates::gates', { kind: 'mixer-gates' as const, signature: catalog.signature }],
+    ]);
+    reconciliation.registerPerformance('timeline', 1, timelineClient, bindings);
+    reconciliation.registerPerformance('blueLive', 1, blueLiveClient, bindings);
+
+    const session = new ProjectSession();
+    session.replace(data, '/tmp/t111-generated-history.blue', {
+      documentId: 'doc-t111-generated-history',
+    });
+    const history = new ProjectHistory({ session, reconciliation });
+    history.setSavedStateId(session.read().stateId);
+    const channelRef = session.read().data!.getMixer().getChannels()[0]!;
+    const docId = session.read().documentId!;
+    const patch = {
+      mixer: {
+        type: 'updateChannel' as const,
+        channelId: 'track-a',
+        patch: { muted: true },
+      },
+    };
+
+    const commit = await history.commit({
+      documentId: docId,
+      operationId: 't111-generated-mute',
+      expectedRevision: 0,
+      contextSequence: 1,
+      label: 'Mute Generated Audio Channel',
+      patches: [patch],
+    });
+    expect(commit.status).toBe('committed');
+    if (commit.status !== 'committed') return;
+    expect(commit.runtimeOutcomes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ performanceKind: 'timeline', status: 'applied' }),
+        expect.objectContaining({
+          performanceKind: 'blueLive',
+          status: 'failed',
+          message: 'Injected Blue Live gate failure',
+        }),
+      ]),
+    );
+    expect(channelRef.isMuted()).toBe(true);
+    expect(channelRef.getAssociation()).toBe('track-a');
+    expect(history.isDirty()).toBe(true);
+
+    const undo = await history.undo({
+      documentId: docId,
+      operationId: 't111-generated-undo',
+      expectedRevision: 1,
+      contextSequence: 2,
+    });
+    expect(undo.status).toBe('committed');
+    if (undo.status !== 'committed') return;
+    expect(channelRef.isMuted()).toBe(false);
+    expect(channelRef.getAssociation()).toBe('track-a');
+    expect(undo.runtimeOutcomes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ performanceKind: 'timeline', status: 'applied' }),
+        expect.objectContaining({ performanceKind: 'blueLive', status: 'failed' }),
+      ]),
+    );
+    expect(history.isDirty()).toBe(false);
+
+    const redo = await history.redo({
+      documentId: docId,
+      operationId: 't111-generated-redo',
+      expectedRevision: 2,
+      contextSequence: 3,
+    });
+    expect(redo.status).toBe('committed');
+    if (redo.status !== 'committed') return;
+    expect(channelRef.isMuted()).toBe(true);
+    expect(channelRef.getAssociation()).toBe('track-a');
+    expect(redo.runtimeOutcomes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ performanceKind: 'timeline', status: 'applied' }),
+        expect.objectContaining({ performanceKind: 'blueLive', status: 'failed' }),
+      ]),
+    );
+    expect(history.isDirty()).toBe(true);
   });
 
   it('restores Track BlueX7 voice settings live on undo without restart-required', async () => {
@@ -853,6 +1000,228 @@ describe('global history engine integration (T040, US3)', () => {
 });
 
 if (process.env.BLUE_RUN_REAL_ENGINE === '1') {
+  describe('T093 real blue-engine project-history reconciliation', () => {
+    it('replays mode and mixer-enable history on both running performances and skips stopped ones', async () => {
+      const enginePath = resolveAcceptanceEnginePath();
+      if (!enginePath) {
+        throw new Error(
+          'T093 real-engine history validation requires a built engine; set BLUE_ENGINE_PATH or build native/blue-engine first',
+        );
+      }
+
+      const outputDirectory = await mkdtemp(path.join(tmpdir(), 'blue-history-t093-'));
+      let timeline: { session: EngineSession; channelName: string } | null = null;
+      let blueLive: { session: EngineSession; channelName: string } | null = null;
+      try {
+        timeline = await startAcceptanceEngine(enginePath, 'realtime', outputDirectory);
+        blueLive = await startAcceptanceEngine(enginePath, 'blue-live', outputDirectory);
+        const timelineEngine = timeline.session.getClient();
+        const blueLiveEngine = blueLive.session.getClient();
+        if (!timelineEngine || !blueLiveEngine) throw new Error('T093 engine clients unavailable');
+
+        const data = new BlueData();
+        const group = new TrackLayerGroup();
+        const track = new ScoreTrack();
+        track.setUniqueId('track-t093-real');
+        track.setMuted(false);
+        track.setSolo(true);
+        group.push(track);
+        data.getScore().push(group);
+        data.getArrangement().addInstrument(new GenericInstrument(), 'track-t093-real');
+
+        const channel = new Channel();
+        channel.setName('Audio T093 Real');
+        channel.setAssociation('track-t093-real');
+        channel.setMuted(true);
+        channel.setSolo(false);
+        data.getMixer().getChannels().push(channel);
+
+        const session = new ProjectSession();
+        session.replace(data, path.join(outputDirectory, 't093-history.blue'), {
+          documentId: 'doc-t093-real-engine',
+        });
+        const publishedSnapshots: Array<ReturnType<typeof createProjectEditorSnapshot>> = [];
+        const unexpectedOperations = new Map<'timeline' | 'blueLive', RuntimeWorkOperation[]>([
+          ['timeline', []],
+          ['blueLive', []],
+        ]);
+        const reconciliation = new ProjectRuntimeReconciliation();
+        for (const kind of ['timeline', 'blueLive'] as const) {
+          reconciliation.registerPerformance(kind, 1, {
+            async applyOperation(operation) {
+              unexpectedOperations.get(kind)!.push(operation);
+              return {
+                status: 'rejected',
+                message: `T093 received unexpected live operation for ${kind}`,
+              };
+            },
+          });
+        }
+
+        const history = new ProjectHistory({
+          session,
+          reconciliation,
+          captureSnapshot: () => {
+            const current = session.read();
+            return current.data
+              ? createProjectEditorSnapshot(
+                  current.data,
+                  current.filePath,
+                  current.sessionId,
+                  current.documentId ?? undefined,
+                )
+              : null;
+          },
+          publishUpdated: (event) => {
+            if (event.snapshot) {
+              publishedSnapshots.push(
+                event.snapshot as ReturnType<typeof createProjectEditorSnapshot>,
+              );
+            }
+          },
+        });
+        history.setSavedStateId(session.read().stateId);
+
+        const channelRef = channel;
+        const trackRef = track;
+        const assertState = (mode: 'audio' | 'event', mixerEnabled: boolean, dirty: boolean) => {
+          expect(data.getProjectProperties().trackLayerMuteSoloMode).toBe(mode);
+          expect(data.getMixer().isEnabled()).toBe(mixerEnabled);
+          expect(channelRef.isMuted()).toBe(true);
+          expect(channelRef.isSolo()).toBe(false);
+          expect(trackRef.isMuted()).toBe(false);
+          expect(trackRef.isSolo()).toBe(true);
+          expect(channelRef.getAssociation()).toBe('track-t093-real');
+          expect(channelRef).toBe(channel);
+          expect(trackRef).toBe(track);
+          expect(history.isDirty()).toBe(dirty);
+
+          const snapshot = publishedSnapshots.at(-1);
+          expect(snapshot).toBeDefined();
+          expect(snapshot?.projectProperties.trackLayerMuteSoloMode).toBe(mode);
+          expect(snapshot?.mixer?.enabled).toBe(mixerEnabled);
+          expect(snapshot?.mixer?.channels).toContainEqual(
+            expect.objectContaining({
+              association: 'track-t093-real',
+              muted: true,
+              solo: false,
+            }),
+          );
+        };
+
+        const assertActiveRestart = (response: {
+          status: string;
+          runtimeOutcomes?: readonly unknown[];
+        }) => {
+          expect(response.status).toBe('committed');
+          expect(response.runtimeOutcomes).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({ performanceKind: 'timeline', status: 'restart-required' }),
+              expect.objectContaining({ performanceKind: 'blueLive', status: 'restart-required' }),
+            ]),
+          );
+          expect(response.runtimeOutcomes).toHaveLength(2);
+          expect(unexpectedOperations.get('timeline')).toHaveLength(0);
+          expect(unexpectedOperations.get('blueLive')).toHaveLength(0);
+        };
+
+        let contextSequence = 0;
+        const commit = (
+          label: string,
+          patches: Parameters<ProjectHistory['commit']>[0]['patches'],
+        ) =>
+          history.commit({
+            documentId: 'doc-t093-real-engine',
+            operationId: `t093-real-commit-${++contextSequence}`,
+            expectedRevision: session.read().revision,
+            contextSequence,
+            label,
+            patches,
+          });
+        const undo = () =>
+          history.undo({
+            documentId: 'doc-t093-real-engine',
+            operationId: `t093-real-undo-${++contextSequence}`,
+            expectedRevision: session.read().revision,
+            contextSequence,
+          });
+        const redo = () =>
+          history.redo({
+            documentId: 'doc-t093-real-engine',
+            operationId: `t093-real-redo-${++contextSequence}`,
+            expectedRevision: session.read().revision,
+            contextSequence,
+          });
+
+        const modeEvent = {
+          projectProperties: { trackLayerMuteSoloMode: 'event' as const },
+        };
+        const disableMixer = {
+          mixer: { type: 'setMixerEnabled' as const, value: false },
+        };
+
+        const modeCommit = await commit('Set Track Header Mode to Event', [modeEvent]);
+        assertActiveRestart(modeCommit);
+        assertState('event', true, true);
+
+        const disableCommit = await commit('Disable Mixer', [disableMixer]);
+        assertActiveRestart(disableCommit);
+        assertState('event', false, true);
+
+        const undoDisable = await undo();
+        assertActiveRestart(undoDisable);
+        assertState('event', true, true);
+
+        const redoDisable = await redo();
+        assertActiveRestart(redoDisable);
+        assertState('event', false, true);
+
+        const undoDisableAgain = await undo();
+        assertActiveRestart(undoDisableAgain);
+        assertState('event', true, true);
+
+        const undoMode = await undo();
+        assertActiveRestart(undoMode);
+        assertState('audio', true, false);
+
+        const redoMode = await redo();
+        assertActiveRestart(redoMode);
+        assertState('event', true, true);
+
+        reconciliation.stopPerformance('timeline');
+        reconciliation.stopPerformance('blueLive');
+        const stoppedCommit = await commit('Disable Mixer While Stopped', [disableMixer]);
+        expect(stoppedCommit.status).toBe('committed');
+        if (stoppedCommit.status !== 'committed') return;
+        expect(stoppedCommit.runtimeOutcomes).toEqual([]);
+        assertState('event', false, true);
+
+        const stoppedUndo = await undo();
+        expect(stoppedUndo.status).toBe('committed');
+        if (stoppedUndo.status !== 'committed') return;
+        expect(stoppedUndo.runtimeOutcomes).toEqual([]);
+        assertState('event', true, true);
+
+        const stoppedRedo = await redo();
+        expect(stoppedRedo.status).toBe('committed');
+        if (stoppedRedo.status !== 'committed') return;
+        expect(stoppedRedo.runtimeOutcomes).toEqual([]);
+        assertState('event', false, true);
+
+        const timelineReadback = await timelineEngine.getChannel(timeline.channelName);
+        const blueLiveReadback = await blueLiveEngine.getChannel(blueLive.channelName);
+        expect(timelineReadback.ok && timelineReadback.value).toBeCloseTo(0.25, 6);
+        expect(blueLiveReadback.ok && blueLiveReadback.value).toBeCloseTo(0.25, 6);
+      } finally {
+        await Promise.all([
+          timeline?.session.shutdown('t093-complete'),
+          blueLive?.session.shutdown('t093-complete'),
+        ]);
+        await rm(outputDirectory, { recursive: true, force: true });
+      }
+    });
+  });
+
   describe('T116 real blue-engine acknowledgement boundary', () => {
     it('measures 100 live reversals with positive timeline and Blue Live readback', async () => {
       const enginePath = resolveAcceptanceEnginePath();

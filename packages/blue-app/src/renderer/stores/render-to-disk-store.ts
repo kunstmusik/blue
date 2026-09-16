@@ -16,10 +16,10 @@ function isTerminalPhase(phase: RenderOperationPhase | null): boolean {
 }
 
 /**
- * Tracks the disk-render operation for the progress dialog. Disk renders are
- * started by the native application menu in the main process; the renderer
- * never invokes renderToDisk, so the store is driven purely by the status
- * broadcasts and the operationId is main-generated.
+ * Tracks the disk-render operation for the progress dialog. Native menu disk
+ * render commands are routed through the renderer so its pending document
+ * patches can settle before main snapshots the project. The store remains
+ * driven by status broadcasts and the operationId is main-generated.
  */
 export interface RenderToDiskState {
   open: boolean;

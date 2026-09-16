@@ -8,11 +8,15 @@ import { CopyMode } from '../deep-copyable';
 import { Parameter } from '../automation/parameter';
 import { Channel } from './channel';
 
+let nextRuntimeIdentity = 1;
+
 export class Send implements BlueDataObject {
   private _sendChannel = Channel.MASTER;
   private _level = 1.0;
   private _enabled = true;
   private _parameter: Parameter;
+  /** Disposable identity used to bind compiled send gates to this entry. */
+  private _runtimeIdentity = `send-${nextRuntimeIdentity++}`;
 
   constructor() {
     this._parameter = new Parameter();
@@ -45,6 +49,14 @@ export class Send implements BlueDataObject {
   }
   setEnabled(enabled: boolean): void {
     this._enabled = enabled;
+  }
+
+  getRuntimeIdentity(): string {
+    return this._runtimeIdentity;
+  }
+
+  setRuntimeIdentity(identity: string): void {
+    this._runtimeIdentity = identity;
   }
 
   getParameter(): Parameter {
@@ -93,6 +105,9 @@ export class Send implements BlueDataObject {
     copy._level = this._level;
     copy._enabled = this._enabled;
     copy._parameter = this._parameter.deepCopy(mode) as Parameter;
+    if (mode === 'history') {
+      copy._runtimeIdentity = this._runtimeIdentity;
+    }
     return copy;
   }
 }

@@ -181,4 +181,82 @@ describe('MixerGatePublisher', () => {
     // New generation starts from CSD-initialized banks with commit 0 again.
     expect(result.commitToken).toBe(1);
   });
+
+  it('fences delayed stage completion to its originating generation and transport', async () => {
+    const oldEngine = new FakeMixerGateEngine();
+    const newEngine = new FakeMixerGateEngine();
+    let releaseStage!: () => void;
+    let stageStarted!: () => void;
+    const stageReady = new Promise<void>((resolve) => {
+      stageStarted = resolve;
+    });
+    const stageRelease = new Promise<void>((resolve) => {
+      releaseStage = resolve;
+    });
+    const oldIO = {
+      setChannels: async (entries: readonly { name: string; value: number }[]) => {
+        stageStarted();
+        await stageRelease;
+        return oldEngine.setChannels(entries);
+      },
+      getChannels: (names: readonly string[]) => oldEngine.getChannels(names),
+    };
+    const publisher = new MixerGatePublisher(oldIO, {
+      observeAttempts: 1,
+      stageRetryDelayMs: 1,
+    });
+    publisher.setBindings('timeline', createTestGateCatalog(1), { generation: 1, io: oldIO });
+
+    const stalePublication = publisher.publish('timeline', TEST_GATE_SIGNATURE, [0], 1);
+    await stageReady;
+    publisher.setBindings('timeline', createTestGateCatalog(1), {
+      generation: 2,
+      io: newEngine,
+    });
+    releaseStage();
+
+    await expect(stalePublication).resolves.toEqual({
+      ok: false,
+      message: 'gate-publication-stale',
+    });
+    expect(newEngine.writes).toHaveLength(0);
+    expect((await publisher.publish('timeline', TEST_GATE_SIGNATURE, [1], 2)).ok).toBe(true);
+    expect(newEngine.writes.length).toBeGreaterThan(0);
+  });
+
+  it('retains an uncertain commit token and recovers by applied-token readback', async () => {
+    const { engine, publisher } = createPublisher();
+    publisher.setBindings('timeline', createTestGateCatalog(1));
+    engine.failureMode = 'commit-write-throws';
+
+    const uncertain = await publisher.publish('timeline', TEST_GATE_SIGNATURE, [0]);
+    expect(uncertain).toEqual({
+      ok: false,
+      message: 'gate-commit-unconfirmed',
+      commitToken: 1,
+      unconfirmed: true,
+    });
+    expect(publisher.getCommitToken('timeline')).toBe(0);
+
+    engine.failureMode = 'none';
+    const recovered = await publisher.publish('timeline', TEST_GATE_SIGNATURE, [1]);
+    expect(recovered.ok).toBe(true);
+    expect(recovered.commitToken).toBe(2);
+    expect(publisher.getCommitToken('timeline')).toBe(2);
+  });
+
+  it('keeps a pending token when applied readback throws, then recovers', async () => {
+    const { engine, publisher } = createPublisher();
+    publisher.setBindings('timeline', createTestGateCatalog(1));
+    engine.failureMode = 'applied-read-throws';
+
+    const uncertain = await publisher.publish('timeline', TEST_GATE_SIGNATURE, [0]);
+    expect(uncertain.unconfirmed).toBe(true);
+    expect(uncertain.commitToken).toBe(1);
+    expect(publisher.getCommitToken('timeline')).toBe(0);
+
+    engine.failureMode = 'none';
+    const recovered = await publisher.publish('timeline', TEST_GATE_SIGNATURE, [0]);
+    expect(recovered).toMatchObject({ ok: true, commitToken: 2 });
+  });
 });

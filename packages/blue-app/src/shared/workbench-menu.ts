@@ -229,6 +229,10 @@ export type NativeMenuCommand =
   | { type: 'navigate-previous-marker' }
   | { type: 'rewind-to-start' }
   | { type: 'render-stop-project' }
+  | { type: 'generate-csd-to-screen' }
+  | { type: 'generate-realtime-csd-to-screen' }
+  | { type: 'generate-csd-to-disk' }
+  | { type: 'render-to-disk'; action: 'render' | 'play' | 'open' }
   | { type: 'audition-score-objects' }
   | { type: 'edit-tempo-map' }
   | { type: 'edit-meter-map' }

@@ -85,6 +85,24 @@ describe('trackLayerMuteSoloMode XML compatibility (Spec 111 T062/T063)', () => 
     expect(hasLegacyMixerStateAtLoad(clean)).toBe(false);
   });
 
+  it.each([
+    { label: 'master mute', muted: true, solo: false, notice: true },
+    { label: 'master solo', muted: false, solo: true, notice: false },
+    { label: 'master mute and solo', muted: true, solo: true, notice: true },
+  ])('tracks $label through save/reload provenance', ({ muted, solo, notice }) => {
+    const data = BlueData.loadFromString(
+      `<blueData version="2.8.0"><mixer><enabled>true</enabled>` +
+        `<channel><name>Master</name><muted>${muted}</muted><solo>${solo}</solo></channel>` +
+        `</mixer></blueData>`,
+    );
+
+    expect(hasLegacyMixerStateAtLoad(data)).toBe(notice);
+    const reloaded = BlueData.loadFromString(data.saveToString());
+    expect(reloaded.getMixer().getMaster().isMuted()).toBe(muted);
+    expect(reloaded.getMixer().getMaster().isSolo()).toBe(solo);
+    expect(hasLegacyMixerStateAtLoad(reloaded)).toBe(notice);
+  });
+
   it('restores raw provenance exactly through history apply and rollback', () => {
     // Loaded with an unsupported raw value.
     const props = ProjectProperties.loadFromXML(

@@ -458,6 +458,54 @@ describe('project-store — canonical acknowledgement barrier', () => {
   });
 });
 
+describe('project-store — generation settlement barrier', () => {
+  const generationCases = [
+    { action: 'generateCsdToScreen' as const, api: 'generateCsdToScreen' as const },
+    {
+      action: 'generateRealtimeCsdToScreen' as const,
+      api: 'generateRealtimeCsdToScreen' as const,
+    },
+    { action: 'generateCsdToDisk' as const, api: 'generateCsdToDisk' as const },
+  ];
+
+  beforeEach(() => {
+    useProjectStore.getState().clearProject();
+  });
+
+  afterEach(() => {
+    useProjectStore.getState().clearProject();
+  });
+
+  it.each(generationCases)(
+    'flushes pending document patches before $action',
+    async ({ action, api }) => {
+      const previousFlush = useProjectStore.getState().flushPendingPatches;
+      const previousBlueAPI = window.blueAPI;
+      const order: string[] = [];
+      const flush = vi.fn(async () => {
+        order.push('flush');
+      });
+      const generate = vi.fn(async () => {
+        order.push('generate');
+      });
+
+      useProjectStore.setState({ flushPendingPatches: flush });
+      window.blueAPI = {
+        ...(previousBlueAPI ?? {}),
+        [api]: generate,
+      } as typeof window.blueAPI;
+
+      try {
+        await useProjectStore.getState()[action]();
+        expect(order).toEqual(['flush', 'generate']);
+      } finally {
+        useProjectStore.setState({ flushPendingPatches: previousFlush });
+        window.blueAPI = previousBlueAPI;
+      }
+    },
+  );
+});
+
 describe('project-store — stable façade contract', () => {
   const commitProjectDocumentPatches = vi.fn();
   const getProjectDocument = vi.fn();

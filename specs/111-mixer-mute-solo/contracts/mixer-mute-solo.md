@@ -51,4 +51,4 @@ Certify only built-in AudioClip-only generation, no opaque code/effects/score pr
 
 ## UI
 
-Non-master M/S, master M: accessible names/pressed states, keyboard operation, no master Solo action. Mixer-disabled strips show inactive controls and headers show Event override. Audio headers/strips share state; Event flags remain separate. Wet-only feeders distinguish output exclusion from send inclusion. Mode selector explains independent saved states. Existing runtime outcomes show when saved intent is not yet applied. No confirmation dialog per toggle.
+Non-master M/S, master M: accessible names/pressed states, keyboard operation, no master Solo action. Mixer-disabled strips show inactive controls and headers show Event override. Audio headers/strips share state; Event flags remain separate. Wet-only feeders distinguish output exclusion from send inclusion. The Audio/Event mode selector lives in the Score Settings modal opened by the Score toolbar gear beside Ruler, explains independent saved states, and is absent from Project Information. Existing runtime outcomes show when saved intent is not yet applied. No confirmation dialog per toggle.

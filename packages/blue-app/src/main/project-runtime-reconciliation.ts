@@ -47,6 +47,8 @@ export interface RuntimeMixerGatesOperation {
   readonly parameterId: string;
   readonly signature: string;
   readonly values: readonly number[];
+  /** Runtime-only fence; never comes from a persisted document patch. */
+  readonly expectedGeneration?: number;
 }
 
 export type RuntimeWorkOperation =
@@ -600,6 +602,16 @@ interface ActivePerformance {
   fenced: boolean;
 }
 
+type OutstandingObligationStatus = Extract<
+  ProjectRuntimeOutcomeStatus,
+  'restart-required' | 'failed'
+>;
+
+interface OutstandingObligation {
+  status: OutstandingObligationStatus;
+  message?: string;
+}
+
 /**
  * Contract: while restart-required remains for an owner, later scalar changes
  * to that owner also await restart; the owner is not live-authorized merely
@@ -624,6 +636,13 @@ export class ProjectRuntimeReconciliation {
     | (() => { signature: string; values: readonly number[] } | null)
     | null;
   private readonly restartRequiredOwners = createOwnerRestartMemory();
+  private readonly outstandingObligations = new Map<
+    PerformanceKind,
+    Map<string, OutstandingObligation>
+  >([
+    ['timeline', new Map<string, OutstandingObligation>()],
+    ['blueLive', new Map<string, OutstandingObligation>()],
+  ]);
   private readonly closedGestures = new Set<string>();
   private planCounter = 0;
 
@@ -650,6 +669,7 @@ export class ProjectRuntimeReconciliation {
       fenced: false,
     });
     this.restartRequiredOwners.get(kind)?.clear();
+    this.outstandingObligations.get(kind)?.clear();
   }
 
   stopPerformance(kind: PerformanceKind): void {
@@ -931,7 +951,7 @@ export class ProjectRuntimeReconciliation {
         bindingKey(operation.ownerKey, operation.parameterId),
       );
       return binding?.kind === 'mixer-gates' && binding.signature === operation.signature
-        ? operation
+        ? { ...operation, expectedGeneration: performance.generation }
         : null;
     }
 
@@ -970,7 +990,9 @@ export class ProjectRuntimeReconciliation {
     const performance = this.performances.get(plan.performanceKind);
     if (!performance) return Promise.resolve(null);
 
-    const pendingOutcome = outcomeFor(plan, 'pending', [...plan.restartRequiredOwnerIds]);
+    const pendingOutcome = this.outcomeWithOutstandingObligations(performance, plan, 'pending', [
+      ...plan.restartRequiredOwnerIds,
+    ]);
     performance.lastOutcome = pendingOutcome;
     this.onOutcome(pendingOutcome, { documentId: plan.documentId });
 
@@ -1016,7 +1038,7 @@ export class ProjectRuntimeReconciliation {
         ack = await this.applyWithTimeout(performance, operation);
       } catch (error) {
         if (this.isObsolete(performance, plan)) return null;
-        return this.settle(performance, plan, 'failed', touchedOwnerIds, errorMessage(error));
+        return this.settle(performance, plan, 'failed', [operation.ownerKey], errorMessage(error));
       }
       if (ack.status === 'rejected') {
         if (this.isObsolete(performance, plan)) return null;
@@ -1024,7 +1046,7 @@ export class ProjectRuntimeReconciliation {
           performance,
           plan,
           'failed',
-          touchedOwnerIds,
+          [operation.ownerKey],
           ack.message ?? 'Engine rejected the runtime operation',
         );
       }
@@ -1082,17 +1104,95 @@ export class ProjectRuntimeReconciliation {
     ownerIds: string[],
     message?: string,
   ): ProjectRuntimeOutcome {
-    const outcome = outcomeFor(plan, status, ownerIds, message);
-    performance.lastOutcome = outcome;
+    const obligations = this.outstandingObligations.get(performance.kind);
+    if (status === 'failed') {
+      for (const ownerId of plan.restartRequiredOwnerIds) {
+        this.recordObligation(
+          obligations,
+          ownerId,
+          'restart-required',
+          'Compiled content requires a performance restart',
+        );
+      }
+      for (const ownerId of ownerIds) {
+        this.recordObligation(obligations, ownerId, 'failed', message);
+      }
+    }
     if (status === 'restart-required') {
       // Remember the owners so later scalar changes to them also await
       // restart; memory clears when a new generation registers.
       const owners = this.restartRequiredOwners.get(performance.kind);
       for (const ownerId of plan.restartRequiredOwnerIds) {
         owners?.add(ownerId);
+        this.recordObligation(
+          obligations,
+          ownerId,
+          'restart-required',
+          message ?? 'Compiled content requires a performance restart',
+        );
       }
     }
+    if (status === 'applied') {
+      for (const ownerId of ownerIds) {
+        const obligation = obligations?.get(ownerId);
+        if (obligation?.status === 'failed') obligations?.delete(ownerId);
+      }
+    }
+    const outcome = this.outcomeWithOutstandingObligations(
+      performance,
+      plan,
+      status,
+      ownerIds,
+      message,
+    );
+    performance.lastOutcome = outcome;
     this.onOutcome(outcome, { documentId: plan.documentId });
     return outcome;
+  }
+
+  private recordObligation(
+    obligations: Map<string, OutstandingObligation> | undefined,
+    ownerId: string,
+    status: OutstandingObligationStatus,
+    message?: string,
+  ): void {
+    if (!obligations) return;
+    const previous = obligations.get(ownerId);
+    if (!previous || OUTCOME_PRECEDENCE[status] > OUTCOME_PRECEDENCE[previous.status]) {
+      obligations.set(ownerId, { status, ...(message === undefined ? {} : { message }) });
+    } else if (previous.message === undefined && message !== undefined) {
+      obligations.set(ownerId, { ...previous, message });
+    }
+  }
+
+  private outcomeWithOutstandingObligations(
+    performance: ActivePerformance,
+    plan: RuntimeWorkPlan,
+    status: ProjectRuntimeOutcomeStatus,
+    ownerIds: string[],
+    message?: string,
+  ): ProjectRuntimeOutcome {
+    const obligations = this.outstandingObligations.get(performance.kind);
+    let effectiveStatus = status;
+    let outstandingMessage: string | undefined;
+    for (const obligation of obligations?.values() ?? []) {
+      if (OUTCOME_PRECEDENCE[obligation.status] > OUTCOME_PRECEDENCE[effectiveStatus]) {
+        effectiveStatus = obligation.status;
+        outstandingMessage = obligation.message;
+      } else if (
+        OUTCOME_PRECEDENCE[obligation.status] === OUTCOME_PRECEDENCE[effectiveStatus] &&
+        outstandingMessage === undefined
+      ) {
+        outstandingMessage = obligation.message;
+      }
+    }
+
+    const affectedOwnerIds = [...new Set([...ownerIds, ...(obligations?.keys() ?? [])])];
+    return outcomeFor(
+      plan,
+      effectiveStatus,
+      affectedOwnerIds,
+      effectiveStatus === status ? message : (outstandingMessage ?? message),
+    );
   }
 }

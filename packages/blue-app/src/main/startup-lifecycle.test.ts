@@ -133,7 +133,7 @@ describe('StartupLifecycle', () => {
 
   it('keeps normal shutdown explicit and ordered separately from failed-startup rollback', () => {
     const source = readFileSync(path.join(__dirname, 'main.ts'), 'utf8');
-    const shutdownStart = source.indexOf('async function doQuit()');
+    const shutdownStart = source.indexOf('async function doQuit(');
     const shutdownEnd = source.indexOf('// ─── File Operations', shutdownStart);
     const shutdown = source.slice(shutdownStart, shutdownEnd);
     const orderedOperations = [
@@ -150,7 +150,7 @@ describe('StartupLifecycle', () => {
       'disposeJavaScriptSession()',
       "closeEffectEditorWindowsForOwner('project')",
       'projectSession.resetForShutdown()',
-      'await cleanupTempCsdSnapshots()',
+      'cleanupTempCsdSnapshots',
       'app.quit()',
     ];
 
@@ -167,6 +167,23 @@ describe('StartupLifecycle', () => {
     expect(shutdownSafeSettings).toBeGreaterThan(domainTeardown);
     expect(shutdownSafeSettings).toBeLessThan(shutdown.indexOf('app.quit()'));
     expect(shutdown).not.toContain('rollbackFailedStartup');
+  });
+
+  it('bounds dev-reload shutdown and clears renderer history fences first', () => {
+    const source = readFileSync(path.join(__dirname, 'main.ts'), 'utf8');
+    const shutdownStart = source.indexOf('async function doQuit(');
+    const shutdownEnd = source.indexOf('// ─── File Operations', shutdownStart);
+    const shutdown = source.slice(shutdownStart, shutdownEnd);
+    const domainTeardown = shutdown.indexOf('unregisterDomainIpc?.()');
+
+    expect(source).toContain('const SHUTDOWN_STEP_TIMEOUT_MS = 2_000;');
+    expect(source).toContain('await Promise.race([');
+    expect(shutdown).toContain('clearHistoryParticipantsForShutdown();');
+    expect(shutdown.indexOf('clearHistoryParticipantsForShutdown();')).toBeLessThan(domainTeardown);
+    expect(shutdown).toContain("if (trigger === 'signal')");
+    expect(shutdown).toContain('app.exit(0)');
+    expect(source).toContain('if (shutdownPromise) {\n    app.exit(0);');
+    expect(source).toContain("void doQuit('signal').catch");
   });
 
   it('uses the app background for native and pre-stylesheet window paint', () => {

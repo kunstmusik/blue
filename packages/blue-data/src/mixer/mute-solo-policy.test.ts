@@ -6,6 +6,7 @@ import {
   buildMixerRouteGraph,
   computeMixerGateState,
   computeMixerGateStateForMixer,
+  getMixerRouteSignature,
 } from './mute-solo-policy';
 
 /**
@@ -228,5 +229,76 @@ describe('mute-solo-policy', () => {
     expect(state.gates).toHaveLength(0);
     expect(a.isSolo()).toBe(true);
     expect(a.isMuted()).toBe(false);
+  });
+
+  it('captures stable channel identities and changes the signature when ownership moves', () => {
+    const mixer = new Mixer();
+    const first = new Channel();
+    first.setName('First');
+    first.setAssociation('track-first');
+    const second = new Channel();
+    second.setName('Second');
+    second.setAssociation('track-second');
+    mixer.getChannels().push(first, second);
+
+    const original = buildMixerRouteGraph(mixer);
+    expect(original.nodes.slice(0, 2).map((node) => node.identity)).toEqual([
+      'association:track-first',
+      'association:track-second',
+    ]);
+    expect(getMixerRouteSignature(original)).not.toBe('');
+
+    mixer.getChannels().reverse();
+    const reordered = buildMixerRouteGraph(mixer);
+    expect(getMixerRouteSignature(reordered)).not.toBe(getMixerRouteSignature(original));
+    expect(reordered.nodes[0]?.identity).toBe('association:track-second');
+
+    mixer.getChannels()[0]?.setName('Renamed second');
+    const renamed = buildMixerRouteGraph(mixer);
+    expect(renamed.nodes[0]?.identity).toBe('association:track-second');
+    expect(getMixerRouteSignature(renamed)).not.toBe(getMixerRouteSignature(reordered));
+  });
+
+  it('invalidates same-name unassociated channel replacements', () => {
+    const mixer = new Mixer();
+    const original = new Channel();
+    original.setName('Return');
+    mixer.getSubChannels().push(original);
+    const before = buildMixerRouteGraph(mixer);
+
+    const replacement = new Channel();
+    replacement.setName('Return');
+    mixer.getSubChannels()[0] = replacement;
+    const after = buildMixerRouteGraph(mixer);
+
+    expect(after.nodes[0]?.identity).not.toBe(before.nodes[0]?.identity);
+    expect(getMixerRouteSignature(after)).not.toBe(getMixerRouteSignature(before));
+  });
+
+  it('invalidates same-position send replacements and preserves identities only for history copies', () => {
+    const mixer = new Mixer();
+    const source = new Channel();
+    source.setName('Source');
+    const send = new Send();
+    send.setSendChannel('Master');
+    source.getPostEffects().push(send);
+    mixer.getChannels().push(source);
+
+    const original = buildMixerRouteGraph(mixer);
+    const duplicate = mixer.deepCopy() as Mixer;
+    const history = mixer.deepCopy('history') as Mixer;
+    expect(getMixerRouteSignature(buildMixerRouteGraph(duplicate))).not.toBe(
+      getMixerRouteSignature(original),
+    );
+    expect(getMixerRouteSignature(buildMixerRouteGraph(history))).toBe(
+      getMixerRouteSignature(original),
+    );
+
+    const replacement = new Send();
+    replacement.setSendChannel('Master');
+    source.getPostEffects()[0] = replacement;
+    expect(getMixerRouteSignature(buildMixerRouteGraph(mixer))).not.toBe(
+      getMixerRouteSignature(original),
+    );
   });
 });

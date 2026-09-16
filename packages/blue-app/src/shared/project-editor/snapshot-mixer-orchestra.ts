@@ -623,10 +623,6 @@ function createMixerChannelListSnapshot(
 
 export function createMixerSnapshot(mixer: Mixer): MixerSnapshot {
   const { byKey } = buildMixerRouteIndicatorIndex(mixer);
-  const hasLegacyActiveChannelState = [
-    ...mixer.getAllSourceChannels(),
-    ...mixer.getSubChannels(),
-  ].some((channel) => channel.isMuted() || channel.isSolo());
   const indicatorFor = (kind: 'source' | 'sub' | 'master', channel: Channel) =>
     byKey.get(`${kind}:${channel.getName()}`);
   return {
@@ -657,15 +653,17 @@ export function createMixerSnapshot(mixer: Mixer): MixerSnapshot {
 
 /**
  * Spec 111 FR-015 compatibility notice: true only when the loaded document
- * carried active channel mute/non-master solo flags at load time (provenance
+ * carried active channel mute/non-master solo flags or master mute at load time (provenance
  * recorded by the XML loader) and the flags are still active now. Flags set
  * by live edits in this session never surface the notice.
  */
 export function computeLegacyMixerStateNotice(data: BlueData): boolean {
   if (!hasLegacyMixerStateAtLoad(data)) return false;
   const mixer = data.getMixer();
-  return [...mixer.getAllSourceChannels(), ...mixer.getSubChannels()].some(
-    (channel) => channel.isMuted() || channel.isSolo(),
+  return (
+    [...mixer.getAllSourceChannels(), ...mixer.getSubChannels()].some(
+      (channel) => channel.isMuted() || channel.isSolo(),
+    ) || mixer.getMaster().isMuted()
   );
 }
 

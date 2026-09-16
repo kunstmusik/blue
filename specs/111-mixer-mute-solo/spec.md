@@ -4,9 +4,9 @@
 
 **Created**: 2026-09-15
 
-**Status**: Planned
+**Status**: Implementation complete; hardware latency and native Windows acceptance pending
 
-**Input**: Add mixer-wide audio mute/solo for instrument channels, track channels, and subchannels; master has Mute only. Default new projects to audio controls on track headers; preserve event controls for legacy projects through Project Properties. Event controls and mixer audio controls remain independent. Force event controls when the mixer is disabled. Research send behavior and support safe event pruning in disk CSD generation.
+**Input**: Add mixer-wide audio mute/solo for instrument channels, track channels, and subchannels; master has Mute only. Default new projects to audio controls on track headers; preserve event controls for legacy projects through Score Settings. Event controls and mixer audio controls remain independent. Force event controls when the mixer is disabled. Research send behavior and support safe event pruning in disk CSD generation.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -29,7 +29,7 @@ A composer mutes any mixer strip or solos an instrument, track, or subchannel to
 
 ### User Story 2 - Choose track header behavior without losing mixer controls (Priority: P1)
 
-A composer uses audio controls for new projects and retains event filtering for older compositions or deliberate event-generation workflows.
+A composer uses audio controls for new projects and retains event filtering for older compositions or deliberate event-generation workflows. They choose that track-header behavior in a Score Settings modal opened from the gear button beside the Score panel's Ruler control, keeping project metadata separate from score behavior.
 
 **Why this priority**: Existing compositions depend on event omission, and event filtering cannot be replaced by audio silence in all projects.
 
@@ -42,7 +42,7 @@ A composer uses audio controls for new projects and retains event filtering for 
 3. **Given** event mode, **When** a track is event-muted and its mixer channel is soloed, **Then** omitted events remain omitted; changing the channel does not clear event state.
 4. **Given** audio mode with stored event flags, **When** events are generated, **Then** those inactive track flags do not affect event inclusion or trigger global event solo filtering.
 5. **Given** either saved mode, **When** the mixer is disabled, **Then** headers operate on event state and clearly identify that behavior; **When** re-enabled, **Then** the saved mode and preserved audio state resume.
-6. **Given** differing saved event and audio states, **When** the user changes header mode, **Then** the application explains that it switches which independent state the headers control and preserves both states without copying or clearing either.
+6. **Given** differing saved event and audio states, **When** the user changes header mode in Score Settings, **Then** the application explains that it switches which independent state the headers control and preserves both states without copying or clearing either.
 
 ### User Story 3 - Render an equivalent mix with less unnecessary event work (Priority: P2)
 
@@ -96,7 +96,7 @@ A composer saves, reloads, undoes, and redoes M/S edits and behavior changes wit
 - **FR-004**: Solo on a non-master channel MUST preserve the paths feeding that explicitly soloed channel and the paths carrying its output onward, including sends. Feeder bypass paths and unrelated feeds into shared downstream channels MUST be suppressed. Multiple non-master solos select the union of these paths. Implicitly retaining master or a shared bus MUST NOT admit all its other inputs.
 - **FR-005**: Explicit mute MUST override all explicit/implicit solo inclusion. Master mute MUST silence mixer output regardless of solos. Unmuting master MUST restore only the mix permitted by existing upstream controls. Stored master-solo values MUST be preserved but ignored; new master-solo edits MUST be rejected. Control of user-authored audio bypassing the mixer remains outside scope.
 - **FR-006**: Display explicit mute/solo separately from exclusion caused by solo elsewhere. Post-output meters MUST reflect audio after the output gate; a silent dry-output meter does not imply that an allowed send is silent. Controls MUST be keyboard operable and have accessible names and state.
-- **FR-007**: Project Properties MUST offer Audio and Event behavior for track headers. New projects default to Audio; projects lacking the property load as Event. The property MUST persist in the project.
+- **FR-007**: Score Settings MUST offer Audio and Event behavior for track headers. The setting MUST be opened by a gear button at the far right of the Score panel toolbar, immediately beside the Ruler button, and presented in a Score Settings modal. New projects default to Audio; projects lacking the property load as Event. The property MUST persist in the project. Project Information MUST remain focused on project metadata and MUST NOT present this control.
 - **FR-008**: With an enabled mixer, Audio headers MUST edit associated channel state; Event headers MUST edit independent track event state. Mixer strips MUST always edit audio state. Mode changes MUST preserve both sets and explain the switch in authority.
 - **FR-009**: With a disabled mixer, track headers MUST use event behavior regardless of the saved preference, indicate the override, and preserve the preference and channel flags for later use. Mixer strip audio controls MUST indicate that they are inactive.
 - **FR-010**: Only effective event controls MUST participate in event inclusion and existing score-wide event solo behavior. Audio solo MUST NOT resurrect event-filtered content.
@@ -106,6 +106,11 @@ A composer saves, reloads, undoes, and redoes M/S edits and behavior changes wit
 - **FR-014**: Save/load MUST preserve both state sets, the behavior preference, existing channel data, and unknown project data. Invalid behavior values MUST use Event as a safe effective fallback, retain the original unknown value until explicitly replaced, and report the unsupported value.
 - **FR-015**: Persisted channel mute and non-master solo flags MUST become effective when the mixer is enabled, including flags in legacy files. A legacy project containing these active flags MUST receive a visible compatibility notice; flags MUST NOT be silently cleared. Master solo is preserved but inactive and does not trigger that notice by itself. Legacy track event behavior remains preserved independently.
 - **FR-016**: Runtime failure MUST be reported without falsely showing saved state as successfully applied. Recovery MUST reconcile playback to the canonical project rather than silently overwrite the edit.
+
+### Score settings access
+
+- The Score Settings modal MUST provide the Audio/Event track-header mute/solo behavior control and its saved-versus-effective explanation, including the mixer-disabled override and any applicable legacy compatibility notice.
+- The modal MUST have a stable section-based layout that can accommodate additional score settings later without returning this behavior to Project Information.
 
 ### Existing Behavior & Data Compatibility *(mandatory when applicable)*
 

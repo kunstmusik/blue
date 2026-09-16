@@ -3,10 +3,8 @@ import { BlueData } from '@blue/data';
 import { Channel } from '@blue/data';
 import { Send } from '@blue/data';
 import { hasLegacyMixerStateAtLoad, markLegacyMixerStateAtLoad } from '@blue/data';
-import {
-  computeLegacyMixerStateNotice,
-  createProjectEditorSnapshot,
-} from './snapshot-mixer-orchestra';
+import { computeLegacyMixerStateNotice } from './snapshot-mixer-orchestra';
+import { createProjectEditorSnapshot } from './snapshot-score';
 import {
   applyProjectDocumentPatch,
   validateProjectDocumentPatch,
@@ -249,6 +247,31 @@ describe('mixer mute/solo contract boundary (Spec 111)', () => {
       // Clearing the loaded flags retires the notice.
       r.setSolo(false);
       expect(computeLegacyMixerStateNotice(data)).toBe(false);
+    });
+
+    it('carries legacy master mute through load, snapshot, bypass, and clearing', () => {
+      const data = BlueData.loadFromString(
+        '<blueData version="2.8.0"><mixer><enabled>true</enabled>' +
+          '<channel><name>Master</name><muted>true</muted><solo>false</solo></channel>' +
+          '</mixer></blueData>',
+      );
+
+      expect(data.getMixer().getMaster().isMuted()).toBe(true);
+      expect(hasLegacyMixerStateAtLoad(data)).toBe(true);
+      expect(computeLegacyMixerStateNotice(data)).toBe(true);
+      let snapshot = createProjectEditorSnapshot(data, null);
+      expect(snapshot.mixer.legacyActiveChannelStateNotice).toBe(true);
+
+      data.getMixer().setEnabled(false);
+      snapshot = createProjectEditorSnapshot(data, null);
+      expect(snapshot.mixer.enabled).toBe(false);
+      expect(snapshot.mixer.legacyActiveChannelStateNotice).toBe(true);
+
+      data.getMixer().setEnabled(true);
+      data.getMixer().getMaster().setMuted(false);
+      data.getMixer().getMaster().setSolo(true);
+      snapshot = createProjectEditorSnapshot(data, null);
+      expect(snapshot.mixer.legacyActiveChannelStateNotice).toBe(false);
     });
   });
 

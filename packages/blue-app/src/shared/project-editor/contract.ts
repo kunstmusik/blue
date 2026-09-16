@@ -1476,7 +1476,7 @@ export interface MixerSnapshot {
   master: MixerChannelSnapshot;
   /**
    * Load-derived compatibility notice (Spec 111 FR-015): a loaded project
-   * carries active channel mute/non-master solo flags that now become
+   * carries active channel mute/non-master solo flags or master mute that now become
    * audible. Disposable; never serialized.
    */
   legacyActiveChannelStateNotice?: boolean;

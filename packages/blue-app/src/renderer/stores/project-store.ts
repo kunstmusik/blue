@@ -189,6 +189,48 @@ interface AudioClipEditorPreview {
   fadeOut?: number;
 }
 
+const RUNTIME_OUTCOME_PRECEDENCE: Record<ProjectRuntimeOutcome['status'], number> = {
+  applied: 0,
+  pending: 1,
+  'restart-required': 2,
+  failed: 3,
+};
+
+function mergeRuntimeOutcome(
+  previous: ProjectRuntimeOutcome | undefined,
+  incoming: ProjectRuntimeOutcome,
+): ProjectRuntimeOutcome {
+  if (!previous || incoming.generation !== previous.generation) return incoming;
+
+  const previousRank = RUNTIME_OUTCOME_PRECEDENCE[previous.status];
+  const incomingRank = RUNTIME_OUTCOME_PRECEDENCE[incoming.status];
+  const affectedOwnerIds = [
+    ...new Set([...(previous.affectedOwnerIds ?? []), ...(incoming.affectedOwnerIds ?? [])]),
+  ];
+
+  // A successful operation can clear a failed obligation only when it names
+  // the failed owner. Unrelated live work must not hide persistent failure.
+  if (
+    previous.status === 'failed' &&
+    incoming.status === 'applied' &&
+    (incoming.affectedOwnerIds ?? []).some((ownerId) =>
+      (previous.affectedOwnerIds ?? []).includes(ownerId),
+    )
+  ) {
+    return incoming;
+  }
+
+  if (incomingRank >= previousRank) {
+    return { ...incoming, affectedOwnerIds };
+  }
+
+  return {
+    ...previous,
+    desiredRevision: incoming.desiredRevision,
+    affectedOwnerIds,
+  };
+}
+
 interface ProjectActions {
   loadProject: () => Promise<void>;
   saveProject: () => Promise<void>;
@@ -3828,8 +3870,13 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
           for (const [kind, outcome] of map) {
             // A canonical revision can be cosmetic or otherwise have no work
             // for a performance. Preserve unresolved state for those kinds;
-            // only an incoming outcome for the same kind supersedes it.
-            if (incomingKinds.has(kind) && outcome.desiredRevision < context.revision) {
+            // only a resolved baseline may be discarded before the incoming
+            // outcome is merged.
+            if (
+              incomingKinds.has(kind) &&
+              outcome.status === 'applied' &&
+              outcome.desiredRevision < context.revision
+            ) {
               map.delete(kind);
             }
           }
@@ -3847,7 +3894,7 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
           ) {
             continue;
           }
-          map.set(o.performanceKind, o);
+          map.set(o.performanceKind, mergeRuntimeOutcome(previous, o));
         }
         const updatedOutcomes = Array.from(map.values());
 
@@ -3862,7 +3909,16 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
           statusText = hasFailed.message
             ? `Live synchronization failed: ${hasFailed.message}`
             : 'Live synchronization failed';
-          toast.error(statusText);
+          const previousFailed = state.runtimeOutcomes.find((o) => o.status === 'failed');
+          const incomingFailure = outcomes.find((o) => o.status === 'failed');
+          if (
+            !previousFailed ||
+            (incomingFailure !== undefined &&
+              (incomingFailure.message !== previousFailed.message ||
+                incomingFailure.performanceKind !== previousFailed.performanceKind))
+          ) {
+            toast.error(statusText);
+          }
         } else if (hasRestart) {
           statusText = 'Restart required for playback to reflect all changes';
         } else if (hasPending) {
@@ -4281,14 +4337,17 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
     },
 
     generateCsdToScreen: async () => {
+      await get().flushPendingPatches();
       await window.blueAPI.generateCsdToScreen();
     },
 
     generateRealtimeCsdToScreen: async () => {
+      await get().flushPendingPatches();
       await window.blueAPI.generateRealtimeCsdToScreen();
     },
 
     generateCsdToDisk: async () => {
+      await get().flushPendingPatches();
       await window.blueAPI.generateCsdToDisk();
     },
 

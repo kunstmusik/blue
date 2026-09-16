@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, Settings } from 'lucide-react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { getSnapValue, type SnapValueName, type SnapCategory } from '@blue/data';
 import type { ScorePathSegment } from './types';
@@ -22,6 +22,7 @@ interface Props {
   onSnapToggle: (enabled: boolean) => void;
   onSnapValueChange: (value: SnapValueName) => void;
   onRulerConfig: () => void;
+  onScoreSettings: () => void;
   onOpenNoteProcessorChain?: (scope: 'rootScore' | 'layerGroup', groupId?: string) => void;
   getSegmentNoteProcessorChain?: (index: number) => NoteProcessorChainSnapshot | undefined;
 }
@@ -59,6 +60,7 @@ export default function ScoreToolbar({
   onSnapToggle,
   onSnapValueChange,
   onRulerConfig,
+  onScoreSettings,
   onOpenNoteProcessorChain,
   getSegmentNoteProcessorChain,
 }: Props) {
@@ -246,15 +248,26 @@ export default function ScoreToolbar({
         </DropdownMenu.Root>
       </div>
 
-      {/* Ruler config button */}
-      <button
-        type="button"
-        className="rounded border border-app-border/40 bg-app-surface px-2 py-0.5 text-role-callout text-app-text cursor-pointer transition-colors hover:bg-app-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
-        onClick={onRulerConfig}
-        title="Ruler configuration"
-      >
-        Ruler
-      </button>
+      <div className="flex items-center gap-1">
+        {/* Ruler config button */}
+        <button
+          type="button"
+          className="rounded border border-app-border/40 bg-app-surface px-2 py-0.5 text-role-callout text-app-text cursor-pointer transition-colors hover:bg-app-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
+          onClick={onRulerConfig}
+          title="Ruler configuration"
+        >
+          Ruler
+        </button>
+        <button
+          type="button"
+          aria-label="Score settings"
+          className="flex h-[22px] w-7 items-center justify-center rounded border border-app-border/40 bg-app-surface text-app-text-muted cursor-pointer transition-colors hover:bg-app-hover hover:text-app-text focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
+          onClick={onScoreSettings}
+          title="Score settings"
+        >
+          <Settings className="h-3.5 w-3.5" aria-hidden="true" />
+        </button>
+      </div>
     </div>
   );
 }

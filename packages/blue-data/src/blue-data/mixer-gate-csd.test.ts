@@ -60,6 +60,14 @@ describe('mixer mute/solo CSD gates (Spec 111)', () => {
     }
     expect(result.csdText).toContain('gk_blue_mixgate_commit init 0');
     expect(result.csdText).toContain('gk_blue_mixgate_applied init 0');
+
+    const sourceOutput = bindings!.gates.find(
+      (gate) => gate.locator.route === 'output' && gate.locator.association === 'track-1',
+    );
+    expect(sourceOutput?.locator).toMatchObject({
+      channelIdentity: 'association:track-1',
+      entryIdentity: JSON.stringify({ channel: 'association:track-1', route: 'output' }),
+    });
   });
 
   it('gates send taps, final outputs after effects, meters after gates, and echoes applied tokens', () => {

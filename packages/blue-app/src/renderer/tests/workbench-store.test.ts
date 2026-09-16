@@ -1075,6 +1075,39 @@ describe('workbench store native menu commands', () => {
     }
   });
 
+  it('settles pending patches before starting a native disk render', async () => {
+    const previousFlush = useProjectStore.getState().flushPendingPatches;
+    const previousBlueAPI = window.blueAPI;
+    const order: string[] = [];
+    const flush = vi.fn(async () => {
+      order.push('flush');
+    });
+    const renderToDisk = vi.fn(async () => {
+      order.push('render');
+      return { ok: true, operationId: 'render-1', cancelled: false, outputPath: null };
+    });
+
+    useProjectStore.setState({ flushPendingPatches: flush });
+    window.blueAPI = {
+      ...(previousBlueAPI ?? {}),
+      renderToDisk,
+    } as typeof window.blueAPI;
+
+    try {
+      useWorkbenchStore.getState().handleNativeMenuCommand({
+        type: 'render-to-disk',
+        action: 'render',
+      });
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(order).toEqual(['flush', 'render']);
+      expect(renderToDisk).toHaveBeenCalledWith({ action: 'render' });
+    } finally {
+      useProjectStore.setState({ flushPendingPatches: previousFlush });
+      window.blueAPI = previousBlueAPI;
+    }
+  });
+
   it('applies resolved set-follow-playback commands without a second toggle or write (SPEC 079)', () => {
     usePlaybackStore.setState({
       followPlayback: true,

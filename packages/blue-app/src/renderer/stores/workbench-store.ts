@@ -2009,6 +2009,23 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()((se
         // through the existing playback-status broadcast.
         void usePlaybackStore.getState().togglePlay();
         return;
+      case 'generate-csd-to-screen':
+        void useProjectStore.getState().generateCsdToScreen();
+        return;
+      case 'generate-realtime-csd-to-screen':
+        void useProjectStore.getState().generateRealtimeCsdToScreen();
+        return;
+      case 'generate-csd-to-disk':
+        void useProjectStore.getState().generateCsdToDisk();
+        return;
+      case 'render-to-disk':
+        void (async () => {
+          await useProjectStore.getState().flushPendingPatches();
+          await window.blueAPI.renderToDisk({ action: command.action });
+        })().catch((error: unknown) => {
+          console.error('[workbench] Failed to start disk render:', error);
+        });
+        return;
       case 'audition-score-objects': {
         const selection = useScoreSelectionStore.getState();
         if (!hasAuditionEligibleSelection(selection)) return;

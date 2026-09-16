@@ -1,5 +1,6 @@
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { userEvent } from 'vitest/browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BlueData, Channel } from '@blue/data';
 import ScorePanel from '../components/workbench/panels/ScorePanel';
@@ -210,8 +211,32 @@ describe('Track header mute/solo authority in the browser (Spec 111 T066)', () =
     expect(scoreCalls).toHaveLength(1);
   });
 
-  it('header M/S buttons are keyboard operable with accessible names and pressed state', () => {
+  it('bypass re-enable restores the saved Audio authority and channel flags', () => {
     setup({
+      mode: 'audio',
+      mixerEnabled: false,
+      channelFlags: { muted: true },
+    });
+
+    expect(document.querySelector('button[aria-label="Mute layer Bass Track"]')).not.toBeNull();
+
+    const current = useProjectStore.getState();
+    act(() => {
+      useProjectStore.getState().setProjectInfo({
+        ...current,
+        mixer: { ...current.mixer, enabled: true },
+      } as any);
+    });
+
+    const restored = document.querySelector<HTMLButtonElement>(
+      'button[aria-label="Unmute mixer channel for Bass Track"]',
+    );
+    expect(restored).not.toBeNull();
+    expect(restored!.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('activates a header M/S button through trusted browser keyboard input', async () => {
+    const applyPatchSpy = setup({
       mode: 'audio',
       channelFlags: { muted: true, solo: true },
     });
@@ -227,10 +252,145 @@ describe('Track header mute/solo authority in the browser (Spec 111 T066)', () =
 
     mute!.focus();
     expect(document.activeElement).toBe(mute);
-    // Native button activation via keyboard events reaches the same handler.
-    mute!.dispatchEvent(
-      new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }),
-    );
+    const callsBefore = applyPatchSpy.mock.calls.length;
+    await act(async () => {
+      await userEvent.keyboard('{Enter}');
+    });
     expect(document.activeElement).toBe(mute);
+    const mixerCalls = applyPatchSpy.mock.calls.filter((call) => 'mixer' in (call[0] as object));
+    expect(mixerCalls).toHaveLength(callsBefore + 1);
+    expect(mixerCalls.at(-1)?.[0]).toMatchObject({
+      mixer: {
+        type: 'updateChannel',
+        patch: { muted: false },
+        headerIntent: { expectedMode: 'audio', association: 'track-0' },
+      },
+    });
+  });
+
+  it('renders and switches the Audio/Event selector while keeping the two flag domains independent', async () => {
+    const applyPatchSpy = setup({
+      mode: 'audio',
+      trackEventFlags: { muted: true },
+      channelFlags: { muted: false },
+    });
+
+    const settingsButton = document.querySelector<HTMLButtonElement>(
+      'button[aria-label="Score settings"]',
+    );
+    expect(settingsButton).not.toBeNull();
+    act(() => {
+      settingsButton!.click();
+    });
+
+    const dialog = document.querySelector<HTMLElement>(
+      '[role="dialog"][aria-labelledby="score-settings-dialog-title"]',
+    );
+    expect(dialog).not.toBeNull();
+    const audio = dialog!.querySelector('[role="radio"][aria-checked="true"]');
+    const event = Array.from(dialog!.querySelectorAll<HTMLElement>('[role="radio"]')).find(
+      (radio) => radio.textContent === 'Event',
+    );
+    expect(audio?.textContent).toBe('Audio');
+    expect(event).not.toBeNull();
+
+    await act(async () => {
+      await userEvent.click(event!);
+    });
+    const projectPatches = applyPatchSpy.mock.calls.filter(
+      (call) => 'projectProperties' in (call[0] as object),
+    );
+    expect(projectPatches).toHaveLength(1);
+    expect(projectPatches[0]?.[0]).toMatchObject({
+      projectProperties: { trackLayerMuteSoloMode: 'event' },
+    });
+    expect(projectPatches[0]?.[1]).toEqual({ label: 'Set Track Header Mode to Event' });
+    // Applying the mode publication switches the header authority. The event
+    // flags are already true/false in their own domain; no mixer flag is copied.
+    expect(document.querySelector('button[aria-label="Unmute layer Bass Track"]')).not.toBeNull();
+    const eventSolo = document.querySelector<HTMLButtonElement>(
+      'button[aria-label="Solo layer Bass Track"]',
+    );
+    expect(eventSolo).not.toBeNull();
+    expect(eventSolo!.getAttribute('aria-pressed')).toBe('false');
+    await act(async () => {
+      await userEvent.click(eventSolo!);
+    });
+    expect(eventSolo!.getAttribute('aria-pressed')).toBe('true');
+    const eventMute = document.querySelector<HTMLButtonElement>(
+      'button[aria-label="Unmute layer Bass Track"]',
+    );
+    expect(eventMute).not.toBeNull();
+    expect(eventMute!.getAttribute('aria-pressed')).toBe('true');
+    await act(async () => {
+      await userEvent.click(eventMute!);
+    });
+    expect(eventMute!.getAttribute('aria-pressed')).toBe('false');
+    expect(applyPatchSpy.mock.calls.filter((call) => 'mixer' in (call[0] as object))).toEqual([]);
+    expect(
+      applyPatchSpy.mock.calls
+        .filter((call) => 'score' in (call[0] as object))
+        .map((call) => call[0]),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          score: expect.objectContaining({
+            patch: { solo: true },
+          }),
+        }),
+        expect.objectContaining({
+          score: expect.objectContaining({
+            patch: { muted: false },
+          }),
+        }),
+      ]),
+    );
+    expect(useProjectStore.getState().mixer.channels[0]?.muted).toBe(false);
+    expect(useProjectStore.getState().mixer.channels[0]?.solo).toBe(false);
+
+    const audioAgain = Array.from(dialog!.querySelectorAll<HTMLElement>('[role="radio"]')).find(
+      (radio) => radio.textContent === 'Audio',
+    );
+    expect(audioAgain).not.toBeNull();
+    await act(async () => {
+      await userEvent.click(audioAgain!);
+    });
+    const updatedProjectPatches = applyPatchSpy.mock.calls.filter(
+      (call) => 'projectProperties' in (call[0] as object),
+    );
+    expect(updatedProjectPatches).toHaveLength(2);
+    expect(updatedProjectPatches[1]?.[0]).toMatchObject({
+      projectProperties: { trackLayerMuteSoloMode: 'audio' },
+    });
+    const audioMute = document.querySelector<HTMLButtonElement>(
+      'button[aria-label="Mute mixer channel for Bass Track"]',
+    );
+    const audioSolo = document.querySelector<HTMLButtonElement>(
+      'button[aria-label="Solo mixer channel for Bass Track"]',
+    );
+    expect(audioMute).not.toBeNull();
+    expect(audioSolo).not.toBeNull();
+    await act(async () => {
+      await userEvent.click(audioMute!);
+      await userEvent.click(audioSolo!);
+    });
+    expect(
+      applyPatchSpy.mock.calls
+        .filter((call) => 'mixer' in (call[0] as object))
+        .map((call) => call[0]),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          mixer: expect.objectContaining({ patch: { muted: true } }),
+        }),
+        expect.objectContaining({
+          mixer: expect.objectContaining({ patch: { solo: true } }),
+        }),
+      ]),
+    );
+    // Audio authority now updates the mixer domain; the event-domain edits
+    // above did not leak into it.
+    expect(useProjectStore.getState().mixer.channels[0]?.muted).toBe(true);
+    expect(useProjectStore.getState().mixer.channels[0]?.solo).toBe(true);
   });
 });

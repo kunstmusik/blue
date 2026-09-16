@@ -45,7 +45,7 @@ function mountTab(): {
   };
 }
 
-describe('Track header mode selector (Spec 111)', () => {
+describe('Project Information metadata (Spec 111)', () => {
   beforeEach(() => {
     useProjectStore.getState().clearProject();
   });
@@ -54,55 +54,20 @@ describe('Track header mode selector (Spec 111)', () => {
     document.body.innerHTML = '';
   });
 
-  it('renders Audio/Event radios with the saved mode checked', () => {
+  it('does not render the Score Settings mode selector', () => {
     const { host, unmount } = mountTab();
-    const group = host.querySelector(
-      '[role="radiogroup"][aria-label="Track header mute/solo behavior"]',
-    );
-    expect(group).toBeTruthy();
-    const audio = host.querySelector('[role="radio"][aria-checked="true"]');
-    expect(audio?.textContent).toBe('Audio');
+    expect(host.querySelector('[role="radiogroup"]')).toBeNull();
+    expect(host.textContent).not.toContain('Track Header M/S');
+    expect(host.textContent).not.toContain('Audio');
+    expect(host.textContent).not.toContain('Event');
     unmount();
   });
 
-  it('submits one semantic mode change per selection', () => {
+  it('keeps project metadata and notes available', () => {
     const { host, updateSpy, unmount } = mountTab();
-    const eventRadio = Array.from(host.querySelectorAll('[role="radio"]')).find(
-      (el) => el.textContent === 'Event',
-    ) as HTMLButtonElement;
-    act(() => {
-      eventRadio.click();
-    });
-    expect(updateSpy).toHaveBeenCalledWith(
-      { trackLayerMuteSoloMode: 'event' },
-      { label: 'Set Track Header Mode to Event' },
-    );
+    expect(host.querySelectorAll('input')).toHaveLength(2);
+    expect(host.querySelector('textarea')).toBeTruthy();
+    expect(updateSpy).not.toHaveBeenCalled();
     unmount();
-  });
-
-  it('reports an unsupported saved value as an Event diagnostic', () => {
-    const host = document.createElement('div');
-    document.body.appendChild(host);
-    const updateSpy = vi.fn();
-    const properties = {
-      ...useProjectStore.getState().projectProperties,
-      trackLayerMuteSoloMode: 'event' as const,
-      trackLayerMuteSoloModeRaw: 'solo-all',
-    };
-    let root: Root | null = null;
-    act(() => {
-      root = createRoot(host);
-      root!.render(
-        React.createElement(ProjectInformationTab, {
-          disabled: false,
-          properties: properties as never,
-          updateProjectProperties: updateSpy,
-        }),
-      );
-    });
-    expect(host.textContent).toContain('solo-all');
-    expect(host.textContent).toContain('Event behavior is used');
-    act(() => root?.unmount());
-    host.remove();
   });
 });
