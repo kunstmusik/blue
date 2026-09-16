@@ -96,8 +96,8 @@ export type {
   CompiledMixerGateLocator,
   MeterBindingMap,
 } from './compile-data';
-export type { TrackLayerMuteSoloMode } from './project-properties';
-export { isTrackLayerMuteSoloMode } from './project-properties';
+export type { TrackLayerMuteSoloMode } from './score/score';
+export { isTrackLayerMuteSoloMode } from './score/score';
 export { hasLegacyMixerStateAtLoad, markLegacyMixerStateAtLoad } from './blue-data/xml-policy';
 import { processOnLoad, processOnLoadAsync, usesJavaRuntime } from './blue-data/runtime-policy';
 

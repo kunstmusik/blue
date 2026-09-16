@@ -1,4 +1,13 @@
 <!--
+Sync Impact Report (2026-09-16)
+- Version change: 2.2.0 → 3.0.0
+- Modified principle: II. Java-Compatible Behavior and Lossless Project Data (one-way file compatibility; no shadow state required for unreleased extensions)
+- Added sections: none
+- Removed sections: none
+- Follow-up TODOs: none
+-->
+
+<!--
 Sync Impact Report (2026-09-11)
 - Version change: 2.1.0 → 2.2.0
 - Modified principles:
@@ -76,9 +85,12 @@ project logic reusable, bundle-safe, and independently testable.
 ### II. Java-Compatible Behavior and Lossless Project Data
 Java Blue is the behavioral reference for parity work, `.blue` XML, CSD generation, rendering,
 formatting, migrations, and legacy project semantics. `.blue` XML MUST remain the canonical
-project format. Loading and saving MUST preserve modeled and unmodeled project data and MUST
-remain structurally compatible with Java Blue; established byte-level fixtures MUST continue to
-match where exact output is part of the contract. Raw-XML migrations MUST run before model
+project format. Blue TypeScript MUST load supported Java Blue projects and preserve their modeled
+and unrelated unmodeled data. Java Blue is not required to load or preserve Blue TypeScript
+extensions. New TypeScript-only fields SHOULD use the simplest representation that meets the
+feature contract; do not retain separate raw-value or presence state solely to round-trip an
+unreleased extension. Established byte-level fixtures MUST continue to match where exact output
+is part of the contract. Raw-XML migrations MUST run before model
 deserialization. Any intentional divergence from Java behavior MUST be named in the feature spec
 and plan, justified, and covered by deterministic validation. Data that cannot be executed by the
 current host MUST be retained without silent loss.
@@ -194,4 +206,4 @@ Code review MUST treat an unexplained MUST violation as blocking. A necessary ex
 documented in the plan's Complexity Tracking section with the rejected compliant alternative and
 MUST receive explicit project-owner approval.
 
-**Version**: 2.2.0 | **Ratified**: 2026-04-11 | **Last Amended**: 2026-09-11
+**Version**: 3.0.0 | **Ratified**: 2026-04-11 | **Last Amended**: 2026-09-16

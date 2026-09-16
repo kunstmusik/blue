@@ -94,13 +94,10 @@ describe('Track header mute/solo authority in the browser (Spec 111 T066)', () =
       title: 'Test Project',
       sessionId: 1,
       loaded: true,
-      score: snapshot.score,
+      score: { ...snapshot.score, trackLayerMuteSoloMode: options.mode },
       orchestra: { ...snapshot.orchestra, loaded: true },
       mixer,
-      projectProperties: {
-        ...snapshot.projectProperties,
-        trackLayerMuteSoloMode: options.mode,
-      },
+      projectProperties: snapshot.projectProperties,
       transport: snapshot.transport,
     } as any);
 
@@ -298,11 +295,12 @@ describe('Track header mute/solo authority in the browser (Spec 111 T066)', () =
       await userEvent.click(event!);
     });
     const projectPatches = applyPatchSpy.mock.calls.filter(
-      (call) => 'projectProperties' in (call[0] as object),
+      (call) =>
+        (call[0] as { score?: { type?: string } }).score?.type === 'updateTrackLayerMuteSoloMode',
     );
     expect(projectPatches).toHaveLength(1);
     expect(projectPatches[0]?.[0]).toMatchObject({
-      projectProperties: { trackLayerMuteSoloMode: 'event' },
+      score: { type: 'updateTrackLayerMuteSoloMode', mode: 'event' },
     });
     expect(projectPatches[0]?.[1]).toEqual({ label: 'Set Track Header Mode to Event' });
     // Applying the mode publication switches the header authority. The event
@@ -356,11 +354,12 @@ describe('Track header mute/solo authority in the browser (Spec 111 T066)', () =
       await userEvent.click(audioAgain!);
     });
     const updatedProjectPatches = applyPatchSpy.mock.calls.filter(
-      (call) => 'projectProperties' in (call[0] as object),
+      (call) =>
+        (call[0] as { score?: { type?: string } }).score?.type === 'updateTrackLayerMuteSoloMode',
     );
     expect(updatedProjectPatches).toHaveLength(2);
     expect(updatedProjectPatches[1]?.[0]).toMatchObject({
-      projectProperties: { trackLayerMuteSoloMode: 'audio' },
+      score: { type: 'updateTrackLayerMuteSoloMode', mode: 'audio' },
     });
     const audioMute = document.querySelector<HTMLButtonElement>(
       'button[aria-label="Mute mixer channel for Bass Track"]',

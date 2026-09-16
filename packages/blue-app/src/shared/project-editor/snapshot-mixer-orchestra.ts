@@ -807,9 +807,6 @@ export function createProjectPropertiesSnapshot(
     diskAlwaysRenderEntireProject: properties.diskAlwaysRenderEntireProject,
     mediaFolder: properties.mediaFolder,
     copyToMediaFileOnImport: properties.copyToMediaFileOnImport,
-    trackLayerMuteSoloMode: properties.trackLayerMuteSoloMode,
-    trackLayerMuteSoloModeRaw: properties.trackLayerMuteSoloModeRaw,
-    trackLayerMuteSoloModePresent: properties.trackLayerMuteSoloModePresent,
   };
 }
 

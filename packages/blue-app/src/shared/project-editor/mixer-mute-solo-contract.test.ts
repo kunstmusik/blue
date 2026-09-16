@@ -12,7 +12,7 @@ import {
   isScalarProjectDocumentPatch,
 } from './patch-document';
 import { applyMixerPatchToData, mixerPatchActionLabel } from './patch-mixer-bluelive';
-import { createMixerSnapshot, createProjectPropertiesSnapshot } from './snapshot-mixer-orchestra';
+import { createMixerSnapshot } from './snapshot-mixer-orchestra';
 import {
   effectiveTrackLayerMuteSoloMode,
   type MixerPatch,
@@ -38,7 +38,7 @@ describe('mixer mute/solo contract boundary (Spec 111)', () => {
           patch: { muted: true },
           headerIntent: { expectedMode: 'audio', association: 'track-abc' },
         },
-        projectProperties: { trackLayerMuteSoloMode: 'audio' },
+        score: { type: 'updateTrackLayerMuteSoloMode', mode: 'audio' },
       };
       const serialized = JSON.stringify(patch);
       const parsed = JSON.parse(serialized) as ProjectDocumentPatch;
@@ -104,7 +104,7 @@ describe('mixer mute/solo contract boundary (Spec 111)', () => {
     it('rejects a header intent whose expected mode no longer matches', () => {
       const data = createProjectWithMasterSolo();
       data.getMixer().setEnabled(true);
-      data.getProjectProperties().trackLayerMuteSoloMode = 'event';
+      data.getScore().trackLayerMuteSoloMode = 'event';
 
       const changed = applyMixerPatchToData(data, {
         type: 'updateChannel',
@@ -117,7 +117,7 @@ describe('mixer mute/solo contract boundary (Spec 111)', () => {
 
     it('rejects a header intent whose association moved', () => {
       const data = createProjectWithMasterSolo();
-      data.getProjectProperties().trackLayerMuteSoloMode = 'audio';
+      data.getScore().trackLayerMuteSoloMode = 'audio';
       const source = new Channel();
       source.setName('S1');
       source.setAssociation('track-1');
@@ -145,13 +145,13 @@ describe('mixer mute/solo contract boundary (Spec 111)', () => {
     it('applies supported mode values and rejects unsupported ones', () => {
       const data = createProjectWithMasterSolo();
       const changed = applyProjectDocumentPatch(data, {
-        projectProperties: { trackLayerMuteSoloMode: 'event' },
+        score: { type: 'updateTrackLayerMuteSoloMode', mode: 'event' },
       });
       expect(changed).toBe(true);
-      expect(data.getProjectProperties().trackLayerMuteSoloMode).toBe('event');
+      expect(data.getScore().trackLayerMuteSoloMode).toBe('event');
 
       const rejected = applyProjectDocumentPatch(data, {
-        projectProperties: { trackLayerMuteSoloMode: 'loud' as 'audio' },
+        score: { type: 'updateTrackLayerMuteSoloMode', mode: 'loud' as 'audio' },
       });
       expect(rejected).toBe(false);
     });
@@ -159,9 +159,9 @@ describe('mixer mute/solo contract boundary (Spec 111)', () => {
     it('classifies mode and M/S patches for history preparation', () => {
       expect(
         isScalarProjectDocumentPatch({
-          projectProperties: { trackLayerMuteSoloMode: 'audio' },
+          score: { type: 'updateTrackLayerMuteSoloMode', mode: 'audio' },
         }),
-      ).toBe(true);
+      ).toBe(false);
       expect(
         isScalarProjectDocumentPatch({
           mixer: { type: 'updateChannel', channelId: 'A', patch: { muted: true } },
@@ -205,10 +205,9 @@ describe('mixer mute/solo contract boundary (Spec 111)', () => {
 
     it('snapshots expose the parsed mode and unsupported raw text', () => {
       const data = createProjectWithMasterSolo();
-      data.getProjectProperties().trackLayerMuteSoloMode = 'audio';
-      const snapshot = createProjectPropertiesSnapshot(data.getProjectProperties());
+      data.getScore().trackLayerMuteSoloMode = 'audio';
+      const snapshot = createProjectEditorSnapshot(data).score;
       expect(snapshot.trackLayerMuteSoloMode).toBe('audio');
-      expect(snapshot.trackLayerMuteSoloModeRaw).toBeNull();
     });
   });
 
@@ -278,7 +277,7 @@ describe('mixer mute/solo contract boundary (Spec 111)', () => {
   describe('association stability (Spec 111 T037)', () => {
     it('keeps the track-channel association through channel and track renames', async () => {
       const data = new BlueData();
-      data.getProjectProperties().trackLayerMuteSoloMode = 'audio';
+      data.getScore().trackLayerMuteSoloMode = 'audio';
       const { TrackLayerGroup, ScoreTrack } = (await import('@blue/data')) as unknown as {
         TrackLayerGroup: new () => unknown[];
         ScoreTrack: new () => { setName: (n: string) => void; getUniqueId: () => string };

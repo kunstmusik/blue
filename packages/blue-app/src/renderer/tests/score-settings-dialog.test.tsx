@@ -5,8 +5,8 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
-  createEmptyProjectPropertiesSnapshot,
-  type ProjectPropertiesSnapshot,
+  createEmptyScoreDocumentSnapshot,
+  type ScoreDocumentSnapshot,
 } from '../../shared/project-editor';
 import ScoreSettingsDialog from '../components/workbench/panels/score/ScoreSettingsDialog';
 
@@ -16,7 +16,7 @@ import ScoreSettingsDialog from '../components/workbench/panels/score/ScoreSetti
 
 function renderDialog(
   overrides: Partial<{
-    properties: ProjectPropertiesSnapshot;
+    score: ScoreDocumentSnapshot;
     mixerEnabled: boolean;
     legacyNotice: boolean;
   }> = {},
@@ -31,15 +31,15 @@ function renderDialog(
   const root = createRoot(container);
   const onModeChange = vi.fn();
   const onClose = vi.fn();
-  const properties = {
-    ...createEmptyProjectPropertiesSnapshot(),
-    ...overrides.properties,
+  const score = {
+    ...createEmptyScoreDocumentSnapshot(),
+    ...overrides.score,
   };
 
   act(() => {
     root.render(
       <ScoreSettingsDialog
-        properties={properties}
+        score={score}
         mixerEnabled={overrides.mixerEnabled ?? true}
         legacyNotice={overrides.legacyNotice ?? false}
         onModeChange={onModeChange}
@@ -88,18 +88,15 @@ describe('ScoreSettingsDialog', () => {
     act(() => root.unmount());
   });
 
-  it('explains invalid saved values and the mixer-disabled Event override', () => {
+  it('explains the mixer-disabled Event override', () => {
     const { container, root } = renderDialog({
       mixerEnabled: false,
-      properties: {
-        ...createEmptyProjectPropertiesSnapshot(),
+      score: {
+        ...createEmptyScoreDocumentSnapshot(),
         trackLayerMuteSoloMode: 'event',
-        trackLayerMuteSoloModeRaw: 'solo-all',
       },
     });
 
-    expect(container.textContent).toContain('solo-all');
-    expect(container.textContent).toContain('Event behavior is used');
     expect(container.textContent).toContain('Effective behavior: Event');
     expect(container.textContent).toContain('mixer is disabled');
 

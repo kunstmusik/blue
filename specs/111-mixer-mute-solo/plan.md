@@ -6,7 +6,7 @@
 
 ## Summary
 
-Add audio mute/solo to instrument, track, and subchannels; master gets Mute only. A pure mixer route policy drives CSD gates, editor indicators, live updates, and conservative disk pruning. Track headers select independent event state or associated channel audio state using a persisted project preference; mixer bypass forces event behavior. Expose that preference from an extensible Score Settings modal opened by the Score toolbar gear beside Ruler, while keeping Project Information focused on metadata. Preserve legacy XML, including inactive master solo, and use ProjectHistory for every durable edit.
+Add audio mute/solo to instrument, track, and subchannels; master gets Mute only. A pure mixer route policy drives CSD gates, editor indicators, live updates, and conservative disk pruning. Track headers select independent event state or associated channel audio state using a persisted Score-owned preference; mixer bypass forces event behavior. Expose that preference from an extensible Score Settings modal opened by the Score toolbar gear beside Ruler, while keeping Project Information focused on metadata. Preserve legacy XML, including inactive master solo, and use ProjectHistory for every durable edit.
 
 **Implementation review (2026-09-16)**: The planned code and automated validation are complete, including the Score Settings relocation and follow-up render/header regressions. The physical UI-to-audio latency measurement and native Windows validation remain open acceptance work; see [quickstart.md](quickstart.md) and the unchecked tasks in [tasks.md](tasks.md).
 
@@ -18,7 +18,9 @@ No product clarification blocks planning. Send-mute conventions vary among DAWs;
 
 **Primary Dependencies**: Existing React 19, Zustand, Electron 35, @rgrove/parse-xml, @blue/engine-client, native Csound engine. No new dependencies.
 
-**Storage**: Canonical .blue XML; one project property, existing channel/track flags. Compiled bindings and runtime acknowledgments are disposable per-performance state.
+**Storage**: Canonical .blue XML; Score owns the `trackLayerMuteSoloMode` attribute on `<score>`, alongside existing channel/track flags. No mode child or ProjectProperties field. Compiled bindings and runtime acknowledgments are disposable per-performance state.
+
+The feature is unreleased: no migration or fallback from the prerelease ProjectProperties location or score child. Java `Score.loadFromXML` treats unknown children as layer groups but ignores attributes, preserving file loading; Java save does not retain this attribute.
 
 **Testing**: Vitest data/main tests, browser Playwright-backed Vitest, actual engine integration and deterministic float-audio comparison.
 
@@ -39,7 +41,7 @@ Pre-research and post-design checks both PASS. No exceptions required.
 | Gate | Pre-research | Post-design evidence |
 | --- | --- | --- |
 | Portable data core | PASS: pure policies possible | Detached topology/flags, static imports; host owns transport and file I/O. |
-| Java/project compatibility | PASS: intentional audio extension specified | Legacy AudioLayer event filtering retained in Event; missing property loads Event; raw unknown mode and inactive master solo round-trip. |
+| Java/project compatibility | PASS: intentional audio extension specified | Legacy AudioLayer event filtering retained in Event; missing or unsupported mode loads Event; inactive master solo round-trips. |
 | Canonical ownership/contracts | PASS: existing document bridge | BlueData owns durable values; typed patches and compiled bindings; renderer never selects runtime symbols. |
 | History/undo/redo | PASS: existing patches | Channel M/S, event M/S, mode, mixer enable use semantic ProjectHistory actions with identity/dirty/runtime coverage. No non-undoable exception. |
 | Runtime isolation | PASS: batch controls available | Main owns revision/generation queue; existing EngineBridge batch API and capability guards. |
@@ -71,7 +73,6 @@ tasks.md belongs to the next phase and is not generated here.
 ```text
 packages/blue-data/src/
   mixer/mute-solo-policy.ts                  # new pure route policy
-  project-properties.ts                     # mode/raw XML metadata
   blue-data.ts                              # stable render façade/types
   blue-data/{xml-policy,csd-policy}.ts        # compatibility/all render profiles
   score/{score,score-generation-options}.ts
@@ -97,7 +98,7 @@ See [research.md](research.md). Repository and Java inspection covered routing/C
 
 ## Phase 1 — Design sequence
 
-1. **Mode/compatibility (FR-007–010, 014–015)**: Add trackLayerMuteSoloMode with missing/invalid XML preservation. Fresh projects use Audio; missing property or properties block loads Event. Expose diagnostics. Preserve but ignore master solo and reject new edits.
+1. **Mode/compatibility (FR-007–010, 014–015)**: Score owns trackLayerMuteSoloMode, persisted as a score attribute. Fresh scores use Audio; a missing score or unsupported attribute loads Event and saves the resolved value. Copy and history retain the mode. Preserve but ignore master solo and reject new edits.
 2. **Pure routing (FR-001–006)**: Enumerate ordered output/send edges; derive permitted routes from non-master solos/mute. Keep output exclusion separate from send inclusion. Capture canonical editor identity before render cloning.
 3. **CSD gates (FR-002–005, 011–012)**: Gate sends at their current taps and final outputs after local effects, before meters. Keep effects/events running. Emit all realtime gate controls, including initially silent routes, across sync/async and BlueLive generation; disk uses the same policy with constant targets.
 4. **Live/history (FR-011, 013, 016)**: Add one typed mixer-gates reconciliation operation holding detached desired values. Use existing batch transport, inactive-bank staging above its limit, and applied-token verification. Scope updates to document/revision/performance generation; handle timeline and BlueLive separately. Topology, mode, and mixer-enable remain restart-required.

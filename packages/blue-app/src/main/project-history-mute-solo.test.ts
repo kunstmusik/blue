@@ -186,31 +186,36 @@ describe('project history: mixer mute/solo, mode, and enable (Spec 111)', () => 
     expect(history.read().length).toBe(0);
   });
 
-  it('restores invalid raw mode provenance exactly through undo', async () => {
+  it('restores score mode through commit, undo, and redo', async () => {
     const { session, history, contextA } = setupHistory();
     const docId = session.read().documentId!;
-    // Load provenance: an unsupported raw value parses Event but retains text.
-    const data = session.read().data!;
-    data.getProjectProperties().restoreTrackLayerMuteSoloMode('event', 'solo-all', true);
+    session.read().data!.getScore().trackLayerMuteSoloMode = 'event';
+    history.checkpointSave();
+    const baselineXml = session.read().data!.saveToString();
+    expect(history.isDirty()).toBe(false);
 
     const res = await history.commit(
       contextA.nextCommitRequest(docId, 0, 'Set Track Header Mode to Audio', [
-        { projectProperties: { trackLayerMuteSoloMode: 'audio' } },
+        { score: { type: 'updateTrackLayerMuteSoloMode', mode: 'audio' } },
       ]),
     );
     expect(res.status).toBe('committed');
-    expect(data.getProjectProperties().trackLayerMuteSoloModeRaw).toBeNull();
+    expect(session.read().data!.getScore().trackLayerMuteSoloMode).toBe('audio');
+    const committedXml = session.read().data!.saveToString();
+    expect(committedXml).not.toBe(baselineXml);
+    expect(history.isDirty()).toBe(true);
 
-    await history.undo({
-      documentId: docId,
-      operationId: 'undo-mode-raw',
-      expectedRevision: 1,
-      contextSequence: contextA.sequence + 1,
-    });
-    // Undo reinstates the retained raw text, not just the parsed mode.
-    expect(data.getProjectProperties().trackLayerMuteSoloMode).toBe('event');
-    expect(data.getProjectProperties().trackLayerMuteSoloModeRaw).toBe('solo-all');
-    expect(data.getProjectProperties().trackLayerMuteSoloModePresent).toBe(true);
+    const undo = await history.undo(contextA.nextUndoRequest(docId, 1));
+    expect(undo.status).toBe('committed');
+    expect(session.read().data!.getScore().trackLayerMuteSoloMode).toBe('event');
+    expect(session.read().data!.saveToString()).toBe(baselineXml);
+    expect(history.isDirty()).toBe(false);
+
+    const redo = await history.redo(contextA.nextRedoRequest(docId, 2));
+    expect(redo.status).toBe('committed');
+    expect(session.read().data!.getScore().trackLayerMuteSoloMode).toBe('audio');
+    expect(session.read().data!.saveToString()).toBe(committedXml);
+    expect(history.isDirty()).toBe(true);
   });
 
   it('leaves both flag sets untouched by mode changes (no state copying)', async () => {
@@ -229,13 +234,13 @@ describe('project history: mixer mute/solo, mode, and enable (Spec 111)', () => 
 
     const res = await history.commit(
       contextA.nextCommitRequest(docId, 0, 'Set Track Header Mode to Event', [
-        { projectProperties: { trackLayerMuteSoloMode: 'event' } },
+        { score: { type: 'updateTrackLayerMuteSoloMode', mode: 'event' } },
       ]),
     );
     expect(res.status).toBe('committed');
     // Neither the channel flags nor the track event flags moved.
-    const scoreTrack = (data.getScore()[0] as unknown as ScoreTrack[])[0]!;
-    expect(data.getMixer().getMaster().isMuted()).toBe(true);
+    const scoreTrack = (session.read().data!.getScore()[0] as TrackLayerGroup)[0]!;
+    expect(session.read().data!.getMixer().getMaster().isMuted()).toBe(true);
     expect(scoreTrack.isMuted()).toBe(true);
     expect(scoreTrack.isSolo()).toBe(true);
 
@@ -245,22 +250,23 @@ describe('project history: mixer mute/solo, mode, and enable (Spec 111)', () => 
       expectedRevision: 1,
       contextSequence: contextA.sequence + 1,
     });
-    expect(data.getMixer().getMaster().isMuted()).toBe(true);
-    expect((data.getScore()[0] as unknown as ScoreTrack[])[0]!.isMuted()).toBe(true);
+    expect(session.read().data!.getMixer().getMaster().isMuted()).toBe(true);
+    expect((session.read().data!.getScore()[0] as TrackLayerGroup)[0]!.isMuted()).toBe(true);
+    expect((session.read().data!.getScore()[0] as TrackLayerGroup)[0]!.isSolo()).toBe(true);
   });
 
   it('commits, undoes, and redoes the track header mode', async () => {
     const { session, history, contextA } = setupHistory();
     const docId = session.read().documentId!;
-    expect(session.read().data!.getProjectProperties().trackLayerMuteSoloMode).toBe('audio');
+    expect(session.read().data!.getScore().trackLayerMuteSoloMode).toBe('audio');
 
     const res = await history.commit(
       contextA.nextCommitRequest(docId, 0, 'Set Track Header Mode to Event', [
-        { projectProperties: { trackLayerMuteSoloMode: 'event' } },
+        { score: { type: 'updateTrackLayerMuteSoloMode', mode: 'event' } },
       ]),
     );
     expect(res.status).toBe('committed');
-    expect(session.read().data!.getProjectProperties().trackLayerMuteSoloMode).toBe('event');
+    expect(session.read().data!.getScore().trackLayerMuteSoloMode).toBe('event');
 
     await history.undo({
       documentId: docId,
@@ -268,7 +274,7 @@ describe('project history: mixer mute/solo, mode, and enable (Spec 111)', () => 
       expectedRevision: 1,
       contextSequence: contextA.sequence + 1,
     });
-    expect(session.read().data!.getProjectProperties().trackLayerMuteSoloMode).toBe('audio');
+    expect(session.read().data!.getScore().trackLayerMuteSoloMode).toBe('audio');
 
     const redo = await history.redo({
       documentId: docId,
@@ -277,7 +283,7 @@ describe('project history: mixer mute/solo, mode, and enable (Spec 111)', () => 
       contextSequence: contextA.sequence + 2,
     });
     expect(redo.status).toBe('committed');
-    expect(session.read().data!.getProjectProperties().trackLayerMuteSoloMode).toBe('event');
+    expect(session.read().data!.getScore().trackLayerMuteSoloMode).toBe('event');
   });
 
   it('commits and undoes mixer enable while preserving channel flags', async () => {
@@ -363,10 +369,11 @@ describe('project history: mixer mute/solo, mode, and enable (Spec 111)', () => 
     });
     const context = new MockHistoryContext('ctx-t093-history');
     const docId = session.read().documentId!;
-    const channelRef = channel;
-    const trackRef = track;
+    const channelId = getMixerChannelSnapshotId(channel);
+    const groupId = group.getUniqueId();
+    const trackId = track.getUniqueId();
     const initialState = {
-      mode: data.getProjectProperties().trackLayerMuteSoloMode,
+      mode: data.getScore().trackLayerMuteSoloMode,
       mixerEnabled: data.getMixer().isEnabled(),
       mixerMuted: channel.isMuted(),
       mixerSolo: channel.isSolo(),
@@ -378,22 +385,30 @@ describe('project history: mixer mute/solo, mode, and enable (Spec 111)', () => 
 
     const expectState = (expected: Partial<typeof initialState>, dirty: boolean) => {
       const current = session.read().data!;
+      const currentChannel = current.getMixer().getChannels()[0]!;
+      const currentGroup = current
+        .getScore()
+        .find(
+          (candidate) =>
+            candidate instanceof TrackLayerGroup && candidate.getUniqueId() === groupId,
+        ) as TrackLayerGroup;
+      const currentTrack = currentGroup[0]!;
       expect({
-        mode: current.getProjectProperties().trackLayerMuteSoloMode,
+        mode: current.getScore().trackLayerMuteSoloMode,
         mixerEnabled: current.getMixer().isEnabled(),
-        mixerMuted: channelRef.isMuted(),
-        mixerSolo: channelRef.isSolo(),
-        eventMuted: trackRef.isMuted(),
-        eventSolo: trackRef.isSolo(),
-        association: channelRef.getAssociation(),
+        mixerMuted: currentChannel.isMuted(),
+        mixerSolo: currentChannel.isSolo(),
+        eventMuted: currentTrack.isMuted(),
+        eventSolo: currentTrack.isSolo(),
+        association: currentChannel.getAssociation(),
       }).toMatchObject(expected);
-      expect(channelRef).toBe(channel);
-      expect(trackRef).toBe(track);
+      expect(getMixerChannelSnapshotId(currentChannel)).toBe(channelId);
+      expect(currentTrack.getUniqueId()).toBe(trackId);
       expect(history.isDirty()).toBe(dirty);
       const snapshot = publishedSnapshots.at(-1);
       expect(snapshot).toBeDefined();
-      expect(snapshot?.projectProperties.trackLayerMuteSoloMode).toBe(
-        expected.mode ?? current.getProjectProperties().trackLayerMuteSoloMode,
+      expect(snapshot?.score?.trackLayerMuteSoloMode).toBe(
+        expected.mode ?? current.getScore().trackLayerMuteSoloMode,
       );
       expect(snapshot?.mixer?.enabled).toBe(
         expected.mixerEnabled ?? current.getMixer().isEnabled(),
@@ -402,8 +417,9 @@ describe('project history: mixer mute/solo, mode, and enable (Spec 111)', () => 
         (candidate) => candidate.association === 'track-t093',
       );
       expect(snapshotChannel).toMatchObject({
-        muted: expected.mixerMuted ?? channelRef.isMuted(),
-        solo: expected.mixerSolo ?? channelRef.isSolo(),
+        id: channelId,
+        muted: expected.mixerMuted ?? currentChannel.isMuted(),
+        solo: expected.mixerSolo ?? currentChannel.isSolo(),
         association: 'track-t093',
       });
       expect(publishedSnapshots.length).toBeGreaterThan(0);
@@ -421,7 +437,9 @@ describe('project history: mixer mute/solo, mode, and enable (Spec 111)', () => 
       expect(writes.get('blueLive')).toHaveLength(0);
     };
 
-    const modeEvent = { projectProperties: { trackLayerMuteSoloMode: 'event' as const } };
+    const modeEvent = {
+      score: { type: 'updateTrackLayerMuteSoloMode' as const, mode: 'event' as const },
+    };
     const disableMixer = { mixer: { type: 'setMixerEnabled' as const, value: false } };
 
     const modeCommit = await history.commit(

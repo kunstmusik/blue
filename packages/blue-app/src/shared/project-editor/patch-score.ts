@@ -42,6 +42,7 @@ import {
   PatternsLayerGroup,
   TimeBase,
   isValidSnapValueName,
+  isTrackLayerMuteSoloMode,
   SoundObject,
   SoundObjectLibrary,
   collectInstanceSoundObjects,
@@ -2626,6 +2627,13 @@ export function applyScoreObjectPatch(
   patch: ScorePatch,
   patchContext?: ProjectDocumentPatchContext,
 ): boolean {
+  if (patch.type === 'updateTrackLayerMuteSoloMode') {
+    if (!isTrackLayerMuteSoloMode(patch.mode)) return false;
+    const score = data.getScore();
+    if (score.trackLayerMuteSoloMode === patch.mode) return false;
+    score.trackLayerMuteSoloMode = patch.mode;
+    return true;
+  }
   if (isTrackScorePatch(patch)) {
     return applyTrackScorePatch(data, patch, patchContext);
   }

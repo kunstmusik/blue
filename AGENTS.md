@@ -49,6 +49,9 @@ Do not manually create worktrees beside the repository or in a tool-specific def
 
 ## Java-first parity
 
+- Blue TypeScript must load supported Java Blue projects; Java Blue is not required to load or
+  preserve Blue TypeScript extensions. Avoid raw-value/presence shadow state for unreleased
+  TypeScript-only fields unless a feature contract calls for it.
 - For behavior mismatches, rendering failures, XML compatibility, formatting, or parity bugs,
   consult the Java implementation before changing TypeScript.
 - Primary references, when available, are `~/work/nbprojects/blue/blue-core` and

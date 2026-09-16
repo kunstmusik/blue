@@ -38,6 +38,7 @@ import { useLayoutSettingsStore } from '../stores/layout-settings-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { useRenderToDiskStore } from '../stores/render-to-disk-store';
 import { createDefaultProgramSettings } from '../../shared/program-settings';
+import { createEmptyScoreDocumentSnapshot } from '../../shared/project-editor';
 import type { RenderOperationStatus } from '../../shared/render-freeze-contract';
 import {
   applyWindowLayoutUpdate,
@@ -700,6 +701,7 @@ describe('useIPCListeners', () => {
 
   it('preserves unrelated selections for closed or non-origin views and prunes deleted selections without hints', () => {
     const aliveScore = {
+      ...createEmptyScoreDocumentSnapshot(),
       layerGroups: [
         {
           groupId: 'g1',

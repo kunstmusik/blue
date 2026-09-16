@@ -6,17 +6,6 @@
 import { Element } from './serialization/xml-reader';
 import { ObjRefSaveMap } from './serialization/obj-ref-map';
 
-/**
- * Track header behavior (Spec 111): what the score track header M/S controls
- * edit. New projects default to Audio; projects loaded without the property
- * (or with an unsupported value) behave as Event.
- */
-export type TrackLayerMuteSoloMode = 'audio' | 'event';
-
-export function isTrackLayerMuteSoloMode(value: unknown): value is TrackLayerMuteSoloMode {
-  return value === 'audio' || value === 'event';
-}
-
 export class ProjectProperties {
   title = '';
   author = '';
@@ -58,57 +47,6 @@ export class ProjectProperties {
 
   mediaFolder = '';
   copyToMediaFileOnImport = true;
-
-  // Track header mute/solo authority (Spec 111). A fresh project writes and
-  // uses Audio; a loaded project without the element falls back to Event.
-  private _trackLayerMuteSoloMode: TrackLayerMuteSoloMode = 'audio';
-  private _trackLayerMuteSoloModePresent = true;
-  /** Raw stored text for an unsupported value, preserved until explicit replacement. */
-  private _trackLayerMuteSoloModeRaw: string | null = null;
-
-  get trackLayerMuteSoloMode(): TrackLayerMuteSoloMode {
-    return this._trackLayerMuteSoloMode;
-  }
-
-  set trackLayerMuteSoloMode(value: TrackLayerMuteSoloMode) {
-    if (!isTrackLayerMuteSoloMode(value)) {
-      return;
-    }
-    this._trackLayerMuteSoloMode = value;
-    this._trackLayerMuteSoloModePresent = true;
-    this._trackLayerMuteSoloModeRaw = null;
-  }
-
-  /** True when the property existed in the loaded document (or was edited). */
-  get trackLayerMuteSoloModePresent(): boolean {
-    return this._trackLayerMuteSoloModePresent;
-  }
-
-  /** Unsupported raw XML text, when loaded; null once explicitly replaced. */
-  get trackLayerMuteSoloModeRaw(): string | null {
-    return this._trackLayerMuteSoloModeRaw;
-  }
-
-  /** Diagnostic: the stored value is not a supported mode; Event is in effect. */
-  hasUnsupportedTrackLayerMuteSoloMode(): boolean {
-    return this._trackLayerMuteSoloModeRaw !== null;
-  }
-
-  /**
-   * Restores exact mode provenance (parsed value, retained raw text, and
-   * presence) — used by history rollback so undo/redo of a mode edit
-   * reinstates omitted/invalid source metadata exactly as loaded.
-   */
-  restoreTrackLayerMuteSoloMode(
-    mode: TrackLayerMuteSoloMode,
-    raw: string | null,
-    present: boolean,
-  ): void {
-    if (!isTrackLayerMuteSoloMode(mode)) return;
-    this._trackLayerMuteSoloMode = mode;
-    this._trackLayerMuteSoloModeRaw = raw;
-    this._trackLayerMuteSoloModePresent = present;
-  }
 
   // Legacy compatibility fields retained for existing callers and file formats.
   commandLine = '';
@@ -152,9 +90,6 @@ export class ProjectProperties {
       this.diskAlwaysRenderEntireProject = other.diskAlwaysRenderEntireProject;
       this.mediaFolder = other.mediaFolder;
       this.copyToMediaFileOnImport = other.copyToMediaFileOnImport;
-      this._trackLayerMuteSoloMode = other._trackLayerMuteSoloMode;
-      this._trackLayerMuteSoloModePresent = other._trackLayerMuteSoloModePresent;
-      this._trackLayerMuteSoloModeRaw = other._trackLayerMuteSoloModeRaw;
       this.commandLine = other.commandLine;
       this.diskCommandLine = other.diskCommandLine;
       this.oFormat = other.oFormat;
@@ -292,14 +227,6 @@ export class ProjectProperties {
     elem.addElement('mediaFolder').setText(this.mediaFolder);
     elem.addElement('copyToMediaFileOnImport').setText(this.copyToMediaFileOnImport.toString());
 
-    // Track header mode (Spec 111): a loaded legacy omission stays omitted;
-    // an unsupported raw value is written back verbatim until replaced.
-    if (this._trackLayerMuteSoloModePresent) {
-      elem
-        .addElement('trackLayerMuteSoloMode')
-        .setText(this._trackLayerMuteSoloModeRaw ?? this._trackLayerMuteSoloMode);
-    }
-
     if (this.commandLine) elem.addElement('commandLine').setText(this.commandLine);
     if (this.diskCommandLine) elem.addElement('diskCommandLine').setText(this.diskCommandLine);
     if (this.oFormat) elem.addElement('oFormat').setText(this.oFormat);
@@ -310,12 +237,6 @@ export class ProjectProperties {
 
   static loadFromXML(data: Element): ProjectProperties {
     const props = new ProjectProperties();
-
-    // Legacy fallback (Spec 111): absence of the property means Event
-    // semantics, overriding the new-project Audio default.
-    props._trackLayerMuteSoloMode = 'event';
-    props._trackLayerMuteSoloModePresent = false;
-    props._trackLayerMuteSoloModeRaw = null;
 
     const title = data.getTextString('title');
     if (title !== null) props.title = title;
@@ -434,21 +355,6 @@ export class ProjectProperties {
       const legacyCopy = data.getTextString('copyToMediaFolderOnImport');
       if (legacyCopy !== null) {
         props.copyToMediaFileOnImport = legacyCopy.toLowerCase() === 'true';
-      }
-    }
-
-    const trackLayerMuteSoloMode = data.getTextString('trackLayerMuteSoloMode');
-    if (trackLayerMuteSoloMode !== null) {
-      props._trackLayerMuteSoloModePresent = true;
-      const parsed = trackLayerMuteSoloMode.trim().toLowerCase();
-      if (isTrackLayerMuteSoloMode(parsed)) {
-        props._trackLayerMuteSoloMode = parsed;
-        props._trackLayerMuteSoloModeRaw = null;
-      } else {
-        // Unsupported value: Event is the safe effective mode; retain the
-        // raw text and report it until an explicit edit replaces it.
-        props._trackLayerMuteSoloMode = 'event';
-        props._trackLayerMuteSoloModeRaw = trackLayerMuteSoloMode;
       }
     }
 

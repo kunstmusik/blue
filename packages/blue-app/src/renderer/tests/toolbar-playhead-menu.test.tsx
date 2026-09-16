@@ -4,7 +4,10 @@ import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
+import {
+  createEmptyProjectEditorSnapshot,
+  createEmptyScoreDocumentSnapshot,
+} from '../../shared/project-editor';
 import ToolbarDisplays from '../components/menu-bar/ToolbarDisplays';
 import { usePlaybackStore } from '../stores/playback-store';
 import { useProjectStore } from '../stores/project-store';
@@ -55,9 +58,11 @@ function seedProjectWithRulers(primaryTimeDisplay: string, secondaryTimeDisplay:
       },
     },
     score: {
+      ...createEmptyScoreDocumentSnapshot(),
       ...snapshot.score,
       timeState: {
-        ...snapshot.score.timeState,
+        ...createEmptyScoreDocumentSnapshot().timeState,
+        ...snapshot.score?.timeState,
         primaryTimeDisplay,
         secondaryTimeDisplay,
       },

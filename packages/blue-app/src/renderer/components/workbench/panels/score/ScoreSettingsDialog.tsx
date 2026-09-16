@@ -1,12 +1,12 @@
 import { X } from 'lucide-react';
 import type { TrackLayerMuteSoloMode } from '@blue/data';
-import type { ProjectPropertiesSnapshot } from '../../../../../shared/project-editor';
+import type { ScoreDocumentSnapshot } from '../../../../../shared/project-editor';
 import { effectiveTrackLayerMuteSoloMode } from '../../../../../shared/project-editor';
 import { cn } from '../../../../lib/cn';
 import { useDialogFocus } from '../../../dialogs/use-dialog-focus';
 
 interface Props {
-  properties: ProjectPropertiesSnapshot;
+  score: ScoreDocumentSnapshot;
   mixerEnabled: boolean;
   legacyNotice: boolean;
   onModeChange: (mode: TrackLayerMuteSoloMode) => void;
@@ -19,16 +19,13 @@ const MODE_OPTIONS: Array<{ value: TrackLayerMuteSoloMode; label: string }> = [
 ];
 
 export default function ScoreSettingsDialog({
-  properties,
+  score,
   mixerEnabled,
   legacyNotice,
   onModeChange,
   onClose,
 }: Props) {
-  const effectiveMode = effectiveTrackLayerMuteSoloMode(
-    properties.trackLayerMuteSoloMode,
-    mixerEnabled,
-  );
+  const effectiveMode = effectiveTrackLayerMuteSoloMode(score.trackLayerMuteSoloMode, mixerEnabled);
   const dialogRef = useDialogFocus(true, onClose, {
     initialFocusSelector: '[role="radio"][aria-checked="true"]',
   });
@@ -83,7 +80,7 @@ export default function ScoreSettingsDialog({
               className="flex gap-2"
             >
               {MODE_OPTIONS.map((option) => {
-                const selected = properties.trackLayerMuteSoloMode === option.value;
+                const selected = score.trackLayerMuteSoloMode === option.value;
                 return (
                   <button
                     key={option.value}
@@ -108,9 +105,8 @@ export default function ScoreSettingsDialog({
               {!mixerEnabled && ' (mixer is disabled)'}.
             </p>
             <p className="text-role-caption text-app-text-muted">
-              {properties.trackLayerMuteSoloModeRaw !== null
-                ? `The saved value "${properties.trackLayerMuteSoloModeRaw}" is not supported; Event behavior is used until you choose a mode.`
-                : 'Audio and Event keep independent saved states. Audio edits the track’s mixer channel; Event omits and soloes events as before.'}{' '}
+              Audio and Event keep independent saved states. Audio edits the track’s mixer channel;
+              Event omits and soloes events as before.
             </p>
             {legacyNotice && (
               <p className="text-role-caption text-app-warning" role="status">

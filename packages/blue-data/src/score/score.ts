@@ -29,10 +29,17 @@ import type { JavaScriptSession } from '../javascript-runtime';
 import type { JavaRuntimeClientContract } from '../java-runtime';
 import { applyNoteProcessorChainAsync } from '../utilities/score';
 
+export type TrackLayerMuteSoloMode = 'audio' | 'event';
+
+export function isTrackLayerMuteSoloMode(value: unknown): value is TrackLayerMuteSoloMode {
+  return value === 'audio' || value === 'event';
+}
+
 export class Score extends Array<LayerGroup<Layer>> {
   private timeContext = new TimeContext();
   private timeState = new TimeState();
   private npc = new NoteProcessorChain();
+  private _trackLayerMuteSoloMode: TrackLayerMuteSoloMode = 'audio';
 
   constructor(other?: Score, mode: CopyMode = 'duplication') {
     super();
@@ -40,6 +47,7 @@ export class Score extends Array<LayerGroup<Layer>> {
       this.timeContext = new TimeContext(other.timeContext);
       this.timeState = new TimeState(other.timeState);
       this.npc = new NoteProcessorChain(other.npc);
+      this._trackLayerMuteSoloMode = other._trackLayerMuteSoloMode;
       for (const layerGroup of other) {
         this.push(layerGroup.deepCopy(mode) as LayerGroup<Layer>);
       }
@@ -52,6 +60,15 @@ export class Score extends Array<LayerGroup<Layer>> {
 
   deepCopy(mode: CopyMode = 'duplication'): Score {
     return new Score(this, mode);
+  }
+
+  get trackLayerMuteSoloMode(): TrackLayerMuteSoloMode {
+    return this._trackLayerMuteSoloMode;
+  }
+
+  set trackLayerMuteSoloMode(value: TrackLayerMuteSoloMode) {
+    if (!isTrackLayerMuteSoloMode(value)) return;
+    this._trackLayerMuteSoloMode = value;
   }
 
   getTimeContext(): TimeContext {
@@ -216,6 +233,7 @@ export class Score extends Array<LayerGroup<Layer>> {
     elem.addElement(this.timeContext.saveAsXML().setName('timeContext'));
     elem.addElement(this.timeState.saveAsXML().setName('timeState'));
     elem.addElement(this.npc.saveAsXML().setName('noteProcessorChain'));
+    elem.setAttribute('trackLayerMuteSoloMode', this._trackLayerMuteSoloMode);
 
     // Serialize layer groups — they self-identify by their XML element name
     for (const lg of this) {
@@ -229,6 +247,8 @@ export class Score extends Array<LayerGroup<Layer>> {
   static loadFromXML(data: Element, objRefMap?: ObjRefLoadMap): Score {
     const score = new Score();
     score.length = 0;
+    const parsed = data.getAttribute('trackLayerMuteSoloMode')?.trim().toLowerCase();
+    score._trackLayerMuteSoloMode = isTrackLayerMuteSoloMode(parsed) ? parsed : 'event';
 
     const nodes = data.getElements();
 

@@ -412,9 +412,6 @@ function createDefaultProjectPropertiesSnapshot(): ProjectPropertiesSnapshot {
     diskAlwaysRenderEntireProject: false,
     mediaFolder: '',
     copyToMediaFileOnImport: true,
-    trackLayerMuteSoloMode: 'audio',
-    trackLayerMuteSoloModeRaw: null,
-    trackLayerMuteSoloModePresent: true,
   };
 }
 
@@ -1102,6 +1099,7 @@ export function createScoreDocumentSnapshot(data: BlueData): ScoreDocumentSnapsh
   const score = data.getScore();
   const rootChain = score.getNoteProcessorChain();
   return {
+    trackLayerMuteSoloMode: score.trackLayerMuteSoloMode,
     timeState: createScoreTimeStateSnapshot(data),
     markers: createMarkerSnapshots(data),
     layerGroups: createScoreLayerGroupSnapshots(data),
@@ -1146,6 +1144,7 @@ export function resolveScoreInsertionLocation(
 
 export function createEmptyScoreDocumentSnapshot(): ScoreDocumentSnapshot {
   return {
+    trackLayerMuteSoloMode: 'audio',
     timeState: {
       snapEnabled: false,
       snapValue: 'BEAT',

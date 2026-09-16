@@ -96,13 +96,13 @@ describe('Track header mute/solo authority (Spec 111)', () => {
       title: 'Test Project',
       sessionId: 1,
       loaded: true,
-      score: snapshot.score,
-      orchestra: { ...snapshot.orchestra, loaded: true },
-      mixer,
-      projectProperties: {
-        ...snapshot.projectProperties,
+      score: {
+        ...snapshot.score,
         trackLayerMuteSoloMode: options.mode,
       },
+      orchestra: { ...snapshot.orchestra, loaded: true },
+      mixer,
+      projectProperties: snapshot.projectProperties,
       transport: snapshot.transport,
     } as any);
 
@@ -126,6 +126,29 @@ describe('Track header mute/solo authority (Spec 111)', () => {
   function headerButton(label: string): HTMLButtonElement | null {
     return host.querySelector<HTMLButtonElement>(`button[aria-label*="${label}"]`);
   }
+
+  function selectHeaderMode(label: 'Audio' | 'Event'): void {
+    const settings = headerButton('Score settings');
+    expect(settings).toBeTruthy();
+    act(() => settings!.click());
+    const radio = Array.from(document.querySelectorAll<HTMLButtonElement>('[role="radio"]')).find(
+      (button) => button.textContent === label,
+    );
+    expect(radio).toBeTruthy();
+    expect(radio!.getAttribute('aria-checked')).toBe('true');
+    act(() => radio!.click());
+  }
+
+  it.each([
+    { mode: 'audio' as const, label: 'Audio' as const },
+    { mode: 'event' as const, label: 'Event' as const },
+  ])('selecting unchanged explicit $label mode remains a no-op', ({ mode, label }) => {
+    const applyPatchSpy = setup({ mode, raw: null, present: true });
+
+    selectHeaderMode(label);
+
+    expect(applyPatchSpy).not.toHaveBeenCalled();
+  });
 
   it('Event mode dispatches the legacy layer-state patch', () => {
     const applyPatchSpy = setup({ mode: 'event' });

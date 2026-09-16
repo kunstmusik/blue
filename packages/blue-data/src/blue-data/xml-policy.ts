@@ -85,7 +85,8 @@ export function loadFromString(xmlString: string, createBlueData: () => BlueData
   let instrumentLibraryNode: Element | null = null;
   let arrangementNode: Element | null = null;
   let mixerLoaded = false;
-  let projectPropertiesLoaded = false;
+  let scoreLoaded = false;
+  let scoreModePresentAtLoad = false;
 
   const nodes = rootElement.getElements();
   while (nodes.hasMoreElements()) {
@@ -95,7 +96,6 @@ export function loadFromString(xmlString: string, createBlueData: () => BlueData
     switch (nodeName) {
       case 'projectProperties':
         state.projectProperties = ProjectProperties.loadFromXML(node);
-        projectPropertiesLoaded = true;
         break;
       case 'instrumentLibrary':
         // Store for deferred processing — arrangement needs it
@@ -134,7 +134,9 @@ export function loadFromString(xmlString: string, createBlueData: () => BlueData
         state.liveData = LiveData.loadFromXML(node, objRefMap);
         break;
       case 'score':
+        scoreModePresentAtLoad = node.getAttribute('trackLayerMuteSoloMode') !== null;
         state.score = Score.loadFromXML(node, objRefMap);
+        scoreLoaded = true;
         break;
       case 'scratchPadData':
         state.scratchData = ScratchPadData.loadFromXML(node);
@@ -193,11 +195,9 @@ export function loadFromString(xmlString: string, createBlueData: () => BlueData
     state.mixer.setMeterProfileKey(DEFAULT_LEGACY_METER_PROFILE_KEY);
   }
 
-  // Post-loop (Spec 111 FR-007): a document with no projectProperties block
-  // never reached ProjectProperties.loadFromXML, so the fresh-project Audio
-  // default would survive. Legacy absence loads Event as omitted data.
-  if (!projectPropertiesLoaded) {
-    state.projectProperties.restoreTrackLayerMuteSoloMode('event', null, false);
+  // A legacy document without a Score retains Event header behavior.
+  if (!scoreLoaded) {
+    state.score.trackLayerMuteSoloMode = 'event';
   }
 
   // Post-loop (Spec 111 FR-015): record whether the loaded document carries
@@ -207,7 +207,7 @@ export function loadFromString(xmlString: string, createBlueData: () => BlueData
   // explicitly persists the mode already knew its flags were audible.
   const mixerChannels = [...state.mixer.getAllSourceChannels(), ...state.mixer.getSubChannels()];
   if (
-    !state.projectProperties.trackLayerMuteSoloModePresent &&
+    !scoreModePresentAtLoad &&
     (mixerChannels.some((channel) => channel.isMuted() || channel.isSolo()) ||
       state.mixer.getMaster().isMuted())
   ) {

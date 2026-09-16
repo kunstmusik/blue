@@ -19,11 +19,7 @@ function mountTab(): {
   const host = document.createElement('div');
   document.body.appendChild(host);
   const updateSpy = vi.fn();
-  const properties = {
-    ...useProjectStore.getState().projectProperties,
-    trackLayerMuteSoloMode: 'audio' as const,
-    trackLayerMuteSoloModeRaw: null,
-  };
+  const properties = useProjectStore.getState().projectProperties;
   let root: Root | null = null;
   act(() => {
     root = createRoot(host);

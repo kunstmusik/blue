@@ -2340,6 +2340,12 @@ function applyScorePatchToSnapshot(
   score: ScoreDocumentSnapshot,
   patch: ScorePatch,
 ): ScoreDocumentSnapshot {
+  if (patch.type === 'updateTrackLayerMuteSoloMode') {
+    return {
+      ...score,
+      trackLayerMuteSoloMode: patch.mode,
+    };
+  }
   if (
     patch.type === 'addTrackItem' ||
     patch.type === 'moveTrackItems' ||
@@ -4526,7 +4532,7 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       const state = get();
       const mixer = state.mixer;
       const mode = effectiveTrackLayerMuteSoloMode(
-        state.projectProperties.trackLayerMuteSoloMode,
+        state.score.trackLayerMuteSoloMode,
         mixer?.enabled ?? false,
       );
       if (mode !== 'audio' || !mixer) {
@@ -4553,7 +4559,7 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       const state = get();
       const mixer = state.mixer;
       const effectiveMode = effectiveTrackLayerMuteSoloMode(
-        state.projectProperties.trackLayerMuteSoloMode,
+        state.score.trackLayerMuteSoloMode,
         mixer?.enabled ?? false,
       );
       const resolved = state.resolveTrackHeaderAuthority(groupId, layerId);
@@ -4587,10 +4593,10 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
     },
 
     setTrackHeaderMode: (mode) => {
-      const current = get().projectProperties.trackLayerMuteSoloMode;
-      if (current === mode) return;
+      const score = get().score;
+      if (score.trackLayerMuteSoloMode === mode) return;
       void get().applyProjectDocumentPatch(
-        { projectProperties: { trackLayerMuteSoloMode: mode } },
+        { score: { type: 'updateTrackLayerMuteSoloMode', mode } },
         {
           label:
             mode === 'audio' ? 'Set Track Header Mode to Audio' : 'Set Track Header Mode to Event',

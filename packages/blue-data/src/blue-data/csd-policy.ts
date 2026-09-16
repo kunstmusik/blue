@@ -1077,7 +1077,7 @@ function getNchnls(blueData: BlueData, profile: CsdRenderProfile = 'realtime'): 
  */
 function getEffectiveTrackLayerMuteSoloMode(blueData: BlueData, mixerEnabled: boolean) {
   if (!mixerEnabled) return 'event' as const;
-  return getBlueDataState(blueData).projectProperties.trackLayerMuteSoloMode;
+  return getBlueDataState(blueData).score.trackLayerMuteSoloMode;
 }
 
 function getRenderWindow(

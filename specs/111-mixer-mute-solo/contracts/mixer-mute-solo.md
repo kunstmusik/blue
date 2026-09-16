@@ -4,8 +4,9 @@
 
 - Reuse mixer.updateChannel with muted and non-master solo fields. Determine master by canonical identity/kind, not display name. Reject an entire patch attempting master solo before committing any companion fields.
 - Audio header actions resolve Track.uniqueId association; Event actions retain layer-state patches. Use canonical ProjectHistory and revision guards. Main checks expected header mode and association before accepting the domain-specific action.
-- Add trackLayerMuteSoloMode: audio/event to project-properties patches/snapshots. Reject invalid edits. For loaded invalid XML, retain raw text, use Event and expose a diagnostic.
-- XML element is `<trackLayerMuteSoloMode>audio</trackLayerMuteSoloMode>` or event inside projectProperties. New projects write Audio. Untouched legacy omission stays omitted; missing properties block also loads Event. Copy/save/load retain raw/presence metadata.
+- Score owns trackLayerMuteSoloMode: audio/event, exposed through Score snapshots and score mode patches. Reject invalid edits; missing or unsupported XML loads as Event.
+- Persist only as `<score trackLayerMuteSoloMode="audio">` (or `event`), never a child element or ProjectProperties field. New projects write Audio. A missing score or attribute loads Event, which is written on the next save. Copy and history retain the resolved mode.
+- This feature is unreleased: no migration or fallback from the prerelease ProjectProperties location or score child element. Java Score.loadFromXML ignores attributes but treats unknown children as layer groups; the attribute preserves Java file loading, but Java save does not retain it.
 - Master solo remains serializable compatibility data but has no active control. Capability and effective state are separate so an old true value never becomes an enabled Solo button.
 - Ordinary score-layer event solo scope stays unchanged. Audio-mode Track groups opt out of event-solo discovery/filtering; mixer bypass restores their legacy participation.
 

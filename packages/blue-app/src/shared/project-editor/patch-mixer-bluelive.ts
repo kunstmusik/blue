@@ -106,7 +106,6 @@ import type {
 } from '@blue/data';
 import { AutomationCurve as BlueDataAutomationCurve, LineColors } from '@blue/data';
 import { ParameterHelper } from '@blue/data';
-import { isTrackLayerMuteSoloMode } from '@blue/data';
 import type {
   SnapValueName,
   BlueX7Voice,
@@ -402,21 +401,6 @@ export function applyProjectPropertiesPatch(
         if (propertyRecord[key] !== value) {
           propertyRecord[key] = value;
           changed = true;
-        }
-        break;
-      case 'trackLayerMuteSoloMode':
-        // Unsupported edits are rejected; raw legacy text survives until an
-        // explicit supported value replaces it (Spec 111). Replacing with the
-        // same parsed mode still clears retained raw metadata.
-        if (isTrackLayerMuteSoloMode(value)) {
-          if (
-            properties.trackLayerMuteSoloMode !== value ||
-            properties.trackLayerMuteSoloModeRaw !== null ||
-            !properties.trackLayerMuteSoloModePresent
-          ) {
-            properties.trackLayerMuteSoloMode = value;
-            changed = true;
-          }
         }
         break;
       default:
@@ -1223,9 +1207,7 @@ export function isRejectedMixerChannelUpdate(
     return true;
   }
   if (patch.headerIntent) {
-    const effectiveMode = mixer.isEnabled()
-      ? data.getProjectProperties().trackLayerMuteSoloMode
-      : 'event';
+    const effectiveMode = mixer.isEnabled() ? data.getScore().trackLayerMuteSoloMode : 'event';
     if (patch.headerIntent.expectedMode !== effectiveMode) {
       return true;
     }

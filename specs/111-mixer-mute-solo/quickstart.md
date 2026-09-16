@@ -10,6 +10,8 @@ Final implementation review: the feature code and Score Settings UI are ready fo
 
 Final-review checks: the focused Score Settings and Project Information tests passed (7/7), adjacent header and render-settlement tests passed (42/42), the production renderer build, full `pnpm lint`, and `git diff --check` passed.
 
+Score ownership follow-up: `trackLayerMuteSoloMode` is a single Audio/Event value on `Score`, stored as a `<score>` attribute. Missing or unsupported values load as Event and save the resolved mode. The legacy active-channel notice is determined from the incoming XML during load; Score carries no raw-value or presence shadow fields. The repository `pnpm test` run passed after this simplification (`@blue/data` 1943 passed/1 skipped, `@blue/app` 5180 passed/2 skipped, `@blue/engine-client` 47, native engine/Java/CLI/script checks). Both app main and renderer builds, full `pnpm lint`, and `git diff --check` passed. The focused Chrome browser test for track headers and Score Settings passed outside the sandbox (7/7); Chrome exited before test discovery inside the sandbox.
+
 Implemented and covered by automated suites: route policy (`packages/blue-data/src/mixer/mute-solo-policy(.test).ts`),
 CSD two-bank gates for realtime/BlueLive and fixed disk gates (`packages/blue-data/src/blue-data/mixer-gate-csd.test.ts`),
 staged gate publication (`packages/blue-app/src/main/mixer-mute-solo-runtime(.test).ts` with
@@ -22,13 +24,13 @@ commit→undo→redo incl. master-solo whole-patch rejection
 `packages/blue-app/src/renderer/tests/track-header-mute-solo.test.tsx`,
 `packages/blue-app/src/renderer/tests/score-settings-dialog.test.tsx`,
 `packages/blue-app/src/renderer/tests/project-properties-mute-solo.test.tsx`), mode persistence
-(`packages/blue-data/src/project-properties.test.ts`), score-mode generation matrix
+(`packages/blue-data/src/score/score-mute-solo-mode.test.ts`), score-mode generation matrix
 (`packages/blue-data/src/score/track/track-layer-group-mute-solo-mode.test.ts`), and
 conservative disk pruning with preserved duration
 (`packages/blue-data/src/blue-data/csd-disk-pruning.test.ts`).
 
 Machine-verified on 2026-09-16 (darwin arm64, local release engine): repository `pnpm test`
-passed (`@blue/data` 1950 passed/1 skipped, `@blue/app` 5176 passed/2 skipped,
+passed (`@blue/data` 1943 passed/1 skipped, `@blue/app` 5180 passed/2 skipped,
 `@blue/engine-client` 47, native engine/Java/CLI/script checks), `pnpm lint`, all app
 main/preload/renderer builds, and `git diff --check` passed. The full browser suite passed
 outside the sandbox (18 files, 106 tests). Runtime outcome failures remain transient toasts;
@@ -129,7 +131,7 @@ Latency reference: 44.1 kHz, ksmps 64, 256-frame device buffer, local engine, 32
 
 ## Compatibility and history
 
-New project uses Audio; legacy Java audio-layer fixture uses Event. Missing projectProperties and unsupported raw mode load Event. Verify diagnostics, raw/unknown-data preservation and copy behavior. Audio header and strip share channel state; Event header retains independent event state. Bypass forces Event and disables strips; re-enable restores saved mode/state. Mode switching never copies flags.
+New project uses Audio; legacy Java audio-layer fixture uses Event. A missing score or missing/unsupported `trackLayerMuteSoloMode` attribute loads Event, and the next save writes Event. Mode persists only as a score attribute, not a child or ProjectProperties field. No migration or fallback supports the prerelease locations. Java ignores the attribute on load and drops it on save. Verify unrelated unknown-data preservation and copy behavior. Audio header and strip share channel state; Event header retains independent event state. Bypass forces Event and disables strips; re-enable restores saved mode/state. Mode switching never copies flags.
 
 An ordinary score-layer solo must not event-filter Audio-mode Tracks; Event mode restores original score-wide behavior. Rename/reorder preserves association. Race header action with mode switch and reject stale domain selection.
 

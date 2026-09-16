@@ -4,19 +4,21 @@
 
 | Entity | Fields | Rules |
 | --- | --- | --- |
-| ProjectProperties | trackLayerMuteSoloMode: audio/event; raw XML value/presence metadata | New Audio, loaded absence/invalid Event. Preserve unsupported raw value until explicit replacement. |
+| Score | trackLayerMuteSoloMode: audio/event | Persist as the `score` attribute `trackLayerMuteSoloMode`. New Audio; missing or unsupported XML loads as Event and saves the resolved mode. |
 | Track | Existing muted, solo, uniqueId | Independent event state; active only in effective Event mode. |
 | Channel | Existing muted, solo, association, routing/chains | Mute for all; active solo for non-master only. Preserve inactive master solo. |
 | Mixer | Existing enabled | False forces header Event without changing saved preference or flags. |
 
 BlueData remains canonical owner; existing .blue XML is the only durable store. Preserve unrelated unknown data through existing XML policy. Do not serialize route masks, UI capabilities, engine tokens, runtime diagnostics or applied revisions.
 
+The feature is unreleased: no migration or fallback reads the prerelease ProjectProperties location or score child. Java ignores the score attribute on load (unknown children are treated as layer groups), so files remain loadable, but Java save does not retain the attribute.
+
 ## Derived editor state
 
 - effectiveTrackLayerMuteSoloMode: Event if mixer disabled, otherwise parsed preference.
 - soloAvailable: false on master; separate from mixer-bypass disabled state.
 - outputExcludedBySolo and hasIncludedSend: distinguish silent dry output from surviving wet routes.
-- modeDiagnostic and legacyMixerStateNotice: load-derived notices, not persisted settings.
+- legacyMixerStateNotice: derived once from the loaded XML, not a persisted setting.
 - Existing runtime outcome: desired/applied revision per performance and failure state.
 
 Header intents include existing revision guarding and expected effective mode/association so main can reject stale domain selection. Channel reconciliation preserves stable association rather than matching display names.

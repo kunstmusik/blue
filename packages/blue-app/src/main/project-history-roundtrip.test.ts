@@ -1179,6 +1179,16 @@ const cases: RoundTripCase[] = [
       { score: { type: 'updateTimeState', patch: { snapEnabled: true, snapValue: '1/4' } } },
     ],
   },
+  {
+    family: 'score',
+    type: 'updateTrackLayerMuteSoloMode',
+    patches: () => [{ score: { type: 'updateTrackLayerMuteSoloMode', mode: 'event' } }],
+    identity: (data) => ({
+      groupId: groupId(data),
+      trackId: scoreLayer(data, 0).getUniqueId(),
+      channelId: mixerChannelEntryId(data),
+    }),
+  },
 
   // ── Score: note processors ──────────────────────────────────────────────
   {

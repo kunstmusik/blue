@@ -197,7 +197,7 @@ export default function ScorePanel() {
   const score = useProjectStore((s) => s.score);
   const sessionId = useProjectStore((s) => s.sessionId);
   const transport = useProjectStore((s) => s.transport);
-  const projectProperties = useProjectStore((s) => s.projectProperties);
+  const scoreMode = useProjectStore((s) => s.score);
   const mixerEnabled = useProjectStore((s) => s.mixer?.enabled ?? true);
   const legacyNotice = useProjectStore((s) => s.mixer?.legacyActiveChannelStateNotice ?? false);
   const setTrackHeaderMode = useProjectStore((s) => s.setTrackHeaderMode);
@@ -999,7 +999,7 @@ export default function ScorePanel() {
 
         {scoreSettingsOpen && (
           <ScoreSettingsDialog
-            properties={projectProperties}
+            score={scoreMode}
             mixerEnabled={mixerEnabled}
             legacyNotice={legacyNotice}
             onModeChange={setTrackHeaderMode}
@@ -1488,7 +1488,7 @@ function SoundLayerHeader({
   const setLayerSolo = useProjectStore((s) => s.setLayerSolo);
   const setTrackHeaderAudioMuteSolo = useProjectStore((s) => s.setTrackHeaderAudioMuteSolo);
   const headerMixerEnabled = useProjectStore((s) => s.mixer?.enabled ?? true);
-  const headerModePreference = useProjectStore((s) => s.projectProperties.trackLayerMuteSoloMode);
+  const headerModePreference = useProjectStore((s) => s.score.trackLayerMuteSoloMode);
   const headerAssociatedChannel = useProjectStore((s) => {
     if (groupType !== 'track') return undefined;
     const mixer = s.mixer;

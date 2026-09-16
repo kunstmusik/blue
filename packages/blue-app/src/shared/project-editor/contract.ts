@@ -405,6 +405,7 @@ export type ScoreLayerGroupSnapshot =
   | PatternsLayerGroupSnapshot;
 
 export interface ScoreDocumentSnapshot {
+  trackLayerMuteSoloMode: TrackLayerMuteSoloMode;
   timeState: ScoreTimeStateSnapshot;
   markers: MarkerSnapshot[];
   layerGroups: ScoreLayerGroupSnapshot[];
@@ -804,6 +805,7 @@ export type PatternScorePatch =
     };
 
 export type ScorePatch =
+  | { type: 'updateTrackLayerMuteSoloMode'; mode: TrackLayerMuteSoloMode }
   | TrackScorePatch
   | PatternScorePatch
   | { type: 'updateTimeState'; patch: Partial<ScoreTimeStateSnapshot> }
@@ -1261,12 +1263,6 @@ export interface ProjectPropertiesSnapshot {
   diskAlwaysRenderEntireProject: boolean;
   mediaFolder: string;
   copyToMediaFileOnImport: boolean;
-  /** Track header authority (Spec 111); loaded absence/invalid parses as Event. */
-  trackLayerMuteSoloMode: TrackLayerMuteSoloMode;
-  /** Raw stored text for an unsupported value; null when none is retained. */
-  trackLayerMuteSoloModeRaw: string | null;
-  /** False when the property was absent from the loaded document. */
-  trackLayerMuteSoloModePresent: boolean;
 }
 
 export interface ClojureLibraryEntrySnapshot {
@@ -1925,6 +1921,7 @@ export const SCORE_PATCH_PREPARATION_CLASS: Readonly<
   updateSharedProperties: 'structural',
   updateSoundObjectBehavior: 'structural',
   updateTimeState: 'structural',
+  updateTrackLayerMuteSoloMode: 'structural',
   updateTrackInstrument: 'structural',
   updateTypeSpecificEditor: 'structural',
   assignAutomationToLayer: 'structural',

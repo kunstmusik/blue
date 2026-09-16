@@ -272,6 +272,46 @@ describe('project-store — canonical acknowledgement barrier', () => {
     );
   });
 
+  it('optimistically selects Event then Audio before canonical publication and submits both patches', async () => {
+    let resolveCommit!: (value: { revision: number; sessionId: number; changed: boolean }) => void;
+    commitProjectDocumentPatches.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveCommit = resolve;
+      }),
+    );
+    useProjectStore.setState((state) => ({
+      score: {
+        ...state.score,
+        trackLayerMuteSoloMode: 'audio',
+      },
+    }));
+
+    try {
+      useProjectStore.getState().setTrackHeaderMode('event');
+      expect(useProjectStore.getState().score).toMatchObject({
+        trackLayerMuteSoloMode: 'event',
+      });
+
+      useProjectStore.getState().setTrackHeaderMode('audio');
+      expect(useProjectStore.getState().score).toMatchObject({
+        trackLayerMuteSoloMode: 'audio',
+      });
+
+      __testFlushPendingPatches();
+      await Promise.resolve();
+
+      expect(commitProjectDocumentPatches).toHaveBeenCalledTimes(1);
+      expect(commitProjectDocumentPatches.mock.calls[0]?.[0]).toEqual([
+        { score: { type: 'updateTrackLayerMuteSoloMode', mode: 'event' } },
+        { score: { type: 'updateTrackLayerMuteSoloMode', mode: 'audio' } },
+      ]);
+      expect(getProjectDocument).not.toHaveBeenCalled();
+    } finally {
+      resolveCommit({ revision: 1, sessionId: 1, changed: true });
+      await useProjectStore.getState().flushPendingPatches();
+    }
+  });
+
   it('drains edits queued while another commit is in flight', async () => {
     let resolveFirst!: (value: { revision: number; sessionId: number; changed: boolean }) => void;
     const firstCommit = new Promise<{ revision: number; sessionId: number; changed: boolean }>(

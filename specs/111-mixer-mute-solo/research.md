@@ -54,13 +54,13 @@ Enqueue acknowledgment is not audible application. Observe applied token with ex
 
 ## 5. Header modes and compatibility
 
-**Decision**: ProjectProperties owns trackLayerMuteSoloMode (audio/event). New constructor defaults Audio; XML absence defaults Event, including an absent projectProperties block. Retain presence and unsupported raw text, use Event for invalid values, and expose a diagnostic. Untouched legacy omission remains omitted on save; explicit edits write a supported value. Copy operations retain raw/presence metadata. Existing unknown-data preservation remains authoritative.
+**Decision**: Score owns trackLayerMuteSoloMode (audio/event), persisted only as an attribute on `<score>`. New constructor defaults Audio; XML absence defaults Event, including an absent score. The feature is unreleased, so no migration or fallback from the prerelease ProjectProperties location or score child is provided. Use Event for missing or unsupported values and write the resolved mode on save. Copy operations retain that mode. Existing unknown-data preservation remains authoritative.
 
 Effective mode is Event when mixer disabled, otherwise preference. In Audio mode, Track groups neither contribute to global event-solo discovery nor obey track event flags or another group's event solo. Other groups retain their existing behavior. In Event mode Track groups participate as before. Extend Score's optional generation context and existing ScoreGenerationOptions while preserving legacy boolean callers. Never temporarily mutate Track flags.
 
 Audio headers resolve canonical association and submit channel patches; Event headers use existing layer patches. Main validates expected mode/association against the revision so a stale header action cannot edit the wrong domain. No state copying on mode switch. Legacy active mute/non-master solo receives a non-blocking compatibility notice; master solo alone does not. Load provenance/diagnostics remain disposable.
 
-**Rationale**: Java AudioLayerGroup checks event flags before generating audio clips. Current Score discovers solo globally; changing only local Track filtering leaves hidden coupling. ProjectProperties.loadFromXML constructs defaults, so the new-project default cannot also serve as the legacy fallback.
+**Rationale**: Java AudioLayerGroup checks event flags before generating audio clips. Current Score discovers solo globally; changing only local Track filtering leaves hidden coupling. Score.loadFromXML must distinguish the new-score Audio default from legacy Event absence. Java `blue-core/src/main/java/blue/score/Score.java:157–189` dispatches unknown children to layer-group loading but ignores attributes. Its save method at lines 144–154 does not retain unknown attributes: Java file loading remains compatible, but a Java save loses the mode attribute.
 
 **Alternatives considered**: Copying flags destroys independent intent. Per-track mode was not requested. Converting instrument/sub/master flags to events on mixer bypass has no generally correct meaning.
 

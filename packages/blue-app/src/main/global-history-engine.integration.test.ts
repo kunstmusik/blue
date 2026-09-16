@@ -1082,23 +1082,23 @@ if (process.env.BLUE_RUN_REAL_ENGINE === '1') {
         });
         history.setSavedStateId(session.read().stateId);
 
-        const channelRef = channel;
-        const trackRef = track;
         const assertState = (mode: 'audio' | 'event', mixerEnabled: boolean, dirty: boolean) => {
-          expect(data.getProjectProperties().trackLayerMuteSoloMode).toBe(mode);
-          expect(data.getMixer().isEnabled()).toBe(mixerEnabled);
-          expect(channelRef.isMuted()).toBe(true);
-          expect(channelRef.isSolo()).toBe(false);
-          expect(trackRef.isMuted()).toBe(false);
-          expect(trackRef.isSolo()).toBe(true);
-          expect(channelRef.getAssociation()).toBe('track-t093-real');
-          expect(channelRef).toBe(channel);
-          expect(trackRef).toBe(track);
+          const current = session.read().data!;
+          const currentChannel = current.getMixer().getChannels()[0]!;
+          const currentTrack = (current.getScore()[1] as TrackLayerGroup)[0]!;
+          expect(current.getScore().trackLayerMuteSoloMode).toBe(mode);
+          expect(current.getMixer().isEnabled()).toBe(mixerEnabled);
+          expect(currentChannel.isMuted()).toBe(true);
+          expect(currentChannel.isSolo()).toBe(false);
+          expect(currentTrack.isMuted()).toBe(false);
+          expect(currentTrack.isSolo()).toBe(true);
+          expect(currentChannel.getAssociation()).toBe('track-t093-real');
+          expect(currentTrack.getUniqueId()).toBe(track.getUniqueId());
           expect(history.isDirty()).toBe(dirty);
 
           const snapshot = publishedSnapshots.at(-1);
           expect(snapshot).toBeDefined();
-          expect(snapshot?.projectProperties.trackLayerMuteSoloMode).toBe(mode);
+          expect(snapshot?.score?.trackLayerMuteSoloMode).toBe(mode);
           expect(snapshot?.mixer?.enabled).toBe(mixerEnabled);
           expect(snapshot?.mixer?.channels).toContainEqual(
             expect.objectContaining({
@@ -1154,7 +1154,7 @@ if (process.env.BLUE_RUN_REAL_ENGINE === '1') {
           });
 
         const modeEvent = {
-          projectProperties: { trackLayerMuteSoloMode: 'event' as const },
+          score: { type: 'updateTrackLayerMuteSoloMode' as const, mode: 'event' as const },
         };
         const disableMixer = {
           mixer: { type: 'setMixerEnabled' as const, value: false },
