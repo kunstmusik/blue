@@ -11,6 +11,8 @@ import type {
   BsbRealtimeControlUpdate,
   MixerRealtimeLevelResult,
   MixerRealtimeLevelUpdate,
+  MixerRealtimePanResult,
+  MixerRealtimePanUpdate,
   EffectRealtimeUpdate,
   BlueLiveNoteTriggerRequest,
   BlueLiveNoteTriggerResult,
@@ -97,6 +99,8 @@ import type {
   NativeConfirmationResult,
 } from '../../shared/confirmation-dialog';
 import type { EngineOutputPayload } from '../../shared/io-provider';
+import type { AudioLayoutDiagnostic } from '../../shared/audio-layout';
+import type { BlueLiveStatusSnapshot } from '../../shared/blue-live-status';
 import type { EngineProbeRequest, EngineProbeResult } from '../../shared/engine-runtime';
 import type { CsoundIoQueryRequest, CsoundIoQueryResult } from '../../shared/csound-runtime';
 import type {
@@ -169,16 +173,6 @@ import type {
   CodeRepositoryStatus,
   CodeRepositoryUpdateNodeRequest,
 } from '../../shared/code-repository';
-
-export type BlueLiveStatus = 'idle' | 'starting' | 'running' | 'stopping' | 'stopped' | 'error';
-
-export interface BlueLiveStatusSnapshot {
-  status: BlueLiveStatus;
-  running: boolean;
-  message?: string;
-  sessionId: number;
-  projectRevision?: number | null;
-}
 
 export interface EvaluateCodeRequest {
   editorKind: 'orc' | 'sco';
@@ -471,6 +465,9 @@ declare global {
       sendMixerRealtimeLevelUpdate: (
         update: MixerRealtimeLevelUpdate,
       ) => Promise<MixerRealtimeLevelResult>;
+      sendMixerRealtimePanUpdate?: (
+        update: MixerRealtimePanUpdate,
+      ) => Promise<MixerRealtimePanResult>;
       sendEffectRealtimeUpdate: (update: EffectRealtimeUpdate) => Promise<void>;
       readClipboardText: () => Promise<string>;
       writeClipboardText: (text: string) => Promise<void>;
@@ -526,7 +523,9 @@ declare global {
         }) => void,
       ) => () => void;
       onPlaybackClock: (cb: (clock: PlaybackClockSnapshot) => void) => () => void;
-      onPlaybackError: (cb: (error: string) => void) => () => void;
+      onPlaybackError: (
+        cb: (error: string, layoutDiagnostic?: AudioLayoutDiagnostic) => void,
+      ) => () => void;
       onMeterBindingMap: (
         cb: (map: import('../../shared/meter-types').MeterBindingMapPayload) => void,
       ) => () => void;
@@ -541,7 +540,9 @@ declare global {
       onEngineOutputSelect: (cb: (payload: { tabName: string }) => void) => () => void;
       onEngineOutputReset: (cb: (payload: { tabName: string }) => void) => () => void;
       onGeneratedCsd: (cb: (csdText: string) => void) => () => void;
-      onGeneratedCsdError: (cb: (error: string) => void) => () => void;
+      onGeneratedCsdError: (
+        cb: (error: string, layoutDiagnostic?: AudioLayoutDiagnostic) => void,
+      ) => () => void;
       onEngineRecoveryStatus: (
         cb: (status: import('../../shared/engine-recovery').EngineRecoveryStatus) => void,
       ) => () => void;

@@ -28,6 +28,7 @@ function createCertifiableProject(): {
   trackB: Track;
 } {
   const data = new BlueData();
+  data.getScore().panningEnabled = false;
   data.getMixer().setEnabled(true);
 
   const group = new TrackLayerGroup();

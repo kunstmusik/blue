@@ -349,7 +349,9 @@ describe('Mounted 64-Strip Metering Performance and Interaction Latency (SC-003,
       );
     });
 
-    const sliders = host.querySelectorAll<HTMLElement>('[role="slider"]');
+    const sliders = host.querySelectorAll<HTMLElement>(
+      '[role="slider"][aria-orientation="vertical"]',
+    );
     expect(sliders.length).toBe(64);
 
     const ITERATIONS = 10;

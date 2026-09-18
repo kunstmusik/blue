@@ -74,6 +74,7 @@ import {
   PianoNote,
   FieldDef,
   TrackerObject,
+  ScoreTrack,
   Track,
   TrackerNote,
   Column,
@@ -109,7 +110,10 @@ import { AutomationCurve as BlueDataAutomationCurve, LineColors } from '@blue/da
 import { ParameterHelper } from '@blue/data';
 import {
   computeMixerGateStateForMixer,
+  hasEnabledStereoGeneratingEffect,
   hasLegacyMixerStateAtLoad,
+  resolveEffectiveTrackLayout,
+  type AudioLayoutManifest,
   type MixerChannelRouteIndicator,
 } from '@blue/data';
 import type {
@@ -248,6 +252,7 @@ import type {
   MixerSendEntrySnapshot,
   MixerChainEntrySnapshot,
   MixerChannelSnapshot,
+  ChannelPositionMode,
   MixerChannelListSnapshot,
   MixerSnapshot,
   MixerChannelEditableFields,
@@ -543,9 +548,53 @@ function createMixerChannelSnapshot(
   refs?: {
     libraryRef?: LibraryEffectRef;
     indicator?: MixerChannelRouteIndicator;
+    score?: Score;
+    manifest?: AudioLayoutManifest | null;
   },
 ): MixerChannelSnapshot {
   const id = getMixerChannelSnapshotId(channel);
+  const score = refs?.score;
+  const manifest = refs?.manifest;
+  let positionMode: ChannelPositionMode = 'balance';
+
+  if (
+    channelKind !== 'subChannel' &&
+    channelKind !== 'master' &&
+    score &&
+    channel.getAssociation()
+  ) {
+    let track: ScoreTrack | undefined;
+    for (const group of score) {
+      if (group instanceof TrackLayerGroup) {
+        track = group.find((t) => t.getUniqueId() === channel.getAssociation());
+        if (track) break;
+      }
+    }
+    if (track) {
+      const clips: AudioClip[] = [];
+      let hasNonClip = false;
+      for (const item of track) {
+        if (item instanceof AudioClip) {
+          clips.push(item);
+        } else {
+          hasNonClip = true;
+        }
+      }
+      const hasUpstreamEffects = hasEnabledStereoGeneratingEffect([
+        ...channel.getPreEffects(),
+        ...channel.getPostEffects(),
+      ]);
+      if (clips.length > 0 && manifest) {
+        const layout = resolveEffectiveTrackLayout(
+          clips.map((c) => c.getAudioFile()),
+          manifest,
+          { hasUpstreamEffects, hasStereoOrUnclassifiedSource: hasNonClip },
+        );
+        positionMode = layout === 'mono' ? 'pan' : 'balance';
+      }
+    }
+  }
+
   return {
     id,
     name: channel.getName(),
@@ -557,6 +606,7 @@ function createMixerChannelSnapshot(
     level: channel.getLevel(),
     volume: channel.getVolume(),
     pan: channel.getPan(),
+    positionMode,
     preChain: createMixerChainSnapshot(channel.getPreEffects(), {
       channelId: id,
       chain: 'pre',
@@ -608,6 +658,8 @@ export function createEmptyMixerSnapshot(): MixerSnapshot {
 function createMixerChannelListSnapshot(
   channelList: ChannelList,
   indicatorFor?: (channel: Channel) => MixerChannelRouteIndicator | undefined,
+  score?: Score,
+  manifest?: AudioLayoutManifest | null,
 ): MixerChannelListSnapshot {
   return {
     association: channelList.getAssociation() ?? undefined,
@@ -616,12 +668,18 @@ function createMixerChannelListSnapshot(
     channels: Array.from(channelList, (channel) =>
       createMixerChannelSnapshot(channel, 'instrument', {
         indicator: indicatorFor?.(channel),
+        score,
+        manifest,
       }),
     ),
   };
 }
 
-export function createMixerSnapshot(mixer: Mixer): MixerSnapshot {
+export function createMixerSnapshot(
+  mixer: Mixer,
+  score?: Score,
+  manifest?: AudioLayoutManifest | null,
+): MixerSnapshot {
   const { byKey } = buildMixerRouteIndicatorIndex(mixer);
   const indicatorFor = (kind: 'source' | 'sub' | 'master', channel: Channel) =>
     byKey.get(`${kind}:${channel.getName()}`);
@@ -633,20 +691,31 @@ export function createMixerSnapshot(mixer: Mixer): MixerSnapshot {
     channelListGroups: mixer
       .getChannelListGroups()
       .map((channelList) =>
-        createMixerChannelListSnapshot(channelList, (channel) => indicatorFor('source', channel)),
+        createMixerChannelListSnapshot(
+          channelList,
+          (channel) => indicatorFor('source', channel),
+          score,
+          manifest,
+        ),
       ),
     channels: Array.from(mixer.getChannels(), (channel) =>
       createMixerChannelSnapshot(channel, 'instrument', {
         indicator: indicatorFor('source', channel),
+        score,
+        manifest,
       }),
     ),
     subChannels: Array.from(mixer.getSubChannels(), (channel) =>
       createMixerChannelSnapshot(channel, 'subChannel', {
         indicator: indicatorFor('sub', channel),
+        score,
+        manifest,
       }),
     ),
     master: createMixerChannelSnapshot(mixer.getMaster(), 'master', {
       indicator: indicatorFor('master', mixer.getMaster()),
+      score,
+      manifest,
     }),
   };
 }

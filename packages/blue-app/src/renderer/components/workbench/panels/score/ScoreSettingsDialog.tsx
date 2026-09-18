@@ -10,6 +10,7 @@ interface Props {
   mixerEnabled: boolean;
   legacyNotice: boolean;
   onModeChange: (mode: TrackLayerMuteSoloMode) => void;
+  onPanningChange?: (enabled: boolean) => void;
   onClose: () => void;
 }
 
@@ -23,6 +24,7 @@ export default function ScoreSettingsDialog({
   mixerEnabled,
   legacyNotice,
   onModeChange,
+  onPanningChange,
   onClose,
 }: Props) {
   const effectiveMode = effectiveTrackLayerMuteSoloMode(score.trackLayerMuteSoloMode, mixerEnabled);
@@ -114,6 +116,24 @@ export default function ScoreSettingsDialog({
                 mixer. With this version those flags are audible during playback.
               </p>
             )}
+          </fieldset>
+
+          <fieldset className="space-y-3 border-t border-app-border/30 pt-4">
+            <legend className="text-role-headline font-bold text-app-text">Panning</legend>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                aria-label="Enable Panning"
+                checked={score.panningEnabled}
+                onChange={(event) => onPanningChange?.(event.target.checked)}
+                className="rounded border-app-border/40 focus-visible:ring-2 focus-visible:ring-app-focus"
+              />
+              <span className="text-role-body text-app-text">Enable Panning</span>
+            </label>
+            <p className="text-role-caption text-app-text-muted">
+              When enabled, mono audio clips are centered into stereo and channel Pan/Balance
+              controls are active. When disabled, legacy audio routing is preserved.
+            </p>
           </fieldset>
         </div>
 

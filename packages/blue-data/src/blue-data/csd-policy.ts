@@ -41,6 +41,14 @@ import { UDOStyle } from '../opcodes/udo-style';
 import { BSBCompilationUnit } from '../instruments/blue-synth-builder/bsb-compilation-unit';
 import { getAllParameters, assignParameterNames } from '../automation/parameter-helper';
 import {
+  AudioLayoutCompileError,
+  hasEnabledStereoGeneratingEffect,
+  resolveEffectiveTrackLayout,
+  type AudioLayoutManifest,
+  type EffectiveTrackLayout,
+} from '../score/audio/audio-layout';
+import { getMonoPanGains, getStereoBalanceGains } from '../mixer/channel-pan';
+import {
   appendParameterScoreJava,
   getParameterInstrumentTextJava,
 } from '../automation/csd-parameter-automation';
@@ -103,18 +111,28 @@ function getBlueDataState(blueData: BlueData): BlueDataCsdState {
   return blueData as unknown as BlueDataCsdState;
 }
 
+function configureCompileChannels(compileData: CompileData, nchnls: number): void {
+  compileData.setNchnls(nchnls);
+  if (!compileData.isPanningEnabled() || nchnls <= 2) return;
+  throw new AudioLayoutCompileError(`Unsupported project output channel count (${nchnls})`, {
+    code: 'UNSUPPORTED_OUTPUT_CHANNELS',
+    outputChannels: nchnls,
+  });
+}
+
 export function buildStandardCSD(
   blueData: BlueData,
   profile: CsdRenderProfile,
   session?: JavaScriptSession,
   emitMetering = false,
+  layoutManifest?: AudioLayoutManifest | null,
 ): RenderCsdResult {
   const {
     arrangement: clonedArrangement,
     tables: clonedTables,
     mixer: clonedMixer,
     compileData,
-  } = createRenderSnapshot(blueData, session);
+  } = createRenderSnapshot(blueData, session, undefined, layoutManifest);
   let generationError: unknown = null;
   const logPrefix = profile === 'disk' ? '[BlueData.toDiskCSD]' : '[BlueData.toCSD]';
   const actualEmitMetering = profile === 'realtime' && emitMetering;
@@ -134,6 +152,7 @@ export function buildStandardCSD(
     // Build CsInstruments header (sr/ksmps/nchnls/0dbfs go here, not in CsOptions)
     const orchestraHeader = buildOrchestraHeader(blueData, profile);
     const nchnls = getNchnls(blueData, profile);
+    configureCompileChannels(compileData, nchnls);
 
     // Global orchestra/sco from stored data
     let globalOrc = getBlueDataState(blueData).globalOrcSco.getGlobalOrc() || '';
@@ -173,7 +192,11 @@ export function buildStandardCSD(
     const udos = new OpcodeList(getBlueDataState(blueData).opcodeList);
     clonedArrangement.generateUserDefinedOpcodes(udos);
 
-    const parameters = getAllParameters(clonedArrangement, clonedMixer);
+    const parameters = getAllParameters(
+      clonedArrangement,
+      clonedMixer,
+      compileData.isPanningEnabled(),
+    );
     assignParameterNames(parameters);
     const stringChannels = collectStringChannels(blueData, clonedArrangement);
     compileData.registerExistingAutomationState(parameters, stringChannels);
@@ -283,6 +306,7 @@ export function buildStandardCSD(
         channelIdAssignments,
         nchnls,
         udos,
+        compileData,
         clonedMixer,
         actualEmitMetering,
         gateContext,
@@ -394,13 +418,14 @@ export async function buildStandardCSDAsync(
   session?: JavaScriptSession,
   runtimeClient?: JavaRuntimeClientContract | null,
   emitMetering = false,
+  layoutManifest?: AudioLayoutManifest | null,
 ): Promise<RenderCsdResult> {
   const {
     arrangement: clonedArrangement,
     tables: clonedTables,
     mixer: clonedMixer,
     compileData,
-  } = createRenderSnapshot(blueData, session, runtimeClient);
+  } = createRenderSnapshot(blueData, session, runtimeClient, layoutManifest);
   let generationError: unknown = null;
   const logPrefix = profile === 'disk' ? '[BlueData.toDiskCSDAsync]' : '[BlueData.toCSDAsync]';
   const actualEmitMetering = profile === 'realtime' && emitMetering;
@@ -419,6 +444,7 @@ export async function buildStandardCSDAsync(
 
     const orchestraHeader = buildOrchestraHeader(blueData, profile);
     const nchnls = getNchnls(blueData, profile);
+    configureCompileChannels(compileData, nchnls);
 
     let globalOrc = getBlueDataState(blueData).globalOrcSco.getGlobalOrc() || '';
     const baseGlobalSco = getBlueDataState(blueData).globalOrcSco.getGlobalSco() || '';
@@ -453,7 +479,11 @@ export async function buildStandardCSDAsync(
     const udos = new OpcodeList(getBlueDataState(blueData).opcodeList);
     clonedArrangement.generateUserDefinedOpcodes(udos);
 
-    const parameters = getAllParameters(clonedArrangement, clonedMixer);
+    const parameters = getAllParameters(
+      clonedArrangement,
+      clonedMixer,
+      compileData.isPanningEnabled(),
+    );
     assignParameterNames(parameters);
     const stringChannels = collectStringChannels(blueData, clonedArrangement);
     compileData.registerExistingAutomationState(parameters, stringChannels);
@@ -562,6 +592,7 @@ export async function buildStandardCSDAsync(
         channelIdAssignments,
         nchnls,
         udos,
+        compileData,
         clonedMixer,
         actualEmitMetering,
         gateContext,
@@ -674,13 +705,14 @@ export function toBlueLiveCSD(
   blueData: BlueData,
   session?: JavaScriptSession,
   emitMetering = false,
+  layoutManifest?: AudioLayoutManifest | null,
 ): RenderCsdResult {
   const {
     arrangement: clonedArrangement,
     tables: clonedTables,
     mixer: clonedMixer,
     compileData,
-  } = createRenderSnapshot(blueData, session);
+  } = createRenderSnapshot(blueData, session, undefined, layoutManifest);
   let generationError: unknown = null;
 
   try {
@@ -694,6 +726,7 @@ export function toBlueLiveCSD(
 
     const orchestraHeader = buildOrchestraHeader(blueData);
     const nchnls = getNchnls(blueData);
+    configureCompileChannels(compileData, nchnls);
 
     let globalOrc = getBlueDataState(blueData).globalOrcSco.getGlobalOrc() || '';
     let globalSco = getBlueDataState(blueData).globalOrcSco.getGlobalSco() || '';
@@ -719,7 +752,11 @@ export function toBlueLiveCSD(
     const udos = new OpcodeList(getBlueDataState(blueData).opcodeList);
     clonedArrangement.generateUserDefinedOpcodes(udos);
 
-    const parameters = getAllParameters(clonedArrangement, clonedMixer);
+    const parameters = getAllParameters(
+      clonedArrangement,
+      clonedMixer,
+      compileData.isPanningEnabled(),
+    );
     assignParameterNames(parameters);
     const stringChannels = collectStringChannels(blueData, clonedArrangement);
     compileData.registerExistingAutomationState(parameters, stringChannels);
@@ -784,6 +821,7 @@ export function toBlueLiveCSD(
         channelIdAssignments,
         nchnls,
         udos,
+        compileData,
         clonedMixer,
         emitMetering,
         gateContext,
@@ -1309,6 +1347,7 @@ function createRenderSnapshot(
   blueData: BlueData,
   session?: JavaScriptSession,
   runtimeClient?: JavaRuntimeClientContract | null,
+  layoutManifest?: AudioLayoutManifest | null,
 ): {
   arrangement: Arrangement;
   tables: Tables;
@@ -1322,7 +1361,12 @@ function createRenderSnapshot(
   const mixer = sourceMixer.deepCopy() as Mixer;
   copyMixerRuntimeIdentities(sourceMixer, mixer);
   const compileData = new CompileData(arrangement, tables, false);
-  getBlueDataState(blueData).score.prepareTrackInstruments(compileData);
+  const score = getBlueDataState(blueData).score;
+  compileData.setPanningEnabled(score.panningEnabled);
+  if (layoutManifest) {
+    compileData.setAudioLayoutManifest(layoutManifest);
+  }
+  score.prepareTrackInstruments(compileData);
   compileData.setHandleParametersAndChannels(true);
 
   if (session) {
@@ -1562,6 +1606,7 @@ function generateMixerOrchestra(
   channelIdAssignments: Map<Channel, number>,
   nchnls: number,
   udos: OpcodeList,
+  compileData: CompileData,
   mixer: Mixer = getBlueDataState(blueData).mixer,
   emitMetering = false,
   gateContext: BlueMixerGateContext | null = null,
@@ -1612,6 +1657,7 @@ function generateMixerOrchestra(
     channelIdAssignments,
     nchnls,
     effectIdMap,
+    compileData,
     mixer,
     emitMetering,
     gateContext,
@@ -1907,11 +1953,14 @@ function generateBlueMixer(
   channelIdAssignments: Map<Channel, number>,
   nchnls: number,
   effectIdMap: Map<Effect, number>,
+  compileData: CompileData,
   mixer: Mixer = getBlueDataState(blueData).mixer,
   emitMetering = false,
   gateContext: BlueMixerGateContext | null = null,
 ): string {
   const lines: string[] = [];
+  const panningEnabled = compileData.isPanningEnabled();
+  const layoutManifest = compileData.getAudioLayoutManifest();
 
   lines.push('\tinstr BlueMixer\t;Blue Mixer Instrument');
 
@@ -1957,6 +2006,10 @@ function generateBlueMixer(
       lines,
       gateContext,
     );
+    if (panningEnabled && nchnls === 2) {
+      const layout = resolveChannelLayout(blueData, channel, layoutManifest);
+      applyChannelPan(blueData, signalVars, channel, layout, lines);
+    }
     if (gateContext) {
       emitOutputGate(gateContext, channelOrdinalOf(gateContext, channel), signalVars, lines);
     }
@@ -1994,6 +2047,9 @@ function generateBlueMixer(
       lines,
       gateContext,
     );
+    if (panningEnabled && nchnls === 2) {
+      applyChannelPan(blueData, signalVars, subChannel, 'stereo-or-unknown', lines);
+    }
     if (gateContext) {
       emitOutputGate(gateContext, channelOrdinalOf(gateContext, subChannel), signalVars, lines);
     }
@@ -2036,6 +2092,9 @@ function generateBlueMixer(
     lines,
     gateContext,
   );
+  if (panningEnabled && nchnls === 2) {
+    applyChannelPan(blueData, masterVars, masterChannel, 'stereo-or-unknown', lines);
+  }
   if (gateContext) {
     emitOutputGate(gateContext, channelOrdinalOf(gateContext, masterChannel), masterVars, lines);
   }
@@ -2148,6 +2207,109 @@ function applyChannelLevel(
 
   for (const signalVar of signalVars) {
     lines.push(`${signalVar} *= ${multiplier}`);
+  }
+}
+
+function resolveChannelLayout(
+  blueData: BlueData,
+  channel: Channel,
+  manifest?: AudioLayoutManifest | null,
+): EffectiveTrackLayout {
+  const hasEffects =
+    hasEnabledStereoGeneratingEffect(channel.getPreEffects()) ||
+    hasEnabledStereoGeneratingEffect(channel.getPostEffects());
+  if (hasEffects) {
+    return 'stereo-or-unknown';
+  }
+
+  const trackId = channel.getAssociation().trim();
+  if (!trackId) {
+    return 'stereo-or-unknown';
+  }
+
+  let matchedTrack: Track | undefined;
+  let hasOtherItems = false;
+  const score = getBlueDataState(blueData).score;
+  for (const layerGroup of score) {
+    if (layerGroup instanceof TrackLayerGroup) {
+      for (const track of layerGroup) {
+        if (track.getUniqueId() === trackId) {
+          matchedTrack = track;
+          break;
+        }
+      }
+    }
+    if (matchedTrack) break;
+  }
+
+  if (!matchedTrack) {
+    return 'stereo-or-unknown';
+  }
+
+  if (matchedTrack.getInstrument() && matchedTrack.getInstrument()!.isEnabled()) {
+    return 'stereo-or-unknown';
+  }
+
+  const clipPaths: string[] = [];
+  for (const item of matchedTrack) {
+    if (item instanceof AudioClip) {
+      clipPaths.push(item.getAudioFile());
+    } else {
+      hasOtherItems = true;
+    }
+  }
+
+  return resolveEffectiveTrackLayout(clipPaths, manifest, {
+    hasStereoOrUnclassifiedSource: hasOtherItems,
+    hasUpstreamEffects: hasEffects,
+  });
+}
+
+function applyChannelPan(
+  blueData: BlueData,
+  signalVars: string[],
+  channel: Channel,
+  layout: EffectiveTrackLayout,
+  lines: string[],
+): void {
+  if (signalVars.length < 2) {
+    return;
+  }
+  const panParam = channel.getPanParameter();
+  const panVar = panParam.getCompilationVarName();
+
+  if (layout === 'mono') {
+    if (panVar) {
+      lines.push(`k_pan_l = 1.4142135623730951 * cos(1.5707963267948966 * ${panVar})`);
+      lines.push(`k_pan_r = 1.4142135623730951 * sin(1.5707963267948966 * ${panVar})`);
+      lines.push(`${signalVars[0]} *= k_pan_l`);
+      lines.push(`${signalVars[1]} *= k_pan_r`);
+    } else {
+      const p = channel.getPan();
+      const [gainL, gainR] = getMonoPanGains(p);
+      if (Math.abs(gainL - 1.0) > 0.0001) {
+        lines.push(`${signalVars[0]} *= ${gainL}`);
+      }
+      if (Math.abs(gainR - 1.0) > 0.0001) {
+        lines.push(`${signalVars[1]} *= ${gainR}`);
+      }
+    }
+  } else {
+    if (panVar) {
+      lines.push(`k_bal_l = min(1, 2 * (1 - ${panVar}))`);
+      lines.push(`k_bal_r = min(1, 2 * ${panVar})`);
+      lines.push(`${signalVars[0]} *= k_bal_l`);
+      lines.push(`${signalVars[1]} *= k_bal_r`);
+    } else {
+      const p = channel.getPan();
+      const [balL, balR] = getStereoBalanceGains(p);
+      if (Math.abs(balL - 1.0) > 0.0001) {
+        lines.push(`${signalVars[0]} *= ${balL}`);
+      }
+      if (Math.abs(balR - 1.0) > 0.0001) {
+        lines.push(`${signalVars[1]} *= ${balR}`);
+      }
+    }
   }
 }
 

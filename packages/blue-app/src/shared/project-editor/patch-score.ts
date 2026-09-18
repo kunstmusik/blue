@@ -565,11 +565,15 @@ export function isNonEmptyScorePatch(patch: ScorePatch): boolean {
   if (patch.type === 'setLayerHeights') {
     return patch.updates.length > 0;
   }
+  if (patch.type === 'updateScorePanning') {
+    return typeof patch.panningEnabled === 'boolean';
+  }
   return true;
 }
 
 export function scorePatchTouchesMixerAudioChannels(patch: ScorePatch): boolean {
   switch (patch.type) {
+    case 'updateScorePanning':
     case 'addLayer':
     case 'removeLayer':
     case 'removeLayerRanges':
@@ -2627,6 +2631,13 @@ export function applyScoreObjectPatch(
   patch: ScorePatch,
   patchContext?: ProjectDocumentPatchContext,
 ): boolean {
+  if (patch.type === 'updateScorePanning') {
+    if (typeof patch.panningEnabled !== 'boolean') return false;
+    const score = data.getScore();
+    if (score.panningEnabled === patch.panningEnabled) return false;
+    score.panningEnabled = patch.panningEnabled;
+    return true;
+  }
   if (patch.type === 'updateTrackLayerMuteSoloMode') {
     if (!isTrackLayerMuteSoloMode(patch.mode)) return false;
     const score = data.getScore();

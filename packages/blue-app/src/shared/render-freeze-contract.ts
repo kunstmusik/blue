@@ -8,6 +8,7 @@
  * and canonical mutation.
  */
 import type { ProjectEditorSnapshot, ScoreObjectEditorTargetSnapshot } from './project-editor';
+import { type AudioLayoutDiagnostic, isAudioLayoutDiagnostic } from './audio-layout';
 
 // ─── Channels ───
 
@@ -99,6 +100,10 @@ export interface RenderOperationStatus {
    * "Render to Disk and Play" completion from a plain render.
    */
   action?: DiskRenderAction | null;
+  /**
+   * Typed diagnostic when preflight or layout compilation rejects the score.
+   */
+  layoutDiagnostic?: AudioLayoutDiagnostic | null;
 }
 
 const RENDER_OPERATION_KINDS: readonly RenderOperationKind[] = ['diskRender', 'freeze'];
@@ -125,7 +130,10 @@ export function isRenderOperationStatus(value: unknown): value is RenderOperatio
     (value.action === undefined ||
       value.action === null ||
       (typeof value.action === 'string' &&
-        DISK_RENDER_ACTIONS.includes(value.action as DiskRenderAction)))
+        DISK_RENDER_ACTIONS.includes(value.action as DiskRenderAction))) &&
+    (value.layoutDiagnostic === undefined ||
+      value.layoutDiagnostic === null ||
+      isAudioLayoutDiagnostic(value.layoutDiagnostic))
   );
 }
 
@@ -248,5 +256,6 @@ export function createStatus(
     outputPath: overrides?.outputPath ?? null,
     error: overrides?.error ?? null,
     action: overrides?.action ?? null,
+    layoutDiagnostic: overrides?.layoutDiagnostic ?? null,
   };
 }

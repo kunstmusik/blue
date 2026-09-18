@@ -174,4 +174,58 @@ describe('render-freeze-contract', () => {
       expect(isFreezeItemStatus({ ...freezeItem(), outputType: 'stdin' })).toBe(false);
     });
   });
+
+  describe('layoutDiagnostic field (Spec 112 T077)', () => {
+    const validDiagnostic = {
+      code: 'MISSING_AUDIO_LAYOUT' as const,
+      message: "Missing audio file: '/audio/mono.wav'",
+      filePath: '/audio/mono.wav',
+    };
+
+    it('accepts a status carrying a well-formed layout diagnostic', () => {
+      const status = createStatus('op', 'diskRender', 'failed', 'Preflight failed');
+      expect(isRenderOperationStatus({ ...status, layoutDiagnostic: validDiagnostic })).toBe(true);
+    });
+
+    it('accepts null and undefined layout diagnostics (legacy/disabled route)', () => {
+      const base = createStatus('op', 'diskRender', 'rendering', '...');
+      expect(isRenderOperationStatus({ ...base, layoutDiagnostic: null })).toBe(true);
+      expect(isRenderOperationStatus({ ...base })).toBe(true);
+    });
+
+    it('accepts every stable diagnostic code with optional observed counts', () => {
+      for (const code of [
+        'MISSING_AUDIO_LAYOUT',
+        'UNREADABLE_AUDIO_FILE',
+        'UNSUPPORTED_SOURCE_CHANNELS',
+        'UNSUPPORTED_OUTPUT_CHANNELS',
+      ] as const) {
+        const status = createStatus('op', 'diskRender', 'failed', 'code');
+        expect(
+          isRenderOperationStatus({
+            ...status,
+            layoutDiagnostic: { code, message: 'm', observedChannels: 3, outputChannels: 4 },
+          }),
+        ).toBe(true);
+      }
+    });
+
+    it('rejects malformed layout diagnostics so raw host data cannot cross IPC', () => {
+      const base = createStatus('op', 'diskRender', 'failed', 'Preflight failed');
+      const withDiagnostic = (diagnostic: unknown) =>
+        isRenderOperationStatus({ ...base, layoutDiagnostic: diagnostic });
+
+      expect(withDiagnostic({ code: 'SOME_OTHER_CODE', message: 'm' })).toBe(false);
+      expect(withDiagnostic({ code: 'MISSING_AUDIO_LAYOUT' })).toBe(false);
+      expect(withDiagnostic({ code: 'MISSING_AUDIO_LAYOUT', message: 7 })).toBe(false);
+      expect(withDiagnostic({ code: 'MISSING_AUDIO_LAYOUT', message: 'm', filePath: 9 })).toBe(
+        false,
+      );
+      expect(
+        withDiagnostic({ code: 'MISSING_AUDIO_LAYOUT', message: 'm', observedChannels: 'many' }),
+      ).toBe(false);
+      expect(withDiagnostic('missing /audio/mono.wav')).toBe(false);
+      expect(withDiagnostic(42)).toBe(false);
+    });
+  });
 });

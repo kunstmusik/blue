@@ -410,6 +410,7 @@ export interface ScoreDocumentSnapshot {
   markers: MarkerSnapshot[];
   layerGroups: ScoreLayerGroupSnapshot[];
   rootNoteProcessorChain?: NoteProcessorChainSnapshot;
+  panningEnabled: boolean;
 }
 
 // ─── Score Object Editor Target Types ───
@@ -806,6 +807,7 @@ export type PatternScorePatch =
 
 export type ScorePatch =
   | { type: 'updateTrackLayerMuteSoloMode'; mode: TrackLayerMuteSoloMode }
+  | { type: 'updateScorePanning'; panningEnabled: boolean }
   | TrackScorePatch
   | PatternScorePatch
   | { type: 'updateTimeState'; patch: Partial<ScoreTimeStateSnapshot> }
@@ -1420,6 +1422,8 @@ export interface MixerSendEntrySnapshot {
 
 export type MixerChainEntrySnapshot = MixerEffectEntrySnapshot | MixerSendEntrySnapshot;
 
+export type ChannelPositionMode = 'pan' | 'balance';
+
 export interface MixerChannelSnapshot {
   id: string;
   name: string;
@@ -1441,6 +1445,7 @@ export interface MixerChannelSnapshot {
   outputExcludedBySolo?: boolean;
   /** Derived: at least one send route of this channel survives solo filtering. */
   hasIncludedSend?: boolean;
+  positionMode?: ChannelPositionMode;
 }
 
 /**
@@ -1879,6 +1884,7 @@ export type ProjectPatchPreparationClass = 'scalar' | 'structural';
 export const SCORE_PATCH_PREPARATION_CLASS: Readonly<
   Record<ScorePatch['type'], ProjectPatchPreparationClass>
 > = {
+  updateScorePanning: 'structural',
   addLayer: 'structural',
   addLayerGroup: 'structural',
   addMarker: 'structural',
@@ -2334,31 +2340,69 @@ export interface MixerRealtimeLevelResult {
   revision?: number;
 }
 
-export function isMixerRealtimeLevelUpdate(value: unknown): value is MixerRealtimeLevelUpdate {
+function isValidMixerRealtimeBaseRequest(value: unknown): value is Record<string, unknown> {
   if (typeof value !== 'object' || value === null) return false;
   const update = value as Record<string, unknown>;
-  if (
-    typeof update.documentId !== 'string' ||
-    update.documentId.trim() === '' ||
-    typeof update.channelId !== 'string' ||
-    update.channelId.trim() === '' ||
-    typeof update.gestureId !== 'string' ||
-    update.gestureId.trim() === '' ||
-    typeof update.gestureSequence !== 'number' ||
-    !Number.isInteger(update.gestureSequence) ||
-    update.gestureSequence < 0 ||
-    typeof update.baseRevision !== 'number' ||
-    !Number.isInteger(update.baseRevision) ||
-    update.baseRevision < 0
-  ) {
-    return false;
-  }
+  return (
+    typeof update.documentId === 'string' &&
+    update.documentId.trim() !== '' &&
+    typeof update.channelId === 'string' &&
+    update.channelId.trim() !== '' &&
+    typeof update.gestureId === 'string' &&
+    update.gestureId.trim() !== '' &&
+    typeof update.gestureSequence === 'number' &&
+    Number.isInteger(update.gestureSequence) &&
+    update.gestureSequence >= 0 &&
+    typeof update.baseRevision === 'number' &&
+    Number.isInteger(update.baseRevision) &&
+    update.baseRevision >= 0
+  );
+}
+
+export function isMixerRealtimeLevelUpdate(value: unknown): value is MixerRealtimeLevelUpdate {
+  if (!isValidMixerRealtimeBaseRequest(value)) return false;
+  const update = value;
   if (update.phase === 'preview') {
     return (
       typeof update.level === 'number' &&
       Number.isFinite(update.level) &&
       update.level >= -96 &&
       update.level <= 12
+    );
+  }
+  return update.phase === 'finish' || update.phase === 'cancel';
+}
+
+/** Runtime-only channel-position preview used by the mixer Pan control. */
+export interface MixerRealtimePanPreviewRequest extends MixerRealtimeLevelBaseRequest {
+  phase: 'preview';
+  pan: number;
+}
+
+export interface MixerRealtimePanFinishRequest extends MixerRealtimeLevelBaseRequest {
+  phase: 'finish';
+}
+
+export interface MixerRealtimePanCancelRequest extends MixerRealtimeLevelBaseRequest {
+  phase: 'cancel';
+}
+
+export type MixerRealtimePanUpdate =
+  | MixerRealtimePanPreviewRequest
+  | MixerRealtimePanFinishRequest
+  | MixerRealtimePanCancelRequest;
+
+export type MixerRealtimePanResult = MixerRealtimeLevelResult;
+
+export function isMixerRealtimePanUpdate(value: unknown): value is MixerRealtimePanUpdate {
+  if (!isValidMixerRealtimeBaseRequest(value)) return false;
+  const update = value;
+  if (update.phase === 'preview') {
+    return (
+      typeof update.pan === 'number' &&
+      Number.isFinite(update.pan) &&
+      update.pan >= 0 &&
+      update.pan <= 1
     );
   }
   return update.phase === 'finish' || update.phase === 'cancel';

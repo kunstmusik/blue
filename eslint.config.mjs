@@ -4,6 +4,7 @@ export default tseslint.config(
   {
     ignores: [
       '**/dist/**',
+      '**/build/**',
       '**/node_modules/**',
       '**/.worktrees/**',
       '**/release/**',
@@ -12,6 +13,9 @@ export default tseslint.config(
       '**/fixtures/**',
       '**/__fixtures__/**',
       '**/user-content/**',
+      '**/*.min.js',
+      '**/*.log',
+      '**/.env*',
     ],
   },
   {

@@ -3,6 +3,11 @@ import { BlueData } from '../blue-data';
 import { Channel } from '../mixer/channel';
 import { Send } from '../mixer/send';
 import { GenericInstrument } from '../instruments/generic-instrument';
+import { AudioClip } from '../score/audio/audio-clip';
+import { createAudioLayoutManifest } from '../score/audio/audio-layout';
+import { TrackLayerGroup } from '../score/track/track-layer-group';
+import { TimeDuration } from '../time/time-duration';
+import { TimePosition } from '../time/time-position';
 import { buildStandardCSD } from './csd-policy';
 
 /**
@@ -166,5 +171,60 @@ describe('mixer mute/solo CSD gates (Spec 111)', () => {
     // Disabled send contributes no edge and no gate.
     expect(result.mixerGateBindings!.gates).toHaveLength(3);
     expect(result.csdText).not.toContain('ga_bluesub_Reverb_0\t+=');
+  });
+});
+
+describe('pan/balance stage interaction with gates (Spec 112 T072)', () => {
+  function createGatedPanningProject(): {
+    data: BlueData;
+    manifest: ReturnType<typeof createAudioLayoutManifest>;
+  } {
+    const data = createProjectWithMixer();
+    data.getScore().panningEnabled = true;
+    const manifest = createAudioLayoutManifest([
+      ['/audio/mono.wav', { filePath: '/audio/mono.wav', channels: 1, status: 'verified' }],
+    ]);
+
+    const group = new TrackLayerGroup();
+    const track = group.newLayerAt(0);
+    track.setUniqueId('track-1');
+    const clip = new AudioClip();
+    clip.setAudioFile('/audio/mono.wav');
+    clip.setStartTime(TimePosition.beats(0));
+    clip.setSubjectiveDuration(TimeDuration.beats(1));
+    track.push(clip);
+    data.getScore().push(group);
+
+    data.getMixer().getChannels()[0].setPan(0.25);
+    return { data, manifest };
+  }
+
+  it('applies the pan stage between the send tap gate and the channel output gate', () => {
+    const { data, manifest } = createGatedPanningProject();
+    const result = data.toRealtimePlaybackCSD(undefined, false, manifest);
+
+    // Send tap (gate 0) is tapped from the pre-pan bus, the position stage
+    // follows, and only then is the channel output gated (gate 1).
+    expect(result.csdText).toMatch(
+      new RegExp(
+        'ga_bluesub_Reverb_0\\t\\+=\\t\\(ga_bluemix_0_0 \\* gk_blue_auto\\d+\\) \\* kMixGateState_0' +
+          '[\\s\\S]*k_pan_l = 1\\.4142135623730951 \\* cos\\(1\\.5707963267948966 \\* gk_blue_auto\\d+\\)' +
+          '[\\s\\S]*ga_bluemix_0_0 \\*= k_pan_l' +
+          '[\\s\\S]*ga_bluemix_0_0 = ga_bluemix_0_0 \\* kMixGateState_1',
+      ),
+    );
+    // The post-pan channel bus is what reaches the parent.
+    expect(result.csdText).toContain('ga_bluesub_Master_0\t+=\tga_bluemix_0_0');
+  });
+
+  it('keeps gates and routing intact when score panning is off', () => {
+    const data = createProjectWithMixer();
+    data.getScore().panningEnabled = false;
+    const result = data.toRealtimePlaybackCSD();
+    expect(result.csdText).not.toContain('k_pan_l');
+    expect(result.csdText).not.toContain('k_bal_');
+    expect(result.csdText).toMatch(
+      /ga_bluemix_0_0 = ga_bluemix_0_0 \* kMixGateState_1\n\s*ga_bluemix_0_1 = ga_bluemix_0_1 \* kMixGateState_1\n\s*ga_bluesub_Master_0\t\+=\tga_bluemix_0_0/,
+    );
   });
 });

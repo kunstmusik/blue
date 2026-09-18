@@ -41,6 +41,7 @@ import {
   type WindowLayoutSettingsSnapshot,
 } from '../../shared/window-layout-settings';
 import type { EngineOutputPayload } from '../../shared/io-provider';
+import { formatAudioLayoutDiagnostic } from '../../shared/audio-layout';
 import type { ProgramSettingsSnapshot } from '../../shared/program-settings';
 import type { ProjectRuntimeOutcomeEvent } from '../../shared/project-history';
 
@@ -279,8 +280,8 @@ export function useIPCListeners(): void {
       acceptPlaybackClock(clock);
     });
 
-    const unsubPlaybackError = window.blueAPI.onPlaybackError((error) => {
-      setError(error);
+    const unsubPlaybackError = window.blueAPI.onPlaybackError((error, layoutDiagnostic) => {
+      setError(layoutDiagnostic ? formatAudioLayoutDiagnostic(layoutDiagnostic) : error);
     });
 
     const unsubEngineRecoveryStatus = window.blueAPI.onEngineRecoveryStatus?.((status) => {
@@ -336,7 +337,12 @@ export function useIPCListeners(): void {
 
       const dialogState = useRenderToDiskStore.getState();
       if (dialogState.open && dialogState.operationId === status.operationId) return;
-      toast.error(status.error ?? status.message, { id: status.operationId });
+      toast.error(
+        status.layoutDiagnostic
+          ? formatAudioLayoutDiagnostic(status.layoutDiagnostic)
+          : (status.error ?? status.message),
+        { id: status.operationId },
+      );
     });
 
     // Disk-render progress reporting lives in RenderToDiskDialog (driven by
@@ -347,12 +353,19 @@ export function useIPCListeners(): void {
       useProjectStore.getState().setGeneratedCsd({ text: csdText, title: 'Generated CSD' });
     });
 
-    const unsubCsdErr = window.blueAPI.onGeneratedCsdError((error) => {
-      toast.error(`CSD generation failed: ${error}`);
+    const unsubCsdErr = window.blueAPI.onGeneratedCsdError((error, layoutDiagnostic) => {
+      toast.error(
+        `CSD generation failed: ${layoutDiagnostic ? formatAudioLayoutDiagnostic(layoutDiagnostic) : error}`,
+      );
     });
 
     const unsubBlueLiveStatus = window.blueAPI.onBlueLiveStatus((snapshot) => {
       setBlueLiveStatus(snapshot);
+      if (snapshot.status === 'error' && snapshot.layoutDiagnostic) {
+        toast.error(formatAudioLayoutDiagnostic(snapshot.layoutDiagnostic), {
+          id: `blue-live-layout-${snapshot.sessionId}`,
+        });
+      }
     });
 
     // Acknowledge project-document-updated broadcasts from the main process.

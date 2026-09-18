@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import type { BlueLiveStatus, BlueLiveStatusSnapshot } from '../types/global';
+import type { AudioLayoutDiagnostic } from '../../shared/audio-layout';
+import type { BlueLiveStatus, BlueLiveStatusSnapshot } from '../../shared/blue-live-status';
 
 /**
  * Transient Manual Trigger feedback. This mirrors runtime-only status from the
@@ -19,6 +20,7 @@ interface BlueLiveState {
   message: string;
   sessionId: number;
   projectRevision: number | null;
+  layoutDiagnostic: AudioLayoutDiagnostic | null;
   initialized: boolean;
   trigger: BlueLiveTriggerFeedback;
 }
@@ -45,6 +47,7 @@ const initialState: BlueLiveState = {
   message: '',
   sessionId: 0,
   projectRevision: null,
+  layoutDiagnostic: null,
   initialized: false,
   trigger: initialTrigger,
 };
@@ -61,6 +64,7 @@ export const useBlueLiveStore = create<BlueLiveStore>((set) => ({
       message: snapshot.message ?? '',
       sessionId: snapshot.sessionId,
       projectRevision: snapshot.projectRevision ?? null,
+      layoutDiagnostic: snapshot.layoutDiagnostic ?? null,
       initialized: true,
     }),
 

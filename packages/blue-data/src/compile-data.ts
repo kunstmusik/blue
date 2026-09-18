@@ -3,6 +3,7 @@ import { Arrangement } from './arrangement';
 import { Tables } from './tables';
 import { Channel } from './mixer/channel';
 import { Parameter } from './automation/parameter';
+import type { AudioLayoutManifest } from './score/audio/audio-layout';
 
 interface StringChannelEntry {
   objectName: string;
@@ -134,6 +135,9 @@ export class CompileData {
   // A standalone CompileData has no mixer orchestra until a render builder
   // supplies the project setting, so direct output is the safe default.
   private mixerEnabled = false;
+  private panningEnabled = false;
+  private audioLayoutManifest: AudioLayoutManifest | null = null;
+  private nchnls = 2;
   private nextParameterIndex = 0;
   private nextStringChannelIndex = 0;
 
@@ -172,6 +176,30 @@ export class CompileData {
 
   setMixerEnabled(enabled: boolean): void {
     this.mixerEnabled = enabled;
+  }
+
+  isPanningEnabled(): boolean {
+    return this.panningEnabled;
+  }
+
+  setPanningEnabled(enabled: boolean): void {
+    this.panningEnabled = enabled;
+  }
+
+  getAudioLayoutManifest(): AudioLayoutManifest | null {
+    return this.audioLayoutManifest;
+  }
+
+  setAudioLayoutManifest(manifest: AudioLayoutManifest | null): void {
+    this.audioLayoutManifest = manifest;
+  }
+
+  getNchnls(): number {
+    return this.nchnls;
+  }
+
+  setNchnls(nchnls: number): void {
+    this.nchnls = nchnls;
   }
 
   addInstrument(instr: Instrument): number {

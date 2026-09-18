@@ -653,10 +653,16 @@ gk_blue_auto301 init 1
 gk_blue_auto301 chnexport "gk_blue_auto301", 3
 gk_blue_auto302 init 0
 gk_blue_auto302 chnexport "gk_blue_auto302", 3
-gk_blue_auto303 init 0
+gk_blue_auto303 init 0.5
 gk_blue_auto303 chnexport "gk_blue_auto303", 3
 gk_blue_auto304 init 0
 gk_blue_auto304 chnexport "gk_blue_auto304", 3
+gk_blue_auto305 init 0.5
+gk_blue_auto305 chnexport "gk_blue_auto305", 3
+gk_blue_auto306 init 0
+gk_blue_auto306 chnexport "gk_blue_auto306", 3
+gk_blue_auto307 init 0.5
+gk_blue_auto307 chnexport "gk_blue_auto307", 3
 
 
 gk_blue_x7_epoch_0 init 0
@@ -5070,20 +5076,32 @@ kMixGateState_2 += limit((kMixGateBank == 0 ? gk_blue_mixgate_2_0 : gk_blue_mixg
 ktempdb = ampdb(gk_blue_auto302)
 ga_bluemix_0_0 *= ktempdb
 ga_bluemix_0_1 *= ktempdb
+k_bal_l = min(1, 2 * (1 - gk_blue_auto303))
+k_bal_r = min(1, 2 * gk_blue_auto303)
+ga_bluemix_0_0 *= k_bal_l
+ga_bluemix_0_1 *= k_bal_r
 ga_bluemix_0_0 = ga_bluemix_0_0 * kMixGateState_0
 ga_bluemix_0_1 = ga_bluemix_0_1 * kMixGateState_0
 ga_bluesub_Master_0	+=	ga_bluemix_0_0
 ga_bluesub_Master_1	+=	ga_bluemix_0_1
-ktempdb = ampdb(gk_blue_auto303)
+ktempdb = ampdb(gk_blue_auto304)
 ga_bluemix_1_0 *= ktempdb
 ga_bluemix_1_1 *= ktempdb
+k_bal_l = min(1, 2 * (1 - gk_blue_auto305))
+k_bal_r = min(1, 2 * gk_blue_auto305)
+ga_bluemix_1_0 *= k_bal_l
+ga_bluemix_1_1 *= k_bal_r
 ga_bluemix_1_0 = ga_bluemix_1_0 * kMixGateState_1
 ga_bluemix_1_1 = ga_bluemix_1_1 * kMixGateState_1
 ga_bluesub_Master_0	+=	ga_bluemix_1_0
 ga_bluesub_Master_1	+=	ga_bluemix_1_1
-ktempdb = ampdb(gk_blue_auto304)
+ktempdb = ampdb(gk_blue_auto306)
 ga_bluesub_Master_0 *= ktempdb
 ga_bluesub_Master_1 *= ktempdb
+k_bal_l = min(1, 2 * (1 - gk_blue_auto307))
+k_bal_r = min(1, 2 * gk_blue_auto307)
+ga_bluesub_Master_0 *= k_bal_l
+ga_bluesub_Master_1 *= k_bal_r
 ga_bluesub_Master_0 = ga_bluesub_Master_0 * kMixGateState_2
 ga_bluesub_Master_1 = ga_bluesub_Master_1 * kMixGateState_2
 outc ga_bluesub_Master_0, ga_bluesub_Master_1

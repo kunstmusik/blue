@@ -13,7 +13,7 @@ describe('screen CSD generation', () => {
     await expect(
       generateDiskCsdForScreen({ toDiskCSD, toDiskCSDAsync }, session, null),
     ).resolves.toBe('disk-csd');
-    expect(toDiskCSD).toHaveBeenCalledWith(session);
+    expect(toDiskCSD).toHaveBeenCalledWith(session, undefined);
     expect(toDiskCSDAsync).not.toHaveBeenCalled();
   });
 
@@ -26,7 +26,7 @@ describe('screen CSD generation', () => {
     await expect(
       generateDiskCsdForScreen({ toDiskCSD, toDiskCSDAsync }, session, runtimeClient),
     ).resolves.toBe('java-runtime-disk-csd');
-    expect(toDiskCSDAsync).toHaveBeenCalledWith(session, runtimeClient);
+    expect(toDiskCSDAsync).toHaveBeenCalledWith(session, runtimeClient, undefined);
     expect(toDiskCSD).not.toHaveBeenCalled();
   });
 
@@ -38,7 +38,7 @@ describe('screen CSD generation', () => {
     await expect(generateRealtimeCsdForScreen({ toCSD, toCSDAsync }, session, null)).resolves.toBe(
       'realtime-csd',
     );
-    expect(toCSD).toHaveBeenCalledWith(session);
+    expect(toCSD).toHaveBeenCalledWith(session, undefined);
     expect(toCSDAsync).not.toHaveBeenCalled();
   });
 
@@ -51,7 +51,7 @@ describe('screen CSD generation', () => {
     await expect(
       generateRealtimeCsdForScreen({ toCSD, toCSDAsync }, session, runtimeClient),
     ).resolves.toBe('java-runtime-realtime-csd');
-    expect(toCSDAsync).toHaveBeenCalledWith(session, runtimeClient);
+    expect(toCSDAsync).toHaveBeenCalledWith(session, runtimeClient, undefined);
     expect(toCSD).not.toHaveBeenCalled();
   });
 
@@ -95,5 +95,31 @@ describe('screen CSD generation', () => {
     expect(first).toBe(csdText);
     expect(second).toBe(csdText);
     expect(first).toBe(second);
+  });
+
+  it('forwards the detached layout manifest for screen CSD generation (T012, T015, T081)', async () => {
+    const session = {} as JavaScriptSession;
+    const runtimeClient = {} as JavaRuntimeClientContract;
+    const manifest = { observations: new Map() } as any;
+
+    const diskMock = {
+      toDiskCSD: vi.fn(() => 'disk-sync'),
+      toDiskCSDAsync: vi.fn(async () => 'disk-async'),
+    };
+    await generateDiskCsdForScreen(diskMock, session, null, manifest);
+    expect(diskMock.toDiskCSD).toHaveBeenCalledWith(session, manifest);
+
+    await generateDiskCsdForScreen(diskMock, session, runtimeClient, manifest);
+    expect(diskMock.toDiskCSDAsync).toHaveBeenCalledWith(session, runtimeClient, manifest);
+
+    const realtimeMock = {
+      toCSD: vi.fn(() => 'rt-sync'),
+      toCSDAsync: vi.fn(async () => 'rt-async'),
+    };
+    await generateRealtimeCsdForScreen(realtimeMock, session, null, manifest);
+    expect(realtimeMock.toCSD).toHaveBeenCalledWith(session, manifest);
+
+    await generateRealtimeCsdForScreen(realtimeMock, session, runtimeClient, manifest);
+    expect(realtimeMock.toCSDAsync).toHaveBeenCalledWith(session, runtimeClient, manifest);
   });
 });

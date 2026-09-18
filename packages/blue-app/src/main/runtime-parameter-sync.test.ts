@@ -10,6 +10,7 @@ import {
   BSBHSliderBank,
   BSBKnob,
   BSBXYController,
+  Channel,
   GenericInstrument,
 } from '@blue/data';
 import { createProjectEditorSnapshot } from '../shared/project-editor';
@@ -53,6 +54,7 @@ describe('syncCompiledRuntimeParameterNames', () => {
       data.getArrangement(),
       data.getMixer(),
       render.parameters,
+      data.getScore(),
     );
 
     expect(sync.liveCount).toBe(sync.compiledCount);
@@ -86,6 +88,7 @@ describe('syncCompiledRuntimeParameterNames', () => {
       data.getArrangement(),
       data.getMixer(),
       compiledParameters,
+      data.getScore(),
     );
 
     expect(sync.liveCount).toBe(sync.compiledCount);
@@ -298,6 +301,96 @@ describe('buildRuntimeBindingRegistry (T044, US3)', () => {
     );
     expect(registry.get(`${owner}::bsb:mode-widget:selectedIndex`)).toEqual(
       registry.get(`${owner}::bsb:mode`),
+    );
+  });
+});
+
+describe('channel pan runtime binding (Spec 112 T077)', () => {
+  interface MixerFixture {
+    data: BlueData;
+    channelA: Channel;
+    channelB: Channel;
+  }
+
+  function createMixerFixture(panningEnabled: boolean): MixerFixture {
+    const data = new BlueData();
+    data.getScore().panningEnabled = panningEnabled;
+    const mixer = data.getMixer();
+    mixer.setEnabled(true);
+    const channelA = new Channel();
+    channelA.setName('Track 1');
+    channelA.setAssociation('track-1');
+    const channelB = new Channel();
+    channelB.setName('Track 2');
+    mixer.getChannels().push(channelA, channelB);
+    return { data, channelA, channelB };
+  }
+
+  it('binds ${channelId}::pan to the compiled pan channel when panning is enabled', () => {
+    const { data, channelA } = createMixerFixture(true);
+    const render = data.toRealtimePlaybackCSD();
+    syncCompiledRuntimeParameterNames(
+      data.getArrangement(),
+      data.getMixer(),
+      render.parameters,
+      data.getScore(),
+    );
+    const registry = buildRuntimeBindingRegistry(data, render.parameters);
+
+    const expectedPanVar = channelA.getPanParameter().getCompilationVarName();
+    expect(expectedPanVar).toMatch(/^gk_blue_auto\d+$/);
+    // The pan binding is distinct from the volume binding and resolves to the
+    // compiled pan parameter variable for every key the channel is known by.
+    for (const key of ['Track 1::pan', 'track-1::pan', 'Master::pan']) {
+      const binding = registry.get(key);
+      expect(binding, key).toBeDefined();
+      expect(binding?.kind).toBe('channel');
+      if (binding?.kind === 'channel') {
+        expect(binding.channel).toMatch(/^gk_blue_auto\d+$/);
+      }
+    }
+    const levelBinding = registry.get('Track 1::level');
+    const panBinding = registry.get('Track 1::pan');
+    expect(panBinding).not.toEqual(levelBinding);
+    if (panBinding?.kind === 'channel' && levelBinding?.kind === 'channel') {
+      expect(panBinding.channel).toBe(expectedPanVar);
+      expect(panBinding.channel).not.toBe(levelBinding.channel);
+    }
+  });
+
+  it('registers no ::pan binding and keeps volumes aligned when panning is disabled', () => {
+    const { data, channelA, channelB } = createMixerFixture(false);
+    const render = data.toRealtimePlaybackCSD();
+    const sync = syncCompiledRuntimeParameterNames(
+      data.getArrangement(),
+      data.getMixer(),
+      render.parameters,
+      data.getScore(),
+    );
+    expect(sync.liveCount).toBe(sync.compiledCount);
+    const registry = buildRuntimeBindingRegistry(data, render.parameters);
+
+    // Legacy (panning-disabled) projects expose only volume bindings.
+    expect(registry.get('Track 1::pan')).toBeUndefined();
+    expect(registry.get('Track 2::pan')).toBeUndefined();
+    expect(registry.get('Master::pan')).toBeUndefined();
+
+    // Positional name syncing stays aligned: each channel's volume binding
+    // resolves to its own compiled variable, never a neighbor's.
+    const compiledNames = new Map(
+      (render.parameters ?? []).map((p) => [p.getCompilationVarName(), p.getName()]),
+    );
+    for (const channel of [channelA, channelB]) {
+      const binding = registry.get(`${channel.getName()}::level`);
+      expect(binding?.kind).toBe('channel');
+      if (binding?.kind === 'channel') {
+        const liveVar = channel.getLevelParameter().getCompilationVarName();
+        expect(binding.channel).toBe(liveVar);
+        expect(compiledNames.get(binding.channel)).toBe('Volume');
+      }
+    }
+    expect(channelA.getLevelParameter().getCompilationVarName()).not.toBe(
+      channelB.getLevelParameter().getCompilationVarName(),
     );
   });
 });

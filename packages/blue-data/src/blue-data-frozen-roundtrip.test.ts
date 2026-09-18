@@ -68,4 +68,24 @@ describe('BlueData frozen SoundObject and AudioFile persistence', () => {
     expect(restored.getCsoundPostCode()).toBe('aChannel1 = aChannel1 * 0.9');
     expect(restored.getName()).toBe('Percussion');
   });
+
+  it('keeps score panning state and unknown XML untouched across save/reopen (Spec 112 T074)', () => {
+    const data = new BlueData();
+    expect(data.getScore().panningEnabled).toBe(true);
+
+    const xml = data.saveToString();
+    const reopened = BlueData.loadFromString(xml);
+
+    expect(reopened.getScore().panningEnabled).toBe(true);
+    expect(reopened.saveToString()).toBe(xml);
+
+    // A legacy document (attribute stripped) reopens disabled and clean; the
+    // only additive change is the explicit attribute on the next save.
+    const legacyXml = xml.replace(/ panningEnabled="true"/, '');
+    const legacy = BlueData.loadFromString(legacyXml);
+    expect(legacy.getScore().panningEnabled).toBe(false);
+    const legacyResaved = legacy.saveToString();
+    expect(legacyResaved).toContain('panningEnabled="false"');
+    expect(BlueData.loadFromString(legacyResaved).saveToString()).toBe(legacyResaved);
+  });
 });

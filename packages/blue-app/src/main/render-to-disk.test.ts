@@ -4,7 +4,14 @@ import * as path from 'node:path';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { BlueData, type JavaRuntimeClientContract, type JavaScriptSession } from '@blue/data';
+import {
+  AudioClip,
+  BlueData,
+  ScoreTrack,
+  TrackLayerGroup,
+  type JavaRuntimeClientContract,
+  type JavaScriptSession,
+} from '@blue/data';
 
 import type { DiskRenderSettingsSnapshot } from '../shared/program-settings';
 import type { RenderOperationStatus } from '../shared/render-freeze-contract';
@@ -69,7 +76,7 @@ describe('executeRenderToDisk', () => {
     await expect(generateDiskCsd({ toDiskCSD, toDiskCSDAsync }, session, null)).resolves.toBe(
       'javascript-csd',
     );
-    expect(toDiskCSD).toHaveBeenCalledWith(session);
+    expect(toDiskCSD).toHaveBeenCalledWith(session, undefined);
     expect(toDiskCSDAsync).not.toHaveBeenCalled();
   });
 
@@ -82,7 +89,7 @@ describe('executeRenderToDisk', () => {
     await expect(
       generateDiskCsd({ toDiskCSD, toDiskCSDAsync }, session, runtimeClient),
     ).resolves.toBe('java-runtime-csd');
-    expect(toDiskCSDAsync).toHaveBeenCalledWith(session, runtimeClient);
+    expect(toDiskCSDAsync).toHaveBeenCalledWith(session, runtimeClient, undefined);
     expect(toDiskCSD).not.toHaveBeenCalled();
   });
 
@@ -116,6 +123,46 @@ describe('executeRenderToDisk', () => {
 
     expect(result).toMatchObject({ ok: true, outputPath: expectedOutput });
     expect(statuses.at(-1)).toMatchObject({ phase: 'completed', outputPath: expectedOutput });
+  });
+
+  it('blocks render before Csound execution when layout preflight fails (T056, T058, T061)', async () => {
+    const projectDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'blue-render-'));
+    temporaryDirectories.push(projectDirectory);
+    const data = new BlueData();
+    data.getScore().panningEnabled = true;
+
+    const group = new TrackLayerGroup();
+    const track = new ScoreTrack();
+    const clip = new AudioClip();
+    clip.setAudioFile('/missing/file/audio.wav');
+    track.push(clip);
+    group.push(track);
+    data.getScore().push(group);
+
+    const beforeXml = data.saveToString();
+    const statuses: RenderOperationStatus[] = [];
+    const runCsound = vi.fn();
+
+    const result = await executeRenderToDisk(
+      {
+        data,
+        projectDirectory,
+        diskRender: diskRenderSettings(),
+        general: { messageColorsEnabled: true },
+        outputFile: path.join(projectDirectory, 'output.wav'),
+      },
+      'render',
+      'disk-preflight-fail',
+      (status) => statuses.push(status),
+      { runCsound },
+    );
+
+    expect(result.ok).toBe(false);
+    expect(runCsound).not.toHaveBeenCalled();
+    expect(data.saveToString()).toBe(beforeXml);
+    const failedStatus = statuses.find((s) => s.phase === 'failed');
+    expect(failedStatus).toBeDefined();
+    expect(failedStatus?.layoutDiagnostic?.code).toBe('MISSING_AUDIO_LAYOUT');
   });
 
   it('reports a failed status when Csound exits successfully without producing the planned output', async () => {

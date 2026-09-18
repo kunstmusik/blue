@@ -1107,6 +1107,7 @@ export function createScoreDocumentSnapshot(data: BlueData): ScoreDocumentSnapsh
       rootChain.getProcessors().length > 0
         ? createNoteProcessorChainSnapshot(rootChain)
         : undefined,
+    panningEnabled: score.panningEnabled,
   };
 }
 
@@ -1145,6 +1146,7 @@ export function resolveScoreInsertionLocation(
 export function createEmptyScoreDocumentSnapshot(): ScoreDocumentSnapshot {
   return {
     trackLayerMuteSoloMode: 'audio',
+    panningEnabled: true,
     timeState: {
       snapEnabled: false,
       snapValue: 'BEAT',
@@ -2076,7 +2078,7 @@ export function createProjectEditorSnapshot(
     globalSco: data.getGlobalOrcSco().getGlobalSco(),
     orchestra: createOrchestraSnapshot(data),
     mixer: {
-      ...createMixerSnapshot(data.getMixer()),
+      ...createMixerSnapshot(data.getMixer(), data.getScore()),
       legacyActiveChannelStateNotice: computeLegacyMixerStateNotice(data),
     },
     projectProperties: createProjectPropertiesSnapshot(data.getProjectProperties()),

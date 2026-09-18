@@ -201,6 +201,7 @@ export default function ScorePanel() {
   const mixerEnabled = useProjectStore((s) => s.mixer?.enabled ?? true);
   const legacyNotice = useProjectStore((s) => s.mixer?.legacyActiveChannelStateNotice ?? false);
   const setTrackHeaderMode = useProjectStore((s) => s.setTrackHeaderMode);
+  const setScorePanning = useProjectStore((s) => s.setScorePanning);
   const lastScorePatch = useProjectStore((s) => s.lastScorePatch);
   const flushPendingPatches = useProjectStore((s) => s.flushPendingPatches);
 
@@ -1003,6 +1004,7 @@ export default function ScorePanel() {
             mixerEnabled={mixerEnabled}
             legacyNotice={legacyNotice}
             onModeChange={setTrackHeaderMode}
+            onPanningChange={setScorePanning}
             onClose={() => setScoreSettingsOpen(false)}
           />
         )}

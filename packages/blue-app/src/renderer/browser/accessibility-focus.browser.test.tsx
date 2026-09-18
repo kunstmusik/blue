@@ -255,7 +255,9 @@ describe('Accessibility Focus Traversal Browser Tests (T020)', () => {
         <MixerSettingsDialog
           isOpen={true}
           enableMeters={true}
+          enablePanning={true}
           onToggleEnableMeters={handleToggle}
+          onToggleEnablePanning={vi.fn()}
           onClose={handleClose}
         />,
       );

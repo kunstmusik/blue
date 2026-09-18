@@ -6,7 +6,12 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import MixerPanel from '../components/workbench/panels/MixerPanel';
-import type { EffectEditorRequest, MixerPatch, MixerSnapshot } from '../../shared/project-editor';
+import type {
+  EffectEditorRequest,
+  MixerPatch,
+  MixerSnapshot,
+  ScoreDocumentSnapshot,
+} from '../../shared/project-editor';
 
 declare global {
   interface Window {
@@ -25,6 +30,8 @@ declare global {
 interface MockProjectState {
   loaded: boolean;
   mixer: MixerSnapshot;
+  score: ScoreDocumentSnapshot;
+  setScorePanning: (enabled: boolean) => void;
   applyProjectDocumentPatch: (patch: { mixer: MixerPatch }) => Promise<void> | void;
   flushPendingPatches: () => Promise<void>;
 }
@@ -81,6 +88,8 @@ const { mockProjectState, mockUIState } = vi.hoisted(() => ({
         postChain: [],
       },
     } as MixerSnapshot,
+    score: { panningEnabled: true } as ScoreDocumentSnapshot,
+    setScorePanning: vi.fn(),
     applyProjectDocumentPatch: vi.fn(),
     flushPendingPatches: vi.fn().mockResolvedValue(undefined),
   } satisfies MockProjectState,

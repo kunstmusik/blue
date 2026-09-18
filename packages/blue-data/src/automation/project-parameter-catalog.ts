@@ -54,25 +54,36 @@ function collectChainParameters(chain: EffectsChain, parameters: Parameter[]): v
   }
 }
 
-function collectChannelParameters(channel: Channel, parameters: Parameter[]): void {
+function collectChannelParameters(
+  channel: Channel,
+  parameters: Parameter[],
+  includePan: boolean,
+): void {
   collectChainParameters(channel.getPreEffects(), parameters);
   collectChainParameters(channel.getPostEffects(), parameters);
   parameters.push(channel.getLevelParameter());
+  if (includePan) {
+    parameters.push(channel.getPanParameter());
+  }
 }
 
-/** Mixer parameters in the established source/sub/master order. */
-export function getMixerOwnerParameters(mixer: Mixer): Parameter[] {
+/**
+ * Mixer parameters in the established source/sub/master order. Pan follows
+ * the compile enumeration (includePan) so positional runtime-name syncing
+ * stays aligned; the UI catalog keeps Pan by default.
+ */
+export function getMixerOwnerParameters(mixer: Mixer, includePan = true): Parameter[] {
   const parameters: Parameter[] = [];
   if (!mixer.isEnabled()) {
     return parameters;
   }
   for (const channel of mixer.getAllSourceChannels()) {
-    collectChannelParameters(channel, parameters);
+    collectChannelParameters(channel, parameters, includePan);
   }
   for (const subChannel of mixer.getSubChannels()) {
-    collectChannelParameters(subChannel, parameters);
+    collectChannelParameters(subChannel, parameters, includePan);
   }
-  collectChannelParameters(mixer.getMaster(), parameters);
+  collectChannelParameters(mixer.getMaster(), parameters, includePan);
   return parameters;
 }
 

@@ -402,6 +402,7 @@ describe('global history engine integration (T040, US3)', () => {
   it('keeps generated timeline and Blue Live gate outcomes independent during history replay (T080)', async () => {
     const data = new BlueData();
     data.getMixer().setEnabled(true);
+    data.getScore().panningEnabled = false;
     data.getScore().length = 0;
     const group = new TrackLayerGroup();
     const track = new ScoreTrack();

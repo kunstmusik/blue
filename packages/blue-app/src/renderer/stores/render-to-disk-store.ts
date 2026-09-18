@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 
+import type { AudioLayoutDiagnostic } from '../../shared/audio-layout';
 import type {
   DiskRenderAction,
   RenderOperationPhase,
@@ -30,6 +31,7 @@ export interface RenderToDiskState {
   outputPath: string | null;
   action: DiskRenderAction | null;
   error: string | null;
+  layoutDiagnostic: AudioLayoutDiagnostic | null;
   outputExpanded: boolean;
   cancelRequested: boolean;
 
@@ -48,6 +50,7 @@ const initialState = {
   outputPath: null,
   action: null,
   error: null,
+  layoutDiagnostic: null,
   outputExpanded: false,
   cancelRequested: false,
 };
@@ -62,6 +65,7 @@ function openStateFromStatus(status: RenderOperationStatus) {
     message: status.message,
     outputPath: status.outputPath,
     action: status.action ?? null,
+    layoutDiagnostic: status.layoutDiagnostic ?? null,
   };
 }
 
@@ -101,6 +105,8 @@ export const useRenderToDiskStore = create<RenderToDiskState>((set, get) => ({
         outputPath: status.outputPath ?? state.outputPath,
         action: status.action ?? state.action,
         error: status.phase === 'failed' ? (status.error ?? status.message) : state.error,
+        layoutDiagnostic:
+          status.phase === 'failed' ? (status.layoutDiagnostic ?? null) : state.layoutDiagnostic,
       };
     });
   },

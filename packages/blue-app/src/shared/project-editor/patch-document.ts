@@ -679,6 +679,25 @@ export function validateProjectDocumentPatch(patch: ProjectDocumentPatch): {
     }
   }
 
+  if (patch.score?.type === 'updateScorePanning') {
+    if (typeof patch.score.panningEnabled !== 'boolean') {
+      return {
+        valid: false,
+        reason: 'Score panningEnabled must be a boolean',
+      };
+    }
+  }
+
+  if (patch.mixer?.type === 'updateChannel' && patch.mixer.patch.pan !== undefined) {
+    const pan = patch.mixer.patch.pan;
+    if (typeof pan !== 'number' || !Number.isFinite(pan) || pan < 0 || pan > 1) {
+      return {
+        valid: false,
+        reason: `Mixer channel pan must be a finite number between 0 and 1, got ${String(pan)}`,
+      };
+    }
+  }
+
   return { valid: true };
 }
 

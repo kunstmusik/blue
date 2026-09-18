@@ -116,7 +116,9 @@ describe('MeterCanvas in popout and re-dock lifecycle', () => {
           <MixerSettingsDialog
             isOpen={true}
             enableMeters={true}
+            enablePanning={true}
             onToggleEnableMeters={handleToggle}
+            onToggleEnablePanning={vi.fn()}
             onClose={handleClose}
           />
         </HostDocumentContext.Provider>,
@@ -144,7 +146,9 @@ describe('MeterCanvas in popout and re-dock lifecycle', () => {
           <MixerSettingsDialog
             isOpen={true}
             enableMeters={false}
+            enablePanning={false}
             onToggleEnableMeters={handleToggle}
+            onToggleEnablePanning={vi.fn()}
             onClose={handleClose}
           />
         </HostDocumentContext.Provider>,
