@@ -19,7 +19,11 @@ import { EffectsChain } from '../mixer/effects-chain';
 /**
  * Get all parameters from arrangement and mixer.
  */
-export function getAllParameters(arrangement: Arrangement, mixer: Mixer): Parameter[] {
+export function getAllParameters(
+  arrangement: Arrangement,
+  mixer: Mixer,
+  includePan = false,
+): Parameter[] {
   const parameters: Parameter[] = [];
 
   // Parameters from instruments in arrangement
@@ -38,29 +42,36 @@ export function getAllParameters(arrangement: Arrangement, mixer: Mixer): Parame
 
   // Parameters from mixer source channels
   for (const channel of mixer.getAllSourceChannels()) {
-    collectChannelParameters(channel, parameters);
+    collectChannelParameters(channel, parameters, includePan);
   }
 
   // Parameters from mixer sub channels
   for (const subChannel of mixer.getSubChannels()) {
-    collectChannelParameters(subChannel, parameters);
+    collectChannelParameters(subChannel, parameters, includePan);
   }
 
   // Master channel
-  collectChannelParameters(mixer.getMaster(), parameters);
+  collectChannelParameters(mixer.getMaster(), parameters, includePan);
 
   return parameters;
 }
 
 /**
- * Collect parameters from a mixer channel: effects, volume, and sends.
+ * Collect parameters from a mixer channel: effects, volume, and sends (and optionally pan).
  */
-function collectChannelParameters(channel: Channel, parameters: Parameter[]): void {
+function collectChannelParameters(
+  channel: Channel,
+  parameters: Parameter[],
+  includePan: boolean,
+): void {
   collectChainParameters(channel.getPreEffects(), parameters);
   collectChainParameters(channel.getPostEffects(), parameters);
 
   // Channel level parameter
   parameters.push(channel.getLevelParameter());
+  if (includePan) {
+    parameters.push(channel.getPanParameter());
+  }
 }
 
 function collectChainParameters(chain: EffectsChain, parameters: Parameter[]): void {

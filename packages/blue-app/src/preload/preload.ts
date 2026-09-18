@@ -91,6 +91,15 @@ import {
 } from '../shared/app-metadata';
 import type { MeterBindingMapPayload, MeterFramePayload } from '../shared/meter-types';
 import type { EngineOutputPayload } from '../shared/io-provider';
+import { isAudioLayoutErrorPayload, type AudioLayoutDiagnostic } from '../shared/audio-layout';
+import { isBlueLiveStatusSnapshot, type BlueLiveStatusSnapshot } from '../shared/blue-live-status';
+
+function decodeBlueLiveStatusSnapshot(value: unknown): BlueLiveStatusSnapshot {
+  if (!isBlueLiveStatusSnapshot(value)) {
+    throw new Error('Invalid Blue Live status payload');
+  }
+  return value;
+}
 import {
   REPL_CONSOLE_CLOSE_CHANNEL,
   REPL_CONSOLE_EVALUATE_CHANNEL,
@@ -913,6 +922,10 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke('send-mixer-realtime-level-update', update) as Promise<
       import('../shared/project-editor').MixerRealtimeLevelResult
     >,
+  sendMixerRealtimePanUpdate: (update: import('../shared/project-editor').MixerRealtimePanUpdate) =>
+    ipcRenderer.invoke('send-mixer-realtime-pan-update', update) as Promise<
+      import('../shared/project-editor').MixerRealtimePanResult
+    >,
   sendEffectRealtimeUpdate: (update: import('../shared/project-editor').EffectRealtimeUpdate) =>
     ipcRenderer.invoke('send-effect-realtime-update', update) as Promise<void>,
 
@@ -1032,9 +1045,18 @@ contextBridge.exposeInMainWorld('blueAPI', {
       ipcRenderer.removeListener('playback-clock', handler);
     };
   },
-  onPlaybackError: (callback: (error: string) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, error: unknown) =>
-      callback(error as string);
+  onPlaybackError: (
+    callback: (error: string, layoutDiagnostic?: AudioLayoutDiagnostic) => void,
+  ) => {
+    const handler = (_event: Electron.IpcRendererEvent, error: unknown) => {
+      if (isAudioLayoutErrorPayload(error)) {
+        callback(error.message, error.layoutDiagnostic);
+      } else if (typeof error === 'string') {
+        callback(error);
+      } else {
+        callback('Playback failed');
+      }
+    };
     ipcRenderer.on('playback-error', handler);
     return () => {
       ipcRenderer.removeListener('playback-error', handler);
@@ -1119,9 +1141,18 @@ contextBridge.exposeInMainWorld('blueAPI', {
       ipcRenderer.removeListener('generated-csd', handler);
     };
   },
-  onGeneratedCsdError: (callback: (error: string) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, error: unknown) =>
-      callback(error as string);
+  onGeneratedCsdError: (
+    callback: (error: string, layoutDiagnostic?: AudioLayoutDiagnostic) => void,
+  ) => {
+    const handler = (_event: Electron.IpcRendererEvent, error: unknown) => {
+      if (isAudioLayoutErrorPayload(error)) {
+        callback(error.message, error.layoutDiagnostic);
+      } else if (typeof error === 'string') {
+        callback(error);
+      } else {
+        callback('CSD generation failed');
+      }
+    };
     ipcRenderer.on('generated-csd-error', handler);
     return () => {
       ipcRenderer.removeListener('generated-csd-error', handler);
@@ -1141,9 +1172,12 @@ contextBridge.exposeInMainWorld('blueAPI', {
   },
 
   // Blue Live
-  toggleBlueLive: () => ipcRenderer.invoke('blue-live:toggle'),
-  stopBlueLive: () => ipcRenderer.invoke('blue-live:stop'),
-  recompileBlueLive: () => ipcRenderer.invoke('blue-live:recompile'),
+  toggleBlueLive: async () =>
+    decodeBlueLiveStatusSnapshot(await ipcRenderer.invoke('blue-live:toggle')),
+  stopBlueLive: async () =>
+    decodeBlueLiveStatusSnapshot(await ipcRenderer.invoke('blue-live:stop')),
+  recompileBlueLive: async () =>
+    decodeBlueLiveStatusSnapshot(await ipcRenderer.invoke('blue-live:recompile')),
   sendBlueLiveAllNotesOff: () => ipcRenderer.invoke('blue-live:all-notes-off'),
   triggerBlueLiveNote: (request: BlueLiveNoteTriggerRequest) =>
     ipcRenderer.invoke('blue-live:trigger-note', request) as Promise<BlueLiveNoteTriggerResult>,
@@ -1152,9 +1186,12 @@ contextBridge.exposeInMainWorld('blueAPI', {
       'blue-live:trigger-objects',
       request,
     ) as Promise<LegacyBlueLiveTriggerResult>,
-  getBlueLiveStatus: () => ipcRenderer.invoke('blue-live:get-status'),
-  onBlueLiveStatus: (callback: (snapshot: unknown) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, snapshot: unknown) => callback(snapshot);
+  getBlueLiveStatus: async () =>
+    decodeBlueLiveStatusSnapshot(await ipcRenderer.invoke('blue-live:get-status')),
+  onBlueLiveStatus: (callback: (snapshot: BlueLiveStatusSnapshot) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, snapshot: unknown) => {
+      if (isBlueLiveStatusSnapshot(snapshot)) callback(snapshot);
+    };
     ipcRenderer.on('blue-live-status', handler);
     return () => {
       ipcRenderer.removeListener('blue-live-status', handler);

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 
+import { formatAudioLayoutDiagnostic } from '../../../../shared/audio-layout';
 import type { RenderOperationStatus } from '../../../../shared/render-freeze-contract';
 import type { OperationRowStatus } from './operation-dialog-shared';
 import {
@@ -28,6 +29,7 @@ export default function RenderToDiskDialog(): React.ReactElement | null {
   const message = useRenderToDiskStore((state) => state.message);
   const outputPath = useRenderToDiskStore((state) => state.outputPath);
   const error = useRenderToDiskStore((state) => state.error);
+  const layoutDiagnostic = useRenderToDiskStore((state) => state.layoutDiagnostic);
   const outputExpanded = useRenderToDiskStore((state) => state.outputExpanded);
   const cancelRequested = useRenderToDiskStore((state) => state.cancelRequested);
   const cancel = useRenderToDiskStore((state) => state.cancel);
@@ -167,6 +169,11 @@ export default function RenderToDiskDialog(): React.ReactElement | null {
             className="max-h-24 overflow-auto border-t border-app-hover px-4 py-2 text-role-callout whitespace-pre-wrap text-red-400"
           >
             {error}
+            {layoutDiagnostic !== null && (
+              <div data-testid="render-dialog-layout-diagnostic" role="note">
+                {formatAudioLayoutDiagnostic(layoutDiagnostic)}
+              </div>
+            )}
           </div>
         )}
 

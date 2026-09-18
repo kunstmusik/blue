@@ -40,6 +40,7 @@ export class Score extends Array<LayerGroup<Layer>> {
   private timeState = new TimeState();
   private npc = new NoteProcessorChain();
   private _trackLayerMuteSoloMode: TrackLayerMuteSoloMode = 'audio';
+  private _panningEnabled = true;
 
   constructor(other?: Score, mode: CopyMode = 'duplication') {
     super();
@@ -48,6 +49,7 @@ export class Score extends Array<LayerGroup<Layer>> {
       this.timeState = new TimeState(other.timeState);
       this.npc = new NoteProcessorChain(other.npc);
       this._trackLayerMuteSoloMode = other._trackLayerMuteSoloMode;
+      this._panningEnabled = other._panningEnabled;
       for (const layerGroup of other) {
         this.push(layerGroup.deepCopy(mode) as LayerGroup<Layer>);
       }
@@ -69,6 +71,15 @@ export class Score extends Array<LayerGroup<Layer>> {
   set trackLayerMuteSoloMode(value: TrackLayerMuteSoloMode) {
     if (!isTrackLayerMuteSoloMode(value)) return;
     this._trackLayerMuteSoloMode = value;
+  }
+
+  get panningEnabled(): boolean {
+    return this._panningEnabled;
+  }
+
+  set panningEnabled(value: boolean) {
+    if (typeof value !== 'boolean') return;
+    this._panningEnabled = value;
   }
 
   getTimeContext(): TimeContext {
@@ -234,6 +245,7 @@ export class Score extends Array<LayerGroup<Layer>> {
     elem.addElement(this.timeState.saveAsXML().setName('timeState'));
     elem.addElement(this.npc.saveAsXML().setName('noteProcessorChain'));
     elem.setAttribute('trackLayerMuteSoloMode', this._trackLayerMuteSoloMode);
+    elem.setAttribute('panningEnabled', this._panningEnabled ? 'true' : 'false');
 
     // Serialize layer groups — they self-identify by their XML element name
     for (const lg of this) {
@@ -249,6 +261,8 @@ export class Score extends Array<LayerGroup<Layer>> {
     score.length = 0;
     const parsed = data.getAttribute('trackLayerMuteSoloMode')?.trim().toLowerCase();
     score._trackLayerMuteSoloMode = isTrackLayerMuteSoloMode(parsed) ? parsed : 'event';
+    const panningParsed = data.getAttribute('panningEnabled')?.trim().toLowerCase();
+    score._panningEnabled = panningParsed === 'true';
 
     const nodes = data.getElements();
 

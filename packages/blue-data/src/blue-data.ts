@@ -100,6 +100,7 @@ export type { TrackLayerMuteSoloMode } from './score/score';
 export { isTrackLayerMuteSoloMode } from './score/score';
 export { hasLegacyMixerStateAtLoad, markLegacyMixerStateAtLoad } from './blue-data/xml-policy';
 import { processOnLoad, processOnLoadAsync, usesJavaRuntime } from './blue-data/runtime-policy';
+import type { AudioLayoutManifest } from './score/audio/audio-layout';
 
 export class BlueData implements BlueDataObject, DeepCopyable<BlueData>, HistoryCopyable<BlueData> {
   // Version
@@ -297,42 +298,64 @@ export class BlueData implements BlueDataObject, DeepCopyable<BlueData>, History
 
   // ─── CSD Generation ───
 
-  toCSD(session?: JavaScriptSession): string {
-    return buildStandardCSD(this, 'realtime', session).csdText;
+  toCSD(session?: JavaScriptSession, layoutManifest?: AudioLayoutManifest | null): string {
+    return buildStandardCSD(this, 'realtime', session, false, layoutManifest).csdText;
   }
 
   async toCSDAsync(
     session?: JavaScriptSession,
     runtimeClient?: JavaRuntimeClientContract | null,
+    layoutManifest?: AudioLayoutManifest | null,
   ): Promise<string> {
-    return (await buildStandardCSDAsync(this, 'realtime', session, runtimeClient)).csdText;
+    return (
+      await buildStandardCSDAsync(this, 'realtime', session, runtimeClient, false, layoutManifest)
+    ).csdText;
   }
 
-  toDiskCSD(session?: JavaScriptSession): string {
-    return buildStandardCSD(this, 'disk', session).csdText;
+  toDiskCSD(session?: JavaScriptSession, layoutManifest?: AudioLayoutManifest | null): string {
+    return buildStandardCSD(this, 'disk', session, false, layoutManifest).csdText;
   }
 
   async toDiskCSDAsync(
     session?: JavaScriptSession,
     runtimeClient?: JavaRuntimeClientContract | null,
+    layoutManifest?: AudioLayoutManifest | null,
   ): Promise<string> {
-    return (await buildStandardCSDAsync(this, 'disk', session, runtimeClient)).csdText;
+    return (
+      await buildStandardCSDAsync(this, 'disk', session, runtimeClient, false, layoutManifest)
+    ).csdText;
   }
 
-  toRealtimePlaybackCSD(session?: JavaScriptSession, emitMetering = false): RenderCsdResult {
-    return buildStandardCSD(this, 'realtime', session, emitMetering);
+  toRealtimePlaybackCSD(
+    session?: JavaScriptSession,
+    emitMetering = false,
+    layoutManifest?: AudioLayoutManifest | null,
+  ): RenderCsdResult {
+    return buildStandardCSD(this, 'realtime', session, emitMetering, layoutManifest);
   }
 
   async toRealtimePlaybackCSDAsync(
     session?: JavaScriptSession,
     runtimeClient?: JavaRuntimeClientContract | null,
     emitMetering = false,
+    layoutManifest?: AudioLayoutManifest | null,
   ): Promise<RenderCsdResult> {
-    return buildStandardCSDAsync(this, 'realtime', session, runtimeClient, emitMetering);
+    return buildStandardCSDAsync(
+      this,
+      'realtime',
+      session,
+      runtimeClient,
+      emitMetering,
+      layoutManifest,
+    );
   }
 
-  toBlueLiveCSD(session?: JavaScriptSession, emitMetering = false): RenderCsdResult {
-    return toBlueLiveCSD(this, session, emitMetering);
+  toBlueLiveCSD(
+    session?: JavaScriptSession,
+    emitMetering = false,
+    layoutManifest?: AudioLayoutManifest | null,
+  ): RenderCsdResult {
+    return toBlueLiveCSD(this, session, emitMetering, layoutManifest);
   }
 
   processOnLoad(session?: JavaScriptSession): void {

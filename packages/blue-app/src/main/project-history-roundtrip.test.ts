@@ -1189,6 +1189,15 @@ const cases: RoundTripCase[] = [
       channelId: mixerChannelEntryId(data),
     }),
   },
+  {
+    family: 'score',
+    type: 'updateScorePanning',
+    patches: () => [{ score: { type: 'updateScorePanning', panningEnabled: false } }],
+    identity: (data) => ({
+      groupId: groupId(data),
+      channelId: mixerChannelEntryId(data),
+    }),
+  },
 
   // ── Score: note processors ──────────────────────────────────────────────
   {

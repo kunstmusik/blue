@@ -97,7 +97,7 @@ import {
 import type { EngineProbeRequest, EngineProbeResult } from '../shared/engine-runtime';
 import type { CsoundIoQueryRequest, CsoundIoQueryResult } from '../shared/csound-runtime';
 import { initializeJavaScriptRuntime, JavaScriptSession } from '@blue/data';
-import type { TempoMap } from '@blue/data';
+import type { AudioLayoutManifest, TempoMap } from '@blue/data';
 import { EngineBridge } from './engine-bridge';
 import {
   clearActiveBlueX7Bindings,
@@ -373,6 +373,12 @@ import {
   type RenderExecutionSeam,
 } from './render-to-disk';
 import { generateDiskCsdForScreen, generateRealtimeCsdForScreen } from './csd-generation';
+import {
+  audioLayoutDiagnosticFromError,
+  preflightAudioLayout,
+  type PreflightAudioLayoutOptions,
+} from './audio-layout-preflight';
+import { type AudioLayoutDiagnostic, type AudioLayoutErrorPayload } from '../shared/audio-layout';
 import { tokenizeCommand } from './disk-render-command';
 import { executeFreezeUnfreeze, type FreezeExecutionSeam } from './freeze-score-objects';
 import { spawn } from 'child_process';
@@ -3604,6 +3610,33 @@ function notifyNoProjectLoaded(channel: 'playback-error' | 'generated-csd-error'
   mainWindow?.webContents.send(channel, 'No project loaded');
 }
 
+function audioLayoutErrorPayload(
+  message: string,
+  layoutDiagnostic: AudioLayoutDiagnostic | null,
+): string | AudioLayoutErrorPayload {
+  return layoutDiagnostic ? { message, layoutDiagnostic } : message;
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function sendGeneratedCsdError(error: unknown, diagnostic?: AudioLayoutDiagnostic | null): void {
+  const layoutDiagnostic = diagnostic ?? audioLayoutDiagnosticFromError(error);
+  mainWindow?.webContents.send(
+    'generated-csd-error',
+    audioLayoutErrorPayload(errorMessage(error), layoutDiagnostic),
+  );
+}
+
+function broadcastPlaybackError(error: unknown, diagnostic?: AudioLayoutDiagnostic | null): void {
+  const layoutDiagnostic = diagnostic ?? audioLayoutDiagnosticFromError(error);
+  broadcastToWorkbenchWindows(
+    'playback-error',
+    audioLayoutErrorPayload(errorMessage(error), layoutDiagnostic),
+  );
+}
+
 async function ensureJavaScriptEngine(): Promise<void> {
   if (!javaScriptRuntimeReady) {
     javaScriptRuntimeReady = initializeJavaScriptRuntime().catch((err: unknown) => {
@@ -4231,6 +4264,25 @@ async function startPlayback(
     mainWindow.webContents.send('engine-output-reset', { tabName: 'Csound' });
     mainWindow.webContents.send('engine-output-select', { tabName: 'Csound' });
 
+    // T070: panning-enabled scores must clear audio layout preflight before any
+    // engine work so unsupported/unreadable layouts fail with a typed
+    // diagnostic instead of MISSING_AUDIO_LAYOUT during CSD generation.
+    const preflight = preflightAudioLayout(data, {
+      projectDirectory: getCurrentProjectDirectory(),
+    });
+    if (!preflight.success) {
+      const diag = preflight.diagnostics[0];
+      const message = diag?.message ?? 'Audio layout preflight failed';
+      activeAuditionPlayback = false;
+      broadcastToWorkbenchWindows('playback-status', {
+        status: 'error',
+        message,
+        auditioning: data !== getCurrentData(),
+      });
+      broadcastPlaybackError(message, diag ?? null);
+      return false;
+    }
+
     await ensureJavaScriptEngine();
 
     const emitMetering = (await engineBridge?.probeMixerMeteringSupport()) ?? false;
@@ -4240,8 +4292,13 @@ async function startPlayback(
           javaScriptSession ?? undefined,
           javaRuntimeClient,
           emitMetering,
+          preflight.manifest,
         )
-      : data.toRealtimePlaybackCSD(javaScriptSession ?? undefined, emitMetering);
+      : data.toRealtimePlaybackCSD(
+          javaScriptSession ?? undefined,
+          emitMetering,
+          preflight.manifest,
+        );
     const csd = render.csdText;
     const parameters = render.parameters;
     const meterBindingMapPayload =
@@ -4396,7 +4453,7 @@ async function startPlayback(
     return true;
   } catch (err: unknown) {
     activeAuditionPlayback = false;
-    broadcastToWorkbenchWindows('playback-error', err instanceof Error ? err.message : String(err));
+    broadcastPlaybackError(err);
     return false;
   }
 }
@@ -4507,7 +4564,7 @@ async function auditionScoreObjects(objectIds: unknown): Promise<boolean> {
     });
   } catch (err: unknown) {
     activeAuditionPlayback = false;
-    broadcastToWorkbenchWindows('playback-error', err instanceof Error ? err.message : String(err));
+    broadcastPlaybackError(err);
     return false;
   }
 }
@@ -4694,79 +4751,107 @@ async function stopActiveBlueLiveBeforeProjectReplacement(): Promise<void> {
   await stopBlueLiveForProjectReplacement(getBlueLiveTriggerController(), blueLiveSession);
 }
 
+interface CsdGenerationPreparation {
+  readonly javaRuntimeClient: JavaRuntimeClient | null;
+  readonly layoutManifest: AudioLayoutManifest | null;
+}
+
+async function prepareCsdGeneration(
+  data: BlueData,
+  options: PreflightAudioLayoutOptions,
+): Promise<CsdGenerationPreparation | null> {
+  const preflight = preflightAudioLayout(data, options);
+  if (!preflight.success) {
+    const diagnostic = preflight.diagnostics[0] ?? null;
+    sendGeneratedCsdError(diagnostic?.message ?? 'Audio layout preflight failed', diagnostic);
+    return null;
+  }
+
+  await ensureJavaScriptEngine();
+  return {
+    javaRuntimeClient: await runProjectOnLoad(data),
+    layoutManifest: preflight.manifest,
+  };
+}
+
 async function generateCsdToScreen(): Promise<void> {
   if (!mainWindow) return;
-  if (!getCurrentData()) {
+  const data = getCurrentData();
+  if (!data) {
     notifyNoProjectLoaded('generated-csd-error');
     return;
   }
   try {
-    await ensureJavaScriptEngine();
-    const javaRuntimeClient = await runProjectOnLoad(getCurrentData());
+    const preparation = await prepareCsdGeneration(data, {
+      isDiskRender: true,
+      projectDirectory: getCurrentProjectDirectory(),
+    });
+    if (!preparation) return;
     // "Generate CSD to Screen" mirrors Java's GenerateCsdToScreenAction, which
     // generates a disk-profile CSD (isRealTime=false).
     const csdText = await generateDiskCsdForScreen(
-      getCurrentData(),
+      data,
       javaScriptSession ?? undefined,
-      javaRuntimeClient,
+      preparation.javaRuntimeClient,
+      preparation.layoutManifest,
     );
     mainWindow.webContents.send('generated-csd', csdText);
   } catch (err) {
-    mainWindow?.webContents.send(
-      'generated-csd-error',
-      err instanceof Error ? err.message : String(err),
-    );
+    sendGeneratedCsdError(err);
   }
 }
 
 async function generateRealtimeCsdToScreen(): Promise<void> {
   if (!mainWindow) return;
-  if (!getCurrentData()) {
+  const data = getCurrentData();
+  if (!data) {
     notifyNoProjectLoaded('generated-csd-error');
     return;
   }
   try {
-    await ensureJavaScriptEngine();
-    const javaRuntimeClient = await runProjectOnLoad(getCurrentData());
+    const preparation = await prepareCsdGeneration(data, {
+      projectDirectory: getCurrentProjectDirectory(),
+    });
+    if (!preparation) return;
     // "Generate Realtime CSD to Screen" mirrors Java's
     // GenerateRealtimeCsdToScreenAction, which generates a realtime-profile
     // CSD (isRealTime=true).
     const csdText = await generateRealtimeCsdForScreen(
-      getCurrentData(),
+      data,
       javaScriptSession ?? undefined,
-      javaRuntimeClient,
+      preparation.javaRuntimeClient,
+      preparation.layoutManifest,
     );
     mainWindow.webContents.send('generated-csd', csdText);
   } catch (err) {
-    mainWindow?.webContents.send(
-      'generated-csd-error',
-      err instanceof Error ? err.message : String(err),
-    );
+    sendGeneratedCsdError(err);
   }
 }
 
 async function generateCsdToDisk(): Promise<void> {
   if (!mainWindow) return;
-  if (!getCurrentData()) {
+  const data = getCurrentData();
+  if (!data) {
     notifyNoProjectLoaded('generated-csd-error');
     return;
   }
   try {
-    await ensureJavaScriptEngine();
-    const javaRuntimeClient = await runProjectOnLoad(getCurrentData());
+    const preparation = await prepareCsdGeneration(data, {
+      isDiskRender: true,
+      projectDirectory: getCurrentProjectDirectory(),
+    });
+    if (!preparation) return;
     await saveGeneratedCsdToDisk({
-      currentData: getCurrentData(),
+      currentData: data,
       currentFilePath: getCurrentFilePath(),
       workDirectory: getConfiguredWorkDirectory(),
       mainWindow,
       session: javaScriptSession ?? undefined,
-      runtimeClient: javaRuntimeClient ?? undefined,
+      runtimeClient: preparation.javaRuntimeClient ?? undefined,
+      layoutManifest: preparation.layoutManifest,
     });
   } catch (err) {
-    mainWindow?.webContents.send(
-      'generated-csd-error',
-      err instanceof Error ? err.message : String(err),
-    );
+    sendGeneratedCsdError(err);
   }
 }
 
@@ -5888,6 +5973,11 @@ async function syncEngineWithProjectPatch(
         if (varName && mixerPatch.patch.level !== undefined) {
           await syncActiveRuntimeChannel(varName, mixerPatch.patch.level);
         }
+        const panParam = channel.getPanParameter();
+        const panVarName = panParam.getCompilationVarName();
+        if (panVarName && mixerPatch.patch.pan !== undefined) {
+          await syncActiveRuntimeChannel(panVarName, mixerPatch.patch.pan);
+        }
       }
     }
   }
@@ -6726,6 +6816,15 @@ ipcRegistration.handle('send-mixer-realtime-level-update', async (event, update:
     });
   }
   return mixerGainPreviewAdapter.handleUpdate(event.sender.id, update);
+});
+
+ipcRegistration.handle('send-mixer-realtime-pan-update', async (event, update: unknown) => {
+  if (!event.sender.isDestroyed()) {
+    event.sender.once('destroyed', () => {
+      mixerGainPreviewAdapter.onSenderDestroyed(event.sender.id);
+    });
+  }
+  return mixerGainPreviewAdapter.handlePanUpdate(event.sender.id, update);
 });
 
 ipcRegistration.handle(

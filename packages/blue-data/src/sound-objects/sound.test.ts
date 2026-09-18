@@ -191,6 +191,7 @@ describe('Sound XML parity', () => {
 
   it('routes score Sound automation through compile-time gk vars and absolute-time parameter notes', () => {
     const data = new BlueData();
+    data.getScore().panningEnabled = false;
     data.getScore().length = 0;
 
     const poly = new PolyObject(true);
@@ -216,6 +217,7 @@ describe('Sound XML parity', () => {
 
   it('includes score Sound automation in realtime playback metadata with absolute beat points', () => {
     const data = new BlueData();
+    data.getScore().panningEnabled = false;
     data.getScore().length = 0;
 
     const poly = new PolyObject(true);

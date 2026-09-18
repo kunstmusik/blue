@@ -9,6 +9,7 @@ import { TrackLayerGroup } from './track-layer-group';
 describe('Track performance envelope', () => {
   it('compiles a 1,000-item mixed Track with one generation visit per note object', () => {
     const data = new BlueData();
+    data.getScore().panningEnabled = false;
     data.getScore().length = 0;
     const group = new TrackLayerGroup();
     group.setUniqueId('performance-group');

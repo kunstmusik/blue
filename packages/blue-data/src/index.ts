@@ -589,3 +589,27 @@ export type { FreezeRenderDataResult } from './utilities/freeze-render-data';
 export { parseAudioFileMetadata, AudioFileMetadataError } from './audio/audio-file-metadata';
 export type { AudioFileMetadata } from './audio/audio-file-metadata';
 export { buildWavBytes, buildAiffBytes } from './audio/audio-file-metadata';
+export {
+  DEFAULT_PAN,
+  MIN_PAN,
+  MAX_PAN,
+  EQUAL_POWER_CENTER_GAIN,
+  isValidPan,
+  clampPan,
+  getMonoPanGains,
+  getStereoBalanceGains,
+} from './mixer/channel-pan';
+export {
+  createAudioLayoutManifest,
+  hasEnabledStereoGeneratingEffect,
+  resolveEffectiveTrackLayout,
+  AudioLayoutCompileError,
+} from './score/audio/audio-layout';
+export type {
+  SourceChannelCount,
+  SourceObservationStatus,
+  AudioFileLayoutObservation,
+  AudioLayoutManifest,
+  EffectiveTrackLayout,
+  EffectiveLayoutResolutionOptions,
+} from './score/audio/audio-layout';

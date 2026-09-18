@@ -97,7 +97,7 @@ describe('saveGeneratedCsdToDisk', () => {
     });
 
     expect(toDiskCSDAsync).toHaveBeenCalledTimes(1);
-    expect(toDiskCSDAsync).toHaveBeenCalledWith(session, runtimeClient);
+    expect(toDiskCSDAsync).toHaveBeenCalledWith(session, runtimeClient, undefined);
     expect(toDiskCSD).not.toHaveBeenCalled();
     expect(writeFile).toHaveBeenCalledWith('/tmp/async-project.csd', 'async-csd', 'utf-8');
     expect(filePath).toBe('/tmp/async-project.csd');

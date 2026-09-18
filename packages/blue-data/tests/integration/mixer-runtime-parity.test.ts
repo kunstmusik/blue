@@ -28,7 +28,7 @@ describe('mixer runtime parity', () => {
 
     const savedXml = mixer.saveAsXML().toXml();
     expect(savedXml).not.toContain('<volume>');
-    expect(savedXml).not.toContain('<pan>');
+    expect(savedXml).toContain('<pan>0.5</pan>');
     expect(savedXml).toContain('<level>-3.0</level>');
 
     const reloaded = Mixer.loadFromXML(Element.parse(savedXml));

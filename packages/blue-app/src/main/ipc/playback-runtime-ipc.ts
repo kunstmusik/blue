@@ -32,6 +32,7 @@ export const PLAYBACK_RUNTIME_IPC_CHANNELS = [
   'java-runtime:reinitialize-jython',
   'send-bsb-realtime-control-update',
   'send-mixer-realtime-level-update',
+  'send-mixer-realtime-pan-update',
   'send-effect-realtime-update',
   'render-to-disk',
   'freeze-score-objects',

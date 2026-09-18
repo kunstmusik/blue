@@ -7,14 +7,18 @@ import { portalEventIsolationProps } from '../../../../hooks/host-portals';
 export interface MixerSettingsDialogProps {
   readonly isOpen: boolean;
   readonly enableMeters: boolean;
+  readonly enablePanning: boolean;
   readonly onToggleEnableMeters: (enabled: boolean) => void;
+  readonly onToggleEnablePanning: (enabled: boolean) => void;
   readonly onClose: () => void;
 }
 
 export function MixerSettingsDialog({
   isOpen,
   enableMeters,
+  enablePanning,
   onToggleEnableMeters,
+  onToggleEnablePanning,
   onClose,
 }: MixerSettingsDialogProps): React.ReactElement | null {
   const container = usePortalContainer();
@@ -64,6 +68,21 @@ export function MixerSettingsDialog({
             />
             <span>Enable Meters</span>
           </label>
+
+          <label className="flex items-center gap-2 cursor-pointer select-none text-role-body text-blue-text">
+            <input
+              type="checkbox"
+              checked={enablePanning}
+              onChange={(e) => onToggleEnablePanning(e.target.checked)}
+              className="rounded border-blue-border/70 bg-blue-surface/60 text-blue-accent focus:ring-1 focus:ring-blue-accent"
+              aria-label="Enable Panning"
+            />
+            <span>Enable Panning</span>
+          </label>
+          <p className="-mt-2 text-role-caption text-blue-muted">
+            Show Pan/Balance controls and enable panning-aware audio routing. When disabled, the
+            controls are hidden and legacy routing is preserved.
+          </p>
         </div>
 
         <div className="flex justify-end gap-2 border-t border-blue-border/30 px-4 py-3 bg-blue-surface/20">

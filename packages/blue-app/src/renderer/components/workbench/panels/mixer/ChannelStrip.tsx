@@ -58,6 +58,7 @@ import { AppSelect } from '../../../AppSelect';
 import { MeterCanvas } from './MeterCanvas';
 import { MeterScaleRuler } from './MeterScaleRuler';
 import { MixerLevelSlider } from './MixerLevelSlider';
+import { MixerPanSlider } from './MixerPanSlider';
 import { METER_PROFILES, type MeterProfileKey } from './meter-profiles';
 
 export const PeakReadout = React.memo(function PeakReadout({
@@ -222,6 +223,7 @@ interface ChannelStripProps {
   onSelectionChange?: (selection: MixerChainSelection | null) => void;
   projectEffectNodes?: readonly LibraryBrowseNode[];
   renderMeter?: boolean;
+  panningEnabled?: boolean;
 }
 
 interface EffectDialogState {
@@ -750,6 +752,13 @@ function MixerEffectEditorDialog({
 
 let nextMixerGestureSequence = 1;
 
+interface MixerChannelGesture {
+  gestureId: string;
+  gestureSequence: number;
+  baseRevision: number;
+  documentId: string;
+}
+
 export default React.memo(function ChannelStrip({
   mixer,
   channel,
@@ -765,6 +774,7 @@ export default React.memo(function ChannelStrip({
   onSelectionChange: controlledOnSelectionChange,
   projectEffectNodes = [],
   renderMeter = true,
+  panningEnabled = true,
 }: ChannelStripProps): React.ReactElement {
   const [localSelection, setLocalSelection] = useState<MixerChainSelection | null>(null);
   const selection = controlledSelection === undefined ? localSelection : controlledSelection;
@@ -783,14 +793,151 @@ export default React.memo(function ChannelStrip({
   const nameRef = useRef<HTMLDivElement>(null);
   const levelControlsRef = useRef<HTMLDivElement>(null);
   const [sliderHeight, setSliderHeight] = useState(MIXER_SLIDER_MIN_H);
-  const activeGestureRef = useRef<{
-    gestureId: string;
-    gestureSequence: number;
-    baseRevision: number;
-    documentId: string;
-  } | null>(null);
+  const activeGestureRef = useRef<MixerChannelGesture | null>(null);
+  const activePanGestureRef = useRef<MixerChannelGesture | null>(null);
   const [previewLevel, setPreviewLevel] = useState<number | null>(null);
+  const [previewPan, setPreviewPan] = useState<number | null>(null);
   const [isSettling, setIsSettling] = useState(false);
+
+  const handlePanPreview = useCallback(
+    (val: number) => {
+      setPreviewPan(val);
+      const sendRealtimePanUpdate = window.blueAPI?.sendMixerRealtimePanUpdate;
+      const docId = getProjectDocumentId();
+      if (!sendRealtimePanUpdate || !docId) return;
+
+      if (!activePanGestureRef.current) {
+        activePanGestureRef.current = {
+          gestureId: crypto.randomUUID(),
+          gestureSequence: nextMixerGestureSequence++,
+          baseRevision: getProjectDocumentRevision(),
+          documentId: docId,
+        };
+      }
+
+      const gesture = activePanGestureRef.current;
+      void sendRealtimePanUpdate({
+        documentId: gesture.documentId,
+        channelId: channel.id,
+        gestureId: gesture.gestureId,
+        gestureSequence: gesture.gestureSequence,
+        baseRevision: gesture.baseRevision,
+        phase: 'preview',
+        pan: val,
+      });
+    },
+    [channel.id],
+  );
+
+  const handlePanCancel = useCallback(async () => {
+    setPreviewPan(null);
+    const gesture = activePanGestureRef.current;
+    if (!gesture) return;
+    activePanGestureRef.current = null;
+
+    try {
+      await window.blueAPI?.sendMixerRealtimePanUpdate?.({
+        documentId: gesture.documentId,
+        channelId: channel.id,
+        gestureId: gesture.gestureId,
+        gestureSequence: gesture.gestureSequence,
+        baseRevision: gesture.baseRevision,
+        phase: 'cancel',
+      });
+    } catch {
+      // Safe fallback.
+    }
+  }, [channel.id]);
+
+  const handlePanCommit = useCallback(
+    (val: number) => {
+      const gesture = activePanGestureRef.current;
+      const sendRealtimePanUpdate = window.blueAPI?.sendMixerRealtimePanUpdate;
+      if (!gesture || !sendRealtimePanUpdate) {
+        setPreviewPan(null);
+        onPatch({
+          type: 'updateChannel',
+          channelId: channel.id,
+          patch: { pan: val },
+        });
+        return;
+      }
+
+      activePanGestureRef.current = null;
+      setIsSettling(true);
+      void (async () => {
+        try {
+          const finishResult = await sendRealtimePanUpdate({
+            documentId: gesture.documentId,
+            channelId: channel.id,
+            gestureId: gesture.gestureId,
+            gestureSequence: gesture.gestureSequence,
+            baseRevision: gesture.baseRevision,
+            phase: 'finish',
+          });
+
+          if (finishResult.status === 'applied') {
+            await applyProjectDocumentPatch(
+              {
+                mixer: {
+                  type: 'updateChannel',
+                  channelId: channel.id,
+                  patch: { pan: val },
+                },
+              },
+              {
+                label: 'Set Channel Pan',
+                gestureId: gesture.gestureId,
+                fieldId: `mixer:channel:${channel.id}:pan`,
+                phase: 'end',
+                expectedRevision: gesture.baseRevision,
+              },
+            );
+            await flushPendingPatches();
+          } else {
+            try {
+              await sendRealtimePanUpdate({
+                documentId: gesture.documentId,
+                channelId: channel.id,
+                gestureId: gesture.gestureId,
+                gestureSequence: gesture.gestureSequence,
+                baseRevision: gesture.baseRevision,
+                phase: 'cancel',
+              });
+            } catch {
+              // Safe fallback.
+            }
+          }
+        } catch {
+          try {
+            await sendRealtimePanUpdate({
+              documentId: gesture.documentId,
+              channelId: channel.id,
+              gestureId: gesture.gestureId,
+              gestureSequence: gesture.gestureSequence,
+              baseRevision: gesture.baseRevision,
+              phase: 'cancel',
+            });
+          } catch {
+            // Safe fallback.
+          }
+        } finally {
+          setPreviewPan(null);
+          setIsSettling(false);
+        }
+      })();
+    },
+    [applyProjectDocumentPatch, channel.id, flushPendingPatches, onPatch],
+  );
+
+  const handlePanDoubleClick = useCallback(() => {
+    setPreviewPan(null);
+    onPatch({
+      type: 'updateChannel',
+      channelId: channel.id,
+      patch: { pan: 0.5 },
+    });
+  }, [channel.id, onPatch]);
 
   useEffect(() => {
     const el = levelControlsRef.current;
@@ -1002,8 +1149,11 @@ export default React.memo(function ChannelStrip({
       if (activeGestureRef.current) {
         await handleSliderCancel();
       }
+      if (activePanGestureRef.current) {
+        await handlePanCancel();
+      }
     });
-  }, [hostDocument, editingLevel, commitLevelEdit, handleSliderCancel]);
+  }, [hostDocument, editingLevel, commitLevelEdit, handlePanCancel, handleSliderCancel]);
 
   const handleOutChannelChange = useCallback(
     (target: string) => {
@@ -1255,6 +1405,19 @@ export default React.memo(function ChannelStrip({
         onSelectionChange={onSelectionChange}
         projectEffectNodes={projectEffectNodes}
       />
+
+      {panningEnabled && (
+        <MixerPanSlider
+          channelName={displayName}
+          pan={previewPan ?? channel.pan}
+          positionMode={channel.positionMode ?? 'balance'}
+          disabled={isSettling}
+          onPreview={handlePanPreview}
+          onCommit={handlePanCommit}
+          onCancel={handlePanCancel}
+          onDoubleClickReset={handlePanDoubleClick}
+        />
+      )}
 
       <div className="mixer-level-section">
         <div className="mixer-level-label">Level</div>

@@ -349,6 +349,7 @@ interface ProjectActions {
     value: boolean,
   ) => void;
   setTrackHeaderMode: (mode: 'audio' | 'event') => void;
+  setScorePanning: (enabled: boolean) => void;
   renameLayer: (layerId: string, name: string) => void;
   setLayerHeight: (groupId: string, layerIndex: number, heightIndex: number) => void;
   addLayer: (groupId: string, layerIndex: number) => void;
@@ -2340,6 +2341,12 @@ function applyScorePatchToSnapshot(
   score: ScoreDocumentSnapshot,
   patch: ScorePatch,
 ): ScoreDocumentSnapshot {
+  if (patch.type === 'updateScorePanning') {
+    return {
+      ...score,
+      panningEnabled: patch.panningEnabled,
+    };
+  }
   if (patch.type === 'updateTrackLayerMuteSoloMode') {
     return {
       ...score,
@@ -4149,10 +4156,13 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       // The queue is the single choke point for durable patches: a mixer
       // patch submitted without an explicit label still gets a semantic
       // action label instead of the generic "Edit Project" fallback.
-      const effectiveMetadata =
-        metadata?.label || normalizedPatch.mixer === undefined
-          ? metadata
-          : { ...metadata, label: mixerPatchActionLabel(normalizedPatch.mixer) };
+      const effectiveMetadata = metadata?.label
+        ? metadata
+        : normalizedPatch.mixer !== undefined
+          ? { ...metadata, label: mixerPatchActionLabel(normalizedPatch.mixer) }
+          : normalizedPatch.score?.type === 'updateScorePanning'
+            ? { ...metadata, label: 'Set Score Panning' }
+            : metadata;
       getProjectPatchQueue().enqueue(
         normalizedPatch,
         dirtyBaseline,
@@ -4601,6 +4611,15 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
           label:
             mode === 'audio' ? 'Set Track Header Mode to Audio' : 'Set Track Header Mode to Event',
         },
+      );
+    },
+
+    setScorePanning: (enabled) => {
+      const score = get().score;
+      if (score.panningEnabled === enabled) return;
+      void get().applyProjectDocumentPatch(
+        { score: { type: 'updateScorePanning', panningEnabled: enabled } },
+        { label: 'Set Score Panning' },
       );
     },
 

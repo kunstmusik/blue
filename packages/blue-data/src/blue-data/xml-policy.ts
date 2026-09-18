@@ -195,9 +195,10 @@ export function loadFromString(xmlString: string, createBlueData: () => BlueData
     state.mixer.setMeterProfileKey(DEFAULT_LEGACY_METER_PROFILE_KEY);
   }
 
-  // A legacy document without a Score retains Event header behavior.
+  // A legacy document without a Score retains Event header behavior and disabled panning.
   if (!scoreLoaded) {
     state.score.trackLayerMuteSoloMode = 'event';
+    state.score.panningEnabled = false;
   }
 
   // Post-loop (Spec 111 FR-015): record whether the loaded document carries

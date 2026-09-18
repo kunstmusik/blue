@@ -70,17 +70,20 @@ interface TrackSpec {
 }
 
 const MASTER_CHANNEL_PARAM_ID = 'param-438380a1-1fe6-4f65-907c-d6abbdd87a38';
+const MASTER_PAN_PARAM_ID = 'param-86cca30f-105b-42b4-b8f9-80d0cc0c420b';
 
-const CHANNELS: { name: string; association: string; paramId: string }[] = [
+const CHANNELS: { name: string; association: string; paramId: string; panParamId: string }[] = [
   {
     name: 'E Piano',
     association: '313b80ef-a098-404e-b957-cc88ac030af5',
     paramId: 'param-ce1aee0b-fa2f-4a0c-b904-2ca5e04ba003',
+    panParamId: 'param-a5bcdedf-858a-48c6-ba06-5be56f2ba294',
   },
   {
     name: 'Bass',
     association: '1fef7747-e706-4786-a1aa-ac20b50b6f8e',
     paramId: 'param-dd9aa36b-32f6-409f-b008-facd522022e5',
+    panParamId: 'param-c784e5b2-072b-49cf-a63c-21a877fd6f7c',
   },
 ];
 
@@ -960,12 +963,18 @@ function beatsToDuration(beats: number): TimeDuration {
   return TimeDuration.bbf(bar, beat, fraction);
 }
 
-function buildChannel(name: string, association: string, paramId: string): Channel {
+function buildChannel(
+  name: string,
+  association: string,
+  paramId: string,
+  panParamId: string,
+): Channel {
   const channel = new Channel();
   channel.setName(name);
   channel.setOutChannel('Master');
   channel.setAssociation(association);
   channel.getLevelParameter().setUniqueId(paramId);
+  channel.getPanParameter().setUniqueId(panParamId);
   return channel;
 }
 
@@ -1039,9 +1048,12 @@ export function buildBlueX7PopSongProject(): BlueData {
   const mixer = data.getMixer();
   mixer.setEnabled(true);
   for (const channel of CHANNELS) {
-    mixer.getChannels().push(buildChannel(channel.name, channel.association, channel.paramId));
+    mixer
+      .getChannels()
+      .push(buildChannel(channel.name, channel.association, channel.paramId, channel.panParamId));
   }
   mixer.getMaster().getLevelParameter().setUniqueId(MASTER_CHANNEL_PARAM_ID);
+  mixer.getMaster().getPanParameter().setUniqueId(MASTER_PAN_PARAM_ID);
 
   return data;
 }

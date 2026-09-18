@@ -8,8 +8,10 @@ import { BlueData, Channel, Effect, GenericInstrument } from '@blue/data';
 import MixerPanel from '../components/workbench/panels/MixerPanel';
 import {
   createEmptyMixerSnapshot,
+  createEmptyScoreDocumentSnapshot,
   createProjectEditorSnapshot,
-  type MixerPatch,
+  type ProjectDocumentPatch,
+  type ScoreDocumentSnapshot,
   type MixerSnapshot,
 } from '../../shared/project-editor';
 import { meterStore } from '../stores/meter-store';
@@ -30,7 +32,9 @@ declare global {
 interface MockProjectState {
   loaded: boolean;
   mixer: MixerSnapshot;
-  applyProjectDocumentPatch: (patch: { mixer: MixerPatch }) => Promise<void> | void;
+  score: ScoreDocumentSnapshot;
+  setScorePanning: (enabled: boolean) => void;
+  applyProjectDocumentPatch: (patch: ProjectDocumentPatch) => Promise<void> | void;
 }
 
 interface MockUIState {
@@ -41,6 +45,8 @@ const { mockProjectState, mockUIState } = vi.hoisted(() => ({
   mockProjectState: {
     loaded: false,
     mixer: {} as MixerSnapshot,
+    score: {} as ScoreDocumentSnapshot,
+    setScorePanning: vi.fn(),
     applyProjectDocumentPatch: vi.fn(),
   } satisfies MockProjectState,
   mockUIState: {
@@ -72,6 +78,7 @@ function seedLoadedProject(): void {
   const snapshot = createProjectEditorSnapshot(data, '/test.blue');
   mockProjectState.loaded = true;
   mockProjectState.mixer = snapshot.mixer!;
+  mockProjectState.score = snapshot.score;
 }
 
 function seedLoadedProjectWithEffects(): void {
@@ -91,6 +98,7 @@ function seedLoadedProjectWithEffects(): void {
   const snapshot = createProjectEditorSnapshot(data, '/test.blue');
   mockProjectState.loaded = true;
   mockProjectState.mixer = snapshot.mixer!;
+  mockProjectState.score = snapshot.score;
 }
 
 function seedLoadedProjectWithTrackGroup(): void {
@@ -135,6 +143,7 @@ function seedLoadedProjectWithTrackGroup(): void {
 
   mockProjectState.loaded = true;
   mockProjectState.mixer = snapshot;
+  mockProjectState.score = createEmptyScoreDocumentSnapshot();
 }
 
 function renderPanel(): { container: HTMLDivElement; root: Root } {
@@ -158,6 +167,8 @@ function setTextInputValue(input: HTMLInputElement, value: string): void {
 beforeEach(() => {
   mockProjectState.loaded = false;
   mockProjectState.mixer = createEmptyMixerSnapshot();
+  mockProjectState.score = createEmptyScoreDocumentSnapshot();
+  mockProjectState.setScorePanning.mockReset();
   mockProjectState.applyProjectDocumentPatch.mockReset();
   mockUIState.openEffectsLibrary.mockReset();
   window.blueAPI = {
@@ -191,6 +202,7 @@ describe('MixerPanel', () => {
     expect(container.textContent).toContain('Lead Channel');
     expect(container.textContent).toContain('Master');
     expect(container.textContent).toContain('Add Subchannel');
+    expect(container.querySelectorAll('.mixer-pan-section').length).toBeGreaterThan(0);
 
     act(() => {
       root.unmount();
@@ -843,6 +855,12 @@ describe('MixerPanel', () => {
       expect(checkbox).not.toBeNull();
       expect(checkbox.checked).toBe(true);
 
+      const panningCheckbox = dialog.querySelector<HTMLInputElement>(
+        'input[type="checkbox"][aria-label="Enable Panning"]',
+      )!;
+      expect(panningCheckbox).not.toBeNull();
+      expect(panningCheckbox.checked).toBe(true);
+
       // Close dialog via Close button (no-op)
       mockProjectState.applyProjectDocumentPatch.mockClear();
       const closeBtn = Array.from(dialog.querySelectorAll<HTMLButtonElement>('button')).find(
@@ -923,6 +941,42 @@ describe('MixerPanel', () => {
       // Faders and strips still present
       expect(container.querySelectorAll('.mixer-channel-strip').length).toBeGreaterThan(0);
       expect(container.querySelectorAll('.mixer-level-slider-wrapper').length).toBeGreaterThan(0);
+
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    });
+
+    it('shows the panning setting in Mixer Settings and hides strip controls when disabled', () => {
+      seedLoadedProject();
+      mockProjectState.score = {
+        ...mockProjectState.score,
+        panningEnabled: false,
+      };
+
+      const { container, root } = renderPanel();
+
+      expect(container.querySelectorAll('.mixer-pan-section')).toHaveLength(0);
+
+      const gearBtn = container.querySelector<HTMLButtonElement>(
+        'button[aria-label="Mixer Settings"]',
+      )!;
+      act(() => {
+        gearBtn.click();
+      });
+
+      const dialog = document.body.querySelector('[role="dialog"]')!;
+      const panningCheckbox = dialog.querySelector<HTMLInputElement>(
+        'input[type="checkbox"][aria-label="Enable Panning"]',
+      )!;
+      expect(panningCheckbox.checked).toBe(false);
+
+      mockProjectState.setScorePanning.mockClear();
+      act(() => {
+        panningCheckbox.click();
+      });
+      expect(mockProjectState.setScorePanning).toHaveBeenCalledWith(true);
 
       act(() => {
         root.unmount();

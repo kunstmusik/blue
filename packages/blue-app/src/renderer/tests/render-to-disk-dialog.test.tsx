@@ -222,6 +222,33 @@ describe('RenderToDiskDialog', () => {
     ).toBe(false);
   });
 
+  it('renders the typed layout diagnostic alongside the render error', () => {
+    act(() => {
+      statusCallback(
+        diskStatus({ phase: 'preparing', progress: 0, message: 'Generating disk CSD...' }),
+      );
+      statusCallback(
+        diskStatus({
+          phase: 'failed',
+          message: "Missing audio file: 'audio/clip.wav'",
+          progress: null,
+          outputPath: null,
+          error: "Missing audio file: 'audio/clip.wav'",
+          layoutDiagnostic: {
+            code: 'MISSING_AUDIO_LAYOUT',
+            message: "Missing audio file: 'audio/clip.wav'",
+            filePath: 'audio/clip.wav',
+          },
+        }),
+      );
+    });
+
+    expect(
+      container.querySelector('[data-testid="render-dialog-layout-diagnostic"]')?.textContent,
+    ).toContain('MISSING_AUDIO_LAYOUT');
+    expect(useRenderToDiskStore.getState().layoutDiagnostic?.filePath).toBe('audio/clip.wav');
+  });
+
   it('ignores statuses for other operations and freeze statuses', () => {
     act(() => {
       statusCallback(

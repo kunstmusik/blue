@@ -9,6 +9,7 @@ import { BlueX7 } from '../instruments/blue-x7';
 import { GenericInstrument } from '../instruments/generic-instrument';
 import { TrackLayerGroup } from '../score/track/track-layer-group';
 import { Track } from '../score/track/track';
+import { Channel } from '../mixer/channel';
 
 function addArrangementBlueX7(
   blueData: BlueData,
@@ -155,5 +156,57 @@ describe('project parameter catalog', () => {
       .filter((e) => e.ownerKind !== 'mixer')
       .map((e) => `${e.ownerIdentity}:${e.parameter.getUniqueId()}`);
     expect(after).toEqual(before);
+  });
+
+  it('enumerates the mixer Pan parameter once per source, subchannel, and master channel (Spec 112 T073)', () => {
+    const blueData = new BlueData();
+    const mixer = blueData.getMixer();
+    mixer.setEnabled(true);
+
+    const source = new Channel();
+    source.setName('Source');
+    mixer.getChannels().push(source);
+    const sub = new Channel();
+    sub.setName('Sub');
+    mixer.getSubChannels().push(sub);
+
+    const mixerEntries = getProjectParameterCatalog(blueData).filter(
+      (e) => e.ownerKind === 'mixer',
+    );
+    const panEntries = mixerEntries.filter((e) => e.parameter.getName() === 'Pan');
+    const expectedPans = [source, sub, mixer.getMaster()].map((channel) =>
+      channel.getPanParameter().getUniqueId(),
+    );
+    expect(panEntries.map((e) => e.parameter.getUniqueId())).toEqual(expectedPans);
+
+    // Owner attribution stays the mixer namespace and routing keys are unique.
+    for (const entry of panEntries) {
+      expect(entry.ownerIdentity).toBe('mixer');
+      expect(entry.path).toEqual(['Mixer']);
+    }
+    const routingKeys = new Set(
+      mixerEntries.map((e) => `${e.ownerIdentity}:${e.parameter.getUniqueId()}`),
+    );
+    expect(routingKeys.size).toBe(mixerEntries.length);
+  });
+
+  it('keeps mixer Pan distinct from Volume in the catalog across save/reopen', () => {
+    const blueData = new BlueData();
+    const mixer = blueData.getMixer();
+    mixer.setEnabled(true);
+    const source = new Channel();
+    source.setName('Source');
+    source.setPan(0.25);
+    mixer.getChannels().push(source);
+
+    const reopened = BlueData.loadFromString(blueData.saveToString());
+    for (const data of [blueData, reopened]) {
+      const entries = getProjectParameterCatalog(data).filter((e) => e.ownerKind === 'mixer');
+      const volume = entries.find((e) => e.parameter.getName() === 'Volume')!;
+      const pan = entries.find((e) => e.parameter.getName() === 'Pan')!;
+      expect(pan.parameter.getUniqueId()).not.toBe(volume.parameter.getUniqueId());
+      expect(pan.parameter.getFixedValue()).toBe(0.25);
+      expect(volume.parameter.getName()).toBe('Volume');
+    }
   });
 });

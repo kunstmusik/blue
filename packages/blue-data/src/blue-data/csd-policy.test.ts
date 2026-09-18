@@ -169,4 +169,25 @@ describe('CSD meter emission and MeterBindingMap', () => {
     expect(subs[1].channelIndex).toBe(1);
     expect(subs[1].csdKey).toBe('sub_Reverb_2');
   });
+
+  describe('legacy CSD snapshots and sync/async parity for mixer-disabled and mixer projects (T003)', () => {
+    it('generates identical sync and async CSD for mixer-enabled legacy projects', async () => {
+      const data = createProjectWithMixer();
+      const syncCsd = data.toCSD();
+      const asyncCsd = await data.toCSDAsync();
+      expect(syncCsd).toBe(asyncCsd);
+      expect(syncCsd).toContain('ga_bluemix_0_0');
+      expect(syncCsd).toContain('ga_bluesub_Reverb_0');
+      expect(syncCsd).toContain('ga_bluesub_Master_0');
+    });
+
+    it('generates identical sync and async CSD for mixer-disabled projects', async () => {
+      const data = createProjectWithMixer();
+      data.getMixer().setEnabled(false);
+      const syncCsd = data.toCSD();
+      const asyncCsd = await data.toCSDAsync();
+      expect(syncCsd).toBe(asyncCsd);
+      expect(syncCsd).not.toContain('ga_bluemix_');
+    });
+  });
 });

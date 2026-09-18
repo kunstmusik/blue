@@ -1,12 +1,18 @@
 import type {
   MixerRealtimeLevelResult,
   MixerRealtimeLevelUpdate,
+  MixerRealtimePanResult,
+  MixerRealtimePanUpdate,
 } from '../shared/project-editor/contract';
-import { isMixerRealtimeLevelUpdate } from '../shared/project-editor/contract';
+import {
+  isMixerRealtimeLevelUpdate,
+  isMixerRealtimePanUpdate,
+} from '../shared/project-editor/contract';
 
 export interface MixerGainPreviewChannel {
   getName(): string;
   getLevel(): number;
+  getPan?(): number;
 }
 
 export interface MixerGainPreviewDeps {
@@ -32,6 +38,7 @@ interface ActiveGesture {
   gestureId: string;
   gestureSequence: number;
   baseRevision: number;
+  parameterId: 'level' | 'pan';
   terminal: boolean;
   activeGenerations?: readonly number[];
 }
@@ -57,7 +64,33 @@ export class MixerGainPreviewAdapter {
   }
 
   async handleUpdate(senderId: number, update: unknown): Promise<MixerRealtimeLevelResult> {
-    if (!isMixerRealtimeLevelUpdate(update)) {
+    return this.handleParameterUpdate(
+      senderId,
+      update,
+      isMixerRealtimeLevelUpdate,
+      'level',
+      (channel) => channel.getLevel(),
+    );
+  }
+
+  async handlePanUpdate(senderId: number, update: unknown): Promise<MixerRealtimePanResult> {
+    return this.handleParameterUpdate(
+      senderId,
+      update,
+      isMixerRealtimePanUpdate,
+      'pan',
+      (channel) => channel.getPan?.() ?? 0.5,
+    );
+  }
+
+  private async handleParameterUpdate(
+    senderId: number,
+    update: unknown,
+    isValidUpdate: (value: unknown) => value is MixerRealtimeLevelUpdate | MixerRealtimePanUpdate,
+    parameterId: 'level' | 'pan',
+    readCurrentValue: (channel: MixerGainPreviewChannel) => number,
+  ): Promise<MixerRealtimeLevelResult | MixerRealtimePanResult> {
+    if (!isValidUpdate(update)) {
       return { status: 'rejected', reason: 'Invalid payload shape' };
     }
 
@@ -105,6 +138,13 @@ export class MixerGainPreviewAdapter {
           revision: this.deps.getCurrentRevision(),
         };
       }
+      if (active.parameterId !== parameterId) {
+        return {
+          status: 'rejected',
+          reason: 'Channel is controlled by another parameter gesture',
+          revision: this.deps.getCurrentRevision(),
+        };
+      }
       if (update.gestureSequence !== active.gestureSequence) {
         return {
           status: 'rejected',
@@ -130,6 +170,7 @@ export class MixerGainPreviewAdapter {
           gestureId: update.gestureId,
           gestureSequence: update.gestureSequence,
           baseRevision: update.baseRevision,
+          parameterId,
           terminal: false,
           activeGenerations: this.deps.getActivePerformanceGenerations?.(),
         };
@@ -193,10 +234,11 @@ export class MixerGainPreviewAdapter {
 
     if (update.phase === 'preview') {
       const ownerKey = this.deps.getChannelOwnerKey(channel);
+      const value = 'level' in update ? update.level : update.pan;
       const ack = await this.deps.previewChannelValue({
         ownerKey,
-        parameterId: 'level',
-        value: update.level,
+        parameterId,
+        value,
         gestureId: update.gestureId,
       });
       if (ack.status === 'rejected') {
@@ -241,8 +283,8 @@ export class MixerGainPreviewAdapter {
         const ownerKey = this.deps.getChannelOwnerKey(freshChannel);
         await this.deps.previewChannelValue({
           ownerKey,
-          parameterId: 'level',
-          value: freshChannel.getLevel(),
+          parameterId,
+          value: readCurrentValue(freshChannel),
         });
       }
     }

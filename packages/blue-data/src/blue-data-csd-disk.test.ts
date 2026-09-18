@@ -43,6 +43,7 @@ class AutomationFixtureInstrument extends GenericInstrument {
 
 function createAutomationProject(diskAlwaysRenderEntireProject: boolean): BlueData {
   const data = new BlueData();
+  data.getScore().panningEnabled = false;
   data.setRenderStartTime(4);
   data.setRenderEndTime(-1);
 
@@ -78,6 +79,7 @@ function createAutomationProject(diskAlwaysRenderEntireProject: boolean): BlueDa
 
 function createRenderWindowProject(diskAlwaysRenderEntireProject: boolean): BlueData {
   const data = new BlueData();
+  data.getScore().panningEnabled = false;
   data.setRenderStartTime(4);
   data.setRenderEndTime(-1);
 

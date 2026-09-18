@@ -7,7 +7,11 @@ import { NoteList } from '../../sound-objects/note-list';
 import { TimeContext } from '../../time/time-context';
 import { AudioClip } from '../audio/audio-clip';
 import { BLUE_FADE_UDO } from '../audio/blue-fade-udo';
-import { PLAYBACK_INSTRUMENT_ORC } from '../audio/playback-instrument-orc';
+import {
+  getPlaybackInstrumentOrc,
+  PLAYBACK_INSTRUMENT_ORC,
+} from '../audio/playback-instrument-orc';
+import { AudioLayoutCompileError } from '../audio/audio-layout';
 import { fadeTypeToCsound } from '../audio/fade-type';
 
 const AUDIO_INSTRUMENT_PREFIX = 'track-audio-instrument:';
@@ -28,6 +32,52 @@ export function generateTrackAudioPlaybackNotes(
   endTime: number,
 ): NoteList {
   if (clips.length === 0) return new NoteList();
+
+  if (compileData.isPanningEnabled()) {
+    if (compileData.getNchnls() > 2) {
+      throw new AudioLayoutCompileError(
+        `Unsupported project output channel count (${compileData.getNchnls()})`,
+        {
+          code: 'UNSUPPORTED_OUTPUT_CHANNELS',
+          outputChannels: compileData.getNchnls(),
+        },
+      );
+    }
+
+    const manifest = compileData.getAudioLayoutManifest();
+    for (const clip of clips) {
+      const filePath = clip.getAudioFile();
+      const observation =
+        manifest?.observations.get(filePath) ??
+        manifest?.observations.get(filePath.replace(/\\/g, '/')) ??
+        manifest?.observations.get(filePath.replace(/\//g, '\\'));
+
+      if (!observation) {
+        throw new AudioLayoutCompileError(`Missing audio layout observation for '${filePath}'`, {
+          code: 'MISSING_AUDIO_LAYOUT',
+          filePath,
+        });
+      }
+
+      if (observation.status === 'unreadable') {
+        throw new AudioLayoutCompileError(`Audio file is unreadable: '${filePath}'`, {
+          code: 'UNREADABLE_AUDIO_FILE',
+          filePath,
+        });
+      }
+
+      if (
+        observation.status === 'unsupported' ||
+        observation.channels === 'unsupported' ||
+        (typeof observation.channels === 'number' && observation.channels > 2)
+      ) {
+        throw new AudioLayoutCompileError(
+          `Unsupported source channel count (${observation.channels}) for '${filePath}'`,
+          { code: 'UNSUPPORTED_SOURCE_CHANNELS', filePath, observedChannels: observation.channels },
+        );
+      }
+    }
+  }
 
   if (compileData.getCompilationVariable('BLUE_FADE_UDO') == null) {
     compileData.appendGlobalOrc(BLUE_FADE_UDO);
@@ -84,35 +134,80 @@ export function ensureTrackAudioPlaybackInstrument(
   const mixerEnabled = compileData.isMixerEnabled();
   const associatedChannel = mixerEnabled ? findAssociatedChannel(compileData, trackId) : undefined;
   const instrument = new GenericInstrument();
-  if (!mixerEnabled) {
-    // With the mixer disabled no BlueMixer instrument reads ga_bluemix_* or
-    // ga_bluesub_* variables, so clips must output directly, matching how the
-    // arrangement compiler rewrites blueMixerOut to outc for that case.
-    instrument.setText(
-      `${PLAYBACK_INSTRUMENT_ORC.replaceAll('{0}', 'a1').replaceAll('{1}', 'a2')}\noutc a1, a2\n`,
-    );
-  } else if (associatedChannel) {
-    const channelId = compileData.getChannelIdAssignments().get(associatedChannel);
-    if (channelId == null) {
-      throw new Error(`Missing mixer channel assignment for Track '${trackId}'`);
+  const panningEnabled = compileData.isPanningEnabled();
+  const nchnls = compileData.getNchnls();
+
+  if (!panningEnabled) {
+    if (!mixerEnabled) {
+      // With the mixer disabled no BlueMixer instrument reads ga_bluemix_* or
+      // ga_bluesub_* variables, so clips must output directly, matching how the
+      // arrangement compiler rewrites blueMixerOut to outc for that case.
+      instrument.setText(
+        `${PLAYBACK_INSTRUMENT_ORC.replaceAll('{0}', 'a1').replaceAll('{1}', 'a2')}\noutc a1, a2\n`,
+      );
+    } else if (associatedChannel) {
+      const channelId = compileData.getChannelIdAssignments().get(associatedChannel);
+      if (channelId == null) {
+        throw new Error(`Missing mixer channel assignment for Track '${trackId}'`);
+      }
+      instrument.setText(
+        PLAYBACK_INSTRUMENT_ORC.replaceAll('{0}', Mixer.getChannelVar(channelId, 0)).replaceAll(
+          '{1}',
+          Mixer.getChannelVar(channelId, 1),
+        ),
+      );
+    } else {
+      // No channel is associated with this Track. Route into the Master
+      // sub-channel so the clip stays audible under the BlueMixer, mirroring
+      // the arrangement compiler's fallback for instruments without a channel.
+      instrument.setText(
+        PLAYBACK_INSTRUMENT_ORC.replaceAll(
+          '{0}',
+          Mixer.getSubChannelVar(Mixer.MASTER_CHANNEL, 0),
+        ).replaceAll('{1}', Mixer.getSubChannelVar(Mixer.MASTER_CHANNEL, 1)),
+      );
     }
-    instrument.setText(
-      PLAYBACK_INSTRUMENT_ORC.replaceAll('{0}', Mixer.getChannelVar(channelId, 0)).replaceAll(
-        '{1}',
-        Mixer.getChannelVar(channelId, 1),
-      ),
-    );
   } else {
-    // No channel is associated with this Track. Route into the Master
-    // sub-channel so the clip stays audible under the BlueMixer, mirroring
-    // the arrangement compiler's fallback for instruments without a channel.
-    instrument.setText(
-      PLAYBACK_INSTRUMENT_ORC.replaceAll(
-        '{0}',
-        Mixer.getSubChannelVar(Mixer.MASTER_CHANNEL, 0),
-      ).replaceAll('{1}', Mixer.getSubChannelVar(Mixer.MASTER_CHANNEL, 1)),
-    );
+    const template = getPlaybackInstrumentOrc(true, nchnls);
+    if (nchnls === 1) {
+      if (!mixerEnabled) {
+        instrument.setText(`${template.replaceAll('{0}', 'a1')}\noutc a1\n`);
+      } else if (associatedChannel) {
+        const channelId = compileData.getChannelIdAssignments().get(associatedChannel);
+        if (channelId == null) {
+          throw new Error(`Missing mixer channel assignment for Track '${trackId}'`);
+        }
+        instrument.setText(template.replaceAll('{0}', Mixer.getChannelVar(channelId, 0)));
+      } else {
+        instrument.setText(
+          template.replaceAll('{0}', Mixer.getSubChannelVar(Mixer.MASTER_CHANNEL, 0)),
+        );
+      }
+    } else {
+      if (!mixerEnabled) {
+        instrument.setText(
+          `${template.replaceAll('{0}', 'a1').replaceAll('{1}', 'a2')}\noutc a1, a2\n`,
+        );
+      } else if (associatedChannel) {
+        const channelId = compileData.getChannelIdAssignments().get(associatedChannel);
+        if (channelId == null) {
+          throw new Error(`Missing mixer channel assignment for Track '${trackId}'`);
+        }
+        instrument.setText(
+          template
+            .replaceAll('{0}', Mixer.getChannelVar(channelId, 0))
+            .replaceAll('{1}', Mixer.getChannelVar(channelId, 1)),
+        );
+      } else {
+        instrument.setText(
+          template
+            .replaceAll('{0}', Mixer.getSubChannelVar(Mixer.MASTER_CHANNEL, 0))
+            .replaceAll('{1}', Mixer.getSubChannelVar(Mixer.MASTER_CHANNEL, 1)),
+        );
+      }
+    }
   }
+
   instrument.setName(`Track Audio Playback (${trackId})`);
 
   const instrId = compileData.addInstrument(instrument);

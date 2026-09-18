@@ -43,7 +43,10 @@ export function syncCompiledRuntimeParameterNames(
   const liveParameters = [
     ...getArrangementOwnerParameters(arrangement).map((entry) => entry.parameter),
     ...(score ? getTrackOwnerParameters(score).map((entry) => entry.parameter) : []),
-    ...getMixerOwnerParameters(mixer),
+    // Pan joins the live enumeration only when the compile included it
+    // (score panning enabled); otherwise positional name syncing would
+    // misalign every mixer parameter after the first channel's volume.
+    ...getMixerOwnerParameters(mixer, score?.panningEnabled ?? false),
   ];
 
   for (const parameter of liveParameters) {

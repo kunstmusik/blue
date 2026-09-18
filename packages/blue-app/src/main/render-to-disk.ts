@@ -8,7 +8,12 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import type { BlueData, JavaRuntimeClientContract, JavaScriptSession } from '@blue/data';
+import {
+  type AudioLayoutManifest,
+  type BlueData,
+  type JavaRuntimeClientContract,
+  type JavaScriptSession,
+} from '@blue/data';
 
 import type {
   DiskRenderSettingsSnapshot,
@@ -19,8 +24,10 @@ import type {
   RenderOperationStatus,
   DiskRenderAction,
 } from '../shared/render-freeze-contract';
+import type { AudioLayoutDiagnostic } from '../shared/audio-layout';
 import { planDiskCommand } from './disk-render-command';
 import { writeTempCsdSnapshot, cleanupTempCsdSnapshots } from './render-command';
+import { audioLayoutDiagnosticFromError, preflightAudioLayout } from './audio-layout-preflight';
 
 // ─── Types ───
 
@@ -81,7 +88,11 @@ export async function executeRenderToDisk(
     javaRuntimeClient,
   } = context;
 
-  const reportFailure = (message: string): RenderOperationResult => {
+  const reportFailure = (
+    message: string,
+    layoutDiagnostic: AudioLayoutDiagnostic | null = null,
+    error = message,
+  ): RenderOperationResult => {
     statusCallback({
       operationId,
       kind: 'diskRender',
@@ -89,9 +100,10 @@ export async function executeRenderToDisk(
       message,
       progress: null,
       outputPath: null,
-      error: message,
+      error,
+      layoutDiagnostic,
     });
-    return { ok: false, operationId, cancelled: false, outputPath: null, error: message };
+    return { ok: false, operationId, cancelled: false, outputPath: null, error };
   };
 
   const reportCancelled = (): RenderOperationResult => {
@@ -138,12 +150,30 @@ export async function executeRenderToDisk(
 
   if (isCancelled?.()) return reportCancelled();
 
+  const preflightResult = preflightAudioLayout(data, {
+    isDiskRender: true,
+    projectDirectory,
+  });
+
+  if (!preflightResult.success) {
+    const firstDiag = preflightResult.diagnostics[0] ?? null;
+    return reportFailure(firstDiag?.message ?? 'Audio layout preflight failed', firstDiag);
+  }
+
   let csdText: string;
   try {
-    csdText = await generateDiskCsd(data, javaScriptSession, javaRuntimeClient);
+    csdText = await generateDiskCsd(
+      data,
+      javaScriptSession,
+      javaRuntimeClient,
+      preflightResult.manifest,
+    );
   } catch (err) {
+    const error = err instanceof Error ? err.message : String(err);
     return reportFailure(
-      `CSD generation failed: ${err instanceof Error ? err.message : String(err)}`,
+      `CSD generation failed: ${error}`,
+      audioLayoutDiagnosticFromError(err),
+      error,
     );
   }
 
@@ -225,10 +255,11 @@ export async function generateDiskCsd(
   data: Pick<BlueData, 'toDiskCSD' | 'toDiskCSDAsync'>,
   javaScriptSession?: JavaScriptSession,
   javaRuntimeClient?: JavaRuntimeClientContract | null,
+  layoutManifest?: AudioLayoutManifest | null,
 ): Promise<string> {
   return javaRuntimeClient
-    ? data.toDiskCSDAsync(javaScriptSession, javaRuntimeClient)
-    : data.toDiskCSD(javaScriptSession);
+    ? data.toDiskCSDAsync(javaScriptSession, javaRuntimeClient, layoutManifest)
+    : data.toDiskCSD(javaScriptSession, layoutManifest);
 }
 
 // ─── Output Path Resolution ───

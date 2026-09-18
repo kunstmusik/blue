@@ -10,6 +10,10 @@ import { LiveData, mapMidiTrigger } from '@blue/data';
 import type { EngineStateSnapshot } from '@blue/engine-client';
 import { formatRenderCommandLine, writeTempCsdSnapshot } from './render-command';
 import { syncCompiledRuntimeParameterNames } from './runtime-parameter-sync';
+import { preflightAudioLayout } from './audio-layout-preflight';
+import type { AudioLayoutDiagnostic } from '../shared/audio-layout';
+import type { BlueLiveStatusSnapshot } from '../shared/blue-live-status';
+export type { BlueLiveStatusSnapshot } from '../shared/blue-live-status';
 import type {
   BlueLiveNoteTarget,
   BlueLiveNoteTriggerRequest,
@@ -27,14 +31,6 @@ export type BlueLiveEngineStatus =
   | 'stopping'
   | 'stopped'
   | 'error';
-
-export interface BlueLiveStatusSnapshot {
-  status: BlueLiveEngineStatus;
-  running: boolean;
-  message?: string;
-  sessionId: number;
-  projectRevision?: number | null;
-}
 
 export type BlueLiveStateChangeCallback = (running: boolean) => void;
 
@@ -70,6 +66,7 @@ export interface BlueLiveEngineSessionDependencies {
 export class BlueLiveEngineSession {
   private status: BlueLiveEngineStatus = 'idle';
   private message = '';
+  private layoutDiagnostic: AudioLayoutDiagnostic | null = null;
   private sessionId = 0;
   private projectRevision: number | null = null;
   private bridge: EngineBridge | null = null;
@@ -126,13 +123,19 @@ export class BlueLiveEngineSession {
       message: this.message || undefined,
       sessionId: this.sessionId,
       projectRevision: this.projectRevision,
+      layoutDiagnostic: this.layoutDiagnostic,
     };
   }
 
-  private setStatus(status: BlueLiveEngineStatus, message?: string): void {
+  private setStatus(
+    status: BlueLiveEngineStatus,
+    message?: string,
+    layoutDiagnostic?: AudioLayoutDiagnostic | null,
+  ): void {
     const wasRunning = this.status === 'running';
     this.status = status;
     this.message = message ?? '';
+    this.layoutDiagnostic = status === 'error' ? (layoutDiagnostic ?? null) : null;
     const isRunning = this.status === 'running';
     if (wasRunning !== isRunning) {
       this.runtimeStateChangeCallback?.(isRunning);
@@ -360,8 +363,19 @@ export class BlueLiveEngineSession {
     this.startCompletion = startCompletion;
 
     try {
+      const preflightResult = preflightAudioLayout(data, {
+        projectDirectory: this.projectDirectory,
+      });
+      if (!preflightResult.success) {
+        const firstDiag = preflightResult.diagnostics[0];
+        const message = firstDiag ? firstDiag.message : 'Audio layout preflight failed';
+        this.setStatus('error', message, firstDiag ?? null);
+        await this.cleanup();
+        return this.getSnapshot();
+      }
+
       const liveData = data.getLiveData();
-      const csd = data.toBlueLiveCSD(session);
+      const csd = data.toBlueLiveCSD(session, false, preflightResult.manifest);
       const runtimeParameterSync = syncCompiledRuntimeParameterNames(
         data.getArrangement(),
         data.getMixer(),

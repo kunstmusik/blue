@@ -9,6 +9,7 @@ import { BlueDataObject } from '../blue-data-object';
 import { Parameter } from '../automation/parameter';
 import type { CopyMode } from '../deep-copyable';
 import { writeDouble, writeBoolean } from '../utilities/xml';
+import { clampPan, isValidPan, DEFAULT_PAN } from './channel-pan';
 
 let nextRuntimeIdentity = 1;
 
@@ -32,6 +33,7 @@ export class Channel implements BlueDataObject {
   private _effectsChain = new EffectsChain();
   private _association = '';
   private _levelParameter: Parameter;
+  private _panParameter: Parameter;
   /** Disposable identity used to bind compiled route gates to this object. */
   private _runtimeIdentity = `channel-${nextRuntimeIdentity++}`;
 
@@ -43,6 +45,14 @@ export class Channel implements BlueDataObject {
     this._levelParameter.setMaximum(12.0);
     this._levelParameter.setFixedValue(0.0);
     this._levelParameter.setResolution(-1.0);
+
+    this._panParameter = new Parameter();
+    this._panParameter.setName('Pan');
+    this._panParameter.setLabel('');
+    this._panParameter.setMinimum(0.0);
+    this._panParameter.setMaximum(1.0);
+    this._panParameter.setFixedValue(0.5);
+    this._panParameter.setResolution(-1.0);
   }
 
   getName(): string {
@@ -94,7 +104,18 @@ export class Channel implements BlueDataObject {
     return this._pan;
   }
   setPan(p: number): void {
+    if (!isValidPan(p)) return;
     this._pan = p;
+    if (!this._panParameter.isAutomationEnabled()) {
+      this._panParameter.setFixedValue(p);
+    }
+  }
+
+  getPanParameter(): Parameter {
+    return this._panParameter;
+  }
+  setPanParameter(param: Parameter): void {
+    this._panParameter = param;
   }
 
   getPreEffects(): EffectsChain {
@@ -150,6 +171,7 @@ export class Channel implements BlueDataObject {
     elem.addElement('name').setText(this._name);
     elem.addElement('outChannel').setText(this._outChannel);
     elem.addElement(writeDouble('level', this._level));
+    elem.addElement(writeDouble('pan', this._pan));
     elem.addElement(writeBoolean('muted', this._muted));
     elem.addElement(writeBoolean('solo', this._solo));
 
@@ -166,6 +188,7 @@ export class Channel implements BlueDataObject {
     }
 
     elem.addElement(this._levelParameter.saveAsXML());
+    elem.addElement(this._panParameter.saveAsXML());
 
     return elem;
   }
@@ -184,6 +207,13 @@ export class Channel implements BlueDataObject {
     // Level (in dB)
     const level = data.getTextString('level');
     if (level) channel._level = parseFloat(level);
+
+    // Pan (finite in [0, 1], invalid XML falls back to center 0.5)
+    const pan = data.getTextString('pan');
+    if (pan) {
+      const parsedPan = parseFloat(pan);
+      channel._pan = isValidPan(parsedPan) ? parsedPan : DEFAULT_PAN;
+    }
 
     const assoc = data.getAttribute('association') ?? data.getTextString('association');
     if (assoc) channel._association = assoc;
@@ -213,11 +243,19 @@ export class Channel implements BlueDataObject {
     const paramNodes = data.getElements('parameter');
     while (paramNodes.hasMoreElements()) {
       const paramElem = paramNodes.next();
-      channel._levelParameter = Parameter.loadFromXML(paramElem);
+      const loadedParam = Parameter.loadFromXML(paramElem);
+      if (loadedParam.getName() === 'Pan') {
+        channel._panParameter = loadedParam;
+      } else {
+        channel._levelParameter = loadedParam;
+      }
     }
 
     if (!channel._levelParameter.isAutomationEnabled()) {
       channel._levelParameter.setFixedValue(channel._level);
+    }
+    if (!channel._panParameter.isAutomationEnabled()) {
+      channel._panParameter.setFixedValue(channel._pan);
     }
 
     return channel;
@@ -237,6 +275,7 @@ export class Channel implements BlueDataObject {
     copy._postEffects = this._postEffects.deepCopy(mode) as EffectsChain;
     copy._effectsChain = this._effectsChain.deepCopy(mode) as EffectsChain;
     copy._levelParameter = this._levelParameter.deepCopy(mode) as Parameter;
+    copy._panParameter = this._panParameter.deepCopy(mode) as Parameter;
     if (mode === 'history') {
       copy._runtimeIdentity = this._runtimeIdentity;
     }

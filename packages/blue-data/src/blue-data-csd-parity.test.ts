@@ -352,3 +352,47 @@ describe('CSD parity across meter presentation settings with legacy fixture (T03
     }
   });
 });
+
+describe('legacy mono/stereo audio playback and mixer CSD parity with Java Blue (T001)', () => {
+  it('confirms legacy Blue project XML produces identical CSD routing without panning', () => {
+    // In Java Blue (blue-core Channel.java and playback_instrument.orc),
+    // mono clips assign to output channel {0} only, and Channel has no pan parameter.
+    // TypeScript Blue preserves this exact behavior when panning is disabled.
+    const xml = [
+      '<blueData version="2.8.0">',
+      '  <projectProperties>',
+      '    <title>Java Parity Legacy</title>',
+      '    <sampleRate>44100</sampleRate>',
+      '    <ksmps>100</ksmps>',
+      '    <channels>2</channels>',
+      '  </projectProperties>',
+      '  <mixer>',
+      '    <enabled>true</enabled>',
+      '    <channelList list="channels">',
+      '      <channel association="1">',
+      '        <name>Ch1</name>',
+      '        <outChannel>Master</outChannel>',
+      '        <level>0.0</level>',
+      '      </channel>',
+      '    </channelList>',
+      '    <channelList list="subChannels"/>',
+      '    <channel><name>Master</name><level>0.0</level></channel>',
+      '  </mixer>',
+      '  <score>',
+      '    <scoreRoot>',
+      '      <trackLayerGroup>',
+      '        <trackLayer/>',
+      '      </trackLayerGroup>',
+      '    </scoreRoot>',
+      '  </score>',
+      '</blueData>',
+    ].join('\n');
+
+    const data = BlueData.loadFromString(xml);
+    const csd = data.toCSD();
+    // Legacy CSD uses ga_bluemix_* and outc without pan statements
+    expect(csd).toContain('ga_bluemix_0_0');
+    expect(csd).toContain('outc ga_bluesub_Master_0, ga_bluesub_Master_1');
+    expect(csd).not.toContain('bluePan');
+  });
+});

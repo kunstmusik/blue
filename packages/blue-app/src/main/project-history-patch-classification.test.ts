@@ -386,7 +386,7 @@ describe('Exhaustive project patch preparation classification (T018)', () => {
           mixer: {
             type: 'updateChannel',
             channelId: 'chan-1',
-            patch: { level: 0.2, pan: -0.5, muted: true, solo: false, volume: 0.8 },
+            patch: { level: 0.2, pan: 0.25, muted: true, solo: false, volume: 0.8 },
           },
         },
       ]);

@@ -31,6 +31,7 @@ describe('MixerGainPreviewAdapter', () => {
     mockChannel = {
       getName: () => 'Track 1',
       getLevel: () => -6.0,
+      getPan: () => 0.5,
     };
 
     deps = {
@@ -127,6 +128,40 @@ describe('MixerGainPreviewAdapter', () => {
       parameterId: 'level',
       value: -3.5,
       gestureId: 'g-1',
+    });
+  });
+
+  it('routes Pan previews through the same guarded gesture lifecycle', async () => {
+    const previewResult = await adapter.handlePanUpdate(1, {
+      documentId: 'doc-123',
+      channelId: 'ch-1',
+      gestureId: 'pan-1',
+      gestureSequence: 1,
+      baseRevision: 5,
+      phase: 'preview',
+      pan: 0.25,
+    });
+
+    expect(previewResult.status).toBe('applied');
+    expect(previewCalls.at(-1)).toEqual({
+      ownerKey: 'owner-Track 1',
+      parameterId: 'pan',
+      value: 0.25,
+      gestureId: 'pan-1',
+    });
+
+    await adapter.handlePanUpdate(1, {
+      documentId: 'doc-123',
+      channelId: 'ch-1',
+      gestureId: 'pan-1',
+      gestureSequence: 1,
+      baseRevision: 5,
+      phase: 'cancel',
+    });
+    expect(previewCalls.at(-1)).toEqual({
+      ownerKey: 'owner-Track 1',
+      parameterId: 'pan',
+      value: 0.5,
     });
   });
 

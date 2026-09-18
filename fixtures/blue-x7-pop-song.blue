@@ -53,6 +53,7 @@ Tempo map is enabled at 112 BPM; mixer is enabled with one channel per track.</n
         <name>E Piano</name>
         <outChannel>Master</outChannel>
         <level>0.0</level>
+        <pan>0.5</pan>
         <muted>false</muted>
         <solo>false</solo>
         <effectsChain bin="pre"/>
@@ -60,17 +61,24 @@ Tempo map is enabled at 112 BPM; mixer is enabled with one channel per track.</n
         <parameter uniqueId="param-ce1aee0b-fa2f-4a0c-b904-2ca5e04ba003" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
         </parameter>
+        <parameter uniqueId="param-a5bcdedf-858a-48c6-ba06-5be56f2ba294" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
+          <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
+        </parameter>
       </channel>
       <channel association="1fef7747-e706-4786-a1aa-ac20b50b6f8e">
         <name>Bass</name>
         <outChannel>Master</outChannel>
         <level>0.0</level>
+        <pan>0.5</pan>
         <muted>false</muted>
         <solo>false</solo>
         <effectsChain bin="pre"/>
         <effectsChain bin="post"/>
         <parameter uniqueId="param-dd9aa36b-32f6-409f-b008-facd522022e5" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
+        </parameter>
+        <parameter uniqueId="param-c784e5b2-072b-49cf-a63c-21a877fd6f7c" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
+          <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
         </parameter>
       </channel>
     </channelList>
@@ -79,12 +87,16 @@ Tempo map is enabled at 112 BPM; mixer is enabled with one channel per track.</n
       <name>Master</name>
       <outChannel>Master</outChannel>
       <level>0.0</level>
+      <pan>0.5</pan>
       <muted>false</muted>
       <solo>false</solo>
       <effectsChain bin="pre"/>
       <effectsChain bin="post"/>
       <parameter uniqueId="param-438380a1-1fe6-4f65-907c-d6abbdd87a38" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
         <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
+      </parameter>
+      <parameter uniqueId="param-86cca30f-105b-42b4-b8f9-80d0cc0c420b" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
+        <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
       </parameter>
     </channel>
     <extraRenderTime>0.0</extraRenderTime>
@@ -118,7 +130,7 @@ Tempo map is enabled at 112 BPM; mixer is enabled with one channel per track.</n
     <repeatEnabled>false</repeatEnabled>
     <liveCodeText></liveCodeText>
   </liveData>
-  <score trackLayerMuteSoloMode="audio">
+  <score trackLayerMuteSoloMode="audio" panningEnabled="true">
     <timeContext>
       <tempoMap>
         <enabled>true</enabled>
