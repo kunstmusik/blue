@@ -53,6 +53,39 @@ describe('Runtime capability classification (T017)', () => {
         mixer: { type: 'updateChannel', channelId: 'Master', patch: { pan: -0.25 } },
       }),
     ).toBe('live');
+    expect(
+      classifyPatchRuntimeCapability({
+        mixer: {
+          type: 'updateChannel',
+          channelId: 'Master',
+          patch: { stereoPanMode: 'stereoPan' },
+        },
+      }),
+    ).toBe('live');
+    expect(
+      classifyPatchRuntimeCapability({
+        mixer: { type: 'updateChannel', channelId: 'Master', patch: { panWidth: 0.5 } },
+      }),
+    ).toBe('live');
+    expect(
+      classifyPatchRuntimeCapability({
+        mixer: {
+          type: 'updateChannel',
+          channelId: 'Master',
+          patch: { dualPanLeft: 0.2, dualPanRight: 0.8 },
+        },
+      }),
+    ).toBe('live');
+    expect(
+      classifyPatchRuntimeCapability({
+        score: { type: 'updateScorePanLaw', panLawDb: -6 },
+      }),
+    ).toBe('live');
+    expect(
+      classifyPatchRuntimeCapability({
+        score: { type: 'updateScorePanBoost', panOffCenterBoost: true },
+      }),
+    ).toBe('live');
   });
 
   it('classifies cosmetic-only edits as no-work regardless of patch name', () => {
@@ -348,6 +381,92 @@ describe('Runtime work plans (T017)', () => {
     expect(Object.isFrozen(plan.operations)).toBe(true);
     expect(Object.isFrozen(plan.operations[0])).toBe(true);
     void reconciliation;
+  });
+
+  it('resolves score pan law/boost and stereo pan channel bindings into operations', () => {
+    const reconciliation = new ProjectRuntimeReconciliation();
+    const client = makeClient();
+    reconciliation.registerPerformance(
+      'timeline',
+      1,
+      client,
+      new Map([
+        ['score::panLawDb', { kind: 'channel', channel: 'gk_blue_score_pan_law' }],
+        ['score::panOffCenterBoost', { kind: 'channel', channel: 'gk_blue_score_pan_boost' }],
+        ['c1::stereoPanMode', { kind: 'channel', channel: 'gk_c1_pan_mode' }],
+        ['c1::panWidth', { kind: 'channel', channel: 'gk_c1_pan_width' }],
+        ['c1::dualPanLeft', { kind: 'channel', channel: 'gk_c1_dual_left' }],
+        ['c1::dualPanRight', { kind: 'channel', channel: 'gk_c1_dual_right' }],
+      ]),
+    );
+
+    const plans = reconciliation.planCommit({
+      documentId: 'doc-1',
+      revision: 1,
+      patches: [
+        { score: { type: 'updateScorePanLaw', panLawDb: -4.5 } },
+        { score: { type: 'updateScorePanBoost', panOffCenterBoost: true } },
+        {
+          mixer: {
+            type: 'updateChannel',
+            channelId: 'c1',
+            patch: {
+              stereoPanMode: 'stereoPan',
+              panWidth: 0.8,
+              dualPanLeft: 0.1,
+              dualPanRight: 0.9,
+            },
+          },
+        },
+      ],
+    });
+
+    expect(plans).toHaveLength(1);
+    const plan = plans[0]!;
+    expect(plan.operations).toEqual([
+      {
+        kind: 'channel-value',
+        ownerKey: 'score',
+        parameterId: 'panLawDb',
+        channel: 'gk_blue_score_pan_law',
+        value: -4.5,
+      },
+      {
+        kind: 'channel-value',
+        ownerKey: 'score',
+        parameterId: 'panOffCenterBoost',
+        channel: 'gk_blue_score_pan_boost',
+        value: 1,
+      },
+      {
+        kind: 'channel-value',
+        ownerKey: 'c1',
+        parameterId: 'stereoPanMode',
+        channel: 'gk_c1_pan_mode',
+        value: 1,
+      },
+      {
+        kind: 'channel-value',
+        ownerKey: 'c1',
+        parameterId: 'panWidth',
+        channel: 'gk_c1_pan_width',
+        value: 0.8,
+      },
+      {
+        kind: 'channel-value',
+        ownerKey: 'c1',
+        parameterId: 'dualPanLeft',
+        channel: 'gk_c1_dual_left',
+        value: 0.1,
+      },
+      {
+        kind: 'channel-value',
+        ownerKey: 'c1',
+        parameterId: 'dualPanRight',
+        channel: 'gk_c1_dual_right',
+        value: 0.9,
+      },
+    ]);
   });
 
   it('falls back to restart-required owners when a live binding is missing', () => {

@@ -209,4 +209,36 @@ describe('project parameter catalog', () => {
       expect(volume.parameter.getName()).toBe('Volume');
     }
   });
+
+  it('enumerates Pan, Width, Dual Left, and Dual Right once per source, sub, and master in project catalog (Spec 113 T021)', () => {
+    const blueData = new BlueData();
+    const mixer = blueData.getMixer();
+    mixer.setEnabled(true);
+
+    const source = new Channel();
+    source.setName('Source');
+    mixer.getChannels().push(source);
+    const sub = new Channel();
+    sub.setName('Sub');
+    mixer.getSubChannels().push(sub);
+
+    const mixerEntries = getProjectParameterCatalog(blueData).filter(
+      (e) => e.ownerKind === 'mixer',
+    );
+
+    const channels = [source, sub, mixer.getMaster()];
+    for (const name of ['Pan', 'Width', 'Dual Left', 'Dual Right']) {
+      const entries = mixerEntries.filter((e) => e.parameter.getName() === name);
+      expect(entries).toHaveLength(channels.length);
+      for (const entry of entries) {
+        expect(entry.ownerIdentity).toBe('mixer');
+        expect(entry.path).toEqual(['Mixer']);
+      }
+    }
+
+    const routingKeys = new Set(
+      mixerEntries.map((e) => `${e.ownerIdentity}:${e.parameter.getUniqueId()}`),
+    );
+    expect(routingKeys.size).toBe(mixerEntries.length);
+  });
 });

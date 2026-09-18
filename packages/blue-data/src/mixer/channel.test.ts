@@ -115,5 +115,174 @@ describe('Channel', () => {
       expect(ch.getPan()).toBe(0.3);
       expect(copy.getPan()).toBe(0.8);
     });
+
+    describe('stereo pan mode persistence, validation, and copy (T019)', () => {
+      it('has exact defaults: Balance, Width 1, Dual Left 0, Dual Right 1', () => {
+        const ch = new Channel();
+        expect(ch.getStereoPanMode()).toBe('balance');
+        expect(ch.getPanWidth()).toBe(1.0);
+        expect(ch.getDualPanLeft()).toBe(0.0);
+        expect(ch.getDualPanRight()).toBe(1.0);
+
+        const widthParam = ch.getPanWidthParameter();
+        expect(widthParam.getName()).toBe('Width');
+        expect(widthParam.getFixedValue()).toBe(1.0);
+        expect(widthParam.getMinimum()).toBe(0.0);
+        expect(widthParam.getMaximum()).toBe(1.0);
+
+        const dualLeftParam = ch.getDualPanLeftParameter();
+        expect(dualLeftParam.getName()).toBe('Dual Left');
+        expect(dualLeftParam.getFixedValue()).toBe(0.0);
+        expect(dualLeftParam.getMinimum()).toBe(0.0);
+        expect(dualLeftParam.getMaximum()).toBe(1.0);
+
+        const dualRightParam = ch.getDualPanRightParameter();
+        expect(dualRightParam.getName()).toBe('Dual Right');
+        expect(dualRightParam.getFixedValue()).toBe(1.0);
+        expect(dualRightParam.getMinimum()).toBe(0.0);
+        expect(dualRightParam.getMaximum()).toBe(1.0);
+      });
+
+      it('enforces finite [0, 1] validation on Width, Dual Left, and Dual Right setters', () => {
+        const ch = new Channel();
+
+        // Valid setters
+        ch.setPanWidth(0.3);
+        expect(ch.getPanWidth()).toBe(0.3);
+        ch.setDualPanLeft(0.1);
+        expect(ch.getDualPanLeft()).toBe(0.1);
+        ch.setDualPanRight(0.9);
+        expect(ch.getDualPanRight()).toBe(0.9);
+
+        // Out of range or non-finite values are rejected (value unchanged)
+        ch.setPanWidth(-0.2);
+        expect(ch.getPanWidth()).toBe(0.3);
+        ch.setPanWidth(1.5);
+        expect(ch.getPanWidth()).toBe(0.3);
+        ch.setPanWidth(NaN);
+        expect(ch.getPanWidth()).toBe(0.3);
+
+        ch.setDualPanLeft(-0.5);
+        expect(ch.getDualPanLeft()).toBe(0.1);
+        ch.setDualPanLeft(1.2);
+        expect(ch.getDualPanLeft()).toBe(0.1);
+        ch.setDualPanLeft(NaN);
+        expect(ch.getDualPanLeft()).toBe(0.1);
+
+        ch.setDualPanRight(-0.1);
+        expect(ch.getDualPanRight()).toBe(0.9);
+        ch.setDualPanRight(1.4);
+        expect(ch.getDualPanRight()).toBe(0.9);
+        ch.setDualPanRight(NaN);
+        expect(ch.getDualPanRight()).toBe(0.9);
+
+        // Mode fallback
+        ch.setStereoPanMode('invalid' as any);
+        expect(ch.getStereoPanMode()).toBe('balance');
+      });
+
+      it('preserves all stored stereo values across mode switches', () => {
+        const ch = new Channel();
+        ch.setPan(0.35);
+        ch.setPanWidth(0.7);
+        ch.setDualPanLeft(0.2);
+        ch.setDualPanRight(0.8);
+
+        ch.setStereoPanMode('stereoPan');
+        expect(ch.getPan()).toBe(0.35);
+        expect(ch.getPanWidth()).toBe(0.7);
+        expect(ch.getDualPanLeft()).toBe(0.2);
+        expect(ch.getDualPanRight()).toBe(0.8);
+
+        ch.setStereoPanMode('dualPan');
+        expect(ch.getPan()).toBe(0.35);
+        expect(ch.getPanWidth()).toBe(0.7);
+        expect(ch.getDualPanLeft()).toBe(0.2);
+        expect(ch.getDualPanRight()).toBe(0.8);
+
+        ch.setStereoPanMode('balance');
+        expect(ch.getPan()).toBe(0.35);
+        expect(ch.getPanWidth()).toBe(0.7);
+        expect(ch.getDualPanLeft()).toBe(0.2);
+        expect(ch.getDualPanRight()).toBe(0.8);
+      });
+
+      it('maintains stable parameter identities across accesses', () => {
+        const ch = new Channel();
+        expect(ch.getPanWidthParameter()).toBe(ch.getPanWidthParameter());
+        expect(ch.getDualPanLeftParameter()).toBe(ch.getDualPanLeftParameter());
+        expect(ch.getDualPanRightParameter()).toBe(ch.getDualPanRightParameter());
+
+        const ids = new Set([
+          ch.getLevelParameter().getUniqueId(),
+          ch.getPanParameter().getUniqueId(),
+          ch.getPanWidthParameter().getUniqueId(),
+          ch.getDualPanLeftParameter().getUniqueId(),
+          ch.getDualPanRightParameter().getUniqueId(),
+        ]);
+        expect(ids.size).toBe(5);
+      });
+
+      it('falls back safely for missing or invalid XML stereo pan fields', () => {
+        const xml = `<channel>
+          <name>Test</name>
+          <stereoPanMode>bogus</stereoPanMode>
+          <panWidth>2.5</panWidth>
+          <dualPanLeft>-1.0</dualPanLeft>
+          <dualPanRight>xyz</dualPanRight>
+        </channel>`;
+        const ch = Channel.loadFromXML(Element.parse(xml));
+        expect(ch.getStereoPanMode()).toBe('balance');
+        expect(ch.getPanWidth()).toBe(1.0);
+        expect(ch.getDualPanLeft()).toBe(0.0);
+        expect(ch.getDualPanRight()).toBe(1.0);
+      });
+
+      it('round-trips stereo modes and dispatches known parameter tags explicitly', () => {
+        const ch = new Channel();
+        ch.setName('StereoCh');
+        ch.setStereoPanMode('stereoPan');
+        ch.setPan(0.4);
+        ch.setPanWidth(0.65);
+        ch.setDualPanLeft(0.15);
+        ch.setDualPanRight(0.85);
+
+        const xml = ch.saveAsXML();
+        const loaded = Channel.loadFromXML(xml);
+
+        expect(loaded.getStereoPanMode()).toBe('stereoPan');
+        expect(loaded.getPan()).toBe(0.4);
+        expect(loaded.getPanWidth()).toBe(0.65);
+        expect(loaded.getDualPanLeft()).toBe(0.15);
+        expect(loaded.getDualPanRight()).toBe(0.85);
+
+        expect(loaded.getPanParameter().getFixedValue()).toBe(0.4);
+        expect(loaded.getPanWidthParameter().getFixedValue()).toBe(0.65);
+        expect(loaded.getDualPanLeftParameter().getFixedValue()).toBe(0.15);
+        expect(loaded.getDualPanRightParameter().getFixedValue()).toBe(0.85);
+      });
+
+      it('preserves stereo values and isolates parameters in deepCopy', () => {
+        const ch = new Channel();
+        ch.setStereoPanMode('dualPan');
+        ch.setPanWidth(0.42);
+        ch.setDualPanLeft(0.18);
+        ch.setDualPanRight(0.82);
+
+        const copy = ch.deepCopy() as Channel;
+        expect(copy.getStereoPanMode()).toBe('dualPan');
+        expect(copy.getPanWidth()).toBe(0.42);
+        expect(copy.getDualPanLeft()).toBe(0.18);
+        expect(copy.getDualPanRight()).toBe(0.82);
+
+        expect(copy.getPanWidthParameter()).not.toBe(ch.getPanWidthParameter());
+        expect(copy.getDualPanLeftParameter()).not.toBe(ch.getDualPanLeftParameter());
+        expect(copy.getDualPanRightParameter()).not.toBe(ch.getDualPanRightParameter());
+
+        copy.setPanWidth(0.99);
+        expect(ch.getPanWidth()).toBe(0.42);
+        expect(copy.getPanWidth()).toBe(0.99);
+      });
+    });
   });
 });

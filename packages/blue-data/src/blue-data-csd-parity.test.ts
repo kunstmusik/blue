@@ -2,6 +2,8 @@ import * as fs from 'fs';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { BlueData } from './blue-data';
 import { Arrangement } from './arrangement';
+import { Channel } from './mixer/channel';
+import { getStereoPanGains } from './mixer/channel-pan';
 import { GenericInstrument } from './instruments/generic-instrument';
 import { BlueSynthBuilder } from './instruments/blue-synth-builder';
 import { OpcodeDefinition } from './opcodes/opcode-definition';
@@ -353,7 +355,7 @@ describe('CSD parity across meter presentation settings with legacy fixture (T03
   });
 });
 
-describe('legacy mono/stereo audio playback and mixer CSD parity with Java Blue (T001)', () => {
+describe('legacy mono/stereo audio playback and mixer CSD parity with Java Blue (T001, T003)', () => {
   it('confirms legacy Blue project XML produces identical CSD routing without panning', () => {
     // In Java Blue (blue-core Channel.java and playback_instrument.orc),
     // mono clips assign to output channel {0} only, and Channel has no pan parameter.
@@ -394,5 +396,72 @@ describe('legacy mono/stereo audio playback and mixer CSD parity with Java Blue 
     expect(csd).toContain('ga_bluemix_0_0');
     expect(csd).toContain('outc ga_bluesub_Master_0, ga_bluesub_Master_1');
     expect(csd).not.toContain('bluePan');
+    expect(csd).not.toContain('k_pan_l');
+    expect(csd).not.toContain('k_bal_l');
+  });
+
+  it('verifies Spec 112 intentional divergence: default -3 dB equal power mono pan, balance, send tap before pan, and gate/meter after pan', () => {
+    // TypeScript-only divergence: when panningEnabled is true (new project default in Spec 112+),
+    // channels route through panners: Mono Pan for verified mono sources, Balance for stereo/mixed.
+    const data = new BlueData();
+    data.getScore().panningEnabled = true;
+    data.getMixer().setEnabled(true);
+
+    const ch1 = new Channel();
+    ch1.setName('MonoTrack');
+    ch1.setAssociation('track-1');
+    ch1.setOutChannel('Master');
+    ch1.setPan(0.5);
+    data.getMixer().getChannels().push(ch1);
+
+    // Default CSD with no observation manifest treats channel as unknown (two-bus -> Balance)
+    const realtimeCsd = data.toRealtimePlaybackCSD().csdText;
+    expect(realtimeCsd).toContain('k_bal_l = min(1, 2 * (1 -');
+    expect(realtimeCsd).toContain('k_bal_r = min(1, 2 *');
+
+    // When disabled, no pan/bal stage exists
+    data.getScore().panningEnabled = false;
+    const disabledCsd = data.toRealtimePlaybackCSD().csdText;
+    expect(disabledCsd).not.toContain('k_pan_l');
+    expect(disabledCsd).not.toContain('k_bal_l');
+  });
+
+  it('compares static CSD, realtime playback, and BlueLive coefficients for score law/boost choices and confirms mathematical parity', () => {
+    const laws: Array<0 | -3 | -4.5 | -6> = [0, -3, -4.5, -6];
+    for (const law of laws) {
+      for (const boost of [false, true]) {
+        const data = new BlueData();
+        data.getScore().panningEnabled = true;
+        data.getScore().panLawDb = law;
+        data.getScore().panOffCenterBoost = boost;
+        data.getMixer().setEnabled(true);
+
+        const ch = new Channel();
+        ch.setName('AudioCh');
+        ch.setOutChannel('Master');
+        ch.setPan(0.25);
+        ch.setPanWidth(0.8);
+        ch.setStereoPanMode('stereoPan');
+        data.getMixer().getChannels().push(ch);
+
+        const realtimeCsd = data.toRealtimePlaybackCSD().csdText;
+        const blueLiveCsd = data.toBlueLiveCSD().csdText;
+        const diskCsd = data.toDiskCSD();
+
+        const extractDynamicMatrix = (csd: string) => {
+          const match = csd.match(
+            /k_pan_al = [^\n]+[\s\S]*?ga_bluemix_0_1 = k_pan_bl \* a_pan_in_l \+ k_pan_br \* a_pan_in_r/,
+          );
+          return match ? match[0] : null;
+        };
+        const realtimeMatrix = extractDynamicMatrix(realtimeCsd);
+        const blueLiveMatrix = extractDynamicMatrix(blueLiveCsd);
+        const diskMatrix = extractDynamicMatrix(diskCsd);
+
+        expect(realtimeMatrix).not.toBeNull();
+        expect(realtimeMatrix).toBe(blueLiveMatrix);
+        expect(diskMatrix).toBe(realtimeMatrix);
+      }
+    }
   });
 });

@@ -43,6 +43,8 @@ import {
   PatternsLayerGroup,
   TimeBase,
   isValidSnapValueName,
+  isValidPanLawDb,
+  isValidStereoPanMode,
   SoundObject,
   SoundObjectLibrary,
   collectInstanceSoundObjects,
@@ -688,13 +690,68 @@ export function validateProjectDocumentPatch(patch: ProjectDocumentPatch): {
     }
   }
 
-  if (patch.mixer?.type === 'updateChannel' && patch.mixer.patch.pan !== undefined) {
-    const pan = patch.mixer.patch.pan;
-    if (typeof pan !== 'number' || !Number.isFinite(pan) || pan < 0 || pan > 1) {
+  if (patch.score?.type === 'updateScorePanLaw') {
+    if (!isValidPanLawDb(patch.score.panLawDb)) {
       return {
         valid: false,
-        reason: `Mixer channel pan must be a finite number between 0 and 1, got ${String(pan)}`,
+        reason: `Score panLawDb must be one of 0, -3, -4.5, -6, got ${String(patch.score.panLawDb)}`,
       };
+    }
+  }
+
+  if (patch.score?.type === 'updateScorePanBoost') {
+    if (typeof patch.score.panOffCenterBoost !== 'boolean') {
+      return {
+        valid: false,
+        reason: 'Score panOffCenterBoost must be a boolean',
+      };
+    }
+  }
+
+  if (patch.mixer?.type === 'updateChannel') {
+    if (patch.mixer.patch.pan !== undefined) {
+      const pan = patch.mixer.patch.pan;
+      if (typeof pan !== 'number' || !Number.isFinite(pan) || pan < 0 || pan > 1) {
+        return {
+          valid: false,
+          reason: `Mixer channel pan must be a finite number between 0 and 1, got ${String(pan)}`,
+        };
+      }
+    }
+    if (patch.mixer.patch.stereoPanMode !== undefined) {
+      if (!isValidStereoPanMode(patch.mixer.patch.stereoPanMode)) {
+        return {
+          valid: false,
+          reason: `Mixer channel stereoPanMode must be balance, stereoPan, or dualPan, got ${String(patch.mixer.patch.stereoPanMode)}`,
+        };
+      }
+    }
+    if (patch.mixer.patch.panWidth !== undefined) {
+      const width = patch.mixer.patch.panWidth;
+      if (typeof width !== 'number' || !Number.isFinite(width) || width < 0 || width > 1) {
+        return {
+          valid: false,
+          reason: `Mixer channel panWidth must be a finite number between 0 and 1, got ${String(width)}`,
+        };
+      }
+    }
+    if (patch.mixer.patch.dualPanLeft !== undefined) {
+      const left = patch.mixer.patch.dualPanLeft;
+      if (typeof left !== 'number' || !Number.isFinite(left) || left < 0 || left > 1) {
+        return {
+          valid: false,
+          reason: `Mixer channel dualPanLeft must be a finite number between 0 and 1, got ${String(left)}`,
+        };
+      }
+    }
+    if (patch.mixer.patch.dualPanRight !== undefined) {
+      const right = patch.mixer.patch.dualPanRight;
+      if (typeof right !== 'number' || !Number.isFinite(right) || right < 0 || right > 1) {
+        return {
+          valid: false,
+          reason: `Mixer channel dualPanRight must be a finite number between 0 and 1, got ${String(right)}`,
+        };
+      }
     }
   }
 

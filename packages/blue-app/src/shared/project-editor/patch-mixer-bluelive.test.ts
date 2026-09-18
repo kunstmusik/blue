@@ -448,4 +448,129 @@ describe('mixer duplicate/paste identity adoption through project history (T119)
       expect(live().getMixer().isEnableMeters()).toBe(false);
     });
   });
+
+  describe('channel stereo panning patches (T029, T030, T033)', () => {
+    it('applies stereo pan fields and returns true on change, false on no-op', () => {
+      const { data, channelId } = createMixerProject();
+      const channel = data.getMixer().getChannels()[0]!;
+      expect(channel.getStereoPanMode()).toBe('balance');
+      expect(channel.getPanWidth()).toBe(1.0);
+      expect(channel.getDualPanLeft()).toBe(0.0);
+      expect(channel.getDualPanRight()).toBe(1.0);
+
+      // Same value no-op
+      expect(
+        applyProjectDocumentPatch(data, {
+          mixer: { type: 'updateChannel', channelId, patch: { stereoPanMode: 'balance' } },
+        }),
+      ).toBe(false);
+
+      // Change mode
+      expect(
+        applyProjectDocumentPatch(data, {
+          mixer: { type: 'updateChannel', channelId, patch: { stereoPanMode: 'stereoPan' } },
+        }),
+      ).toBe(true);
+      expect(channel.getStereoPanMode()).toBe('stereoPan');
+
+      // Change width
+      expect(
+        applyProjectDocumentPatch(data, {
+          mixer: { type: 'updateChannel', channelId, patch: { panWidth: 0.6 } },
+        }),
+      ).toBe(true);
+      expect(channel.getPanWidth()).toBe(0.6);
+
+      // Change dual left and right
+      expect(
+        applyProjectDocumentPatch(data, {
+          mixer: {
+            type: 'updateChannel',
+            channelId,
+            patch: { dualPanLeft: 0.3, dualPanRight: 0.7 },
+          },
+        }),
+      ).toBe(true);
+      expect(channel.getDualPanLeft()).toBe(0.3);
+      expect(channel.getDualPanRight()).toBe(0.7);
+
+      // Invalid range throws and leaves channel intact
+      expect(() =>
+        applyProjectDocumentPatch(data, {
+          mixer: { type: 'updateChannel', channelId, patch: { panWidth: 2.0 } },
+        }),
+      ).toThrow();
+      expect(channel.getPanWidth()).toBe(0.6);
+    });
+
+    it('round-trips stereo pan patches through ProjectHistory with semantic labels', async () => {
+      const { data, channelId } = createMixerProject();
+      const { history, context, docId, live } = setupHistory(data);
+
+      const targetChannel = () => live().getMixer().getChannels()[0]!;
+      expect(targetChannel().getStereoPanMode()).toBe('balance');
+      expect(targetChannel().getPanWidth()).toBe(1.0);
+
+      // Commit Set Channel Pan Mode
+      const commitMode = await history.commit(
+        context.nextCommitRequest(docId, 0, 'Set Channel Pan Mode', [
+          { mixer: { type: 'updateChannel', channelId, patch: { stereoPanMode: 'stereoPan' } } },
+        ]),
+      );
+      expect(commitMode.status).toBe('committed');
+      expect(targetChannel().getStereoPanMode()).toBe('stereoPan');
+
+      // Commit Set Channel Pan Width
+      const commitWidth = await history.commit(
+        context.nextCommitRequest(docId, 1, 'Set Channel Pan Width', [
+          { mixer: { type: 'updateChannel', channelId, patch: { panWidth: 0.5 } } },
+        ]),
+      );
+      expect(commitWidth.status).toBe('committed');
+      expect(targetChannel().getPanWidth()).toBe(0.5);
+
+      // Commit Set Channel Left Pan
+      const commitLeft = await history.commit(
+        context.nextCommitRequest(docId, 2, 'Set Channel Left Pan', [
+          { mixer: { type: 'updateChannel', channelId, patch: { dualPanLeft: 0.25 } } },
+        ]),
+      );
+      expect(commitLeft.status).toBe('committed');
+      expect(targetChannel().getDualPanLeft()).toBe(0.25);
+
+      // Commit Set Channel Right Pan
+      const commitRight = await history.commit(
+        context.nextCommitRequest(docId, 3, 'Set Channel Right Pan', [
+          { mixer: { type: 'updateChannel', channelId, patch: { dualPanRight: 0.75 } } },
+        ]),
+      );
+      expect(commitRight.status).toBe('committed');
+      expect(targetChannel().getDualPanRight()).toBe(0.75);
+
+      // Undo Right Pan
+      const undoRight = await history.undo(context.nextUndoRequest(docId, 4));
+      expect(undoRight.status).toBe('committed');
+      expect(targetChannel().getDualPanRight()).toBe(1.0);
+
+      // Undo Left Pan
+      const undoLeft = await history.undo(context.nextUndoRequest(docId, 5));
+      expect(undoLeft.status).toBe('committed');
+      expect(targetChannel().getDualPanLeft()).toBe(0.0);
+
+      // Undo Width
+      const undoWidth = await history.undo(context.nextUndoRequest(docId, 6));
+      expect(undoWidth.status).toBe('committed');
+      expect(targetChannel().getPanWidth()).toBe(1.0);
+
+      // Undo Mode
+      const undoMode = await history.undo(context.nextUndoRequest(docId, 7));
+      expect(undoMode.status).toBe('committed');
+      expect(targetChannel().getStereoPanMode()).toBe('balance');
+
+      // Redo Mode
+      const redoMode = await history.redo(context.nextRedoRequest(docId, 8));
+      expect(redoMode.status).toBe('committed');
+      expect(targetChannel().getStereoPanMode()).toBe('stereoPan');
+    });
+  });
 });

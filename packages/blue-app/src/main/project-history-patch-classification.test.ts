@@ -176,6 +176,9 @@ describe('Exhaustive project patch preparation classification (T018)', () => {
 
     it('classifies every score patch variant as structural', () => {
       const fixtures: Array<{ type: keyof typeof SCORE_PATCH_PREPARATION_CLASS }> = [
+        { type: 'updateScorePanning' },
+        { type: 'updateScorePanLaw' },
+        { type: 'updateScorePanBoost' },
         { type: 'addLayer' },
         { type: 'addLayerGroup' },
         { type: 'addMarker' },
@@ -325,13 +328,37 @@ describe('Exhaustive project patch preparation classification (T018)', () => {
 
     it('classifies every mixer channel field so only captured fields take the scalar path', () => {
       expect(Object.keys(MIXER_CHANNEL_FIELD_PREPARATION_CLASS).sort()).toEqual(
-        ['level', 'muted', 'name', 'outChannel', 'pan', 'solo', 'volume'].sort(),
+        [
+          'level',
+          'muted',
+          'name',
+          'outChannel',
+          'pan',
+          'solo',
+          'volume',
+          'stereoPanMode',
+          'panWidth',
+          'dualPanLeft',
+          'dualPanRight',
+        ].sort(),
       );
 
       const scalarFields = Object.entries(MIXER_CHANNEL_FIELD_PREPARATION_CLASS)
         .filter(([, classification]) => classification === 'scalar')
         .map(([key]) => key);
-      expect(scalarFields.sort()).toEqual(['level', 'muted', 'pan', 'solo', 'volume'].sort());
+      expect(scalarFields.sort()).toEqual(
+        [
+          'level',
+          'muted',
+          'pan',
+          'solo',
+          'volume',
+          'stereoPanMode',
+          'panWidth',
+          'dualPanLeft',
+          'dualPanRight',
+        ].sort(),
+      );
 
       // Identity and routing fields must never take the scalar path.
       expect(

@@ -511,6 +511,25 @@ const cases: RoundTripCase[] = [
   },
   {
     family: 'mixer',
+    type: 'updateChannel.stereoPan',
+    patches: (data) => [
+      {
+        mixer: {
+          type: 'updateChannel',
+          channelId: getMixerChannelSnapshotId(data.getMixer().getChannels()[0]!),
+          patch: {
+            stereoPanMode: 'stereoPan',
+            panWidth: 0.8,
+            dualPanLeft: 0.2,
+            dualPanRight: 0.9,
+          },
+        },
+      },
+    ],
+    identity: (data) => mixerChannelEntryId(data),
+  },
+  {
+    family: 'mixer',
     type: 'renameChannelListGroup',
     patches: () => [
       { mixer: { type: 'renameChannelListGroup', association: '1', name: 'Synth Group' } },
@@ -1193,6 +1212,24 @@ const cases: RoundTripCase[] = [
     family: 'score',
     type: 'updateScorePanning',
     patches: () => [{ score: { type: 'updateScorePanning', panningEnabled: false } }],
+    identity: (data) => ({
+      groupId: groupId(data),
+      channelId: mixerChannelEntryId(data),
+    }),
+  },
+  {
+    family: 'score',
+    type: 'updateScorePanLaw',
+    patches: () => [{ score: { type: 'updateScorePanLaw', panLawDb: -6 } }],
+    identity: (data) => ({
+      groupId: groupId(data),
+      channelId: mixerChannelEntryId(data),
+    }),
+  },
+  {
+    family: 'score',
+    type: 'updateScorePanBoost',
+    patches: () => [{ score: { type: 'updateScorePanBoost', panOffCenterBoost: true } }],
     identity: (data) => ({
       groupId: groupId(data),
       channelId: mixerChannelEntryId(data),

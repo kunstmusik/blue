@@ -12,7 +12,10 @@ export type {
   CompiledMixerGateBinding,
   CompiledMixerGateBindings,
   CompiledMixerGateLocator,
+  CompiledChannelPannerBinding,
+  CompiledPannerBindings,
 } from './compile-data';
+
 export type { TrackLayerMuteSoloMode } from './score/score';
 export { isTrackLayerMuteSoloMode } from './score/score';
 export { hasLegacyMixerStateAtLoad, markLegacyMixerStateAtLoad } from './blue-data/xml-policy';
@@ -596,9 +599,39 @@ export {
   EQUAL_POWER_CENTER_GAIN,
   isValidPan,
   clampPan,
+  PAN_LAW_VALUES,
+  DEFAULT_PAN_LAW_DB,
+  DEFAULT_PAN_OFF_CENTER_BOOST,
+  isValidPanLawDb,
+  clampPanLawDb,
+  STEREO_PAN_MODES,
+  DEFAULT_STEREO_PAN_MODE,
+  isValidStereoPanMode,
+  clampStereoPanMode,
+  stereoPanModeToNumber,
+  numberToStereoPanMode,
+  DEFAULT_PAN_WIDTH,
+  MIN_PAN_WIDTH,
+  MAX_PAN_WIDTH,
+  isValidPanWidth,
+  clampPanWidth,
+  DEFAULT_DUAL_PAN_LEFT,
+  DEFAULT_DUAL_PAN_RIGHT,
+  isValidDualPan,
+  clampDualPan,
+  PARAM_PAN,
+  PARAM_WIDTH,
+  PARAM_DUAL_LEFT,
+  PARAM_DUAL_RIGHT,
+  getSourceLegGains,
   getMonoPanGains,
   getStereoBalanceGains,
+  calculateStereoPanEffectiveSpread,
+  getStereoPanGains,
+  getDualPanGains,
 } from './mixer/channel-pan';
+export type { PanLawDb, StereoPanMode } from './mixer/channel-pan';
+
 export {
   createAudioLayoutManifest,
   hasEnabledStereoGeneratingEffect,

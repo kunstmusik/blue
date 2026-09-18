@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-
-import type { JavaRuntimeClientContract, JavaScriptSession } from '@blue/data';
+import {
+  BlueData,
+  Channel,
+  type JavaRuntimeClientContract,
+  type JavaScriptSession,
+} from '@blue/data';
 
 import { generateDiskCsdForScreen, generateRealtimeCsdForScreen } from './csd-generation';
 
@@ -121,5 +125,25 @@ describe('screen CSD generation', () => {
 
     await generateRealtimeCsdForScreen(realtimeMock, session, runtimeClient, manifest);
     expect(realtimeMock.toCSDAsync).toHaveBeenCalledWith(session, runtimeClient, manifest);
+  });
+
+  it('generates screen CSD with score pan law and boost across disk and realtime profiles (T018)', async () => {
+    const data = new BlueData();
+    data.getScore().panningEnabled = true;
+    data.getScore().panLawDb = -6;
+    data.getScore().panOffCenterBoost = true;
+    data.getMixer().setEnabled(true);
+
+    const ch = new Channel();
+    ch.setName('Track 1');
+    ch.setPan(0.5);
+    data.getMixer().getChannels().push(ch);
+
+    const diskCsd = await generateDiskCsdForScreen(data, {} as JavaScriptSession, null);
+    const rtCsd = await generateRealtimeCsdForScreen(data, {} as JavaScriptSession, null);
+
+    expect(diskCsd).toContain('<CsoundSynthesizer>');
+    expect(rtCsd).toContain('<CsoundSynthesizer>');
+    expect(rtCsd).toContain('k_bal_l = min(1, 2 * (1 -');
   });
 });

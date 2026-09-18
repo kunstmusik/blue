@@ -71,19 +71,36 @@ interface TrackSpec {
 
 const MASTER_CHANNEL_PARAM_ID = 'param-438380a1-1fe6-4f65-907c-d6abbdd87a38';
 const MASTER_PAN_PARAM_ID = 'param-86cca30f-105b-42b4-b8f9-80d0cc0c420b';
+const MASTER_PAN_WIDTH_PARAM_ID = 'param-f086131c-4560-4b55-9ba5-1f5f548d1d1d';
+const MASTER_DUAL_LEFT_PARAM_ID = 'param-55bf952f-81d8-4d41-b445-f62a221b888e';
+const MASTER_DUAL_RIGHT_PARAM_ID = 'param-e1ec72b2-ef39-49a4-bd5b-03c8b977a851';
 
-const CHANNELS: { name: string; association: string; paramId: string; panParamId: string }[] = [
+const CHANNELS: {
+  name: string;
+  association: string;
+  paramId: string;
+  panParamId: string;
+  panWidthParamId: string;
+  dualLeftParamId: string;
+  dualRightParamId: string;
+}[] = [
   {
     name: 'E Piano',
     association: '313b80ef-a098-404e-b957-cc88ac030af5',
     paramId: 'param-ce1aee0b-fa2f-4a0c-b904-2ca5e04ba003',
     panParamId: 'param-a5bcdedf-858a-48c6-ba06-5be56f2ba294',
+    panWidthParamId: 'param-53255ed8-17f8-4d79-b1c8-95c56ddeaebf',
+    dualLeftParamId: 'param-6756cfc1-28a9-4dba-85be-af6240dc1bef',
+    dualRightParamId: 'param-3029fa9c-b0da-48a6-a504-4c09a5d03cff',
   },
   {
     name: 'Bass',
     association: '1fef7747-e706-4786-a1aa-ac20b50b6f8e',
     paramId: 'param-dd9aa36b-32f6-409f-b008-facd522022e5',
     panParamId: 'param-c784e5b2-072b-49cf-a63c-21a877fd6f7c',
+    panWidthParamId: 'param-eb8ede63-df89-4fb1-8c27-f9ec671e89f8',
+    dualLeftParamId: 'param-0b18231e-e469-4ac9-acec-b58ace6fce14',
+    dualRightParamId: 'param-5b4531ab-e574-428b-8788-c5b58f997aa9',
   },
 ];
 
@@ -968,6 +985,9 @@ function buildChannel(
   association: string,
   paramId: string,
   panParamId: string,
+  panWidthParamId: string,
+  dualLeftParamId: string,
+  dualRightParamId: string,
 ): Channel {
   const channel = new Channel();
   channel.setName(name);
@@ -975,6 +995,9 @@ function buildChannel(
   channel.setAssociation(association);
   channel.getLevelParameter().setUniqueId(paramId);
   channel.getPanParameter().setUniqueId(panParamId);
+  channel.getPanWidthParameter().setUniqueId(panWidthParamId);
+  channel.getDualPanLeftParameter().setUniqueId(dualLeftParamId);
+  channel.getDualPanRightParameter().setUniqueId(dualRightParamId);
   return channel;
 }
 
@@ -1050,10 +1073,23 @@ export function buildBlueX7PopSongProject(): BlueData {
   for (const channel of CHANNELS) {
     mixer
       .getChannels()
-      .push(buildChannel(channel.name, channel.association, channel.paramId, channel.panParamId));
+      .push(
+        buildChannel(
+          channel.name,
+          channel.association,
+          channel.paramId,
+          channel.panParamId,
+          channel.panWidthParamId,
+          channel.dualLeftParamId,
+          channel.dualRightParamId,
+        ),
+      );
   }
   mixer.getMaster().getLevelParameter().setUniqueId(MASTER_CHANNEL_PARAM_ID);
   mixer.getMaster().getPanParameter().setUniqueId(MASTER_PAN_PARAM_ID);
+  mixer.getMaster().getPanWidthParameter().setUniqueId(MASTER_PAN_WIDTH_PARAM_ID);
+  mixer.getMaster().getDualPanLeftParameter().setUniqueId(MASTER_DUAL_LEFT_PARAM_ID);
+  mixer.getMaster().getDualPanRightParameter().setUniqueId(MASTER_DUAL_RIGHT_PARAM_ID);
 
   return data;
 }

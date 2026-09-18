@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BlueData } from '../blue-data';
+import { Channel } from '../mixer/channel';
 
 /**
  * Spec 112 T074/T028/T031: the score panning setting is additive XML. New
@@ -87,5 +88,73 @@ describe('xml-policy score panning compatibility (Spec 112)', () => {
     const reopened = BlueData.loadFromString(xml);
     expect(reopened.getScore().panningEnabled).toBe(true);
     expect(reopened.saveToString()).toContain('<legacyPanningPlugin>keep-me</legacyPanningPlugin>');
+  });
+
+  describe('xml-policy pan laws, boost, and channel stereo compatibility (Spec 113 T038, T042)', () => {
+    it('falls back to default -3 dB and unboosted when score attributes are absent', () => {
+      const xml = new BlueData()
+        .saveToString()
+        .replace(/ panLawDb="[^"]*"/, '')
+        .replace(/ panOffCenterBoost="[^"]*"/, '');
+      const data = BlueData.loadFromString(xml);
+      expect(data.getScore().panLawDb).toBe(-3);
+      expect(data.getScore().panOffCenterBoost).toBe(false);
+    });
+
+    it('falls back to default -3 dB and unboosted when score attributes are invalid', () => {
+      const xml = new BlueData()
+        .saveToString()
+        .replace(/ panLawDb="[^"]*"/, ' panLawDb="-5"')
+        .replace(/ panOffCenterBoost="[^"]*"/, ' panOffCenterBoost="invalid"');
+      const data = BlueData.loadFromString(xml);
+      expect(data.getScore().panLawDb).toBe(-3);
+      expect(data.getScore().panOffCenterBoost).toBe(false);
+    });
+
+    it('falls back to balance and default scalars when channel stereo tags are missing', () => {
+      const data = new BlueData();
+      const ch = new Channel();
+      ch.setName('TestChan');
+      ch.setStereoPanMode('stereoPan');
+      ch.setPanWidth(0.7);
+      ch.setDualPanLeft(0.2);
+      ch.setDualPanRight(0.8);
+      data.getMixer().getChannels().push(ch);
+
+      const xml = data
+        .saveToString()
+        .replace(/<stereoPanMode>.*?<\/stereoPanMode>/g, '')
+        .replace(/<panWidth>.*?<\/panWidth>/g, '')
+        .replace(/<dualPanLeft>.*?<\/dualPanLeft>/g, '')
+        .replace(/<dualPanRight>.*?<\/dualPanRight>/g, '');
+
+      const loaded = BlueData.loadFromString(xml);
+      const loadedCh = loaded.getMixer().getChannels()[0]!;
+      expect(loadedCh.getStereoPanMode()).toBe('balance');
+      expect(loadedCh.getPanWidth()).toBe(1.0);
+      expect(loadedCh.getDualPanLeft()).toBe(0.0);
+      expect(loadedCh.getDualPanRight()).toBe(1.0);
+    });
+
+    it('falls back safely when channel stereo tags contain invalid values', () => {
+      const data = new BlueData();
+      const ch = new Channel();
+      ch.setName('TestChan');
+      data.getMixer().getChannels().push(ch);
+
+      const xml = data
+        .saveToString()
+        .replace(/<stereoPanMode>.*?<\/stereoPanMode>/g, '<stereoPanMode>surround</stereoPanMode>')
+        .replace(/<panWidth>.*?<\/panWidth>/g, '<panWidth>2.5</panWidth>')
+        .replace(/<dualPanLeft>.*?<\/dualPanLeft>/g, '<dualPanLeft>-0.5</dualPanLeft>')
+        .replace(/<dualPanRight>.*?<\/dualPanRight>/g, '<dualPanRight>NaN</dualPanRight>');
+
+      const loaded = BlueData.loadFromString(xml);
+      const loadedCh = loaded.getMixer().getChannels()[0]!;
+      expect(loadedCh.getStereoPanMode()).toBe('balance');
+      expect(loadedCh.getPanWidth()).toBe(1.0);
+      expect(loadedCh.getDualPanLeft()).toBe(0.0);
+      expect(loadedCh.getDualPanRight()).toBe(1.0);
+    });
   });
 });

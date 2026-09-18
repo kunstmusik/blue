@@ -227,4 +227,28 @@ describe('pan/balance stage interaction with gates (Spec 112 T072)', () => {
       /ga_bluemix_0_0 = ga_bluemix_0_0 \* kMixGateState_1\n\s*ga_bluemix_0_1 = ga_bluemix_0_1 \* kMixGateState_1\n\s*ga_bluesub_Master_0\t\+=\tga_bluemix_0_0/,
     );
   });
+
+  it('applies Stereo Pan and Dual Pan matrices between send taps and output gates on sources and subchannels (Spec 113 T020)', () => {
+    const { data, manifest } = createGatedPanningProject();
+    const source = data.getMixer().getChannels()[0]!;
+    source.setPan(0.25);
+
+    const sub = data.getMixer().getSubChannels()[0]!;
+    sub.setStereoPanMode('dualPan');
+    sub.setDualPanLeft(0.1);
+    sub.setDualPanRight(0.9);
+
+    const result = data.toRealtimePlaybackCSD(undefined, false, manifest);
+    const csd = result.csdText;
+
+    // Verified mono source uses Mono Pan: Send tap -> k_pan_l/r -> output gate
+    expect(csd).toMatch(
+      /ga_bluesub_Reverb_0\t\+=\t[\s\S]*k_pan_l = 1\.4142135623730951[\s\S]*ga_bluemix_0_0 = ga_bluemix_0_0 \* kMixGateState_1/,
+    );
+
+    // Subchannel uses Dual Pan 2x2 matrix: a_pan_in_l -> output gate
+    expect(csd).toMatch(
+      /a_pan_in_l = ga_bluesub_Reverb_0[\s\S]*ga_bluesub_Reverb_0 = ga_bluesub_Reverb_0 \* kMixGateState_2/,
+    );
+  });
 });

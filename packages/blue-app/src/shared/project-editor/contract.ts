@@ -24,6 +24,8 @@ import {
   Mixer,
   type MeterProfileKey,
   type TrackLayerMuteSoloMode,
+  type PanLawDb,
+  type StereoPanMode,
   isMeterProfileKey,
   isTrackLayerMuteSoloMode,
   DEFAULT_NEW_METER_ENABLED,
@@ -411,6 +413,8 @@ export interface ScoreDocumentSnapshot {
   layerGroups: ScoreLayerGroupSnapshot[];
   rootNoteProcessorChain?: NoteProcessorChainSnapshot;
   panningEnabled: boolean;
+  panLawDb: PanLawDb;
+  panOffCenterBoost: boolean;
 }
 
 // ─── Score Object Editor Target Types ───
@@ -808,6 +812,8 @@ export type PatternScorePatch =
 export type ScorePatch =
   | { type: 'updateTrackLayerMuteSoloMode'; mode: TrackLayerMuteSoloMode }
   | { type: 'updateScorePanning'; panningEnabled: boolean }
+  | { type: 'updateScorePanLaw'; panLawDb: PanLawDb }
+  | { type: 'updateScorePanBoost'; panOffCenterBoost: boolean }
   | TrackScorePatch
   | PatternScorePatch
   | { type: 'updateTimeState'; patch: Partial<ScoreTimeStateSnapshot> }
@@ -1446,6 +1452,10 @@ export interface MixerChannelSnapshot {
   /** Derived: at least one send route of this channel survives solo filtering. */
   hasIncludedSend?: boolean;
   positionMode?: ChannelPositionMode;
+  stereoPanMode?: StereoPanMode;
+  panWidth?: number;
+  dualPanLeft?: number;
+  dualPanRight?: number;
 }
 
 /**
@@ -1491,6 +1501,10 @@ export interface MixerChannelEditableFields {
   level: number;
   volume: number;
   pan: number;
+  stereoPanMode?: StereoPanMode;
+  panWidth?: number;
+  dualPanLeft?: number;
+  dualPanRight?: number;
 }
 
 export interface EffectEditablePatch {
@@ -1885,6 +1899,8 @@ export const SCORE_PATCH_PREPARATION_CLASS: Readonly<
   Record<ScorePatch['type'], ProjectPatchPreparationClass>
 > = {
   updateScorePanning: 'structural',
+  updateScorePanLaw: 'structural',
+  updateScorePanBoost: 'structural',
   addLayer: 'structural',
   addLayerGroup: 'structural',
   addMarker: 'structural',
@@ -1979,6 +1995,10 @@ export const MIXER_CHANNEL_FIELD_PREPARATION_CLASS: Readonly<
   level: 'scalar',
   volume: 'scalar',
   pan: 'scalar',
+  stereoPanMode: 'scalar',
+  panWidth: 'scalar',
+  dualPanLeft: 'scalar',
+  dualPanRight: 'scalar',
 };
 
 export const ORCHESTRA_PATCH_PREPARATION_CLASS: Readonly<

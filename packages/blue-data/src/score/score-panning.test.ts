@@ -68,3 +68,93 @@ describe('Score panningEnabled configuration and serialization (T027, T028)', ()
     expect(data.getScore().panningEnabled).toBe(false);
   });
 });
+
+describe('Score panLawDb and panOffCenterBoost configuration and serialization (T010, T013)', () => {
+  it('defaults to -3 dB and boost false on newly created Score', () => {
+    const score = new Score();
+    expect(score.panLawDb).toBe(-3);
+    expect(score.panOffCenterBoost).toBe(false);
+  });
+
+  it('preserves panLawDb and panOffCenterBoost across deepCopy', () => {
+    const score = new Score();
+    score.panLawDb = -6;
+    score.panOffCenterBoost = true;
+    score.panningEnabled = false;
+
+    const copy = score.deepCopy();
+    expect(copy.panLawDb).toBe(-6);
+    expect(copy.panOffCenterBoost).toBe(true);
+    expect(copy.panningEnabled).toBe(false);
+
+    score.panLawDb = -4.5;
+    score.panOffCenterBoost = false;
+    const copy2 = score.deepCopy();
+    expect(copy2.panLawDb).toBe(-4.5);
+    expect(copy2.panOffCenterBoost).toBe(false);
+  });
+
+  it('serializes panLawDb and panOffCenterBoost as attributes on score element', () => {
+    const score = new Score();
+    score.panLawDb = -6;
+    score.panOffCenterBoost = true;
+    const xml = score.saveAsXML();
+    expect(xml.getAttribute('panLawDb')).toBe('-6');
+    expect(xml.getAttribute('panOffCenterBoost')).toBe('true');
+
+    score.panLawDb = 0;
+    score.panOffCenterBoost = false;
+    const xml2 = score.saveAsXML();
+    expect(xml2.getAttribute('panLawDb')).toBe('0');
+    expect(xml2.getAttribute('panOffCenterBoost')).toBe('false');
+  });
+
+  it('loads absent panLawDb and panOffCenterBoost with defaults', () => {
+    const elem = new Element('score');
+    const loaded = Score.loadFromXML(elem);
+    expect(loaded.panLawDb).toBe(-3);
+    expect(loaded.panOffCenterBoost).toBe(false);
+  });
+
+  it('loads invalid panLawDb values with default fallback', () => {
+    for (const invalid of ['-1', '-5', 'foo', '', 'null', '3']) {
+      const elem = new Element('score');
+      elem.setAttribute('panLawDb', invalid);
+      const loaded = Score.loadFromXML(elem);
+      expect(loaded.panLawDb).toBe(-3);
+    }
+  });
+
+  it('loads invalid panOffCenterBoost values as false', () => {
+    for (const invalid of ['1', 'yes', 'enabled', '', 'null']) {
+      const elem = new Element('score');
+      elem.setAttribute('panOffCenterBoost', invalid);
+      const loaded = Score.loadFromXML(elem);
+      expect(loaded.panOffCenterBoost).toBe(false);
+    }
+  });
+
+  it('loads explicit valid panLawDb and panOffCenterBoost values', () => {
+    for (const law of ['0', '-3', '-4.5', '-6']) {
+      const elem = new Element('score');
+      elem.setAttribute('panLawDb', law);
+      elem.setAttribute('panOffCenterBoost', 'true');
+      const loaded = Score.loadFromXML(elem);
+      expect(loaded.panLawDb).toBe(Number(law));
+      expect(loaded.panOffCenterBoost).toBe(true);
+    }
+  });
+
+  it('preserves pan law and boost settings even when panningEnabled is false', () => {
+    const score = new Score();
+    score.panningEnabled = false;
+    score.panLawDb = -4.5;
+    score.panOffCenterBoost = true;
+
+    const xml = score.saveAsXML();
+    const loaded = Score.loadFromXML(xml);
+    expect(loaded.panningEnabled).toBe(false);
+    expect(loaded.panLawDb).toBe(-4.5);
+    expect(loaded.panOffCenterBoost).toBe(true);
+  });
+});

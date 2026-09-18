@@ -36,6 +36,34 @@ describe('mixer patch action labels (T023)', () => {
       mixerPatchActionLabel({
         type: 'updateChannel',
         channelId: 'Master',
+        patch: { stereoPanMode: 'stereoPan' },
+      } satisfies MixerPatch),
+    ).toBe('Set Channel Pan Mode');
+    expect(
+      mixerPatchActionLabel({
+        type: 'updateChannel',
+        channelId: 'Master',
+        patch: { panWidth: 0.8 },
+      } satisfies MixerPatch),
+    ).toBe('Set Channel Pan Width');
+    expect(
+      mixerPatchActionLabel({
+        type: 'updateChannel',
+        channelId: 'Master',
+        patch: { dualPanLeft: 0.2 },
+      } satisfies MixerPatch),
+    ).toBe('Set Channel Left Pan');
+    expect(
+      mixerPatchActionLabel({
+        type: 'updateChannel',
+        channelId: 'Master',
+        patch: { dualPanRight: 0.9 },
+      } satisfies MixerPatch),
+    ).toBe('Set Channel Right Pan');
+    expect(
+      mixerPatchActionLabel({
+        type: 'updateChannel',
+        channelId: 'Master',
         patch: { muted: true },
       } satisfies MixerPatch),
     ).toBe('Mute Channel');

@@ -4,6 +4,11 @@ import { Tables } from './tables';
 import { Channel } from './mixer/channel';
 import { Parameter } from './automation/parameter';
 import type { AudioLayoutManifest } from './score/audio/audio-layout';
+import {
+  DEFAULT_PAN_LAW_DB,
+  DEFAULT_PAN_OFF_CENTER_BOOST,
+  type PanLawDb,
+} from './mixer/channel-pan';
 
 interface StringChannelEntry {
   objectName: string;
@@ -119,6 +124,36 @@ export interface CompiledMixerGateBindings {
   readonly gates: readonly CompiledMixerGateBinding[];
 }
 
+/**
+ * Disposable compiled mixer channel panner binding (Spec 113).
+ * Describes runtime panner bindings for one channel in a compiled CSD snapshot:
+ * mode channel name, Width, Dual Left, and Dual Right compilation variable names.
+ * Derived render output only; never serialized into `.blue` XML.
+ */
+export interface CompiledChannelPannerBinding {
+  readonly channelIdentity: string;
+  readonly channelOrdinal: number;
+  readonly channelKind: 'source' | 'sub' | 'master';
+  readonly modeChannel: string;
+  readonly widthVar?: string;
+  readonly dualLeftVar?: string;
+  readonly dualRightVar?: string;
+}
+
+/**
+ * Disposable compiled panner bindings catalog (Spec 113).
+ * Connects compile-time CSD score law, boost, and channel mode channels
+ * to generation-scoped engine channel writes.
+ * Derived render output only; never serialized into `.blue` XML.
+ */
+export interface CompiledPannerBindings {
+  /** Deterministic topology signature; live edits with a different topology are stale. */
+  readonly signature: string;
+  readonly scoreLawChannel: string;
+  readonly scoreBoostChannel: string;
+  readonly channels: readonly CompiledChannelPannerBinding[];
+}
+
 /** Render-scoped registry key for compiled BlueX7 bindings. */
 export const BLUE_X7_BINDINGS_KEY = Symbol('blueX7.bindings');
 
@@ -136,6 +171,8 @@ export class CompileData {
   // supplies the project setting, so direct output is the safe default.
   private mixerEnabled = false;
   private panningEnabled = false;
+  private panLawDb: PanLawDb = DEFAULT_PAN_LAW_DB;
+  private panOffCenterBoost = DEFAULT_PAN_OFF_CENTER_BOOST;
   private audioLayoutManifest: AudioLayoutManifest | null = null;
   private nchnls = 2;
   private nextParameterIndex = 0;
@@ -184,6 +221,22 @@ export class CompileData {
 
   setPanningEnabled(enabled: boolean): void {
     this.panningEnabled = enabled;
+  }
+
+  getPanLawDb(): PanLawDb {
+    return this.panLawDb;
+  }
+
+  setPanLawDb(lawDb: PanLawDb): void {
+    this.panLawDb = lawDb;
+  }
+
+  isPanOffCenterBoost(): boolean {
+    return this.panOffCenterBoost;
+  }
+
+  setPanOffCenterBoost(boost: boolean): void {
+    this.panOffCenterBoost = boost;
   }
 
   getAudioLayoutManifest(): AudioLayoutManifest | null {

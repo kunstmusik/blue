@@ -122,4 +122,43 @@ describe('deterministic audio fixtures for mono clip panning (T002)', () => {
     expect(mRightL).toBeCloseTo(0.0, 6);
     expect(mRightR * EQUAL_POWER_CENTER_GAIN).toBeCloseTo(1.0, 6);
   });
+
+  it('builds deterministic left-only, right-only, correlated stereo, and verifies intermediate positions (T002)', () => {
+    // Left-only fixture
+    const leftOnlyBytes = buildPcmWavWithSamples(2, 44100, 100, [1.0, 0.0]);
+    const leftMeta = parseAudioFileMetadata(leftOnlyBytes);
+    expect(leftMeta.channels).toBe(2);
+
+    // Right-only fixture
+    const rightOnlyBytes = buildPcmWavWithSamples(2, 44100, 100, [0.0, 1.0]);
+    const rightMeta = parseAudioFileMetadata(rightOnlyBytes);
+    expect(rightMeta.channels).toBe(2);
+
+    // Correlated stereo fixture
+    const correlatedBytes = buildPcmWavWithSamples(2, 44100, 100, [0.707, 0.707]);
+    const corrMeta = parseAudioFileMetadata(correlatedBytes);
+    expect(corrMeta.channels).toBe(2);
+
+    // Check intermediate positions for default equal-power mono pan
+    const [q1L, q1R] = getMonoPanGains(0.25);
+    expect(q1L * EQUAL_POWER_CENTER_GAIN).toBeCloseTo(Math.cos(Math.PI / 8), 5);
+    expect(q1R * EQUAL_POWER_CENTER_GAIN).toBeCloseTo(Math.sin(Math.PI / 8), 5);
+
+    const [q3L, q3R] = getMonoPanGains(0.75);
+    expect(q3L * EQUAL_POWER_CENTER_GAIN).toBeCloseTo(Math.cos((3 * Math.PI) / 8), 5);
+    expect(q3R * EQUAL_POWER_CENTER_GAIN).toBeCloseTo(Math.sin((3 * Math.PI) / 8), 5);
+
+    // Symmetry check: left at 0.25 equals right at 0.75
+    expect(q1L).toBeCloseTo(q3R, 6);
+    expect(q1R).toBeCloseTo(q3L, 6);
+
+    // Balance intermediate positions: linear ramp with no crossfeed
+    const [balQ1L, balQ1R] = getStereoBalanceGains(0.25);
+    expect(balQ1L).toBe(1.0);
+    expect(balQ1R).toBe(0.5);
+
+    const [balQ3L, balQ3R] = getStereoBalanceGains(0.75);
+    expect(balQ3L).toBe(0.5);
+    expect(balQ3R).toBe(1.0);
+  });
 });

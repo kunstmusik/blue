@@ -18,6 +18,7 @@ import type {
   Arrangement,
   BlueData,
   CompiledBlueX7Binding,
+  CompiledPannerBindings,
   EffectsChain,
   Mixer,
   Parameter,
@@ -104,6 +105,7 @@ export function buildRuntimeBindingRegistry(
   data: BlueData,
   compiledParameters?: readonly Parameter[],
   blueX7Bindings?: readonly CompiledBlueX7Binding[],
+  pannerBindings?: CompiledPannerBindings,
 ): Map<string, RuntimeBinding> {
   const registry = new Map<string, RuntimeBinding>();
 
@@ -184,6 +186,38 @@ export function buildRuntimeBindingRegistry(
         const panVar = resolveVarName(panParam);
         if (panVar) {
           registry.set(`${channelId}::pan`, { kind: 'channel', channel: panVar });
+        }
+      }
+      const panWidthParam = channel.getPanWidthParameter?.();
+      if (panWidthParam) {
+        const panWidthVar = resolveVarName(panWidthParam);
+        if (panWidthVar) {
+          registry.set(`${channelId}::panWidth`, { kind: 'channel', channel: panWidthVar });
+        }
+      }
+      const dualPanLeftParam = channel.getDualPanLeftParameter?.();
+      if (dualPanLeftParam) {
+        const dualPanLeftVar = resolveVarName(dualPanLeftParam);
+        if (dualPanLeftVar) {
+          registry.set(`${channelId}::dualPanLeft`, { kind: 'channel', channel: dualPanLeftVar });
+        }
+      }
+      const dualPanRightParam = channel.getDualPanRightParameter?.();
+      if (dualPanRightParam) {
+        const dualPanRightVar = resolveVarName(dualPanRightParam);
+        if (dualPanRightVar) {
+          registry.set(`${channelId}::dualPanRight`, { kind: 'channel', channel: dualPanRightVar });
+        }
+      }
+      if (pannerBindings) {
+        const pb = pannerBindings.channels.find(
+          (c) =>
+            c.channelIdentity === channelId ||
+            c.channelIdentity === channel.getAssociation().trim() ||
+            c.channelIdentity === channel.getName().trim(),
+        );
+        if (pb?.modeChannel) {
+          registry.set(`${channelId}::stereoPanMode`, { kind: 'channel', channel: pb.modeChannel });
         }
       }
 
@@ -351,6 +385,27 @@ export function buildRuntimeBindingRegistry(
       supportsUpdate: true,
       supportsDelete: true,
     });
+  }
+
+  // 6. Generation-scoped Panner Bindings
+  if (pannerBindings?.scoreLawChannel) {
+    registry.set('score::panLawDb', { kind: 'channel', channel: pannerBindings.scoreLawChannel });
+  }
+  if (pannerBindings?.scoreBoostChannel) {
+    registry.set('score::panOffCenterBoost', {
+      kind: 'channel',
+      channel: pannerBindings.scoreBoostChannel,
+    });
+  }
+  if (pannerBindings?.channels) {
+    for (const b of pannerBindings.channels) {
+      if (b.modeChannel && b.channelIdentity) {
+        registry.set(`${b.channelIdentity}::stereoPanMode`, {
+          kind: 'channel',
+          channel: b.modeChannel,
+        });
+      }
+    }
   }
 
   return registry;

@@ -162,4 +162,56 @@ describe('pan parameter enumeration (Spec 112 T073)', () => {
     const sourceBVolumeVar = disabledVars.get(sourceB.getLevelParameter().getUniqueId());
     expect(sourceBVolumeVar).toBe(`gk_blue_auto${sourceAPanIndex}`);
   });
+
+  describe('stereo pan parameter enumeration (Spec 113 T021)', () => {
+    it('enumerates Pan, Width, Dual Left, and Dual Right exactly once per source, sub, and master', () => {
+      const { mixer, sourceA, sourceB, sub } = createMixerFixture();
+      const parameters = getAllParameters(new Arrangement(), mixer, true);
+
+      const channels = [sourceA, sourceB, sub, mixer.getMaster()];
+      for (const name of ['Pan', 'Width', 'Dual Left', 'Dual Right']) {
+        const namedParams = parameters.filter((p) => p.getName() === name);
+        expect(namedParams).toHaveLength(channels.length);
+      }
+    });
+
+    it('enumerates mixer parameters in the exact Volume -> Pan -> Width -> Dual Left -> Dual Right order', () => {
+      const { mixer, sourceA, sourceB, sub } = createMixerFixture();
+      const parameters = getAllParameters(new Arrangement(), mixer, true);
+
+      const channels = [sourceA, sourceB, sub, mixer.getMaster()];
+      const expectedOrder = channels.flatMap((channel) => [
+        channel.getLevelParameter().getUniqueId(),
+        channel.getPanParameter().getUniqueId(),
+        channel.getPanWidthParameter().getUniqueId(),
+        channel.getDualPanLeftParameter().getUniqueId(),
+        channel.getDualPanRightParameter().getUniqueId(),
+      ]);
+
+      const mixerParamNames = new Set(['Volume', 'Pan', 'Width', 'Dual Left', 'Dual Right']);
+      const mixerOrder = parameters
+        .filter((p) => mixerParamNames.has(p.getName()))
+        .map((p) => p.getUniqueId());
+
+      expect(mixerOrder).toEqual(expectedOrder);
+    });
+
+    it('assigns deterministic compilation variables to Width, Dual Left, and Dual Right', () => {
+      const arrangement = createArrangementFixture();
+      const { mixer } = createMixerFixture();
+
+      const parameters = getAllParameters(arrangement, mixer, true);
+      assignParameterNames(parameters);
+
+      for (const name of ['Pan', 'Width', 'Dual Left', 'Dual Right']) {
+        const vars = parameters
+          .filter((p) => p.getName() === name)
+          .map((p) => p.getCompilationVarName());
+        expect(vars).toHaveLength(4);
+        for (const v of vars) {
+          expect(v).toMatch(/^gk_blue_auto\d+$/);
+        }
+      }
+    });
+  });
 });

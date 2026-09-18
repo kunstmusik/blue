@@ -9,7 +9,26 @@ import { BlueDataObject } from '../blue-data-object';
 import { Parameter } from '../automation/parameter';
 import type { CopyMode } from '../deep-copyable';
 import { writeDouble, writeBoolean } from '../utilities/xml';
-import { clampPan, isValidPan, DEFAULT_PAN } from './channel-pan';
+import {
+  clampPan,
+  isValidPan,
+  DEFAULT_PAN,
+  type StereoPanMode,
+  DEFAULT_STEREO_PAN_MODE,
+  isValidStereoPanMode,
+  clampStereoPanMode,
+  DEFAULT_PAN_WIDTH,
+  isValidPanWidth,
+  clampPanWidth,
+  DEFAULT_DUAL_PAN_LEFT,
+  DEFAULT_DUAL_PAN_RIGHT,
+  isValidDualPan,
+  clampDualPan,
+  PARAM_PAN,
+  PARAM_WIDTH,
+  PARAM_DUAL_LEFT,
+  PARAM_DUAL_RIGHT,
+} from './channel-pan';
 
 let nextRuntimeIdentity = 1;
 
@@ -27,13 +46,20 @@ export class Channel implements BlueDataObject {
   private _solo = false;
   private _level = 0;
   private _volume = 1.0;
-  private _pan = 0.5;
+  private _pan = DEFAULT_PAN;
+  private _stereoPanMode: StereoPanMode = DEFAULT_STEREO_PAN_MODE;
+  private _panWidth = DEFAULT_PAN_WIDTH;
+  private _dualPanLeft = DEFAULT_DUAL_PAN_LEFT;
+  private _dualPanRight = DEFAULT_DUAL_PAN_RIGHT;
   private _preEffects = new EffectsChain();
   private _postEffects = new EffectsChain();
   private _effectsChain = new EffectsChain();
   private _association = '';
   private _levelParameter: Parameter;
   private _panParameter: Parameter;
+  private _panWidthParameter: Parameter;
+  private _dualPanLeftParameter: Parameter;
+  private _dualPanRightParameter: Parameter;
   /** Disposable identity used to bind compiled route gates to this object. */
   private _runtimeIdentity = `channel-${nextRuntimeIdentity++}`;
 
@@ -47,12 +73,36 @@ export class Channel implements BlueDataObject {
     this._levelParameter.setResolution(-1.0);
 
     this._panParameter = new Parameter();
-    this._panParameter.setName('Pan');
+    this._panParameter.setName(PARAM_PAN);
     this._panParameter.setLabel('');
     this._panParameter.setMinimum(0.0);
     this._panParameter.setMaximum(1.0);
-    this._panParameter.setFixedValue(0.5);
+    this._panParameter.setFixedValue(DEFAULT_PAN);
     this._panParameter.setResolution(-1.0);
+
+    this._panWidthParameter = new Parameter();
+    this._panWidthParameter.setName(PARAM_WIDTH);
+    this._panWidthParameter.setLabel('');
+    this._panWidthParameter.setMinimum(0.0);
+    this._panWidthParameter.setMaximum(1.0);
+    this._panWidthParameter.setFixedValue(DEFAULT_PAN_WIDTH);
+    this._panWidthParameter.setResolution(-1.0);
+
+    this._dualPanLeftParameter = new Parameter();
+    this._dualPanLeftParameter.setName(PARAM_DUAL_LEFT);
+    this._dualPanLeftParameter.setLabel('');
+    this._dualPanLeftParameter.setMinimum(0.0);
+    this._dualPanLeftParameter.setMaximum(1.0);
+    this._dualPanLeftParameter.setFixedValue(DEFAULT_DUAL_PAN_LEFT);
+    this._dualPanLeftParameter.setResolution(-1.0);
+
+    this._dualPanRightParameter = new Parameter();
+    this._dualPanRightParameter.setName(PARAM_DUAL_RIGHT);
+    this._dualPanRightParameter.setLabel('');
+    this._dualPanRightParameter.setMinimum(0.0);
+    this._dualPanRightParameter.setMaximum(1.0);
+    this._dualPanRightParameter.setFixedValue(DEFAULT_DUAL_PAN_RIGHT);
+    this._dualPanRightParameter.setResolution(-1.0);
   }
 
   getName(): string {
@@ -118,6 +168,68 @@ export class Channel implements BlueDataObject {
     this._panParameter = param;
   }
 
+  getStereoPanMode(): StereoPanMode {
+    return this._stereoPanMode;
+  }
+  setStereoPanMode(mode: StereoPanMode): void {
+    if (!isValidStereoPanMode(mode)) return;
+    this._stereoPanMode = mode;
+  }
+
+  getPanWidth(): number {
+    return this._panWidth;
+  }
+  setPanWidth(w: number): void {
+    if (!isValidPanWidth(w)) return;
+    this._panWidth = w;
+    if (!this._panWidthParameter.isAutomationEnabled()) {
+      this._panWidthParameter.setFixedValue(w);
+    }
+  }
+
+  getPanWidthParameter(): Parameter {
+    return this._panWidthParameter;
+  }
+  setPanWidthParameter(param: Parameter): void {
+    this._panWidthParameter = param;
+  }
+
+  getDualPanLeft(): number {
+    return this._dualPanLeft;
+  }
+  setDualPanLeft(p: number): void {
+    if (!isValidDualPan(p)) return;
+    this._dualPanLeft = p;
+    if (!this._dualPanLeftParameter.isAutomationEnabled()) {
+      this._dualPanLeftParameter.setFixedValue(p);
+    }
+  }
+
+  getDualPanLeftParameter(): Parameter {
+    return this._dualPanLeftParameter;
+  }
+  setDualPanLeftParameter(param: Parameter): void {
+    this._dualPanLeftParameter = param;
+  }
+
+  getDualPanRight(): number {
+    return this._dualPanRight;
+  }
+  setDualPanRight(p: number): void {
+    if (!isValidDualPan(p)) return;
+    this._dualPanRight = p;
+    if (!this._dualPanRightParameter.isAutomationEnabled()) {
+      this._dualPanRightParameter.setFixedValue(p);
+    }
+  }
+
+  getDualPanRightParameter(): Parameter {
+    return this._dualPanRightParameter;
+  }
+  setDualPanRightParameter(param: Parameter): void {
+    this._dualPanRightParameter = param;
+  }
+
   getPreEffects(): EffectsChain {
     return this._preEffects;
   }
@@ -172,6 +284,10 @@ export class Channel implements BlueDataObject {
     elem.addElement('outChannel').setText(this._outChannel);
     elem.addElement(writeDouble('level', this._level));
     elem.addElement(writeDouble('pan', this._pan));
+    elem.addElement('stereoPanMode').setText(this._stereoPanMode);
+    elem.addElement(writeDouble('panWidth', this._panWidth));
+    elem.addElement(writeDouble('dualPanLeft', this._dualPanLeft));
+    elem.addElement(writeDouble('dualPanRight', this._dualPanRight));
     elem.addElement(writeBoolean('muted', this._muted));
     elem.addElement(writeBoolean('solo', this._solo));
 
@@ -189,6 +305,9 @@ export class Channel implements BlueDataObject {
 
     elem.addElement(this._levelParameter.saveAsXML());
     elem.addElement(this._panParameter.saveAsXML());
+    elem.addElement(this._panWidthParameter.saveAsXML());
+    elem.addElement(this._dualPanLeftParameter.saveAsXML());
+    elem.addElement(this._dualPanRightParameter.saveAsXML());
 
     return elem;
   }
@@ -213,6 +332,32 @@ export class Channel implements BlueDataObject {
     if (pan) {
       const parsedPan = parseFloat(pan);
       channel._pan = isValidPan(parsedPan) ? parsedPan : DEFAULT_PAN;
+    }
+
+    // Stereo mode and scalars with independent fallbacks
+    const stereoMode = data.getTextString('stereoPanMode');
+    if (stereoMode) {
+      channel._stereoPanMode = isValidStereoPanMode(stereoMode)
+        ? stereoMode
+        : DEFAULT_STEREO_PAN_MODE;
+    }
+
+    const width = data.getTextString('panWidth');
+    if (width) {
+      const parsedWidth = parseFloat(width);
+      channel._panWidth = isValidPanWidth(parsedWidth) ? parsedWidth : DEFAULT_PAN_WIDTH;
+    }
+
+    const dualLeft = data.getTextString('dualPanLeft');
+    if (dualLeft) {
+      const parsedLeft = parseFloat(dualLeft);
+      channel._dualPanLeft = isValidDualPan(parsedLeft) ? parsedLeft : DEFAULT_DUAL_PAN_LEFT;
+    }
+
+    const dualRight = data.getTextString('dualPanRight');
+    if (dualRight) {
+      const parsedRight = parseFloat(dualRight);
+      channel._dualPanRight = isValidDualPan(parsedRight) ? parsedRight : DEFAULT_DUAL_PAN_RIGHT;
     }
 
     const assoc = data.getAttribute('association') ?? data.getTextString('association');
@@ -244,9 +389,16 @@ export class Channel implements BlueDataObject {
     while (paramNodes.hasMoreElements()) {
       const paramElem = paramNodes.next();
       const loadedParam = Parameter.loadFromXML(paramElem);
-      if (loadedParam.getName() === 'Pan') {
+      const name = loadedParam.getName();
+      if (name === PARAM_PAN) {
         channel._panParameter = loadedParam;
-      } else {
+      } else if (name === PARAM_WIDTH) {
+        channel._panWidthParameter = loadedParam;
+      } else if (name === PARAM_DUAL_LEFT) {
+        channel._dualPanLeftParameter = loadedParam;
+      } else if (name === PARAM_DUAL_RIGHT) {
+        channel._dualPanRightParameter = loadedParam;
+      } else if (name === 'Volume') {
         channel._levelParameter = loadedParam;
       }
     }
@@ -256,6 +408,15 @@ export class Channel implements BlueDataObject {
     }
     if (!channel._panParameter.isAutomationEnabled()) {
       channel._panParameter.setFixedValue(channel._pan);
+    }
+    if (!channel._panWidthParameter.isAutomationEnabled()) {
+      channel._panWidthParameter.setFixedValue(channel._panWidth);
+    }
+    if (!channel._dualPanLeftParameter.isAutomationEnabled()) {
+      channel._dualPanLeftParameter.setFixedValue(channel._dualPanLeft);
+    }
+    if (!channel._dualPanRightParameter.isAutomationEnabled()) {
+      channel._dualPanRightParameter.setFixedValue(channel._dualPanRight);
     }
 
     return channel;
@@ -268,6 +429,10 @@ export class Channel implements BlueDataObject {
     copy._solo = this._solo;
     copy._volume = this._volume;
     copy._pan = this._pan;
+    copy._stereoPanMode = this._stereoPanMode;
+    copy._panWidth = this._panWidth;
+    copy._dualPanLeft = this._dualPanLeft;
+    copy._dualPanRight = this._dualPanRight;
     copy._association = this._association;
     copy._level = this._level;
     copy._outChannel = this._outChannel;
@@ -276,6 +441,9 @@ export class Channel implements BlueDataObject {
     copy._effectsChain = this._effectsChain.deepCopy(mode) as EffectsChain;
     copy._levelParameter = this._levelParameter.deepCopy(mode) as Parameter;
     copy._panParameter = this._panParameter.deepCopy(mode) as Parameter;
+    copy._panWidthParameter = this._panWidthParameter.deepCopy(mode) as Parameter;
+    copy._dualPanLeftParameter = this._dualPanLeftParameter.deepCopy(mode) as Parameter;
+    copy._dualPanRightParameter = this._dualPanRightParameter.deepCopy(mode) as Parameter;
     if (mode === 'history') {
       copy._runtimeIdentity = this._runtimeIdentity;
     }

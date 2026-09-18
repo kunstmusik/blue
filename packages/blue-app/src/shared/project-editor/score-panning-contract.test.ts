@@ -186,4 +186,135 @@ describe('score-panning-contract (T029, T032, T045, T047)', () => {
     const snapshot = createMixerSnapshot(mixer, score, manifest);
     expect(snapshot.channels[0]?.positionMode).toBe('pan');
   });
+
+  it('exposes panLawDb and panOffCenterBoost on ScoreDocumentSnapshot and defaults properly', () => {
+    const data = new BlueData();
+    const snap = createScoreDocumentSnapshot(data);
+    expect(snap.panLawDb).toBe(-3);
+    expect(snap.panOffCenterBoost).toBe(false);
+
+    const emptySnap = createEmptyScoreDocumentSnapshot();
+    expect(emptySnap.panLawDb).toBe(-3);
+    expect(emptySnap.panOffCenterBoost).toBe(false);
+
+    data.getScore().panLawDb = -6;
+    data.getScore().panOffCenterBoost = true;
+    const customSnap = createScoreDocumentSnapshot(data);
+    expect(customSnap.panLawDb).toBe(-6);
+    expect(customSnap.panOffCenterBoost).toBe(true);
+  });
+
+  it('applies updateScorePanLaw and updateScorePanBoost patches to BlueData.getScore()', () => {
+    const data = new BlueData();
+    expect(data.getScore().panLawDb).toBe(-3);
+    expect(data.getScore().panOffCenterBoost).toBe(false);
+
+    const patchLaw: ScorePatch = { type: 'updateScorePanLaw', panLawDb: -4.5 };
+    const changed1 = applyScoreObjectPatch(data, patchLaw);
+    expect(changed1).toBe(true);
+    expect(data.getScore().panLawDb).toBe(-4.5);
+
+    const patchBoost: ScorePatch = { type: 'updateScorePanBoost', panOffCenterBoost: true };
+    const changed2 = applyScoreObjectPatch(data, patchBoost);
+    expect(changed2).toBe(true);
+    expect(data.getScore().panOffCenterBoost).toBe(true);
+  });
+
+  it('validates score panLawDb and panOffCenterBoost', () => {
+    expect(
+      validateProjectDocumentPatch({ score: { type: 'updateScorePanLaw', panLawDb: 0 } }).valid,
+    ).toBe(true);
+    expect(
+      validateProjectDocumentPatch({ score: { type: 'updateScorePanLaw', panLawDb: -3 } }).valid,
+    ).toBe(true);
+    expect(
+      validateProjectDocumentPatch({ score: { type: 'updateScorePanLaw', panLawDb: -4.5 } }).valid,
+    ).toBe(true);
+    expect(
+      validateProjectDocumentPatch({ score: { type: 'updateScorePanLaw', panLawDb: -6 } }).valid,
+    ).toBe(true);
+    expect(
+      validateProjectDocumentPatch({ score: { type: 'updateScorePanLaw', panLawDb: -5 as never } })
+        .valid,
+    ).toBe(false);
+
+    expect(
+      validateProjectDocumentPatch({
+        score: { type: 'updateScorePanBoost', panOffCenterBoost: true },
+      }).valid,
+    ).toBe(true);
+    expect(
+      validateProjectDocumentPatch({
+        score: { type: 'updateScorePanBoost', panOffCenterBoost: 'true' as never },
+      }).valid,
+    ).toBe(false);
+  });
+
+  it('exposes stereoPanMode, panWidth, dualPanLeft, dualPanRight on MixerChannelSnapshot and defaults correctly', () => {
+    const data = new BlueData();
+    const ch = new Channel();
+    ch.setName('Stereo1');
+    data.getMixer().getChannels().push(ch);
+
+    const snap = createMixerSnapshot(data.getMixer(), data.getScore());
+    const channelSnap = snap.channels[0]!;
+    expect(channelSnap.stereoPanMode).toBe('balance');
+    expect(channelSnap.panWidth).toBe(1.0);
+    expect(channelSnap.dualPanLeft).toBe(0.0);
+    expect(channelSnap.dualPanRight).toBe(1.0);
+  });
+
+  it('validates channel stereo pan mode and scalar fields', () => {
+    expect(
+      validateProjectDocumentPatch({
+        mixer: { type: 'updateChannel', channelId: 'c1', patch: { stereoPanMode: 'stereoPan' } },
+      }).valid,
+    ).toBe(true);
+    expect(
+      validateProjectDocumentPatch({
+        mixer: { type: 'updateChannel', channelId: 'c1', patch: { stereoPanMode: 'dualPan' } },
+      }).valid,
+    ).toBe(true);
+    expect(
+      validateProjectDocumentPatch({
+        mixer: {
+          type: 'updateChannel',
+          channelId: 'c1',
+          patch: { stereoPanMode: 'invalid' as never },
+        },
+      }).valid,
+    ).toBe(false);
+
+    expect(
+      validateProjectDocumentPatch({
+        mixer: { type: 'updateChannel', channelId: 'c1', patch: { panWidth: 0.5 } },
+      }).valid,
+    ).toBe(true);
+    expect(
+      validateProjectDocumentPatch({
+        mixer: { type: 'updateChannel', channelId: 'c1', patch: { panWidth: -0.1 } },
+      }).valid,
+    ).toBe(false);
+    expect(
+      validateProjectDocumentPatch({
+        mixer: { type: 'updateChannel', channelId: 'c1', patch: { panWidth: 1.1 } },
+      }).valid,
+    ).toBe(false);
+
+    expect(
+      validateProjectDocumentPatch({
+        mixer: { type: 'updateChannel', channelId: 'c1', patch: { dualPanLeft: 0.2 } },
+      }).valid,
+    ).toBe(true);
+    expect(
+      validateProjectDocumentPatch({
+        mixer: { type: 'updateChannel', channelId: 'c1', patch: { dualPanRight: 0.8 } },
+      }).valid,
+    ).toBe(true);
+    expect(
+      validateProjectDocumentPatch({
+        mixer: { type: 'updateChannel', channelId: 'c1', patch: { dualPanLeft: NaN } },
+      }).valid,
+    ).toBe(false);
+  });
 });

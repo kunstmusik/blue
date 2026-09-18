@@ -1,6 +1,8 @@
 import * as path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 
+import { BlueData, Channel } from '@blue/data';
+
 import { saveGeneratedCsdToDisk } from './csd-export';
 
 describe('saveGeneratedCsdToDisk', () => {
@@ -101,5 +103,40 @@ describe('saveGeneratedCsdToDisk', () => {
     expect(toDiskCSD).not.toHaveBeenCalled();
     expect(writeFile).toHaveBeenCalledWith('/tmp/async-project.csd', 'async-csd', 'utf-8');
     expect(filePath).toBe('/tmp/async-project.csd');
+  });
+
+  it('exports disk CSD preserving score pan law configuration (T018)', async () => {
+    const data = new BlueData();
+    data.getScore().panningEnabled = true;
+    data.getScore().panLawDb = -4.5;
+    data.getScore().panOffCenterBoost = true;
+    data.getMixer().setEnabled(true);
+
+    const ch = new Channel();
+    ch.setName('Track 1');
+    ch.setPan(0.5);
+    data.getMixer().getChannels().push(ch);
+
+    const send = vi.fn();
+    const showSaveDialog = vi.fn(async () => ({
+      canceled: false,
+      filePath: '/tmp/pan-law-export.csd',
+    }));
+    let writtenCsd = '';
+    const writeFile = vi.fn(async (_path: string, content: string) => {
+      writtenCsd = content;
+    });
+
+    const filePath = await saveGeneratedCsdToDisk({
+      currentData: data,
+      currentFilePath: '/tmp/test.blue',
+      mainWindow: { webContents: { send } } as any,
+      dialogApi: { showSaveDialog } as any,
+      writeFile: writeFile as any,
+    });
+
+    expect(filePath).toBe('/tmp/pan-law-export.csd');
+    expect(writtenCsd).toContain('<CsoundSynthesizer>');
+    expect(writtenCsd).toContain('k_bal_l = min(1, 2 * (1 -');
   });
 });

@@ -177,4 +177,415 @@ describe('Mono clip panning browser tests (T075)', () => {
     )!;
     expect(reopened.checked).toBe(false);
   });
+
+  it('renders Score Settings pan law choices and off-center boost with defaults and accessible explanations', () => {
+    const onPanLawChange = vi.fn();
+    const onPanBoostChange = vi.fn();
+    const score = createEmptyScoreDocumentSnapshot();
+
+    expect(score.panLawDb).toBe(-3);
+    expect(score.panOffCenterBoost).toBe(false);
+
+    mount(
+      <ScoreSettingsDialog
+        score={score}
+        mixerEnabled={true}
+        legacyNotice={false}
+        onModeChange={() => {}}
+        onPanLawChange={onPanLawChange}
+        onPanBoostChange={onPanBoostChange}
+        onClose={() => {}}
+      />,
+    );
+
+    // Default law (-3 dB) is selected
+    const lawGroup = container.querySelector('[role="radiogroup"][aria-label="Score pan law"]')!;
+    expect(lawGroup).not.toBeNull();
+    const defaultRadio = lawGroup.querySelector('[role="radio"][aria-checked="true"]')!;
+    expect(defaultRadio.textContent).toBe('-3 dB (Default)');
+
+    // Accessible description of affected channels and default
+    expect(container.textContent).toContain(
+      'Governs center attenuation for Mono Pan and true-stereo (Stereo Pan and Dual Pan) source-side panners. Balance channels are unaffected.',
+    );
+    expect(container.textContent).toContain('-3 dB is the default equal-power law.');
+
+    // Off-center boost default is unchecked
+    const boostCheckbox = container.querySelector<HTMLInputElement>(
+      'input[type="checkbox"][aria-label="Off-center boost"]',
+    )!;
+    expect(boostCheckbox).not.toBeNull();
+    expect(boostCheckbox.checked).toBe(false);
+
+    // Clicking a different law calls onPanLawChange
+    const law0Button = Array.from(
+      lawGroup.querySelectorAll<HTMLButtonElement>('[role="radio"]'),
+    ).find((btn) => btn.textContent === '0 dB')!;
+    act(() => {
+      law0Button.click();
+    });
+    expect(onPanLawChange).toHaveBeenCalledWith(0);
+
+    // Clicking boost checkbox calls onPanBoostChange
+    act(() => {
+      boostCheckbox.click();
+    });
+    expect(onPanBoostChange).toHaveBeenCalledWith(true);
+  });
+
+  it('navigates pan law radio choices via keyboard Arrow keys', () => {
+    const onPanLawChange = vi.fn();
+    const score = createEmptyScoreDocumentSnapshot(); // panLawDb is -3
+
+    mount(
+      <ScoreSettingsDialog
+        score={score}
+        mixerEnabled={true}
+        legacyNotice={false}
+        onModeChange={() => {}}
+        onPanLawChange={onPanLawChange}
+        onClose={() => {}}
+      />,
+    );
+
+    const lawGroup = container.querySelector('[role="radiogroup"][aria-label="Score pan law"]')!;
+    // In PAN_LAW_OPTIONS: [0, -3, -4.5, -6]
+    // Current is index 1 (-3). ArrowRight should go to index 2 (-4.5)
+    act(() => {
+      lawGroup.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }),
+      );
+    });
+    expect(onPanLawChange).toHaveBeenCalledWith(-4.5);
+
+    // ArrowLeft from -3 should go to index 0 (0)
+    act(() => {
+      lawGroup.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true, cancelable: true }),
+      );
+    });
+    expect(onPanLawChange).toHaveBeenCalledWith(0);
+  });
+
+  it('displays clipping risk warning when off-center boost is enabled for non-zero law', () => {
+    const score = {
+      ...createEmptyScoreDocumentSnapshot(),
+      panLawDb: -6 as const,
+      panOffCenterBoost: true,
+    };
+
+    mount(
+      <ScoreSettingsDialog
+        score={score}
+        mixerEnabled={true}
+        legacyNotice={false}
+        onModeChange={() => {}}
+        onClose={() => {}}
+      />,
+    );
+
+    const warning = container.querySelector('[role="status"]');
+    expect(warning).not.toBeNull();
+    expect(warning?.textContent).toContain(
+      'Warning: Off-center boost raises endpoint gains up to 6 dB',
+    );
+    expect(warning?.textContent).toContain('boosted signals may clip');
+  });
+
+  it('preserves pan law and boost as future-intent settings when panning is disabled', () => {
+    const onPanLawChange = vi.fn();
+    const onPanBoostChange = vi.fn();
+    const score = {
+      ...createEmptyScoreDocumentSnapshot(),
+      panningEnabled: false,
+      panLawDb: -4.5 as const,
+      panOffCenterBoost: false,
+    };
+
+    mount(
+      <ScoreSettingsDialog
+        score={score}
+        mixerEnabled={true}
+        legacyNotice={false}
+        onModeChange={() => {}}
+        onPanLawChange={onPanLawChange}
+        onPanBoostChange={onPanBoostChange}
+        onClose={() => {}}
+      />,
+    );
+
+    // Explains future intent
+    const note = container.querySelector('[role="note"]');
+    expect(note).not.toBeNull();
+    expect(note?.textContent).toContain(
+      'Panning is currently disabled. Pan law and boost settings reflect future intent and will apply once Enable Panning is turned on.',
+    );
+
+    // Controls remain interactive to configure future intent
+    const lawGroup = container.querySelector('[role="radiogroup"][aria-label="Score pan law"]')!;
+    const radioSelected = lawGroup.querySelector('[role="radio"][aria-checked="true"]');
+    expect(radioSelected?.textContent).toBe('-4.5 dB');
+
+    const law0Button = Array.from(
+      lawGroup.querySelectorAll<HTMLButtonElement>('[role="radio"]'),
+    ).find((btn) => btn.textContent === '0 dB')!;
+    act(() => {
+      law0Button.click();
+    });
+    expect(onPanLawChange).toHaveBeenCalledWith(0);
+
+    const boostCheckbox = container.querySelector<HTMLInputElement>(
+      'input[type="checkbox"][aria-label="Off-center boost"]',
+    )!;
+    act(() => {
+      boostCheckbox.click();
+    });
+    expect(onPanBoostChange).toHaveBeenCalledWith(true);
+  });
+
+  describe('Complete Stereo Mixer Panning Browser Tests (Spec 113 T022)', () => {
+    it('renders mode selector with Balance, Stereo Pan, and Dual Pan options for two-bus channels', () => {
+      const onModeChange = vi.fn();
+      renderSlider({
+        positionMode: 'balance',
+        stereoPanMode: 'balance',
+        onModeChange,
+      });
+
+      const modeSelect = container.querySelector<HTMLSelectElement>(
+        'select[aria-label="Track 1 Pan Mode"]',
+      )!;
+      expect(modeSelect).not.toBeNull();
+      expect(modeSelect.value).toBe('balance');
+
+      const options = Array.from(modeSelect.options).map((o) => ({
+        value: o.value,
+        text: o.text,
+      }));
+      expect(options).toEqual([
+        { value: 'balance', text: 'Balance' },
+        { value: 'stereoPan', text: 'Stereo Pan' },
+        { value: 'dualPan', text: 'Dual Pan' },
+      ]);
+
+      // Change mode to stereoPan
+      act(() => {
+        modeSelect.value = 'stereoPan';
+        modeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+      expect(onModeChange).toHaveBeenCalledWith('stereoPan');
+
+      // Change mode to dualPan
+      act(() => {
+        modeSelect.value = 'dualPan';
+        modeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+      expect(onModeChange).toHaveBeenCalledWith('dualPan');
+    });
+
+    it('presents Mono Pan ONLY without mode selector when channel is verified mono', () => {
+      const onModeChange = vi.fn();
+      renderSlider({
+        positionMode: 'pan',
+        onModeChange,
+      });
+
+      // No mode selector on verified mono channels
+      const modeSelect = container.querySelector('select[aria-label="Track 1 Pan Mode"]');
+      expect(modeSelect).toBeNull();
+
+      // Only Mono Pan slider is rendered
+      const panSlider = container.querySelector<HTMLInputElement>(
+        'input[type="range"][aria-label="Track 1 Mono Pan"]',
+      )!;
+      expect(panSlider).not.toBeNull();
+
+      // No true-stereo warning
+      expect(container.querySelector('[role="status"]')).toBeNull();
+    });
+
+    it('renders Stereo Pan controls with Position and Width sliders, effective-width disclosure, and peak warning', () => {
+      const onCommit = vi.fn();
+      const onCommitWidth = vi.fn();
+      const onModeChange = vi.fn();
+
+      renderSlider({
+        positionMode: 'balance',
+        stereoPanMode: 'stereoPan',
+        pan: 0.5,
+        panWidth: 1.0,
+        onModeChange,
+        onCommit,
+        onCommitWidth,
+      });
+
+      const posSlider = container.querySelector<HTMLInputElement>(
+        'input[type="range"][aria-label="Track 1 Stereo Pan Position"]',
+      )!;
+      const widthSlider = container.querySelector<HTMLInputElement>(
+        'input[type="range"][aria-label="Track 1 Stereo Pan Width"]',
+      )!;
+      expect(posSlider).not.toBeNull();
+      expect(widthSlider).not.toBeNull();
+      expect(posSlider.value).toBe('0.5');
+      expect(widthSlider.value).toBe('1');
+
+      // True-stereo peak warning
+      const warning = container.querySelector('[role="status"]')!;
+      expect(warning).not.toBeNull();
+      expect(warning.textContent).toContain('Stereo Pan can sum signals and raise peaks');
+
+      // Keyboard operation on Width slider
+      act(() => {
+        widthSlider.dispatchEvent(
+          new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true, cancelable: true }),
+        );
+      });
+      expect(onCommitWidth).toHaveBeenCalledWith(0.99);
+
+      act(() => {
+        widthSlider.dispatchEvent(
+          new KeyboardEvent('keydown', { key: 'Home', bubbles: true, cancelable: true }),
+        );
+      });
+      expect(onCommitWidth).toHaveBeenCalledWith(0);
+
+      // Effective-width disclosure near endpoint (pan = 0.1, width = 1.0 -> d = 0.1, effective width = 20%)
+      renderSlider({
+        positionMode: 'balance',
+        stereoPanMode: 'stereoPan',
+        pan: 0.1,
+        panWidth: 1.0,
+        onModeChange,
+      });
+      const disclosure = container.querySelector(
+        '[role="note"][aria-label="Track 1 Effective Width"]',
+      )!;
+      expect(disclosure).not.toBeNull();
+      expect(disclosure.textContent).toBe('Effective width: 20%');
+
+      // Hard endpoint pan = 0 -> effective width = 0%
+      renderSlider({
+        positionMode: 'balance',
+        stereoPanMode: 'stereoPan',
+        pan: 0.0,
+        panWidth: 1.0,
+        onModeChange,
+      });
+      const endDisclosure = container.querySelector(
+        '[role="note"][aria-label="Track 1 Effective Width"]',
+      )!;
+      expect(endDisclosure).not.toBeNull();
+      expect(endDisclosure.textContent).toBe('Effective width: 0%');
+    });
+
+    it('renders Dual Pan controls with independent Left and Right sliders and peak warning', () => {
+      const onCommitDualLeft = vi.fn();
+      const onCommitDualRight = vi.fn();
+      const onModeChange = vi.fn();
+
+      renderSlider({
+        positionMode: 'balance',
+        stereoPanMode: 'dualPan',
+        dualPanLeft: 0.0,
+        dualPanRight: 1.0,
+        onModeChange,
+        onCommitDualLeft,
+        onCommitDualRight,
+      });
+
+      const leftSlider = container.querySelector<HTMLInputElement>(
+        'input[type="range"][aria-label="Track 1 Dual Pan Left"]',
+      )!;
+      const rightSlider = container.querySelector<HTMLInputElement>(
+        'input[type="range"][aria-label="Track 1 Dual Pan Right"]',
+      )!;
+      expect(leftSlider).not.toBeNull();
+      expect(rightSlider).not.toBeNull();
+      expect(leftSlider.value).toBe('0');
+      expect(rightSlider.value).toBe('1');
+
+      // Peak warning
+      const warning = container.querySelector('[role="status"]')!;
+      expect(warning).not.toBeNull();
+      expect(warning.textContent).toContain('Dual Pan can sum signals and raise peaks');
+
+      // Keyboard edit left slider
+      act(() => {
+        leftSlider.dispatchEvent(
+          new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }),
+        );
+      });
+      expect(onCommitDualLeft).toHaveBeenCalledWith(0.01);
+
+      // Keyboard edit right slider
+      act(() => {
+        rightSlider.dispatchEvent(
+          new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true, cancelable: true }),
+        );
+      });
+      expect(onCommitDualRight).toHaveBeenCalledWith(0.99);
+    });
+
+    it('preserves stored mode values across switches', () => {
+      const onModeChange = vi.fn();
+      // Start in Balance with non-default stored width and dual values
+      renderSlider({
+        positionMode: 'balance',
+        stereoPanMode: 'balance',
+        pan: 0.75,
+        panWidth: 0.6,
+        dualPanLeft: 0.25,
+        dualPanRight: 0.85,
+        onModeChange,
+      });
+
+      const balanceSlider = container.querySelector<HTMLInputElement>(
+        'input[type="range"][aria-label="Track 1 Stereo Balance"]',
+      )!;
+      expect(balanceSlider.value).toBe('0.75');
+
+      // Switch to Stereo Pan: receives preserved pan (0.75) and panWidth (0.6)
+      renderSlider({
+        positionMode: 'balance',
+        stereoPanMode: 'stereoPan',
+        pan: 0.75,
+        panWidth: 0.6,
+        dualPanLeft: 0.25,
+        dualPanRight: 0.85,
+        onModeChange,
+      });
+      expect(
+        container.querySelector<HTMLInputElement>(
+          'input[type="range"][aria-label="Track 1 Stereo Pan Position"]',
+        )!.value,
+      ).toBe('0.75');
+      expect(
+        container.querySelector<HTMLInputElement>(
+          'input[type="range"][aria-label="Track 1 Stereo Pan Width"]',
+        )!.value,
+      ).toBe('0.6');
+
+      // Switch to Dual Pan: receives preserved dualPanLeft (0.25) and dualPanRight (0.85)
+      renderSlider({
+        positionMode: 'balance',
+        stereoPanMode: 'dualPan',
+        pan: 0.75,
+        panWidth: 0.6,
+        dualPanLeft: 0.25,
+        dualPanRight: 0.85,
+        onModeChange,
+      });
+      expect(
+        container.querySelector<HTMLInputElement>(
+          'input[type="range"][aria-label="Track 1 Dual Pan Left"]',
+        )!.value,
+      ).toBe('0.25');
+      expect(
+        container.querySelector<HTMLInputElement>(
+          'input[type="range"][aria-label="Track 1 Dual Pan Right"]',
+        )!.value,
+      ).toBe('0.85');
+    });
+  });
 });

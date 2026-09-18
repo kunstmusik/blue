@@ -21,6 +21,7 @@ import type {
   MixerSendEntrySnapshot,
   MixerSnapshot,
   ProjectEffectRef,
+  StereoPanMode,
   UdoDefinitionSnapshot,
 } from '../../../../../shared/project-editor';
 import {
@@ -939,6 +940,50 @@ export default React.memo(function ChannelStrip({
     });
   }, [channel.id, onPatch]);
 
+  const handleStereoPanModeChange = useCallback(
+    (mode: StereoPanMode) => {
+      onPatch({
+        type: 'updateChannel',
+        channelId: channel.id,
+        patch: { stereoPanMode: mode },
+      });
+    },
+    [channel.id, onPatch],
+  );
+
+  const handlePanWidthCommit = useCallback(
+    (val: number) => {
+      onPatch({
+        type: 'updateChannel',
+        channelId: channel.id,
+        patch: { panWidth: val },
+      });
+    },
+    [channel.id, onPatch],
+  );
+
+  const handleDualPanLeftCommit = useCallback(
+    (val: number) => {
+      onPatch({
+        type: 'updateChannel',
+        channelId: channel.id,
+        patch: { dualPanLeft: val },
+      });
+    },
+    [channel.id, onPatch],
+  );
+
+  const handleDualPanRightCommit = useCallback(
+    (val: number) => {
+      onPatch({
+        type: 'updateChannel',
+        channelId: channel.id,
+        patch: { dualPanRight: val },
+      });
+    },
+    [channel.id, onPatch],
+  );
+
   useEffect(() => {
     const el = levelControlsRef.current;
     if (!el) return;
@@ -1411,11 +1456,19 @@ export default React.memo(function ChannelStrip({
           channelName={displayName}
           pan={previewPan ?? channel.pan}
           positionMode={channel.positionMode ?? 'balance'}
+          stereoPanMode={channel.stereoPanMode ?? 'balance'}
+          panWidth={channel.panWidth ?? 1.0}
+          dualPanLeft={channel.dualPanLeft ?? 0.0}
+          dualPanRight={channel.dualPanRight ?? 1.0}
           disabled={isSettling}
+          onModeChange={handleStereoPanModeChange}
           onPreview={handlePanPreview}
           onCommit={handlePanCommit}
           onCancel={handlePanCancel}
           onDoubleClickReset={handlePanDoubleClick}
+          onCommitWidth={handlePanWidthCommit}
+          onCommitDualLeft={handleDualPanLeftCommit}
+          onCommitDualRight={handleDualPanRightCommit}
         />
       )}
 

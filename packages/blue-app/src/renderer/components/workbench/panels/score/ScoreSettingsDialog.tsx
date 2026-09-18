@@ -1,5 +1,5 @@
 import { X } from 'lucide-react';
-import type { TrackLayerMuteSoloMode } from '@blue/data';
+import type { TrackLayerMuteSoloMode, PanLawDb } from '@blue/data';
 import type { ScoreDocumentSnapshot } from '../../../../../shared/project-editor';
 import { effectiveTrackLayerMuteSoloMode } from '../../../../../shared/project-editor';
 import { cn } from '../../../../lib/cn';
@@ -11,6 +11,8 @@ interface Props {
   legacyNotice: boolean;
   onModeChange: (mode: TrackLayerMuteSoloMode) => void;
   onPanningChange?: (enabled: boolean) => void;
+  onPanLawChange?: (panLawDb: PanLawDb) => void;
+  onPanBoostChange?: (boost: boolean) => void;
   onClose: () => void;
 }
 
@@ -19,12 +21,21 @@ const MODE_OPTIONS: Array<{ value: TrackLayerMuteSoloMode; label: string }> = [
   { value: 'event', label: 'Event' },
 ];
 
+const PAN_LAW_OPTIONS: Array<{ value: PanLawDb; label: string }> = [
+  { value: 0, label: '0 dB' },
+  { value: -3, label: '-3 dB (Default)' },
+  { value: -4.5, label: '-4.5 dB' },
+  { value: -6, label: '-6 dB' },
+];
+
 export default function ScoreSettingsDialog({
   score,
   mixerEnabled,
   legacyNotice,
   onModeChange,
   onPanningChange,
+  onPanLawChange,
+  onPanBoostChange,
   onClose,
 }: Props) {
   const effectiveMode = effectiveTrackLayerMuteSoloMode(score.trackLayerMuteSoloMode, mixerEnabled);
@@ -134,6 +145,89 @@ export default function ScoreSettingsDialog({
               When enabled, mono audio clips are centered into stereo and channel Pan/Balance
               controls are active. When disabled, legacy audio routing is preserved.
             </p>
+
+            <div className="space-y-2 pt-2">
+              <label className="text-role-body font-medium text-app-text">Pan Law</label>
+              <p className="text-role-caption text-app-text-muted">
+                Governs center attenuation for Mono Pan and true-stereo (Stereo Pan and Dual Pan)
+                source-side panners. Balance channels are unaffected. -3 dB is the default
+                equal-power law.
+              </p>
+              <div
+                role="radiogroup"
+                aria-label="Score pan law"
+                className="flex flex-wrap gap-2"
+                onKeyDown={(e) => {
+                  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    const currentIndex = PAN_LAW_OPTIONS.findIndex(
+                      (opt) => opt.value === score.panLawDb,
+                    );
+                    const nextIndex = (currentIndex + 1) % PAN_LAW_OPTIONS.length;
+                    onPanLawChange?.(PAN_LAW_OPTIONS[nextIndex].value);
+                  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    const currentIndex = PAN_LAW_OPTIONS.findIndex(
+                      (opt) => opt.value === score.panLawDb,
+                    );
+                    const prevIndex =
+                      (currentIndex - 1 + PAN_LAW_OPTIONS.length) % PAN_LAW_OPTIONS.length;
+                    onPanLawChange?.(PAN_LAW_OPTIONS[prevIndex].value);
+                  }
+                }}
+              >
+                {PAN_LAW_OPTIONS.map((option) => {
+                  const selected = score.panLawDb === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      tabIndex={selected ? 0 : -1}
+                      className={cn(
+                        'rounded border px-3 py-1 text-role-body transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus',
+                        selected
+                          ? 'border-app-accent bg-app-accent/20 text-app-text-strong'
+                          : 'border-app-border/40 text-app-text-muted hover:bg-app-hover hover:text-app-text',
+                      )}
+                      onClick={() => onPanLawChange?.(option.value)}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="space-y-2 pt-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  aria-label="Off-center boost"
+                  checked={score.panOffCenterBoost}
+                  onChange={(event) => onPanBoostChange?.(event.target.checked)}
+                  className="rounded border-app-border/40 focus-visible:ring-2 focus-visible:ring-app-focus"
+                />
+                <span className="text-role-body text-app-text">Off-center boost</span>
+              </label>
+              <p className="text-role-caption text-app-text-muted">
+                Boosts endpoints by the center depth magnitude to keep center level unattenuated.
+              </p>
+              {score.panOffCenterBoost && score.panLawDb !== 0 && (
+                <p className="text-role-caption text-app-warning" role="status">
+                  Warning: Off-center boost raises endpoint gains up to {Math.abs(score.panLawDb)}{' '}
+                  dB above unity; boosted signals may clip.
+                </p>
+              )}
+            </div>
+
+            {!score.panningEnabled && (
+              <p className="text-role-caption text-app-text-muted italic pt-1" role="note">
+                Panning is currently disabled. Pan law and boost settings reflect future intent and
+                will apply once Enable Panning is turned on.
+              </p>
+            )}
           </fieldset>
         </div>
 

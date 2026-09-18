@@ -1038,6 +1038,22 @@ function applyMixerChannelEditablePatch(
     channel.setPan(patch.pan);
     changed = true;
   }
+  if (patch.stereoPanMode !== undefined && channel.getStereoPanMode() !== patch.stereoPanMode) {
+    channel.setStereoPanMode(patch.stereoPanMode);
+    changed = true;
+  }
+  if (patch.panWidth !== undefined && channel.getPanWidth() !== patch.panWidth) {
+    channel.setPanWidth(patch.panWidth);
+    changed = true;
+  }
+  if (patch.dualPanLeft !== undefined && channel.getDualPanLeft() !== patch.dualPanLeft) {
+    channel.setDualPanLeft(patch.dualPanLeft);
+    changed = true;
+  }
+  if (patch.dualPanRight !== undefined && channel.getDualPanRight() !== patch.dualPanRight) {
+    channel.setDualPanRight(patch.dualPanRight);
+    changed = true;
+  }
 
   return changed;
 }
@@ -1518,6 +1534,14 @@ export function mixerPatchActionLabel(patch: MixerPatch): string {
             return 'Set Channel Volume';
           case 'pan':
             return 'Set Channel Pan';
+          case 'stereoPanMode':
+            return 'Set Channel Pan Mode';
+          case 'panWidth':
+            return 'Set Channel Pan Width';
+          case 'dualPanLeft':
+            return 'Set Channel Left Pan';
+          case 'dualPanRight':
+            return 'Set Channel Right Pan';
           case 'muted':
             return patch.patch.muted ? 'Mute Channel' : 'Unmute Channel';
           case 'solo':

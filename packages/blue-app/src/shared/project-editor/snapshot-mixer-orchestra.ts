@@ -607,6 +607,10 @@ function createMixerChannelSnapshot(
     volume: channel.getVolume(),
     pan: channel.getPan(),
     positionMode,
+    stereoPanMode: channel.getStereoPanMode(),
+    panWidth: channel.getPanWidth(),
+    dualPanLeft: channel.getDualPanLeft(),
+    dualPanRight: channel.getDualPanRight(),
     preChain: createMixerChainSnapshot(channel.getPreEffects(), {
       channelId: id,
       chain: 'pre',

@@ -423,5 +423,43 @@ describe('java-parity-fixtures history fixture entry points', () => {
         expect(current.saveToString()).toBe(dropdownXml);
       }
     });
+
+    it('preserves score pan laws and channel stereo settings with stable parameter identities across historyCopy (Spec 113 T040)', () => {
+      const project = createRepresentativeMixerProject();
+      project.getScore().panLawDb = -6;
+      project.getScore().panOffCenterBoost = true;
+
+      const ch = project.getMixer().getChannels()[0]!;
+      ch.setStereoPanMode('stereoPan');
+      ch.setPanWidth(0.65);
+      ch.setDualPanLeft(0.15);
+      ch.setDualPanRight(0.85);
+
+      const widthParamId = ch.getPanWidthParameter().getUniqueId();
+      const dualLeftParamId = ch.getDualPanLeftParameter().getUniqueId();
+      const dualRightParamId = ch.getDualPanRightParameter().getUniqueId();
+
+      const memento = project.historyCopy();
+
+      // Mutation on original project
+      project.getScore().panLawDb = 0;
+      project.getScore().panOffCenterBoost = false;
+      ch.setStereoPanMode('balance');
+      ch.setPanWidth(1.0);
+
+      // Verify memento is unaffected
+      expect(memento.getScore().panLawDb).toBe(-6);
+      expect(memento.getScore().panOffCenterBoost).toBe(true);
+      const mementoCh = memento.getMixer().getChannels()[0]!;
+      expect(mementoCh.getStereoPanMode()).toBe('stereoPan');
+      expect(mementoCh.getPanWidth()).toBe(0.65);
+      expect(mementoCh.getDualPanLeft()).toBe(0.15);
+      expect(mementoCh.getDualPanRight()).toBe(0.85);
+
+      // Parameter unique IDs remain stable across historyCopy
+      expect(mementoCh.getPanWidthParameter().getUniqueId()).toBe(widthParamId);
+      expect(mementoCh.getDualPanLeftParameter().getUniqueId()).toBe(dualLeftParamId);
+      expect(mementoCh.getDualPanRightParameter().getUniqueId()).toBe(dualRightParamId);
+    });
   });
 });

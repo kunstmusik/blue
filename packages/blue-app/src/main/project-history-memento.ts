@@ -9,6 +9,7 @@ import {
   TrackLayerGroup,
   PolyObject,
   type MeterProfileKey,
+  type StereoPanMode,
 } from '@blue/data';
 import type {
   ProjectDocumentPatch,
@@ -163,6 +164,11 @@ export function resolveTargetValue(
       let value: unknown = foundChan;
       if (field === 'level') value = foundChan.getLevel();
       else if (field === 'pan') value = foundChan.getPan();
+      else if (field === 'volume') value = foundChan.getVolume();
+      else if (field === 'stereoPanMode') value = foundChan.getStereoPanMode();
+      else if (field === 'panWidth') value = foundChan.getPanWidth();
+      else if (field === 'dualPanLeft') value = foundChan.getDualPanLeft();
+      else if (field === 'dualPanRight') value = foundChan.getDualPanRight();
       else if (field === 'muted' || field === 'mute') value = foundChan.isMuted();
       else if (field === 'solo') value = foundChan.isSolo();
       return { found: true, value, identity, target: foundChan };
@@ -524,6 +530,42 @@ export function captureScalarFieldRecords(
             afterValue: m.patch.solo,
           });
         }
+        if (m.patch.stereoPanMode !== undefined) {
+          records.push({
+            targetType: 'mixerChannel',
+            targetId: m.channelId,
+            field: 'stereoPanMode',
+            beforeValue: ch.getStereoPanMode(),
+            afterValue: m.patch.stereoPanMode,
+          });
+        }
+        if (m.patch.panWidth !== undefined) {
+          records.push({
+            targetType: 'mixerChannel',
+            targetId: m.channelId,
+            field: 'panWidth',
+            beforeValue: ch.getPanWidth(),
+            afterValue: m.patch.panWidth,
+          });
+        }
+        if (m.patch.dualPanLeft !== undefined) {
+          records.push({
+            targetType: 'mixerChannel',
+            targetId: m.channelId,
+            field: 'dualPanLeft',
+            beforeValue: ch.getDualPanLeft(),
+            afterValue: m.patch.dualPanLeft,
+          });
+        }
+        if (m.patch.dualPanRight !== undefined) {
+          records.push({
+            targetType: 'mixerChannel',
+            targetId: m.channelId,
+            field: 'dualPanRight',
+            beforeValue: ch.getDualPanRight(),
+            afterValue: m.patch.dualPanRight,
+          });
+        }
       }
     }
   }
@@ -588,6 +630,10 @@ export function applyScalarFieldRecord(
           if (record.field === 'level') ch.setLevel(Number(value));
           else if (record.field === 'pan') ch.setPan(Number(value));
           else if (record.field === 'volume') ch.setVolume(Number(value));
+          else if (record.field === 'stereoPanMode') ch.setStereoPanMode(value as StereoPanMode);
+          else if (record.field === 'panWidth') ch.setPanWidth(Number(value));
+          else if (record.field === 'dualPanLeft') ch.setDualPanLeft(Number(value));
+          else if (record.field === 'dualPanRight') ch.setDualPanRight(Number(value));
           else if (record.field === 'muted' || record.field === 'mute') ch.setMuted(Boolean(value));
           else if (record.field === 'solo') ch.setSolo(Boolean(value));
         }

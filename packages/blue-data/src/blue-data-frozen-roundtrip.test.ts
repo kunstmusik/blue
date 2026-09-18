@@ -8,6 +8,7 @@ import { TimeDuration } from './time/time-duration';
 import { TimePosition } from './time/time-position';
 
 import { AudioFile } from './sound-objects/audio-file';
+import { Channel } from './mixer/channel';
 
 describe('BlueData frozen SoundObject and AudioFile persistence', () => {
   it('preserves relative artifact metadata and nested source across a project save/reopen without transient fields', () => {
@@ -87,5 +88,39 @@ describe('BlueData frozen SoundObject and AudioFile persistence', () => {
     const legacyResaved = legacy.saveToString();
     expect(legacyResaved).toContain('panningEnabled="false"');
     expect(BlueData.loadFromString(legacyResaved).saveToString()).toBe(legacyResaved);
+  });
+
+  it('keeps panLawDb, panOffCenterBoost, and channel stereo settings across save/reopen with unknown XML (Spec 113 T038, T040, T044)', () => {
+    const data = new BlueData();
+    data.getScore().panLawDb = -4.5;
+    data.getScore().panOffCenterBoost = true;
+
+    const ch = new Channel();
+    ch.setName('Stereo Channel');
+    ch.setStereoPanMode('dualPan');
+    ch.setPanWidth(0.75);
+    ch.setDualPanLeft(0.25);
+    ch.setDualPanRight(0.85);
+    data.getMixer().getChannels().push(ch);
+
+    const xmlRoot = data.saveAsXML();
+    xmlRoot.getElement('pluginData')?.addElement('futurePlugin').setText('preserved');
+    const xml = xmlRoot.toXml();
+
+    const reopened = BlueData.loadFromString(xml);
+    expect(reopened.getScore().panLawDb).toBe(-4.5);
+    expect(reopened.getScore().panOffCenterBoost).toBe(true);
+
+    const restoredCh = reopened.getMixer().getChannels()[0]!;
+    expect(restoredCh.getStereoPanMode()).toBe('dualPan');
+    expect(restoredCh.getPanWidth()).toBe(0.75);
+    expect(restoredCh.getDualPanLeft()).toBe(0.25);
+    expect(restoredCh.getDualPanRight()).toBe(0.85);
+
+    const resavedXml = reopened.saveToString();
+    expect(resavedXml).toContain('<futurePlugin>preserved</futurePlugin>');
+    expect(resavedXml).toContain('panLawDb="-4.5"');
+    expect(resavedXml).toContain('panOffCenterBoost="true"');
+    expect(resavedXml).toContain('<stereoPanMode>dualPan</stereoPanMode>');
   });
 });

@@ -54,6 +54,10 @@ Tempo map is enabled at 112 BPM; mixer is enabled with one channel per track.</n
         <outChannel>Master</outChannel>
         <level>0.0</level>
         <pan>0.5</pan>
+        <stereoPanMode>balance</stereoPanMode>
+        <panWidth>1.0</panWidth>
+        <dualPanLeft>0.0</dualPanLeft>
+        <dualPanRight>1.0</dualPanRight>
         <muted>false</muted>
         <solo>false</solo>
         <effectsChain bin="pre"/>
@@ -64,12 +68,25 @@ Tempo map is enabled at 112 BPM; mixer is enabled with one channel per track.</n
         <parameter uniqueId="param-a5bcdedf-858a-48c6-ba06-5be56f2ba294" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
         </parameter>
+        <parameter uniqueId="param-53255ed8-17f8-4d79-b1c8-95c56ddeaebf" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
+          <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
+        </parameter>
+        <parameter uniqueId="param-6756cfc1-28a9-4dba-85be-af6240dc1bef" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
+          <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
+        </parameter>
+        <parameter uniqueId="param-3029fa9c-b0da-48a6-a504-4c09a5d03cff" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
+          <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
+        </parameter>
       </channel>
       <channel association="1fef7747-e706-4786-a1aa-ac20b50b6f8e">
         <name>Bass</name>
         <outChannel>Master</outChannel>
         <level>0.0</level>
         <pan>0.5</pan>
+        <stereoPanMode>balance</stereoPanMode>
+        <panWidth>1.0</panWidth>
+        <dualPanLeft>0.0</dualPanLeft>
+        <dualPanRight>1.0</dualPanRight>
         <muted>false</muted>
         <solo>false</solo>
         <effectsChain bin="pre"/>
@@ -80,6 +97,15 @@ Tempo map is enabled at 112 BPM; mixer is enabled with one channel per track.</n
         <parameter uniqueId="param-c784e5b2-072b-49cf-a63c-21a877fd6f7c" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
         </parameter>
+        <parameter uniqueId="param-eb8ede63-df89-4fb1-8c27-f9ec671e89f8" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
+          <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
+        </parameter>
+        <parameter uniqueId="param-0b18231e-e469-4ac9-acec-b58ace6fce14" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
+          <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
+        </parameter>
+        <parameter uniqueId="param-5b4531ab-e574-428b-8788-c5b58f997aa9" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
+          <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
+        </parameter>
       </channel>
     </channelList>
     <channelList listName="SubChannels" list="subChannels"/>
@@ -88,6 +114,10 @@ Tempo map is enabled at 112 BPM; mixer is enabled with one channel per track.</n
       <outChannel>Master</outChannel>
       <level>0.0</level>
       <pan>0.5</pan>
+      <stereoPanMode>balance</stereoPanMode>
+      <panWidth>1.0</panWidth>
+      <dualPanLeft>0.0</dualPanLeft>
+      <dualPanRight>1.0</dualPanRight>
       <muted>false</muted>
       <solo>false</solo>
       <effectsChain bin="pre"/>
@@ -96,6 +126,15 @@ Tempo map is enabled at 112 BPM; mixer is enabled with one channel per track.</n
         <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
       </parameter>
       <parameter uniqueId="param-86cca30f-105b-42b4-b8f9-80d0cc0c420b" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
+        <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
+      </parameter>
+      <parameter uniqueId="param-f086131c-4560-4b55-9ba5-1f5f548d1d1d" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
+        <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
+      </parameter>
+      <parameter uniqueId="param-55bf952f-81d8-4d41-b445-f62a221b888e" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
+        <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
+      </parameter>
+      <parameter uniqueId="param-e1ec72b2-ef39-49a4-bd5b-03c8b977a851" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
         <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
       </parameter>
     </channel>
@@ -130,7 +169,7 @@ Tempo map is enabled at 112 BPM; mixer is enabled with one channel per track.</n
     <repeatEnabled>false</repeatEnabled>
     <liveCodeText></liveCodeText>
   </liveData>
-  <score trackLayerMuteSoloMode="audio" panningEnabled="true">
+  <score trackLayerMuteSoloMode="audio" panningEnabled="true" panLawDb="-3" panOffCenterBoost="false">
     <timeContext>
       <tempoMap>
         <enabled>true</enabled>

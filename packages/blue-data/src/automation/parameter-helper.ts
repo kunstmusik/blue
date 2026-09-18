@@ -71,6 +71,9 @@ function collectChannelParameters(
   parameters.push(channel.getLevelParameter());
   if (includePan) {
     parameters.push(channel.getPanParameter());
+    parameters.push(channel.getPanWidthParameter());
+    parameters.push(channel.getDualPanLeftParameter());
+    parameters.push(channel.getDualPanRightParameter());
   }
 }
 

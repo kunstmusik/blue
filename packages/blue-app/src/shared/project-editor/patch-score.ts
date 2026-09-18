@@ -42,6 +42,7 @@ import {
   PatternsLayerGroup,
   TimeBase,
   isValidSnapValueName,
+  isValidPanLawDb,
   isTrackLayerMuteSoloMode,
   SoundObject,
   SoundObjectLibrary,
@@ -567,6 +568,12 @@ export function isNonEmptyScorePatch(patch: ScorePatch): boolean {
   }
   if (patch.type === 'updateScorePanning') {
     return typeof patch.panningEnabled === 'boolean';
+  }
+  if (patch.type === 'updateScorePanLaw') {
+    return isValidPanLawDb(patch.panLawDb);
+  }
+  if (patch.type === 'updateScorePanBoost') {
+    return typeof patch.panOffCenterBoost === 'boolean';
   }
   return true;
 }
@@ -2636,6 +2643,20 @@ export function applyScoreObjectPatch(
     const score = data.getScore();
     if (score.panningEnabled === patch.panningEnabled) return false;
     score.panningEnabled = patch.panningEnabled;
+    return true;
+  }
+  if (patch.type === 'updateScorePanLaw') {
+    if (!isValidPanLawDb(patch.panLawDb)) return false;
+    const score = data.getScore();
+    if (score.panLawDb === patch.panLawDb) return false;
+    score.panLawDb = patch.panLawDb;
+    return true;
+  }
+  if (patch.type === 'updateScorePanBoost') {
+    if (typeof patch.panOffCenterBoost !== 'boolean') return false;
+    const score = data.getScore();
+    if (score.panOffCenterBoost === patch.panOffCenterBoost) return false;
+    score.panOffCenterBoost = patch.panOffCenterBoost;
     return true;
   }
   if (patch.type === 'updateTrackLayerMuteSoloMode') {

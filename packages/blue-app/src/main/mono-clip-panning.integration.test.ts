@@ -128,6 +128,31 @@ describe('mono-clip-panning integration fixtures (T002)', () => {
     const [balanceCenterL, balanceCenterR] = getStereoBalanceGains(0.5);
     expect(balanceCenterL).toBe(1.0);
     expect(balanceCenterR).toBe(1.0);
+
+    // Intermediate positions (0.25, 0.75) and symmetry
+    const [monoQ1L, monoQ1R] = getMonoPanGains(0.25);
+    const [monoQ3L, monoQ3R] = getMonoPanGains(0.75);
+    expect(monoQ1L).toBeCloseTo(monoQ3R, 6);
+    expect(monoQ1R).toBeCloseTo(monoQ3L, 6);
+  });
+
+  it('creates deterministic left-only, right-only, and correlated stereo files on disk (T002)', () => {
+    const leftOnlyPath = path.join(tmpDir, 'left-only.wav');
+    const rightOnlyPath = path.join(tmpDir, 'right-only.wav');
+    const correlatedPath = path.join(tmpDir, 'correlated.wav');
+
+    writeWavFile(leftOnlyPath, 2, 44100, 100, [1.0, 0.0]);
+    writeWavFile(rightOnlyPath, 2, 44100, 100, [0.0, 1.0]);
+    writeWavFile(correlatedPath, 2, 44100, 100, [0.707, 0.707]);
+
+    const leftMeta = parseAudioFileMetadata(fs.readFileSync(leftOnlyPath));
+    expect(leftMeta.channels).toBe(2);
+
+    const rightMeta = parseAudioFileMetadata(fs.readFileSync(rightOnlyPath));
+    expect(rightMeta.channels).toBe(2);
+
+    const correlatedMeta = parseAudioFileMetadata(fs.readFileSync(correlatedPath));
+    expect(correlatedMeta.channels).toBe(2);
   });
 });
 
@@ -170,10 +195,19 @@ describe.skipIf(!hasCsound)('mono-clip-panning numerical renders (T071)', () => 
       pan?: number;
       channels?: string;
       channelName?: string;
+      panLawDb?: 0 | -3 | -4.5 | -6;
+      panOffCenterBoost?: boolean;
     },
   ): { data: BlueData; preflight: ReturnType<typeof preflightAudioLayout> } {
     const data = new BlueData();
     expect(data.getScore().panningEnabled).toBe(true);
+
+    if (options.panLawDb !== undefined) {
+      data.getScore().panLawDb = options.panLawDb;
+    }
+    if (options.panOffCenterBoost !== undefined) {
+      data.getScore().panOffCenterBoost = options.panOffCenterBoost;
+    }
 
     if (options.channels !== undefined) {
       data.getProjectProperties().channels = options.channels;
@@ -355,5 +389,51 @@ describe.skipIf(!hasCsound)('mono-clip-panning numerical renders (T071)', () => 
 
     const [mono] = plateauLevels(wav, 0.9, 1.1);
     expect(mono).toBeCloseTo(1.0, 2);
+  }, 120_000);
+
+  it('renders a mono clip under 0 dB and -6 dB pan laws at center with exact gains (T011, US1)', () => {
+    const scratchDir = scratchDirectory();
+    const monoPath = path.join(scratchDir, 'mono.wav');
+    writeWavFile(monoPath, 1, 44100, 44100, [1.0]);
+
+    // 0 dB law: center gains are unity (1.0) per speaker
+    const project0 = createPanningProject(scratchDir, {
+      clips: [{ file: monoPath }],
+      pan: 0.5,
+      panLawDb: 0,
+    });
+    const { wav: wav0 } = renderProjectToWav(project0, scratchDir, 'mono-center-0db');
+    const [left0, right0] = plateauLevels(wav0, 0.9, 1.1);
+    expect(left0).toBeCloseTo(1.0, 2);
+    expect(right0).toBeCloseTo(1.0, 2);
+
+    // -6 dB law: center gains are 0.5 per speaker
+    const project6 = createPanningProject(scratchDir, {
+      clips: [{ file: monoPath }],
+      pan: 0.5,
+      panLawDb: -6,
+    });
+    const { wav: wav6 } = renderProjectToWav(project6, scratchDir, 'mono-center-6db');
+    const [left6, right6] = plateauLevels(wav6, 0.9, 1.1);
+    expect(left6).toBeCloseTo(0.5, 2);
+    expect(right6).toBeCloseTo(0.5, 2);
+  }, 180_000);
+
+  it('renders a mono clip with off-center boost at endpoint with expected boost gain (T011, US1)', () => {
+    const scratchDir = scratchDirectory();
+    const monoPath = path.join(scratchDir, 'mono.wav');
+    writeWavFile(monoPath, 1, 44100, 44100, [1.0]);
+
+    // -3 dB law with off-center boost: endpoint gain is 10^(3/20) ≈ 1.4125
+    const project = createPanningProject(scratchDir, {
+      clips: [{ file: monoPath }],
+      pan: 0,
+      panLawDb: -3,
+      panOffCenterBoost: true,
+    });
+    const { wav } = renderProjectToWav(project, scratchDir, 'mono-boost-left');
+    const [left, right] = plateauLevels(wav, 0.9, 1.1);
+    expect(left).toBeCloseTo(Math.pow(10, 3 / 20), 2);
+    expect(right).toBeLessThan(1e-4);
   }, 120_000);
 });

@@ -83,6 +83,7 @@ import {
   type ScoreObjectEditorTargetSnapshot,
   type ScoreObjectLocationRef,
   type ScorePatch,
+  type PanLawDb,
   type SupportedNewInstrumentType,
   type TempoMapPatch,
   type ToolbarProjectTransportSnapshot,
@@ -350,6 +351,8 @@ interface ProjectActions {
   ) => void;
   setTrackHeaderMode: (mode: 'audio' | 'event') => void;
   setScorePanning: (enabled: boolean) => void;
+  setScorePanLaw: (panLawDb: PanLawDb) => void;
+  setScorePanBoost: (panOffCenterBoost: boolean) => void;
   renameLayer: (layerId: string, name: string) => void;
   setLayerHeight: (groupId: string, layerIndex: number, heightIndex: number) => void;
   addLayer: (groupId: string, layerIndex: number) => void;
@@ -2347,6 +2350,18 @@ function applyScorePatchToSnapshot(
       panningEnabled: patch.panningEnabled,
     };
   }
+  if (patch.type === 'updateScorePanLaw') {
+    return {
+      ...score,
+      panLawDb: patch.panLawDb,
+    };
+  }
+  if (patch.type === 'updateScorePanBoost') {
+    return {
+      ...score,
+      panOffCenterBoost: patch.panOffCenterBoost,
+    };
+  }
   if (patch.type === 'updateTrackLayerMuteSoloMode') {
     return {
       ...score,
@@ -4162,7 +4177,11 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
           ? { ...metadata, label: mixerPatchActionLabel(normalizedPatch.mixer) }
           : normalizedPatch.score?.type === 'updateScorePanning'
             ? { ...metadata, label: 'Set Score Panning' }
-            : metadata;
+            : normalizedPatch.score?.type === 'updateScorePanLaw'
+              ? { ...metadata, label: 'Set Score Pan Law' }
+              : normalizedPatch.score?.type === 'updateScorePanBoost'
+                ? { ...metadata, label: 'Set Score Pan Boost' }
+                : metadata;
       getProjectPatchQueue().enqueue(
         normalizedPatch,
         dirtyBaseline,
@@ -4620,6 +4639,24 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       void get().applyProjectDocumentPatch(
         { score: { type: 'updateScorePanning', panningEnabled: enabled } },
         { label: 'Set Score Panning' },
+      );
+    },
+
+    setScorePanLaw: (panLawDb) => {
+      const score = get().score;
+      if (score.panLawDb === panLawDb) return;
+      void get().applyProjectDocumentPatch(
+        { score: { type: 'updateScorePanLaw', panLawDb } },
+        { label: 'Set Score Pan Law' },
+      );
+    },
+
+    setScorePanBoost: (panOffCenterBoost) => {
+      const score = get().score;
+      if (score.panOffCenterBoost === panOffCenterBoost) return;
+      void get().applyProjectDocumentPatch(
+        { score: { type: 'updateScorePanBoost', panOffCenterBoost } },
+        { label: 'Set Score Pan Boost' },
       );
     },
 

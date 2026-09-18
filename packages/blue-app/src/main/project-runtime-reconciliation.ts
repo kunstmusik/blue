@@ -1,6 +1,7 @@
 import type { BsbInterfacePatch, ProjectDocumentPatch } from '../shared/project-editor/contract';
 import type { ProjectRuntimeOutcome, ProjectRuntimeOutcomeStatus } from '../shared/project-history';
 import { blueX7PatchToRuntimeIntent } from '../shared/blue-x7-patch-intents';
+import { stereoPanModeToNumber } from '@blue/data';
 
 export type PerformanceKind = 'timeline' | 'blueLive';
 
@@ -316,6 +317,9 @@ const MIXER_CHANNEL_LIVE_KEYS = new Set<keyof MixerChannelUpdatePatch>([
   'level',
   'volume',
   'pan',
+  'panWidth',
+  'dualPanLeft',
+  'dualPanRight',
   'muted',
   'solo',
 ]);
@@ -352,6 +356,10 @@ function classifyMixerPatch(patch: NonNullable<ProjectDocumentPatch['mixer']>): 
             operations: [mixerGatesMarkerOperation()],
             restartRequiredOwnerIds: [],
           });
+        } else if (key === 'stereoPanMode') {
+          const mode = patch.patch.stereoPanMode;
+          const numMode = mode !== undefined ? stereoPanModeToNumber(mode) : undefined;
+          works.push(channelValueOperation(patch.channelId, 'stereoPanMode', numMode));
         } else if (MIXER_CHANNEL_LIVE_KEYS.has(key)) {
           works.push(channelValueOperation(patch.channelId, key, patch.patch[key]));
         } else if (key === 'name') {
@@ -509,6 +517,10 @@ function classifyScorePatch(patch: ScoreUpdatePatch): PatchRuntimeWork {
         patch.patch,
         `track:${patch.track.rootGroupId}:${patch.track.trackId}`,
       );
+    case 'updateScorePanLaw':
+      return channelValueOperation('score', 'panLawDb', patch.panLawDb);
+    case 'updateScorePanBoost':
+      return channelValueOperation('score', 'panOffCenterBoost', patch.panOffCenterBoost ? 1 : 0);
     default:
       return restartWork('score');
   }
