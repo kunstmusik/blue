@@ -25,7 +25,7 @@ From repository root, install dependencies with `pnpm install`. Have a working B
 
 Run `pnpm test`, `pnpm lint`, and `git diff --check` from repository root. For changed host-path behavior, run the Windows CI target or equivalent native Windows validation. Record any scoped environment-only failure in the implementation handoff.
 
-## Verification Record (2026-09-18, T026/T038/T053/T062/T067/T076/T079-T084)
+## Verification Record (2026-09-18, T026/T038/T053/T062/T067/T076/T078-T086)
 
 Environment: macOS (darwin 23.2.0, arm64), Csound 7.0 at `/usr/local/bin/csound`,
 Blue Engine binary under `native/blue-engine/build-darwin-arm64-debug/`. Numerical
@@ -47,6 +47,15 @@ Csound runtime is absent, matching the CI pattern in
 | `pnpm lint` | OK (`eslint`, typography audit, package lint, and Prettier check) |
 | `pnpm test` | OK — all workspace packages pass (exit 0; includes native engine suites) |
 | `git diff --check` | clean |
+
+### Cross-platform CI validation (T078/T085/T086)
+
+[PR #6](https://github.com/kunstmusik/blue-electron-poc/pull/6) passed all platform checks. The
+`windows-x64` job ran on `windows-2022` and passed native workspace/artifact verification, the
+full workspace tests, lint, Windows packaging, packaged-app smoke verification, and installer
+staging/upload. The [Windows job](https://github.com/kunstmusik/blue-electron-poc/actions/runs/35372915388/job/105690859338)
+provides the required native path-sensitive validation for audio-layout preflight, file identity,
+and embedded Csound paths.
 
 ### Numerical render matrix (T071, `packages/blue-app/src/main/mono-clip-panning.integration.test.ts`)
 
@@ -169,6 +178,5 @@ N+1's compiled variable, and Pan adopted a neighbor's Volume. Fixed by gating
   other non-`true` value loads disabled.
 - Numerical renders and engine integration tests require a Csound runtime and
   the Blue Engine binary; they skip automatically where those are absent.
-- Supported Windows CI was not run for this local branch (no PR and no Windows runner).
-  Synthetic win32 separator/case and native macOS realpath tests pass; native Windows
-  remains T078.
+- The local macOS Chromium browser suite could not launch; jsdom coverage passed and manual UI
+  acceptance passed. Native Windows path-sensitive validation passed in PR #6.

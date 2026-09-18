@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-17
 
-**Status**: Draft
+**Status**: Closed — implementation converged; manual acceptance and cross-platform CI validation passed (2026-09-18)
 
 **Input**: User description: "Review .tmp-research/MIXER_PANNING.md and independently review the codebase. Support mixed mono and stereo audio clips on a track, automatically route mono clips to both stereo channels, and add a score-level panning setting to preserve backwards compatibility with legacy projects while supporting industry-aligned Blue/Csound panning."
 
