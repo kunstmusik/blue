@@ -13,6 +13,7 @@ import {
   Channel,
   GenericInstrument,
 } from '@blue/data';
+import { getMixerChannelSnapshotId } from '../shared/project-editor/identity';
 import { createProjectEditorSnapshot } from '../shared/project-editor';
 import {
   buildRuntimeBindingRegistry,
@@ -314,7 +315,7 @@ describe('channel pan runtime binding (Spec 112 T077)', () => {
 
   function createMixerFixture(panningEnabled: boolean): MixerFixture {
     const data = new BlueData();
-    data.getScore().panningEnabled = panningEnabled;
+    data.getMixer().setPanningEnabled(panningEnabled);
     const mixer = data.getMixer();
     mixer.setEnabled(true);
     const channelA = new Channel();
@@ -393,4 +394,72 @@ describe('channel pan runtime binding (Spec 112 T077)', () => {
       channelB.getLevelParameter().getCompilationVarName(),
     );
   });
+});
+
+describe('compiled panner binding ownership', () => {
+  it.each(['timeline', 'timelineAsync', 'blueLive'] as const)(
+    'keeps colliding names separate in %s',
+    async (profile) => {
+      const data = new BlueData();
+      const instrument = new GenericInstrument();
+      instrument.setText('aout init 0\nblueMixerOut aout, aout');
+      data.getArrangement().addInstrument(instrument, '1');
+      const source = new Channel();
+      source.setAssociation('1');
+      source.setName('Lead');
+      data.getMixer().getChannels().push(source);
+      const sub = new Channel();
+      sub.setName('1');
+      data.getMixer().getSubChannels().push(sub);
+      const subId = getMixerChannelSnapshotId(sub);
+      const render =
+        profile === 'timeline'
+          ? data.toRealtimePlaybackCSD()
+          : profile === 'timelineAsync'
+            ? await data.toRealtimePlaybackCSDAsync()
+            : data.toBlueLiveCSD();
+      const registry = buildRuntimeBindingRegistry(
+        data,
+        render.parameters,
+        undefined,
+        render.pannerBindings,
+      );
+      for (const [owner, kind] of [
+        ['1', 'source'],
+        [subId, 'sub'],
+        ['master', 'master'],
+      ] as const) {
+        const binding = render.pannerBindings!.channels.find((b) => b.channelKind === kind)!;
+        expect(registry.get(`${owner}::stereoPanMode`)).toEqual({
+          kind: 'channel',
+          channel: binding.modeChannel,
+        });
+      }
+    },
+  );
+
+  it.each(['timeline', 'timelineAsync', 'blueLive'] as const)(
+    'omits bypassed panner bindings in %s',
+    async (profile) => {
+      const data = new BlueData();
+      data.getMixer().setEnabled(false);
+      const render =
+        profile === 'timeline'
+          ? data.toRealtimePlaybackCSD()
+          : profile === 'timelineAsync'
+            ? await data.toRealtimePlaybackCSDAsync()
+            : data.toBlueLiveCSD();
+      const registry = buildRuntimeBindingRegistry(
+        data,
+        render.parameters,
+        undefined,
+        render.pannerBindings,
+      );
+      expect(render.csdText).not.toContain('gk_blue_score_pan_law chnexport');
+      expect(render.pannerBindings).toBeUndefined();
+      expect(registry.has('mixer::panLawDb')).toBe(false);
+      expect(registry.has('mixer::panOffCenterBoost')).toBe(false);
+      expect([...registry.keys()].some((key) => key.endsWith('::stereoPanMode'))).toBe(false);
+    },
+  );
 });

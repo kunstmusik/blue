@@ -1,6 +1,6 @@
 # Audio Panning Contract
 
-This contract extends Spec 112's [audio routing contract](../../112-mono-clip-panning/contracts/audio-routing.md). It applies only when score panning is enabled and output has two channels. Disabled, mono-output, clip-adaptation, sends, mute/solo, meter, and unsupported-layout rules remain as specified there.
+This contract extends Spec 112's [audio routing contract](../../112-mono-clip-panning/contracts/audio-routing.md). It applies only when Mixer panning is enabled and output has two channels. Disabled, mono-output, clip-adaptation, sends, mute/solo, meter, and unsupported-layout rules remain as specified there.
 
 ## Gain function
 
@@ -46,4 +46,4 @@ At `(c,w)=(0.5,1)` or Dual defaults `(pL,pR)=(0,1)`, boost off, this is identity
 - Center/full-width and default Dual Pan are identity with boost off.
 - Zero Width, endpoint Position, coincident Dual Pan, and crossed Dual Pan obey the matrix.
 - Every law/boost pair is checked at `p=0,0.25,0.5,0.75,1`; default −3/off matches Spec 112's mono curve and Balance path numerically and in rendered float audio.
-- Static, automated, timeline, BlueLive, and disk generation use equivalent coefficients. Changes must not introduce a click from a discontinuous coefficient jump; use the existing runtime update smoothing/fencing behavior or document the required minimal smoothing in implementation.
+- Static, automated, timeline, BlueLive, and disk generation use equivalent coefficients. A discrete pan-law selection may change coefficients immediately and produce a click (project-owner acceptance, 2026-09-19: this is normally a once-per-project choice). This exception does not relax rapid position/width/dual-control transition requirements; use the existing runtime update smoothing/fencing behavior or document the required minimal smoothing in implementation.

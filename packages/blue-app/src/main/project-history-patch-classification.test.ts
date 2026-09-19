@@ -176,9 +176,6 @@ describe('Exhaustive project patch preparation classification (T018)', () => {
 
     it('classifies every score patch variant as structural', () => {
       const fixtures: Array<{ type: keyof typeof SCORE_PATCH_PREPARATION_CLASS }> = [
-        { type: 'updateScorePanning' },
-        { type: 'updateScorePanLaw' },
-        { type: 'updateScorePanBoost' },
         { type: 'addLayer' },
         { type: 'addLayerGroup' },
         { type: 'addMarker' },

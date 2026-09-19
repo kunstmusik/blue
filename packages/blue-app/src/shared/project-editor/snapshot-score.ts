@@ -1107,9 +1107,6 @@ export function createScoreDocumentSnapshot(data: BlueData): ScoreDocumentSnapsh
       rootChain.getProcessors().length > 0
         ? createNoteProcessorChainSnapshot(rootChain)
         : undefined,
-    panningEnabled: score.panningEnabled,
-    panLawDb: score.panLawDb,
-    panOffCenterBoost: score.panOffCenterBoost,
   };
 }
 
@@ -1148,9 +1145,6 @@ export function resolveScoreInsertionLocation(
 export function createEmptyScoreDocumentSnapshot(): ScoreDocumentSnapshot {
   return {
     trackLayerMuteSoloMode: 'audio',
-    panningEnabled: true,
-    panLawDb: -3,
-    panOffCenterBoost: false,
     timeState: {
       snapEnabled: false,
       snapValue: 'BEAT',

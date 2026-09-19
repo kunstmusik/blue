@@ -28,9 +28,21 @@ import {
   PARAM_WIDTH,
   PARAM_DUAL_LEFT,
   PARAM_DUAL_RIGHT,
+  parseFiniteNumber,
 } from './channel-pan';
 
 let nextRuntimeIdentity = 1;
+
+function createUnitRangeParameter(name: string, fixedValue: number): Parameter {
+  const parameter = new Parameter();
+  parameter.setName(name);
+  parameter.setLabel('');
+  parameter.setMinimum(0.0);
+  parameter.setMaximum(1.0);
+  parameter.setFixedValue(fixedValue);
+  parameter.setResolution(-1.0);
+  return parameter;
+}
 
 export class Channel implements BlueDataObject {
   static readonly MASTER = 'Master';
@@ -72,37 +84,13 @@ export class Channel implements BlueDataObject {
     this._levelParameter.setFixedValue(0.0);
     this._levelParameter.setResolution(-1.0);
 
-    this._panParameter = new Parameter();
-    this._panParameter.setName(PARAM_PAN);
-    this._panParameter.setLabel('');
-    this._panParameter.setMinimum(0.0);
-    this._panParameter.setMaximum(1.0);
-    this._panParameter.setFixedValue(DEFAULT_PAN);
-    this._panParameter.setResolution(-1.0);
-
-    this._panWidthParameter = new Parameter();
-    this._panWidthParameter.setName(PARAM_WIDTH);
-    this._panWidthParameter.setLabel('');
-    this._panWidthParameter.setMinimum(0.0);
-    this._panWidthParameter.setMaximum(1.0);
-    this._panWidthParameter.setFixedValue(DEFAULT_PAN_WIDTH);
-    this._panWidthParameter.setResolution(-1.0);
-
-    this._dualPanLeftParameter = new Parameter();
-    this._dualPanLeftParameter.setName(PARAM_DUAL_LEFT);
-    this._dualPanLeftParameter.setLabel('');
-    this._dualPanLeftParameter.setMinimum(0.0);
-    this._dualPanLeftParameter.setMaximum(1.0);
-    this._dualPanLeftParameter.setFixedValue(DEFAULT_DUAL_PAN_LEFT);
-    this._dualPanLeftParameter.setResolution(-1.0);
-
-    this._dualPanRightParameter = new Parameter();
-    this._dualPanRightParameter.setName(PARAM_DUAL_RIGHT);
-    this._dualPanRightParameter.setLabel('');
-    this._dualPanRightParameter.setMinimum(0.0);
-    this._dualPanRightParameter.setMaximum(1.0);
-    this._dualPanRightParameter.setFixedValue(DEFAULT_DUAL_PAN_RIGHT);
-    this._dualPanRightParameter.setResolution(-1.0);
+    this._panParameter = createUnitRangeParameter(PARAM_PAN, DEFAULT_PAN);
+    this._panWidthParameter = createUnitRangeParameter(PARAM_WIDTH, DEFAULT_PAN_WIDTH);
+    this._dualPanLeftParameter = createUnitRangeParameter(PARAM_DUAL_LEFT, DEFAULT_DUAL_PAN_LEFT);
+    this._dualPanRightParameter = createUnitRangeParameter(
+      PARAM_DUAL_RIGHT,
+      DEFAULT_DUAL_PAN_RIGHT,
+    );
   }
 
   getName(): string {
@@ -324,14 +312,13 @@ export class Channel implements BlueDataObject {
     if (outCh) channel._outChannel = outCh;
 
     // Level (in dB)
-    const level = data.getTextString('level');
-    if (level) channel._level = parseFloat(level);
+    const level = parseFiniteNumber(data.getTextString('level'));
+    if (level !== undefined) channel._level = level;
 
     // Pan (finite in [0, 1], invalid XML falls back to center 0.5)
-    const pan = data.getTextString('pan');
-    if (pan) {
-      const parsedPan = parseFloat(pan);
-      channel._pan = isValidPan(parsedPan) ? parsedPan : DEFAULT_PAN;
+    const pan = parseFiniteNumber(data.getTextString('pan'));
+    if (pan !== undefined) {
+      channel._pan = isValidPan(pan) ? pan : DEFAULT_PAN;
     }
 
     // Stereo mode and scalars with independent fallbacks
@@ -342,22 +329,19 @@ export class Channel implements BlueDataObject {
         : DEFAULT_STEREO_PAN_MODE;
     }
 
-    const width = data.getTextString('panWidth');
-    if (width) {
-      const parsedWidth = parseFloat(width);
-      channel._panWidth = isValidPanWidth(parsedWidth) ? parsedWidth : DEFAULT_PAN_WIDTH;
+    const width = parseFiniteNumber(data.getTextString('panWidth'));
+    if (width !== undefined) {
+      channel._panWidth = isValidPanWidth(width) ? width : DEFAULT_PAN_WIDTH;
     }
 
-    const dualLeft = data.getTextString('dualPanLeft');
-    if (dualLeft) {
-      const parsedLeft = parseFloat(dualLeft);
-      channel._dualPanLeft = isValidDualPan(parsedLeft) ? parsedLeft : DEFAULT_DUAL_PAN_LEFT;
+    const dualLeft = parseFiniteNumber(data.getTextString('dualPanLeft'));
+    if (dualLeft !== undefined) {
+      channel._dualPanLeft = isValidDualPan(dualLeft) ? dualLeft : DEFAULT_DUAL_PAN_LEFT;
     }
 
-    const dualRight = data.getTextString('dualPanRight');
-    if (dualRight) {
-      const parsedRight = parseFloat(dualRight);
-      channel._dualPanRight = isValidDualPan(parsedRight) ? parsedRight : DEFAULT_DUAL_PAN_RIGHT;
+    const dualRight = parseFiniteNumber(data.getTextString('dualPanRight'));
+    if (dualRight !== undefined) {
+      channel._dualPanRight = isValidDualPan(dualRight) ? dualRight : DEFAULT_DUAL_PAN_RIGHT;
     }
 
     const assoc = data.getAttribute('association') ?? data.getTextString('association');

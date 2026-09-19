@@ -9,6 +9,7 @@ import { MeterCanvas } from '../components/workbench/panels/mixer/MeterCanvas';
 import { MixerSettingsDialog } from '../components/workbench/panels/mixer/MixerSettingsDialog';
 import { HostDocumentContext } from '../hooks/use-host-document';
 import { meterStore } from '../stores/meter-store';
+import { createEmptyMixerSnapshot } from '../../shared/project-editor';
 
 (
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -116,9 +117,11 @@ describe('MeterCanvas in popout and re-dock lifecycle', () => {
           <MixerSettingsDialog
             isOpen={true}
             enableMeters={true}
-            enablePanning={true}
+            mixer={createEmptyMixerSnapshot()}
             onToggleEnableMeters={handleToggle}
             onToggleEnablePanning={vi.fn()}
+            onPanLawChange={vi.fn()}
+            onPanBoostChange={vi.fn()}
             onClose={handleClose}
           />
         </HostDocumentContext.Provider>,
@@ -146,9 +149,11 @@ describe('MeterCanvas in popout and re-dock lifecycle', () => {
           <MixerSettingsDialog
             isOpen={true}
             enableMeters={false}
-            enablePanning={false}
+            mixer={createEmptyMixerSnapshot()}
             onToggleEnableMeters={handleToggle}
             onToggleEnablePanning={vi.fn()}
+            onPanLawChange={vi.fn()}
+            onPanBoostChange={vi.fn()}
             onClose={handleClose}
           />
         </HostDocumentContext.Provider>,

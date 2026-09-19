@@ -70,21 +70,21 @@ describe('BlueData frozen SoundObject and AudioFile persistence', () => {
     expect(restored.getName()).toBe('Percussion');
   });
 
-  it('keeps score panning state and unknown XML untouched across save/reopen (Spec 112 T074)', () => {
+  it('keeps mixer panning state and unknown XML untouched across save/reopen (Spec 112 T074)', () => {
     const data = new BlueData();
-    expect(data.getScore().panningEnabled).toBe(true);
+    expect(data.getMixer().isPanningEnabled()).toBe(true);
 
     const xml = data.saveToString();
     const reopened = BlueData.loadFromString(xml);
 
-    expect(reopened.getScore().panningEnabled).toBe(true);
+    expect(reopened.getMixer().isPanningEnabled()).toBe(true);
     expect(reopened.saveToString()).toBe(xml);
 
     // A legacy document (attribute stripped) reopens disabled and clean; the
     // only additive change is the explicit attribute on the next save.
     const legacyXml = xml.replace(/ panningEnabled="true"/, '');
     const legacy = BlueData.loadFromString(legacyXml);
-    expect(legacy.getScore().panningEnabled).toBe(false);
+    expect(legacy.getMixer().isPanningEnabled()).toBe(false);
     const legacyResaved = legacy.saveToString();
     expect(legacyResaved).toContain('panningEnabled="false"');
     expect(BlueData.loadFromString(legacyResaved).saveToString()).toBe(legacyResaved);
@@ -92,8 +92,8 @@ describe('BlueData frozen SoundObject and AudioFile persistence', () => {
 
   it('keeps panLawDb, panOffCenterBoost, and channel stereo settings across save/reopen with unknown XML (Spec 113 T038, T040, T044)', () => {
     const data = new BlueData();
-    data.getScore().panLawDb = -4.5;
-    data.getScore().panOffCenterBoost = true;
+    data.getMixer().setPanLawDb(-4.5);
+    data.getMixer().setPanOffCenterBoost(true);
 
     const ch = new Channel();
     ch.setName('Stereo Channel');
@@ -108,8 +108,8 @@ describe('BlueData frozen SoundObject and AudioFile persistence', () => {
     const xml = xmlRoot.toXml();
 
     const reopened = BlueData.loadFromString(xml);
-    expect(reopened.getScore().panLawDb).toBe(-4.5);
-    expect(reopened.getScore().panOffCenterBoost).toBe(true);
+    expect(reopened.getMixer().getPanLawDb()).toBe(-4.5);
+    expect(reopened.getMixer().isPanOffCenterBoost()).toBe(true);
 
     const restoredCh = reopened.getMixer().getChannels()[0]!;
     expect(restoredCh.getStereoPanMode()).toBe('dualPan');

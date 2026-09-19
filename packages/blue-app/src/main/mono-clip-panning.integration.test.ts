@@ -12,11 +12,14 @@ import {
   TimeDuration,
   TimePosition,
   TrackLayerGroup,
+  getDualPanGains,
   getMonoPanGains,
   getStereoBalanceGains,
+  getStereoPanGains,
   parseAudioFileMetadata,
 } from '@blue/data';
 import { preflightAudioLayout } from './audio-layout-preflight';
+import { syncCompiledRuntimeParameterNames } from './runtime-parameter-sync';
 
 const hasCsound = (() => {
   try {
@@ -197,16 +200,20 @@ describe.skipIf(!hasCsound)('mono-clip-panning numerical renders (T071)', () => 
       channelName?: string;
       panLawDb?: 0 | -3 | -4.5 | -6;
       panOffCenterBoost?: boolean;
+      stereoPanMode?: import('@blue/data').StereoPanMode;
+      dualPanLeft?: number;
+      dualPanRight?: number;
+      panWidth?: number;
     },
   ): { data: BlueData; preflight: ReturnType<typeof preflightAudioLayout> } {
     const data = new BlueData();
-    expect(data.getScore().panningEnabled).toBe(true);
+    expect(data.getMixer().isPanningEnabled()).toBe(true);
 
     if (options.panLawDb !== undefined) {
-      data.getScore().panLawDb = options.panLawDb;
+      data.getMixer().setPanLawDb(options.panLawDb);
     }
     if (options.panOffCenterBoost !== undefined) {
-      data.getScore().panOffCenterBoost = options.panOffCenterBoost;
+      data.getMixer().setPanOffCenterBoost(options.panOffCenterBoost);
     }
 
     if (options.channels !== undefined) {
@@ -235,6 +242,18 @@ describe.skipIf(!hasCsound)('mono-clip-panning numerical renders (T071)', () => 
     if (options.pan !== undefined) {
       channel.setPan(options.pan);
     }
+    if (options.stereoPanMode !== undefined) {
+      channel.setStereoPanMode(options.stereoPanMode);
+    }
+    if (options.dualPanLeft !== undefined) {
+      channel.setDualPanLeft(options.dualPanLeft);
+    }
+    if (options.dualPanRight !== undefined) {
+      channel.setDualPanRight(options.dualPanRight);
+    }
+    if (options.panWidth !== undefined) {
+      channel.setPanWidth(options.panWidth);
+    }
     data.getMixer().getChannels().push(channel);
 
     // Native paths stay untouched; preflight resolves them with host fs/path.
@@ -258,6 +277,17 @@ describe.skipIf(!hasCsound)('mono-clip-panning numerical renders (T071)', () => 
       stdio: ['ignore', 'pipe', 'pipe'],
     });
     return { csdText, wav: fs.readFileSync(wavPath) };
+  }
+
+  function renderCsdToWav(csdText: string, scratchDir: string, name: string): Buffer {
+    const csdPath = path.join(scratchDir, `${name}.csd`);
+    const wavPath = path.join(scratchDir, `${name}.wav`);
+    fs.writeFileSync(csdPath, csdText, 'utf8');
+    execFileSync('csound', ['-nd', '-W', '--0dbfs=1', '--format=double', '-o', wavPath, csdPath], {
+      cwd: scratchDir,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    return fs.readFileSync(wavPath);
   }
 
   function wavDataOffset(buffer: Buffer): number {
@@ -436,4 +466,191 @@ describe.skipIf(!hasCsound)('mono-clip-panning numerical renders (T071)', () => 
     expect(left).toBeCloseTo(Math.pow(10, 3 / 20), 2);
     expect(right).toBeLessThan(1e-4);
   }, 120_000);
+
+  it('renders a stereo clip under Dual Pan mode with independent left and right panning (T025, US2)', () => {
+    const scratchDir = scratchDirectory();
+    const stereoPath = path.join(scratchDir, 'stereo.wav');
+    // Left channel has 1.0, Right channel has 0.5
+    writeWavFile(stereoPath, 2, 44100, 44100, [1.0, 0.5]);
+
+    // 1. Default Dual Pan: Left is 0.0 (hard left), Right is 1.0 (hard right)
+    // Left output should have Left input (1.0), Right output should have Right input (0.5)
+    const projectDefault = createPanningProject(scratchDir, {
+      clips: [{ file: stereoPath }],
+      stereoPanMode: 'dualPan',
+      dualPanLeft: 0.0,
+      dualPanRight: 1.0,
+    });
+    const { wav: wavDefault } = renderProjectToWav(projectDefault, scratchDir, 'dual-pan-default');
+    const [leftDef, rightDef] = plateauLevels(wavDefault, 0.9, 1.1);
+    expect(leftDef).toBeCloseTo(1.0, 2);
+    expect(rightDef).toBeCloseTo(0.5, 2);
+
+    // 2. Swapped Dual Pan: Left is 1.0 (hard right), Right is 0.0 (hard left)
+    // Left output should have Right input (0.5), Right output should have Left input (1.0)
+    const projectSwapped = createPanningProject(scratchDir, {
+      clips: [{ file: stereoPath }],
+      stereoPanMode: 'dualPan',
+      dualPanLeft: 1.0,
+      dualPanRight: 0.0,
+    });
+    const { wav: wavSwapped } = renderProjectToWav(projectSwapped, scratchDir, 'dual-pan-swapped');
+    const [leftSwap, rightSwap] = plateauLevels(wavSwapped, 0.9, 1.1);
+    expect(leftSwap).toBeCloseTo(0.5, 2);
+    expect(rightSwap).toBeCloseTo(1.0, 2);
+
+    // 3. Center Dual Pan: Left is 0.5 (center), Right is 0.5 (center)
+    // Under -3 dB law, center factor is 1/√2 ≈ 0.7071
+    // Left output = 0.7071 * 1.0 + 0.7071 * 0.5 = 1.0607
+    // Right output = 0.7071 * 1.0 + 0.7071 * 0.5 = 1.0607
+    const projectCenter = createPanningProject(scratchDir, {
+      clips: [{ file: stereoPath }],
+      stereoPanMode: 'dualPan',
+      dualPanLeft: 0.5,
+      dualPanRight: 0.5,
+    });
+    const { wav: wavCenter } = renderProjectToWav(projectCenter, scratchDir, 'dual-pan-center');
+    const [leftCenter, rightCenter] = plateauLevels(wavCenter, 0.9, 1.1);
+    expect(leftCenter).toBeCloseTo(1.06, 2);
+    expect(rightCenter).toBeCloseTo(1.06, 2);
+  }, 180_000);
+
+  it('renders Stereo Pan across every law, boost state, and position (T056)', () => {
+    const scratchDir = scratchDirectory();
+    const stereoPath = path.join(scratchDir, 'stereo-matrix.wav');
+    writeWavFile(stereoPath, 2, 44100, 44100, [1.0, 0.5]);
+
+    const laws = [0, -3, -4.5, -6] as const;
+    const positions = [0, 0.25, 0.5, 0.75, 1] as const;
+    for (const law of laws) {
+      for (const boost of [false, true]) {
+        for (const position of positions) {
+          const project = createPanningProject(scratchDir, {
+            clips: [{ file: stereoPath }],
+            pan: position,
+            panLawDb: law,
+            panOffCenterBoost: boost,
+            stereoPanMode: 'stereoPan',
+            panWidth: 1,
+          });
+          const { wav } = renderProjectToWav(
+            project,
+            scratchDir,
+            `stereo-pan-${law}-${boost ? 'boost' : 'flat'}-${position}`,
+          );
+          const [left, right] = plateauLevels(wav, 0.9, 1.1);
+          const [aL, bL, aR, bR] = getStereoPanGains(position, 1, law, boost);
+
+          expect(left, `left law=${law} boost=${boost} position=${position}`).toBeCloseTo(
+            aL + 0.5 * aR,
+            2,
+          );
+          expect(right, `right law=${law} boost=${boost} position=${position}`).toBeCloseTo(
+            bL + 0.5 * bR,
+            2,
+          );
+        }
+      }
+    }
+
+    const dualPositions = [
+      [0, 1],
+      [0.25, 1],
+      [0, 0.75],
+      [0.25, 0.75],
+      [0.75, 0.25],
+      [0.5, 0.5],
+    ] as const;
+    for (const law of laws) {
+      for (const boost of [false, true]) {
+        for (const [leftPosition, rightPosition] of dualPositions) {
+          const project = createPanningProject(scratchDir, {
+            clips: [{ file: stereoPath }],
+            panLawDb: law,
+            panOffCenterBoost: boost,
+            stereoPanMode: 'dualPan',
+            dualPanLeft: leftPosition,
+            dualPanRight: rightPosition,
+          });
+          const { wav } = renderProjectToWav(
+            project,
+            scratchDir,
+            `dual-pan-${law}-${boost ? 'boost' : 'flat'}-${leftPosition}-${rightPosition}`,
+          );
+          const [left, right] = plateauLevels(wav, 0.9, 1.1);
+          const [aL, bL, aR, bR] = getDualPanGains(leftPosition, rightPosition, law, boost);
+
+          expect(
+            left,
+            `left law=${law} boost=${boost} dual=${leftPosition},${rightPosition}`,
+          ).toBeCloseTo(aL + 0.5 * aR, 2);
+          expect(
+            right,
+            `right law=${law} boost=${boost} dual=${leftPosition},${rightPosition}`,
+          ).toBeCloseTo(bL + 0.5 * bR, 2);
+        }
+      }
+    }
+
+    // Width zero co-locates both source legs without changing the saved mode.
+    const zeroWidth = createPanningProject(scratchDir, {
+      clips: [{ file: stereoPath }],
+      pan: 0.25,
+      panLawDb: -3,
+      stereoPanMode: 'stereoPan',
+      panWidth: 0,
+    });
+    const zeroWidthWav = renderProjectToWav(zeroWidth, scratchDir, 'stereo-pan-zero-width').wav;
+    const [zeroLeft, zeroRight] = plateauLevels(zeroWidthWav, 0.9, 1.1);
+    const [zeroAL, zeroBL, zeroAR, zeroBR] = getStereoPanGains(0.25, 0, -3, false);
+    expect(zeroLeft).toBeCloseTo(zeroAL + 0.5 * zeroAR, 2);
+    expect(zeroRight).toBeCloseTo(zeroBL + 0.5 * zeroBR, 2);
+  }, 300_000);
+
+  it('applies a live Balance-to-Dual-Pan mode switch and source move without restarting', () => {
+    const scratchDir = scratchDirectory();
+    const stereoPath = path.join(scratchDir, 'stereo.wav');
+    writeWavFile(stereoPath, 2, 44100, 44100, [1.0, 0.5]);
+
+    const project = createPanningProject(scratchDir, {
+      clips: [{ file: stereoPath }],
+      stereoPanMode: 'balance',
+      pan: 0.5,
+    });
+    const render = project.data.toRealtimePlaybackCSD(undefined, false, project.preflight.manifest);
+    expect(render.pannerBindings).toBeDefined();
+    syncCompiledRuntimeParameterNames(
+      project.data.getArrangement(),
+      project.data.getMixer(),
+      render.parameters,
+      project.data.getScore(),
+    );
+
+    const channel = project.data.getMixer().getChannels()[0]!;
+    const modeChannel = render.pannerBindings?.channels.find(
+      (binding) => binding.channelOrdinal === 0,
+    )?.modeChannel;
+    const leftVar = channel.getDualPanLeftParameter().getCompilationVarName();
+    const rightVar = channel.getDualPanRightParameter().getCompilationVarName();
+    expect(modeChannel).toBeTruthy();
+    expect(leftVar).toMatch(/^gk_blue_auto\d+$/);
+    expect(rightVar).toMatch(/^gk_blue_auto\d+$/);
+
+    const liveControl = `
+instr SetDualPan
+  chnset 2, "${modeChannel}"
+  chnset 1, "${leftVar}"
+  chnset 0, "${rightVar}"
+endin
+`;
+    const csdText = render.csdText
+      .replace('</CsInstruments>', `${liveControl}</CsInstruments>`)
+      .replace('\ne\n', '\ni"SetDualPan" 0.5 0.1\ne 2\n');
+    expect(csdText).toContain('i"SetDualPan" 0.5 0.1');
+    const wav = renderCsdToWav(csdText, scratchDir, 'live-dual-pan');
+    const [left, right] = plateauLevels(wav, 0.9, 1.1);
+
+    expect(left).toBeCloseTo(0.5, 2);
+    expect(right).toBeCloseTo(1.0, 2);
+  }, 180_000);
 });

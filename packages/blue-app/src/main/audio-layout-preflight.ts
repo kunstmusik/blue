@@ -65,7 +65,7 @@ export function preflightAudioLayout(
   deps?: AudioLayoutPreflightDeps,
 ): AudioLayoutPreflightResult {
   const score = project.getScore();
-  const panningEnabled = score.panningEnabled;
+  const panningEnabled = project.getMixer().isPanningEnabled();
 
   if (!panningEnabled) {
     return {

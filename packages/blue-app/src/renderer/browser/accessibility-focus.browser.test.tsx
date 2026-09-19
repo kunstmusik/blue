@@ -13,6 +13,7 @@ import { MeterCanvas } from '../components/workbench/panels/mixer/MeterCanvas';
 import { MeterScaleRuler } from '../components/workbench/panels/mixer/MeterScaleRuler';
 import { PeakReadout } from '../components/workbench/panels/mixer/ChannelStrip';
 import { meterStore } from '../stores/meter-store';
+import { createEmptyMixerSnapshot } from '../../shared/project-editor';
 
 (
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -255,9 +256,11 @@ describe('Accessibility Focus Traversal Browser Tests (T020)', () => {
         <MixerSettingsDialog
           isOpen={true}
           enableMeters={true}
-          enablePanning={true}
+          mixer={createEmptyMixerSnapshot()}
           onToggleEnableMeters={handleToggle}
           onToggleEnablePanning={vi.fn()}
+          onPanLawChange={vi.fn()}
+          onPanBoostChange={vi.fn()}
           onClose={handleClose}
         />,
       );

@@ -51,7 +51,7 @@ interface PanningProjectOptions {
  */
 function createPanningProject(options: PanningProjectOptions = {}): BlueData {
   const data = new BlueData();
-  data.getScore().panningEnabled = true;
+  data.getMixer().setPanningEnabled(true);
   const mixer = data.getMixer();
   mixer.setEnabled(true);
 
@@ -109,32 +109,19 @@ function extractBlueMixer(csdText: string): string {
   return csdText.slice(start, end);
 }
 
-/** Resolves the compilation variable assigned to the first channel's pan. */
-function findSourcePanVar(mixerText: string): string {
-  const match = mixerText.match(
-    /k_pan_l = 1\.4142135623730951 \* cos\(1\.5707963267948966 \* (\w+)\)/,
-  );
-  expect(match).not.toBeNull();
-  return match![1]!;
-}
-
 describe('mono clip panning mixer stage CSD (Spec 112 T072)', () => {
   it('emits the equal-power Mono Pan law for a verified all-mono channel', () => {
     const data = createPanningProject({ clips: [{ file: MONO_CLIP }], sourcePan: 0.25 });
     const { csdText } = data.toRealtimePlaybackCSD(undefined, false, monoObservationManifest());
     const mixerText = extractBlueMixer(csdText);
 
-    const panVar = findSourcePanVar(mixerText);
-    expect(mixerText).toContain(
-      `k_pan_l = 1.4142135623730951 * cos(1.5707963267948966 * ${panVar})`,
-    );
-    expect(mixerText).toContain(
-      `k_pan_r = 1.4142135623730951 * sin(1.5707963267948966 * ${panVar})`,
-    );
-    expect(mixerText).toContain('ga_bluemix_0_0 *= k_pan_l');
-    expect(mixerText).toContain('ga_bluemix_0_1 *= k_pan_r');
+    expect(mixerText).toContain('k_pan_l = (gk_blue_score_pan_law == 0 ?');
+    expect(mixerText).toContain('gk_blue_score_pan_law == -3 ? cos(');
+    expect(mixerText).toContain('gk_blue_score_pan_law == -3 ? sin(');
+    expect(mixerText).toContain('ga_bluemix_0_0 *= 1.4142135623730951 * k_pan_l');
+    expect(mixerText).toContain('ga_bluemix_0_1 *= 1.4142135623730951 * k_pan_r');
     // The fixed pan value reaches the runtime through the parameter init.
-    expect(csdText).toContain(`${panVar} init 0.25`);
+    expect(csdText).toMatch(/gk_blue_auto\d+ init 0\.25/);
   });
 
   it('emits no-crossfeed Balance for stereo, mixed, and unknown channels', () => {
@@ -145,10 +132,11 @@ describe('mono clip panning mixer stage CSD (Spec 112 T072)', () => {
       stereoObservationManifest(),
     );
     const stereoMixer = extractBlueMixer(stereoResult.csdText);
-    expect(stereoMixer).toMatch(/k_bal_l = min\(1, 2 \* \(1 - gk_blue_auto\d+\)\)/);
-    expect(stereoMixer).toMatch(/k_bal_r = min\(1, 2 \* gk_blue_auto\d+\)/);
-    expect(stereoMixer).toContain('ga_bluemix_0_0 *= k_bal_l');
-    expect(stereoMixer).toContain('ga_bluemix_0_1 *= k_bal_r');
+    expect(stereoMixer).toMatch(/if gk_blue_pan_mode_\d+ < 0\.5 then/);
+    expect(stereoMixer).toMatch(/k_pan_al = min\(1, 2 \* \(1 - gk_blue_auto\d+\)\)/);
+    expect(stereoMixer).toMatch(/k_pan_br = min\(1, 2 \* gk_blue_auto\d+\)/);
+    expect(stereoMixer).toContain('k_pan_ar = 0');
+    expect(stereoMixer).toContain('k_pan_bl = 0');
     expect(stereoMixer).not.toContain('k_pan_l');
 
     const mixedData = createPanningProject({
@@ -160,7 +148,7 @@ describe('mono clip panning mixer stage CSD (Spec 112 T072)', () => {
       stereoObservationManifest(),
     );
     const mixedMixer = extractBlueMixer(mixedResult.csdText);
-    expect(mixedMixer).toMatch(/k_bal_l = min\(1, 2 \* \(1 - gk_blue_auto\d+\)\)/);
+    expect(mixedMixer).toMatch(/if gk_blue_pan_mode_\d+ < 0\.5 then/);
     expect(mixedMixer).not.toContain('k_pan_l');
 
     const unknownData = createPanningProject({
@@ -173,7 +161,7 @@ describe('mono clip panning mixer stage CSD (Spec 112 T072)', () => {
       monoObservationManifest(),
     );
     const unknownMixer = extractBlueMixer(unknownResult.csdText);
-    expect(unknownMixer).toMatch(/k_bal_l = min\(1, 2 \* \(1 - gk_blue_auto\d+\)\)/);
+    expect(unknownMixer).toMatch(/if gk_blue_pan_mode_\d+ < 0\.5 then/);
     expect(unknownMixer).not.toContain('k_pan_l');
   });
 
@@ -184,7 +172,7 @@ describe('mono clip panning mixer stage CSD (Spec 112 T072)', () => {
 
     const sendTap = mixerText.search(/ga_bluesub_Reverb_0\t\+=\t/g);
     const panStage = mixerText.indexOf('k_pan_l = ');
-    const panApply = mixerText.indexOf('ga_bluemix_0_0 *= k_pan_l');
+    const panApply = mixerText.indexOf('ga_bluemix_0_0 *= 1.4142135623730951 * k_pan_l');
     const outputGate = mixerText.indexOf('ga_bluemix_0_0 = ga_bluemix_0_0 * kMixGateState_1');
     const meterTap = mixerText.indexOf('kMeter_rms_0 rms ga_bluemix_0_0');
     const parentRouting = mixerText.indexOf('ga_bluesub_Master_0\t+=\tga_bluemix_0_0');
@@ -213,7 +201,9 @@ describe('mono clip panning mixer stage CSD (Spec 112 T072)', () => {
 
     // The return is positioned exactly once, by the Reverb stage itself, and
     // the panned return is what reaches Master.
-    const reverbBalance = mixerText.indexOf('ga_bluesub_Reverb_0 *= k_bal_l');
+    const reverbBalance = mixerText.indexOf(
+      'ga_bluesub_Reverb_0 = k_pan_al * a_pan_in_l + k_pan_ar * a_pan_in_r',
+    );
     const reverbRouting = mixerText.indexOf('ga_bluesub_Master_0\t+=\tga_bluesub_Reverb_0');
     expect(reverbBalance).toBeGreaterThan(0);
     expect(reverbRouting).toBeGreaterThan(reverbBalance);
@@ -239,7 +229,7 @@ describe('mono clip panning mixer stage CSD (Spec 112 T072)', () => {
       false,
       monoObservationManifest(),
     );
-    expect(extractBlueMixer(enabledEffectResult.csdText)).toContain('k_bal_l');
+    expect(extractBlueMixer(enabledEffectResult.csdText)).toContain('k_pan_al');
     expect(extractBlueMixer(enabledEffectResult.csdText)).not.toContain('k_pan_l');
   });
 
@@ -256,20 +246,20 @@ describe('mono clip panning mixer stage CSD (Spec 112 T072)', () => {
     // the Reverb subchannel and Master stages use the Balance law.
     const monoPanStages = mixerText.match(/k_pan_l = /g) ?? [];
     expect(monoPanStages).toHaveLength(1);
-    expect(mixerText.match(/k_bal_l = min\(1, 2 \* \(1 - gk_blue_auto\d+\)\)/g)).toHaveLength(2);
+    expect(mixerText.match(/k_pan_al = min\(1, 2 \* \(1 - gk_blue_auto\d+\)\)/g)).toHaveLength(2);
 
     // Master fixed position 1 is delivered through its parameter init: the
     // second Balance assignment pair in the instrument belongs to Master.
     const balanceVars = Array.from(
-      mixerText.matchAll(/k_bal_l = min\(1, 2 \* \(1 - (gk_blue_auto\d+)\)\)/g),
+      mixerText.matchAll(/k_pan_al = min\(1, 2 \* \(1 - (gk_blue_auto\d+)\)\)/g),
     ).map((match) => match[1]!);
     expect(balanceVars).toHaveLength(2);
     expect(csdText).toContain(`${balanceVars[1]} init 1`);
   });
 
-  it('omits every position stage when score panning is disabled', () => {
+  it('omits every position stage when Mixer panning is disabled', () => {
     const data = createPanningProject({ clips: [{ file: MONO_CLIP }] });
-    data.getScore().panningEnabled = false;
+    data.getMixer().setPanningEnabled(false);
 
     const { csdText } = data.toRealtimePlaybackCSD();
     expect(csdText).not.toContain('k_pan_l');
@@ -284,81 +274,84 @@ describe('mono clip panning mixer stage CSD (Spec 112 T072)', () => {
   it('emits correct pan law curves for all 4 laws in automated Mono Pan (T011, US1)', () => {
     // 0 dB law
     const data0 = createPanningProject({ clips: [{ file: MONO_CLIP }] });
-    data0.getScore().panLawDb = 0;
+    data0.getMixer().setPanLawDb(0);
     const { csdText: csd0 } = data0.toRealtimePlaybackCSD(
       undefined,
       false,
       monoObservationManifest(),
     );
     const mixer0 = extractBlueMixer(csd0);
-    expect(mixer0).toContain('k_pan_l = 1.4142135623730951 * (min(1, 2 * (1 - gk_blue_auto');
-    expect(mixer0).toContain('k_pan_r = 1.4142135623730951 * (min(1, 2 * gk_blue_auto');
+    expect(csd0).toContain('gk_blue_score_pan_law init 0');
+    expect(mixer0).toContain('gk_blue_score_pan_law == 0 ? min(1, 2 * (1 -');
+    expect(mixer0).toContain('gk_blue_score_pan_law == -3 ? cos(');
 
     // -3 dB law (default Spec 112 parity)
     const data3 = createPanningProject({ clips: [{ file: MONO_CLIP }] });
-    data3.getScore().panLawDb = -3;
+    data3.getMixer().setPanLawDb(-3);
     const { csdText: csd3 } = data3.toRealtimePlaybackCSD(
       undefined,
       false,
       monoObservationManifest(),
     );
     const mixer3 = extractBlueMixer(csd3);
-    expect(mixer3).toContain(
-      'k_pan_l = 1.4142135623730951 * cos(1.5707963267948966 * gk_blue_auto',
-    );
-    expect(mixer3).toContain(
-      'k_pan_r = 1.4142135623730951 * sin(1.5707963267948966 * gk_blue_auto',
-    );
+    expect(csd3).toContain('gk_blue_score_pan_law init -3');
+    expect(mixer3).toContain('gk_blue_score_pan_law == -3 ? cos(');
+    expect(mixer3).toContain('gk_blue_score_pan_law == -3 ? sin(');
 
     // -4.5 dB law
     const data45 = createPanningProject({ clips: [{ file: MONO_CLIP }] });
-    data45.getScore().panLawDb = -4.5;
+    data45.getMixer().setPanLawDb(-4.5);
     const { csdText: csd45 } = data45.toRealtimePlaybackCSD(
       undefined,
       false,
       monoObservationManifest(),
     );
     const mixer45 = extractBlueMixer(csd45);
-    expect(mixer45).toContain('k_pan_l = 1.4142135623730951 * ((0.5393149814421111 * cos(');
-    expect(mixer45).toContain('k_pan_r = 1.4142135623730951 * ((0.5393149814421111 * sin(');
+    expect(csd45).toContain('gk_blue_score_pan_law init -4.5');
+    expect(mixer45).toContain('gk_blue_score_pan_law == -4.5 ?');
+    expect(mixer45).toContain('0.46189768862683755 * cos(');
+    expect(mixer45).toContain('0.46189768862683755 * sin(');
 
     // -6 dB law
     const data6 = createPanningProject({ clips: [{ file: MONO_CLIP }] });
-    data6.getScore().panLawDb = -6;
+    data6.getMixer().setPanLawDb(-6);
     const { csdText: csd6 } = data6.toRealtimePlaybackCSD(
       undefined,
       false,
       monoObservationManifest(),
     );
     const mixer6 = extractBlueMixer(csd6);
-    expect(mixer6).toContain('k_pan_l = 1.4142135623730951 * ((1 - gk_blue_auto');
-    expect(mixer6).toContain('k_pan_r = 1.4142135623730951 * (gk_blue_auto');
+    expect(csd6).toContain('gk_blue_score_pan_law init -6');
+    expect(mixer6).toContain(': (1 - gk_blue_auto');
+    expect(mixer6).toContain(': gk_blue_auto');
   });
 
   it('emits off-center boost calculation in automated Mono Pan when enabled (T011, US1)', () => {
     const data = createPanningProject({ clips: [{ file: MONO_CLIP }] });
-    data.getScore().panLawDb = -3;
-    data.getScore().panOffCenterBoost = true;
+    data.getMixer().setPanLawDb(-3);
+    data.getMixer().setPanOffCenterBoost(true);
     const { csdText } = data.toRealtimePlaybackCSD(undefined, false, monoObservationManifest());
     const mixer = extractBlueMixer(csdText);
-    expect(mixer).toContain('abs(gk_blue_auto');
-    expect(mixer).toContain('k_pan_l = 1.4142135623730951 *');
+    expect(csdText).toContain('gk_blue_score_pan_boost init 1');
+    expect(mixer).toContain('abs(gk_blue_score_pan_law)');
+    expect(mixer).toContain('k_pan_l *= k_pan_boost');
   });
 
   it('leaves Balance channels completely invariant across all pan laws and boost states (T011, US1)', () => {
     for (const law of [0, -3, -4.5, -6] as const) {
       for (const boost of [false, true]) {
         const data = createPanningProject({ clips: [{ file: STEREO_CLIP }] });
-        data.getScore().panLawDb = law;
-        data.getScore().panOffCenterBoost = boost;
+        data.getMixer().setPanLawDb(law);
+        data.getMixer().setPanOffCenterBoost(boost);
         const { csdText } = data.toRealtimePlaybackCSD(
           undefined,
           false,
           stereoObservationManifest(),
         );
         const mixer = extractBlueMixer(csdText);
-        expect(mixer).toContain('k_bal_l = min(1, 2 * (1 - gk_blue_auto');
-        expect(mixer).toContain('k_bal_r = min(1, 2 * gk_blue_auto');
+        expect(mixer).toMatch(/if gk_blue_pan_mode_\d+ < 0\.5 then/);
+        expect(mixer).toMatch(/k_pan_al = min\(1, 2 \* \(1 - gk_blue_auto\d+\)\)/);
+        expect(mixer).toMatch(/k_pan_br = min\(1, 2 \* gk_blue_auto\d+\)/);
         expect(mixer).not.toContain('k_pan_l');
       }
     }
@@ -398,6 +391,45 @@ describe('mono clip panning mixer stage CSD (Spec 112 T072)', () => {
     expect(mixerDual).toContain('k_pan_pr = gk_blue_auto');
     expect(mixerDual).toContain('a_pan_in_l = ga_bluemix_0_0');
     expect(mixerDual).toContain('a_pan_in_r = ga_bluemix_0_1');
+  });
+
+  it('emits deterministic true-stereo laws and boost branches for both modes', () => {
+    for (const law of [0, -3, -4.5, -6] as const) {
+      for (const boost of [false, true]) {
+        for (const mode of ['stereoPan', 'dualPan'] as const) {
+          const data = createPanningProject({ clips: [{ file: STEREO_CLIP }] });
+          data.getMixer().setPanLawDb(law);
+          data.getMixer().setPanOffCenterBoost(boost);
+          const channel = data.getMixer().getChannels()[0]!;
+          channel.setStereoPanMode(mode);
+          channel.setPan(0.25);
+          channel.setPanWidth(0.8);
+          channel.setDualPanLeft(0.2);
+          channel.setDualPanRight(0.8);
+
+          const { csdText } = data.toRealtimePlaybackCSD(
+            undefined,
+            false,
+            stereoObservationManifest(),
+          );
+          const mixerText = extractBlueMixer(csdText);
+
+          expect(csdText).toContain(`gk_blue_score_pan_law init ${law}`);
+          expect(csdText).toContain(`gk_blue_score_pan_boost init ${boost ? 1 : 0}`);
+          expect(mixerText).toContain('k_pan_al = ');
+          expect(mixerText).toContain('k_pan_bl = ');
+          expect(mixerText).toContain('k_pan_ar = ');
+          expect(mixerText).toContain('k_pan_br = ');
+          if (mode === 'stereoPan') {
+            expect(mixerText).toContain('k_pan_pl = k_pan_c - k_pan_d');
+            expect(mixerText).toContain('k_pan_pr = k_pan_c + k_pan_d');
+          } else {
+            expect(mixerText).toMatch(/k_pan_pl = gk_blue_auto\d+/);
+            expect(mixerText).toMatch(/k_pan_pr = gk_blue_auto\d+/);
+          }
+        }
+      }
+    }
   });
 
   it('exercises true-stereo matrix calculations for signal paths, endpoint narrowing, and crossing (T020, US2)', () => {

@@ -8,8 +8,8 @@ import {
   MixerPanSlider,
   formatPanDisplay,
 } from '../components/workbench/panels/mixer/MixerPanSlider';
-import ScoreSettingsDialog from '../components/workbench/panels/score/ScoreSettingsDialog';
-import { createEmptyScoreDocumentSnapshot } from '../../shared/project-editor';
+import { MixerSettingsDialog } from '../components/workbench/panels/mixer/MixerSettingsDialog';
+import { createEmptyMixerSnapshot } from '../../shared/project-editor';
 
 (
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -88,8 +88,7 @@ describe('MixerPanSlider accessibility and interaction (T043, T050, T065)', () =
           channelName="Vocal"
           pan={0.5}
           positionMode="pan"
-          onPreview={onPreview}
-          onCommit={onCommit}
+          gestureHandlers={{ pan: { onPreview, onCommit } }}
         />,
       );
     });
@@ -134,54 +133,34 @@ describe('MixerPanSlider accessibility and interaction (T043, T050, T065)', () =
     expect(onCommit).toHaveBeenLastCalledWith(0.75);
   });
 
-  it('handles keyboard navigation: ArrowLeft/ArrowRight, Home/End, and Shift steps', () => {
+  it('commits values delivered by the native range input', () => {
     const onCommit = vi.fn();
     act(() => {
       root.render(
-        <MixerPanSlider channelName="Vocal" pan={0.5} positionMode="pan" onCommit={onCommit} />,
+        <MixerPanSlider
+          channelName="Vocal"
+          pan={0.5}
+          positionMode="pan"
+          gestureHandlers={{ pan: { onCommit } }}
+        />,
       );
     });
 
     const slider = container.querySelector<HTMLInputElement>('input[type="range"]')!;
 
-    // ArrowLeft: -0.01
-    act(() => {
-      slider.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
-    });
+    const setNativeValue = (value: string) => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(
+        slider,
+        value,
+      );
+      slider.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+
+    act(() => setNativeValue('0.49'));
     expect(onCommit).toHaveBeenLastCalledWith(0.49);
-
-    // ArrowRight: +0.01
-    act(() => {
-      slider.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
-    });
-    expect(onCommit).toHaveBeenLastCalledWith(0.51);
-
-    // Shift + ArrowLeft: -0.05
-    act(() => {
-      slider.dispatchEvent(
-        new KeyboardEvent('keydown', { key: 'ArrowLeft', shiftKey: true, bubbles: true }),
-      );
-    });
-    expect(onCommit).toHaveBeenLastCalledWith(0.45);
-
-    // Shift + ArrowRight: +0.05
-    act(() => {
-      slider.dispatchEvent(
-        new KeyboardEvent('keydown', { key: 'ArrowRight', shiftKey: true, bubbles: true }),
-      );
-    });
-    expect(onCommit).toHaveBeenLastCalledWith(0.55);
-
-    // Home: 0
-    act(() => {
-      slider.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
-    });
+    act(() => setNativeValue('0'));
     expect(onCommit).toHaveBeenLastCalledWith(0);
-
-    // End: 1
-    act(() => {
-      slider.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
-    });
+    act(() => setNativeValue('1'));
     expect(onCommit).toHaveBeenLastCalledWith(1);
   });
 
@@ -189,7 +168,12 @@ describe('MixerPanSlider accessibility and interaction (T043, T050, T065)', () =
     const onCommit = vi.fn();
     act(() => {
       root.render(
-        <MixerPanSlider channelName="Vocal" pan={0.2} positionMode="pan" onCommit={onCommit} />,
+        <MixerPanSlider
+          channelName="Vocal"
+          pan={0.2}
+          positionMode="pan"
+          gestureHandlers={{ pan: { onCommit } }}
+        />,
       );
     });
 
@@ -204,7 +188,12 @@ describe('MixerPanSlider accessibility and interaction (T043, T050, T065)', () =
     const onCommit = vi.fn();
     act(() => {
       root.render(
-        <MixerPanSlider channelName="Vocal" pan={0.5} disabled={true} onCommit={onCommit} />,
+        <MixerPanSlider
+          channelName="Vocal"
+          pan={0.5}
+          disabled={true}
+          gestureHandlers={{ pan: { onCommit } }}
+        />,
       );
     });
 
@@ -218,25 +207,27 @@ describe('MixerPanSlider accessibility and interaction (T043, T050, T065)', () =
     expect(onCommit).not.toHaveBeenCalled();
   });
 
-  it('ScoreSettingsDialog renders Enable Panning checkbox and notifies onPanningChange', () => {
+  it('MixerSettingsDialog renders Enable Panning checkbox and notifies onToggleEnablePanning', () => {
     const onPanningChange = vi.fn();
-    const score = createEmptyScoreDocumentSnapshot();
-    expect(score.panningEnabled).toBe(true);
+    const mixer = createEmptyMixerSnapshot();
+    expect(mixer.panningEnabled).toBe(true);
 
     act(() => {
       root.render(
-        <ScoreSettingsDialog
-          score={score}
-          mixerEnabled={true}
-          legacyNotice={false}
-          onModeChange={() => {}}
-          onPanningChange={onPanningChange}
+        <MixerSettingsDialog
+          isOpen={true}
+          enableMeters={true}
+          mixer={mixer}
+          onToggleEnableMeters={() => {}}
+          onToggleEnablePanning={onPanningChange}
+          onPanLawChange={() => {}}
+          onPanBoostChange={() => {}}
           onClose={() => {}}
         />,
       );
     });
 
-    const checkbox = container.querySelector<HTMLInputElement>(
+    const checkbox = document.body.querySelector<HTMLInputElement>(
       'input[type="checkbox"][aria-label="Enable Panning"]',
     )!;
     expect(checkbox).not.toBeNull();
@@ -246,5 +237,47 @@ describe('MixerPanSlider accessibility and interaction (T043, T050, T065)', () =
       checkbox.click();
     });
     expect(onPanningChange).toHaveBeenCalledWith(false);
+  });
+
+  it('MixerSettingsDialog renders pan law and off-center boost controls', () => {
+    const onPanLawChange = vi.fn();
+    const onPanBoostChange = vi.fn();
+    const mixer = {
+      ...createEmptyMixerSnapshot(),
+      panLawDb: -4.5 as const,
+    };
+
+    act(() => {
+      root.render(
+        <MixerSettingsDialog
+          isOpen={true}
+          enableMeters={true}
+          mixer={mixer}
+          onToggleEnableMeters={() => {}}
+          onToggleEnablePanning={() => {}}
+          onPanLawChange={onPanLawChange}
+          onPanBoostChange={onPanBoostChange}
+          onClose={() => {}}
+        />,
+      );
+    });
+
+    const dialog = document.body.querySelector('[role="dialog"]')!;
+    const lawGroup = dialog.querySelector('[role="radiogroup"][aria-label="Mixer pan law"]')!;
+    expect(lawGroup.querySelector('[role="radio"][aria-checked="true"]')?.textContent).toBe(
+      '-4.5 dB',
+    );
+
+    const lawButton = Array.from(
+      lawGroup.querySelectorAll<HTMLButtonElement>('[role="radio"]'),
+    ).find((button) => button.textContent === '0 dB')!;
+    act(() => lawButton.click());
+    expect(onPanLawChange).toHaveBeenCalledWith(0);
+
+    const boostCheckbox = dialog.querySelector<HTMLInputElement>(
+      'input[aria-label="Off-center boost"]',
+    )!;
+    act(() => boostCheckbox.click());
+    expect(onPanBoostChange).toHaveBeenCalledWith(true);
   });
 });

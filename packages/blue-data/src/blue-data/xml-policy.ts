@@ -19,6 +19,13 @@ import {
   DEFAULT_LEGACY_METER_ENABLED,
   DEFAULT_LEGACY_METER_PROFILE_KEY,
 } from '../mixer/mixer';
+import {
+  DEFAULT_PAN_LAW_DB,
+  DEFAULT_PAN_OFF_CENTER_BOOST,
+  isValidPanLawDb,
+  parseFiniteNumber,
+  type PanLawDb,
+} from '../mixer/channel-pan';
 import { OpcodeList } from '../opcodes/opcode-list';
 import { parseUDOText } from '../opcodes/udo-utilities';
 import { TimeContext } from '../time/time-context';
@@ -87,6 +94,12 @@ export function loadFromString(xmlString: string, createBlueData: () => BlueData
   let mixerLoaded = false;
   let scoreLoaded = false;
   let scoreModePresentAtLoad = false;
+  const mixerPanningAttributes = new Set<'panningEnabled' | 'panLawDb' | 'panOffCenterBoost'>();
+  const legacyScorePanning: {
+    panningEnabled?: boolean;
+    panLawDb?: PanLawDb;
+    panOffCenterBoost?: boolean;
+  } = {};
 
   const nodes = rootElement.getElements();
   while (nodes.hasMoreElements()) {
@@ -108,6 +121,9 @@ export function loadFromString(xmlString: string, createBlueData: () => BlueData
       case 'mixer':
         state.mixer = Mixer.loadFromXML(node);
         mixerLoaded = true;
+        for (const attribute of ['panningEnabled', 'panLawDb', 'panOffCenterBoost'] as const) {
+          if (node.getAttribute(attribute) !== null) mixerPanningAttributes.add(attribute);
+        }
         break;
       case 'tables':
         state.tableSet = Tables.loadFromXML(node);
@@ -136,6 +152,18 @@ export function loadFromString(xmlString: string, createBlueData: () => BlueData
       case 'score':
         scoreModePresentAtLoad = node.getAttribute('trackLayerMuteSoloMode') !== null;
         state.score = Score.loadFromXML(node, objRefMap);
+        const legacyPanningEnabled = node.getAttribute('panningEnabled');
+        if (legacyPanningEnabled !== null) {
+          legacyScorePanning.panningEnabled = legacyPanningEnabled.trim().toLowerCase() === 'true';
+        }
+        const legacyPanLaw = parseFiniteNumber(node.getAttribute('panLawDb'));
+        if (legacyPanLaw !== undefined && isValidPanLawDb(legacyPanLaw)) {
+          legacyScorePanning.panLawDb = legacyPanLaw;
+        }
+        const legacyPanBoost = node.getAttribute('panOffCenterBoost');
+        if (legacyPanBoost !== null) {
+          legacyScorePanning.panOffCenterBoost = legacyPanBoost.trim().toLowerCase() === 'true';
+        }
         scoreLoaded = true;
         break;
       case 'scratchPadData':
@@ -195,10 +223,23 @@ export function loadFromString(xmlString: string, createBlueData: () => BlueData
     state.mixer.setMeterProfileKey(DEFAULT_LEGACY_METER_PROFILE_KEY);
   }
 
+  // Panning was originally serialized on <score>. Prefer the Mixer-owned
+  // attributes when present, while migrating each legacy value independently.
+  if (!mixerPanningAttributes.has('panningEnabled')) {
+    state.mixer.setPanningEnabled(legacyScorePanning.panningEnabled ?? false);
+  }
+  if (!mixerPanningAttributes.has('panLawDb')) {
+    state.mixer.setPanLawDb(legacyScorePanning.panLawDb ?? DEFAULT_PAN_LAW_DB);
+  }
+  if (!mixerPanningAttributes.has('panOffCenterBoost')) {
+    state.mixer.setPanOffCenterBoost(
+      legacyScorePanning.panOffCenterBoost ?? DEFAULT_PAN_OFF_CENTER_BOOST,
+    );
+  }
+
   // A legacy document without a Score retains Event header behavior and disabled panning.
   if (!scoreLoaded) {
     state.score.trackLayerMuteSoloMode = 'event';
-    state.score.panningEnabled = false;
   }
 
   // Post-loop (Spec 111 FR-015): record whether the loaded document carries

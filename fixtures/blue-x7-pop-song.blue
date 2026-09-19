@@ -44,7 +44,7 @@ Tempo map is enabled at 112 BPM; mixer is enabled with one channel per track.</n
     <copyToMediaFileOnImport>true</copyToMediaFileOnImport>
   </projectProperties>
   <arrangement/>
-  <mixer>
+  <mixer panningEnabled="true" panLawDb="-3" panOffCenterBoost="false">
     <enabled>true</enabled>
     <enableMeters>true</enableMeters>
     <meterProfile>peak-rms-mixing-plus-6</meterProfile>
@@ -169,7 +169,7 @@ Tempo map is enabled at 112 BPM; mixer is enabled with one channel per track.</n
     <repeatEnabled>false</repeatEnabled>
     <liveCodeText></liveCodeText>
   </liveData>
-  <score trackLayerMuteSoloMode="audio" panningEnabled="true" panLawDb="-3" panOffCenterBoost="false">
+  <score trackLayerMuteSoloMode="audio">
     <timeContext>
       <tempoMap>
         <enabled>true</enabled>

@@ -31,4 +31,4 @@
 
 ## Notes
 
-- Revalidated after stereo-mode expansion against the active template, constitution, panning research, and Specs 111–112 on 2026-09-18. Score-wide law, Balance compatibility, and fixed clip adaptation are explicit planning boundaries.
+- Revalidated after stereo-mode expansion against the active template, constitution, panning research, and Specs 111–112 on 2026-09-18. Mixer-wide law, Balance compatibility, and fixed clip adaptation are explicit planning boundaries.

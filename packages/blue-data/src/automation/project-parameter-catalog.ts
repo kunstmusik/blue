@@ -13,12 +13,9 @@
  * Browser-safe: no host APIs, static imports only.
  */
 import { Parameter } from './parameter';
+import { getMixerChannelParameters } from './mixer-parameter-collection';
 import { Arrangement } from '../arrangement';
 import { Mixer } from '../mixer/mixer';
-import { Channel } from '../mixer/channel';
-import { Effect } from '../mixer/effect';
-import { Send } from '../mixer/send';
-import { EffectsChain } from '../mixer/effects-chain';
 import { Score } from '../score/score';
 import { TrackLayerGroup } from '../score/track/track-layer-group';
 import type { BlueData } from '../blue-data';
@@ -46,30 +43,6 @@ function collectInstrumentParameters(instr: unknown): Parameter[] | null {
   return null;
 }
 
-function collectChainParameters(chain: EffectsChain, parameters: Parameter[]): void {
-  for (const item of chain) {
-    if (item instanceof Effect || item instanceof Send) {
-      parameters.push(...item.getParameters());
-    }
-  }
-}
-
-function collectChannelParameters(
-  channel: Channel,
-  parameters: Parameter[],
-  includePan: boolean,
-): void {
-  collectChainParameters(channel.getPreEffects(), parameters);
-  collectChainParameters(channel.getPostEffects(), parameters);
-  parameters.push(channel.getLevelParameter());
-  if (includePan) {
-    parameters.push(channel.getPanParameter());
-    parameters.push(channel.getPanWidthParameter());
-    parameters.push(channel.getDualPanLeftParameter());
-    parameters.push(channel.getDualPanRightParameter());
-  }
-}
-
 /**
  * Mixer parameters in the established source/sub/master order. Pan follows
  * the compile enumeration (includePan) so positional runtime-name syncing
@@ -81,12 +54,12 @@ export function getMixerOwnerParameters(mixer: Mixer, includePan = true): Parame
     return parameters;
   }
   for (const channel of mixer.getAllSourceChannels()) {
-    collectChannelParameters(channel, parameters, includePan);
+    parameters.push(...getMixerChannelParameters(channel, includePan));
   }
   for (const subChannel of mixer.getSubChannels()) {
-    collectChannelParameters(subChannel, parameters, includePan);
+    parameters.push(...getMixerChannelParameters(subChannel, includePan));
   }
-  collectChannelParameters(mixer.getMaster(), parameters, includePan);
+  parameters.push(...getMixerChannelParameters(mixer.getMaster(), includePan));
   return parameters;
 }
 

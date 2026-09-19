@@ -9,80 +9,66 @@ import {
   Send,
   createAudioLayoutManifest,
 } from '@blue/data';
-import { createScoreDocumentSnapshot, createEmptyScoreDocumentSnapshot } from './snapshot-score';
 import { createMixerSnapshot, createEmptyMixerSnapshot } from './snapshot-mixer-orchestra';
-import {
-  applyScoreObjectPatch,
-  isNonEmptyScorePatch,
-  scorePatchTouchesMixerAudioChannels,
-} from './patch-score';
+import { applyMixerPatchToData } from './patch-mixer-bluelive';
 import { validateProjectDocumentPatch, classifyProjectDocumentPatch } from './patch-document';
-import { SCORE_PATCH_PREPARATION_CLASS, type ScorePatch } from './contract';
+import { MIXER_PATCH_PREPARATION_CLASS, type MixerPatch } from './contract';
 
-describe('score-panning-contract (T029, T032, T045, T047)', () => {
-  it('exposes panningEnabled on ScoreDocumentSnapshot and defaults empty to true', () => {
+describe('mixer-panning-contract (T029, T032, T045, T047)', () => {
+  it('exposes panningEnabled on MixerSnapshot and defaults empty to true', () => {
     const data = new BlueData();
-    const snap = createScoreDocumentSnapshot(data);
+    const snap = createMixerSnapshot(data.getMixer(), data.getScore());
     expect(snap.panningEnabled).toBe(true);
 
-    const emptySnap = createEmptyScoreDocumentSnapshot();
+    const emptySnap = createEmptyMixerSnapshot();
     expect(emptySnap.panningEnabled).toBe(true);
 
-    data.getScore().panningEnabled = false;
-    const disabledSnap = createScoreDocumentSnapshot(data);
+    data.getMixer().setPanningEnabled(false);
+    const disabledSnap = createMixerSnapshot(data.getMixer(), data.getScore());
     expect(disabledSnap.panningEnabled).toBe(false);
   });
 
-  it('applies updateScorePanning patch to BlueData.getScore()', () => {
+  it('applies updateMixerPanning patch to BlueData.getMixer()', () => {
     const data = new BlueData();
-    expect(data.getScore().panningEnabled).toBe(true);
+    expect(data.getMixer().isPanningEnabled()).toBe(true);
 
     // Toggling to false
-    const patchFalse: ScorePatch = { type: 'updateScorePanning', panningEnabled: false };
-    const changed1 = applyScoreObjectPatch(data, patchFalse);
+    const patchFalse: MixerPatch = { type: 'updateMixerPanning', panningEnabled: false };
+    const changed1 = applyMixerPatchToData(data, patchFalse);
     expect(changed1).toBe(true);
-    expect(data.getScore().panningEnabled).toBe(false);
+    expect(data.getMixer().isPanningEnabled()).toBe(false);
 
     // Idempotent application returns false
-    const changedNoop = applyScoreObjectPatch(data, patchFalse);
+    const changedNoop = applyMixerPatchToData(data, patchFalse);
     expect(changedNoop).toBe(false);
 
     // Toggling back to true
-    const patchTrue: ScorePatch = { type: 'updateScorePanning', panningEnabled: true };
-    const changed2 = applyScoreObjectPatch(data, patchTrue);
+    const patchTrue: MixerPatch = { type: 'updateMixerPanning', panningEnabled: true };
+    const changed2 = applyMixerPatchToData(data, patchTrue);
     expect(changed2).toBe(true);
-    expect(data.getScore().panningEnabled).toBe(true);
+    expect(data.getMixer().isPanningEnabled()).toBe(true);
   });
 
-  it('classifies updateScorePanning as structural in SCORE_PATCH_PREPARATION_CLASS', () => {
-    expect(SCORE_PATCH_PREPARATION_CLASS.updateScorePanning).toBe('structural');
+  it('classifies updateMixerPanning as structural in MIXER_PATCH_PREPARATION_CLASS', () => {
+    expect(MIXER_PATCH_PREPARATION_CLASS.updateMixerPanning).toBe('structural');
 
     const classification = classifyProjectDocumentPatch({
-      score: { type: 'updateScorePanning', panningEnabled: false },
+      mixer: { type: 'updateMixerPanning', panningEnabled: false },
     });
     expect(classification).toBe('structural');
   });
 
-  it('treats updateScorePanning as touching mixer audio channels', () => {
-    expect(
-      scorePatchTouchesMixerAudioChannels({
-        type: 'updateScorePanning',
-        panningEnabled: true,
-      }),
-    ).toBe(true);
-  });
-
-  it('validates score panningEnabled is a boolean', () => {
+  it('validates mixer panningEnabled is a boolean', () => {
     const valid = validateProjectDocumentPatch({
-      score: { type: 'updateScorePanning', panningEnabled: true },
+      mixer: { type: 'updateMixerPanning', panningEnabled: true },
     });
     expect(valid.valid).toBe(true);
 
     const invalid = validateProjectDocumentPatch({
-      score: { type: 'updateScorePanning', panningEnabled: 'true' as unknown as boolean },
+      mixer: { type: 'updateMixerPanning', panningEnabled: 'true' as unknown as boolean },
     });
     expect(invalid.valid).toBe(false);
-    expect(invalid.reason).toContain('Score panningEnabled must be a boolean');
+    expect(invalid.reason).toContain('Mixer panningEnabled must be a boolean');
   });
 
   it('validates channel pan is finite in [0, 1]', () => {
@@ -187,65 +173,65 @@ describe('score-panning-contract (T029, T032, T045, T047)', () => {
     expect(snapshot.channels[0]?.positionMode).toBe('pan');
   });
 
-  it('exposes panLawDb and panOffCenterBoost on ScoreDocumentSnapshot and defaults properly', () => {
+  it('exposes panLawDb and panOffCenterBoost on MixerSnapshot and defaults properly', () => {
     const data = new BlueData();
-    const snap = createScoreDocumentSnapshot(data);
+    const snap = createMixerSnapshot(data.getMixer(), data.getScore());
     expect(snap.panLawDb).toBe(-3);
     expect(snap.panOffCenterBoost).toBe(false);
 
-    const emptySnap = createEmptyScoreDocumentSnapshot();
+    const emptySnap = createEmptyMixerSnapshot();
     expect(emptySnap.panLawDb).toBe(-3);
     expect(emptySnap.panOffCenterBoost).toBe(false);
 
-    data.getScore().panLawDb = -6;
-    data.getScore().panOffCenterBoost = true;
-    const customSnap = createScoreDocumentSnapshot(data);
+    data.getMixer().setPanLawDb(-6);
+    data.getMixer().setPanOffCenterBoost(true);
+    const customSnap = createMixerSnapshot(data.getMixer(), data.getScore());
     expect(customSnap.panLawDb).toBe(-6);
     expect(customSnap.panOffCenterBoost).toBe(true);
   });
 
-  it('applies updateScorePanLaw and updateScorePanBoost patches to BlueData.getScore()', () => {
+  it('applies updateMixerPanLaw and updateMixerPanBoost patches to BlueData.getMixer()', () => {
     const data = new BlueData();
-    expect(data.getScore().panLawDb).toBe(-3);
-    expect(data.getScore().panOffCenterBoost).toBe(false);
+    expect(data.getMixer().getPanLawDb()).toBe(-3);
+    expect(data.getMixer().isPanOffCenterBoost()).toBe(false);
 
-    const patchLaw: ScorePatch = { type: 'updateScorePanLaw', panLawDb: -4.5 };
-    const changed1 = applyScoreObjectPatch(data, patchLaw);
+    const patchLaw: MixerPatch = { type: 'updateMixerPanLaw', panLawDb: -4.5 };
+    const changed1 = applyMixerPatchToData(data, patchLaw);
     expect(changed1).toBe(true);
-    expect(data.getScore().panLawDb).toBe(-4.5);
+    expect(data.getMixer().getPanLawDb()).toBe(-4.5);
 
-    const patchBoost: ScorePatch = { type: 'updateScorePanBoost', panOffCenterBoost: true };
-    const changed2 = applyScoreObjectPatch(data, patchBoost);
+    const patchBoost: MixerPatch = { type: 'updateMixerPanBoost', panOffCenterBoost: true };
+    const changed2 = applyMixerPatchToData(data, patchBoost);
     expect(changed2).toBe(true);
-    expect(data.getScore().panOffCenterBoost).toBe(true);
+    expect(data.getMixer().isPanOffCenterBoost()).toBe(true);
   });
 
-  it('validates score panLawDb and panOffCenterBoost', () => {
+  it('validates mixer panLawDb and panOffCenterBoost', () => {
     expect(
-      validateProjectDocumentPatch({ score: { type: 'updateScorePanLaw', panLawDb: 0 } }).valid,
+      validateProjectDocumentPatch({ mixer: { type: 'updateMixerPanLaw', panLawDb: 0 } }).valid,
     ).toBe(true);
     expect(
-      validateProjectDocumentPatch({ score: { type: 'updateScorePanLaw', panLawDb: -3 } }).valid,
+      validateProjectDocumentPatch({ mixer: { type: 'updateMixerPanLaw', panLawDb: -3 } }).valid,
     ).toBe(true);
     expect(
-      validateProjectDocumentPatch({ score: { type: 'updateScorePanLaw', panLawDb: -4.5 } }).valid,
+      validateProjectDocumentPatch({ mixer: { type: 'updateMixerPanLaw', panLawDb: -4.5 } }).valid,
     ).toBe(true);
     expect(
-      validateProjectDocumentPatch({ score: { type: 'updateScorePanLaw', panLawDb: -6 } }).valid,
+      validateProjectDocumentPatch({ mixer: { type: 'updateMixerPanLaw', panLawDb: -6 } }).valid,
     ).toBe(true);
     expect(
-      validateProjectDocumentPatch({ score: { type: 'updateScorePanLaw', panLawDb: -5 as never } })
+      validateProjectDocumentPatch({ mixer: { type: 'updateMixerPanLaw', panLawDb: -5 as never } })
         .valid,
     ).toBe(false);
 
     expect(
       validateProjectDocumentPatch({
-        score: { type: 'updateScorePanBoost', panOffCenterBoost: true },
+        mixer: { type: 'updateMixerPanBoost', panOffCenterBoost: true },
       }).valid,
     ).toBe(true);
     expect(
       validateProjectDocumentPatch({
-        score: { type: 'updateScorePanBoost', panOffCenterBoost: 'true' as never },
+        mixer: { type: 'updateMixerPanBoost', panOffCenterBoost: 'true' as never },
       }).valid,
     ).toBe(false);
   });

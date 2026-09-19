@@ -681,29 +681,29 @@ export function validateProjectDocumentPatch(patch: ProjectDocumentPatch): {
     }
   }
 
-  if (patch.score?.type === 'updateScorePanning') {
-    if (typeof patch.score.panningEnabled !== 'boolean') {
+  if (patch.mixer?.type === 'updateMixerPanning') {
+    if (typeof patch.mixer.panningEnabled !== 'boolean') {
       return {
         valid: false,
-        reason: 'Score panningEnabled must be a boolean',
+        reason: 'Mixer panningEnabled must be a boolean',
       };
     }
   }
 
-  if (patch.score?.type === 'updateScorePanLaw') {
-    if (!isValidPanLawDb(patch.score.panLawDb)) {
+  if (patch.mixer?.type === 'updateMixerPanLaw') {
+    if (!isValidPanLawDb(patch.mixer.panLawDb)) {
       return {
         valid: false,
-        reason: `Score panLawDb must be one of 0, -3, -4.5, -6, got ${String(patch.score.panLawDb)}`,
+        reason: `Mixer panLawDb must be one of 0, -3, -4.5, -6, got ${String(patch.mixer.panLawDb)}`,
       };
     }
   }
 
-  if (patch.score?.type === 'updateScorePanBoost') {
-    if (typeof patch.score.panOffCenterBoost !== 'boolean') {
+  if (patch.mixer?.type === 'updateMixerPanBoost') {
+    if (typeof patch.mixer.panOffCenterBoost !== 'boolean') {
       return {
         valid: false,
-        reason: 'Score panOffCenterBoost must be a boolean',
+        reason: 'Mixer panOffCenterBoost must be a boolean',
       };
     }
   }

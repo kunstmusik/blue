@@ -1,6 +1,6 @@
 # Audio Routing Contract
 
-Applies when `score.panningEnabled === true`. For false, generate the established legacy route and ignore channel position.
+Applies when `mixer.panningEnabled === true`. For false, generate the established legacy route and ignore channel position.
 
 ## Layout and value
 

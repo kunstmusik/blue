@@ -402,9 +402,11 @@ describe('legacy mono/stereo audio playback and mixer CSD parity with Java Blue 
 
   it('verifies Spec 112 intentional divergence: default -3 dB equal power mono pan, balance, send tap before pan, and gate/meter after pan', () => {
     // TypeScript-only divergence: when panningEnabled is true (new project default in Spec 112+),
-    // channels route through panners: Mono Pan for verified mono sources, Balance for stereo/mixed.
+    // channels route through a live mode-aware panner. Without an observation
+    // manifest this channel is stereo-or-unknown, so its default Balance mode
+    // is represented by the first matrix branch.
     const data = new BlueData();
-    data.getScore().panningEnabled = true;
+    data.getMixer().setPanningEnabled(true);
     data.getMixer().setEnabled(true);
 
     const ch1 = new Channel();
@@ -414,53 +416,70 @@ describe('legacy mono/stereo audio playback and mixer CSD parity with Java Blue 
     ch1.setPan(0.5);
     data.getMixer().getChannels().push(ch1);
 
-    // Default CSD with no observation manifest treats channel as unknown (two-bus -> Balance)
+    // Default CSD with no observation manifest treats channel as unknown (two-bus -> Balance).
     const realtimeCsd = data.toRealtimePlaybackCSD().csdText;
-    expect(realtimeCsd).toContain('k_bal_l = min(1, 2 * (1 -');
-    expect(realtimeCsd).toContain('k_bal_r = min(1, 2 *');
+    expect(realtimeCsd).toContain('if gk_blue_pan_mode_0 < 0.5 then');
+    expect(realtimeCsd).toContain('k_pan_al = min(1, 2 * (1 - gk_blue_auto1))');
+    expect(realtimeCsd).toContain('k_pan_br = min(1, 2 * gk_blue_auto1)');
+    expect(realtimeCsd).toContain('k_pan_ar = 0');
+    expect(realtimeCsd).toContain('k_pan_bl = 0');
 
     // When disabled, no pan/bal stage exists
-    data.getScore().panningEnabled = false;
+    data.getMixer().setPanningEnabled(false);
     const disabledCsd = data.toRealtimePlaybackCSD().csdText;
     expect(disabledCsd).not.toContain('k_pan_l');
     expect(disabledCsd).not.toContain('k_bal_l');
   });
 
-  it('compares static CSD, realtime playback, and BlueLive coefficients for score law/boost choices and confirms mathematical parity', () => {
+  it('keeps static, realtime, and BlueLive panner graphs aligned for score law/boost choices', () => {
     const laws: Array<0 | -3 | -4.5 | -6> = [0, -3, -4.5, -6];
-    for (const law of laws) {
-      for (const boost of [false, true]) {
-        const data = new BlueData();
-        data.getScore().panningEnabled = true;
-        data.getScore().panLawDb = law;
-        data.getScore().panOffCenterBoost = boost;
-        data.getMixer().setEnabled(true);
+    for (const mode of ['stereoPan', 'dualPan'] as const) {
+      for (const law of laws) {
+        for (const boost of [false, true]) {
+          const data = new BlueData();
+          data.getMixer().setPanningEnabled(true);
+          data.getMixer().setPanLawDb(law);
+          data.getMixer().setPanOffCenterBoost(boost);
+          data.getMixer().setEnabled(true);
 
-        const ch = new Channel();
-        ch.setName('AudioCh');
-        ch.setOutChannel('Master');
-        ch.setPan(0.25);
-        ch.setPanWidth(0.8);
-        ch.setStereoPanMode('stereoPan');
-        data.getMixer().getChannels().push(ch);
+          const ch = new Channel();
+          ch.setName('AudioCh');
+          ch.setOutChannel('Master');
+          ch.setPan(0.25);
+          ch.setPanWidth(0.8);
+          ch.setStereoPanMode(mode);
+          ch.setDualPanLeft(0.2);
+          ch.setDualPanRight(0.8);
+          data.getMixer().getChannels().push(ch);
 
-        const realtimeCsd = data.toRealtimePlaybackCSD().csdText;
-        const blueLiveCsd = data.toBlueLiveCSD().csdText;
-        const diskCsd = data.toDiskCSD();
+          const realtimeCsd = data.toRealtimePlaybackCSD().csdText;
+          const blueLiveCsd = data.toBlueLiveCSD().csdText;
+          const diskCsd = data.toDiskCSD();
 
-        const extractDynamicMatrix = (csd: string) => {
-          const match = csd.match(
-            /k_pan_al = [^\n]+[\s\S]*?ga_bluemix_0_1 = k_pan_bl \* a_pan_in_l \+ k_pan_br \* a_pan_in_r/,
-          );
-          return match ? match[0] : null;
-        };
-        const realtimeMatrix = extractDynamicMatrix(realtimeCsd);
-        const blueLiveMatrix = extractDynamicMatrix(blueLiveCsd);
-        const diskMatrix = extractDynamicMatrix(diskCsd);
+          const extractDynamicMatrix = (csd: string) => {
+            const match = csd.match(
+              /k_pan_al = [^\n]+[\s\S]*?ga_bluemix_0_1 = k_pan_bl \* a_pan_in_l \+ k_pan_br \* a_pan_in_r/,
+            );
+            return match ? match[0] : null;
+          };
+          const realtimeMatrix = extractDynamicMatrix(realtimeCsd);
+          const blueLiveMatrix = extractDynamicMatrix(blueLiveCsd);
+          const diskMatrix = extractDynamicMatrix(diskCsd);
 
-        expect(realtimeMatrix).not.toBeNull();
-        expect(realtimeMatrix).toBe(blueLiveMatrix);
-        expect(diskMatrix).toBe(realtimeMatrix);
+          expect(realtimeMatrix).not.toBeNull();
+          expect(realtimeMatrix).toBe(blueLiveMatrix);
+          expect(diskMatrix).not.toBeNull();
+
+          // Realtime and BlueLive read the exported policy channels. Disk CSD
+          // has no live control channels, so it bakes the selected values into
+          // the same matrix graph instead of being byte-identical.
+          expect(realtimeMatrix).toContain('gk_blue_score_pan_law');
+          expect(realtimeMatrix).toContain('gk_blue_score_pan_boost');
+          expect(diskMatrix).toContain(`${law} == 0 ?`);
+          expect(diskMatrix).toContain(`${law} == -3 ?`);
+          expect(diskMatrix).toContain(`${law} == -4.5 ?`);
+          expect(diskMatrix).toContain(`${boost ? 1 : 0} != 0 && ${law} != 0`);
+        }
       }
     }
   });

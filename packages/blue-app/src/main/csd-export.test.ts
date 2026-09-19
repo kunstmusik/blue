@@ -107,9 +107,9 @@ describe('saveGeneratedCsdToDisk', () => {
 
   it('exports disk CSD preserving score pan law configuration (T018)', async () => {
     const data = new BlueData();
-    data.getScore().panningEnabled = true;
-    data.getScore().panLawDb = -4.5;
-    data.getScore().panOffCenterBoost = true;
+    data.getMixer().setPanningEnabled(true);
+    data.getMixer().setPanLawDb(-4.5);
+    data.getMixer().setPanOffCenterBoost(true);
     data.getMixer().setEnabled(true);
 
     const ch = new Channel();

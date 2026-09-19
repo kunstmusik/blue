@@ -11,10 +11,7 @@
 import { Parameter } from '../automation/parameter';
 import { Arrangement } from '../arrangement';
 import { Mixer } from '../mixer/mixer';
-import { Channel } from '../mixer/channel';
-import { Effect } from '../mixer/effect';
-import { Send } from '../mixer/send';
-import { EffectsChain } from '../mixer/effects-chain';
+import { getMixerChannelParameters } from './mixer-parameter-collection';
 
 /**
  * Get all parameters from arrangement and mixer.
@@ -42,47 +39,18 @@ export function getAllParameters(
 
   // Parameters from mixer source channels
   for (const channel of mixer.getAllSourceChannels()) {
-    collectChannelParameters(channel, parameters, includePan);
+    parameters.push(...getMixerChannelParameters(channel, includePan));
   }
 
   // Parameters from mixer sub channels
   for (const subChannel of mixer.getSubChannels()) {
-    collectChannelParameters(subChannel, parameters, includePan);
+    parameters.push(...getMixerChannelParameters(subChannel, includePan));
   }
 
   // Master channel
-  collectChannelParameters(mixer.getMaster(), parameters, includePan);
+  parameters.push(...getMixerChannelParameters(mixer.getMaster(), includePan));
 
   return parameters;
-}
-
-/**
- * Collect parameters from a mixer channel: effects, volume, and sends (and optionally pan).
- */
-function collectChannelParameters(
-  channel: Channel,
-  parameters: Parameter[],
-  includePan: boolean,
-): void {
-  collectChainParameters(channel.getPreEffects(), parameters);
-  collectChainParameters(channel.getPostEffects(), parameters);
-
-  // Channel level parameter
-  parameters.push(channel.getLevelParameter());
-  if (includePan) {
-    parameters.push(channel.getPanParameter());
-    parameters.push(channel.getPanWidthParameter());
-    parameters.push(channel.getDualPanLeftParameter());
-    parameters.push(channel.getDualPanRightParameter());
-  }
-}
-
-function collectChainParameters(chain: EffectsChain, parameters: Parameter[]): void {
-  for (const item of chain) {
-    if (item instanceof Effect || item instanceof Send) {
-      parameters.push(...item.getParameters());
-    }
-  }
 }
 
 /**

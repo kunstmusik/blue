@@ -129,9 +129,9 @@ describe('screen CSD generation', () => {
 
   it('generates screen CSD with score pan law and boost across disk and realtime profiles (T018)', async () => {
     const data = new BlueData();
-    data.getScore().panningEnabled = true;
-    data.getScore().panLawDb = -6;
-    data.getScore().panOffCenterBoost = true;
+    data.getMixer().setPanningEnabled(true);
+    data.getMixer().setPanLawDb(-6);
+    data.getMixer().setPanOffCenterBoost(true);
     data.getMixer().setEnabled(true);
 
     const ch = new Channel();
@@ -144,6 +144,9 @@ describe('screen CSD generation', () => {
 
     expect(diskCsd).toContain('<CsoundSynthesizer>');
     expect(rtCsd).toContain('<CsoundSynthesizer>');
-    expect(rtCsd).toContain('k_bal_l = min(1, 2 * (1 -');
+    expect(rtCsd).toContain('gk_blue_score_pan_law init -6');
+    expect(rtCsd).toContain('gk_blue_score_pan_boost init 1');
+    expect(rtCsd).toContain('if gk_blue_pan_mode_0 < 0.5 then');
+    expect(rtCsd).toContain('k_pan_al = min(1, 2 * (1 - gk_blue_auto1))');
   });
 });

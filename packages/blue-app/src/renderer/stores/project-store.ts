@@ -350,9 +350,9 @@ interface ProjectActions {
     value: boolean,
   ) => void;
   setTrackHeaderMode: (mode: 'audio' | 'event') => void;
-  setScorePanning: (enabled: boolean) => void;
-  setScorePanLaw: (panLawDb: PanLawDb) => void;
-  setScorePanBoost: (panOffCenterBoost: boolean) => void;
+  setMixerPanning: (enabled: boolean) => void;
+  setMixerPanLaw: (panLawDb: PanLawDb) => void;
+  setMixerPanBoost: (panOffCenterBoost: boolean) => void;
   renameLayer: (layerId: string, name: string) => void;
   setLayerHeight: (groupId: string, layerIndex: number, heightIndex: number) => void;
   addLayer: (groupId: string, layerIndex: number) => void;
@@ -1565,6 +1565,15 @@ function applyMixerPatchToSnapshot(
         next.meterProfileKey = patch.value;
       }
       break;
+    case 'updateMixerPanning':
+      next.panningEnabled = patch.panningEnabled;
+      break;
+    case 'updateMixerPanLaw':
+      next.panLawDb = patch.panLawDb;
+      break;
+    case 'updateMixerPanBoost':
+      next.panOffCenterBoost = patch.panOffCenterBoost;
+      break;
     case 'updateExtraRenderTime':
       next.extraRenderTime = patch.value;
       break;
@@ -2344,24 +2353,6 @@ function applyScorePatchToSnapshot(
   score: ScoreDocumentSnapshot,
   patch: ScorePatch,
 ): ScoreDocumentSnapshot {
-  if (patch.type === 'updateScorePanning') {
-    return {
-      ...score,
-      panningEnabled: patch.panningEnabled,
-    };
-  }
-  if (patch.type === 'updateScorePanLaw') {
-    return {
-      ...score,
-      panLawDb: patch.panLawDb,
-    };
-  }
-  if (patch.type === 'updateScorePanBoost') {
-    return {
-      ...score,
-      panOffCenterBoost: patch.panOffCenterBoost,
-    };
-  }
   if (patch.type === 'updateTrackLayerMuteSoloMode') {
     return {
       ...score,
@@ -4175,13 +4166,7 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
         ? metadata
         : normalizedPatch.mixer !== undefined
           ? { ...metadata, label: mixerPatchActionLabel(normalizedPatch.mixer) }
-          : normalizedPatch.score?.type === 'updateScorePanning'
-            ? { ...metadata, label: 'Set Score Panning' }
-            : normalizedPatch.score?.type === 'updateScorePanLaw'
-              ? { ...metadata, label: 'Set Score Pan Law' }
-              : normalizedPatch.score?.type === 'updateScorePanBoost'
-                ? { ...metadata, label: 'Set Score Pan Boost' }
-                : metadata;
+          : metadata;
       getProjectPatchQueue().enqueue(
         normalizedPatch,
         dirtyBaseline,
@@ -4633,30 +4618,30 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       );
     },
 
-    setScorePanning: (enabled) => {
-      const score = get().score;
-      if (score.panningEnabled === enabled) return;
+    setMixerPanning: (enabled) => {
+      const mixer = get().mixer;
+      if (mixer.panningEnabled === enabled) return;
       void get().applyProjectDocumentPatch(
-        { score: { type: 'updateScorePanning', panningEnabled: enabled } },
-        { label: 'Set Score Panning' },
+        { mixer: { type: 'updateMixerPanning', panningEnabled: enabled } },
+        { label: enabled ? 'Enable Panning' : 'Disable Panning' },
       );
     },
 
-    setScorePanLaw: (panLawDb) => {
-      const score = get().score;
-      if (score.panLawDb === panLawDb) return;
+    setMixerPanLaw: (panLawDb) => {
+      const mixer = get().mixer;
+      if (mixer.panLawDb === panLawDb) return;
       void get().applyProjectDocumentPatch(
-        { score: { type: 'updateScorePanLaw', panLawDb } },
-        { label: 'Set Score Pan Law' },
+        { mixer: { type: 'updateMixerPanLaw', panLawDb } },
+        { label: 'Set Pan Law' },
       );
     },
 
-    setScorePanBoost: (panOffCenterBoost) => {
-      const score = get().score;
-      if (score.panOffCenterBoost === panOffCenterBoost) return;
+    setMixerPanBoost: (panOffCenterBoost) => {
+      const mixer = get().mixer;
+      if (mixer.panOffCenterBoost === panOffCenterBoost) return;
       void get().applyProjectDocumentPatch(
-        { score: { type: 'updateScorePanBoost', panOffCenterBoost } },
-        { label: 'Set Score Pan Boost' },
+        { mixer: { type: 'updateMixerPanBoost', panOffCenterBoost } },
+        { label: panOffCenterBoost ? 'Enable Off-center Boost' : 'Disable Off-center Boost' },
       );
     },
 

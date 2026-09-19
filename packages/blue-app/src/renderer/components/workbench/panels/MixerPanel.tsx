@@ -12,8 +12,9 @@ import CommitNumberInput from '../../CommitNumberInput';
 export default function MixerPanel(): React.ReactElement {
   const loaded = useProjectStore((state) => state.loaded);
   const mixer = useProjectStore((state) => state.mixer);
-  const score = useProjectStore((state) => state.score);
-  const setScorePanning = useProjectStore((state) => state.setScorePanning);
+  const setMixerPanning = useProjectStore((state) => state.setMixerPanning);
+  const setMixerPanLaw = useProjectStore((state) => state.setMixerPanLaw);
+  const setMixerPanBoost = useProjectStore((state) => state.setMixerPanBoost);
   const applyProjectDocumentPatch = useProjectStore((state) => state.applyProjectDocumentPatch);
   const flushPendingPatches = useProjectStore((state) => state.flushPendingPatches);
   const projectSessionId = useProjectStore((state) => state.sessionId);
@@ -213,7 +214,7 @@ export default function MixerPanel(): React.ReactElement {
                         onPatch={handleMixerPatch}
                         projectSessionId={projectSessionId}
                         projectRevision={projectRevision}
-                        panningEnabled={score.panningEnabled}
+                        panningEnabled={mixer.panningEnabled}
                         onOpenEffectInterface={handleOpenEffectInterface}
                         selection={chainSelection}
                         onSelectionChange={setChainSelection}
@@ -238,7 +239,7 @@ export default function MixerPanel(): React.ReactElement {
                       onPatch={handleMixerPatch}
                       projectSessionId={projectSessionId}
                       projectRevision={projectRevision}
-                      panningEnabled={score.panningEnabled}
+                      panningEnabled={mixer.panningEnabled}
                       onOpenEffectInterface={handleOpenEffectInterface}
                       selection={chainSelection}
                       onSelectionChange={setChainSelection}
@@ -262,7 +263,7 @@ export default function MixerPanel(): React.ReactElement {
                       onPatch={handleMixerPatch}
                       projectSessionId={projectSessionId}
                       projectRevision={projectRevision}
-                      panningEnabled={score.panningEnabled}
+                      panningEnabled={mixer.panningEnabled}
                       onOpenEffectInterface={handleOpenEffectInterface}
                       selection={chainSelection}
                       onSelectionChange={setChainSelection}
@@ -284,7 +285,7 @@ export default function MixerPanel(): React.ReactElement {
               onPatch={handleMixerPatch}
               projectSessionId={projectSessionId}
               projectRevision={projectRevision}
-              panningEnabled={score.panningEnabled}
+              panningEnabled={mixer.panningEnabled}
               onOpenEffectInterface={handleOpenEffectInterface}
               selection={chainSelection}
               onSelectionChange={setChainSelection}
@@ -297,7 +298,7 @@ export default function MixerPanel(): React.ReactElement {
       <MixerSettingsDialog
         isOpen={isSettingsOpen}
         enableMeters={mixer.enableMeters !== false}
-        enablePanning={score.panningEnabled}
+        mixer={mixer}
         onToggleEnableMeters={(enabled) => {
           const current = mixer.enableMeters !== false;
           if (enabled === current) return;
@@ -306,7 +307,9 @@ export default function MixerPanel(): React.ReactElement {
             value: enabled,
           });
         }}
-        onToggleEnablePanning={setScorePanning}
+        onToggleEnablePanning={setMixerPanning}
+        onPanLawChange={setMixerPanLaw}
+        onPanBoostChange={setMixerPanBoost}
         onClose={() => setIsSettingsOpen(false)}
       />
 

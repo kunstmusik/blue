@@ -17,7 +17,7 @@ export function createTrackFixture(
   } = {},
 ): { data: BlueData; group: TrackLayerGroup; track: Track } {
   const data = new BlueData();
-  data.getScore().panningEnabled = options.panningEnabled ?? false;
+  data.getMixer().setPanningEnabled(options.panningEnabled ?? false);
   const group = new TrackLayerGroup();
   group.setUniqueId(options.groupId ?? 'fixture-track-group');
   const track = group.newLayerAt(0);

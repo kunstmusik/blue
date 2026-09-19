@@ -57,7 +57,7 @@ function createTrackFixture(): {
   selectedClip: AudioClip;
 } {
   const data = new BlueData();
-  data.getScore().panningEnabled = false;
+  data.getMixer().setPanningEnabled(false);
   data.getScore().length = 0;
   const group = new TrackLayerGroup();
   const selectedTrack = group.newLayerAt(0);

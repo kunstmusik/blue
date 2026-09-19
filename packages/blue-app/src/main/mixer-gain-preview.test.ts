@@ -32,6 +32,9 @@ describe('MixerGainPreviewAdapter', () => {
       getName: () => 'Track 1',
       getLevel: () => -6.0,
       getPan: () => 0.5,
+      getPanWidth: () => 0.8,
+      getDualPanLeft: () => 0.1,
+      getDualPanRight: () => 0.9,
     };
 
     deps = {
@@ -162,6 +165,106 @@ describe('MixerGainPreviewAdapter', () => {
       ownerKey: 'owner-Track 1',
       parameterId: 'pan',
       value: 0.5,
+    });
+  });
+
+  it('routes panWidth, dualPanLeft, and dualPanRight previews and cancellation', async () => {
+    // Width preview and cancel
+    const widthRes = await adapter.handlePanUpdate(1, {
+      documentId: 'doc-123',
+      channelId: 'ch-1',
+      gestureId: 'width-1',
+      gestureSequence: 1,
+      baseRevision: 5,
+      phase: 'preview',
+      pan: 0.4,
+      parameterId: 'panWidth',
+    });
+    expect(widthRes.status).toBe('applied');
+    expect(previewCalls.at(-1)).toEqual({
+      ownerKey: 'owner-Track 1',
+      parameterId: 'panWidth',
+      value: 0.4,
+      gestureId: 'width-1',
+    });
+
+    await adapter.handlePanUpdate(1, {
+      documentId: 'doc-123',
+      channelId: 'ch-1',
+      gestureId: 'width-1',
+      gestureSequence: 1,
+      baseRevision: 5,
+      phase: 'cancel',
+      parameterId: 'panWidth',
+    });
+    expect(previewCalls.at(-1)).toEqual({
+      ownerKey: 'owner-Track 1',
+      parameterId: 'panWidth',
+      value: 0.8,
+    });
+
+    // Dual Left preview and finish
+    const leftRes = await adapter.handlePanUpdate(1, {
+      documentId: 'doc-123',
+      channelId: 'ch-1',
+      gestureId: 'left-1',
+      gestureSequence: 2,
+      baseRevision: 5,
+      phase: 'preview',
+      pan: 0.35,
+      parameterId: 'dualPanLeft',
+    });
+    expect(leftRes.status).toBe('applied');
+    expect(previewCalls.at(-1)).toEqual({
+      ownerKey: 'owner-Track 1',
+      parameterId: 'dualPanLeft',
+      value: 0.35,
+      gestureId: 'left-1',
+    });
+
+    const leftFinish = await adapter.handlePanUpdate(1, {
+      documentId: 'doc-123',
+      channelId: 'ch-1',
+      gestureId: 'left-1',
+      gestureSequence: 2,
+      baseRevision: 5,
+      phase: 'finish',
+      parameterId: 'dualPanLeft',
+    });
+    expect(leftFinish.status).toBe('applied');
+
+    // Dual Right preview and cancel
+    const rightRes = await adapter.handlePanUpdate(1, {
+      documentId: 'doc-123',
+      channelId: 'ch-1',
+      gestureId: 'right-1',
+      gestureSequence: 3,
+      baseRevision: 5,
+      phase: 'preview',
+      pan: 0.65,
+      parameterId: 'dualPanRight',
+    });
+    expect(rightRes.status).toBe('applied');
+    expect(previewCalls.at(-1)).toEqual({
+      ownerKey: 'owner-Track 1',
+      parameterId: 'dualPanRight',
+      value: 0.65,
+      gestureId: 'right-1',
+    });
+
+    await adapter.handlePanUpdate(1, {
+      documentId: 'doc-123',
+      channelId: 'ch-1',
+      gestureId: 'right-1',
+      gestureSequence: 3,
+      baseRevision: 5,
+      phase: 'cancel',
+      parameterId: 'dualPanRight',
+    });
+    expect(previewCalls.at(-1)).toEqual({
+      ownerKey: 'owner-Track 1',
+      parameterId: 'dualPanRight',
+      value: 0.9,
     });
   });
 

@@ -23,6 +23,8 @@ import {
   Mixer,
   DEFAULT_NEW_METER_ENABLED,
   DEFAULT_NEW_METER_PROFILE_KEY,
+  DEFAULT_PAN_LAW_DB,
+  DEFAULT_PAN_OFF_CENTER_BOOST,
   Scale,
   TempoMap,
   TempoPoint,
@@ -651,6 +653,9 @@ export function createEmptyMixerSnapshot(): MixerSnapshot {
     enabled: true,
     enableMeters: DEFAULT_NEW_METER_ENABLED,
     meterProfileKey: DEFAULT_NEW_METER_PROFILE_KEY,
+    panningEnabled: true,
+    panLawDb: DEFAULT_PAN_LAW_DB,
+    panOffCenterBoost: DEFAULT_PAN_OFF_CENTER_BOOST,
     extraRenderTime: 0,
     channelListGroups: [],
     channels: [],
@@ -691,6 +696,9 @@ export function createMixerSnapshot(
     enabled: mixer.isEnabled(),
     enableMeters: mixer.isEnableMeters(),
     meterProfileKey: mixer.getMeterProfileKey(),
+    panningEnabled: mixer.isPanningEnabled(),
+    panLawDb: mixer.getPanLawDb(),
+    panOffCenterBoost: mixer.isPanOffCenterBoost(),
     extraRenderTime: mixer.getExtraRenderTime(),
     channelListGroups: mixer
       .getChannelListGroups()

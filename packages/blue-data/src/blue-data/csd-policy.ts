@@ -55,6 +55,7 @@ import {
   getMonoPanGains,
   getStereoBalanceGains,
   getStereoPanGains,
+  stereoPanModeToNumber,
   type PanLawDb,
 } from '../mixer/channel-pan';
 import {
@@ -76,6 +77,10 @@ import { getNotes } from '../utilities/score';
 import { TempoMap } from '../time/tempo-map';
 
 type CsdRenderProfile = 'realtime' | 'disk';
+
+const SCORE_PAN_LAW_CHANNEL = 'gk_blue_score_pan_law';
+const SCORE_PAN_BOOST_CHANNEL = 'gk_blue_score_pan_boost';
+const PAN_MODE_CHANNEL_PREFIX = 'gk_blue_pan_mode_';
 
 export type RenderCsdResult = {
   csdText: string;
@@ -169,7 +174,10 @@ export function buildStandardCSD(
     const nchnls = getNchnls(blueData, profile);
     configureCompileChannels(compileData, nchnls);
     const pannerBindings =
-      compileData.isPanningEnabled() && nchnls === 2 && profile !== 'disk'
+      clonedMixer.isEnabled() &&
+      compileData.isPanningEnabled() &&
+      nchnls === 2 &&
+      profile !== 'disk'
         ? buildCompiledPannerBindings(clonedMixer)
         : undefined;
 
@@ -204,6 +212,12 @@ export function buildStandardCSD(
         const gateInits = buildMixerGateInitStatements(gateBindings);
         if (gateInits) {
           appendGlobalOrc(`${gateInits}\n\n`);
+        }
+      }
+      if (pannerBindings && profile !== 'disk') {
+        const pannerInits = buildPannerInitStatements(blueData, pannerBindings, clonedMixer);
+        if (pannerInits) {
+          appendGlobalOrc(`${pannerInits}\n\n`);
         }
       }
     }
@@ -466,7 +480,10 @@ export async function buildStandardCSDAsync(
     const nchnls = getNchnls(blueData, profile);
     configureCompileChannels(compileData, nchnls);
     const pannerBindings =
-      compileData.isPanningEnabled() && nchnls === 2 && profile !== 'disk'
+      clonedMixer.isEnabled() &&
+      compileData.isPanningEnabled() &&
+      nchnls === 2 &&
+      profile !== 'disk'
         ? buildCompiledPannerBindings(clonedMixer)
         : undefined;
 
@@ -496,6 +513,12 @@ export async function buildStandardCSDAsync(
         const gateInits = buildMixerGateInitStatements(gateBindings);
         if (gateInits) {
           appendGlobalOrc(`${gateInits}\n\n`);
+        }
+      }
+      if (pannerBindings && profile !== 'disk') {
+        const pannerInits = buildPannerInitStatements(blueData, pannerBindings, clonedMixer);
+        if (pannerInits) {
+          appendGlobalOrc(`${pannerInits}\n\n`);
         }
       }
     }
@@ -753,7 +776,7 @@ export function toBlueLiveCSD(
     const nchnls = getNchnls(blueData);
     configureCompileChannels(compileData, nchnls);
     const pannerBindings =
-      compileData.isPanningEnabled() && nchnls === 2
+      clonedMixer.isEnabled() && compileData.isPanningEnabled() && nchnls === 2
         ? buildCompiledPannerBindings(clonedMixer)
         : undefined;
 
@@ -774,6 +797,12 @@ export function toBlueLiveCSD(
         const gateInits = buildMixerGateInitStatements(gateBindings);
         if (gateInits) {
           appendGlobalOrc(`${gateInits}\n\n`);
+        }
+      }
+      if (pannerBindings) {
+        const pannerInits = buildPannerInitStatements(blueData, pannerBindings, clonedMixer);
+        if (pannerInits) {
+          appendGlobalOrc(`${pannerInits}\n\n`);
         }
       }
     }
@@ -1392,9 +1421,9 @@ function createRenderSnapshot(
   copyMixerRuntimeIdentities(sourceMixer, mixer);
   const compileData = new CompileData(arrangement, tables, false);
   const score = getBlueDataState(blueData).score;
-  compileData.setPanningEnabled(score.panningEnabled);
-  compileData.setPanLawDb(score.panLawDb);
-  compileData.setPanOffCenterBoost(score.panOffCenterBoost);
+  compileData.setPanningEnabled(mixer.isPanningEnabled());
+  compileData.setPanLawDb(mixer.getPanLawDb());
+  compileData.setPanOffCenterBoost(mixer.isPanOffCenterBoost());
   if (layoutManifest) {
     compileData.setAudioLayoutManifest(layoutManifest);
   }
@@ -1656,14 +1685,12 @@ function generateMixerOrchestra(
       if (!(item instanceof Effect) || !item.isEnabled() || effectIdMap.has(item)) {
         continue;
       }
-
       const udo = item.generateUDO(effectId, item.getParameters(), udos);
       if (!udo) {
         continue;
       }
-
-      effectIdMap.set(item, effectId);
       effectUDOs.push(udo);
+      effectIdMap.set(item, effectId);
       effectId++;
     }
   };
@@ -1948,8 +1975,7 @@ function buildCompiledPannerBindings(mixer: Mixer): CompiledPannerBindings {
         : mixer.getSubChannels().includes(channel)
           ? 'sub'
           : 'source';
-    const channelIdentity =
-      channel.getAssociation().trim() || channel.getName().trim() || `channel:${kind}:${ordinal}`;
+    const channelIdentity = channel.getRuntimeIdentity();
     return {
       channelIdentity,
       channelOrdinal: ordinal,
@@ -1963,10 +1989,40 @@ function buildCompiledPannerBindings(mixer: Mixer): CompiledPannerBindings {
 
   return {
     signature: 'panner-signature',
-    scoreLawChannel: 'gk_blue_score_pan_law',
-    scoreBoostChannel: 'gk_blue_score_pan_boost',
+    scoreLawChannel: SCORE_PAN_LAW_CHANNEL,
+    scoreBoostChannel: SCORE_PAN_BOOST_CHANNEL,
     channels,
   };
+}
+
+function buildPannerInitStatements(
+  blueData: BlueData,
+  bindings: CompiledPannerBindings,
+  mixer: Mixer = getBlueDataState(blueData).mixer,
+): string {
+  const lines: string[] = [];
+  const lawDb = mixer.getPanLawDb();
+  const boost = mixer.isPanOffCenterBoost() ? 1 : 0;
+
+  lines.push(`${bindings.scoreLawChannel} init ${formatBlueNumber(lawDb)}`);
+  lines.push(`${bindings.scoreLawChannel} chnexport "${bindings.scoreLawChannel}", 3`);
+  lines.push(`${bindings.scoreBoostChannel} init ${boost}`);
+  lines.push(`${bindings.scoreBoostChannel} chnexport "${bindings.scoreBoostChannel}", 3`);
+
+  const orderedChannels = [
+    ...mixer.getAllSourceChannels(),
+    ...sortSubChannelsForRendering(Array.from(mixer.getSubChannels())),
+    mixer.getMaster(),
+  ];
+
+  for (const b of bindings.channels) {
+    const ch = orderedChannels[b.channelOrdinal];
+    const initialMode = ch ? stereoPanModeToNumber(ch.getStereoPanMode()) : 0;
+    lines.push(`${b.modeChannel} init ${initialMode}`);
+    lines.push(`${b.modeChannel} chnexport "${b.modeChannel}", 3`);
+  }
+
+  return lines.join('\n');
 }
 
 function gateStateVar(ordinal: number): string {
@@ -2074,7 +2130,15 @@ function generateBlueMixer(
     );
     if (panningEnabled && nchnls === 2) {
       const layout = resolveChannelLayout(blueData, channel, layoutManifest);
-      applyChannelPan(blueData, signalVars, channel, layout, lines);
+      applyChannelPan(
+        blueData,
+        signalVars,
+        channel,
+        layout,
+        lines,
+        gateContext?.mode === 'live',
+        gateContext ? `${PAN_MODE_CHANNEL_PREFIX}${channelOrdinalOf(gateContext, channel)}` : null,
+      );
     }
     if (gateContext) {
       emitOutputGate(gateContext, channelOrdinalOf(gateContext, channel), signalVars, lines);
@@ -2114,14 +2178,24 @@ function generateBlueMixer(
       gateContext,
     );
     if (panningEnabled && nchnls === 2) {
-      applyChannelPan(blueData, signalVars, subChannel, 'stereo-or-unknown', lines);
+      applyChannelPan(
+        blueData,
+        signalVars,
+        subChannel,
+        'stereo-or-unknown',
+        lines,
+        gateContext?.mode === 'live',
+        gateContext
+          ? `${PAN_MODE_CHANNEL_PREFIX}${channelOrdinalOf(gateContext, subChannel)}`
+          : null,
+      );
     }
     if (gateContext) {
       emitOutputGate(gateContext, channelOrdinalOf(gateContext, subChannel), signalVars, lines);
     }
-    if (emitMetering && subMeterKeys) {
+    if (emitMetering) {
       const subKey =
-        subMeterKeys.get(subChannel) ?? `sub_${subChannel.getName().replace(/\s+/g, '_')}`;
+        subMeterKeys?.get(subChannel) ?? `sub_${subChannel.getName().replace(/\s+/g, '_')}`;
       emitMeterTaps(subKey, signalVars, lines, nextMeterVarId);
     }
     routeChannelOutput(
@@ -2159,7 +2233,17 @@ function generateBlueMixer(
     gateContext,
   );
   if (panningEnabled && nchnls === 2) {
-    applyChannelPan(blueData, masterVars, masterChannel, 'stereo-or-unknown', lines);
+    applyChannelPan(
+      blueData,
+      masterVars,
+      masterChannel,
+      'stereo-or-unknown',
+      lines,
+      gateContext?.mode === 'live',
+      gateContext
+        ? `${PAN_MODE_CHANNEL_PREFIX}${channelOrdinalOf(gateContext, masterChannel)}`
+        : null,
+    );
   }
   if (gateContext) {
     emitOutputGate(gateContext, channelOrdinalOf(gateContext, masterChannel), masterVars, lines);
@@ -2348,8 +2432,8 @@ function generateCsoundSourceLegGainExprs(
       rightExpr = `sin(1.5707963267948966 * ${posExpr})`;
       break;
     case -4.5:
-      leftExpr = `(0.5393149814421111 * cos(1.5707963267948966 * ${posExpr}) + 0.4606850185578889 * (1 - ${posExpr}))`;
-      rightExpr = `(0.5393149814421111 * sin(1.5707963267948966 * ${posExpr}) + 0.4606850185578889 * ${posExpr})`;
+      leftExpr = `(0.46189768862683755 * cos(1.5707963267948966 * ${posExpr}) + 0.5381023113731624 * (1 - ${posExpr}))`;
+      rightExpr = `(0.46189768862683755 * sin(1.5707963267948966 * ${posExpr}) + 0.5381023113731624 * ${posExpr})`;
       break;
     case -6:
       leftExpr = `(1 - ${posExpr})`;
@@ -2389,55 +2473,94 @@ function emitStereoPanMatrixLines(
   lines.push(`${inR} = ${bL} * a_pan_in_l + ${bR} * a_pan_in_r`);
 }
 
-function emitDynamicStereoPanLines(
-  signalVars: string[],
+function emitDynamicSourceLegGainLines(
   posExpr: string,
-  widthExpr: string,
-  lawDb: PanLawDb,
-  boost: boolean,
+  leftVar: string,
+  rightVar: string,
   lines: string[],
+  lawExpr = SCORE_PAN_LAW_CHANNEL,
+  boostExpr = SCORE_PAN_BOOST_CHANNEL,
 ): void {
-  const inL = signalVars[0];
-  const inR = signalVars[1];
-  lines.push(`k_pan_c = ${posExpr}`);
-  lines.push(`k_pan_w = ${widthExpr}`);
-  lines.push(`k_pan_d = k_pan_w * min(k_pan_c, 1 - k_pan_c)`);
-  lines.push(`k_pan_pl = k_pan_c - k_pan_d`);
-  lines.push(`k_pan_pr = k_pan_c + k_pan_d`);
-  const [aLExpr, bLExpr] = generateCsoundSourceLegGainExprs('k_pan_pl', lawDb, boost);
-  const [aRExpr, bRExpr] = generateCsoundSourceLegGainExprs('k_pan_pr', lawDb, boost);
-  lines.push(`k_pan_al = ${aLExpr}`);
-  lines.push(`k_pan_bl = ${bLExpr}`);
-  lines.push(`k_pan_ar = ${aRExpr}`);
-  lines.push(`k_pan_br = ${bRExpr}`);
-  lines.push(`a_pan_in_l = ${inL}`);
-  lines.push(`a_pan_in_r = ${inR}`);
-  lines.push(`${inL} = k_pan_al * a_pan_in_l + k_pan_ar * a_pan_in_r`);
-  lines.push(`${inR} = k_pan_bl * a_pan_in_l + k_pan_br * a_pan_in_r`);
+  lines.push(
+    `${leftVar} = (${lawExpr} == 0 ? min(1, 2 * (1 - ${posExpr})) : ` +
+      `${lawExpr} == -3 ? cos(1.5707963267948966 * ${posExpr}) : ` +
+      `${lawExpr} == -4.5 ? ` +
+      `(0.46189768862683755 * cos(1.5707963267948966 * ${posExpr}) + ` +
+      `0.5381023113731624 * (1 - ${posExpr})) : (1 - ${posExpr}))`,
+  );
+  lines.push(
+    `${rightVar} = (${lawExpr} == 0 ? min(1, 2 * ${posExpr}) : ` +
+      `${lawExpr} == -3 ? sin(1.5707963267948966 * ${posExpr}) : ` +
+      `${lawExpr} == -4.5 ? ` +
+      `(0.46189768862683755 * sin(1.5707963267948966 * ${posExpr}) + ` +
+      `0.5381023113731624 * ${posExpr}) : ${posExpr})`,
+  );
+  lines.push(`if ${boostExpr} != 0 && ${lawExpr} != 0 then`);
+  lines.push(
+    `  k_pan_boost = 1 + (pow(10, abs(${lawExpr}) / 20) - 1) * ` + `2 * abs(${posExpr} - 0.5)`,
+  );
+  lines.push(`  ${leftVar} *= k_pan_boost`);
+  lines.push(`  ${rightVar} *= k_pan_boost`);
+  lines.push('endif');
 }
 
-function emitDynamicDualPanLines(
+function emitDynamicPanGains(
+  leftExpr: string,
+  rightExpr: string,
+  lines: string[],
+  lawExpr = SCORE_PAN_LAW_CHANNEL,
+  boostExpr = SCORE_PAN_BOOST_CHANNEL,
+): void {
+  lines.push(`k_pan_pl = ${leftExpr}`);
+  lines.push(`k_pan_pr = ${rightExpr}`);
+  emitDynamicSourceLegGainLines('k_pan_pl', 'k_pan_al', 'k_pan_bl', lines, lawExpr, boostExpr);
+  emitDynamicSourceLegGainLines('k_pan_pr', 'k_pan_ar', 'k_pan_br', lines, lawExpr, boostExpr);
+}
+
+function emitDynamicPanMatrixLines(
   signalVars: string[],
   leftExpr: string,
   rightExpr: string,
-  lawDb: PanLawDb,
-  boost: boolean,
+  lines: string[],
+  lawExpr: string,
+  boostExpr: string,
+): void {
+  emitDynamicPanGains(leftExpr, rightExpr, lines, lawExpr, boostExpr);
+  lines.push(`a_pan_in_l = ${signalVars[0]}`);
+  lines.push(`a_pan_in_r = ${signalVars[1]}`);
+  lines.push(`${signalVars[0]} = k_pan_al * a_pan_in_l + k_pan_ar * a_pan_in_r`);
+  lines.push(`${signalVars[1]} = k_pan_bl * a_pan_in_l + k_pan_br * a_pan_in_r`);
+}
+
+function emitDynamicStereoModePanLines(
+  signalVars: string[],
+  modeExpr: string,
+  panExpr: string,
+  widthExpr: string,
+  dualLeftExpr: string,
+  dualRightExpr: string,
   lines: string[],
 ): void {
-  const inL = signalVars[0];
-  const inR = signalVars[1];
-  lines.push(`k_pan_pl = ${leftExpr}`);
-  lines.push(`k_pan_pr = ${rightExpr}`);
-  const [aLExpr, bLExpr] = generateCsoundSourceLegGainExprs('k_pan_pl', lawDb, boost);
-  const [aRExpr, bRExpr] = generateCsoundSourceLegGainExprs('k_pan_pr', lawDb, boost);
-  lines.push(`k_pan_al = ${aLExpr}`);
-  lines.push(`k_pan_bl = ${bLExpr}`);
-  lines.push(`k_pan_ar = ${aRExpr}`);
-  lines.push(`k_pan_br = ${bRExpr}`);
-  lines.push(`a_pan_in_l = ${inL}`);
-  lines.push(`a_pan_in_r = ${inR}`);
-  lines.push(`${inL} = k_pan_al * a_pan_in_l + k_pan_ar * a_pan_in_r`);
-  lines.push(`${inR} = k_pan_bl * a_pan_in_l + k_pan_br * a_pan_in_r`);
+  lines.push(`a_pan_in_l = ${signalVars[0]}`);
+  lines.push(`a_pan_in_r = ${signalVars[1]}`);
+  lines.push(`if ${modeExpr} < 0.5 then`);
+  lines.push(`  k_pan_al = min(1, 2 * (1 - ${panExpr}))`);
+  lines.push(`  k_pan_br = min(1, 2 * ${panExpr})`);
+  lines.push('  k_pan_ar = 0');
+  lines.push('  k_pan_bl = 0');
+  lines.push(`elseif ${modeExpr} < 1.5 then`);
+  lines.push(`  k_pan_c = ${panExpr}`);
+  lines.push(`  k_pan_w = ${widthExpr}`);
+  lines.push(`  k_pan_d = k_pan_w * min(k_pan_c, 1 - k_pan_c)`);
+  lines.push('  k_pan_pl = k_pan_c - k_pan_d');
+  lines.push('  k_pan_pr = k_pan_c + k_pan_d');
+  emitDynamicSourceLegGainLines('k_pan_pl', 'k_pan_al', 'k_pan_bl', lines);
+  emitDynamicSourceLegGainLines('k_pan_pr', 'k_pan_ar', 'k_pan_br', lines);
+  lines.push('else');
+  emitDynamicPanGains(dualLeftExpr, dualRightExpr, lines);
+  lines.push('endif');
+  lines.push(`${signalVars[0]} = k_pan_al * a_pan_in_l + k_pan_ar * a_pan_in_r`);
+  lines.push(`${signalVars[1]} = k_pan_bl * a_pan_in_l + k_pan_br * a_pan_in_r`);
 }
 
 function applyChannelPan(
@@ -2446,19 +2569,30 @@ function applyChannelPan(
   channel: Channel,
   layout: EffectiveTrackLayout,
   lines: string[],
+  livePanner = false,
+  modeChannel: string | null = null,
 ): void {
   if (signalVars.length < 2) {
     return;
   }
-  const score = getBlueDataState(blueData).score;
-  const lawDb = score.panLawDb;
-  const boost = score.panOffCenterBoost;
+  const mixer = getBlueDataState(blueData).mixer;
+  const lawDb = mixer.getPanLawDb();
+  const boost = mixer.isPanOffCenterBoost();
 
   const panParam = channel.getPanParameter();
   const panVar = panParam.getCompilationVarName();
 
   if (layout === 'mono') {
-    if (panVar) {
+    if (livePanner) {
+      emitDynamicSourceLegGainLines(
+        panVar ?? String(channel.getPan()),
+        'k_pan_l',
+        'k_pan_r',
+        lines,
+      );
+      lines.push(`${signalVars[0]} *= 1.4142135623730951 * k_pan_l`);
+      lines.push(`${signalVars[1]} *= 1.4142135623730951 * k_pan_r`);
+    } else if (panVar) {
       if (lawDb === -3 && !boost) {
         lines.push(`k_pan_l = 1.4142135623730951 * cos(1.5707963267948966 * ${panVar})`);
         lines.push(`k_pan_r = 1.4142135623730951 * sin(1.5707963267948966 * ${panVar})`);
@@ -2481,6 +2615,20 @@ function applyChannelPan(
     }
   } else {
     const mode = channel.getStereoPanMode();
+    if (livePanner && modeChannel) {
+      emitDynamicStereoModePanLines(
+        signalVars,
+        modeChannel,
+        panVar ?? String(channel.getPan()),
+        channel.getPanWidthParameter().getCompilationVarName() ?? String(channel.getPanWidth()),
+        channel.getDualPanLeftParameter().getCompilationVarName() ??
+          String(channel.getDualPanLeft()),
+        channel.getDualPanRightParameter().getCompilationVarName() ??
+          String(channel.getDualPanRight()),
+        lines,
+      );
+      return;
+    }
     if (mode === 'balance') {
       if (panVar) {
         lines.push(`k_bal_l = min(1, 2 * (1 - ${panVar}))`);
@@ -2509,13 +2657,16 @@ function applyChannelPan(
         );
         emitStereoPanMatrixLines(signalVars, aL, bL, aR, bR, lines);
       } else {
-        emitDynamicStereoPanLines(
+        lines.push(`k_pan_c = ${panVar ?? String(channel.getPan())}`);
+        lines.push(`k_pan_w = ${widthVar ?? String(channel.getPanWidth())}`);
+        lines.push(`k_pan_d = k_pan_w * min(k_pan_c, 1 - k_pan_c)`);
+        emitDynamicPanMatrixLines(
           signalVars,
-          panVar ?? String(channel.getPan()),
-          widthVar ?? String(channel.getPanWidth()),
-          lawDb,
-          boost,
+          'k_pan_c - k_pan_d',
+          'k_pan_c + k_pan_d',
           lines,
+          String(lawDb),
+          boost ? '1' : '0',
         );
       }
     } else if (mode === 'dualPan') {
@@ -2532,13 +2683,13 @@ function applyChannelPan(
         );
         emitStereoPanMatrixLines(signalVars, aL, bL, aR, bR, lines);
       } else {
-        emitDynamicDualPanLines(
+        emitDynamicPanMatrixLines(
           signalVars,
           leftVar ?? String(channel.getDualPanLeft()),
           rightVar ?? String(channel.getDualPanRight()),
-          lawDb,
-          boost,
           lines,
+          String(lawDb),
+          boost ? '1' : '0',
         );
       }
     }

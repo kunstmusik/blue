@@ -19,26 +19,16 @@ export interface MixerPanSliderProps {
   disabledReason?: string;
   className?: string;
   onModeChange?: (mode: StereoPanMode) => void;
-  // Position / Balance / Mono Pan
-  onPreview?: (pan: number) => void;
-  onCommit?: (pan: number) => void;
+  gestureHandlers?: Partial<Record<MixerPanSliderField, MixerPanSliderGestureHandlers>>;
+}
+
+export type MixerPanSliderField = 'pan' | 'panWidth' | 'dualPanLeft' | 'dualPanRight';
+
+export interface MixerPanSliderGestureHandlers {
+  onPreview?: (value: number) => void;
+  onCommit?: (value: number) => void;
   onCancel?: () => void;
   onDoubleClickReset?: () => void;
-  // Width
-  onPreviewWidth?: (width: number) => void;
-  onCommitWidth?: (width: number) => void;
-  onCancelWidth?: () => void;
-  onDoubleClickResetWidth?: () => void;
-  // Dual Left
-  onPreviewDualLeft?: (left: number) => void;
-  onCommitDualLeft?: (left: number) => void;
-  onCancelDualLeft?: () => void;
-  onDoubleClickResetDualLeft?: () => void;
-  // Dual Right
-  onPreviewDualRight?: (right: number) => void;
-  onCommitDualRight?: (right: number) => void;
-  onCancelDualRight?: () => void;
-  onDoubleClickResetDualRight?: () => void;
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -174,6 +164,7 @@ const SingleSlider = React.memo(function SingleSlider({
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (disabled) return;
       const nextVal = roundToPlaces(clamp(Number(e.currentTarget.value), min, max), 2);
       const session = dragSessionRef.current;
       if (!session) {
@@ -186,7 +177,7 @@ const SingleSlider = React.memo(function SingleSlider({
       setDraftVal(nextVal);
       onPreview?.(nextVal);
     },
-    [max, min, onCommit, onPreview],
+    [disabled, max, min, onCommit, onPreview],
   );
 
   const handlePointerUp = useCallback(
@@ -247,35 +238,13 @@ const SingleSlider = React.memo(function SingleSlider({
     [defaultValue, disabled, onCommit, onDoubleClickReset],
   );
 
-  const handleKeyDown = useCallback(
+  const handleEscape = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (disabled) return;
-      let nextVal = displayedVal;
-      const stepVal = e.shiftKey ? 0.05 : 0.01;
-
-      if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
-        nextVal = clamp(displayedVal - stepVal, min, max);
-      } else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
-        nextVal = clamp(displayedVal + stepVal, min, max);
-      } else if (e.key === 'Home') {
-        nextVal = min;
-      } else if (e.key === 'End') {
-        nextVal = max;
-      } else if (e.key === 'Escape') {
-        e.preventDefault();
-        cancelDrag();
-        return;
-      } else {
-        return;
-      }
-
+      if (e.key !== 'Escape') return;
       e.preventDefault();
-      e.stopPropagation();
-      const rounded = roundToPlaces(nextVal, 2);
-      setDraftVal(null);
-      onCommit?.(rounded);
+      cancelDrag();
     },
-    [cancelDrag, disabled, displayedVal, max, min, onCommit],
+    [cancelDrag],
   );
 
   const tooltipOpen = !disabled && (isHovered || isDragging);
@@ -323,7 +292,7 @@ const SingleSlider = React.memo(function SingleSlider({
             onPointerCancel={handlePointerCancel}
             onLostPointerCapture={handleLostPointerCapture}
             onDoubleClick={handleDoubleClick}
-            onKeyDown={handleKeyDown}
+            onKeyDown={handleEscape}
             onPointerEnter={() => setIsHovered(true)}
             onPointerLeave={() => setIsHovered(false)}
           />
@@ -345,6 +314,21 @@ const SingleSlider = React.memo(function SingleSlider({
   );
 });
 
+interface PanSliderConfig {
+  field: MixerPanSliderField;
+  label?: string;
+  value: number;
+  min?: number;
+  max?: number;
+  step?: number;
+  defaultValue?: number;
+  accessibleName: string;
+  accessibleValueText: string;
+  title: string;
+  formatTooltip: (value: number) => string;
+  centerNotch: boolean;
+}
+
 export const MixerPanSlider = React.memo(function MixerPanSlider({
   channelName = 'Channel',
   pan = 0.5,
@@ -357,22 +341,7 @@ export const MixerPanSlider = React.memo(function MixerPanSlider({
   disabledReason,
   className,
   onModeChange,
-  onPreview,
-  onCommit,
-  onCancel,
-  onDoubleClickReset,
-  onPreviewWidth,
-  onCommitWidth,
-  onCancelWidth,
-  onDoubleClickResetWidth,
-  onPreviewDualLeft,
-  onCommitDualLeft,
-  onCancelDualLeft,
-  onDoubleClickResetDualLeft,
-  onPreviewDualRight,
-  onCommitDualRight,
-  onCancelDualRight,
-  onDoubleClickResetDualRight,
+  gestureHandlers = {},
 }: MixerPanSliderProps): React.ReactElement {
   const isMonoOnly = positionMode === 'pan';
 
@@ -380,6 +349,103 @@ export const MixerPanSlider = React.memo(function MixerPanSlider({
   const effectiveWidth = 2.0 * effectiveSpread;
   const isNearEndpoint =
     stereoPanMode === 'stereoPan' && (pan < 0.1 || pan > 0.9 || effectiveWidth < panWidth - 0.01);
+
+  const renderSlider = (config: PanSliderConfig): React.ReactElement => {
+    const { field, ...sliderProps } = config;
+    return (
+      <SingleSlider key={field} {...sliderProps} {...gestureHandlers[field]} disabled={disabled} />
+    );
+  };
+
+  const panConfig: PanSliderConfig = {
+    field: 'pan',
+    value: pan,
+    min: 0,
+    max: 1,
+    step: 0.01,
+    defaultValue: 0.5,
+    accessibleName: isMonoOnly ? `${channelName} Mono Pan` : `${channelName} Stereo Balance`,
+    accessibleValueText: isMonoOnly
+      ? `Mono Pan ${formatPanDisplay(pan)} (${pan.toFixed(2)})`
+      : `Stereo Balance ${formatPanDisplay(pan)} (${pan.toFixed(2)})`,
+    title: isMonoOnly ? 'Mono Pan control' : 'Stereo Balance control',
+    formatTooltip: (value) =>
+      isMonoOnly
+        ? `Mono Pan: ${formatPanDisplay(value)} (${value.toFixed(2)})`
+        : `Stereo Balance: ${formatPanDisplay(value)} (${value.toFixed(2)})`,
+    centerNotch: true,
+  };
+
+  const sliderConfigs: PanSliderConfig[] =
+    isMonoOnly || !onModeChange
+      ? [panConfig]
+      : stereoPanMode === 'balance'
+        ? [panConfig]
+        : stereoPanMode === 'stereoPan'
+          ? [
+              {
+                field: 'pan',
+                label: 'P',
+                value: pan,
+                min: 0,
+                max: 1,
+                step: 0.01,
+                defaultValue: 0.5,
+                accessibleName: `${channelName} Stereo Pan Position`,
+                accessibleValueText: `Stereo Pan Position ${formatPanDisplay(pan)} (${pan.toFixed(2)})`,
+                title: 'Stereo Pan Position control',
+                formatTooltip: (value) =>
+                  `Stereo Pan Position: ${formatPanDisplay(value)} (${value.toFixed(2)})`,
+                centerNotch: true,
+              },
+              {
+                field: 'panWidth',
+                label: 'W',
+                value: panWidth,
+                min: 0,
+                max: 1,
+                step: 0.01,
+                defaultValue: 1.0,
+                accessibleName: `${channelName} Stereo Pan Width`,
+                accessibleValueText: `Stereo Pan Width ${Math.round(panWidth * 100)}% (${panWidth.toFixed(2)})`,
+                title: 'Stereo Pan Width control',
+                formatTooltip: (value) =>
+                  `Stereo Pan Width: ${Math.round(value * 100)}% (${value.toFixed(2)})`,
+                centerNotch: false,
+              },
+            ]
+          : [
+              {
+                field: 'dualPanLeft',
+                label: 'L',
+                value: dualPanLeft,
+                min: 0,
+                max: 1,
+                step: 0.01,
+                defaultValue: 0.0,
+                accessibleName: `${channelName} Dual Pan Left`,
+                accessibleValueText: `Dual Pan Left ${formatPanDisplay(dualPanLeft)} (${dualPanLeft.toFixed(2)})`,
+                title: 'Dual Pan Left control',
+                formatTooltip: (value) =>
+                  `Dual Pan Left: ${formatPanDisplay(value)} (${value.toFixed(2)})`,
+                centerNotch: true,
+              },
+              {
+                field: 'dualPanRight',
+                label: 'R',
+                value: dualPanRight,
+                min: 0,
+                max: 1,
+                step: 0.01,
+                defaultValue: 1.0,
+                accessibleName: `${channelName} Dual Pan Right`,
+                accessibleValueText: `Dual Pan Right ${formatPanDisplay(dualPanRight)} (${dualPanRight.toFixed(2)})`,
+                title: 'Dual Pan Right control',
+                formatTooltip: (value) =>
+                  `Dual Pan Right: ${formatPanDisplay(value)} (${value.toFixed(2)})`,
+                centerNotch: true,
+              },
+            ];
 
   return (
     <Tooltip.Provider delayDuration={0} skipDelayDuration={0}>
@@ -395,33 +461,7 @@ export const MixerPanSlider = React.memo(function MixerPanSlider({
             <div className="flex w-full items-center justify-center text-role-caption text-app-text-muted px-0.5">
               <span className="font-semibold">Pan</span>
             </div>
-            <SingleSlider
-              value={pan}
-              min={0}
-              max={1}
-              step={0.01}
-              defaultValue={0.5}
-              disabled={disabled}
-              accessibleName={
-                isMonoOnly ? `${channelName} Mono Pan` : `${channelName} Stereo Balance`
-              }
-              accessibleValueText={
-                isMonoOnly
-                  ? `Mono Pan ${formatPanDisplay(pan)} (${pan.toFixed(2)})`
-                  : `Stereo Balance ${formatPanDisplay(pan)} (${pan.toFixed(2)})`
-              }
-              title={isMonoOnly ? 'Mono Pan control' : 'Stereo Balance control'}
-              formatTooltip={(val) =>
-                isMonoOnly
-                  ? `Mono Pan: ${formatPanDisplay(val)} (${val.toFixed(2)})`
-                  : `Stereo Balance: ${formatPanDisplay(val)} (${val.toFixed(2)})`
-              }
-              centerNotch={true}
-              onPreview={onPreview}
-              onCommit={onCommit}
-              onCancel={onCancel}
-              onDoubleClickReset={onDoubleClickReset}
-            />
+            {sliderConfigs.map(renderSlider)}
           </>
         ) : (
           <>
@@ -441,141 +481,15 @@ export const MixerPanSlider = React.memo(function MixerPanSlider({
               <option value="dualPan">Dual Pan</option>
             </select>
 
-            {stereoPanMode === 'balance' && (
-              <SingleSlider
-                value={pan}
-                min={0}
-                max={1}
-                step={0.01}
-                defaultValue={0.5}
-                disabled={disabled}
-                accessibleName={`${channelName} Stereo Balance`}
-                accessibleValueText={`Stereo Balance ${formatPanDisplay(pan)} (${pan.toFixed(2)})`}
-                title="Stereo Balance control"
-                formatTooltip={(val) =>
-                  `Stereo Balance: ${formatPanDisplay(val)} (${val.toFixed(2)})`
-                }
-                centerNotch={true}
-                onPreview={onPreview}
-                onCommit={onCommit}
-                onCancel={onCancel}
-                onDoubleClickReset={onDoubleClickReset}
-              />
-            )}
-
-            {stereoPanMode === 'stereoPan' && (
-              <>
-                <SingleSlider
-                  label="P"
-                  value={pan}
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  defaultValue={0.5}
-                  disabled={disabled}
-                  accessibleName={`${channelName} Stereo Pan Position`}
-                  accessibleValueText={`Stereo Pan Position ${formatPanDisplay(pan)} (${pan.toFixed(2)})`}
-                  title="Stereo Pan Position control"
-                  formatTooltip={(val) =>
-                    `Stereo Pan Position: ${formatPanDisplay(val)} (${val.toFixed(2)})`
-                  }
-                  centerNotch={true}
-                  onPreview={onPreview}
-                  onCommit={onCommit}
-                  onCancel={onCancel}
-                  onDoubleClickReset={onDoubleClickReset}
-                />
-                <SingleSlider
-                  label="W"
-                  value={panWidth}
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  defaultValue={1.0}
-                  disabled={disabled}
-                  accessibleName={`${channelName} Stereo Pan Width`}
-                  accessibleValueText={`Stereo Pan Width ${Math.round(panWidth * 100)}% (${panWidth.toFixed(2)})`}
-                  title="Stereo Pan Width control"
-                  formatTooltip={(val) =>
-                    `Stereo Pan Width: ${Math.round(val * 100)}% (${val.toFixed(2)})`
-                  }
-                  centerNotch={false}
-                  onPreview={onPreviewWidth}
-                  onCommit={onCommitWidth}
-                  onCancel={onCancelWidth}
-                  onDoubleClickReset={onDoubleClickResetWidth}
-                />
-                {isNearEndpoint && (
-                  <div
-                    role="note"
-                    aria-label={`${channelName} Effective Width`}
-                    className="text-role-subheadline text-app-text-muted text-center"
-                  >
-                    Effective width: {Math.round(effectiveWidth * 100)}%
-                  </div>
-                )}
-                <div
-                  role="status"
-                  aria-label="Peak warning"
-                  className="text-role-subheadline text-amber-500/90 text-center truncate w-full"
-                  title="Stereo Pan can sum signals and raise peaks"
-                >
-                  Stereo Pan can sum signals and raise peaks
-                </div>
-              </>
-            )}
-
-            {stereoPanMode === 'dualPan' && (
-              <>
-                <SingleSlider
-                  label="L"
-                  value={dualPanLeft}
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  defaultValue={0.0}
-                  disabled={disabled}
-                  accessibleName={`${channelName} Dual Pan Left`}
-                  accessibleValueText={`Dual Pan Left ${formatPanDisplay(dualPanLeft)} (${dualPanLeft.toFixed(2)})`}
-                  title="Dual Pan Left control"
-                  formatTooltip={(val) =>
-                    `Dual Pan Left: ${formatPanDisplay(val)} (${val.toFixed(2)})`
-                  }
-                  centerNotch={true}
-                  onPreview={onPreviewDualLeft}
-                  onCommit={onCommitDualLeft}
-                  onCancel={onCancelDualLeft}
-                  onDoubleClickReset={onDoubleClickResetDualLeft}
-                />
-                <SingleSlider
-                  label="R"
-                  value={dualPanRight}
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  defaultValue={1.0}
-                  disabled={disabled}
-                  accessibleName={`${channelName} Dual Pan Right`}
-                  accessibleValueText={`Dual Pan Right ${formatPanDisplay(dualPanRight)} (${dualPanRight.toFixed(2)})`}
-                  title="Dual Pan Right control"
-                  formatTooltip={(val) =>
-                    `Dual Pan Right: ${formatPanDisplay(val)} (${val.toFixed(2)})`
-                  }
-                  centerNotch={true}
-                  onPreview={onPreviewDualRight}
-                  onCommit={onCommitDualRight}
-                  onCancel={onCancelDualRight}
-                  onDoubleClickReset={onDoubleClickResetDualRight}
-                />
-                <div
-                  role="status"
-                  aria-label="Peak warning"
-                  className="text-role-subheadline text-amber-500/90 text-center truncate w-full"
-                  title="Dual Pan can sum signals and raise peaks"
-                >
-                  Dual Pan can sum signals and raise peaks
-                </div>
-              </>
+            {sliderConfigs.map(renderSlider)}
+            {isNearEndpoint && (
+              <div
+                role="note"
+                aria-label={`${channelName} Effective Width`}
+                className="text-role-subheadline text-app-text-muted text-center"
+              >
+                Effective width: {Math.round(effectiveWidth * 100)}%
+              </div>
             )}
           </>
         )}

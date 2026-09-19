@@ -4426,7 +4426,12 @@ async function startPlayback(
         );
       },
     };
-    const timelineBindings = buildRuntimeBindingRegistry(data, parameters, render.blueX7Bindings);
+    const timelineBindings = buildRuntimeBindingRegistry(
+      data,
+      parameters,
+      render.blueX7Bindings,
+      render.pannerBindings,
+    );
     if (render.mixerGateBindings) {
       timelineGatePublisher.setBindings('timeline', render.mixerGateBindings, {
         generation: timelineGeneration,
@@ -4608,6 +4613,7 @@ function registerBlueLivePerformance(): void {
     getCurrentData()!,
     blueLiveSession.getParameters?.() ?? [],
     blueLiveBindings,
+    blueLiveSession.getPannerBindings?.() ?? undefined,
   );
   const blueLiveGateBindings = blueLiveSession.getMixerGateBindings();
   const blueLiveGateIO = blueLiveSession.getMixerGateEngineIO();
@@ -5962,7 +5968,7 @@ async function syncEngineWithProjectPatch(
     }
   }
 
-  if (engineBridge?.isCurrentlyPlaying() && patch.mixer) {
+  if ((engineBridge?.isCurrentlyPlaying() || blueLiveSession?.isRunning()) && patch.mixer) {
     const mixerPatch = patch.mixer;
 
     if (mixerPatch.type === 'updateChannel') {
@@ -5977,6 +5983,18 @@ async function syncEngineWithProjectPatch(
         const panVarName = panParam.getCompilationVarName();
         if (panVarName && mixerPatch.patch.pan !== undefined) {
           await syncActiveRuntimeChannel(panVarName, mixerPatch.patch.pan);
+        }
+        const panWidthVarName = channel.getPanWidthParameter().getCompilationVarName();
+        if (panWidthVarName && mixerPatch.patch.panWidth !== undefined) {
+          await syncActiveRuntimeChannel(panWidthVarName, mixerPatch.patch.panWidth);
+        }
+        const dualLeftVarName = channel.getDualPanLeftParameter().getCompilationVarName();
+        if (dualLeftVarName && mixerPatch.patch.dualPanLeft !== undefined) {
+          await syncActiveRuntimeChannel(dualLeftVarName, mixerPatch.patch.dualPanLeft);
+        }
+        const dualRightVarName = channel.getDualPanRightParameter().getCompilationVarName();
+        if (dualRightVarName && mixerPatch.patch.dualPanRight !== undefined) {
+          await syncActiveRuntimeChannel(dualRightVarName, mixerPatch.patch.dualPanRight);
         }
       }
     }

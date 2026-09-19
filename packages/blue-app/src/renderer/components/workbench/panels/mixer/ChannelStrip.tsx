@@ -18,6 +18,7 @@ import type {
   MixerChainKind,
   MixerChannelSnapshot,
   MixerEffectEntrySnapshot,
+  MixerPannerParameterId,
   MixerSendEntrySnapshot,
   MixerSnapshot,
   ProjectEffectRef,
@@ -796,106 +797,135 @@ export default React.memo(function ChannelStrip({
   const [sliderHeight, setSliderHeight] = useState(MIXER_SLIDER_MIN_H);
   const activeGestureRef = useRef<MixerChannelGesture | null>(null);
   const activePanGestureRef = useRef<MixerChannelGesture | null>(null);
+  const activePanWidthGestureRef = useRef<MixerChannelGesture | null>(null);
+  const activeDualLeftGestureRef = useRef<MixerChannelGesture | null>(null);
+  const activeDualRightGestureRef = useRef<MixerChannelGesture | null>(null);
   const [previewLevel, setPreviewLevel] = useState<number | null>(null);
   const [previewPan, setPreviewPan] = useState<number | null>(null);
+  const [previewPanWidth, setPreviewPanWidth] = useState<number | null>(null);
+  const [previewDualPanLeft, setPreviewDualPanLeft] = useState<number | null>(null);
+  const [previewDualPanRight, setPreviewDualPanRight] = useState<number | null>(null);
   const [isSettling, setIsSettling] = useState(false);
 
-  const handlePanPreview = useCallback(
-    (val: number) => {
-      setPreviewPan(val);
-      const sendRealtimePanUpdate = window.blueAPI?.sendMixerRealtimePanUpdate;
-      const docId = getProjectDocumentId();
-      if (!sendRealtimePanUpdate || !docId) return;
+  const createPannerGestureHandlers = useCallback(
+    (
+      parameterId: MixerPannerParameterId,
+      gestureRef: React.MutableRefObject<MixerChannelGesture | null>,
+      setPreview: (val: number | null) => void,
+      label: string,
+      fieldKey: 'pan' | 'panWidth' | 'dualPanLeft' | 'dualPanRight',
+      defaultResetValue: number,
+    ) => {
+      const onPreview = (val: number) => {
+        setPreview(val);
+        const sendRealtimePanUpdate = window.blueAPI?.sendMixerRealtimePanUpdate;
+        const docId = getProjectDocumentId();
+        if (!sendRealtimePanUpdate || !docId) return;
 
-      if (!activePanGestureRef.current) {
-        activePanGestureRef.current = {
-          gestureId: crypto.randomUUID(),
-          gestureSequence: nextMixerGestureSequence++,
-          baseRevision: getProjectDocumentRevision(),
-          documentId: docId,
-        };
-      }
+        if (!gestureRef.current) {
+          gestureRef.current = {
+            gestureId: crypto.randomUUID(),
+            gestureSequence: nextMixerGestureSequence++,
+            baseRevision: getProjectDocumentRevision(),
+            documentId: docId,
+          };
+        }
 
-      const gesture = activePanGestureRef.current;
-      void sendRealtimePanUpdate({
-        documentId: gesture.documentId,
-        channelId: channel.id,
-        gestureId: gesture.gestureId,
-        gestureSequence: gesture.gestureSequence,
-        baseRevision: gesture.baseRevision,
-        phase: 'preview',
-        pan: val,
-      });
-    },
-    [channel.id],
-  );
-
-  const handlePanCancel = useCallback(async () => {
-    setPreviewPan(null);
-    const gesture = activePanGestureRef.current;
-    if (!gesture) return;
-    activePanGestureRef.current = null;
-
-    try {
-      await window.blueAPI?.sendMixerRealtimePanUpdate?.({
-        documentId: gesture.documentId,
-        channelId: channel.id,
-        gestureId: gesture.gestureId,
-        gestureSequence: gesture.gestureSequence,
-        baseRevision: gesture.baseRevision,
-        phase: 'cancel',
-      });
-    } catch {
-      // Safe fallback.
-    }
-  }, [channel.id]);
-
-  const handlePanCommit = useCallback(
-    (val: number) => {
-      const gesture = activePanGestureRef.current;
-      const sendRealtimePanUpdate = window.blueAPI?.sendMixerRealtimePanUpdate;
-      if (!gesture || !sendRealtimePanUpdate) {
-        setPreviewPan(null);
-        onPatch({
-          type: 'updateChannel',
+        const gesture = gestureRef.current;
+        void sendRealtimePanUpdate({
+          documentId: gesture.documentId,
           channelId: channel.id,
-          patch: { pan: val },
+          gestureId: gesture.gestureId,
+          gestureSequence: gesture.gestureSequence,
+          baseRevision: gesture.baseRevision,
+          phase: 'preview',
+          pan: val,
+          parameterId,
         });
-        return;
-      }
+      };
 
-      activePanGestureRef.current = null;
-      setIsSettling(true);
-      void (async () => {
+      const onCancel = async () => {
+        setPreview(null);
+        const gesture = gestureRef.current;
+        if (!gesture) return;
+        gestureRef.current = null;
+
         try {
-          const finishResult = await sendRealtimePanUpdate({
+          await window.blueAPI?.sendMixerRealtimePanUpdate?.({
             documentId: gesture.documentId,
             channelId: channel.id,
             gestureId: gesture.gestureId,
             gestureSequence: gesture.gestureSequence,
             baseRevision: gesture.baseRevision,
-            phase: 'finish',
+            phase: 'cancel',
+            parameterId,
           });
+        } catch {
+          // Safe fallback.
+        }
+      };
 
-          if (finishResult.status === 'applied') {
-            await applyProjectDocumentPatch(
-              {
-                mixer: {
-                  type: 'updateChannel',
-                  channelId: channel.id,
-                  patch: { pan: val },
+      const onCommit = (val: number) => {
+        const gesture = gestureRef.current;
+        const sendRealtimePanUpdate = window.blueAPI?.sendMixerRealtimePanUpdate;
+        if (!gesture || !sendRealtimePanUpdate) {
+          setPreview(null);
+          onPatch({
+            type: 'updateChannel',
+            channelId: channel.id,
+            patch: { [fieldKey]: val },
+          });
+          return;
+        }
+
+        gestureRef.current = null;
+        setIsSettling(true);
+        void (async () => {
+          try {
+            const finishResult = await sendRealtimePanUpdate({
+              documentId: gesture.documentId,
+              channelId: channel.id,
+              gestureId: gesture.gestureId,
+              gestureSequence: gesture.gestureSequence,
+              baseRevision: gesture.baseRevision,
+              phase: 'finish',
+              parameterId,
+            });
+
+            if (finishResult.status === 'applied') {
+              await applyProjectDocumentPatch(
+                {
+                  mixer: {
+                    type: 'updateChannel',
+                    channelId: channel.id,
+                    patch: { [fieldKey]: val },
+                  },
                 },
-              },
-              {
-                label: 'Set Channel Pan',
-                gestureId: gesture.gestureId,
-                fieldId: `mixer:channel:${channel.id}:pan`,
-                phase: 'end',
-                expectedRevision: gesture.baseRevision,
-              },
-            );
-            await flushPendingPatches();
-          } else {
+                {
+                  label,
+                  gestureId: gesture.gestureId,
+                  fieldId: `mixer:channel:${channel.id}:${fieldKey}`,
+                  phase: 'end',
+                  expectedRevision: gesture.baseRevision,
+                },
+              );
+              await flushPendingPatches();
+            } else {
+              try {
+                await sendRealtimePanUpdate({
+                  documentId: gesture.documentId,
+                  channelId: channel.id,
+                  gestureId: gesture.gestureId,
+                  gestureSequence: gesture.gestureSequence,
+                  baseRevision: gesture.baseRevision,
+                  phase: 'cancel',
+                  parameterId,
+                });
+              } catch {
+                // Safe fallback.
+              }
+            }
+          } catch {
             try {
               await sendRealtimePanUpdate({
                 documentId: gesture.documentId,
@@ -904,41 +934,114 @@ export default React.memo(function ChannelStrip({
                 gestureSequence: gesture.gestureSequence,
                 baseRevision: gesture.baseRevision,
                 phase: 'cancel',
+                parameterId,
               });
             } catch {
               // Safe fallback.
             }
+          } finally {
+            setPreview(null);
+            setIsSettling(false);
           }
-        } catch {
-          try {
-            await sendRealtimePanUpdate({
-              documentId: gesture.documentId,
-              channelId: channel.id,
-              gestureId: gesture.gestureId,
-              gestureSequence: gesture.gestureSequence,
-              baseRevision: gesture.baseRevision,
-              phase: 'cancel',
-            });
-          } catch {
-            // Safe fallback.
-          }
-        } finally {
-          setPreviewPan(null);
-          setIsSettling(false);
-        }
-      })();
+        })();
+      };
+
+      const onDoubleClick = () => {
+        setPreview(null);
+        onPatch({
+          type: 'updateChannel',
+          channelId: channel.id,
+          patch: { [fieldKey]: defaultResetValue },
+        });
+      };
+
+      return { onPreview, onCancel, onCommit, onDoubleClick };
     },
     [applyProjectDocumentPatch, channel.id, flushPendingPatches, onPatch],
   );
 
-  const handlePanDoubleClick = useCallback(() => {
-    setPreviewPan(null);
-    onPatch({
-      type: 'updateChannel',
-      channelId: channel.id,
-      patch: { pan: 0.5 },
-    });
-  }, [channel.id, onPatch]);
+  const {
+    onPreview: handlePanPreview,
+    onCancel: handlePanCancel,
+    onCommit: handlePanCommit,
+    onDoubleClick: handlePanDoubleClick,
+  } = createPannerGestureHandlers(
+    'pan',
+    activePanGestureRef,
+    setPreviewPan,
+    'Set Channel Pan',
+    'pan',
+    0.5,
+  );
+
+  const {
+    onPreview: handlePanWidthPreview,
+    onCancel: handlePanWidthCancel,
+    onCommit: handlePanWidthCommit,
+    onDoubleClick: handlePanWidthDoubleClick,
+  } = createPannerGestureHandlers(
+    'panWidth',
+    activePanWidthGestureRef,
+    setPreviewPanWidth,
+    'Set Stereo Pan Width',
+    'panWidth',
+    1.0,
+  );
+
+  const {
+    onPreview: handleDualPanLeftPreview,
+    onCancel: handleDualPanLeftCancel,
+    onCommit: handleDualPanLeftCommit,
+    onDoubleClick: handleDualPanLeftDoubleClick,
+  } = createPannerGestureHandlers(
+    'dualPanLeft',
+    activeDualLeftGestureRef,
+    setPreviewDualPanLeft,
+    'Set Dual Pan Left',
+    'dualPanLeft',
+    0.0,
+  );
+
+  const {
+    onPreview: handleDualPanRightPreview,
+    onCancel: handleDualPanRightCancel,
+    onCommit: handleDualPanRightCommit,
+    onDoubleClick: handleDualPanRightDoubleClick,
+  } = createPannerGestureHandlers(
+    'dualPanRight',
+    activeDualRightGestureRef,
+    setPreviewDualPanRight,
+    'Set Dual Pan Right',
+    'dualPanRight',
+    1.0,
+  );
+
+  const pannerGestureHandlers = {
+    pan: {
+      onPreview: handlePanPreview,
+      onCommit: handlePanCommit,
+      onCancel: handlePanCancel,
+      onDoubleClickReset: handlePanDoubleClick,
+    },
+    panWidth: {
+      onPreview: handlePanWidthPreview,
+      onCommit: handlePanWidthCommit,
+      onCancel: handlePanWidthCancel,
+      onDoubleClickReset: handlePanWidthDoubleClick,
+    },
+    dualPanLeft: {
+      onPreview: handleDualPanLeftPreview,
+      onCommit: handleDualPanLeftCommit,
+      onCancel: handleDualPanLeftCancel,
+      onDoubleClickReset: handleDualPanLeftDoubleClick,
+    },
+    dualPanRight: {
+      onPreview: handleDualPanRightPreview,
+      onCommit: handleDualPanRightCommit,
+      onCancel: handleDualPanRightCancel,
+      onDoubleClickReset: handleDualPanRightDoubleClick,
+    },
+  };
 
   const handleStereoPanModeChange = useCallback(
     (mode: StereoPanMode) => {
@@ -946,39 +1049,6 @@ export default React.memo(function ChannelStrip({
         type: 'updateChannel',
         channelId: channel.id,
         patch: { stereoPanMode: mode },
-      });
-    },
-    [channel.id, onPatch],
-  );
-
-  const handlePanWidthCommit = useCallback(
-    (val: number) => {
-      onPatch({
-        type: 'updateChannel',
-        channelId: channel.id,
-        patch: { panWidth: val },
-      });
-    },
-    [channel.id, onPatch],
-  );
-
-  const handleDualPanLeftCommit = useCallback(
-    (val: number) => {
-      onPatch({
-        type: 'updateChannel',
-        channelId: channel.id,
-        patch: { dualPanLeft: val },
-      });
-    },
-    [channel.id, onPatch],
-  );
-
-  const handleDualPanRightCommit = useCallback(
-    (val: number) => {
-      onPatch({
-        type: 'updateChannel',
-        channelId: channel.id,
-        patch: { dualPanRight: val },
       });
     },
     [channel.id, onPatch],
@@ -1197,8 +1267,26 @@ export default React.memo(function ChannelStrip({
       if (activePanGestureRef.current) {
         await handlePanCancel();
       }
+      if (activePanWidthGestureRef.current) {
+        await handlePanWidthCancel();
+      }
+      if (activeDualLeftGestureRef.current) {
+        await handleDualPanLeftCancel();
+      }
+      if (activeDualRightGestureRef.current) {
+        await handleDualPanRightCancel();
+      }
     });
-  }, [hostDocument, editingLevel, commitLevelEdit, handlePanCancel, handleSliderCancel]);
+  }, [
+    hostDocument,
+    editingLevel,
+    commitLevelEdit,
+    handlePanCancel,
+    handlePanWidthCancel,
+    handleDualPanLeftCancel,
+    handleDualPanRightCancel,
+    handleSliderCancel,
+  ]);
 
   const handleOutChannelChange = useCallback(
     (target: string) => {
@@ -1457,18 +1545,12 @@ export default React.memo(function ChannelStrip({
           pan={previewPan ?? channel.pan}
           positionMode={channel.positionMode ?? 'balance'}
           stereoPanMode={channel.stereoPanMode ?? 'balance'}
-          panWidth={channel.panWidth ?? 1.0}
-          dualPanLeft={channel.dualPanLeft ?? 0.0}
-          dualPanRight={channel.dualPanRight ?? 1.0}
+          panWidth={previewPanWidth ?? channel.panWidth ?? 1.0}
+          dualPanLeft={previewDualPanLeft ?? channel.dualPanLeft ?? 0.0}
+          dualPanRight={previewDualPanRight ?? channel.dualPanRight ?? 1.0}
           disabled={isSettling}
           onModeChange={handleStereoPanModeChange}
-          onPreview={handlePanPreview}
-          onCommit={handlePanCommit}
-          onCancel={handlePanCancel}
-          onDoubleClickReset={handlePanDoubleClick}
-          onCommitWidth={handlePanWidthCommit}
-          onCommitDualLeft={handleDualPanLeftCommit}
-          onCommitDualRight={handleDualPanRightCommit}
+          gestureHandlers={pannerGestureHandlers}
         />
       )}
 

@@ -129,7 +129,7 @@ describe('executeRenderToDisk', () => {
     const projectDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'blue-render-'));
     temporaryDirectories.push(projectDirectory);
     const data = new BlueData();
-    data.getScore().panningEnabled = true;
+    data.getMixer().setPanningEnabled(true);
 
     const group = new TrackLayerGroup();
     const track = new ScoreTrack();

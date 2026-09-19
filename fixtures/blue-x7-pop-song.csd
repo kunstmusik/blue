@@ -47,6 +47,17 @@ gk_blue_mixgate_commit chnexport "gk_blue_mixgate_commit", 3
 gk_blue_mixgate_applied init 0
 gk_blue_mixgate_applied chnexport "gk_blue_mixgate_applied", 3
 
+gk_blue_score_pan_law init -3
+gk_blue_score_pan_law chnexport "gk_blue_score_pan_law", 3
+gk_blue_score_pan_boost init 0
+gk_blue_score_pan_boost chnexport "gk_blue_score_pan_boost", 3
+gk_blue_pan_mode_0 init 0
+gk_blue_pan_mode_0 chnexport "gk_blue_pan_mode_0", 3
+gk_blue_pan_mode_1 init 0
+gk_blue_pan_mode_1 chnexport "gk_blue_pan_mode_1", 3
+gk_blue_pan_mode_2 init 0
+gk_blue_pan_mode_2 chnexport "gk_blue_pan_mode_2", 3
+
 gk_blue_auto0 init 5
 gk_blue_auto0 chnexport "gk_blue_auto0", 3
 gk_blue_auto1 init 0
@@ -5094,10 +5105,53 @@ kMixGateState_2 += limit((kMixGateBank == 0 ? gk_blue_mixgate_2_0 : gk_blue_mixg
 ktempdb = ampdb(gk_blue_auto302)
 ga_bluemix_0_0 *= ktempdb
 ga_bluemix_0_1 *= ktempdb
-k_bal_l = min(1, 2 * (1 - gk_blue_auto303))
-k_bal_r = min(1, 2 * gk_blue_auto303)
-ga_bluemix_0_0 *= k_bal_l
-ga_bluemix_0_1 *= k_bal_r
+a_pan_in_l = ga_bluemix_0_0
+a_pan_in_r = ga_bluemix_0_1
+if gk_blue_pan_mode_0 < 0.5 then
+  k_pan_al = min(1, 2 * (1 - gk_blue_auto303))
+  k_pan_br = min(1, 2 * gk_blue_auto303)
+  k_pan_ar = 0
+  k_pan_bl = 0
+elseif gk_blue_pan_mode_0 < 1.5 then
+  k_pan_c = gk_blue_auto303
+  k_pan_w = gk_blue_auto304
+  k_pan_d = k_pan_w * min(k_pan_c, 1 - k_pan_c)
+  k_pan_pl = k_pan_c - k_pan_d
+  k_pan_pr = k_pan_c + k_pan_d
+k_pan_al = (gk_blue_score_pan_law == 0 ? min(1, 2 * (1 - k_pan_pl)) : gk_blue_score_pan_law == -3 ? cos(1.5707963267948966 * k_pan_pl) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * cos(1.5707963267948966 * k_pan_pl) + 0.5381023113731624 * (1 - k_pan_pl)) : (1 - k_pan_pl))
+k_pan_bl = (gk_blue_score_pan_law == 0 ? min(1, 2 * k_pan_pl) : gk_blue_score_pan_law == -3 ? sin(1.5707963267948966 * k_pan_pl) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * sin(1.5707963267948966 * k_pan_pl) + 0.5381023113731624 * k_pan_pl) : k_pan_pl)
+if gk_blue_score_pan_boost != 0 && gk_blue_score_pan_law != 0 then
+  k_pan_boost = 1 + (pow(10, abs(gk_blue_score_pan_law) / 20) - 1) * 2 * abs(k_pan_pl - 0.5)
+  k_pan_al *= k_pan_boost
+  k_pan_bl *= k_pan_boost
+endif
+k_pan_ar = (gk_blue_score_pan_law == 0 ? min(1, 2 * (1 - k_pan_pr)) : gk_blue_score_pan_law == -3 ? cos(1.5707963267948966 * k_pan_pr) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * cos(1.5707963267948966 * k_pan_pr) + 0.5381023113731624 * (1 - k_pan_pr)) : (1 - k_pan_pr))
+k_pan_br = (gk_blue_score_pan_law == 0 ? min(1, 2 * k_pan_pr) : gk_blue_score_pan_law == -3 ? sin(1.5707963267948966 * k_pan_pr) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * sin(1.5707963267948966 * k_pan_pr) + 0.5381023113731624 * k_pan_pr) : k_pan_pr)
+if gk_blue_score_pan_boost != 0 && gk_blue_score_pan_law != 0 then
+  k_pan_boost = 1 + (pow(10, abs(gk_blue_score_pan_law) / 20) - 1) * 2 * abs(k_pan_pr - 0.5)
+  k_pan_ar *= k_pan_boost
+  k_pan_br *= k_pan_boost
+endif
+else
+k_pan_pl = gk_blue_auto305
+k_pan_pr = gk_blue_auto306
+k_pan_al = (gk_blue_score_pan_law == 0 ? min(1, 2 * (1 - k_pan_pl)) : gk_blue_score_pan_law == -3 ? cos(1.5707963267948966 * k_pan_pl) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * cos(1.5707963267948966 * k_pan_pl) + 0.5381023113731624 * (1 - k_pan_pl)) : (1 - k_pan_pl))
+k_pan_bl = (gk_blue_score_pan_law == 0 ? min(1, 2 * k_pan_pl) : gk_blue_score_pan_law == -3 ? sin(1.5707963267948966 * k_pan_pl) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * sin(1.5707963267948966 * k_pan_pl) + 0.5381023113731624 * k_pan_pl) : k_pan_pl)
+if gk_blue_score_pan_boost != 0 && gk_blue_score_pan_law != 0 then
+  k_pan_boost = 1 + (pow(10, abs(gk_blue_score_pan_law) / 20) - 1) * 2 * abs(k_pan_pl - 0.5)
+  k_pan_al *= k_pan_boost
+  k_pan_bl *= k_pan_boost
+endif
+k_pan_ar = (gk_blue_score_pan_law == 0 ? min(1, 2 * (1 - k_pan_pr)) : gk_blue_score_pan_law == -3 ? cos(1.5707963267948966 * k_pan_pr) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * cos(1.5707963267948966 * k_pan_pr) + 0.5381023113731624 * (1 - k_pan_pr)) : (1 - k_pan_pr))
+k_pan_br = (gk_blue_score_pan_law == 0 ? min(1, 2 * k_pan_pr) : gk_blue_score_pan_law == -3 ? sin(1.5707963267948966 * k_pan_pr) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * sin(1.5707963267948966 * k_pan_pr) + 0.5381023113731624 * k_pan_pr) : k_pan_pr)
+if gk_blue_score_pan_boost != 0 && gk_blue_score_pan_law != 0 then
+  k_pan_boost = 1 + (pow(10, abs(gk_blue_score_pan_law) / 20) - 1) * 2 * abs(k_pan_pr - 0.5)
+  k_pan_ar *= k_pan_boost
+  k_pan_br *= k_pan_boost
+endif
+endif
+ga_bluemix_0_0 = k_pan_al * a_pan_in_l + k_pan_ar * a_pan_in_r
+ga_bluemix_0_1 = k_pan_bl * a_pan_in_l + k_pan_br * a_pan_in_r
 ga_bluemix_0_0 = ga_bluemix_0_0 * kMixGateState_0
 ga_bluemix_0_1 = ga_bluemix_0_1 * kMixGateState_0
 ga_bluesub_Master_0	+=	ga_bluemix_0_0
@@ -5105,10 +5159,53 @@ ga_bluesub_Master_1	+=	ga_bluemix_0_1
 ktempdb = ampdb(gk_blue_auto307)
 ga_bluemix_1_0 *= ktempdb
 ga_bluemix_1_1 *= ktempdb
-k_bal_l = min(1, 2 * (1 - gk_blue_auto308))
-k_bal_r = min(1, 2 * gk_blue_auto308)
-ga_bluemix_1_0 *= k_bal_l
-ga_bluemix_1_1 *= k_bal_r
+a_pan_in_l = ga_bluemix_1_0
+a_pan_in_r = ga_bluemix_1_1
+if gk_blue_pan_mode_1 < 0.5 then
+  k_pan_al = min(1, 2 * (1 - gk_blue_auto308))
+  k_pan_br = min(1, 2 * gk_blue_auto308)
+  k_pan_ar = 0
+  k_pan_bl = 0
+elseif gk_blue_pan_mode_1 < 1.5 then
+  k_pan_c = gk_blue_auto308
+  k_pan_w = gk_blue_auto309
+  k_pan_d = k_pan_w * min(k_pan_c, 1 - k_pan_c)
+  k_pan_pl = k_pan_c - k_pan_d
+  k_pan_pr = k_pan_c + k_pan_d
+k_pan_al = (gk_blue_score_pan_law == 0 ? min(1, 2 * (1 - k_pan_pl)) : gk_blue_score_pan_law == -3 ? cos(1.5707963267948966 * k_pan_pl) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * cos(1.5707963267948966 * k_pan_pl) + 0.5381023113731624 * (1 - k_pan_pl)) : (1 - k_pan_pl))
+k_pan_bl = (gk_blue_score_pan_law == 0 ? min(1, 2 * k_pan_pl) : gk_blue_score_pan_law == -3 ? sin(1.5707963267948966 * k_pan_pl) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * sin(1.5707963267948966 * k_pan_pl) + 0.5381023113731624 * k_pan_pl) : k_pan_pl)
+if gk_blue_score_pan_boost != 0 && gk_blue_score_pan_law != 0 then
+  k_pan_boost = 1 + (pow(10, abs(gk_blue_score_pan_law) / 20) - 1) * 2 * abs(k_pan_pl - 0.5)
+  k_pan_al *= k_pan_boost
+  k_pan_bl *= k_pan_boost
+endif
+k_pan_ar = (gk_blue_score_pan_law == 0 ? min(1, 2 * (1 - k_pan_pr)) : gk_blue_score_pan_law == -3 ? cos(1.5707963267948966 * k_pan_pr) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * cos(1.5707963267948966 * k_pan_pr) + 0.5381023113731624 * (1 - k_pan_pr)) : (1 - k_pan_pr))
+k_pan_br = (gk_blue_score_pan_law == 0 ? min(1, 2 * k_pan_pr) : gk_blue_score_pan_law == -3 ? sin(1.5707963267948966 * k_pan_pr) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * sin(1.5707963267948966 * k_pan_pr) + 0.5381023113731624 * k_pan_pr) : k_pan_pr)
+if gk_blue_score_pan_boost != 0 && gk_blue_score_pan_law != 0 then
+  k_pan_boost = 1 + (pow(10, abs(gk_blue_score_pan_law) / 20) - 1) * 2 * abs(k_pan_pr - 0.5)
+  k_pan_ar *= k_pan_boost
+  k_pan_br *= k_pan_boost
+endif
+else
+k_pan_pl = gk_blue_auto310
+k_pan_pr = gk_blue_auto311
+k_pan_al = (gk_blue_score_pan_law == 0 ? min(1, 2 * (1 - k_pan_pl)) : gk_blue_score_pan_law == -3 ? cos(1.5707963267948966 * k_pan_pl) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * cos(1.5707963267948966 * k_pan_pl) + 0.5381023113731624 * (1 - k_pan_pl)) : (1 - k_pan_pl))
+k_pan_bl = (gk_blue_score_pan_law == 0 ? min(1, 2 * k_pan_pl) : gk_blue_score_pan_law == -3 ? sin(1.5707963267948966 * k_pan_pl) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * sin(1.5707963267948966 * k_pan_pl) + 0.5381023113731624 * k_pan_pl) : k_pan_pl)
+if gk_blue_score_pan_boost != 0 && gk_blue_score_pan_law != 0 then
+  k_pan_boost = 1 + (pow(10, abs(gk_blue_score_pan_law) / 20) - 1) * 2 * abs(k_pan_pl - 0.5)
+  k_pan_al *= k_pan_boost
+  k_pan_bl *= k_pan_boost
+endif
+k_pan_ar = (gk_blue_score_pan_law == 0 ? min(1, 2 * (1 - k_pan_pr)) : gk_blue_score_pan_law == -3 ? cos(1.5707963267948966 * k_pan_pr) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * cos(1.5707963267948966 * k_pan_pr) + 0.5381023113731624 * (1 - k_pan_pr)) : (1 - k_pan_pr))
+k_pan_br = (gk_blue_score_pan_law == 0 ? min(1, 2 * k_pan_pr) : gk_blue_score_pan_law == -3 ? sin(1.5707963267948966 * k_pan_pr) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * sin(1.5707963267948966 * k_pan_pr) + 0.5381023113731624 * k_pan_pr) : k_pan_pr)
+if gk_blue_score_pan_boost != 0 && gk_blue_score_pan_law != 0 then
+  k_pan_boost = 1 + (pow(10, abs(gk_blue_score_pan_law) / 20) - 1) * 2 * abs(k_pan_pr - 0.5)
+  k_pan_ar *= k_pan_boost
+  k_pan_br *= k_pan_boost
+endif
+endif
+ga_bluemix_1_0 = k_pan_al * a_pan_in_l + k_pan_ar * a_pan_in_r
+ga_bluemix_1_1 = k_pan_bl * a_pan_in_l + k_pan_br * a_pan_in_r
 ga_bluemix_1_0 = ga_bluemix_1_0 * kMixGateState_1
 ga_bluemix_1_1 = ga_bluemix_1_1 * kMixGateState_1
 ga_bluesub_Master_0	+=	ga_bluemix_1_0
@@ -5116,10 +5213,53 @@ ga_bluesub_Master_1	+=	ga_bluemix_1_1
 ktempdb = ampdb(gk_blue_auto312)
 ga_bluesub_Master_0 *= ktempdb
 ga_bluesub_Master_1 *= ktempdb
-k_bal_l = min(1, 2 * (1 - gk_blue_auto313))
-k_bal_r = min(1, 2 * gk_blue_auto313)
-ga_bluesub_Master_0 *= k_bal_l
-ga_bluesub_Master_1 *= k_bal_r
+a_pan_in_l = ga_bluesub_Master_0
+a_pan_in_r = ga_bluesub_Master_1
+if gk_blue_pan_mode_2 < 0.5 then
+  k_pan_al = min(1, 2 * (1 - gk_blue_auto313))
+  k_pan_br = min(1, 2 * gk_blue_auto313)
+  k_pan_ar = 0
+  k_pan_bl = 0
+elseif gk_blue_pan_mode_2 < 1.5 then
+  k_pan_c = gk_blue_auto313
+  k_pan_w = gk_blue_auto314
+  k_pan_d = k_pan_w * min(k_pan_c, 1 - k_pan_c)
+  k_pan_pl = k_pan_c - k_pan_d
+  k_pan_pr = k_pan_c + k_pan_d
+k_pan_al = (gk_blue_score_pan_law == 0 ? min(1, 2 * (1 - k_pan_pl)) : gk_blue_score_pan_law == -3 ? cos(1.5707963267948966 * k_pan_pl) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * cos(1.5707963267948966 * k_pan_pl) + 0.5381023113731624 * (1 - k_pan_pl)) : (1 - k_pan_pl))
+k_pan_bl = (gk_blue_score_pan_law == 0 ? min(1, 2 * k_pan_pl) : gk_blue_score_pan_law == -3 ? sin(1.5707963267948966 * k_pan_pl) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * sin(1.5707963267948966 * k_pan_pl) + 0.5381023113731624 * k_pan_pl) : k_pan_pl)
+if gk_blue_score_pan_boost != 0 && gk_blue_score_pan_law != 0 then
+  k_pan_boost = 1 + (pow(10, abs(gk_blue_score_pan_law) / 20) - 1) * 2 * abs(k_pan_pl - 0.5)
+  k_pan_al *= k_pan_boost
+  k_pan_bl *= k_pan_boost
+endif
+k_pan_ar = (gk_blue_score_pan_law == 0 ? min(1, 2 * (1 - k_pan_pr)) : gk_blue_score_pan_law == -3 ? cos(1.5707963267948966 * k_pan_pr) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * cos(1.5707963267948966 * k_pan_pr) + 0.5381023113731624 * (1 - k_pan_pr)) : (1 - k_pan_pr))
+k_pan_br = (gk_blue_score_pan_law == 0 ? min(1, 2 * k_pan_pr) : gk_blue_score_pan_law == -3 ? sin(1.5707963267948966 * k_pan_pr) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * sin(1.5707963267948966 * k_pan_pr) + 0.5381023113731624 * k_pan_pr) : k_pan_pr)
+if gk_blue_score_pan_boost != 0 && gk_blue_score_pan_law != 0 then
+  k_pan_boost = 1 + (pow(10, abs(gk_blue_score_pan_law) / 20) - 1) * 2 * abs(k_pan_pr - 0.5)
+  k_pan_ar *= k_pan_boost
+  k_pan_br *= k_pan_boost
+endif
+else
+k_pan_pl = gk_blue_auto315
+k_pan_pr = gk_blue_auto316
+k_pan_al = (gk_blue_score_pan_law == 0 ? min(1, 2 * (1 - k_pan_pl)) : gk_blue_score_pan_law == -3 ? cos(1.5707963267948966 * k_pan_pl) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * cos(1.5707963267948966 * k_pan_pl) + 0.5381023113731624 * (1 - k_pan_pl)) : (1 - k_pan_pl))
+k_pan_bl = (gk_blue_score_pan_law == 0 ? min(1, 2 * k_pan_pl) : gk_blue_score_pan_law == -3 ? sin(1.5707963267948966 * k_pan_pl) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * sin(1.5707963267948966 * k_pan_pl) + 0.5381023113731624 * k_pan_pl) : k_pan_pl)
+if gk_blue_score_pan_boost != 0 && gk_blue_score_pan_law != 0 then
+  k_pan_boost = 1 + (pow(10, abs(gk_blue_score_pan_law) / 20) - 1) * 2 * abs(k_pan_pl - 0.5)
+  k_pan_al *= k_pan_boost
+  k_pan_bl *= k_pan_boost
+endif
+k_pan_ar = (gk_blue_score_pan_law == 0 ? min(1, 2 * (1 - k_pan_pr)) : gk_blue_score_pan_law == -3 ? cos(1.5707963267948966 * k_pan_pr) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * cos(1.5707963267948966 * k_pan_pr) + 0.5381023113731624 * (1 - k_pan_pr)) : (1 - k_pan_pr))
+k_pan_br = (gk_blue_score_pan_law == 0 ? min(1, 2 * k_pan_pr) : gk_blue_score_pan_law == -3 ? sin(1.5707963267948966 * k_pan_pr) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * sin(1.5707963267948966 * k_pan_pr) + 0.5381023113731624 * k_pan_pr) : k_pan_pr)
+if gk_blue_score_pan_boost != 0 && gk_blue_score_pan_law != 0 then
+  k_pan_boost = 1 + (pow(10, abs(gk_blue_score_pan_law) / 20) - 1) * 2 * abs(k_pan_pr - 0.5)
+  k_pan_ar *= k_pan_boost
+  k_pan_br *= k_pan_boost
+endif
+endif
+ga_bluesub_Master_0 = k_pan_al * a_pan_in_l + k_pan_ar * a_pan_in_r
+ga_bluesub_Master_1 = k_pan_bl * a_pan_in_l + k_pan_br * a_pan_in_r
 ga_bluesub_Master_0 = ga_bluesub_Master_0 * kMixGateState_2
 ga_bluesub_Master_1 = ga_bluesub_Master_1 * kMixGateState_2
 outc ga_bluesub_Master_0, ga_bluesub_Master_1

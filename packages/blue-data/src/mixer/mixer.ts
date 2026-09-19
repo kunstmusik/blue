@@ -8,6 +8,13 @@ import { Element } from '../serialization/xml-reader';
 import { BlueDataObject } from '../blue-data-object';
 import type { CopyMode } from '../deep-copyable';
 import { writeBoolean, writeDouble } from '../utilities/xml';
+import {
+  DEFAULT_PAN_LAW_DB,
+  DEFAULT_PAN_OFF_CENTER_BOOST,
+  isValidPanLawDb,
+  parseFiniteNumber,
+  type PanLawDb,
+} from './channel-pan';
 
 export type MeterProfileKey =
   | 'peak-rms-mixing-plus-6'
@@ -40,6 +47,9 @@ export class Mixer implements BlueDataObject {
   private _enabled = true;
   private _enableMeters = DEFAULT_NEW_METER_ENABLED;
   private _meterProfileKey: MeterProfileKey = DEFAULT_NEW_METER_PROFILE_KEY;
+  private _panningEnabled = true;
+  private _panLawDb: PanLawDb = DEFAULT_PAN_LAW_DB;
+  private _panOffCenterBoost = DEFAULT_PAN_OFF_CENTER_BOOST;
   private _channelListGroups: ChannelList[] = [];
   private _channels = new ChannelList();
   private _subChannels = new ChannelList();
@@ -74,6 +84,27 @@ export class Mixer implements BlueDataObject {
   }
   setMeterProfileKey(key: MeterProfileKey): void {
     this._meterProfileKey = isMeterProfileKey(key) ? key : DEFAULT_LEGACY_METER_PROFILE_KEY;
+  }
+
+  isPanningEnabled(): boolean {
+    return this._panningEnabled;
+  }
+  setPanningEnabled(enabled: boolean): void {
+    if (typeof enabled === 'boolean') this._panningEnabled = enabled;
+  }
+
+  getPanLawDb(): PanLawDb {
+    return this._panLawDb;
+  }
+  setPanLawDb(lawDb: PanLawDb): void {
+    if (isValidPanLawDb(lawDb)) this._panLawDb = lawDb;
+  }
+
+  isPanOffCenterBoost(): boolean {
+    return this._panOffCenterBoost;
+  }
+  setPanOffCenterBoost(boost: boolean): void {
+    if (typeof boost === 'boolean') this._panOffCenterBoost = boost;
   }
 
   getExtraRenderTime(): number {
@@ -215,6 +246,9 @@ export class Mixer implements BlueDataObject {
 
   saveAsXML(): Element {
     const elem = new Element('mixer');
+    elem.setAttribute('panningEnabled', this._panningEnabled ? 'true' : 'false');
+    elem.setAttribute('panLawDb', String(this._panLawDb));
+    elem.setAttribute('panOffCenterBoost', this._panOffCenterBoost ? 'true' : 'false');
     elem.addElement(writeBoolean('enabled', this._enabled));
     elem.addElement(writeBoolean('enableMeters', this._enableMeters));
     elem.addElement('meterProfile').setText(this._meterProfileKey);
@@ -241,6 +275,15 @@ export class Mixer implements BlueDataObject {
 
   static loadFromXML(data: Element): Mixer {
     const mixer = new Mixer();
+
+    const panningParsed = data.getAttribute('panningEnabled')?.trim().toLowerCase();
+    mixer._panningEnabled = panningParsed === 'true';
+
+    const panLaw = parseFiniteNumber(data.getAttribute('panLawDb'));
+    mixer._panLawDb = panLaw !== undefined && isValidPanLawDb(panLaw) ? panLaw : DEFAULT_PAN_LAW_DB;
+
+    const panBoostParsed = data.getAttribute('panOffCenterBoost')?.trim().toLowerCase();
+    mixer._panOffCenterBoost = panBoostParsed === 'true';
 
     const appendChannels = (target: ChannelList, source: ChannelList) => {
       for (const channel of source) {
@@ -332,6 +375,9 @@ export class Mixer implements BlueDataObject {
     copy._enabled = this._enabled;
     copy._enableMeters = this._enableMeters;
     copy._meterProfileKey = this._meterProfileKey;
+    copy._panningEnabled = this._panningEnabled;
+    copy._panLawDb = this._panLawDb;
+    copy._panOffCenterBoost = this._panOffCenterBoost;
     copy._channelListGroups = this._channelListGroups.map((cl) => cl.deepCopy(mode) as ChannelList);
     copy._channels = this._channels.deepCopy(mode) as ChannelList;
     copy._subChannels = this._subChannels.deepCopy(mode) as ChannelList;

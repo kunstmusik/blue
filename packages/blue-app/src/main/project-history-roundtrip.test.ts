@@ -479,6 +479,21 @@ const cases: RoundTripCase[] = [
   },
   {
     family: 'mixer',
+    type: 'updateMixerPanning',
+    patches: () => [{ mixer: { type: 'updateMixerPanning', panningEnabled: false } }],
+  },
+  {
+    family: 'mixer',
+    type: 'updateMixerPanLaw',
+    patches: () => [{ mixer: { type: 'updateMixerPanLaw', panLawDb: -6 } }],
+  },
+  {
+    family: 'mixer',
+    type: 'updateMixerPanBoost',
+    patches: () => [{ mixer: { type: 'updateMixerPanBoost', panOffCenterBoost: true } }],
+  },
+  {
+    family: 'mixer',
     type: 'updateExtraRenderTime',
     patches: () => [{ mixer: { type: 'updateExtraRenderTime', value: 500 } }],
   },
@@ -1208,34 +1223,6 @@ const cases: RoundTripCase[] = [
       channelId: mixerChannelEntryId(data),
     }),
   },
-  {
-    family: 'score',
-    type: 'updateScorePanning',
-    patches: () => [{ score: { type: 'updateScorePanning', panningEnabled: false } }],
-    identity: (data) => ({
-      groupId: groupId(data),
-      channelId: mixerChannelEntryId(data),
-    }),
-  },
-  {
-    family: 'score',
-    type: 'updateScorePanLaw',
-    patches: () => [{ score: { type: 'updateScorePanLaw', panLawDb: -6 } }],
-    identity: (data) => ({
-      groupId: groupId(data),
-      channelId: mixerChannelEntryId(data),
-    }),
-  },
-  {
-    family: 'score',
-    type: 'updateScorePanBoost',
-    patches: () => [{ score: { type: 'updateScorePanBoost', panOffCenterBoost: true } }],
-    identity: (data) => ({
-      groupId: groupId(data),
-      channelId: mixerChannelEntryId(data),
-    }),
-  },
-
   // ── Score: note processors ──────────────────────────────────────────────
   {
     family: 'score',

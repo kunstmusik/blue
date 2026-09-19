@@ -6,8 +6,8 @@ import {
   MixerPanSlider,
   formatPanDisplay,
 } from '../components/workbench/panels/mixer/MixerPanSlider';
-import ScoreSettingsDialog from '../components/workbench/panels/score/ScoreSettingsDialog';
-import { createEmptyScoreDocumentSnapshot } from '../../shared/project-editor';
+import { MixerSettingsDialog } from '../components/workbench/panels/mixer/MixerSettingsDialog';
+import { createEmptyMixerSnapshot } from '../../shared/project-editor';
 
 (
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -16,7 +16,7 @@ import { createEmptyScoreDocumentSnapshot } from '../../shared/project-editor';
 /**
  * Browser-level verification for Spec 112 T075 (US3/US2): real Chromium
  * focus, keyboard, and checkbox semantics for the mixer Pan control
- * and the Score Settings Enable Panning checkbox.
+ * and the Mixer Settings panning controls.
  */
 describe('Mono clip panning browser tests (T075)', () => {
   let container: HTMLDivElement;
@@ -53,12 +53,34 @@ describe('Mono clip panning browser tests (T075)', () => {
     return container.querySelector<HTMLInputElement>('input[type="range"]')!;
   }
 
-  function pressKey(key: string, options: KeyboardEventInit = {}): void {
+  function emitNativeValue(element: HTMLInputElement, value: string): void {
     act(() => {
-      slider().dispatchEvent(
-        new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...options }),
-      );
+      element.value = value;
+      element.dispatchEvent(new Event('input', { bubbles: true }));
     });
+  }
+
+  function renderMixerSettings(
+    props: Partial<React.ComponentProps<typeof MixerSettingsDialog>> = {},
+  ): void {
+    const mixer = props.mixer ?? createEmptyMixerSnapshot();
+    mount(
+      <MixerSettingsDialog
+        isOpen={true}
+        enableMeters={true}
+        mixer={mixer}
+        onToggleEnableMeters={() => {}}
+        onToggleEnablePanning={() => {}}
+        onPanLawChange={() => {}}
+        onPanBoostChange={() => {}}
+        onClose={() => {}}
+        {...props}
+      />,
+    );
+  }
+
+  function mixerDialog(): HTMLElement {
+    return document.body.querySelector<HTMLElement>('[role="dialog"]')!;
   }
 
   it('keeps the Pan heading while disclosing the effective law accessibly', () => {
@@ -85,47 +107,41 @@ describe('Mono clip panning browser tests (T075)', () => {
     expect(container.textContent).toBe('Pan');
   });
 
-  it('edits the range with Arrow keys, Shift coarser steps, and Home/End', () => {
+  it('commits values delivered by the native range input', () => {
     const onCommit = vi.fn();
-    renderSlider({ pan: 0.5, positionMode: 'pan', onCommit });
+    renderSlider({
+      pan: 0.5,
+      positionMode: 'pan',
+      gestureHandlers: { pan: { onCommit } },
+    });
 
     slider().focus();
     expect(document.activeElement).toBe(slider());
 
-    // The control is prop-driven: every gesture is relative to the committed
-    // value (0.5), with Shift giving a coarser 0.05 step.
-    pressKey('ArrowRight');
+    emitNativeValue(slider(), '0.51');
     expect(onCommit).toHaveBeenLastCalledWith(0.51);
-    pressKey('ArrowRight', { shiftKey: true });
-    expect(onCommit).toHaveBeenLastCalledWith(0.55);
-    pressKey('ArrowLeft');
-    expect(onCommit).toHaveBeenLastCalledWith(0.49);
-    pressKey('ArrowLeft', { shiftKey: true });
-    expect(onCommit).toHaveBeenLastCalledWith(0.45);
-    pressKey('Home');
+    emitNativeValue(slider(), '0');
     expect(onCommit).toHaveBeenLastCalledWith(0);
-    pressKey('End');
+    emitNativeValue(slider(), '1');
     expect(onCommit).toHaveBeenLastCalledWith(1);
 
     // Movement past the endpoints clamps to the accessible 0..1 range.
-    renderSlider({ pan: 1, onCommit });
+    renderSlider({ pan: 1, gestureHandlers: { pan: { onCommit } } });
     slider().focus();
-    pressKey('ArrowRight');
+    emitNativeValue(slider(), '1');
     expect(onCommit).toHaveBeenLastCalledWith(1);
-    pressKey('ArrowRight', { shiftKey: true });
+    emitNativeValue(slider(), '1');
     expect(onCommit).toHaveBeenLastCalledWith(1);
   });
 
-  it('is inactive when score panning is disabled: not tabbable and non-interactive', () => {
+  it('is inactive when mixer panning is disabled: not tabbable and non-interactive', () => {
     const onCommit = vi.fn();
-    renderSlider({ disabled: true, onCommit });
+    renderSlider({ disabled: true, gestureHandlers: { pan: { onCommit } } });
 
     expect(slider().disabled).toBe(true);
     expect(slider().getAttribute('tabindex')).toBeNull();
 
-    pressKey('ArrowRight');
-    pressKey('Home');
-    pressKey('End');
+    emitNativeValue(slider(), '0.25');
     expect(onCommit).not.toHaveBeenCalled();
 
     // The whole section is non-interactive for pointer users as well.
@@ -133,23 +149,14 @@ describe('Mono clip panning browser tests (T075)', () => {
     expect(section.className).toContain('pointer-events-none');
   });
 
-  it('renders the Score Settings Enable Panning checkbox with real click semantics', () => {
+  it('renders the Mixer Settings Enable Panning checkbox with real click semantics', () => {
     const onPanningChange = vi.fn();
-    const score = createEmptyScoreDocumentSnapshot();
-    expect(score.panningEnabled).toBe(true);
+    const mixer = createEmptyMixerSnapshot();
+    expect(mixer.panningEnabled).toBe(true);
 
-    mount(
-      <ScoreSettingsDialog
-        score={score}
-        mixerEnabled={true}
-        legacyNotice={false}
-        onModeChange={() => {}}
-        onPanningChange={onPanningChange}
-        onClose={() => {}}
-      />,
-    );
+    renderMixerSettings({ mixer, onToggleEnablePanning: onPanningChange });
 
-    const checkbox = container.querySelector<HTMLInputElement>(
+    const checkbox = mixerDialog().querySelector<HTMLInputElement>(
       'input[type="checkbox"][aria-label="Enable Panning"]',
     )!;
     expect(checkbox).not.toBeNull();
@@ -161,57 +168,42 @@ describe('Mono clip panning browser tests (T075)', () => {
     expect(onPanningChange).toHaveBeenCalledWith(false);
 
     // The dialog is a controlled view: the saved state drives the box, so a
-    // disabled score renders it unchecked without having mutated anything.
-    mount(
-      <ScoreSettingsDialog
-        score={{ ...score, panningEnabled: false }}
-        mixerEnabled={true}
-        legacyNotice={false}
-        onModeChange={() => {}}
-        onPanningChange={onPanningChange}
-        onClose={() => {}}
-      />,
-    );
-    const reopened = container.querySelector<HTMLInputElement>(
+    // disabled mixer renders it unchecked without having mutated anything.
+    renderMixerSettings({
+      mixer: { ...mixer, panningEnabled: false },
+      onToggleEnablePanning: onPanningChange,
+    });
+    const reopened = mixerDialog().querySelector<HTMLInputElement>(
       'input[type="checkbox"][aria-label="Enable Panning"]',
     )!;
     expect(reopened.checked).toBe(false);
   });
 
-  it('renders Score Settings pan law choices and off-center boost with defaults and accessible explanations', () => {
+  it('renders Mixer Settings pan law choices and off-center boost with defaults and accessible explanations', () => {
     const onPanLawChange = vi.fn();
     const onPanBoostChange = vi.fn();
-    const score = createEmptyScoreDocumentSnapshot();
+    const mixer = createEmptyMixerSnapshot();
 
-    expect(score.panLawDb).toBe(-3);
-    expect(score.panOffCenterBoost).toBe(false);
+    expect(mixer.panLawDb).toBe(-3);
+    expect(mixer.panOffCenterBoost).toBe(false);
 
-    mount(
-      <ScoreSettingsDialog
-        score={score}
-        mixerEnabled={true}
-        legacyNotice={false}
-        onModeChange={() => {}}
-        onPanLawChange={onPanLawChange}
-        onPanBoostChange={onPanBoostChange}
-        onClose={() => {}}
-      />,
-    );
+    renderMixerSettings({ mixer, onPanLawChange, onPanBoostChange });
 
     // Default law (-3 dB) is selected
-    const lawGroup = container.querySelector('[role="radiogroup"][aria-label="Score pan law"]')!;
+    const dialog = mixerDialog();
+    const lawGroup = dialog.querySelector('[role="radiogroup"][aria-label="Mixer pan law"]')!;
     expect(lawGroup).not.toBeNull();
     const defaultRadio = lawGroup.querySelector('[role="radio"][aria-checked="true"]')!;
     expect(defaultRadio.textContent).toBe('-3 dB (Default)');
 
     // Accessible description of affected channels and default
-    expect(container.textContent).toContain(
+    expect(dialog.textContent).toContain(
       'Governs center attenuation for Mono Pan and true-stereo (Stereo Pan and Dual Pan) source-side panners. Balance channels are unaffected.',
     );
-    expect(container.textContent).toContain('-3 dB is the default equal-power law.');
+    expect(dialog.textContent).toContain('-3 dB is the default equal-power law.');
 
     // Off-center boost default is unchecked
-    const boostCheckbox = container.querySelector<HTMLInputElement>(
+    const boostCheckbox = dialog.querySelector<HTMLInputElement>(
       'input[type="checkbox"][aria-label="Off-center boost"]',
     )!;
     expect(boostCheckbox).not.toBeNull();
@@ -235,20 +227,13 @@ describe('Mono clip panning browser tests (T075)', () => {
 
   it('navigates pan law radio choices via keyboard Arrow keys', () => {
     const onPanLawChange = vi.fn();
-    const score = createEmptyScoreDocumentSnapshot(); // panLawDb is -3
+    const mixer = createEmptyMixerSnapshot(); // panLawDb is -3
 
-    mount(
-      <ScoreSettingsDialog
-        score={score}
-        mixerEnabled={true}
-        legacyNotice={false}
-        onModeChange={() => {}}
-        onPanLawChange={onPanLawChange}
-        onClose={() => {}}
-      />,
-    );
+    renderMixerSettings({ mixer, onPanLawChange });
 
-    const lawGroup = container.querySelector('[role="radiogroup"][aria-label="Score pan law"]')!;
+    const lawGroup = mixerDialog().querySelector(
+      '[role="radiogroup"][aria-label="Mixer pan law"]',
+    )!;
     // In PAN_LAW_OPTIONS: [0, -3, -4.5, -6]
     // Current is index 1 (-3). ArrowRight should go to index 2 (-4.5)
     act(() => {
@@ -268,23 +253,15 @@ describe('Mono clip panning browser tests (T075)', () => {
   });
 
   it('displays clipping risk warning when off-center boost is enabled for non-zero law', () => {
-    const score = {
-      ...createEmptyScoreDocumentSnapshot(),
+    const mixer = {
+      ...createEmptyMixerSnapshot(),
       panLawDb: -6 as const,
       panOffCenterBoost: true,
     };
 
-    mount(
-      <ScoreSettingsDialog
-        score={score}
-        mixerEnabled={true}
-        legacyNotice={false}
-        onModeChange={() => {}}
-        onClose={() => {}}
-      />,
-    );
+    renderMixerSettings({ mixer });
 
-    const warning = container.querySelector('[role="status"]');
+    const warning = mixerDialog().querySelector('[role="status"]');
     expect(warning).not.toBeNull();
     expect(warning?.textContent).toContain(
       'Warning: Off-center boost raises endpoint gains up to 6 dB',
@@ -295,34 +272,25 @@ describe('Mono clip panning browser tests (T075)', () => {
   it('preserves pan law and boost as future-intent settings when panning is disabled', () => {
     const onPanLawChange = vi.fn();
     const onPanBoostChange = vi.fn();
-    const score = {
-      ...createEmptyScoreDocumentSnapshot(),
+    const mixer = {
+      ...createEmptyMixerSnapshot(),
       panningEnabled: false,
       panLawDb: -4.5 as const,
       panOffCenterBoost: false,
     };
 
-    mount(
-      <ScoreSettingsDialog
-        score={score}
-        mixerEnabled={true}
-        legacyNotice={false}
-        onModeChange={() => {}}
-        onPanLawChange={onPanLawChange}
-        onPanBoostChange={onPanBoostChange}
-        onClose={() => {}}
-      />,
-    );
+    renderMixerSettings({ mixer, onPanLawChange, onPanBoostChange });
 
     // Explains future intent
-    const note = container.querySelector('[role="note"]');
+    const dialog = mixerDialog();
+    const note = dialog.querySelector('[role="note"]');
     expect(note).not.toBeNull();
     expect(note?.textContent).toContain(
       'Panning is currently disabled. Pan law and boost settings reflect future intent and will apply once Enable Panning is turned on.',
     );
 
     // Controls remain interactive to configure future intent
-    const lawGroup = container.querySelector('[role="radiogroup"][aria-label="Score pan law"]')!;
+    const lawGroup = dialog.querySelector('[role="radiogroup"][aria-label="Mixer pan law"]')!;
     const radioSelected = lawGroup.querySelector('[role="radio"][aria-checked="true"]');
     expect(radioSelected?.textContent).toBe('-4.5 dB');
 
@@ -334,7 +302,7 @@ describe('Mono clip panning browser tests (T075)', () => {
     });
     expect(onPanLawChange).toHaveBeenCalledWith(0);
 
-    const boostCheckbox = container.querySelector<HTMLInputElement>(
+    const boostCheckbox = dialog.querySelector<HTMLInputElement>(
       'input[type="checkbox"][aria-label="Off-center boost"]',
     )!;
     act(() => {
@@ -404,7 +372,7 @@ describe('Mono clip panning browser tests (T075)', () => {
       expect(container.querySelector('[role="status"]')).toBeNull();
     });
 
-    it('renders Stereo Pan controls with Position and Width sliders, effective-width disclosure, and peak warning', () => {
+    it('renders Stereo Pan controls with Position and Width sliders and effective-width disclosure', () => {
       const onCommit = vi.fn();
       const onCommitWidth = vi.fn();
       const onModeChange = vi.fn();
@@ -415,8 +383,10 @@ describe('Mono clip panning browser tests (T075)', () => {
         pan: 0.5,
         panWidth: 1.0,
         onModeChange,
-        onCommit,
-        onCommitWidth,
+        gestureHandlers: {
+          pan: { onCommit },
+          panWidth: { onCommit: onCommitWidth },
+        },
       });
 
       const posSlider = container.querySelector<HTMLInputElement>(
@@ -429,25 +399,15 @@ describe('Mono clip panning browser tests (T075)', () => {
       expect(widthSlider).not.toBeNull();
       expect(posSlider.value).toBe('0.5');
       expect(widthSlider.value).toBe('1');
+      expect(
+        container.querySelector('[role="note"][aria-label="Track 1 Stereo Pan peak disclosure"]'),
+      ).toBeNull();
 
-      // True-stereo peak warning
-      const warning = container.querySelector('[role="status"]')!;
-      expect(warning).not.toBeNull();
-      expect(warning.textContent).toContain('Stereo Pan can sum signals and raise peaks');
-
-      // Keyboard operation on Width slider
-      act(() => {
-        widthSlider.dispatchEvent(
-          new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true, cancelable: true }),
-        );
-      });
+      // Native range operation on Width slider
+      emitNativeValue(widthSlider, '0.99');
       expect(onCommitWidth).toHaveBeenCalledWith(0.99);
 
-      act(() => {
-        widthSlider.dispatchEvent(
-          new KeyboardEvent('keydown', { key: 'Home', bubbles: true, cancelable: true }),
-        );
-      });
+      emitNativeValue(widthSlider, '0');
       expect(onCommitWidth).toHaveBeenCalledWith(0);
 
       // Effective-width disclosure near endpoint (pan = 0.1, width = 1.0 -> d = 0.1, effective width = 20%)
@@ -479,7 +439,7 @@ describe('Mono clip panning browser tests (T075)', () => {
       expect(endDisclosure.textContent).toBe('Effective width: 0%');
     });
 
-    it('renders Dual Pan controls with independent Left and Right sliders and peak warning', () => {
+    it('renders Dual Pan controls with independent Left and Right sliders', () => {
       const onCommitDualLeft = vi.fn();
       const onCommitDualRight = vi.fn();
       const onModeChange = vi.fn();
@@ -490,8 +450,10 @@ describe('Mono clip panning browser tests (T075)', () => {
         dualPanLeft: 0.0,
         dualPanRight: 1.0,
         onModeChange,
-        onCommitDualLeft,
-        onCommitDualRight,
+        gestureHandlers: {
+          dualPanLeft: { onCommit: onCommitDualLeft },
+          dualPanRight: { onCommit: onCommitDualRight },
+        },
       });
 
       const leftSlider = container.querySelector<HTMLInputElement>(
@@ -504,26 +466,16 @@ describe('Mono clip panning browser tests (T075)', () => {
       expect(rightSlider).not.toBeNull();
       expect(leftSlider.value).toBe('0');
       expect(rightSlider.value).toBe('1');
+      expect(
+        container.querySelector('[role="note"][aria-label="Track 1 Dual Pan peak disclosure"]'),
+      ).toBeNull();
 
-      // Peak warning
-      const warning = container.querySelector('[role="status"]')!;
-      expect(warning).not.toBeNull();
-      expect(warning.textContent).toContain('Dual Pan can sum signals and raise peaks');
-
-      // Keyboard edit left slider
-      act(() => {
-        leftSlider.dispatchEvent(
-          new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }),
-        );
-      });
+      // Native range edit left slider
+      emitNativeValue(leftSlider, '0.01');
       expect(onCommitDualLeft).toHaveBeenCalledWith(0.01);
 
-      // Keyboard edit right slider
-      act(() => {
-        rightSlider.dispatchEvent(
-          new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true, cancelable: true }),
-        );
-      });
+      // Native range edit right slider
+      emitNativeValue(rightSlider, '0.99');
       expect(onCommitDualRight).toHaveBeenCalledWith(0.99);
     });
 

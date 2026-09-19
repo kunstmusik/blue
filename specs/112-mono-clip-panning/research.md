@@ -2,9 +2,9 @@
 
 ## Decision 1: Compatibility switch
 
-- **Decision**: Store `panningEnabled` on `Score`; constructor default true, absent/invalid XML and missing score element false.
-- **Rationale**: `Score` already owns score behavior flags. `score.ts` uses this pattern for `trackLayerMuteSoloMode`; `xml-policy.ts` handles missing score explicitly. Java Blue has no pan property, so omission must retain old audio.
-- **Alternatives considered**: App-wide setting (wrong lifetime); inferred enablement from pan XML (unreliable); separate raw/presence shadow state (unnecessary for TS-only extension).
+- **Decision**: Store `panningEnabled` on `Mixer`; constructor default true, absent/invalid mixer XML false, with legacy score-level values migrated when no mixer value is present.
+- **Rationale**: Panning is mixer behavior and its UI/settings, channel controls, law, and boost share the same project lifetime. Java Blue has no pan property, so omission must retain old audio. A load-time migration preserves projects written by the earlier score-owned implementation.
+- **Alternatives considered**: App-wide setting (wrong lifetime); Score ownership (does not match the mixer domain); inferred enablement from pan XML (unreliable); separate raw/presence shadow state (unnecessary for TS-only extension).
 
 ## Decision 2: Channel value and automation
 

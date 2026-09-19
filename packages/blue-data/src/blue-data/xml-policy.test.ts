@@ -3,7 +3,7 @@ import { BlueData } from '../blue-data';
 import { Channel } from '../mixer/channel';
 
 /**
- * Spec 112 T074/T028/T031: the score panning setting is additive XML. New
+ * Spec 112 T074/T028/T031: the mixer panning setting is additive XML. New
  * scores persist an explicit attribute; legacy documents (attribute absent,
  * attribute invalid, or no <score> element at all) load disabled, stay clean,
  * and preserve unrelated unknown project XML.
@@ -17,10 +17,10 @@ function projectXmlWithoutScoreElement(): string {
   return new BlueData().saveToString().replace(/<score[\s\S]*?<\/score>/, '');
 }
 
-describe('xml-policy score panning compatibility (Spec 112)', () => {
-  it('loads a legacy score with a missing panningEnabled attribute as disabled', () => {
+describe('xml-policy mixer panning compatibility (Spec 112)', () => {
+  it('loads a legacy mixer with a missing panningEnabled attribute as disabled', () => {
     const data = BlueData.loadFromString(legacyProjectXml());
-    expect(data.getScore().panningEnabled).toBe(false);
+    expect(data.getMixer().isPanningEnabled()).toBe(false);
   });
 
   it('loads invalid panningEnabled attribute values as disabled', () => {
@@ -29,7 +29,7 @@ describe('xml-policy score panning compatibility (Spec 112)', () => {
         .saveToString()
         .replace(/ panningEnabled="true"/, ` panningEnabled="${invalid}"`);
       const data = BlueData.loadFromString(xml);
-      expect(data.getScore().panningEnabled).toBe(false);
+      expect(data.getMixer().isPanningEnabled()).toBe(false);
     }
   });
 
@@ -38,28 +38,28 @@ describe('xml-policy score panning compatibility (Spec 112)', () => {
       const xml = new BlueData()
         .saveToString()
         .replace(/ panningEnabled="true"/, ` panningEnabled="${value}"`);
-      expect(BlueData.loadFromString(xml).getScore().panningEnabled).toBe(true);
+      expect(BlueData.loadFromString(xml).getMixer().isPanningEnabled()).toBe(true);
     }
   });
 
   it('keeps an explicit panningEnabled value through load and save', () => {
     const enabled = new BlueData();
-    expect(enabled.getScore().panningEnabled).toBe(true);
+    expect(enabled.getMixer().isPanningEnabled()).toBe(true);
     expect(enabled.saveToString()).toContain('panningEnabled="true"');
 
     const disabled = BlueData.loadFromString(
       enabled.saveToString().replace(/ panningEnabled="true"/, ' panningEnabled="false"'),
     );
-    expect(disabled.getScore().panningEnabled).toBe(false);
+    expect(disabled.getMixer().isPanningEnabled()).toBe(false);
     expect(disabled.saveToString()).toContain('panningEnabled="false"');
     expect(disabled.saveToString()).not.toContain('panningEnabled="true"');
   });
 
   it('loads a document without a <score> element with disabled panning', () => {
     const data = BlueData.loadFromString(projectXmlWithoutScoreElement());
-    expect(data.getScore().panningEnabled).toBe(false);
-    // The re-persisted document gains an explicit disabled attribute.
-    expect(data.saveToString()).toContain('panningEnabled="false"');
+    expect(data.getMixer().isPanningEnabled()).toBe(true);
+    // The Mixer setting remains authoritative even when the score element is absent.
+    expect(data.saveToString()).toContain('panningEnabled="true"');
   });
 
   it('leaves a legacy document clean: load adds nothing and re-save is idempotent', () => {
@@ -73,12 +73,12 @@ describe('xml-policy score panning compatibility (Spec 112)', () => {
     // Load/save/load is stable: no further normalization drift.
     const secondPass = BlueData.loadFromString(firstSave);
     expect(secondPass.saveToString()).toBe(firstSave);
-    expect(secondPass.getScore().panningEnabled).toBe(false);
+    expect(secondPass.getMixer().isPanningEnabled()).toBe(false);
   });
 
   it('preserves unknown project XML around a panning-enabled score', () => {
     const data = new BlueData();
-    data.getScore().panningEnabled = true;
+    data.getMixer().setPanningEnabled(true);
     const xmlRoot = data.saveAsXML();
     xmlRoot.getElement('pluginData')?.addElement('legacyPanningPlugin').setText('keep-me');
 
@@ -86,29 +86,48 @@ describe('xml-policy score panning compatibility (Spec 112)', () => {
     expect(xml).toContain('panningEnabled="true"');
 
     const reopened = BlueData.loadFromString(xml);
-    expect(reopened.getScore().panningEnabled).toBe(true);
+    expect(reopened.getMixer().isPanningEnabled()).toBe(true);
     expect(reopened.saveToString()).toContain('<legacyPanningPlugin>keep-me</legacyPanningPlugin>');
   });
 
+  it('migrates legacy score-owned panning attributes into Mixer state', () => {
+    const xml = new BlueData()
+      .saveToString()
+      .replace('<mixer panningEnabled="true" panLawDb="-3" panOffCenterBoost="false">', '<mixer>')
+      .replace(
+        '<score trackLayerMuteSoloMode="audio">',
+        '<score trackLayerMuteSoloMode="audio" panningEnabled="true" panLawDb="-6" panOffCenterBoost="true">',
+      );
+
+    const data = BlueData.loadFromString(xml);
+    expect(data.getMixer().isPanningEnabled()).toBe(true);
+    expect(data.getMixer().getPanLawDb()).toBe(-6);
+    expect(data.getMixer().isPanOffCenterBoost()).toBe(true);
+
+    const saved = data.saveToString();
+    expect(saved).toContain('<mixer panningEnabled="true" panLawDb="-6" panOffCenterBoost="true">');
+    expect(saved).not.toContain('<score trackLayerMuteSoloMode="audio" panningEnabled=');
+  });
+
   describe('xml-policy pan laws, boost, and channel stereo compatibility (Spec 113 T038, T042)', () => {
-    it('falls back to default -3 dB and unboosted when score attributes are absent', () => {
+    it('falls back to default -3 dB and unboosted when Mixer attributes are absent', () => {
       const xml = new BlueData()
         .saveToString()
         .replace(/ panLawDb="[^"]*"/, '')
         .replace(/ panOffCenterBoost="[^"]*"/, '');
       const data = BlueData.loadFromString(xml);
-      expect(data.getScore().panLawDb).toBe(-3);
-      expect(data.getScore().panOffCenterBoost).toBe(false);
+      expect(data.getMixer().getPanLawDb()).toBe(-3);
+      expect(data.getMixer().isPanOffCenterBoost()).toBe(false);
     });
 
-    it('falls back to default -3 dB and unboosted when score attributes are invalid', () => {
+    it('falls back to default -3 dB and unboosted when Mixer attributes are invalid', () => {
       const xml = new BlueData()
         .saveToString()
         .replace(/ panLawDb="[^"]*"/, ' panLawDb="-5"')
         .replace(/ panOffCenterBoost="[^"]*"/, ' panOffCenterBoost="invalid"');
       const data = BlueData.loadFromString(xml);
-      expect(data.getScore().panLawDb).toBe(-3);
-      expect(data.getScore().panOffCenterBoost).toBe(false);
+      expect(data.getMixer().getPanLawDb()).toBe(-3);
+      expect(data.getMixer().isPanOffCenterBoost()).toBe(false);
     });
 
     it('falls back to balance and default scalars when channel stereo tags are missing', () => {

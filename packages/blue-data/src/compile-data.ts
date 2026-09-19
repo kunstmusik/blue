@@ -131,6 +131,7 @@ export interface CompiledMixerGateBindings {
  * Derived render output only; never serialized into `.blue` XML.
  */
 export interface CompiledChannelPannerBinding {
+  /** Channel runtime identity preserved by the render copy; never a display name. */
   readonly channelIdentity: string;
   readonly channelOrdinal: number;
   readonly channelKind: 'source' | 'sub' | 'master';

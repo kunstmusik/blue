@@ -27,6 +27,14 @@ export function clampPan(value: unknown, fallback = DEFAULT_PAN): number {
   return Math.max(MIN_PAN, Math.min(MAX_PAN, value));
 }
 
+export function parseFiniteNumber(str: string | null | undefined): number | undefined {
+  if (typeof str !== 'string') return undefined;
+  const trimmed = str.trim();
+  if (trimmed.length === 0) return undefined;
+  const num = Number(trimmed);
+  return Number.isFinite(num) ? num : undefined;
+}
+
 // ─── Pan Law Constants and Validation ───
 
 export type PanLawDb = 0 | -3 | -4.5 | -6;

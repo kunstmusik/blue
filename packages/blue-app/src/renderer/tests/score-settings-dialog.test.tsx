@@ -111,6 +111,16 @@ describe('ScoreSettingsDialog', () => {
     act(() => root.unmount());
   });
 
+  it('keeps mixer panning settings out of Score Settings', () => {
+    const { container, root } = renderDialog();
+
+    expect(container.querySelector('input[aria-label="Enable Panning"]')).toBeNull();
+    expect(container.querySelector('input[aria-label="Off-center boost"]')).toBeNull();
+    expect(container.querySelector('[aria-label="Score pan law"]')).toBeNull();
+
+    act(() => root.unmount());
+  });
+
   it('closes from the dialog close control without changing the mode', () => {
     const { container, root, onModeChange, onClose } = renderDialog();
     const closeButton = container.querySelector<HTMLButtonElement>(

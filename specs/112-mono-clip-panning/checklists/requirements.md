@@ -32,4 +32,4 @@
 ## Notes
 
 - The specification is ready for `$speckit-clarify` or `$speckit-plan`.
-- The compatibility decision is explicit: absent `panningEnabled` means legacy behavior; new scores default to enabled.
+- The compatibility decision is explicit: absent mixer `panningEnabled` means legacy behavior; new mixers default to enabled; legacy score-level values migrate to the mixer.

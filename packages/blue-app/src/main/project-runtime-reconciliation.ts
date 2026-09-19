@@ -343,6 +343,12 @@ function isMixerGatesMarker(
 
 function classifyMixerPatch(patch: NonNullable<ProjectDocumentPatch['mixer']>): PatchRuntimeWork {
   switch (patch.type) {
+    case 'updateMixerPanning':
+      return restartWork('mixer');
+    case 'updateMixerPanLaw':
+      return channelValueOperation('mixer', 'panLawDb', patch.panLawDb);
+    case 'updateMixerPanBoost':
+      return channelValueOperation('mixer', 'panOffCenterBoost', patch.panOffCenterBoost ? 1 : 0);
     case 'renameChannelListGroup':
       return emptyPatchWork();
     case 'updateChannel': {
@@ -517,10 +523,6 @@ function classifyScorePatch(patch: ScoreUpdatePatch): PatchRuntimeWork {
         patch.patch,
         `track:${patch.track.rootGroupId}:${patch.track.trackId}`,
       );
-    case 'updateScorePanLaw':
-      return channelValueOperation('score', 'panLawDb', patch.panLawDb);
-    case 'updateScorePanBoost':
-      return channelValueOperation('score', 'panOffCenterBoost', patch.panOffCenterBoost ? 1 : 0);
     default:
       return restartWork('score');
   }
@@ -635,6 +637,19 @@ function createOwnerRestartMemory(): Map<PerformanceKind, Set<string>> {
     ['timeline', new Set<string>()],
     ['blueLive', new Set<string>()],
   ]);
+}
+
+export function isPannerFutureIntentParameter(ownerKey: string, parameterId: string): boolean {
+  if (ownerKey === 'mixer') {
+    return parameterId === 'panLawDb' || parameterId === 'panOffCenterBoost';
+  }
+  return (
+    parameterId === 'stereoPanMode' ||
+    parameterId === 'pan' ||
+    parameterId === 'panWidth' ||
+    parameterId === 'dualPanLeft' ||
+    parameterId === 'dualPanRight'
+  );
 }
 
 export class ProjectRuntimeReconciliation {
@@ -773,7 +788,12 @@ export class ProjectRuntimeReconciliation {
       if (!channel) {
         if (!request.ownerKey || !request.parameterId) continue;
         const binding = performance.bindings.get(bindingKey(request.ownerKey, request.parameterId));
-        if (binding?.kind !== 'channel') continue;
+        if (binding?.kind !== 'channel') {
+          if (isPannerFutureIntentParameter(request.ownerKey, request.parameterId)) {
+            anyApplied = true;
+          }
+          continue;
+        }
         channel = binding.channel;
       }
 
@@ -930,6 +950,14 @@ export class ProjectRuntimeReconciliation {
       const resolved = this.resolveOperation(performance, operation);
       if (resolved) {
         operations.push(Object.freeze(resolved));
+      } else if (
+        'parameterId' in operation &&
+        isPannerFutureIntentParameter(operation.ownerKey, operation.parameterId)
+      ) {
+        // Panning-disabled future intent: when no panner binding was compiled
+        // (e.g. Mixer panning is disabled or channel has no panner graph),
+        // save the setting without unresolved live writes or demanding restart.
+        continue;
       } else if (!restartRequiredOwnerIds.includes(operation.ownerKey)) {
         restartRequiredOwnerIds.push(operation.ownerKey);
       }

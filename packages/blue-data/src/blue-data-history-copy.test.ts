@@ -426,8 +426,8 @@ describe('java-parity-fixtures history fixture entry points', () => {
 
     it('preserves score pan laws and channel stereo settings with stable parameter identities across historyCopy (Spec 113 T040)', () => {
       const project = createRepresentativeMixerProject();
-      project.getScore().panLawDb = -6;
-      project.getScore().panOffCenterBoost = true;
+      project.getMixer().setPanLawDb(-6);
+      project.getMixer().setPanOffCenterBoost(true);
 
       const ch = project.getMixer().getChannels()[0]!;
       ch.setStereoPanMode('stereoPan');
@@ -442,14 +442,14 @@ describe('java-parity-fixtures history fixture entry points', () => {
       const memento = project.historyCopy();
 
       // Mutation on original project
-      project.getScore().panLawDb = 0;
-      project.getScore().panOffCenterBoost = false;
+      project.getMixer().setPanLawDb(0);
+      project.getMixer().setPanOffCenterBoost(false);
       ch.setStereoPanMode('balance');
       ch.setPanWidth(1.0);
 
       // Verify memento is unaffected
-      expect(memento.getScore().panLawDb).toBe(-6);
-      expect(memento.getScore().panOffCenterBoost).toBe(true);
+      expect(memento.getMixer().getPanLawDb()).toBe(-6);
+      expect(memento.getMixer().isPanOffCenterBoost()).toBe(true);
       const mementoCh = memento.getMixer().getChannels()[0]!;
       expect(mementoCh.getStereoPanMode()).toBe('stereoPan');
       expect(mementoCh.getPanWidth()).toBe(0.65);

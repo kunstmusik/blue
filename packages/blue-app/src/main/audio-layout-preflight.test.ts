@@ -18,9 +18,9 @@ describe('audio-layout-preflight (T008, T054, T060, T064)', () => {
     }
   });
 
-  it('skips preflight when score panning is disabled', () => {
+  it('skips preflight when Mixer panning is disabled', () => {
     const data = new BlueData();
-    data.getScore().panningEnabled = false;
+    data.getMixer().setPanningEnabled(false);
 
     const group = new TrackLayerGroup();
     const track = new ScoreTrack();
@@ -41,7 +41,7 @@ describe('audio-layout-preflight (T008, T054, T060, T064)', () => {
     fs.writeFileSync(monoPath, buildWavBytes(1, 44100, 16, 100));
 
     const data = new BlueData();
-    data.getScore().panningEnabled = true;
+    data.getMixer().setPanningEnabled(true);
 
     const group = new TrackLayerGroup();
     const track = new ScoreTrack();
@@ -68,7 +68,7 @@ describe('audio-layout-preflight (T008, T054, T060, T064)', () => {
     fs.writeFileSync(stereoPath, buildWavBytes(2, 44100, 16, 100));
 
     const data = new BlueData();
-    data.getScore().panningEnabled = true;
+    data.getMixer().setPanningEnabled(true);
 
     const group = new TrackLayerGroup();
     const track = new ScoreTrack();
@@ -100,7 +100,7 @@ describe('audio-layout-preflight (T008, T054, T060, T064)', () => {
     fs.writeFileSync(targetPath, buildWavBytes(1, 44100, 16, 100));
 
     const data = new BlueData();
-    data.getScore().panningEnabled = true;
+    data.getMixer().setPanningEnabled(true);
     const group = new TrackLayerGroup();
     const track = new ScoreTrack();
     for (const filePath of [targetPath, relativePath, symlinkPath]) {
@@ -139,7 +139,7 @@ describe('audio-layout-preflight (T008, T054, T060, T064)', () => {
 
   it('reports MISSING_AUDIO_LAYOUT when audio file does not exist', () => {
     const data = new BlueData();
-    data.getScore().panningEnabled = true;
+    data.getMixer().setPanningEnabled(true);
 
     const group = new TrackLayerGroup();
     const track = new ScoreTrack();
@@ -161,7 +161,7 @@ describe('audio-layout-preflight (T008, T054, T060, T064)', () => {
     fs.writeFileSync(dummyPath, Buffer.from('bad'));
 
     const data = new BlueData();
-    data.getScore().panningEnabled = true;
+    data.getMixer().setPanningEnabled(true);
 
     const group = new TrackLayerGroup();
     const track = new ScoreTrack();
@@ -190,7 +190,7 @@ describe('audio-layout-preflight (T008, T054, T060, T064)', () => {
     fs.writeFileSync(multiPath, buildWavBytes(4, 44100, 16, 100));
 
     const data = new BlueData();
-    data.getScore().panningEnabled = true;
+    data.getMixer().setPanningEnabled(true);
 
     const group = new TrackLayerGroup();
     const track = new ScoreTrack();
@@ -208,7 +208,7 @@ describe('audio-layout-preflight (T008, T054, T060, T064)', () => {
 
   it('reports UNSUPPORTED_OUTPUT_CHANNELS when project nchnls > 2', () => {
     const data = new BlueData();
-    data.getScore().panningEnabled = true;
+    data.getMixer().setPanningEnabled(true);
     data.getProjectProperties().channels = '6';
 
     const result = preflightAudioLayout(data);
@@ -220,7 +220,7 @@ describe('audio-layout-preflight (T008, T054, T060, T064)', () => {
   it('supports synthetic Windows paths without crashing or mangling', () => {
     const winPath = 'C:\\Projects\\Audio\\clip.wav';
     const data = new BlueData();
-    data.getScore().panningEnabled = true;
+    data.getMixer().setPanningEnabled(true);
 
     const group = new TrackLayerGroup();
     const track = new ScoreTrack();

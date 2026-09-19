@@ -7,16 +7,16 @@ From repository root, install dependencies with `pnpm install`. Have a working B
 ## Model and compiler checks
 
 1. Run `pnpm --filter @blue/data test` and `pnpm --filter @blue/data build`.
-2. Inspect focused tests for new-score true, legacy/missing/invalid score false, channel pan/Parameter XML round trip, deep copy, and Java fixture preservation.
-3. Generate CSD for a legacy score with no property before/after save and compare its routing. Generate enabled stereo CSD for mono, stereo, and mixed clips; verify the emitted routing and gain equations.
+2. Inspect focused tests for new-mixer true, legacy/missing/invalid mixer false, legacy score-to-mixer migration, channel pan/Parameter XML round trip, deep copy, and Java fixture preservation.
+3. Generate CSD for a legacy project with no mixer property before/after save and compare its routing. Generate enabled stereo CSD for mono, stereo, and mixed clips; verify the emitted routing and gain equations.
 4. Render the numeric fixtures at left, center, and right. Mono center should measure about 0.707 per side for unit source, endpoints 1/0 and 0/1. Stereo center should preserve independent sides. Mixed track should retain both.
 5. Repeat with mixer disabled and `nchnls=1`; inspect valid output. For `nchnls>2`, three-channel input, and unreadable audio, confirm a clear diagnostic before launch and unchanged project XML. Change cached clip metadata and confirm actual file layout still wins.
 
 ## App, history, and runtime checks
 
 1. Run `pnpm --filter @blue/app test` and `pnpm --filter @blue/app build:main`.
-2. Open a new score: Score Settings shows enabled; mixer shows Pan for verified all-mono source and Balance for stereo/mixed/unknown. Toggle off: control becomes inactive and legacy render returns.
-3. Open a pre-feature Java/TS score: setting shows disabled; save/reopen without toggling and compare audio/CSD. Enable explicitly, save/reopen, and confirm the new route.
+2. Open a new score: Mixer Settings shows enabled; mixer shows Pan for verified all-mono source and Balance for stereo/mixed/unknown. Toggle off: control becomes inactive and legacy render returns.
+3. Open a pre-feature Java/TS project: setting shows disabled; save/reopen without toggling and compare audio/CSD. If an older project has score-level panning, confirm it migrates to Mixer Settings. Enable explicitly, save/reopen, and confirm the new route.
 4. With playback running, commit a setting toggle and a channel position edit; undo and redo each. Confirm canonical value, dirty state, stable references, audible reconciliation, and no stale panner. Exercise automation during playback.
 5. Confirm sends use their prior feed point and output meters reflect the audible post-pan channel.
 6. Exercise disk-profile Generate CSD to Screen with enabled audio, plus timeline, realtime, and Blue Live failures. Confirm preflight diagnostics stay typed and recoverable, and that the generated CSD path receives the detached audio-layout manifest.
@@ -114,11 +114,11 @@ plateaus within 0.0001 of ideal).
 
 | Scenario | Assertion suite | Result |
 | --- | --- | --- |
-| New score defaults `panningEnabled=true`, explicit attribute saved | `score-panning.test.ts`, `xml-policy.test.ts` | PASS |
+| New mixer defaults `panningEnabled=true`, explicit attribute saved | `score-panning.test.ts`, `xml-policy.test.ts` | PASS |
 | Absent attribute / invalid value / missing `<score>` loads false, document clean | `xml-policy.test.ts`, `blue-data-frozen-roundtrip.test.ts` | PASS |
 | Legacy open→save→reopen idempotence, unknown XML preserved | `xml-policy.test.ts` | PASS |
 | Disabled route byte/order-compatible baseline (mixer-disabled and ordinary) | `csd-policy.test.ts`, `csd-generation.test.ts`, `render-to-disk.test.ts` | PASS |
-| Explicit toggle commits `Set Score Panning`, structural restart classification | `score-panning-contract.test.ts`, `project-history-patch-classification.test.ts`, `project-runtime-reconciliation.test.ts` | PASS |
+| Explicit toggle commits an Enable/Disable Panning mixer edit, structural restart classification | `score-panning-contract.test.ts`, `project-history-patch-classification.test.ts`, `project-runtime-reconciliation.test.ts` | PASS |
 | End-to-end legacy open/save/reopen across disk/realtime/BlueLive | `csd-generation.test.ts`, `render-to-disk.test.ts`, `blue-live-engine.test.ts` | PASS |
 
 ### Pan/Balance behavior matrix (T053, US3)
@@ -159,11 +159,11 @@ native path as a manifest alias.
 ### Convergence-time correction (T077)
 
 Runtime parameter name syncing enumerated mixer Pan unconditionally while the
-compiler enumerated it only when score panning was enabled. For every
+compiler enumerated it only when mixer panning was enabled. For every
 panning-disabled (legacy) project with more than one mixer channel this
 misaligned the positional fallback: live channel N's Volume adopted channel
 N+1's compiled variable, and Pan adopted a neighbor's Volume. Fixed by gating
-`getMixerOwnerParameters(mixer, { includePan })` to the score setting in
+`getMixerOwnerParameters(mixer, { includePan })` to the mixer setting in
 `syncCompiledRuntimeParameterNames`; regression coverage lives in
 `runtime-parameter-sync.test.ts`.
 

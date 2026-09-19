@@ -50,7 +50,7 @@ describe('BlueData scheduling parity', () => {
 
   it('replaces audio-layer placeholder ids with compile-time instrument ids', () => {
     const data = new BlueData();
-    data.getScore().panningEnabled = false;
+    data.getMixer().setPanningEnabled(false);
 
     const layer = new Track();
     const clip = new AudioClip();

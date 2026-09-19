@@ -78,12 +78,12 @@ describe('Runtime capability classification (T017)', () => {
     ).toBe('live');
     expect(
       classifyPatchRuntimeCapability({
-        score: { type: 'updateScorePanLaw', panLawDb: -6 },
+        mixer: { type: 'updateMixerPanLaw', panLawDb: -6 },
       }),
     ).toBe('live');
     expect(
       classifyPatchRuntimeCapability({
-        score: { type: 'updateScorePanBoost', panOffCenterBoost: true },
+        mixer: { type: 'updateMixerPanBoost', panOffCenterBoost: true },
       }),
     ).toBe('live');
   });
@@ -391,8 +391,8 @@ describe('Runtime work plans (T017)', () => {
       1,
       client,
       new Map([
-        ['score::panLawDb', { kind: 'channel', channel: 'gk_blue_score_pan_law' }],
-        ['score::panOffCenterBoost', { kind: 'channel', channel: 'gk_blue_score_pan_boost' }],
+        ['mixer::panLawDb', { kind: 'channel', channel: 'gk_blue_score_pan_law' }],
+        ['mixer::panOffCenterBoost', { kind: 'channel', channel: 'gk_blue_score_pan_boost' }],
         ['c1::stereoPanMode', { kind: 'channel', channel: 'gk_c1_pan_mode' }],
         ['c1::panWidth', { kind: 'channel', channel: 'gk_c1_pan_width' }],
         ['c1::dualPanLeft', { kind: 'channel', channel: 'gk_c1_dual_left' }],
@@ -404,8 +404,8 @@ describe('Runtime work plans (T017)', () => {
       documentId: 'doc-1',
       revision: 1,
       patches: [
-        { score: { type: 'updateScorePanLaw', panLawDb: -4.5 } },
-        { score: { type: 'updateScorePanBoost', panOffCenterBoost: true } },
+        { mixer: { type: 'updateMixerPanLaw', panLawDb: -4.5 } },
+        { mixer: { type: 'updateMixerPanBoost', panOffCenterBoost: true } },
         {
           mixer: {
             type: 'updateChannel',
@@ -426,14 +426,14 @@ describe('Runtime work plans (T017)', () => {
     expect(plan.operations).toEqual([
       {
         kind: 'channel-value',
-        ownerKey: 'score',
+        ownerKey: 'mixer',
         parameterId: 'panLawDb',
         channel: 'gk_blue_score_pan_law',
         value: -4.5,
       },
       {
         kind: 'channel-value',
-        ownerKey: 'score',
+        ownerKey: 'mixer',
         parameterId: 'panOffCenterBoost',
         channel: 'gk_blue_score_pan_boost',
         value: 1,
@@ -481,6 +481,60 @@ describe('Runtime work plans (T017)', () => {
 
     expect(plan!.operations).toHaveLength(0);
     expect(plan!.restartRequiredOwnerIds).toEqual(['Master']);
+  });
+
+  it('treats missing panner bindings as future intent without restart-required when panning is disabled (T051, US3)', async () => {
+    const reconciliation = new ProjectRuntimeReconciliation();
+    const client = makeClient();
+    reconciliation.registerPerformance('timeline', 1, client, new Map());
+
+    const [plan] = reconciliation.planCommit({
+      documentId: 'doc-1',
+      revision: 5,
+      patches: [
+        { mixer: { type: 'updateMixerPanLaw', panLawDb: -6 } },
+        { mixer: { type: 'updateMixerPanBoost', panOffCenterBoost: true } },
+        {
+          mixer: {
+            type: 'updateChannel',
+            channelId: 'c1',
+            patch: {
+              stereoPanMode: 'dualPan',
+              panWidth: 0.5,
+              dualPanLeft: 0.2,
+              dualPanRight: 0.8,
+            },
+          },
+        },
+      ],
+    });
+
+    expect(plan!.operations).toHaveLength(0);
+    expect(plan!.restartRequiredOwnerIds).toHaveLength(0);
+
+    const outcomes = await reconciliation.reconcileCommit({
+      documentId: 'doc-1',
+      revision: 5,
+      patches: [
+        { mixer: { type: 'updateMixerPanLaw', panLawDb: -6 } },
+        { mixer: { type: 'updateMixerPanBoost', panOffCenterBoost: true } },
+        {
+          mixer: {
+            type: 'updateChannel',
+            channelId: 'c1',
+            patch: {
+              stereoPanMode: 'dualPan',
+              panWidth: 0.5,
+              dualPanLeft: 0.2,
+              dualPanRight: 0.8,
+            },
+          },
+        },
+      ],
+    });
+
+    expect(outcomes[0]?.status).toBe('applied');
+    expect(client.applied).toHaveLength(0);
   });
 
   it('captures immutable payload copies for automation operations', () => {

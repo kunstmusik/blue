@@ -31,7 +31,7 @@ function clipAt(start: number): AudioClip {
 describe('mixed Track content', () => {
   it('accepts ordered AudioClip and compatible SoundObject items and round-trips them', () => {
     const data = new BlueData();
-    data.getScore().panningEnabled = false;
+    data.getMixer().setPanningEnabled(false);
     data.getScore().length = 0;
     const group = new TrackLayerGroup();
     group.setUniqueId('mixed-group');

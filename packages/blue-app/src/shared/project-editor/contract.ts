@@ -412,9 +412,6 @@ export interface ScoreDocumentSnapshot {
   markers: MarkerSnapshot[];
   layerGroups: ScoreLayerGroupSnapshot[];
   rootNoteProcessorChain?: NoteProcessorChainSnapshot;
-  panningEnabled: boolean;
-  panLawDb: PanLawDb;
-  panOffCenterBoost: boolean;
 }
 
 // ─── Score Object Editor Target Types ───
@@ -811,9 +808,6 @@ export type PatternScorePatch =
 
 export type ScorePatch =
   | { type: 'updateTrackLayerMuteSoloMode'; mode: TrackLayerMuteSoloMode }
-  | { type: 'updateScorePanning'; panningEnabled: boolean }
-  | { type: 'updateScorePanLaw'; panLawDb: PanLawDb }
-  | { type: 'updateScorePanBoost'; panOffCenterBoost: boolean }
   | TrackScorePatch
   | PatternScorePatch
   | { type: 'updateTimeState'; patch: Partial<ScoreTimeStateSnapshot> }
@@ -1480,6 +1474,9 @@ export interface MixerSnapshot {
   enabled: boolean;
   enableMeters: boolean;
   meterProfileKey: MeterProfileKey;
+  panningEnabled: boolean;
+  panLawDb: PanLawDb;
+  panOffCenterBoost: boolean;
   extraRenderTime: number;
   channelListGroups: MixerChannelListSnapshot[];
   channels: MixerChannelSnapshot[];
@@ -1569,6 +1566,9 @@ export type MixerPatch =
   | { type: 'setMixerEnabled'; value: boolean }
   | { type: 'setMeterEnabled'; value: boolean }
   | { type: 'setMeterProfile'; value: MeterProfileKey }
+  | { type: 'updateMixerPanning'; panningEnabled: boolean }
+  | { type: 'updateMixerPanLaw'; panLawDb: PanLawDb }
+  | { type: 'updateMixerPanBoost'; panOffCenterBoost: boolean }
   | { type: 'updateExtraRenderTime'; value: number }
   | { type: 'renameChannelListGroup'; association: string; name: string }
   | {
@@ -1898,9 +1898,6 @@ export type ProjectPatchPreparationClass = 'scalar' | 'structural';
 export const SCORE_PATCH_PREPARATION_CLASS: Readonly<
   Record<ScorePatch['type'], ProjectPatchPreparationClass>
 > = {
-  updateScorePanning: 'structural',
-  updateScorePanLaw: 'structural',
-  updateScorePanBoost: 'structural',
   addLayer: 'structural',
   addLayerGroup: 'structural',
   addMarker: 'structural',
@@ -1968,6 +1965,9 @@ export const MIXER_PATCH_PREPARATION_CLASS: Readonly<
   setMixerEnabled: 'scalar',
   setMeterEnabled: 'scalar',
   setMeterProfile: 'scalar',
+  updateMixerPanning: 'structural',
+  updateMixerPanLaw: 'structural',
+  updateMixerPanBoost: 'structural',
   updateExtraRenderTime: 'scalar',
   updateChannel: 'scalar',
   renameChannelListGroup: 'structural',
@@ -2393,18 +2393,23 @@ export function isMixerRealtimeLevelUpdate(value: unknown): value is MixerRealti
   return update.phase === 'finish' || update.phase === 'cancel';
 }
 
-/** Runtime-only channel-position preview used by the mixer Pan control. */
+export type MixerPannerParameterId = 'pan' | 'panWidth' | 'dualPanLeft' | 'dualPanRight';
+
+/** Runtime-only channel-position preview used by mixer Pan, Width, and Dual Pan controls. */
 export interface MixerRealtimePanPreviewRequest extends MixerRealtimeLevelBaseRequest {
   phase: 'preview';
   pan: number;
+  parameterId?: MixerPannerParameterId;
 }
 
 export interface MixerRealtimePanFinishRequest extends MixerRealtimeLevelBaseRequest {
   phase: 'finish';
+  parameterId?: MixerPannerParameterId;
 }
 
 export interface MixerRealtimePanCancelRequest extends MixerRealtimeLevelBaseRequest {
   phase: 'cancel';
+  parameterId?: MixerPannerParameterId;
 }
 
 export type MixerRealtimePanUpdate =
@@ -2416,7 +2421,17 @@ export type MixerRealtimePanResult = MixerRealtimeLevelResult;
 
 export function isMixerRealtimePanUpdate(value: unknown): value is MixerRealtimePanUpdate {
   if (!isValidMixerRealtimeBaseRequest(value)) return false;
-  const update = value;
+  const update = value as Record<string, unknown>;
+  if (update.parameterId !== undefined) {
+    if (
+      update.parameterId !== 'pan' &&
+      update.parameterId !== 'panWidth' &&
+      update.parameterId !== 'dualPanLeft' &&
+      update.parameterId !== 'dualPanRight'
+    ) {
+      return false;
+    }
+  }
   if (update.phase === 'preview') {
     return (
       typeof update.pan === 'number' &&

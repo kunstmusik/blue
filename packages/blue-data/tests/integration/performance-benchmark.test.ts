@@ -71,7 +71,7 @@ describe('Performance', () => {
     data.getProjectProperties().nchnls = '2';
 
     const score = new Score();
-    score.panningEnabled = false;
+    data.getMixer().setPanningEnabled(false);
     const ag = new TrackLayerGroup();
     const layer = ag.newLayerAt(0);
 

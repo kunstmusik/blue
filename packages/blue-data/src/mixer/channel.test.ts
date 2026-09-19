@@ -238,6 +238,21 @@ describe('Channel', () => {
         expect(ch.getDualPanRight()).toBe(1.0);
       });
 
+      it('rejects trailing garbage in numeric fields with safe default fallback', () => {
+        const xml = `<channel>
+          <name>Test</name>
+          <pan>0.5trailing</pan>
+          <panWidth>0.8xyz</panWidth>
+          <dualPanLeft>0.2abc</dualPanLeft>
+          <dualPanRight>0.9garbage</dualPanRight>
+        </channel>`;
+        const ch = Channel.loadFromXML(Element.parse(xml));
+        expect(ch.getPan()).toBe(0.5);
+        expect(ch.getPanWidth()).toBe(1.0);
+        expect(ch.getDualPanLeft()).toBe(0.0);
+        expect(ch.getDualPanRight()).toBe(1.0);
+      });
+
       it('round-trips stereo modes and dispatches known parameter tags explicitly', () => {
         const ch = new Channel();
         ch.setName('StereoCh');

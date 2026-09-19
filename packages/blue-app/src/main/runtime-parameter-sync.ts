@@ -26,6 +26,7 @@ import type {
 } from '@blue/data';
 import {
   getKnownMixerChannelSnapshotId,
+  getMixerChannelSnapshotId,
   getKnownMixerEntrySnapshotId,
 } from '../shared/project-editor/identity';
 import type { RuntimeBinding } from './project-runtime-reconciliation';
@@ -45,9 +46,9 @@ export function syncCompiledRuntimeParameterNames(
     ...getArrangementOwnerParameters(arrangement).map((entry) => entry.parameter),
     ...(score ? getTrackOwnerParameters(score).map((entry) => entry.parameter) : []),
     // Pan joins the live enumeration only when the compile included it
-    // (score panning enabled); otherwise positional name syncing would
+    // (mixer panning enabled); otherwise positional name syncing would
     // misalign every mixer parameter after the first channel's volume.
-    ...getMixerOwnerParameters(mixer, score?.panningEnabled ?? false),
+    ...getMixerOwnerParameters(mixer, mixer.isPanningEnabled()),
   ];
 
   for (const parameter of liveParameters) {
@@ -179,46 +180,21 @@ export function buildRuntimeBindingRegistry(
         registry.set(`${channelId}::level`, { kind: 'channel', channel: levelVar });
         registry.set(`${channelId}::volume`, { kind: 'channel', channel: levelVar });
       }
-      const panParam = (
-        channel as unknown as { getPanParameter?: () => Parameter | undefined }
-      ).getPanParameter?.();
-      if (panParam) {
-        const panVar = resolveVarName(panParam);
-        if (panVar) {
-          registry.set(`${channelId}::pan`, { kind: 'channel', channel: panVar });
-        }
+      const panVar = resolveVarName(channel.getPanParameter());
+      if (panVar) {
+        registry.set(`${channelId}::pan`, { kind: 'channel', channel: panVar });
       }
-      const panWidthParam = channel.getPanWidthParameter?.();
-      if (panWidthParam) {
-        const panWidthVar = resolveVarName(panWidthParam);
-        if (panWidthVar) {
-          registry.set(`${channelId}::panWidth`, { kind: 'channel', channel: panWidthVar });
-        }
+      const panWidthVar = resolveVarName(channel.getPanWidthParameter());
+      if (panWidthVar) {
+        registry.set(`${channelId}::panWidth`, { kind: 'channel', channel: panWidthVar });
       }
-      const dualPanLeftParam = channel.getDualPanLeftParameter?.();
-      if (dualPanLeftParam) {
-        const dualPanLeftVar = resolveVarName(dualPanLeftParam);
-        if (dualPanLeftVar) {
-          registry.set(`${channelId}::dualPanLeft`, { kind: 'channel', channel: dualPanLeftVar });
-        }
+      const dualPanLeftVar = resolveVarName(channel.getDualPanLeftParameter());
+      if (dualPanLeftVar) {
+        registry.set(`${channelId}::dualPanLeft`, { kind: 'channel', channel: dualPanLeftVar });
       }
-      const dualPanRightParam = channel.getDualPanRightParameter?.();
-      if (dualPanRightParam) {
-        const dualPanRightVar = resolveVarName(dualPanRightParam);
-        if (dualPanRightVar) {
-          registry.set(`${channelId}::dualPanRight`, { kind: 'channel', channel: dualPanRightVar });
-        }
-      }
-      if (pannerBindings) {
-        const pb = pannerBindings.channels.find(
-          (c) =>
-            c.channelIdentity === channelId ||
-            c.channelIdentity === channel.getAssociation().trim() ||
-            c.channelIdentity === channel.getName().trim(),
-        );
-        if (pb?.modeChannel) {
-          registry.set(`${channelId}::stereoPanMode`, { kind: 'channel', channel: pb.modeChannel });
-        }
+      const dualPanRightVar = resolveVarName(channel.getDualPanRightParameter());
+      if (dualPanRightVar) {
+        registry.set(`${channelId}::dualPanRight`, { kind: 'channel', channel: dualPanRightVar });
       }
 
       const registerChain = (chain: EffectsChain) => {
@@ -389,20 +365,30 @@ export function buildRuntimeBindingRegistry(
 
   // 6. Generation-scoped Panner Bindings
   if (pannerBindings?.scoreLawChannel) {
-    registry.set('score::panLawDb', { kind: 'channel', channel: pannerBindings.scoreLawChannel });
+    registry.set('mixer::panLawDb', { kind: 'channel', channel: pannerBindings.scoreLawChannel });
   }
   if (pannerBindings?.scoreBoostChannel) {
-    registry.set('score::panOffCenterBoost', {
+    registry.set('mixer::panOffCenterBoost', {
       kind: 'channel',
       channel: pannerBindings.scoreBoostChannel,
     });
   }
-  if (pannerBindings?.channels) {
-    for (const b of pannerBindings.channels) {
-      if (b.modeChannel && b.channelIdentity) {
-        registry.set(`${b.channelIdentity}::stereoPanMode`, {
+  if (pannerBindings?.channels && mixer.isEnabled()) {
+    const channels = [
+      ...mixer.getAllSourceChannels(),
+      ...mixer.getSubChannels(),
+      mixer.getMaster(),
+    ];
+    for (const channel of channels) {
+      const binding = pannerBindings.channels.find(
+        (candidate) => candidate.channelIdentity === channel.getRuntimeIdentity(),
+      );
+      if (binding) {
+        // Display names and associations can collide; only the canonical editor owner
+        // may address this channel's compiled mode control.
+        registry.set(`${getMixerChannelSnapshotId(channel)}::stereoPanMode`, {
           kind: 'channel',
-          channel: b.modeChannel,
+          channel: binding.modeChannel,
         });
       }
     }

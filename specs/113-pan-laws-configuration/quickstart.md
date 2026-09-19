@@ -1,6 +1,6 @@
 # Validation Quickstart: Complete Stereo Mixer Panning
 
-Run from repository root after implementation. This guide defines acceptance; it does not claim the feature is already built.
+Run from repository root. Automated implementation evidence and remaining manual acceptance checks are recorded below.
 
 ## Prerequisites
 
@@ -43,10 +43,10 @@ For each 0/−3/−4.5/−6 dB law, boost off/on, and positions 0/0.25/0.5/0.75/
 
 ## Scenario D: editing, automation, and recovery
 
-1. Change each score and channel setting. For every action, confirm one semantic history entry, dirty state, undo, redo, save/reopen, stable channel/Parameter IDs and track associations, and matching playback/export results.
+1. Change each Mixer and channel setting. For every action, confirm one semantic history entry, dirty state, undo, redo, save/reopen, stable channel/Parameter IDs and track associations, and matching playback/export results.
 2. Drag Position, Width, and both Dual controls during timeline and BlueLive playback. Confirm previews are audible without durable state until commit; cancel restores canonical audio and creates no history entry. Automate the three new scalars and compare live/disk results.
 3. Change law/boost/mode during playback. Confirm no score-event retrigger or transport movement on the stable graph. Inject engine rejection and generation replacement: the UI reports saved versus applied state; reconciliation restores the canonical mix. Re-test after toggling `panningEnabled`.
-4. In browser tests, operate every control by keyboard and confirm accessible names, selected mode, inactive-state reason, and gain warnings.
+4. In browser tests, operate every control by keyboard and confirm accessible names, selected mode, inactive-state reason, effective-width feedback, and the Mixer Settings gain warning; channel strips have no dedicated true-stereo peak/summing disclosure.
 
 ## Evidence to record
 
@@ -57,18 +57,33 @@ Record platform, engine version, output/loopback device (or offline render path)
 - **Platform**: macOS (Darwin arm64)
 - **Engine / Offline Render**: Csound / Blue Engine native bindings with deterministic PCM / WAV plateau measurement (`mono-clip-panning.integration.test.ts`).
 - **Fixtures Verified**:
-  - `packages/blue-data/src/score/audio/mono-clip-panning-fixtures.test.ts`: mathematical parity for 0 dB, -3 dB, -4.5 dB, -6 dB laws, boost flag, Balance, Stereo Pan, Dual Pan.
-  - `packages/blue-app/src/main/mono-clip-panning.integration.test.ts`: offline audio renders of synthetic tone files verifying gain plateau levels across pan positions and laws.
+  - `packages/blue-data/src/mixer/channel-pan.test.ts`: mathematical parity for 0 dB, -3 dB, -4.5 dB, -6 dB laws, boost flag, Balance, Stereo Pan, Dual Pan.
+  - `packages/blue-app/src/main/mono-clip-panning.integration.test.ts`: offline Csound audio renders of synthetic stereo files verifying Stereo Pan and Dual Pan gain matrices across all laws, boost states, endpoints, intermediate positions, independent/crossed/coincident Dual Pan positions, and zero-width Stereo Pan.
   - `packages/blue-data/src/blue-data/mono-clip-panning.test.ts`: CSD generation for all stereo pan modes, automation bindings, subchannels, sends, master.
-  - `packages/blue-app/src/main/project-history-roundtrip.test.ts`: ProjectHistory commit→undo→redo round-trips for `updateScorePanLaw`, `updateScorePanBoost`, and channel `stereoPanMode`/`panWidth`/`dualPanLeft`/`dualPanRight`.
-  - `packages/blue-app/src/renderer/browser/mono-clip-panning.browser.test.tsx`: real Chromium browser component tests for ScoreSettingsDialog and MixerPanSlider with accessible labels, keyboard navigation, and effective width disclosures.
+  - `packages/blue-data/src/blue-data-csd-parity.test.ts`: static, realtime, BlueLive, and disk CSD graph parity for both true-stereo modes and all law/boost choices.
+  - `packages/blue-app/src/main/project-history-roundtrip.test.ts`: ProjectHistory commit→undo→redo round-trips for `updateMixerPanLaw`, `updateMixerPanBoost`, and channel `stereoPanMode`/`panWidth`/`dualPanLeft`/`dualPanRight`.
+  - `packages/blue-app/src/renderer/browser/mono-clip-panning.browser.test.tsx`: browser component coverage for MixerSettingsDialog and MixerPanSlider with accessible labels, keyboard navigation, effective-width disclosures, and no dedicated true-stereo peak/summing disclosure. The current host could not launch Chrome for this run; Vitest/Playwright exited with SIGABRT before executing tests.
 - **Verification Gates**:
-  - `pnpm --filter @blue/data test`: 201/201 test files passed (2,052 tests)
-  - `pnpm --filter @blue/app test`: 493/493 test files passed (5,248 tests)
-  - `pnpm --filter @blue/app test:browser`: 19/19 test files passed (118 tests)
+  - `pnpm --filter @blue/data test`: 201/201 test files passed, 1 skipped (2,056 passed, 1 skipped)
+  - `pnpm --filter @blue/app test`: 493/493 test files passed (5,254 passed, 2 skipped)
+  - `pnpm --filter @blue/app test:browser -- src/renderer/browser/mono-clip-panning.browser.test.tsx`: blocked before test execution because the installed Chrome process exited with SIGABRT.
   - `pnpm --filter @blue/app build:main`: Passed (0 errors)
   - `pnpm --filter @blue/app build:renderer`: Passed (0 errors)
   - `pnpm audit:renderer-typography`: Passed (0 findings)
-  - `pnpm lint`: Passed (0 errors)
+  - `pnpm test`: Passed, including native engine, Java, CLI, data, app, and repository script tests.
+  - `pnpm lint`: Passed (renderer typography audit, ESLint, workspace package lint, native/Java lint, and Prettier).
   - `git diff --check`: Passed (0 errors)
 - **Unrun Checks**: Physical DAC/loopback measurement (verified via offline PCM plateau analysis); native Windows execution (verified with synthetic path handling and boundary tests; requires Windows CI runner).
+
+
+### Review correction evidence (2026-09-19)
+
+- Reproduced the channel-name collision and bypass-binding defects before changing implementation: four failing timeline/BlueLive cases. Added asynchronous timeline coverage too; all six regression cases now pass in `runtime-parameter-sync.test.ts`.
+- Mode bindings now match the existing Channel runtime identity preserved by render copies and register under the canonical editor owner ID. A subchannel named `1` cannot redirect instrument `1`'s mode edits (or vice versa); master binding remains independent.
+- Bypassed mixers now return no panner bindings in synchronous timeline, asynchronous timeline, or BlueLive generation. Law/boost settings remain future intent rather than targeting absent Csound controls.
+- Focused runtime registry, reconciliation, and rendered-audio suites: 74 tests passed. Data suite: 2,056 passed, 1 skipped. Data build and app main/renderer builds passed.
+- Browser panning suite: 14 tests passed using the same Chrome configuration outside the filesystem sandbox. Chrome still aborts with SIGABRT inside the sandbox. The browser run exposed a missing disabled-input guard; the existing non-interaction regression passes after adding it.
+- Off-center boost help now states that center attenuation remains unchanged.
+- The project owner accepts discontinuities from discrete pan-law selection changes. The measured centered mono −3 dB → 0 dB transition has a roughly 0.293 sample jump at unit source amplitude; no law-selection ramp is added. This acceptance does not change the gain curves or extend to other rapid control transitions.
+- An initial full workspace run passed 492 app files but failed the existing meter timing threshold while other validation jobs were active. The final `pnpm test` run passed without those competing validation jobs: 493 app files, 5,260 app tests passed (2 skipped), plus all other workspace and repository-script tests. The timing test was not weakened. `pnpm lint` passed; the subsequent disabled-input guard also passed targeted ESLint and Prettier checks. `git diff --check` passed.
+- Remaining acceptance: moderated composer usability check (SC-006), native Windows execution, and physical DAC/loopback measurements. Offline PCM checks do not substitute for physical measurements. These checks are not marked complete by this review.

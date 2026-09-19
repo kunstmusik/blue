@@ -1,11 +1,11 @@
 # Data Model: Mono Clip Panning Compatibility
 
-## Score Panning Configuration
+## Mixer Panning Configuration
 
-- **Owner**: Active `BlueData.Score`.
-- **Field**: `panningEnabled: boolean`; new instance true, absent/invalid XML or missing score element false.
-- **Persistence**: `<score panningEnabled="true|false">` in `.blue` XML.
-- **Transitions**: User toggle commits `Set Score Panning`; undo/redo restores prior value and recompiles or reconciles active audio. Merely loading a legacy score does not make it dirty.
+- **Owner**: Active `BlueData.Mixer`.
+- **Field**: `panningEnabled: boolean`; new instance true, absent/invalid mixer XML false. A legacy score-level value is migrated when no mixer-level value is present; missing values in both locations resolve false.
+- **Persistence**: `<mixer panningEnabled="true|false">` in `.blue` XML. The loader accepts legacy `<score panningEnabled="true|false">` only as a migration input and saves the canonical mixer form.
+- **Transitions**: User toggle commits an `Enable Panning` or `Disable Panning` mixer edit; undo/redo restores prior value and recompiles or reconciles active audio. Merely loading a legacy project does not make it dirty.
 - **Relationship**: Gates clip upmix and channel Pan/Balance. Does not alter sends.
 
 ## Audio Clip Channel Layout
@@ -29,7 +29,7 @@
 - **Persistence**: Channel XML pan value and pan Parameter; older channel XML defaults to center. Deep copy preserves values; history copy preserves stable runtime identity.
 - **Validation**: Reject nonfinite/out-of-range user and automation values; invalid XML falls back to center. Compile uses a validated value.
 - **Transitions**: Edit commits `Set Channel Pan`; automation edits follow existing parameter history; undo/redo restores canonical value and audible behavior.
-- **Relationship**: Label is `Pan` for verified mono-only channels, `Balance` otherwise; control is inactive when score panning is disabled.
+- **Relationship**: Label is `Pan` for verified mono-only channels, `Balance` otherwise; control is inactive when mixer panning is disabled.
 
 ## Render Layout Diagnostic
 

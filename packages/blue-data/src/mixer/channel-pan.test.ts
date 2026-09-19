@@ -5,6 +5,7 @@ import {
   clampPanLawDb,
   clampPanWidth,
   clampStereoPanMode,
+  calculateStereoPanEffectiveSpread,
   DEFAULT_DUAL_PAN_LEFT,
   DEFAULT_DUAL_PAN_RIGHT,
   DEFAULT_PAN,
@@ -367,5 +368,44 @@ describe('stereo pan and dual pan matrices (T020, T024)', () => {
     expect(bL).toBeCloseTo(1.0, 6);
     expect(aR).toBeCloseTo(1.0, 6);
     expect(bR).toBeCloseTo(0.0, 6);
+  });
+
+  it('covers every true-stereo law, boost state, position, and matrix mode', () => {
+    const positions = [0, 0.25, 0.5, 0.75, 1];
+
+    for (const law of PAN_LAW_VALUES) {
+      for (const boost of [false, true]) {
+        for (const position of positions) {
+          const width = position === 0.5 ? 1 : 0.8;
+          const stereo = getStereoPanGains(position, width, law, boost);
+          const spread = calculateStereoPanEffectiveSpread(position, width);
+          const [leftLeg, rightLeg] = getSourceLegGains(position - spread, law, boost);
+          const [rightSourceLeft, rightSourceRight] = getSourceLegGains(
+            position + spread,
+            law,
+            boost,
+          );
+
+          expect(stereo).toEqual([
+            expect.closeTo(leftLeg, 10),
+            expect.closeTo(rightLeg, 10),
+            expect.closeTo(rightSourceLeft, 10),
+            expect.closeTo(rightSourceRight, 10),
+          ]);
+          expect(stereo.every(Number.isFinite)).toBe(true);
+
+          const dual = getDualPanGains(position, 1 - position, law, boost);
+          const [dualLeftL, dualLeftR] = getSourceLegGains(position, law, boost);
+          const [dualRightL, dualRightR] = getSourceLegGains(1 - position, law, boost);
+          expect(dual).toEqual([
+            expect.closeTo(dualLeftL, 10),
+            expect.closeTo(dualLeftR, 10),
+            expect.closeTo(dualRightL, 10),
+            expect.closeTo(dualRightR, 10),
+          ]);
+          expect(dual.every(Number.isFinite)).toBe(true);
+        }
+      }
+    }
   });
 });

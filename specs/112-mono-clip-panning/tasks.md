@@ -64,7 +64,7 @@ generation seams exist; legacy callers still produce the captured baseline CSD.
 
 ## Phase 3: User Story 1 - Mix Mono and Stereo Clips on One Track (Priority: P1) 🎯 MVP
 
-**Goal**: With score panning enabled, verified mono clips are centered into stereo without
+**Goal**: With mixer panning enabled, verified mono clips are centered into stereo without
 collapsing stereo clips, and mixed tracks remain stereo-safe; disabled panning retains the old route.
 
 **Independent Test**: Generate and render a two-channel score containing overlapping mono and
@@ -87,7 +87,7 @@ stereo clips, compare left/right samples at center and endpoints, verify all-mon
 - [x] T021 [US1] Integrate the enabled route into source, subchannel, master, and direct output CSD generation in `packages/blue-data/src/blue-data/csd-policy.ts` and `packages/blue-data/src/score/track/track-audio-playback.ts`; preserve mixed-track stereo width, existing channel indexing, unchanged send taps, and the exact mixer-disabled route.
 - [x] T022 [US1] Invoke main preflight before timeline realtime, disk render, and BlueLive CSD generation in `packages/blue-app/src/main/main.ts`, `packages/blue-app/src/main/csd-generation.ts`, `packages/blue-app/src/main/render-to-disk.ts`, and `packages/blue-app/src/main/blue-live-engine.ts`, passing the detached manifest only after successful inspection.
 - [x] T023 [US1] Update the disk/realtime/BlueLive generation wrappers to accept the preflight result and preserve their existing Java-runtime/session behavior in `packages/blue-app/src/main/csd-generation.ts`, `packages/blue-app/src/main/render-to-disk.ts`, and `packages/blue-app/src/main/blue-live-engine.ts`.
-- [x] T024 [US1] Reconcile a score panning/layout context change as a structural CSD/runtime rebuild while allowing stable scalar bindings to remain live in `packages/blue-app/src/main/project-runtime-reconciliation.ts`, `packages/blue-app/src/main/main.ts`, and `packages/blue-app/src/main/project-runtime-reconciliation.test.ts`.
+- [x] T024 [US1] Reconcile a mixer panning/layout context change as a structural CSD/runtime rebuild while allowing stable scalar bindings to remain live in `packages/blue-app/src/main/project-runtime-reconciliation.ts`, `packages/blue-app/src/main/main.ts`, and `packages/blue-app/src/main/project-runtime-reconciliation.test.ts`.
 - [x] T025 [US1] Add end-to-end assertions for overlapping clips through post-effects, sends, gates, meters, subchannels, and master routing in `packages/blue-data/src/blue-data/mixer-gate-csd.test.ts` and `packages/blue-app/src/main/mono-clip-panning.integration.test.ts`; verify no send signal is panned twice.
 - [x] T026 [US1] Run and record the complete mixed mono/stereo, all-mono, disabled, sync/async, and numerical render matrix in `specs/112-mono-clip-panning/quickstart.md`, including the captured CSD snippets and tolerance used for floating-point comparison.
 
@@ -96,33 +96,33 @@ disabled panning and mixer-disabled generation remain byte/order-compatible with
 
 ---
 
-## Phase 4: User Story 2 - Open Legacy Scores Without Unrequested Audio Change (Priority: P1)
+## Phase 4: User Story 2 - Open Legacy Projects Without Unrequested Audio Change (Priority: P1)
 
-**Goal**: New scores opt into panning, while Java/pre-feature scores with an absent or invalid
-setting open disabled, remain clean, preserve unknown data, and retain the old audio route until the
+**Goal**: New mixers opt into panning, while Java/pre-feature projects with an absent or invalid
+mixer setting open disabled, remain clean, preserve unknown data, and retain the old audio route until the
 user explicitly enables the feature.
 
-**Independent Test**: Load new, Java, missing-attribute, invalid-attribute, and missing-`score`
-fixtures; assert the setting, dirty state, XML round-trip, generated legacy CSD, explicit toggle,
+**Independent Test**: Load new, Java, missing-attribute, invalid-attribute, missing-`mixer`, and
+legacy score-attribute fixtures; assert the setting, dirty state, XML round-trip, generated legacy CSD, explicit toggle,
 history label, and runtime restart behavior.
 
 ### Verification for User Story 2
 
-- [x] T027 [P] [US2] Add Score model load/save/deep-copy tests for `panningEnabled: boolean`, new-score `true`, absent/invalid/missing-score `false`, explicit `true`, clean load state, and explicit attribute persistence in `packages/blue-data/src/score/score-panning.test.ts` and `packages/blue-data/src/score/score-model-compatibility.test.ts`.
-- [x] T028 [P] [US2] Add XML-policy and Java-compatibility tests for a missing `<score>`, malformed/unknown panning attributes, preserved unknown project XML, Java score fixtures, and no accidental ProjectProperties fallback in `packages/blue-data/src/blue-data/xml-policy.test.ts`, `packages/blue-data/src/blue-data-frozen-roundtrip.test.ts`, and `packages/blue-data/src/blue-data/blue-data-csd-parity.test.ts`.
-- [x] T029 [P] [US2] Add typed snapshot/patch/guard/classification tests for score panning state, a boolean patch, semantic action text, and structural runtime classification in `packages/blue-app/src/shared/project-editor/score-panning-contract.test.ts`, `packages/blue-app/src/shared/project-editor/contract.ts`, and `packages/blue-app/src/main/project-history-patch-classification.test.ts`.
+- [x] T027 [P] [US2] Add Mixer model load/save/deep-copy tests for `panningEnabled: boolean`, new-mixer `true`, absent/invalid/missing-mixer `false`, explicit `true`, clean load state, and explicit attribute persistence in `packages/blue-data/src/score/score-panning.test.ts` and the mixer model tests.
+- [x] T028 [P] [US2] Add XML-policy and Java-compatibility tests for a missing `<mixer>`, legacy `<score>` migration, malformed/unknown panning attributes, preserved unknown project XML, Java fixtures, and no accidental ProjectProperties fallback in `packages/blue-data/src/blue-data/xml-policy.test.ts`, `packages/blue-data/src/blue-data-frozen-roundtrip.test.ts`, and `packages/blue-data/src/blue-data/blue-data-csd-parity.test.ts`.
+- [x] T029 [P] [US2] Add typed Mixer snapshot/patch/guard/classification tests for panning state, a boolean patch, semantic action text, and structural runtime classification in `packages/blue-app/src/shared/project-editor/score-panning-contract.test.ts`, `packages/blue-app/src/shared/project-editor/contract.ts`, and `packages/blue-app/src/main/project-history-patch-classification.test.ts`.
 
 ### Implementation for User Story 2
 
-- [x] T030 [US2] Add Score-owned `panningEnabled` with the exact rules “new true; absent/invalid or missing score false,” serialize it as `<score panningEnabled="true|false">`, and preserve the state through deep copy in `packages/blue-data/src/score/score.ts`.
-- [x] T031 [US2] Make the XML loader force `panningEnabled=false` for an absent `<score>` or invalid/missing attribute without marking a legacy document dirty in `packages/blue-data/src/blue-data/xml-policy.ts` and `packages/blue-data/src/score/score.ts`.
-- [x] T032 [US2] Extend the serializable score snapshot, empty snapshot, typed patch union, runtime guard, canonical patch application, preparation classification, and renderer store projection in `packages/blue-app/src/shared/project-editor/contract.ts`, `packages/blue-app/src/shared/project-editor/snapshot-score.ts`, `packages/blue-app/src/shared/project-editor/patch-score.ts`, `packages/blue-app/src/shared/project-editor/patch-document.ts`, and `packages/blue-app/src/renderer/stores/project-store.ts`.
-- [x] T033 [US2] Add the canonical score-setting writer with semantic `Set Score Panning` history labeling, one durable patch per toggle, and correct expected-revision handling in `packages/blue-app/src/renderer/stores/project-store.ts`, `packages/blue-app/src/main/project-history.ts`, and `packages/blue-app/src/main/project-history-roundtrip.test.ts`.
-- [x] T034 [US2] Add an accessible `Enable Panning` checkbox to Score Settings and wire it to the typed history patch in `packages/blue-app/src/renderer/components/workbench/panels/score/ScoreSettingsDialog.tsx`, `packages/blue-app/src/renderer/components/workbench/panels/ScorePanel.tsx`, and `packages/blue-app/src/renderer/stores/project-store.ts`; show the saved state without mutating it during preview or dialog cancellation.
-- [x] T035 [US2] Make the score setting select the legacy or enabled CSD route in `packages/blue-data/src/blue-data/csd-policy.ts`, `packages/blue-data/src/blue-data.ts`, and `packages/blue-data/src/blue-data/blue-data-csd-parity.test.ts`; prove an untouched legacy document’s generated route is unchanged and a new score defaults to enabled.
-- [x] T036 [US2] Classify a score panning toggle as structural/restart-required and reconcile the latest canonical value before relaunch in `packages/blue-app/src/main/project-runtime-reconciliation.ts`, `packages/blue-app/src/main/main.ts`, and `packages/blue-app/src/main/project-runtime-reconciliation.test.ts`.
+- [x] T030 [US2] Add Mixer-owned `panningEnabled` with the exact rules “new true; absent/invalid or missing mixer false,” serialize it as `<mixer panningEnabled="true|false">`, migrate a legacy score attribute, and preserve the state through deep copy in `packages/blue-data/src/mixer/mixer.ts`.
+- [x] T031 [US2] Make the XML loader force `panningEnabled=false` for an absent `<mixer>` or invalid/missing mixer attribute, while accepting a legacy score value when present, without marking a legacy document dirty in `packages/blue-data/src/blue-data/xml-policy.ts` and `packages/blue-data/src/mixer/mixer.ts`.
+- [x] T032 [US2] Extend the serializable Mixer snapshot, empty snapshot, typed Mixer patch union, runtime guard, canonical patch application, preparation classification, and renderer store projection in `packages/blue-app/src/shared/project-editor/contract.ts`, `packages/blue-app/src/shared/project-editor/snapshot-mixer-orchestra.ts`, `packages/blue-app/src/shared/project-editor/patch-mixer-bluelive.ts`, `packages/blue-app/src/shared/project-editor/patch-document.ts`, and `packages/blue-app/src/renderer/stores/project-store.ts`.
+- [x] T033 [US2] Add the canonical mixer-setting writer with semantic Enable/Disable Panning history labeling, one durable patch per toggle, and correct expected-revision handling in `packages/blue-app/src/renderer/stores/project-store.ts`, `packages/blue-app/src/main/project-history.ts`, and `packages/blue-app/src/main/project-history-roundtrip.test.ts`.
+- [x] T034 [US2] Add an accessible `Enable Panning` checkbox to Mixer Settings and wire it to the typed history patch in `packages/blue-app/src/renderer/components/workbench/panels/mixer/MixerSettingsDialog.tsx`, `packages/blue-app/src/renderer/components/workbench/panels/MixerPanel.tsx`, and `packages/blue-app/src/renderer/stores/project-store.ts`; show the saved state without mutating it during preview or dialog cancellation.
+- [x] T035 [US2] Make the mixer setting select the legacy or enabled CSD route in `packages/blue-data/src/blue-data/csd-policy.ts`, `packages/blue-data/src/blue-data.ts`, and `packages/blue-data/src/blue-data/blue-data-csd-parity.test.ts`; prove an untouched legacy document’s generated route is unchanged and a new mixer defaults to enabled.
+- [x] T036 [US2] Classify a mixer panning toggle as structural/restart-required and reconcile the latest canonical value before relaunch in `packages/blue-app/src/main/project-runtime-reconciliation.ts`, `packages/blue-app/src/main/main.ts`, and `packages/blue-app/src/main/project-runtime-reconciliation.test.ts`.
 - [x] T037 [US2] Add end-to-end legacy open/save/reopen and explicit-enable coverage across disk, realtime, and BlueLive paths in `packages/blue-app/src/main/csd-generation.test.ts`, `packages/blue-app/src/main/render-to-disk.test.ts`, `packages/blue-app/src/main/blue-live-engine.test.ts`, and `packages/blue-data/src/blue-data-frozen-roundtrip.test.ts`; assert no unrequested audio, XML, unknown-data, dirty-state, or history change on load.
-- [x] T038 [US2] Run and record new-score, Java/pre-feature, absent/invalid, missing-score, explicit-enable, save/reopen, history, and runtime-toggle scenarios in `specs/112-mono-clip-panning/quickstart.md`.
+- [x] T038 [US2] Run and record new-mixer, Java/pre-feature, absent/invalid, missing-mixer, legacy score migration, explicit-enable, save/reopen, history, and runtime-toggle scenarios in `specs/112-mono-clip-panning/quickstart.md`.
 
 **Checkpoint**: Legacy projects load disabled and clean, new projects visibly default enabled, and an
 explicit toggle is the only action that changes the persisted audio behavior.
@@ -151,7 +151,7 @@ automation, UI label/inactive state, and commit→undo→redo while playback is 
 - [x] T044 [US3] Add a distinct Channel Pan Parameter named/identified separately from Volume, with fixed-value synchronization only when automation is off, legacy volume-only loading, `<parameter>` persistence, and history-mode identity preservation in `packages/blue-data/src/mixer/channel.ts` and `packages/blue-data/src/automation/parameter.ts`.
 - [x] T045 [US3] Enforce the data-model constraint “pan is finite in `[0,1]`, default `0.5`; reject nonfinite/out-of-range user and automation values; invalid XML falls back to center” across Channel setters, mixer patches, and automation application in `packages/blue-data/src/mixer/channel.ts`, `packages/blue-data/src/mixer/channel-pan.ts`, `packages/blue-app/src/shared/project-editor/patch-mixer-bluelive.ts`, and `packages/blue-app/src/shared/project-editor/patch-score.ts`.
 - [x] T046 [US3] Include the Pan Parameter in every authoritative automation enumeration and runtime compilation order without disturbing existing Volume/send/effect ordering in `packages/blue-data/src/automation/parameter-helper.ts`, `packages/blue-data/src/automation/project-parameter-catalog.ts`, and `packages/blue-data/src/blue-data/csd-policy.ts`.
-- [x] T047 [US3] Add disposable effective position mode and layout confidence to mixer snapshots, compute `Pan` only for verified all-mono tracks and `Balance` for stereo/mixed/unknown/sub/master layouts, and keep the mode inactive when score panning is off in `packages/blue-app/src/shared/project-editor/contract.ts`, `packages/blue-app/src/shared/project-editor/snapshot-mixer-orchestra.ts`, `packages/blue-app/src/shared/project-editor/snapshot-score.ts`, and `packages/blue-app/src/main/main.ts`.
+- [x] T047 [US3] Add disposable effective position mode and layout confidence to mixer snapshots, compute `Pan` only for verified all-mono tracks and `Balance` for stereo/mixed/unknown/sub/master layouts, and keep the mode inactive when mixer panning is off in `packages/blue-app/src/shared/project-editor/contract.ts`, `packages/blue-app/src/shared/project-editor/snapshot-mixer-orchestra.ts`, and `packages/blue-app/src/main/main.ts`.
 - [x] T048 [US3] Generate the position stage after post-effects and send taps but before output gate, meter, and parent routing in `packages/blue-data/src/blue-data/csd-policy.ts`; use equal-power Mono Pan for eligible all-mono source signals, no-crossfeed Balance otherwise, no-op for `nchnls=1`, and a conservative Balance policy for sub/master until proven otherwise.
 - [x] T049 [US3] Register the distinct Pan Parameter in compiled runtime bindings and make live updates depend on a stable resolved binding/graph in `packages/blue-app/src/main/runtime-parameter-sync.ts`, `packages/blue-app/src/main/project-runtime-reconciliation.ts`, and `packages/blue-app/src/main/runtime-parameter-sync.test.ts`.
 - [x] T050 [US3] Add the renderer position control and integrate it into every ChannelStrip/MixerPanel source, subchannel, and master path in `packages/blue-app/src/renderer/components/workbench/panels/mixer/MixerPanSlider.tsx`, `packages/blue-app/src/renderer/components/workbench/panels/mixer/ChannelStrip.tsx`, and `packages/blue-app/src/renderer/components/workbench/panels/MixerPanel.tsx`; use accessible `Pan`/`Balance` labels and submit `Set Channel Pan` patches through the existing history boundary.
@@ -199,7 +199,7 @@ serializable, and a failed inspection does not alter the project or its legacy c
 
 - [x] T063 [P] Compare representative enabled/disabled CSD against the Java sources and artifacts in `/Users/stevenyi/work/nbprojects/blue/blue-core`, `/Users/stevenyi/work/nbprojects/blue/blue-ui-core`, `/Users/stevenyi/work/blue/demo2026/01.csd`, and `packages/blue-data/src/blue-data/blue-data-csd-parity.test.ts`; document any intentional TypeScript-only panning behavior in `specs/112-mono-clip-panning/research.md`.
 - [x] T064 [P] Audit all host-path and filesystem fixtures for native path preservation, `path.join()`/`os.tmpdir()` construction, synthetic Windows paths, and injected `EACCES`/`EPERM` behavior in `packages/blue-app/src/main/audio-layout-preflight.ts`, `packages/blue-app/src/main/audio-layout-preflight.test.ts`, and `specs/112-mono-clip-panning/quickstart.md`.
-- [x] T065 [P] Run the UI accessibility audit for Score Settings and mixer position controls—labels, focus order, keyboard range editing, disabled explanation, Pan/Balance announcements, and diagnostic visibility—in `packages/blue-app/src/renderer/browser/mono-clip-panning.browser.test.tsx`, `packages/blue-app/src/renderer/components/workbench/panels/score/ScoreSettingsDialog.tsx`, and `packages/blue-app/src/renderer/components/workbench/panels/mixer/MixerPanSlider.tsx`.
+- [x] T065 [P] Run the UI accessibility audit for Mixer Settings and mixer position controls—labels, focus order, keyboard range editing, disabled explanation, Pan/Balance announcements, and diagnostic visibility—in `packages/blue-app/src/renderer/browser/mono-clip-panning.browser.test.tsx`, `packages/blue-app/src/renderer/components/workbench/panels/mixer/MixerSettingsDialog.tsx`, and `packages/blue-app/src/renderer/components/workbench/panels/mixer/MixerPanSlider.tsx`.
 - [x] T066 [P] Verify preflight reads each unique source once, CSD generation remains deterministic, and position DSP adds no avoidable per-sample work in `packages/blue-app/src/main/audio-layout-preflight.test.ts`, `packages/blue-data/src/blue-data-csd-determinism.test.ts`, and `packages/blue-data/src/blue-data/mixer-gate-csd.test.ts`.
 - [x] T067 Update `specs/112-mono-clip-panning/quickstart.md` with the final commands, engine/runtime prerequisites, fixture locations, expected tolerances, known limitations, and any platform-specific validation notes after focused suites pass.
 - [x] T068 Run affected-package validation from `specs/112-mono-clip-panning/quickstart.md`: `pnpm --filter @blue/data test`, `pnpm --filter @blue/data build`, `pnpm --filter @blue/app test`, `pnpm --filter @blue/app build:main`, relevant browser tests, and focused real-engine integration tests.
@@ -215,7 +215,7 @@ serializable, and a failed inspection does not alter the project or its legacy c
 - **Foundational (Phase 2)**: Depends on Phase 1 and blocks every story because it defines the portable layout manifest, pan equations, main preflight, diagnostic boundary, and detached compile context.
 - **User Story 1 (Phase 3)**: Depends on Phase 2 and is the MVP; its route/CSD integration establishes the enabled audio path used by later position behavior.
 - **User Story 2 (Phase 4)**: Depends on Phase 2 and can begin in parallel with US1 for model/UI work; its setting selects the enabled/legacy route produced by US1.
-- **User Story 3 (Phase 5)**: Depends on the layout-aware route from US1 and the score setting/snapshot contract from US2 for the complete UI/runtime behavior; Channel parameter work can begin after Phase 2.
+- **User Story 3 (Phase 5)**: Depends on the layout-aware route from US1 and the mixer setting/snapshot contract from US2 for the complete UI/runtime behavior; Channel parameter work can begin after Phase 2.
 - **User Story 4 (Phase 6)**: Depends on the preflight/generation entrypoints from Phase 2 and US1, and validates the failure behavior used by the enabled setting in US2.
 - **Polish (Phase 7)**: Depends on every desired story and its focused validation.
 
@@ -223,14 +223,14 @@ serializable, and a failed inspection does not alter the project or its legacy c
 
 - **US1 (P1)**: Can start after Phase 2; no dependency on another story for the core mono/stereo route.
 - **US2 (P1)**: Can start after Phase 2; it integrates with US1 only when selecting the enabled route.
-- **US3 (P1)**: Core Channel/Parameter work can start after Phase 2; final CSD/UI/runtime integration depends on US1’s effective-layout route and US2’s score setting.
+- **US3 (P1)**: Core Channel/Parameter work can start after Phase 2; final CSD/UI/runtime integration depends on US1’s effective-layout route and US2’s mixer setting.
 - **US4 (P2)**: Depends on US1’s enabled generation path and the shared main preflight; disabled compatibility tests remain independently runnable.
 
 ### Within Each User Story
 
 - Verification tasks precede the implementation they protect, especially for CSD and compatibility regressions.
 - Portable model/validation work precedes CSD generation; CSD binding work precedes main publication; main publication precedes renderer status/UI behavior.
-- All durable score/channel edits use the canonical `ProjectHistory` patch path with semantic labels and commit→undo→redo assertions for canonical state, stable identities, dirty state, and runtime reconciliation.
+- All durable mixer/channel edits use the canonical `ProjectHistory` patch path with semantic labels and commit→undo→redo assertions for canonical state, stable identities, dirty state, and runtime reconciliation.
 - Transient layout observations and previews never enter XML/history; cancellation restores canonical document/runtime state.
 
 ### Parallel Opportunities
@@ -258,10 +258,10 @@ Integrator: T026 (quickstart matrix after A-D)
 
 ```text
 # After Phase 2, alongside US1 if desired:
-Workstream A: T027 -> T030 -> T031 (Score/XML compatibility)
+Workstream A: T027 -> T030 -> T031 (Mixer/XML compatibility)
 Workstream B: T028 -> T032 (snapshot, patch, and guards)
 Workstream C: T029 -> T033 -> T036 (history and runtime classification)
-Workstream D: T034 -> T037 (Score Settings and compatibility UI)
+Workstream D: T034 -> T037 (Mixer Settings and compatibility UI)
 Integrator: T035 -> T038 (route selection and quickstart)
 ```
 
@@ -279,7 +279,7 @@ Integrator: T042 -> T052 -> T053 (history/runtime matrix)
 ## Implementation Strategy
 
 1. **MVP first**: Complete Phase 2 and US1 to support explicit enabled mono/stereo mixing with exact legacy fallback and deterministic numeric verification.
-2. **Compatibility next**: Complete US2 so new/legacy defaults, XML round-trips, Score Settings, history, and structural runtime reconciliation are safe before broad UI rollout.
+2. **Compatibility next**: Complete US2 so new/legacy defaults, XML round-trips, Mixer Settings, history, and structural runtime reconciliation are safe before broad UI rollout.
 3. **Position controls**: Complete US3’s distinct Pan Parameter, effective-layout UI, DSP stage, automation, and live binding while preserving sends and meters.
 4. **Failure clarity**: Complete US4 so actual file/output layouts are validated before launch and all unsupported cases are recoverable without project mutation.
 5. **Handoff gate**: Run the quickstart, focused package tests/builds, repository tests/lint, `git diff --check`, and native Windows/path-sensitive validation before delivery.
@@ -288,12 +288,12 @@ Integrator: T042 -> T052 -> T053 (history/runtime matrix)
 
 ## Phase 8: Convergence
 
-- [x] T070 Thread `preflightAudioLayout` and its resolved manifest through timeline realtime playback by invoking preflight and passing `preflight.manifest` to `toRealtimePlaybackCSD`/`toRealtimePlaybackCSDAsync` in `startPlayback` (`packages/blue-app/src/main/main.ts`), covering the togglePlay, restartPlayback, audition, and loop callers, so panning-enabled scores with audio clips launch with the typed layout diagnostic instead of failing generation with `MISSING_AUDIO_LAYOUT` (`packages/blue-data/src/score/track/track-audio-playback.ts` throws when the manifest is absent) per T022, T058, FR-013, FR-014, US1/AC1 (missing, CRITICAL: blocks timeline playback for the new-score panning-enabled default).
+- [x] T070 Thread `preflightAudioLayout` and its resolved manifest through timeline realtime playback by invoking preflight and passing `preflight.manifest` to `toRealtimePlaybackCSD`/`toRealtimePlaybackCSDAsync` in `startPlayback` (`packages/blue-app/src/main/main.ts`), covering the togglePlay, restartPlayback, audition, and loop callers, so panning-enabled projects with audio clips launch with the typed layout diagnostic instead of failing generation with `MISSING_AUDIO_LAYOUT` (`packages/blue-data/src/score/track/track-audio-playback.ts` throws when the manifest is absent) per T022, T058, FR-013, FR-014, US1/AC1 (missing, CRITICAL: blocks timeline playback for the new-mixer panning-enabled default).
 - [x] T071 Add numerical engine integration coverage that renders panning-enabled CSD through Csound and asserts center `1/sqrt(2)` gains per side, unity endpoints, stereo channel independence, overlapping mixed clips, and a single valid mono output in `packages/blue-app/src/main/mono-clip-panning.integration.test.ts` (currently fixture/constants only) per T016, T025, FR-016, SC-001, SC-005 (partial).
 - [x] T072 Add CSD-level assertions for the BlueMixer pan/balance stage — equal-power Mono Pan versus no-crossfeed Balance emission, placement after post-effects and send taps but before output gate, output meter, and parent routing, conservative sub/master balance, and no send panned twice — in `packages/blue-data/src/blue-data/mono-clip-panning.test.ts` (file absent) and `packages/blue-data/src/blue-data/mixer-gate-csd.test.ts` (no panning references) per T014, T041, T055, FR-012, FR-016, SC-005 (partial).
 - [x] T073 Add pan Parameter enumeration tests proving Pan appears exactly once per source/subchannel/master channel, retains a stable unique identity through history copies, and receives deterministic compilation names in `packages/blue-data/src/automation/parameter-helper.test.ts` (file absent) and `packages/blue-data/src/automation/project-parameter-catalog.test.ts` (no pan coverage) per T040, T046, FR-016 (partial).
-- [x] T074 Add XML-policy panning compatibility tests for missing/invalid `panningEnabled` attributes, a missing `<score>` element, unknown project XML preservation, and a legacy load leaving the document clean in `packages/blue-data/src/blue-data/xml-policy.test.ts` (file absent) and `packages/blue-data/src/blue-data-frozen-roundtrip.test.ts` per T028, FR-015 (partial).
-- [x] T075 Add browser-level coverage for Pan versus Balance labeling, center indication, keyboard range editing, inactive-when-panning-disabled state, and the Score Settings `Enable Panning` checkbox in `packages/blue-app/src/renderer/browser/mono-clip-panning.browser.test.tsx` (file absent) per T043, T065, FR-009, SC-009 (partial).
+- [x] T074 Add XML-policy panning compatibility tests for missing/invalid `panningEnabled` attributes, a missing `<mixer>` element, legacy `<score>` migration, unknown project XML preservation, and a legacy load leaving the document clean in `packages/blue-data/src/blue-data/xml-policy.test.ts` and `packages/blue-data/src/blue-data-frozen-roundtrip.test.ts` per T028, FR-015 (partial).
+- [x] T075 Add browser-level coverage for Pan versus Balance labeling, center indication, keyboard range editing, inactive-when-panning-disabled state, and the Mixer Settings `Enable Panning` checkbox in `packages/blue-app/src/renderer/browser/mono-clip-panning.browser.test.tsx` per T043, T065, FR-009, SC-009 (partial).
 - [x] T076 Run and record the promised verification matrices in `specs/112-mono-clip-panning/quickstart.md` (currently instructions only): mixed mono/stereo, all-mono, disabled, sync/async, and numerical render results with captured CSD snippets and tolerances (T026); legacy open/save/reopen and explicit-enable scenarios (T038); pan/balance/automation/undo-redo/live scenarios (T053); unsupported-layout matrix (T062); final commands, prerequisites, and limitations (T067) per SC-008 (partial).
 - [x] T077 Add focused assertions for the `${channelId}::pan` runtime binding in `packages/blue-app/src/main/runtime-parameter-sync.test.ts` and for the `layoutDiagnostic` render-status field guard in `packages/blue-app/src/shared/render-freeze-contract.test.ts` per T049, T056, FR-016 (partial).
 

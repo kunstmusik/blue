@@ -43,6 +43,7 @@ import {
   PatternsLayerGroup,
   TimeBase,
   isValidSnapValueName,
+  isValidPanLawDb,
   SoundObject,
   SoundObjectLibrary,
   collectInstanceSoundObjects,
@@ -1263,6 +1264,26 @@ export function applyMixerPatchToData(data: BlueData, patch: MixerPatch): boolea
       }
       return false;
     }
+    case 'updateMixerPanning':
+      if (mixer.isPanningEnabled() !== patch.panningEnabled) {
+        mixer.setPanningEnabled(patch.panningEnabled);
+        return true;
+      }
+      return false;
+    case 'updateMixerPanLaw':
+      if (!isValidPanLawDb(patch.panLawDb)) return false;
+      if (mixer.getPanLawDb() !== patch.panLawDb) {
+        mixer.setPanLawDb(patch.panLawDb);
+        return true;
+      }
+      return false;
+    case 'updateMixerPanBoost':
+      if (typeof patch.panOffCenterBoost !== 'boolean') return false;
+      if (mixer.isPanOffCenterBoost() !== patch.panOffCenterBoost) {
+        mixer.setPanOffCenterBoost(patch.panOffCenterBoost);
+        return true;
+      }
+      return false;
     case 'updateExtraRenderTime':
       if (mixer.getExtraRenderTime() !== patch.value) {
         mixer.setExtraRenderTime(patch.value);
@@ -1520,6 +1541,12 @@ export function mixerPatchActionLabel(patch: MixerPatch): string {
       return patch.value ? 'Enable Meters' : 'Disable Meters';
     case 'setMeterProfile':
       return 'Set Meter Profile';
+    case 'updateMixerPanning':
+      return patch.panningEnabled ? 'Enable Panning' : 'Disable Panning';
+    case 'updateMixerPanLaw':
+      return 'Set Pan Law';
+    case 'updateMixerPanBoost':
+      return patch.panOffCenterBoost ? 'Enable Off-center Boost' : 'Disable Off-center Boost';
     case 'updateExtraRenderTime':
       return 'Set Extra Render Time';
     case 'renameChannelListGroup':

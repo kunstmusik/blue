@@ -5,6 +5,7 @@ import type {
   CompiledBlueX7Binding,
   CompiledMidiInstrumentTarget,
   CompiledMixerGateBindings,
+  CompiledPannerBindings,
 } from '@blue/data';
 import { LiveData, mapMidiTrigger } from '@blue/data';
 import type { EngineStateSnapshot } from '@blue/engine-client';
@@ -87,6 +88,7 @@ export class BlueLiveEngineSession {
   private parameters: readonly Parameter[] = [];
   private blueX7Bindings: readonly CompiledBlueX7Binding[] = [];
   private mixerGateBindings: CompiledMixerGateBindings | null = null;
+  private pannerBindings: CompiledPannerBindings | null = null;
   private statePollingTimer: ReturnType<typeof setInterval> | null = null;
   private engineStateUnsubscribe: (() => void) | null = null;
   private awaitingTerminalState = false;
@@ -504,6 +506,7 @@ export class BlueLiveEngineSession {
       this.parameters = csd.parameters ?? [];
       this.blueX7Bindings = csd.blueX7Bindings;
       this.mixerGateBindings = csd.mixerGateBindings ?? null;
+      this.pannerBindings = csd.pannerBindings ?? null;
       this.beginTerminalStateMonitoring();
       this.setStatus('running', 'Blue Live running');
       return this.getSnapshot();
@@ -780,6 +783,11 @@ export class BlueLiveEngineSession {
     return this.mixerGateBindings;
   }
 
+  /** Generation-scoped panner bindings compiled into this session's CSD. */
+  getPannerBindings(): CompiledPannerBindings | null {
+    return this.pannerBindings;
+  }
+
   /** Captures the exact engine client owned by the current Blue Live generation. */
   getMixerGateEngineIO(): MixerGateEngineIO | null {
     const client = this.bridge?.getClient();
@@ -802,6 +810,7 @@ export class BlueLiveEngineSession {
       this.parameters = [];
       this.blueX7Bindings = [];
       this.mixerGateBindings = null;
+      this.pannerBindings = null;
       this.projectData = null;
       if (this.bridge) {
         const bridge = this.bridge;

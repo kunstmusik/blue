@@ -1,4 +1,5 @@
 import type {
+  MixerPannerParameterId,
   MixerRealtimeLevelResult,
   MixerRealtimeLevelUpdate,
   MixerRealtimePanResult,
@@ -13,6 +14,9 @@ export interface MixerGainPreviewChannel {
   getName(): string;
   getLevel(): number;
   getPan?(): number;
+  getPanWidth?(): number;
+  getDualPanLeft?(): number;
+  getDualPanRight?(): number;
 }
 
 export interface MixerGainPreviewDeps {
@@ -38,7 +42,7 @@ interface ActiveGesture {
   gestureId: string;
   gestureSequence: number;
   baseRevision: number;
-  parameterId: 'level' | 'pan';
+  parameterId: 'level' | MixerPannerParameterId;
   terminal: boolean;
   activeGenerations?: readonly number[];
 }
@@ -46,7 +50,7 @@ interface ActiveGesture {
 export class MixerGainPreviewAdapter {
   private readonly deps: MixerGainPreviewDeps;
   private readonly senderHighWaterSequences = new Map<number, number>();
-  private readonly activeGesturesByChannel = new Map<string, ActiveGesture>();
+  private readonly activeGestures = new Map<string, ActiveGesture>();
   private readonly closedGestureIds = new Set<string>();
 
   constructor(deps: MixerGainPreviewDeps) {
@@ -74,12 +78,31 @@ export class MixerGainPreviewAdapter {
   }
 
   async handlePanUpdate(senderId: number, update: unknown): Promise<MixerRealtimePanResult> {
+    const paramId: MixerPannerParameterId =
+      typeof update === 'object' &&
+      update !== null &&
+      'parameterId' in update &&
+      typeof (update as { parameterId?: unknown }).parameterId === 'string'
+        ? (update as { parameterId: MixerPannerParameterId }).parameterId
+        : 'pan';
     return this.handleParameterUpdate(
       senderId,
       update,
       isMixerRealtimePanUpdate,
-      'pan',
-      (channel) => channel.getPan?.() ?? 0.5,
+      paramId,
+      (channel) => {
+        switch (paramId) {
+          case 'panWidth':
+            return channel.getPanWidth?.() ?? 1.0;
+          case 'dualPanLeft':
+            return channel.getDualPanLeft?.() ?? 0.0;
+          case 'dualPanRight':
+            return channel.getDualPanRight?.() ?? 1.0;
+          case 'pan':
+          default:
+            return channel.getPan?.() ?? 0.5;
+        }
+      },
     );
   }
 
@@ -87,7 +110,7 @@ export class MixerGainPreviewAdapter {
     senderId: number,
     update: unknown,
     isValidUpdate: (value: unknown) => value is MixerRealtimeLevelUpdate | MixerRealtimePanUpdate,
-    parameterId: 'level' | 'pan',
+    parameterId: 'level' | MixerPannerParameterId,
     readCurrentValue: (channel: MixerGainPreviewChannel) => number,
   ): Promise<MixerRealtimeLevelResult | MixerRealtimePanResult> {
     if (!isValidUpdate(update)) {
@@ -127,21 +150,15 @@ export class MixerGainPreviewAdapter {
     }
 
     const highWater = this.senderHighWaterSequences.get(senderId) ?? -1;
-    let active = this.activeGesturesByChannel.get(update.channelId);
+    const gestureKey = `${update.channelId}::${parameterId}`;
+    let active = this.activeGestures.get(gestureKey);
 
     if (active) {
-      // Channel currently has an active gesture
+      // Channel currently has an active gesture for this parameter
       if (active.senderId !== senderId || active.gestureId !== update.gestureId) {
         return {
           status: 'rejected',
           reason: 'Channel is controlled by another gesture',
-          revision: this.deps.getCurrentRevision(),
-        };
-      }
-      if (active.parameterId !== parameterId) {
-        return {
-          status: 'rejected',
-          reason: 'Channel is controlled by another parameter gesture',
           revision: this.deps.getCurrentRevision(),
         };
       }
@@ -153,7 +170,7 @@ export class MixerGainPreviewAdapter {
         };
       }
     } else {
-      // No active gesture on this channel
+      // No active gesture on this channel parameter
       if (update.phase === 'preview') {
         if (update.gestureSequence <= highWater) {
           return {
@@ -174,7 +191,7 @@ export class MixerGainPreviewAdapter {
           terminal: false,
           activeGenerations: this.deps.getActivePerformanceGenerations?.(),
         };
-        this.activeGesturesByChannel.set(update.channelId, active);
+        this.activeGestures.set(gestureKey, active);
       } else {
         // finish or cancel without active gesture
         if (update.gestureSequence <= highWater) {
@@ -256,7 +273,7 @@ export class MixerGainPreviewAdapter {
 
     if (update.phase === 'finish') {
       active.terminal = true;
-      this.activeGesturesByChannel.delete(update.channelId);
+      this.activeGestures.delete(gestureKey);
       this.markGestureClosed(update.gestureId);
       await this.deps.drainPreviews(update.gestureId);
       if (this.deps.getCurrentDocumentId() !== update.documentId) {
@@ -274,7 +291,7 @@ export class MixerGainPreviewAdapter {
 
     // Phase: cancel
     active.terminal = true;
-    this.activeGesturesByChannel.delete(update.channelId);
+    this.activeGestures.delete(gestureKey);
     this.markGestureClosed(update.gestureId);
     await this.deps.drainPreviews(update.gestureId);
     if (this.deps.getCurrentDocumentId() === update.documentId) {
@@ -295,16 +312,16 @@ export class MixerGainPreviewAdapter {
   }
 
   onSenderDestroyed(senderId: number): void {
-    for (const [channelId, active] of this.activeGesturesByChannel.entries()) {
+    for (const [key, active] of this.activeGestures.entries()) {
       if (active.senderId === senderId) {
-        this.activeGesturesByChannel.delete(channelId);
+        this.activeGestures.delete(key);
       }
     }
     this.senderHighWaterSequences.delete(senderId);
   }
 
   onDocumentReplaced(): void {
-    this.activeGesturesByChannel.clear();
+    this.activeGestures.clear();
     this.closedGestureIds.clear();
   }
 }

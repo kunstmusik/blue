@@ -8,10 +8,8 @@ import { BlueData, Channel, Effect, GenericInstrument } from '@blue/data';
 import MixerPanel from '../components/workbench/panels/MixerPanel';
 import {
   createEmptyMixerSnapshot,
-  createEmptyScoreDocumentSnapshot,
   createProjectEditorSnapshot,
   type ProjectDocumentPatch,
-  type ScoreDocumentSnapshot,
   type MixerSnapshot,
 } from '../../shared/project-editor';
 import { meterStore } from '../stores/meter-store';
@@ -32,8 +30,7 @@ declare global {
 interface MockProjectState {
   loaded: boolean;
   mixer: MixerSnapshot;
-  score: ScoreDocumentSnapshot;
-  setScorePanning: (enabled: boolean) => void;
+  setMixerPanning: (enabled: boolean) => void;
   applyProjectDocumentPatch: (patch: ProjectDocumentPatch) => Promise<void> | void;
 }
 
@@ -45,8 +42,7 @@ const { mockProjectState, mockUIState } = vi.hoisted(() => ({
   mockProjectState: {
     loaded: false,
     mixer: {} as MixerSnapshot,
-    score: {} as ScoreDocumentSnapshot,
-    setScorePanning: vi.fn(),
+    setMixerPanning: vi.fn(),
     applyProjectDocumentPatch: vi.fn(),
   } satisfies MockProjectState,
   mockUIState: {
@@ -78,7 +74,6 @@ function seedLoadedProject(): void {
   const snapshot = createProjectEditorSnapshot(data, '/test.blue');
   mockProjectState.loaded = true;
   mockProjectState.mixer = snapshot.mixer!;
-  mockProjectState.score = snapshot.score;
 }
 
 function seedLoadedProjectWithEffects(): void {
@@ -98,7 +93,6 @@ function seedLoadedProjectWithEffects(): void {
   const snapshot = createProjectEditorSnapshot(data, '/test.blue');
   mockProjectState.loaded = true;
   mockProjectState.mixer = snapshot.mixer!;
-  mockProjectState.score = snapshot.score;
 }
 
 function seedLoadedProjectWithTrackGroup(): void {
@@ -143,7 +137,6 @@ function seedLoadedProjectWithTrackGroup(): void {
 
   mockProjectState.loaded = true;
   mockProjectState.mixer = snapshot;
-  mockProjectState.score = createEmptyScoreDocumentSnapshot();
 }
 
 function renderPanel(): { container: HTMLDivElement; root: Root } {
@@ -167,8 +160,7 @@ function setTextInputValue(input: HTMLInputElement, value: string): void {
 beforeEach(() => {
   mockProjectState.loaded = false;
   mockProjectState.mixer = createEmptyMixerSnapshot();
-  mockProjectState.score = createEmptyScoreDocumentSnapshot();
-  mockProjectState.setScorePanning.mockReset();
+  mockProjectState.setMixerPanning.mockReset();
   mockProjectState.applyProjectDocumentPatch.mockReset();
   mockUIState.openEffectsLibrary.mockReset();
   window.blueAPI = {
@@ -950,8 +942,8 @@ describe('MixerPanel', () => {
 
     it('shows the panning setting in Mixer Settings and hides strip controls when disabled', () => {
       seedLoadedProject();
-      mockProjectState.score = {
-        ...mockProjectState.score,
+      mockProjectState.mixer = {
+        ...mockProjectState.mixer,
         panningEnabled: false,
       };
 
@@ -972,11 +964,11 @@ describe('MixerPanel', () => {
       )!;
       expect(panningCheckbox.checked).toBe(false);
 
-      mockProjectState.setScorePanning.mockClear();
+      mockProjectState.setMixerPanning.mockClear();
       act(() => {
         panningCheckbox.click();
       });
-      expect(mockProjectState.setScorePanning).toHaveBeenCalledWith(true);
+      expect(mockProjectState.setMixerPanning).toHaveBeenCalledWith(true);
 
       act(() => {
         root.unmount();

@@ -180,7 +180,7 @@ describe('pan/balance stage interaction with gates (Spec 112 T072)', () => {
     manifest: ReturnType<typeof createAudioLayoutManifest>;
   } {
     const data = createProjectWithMixer();
-    data.getScore().panningEnabled = true;
+    data.getMixer().setPanningEnabled(true);
     const manifest = createAudioLayoutManifest([
       ['/audio/mono.wav', { filePath: '/audio/mono.wav', channels: 1, status: 'verified' }],
     ]);
@@ -208,8 +208,8 @@ describe('pan/balance stage interaction with gates (Spec 112 T072)', () => {
     expect(result.csdText).toMatch(
       new RegExp(
         'ga_bluesub_Reverb_0\\t\\+=\\t\\(ga_bluemix_0_0 \\* gk_blue_auto\\d+\\) \\* kMixGateState_0' +
-          '[\\s\\S]*k_pan_l = 1\\.4142135623730951 \\* cos\\(1\\.5707963267948966 \\* gk_blue_auto\\d+\\)' +
-          '[\\s\\S]*ga_bluemix_0_0 \\*= k_pan_l' +
+          '[\\s\\S]*k_pan_l = \\(' +
+          '[\\s\\S]*ga_bluemix_0_0 \\*= 1\\.4142135623730951 \\* k_pan_l' +
           '[\\s\\S]*ga_bluemix_0_0 = ga_bluemix_0_0 \\* kMixGateState_1',
       ),
     );
@@ -217,9 +217,9 @@ describe('pan/balance stage interaction with gates (Spec 112 T072)', () => {
     expect(result.csdText).toContain('ga_bluesub_Master_0\t+=\tga_bluemix_0_0');
   });
 
-  it('keeps gates and routing intact when score panning is off', () => {
+  it('keeps gates and routing intact when Mixer panning is off', () => {
     const data = createProjectWithMixer();
-    data.getScore().panningEnabled = false;
+    data.getMixer().setPanningEnabled(false);
     const result = data.toRealtimePlaybackCSD();
     expect(result.csdText).not.toContain('k_pan_l');
     expect(result.csdText).not.toContain('k_bal_');
@@ -243,7 +243,7 @@ describe('pan/balance stage interaction with gates (Spec 112 T072)', () => {
 
     // Verified mono source uses Mono Pan: Send tap -> k_pan_l/r -> output gate
     expect(csd).toMatch(
-      /ga_bluesub_Reverb_0\t\+=\t[\s\S]*k_pan_l = 1\.4142135623730951[\s\S]*ga_bluemix_0_0 = ga_bluemix_0_0 \* kMixGateState_1/,
+      /ga_bluesub_Reverb_0\t\+=\t[\s\S]*k_pan_l = \([\s\S]*ga_bluemix_0_0 \*= 1\.4142135623730951 \* k_pan_l[\s\S]*ga_bluemix_0_0 = ga_bluemix_0_0 \* kMixGateState_1/,
     );
 
     // Subchannel uses Dual Pan 2x2 matrix: a_pan_in_l -> output gate

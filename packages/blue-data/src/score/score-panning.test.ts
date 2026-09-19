@@ -1,59 +1,59 @@
 import { describe, expect, it } from 'vitest';
-import { Score } from './score';
+import { Mixer } from '../mixer/mixer';
 import { Element } from '../serialization/xml-reader';
 import { BlueData } from '../blue-data';
 
-describe('Score panningEnabled configuration and serialization (T027, T028)', () => {
-  it('defaults to true on newly created Score', () => {
-    const score = new Score();
-    expect(score.panningEnabled).toBe(true);
+describe('Mixer panningEnabled configuration and serialization (T027, T028)', () => {
+  it('defaults to true on newly created Mixer', () => {
+    const mixer = new Mixer();
+    expect(mixer.isPanningEnabled()).toBe(true);
   });
 
   it('preserves panningEnabled across deepCopy', () => {
-    const score = new Score();
-    score.panningEnabled = false;
-    const copy = score.deepCopy();
-    expect(copy.panningEnabled).toBe(false);
+    const mixer = new Mixer();
+    mixer.setPanningEnabled(false);
+    const copy = mixer.deepCopy() as Mixer;
+    expect(copy.isPanningEnabled()).toBe(false);
 
-    score.panningEnabled = true;
-    const copy2 = score.deepCopy();
-    expect(copy2.panningEnabled).toBe(true);
+    mixer.setPanningEnabled(true);
+    const copy2 = mixer.deepCopy() as Mixer;
+    expect(copy2.isPanningEnabled()).toBe(true);
   });
 
-  it('serializes panningEnabled as attribute on score element', () => {
-    const score = new Score();
-    score.panningEnabled = true;
-    const xml = score.saveAsXML();
+  it('serializes panningEnabled as attribute on mixer element', () => {
+    const mixer = new Mixer();
+    mixer.setPanningEnabled(true);
+    const xml = mixer.saveAsXML();
     expect(xml.getAttribute('panningEnabled')).toBe('true');
 
-    score.panningEnabled = false;
-    const xmlFalse = score.saveAsXML();
+    mixer.setPanningEnabled(false);
+    const xmlFalse = mixer.saveAsXML();
     expect(xmlFalse.getAttribute('panningEnabled')).toBe('false');
   });
 
   it('loads absent panningEnabled as false (legacy behavior)', () => {
-    const elem = new Element('score');
-    const loaded = Score.loadFromXML(elem);
-    expect(loaded.panningEnabled).toBe(false);
+    const elem = new Element('mixer');
+    const loaded = Mixer.loadFromXML(elem);
+    expect(loaded.isPanningEnabled()).toBe(false);
   });
 
   it('loads invalid panningEnabled values as false', () => {
     for (const invalid of ['1', 'yes', 'enabled', '', 'null', 'TRUE_EXTRA']) {
-      const elem = new Element('score');
+      const elem = new Element('mixer');
       elem.setAttribute('panningEnabled', invalid);
-      const loaded = Score.loadFromXML(elem);
-      expect(loaded.panningEnabled).toBe(false);
+      const loaded = Mixer.loadFromXML(elem);
+      expect(loaded.isPanningEnabled()).toBe(false);
     }
   });
 
   it('loads explicit true and false correctly', () => {
-    const elemTrue = new Element('score');
+    const elemTrue = new Element('mixer');
     elemTrue.setAttribute('panningEnabled', 'true');
-    expect(Score.loadFromXML(elemTrue).panningEnabled).toBe(true);
+    expect(Mixer.loadFromXML(elemTrue).isPanningEnabled()).toBe(true);
 
-    const elemFalse = new Element('score');
+    const elemFalse = new Element('mixer');
     elemFalse.setAttribute('panningEnabled', 'false');
-    expect(Score.loadFromXML(elemFalse).panningEnabled).toBe(false);
+    expect(Mixer.loadFromXML(elemFalse).isPanningEnabled()).toBe(false);
   });
 
   it('loads project XML without <score> as false', () => {
@@ -65,96 +65,107 @@ describe('Score panningEnabled configuration and serialization (T027, T028)', ()
       '</blueData>',
     ].join('\n');
     const data = BlueData.loadFromString(xml);
-    expect(data.getScore().panningEnabled).toBe(false);
+    expect(data.getMixer().isPanningEnabled()).toBe(false);
   });
 });
 
-describe('Score panLawDb and panOffCenterBoost configuration and serialization (T010, T013)', () => {
-  it('defaults to -3 dB and boost false on newly created Score', () => {
-    const score = new Score();
-    expect(score.panLawDb).toBe(-3);
-    expect(score.panOffCenterBoost).toBe(false);
+describe('Mixer panLawDb and panOffCenterBoost configuration and serialization (T010, T013)', () => {
+  it('defaults to -3 dB and boost false on newly created Mixer', () => {
+    const mixer = new Mixer();
+    expect(mixer.getPanLawDb()).toBe(-3);
+    expect(mixer.isPanOffCenterBoost()).toBe(false);
   });
 
   it('preserves panLawDb and panOffCenterBoost across deepCopy', () => {
-    const score = new Score();
-    score.panLawDb = -6;
-    score.panOffCenterBoost = true;
-    score.panningEnabled = false;
+    const mixer = new Mixer();
+    mixer.setPanLawDb(-6);
+    mixer.setPanOffCenterBoost(true);
+    mixer.setPanningEnabled(false);
 
-    const copy = score.deepCopy();
-    expect(copy.panLawDb).toBe(-6);
-    expect(copy.panOffCenterBoost).toBe(true);
-    expect(copy.panningEnabled).toBe(false);
+    const copy = mixer.deepCopy() as Mixer;
+    expect(copy.getPanLawDb()).toBe(-6);
+    expect(copy.isPanOffCenterBoost()).toBe(true);
+    expect(copy.isPanningEnabled()).toBe(false);
 
-    score.panLawDb = -4.5;
-    score.panOffCenterBoost = false;
-    const copy2 = score.deepCopy();
-    expect(copy2.panLawDb).toBe(-4.5);
-    expect(copy2.panOffCenterBoost).toBe(false);
+    mixer.setPanLawDb(-4.5);
+    mixer.setPanOffCenterBoost(false);
+    const copy2 = mixer.deepCopy() as Mixer;
+    expect(copy2.getPanLawDb()).toBe(-4.5);
+    expect(copy2.isPanOffCenterBoost()).toBe(false);
   });
 
-  it('serializes panLawDb and panOffCenterBoost as attributes on score element', () => {
-    const score = new Score();
-    score.panLawDb = -6;
-    score.panOffCenterBoost = true;
-    const xml = score.saveAsXML();
+  it('serializes panLawDb and panOffCenterBoost as attributes on mixer element', () => {
+    const mixer = new Mixer();
+    mixer.setPanLawDb(-6);
+    mixer.setPanOffCenterBoost(true);
+    const xml = mixer.saveAsXML();
     expect(xml.getAttribute('panLawDb')).toBe('-6');
     expect(xml.getAttribute('panOffCenterBoost')).toBe('true');
 
-    score.panLawDb = 0;
-    score.panOffCenterBoost = false;
-    const xml2 = score.saveAsXML();
+    mixer.setPanLawDb(0);
+    mixer.setPanOffCenterBoost(false);
+    const xml2 = mixer.saveAsXML();
     expect(xml2.getAttribute('panLawDb')).toBe('0');
     expect(xml2.getAttribute('panOffCenterBoost')).toBe('false');
   });
 
   it('loads absent panLawDb and panOffCenterBoost with defaults', () => {
-    const elem = new Element('score');
-    const loaded = Score.loadFromXML(elem);
-    expect(loaded.panLawDb).toBe(-3);
-    expect(loaded.panOffCenterBoost).toBe(false);
+    const elem = new Element('mixer');
+    const loaded = Mixer.loadFromXML(elem);
+    expect(loaded.getPanLawDb()).toBe(-3);
+    expect(loaded.isPanOffCenterBoost()).toBe(false);
   });
 
   it('loads invalid panLawDb values with default fallback', () => {
-    for (const invalid of ['-1', '-5', 'foo', '', 'null', '3']) {
-      const elem = new Element('score');
+    for (const invalid of [
+      '-1',
+      '-5',
+      'foo',
+      '',
+      'null',
+      '3',
+      '-3garbage',
+      '-4.5xyz',
+      '0abc',
+      '--3',
+    ]) {
+      const elem = new Element('mixer');
       elem.setAttribute('panLawDb', invalid);
-      const loaded = Score.loadFromXML(elem);
-      expect(loaded.panLawDb).toBe(-3);
+      const loaded = Mixer.loadFromXML(elem);
+      expect(loaded.getPanLawDb()).toBe(-3);
     }
   });
 
   it('loads invalid panOffCenterBoost values as false', () => {
     for (const invalid of ['1', 'yes', 'enabled', '', 'null']) {
-      const elem = new Element('score');
+      const elem = new Element('mixer');
       elem.setAttribute('panOffCenterBoost', invalid);
-      const loaded = Score.loadFromXML(elem);
-      expect(loaded.panOffCenterBoost).toBe(false);
+      const loaded = Mixer.loadFromXML(elem);
+      expect(loaded.isPanOffCenterBoost()).toBe(false);
     }
   });
 
   it('loads explicit valid panLawDb and panOffCenterBoost values', () => {
     for (const law of ['0', '-3', '-4.5', '-6']) {
-      const elem = new Element('score');
+      const elem = new Element('mixer');
       elem.setAttribute('panLawDb', law);
       elem.setAttribute('panOffCenterBoost', 'true');
-      const loaded = Score.loadFromXML(elem);
-      expect(loaded.panLawDb).toBe(Number(law));
-      expect(loaded.panOffCenterBoost).toBe(true);
+      const loaded = Mixer.loadFromXML(elem);
+      expect(loaded.getPanLawDb()).toBe(Number(law));
+      expect(loaded.isPanOffCenterBoost()).toBe(true);
     }
   });
 
   it('preserves pan law and boost settings even when panningEnabled is false', () => {
-    const score = new Score();
-    score.panningEnabled = false;
-    score.panLawDb = -4.5;
-    score.panOffCenterBoost = true;
+    const mixer = new Mixer();
+    mixer.setPanningEnabled(false);
+    mixer.setPanLawDb(-4.5);
+    mixer.setPanOffCenterBoost(true);
 
-    const xml = score.saveAsXML();
-    const loaded = Score.loadFromXML(xml);
-    expect(loaded.panningEnabled).toBe(false);
-    expect(loaded.panLawDb).toBe(-4.5);
-    expect(loaded.panOffCenterBoost).toBe(true);
+    const xml = mixer.saveAsXML();
+    const loaded = Mixer.loadFromXML(xml);
+    expect(loaded.isPanningEnabled()).toBe(false);
+    expect(loaded.getPanLawDb()).toBe(-4.5);
+    expect(loaded.isPanOffCenterBoost()).toBe(true);
   });
 });
