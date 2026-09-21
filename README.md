@@ -11,6 +11,7 @@ Blue is a visual composition environment for [Csound](https://csound.com/) that 
 ## Table of Contents
 
 - [Overview](#overview)
+- [Repository History](#repository-history)
 - [Monorepo Structure](#monorepo-structure)
 - [Prerequisites](#prerequisites)
 - [Quick Start](#quick-start)
@@ -37,12 +38,23 @@ Blue lets you compose music using Csound by providing a visual timeline editor w
 - **Backwards compatible:** Preserves and round-trips Java Blue `.blue` project data, including unsupported legacy fields
 - **Incremental migration:** Data classes, score layers, and engine integration are ported phase-by-phase
 
+## Repository History
+
+Blue 3 is the active TypeScript/Electron line. The `develop` branch is the active
+development line and `main` is the release/default branch. At the repository
+cutover, both pointed to the `v3.0.0-beta.1` commit.
+
+The original Java/NetBeans implementation remains available in the
+[`legacy/blue-2.x`](https://github.com/kunstmusik/blue/tree/legacy/blue-2.x)
+history. The repository transition and its exact commit anchors are documented
+in [`docs/repository-history.md`](docs/repository-history.md).
+
 ---
 
 ## Monorepo Structure
 
 ```
-blue-electron/
+blue/
 ├── packages/
 │   ├── blue-data/            # @blue/data — Universal data model (browser + Node)
 │   │   ├── src/
@@ -127,8 +139,8 @@ corepack prepare pnpm@latest --activate
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/kunstmusik/blue-electron-poc.git
-cd blue-electron-poc
+git clone https://github.com/kunstmusik/blue.git
+cd blue
 
 # 2. Install dependencies
 pnpm install
@@ -277,8 +289,8 @@ The `@blue/data` package must remain **environment-agnostic** (works in both bro
 ### Java-First Parity
 
 For behavior, rendering, XML, or formatting differences, consult the Java implementation before
-changing TypeScript. The primary references are [blue-core](https://github.com/kunstmusik/blue/tree/develop/blue-core) and
-[blue-ui-core](https://github.com/kunstmusik/blue/tree/develop/blue-ui-core). Compare Java-generated artifacts when available and document
+changing TypeScript. The primary references are [blue-core](https://github.com/kunstmusik/blue/tree/legacy/blue-2.x/blue-core) and
+[blue-ui-core](https://github.com/kunstmusik/blue/tree/legacy/blue-2.x/blue-ui-core). Compare Java-generated artifacts when available and document
 every intentional divergence in the active feature spec and plan.
 
 ### Adding a New Data Class
@@ -390,4 +402,4 @@ See [LICENSE](LICENSE) for details.
 
 ---
 
-_This project ports Blue from Java/NetBeans RCP to TypeScript. The original Blue Java application is at [https://github.com/kunstmusik/blue](https://github.com/kunstmusik/blue)._
+_This project ports Blue from Java/NetBeans RCP to TypeScript. The original Java implementation is preserved in the [`legacy/blue-2.x`](https://github.com/kunstmusik/blue/tree/legacy/blue-2.x) history._

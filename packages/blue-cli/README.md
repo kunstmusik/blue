@@ -22,7 +22,7 @@ npm install -g blue-cli
 
 ### Local / Monorepo Workspace
 
-From the `blue-electron` repository root:
+From the Blue repository root:
 
 ```bash
 pnpm --filter blue-cli build

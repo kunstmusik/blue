@@ -57,6 +57,6 @@
   "license": "GPL-2.0-or-later",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kunstmusik/blue-electron-poc"
+    "url": "https://github.com/kunstmusik/blue"
   }
 }
