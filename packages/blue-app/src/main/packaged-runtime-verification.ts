@@ -147,7 +147,9 @@ export function verifyPackagedMetadata(
     };
   }
   if (
-    (context.releaseChannel === 'development' || context.releaseChannel === 'stable') &&
+    (context.releaseChannel === 'development' ||
+      context.releaseChannel === 'prerelease' ||
+      context.releaseChannel === 'stable') &&
     metadata.channel !== context.releaseChannel
   ) {
     return {

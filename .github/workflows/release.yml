@@ -1,10 +1,11 @@
-# Tag-triggered stable release workflow.
+# Tag-triggered release workflow.
 #
-# Triggered by an immutable `vX.Y.Z` tag that must match
-# packages/blue-app/package.json. Validates version agreement, then packages
-# each native target as an unsigned build. Signing and notarization are
-# intentionally reserved for a future release policy; the current workflow
-# does not require or consume Apple or Azure signing credentials.
+# Triggered by an immutable `vX.Y.Z` or `vX.Y.Z-<prerelease>` tag
+# that must match packages/blue-app/package.json. Validates version agreement,
+# then packages each native target as an unsigned build. Signing and
+# notarization are intentionally reserved for a future release policy; the
+# current workflow does not require or consume Apple or Azure signing
+# credentials.
 #
 # A final promoter job downloads all expected native package artifacts,
 # validates the consolidated manifest, creates a draft release, attaches the
@@ -18,7 +19,7 @@
 #   - The promoter job is the only job that receives `contents: write`.
 #   - No platform job publishes a release. Only the promoter does, and only
 #     after the manifest validates the complete asset set.
-name: Stable Release
+name: Tagged Release
 
 on:
   push:
@@ -29,7 +30,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: stable-release-${{ github.ref }}
+  group: tagged-release-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -38,6 +39,8 @@ jobs:
     runs-on: ubuntu-22.04
     outputs:
       app-version: ${{ steps.version.outputs.app-version }}
+      release-channel: ${{ steps.version.outputs.release-channel }}
+      is-prerelease: ${{ steps.version.outputs.is-prerelease }}
       tag: ${{ steps.version.outputs.tag }}
     steps:
       - name: Checkout
@@ -58,8 +61,17 @@ jobs:
           pnpm --filter @blue/app verify:release-version -- \
             --repository ${{ github.repository }}
           APP_VERSION=$(node -e "console.log(require('./packages/blue-app/package.json').version)")
+          if [[ "$APP_VERSION" == *-* ]]; then
+            RELEASE_CHANNEL=prerelease
+            IS_PRERELEASE=true
+          else
+            RELEASE_CHANNEL=stable
+            IS_PRERELEASE=false
+          fi
           {
             echo "app-version=${APP_VERSION}"
+            echo "release-channel=${RELEASE_CHANNEL}"
+            echo "is-prerelease=${IS_PRERELEASE}"
             echo "tag=${GITHUB_REF_NAME}"
           } >> "$GITHUB_OUTPUT"
 
@@ -68,7 +80,7 @@ jobs:
     needs: validate-version
     runs-on: ${{ matrix.runner }}
     env:
-      BLUE_RELEASE_CHANNEL: stable
+      BLUE_RELEASE_CHANNEL: ${{ needs.validate-version.outputs.release-channel }}
     strategy:
       fail-fast: false
       matrix:
@@ -99,7 +111,7 @@ jobs:
         run: |
           pnpm --filter @blue/app verify:packaged-app -- --no-playwright
 
-      - name: Stage stable macOS package
+      - name: Stage release macOS package
         env:
           APP_VERSION: ${{ needs.validate-version.outputs.app-version }}
         run: |
@@ -122,7 +134,7 @@ jobs:
     needs: validate-version
     runs-on: windows-2022
     env:
-      BLUE_RELEASE_CHANNEL: stable
+      BLUE_RELEASE_CHANNEL: ${{ needs.validate-version.outputs.release-channel }}
     permissions:
       contents: read
     steps:
@@ -146,7 +158,7 @@ jobs:
         run: |
           pnpm --filter @blue/app verify:packaged-app -- --no-playwright
 
-      - name: Stage stable Windows package
+      - name: Stage release Windows package
         shell: pwsh
         env:
           APP_VERSION: ${{ needs.validate-version.outputs.app-version }}
@@ -172,7 +184,7 @@ jobs:
     needs: validate-version
     runs-on: ubuntu-22.04
     env:
-      BLUE_RELEASE_CHANNEL: stable
+      BLUE_RELEASE_CHANNEL: ${{ needs.validate-version.outputs.release-channel }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -198,7 +210,7 @@ jobs:
         run: |
           xvfb-run --auto-servernum pnpm --filter @blue/app verify:appimage
 
-      - name: Stage stable Linux packages
+      - name: Stage release Linux packages
         env:
           APP_VERSION: ${{ needs.validate-version.outputs.app-version }}
         run: |
@@ -229,8 +241,8 @@ jobs:
           retention-days: 14
           overwrite: true
 
-  publish-stable:
-    name: publish-stable
+  publish-release:
+    name: publish-release
     needs: [validate-version, package-macos, package-windows, package-linux]
     runs-on: ubuntu-22.04
     environment: release
@@ -310,6 +322,10 @@ jobs:
             echo "body<<RELEASE_BODY_EOF"
             echo "Source revision: \`${{ github.sha }}\`"
             echo ""
+            if [[ "${{ needs.validate-version.outputs.is-prerelease }}" == "true" ]]; then
+              echo "This is a prerelease build for tester feedback and is not the stable release."
+              echo ""
+            fi
             echo "macOS: **unsigned** \`blue-macos-arm64-${{ needs.validate-version.outputs.app-version }}.dmg\`."
             echo "Windows: **unsigned** \`blue-windows-x64-${{ needs.validate-version.outputs.app-version }}.exe\`."
             echo "Linux: \`blue-linux-x64-${{ needs.validate-version.outputs.app-version }}.AppImage\` or \`blue-linux-x64-${{ needs.validate-version.outputs.app-version }}.deb\`."
@@ -339,7 +355,7 @@ jobs:
           tag_name: ${{ github.ref_name }}
           name: Blue ${{ github.ref_name }}
           draft: true
-          prerelease: false
+          prerelease: ${{ needs.validate-version.outputs.is-prerelease }}
           body: ${{ steps.body.outputs.body }}
           generate_release_notes: true
           files: |

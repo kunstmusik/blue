@@ -19,7 +19,7 @@
  *       * uploads versioned native package artifacts without creating a
  *         GitHub Release.
  *   - .github/workflows/release.yml:
- *       * triggered by `v*.*.*` tags.
+ *       * triggered by release tags.
  *       * publishes unsigned native packages with exact versioned names.
  *       * validates the complete verified package manifest before publication.
  *       * references the protected `release` Environment only for publishing.
@@ -382,7 +382,7 @@ requireRegex(
   '.github/workflows/release.yml',
   /v\*\.\*\.\*/,
   'RELEASE_VXYZ_PATTERN',
-  'release.yml tag trigger must match vX.Y.Z',
+  'release.yml tag trigger must match the release tag pattern',
 );
 requireSubstring(
   '.github/workflows/release.yml',
@@ -404,9 +404,27 @@ requireSubstring(
 );
 requireSubstring(
   '.github/workflows/release.yml',
-  'BLUE_RELEASE_CHANNEL: stable',
+  'release-channel: ${{ steps.version.outputs.release-channel }}',
+  'RELEASE_CHANNEL_OUTPUT',
+  'release.yml must derive the release channel from the validated package version',
+);
+requireSubstring(
+  '.github/workflows/release.yml',
+  'is-prerelease: ${{ steps.version.outputs.is-prerelease }}',
+  'RELEASE_PRERELEASE_OUTPUT',
+  'release.yml must expose whether the tagged release is a prerelease',
+);
+requireSubstring(
+  '.github/workflows/release.yml',
+  'BLUE_RELEASE_CHANNEL: ${{ needs.validate-version.outputs.release-channel }}',
   'RELEASE_METADATA_CHANNEL',
-  'release.yml must build stable-channel metadata',
+  'release.yml package jobs must use the validated release channel',
+);
+requireSubstring(
+  '.github/workflows/release.yml',
+  'prerelease: ${{ needs.validate-version.outputs.is-prerelease }}',
+  'RELEASE_PRERELEASE_FLAG',
+  'release.yml must mark prerelease GitHub Releases from the validated tag version',
 );
 requireSubstring(
   '.github/workflows/release.yml',
@@ -425,6 +443,12 @@ forbidRegex(
   /package:macos-x64/,
   'RELEASE_NO_MACOS_X64',
   'release.yml must keep intentionally unsupported macos-x64 packaging out of the active matrix',
+);
+forbidRegex(
+  '.github/workflows/release.yml',
+  /prerelease:\s*false/,
+  'RELEASE_NO_FIXED_PRERELEASE',
+  'release.yml must not force every tagged release to stable',
 );
 forbidRegex(
   '.github/workflows/release.yml',

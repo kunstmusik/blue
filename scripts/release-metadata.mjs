@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Development and stable release metadata derivation.
+ * Development, prerelease, and stable release metadata derivation.
  *
  * Produces a release-metadata.json file describing the source revision and a
  * generated prerelease version, without mutating packages/blue-app/package.json
@@ -12,14 +12,14 @@
  * Usage:
  *   node scripts/release-metadata.mjs \
  *       --out <release-metadata.json> \
- *       [--channel development|stable] \
+ *       [--channel development|prerelease|stable] \
  *       [--app-version <ver>] \
  *       [--source-revision <sha>] \
  *       [--prerelease-timestamp <unix-seconds>]
  *
  * Output shape:
  *   {
- *     "channel": "development" | "stable",
+ *     "channel": "development" | "prerelease" | "stable",
  *     "appVersion": string,
  *     "sourceRevision": string,
  *     "generatedAt": string,
@@ -28,10 +28,10 @@
  *     "releaseNotes": string
  *   }
  *
- * Stable releases use this script to embed About-dialog metadata: the
- * tag itself remains the version, while the stable workflow also calls
+ * Tagged releases use this script to embed About-dialog metadata: the
+ * tag itself remains the version, while the tagged-release workflow also calls
  * verify-release-version.mjs to validate tag/version agreement. The
- * releaseVersion equals appVersion for the stable channel.
+ * releaseVersion equals appVersion for prerelease and stable channels.
  *
  * No secrets are read or logged.
  */
@@ -94,7 +94,7 @@ function shortSha(sha) {
  * @returns {string}
  */
 function buildReleaseVersion(appVersion, sha, timestamp, channel) {
-  if (channel === 'stable') {
+  if (channel !== 'development') {
     return appVersion;
   }
   // Strip any existing prerelease suffix from appVersion so we never compose
@@ -125,6 +125,15 @@ function buildReleaseNameAndNotes(channel, releaseVersion, sha) {
       notes: `Blue ${releaseVersion}\n\nSource revision: ${sha}\n`,
     };
   }
+  if (channel === 'prerelease') {
+    return {
+      name: `Blue Prerelease ${releaseVersion}`,
+      notes:
+        `Blue prerelease ${releaseVersion}.\n\n` +
+        'This is an unsigned prerelease build for tester feedback and is not a stable release.\n\n' +
+        `Source revision: ${sha}\n`,
+    };
+  }
   return {
     name: `Blue Development Build ${releaseVersion}`,
     notes:
@@ -140,15 +149,19 @@ function main() {
   const flags = parseFlags(process.argv.slice(2));
   if (!flags.out) {
     process.stderr.write(
-      'Usage: release-metadata.mjs --out <release-metadata.json> [--channel development|stable] [--app-version <ver>] [--source-revision <sha>] [--prerelease-timestamp <unix-seconds>]\n',
+      'Usage: release-metadata.mjs --out <release-metadata.json> [--channel development|prerelease|stable] [--app-version <ver>] [--source-revision <sha>] [--prerelease-timestamp <unix-seconds>]\n',
     );
     process.exit(2);
   }
 
   const requestedChannel = flags.channel ?? (process.env.BLUE_RELEASE_CHANNEL || 'development');
-  if (requestedChannel !== 'development' && requestedChannel !== 'stable') {
+  if (
+    requestedChannel !== 'development' &&
+    requestedChannel !== 'prerelease' &&
+    requestedChannel !== 'stable'
+  ) {
     process.stderr.write(
-      `--channel or BLUE_RELEASE_CHANNEL must be development or stable, got "${requestedChannel}".\n`,
+      `--channel or BLUE_RELEASE_CHANNEL must be development, prerelease, or stable, got "${requestedChannel}".\n`,
     );
     process.exit(2);
   }

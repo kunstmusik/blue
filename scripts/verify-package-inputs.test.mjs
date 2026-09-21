@@ -109,11 +109,11 @@ test('rejects protocol, target, revision, hash, and extra-file mismatches', asyn
   });
 });
 
-async function metadataFixture(overrides = {}) {
+async function metadataFixture(overrides = {}, packageVersion = '2.3.4') {
   const root = await mkdtemp(join(tmpdir(), 'blue-package-metadata-'));
   const packagePath = join(root, 'package.json');
   const metadataPath = join(root, 'release-metadata.json');
-  await writeFile(packagePath, JSON.stringify({ version: '2.3.4' }));
+  await writeFile(packagePath, JSON.stringify({ version: packageVersion }));
   await writeFile(
     metadataPath,
     JSON.stringify({
@@ -136,6 +136,26 @@ test('accepts complete release metadata for the requested channel', async () => 
     checkReleaseMetadata({
       ...fixture,
       expectedChannel: 'stable',
+    }).ok,
+    true,
+  );
+  await rm(fixture.root, { recursive: true, force: true });
+});
+
+test('accepts complete prerelease metadata for the prerelease channel', async () => {
+  const fixture = await metadataFixture(
+    {
+      channel: 'prerelease',
+      appVersion: '3.0.0-beta.1',
+      releaseVersion: '3.0.0-beta.1',
+      releaseName: 'Blue Prerelease 3.0.0-beta.1',
+    },
+    '3.0.0-beta.1',
+  );
+  assert.equal(
+    checkReleaseMetadata({
+      ...fixture,
+      expectedChannel: 'prerelease',
     }).ok,
     true,
   );

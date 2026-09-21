@@ -66,6 +66,28 @@ describe('resolveAppMetadata', () => {
     });
   });
 
+  it('accepts prerelease packaged metadata', () => {
+    expect(
+      resolveAppMetadata({
+        appPath: '/app',
+        isPackaged: true,
+        processVersions: {},
+        readFile: () =>
+          JSON.stringify({
+            appVersion: '3.0.0-beta.1',
+            sourceRevision: 'b'.repeat(40),
+            generatedAt: '2026-05-04T12:00:00.000Z',
+            channel: 'prerelease',
+          }),
+      }),
+    ).toMatchObject({
+      version: '3.0.0-beta.1',
+      sourceRevision: 'b'.repeat(40),
+      buildDate: '2026-05-04T12:00:00.000Z',
+      channel: 'prerelease',
+    });
+  });
+
   it('ignores generated release metadata during non-packaged development runs', () => {
     expect(
       resolveAppMetadata({

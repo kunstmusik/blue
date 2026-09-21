@@ -10,7 +10,7 @@
  * Checks:
  *   1. package-inputs      - build artifacts and runtime contracts present
  *   2. release-workflows   - .github/workflows/*.yml structural contract
- *   3. release-artifacts   - stable ZIP manifest integrity and completeness
+ *   3. release-artifacts   - tagged native-package manifest integrity and completeness
  *   4. release-credentials - sanitized test suite for the credential preflight
  *   5. credential-preflight --advisory
  *                          - reports local future signing credential availability

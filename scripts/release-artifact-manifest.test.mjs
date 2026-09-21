@@ -12,7 +12,7 @@ const manifestScript = join(scriptDir, 'release-artifact-manifest.mjs');
 const fixtureDir = mkdtempSync(join(tmpdir(), 'blue-release-manifest-'));
 const manifestPath = join(fixtureDir, 'release-manifest.json');
 const checksumPath = join(fixtureDir, 'checksums-sha256.txt');
-const appVersion = '1.2.3';
+const appVersion = '3.0.0-beta.1';
 const sourceRevision = 'a'.repeat(40);
 
 const packageFiles = {
@@ -93,7 +93,7 @@ try {
   );
   assert(
     manifest.targets.every((target) => target.verificationStatus === 'verified'),
-    'generated stable entries must be verified',
+    'generated release entries must be verified',
   );
   assert(
     manifest.engine?.protocolVersion === 2 &&
@@ -119,7 +119,7 @@ try {
   manifest.targets[0].verificationStatus = 'pending';
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
   const pending = validate();
-  assert(pending.status === 1, 'pending package must fail stable validation');
+  assert(pending.status === 1, 'pending package must fail tagged-release validation');
   assert(
     pending.stderr.includes('verificationStatus must be "verified"'),
     'pending status failure must be actionable',
@@ -133,7 +133,7 @@ try {
   assert(
     mismatchedEngineProtocol.status === 1 &&
       mismatchedEngineProtocol.stderr.includes('engine protocolVersion'),
-    'mismatched Blue Engine protocol metadata must fail stable validation',
+    'mismatched Blue Engine protocol metadata must fail tagged-release validation',
   );
   manifest.engine.protocolVersion = 1;
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);

@@ -29,7 +29,9 @@ function nonEmptyString(value: unknown): string | null {
 }
 
 function resolveChannel(value: unknown): AppBuildChannel {
-  return value === 'development' || value === 'stable' ? value : 'unknown';
+  return value === 'development' || value === 'prerelease' || value === 'stable'
+    ? value
+    : 'unknown';
 }
 
 function resolveBuildDate(value: unknown): string {

@@ -110,6 +110,33 @@ describe('packaged-runtime-verification', () => {
     });
   });
 
+  it('accepts complete prerelease metadata when the package requests it', () => {
+    const result = verifyPackagedMetadata({
+      isPackaged: true,
+      appVersion: '3.0.0-beta.1',
+      appPath: '/app',
+      releaseChannel: 'prerelease',
+      processVersions: {
+        electron: '35.7.5',
+        chromium: '134.0.6998.179',
+        node: '22.14.0',
+      },
+      readFile: () =>
+        JSON.stringify({
+          appVersion: '3.0.0-beta.1',
+          sourceRevision: 'b'.repeat(40),
+          generatedAt: '2026-05-04T12:00:00.000Z',
+          channel: 'prerelease',
+        }),
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      code: 'OK',
+      message: `Packaged release metadata: 3.0.0-beta.1, prerelease, ${'b'.repeat(40)}`,
+    });
+  });
+
   it('rejects release metadata for a different application version', () => {
     const result = verifyPackagedMetadata({
       isPackaged: true,

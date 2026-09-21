@@ -10,7 +10,7 @@ const execFileAsync = promisify(execFile);
 const repoRoot = resolve(import.meta.dirname, '..');
 const scriptPath = join(repoRoot, 'scripts', 'release-metadata.mjs');
 
-async function generateMetadata(extraArgs, env = {}) {
+async function generateMetadata(extraArgs, env = {}, appVersion = '2.3.4') {
   const outputDir = await mkdtemp(join(tmpdir(), 'blue-release-metadata-'));
   const outputPath = join(outputDir, 'release-metadata.json');
   try {
@@ -21,7 +21,7 @@ async function generateMetadata(extraArgs, env = {}) {
         '--out',
         outputPath,
         '--app-version',
-        '2.3.4',
+        appVersion,
         '--source-revision',
         'a'.repeat(40),
         '--prerelease-timestamp',
@@ -55,4 +55,14 @@ test('uses BLUE_RELEASE_CHANNEL when no channel flag is supplied', async () => {
   assert.equal(metadata.channel, 'stable');
   assert.equal(metadata.releaseVersion, '2.3.4');
   assert.equal(metadata.releaseName, 'Blue 2.3.4');
+});
+
+test('preserves tagged prerelease versions and labels their metadata', async () => {
+  const metadata = await generateMetadata(['--channel', 'prerelease'], {}, '3.0.0-beta.1');
+
+  assert.equal(metadata.channel, 'prerelease');
+  assert.equal(metadata.appVersion, '3.0.0-beta.1');
+  assert.equal(metadata.releaseVersion, '3.0.0-beta.1');
+  assert.equal(metadata.releaseName, 'Blue Prerelease 3.0.0-beta.1');
+  assert.match(metadata.releaseNotes, /not a stable release/);
 });

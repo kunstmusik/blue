@@ -1,23 +1,23 @@
 #!/usr/bin/env node
 /**
- * Stable tag / package version validation.
+ * Tagged release / package version validation.
  *
- * Requires an immutable `vX.Y.Z` Git tag that exactly matches the version
+ * Requires an immutable `vX.Y.Z` or `vX.Y.Z-<prerelease>` Git tag that exactly matches the version
  * declared in packages/blue-app/package.json. Refuses to proceed when:
- *   - The current commit is not at a `vX.Y.Z` tag.
+ *   - The current commit is not at a supported release tag.
  *   - The tag does not match `packages/blue-app/package.json`.
  *   - The version has already been published as a non-draft GitHub Release.
  *
  * The script is intentionally GitHub-aware but does not require GitHub
  * authentication: when GH_TOKEN/GITHUB_TOKEN is unavailable, the
  * duplicate-publication check is skipped with a warning so a local maintainer
- * can still validate the tag/version agreement. In CI, the stable workflow
+ * can still validate the tag/version agreement. In CI, the tagged-release workflow
  * runs the script with the workflow-provided GITHUB_TOKEN so the duplicate
  * check is authoritative.
  *
  * Usage:
  *   node packages/blue-app/scripts/verify-release-version.mjs \
- *       [--tag <vX.Y.Z>] \
+ *       [--tag <vX.Y.Z[-prerelease]>] \
  *       [--app-version <ver>] \
  *       [--repository <owner/repo>] \
  *       [--allow-no-gh-token]
@@ -38,7 +38,22 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, '..', '..', '..');
 const appPkgPath = join(repoRoot, 'packages', 'blue-app', 'package.json');
 
-const VERSION_PATTERN = /^v(\d+)\.(\d+)\.(\d+)$/;
+const NUMERIC_IDENTIFIER = '(?:0|[1-9]\\d*)';
+const NON_NUMERIC_IDENTIFIER = '[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*';
+const PRERELEASE_IDENTIFIER = '(?:' + NUMERIC_IDENTIFIER + '|' + NON_NUMERIC_IDENTIFIER + ')';
+const VERSION_PATTERN = new RegExp(
+  '^v(?<version>' +
+    NUMERIC_IDENTIFIER +
+    '\\.' +
+    NUMERIC_IDENTIFIER +
+    '\\.' +
+    NUMERIC_IDENTIFIER +
+    '(?<prerelease>-' +
+    PRERELEASE_IDENTIFIER +
+    '(?:\\.' +
+    PRERELEASE_IDENTIFIER +
+    ')*)?)$',
+);
 
 function readAppVersion() {
   if (!existsSync(appPkgPath)) {
@@ -175,17 +190,21 @@ async function main() {
     diagnostics.push({
       ok: false,
       message:
-        'HEAD is not at an exact vX.Y.Z tag. Stable releases must be triggered by an immutable tag.',
+        'HEAD is not at an exact supported release tag. Tagged releases must be triggered by an immutable tag.',
     });
   } else {
     const match = VERSION_PATTERN.exec(detectedTag);
     if (!match) {
       diagnostics.push({
         ok: false,
-        message: `Tag "${detectedTag}" does not match the required vX.Y.Z shape.`,
+        message:
+          'Tag "' +
+          detectedTag +
+          '" does not match the required SemVer release shape ' +
+          '(for example v3.0.0 or v3.0.0-beta.1).',
       });
     } else {
-      const tagVersion = `${match[1]}.${match[2]}.${match[3]}`;
+      const tagVersion = match.groups.version;
       if (tagVersion !== expectedVersion) {
         diagnostics.push({
           ok: false,
@@ -196,7 +215,14 @@ async function main() {
       } else {
         diagnostics.push({
           ok: true,
-          message: `Tag/version agreement: ${detectedTag} <-> ${expectedVersion}`,
+          message:
+            'Tag/version agreement: ' +
+            detectedTag +
+            ' <-> ' +
+            expectedVersion +
+            ' (' +
+            (match.groups.prerelease ? 'prerelease' : 'stable') +
+            ')',
         });
       }
     }

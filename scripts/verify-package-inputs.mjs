@@ -326,11 +326,11 @@ export function checkReleaseMetadata({
   }
 
   const channel = metadata.channel;
-  if (channel !== 'development' && channel !== 'stable') {
+  if (channel !== 'development' && channel !== 'prerelease' && channel !== 'stable') {
     return {
       ok: false,
       code: 'RELEASE_METADATA_CHANNEL_INVALID',
-      message: `Release metadata channel must be development or stable at ${metadataPath}`,
+      message: `Release metadata channel must be development, prerelease, or stable at ${metadataPath}`,
     };
   }
   if (expectedChannel !== undefined && expectedChannel !== channel) {

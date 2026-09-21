@@ -1,7 +1,7 @@
 export const APP_METADATA_GET_CHANNEL = 'app-metadata:get';
 export const ABOUT_WINDOW_CLOSE_CHANNEL = 'about:close';
 
-export type AppBuildChannel = 'development' | 'stable' | 'unknown';
+export type AppBuildChannel = 'development' | 'prerelease' | 'stable' | 'unknown';
 
 export interface AppRuntimeVersions {
   electron: string;
