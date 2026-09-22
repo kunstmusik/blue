@@ -93,5 +93,3 @@ research/
 # Agent and assistant skill bundles
 .agents/skills/
 **/.agents/skills/**
-.claude/skills/
-**/.claude/skills/**

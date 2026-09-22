@@ -21,7 +21,6 @@ node_modules/
 *.swo
 
 # Local agent/IDE settings (personal, machine-specific)
-.claude/settings.local.json
 skills-lock.json
 
 # OS
