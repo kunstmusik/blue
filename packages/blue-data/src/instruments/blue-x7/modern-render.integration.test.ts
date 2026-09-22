@@ -11,6 +11,8 @@ import { generateBlueX7Target } from './csound-target-generator';
 import { BLUE_X7_PARAMETER_DESCRIPTORS, readBlueX7VoiceValue } from './parameter-catalog';
 import { BlueData } from '../../blue-data';
 import { Arrangement } from '../../arrangement';
+import { TrackLayerGroup } from '../../score/track/track-layer-group';
+import { buildBlueX7PopSongProject } from './pop-song-fixture';
 
 /**
  * Deterministic Csound render tests for the modern BlueX7 module (Spec 092,
@@ -28,7 +30,6 @@ const hasCsound = (() => {
 
 const SR = 44100;
 const KSMPS = 64;
-const KR = SR / KSMPS;
 
 interface RenderResult {
   samples: Float64Array;
@@ -52,11 +53,12 @@ function renderCsound(
   scoText: string,
   dir: string,
   durationSeconds: number,
+  ksmps = KSMPS,
 ): RenderResult {
   const orcPath = path.join(dir, 'render.orc');
   const scoPath = path.join(dir, 'render.sco');
   const wavPath = path.join(dir, 'render.wav');
-  fs.writeFileSync(orcPath, `sr = ${SR}\nksmps = ${KSMPS}\nnchnls = 1\n${orcText}`);
+  fs.writeFileSync(orcPath, `sr = ${SR}\nksmps = ${ksmps}\nnchnls = 1\n${orcText}`);
   fs.writeFileSync(scoPath, scoText);
   execFileSync(
     'csound',
@@ -66,7 +68,7 @@ function renderCsound(
       '-r',
       String(SR),
       '-k',
-      String(KR),
+      String(SR / ksmps),
       '--0dbfs=1',
       '--format=double',
       '-o',
@@ -119,6 +121,14 @@ function peakOf(samples: Float64Array): number {
     return Number.NaN;
   }
   return peak;
+}
+
+function rmsOf(samples: Float64Array, startSeconds: number, endSeconds: number): number {
+  const start = Math.floor(startSeconds * SR);
+  const end = Math.min(samples.length, Math.floor(endSeconds * SR));
+  let sum = 0;
+  for (let i = start; i < end; i++) sum += samples[i] * samples[i];
+  return Math.sqrt(sum / (end - start));
 }
 
 function maxControlBoundaryDiscontinuityRatio(
@@ -217,6 +227,41 @@ describe.skipIf(!hasCsound)('modern BlueX7 Csound renders', () => {
     // the note itself was audible
     const midStart = Math.floor(0.2 * SR);
     expect(peakOf(samples.subarray(midStart, midStart + SR))).toBeGreaterThan(0.001);
+  }, 60_000);
+
+  it('keeps the pop-song voice envelope timing across host ksmps values', () => {
+    const project = buildBlueX7PopSongProject();
+    const tracks = project.getScore()[0] as TrackLayerGroup;
+    const score = 'i1 0 0.8 8.00 88';
+    for (const track of tracks) {
+      const voice = (track.getInstrument() as BlueX7).getVoice();
+      const { mask, voice: transportVoice } = buildTransportText(voice);
+      const orc = hostWrapperOrc(transportVoice, mask);
+      const reference = renderCsound(orc, score, scratch(), 2, 64).samples;
+      for (const ksmps of [1, 32, 128]) {
+        const rendered = renderCsound(orc, score, scratch(), 2, ksmps).samples;
+        let checkedWindows = 0;
+        for (const [start, end] of [
+          [0.1, 0.2],
+          [0.4, 0.5],
+          [0.7, 0.8],
+          [0.9, 1.0],
+        ]) {
+          const expected = rmsOf(reference, start, end);
+          if (expected < 0.00001) continue;
+          const actual = rmsOf(rendered, start, end);
+          expect(
+            actual / expected,
+            `${track.getName()}, ksmps=${ksmps}, t=${start}s`,
+          ).toBeGreaterThan(0.9);
+          expect(actual / expected, `${track.getName()}, ksmps=${ksmps}, t=${start}s`).toBeLessThan(
+            1.1,
+          );
+          checkedWindows++;
+        }
+        expect(checkedWindows).toBeGreaterThanOrEqual(2);
+      }
+    }
   }, 60_000);
 
   it('interpolates fast release gains across control blocks like msfa', () => {

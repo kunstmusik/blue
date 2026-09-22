@@ -24,11 +24,11 @@
   "current": {
     "orchestra": {
       "file": "packages/blue-data/resources/blue-x7-modern/bluex7.orc",
-      "sha256": "4bf656086ac42b60d80637ed31a6520ac1e6d452c64c9eef9740d1bf814ca4f0"
+      "sha256": "60cc627b304ef28f4de86d6cd751c77a6559ffca22a7934b759ddcb1da52a92b"
     },
     "generatedModule": {
       "file": "packages/blue-data/src/instruments/blue-x7/modern-orchestra.generated.ts",
-      "sha256": "2958d2e9bea3bb57f161af55dbc2673a6065642ae830f5a78942e3d31836a9f3"
+      "sha256": "02e4e42cabde837a617b46281e33f51a02d763e30311f77912c19bb23722bdc8"
     }
   },
   "blueModifications": [
@@ -72,6 +72,13 @@
     },
     {
       "summary": "MSFA-style gain continuity: retain each operator's previous and current control-block gains, interpolate between them sample-by-sample in all 32 algorithm topologies (including feedback loops), and render the final carrier transition block while either endpoint exceeds the inaudible threshold. This removes release-time held-gain discontinuities while preserving the existing sub-audible parking bound and live-edit resurrection semantics.",
+      "files": [
+        "packages/blue-data/resources/blue-x7-modern/bluex7.orc",
+        "packages/blue-data/src/instruments/blue-x7/modern-render.integration.test.ts"
+      ]
+    },
+    {
+      "summary": "Host-ksmps-independent amplitude timing: scale each operator EG advance from its 64-sample reference increment by the actual control-block size, and calculate the release-tail bound from the same fixed reference interval.",
       "files": [
         "packages/blue-data/resources/blue-x7-modern/bluex7.orc",
         "packages/blue-data/src/instruments/blue-x7/modern-render.integration.test.ts"

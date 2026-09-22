@@ -2993,7 +2993,8 @@ opcode bluex7_voice(iMidiNote, iVelocity, iVoice[], iOperatorMask, iGateSeconds,
     iqr4  = int(iEgRA[iop * 4 + 3] * 41 / 64) + iQrsA[iop]
     iqr4  = (iqr4 > 63 ? 63 : iqr4)
     iinc4 = (4 + (iqr4 % 4)) * 2 ^ (8 + int(iqr4 / 4))
-    iTailA[iop] = (17 * 16777216 / iinc4) * ksmps / sr
+    ; EG increments are defined per 64 samples, independent of host ksmps.
+    iTailA[iop] = (17 * 16777216 / iinc4) * 64 / sr
     iop += 1
   od
   kEgL = iEgLA
@@ -3274,11 +3275,13 @@ opcode bluex7_voice(iMidiNote, iVelocity, iVoice[], iOperatorMask, iGateSeconds,
   kop = 0
   while kop < 6 do
     if kEgIx[kop] < 3 || (kEgIx[kop] < 4 && kGate == 0) then
+      ; msfa's EG increment is per 64 samples, not per host control cycle.
+      kEgStep = kEgInc[kop] * ksmps / 64
       if kEgRis[kop] == 1 then
         if kEgLevel[kop] < 112457728 then
           kEgLevel[kop] = 112457728              ; 1716 << 16 jump floor
         endif
-        kEgLevel[kop] += (285212672 - kEgLevel[kop]) / 16777216 * kEgInc[kop]
+        kEgLevel[kop] += (285212672 - kEgLevel[kop]) / 16777216 * kEgStep
         if kEgLevel[kop] >= kEgTarget[kop] then
           kEgLevel[kop] = kEgTarget[kop]
           kEgIx[kop] += 1
@@ -3295,7 +3298,7 @@ opcode bluex7_voice(iMidiNote, iVelocity, iVoice[], iOperatorMask, iGateSeconds,
           endif
         endif
       else
-        kEgLevel[kop] -= kEgInc[kop]
+        kEgLevel[kop] -= kEgStep
         if kEgLevel[kop] <= kEgTarget[kop] then
           kEgLevel[kop] = kEgTarget[kop]
           kEgIx[kop] += 1
@@ -3782,7 +3785,8 @@ kBlueX7EpochSeen = gk_blue_x7_epoch_0
     iqr4  = int(iEgRA[iop * 4 + 3] * 41 / 64) + iQrsA[iop]
     iqr4  = (iqr4 > 63 ? 63 : iqr4)
     iinc4 = (4 + (iqr4 % 4)) * 2 ^ (8 + int(iqr4 / 4))
-    iTailA[iop] = (17 * 16777216 / iinc4) * ksmps / sr
+    ; EG increments are defined per 64 samples, independent of host ksmps.
+    iTailA[iop] = (17 * 16777216 / iinc4) * 64 / sr
     iop += 1
   od
   kEgL = iEgLA
@@ -4102,11 +4106,13 @@ kBlueX7EpochSeen = gk_blue_x7_epoch_0
   kop = 0
   while kop < 6 do
     if kEgIx[kop] < 3 || (kEgIx[kop] < 4 && kGate == 0) then
+      ; msfa's EG increment is per 64 samples, not per host control cycle.
+      kEgStep = kEgInc[kop] * ksmps / 64
       if kEgRis[kop] == 1 then
         if kEgLevel[kop] < 112457728 then
           kEgLevel[kop] = 112457728              ; 1716 << 16 jump floor
         endif
-        kEgLevel[kop] += (285212672 - kEgLevel[kop]) / 16777216 * kEgInc[kop]
+        kEgLevel[kop] += (285212672 - kEgLevel[kop]) / 16777216 * kEgStep
         if kEgLevel[kop] >= kEgTarget[kop] then
           kEgLevel[kop] = kEgTarget[kop]
           kEgIx[kop] += 1
@@ -4123,7 +4129,7 @@ kBlueX7EpochSeen = gk_blue_x7_epoch_0
           endif
         endif
       else
-        kEgLevel[kop] -= kEgInc[kop]
+        kEgLevel[kop] -= kEgStep
         if kEgLevel[kop] <= kEgTarget[kop] then
           kEgLevel[kop] = kEgTarget[kop]
           kEgIx[kop] += 1
@@ -4612,7 +4618,8 @@ kBlueX7EpochSeen = gk_blue_x7_epoch_151
     iqr4  = int(iEgRA[iop * 4 + 3] * 41 / 64) + iQrsA[iop]
     iqr4  = (iqr4 > 63 ? 63 : iqr4)
     iinc4 = (4 + (iqr4 % 4)) * 2 ^ (8 + int(iqr4 / 4))
-    iTailA[iop] = (17 * 16777216 / iinc4) * ksmps / sr
+    ; EG increments are defined per 64 samples, independent of host ksmps.
+    iTailA[iop] = (17 * 16777216 / iinc4) * 64 / sr
     iop += 1
   od
   kEgL = iEgLA
@@ -4932,11 +4939,13 @@ kBlueX7EpochSeen = gk_blue_x7_epoch_151
   kop = 0
   while kop < 6 do
     if kEgIx[kop] < 3 || (kEgIx[kop] < 4 && kGate == 0) then
+      ; msfa's EG increment is per 64 samples, not per host control cycle.
+      kEgStep = kEgInc[kop] * ksmps / 64
       if kEgRis[kop] == 1 then
         if kEgLevel[kop] < 112457728 then
           kEgLevel[kop] = 112457728              ; 1716 << 16 jump floor
         endif
-        kEgLevel[kop] += (285212672 - kEgLevel[kop]) / 16777216 * kEgInc[kop]
+        kEgLevel[kop] += (285212672 - kEgLevel[kop]) / 16777216 * kEgStep
         if kEgLevel[kop] >= kEgTarget[kop] then
           kEgLevel[kop] = kEgTarget[kop]
           kEgIx[kop] += 1
@@ -4953,7 +4962,7 @@ kBlueX7EpochSeen = gk_blue_x7_epoch_151
           endif
         endif
       else
-        kEgLevel[kop] -= kEgInc[kop]
+        kEgLevel[kop] -= kEgStep
         if kEgLevel[kop] <= kEgTarget[kop] then
           kEgLevel[kop] = kEgTarget[kop]
           kEgIx[kop] += 1
