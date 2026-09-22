@@ -1828,6 +1828,8 @@ export interface BlueMixerGateContext {
   readonly outputGateOrdinals: Map<number, number>;
   /** Cloned channels in graph ordinal order (sources, render-ordered subs, master). */
   readonly orderedChannels: Channel[];
+  /** Cloned channel -> graph ordinal. */
+  readonly channelOrdinals: ReadonlyMap<Channel, number>;
 }
 
 /**
@@ -1870,6 +1872,7 @@ function buildBlueMixerGateContext(
     sendGateOrdinals,
     outputGateOrdinals,
     orderedChannels,
+    channelOrdinals: new Map(orderedChannels.map((channel, ordinal) => [channel, ordinal])),
   };
 }
 
@@ -2308,7 +2311,7 @@ function generateBlueMixer(
 
 /** Graph ordinal of a cloned channel within the gate context. */
 function channelOrdinalOf(context: BlueMixerGateContext, channel: Channel): number {
-  return context.orderedChannels.indexOf(channel);
+  return context.channelOrdinals.get(channel) ?? -1;
 }
 
 function applyEffectsChain(
