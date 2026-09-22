@@ -5,13 +5,7 @@ import type { ProjectDocumentCommitMetadata } from '../../../../shared/project-h
 export type SelectedEditorKind = 'codemirror';
 
 export type CsoundDocumentMode =
-  | 'orc'
-  | 'sco'
-  | 'csd'
-  | 'text'
-  | 'javascript'
-  | 'python'
-  | 'clojure';
+  'orc' | 'sco' | 'csd' | 'text' | 'javascript' | 'python' | 'clojure';
 
 export interface CsoundCompletionContext {
   text: string;
@@ -167,10 +161,7 @@ export interface NormalizedOpcodeMetadata {
 }
 
 export type OpcodeInsertionForm =
-  | 'expression'
-  | 'classic-statement'
-  | 'modern-statement'
-  | 'name-only';
+  'expression' | 'classic-statement' | 'modern-statement' | 'name-only';
 
 export interface OpcodeInsertionPlan {
   from: number;

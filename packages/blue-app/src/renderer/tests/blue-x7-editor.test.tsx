@@ -572,8 +572,7 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
 
   it('discards an import result when the editor target changes while reading', async () => {
     let resolveRead:
-      | ((value: import('../../shared/blue-x7-sysex').BlueX7SysexReadResult) => void)
-      | undefined;
+      ((value: import('../../shared/blue-x7-sysex').BlueX7SysexReadResult) => void) | undefined;
     const pendingRead = new Promise<import('../../shared/blue-x7-sysex').BlueX7SysexReadResult>(
       (resolve) => {
         resolveRead = resolve;

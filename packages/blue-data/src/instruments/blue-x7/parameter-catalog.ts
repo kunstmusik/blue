@@ -14,10 +14,7 @@ export type BlueX7UpdateClass = 'active-note' | 'next-note';
 export type BlueX7ParameterKind = 'continuous-integer' | 'boolean' | 'categorical';
 
 export type BlueX7ParameterGroup =
-  | 'Common'
-  | 'LFO'
-  | 'Pitch Envelope'
-  | `Operator ${1 | 2 | 3 | 4 | 5 | 6}`;
+  'Common' | 'LFO' | 'Pitch Envelope' | `Operator ${1 | 2 | 3 | 4 | 5 | 6}`;
 
 export interface BlueX7ParameterDescriptor {
   /** Stable semantic name, independent of the instrument display name. */
@@ -31,8 +28,7 @@ export interface BlueX7ParameterDescriptor {
   /** Whether changes apply to sounding notes or from the next note. */
   updateClass: BlueX7UpdateClass;
   transport:
-    | { kind: 'voice'; slot: number }
-    | { kind: 'operator-enable'; operator: 1 | 2 | 3 | 4 | 5 | 6 };
+    { kind: 'voice'; slot: number } | { kind: 'operator-enable'; operator: 1 | 2 | 3 | 4 | 5 | 6 };
 }
 
 interface BlueX7CatalogEntry extends BlueX7ParameterDescriptor {

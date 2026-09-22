@@ -182,8 +182,7 @@ export interface JavaRuntimeFailureResponseEnvelope {
 }
 
 export type JavaRuntimeResponseEnvelope<TResult> =
-  | JavaRuntimeSuccessResponseEnvelope<TResult>
-  | JavaRuntimeFailureResponseEnvelope;
+  JavaRuntimeSuccessResponseEnvelope<TResult> | JavaRuntimeFailureResponseEnvelope;
 
 export function createJavaRuntimeRequest<TParams extends Record<string, unknown>>(
   id: string,

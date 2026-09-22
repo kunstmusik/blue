@@ -21,10 +21,7 @@ export type MidiImportDivision =
   | { kind: 'smpte'; framesPerSecond: number; ticksPerFrame: number };
 
 export type MidiImportWarningCode =
-  | 'unmatched-note-off'
-  | 'dangling-note-on'
-  | 'invalid-note'
-  | 'unsupported-event';
+  'unmatched-note-off' | 'dangling-note-on' | 'invalid-note' | 'unsupported-event';
 
 export interface MidiImportWarning {
   code: MidiImportWarningCode;

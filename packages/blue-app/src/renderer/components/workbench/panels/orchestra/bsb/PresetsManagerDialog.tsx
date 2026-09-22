@@ -52,8 +52,7 @@ export interface PresetTreeNode {
 }
 
 type PresetClipboard =
-  | { kind: 'preset'; item: PresetSnapshot }
-  | { kind: 'group'; item: PresetGroupSnapshot };
+  { kind: 'preset'; item: PresetSnapshot } | { kind: 'group'; item: PresetGroupSnapshot };
 
 let presetClipboard: PresetClipboard | null = null;
 

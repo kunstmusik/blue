@@ -81,13 +81,7 @@ interface Props {
 }
 
 type GestureMode =
-  | 'marquee'
-  | 'move'
-  | 'resizeLeft'
-  | 'resizeRight'
-  | 'fadeIn'
-  | 'fadeOut'
-  | 'slideFileStart';
+  'marquee' | 'move' | 'resizeLeft' | 'resizeRight' | 'fadeIn' | 'fadeOut' | 'slideFileStart';
 
 interface TrackPreview {
   startBeats: number;

@@ -16,12 +16,7 @@ export const GENERATOR_REGISTRY = [
 ] as const;
 
 export type GeneratorKind =
-  | 'Constant'
-  | 'ItemList'
-  | 'Segment'
-  | 'Random'
-  | 'Probability'
-  | 'Oscillator';
+  'Constant' | 'ItemList' | 'Segment' | 'Random' | 'Probability' | 'Oscillator';
 
 const MASKABLE_GENERATORS: ReadonlySet<string> = new Set(['Oscillator', 'Probability']);
 const QUANTIZABLE_GENERATORS: ReadonlySet<string> = new Set([

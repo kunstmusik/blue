@@ -49,9 +49,7 @@ export interface ExampleLibraryOperationJournal {
 }
 
 export type ParsedSidecar<T> =
-  | { kind: 'loaded'; value: T }
-  | { kind: 'absent' }
-  | { kind: 'invalid'; reasons: string[] };
+  { kind: 'loaded'; value: T } | { kind: 'absent' } | { kind: 'invalid'; reasons: string[] };
 
 export class ExampleLibraryStateError extends Error {
   readonly reasons: string[];

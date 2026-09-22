@@ -1479,9 +1479,7 @@ export function resolveEditorTarget(
       // location before the main-owned graph commits it. Stable selection
       // identity keeps the same object editable through that short interval.
       sObj = (resolveTimelineScoreObjects(data, [target.selectionId])?.[0] ?? null) as
-        | SoundObject
-        | AudioClip
-        | null;
+        SoundObject | AudioClip | null;
     }
   }
 

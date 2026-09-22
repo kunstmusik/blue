@@ -262,12 +262,7 @@ export interface ScoreLayerSnapshot {
 
 export type AutomationLayerKind = 'soundObject' | 'track';
 export type AutomationTargetSourceKind =
-  | 'instrument'
-  | 'mixer'
-  | 'audioChannel'
-  | 'effect'
-  | 'send'
-  | 'unknown';
+  'instrument' | 'mixer' | 'audioChannel' | 'effect' | 'send' | 'unknown';
 
 export interface AutomationPointSnapshot {
   time: number;
@@ -295,10 +290,7 @@ export interface AutomationParameterSnapshot {
 }
 
 export type AutomationAssignmentState =
-  | 'available'
-  | 'assignedCurrentLayer'
-  | 'assignedOtherLayer'
-  | 'missing';
+  'available' | 'assignedCurrentLayer' | 'assignedOtherLayer' | 'missing';
 
 export interface AutomationTargetSnapshot {
   parameterId: string;
@@ -402,9 +394,7 @@ export interface PatternsLayerGroupSnapshot {
 }
 
 export type ScoreLayerGroupSnapshot =
-  | PolyObjectLayerGroupSnapshot
-  | TrackLayerGroupSnapshot
-  | PatternsLayerGroupSnapshot;
+  PolyObjectLayerGroupSnapshot | TrackLayerGroupSnapshot | PatternsLayerGroupSnapshot;
 
 export interface ScoreDocumentSnapshot {
   trackLayerMuteSoloMode: TrackLayerMuteSoloMode;
@@ -531,11 +521,7 @@ export interface TrackerColumnSnapshot {
 }
 
 export type AudioFileMetadataStatus =
-  | 'empty'
-  | 'missing'
-  | 'unreadable'
-  | 'unsupported'
-  | 'available';
+  'empty' | 'missing' | 'unreadable' | 'unsupported' | 'available';
 
 export type AudioFileMetadataState =
   | { status: 'empty' }
@@ -2123,16 +2109,10 @@ export interface ProjectDocumentPatchContext {
  * column-major order. Row/column indices are never canonical identity.
  */
 export type LegacyBlueLiveTriggerRequest =
-  | { mode: 'selected'; liveObjectId: string }
-  | { mode: 'enabled' };
+  { mode: 'selected'; liveObjectId: string } | { mode: 'enabled' };
 
 export type LegacyBlueLiveTriggerStatus =
-  | 'submitted'
-  | 'empty'
-  | 'busy'
-  | 'rejected'
-  | 'failed'
-  | 'stale';
+  'submitted' | 'empty' | 'busy' | 'rejected' | 'failed' | 'stale';
 
 export type LegacyBlueLiveTriggerErrorCode =
   | 'no-project'
@@ -2413,9 +2393,7 @@ export interface MixerRealtimePanCancelRequest extends MixerRealtimeLevelBaseReq
 }
 
 export type MixerRealtimePanUpdate =
-  | MixerRealtimePanPreviewRequest
-  | MixerRealtimePanFinishRequest
-  | MixerRealtimePanCancelRequest;
+  MixerRealtimePanPreviewRequest | MixerRealtimePanFinishRequest | MixerRealtimePanCancelRequest;
 
 export type MixerRealtimePanResult = MixerRealtimeLevelResult;
 
@@ -2451,11 +2429,7 @@ export interface EffectRealtimeUpdate {
 }
 
 export type SupportedNewInstrumentType =
-  | 'generic'
-  | 'python'
-  | 'javascript'
-  | 'blueX7'
-  | 'blueSynthBuilder';
+  'generic' | 'python' | 'javascript' | 'blueX7' | 'blueSynthBuilder';
 
 export type InstrumentSnapshot =
   | GenericInstrumentSnapshot
@@ -3085,8 +3059,7 @@ export interface BlueX7TrackOwnerTarget {
  * routing identities.
  */
 export type BlueX7RuntimeTarget =
-  | { assignmentId: string; track?: never }
-  | { assignmentId?: never; track: BlueX7TrackOwnerTarget };
+  { assignmentId: string; track?: never } | { assignmentId?: never; track: BlueX7TrackOwnerTarget };
 
 export interface BlueX7ParameterValuePair {
   parameterId: string;

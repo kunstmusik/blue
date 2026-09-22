@@ -29,10 +29,7 @@ export interface FactoryManifest {
 
 export class FactorySourceError extends Error {
   readonly code:
-    | 'symlink-entry'
-    | 'non-regular-entry'
-    | 'path-collision'
-    | 'unreadable-factory-source';
+    'symlink-entry' | 'non-regular-entry' | 'path-collision' | 'unreadable-factory-source';
 
   constructor(code: FactorySourceError['code'], detail: string) {
     super(`${code}: ${detail}`);

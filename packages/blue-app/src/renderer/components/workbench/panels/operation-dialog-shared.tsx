@@ -5,13 +5,7 @@ import type { RenderOperationStatus } from '../../../../shared/render-freeze-con
 
 /** Row status vocabulary shared by the operation progress dialogs. */
 export type OperationRowStatus =
-  | 'pending'
-  | 'running'
-  | 'rendered'
-  | 'complete'
-  | 'failed'
-  | 'cancelled'
-  | 'notApplied';
+  'pending' | 'running' | 'rendered' | 'complete' | 'failed' | 'cancelled' | 'notApplied';
 
 export function isTerminalOperationPhase(phase: RenderOperationStatus['phase'] | null): boolean {
   return phase === 'completed' || phase === 'cancelled' || phase === 'failed';

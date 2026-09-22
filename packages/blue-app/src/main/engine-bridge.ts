@@ -153,12 +153,10 @@ async function stopClientWithTimeout(
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
   let stopRequest: Promise<EngineStopResponse>;
   try {
-    stopRequest = Promise.resolve(client.stop()).catch(
-      (error: unknown): EngineStopResponse => ({
-        ok: false,
-        message: error instanceof Error ? error.message : String(error),
-      }),
-    );
+    stopRequest = Promise.resolve(client.stop()).catch((error: unknown): EngineStopResponse => ({
+      ok: false,
+      message: error instanceof Error ? error.message : String(error),
+    }));
   } catch (error: unknown) {
     return {
       ok: false,

@@ -18,12 +18,10 @@ export interface ImportedScoreObject {
 }
 
 export type ScoreObjectImportResult =
-  | { ok: true; object: ImportedScoreObject }
-  | { ok: false; error: string };
+  { ok: true; object: ImportedScoreObject } | { ok: false; error: string };
 
 export type ScoreObjectExportResult =
-  | { status: 'saved' | 'cancelled' }
-  | { status: 'error'; error: string };
+  { status: 'saved' | 'cancelled' } | { status: 'error'; error: string };
 
 export type ScoreObjectValidationResult = { ok: true } | { ok: false; error: string };
 

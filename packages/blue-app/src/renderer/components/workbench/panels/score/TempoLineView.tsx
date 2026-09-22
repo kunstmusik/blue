@@ -46,9 +46,7 @@ interface DragState {
 }
 
 type ContextMenuTarget =
-  | { type: 'point'; index: number }
-  | { type: 'segment'; index: number }
-  | null;
+  { type: 'point'; index: number } | { type: 'segment'; index: number } | null;
 
 export default function TempoLineView({
   tempoMap,

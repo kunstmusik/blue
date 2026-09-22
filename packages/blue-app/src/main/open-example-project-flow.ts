@@ -46,8 +46,7 @@ export interface ProjectLoadFailed {
 export type ProjectLoadResult<Project> = ProjectLoadedOk<Project> | ProjectLoadFailed;
 
 export type OpenExampleCommitStepResult =
-  | { ok: true }
-  | { ok: false; message: string; retryable: boolean };
+  { ok: true } | { ok: false; message: string; retryable: boolean };
 
 export interface ResolvedExampleSelection {
   /** Existing project file to parse before any candidate is committed. */

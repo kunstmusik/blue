@@ -78,13 +78,7 @@ export function isCancelRenderOperationRequest(
 export type RenderOperationKind = 'diskRender' | 'freeze';
 
 export type RenderOperationPhase =
-  | 'preparing'
-  | 'rendering'
-  | 'inspecting'
-  | 'committing'
-  | 'completed'
-  | 'cancelled'
-  | 'failed';
+  'preparing' | 'rendering' | 'inspecting' | 'committing' | 'completed' | 'cancelled' | 'failed';
 
 export interface RenderOperationStatus {
   operationId: string;

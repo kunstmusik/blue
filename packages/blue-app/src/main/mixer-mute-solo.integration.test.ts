@@ -642,8 +642,7 @@ async function captureLiveGateTransitions(
     const recordResponse = async (
       label: string,
       response:
-        | Awaited<ReturnType<ProjectHistory['commit']>>
-        | Awaited<ReturnType<ProjectHistory['undo']>>,
+        Awaited<ReturnType<ProjectHistory['commit']>> | Awaited<ReturnType<ProjectHistory['undo']>>,
     ): Promise<void> => {
       expect(response.status).toBe('committed');
       if (response.status !== 'committed') return;

@@ -20,13 +20,7 @@ import { useProjectStore } from './project-store';
  * mapped onto them when the operation ends.
  */
 export type FreezeRowStatus =
-  | 'pending'
-  | 'running'
-  | 'rendered'
-  | 'complete'
-  | 'failed'
-  | 'cancelled'
-  | 'notApplied';
+  'pending' | 'running' | 'rendered' | 'complete' | 'failed' | 'cancelled' | 'notApplied';
 
 export interface FreezeOperationRow {
   selectionId: string;

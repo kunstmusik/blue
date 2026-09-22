@@ -74,9 +74,7 @@ export interface PreparedStructuralTransaction {
 }
 
 export type PreparedTransaction =
-  | PreparedEmptyTransaction
-  | PreparedScalarTransaction
-  | PreparedStructuralTransaction;
+  PreparedEmptyTransaction | PreparedScalarTransaction | PreparedStructuralTransaction;
 
 export interface PreconditionValidationResult {
   valid: boolean;

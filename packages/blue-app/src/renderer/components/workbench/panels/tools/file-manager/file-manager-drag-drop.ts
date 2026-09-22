@@ -19,14 +19,12 @@ import {
 import { BLUE_LIBRARY_DRAG_MIME } from '../../../../libraries/library-drag-drop';
 
 export type AudioDropSource =
-  | { kind: 'file-manager'; path: string; name: string }
-  | { kind: 'external-os'; path: string };
+  { kind: 'file-manager'; path: string; name: string } | { kind: 'external-os'; path: string };
 
 const FILE_MANAGER_DRAG_CHANNEL = 'blue-electron-file-manager-drag-v1';
 
 type FileManagerDragMessage =
-  | { type: 'start'; payload: FileManagerDragPayload }
-  | { type: 'clear' };
+  { type: 'start'; payload: FileManagerDragPayload } | { type: 'clear' };
 
 let activeFileManagerDragPayload: FileManagerDragPayload | null = null;
 let fileManagerDragChannel: BroadcastChannel | null = null;

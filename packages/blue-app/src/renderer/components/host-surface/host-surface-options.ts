@@ -8,11 +8,7 @@
 export type HostSurfaceKind = 'menu' | 'tooltip' | 'readout' | 'popover';
 
 export type HostSurfaceDismissReason =
-  | 'escape'
-  | 'outside-pointer'
-  | 'host-scroll'
-  | 'host-unmount'
-  | 'caller';
+  'escape' | 'outside-pointer' | 'host-scroll' | 'host-unmount' | 'caller';
 
 export interface HostSurfaceAnchorElement {
   type: 'element';
@@ -38,9 +34,7 @@ export interface HostSurfaceAnchorPoint {
 }
 
 export type HostSurfaceAnchor =
-  | HostSurfaceAnchorElement
-  | HostSurfaceAnchorRect
-  | HostSurfaceAnchorPoint;
+  HostSurfaceAnchorElement | HostSurfaceAnchorRect | HostSurfaceAnchorPoint;
 
 export interface HostAnchorRect {
   left: number;

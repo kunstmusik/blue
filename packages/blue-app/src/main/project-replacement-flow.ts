@@ -11,10 +11,7 @@
 import { projectSaveStateNeedsSaving, type ProjectSaveState } from '../shared/project-history';
 
 export type ReplacementFlowOutcome =
-  | { status: 'committed' }
-  | { status: 'no-op' }
-  | { status: 'cancelled' }
-  | { status: 'blocked' };
+  { status: 'committed' } | { status: 'no-op' } | { status: 'cancelled' } | { status: 'blocked' };
 
 export interface ReplacementFlowCallbacks<Target> {
   /** Render/freeze safety gate. Runs before prepare and again before prompts. */

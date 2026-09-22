@@ -660,8 +660,7 @@ export class ProjectRuntimeReconciliation {
   ) => void;
   private readonly operationTimeoutMs: number;
   private readonly resolveMixerGates:
-    | (() => { signature: string; values: readonly number[] } | null)
-    | null;
+    (() => { signature: string; values: readonly number[] } | null) | null;
   private readonly restartRequiredOwners = createOwnerRestartMemory();
   private readonly outstandingObligations = new Map<
     PerformanceKind,

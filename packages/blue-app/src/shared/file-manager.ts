@@ -52,11 +52,7 @@ export interface FileManagerDirectorySnapshot {
 }
 
 export type FileManagerDirectoryErrorCode =
-  | 'not-found'
-  | 'not-directory'
-  | 'permission-denied'
-  | 'read-failed'
-  | 'symlink-cycle';
+  'not-found' | 'not-directory' | 'permission-denied' | 'read-failed' | 'symlink-cycle';
 
 export type FileManagerDirectoryResult =
   | { status: 'ok'; snapshot: FileManagerDirectorySnapshot }

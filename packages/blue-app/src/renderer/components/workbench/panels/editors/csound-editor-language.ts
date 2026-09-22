@@ -20,13 +20,7 @@ export const SELECTED_CSOUND_EDITOR: SelectedEditorMetadata = {
 };
 
 export type CsoundDocumentMode =
-  | 'orc'
-  | 'sco'
-  | 'csd'
-  | 'text'
-  | 'javascript'
-  | 'python'
-  | 'clojure';
+  'orc' | 'sco' | 'csd' | 'text' | 'javascript' | 'python' | 'clojure';
 
 export function getSelectedEditorMetadata(mode: CsoundDocumentMode): SelectedEditorMetadata {
   return {

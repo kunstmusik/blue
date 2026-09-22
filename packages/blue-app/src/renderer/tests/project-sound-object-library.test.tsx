@@ -230,27 +230,24 @@ describe('Project SoundObject Library panel', () => {
   });
 
   it('drains every project SoundObject page without truncating the panel', async () => {
-    const allNodes = Array.from(
-      { length: 501 },
-      (_, index): LibraryBrowseNode => ({
-        ...sharedNode,
-        key: {
-          ...sharedNode.key!,
-          locator: {
-            kind: 'soundObject',
-            libraryId: `shared-${index}`,
-            persistedFingerprint: {
-              canonicalHash: `hash-${index}`,
-              displayName: `Shared ${index}`,
-              objectType: 'GenericScore',
-            },
+    const allNodes = Array.from({ length: 501 }, (_, index): LibraryBrowseNode => ({
+      ...sharedNode,
+      key: {
+        ...sharedNode.key!,
+        locator: {
+          kind: 'soundObject',
+          libraryId: `shared-${index}`,
+          persistedFingerprint: {
+            canonicalHash: `hash-${index}`,
+            displayName: `Shared ${index}`,
+            objectType: 'GenericScore',
           },
         },
-        nodeId: `project-sound-${index}`,
-        displayName: `Shared ${index}`,
-        revision: `hash-${index}`,
-      }),
-    );
+      },
+      nodeId: `project-sound-${index}`,
+      displayName: `Shared ${index}`,
+      revision: `hash-${index}`,
+    }));
     vi.mocked(window.blueAPI.browseLibraries).mockImplementation(async (request) => {
       const offset = request.cursor ? 500 : 0;
       return {

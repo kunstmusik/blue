@@ -438,8 +438,8 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
         channelState.set(entry.name, entry.value);
       }
       observations.push(
-        parameters.map(
-          (parameter) => channelState.get(binding.parameterChannels.get(parameter.getName())!)!,
+        parameters.map((parameter) =>
+          channelState.get(binding.parameterChannels.get(parameter.getName())!)!,
         ),
       );
       return { ok: true, message: '' };

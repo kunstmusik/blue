@@ -93,8 +93,7 @@ describe('MIDI service hook lifecycle', () => {
 
   it('does not install a stale command subscription after StrictMode cleanup', async () => {
     let resolveFirst:
-      | ((value: { preferences: { devices: [] }; cachedSnapshot: null }) => void)
-      | null = null;
+      ((value: { preferences: { devices: [] }; cachedSnapshot: null }) => void) | null = null;
     const first = new Promise<{ preferences: { devices: [] }; cachedSnapshot: null }>((resolve) => {
       resolveFirst = resolve;
     });

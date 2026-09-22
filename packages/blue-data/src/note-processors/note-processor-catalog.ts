@@ -18,12 +18,7 @@ import { PythonProcessor, DEFAULT_PYTHON_PROCESSOR_CODE } from './python-process
 import { NoteProcessor } from './note-processor';
 
 export type ParameterValueType =
-  | 'string'
-  | 'number'
-  | 'integer'
-  | 'boolean'
-  | 'multilineText'
-  | 'code';
+  'string' | 'number' | 'integer' | 'boolean' | 'multilineText' | 'code';
 
 export interface NoteProcessorParameterDefinition {
   name: string;

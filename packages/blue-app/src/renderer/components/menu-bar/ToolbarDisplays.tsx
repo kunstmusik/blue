@@ -38,14 +38,12 @@ export const ToolbarDisplayCard = forwardRef<
   ComponentPropsWithoutRef<'section'> & {
     title: string;
   }
->(
-  ({ title, children, className, ...props }, ref): React.ReactElement => (
-    <section ref={ref} className={cn('toolbar-display-card', className)} {...props}>
-      <div className="toolbar-display-label mb-0.5">{title}</div>
-      {children}
-    </section>
-  ),
-);
+>(({ title, children, className, ...props }, ref): React.ReactElement => (
+  <section ref={ref} className={cn('toolbar-display-card', className)} {...props}>
+    <div className="toolbar-display-label mb-0.5">{title}</div>
+    {children}
+  </section>
+));
 
 ToolbarDisplayCard.displayName = 'ToolbarDisplayCard';
 

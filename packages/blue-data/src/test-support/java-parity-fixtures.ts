@@ -370,14 +370,7 @@ export function assertManifestInvariants(
 }
 
 export type HistoryFixtureKind =
-  | 'score'
-  | 'mixer'
-  | 'instrument'
-  | 'bsb'
-  | 'blueX7'
-  | 'pianoRoll'
-  | 'freeze'
-  | 'unknownData';
+  'score' | 'mixer' | 'instrument' | 'bsb' | 'blueX7' | 'pianoRoll' | 'freeze' | 'unknownData';
 
 export function resolveRepoRoot(): string {
   const candidates = [

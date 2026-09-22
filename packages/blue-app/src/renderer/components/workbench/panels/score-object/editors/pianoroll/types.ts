@@ -106,13 +106,7 @@ export const CENTER_OCTAVE = 8;
 export const PITCH_HEADER_WIDTH = 72;
 
 export type DragMode =
-  | 'NONE'
-  | 'SELECTING'
-  | 'MOVE'
-  | 'RESIZE_LEFT'
-  | 'RESIZE_RIGHT'
-  | 'FIELD_EDIT'
-  | 'CREATE';
+  'NONE' | 'SELECTING' | 'MOVE' | 'RESIZE_LEFT' | 'RESIZE_RIGHT' | 'FIELD_EDIT' | 'CREATE';
 
 export interface NoteData {
   noteIndex: number;

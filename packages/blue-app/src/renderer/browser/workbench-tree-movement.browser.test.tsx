@@ -599,8 +599,7 @@ describe('unaffected auxiliary session preservation', () => {
 
         const active = document.activeElement;
         const librariesGroupElement = api.getPanel('LibrariesTopComponent')?.group.element as
-          | HTMLElement
-          | undefined;
+          HTMLElement | undefined;
         const fileManagerGroupElement = api.getPanel('BlueFileManagerTopComponent')?.group
           .element as HTMLElement | undefined;
         expect(

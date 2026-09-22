@@ -47,9 +47,7 @@ const AUXILIARY_DRAG_THRESHOLD = 8;
 
 export function selectWorkbenchLayout(
   layoutSnapshot:
-    | Pick<WindowLayoutSettingsSnapshot, 'workbench' | 'lastResetAt'>
-    | null
-    | undefined,
+    Pick<WindowLayoutSettingsSnapshot, 'workbench' | 'lastResetAt'> | null | undefined,
   legacyLayout: string | null,
 ): string | null {
   // A reset marker means the next workbench must be rebuilt from defaults.
@@ -245,8 +243,7 @@ export default function WorkbenchShell() {
         let displayWorkAreas: DisplayWorkArea[] | undefined;
         try {
           displayWorkAreas = (await blueAPI?.['getDisplayWorkAreas']?.()) as
-            | DisplayWorkArea[]
-            | undefined;
+            DisplayWorkArea[] | undefined;
         } catch {
           // Keep the renderer viewport fallback when the main process is
           // unavailable during tests or early startup.

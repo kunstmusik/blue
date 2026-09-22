@@ -8,11 +8,7 @@ export interface OpenCsoundManualRequest {
 export type ManualAvailability = 'available' | 'missing' | 'indeterminate';
 
 export type ManualFailureReason =
-  | 'invalid-request'
-  | 'invalid-setting'
-  | 'missing'
-  | 'probe-failed'
-  | 'open-failed';
+  'invalid-request' | 'invalid-setting' | 'missing' | 'probe-failed' | 'open-failed';
 
 export interface OpenCsoundManualResult {
   disposition: 'opened' | 'fallback';

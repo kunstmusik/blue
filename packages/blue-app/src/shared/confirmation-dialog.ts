@@ -3,11 +3,7 @@ export const NATIVE_CONFIRMATION_CHANNEL = 'blue:native-confirmation:show';
 export type NativeConfirmationType = 'none' | 'info' | 'error' | 'question' | 'warning';
 
 export type NativeConfirmationActionRole =
-  | 'accept'
-  | 'cancel'
-  | 'destructive'
-  | 'secondary'
-  | string;
+  'accept' | 'cancel' | 'destructive' | 'secondary' | string;
 
 export interface NativeConfirmationAction {
   id: string;

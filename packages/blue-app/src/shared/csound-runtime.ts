@@ -150,8 +150,7 @@ export interface CsoundPerformanceExecutionRequest extends CsoundExecutionCommon
 }
 
 export type CsoundExecutionRequest =
-  | CsoundUtilityExecutionRequest
-  | CsoundPerformanceExecutionRequest;
+  CsoundUtilityExecutionRequest | CsoundPerformanceExecutionRequest;
 
 export type CsoundExecutionState = 'completed' | 'failed' | 'cancelled';
 

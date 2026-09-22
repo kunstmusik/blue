@@ -42,11 +42,7 @@ export interface CodeRepositoryServiceOptions {
 }
 
 export type CodeRepositoryServicePhase =
-  | 'initializing'
-  | 'migrating'
-  | 'ready'
-  | 'failed'
-  | 'stopped';
+  'initializing' | 'migrating' | 'ready' | 'failed' | 'stopped';
 
 interface CodeRepositoryServiceSnapshot {
   readonly phase: CodeRepositoryServicePhase;
