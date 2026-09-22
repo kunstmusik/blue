@@ -15,7 +15,7 @@ description: |
 
 inputs:
   node-version:
-    description: Pinned Node.js major version (must match the Electron 35.7.5 embedded Node runtime contract).
+    description: Pinned Node.js major version (must match the Electron 39.8.10 embedded Node runtime contract).
     required: false
     default: '22'
   pnpm-version:

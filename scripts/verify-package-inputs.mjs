@@ -16,7 +16,7 @@
  *   3. Built Electron entries (dist/main, dist/preload, dist/renderer,
  *      dist/shared) that electron-builder consumes from packages/blue-app.
  *   4. The Electron version declared in packages/blue-app/package.json matches
- *      the pinned runtime constraint (35.7.5) used for native-module rebuilds.
+ *      the pinned runtime constraint (39.8.10) used for native-module rebuilds.
  *   5. Native ZeroMQ (.node) availability for the host runtime so packaging
  *      does not silently ship an app that cannot load `zeromq`.
  *   6. The macOS nested-engine entitlement required for future signed builds.
@@ -397,7 +397,7 @@ export function checkReleaseMetadata({
  * @returns {Diagnostic}
  */
 function checkElectronVersion() {
-  const expectedPin = '35.7.5';
+  const expectedPin = '39.8.10';
   let pkgText;
   try {
     pkgText = readFileSync(join(appRoot, 'package.json'), 'utf-8');
@@ -431,8 +431,8 @@ function checkElectronVersion() {
     };
   }
 
-  // Accept exact pins ("35.7.5") or caret ranges that still resolve to the pin
-  // ("^35.7.5"). Reject "~" or ">= " ranges because they do not lock the
+  // Accept exact pins ("39.8.10") or caret ranges that still resolve to the pin
+  // ("^39.8.10"). Reject "~" or ">= " ranges because they do not lock the
   // Node/SQLite runtime contract documented in the release plan.
   const cleaned = declared.replace(/^[^0-9]*/, '');
   if (cleaned !== expectedPin) {
