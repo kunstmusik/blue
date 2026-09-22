@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "commander": "^14.0.3",
-    "esbuild": "^0.28.0"
+    "esbuild": "^0.28.2"
   },
   "//": "quickjs-emscripten must remain in dependencies because esbuild externalizes it when bundling @blue/data into dist/blue-cli.cjs; standalone CLI installations require it at runtime.",
   "dependencies": {

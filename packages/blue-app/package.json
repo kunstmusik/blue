@@ -84,16 +84,16 @@
     "@types/react": "^19.2.8",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.4",
-    "@vitest/browser-playwright": "^4.1.6",
-    "electron": "35.7.5",
+    "@vitest/browser-playwright": "^4.1.11",
+    "electron": "39.8.10",
     "electron-builder": "^26.0.36",
     "jsdom": "^29.1.0",
     "playwright": "^1.60.0",
     "tailwindcss": "^4.1.18",
     "typescript": "^5.8.0",
-    "vite": "^7.3.2",
+    "vite": "^7.3.5",
     "vite-plugin-electron": "^0.29.1",
     "vite-plugin-electron-renderer": "^0.14.6",
-    "vitest": "^4.1.6"
+    "vitest": "^4.1.11"
   }
 }

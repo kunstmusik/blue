@@ -13,7 +13,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.build.finalName>blue-java</project.build.finalName>
     <junit.version>5.13.4</junit.version>
-    <jackson.version>2.20.1</jackson.version>
+    <jackson.version>2.21.5</jackson.version>
     <jeromq.version>0.6.0</jeromq.version>
     <jython.version>2.7.4</jython.version>
   </properties>

@@ -2,9 +2,9 @@ import { spawnSync } from 'node:child_process';
 import electronPath from 'electron';
 import { describe, expect, it } from 'vitest';
 
-const EXPECTED_ELECTRON_VERSION = '35.7.5';
-const EXPECTED_NODE_VERSION = '22.16.0';
-const EXPECTED_SQLITE_VERSION = '3.49.1';
+const EXPECTED_ELECTRON_VERSION = '39.8.10';
+const EXPECTED_NODE_VERSION = '22.22.1';
+const EXPECTED_SQLITE_VERSION = '3.51.2';
 
 interface ElectronRuntimeSnapshot {
   electron: string;
