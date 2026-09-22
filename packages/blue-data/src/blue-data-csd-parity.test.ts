@@ -458,7 +458,7 @@ describe('legacy mono/stereo audio playback and mixer CSD parity with Java Blue 
 
           const extractDynamicMatrix = (csd: string) => {
             const match = csd.match(
-              /k_pan_al = [^\n]+[\s\S]*?ga_bluemix_0_1 = k_pan_bl \* a_pan_in_l \+ k_pan_br \* a_pan_in_r/,
+              /\$BLUE_MIXER_CALC_PAN_GAINS\([^\n]+'k_pan_al'k_pan_bl'[^\n]+\)[\s\S]*?ga_bluemix_0_1 = k_pan_bl \* a_pan_in_l \+ k_pan_br \* a_pan_in_r/,
             );
             return match ? match[0] : null;
           };
@@ -475,10 +475,7 @@ describe('legacy mono/stereo audio playback and mixer CSD parity with Java Blue 
           // the same matrix graph instead of being byte-identical.
           expect(realtimeMatrix).toContain('gk_blue_score_pan_law');
           expect(realtimeMatrix).toContain('gk_blue_score_pan_boost');
-          expect(diskMatrix).toContain(`${law} == 0 ?`);
-          expect(diskMatrix).toContain(`${law} == -3 ?`);
-          expect(diskMatrix).toContain(`${law} == -4.5 ?`);
-          expect(diskMatrix).toContain(`${boost ? 1 : 0} != 0 && ${law} != 0`);
+          expect(diskMatrix).toContain(`'${law}'${boost ? 1 : 0})`);
         }
       }
     }

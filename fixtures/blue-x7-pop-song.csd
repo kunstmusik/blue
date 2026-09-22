@@ -5092,7 +5092,22 @@ endif
 
 	endin
 
+#define BLUE_MIXER_CALC_PAN_GAINS(POS'LEFT'RIGHT'LAW'BOOST) #
+$LEFT = ($LAW == 0 ? min(1, 2 * (1 - ($POS))) : $LAW == -3 ? cos(1.5707963267948966 * ($POS)) : $LAW == -4.5 ? (0.46189768862683755 * cos(1.5707963267948966 * ($POS)) + 0.5381023113731624 * (1 - ($POS))) : (1 - ($POS)))
+$RIGHT = ($LAW == 0 ? min(1, 2 * ($POS)) : $LAW == -3 ? sin(1.5707963267948966 * ($POS)) : $LAW == -4.5 ? (0.46189768862683755 * sin(1.5707963267948966 * ($POS)) + 0.5381023113731624 * ($POS)) : ($POS))
+if $BOOST != 0 && $LAW != 0 then
+  k_pan_boost = 1 + k_pan_boost_amount * 2 * abs(($POS) - 0.5)
+  $LEFT *= k_pan_boost
+  $RIGHT *= k_pan_boost
+endif
+#
+
 	instr BlueMixer	;Blue Mixer Instrument
+if gk_blue_score_pan_boost != 0 && gk_blue_score_pan_law != 0 then
+  k_pan_boost_amount = pow(10, abs(gk_blue_score_pan_law) / 20) - 1
+else
+  k_pan_boost_amount = 0
+endif
 kMixGateStep init ksmps / (0.005 * sr)
 kMixGateCommit = gk_blue_mixgate_commit
 kMixGateBank = (kMixGateCommit % 2)
@@ -5118,37 +5133,13 @@ elseif gk_blue_pan_mode_0 < 1.5 then
   k_pan_d = k_pan_w * min(k_pan_c, 1 - k_pan_c)
   k_pan_pl = k_pan_c - k_pan_d
   k_pan_pr = k_pan_c + k_pan_d
-k_pan_al = (gk_blue_score_pan_law == 0 ? min(1, 2 * (1 - k_pan_pl)) : gk_blue_score_pan_law == -3 ? cos(1.5707963267948966 * k_pan_pl) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * cos(1.5707963267948966 * k_pan_pl) + 0.5381023113731624 * (1 - k_pan_pl)) : (1 - k_pan_pl))
-k_pan_bl = (gk_blue_score_pan_law == 0 ? min(1, 2 * k_pan_pl) : gk_blue_score_pan_law == -3 ? sin(1.5707963267948966 * k_pan_pl) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * sin(1.5707963267948966 * k_pan_pl) + 0.5381023113731624 * k_pan_pl) : k_pan_pl)
-if gk_blue_score_pan_boost != 0 && gk_blue_score_pan_law != 0 then
-  k_pan_boost = 1 + (pow(10, abs(gk_blue_score_pan_law) / 20) - 1) * 2 * abs(k_pan_pl - 0.5)
-  k_pan_al *= k_pan_boost
-  k_pan_bl *= k_pan_boost
-endif
-k_pan_ar = (gk_blue_score_pan_law == 0 ? min(1, 2 * (1 - k_pan_pr)) : gk_blue_score_pan_law == -3 ? cos(1.5707963267948966 * k_pan_pr) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * cos(1.5707963267948966 * k_pan_pr) + 0.5381023113731624 * (1 - k_pan_pr)) : (1 - k_pan_pr))
-k_pan_br = (gk_blue_score_pan_law == 0 ? min(1, 2 * k_pan_pr) : gk_blue_score_pan_law == -3 ? sin(1.5707963267948966 * k_pan_pr) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * sin(1.5707963267948966 * k_pan_pr) + 0.5381023113731624 * k_pan_pr) : k_pan_pr)
-if gk_blue_score_pan_boost != 0 && gk_blue_score_pan_law != 0 then
-  k_pan_boost = 1 + (pow(10, abs(gk_blue_score_pan_law) / 20) - 1) * 2 * abs(k_pan_pr - 0.5)
-  k_pan_ar *= k_pan_boost
-  k_pan_br *= k_pan_boost
-endif
+$BLUE_MIXER_CALC_PAN_GAINS(k_pan_pl'k_pan_al'k_pan_bl'gk_blue_score_pan_law'gk_blue_score_pan_boost)
+$BLUE_MIXER_CALC_PAN_GAINS(k_pan_pr'k_pan_ar'k_pan_br'gk_blue_score_pan_law'gk_blue_score_pan_boost)
 else
 k_pan_pl = gk_blue_auto305
 k_pan_pr = gk_blue_auto306
-k_pan_al = (gk_blue_score_pan_law == 0 ? min(1, 2 * (1 - k_pan_pl)) : gk_blue_score_pan_law == -3 ? cos(1.5707963267948966 * k_pan_pl) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * cos(1.5707963267948966 * k_pan_pl) + 0.5381023113731624 * (1 - k_pan_pl)) : (1 - k_pan_pl))
-k_pan_bl = (gk_blue_score_pan_law == 0 ? min(1, 2 * k_pan_pl) : gk_blue_score_pan_law == -3 ? sin(1.5707963267948966 * k_pan_pl) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * sin(1.5707963267948966 * k_pan_pl) + 0.5381023113731624 * k_pan_pl) : k_pan_pl)
-if gk_blue_score_pan_boost != 0 && gk_blue_score_pan_law != 0 then
-  k_pan_boost = 1 + (pow(10, abs(gk_blue_score_pan_law) / 20) - 1) * 2 * abs(k_pan_pl - 0.5)
-  k_pan_al *= k_pan_boost
-  k_pan_bl *= k_pan_boost
-endif
-k_pan_ar = (gk_blue_score_pan_law == 0 ? min(1, 2 * (1 - k_pan_pr)) : gk_blue_score_pan_law == -3 ? cos(1.5707963267948966 * k_pan_pr) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * cos(1.5707963267948966 * k_pan_pr) + 0.5381023113731624 * (1 - k_pan_pr)) : (1 - k_pan_pr))
-k_pan_br = (gk_blue_score_pan_law == 0 ? min(1, 2 * k_pan_pr) : gk_blue_score_pan_law == -3 ? sin(1.5707963267948966 * k_pan_pr) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * sin(1.5707963267948966 * k_pan_pr) + 0.5381023113731624 * k_pan_pr) : k_pan_pr)
-if gk_blue_score_pan_boost != 0 && gk_blue_score_pan_law != 0 then
-  k_pan_boost = 1 + (pow(10, abs(gk_blue_score_pan_law) / 20) - 1) * 2 * abs(k_pan_pr - 0.5)
-  k_pan_ar *= k_pan_boost
-  k_pan_br *= k_pan_boost
-endif
+$BLUE_MIXER_CALC_PAN_GAINS(k_pan_pl'k_pan_al'k_pan_bl'gk_blue_score_pan_law'gk_blue_score_pan_boost)
+$BLUE_MIXER_CALC_PAN_GAINS(k_pan_pr'k_pan_ar'k_pan_br'gk_blue_score_pan_law'gk_blue_score_pan_boost)
 endif
 ga_bluemix_0_0 = k_pan_al * a_pan_in_l + k_pan_ar * a_pan_in_r
 ga_bluemix_0_1 = k_pan_bl * a_pan_in_l + k_pan_br * a_pan_in_r
@@ -5172,37 +5163,13 @@ elseif gk_blue_pan_mode_1 < 1.5 then
   k_pan_d = k_pan_w * min(k_pan_c, 1 - k_pan_c)
   k_pan_pl = k_pan_c - k_pan_d
   k_pan_pr = k_pan_c + k_pan_d
-k_pan_al = (gk_blue_score_pan_law == 0 ? min(1, 2 * (1 - k_pan_pl)) : gk_blue_score_pan_law == -3 ? cos(1.5707963267948966 * k_pan_pl) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * cos(1.5707963267948966 * k_pan_pl) + 0.5381023113731624 * (1 - k_pan_pl)) : (1 - k_pan_pl))
-k_pan_bl = (gk_blue_score_pan_law == 0 ? min(1, 2 * k_pan_pl) : gk_blue_score_pan_law == -3 ? sin(1.5707963267948966 * k_pan_pl) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * sin(1.5707963267948966 * k_pan_pl) + 0.5381023113731624 * k_pan_pl) : k_pan_pl)
-if gk_blue_score_pan_boost != 0 && gk_blue_score_pan_law != 0 then
-  k_pan_boost = 1 + (pow(10, abs(gk_blue_score_pan_law) / 20) - 1) * 2 * abs(k_pan_pl - 0.5)
-  k_pan_al *= k_pan_boost
-  k_pan_bl *= k_pan_boost
-endif
-k_pan_ar = (gk_blue_score_pan_law == 0 ? min(1, 2 * (1 - k_pan_pr)) : gk_blue_score_pan_law == -3 ? cos(1.5707963267948966 * k_pan_pr) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * cos(1.5707963267948966 * k_pan_pr) + 0.5381023113731624 * (1 - k_pan_pr)) : (1 - k_pan_pr))
-k_pan_br = (gk_blue_score_pan_law == 0 ? min(1, 2 * k_pan_pr) : gk_blue_score_pan_law == -3 ? sin(1.5707963267948966 * k_pan_pr) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * sin(1.5707963267948966 * k_pan_pr) + 0.5381023113731624 * k_pan_pr) : k_pan_pr)
-if gk_blue_score_pan_boost != 0 && gk_blue_score_pan_law != 0 then
-  k_pan_boost = 1 + (pow(10, abs(gk_blue_score_pan_law) / 20) - 1) * 2 * abs(k_pan_pr - 0.5)
-  k_pan_ar *= k_pan_boost
-  k_pan_br *= k_pan_boost
-endif
+$BLUE_MIXER_CALC_PAN_GAINS(k_pan_pl'k_pan_al'k_pan_bl'gk_blue_score_pan_law'gk_blue_score_pan_boost)
+$BLUE_MIXER_CALC_PAN_GAINS(k_pan_pr'k_pan_ar'k_pan_br'gk_blue_score_pan_law'gk_blue_score_pan_boost)
 else
 k_pan_pl = gk_blue_auto310
 k_pan_pr = gk_blue_auto311
-k_pan_al = (gk_blue_score_pan_law == 0 ? min(1, 2 * (1 - k_pan_pl)) : gk_blue_score_pan_law == -3 ? cos(1.5707963267948966 * k_pan_pl) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * cos(1.5707963267948966 * k_pan_pl) + 0.5381023113731624 * (1 - k_pan_pl)) : (1 - k_pan_pl))
-k_pan_bl = (gk_blue_score_pan_law == 0 ? min(1, 2 * k_pan_pl) : gk_blue_score_pan_law == -3 ? sin(1.5707963267948966 * k_pan_pl) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * sin(1.5707963267948966 * k_pan_pl) + 0.5381023113731624 * k_pan_pl) : k_pan_pl)
-if gk_blue_score_pan_boost != 0 && gk_blue_score_pan_law != 0 then
-  k_pan_boost = 1 + (pow(10, abs(gk_blue_score_pan_law) / 20) - 1) * 2 * abs(k_pan_pl - 0.5)
-  k_pan_al *= k_pan_boost
-  k_pan_bl *= k_pan_boost
-endif
-k_pan_ar = (gk_blue_score_pan_law == 0 ? min(1, 2 * (1 - k_pan_pr)) : gk_blue_score_pan_law == -3 ? cos(1.5707963267948966 * k_pan_pr) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * cos(1.5707963267948966 * k_pan_pr) + 0.5381023113731624 * (1 - k_pan_pr)) : (1 - k_pan_pr))
-k_pan_br = (gk_blue_score_pan_law == 0 ? min(1, 2 * k_pan_pr) : gk_blue_score_pan_law == -3 ? sin(1.5707963267948966 * k_pan_pr) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * sin(1.5707963267948966 * k_pan_pr) + 0.5381023113731624 * k_pan_pr) : k_pan_pr)
-if gk_blue_score_pan_boost != 0 && gk_blue_score_pan_law != 0 then
-  k_pan_boost = 1 + (pow(10, abs(gk_blue_score_pan_law) / 20) - 1) * 2 * abs(k_pan_pr - 0.5)
-  k_pan_ar *= k_pan_boost
-  k_pan_br *= k_pan_boost
-endif
+$BLUE_MIXER_CALC_PAN_GAINS(k_pan_pl'k_pan_al'k_pan_bl'gk_blue_score_pan_law'gk_blue_score_pan_boost)
+$BLUE_MIXER_CALC_PAN_GAINS(k_pan_pr'k_pan_ar'k_pan_br'gk_blue_score_pan_law'gk_blue_score_pan_boost)
 endif
 ga_bluemix_1_0 = k_pan_al * a_pan_in_l + k_pan_ar * a_pan_in_r
 ga_bluemix_1_1 = k_pan_bl * a_pan_in_l + k_pan_br * a_pan_in_r
@@ -5226,37 +5193,13 @@ elseif gk_blue_pan_mode_2 < 1.5 then
   k_pan_d = k_pan_w * min(k_pan_c, 1 - k_pan_c)
   k_pan_pl = k_pan_c - k_pan_d
   k_pan_pr = k_pan_c + k_pan_d
-k_pan_al = (gk_blue_score_pan_law == 0 ? min(1, 2 * (1 - k_pan_pl)) : gk_blue_score_pan_law == -3 ? cos(1.5707963267948966 * k_pan_pl) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * cos(1.5707963267948966 * k_pan_pl) + 0.5381023113731624 * (1 - k_pan_pl)) : (1 - k_pan_pl))
-k_pan_bl = (gk_blue_score_pan_law == 0 ? min(1, 2 * k_pan_pl) : gk_blue_score_pan_law == -3 ? sin(1.5707963267948966 * k_pan_pl) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * sin(1.5707963267948966 * k_pan_pl) + 0.5381023113731624 * k_pan_pl) : k_pan_pl)
-if gk_blue_score_pan_boost != 0 && gk_blue_score_pan_law != 0 then
-  k_pan_boost = 1 + (pow(10, abs(gk_blue_score_pan_law) / 20) - 1) * 2 * abs(k_pan_pl - 0.5)
-  k_pan_al *= k_pan_boost
-  k_pan_bl *= k_pan_boost
-endif
-k_pan_ar = (gk_blue_score_pan_law == 0 ? min(1, 2 * (1 - k_pan_pr)) : gk_blue_score_pan_law == -3 ? cos(1.5707963267948966 * k_pan_pr) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * cos(1.5707963267948966 * k_pan_pr) + 0.5381023113731624 * (1 - k_pan_pr)) : (1 - k_pan_pr))
-k_pan_br = (gk_blue_score_pan_law == 0 ? min(1, 2 * k_pan_pr) : gk_blue_score_pan_law == -3 ? sin(1.5707963267948966 * k_pan_pr) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * sin(1.5707963267948966 * k_pan_pr) + 0.5381023113731624 * k_pan_pr) : k_pan_pr)
-if gk_blue_score_pan_boost != 0 && gk_blue_score_pan_law != 0 then
-  k_pan_boost = 1 + (pow(10, abs(gk_blue_score_pan_law) / 20) - 1) * 2 * abs(k_pan_pr - 0.5)
-  k_pan_ar *= k_pan_boost
-  k_pan_br *= k_pan_boost
-endif
+$BLUE_MIXER_CALC_PAN_GAINS(k_pan_pl'k_pan_al'k_pan_bl'gk_blue_score_pan_law'gk_blue_score_pan_boost)
+$BLUE_MIXER_CALC_PAN_GAINS(k_pan_pr'k_pan_ar'k_pan_br'gk_blue_score_pan_law'gk_blue_score_pan_boost)
 else
 k_pan_pl = gk_blue_auto315
 k_pan_pr = gk_blue_auto316
-k_pan_al = (gk_blue_score_pan_law == 0 ? min(1, 2 * (1 - k_pan_pl)) : gk_blue_score_pan_law == -3 ? cos(1.5707963267948966 * k_pan_pl) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * cos(1.5707963267948966 * k_pan_pl) + 0.5381023113731624 * (1 - k_pan_pl)) : (1 - k_pan_pl))
-k_pan_bl = (gk_blue_score_pan_law == 0 ? min(1, 2 * k_pan_pl) : gk_blue_score_pan_law == -3 ? sin(1.5707963267948966 * k_pan_pl) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * sin(1.5707963267948966 * k_pan_pl) + 0.5381023113731624 * k_pan_pl) : k_pan_pl)
-if gk_blue_score_pan_boost != 0 && gk_blue_score_pan_law != 0 then
-  k_pan_boost = 1 + (pow(10, abs(gk_blue_score_pan_law) / 20) - 1) * 2 * abs(k_pan_pl - 0.5)
-  k_pan_al *= k_pan_boost
-  k_pan_bl *= k_pan_boost
-endif
-k_pan_ar = (gk_blue_score_pan_law == 0 ? min(1, 2 * (1 - k_pan_pr)) : gk_blue_score_pan_law == -3 ? cos(1.5707963267948966 * k_pan_pr) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * cos(1.5707963267948966 * k_pan_pr) + 0.5381023113731624 * (1 - k_pan_pr)) : (1 - k_pan_pr))
-k_pan_br = (gk_blue_score_pan_law == 0 ? min(1, 2 * k_pan_pr) : gk_blue_score_pan_law == -3 ? sin(1.5707963267948966 * k_pan_pr) : gk_blue_score_pan_law == -4.5 ? (0.46189768862683755 * sin(1.5707963267948966 * k_pan_pr) + 0.5381023113731624 * k_pan_pr) : k_pan_pr)
-if gk_blue_score_pan_boost != 0 && gk_blue_score_pan_law != 0 then
-  k_pan_boost = 1 + (pow(10, abs(gk_blue_score_pan_law) / 20) - 1) * 2 * abs(k_pan_pr - 0.5)
-  k_pan_ar *= k_pan_boost
-  k_pan_br *= k_pan_boost
-endif
+$BLUE_MIXER_CALC_PAN_GAINS(k_pan_pl'k_pan_al'k_pan_bl'gk_blue_score_pan_law'gk_blue_score_pan_boost)
+$BLUE_MIXER_CALC_PAN_GAINS(k_pan_pr'k_pan_ar'k_pan_br'gk_blue_score_pan_law'gk_blue_score_pan_boost)
 endif
 ga_bluesub_Master_0 = k_pan_al * a_pan_in_l + k_pan_ar * a_pan_in_r
 ga_bluesub_Master_1 = k_pan_bl * a_pan_in_l + k_pan_br * a_pan_in_r

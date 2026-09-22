@@ -208,7 +208,7 @@ describe('pan/balance stage interaction with gates (Spec 112 T072)', () => {
     expect(result.csdText).toMatch(
       new RegExp(
         'ga_bluesub_Reverb_0\\t\\+=\\t\\(ga_bluemix_0_0 \\* gk_blue_auto\\d+\\) \\* kMixGateState_0' +
-          '[\\s\\S]*k_pan_l = \\(' +
+          "[\\s\\S]*\\$BLUE_MIXER_CALC_PAN_GAINS\\([^\\n]*'k_pan_l'k_pan_r'" +
           '[\\s\\S]*ga_bluemix_0_0 \\*= 1\\.4142135623730951 \\* k_pan_l' +
           '[\\s\\S]*ga_bluemix_0_0 = ga_bluemix_0_0 \\* kMixGateState_1',
       ),
@@ -243,7 +243,7 @@ describe('pan/balance stage interaction with gates (Spec 112 T072)', () => {
 
     // Verified mono source uses Mono Pan: Send tap -> k_pan_l/r -> output gate
     expect(csd).toMatch(
-      /ga_bluesub_Reverb_0\t\+=\t[\s\S]*k_pan_l = \([\s\S]*ga_bluemix_0_0 \*= 1\.4142135623730951 \* k_pan_l[\s\S]*ga_bluemix_0_0 = ga_bluemix_0_0 \* kMixGateState_1/,
+      /ga_bluesub_Reverb_0\t\+=\t[\s\S]*\$BLUE_MIXER_CALC_PAN_GAINS\([^\n]*'k_pan_l'k_pan_r'[\s\S]*ga_bluemix_0_0 \*= 1\.4142135623730951 \* k_pan_l[\s\S]*ga_bluemix_0_0 = ga_bluemix_0_0 \* kMixGateState_1/,
     );
 
     // Subchannel uses Dual Pan 2x2 matrix: a_pan_in_l -> output gate

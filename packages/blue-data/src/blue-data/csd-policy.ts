@@ -1721,6 +1721,9 @@ function generateMixerOrchestra(
     emitMetering,
     gateContext,
   );
+  if (compileData.isPanningEnabled() && nchnls === 2) {
+    instrBuffer.push(BLUE_MIXER_CALC_PAN_GAINS_MACRO, '');
+  }
   instrBuffer.push(blueMixerCode);
 
   return {
@@ -2276,6 +2279,26 @@ function generateBlueMixer(
     lines.push(`${signalVar} = 0`);
   }
 
+  if (lines.some((line) => line.includes('$BLUE_MIXER_CALC_PAN_GAINS('))) {
+    const lawExpr =
+      gateContext?.mode === 'live' ? SCORE_PAN_LAW_CHANNEL : String(mixer.getPanLawDb());
+    const boostExpr =
+      gateContext?.mode === 'live'
+        ? SCORE_PAN_BOOST_CHANNEL
+        : mixer.isPanOffCenterBoost()
+          ? '1'
+          : '0';
+    lines.splice(
+      1,
+      0,
+      `if ${boostExpr} != 0 && ${lawExpr} != 0 then`,
+      `  k_pan_boost_amount = pow(10, abs(${lawExpr}) / 20) - 1`,
+      'else',
+      '  k_pan_boost_amount = 0',
+      'endif',
+    );
+  }
+
   lines.push('');
   lines.push('\tendin');
   lines.push('');
@@ -2482,27 +2505,19 @@ function emitDynamicSourceLegGainLines(
   boostExpr = SCORE_PAN_BOOST_CHANNEL,
 ): void {
   lines.push(
-    `${leftVar} = (${lawExpr} == 0 ? min(1, 2 * (1 - ${posExpr})) : ` +
-      `${lawExpr} == -3 ? cos(1.5707963267948966 * ${posExpr}) : ` +
-      `${lawExpr} == -4.5 ? ` +
-      `(0.46189768862683755 * cos(1.5707963267948966 * ${posExpr}) + ` +
-      `0.5381023113731624 * (1 - ${posExpr})) : (1 - ${posExpr}))`,
+    `$BLUE_MIXER_CALC_PAN_GAINS(${posExpr}'${leftVar}'${rightVar}'${lawExpr}'${boostExpr})`,
   );
-  lines.push(
-    `${rightVar} = (${lawExpr} == 0 ? min(1, 2 * ${posExpr}) : ` +
-      `${lawExpr} == -3 ? sin(1.5707963267948966 * ${posExpr}) : ` +
-      `${lawExpr} == -4.5 ? ` +
-      `(0.46189768862683755 * sin(1.5707963267948966 * ${posExpr}) + ` +
-      `0.5381023113731624 * ${posExpr}) : ${posExpr})`,
-  );
-  lines.push(`if ${boostExpr} != 0 && ${lawExpr} != 0 then`);
-  lines.push(
-    `  k_pan_boost = 1 + (pow(10, abs(${lawExpr}) / 20) - 1) * ` + `2 * abs(${posExpr} - 0.5)`,
-  );
-  lines.push(`  ${leftVar} *= k_pan_boost`);
-  lines.push(`  ${rightVar} *= k_pan_boost`);
-  lines.push('endif');
 }
+
+const BLUE_MIXER_CALC_PAN_GAINS_MACRO = `#define BLUE_MIXER_CALC_PAN_GAINS(POS'LEFT'RIGHT'LAW'BOOST) #
+$LEFT = ($LAW == 0 ? min(1, 2 * (1 - ($POS))) : $LAW == -3 ? cos(1.5707963267948966 * ($POS)) : $LAW == -4.5 ? (0.46189768862683755 * cos(1.5707963267948966 * ($POS)) + 0.5381023113731624 * (1 - ($POS))) : (1 - ($POS)))
+$RIGHT = ($LAW == 0 ? min(1, 2 * ($POS)) : $LAW == -3 ? sin(1.5707963267948966 * ($POS)) : $LAW == -4.5 ? (0.46189768862683755 * sin(1.5707963267948966 * ($POS)) + 0.5381023113731624 * ($POS)) : ($POS))
+if $BOOST != 0 && $LAW != 0 then
+  k_pan_boost = 1 + k_pan_boost_amount * 2 * abs(($POS) - 0.5)
+  $LEFT *= k_pan_boost
+  $RIGHT *= k_pan_boost
+endif
+#`;
 
 function emitDynamicPanGains(
   leftExpr: string,
