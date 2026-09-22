@@ -74,6 +74,30 @@ describe('disk pruning eligibility and route survival (Spec 111 US3)', () => {
     expect(score).not.toContain('\t4\t"test.wav"');
   });
 
+  it('skips only certified pruned source processing while retaining its clears', () => {
+    const { data, trackA, trackB } = createCertifiableProject();
+    addClip(trackA, 0, 4);
+    addClip(trackB, 0, 2);
+    data.getMixer().getChannels()[0].setMuted(true);
+
+    const sourceLines = (profile: 'disk' | 'realtime', sourceId = 0) => {
+      const mixer = buildStandardCSD(data, profile).csdText.match(
+        /\tinstr BlueMixer[\s\S]*?\tendin/,
+      )![0];
+      return mixer
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) => line.includes(`ga_bluemix_${sourceId}_`));
+    };
+
+    expect(sourceLines('disk')).toEqual(['ga_bluemix_0_0 = 0', 'ga_bluemix_0_1 = 0']);
+    expect(sourceLines('disk', 1).length).toBeGreaterThan(2);
+    expect(sourceLines('realtime').length).toBeGreaterThan(2);
+
+    data.getGlobalOrcSco().setGlobalOrc('; disables disk pruning\n');
+    expect(sourceLines('disk').length).toBeGreaterThan(2);
+  });
+
   it('keeps a feeder whose send survives a soloed return even when its dry output is excluded', () => {
     const { data, trackA } = createCertifiableProject();
     const reverb = new Channel();

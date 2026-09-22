@@ -343,6 +343,7 @@ export function buildStandardCSD(
         clonedMixer,
         actualEmitMetering,
         gateContext,
+        pruneInaudibleTracks,
       );
       mixerEffectUDOs = mixerOutput.effectUDOs;
       mixerInstruments = mixerOutput.instrumentsText;
@@ -643,6 +644,7 @@ export async function buildStandardCSDAsync(
         clonedMixer,
         actualEmitMetering,
         gateContext,
+        pruneInaudibleTracks,
       );
       mixerEffectUDOs = mixerOutput.effectUDOs;
       mixerInstruments = mixerOutput.instrumentsText;
@@ -1671,6 +1673,7 @@ function generateMixerOrchestra(
   mixer: Mixer = getBlueDataState(blueData).mixer,
   emitMetering = false,
   gateContext: BlueMixerGateContext | null = null,
+  prunedTrackIds?: ReadonlySet<string>,
 ): { effectUDOs: string[]; instrumentsText: string; effectIdMap: Map<Effect, number> } {
   const instrBuffer: string[] = [];
   const sourceChannels = mixer.getAllSourceChannels();
@@ -1720,6 +1723,7 @@ function generateMixerOrchestra(
     mixer,
     emitMetering,
     gateContext,
+    prunedTrackIds,
   );
   if (compileData.isPanningEnabled() && nchnls === 2) {
     instrBuffer.push(BLUE_MIXER_CALC_PAN_GAINS_MACRO, '');
@@ -2085,6 +2089,7 @@ function generateBlueMixer(
   mixer: Mixer = getBlueDataState(blueData).mixer,
   emitMetering = false,
   gateContext: BlueMixerGateContext | null = null,
+  prunedTrackIds?: ReadonlySet<string>,
 ): string {
   const lines: string[] = [];
   const panningEnabled = compileData.isPanningEnabled();
@@ -2115,6 +2120,7 @@ function generateBlueMixer(
   for (const channel of sourceChannels) {
     const channelId = channelIdAssignments.get(channel);
     if (channelId === undefined) continue;
+    if (gateContext?.mode === 'fixed' && prunedTrackIds?.has(channel.getAssociation())) continue;
     const signalVars = getSourceSignalVars(blueData, channelId, nchnls);
 
     applyEffectsChain(
