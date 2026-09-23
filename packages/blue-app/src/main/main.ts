@@ -6827,21 +6827,20 @@ const mixerGainPreviewAdapter = new MixerGainPreviewAdapter({
   ],
 });
 
+const mixerPreviewSenders = new WeakSet<Electron.WebContents>();
+function trackMixerPreviewSender(sender: Electron.WebContents): void {
+  if (sender.isDestroyed() || mixerPreviewSenders.has(sender)) return;
+  mixerPreviewSenders.add(sender);
+  sender.once('destroyed', () => mixerGainPreviewAdapter.onSenderDestroyed(sender.id));
+}
+
 ipcRegistration.handle('send-mixer-realtime-level-update', async (event, update: unknown) => {
-  if (!event.sender.isDestroyed()) {
-    event.sender.once('destroyed', () => {
-      mixerGainPreviewAdapter.onSenderDestroyed(event.sender.id);
-    });
-  }
+  trackMixerPreviewSender(event.sender);
   return mixerGainPreviewAdapter.handleUpdate(event.sender.id, update);
 });
 
 ipcRegistration.handle('send-mixer-realtime-pan-update', async (event, update: unknown) => {
-  if (!event.sender.isDestroyed()) {
-    event.sender.once('destroyed', () => {
-      mixerGainPreviewAdapter.onSenderDestroyed(event.sender.id);
-    });
-  }
+  trackMixerPreviewSender(event.sender);
   return mixerGainPreviewAdapter.handlePanUpdate(event.sender.id, update);
 });
 
