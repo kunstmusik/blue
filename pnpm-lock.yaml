@@ -79,8 +79,8 @@ importers:
         specifier: ^5.2.10
         version: 5.3.0
       '@kunstmusik/codemirror-lang-csound':
-        specifier: 1.0.2
-        version: 1.0.2
+        specifier: 1.0.3
+        version: 1.0.3
       '@lezer/highlight':
         specifier: ^1.2.3
         version: 1.2.3
@@ -753,8 +753,8 @@ packages:
   '@keyv/serialize@1.1.1':
     resolution: {integrity: sha512-dXn3FZhPv0US+7dtJsIi2R+c7qWYiReoEh5zUntWCf4oSpMNib8FDhSoed6m3QyZdx5hK7iLFkYk3rNxwt8vTA==}
 
-  '@kunstmusik/codemirror-lang-csound@1.0.2':
-    resolution: {integrity: sha512-/MJjvkXOReHAvmJegvxr6y3MiywYqxVRA1/+pfTOfHX3ejrH8gXJio6izQridhbc33qF0FxYAHxLp9P5uLAZPw==}
+  '@kunstmusik/codemirror-lang-csound@1.0.3':
+    resolution: {integrity: sha512-03KIzK1m488ng/wXt0oGGWtsvYyshXCyyHalWmdYCrTh8BXrDTiD4uPRYgUZQ2IZjRJ8J/Zw7+qZeTiIHbwWdQ==}
 
   '@lezer/common@1.5.2':
     resolution: {integrity: sha512-sxQE460fPZyU3sdc8lafxiPwJHBzZRy/udNFynGQky1SePYBdhkBl1kOagA9uT3pxR8K09bOrmTUqA9wb/PjSQ==}
@@ -4346,7 +4346,7 @@ snapshots:
 
   '@keyv/serialize@1.1.1': {}
 
-  '@kunstmusik/codemirror-lang-csound@1.0.2':
+  '@kunstmusik/codemirror-lang-csound@1.0.3':
     dependencies:
       '@codemirror/autocomplete': 6.20.3
       '@codemirror/language': 6.12.4

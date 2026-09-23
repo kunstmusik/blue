@@ -53,7 +53,7 @@
     "@codemirror/view": "^6.43.11",
     "@floating-ui/dom": "^1.7.6",
     "@fontsource/roboto": "^5.2.10",
-    "@kunstmusik/codemirror-lang-csound": "1.0.2",
+    "@kunstmusik/codemirror-lang-csound": "1.0.3",
     "@lezer/highlight": "^1.2.3",
     "@nextjournal/lang-clojure": "^1.0.0",
     "@radix-ui/react-context-menu": "^2.2.16",
