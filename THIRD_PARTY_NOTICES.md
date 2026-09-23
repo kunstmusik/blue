@@ -35,13 +35,13 @@ The exact production npm dependency graph and declared license identifiers are r
 
 The `.blue` and generated `.csd` files for these Dave Seidel works carry the stated Creative Commons terms independently of Blue's source-code license:
 
-| Work | License |
-| --- | --- |
-| The Gemini Nebula | CC BY 2.0 |
-| Timewave Canon | CC BY 2.5 |
-| Owllight; Palimpsest; Aurora; Second Sleep; Unstill Light; Herald of Water, Herald of Air; Drift Study III | CC BY 3.0 |
-| Gyre | CC BY-NC 3.0 |
-| Triune [disquiet0062-lifeofsine] | CC BY-NC-SA 3.0 |
+| Work                                                                                                       | License         |
+| ---------------------------------------------------------------------------------------------------------- | --------------- |
+| The Gemini Nebula                                                                                          | CC BY 2.0       |
+| Timewave Canon                                                                                             | CC BY 2.5       |
+| Owllight; Palimpsest; Aurora; Second Sleep; Unstill Light; Herald of Water, Herald of Air; Drift Study III | CC BY 3.0       |
+| Gyre                                                                                                       | CC BY-NC 3.0    |
+| Triune [disquiet0062-lifeofsine]                                                                           | CC BY-NC-SA 3.0 |
 
 The original project notes include the author and license URLs. Blue's root code license does not replace those terms. Creative Commons BY-NC material is limited to noncommercial use under its license. See [Creative Commons' FAQ](https://creativecommons.org/faq/).
 

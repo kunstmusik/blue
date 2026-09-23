@@ -130,16 +130,16 @@ Generated from the installed production dependency graph with `pnpm licenses lis
 
 ## Additional production dependencies through `@blue/data`
 
-| Package | Version | License |
-| --- | --- | --- |
-| `@rgrove/parse-xml` | 4.2.3 | ISC |
-| `@jitl/quickjs-ffi-types` | 0.32.0 | MIT |
-| `@jitl/quickjs-wasmfile-debug-asyncify` | 0.32.0 | MIT |
-| `@jitl/quickjs-wasmfile-debug-sync` | 0.32.0 | MIT |
-| `@jitl/quickjs-wasmfile-release-asyncify` | 0.32.0 | MIT |
-| `@jitl/quickjs-wasmfile-release-sync` | 0.32.0 | MIT |
-| `quickjs-emscripten` | 0.32.0 | MIT |
-| `quickjs-emscripten-core` | 0.32.0 | MIT |
+| Package                                   | Version | License |
+| ----------------------------------------- | ------- | ------- |
+| `@rgrove/parse-xml`                       | 4.2.3   | ISC     |
+| `@jitl/quickjs-ffi-types`                 | 0.32.0  | MIT     |
+| `@jitl/quickjs-wasmfile-debug-asyncify`   | 0.32.0  | MIT     |
+| `@jitl/quickjs-wasmfile-debug-sync`       | 0.32.0  | MIT     |
+| `@jitl/quickjs-wasmfile-release-asyncify` | 0.32.0  | MIT     |
+| `@jitl/quickjs-wasmfile-release-sync`     | 0.32.0  | MIT     |
+| `quickjs-emscripten`                      | 0.32.0  | MIT     |
+| `quickjs-emscripten-core`                 | 0.32.0  | MIT     |
 
 ## Electron runtime
 

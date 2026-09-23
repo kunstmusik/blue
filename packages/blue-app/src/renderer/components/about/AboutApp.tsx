@@ -129,9 +129,9 @@ export default function AboutApp({ iconUrl }: AboutAppProps) {
           Licenses
         </h2>
         <p className="text-role-body text-app-text-soft">
-          Blue is licensed under GPL-3.0-or-later. Third-party notices and license texts ship with the
-          application in its Resources/licenses folder; bundled Java components and examples have
-          additional notices beside their assets.
+          Blue is licensed under GPL-3.0-or-later. Third-party notices and license texts ship with
+          the application in its Resources/licenses folder; bundled Java components and examples
+          have additional notices beside their assets.
         </p>
       </section>
 
