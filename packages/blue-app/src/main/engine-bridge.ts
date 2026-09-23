@@ -746,9 +746,6 @@ export class EngineBridge {
     session.onOutput((text, type) => {
       if (type === 'stderr') {
         this.stderr += text;
-        console.error(`[EngineBridge] stderr: ${text.trim()}`);
-      } else {
-        console.log(`[EngineBridge] stdout: ${text.trim()}`);
       }
       this.outputCallback?.(text, type);
     });
