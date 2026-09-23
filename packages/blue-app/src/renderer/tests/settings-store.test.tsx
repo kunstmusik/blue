@@ -80,9 +80,22 @@ describe('Settings store (T066)', () => {
     useSettingsStore.getState().addRecentFile('/a.blue');
     useSettingsStore.getState().addRecentFile('/b.blue');
     useSettingsStore.getState().addRecentFile('/a.blue');
+    useSettingsStore.getState().addRecentFile('/export.csd');
     const files = useSettingsStore.getState().recentFiles;
     expect(files[0]).toBe('/a.blue');
     expect(files.filter((f: string) => f === '/a.blue')).toHaveLength(1);
+    expect(files).not.toContain('/export.csd');
+  });
+
+  it('removes old CSD entries when recent projects are restored', async () => {
+    await useSettingsStore.persist.getOptions().storage!.setItem('blue-settings', {
+      state: { recentFiles: ['/export.csd', '/project.blue', '/other.CSD'] },
+      version: 0,
+    });
+
+    await useSettingsStore.persist.rehydrate();
+
+    expect(useSettingsStore.getState().recentFiles).toEqual(['/project.blue']);
   });
 
   it('removeRecentFile removes the file', () => {

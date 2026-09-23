@@ -56,7 +56,6 @@ export async function saveGeneratedCsdToDisk(
         )
       : request.currentData.toDiskCSD(request.session, request.layoutManifest);
   await writeFile(filePath, csdText, 'utf-8');
-  request.mainWindow.webContents.send('save-complete', { filePath });
 
   return filePath;
 }

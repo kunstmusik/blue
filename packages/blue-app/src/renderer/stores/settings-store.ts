@@ -86,6 +86,7 @@ export const useSettingsStore = create<SettingsState & SettingsActions>()(
 
       addRecentFile: (path: string) =>
         set((state) => {
+          if (!/\.blue$/i.test(path)) return state;
           const files = [path, ...state.recentFiles.filter((f) => f !== path)].slice(0, 10);
           return { recentFiles: files };
         }),
@@ -103,6 +104,18 @@ export const useSettingsStore = create<SettingsState & SettingsActions>()(
     {
       name: 'blue-settings',
       storage: createJSONStorage(() => getStorage()),
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<SettingsState>;
+        return {
+          ...currentState,
+          ...persisted,
+          recentFiles: Array.isArray(persisted?.recentFiles)
+            ? persisted.recentFiles.filter(
+                (filePath) => typeof filePath === 'string' && /\.blue$/i.test(filePath),
+              )
+            : [],
+        };
+      },
       partialize: (state) => ({
         recentFiles: state.recentFiles,
         windowBounds: state.windowBounds,

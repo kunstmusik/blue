@@ -5,6 +5,8 @@ import { BlueData, Channel } from '@blue/data';
 
 import { saveGeneratedCsdToDisk } from './csd-export';
 
+vi.mock('electron', () => ({ dialog: { showSaveDialog: vi.fn() } }));
+
 describe('saveGeneratedCsdToDisk', () => {
   it('uses the configured work directory for an unsaved project', async () => {
     const toDiskCSD = vi.fn(() => 'disk-csd');
@@ -70,9 +72,7 @@ describe('saveGeneratedCsdToDisk', () => {
     expect(toDiskCSD).toHaveBeenCalledTimes(1);
     expect(showSaveDialog).toHaveBeenCalledTimes(1);
     expect(writeFile).toHaveBeenCalledWith('/tmp/project.csd', 'disk-csd', 'utf-8');
-    expect(send).toHaveBeenCalledWith('save-complete', {
-      filePath: '/tmp/project.csd',
-    });
+    expect(send).not.toHaveBeenCalled();
     expect(filePath).toBe('/tmp/project.csd');
   });
 
