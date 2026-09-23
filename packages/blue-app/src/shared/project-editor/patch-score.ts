@@ -370,11 +370,17 @@ import {
 } from './patch-mixer-bluelive';
 
 function toBlueDataFadeType(value: string | null | undefined): FadeType {
-  switch ((value ?? '').trim().toUpperCase().replace(/\s+/g, '_')) {
+  switch (
+    (value ?? '')
+      .trim()
+      .toUpperCase()
+      .replace(/[\s-]+/g, '_')
+  ) {
     case 'CONSTANT_POWER':
       return FadeType.CONSTANT_POWER;
     case 'SYMMETRIC':
-      return FadeType.SYMMETRIC;
+    case 'S_CURVE':
+      return FadeType.S_CURVE;
     case 'FAST':
       return FadeType.FAST;
     case 'SLOW':

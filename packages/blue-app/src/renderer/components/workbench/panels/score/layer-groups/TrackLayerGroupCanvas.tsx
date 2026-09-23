@@ -144,7 +144,7 @@ const FADE_HANDLE_OUTLINE = '0 0 0 1px #000000';
 const AUDIO_FADE_TYPE_OPTIONS: Array<{ value: AudioFadeType; label: string }> = [
   { value: 'LINEAR', label: 'Linear' },
   { value: 'CONSTANT_POWER', label: 'Constant Power' },
-  { value: 'SYMMETRIC', label: 'Symmetric' },
+  { value: 'S_CURVE', label: 'S-Curve' },
   { value: 'FAST', label: 'Fast' },
   { value: 'SLOW', label: 'Slow' },
 ];

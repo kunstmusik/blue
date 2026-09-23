@@ -18,7 +18,7 @@ const INPUT_CLASS = BLUE_INSPECTOR_INPUT_CLASS;
 const FADE_TYPE_OPTIONS = [
   { value: 'LINEAR', label: 'Linear' },
   { value: 'CONSTANT_POWER', label: 'Constant Power' },
-  { value: 'SYMMETRIC', label: 'Symmetric' },
+  { value: 'S_CURVE', label: 'S-Curve' },
   { value: 'FAST', label: 'Fast' },
   { value: 'SLOW', label: 'Slow' },
 ] as const;

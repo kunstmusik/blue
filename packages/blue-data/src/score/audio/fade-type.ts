@@ -1,18 +1,17 @@
 /**
  * FadeType — types of fade envelopes for audio clips.
- * Mirrors the Java FadeType enum.
+ * Uses Java Blue's audio fade names where they remain supported.
  *
- * Based on Ardour's fade types (Curve.cpp):
  * - LINEAR: Straight linear fade
  * - CONSTANT_POWER: Equal-power fade (used for crossfades)
- * - SYMMETRIC: Constrained cubic spline (symmetric fade curve)
+ * - S_CURVE: Raised-cosine fade
  * - FAST: Fast attack/release curve
  * - SLOW: Slow attack/release curve
  */
 export enum FadeType {
   LINEAR = 'Linear',
   CONSTANT_POWER = 'Constant Power',
-  SYMMETRIC = 'Symmetric',
+  S_CURVE = 'S-Curve',
   FAST = 'Fast',
   SLOW = 'Slow',
 }
@@ -20,7 +19,8 @@ export enum FadeType {
 export const FADE_TYPE_MAP: Map<string, FadeType> = new Map([
   ['Linear', FadeType.LINEAR],
   ['Constant Power', FadeType.CONSTANT_POWER],
-  ['Symmetric', FadeType.SYMMETRIC],
+  ['S-Curve', FadeType.S_CURVE],
+  ['Symmetric', FadeType.S_CURVE], // Migrate legacy Java Blue projects on load.
   ['Fast', FadeType.FAST],
   ['Slow', FadeType.SLOW],
 ]);
@@ -35,7 +35,7 @@ export function fadeTypeToString(ft: FadeType): string {
 
 /**
  * Get the Csound fade curve type number for the blue_fade UDO.
- * Matches the enum ordinal values from the Java FadeType.
+ * Reuses slot 2 in generated Csound scores for the replacement S-Curve.
  */
 export function fadeTypeToCsound(ft: FadeType): number {
   switch (ft) {
@@ -43,7 +43,7 @@ export function fadeTypeToCsound(ft: FadeType): number {
       return 0;
     case FadeType.CONSTANT_POWER:
       return 1;
-    case FadeType.SYMMETRIC:
+    case FadeType.S_CURVE:
       return 2;
     case FadeType.FAST:
       return 3;

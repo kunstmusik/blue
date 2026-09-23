@@ -25,7 +25,7 @@ afterEach(() => {
 
 describe('AudioClip bar renderer', () => {
   describe('fade curves', () => {
-    const fadeTypes: AudioFadeType[] = ['LINEAR', 'CONSTANT_POWER', 'SYMMETRIC', 'FAST', 'SLOW'];
+    const fadeTypes: AudioFadeType[] = ['LINEAR', 'CONSTANT_POWER', 'S_CURVE', 'FAST', 'SLOW'];
     const tolerance = 0.02;
 
     for (const fadeType of fadeTypes) {

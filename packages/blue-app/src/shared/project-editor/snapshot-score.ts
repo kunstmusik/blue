@@ -361,11 +361,17 @@ import {
 } from './snapshot-mixer-orchestra';
 
 function normalizeAudioFadeType(value: string | null | undefined): AudioFadeType {
-  switch ((value ?? '').trim().toUpperCase().replace(/\s+/g, '_')) {
+  switch (
+    (value ?? '')
+      .trim()
+      .toUpperCase()
+      .replace(/[\s-]+/g, '_')
+  ) {
     case 'CONSTANT_POWER':
       return 'CONSTANT_POWER';
     case 'SYMMETRIC':
-      return 'SYMMETRIC';
+    case 'S_CURVE':
+      return 'S_CURVE';
     case 'FAST':
       return 'FAST';
     case 'SLOW':

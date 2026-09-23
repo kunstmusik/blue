@@ -147,7 +147,7 @@ export interface MarkerSnapshot {
   sourceIndex: number;
 }
 
-export type AudioFadeType = 'LINEAR' | 'CONSTANT_POWER' | 'SYMMETRIC' | 'FAST' | 'SLOW';
+export type AudioFadeType = 'LINEAR' | 'CONSTANT_POWER' | 'S_CURVE' | 'FAST' | 'SLOW';
 
 export type ScoreObjectBarRendererSnapshot =
   | GenericBarRendererSnapshot

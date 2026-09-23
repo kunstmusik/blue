@@ -1,177 +1,11 @@
-/**
- * Blue Fade UDO — fade envelope for audio clips.
- * Mirrors the Java blue_fade.udo resource.
- *
- * Based on code from Curve.cpp in the Evoral library (Ardour).
- * Implements 5 fade types: linear, constant power, symmetric, fast, slow.
- */
-export const BLUE_FADE_UDO = `/* Returns array of points with x-values reversed in time */
-opcode reverse_curve, i[], i[]
-
-  ipoints[] xin
-
-  ilen = lenarray(ipoints)
-  irev[] init ilen
-  idur = ipoints[ilen - 2]
-  indx = 0
-
-  until (indx >= ilen) do
-    iInIndex = ilen - indx - 2
-    irev[indx] = idur - ipoints[iInIndex]
-    irev[indx + 1] = ipoints[iInIndex + 1]
-    indx += 2
-  od
-
-  xout irev
-
-endop
-
-/* Pre-calculate points for use with symmetric curve */
-opcode get_symmetric_curve_points, i[], 0
-
-  ipoints[] init 20
-  ipoints[0] = 0.0
-  ipoints[1] = 1.0
-  ipoints[2] = 0.5
-  ipoints[3] = 0.6
-
-  indx = 2
-  until (indx >= 9) do
-    icoef = 0.3 * pow(0.5, indx)
-    ix = (0.7 + (0.3 * (indx / 9)))
-    indx2 = indx * 2
-    ipoints[indx2] = ix
-    ipoints[indx2 + 1] = icoef
-    indx += 1
-  od
-
-  ipoints[18] = 1.0
-  ipoints[19] = 0.0000001
-
-  xout ipoints
-
-endop
-
-/* Based on code from Curve.cpp from Evoral library,
-   included with Ardour, by David Robbillard and Paul Davis.
-   Calculates coefficients to use for "Constrained Cubic
-   Spline Interpolation" by CJC Kruger
-   (www.korf.co.uk/spline.pdf) */
-
-opcode calc_cubic_coefficients, i[],i[]
-
-  ipoints[] xin
-  inumpoints = lenarray(ipoints) / 2
-  icoefs[] init ((inumpoints - 1) * 4)
-
-  ifplast init 0
-  indx = 0
-  icoefindx = 0
-
-  until (indx >= inumpoints) do
-
-    if (indx == 0) then
-      ilp0 = (ipoints[2] - ipoints[0]) / (ipoints[3] - ipoints[1])
-      ilp1 = (ipoints[4] - ipoints[2]) / (ipoints[5] - ipoints[3])
-      ifpone = ((ilp0 * ilp1) < 0) ? 0 : (2 / (ilp1 + ilp0))
-
-      ifplast = ((3 * (ipoints[3] - ipoints[1]) /
-                    (2 * (ipoints[2] - ipoints[0]))) -
-                    (ifpone * 0.5))
-    else
-      indx2 = indx * 2
-      ixdelta = ipoints[indx2] - ipoints[indx2-2];
-      ixdelta2 = ixdelta * ixdelta;
-      iydelta = ipoints[indx2 + 1] - ipoints[indx2-1];
-
-      if (indx == inumpoints - 1)  then
-        ifpi = ((3 * iydelta) / (2 * ixdelta)) - (ifplast * 0.5)
-      else
-        islope_before = ((ipoints[indx2+2] - ipoints[indx2]) /
-                         (ipoints[indx2+3] - ipoints[indx2 + 1]))
-        islope_after = (ixdelta / iydelta);
-
-        ifpi = ((islope_after * islope_before) < 0.0) ? 0.0 : 2 / (islope_after + islope_before)
-      endif
-
-      ifppL = (((-2 * (ifpi + (2 * ifplast))) / (ixdelta))) +
-        ((6 * iydelta) / ixdelta2);
-
-      ifppR = (2 * ((2 * ifpi) + ifplast) / ixdelta) -
-        ((6 * iydelta) / ixdelta2);
-
-
-      id = (ifppR - ifppL) / (6 * ixdelta);
-      ic = ((ipoints[indx2] * ifppL) - (ipoints[indx2-2] * ifppR))/(2 * ixdelta)
-
-      ixim1 = ipoints[indx2-2]
-      ixi = ipoints[indx2]
-      iyim1 = ipoints[indx2 -1]
-      ixim12 = ixim1 * ixim1
-      ixim13 = ixim12 * ixim1
-      ixi2 = ixi * ixi
-      ixi3 = ixi2 * ixi;
-
-      ib = (iydelta - (ic * (ixi2 - ixim12)) - (id * (ixi3 - ixim13))) / ixdelta
-
-      icoefs[icoefindx] = iyim1 - (ib * ixim1) - (ic * ixim12) - (id * ixim13)
-      icoefs[icoefindx + 1] = ib
-      icoefs[icoefindx + 2] = ic
-      icoefs[icoefindx + 3] = id
-      ifplast = ifpi
-      icoefindx += 4
-    endif
-    indx += 1
-  od
-
-  xout icoefs
-
-endop
-
-/* Single-sample generation of symmetric curve */
-opcode calc_symmetric, k, kii[]i[]
-  kcounter, ilen, ipoints[], icoefs[] xin
-
-  kout init 0
-
-  if(lenarray:i(ipoints) <= 0 || lenarray:i(icoefs) <= 0) goto skip
-
-  kpointsIndx init 2
-  kcoefIndx init 0
-
-  ka init icoefs[0]
-  kb init icoefs[1]
-  kc init icoefs[2]
-  kd init icoefs[3]
-
-  ktime = kcounter / ilen
-
-  until (ktime <= ipoints[kpointsIndx]) do
-    kpointsIndx += 2
-    kcoefIndx += 4
-    ka = icoefs[kcoefIndx]
-    kb = icoefs[kcoefIndx + 1]
-    kc = icoefs[kcoefIndx + 2]
-    kd = icoefs[kcoefIndx + 3]
-  od
-
-  ktime2 = ktime * ktime
-  ktime3 = ktime2 * ktime
-  kout = ka + (ktime * kb) + (ktime2 * kc) + (ktime3 * kd)
-
-skip:
-  xout kout
-
-endop
-
-
-/*
-  blue_fade - Fade envelope for audio clips. Fade types based on Ardour.
+/** Blue fade envelope for Csound audio clips. */
+export const BLUE_FADE_UDO = `/*
+  blue_fade - Fade envelope for audio clips.
 
   fade types:
     0 - linear
     1 - constant power
-    2 - symmetric
+    2 - S-Curve (raised cosine)
     3 - fast (linear dB)
     4 - slow (modified linear dB)
 */
@@ -217,18 +51,12 @@ kstate init istate
 if (initDone == 1) goto afterInit
 initDone = 1
 
-i_symmetric_fade_dec[] get_symmetric_curve_points
-i_symmetric_fade_inc[] reverse_curve i_symmetric_fade_dec
-
 if (istate == 1) then
   kfadeStep init itime
   if (ifadeInType == 0) then
     iinCoef init (1.0 - $GAIN_COEF_SMALL) / ifadeInSamps
     kval init (1.0 - $GAIN_COEF_SMALL) * (ioffset / ifadeInTime)
   elseif (ifadeInType == 1) then
-  elseif (ifadeInType == 2) then
-    iSymInCoefs[] = calc_cubic_coefficients(i_symmetric_fade_inc)
-    iSymInInvCoefs[] = calc_cubic_coefficients(i_symmetric_fade_dec)
   elseif (ifadeInType == 3) then
     iinCoef init ampdb(60 / ifadeInSamps)
     kval init 0.001 * pow(iinCoef, itime)
@@ -254,9 +82,6 @@ if (ifadeOutTime > 0) then
       kval init (1.0 - $GAIN_COEF_SMALL) * (ifadeStep / ifadeOutSamps)
     endif
   elseif (ifadeOutType == 1) then
-  elseif (ifadeOutType == 2) then
-    iSymOutCoefs[] = calc_cubic_coefficients(i_symmetric_fade_dec)
-    iSymOutInvCoefs[] = calc_cubic_coefficients(i_symmetric_fade_inc)
   elseif (ifadeOutType == 3) then
     ioutCoef init ampdb(-60 / ifadeOutSamps)
     if(imidStart == 1) then
@@ -298,8 +123,9 @@ until (kcount >= ksmps) do
         ainverse[kcount] = cos(karg)
 
       elseif (ifadeInType == 2) then
-        asig[kcount] = calc_symmetric(kfadeStep, ifadeInSamps, i_symmetric_fade_inc, iSymInCoefs)
-        ainverse[kcount] = calc_symmetric(kfadeStep, ifadeInSamps, i_symmetric_fade_dec, iSymInInvCoefs)
+        karg = (kfadeStep / ifadeInSamps) * (2 * $M_PI_2)
+        asig[kcount] = (1 - cos(karg)) * 0.5
+        ainverse[kcount] = (1 + cos(karg)) * 0.5
 
       elseif (ifadeInType == 3) then
         asig[kcount] =  kval
@@ -350,8 +176,9 @@ until (kcount >= ksmps) do
         ainverse[kcount] = sin(karg)
 
       elseif (ifadeOutType == 2) then
-        asig[kcount] = calc_symmetric(kfadeStep, ifadeOutSamps, i_symmetric_fade_dec, iSymOutCoefs)
-        ainverse[kcount] = calc_symmetric(kfadeStep, ifadeOutSamps, i_symmetric_fade_inc, iSymOutInvCoefs)
+        karg = (kfadeStep / ifadeOutSamps) * (2 * $M_PI_2)
+        asig[kcount] = (1 + cos(karg)) * 0.5
+        ainverse[kcount] = (1 - cos(karg)) * 0.5
 
       elseif (ifadeOutType == 3) then
         asig[kcount] =  kval
