@@ -55,6 +55,19 @@ files:
 # Bundled example projects (assets/examples) are copied alongside so the
 # resolver in example-project-path.ts finds them at its preferred candidate.
 extraResources:
+  - from: ../../LICENSES
+    to: licenses
+    filter: ['**/*']
+  - from: ../../LICENSE
+    to: licenses/GPL-3.0-or-later.txt
+  - from: THIRD_PARTY_NOTICES.md
+    to: licenses/THIRD_PARTY_NOTICES.md
+  - from: NPM-PRODUCTION-DEPENDENCIES.md
+    to: licenses/NPM-PRODUCTION-DEPENDENCIES.md
+  - from: node_modules/electron/dist/LICENSE
+    to: licenses/Electron-LICENSE
+  - from: node_modules/electron/dist/LICENSES.chromium.html
+    to: licenses/Electron-LICENSES.chromium.html
   - from: assets/java
     to: assets/java
     filter: ['**/*']

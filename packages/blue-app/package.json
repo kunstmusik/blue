@@ -5,6 +5,7 @@
   "version": "3.0.0-beta.2",
   "description": "Blue music composition environment for Csound",
   "author": "Blue contributors <https://github.com/kunstmusik/blue>",
+  "license": "GPL-3.0-or-later",
   "homepage": "https://github.com/kunstmusik/blue",
   "main": "dist/main/main.js",
   "scripts": {

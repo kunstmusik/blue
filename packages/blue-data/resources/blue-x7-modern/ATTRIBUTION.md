@@ -16,7 +16,7 @@ included.
   `giDx7LevelLut`, `giDx7PegRate`, `giDx7PegLevel`, `giDx7PmsTab`) are
   transcribed exactly from the msfa sources (`dx7note.cc`, `env.cc`,
   `pitchenv.cc`). msfa is licensed under the Apache License, Version 2.0; the
-  full license text is in [`LICENSES/Apache-2.0.txt`](LICENSES/Apache-2.0.txt).
+  full license text is in [`LICENSES/Apache-2.0.txt`](../../LICENSES/Apache-2.0.txt).
 
 - **hether repository (no longer available)** — the amplitude-modulation
   sensitivity values (`giDx7AmsTab` = `{0, 0.238, 0.461, 1.0}`) are a
@@ -35,7 +35,7 @@ included.
 ## Blue-maintained modifications
 
 Modifications made after the baseline import are owned by the Blue project
-(Steven Yi) and are licensed with the blue-electron repository under
-GPL-2.0-or-later. Each modification is listed in `provenance.json`
+(Steven Yi) and are licensed under MIT. The incorporated Google msfa tables
+remain under Apache License 2.0. Each modification is listed in `provenance.json`
 (`blueModifications`) alongside the current source digest maintained by
 `pnpm --filter @blue/data generate:blue-x7`.

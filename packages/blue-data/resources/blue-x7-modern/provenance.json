@@ -118,7 +118,7 @@
   },
   "license": {
     "projectLicense": "GPL-2.0-or-later",
-    "blueModificationOwnership": "Blue-maintained modifications to the imported orchestra are Copyright (C) Steven Yi and licensed with the blue-electron repository under GPL-2.0-or-later.",
+    "blueModificationOwnership": "Blue-maintained modifications to the imported orchestra are Copyright (C) Steven Yi and licensed under MIT.",
     "thirdPartyLicenseFiles": ["LICENSES/Apache-2.0.txt"]
   }
 }

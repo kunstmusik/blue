@@ -1,0 +1,7 @@
+Blue Java Helper
+Copyright (c) 2026 Steven Yi
+
+Blue-owned Java source is licensed under the Eclipse Public License 2.0.
+The shaded JAR contains third-party dependencies and Python resources under
+their own licenses. See the accompanying THIRD_PARTY_NOTICES.md and the
+META-INF/NOTICE* and LICENSE* resources in this JAR.

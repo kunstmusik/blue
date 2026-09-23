@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "Build orchestration for the native Blue Engine sidecar",
+  "license": "MIT AND MPL-2.0 AND BSL-1.0",
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",

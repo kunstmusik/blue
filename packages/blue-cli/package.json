@@ -8,7 +8,10 @@
     "blue-cli": "./dist/blue-cli.cjs"
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE",
+    "LICENSES",
+    "THIRD_PARTY_NOTICES.md"
   ],
   "scripts": {
     "build": "node ./scripts/build.mjs",
@@ -25,7 +28,7 @@
     "cli"
   ],
   "author": "Steven Yi",
-  "license": "GPL-2.0-or-later",
+  "license": "MIT AND Apache-2.0 AND ISC",
   "repository": {
     "type": "git",
     "url": "https://github.com/kunstmusik/blue"

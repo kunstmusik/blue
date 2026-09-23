@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "description": "Java helper runtime for Blue Electron",
+  "license": "EPL-2.0",
   "scripts": {
     "build": "mvn -q -DskipTests package",
     "test": "mvn -q test",

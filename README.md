@@ -396,9 +396,14 @@ This project uses [Spec Kit](https://github.com/github/spec-kit) for structured 
 
 ## License
 
-GPL v2.0 or later — same license as the original Java Blue application.
+Blue-authored code is licensed under GNU GPL v3.0 or later by default.
+Some reusable packages use MIT, the Java helper source uses EPL-2.0, and
+third-party assets retain their own licenses. See [LICENSING.md](LICENSING.md)
+for the scope map and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for
+bundled components.
 
-See [LICENSE](LICENSE) for details.
+The Blue desktop application is licensed under GPL-3.0-or-later. See [LICENSE](LICENSE)
+for the license text.
 
 ---
 

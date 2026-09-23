@@ -2,6 +2,7 @@
 things like call tips and command auto completion.
 
 NOTE: this file is a modification of Patrick O'Brien's version 1.62
+License: wxWindows Library Licence, Version 3.1 (see COPYING)
 """
 
 from __future__ import nested_scopes

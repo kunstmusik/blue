@@ -9,6 +9,10 @@ Optional Java helper runtime for Blue Electron.
 - Exposes the helper-side transport and project-scoped Clojure and Jython sessions used by Electron main.
 - Works with packaged Python libraries under `packages/blue-app/assets/java/pythonLib/` plus the user `pythonLib` directory so Java Blue modules like `orchestra` and `pmask` import without extra setup.
 
+## Licensing
+
+Blue-owned Java source is EPL-2.0. The shaded JAR is a mixed-license distribution and is not solely EPL-2.0: it contains third-party libraries and Python resources with separate terms. `blue/orchestra` and `blue/pmask` retain GPL-2.0-or-later notices; `blue/jythonconsole/introspect.py` retains the wxWindows Library Licence 3.1. Shared license texts are in the repository's root `LICENSES/`; the JAR retains its own notices and Python library licenses, and the app installs the shared texts under `Resources/licenses/`. See `../blue-app/assets/java/THIRD_PARTY_NOTICES.md` for the component list.
+
 ## Commands
 
 From the repository root:
