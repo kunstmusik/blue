@@ -70,3 +70,4 @@ temp*.csd
 
 node_modules
 .tmp-research
+.worktrees
