@@ -125,9 +125,9 @@ independent version chains with different responsibilities.
 - Coverage: `blue-data-root-compatibility`, `blue-data-frozen-roundtrip` (unknown-data round
   trip), `blue-data-csd-{determinism,copy-safety,scheduling,automation,disk,parity}`,
   `blue-live-csd`, `migration/track-layer-migration-integration` (in-repo fixtures). Caveat: the
-  two full-output oracles (`~/work/blue/demo2026`, `~/work/blue/rhythmic`) are developer-local
-  absolute paths and cover only the sync path — they must be run manually on a machine that has
-  them; CI-reliant coverage is structural/in-memory.
+  two full-output oracles (`~/work/blue/demo2026`, `~/work/blue/rhythmic`) were developer-local
+  absolute paths and covered only the sync path. Their automated cases were removed on
+  2026-09-24; current coverage is structural/in-memory.
 
 **Decision**: Three internal policy modules (`xml-policy.ts`, `csd-policy.ts`,
 `runtime-policy.ts`) behind the unchanged `BlueData` class façade; `blue-data.ts` retains fields,
@@ -187,9 +187,11 @@ feature-scoped and historical. A maintainer must find the rule after this branch
 
 **Decision**: Before any extraction, record the baseline: run
 `pnpm --filter @blue/data test`, `pnpm --filter @blue/app test`, `pnpm --filter @blue/app build:main`,
-and (on a machine with the fixtures) the Java-parity suites. Any pre-existing failure is recorded
-and not attributed to the refactor (spec edge case). After each extraction step, rerun the
-affected package suite plus the focused seam tests (quickstart.md). New focused tests are added
+and (at the time, on a machine with the fixtures) the Java-parity suites. Those
+developer-local cases were removed from automated tests on 2026-09-24. Any
+pre-existing failure is recorded and not attributed to the refactor (spec edge
+case). After each extraction step, rerun the affected package suite plus the
+focused seam tests (quickstart.md). New focused tests are added
 only where no direct target exists: `identity.ts` ID stability and the envelope codec round-trip
 already have indirect coverage — add direct unit tests at those two modules only if extraction
 reveals they are the sole guard. Circular-dependency checking: dependency direction is fixed by
@@ -230,6 +232,7 @@ The required baseline was run from the repository root before any source extract
 
 Developer-local Java parity fixture directories were available at
 `/Users/stevenyi/work/blue/demo2026` and `/Users/stevenyi/work/blue/rhythmic`.
+This records the 2026-08-22 baseline; automated tests no longer read these directories.
 
 ## Final automated validation (updated 2026-08-23)
 

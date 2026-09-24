@@ -4,6 +4,7 @@ import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import WorkbenchPanelContent from '../components/workbench/WorkbenchPanelContent';
 import UndoHistoryPanel from '../components/workbench/panels/UndoHistoryPanel';
 import {
   cancelScheduledProjectHistoryEntriesRefresh,
@@ -84,14 +85,16 @@ function seedLoadedProject(): void {
 
 const roots: Array<{ container: HTMLDivElement; root: Root }> = [];
 
-async function renderPanel(): Promise<HTMLDivElement> {
+async function renderPanel(
+  panel: React.ReactElement = <UndoHistoryPanel />,
+): Promise<HTMLDivElement> {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);
   roots.push({ container, root });
 
   await act(async () => {
-    root.render(<UndoHistoryPanel />);
+    root.render(panel);
   });
   // The panel refreshes entries on a trailing debounce (500ms); advance past
   // it so mount-time fetches are observable.
@@ -164,6 +167,19 @@ describe('UndoHistoryPanel', () => {
 
     expect(container.textContent).toContain('No edits yet');
     expect(container.textContent).not.toContain('No project loaded');
+  });
+
+  it('routes the registered workbench id to Undo History', async () => {
+    seedLoadedProject();
+    setProjectHistoryProjection(
+      makeProjection({ canUndo: false, undoLabel: null, cursor: 0, length: 0 }),
+    );
+    currentSnapshot = makeSnapshot(0, []);
+    const container = await renderPanel(
+      <WorkbenchPanelContent panelId="UndoHistoryTopComponent" />,
+    );
+
+    expect(container.textContent).toContain('No edits yet.');
   });
 
   it('lists entries most recent first, all applied, with no divider at the tip', async () => {

@@ -1,5 +1,4 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import * as fs from 'fs';
 import { BlueData } from '../../src/blue-data';
 import { NoteList } from '../../src/sound-objects/note-list';
 import { Note } from '../../src/sound-objects/note';
@@ -15,51 +14,12 @@ import {
   initializeJavaScriptRuntime,
 } from '../../src/javascript-runtime';
 
-const DEMO2026_BLUE_PATH = '/Users/stevenyi/work/blue/demo2026/01.blue';
-const DEMO2026_CSD_PATH = '/Users/stevenyi/work/blue/demo2026/01.csd';
-
 function createNote(instrId: string, start: number, duration: number): Note {
   const note = new Note();
   note.setPField(instrId, 1);
   note.setStartTime(start);
   note.setSubjectiveDuration(duration);
   return note;
-}
-
-function extractScoreEvents(csd: string): string[] {
-  const match = csd.match(/<CsScore>([\s\S]*?)<\/CsScore>/);
-  if (!match) {
-    throw new Error('CSD is missing a <CsScore> section');
-  }
-
-  return match[1]
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.startsWith('i'));
-}
-
-function extractInstrumentSequence(scoreEvents: string[]): string[] {
-  return scoreEvents.map((line) => {
-    const match = line.match(/^i\s*"?([^"\s]+)"?/);
-    if (!match) {
-      throw new Error(`Unable to parse score event: ${line}`);
-    }
-    return match[1];
-  });
-}
-
-function normalizeWhitespace(line: string): string {
-  return line
-    .replace(/\s+/g, ' ')
-    .trim()
-    .split(' ')
-    .map((token) => {
-      if (/^-?\d+\.0+$/.test(token)) {
-        return String(Number.parseInt(token, 10));
-      }
-      return token;
-    })
-    .join(' ');
 }
 
 beforeAll(async () => {
@@ -121,33 +81,3 @@ describe('Score-based sound object parity', () => {
     }
   });
 });
-
-describe.skipIf(!fs.existsSync(DEMO2026_BLUE_PATH) || !fs.existsSync(DEMO2026_CSD_PATH))(
-  'Demo2026 render parity',
-  () => {
-    let generatedScoreEvents: string[];
-    let referenceScoreEvents: string[];
-
-    beforeAll(async () => {
-      const xml = fs.readFileSync(DEMO2026_BLUE_PATH, 'utf-8');
-      const data = await BlueData.loadFromString(xml);
-      const generatedCsd = data.toCSD();
-      const referenceCsd = fs.readFileSync(DEMO2026_CSD_PATH, 'utf-8');
-
-      generatedScoreEvents = extractScoreEvents(generatedCsd);
-      referenceScoreEvents = extractScoreEvents(referenceCsd);
-    });
-
-    it('matches the Java score event instrument ordering', () => {
-      expect(extractInstrumentSequence(generatedScoreEvents)).toEqual(
-        extractInstrumentSequence(referenceScoreEvents),
-      );
-    });
-
-    it('matches the Java always-on event durations', () => {
-      expect(generatedScoreEvents.slice(-6).map(normalizeWhitespace)).toEqual(
-        referenceScoreEvents.slice(-6).map(normalizeWhitespace),
-      );
-    });
-  },
-);

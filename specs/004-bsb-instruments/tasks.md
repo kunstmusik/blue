@@ -3,6 +3,10 @@
 **Input**: Design documents from `specs/004-bsb-instruments/`
 **Prerequisites**: Specs 001-003 complete (data model, engine, audio pipeline)
 
+The developer-local `demo2022.blue` integration suite used for some completed tasks
+below was removed from automated tests on 2026-09-24. These checkboxes record the
+original implementation work, not current test coverage.
+
 ---
 
 ## Phase 18: BSB Data Model

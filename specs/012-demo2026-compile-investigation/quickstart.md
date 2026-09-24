@@ -59,4 +59,5 @@ If standalone `csound` validation is used from this repo context, ensure the req
 - normal `blue-electron` playback/render path works for `01.blue`
 - standalone `csound -n` validation succeeds
 - generated demo2026 output matches the Java reference `01.csd` byte-for-byte
-- regression coverage now protects the demo2026 render/parity behavior
+- self-contained regression coverage protects score scheduling and sound object timing;
+  automated tests no longer read the developer-local Demo2026 project (removed 2026-09-24)

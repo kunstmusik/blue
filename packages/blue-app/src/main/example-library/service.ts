@@ -1176,7 +1176,6 @@ export function createExampleLibraryService(options: ExampleLibraryServiceOption
     commit,
     abort,
     recover,
-    __layoutForTesting: layout,
   };
 }
 

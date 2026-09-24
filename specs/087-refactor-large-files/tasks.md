@@ -103,6 +103,9 @@ exist before the first seam.
 - [X] T024 [US2] Seam 1 checkpoints (after each of T014–T020, repeated per step): run `pnpm --filter @blue/app test project-editor score-timeline-automation project-store`, `pnpm --filter @blue/app build:main`, `pnpm --filter @blue/app build:preload`; specifically after T015, the duplicate/stale-ID rejection tests must pass — they prove the WeakMap registries remained a single instance
 - [X] T025 [US2] After all seams: confirm zero behavioral artifacts changed — `git status` and a diff scoped to fixtures/snapshots show no modifications or additions attributable to the refactor; any diff is investigated against Java Blue and existing fixtures before proceeding (spec edge case)
 
+The developer-local Java parity cases mentioned in the historical T001/T022 checkpoints
+were removed on 2026-09-24. Current CSD tests use self-contained projects.
+
 **Checkpoint**: Behavior preservation proven per seam and across the whole delivery
 
 ---

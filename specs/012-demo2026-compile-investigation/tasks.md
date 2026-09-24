@@ -16,10 +16,13 @@ This spec was closed by the completed compile/parity work in `blue-electron`:
 	now match Java UDO formatting and mixer routing semantics.
 - `packages/blue-app/src/main/engine-bridge.ts`
 	carries the compile diagnostics needed to confirm the normal playback path is healthy.
-- `packages/blue-data/tests/integration/demo2026-render-parity.test.ts`
-	captures the demo2026 render-parity regression coverage.
+- `packages/blue-data/tests/integration/score-scheduling-parity.test.ts`
+	retains self-contained score scheduling and sound object timing regression coverage.
 
 Use [STATUS.md](/Users/stevenyi/work/blue-electron/STATUS.md) as the authoritative current summary.
+
+The developer-local Demo2026 parity cases were removed from automated tests on
+2026-09-24. The verification below records the original 2026-04-18 closeout.
 
 ## Final Verification
 

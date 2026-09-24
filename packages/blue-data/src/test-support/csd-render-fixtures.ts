@@ -1,19 +1,6 @@
 import * as fs from 'fs';
 import { Buffer as NodeBuffer } from 'buffer';
 
-export const DEMO2026_BLUE_PATH = '/Users/stevenyi/work/blue/demo2026/01.blue';
-export const DEMO2026_CSD_PATH = '/Users/stevenyi/work/blue/demo2026/01.csd';
-export const RHYTHMIC_BLUE_PATH = '/Users/stevenyi/work/blue/rhythmic/01.blue';
-export const RHYTHMIC_DISK_CSD_PATH = '/Users/stevenyi/work/blue/rhythmic/01_disk.csd';
-
-export function hasDemo2026Fixture(): boolean {
-  return fs.existsSync(DEMO2026_BLUE_PATH) && fs.existsSync(DEMO2026_CSD_PATH);
-}
-
-export function hasRhythmicFixture(): boolean {
-  return fs.existsSync(RHYTHMIC_BLUE_PATH) && fs.existsSync(RHYTHMIC_DISK_CSD_PATH);
-}
-
 export function extractScoreEvents(csd: string): string[] {
   const match = csd.match(/<CsScore>([\s\S]*?)<\/CsScore>/);
   if (!match) {

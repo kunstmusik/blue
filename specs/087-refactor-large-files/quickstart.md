@@ -14,9 +14,6 @@ quoted there and not repeated here.
   pnpm --filter @blue/app test
   pnpm --filter @blue/app build:main
   ```
-- Optional, on a machine with the Java-generated fixtures (`~/work/blue/demo2026/01.blue`,
-  `~/work/blue/rhythmic/01.blue`): the parity suites below include them automatically and
-  skip when absent; note in the boundary map when they were actually executed.
 
 ## Per-seam validation (run after each staged extraction step)
 
@@ -43,8 +40,8 @@ pnpm --filter @blue/data build        # ESM + CJS strict compile
 
 Expected: `blue-data-frozen-roundtrip` (unknown-data round trip), CSD
 determinism/copy-safety/scheduling/automation, BlueLive CSD, and runtime traversal suites
-pass unchanged; no `.blue` fixture diff. If the Java parity fixtures exist locally,
-`blue-data-csd-parity` and `blue-data-csd-disk` must produce byte-identical output.
+pass unchanged; no `.blue` fixture diff. The CSD parity and disk suites use
+self-contained projects and run without developer-local Java artifacts.
 
 ### Seam 2 — auxiliary layout split
 

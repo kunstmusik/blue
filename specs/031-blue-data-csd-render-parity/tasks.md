@@ -7,6 +7,10 @@
 
 **Organization**: Tasks are grouped by user story so each story can be implemented and validated independently after foundational render scaffolding is complete.
 
+The integration fixture and comparison files named in historical T005/T008 were
+removed on 2026-09-24 with tests that read developer-local projects. Current
+self-contained CSD helpers live under `packages/blue-data/src/test-support/`.
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no blocking dependencies)

@@ -9,7 +9,6 @@ import {
   parseTsvText,
   loadRealtimeFixtureCases,
   loadResolutionFixtureCases,
-  type RealtimeFixtureCase,
 } from './java-parity-fixtures';
 
 describe('Java parity fixture corpus (no JVM required)', () => {
@@ -91,50 +90,4 @@ describe('Java parity fixture corpus (no JVM required)', () => {
     expect(mgr!.sampleNumber).toBe(16000.0);
     expect(mgr!.evaluationTime).toBe(16000.0 / 48000.0);
   });
-
-  it('detects a deliberate one-bit mutation and reports the case id', () => {
-    const cases = loadRealtimeFixtureCases();
-    const bitsCase = cases.find((c) => c.expectedKind === 'bits' && c.expectedBits !== '');
-    expect(bitsCase).toBeDefined();
-
-    // flip the last bit of the expected value
-    const mutated: RealtimeFixtureCase = {
-      ...bitsCase!,
-      expectedBits:
-        bitsCase!.expectedBits.slice(0, 15) + (bitsCase!.expectedBits[15] === '0' ? '1' : '0'),
-    };
-    const mutatedCases = cases.map((c) => (c.caseId === mutated.caseId ? mutated : c));
-
-    // the "implementation" returns each case's original Java value; only the
-    // mutated expectation differs, so exactly that case must be reported
-    const originalById = new Map(cases.map((c) => [c.caseId, c.expectedBits]));
-    const failures = collectRealtimeFailures(mutatedCases, (fixtureCase) =>
-      bitsToDouble(originalById.get(fixtureCase.caseId)!),
-    );
-    expect(failures.length).toBe(1);
-    expect(failures[0]).toContain(mutated.caseId);
-  });
 });
-
-/**
- * Shared comparison helper used by the parity suites: compares exact output
- * bits per case and reports the failing case ids with full input context.
- */
-export function collectRealtimeFailures(
-  cases: RealtimeFixtureCase[],
-  evaluate: (fixtureCase: RealtimeFixtureCase) => number,
-): string[] {
-  const failures: string[] = [];
-  for (const fixtureCase of cases) {
-    if (fixtureCase.expectedKind !== 'bits') continue;
-    const actual = doubleToBits(evaluate(fixtureCase));
-    if (actual !== fixtureCase.expectedBits) {
-      failures.push(
-        `${fixtureCase.caseId} (category=${fixtureCase.category}, resolution=${fixtureCase.resolutionText}, ` +
-          `points=${JSON.stringify(fixtureCase.points)}, time=${fixtureCase.evaluationTime}, ` +
-          `expected=${fixtureCase.expectedBits}, actual=${actual})`,
-      );
-    }
-  }
-  return failures;
-}

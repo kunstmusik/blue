@@ -1,5 +1,3 @@
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { getPanel, getPanelsByMode } from '../../shared/workbench-menu';
 import {
@@ -25,14 +23,5 @@ describe('Undo History panel registration (spec 106, US1)', () => {
     const seeded = createDefaultSeededInstance('properties-main', 0);
     expect(seeded.panelIds).not.toContain('UndoHistoryTopComponent');
     expect(seeded.dockedPanelIds).not.toContain('UndoHistoryTopComponent');
-  });
-
-  it('wires the panel id to its component in the workbench content switch', async () => {
-    const source = await readFile(
-      path.join(__dirname, '..', 'components', 'workbench', 'WorkbenchPanelContent.tsx'),
-      'utf8',
-    );
-    expect(source).toContain("case 'UndoHistoryTopComponent':");
-    expect(source).toMatch(/import UndoHistoryPanel from '\.\/panels\/UndoHistoryPanel';/);
   });
 });

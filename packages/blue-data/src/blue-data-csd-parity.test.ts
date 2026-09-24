@@ -1,4 +1,3 @@
-import * as fs from 'fs';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { BlueData } from './blue-data';
 import { Arrangement } from './arrangement';
@@ -13,16 +12,6 @@ import { Tables } from './tables';
 import { CurveType } from './time/curve-type';
 import { TempoMap } from './time/tempo-map';
 import { getTempoScore, preprocessSco, processCommandBlocks } from './utilities/csd-render';
-import {
-  DEMO2026_BLUE_PATH,
-  DEMO2026_CSD_PATH,
-  hasDemo2026Fixture,
-} from './test-support/csd-render-fixtures';
-import {
-  extractInstrumentSequence,
-  extractScoreEvents,
-  normalizeWhitespace,
-} from './test-support/csd-comparison';
 import { initializeJavaScriptRuntime } from './javascript-runtime';
 
 beforeAll(async () => {
@@ -230,54 +219,6 @@ describe('BlueData UDO/table parity', () => {
     expect(retainedAfter.toCSD()).toBe(candidateCsd);
     expect(retainedBefore.toCSD()).toBe(sourceCsd);
     expect(source.toCSD()).toBe(sourceCsd);
-  });
-});
-
-describe.skipIf(!hasDemo2026Fixture())('Demo2026 CSD parity', () => {
-  let generatedScoreEvents: string[] = [];
-  let referenceScoreEvents: string[] = [];
-
-  beforeAll(async () => {
-    const xml = fs.readFileSync(DEMO2026_BLUE_PATH, 'utf-8');
-    const data = await BlueData.loadFromString(xml);
-    const generatedCsd = data.toCSD();
-    const referenceCsd = fs.readFileSync(DEMO2026_CSD_PATH, 'utf-8');
-
-    generatedScoreEvents = extractScoreEvents(generatedCsd);
-    referenceScoreEvents = extractScoreEvents(referenceCsd);
-  });
-
-  it('matches the Java score event instrument ordering', () => {
-    expect(extractInstrumentSequence(generatedScoreEvents)).toEqual(
-      extractInstrumentSequence(referenceScoreEvents),
-    );
-  });
-
-  it('matches the Java always-on event durations', () => {
-    expect(generatedScoreEvents.slice(-6).map(normalizeWhitespace)).toEqual(
-      referenceScoreEvents.slice(-6).map(normalizeWhitespace),
-    );
-  });
-
-  it('generates byte-identical CSD regardless of meter presentation settings (T022)', async () => {
-    const xml = fs.readFileSync(DEMO2026_BLUE_PATH, 'utf-8');
-    const data = await BlueData.loadFromString(xml);
-    const baselineCsd = data.toCSD();
-
-    data.getMixer().setEnableMeters(false);
-    expect(data.toCSD()).toBe(baselineCsd);
-
-    data.getMixer().setEnableMeters(true);
-    for (const key of [
-      'peak-rms-linear-plus-6',
-      'peak-rms-mixing-plus-6',
-      'k20-rms-peak',
-      'k14-rms-peak',
-      'k12-rms-peak',
-    ] as const) {
-      data.getMixer().setMeterProfileKey(key);
-      expect(data.toCSD()).toBe(baselineCsd);
-    }
   });
 });
 

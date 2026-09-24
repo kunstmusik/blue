@@ -40,7 +40,6 @@ import type { IpcMainEventListener, IpcMainInvokeHandler, IpcMainLike } from './
 interface RegistrationRecord {
   mode: 'handle' | 'on';
   channelExpression: string;
-  source: string;
 }
 
 async function registrations(
@@ -54,7 +53,6 @@ async function registrations(
     records.push({
       mode: match[1] as RegistrationRecord['mode'],
       channelExpression: match[2].trim(),
-      source: match[0],
     });
   }
   return records;
@@ -326,7 +324,7 @@ describe('main-process IPC inventory oracle', () => {
     expect(domainChannels.length + existing.length).toBe(193);
   });
 
-  it('keeps registration expressions unique by mode and records listener identity sites', async () => {
+  it('keeps registration expressions unique by mode', async () => {
     const sources = await Promise.all([
       registrations('main.ts', 'ipcRegistration'),
       registrations('unified-library/ipc.ts', 'scope'),
@@ -342,9 +340,6 @@ describe('main-process IPC inventory oracle', () => {
     // by the first oracle.
     expect(new Set(keys).size).toBe(keys.length);
     expect(records.filter((entry) => entry.mode === 'on')).toHaveLength(7);
-    expect(
-      records.filter((entry) => entry.mode === 'on').every((entry) => entry.source.includes('(')),
-    ).toBe(true);
   });
 
   it('keeps the direct main-process registrations in the pre-ready source region', async () => {

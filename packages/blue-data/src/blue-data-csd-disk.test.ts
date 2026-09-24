@@ -1,5 +1,3 @@
-import fs from 'node:fs';
-
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { Arrangement } from './arrangement';
@@ -13,12 +11,7 @@ import { TrackLayerGroup } from './score/track/track-layer-group';
 import { initializeJavaScriptRuntime } from './javascript-runtime';
 import { TimeDuration } from './time/time-duration';
 import { TimePosition } from './time/time-position';
-import {
-  RHYTHMIC_BLUE_PATH,
-  RHYTHMIC_DISK_CSD_PATH,
-  extractScoreEvents,
-  hasRhythmicFixture,
-} from './test-support/csd-render-fixtures';
+import { extractScoreEvents } from './test-support/csd-render-fixtures';
 
 class AutomationFixtureInstrument extends GenericInstrument {
   constructor(private readonly parameters: Parameter[]) {
@@ -106,37 +99,11 @@ function createRenderWindowProject(diskAlwaysRenderEntireProject: boolean): Blue
   return data;
 }
 
-function extractDiskPrologue(csd: string): string[] {
-  const lines: string[] = [];
-
-  for (const rawLine of csd.replace(/\r\n/g, '\n').split('\n')) {
-    const line = rawLine.trim();
-    if (!line) {
-      continue;
-    }
-    if (/^instr\s+6\b/.test(line)) {
-      break;
-    }
-    lines.push(line);
-  }
-
-  return lines;
-}
-
 beforeAll(async () => {
   await initializeJavaScriptRuntime();
 });
 
-describe.skipIf(!hasRhythmicFixture())('disk CSD parity', () => {
-  it('matches the Java Blue 2.10.1 disk export prologue for rhythmic/01.blue', async () => {
-    const source = fs.readFileSync(RHYTHMIC_BLUE_PATH, 'utf-8');
-    const data = await BlueData.loadFromString(source);
-    const generated = data.toDiskCSD();
-    const reference = fs.readFileSync(RHYTHMIC_DISK_CSD_PATH, 'utf-8');
-
-    expect(extractDiskPrologue(generated)).toEqual(extractDiskPrologue(reference));
-  });
-
+describe('disk CSD parity', () => {
   it('uses disk project properties for the CsInstruments header', () => {
     const data = createAutomationProject(false);
     const realtime = data.toCSD();

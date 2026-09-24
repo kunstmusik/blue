@@ -16,6 +16,10 @@ validated independently after the shared history foundation is complete.
 preferences, window layout, search history, playback commands, external library database writes, or
 filesystem deletion.
 
+The `tests/integration/csd-comparison.ts` helper named in historical T007 was
+removed on 2026-09-24 with developer-local CSD parity cases. The other
+detached-memento tests remain.
+
 ## Phase 1: Setup (Shared Infrastructure)
 
 **Purpose**: Establish the typed seams, fixture locations, and evidence scaffolding required by the

@@ -4,9 +4,6 @@ import type {
   ProjectHistoryRedoRequest,
   ProjectDocumentUpdatedEvent,
   PrepareHistoryBoundaryAck,
-  PrepareHistoryBoundaryEvent,
-  ReleaseHistoryBoundaryEvent,
-  ProjectRuntimeOutcome,
 } from '../shared/project-history';
 import type { ProjectDocumentPatch } from '../shared/project-editor/contract';
 import type { ProjectSession } from './project-session';
@@ -132,100 +129,6 @@ export function captureProjectStateXml(session: ProjectSession): string {
   const data = session.read().data;
   if (!data) throw new Error('No live project document in session');
   return data.saveToString();
-}
-
-export type FakeEngineOutcomeMode = 'success' | 'negative-ack' | 'timeout' | 'error';
-
-export interface FakePerformance {
-  kind: 'timeline' | 'blueLive';
-  generation: number;
-  mode: FakeEngineOutcomeMode;
-  delayMs: number;
-}
-
-export class FakePerformanceManager {
-  private performances = new Map<'timeline' | 'blueLive', FakePerformance>();
-
-  startPerformance(
-    kind: 'timeline' | 'blueLive',
-    mode: FakeEngineOutcomeMode = 'success',
-    delayMs = 0,
-  ): FakePerformance {
-    const existing = this.performances.get(kind);
-    const generation = (existing?.generation ?? 0) + 1;
-    const perf: FakePerformance = { kind, generation, mode, delayMs };
-    this.performances.set(kind, perf);
-    return perf;
-  }
-
-  stopPerformance(kind: 'timeline' | 'blueLive'): void {
-    this.performances.delete(kind);
-  }
-
-  getPerformance(kind: 'timeline' | 'blueLive'): FakePerformance | undefined {
-    return this.performances.get(kind);
-  }
-
-  async reconcileWork(
-    kind: 'timeline' | 'blueLive',
-    desiredRevision: number,
-    affectedOwnerIds: string[] = [],
-  ): Promise<ProjectRuntimeOutcome> {
-    const perf = this.performances.get(kind);
-    if (!perf) {
-      return {
-        performanceKind: kind,
-        generation: 0,
-        desiredRevision,
-        status: 'applied',
-        affectedOwnerIds,
-      };
-    }
-
-    if (perf.delayMs > 0) {
-      await new Promise((resolve) => setTimeout(resolve, perf.delayMs));
-    }
-
-    switch (perf.mode) {
-      case 'negative-ack':
-        return {
-          performanceKind: kind,
-          generation: perf.generation,
-          desiredRevision,
-          status: 'failed',
-          message: 'Engine rejected parameter assignment',
-          affectedOwnerIds,
-        };
-      case 'timeout':
-        return {
-          performanceKind: kind,
-          generation: perf.generation,
-          desiredRevision,
-          status: 'failed',
-          message: 'Engine acknowledgement timed out after 1000ms',
-          affectedOwnerIds,
-        };
-      case 'error':
-        return {
-          performanceKind: kind,
-          generation: perf.generation,
-          desiredRevision,
-          status: 'restart-required',
-          message: 'Compilation-dependent structural change requires restart',
-          affectedOwnerIds,
-        };
-      case 'success':
-      default:
-        return {
-          performanceKind: kind,
-          generation: perf.generation,
-          desiredRevision,
-          appliedRevision: desiredRevision,
-          status: 'applied',
-          affectedOwnerIds,
-        };
-    }
-  }
 }
 
 /**

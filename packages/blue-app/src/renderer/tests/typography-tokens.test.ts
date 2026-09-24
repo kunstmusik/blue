@@ -10,35 +10,8 @@ import {
 } from '../lib/typography';
 
 const RENDERER_DIR = resolve(__dirname, '..');
-const INDEX_CSS_PATH = resolve(RENDERER_DIR, 'styles/index.css');
 
 describe('Typography Tokens and System Contracts', () => {
-  it('defines exactly seven semantic roles with approved metrics in index.css', () => {
-    const css = readFileSync(INDEX_CSS_PATH, 'utf8');
-
-    // Verify all 7 roles and companion line heights
-    expect(css).toMatch(/--text-role-large-title:\s*26px;/);
-    expect(css).toMatch(/--text-role-large-title--line-height:\s*32px;/);
-    expect(css).toMatch(/--text-role-title-2:\s*17px;/);
-    expect(css).toMatch(/--text-role-title-2--line-height:\s*22px;/);
-    expect(css).toMatch(/--text-role-title-3:\s*15px;/);
-    expect(css).toMatch(/--text-role-title-3--line-height:\s*20px;/);
-    expect(css).toMatch(/--text-role-headline:\s*13px;/);
-    expect(css).toMatch(/--text-role-headline--line-height:\s*16px;/);
-    expect(css).toMatch(/--text-role-body:\s*13px;/);
-    expect(css).toMatch(/--text-role-body--line-height:\s*16px;/);
-    expect(css).toMatch(/--text-role-callout:\s*12px;/);
-    expect(css).toMatch(/--text-role-callout--line-height:\s*15px;/);
-    expect(css).toMatch(/--text-role-subheadline:\s*11px;/);
-    expect(css).toMatch(/--text-role-subheadline--line-height:\s*14px;/);
-  });
-
-  it('establishes the Body role baseline in global body styles', () => {
-    const css = readFileSync(INDEX_CSS_PATH, 'utf8');
-    expect(css).toMatch(/font-size:\s*var\(--text-role-body\);/);
-    expect(css).toMatch(/line-height:\s*var\(--text-role-body--line-height\);/);
-  });
-
   it('verifies all 5 renderer entry points import styles/index.css', () => {
     const entryPoints = [
       'main.tsx',

@@ -25,8 +25,7 @@ aggregate. The class stays the single public entry point; `xml-policy.ts`,
    `blue-data-frozen-roundtrip`, `blue-data-root-compatibility`, fixture-based
    `migration/track-layer-migration-integration`).
 2. CSD output determinism and copy safety are unchanged (oracles:
-   `blue-data-csd-{determinism,copy-safety,scheduling,automation}`; Java parity via
-   developer-local `demo2026`/`rhythmic` fixtures — run manually where available;
+   `blue-data-csd-{determinism,copy-safety,scheduling,automation,disk,parity}`;
    `blue-live-csd`, `blue-data-{java,python-*}-runtime` for async paths).
 3. Module dependency rule: policy modules import the aggregate as `import type` only;
    runtime imports are limited to modules that do not import `blue-data.ts` back
