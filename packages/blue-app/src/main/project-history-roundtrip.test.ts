@@ -4,6 +4,7 @@ import {
   getProjectParameterCatalog,
   AudioFile,
   BlueData,
+  CompileData,
   BSBKnob,
   BSBHSlider,
   BSBHSliderBank,
@@ -13,6 +14,7 @@ import {
   Effect,
   GenericInstrument,
   GenericScore,
+  Instance,
   LiveObject,
   NoteProcessorChain,
   ObjectBuilder,
@@ -23,6 +25,9 @@ import {
   PythonObject,
   TrackLayer,
   TrackLayerGroup,
+  TimeBehavior,
+  TimeDuration,
+  TimePosition,
 } from '@blue/data';
 import { ProjectSession } from './project-session';
 import type { ProjectSession as ProjectSessionType } from './project-session';
@@ -3109,6 +3114,76 @@ describe('Project patch round trips through real ProjectHistory (T117)', () => {
       dropdownIndex: 1,
       bankValues: [0.123, 0.789],
     });
+  });
+});
+
+describe('linked Instance timing through project history', () => {
+  it('commits, undoes, and redoes placement duration and repeat behavior', async () => {
+    const data = new BlueData();
+    data.getScore().length = 0;
+    const source = new GenericScore();
+    source.setScoreText('i1 0 1 440');
+    source.setTimeBehavior(TimeBehavior.NONE);
+    const libraryId = data.getSoundObjectLibrary().addObject(source);
+    const root = new PolyObject(true);
+    root.newLayerAt(0);
+    const instance = new Instance();
+    instance.setSoundObject(source);
+    instance.setLibraryId(libraryId);
+    instance.setStartTime(TimePosition.beats(10));
+    instance.setSubjectiveDuration(TimeDuration.beats(2));
+    instance.setTimeBehavior(TimeBehavior.NONE);
+    assignExplicitScoreObjectId(instance, 'timed-instance');
+    root[0]!.push(instance);
+    data.getScore().push(root);
+
+    const session = new ProjectSession();
+    session.replace(data, '/tmp/instance-timing.blue');
+    const history = new ProjectHistory({ session });
+    const context = new MockHistoryContext('ctx-instance-timing');
+    const documentId = session.read().documentId!;
+    const live = () => session.read().data!;
+    const liveInstance = () => (live().getScore()[0] as PolyObject)[0]![0] as Instance;
+    const starts = () =>
+      Array.from(
+        liveInstance().generateForCSD(live().getScore().getTimeContext(), new CompileData(), 0, -1),
+        (note) => note.getStartTime(),
+      );
+    const target = createProjectEditorSnapshot(data, null).score!.layerGroups[0]!.layers[0]!
+      .items[0]!.editorTarget!;
+    history.markClean();
+    expect(starts()).toEqual([10]);
+
+    const commit = await history.commit(
+      context.nextCommitRequest(documentId, 0, 'Repeat Instance', [
+        {
+          score: {
+            type: 'updateSharedProperties',
+            target,
+            patch: { subjectiveDuration: { value: 4, timeBase: 'BEATS' } },
+          },
+        },
+        { score: { type: 'updateSoundObjectBehavior', target, patch: { timeBehavior: 'REPEAT' } } },
+      ]),
+    );
+    expect(commit.status).toBe('committed');
+    expect(starts()).toEqual([10, 11, 12, 13]);
+    expect(getScoreObjectId(liveInstance())).toBe('timed-instance');
+    expect(history.isDirty()).toBe(true);
+
+    expect(
+      (await history.undo(context.nextUndoRequest(documentId, session.read().revision))).status,
+    ).toBe('committed');
+    expect(starts()).toEqual([10]);
+    expect(getScoreObjectId(liveInstance())).toBe('timed-instance');
+    expect(history.isDirty()).toBe(false);
+
+    expect(
+      (await history.redo(context.nextRedoRequest(documentId, session.read().revision))).status,
+    ).toBe('committed');
+    expect(starts()).toEqual([10, 11, 12, 13]);
+    expect(getScoreObjectId(liveInstance())).toBe('timed-instance');
+    expect(history.isDirty()).toBe(true);
   });
 });
 

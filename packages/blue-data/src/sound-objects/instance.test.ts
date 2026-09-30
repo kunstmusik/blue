@@ -1,10 +1,59 @@
-import { describe, it, expect } from 'vitest';
+import { beforeAll, describe, it, expect } from 'vitest';
 import { Instance } from './instance';
 import { GenericScore } from './generic-score';
 import { Element } from '../serialization/xml-reader';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 
+import { JavaScriptObject } from './javascript-object';
+
+import { CompileData } from '../compile-data';
+
+import { TimeContext } from '../time/time-context';
+
+import { TimePosition } from '../time/time-position';
+
+import { TimeDuration } from '../time/time-duration';
+
+import { TimeBehavior } from './time-behavior';
+
+import { initializeJavaScriptRuntime } from '../javascript-runtime';
+
 describe('Instance', () => {
+  beforeAll(initializeJavaScriptRuntime);
+  it('repeats linked source notes within its own duration at its Score start', async () => {
+    const context = new TimeContext();
+    const source = new GenericScore();
+    source.setScoreText('i1 2 1 440');
+    source.setTimeBehavior(TimeBehavior.NONE);
+    const instance = new Instance();
+    instance.setSoundObject(source);
+    instance.setStartTime(TimePosition.beats(10));
+    instance.setSubjectiveDuration(TimeDuration.beats(4));
+    instance.setTimeBehavior(TimeBehavior.REPEAT);
+
+    const expected = [10, 11, 12, 13];
+    expect(
+      Array.from(instance.generateForCSD(context, new CompileData(), 0, -1), (note) =>
+        note.getStartTime(),
+      ),
+    ).toEqual(expected);
+    expect(
+      Array.from(await instance.generateForCSDAsync(context, new CompileData(), 0, -1), (note) =>
+        note.getStartTime(),
+      ),
+    ).toEqual(expected);
+
+    const generated = new JavaScriptObject();
+    generated.setJavaScriptCode('score = "i1 2 1 440";');
+    generated.setTimeBehavior(TimeBehavior.NONE);
+    instance.setSoundObject(generated);
+    expect(
+      Array.from(await instance.generateForCSDAsync(context, new CompileData(), 0, -1), (note) =>
+        note.getStartTime(),
+      ),
+    ).toEqual(expected);
+  });
+
   describe('default state', () => {
     it('has no sound object', () => {
       const inst = new Instance();

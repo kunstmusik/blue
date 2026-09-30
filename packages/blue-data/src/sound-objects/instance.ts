@@ -13,7 +13,7 @@ import { Element } from '../serialization/xml-reader';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
 import { initBasicFromXML, getBasicXML } from './sound-object-utilities';
-import { setScoreStart } from '../utilities/score';
+import { applyTimeBehavior, normalizeNoteList, setScoreStart } from '../utilities/score';
 import type { ScoreGenerationOptions } from '../score/score-generation-options';
 import { markTrackInstrumentTargets } from '../score/score-generation-options';
 import { getTrackPlacementForSoundObject } from './sound-object-registry';
@@ -68,6 +68,8 @@ export class Instance extends AbstractSoundObject {
       options?.instrumentTargetCollector,
     );
 
+    normalizeNoteList(nl);
+
     // Apply note processor chain
     const npc = this.getNoteProcessorChain();
     npc.apply(nl);
@@ -75,7 +77,7 @@ export class Instance extends AbstractSoundObject {
     // Apply time behavior
     const duration = this._subjectiveDuration.toBeats(context);
     const rpBeats = this._repeatPoint ? this._repeatPoint.toBeats(context) : -1;
-    // Note: full time behavior application needs ScoreUtilities — simplified for Phase 11
+    applyTimeBehavior(nl, this.getTimeBehavior(), duration, rpBeats);
     setScoreStart(nl, this._startTime.toBeats(context));
 
     return nl;
@@ -108,8 +110,12 @@ export class Instance extends AbstractSoundObject {
       options?.instrumentTargetCollector,
     );
 
+    normalizeNoteList(nl);
     const npc = this.getNoteProcessorChain();
     await npc.applyAsync(nl, compileData);
+    const duration = this._subjectiveDuration.toBeats(context);
+    const rpBeats = this._repeatPoint ? this._repeatPoint.toBeats(context) : -1;
+    applyTimeBehavior(nl, this.getTimeBehavior(), duration, rpBeats);
     setScoreStart(nl, this._startTime.toBeats(context));
 
     return nl;
