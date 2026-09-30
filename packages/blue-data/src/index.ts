@@ -575,6 +575,7 @@ export {
   applyNoteProcessorChain,
   setScoreStart,
   getNotes,
+  NoteParseException,
   getTotalDuration,
 } from './utilities/score';
 export {
