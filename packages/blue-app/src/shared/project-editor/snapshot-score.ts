@@ -1505,7 +1505,10 @@ function createTimeValueSnapshot(value: number, timeBase: string): TimeValueSnap
   };
 }
 
-function createTimeConversionContext(context: TimeContext): TimeConversionContext {
+function createTimeConversionContext(
+  context: TimeContext,
+  smpteFrameRate: number,
+): TimeConversionContext {
   const meterMap = context.getMeterMap();
   const meterEntries: TimeConversionMeterEntry[] = [];
   for (let i = 0; i < meterMap.size(); i++) {
@@ -1522,7 +1525,13 @@ function createTimeConversionContext(context: TimeContext): TimeConversionContex
     meterEntries,
     tempoEnabled: tempoMap.isEnabled(),
     initialTempo: tempoPoints.length > 0 ? tempoPoints[0].tempo : 60,
+    tempoPoints: tempoPoints.map((point) => ({
+      beat: point.beat,
+      tempo: point.tempo,
+      curveType: point.curveType === CurveType.CONSTANT ? 'constant' : 'linear',
+    })),
     sampleRate: context.getSampleRate(),
+    smpteFrameRate,
   };
 }
 
@@ -1556,7 +1565,10 @@ export function createScoreObjectEditorDocument(
         reason: 'removed-target',
         message: 'Score object no longer exists.',
       },
-      timeContext: createTimeConversionContext(data.getScore().getTimeContext()),
+      timeContext: createTimeConversionContext(
+        data.getScore().getTimeContext(),
+        data.getScore().getTimeState().getSmpteFrameRate(),
+      ),
     };
   }
 
@@ -2025,7 +2037,12 @@ export function createScoreObjectEditorDocument(
     }
   }
 
-  return { target, shared, editor, timeContext: createTimeConversionContext(context) };
+  return {
+    target,
+    shared,
+    editor,
+    timeContext: createTimeConversionContext(context, score.getTimeState().getSmpteFrameRate()),
+  };
 }
 
 export function createFallbackEditorDocument(

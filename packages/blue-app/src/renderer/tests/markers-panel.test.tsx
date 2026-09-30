@@ -14,6 +14,7 @@ import { chooseAppSelectOption } from './app-select-test-utils';
 interface MockProjectState {
   loaded: boolean;
   score: {
+    timeState: { smpteFrameRate: number };
     markers: Array<{
       name: string;
       time: number;
@@ -38,6 +39,7 @@ const { mockProjectState } = vi.hoisted(() => ({
   mockProjectState: {
     loaded: true,
     score: {
+      timeState: { smpteFrameRate: 30 },
       markers: [{ name: 'Intro', time: 4, timeBase: 'BEATS', sourceIndex: 0 }],
     },
     transport: {

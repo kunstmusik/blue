@@ -7,6 +7,7 @@ import { AppSelect } from '../../AppSelect';
 export default function MarkersPanel(): React.ReactElement {
   const loaded = useProjectStore((s) => s.loaded);
   const markers = useProjectStore((s) => s.score.markers);
+  const smpteFrameRate = useProjectStore((s) => s.score.timeState.smpteFrameRate);
   const transport = useProjectStore((s) => s.transport);
   const applyPatch = useProjectStore((s) => s.applyProjectDocumentPatch);
 
@@ -19,13 +20,16 @@ export default function MarkersPanel(): React.ReactElement {
       })),
       tempoEnabled: transport.tempoMap.enabled,
       initialTempo: transport.tempoMap.points[0]?.tempo ?? 60,
+      tempoPoints: transport.tempoMap.points,
       sampleRate: transport.sampleRate,
+      smpteFrameRate,
     }),
     [
       transport.meterMap.entries,
       transport.tempoMap.enabled,
       transport.tempoMap.points,
       transport.sampleRate,
+      smpteFrameRate,
     ],
   );
 

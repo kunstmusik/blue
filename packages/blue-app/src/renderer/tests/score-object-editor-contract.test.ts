@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { formatForBase, parseForBase } from '../time/time-unit-logic';
 import {
   BlueData,
   GenericScore,
@@ -16,6 +17,8 @@ import {
   TrackerObject,
   AudioFile,
   FrozenSoundObject,
+  TempoPoint,
+  CurveType,
 } from '@blue/data';
 import {
   createScoreObjectEditorDocument,
@@ -119,6 +122,26 @@ function createDataWithAudioClip(): {
 }
 
 describe('createScoreObjectEditorDocument', () => {
+  it('carries later project tempo points into Score Object time entry', () => {
+    const { data, target } = createDataWithGenericScore();
+    const tempoMap = data.getScore().getTimeContext().getTempoMap();
+    tempoMap.addTempoPoint(new TempoPoint(4, 120, CurveType.CONSTANT));
+    tempoMap.setEnabled(true);
+    const doc = createScoreObjectEditorDocument(data, { target })!;
+
+    expect(formatForBase(8, 'SECONDS', doc.timeContext, false)).toBe('6');
+    expect(parseForBase('6', 'SECONDS', doc.timeContext, false)).toBe(8);
+  });
+
+  it('uses the project SMPTE frame rate for Score Object time entry', () => {
+    const { data, target } = createDataWithGenericScore();
+    data.getScore().getTimeState().setSmpteFrameRate(30);
+    const doc = createScoreObjectEditorDocument(data, { target })!;
+
+    expect(formatForBase(1.5, 'SMPTE', doc.timeContext, false)).toBe('00:00:01:15');
+    expect(parseForBase('00:00:01:15', 'SMPTE', doc.timeContext, false)).toBeCloseTo(1.5);
+  });
+
   it('returns a code-backed editor document for a GenericScore with correct syntax, text, and shared properties', () => {
     const { data, gs, target } = createDataWithGenericScore();
     const doc = createScoreObjectEditorDocument(data, { target });

@@ -466,7 +466,9 @@ export interface TimeConversionContext {
   meterEntries: TimeConversionMeterEntry[];
   tempoEnabled: boolean;
   initialTempo: number;
+  tempoPoints?: TempoPointSnapshot[];
   sampleRate: number;
+  smpteFrameRate?: number;
 }
 
 export interface TimeValueSnapshot {

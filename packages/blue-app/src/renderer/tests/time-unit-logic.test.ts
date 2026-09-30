@@ -82,6 +82,19 @@ describe('beatsToSeconds / secondsToBeats', () => {
     const beats = 3.75;
     expect(secondsToBeats(beatsToSeconds(beats, BPM120), BPM120)).toBeCloseTo(beats, 10);
   });
+
+  it('uses later tempo points for clock-based fields and parses them back', () => {
+    const context: TimeConversionContext = {
+      ...SIMPLE_4_4,
+      tempoPoints: [
+        { beat: 0, tempo: 60, curveType: 'constant' },
+        { beat: 4, tempo: 120, curveType: 'constant' },
+      ],
+    };
+    expect(formatForBase(8, 'SECONDS', context, false)).toBe('6');
+    expect(parseForBase('6', 'SECONDS', context, false)).toBe(8);
+    expect(formatForBase(8, 'FRAME', context, false)).toBe(String(6 * context.sampleRate));
+  });
 });
 
 describe('beatsToBBTInternal', () => {
