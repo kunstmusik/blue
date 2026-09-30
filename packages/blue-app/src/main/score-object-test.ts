@@ -114,14 +114,16 @@ export async function testScoreObject(
   }
 
   const usesJavaScript =
-    sObj instanceof JavaScriptObject || objectBuilder?.getLanguageType() === 'JAVASCRIPT';
+    sObj instanceof JavaScriptObject ||
+    sObj instanceof PolyObject ||
+    objectBuilder?.getLanguageType() === 'JAVASCRIPT';
   if (usesJavaScript) {
     await options.ensureJavaScriptEngine?.();
   }
 
   try {
     const compileData = CompileData.createEmptyCompileData();
-    if (usesJavaScript && options.javaScriptSession) {
+    if (options.javaScriptSession) {
       setJavaScriptSession(compileData, options.javaScriptSession);
     }
     if (options.javaRuntimeClient) {
