@@ -131,6 +131,18 @@ describe('panel dialogs and inline menus in a floated (popout) panel', () => {
     void onApply;
   });
 
+  it('RulerConfigDialog: labels 29.97 fps as non-drop', () => {
+    renderUnderPopout(
+      <RulerConfigDialog
+        timeState={{ ...TIME_STATE, smpteFrameRate: 29.97 }}
+        onApply={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(host.textContent).toContain('29.97 fps (non-drop)');
+  });
+
   it('ShiftObjectsDialog: modal state, backdrop dismissal, and popout Escape routing', async () => {
     const onClose = vi.fn();
     const onConfirm = vi.fn();

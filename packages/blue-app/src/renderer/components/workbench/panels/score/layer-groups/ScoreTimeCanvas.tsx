@@ -17,7 +17,7 @@ import {
 } from '../../../../../stores/score-selection-store';
 import { useLayerSelectionStore } from '../../../../../stores/layer-selection-store';
 import { buildSelectionKey, getLayerSelectionId } from '../layer-selection-utils';
-import { useProjectStore } from '../../../../../stores/project-store';
+import { getProjectDocumentRevision, useProjectStore } from '../../../../../stores/project-store';
 import { useWorkbenchStore } from '../../../../../stores/workbench-store';
 import AutomationLayerOverlay from '../automation/AutomationLayerOverlay';
 import { useScoreAutomationStore } from '../../../../../stores/score-automation-store';
@@ -1381,15 +1381,74 @@ export default function ScoreTimeCanvas({
   const handleSetSubjectiveToObjective = useCallback(() => {
     const entries = getSelectedEntries();
     if (entries.length === 0 || entries.some((entry) => entry.objectType === 'AudioClip')) return;
-    const targets = entries
-      .map((entry) => entry.editorTarget)
-      .filter((target): target is ScoreObjectEditorTargetSnapshot => target !== undefined);
-    if (targets.length > 0) {
-      void applyProjectDocumentPatch({
-        score: { type: 'setSubjectiveDurationToObjective', targets },
-      });
+    const selectedTargets = entries.flatMap((entry) =>
+      entry.editorTarget ? [{ entry, target: entry.editorTarget }] : [],
+    );
+    if (selectedTargets.length === 0) return;
+
+    const targets = selectedTargets.map(({ target }) => target);
+    const label = 'Set Subjective Time to Objective Time';
+    const polyObjectIndexes = selectedTargets.flatMap(({ entry }, index) =>
+      entry.objectType === 'PolyObject' ? [index] : [],
+    );
+
+    if (polyObjectIndexes.length === 0) {
+      void applyProjectDocumentPatch(
+        { score: { type: 'setSubjectiveDurationToObjective', targets } },
+        { label },
+      );
+      return;
     }
-  }, [applyProjectDocumentPatch, getSelectedEntries]);
+
+    void (async () => {
+      try {
+        await flushPendingPatches();
+        const baseRevision = getProjectDocumentRevision();
+        const baseSessionId = useProjectStore.getState().sessionId;
+        const resolvedObjectiveDurationsBeats: Array<number | null> = targets.map(() => null);
+
+        for (const index of polyObjectIndexes) {
+          const result = await window.blueAPI.testScoreObject({
+            target: targets[index]!,
+            mode: 'objective-duration',
+            expectedProjectRevision: baseRevision,
+            expectedProjectSessionId: baseSessionId,
+          });
+          if (!result.ok) {
+            throw new Error(result.error ?? 'PolyObject duration measurement failed.');
+          }
+          const duration = result.objectiveDurationBeats;
+          if (duration === undefined || !Number.isFinite(duration) || duration <= 0) {
+            throw new Error('PolyObject measurement did not return a positive duration.');
+          }
+          resolvedObjectiveDurationsBeats[index] = duration;
+        }
+
+        if (
+          useProjectStore.getState().sessionId !== baseSessionId ||
+          getProjectDocumentRevision() !== baseRevision
+        ) {
+          throw new Error('The project changed while measuring. Run the command again.');
+        }
+
+        await applyProjectDocumentPatch(
+          {
+            score: {
+              type: 'setSubjectiveDurationToObjective',
+              targets,
+              resolvedObjectiveDurationsBeats,
+            },
+          },
+          { label, expectedRevision: baseRevision },
+        );
+        await flushPendingPatches();
+      } catch (error) {
+        toast.error(
+          `Could not set objective duration: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    })();
+  }, [applyProjectDocumentPatch, flushPendingPatches, getSelectedEntries]);
 
   const handleReplaceWithBuffer = useCallback(() => {
     const selected = getSelectedEntries();

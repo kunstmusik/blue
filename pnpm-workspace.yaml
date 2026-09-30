@@ -2,14 +2,12 @@ packages:
   - packages/*
   - native/*
 
-onlyBuiltDependencies:
-  - '@electron/rebuild'
-  - electron
-  - electron-winstaller
-  - esbuild
-  - zeromq
-
-confirmModulesPurge: false
+allowBuilds:
+  '@electron/rebuild': true
+  electron: true
+  electron-winstaller: true
+  esbuild: true
+  zeromq: true
 
 packageExtensions:
   vite-plugin-electron@0.29.1:

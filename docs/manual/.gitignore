@@ -1,0 +1,4 @@
+/.quarto/
+/_build/
+**/*.quarto_ipynb
+**/.DS_Store

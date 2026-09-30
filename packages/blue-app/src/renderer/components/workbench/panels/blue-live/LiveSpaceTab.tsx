@@ -349,9 +349,9 @@ export default function LiveSpaceTab(): React.ReactElement {
           />
         </label>
         <label style={toolbarLabelStyle}>
-          Repeat
+          Repeat every
           <CommitNumberInput
-            aria-label="Repeat"
+            aria-label="Repeat every (quarter-note beats)"
             min={1}
             max={256}
             step={1}
@@ -368,9 +368,12 @@ export default function LiveSpaceTab(): React.ReactElement {
             }}
             style={spinnerStyle}
           />
+          beats
         </label>
         <button
           type="button"
+          aria-label="Repeat"
+          aria-pressed={repeatEnabled}
           onClick={() =>
             applyBlueLivePatch({
               type: 'updateTempoRepeat',
@@ -384,7 +387,7 @@ export default function LiveSpaceTab(): React.ReactElement {
               : 'var(--color-app-surface-strong)',
             color: repeatEnabled ? 'var(--color-app-text-strong)' : 'var(--color-app-text-muted)',
           }}
-          title="Audible global Repeat is deferred in this release; values remain editable and preserved"
+          title={`Automatically trigger all enabled cells every ${repeat} quarter-note beats`}
         >
           Repeat
         </button>

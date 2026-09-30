@@ -1,0 +1,71 @@
+# Tools
+
+These tools are separate from project editors. Open the named dialogs from
+the **Tools** menu; open dockable panels from **Window** or the workbench.
+
+## Code Repository
+
+**Tools → Code Repository Editor** opens a personal tree of code groups and
+snippets. Add a group or snippet from the tree's context menu, rename it in
+the tree, and edit a selected snippet in the code area. **Save** applies
+changes. **Import…** and **Export…** exchange the repository with Java Blue
+XML. Blue stores the repository with its application data, not in the open
+`.blue` project, so use **Export…** when you need a portable copy. In a
+Csound editor, use its context menu to insert a snippet or add selected text
+to the repository. The repository is separate from the project's orchestra
+and UDO list.
+
+## Effects Library
+
+**Tools → Effects Library** opens reusable mixer effects. Organize effects
+in folders, import effect XML with the Libraries actions menu, and
+double-click an effect to edit it. Add a library effect to a mixer chain
+from the mixer or by dragging it from Libraries. See
+[Mixer](mixer.qmd) for routing, chain order, sends, and channel settings.
+
+## FTable Converter
+
+**Tools → FTable Converter** accepts Csound `f` statements in its upper
+editor. Click **Convert to FTGEN** and copy the output from the lower
+editor into orchestra code. The converter changes numbered score tables
+into `ftgen` assignments; inspect and name the generated `gi_` variables
+before using them. It does not insert its output into the project.
+
+## Csound configuration editor
+
+**Tools → .csound7rc Editor** edits the configuration file shown by the
+dialog's path label. **Save** writes the text; **Cancel** closes without
+writing. By default, Blue opens `.csound7rc` in your home directory. If
+`CSOUNDRC` is set, Blue opens that path instead. Check the selected file
+and Csound flags before saving. The older manual described a `.csoundrc`
+editor; Blue 3's menu and dialog use `.csound7rc`.
+
+## SoundFont Viewer
+
+Open **Window → Properties → SoundFont Viewer**, or double-click an `.sf2`
+file in the File Manager. The viewer lists the SoundFont's instruments and
+presets after Blue's managed Csound runtime inspects the file. This is an
+inspection tool; selecting a preset here does not add it to an instrument
+or Score automatically.
+
+## Code editors and consoles
+
+Csound text editors appear in **Global Orchestra**, **Tables**, **UDOs**,
+instrument editors, and other panels. Their context menu offers Csound
+opcode help and Code Repository actions where appropriate. The older
+manual's NetBeans editor preferences and shortcuts do not describe this
+workbench.
+
+Open **Python Console** from **Window → REPL → Python Console** for the
+Java-backed Jython session used by supported Python content. **JavaScript
+Console** and **Clojure REPL** are separate panels in the same submenu. A
+Python or JavaScript console is useful for diagnosis, but the project code
+still belongs in the relevant instrument, SoundObject, or processor editor.
+
+## Historical tools
+
+**Blue Share** appears disabled in the Blue 3 Tools menu. The Blue 2
+manual's account and upload steps cannot be used here. The old **Scanned
+Synthesis Matrix Editor** and **Manage Tools** menu are also absent from
+the current Tools menu. Their original descriptions remain in the
+[Blue 2 source edition](https://github.com/kunstmusik/blue-manual/tree/7a92066a2aa8f0370026ba9527c158643c2935a1) for historical reference.

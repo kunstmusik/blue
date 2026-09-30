@@ -82,6 +82,13 @@ export class Sound extends AbstractSoundObject {
     return TimeBehavior.NOT_SUPPORTED;
   }
 
+  getRangeOriginBeats(context: TimeContext): number | null | undefined {
+    if (this.getNoteProcessorChain().getProcessors().length > 0) return undefined;
+    const duration = this.getSubjectiveDuration().toBeats(context);
+    if (!Number.isFinite(duration) || duration <= 0) return null;
+    return this.getStartTime().toBeats(context);
+  }
+
   override generateForCSD(
     context: TimeContext,
     compileData: CompileData,

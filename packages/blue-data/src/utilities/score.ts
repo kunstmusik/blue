@@ -4,6 +4,18 @@ import { NoteProcessorChain } from '../note-processors/note-processor-chain';
 import { Note } from '../sound-objects/note';
 import { TimeBehavior } from '../sound-objects/time-behavior';
 
+export class NoteParseException extends Error {
+  constructor(
+    readonly lineNumber: number,
+    readonly noteText: string,
+  ) {
+    super(
+      `NoteParseException\nLine Number: ${lineNumber}\nNote Text: ${noteText}\nDetails:\nInvalid note text: ${noteText}`,
+    );
+    this.name = 'NoteParseException';
+  }
+}
+
 export function applyNoteProcessorChain(nl: NoteList, npc: NoteProcessorChain): NoteList {
   return npc.apply(nl);
 }
@@ -315,10 +327,12 @@ export function getNotes(scoreText: string): NoteList {
 
         if (noteText.charAt(0) === 'i') {
           const tempNote = Note.createNoteFromText(noteText, previousNote);
-          if (tempNote !== null) {
-            notes.add(tempNote);
-            previousNote = tempNote;
+          if (tempNote === null) {
+            const lineNumber = scoreText.slice(0, start).split('\n').length;
+            throw new NoteParseException(lineNumber, noteText);
           }
+          notes.add(tempNote);
+          previousNote = tempNote;
         }
 
         collecting = false;

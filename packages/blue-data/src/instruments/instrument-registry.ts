@@ -12,6 +12,7 @@ import { GenericInstrument } from './generic-instrument';
 import { JavaScriptInstrument } from './javascript-instrument';
 import { PythonInstrument } from './python-instrument';
 import { BlueX7 } from './blue-x7';
+import { UnknownInstrument } from './unknown-instrument';
 
 /** Type for instrument loader functions */
 export type InstrumentLoader = (data: Element) => Instrument | null;
@@ -29,7 +30,7 @@ export function loadInstrumentFromXML(data: Element): Instrument | null {
   const loader = registry.get(type);
   if (!loader) {
     console.warn(`Unknown instrument type: ${type}`);
-    return null;
+    return new UnknownInstrument(data);
   }
 
   return loader(data);

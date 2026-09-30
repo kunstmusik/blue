@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { formatForBase, parseForBase } from '../time/time-unit-logic';
 import {
   BlueData,
   GenericScore,
@@ -16,7 +19,15 @@ import {
   TrackerObject,
   AudioFile,
   FrozenSoundObject,
+  PatternObject,
+  Pattern,
+  TempoPoint,
+  CurveType,
+  PianoNote,
 } from '@blue/data';
+import { ProjectHistory } from '../../main/project-history';
+import { ProjectSession } from '../../main/project-session';
+import { applyPatchToDocument } from '../components/workbench/panels/score-object/score-object-document-reducer';
 import {
   createScoreObjectEditorDocument,
   createFallbackEditorDocument,
@@ -119,6 +130,26 @@ function createDataWithAudioClip(): {
 }
 
 describe('createScoreObjectEditorDocument', () => {
+  it('carries later project tempo points into Score Object time entry', () => {
+    const { data, target } = createDataWithGenericScore();
+    const tempoMap = data.getScore().getTimeContext().getTempoMap();
+    tempoMap.addTempoPoint(new TempoPoint(4, 120, CurveType.CONSTANT));
+    tempoMap.setEnabled(true);
+    const doc = createScoreObjectEditorDocument(data, { target })!;
+
+    expect(formatForBase(8, 'SECONDS', doc.timeContext, false)).toBe('6');
+    expect(parseForBase('6', 'SECONDS', doc.timeContext, false)).toBe(8);
+  });
+
+  it('uses the project SMPTE frame rate for Score Object time entry', () => {
+    const { data, target } = createDataWithGenericScore();
+    data.getScore().getTimeState().setSmpteFrameRate(30);
+    const doc = createScoreObjectEditorDocument(data, { target })!;
+
+    expect(formatForBase(1.5, 'SMPTE', doc.timeContext, false)).toBe('00:00:01:15');
+    expect(parseForBase('00:00:01:15', 'SMPTE', doc.timeContext, false)).toBeCloseTo(1.5);
+  });
+
   it('returns a code-backed editor document for a GenericScore with correct syntax, text, and shared properties', () => {
     const { data, gs, target } = createDataWithGenericScore();
     const doc = createScoreObjectEditorDocument(data, { target });
@@ -388,6 +419,129 @@ describe('Score patches — updateSoundObjectBehavior', () => {
 });
 
 describe('Score patches — updateTypeSpecificEditor', () => {
+  it('commits PianoRoll Base Frequency through ProjectHistory with undo and redo', async () => {
+    const { data, pianoRoll, target } = createDataWithPianoRoll();
+    const note = new PianoNote();
+    note.setStart(1);
+    note.setDuration(2);
+    note.setOctave(8);
+    note.setScaleDegree(7);
+    pianoRoll.addNote(note);
+
+    const session = new ProjectSession();
+    session.replace(data, join(tmpdir(), 'piano-roll-base-frequency.blue'));
+    const documentId = session.read().documentId!;
+    const history = new ProjectHistory({ session });
+    history.markClean();
+    const baseFrequencyPatch = {
+      score: {
+        type: 'updateTypeSpecificEditor' as const,
+        target,
+        patch: {
+          scale: {
+            scaleName: '12TET',
+            baseFrequency: 440,
+            octave: 2,
+            ratios: [1, 1.5],
+          },
+        },
+      },
+    };
+    const currentPianoRoll = () =>
+      (session.read().data!.getScore()[0] as PolyObject)[0]![0] as PianoRoll;
+    const assertEditorTargetAndNotes = () => {
+      const document = createScoreObjectEditorDocument(session.read().data!, { target });
+      expect(document?.target.selectionId).toBe(target.selectionId);
+      expect(document?.editor.kind).toBe('structured');
+      expect(currentPianoRoll().getNotes()).toMatchObject([
+        { start: 1, duration: 2, octave: 8, scaleDegree: 7 },
+      ]);
+    };
+
+    const commit = await history.commit({
+      documentId,
+      operationId: 'base-frequency-commit',
+      expectedRevision: 0,
+      contextSequence: 0,
+      label: 'Set PianoRoll Base Frequency',
+      patches: [baseFrequencyPatch],
+    });
+
+    expect(commit.status).toBe('committed');
+    expect(history.read().undoLabel).toBe('Set PianoRoll Base Frequency');
+    expect(history.isDirty()).toBe(true);
+    expect(currentPianoRoll().getScale().baseFrequency).toBeCloseTo(440);
+    assertEditorTargetAndNotes();
+
+    const undo = await history.undo({
+      documentId,
+      operationId: 'base-frequency-undo',
+      expectedRevision: session.read().revision,
+      contextSequence: 1,
+    });
+    expect(undo.status).toBe('committed');
+    expect(history.isDirty()).toBe(false);
+    expect(currentPianoRoll().getScale().baseFrequency).toBeCloseTo(261.625565);
+    assertEditorTargetAndNotes();
+
+    const redo = await history.redo({
+      documentId,
+      operationId: 'base-frequency-redo',
+      expectedRevision: session.read().revision,
+      contextSequence: 2,
+    });
+    expect(redo.status).toBe('committed');
+    expect(history.isDirty()).toBe(true);
+    expect(currentPianoRoll().getScale().baseFrequency).toBeCloseTo(440);
+    assertEditorTargetAndNotes();
+  });
+
+  it('keeps PatternObject preview and canonical grid aligned after a beat resize', () => {
+    const data = new BlueData();
+    data.getScore().length = 0;
+    const poly = new PolyObject();
+    const layer = new SoundLayer();
+    const patternObject = new PatternObject();
+    const row = new Pattern(16);
+    row.values[2] = true;
+    row.values[14] = true;
+    patternObject.addPattern(row);
+    layer.push(patternObject);
+    poly.push(layer);
+    data.getScore().push(poly);
+    const target: ScoreObjectEditorTargetSnapshot = {
+      selectionId: 'sobj-0-0',
+      selectedObjectType: 'PatternObject',
+      editorObjectType: 'PatternObject',
+      ownerKind: 'timeline',
+      displayContext: 'timeline',
+      location: { rootGroupIndex: 0, containerPath: [], layerIndex: 0, objectIndex: 0 },
+      supportsTimeBehavior: true,
+      supportsRepeatPoint: true,
+      supportsNoteProcessorChain: true,
+    };
+    const patch = { type: 'updateTypeSpecificEditor' as const, target, patch: { beats: 2 } };
+    const before = createScoreObjectEditorDocument(data, { target })!;
+    const preview = applyPatchToDocument(before, patch);
+
+    expect(applyProjectDocumentPatch(data, { score: patch })).toBe(true);
+    expect(patternObject.getPattern(0).values).toEqual([
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+    ]);
+    const after = createScoreObjectEditorDocument(data, { target })!;
+    if (preview.editor.kind !== 'structured' || after.editor.kind !== 'structured') {
+      throw new Error('Expected structured PatternObject editors');
+    }
+    expect(preview.editor.payload.patterns).toEqual(after.editor.payload.patterns);
+  });
+
   it('updates code text for GenericScore', () => {
     const { data, gs, target } = createDataWithGenericScore();
 

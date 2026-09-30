@@ -158,19 +158,7 @@ export default function DiskRenderSettings({
         placeholder="Additional Csound command-line options"
       />
 
-      <SettingsSubsectionTitle>Render and Play / Open</SettingsSubsectionTitle>
-
-      <SettingsCheckboxField
-        label="Render and Play Enabled"
-        checked={settings.externalPlayCommandEnabled}
-        onChange={(checked) => set('externalPlayCommandEnabled', checked)}
-      />
-      <SettingsField
-        label="Render and Play Command"
-        value={settings.externalPlayCommand}
-        onChange={(value) => set('externalPlayCommand', value)}
-        placeholder="command $outfile"
-      />
+      <SettingsSubsectionTitle>Render and Open</SettingsSubsectionTitle>
 
       <SettingsField
         label="Render and Open Command"

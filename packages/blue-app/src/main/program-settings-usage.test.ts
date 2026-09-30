@@ -58,6 +58,15 @@ describe('program-settings-usage matrix', () => {
     expect(keys.has('diskRender.externalOpenCommand')).toBe(true);
   });
 
+  it('identifies retained external play preferences as inactive', () => {
+    const matrix = buildUsageMatrix();
+    for (const key of ['diskRender.externalPlayCommandEnabled', 'diskRender.externalPlayCommand']) {
+      const entry = matrix.find((item) => item.settingKey === key);
+      expect(entry?.currentStatus).toBe('app-specific-retained');
+      expect(entry?.consumerPath).toBeUndefined();
+    }
+  });
+
   it('has feature parity notes', () => {
     expect(FEATURE_PARITY_NOTES.length).toBeGreaterThan(0);
     const ids = FEATURE_PARITY_NOTES.map((f) => f.id);

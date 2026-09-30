@@ -466,7 +466,9 @@ export interface TimeConversionContext {
   meterEntries: TimeConversionMeterEntry[];
   tempoEnabled: boolean;
   initialTempo: number;
+  tempoPoints?: TempoPointSnapshot[];
   sampleRate: number;
+  smpteFrameRate?: number;
 }
 
 export interface TimeValueSnapshot {
@@ -712,11 +714,17 @@ export interface ScoreObjectEditorDocumentSnapshot {
 
 export interface ScoreObjectEditorRequest {
   target: ScoreObjectEditorTargetSnapshot;
+  /** Generate a PolyObject exactly as the objective-duration command measures it. */
+  mode?: 'objective-duration';
+  /** Revision/session fence used while objective-duration generation is asynchronous. */
+  expectedProjectRevision?: number;
+  expectedProjectSessionId?: number;
 }
 
 export interface ScoreObjectTestResult {
   ok: boolean;
   output: string;
+  objectiveDurationBeats?: number;
   error?: string;
 }
 
@@ -893,6 +901,8 @@ export type ScorePatch =
   | {
       type: 'setSubjectiveDurationToObjective';
       targets: ScoreObjectEditorTargetSnapshot[];
+      /** Measured PolyObject durations in beats, aligned with targets; null keeps the normal calculation. */
+      resolvedObjectiveDurationsBeats?: Array<number | null>;
     }
   | {
       type: 'addLayer';

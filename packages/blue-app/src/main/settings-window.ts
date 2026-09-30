@@ -10,6 +10,7 @@ let settingsWindow: BrowserWindow | null = null;
 let disposeStateHandlers: (() => void) | null = null;
 let closeRequestPending = false;
 let allowNextClose = false;
+let resolveQuitClose: ((allowed: boolean) => void) | null = null;
 
 export interface OpenSettingsWindowOptions {
   /**
@@ -68,6 +69,8 @@ export function openSettingsWindow(
   });
 
   settingsWindow.on('closed', () => {
+    resolveQuitClose?.(true);
+    resolveQuitClose = null;
     disposeStateHandlers?.();
     disposeStateHandlers = null;
     closeRequestPending = false;
@@ -111,11 +114,24 @@ export function closeSettingsWindow(): void {
   disposeStateHandlers = null;
 }
 
+/** Close Settings through its normal save/discard/cancel guard before quitting. */
+export function requestSettingsWindowCloseForQuit(): Promise<boolean> {
+  if (!settingsWindow || settingsWindow.isDestroyed()) return Promise.resolve(true);
+  return new Promise<boolean>((resolve) => {
+    resolveQuitClose = resolve;
+    if (!closeRequestPending) settingsWindow?.close();
+  });
+}
+
 /** Resolve a renderer-originated close request after the draft is handled. */
 export function resolveSettingsWindowClose(resolution: SettingsCloseResolution): void {
   if (!settingsWindow || settingsWindow.isDestroyed() || !closeRequestPending) return;
   closeRequestPending = false;
-  if (resolution !== 'allow') return;
+  if (resolution !== 'allow') {
+    resolveQuitClose?.(false);
+    resolveQuitClose = null;
+    return;
+  }
   allowNextClose = true;
   settingsWindow.close();
 }

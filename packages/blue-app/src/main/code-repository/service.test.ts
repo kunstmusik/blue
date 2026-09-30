@@ -335,6 +335,31 @@ describe('CodeRepositoryService migration robustness', () => {
     }
   });
 
+  it('clears a stale migration failure after retrying an initialized repository', async () => {
+    const dir = createCodeRepositoryTestDirectory();
+    try {
+      const first = createMigratingService(dir);
+      await first.start();
+      await first.stop();
+      new CodeRepositoryMigrationStateStore(dir.statePath).finishAttempt({
+        state: 'failed',
+        error: 'Code Repository worker exited',
+      });
+
+      const restarted = createMigratingService(dir);
+      await restarted.start();
+      expect(restarted.getStatus()).toMatchObject({
+        available: true,
+        migrationStatus: 'failed',
+      });
+      await restarted.retry();
+      expect(restarted.getStatus()).toEqual({ available: true, migrationStatus: 'skipped' });
+      await restarted.stop();
+    } finally {
+      dir.cleanup();
+    }
+  });
+
   it('transitions runtime transport failures to recoverable storage failure and reopens', async () => {
     const dir = createCodeRepositoryTestDirectory();
     const openedClients: CodeRepositoryClient[] = [];

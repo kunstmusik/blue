@@ -6,6 +6,7 @@ export interface PianoRollNoteClipboardEntry {
   start: number;
   duration: number;
   fieldValues: number[];
+  noteTemplate: string | null;
 }
 
 export interface PianoRollClipboard {
@@ -36,6 +37,7 @@ function cloneClipboard(clipboard: PianoRollClipboard | null): PianoRollClipboar
       start: note.start,
       duration: note.duration,
       fieldValues: [...note.fieldValues],
+      noteTemplate: note.noteTemplate,
     })),
   };
 }

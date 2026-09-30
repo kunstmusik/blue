@@ -7,7 +7,26 @@ export interface InstrumentTargetCollector {
   mark(note: Note, behavior: InstrumentTargetBehavior): void;
 }
 
+/** Shared by an Instance and the PolyObject that normalizes its linked source. */
+export interface ScoreNormalizationOrigin {
+  readonly owner: object;
+  originBeats?: number;
+  /**
+   * Stable origin in the linked PolyObject's child timeline. `null` means
+   * the source is known to generate no notes; `undefined` means unsupported.
+   */
+  rangeOriginBeats?: number | null;
+  /** The linked Instance permits range-origin generation for this request. */
+  readonly allowRangeOrigin?: boolean;
+}
+
 export interface ScoreGenerationOptions {
+  /** Absolute score beat at local beat zero while descending nested PolyObjects. */
+  readonly beatOrigin?: number;
+  /** A parent PolyObject will rebase selected-range notes after child placement. */
+  readonly deferRenderStartRebase?: boolean;
+  /** Pre-range minimum collected once by a linked source's owner PolyObject. */
+  readonly normalizationOrigin?: ScoreNormalizationOrigin;
   readonly processWithSolo?: boolean;
   readonly trackId?: string;
   readonly instrumentOverrideId?: string;

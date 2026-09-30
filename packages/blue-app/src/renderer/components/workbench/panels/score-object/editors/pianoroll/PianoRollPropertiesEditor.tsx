@@ -10,12 +10,13 @@ import {
   BLUE_INSPECTOR_INPUT_CLASS,
   BLUE_INSPECTOR_ROW_CLASS,
 } from '../../../shared/compactFieldStyles';
+import type { ProjectDocumentCommitMetadata } from '../../../../../../../shared/project-history';
 
 const inputCls = BLUE_INSPECTOR_INPUT_CLASS;
 
 interface PianoRollPropertiesEditorProps {
   payload: PianoRollPayload;
-  onPatch: (patch: Record<string, unknown>) => void;
+  onPatch: (patch: Record<string, unknown>, metadata?: ProjectDocumentCommitMetadata) => void;
 }
 
 function FieldRow({
@@ -43,9 +44,8 @@ export default function PianoRollPropertiesEditor({
     pchGenerationMethod,
     transposition,
     scale,
-    baseFrequency,
     fieldDefinitions,
-  } = payload as PianoRollPayload & { baseFrequency?: number };
+  } = payload;
 
   const handleScaleChange = useCallback(
     (newScale: typeof scale) => {
@@ -79,6 +79,21 @@ export default function PianoRollPropertiesEditor({
         </FieldRow>
         <FieldRow label="Scale">
           <ScaleSelectionPanel scale={scale} onScaleChange={handleScaleChange} />
+        </FieldRow>
+        <FieldRow label="Base Frequency">
+          <CommitNumberInput
+            aria-label="Base Frequency"
+            className={inputCls}
+            value={scale.baseFrequency}
+            min={0}
+            step={1}
+            onChange={(value) =>
+              onPatch(
+                { scale: { ...scale, baseFrequency: value } },
+                { label: 'Set PianoRoll Base Frequency' },
+              )
+            }
+          />
         </FieldRow>
         <FieldRow label="Pitch Generation">
           <div className="flex gap-2">

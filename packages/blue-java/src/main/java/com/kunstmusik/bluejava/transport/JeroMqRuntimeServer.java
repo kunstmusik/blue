@@ -8,6 +8,7 @@ import com.kunstmusik.bluejava.errors.ClojureEvaluationException;
 import com.kunstmusik.bluejava.jython.JythonEvaluationException;
 import com.kunstmusik.bluejava.jython.JythonNote;
 import com.kunstmusik.bluejava.jython.JythonNoteList;
+import com.kunstmusik.bluejava.jython.JythonNoteTransportMetadata;
 import com.kunstmusik.bluejava.jython.JythonSession;
 import com.kunstmusik.bluejava.protocol.RuntimeErrorEnvelope;
 import com.kunstmusik.bluejava.protocol.RuntimeMethod;
@@ -314,10 +315,7 @@ public final class JeroMqRuntimeServer {
 
         if (params.notes != null) {
             for (JythonSerializedNote serializedNote : params.notes) {
-                noteList.add(new JythonNote(
-                        serializedNote.pfields != null ? serializedNote.pfields : Collections.emptyList(),
-                        serializedNote.subjectiveDuration,
-                        serializedNote.tied));
+                noteList.add(deserializeJythonNote(serializedNote));
             }
         }
 
@@ -326,18 +324,33 @@ public final class JeroMqRuntimeServer {
                 noteList);
 
         List<Map<String, Object>> serializedNotes = evaluation.notes().stream()
-                .map(note -> {
-                    Map<String, Object> serialized = new LinkedHashMap<>();
-                    serialized.put("pfields", note.getPfields());
-                    serialized.put("subjectiveDuration", note.getSubjectiveDuration());
-                    serialized.put("tied", note.isTied());
-                    return serialized;
-                })
+                .map(JeroMqRuntimeServer::serializeJythonNote)
                 .toList();
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("notes", serializedNotes);
         return new RequestResult(result, evaluation.stdout(), evaluation.stderr());
+    }
+
+    static JythonNote deserializeJythonNote(JythonSerializedNote serializedNote) {
+        JythonNote note = new JythonNote(
+                serializedNote.pfields != null ? serializedNote.pfields : Collections.emptyList(),
+                serializedNote.subjectiveDuration,
+                serializedNote.tied);
+        JythonNoteTransportMetadata.setRenderMetadataId(note, serializedNote.renderMetadataId);
+        return note;
+    }
+
+    static Map<String, Object> serializeJythonNote(JythonNote note) {
+        Map<String, Object> serialized = new LinkedHashMap<>();
+        serialized.put("pfields", note.getPfields());
+        serialized.put("subjectiveDuration", note.getSubjectiveDuration());
+        serialized.put("tied", note.isTied());
+        String renderMetadataId = JythonNoteTransportMetadata.getRenderMetadataId(note);
+        if (renderMetadataId != null) {
+            serialized.put("renderMetadataId", renderMetadataId);
+        }
+        return serialized;
     }
 
     private RequestResult evaluateClojure(RuntimeRequestEnvelope request) {
@@ -467,6 +480,7 @@ public final class JeroMqRuntimeServer {
         public List<String> pfields = Collections.emptyList();
         public double subjectiveDuration;
         public boolean tied;
+        public String renderMetadataId;
     }
 
     public static final class ClojureEvalParams {

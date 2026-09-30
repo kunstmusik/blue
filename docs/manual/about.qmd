@@ -1,0 +1,23 @@
+# About this manual
+
+Steven Yi created Blue to compose with Csound by arranging SoundObjects in
+time and simplifying repeated setup work. This Blue 3 edition adapts the
+original community manual for the TypeScript/Electron application.
+
+## Authors and contributors
+
+The original manual's preface is by Steven Yi. Its credits name:
+
+- Michael Bechard — Java development; author of the original PolyObjects concept chapter.
+- Andrés Cabrera — documentation, tutorials, and ideas.
+- Dave Seidel — Java development.
+- Kevin Welsh — blueShare server and Java development.
+- Menno Knevel — documentation, tutorials, and ideas.
+
+This edition also credits Blue's ongoing contributors. The [Blue 2 source
+edition](https://github.com/kunstmusik/blue-manual/tree/7a92066a2aa8f0370026ba9527c158643c2935a1) preserves the original preface, credits, and historical
+instructions. The migration baseline is commit `7a92066a2aa8f0370026ba9527c158643c2935a1`;
+the current manual is versioned with the Blue 3 application.
+
+The manual text retains the GNU Free Documentation License 1.3. See
+[COPYING.GFDL](COPYING.GFDL) for the license.

@@ -25,6 +25,14 @@ import { DeepCopyable, type CopyMode } from '../deep-copyable';
 import type { ScoreGenerationOptions } from '../score/score-generation-options';
 
 export interface SoundObject extends ScoreObject, DeepCopyable<SoundObject> {
+  /**
+   * Return a range-independent earliest note start in the containing
+   * PolyObject's child timeline. `null` means the object is known to generate
+   * no notes; an absent method or `undefined` means its origin cannot be
+   * established safely before generation.
+   */
+  getRangeOriginBeats?(context: TimeContext): number | null | undefined;
+
   /** Generate notes for CSD output. */
   generateForCSD(
     context: TimeContext,

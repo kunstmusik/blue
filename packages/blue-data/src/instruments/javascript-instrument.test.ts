@@ -1,4 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { CompileData } from '../compile-data';
+import { Arrangement } from '../arrangement';
+import { BlueData } from '../blue-data';
+import { initializeJavaScriptRuntime } from '../javascript-runtime';
 import { OpcodeDefinition } from '../opcodes/opcode-definition';
 import { OpcodeList } from '../opcodes/opcode-list';
 import { UDOStyle } from '../opcodes/udo-style';
@@ -6,6 +10,30 @@ import { Element } from '../serialization/xml-reader';
 import { JavaScriptInstrument } from './javascript-instrument';
 
 describe('JavaScriptInstrument', () => {
+  beforeAll(initializeJavaScriptRuntime);
+
+  it('generates orchestra code from the script instrument variable', async () => {
+    const instr = new JavaScriptInstrument();
+    instr.setText('instrument = "aTone oscili 0.2, 440\\nouts aTone, aTone";');
+
+    expect(instr.generateInstrument()).toBe('aTone oscili 0.2, 440\nouts aTone, aTone');
+    expect(await instr.generateInstrumentAsync(CompileData.createEmptyCompileData())).toBe(
+      'aTone oscili 0.2, 440\nouts aTone, aTone',
+    );
+  });
+
+  it('includes the generated body in realtime CSD', async () => {
+    const instr = new JavaScriptInstrument();
+    instr.setText('instrument = "aTone oscili 0.2, 440\\nouts aTone, aTone";');
+    const arrangement = new Arrangement();
+    arrangement.addInstrument(instr, '1');
+    const data = new BlueData();
+    data.setArrangement(arrangement);
+
+    expect(data.toCSD()).toContain('aTone oscili 0.2, 440');
+    expect(await data.toCSDAsync()).toContain('outs aTone, aTone');
+  });
+
   it('round-trips Java-style XML without losing script fields', () => {
     const xml = `<instrument type="blue.orchestra.JavaScriptInstrument">
       <name>JS Tone</name>

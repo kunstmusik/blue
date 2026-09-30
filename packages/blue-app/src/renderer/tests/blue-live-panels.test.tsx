@@ -238,7 +238,7 @@ describe('Blue Live panel tab render tests (T045)', () => {
     expect(container.textContent).toContain('Command Line Enabled');
   });
 
-  it('LiveSpaceTab renders toolbar buttons', () => {
+  it('LiveSpaceTab exposes global Repeat count and enable controls', () => {
     seedProject(makeBlueLiveSnapshot());
     act(() => {
       root.render(
@@ -249,7 +249,20 @@ describe('Blue Live panel tab render tests (T045)', () => {
     });
     const buttons = container.querySelectorAll('button');
     const texts = Array.from(buttons).map((b) => b.textContent);
-    expect(texts).toContain('Repeat');
+    const repeatInput = container.querySelector<HTMLInputElement>(
+      'input[aria-label="Repeat every (quarter-note beats)"]',
+    );
+    const repeatButton = Array.from(buttons).find(
+      (button) => button.getAttribute('aria-label') === 'Repeat',
+    );
+    expect(repeatInput?.value).toBe('4');
+    expect(repeatButton).toBeDefined();
+    expect(repeatButton?.getAttribute('aria-pressed')).toBe('false');
+
+    act(() => repeatButton?.click());
+
+    expect(useProjectStore.getState().blueLive?.repeatEnabled).toBe(true);
+    expect(repeatButton?.getAttribute('aria-pressed')).toBe('true');
     expect(texts).toContain('Trigger');
   });
 

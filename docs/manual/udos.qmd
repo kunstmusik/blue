@@ -1,0 +1,46 @@
+# User-defined opcodes
+
+A user-defined opcode (UDO) is a reusable Csound operation. Open **Window →
+Editors → UDOs** to manage definitions saved in the current project. Blue
+generates these definitions in `<CsInstruments>` before the project's
+[Orchestra](orchestra.qmd) instruments.
+
+## Create and edit a project UDO
+
+1. Click **Add** in the UDO list, then select the new row.
+2. Enter an **Opcode Name** and choose **Classic** or **Modern** under
+   **Style**. For Classic, supply **Out Types** and **In Types**. For Modern,
+   supply **Out Types** and named **Input Arguments**.
+3. Enter the operation body on the **Code** tab. Blue generates the opcode
+   declaration and ending from the fields, so the body should omit `opcode`
+   and `endop` lines. The **Comments** tab stores notes about the definition.
+4. Click **Test Opcode** to preview the Csound code Blue generates for this
+   definition. To check it with Csound, use it in an instrument and render
+   the project. **Project → Generate CSD to Screen** shows its placement in
+   the full project.
+
+The project UDO list has **Add** and **Import** controls. Import accepts a
+Blue UDO (`.blueUDO`) or a Csound UDO (`.udo`, `.orc`, or `.csd`). A row's
+context menu offers **Export**, **Remove**, and **Push Up** or **Push Down**.
+Blue emits project UDOs in list order, which matters when one definition
+uses another.
+
+## Reuse definitions
+
+The separate **Libraries** panel has **User Libraries → User-Defined Opcodes**
+for definitions you want to reuse in other projects. Copy or drag a library
+UDO into the project's UDO list; the project receives its own definition.
+Insertion keeps the opcode name, even if the list already contains that name.
+Review the list and rename definitions and their calls when necessary.
+An instrument can also carry embedded UDOs. Use an embedded definition when
+the instrument should bring its opcode with it when copied to another
+project. During CSD generation, Blue reuses equivalent embedded definitions.
+If an embedded definition has the same name as a different project definition,
+Blue gives it a generated name such as `uniqueUDO0` and updates calls in the
+instrument and its dependent embedded UDOs. This changes the generated CSD;
+the project's stored definitions retain their names and code. See
+[Orchestra](orchestra.qmd) for instrument editing.
+
+The older Java manual shows a different UDO manager and links to external
+collections. Consult the upstream Blue 2 edition for those historical instructions;
+use the current controls described here for Blue 3.

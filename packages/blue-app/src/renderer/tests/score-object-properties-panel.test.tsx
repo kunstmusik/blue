@@ -2,6 +2,7 @@ import React, { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import ScoreObjectPropertiesPanel from '../components/workbench/panels/ScoreObjectPropertiesPanel';
+import ScoreObjectPropertiesForm from '../components/workbench/panels/score-object/ScoreObjectPropertiesForm';
 import type {
   ScoreObjectEditorDocumentSnapshot,
   ScoreObjectEditorTargetSnapshot,
@@ -380,6 +381,45 @@ describe('ScoreObjectPropertiesPanel — Java Blue parity: repeat point enabled 
 });
 
 describe('ScoreObjectPropertiesPanel — Java Blue parity: labels', () => {
+  it('hides AudioFile controls that do not affect generated playback', () => {
+    const target = makeTarget({ selectedObjectType: 'AudioFile', editorObjectType: 'AudioFile' });
+    const doc = makeEditorDoc({
+      target,
+      shared: {
+        ...makeEditorDoc().shared,
+        target,
+        noteProcessorChain: { processors: [] },
+      },
+    });
+    const html = renderToStaticMarkup(
+      createElement(ScoreObjectPropertiesForm, { document: doc, onPatch: vi.fn() }),
+    );
+    expect(html).not.toContain('Note Processors');
+    expect(html).not.toContain('Time Behavior');
+  });
+
+  it('displays End Time in the selected Start Time base with the tempo map', () => {
+    const doc = makeEditorDoc({
+      shared: {
+        ...makeEditorDoc().shared,
+        startTime: { value: 4, timeBase: 'TIME', displayText: '0:00:04.000' },
+        endTimeDisplay: '8.0000',
+      },
+      timeContext: {
+        ...DEFAULT_TIME_CONTEXT,
+        tempoEnabled: true,
+        tempoPoints: [
+          { beat: 0, tempo: 60, curveType: 'constant' },
+          { beat: 4, tempo: 120, curveType: 'constant' },
+        ],
+      },
+    });
+    const html = renderToStaticMarkup(
+      createElement(ScoreObjectPropertiesForm, { document: doc, onPatch: vi.fn() }),
+    );
+    expect(html).toContain('0:00:06.000');
+  });
+
   it('snapshot uses "Subjective Duration" field for duration', () => {
     const doc = makeEditorDoc();
     expect(doc.shared.subjectiveDuration).toBeDefined();

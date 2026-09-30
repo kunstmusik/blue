@@ -119,4 +119,25 @@ describe('Marker parity with Java Blue', () => {
     expect(data.getMarkersList().getMarkerTimePosition(0).getTimeBase()).toBe(TimeBase.BBT);
     expect(data.getMarkersList().getMarkerTimePosition(1).getTimeBase()).toBe(TimeBase.BBT);
   });
+
+  it('converts markers when ScoreObject conversion is disabled', () => {
+    const data = new BlueData();
+    data.setMarkersList(
+      MarkersList.loadFromXML(
+        Element.parse(
+          '<markersList><marker name="Cue"><time type="BEATS"><csoundBeats>4</csoundBeats></time></marker></markersList>',
+        ),
+      ),
+    );
+
+    applyScoreTimeStatePatch(data, {
+      primaryTimeDisplay: TimeBase.BBT,
+      scoreObjectUpdateMode: null,
+      markerUpdateMode: 'UPDATE_MATCHING',
+    });
+
+    const marker = data.getMarkersList().getMarkerTimePosition(0);
+    expect(marker.getTimeBase()).toBe(TimeBase.BBT);
+    expect(marker.toBeats(data.getScore().getTimeContext())).toBeCloseTo(4);
+  });
 });

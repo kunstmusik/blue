@@ -141,4 +141,27 @@ describe('TrackerScoreObjectEditor keyboard interaction', () => {
       container.querySelector('[data-track="0"][data-col="-1"][data-step="1"]'),
     );
   });
+
+  it('cancels a cell draft with Escape without committing it on blur', () => {
+    const onPatch = vi.fn();
+    act(() => {
+      root.render(<TrackerScoreObjectEditor document={makeTrackerDocument()} onPatch={onPatch} />);
+    });
+    const cell = container.querySelector<HTMLInputElement>(
+      '[data-track="0"][data-col="0"][data-step="0"]',
+    )!;
+    act(() => cell.focus());
+    act(() => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(cell, '9.00');
+      cell.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    expect(cell.value).toBe('9.00');
+    expect(onPatch).not.toHaveBeenCalled();
+
+    act(() => cell.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+
+    expect(onPatch).not.toHaveBeenCalled();
+    expect(cell.value).toBe('8.00');
+    expect(document.activeElement).not.toBe(cell);
+  });
 });

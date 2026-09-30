@@ -1,4 +1,5 @@
 import type { TimeConversionContext, TimeConversionMeterEntry } from '../../shared/project-editor';
+import { CurveType, TempoMap, TempoPoint } from '@blue/data';
 
 export type { TimeConversionContext };
 
@@ -15,14 +16,45 @@ export const TIME_BASE_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'FRAME', label: 'Sample Frames' },
 ];
 
+const tempoMapCache = new WeakMap<TimeConversionContext, TempoMap>();
+
+function getTempoMap(ctx: TimeConversionContext): TempoMap {
+  const cached = tempoMapCache.get(ctx);
+  if (cached) return cached;
+
+  const map = new TempoMap();
+  const points = [...(ctx.tempoPoints ?? [])].sort((a, b) => a.beat - b.beat);
+  if (points.length > 0) {
+    const first = points[0];
+    map.setTempoPoint(
+      0,
+      first.beat,
+      first.tempo,
+      first.curveType === 'constant' ? CurveType.CONSTANT : CurveType.LINEAR,
+    );
+    for (const point of points.slice(1)) {
+      map.addTempoPoint(
+        new TempoPoint(
+          point.beat,
+          point.tempo,
+          point.curveType === 'constant' ? CurveType.CONSTANT : CurveType.LINEAR,
+        ),
+      );
+    }
+  } else {
+    map.setTempo(ctx.initialTempo);
+  }
+  map.setEnabled(ctx.tempoEnabled);
+  tempoMapCache.set(ctx, map);
+  return map;
+}
+
 export function beatsToSeconds(beats: number, ctx: TimeConversionContext): number {
-  if (!ctx.tempoEnabled) return beats;
-  return (beats * 60.0) / ctx.initialTempo;
+  return getTempoMap(ctx).beatsToSeconds(beats);
 }
 
 export function secondsToBeats(seconds: number, ctx: TimeConversionContext): number {
-  if (!ctx.tempoEnabled) return seconds;
-  return (seconds * ctx.initialTempo) / 60.0;
+  return getTempoMap(ctx).secondsToBeats(seconds);
 }
 
 function beatsPerMeasure(entry: { numBeats: number; beatLength: number }): number {
@@ -319,7 +351,7 @@ export function formatForBase(
 
     case 'SMPTE': {
       const secs = beatsToSeconds(beats, ctx);
-      return formatSMPTE(secs, 24);
+      return formatSMPTE(secs, ctx.smpteFrameRate || 24);
     }
 
     case 'FRAME': {
@@ -441,7 +473,7 @@ export function parseForBase(
         const s = parseInt(parts[2], 10);
         const f = parseInt(parts[3], 10);
         if (isNaN(h) || isNaN(m) || isNaN(s) || isNaN(f)) return null;
-        const totalSecs = h * 3600 + m * 60 + s + f / 24;
+        const totalSecs = h * 3600 + m * 60 + s + f / (ctx.smpteFrameRate || 24);
         return secondsToBeats(totalSecs, ctx);
       }
 

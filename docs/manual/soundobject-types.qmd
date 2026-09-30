@@ -1,0 +1,81 @@
+# More SoundObject types
+
+Add these from a SoundObject layer's **Add SoundObject** menu, select the
+object, and open **Score Object Editor** to edit its type-specific contents.
+The [SoundObjects overview](soundobjects.qmd) explains placement, shared
+properties, Note Processors, and Time Behavior. A **Test** button in an
+object editor previews generated score text; it does not audition audio.
+
+## Text and generated notes
+
+**Comment** stores notes for the composer and emits no Csound score
+events. Use it to label a section without adding sound.
+
+**JavaScriptObject** runs its script in Blue's JavaScript session to
+produce score text. Its generated notes then pass through the object's
+Note Processors and Time Behavior. **PythonObject** and
+**ClojureObject** similarly generate notes through the Java runtime's
+Jython and Clojure sessions. Their synchronous generation path cannot
+run without that service; check runtime status and use the editor's Test
+action before a full render. A project's **Clojure** properties tab can
+name dependencies for Clojure content. These languages are distinct
+from a JavaScript *Instrument*, whose orchestra generation has a
+[current limitation](instruments.qmd#javascript-instrument).
+
+**External** sends the editor's code text to a configured external
+command and parses the returned score. Enter a **Command Line** in the
+object editor, then use **Test** to see what it produces. The command
+must be available on the computer doing the render; copied `.blue`
+projects do not supply the executable. Treat the command output as
+score text and check file paths before sharing the project.
+
+**ObjectBuilder** combines a small widget interface with code that
+generates score. Its language selector supports JavaScript, Python,
+Clojure, and an external command. Python and Clojure need the Java
+runtime; External needs its command executor. The interface supplies
+widget values to the code. Test the object after changing its language,
+command, or widget names.
+
+## Pattern generators
+
+**JMask** generates notes from parameter generators and modifiers. In
+its editor, choose which parameters are visible, configure their
+generators, and press **Test** to inspect the resulting score. Enable
+**Seed** and set a value when you need repeatable random output. An
+unseeded pattern may change on each generation.
+
+### TrackerObject
+
+**TrackerObject** is a step grid with multiple tracks. Use **+ TRACK**,
+set **STEPS** and **Steps per beat**, then edit each track's instrument,
+note template, and columns to match its Csound `p` fields. **USE KEYBOARD
+NOTES** and **OCTAVE** aid pitch entry. **TEST** previews generated
+score, and the **Keyboard Shortcuts** button shows the current grid
+commands. The old Java shortcut table is not a reliable Blue 3 key map.
+
+## Lines and self-contained sounds
+
+**LineObject** draws one or more control lines. Add a line in the
+definitions pane, give it a variable name and range, then edit points
+in the canvas. The current canvas hints that **Alt-click** adds a point;
+its right-click menu offers further actions. Blue generates supporting
+tables and instruments for the line when rendering.
+
+**ZakLineObject** uses a similar line editor but writes to Zak channels.
+Set each line's **Zak Channel** and the object's **Zak Space** before
+generating. Check that these channel numbers agree with the Csound
+code that reads them.
+
+**Sound** contains its own BlueSynthBuilder and produces an instrument
+and a note for that one object. Edit its interface and code in the
+Sound editor. Use its local automation controls for values that vary
+over the object's duration. For an instrument reused by many Score
+objects, put it in the [Orchestra](orchestra.qmd) instead.
+
+## Historical Cecilia module
+
+The Blue 2 **CeciliaModule** entry describes an unfinished Java Blue
+SoundObject. Blue 3 does not register a CeciliaModule type or offer it
+in the Add SoundObject menu. The original text remains in the
+[Blue 2 source edition](https://github.com/kunstmusik/blue-manual/tree/7a92066a2aa8f0370026ba9527c158643c2935a1); it is not an instruction for
+the current application.

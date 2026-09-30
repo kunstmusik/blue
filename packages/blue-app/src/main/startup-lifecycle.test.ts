@@ -139,7 +139,6 @@ describe('StartupLifecycle', () => {
     const orderedOperations = [
       'await oscControlService?.shutdown()',
       'unregisterDomainIpc?.()',
-      'unregisterUnifiedLibraryIpc?.()',
       'await unifiedLibraryService?.stop()',
       'unregisterCodeRepositoryIpc?.()',
       'await codeRepositoryService?.stop()',
@@ -167,6 +166,9 @@ describe('StartupLifecycle', () => {
     expect(shutdownSafeSettings).toBeGreaterThan(domainTeardown);
     expect(shutdownSafeSettings).toBeLessThan(shutdown.indexOf('app.quit()'));
     expect(shutdown).not.toContain('rollbackFailedStartup');
+    // The renderer can still browse until app.quit closes its windows.
+    expect(shutdown).not.toContain('unregisterUnifiedLibraryIpc?.()');
+    expect(source).toContain("app.on('will-quit', () => {\n  unregisterUnifiedLibraryIpc?.()");
   });
 
   it('bounds dev-reload shutdown and clears renderer history fences first', () => {

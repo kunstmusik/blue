@@ -12,9 +12,13 @@ import { CompileData } from '../compile-data';
 import { Element } from '../serialization/xml-reader';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
+import { TimeBehavior } from './time-behavior';
 import { initBasicFromXML, getBasicXML } from './sound-object-utilities';
-import { setScoreStart } from '../utilities/score';
-import type { ScoreGenerationOptions } from '../score/score-generation-options';
+import { applyTimeBehavior, normalizeNoteList, setScoreStart } from '../utilities/score';
+import type {
+  ScoreGenerationOptions,
+  ScoreNormalizationOrigin,
+} from '../score/score-generation-options';
 import { markTrackInstrumentTargets } from '../score/score-generation-options';
 import { getTrackPlacementForSoundObject } from './sound-object-registry';
 
@@ -60,13 +64,37 @@ export class Instance extends AbstractSoundObject {
       return new NoteList();
     }
 
-    const nl = this._soundObject.generateForCSD(context, compileData, startTime, endTime, options);
+    const normalizationOrigin: ScoreNormalizationOrigin = {
+      owner: this._soundObject,
+      allowRangeOrigin:
+        this.getTimeBehavior() === TimeBehavior.NONE &&
+        this.getNoteProcessorChain().getProcessors().length === 0,
+    };
+    const sourceOptions: ScoreGenerationOptions = {
+      ...options,
+      normalizationOrigin,
+      beatOrigin:
+        (options?.beatOrigin ?? 0) +
+        this._startTime.toBeats(context) -
+        this._soundObject.getStartTime().toBeats(context),
+    };
+    const nl = this._soundObject.generateForCSD(
+      context,
+      compileData,
+      startTime,
+      endTime,
+      sourceOptions,
+    );
     const descriptor = getTrackPlacementForSoundObject(this._soundObject).descriptor;
     markTrackInstrumentTargets(
       nl,
       descriptor?.instrumentTargetBehavior ?? 'none',
       options?.instrumentTargetCollector,
     );
+
+    if (normalizationOrigin.rangeOriginBeats === undefined) {
+      normalizeNoteList(nl);
+    }
 
     // Apply note processor chain
     const npc = this.getNoteProcessorChain();
@@ -75,7 +103,7 @@ export class Instance extends AbstractSoundObject {
     // Apply time behavior
     const duration = this._subjectiveDuration.toBeats(context);
     const rpBeats = this._repeatPoint ? this._repeatPoint.toBeats(context) : -1;
-    // Note: full time behavior application needs ScoreUtilities — simplified for Phase 11
+    applyTimeBehavior(nl, this.getTimeBehavior(), duration, rpBeats);
     setScoreStart(nl, this._startTime.toBeats(context));
 
     return nl;
@@ -92,15 +120,29 @@ export class Instance extends AbstractSoundObject {
       return new NoteList();
     }
 
+    const normalizationOrigin: ScoreNormalizationOrigin = {
+      owner: this._soundObject,
+      allowRangeOrigin:
+        this.getTimeBehavior() === TimeBehavior.NONE &&
+        this.getNoteProcessorChain().getProcessors().length === 0,
+    };
+    const sourceOptions: ScoreGenerationOptions = {
+      ...options,
+      normalizationOrigin,
+      beatOrigin:
+        (options?.beatOrigin ?? 0) +
+        this._startTime.toBeats(context) -
+        this._soundObject.getStartTime().toBeats(context),
+    };
     const nl = this._soundObject.generateForCSDAsync
       ? await this._soundObject.generateForCSDAsync(
           context,
           compileData,
           startTime,
           endTime,
-          options,
+          sourceOptions,
         )
-      : this._soundObject.generateForCSD(context, compileData, startTime, endTime, options);
+      : this._soundObject.generateForCSD(context, compileData, startTime, endTime, sourceOptions);
     const descriptor = getTrackPlacementForSoundObject(this._soundObject).descriptor;
     markTrackInstrumentTargets(
       nl,
@@ -108,8 +150,14 @@ export class Instance extends AbstractSoundObject {
       options?.instrumentTargetCollector,
     );
 
+    if (normalizationOrigin.rangeOriginBeats === undefined) {
+      normalizeNoteList(nl);
+    }
     const npc = this.getNoteProcessorChain();
     await npc.applyAsync(nl, compileData);
+    const duration = this._subjectiveDuration.toBeats(context);
+    const rpBeats = this._repeatPoint ? this._repeatPoint.toBeats(context) : -1;
+    applyTimeBehavior(nl, this.getTimeBehavior(), duration, rpBeats);
     setScoreStart(nl, this._startTime.toBeats(context));
 
     return nl;

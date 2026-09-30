@@ -31,6 +31,7 @@ export interface ApplicationMenuTemplateOptions {
   onRequestQuit: () => void;
   onOpenSettings: () => void;
   onOpenAbout: () => void;
+  onOpenManual: () => void;
   onOpenEffectsLibrary: () => void;
   onOpenFTableConverter: () => void;
   onOpenCsoundRCEditor: () => void;
@@ -465,16 +466,17 @@ export function buildApplicationMenuTemplate(
     submenu: buildToolsMenuTemplate(options),
   });
 
-  if (!options.isDarwin) {
-    template.push({
-      label: 'Help',
-      submenu: [{ label: 'About Blue', click: () => options.onOpenAbout() }],
-    });
-  }
-
   template.push({
     label: 'Window',
     submenu: buildWindowMenuTemplate(options),
+  });
+
+  template.push({
+    label: 'Help',
+    submenu: [
+      { label: 'Blue Manual', click: () => options.onOpenManual() },
+      ...(!options.isDarwin ? [{ label: 'About Blue', click: () => options.onOpenAbout() }] : []),
+    ],
   });
 
   return template;

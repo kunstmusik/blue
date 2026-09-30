@@ -1,0 +1,119 @@
+project:
+  type: book
+  output-dir: _build/html
+  render:
+    - index.qmd
+    - about.qmd
+    - installation.qmd
+    - first-project.qmd
+    - score.qmd
+    - orchestra.qmd
+    - mixer.qmd
+    - rendering.qmd
+    - soundobject-library.qmd
+    - blue-live.qmd
+    - globals.qmd
+    - project-properties.qmd
+    - tables.qmd
+    - udos.qmd
+    - time.qmd
+    - note-processors.qmd
+    - note-processor-reference.qmd
+    - command-blocks.qmd
+    - parameter-automation.qmd
+    - soundobjects.qmd
+    - generic-score.qmd
+    - piano-roll.qmd
+    - pattern-object.qmd
+    - polyobjects.qmd
+    - instance.qmd
+    - audio-file.qmd
+    - soundobject-types.qmd
+    - instruments.qmd
+    - tools.qmd
+    - importing.qmd
+    - workflow-features.qmd
+    - settings.qmd
+    - shortcuts.qmd
+    - reference.qmd
+    - developer.qmd
+  resources:
+    - COPYING.GFDL
+    - images/score-timeline.png
+    - images/orchestra.png
+    - images/mixer.png
+    - images/piano-roll.png
+    - images/pattern-object.png
+    - images/soundobject-library.png
+    - images/blue-live.png
+    - images/settings-realtime.png
+
+book:
+  title: 'Blue 3 Manual'
+  author: 'Blue contributors'
+  # Installed file:// pages cannot reliably fetch search.json.
+  search: false
+  chapters:
+    - index.qmd
+    - about.qmd
+    - part: 'Getting started'
+      chapters:
+        - installation.qmd
+        - first-project.qmd
+    - part: 'Working in Blue'
+      chapters:
+        - score.qmd
+        - orchestra.qmd
+        - mixer.qmd
+        - rendering.qmd
+        - soundobject-library.qmd
+        - blue-live.qmd
+        - globals.qmd
+        - project-properties.qmd
+        - tables.qmd
+        - udos.qmd
+    - part: 'Concepts'
+      chapters:
+        - time.qmd
+        - note-processors.qmd
+        - command-blocks.qmd
+        - parameter-automation.qmd
+    - part: 'SoundObjects'
+      chapters:
+        - soundobjects.qmd
+        - generic-score.qmd
+        - piano-roll.qmd
+        - pattern-object.qmd
+        - polyobjects.qmd
+        - instance.qmd
+        - audio-file.qmd
+        - soundobject-types.qmd
+    - part: 'Instruments'
+      chapters:
+        - instruments.qmd
+    - part: 'Note Processor reference'
+      chapters:
+        - note-processor-reference.qmd
+    - part: 'Tools'
+      chapters:
+        - tools.qmd
+    - part: 'Other features and tasks'
+      chapters:
+        - importing.qmd
+        - workflow-features.qmd
+    - part: 'Reference'
+      chapters:
+        - settings.qmd
+        - shortcuts.qmd
+        - reference.qmd
+    - part: 'Developer notes'
+      chapters:
+        - developer.qmd
+
+format:
+  html:
+    theme:
+      light: [cosmo, offline-fonts.scss]
+      dark: [darkly, offline-fonts.scss]
+    toc: true
+    code-copy: true

@@ -34,7 +34,11 @@ import {
 } from '@blue/data';
 import type { MeterBindingMapPayload } from '../shared/meter-types';
 import { buildMeterBindingMapPayload } from './meter-binding';
-import { openSettingsWindow, resolveSettingsWindowClose } from './settings-window';
+import {
+  openSettingsWindow,
+  requestSettingsWindowCloseForQuit,
+  resolveSettingsWindowClose,
+} from './settings-window';
 import { closeAboutWindow, openAboutWindow, syncAboutWindowZoom } from './about-window';
 import { resolveAppMetadata } from './app-metadata';
 import {
@@ -207,6 +211,7 @@ import type { JavaRuntimeClient } from './java-runtime/java-runtime-client';
 import { JavaRuntimeSessionManager } from './java-runtime/java-runtime-session';
 import { evaluateJavaScriptConsole } from './repl-console-runtime';
 import { testScoreObject } from './score-object-test';
+import { runScoreObjectTestRequest as runFencedScoreObjectTestRequest } from './score-object-test-request';
 import {
   testPythonInstrument,
   type PythonInstrumentTestRequest,
@@ -585,6 +590,20 @@ const collectedIpcHandlers = new Map<string, IpcMainInvokeHandler>();
 const collectedIpcListeners = new Map<string, IpcMainEventListener>();
 const historyParticipantSenders = new Map<string, unknown>();
 const historyAvailabilityBySender = new Map<number, FocusedHistoryAvailability>();
+const trackedHistorySenders = new WeakSet<Electron.WebContents>();
+
+function trackHistorySender(sender: Electron.WebContents): void {
+  if (trackedHistorySenders.has(sender)) return;
+  trackedHistorySenders.add(sender);
+  sender.once('destroyed', () => {
+    historyAvailabilityBySender.delete(sender.id);
+    for (const [contextId, owner] of historyParticipantSenders) {
+      if (owner !== sender) continue;
+      historyParticipantSenders.delete(contextId);
+      projectHistory.unregisterParticipant({ contextId });
+    }
+  });
+}
 
 /**
  * Keeps the legacy handler bodies close to their existing owners while the
@@ -1976,6 +1995,21 @@ function rebuildApplicationMenu(): void {
           initialZoomFactor: appZoomController.getCurrentFactor(),
         });
       },
+      onOpenManual: () => {
+        const manualIndex = app.isPackaged
+          ? path.join(process.resourcesPath, 'assets', 'manual', 'index.html')
+          : path.resolve(app.getAppPath(), '../../docs/manual/_build/html/index.html');
+        if (!fs.existsSync(manualIndex)) {
+          dialog.showErrorBox('Blue Manual', 'The Blue Manual is missing from this installation.');
+          return;
+        }
+        void shell
+          .openPath(manualIndex)
+          .then((error) => {
+            if (error) dialog.showErrorBox('Blue Manual', error);
+          })
+          .catch((error: unknown) => dialog.showErrorBox('Blue Manual', String(error)));
+      },
       onOpenEffectsLibrary: () => {
         if (mainWindow) {
           routeFocusPanel('LibrariesTopComponent');
@@ -2330,7 +2364,11 @@ function createWindow(): void {
     engineRuntimeService,
   );
   blueLiveSession.setRuntimeStateChangeCallback(() => {
-    if (!blueLiveSession?.isRunning()) {
+    if (blueLiveSession?.isRunning()) {
+      const repeatSync = getBlueLiveTriggerController().syncRepeatSchedule();
+      if (!repeatSync.ok) console.warn(`[Blue Live] ${repeatSync.message}`);
+    } else {
+      getBlueLiveTriggerController().stopRepeatSchedule();
       projectRuntimeReconciliation.stopPerformance('blueLive');
       blueLiveGatePublisher.reset('blueLive');
       broadcastRuntimePerformanceCleared('blueLive');
@@ -2441,12 +2479,17 @@ async function requestQuit(): Promise<void> {
         return false;
       }
 
+      if (!(await requestSettingsWindowCloseForQuit())) {
+        return false;
+      }
+
       await doQuit();
       return true;
     });
-  } catch {
+  } catch (error) {
     // A failed transition (e.g. settlement timeout) must abort the quit
     // without wedging isQuitting — the app has to stay usable and quit-able.
+    console.error('[main] Quit transition failed:', error);
     mayQuit = false;
   }
 
@@ -2547,8 +2590,8 @@ async function doQuit(trigger: ShutdownTrigger = 'user'): Promise<void> {
       });
 
       await runShutdownStep('unified library', async () => {
-        unregisterUnifiedLibraryIpc?.();
-        unregisterUnifiedLibraryIpc = null;
+        // Keep the handler while renderer windows are still open. A late
+        // library refresh can then receive the service's not-ready result.
         await unifiedLibraryService?.stop();
       });
       unifiedLibraryService = null;
@@ -4184,6 +4227,13 @@ async function applyRuntimeWorkOperation(
   setChannel: (channel: string, value: number) => Promise<unknown>,
   blueX7Deps: BlueX7EngineSyncDeps,
 ): Promise<RuntimeOperationAck> {
+  if (operation.kind === 'blue-live-repeat') {
+    return {
+      status: 'rejected',
+      message: 'Blue Live Repeat operation was routed to the wrong performance',
+    };
+  }
+
   if (operation.kind === 'channel-value') {
     try {
       await setChannel(operation.channel, operation.value);
@@ -4599,6 +4649,12 @@ function registerBlueLivePerformance(): void {
   });
   const client: AcknowledgedRuntimeClient = {
     applyOperation(operation) {
+      if (operation.kind === 'blue-live-repeat') {
+        const result = getBlueLiveTriggerController().syncRepeatSchedule();
+        return Promise.resolve(
+          result.ok ? { status: 'applied' } : { status: 'rejected', message: result.message },
+        );
+      }
       if (operation.kind === 'mixer-gates') {
         return applyMixerGatesOperation(blueLiveGatePublisher, 'blueLive', operation);
       }
@@ -6264,16 +6320,10 @@ function validateHistoryRequestSender(
 
 ipcRegistration.on(PROJECT_HISTORY_AVAILABILITY_CHANNEL, (event, payload: unknown) => {
   if (!isFocusedHistoryAvailability(payload)) return;
-  const sender = event.sender as {
-    id?: unknown;
-    once?: (name: string, listener: () => void) => void;
-  };
-  if (typeof sender.id !== 'number') return;
-  const senderId = sender.id;
-  historyAvailabilityBySender.set(senderId, payload);
-  sender.once?.('destroyed', () => {
-    historyAvailabilityBySender.delete(senderId);
-  });
+  const sender = event.sender as Electron.WebContents;
+  if (typeof sender?.id !== 'number') return;
+  historyAvailabilityBySender.set(sender.id, payload);
+  trackHistorySender(sender);
   rebuildApplicationMenu();
 });
 
@@ -6356,12 +6406,7 @@ ipcRegistration.handle(
     const response = projectHistory.registerParticipant(req);
     if (!response.ok) return response;
     historyParticipantSenders.set(req.contextId, event.sender);
-    event.sender.once('destroyed', () => {
-      if (historyParticipantSenders.get(req.contextId) === event.sender) {
-        historyParticipantSenders.delete(req.contextId);
-        projectHistory.unregisterParticipant({ contextId: req.contextId });
-      }
-    });
+    trackHistorySender(event.sender);
     return response;
   },
 );
@@ -6670,24 +6715,16 @@ ipcRegistration.handle(
 async function runScoreObjectTestRequest(
   request: ScoreObjectEditorRequest,
 ): Promise<ScoreObjectTestResult> {
-  let javaRuntimeClient: JavaRuntimeClient | null = null;
-
-  try {
-    if (getCurrentData()) {
-      javaRuntimeClient = await runProjectOnLoad(getCurrentData());
-    }
-  } catch (error) {
-    return {
-      ok: false,
-      output: '',
-      error: error instanceof Error ? error.message : String(error),
-    };
-  }
-
-  return testScoreObject(getCurrentData(), request, {
+  return runFencedScoreObjectTestRequest(request, {
+    getProjectState: () => ({
+      data: getCurrentData() ?? null,
+      revision: getCurrentProjectRevision(),
+      sessionId: getCurrentProjectSessionId(),
+    }),
+    prepareJavaRuntime: runProjectOnLoad,
     ensureJavaScriptEngine,
     javaScriptSession,
-    javaRuntimeClient,
+    testScoreObject,
   });
 }
 
@@ -7222,9 +7259,9 @@ applicationReadyPromise.then(async () => {
       },
     },
     {
-      name: 'application shell',
-      start: startApplicationShellStage,
-      rollback: rollbackApplicationShellStage,
+      name: 'code repository',
+      start: startCodeRepositoryStage,
+      rollback: rollbackCodeRepositoryStage,
     },
     {
       name: 'unified library',
@@ -7232,9 +7269,9 @@ applicationReadyPromise.then(async () => {
       rollback: rollbackUnifiedLibraryStage,
     },
     {
-      name: 'code repository',
-      start: startCodeRepositoryStage,
-      rollback: rollbackCodeRepositoryStage,
+      name: 'application shell',
+      start: startApplicationShellStage,
+      rollback: rollbackApplicationShellStage,
     },
     {
       name: 'OSC control',
@@ -7257,6 +7294,11 @@ applicationReadyPromise.then(async () => {
 });
 
 // Intercept Cmd+Q and window close buttons
+app.on('will-quit', () => {
+  unregisterUnifiedLibraryIpc?.();
+  unregisterUnifiedLibraryIpc = null;
+});
+
 app.on('before-quit', (event: Electron.Event) => {
   if (!isQuitting) {
     event.preventDefault();

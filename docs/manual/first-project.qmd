@@ -1,0 +1,64 @@
+# First project
+
+This short project makes a sine tone from one instrument and one score event.
+Install [Csound 7](installation.qmd) before the final render. You can do the
+editing and inspect the generated CSD without starting Csound.
+
+## Create and save the project
+
+1. Choose **File → New Project**. The new project has an empty Orchestra and a
+   Score with a Track layer that can hold SoundObjects or audio clips.
+2. Choose **File → Save as...**, choose a location, and save the `.blue` file.
+   Save again as you work with **File → Save**.
+
+## Add an instrument
+
+1. Open the **Orchestra** panel. If it is hidden, choose it from **Window →
+   Editors**.
+2. Click **+ Add → Generic Instrument**. In the new row, set **Instr ID** to
+   `1` if it has another value. The ID connects the instrument to score events.
+   You can also give it a name such as `Sine tone`.
+3. Select the row. On the **Instrument** tab, replace the editor contents with:
+
+   ```csound
+   aTone oscili p4, p5
+   outs aTone, aTone
+   ```
+
+   Blue supplies the `instr` and `endin` lines when it generates the CSD.
+   Here `p4` is amplitude and `p5` is frequency. See [Orchestra](orchestra.qmd)
+   for the other instrument types and editor tabs.
+
+## Add a score event
+
+1. In the **Score** panel, right-click near the start of the Track layer
+   and choose **Add SoundObject → GenericScore**.
+2. Double-click the new object to open its editor. Replace its score text with:
+
+   ```csound-sco
+   i1 0 4 0.15 440
+   ```
+
+   `i1` uses instrument ID `1`; the following values give the event's start,
+   duration, amplitude, and frequency. The start and duration are relative to
+   this SoundObject on the timeline. The new object is four beats long, matching
+   the event's duration. See [GenericScore](generic-score.qmd) for more event
+   examples and [SoundObjects](soundobjects.qmd) for how moving or resizing the
+   object changes its generated score.
+
+## Inspect and render
+
+1. Choose **Project → Generate CSD to Screen**. Look for `instr 1` and the
+   score event. Its absolute start in the CSD includes the position where you
+   placed the GenericScore on the Track. If the instrument ID and the event's
+   `i` number differ, make them match before rendering.
+2. Save the project, then choose **File → Render to Disk**. The render dialog
+   reports progress and the output file. Listen to the result after it finishes.
+   You can also choose **Project → Render/Stop Project** or press **F9** for
+   realtime playback.
+
+If Csound cannot start, check its installation and the **Realtime Render** or
+**Disk Render** sections of [Settings](settings.qmd). [Rendering](rendering.qmd)
+explains the other render and CSD commands.
+
+To explore a larger prepared project, choose **File → Open Example Project...**.

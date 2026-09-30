@@ -4,11 +4,15 @@ import {
   ClojureObject,
   GenericScore,
   initializeJavaScriptRuntime,
+  JavaScriptObject,
+  JavaScriptSession,
   ObjectBuilder,
   PolyObject,
   PythonObject,
   PythonProcessor,
   SoundLayer,
+  TimeBehavior,
+  TimeDuration,
   TimePosition,
 } from '@blue/data';
 import { testScoreObject } from './score-object-test';
@@ -78,6 +82,102 @@ describe('testScoreObject', () => {
 
     expect(result.ok).toBe(true);
     expect(result.output).toContain('i2\t0.0\t4\t880');
+  });
+
+  it('measures a PolyObject JavaScript child using the project on-load session', async () => {
+    await initializeJavaScriptRuntime();
+    const session = new JavaScriptSession();
+    try {
+      const data = new BlueData();
+      const root = data.getScore()[0] as PolyObject;
+      const onLoad = new JavaScriptObject();
+      onLoad.setOnLoadProcessable(true);
+      onLoad.setJavaScriptCode('var sharedDuration = 6;');
+      root[0]!.push(onLoad);
+
+      const phrase = new PolyObject();
+      phrase.newLayerAt(-1);
+      phrase.setStartTime(TimePosition.beats(10));
+      phrase.setTimeBehavior(TimeBehavior.NONE);
+      const child = new JavaScriptObject();
+      child.setTimeBehavior(TimeBehavior.NONE);
+      child.setJavaScriptCode('score = "i1 0 " + sharedDuration + " 440";');
+      phrase[0]!.push(child);
+      root[0]!.push(phrase);
+      data.processOnLoad(session);
+      const baselineXml = data.saveToString();
+      const ensureJavaScriptEngine = vi.fn(initializeJavaScriptRuntime);
+
+      const result = await testScoreObject(
+        data,
+        {
+          target: makeTarget('PolyObject', {
+            rootGroupIndex: 0,
+            containerPath: [],
+            layerIndex: 0,
+            objectIndex: root[0]!.length - 1,
+          }),
+          mode: 'objective-duration',
+        },
+        { javaScriptSession: session, ensureJavaScriptEngine },
+      );
+
+      expect(result.error).toBeUndefined();
+      expect(result).toMatchObject({ ok: true, objectiveDurationBeats: 6 });
+      expect(result.output).toContain('i1\t10.0\t6\t440');
+      expect(ensureJavaScriptEngine).toHaveBeenCalledTimes(1);
+      expect(data.saveToString()).toBe(baselineXml);
+      expect(session.isDisposed()).toBe(false);
+    } finally {
+      session.dispose();
+    }
+  });
+
+  it('measures a PolyObject after its child PythonProcessor changes the note duration', async () => {
+    const data = new BlueData();
+    const root = data.getScore()[0] as PolyObject;
+    const phrase = new PolyObject();
+    phrase.newLayerAt(-1);
+    phrase.setStartTime(TimePosition.beats(10));
+    phrase.setSubjectiveDuration(TimeDuration.beats(4));
+    phrase.setTimeBehavior(TimeBehavior.NONE);
+
+    const child = new GenericScore();
+    child.setScoreText('i1 0 2 440');
+    child.setTimeBehavior(TimeBehavior.NONE);
+    const processor = new PythonProcessor();
+    processor.setCode('for note in noteList:\n    note.setSubjectiveDuration(6)');
+    child.getNoteProcessorChain().addProcessor(processor);
+    phrase[0]!.push(child);
+    root[0]!.push(phrase);
+
+    const processJythonNoteList = vi.fn(async ({ notes }) => ({
+      ok: true,
+      result: {
+        notes: notes.map((note: any) => ({
+          ...note,
+          subjectiveDuration: 6,
+          pfields: note.pfields.map((value: string, index: number) => (index === 2 ? '6' : value)),
+        })),
+      },
+    }));
+    const result = await testScoreObject(
+      data,
+      {
+        target: makeTarget('PolyObject', {
+          rootGroupIndex: 0,
+          containerPath: [],
+          layerIndex: 0,
+          objectIndex: root[0]!.length - 1,
+        }),
+        mode: 'objective-duration',
+      },
+      { javaRuntimeClient: { processJythonNoteList } as any },
+    );
+
+    expect(result).toMatchObject({ ok: true, objectiveDurationBeats: 6 });
+    expect(result.output).toContain('i1\t10.0\t6\t440');
+    expect(processJythonNoteList).toHaveBeenCalledTimes(1);
   });
 
   it('delegates ClojureObject testing through the async Java runtime path', async () => {

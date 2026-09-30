@@ -133,6 +133,8 @@ export interface JythonSerializedNote {
   pfields: string[];
   subjectiveDuration: number;
   tied: boolean;
+  /** Opaque render-only identity; never exposed on the Python note adapter. */
+  renderMetadataId?: string;
 }
 
 export interface JythonProcessNoteListRequest {

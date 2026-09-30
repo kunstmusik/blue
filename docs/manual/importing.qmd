@@ -1,0 +1,54 @@
+# Importing CSD and MIDI
+
+Importing replaces the active project with a new Blue project. Save work in
+the current project before starting an import, then save the imported result
+as a `.blue` file. Open a project first; the import commands are disabled
+when no project is loaded. The original source file remains separate.
+
+## Import a CSD
+
+Choose **File → Import CSD File** and select a `.csd`. Blue asks where the
+`CsScore` events should go:
+
+| Choice                          | Result                                                                 |
+| ------------------------------- | ---------------------------------------------------------------------- |
+| **Global Score**                | Places imported score text in the [Global Score](globals.qmd).         |
+| **Single Sound Object**         | Creates GenericScore material, splitting score sections where present. |
+| **Sound Object per Instrument** | Splits each section again by instrument.                               |
+
+Blue parses orchestra instruments and UDOs, global orchestra text, settings,
+tables, and supported score statements. The score importer handles `f`, `i`,
+`s`, and valid `t` tempo statements; it is not a general Csound score parser.
+After import, inspect **Project → Generate CSD to Screen**, instrument IDs,
+table references, and media paths before rendering. See
+[GenericScore](generic-score.qmd) and [Tables](tables.qmd).
+
+## Import a MIDI file
+
+Choose **File → Import MIDI File** and select a MIDI file. The **MIDI Import
+Settings** dialog shows streams with note data, grouped by source track and
+channel. Each row shows its note range and lets you set an **Instrument ID**,
+**Note template**, and **Trim** choice. The instrument ID and template must
+be nonempty; instrument ID zero is rejected.
+
+The default template is:
+
+```text
+i<INSTR_ID> <START> <DUR> <KEY> <VELOCITY>
+```
+
+Expand **Template placeholders** in the dialog for the full list, including
+`<KEY_PCH>`, `<KEY_OCT>`, `<KEY_CPS>`, and `<VELOCITY_AMP>`. Adapt the template
+to the target Csound instrument's `p` fields. **Trim** removes leading
+silence within that stream: the layer starts at its first note and the
+first generated note is written at beat zero. Review imported layers and
+timing before replacing the source MIDI file in your workflow.
+
+## Add an audio file
+
+For an audio recording that should play as recorded, add an **AudioClip** to
+an audio Track in the [Score](score.qmd). A Track can route it through the
+[Mixer](mixer.qmd). For a file-driven SoundObject with its own playback
+instrument and post code, use [AudioFile](audio-file.qmd) instead. Set the
+project's [Media Folder](project-properties.qmd) before importing if the
+project should copy its audio into a portable folder.

@@ -1,0 +1,31 @@
+# Command blocks
+
+Blue recognizes **command blocks** in an instrument's Global Orchestra
+text when building a CSD. They mainly support older self-contained
+instruments whose global code must be ordered or emitted only once.
+Ordinary project-wide code belongs in [Global Orchestra](globals.qmd).
+
+A block starts with `;[command]{` and ends with `;}` on their own lines:
+
+```csound-orc
+;[once]{
+gaShared init 0
+;}
+```
+
+`once` emits identical block text only once from the collected instrument
+global code. `pre` moves its block to the beginning of that collected code:
+
+```csound-orc
+;[pre]{
+giEngine fluidEngine
+;}
+```
+
+The implementation compares `once` blocks by their exact content and
+recognizes only `once` and `pre`. A well-formed block with another command name
+is discarded. Keep each opener and closer well formed: an unclosed block can
+swallow the rest of the collected Global Orchestra text. Use **Project →
+Generate CSD to Screen** to verify the placement and deduplication before
+rendering an imported instrument. These blocks do not provide a general Csound
+preprocessor.

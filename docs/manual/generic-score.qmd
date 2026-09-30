@@ -1,0 +1,77 @@
+# GenericScore
+
+A **GenericScore** holds Csound score text inside one
+[SoundObject](soundobjects.qmd). Use it when writing `i` events directly is
+faster than drawing them. The [First project](first-project.qmd) tutorial uses
+one GenericScore and one Generic Instrument.
+
+## Create and edit one
+
+1. In a SoundObject layer of the [Score](score.qmd), right-click at the
+   intended position and choose **Add SoundObject → GenericScore**.
+2. Double-click the object to open the Score Object Editor. Replace its
+   example text with events for an instrument in your
+   [Orchestra](orchestra.qmd).
+3. Choose **Project → Generate CSD to Screen** to check the final `i` events.
+
+For the first-project instrument, `p4` is amplitude and `p5` is frequency.
+This two-note phrase calls its instrument ID `1`:
+
+```csound-sco
+i1 0 1 0.15 440
+i1 1 1 0.15 660
+```
+
+The first value after `i1` is start time relative to the object; the next is
+duration. The following fields are interpreted by the instrument. Use an `i`
+number that matches an enabled **Instr ID** in the Orchestra. If a note does
+not appear in the generated CSD, check that ID and the score text before
+changing Csound settings.
+
+GenericScore parses `i` statements into notes before generation; it does not
+pass all its text through as a raw `<CsScore>` block. An event needs at least
+the instrument (`p1`), start time (`p2`), and duration (`p3`): `i1 0 1` has
+those required fields, while `i1 0` is too short. Blue 3 raises a
+`NoteParseException` for malformed `i` events and reports their source line
+and text, matching Java Blue. Other score statements in the editor still do
+not become generated notes. In the packaged macOS app, `i1 0` displayed its
+line and text in the Generate CSD error toast; corrected input generated CSD.
+
+The parser recognizes `;` and `//` line comments and `/* ... */` block
+comments. It also expands `+` in `p2` to the preceding note's end time, and `.`
+can reuse a field from the preceding note. `<` and `>` can interpolate numeric
+fields between surrounding notes. These conveniences are a subset of Csound
+score syntax: other score statements in this editor do not become generated
+notes. For project-wide statements that should pass through as Global Score
+text, use [Global Score](globals.qmd). Inspect **Generate CSD to Screen** to see
+which events became notes; rendering checks only the Csound text Blue emitted,
+not lines it skipped.
+
+## Place and size the phrase
+
+GenericScore text starts at local time zero. Moving the object on the Score
+offsets all its generated notes without rewriting the text. The object's
+**Subjective Duration** is its visible width. Its **Time Behavior** controls
+what the width does to the notes:
+
+- **Scale** fits the phrase to that duration. For the two-beat example above,
+  a four-beat object doubles the starts and durations: events begin at local
+  beats 0 and 2 and each lasts two beats.
+- **Repeat** loops the phrase to fill the object. Enable **Use Repeat Point**
+  and set **Repeat Point** to choose the cycle length. Notes crossing a cycle
+  boundary are clipped there. **Repeat (Classic)** keeps overlapping notes in
+  full cycles but only includes notes that fit in its final cycle.
+- **None** keeps the event times and durations as written, even if the
+  object's visible width differs from the content.
+
+Choose a behavior in **Score Object Properties**. To make the object width
+match its generated notes, right-click it and choose **Set Subjective Time to
+Objective Time**. With Scale or Repeat, the processed notes may already fill
+the visible width, leaving it unchanged. Always inspect the generated CSD when
+changing timing; the width alone does not tell the whole story. [Time](time.qmd) explains
+positions, durations, rulers, and snap.
+
+You can add a [Note Processor](note-processors.qmd) to transform the generated
+events without altering this text. For graphical notes, use
+[PianoRoll](piano-roll.qmd); for a trigger grid, use
+[PatternObject](pattern-object.qmd).

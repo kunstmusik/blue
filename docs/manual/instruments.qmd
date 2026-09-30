@@ -1,0 +1,83 @@
+# Instrument types
+
+Add an instrument from the [Orchestra](orchestra.qmd) Arrangement, give it
+an ID, then create Score notes that target that ID. Use **Project → Generate
+CSD to Screen** to see the resulting `instr` block. A project's instrument
+can also have Global Orchestra, Global Score, and embedded UDO code; these
+travel with the instrument when copied between projects.
+
+## Generic Instrument
+
+Use **Generic Instrument** when you already have Csound orchestra text.
+Enter the instrument _body_ in its **Instrument** tab; Blue creates the
+surrounding `instr <ID>` and `endin`. The **UDO** tab stores local opcode
+definitions. **Global Orc** and **Global Sco** hold supporting statements
+emitted outside the instrument. For example, `blueMixerOut` can route the
+instrument through Blue's [Mixer](mixer.qmd).
+
+## BlueSynthBuilder
+
+**BlueSynthBuilder** combines Csound code with a graphical control
+interface. In **Interface**, turn on **Edit Mode** to add and arrange
+widgets, set their object names and ranges, and configure the grid. Turn
+Edit Mode off to use the controls. A widget named `amplitude` can supply
+the replacement key `<amplitude>` in Csound code. Blue substitutes its
+current value or generated automation signal when building the CSD.
+
+The **Code** tab has four parts: **Instrument** for per-note Csound code,
+**Always On** for an associated continuously running instrument, and
+**Global Orc** and **Global Sco** for supporting statements. The **UDO**
+tab keeps dependent opcodes with the instrument. To share a self-contained
+instrument, include required UDOs there and use its global sections for
+shared setup; inspect the generated CSD for duplicate tables or names.
+
+Use the interface's **Presets** menu to save or recall widget values.
+Presets save values, not widget layout. Supported widgets can expose
+[Parameter automation](parameter-automation.qmd); write their replacement
+keys where a Csound control-rate signal is legal. To expose a supported
+control, select its widget in Edit Mode and enable **Automation** in
+Properties. For an always-on audio
+chain, the main code can send through `blueMixerOut` and the always-on code
+can read with `blueMixerIn` before routing onward. This requires the mixer
+to be enabled. Start with a simple instrument and verify its output before
+adding more routing.
+
+## BlueX7
+
+**BlueX7** is Blue's six-operator FM instrument. Its current editor has
+**Voice & Global**, **Operators**, **Pitch Envelope**, and **Csound** tabs.
+The first tab contains common voice settings, LFO controls, and an
+algorithm chooser. The Operators tab edits one of six operators; the
+Pitch Envelope tab edits the shared pitch contour. The Csound tab is for
+additional Csound processing and output routing.
+
+**Import SysEx…** loads a DX7 voice or lets you choose one from a bank.
+Confirm the selected voice before it replaces the current settings.
+The editor offers local undo and redo for voice edits. Test a short
+[GenericScore](generic-score.qmd) event against its Arrangement ID. As in
+the older BlueX7 score convention, `p4` supplies pitch and `p5` velocity;
+check the generated CSD and resulting sound after importing a legacy bank.
+
+## Python Instrument
+
+The **Python Instrument** editor stores Jython code that generates a
+Csound instrument body. Its **Test** button evaluates the code and shows
+the generated text or an error. Rendering requires the Java runtime
+session; if that service is unavailable, code generation fails. The
+editor also contains embedded UDO and global code tabs. Test the
+generated instrument before relying on an older Python project.
+
+## JavaScript Instrument
+
+**JavaScript Instrument** evaluates its script and uses the resulting
+`instrument` string as the Csound orchestra body. For example:
+
+```javascript
+instrument = 'aTone oscili p4, p5\nouts aTone, aTone';
+```
+
+Its UDO and global code tabs remain available. Blue 3 runs the script with
+its embedded JavaScript runtime during CSD generation; inspect **Project →
+Generate CSD to Screen** to confirm the generated body and resolve any
+script error before rendering. Scripts that depend on the older Java
+application's host APIs may need revision.

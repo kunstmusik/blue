@@ -1022,7 +1022,9 @@ export default function ScorePanel() {
               })),
               tempoEnabled: transport.tempoMap.enabled,
               initialTempo: transport.tempoMap.points[0]?.tempo ?? 60,
+              tempoPoints: transport.tempoMap.points,
               sampleRate: transport.sampleRate,
+              smpteFrameRate: timeState.smpteFrameRate,
             }}
             onCommit={handleTempoPatch}
             onClose={() => setTempoMapEditorOpen(false)}

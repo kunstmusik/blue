@@ -19,9 +19,9 @@ inputs:
     required: false
     default: '22'
   pnpm-version:
-    description: Pinned pnpm major version.
+    description: Pinned pnpm version (must match package.json).
     required: false
-    default: '10'
+    default: '12.8.1'
   java-version:
     description: Java major version for the @blue/java-runtime Maven build.
     required: false
@@ -42,13 +42,18 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Setup Quarto for bundled manual
+      uses: quarto-dev/quarto-actions/setup@v2
+      with:
+        version: '1.10.18'
+
     - name: Setup Node.js ${{ inputs.node-version }}
       uses: actions/setup-node@v5
       with:
         node-version: ${{ inputs.node-version }}
 
     - name: Setup pnpm ${{ inputs.pnpm-version }}
-      uses: pnpm/action-setup@v5
+      uses: pnpm/action-setup@v6
       with:
         version: ${{ inputs.pnpm-version }}
         run_install: false
@@ -121,9 +126,9 @@ runs:
       uses: actions/cache@v5
       with:
         path: ${{ env.PNPM_STORE_PATH }}
-        key: ${{ runner.os }}-${{ runner.arch }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+        key: ${{ runner.os }}-${{ runner.arch }}-pnpm-${{ inputs.pnpm-version }}-store-${{ hashFiles('**/pnpm-lock.yaml') }}
         restore-keys: |
-          ${{ runner.os }}-${{ runner.arch }}-pnpm-store-
+          ${{ runner.os }}-${{ runner.arch }}-pnpm-${{ inputs.pnpm-version }}-store-
 
     - name: Setup Java ${{ inputs.java-version }}
       uses: actions/setup-java@v5

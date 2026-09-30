@@ -2,6 +2,7 @@
 #include "csound/CsoundRuntimeServices.h"
 #include "engine/CsoundEngine.h"
 
+#include <atomic>
 #include <chrono>
 #include <iostream>
 #include <filesystem>
@@ -55,6 +56,34 @@ endin
     require(state.stopReason == blue::EngineStopReason::COMPLETED,
             "Null-audio performance did not report completion");
     engine.destroy();
+
+    // Live compilation pauses performance internally; consumers must not see
+    // that pause as a terminal stop and tear down their running session.
+    std::atomic<int> terminalStops{0};
+    blue::CsoundEngine liveEngine;
+    liveEngine.setStateChangeCallback([&](const blue::EngineStateSnapshot &snapshot) {
+      if (snapshot.state == blue::EngineLifecycleState::STOPPED) {
+        terminalStops.fetch_add(1);
+      }
+    });
+    liveEngine.setThreadPriorityElevationEnabled(false);
+    require(liveEngine.create(), liveEngine.getLastError());
+    require(liveEngine.setOption("-n"), liveEngine.getLastError());
+    require(liveEngine.setOption("-d"), liveEngine.getLastError());
+    require(liveEngine.compileOrc("sr=48000\nksmps=32\nnchnls=2\n"
+                                  "instr 1\na0 init 0\nout a0,a0\nendin"),
+            liveEngine.getLastError());
+    require(liveEngine.readScore("i1 0 -1"), liveEngine.getLastError());
+    require(liveEngine.start(), liveEngine.getLastError());
+    require(liveEngine.compileOrc("instr 2\na0 init 0\nout a0,a0\nendin"),
+            liveEngine.getLastError());
+    require(terminalStops.load() == 0,
+            "Live compilation published a terminal stop");
+    require(liveEngine.isRunning(), "Live compilation did not resume performance");
+    liveEngine.stop();
+    require(terminalStops.load() == 1,
+            "Explicit stop did not publish exactly one terminal stop");
+    liveEngine.destroy();
 
     // Exercise the one-shot Csound API lifecycle with the committed fixture.
     auto *csound = blue::CsoundLoader::csoundCreate(nullptr, nullptr);

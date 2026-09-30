@@ -1,0 +1,47 @@
+# Further reference
+
+## Csound and Blue
+
+Blue produces Csound instruments and score events. If you are new to
+Csound, learn the basic `instr`/`endin` structure and `i` and `f` score
+statements before adapting examples in this book. Blue's generated CSD
+preview is a useful bridge between the visual project and the Csound
+code it runs. Use **Project → Generate CSD to Screen** while following
+the [first project](first-project.qmd).
+
+## Practical habits
+
+- Keep related instrument code, local UDOs, and setup text together so
+  the instrument can be copied into another project. See
+  [Instrument types](instruments.qmd) and [UDOs](udos.qmd).
+- Put reusable Score phrases in Project SoundObjects and create
+  [Instances](instance.qmd) where linked editing is useful.
+- Save the `.blue` project and its copied media folder together before
+  moving them. Use [Project Properties](project-properties.qmd) to set the
+  media folder.
+- Preview generated CSD after changing score templates, processors,
+  command blocks, or render options; this exposes the actual instrument
+  IDs, note timing, and code order.
+
+## Terms
+
+**SoundObject** is a Score item that generates notes or other Csound
+material. **BlueSynthBuilder** is an instrument with a widget interface.
+**`pch`** is Csound's octave.pitch-class representation. **`p` field** is
+one field of a Csound score event; `p1` is the instrument, `p2` start,
+and `p3` duration. **UDO** means user-defined opcode. See the linked
+chapters for their current controls.
+
+## Compatibility notes
+
+The Blue 2 manual's compatibility appendix describes a Java Blue
+0.124.3 change: an automatable BlueSynthBuilder widget can produce a
+control-rate signal even when a particular line is not automated. A
+Csound expression using such a widget must accept that rate. This
+remains useful when diagnosing older projects; verify the generated
+CSD and current [automation](parameter-automation.qmd) behavior.
+
+Older terms such as **blue Home** and the NetBeans-specific **`.blue`
+directory** belong to the Java application. They should not be
+used as current project-location instructions. Historical text and
+links remain in the [Blue 2 source edition](https://github.com/kunstmusik/blue-manual/tree/7a92066a2aa8f0370026ba9527c158643c2935a1).

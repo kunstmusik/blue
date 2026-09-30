@@ -4,6 +4,7 @@ import {
   getProjectParameterCatalog,
   AudioFile,
   BlueData,
+  CompileData,
   BSBKnob,
   BSBHSlider,
   BSBHSliderBank,
@@ -13,19 +14,27 @@ import {
   Effect,
   GenericInstrument,
   GenericScore,
+  Instance,
   LiveObject,
   NoteProcessorChain,
   ObjectBuilder,
   PolyObject,
   PatternsLayerGroup,
+  PatternObject,
+  Pattern,
+  PythonProcessor,
   PythonObject,
   TrackLayer,
   TrackLayerGroup,
+  TimeBehavior,
+  TimeDuration,
+  TimePosition,
 } from '@blue/data';
 import { ProjectSession } from './project-session';
 import type { ProjectSession as ProjectSessionType } from './project-session';
 import { ProjectHistory } from './project-history';
 import { FakePublicationRecorder, MockHistoryContext } from './project-history-test-support';
+import { testScoreObject } from './score-object-test';
 import {
   assignExplicitScoreObjectId,
   assignLayerGroupId,
@@ -1160,6 +1169,27 @@ const cases: RoundTripCase[] = [
         { score: { type: 'updateTypeSpecificEditor', target, patch: { text: 'aout = aout' } } },
       ];
     },
+  },
+  {
+    family: 'score',
+    type: 'updateTypeSpecificEditor.patternResize',
+    patches: (data) => {
+      const object = new PatternObject();
+      assignExplicitScoreObjectId(object, 'pattern-resize-1');
+      const row = new Pattern(16);
+      row.values[2] = true;
+      row.values[14] = true;
+      object.addPattern(row);
+      scoreLayer(data, 1).push(object);
+      const target = {
+        ...scoreObjectTarget(data, 1, 0),
+        selectionId: 'pattern-resize-1',
+        selectedObjectType: 'PatternObject',
+        editorObjectType: 'PatternObject',
+      };
+      return [{ score: { type: 'updateTypeSpecificEditor', target, patch: { beats: 2 } } }];
+    },
+    identity: (data) => getScoreObjectId(scoreLayer(data, 1)[0]!),
   },
   {
     family: 'score',
@@ -3086,6 +3116,219 @@ describe('Project patch round trips through real ProjectHistory (T117)', () => {
       dropdownIndex: 1,
       bankValues: [0.123, 0.789],
     });
+  });
+
+  it('sets a PolyObject duration to its generated child phrase and round-trips through history', async () => {
+    const data = new BlueData();
+    const score = data.getScore();
+    score.length = 0;
+    const root = new PolyObject(true);
+    root.newLayerAt(-1);
+    score.push(root);
+
+    const phrase = new PolyObject();
+    phrase.newLayerAt(-1);
+    phrase.setStartTime(TimePosition.beats(10));
+    phrase.setSubjectiveDuration(TimeDuration.beats(4));
+    phrase.setTimeBehavior(TimeBehavior.NONE);
+    assignExplicitScoreObjectId(phrase, 'poly-duration');
+    const child = new PythonObject();
+    child.setPythonCode('score = "i1 2 4 440"');
+    child.setSubjectiveDuration(TimeDuration.beats(4));
+    child.setTimeBehavior(TimeBehavior.NONE);
+    phrase[0]!.push(child);
+    root[0]!.push(phrase);
+
+    const target = createProjectEditorSnapshot(data, null).score!.layerGroups[0]!.layers[0]!
+      .items[0]!.editorTarget!;
+    const session = new ProjectSession();
+    session.replace(data, '/tmp/poly-duration.blue');
+    const history = new ProjectHistory({ session });
+    const context = new MockHistoryContext('ctx-poly-duration');
+    const docId = session.read().documentId!;
+    const live = () => session.read().data!;
+    const livePhrase = () => (live().getScore()[0] as PolyObject)[0]![0] as PolyObject;
+    const duration = () =>
+      livePhrase().getSubjectiveDuration().toBeats(live().getScore().getTimeContext());
+    history.markClean();
+    const baselineXml = live().saveToString();
+
+    const request = { target, mode: 'objective-duration' as const };
+    const missingRuntime = await testScoreObject(live(), request);
+    expect(missingRuntime).toMatchObject({
+      ok: false,
+      error: expect.stringContaining('Java runtime is unavailable'),
+    });
+    expect(duration()).toBe(4);
+    expect(session.read().revision).toBe(0);
+    expect(history.isDirty()).toBe(false);
+
+    const measurement = await testScoreObject(live(), request, {
+      javaRuntimeClient: {
+        evaluateJythonScoreObject: async () => ({
+          ok: true,
+          result: { scoreText: 'i1 2 4 440' },
+        }),
+      } as never,
+    });
+    expect(measurement).toMatchObject({ ok: true, objectiveDurationBeats: 6 });
+
+    const commit = await history.commit(
+      context.nextCommitRequest(docId, 0, 'Set Subjective Time to Objective Time', [
+        {
+          score: {
+            type: 'setSubjectiveDurationToObjective',
+            targets: [target],
+            resolvedObjectiveDurationsBeats: [measurement.objectiveDurationBeats!],
+          },
+        },
+      ]),
+    );
+    expect(commit.status).toBe('committed');
+    expect(duration()).toBe(6);
+    expect(livePhrase().getStartTime().toBeats(live().getScore().getTimeContext())).toBe(10);
+    expect(getScoreObjectId(livePhrase())).toBe('poly-duration');
+    expect(history.isDirty()).toBe(true);
+    const committedXml = live().saveToString();
+
+    const undo = await history.undo(context.nextUndoRequest(docId, session.read().revision));
+    expect(undo.status).toBe('committed');
+    expect(duration()).toBe(4);
+    expect(live().saveToString()).toBe(baselineXml);
+    expect(getScoreObjectId(livePhrase())).toBe('poly-duration');
+    expect(history.isDirty()).toBe(false);
+
+    const redo = await history.redo(context.nextRedoRequest(docId, session.read().revision));
+    expect(redo.status).toBe('committed');
+    expect(duration()).toBe(6);
+    expect(live().saveToString()).toBe(committedXml);
+    expect(getScoreObjectId(livePhrase())).toBe('poly-duration');
+    expect(history.isDirty()).toBe(true);
+  });
+
+  it('leaves history unchanged when a child PythonProcessor cannot run for duration measurement', async () => {
+    const data = new BlueData();
+    const score = data.getScore();
+    score.length = 0;
+    const root = new PolyObject(true);
+    root.newLayerAt(-1);
+    score.push(root);
+
+    const phrase = new PolyObject();
+    phrase.newLayerAt(-1);
+    phrase.setStartTime(TimePosition.beats(10));
+    phrase.setSubjectiveDuration(TimeDuration.beats(4));
+    phrase.setTimeBehavior(TimeBehavior.NONE);
+    assignExplicitScoreObjectId(phrase, 'poly-duration-python-processor');
+    const child = new GenericScore();
+    child.setScoreText('i1 0 2 440');
+    child.setTimeBehavior(TimeBehavior.NONE);
+    const processor = new PythonProcessor();
+    processor.setCode('for note in noteList:\n    note.setSubjectiveDuration(6)');
+    child.getNoteProcessorChain().addProcessor(processor);
+    phrase[0]!.push(child);
+    root[0]!.push(phrase);
+
+    const target = createProjectEditorSnapshot(data, null).score!.layerGroups[0]!.layers[0]!
+      .items[0]!.editorTarget!;
+    const session = new ProjectSession();
+    session.replace(data, '/tmp/poly-duration-python-processor.blue');
+    const history = new ProjectHistory({ session });
+    const live = () => session.read().data!;
+    const duration = () =>
+      ((live().getScore()[0] as PolyObject)[0]![0] as PolyObject)
+        .getSubjectiveDuration()
+        .toBeats(live().getScore().getTimeContext());
+    history.markClean();
+    const baselineXml = live().saveToString();
+    const baselineHistory = history.read();
+
+    const result = await testScoreObject(live(), { target, mode: 'objective-duration' });
+
+    expect(result).toMatchObject({
+      ok: false,
+      error: expect.stringContaining('Java runtime is unavailable'),
+    });
+    expect(duration()).toBe(4);
+    expect(live().saveToString()).toBe(baselineXml);
+    expect(session.read().revision).toBe(0);
+    expect(history.isDirty()).toBe(false);
+    expect(history.read()).toMatchObject({
+      cursor: baselineHistory.cursor,
+      length: baselineHistory.length,
+      canUndo: baselineHistory.canUndo,
+      canRedo: baselineHistory.canRedo,
+    });
+  });
+});
+
+describe('linked Instance timing through project history', () => {
+  it('commits, undoes, and redoes placement duration and repeat behavior', async () => {
+    const data = new BlueData();
+    data.getScore().length = 0;
+    const source = new GenericScore();
+    source.setScoreText('i1 0 1 440');
+    source.setTimeBehavior(TimeBehavior.NONE);
+    const libraryId = data.getSoundObjectLibrary().addObject(source);
+    const root = new PolyObject(true);
+    root.newLayerAt(0);
+    const instance = new Instance();
+    instance.setSoundObject(source);
+    instance.setLibraryId(libraryId);
+    instance.setStartTime(TimePosition.beats(10));
+    instance.setSubjectiveDuration(TimeDuration.beats(2));
+    instance.setTimeBehavior(TimeBehavior.NONE);
+    assignExplicitScoreObjectId(instance, 'timed-instance');
+    root[0]!.push(instance);
+    data.getScore().push(root);
+
+    const session = new ProjectSession();
+    session.replace(data, '/tmp/instance-timing.blue');
+    const history = new ProjectHistory({ session });
+    const context = new MockHistoryContext('ctx-instance-timing');
+    const documentId = session.read().documentId!;
+    const live = () => session.read().data!;
+    const liveInstance = () => (live().getScore()[0] as PolyObject)[0]![0] as Instance;
+    const starts = () =>
+      Array.from(
+        liveInstance().generateForCSD(live().getScore().getTimeContext(), new CompileData(), 0, -1),
+        (note) => note.getStartTime(),
+      );
+    const target = createProjectEditorSnapshot(data, null).score!.layerGroups[0]!.layers[0]!
+      .items[0]!.editorTarget!;
+    history.markClean();
+    expect(starts()).toEqual([10]);
+
+    const commit = await history.commit(
+      context.nextCommitRequest(documentId, 0, 'Repeat Instance', [
+        {
+          score: {
+            type: 'updateSharedProperties',
+            target,
+            patch: { subjectiveDuration: { value: 4, timeBase: 'BEATS' } },
+          },
+        },
+        { score: { type: 'updateSoundObjectBehavior', target, patch: { timeBehavior: 'REPEAT' } } },
+      ]),
+    );
+    expect(commit.status).toBe('committed');
+    expect(starts()).toEqual([10, 11, 12, 13]);
+    expect(getScoreObjectId(liveInstance())).toBe('timed-instance');
+    expect(history.isDirty()).toBe(true);
+
+    expect(
+      (await history.undo(context.nextUndoRequest(documentId, session.read().revision))).status,
+    ).toBe('committed');
+    expect(starts()).toEqual([10]);
+    expect(getScoreObjectId(liveInstance())).toBe('timed-instance');
+    expect(history.isDirty()).toBe(false);
+
+    expect(
+      (await history.redo(context.nextRedoRequest(documentId, session.read().revision))).status,
+    ).toBe('committed');
+    expect(starts()).toEqual([10, 11, 12, 13]);
+    expect(getScoreObjectId(liveInstance())).toBe('timed-instance');
+    expect(history.isDirty()).toBe(true);
   });
 });
 

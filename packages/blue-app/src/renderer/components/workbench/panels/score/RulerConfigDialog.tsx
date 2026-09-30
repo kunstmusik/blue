@@ -39,7 +39,7 @@ const SMPTE_FRAME_RATES = [
   { value: 23.976, label: '23.976 fps' },
   { value: 24, label: '24 fps' },
   { value: 25, label: '25 fps' },
-  { value: 29.97, label: '29.97 fps (drop)' },
+  { value: 29.97, label: '29.97 fps (non-drop)' },
   { value: 30, label: '30 fps' },
   { value: 50, label: '50 fps' },
   { value: 59.94, label: '59.94 fps' },

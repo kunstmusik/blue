@@ -144,6 +144,15 @@ Settings migration note: the natural move is a `SettingsNumberField` built on `C
 | FieldDefinitionsEditor.tsx:91-102                                   | FieldDef max            | `step="any"`                                                         | same                                                                                                                                                         | float                                                | **REPLACE_WITH_ADJUSTMENTS**                                               |
 | FieldDefinitionsEditor.tsx:104-115                                  | FieldDef default        | `step="any"`                                                         | same                                                                                                                                                         | float                                                | **REPLACE_WITH_ADJUSTMENTS**                                               |
 
+### Current source inventory follow-up (2026-09-26)
+
+The table above records the 66-site baseline for this consolidation. Later UI
+work added PianoRoll Base Frequency beside Transposition (M15) and restored
+Blue Live's Repeat interval input while completing its scheduler (M01). The
+Repeat input uses the shared number input component, bringing the active source
+inventory to 38 ordinary and 29 specialized sites. `number-input-inventory.test.ts`
+reflects the current controls.
+
 ## (c) Numeric text-input sweep (`type="text"` or no `type`, numeric purpose)
 
 | file:line                                                            | Field                                         | Pattern                                                                                                                                                                                                           | Verdict                                                                                                                                                                           |

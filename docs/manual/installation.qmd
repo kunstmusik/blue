@@ -1,0 +1,32 @@
+# Installation
+
+During Blue 3 development, obtain a package from the
+[Develop workflow artifacts](https://github.com/kunstmusik/blue/actions/workflows/develop.yml)
+for your platform. The repository's Releases page still lists Java Blue 2
+packages; use it for Blue 3 only after a Blue 3 release is published.
+Development packages are a macOS DMG, a Windows installer, and Linux AppImage
+and Deb packages. Install or launch the package using the usual method for
+your platform.
+
+- **macOS:** Open the DMG and copy Blue to Applications. On a Mac without a
+  secondary mouse button, use Control-click for the right-click actions in
+  this manual.
+- **Windows:** Run the installer, then launch Blue from the Start menu.
+- **Linux:** Install the Deb package on a compatible Debian-based system, or
+  make the AppImage executable and launch it. The AppImage supports
+  extract-and-run if FUSE is unavailable.
+
+Blue 3 includes its own Blue Engine executable. You do not need to install a
+separate Blue Engine. Blue can open, edit, and save `.blue` projects without
+Csound. Install **Csound 7** from the [official Csound download
+page](https://csound.com/download.html) to play or render audio. After
+installation, `csound --version` in a terminal should report Csound 7.
+Engine features report an error until Csound is available.
+
+The basic Blue 3 desktop workflow does not use the Java Blue launcher or its
+`blue64.exe` scripts. Some Java-backed project features still require a Java
+runtime; Blue preserves that project data if the runtime is unavailable.
+
+After launching Blue, choose **File → Open Example Project…** to explore a
+bundled example, or choose **File → New Project** to start an empty project.
+See [First project](first-project.qmd) for the next steps.

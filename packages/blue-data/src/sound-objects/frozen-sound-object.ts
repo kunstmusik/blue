@@ -63,6 +63,15 @@ export class FrozenSoundObject extends AbstractSoundObject {
     return TimeBehavior.NOT_SUPPORTED;
   }
 
+  getRangeOriginBeats(context: TimeContext): number | null | undefined {
+    if (this.getNoteProcessorChain().getProcessors().length > 0) return undefined;
+    if (!this._frozenWaveFileName) return null;
+    if (this._numChannels <= 0) return undefined;
+    const duration = this.getSubjectiveDuration().toBeats(context);
+    if (!Number.isFinite(duration) || duration <= 0) return null;
+    return this.getStartTime().toBeats(context);
+  }
+
   // ─── CSD Generation ───
 
   /**
@@ -100,7 +109,14 @@ export class FrozenSoundObject extends AbstractSoundObject {
       return new NoteList();
     }
 
-    return this.generateNotes(context, instrumentNumber, startTime, endTime);
+    return this.generateNotes(
+      context,
+      instrumentNumber,
+      startTime,
+      endTime,
+      options?.beatOrigin ?? 0,
+      options?.normalizationOrigin,
+    );
   }
 
   private generateInstruments(compileData: CompileData, trackId?: string): number {
@@ -132,6 +148,8 @@ export class FrozenSoundObject extends AbstractSoundObject {
     instrumentNumber: number,
     renderStart: number,
     renderEnd: number,
+    beatOrigin: number,
+    normalizationOrigin?: ScoreGenerationOptions['normalizationOrigin'],
   ): NoteList {
     const notes = new NoteList();
 
@@ -147,13 +165,27 @@ export class FrozenSoundObject extends AbstractSoundObject {
     }
 
     const sfName = this._frozenWaveFileName.replace(/\\/g, '/');
+    const objectStart = this._startTime.toBeats(context);
+    const absoluteObjectStart = beatOrigin + objectStart;
+    const fileOffsetSeconds =
+      context.beatsToSeconds(absoluteObjectStart + renderStart) -
+      context.beatsToSeconds(absoluteObjectStart);
 
     const note = new Note();
     note.setPField(String(instrumentNumber), 1);
-    note.setStartTime(this._startTime.toBeats(context) + renderStart);
+    note.setStartTime(objectStart + renderStart);
     note.setSubjectiveDuration(newDur);
     note.setPField(`"${sfName}"`, 4);
-    note.setPField(String(renderStart), 5);
+    note.setPField(String(fileOffsetSeconds), 5);
+    if (normalizationOrigin) {
+      note.setFileSeekProvenance({
+        pField: 5,
+        absoluteObjectStartBeat: absoluteObjectStart,
+        originalDurationBeats: subjectiveDuration,
+        generatedOffsetSeconds: fileOffsetSeconds,
+        normalizationOrigin,
+      });
+    }
     notes.add(note);
 
     return notes;

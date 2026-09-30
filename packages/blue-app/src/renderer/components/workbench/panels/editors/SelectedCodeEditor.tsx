@@ -309,6 +309,7 @@ export default function SelectedCodeEditor({
 
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingValueRef = useRef<string | null>(null);
+  const submittedValuesRef = useRef<string[]>([]);
   const isComposingRef = useRef(false);
   const compositionWaitersRef = useRef(new Set<() => void>());
   const hasSubmittedRef = useRef(false);
@@ -337,6 +338,7 @@ export default function SelectedCodeEditor({
 
   const submitValue = useCallback(
     (nextValue: string, phaseOverride?: 'single' | 'begin' | 'update' | 'end') => {
+      submittedValuesRef.current.push(nextValue);
       const metadata = historyMetadataRef.current;
       if (!metadata) {
         void onChangeRef.current(nextValue);
@@ -559,6 +561,7 @@ export default function SelectedCodeEditor({
       return undefined;
     }
 
+    submittedValuesRef.current = [];
     const targetTooltipParent = portalContainer ?? container.ownerDocument?.body;
     const extensions: Extension[] = [
       ...createEditorSetupExtensions(historyScope),
@@ -792,7 +795,17 @@ export default function SelectedCodeEditor({
     }
 
     const currentValue = view.state.doc.toString();
+    const submittedIndex = submittedValuesRef.current.indexOf(value);
+    if (submittedIndex !== -1) {
+      // Operation changes can submit the preceding text while newer typing
+      // is already visible. Its acknowledgement must not discard that draft.
+      submittedValuesRef.current.splice(0, submittedIndex + 1);
+      lastSyncedValueRef.current = value;
+      setDraftConflict(null);
+      if (currentValue !== value) return;
+    }
     if (currentValue === value) {
+      submittedValuesRef.current = [];
       lastSyncedValueRef.current = value;
       setDraftConflict(null);
       return;
@@ -810,6 +823,7 @@ export default function SelectedCodeEditor({
       // previous state object when the value is unchanged prevents a
       // render loop through this effect's dependencies, and a value the
       // user already resolved (kept/applied) never re-conflicts.
+      submittedValuesRef.current = [];
       cancelPendingChange();
       setDraftConflict((prev) =>
         prev && prev.incomingValue === value ? prev : { incomingValue: value },
@@ -820,6 +834,7 @@ export default function SelectedCodeEditor({
       return;
     }
 
+    submittedValuesRef.current = [];
     try {
       syncingFromPropsRef.current = true;
       const currentSelection = view.state.selection.main;

@@ -430,6 +430,7 @@ export class CodeRepositoryService {
           this.snapshot = toPublicSnapshot(current);
           this.finishMigrationAttempt({ state: 'skipped' });
           this.migrationStatus = 'skipped';
+          this.migrationDiagnostic = undefined;
           return;
         }
         const parsed = parseCodeRepositoryXml(xml);
@@ -457,6 +458,7 @@ export class CodeRepositoryService {
         this.snapshot = toPublicSnapshot(current);
         this.finishMigrationAttempt({ state: 'skipped' });
         this.migrationStatus = 'skipped';
+        this.migrationDiagnostic = undefined;
         return;
       }
       // No legacy source: initialize the protected root programmatically. A

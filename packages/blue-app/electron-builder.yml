@@ -74,6 +74,9 @@ extraResources:
   - from: assets/examples
     to: assets/examples
     filter: ['**/*']
+  - from: ../../docs/manual/_build/html
+    to: assets/manual
+    filter: ['**/*']
   - from: .engine-stage
     to: assets/engine
     filter:

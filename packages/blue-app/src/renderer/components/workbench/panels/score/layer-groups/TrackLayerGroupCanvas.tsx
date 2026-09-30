@@ -18,7 +18,7 @@ import { useScoreSelectionStore } from '../../../../../stores/score-selection-st
 import { useLayerSelectionStore } from '../../../../../stores/layer-selection-store';
 import { buildSelectionKey, getLayerSelectionId } from '../layer-selection-utils';
 import { useLibraryStore } from '../../../../../stores/library-store';
-import { useProjectStore } from '../../../../../stores/project-store';
+import { getProjectDocumentRevision, useProjectStore } from '../../../../../stores/project-store';
 import { useMidiRoutingStore } from '../../../../../stores/midi-routing-store';
 import { useWorkbenchStore } from '../../../../../stores/workbench-store';
 import { buildSetSelectionToLayerColorPatch } from '../score-color-actions';
@@ -813,22 +813,39 @@ export default function TrackLayerGroupCanvas({
     (objectType: 'AudioClip' | string, startBeats: number, layerIndex: number) => {
       const layer = group.layers[Math.max(0, Math.min(layerIndex, group.layers.length - 1))];
       if (!layer || !layerGroupAcceptsObjectType('track', objectType)) return;
-      void applyProjectDocumentPatch({
-        score: {
-          type: 'addTrackItem',
-          track: trackRef(group, layer.layerId, projectSessionId, projectRevision),
-          item: {
-            objectType,
-            ...(objectType === 'AudioClip' ? { name: 'AudioClip' } : {}),
-            durationBeats: 4,
-            startTimeBase: 'BEATS',
-            durationTimeBase: 'BEATS',
-          },
-          startBeats: clampBeat(snapBeat(startBeats, 'floor'), totalBeats),
-        },
-      });
+      void (async () => {
+        try {
+          await flushPendingPatches();
+          await applyProjectDocumentPatch(
+            {
+              score: {
+                type: 'addTrackItem',
+                track: trackRef(
+                  group,
+                  layer.layerId,
+                  projectSessionId,
+                  getProjectDocumentRevision(),
+                ),
+                item: {
+                  objectType,
+                  ...(objectType === 'AudioClip' ? { name: 'AudioClip' } : {}),
+                  durationBeats: 4,
+                  startTimeBase: 'BEATS',
+                  durationTimeBase: 'BEATS',
+                },
+                startBeats: clampBeat(snapBeat(startBeats, 'floor'), totalBeats),
+              },
+            },
+            { label: objectType === 'AudioClip' ? 'Add Audio Clip' : 'Add Score Object' },
+          );
+        } catch (error) {
+          toast.error(
+            `Could not add ${objectType}: ${error instanceof Error ? error.message : String(error)}`,
+          );
+        }
+      })();
     },
-    [applyProjectDocumentPatch, group, projectRevision, projectSessionId, snapBeat, totalBeats],
+    [applyProjectDocumentPatch, flushPendingPatches, group, projectSessionId, snapBeat, totalBeats],
   );
 
   const pasteAtTrackPosition = useCallback(

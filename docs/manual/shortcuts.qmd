@@ -1,0 +1,34 @@
+# Keyboard shortcuts
+
+These are the current application-menu shortcuts. Use **Cmd** on macOS
+and **Ctrl** on Windows and Linux where both are shown. A shortcut may be
+unavailable until a project or suitable selection is active.
+
+| Action                           | Shortcut                                                      |
+| -------------------------------- | ------------------------------------------------------------- |
+| New project                      | Cmd/Ctrl+N                                                    |
+| Open project                     | Cmd/Ctrl+O                                                    |
+| Save                             | Cmd/Ctrl+S                                                    |
+| Close project                    | Shift+Cmd/Ctrl+W                                              |
+| Undo                             | Cmd/Ctrl+Z                                                    |
+| Redo                             | Shift+Cmd+Z on macOS; Ctrl+Y or Ctrl+Shift+Z on Windows/Linux |
+| Generate CSD to screen           | Cmd/Ctrl+Shift+G                                              |
+| Generate CSD to file             | Cmd/Ctrl+G                                                    |
+| Render or stop project           | F9                                                            |
+| Render to disk and play          | Shift+F9                                                      |
+| Render to disk                   | Shift+Cmd/Ctrl+F9                                             |
+| Audition selected ScoreObjects   | Cmd/Ctrl+Shift+A                                              |
+| Add marker                       | Cmd/Ctrl+M                                                    |
+| Toggle loop rendering            | Cmd/Ctrl+L                                                    |
+| Navigate to previous/next marker | `[` / `]`                                                     |
+
+With focus in [Blue Live](blue-live.qmd) Live Space, **Cmd/Ctrl+T** triggers
+the selected cell and **Cmd/Ctrl+Shift+T** triggers enabled cells. In
+Live Code, **Cmd/Ctrl+Enter** evaluates the current line or block while
+a realtime engine is running. The [Tracker](soundobject-types.qmd#trackerobject)
+editor has its own **Keyboard Shortcuts** help button.
+
+The older Java Blue shortcut table included fixed `Ctrl+1` through
+`Ctrl+6` editor switching and a Quick Time dialog. Those are not current
+application-menu shortcuts. Check a panel's own help or tooltip for
+local editing gestures.

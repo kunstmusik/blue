@@ -46,14 +46,31 @@ export class PatternObject extends AbstractSoundObject {
     return this._beats;
   }
   setBeats(b: number): void {
-    this._beats = b;
+    this.setTime(b, this._subDivisions);
   }
 
   getSubDivisions(): number {
     return this._subDivisions;
   }
   setSubDivisions(s: number): void {
-    this._subDivisions = s;
+    this.setTime(this._beats, s);
+  }
+
+  setTime(beats: number, subDivisions: number): void {
+    if (this._beats === beats && this._subDivisions === subDivisions) return;
+    const preserveSteps = this._subDivisions === subDivisions;
+    const numSteps = beats * subDivisions;
+    for (const pattern of this._patterns) {
+      const values = new Array<boolean>(numSteps).fill(false);
+      if (preserveSteps) {
+        for (let i = 0; i < Math.min(numSteps, pattern.values.length); i++) {
+          values[i] = pattern.values[i] ?? false;
+        }
+      }
+      pattern.values = values;
+    }
+    this._beats = beats;
+    this._subDivisions = subDivisions;
   }
 
   size(): number {
@@ -75,7 +92,7 @@ export class PatternObject extends AbstractSoundObject {
     for (const p of this._patterns) {
       if (p.solo && !p.muted) {
         soloFound = true;
-        for (let j = 0; j < p.values.length; j++) {
+        for (let j = 0; j < Math.min(p.values.length, this._beats * this._subDivisions); j++) {
           if (p.values[j]) {
             const tempPattern = getNotes(p.patternScore);
             const start = j * timeIncrement;
@@ -89,7 +106,7 @@ export class PatternObject extends AbstractSoundObject {
     if (!soloFound) {
       for (const p of this._patterns) {
         if (!p.muted) {
-          for (let j = 0; j < p.values.length; j++) {
+          for (let j = 0; j < Math.min(p.values.length, this._beats * this._subDivisions); j++) {
             if (p.values[j]) {
               const tempPattern = getNotes(p.patternScore);
               const start = j * timeIncrement;

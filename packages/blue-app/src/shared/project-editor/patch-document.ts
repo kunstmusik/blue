@@ -657,6 +657,24 @@ export function validateProjectDocumentPatch(patch: ProjectDocumentPatch): {
     return { valid: false, unexpectedKeys };
   }
 
+  if (patch.score?.type === 'setSubjectiveDurationToObjective') {
+    const durations = patch.score.resolvedObjectiveDurationsBeats;
+    if (
+      durations !== undefined &&
+      (durations.length !== patch.score.targets.length ||
+        durations.some(
+          (duration) =>
+            duration !== null &&
+            (typeof duration !== 'number' || !Number.isFinite(duration) || duration <= 0),
+        ))
+    ) {
+      return {
+        valid: false,
+        reason: 'Resolved objective durations must be positive finite beats aligned with targets',
+      };
+    }
+  }
+
   const clojureEntries = patch.clojureProject?.libraryEntries;
   if (Array.isArray(clojureEntries)) {
     const entryIds = clojureEntries.map((entry) =>

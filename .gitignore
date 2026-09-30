@@ -1,6 +1,9 @@
 # Build output
 dist/
 build/
+.worktrees/
+docs/manual/_build/
+docs/manual/.quarto/
 !packages/blue-app/build/
 packages/blue-app/build/*
 !packages/blue-app/build/entitlements.mac.plist

@@ -1,0 +1,74 @@
+# AudioFile SoundObject
+
+An **AudioFile** is a [SoundObject](soundobjects.qmd) that plays a sound file
+from a SoundObject layer. Blue generates a Csound `diskin2` instrument and a
+score event for it; you do not need to assign it one of your project's
+Orchestra instrument IDs. This is different from an audio-layer clip, whose
+timeline controls include fades and routing through the [Mixer](mixer.qmd).
+
+## Place and select a file
+
+1. Right-click empty space on a SoundObject layer and choose **Add
+   SoundObject → AudioFile**.
+2. Double-click the object to open its editor. On the **Audio File** tab,
+   choose **Browse Audio File** beside **Sound File** and select a readable
+   sound file. Blue displays its duration, format, sample rate, and channel
+   count when it can read that metadata.
+3. Move the object to its desired start position and set its **Subjective
+   Duration** for the playback interval. Choosing a file changes the source
+   and name; it does not automatically set the Score object's duration to
+   the file's length.
+
+The **Audio File** tab reports a missing, unreadable, or unsupported file.
+For AudioFile sources, use WAV or AIFF; the file picker also offers AIFC.
+The packaged macOS editor accepted stereo PCM WAV and AIFF and reported a
+FLAC source as **Unsupported Audio Format**. This is separate from the
+formats available for Render to Disk output. Resolve a source-file problem
+before rendering. If **Copy Imported Media** is enabled
+under the project's **Media** properties and the project has a directory,
+Blue copies a newly selected file into its media folder; otherwise the
+project keeps a path to the selected file. Keep the file available when
+moving a project to another computer.
+
+## Playback and Csound code
+
+The **Csound** tab contains post code that receives the file channels as
+`aChannel1`, `aChannel2`, and so on. Blue lists the available channel variables
+for the selected file above the editor; use the post code to choose how to
+route them. The default code sends the first channel to both outputs. For a
+stereo file, use `outs aChannel1, aChannel2` to keep its left and right
+channels distinct.
+
+The object's start position determines when playback begins. Its Score width
+sets the generated playback event's duration; it does not time-stretch the
+audio. AudioFile does not apply a Note Processor chain or a SoundObject Time
+Behavior to this playback event, so Score Object Properties omits those
+controls for AudioFile. When a selected range starts inside the object, Blue
+converts the overlap offset through the project tempo map to clip-relative
+seconds before seeking into the file. Model tests cover direct placements,
+direct AudioFile/FrozenObject Instances, file objects under nested PolyObjects
+with unscaled, unrepeated timing, and a linked Instance whose flat PolyObject
+source has a stable range-independent origin. For the latter, the Instance
+and source PolyObject must use `TimeBehavior.NONE` and have no Note Processor
+chains, source SoundLayers must have no processor chains, and all active direct
+children must report a known origin. Sync/async tests check the translated
+SoundLayer window and object-relative file overlap, seek, and finite duration.
+Blue 3's stable-origin
+handling is an extension to Java Blue's positional range handling for this
+case. Dynamic JavaScript/Python sources, nested PolyObject/Instance leaves,
+processor-bearing or transformed compositions, and GenericScore events outside
+their object's subjective duration do not qualify; their existing generation
+behavior remains. For example, an event at beat 2 in a GenericScore with
+subjective duration 2 is pruned when the selected range starts at beat 3, so
+file leaves keep the legacy seek and duration. This edge needs a separate
+range-aware contract. Direct AudioFile selected-range playback has been
+checked in a built macOS app with a tempo change. A packaged frozen-object
+selected-range disk render matched the direct AudioFile render, realtime
+playback started and finished, and the user accepted the captured output. See
+[SoundObjects](soundobjects.qmd#render-from-the-middle-of-a-project) for the
+range behavior. Use **Project → Generate CSD to Screen** to inspect the
+generated instrument and event before rendering.
+
+For a file you want to trim and fade directly on the timeline, use an
+**audio layer** and drop a file onto it instead. See [Score](score.qmd) for
+the distinction between SoundObject and audio layers.

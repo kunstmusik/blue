@@ -40,6 +40,11 @@ const BPM120: TimeConversionContext = {
   sampleRate: 44100,
 };
 
+const SMPTE_29_97: TimeConversionContext = {
+  ...SIMPLE_4_4,
+  smpteFrameRate: 29.97,
+};
+
 const METER_CHANGE: TimeConversionContext = {
   meterEntries: [
     { measure: 1, numBeats: 4, beatLength: 4 },
@@ -81,6 +86,19 @@ describe('beatsToSeconds / secondsToBeats', () => {
   it('round-trips through seconds', () => {
     const beats = 3.75;
     expect(secondsToBeats(beatsToSeconds(beats, BPM120), BPM120)).toBeCloseTo(beats, 10);
+  });
+
+  it('uses later tempo points for clock-based fields and parses them back', () => {
+    const context: TimeConversionContext = {
+      ...SIMPLE_4_4,
+      tempoPoints: [
+        { beat: 0, tempo: 60, curveType: 'constant' },
+        { beat: 4, tempo: 120, curveType: 'constant' },
+      ],
+    };
+    expect(formatForBase(8, 'SECONDS', context, false)).toBe('6');
+    expect(parseForBase('6', 'SECONDS', context, false)).toBe(8);
+    expect(formatForBase(8, 'FRAME', context, false)).toBe(String(6 * context.sampleRate));
   });
 });
 
@@ -261,6 +279,10 @@ describe('formatForBase', () => {
     expect(formatForBase(1.5, 'SMPTE', SIMPLE_4_4, false)).toBe('00:00:01:12');
   });
 
+  it('formats the 29.97 fps minute boundary without drop-frame skips', () => {
+    expect(formatForBase(60, 'SMPTE', SMPTE_29_97, false)).toBe('00:01:00:00');
+  });
+
   it('formats FRAME from beats at 60 BPM, 44100 sr', () => {
     expect(formatForBase(1, 'FRAME', SIMPLE_4_4, false)).toBe('44100');
   });
@@ -353,6 +375,14 @@ describe('parseForBase', () => {
 
   it('parses SMPTE at 24fps', () => {
     expect(parseForBase('00:00:01:12', 'SMPTE', SIMPLE_4_4, false)).toBeCloseTo(1.5, EPSILON);
+  });
+
+  it('parses 29.97 fps minute-boundary labels with ordinary frame arithmetic', () => {
+    expect(parseForBase('00:01:00:00', 'SMPTE', SMPTE_29_97, false)).toBeCloseTo(60, EPSILON);
+    expect(parseForBase('00:01:00:01', 'SMPTE', SMPTE_29_97, false)).toBeCloseTo(
+      60 + 1 / 29.97,
+      EPSILON,
+    );
   });
 
   it('rejects wrong SMPTE part count', () => {

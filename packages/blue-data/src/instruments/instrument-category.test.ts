@@ -30,6 +30,12 @@ describe('InstrumentCategory legacy loading', () => {
       `),
     );
 
-    expect(category.getInstruments()).toEqual([]);
+    expect(category.getInstruments()).toHaveLength(1);
+    const instrument = category.getInstruments()[0]!;
+    expect(instrument.getName()).toBe('Unknown');
+    expect(instrument.saveAsXML().getAttribute('type')).toBe('example.UnknownInstrument');
+    expect(() => instrument.generateInstrument()).toThrow(
+      'Unsupported instrument type: example.UnknownInstrument',
+    );
   });
 });
