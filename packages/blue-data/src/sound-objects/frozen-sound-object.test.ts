@@ -5,6 +5,8 @@ import { Element } from '../serialization/xml-reader';
 import { TimeContext } from '../time/time-context';
 import { TimeDuration } from '../time/time-duration';
 import { TimePosition } from '../time/time-position';
+import { CurveType } from '../time/curve-type';
+import { TempoPoint } from '../time/tempo-point';
 import { GenericScore } from './generic-score';
 import { FrozenSoundObject } from './frozen-sound-object';
 import './register-sound-object-types';
@@ -222,6 +224,26 @@ describe('FrozenSoundObject', () => {
       expect(note.getStartTime()).toBe(2);
       expect(note.getSubjectiveDuration()).toBe(4);
       expect(note.getPField(5)).toBe('2');
+    });
+
+    it('converts a selected-range skip offset to object-relative seconds', () => {
+      const fso = createPopulatedFrozen();
+      fso.setStartTime(TimePosition.beats(2));
+      fso.setSubjectiveDuration(TimeDuration.beats(8));
+
+      const context = new TimeContext();
+      const tempoMap = context.getTempoMap();
+      tempoMap.setEnabled(true);
+      tempoMap.setTempoPoint(0, 0, 120, CurveType.CONSTANT);
+      tempoMap.addTempoPoint(new TempoPoint(4, 60, CurveType.CONSTANT));
+
+      const notes = fso.generateForCSD(context, CompileData.createEmptyCompileData(), 3, 5);
+
+      expect(notes.size).toBe(1);
+      expect(Number(notes.getNote(0).getPField(5))).toBeCloseTo(
+        context.beatsToSeconds(5) - context.beatsToSeconds(2),
+        6,
+      );
     });
   });
 

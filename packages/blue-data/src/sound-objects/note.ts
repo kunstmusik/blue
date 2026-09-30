@@ -1,6 +1,15 @@
 import { formatBlueNumber, formatJavaDouble } from '../utilities/number-format';
+import type { ScoreNormalizationOrigin } from '../score/score-generation-options';
 
 const TOKEN_PATTERN = /"[^"]*"|\[[^\]]*\]|\S*/g;
+
+export interface FileSeekProvenance {
+  readonly pField: 4 | 5;
+  readonly absoluteObjectStartBeat: number;
+  readonly originalDurationBeats: number;
+  readonly generatedOffsetSeconds: number;
+  readonly normalizationOrigin: ScoreNormalizationOrigin;
+}
 
 function evalBracketExpression(expr: string): string {
   try {
@@ -21,6 +30,7 @@ export class Note {
   private _startTime = 0;
   private _subjectiveDuration = 0;
   private _trackInstrumentTarget: 'assignable' | 'preserve' | undefined;
+  private _fileSeekProvenance: FileSeekProvenance | undefined;
   isTied = false;
 
   static createNote(numPFields: number): Note {
@@ -40,6 +50,7 @@ export class Note {
     note._startTime = other._startTime;
     note._subjectiveDuration = other._subjectiveDuration;
     note._trackInstrumentTarget = other._trackInstrumentTarget;
+    note._fileSeekProvenance = other._fileSeekProvenance;
     note.isTied = other.isTied;
     for (const [k, v] of other._pFields) {
       note._pFields.set(k, v);
@@ -187,6 +198,14 @@ export class Note {
 
   setTrackInstrumentTarget(target: 'assignable' | 'preserve' | undefined): void {
     this._trackInstrumentTarget = target;
+  }
+
+  getFileSeekProvenance(): FileSeekProvenance | undefined {
+    return this._fileSeekProvenance;
+  }
+
+  setFileSeekProvenance(provenance: FileSeekProvenance | undefined): void {
+    this._fileSeekProvenance = provenance;
   }
 
   getPFields(): Map<number, string> {

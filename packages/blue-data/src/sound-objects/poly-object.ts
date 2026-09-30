@@ -235,6 +235,34 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
     const generationOptions = normalizeScoreGenerationOptions(options);
     const processWithSolo = generationOptions.processWithSolo ?? this.hasSoloLayers();
     const shouldProcessWithSolo = processWithSolo ?? this.hasSoloLayers();
+    const rangeOriginBeats =
+      generationOptions.normalizationOrigin?.owner === this &&
+      generationOptions.normalizationOrigin.allowRangeOrigin
+        ? this.getLinkedRangeOriginBeats(context, shouldProcessWithSolo)
+        : undefined;
+    if (rangeOriginBeats !== undefined && generationOptions.normalizationOrigin) {
+      generationOptions.normalizationOrigin.rangeOriginBeats = rangeOriginBeats;
+      if (rangeOriginBeats !== null) {
+        generationOptions.normalizationOrigin.originBeats =
+          this._startTime.toBeats(context) + rangeOriginBeats;
+      }
+    }
+    const sourceStartTime =
+      typeof rangeOriginBeats === 'number' ? startTime + rangeOriginBeats : startTime;
+    const sourceEndTime =
+      typeof rangeOriginBeats === 'number'
+        ? endTime > startTime
+          ? endTime + rangeOriginBeats
+          : sourceStartTime
+        : endTime;
+    const childOptions: ScoreGenerationOptions = {
+      deferRenderStartRebase: true,
+      normalizationOrigin:
+        generationOptions.normalizationOrigin?.owner === this
+          ? generationOptions.normalizationOrigin
+          : undefined,
+      beatOrigin: (generationOptions.beatOrigin ?? 0) + this._startTime.toBeats(context),
+    };
 
     if (shouldProcessWithSolo) {
       for (const layer of this) {
@@ -242,9 +270,13 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
           continue;
         }
 
-        const nl = layer.generateForCSD(context, compileData, startTime, endTime, {
-          deferRenderStartRebase: true,
-        });
+        const nl = layer.generateForCSD(
+          context,
+          compileData,
+          sourceStartTime,
+          sourceEndTime,
+          childOptions,
+        );
         noteList.merge(nl);
       }
     } else {
@@ -253,14 +285,26 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
           continue;
         }
 
-        const nl = layer.generateForCSD(context, compileData, startTime, endTime, {
-          deferRenderStartRebase: true,
-        });
+        const nl = layer.generateForCSD(
+          context,
+          compileData,
+          sourceStartTime,
+          sourceEndTime,
+          childOptions,
+        );
         noteList.merge(nl);
       }
     }
 
-    return this.processGeneratedNotes(context, noteList, startTime, endTime, generationOptions);
+    return this.processGeneratedNotes(
+      context,
+      noteList,
+      startTime,
+      endTime,
+      sourceStartTime,
+      sourceEndTime,
+      generationOptions,
+    );
   }
 
   async generateForCSDAsync(
@@ -274,6 +318,34 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
     const generationOptions = normalizeScoreGenerationOptions(options);
     const processWithSolo = generationOptions.processWithSolo ?? this.hasSoloLayers();
     const shouldProcessWithSolo = processWithSolo ?? this.hasSoloLayers();
+    const rangeOriginBeats =
+      generationOptions.normalizationOrigin?.owner === this &&
+      generationOptions.normalizationOrigin.allowRangeOrigin
+        ? this.getLinkedRangeOriginBeats(context, shouldProcessWithSolo)
+        : undefined;
+    if (rangeOriginBeats !== undefined && generationOptions.normalizationOrigin) {
+      generationOptions.normalizationOrigin.rangeOriginBeats = rangeOriginBeats;
+      if (rangeOriginBeats !== null) {
+        generationOptions.normalizationOrigin.originBeats =
+          this._startTime.toBeats(context) + rangeOriginBeats;
+      }
+    }
+    const sourceStartTime =
+      typeof rangeOriginBeats === 'number' ? startTime + rangeOriginBeats : startTime;
+    const sourceEndTime =
+      typeof rangeOriginBeats === 'number'
+        ? endTime > startTime
+          ? endTime + rangeOriginBeats
+          : sourceStartTime
+        : endTime;
+    const childOptions: ScoreGenerationOptions = {
+      deferRenderStartRebase: true,
+      normalizationOrigin:
+        generationOptions.normalizationOrigin?.owner === this
+          ? generationOptions.normalizationOrigin
+          : undefined,
+      beatOrigin: (generationOptions.beatOrigin ?? 0) + this._startTime.toBeats(context),
+    };
 
     if (shouldProcessWithSolo) {
       for (const layer of this) {
@@ -281,9 +353,13 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
           continue;
         }
 
-        const nl = await layer.generateForCSDAsync(context, compileData, startTime, endTime, {
-          deferRenderStartRebase: true,
-        });
+        const nl = await layer.generateForCSDAsync(
+          context,
+          compileData,
+          sourceStartTime,
+          sourceEndTime,
+          childOptions,
+        );
         noteList.merge(nl);
       }
     } else {
@@ -292,9 +368,13 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
           continue;
         }
 
-        const nl = await layer.generateForCSDAsync(context, compileData, startTime, endTime, {
-          deferRenderStartRebase: true,
-        });
+        const nl = await layer.generateForCSDAsync(
+          context,
+          compileData,
+          sourceStartTime,
+          sourceEndTime,
+          childOptions,
+        );
         noteList.merge(nl);
       }
     }
@@ -304,6 +384,8 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
       noteList,
       startTime,
       endTime,
+      sourceStartTime,
+      sourceEndTime,
       compileData,
       generationOptions,
     );
@@ -312,20 +394,43 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
   private processGeneratedNotes(
     context: TimeContext,
     noteList: NoteList,
-    startTime: number,
-    endTime: number,
+    renderStart: number,
+    renderEnd: number,
+    sourceStart: number,
+    sourceEnd: number,
     generationOptions: ScoreGenerationOptions,
   ): NoteList {
     let processed = applyNoteProcessorChain(noteList, this._npc);
     const duration = this._subjectiveDuration.toBeats(context);
     const repeatPointBeats = this._repeatPoint ? this._repeatPoint.toBeats(context) : -1;
-
     applyTimeBehavior(processed, this._timeBehavior, duration, repeatPointBeats);
 
-    if (endTime > startTime) {
+    const normalizationOrigin = generationOptions.normalizationOrigin;
+    if (
+      normalizationOrigin?.owner === this &&
+      typeof normalizationOrigin.rangeOriginBeats === 'number'
+    ) {
+      normalizationOrigin.originBeats =
+        this._startTime.toBeats(context) + normalizationOrigin.rangeOriginBeats;
+    }
+    const canFinalizeFileSeeks =
+      this._timeBehavior === TimeBehavior.NONE &&
+      this._npc.getProcessors().length === 0 &&
+      this.every((layer) => layer.getNoteProcessorChain().getProcessors().length === 0);
+    if (canFinalizeFileSeeks) {
+      this.applyFileSeekNormalization(
+        context,
+        processed,
+        renderStart,
+        renderEnd,
+        generationOptions,
+      );
+    }
+
+    if (sourceEnd > sourceStart) {
       const filtered = new NoteList();
       for (const note of processed) {
-        if (note.getStartTime() <= endTime) {
+        if (note.getStartTime() <= sourceEnd) {
           filtered.add(note);
         }
       }
@@ -334,8 +439,13 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
 
     setScoreStart(processed, this._startTime.toBeats(context));
 
+    const hasStableRangeOrigin =
+      normalizationOrigin?.owner === this && normalizationOrigin.rangeOriginBeats !== undefined;
     if (!generationOptions.deferRenderStartRebase) {
-      rebaseScoreToRenderStart(processed, startTime);
+      rebaseScoreToRenderStart(
+        processed,
+        hasStableRangeOrigin ? this._startTime.toBeats(context) + sourceStart : renderStart,
+      );
     }
 
     return processed;
@@ -344,21 +454,44 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
   private async processGeneratedNotesAsync(
     context: TimeContext,
     noteList: NoteList,
-    startTime: number,
-    endTime: number,
+    renderStart: number,
+    renderEnd: number,
+    sourceStart: number,
+    sourceEnd: number,
     compileData: CompileData,
     generationOptions: ScoreGenerationOptions,
   ): Promise<NoteList> {
     let processed = await applyNoteProcessorChainAsync(noteList, this._npc, compileData);
     const duration = this._subjectiveDuration.toBeats(context);
     const repeatPointBeats = this._repeatPoint ? this._repeatPoint.toBeats(context) : -1;
-
     applyTimeBehavior(processed, this._timeBehavior, duration, repeatPointBeats);
 
-    if (endTime > startTime) {
+    const normalizationOrigin = generationOptions.normalizationOrigin;
+    if (
+      normalizationOrigin?.owner === this &&
+      typeof normalizationOrigin.rangeOriginBeats === 'number'
+    ) {
+      normalizationOrigin.originBeats =
+        this._startTime.toBeats(context) + normalizationOrigin.rangeOriginBeats;
+    }
+    const canFinalizeFileSeeks =
+      this._timeBehavior === TimeBehavior.NONE &&
+      this._npc.getProcessors().length === 0 &&
+      this.every((layer) => layer.getNoteProcessorChain().getProcessors().length === 0);
+    if (canFinalizeFileSeeks) {
+      this.applyFileSeekNormalization(
+        context,
+        processed,
+        renderStart,
+        renderEnd,
+        generationOptions,
+      );
+    }
+
+    if (sourceEnd > sourceStart) {
       const filtered = new NoteList();
       for (const note of processed) {
-        if (note.getStartTime() <= endTime) {
+        if (note.getStartTime() <= sourceEnd) {
           filtered.add(note);
         }
       }
@@ -367,11 +500,102 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
 
     setScoreStart(processed, this._startTime.toBeats(context));
 
+    const hasStableRangeOrigin =
+      normalizationOrigin?.owner === this && normalizationOrigin.rangeOriginBeats !== undefined;
     if (!generationOptions.deferRenderStartRebase) {
-      rebaseScoreToRenderStart(processed, startTime);
+      rebaseScoreToRenderStart(
+        processed,
+        hasStableRangeOrigin ? this._startTime.toBeats(context) + sourceStart : renderStart,
+      );
     }
 
     return processed;
+  }
+
+  private applyFileSeekNormalization(
+    context: TimeContext,
+    notes: NoteList,
+    renderStart: number,
+    renderEnd: number,
+    generationOptions: ScoreGenerationOptions,
+  ): void {
+    const normalizationOrigin = generationOptions.normalizationOrigin;
+    const originBeats = normalizationOrigin?.originBeats;
+    if (normalizationOrigin?.owner !== this || originBeats === undefined) return;
+
+    const targetBeat = (generationOptions.beatOrigin ?? 0) + originBeats + renderStart;
+    const targetEndBeat =
+      renderEnd > renderStart
+        ? (generationOptions.beatOrigin ?? 0) + originBeats + renderEnd
+        : Infinity;
+    notes.removeIf((note) => {
+      const provenance = note.getFileSeekProvenance();
+      if (!provenance || provenance.normalizationOrigin !== normalizationOrigin) return false;
+
+      const fileEndBeat = provenance.absoluteObjectStartBeat + provenance.originalDurationBeats;
+      const overlapStartBeat = Math.max(provenance.absoluteObjectStartBeat, targetBeat);
+      const overlapEndBeat = Math.min(fileEndBeat, targetEndBeat);
+      const overlapBeats = overlapEndBeat - overlapStartBeat;
+      if (overlapBeats <= 0) {
+        note.setFileSeekProvenance(undefined);
+        return true;
+      }
+
+      note.setSubjectiveDuration(overlapBeats);
+      return false;
+    });
+
+    for (const note of notes) {
+      const provenance = note.getFileSeekProvenance();
+      if (!provenance || provenance.normalizationOrigin !== normalizationOrigin) continue;
+
+      const seekEndBeat = Math.max(provenance.absoluteObjectStartBeat, targetBeat);
+      const normalizedOffsetSeconds =
+        context.beatsToSeconds(seekEndBeat) -
+        context.beatsToSeconds(provenance.absoluteObjectStartBeat);
+      const currentOffsetSeconds = Number(note.getPField(provenance.pField));
+      if (Number.isFinite(currentOffsetSeconds)) {
+        note.setPField(
+          String(
+            currentOffsetSeconds + normalizedOffsetSeconds - provenance.generatedOffsetSeconds,
+          ),
+          provenance.pField,
+        );
+      }
+      note.setFileSeekProvenance(undefined);
+    }
+  }
+
+  private getLinkedRangeOriginBeats(
+    context: TimeContext,
+    processWithSolo: boolean,
+  ): number | null | undefined {
+    if (this._timeBehavior !== TimeBehavior.NONE || this._npc.getProcessors().length > 0) {
+      return undefined;
+    }
+
+    let earliest = Infinity;
+    let hasNotes = false;
+    for (const layer of this) {
+      if (layer.isMuted() || (processWithSolo && !layer.isSolo())) continue;
+      if (layer.getNoteProcessorChain().getProcessors().length > 0) return undefined;
+
+      for (const soundObject of layer) {
+        // Nested containers need their own source/output range contract.
+        if (soundObject instanceof PolyObject || soundObject instanceof Instance) {
+          return undefined;
+        }
+
+        const origin = soundObject.getRangeOriginBeats?.(context);
+        if (origin === undefined) return undefined;
+        if (origin === null) continue;
+        if (!Number.isFinite(origin)) return undefined;
+        earliest = Math.min(earliest, origin);
+        hasNotes = true;
+      }
+    }
+
+    return hasNotes ? earliest : null;
   }
 
   // ─── LayerGroup ───

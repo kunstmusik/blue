@@ -211,7 +211,7 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
     compileData: CompileData,
     startTime: number,
     endTime: number,
-    options?: Pick<ScoreGenerationOptions, 'deferRenderStartRebase'>,
+    options?: Pick<ScoreGenerationOptions, 'beatOrigin' | 'normalizationOrigin'>,
   ): NoteList {
     const noteList = new NoteList();
 
@@ -259,7 +259,7 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
     compileData: CompileData,
     startTime: number,
     endTime: number,
-    options?: Pick<ScoreGenerationOptions, 'deferRenderStartRebase'>,
+    options?: Pick<ScoreGenerationOptions, 'beatOrigin' | 'normalizationOrigin'>,
   ): Promise<NoteList> {
     const noteList = new NoteList();
 

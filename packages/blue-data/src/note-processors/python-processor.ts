@@ -1,5 +1,6 @@
 import { Element } from '../serialization/xml-reader';
 import { Note } from '../sound-objects/note';
+import type { FileSeekProvenance } from '../sound-objects/note';
 import { NoteList } from '../sound-objects/note-list';
 import type { CompileData } from '../compile-data';
 import {
@@ -25,26 +26,40 @@ function formatRuntimeError(message: string, error?: JavaRuntimeError): string {
   return `${baseMessage} (line ${error.line}, column ${error.column})`;
 }
 
-function serializeNoteList(notes: NoteList): JythonSerializedNote[] {
+function serializeNoteList(notes: NoteList): {
+  serialized: JythonSerializedNote[];
+  fileSeekProvenanceById: Map<string, FileSeekProvenance>;
+} {
   const serialized: JythonSerializedNote[] = [];
+  const fileSeekProvenanceById = new Map<string, FileSeekProvenance>();
 
-  for (const note of notes) {
+  for (const [index, note] of [...notes].entries()) {
     const pfields: string[] = [];
     for (let i = 1; i <= note.getPCount(); i++) {
       pfields.push(note.getPField(i) ?? '');
+    }
+
+    const fileSeekProvenance = note.getFileSeekProvenance();
+    const renderMetadataId = fileSeekProvenance ? `file-seek-${index}` : undefined;
+    if (renderMetadataId && fileSeekProvenance) {
+      fileSeekProvenanceById.set(renderMetadataId, fileSeekProvenance);
     }
 
     serialized.push({
       pfields,
       subjectiveDuration: note.getSubjectiveDuration(),
       tied: note.isTiedNote(),
+      ...(renderMetadataId ? { renderMetadataId } : {}),
     });
   }
 
-  return serialized;
+  return { serialized, fileSeekProvenanceById };
 }
 
-function deserializeNoteList(notes: JythonSerializedNote[]): NoteList {
+function deserializeNoteList(
+  notes: JythonSerializedNote[],
+  fileSeekProvenanceById: ReadonlyMap<string, FileSeekProvenance>,
+): NoteList {
   const noteList = new NoteList();
 
   for (const serialized of notes) {
@@ -57,6 +72,10 @@ function deserializeNoteList(notes: JythonSerializedNote[]): NoteList {
 
     note.setSubjectiveDuration(serialized.subjectiveDuration);
     note.setTied(serialized.tied);
+    if (serialized.renderMetadataId) {
+      const provenance = fileSeekProvenanceById.get(serialized.renderMetadataId);
+      if (provenance) note.setFileSeekProvenance(provenance);
+    }
     noteList.add(note);
   }
 
@@ -95,9 +114,10 @@ export class PythonProcessor extends NoteProcessor {
       throw new NoteProcessorException('PythonProcessor requires a Java runtime session', -1);
     }
 
+    const { serialized, fileSeekProvenanceById } = serializeNoteList(notes);
     const response = await runtimeClient.processJythonNoteList({
       code: this.code,
-      notes: serializeNoteList(notes),
+      notes: serialized,
     });
 
     if (!response.ok) {
@@ -107,7 +127,7 @@ export class PythonProcessor extends NoteProcessor {
       );
     }
 
-    return deserializeNoteList(response.result?.notes ?? []);
+    return deserializeNoteList(response.result?.notes ?? [], fileSeekProvenanceById);
   }
 
   override getDisplayName(): string {

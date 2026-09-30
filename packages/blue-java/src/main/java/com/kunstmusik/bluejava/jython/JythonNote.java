@@ -20,6 +20,7 @@ public final class JythonNote {
 
     public JythonNote(JythonNote other) {
         this(other.getPfields(), other.getSubjectiveDuration(), other.isTied());
+        JythonNoteTransportMetadata.copyRenderMetadataId(other, this);
     }
 
     public List<String> getPfields() {

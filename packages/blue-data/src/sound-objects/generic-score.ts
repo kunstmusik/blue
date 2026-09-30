@@ -15,6 +15,7 @@ import { CompileData } from '../compile-data';
 import { Element } from '../serialization/xml-reader';
 import { ObjRefSaveMap } from '../serialization/obj-ref-map';
 import { SoundObject, SoundObjectStatic } from './sound-object';
+import { TimeBehavior } from './time-behavior';
 import { initBasicFromXML, getBasicXML } from './sound-object-utilities';
 import {
   applyNoteProcessorChain,
@@ -42,6 +43,45 @@ export class GenericScore extends AbstractSoundObject implements SoundObject {
   /** Set the raw score text. */
   setScoreText(text: string): void {
     this._scoreText = text;
+  }
+
+  getRangeOriginBeats(context: TimeContext): number | null | undefined {
+    if (
+      this.getTimeBehavior() !== TimeBehavior.NONE ||
+      this.getNoteProcessorChain().getProcessors().length > 0
+    ) {
+      return undefined;
+    }
+
+    let notes: NoteList;
+    try {
+      notes = getNotes(this._scoreText);
+    } catch {
+      // Do not surface parse errors for score objects that the requested
+      // range would otherwise prune before generation.
+      return undefined;
+    }
+    if (notes.length === 0) return null;
+
+    const objectDuration = this.getSubjectiveDuration().toBeats(context);
+    if (!Number.isFinite(objectDuration) || objectDuration <= 0) return undefined;
+
+    let earliest = Infinity;
+    for (const note of notes) {
+      const start = note.getStartTime();
+      const end = note.getEndTime();
+      if (
+        !Number.isFinite(start) ||
+        !Number.isFinite(end) ||
+        start < 0 ||
+        start >= objectDuration ||
+        end > objectDuration
+      ) {
+        return undefined;
+      }
+      earliest = Math.min(earliest, note.getStartTime());
+    }
+    return this.getStartTime().toBeats(context) + earliest;
   }
 
   // ─── SoundObject implementation ───
