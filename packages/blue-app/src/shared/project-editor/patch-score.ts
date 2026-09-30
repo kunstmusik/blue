@@ -1,5 +1,6 @@
 import {
   BlueData,
+  CompileData,
   Channel,
   ChannelList,
   BlueSynthBuilder,
@@ -93,6 +94,7 @@ import {
   ScratchPadData,
   getTrackPlacementForSoundObject,
   getNotes as parseScoreNotes,
+  getTotalDuration,
   createNoteProcessorChainSnapshot as createNoteProcessorChainSnapshotFromData,
   reifyChainFromSnapshot,
   isValidLayerColorInput,
@@ -2691,20 +2693,38 @@ export function applyScoreObjectPatch(
     const context = data.getScore().getTimeContext();
     const resolved = patch.targets.map((target) => resolveEditorTarget(data, target)?.sObj ?? null);
     if (resolved.some((object) => !object || object instanceof AudioClip)) return false;
-    const updates = (resolved as SoundObject[]).map((object) => {
+    const measuredDurations = patch.resolvedObjectiveDurationsBeats;
+    if (
+      measuredDurations !== undefined &&
+      (measuredDurations.length !== resolved.length ||
+        measuredDurations.some(
+          (duration, index) =>
+            duration !== null &&
+            (!(resolved[index] instanceof PolyObject) ||
+              !Number.isFinite(duration) ||
+              duration <= 0),
+        ))
+    ) {
+      return false;
+    }
+    const updates = (resolved as SoundObject[]).map((object, index) => {
       let durationBeats: number | null = null;
-      if (object instanceof GenericScore) {
+      if (measuredDurations?.[index] != null) {
+        durationBeats = measuredDurations[index]!;
+      } else if (object instanceof GenericScore) {
         const notes = parseScoreNotes(object.getScoreText());
         durationBeats =
           notes.length === 0
             ? null
             : Math.max(...notes.map((note) => note.getStartTime() + note.getObjectiveDuration()));
+      } else if (object instanceof PolyObject) {
+        const notes = object.generateForCSD(context, new CompileData(), -1, -1);
+        durationBeats = getTotalDuration(notes) - object.getStartTime().toBeats(context);
       } else if (object instanceof Instance && object.getSoundObject()) {
         durationBeats = object.getSoundObject()!.getSubjectiveDuration().toBeats(context);
       } else {
         // Java Blue defines the objective duration of most SoundObject types as
-        // their current subjective duration. GenericScore and Instance are the
-        // meaningful exceptions supported here.
+        // their current subjective duration. The types above are exceptions.
         durationBeats = object.getSubjectiveDuration().toBeats(context);
       }
       return durationBeats !== null && Number.isFinite(durationBeats) && durationBeats > 0
@@ -2712,7 +2732,13 @@ export function applyScoreObjectPatch(
         : null;
     });
     if (updates.some((update) => update === null)) return false;
+    let changed = false;
     for (const update of updates as Array<{ object: SoundObject; durationBeats: number }>) {
+      if (
+        Math.abs(update.object.getSubjectiveDuration().toBeats(context) - update.durationBeats) <
+        1e-9
+      )
+        continue;
       update.object.setSubjectiveDuration(
         beatsToDuration(
           update.durationBeats,
@@ -2720,8 +2746,9 @@ export function applyScoreObjectPatch(
           context,
         ),
       );
+      changed = true;
     }
-    return updates.length > 0;
+    return changed;
   }
 
   if (patch.type === 'addLayer') {

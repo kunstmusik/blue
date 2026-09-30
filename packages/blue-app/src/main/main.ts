@@ -207,6 +207,7 @@ import type { JavaRuntimeClient } from './java-runtime/java-runtime-client';
 import { JavaRuntimeSessionManager } from './java-runtime/java-runtime-session';
 import { evaluateJavaScriptConsole } from './repl-console-runtime';
 import { testScoreObject } from './score-object-test';
+import { runScoreObjectTestRequest as runFencedScoreObjectTestRequest } from './score-object-test-request';
 import {
   testPythonInstrument,
   type PythonInstrumentTestRequest,
@@ -6670,24 +6671,16 @@ ipcRegistration.handle(
 async function runScoreObjectTestRequest(
   request: ScoreObjectEditorRequest,
 ): Promise<ScoreObjectTestResult> {
-  let javaRuntimeClient: JavaRuntimeClient | null = null;
-
-  try {
-    if (getCurrentData()) {
-      javaRuntimeClient = await runProjectOnLoad(getCurrentData());
-    }
-  } catch (error) {
-    return {
-      ok: false,
-      output: '',
-      error: error instanceof Error ? error.message : String(error),
-    };
-  }
-
-  return testScoreObject(getCurrentData(), request, {
+  return runFencedScoreObjectTestRequest(request, {
+    getProjectState: () => ({
+      data: getCurrentData() ?? null,
+      revision: getCurrentProjectRevision(),
+      sessionId: getCurrentProjectSessionId(),
+    }),
+    prepareJavaRuntime: runProjectOnLoad,
     ensureJavaScriptEngine,
     javaScriptSession,
-    javaRuntimeClient,
+    testScoreObject,
   });
 }
 

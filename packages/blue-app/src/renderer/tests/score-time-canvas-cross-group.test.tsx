@@ -363,12 +363,15 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
     });
     clickContextMenuItem('Set Subjective Time to Objective Time');
 
-    expect(applyPatch).toHaveBeenCalledWith({
-      score: {
-        type: 'setSubjectiveDurationToObjective',
-        targets: [item.editorTarget],
+    expect(applyPatch).toHaveBeenCalledWith(
+      {
+        score: {
+          type: 'setSubjectiveDurationToObjective',
+          targets: [item.editorTarget],
+        },
       },
-    });
+      { label: 'Set Subjective Time to Objective Time' },
+    );
 
     act(() => {
       root.unmount();
