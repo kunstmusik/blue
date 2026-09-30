@@ -299,15 +299,11 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
     startTime: number,
     endTime: number,
   ): NoteList {
-    const processed = applyNoteProcessorChain(noteList, this._npc);
+    let processed = applyNoteProcessorChain(noteList, this._npc);
     const duration = this._subjectiveDuration.toBeats(context);
     const repeatPointBeats = this._repeatPoint ? this._repeatPoint.toBeats(context) : -1;
 
     applyTimeBehavior(processed, this._timeBehavior, duration, repeatPointBeats);
-
-    setScoreStart(processed, this._startTime.toBeats(context));
-
-    rebaseScoreToRenderStart(processed, startTime);
 
     if (endTime > startTime) {
       const filtered = new NoteList();
@@ -316,8 +312,12 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
           filtered.add(note);
         }
       }
-      return filtered;
+      processed = filtered;
     }
+
+    setScoreStart(processed, this._startTime.toBeats(context));
+
+    rebaseScoreToRenderStart(processed, startTime);
 
     return processed;
   }
@@ -329,15 +329,11 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
     endTime: number,
     compileData: CompileData,
   ): Promise<NoteList> {
-    const processed = await applyNoteProcessorChainAsync(noteList, this._npc, compileData);
+    let processed = await applyNoteProcessorChainAsync(noteList, this._npc, compileData);
     const duration = this._subjectiveDuration.toBeats(context);
     const repeatPointBeats = this._repeatPoint ? this._repeatPoint.toBeats(context) : -1;
 
     applyTimeBehavior(processed, this._timeBehavior, duration, repeatPointBeats);
-
-    setScoreStart(processed, this._startTime.toBeats(context));
-
-    rebaseScoreToRenderStart(processed, startTime);
 
     if (endTime > startTime) {
       const filtered = new NoteList();
@@ -346,8 +342,12 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
           filtered.add(note);
         }
       }
-      return filtered;
+      processed = filtered;
     }
+
+    setScoreStart(processed, this._startTime.toBeats(context));
+
+    rebaseScoreToRenderStart(processed, startTime);
 
     return processed;
   }

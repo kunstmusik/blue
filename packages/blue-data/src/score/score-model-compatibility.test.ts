@@ -22,6 +22,31 @@ function createSingleNoteScore(instr: number): GenericScore {
   return score;
 }
 
+function createNestedFiniteEndScore(): Score {
+  const score = new Score();
+  score.length = 0;
+
+  const root = new PolyObject(true);
+  const rootLayer = new SoundLayer();
+  const nested = new PolyObject();
+  nested.setStartTime(TimePosition.beats(4));
+  nested.setSubjectiveDuration(TimeDuration.beats(16));
+  nested.setTimeBehavior(TimeBehavior.NONE);
+
+  const nestedLayer = new SoundLayer();
+  const content = new GenericScore();
+  content.setSubjectiveDuration(TimeDuration.beats(16));
+  content.setTimeBehavior(TimeBehavior.NONE);
+  content.setScoreText('i1 0 1 440\ni1 2 1 440\ni1 5 1 440\ni1 8 1 440');
+  nestedLayer.push(content);
+  nested.push(nestedLayer);
+  rootLayer.push(nested);
+  root.push(rootLayer);
+  score.push(root);
+
+  return score;
+}
+
 describe('Score model compatibility', () => {
   describe('default score', () => {
     it('has one root PolyObject layer group', () => {
@@ -272,6 +297,22 @@ i1 2 1 440</scoreText>
       const startTimes = [...notes].map((note) => note.getStartTime());
       expect(startTimes).toHaveLength(2);
       expect(Math.max(...startTimes)).toBeLessThanOrEqual(10);
+    });
+
+    it('keeps nested PolyObject notes within the outer finite end after rebasing the child range', () => {
+      const notes = createNestedFiniteEndScore().generateForCSD(new CompileData(), 0, 10);
+
+      expect([...notes].map((note) => note.getStartTime())).toEqual([4, 6, 9]);
+    });
+
+    it('keeps nested PolyObject notes within the outer finite end after async generation', async () => {
+      const notes = await createNestedFiniteEndScore().generateForCSDAsync(
+        new CompileData(),
+        0,
+        10,
+      );
+
+      expect([...notes].map((note) => note.getStartTime())).toEqual([4, 6, 9]);
     });
 
     it('skips muted SoundLayers when no solo layer exists', () => {
