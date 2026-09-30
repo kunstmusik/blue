@@ -61,6 +61,7 @@ export class JavaRuntimeSessionManager {
   private client: JavaRuntimeClient | null = null;
   private activeProjectSessionId: number | null = null;
   private activeProjectDir: string | null = null;
+  private activeClojureDependencies: string | null = null;
   private pendingReady: Promise<JavaRuntimeClient> | null = null;
   private lifecycleEpoch = 0;
   private jythonStateRevision = 0;
@@ -88,8 +89,13 @@ export class JavaRuntimeSessionManager {
     currentFilePath: string | null,
   ): Promise<JavaRuntimeClient> {
     const projectDir = resolveProjectDirectory(currentFilePath);
+    const clojureDependencies = JSON.stringify(extractClojureDependencies(data));
 
-    const cachedClient = this.getCachedReadyClient(projectSessionId, projectDir);
+    const cachedClient = this.getCachedReadyClient(
+      projectSessionId,
+      projectDir,
+      clojureDependencies,
+    );
     if (cachedClient) {
       return cachedClient;
     }
@@ -101,7 +107,11 @@ export class JavaRuntimeSessionManager {
         // The caller below will retry and surface the current failure if it repeats.
       }
 
-      const readyClient = this.getCachedReadyClient(projectSessionId, projectDir);
+      const readyClient = this.getCachedReadyClient(
+        projectSessionId,
+        projectDir,
+        clojureDependencies,
+      );
       if (readyClient) {
         return readyClient;
       }
@@ -126,12 +136,21 @@ export class JavaRuntimeSessionManager {
     projectDir: string | null,
     epoch: number,
   ): Promise<JavaRuntimeClient> {
+    const clojureDependencies = extractClojureDependencies(data);
+    const dependencyKey = JSON.stringify(clojureDependencies);
+    if (
+      this.activeClojureDependencies !== null &&
+      this.activeClojureDependencies !== dependencyKey
+    ) {
+      // A new JVM is needed to remove dynamically loaded dependencies too.
+      await this.disposeCurrent();
+    }
     const client = await this.ensureProcess(projectDir, epoch);
     const pythonLibraryPaths = resolveJavaRuntimePythonLibraryPaths(this.options);
     const response = await client.initSession({
       projectSessionId,
       projectDir,
-      clojureDependencies: extractClojureDependencies(data),
+      clojureDependencies,
       jythonPythonLibRoot: pythonLibraryPaths.packagedLibraryRoot,
       jythonUserPythonLibRoot: pythonLibraryPaths.userLibraryRoot,
     });
@@ -149,6 +168,7 @@ export class JavaRuntimeSessionManager {
     this.jythonStateRevision += 1;
     this.activeProjectSessionId = projectSessionId;
     this.activeProjectDir = projectDir;
+    this.activeClojureDependencies = dependencyKey;
     return client;
   }
 
@@ -204,6 +224,7 @@ export class JavaRuntimeSessionManager {
     this.processHandle = null;
     this.activeProjectSessionId = null;
     this.activeProjectDir = null;
+    this.activeClojureDependencies = null;
 
     if (client) {
       try {
@@ -227,13 +248,15 @@ export class JavaRuntimeSessionManager {
   private getCachedReadyClient(
     projectSessionId: number,
     projectDir: string | null,
+    clojureDependencies: string,
   ): JavaRuntimeClient | null {
     if (
       this.client &&
       this.processHandle &&
       isJavaRuntimeProcessRunning(this.processHandle) &&
       this.activeProjectSessionId === projectSessionId &&
-      this.activeProjectDir === projectDir
+      this.activeProjectDir === projectDir &&
+      this.activeClojureDependencies === clojureDependencies
     ) {
       return this.client;
     }
@@ -321,6 +344,7 @@ export class JavaRuntimeSessionManager {
     this.processHandle = null;
     this.activeProjectSessionId = null;
     this.activeProjectDir = null;
+    this.activeClojureDependencies = null;
     void client?.disconnect().catch(() => undefined);
     (this.dependencies.terminateProcess ?? terminateJavaRuntimeProcess)(handle);
   }

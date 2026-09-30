@@ -114,7 +114,7 @@ describe('java-runtime-session', () => {
     });
   });
 
-  it('reuses the active helper for the same project session and directory', async () => {
+  it('reuses unchanged sessions and refreshes the helper after dependency edits or removal', async () => {
     const data = { getClojureProjectData: () => null } as any;
     const client = {
       connect: vi.fn(async () => undefined),
@@ -181,6 +181,21 @@ describe('java-runtime-session', () => {
     expect(manager.getJythonStateRevision()).toBe(1);
     expect(createProcess).toHaveBeenCalledTimes(1);
     expect(client.initSession).toHaveBeenCalledTimes(1);
+
+    const withDependencies = createDataWithDependencies();
+    await manager.ensureReady(withDependencies, 2, '/tmp/project/demo.blue');
+    expect(client.shutdown).toHaveBeenCalledTimes(1);
+    expect(createProcess).toHaveBeenCalledTimes(2);
+    expect(client.initSession.mock.lastCall?.[0].clojureDependencies).toEqual([
+      { coordinates: 'org.clojure/data.json', version: '2.5.1' },
+    ]);
+
+    // Removing the library (including by Undo) must discard the old JVM's
+    // dynamically loaded classes, rather than reusing its classpath.
+    await manager.ensureReady(data, 2, '/tmp/project/demo.blue');
+    expect(client.shutdown).toHaveBeenCalledTimes(2);
+    expect(createProcess).toHaveBeenCalledTimes(3);
+    expect(client.initSession.mock.lastCall?.[0].clojureDependencies).toEqual([]);
   });
 
   it('disposes the helper when the project directory changes', async () => {
