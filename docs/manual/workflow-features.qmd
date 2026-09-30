@@ -1,0 +1,56 @@
+# Audition, freeze, and project workflow
+
+## Audition a selection
+
+Select one or more Score objects and choose **Project → Audition
+ScoreObjects**, or press **Cmd/Ctrl+Shift+A**. Blue renders a disposable
+copy containing only the selected SoundObjects or audio clips, so the active
+project is not rewritten and unrelated timeline items are excluded. The
+audition starts at the earliest selected item's start and runs through the
+latest selected item's end; an enabled mixer can extend the tail by its
+extra render time. Interact with the Score timeline to stop auditioning.
+
+## Freeze a ScoreObject
+
+Save the project before freezing: Blue writes each freeze file beside the
+`.blue` project. Select timeline SoundObjects (including FrozenSoundObjects
+to unfreeze), then use **Freeze/Unfreeze ScoreObjects** in the context menu.
+Freeze renders a SoundObject to audio and replaces it with a
+FrozenSoundObject; unfreeze restores its nested source. Audio clips are not
+freeze targets. If any selected item is unsupported or a freeze render fails,
+Blue leaves the selection unchanged. The freeze dialog reports progress,
+output, and any failure. Save the project again after success, and keep its
+generated audio files with the project when moving it. Freeze uses the
+project's instruments, tables, global code, and render settings, so fix any
+Csound error before retrying. See [Rendering](rendering.qmd) for ordinary
+disk output.
+
+## Blue variables in Csound text
+
+Blue substitutes the following tokens in the appropriate generated CSD
+contexts. The Csound editor's **Blue Variables** menu inserts supported
+tokens; inspect **Project → Generate CSD to Screen** to see actual values.
+
+| Token                     | Meaning                                                                      |
+| ------------------------- | ---------------------------------------------------------------------------- |
+| `<TOTAL_DUR>`             | Duration computed from the generated Score timeline; useful in Global Score. |
+| `<PROCESSING_START>`      | Start used for always-on processing.                                         |
+| `<RENDER_START>`          | Selected render start before absolute time conversion.                       |
+| `<RENDER_START_ABSOLUTE>` | Render start after the Score's time conversion.                              |
+| `<INSTR_ID>`              | Current instrument ID in supported instrument or note-template contexts.     |
+| `<INSTR_NAME>`            | Current instrument name/ID without score quoting, for code identifiers.      |
+
+`<TOTAL_DUR>` is calculated from timeline notes, not from extra events
+typed into Global Score. A Global Score event can still lengthen the
+actual Csound render. See [Globals](globals.qmd).
+
+## Historical workflows
+
+The older Java Blue manual describes an automatic minute-by-minute project
+backup with a recovery prompt, a `blue --compile` command, and a Script
+Library that runs Python against Blue's application object model. Those
+workflows are not established in the current Blue 3 application. Save
+projects explicitly, keep versioned copies when needed, and use the
+current **Project → Generate CSD to File** command for a CSD export.
+The **Python Console** is for the supported Jython session; it does not
+replace the old Script Library's project-editing API.

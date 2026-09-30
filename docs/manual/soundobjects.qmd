@@ -1,0 +1,131 @@
+# SoundObjects overview
+
+A SoundObject represents a musical idea on the [Score](score.qmd): a note, a
+phrase, a pattern, or a section containing other ideas. The Score places that
+idea in time; the object supplies material for Blue to turn into Csound score
+events. Choose the object type that fits how you want to work with the idea.
+
+## Choose and place an object
+
+Right-click an empty part of a SoundObject layer and open **Add SoundObject**.
+The menu includes **GenericScore** for Csound score text, **PianoRoll** for
+drawn notes, **PatternObject** for pattern material, and **PolyObject** for a
+nested timeline. [AudioFile](audio-file.qmd) refers to an audio file. An
+**AudioClip** on an audio layer has a separate timeline and editor workflow.
+For the other available types, see [More SoundObject types](soundobject-types.qmd).
+
+The object appears at the point you clicked. With **Snap** on, placement and
+later dragging follow the selected snap division. Click an object to select
+it, Shift-click to add or remove it from the selection, or drag across empty
+Score space to select a group. Drag a selected object to move it; drag its
+left or right edge to change its position or width. The [Time](time.qmd)
+chapter explains ruler, snap, and time-base choices.
+
+Double-click a selected ordinary SoundObject to open its type-specific
+editor. Double-clicking a **PolyObject** enters its nested Score instead; use
+the Score path at the top to return to the parent timeline. Right-click a
+selected object for actions such as **Cut**, **Copy**, **Remove**, **Set
+Color…**, **Set Subjective Time to Objective Time**, and **Add to Project
+SoundObjects**. Right-click empty Score space to add or paste an object.
+
+## Read its shared properties
+
+With one object selected, **Score Object Properties** shows its **Name**,
+**Start Time**, **Subjective Duration**, calculated **End Time**, and
+**Color**. Start Time says where the object begins. Subjective Duration is
+the width shown on the Score; End Time is read-only, calculated from start
+plus duration, and displayed in the Start Time format. The editable time fields have their own format
+menus, so an object can use beats, bars, seconds, or other supported formats
+independently of the ruler.
+
+Where the object supports them, the properties panel also shows **Time
+Behavior**, **Use Repeat Point**, **Repeat Point**, and **Note Processors**.
+The repeat-point controls apply to repeat modes. The color changes how the
+object appears on the Score; it does not alter the generated notes.
+
+## Relate width to generated notes
+
+A SoundObject's visible width and the length of the notes it generates are
+different concepts. For objects with a Time Behavior control:
+
+| Behavior             | Effect on generated notes                                                                            |
+| -------------------- | ---------------------------------------------------------------------------------------------------- |
+| **Scale**            | Stretches or compresses note starts and lengths to fit the subjective duration.                      |
+| **Repeat**           | Repeats the material to fill that duration and clips notes at each repeat boundary.                  |
+| **Repeat (Classic)** | Repeats full cycles; in the final partial cycle, includes only notes that fit entirely.              |
+| **None**             | Leaves the generated note times as written, even when they extend beyond the object's visible width. |
+
+For repeat modes, **Use Repeat Point** and **Repeat Point** set the cycle
+length when supported. If no repeat point is used, the generated material's
+length supplies the cycle. The available behavior and default vary by object
+type; an AudioFile SoundObject, for example, does not use the note-scaling
+behavior.
+
+For a **GenericScore**, event times in its text are relative to the object's
+start. The [First project](first-project.qmd) example `i1 0 4 0.15 440`
+starts at the object's beginning. Moving the object later offsets that event
+in the generated score. Blue applies the object's Note Processors to its
+initial notes, then its Time Behavior, then its Score start offset. A
+SoundObject layer and the Score can each apply further processor chains to
+their combined notes. See [Note Processors](note-processors.qmd) for those
+scopes.
+
+Some types contribute more than score notes to the generated CSD. AudioFile
+and FrozenObject reference audio files; Sound creates a synthesis instrument;
+LineObject and ZakLineObject generate supporting control material. Use
+**Generate CSD to Screen** to inspect the complete result before depending on
+a generated table, UDO, or other resource.
+
+## Render from the middle of a project
+
+Blue passes the overlap between the render range and each contributing object
+as offsets from that object's start. Ordinary note-producing objects cannot
+resume a note that began before the selected range, so that note may be
+omitted even if it overlaps the range. These types generate their own clipped
+event or control interval:
+
+| Type              | Generated behavior for a range that starts inside the object                                                                                                                                                                                                                                                                             |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Sound**         | Starts a shortened event for its BSB instrument at the overlap start. It does not pass an audio-file seek offset, so this is a new instrument event rather than continuation of an already-running voice.                                                                                                                                |
+| **AudioFile**     | Starts a shortened `diskin2` event and passes the overlap offset converted to clip-relative seconds through the project tempo map. The instrument refers to the selected audio file path; the file is not embedded in the CSD. If **Copy Imported Media** is enabled, Blue copies a newly selected file into the project's media folder. |
+| **LineObject**    | Starts a shortened event and uses normalized start and end positions to sample the corresponding section of its line table. It writes the resulting control value to its `gk` variable.                                                                                                                                                  |
+| **ZakLineObject** | Starts a shortened event and uses normalized start and end positions to sample the corresponding section of its line table, writing values to the configured zak channel.                                                                                                                                                                |
+| **FrozenObject**  | Starts a shortened `diskin2` event, referring to its stored freeze file and passing the overlap offset converted to clip-relative seconds through the project tempo map. The nested source object is retained for unfreezing; playback reads the freeze file.                                                                            |
+
+The AudioFile and FrozenObject generators convert the beat-domain overlap
+offset to object-relative seconds using the project's tempo map:
+`seconds(objectStart + offset) - seconds(objectStart)`. This is the unit that
+[`diskin2`](https://csound.com/manual/opcodes/diskin2/)'s skip-time input
+expects. Sync/async tests cover direct AudioFile and FrozenObject placements,
+direct Instances of those file-backed objects (including nonzero source
+starts), and file objects under nested PolyObjects with unscaled, unrepeated
+timing. For a linked Instance, Blue can also translate the selected window
+before SoundLayer pruning when both the linked Instance and its flat PolyObject
+source use `TimeBehavior.NONE` and have no Note Processor chains, no source
+SoundLayer has a Note Processor chain, and every active direct child reports a
+range-independent origin. GenericScore origins qualify only when all parsed
+notes fit inside the object's subjective duration. Sync/async model tests
+cover a source event at beat 2, file leaves at beat 4, and selected range
+`[3,5]`: the SoundLayer is queried over `[5,7]`, while each file generator
+receives its object-relative `[1,3]` overlap; the seek is one beat and the
+duration is two beats. This is a Blue 3 extension to Java
+Blue's positional linked-source range handling. Dynamic JavaScript/Python
+sources, nested containers, transformed or repeated sources, processor-bearing
+compositions, and sources whose events extend outside their declared span do
+not provide a safe origin and keep the existing behavior. For example, an
+event at beat 2 in a GenericScore with subjective duration 2 does not establish
+an origin: when the selected range starts at beat 3, SoundLayer prunes that
+score object by its declared duration, and file leaves retain the legacy seek
+and duration. This out-of-span case needs a separate range-aware contract.
+Direct AudioFile selected-range playback has been heard in a built macOS app
+with a tempo change. A packaged run also froze an AudioFile and produced a
+selected-range FrozenObject render matching the direct render; realtime
+playback started and finished, and the user accepted the captured output. See
+[Rendering](rendering.qmd) for choosing a range.
+
+For editing each kind, see [GenericScore](generic-score.qmd),
+[PianoRoll](piano-roll.qmd), [PatternObject](pattern-object.qmd), and
+[PolyObjects](polyobjects.qmd). For reusable material, see
+[SoundObject Library](soundobject-library.qmd) and [Instance](instance.qmd).
+An Instance is a Score placement linked to a project-library definition; an
+independent copy is edited separately.

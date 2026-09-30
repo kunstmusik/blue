@@ -1,0 +1,74 @@
+# Note Processors
+
+A **Note Processor** transforms Csound score events after a
+[SoundObject](soundobjects.qmd) generates them. It can change a `p` field,
+reorder notes, or reshape time without rewriting the object's original text
+or drawn notes. Use processors for variations, transposition, and changes
+that should apply to a whole phrase.
+
+## Choose the scope
+
+Blue 3 can attach a chain to a SoundObject, SoundObject layer, layer group,
+or the root Score. The scope determines which notes it receives:
+
+| Scope | Where to edit it | What it affects |
+| --- | --- | --- |
+| SoundObject | Select an object and open **Score Object Properties → Note Processors**. | That object's generated notes. |
+| SoundObject layer | Click the layer header's **N** button. | Notes from objects on that layer. |
+| Layer group | Use the group's **N** button in the Score controls. | Notes combined from that group. |
+| Root Score | Open **Edit Note Processors** from the first segment of the Score toolbar path. | The final Score output. |
+
+An object's chain runs before its outer scopes. A root chain runs after
+layer-group output is combined. A [PolyObject](polyobjects.qmd) can also
+process the notes of all its children. Use a narrow scope when only one
+phrase should change; use an outer scope for a shared transformation.
+
+## Build and inspect a chain
+
+Click **+ Add** in the chain editor and choose a processor. Select it to edit
+its parameters. The list order matters: each processor receives the result
+of the one before it. **Up** and **Down** reorder entries; **Remove** deletes
+the selected entry. **Copy**, **Cut**, and **Paste** reuse entries, while
+**Save As...** and **Import** reuse named chains.
+
+For example, [GenericScore](generic-score.qmd) could contain:
+
+```csound-sco
+i1 0 1 0.15 440
+```
+
+If the instrument reads frequency from `p5`, add **AddProcessor** to that
+object's chain, set **P Field** to `5`, and **Value** to `110`. The generated
+event's frequency becomes `550`; the GenericScore text still says `440`.
+Use **Project → Generate CSD to Screen** to inspect the processed event.
+Check the instrument's `p` field meanings before choosing a processor:
+the first-project instrument uses `p4` for amplitude and `p5` for frequency,
+while an unmodified [PianoRoll](piano-roll.qmd) template sends them in the
+opposite order.
+
+Processors also run before a SoundObject's time behavior scales or repeats
+its notes. If an unexpected event appears, compare the source object, its
+processor chain, its time behavior, and any outer chains in that order.
+
+The add menu contains several processor types:
+
+| Processor | Typical job |
+| --- | --- |
+| AddProcessor, MultiplyProcessor | Change a numeric `p` field by a fixed amount or factor. |
+| RandomAddProcessor, RandomMultiplyProcessor | Vary a numeric `p` field within configured bounds. |
+| LineAddProcessor, LineMultiplyProcessor | Apply a changing value across a phrase. |
+| RotateProcessor, RetrogradeProcessor, SubListProcessor | Rearrange or select notes. |
+| TimeWarpProcessor | Remap note timing. |
+| PythonProcessor | Run custom note processing through the Java runtime. |
+
+The add menu also contains pitch-code, inversion, tuning, switch, and equality
+processors. Choose a processor only after checking the event's `p` fields;
+for example, adding to `p5` requires a numeric `p5` in each affected note.
+See the [Note Processor reference](note-processor-reference.qmd) for the
+parameters and behavior of each processor.
+
+**PythonProcessor** is recognized by Blue 3, but rendering with it requires
+an available Java runtime session. Older snapshots can carry a **deferred**
+status; an unknown legacy processor type appears **unsupported**. Keep these
+entries when reviewing an older project, and check their status or runtime
+requirement before expecting them to affect a render.

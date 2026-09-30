@@ -1,0 +1,44 @@
+# Global Orchestra and Global Score
+
+Use the **Global Orchestra** and **Global Score** editors for Csound text that
+belongs to the project as a whole. Open either panel from **Window → Editors**.
+Their text is saved in the `.blue` project. For a phrase you want to move or
+repeat on the timeline, use a [SoundObject](soundobjects.qmd) instead.
+
+## Global Orchestra
+
+Enter Csound orchestra code such as global variables or definitions in
+**Global Orchestra**. Blue places this text in `<CsInstruments>` before the
+project's generated UDOs and [Orchestra](orchestra.qmd) instruments. For
+reusable opcode definitions, the [UDOs](udos.qmd) panel provides a structured
+editor and a library workflow.
+
+For example, a global variable can be declared here and used by several
+instruments:
+
+```csound
+gkLevel init 0.5
+```
+
+## Global Score
+
+Enter project-wide Csound score statements in **Global Score**. Blue places
+them in `<CsScore>` after the [Tables](tables.qmd) text and before notes from
+the Score timeline. Global Score text is not inside a SoundObject: its `i`
+events do not move with a timeline object or receive that object's Time
+Behavior and Note Processor chain.
+
+For example, `i1 0 1 0.15 440` schedules instrument `1` at score time zero.
+If a selected render starts later on the timeline, Blue rebases ordinary
+timeline notes but leaves this Global Score event at its written time. Check
+the generated CSD when using Global Score with a render range.
+
+Blue replaces `<TOTAL_DUR>` in Global Score text with the duration of the
+generated timeline material. A long Global Score event can extend the
+overall render, but it does not increase the value substituted for
+`<TOTAL_DUR>`. Use a Csound bracket expression when adding to it, for example
+`i20 0 [<TOTAL_DUR> + 1]`. The instrument ID must exist in the
+[Orchestra](orchestra.qmd).
+
+Choose **Project → Generate CSD to Screen** to inspect the placement of these
+sections and the resulting events before rendering.

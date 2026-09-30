@@ -1,0 +1,66 @@
+# Note Processor reference
+
+Add these processors in a [Note Processor chain](note-processors.qmd).
+**P Field** is the Csound score field to change: `p1` is the instrument,
+`p2` the start, and `p3` the duration. Most numeric processors default to
+`p4`. Check the target instrument's score format first; a processor that
+expects a number cannot safely process text in that field. Chain order and
+scope are explained in the [overview](note-processors.qmd).
+
+## Field values
+
+| Processor                   | Parameters                       | Effect                                                                |
+| --------------------------- | -------------------------------- | --------------------------------------------------------------------- |
+| **AddProcessor**            | P Field, Value                   | Adds a fixed number to every selected field.                          |
+| **MultiplyProcessor**       | P Field, Value                   | Multiplies every selected field by a fixed number.                    |
+| **EqualsProcessor**         | P Field, Value                   | Replaces the field with Value; `p3` also changes the note's duration. |
+| **InversionProcessor**      | P Field, Value                   | Reflects numeric values around the given axis: `2 × Value − input`.   |
+| **SwitchProcessor**         | P Field 1, P Field 2             | Exchanges two fields on each note.                                    |
+| **RandomAddProcessor**      | P Field, Min, Max, optional Seed | Adds a random value between Min and Max to each note.                 |
+| **RandomMultiplyProcessor** | P Field, Min, Max, optional Seed | Multiplies each note by a random factor in that range.                |
+| **LineAddProcessor**        | P Field, time/value line         | Adds a value interpolated at each note's start.                       |
+| **LineMultiplyProcessor**   | P Field, time/value line         | Multiplies by a value interpolated at each note's start.              |
+
+**SwitchProcessor** follows Java Blue's field-range check: it rejects the
+last p-field as well as missing fields. A swap between `p4` and `p5` therefore
+requires a note with at least six p-fields.
+
+For a repeatable random result, enable **Seed** and supply a seed. A line
+is a sequence of beat/value pairs such as `0 0 4 1`: at beat zero its
+value is zero and at beat four its value is one. Start the line no later
+than the first note it processes. After the final pair, the last value
+continues.
+
+## Pitch and tuning
+
+| Processor                 | Parameters                            | Effect                                                             |
+| ------------------------- | ------------------------------------- | ------------------------------------------------------------------ |
+| **PchAddProcessor**       | P Field, Value                        | Adds a number of semitones to a Csound `pch` field.                |
+| **PchInversionProcessor** | P Field, Value                        | Reflects a `pch` value around a `pch` axis.                        |
+| **TuningProcessor**       | P Field, base frequency, scale ratios | Converts the field's octave and scale-degree value into frequency. |
+
+These expect pitch encodings, not an arbitrary frequency or amplitude.
+In particular, **TuningProcessor** uses the project's stored ratio list
+and base frequency; test a short phrase after changing its scale.
+
+## Note order and time
+
+| Processor               | Parameters     | Effect                                                                                  |
+| ----------------------- | -------------- | --------------------------------------------------------------------------------------- |
+| **RetrogradeProcessor** | None           | Mirrors note start times across the phrase's end while retaining each duration.         |
+| **RotateProcessor**     | Note Index     | Rotates sorted notes from that index and normalizes their new start times.              |
+| **SubListProcessor**    | Start, End     | Keeps the one-based inclusive range of notes and normalizes it to start at zero.        |
+| **TimeWarpProcessor**   | beat/tempo map | Converts start and end beats through its tempo map; both start and duration can change. |
+
+**TimeWarpProcessor** uses beat/tempo pairs such as `0 60` for a constant
+60 beats per minute. Preview the CSD after adding it, especially when
+other processors or a SoundObject's Time Behavior also change timing.
+
+## PythonProcessor
+
+**PythonProcessor** stores code that edits a `noteList`. It requires a
+working Java runtime session for asynchronous rendering. When the Java
+runtime is unavailable, Blue cannot apply it during a render; an older
+project may display it as deferred. Use the processor's code editor and
+test with a small phrase before applying it at Score scope. The ordinary
+TypeScript `process` path alone does not run the Python code.

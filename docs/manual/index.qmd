@@ -1,0 +1,40 @@
+---
+title: "Blue 3 Manual"
+---
+
+Blue is a music composition environment for Csound. Blue 3 provides a score
+timeline, instrument editing, a mixer, and project rendering in a desktop app.
+
+This manual covers the current Blue 3 application. Start with
+[Installation](installation.qmd) and a [First project](first-project.qmd) that
+builds and renders a short sound. Then use [Score](score.qmd),
+[Orchestra](orchestra.qmd), [Mixer](mixer.qmd), and
+[Rendering](rendering.qmd) while working in Blue. [SoundObjects](soundobjects.qmd)
+explains the main score concept, and [Settings](settings.qmd) is a reference
+for application preferences.
+
+To develop a phrase, read [Time](time.qmd) for rulers and snap, then choose
+[GenericScore](generic-score.qmd) for written Csound events,
+[PianoRoll](piano-roll.qmd) for drawn notes, or
+[PatternObject](pattern-object.qmd) for a trigger grid.
+[PolyObjects](polyobjects.qmd) group phrases in a nested Score, and
+[Note Processors](note-processors.qmd) transform their generated events.
+The [SoundObject Library](soundobject-library.qmd) and [Instance](instance.qmd)
+chapters explain reuse; [AudioFile](audio-file.qmd) covers recorded sound on a
+SoundObject layer.
+
+For project-wide Csound text, use [Global Orchestra and Global Score](globals.qmd),
+[Tables](tables.qmd), and [UDOs](udos.qmd). The [Instrument types](instruments.qmd),
+[more SoundObject types](soundobject-types.qmd), and
+[Note Processor reference](note-processor-reference.qmd) collect the remaining
+type-specific guidance. [Importing](importing.qmd), [Tools](tools.qmd), and
+[Keyboard shortcuts](shortcuts.qmd) cover common workflows.
+
+This edition draws on Steven Yi's earlier Blue Manual. The original Java
+source remains in the [Blue 2 source edition](https://github.com/kunstmusik/blue-manual/tree/7a92066a2aa8f0370026ba9527c158643c2935a1); unsupported
+Java-era features are identified in the corresponding Blue 3 topics.
+
+This documentation is open source and released under the
+[GNU Free Documentation License 1.3](COPYING.GFDL).
+Contributions and corrections can be filed in the
+[Blue repository](https://github.com/kunstmusik/blue).

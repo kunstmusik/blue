@@ -1,0 +1,36 @@
+# Parameter automation
+
+Automation changes an instrument or mixer parameter over Score time.
+Automatable BlueSynthBuilder controls, mixer levels, sends, and effects
+can provide targets. The automation line is stored with the project,
+while CSD generation supplies the Csound control signal. See
+[BlueSynthBuilder](instruments.qmd) for instrument controls and
+[Mixer](mixer.qmd) for channel routing.
+
+## Assign a target
+
+On a PolyObject's SoundObject layer or a Track layer, open its **Automation
+(A)** button and choose an available parameter. Choosing a target assigned to
+another layer moves the assignment; choosing one assigned here removes it. Use
+**Clear All** to remove this layer's assignments. **Cleanup Missing** removes
+references to parameters no longer present in the project. Keep each parameter
+assigned to one intended layer to avoid competing automation lines.
+
+## Edit lines
+
+The Score toolbar has **Score**, **Single Line**, and **Multi Line** modes.
+Use Score mode for SoundObjects. In Single Line mode, select a layer's
+parameter and edit its points on the line. Multi Line mode lets you select
+and move points across visible lines. Hover over or select a point to read its
+numeric beat and value on the canvas. Blue edits points graphically; it does
+not offer a numeric time/value editor. Check the layer and selected parameter
+before dragging: automation edits change the project and the generated CSD.
+
+Preview a short range with **Project → Generate CSD to Screen** or render
+it to check the result. When coding a BlueSynthBuilder instrument or
+effect, place an automatable replacement key where a Csound control-rate
+value is legal; an unautomated parameter may be emitted as a constant.
+
+The older manual's exact colors, point gestures, and keyboard shortcuts
+were tied to the Java timeline. Follow the controls shown by the current
+Score editor for those gestures.

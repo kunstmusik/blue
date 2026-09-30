@@ -1,0 +1,54 @@
+# Instance
+
+An Instance is a [SoundObject](soundobjects.qmd) on the Score that refers to a
+definition in [Project SoundObjects](soundobject-library.qmd). Place the same
+definition several times when a phrase or pattern should have one editable
+source. Updating that source changes the material used by every linked
+Instance in the project.
+
+## Make and place Instances
+
+Select one ordinary SoundObject on the Score and choose **Add to Project
+SoundObjects** from its context menu. Blue stores the source in the project
+library and replaces the selected timeline object with an Instance. For
+another placement, copy and paste that Instance, or drag its definition from
+**Window → Properties → Project SoundObjects** onto a SoundObject layer and
+choose **Copy Instance**.
+
+Choosing **Copy Independent** from the project library creates a new
+SoundObject without the link. The user-wide [Libraries](soundobject-library.qmd)
+panel also inserts independent copies. Use an independent copy if you want to
+edit its content without changing the original definition or any other
+placement.
+
+## Edit source and placement
+
+Double-click an Instance to reach the referenced object's editor. Blue marks
+the properties area **Editing library object via Instance**. Changes to the
+source affect all linked Instances; edit the source in **Project SoundObjects**
+when you want to see that relationship clearly. You can move each Instance
+to its own Score position and give it its own [Note Processor](note-processors.qmd)
+chain. Those processors transform that placement's generated notes after
+the shared source produces them.
+
+For example, keep a short GenericScore phrase in Project SoundObjects, make
+two Instances at different Score positions, and add an AddProcessor to one
+Instance's chain. Both placements use the same source phrase, while only the
+processed placement gets that added value. Inspect **Generate CSD to Screen**
+to check the resulting notes.
+
+Blue generates notes from the shared definition first, including the
+definition's own Note Processors and Time Behavior. It aligns the first
+generated note with the Instance's local start, runs the Instance's processor
+chain, applies the Instance's Time Behavior within its Subjective Duration,
+then adds the Instance's Score start offset. Set **Scale** to stretch a phrase
+to the placement duration, **Repeat** to fill it with repeated notes, or
+**None** to leave its length unchanged. An
+Instance with an unresolved project-library reference generates no notes.
+The older manual's **Convert to Generic Score** command is not present in
+Blue 3; use **Copy Independent** from the project library to create an
+unlinked placement.
+
+The same placement timing applies when the shared definition generates notes
+at runtime, such as a JavaScriptObject. Check **Generate CSD to Screen** when
+the source script or its processors make the resulting length hard to predict.

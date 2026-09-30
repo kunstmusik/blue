@@ -1,0 +1,67 @@
+# Building and extending Blue 3
+
+Blue 3 is a TypeScript monorepo with an Electron application, a
+platform-neutral `@blue/data` project model, a Java-runtime helper,
+and a native Blue Engine. The archived Java manual's Maven and
+NetBeans-module instructions apply to the older application, not this
+repository.
+
+Install Node.js 22 or newer and pnpm 12.8.1, matching the repository's
+`packageManager` version and CI setup. App source builds also
+need Java 17 or newer, Maven 3 or newer, CMake 3.21 or newer, and a C/C++
+toolchain. The native build bootstraps the repository's pinned vcpkg revision.
+Install Quarto to build the manual. Csound 7 is required for playback and
+rendering; it is not required to open and edit projects.
+
+On macOS, the C/C++ toolchain comes from Xcode or the Xcode Command Line
+Tools. Check that `xcode-select -p` identifies the installed toolchain.
+
+## Build from a fresh checkout
+
+After installing the prerequisites, run:
+
+```bash
+git clone https://github.com/kunstmusik/blue.git
+cd blue
+pnpm install --frozen-lockfile
+pnpm build
+pnpm test
+pnpm lint
+pnpm --filter @blue/app manual:build
+pnpm --filter @blue/app start
+```
+
+The first build downloads and bootstraps the pinned vcpkg checkout and
+builds its native dependencies. Maven also downloads the Java helper's
+dependencies. Allow network access and extra time for this first build.
+The final command opens the built Electron app. For development with
+automatic reload after edits, use `pnpm --filter @blue/app dev` instead.
+
+To create and verify an unsigned local application package after building:
+
+```bash
+pnpm --filter @blue/app package:dir
+pnpm --filter @blue/app verify:packaged-app
+```
+
+The packaging command rebuilds and bundles the manual. For changes limited
+to the application, the package scripts under `packages/blue-app` offer
+more focused validation. The manual can also be built directly with
+`quarto render docs/manual --to html`.
+
+## Extension boundaries
+
+Start in `packages/blue-data` for project models, XML compatibility,
+note generation, and CSD policy. Host filesystem, processes, the engine,
+and Java runtime integration belong in the Electron main process or
+their host packages. Renderer work uses typed preload and IPC contracts.
+Read the repository's `AGENTS.md`, `docs/modularization.md`, and
+`.specify/memory/constitution.md` before changing those boundaries.
+
+Blue 3 does not expose the Java application's NetBeans RCP plugin APIs.
+When extending a SoundObject, instrument, Note Processor, or widget, follow
+the extension type's model registration and serialization paths, its editor
+contract, and the ProjectHistory path for user edits. Extend CSD generation
+or note processing where that feature requires it. Preserve unknown `.blue`
+data and compare Java behavior for compatibility changes. Feature-specific
+requirements and validation belong in `specs/`.

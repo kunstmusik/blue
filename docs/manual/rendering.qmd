@@ -1,0 +1,78 @@
+# Rendering and CSD output
+
+Blue combines the project's [Orchestra](orchestra.qmd) and
+[Score](score.qmd) into a Csound document, or CSD. Generating a CSD lets you
+inspect that result without playing audio. The managed Blue Engine runs
+Csound for realtime playback and disk output. [First project](first-project.qmd)
+walks through one complete render.
+
+## Choose an output
+
+| Command | Use it to |
+| --- | --- |
+| **Project → Generate CSD to Screen** | Inspect the disk-render version of the generated CSD. |
+| **Project → Generate Realtime CSD to Screen** | Inspect the realtime version, including its audio and MIDI options. |
+| **Project → Generate CSD to File** | Save the disk-render CSD for inspection or another Csound workflow. |
+| **Project → Render/Stop Project** (**F9**) | Start or stop realtime playback. The toolbar Play/Stop button also controls playback. |
+| **File → Render to Disk** | Write an audio file and show render progress. |
+| **File → Render to Disk and Play** | Render, then play the file in Blue's Audio File Player. |
+| **File → Render to Disk and Open** | Render, then run the configured open command or show the file in its folder. |
+
+Use **Generate CSD to Screen** when a note is missing, an instrument ID seems
+wrong, or you want to see how Blue translated SoundObjects into Csound score
+events. The generated text shows the result of the project; edit the Blue
+project rather than the displayed CSD to make a lasting change. Use the
+realtime CSD command when diagnosing a device or playback option; the plain
+CSD-to-screen and CSD-to-file commands use the disk profile.
+
+## Render a selection or a full project
+
+On the root Score ruler, click to set the render start and clear the end, or
+drag to set both ends of a range. The toolbar's **Selection** display shows
+start, end, and duration. **Rewind to Start** resets the range to the whole
+project. Ruler dragging follows the Score's snap value; hold Shift to place
+the boundary without snapping. The transport toolbar's **Loop rendering**
+button repeats a selected range during realtime playback.
+
+In **Project Properties → Disk Render**, **Render Entire Project** ignores the
+selected range for disk CSD generation and renders from the beginning. Leave
+it off when you want the disk render to follow the Score selection.
+
+## Choose project and application render options
+
+The **Project Properties** panel stores settings with the `.blue` project.
+Its **Realtime** tab has sample rate, `ksmps`, channel count, audio and MIDI
+input/output switches, message flags, `0dbfs`, and advanced flags. Its
+**Disk Render** tab has separate sample rate, `ksmps`, channel count, `0dbfs`,
+message flags, and advanced flags. **Complete Override** is an expert option
+that replaces normal realtime or disk command flags; leave it off for the
+usual workflow.
+
+Blue's [Settings](settings.qmd) store application-wide defaults and runtime
+choices. **Realtime Render** selects the Blue Engine, Csound library, audio
+and MIDI modules and devices, and buffers. **Disk Render** chooses output
+format and sample format. For a project that behaves differently on another
+machine, check its saved Project Properties alongside that machine's
+application Settings.
+
+## Render an audio file
+
+In **Project Properties → Disk Render**, set **File Name** to reuse a specific
+output path. A relative name is resolved from the saved project's directory.
+Enable **Ask on Render**, or leave File Name empty, to choose a destination in
+a save dialog for each render. The render dialog shows the output file,
+progress, and any error; expand **Output** for Csound messages, or click
+**Cancel** to stop a running render. The **Csound (Disk)** output tab also
+receives the console text.
+
+**Render to Disk and Play** opens the completed file in Blue's Audio File
+Player. **Render to Disk and Open** uses **Render and Open Command** in
+[Settings](settings.qmd) when configured; with the default setting, Blue
+reveals the file in its folder. A custom command can use `$outfile` for the
+rendered path.
+
+If realtime playback is silent, use **Check Engine and Csound** in Settings,
+then confirm the selected output device and the instrument ID in the
+generated realtime CSD. If a disk render fails, check the dialog's error and
+**Csound (Disk)** output first. Confirm the destination and project disk
+options before changing score content.

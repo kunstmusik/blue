@@ -1,0 +1,114 @@
+# Time, rulers, and snap
+
+Blue arranges the [Score](score.qmd) in musical beats, but time fields can be
+entered and displayed in several formats. Three choices serve different jobs:
+the **time base** of a position or duration, the **ruler format** shown on
+screen, and the **snap value** used when moving or drawing material. You can
+change one without necessarily changing the others.
+
+## Positions and durations
+
+A position answers _where?_; a duration answers _how long?_. A SoundObject's
+**Start Time** is a position. Its **Subjective Duration** and optional
+**Repeat Point** are durations. A marker or tempo point also has a position.
+
+Select a SoundObject and open [Score Object Properties](soundobjects.qmd) to
+edit its time fields. Each field has a format menu above the value. Choose the
+format, enter the value, then press **Enter** or leave the field to apply it.
+Changing a field's format displays its current location or length in that
+format. The AudioClip editor similarly separates the clip's Score **Start
+Time** and **Duration** from its position within the audio file (**File
+Start**).
+
+| Format  | Example entry                                             |
+| ------- | --------------------------------------------------------- |
+| Beats   | `12.5` beats.                                             |
+| BBT     | `3.1.0`: bar 3, beat 1, tick 0.                           |
+| BBST    | `5.3.2.60`: bar, beat, sixteenth, ticks.                  |
+| BBF     | `5.3.50`: bar, beat, hundredths of a beat.                |
+| Time    | `0:01:23.450`: hours, minutes, seconds, milliseconds.     |
+| Seconds | `83.45`: decimal seconds.                                 |
+| SMPTE   | `00:01:23:12`: hours, minutes, seconds, frames.           |
+| Samples | `4000000`: sample-frame count at the project sample rate. |
+
+Bar-based positions depend on the project's time signature map. A bar-based
+duration is a length, not an absolute bar number: a **BBT** position of
+`3.1.0` means the start of bar 3, while a **BBT** duration of `1.0.0` means
+one bar. Clock and sample displays also depend on the project's tempo and
+sample-rate context. The same event can therefore have several useful
+representations.
+
+New SoundObjects and AudioClips store their start and duration in beats by
+default. The archived Java manual's **Quick Time** dialog and status readout
+are not present in the Blue 3 Score workbench; use the field format menus and
+toolbar displays instead.
+
+## Set the Score ruler
+
+In the Score toolbar, click **Ruler**. Choose a **Primary Ruler** format and,
+if useful, enable a **Secondary Ruler** in another format. The dialog also
+sets the ruler's SMPTE frame rate. For example, keep bars and beats on the
+primary ruler and clock time on the secondary ruler while lining up music with
+a cue. New markers use the primary ruler's time base.
+
+The dialog has **Update ScoreObjects** and **Update Markers** checkboxes.
+Both are selected, with **Update All TimeBases**, when the dialog opens. If
+you only want a new display, clear both before clicking **OK**. To convert
+existing ScoreObjects and markers to the new primary time base, keep both
+selected and choose a mode for each:
+
+- **Update All TimeBases** converts their time fields regardless of their
+  current time base.
+- **Update Matching TimeBases** converts only fields already using the old
+  primary ruler's time base. A SoundObject's start, duration, and repeat point
+  are checked independently, so one field can change while another keeps its
+  original time base.
+
+This distinction matters when some objects use beats and others use seconds.
+The ruler controls how you view the Score; the conversion choices control
+whether existing objects and markers change their time bases. To convert
+ScoreObjects without converting markers, clear **Update Markers**. To convert
+only markers, clear **Update ScoreObjects** and leave **Update Markers**
+selected.
+
+The ScoreObject conversion visits objects directly on the root Score. It
+converts a PolyObject's own start, duration, and repeat point when that
+PolyObject is on the root Score, but does not descend into its child layers.
+Open a nested PolyObject and inspect its children's time bases separately
+after changing the root ruler.
+
+SMPTE text entry in Score Object Properties and the Markers panel uses the
+project's selected frame rate, matching the ruler and transport readout. The
+frame component is converted arithmetically from that rate; **29.97 fps
+(non-drop)** does not skip frame numbers at minute boundaries. For Score
+positions, durations, and marker positions, clock
+formats use the project's tempo points, including later tempo changes, when
+tempo mapping is enabled. When it is disabled, beats and seconds convert
+one-to-one. This does not affect an AudioClip's file-relative **File Start**.
+The read-only **End Time** uses the selected **Start Time** format.
+
+## Set snap independently
+
+Click the **Snap** button to turn snapping on or off. Open its adjacent menu
+to choose a division. Blue offers bars and musical subdivisions, triplets,
+time intervals, SMPTE frames, samples, and **Auto**. Snapping affects where a
+dragged object lands; it does not change the ruler's display format. You can,
+for example, display seconds while snapping to sixteenths.
+
+The [PianoRoll](piano-roll.qmd) has its own Snap control. Its **Ruler** dialog
+can follow the global Score ruler or show local primary and secondary formats.
+Changing that view does not rewrite PianoRoll note starts merely to change the
+labels.
+
+## Tempo and meter
+
+Use **Project → Edit Tempo Map...** to place or edit tempo points, and
+**Project → Edit Time Signature Map...** for meter changes. Tempo determines
+how beat positions map to elapsed time; meter determines bar boundaries and
+bar-based formatting. If an object must stay aligned to a clock cue when
+tempo changes, inspect its time base in Score Object Properties rather than
+assuming that a ruler choice controls its timing.
+
+For the difference between an object's displayed width and its generated
+notes, see [SoundObjects](soundobjects.qmd). For nested timelines, see
+[PolyObjects](polyobjects.qmd).

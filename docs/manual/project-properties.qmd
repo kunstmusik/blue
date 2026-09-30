@@ -1,0 +1,55 @@
+# Project Properties
+
+Open **Project Properties** from **Window → Editors** to edit settings stored
+in the current `.blue` project. Application-wide defaults and the local
+audio or MIDI devices are in [Settings](settings.qmd). Keeping device choices
+outside the project makes it easier to move a project between computers.
+
+## Project Information
+
+**Title**, **Author**, and **Notes** identify the project. They also provide
+the descriptive header in generated CSD. Use this tab for information about
+the composition rather than Csound code.
+
+## Realtime
+
+Set the project sample rate, `ksmps`, channel count, and optional `0dbfs`
+value for realtime playback. **Use Audio Out/In** and **Use MIDI In/Out**
+control which I/O the project requests. The **Note Amps**, **Out Of Range**,
+**Warnings**, and **Benchmark** switches control Csound's message level.
+
+**Advanced Settings** adds Csound option flags. **Complete Override** uses
+that text as the real-time Csound option list instead of Blue's normal
+audio/MIDI, device, buffer, and message-level options. Add any required driver
+and device flags to the override. The project's sample rate, `ksmps`, channel
+count, and `0dbfs` remain in the generated CSD orchestra header. **Project →
+Generate CSD to Screen** shows that header but not the real-time launch
+options. Without an override, device and buffer choices come from
+[Settings](settings.qmd).
+
+## Disk Render
+
+Disk rendering has its own sample rate, `ksmps`, channels, `0dbfs`, message
+level, and advanced options. In normal mode, **File Name** provides the
+project output path and **Ask on Render** prompts for a destination each time.
+**Disk Complete Override** uses the Disk Advanced Settings text as the full
+Csound option list; include an output `-o` path there. In override mode, Blue
+does not use **File Name** or **Ask on Render**. **Render Entire Project**
+ignores a selected Score range for disk output. See [Rendering](rendering.qmd)
+for the render controls and output behavior.
+
+## Media
+
+**Media Folder** sets where imported assets are copied. A relative path is
+resolved from the project directory; an absolute path is used directly. When
+the field is blank, Blue uses a `media` folder beside the project. Prefer a
+relative path when moving the project and its assets together. **Copy Imported
+Media** controls whether supported imports are copied there; when it is off,
+the project refers to the source files. Changing this setting does not move
+assets imported earlier, so verify their paths when sharing the project.
+
+The **Clojure** tab lists project libraries by dependency coordinates and
+version. Blue loads these dependencies for the project's Clojure content
+before evaluation and rendering. Keep the list aligned with the dependencies
+expected by that content; use **Add Library**, **Move Up**, **Move Down**, and
+**Remove** to maintain it.
