@@ -260,7 +260,7 @@ export default function SoundObjectLibraryPanel(): React.ReactElement {
             pendingDelete.linkedInstances > 0
               ? ` and ${pendingDelete.linkedInstances} linked score instance${pendingDelete.linkedInstances === 1 ? '' : 's'}`
               : ''
-          }? This cannot be undone.`}
+          }? You can undo this while the project remains open.`}
           actions={[
             { id: 'cancel', label: 'Cancel', intent: 'cancel' },
             { id: 'delete', label: 'Delete', intent: 'destructive' },
