@@ -1073,6 +1073,8 @@ export default function TrackerScoreObjectEditor({
         if (columnIndex >= 0) {
           clearDraftCellValue(getCellKey(trackIndex, columnIndex, stepIndex));
           e.preventDefault();
+          // Blur reads the DOM value before React renders the cleared draft.
+          e.currentTarget.value = getRowFieldValue(trackIndex, columnIndex, stepIndex);
           (e.currentTarget as HTMLInputElement).blur();
         }
         return;
@@ -1360,6 +1362,7 @@ export default function TrackerScoreObjectEditor({
       useKeyboardNotes,
       clearDraftCellValue,
       commitCellEdit,
+      getRowFieldValue,
       readNoteFromRow,
       toTrackerActionBuffer,
       setShowShortcutHelp,
