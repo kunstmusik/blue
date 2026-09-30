@@ -381,6 +381,23 @@ describe('ScoreObjectPropertiesPanel — Java Blue parity: repeat point enabled 
 });
 
 describe('ScoreObjectPropertiesPanel — Java Blue parity: labels', () => {
+  it('hides AudioFile controls that do not affect generated playback', () => {
+    const target = makeTarget({ selectedObjectType: 'AudioFile', editorObjectType: 'AudioFile' });
+    const doc = makeEditorDoc({
+      target,
+      shared: {
+        ...makeEditorDoc().shared,
+        target,
+        noteProcessorChain: { processors: [] },
+      },
+    });
+    const html = renderToStaticMarkup(
+      createElement(ScoreObjectPropertiesForm, { document: doc, onPatch: vi.fn() }),
+    );
+    expect(html).not.toContain('Note Processors');
+    expect(html).not.toContain('Time Behavior');
+  });
+
   it('displays End Time in the selected Start Time base with the tempo map', () => {
     const doc = makeEditorDoc({
       shared: {

@@ -281,7 +281,8 @@ export default function ScoreObjectPropertiesForm({
     [onPatch],
   );
 
-  const showSoundObjectFields = target.supportsTimeBehavior && tb !== undefined;
+  const showSoundObjectFields =
+    target.editorObjectType !== 'AudioFile' && target.supportsTimeBehavior && tb !== undefined;
 
   return (
     <div className="py-2">
