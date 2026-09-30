@@ -6,7 +6,7 @@ import { Element } from '../../serialization/xml-reader';
 
 export class Scale {
   scaleName = '12TET';
-  baseFrequency = 261.625565; // C8 (middle C area)
+  baseFrequency = 261.625565; // Middle C (C4)
   octave = 2.0;
   ratios: number[];
 

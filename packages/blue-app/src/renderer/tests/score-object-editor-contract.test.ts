@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { formatForBase, parseForBase } from '../time/time-unit-logic';
 import {
   BlueData,
@@ -21,7 +23,10 @@ import {
   Pattern,
   TempoPoint,
   CurveType,
+  PianoNote,
 } from '@blue/data';
+import { ProjectHistory } from '../../main/project-history';
+import { ProjectSession } from '../../main/project-session';
 import { applyPatchToDocument } from '../components/workbench/panels/score-object/score-object-document-reducer';
 import {
   createScoreObjectEditorDocument,
@@ -414,6 +419,83 @@ describe('Score patches — updateSoundObjectBehavior', () => {
 });
 
 describe('Score patches — updateTypeSpecificEditor', () => {
+  it('commits PianoRoll Base Frequency through ProjectHistory with undo and redo', async () => {
+    const { data, pianoRoll, target } = createDataWithPianoRoll();
+    const note = new PianoNote();
+    note.setStart(1);
+    note.setDuration(2);
+    note.setOctave(8);
+    note.setScaleDegree(7);
+    pianoRoll.addNote(note);
+
+    const session = new ProjectSession();
+    session.replace(data, join(tmpdir(), 'piano-roll-base-frequency.blue'));
+    const documentId = session.read().documentId!;
+    const history = new ProjectHistory({ session });
+    history.markClean();
+    const baseFrequencyPatch = {
+      score: {
+        type: 'updateTypeSpecificEditor' as const,
+        target,
+        patch: {
+          scale: {
+            scaleName: '12TET',
+            baseFrequency: 440,
+            octave: 2,
+            ratios: [1, 1.5],
+          },
+        },
+      },
+    };
+    const currentPianoRoll = () =>
+      (session.read().data!.getScore()[0] as PolyObject)[0]![0] as PianoRoll;
+    const assertEditorTargetAndNotes = () => {
+      const document = createScoreObjectEditorDocument(session.read().data!, { target });
+      expect(document?.target.selectionId).toBe(target.selectionId);
+      expect(document?.editor.kind).toBe('structured');
+      expect(currentPianoRoll().getNotes()).toMatchObject([
+        { start: 1, duration: 2, octave: 8, scaleDegree: 7 },
+      ]);
+    };
+
+    const commit = await history.commit({
+      documentId,
+      operationId: 'base-frequency-commit',
+      expectedRevision: 0,
+      contextSequence: 0,
+      label: 'Set PianoRoll Base Frequency',
+      patches: [baseFrequencyPatch],
+    });
+
+    expect(commit.status).toBe('committed');
+    expect(history.read().undoLabel).toBe('Set PianoRoll Base Frequency');
+    expect(history.isDirty()).toBe(true);
+    expect(currentPianoRoll().getScale().baseFrequency).toBeCloseTo(440);
+    assertEditorTargetAndNotes();
+
+    const undo = await history.undo({
+      documentId,
+      operationId: 'base-frequency-undo',
+      expectedRevision: session.read().revision,
+      contextSequence: 1,
+    });
+    expect(undo.status).toBe('committed');
+    expect(history.isDirty()).toBe(false);
+    expect(currentPianoRoll().getScale().baseFrequency).toBeCloseTo(261.625565);
+    assertEditorTargetAndNotes();
+
+    const redo = await history.redo({
+      documentId,
+      operationId: 'base-frequency-redo',
+      expectedRevision: session.read().revision,
+      contextSequence: 2,
+    });
+    expect(redo.status).toBe('committed');
+    expect(history.isDirty()).toBe(true);
+    expect(currentPianoRoll().getScale().baseFrequency).toBeCloseTo(440);
+    assertEditorTargetAndNotes();
+  });
+
   it('keeps PatternObject preview and canonical grid aligned after a beat resize', () => {
     const data = new BlueData();
     data.getScore().length = 0;

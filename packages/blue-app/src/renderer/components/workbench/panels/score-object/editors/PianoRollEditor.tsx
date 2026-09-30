@@ -32,6 +32,7 @@ import { NoteCanvasMouseListener } from './pianoroll/NoteCanvasMouseListener';
 import type { SnapValueName } from '@blue/data';
 import GeneratedScoreModal from './GeneratedScoreModal';
 import { useScoreObjectTest } from './useScoreObjectTest';
+import type { ProjectDocumentCommitMetadata } from '../../../../../../shared/project-history';
 import {
   PopoutContextMenuPortal,
   portalEventIsolationProps,
@@ -138,8 +139,11 @@ export default function PianoRollEditor({
   }, [fieldDefinitions, selectedFieldDef]);
 
   const patch = useCallback(
-    (p: Record<string, unknown>) => {
-      onPatch({ type: 'updateTypeSpecificEditor', target: scoreDocument.target, patch: p });
+    (p: Record<string, unknown>, metadata?: ProjectDocumentCommitMetadata) => {
+      onPatch(
+        { type: 'updateTypeSpecificEditor', target: scoreDocument.target, patch: p },
+        metadata,
+      );
     },
     [scoreDocument.target, onPatch],
   );

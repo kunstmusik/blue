@@ -156,7 +156,7 @@ describe('Number input inventory and source boundaries (T005, T028, T037, T043)'
     'components/workbench/panels/score-object/editors/ZakLineObjectEditor.tsx': 2,
     'components/workbench/panels/score-object/editors/TrackerScoreObjectEditor.tsx': 5,
     'components/workbench/panels/score-object/editors/PatternObjectEditor.tsx': 2,
-    'components/workbench/panels/score-object/editors/pianoroll/PianoRollPropertiesEditor.tsx': 1,
+    'components/workbench/panels/score-object/editors/pianoroll/PianoRollPropertiesEditor.tsx': 2,
     'components/workbench/panels/score-object/editors/pianoroll/FieldDefinitionsEditor.tsx': 3,
   };
 
@@ -173,7 +173,7 @@ describe('Number input inventory and source boundaries (T005, T028, T037, T043)'
     'components/workbench/panels/score/TempoMapEditorDialog.tsx': 1,
   };
 
-  it('verifies that all 37 ordinary audited numeric sites are accounted for (T028, T043)', () => {
+  it('verifies that all 38 ordinary audited numeric sites are accounted for (T028, T043)', () => {
     let ordinaryTotal = 0;
     for (const [relPath, expectedCount] of Object.entries(ORDINARY_MIGRATED_SITES)) {
       const fullPath = path.join(rendererDir, relPath);
@@ -185,7 +185,7 @@ describe('Number input inventory and source boundaries (T005, T028, T037, T043)'
       ).toBe(expectedCount);
       ordinaryTotal += actualCount;
     }
-    expect(ordinaryTotal).toBe(37);
+    expect(ordinaryTotal).toBe(38);
   });
 
   it('verifies that all 29 specialized audited numeric sites are accounted for (T037, T043)', () => {
@@ -203,18 +203,18 @@ describe('Number input inventory and source boundaries (T005, T028, T037, T043)'
     expect(specializedTotal).toBe(29);
   });
 
-  it('verifies total migrated inventory is exactly 66 sites (37 ordinary + 29 specialized) (T043)', () => {
+  it('verifies total migrated inventory is exactly 67 sites (38 ordinary + 29 specialized) (T043)', () => {
     const ordinaryCount = Object.values(ORDINARY_MIGRATED_SITES).reduce((a, b) => a + b, 0);
     const specializedCount = Object.values(SPECIALIZED_MIGRATED_SITES).reduce((a, b) => a + b, 0);
-    expect(ordinaryCount).toBe(37);
+    expect(ordinaryCount).toBe(38);
     expect(specializedCount).toBe(29);
-    expect(ordinaryCount + specializedCount).toBe(66);
+    expect(ordinaryCount + specializedCount).toBe(67);
   });
 
   it('verifies that 0 raw number inputs remain outside CommitNumberInput.tsx across entire renderer (T037, T043)', () => {
     const { allSites, rawInputSites, wrapperSites } = scanRendererNumericSites(rendererDir);
 
-    // All 66 audited production sites have been consolidated into CommitNumberInput:
+    // All 67 audited production sites have been consolidated into CommitNumberInput:
     // Exactly 0 raw number inputs outside CommitNumberInput.tsx remain across the entire renderer!
     expect(allSites.length).toBe(0);
     expect(rawInputSites.length).toBe(0);

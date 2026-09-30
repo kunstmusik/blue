@@ -6,6 +6,7 @@ import type {
   ScoreObjectEditorDocumentSnapshot,
   ScorePatch,
 } from '../../../../shared/project-editor';
+import type { ProjectDocumentCommitMetadata } from '../../../../shared/project-history';
 import { resolveEditorComponent } from './score-object/editor-registry';
 import { applyPatchToDocument } from './score-object/score-object-document-reducer';
 export { applyPatchToDocument };
@@ -174,8 +175,8 @@ export default function ScoreObjectEditorPanel(): React.ReactElement {
   }, [audioClipEditorPreview]);
 
   const handlePatch = useCallback(
-    (patch: ScorePatch): void => {
-      applyProjectDocumentPatch({ score: patch });
+    (patch: ScorePatch, metadata?: ProjectDocumentCommitMetadata): void => {
+      applyProjectDocumentPatch({ score: patch }, metadata);
       setDocument((current) => (current ? applyPatchToDocument(current, patch) : current));
     },
     [applyProjectDocumentPatch],
