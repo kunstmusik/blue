@@ -82,6 +82,7 @@ export { Arrangement } from './arrangement';
 // ─── Instruments ───
 export { Instrument } from './instruments/instrument';
 export { GenericInstrument } from './instruments/generic-instrument';
+export { UnknownInstrument } from './instruments/unknown-instrument';
 export { loadInstrumentFromXML, registerInstrumentType } from './instruments/instrument-registry';
 export { JavaScriptInstrument } from './instruments/javascript-instrument';
 export { PythonInstrument } from './instruments/python-instrument';
