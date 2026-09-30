@@ -1198,6 +1198,26 @@ export function applyPatchToDocument(
   if (patch.type === 'updateTypeSpecificEditor' && doc.editor.kind === 'structured') {
     const payload = { ...(doc.editor.payload as Record<string, unknown>) };
     const p = patch.patch;
+    if (
+      doc.editor.editorFamily === 'PatternObject' &&
+      (p.beats !== undefined || p.subDivisions !== undefined) &&
+      Array.isArray(payload.patterns)
+    ) {
+      const previousSubDivisions = payload.subDivisions as number;
+      const beats = (p.beats as number | undefined) ?? (payload.beats as number);
+      const subDivisions = (p.subDivisions as number | undefined) ?? previousSubDivisions;
+      const numSteps = beats * subDivisions;
+      payload.patterns = (payload.patterns as Array<Record<string, unknown>>).map((pattern) => {
+        const values =
+          previousSubDivisions === subDivisions
+            ? (pattern.values as boolean[]).slice(0, numSteps)
+            : [];
+        return {
+          ...pattern,
+          values: [...values, ...new Array<boolean>(numSteps - values.length).fill(false)],
+        };
+      });
+    }
     if (p.beats !== undefined) payload.beats = p.beats;
     if (p.subDivisions !== undefined) payload.subDivisions = p.subDivisions;
     if (p.instrumentId !== undefined) payload.instrumentId = p.instrumentId;

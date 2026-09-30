@@ -17,9 +17,12 @@ import {
   TrackerObject,
   AudioFile,
   FrozenSoundObject,
+  PatternObject,
+  Pattern,
   TempoPoint,
   CurveType,
 } from '@blue/data';
+import { applyPatchToDocument } from '../components/workbench/panels/score-object/score-object-document-reducer';
 import {
   createScoreObjectEditorDocument,
   createFallbackEditorDocument,
@@ -411,6 +414,52 @@ describe('Score patches — updateSoundObjectBehavior', () => {
 });
 
 describe('Score patches — updateTypeSpecificEditor', () => {
+  it('keeps PatternObject preview and canonical grid aligned after a beat resize', () => {
+    const data = new BlueData();
+    data.getScore().length = 0;
+    const poly = new PolyObject();
+    const layer = new SoundLayer();
+    const patternObject = new PatternObject();
+    const row = new Pattern(16);
+    row.values[2] = true;
+    row.values[14] = true;
+    patternObject.addPattern(row);
+    layer.push(patternObject);
+    poly.push(layer);
+    data.getScore().push(poly);
+    const target: ScoreObjectEditorTargetSnapshot = {
+      selectionId: 'sobj-0-0',
+      selectedObjectType: 'PatternObject',
+      editorObjectType: 'PatternObject',
+      ownerKind: 'timeline',
+      displayContext: 'timeline',
+      location: { rootGroupIndex: 0, containerPath: [], layerIndex: 0, objectIndex: 0 },
+      supportsTimeBehavior: true,
+      supportsRepeatPoint: true,
+      supportsNoteProcessorChain: true,
+    };
+    const patch = { type: 'updateTypeSpecificEditor' as const, target, patch: { beats: 2 } };
+    const before = createScoreObjectEditorDocument(data, { target })!;
+    const preview = applyPatchToDocument(before, patch);
+
+    expect(applyProjectDocumentPatch(data, { score: patch })).toBe(true);
+    expect(patternObject.getPattern(0).values).toEqual([
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+    ]);
+    const after = createScoreObjectEditorDocument(data, { target })!;
+    if (preview.editor.kind !== 'structured' || after.editor.kind !== 'structured') {
+      throw new Error('Expected structured PatternObject editors');
+    }
+    expect(preview.editor.payload.patterns).toEqual(after.editor.payload.patterns);
+  });
+
   it('updates code text for GenericScore', () => {
     const { data, gs, target } = createDataWithGenericScore();
 

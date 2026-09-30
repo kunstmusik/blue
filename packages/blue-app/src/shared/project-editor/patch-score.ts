@@ -3405,8 +3405,12 @@ export function applyScoreObjectPatch(
       if (sObj instanceof PatternObject) {
         const po = sObj as PatternObject;
         const p = patch.patch;
-        if (p.beats !== undefined) po.setBeats(p.beats as number);
-        if (p.subDivisions !== undefined) po.setSubDivisions(p.subDivisions as number);
+        if (p.beats !== undefined || p.subDivisions !== undefined) {
+          po.setTime(
+            (p.beats as number | undefined) ?? po.getBeats(),
+            (p.subDivisions as number | undefined) ?? po.getSubDivisions(),
+          );
+        }
         if (Array.isArray(p.patterns)) {
           const newPatterns = p.patterns as Array<{
             patternName: string;

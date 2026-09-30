@@ -18,6 +18,8 @@ import {
   ObjectBuilder,
   PolyObject,
   PatternsLayerGroup,
+  PatternObject,
+  Pattern,
   PythonObject,
   TrackLayer,
   TrackLayerGroup,
@@ -1160,6 +1162,27 @@ const cases: RoundTripCase[] = [
         { score: { type: 'updateTypeSpecificEditor', target, patch: { text: 'aout = aout' } } },
       ];
     },
+  },
+  {
+    family: 'score',
+    type: 'updateTypeSpecificEditor.patternResize',
+    patches: (data) => {
+      const object = new PatternObject();
+      assignExplicitScoreObjectId(object, 'pattern-resize-1');
+      const row = new Pattern(16);
+      row.values[2] = true;
+      row.values[14] = true;
+      object.addPattern(row);
+      scoreLayer(data, 1).push(object);
+      const target = {
+        ...scoreObjectTarget(data, 1, 0),
+        selectionId: 'pattern-resize-1',
+        selectedObjectType: 'PatternObject',
+        editorObjectType: 'PatternObject',
+      };
+      return [{ score: { type: 'updateTypeSpecificEditor', target, patch: { beats: 2 } } }];
+    },
+    identity: (data) => getScoreObjectId(scoreLayer(data, 1)[0]!),
   },
   {
     family: 'score',
