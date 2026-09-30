@@ -34,7 +34,11 @@ import {
 } from '@blue/data';
 import type { MeterBindingMapPayload } from '../shared/meter-types';
 import { buildMeterBindingMapPayload } from './meter-binding';
-import { openSettingsWindow, resolveSettingsWindowClose } from './settings-window';
+import {
+  openSettingsWindow,
+  requestSettingsWindowCloseForQuit,
+  resolveSettingsWindowClose,
+} from './settings-window';
 import { closeAboutWindow, openAboutWindow, syncAboutWindowZoom } from './about-window';
 import { resolveAppMetadata } from './app-metadata';
 import {
@@ -2442,12 +2446,17 @@ async function requestQuit(): Promise<void> {
         return false;
       }
 
+      if (!(await requestSettingsWindowCloseForQuit())) {
+        return false;
+      }
+
       await doQuit();
       return true;
     });
-  } catch {
+  } catch (error) {
     // A failed transition (e.g. settlement timeout) must abort the quit
     // without wedging isQuitting — the app has to stay usable and quit-able.
+    console.error('[main] Quit transition failed:', error);
     mayQuit = false;
   }
 

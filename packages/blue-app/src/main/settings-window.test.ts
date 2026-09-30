@@ -5,6 +5,7 @@ import * as os from 'os';
 import {
   openSettingsWindow,
   closeSettingsWindow,
+  requestSettingsWindowCloseForQuit,
   resolveSettingsWindowClose,
 } from './settings-window';
 import { SETTINGS_CLOSE_REQUEST_CHANNEL } from '../shared/settings-window';
@@ -33,8 +34,11 @@ const electronMock = vi.hoisted(() => {
     });
     removeListener = vi.fn();
     close = vi.fn(() => {
+      const event = { preventDefault: vi.fn() };
+      this.eventHandlers.close?.forEach((handler) => handler(event));
+      if (event.preventDefault.mock.calls.length > 0) return;
       this.destroyed = true;
-      this.closedHandler?.();
+      this.eventHandlers.closed?.forEach((handler) => handler());
     });
     isDestroyed = vi.fn(() => this.destroyed);
     isMaximized = vi.fn(() => false);
@@ -45,7 +49,6 @@ const electronMock = vi.hoisted(() => {
     setBounds = vi.fn();
 
     private readyToShowHandler?: () => void;
-    private closedHandler?: () => void;
     eventHandlers: Record<string, Array<(event?: { preventDefault: () => void }) => void>> = {};
 
     constructor(options: Record<string, unknown>) {
@@ -151,6 +154,23 @@ describe('settings window lifecycle', () => {
     settingsWindow.trigger('close');
     resolveSettingsWindowClose('allow');
     expect(settingsWindow.close).toHaveBeenCalledTimes(1);
+  });
+
+  it('lets quit continue only after the Settings close decision allows it', async () => {
+    const mainWindow = {} as never;
+    openSettingsWindow(mainWindow);
+    const firstWindow = electronMock.instances[0]!;
+
+    const cancelledQuit = requestSettingsWindowCloseForQuit();
+    expect(firstWindow.webContents.send).toHaveBeenCalledWith(SETTINGS_CLOSE_REQUEST_CHANNEL);
+    resolveSettingsWindowClose('cancel');
+    expect(await cancelledQuit).toBe(false);
+    expect(firstWindow.isDestroyed()).toBe(false);
+
+    const allowedQuit = requestSettingsWindowCloseForQuit();
+    resolveSettingsWindowClose('allow');
+    expect(await allowedQuit).toBe(true);
+    expect(firstWindow.isDestroyed()).toBe(true);
   });
 });
 
