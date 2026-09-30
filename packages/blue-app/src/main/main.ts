@@ -2557,8 +2557,8 @@ async function doQuit(trigger: ShutdownTrigger = 'user'): Promise<void> {
       });
 
       await runShutdownStep('unified library', async () => {
-        unregisterUnifiedLibraryIpc?.();
-        unregisterUnifiedLibraryIpc = null;
+        // Keep the handler while renderer windows are still open. A late
+        // library refresh can then receive the service's not-ready result.
         await unifiedLibraryService?.stop();
       });
       unifiedLibraryService = null;
@@ -7259,6 +7259,11 @@ applicationReadyPromise.then(async () => {
 });
 
 // Intercept Cmd+Q and window close buttons
+app.on('will-quit', () => {
+  unregisterUnifiedLibraryIpc?.();
+  unregisterUnifiedLibraryIpc = null;
+});
+
 app.on('before-quit', (event: Electron.Event) => {
   if (!isQuitting) {
     event.preventDefault();
