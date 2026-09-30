@@ -382,6 +382,14 @@ async function runVerifier(binary, verificationMode, blueFile, usePlaywright, us
  * @returns {Promise<number>}
  */
 async function runSmokeChecks(binary, blueFile, usePlaywright) {
+  const manualIndex =
+    process.platform === 'darwin'
+      ? resolve(dirname(binary), '..', 'Resources', 'assets', 'manual', 'index.html')
+      : resolve(dirname(binary), 'resources', 'assets', 'manual', 'index.html');
+  if (!existsSync(manualIndex)) {
+    process.stderr.write(`Bundled Blue Manual not found: ${manualIndex}\n`);
+    return 1;
+  }
   const userDataPath = mkdtempSync(join(tmpdir(), 'blue-packaged-smoke-'));
   try {
     const metadataCode = await launchViaSpawn(binary, 'packaged-metadata', null, userDataPath);

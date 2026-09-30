@@ -590,7 +590,6 @@ const collectedIpcHandlers = new Map<string, IpcMainInvokeHandler>();
 const collectedIpcListeners = new Map<string, IpcMainEventListener>();
 const historyParticipantSenders = new Map<string, unknown>();
 const historyAvailabilityBySender = new Map<number, FocusedHistoryAvailability>();
-
 const trackedHistorySenders = new WeakSet<Electron.WebContents>();
 
 function trackHistorySender(sender: Electron.WebContents): void {
@@ -1995,6 +1994,21 @@ function rebuildApplicationMenu(): void {
           icon: getAppIcon(),
           initialZoomFactor: appZoomController.getCurrentFactor(),
         });
+      },
+      onOpenManual: () => {
+        const manualIndex = app.isPackaged
+          ? path.join(process.resourcesPath, 'assets', 'manual', 'index.html')
+          : path.resolve(app.getAppPath(), '../../docs/manual/_build/html/index.html');
+        if (!fs.existsSync(manualIndex)) {
+          dialog.showErrorBox('Blue Manual', 'The Blue Manual is missing from this installation.');
+          return;
+        }
+        void shell
+          .openPath(manualIndex)
+          .then((error) => {
+            if (error) dialog.showErrorBox('Blue Manual', error);
+          })
+          .catch((error: unknown) => dialog.showErrorBox('Blue Manual', String(error)));
       },
       onOpenEffectsLibrary: () => {
         if (mainWindow) {

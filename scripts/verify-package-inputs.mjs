@@ -280,6 +280,11 @@ function checkBuiltElectronEntries() {
     checkPath('Electron preload bundle', join(appRoot, 'dist', 'preload', 'preload.js'), 'file'),
     checkPath('Electron renderer output', join(appRoot, 'dist', 'renderer', 'index.html'), 'file'),
     checkPath(
+      'Blue manual',
+      join(repoRoot, 'docs', 'manual', '_build', 'html', 'index.html'),
+      'file',
+    ),
+    checkPath(
       'Electron shared runtime output',
       join(appRoot, 'dist', 'shared', 'window-layout-settings.js'),
       'file',

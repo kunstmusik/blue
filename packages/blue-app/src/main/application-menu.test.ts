@@ -20,6 +20,7 @@ function createHandlers() {
     onRequestQuit: vi.fn(),
     onOpenSettings: vi.fn(),
     onOpenAbout: vi.fn(),
+    onOpenManual: vi.fn(),
     onOpenEffectsLibrary: vi.fn(),
     onOpenFTableConverter: vi.fn(),
     onOpenCsoundRCEditor: vi.fn(),
@@ -302,14 +303,20 @@ describe('application menu template', () => {
       'Script',
       'Tools',
       'Window',
+      'Help',
     ]);
 
     const blueMenu = getSubmenu(template[0]);
     expect(blueMenu.map((item) => item.label)).toContain('About Blue');
     expect(blueMenu.map((item) => item.label)).toContain('Settings...');
+    expect(blueMenu.map((item) => item.label)).not.toContain('Blue Manual');
 
     blueMenu.find((item) => item.label === 'About Blue')?.click?.();
     expect(handlers.onOpenAbout).toHaveBeenCalledTimes(1);
+    const helpMenu = getSubmenu(template.at(-1));
+    expect(getLabels(helpMenu)).toEqual(['Blue Manual']);
+    helpMenu.find((item) => item.label === 'Blue Manual')?.click?.();
+    expect(handlers.onOpenManual).toHaveBeenCalledTimes(1);
 
     const blueSettings = blueMenu.find((item) => item.label === 'Settings...');
     expect(blueSettings?.accelerator).toBe('Cmd+,');
@@ -451,8 +458,8 @@ describe('application menu template', () => {
       'Project',
       'Script',
       'Tools',
-      'Help',
       'Window',
+      'Help',
     ]);
 
     const fileMenu = getSubmenu(template[0]);
@@ -508,7 +515,10 @@ describe('application menu template', () => {
     const toolsMenu = getSubmenu(template[5]);
     expect(toolsMenu.find((item) => item.label === 'Effects Library')).toBeTruthy();
 
-    const helpMenu = getSubmenu(template[6]);
+    const helpMenu = getSubmenu(template[7]);
+    expect(getLabels(helpMenu)).toEqual(['Blue Manual', 'About Blue']);
+    helpMenu.find((item) => item.label === 'Blue Manual')?.click?.();
+    expect(handlers.onOpenManual).toHaveBeenCalledTimes(1);
     helpMenu.find((item) => item.label === 'About Blue')?.click?.();
     expect(handlers.onOpenAbout).toHaveBeenCalledTimes(1);
   });

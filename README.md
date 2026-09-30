@@ -115,7 +115,7 @@ blue/
 | Tool                           | Version                    | Required                                                                                           |
 | ------------------------------ | -------------------------- | -------------------------------------------------------------------------------------------------- |
 | [Node.js](https://nodejs.org/) | 22+                        | ✅                                                                                                 |
-| [pnpm](https://pnpm.io/)       | 10+                        | ✅                                                                                                 |
+| [pnpm](https://pnpm.io/)       | 12.8.1                     | ✅                                                                                                 |
 | Java and Maven                 | Java 17+ / Maven 3+        | For the Java helper runtime and app builds                                                         |
 | CMake and C/C++ toolchain      | CMake 3.21+                | Source builds only                                                                                 |
 | vcpkg                          | Pinned repository revision | Bootstrapped automatically on the first native build; `VCPKG_ROOT` may select an existing checkout |
@@ -130,7 +130,7 @@ recoverable diagnostic until Csound 7 is installed.
 
 ```bash
 corepack enable
-corepack prepare pnpm@latest --activate
+corepack prepare pnpm@12.8.1 --activate
 ```
 
 ---
