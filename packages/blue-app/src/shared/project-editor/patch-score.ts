@@ -395,7 +395,7 @@ function applyTimebaseUpdate(
   data: BlueData,
   oldTimeBase: TimeBase,
   newTimeBase: TimeBase,
-  scoreObjectMode: 'UPDATE_ALL' | 'UPDATE_MATCHING',
+  scoreObjectMode: 'UPDATE_ALL' | 'UPDATE_MATCHING' | null,
   markerMode: 'UPDATE_ALL' | 'UPDATE_MATCHING' | null,
 ): void {
   const score = data.getScore();
@@ -518,13 +518,16 @@ export function applyScoreTimeStatePatch(
     changed = true;
   }
 
-  if (oldTimeDisplay !== undefined && patch.scoreObjectUpdateMode != null) {
+  if (
+    oldTimeDisplay !== undefined &&
+    (patch.scoreObjectUpdateMode != null || patch.markerUpdateMode != null)
+  ) {
     const newBase = patch.primaryTimeDisplay as TimeBase;
     applyTimebaseUpdate(
       data,
       oldTimeDisplay,
       newBase,
-      patch.scoreObjectUpdateMode,
+      patch.scoreObjectUpdateMode ?? null,
       patch.markerUpdateMode ?? null,
     );
   }
