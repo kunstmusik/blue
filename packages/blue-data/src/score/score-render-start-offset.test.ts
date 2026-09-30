@@ -4,6 +4,7 @@ import { PianoRoll } from '../sound-objects/piano-roll';
 import { PianoNote } from '../sound-objects/piano-roll/piano-note';
 import { PolyObject } from '../sound-objects/poly-object';
 import { SoundLayer } from '../sound-objects/sound-layer';
+import { GenericScore } from '../sound-objects/generic-score';
 import { TimeBehavior } from '../sound-objects/time-behavior';
 import { TimeDuration } from '../time/time-duration';
 import { TimePosition } from '../time/time-position';
@@ -108,4 +109,22 @@ it('does not rebase already-relative Track AudioClip notes twice', () => {
   const notes = score.generateForCSD(new CompileData(), RENDER_START, RENDER_END);
 
   expect(startTimes(notes)).toEqual([0]);
+});
+
+describe('nested file-backed SoundObject render offsets', () => {
+  it('rebases nested PolyObject notes once for a bounded selected range', async () => {
+    const score = new Score();
+    const nested = new PolyObject();
+    nested.newLayerAt(-1);
+    nested.setStartTime(TimePosition.beats(8));
+    nested.setTimeBehavior(TimeBehavior.NONE);
+    const phrase = new GenericScore();
+    phrase.setScoreText('i1 1 0.5\ni2 1.5 0.5');
+    phrase.setTimeBehavior(TimeBehavior.NONE);
+    nested[0]!.push(phrase);
+    (score[0] as PolyObject)[0]!.push(nested);
+
+    expect(startTimes(score.generateForCSD(new CompileData(), 9, 10))).toEqual([0, 0.5]);
+    expect(startTimes(await score.generateForCSDAsync(new CompileData(), 9, 10))).toEqual([0, 0.5]);
+  });
 });

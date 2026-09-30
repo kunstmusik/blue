@@ -25,6 +25,7 @@ import {
   resolveEffectiveHeight,
   resolveExplicitHeight,
 } from '../score/layer-height-policy';
+import type { ScoreGenerationOptions } from '../score/score-generation-options';
 
 export class SoundLayer extends Array<SoundObject> implements Layer, AutomatableLayer {
   private _name = '';
@@ -210,6 +211,7 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
     compileData: CompileData,
     startTime: number,
     endTime: number,
+    options?: Pick<ScoreGenerationOptions, 'deferRenderStartRebase'>,
   ): NoteList {
     const noteList = new NoteList();
 
@@ -245,7 +247,7 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
         continue;
       }
 
-      const nl = sObj.generateForCSD(context, compileData, adjustedStart, adjustedEnd);
+      const nl = sObj.generateForCSD(context, compileData, adjustedStart, adjustedEnd, options);
       noteList.merge(nl);
     }
 
@@ -257,6 +259,7 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
     compileData: CompileData,
     startTime: number,
     endTime: number,
+    options?: Pick<ScoreGenerationOptions, 'deferRenderStartRebase'>,
   ): Promise<NoteList> {
     const noteList = new NoteList();
 
@@ -288,8 +291,8 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
       }
 
       const nl = sObj.generateForCSDAsync
-        ? await sObj.generateForCSDAsync(context, compileData, adjustedStart, adjustedEnd)
-        : sObj.generateForCSD(context, compileData, adjustedStart, adjustedEnd);
+        ? await sObj.generateForCSDAsync(context, compileData, adjustedStart, adjustedEnd, options)
+        : sObj.generateForCSD(context, compileData, adjustedStart, adjustedEnd, options);
       noteList.merge(nl);
     }
 

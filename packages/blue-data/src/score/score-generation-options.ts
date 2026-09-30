@@ -8,6 +8,8 @@ export interface InstrumentTargetCollector {
 }
 
 export interface ScoreGenerationOptions {
+  /** A parent PolyObject will rebase selected-range notes after child placement. */
+  readonly deferRenderStartRebase?: boolean;
   readonly processWithSolo?: boolean;
   readonly trackId?: string;
   readonly instrumentOverrideId?: string;

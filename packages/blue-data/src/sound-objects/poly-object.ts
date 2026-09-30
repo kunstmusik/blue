@@ -39,6 +39,7 @@ import type { JavaScriptSession } from '../javascript-runtime';
 import type { JavaRuntimeClientContract } from '../java-runtime';
 import {
   normalizeScoreGenerationOptions,
+  type ScoreGenerationOptions,
   type ScoreGenerationOptionsOrSolo,
 } from '../score/score-generation-options';
 
@@ -231,8 +232,8 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
     options?: ScoreGenerationOptionsOrSolo,
   ): NoteList {
     const noteList = new NoteList();
-    const processWithSolo =
-      normalizeScoreGenerationOptions(options).processWithSolo ?? this.hasSoloLayers();
+    const generationOptions = normalizeScoreGenerationOptions(options);
+    const processWithSolo = generationOptions.processWithSolo ?? this.hasSoloLayers();
     const shouldProcessWithSolo = processWithSolo ?? this.hasSoloLayers();
 
     if (shouldProcessWithSolo) {
@@ -241,7 +242,9 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
           continue;
         }
 
-        const nl = layer.generateForCSD(context, compileData, startTime, endTime);
+        const nl = layer.generateForCSD(context, compileData, startTime, endTime, {
+          deferRenderStartRebase: true,
+        });
         noteList.merge(nl);
       }
     } else {
@@ -250,12 +253,14 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
           continue;
         }
 
-        const nl = layer.generateForCSD(context, compileData, startTime, endTime);
+        const nl = layer.generateForCSD(context, compileData, startTime, endTime, {
+          deferRenderStartRebase: true,
+        });
         noteList.merge(nl);
       }
     }
 
-    return this.processGeneratedNotes(context, noteList, startTime, endTime);
+    return this.processGeneratedNotes(context, noteList, startTime, endTime, generationOptions);
   }
 
   async generateForCSDAsync(
@@ -266,8 +271,8 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
     options?: ScoreGenerationOptionsOrSolo,
   ): Promise<NoteList> {
     const noteList = new NoteList();
-    const processWithSolo =
-      normalizeScoreGenerationOptions(options).processWithSolo ?? this.hasSoloLayers();
+    const generationOptions = normalizeScoreGenerationOptions(options);
+    const processWithSolo = generationOptions.processWithSolo ?? this.hasSoloLayers();
     const shouldProcessWithSolo = processWithSolo ?? this.hasSoloLayers();
 
     if (shouldProcessWithSolo) {
@@ -276,7 +281,9 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
           continue;
         }
 
-        const nl = await layer.generateForCSDAsync(context, compileData, startTime, endTime);
+        const nl = await layer.generateForCSDAsync(context, compileData, startTime, endTime, {
+          deferRenderStartRebase: true,
+        });
         noteList.merge(nl);
       }
     } else {
@@ -285,12 +292,21 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
           continue;
         }
 
-        const nl = await layer.generateForCSDAsync(context, compileData, startTime, endTime);
+        const nl = await layer.generateForCSDAsync(context, compileData, startTime, endTime, {
+          deferRenderStartRebase: true,
+        });
         noteList.merge(nl);
       }
     }
 
-    return this.processGeneratedNotesAsync(context, noteList, startTime, endTime, compileData);
+    return this.processGeneratedNotesAsync(
+      context,
+      noteList,
+      startTime,
+      endTime,
+      compileData,
+      generationOptions,
+    );
   }
 
   private processGeneratedNotes(
@@ -298,6 +314,7 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
     noteList: NoteList,
     startTime: number,
     endTime: number,
+    generationOptions: ScoreGenerationOptions,
   ): NoteList {
     let processed = applyNoteProcessorChain(noteList, this._npc);
     const duration = this._subjectiveDuration.toBeats(context);
@@ -317,7 +334,9 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
 
     setScoreStart(processed, this._startTime.toBeats(context));
 
-    rebaseScoreToRenderStart(processed, startTime);
+    if (!generationOptions.deferRenderStartRebase) {
+      rebaseScoreToRenderStart(processed, startTime);
+    }
 
     return processed;
   }
@@ -328,6 +347,7 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
     startTime: number,
     endTime: number,
     compileData: CompileData,
+    generationOptions: ScoreGenerationOptions,
   ): Promise<NoteList> {
     let processed = await applyNoteProcessorChainAsync(noteList, this._npc, compileData);
     const duration = this._subjectiveDuration.toBeats(context);
@@ -347,7 +367,9 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
 
     setScoreStart(processed, this._startTime.toBeats(context));
 
-    rebaseScoreToRenderStart(processed, startTime);
+    if (!generationOptions.deferRenderStartRebase) {
+      rebaseScoreToRenderStart(processed, startTime);
+    }
 
     return processed;
   }
