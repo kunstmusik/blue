@@ -114,6 +114,23 @@ function forbidRegex(file, pattern, code, message) {
 }
 
 // === setup-blue-build action.yml ===
+for (const file of [
+  '.github/actions/setup-blue-build/action.yml',
+  '.github/workflows/release.yml',
+  '.github/workflows/appimage-compat.yml',
+]) {
+  const steps = readRepoFile(file).split(/^\s*- (?=name:|uses:)/m);
+  const nodeSteps = steps.filter((step) => /uses: actions\/setup-node@/.test(step));
+  const ok = nodeSteps.every((step) => /^\s*package-manager-cache: false\s*$/m.test(step));
+  findings.push({
+    ok,
+    file,
+    code: 'SETUP_NODE_NO_IMPLICIT_CACHE',
+    message:
+      'Node setup must disable implicit package-manager caching; pnpm may not be installed yet',
+  });
+}
+
 requireSubstring(
   '.github/actions/setup-blue-build/action.yml',
   'using: composite',

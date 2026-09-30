@@ -51,6 +51,8 @@ runs:
       uses: actions/setup-node@v5
       with:
         node-version: ${{ inputs.node-version }}
+        # The pnpm store cache is restored below, after pnpm is installed.
+        package-manager-cache: false
 
     - name: Setup pnpm ${{ inputs.pnpm-version }}
       uses: pnpm/action-setup@v6
