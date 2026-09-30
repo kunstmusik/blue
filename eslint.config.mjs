@@ -10,6 +10,7 @@ export default tseslint.config(
       '**/release/**',
       '**/coverage/**',
       '**/generated/**',
+      'docs/manual/_build/**',
       '**/fixtures/**',
       '**/__fixtures__/**',
       '**/user-content/**',
