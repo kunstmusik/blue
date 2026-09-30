@@ -7233,14 +7233,14 @@ applicationReadyPromise.then(async () => {
       rollback: rollbackCodeRepositoryStage,
     },
     {
-      name: 'application shell',
-      start: startApplicationShellStage,
-      rollback: rollbackApplicationShellStage,
-    },
-    {
       name: 'unified library',
       start: startUnifiedLibraryStage,
       rollback: rollbackUnifiedLibraryStage,
+    },
+    {
+      name: 'application shell',
+      start: startApplicationShellStage,
+      rollback: rollbackApplicationShellStage,
     },
     {
       name: 'OSC control',
