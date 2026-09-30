@@ -360,6 +360,9 @@ bool CsoundEngine::compileOrc(const std::string &orc) {
 
   if (wasRunning && rebuilt) {
     resumePerformThread();
+  } else if (wasRunning) {
+    transitionState(EngineLifecycleState::STOPPED, EngineStopReason::FAILED,
+                    getLastError());
   }
 
   if (!compiled) {
@@ -1096,7 +1099,9 @@ void CsoundEngine::performThread() {
 
   clearControlChannelCache();
   running_.store(false, std::memory_order_relaxed);
-  transitionState(EngineLifecycleState::STOPPED, stopReason, terminalError);
+  if (!preservePerformanceState) {
+    transitionState(EngineLifecycleState::STOPPED, stopReason, terminalError);
+  }
 
 #if BLUE_ENGINE_USE_PERFORMANCE_TRACKING
   if (cycleCount > 0) {
