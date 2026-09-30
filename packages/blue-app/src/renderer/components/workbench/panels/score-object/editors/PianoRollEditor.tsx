@@ -296,6 +296,7 @@ export default function PianoRollEditor({
         start: n.start - minStart,
         duration: n.duration,
         fieldValues: [...n.fieldValues],
+        noteTemplate: n.noteTemplate ?? null,
       })),
     });
   }, [selectedIndices, notes, setClipboard, pchGenerationMethod, scale.ratios]);
@@ -327,6 +328,7 @@ export default function PianoRollEditor({
                     start: n.start + startBeat,
                     duration: n.duration,
                     fieldValues: [...n.fieldValues],
+                    noteTemplate: n.noteTemplate,
                   };
                 }),
               },
