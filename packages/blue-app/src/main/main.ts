@@ -591,6 +591,21 @@ const collectedIpcListeners = new Map<string, IpcMainEventListener>();
 const historyParticipantSenders = new Map<string, unknown>();
 const historyAvailabilityBySender = new Map<number, FocusedHistoryAvailability>();
 
+const trackedHistorySenders = new WeakSet<Electron.WebContents>();
+
+function trackHistorySender(sender: Electron.WebContents): void {
+  if (trackedHistorySenders.has(sender)) return;
+  trackedHistorySenders.add(sender);
+  sender.once('destroyed', () => {
+    historyAvailabilityBySender.delete(sender.id);
+    for (const [contextId, owner] of historyParticipantSenders) {
+      if (owner !== sender) continue;
+      historyParticipantSenders.delete(contextId);
+      projectHistory.unregisterParticipant({ contextId });
+    }
+  });
+}
+
 /**
  * Keeps the legacy handler bodies close to their existing owners while the
  * domain registrars own the real Electron registration and teardown. The
@@ -6274,16 +6289,10 @@ function validateHistoryRequestSender(
 
 ipcRegistration.on(PROJECT_HISTORY_AVAILABILITY_CHANNEL, (event, payload: unknown) => {
   if (!isFocusedHistoryAvailability(payload)) return;
-  const sender = event.sender as {
-    id?: unknown;
-    once?: (name: string, listener: () => void) => void;
-  };
-  if (typeof sender.id !== 'number') return;
-  const senderId = sender.id;
-  historyAvailabilityBySender.set(senderId, payload);
-  sender.once?.('destroyed', () => {
-    historyAvailabilityBySender.delete(senderId);
-  });
+  const sender = event.sender as Electron.WebContents;
+  if (typeof sender?.id !== 'number') return;
+  historyAvailabilityBySender.set(sender.id, payload);
+  trackHistorySender(sender);
   rebuildApplicationMenu();
 });
 
@@ -6366,12 +6375,7 @@ ipcRegistration.handle(
     const response = projectHistory.registerParticipant(req);
     if (!response.ok) return response;
     historyParticipantSenders.set(req.contextId, event.sender);
-    event.sender.once('destroyed', () => {
-      if (historyParticipantSenders.get(req.contextId) === event.sender) {
-        historyParticipantSenders.delete(req.contextId);
-        projectHistory.unregisterParticipant({ contextId: req.contextId });
-      }
-    });
+    trackHistorySender(event.sender);
     return response;
   },
 );
