@@ -14,6 +14,7 @@ import TimeUnitEditor from './TimeUnitEditor';
 import NoteProcessorChainEditor from './note-processors/NoteProcessorChainEditor';
 import ColorPickerButton from '../../../ColorPicker';
 import { AppSelect } from '../../../AppSelect';
+import { formatForBase } from '../../../../time/time-unit-logic';
 
 interface ScoreObjectPropertiesFormProps {
   document: ScoreObjectEditorDocumentSnapshot;
@@ -309,7 +310,14 @@ export default function ScoreObjectPropertiesForm({
       </FieldRow>
 
       <FieldRow label="End Time:">
-        <div className={BLUE_INSPECTOR_VALUE_TEXT_CLASS}>{shared.endTimeDisplay}</div>
+        <div className={BLUE_INSPECTOR_VALUE_TEXT_CLASS}>
+          {formatForBase(
+            shared.startTime.value + shared.subjectiveDuration.value,
+            shared.startTime.timeBase,
+            document.timeContext,
+            false,
+          )}
+        </div>
       </FieldRow>
 
       <FieldRow label="Color:">
