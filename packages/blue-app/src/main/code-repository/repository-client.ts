@@ -4,6 +4,7 @@
 // repository in-process for unit tests.
 
 import * as path from 'node:path';
+import { existsSync } from 'node:fs';
 import { Worker } from 'node:worker_threads';
 import type { CodeRepositoryNode } from '@blue/data';
 import {
@@ -55,7 +56,10 @@ export class CodeRepositoryClient {
   }
 
   static open(databasePath: string): CodeRepositoryClient {
-    const workerPath = path.join(__dirname, 'code-repository-worker.js');
+    const bundledWorkerPath = path.join(__dirname, 'code-repository-worker.js');
+    const workerPath = existsSync(bundledWorkerPath)
+      ? bundledWorkerPath
+      : path.join(__dirname, 'repository-worker.js');
     const worker = new Worker(workerPath, {
       workerData: { kind: 'blue-code-repository', databasePath },
     });
