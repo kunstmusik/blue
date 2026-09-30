@@ -34,7 +34,7 @@ export const FEATURE_PARITY_NOTES: readonly FeatureParityNote[] = [
     javaWorkflow:
       'Java Blue executes Csound to render audio to disk with format/sample/header flags, render-and-play, and render-and-open commands.',
     currentAppStatus:
-      'Implemented: disk render executes through the managed Blue Engine Csound runtime, validates output, and supports render-and-play/open follow-up commands.',
+      'Disk render uses the managed Blue Engine Csound runtime. Render and Play opens the in-app Audio File Player; Render and Open uses the external open command. Legacy external play preferences are retained but inactive.',
     recommendedSpecScope:
       'Implemented by SPEC 056; retain this entry only as a Java-parity usage reference.',
   },
@@ -794,18 +794,16 @@ export function buildUsageMatrix(): UsageParityMatrixEntry[] {
       'diskRender.externalPlayCommandEnabled',
       'Render and Play Enabled',
       'false',
-      'External play command after render',
-      'used-by-workflow',
-      { consumerPath: 'main.ts:handleRenderToDisk' },
+      'Legacy external play command toggle; retained in settings data but not used by the in-app player',
+      'app-specific-retained',
     ),
     entry(
       'diskRender',
       'diskRender.externalPlayCommand',
       'Render and Play Command',
       'command $outfile',
-      'External play command template',
-      'used-by-workflow',
-      { consumerPath: 'main.ts:handleRenderToDisk' },
+      'Legacy external play command template; retained in settings data but not used by the in-app player',
+      'app-specific-retained',
     ),
     entry(
       'diskRender',
