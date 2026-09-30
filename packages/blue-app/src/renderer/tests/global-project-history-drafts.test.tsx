@@ -202,4 +202,50 @@ describe('global project history draft-conflict resolution (T036, US2)', () => {
     expect(container.querySelector('[data-testid="draft-conflict-dialog"]')).toBeNull();
     expect(getEditorText(container)).toBe('second typed');
   });
+
+  it.each(['immediate', 'delayed'] as const)(
+    'keeps new typing when Backspace commits its deletion with %s acknowledgements',
+    (acknowledgement) => {
+      const committed = vi.fn();
+      let acknowledge: (value: string) => void;
+      function ControlledEditor(): React.ReactElement {
+        const [value, setValue] = React.useState('abc');
+        acknowledge = setValue;
+        return (
+          <SelectedCodeEditor
+            value={value}
+            ariaLabel="Instrument typing editor"
+            typingGroupingMs={500}
+            onChange={(text) => {
+              committed(text);
+              if (acknowledgement === 'immediate') setValue(text);
+            }}
+          />
+        );
+      }
+      act(() => root.render(<ControlledEditor />));
+      const view = EditorView.findFromDOM(container.querySelector('.cm-editor') as HTMLElement)!;
+
+      act(() => {
+        view.dispatch({ changes: { from: 2, to: 3 }, userEvent: 'delete.backward' });
+      });
+      act(() => {
+        view.dispatch({ changes: { from: 2, insert: 'd' }, userEvent: 'input.type' });
+      });
+
+      expect(committed).toHaveBeenCalledWith('ab');
+      expect(getEditorText(container)).toBe('abd');
+      expect(container.querySelector('[data-testid="draft-conflict-dialog"]')).toBeNull();
+
+      act(() => view.contentDOM.dispatchEvent(new FocusEvent('blur')));
+      expect(committed).toHaveBeenLastCalledWith('abd');
+      if (acknowledgement === 'delayed') {
+        act(() => acknowledge('ab'));
+        expect(getEditorText(container)).toBe('abd');
+        expect(container.querySelector('[data-testid="draft-conflict-dialog"]')).toBeNull();
+        act(() => acknowledge('abd'));
+      }
+      expect(container.querySelector('[data-testid="draft-conflict-dialog"]')).toBeNull();
+    },
+  );
 });
