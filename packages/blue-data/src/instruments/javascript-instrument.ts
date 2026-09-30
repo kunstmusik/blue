@@ -2,6 +2,24 @@ import { Element } from '../serialization/xml-reader';
 import { OpcodeList } from '../opcodes/opcode-list';
 import { appendUserDefinedOpcodes } from '../opcodes/udo-utilities';
 import { Instrument } from './instrument';
+import { CompileData } from '../compile-data';
+import { disposeJavaScriptCompileState, getJavaScriptCompileContext } from '../javascript-runtime';
+
+function executeInstrumentScript(text: string, compileData: CompileData): string {
+  const context = getJavaScriptCompileContext(compileData);
+  for (const code of ["var instrument = '';", text]) {
+    const result = context.unwrapResult(
+      context.evalCode(code, 'blue-javascript-instrument.js', { type: 'global' }),
+    );
+    result.dispose();
+  }
+  const value = context.getProp(context.global, 'instrument');
+  try {
+    return String(context.dump(value) ?? '');
+  } finally {
+    value.dispose();
+  }
+}
 
 export class JavaScriptInstrument extends Instrument {
   private _text =
@@ -70,7 +88,17 @@ export class JavaScriptInstrument extends Instrument {
   }
 
   override generateInstrument(): string {
-    return '';
+    const compileData = CompileData.createEmptyCompileData();
+    try {
+      return executeInstrumentScript(this._text, compileData);
+    } finally {
+      disposeJavaScriptCompileState(compileData);
+    }
+  }
+
+  override async generateInstrumentAsync(compileData?: CompileData): Promise<string> {
+    if (!compileData) return this.generateInstrument();
+    return executeInstrumentScript(this._text, compileData);
   }
 
   saveAsXML(): Element {
