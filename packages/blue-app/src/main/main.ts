@@ -2350,7 +2350,11 @@ function createWindow(): void {
     engineRuntimeService,
   );
   blueLiveSession.setRuntimeStateChangeCallback(() => {
-    if (!blueLiveSession?.isRunning()) {
+    if (blueLiveSession?.isRunning()) {
+      const repeatSync = getBlueLiveTriggerController().syncRepeatSchedule();
+      if (!repeatSync.ok) console.warn(`[Blue Live] ${repeatSync.message}`);
+    } else {
+      getBlueLiveTriggerController().stopRepeatSchedule();
       projectRuntimeReconciliation.stopPerformance('blueLive');
       blueLiveGatePublisher.reset('blueLive');
       broadcastRuntimePerformanceCleared('blueLive');
@@ -4209,6 +4213,13 @@ async function applyRuntimeWorkOperation(
   setChannel: (channel: string, value: number) => Promise<unknown>,
   blueX7Deps: BlueX7EngineSyncDeps,
 ): Promise<RuntimeOperationAck> {
+  if (operation.kind === 'blue-live-repeat') {
+    return {
+      status: 'rejected',
+      message: 'Blue Live Repeat operation was routed to the wrong performance',
+    };
+  }
+
   if (operation.kind === 'channel-value') {
     try {
       await setChannel(operation.channel, operation.value);
@@ -4624,6 +4635,12 @@ function registerBlueLivePerformance(): void {
   });
   const client: AcknowledgedRuntimeClient = {
     applyOperation(operation) {
+      if (operation.kind === 'blue-live-repeat') {
+        const result = getBlueLiveTriggerController().syncRepeatSchedule();
+        return Promise.resolve(
+          result.ok ? { status: 'applied' } : { status: 'rejected', message: result.message },
+        );
+      }
       if (operation.kind === 'mixer-gates') {
         return applyMixerGatesOperation(blueLiveGatePublisher, 'blueLive', operation);
       }

@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it } from 'vitest';
-import { BlueData, GenericScore, LiveObject, LiveObjectBins } from '@blue/data';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { BlueData, GenericScore, LiveObject, LiveObjectBins, PythonObject } from '@blue/data';
 import { createModernProject, createRuntimeBackedLiveData } from '@blue/data';
 import {
   BlueLiveTriggerController,
@@ -29,7 +29,7 @@ async function waitForJythonScoreCall(
   harness: BlueLiveTriggerHarness,
   expectedCalls: number,
 ): Promise<void> {
-  for (let attempt = 0; attempt < 20; attempt++) {
+  for (let attempt = 0; attempt < 200; attempt++) {
     if (harness.javaRuntime.calls.jythonScore === expectedCalls) {
       return;
     }
@@ -278,5 +278,125 @@ describe('BlueLiveTriggerController stress (SC-003/SC-004)', () => {
     }
     expect(harness.engine.submissions).toHaveLength(0);
     harness.reset();
+  });
+});
+
+describe('BlueLiveTriggerController Repeat scheduling', () => {
+  let harness: BlueLiveTriggerHarness;
+  let controller: BlueLiveTriggerController;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    controller?.stopRepeatSchedule();
+    harness?.reset();
+    vi.useRealTimers();
+  });
+
+  it('triggers enabled cells every Repeat beats and stops when disabled', async () => {
+    const data = createModernProject();
+    data.getLiveData().setTempo(120);
+    data.getLiveData().setRepeat(2);
+    data.getLiveData().setRepeatEnabled(true);
+    harness = createBlueLiveTriggerHarness(data);
+    harness.engine.start();
+    controller = new BlueLiveTriggerController(buildAccessors(harness));
+
+    expect(controller.syncRepeatSchedule()).toEqual({ ok: true });
+    await vi.advanceTimersByTimeAsync(999);
+    expect(harness.engine.submissions).toHaveLength(0);
+
+    await vi.advanceTimersByTimeAsync(1);
+    expect(harness.engine.submissions).toHaveLength(1);
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(harness.engine.submissions).toHaveLength(3);
+
+    data.getLiveData().setRepeatEnabled(false);
+    expect(controller.syncRepeatSchedule()).toEqual({ ok: true });
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(harness.engine.submissions).toHaveLength(3);
+  });
+
+  it('preserves elapsed repeat phase when Tempo or Repeat changes live', async () => {
+    const data = createModernProject();
+    data.getLiveData().setTempo(120);
+    data.getLiveData().setRepeat(4);
+    data.getLiveData().setRepeatEnabled(true);
+    harness = createBlueLiveTriggerHarness(data);
+    harness.engine.start();
+    controller = new BlueLiveTriggerController(buildAccessors(harness));
+
+    controller.syncRepeatSchedule();
+    await vi.advanceTimersByTimeAsync(1900);
+    data.getLiveData().setRepeat(2);
+    controller.syncRepeatSchedule();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(harness.engine.submissions).toHaveLength(1);
+
+    await vi.advanceTimersByTimeAsync(100);
+    expect(harness.engine.submissions).toHaveLength(2);
+    await vi.advanceTimersByTimeAsync(300);
+    data.getLiveData().setTempo(240);
+    controller.syncRepeatSchedule();
+    await vi.advanceTimersByTimeAsync(199);
+    expect(harness.engine.submissions).toHaveLength(2);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(harness.engine.submissions).toHaveLength(3);
+  });
+
+  it('queues repeat ticks that arrive while another trigger is busy', async () => {
+    const data = new BlueData();
+    const bins = new LiveObjectBins(1, 1);
+    const pythonObject = new PythonObject();
+    pythonObject.setPythonCode('score = "i1 0 1 440"');
+    const liveObject = new LiveObject();
+    liveObject.setUniqueId('repeat-python');
+    liveObject.setEnabled(true);
+    liveObject.setSoundObject(pythonObject);
+    bins.setLiveObject(0, 0, liveObject);
+    data.getLiveData().setLiveObjectBins(bins);
+    data.getLiveData().setTempo(300);
+    data.getLiveData().setRepeat(1);
+    data.getLiveData().setRepeatEnabled(true);
+    harness = createBlueLiveTriggerHarness(data);
+    harness.engine.start();
+    controller = new BlueLiveTriggerController(buildAccessors(harness));
+
+    const deferred = createDeferred();
+    harness.javaRuntime.setOptions({ waitFor: deferred.promise });
+    const manualTrigger = controller.trigger({ mode: 'selected', liveObjectId: 'repeat-python' });
+    await waitForJythonScoreCall(harness, 1);
+    controller.syncRepeatSchedule();
+    await vi.advanceTimersByTimeAsync(600);
+
+    expect(harness.javaRuntime.calls.jythonScore).toBe(1);
+    expect(harness.engine.submissions).toHaveLength(0);
+
+    deferred.resolve();
+    expect((await manualTrigger).status).toBe('submitted');
+    await waitForJythonScoreCall(harness, 4);
+    for (let attempt = 0; attempt < 200 && harness.engine.submissions.length < 4; attempt += 1) {
+      await Promise.resolve();
+    }
+    expect(harness.engine.submissions).toHaveLength(4);
+  });
+
+  it('does not schedule while the session is stopped and cancels on gate closure', async () => {
+    const data = createModernProject();
+    data.getLiveData().setRepeatEnabled(true);
+    harness = createBlueLiveTriggerHarness(data);
+    controller = new BlueLiveTriggerController(buildAccessors(harness));
+
+    controller.syncRepeatSchedule();
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(harness.engine.submissions).toHaveLength(0);
+
+    harness.engine.start();
+    controller.syncRepeatSchedule();
+    controller.closeGate();
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(harness.engine.submissions).toHaveLength(0);
   });
 });

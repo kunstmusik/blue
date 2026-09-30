@@ -124,6 +124,32 @@ describe('Runtime capability classification (T017)', () => {
     ).toBe('none');
   });
 
+  it('applies Blue Live tempo and repeat changes as live work for Blue Live only', async () => {
+    const reconciliation = new ProjectRuntimeReconciliation();
+    const timeline = makeClient();
+    const blueLive = makeClient();
+    reconciliation.registerPerformance('timeline', 1, timeline);
+    reconciliation.registerPerformance('blueLive', 2, blueLive);
+
+    const patch: ProjectDocumentPatch = {
+      blueLive: { type: 'updateTempoRepeat', patch: { tempo: 140, repeatEnabled: true } },
+    };
+    expect(classifyPatchRuntimeCapability(patch)).toBe('live');
+
+    const outcomes = await reconciliation.reconcileCommit({
+      documentId: 'doc',
+      revision: 3,
+      patches: [patch],
+    });
+
+    expect(outcomes).toMatchObject([
+      { performanceKind: 'timeline', status: 'applied' },
+      { performanceKind: 'blueLive', status: 'applied', affectedOwnerIds: ['blueLive'] },
+    ]);
+    expect(timeline.applied).toEqual([]);
+    expect(blueLive.applied).toEqual([{ kind: 'blue-live-repeat', ownerKey: 'blueLive' }]);
+  });
+
   it('classifies compiled structure and code content as restart-required', () => {
     expect(classifyPatchRuntimeCapability(globalOrcPatch())).toBe('restart-required');
     expect(classifyPatchRuntimeCapability({ tablesText: 'f 1 0 16 2 0' })).toBe('restart-required');

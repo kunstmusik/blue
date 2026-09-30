@@ -52,11 +52,17 @@ export interface RuntimeMixerGatesOperation {
   readonly expectedGeneration?: number;
 }
 
+export interface RuntimeBlueLiveRepeatOperation {
+  readonly kind: 'blue-live-repeat';
+  readonly ownerKey: 'blueLive';
+}
+
 export type RuntimeWorkOperation =
   | RuntimeChannelValueOperation
   | RuntimeAutomationOperation
   | RuntimePresetOperation
-  | RuntimeMixerGatesOperation;
+  | RuntimeMixerGatesOperation
+  | RuntimeBlueLiveRepeatOperation;
 
 /**
  * Immutable per-performance unit of runtime work derived from one committed
@@ -424,6 +430,13 @@ type BlueLiveUpdatePatch = NonNullable<ProjectDocumentPatch['blueLive']>;
 
 function classifyBlueLivePatch(patch: BlueLiveUpdatePatch): PatchRuntimeWork {
   if (patch.type === 'renameSet') return emptyPatchWork();
+  if (patch.type === 'updateTempoRepeat') {
+    return {
+      capability: 'live',
+      operations: [{ kind: 'blue-live-repeat', ownerKey: 'blueLive' }],
+      restartRequiredOwnerIds: [],
+    };
+  }
   return restartWork('blueLive');
 }
 
@@ -938,6 +951,10 @@ export class ProjectRuntimeReconciliation {
     const ownersAwaitingRestart = this.restartRequiredOwners.get(performance.kind);
 
     for (const operation of batchWork.operations) {
+      if (operation.kind === 'blue-live-repeat') {
+        if (performance.kind === 'blueLive') operations.push(operation);
+        continue;
+      }
       if (ownersAwaitingRestart?.has(operation.ownerKey)) {
         // Topology invalidation memory: the owner is not live-authorized
         // until its performance restarts with fresh compiled bindings.
@@ -984,6 +1001,9 @@ export class ProjectRuntimeReconciliation {
     operation: RuntimeWorkOperation,
   ): RuntimeWorkOperation | null {
     if (operation.kind === 'preset') return operation;
+    if (operation.kind === 'blue-live-repeat') {
+      return performance.kind === 'blueLive' ? operation : null;
+    }
 
     if (operation.kind === 'mixer-gates') {
       const binding = performance.bindings.get(

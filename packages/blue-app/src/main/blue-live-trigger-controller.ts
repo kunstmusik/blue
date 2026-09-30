@@ -69,6 +69,12 @@ export interface BlueLiveTriggerControllerAccessors {
   getCurrentFilePath(): string | null;
 }
 
+interface BlueLiveRepeatConfiguration {
+  signature: string;
+  intervalMs: number;
+  periodStart: number;
+}
+
 /**
  * Controls single-flight manual-trigger preparation and submission. At most
  * one preparation job may hold the active slot; a competing request returns
@@ -77,6 +83,11 @@ export interface BlueLiveTriggerControllerAccessors {
 export class BlueLiveTriggerController {
   private inFlight = false;
   private acceptingTriggers = true;
+  private repeatTimer: ReturnType<typeof setTimeout> | null = null;
+  private repeatGeneration = 0;
+  private repeatConfiguration: BlueLiveRepeatConfiguration | null = null;
+  private repeatQueuedTriggers = 0;
+  private drainingRepeatQueue = false;
 
   constructor(private readonly accessors: BlueLiveTriggerControllerAccessors) {}
 
@@ -89,10 +100,176 @@ export class BlueLiveTriggerController {
 
   closeGate(): void {
     this.acceptingTriggers = false;
+    this.stopRepeatSchedule();
   }
 
   openGate(): void {
     this.acceptingTriggers = true;
+    this.syncRepeatSchedule();
+  }
+
+  /**
+   * Starts, refreshes, or cancels automatic enabled-cell triggering from the
+   * canonical LiveData. Repeat is measured in quarter-note beats, matching
+   * Java Blue's BlueLiveBinding.
+   */
+  syncRepeatSchedule(): { ok: boolean; message?: string } {
+    const project = this.accessors.getCanonicalProject();
+    const session = this.accessors.getBlueLiveSession();
+    if (!this.acceptingTriggers || !project || !session?.isRunning()) {
+      this.stopRepeatSchedule();
+      return { ok: true };
+    }
+
+    const liveData = project.getLiveData();
+    if (!liveData.isRepeatEnabled()) {
+      this.stopRepeatSchedule();
+      return { ok: true };
+    }
+
+    const tempo = liveData.getTempo();
+    const repeat = liveData.getRepeat();
+    if (
+      !Number.isInteger(tempo) ||
+      tempo < 1 ||
+      tempo > 300 ||
+      !Number.isInteger(repeat) ||
+      repeat < 1 ||
+      repeat > 256
+    ) {
+      this.stopRepeatSchedule();
+      return { ok: false, message: 'Repeat requires Tempo 1–300 and Repeat 1–256 beats' };
+    }
+
+    const intervalMs = (60_000 * repeat) / tempo;
+    const signature = `${tempo}:${repeat}`;
+    if (this.repeatConfiguration?.signature === signature && this.repeatTimer !== null) {
+      return { ok: true };
+    }
+
+    const previousConfiguration = this.repeatConfiguration;
+    if (this.repeatTimer !== null) clearTimeout(this.repeatTimer);
+    this.repeatTimer = null;
+    this.repeatGeneration += 1;
+    const generation = this.repeatGeneration;
+    const now = performance.now();
+    const configuration = {
+      signature,
+      intervalMs,
+      periodStart: previousConfiguration?.periodStart ?? now,
+    };
+    this.repeatConfiguration = configuration;
+    this.scheduleRepeat(
+      generation,
+      configuration,
+      Math.max(now, configuration.periodStart + intervalMs),
+    );
+    return { ok: true };
+  }
+
+  stopRepeatSchedule(): void {
+    if (this.repeatTimer !== null) {
+      clearTimeout(this.repeatTimer);
+      this.repeatTimer = null;
+    }
+    this.repeatConfiguration = null;
+    this.repeatQueuedTriggers = 0;
+    this.repeatGeneration += 1;
+  }
+
+  private scheduleRepeat(
+    generation: number,
+    configuration: BlueLiveRepeatConfiguration,
+    deadline: number,
+  ): void {
+    const delay = Math.max(0, deadline - performance.now());
+    this.repeatTimer = setTimeout(() => {
+      this.repeatTimer = null;
+      if (generation !== this.repeatGeneration) return;
+
+      const session = this.accessors.getBlueLiveSession();
+      const liveData = this.accessors.getCanonicalProject()?.getLiveData();
+      if (!this.acceptingTriggers || !session?.isRunning() || !liveData) {
+        this.stopRepeatSchedule();
+        return;
+      }
+
+      const currentSignature = liveData.isRepeatEnabled()
+        ? `${liveData.getTempo()}:${liveData.getRepeat()}`
+        : null;
+      if (currentSignature !== configuration.signature) {
+        const result = this.syncRepeatSchedule();
+        if (!result.ok) console.warn(`[Blue Live] ${result.message}`);
+        return;
+      }
+
+      const now = performance.now();
+      const elapsedIntervals = Math.max(
+        1,
+        Math.floor((now - configuration.periodStart) / configuration.intervalMs),
+      );
+      const nextConfiguration = {
+        ...configuration,
+        periodStart: configuration.periodStart + elapsedIntervals * configuration.intervalMs,
+      };
+      this.repeatConfiguration = nextConfiguration;
+      this.scheduleRepeat(
+        generation,
+        nextConfiguration,
+        nextConfiguration.periodStart + nextConfiguration.intervalMs,
+      );
+      this.repeatQueuedTriggers += elapsedIntervals;
+      void this.drainRepeatQueue(generation);
+    }, delay);
+  }
+
+  private async drainRepeatQueue(generation: number): Promise<void> {
+    if (this.drainingRepeatQueue || generation !== this.repeatGeneration) return;
+    this.drainingRepeatQueue = true;
+    try {
+      while (this.repeatQueuedTriggers > 0 && generation === this.repeatGeneration) {
+        const session = this.accessors.getBlueLiveSession();
+        const liveData = this.accessors.getCanonicalProject()?.getLiveData();
+        if (!this.acceptingTriggers || !session?.isRunning() || !liveData?.isRepeatEnabled()) {
+          this.stopRepeatSchedule();
+          return;
+        }
+
+        this.repeatQueuedTriggers -= 1;
+        let result: LegacyBlueLiveTriggerResult;
+        try {
+          result = await this.trigger({ mode: 'enabled' });
+        } catch (error: unknown) {
+          console.warn(
+            `[Blue Live Repeat] ${error instanceof Error ? error.message : String(error)}`,
+          );
+          continue;
+        }
+
+        if (result.status === 'busy') {
+          this.repeatQueuedTriggers += 1;
+          return;
+        }
+        if (
+          !result.ok &&
+          result.status !== 'stale' &&
+          result.code !== 'not-running' &&
+          result.code !== 'stale-document' &&
+          result.code !== 'stale-session'
+        ) {
+          console.warn(`[Blue Live Repeat] ${result.message ?? result.status}`);
+        }
+        if (result.code === 'not-running') {
+          this.stopRepeatSchedule();
+          return;
+        }
+      }
+    } finally {
+      this.drainingRepeatQueue = false;
+      if (this.repeatQueuedTriggers > 0 && !this.inFlight && this.repeatConfiguration) {
+        void this.drainRepeatQueue(this.repeatGeneration);
+      }
+    }
   }
 
   /**
@@ -140,6 +317,9 @@ export class BlueLiveTriggerController {
       );
     } finally {
       this.inFlight = false;
+      if (this.repeatQueuedTriggers > 0 && this.repeatConfiguration) {
+        void this.drainRepeatQueue(this.repeatGeneration);
+      }
     }
   }
 
