@@ -17,7 +17,7 @@ import type {
 } from '../components/workbench/panels/score/types';
 import type { ScoreLayerGroupSnapshot, TrackLayerGroupSnapshot } from '../../shared/project-editor';
 import TrackLayerGroupCanvas from '../components/workbench/panels/score/layer-groups/TrackLayerGroupCanvas';
-import { useProjectStore } from '../stores/project-store';
+import { acceptProjectDocumentRevision, useProjectStore } from '../stores/project-store';
 import { useLibraryStore } from '../stores/library-store';
 import { useMidiRoutingStore } from '../stores/midi-routing-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
@@ -230,6 +230,7 @@ function clickContextMenuItem(label: string): void {
 
 const originalProjectActions = {
   applyProjectDocumentPatch: useProjectStore.getState().applyProjectDocumentPatch,
+  flushPendingPatches: useProjectStore.getState().flushPendingPatches,
   moveScoreObjects: useProjectStore.getState().moveScoreObjects,
   resizeScoreObjects: useProjectStore.getState().resizeScoreObjects,
 };
@@ -237,8 +238,21 @@ const originalBlueAPI = window.blueAPI;
 const originalCaptureScoreSoundObject = useLibraryStore.getState().captureScoreSoundObject;
 const originalSelect = useScoreSelectionStore.getState().select;
 const originalOpenPanel = useWorkbenchStore.getState().openPanel;
+type ViewportDimension = 'clientWidth' | 'clientHeight';
+let originalViewportDimensions: Array<{
+  element: HTMLElement;
+  dimension: ViewportDimension;
+  descriptor: PropertyDescriptor | undefined;
+}> = [];
 
 beforeEach(() => {
+  originalViewportDimensions = [document.documentElement, document.body].flatMap((element) =>
+    (['clientWidth', 'clientHeight'] as const).map((dimension) => ({
+      element,
+      dimension,
+      descriptor: Object.getOwnPropertyDescriptor(element, dimension),
+    })),
+  );
   useProjectStore.setState({
     applyProjectDocumentPatch: vi.fn().mockResolvedValue(undefined),
     moveScoreObjects: vi.fn(),
@@ -275,9 +289,45 @@ afterEach(() => {
   >);
   window.blueAPI = originalBlueAPI;
   document.body.innerHTML = '';
+  for (const { element, dimension, descriptor } of originalViewportDimensions) {
+    if (descriptor) {
+      Object.defineProperty(element, dimension, descriptor);
+    } else {
+      Reflect.deleteProperty(element, dimension);
+    }
+  }
 });
 
 describe('Track layer timeline gestures', () => {
+  it('settles an instrument edit before adding a Track SoundObject with the current revision', async () => {
+    const flushPendingPatches = vi.fn(async () => {
+      acceptProjectDocumentRevision(1, 3);
+    });
+    useProjectStore.setState({ flushPendingPatches });
+    const { root, surface } = renderTrackCanvas(makeTrackGroup([]));
+
+    act(() => mouse(surface, 'contextmenu', 100, 15));
+    clickContextMenuItem('Add SoundObject');
+    clickContextMenuItem('GenericScore');
+    await act(async () => {
+      await flushPendingPatches.mock.results[0]?.value;
+    });
+
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<
+      typeof vi.fn
+    >;
+    expect(flushPendingPatches).toHaveBeenCalledOnce();
+    expect(applyPatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        score: expect.objectContaining({
+          type: 'addTrackItem',
+          track: expect.objectContaining({ projectRevision: 3 }),
+        }),
+      }),
+      { label: 'Add Score Object' },
+    );
+    act(() => root.unmount());
+  });
   it('uses the topmost overlapping item and correct row hit target', () => {
     const layers = [
       makeLayer([makeItem('bottom', 0, 4), makeItem('top', 1, 2)]),
@@ -714,6 +764,7 @@ describe('Track layer timeline gestures', () => {
     });
 
     const picker = document.querySelector<HTMLElement>('[role="dialog"]')!;
+    await vi.waitFor(() => expect(picker.dataset.placement).toBe('bottom'));
     expect(picker.dataset.placement).toBe('bottom');
     expect(Number.parseFloat(picker.style.top)).toBeGreaterThanOrEqual(52);
     expect(document.querySelector('[role="dialog"]')).toBeTruthy();
