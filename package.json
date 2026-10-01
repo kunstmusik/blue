@@ -4,6 +4,7 @@
   "packageManager": "pnpm@12.8.1",
   "scripts": {
     "build": "pnpm -r run build",
+    "build:manual": "pnpm --filter @blue/app manual:build",
     "app:package": "pnpm --filter @blue/app package:current",
     "clean": "node scripts/clean.mjs",
     "test": "pnpm -r run test && pnpm test:scripts",
