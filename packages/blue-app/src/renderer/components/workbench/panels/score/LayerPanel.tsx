@@ -102,6 +102,7 @@ export default function LayerPanel({
                   snapEnabled={snapEnabled}
                   snapValue={snapValue}
                   tempo={tempo}
+                  tempoMap={tempoMap}
                   smpteFrameRate={smpteFrameRate}
                   meterMap={meterMap}
                   onDoubleClickObject={(objectId) => {
@@ -191,6 +192,7 @@ export default function LayerPanel({
           snapEnabled={snapEnabled}
           snapValue={snapValue}
           tempo={tempo}
+          tempoMap={tempoMap}
           smpteFrameRate={smpteFrameRate}
         />
       )}

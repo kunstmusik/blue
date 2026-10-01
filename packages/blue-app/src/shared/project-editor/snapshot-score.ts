@@ -704,6 +704,7 @@ function createScoreTimeStateSnapshot(data: BlueData): ScoreTimeStateSnapshot {
     meterRowVisible: ts.isMeterRowVisible(),
     markersRowVisible: ts.isMarkersRowVisible(),
     smpteFrameRate: ts.getSmpteFrameRate(),
+    smpteDropFrame: ts.isSmpteDropFrame(),
     zoomIterations: ts.getZoomIterations(),
   };
 }
@@ -1161,6 +1162,7 @@ export function createEmptyScoreDocumentSnapshot(): ScoreDocumentSnapshot {
       meterRowVisible: true,
       markersRowVisible: true,
       smpteFrameRate: 24,
+      smpteDropFrame: false,
       zoomIterations: 0,
     },
     markers: [],
@@ -1508,6 +1510,7 @@ function createTimeValueSnapshot(value: number, timeBase: string): TimeValueSnap
 function createTimeConversionContext(
   context: TimeContext,
   smpteFrameRate: number,
+  smpteDropFrame: boolean,
 ): TimeConversionContext {
   const meterMap = context.getMeterMap();
   const meterEntries: TimeConversionMeterEntry[] = [];
@@ -1532,6 +1535,7 @@ function createTimeConversionContext(
     })),
     sampleRate: context.getSampleRate(),
     smpteFrameRate,
+    smpteDropFrame,
   };
 }
 
@@ -1568,6 +1572,7 @@ export function createScoreObjectEditorDocument(
       timeContext: createTimeConversionContext(
         data.getScore().getTimeContext(),
         data.getScore().getTimeState().getSmpteFrameRate(),
+        data.getScore().getTimeState().isSmpteDropFrame(),
       ),
     };
   }
@@ -2041,7 +2046,11 @@ export function createScoreObjectEditorDocument(
     target,
     shared,
     editor,
-    timeContext: createTimeConversionContext(context, score.getTimeState().getSmpteFrameRate()),
+    timeContext: createTimeConversionContext(
+      context,
+      score.getTimeState().getSmpteFrameRate(),
+      score.getTimeState().isSmpteDropFrame(),
+    ),
   };
 }
 

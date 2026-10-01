@@ -1,3 +1,4 @@
+import { formatSMPTE } from '../../../../time/time-unit-logic';
 import { useState, useCallback } from 'react';
 import type { RefObject } from 'react';
 import type {
@@ -10,7 +11,13 @@ import type {
   TempoMapPatch,
   MeterMapPatch,
 } from '../../../../../shared/project-editor';
-import { TimeBase, type SnapValueName } from '@blue/data';
+import {
+  TimeBase,
+  resolveSmpteRate,
+  secondsToSmpteFrame,
+  smpteFrameToSeconds,
+  type SnapValueName,
+} from '@blue/data';
 import MeterRegionBar from './MeterRegionBar';
 import MarkersBar from './MarkersBar';
 import TempoRegionBar from './TempoRegionBar';
@@ -91,6 +98,8 @@ export default function ColumnHeader({
     >
       {timeState.tempoRowVisible && (
         <TempoRegionBar
+          smpteFrameRate={smpteFrameRate}
+          sampleRate={sampleRate}
           tempoMap={tempoMap}
           meterMap={meterMap}
           totalBeats={totalBeats}
@@ -104,6 +113,8 @@ export default function ColumnHeader({
       )}
       {timeState.tempoRowVisible && tempoMap.visible && (
         <TempoLineView
+          smpteFrameRate={smpteFrameRate}
+          sampleRate={sampleRate}
           tempoMap={tempoMap}
           meterMap={meterMap}
           totalBeats={totalBeats}
@@ -126,6 +137,8 @@ export default function ColumnHeader({
         onOpenEntryDialog={handleOpenMeterDialog}
       />
       <MarkersBar
+        tempoMap={tempoMap}
+        timeDisplay={timeState.primaryTimeDisplay}
         markers={markers}
         totalBeats={totalBeats}
         pixelsPerBeat={pixelsPerBeat}
@@ -137,6 +150,7 @@ export default function ColumnHeader({
         rootTimelineOnly={rootTimelineOnly}
         tempo={tempo}
         smpteFrameRate={smpteFrameRate}
+        smpteDropFrame={timeState.smpteDropFrame}
         sampleRate={sampleRate}
       />
 
@@ -147,6 +161,7 @@ export default function ColumnHeader({
         tempoMap={tempoMap}
         meters={meters}
         smpteFrameRate={smpteFrameRate}
+        smpteDropFrame={timeState.smpteDropFrame}
         sampleRate={sampleRate}
         renderStartTime={renderStartTime}
         renderEndTime={renderEndTime}
@@ -162,6 +177,7 @@ export default function ColumnHeader({
           tempoMap={tempoMap}
           meters={meters}
           smpteFrameRate={smpteFrameRate}
+          smpteDropFrame={timeState.smpteDropFrame}
           sampleRate={sampleRate}
           secondary
         />
@@ -216,6 +232,7 @@ function TimeBar({
   tempoMap,
   meters,
   smpteFrameRate,
+  smpteDropFrame,
   sampleRate,
   secondary,
   renderStartTime,
@@ -229,6 +246,7 @@ function TimeBar({
   tempoMap: TempoMapSnapshot;
   meters: MeterSnapshot[];
   smpteFrameRate: number;
+  smpteDropFrame?: boolean;
   sampleRate: number;
   secondary?: boolean;
   renderStartTime?: number;
@@ -244,6 +262,7 @@ function TimeBar({
     meters,
     smpteFrameRate,
     sampleRate,
+    smpteDropFrame,
   );
   const ROW_HEIGHT = 20;
   const hasRenderEnd =
@@ -320,13 +339,14 @@ function computeMarks(
   meters: MeterSnapshot[],
   smpteFrameRate: number,
   sampleRate: number,
+  smpteDropFrame = false,
 ): Mark[] {
   switch (timeDisplay) {
     case TimeBase.TIME:
     case TimeBase.SECONDS:
       return computeTimeMarks(totalBeats, pixelsPerBeat, tempoMap, timeDisplay);
     case TimeBase.SMPTE:
-      return computeSmpteMarks(totalBeats, pixelsPerBeat, tempoMap, smpteFrameRate);
+      return computeSmpteMarks(totalBeats, pixelsPerBeat, tempoMap, smpteFrameRate, smpteDropFrame);
     case TimeBase.FRAME:
       return computeSamplesMarks(totalBeats, pixelsPerBeat, tempoMap, sampleRate);
     case TimeBase.BBT:
@@ -456,7 +476,7 @@ function createTempoMapAdapter(snapshot: TempoMapSnapshot): TempoMapAdapter {
       return current.beat + elapsed / factor1;
     }
 
-    return current.beat + (Math.sqrt(Math.max(0, discriminant)) - factor1) / acceleration;
+    return current.beat + (2 * elapsed) / (Math.sqrt(Math.max(0, discriminant)) + factor1);
   };
 
   const adapter = { beatsToSeconds, secondsToBeats };
@@ -577,67 +597,40 @@ function computeSmpteMarks(
   pixelsPerBeat: number,
   tempoMap: TempoMapSnapshot,
   frameRate: number,
+  dropFrame: boolean,
 ): Mark[] {
-  const tempoAdapter = createTempoMapAdapter(tempoMap);
-  const approxWidth = totalBeats * pixelsPerBeat;
-  const startSeconds = 0;
-  const endSeconds = tempoAdapter.beatsToSeconds(totalBeats);
-  const frameDuration = 1.0 / frameRate;
-
-  const pixelsPerSecond = endSeconds > 0 ? approxWidth / endSeconds : 1;
-  const minSecPerLabel = 80 / pixelsPerSecond;
-
-  const increments = [
-    frameDuration,
-    2 * frameDuration,
-    5 * frameDuration,
-    10 * frameDuration,
-    0.5,
+  const rate = resolveSmpteRate(frameRate);
+  if (!rate) return [];
+  const adapter = createTempoMapAdapter(tempoMap);
+  const endSeconds = adapter.beatsToSeconds(totalBeats);
+  const lastFrame = secondsToSmpteFrame(endSeconds, frameRate);
+  if (lastFrame === null || totalBeats <= 0) return [];
+  const pixelsPerSecond = (totalBeats * pixelsPerBeat) / endSeconds;
+  const minimumStride = ((80 / pixelsPerSecond) * rate.numerator) / rate.denominator;
+  const strides = [
     1,
     2,
     5,
     10,
-    30,
-    60,
-    120,
-    300,
-    600,
+    rate.nominal,
+    2 * rate.nominal,
+    5 * rate.nominal,
+    10 * rate.nominal,
+    30 * rate.nominal,
+    60 * rate.nominal,
+    600 * rate.nominal,
   ];
-  let increment = increments[increments.length - 1];
-  for (const inc of increments) {
-    if (minSecPerLabel <= inc) {
-      increment = inc;
-      break;
-    }
-  }
-  const alignedStart = Math.floor(startSeconds / increment) * increment;
+  const stride = strides.find((value) => value >= minimumStride) ?? Math.ceil(minimumStride);
   const marks: Mark[] = [];
-
-  for (let sec = alignedStart; sec <= endSeconds + increment * 0.5; sec += increment) {
-    if (sec < 0) continue;
-    const beatPos = tempoAdapter.secondsToBeats(sec);
-    const x = totalBeats > 0 ? (beatPos / totalBeats) * approxWidth : 0;
-    if (x >= 0 && x <= approxWidth) {
-      marks.push({
-        x,
-        label: formatSmpteLabel(sec, frameRate),
-        type: 'major',
-      });
-    }
+  for (let frame = 0; frame <= lastFrame; frame += stride) {
+    const seconds = smpteFrameToSeconds(frame, frameRate)!;
+    marks.push({
+      x: adapter.secondsToBeats(seconds) * pixelsPerBeat,
+      label: formatSMPTE(seconds, frameRate, dropFrame),
+      type: 'major',
+    });
   }
   return marks;
-}
-
-function formatSmpteLabel(seconds: number, frameRate: number): string {
-  const totalSecs = Math.floor(seconds);
-  const hours = Math.floor(totalSecs / 3600);
-  const mins = Math.floor((totalSecs % 3600) / 60);
-  const secs = totalSecs % 60;
-  let frames = Math.floor((seconds - totalSecs) * frameRate);
-  const maxFrames = Math.floor(frameRate) - 1;
-  if (frames > maxFrames) frames = maxFrames;
-  if (frames < 0) frames = 0;
-  return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}:${String(frames).padStart(2, '0')}`;
 }
 
 function computeSamplesMarks(

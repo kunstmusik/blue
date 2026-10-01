@@ -491,6 +491,7 @@ export default function ScorePanel() {
     rootTimelineOnly: isRootTimeline,
     scrollContainerRef,
     tempo: initialTempo,
+    tempoMap: transport.tempoMap,
     smpteFrameRate: timeState.smpteFrameRate || 24,
     sampleRate: transport.sampleRate,
     onUserNavigation: suspendForUserNavigation,
@@ -750,26 +751,23 @@ export default function ScorePanel() {
   }, [scrollContainerRef]);
 
   const handleRulerConfigApply = useCallback((changes: RulerConfigChanges) => {
-    setTimeState((prev) => ({
-      ...prev,
-      primaryTimeDisplay: changes.primaryTimeDisplay,
-      secondaryRulerEnabled: changes.secondaryRulerEnabled,
-      secondaryTimeDisplay: changes.secondaryTimeDisplay,
-      smpteFrameRate: changes.smpteFrameRate,
-    }));
-    useProjectStore.getState().applyProjectDocumentPatch({
-      score: {
-        type: 'updateTimeState',
-        patch: {
-          primaryTimeDisplay: changes.primaryTimeDisplay,
-          secondaryRulerEnabled: changes.secondaryRulerEnabled,
-          secondaryTimeDisplay: changes.secondaryTimeDisplay,
-          smpteFrameRate: changes.smpteFrameRate,
-          scoreObjectUpdateMode: changes.scoreObjectUpdateMode,
-          markerUpdateMode: changes.markerUpdateMode,
+    useProjectStore.getState().applyProjectDocumentPatch(
+      {
+        score: {
+          type: 'updateTimeState',
+          patch: {
+            primaryTimeDisplay: changes.primaryTimeDisplay,
+            secondaryRulerEnabled: changes.secondaryRulerEnabled,
+            secondaryTimeDisplay: changes.secondaryTimeDisplay,
+            smpteFrameRate: changes.smpteFrameRate,
+            smpteDropFrame: changes.smpteDropFrame,
+            scoreObjectUpdateMode: changes.scoreObjectUpdateMode,
+            markerUpdateMode: changes.markerUpdateMode,
+          },
         },
       },
-    });
+      { label: 'Change SMPTE Format' },
+    );
   }, []);
 
   const handleRowVisibilityChange = useCallback((key: RowVisibilityKey, value: boolean) => {
@@ -1025,6 +1023,7 @@ export default function ScorePanel() {
               tempoPoints: transport.tempoMap.points,
               sampleRate: transport.sampleRate,
               smpteFrameRate: timeState.smpteFrameRate,
+              smpteDropFrame: timeState.smpteDropFrame,
             }}
             onCommit={handleTempoPatch}
             onClose={() => setTempoMapEditorOpen(false)}

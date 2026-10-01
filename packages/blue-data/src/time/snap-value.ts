@@ -1,3 +1,4 @@
+import { resolveSmpteRate } from './smpte-timecode';
 /**
  * SnapValue — predefined snap values for timeline editing.
  * Mirrors the Java SnapValue enum.
@@ -90,8 +91,10 @@ export function snapValueToBeats(
       return def.baseValue;
     case 'TIME':
       return def.baseValue * (tempo / 60.0);
-    case 'SMPTE':
-      return def.baseValue * (1.0 / smpteFrameRate) * (tempo / 60.0);
+    case 'SMPTE': {
+      const rate = resolveSmpteRate(smpteFrameRate);
+      return rate ? def.baseValue * (rate.denominator / rate.numerator) * (tempo / 60.0) : 0;
+    }
     case 'SAMPLE':
       return def.baseValue * (1.0 / sampleRate) * (tempo / 60.0);
     case 'AUTO': {

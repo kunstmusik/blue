@@ -128,3 +128,22 @@ describe('toolbar playhead sync preferences', () => {
     expect(bbfPlayhead.primaryText).toBe('2.1.25');
   });
 });
+
+it('keeps primary and secondary SMPTE displays on the selected counting mode', () => {
+  for (const [dropFrame, expected] of [
+    [false, '00:01:00:00'],
+    [true, '00:01:00;02'],
+  ] as const) {
+    const transport = {
+      ...createPlayheadTransport(60.06),
+      smpteFrameRate: 29.97,
+      smpteDropFrame: dropFrame,
+    };
+    const display = buildPlayheadDisplayState(transport, idlePlayback, {
+      primaryMode: TimeBase.SMPTE,
+      secondaryMode: TimeBase.SMPTE,
+    });
+    expect(display.primaryText).toBe(expected);
+    expect(display.secondaryText).toBe(expected);
+  }
+});

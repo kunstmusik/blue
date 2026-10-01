@@ -135,6 +135,7 @@ export interface ScoreTimeStateSnapshot {
   meterRowVisible: boolean;
   markersRowVisible: boolean;
   smpteFrameRate: number;
+  smpteDropFrame: boolean;
   zoomIterations: number;
   scoreObjectUpdateMode?: 'UPDATE_ALL' | 'UPDATE_MATCHING' | null;
   markerUpdateMode?: 'UPDATE_ALL' | 'UPDATE_MATCHING' | null;
@@ -469,6 +470,7 @@ export interface TimeConversionContext {
   tempoPoints?: TempoPointSnapshot[];
   sampleRate: number;
   smpteFrameRate?: number;
+  smpteDropFrame?: boolean;
 }
 
 export interface TimeValueSnapshot {
@@ -1216,6 +1218,7 @@ export interface ToolbarProjectTransportSnapshot {
   meterMap: MeterMapSnapshot;
   sampleRate: number;
   smpteFrameRate: number;
+  smpteDropFrame: boolean;
 }
 
 export interface PlaybackClockSnapshot {

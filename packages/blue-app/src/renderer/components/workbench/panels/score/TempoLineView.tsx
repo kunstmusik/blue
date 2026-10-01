@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+import { createFrameSnapContext } from './snap-grid-utils';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import type {
   MeterMapSnapshot,
@@ -29,6 +31,8 @@ interface TempoLineViewProps {
   pixelsPerBeat: number;
   snapEnabled: boolean;
   snapValue: SnapValueName;
+  smpteFrameRate?: number;
+  sampleRate?: number;
   rootTimelineOnly: boolean;
   scrollContainerRef: React.RefObject<HTMLDivElement | null>;
   onTempoPatch: (patch: TempoMapPatch) => void;
@@ -55,10 +59,16 @@ export default function TempoLineView({
   pixelsPerBeat,
   snapEnabled,
   snapValue,
+  smpteFrameRate = 24,
+  sampleRate = 44100,
   rootTimelineOnly,
   scrollContainerRef,
   onTempoPatch,
 }: TempoLineViewProps) {
+  const frameSnapContext = useMemo(
+    () => createFrameSnapContext(tempoMap, smpteFrameRate),
+    [tempoMap, smpteFrameRate],
+  );
   const points = tempoMap.points;
   const enabled = tempoMap.enabled;
   const contentWidth = totalBeats * pixelsPerBeat;
@@ -136,9 +146,10 @@ export default function TempoLineView({
           snapValue,
           pixelsPerBeat,
           points[0]?.tempo ?? 60,
-          30,
-          44100,
+          smpteFrameRate,
+          sampleRate,
           meterMap,
+          frameSnapContext,
         );
         const tempo = screenYToTempo(y, TEMPO_LINE_VIEW_HEIGHT);
         onTempoPatch({
@@ -157,6 +168,9 @@ export default function TempoLineView({
       snapEnabled,
       snapValue,
       meterMap,
+      smpteFrameRate,
+      sampleRate,
+      frameSnapContext,
       points,
       totalBeats,
       onTempoPatch,
@@ -210,9 +224,10 @@ export default function TempoLineView({
           snapValue,
           pixelsPerBeat,
           points[0]?.tempo ?? 60,
-          30,
-          44100,
+          smpteFrameRate,
+          sampleRate,
           meterMap,
+          frameSnapContext,
         );
       }
 
@@ -231,6 +246,10 @@ export default function TempoLineView({
       snapEnabled,
       snapValue,
       meterMap,
+      smpteFrameRate,
+      sampleRate,
+      frameSnapContext,
+      points,
       findPointAt,
       getContentPoint,
       selectedPoint,
@@ -298,9 +317,22 @@ export default function TempoLineView({
 
   const snapLines: number[] = [];
   if (snapEnabled) {
-    const snapBeats = snapValueToBeats(snapValue, points[0]?.tempo ?? 60, 30, 44100, pixelsPerBeat);
+    const snapBeats = snapValueToBeats(
+      snapValue,
+      points[0]?.tempo ?? 60,
+      smpteFrameRate,
+      sampleRate,
+      pixelsPerBeat,
+    );
     if (snapBeats > 0) {
-      for (const beat of deriveSnapLineBeats(snapValue, snapBeats, meterMap, totalBeats)) {
+      for (const beat of deriveSnapLineBeats(
+        snapValue,
+        snapBeats,
+        meterMap,
+        totalBeats,
+        frameSnapContext,
+        pixelsPerBeat,
+      )) {
         snapLines.push(beatToScreenX(beat, pixelsPerBeat));
       }
     }

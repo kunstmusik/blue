@@ -1,3 +1,4 @@
+import { formatSMPTE } from '../../time/time-unit-logic';
 import type { PlaybackStatus } from '../../stores/playback-store';
 import type { MeterMapSnapshot, TempoMapSnapshot } from '../../../shared/project-editor';
 import { TimeBase } from '../../../shared/time-base';
@@ -6,6 +7,7 @@ interface TransportFormatAdapter {
   tempoMap: TempoMapSnapshot;
   meterMap: MeterMapSnapshot;
   smpteFrameRate: number;
+  smpteDropFrame?: boolean;
   sampleRate: number;
 }
 
@@ -38,6 +40,7 @@ export interface ToolbarPlayheadTransportSnapshot {
   tempoMap: TempoMapSnapshot;
   meterMap: MeterMapSnapshot;
   smpteFrameRate: number;
+  smpteDropFrame?: boolean;
   sampleRate: number;
 }
 
@@ -47,6 +50,7 @@ export interface ToolbarSelectionTransportSnapshot {
   tempoMap: TempoMapSnapshot;
   meterMap: MeterMapSnapshot;
   smpteFrameRate: number;
+  smpteDropFrame?: boolean;
   sampleRate: number;
 }
 
@@ -211,7 +215,7 @@ function createTempoMapAdapter(snapshot: TempoMapSnapshot): TempoMapAdapter {
       return current.beat + elapsed / factor1;
     }
 
-    return current.beat + (Math.sqrt(Math.max(0, discriminant)) - factor1) / acceleration;
+    return current.beat + (2 * elapsed) / (Math.sqrt(Math.max(0, discriminant)) + factor1);
   };
 
   const adapter = { beatsToSeconds, secondsToBeats };
@@ -346,20 +350,6 @@ function formatSeconds(seconds: number): string {
   return `${minutes}:${String(secs).padStart(2, '0')}.${String(millis).padStart(3, '0')}`;
 }
 
-function formatSmpte(seconds: number, frameRate: number): string {
-  const safeFrameRate = frameRate > 0 ? frameRate : 30;
-  const totalSeconds = Math.max(0, seconds);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const secs = Math.floor(totalSeconds % 60);
-  const frames = Math.min(
-    Math.max(0, Math.floor((totalSeconds - Math.floor(totalSeconds)) * safeFrameRate)),
-    Math.max(0, Math.floor(safeFrameRate) - 1),
-  );
-
-  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}:${String(frames).padStart(2, '0')}`;
-}
-
 function formatToolbarPosition(
   beat: number,
   format: TimeBase,
@@ -368,7 +358,11 @@ function formatToolbarPosition(
   const tempoAdapter = createTempoMapAdapter(transport.tempoMap);
 
   if (format === TimeBase.SMPTE) {
-    return formatSmpte(tempoAdapter.beatsToSeconds(beat), transport.smpteFrameRate);
+    return formatSMPTE(
+      tempoAdapter.beatsToSeconds(beat),
+      transport.smpteFrameRate,
+      transport.smpteDropFrame ?? false,
+    );
   }
 
   switch (format) {

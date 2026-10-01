@@ -46,6 +46,16 @@ function isZeroBeat(beat: number): boolean {
   return Math.abs(beat) < BEAT_EPSILON;
 }
 
+function parseRowBeat(
+  row: TableRow,
+  context: TimeConversionContext,
+  text = row.beatText,
+): number | null {
+  return text === formatForBase(row.beat, row.timeBase, context, false)
+    ? row.beat
+    : parseForBase(text, row.timeBase, context, false);
+}
+
 export default function TempoMapEditorDialog({
   tempoMap,
   timeContext,
@@ -90,9 +100,7 @@ export default function TempoMapEditorDialog({
   const validateBeat = useCallback(
     (index: number, value: string): number | null => {
       const row = rows[index];
-      const beat = row
-        ? parseForBase(value, row.timeBase, timeContext, false)
-        : parseNumberText(value);
+      const beat = row ? parseRowBeat(row, timeContext, value) : parseNumberText(value);
       if (beat == null || beat < 0) {
         setError('Start time must be valid for the selected time unit');
         return null;
@@ -100,7 +108,7 @@ export default function TempoMapEditorDialog({
 
       const duplicate = rows.some((row, i) => {
         if (i === index) return false;
-        const otherBeat = parseForBase(row.beatText, row.timeBase, timeContext, false);
+        const otherBeat = parseRowBeat(row, timeContext);
         return otherBeat != null && Math.abs(otherBeat - beat) < BEAT_EPSILON;
       });
       if (duplicate) {
@@ -131,9 +139,7 @@ export default function TempoMapEditorDialog({
       setRows((prev) => {
         if (prev.length <= 1) return prev;
         const row = prev[index];
-        const beat = row
-          ? (parseForBase(row.beatText, row.timeBase, timeContext, false) ?? row.beat)
-          : null;
+        const beat = row ? (parseRowBeat(row, timeContext) ?? row.beat) : null;
         if (beat != null && isZeroBeat(beat)) return prev;
         return prev.filter((_, i) => i !== index);
       });
@@ -173,7 +179,7 @@ export default function TempoMapEditorDialog({
       if (!row) return false;
       const beat = validateBeat(index, value ?? row.beatText);
       if (beat == null) {
-        revertBeat(index);
+        if (row.timeBase !== 'SMPTE') revertBeat(index);
         return false;
       }
       setRows((prev) => {
@@ -195,8 +201,11 @@ export default function TempoMapEditorDialog({
       setRows((prev) => {
         const row = prev[index];
         if (!row) return prev;
-        const currentBeat =
-          parseForBase(row.beatText, row.timeBase, timeContext, false) ?? row.beat;
+        const currentBeat = parseRowBeat(row, timeContext);
+        if (currentBeat === null) {
+          setError('Enter a valid time before changing format.');
+          return prev;
+        }
         const next = [...prev];
         next[index] = {
           ...row,
@@ -256,7 +265,7 @@ export default function TempoMapEditorDialog({
     const points: TempoPointSnapshot[] = [];
     const seenBeats: number[] = [];
     for (const row of rows) {
-      const beat = parseForBase(row.beatText, row.timeBase, timeContext, false);
+      const beat = parseRowBeat(row, timeContext);
       if (beat == null || beat < 0) {
         setError('All start times must be valid for their selected time units');
         return;
@@ -339,8 +348,7 @@ export default function TempoMapEditorDialog({
             </thead>
             <tbody>
               {rows.map((row, i) => {
-                const rowBeat =
-                  parseForBase(row.beatText, row.timeBase, timeContext, false) ?? row.beat;
+                const rowBeat = parseRowBeat(row, timeContext) ?? row.beat;
                 const isTimeZero = isZeroBeat(rowBeat);
                 const canDeleteRow = canDelete && !isTimeZero;
 
@@ -360,6 +368,9 @@ export default function TempoMapEditorDialog({
                         type="text"
                         aria-label={`Start time for tempo point ${i + 1}`}
                         className="w-full rounded border border-app-border/30 bg-app-field px-1.5 py-0.5 text-role-body text-app-text outline-none focus:border-app-border/60"
+                        aria-invalid={
+                          row.timeBase === 'SMPTE' && parseRowBeat(row, timeContext) === null
+                        }
                         value={row.beatText}
                         onChange={(e) => handleBeatChange(i, e.target.value)}
                         onBlur={(e) => commitBeat(i, e.currentTarget.value)}
@@ -371,6 +382,11 @@ export default function TempoMapEditorDialog({
                         }}
                         disabled={isTimeZero}
                       />
+                      {row.timeBase === 'SMPTE' && parseRowBeat(row, timeContext) === null && (
+                        <span role="alert" className="text-role-callout text-red-400">
+                          Invalid SMPTE label for the selected counting mode.
+                        </span>
+                      )}
                     </td>
                     <td className="py-1 pr-2">
                       <DraftNumberInput

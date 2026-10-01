@@ -305,7 +305,7 @@ export class TempoMap {
     if (acceleration === 0) {
       return point.beat + elapsed / factor1;
     }
-    return point.beat + (Math.sqrt(Math.max(0, discriminant)) - factor1) / acceleration;
+    return point.beat + (2 * elapsed) / (Math.sqrt(Math.max(0, discriminant)) + factor1);
   }
 
   /**

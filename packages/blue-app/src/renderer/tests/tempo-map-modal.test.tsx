@@ -84,6 +84,30 @@ afterEach(() => {
 });
 
 describe('TempoMapEditorDialog', () => {
+  it('preserves a subframe tempo-point position when accepting unchanged SMPTE text', () => {
+    const tempoMap: TempoMapSnapshot = {
+      enabled: false,
+      visible: true,
+      points: [
+        { beat: 0, tempo: 60, curveType: 'constant', timeBase: 'BEATS' },
+        { beat: 60.065, tempo: 120, curveType: 'constant', timeBase: 'SMPTE' },
+      ],
+    };
+    const { container, root, onCommit } = renderDialog(tempoMap, {
+      ...BASE_TIME_CONTEXT,
+      tempoEnabled: false,
+      smpteFrameRate: 29.97,
+      smpteDropFrame: true,
+    });
+    const ok = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.textContent === 'OK',
+    )!;
+    act(() => ok.click());
+    expect(onCommit).toHaveBeenCalledWith({ type: 'replaceTempoMap', map: tempoMap });
+    act(() => root.unmount());
+    container.remove();
+  });
+
   it('adds a new row at last beat plus four with the previous tempo', () => {
     const { container, root } = renderDialog();
     const addButton = Array.from(container.querySelectorAll('button')).find(

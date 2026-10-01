@@ -160,34 +160,39 @@ function makeSoundGroup(items: ScoreRowObjectSnapshot[]): ScoreLayerGroupSnapsho
 function renderTrackCanvas(
   group: TrackLayerGroupSnapshot,
   allLayerGroups: ScoreLayerGroupSnapshot[] = [group],
+  options: Partial<React.ComponentProps<typeof TrackLayerGroupCanvas>> = {},
 ) {
   const host = document.createElement('div');
   document.body.appendChild(host);
   const root = createRoot(host);
-  act(() => {
-    root.render(
-      <TrackLayerGroupCanvas
-        group={group}
-        allLayerGroups={allLayerGroups}
-        projectSessionId={1}
-        projectRevision={1}
-        scoreRootGroupId={group.groupId}
-        scoreContainerPath={[]}
-        totalBeats={16}
-        pixelsPerBeat={25}
-        snapEnabled={false}
-        snapValue="BEAT"
-        tempo={120}
-        tempoMap={{
-          enabled: false,
-          visible: false,
-          points: [{ beat: 0, tempo: 60, curveType: 'constant' }],
-        }}
-        smpteFrameRate={30}
-        meterMap={{ entries: [{ measure: 0, numBeats: 4, beatLength: 4, startBeat: 0 }] }}
-      />,
-    );
-  });
+  const render = (overrides: Partial<React.ComponentProps<typeof TrackLayerGroupCanvas>> = {}) =>
+    act(() => {
+      root.render(
+        <TrackLayerGroupCanvas
+          group={group}
+          allLayerGroups={allLayerGroups}
+          projectSessionId={1}
+          projectRevision={1}
+          scoreRootGroupId={group.groupId}
+          scoreContainerPath={[]}
+          totalBeats={16}
+          pixelsPerBeat={25}
+          snapEnabled={false}
+          snapValue="BEAT"
+          tempo={120}
+          tempoMap={{
+            enabled: false,
+            visible: false,
+            points: [{ beat: 0, tempo: 60, curveType: 'constant' }],
+          }}
+          smpteFrameRate={30}
+          meterMap={{ entries: [{ measure: 0, numBeats: 4, beatLength: 4, startBeat: 0 }] }}
+          {...options}
+          {...overrides}
+        />,
+      );
+    });
+  render();
   const surface = host.querySelector('[data-track-layer-group="true"]') as HTMLDivElement;
   Object.defineProperty(surface, 'getBoundingClientRect', {
     value: () => ({
@@ -202,7 +207,7 @@ function renderTrackCanvas(
       toJSON: () => undefined,
     }),
   });
-  return { host, root, surface };
+  return { host, root, surface, render };
 }
 
 function mouse(target: EventTarget, type: string, x: number, y: number, init: MouseEventInit = {}) {
@@ -299,6 +304,68 @@ afterEach(() => {
 });
 
 describe('Track layer timeline gestures', () => {
+  it('refreshes physical frame snapping when only later tempo points change', async () => {
+    const group = makeTrackGroup([makeItem('track-object', 90, 2)]);
+    const meterMap = { entries: [{ measure: 1, numBeats: 4, beatLength: 4, startBeat: 0 }] };
+    const tempoMap = {
+      enabled: true,
+      visible: false,
+      points: [
+        { beat: 0, tempo: 60, curveType: 'constant' as const },
+        { beat: 30, tempo: 60, curveType: 'constant' as const },
+      ],
+    };
+    const { root, surface, render } = renderTrackCanvas(group, [group], {
+      totalBeats: 100,
+      snapEnabled: true,
+      snapValue: 'FRAME',
+      tempo: 60,
+      smpteFrameRate: 29.97,
+      meterMap,
+      tempoMap,
+    });
+    try {
+      render({
+        tempoMap: {
+          ...tempoMap,
+          points: [tempoMap.points[0], { ...tempoMap.points[1], tempo: 120 }],
+        },
+      });
+      act(() => {
+        mouse(surface, 'mousedown', 90 * 25 + 12, 20);
+        mouse(window, 'mousemove', 90.13 * 25 + 12, 20);
+        mouse(window, 'mouseup', 90.13 * 25 + 12, 20);
+      });
+      const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<
+        typeof vi.fn
+      >;
+      expect(applyPatch).toHaveBeenCalledWith({
+        score: {
+          type: 'moveScoreObjects',
+          moves: [expect.objectContaining({ targetStartBeats: expect.closeTo(90.12, 10) })],
+        },
+      });
+      applyPatch.mockClear();
+      act(() => mouse(surface, 'contextmenu', 94.13 * 25, 15));
+      clickContextMenuItem('Add SoundObject');
+      clickContextMenuItem('GenericScore');
+      await act(async () => {
+        await Promise.resolve();
+      });
+      expect(applyPatch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          score: expect.objectContaining({
+            type: 'addTrackItem',
+            startBeats: expect.closeTo(94.124, 10),
+          }),
+        }),
+        { label: 'Add Score Object' },
+      );
+    } finally {
+      act(() => root.unmount());
+    }
+  });
+
   it('settles an instrument edit before adding a Track SoundObject with the current revision', async () => {
     const flushPendingPatches = vi.fn(async () => {
       acceptProjectDocumentRevision(1, 3);

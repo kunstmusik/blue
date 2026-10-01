@@ -127,6 +127,7 @@ function clonePlaybackTransportAnchor(
     },
     sampleRate: transport.sampleRate,
     smpteFrameRate: transport.smpteFrameRate,
+    smpteDropFrame: transport.smpteDropFrame,
   };
 }
 

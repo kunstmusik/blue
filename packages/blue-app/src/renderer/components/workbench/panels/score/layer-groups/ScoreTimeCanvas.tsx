@@ -1,3 +1,4 @@
+import type { TempoMapSnapshot } from '../../../../../../shared/project-editor';
 import { useRef, useCallback, useState, useEffect, useMemo } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import ShiftObjectsDialog from '../ShiftObjectsDialog';
@@ -42,7 +43,7 @@ import type {
   MeterMapSnapshot,
   ScoreObjectEditorTargetSnapshot,
 } from '../../../../../../shared/project-editor';
-import { deriveSnapLineBeats, snapBeatToGrid } from '../snap-grid-utils';
+import { createFrameSnapContext, deriveSnapLineBeats, snapBeatToGrid } from '../snap-grid-utils';
 import { toast } from 'sonner';
 import {
   collectClipboardEntriesForSelection,
@@ -81,6 +82,7 @@ interface Props {
   snapEnabled: boolean;
   snapValue: SnapValueName;
   tempo: number;
+  tempoMap?: TempoMapSnapshot;
   smpteFrameRate: number;
   meterMap: MeterMapSnapshot;
   onDoubleClickObject?: (objectId: string) => void;
@@ -299,10 +301,15 @@ export default function ScoreTimeCanvas({
   snapEnabled,
   snapValue,
   tempo,
+  tempoMap,
   smpteFrameRate,
   meterMap,
   onDoubleClickObject,
 }: Props) {
+  const frameSnapContext = useMemo(
+    () => createFrameSnapContext(tempoMap, smpteFrameRate, tempo),
+    [tempoMap, smpteFrameRate, tempo],
+  );
   const selectedObjectIds = useScoreSelectionStore((s) => s.selectedObjectIds);
   const selectedObjectTarget = useScoreSelectionStore((s) => s.selectedObjectTarget);
   const selectedObjectTargets = useScoreSelectionStore((s) => s.selectedObjectTargets);
@@ -480,25 +487,30 @@ export default function ScoreTimeCanvas({
       return [] as number[];
     }
 
-    return deriveSnapLineBeats(snapValue, snapBeats, meterMap, totalBeats).map(
-      (beat) => Math.round(beat * pixelsPerBeat) + 0.5,
-    );
-  }, [meterMap, pixelsPerBeat, snapBeats, snapEnabled, snapValue, totalBeats]);
+    return deriveSnapLineBeats(
+      snapValue,
+      snapBeats,
+      meterMap,
+      totalBeats,
+      frameSnapContext,
+      pixelsPerBeat,
+    ).map((beat) => Math.round(beat * pixelsPerBeat) + 0.5);
+  }, [meterMap, pixelsPerBeat, snapBeats, snapEnabled, snapValue, totalBeats, frameSnapContext]);
 
   const snapBeatValueMove = useCallback(
     (beats: number): number => {
       if (!snapEnabled || snapBeats <= 0) return beats;
-      return snapBeatToGrid(beats, 'nearest', snapValue, snapBeats, meterMap);
+      return snapBeatToGrid(beats, 'nearest', snapValue, snapBeats, meterMap, frameSnapContext);
     },
-    [meterMap, snapEnabled, snapBeats, snapValue],
+    [meterMap, snapEnabled, snapBeats, snapValue, frameSnapContext],
   );
 
   const snapBeatValueStart = useCallback(
     (beats: number): number => {
       if (!snapEnabled || snapBeats <= 0) return beats;
-      return snapBeatToGrid(beats, 'floor', snapValue, snapBeats, meterMap);
+      return snapBeatToGrid(beats, 'floor', snapValue, snapBeats, meterMap, frameSnapContext);
     },
-    [meterMap, snapEnabled, snapBeats, snapValue],
+    [meterMap, snapEnabled, snapBeats, snapValue, frameSnapContext],
   );
 
   const findEditorTarget = useCallback(
@@ -860,7 +872,14 @@ export default function ScoreTimeCanvas({
         let delta = Math.max(-minOriginal, rawDelta);
         if (snapEnabled && snapBeats > 0) {
           const absPos = minOriginal + delta;
-          const snappedAbsPos = snapBeatToGrid(absPos, 'nearest', snapValue, snapBeats, meterMap);
+          const snappedAbsPos = snapBeatToGrid(
+            absPos,
+            'nearest',
+            snapValue,
+            snapBeats,
+            meterMap,
+            frameSnapContext,
+          );
           delta = snappedAbsPos - minOriginal;
         }
 
@@ -1057,6 +1076,7 @@ export default function ScoreTimeCanvas({
       snapBeats,
       snapValue,
       meterMap,
+      frameSnapContext,
       previewByObjectId,
       isNestedView,
       setLiveSharedProperties,
@@ -2152,6 +2172,7 @@ export default function ScoreTimeCanvas({
                     snapEnabled={snapEnabled}
                     snapValue={snapValue}
                     tempo={tempo}
+                    tempoMap={tempoMap}
                     smpteFrameRate={smpteFrameRate}
                     mode={mode}
                     onPatch={(patch: ScoreAutomationPatch) => {

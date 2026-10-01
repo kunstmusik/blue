@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import React from 'react';
+import { BlueData } from '@blue/data';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -9,7 +10,10 @@ import { __testClearPendingPatches, useProjectStore } from '../stores/project-st
 import { usePlaybackStore } from '../stores/playback-store';
 import { useMidiRoutingStore } from '../stores/midi-routing-store';
 import { useLayerSelectionStore } from '../stores/layer-selection-store';
-import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
+import {
+  createEmptyProjectEditorSnapshot,
+  createProjectEditorSnapshot,
+} from '../../shared/project-editor';
 
 (
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -176,6 +180,79 @@ afterEach(() => {
 });
 
 describe('ScorePanel session resets', () => {
+  it('passes the canonical DF format into tempo-map entry after reopening a project', async () => {
+    const commit = vi.fn().mockResolvedValue({ revision: 1, sessionId: 1 });
+    Object.assign(window.blueAPI!, { commitProjectDocumentPatches: commit });
+    const data = new BlueData();
+    data.getScore().getTimeState().setSmpteFrameRate(29.97);
+    data.getScore().getTimeState().setSmpteDropFrame(true);
+    const reopened = createProjectEditorSnapshot(
+      BlueData.loadFromString(data.saveToString()),
+      '/tmp/df.blue',
+    );
+    reopened.transport.tempoMap = {
+      enabled: false,
+      visible: true,
+      points: [
+        { beat: 0, tempo: 60, curveType: 'constant', timeBase: 'BEATS' },
+        { beat: 60.06, tempo: 120, curveType: 'constant', timeBase: 'SMPTE' },
+      ],
+    };
+    useProjectStore.getState().setProjectInfo({ ...reopened, loaded: true, sessionId: 1 });
+    const { container, root } = renderPanel();
+    try {
+      act(() => window.dispatchEvent(new Event('blue-edit-tempo-map')));
+      const input = container.querySelector<HTMLInputElement>(
+        '[aria-label="Start time for tempo point 2"]',
+      )!;
+      expect(input.value).toBe('00:01:00;02');
+      const ok = Array.from(container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'OK',
+      )!;
+      for (const text of ['00:01:00:02', '00:01:00;00', '00:01:00;01']) {
+        act(() => {
+          Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(
+            input,
+            text,
+          );
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+        act(() => ok.click());
+        expect(input.value).toBe(text);
+        expect(commit).not.toHaveBeenCalled();
+      }
+      act(() => {
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(
+          input,
+          '00:01:00;02',
+        );
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+      act(() => ok.click());
+      await useProjectStore.getState().flushPendingPatches();
+      expect(commit).toHaveBeenCalledWith(
+        [
+          expect.objectContaining({
+            transport: expect.objectContaining({
+              tempoMapPatch: expect.objectContaining({
+                type: 'replaceTempoMap',
+                map: expect.objectContaining({
+                  points: expect.arrayContaining([
+                    expect.objectContaining({ beat: 60.06, timeBase: 'SMPTE' }),
+                  ]),
+                }),
+              }),
+            }),
+          }),
+        ],
+        expect.anything(),
+      );
+    } finally {
+      act(() => root.unmount());
+      container.remove();
+    }
+  });
+
   it('stops an active audition on a score-timeline press', () => {
     seedLoadedProject();
     const stopAuditioning = vi.fn().mockResolvedValue(undefined);

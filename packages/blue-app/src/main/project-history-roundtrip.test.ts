@@ -3382,3 +3382,73 @@ describe('save-state-aware serialization compatibility (spec 109)', () => {
     }
   });
 });
+
+it('restores SMPTE format, clean state, published snapshots and stable content through history', async () => {
+  const session = new ProjectSession();
+  session.replace(buildProject(), '/tmp/smpte-history.blue');
+  const recorder = new FakePublicationRecorder();
+  const history = new ProjectHistory({
+    session,
+    captureSnapshot: () =>
+      createProjectEditorSnapshot(session.read().data!, '/tmp/smpte-history.blue'),
+    publishUpdated: (event) => recorder.record(event),
+  });
+  const context = new MockHistoryContext('smpte-history');
+  const documentId = session.read().documentId!;
+  const live = () => session.read().data!;
+  const content = () => ({
+    groupId: groupId(live()),
+    layerId: scoreLayer(live(), 0).getUniqueId(),
+    objects: scoreLayer(live(), 0).map((object) => ({
+      id: getScoreObjectId(object),
+      start: object.getStartTime().toBeats(live().getScore().getTimeContext()),
+      duration: object.getSubjectiveDuration().toBeats(live().getScore().getTimeContext()),
+    })),
+    markers: live().getMarkersList().saveAsXML().toXml(),
+    start: live().getRenderStartTime(),
+    end: live().getRenderEndTime(),
+  });
+  createProjectEditorSnapshot(live(), '/tmp/smpte-history.blue');
+  const before = content();
+  const baseline = live().saveToString();
+  history.markClean();
+  const patch: ProjectDocumentPatch = {
+    score: { type: 'updateTimeState', patch: { smpteFrameRate: 29.97, smpteDropFrame: true } },
+  };
+  expect(
+    (await history.commit(context.nextCommitRequest(documentId, 0, 'Change SMPTE Format', [patch])))
+      .status,
+  ).toBe('committed');
+  expect(history.isDirty()).toBe(true);
+  expect(content()).toEqual(before);
+  expect(recorder.latest()?.snapshot).toMatchObject({
+    transport: { smpteFrameRate: 29.97, smpteDropFrame: true },
+    score: { timeState: { smpteDropFrame: true } },
+  });
+  expect(
+    (await history.undo(context.nextUndoRequest(documentId, session.read().revision))).status,
+  ).toBe('committed');
+  expect(live().saveToString()).toBe(baseline);
+  expect(content()).toEqual(before);
+  expect(history.isDirty()).toBe(false);
+  expect(recorder.latest()?.snapshot).toMatchObject({
+    transport: { smpteFrameRate: 24, smpteDropFrame: false },
+  });
+  expect(
+    (await history.redo(context.nextRedoRequest(documentId, session.read().revision))).status,
+  ).toBe('committed');
+  expect(content()).toEqual(before);
+  expect(history.isDirty()).toBe(true);
+  expect(live().getScore().getTimeState().isSmpteDropFrame()).toBe(true);
+  const length = history.read().length;
+  expect(
+    (
+      await history.commit(
+        context.nextCommitRequest(documentId, session.read().revision, 'Change SMPTE Format', [
+          patch,
+        ]),
+      )
+    ).status,
+  ).toBe('unchanged');
+  expect(history.read().length).toBe(length);
+});

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { TimeBase } from '@blue/data';
+import { SMPTE_FORMAT_CHOICES } from '../../../../../shared/program-settings';
 import type { ScoreTimeStateSnapshot } from '../../../../../shared/project-editor';
 import { AppSelect } from '../../../AppSelect';
 import { useDialogFocus } from '../../../dialogs/use-dialog-focus';
@@ -14,6 +15,7 @@ export interface RulerConfigChanges {
   secondaryRulerEnabled: boolean;
   secondaryTimeDisplay: string;
   smpteFrameRate: number;
+  smpteDropFrame: boolean;
   scoreObjectUpdateMode: TimebaseUpdateMode | null;
   markerUpdateMode: TimebaseUpdateMode | null;
 }
@@ -35,17 +37,6 @@ const TIME_DISPLAY_OPTIONS: { value: string; label: string }[] = [
   { value: TimeBase.FRAME, label: 'Samples' },
 ];
 
-const SMPTE_FRAME_RATES = [
-  { value: 23.976, label: '23.976 fps' },
-  { value: 24, label: '24 fps' },
-  { value: 25, label: '25 fps' },
-  { value: 29.97, label: '29.97 fps (non-drop)' },
-  { value: 30, label: '30 fps' },
-  { value: 50, label: '50 fps' },
-  { value: 59.94, label: '59.94 fps' },
-  { value: 60, label: '60 fps' },
-];
-
 export default function RulerConfigDialog({ timeState, onApply, onClose }: Props) {
   const [primaryTimeDisplay, setPrimaryTimeDisplay] = useState(timeState.primaryTimeDisplay);
   const [secondaryRulerEnabled, setSecondaryRulerEnabled] = useState(
@@ -53,6 +44,8 @@ export default function RulerConfigDialog({ timeState, onApply, onClose }: Props
   );
   const [secondaryTimeDisplay, setSecondaryTimeDisplay] = useState(timeState.secondaryTimeDisplay);
   const [smpteFrameRate, setSmpteFrameRate] = useState(timeState.smpteFrameRate);
+
+  const [smpteDropFrame, setSmpteDropFrame] = useState(timeState.smpteDropFrame ?? false);
 
   const [updateScoreObjects, setUpdateScoreObjects] = useState(true);
   const [scoreObjectMode, setScoreObjectMode] = useState<TimebaseUpdateMode>('UPDATE_ALL');
@@ -66,6 +59,7 @@ export default function RulerConfigDialog({ timeState, onApply, onClose }: Props
       secondaryRulerEnabled,
       secondaryTimeDisplay,
       smpteFrameRate,
+      smpteDropFrame,
       scoreObjectUpdateMode: updateScoreObjects ? scoreObjectMode : null,
       markerUpdateMode: updateMarkers ? markerMode : null,
     });
@@ -214,13 +208,18 @@ export default function RulerConfigDialog({ timeState, onApply, onClose }: Props
           <fieldset className="space-y-2">
             <legend className="text-role-headline font-bold text-blue-text">SMPTE Settings</legend>
             <div className="flex items-center gap-2">
-              <label className="text-role-body text-blue-muted w-16 shrink-0">Frame Rate:</label>
+              <label className="text-role-body text-blue-muted w-16 shrink-0">Format:</label>
               <AppSelect
                 className="flex-1 bg-blue-surface border border-blue-border/40 rounded px-2 py-1 text-role-body text-blue-text cursor-pointer"
-                value={smpteFrameRate}
-                onValueChange={(value) => setSmpteFrameRate(Number(value))}
-                options={SMPTE_FRAME_RATES}
-                aria-label="SMPTE frame rate"
+                value={`${smpteFrameRate}:${smpteDropFrame ? 'DF' : 'NDF'}`}
+                onValueChange={(value) => {
+                  const format = SMPTE_FORMAT_CHOICES.find((option) => option.value === value);
+                  if (!format) return;
+                  setSmpteFrameRate(format.frameRate);
+                  setSmpteDropFrame(format.dropFrame);
+                }}
+                options={SMPTE_FORMAT_CHOICES}
+                aria-label="SMPTE format"
               />
             </div>
           </fieldset>

@@ -136,6 +136,19 @@ describe('project-store — canonical acknowledgement barrier', () => {
     useProjectStore.getState().clearProject();
   });
 
+  it('publishes a format pair consistently before the canonical acknowledgement', async () => {
+    await useProjectStore.getState().applyProjectDocumentPatch(
+      {
+        score: { type: 'updateTimeState', patch: { smpteFrameRate: 29.97, smpteDropFrame: true } },
+      },
+      { label: 'Change SMPTE Format' },
+    );
+    const state = useProjectStore.getState();
+    for (const format of [state.transport, state.score.timeState]) {
+      expect(format).toMatchObject({ smpteFrameRate: 29.97, smpteDropFrame: true });
+    }
+  });
+
   it('keeps load and canonical refresh semantics separate (T032)', () => {
     useProjectStore.getState().clearProject();
     const snapshot = createEmptyProjectEditorSnapshot();

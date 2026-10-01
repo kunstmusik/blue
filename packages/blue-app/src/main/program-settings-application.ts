@@ -52,6 +52,7 @@ export function applyProgramSettingsToNewProject(
   timeState.setSnapEnabled(pd.defaultSnapEnabled);
   timeState.setSnapValue(pd.defaultSnapValue as any);
   timeState.setSmpteFrameRate(pd.defaultSmpteFrameRate);
+  timeState.setSmpteDropFrame(pd.defaultSmpteDropFrame ?? false);
 
   props.sampleRate = rt.defaultSr;
   props.ksmps = rt.defaultKsmps;

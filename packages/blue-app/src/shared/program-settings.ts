@@ -1,3 +1,4 @@
+import { isValidSmpteFormat, resolveSmpteRate } from '@blue/data';
 import {
   createDefaultWindowLayoutSettings,
   mergeWindowLayoutSettings,
@@ -56,6 +57,7 @@ export interface ProjectDefaultsSettingsSnapshot {
   defaultSnapEnabled: boolean;
   defaultSnapValue: string;
   defaultSmpteFrameRate: number;
+  defaultSmpteDropFrame: boolean;
 }
 
 export interface PlaybackSettingsSnapshot {
@@ -280,6 +282,14 @@ export const SNAP_VALUE_CHOICES: readonly string[] = [
 ];
 
 export const SMPTE_FRAME_RATES: readonly number[] = [23.976, 24, 25, 29.97, 30, 50, 59.94, 60];
+export const SMPTE_FORMAT_CHOICES = SMPTE_FRAME_RATES.flatMap((frameRate) =>
+  (frameRate === 29.97 || frameRate === 59.94 ? [false, true] : [false]).map((dropFrame) => ({
+    value: `${frameRate}:${dropFrame ? 'DF' : 'NDF'}`,
+    label: `${frameRate} fps${frameRate === 29.97 || frameRate === 59.94 ? ` (${dropFrame ? 'DF' : 'NDF'})` : ''}`,
+    frameRate,
+    dropFrame,
+  })),
+);
 
 export const LAYER_HEIGHT_CHOICES: readonly number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
@@ -454,6 +464,7 @@ export function createDefaultProjectDefaultsSettings(): ProjectDefaultsSettingsS
     defaultSnapEnabled: false,
     defaultSnapValue: 'BEAT',
     defaultSmpteFrameRate: 24,
+    defaultSmpteDropFrame: false,
   };
 }
 
@@ -662,11 +673,16 @@ export function validateProgramSettings(
     });
   }
 
-  if (!SMPTE_FRAME_RATES.includes(snapshot.projectDefaults.defaultSmpteFrameRate)) {
+  if (
+    !isValidSmpteFormat(
+      snapshot.projectDefaults.defaultSmpteFrameRate,
+      snapshot.projectDefaults.defaultSmpteDropFrame,
+    )
+  ) {
     issues.push({
-      path: 'projectDefaults.defaultSmpteFrameRate',
-      message: `Must be a valid SMPTE frame rate`,
-      severity: 'warning',
+      path: 'projectDefaults.defaultSmpteDropFrame',
+      message: 'Choose a supported SMPTE rate/mode pair',
+      severity: 'error',
     });
   }
 
@@ -860,6 +876,12 @@ export function mergeWithDefaults(
     projectDefaults: {
       ...defaults.projectDefaults,
       ...saved.projectDefaults,
+      defaultSmpteFrameRate: resolveSmpteRate(saved.projectDefaults?.defaultSmpteFrameRate ?? 24)
+        ? (saved.projectDefaults?.defaultSmpteFrameRate ?? 24)
+        : 24,
+      defaultSmpteDropFrame:
+        saved.projectDefaults?.defaultSmpteDropFrame === true &&
+        isValidSmpteFormat(saved.projectDefaults?.defaultSmpteFrameRate ?? 24, true),
       defaultLayerGroupType: normalizeDefaultLayerGroupType(
         saved.projectDefaults?.defaultLayerGroupType,
       ),

@@ -420,3 +420,28 @@ endop</udo>
     });
   });
 });
+
+describe('project SMPTE compatibility', () => {
+  it.each([
+    ['29.97', '', 29.97, false],
+    ['29.97', '<smpteDropFrame>true</smpteDropFrame>', 29.97, true],
+    ['29.97df', '', 29.97, false],
+    ['30df', '', 30, false],
+    ['bad', '', 24, false],
+  ])(
+    'loads and saves %s without losing unrelated TimeState XML',
+    (rate, mode, expectedRate, expectedMode) => {
+      const data = BlueData.loadFromString(
+        `<blueData version="5.0.0"><score><timeState version="2" future="yes"><smpteFrameRate>${rate}</smpteFrameRate>${mode}<future value="opaque"/></timeState></score></blueData>`,
+      );
+      const state = data.getScore().getTimeState();
+      expect(state.getSmpteFrameRate()).toBe(expectedRate);
+      expect(state.isSmpteDropFrame()).toBe(expectedMode);
+      const reopened = BlueData.loadFromString(data.saveToString());
+      expect(reopened.getScore().getTimeState().isSmpteDropFrame()).toBe(expectedMode);
+      const xml = reopened.getScore().getTimeState().saveAsXML();
+      expect(xml.getAttribute('future')).toBe('yes');
+      expect(xml.getElement('future')!.getAttribute('value')).toBe('opaque');
+    },
+  );
+});

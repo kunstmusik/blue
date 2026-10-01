@@ -1,10 +1,12 @@
-import { useRef, useCallback, useState, useEffect, type RefObject } from 'react';
+import { formatForBase } from '../../../../time/time-unit-logic';
+import type { TempoMapSnapshot } from '../../../../../shared/project-editor';
+import { useMemo, useRef, useCallback, useState, useEffect, type RefObject } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import type { MarkerSnapshot, MeterMapSnapshot } from '../../../../../shared/project-editor';
 import { useProjectStore } from '../../../../stores/project-store';
 import type { SnapValueName } from '@blue/data';
 import { snapValueToBeats } from '@blue/data';
-import { snapBeatToGrid } from './snap-grid-utils';
+import { createFrameSnapContext, snapBeatToGrid } from './snap-grid-utils';
 import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../hooks/host-portals';
 
 const AUTO_SCROLL_EDGE_THRESHOLD = 24;
@@ -21,7 +23,10 @@ interface Props {
   scrollContainerRef: RefObject<HTMLDivElement | null>;
   rootTimelineOnly: boolean;
   tempo: number;
+  tempoMap?: TempoMapSnapshot;
   smpteFrameRate: number;
+  smpteDropFrame?: boolean;
+  timeDisplay?: string;
   sampleRate: number;
 }
 
@@ -46,9 +51,16 @@ export default function MarkersBar({
   scrollContainerRef,
   rootTimelineOnly,
   tempo,
+  tempoMap,
   smpteFrameRate,
+  smpteDropFrame = false,
+  timeDisplay = 'BEATS',
   sampleRate,
 }: Props) {
+  const frameSnapContext = useMemo(
+    () => createFrameSnapContext(tempoMap, smpteFrameRate, tempo),
+    [tempoMap, smpteFrameRate, tempo],
+  );
   const applyPatch = useProjectStore((s) => s.applyProjectDocumentPatch);
   const rowRef = useRef<HTMLDivElement>(null);
   const dragStateRef = useRef<DragState>(null);
@@ -59,9 +71,18 @@ export default function MarkersBar({
       if (!snapEnabled || shiftHeld) return beats;
       const sv = snapValueToBeats(snapValue, tempo, smpteFrameRate, sampleRate, pixelsPerBeat);
       if (sv <= 0) return beats;
-      return snapBeatToGrid(beats, 'nearest', snapValue, sv, meterMap);
+      return snapBeatToGrid(beats, 'nearest', snapValue, sv, meterMap, frameSnapContext);
     },
-    [snapEnabled, snapValue, meterMap, tempo, smpteFrameRate, sampleRate, pixelsPerBeat],
+    [
+      snapEnabled,
+      snapValue,
+      meterMap,
+      tempo,
+      smpteFrameRate,
+      sampleRate,
+      pixelsPerBeat,
+      frameSnapContext,
+    ],
   );
 
   const xToBeats = useCallback(
@@ -218,6 +239,17 @@ export default function MarkersBar({
         <MarkerWidget
           key={`${marker.sourceIndex}-${marker.name}`}
           marker={marker}
+          timeLabel={formatForBase(
+            marker.time,
+            timeDisplay,
+            {
+              ...frameSnapContext,
+              meterEntries: meterMap?.entries ?? [],
+              sampleRate,
+              smpteDropFrame,
+            },
+            false,
+          )}
           sourceIndex={marker.sourceIndex}
           pixelsPerBeat={pixelsPerBeat}
           onStartDrag={startMarkerDrag}
@@ -234,12 +266,14 @@ function MarkerWidget({
   pixelsPerBeat,
   onStartDrag,
   isDragging,
+  timeLabel,
 }: {
   marker: MarkerSnapshot;
   sourceIndex: number;
   pixelsPerBeat: number;
   onStartDrag: (sourceIndex: number, clientX: number, startMarkerBeats: number) => void;
   isDragging: boolean;
+  timeLabel: string;
 }) {
   const applyPatch = useProjectStore((s) => s.applyProjectDocumentPatch);
   const [renaming, setRenaming] = useState(false);
@@ -332,7 +366,7 @@ function MarkerWidget({
             ) : (
               <span
                 className="ml-1 text-role-body text-black whitespace-nowrap select-none"
-                title={`${marker.name} [${marker.time.toFixed(2)}]`}
+                title={`${marker.name} [${timeLabel}]`}
               >
                 {marker.name}
               </span>

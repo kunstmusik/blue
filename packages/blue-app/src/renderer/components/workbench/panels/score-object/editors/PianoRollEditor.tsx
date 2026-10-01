@@ -787,6 +787,7 @@ export default function PianoRollEditor({
                             secondaryRulerEnabled={effectiveSecondaryRulerEnabled}
                             meters={scoreDocument.timeContext.meterEntries}
                             initialTempo={scoreDocument.timeContext.initialTempo}
+                            timeContext={scoreDocument.timeContext}
                             sampleRate={scoreDocument.timeContext.sampleRate}
                           />
                         </div>

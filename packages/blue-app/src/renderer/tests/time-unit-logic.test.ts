@@ -279,8 +279,8 @@ describe('formatForBase', () => {
     expect(formatForBase(1.5, 'SMPTE', SIMPLE_4_4, false)).toBe('00:00:01:12');
   });
 
-  it('formats the 29.97 fps minute boundary without drop-frame skips', () => {
-    expect(formatForBase(60, 'SMPTE', SMPTE_29_97, false)).toBe('00:01:00:00');
+  it('formats elapsed seconds at fractional NDF rate', () => {
+    expect(formatForBase(60, 'SMPTE', SMPTE_29_97, false)).toBe('00:00:59:28');
   });
 
   it('formats FRAME from beats at 60 BPM, 44100 sr', () => {
@@ -519,5 +519,32 @@ describe('formatTime', () => {
 
   it('pads minutes, seconds, ms', () => {
     expect(formatTime(1, 2, 3, 4)).toBe('1:02:03.004');
+  });
+});
+
+describe('project SMPTE mode and complete tempo integration', () => {
+  it('converts fractional NDF by physical frame count', () => {
+    expect(formatForBase(60, 'SMPTE', SMPTE_29_97, false)).toBe('00:00:59:28');
+    expect(parseForBase('00:01:00:00', 'SMPTE', SMPTE_29_97, false)).toBe(60.06);
+    expect(parseForBase('00:00:00;00', 'SMPTE', SMPTE_29_97, false)).toBeNull();
+  });
+  it('uses DF and the preceding tempo change for positions and durations', () => {
+    const context: TimeConversionContext = {
+      ...SMPTE_29_97,
+      smpteDropFrame: true,
+      tempoPoints: [
+        { beat: 0, tempo: 60, curveType: 'constant' },
+        { beat: 30, tempo: 120, curveType: 'constant' },
+      ],
+    };
+    expect(parseForBase('00:01:00;02', 'SMPTE', context, false)).toBeCloseTo(90.12, 12);
+    expect(formatForBase(90.12, 'SMPTE', context, false)).toBe('00:01:00;02');
+    expect(formatForBase(90.12, 'SMPTE', context, true)).toBe('00:01:00;02');
+    for (const text of ['00:01:00;00', '00:01:00;01', '00:01:00:02', '00:00:00;00junk']) {
+      expect(parseForBase(text, 'SMPTE', context, false)).toBeNull();
+    }
+    expect(
+      formatForBase(parseForBase('25:00:00;00', 'SMPTE', context, false)!, 'SMPTE', context, false),
+    ).toBe('25:00:00;00');
   });
 });

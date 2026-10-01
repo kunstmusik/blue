@@ -1,9 +1,10 @@
-import { useRef, useCallback, useState, useEffect, type RefObject } from 'react';
+import type { TempoMapSnapshot } from '../../../../../shared/project-editor';
+import { useMemo, useRef, useCallback, useState, useEffect, type RefObject } from 'react';
 import { useProjectStore } from '../../../../stores/project-store';
 import type { SnapValueName } from '@blue/data';
 import { snapValueToBeats } from '@blue/data';
 import type { MeterMapSnapshot } from '../../../../../shared/project-editor';
-import { snapBeatToGrid } from './snap-grid-utils';
+import { createFrameSnapContext, snapBeatToGrid } from './snap-grid-utils';
 
 const DRAG_THRESHOLD = 5;
 const AUTO_SCROLL_EDGE_THRESHOLD = 24;
@@ -18,6 +19,7 @@ interface UseScoreRulerSelectionOptions {
   rootTimelineOnly: boolean;
   scrollContainerRef: RefObject<HTMLDivElement | null>;
   tempo: number;
+  tempoMap?: TempoMapSnapshot;
   smpteFrameRate: number;
   sampleRate: number;
   /**
@@ -36,10 +38,15 @@ export function useScoreRulerSelection({
   rootTimelineOnly,
   scrollContainerRef,
   tempo,
+  tempoMap,
   smpteFrameRate,
   sampleRate,
   onUserNavigation,
 }: UseScoreRulerSelectionOptions) {
+  const frameSnapContext = useMemo(
+    () => createFrameSnapContext(tempoMap, smpteFrameRate, tempo),
+    [tempoMap, smpteFrameRate, tempo],
+  );
   const applyPatch = useProjectStore((s) => s.applyProjectDocumentPatch);
 
   const onUserNavigationRef = useRef(onUserNavigation);
@@ -65,9 +72,18 @@ export function useScoreRulerSelection({
       if (!snapEnabled || shiftHeld) return beats;
       const sv = snapValueToBeats(snapValue, tempo, smpteFrameRate, sampleRate, pixelsPerBeat);
       if (sv <= 0) return beats;
-      return snapBeatToGrid(beats, 'nearest', snapValue, sv, meterMap);
+      return snapBeatToGrid(beats, 'nearest', snapValue, sv, meterMap, frameSnapContext);
     },
-    [snapEnabled, snapValue, meterMap, tempo, smpteFrameRate, sampleRate, pixelsPerBeat],
+    [
+      snapEnabled,
+      snapValue,
+      meterMap,
+      tempo,
+      smpteFrameRate,
+      sampleRate,
+      pixelsPerBeat,
+      frameSnapContext,
+    ],
   );
 
   const autoScroll = useCallback(

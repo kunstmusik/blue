@@ -8,6 +8,7 @@ export default function MarkersPanel(): React.ReactElement {
   const loaded = useProjectStore((s) => s.loaded);
   const markers = useProjectStore((s) => s.score.markers);
   const smpteFrameRate = useProjectStore((s) => s.score.timeState.smpteFrameRate);
+  const smpteDropFrame = useProjectStore((s) => s.score.timeState.smpteDropFrame);
   const transport = useProjectStore((s) => s.transport);
   const applyPatch = useProjectStore((s) => s.applyProjectDocumentPatch);
 
@@ -23,6 +24,7 @@ export default function MarkersPanel(): React.ReactElement {
       tempoPoints: transport.tempoMap.points,
       sampleRate: transport.sampleRate,
       smpteFrameRate,
+      smpteDropFrame,
     }),
     [
       transport.meterMap.entries,
@@ -30,6 +32,7 @@ export default function MarkersPanel(): React.ReactElement {
       transport.tempoMap.points,
       transport.sampleRate,
       smpteFrameRate,
+      smpteDropFrame,
     ],
   );
 
@@ -112,28 +115,36 @@ function MarkerRow({
   const [draftTime, setDraftTime] = useState(() =>
     formatForBase(marker.time, marker.timeBase, timeContext, false),
   );
+  const [timeError, setTimeError] = useState<string | null>(null);
   const [draftLabel, setDraftLabel] = useState(marker.name);
   const timeInputRef = useRef<HTMLInputElement>(null);
   const labelInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setDraftTimeBase(marker.timeBase);
-    if (document.activeElement !== timeInputRef.current) {
+    if (timeInputRef.current?.ownerDocument.activeElement !== timeInputRef.current) {
       setDraftTime(formatForBase(marker.time, marker.timeBase, timeContext, false));
     }
-    if (document.activeElement !== labelInputRef.current) {
+    if (labelInputRef.current?.ownerDocument.activeElement !== labelInputRef.current) {
       setDraftLabel(marker.name);
     }
   }, [marker.name, marker.time, marker.timeBase, timeContext]);
 
   const commitTime = useCallback(() => {
+    if (
+      draftTimeBase === marker.timeBase &&
+      draftTime === formatForBase(marker.time, marker.timeBase, timeContext, false)
+    ) {
+      setTimeError(null);
+      return;
+    }
     const parsed = parseForBase(draftTime, draftTimeBase, timeContext, false);
     if (parsed === null) {
-      setDraftTime(formatForBase(marker.time, marker.timeBase, timeContext, false));
-      setDraftTimeBase(marker.timeBase);
+      setTimeError('Enter a valid time for the selected format and counting mode.');
       return;
     }
 
+    setTimeError(null);
     if (Math.abs(parsed - marker.time) > 1e-10 || draftTimeBase !== marker.timeBase) {
       applyPatch({
         score: {
@@ -177,7 +188,13 @@ function MarkerRow({
   const handleTimeBaseChange = useCallback(
     (nextBase: string) => {
       const currentBeats =
-        parseForBase(draftTime, draftTimeBase, timeContext, false) ?? marker.time;
+        draftTime === formatForBase(marker.time, draftTimeBase, timeContext, false)
+          ? marker.time
+          : parseForBase(draftTime, draftTimeBase, timeContext, false);
+      if (currentBeats === null) {
+        setTimeError('Enter a valid time before changing format.');
+        return;
+      }
       setDraftTimeBase(nextBase);
       setDraftTime(formatForBase(currentBeats, nextBase, timeContext, false));
       if (nextBase !== marker.timeBase) {
@@ -220,6 +237,7 @@ function MarkerRow({
           type="text"
           className="w-full rounded border border-blue-border/40 bg-blue-surface/80 px-2 py-1 text-role-body text-blue-text focus:border-blue-accent focus:outline-none"
           value={draftTime}
+          aria-invalid={timeError !== null}
           onChange={(e) => setDraftTime(e.target.value)}
           onBlur={commitTime}
           onKeyDown={(e) => {
@@ -228,6 +246,11 @@ function MarkerRow({
             }
           }}
         />
+        {timeError && (
+          <span role="alert" className="text-role-callout text-red-400">
+            {timeError}
+          </span>
+        )}
       </td>
       <td className="px-2 py-1.5">
         <input

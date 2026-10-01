@@ -4019,6 +4019,15 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
           isDirty: true,
         };
 
+        if (normalizedPatch.score?.type === 'updateTimeState') {
+          const format = normalizedPatch.score.patch;
+          next.transport = {
+            ...next.transport,
+            smpteFrameRate: format.smpteFrameRate ?? next.transport.smpteFrameRate,
+            smpteDropFrame: format.smpteDropFrame ?? next.transport.smpteDropFrame,
+          };
+        }
+
         if (normalizedPatch.globalOrc !== undefined) {
           next.globalOrc = normalizedPatch.globalOrc;
         }

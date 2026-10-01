@@ -29,14 +29,16 @@ export default function TimeUnitEditor({
   const [draft, setDraft] = useState(() =>
     formatForBase(valueBeats, timeBase, timeContext, durationMode),
   );
+  const [error, setError] = useState<string | null>(null);
   const [activeBase, setActiveBase] = useState(timeBase);
   const lastCommitted = useRef(valueBeats);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (document.activeElement !== inputRef.current) {
+    if (inputRef.current?.ownerDocument.activeElement !== inputRef.current) {
       setDraft(formatForBase(valueBeats, activeBase, timeContext, durationMode));
       lastCommitted.current = valueBeats;
+      setError(null);
     }
   }, [valueBeats, activeBase, timeContext, durationMode]);
 
@@ -47,11 +49,16 @@ export default function TimeUnitEditor({
   }, [timeBase, activeBase]);
 
   const commitText = useCallback(() => {
-    const parsed = parseForBase(draft, activeBase, timeContext, durationMode);
-    if (parsed === null) {
-      setDraft(formatForBase(lastCommitted.current, activeBase, timeContext, durationMode));
+    if (draft === formatForBase(lastCommitted.current, activeBase, timeContext, durationMode)) {
+      setError(null);
       return;
     }
+    const parsed = parseForBase(draft, activeBase, timeContext, durationMode);
+    if (parsed === null) {
+      setError('Enter a valid time for the selected format and counting mode.');
+      return;
+    }
+    setError(null);
     if (Math.abs(parsed - lastCommitted.current) > 1e-10) {
       lastCommitted.current = parsed;
       onCommit(parsed, activeBase);
@@ -61,7 +68,12 @@ export default function TimeUnitEditor({
 
   const handleBaseChange = useCallback(
     (newBase: string) => {
+      if (parseForBase(draft, activeBase, timeContext, durationMode) === null) {
+        setError('Enter a valid time before changing format.');
+        return;
+      }
       const currentBeats = lastCommitted.current;
+      setError(null);
       setDraft(formatForBase(currentBeats, newBase, timeContext, durationMode));
       setActiveBase(newBase);
       if (newBase !== timeBase) {
@@ -69,7 +81,7 @@ export default function TimeUnitEditor({
         onCommit(currentBeats, newBase);
       }
     },
-    [timeBase, timeContext, durationMode, onCommit],
+    [draft, activeBase, timeBase, timeContext, durationMode, onCommit],
   );
 
   return (
@@ -86,6 +98,7 @@ export default function TimeUnitEditor({
         type="text"
         className={BLUE_INSPECTOR_INPUT_CLASS}
         value={draft}
+        aria-invalid={error !== null}
         disabled={disabled}
         onChange={(e) => setDraft(e.target.value)}
         onBlur={commitText}
@@ -93,6 +106,11 @@ export default function TimeUnitEditor({
           if (e.key === 'Enter') commitText();
         }}
       />
+      {error && (
+        <span role="alert" className="text-role-callout text-red-400">
+          {error}
+        </span>
+      )}
     </div>
   );
 }

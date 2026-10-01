@@ -9,14 +9,9 @@
 import { TimeBase } from './time-base';
 import { SnapValueName, isValidSnapValueName } from './snap-value';
 import { Element } from '../serialization/xml-reader';
-import {
-  writeBoolean,
-  readBoolean,
-  writeDouble,
-  readDouble,
-  writeInt,
-  readInt,
-} from '../utilities/xml';
+import { writeBoolean, readBoolean, writeDouble, writeInt, readInt } from '../utilities/xml';
+
+import { resolveSmpteRate, isValidSmpteFormat } from './smpte-timecode';
 
 const CURRENT_FORMAT_VERSION = 2;
 
@@ -93,6 +88,9 @@ export class TimeState {
   private meterRowVisible = true;
   private markersRowVisible = true;
   private smpteFrameRate = 24.0;
+  private smpteDropFrame = false;
+  private unknownChildren: Element[] = [];
+  private unknownAttributes: Array<[string, string]> = [];
   private zoomIterations = 0;
 
   constructor(other?: TimeState) {
@@ -106,6 +104,9 @@ export class TimeState {
       this.meterRowVisible = other.meterRowVisible;
       this.markersRowVisible = other.markersRowVisible;
       this.smpteFrameRate = other.smpteFrameRate;
+      this.smpteDropFrame = other.smpteDropFrame;
+      this.unknownChildren = other.unknownChildren.map((child) => child.clone());
+      this.unknownAttributes = other.unknownAttributes.map(([name, value]) => [name, value]);
       this.zoomIterations = other.zoomIterations;
     }
   }
@@ -174,7 +175,18 @@ export class TimeState {
     return this.smpteFrameRate;
   }
   setSmpteFrameRate(value: number): void {
+    if (!resolveSmpteRate(value)) throw new Error('Unsupported SMPTE rate');
     this.smpteFrameRate = value;
+    if (!isValidSmpteFormat(value, this.smpteDropFrame)) this.smpteDropFrame = false;
+  }
+
+  isSmpteDropFrame(): boolean {
+    return this.smpteDropFrame;
+  }
+  setSmpteDropFrame(value: boolean): void {
+    if (!isValidSmpteFormat(this.smpteFrameRate, value))
+      throw new Error('Unsupported SMPTE format');
+    this.smpteDropFrame = value;
   }
 
   getZoomIterations(): number {
@@ -195,6 +207,7 @@ export class TimeState {
 
   saveAsXML(): Element {
     const elem = new Element('timeState');
+    for (const [name, value] of this.unknownAttributes) elem.setAttribute(name, value);
     elem.setAttribute('version', CURRENT_FORMAT_VERSION.toString());
     elem.addElement(writeInt('zoomIterations', Math.round(this.zoomIterations)));
     elem.addElement(writeBoolean('snapEnabled', this.snapEnabled));
@@ -206,6 +219,8 @@ export class TimeState {
     elem.addElement(writeBoolean('meterRowVisible', this.meterRowVisible));
     elem.addElement(writeBoolean('markersRowVisible', this.markersRowVisible));
     elem.addElement(writeDouble('smpteFrameRate', this.smpteFrameRate));
+    if (this.smpteDropFrame) elem.addElement(writeBoolean('smpteDropFrame', true));
+    for (const child of this.unknownChildren) elem.addElement(child.clone());
     return elem;
   }
 
@@ -214,6 +229,10 @@ export class TimeState {
     const versionStr = data.getAttribute('version');
     const version = versionStr ? parseInt(versionStr, 10) : 1;
 
+    state.unknownAttributes = data
+      .getAttributeNames()
+      .filter((name) => name !== 'version')
+      .map((name) => [name, data.getAttribute(name)!]);
     const nodes = data.getElements();
     while (nodes.hasMoreElements()) {
       const node = nodes.next();
@@ -254,10 +273,21 @@ export class TimeState {
           state.markersRowVisible = readBoolean(node);
           break;
         case 'smpteFrameRate':
-          state.smpteFrameRate = readDouble(node);
+          {
+            const token = text.trim();
+            const rate = Number(token === '29.97df' ? '29.97' : token === '30df' ? '30' : token);
+            state.smpteFrameRate = resolveSmpteRate(rate) ? rate : 24;
+          }
           break;
+        case 'smpteDropFrame':
+          state.smpteDropFrame = text.trim() === 'true';
+          break;
+        default:
+          state.unknownChildren.push(node.clone());
       }
     }
+    if (!isValidSmpteFormat(state.smpteFrameRate, state.smpteDropFrame))
+      state.smpteDropFrame = false;
 
     // Migrate legacy format values (version 1)
     if (version < 2) {

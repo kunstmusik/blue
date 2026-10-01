@@ -78,9 +78,40 @@ Open a nested PolyObject and inspect its children's time bases separately
 after changing the root ruler.
 
 SMPTE text entry in Score Object Properties and the Markers panel uses the
-project's selected frame rate, matching the ruler and transport readout. The
-frame component is converted arithmetically from that rate; **29.97 fps
-(non-drop)** does not skip frame numbers at minute boundaries. For Score
+project's selected physical frame rate and counting mode, matching the rulers
+and transport. Choose the **SMPTE Format** in Ruler Configuration: 29.97 and
+59.94 each have separate **(NDF)** and **(DF)** options. Other rates, such as
+**24 fps**, use NDF. One selection sets both rate and counting mode.
+Project Defaults supplies the pair for new projects without changing opened projects.
+
+Right-click **Playhead**, then choose **Primary → SMPTE** or
+**Secondary → SMPTE** to select the same format options. When the readout is explicitly set to SMPTE, the submenu checks the
+current project format. Selecting an option changes the project format as an
+undoable action and switches that readout to SMPTE. **Sync to Primary Ruler**
+and **Sync to Secondary Ruler** remain available.
+
+Fractional aliases use exact rates: 23.976 is 24000/1001, 29.97 is 30000/1001,
+and 59.94 is 60000/1001 frames per elapsed second. NDF counts every frame using
+`HH:MM:SS:FF`; its labels differ from clock time. At 29.97 NDF, 60 elapsed seconds
+shows `00:00:59:28`, and `00:01:00:00` means 60.060 elapsed seconds.
+
+DF uses `HH:MM:SS;FF` and omits labels, without dropping audio or media frames.
+At 29.97 DF, `00:00:59;29` advances to `00:01:00;02`; every tenth minute keeps
+frame zero, so `00:09:59;29` advances to `00:10:00;00`. At 59.94 DF, non-tenth
+minutes omit labels 00–03 instead. Enter the matching separator; omitted labels
+and invalid fields are rejected with validation feedback.
+
+Blue retains elapsed hours beyond 23, such as `25:00:00;00`, without wrapping.
+These extended labels are a timeline convention, not a 24-hour wire address.
+Durations count frames from zero; calculate differences using elapsed time rather
+than subtracting printed label components. Changing format, saving, reopening,
+undoing, or redoing it preserves stored positions and durations. Frame snapping
+uses physical frame starts through the tempo map and is identical in DF and NDF.
+Audio **Sample Frames** continues to use the audio sample rate.
+
+Counting follows [SMPTE ST 12-1:2014](https://pub.smpte.org/latest/st12-1/st0012-1-2014.pdf).
+
+For Score
 positions, durations, and marker positions, clock
 formats use the project's tempo points, including later tempo changes, when
 tempo mapping is enabled. When it is disabled, beats and seconds convert

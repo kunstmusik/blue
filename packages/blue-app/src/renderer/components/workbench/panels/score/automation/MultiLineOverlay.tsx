@@ -1,3 +1,5 @@
+import { createFrameSnapContext } from '../snap-grid-utils';
+import type { TempoMapSnapshot } from '../../../../../../shared/project-editor';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
   AutomationRangeRef,
@@ -29,6 +31,7 @@ interface Props {
   snapEnabled: boolean;
   snapValue: SnapValueName;
   tempo: number;
+  tempoMap?: TempoMapSnapshot;
   smpteFrameRate: number;
 }
 
@@ -73,8 +76,13 @@ export default function MultiLineOverlay({
   snapEnabled,
   snapValue,
   tempo,
+  tempoMap,
   smpteFrameRate,
 }: Props) {
+  const frameSnapContext = useMemo(
+    () => createFrameSnapContext(tempoMap, smpteFrameRate, tempo),
+    [tempoMap, smpteFrameRate, tempo],
+  );
   const containerRef = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<DragState>({ kind: 'none' });
   const lastClientX = useRef(0);
@@ -110,9 +118,9 @@ export default function MultiLineOverlay({
       const snapBeats = snapEnabled
         ? snapValueToBeats(snapValue, tempo, smpteFrameRate, 44100, pixelsPerBeat)
         : 0;
-      return snapBeat(beat, snapEnabled, snapBeats);
+      return snapBeat(beat, snapEnabled, snapBeats, snapValue, frameSnapContext);
     },
-    [snapEnabled, snapValue, tempo, smpteFrameRate, pixelsPerBeat],
+    [snapEnabled, snapValue, tempo, smpteFrameRate, pixelsPerBeat, frameSnapContext],
   );
 
   // E1: Auto-scroll near viewport edges during drag (Java's checkScroll).

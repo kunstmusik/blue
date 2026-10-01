@@ -324,3 +324,21 @@ describe('Tempo map patch round-trips through save/load', () => {
     expect(reloaded.getCurveType(1)).toBe(CurveType.LINEAR);
   });
 });
+
+describe('canonical SMPTE snapshot ownership', () => {
+  it('derives score and transport format from TimeState, including the empty default', () => {
+    const data = new BlueData();
+    expect(createToolbarProjectTransportSnapshot(data)).toMatchObject({
+      smpteFrameRate: 24,
+      smpteDropFrame: false,
+    });
+    data.getScore().getTimeState().setSmpteFrameRate(29.97);
+    data.getScore().getTimeState().setSmpteDropFrame(true);
+    const snapshot = createProjectEditorSnapshot(data, '/tmp/timecode.blue');
+    expect(snapshot.score!.timeState).toMatchObject({
+      smpteFrameRate: 29.97,
+      smpteDropFrame: true,
+    });
+    expect(snapshot.transport).toMatchObject({ smpteFrameRate: 29.97, smpteDropFrame: true });
+  });
+});

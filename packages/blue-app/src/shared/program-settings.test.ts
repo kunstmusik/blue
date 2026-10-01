@@ -805,3 +805,26 @@ describe('program-settings utility.freezeMaxJobs (SPEC 085)', () => {
     });
   });
 });
+
+it('migrates missing SMPTE default mode and validates submitted pairs', () => {
+  const defaults = createDefaultProgramSettings('darwin');
+  expect(defaults.projectDefaults.defaultSmpteDropFrame).toBe(false);
+  const migrated = mergeWithDefaults(
+    { projectDefaults: { defaultSmpteFrameRate: 29.97 } } as never,
+    'darwin',
+  );
+  expect(migrated.projectDefaults.defaultSmpteDropFrame).toBe(false);
+  defaults.projectDefaults.defaultSmpteDropFrame = true;
+  expect(
+    validateProgramSettings(defaults).some(
+      (issue) =>
+        issue.path === 'projectDefaults.defaultSmpteDropFrame' && issue.severity === 'error',
+    ),
+  ).toBe(true);
+  defaults.projectDefaults.defaultSmpteFrameRate = 29.97;
+  expect(
+    validateProgramSettings(defaults).some(
+      (issue) => issue.path === 'projectDefaults.defaultSmpteDropFrame',
+    ),
+  ).toBe(false);
+});

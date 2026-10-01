@@ -34,6 +34,9 @@ function renderMarkersBar(options?: {
   snapEnabled?: boolean;
   snapValue?: 'BEAT' | 'ONE_SECOND';
   tempo?: number;
+  smpteFrameRate?: number;
+  smpteDropFrame?: boolean;
+  timeDisplay?: string;
 }): {
   container: HTMLDivElement;
   root: Root;
@@ -77,7 +80,9 @@ function renderMarkersBar(options?: {
         scrollContainerRef={{ current: scrollContainer }}
         rootTimelineOnly
         tempo={options?.tempo ?? 60}
-        smpteFrameRate={24}
+        smpteFrameRate={options?.smpteFrameRate ?? 24}
+        smpteDropFrame={options?.smpteDropFrame ?? false}
+        timeDisplay={options?.timeDisplay ?? 'BEATS'}
         sampleRate={44100}
       />,
     );
@@ -296,4 +301,18 @@ describe('MarkersBar', () => {
       root.unmount();
     });
   });
+});
+
+it('shows selected DF marker time without changing the marker position', () => {
+  const marker = { name: 'Boundary', time: 60.06, timeBase: 'SMPTE', sourceIndex: 0 };
+  const { container, root } = renderMarkersBar({
+    markers: [marker],
+    smpteFrameRate: 29.97,
+    smpteDropFrame: true,
+    timeDisplay: 'SMPTE',
+  });
+  expect(container.querySelector('[title]')?.getAttribute('title')).toBe('Boundary [00:01:00;02]');
+  expect(marker.time).toBe(60.06);
+  act(() => root.unmount());
+  container.remove();
 });

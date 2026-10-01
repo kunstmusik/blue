@@ -1,5 +1,6 @@
 import {
   BlueData,
+  isValidSmpteFormat,
   CompileData,
   Channel,
   ChannelList,
@@ -455,6 +456,10 @@ export function applyScoreTimeStatePatch(
   patch: Partial<ScoreTimeStateSnapshot>,
 ): boolean {
   const ts = data.getScore().getTimeState();
+  const rate = patch.smpteFrameRate !== undefined ? patch.smpteFrameRate : ts.getSmpteFrameRate();
+  const dropFrame =
+    patch.smpteDropFrame !== undefined ? patch.smpteDropFrame : ts.isSmpteDropFrame();
+  if (!isValidSmpteFormat(rate, dropFrame)) throw new Error('Unsupported SMPTE rate/mode pair');
   let changed = false;
 
   if (patch.snapEnabled !== undefined && ts.isSnapEnabled() !== patch.snapEnabled) {
@@ -513,6 +518,10 @@ export function applyScoreTimeStatePatch(
     ts.getSmpteFrameRate() !== patch.smpteFrameRate
   ) {
     ts.setSmpteFrameRate(patch.smpteFrameRate);
+    changed = true;
+  }
+  if (patch.smpteDropFrame !== undefined && ts.isSmpteDropFrame() !== patch.smpteDropFrame) {
+    ts.setSmpteDropFrame(patch.smpteDropFrame);
     changed = true;
   }
   if (patch.zoomIterations !== undefined && ts.getZoomIterations() !== patch.zoomIterations) {

@@ -47,6 +47,7 @@ const TIME_STATE: ScoreTimeStateSnapshot = {
   meterRowVisible: false,
   markersRowVisible: false,
   smpteFrameRate: 30,
+  smpteDropFrame: false,
   zoomIterations: 3,
 };
 
@@ -131,7 +132,7 @@ describe('panel dialogs and inline menus in a floated (popout) panel', () => {
     void onApply;
   });
 
-  it('RulerConfigDialog: labels 29.97 fps as non-drop', () => {
+  it('RulerConfigDialog: shows the rate and explicit NDF mode', () => {
     renderUnderPopout(
       <RulerConfigDialog
         timeState={{ ...TIME_STATE, smpteFrameRate: 29.97 }}
@@ -140,7 +141,54 @@ describe('panel dialogs and inline menus in a floated (popout) panel', () => {
       />,
     );
 
-    expect(host.textContent).toContain('29.97 fps (non-drop)');
+    expect(host.textContent).toContain('29.97 fps');
+    expect(host.textContent).toContain('29.97 fps (NDF)');
+  });
+
+  it.each([
+    ['24 fps', 24, false],
+    ['29.97 fps (NDF)', 29.97, false],
+    ['29.97 fps (DF)', 29.97, true],
+    ['59.94 fps (NDF)', 59.94, false],
+    ['59.94 fps (DF)', 59.94, true],
+  ])('applies %s as a single valid format pair', async (label, rate, dropFrame) => {
+    for (const prototype of [Element.prototype, popout.window.Element.prototype]) {
+      prototype.hasPointerCapture ??= () => false;
+      prototype.setPointerCapture ??= () => undefined;
+      prototype.releasePointerCapture ??= () => undefined;
+    }
+    for (const prototype of [HTMLElement.prototype, popout.window.HTMLElement.prototype])
+      prototype.scrollIntoView ??= () => undefined;
+    const onApply = vi.fn();
+    renderUnderPopout(
+      <RulerConfigDialog
+        timeState={{ ...TIME_STATE, smpteFrameRate: 29.97, smpteDropFrame: true }}
+        onApply={onApply}
+        onClose={vi.fn()}
+      />,
+    );
+    const trigger = host.querySelector<HTMLElement>('[aria-label="SMPTE format"]')!;
+    await act(async () => {
+      trigger.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    const option = [...popoutDoc.querySelectorAll<HTMLElement>('[role="option"]')].find(
+      (item) => item.textContent === label,
+    )!;
+    await act(async () => {
+      option.dispatchEvent(new PopoutMouseEvent('click', { bubbles: true, button: 0 }));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(host.querySelector('[aria-label="SMPTE counting mode"]')).toBeNull();
+    expect(trigger.textContent).toBe(label);
+    act(() =>
+      [...host.querySelectorAll<HTMLButtonElement>('button')]
+        .find((button) => button.textContent === 'OK')!
+        .click(),
+    );
+    expect(onApply).toHaveBeenCalledWith(
+      expect.objectContaining({ smpteFrameRate: rate, smpteDropFrame: dropFrame }),
+    );
   });
 
   it('ShiftObjectsDialog: modal state, backdrop dismissal, and popout Escape routing', async () => {

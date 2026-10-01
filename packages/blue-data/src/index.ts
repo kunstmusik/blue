@@ -648,3 +648,13 @@ export type {
   EffectiveTrackLayout,
   EffectiveLayoutResolutionOptions,
 } from './score/audio/audio-layout';
+
+export {
+  resolveSmpteRate,
+  isValidSmpteFormat,
+  formatSmpte,
+  parseSmpte,
+  secondsToSmpteFrame,
+  smpteFrameToSeconds,
+} from './time/smpte-timecode';
+export type { SmpteFormat } from './time/smpte-timecode';

@@ -463,3 +463,17 @@ describe('java-parity-fixtures history fixture entry points', () => {
     });
   });
 });
+
+it('copies SMPTE mode and independently owns unknown TimeState XML', () => {
+  const data = BlueData.loadFromString(
+    '<blueData><score><timeState future="yes"><smpteFrameRate>59.94</smpteFrameRate><smpteDropFrame>true</smpteDropFrame><future value="opaque"/></timeState></score></blueData>',
+  );
+  const copy = data.historyCopy();
+  data.getScore().getTimeState().setSmpteDropFrame(false);
+  expect(copy.getScore().getTimeState().isSmpteDropFrame()).toBe(true);
+  const exported = copy.getScore().getTimeState().saveAsXML();
+  exported.getElement('future')!.setAttribute('value', 'changed');
+  expect(
+    copy.getScore().getTimeState().saveAsXML().getElement('future')!.getAttribute('value'),
+  ).toBe('opaque');
+});

@@ -40,6 +40,7 @@ function createProgramSettings(
       defaultSnapEnabled: false,
       defaultSnapValue: 'BEAT',
       defaultSmpteFrameRate: 24,
+      defaultSmpteDropFrame: false,
     },
     playback: {
       playbackFps: 24,

@@ -1,3 +1,6 @@
+import type { TimeConversionContext } from '../../../../../../shared/project-editor';
+import type { SnapValueName } from '@blue/data';
+import { snapBeatToGrid } from '../snap-grid-utils';
 import type { AutomationPointSnapshot } from '../../../../../../shared/project-editor';
 
 export const AUTOMATION_LINE_EDGE_INSET = 5;
@@ -46,7 +49,15 @@ export function clampAndSnap(
   return clamped;
 }
 
-export function snapBeat(beat: number, snapEnabled: boolean, snapValue: number): number {
+export function snapBeat(
+  beat: number,
+  snapEnabled: boolean,
+  snapValue: number,
+  snapName?: SnapValueName,
+  context?: TimeConversionContext,
+): number {
+  if (snapEnabled && snapName === 'FRAME' && context)
+    return Math.max(0, snapBeatToGrid(beat, 'nearest', snapName, snapValue, undefined, context));
   if (!snapEnabled || snapValue <= 0) return Math.max(0, beat);
   const snapped = Math.round(beat / snapValue) * snapValue;
   return Math.max(0, snapped);

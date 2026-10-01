@@ -4,6 +4,7 @@ import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import { chooseAppSelectOption } from './app-select-test-utils';
 import SettingsApp from '../components/settings/SettingsApp';
 import { createDefaultProgramSettings } from '../../shared/program-settings';
 import type { ProgramSettingsSnapshot } from '../../shared/program-settings';
@@ -67,6 +68,33 @@ afterEach(() => {
 });
 
 describe('settings renderer (044)', () => {
+  it('saves a combined SMPTE format as an atomic default pair', async () => {
+    await act(async () => root.render(<SettingsApp />));
+    act(() =>
+      Array.from(container.querySelectorAll('nav button'))
+        .find((button) => button.textContent === 'Project Defaults')!
+        .dispatchEvent(new MouseEvent('click', { bubbles: true })),
+    );
+    const label = Array.from(container.querySelectorAll('label')).find(
+      (label) => label.textContent === 'SMPTE Format',
+    )!;
+    const trigger = document.getElementById(label.htmlFor)!;
+    expect(trigger).not.toBeNull();
+    await chooseAppSelectOption(trigger, '59.94 fps (DF)');
+    const apply = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.textContent === 'Apply',
+    )!;
+    await act(async () => apply.click());
+    expect(mockBlueAPI.saveProgramSettings).toHaveBeenCalledWith(
+      expect.objectContaining({
+        projectDefaults: expect.objectContaining({
+          defaultSmpteFrameRate: 59.94,
+          defaultSmpteDropFrame: true,
+        }),
+      }),
+    );
+  });
+
   it('shows the active Java Blue category panels plus MIDI and OSC panels', async () => {
     mockBlueAPI.getProgramSettings.mockResolvedValueOnce({ ...defaultSettings });
 

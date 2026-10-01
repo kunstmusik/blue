@@ -27,7 +27,7 @@ import AutomationLayerOverlay from '../automation/AutomationLayerOverlay';
 import type { ScoreAutomationPatch } from '../../../../../../shared/project-editor';
 import type { ScoreLayerSnapshot, ScoreRowObjectSnapshot } from '../types';
 import { DEFAULT_ROW_HEIGHT, GROUP_SPACER } from '../types';
-import { snapBeatToGrid } from '../snap-grid-utils';
+import { createFrameSnapContext, snapBeatToGrid } from '../snap-grid-utils';
 import {
   collectClipboardEntriesForSelection,
   layerGroupAcceptsObjectType,
@@ -202,6 +202,10 @@ export default function TrackLayerGroupCanvas({
   meterMap,
   onDoubleClickObject,
 }: Props) {
+  const frameSnapContext = useMemo(
+    () => createFrameSnapContext(tempoMap, smpteFrameRate, tempo),
+    [tempoMap, smpteFrameRate, tempo],
+  );
   const containerRef = useRef<HTMLDivElement>(null);
   const colorPickerRef = useRef<ScoreObjectColorPickerHandle>(null);
   const colorPickerAnchorRef = useRef<ColorPickerAnchorRect | null>(null);
@@ -277,9 +281,9 @@ export default function TrackLayerGroupCanvas({
   const snapBeat = useCallback(
     (beats: number, direction: 'floor' | 'nearest') => {
       if (!snapEnabled || snapBeats <= 0) return beats;
-      return snapBeatToGrid(beats, direction, snapValue, snapBeats, meterMap);
+      return snapBeatToGrid(beats, direction, snapValue, snapBeats, meterMap, frameSnapContext);
     },
-    [meterMap, snapBeats, snapEnabled, snapValue],
+    [meterMap, snapBeats, snapEnabled, snapValue, frameSnapContext],
   );
   const beatsToSeconds = useCallback(
     (beats: number) => (tempo > 0 ? (Math.max(0, beats) * 60) / tempo : Math.max(0, beats)),
@@ -1927,6 +1931,7 @@ export default function TrackLayerGroupCanvas({
                     snapEnabled={snapEnabled}
                     snapValue={snapValue}
                     tempo={tempo}
+                    tempoMap={tempoMap}
                     smpteFrameRate={smpteFrameRate}
                     mode={mode}
                     onPatch={(patch: ScoreAutomationPatch) => {

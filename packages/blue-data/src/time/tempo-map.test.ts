@@ -203,3 +203,13 @@ describe('TempoMap save/load with constant and linear points', () => {
     expect(reloaded.getTempo(1)).toBe(120);
   });
 });
+
+describe('shallow linear tempo inversion', () => {
+  it('preserves physical frame starts without cancellation', () => {
+    const map = new TempoMap();
+    map.setTempoPoint(0, 0, 120, CurveType.LINEAR);
+    map.addTempoPoint(new TempoPoint(1000, 120.000001, CurveType.CONSTANT));
+    map.setEnabled(true);
+    expect(Math.abs(map.beatsToSeconds(map.secondsToBeats(60.06)) - 60.06)).toBeLessThan(1e-12);
+  });
+});

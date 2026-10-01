@@ -86,3 +86,18 @@ describe('Score ruler parity with Java TimeBar', () => {
     expect(measure4!.x).toBeCloseTo(11 * 80, 6);
   });
 });
+
+it('places DF labels on physical frame starts at skipped and tenth minutes', () => {
+  const marks = __testOnly.computeMarks(
+    TimeBase.SMPTE,
+    601,
+    2400,
+    TEMPO_60,
+    METERS_4_4,
+    29.97,
+    44100,
+    true,
+  );
+  expect(marks.find((mark) => mark.label === '00:01:00;02')?.x).toBeCloseTo(60.06 * 2400, 6);
+  expect(marks.find((mark) => mark.label === '00:10:00;00')?.x).toBeCloseTo(599.9994 * 2400, 6);
+});

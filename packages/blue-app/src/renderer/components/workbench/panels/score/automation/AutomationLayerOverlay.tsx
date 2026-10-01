@@ -1,3 +1,5 @@
+import { createFrameSnapContext } from '../snap-grid-utils';
+import type { TempoMapSnapshot } from '../../../../../../shared/project-editor';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type {
   AutomationParameterSnapshot,
@@ -30,6 +32,7 @@ interface Props {
   snapEnabled: boolean;
   snapValue: SnapValueName;
   tempo: number;
+  tempoMap?: TempoMapSnapshot;
   smpteFrameRate: number;
   mode: 'score' | 'singleLine' | 'multiLine';
   onPatch: (patch: ScoreAutomationPatch) => void;
@@ -88,10 +91,15 @@ export default function AutomationLayerOverlay({
   snapEnabled,
   snapValue,
   tempo,
+  tempoMap,
   smpteFrameRate,
   mode,
   onPatch,
 }: Props) {
+  const frameSnapContext = useMemo(
+    () => createFrameSnapContext(tempoMap, smpteFrameRate, tempo),
+    [tempoMap, smpteFrameRate, tempo],
+  );
   const containerRef = useRef<HTMLDivElement>(null);
   const [dragState, setDragState] = useState<DragState>({ kind: 'none' });
   /**
@@ -145,9 +153,9 @@ export default function AutomationLayerOverlay({
       const snapBeats = snapEnabled
         ? snapValueToBeats(snapValue, tempo, smpteFrameRate, 44100, pixelsPerBeat)
         : 0;
-      return snapBeat(beat, snapEnabled, snapBeats);
+      return snapBeat(beat, snapEnabled, snapBeats, snapValue, frameSnapContext);
     },
-    [snapEnabled, snapValue, tempo, smpteFrameRate, pixelsPerBeat],
+    [snapEnabled, snapValue, tempo, smpteFrameRate, pixelsPerBeat, frameSnapContext],
   );
 
   const setSingleParamRange = useCallback(

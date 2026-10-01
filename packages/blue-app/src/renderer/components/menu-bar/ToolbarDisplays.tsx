@@ -29,6 +29,7 @@ import {
   getTimeDisplayFormatMenuLabel,
   type ToolbarDisplayMode,
 } from './toolbar-formatters';
+import { SMPTE_FORMAT_CHOICES } from '../../../shared/program-settings';
 import { TimeBase } from '../../../shared/time-base';
 import { usePortalContainer } from '../../hooks/use-host-document';
 import { cn } from '../../lib/cn';
@@ -123,6 +124,7 @@ const PlayheadDisplayCard = memo(
     const tempoMap = useProjectStore((state) => state.transport.tempoMap);
     const meterMap = useProjectStore((state) => state.transport.meterMap);
     const smpteFrameRate = useProjectStore((state) => state.transport.smpteFrameRate);
+    const smpteDropFrame = useProjectStore((state) => state.transport.smpteDropFrame);
     const sampleRate = useProjectStore((state) => state.transport.sampleRate);
     const status = usePlaybackStore((state) => state.status);
     const clock = usePlaybackStore((state) => state.clock);
@@ -131,12 +133,17 @@ const PlayheadDisplayCard = memo(
     const display = useInterpolatedPlaybackDisplay(status, clock, authoritativeDisplay);
 
     const playhead = useMemo(() => {
-      const playheadTransport = transportAnchor ?? {
-        renderStartTime,
-        tempoMap,
-        meterMap,
+      const playheadTransport = {
+        ...(transportAnchor ?? {
+          renderStartTime,
+          tempoMap,
+          meterMap,
+          smpteFrameRate,
+          smpteDropFrame,
+          sampleRate,
+        }),
         smpteFrameRate,
-        sampleRate,
+        smpteDropFrame,
       };
 
       return buildPlayheadDisplayState(
@@ -160,6 +167,7 @@ const PlayheadDisplayCard = memo(
       tempoMap,
       meterMap,
       smpteFrameRate,
+      smpteDropFrame,
       sampleRate,
       status,
       clock,
@@ -196,6 +204,7 @@ const SelectionDisplayCard = memo(
       const tempoMap = useProjectStore((state) => state.transport.tempoMap);
       const meterMap = useProjectStore((state) => state.transport.meterMap);
       const smpteFrameRate = useProjectStore((state) => state.transport.smpteFrameRate);
+      const smpteDropFrame = useProjectStore((state) => state.transport.smpteDropFrame);
       const sampleRate = useProjectStore((state) => state.transport.sampleRate);
 
       const selection = useMemo(
@@ -207,11 +216,21 @@ const SelectionDisplayCard = memo(
               tempoMap,
               meterMap,
               smpteFrameRate,
+              smpteDropFrame,
               sampleRate,
             },
             format,
           ),
-        [renderStartTime, renderEndTime, tempoMap, meterMap, smpteFrameRate, sampleRate, format],
+        [
+          renderStartTime,
+          renderEndTime,
+          tempoMap,
+          meterMap,
+          smpteFrameRate,
+          smpteDropFrame,
+          sampleRate,
+          format,
+        ],
       );
 
       return (
@@ -255,11 +274,7 @@ function ContextMenuCheckItem({
     <ContextMenu.CheckboxItem
       className="toolbar-context-menu__item"
       checked={checked}
-      onCheckedChange={(nextChecked) => {
-        if (nextChecked) {
-          onSelect();
-        }
-      }}
+      onSelect={onSelect}
     >
       <ContextMenu.ItemIndicator className="toolbar-context-menu__item-indicator">
         <Check size={12} strokeWidth={2.5} />
@@ -284,6 +299,8 @@ function ToolbarFormatSubmenu({
   includeOff?: boolean;
   offLabel?: string;
 }): React.ReactElement {
+  const rate = useProjectStore((state) => state.score.timeState.smpteFrameRate);
+  const dropFrame = useProjectStore((state) => state.score.timeState.smpteDropFrame);
   return (
     <ContextMenu.Sub>
       <ContextMenu.SubTrigger className="toolbar-context-menu__item toolbar-context-menu__subtrigger">
@@ -309,15 +326,59 @@ function ToolbarFormatSubmenu({
 
             <ContextMenu.Separator className="toolbar-context-menu__separator" />
 
-            {TOOLBAR_TIME_DISPLAY_FORMATS.map((format) => (
-              <ContextMenuCheckItem
-                key={format}
-                checked={mode === format}
-                onSelect={() => onModeChange(format)}
-              >
-                {getTimeDisplayFormatMenuLabel(format)}
-              </ContextMenuCheckItem>
-            ))}
+            {TOOLBAR_TIME_DISPLAY_FORMATS.map((format) =>
+              format === TimeBase.SMPTE ? (
+                <ContextMenu.Sub key={format}>
+                  <ContextMenu.SubTrigger className="toolbar-context-menu__item toolbar-context-menu__subtrigger">
+                    <span>SMPTE</span>
+                    <ChevronRight className="w-3.5 h-3.5 opacity-60" />
+                  </ContextMenu.SubTrigger>
+                  <ContextMenu.Portal container={portalContainer}>
+                    <ContextMenu.SubContent
+                      className="toolbar-context-menu"
+                      sideOffset={6}
+                      alignOffset={-4}
+                    >
+                      {SMPTE_FORMAT_CHOICES.map((choice) => (
+                        <ContextMenuCheckItem
+                          key={choice.value}
+                          checked={
+                            mode === TimeBase.SMPTE &&
+                            rate === choice.frameRate &&
+                            dropFrame === choice.dropFrame
+                          }
+                          onSelect={() => {
+                            onModeChange(TimeBase.SMPTE);
+                            void useProjectStore.getState().applyProjectDocumentPatch(
+                              {
+                                score: {
+                                  type: 'updateTimeState',
+                                  patch: {
+                                    smpteFrameRate: choice.frameRate,
+                                    smpteDropFrame: choice.dropFrame,
+                                  },
+                                },
+                              },
+                              { label: 'Change SMPTE Format' },
+                            );
+                          }}
+                        >
+                          {choice.label}
+                        </ContextMenuCheckItem>
+                      ))}
+                    </ContextMenu.SubContent>
+                  </ContextMenu.Portal>
+                </ContextMenu.Sub>
+              ) : (
+                <ContextMenuCheckItem
+                  key={format}
+                  checked={mode === format}
+                  onSelect={() => onModeChange(format)}
+                >
+                  {getTimeDisplayFormatMenuLabel(format)}
+                </ContextMenuCheckItem>
+              ),
+            )}
           </ContextMenu.SubContent>
         </ContextMenu.Portal>
       ) : null}

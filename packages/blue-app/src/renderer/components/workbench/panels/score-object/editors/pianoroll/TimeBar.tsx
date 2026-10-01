@@ -1,5 +1,11 @@
+import type { TimeConversionContext } from '../../../../../../../shared/project-editor';
+import {
+  beatsToSeconds,
+  secondsToBeats,
+  formatSMPTE,
+} from '../../../../../../time/time-unit-logic';
 import React, { useMemo } from 'react';
-import { TimeBase } from '@blue/data';
+import { resolveSmpteRate, secondsToSmpteFrame, smpteFrameToSeconds, TimeBase } from '@blue/data';
 import { cn } from '../../../../../../lib/cn';
 
 export const PIANO_ROLL_RULER_ROW_HEIGHT = 20;
@@ -23,6 +29,7 @@ interface TimeBarProps {
   meters: MeterEntry[];
   initialTempo: number;
   sampleRate: number;
+  timeContext?: TimeConversionContext;
 }
 
 interface Mark {
@@ -45,6 +52,7 @@ export default function TimeBar({
   meters,
   initialTempo,
   sampleRate,
+  timeContext,
 }: TimeBarProps): React.ReactElement {
   const totalBeats = canvasWidth / pixelSecond;
   const safeTempo = initialTempo > 0 ? initialTempo : 60;
@@ -61,6 +69,7 @@ export default function TimeBar({
         meters={meters}
         tempo={safeTempo}
         sampleRate={sampleRate}
+        timeContext={timeContext}
       />
       {secondaryRulerEnabled && (
         <RulerRow
@@ -70,6 +79,7 @@ export default function TimeBar({
           meters={meters}
           tempo={safeTempo}
           sampleRate={sampleRate}
+          timeContext={timeContext}
           secondary
         />
       )}
@@ -85,6 +95,7 @@ function RulerRow({
   tempo,
   sampleRate,
   secondary,
+  timeContext,
 }: {
   timeDisplay: string;
   totalBeats: number;
@@ -93,10 +104,12 @@ function RulerRow({
   tempo: number;
   sampleRate: number;
   secondary?: boolean;
+  timeContext?: TimeConversionContext;
 }): React.ReactElement {
   const marks = useMemo(
-    () => computeMarks(timeDisplay, totalBeats, pixelSecond, meters, tempo, sampleRate),
-    [timeDisplay, totalBeats, pixelSecond, meters, tempo, sampleRate],
+    () =>
+      computeMarks(timeDisplay, totalBeats, pixelSecond, meters, tempo, sampleRate, timeContext),
+    [timeDisplay, totalBeats, pixelSecond, meters, tempo, sampleRate, timeContext],
   );
 
   return (
@@ -142,13 +155,25 @@ function computeMarks(
   meters: MeterEntry[],
   tempo: number,
   sampleRate: number,
+  timeContext?: TimeConversionContext,
 ): Mark[] {
   switch (timeDisplay) {
     case TimeBase.TIME:
     case TimeBase.SECONDS:
       return computeTimeMarks(totalBeats, pixelsPerBeat, tempo, timeDisplay);
     case TimeBase.SMPTE:
-      return computeSmpteMarks(totalBeats, pixelsPerBeat, tempo, 24);
+      return computeSmpteMarks(
+        totalBeats,
+        pixelsPerBeat,
+        timeContext ?? {
+          meterEntries: meters,
+          initialTempo: tempo,
+          tempoEnabled: true,
+          sampleRate,
+          smpteFrameRate: 24,
+          smpteDropFrame: false,
+        },
+      );
     case TimeBase.FRAME:
       return computeSamplesMarks(totalBeats, pixelsPerBeat, tempo, sampleRate);
     case TimeBase.BBT:
@@ -217,43 +242,38 @@ function computeTimeMarks(
 function computeSmpteMarks(
   totalBeats: number,
   pixelsPerBeat: number,
-  tempo: number,
-  frameRate: number,
+  context: TimeConversionContext,
 ): Mark[] {
-  const secondsPerBeat = 60 / tempo;
-  const totalSeconds = totalBeats * secondsPerBeat;
-  const pixelsPerSecond = pixelsPerBeat / secondsPerBeat;
-  const minSecPerLabel = 80 / pixelsPerSecond;
-  const increments = [
-    1 / frameRate,
-    2 / frameRate,
-    5 / frameRate,
-    10 / frameRate,
-    0.5,
-    1,
-    2,
-    5,
-    10,
-    30,
-    60,
-    120,
-    300,
-    600,
-  ];
-  let increment = increments[increments.length - 1]!;
-  for (const inc of increments) {
-    if (minSecPerLabel <= inc) {
-      increment = inc;
-      break;
-    }
-  }
-
+  const frameRate = context.smpteFrameRate ?? 24;
+  const rate = resolveSmpteRate(frameRate);
+  if (!rate || totalBeats <= 0) return [];
+  const seconds = beatsToSeconds(totalBeats, context);
+  const lastFrame = secondsToSmpteFrame(seconds, frameRate);
+  if (lastFrame === null) return [];
+  const minimumStride =
+    (((80 * seconds) / (totalBeats * pixelsPerBeat)) * rate.numerator) / rate.denominator;
+  const stride =
+    [
+      1,
+      2,
+      5,
+      10,
+      rate.nominal,
+      2 * rate.nominal,
+      5 * rate.nominal,
+      10 * rate.nominal,
+      30 * rate.nominal,
+      60 * rate.nominal,
+      600 * rate.nominal,
+    ].find((value) => value >= minimumStride) ?? Math.ceil(minimumStride);
   const marks: Mark[] = [];
-  for (let seconds = 0; seconds <= totalSeconds + increment * 0.5; seconds += increment) {
-    const x = (seconds / secondsPerBeat) * pixelsPerBeat;
-    if (x >= 0 && x <= totalBeats * pixelsPerBeat) {
-      marks.push({ x, label: formatSmpteLabel(seconds, frameRate), type: 'major' });
-    }
+  for (let frame = 0; frame <= lastFrame; frame += stride) {
+    const time = smpteFrameToSeconds(frame, frameRate)!;
+    marks.push({
+      x: secondsToBeats(time, context) * pixelsPerBeat,
+      label: formatSMPTE(time, frameRate, context.smpteDropFrame ?? false),
+      type: 'major',
+    });
   }
   return marks;
 }
@@ -437,18 +457,6 @@ function formatSecondsWithPrecision(seconds: number, nfrac: number): string {
   const scale = Math.max(1, Math.min(nfrac, 6));
   const text = seconds.toFixed(scale);
   return text.includes('.') ? text : text + '.0';
-}
-
-function formatSmpteLabel(seconds: number, frameRate: number): string {
-  const totalSecs = Math.floor(seconds);
-  const hours = Math.floor(totalSecs / 3600);
-  const mins = Math.floor((totalSecs % 3600) / 60);
-  const secs = totalSecs % 60;
-  let frames = Math.floor((seconds - totalSecs) * frameRate);
-  const maxFrames = Math.floor(frameRate) - 1;
-  if (frames > maxFrames) frames = maxFrames;
-  if (frames < 0) frames = 0;
-  return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}:${String(frames).padStart(2, '0')}`;
 }
 
 function formatSampleCount(samples: number, nfrac: number): string {

@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+import { createFrameSnapContext } from './snap-grid-utils';
 import { useState, useCallback, useRef } from 'react';
 import type {
   MeterMapSnapshot,
@@ -29,6 +31,8 @@ interface TempoRegionBarProps {
   pixelsPerBeat: number;
   snapEnabled: boolean;
   snapValue: SnapValueName;
+  smpteFrameRate?: number;
+  sampleRate?: number;
   rootTimelineOnly: boolean;
   onTempoPatch: (patch: TempoMapPatch) => void;
   onOpenPointDialog: (index: number) => void;
@@ -41,10 +45,16 @@ export default function TempoRegionBar({
   pixelsPerBeat,
   snapEnabled,
   snapValue,
+  smpteFrameRate = 24,
+  sampleRate = 44100,
   rootTimelineOnly,
   onTempoPatch,
   onOpenPointDialog,
 }: TempoRegionBarProps) {
+  const frameSnapContext = useMemo(
+    () => createFrameSnapContext(tempoMap, smpteFrameRate),
+    [tempoMap, smpteFrameRate],
+  );
   const [hoveredRegion, setHoveredRegion] = useState<number | null>(null);
   const contentWidth = totalBeats * pixelsPerBeat;
   const regions = deriveTempoRegions(tempoMap, totalBeats);
@@ -63,9 +73,10 @@ export default function TempoRegionBar({
         snapValue,
         pixelsPerBeat,
         tempoMap.points[0]?.tempo ?? 60,
-        30,
-        44100,
+        smpteFrameRate,
+        sampleRate,
         meterMap,
+        frameSnapContext,
       );
 
       const existingIdx = findExistingPointNearBeat(
@@ -88,6 +99,9 @@ export default function TempoRegionBar({
       snapEnabled,
       snapValue,
       meterMap,
+      smpteFrameRate,
+      sampleRate,
+      frameSnapContext,
       tempoMap.points,
       onTempoPatch,
       onOpenPointDialog,

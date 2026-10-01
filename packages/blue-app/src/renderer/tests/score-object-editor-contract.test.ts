@@ -762,3 +762,17 @@ describe('Score patches — updateTypeSpecificEditor', () => {
     expect(fso.getFrozenWaveFileName()).toBe('freeze0.wav');
   });
 });
+
+it('provides the project DF mode and preceding tempo points to position and duration editors', () => {
+  const { data, target } = createDataWithGenericScore();
+  const state = data.getScore().getTimeState();
+  state.setSmpteFrameRate(29.97);
+  state.setSmpteDropFrame(true);
+  const tempo = data.getScore().getTimeContext().getTempoMap();
+  tempo.setEnabled(true);
+  tempo.addTempoPoint(new TempoPoint(30, 120, CurveType.CONSTANT));
+  const doc = createScoreObjectEditorDocument(data, { target })!;
+  expect(doc.timeContext.smpteDropFrame).toBe(true);
+  expect(formatForBase(90.12, 'SMPTE', doc.timeContext, false)).toBe('00:01:00;02');
+  expect(parseForBase('00:01:00;02', 'SMPTE', doc.timeContext, true)).toBeCloseTo(90.12, 12);
+});

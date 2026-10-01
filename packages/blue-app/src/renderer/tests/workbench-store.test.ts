@@ -580,6 +580,7 @@ const markerMenuTransport = {
   },
   sampleRate: 44100,
   smpteFrameRate: 24,
+  smpteDropFrame: false,
 };
 
 describe('restored workbench validation', () => {

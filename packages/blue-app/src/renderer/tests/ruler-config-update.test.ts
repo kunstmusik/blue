@@ -572,3 +572,20 @@ describe('Ruler Config Timebase Update Logic', () => {
     });
   });
 });
+
+it('rejects unsupported SMPTE pairs atomically and commits supported pairs without retiming', () => {
+  const data = new BlueData();
+  const state = data.getScore().getTimeState();
+  const before = data.saveToString();
+  expect(() =>
+    applyScoreTimeStatePatch(data, { smpteFrameRate: 30, smpteDropFrame: true, snapEnabled: true }),
+  ).toThrow();
+  expect(data.saveToString()).toBe(before);
+  expect(applyScoreTimeStatePatch(data, { smpteFrameRate: 29.97, smpteDropFrame: true })).toBe(
+    true,
+  );
+  expect(state.isSmpteDropFrame()).toBe(true);
+  expect(applyScoreTimeStatePatch(data, { smpteFrameRate: 24, smpteDropFrame: false })).toBe(true);
+  expect(state.isSmpteDropFrame()).toBe(false);
+  expect(applyScoreTimeStatePatch(data, { smpteFrameRate: 24, smpteDropFrame: false })).toBe(false);
+});

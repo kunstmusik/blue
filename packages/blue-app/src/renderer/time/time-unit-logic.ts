@@ -1,5 +1,5 @@
 import type { TimeConversionContext, TimeConversionMeterEntry } from '../../shared/project-editor';
-import { CurveType, TempoMap, TempoPoint } from '@blue/data';
+import { CurveType, TempoMap, TempoPoint, formatSmpte, parseSmpte } from '@blue/data';
 
 export type { TimeConversionContext };
 
@@ -271,14 +271,8 @@ export function formatSeconds(secs: number): string {
   return s.replace(/\.?0+$/, '') || '0';
 }
 
-export function formatSMPTE(secs: number, frameRate: number): string {
-  const h = Math.floor(secs / 3600);
-  const rem = secs - h * 3600;
-  const m = Math.floor(rem / 60);
-  const sec = rem - m * 60;
-  const s = Math.floor(sec);
-  const frames = Math.floor((sec - s) * frameRate);
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}:${String(frames).padStart(2, '0')}`;
+export function formatSMPTE(secs: number, frameRate: number, dropFrame = false): string {
+  return formatSmpte(secs, { frameRate, dropFrame }) ?? '—';
 }
 
 export function totalSecondsToTime(secs: number): {
@@ -351,7 +345,7 @@ export function formatForBase(
 
     case 'SMPTE': {
       const secs = beatsToSeconds(beats, ctx);
-      return formatSMPTE(secs, ctx.smpteFrameRate || 24);
+      return formatSMPTE(secs, ctx.smpteFrameRate ?? 24, ctx.smpteDropFrame ?? false);
     }
 
     case 'FRAME': {
@@ -466,15 +460,11 @@ export function parseForBase(
       }
 
       case 'SMPTE': {
-        const parts = text.split(':');
-        if (parts.length !== 4) return null;
-        const h = parseInt(parts[0], 10);
-        const m = parseInt(parts[1], 10);
-        const s = parseInt(parts[2], 10);
-        const f = parseInt(parts[3], 10);
-        if (isNaN(h) || isNaN(m) || isNaN(s) || isNaN(f)) return null;
-        const totalSecs = h * 3600 + m * 60 + s + f / (ctx.smpteFrameRate || 24);
-        return secondsToBeats(totalSecs, ctx);
+        const seconds = parseSmpte(text, {
+          frameRate: ctx.smpteFrameRate ?? 24,
+          dropFrame: ctx.smpteDropFrame ?? false,
+        });
+        return seconds === null ? null : secondsToBeats(seconds, ctx);
       }
 
       case 'FRAME': {

@@ -3,7 +3,7 @@ import type { ProjectDefaultsSettingsSnapshot } from '../../../shared/program-se
 import {
   TIME_BASE_CHOICES,
   SNAP_VALUE_CHOICES,
-  SMPTE_FRAME_RATES,
+  SMPTE_FORMAT_CHOICES,
   LAYER_HEIGHT_CHOICES,
   UDO_STYLE_CHOICES,
   DEFAULT_LAYER_GROUP_TYPE_CHOICES,
@@ -132,13 +132,21 @@ export default function ProjectDefaultsSettings({
       </SettingsSelectField>
 
       <SettingsSelectField
-        label="SMPTE Frame Rate"
-        value={settings.defaultSmpteFrameRate}
-        onChange={(value) => set('defaultSmpteFrameRate', Number.parseFloat(value))}
+        label="SMPTE Format"
+        value={`${settings.defaultSmpteFrameRate}:${settings.defaultSmpteDropFrame ? 'DF' : 'NDF'}`}
+        onChange={(value) => {
+          const format = SMPTE_FORMAT_CHOICES.find((option) => option.value === value);
+          if (!format) return;
+          onChange({
+            ...settings,
+            defaultSmpteFrameRate: format.frameRate,
+            defaultSmpteDropFrame: format.dropFrame,
+          });
+        }}
       >
-        {SMPTE_FRAME_RATES.map((frameRate) => (
-          <option key={frameRate} value={frameRate}>
-            {frameRate}
+        {SMPTE_FORMAT_CHOICES.map((format) => (
+          <option key={format.value} value={format.value}>
+            {format.label}
           </option>
         ))}
       </SettingsSelectField>

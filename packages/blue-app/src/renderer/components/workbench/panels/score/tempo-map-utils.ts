@@ -1,3 +1,4 @@
+import type { TimeConversionContext } from '../../../../../shared/project-editor';
 import type {
   MeterMapSnapshot,
   TempoMapSnapshot,
@@ -59,11 +60,12 @@ export function snapBeat(
   smpteFrameRate: number = 30,
   sampleRate: number = 44100,
   meterMap?: MeterMapSnapshot,
+  context?: TimeConversionContext,
 ): number {
   if (!snapEnabled) return beat;
   const snapBeats = snapValueToBeats(snapValue, tempo, smpteFrameRate, sampleRate, pixelsPerBeat);
   if (snapBeats <= 0) return beat;
-  return snapBeatToGrid(beat, 'nearest', snapValue, snapBeats, meterMap);
+  return snapBeatToGrid(beat, 'nearest', snapValue, snapBeats, meterMap, context);
 }
 
 export function getTempoAtBeat(points: TempoPointSnapshot[], beat: number): number {
@@ -137,7 +139,7 @@ export function secondsToBeats(seconds: number, tempoMap: TempoMapSnapshot): num
   }
 
   const discriminant = factor1 * factor1 + 2 * acceleration * elapsed;
-  return current.beat + (Math.sqrt(Math.max(0, discriminant)) - factor1) / acceleration;
+  return current.beat + (2 * elapsed) / (Math.sqrt(Math.max(0, discriminant)) + factor1);
 }
 
 export function beatToScreenX(beat: number, pixelsPerBeat: number): number {

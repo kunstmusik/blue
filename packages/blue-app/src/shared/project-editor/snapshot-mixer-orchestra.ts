@@ -832,7 +832,8 @@ export function createEmptyToolbarProjectTransportSnapshot(): ToolbarProjectTran
     tempoMap: createEmptyTempoMapSnapshot(),
     meterMap: createEmptyMeterMapSnapshot(),
     sampleRate: 44100,
-    smpteFrameRate: 30,
+    smpteFrameRate: 24,
+    smpteDropFrame: false,
   };
 }
 
@@ -847,7 +848,8 @@ export function createToolbarProjectTransportSnapshot(
     tempoMap: createTempoMapSnapshot(data.getScore().getTimeContext().getTempoMap()),
     meterMap: createMeterMapSnapshot(timeContext.getMeterMap()),
     sampleRate: Number(data.getProjectProperties().sampleRate) || 44100,
-    smpteFrameRate: timeContext.getSmpteFramesPerSecond(),
+    smpteFrameRate: data.getScore().getTimeState().getSmpteFrameRate(),
+    smpteDropFrame: data.getScore().getTimeState().isSmpteDropFrame(),
   };
 }
 

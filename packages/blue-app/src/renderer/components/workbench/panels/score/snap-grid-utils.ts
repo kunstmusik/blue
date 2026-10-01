@@ -1,5 +1,28 @@
-import type { SnapValueName } from '@blue/data';
+import {
+  secondsToSmpteFrame,
+  smpteFrameToSeconds,
+  resolveSmpteRate,
+  type SnapValueName,
+} from '@blue/data';
+import { beatsToSeconds, secondsToBeats } from '../../../../time/time-unit-logic';
+import type { TimeConversionContext, TempoMapSnapshot } from '../../../../../shared/project-editor';
 import type { MeterMapSnapshot, MeterSnapshot } from '../../../../../shared/project-editor';
+
+export function createFrameSnapContext(
+  tempoMap: TempoMapSnapshot | undefined,
+  smpteFrameRate: number,
+  tempo = 60,
+): TimeConversionContext {
+  return {
+    meterEntries: [],
+    tempoEnabled: tempoMap?.enabled ?? true,
+    initialTempo: tempo,
+    tempoPoints: tempoMap?.points,
+    sampleRate: 44100,
+    smpteFrameRate,
+    smpteDropFrame: false,
+  };
+}
 
 const EPSILON = 1e-9;
 
@@ -109,7 +132,22 @@ export function deriveSnapLineBeats(
   snapBeats: number,
   meterMap: MeterMapSnapshot | null | undefined,
   maxBeat: number,
+  context?: TimeConversionContext,
+  pixelsPerBeat = 100,
 ): number[] {
+  if (snapValue === 'FRAME' && context) {
+    const rate = context.smpteFrameRate ?? 24;
+    const last = secondsToSmpteFrame(beatsToSeconds(maxBeat, context), rate);
+    const descriptor = resolveSmpteRate(rate);
+    if (last === null || !descriptor) return [];
+    const spacing =
+      secondsToBeats(descriptor.denominator / descriptor.numerator, context) * pixelsPerBeat;
+    const stride = Math.max(1, Math.ceil(8 / Math.max(spacing, Number.EPSILON)));
+    const lines: number[] = [];
+    for (let frame = 0; frame <= last; frame += stride)
+      lines.push(secondsToBeats(smpteFrameToSeconds(frame, rate)!, context));
+    return lines;
+  }
   if (usesMeterBoundarySnap(snapValue, snapBeats)) {
     return deriveBarSnapLineBeats(meterMap, maxBeat);
   }
@@ -135,7 +173,13 @@ export function snapBeatToGrid(
   snapValue: SnapValueName,
   snapBeats: number,
   meterMap: MeterMapSnapshot | null | undefined,
+  context?: TimeConversionContext,
 ): number {
+  if (snapValue === 'FRAME' && context) {
+    const rate = context.smpteFrameRate ?? 24;
+    const frame = secondsToSmpteFrame(beatsToSeconds(beat, context), rate, mode);
+    return frame === null ? beat : secondsToBeats(smpteFrameToSeconds(frame, rate)!, context);
+  }
   if (
     !usesMeterBoundarySnap(snapValue, snapBeats) &&
     !usesMeterAnchoredAutoSnap(snapValue, snapBeats)

@@ -242,3 +242,13 @@ describe('program settings follow synchronization inputs (SPEC 079)', () => {
     expect(loadProgramSettings().playback.followPlayback).toBe(false);
   });
 });
+
+it('seeds both SMPTE fields in a new project', () => {
+  const data = new BlueData();
+  const settings = createDefaultProgramSettings('darwin');
+  settings.projectDefaults.defaultSmpteFrameRate = 59.94;
+  settings.projectDefaults.defaultSmpteDropFrame = true;
+  applyProgramSettingsToNewProject(data, settings);
+  expect(data.getScore().getTimeState().getSmpteFrameRate()).toBe(59.94);
+  expect(data.getScore().getTimeState().isSmpteDropFrame()).toBe(true);
+});
