@@ -1,4 +1,19 @@
 <!--
+Sync Impact Report (2026-09-30)
+- Version change: 3.0.0 → 3.1.0
+- Modified principles: none
+- Added principle: VI. License Boundaries and Source Provenance
+- Expanded sections: Spec-Driven Delivery and Governance (licensing gate and obligations)
+- Removed sections: none
+- Templates and guidance:
+  - updated: AGENTS.md
+  - updated: .specify/templates/plan-template.md
+  - reviewed/no change: .specify/templates/spec-template.md and tasks-template.md;
+    plan and tasks skills already load the constitution and its obligations
+- Follow-up TODOs: none
+-->
+
+<!--
 Sync Impact Report (2026-09-16)
 - Version change: 2.2.0 → 3.0.0
 - Modified principle: II. Java-Compatible Behavior and Lossless Project Data (one-way file compatibility; no shadow state required for unreleased extensions)
@@ -136,6 +151,29 @@ the plan MUST record why and the quickstart MUST provide deterministic manual va
 is not complete until affected tests, type checks, lint, and builds pass or a scoped exception is
 documented.
 
+### VI. License Boundaries and Source Provenance
+
+Before coding, agents MUST consult `LICENSING.md` and the affected component's license files,
+package metadata, third-party notices, and file-specific headers. `LICENSING.md` is the repository's
+license-scope map; component and third-party terms MUST be checked rather than inferred from the
+repository default or a package's license field. Copying, adapting, translating, or moving code
+across scopes, including Java parity work, MUST be checked for compatibility with the destination
+and intended distribution. New or changed dependencies, bundled assets, examples, generated tables,
+and snippets MUST receive the same check. This protects the repository's existing license boundaries.
+
+Incorporated third-party material MUST have documented provenance: source URL and revision/version
+when available, applicable license, destination scope, and required attribution, notices, license
+texts, or source distribution. Existing notices MUST be preserved, and affected inventories and
+packaging checks MUST be updated. Public availability MUST NOT be treated as permission to reuse
+source code. Original implementations from public behavioral or mathematical descriptions MUST cite
+their references; translations and AI-generated adaptations MUST NOT be used to bypass the terms
+of incorporated material.
+
+Unresolved permission or compatibility MUST block incorporation of the affected material, while
+unaffected work MAY continue. Use a compatible alternative or resolve the issue with the project
+owner before incorporation. Project-owner approval or a constitutional exception MUST NOT be
+treated as granting third-party rights or waiving license obligations.
+
 ## Additional Constraints
 
 ### TypeScript and Import Discipline
@@ -180,8 +218,12 @@ permitted only when intentional and documented.
 ### Spec-Driven Delivery
 Material features follow `/speckit-specify` → `/speckit-clarify` as needed → `/speckit-plan` →
 `/speckit-tasks` → `/speckit-implement`. Plans MUST complete the Constitution Check before research
-and after design. Tasks MUST trace compatibility, state ownership, boundary contracts, and
-verification obligations to concrete files and runnable validation.
+and after design, including an explicit license-compatibility and provenance assessment. That
+assessment MUST identify affected license scopes, proposed external material or cross-scope reuse,
+and obligations or unresolved issues. A short statement that only original code is added within an
+existing scope is sufficient when applicable. Tasks MUST trace compatibility, state ownership,
+boundary contracts, verification, and applicable licensing obligations to concrete files and
+runnable validation.
 
 ### Change Discipline and Validation
 Implementation MUST preserve unrelated work, keep edits surgical, and avoid speculative
@@ -200,10 +242,11 @@ Versioning follows these rules: MAJOR for removed or incompatibly redefined prin
 governance; MINOR for a new principle, section, or materially expanded mandatory guidance; PATCH
 for non-semantic clarification or correction. The original ratification date never changes.
 
-Every implementation plan MUST evaluate all five core principles before research and after design.
-Every task list MUST include the constitution-required compatibility and verification work.
+Every implementation plan MUST evaluate all core principles before research and after design.
+Every task list MUST include the constitution-required compatibility, verification, and applicable
+licensing work.
 Code review MUST treat an unexplained MUST violation as blocking. A necessary exception MUST be
 documented in the plan's Complexity Tracking section with the rejected compliant alternative and
 MUST receive explicit project-owner approval.
 
-**Version**: 3.0.0 | **Ratified**: 2026-04-11 | **Last Amended**: 2026-09-16
+**Version**: 3.1.0 | **Ratified**: 2026-04-11 | **Last Amended**: 2026-09-30

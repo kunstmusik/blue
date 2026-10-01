@@ -47,6 +47,26 @@ Do not manually create worktrees beside the repository or in a tool-specific def
   project format. Preserve unknown project data and route project mutations through the
   existing document bridge.
 
+## Licensing and source provenance
+
+- Before coding, read [LICENSING.md](LICENSING.md) and the affected component's license files,
+  package metadata, third-party notices, and file-specific headers. Check the destination scope;
+  the repository default does not override component or third-party terms.
+- Check compatibility before copying, translating, adapting, or moving code across license scopes,
+  including Java parity references. Also check new or changed dependencies, bundled assets,
+  examples, generated tables, and code snippets against how Blue will distribute them.
+- Public availability is not permission to reuse source code. Prefer original implementations
+  from public behavioral descriptions or mathematical rules; cite those references. Code
+  translation or AI generation does not remove obligations attached to incorporated material.
+- Record incorporated third-party material's source URL/revision, license, destination, and required
+  attribution, notices, license texts, or source distribution in feature research or the change
+  description. Preserve existing notices and update the applicable inventories and release checks.
+- Spec Kit plans must explicitly evaluate license compatibility and provenance in the Constitution
+  Check. For changes using only original code within an existing scope, a short statement suffices.
+- If permission or compatibility is unresolved, do not incorporate the affected material. Continue
+  unaffected work and use a compatible alternative or resolve the issue with the project owner;
+  owner approval alone does not grant third-party rights or change license terms.
+
 ## Java-first parity
 
 - Blue TypeScript must load supported Java Blue projects; Java Blue is not required to load or

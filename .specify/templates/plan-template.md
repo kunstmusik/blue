@@ -55,6 +55,11 @@
   external-text forms; name normalization boundaries and synthetic Windows/native OS coverage]
 - **Verification evidence**: [PASS/FAIL — list focused regression tests, round-trip/contract
   coverage, quickstart validation, and affected package type/lint/build commands]
+- **License compatibility and provenance**: [PASS/FAIL — consult `LICENSING.md` and applicable
+  component/file notices; identify destination scopes, external material or cross-scope reuse
+  (including Java translations), source URLs/revisions and licenses, distribution obligations,
+  and required notice/inventory/packaging updates; block unresolved incorporation. A short
+  original-code-only statement within an existing scope suffices when applicable]
 
 ## Project Structure
 
