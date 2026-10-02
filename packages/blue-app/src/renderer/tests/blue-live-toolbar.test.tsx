@@ -21,17 +21,6 @@ vi.mock('../stores/workbench-store', () => ({
     selector({ openPanel: vi.fn() }),
 }));
 
-declare global {
-  interface Window {
-    blueAPI?: {
-      toggleBlueLive?: () => Promise<unknown> | unknown;
-      recompileBlueLive?: () => Promise<unknown> | unknown;
-      sendBlueLiveAllNotesOff?: () => Promise<unknown> | unknown;
-      triggerBlueLiveNote?: () => Promise<unknown> | unknown;
-    };
-  }
-}
-
 function seedLoadedProject(): void {
   const snapshot = createEmptyProjectEditorSnapshot();
   useProjectStore.getState().setProjectInfo({
@@ -64,16 +53,18 @@ function renderToolbar(): { container: HTMLDivElement; root: Root } {
 beforeEach(() => {
   useBlueLiveStore.getState().reset();
   useProjectStore.getState().clearProject();
-  window.blueAPI = {
-    toggleBlueLive: vi.fn(),
-    recompileBlueLive: vi.fn(),
-    sendBlueLiveAllNotesOff: vi.fn(),
-    triggerBlueLiveNote: vi.fn(),
-  };
+  Object.assign(window, {
+    blueAPI: {
+      toggleBlueLive: vi.fn(),
+      recompileBlueLive: vi.fn(),
+      sendBlueLiveAllNotesOff: vi.fn(),
+      triggerBlueLiveNote: vi.fn(),
+    },
+  });
 });
 
 afterEach(() => {
-  delete window.blueAPI;
+  delete (window as unknown as { blueAPI?: unknown }).blueAPI;
 });
 
 describe('Blue Live toolbar behavior', () => {
@@ -108,10 +99,9 @@ describe('Blue Live toolbar behavior', () => {
     } as unknown as Partial<ReturnType<typeof useProjectStore.getState>>);
     const { container, root } = renderToolbar();
     const toggle = vi.fn();
-    window.blueAPI = {
-      ...window.blueAPI,
+    Object.assign(window.blueAPI, {
       toggleBlueLive: toggle,
-    };
+    });
 
     const blueLiveButton = Array.from(container.querySelectorAll('button')).find(
       (button) => button.textContent === 'Blue Live',
@@ -145,10 +135,9 @@ describe('Blue Live toolbar behavior', () => {
     } as unknown as Partial<ReturnType<typeof useProjectStore.getState>>);
     const { container, root } = renderToolbar();
     const toggle = vi.fn();
-    window.blueAPI = {
-      ...window.blueAPI,
+    Object.assign(window.blueAPI, {
       toggleBlueLive: toggle,
-    };
+    });
     const blueLiveButton = Array.from(container.querySelectorAll('button')).find(
       (button) => button.textContent === 'Blue Live',
     );
@@ -191,10 +180,9 @@ describe('Blue Live toolbar behavior', () => {
     });
     const { container, root } = renderToolbar();
     const toggle = vi.fn();
-    window.blueAPI = {
-      ...window.blueAPI,
+    Object.assign(window.blueAPI, {
       toggleBlueLive: toggle,
-    };
+    });
     const blueLiveButton = Array.from(container.querySelectorAll('button')).find(
       (button) => button.textContent === 'Blue Live',
     );
@@ -231,10 +219,9 @@ describe('Blue Live toolbar behavior', () => {
     } as unknown as Partial<ReturnType<typeof useProjectStore.getState>>);
     const { container, root } = renderToolbar();
     const recompile = vi.fn();
-    window.blueAPI = {
-      ...window.blueAPI,
+    Object.assign(window.blueAPI, {
       recompileBlueLive: recompile,
-    };
+    });
     const recompileButton = Array.from(container.querySelectorAll('button')).find(
       (button) => button.textContent === 'Recompile',
     );
@@ -279,11 +266,10 @@ describe('Blue Live toolbar behavior', () => {
     const { container, root } = renderToolbar();
     const recompile = vi.fn();
     const allNotesOff = vi.fn();
-    window.blueAPI = {
-      ...window.blueAPI,
+    Object.assign(window.blueAPI, {
       recompileBlueLive: recompile,
       sendBlueLiveAllNotesOff: allNotesOff,
-    };
+    });
 
     const buttons = Array.from(container.querySelectorAll('button'));
     const blueLiveButton = buttons.find((button) => button.textContent === 'Blue Live');

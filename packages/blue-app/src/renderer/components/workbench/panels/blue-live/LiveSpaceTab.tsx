@@ -205,17 +205,97 @@ export default function LiveSpaceTab(): React.ReactElement {
   }, [hoveredSetIndex, blueLive]);
 
   const isTriggerBusy = triggerFeedback.status === 'busy';
-  const canTrigger = loaded && blueLiveRunning && !isTriggerBusy;
+  const triggerAvailable = loaded && blueLiveRunning;
+  const canTrigger = triggerAvailable && !isTriggerBusy;
+
+  const [flashingCellPhases, setFlashingCellPhases] = useState<ReadonlyMap<string, 0 | 1>>(
+    () => new Map(),
+  );
+  const flashCellPhasesRef = useRef<Map<string, 0 | 1>>(new Map());
+  const flashTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const [flashingTriggerButton, setFlashingTriggerButton] = useState<{
+    mode: 'selected' | 'enabled';
+    phase: 0 | 1;
+  } | null>(null);
+  const triggerFlashPhaseRef = useRef<0 | 1>(0);
+  const triggerFlashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const flashCells = useCallback((cellIds: string[]) => {
+    const uniqueCellIds = [...new Set(cellIds)];
+    if (uniqueCellIds.length === 0) return;
+
+    for (const id of uniqueCellIds) {
+      const phase = flashCellPhasesRef.current.get(id) === 0 ? 1 : 0;
+      flashCellPhasesRef.current.set(id, phase);
+      setFlashingCellPhases((prev) => {
+        const next = new Map(prev);
+        next.set(id, phase);
+        return next;
+      });
+
+      const existing = flashTimeoutsRef.current.get(id);
+      if (existing) clearTimeout(existing);
+
+      const timer = setTimeout(() => {
+        if (flashCellPhasesRef.current.get(id) !== phase) return;
+        flashTimeoutsRef.current.delete(id);
+        flashCellPhasesRef.current.delete(id);
+        setFlashingCellPhases((prev) => {
+          if (prev.get(id) !== phase) return prev;
+          const next = new Map(prev);
+          next.delete(id);
+          return next;
+        });
+      }, 250);
+      flashTimeoutsRef.current.set(id, timer);
+    }
+  }, []);
+
+  const flashTriggerButton = useCallback((mode: 'selected' | 'enabled') => {
+    const phase = triggerFlashPhaseRef.current === 0 ? 1 : 0;
+    triggerFlashPhaseRef.current = phase;
+    if (triggerFlashTimeoutRef.current) clearTimeout(triggerFlashTimeoutRef.current);
+    setFlashingTriggerButton({ mode, phase });
+    triggerFlashTimeoutRef.current = setTimeout(() => {
+      triggerFlashTimeoutRef.current = null;
+      setFlashingTriggerButton((current) =>
+        current?.mode === mode && current.phase === phase ? null : current,
+      );
+    }, 250);
+  }, []);
+
+  useEffect(() => {
+    const timeouts = flashTimeoutsRef.current;
+    return () => {
+      for (const timer of timeouts.values()) {
+        clearTimeout(timer);
+      }
+      timeouts.clear();
+      flashCellPhasesRef.current.clear();
+      if (triggerFlashTimeoutRef.current) clearTimeout(triggerFlashTimeoutRef.current);
+      triggerFlashTimeoutRef.current = null;
+    };
+  }, []);
 
   const runTrigger = useCallback(
     async (mode: 'selected' | 'enabled') => {
       if (!canTrigger) return;
+      const targetCellIds: string[] = [];
       if (mode === 'selected') {
         const cell =
           selectedCol >= 0 && selectedRow >= 0
             ? (blueLive?.bins.cells[selectedCol]?.[selectedRow] ?? null)
             : null;
         if (!cell || !cell.hasSoundObject) return;
+        targetCellIds.push(cell.uniqueId);
+      } else {
+        for (const col of blueLive?.bins.cells ?? []) {
+          for (const cell of col ?? []) {
+            if (cell?.enabled && cell.hasSoundObject) {
+              targetCellIds.push(cell.uniqueId);
+            }
+          }
+        }
       }
 
       // Flush pending project patches so the trigger uses the latest
@@ -237,12 +317,16 @@ export default function LiveSpaceTab(): React.ReactElement {
           mode === 'selected'
             ? {
                 mode: 'selected' as const,
-                liveObjectId: blueLive!.bins.cells[selectedCol]?.[selectedRow]?.uniqueId ?? '',
+                liveObjectId: targetCellIds[0] ?? '',
               }
             : { mode: 'enabled' as const };
         const result: LegacyBlueLiveTriggerResult =
           await window.blueAPI.triggerBlueLiveObjects(request);
         mapTriggerResultToFeedback(result, setTriggerResult);
+        if (result.status === 'submitted') {
+          flashCells(targetCellIds);
+          flashTriggerButton(mode);
+        }
       } catch (err) {
         setTriggerResult({
           status: 'error',
@@ -258,6 +342,8 @@ export default function LiveSpaceTab(): React.ReactElement {
       flushPendingPatches,
       setTriggerBusy,
       setTriggerResult,
+      flashCells,
+      flashTriggerButton,
     ],
   );
 
@@ -285,15 +371,15 @@ export default function LiveSpaceTab(): React.ReactElement {
     return () => hostWindow.removeEventListener('keydown', handler);
   }, [runTrigger, shortcutHostDocument]);
 
-  // Auto-clear transient success/empty feedback after a short delay.
+  // Auto-clear transient empty/error feedback after a short delay.
   useEffect(() => {
-    if (triggerFeedback.status !== 'submitted' && triggerFeedback.status !== 'empty') return;
+    if (triggerFeedback.status !== 'error' && triggerFeedback.status !== 'empty') return;
     const token = triggerFeedback.token;
     const timer = setTimeout(() => {
       // Only clear if no newer feedback arrived.
       const current = useBlueLiveStore.getState().trigger;
       if (current.token === token) clearTrigger();
-    }, 2500);
+    }, triggerFeedback.status === 'empty' ? 2500 : 4000);
     return () => clearTimeout(timer);
   }, [triggerFeedback.status, triggerFeedback.token, clearTrigger]);
 
@@ -405,7 +491,7 @@ export default function LiveSpaceTab(): React.ReactElement {
           style={{
             ...toolbarBtnStyle,
             opacity:
-              canTrigger &&
+              triggerAvailable &&
               selectedCol >= 0 &&
               selectedRow >= 0 &&
               bins.cells[selectedCol]?.[selectedRow]?.hasSoundObject
@@ -415,7 +501,15 @@ export default function LiveSpaceTab(): React.ReactElement {
           }}
           title="Trigger selected cell (⌘/Ctrl+T)"
         >
-          Trigger Selected
+          <span
+            className={
+              flashingTriggerButton?.mode === 'selected'
+                ? `blue-live-trigger-label--flashing blue-live-trigger-label--flashing-${flashingTriggerButton.phase}`
+                : undefined
+            }
+          >
+            Trigger Selected
+          </span>
         </button>
         <button
           type="button"
@@ -423,14 +517,22 @@ export default function LiveSpaceTab(): React.ReactElement {
           disabled={!canTrigger}
           style={{
             ...toolbarBtnStyle,
-            opacity: canTrigger ? 1 : 0.5,
+            opacity: triggerAvailable ? 1 : 0.5,
             cursor: canTrigger ? 'pointer' : 'not-allowed',
           }}
           title="Trigger all enabled cells (⌘/Ctrl+Shift+T)"
         >
-          Trigger
+          <span
+            className={
+              flashingTriggerButton?.mode === 'enabled'
+                ? `blue-live-trigger-label--flashing blue-live-trigger-label--flashing-${flashingTriggerButton.phase}`
+                : undefined
+            }
+          >
+            Trigger
+          </span>
         </button>
-        {triggerFeedback.status !== 'idle' && (
+        {(triggerFeedback.status === 'error' || triggerFeedback.status === 'empty') && (
           <span
             role="status"
             aria-live="polite"
@@ -441,30 +543,11 @@ export default function LiveSpaceTab(): React.ReactElement {
               color:
                 triggerFeedback.status === 'error'
                   ? 'var(--color-app-danger)'
-                  : triggerFeedback.status === 'submitted'
-                    ? 'var(--color-app-success)'
-                    : 'var(--color-app-text-muted)',
+                  : 'var(--color-app-text-muted)',
             }}
           >
-            <span aria-hidden="true">
-              {triggerFeedback.status === 'error'
-                ? '⚠'
-                : triggerFeedback.status === 'submitted'
-                  ? '✓'
-                  : triggerFeedback.status === 'busy'
-                    ? '●'
-                    : '○'}
-            </span>
-            <span>
-              {triggerFeedback.message ||
-                (triggerFeedback.status === 'busy'
-                  ? 'Triggering…'
-                  : triggerFeedback.status === 'submitted'
-                    ? 'Submitted'
-                    : triggerFeedback.status === 'empty'
-                      ? 'No targets'
-                      : '')}
-            </span>
+            <span aria-hidden="true">{triggerFeedback.status === 'error' ? '⚠' : '○'}</span>
+            <span>{triggerFeedback.message}</span>
           </span>
         )}
       </div>
@@ -669,6 +752,9 @@ export default function LiveSpaceTab(): React.ReactElement {
                     const cell = bins.cells[ci]?.[ri] ?? null;
                     const isSelected = selectedCol === ci && selectedRow === ri;
                     const isHoveredSet = cell != null && hoveredSetIds.has(cell.uniqueId);
+                    const flashingCellPhase = cell
+                      ? flashingCellPhases.get(cell.uniqueId)
+                      : undefined;
 
                     return (
                       <ContextMenu.Root key={ci}>
@@ -677,6 +763,12 @@ export default function LiveSpaceTab(): React.ReactElement {
                             data-blue-live-cell
                             data-column={ci}
                             data-row={ri}
+                            data-flashing={flashingCellPhase === undefined ? undefined : 'true'}
+                            className={
+                              flashingCellPhase === undefined
+                                ? undefined
+                                : `blue-live-cell--flashing blue-live-cell--flashing-${flashingCellPhase}`
+                            }
                             onClick={() => selectCellForEditing(ci, ri, cell)}
                             onContextMenu={() => setTargetCell(ci, ri)}
                             onDoubleClick={() => handleToggleEnabled(ci, ri, cell)}
@@ -912,7 +1004,7 @@ function mapTriggerResultToFeedback(
   if (result.status === 'submitted') {
     setTriggerResult({
       status: 'submitted',
-      message: `Submitted ${result.noteCount} note${result.noteCount === 1 ? '' : 's'} from ${result.targetCount} cell${result.targetCount === 1 ? '' : 's'}`,
+      message: '',
     });
     return;
   }

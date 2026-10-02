@@ -942,6 +942,44 @@ describe('Blue Live trigger routing tests (T049)', () => {
     expect((selectedBtn as HTMLButtonElement).disabled).toBe(true);
   });
 
+  it('keeps trigger button appearance stable while a request is busy', async () => {
+    const { useBlueLiveStore } = await import('../stores/blue-live-store');
+    useBlueLiveStore.setState({ running: true, status: 'running' });
+    seedProject(makeBlueLiveSnapshot());
+
+    act(() => {
+      root.render(
+        <HostDocumentContext.Provider value={document}>
+          <LiveSpaceTab />
+        </HostDocumentContext.Provider>,
+      );
+    });
+
+    const buttons = container.querySelectorAll('button');
+    const selectedBtn = Array.from(buttons).find((b) => b.textContent === 'Trigger Selected');
+    const triggerBtn = Array.from(buttons).find((b) => b.textContent === 'Trigger');
+    const selectedCell = Array.from(container.querySelectorAll('div')).find(
+      (element) => element.textContent === 'OSC1',
+    );
+    expect(selectedBtn).toBeTruthy();
+    expect(triggerBtn).toBeTruthy();
+    expect(selectedCell).toBeTruthy();
+
+    act(() => {
+      selectedCell!.click();
+      useBlueLiveStore.getState().setTriggerBusy();
+    });
+
+    expect((selectedBtn as HTMLButtonElement).disabled).toBe(true);
+    expect((triggerBtn as HTMLButtonElement).disabled).toBe(true);
+    expect((selectedBtn as HTMLElement).style.opacity).toBe('1');
+    expect((triggerBtn as HTMLElement).style.opacity).toBe('1');
+
+    act(() => {
+      useBlueLiveStore.getState().reset();
+    });
+  });
+
   it('scopes trigger shortcuts to the focused Live Space and ignores editors', async () => {
     const triggerSpy = vi.fn().mockResolvedValue({
       ok: true,
@@ -1055,6 +1093,121 @@ describe('Blue Live trigger routing tests (T049)', () => {
     });
     await vi.waitFor(() => {
       expect(container.textContent).toContain('engine down');
+    });
+  });
+
+  it('flashes triggered cells and the enabled trigger button', async () => {
+    const triggerSpy = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 'submitted',
+      targetCount: 1,
+      noteCount: 1,
+      documentRevision: 0,
+      blueLiveSessionId: 1,
+    });
+    (window as unknown as { blueAPI: unknown }).blueAPI = {
+      triggerBlueLiveObjects: triggerSpy,
+    };
+    seedProject(makeBlueLiveSnapshot());
+    useProjectStore.setState({
+      flushPendingPatches: vi.fn().mockResolvedValue(undefined),
+    } as unknown as Partial<ReturnType<typeof useProjectStore.getState>>);
+
+    const { useBlueLiveStore } = await import('../stores/blue-live-store');
+    useBlueLiveStore.setState({ running: true, status: 'running' });
+
+    act(() => {
+      root.render(
+        <HostDocumentContext.Provider value={document}>
+          <LiveSpaceTab />
+        </HostDocumentContext.Provider>,
+      );
+    });
+
+    const triggerBtn = Array.from(container.querySelectorAll('button')).find(
+      (b) => b.textContent === 'Trigger',
+    );
+    expect(triggerBtn).toBeTruthy();
+
+    const enabledCell = container.querySelector(
+      '[data-blue-live-cell][data-column="0"][data-row="0"]',
+    ) as HTMLElement;
+    expect(enabledCell).toBeTruthy();
+    expect(enabledCell.getAttribute('data-flashing')).toBeNull();
+
+    await act(async () => {
+      triggerBtn!.click();
+    });
+
+    await vi.waitFor(() => {
+      expect(triggerSpy).toHaveBeenCalledWith({ mode: 'enabled' });
+    });
+
+    // Cell should be flashing
+    expect(enabledCell.getAttribute('data-flashing')).toBe('true');
+    expect(enabledCell.classList.contains('blue-live-cell--flashing')).toBe(true);
+    const triggerLabel = triggerBtn!.querySelector('span');
+    expect(triggerLabel?.classList.contains('blue-live-trigger-label--flashing')).toBe(true);
+    expect(triggerBtn!.textContent).toBe('Trigger');
+
+    // Toolbar should NOT display any "Submitted" or "✓" indicator text
+    expect(container.textContent).not.toContain('Submitted');
+    expect(container.textContent).not.toContain('✓');
+
+    const firstFlashClass = triggerLabel?.className;
+    await act(async () => {
+      triggerBtn!.click();
+    });
+    expect(triggerSpy).toHaveBeenCalledTimes(2);
+    expect(triggerLabel?.className).not.toBe(firstFlashClass);
+
+    // After animation duration, cell flashing attribute should clear
+    await vi.waitFor(
+      () => {
+        expect(enabledCell.getAttribute('data-flashing')).toBeNull();
+        expect(triggerLabel?.classList.contains('blue-live-trigger-label--flashing')).toBe(false);
+      },
+      { timeout: 1000 },
+    );
+  });
+
+  it('shows benign feedback when the enabled trigger has no targets', async () => {
+    const triggerSpy = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 'empty',
+      targetCount: 0,
+      noteCount: 0,
+      documentRevision: 0,
+      blueLiveSessionId: 1,
+    });
+    (window as unknown as { blueAPI: unknown }).blueAPI = {
+      triggerBlueLiveObjects: triggerSpy,
+    };
+    seedProject(makeBlueLiveSnapshot());
+    useProjectStore.setState({
+      flushPendingPatches: vi.fn().mockResolvedValue(undefined),
+    } as unknown as Partial<ReturnType<typeof useProjectStore.getState>>);
+
+    const { useBlueLiveStore } = await import('../stores/blue-live-store');
+    useBlueLiveStore.setState({ running: true, status: 'running' });
+
+    act(() => {
+      root.render(
+        <HostDocumentContext.Provider value={document}>
+          <LiveSpaceTab />
+        </HostDocumentContext.Provider>,
+      );
+    });
+
+    const triggerButton = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.textContent === 'Trigger',
+    );
+    await act(async () => {
+      triggerButton?.click();
+    });
+
+    await vi.waitFor(() => {
+      expect(container.textContent).toContain('No enabled cells to trigger');
     });
   });
 });

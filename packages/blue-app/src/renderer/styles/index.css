@@ -355,6 +355,58 @@
     }
   }
 
+  .blue-live-cell--flashing-0 {
+    animation: blueLiveCellFlashA 250ms ease-out;
+  }
+
+  .blue-live-cell--flashing-1 {
+    animation: blueLiveCellFlashB 250ms ease-out;
+  }
+
+  .blue-live-trigger-label--flashing-0 {
+    animation: blueLiveTriggerButtonFlashA 250ms ease-out;
+  }
+
+  .blue-live-trigger-label--flashing-1 {
+    animation: blueLiveTriggerButtonFlashB 250ms ease-out;
+  }
+
+  @keyframes blueLiveCellFlashA {
+    0% {
+      box-shadow: inset 0 0 0 999px var(--color-app-code-flash);
+    }
+    100% {
+      box-shadow: none;
+    }
+  }
+
+  @keyframes blueLiveCellFlashB {
+    0% {
+      box-shadow: inset 0 0 0 999px var(--color-app-code-flash);
+    }
+    100% {
+      box-shadow: none;
+    }
+  }
+
+  @keyframes blueLiveTriggerButtonFlashA {
+    0% {
+      color: #fff;
+    }
+    100% {
+      color: var(--color-app-text-muted);
+    }
+  }
+
+  @keyframes blueLiveTriggerButtonFlashB {
+    0% {
+      color: #fff;
+    }
+    100% {
+      color: var(--color-app-text-muted);
+    }
+  }
+
   .bsb-tooltip-content {
     padding: 6px 10px;
     border-radius: 4px;
