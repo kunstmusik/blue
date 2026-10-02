@@ -711,6 +711,7 @@ describe('global history engine integration (T040, US3)', () => {
     const slider = new BSBHSlider();
     slider.id = 'history-cutoff-slider';
     slider.objectName = 'cutoff';
+    slider.resolution = 0.01;
     slider.value = 0.37;
     const dropdown = new BSBDropdown();
     dropdown.id = 'history-mode-dropdown';

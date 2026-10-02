@@ -422,20 +422,31 @@ function serializeBsbWidgetSnapshot(widget: unknown): BsbWidgetNodeSnapshot | nu
   };
 
   if (
-    (ctorName === 'BSBHSlider' ||
-      ctorName === 'BSBVSlider' ||
-      ctorName === 'BSBHSliderBank' ||
-      ctorName === 'BSBVSliderBank') &&
-    typeof record.getResolutionText === 'function'
+    ctorName === 'BSBHSlider' ||
+    ctorName === 'BSBVSlider' ||
+    ctorName === 'BSBHSliderBank' ||
+    ctorName === 'BSBVSliderBank'
   ) {
-    try {
-      const resolutionText = (record.getResolutionText as () => unknown).call(widget);
-      if (typeof resolutionText === 'string') {
-        snapshot.properties.resolutionDecimal = resolutionText;
+    if (typeof record.getResolutionText === 'function') {
+      try {
+        const resolutionText = (record.getResolutionText as () => unknown).call(widget);
+        if (typeof resolutionText === 'string') {
+          snapshot.properties.resolutionDecimal = resolutionText;
+          const num = Number(resolutionText);
+          if (Number.isFinite(num)) {
+            snapshot.properties.resolution = num;
+          }
+        }
+      } catch {
+        // Keep the numeric projection available for legacy/malformed widgets;
+        // explicit exact edits are validated by the canonical model.
       }
-    } catch {
-      // Keep the numeric projection available for legacy/malformed widgets;
-      // explicit exact edits are validated by the canonical model.
+    }
+    if (
+      typeof (record as Record<string, unknown>).resolution === 'number' &&
+      Number.isFinite((record as Record<string, unknown>).resolution)
+    ) {
+      snapshot.properties.resolution = (record as Record<string, unknown>).resolution;
     }
   }
 
@@ -1464,4 +1475,77 @@ export function snapshotToUdo(snapshot: UdoDefinitionSnapshot): OpcodeDefinition
   udo.setCode(snapshot.code);
   udo.setComments(snapshot.comments);
   return udo;
+}
+
+export function getWidgetResolution(node: { properties?: Record<string, unknown> }): number | null {
+  const res = node.properties?.resolution;
+  if (typeof res === 'number' && Number.isFinite(res) && res > 0) {
+    return res;
+  }
+  const exact = node.properties?.resolutionDecimal;
+  if (typeof exact === 'string') {
+    const parsed = Number(exact);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return parsed;
+    }
+  }
+  return null;
+}
+
+export function getWidgetResolutionDecimal(node: {
+  properties?: Record<string, unknown>;
+}): string | null {
+  const exact = node.properties?.resolutionDecimal;
+  if (typeof exact === 'string' && exact.trim().length > 0) {
+    return exact.trim();
+  }
+  const res = node.properties?.resolution;
+  if (typeof res === 'number' && Number.isFinite(res) && res > 0) {
+    return String(res);
+  }
+  return null;
+}
+
+export function snapWidgetValueToResolution(
+  value: number,
+  min: number,
+  max: number,
+  resolution: number | null,
+  resolutionDecimal?: string | null,
+): number {
+  const trueMin = Math.min(min, max);
+  const trueMax = Math.max(min, max);
+  if (value <= trueMin) return trueMin;
+  if (value >= trueMax) return trueMax;
+  if (resolution === null || !Number.isFinite(resolution) || resolution <= 0) {
+    return value;
+  }
+
+  const steps = Math.round((value - trueMin) / resolution);
+  let snapped = trueMin + steps * resolution;
+  if (snapped < trueMin) snapped = trueMin;
+  if (snapped > trueMax) snapped = trueMax;
+
+  let decimalPlaces = 0;
+  if (typeof resolutionDecimal === 'string' && resolutionDecimal.trim().length > 0) {
+    const trimmed = resolutionDecimal.trim();
+    if (trimmed.includes('e-') || trimmed.includes('E-')) {
+      const exp = parseInt(trimmed.split(/e-|E-/)[1]!, 10);
+      decimalPlaces = Number.isFinite(exp) ? exp : 0;
+    } else {
+      const parts = trimmed.split('.');
+      decimalPlaces = parts.length > 1 ? parts[1]!.length : 0;
+    }
+  } else {
+    const resStr = resolution.toString();
+    if (resStr.includes('e-') || resStr.includes('E-')) {
+      const exp = parseInt(resStr.split(/e-|E-/)[1]!, 10);
+      decimalPlaces = Number.isFinite(exp) ? exp : 0;
+    } else {
+      const decimalParts = resStr.split('.');
+      decimalPlaces = decimalParts ? decimalParts.length : 0;
+    }
+  }
+
+  return Number(snapped.toFixed(Math.min(10, decimalPlaces)));
 }

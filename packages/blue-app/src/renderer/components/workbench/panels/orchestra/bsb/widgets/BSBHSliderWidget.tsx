@@ -4,8 +4,14 @@ import {
   BSB_VALUE_PANEL_WIDTH,
 } from '../../../../../../../shared/bsb-widget-layout';
 import WidgetWrapper from './WidgetWrapper';
-import { ValuePanel, formatValue } from './ValuePanel';
-import { computeKeyboardSteppedValue, getWidgetDisplaySize } from './utils';
+import { ValuePanel, formatDisplayValue, formatValue } from './ValuePanel';
+import {
+  computeKeyboardSteppedValue,
+  getWidgetDisplaySize,
+  getWidgetResolution,
+  getWidgetResolutionDecimal,
+  snapWidgetValueToResolution,
+} from './utils';
 import type { BSBWidgetPatchComponentProps } from './widget-component-props';
 
 type BSBHSliderWidgetProps = BSBWidgetPatchComponentProps;
@@ -34,6 +40,8 @@ function BSBHSliderWidget({
   const minimum = node.minimum;
   const maximum = node.maximum;
   const showValue = node.properties.valueDisplayEnabled === true;
+  const resolution = getWidgetResolution(node);
+  const resolutionDecimal = getWidgetResolutionDecimal(node);
 
   const totalWidth = displaySize.width;
   const totalHeight = displaySize.height;
@@ -41,12 +49,28 @@ function BSBHSliderWidget({
   const pct = Math.max(0, Math.min(1, (value - minimum) / range));
 
   const strVal = formatValue(value);
-  const displayVal = strVal.length > 7 ? strVal.substring(0, 7) : strVal;
+  const displayVal = formatDisplayValue(strVal);
 
   const svgRef = useRef<SVGSVGElement>(null);
   const dragging = useRef(false);
-  const paramsRef = useRef({ sliderWidth, minimum, range, nodeId: node.id });
-  paramsRef.current = { sliderWidth, minimum, range, nodeId: node.id };
+  const paramsRef = useRef({
+    sliderWidth,
+    minimum,
+    maximum,
+    range,
+    nodeId: node.id,
+    resolution,
+    resolutionDecimal,
+  });
+  paramsRef.current = {
+    sliderWidth,
+    minimum,
+    maximum,
+    range,
+    nodeId: node.id,
+    resolution,
+    resolutionDecimal,
+  };
   const patchRef = useRef(onBsbInterfacePatch);
   patchRef.current = onBsbInterfacePatch;
 
@@ -56,13 +80,22 @@ function BSBHSliderWidget({
     const onMouseMove = (e: MouseEvent) => {
       if (!dragging.current || !svgRef.current) return;
       e.preventDefault();
-      const { sliderWidth: sw, minimum: min, range: r, nodeId } = paramsRef.current;
+      const {
+        sliderWidth: sw,
+        minimum: min,
+        maximum: max,
+        range: r,
+        nodeId,
+        resolution: res,
+        resolutionDecimal: resDec,
+      } = paramsRef.current;
       const rect = svgRef.current.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const trackStart = THUMB_R;
       const trackEnd = sw - THUMB_R;
       const newPct = Math.max(0, Math.min(1, (x - trackStart) / (trackEnd - trackStart)));
-      const newVal = min + newPct * r;
+      const rawVal = min + newPct * r;
+      const newVal = snapWidgetValueToResolution(rawVal, min, max, res, resDec);
       patchRef.current({
         type: 'updateWidgetProperties',
         widgetId: nodeId,
@@ -85,13 +118,22 @@ function BSBHSliderWidget({
       if (editEnabled) return;
       e.preventDefault();
       dragging.current = true;
-      const { sliderWidth: sw, minimum: min, range: r, nodeId } = paramsRef.current;
+      const {
+        sliderWidth: sw,
+        minimum: min,
+        maximum: max,
+        range: r,
+        nodeId,
+        resolution: res,
+        resolutionDecimal: resDec,
+      } = paramsRef.current;
       const rect = svgRef.current!.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const trackStart = THUMB_R;
       const trackEnd = sw - THUMB_R;
       const newPct = Math.max(0, Math.min(1, (x - trackStart) / (trackEnd - trackStart)));
-      const newVal = min + newPct * r;
+      const rawVal = min + newPct * r;
+      const newVal = snapWidgetValueToResolution(rawVal, min, max, res, resDec);
       patchRef.current({
         type: 'updateWidgetProperties',
         widgetId: nodeId,
@@ -104,15 +146,12 @@ function BSBHSliderWidget({
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<SVGSVGElement>) => {
       if (editEnabled) return;
-      const resolution =
-        typeof node.properties.resolution === 'number' && node.properties.resolution > 0
-          ? node.properties.resolution
-          : null;
       const nextVal = computeKeyboardSteppedValue({
         current: value,
         min: minimum,
         max: maximum,
         resolution,
+        resolutionDecimal,
         key: e.key,
         shiftKey: e.shiftKey,
         axis: 'horizontal',
@@ -127,7 +166,7 @@ function BSBHSliderWidget({
         });
       }
     },
-    [editEnabled, node.properties.resolution, value, minimum, maximum, node.id],
+    [editEnabled, value, minimum, maximum, resolution, resolutionDecimal, node.id],
   );
 
   return (
@@ -163,7 +202,7 @@ function BSBHSliderWidget({
           aria-valuemin={minimum}
           aria-valuemax={maximum}
           aria-valuenow={value}
-          aria-valuetext={showValue ? displayVal : String(value)}
+          aria-valuetext={showValue ? strVal : String(value)}
         >
           <rect
             x={THUMB_R}
@@ -199,15 +238,24 @@ function BSBHSliderWidget({
         {showValue && (
           <ValuePanel
             value={displayVal}
+            fullValue={strVal}
             width={BSB_VALUE_PANEL_WIDTH}
             height={BSB_VALUE_PANEL_HEIGHT}
             onCommit={(v) => {
               const parsed = parseFloat(v);
               if (!isNaN(parsed)) {
+                const clamped = Math.max(minimum, Math.min(maximum, parsed));
+                const snapped = snapWidgetValueToResolution(
+                  clamped,
+                  minimum,
+                  maximum,
+                  resolution,
+                  resolutionDecimal,
+                );
                 onBsbInterfacePatch({
                   type: 'updateWidgetProperties',
                   widgetId: node.id,
-                  properties: { value: Math.max(minimum, Math.min(maximum, parsed)) },
+                  properties: { value: snapped },
                 });
               }
             }}

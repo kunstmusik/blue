@@ -18,6 +18,10 @@ import BSBKnobWidget from '../components/workbench/panels/orchestra/bsb/widgets/
 import BSBVSliderWidget from '../components/workbench/panels/orchestra/bsb/widgets/BSBVSliderWidget';
 import BSBVSliderBankWidget from '../components/workbench/panels/orchestra/bsb/widgets/BSBVSliderBankWidget';
 import BSBXYControllerWidget from '../components/workbench/panels/orchestra/bsb/widgets/BSBXYControllerWidget';
+import {
+  formatDisplayValue,
+  formatValue,
+} from '../components/workbench/panels/orchestra/bsb/widgets/ValuePanel';
 
 (
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -389,6 +393,312 @@ describe('BSB parameter controls', () => {
         widgetId: 'production-slider',
         properties: { value: 0.51 },
       },
+    });
+  });
+
+  describe('resolution snapping on sliders and slider banks', () => {
+    function setInputValue(input: HTMLInputElement, val: string) {
+      const nativeSetter = Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        'value',
+      )?.set;
+      nativeSetter?.call(input, val);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    it('formatValue formats values cleanly without IEEE-754 noise or trailing zeroes', () => {
+      expect(formatValue(5)).toBe('5');
+      expect(formatValue(1.7000000000000002)).toBe('1.7');
+      expect(formatValue(0.25)).toBe('0.25');
+      expect(formatValue(0)).toBe('0');
+      expect(formatValue(-0)).toBe('0');
+    });
+
+    it('BSBHSliderWidget snaps mouse drag to resolution', () => {
+      const onPatch = vi.fn();
+      const node = makeWidgetNode('BSBHSlider', {
+        id: 'h-slider',
+        minimum: 0,
+        maximum: 10,
+        value: 0,
+        properties: { resolution: 1, sliderWidth: 150 },
+      });
+      act(() => root.render(<BSBHSliderWidget {...makeWidgetProps(onPatch)} node={node} />));
+
+      const svg = container.querySelector('[role="slider"]') as SVGSVGElement;
+      expect(svg).not.toBeNull();
+      svg.getBoundingClientRect = () => ({ left: 0, top: 0, width: 150, height: 20 }) as DOMRect;
+
+      // mousedown at x=80: (80-7)/(150-14) = 73/136 = 0.5367... -> raw 5.367... -> snapped 5
+      act(() => {
+        svg.dispatchEvent(new MouseEvent('mousedown', { clientX: 80, bubbles: true }));
+      });
+      expect(onPatch).toHaveBeenCalledWith({
+        type: 'updateWidgetProperties',
+        widgetId: 'h-slider',
+        properties: { value: 5 },
+      });
+
+      // mousemove to x=95: (95-7)/136 = 88/136 = 0.647... -> raw 6.47... -> snapped 6
+      act(() => {
+        window.dispatchEvent(new MouseEvent('mousemove', { clientX: 95 }));
+      });
+      expect(onPatch).toHaveBeenCalledWith({
+        type: 'updateWidgetProperties',
+        widgetId: 'h-slider',
+        properties: { value: 6 },
+      });
+
+      act(() => {
+        window.dispatchEvent(new MouseEvent('mouseup'));
+      });
+    });
+
+    it('BSBVSliderWidget snaps mouse drag to resolution', () => {
+      const onPatch = vi.fn();
+      const node = makeWidgetNode('BSBVSlider', {
+        id: 'v-slider',
+        minimum: 0,
+        maximum: 10,
+        value: 0,
+        properties: { resolution: 1, sliderHeight: 150 },
+      });
+      act(() => root.render(<BSBVSliderWidget {...makeWidgetProps(onPatch)} node={node} />));
+
+      const svg = container.querySelector('[role="slider"]') as SVGSVGElement;
+      expect(svg).not.toBeNull();
+      svg.getBoundingClientRect = () => ({ left: 0, top: 0, width: 50, height: 150 }) as DOMRect;
+
+      // mousedown at y=80: 1 - (80-7)/136 = 1 - 0.5367... = 0.4632... -> raw 4.632... -> snapped 5
+      act(() => {
+        svg.dispatchEvent(new MouseEvent('mousedown', { clientY: 80, bubbles: true }));
+      });
+      expect(onPatch).toHaveBeenCalledWith({
+        type: 'updateWidgetProperties',
+        widgetId: 'v-slider',
+        properties: { value: 5 },
+      });
+
+      act(() => {
+        window.dispatchEvent(new MouseEvent('mouseup'));
+      });
+    });
+
+    it('BSBHSliderBankWidget snaps mouse drag to resolution', () => {
+      const onPatch = vi.fn();
+      const node = makeWidgetNode('BSBHSliderBank', {
+        id: 'h-bank',
+        minimum: 0,
+        maximum: 10,
+        properties: {
+          numberOfSliders: 2,
+          resolution: 1,
+          sliderWidth: 150,
+          sliders: [{ value: 0 }, { value: 0 }],
+        },
+      });
+      act(() => root.render(<BSBHSliderBankWidget {...makeWidgetProps(onPatch)} node={node} />));
+
+      const sliders = container.querySelectorAll('[role="slider"]');
+      const svg = sliders[0] as SVGSVGElement;
+      svg.getBoundingClientRect = () => ({ left: 0, top: 0, width: 150, height: 20 }) as DOMRect;
+
+      act(() => {
+        svg.dispatchEvent(new MouseEvent('mousedown', { clientX: 80, bubbles: true }));
+      });
+      expect(onPatch).toHaveBeenCalledWith({
+        type: 'updateSliderBankValue',
+        widgetId: 'h-bank',
+        sliderIndex: 0,
+        value: 5,
+      });
+
+      act(() => {
+        window.dispatchEvent(new MouseEvent('mouseup'));
+      });
+    });
+
+    it('BSBVSliderBankWidget snaps mouse drag to resolution', () => {
+      const onPatch = vi.fn();
+      const node = makeWidgetNode('BSBVSliderBank', {
+        id: 'v-bank',
+        minimum: 0,
+        maximum: 10,
+        properties: {
+          numberOfSliders: 2,
+          resolution: 1,
+          sliderHeight: 150,
+          sliders: [{ value: 0 }, { value: 0 }],
+        },
+      });
+      act(() => root.render(<BSBVSliderBankWidget {...makeWidgetProps(onPatch)} node={node} />));
+
+      const sliders = container.querySelectorAll('[role="slider"]');
+      const svg = sliders[1] as SVGSVGElement;
+      svg.getBoundingClientRect = () => ({ left: 0, top: 0, width: 50, height: 150 }) as DOMRect;
+
+      act(() => {
+        svg.dispatchEvent(new MouseEvent('mousedown', { clientY: 80, bubbles: true }));
+      });
+      expect(onPatch).toHaveBeenCalledWith({
+        type: 'updateSliderBankValue',
+        widgetId: 'v-bank',
+        sliderIndex: 1,
+        value: 5,
+      });
+
+      act(() => {
+        window.dispatchEvent(new MouseEvent('mouseup'));
+      });
+    });
+
+    it('ValuePanel onCommit snaps input values to resolution across all slider widgets', () => {
+      const onPatch = vi.fn();
+
+      // 1. BSBHSliderWidget
+      const hNode = makeWidgetNode('BSBHSlider', {
+        id: 'h-val',
+        minimum: 0,
+        maximum: 10,
+        value: 2,
+        properties: { resolution: 1, valueDisplayEnabled: true },
+      });
+      act(() => root.render(<BSBHSliderWidget {...makeWidgetProps(onPatch)} node={hNode} />));
+
+      const hValuePanelSvg = container.querySelector('svg:not([role="slider"])');
+      expect(hValuePanelSvg).not.toBeNull();
+      act(() => {
+        hValuePanelSvg!.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+      });
+      let input = container.querySelector('input');
+      expect(input).not.toBeNull();
+      act(() => {
+        setInputValue(input!, '3.7');
+        input!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      });
+      expect(onPatch).toHaveBeenCalledWith({
+        type: 'updateWidgetProperties',
+        widgetId: 'h-val',
+        properties: { value: 4 },
+      });
+
+      // 2. BSBVSliderWidget
+      onPatch.mockClear();
+      const vNode = makeWidgetNode('BSBVSlider', {
+        id: 'v-val',
+        minimum: 0,
+        maximum: 10,
+        value: 2,
+        properties: { resolution: 0.5, valueDisplayEnabled: true },
+      });
+      act(() => root.render(<BSBVSliderWidget {...makeWidgetProps(onPatch)} node={vNode} />));
+
+      const vValuePanelSvg = container.querySelector('svg:not([role="slider"])');
+      act(() => {
+        vValuePanelSvg!.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+      });
+      input = container.querySelector('input');
+      act(() => {
+        setInputValue(input!, '6.2');
+        input!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      });
+      expect(onPatch).toHaveBeenCalledWith({
+        type: 'updateWidgetProperties',
+        widgetId: 'v-val',
+        properties: { value: 6 },
+      });
+
+      // 3. BSBHSliderBankWidget
+      onPatch.mockClear();
+      const hBankNode = makeWidgetNode('BSBHSliderBank', {
+        id: 'h-bank-val',
+        minimum: 0,
+        maximum: 10,
+        properties: {
+          numberOfSliders: 2,
+          resolution: 1,
+          valueDisplayEnabled: true,
+          sliders: [{ value: 0 }, { value: 0 }],
+        },
+      });
+      act(() =>
+        root.render(<BSBHSliderBankWidget {...makeWidgetProps(onPatch)} node={hBankNode} />),
+      );
+
+      const hBankValuePanelSvgs = container.querySelectorAll('svg:not([role="slider"])');
+      act(() => {
+        hBankValuePanelSvgs[0].dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+      });
+      input = container.querySelector('input');
+      act(() => {
+        setInputValue(input!, '2.8');
+        input!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      });
+      expect(onPatch).toHaveBeenCalledWith({
+        type: 'updateSliderBankValue',
+        widgetId: 'h-bank-val',
+        sliderIndex: 0,
+        value: 3,
+      });
+
+      // 4. BSBVSliderBankWidget
+      onPatch.mockClear();
+      const vBankNode = makeWidgetNode('BSBVSliderBank', {
+        id: 'v-bank-val',
+        minimum: 0,
+        maximum: 10,
+        properties: {
+          numberOfSliders: 2,
+          resolution: 1,
+          valueDisplayEnabled: true,
+          sliders: [{ value: 0 }, { value: 0 }],
+        },
+      });
+      act(() =>
+        root.render(<BSBVSliderBankWidget {...makeWidgetProps(onPatch)} node={vBankNode} />),
+      );
+
+      const vBankValuePanelSvgs = container.querySelectorAll('svg:not([role="slider"])');
+      act(() => {
+        vBankValuePanelSvgs[1].dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+      });
+      input = container.querySelector('input');
+      act(() => {
+        setInputValue(input!, '7.1');
+        input!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      });
+      expect(onPatch).toHaveBeenCalledWith({
+        type: 'updateSliderBankValue',
+        widgetId: 'v-bank-val',
+        sliderIndex: 1,
+        value: 7,
+      });
+    });
+
+    it('keeps full numeric text in the tooltip and editor while displaying six characters', () => {
+      const onPatch = vi.fn();
+      const value = 0.0000001;
+      const fullValue = formatValue(value);
+      const node = makeWidgetNode('BSBHSlider', {
+        id: 'precision-slider',
+        value,
+        properties: { resolution: 0.0000001, valueDisplayEnabled: true },
+      });
+
+      act(() => root.render(<BSBHSliderWidget {...makeWidgetProps(onPatch)} node={node} />));
+
+      const valuePanel = container.querySelector('svg:not([role="slider"])');
+      expect(valuePanel?.querySelector('text')?.textContent).toBe(formatDisplayValue(fullValue));
+      expect(valuePanel?.querySelector('title')?.textContent).toBe(fullValue);
+      expect(container.querySelector('[role="slider"]')?.getAttribute('aria-valuetext')).toBe(
+        fullValue,
+      );
+
+      act(() => {
+        valuePanel?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+      });
+      expect((container.querySelector('input') as HTMLInputElement | null)?.value).toBe(fullValue);
     });
   });
 });

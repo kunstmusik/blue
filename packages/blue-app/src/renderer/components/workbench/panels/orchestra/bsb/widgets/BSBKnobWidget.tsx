@@ -1,6 +1,6 @@
 import React, { useCallback, useRef } from 'react';
 import WidgetWrapper from './WidgetWrapper';
-import { formatValue } from './ValuePanel';
+import { formatDisplayValue, formatValue } from './ValuePanel';
 import BsbTextLabel from './BsbTextLabel';
 import {
   computeKeyboardSteppedValue,
@@ -56,7 +56,7 @@ function BSBKnobWidget({
   const knobVal = Math.max(0, Math.min(1, (value - minimum) / range));
 
   const strVal = formatValue(value);
-  const displayVal = strVal.length > 7 ? strVal.substring(0, 7) : strVal;
+  const displayVal = formatDisplayValue(strVal);
 
   const displaySize = getWidgetDisplaySize(node);
   const labelH = showLabel ? Math.max(16, Math.ceil(labelMetrics.height)) : 0;
@@ -214,10 +214,11 @@ function BSBKnobWidget({
           aria-valuemin={minimum}
           aria-valuemax={maximum}
           aria-valuenow={value}
-          aria-valuetext={showValue ? displayVal : String(value)}
+          aria-valuetext={showValue ? strVal : String(value)}
         />
         {showValue && (
           <div
+            title={strVal}
             className="flex items-center justify-center"
             style={{
               height: valueH,

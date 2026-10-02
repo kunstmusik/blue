@@ -5,8 +5,14 @@ import {
   getVSliderBankDisplaySize,
 } from '../../../../../../../shared/bsb-widget-layout';
 import WidgetWrapper from './WidgetWrapper';
-import { ValuePanel, formatValue } from './ValuePanel';
-import { computeKeyboardSteppedValue, getWidgetDisplaySize } from './utils';
+import { ValuePanel, formatDisplayValue, formatValue } from './ValuePanel';
+import {
+  computeKeyboardSteppedValue,
+  getWidgetDisplaySize,
+  getWidgetResolution,
+  getWidgetResolutionDecimal,
+  snapWidgetValueToResolution,
+} from './utils';
 import type { BSBWidgetComponentProps } from './widget-component-props';
 
 type BSBVSliderBankWidgetProps = BSBWidgetComponentProps;
@@ -28,10 +34,22 @@ function BSBVSliderBankWidget({
   getWidgetPosition,
   onWidgetAction,
 }: BSBVSliderBankWidgetProps): React.ReactElement {
-  const minimum = typeof node.properties.minimum === 'number' ? node.properties.minimum : 0;
-  const maximum = typeof node.properties.maximum === 'number' ? node.properties.maximum : 1;
+  const minimum =
+    typeof node.minimum === 'number'
+      ? node.minimum
+      : typeof node.properties.minimum === 'number'
+        ? node.properties.minimum
+        : 0;
+  const maximum =
+    typeof node.maximum === 'number'
+      ? node.maximum
+      : typeof node.properties.maximum === 'number'
+        ? node.properties.maximum
+        : 1;
   const gap = typeof node.properties.gap === 'number' ? node.properties.gap : 5;
   const showValue = node.properties.valueDisplayEnabled === true;
+  const resolution = getWidgetResolution(node);
+  const resolutionDecimal = getWidgetResolutionDecimal(node);
   const sliderHeight =
     typeof node.properties.sliderHeight === 'number' ? node.properties.sliderHeight : 150;
   const sliderCount =
@@ -64,7 +82,14 @@ function BSBVSliderBankWidget({
       const trackStart = THUMB_R;
       const trackEnd = Math.max(trackStart + 1, rect.height - THUMB_R);
       const pct = 1 - Math.max(0, Math.min(1, (y - trackStart) / (trackEnd - trackStart)));
-      const nextValue = minimum + pct * range;
+      const rawValue = minimum + pct * range;
+      const nextValue = snapWidgetValueToResolution(
+        rawValue,
+        minimum,
+        maximum,
+        resolution,
+        resolutionDecimal,
+      );
       onBsbInterfacePatch?.({
         type: 'updateSliderBankValue',
         widgetId: node.id,
@@ -72,7 +97,7 @@ function BSBVSliderBankWidget({
         value: nextValue,
       });
     },
-    [minimum, node.id, onBsbInterfacePatch, range],
+    [maximum, minimum, node.id, onBsbInterfacePatch, range, resolution, resolutionDecimal],
   );
 
   useEffect(() => {
@@ -101,15 +126,12 @@ function BSBVSliderBankWidget({
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<SVGSVGElement>, sliderIndex: number, currentVal: number) => {
       if (editEnabled) return;
-      const resolution =
-        typeof node.properties.resolution === 'number' && node.properties.resolution > 0
-          ? node.properties.resolution
-          : null;
       const nextVal = computeKeyboardSteppedValue({
         current: currentVal,
         min: minimum,
         max: maximum,
         resolution,
+        resolutionDecimal,
         key: e.key,
         shiftKey: e.shiftKey,
         axis: 'vertical',
@@ -125,7 +147,7 @@ function BSBVSliderBankWidget({
         });
       }
     },
-    [editEnabled, maximum, minimum, node.id, node.properties.resolution, onBsbInterfacePatch],
+    [editEnabled, maximum, minimum, node.id, onBsbInterfacePatch, resolution, resolutionDecimal],
   );
 
   return (
@@ -152,7 +174,8 @@ function BSBVSliderBankWidget({
         {sliders.map((slider, i) => {
           const val = typeof slider.value === 'number' ? slider.value : minimum;
           const pct = Math.max(0, Math.min(1, (val - minimum) / range));
-          const displayValue = formatValue(val);
+          const fullValue = formatValue(val);
+          const displayValue = formatDisplayValue(fullValue);
           const trackHeight = Math.max(1, sliderHeight - 2 * THUMB_R);
           const thumbY = THUMB_R + trackHeight * (1 - pct);
           const trackX = BSB_VALUE_PANEL_WIDTH / 2 - TRACK_W / 2;
@@ -186,7 +209,7 @@ function BSBVSliderBankWidget({
                 aria-valuemin={minimum}
                 aria-valuemax={maximum}
                 aria-valuenow={val}
-                aria-valuetext={displayValue}
+                aria-valuetext={fullValue}
                 style={{ cursor: editEnabled ? 'default' : 'pointer', height: sliderHeight }}
               >
                 <rect
@@ -222,7 +245,8 @@ function BSBVSliderBankWidget({
               </svg>
               {showValue && (
                 <ValuePanel
-                  value={displayValue.length > 7 ? displayValue.substring(0, 7) : displayValue}
+                  value={displayValue}
+                  fullValue={fullValue}
                   width={BSB_VALUE_PANEL_WIDTH}
                   height={BSB_VALUE_PANEL_HEIGHT}
                   onCommit={
@@ -231,11 +255,19 @@ function BSBVSliderBankWidget({
                       : (text) => {
                           const parsed = parseFloat(text);
                           if (!Number.isNaN(parsed)) {
+                            const clamped = Math.max(minimum, Math.min(maximum, parsed));
+                            const snapped = snapWidgetValueToResolution(
+                              clamped,
+                              minimum,
+                              maximum,
+                              resolution,
+                              resolutionDecimal,
+                            );
                             onBsbInterfacePatch?.({
                               type: 'updateSliderBankValue',
                               widgetId: node.id,
                               sliderIndex: i,
-                              value: Math.max(minimum, Math.min(maximum, parsed)),
+                              value: snapped,
                             });
                           }
                         }

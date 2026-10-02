@@ -1,4 +1,9 @@
-import type { BsbWidgetNodeSnapshot } from '../../../../../../../shared/project-editor';
+import {
+  type BsbWidgetNodeSnapshot,
+  getWidgetResolution,
+  getWidgetResolutionDecimal,
+  snapWidgetValueToResolution,
+} from '../../../../../../../shared/project-editor';
 import {
   BSB_CANVAS_SCROLL_PADDING,
   BSB_LINE_SELECTOR_HEIGHT,
@@ -613,16 +618,20 @@ export interface SteppedValueOptions {
   min: number;
   max: number;
   resolution?: number | null;
+  resolutionDecimal?: string | null;
   key: string;
   shiftKey?: boolean;
   axis?: '1d' | 'horizontal' | 'vertical' | 'x' | 'y';
 }
+
+export { getWidgetResolution, getWidgetResolutionDecimal, snapWidgetValueToResolution };
 
 export function computeKeyboardSteppedValue({
   current,
   min,
   max,
   resolution,
+  resolutionDecimal,
   key,
   shiftKey = false,
   axis = '1d',
@@ -668,17 +677,11 @@ export function computeKeyboardSteppedValue({
         ? range * 0.01
         : 1;
 
-  let next = current + delta * effectiveStep * multiplier;
+  const next = current + delta * effectiveStep * multiplier;
 
   if (typeof resolution === 'number' && Number.isFinite(resolution) && resolution > 0) {
-    const steps = Math.round((next - trueMin) / resolution);
-    next = trueMin + steps * resolution;
-    const decimalParts = resolution.toString().split('.')[1];
-    const decimalPlaces = decimalParts ? decimalParts.length : 0;
-    next = Number(next.toFixed(Math.min(10, decimalPlaces)));
-  } else {
-    next = Number(next.toFixed(4));
+    return snapWidgetValueToResolution(next, trueMin, trueMax, resolution, resolutionDecimal);
   }
 
-  return Math.max(trueMin, Math.min(trueMax, next));
+  return Math.max(trueMin, Math.min(trueMax, Number(next.toFixed(4))));
 }

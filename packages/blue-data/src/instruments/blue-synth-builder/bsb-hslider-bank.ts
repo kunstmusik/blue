@@ -38,6 +38,14 @@ export class BSBHSliderBank extends BSBWidget {
     while (this.sliders.length > count) {
       this.sliders.pop();
     }
+    this.syncSliderBounds();
+  }
+
+  syncSliderBounds(): void {
+    for (const slider of this.sliders) {
+      slider.minimum = this.minimum;
+      slider.maximum = this.maximum;
+    }
   }
 
   override collectReplacements(unit: BSBCompilationUnit, parameters?: Parameter[]): void {
@@ -100,6 +108,8 @@ export class BSBHSliderBank extends BSBWidget {
         const rawValue = parseFloat(rawValueText);
         if (Number.isFinite(rawValue)) slider.value = rawValue;
       }
+      slider.minimum = this.minimum;
+      slider.maximum = this.maximum;
       slider.resolutionDecimal = loadedResolution;
       slider.value = snapToResolutionJava(
         slider.value,
@@ -111,6 +121,8 @@ export class BSBHSliderBank extends BSBWidget {
     }
     if (this.sliders.length === 0) {
       const slider = new BSBHSlider();
+      slider.minimum = this.minimum;
+      slider.maximum = this.maximum;
       slider.resolutionDecimal = loadedResolution;
       slider.value = snapToResolutionJava(
         slider.value,
@@ -140,6 +152,7 @@ export class BSBHSliderBank extends BSBWidget {
   setResolutionText(text: string): void {
     const next = parseExactBsbResolution(text);
     this.resolutionDecimal = next;
+    this.syncSliderBounds();
     for (const slider of this.sliders) {
       slider.resolutionDecimal = next;
       slider.value = snapToResolutionJava(slider.value, this.minimum, this.maximum, next);

@@ -1,14 +1,25 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { formatBlueNumber } from '@blue/data';
 
 interface ValuePanelProps {
   value: string;
+  fullValue?: string;
   width: number;
   height: number;
   onCommit?: (text: string) => void;
 }
 
+export const VALUE_DISPLAY_MAX_LENGTH = 6;
+
+export function formatDisplayValue(value: string): string {
+  return value.length > VALUE_DISPLAY_MAX_LENGTH
+    ? value.substring(0, VALUE_DISPLAY_MAX_LENGTH)
+    : value;
+}
+
 export function ValuePanel({
   value,
+  fullValue = value,
   width,
   height,
   onCommit,
@@ -19,9 +30,9 @@ export function ValuePanel({
 
   const startEdit = useCallback(() => {
     if (!onCommit) return;
-    setEditText(value);
+    setEditText(fullValue);
     setEditing(true);
-  }, [onCommit, value]);
+  }, [fullValue, onCommit]);
 
   const commit = useCallback(() => {
     setEditing(false);
@@ -41,6 +52,7 @@ export function ValuePanel({
         <input
           ref={inputRef}
           className="h-full w-full rounded border border-blue-accent bg-app-bsb-control px-1 text-center font-mono text-role-callout text-app-text outline-none"
+          title={fullValue}
           value={editText}
           onChange={(e) => setEditText(e.target.value)}
           onKeyDown={(e) => {
@@ -61,6 +73,7 @@ export function ValuePanel({
       onDoubleClick={startEdit}
       style={{ cursor: onCommit ? 'text' : 'default' }}
     >
+      <title>{fullValue}</title>
       <rect x={0} y={0} width={width} height={height} rx={6} ry={6} fill="rgb(20,29,45)" />
       <text
         x={width / 2}
@@ -81,7 +94,5 @@ export function ValuePanel({
 }
 
 export function formatValue(v: number): string {
-  const s = v.toFixed(4);
-  const trimmed = s.replace(/\.?0+$/, '');
-  return trimmed === '' ? '0' : trimmed;
+  return formatBlueNumber(v);
 }
