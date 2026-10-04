@@ -279,7 +279,7 @@ export class Column {
     _objRefMap?: ObjRefLoadMap,
     context = new XmlLoadContext(data),
   ): Column {
-    checkRoot(data, 'column', context);
+    checkRoot(data, ['column', 'track'], context);
     checkShape(
       data,
       [],

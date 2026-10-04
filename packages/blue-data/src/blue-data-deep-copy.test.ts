@@ -568,6 +568,92 @@ describe('BlueData.deepCopy aggregate isolation', () => {
     expect((reloadedTrack[0]![0] as Instance).getSoundObject()).toBe(reloadedTarget);
   });
 
+  it('preserves authored Instance presentation while relinking every copied owner path', () => {
+    const original = new BlueData();
+    const target = new GenericScore();
+    target.setName('Reference target');
+    original.getSoundObjectLibrary().addObject(target);
+
+    const makeInstance = (name: string, color: number): Instance => {
+      const instance = new Instance();
+      instance.setSoundObject(target);
+      instance.setName(name);
+      instance.setBackgroundColor(color);
+      return instance;
+    };
+
+    const libraryInstance = makeInstance('Library authored name', 0x102030);
+    original.getSoundObjectLibrary().addObject(libraryInstance);
+
+    const frozen = new FrozenSoundObject();
+    frozen.setNumChannels(2);
+    frozen.setFrozenSoundObject(makeInstance('Frozen authored name', 0x203040));
+    original.getSoundObjectLibrary().addObject(frozen);
+
+    const poly = new PolyObject(true);
+    poly.newLayerAt(0);
+    poly[0]!.push(makeInstance('Score authored name', 0x304050));
+    original.getScore().push(poly);
+
+    const track = new Track();
+    track.push(makeInstance('Track authored name', 0x405060));
+    const tracks = new TrackLayerGroup();
+    tracks.push(track);
+    original.getScore().push(tracks);
+
+    const patterns = new PatternsLayerGroup();
+    patterns.newLayerAt(0).setSoundObject(makeInstance('Pattern authored name', 0x506070));
+    original.getScore().push(patterns);
+
+    const liveObject = new LiveObject();
+    liveObject.setSoundObject(makeInstance('Live authored name', 0x607080));
+    original.getLiveData().getLiveObjectBins().setLiveObject(0, 0, liveObject);
+
+    const expected = [
+      ['Library authored name', 0x102030],
+      ['Frozen authored name', 0x203040],
+      ['Score authored name', 0x304050],
+      ['Track authored name', 0x405060],
+      ['Pattern authored name', 0x506070],
+      ['Live authored name', 0x607080],
+    ];
+    const references = (project: BlueData): Instance[] => {
+      const library = project.getSoundObjectLibrary();
+      const frozenObject = library
+        .getAllObjects()
+        .find((object) => object instanceof FrozenSoundObject)! as FrozenSoundObject;
+      const scorePoly = project.getScore()[1] as PolyObject;
+      const scoreTracks = project.getScore()[2] as TrackLayerGroup;
+      const scorePatterns = project.getScore()[3] as PatternsLayerGroup;
+      return [
+        library.getAllObjects().find((object) => object instanceof Instance) as Instance,
+        frozenObject.getFrozenSoundObject() as Instance,
+        scorePoly[0]![0] as Instance,
+        scoreTracks[0]![0] as Instance,
+        scorePatterns[0]!.getSoundObject() as Instance,
+        project.getLiveData().getLiveObjectBins().getLiveObject(0, 0)!.getSoundObject() as Instance,
+      ];
+    };
+
+    const assertCopy = (copy: BlueData): void => {
+      const instances = references(copy);
+      expect(
+        instances.map((instance) => [instance.getName(), instance.getBackgroundColor()]),
+      ).toEqual(expected);
+      const copiedTarget = copy.getSoundObjectLibrary().getObject(0)!;
+      expect(copiedTarget).not.toBe(target);
+      for (const instance of instances) expect(instance.getSoundObject()).toBe(copiedTarget);
+    };
+
+    const historyCopy = original.historyCopy();
+    assertCopy(historyCopy);
+    const duplicationCopy = original.deepCopy('duplication') as BlueData;
+    assertCopy(duplicationCopy);
+
+    (historyCopy.getSoundObjectLibrary().getObject(0) as GenericScore).setName('Memento only');
+    expect(target.getName()).toBe('Reference target');
+  });
+
   it('preserves stable LiveObject uniqueIds across a whole-project copy', () => {
     const original = createModernProject();
     const copy = original.deepCopy() as BlueData;

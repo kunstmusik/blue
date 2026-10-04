@@ -5,8 +5,8 @@
  */
 import { Element } from './serialization/xml-reader';
 import { ObjRefSaveMap } from './serialization/obj-ref-map';
-import { XmlLoadContext } from './serialization/xml-load';
-import { checkRoot, checkShape, readBoolean, readText } from './utilities/xml';
+import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from './serialization/xml-load';
+import { checkRoot, checkShape, readBoolean, readInt, readText } from './utilities/xml';
 
 const STRING_FIELDS = [
   'title',
@@ -280,12 +280,17 @@ export class ProjectProperties {
     return elem;
   }
 
-  static loadFromXML(data: Element, context = new XmlLoadContext(data)): ProjectProperties {
+  static loadFromXML(
+    data: Element,
+    providedContext?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): ProjectProperties {
+    const context = providedContext ?? new XmlLoadContext(data);
     checkRoot(data, 'projectProperties', context);
     checkShape(
       data,
       [],
-      [...STRING_FIELDS, ...BOOLEAN_FIELDS, 'copyToMediaFolderOnImport'],
+      [...STRING_FIELDS, ...BOOLEAN_FIELDS, 'copyToMediaFolderOnImport', 'csladspaSettings'],
       context,
     );
     const props = new ProjectProperties();
@@ -311,6 +316,57 @@ export class ProjectProperties {
       }
       props.copyToMediaFileOnImport = value;
     }
-    return props;
+
+    const retiredSettings = data.getElement('csladspaSettings');
+    if (retiredSettings) {
+      const fields = ['name', 'maker', 'uniqueId', 'copyright', 'portDefinitionList', 'enabled'];
+      checkShape(retiredSettings, [], fields, context);
+      for (const field of fields) {
+        if (!retiredSettings.hasElement(field))
+          throw context.at(retiredSettings).error({
+            code: 'member',
+            member: field,
+            message: `Retired csladspaSettings is missing ${field}.`,
+            recovery:
+              'Keep only a complete inactive default or migrate the settings in a compatible editor.',
+          });
+      }
+      const name = retiredSettings.getElement('name')!;
+      const maker = retiredSettings.getElement('maker')!;
+      const uniqueId = retiredSettings.getElement('uniqueId')!;
+      const copyright = retiredSettings.getElement('copyright')!;
+      const ports = retiredSettings.getElement('portDefinitionList')!;
+      const enabled = retiredSettings.getElement('enabled')!;
+      for (const field of [name, maker, copyright]) {
+        if (readText(field, context) !== '')
+          throw context.at(field).error({
+            code: 'value',
+            value: field.getTextString(),
+            message: 'Retired csladspaSettings contains populated metadata.',
+            recovery:
+              'Migrate this content in a compatible editor; it cannot be saved by the current model.',
+          });
+      }
+      readInt(uniqueId, context, 0, 0);
+      checkShape(ports, [], [], context);
+      if (readBoolean(enabled, context))
+        throw context.at(enabled).error({
+          code: 'value',
+          value: enabled.getTextString(),
+          message: 'Retired csladspaSettings is enabled.',
+          recovery: 'Migrate the active LADSPA settings in a compatible editor.',
+        });
+      context.at(retiredSettings).diagnostic({
+        code: 'PP-LADSPA-RETIRED-DEFAULT',
+        severity: 'warning',
+        member: 'csladspaSettings',
+        message:
+          'The retired inactive default LADSPA settings have no current model representation.',
+        recovery:
+          'This exact empty default is omitted on save; migrate any active or populated settings in a compatible editor.',
+      });
+    }
+
+    return providedContext ? props : requireXmlValue(context.result(props), sink);
   }
 }

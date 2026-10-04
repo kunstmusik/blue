@@ -70,16 +70,16 @@ may be signed where the owning model permits them. A missing processor chain is 
 | CSDSoundObject — `sound-objects/csd-sound-object.ts` | `csdText` | Typed whole CSD text. Its existing writer uses the short type `CSDSoundObject` and plain common timing, so support those explicitly; do not require a Java package prefix that the writer never emits. |
 | External — `sound-objects/external.ts` | `text`, `commandLine`, `syntaxType` | Typed code, command text, and editor syntax string. Expected scalar `syntaxType` is data, not an element-name extension point. Loading must not run the command. |
 | FrozenSoundObject — `sound-objects/frozen-sound-object.ts` | `numChannels`, `frozenWaveFileName`, optional nested `soundObject` | Positive integral channel count when supplied; typed file path and recursively accepted source object. Unknown nested type is error in a project or standalone accepted resource; archive only at the library outcome. |
-| Instance — `sound-objects/instance.ts` | `soundObjectReference` with `@soundObjectLibraryID` | Typed reference; the historical `null` sentinel means no target. Resolve references only after all project library owners are accepted. Unresolved external dependency in a library has explicit dependency metadata and blocks insertion until resolved; it is not an unknown XML bag. |
+| Instance — `sound-objects/instance.ts` | `soundObjectReference` with `@soundObjectLibraryID`; authored common `name` and `backgroundColor` | Typed reference; the historical `null` sentinel means no target. Resolve references only after all project library owners are accepted. Unresolved external dependency in a library has explicit dependency metadata and blocks insertion until resolved; it is not an unknown XML bag. The Java reference setter only rebinds the target, so an Instance's serialized name/color remain independent; initial construction from a definition may inherit them explicitly ([GPL-2.0-or-later Java source at `3ca3f40579c48a023299a68130d8ab6b9e950974`](https://github.com/kunstmusik/blue/blob/3ca3f40579c48a023299a68130d8ab6b9e950974/blue-core/src/main/java/blue/soundObject/Instance.java)). |
 | Sound — `sound-objects/sound.ts` | `instrument`, `comment` | Typed BlueSynthBuilder plus text. Validate that the instrument is the appropriate kind and all its BSB owners; migrate old `instrumentText` locally. |
 | ObjectBuilder — `sound-objects/object-builder.ts` | `@editEnabled`, `code`, `commandLine`, `graphicInterface`, `presetGroup`, `comment`, `languageType` | Typed BSB interface/presets and language `PYTHON`, `JAVASCRIPT`, `CLOJURE`, `EXTERNAL`. Missing old language defaults PYTHON; old `isExternal` conversion belongs here. BSB nested rules are shared with instrument/effect contracts. |
 | LineObject — `sound-objects/line-object.ts` | `line[]` | Typed line records and points; explicit aliases/version migration below. |
 | ZakLineObject — `sound-objects/zak-line-object.ts` | `zakSpace`, `zakline[]` | Typed Zak-space/channel integers and line records. Same point/value normalization as LineObject. |
 | PatternObject — `sound-objects/pattern-object.ts` | `beats`, `subDivisions`, `patterns` containing `pattern[]` | Positive integer grid dimensions (historical omission defaults 4/4), ordered typed patterns; validate binary values instead of interpreting every non-`1` character as false. |
 | PianoRoll — `sound-objects/piano-roll.ts` | `noteTemplate`, `instrumentId`, `scale`, `pchGenerationMethod`, `transposition`, `pixelSecond`, `noteHeight`, `snapEnabled`, `snapValueEnum`, `useGlobalRuler`, `primaryTimeDisplay`, `secondaryTimeDisplay`, `secondaryRulerEnabled`, `fieldDef[]`, `pianoNote[]` | Typed score template, scale/notes, grid and ruler settings. Pitch method is 0 frequency / 1 pch / 2 MIDI; integer transposition; positive editor dimensions. Explicit snap/time enums, no invalid-value fallback. See historical and writer defect rows. |
-| TrackerObject — `sound-objects/tracker-object.ts` | `stepsPerBeat`, `trackList` | Positive integer subdivision and ordered typed tracker tracks. `tracks` is reader-only TypeScript compatibility, not evidence of Java output. |
+| TrackerObject — `sound-objects/tracker-object.ts` | `stepsPerBeat`, `trackList` and typed columns/notes; historical objective `duration` | Positive integer subdivision and ordered typed tracker tracks. The historical objective duration remains a separate optional typed value, is copied and written back with a named warning that current TypeScript generation uses `subjectiveDuration`. Tracker column records accept Java's `<track>` and TypeScript's `<column>` tags under `<columns>`; each uses the strict column field grammar and canonical TypeScript output uses `<column>`. `tracks` is reader-only TypeScript compatibility, not evidence of Java output. |
 | JMask — `sound-objects/j-mask.ts` | `seedUsed`, `seed`, `field` | Typed seed/use flag and full generator model below. Missing seed fields from before 2015 mean seed disabled. Seed is authoritative signed64 canonical decimal string, including snapshots/patches; use BigInt for JavaRandom input before Number narrowing. |
-| PolyObject — `sound-objects/poly-object.ts` | `defaultHeightIndex`, `soundLayer[]` | Typed nested layers, common timing, processor chain. Existing attribute-based TypeScript form is a named historical normalization, not permission for arbitrary attributes. Old root project TimeState extraction stays project-owned. PolyObject is not valid inside a Track. |
+| PolyObject — `sound-objects/poly-object.ts` | `defaultHeightIndex`, nested `timeState`, `soundLayer[]`; legacy `isRoot`, `heightIndex`, and inline TimeState children | Typed nested layers, per-PolyObject TimeState, common timing, and processor chain. The 2012 TimeState extraction introduced nested `<timeState>`; prior PolyObject writers stored `pixelSecond`, `snapEnabled`, `snapValue`, `timeDisplay`, and `timeUnit` inline. Accept either nested state or those exact inline members; reject both topologies together. Versionless old `heightIndex` maps `max(value - 1, 0)` to the group and all child layers; exact version `2` uses the current index directly. `isRoot=true` overrides time behavior to `NONE`; false has no effect. Existing attribute-based TypeScript form remains a named historical normalization, not permission for arbitrary attributes. Canonical output emits nested `timeState`, current `defaultHeightIndex`/layer indexes and `timeBehavior`, and omits legacy members. Root project TimeState extraction stays project-owned. PolyObject is not valid inside a Track. |
 
 The table contains every built-in registered SoundObject. Primitive generated `Note`/`NoteList`,
 runtime exceptions, generator runtime caches, renderer drag snapshots, and registry descriptors
@@ -286,15 +286,16 @@ later is a user-visible action; unavailable execution does not authorize droppin
 | SL-H09 | TypeScript current loader-only aliases: GenericScore scoreText, TrackerObject tracks, Add/Multiply pFieldIndex, NoteProcessorChainMap direct named noteProcessorChain, Line varName/text points, PolyObject attribute timing | Explicit TypeScript compatibility decision: preserve each precisely defined existing reader form where values map without ambiguity; do not call them verified Java writer forms. | Owning class/shared normalization. Equal old/current values only, no overwrite by order; canonical writer form. Invalid alias grammar errors. Synthetic fixture origin records this support decision. |
 | SL-H10 | TypeScript current PianoRoll writer inspected 2026-10-02 | Exact empty scale followed by populated scale is an emitted TypeScript defect, safely normalize by discarding only the empty structural placeholder. | PianoRoll local warning with recovery “empty serializer placeholder removed”; preserve complete populated scale and output it once. Any other duplicate scale error. |
 | SL-H11 | TypeScript AudioClip current compatibility and `score/audio/fade-type.ts` | Legacy scalar start/duration aliases → typed times; recognized historical Symmetric fade → S-Curve intentional TS replacement. | AudioClip local; conflicts error; existing feature parity evidence referenced by implementation task. Unknown fade names error. |
+| SL-H12 | [Initial TrackerObject writer](https://github.com/kunstmusik/blue/blob/d1735b6fe22b6e0dee07d665108a50b6151e2cf9/blue-core/src/blue/soundObject/TrackerObject.java); [separate duration removal](https://github.com/kunstmusik/blue/commit/35adb7bb904d5c1794c5ba93d44451b4d707add3) | Retired `duration` represented a distinct objective-duration value. Corpus copies pair value `4.0` with current subjective durations `2.0`, `16.0`, and `4.0`. | TrackerObject owns typed optional historical objective duration, copies and writes it, and warns that current generation uses subjective duration. Unequal values are preserved, not treated as alias conflicts. |
+| SL-H13 | [Java tracker Column writer and reader](https://github.com/kunstmusik/blue/blob/3ca3f40579c48a023299a68130d8ab6b9e950974/blue-core/src/main/java/blue/soundObject/tracker/Column.java), Java tree revision `3ca3f40579c48a023299a68130d8ab6b9e950974` | Java writes Column records as `<track>` children under `<columns>`; loader reads the record members independent of the root name. | Track's columns container accepts only the existing TypeScript `<column>` and Java `<track>` record roots. Column member validation remains unchanged; TypeScript canonical output uses `<column>`. |
 
 For SL-H02, the historical Java constructor writes `syntaxType=Python`; the pre-transition editor
-callbacks using it were commented out, while code execution was determined by isExternal.
-The **only safe warning case adopted here** is the verified default `syntaxType=Python` together
-with a language normalization to PYTHON: it is redundant with the canonical Python editor mode,
-so output can omit it without discarding code or a distinct editor choice. Any nondefault value,
-unknown syntax string, duplicate field, or external-language combination rejects acceptance until
-a specific semantic mapping/retention rule is documented. The source permits arbitrary strings;
-do not infer a historical vocabulary from those setters.
+callbacks using it were commented out, while `isExternal` determined execution mode. The corpus
+contains five exact Python hints, including two alongside `isExternal=true`. Accept that exact
+default as redundant dormant editor metadata for either normalized `PYTHON` or `EXTERNAL` mode,
+warn, and omit it while preserving the language mode and code. Any other syntax string, duplicate
+field, or conflicting `languageType`/`isExternal` representations reject. The source permits
+arbitrary syntax strings; do not infer a historical vocabulary from those setters.
 
 For SL-H06, inspection of
 [historical TimeBar](https://github.com/kunstmusik/blue/blob/aa15d3c8fd8cf68dfc57a3db672af9bc35413f64/blue-ui-core/src/main/java/blue/soundObject/editor/pianoRoll/TimeBar.java)
@@ -312,6 +313,17 @@ fixture, a canonical reapplication fixture, and the applicable standalone/embedd
 No fixture bytes in this research are copied from the GPL Java tree. Development transition
 forms require shape-specific fixtures; absence of proof of release shipment is explicitly retained
 in provenance and does not block an intentional bounded compatibility choice.
+
+### Example-corpus follow-up (T056)
+
+The 134 read-only project cases contain 1,506 `isRoot` values: 140 true and 1,366 false. The
+historical Java writer emitted a boolean child; before its removal in commit
+[cbc9487](https://github.com/kunstmusik/blue/commit/cbc9487e33e87337f507959ae52dd54a445fa86b),
+`isRoot=true` forced effective time behavior to `NONE` during note generation. That commit also
+removed the old root-only render-range adjustment. The current typed `timeBehavior` field therefore
+represents the retained generation rule; normalize true to `NONE`, preserve false/current behavior,
+and reject malformed booleans. This is a class-local SoundObject rule reached by project,
+standalone, and library resource loaders, not a project migration.
 
 ## User-library envelopes and archive boundary
 

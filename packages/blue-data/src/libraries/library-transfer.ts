@@ -35,6 +35,8 @@ export function createSharedSoundObjectInstance(
 ): Instance {
   const instance = new Instance();
   instance.setSoundObject(definition);
+  instance.setName(definition.getName());
+  instance.setBackgroundColor(definition.getBackgroundColor());
   instance.setLibraryId(libraryId);
   instance.setSubjectiveDuration(definition.getSubjectiveDuration());
   return instance;

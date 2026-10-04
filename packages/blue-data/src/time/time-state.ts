@@ -21,7 +21,7 @@ import {
   parseXmlInteger,
   checkRoot,
 } from '../utilities/xml';
-import { XmlLoadContext } from '../serialization/xml-load';
+import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
 
 import { resolveSmpteRate, isValidSmpteFormat } from './smpte-timecode';
 
@@ -39,6 +39,7 @@ export class TimeState {
   private smpteFrameRate = 24.0;
   private smpteDropFrame = false;
   private zoomIterations = 0;
+  private historicalRulerInterval: number | null = null;
 
   constructor(other?: TimeState) {
     if (other) {
@@ -53,6 +54,7 @@ export class TimeState {
       this.smpteFrameRate = other.smpteFrameRate;
       this.smpteDropFrame = other.smpteDropFrame;
       this.zoomIterations = other.zoomIterations;
+      this.historicalRulerInterval = other.historicalRulerInterval;
     }
   }
 
@@ -164,10 +166,17 @@ export class TimeState {
     elem.addElement(writeBoolean('markersRowVisible', this.markersRowVisible));
     elem.addElement(writeDouble('smpteFrameRate', this.smpteFrameRate));
     if (this.smpteDropFrame) elem.addElement(writeBoolean('smpteDropFrame', true));
+    if (this.historicalRulerInterval !== null)
+      elem.addElement(writeInt('timeUnit', this.historicalRulerInterval));
     return elem;
   }
 
-  static loadFromXML(data: Element, context = new XmlLoadContext(data)): TimeState {
+  static loadFromXML(
+    data: Element,
+    providedContext?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): TimeState {
+    const context = providedContext ?? new XmlLoadContext(data);
     checkRoot(data, 'timeState', context);
     const booleanFields = [
       'snapEnabled',
@@ -187,6 +196,7 @@ export class TimeState {
         'timeDisplay',
         'secondaryTimeDisplay',
         'smpteFrameRate',
+        'timeUnit',
         ...booleanFields,
       ],
       context,
@@ -219,6 +229,20 @@ export class TimeState {
         });
       state.zoomIterations = converted;
     }
+    const timeUnit = data.getElement('timeUnit');
+    if (timeUnit) {
+      state.historicalRulerInterval = readInt(timeUnit, context, 1, 2147483647);
+      context.at(timeUnit).diagnostic({
+        code: 'P-TIME-STATE-HISTORICAL-RULER',
+        severity: 'warning',
+        member: 'timeUnit',
+        value: String(state.historicalRulerInterval),
+        message:
+          'Historical timeUnit controlled TimeState ruler ticks and labels; the current timeline does not apply that interval.',
+        recovery:
+          'The interval is retained and saved as timeUnit. Use a compatible editor to edit it until the current timeline supports historical intervals.',
+      });
+    }
     for (const field of ['timeDisplay', 'secondaryTimeDisplay'] as const) {
       const node = data.getElement(field);
       if (!node) continue;
@@ -242,14 +266,23 @@ export class TimeState {
       if (isValidSnapValueName(normalized)) state.snapValue = normalized;
       else {
         const value = parseXmlNumber(token, context.at(snap));
-        if (value <= 0)
+        if (value < 0)
           throw context.at(snap).error({
             code: 'value',
             value: token,
-            message: 'Legacy snap must be positive.',
-            recovery: 'Choose a positive snap interval or a supported enum name.',
+            message: 'Legacy snap cannot be negative.',
+            recovery: 'Choose a nonnegative snap interval or a supported enum name.',
           });
         state.snapValue = closestSnapValueMatch(value);
+        if (value === 0)
+          context.at(snap).diagnostic({
+            code: 'P-TIME-STATE-ZERO-SNAP',
+            severity: 'warning',
+            member: 'snapValue',
+            value: token,
+            message: 'Legacy zero snap maps to SIXTY_FOURTH using Java nearest-match behavior.',
+            recovery: 'The mapped SIXTY_FOURTH value is saved as the canonical snap enum.',
+          });
       }
     }
     const fps = data.getElement('smpteFrameRate');
@@ -274,6 +307,6 @@ export class TimeState {
         message: 'Drop-frame mode is incompatible with the SMPTE rate.',
         recovery: 'Choose a supported rate/drop-frame pair.',
       });
-    return state;
+    return providedContext ? state : requireXmlValue(context.result(state), sink);
   }
 }

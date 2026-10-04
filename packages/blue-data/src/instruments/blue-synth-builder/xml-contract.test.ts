@@ -29,6 +29,16 @@ describe('BSB local XML contracts', () => {
     expect(() => loadBsbWidgetFromXML(widget(type, body))).toThrow();
   });
   it.each([
+    ['None', 'NONE'],
+    ['Comma', 'COMMA'],
+    ['Single Quote', 'SINGLE_QUOTE'],
+  ])('accepts Java separator display value %s and writes %s', (value, canonical) => {
+    const line = loadBsbWidgetFromXML(
+      widget('BSBLineObject', `<separatorType>${value}</separatorType>`),
+    )!;
+    expect(saveBsbWidgetAsXML(line).getTextString('separatorType')).toBe(canonical);
+  });
+  it.each([
     'BSBGroup',
     'BSBKnob',
     'BSBHSlider',

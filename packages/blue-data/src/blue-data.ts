@@ -490,6 +490,7 @@ function remapInstanceReferencesInSoundObject(
   if (soundObject instanceof Instance) {
     const referenced = soundObject.getSoundObject();
     if (referenced && libraryRemap.has(referenced)) {
+      // Instance presentation fields belong to the placement; only rebind its target.
       soundObject.setSoundObject(libraryRemap.get(referenced)!);
     }
     const copiedReference = soundObject.getSoundObject();

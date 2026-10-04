@@ -397,6 +397,28 @@ describe('Instance', () => {
   });
 
   describe('library binding', () => {
+    it('changes only the reference when binding a SoundObject', () => {
+      const instance = new Instance();
+      instance.setName('Authored Instance name');
+      instance.setBackgroundColor(0x123456);
+      const first = new GenericScore();
+      first.setName('First target');
+      first.setBackgroundColor(0xabcdef);
+      const second = new GenericScore();
+      second.setName('Second target');
+      second.setBackgroundColor(0xfedcba);
+
+      instance.setSoundObject(first);
+      expect(instance.getSoundObject()).toBe(first);
+      expect(instance.getName()).toBe('Authored Instance name');
+      expect(instance.getBackgroundColor()).toBe(0x123456);
+
+      instance.setSoundObject(second);
+      expect(instance.getSoundObject()).toBe(second);
+      expect(instance.getName()).toBe('Authored Instance name');
+      expect(instance.getBackgroundColor()).toBe(0x123456);
+    });
+
     it('rejects unresolved library dependencies before typed acceptance', () => {
       const xml = `<soundObject type="Instance">
         <name>My Instance</name>

@@ -38,6 +38,7 @@ import {
 import { ProjectSession } from './project-session';
 import type { ProjectSession as ProjectSessionType } from './project-session';
 import { ProjectHistory } from './project-history';
+import { ProjectRuntimeReconciliation } from './project-runtime-reconciliation';
 import { FakePublicationRecorder, MockHistoryContext } from './project-history-test-support';
 import { testScoreObject } from './score-object-test';
 import {
@@ -2908,6 +2909,8 @@ describe('Project patch round trips through real ProjectHistory (T117)', () => {
     target.setName('History reference target');
     target.setScoreText('i1 0 2 440');
     forwardReference.setSoundObject(target);
+    forwardReference.setName('Library Instance authored name');
+    forwardReference.setBackgroundColor(0x102030);
     data.getSoundObjectLibrary().addObject(forwardReference);
     data.getSoundObjectLibrary().addObject(target);
 
@@ -2915,11 +2918,16 @@ describe('Project patch round trips through real ProjectHistory (T117)', () => {
     frozen.setNumChannels(2);
     const frozenReference = new Instance();
     frozenReference.setSoundObject(target);
+    frozenReference.setName('Frozen Instance authored name');
+    frozenReference.setBackgroundColor(0x203040);
     frozen.setFrozenSoundObject(frozenReference);
     data.getSoundObjectLibrary().addObject(frozen);
 
     const trackReference = new Instance();
     trackReference.setSoundObject(target);
+    trackReference.setName('Track Instance authored name');
+    trackReference.setBackgroundColor(0x304050);
+    assignExplicitScoreObjectId(trackReference, 'track-instance-authored-id');
     const track = new ScoreTrack();
     track.push(trackReference);
     const tracks = new TrackLayerGroup();
@@ -2930,6 +2938,9 @@ describe('Project patch round trips through real ProjectHistory (T117)', () => {
     const patternReferenceLayer = patterns.newLayerAt(0);
     const patternReference = new Instance();
     patternReference.setSoundObject(target);
+    patternReference.setName('Pattern Instance authored name');
+    patternReference.setBackgroundColor(0x405060);
+    assignExplicitScoreObjectId(patternReference, 'pattern-instance-authored-id');
     patternReferenceLayer.setSoundObject(patternReference);
     const patternSoundLayer = patterns.newLayerAt(1);
     patternSoundLayer.setSoundObject(makeSound('pattern'));
@@ -2968,18 +2979,36 @@ describe('Project patch round trips through real ProjectHistory (T117)', () => {
       );
 
       const targetCopy = library.getObject(3)!;
-      expect((library.getObject(2) as Instance).getSoundObject()).toBe(targetCopy);
-      expect(
-        (
-          (library.getObject(4) as FrozenSoundObject).getFrozenSoundObject() as Instance
-        ).getSoundObject(),
-      ).toBe(targetCopy);
-      expect(((current.getScore()[1] as TrackLayerGroup)[0]![0] as Instance).getSoundObject()).toBe(
-        targetCopy,
-      );
+      const libraryInstance = library.getObject(2) as Instance;
+      expect(libraryInstance.getSoundObject()).toBe(targetCopy);
+      expect([libraryInstance.getName(), libraryInstance.getBackgroundColor()]).toEqual([
+        'Library Instance authored name',
+        0x102030,
+      ]);
+      const frozenInstance = (
+        library.getObject(4) as FrozenSoundObject
+      ).getFrozenSoundObject() as Instance;
+      expect(frozenInstance.getSoundObject()).toBe(targetCopy);
+      expect([frozenInstance.getName(), frozenInstance.getBackgroundColor()]).toEqual([
+        'Frozen Instance authored name',
+        0x203040,
+      ]);
+      const trackInstance = (current.getScore()[1] as TrackLayerGroup)[0]![0] as Instance;
+      expect(trackInstance.getSoundObject()).toBe(targetCopy);
+      expect([trackInstance.getName(), trackInstance.getBackgroundColor()]).toEqual([
+        'Track Instance authored name',
+        0x304050,
+      ]);
+      expect(getScoreObjectId(trackInstance)).toBe('track-instance-authored-id');
 
       const copiedPatterns = current.getScore()[2] as PatternsLayerGroup;
-      expect((copiedPatterns[0]!.getSoundObject() as Instance).getSoundObject()).toBe(targetCopy);
+      const patternInstance = copiedPatterns[0]!.getSoundObject() as Instance;
+      expect(patternInstance.getSoundObject()).toBe(targetCopy);
+      expect([patternInstance.getName(), patternInstance.getBackgroundColor()]).toEqual([
+        'Pattern Instance authored name',
+        0x405060,
+      ]);
+      expect(getScoreObjectId(patternInstance)).toBe('pattern-instance-authored-id');
       const patternSound = copiedPatterns[1]!.getSoundObject() as Sound;
       const patternKnob = patternSound
         .getBlueSynthBuilder()
@@ -3013,7 +3042,15 @@ describe('Project patch round trips through real ProjectHistory (T117)', () => {
 
     const session = new ProjectSession();
     session.replace(data, '/tmp/history-copy-owners.blue');
-    const history = new ProjectHistory({ session, publishUpdated: () => {} });
+    const runtimeOperations: unknown[] = [];
+    const reconciliation = new ProjectRuntimeReconciliation();
+    reconciliation.registerPerformance('timeline', 7, {
+      async applyOperation(operation) {
+        runtimeOperations.push(operation);
+        return { status: 'applied' };
+      },
+    });
+    const history = new ProjectHistory({ session, publishUpdated: () => {}, reconciliation });
     const context = new MockHistoryContext('ctx-history-copy-owners');
     const docId = session.read().documentId!;
     const live = () => session.read().data!;
@@ -3037,6 +3074,15 @@ describe('Project patch round trips through real ProjectHistory (T117)', () => {
     if (edit.status !== 'committed') return;
     const committedXml = live().saveToString();
     expect(committedXml).not.toBe(originalXml);
+    expect(edit.runtimeOutcomes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          performanceKind: 'timeline',
+          generation: 7,
+          status: 'restart-required',
+        }),
+      ]),
+    );
     expect(history.read().undoLabel).toBe('Activate Pattern Cell');
     expect((live().getScore()[2] as PatternsLayerGroup)[0]!.getPatternData().isPatternSet(0)).toBe(
       true,
@@ -3046,6 +3092,12 @@ describe('Project patch round trips through real ProjectHistory (T117)', () => {
 
     const undo = await history.undo(context.nextUndoRequest(docId, edit.revision));
     expect(undo.status).toBe('committed');
+    if (undo.status !== 'committed') return;
+    expect(undo.runtimeOutcomes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ performanceKind: 'timeline', status: 'restart-required' }),
+      ]),
+    );
     expect(live().saveToString()).toBe(originalXml);
     expect(history.read().redoLabel).toBe('Activate Pattern Cell');
     expect((live().getScore()[2] as PatternsLayerGroup)[0]!.getPatternData().isPatternSet(0)).toBe(
@@ -3056,12 +3108,19 @@ describe('Project patch round trips through real ProjectHistory (T117)', () => {
 
     const redo = await history.redo(context.nextRedoRequest(docId, session.read().revision));
     expect(redo.status).toBe('committed');
+    if (redo.status !== 'committed') return;
+    expect(redo.runtimeOutcomes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ performanceKind: 'timeline', status: 'restart-required' }),
+      ]),
+    );
     expect(live().saveToString()).toBe(committedXml);
     expect((live().getScore()[2] as PatternsLayerGroup)[0]!.getPatternData().isPatternSet(0)).toBe(
       true,
     );
     expect(history.isDirty()).toBe(true);
     assertGraph(live());
+    expect(runtimeOperations).toEqual([]);
   });
 
   it('preserves BSB slider identities and values through dropdown history copies (T135)', async () => {

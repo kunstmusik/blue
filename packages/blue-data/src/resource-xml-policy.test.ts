@@ -9,6 +9,9 @@ import { Preset } from './instruments/blue-synth-builder/preset';
 import { PresetGroup } from './instruments/blue-synth-builder/preset-group';
 import { ClojureObject } from './sound-objects/clojure-object';
 import { FrozenSoundObject } from './sound-objects/frozen-sound-object';
+import { BlueSynthBuilder } from './instruments/blue-synth-builder';
+import { BlueData } from './blue-data';
+import { Sound } from './sound-objects/sound';
 import { XmlLoadContext, loadXml } from './serialization/xml-load';
 import { Element } from './serialization/xml-reader';
 
@@ -22,6 +25,16 @@ const directSoundObjectOwners: Array<
   ['ClojureObject', (root, context) => ClojureObject.loadFromXML(root, undefined, context)],
   ['FrozenSoundObject', (root, context) => FrozenSoundObject.loadFromXML(root, undefined, context)],
 ];
+
+function instrumentWithRetiredHelper(content: string): string {
+  return new BlueSynthBuilder()
+    .saveAsXML()
+    .toXml()
+    .replace(
+      '</graphicInterface>',
+      `<uniqueNameManager defaultPrefix="bsbObj" nameIndex="20">${content}</uniqueNameManager></graphicInterface>`,
+    );
+}
 
 describe('standalone resource report boundary', () => {
   it.each([
@@ -64,6 +77,51 @@ describe('standalone resource report boundary', () => {
     if (!report.ok) throw new Error(JSON.stringify(report.diagnostics));
     expect(report.value.saveAsXML().getTextString('timeUnit')).toBe('6');
   });
+
+  it('warns and omits a genuinely empty retired BSB helper through standalone loading', () => {
+    const xml = instrumentWithRetiredHelper('\n  \t');
+    const report = readResourceXml('instrument', xml, source);
+
+    expect(report.ok).toBe(true);
+    expect(report.diagnostics).toEqual([
+      expect.objectContaining({
+        code: 'R-BSB-UNIQUE-NAME-STATE',
+        severity: 'warning',
+        source,
+        path: '/instrument/graphicInterface[1]/uniqueNameManager[1]',
+        value: '20',
+      }),
+    ]);
+    if (!report.ok) throw new Error(JSON.stringify(report.diagnostics));
+    expect(
+      report.value.saveAsXML().getElement('graphicInterface')?.getElement('uniqueNameManager'),
+    ).toBeNull();
+    expect(xml).toContain('<uniqueNameManager defaultPrefix="bsbObj" nameIndex="20">');
+  });
+
+  it.each([
+    ['plain text', 'retired state'],
+    ['CDATA', '<![CDATA[retired state]]>'],
+  ])(
+    'rejects meaningful %s in the retired BSB helper through standalone loading',
+    (_kind, content) => {
+      const xml = instrumentWithRetiredHelper(content);
+      const original = xml;
+      const report = readResourceXml('instrument', xml, source);
+
+      expect(report.ok).toBe(false);
+      expect(report).not.toHaveProperty('value');
+      expect(report.diagnostics[0]).toMatchObject({
+        code: 'value',
+        severity: 'error',
+        source,
+        path: '/instrument/graphicInterface[1]/uniqueNameManager[1]',
+        member: '#text',
+        value: 'retired state',
+      });
+      expect(xml).toBe(original);
+    },
+  );
 
   it.each(directSoundObjectOwners)(
     'matches direct %s root diagnostics at the resource report boundary',

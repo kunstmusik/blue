@@ -44,9 +44,12 @@ describe('library transfer helpers', () => {
   it('creates an explicit shared instance without cloning its definition', () => {
     const definition = new GenericScore();
     definition.setName('Shared');
+    definition.setBackgroundColor(0x123456);
     const instance = createSharedSoundObjectInstance(definition, 'lib_9');
     expect(instance).toBeInstanceOf(Instance);
     expect(instance.getSoundObject()).toBe(definition);
+    expect(instance.getName()).toBe('Shared');
+    expect(instance.getBackgroundColor()).toBe(0x123456);
     expect(instance.getLibraryId()).toBe('lib_9');
   });
 

@@ -1328,14 +1328,8 @@ export class UnifiedLibraryProjectAdapter {
             object.getLibraryId() === libraryId &&
             (!onlyMissing || !object.getSoundObject())
           ) {
-            const name = object.getName();
-            const backgroundColor = object.getBackgroundColor();
             object.setSoundObject(definition);
             object.setLibraryId(libraryId);
-            if (!onlyMissing) {
-              object.setName(name);
-              object.setBackgroundColor(backgroundColor);
-            }
           } else if (object instanceof PolyObject) {
             visit(object);
           }

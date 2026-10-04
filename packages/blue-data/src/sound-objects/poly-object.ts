@@ -15,6 +15,7 @@ import { NoteProcessorChain } from '../note-processors/note-processor-chain';
 import { TimeBehavior } from './time-behavior';
 import { TimePosition } from '../time/time-position';
 import { TimeDuration } from '../time/time-duration';
+import { TimeState } from '../time/time-state';
 import { TimeContext } from '../time/time-context';
 import { CompileData } from '../compile-data';
 import { NoteList } from './note-list';
@@ -29,7 +30,14 @@ import {
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { Layer } from '../score/layers/layer';
 import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
-import { checkRoot, checkShape, parseXmlNumber, parseXmlInteger, readInt } from '../utilities/xml';
+import {
+  checkRoot,
+  checkShape,
+  parseXmlNumber,
+  parseXmlInteger,
+  readBoolean,
+  readInt,
+} from '../utilities/xml';
 import {
   BASIC_SOUND_OBJECT_CHILDREN,
   getBasicXML,
@@ -83,6 +91,7 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
 
   // LayerGroup properties
   private _defaultHeightIndex = 0;
+  private _timeState = new TimeState();
 
   getDefaultHeightIndex(): number {
     return this._defaultHeightIndex;
@@ -90,6 +99,14 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
 
   setDefaultHeightIndex(index: number): void {
     this._defaultHeightIndex = Math.max(0, Math.min(SOUND_LAYER_MAX_HEIGHT_INDEX, index));
+  }
+
+  getTimeState(): TimeState {
+    return this._timeState;
+  }
+
+  setTimeState(value: TimeState): void {
+    this._timeState = value;
   }
 
   constructor(isRoot = false) {
@@ -698,6 +715,7 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
   saveAsXML(objRefMap?: ObjRefSaveMap): Element {
     const elem = getBasicXML(this, 'blue.soundObject.PolyObject');
     elem.addElement('defaultHeightIndex').setText(this._defaultHeightIndex.toString());
+    elem.addElement(this._timeState.saveAsXML());
 
     for (const layer of this) {
       const layerElem = new Element('soundLayer');
@@ -748,7 +766,19 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
         'backgroundColor',
         'defaultHeightIndex',
       ],
-      [...BASIC_SOUND_OBJECT_CHILDREN, 'defaultHeightIndex', 'soundLayer'],
+      [
+        ...BASIC_SOUND_OBJECT_CHILDREN,
+        'defaultHeightIndex',
+        'isRoot',
+        'heightIndex',
+        'timeState',
+        'pixelSecond',
+        'snapEnabled',
+        'snapValue',
+        'timeDisplay',
+        'timeUnit',
+        'soundLayer',
+      ],
       context,
       ['soundLayer'],
     );
@@ -843,8 +873,95 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
     }
     const height = data.getElement('defaultHeightIndex');
     if (height) object._defaultHeightIndex = readInt(height, context, 0, 2147483647);
-    for (const child of data.getElements('soundLayer'))
-      object.push(SoundLayer.loadFromXML(child, objRefMap, context));
+    const inlineTimeFields = ['pixelSecond', 'snapEnabled', 'snapValue', 'timeDisplay', 'timeUnit'];
+    const inlineTimeElements = inlineTimeFields.flatMap((field) =>
+      data.getElements(field).toArray(),
+    );
+    const nestedTimeState = data.getElement('timeState');
+    if (nestedTimeState && inlineTimeElements.length > 0)
+      throw context.at(inlineTimeElements[0]).error({
+        code: 'conflict',
+        message: 'PolyObject has both nested and inline TimeState representations.',
+        recovery: 'Keep either the nested timeState or the historical inline fields.',
+      });
+    if (nestedTimeState) {
+      object._timeState = TimeState.loadFromXML(nestedTimeState, context);
+    } else if (inlineTimeElements.length > 0) {
+      const timeState = new Element('timeState');
+      context.anchor(timeState, inlineTimeElements[0]);
+      for (const oldField of inlineTimeElements) {
+        const field = oldField.clone();
+        context.anchor(field, oldField);
+        timeState.addElement(field);
+      }
+      object._timeState = TimeState.loadFromXML(timeState, context);
+    }
+
+    const oldHeight = data.getElement('heightIndex');
+    let oldHeightIndex: number | undefined;
+    if (oldHeight) {
+      checkShape(oldHeight, ['version'], [], context, [], true);
+      const version = oldHeight.getAttribute('version');
+      if (version !== null && version !== '2')
+        throw context.at(oldHeight).error({
+          code: 'value',
+          member: '@version',
+          value: version,
+          message: 'Unsupported historical PolyObject heightIndex version.',
+          recovery: 'Use a versionless legacy height or version 2 current index.',
+        });
+      const value = parseXmlInteger(
+        oldHeight.getTextString(),
+        context.at(oldHeight),
+        -2147483648,
+        2147483647,
+      );
+      oldHeightIndex = version === '2' ? value : Math.max(value - 1, 0);
+      if (oldHeightIndex < 0)
+        throw context.at(oldHeight).error({
+          code: 'value',
+          member: '#text',
+          value: String(value),
+          message: 'Historical PolyObject height index must resolve to a nonnegative value.',
+          recovery: 'Use a valid nonnegative height index.',
+        });
+      const explicitDefaultHeight =
+        height !== null || data.getAttribute('defaultHeightIndex') !== null;
+      if (explicitDefaultHeight && object._defaultHeightIndex !== oldHeightIndex)
+        throw context.at(height ?? data).error({
+          code: 'conflict',
+          member: 'defaultHeightIndex',
+          message: 'Historical and current PolyObject default heights disagree.',
+          recovery: 'Keep one matching height representation.',
+        });
+      for (const layer of data.getElements('soundLayer')) {
+        const currentHeight = layer.getAttribute('heightIndex');
+        if (
+          currentHeight !== null &&
+          parseXmlInteger(currentHeight, context.at(layer), 0, 2147483647) !== oldHeightIndex
+        )
+          throw context.at(layer).error({
+            code: 'conflict',
+            member: '@heightIndex',
+            value: currentHeight,
+            message: 'Historical shared height conflicts with a current layer height.',
+            recovery: 'Keep one matching height representation.',
+          });
+      }
+      object._defaultHeightIndex = oldHeightIndex;
+    }
+    const isRoot = data.getElement('isRoot');
+    if (isRoot && readBoolean(isRoot, context)) object._timeBehavior = TimeBehavior.NONE;
+    for (const child of data.getElements('soundLayer')) {
+      const layer = SoundLayer.loadFromXML(child, objRefMap, context);
+      if (oldHeightIndex !== undefined) {
+        const customHeight = child.getAttribute('customHeight');
+        layer.setHeightIndex(oldHeightIndex);
+        if (customHeight !== null)
+          layer.setCustomHeight(parseXmlInteger(customHeight, context.at(child), 22, 660));
+      }
+      object.push(layer);
+    }
     return providedContext ? object : requireXmlValue(context.result(object), sink);
   }
 
@@ -857,6 +974,7 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
     copy._timeBehavior = this._timeBehavior;
     copy._npc = new NoteProcessorChain(this._npc);
     copy._defaultHeightIndex = this._defaultHeightIndex;
+    copy._timeState = new TimeState(this._timeState);
     // Deep copy layers
     for (const layer of this) {
       copy.push(layer.deepCopy(mode));

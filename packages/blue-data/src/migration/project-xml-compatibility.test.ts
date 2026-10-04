@@ -5,6 +5,27 @@ import { UpgradeManager } from './upgrade-manager';
 import { readProjectXml } from '../blue-data/xml-policy';
 
 describe('project XML migration composition', () => {
+  it.each(['2.7.4_dev', '2.7.0_dev'])('accepts corpus development version %s', (version) => {
+    const result = readProjectXml(`<blueData version="${version}"/>`, {
+      kind: 'project',
+      label: `${version}.blue`,
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(JSON.stringify(result.diagnostics));
+    expect(readProjectXml(result.value.saveToString()).ok).toBe(true);
+  });
+
+  it.each(['2.7.4_dev1', '2.7.4_preview'])('rejects unrecognized version suffix %s', (version) => {
+    const result = readProjectXml(`<blueData version="${version}"/>`);
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics[0]).toMatchObject({
+      code: 'value',
+      member: '@version',
+      value: version,
+      path: '/blueData/@version',
+    });
+  });
+
   it('P-210-230-COMPOSE transfers 0dbfs and root timing without losing code', () => {
     const xml = `<blueData version="2.0.0">
       <projectProperties/>
@@ -21,7 +42,37 @@ describe('project XML migration composition', () => {
     expect(data.getScore().getTimeState().getSnapValue()).toBe('SIXTEENTH');
     expect(data.getScore()[0].getName()).toBe('Original synthetic root');
     const canonical = data.saveToString();
-    expect(BlueData.loadFromString(canonical).saveToString()).toBe(canonical);
+    const reopened = readProjectXml(canonical, { kind: 'project', label: 'compose.blue' });
+    expect(reopened.ok).toBe(true);
+    if (!reopened.ok) throw new Error(JSON.stringify(reopened.diagnostics));
+    expect(reopened.value.saveToString()).toBe(canonical);
+  });
+
+  it('moves old root PolyObject timeUnit into the project-owned TimeState with a warning', () => {
+    const xml =
+      '<blueData version="2.2.0"><soundObject type="blue.soundObject.PolyObject"><name>Legacy root</name><timeUnit>5</timeUnit></soundObject></blueData>';
+    const result = readProjectXml(xml, { kind: 'project', label: 'root-time-unit.blue' });
+    expect(result.ok).toBe(true);
+    expect(result.diagnostics).toMatchObject([
+      {
+        code: 'P-TIME-STATE-HISTORICAL-RULER',
+        severity: 'warning',
+        source: { label: 'root-time-unit.blue' },
+        path: '/blueData/soundObject[1]/timeUnit[1]',
+        value: '5',
+      },
+    ]);
+    if (!result.ok) throw new Error(JSON.stringify(result.diagnostics));
+    const canonical = result.value.saveToString();
+    expect(canonical).toContain('<timeState');
+    expect(canonical).toContain('<timeUnit>5</timeUnit>');
+    const score = Element.parse(canonical).getElement('score')!;
+    expect(score.getElement('timeState')?.getTextString('timeUnit')).toBe('5');
+    expect(score.getElement('soundObject')?.getElement('timeUnit')).toBeNull();
+    const reopened = readProjectXml(canonical, { kind: 'project', label: 'root-time-unit.blue' });
+    expect(reopened.ok).toBe(true);
+    if (!reopened.ok) throw new Error(JSON.stringify(reopened.diagnostics));
+    expect(reopened.value.saveToString()).toBe(canonical);
   });
 
   it('normalizes beta patterns once and leaves current containers alone', () => {

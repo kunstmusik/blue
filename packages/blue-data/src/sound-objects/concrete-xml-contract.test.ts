@@ -236,4 +236,19 @@ describe('concrete SoundObject XML acceptance', () => {
     expect(obj.saveAsXML().getElement('syntaxType')).toBeNull();
     expect(obj.saveAsXML().getTextString('code')).toBe('  pass\n');
   });
+  it('normalizes the obsolete Python syntax hint without overriding external mode', () => {
+    const root = parse(
+      'ObjectBuilder',
+      '<isExternal>true</isExternal><syntaxType>Python</syntaxType><code>  run\n</code>',
+    );
+    const context = new XmlLoadContext(root);
+    const result = context.result(loadSoundObjectFromXML(root, undefined, context));
+    expect(result.ok).toBe(true);
+    expect(result.diagnostics).toMatchObject([{ code: 'SL-H02', severity: 'warning' }]);
+    const object = requireXmlValue(result, () => {});
+    const saved = object.saveAsXML();
+    expect(saved.getTextString('languageType')).toBe('EXTERNAL');
+    expect(saved.getElement('syntaxType')).toBeNull();
+    expect(saved.getTextString('code')).toBe('  run\n');
+  });
 });

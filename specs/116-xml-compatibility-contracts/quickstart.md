@@ -1,7 +1,7 @@
 # Validation guide
 
-**Date**: 2026-10-03  
-**Status**: Completed — implementation converged; final workspace tests and lint pass. Manual platform verification limits are recorded below.
+**Date**: 2026-10-04
+**Status**: Implemented — all 134 example projects load and survive canonical save/reopen. Manual platform verification limits remain recorded below.
 
 ## Prerequisites
 
@@ -182,6 +182,9 @@ no mandatory implementation hook is registered. All 54 task markers are now chec
 
 ## Feature closure (2026-10-03)
 
+**Superseded by the example corpus audit below.** This initial assessment did not test every
+example project, so its no-remaining-work conclusion and closure claim are withdrawn.
+
 Convergence found no remaining work after checking FR-001–FR-020, SC-001–SC-008, all 19 user-story
 acceptance scenarios, 12 plan decisions, and six constitution principles. Findings by gap type
 (missing/partial/contradicts/unrequested) and severity are all zero. T001–T054 are complete;
@@ -208,4 +211,97 @@ Existing Vite loader, SQLite experimental, jsdom canvas, and renderer bundle-siz
 recorded toolchain observations. Interactive desktop smoke tests and native Windows filesystem
 execution were not performed; synthetic Windows-label/path and automated lifecycle/history tests
 do not claim that platform coverage. No code was changed during convergence or documentation
-closure, and no commit was created. The completed feature is ready for review.
+closure, and no commit was created. The subsequent corpus audit reopened the feature.
+
+## Example project corpus audit (2026-10-03)
+
+Checked every `.blue` file under both example directories against the current source
+`readProjectXml` API, rather than a previously built package. Both directories contain 67
+project files: 134 files total, representing 73 distinct byte payloads. No file was accepted.
+Source hashes before and after the audit match for all files. No projects were saved to disk,
+no project scripts were executed, and no Java/audio runtime was initialized.
+
+| First error | Root examples | Bundled examples | Total rejected files |
+| --- | --- | --- | --- |
+| ProjectProperties `csladspaSettings` unexpected element | 43 | 43 | 86 |
+| TimeState `timeUnit` unexpected element | 16 | 16 | 32 |
+| PolyObject `isRoot` unexpected element | 6 | 6 | 12 |
+| Project version `2.7.4_dev` or `2.7.0_dev` rejected | 2 | 2 | 4 |
+| Total | 67 | 67 | 134 |
+
+Counts use the first **error**, excluding preceding warning diagnostics. Loading can reveal
+additional incompatibilities after each blocker is resolved. No canonical save/reopen result
+can be claimed for this corpus because no original candidate was accepted.
+
+The persistent regression is
+`packages/blue-data/tests/integration/example-projects-load.test.ts`. It discovers both directories,
+requires a nonempty inventory in each, and tests each project separately for acceptance, unchanged
+source bytes, canonical reopening, and stable canonical serialization. It reads the existing
+licensed examples in place; no payload was copied into test fixtures.
+
+```sh
+pnpm --filter @blue/data exec vitest run --no-cache --configLoader runner tests/integration/example-projects-load.test.ts
+```
+
+Actual result: 134 project tests fail; the two inventory checks pass. This intentionally exposes
+the compatibility regression; it does not mark rejected examples as successful or skipped.
+The previously passing workspace run predates this new suite and does not establish current
+closure. T055 records the completed corpus regression; T056 records the remaining compatibility
+work and required final validation. Interactive desktop and native Windows checks remain
+unperformed. The example source files remain unchanged.
+
+## Example corpus restoration (2026-10-04)
+
+T056 resolved the nested compatibility cases while keeping unknown-member and invalid-value
+rejection strict. Historical content now has typed owners or a bounded warning rule with explicit
+save behavior; source project bytes are never rewritten during acceptance.
+
+The final integration run passed **136/136 assertions**: all 134 projects across both example
+directories plus both nonempty-inventory checks. Every project passed load, canonical save/reopen,
+stable canonical serialization, and unchanged-source checks.
+
+Validation:
+
+- `pnpm --filter @blue/data build` — passed; refreshed the stale local distribution used by app tests.
+- `pnpm --filter @blue/data test` — 3,080 passed, 1 skipped.
+- `pnpm test` — passed across workspace packages and all 59 script checks. The package totals included
+  3,080 data tests, 5,370 app tests, 7 CLI tests, and 14 native engine tests; 3 tests were skipped.
+- `pnpm lint` — passed, including ESLint and formatting.
+- `git diff --check` — passed.
+
+The initial `pnpm test` attempt used the stale distribution and failed in app BSB tests because
+`formatBlueNumber` was absent from its generated index. Rebuilding `@blue/data` resolved that issue;
+the final workspace run passed. Interactive desktop and native Windows verification remains
+unperformed. Example projects remained read-only throughout.
+
+## XML owner and history-copy convergence (2026-10-04)
+
+T057 rejects meaningful text and CDATA in the retired BSB `uniqueNameManager` helper at all tested
+owners. The exact empty helper still produces its named warning and is omitted canonically;
+whitespace-only formatting is allowed. The direct BSB, standalone resource, and embedded project
+tests verify contextual errors, no rejected candidate, and unchanged source input.
+
+T058 keeps Instance name and background color independent from the referenced sound object when
+history copies, duplication, library relinking, and edits rebind references. Library transfer still
+seeds those fields when it creates a new Instance. Tests cover Library, Score/PolyObject, Track,
+Pattern, Frozen, and Live traversal paths, and a project-history commit→undo→redo round trip. The
+example corpus test now checks canonical history-copy equality for all 134 projects.
+
+Validation:
+
+- `pnpm --filter @blue/data build` — passed.
+- `pnpm --filter @blue/data test` — 221 files passed, 1 skipped; 3,089 tests passed, 1 skipped.
+- `pnpm --filter @blue/app test` — 502 files passed; 5,370 tests passed, 2 skipped.
+- `pnpm --filter @blue/app build:main` — passed.
+- `pnpm --filter @blue/engine-client test` — 4 files and 47 tests passed.
+- Native engine tests — 14/14 passed.
+- `pnpm test:scripts` — 59/59 passed.
+- `pnpm lint` and `git diff --check` — passed.
+- Corpus integration — 136/136 checks passed, including history-copy equality and unchanged source bytes.
+
+The root `pnpm test` command did not complete as a whole. Its initial run hit one timing-sensitive
+`meter-stress` limit; that test passed when rerun alone. The serialized package run then passed the
+data, engine-client, and native suites but stopped in `@blue/java-runtime`: Maven could not acquire
+the cached `maven-resources-plugin:3.5.0` lock after five attempts. The Java package is unchanged by
+this feature. The full app suite passed when run alone after that retry. No cache files were changed.
+Interactive desktop and native Windows verification remains unperformed.

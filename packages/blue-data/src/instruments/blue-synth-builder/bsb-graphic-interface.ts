@@ -8,6 +8,7 @@ import {
   checkShape,
   readBoolean,
   readInt,
+  parseXmlInteger,
   readEnum,
   parseXmlBoolean,
 } from '../../utilities/xml';
@@ -127,7 +128,9 @@ export class BSBGraphicInterface {
 
   private loadValidatedXml(data: Element, context: XmlLoadContext): BsbWidgetIdRepair[] {
     checkRoot(data, 'graphicInterface', context);
-    checkShape(data, ['editEnabled'], ['gridSettings', 'bsbObject'], context, ['bsbObject']);
+    checkShape(data, ['editEnabled'], ['gridSettings', 'uniqueNameManager', 'bsbObject'], context, [
+      'bsbObject',
+    ]);
     const roots = data.getElements('bsbObject').toArray();
     const groups = roots.filter(
       (elem) => elem.getAttribute('type') === 'blue.orchestra.blueSynthBuilder.BSBGroup',
@@ -142,6 +145,29 @@ export class BSBGraphicInterface {
     const editEnabledAttr = data.getAttribute('editEnabled');
     if (editEnabledAttr !== null)
       this.editEnabled = parseXmlBoolean(editEnabledAttr, context.at(data), '@editEnabled');
+
+    const uniqueNameManager = data.getElement('uniqueNameManager');
+    if (uniqueNameManager) {
+      checkShape(uniqueNameManager, ['defaultPrefix', 'nameIndex'], [], context);
+      const defaultPrefix = uniqueNameManager.getAttribute('defaultPrefix');
+      const nameIndex = uniqueNameManager.getAttribute('nameIndex');
+      if (defaultPrefix !== 'bsbObj' || nameIndex === null)
+        throw context.at(uniqueNameManager).error({
+          code: 'value',
+          member: 'uniqueNameManager',
+          message: 'Unsupported retired widget naming state.',
+          recovery: 'Keep only the recognized empty bsbObj naming helper.',
+        });
+      parseXmlInteger(nameIndex, context.at(uniqueNameManager), -1, 2147483647, '@nameIndex');
+      context.at(uniqueNameManager).diagnostic({
+        code: 'R-BSB-UNIQUE-NAME-STATE',
+        severity: 'warning',
+        member: 'uniqueNameManager',
+        value: nameIndex,
+        message: 'Retired widget naming state is rebuilt from the loaded widget names.',
+        recovery: 'The empty helper is omitted on save; loaded widget names remain unchanged.',
+      });
+    }
 
     this.loadGridSettings(data, context);
 

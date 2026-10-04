@@ -89,6 +89,7 @@ Behavioral source URLs, fixed widget/type lists, defaults, and support decisions
 | R-H08 | blueData instrumentLibrary/arrangement; J-current documented pre-0.95.0 | Project reference migrator | Category-index paths resolve to independent embedded instruments in original order; invalid/inline-plus-reference/unaccounted library content rejects. | Project |
 | R-H09 | mixer/channel; J-current / TS-base aliases | Mixer/Channel local owners | Old lists become current lists; unbinned chain becomes post then ordered direct sends; competing bins/lists reject. | Both |
 | R-H10 | parameter/line; TS-base, Specs009/073 explicit support | Shared Parameter/Line owners | enabled becomes automationEnabled; points/curve aliases normalize; conflicting aliases and unsupported precision-selector behavior reject. | Both |
+| R-BSB-UNIQUE-NAME-EMPTY | graphicInterface/instrument; TS-base bounded acceptance decision | BSBGraphicInterface | Exact `defaultPrefix="bsbObj"` and integer `nameIndex >= -1` on an otherwise empty helper warns and is omitted. Direct text/CDATA, child, unknown attribute, duplicate, invalid prefix, and malformed/out-of-range index reject. | Both |
 
 Each recognized instrument, Effect, UDO, BSB widget, preset/group, parameter, and
 mixer nested owner also receives current/unknown/member/value cases. Parameter
@@ -105,7 +106,7 @@ Behavioral source URLs, nested owner grammar, and support decisions:
 | ID | Root / source revision | Migration or validation owner | Independent expected canonical state/output | Applicability |
 | --- | --- | --- | --- | --- |
 | SL-H01 | Sound; J-2010 | Sound local instrument owner | instrumentText becomes BlueSynthBuilder instrument text; unequal current/old instrument rejects; current instrument output. | Both |
-| SL-H02 | ObjectBuilder; `e5f762edafca0173a1504a87f3b3b57cecf65596` | ObjectBuilder | isExternal maps PYTHON/EXTERNAL; only syntaxType Python with Python mode warns/omits safely; other editor metadata rejects. | Both |
+| SL-H02 | ObjectBuilder; `e5f762edafca0173a1504a87f3b3b57cecf65596` | ObjectBuilder | isExternal maps PYTHON/EXTERNAL; exact syntaxType Python warns/omits in either mode; other editor metadata rejects. | Both |
 | SL-H03 | Line/zak line; resolution revisions in R-H02 | Shared Line | Exact bdresolution output, validated precedence and legacy rounding; malformed competing form rejects. | Both |
 | SL-H04 | Line; J-2010 documented pre-0.110.0 | Shared Line | Relative y becomes absolute once, missing old color gray, output version 2; no clamping invalid data. | Both |
 | SL-H05 | SoundObject common time; `3b237ef572853ffc31f45a8c9af3f9c8808c979e`, `08ac9375357a481d5799c50e259f8febbcf7d68d`, `917b3aa105044eadde4c8c748a757d671055f8a0`, `7da35d375be5f17d8a7c42383ad100fb9ce55193`, `c7b0d28060c91d8eb446c781a26ad0968de27b0c` development | Common SoundObject local time normalization | Direct BeatTime/TimeValue/FrameValue maps preserve units/components; emit startTime/subjectiveDuration. MeasureBeatsTime/SMPTEValue and reader-only wrapper reject; no four-beat fallback. | Both |
@@ -115,6 +116,7 @@ Behavioral source URLs, nested owner grammar, and support decisions:
 | SL-H09 | GenericScore/TrackerObject/processors/maps/Line/PolyObject; TS-base | Respective local owner | Listed TS aliases map to one current form; equal values coalesce, conflicts/invalid grammar reject. No suffix-based type acceptance. | Both |
 | SL-H10 | PianoRoll; TS-base emitted defect | PianoRoll Scale owner | Exact empty then populated scale warns and retains complete scale; output one populated scale. All other duplicates reject. | Both |
 | SL-H11 | audioClip; TS-base AudioClip/fade contract | AudioClip | Scalar beat aliases become typed time; Symmetric becomes S-Curve; unknown fades/conflicts reject. | Both |
+| SL-INSTANCE-PRESENTATION-COPY | Instance; Java `3ca3f40579c48a023299a68130d8ab6b9e950974` / TS-base | Instance reference setter and BlueData copy relinker | Rebinding preserves authored `name`/`backgroundColor`; history and duplication copies relink each library/Score/Track/Pattern/Frozen/Live reference to the copied target without changing presentation. Initial library-transfer construction explicitly inherits presentation from its definition. | Project |
 
 Library cases extend the evidence matrix's unnumbered envelope/archive/transaction
 contracts with stable IDs:
@@ -158,6 +160,11 @@ fixture after removal of the duplicate empty PianoRoll Scale; CSD behavior remai
 history fixtures use typed Clojure metadata in place of arbitrary retained plugin XML. No Java
 example/source was copied into a new fixture. Native Windows and manual desktop observations remain
 explicit validation limits in quickstart.md.
+
+T057/T058 add original inline synthetic owner cases to the BSB graphic-interface, standalone
+resource, project XML, Instance, library-transfer, deep-copy, app history, and example-corpus tests.
+The retired name helper uses only its TS-base bounded empty-container decision; Instance behavior
+uses the pinned Java setter/constructor contract above. No Java or example fixture bytes are used.
 
 
 ### T054 direct owner roots

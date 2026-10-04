@@ -4,7 +4,7 @@
 
 **Input**: `specs/116-xml-compatibility-contracts/spec.md`
 
-**Status**: Completed — all delivery phases and T001–T054 are implemented; convergence verified 2026-10-03.
+**Status**: Implemented — T001–T058 are complete; corpus loading and history-copy preservation pass (2026-10-04).
 
 ## Summary
 
@@ -34,6 +34,7 @@ XML envelopes and repository records. Source-span archive strings remain in the 
 store. No diagnostics in project XML and no new database/schema migration system.
 
 **Testing**: Existing Vitest owner suites, original synthetic fixtures with declared provenance,
+read-only loading and canonical reopening of both example project directories,
 app replacement/library/history suites, CLI boundary coverage, and desktop smoke scenarios.
 No tests are authored or run by planning.
 
@@ -237,7 +238,7 @@ No constitution violations or exceptions. No new runtime/dependency, schema lang
 history system, or migration backend abstraction.
 
 
-## Implementation closure (2026-10-03)
+## Initial implementation closure (2026-10-03; superseded)
 
 The final convergence assessment checked 20 functional requirements, eight success criteria,
 19 acceptance scenarios, 12 plan decisions, and all six constitution principles. No actionable
@@ -253,5 +254,57 @@ manifest; no new runtime, schema system, dependency, or incorporated Java source
 Final pnpm test and pnpm lint runs pass. Fresh focused acceptance/history suites pass as well.
 [The validation guide](quickstart.md#feature-closure-2026-10-03) records actual results, the
 Maven-cache retry, existing toolchain warnings, and unexecuted desktop/native Windows scenarios.
-The implementation is ready for review; manual platform verification remains distinct from
-this completed implementation assessment.
+This assessment omitted the real example corpus and is superseded by the follow-up below.
+
+## Example corpus follow-up (2026-10-03)
+
+The current source loader rejects all 134 `.blue` files across `examples/` and the bundled
+`packages/blue-app/assets/examples/`. The first error in each report identifies historical
+ProjectProperties `csladspaSettings`, TimeState `timeUnit`, PolyObject `isRoot`, or `_dev`
+project version strings. These are the first blockers, not an exhaustive list of nested gaps.
+The new integration suite requires loading, canonical reopening, stable canonical output,
+and unchanged source bytes for every file. It currently fails for all 134 projects.
+
+Reopen implementation through T056: establish Java writer/loader history and explicit owner
+contracts before changing acceptance, preserve meaningful content, and continue auditing past
+each initial rejection until the corpus passes. Keep project structural migrations distinct
+from class-local compatibility and retain unknown-input rejection. Re-run the required package
+and workspace checks before restoring closure.
+
+The regression is original test code within the existing data-package license scope. It reads
+existing projects in place under their existing directory notices; it copies no example payloads
+or Java source, introduces no dependency, and executes no project code. Corpus results and
+verification limits are recorded in [the validation guide](quickstart.md#example-project-corpus-audit-2026-10-03).
+
+## Example corpus restoration (2026-10-04)
+
+T056 completed the corpus audit. Historical contracts and synthetic owner tests now cover the
+retired inactive LADSPA default, development project suffixes, PolyObject time/height/root forms,
+the retired BSB name helper, Java Tracker column roots and irregular cell counts, Tracker duration,
+legacy zero snap, Java BSB separator values, and the obsolete ObjectBuilder Python editor hint.
+Each rule stays at its owning class or project-envelope boundary; unknown or conflicting data
+continues to reject. No example file, Java source, dependency, or asset was incorporated.
+
+The final corpus run passed all 136 assertions (134 project cases and two inventory checks),
+including canonical save/reopen stability and unchanged source bytes. `pnpm --filter @blue/data
+test` passed 3,080 tests with one skipped. After rebuilding the stale `@blue/data` distribution,
+`pnpm test` passed across the workspace and script checks; `pnpm lint` and `git diff --check` also
+passed. The recorded commands and results are in [the validation guide](quickstart.md#example-corpus-restoration-2026-10-04).
+
+## XML owner and history-copy convergence (2026-10-04)
+
+T057 tightens the retired BSB `uniqueNameManager` exception: only an empty helper is accepted,
+with whitespace-only formatting preserved as the existing warning-and-omit case. Meaningful text
+and CDATA fail at the direct, standalone resource, and embedded project owners with contextual
+diagnostics before a candidate is published.
+
+T058 makes Instance reference rebinding independent of authored presentation fields. The shared
+copy traversal now changes only the referenced sound object; initial name/color seeding remains at
+the library-transfer creation boundary, matching the Java reference setter evidence in
+`research.md`. Copy, duplication, library relinking, and project-history round trips preserve
+Instance names/colors, identities, and copied-reference independence.
+
+Validation results and the Maven cache-lock limitation are recorded in
+[the validation guide](quickstart.md#xml-owner-and-history-copy-convergence-2026-10-04). The 134
+example files remained read-only; each passed load, canonical save/reopen, history-copy equality,
+and unchanged-source checks.

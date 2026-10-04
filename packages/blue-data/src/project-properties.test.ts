@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { ProjectProperties } from './project-properties';
 import { Element } from './serialization/xml-reader';
+import type { XmlDiagnostic } from './serialization/xml-load';
 
 describe('ProjectProperties', () => {
   describe('Java-compatible defaults', () => {
@@ -74,6 +75,60 @@ describe('ProjectProperties', () => {
       const elem = Element.parse(xml);
       const props = ProjectProperties.loadFromXML(elem);
       expect(props.copyToMediaFileOnImport).toBe(false);
+    });
+  });
+
+  describe('retired csladspaSettings', () => {
+    const defaultSettings =
+      '<csladspaSettings><name></name><maker></maker><uniqueId>0</uniqueId><copyright></copyright><portDefinitionList/><enabled>false</enabled></csladspaSettings>';
+
+    it('warns and omits only the exact inactive default', () => {
+      const diagnostics: XmlDiagnostic[] = [];
+      const props = ProjectProperties.loadFromXML(
+        Element.parse(`<projectProperties>${defaultSettings}</projectProperties>`),
+        undefined,
+        (items) => diagnostics.push(...items),
+      );
+
+      expect(diagnostics).toMatchObject([
+        {
+          code: 'PP-LADSPA-RETIRED-DEFAULT',
+          severity: 'warning',
+          path: '/projectProperties/csladspaSettings[1]',
+          member: 'csladspaSettings',
+        },
+      ]);
+      expect(props.saveAsXML().hasElement('csladspaSettings')).toBe(false);
+      expect(() =>
+        ProjectProperties.loadFromXML(
+          Element.parse(`<projectProperties>${defaultSettings}</projectProperties>`),
+        ),
+      ).toThrow('report handler');
+    });
+
+    it.each([
+      ['active', defaultSettings.replace('<enabled>false', '<enabled>true')],
+      ['populated', defaultSettings.replace('<maker></maker>', '<maker>DSP vendor</maker>')],
+      [
+        'nested port data',
+        defaultSettings.replace(
+          '<portDefinitionList/>',
+          '<portDefinitionList><port/></portDefinitionList>',
+        ),
+      ],
+      [
+        'unknown nested member',
+        defaultSettings.replace('</csladspaSettings>', '<future/></csladspaSettings>'),
+      ],
+      ['missing historical member', defaultSettings.replace('<uniqueId>0</uniqueId>', '')],
+    ])('rejects %s retired settings instead of discarding them', (_case, settings) => {
+      expect(() =>
+        ProjectProperties.loadFromXML(
+          Element.parse(`<projectProperties>${settings}</projectProperties>`),
+          undefined,
+          () => {},
+        ),
+      ).toThrow();
     });
   });
 

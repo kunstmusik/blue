@@ -63,6 +63,7 @@ export class ProjectUpgrader_2_3_0 extends ProjectUpgrader {
         'snapEnabled',
         'snapValue',
         'timeDisplay',
+        'timeUnit',
       ]) {
         const fields = soundObjectNode.getElements(field).toArray();
         if (fields.length > 1)

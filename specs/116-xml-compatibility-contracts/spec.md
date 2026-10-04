@@ -4,12 +4,15 @@
 
 **Created**: 2026-10-01
 
-**Status**: Completed — implementation converged
+**Status**: Implemented — T001–T058 complete; example corpus and copy/history preservation verified (2026-10-04)
 
-**Closed**: 2026-10-03
+**Reopened**: 2026-10-03, after the initial closure assessment
 
-**Verification**: All 54 tasks are complete; final convergence found no remaining work.
-See [closure results and validation limits](quickstart.md#feature-closure-2026-10-03).
+**Verification**: T001–T058 are complete. All 134 example projects pass loading, canonical
+save/reopen and history-copy stability, and unchanged-source checks; both corpus inventory checks
+pass. The data and app suites, engine-client and native suites, script checks, lint, and whitespace
+checks pass. The complete workspace runner is limited by an unrelated Maven cache lock; see the
+[implementation results](quickstart.md#xml-owner-and-history-copy-convergence-2026-10-04).
 
 **Input**: User direction: load known expected elements/attributes; migrate known historical
 forms; warn or error on unexpected data. Update the constitution, research Java Blue history,
@@ -27,6 +30,8 @@ save/reopen it without unintended changes caused by compatibility handling.
 
 **Independent Test**: Open representative current and historical projects, compare supported
 content after migrations, save/reopen, and check that source files were untouched during loading.
+Include every `.blue` project in `examples/` and `packages/blue-app/assets/examples/`, reading
+the existing files in place without running project scripts or initializing audio runtimes.
 
 **Acceptance Scenarios**:
 

@@ -133,13 +133,14 @@ function loadProjectRoot(
 
   checkShape(rootElement, ['version'], PROJECT_CHILDREN, context);
   const version = rootElement.getAttribute('version');
-  if (version !== null && !/^\d+(?:\.\d+){0,2}(?:_beta\d*)?$/.test(version))
+  if (version !== null && !/^\d+(?:\.\d+){0,2}(?:_beta\d*|_dev)?$/.test(version))
     throw context.error({
       code: 'value',
       member: '@version',
       value: version,
       message: 'Invalid project version syntax.',
-      recovery: 'Supply a supported numeric project version, optionally with a beta suffix.',
+      recovery:
+        'Supply a supported numeric project version, optionally with a beta suffix or the historical _dev suffix.',
     });
 
   // Apply migrations

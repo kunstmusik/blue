@@ -16,10 +16,12 @@ import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../seri
 import {
   checkShape,
   readText,
+  readDouble,
   readInt,
   readBoolean,
   readEnum,
   parseXmlBoolean,
+  writeDouble,
 } from '../utilities/xml';
 import { BASIC_SOUND_OBJECT_CHILDREN } from './sound-object-utilities';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
@@ -41,6 +43,7 @@ export class TrackerObject extends AbstractSoundObject {
   // canonical object to retain them across asynchronous panel refreshes.
   private _keyboardNotesEnabled = false;
   private _keyboardOctave = 0;
+  private _historicalObjectiveDuration: number | null = null;
 
   constructor(other?: TrackerObject) {
     super();
@@ -53,6 +56,7 @@ export class TrackerObject extends AbstractSoundObject {
       this._tracks = new TrackList(other._tracks);
       this._keyboardNotesEnabled = other._keyboardNotesEnabled;
       this._keyboardOctave = other._keyboardOctave;
+      this._historicalObjectiveDuration = other._historicalObjectiveDuration;
     }
   }
 
@@ -68,6 +72,16 @@ export class TrackerObject extends AbstractSoundObject {
   }
   setTracks(tracks: TrackList): void {
     this._tracks = tracks;
+  }
+
+  getHistoricalObjectiveDuration(): number | null {
+    return this._historicalObjectiveDuration;
+  }
+
+  setHistoricalObjectiveDuration(value: number | null): void {
+    if (value !== null && !Number.isFinite(value))
+      throw new RangeError('Historical objective duration must be finite.');
+    this._historicalObjectiveDuration = value;
   }
 
   isKeyboardNotesEnabled(): boolean {
@@ -132,6 +146,8 @@ export class TrackerObject extends AbstractSoundObject {
   override saveAsXML(_objRefMap?: ObjRefSaveMap): Element {
     const elem = getBasicXML(this, 'blue.soundObject.TrackerObject');
     elem.addElement('stepsPerBeat').setText(this._stepsPerBeat.toString());
+    if (this._historicalObjectiveDuration !== null)
+      elem.addElement(writeDouble('duration', this._historicalObjectiveDuration));
     elem.addElement(this._tracks.saveAsXML());
 
     return elem;
@@ -160,13 +176,29 @@ export class TrackerObject extends AbstractSoundObject {
     checkShape(
       data,
       ['type'],
-      [...BASIC_SOUND_OBJECT_CHILDREN, ...['stepsPerBeat', 'trackList', 'tracks']],
+      [...BASIC_SOUND_OBJECT_CHILDREN, ...['duration', 'stepsPerBeat', 'trackList', 'tracks']],
       ctx,
     );
     const obj = new TrackerObject();
     const stepsPerBeatElement = data.getElement('stepsPerBeat');
     if (stepsPerBeatElement) readText(stepsPerBeatElement, ctx);
     initBasicFromXML(obj, data, ctx);
+
+    const legacyDuration = data.getElement('duration');
+    if (legacyDuration) {
+      const value = readDouble(legacyDuration, ctx);
+      obj.setHistoricalObjectiveDuration(value);
+      ctx.at(legacyDuration).diagnostic({
+        code: 'SL-TRACKER-OBJECTIVE-DURATION',
+        severity: 'warning',
+        member: 'duration',
+        value: String(value),
+        message:
+          'Historical TrackerObject objective duration is retained separately from subjective duration.',
+        recovery:
+          'The value is saved as duration; current TypeScript generation uses subjectiveDuration.',
+      });
+    }
 
     const steps = data.getElement('stepsPerBeat');
     obj._stepsPerBeat = steps ? readInt(steps, ctx, 1, 2147483647) : 1;

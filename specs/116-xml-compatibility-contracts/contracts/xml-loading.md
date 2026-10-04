@@ -127,7 +127,7 @@ reject. Scalar legacy times remain beats. All output uses current typed roots.
 | Duplicate widget identities | Existing Spec043 preserves first/rekeys collisions, warns, writes canonical unique identities. Alias identity conflicts reject. |
 | Live set unresolved target IDs | Preserve exact typed IDs, warn, application to missing target has no effect; save/copy/history retain them. |
 | PianoRoll empty first scale + populated second scale | Recognize exact emitted TS defect, warn, retain populated content, write once. Other duplicates reject. |
-| Historical ObjectBuilder default syntaxType | Only proven Python editor hint with normalized PYTHON language may warn/omit as documented in SL-H02; nondefault/conflicting hints reject. |
+| Historical ObjectBuilder default syntaxType | Exact `Python` editor hint may warn/omit with normalized PYTHON or EXTERNAL language; preserve the mode and code as documented in SL-H02. Other syntax values reject. |
 | Historical PianoRoll timeUnit | Preserve positive integral interval in a named typed legacy ruler metadata field, warn that current ruler cannot display that historical interval. Write timeUnit as an explicit output exception; copy/history retain it. Never infer safe deletion from snap value. |
 | Unsupported resource in valid library envelope | Archive original leaf source with diagnostics, exact export, no typed editing/insertion. Revalidation is required for promotion. |
 

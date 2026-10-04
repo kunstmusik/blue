@@ -44,7 +44,8 @@
   explicitly requested by the owner, not speculative implementation choices.
 - Phase 0/1 design completed 2026-10-02, including the requested XSLT assessment. That planning
   pass changed documentation only; implementation and executable verification followed.
-- Final convergence completed 2026-10-03 with no remaining findings and all 54 implementation
-  tasks checked. The specification is closed; [final validation](../quickstart.md#feature-closure-2026-10-03)
-  records passing workspace checks and remaining manual platform verification. Checklist markers
-  continue to describe requirements quality rather than implementation completion.
+- The initial convergence assessment on 2026-10-03 checked all 54 implementation tasks, but
+  omitted the real example corpus. The subsequent audit rejects all 134 example project files;
+  the specification is reopened with T056 outstanding. [Corpus validation](../quickstart.md#example-project-corpus-audit-2026-10-03)
+  records the failing regression and unchanged sources. Checklist markers continue to describe
+  requirements quality rather than implementation completion.

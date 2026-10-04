@@ -227,7 +227,7 @@ export class Track {
           retVal._instrumentId = readText(node, context);
           break;
         case 'columns': {
-          checkShape(node, [], ['column'], context, ['column']);
+          checkShape(node, [], ['column', 'track'], context, ['column', 'track']);
           const nodes2 = node.getElements();
           while (nodes2.hasMoreElements()) {
             retVal._columns.push(Column.loadFromXML(nodes2.next(), undefined, context));
@@ -244,21 +244,29 @@ export class Track {
         }
       }
     }
-    for (const note of retVal._trackerNotes) {
-      if (note.getNumFields() !== retVal.getNumColumns())
-        throw context.error({
-          code: 'value',
-          message: 'Tracker cells differ from column definitions.',
-          recovery: 'Provide one field per declared column.',
-        });
-    }
     const notesElement = data.getElement('trackerNotes');
-    if (notesElement)
-      for (const noteElement of notesElement.getElements('trackerNote')) {
+    if (notesElement) {
+      const noteElements = notesElement.getElements('trackerNote').toArray();
+      for (let noteIndex = 0; noteIndex < retVal._trackerNotes.length; noteIndex++) {
+        const note = retVal._trackerNotes[noteIndex]!;
+        const noteElement = noteElements[noteIndex]!;
+        const cellCount = note.getNumFields() - 1;
+        const columnCount = retVal._columns.length;
+        if (cellCount !== columnCount)
+          context.at(noteElement).diagnostic({
+            code: 'SL-TRACKER-CELL-COUNT',
+            severity: 'warning',
+            member: 'trackerNote',
+            value: `${cellCount}/${columnCount}`,
+            message: 'Tracker cell count differs from its declared columns.',
+            recovery:
+              'All ordered cells are retained; type-specific validation applies only to cells with a declared column.',
+          });
         let columnIndex = 0;
         for (const cell of noteElement.getElements()) {
           if (!['field', 'otherField', 'pitch', 'amp'].includes(cell.getName())) continue;
           const column = retVal._columns[columnIndex++];
+          if (!column) continue;
           const value =
             cell.getName() === 'field' || cell.getName() === 'otherField'
               ? cell.getAttribute('val')!
@@ -313,6 +321,7 @@ export class Track {
           }
         }
       }
+    }
     return retVal;
   }
 

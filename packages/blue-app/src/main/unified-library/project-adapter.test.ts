@@ -158,14 +158,20 @@ describe('UnifiedLibraryProjectAdapter', () => {
     const first = new Instance();
     first.setSoundObject(definition);
     first.setLibraryId(libraryId);
+    first.setName('First authored placement');
+    first.setBackgroundColor(0x123456);
     const second = new Instance();
     second.setSoundObject(definition);
     second.setLibraryId(libraryId);
+    second.setName('Second authored placement');
+    second.setBackgroundColor(0x234567);
     const libraryContainer = new PolyObject(true);
     libraryContainer.newLayerAt(0);
     const libraryNested = new Instance();
     libraryNested.setSoundObject(definition);
     libraryNested.setLibraryId(libraryId);
+    libraryNested.setName('Nested authored placement');
+    libraryNested.setBackgroundColor(0x345678);
     libraryContainer[0]!.push(libraryNested);
     const libraryContainerId = data.getSoundObjectLibrary().addObject(libraryContainer);
     const containerInstance = new Instance();
@@ -195,6 +201,18 @@ describe('UnifiedLibraryProjectAdapter', () => {
     expect(first.getSoundObject()).toBe(canonical);
     expect(second.getSoundObject()).toBe(canonical);
     expect(libraryNested.getSoundObject()).toBe(canonical);
+    expect([first.getName(), first.getBackgroundColor()]).toEqual([
+      'First authored placement',
+      0x123456,
+    ]);
+    expect([second.getName(), second.getBackgroundColor()]).toEqual([
+      'Second authored placement',
+      0x234567,
+    ]);
+    expect([libraryNested.getName(), libraryNested.getBackgroundColor()]).toEqual([
+      'Nested authored placement',
+      0x345678,
+    ]);
     const context = new TimeContext();
     const compileData = CompileData.createEmptyCompileData();
     expect(first.generateForCSD(context, compileData, 0, -1).toString()).toContain('i2');

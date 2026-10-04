@@ -3,6 +3,7 @@ import { BlueData } from '../blue-data';
 import { Channel } from '../mixer/channel';
 import { readProjectXml } from './xml-policy';
 import { XmlLoadError } from '../serialization/xml-load';
+import { Sound } from '../sound-objects/sound';
 
 describe('project XML candidate acceptance', () => {
   const source = { kind: 'project' as const, label: 'original-synthetic.blue' };
@@ -50,6 +51,38 @@ describe('project XML candidate acceptance', () => {
     expect(result.diagnostics[0]).toMatchObject({ source, path, code, severity: 'error' });
     expect(() => BlueData.loadFromString(xml)).toThrow(XmlLoadError);
   });
+
+  it.each([
+    ['plain text', 'retired state'],
+    ['CDATA', '<![CDATA[retired state]]>'],
+  ])(
+    'rejects meaningful %s in an embedded retired BSB helper without changing its source',
+    (_kind, content) => {
+      const data = new BlueData();
+      data.getSoundObjectLibrary().addObject(new Sound());
+      const xml = data
+        .saveToString()
+        .replace(
+          '</graphicInterface>',
+          `<uniqueNameManager defaultPrefix="bsbObj" nameIndex="20">${content}</uniqueNameManager></graphicInterface>`,
+        );
+      const original = xml;
+
+      const report = readProjectXml(xml, source);
+
+      expect(report.ok).toBe(false);
+      expect(report).not.toHaveProperty('value');
+      expect(report.diagnostics[0]).toMatchObject({
+        code: 'value',
+        severity: 'error',
+        source,
+        path: '/blueData/soundObjectLibrary[1]/soundObject[1]/instrument[1]/graphicInterface[1]/uniqueNameManager[1]',
+        member: '#text',
+        value: 'retired state',
+      });
+      expect(xml).toBe(original);
+    },
+  );
 });
 
 // Missing historical settings default; malformed present settings reject.

@@ -212,7 +212,10 @@ export function validateBsbWidget(
       if (!result.ok) fail(name, result.message);
     } else if (name.endsWith('Color') && !isValidBsbColor(text))
       fail(name, 'Invalid supported color encoding.');
-    else if (name === 'separatorType' && !['NONE', 'COMMA', 'SINGLE_QUOTE'].includes(text))
+    else if (
+      name === 'separatorType' &&
+      !['NONE', 'COMMA', 'SINGLE_QUOTE', 'None', 'Comma', 'Single Quote'].includes(text)
+    )
       fail(name, 'Invalid line separator.');
   }
   for (const [lo, hi] of [

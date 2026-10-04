@@ -347,7 +347,7 @@ export class ObjectBuilder extends AbstractSoundObject {
     const syntax = data.getElement('syntaxType');
     if (syntax) {
       const value = readText(syntax, ctx);
-      if (value !== 'Python' || builder.getLanguageType() !== 'PYTHON')
+      if (value !== 'Python')
         throw ctx.at(syntax).error({
           code: 'value',
           value,
@@ -357,9 +357,11 @@ export class ObjectBuilder extends AbstractSoundObject {
       ctx.at(syntax).diagnostic({
         code: 'SL-H02',
         severity: 'warning',
+        member: 'syntaxType',
         value,
         message: 'Redundant historical Python editor setting normalized.',
-        recovery: 'The canonical Python language setting preserves this editor choice.',
+        recovery:
+          'The editor hint is omitted; the canonical language setting preserves execution mode.',
       });
     }
     for (const child of data.getElements()) {

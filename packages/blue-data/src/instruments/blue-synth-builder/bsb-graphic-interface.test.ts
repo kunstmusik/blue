@@ -3,8 +3,83 @@ import { Element } from '../../serialization/xml-reader';
 import { BSBGraphicInterface } from './bsb-graphic-interface';
 import { BSBKnob } from './bsb-knob';
 import { BSBGroup } from './bsb-group';
+import { XmlLoadContext, XmlLoadError } from '../../serialization/xml-load';
 
 describe('BSBGraphicInterface', () => {
+  it('warns and omits only the exact retired empty uniqueNameManager helper', () => {
+    const root = Element.parse(
+      '<graphicInterface><uniqueNameManager defaultPrefix="bsbObj" nameIndex="20">\n  \t</uniqueNameManager></graphicInterface>',
+    );
+    const context = new XmlLoadContext(root);
+    const graphicInterface = new BSBGraphicInterface();
+    graphicInterface.loadFromXML(root, context);
+    expect(context.result(graphicInterface).diagnostics).toMatchObject([
+      {
+        code: 'R-BSB-UNIQUE-NAME-STATE',
+        severity: 'warning',
+        member: 'uniqueNameManager',
+        value: '20',
+      },
+    ]);
+    expect(graphicInterface.saveAsXML().getElement('uniqueNameManager')).toBeNull();
+
+    for (const manager of [
+      '<uniqueNameManager defaultPrefix="other" nameIndex="20"/>',
+      '<uniqueNameManager defaultPrefix="bsbObj" nameIndex="-2"/>',
+      '<uniqueNameManager defaultPrefix="bsbObj" nameIndex="20"><extra/></uniqueNameManager>',
+      '<uniqueNameManager defaultPrefix="bsbObj" nameIndex="20" future="x"/>',
+      '<uniqueNameManager defaultPrefix="bsbObj" nameIndex="20junk"/>',
+      '<uniqueNameManager defaultPrefix="bsbObj" nameIndex="2147483648"/>',
+      '<uniqueNameManager defaultPrefix="bsbObj"/>',
+    ]) {
+      expect(() =>
+        new BSBGraphicInterface().loadFromXML(
+          Element.parse(`<graphicInterface>${manager}</graphicInterface>`),
+        ),
+      ).toThrow();
+    }
+
+    expect(() =>
+      new BSBGraphicInterface().loadFromXML(
+        Element.parse(
+          '<graphicInterface><uniqueNameManager defaultPrefix="bsbObj" nameIndex="20"/><uniqueNameManager defaultPrefix="bsbObj" nameIndex="21"/></graphicInterface>',
+        ),
+      ),
+    ).toThrow();
+  });
+
+  it.each([
+    ['plain text', 'retired state'],
+    ['CDATA', '<![CDATA[retired state]]>'],
+  ])(
+    'rejects meaningful %s inside the retired helper without mutating the input',
+    (_kind, text) => {
+      const root = Element.parse(
+        `<graphicInterface><uniqueNameManager defaultPrefix="bsbObj" nameIndex="20">${text}</uniqueNameManager></graphicInterface>`,
+      );
+      const original = root.toXml();
+      const context = new XmlLoadContext(root, { kind: 'instrument', label: 'direct-bsb.xml' });
+
+      let error: unknown;
+      try {
+        new BSBGraphicInterface().loadFromXML(root, context);
+      } catch (caught) {
+        error = caught;
+      }
+
+      expect(error).toBeInstanceOf(XmlLoadError);
+      expect((error as XmlLoadError).diagnostics[0]).toMatchObject({
+        code: 'value',
+        severity: 'error',
+        source: { kind: 'instrument', label: 'direct-bsb.xml' },
+        path: '/graphicInterface/uniqueNameManager[1]',
+        member: '#text',
+        value: 'retired state',
+      });
+      expect(root.toXml()).toBe(original);
+    },
+  );
+
   it('reports load-time repairs for legacy widgets without ids', () => {
     const graphicInterface = new BSBGraphicInterface();
     const repairs = graphicInterface.loadFromXML(

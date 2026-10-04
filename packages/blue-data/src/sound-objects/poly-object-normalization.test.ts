@@ -7,6 +7,9 @@ import { SoundObjectLibrary, collectInstanceSoundObjects } from './sound-object-
 import { TimeContext } from '../time/time-context';
 import { TimePosition } from '../time/time-position';
 import { TimeDuration } from '../time/time-duration';
+import { TimeBehavior } from './time-behavior';
+import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext } from '../serialization/xml-load';
 
 describe('PolyObject normalization and instance registration', () => {
   const context = new TimeContext();
@@ -82,5 +85,94 @@ describe('PolyObject normalization and instance registration', () => {
     expect(instance2.getSoundObject()).toBe(libObj);
     expect(instance1.getLibraryId()).toBe(libraryId);
     expect(instance2.getLibraryId()).toBe(libraryId);
+  });
+
+  test('loads nested and inline historical TimeState, then writes and copies it canonically', () => {
+    for (const stateXml of [
+      '<timeState><snapEnabled>true</snapEnabled><timeUnit>5</timeUnit></timeState>',
+      '<snapEnabled>true</snapEnabled><timeUnit>5</timeUnit>',
+    ]) {
+      const root = Element.parse(`<soundObject type="PolyObject">${stateXml}</soundObject>`);
+      const context = new XmlLoadContext(root);
+      const poly = PolyObject.loadFromXML(root, undefined, context);
+      expect(context.result(poly).diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+        'P-TIME-STATE-HISTORICAL-RULER',
+      );
+      const saved = poly.saveAsXML();
+      expect(saved.getElement('timeState')?.getTextString('timeUnit')).toBe('5');
+      expect(saved.getElements('snapEnabled').size).toBe(0);
+      const copy = poly.deepCopy();
+      expect(copy.saveAsXML().getElement('timeState')?.getTextString('timeUnit')).toBe('5');
+    }
+  });
+
+  test('rejects competing or malformed PolyObject TimeState forms', () => {
+    for (const stateXml of [
+      '<timeState/><timeUnit>5</timeUnit>',
+      '<timeState><timeUnit>0</timeUnit></timeState>',
+      '<timeState><unexpected/></timeState>',
+    ]) {
+      expect(() =>
+        PolyObject.loadFromXML(Element.parse(`<polyObject>${stateXml}</polyObject>`)),
+      ).toThrow();
+    }
+  });
+
+  test('normalizes the old shared height index and rejects conflicts', () => {
+    const root = Element.parse(
+      '<polyObject><heightIndex>2</heightIndex><soundLayer/></polyObject>',
+    );
+    const poly = PolyObject.loadFromXML(root);
+    expect(poly.getDefaultHeightIndex()).toBe(1);
+    expect(poly[0].getHeightIndex()).toBe(1);
+    const saved = poly.saveAsXML();
+    expect(saved.getTextString('defaultHeightIndex')).toBe('1');
+    expect(saved.getElement('heightIndex')).toBeNull();
+    expect(PolyObject.loadFromXML(saved).saveAsXML().toXml()).toBe(saved.toXml());
+
+    for (const conflictingXml of [
+      '<polyObject><heightIndex version="3">2</heightIndex></polyObject>',
+      '<polyObject><heightIndex>2.0</heightIndex></polyObject>',
+      '<polyObject><heightIndex>2</heightIndex><defaultHeightIndex>4</defaultHeightIndex></polyObject>',
+      '<polyObject><heightIndex>2</heightIndex><soundLayer heightIndex="4"/></polyObject>',
+    ]) {
+      expect(() => PolyObject.loadFromXML(Element.parse(conflictingXml))).toThrow();
+    }
+  });
+});
+
+describe('PolyObject historical isRoot', () => {
+  test('normalizes isRoot=true to current NONE behavior and saves canonically', () => {
+    const input = Element.parse(
+      '<soundObject type="blue.soundObject.PolyObject"><timeBehavior>0</timeBehavior><isRoot>true</isRoot></soundObject>',
+    );
+    const object = PolyObject.loadFromXML(input);
+
+    expect(object.getTimeBehavior()).toBe(TimeBehavior.NONE);
+    const canonical = object.saveAsXML();
+    expect(canonical.getTextString('timeBehavior')).toBe('2');
+    expect(canonical.hasElement('isRoot')).toBe(false);
+    expect(PolyObject.loadFromXML(canonical).getTimeBehavior()).toBe(TimeBehavior.NONE);
+  });
+
+  test('drops isRoot=false without changing the explicit time behavior', () => {
+    const object = PolyObject.loadFromXML(
+      Element.parse(
+        '<soundObject type="blue.soundObject.PolyObject"><timeBehavior>3</timeBehavior><isRoot>false</isRoot></soundObject>',
+      ),
+    );
+
+    expect(object.getTimeBehavior()).toBe(TimeBehavior.REPEAT);
+    expect(object.saveAsXML().hasElement('isRoot')).toBe(false);
+  });
+
+  test.each(['yes', '0', ''])('rejects malformed isRoot value %s', (value) => {
+    expect(() =>
+      PolyObject.loadFromXML(
+        Element.parse(
+          `<soundObject type="blue.soundObject.PolyObject"><isRoot>${value}</isRoot></soundObject>`,
+        ),
+      ),
+    ).toThrow();
   });
 });

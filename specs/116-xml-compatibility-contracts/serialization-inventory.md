@@ -231,3 +231,28 @@ Arrangement/instrument/Live/time/audio/library/Clojure writers. MIDI mappings re
 TypeScript public-root decisions in project-evidence.md. This adds only original MIT-scope code
 and synthetic test inputs, using the existing checkRoot helper; no Java source, external fixtures,
 assets, or dependencies were incorporated.
+
+## Example-corpus compatibility owners (T056)
+
+| XML member | Owning boundary | Supported value and recovery | Canonical output |
+| --- | --- | --- | --- |
+| `projectProperties/csladspaSettings` | ProjectProperties | Exact old inactive default only: empty name/maker/copyright/list, integer ID 0, disabled; named warning. Any other shape/value rejects. | Omitted after warning; active or populated settings are never silently discarded. |
+| `timeState/timeUnit` | TimeState | Positive Java integer retained as historical ruler interval; named warning that current timeline does not use it. Legacy numeric `snapValue=0.0` maps to nearest Java musical subdivision `SIXTY_FOURTH` with a named warning; negative/malformed values reject. | Re-emitted `timeUnit` is copied; zero snap writes canonical `SIXTY_FOURTH`. |
+| `soundObject/timeState` and inline `pixelSecond`, `snapEnabled`, `snapValue`, `timeDisplay`, `timeUnit` | PolyObject; root-project inline state is first moved by the project upgrader | Typed per-PolyObject TimeState. Accept nested form or the exact old inline fields, not both; inline history is normalized at PolyObject so standalone/library resources work too. | One nested `timeState` emitted; copy constructor clones this state. |
+| `soundObject/isRoot` | PolyObject | Strict boolean; true maps to typed `timeBehavior=NONE`, false keeps existing behavior. | `isRoot` omitted; current `timeBehavior` emitted. |
+| `soundObject/heightIndex` | PolyObject | Strict integer; absent version uses `max(value - 1, 0)`, exact version 2 uses the value directly. Applies to the old shared group/layer height representation. | `defaultHeightIndex` and per-layer indexes emitted. |
+| `soundObject[type=Instance]/soundObjectReference` | Instance target binding and BlueData copy traversal | Resolve against the accepted project library; rebinding changes only the target. Authored Instance `name` and `backgroundColor` stay independent of the referenced definition. | History/duplication copies target the corresponding copied library object and preserve the authored presentation values. |
+| `graphicInterface/uniqueNameManager` | BSBGraphicInterface | Only the observed empty helper with `defaultPrefix="bsbObj"` and integer `nameIndex >= -1`; named warning because current Java rebuilds the helper from widgets. | Omitted; widget XML and names remain authoritative. |
+| `TrackerObject/duration` | TrackerObject | Initial Java objective-duration scalar was independent from subjective duration; current Java removed the separate field. Retain it as an optional typed value and warn that current generation uses subjective duration. | Re-emitted as `duration`; copy preserves it. |
+| `TrackerObject/trackList/track/columns/track` | Track / Column | Java writes Column records with a `track` root; accept that exact root alongside TypeScript `column`, with the same strict Column member grammar. | TypeScript canonical output uses `column`. |
+| `TrackerObject/trackList/track/trackerNotes/trackerNote` cell count mismatch | Track / TrackerNote | Java preserves ordered note fields without requiring one cell for each declared column. Warn on mismatches, validate values only for cells with corresponding columns, and preserve all cells. | Exact ordered field sequence round-trips; no inferred or deleted cells. |
+| `BSBLineObject/separatorType` display aliases | BSBLineObject | Accept exact Java reader values `None`, `Comma`, and `Single Quote` beside enum names; warn only for unrelated compatibility fields under their own rules. | Existing typed output uses canonical `NONE`, `COMMA`, or `SINGLE_QUOTE`. |
+| `ObjectBuilder/syntaxType` | ObjectBuilder | Exact `Python` is redundant dormant metadata in both PYTHON and EXTERNAL mode; warn and omit while preserving code and mode. Other values reject. | Canonical `languageType`; `isExternal` remains authoritative when it supplied the mode. |
+| `blueData/@version` ending `_dev` | Project XML policy | Exact `_dev` prerelease suffix admitted beside existing numeric and `_beta` syntax. Other suffixes still reject. | Project writer emits its current numeric version. |
+
+These additions extend existing Project, TimeState, resource, and SoundObject owners; they do not
+add migration passes or arbitrary XML retention. Their Java behavior sources and license/provenance
+decisions are recorded in [research.md](research.md), with the project, resource, and SoundObject
+contracts in [project-evidence.md](project-evidence.md), [resource-evidence.md](resource-evidence.md),
+and [sound-library-evidence.md](sound-library-evidence.md). All focused XML is original synthetic
+MIT-scope test data; example files remain read-only.

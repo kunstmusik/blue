@@ -76,6 +76,95 @@ describe('TrackerObject', () => {
     expect(obj.getStepsPerBeat()).toBe(1); // Default for legacy
   });
 
+  it('retains retired objective duration separately from subjective duration', () => {
+    const xml = Element.parse(
+      '<soundObject type="blue.soundObject.TrackerObject"><duration>4.0</duration><subjectiveDuration>16.0</subjectiveDuration></soundObject>',
+    );
+    expect(() => TrackerObject.loadFromXML(xml)).toThrow(/report handler/i);
+
+    const warnings: string[] = [];
+    const object = TrackerObject.loadFromXML(xml, undefined, undefined, (diagnostics) => {
+      warnings.push(...diagnostics.map((diagnostic) => diagnostic.code));
+    });
+    expect(warnings).toEqual(['SL-TRACKER-OBJECTIVE-DURATION']);
+    expect(object.getHistoricalObjectiveDuration()).toBe(4);
+    expect(object.getSubjectiveDuration().toBeats(new TimeContext())).toBe(16);
+    expect(object.saveAsXML().getTextString('duration')).toBe('4.0');
+    const copy = object.deepCopy() as TrackerObject;
+    expect(copy.getHistoricalObjectiveDuration()).toBe(4);
+    expect(copy.saveAsXML().getTextString('duration')).toBe('4.0');
+
+    expect(() =>
+      TrackerObject.loadFromXML(
+        Element.parse(
+          '<soundObject type="blue.soundObject.TrackerObject"><duration>not-a-number</duration></soundObject>',
+        ),
+        undefined,
+        undefined,
+        () => {},
+      ),
+    ).toThrow();
+  });
+
+  it('accepts Java Column records named track inside a columns container', () => {
+    const xml = Element.parse(
+      '<soundObject type="blue.soundObject.TrackerObject"><trackList><steps>1</steps><track><columns><track><name>pitch</name><type>0</type></track></columns><trackerNotes><trackerNote><field val="8.00"/></trackerNote></trackerNotes></track></trackList></soundObject>',
+    );
+    const object = TrackerObject.loadFromXML(xml);
+    const saved = object.saveAsXML();
+    expect(
+      saved
+        .getElement('trackList')
+        ?.getElement('track')
+        ?.getElement('columns')
+        ?.getElement('column')
+        ?.getTextString('name'),
+    ).toBe('pitch');
+    expect(
+      saved
+        .getElement('trackList')
+        ?.getElement('track')
+        ?.getElement('columns')
+        ?.getElement('track'),
+    ).toBeNull();
+    expect(TrackerObject.loadFromXML(saved).saveAsXML().toXml()).toBe(saved.toXml());
+  });
+
+  it('warns and preserves tracker cells when their count differs from the columns', () => {
+    const xml = Element.parse(
+      '<soundObject type="blue.soundObject.TrackerObject"><trackList><steps>1</steps><track><columns><column><name>pitch</name><type>0</type></column></columns><trackerNotes><trackerNote><field val="8.00"/><field val="extra"/></trackerNote></trackerNotes></track></trackList></soundObject>',
+    );
+    const diagnostics: Array<{ code: string; severity: string }> = [];
+    const object = TrackerObject.loadFromXML(xml, undefined, undefined, (items) =>
+      diagnostics.push(...items),
+    );
+    const saved = object.saveAsXML();
+    const cells = () =>
+      saved
+        .getElement('trackList')!
+        .getElement('track')!
+        .getElement('trackerNotes')!
+        .getElement('trackerNote')!
+        .getElements('field')
+        .toArray()
+        .map((field) => field.getAttribute('val'));
+
+    expect(diagnostics).toMatchObject([
+      {
+        code: 'SL-TRACKER-CELL-COUNT',
+        severity: 'warning',
+        member: 'trackerNote',
+        value: '2/1',
+      },
+    ]);
+    expect(cells()).toEqual(['8.00', 'extra']);
+    expect(
+      TrackerObject.loadFromXML(saved, undefined, undefined, () => {})
+        .saveAsXML()
+        .toXml(),
+    ).toBe(saved.toXml());
+  });
+
   it('should load stepsPerBeat when present in XML', () => {
     const xml = `<soundObject type="blue.soundObject.TrackerObject">
       <name>Tracker</name>
