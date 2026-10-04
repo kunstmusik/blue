@@ -3237,7 +3237,10 @@ async function readProjectFromDisk(filePath: string): Promise<BlueData> {
 
 async function presentProjectXmlWarnings(diagnostics: readonly XmlDiagnostic[]): Promise<void> {
   const detail = formatProjectXmlDiagnostics(diagnostics);
-  if (process.env.BLUE_VERIFY_MODE === 'packaged-project') {
+  if (
+    process.env.BLUE_VERIFY_MODE === 'packaged-project' ||
+    process.env.BLUE_VERIFY_MODE === 'packaged-engine-mismatch'
+  ) {
     process.stderr.write(`[WARN] ${detail}\n`);
     return;
   }
@@ -3278,7 +3281,10 @@ async function reportProjectLoadError(filePath: string, err: unknown): Promise<v
         ? err.message
         : String(err);
   const message = `Failed to load ${path.basename(filePath)}:\n${detail}`;
-  if (process.env.BLUE_VERIFY_MODE === 'packaged-project') {
+  if (
+    process.env.BLUE_VERIFY_MODE === 'packaged-project' ||
+    process.env.BLUE_VERIFY_MODE === 'packaged-engine-mismatch'
+  ) {
     process.stderr.write(`[FAIL] ${message}\n`);
   } else {
     await dialog.showErrorBox('Error Loading File', message);
