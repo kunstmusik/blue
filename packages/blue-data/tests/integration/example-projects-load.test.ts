@@ -20,29 +20,24 @@ describe.each(exampleDirectories)('Example projects: %s', (directory) => {
     expect(files.length).toBeGreaterThan(0);
   });
 
-  // Large real-world projects can exceed Vitest's 30s default under CI load.
-  it.each(files)(
-    'loads and canonically reopens %s without changing its source',
-    (file) => {
-      const nativePath = path.join(root, file);
-      const original = fs.readFileSync(nativePath);
-      const source = { kind: 'project' as const, label: path.join(directory, file), nativePath };
-      const result = readProjectXml(original.toString('utf8'), source);
+  it.each(files)('loads and canonically reopens %s without changing its source', (file) => {
+    const nativePath = path.join(root, file);
+    const original = fs.readFileSync(nativePath);
+    const source = { kind: 'project' as const, label: path.join(directory, file), nativePath };
+    const result = readProjectXml(original.toString('utf8'), source);
 
-      expect(fs.readFileSync(nativePath)).toEqual(original);
-      expect(result.ok, JSON.stringify(result.diagnostics, null, 2)).toBe(true);
-      if (!result.ok) return;
+    expect(fs.readFileSync(nativePath).equals(original)).toBe(true);
+    expect(result.ok, JSON.stringify(result.diagnostics, null, 2)).toBe(true);
+    if (!result.ok) return;
 
-      const canonical = result.value.saveToString();
-      const historyCopyXml = result.value.historyCopy().saveToString();
-      expect(historyCopyXml).toBe(canonical);
-      const reopened = readProjectXml(canonical, source);
-      expect(reopened.ok, JSON.stringify(reopened.diagnostics, null, 2)).toBe(true);
-      if (!reopened.ok) return;
+    const canonical = result.value.saveToString();
+    const historyCopyXml = result.value.historyCopy().saveToString();
+    expect(historyCopyXml).toBe(canonical);
+    const reopened = readProjectXml(canonical, source);
+    expect(reopened.ok, JSON.stringify(reopened.diagnostics, null, 2)).toBe(true);
+    if (!reopened.ok) return;
 
-      expect(reopened.value.saveToString()).toBe(canonical);
-      expect(fs.readFileSync(nativePath)).toEqual(original);
-    },
-    120_000,
-  );
+    expect(reopened.value.saveToString()).toBe(canonical);
+    expect(fs.readFileSync(nativePath).equals(original)).toBe(true);
+  });
 });
