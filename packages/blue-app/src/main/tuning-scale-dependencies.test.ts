@@ -66,9 +66,10 @@ describe('host tuning dependencies', () => {
     (source.getScore()[0] as PolyObject).addSoundObject(0, nested);
     const before = source.saveToString();
     const paths: string[] = [];
+    const scaleDirectory = path.join(os.tmpdir(), 'blue-native-scl');
 
     const prepared = prepareProjectTuningDependencies(source, {
-      scaleDirectory: '/native/scales',
+      scaleDirectory,
       readFile: (filename) => {
         paths.push(filename);
         return scala;
@@ -76,7 +77,7 @@ describe('host tuning dependencies', () => {
     });
 
     expect(prepared).not.toBe(source);
-    expect(paths).toEqual(['/native/scales/original.scl']);
+    expect(paths).toEqual([path.join(scaleDirectory, 'original.scl')]);
     const resolved = (prepared.getScore()[0] as PolyObject)[0]![0]!
       .getNoteProcessorChain()
       .getProcessors()[0] as TuningProcessor;
