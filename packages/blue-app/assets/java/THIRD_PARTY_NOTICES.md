@@ -8,7 +8,7 @@ Blue-owned Java source is EPL-2.0. The shaded JAR includes separately licensed l
 | Pomegranate, dynapath                                                                           | 1.1.0, 1.0.0                                   | EPL-1.0                                        |
 | JeroMQ                                                                                          | 0.6.0                                          | MPL-2.0                                        |
 | jnacl                                                                                           | 1.0.0; Copyright (c) 2011 Neil Alexander T.    | BSD-2-Clause                                   |
-| Jackson databind, core, annotations                                                             | 2.21.5, 2.21.5, 2.21                           | Apache-2.0                                     |
+| Jackson databind, core, annotations                                                             | 2.21.7, 2.21.7, 2.21                           | Apache-2.0                                     |
 | Maven Resolver provider, Maven model/model-builder/artifact/builder-support/repository-metadata | 3.5.3                                          | Apache-2.0                                     |
 | Maven Resolver API/SPI/util/impl; file/http/wagon transports; basic connector                   | 1.1.1; 1.0.3                                   | Apache-2.0                                     |
 | Maven Wagon provider/http/http-shared                                                           | 3.0.0                                          | Apache-2.0                                     |
