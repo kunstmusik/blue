@@ -3,6 +3,9 @@ import { NoteList } from './note-list';
 import { TimeContext } from '../time/time-context';
 import { CompileData } from '../compile-data';
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
+import { checkShape, readText } from '../utilities/xml';
+import { BASIC_SOUND_OBJECT_CHILDREN } from './sound-object-utilities';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
 import { initBasicFromXML, getBasicXML } from './sound-object-utilities';
@@ -161,20 +164,39 @@ export class External extends AbstractSoundObject {
     return elem;
   }
 
-  static loadFromXML(data: Element, _objRefMap?: ObjRefLoadMap): External {
-    const obj = new External();
-    initBasicFromXML(obj, data);
-
-    const text = data.getTextString('text');
-    if (text !== null) obj._text = text;
-
-    const cmd = data.getTextString('commandLine');
-    if (cmd !== null) obj._commandLine = cmd;
-
-    const syntax = data.getTextString('syntaxType');
-    if (syntax !== null) obj._syntaxType = syntax;
-
-    return obj;
+  static loadFromXML(
+    data: Element,
+    _objRefMap?: ObjRefLoadMap,
+    providedContext?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): External {
+    const context = providedContext ?? new XmlLoadContext(data);
+    if (
+      data.getName() !== 'soundObject' ||
+      !['External', 'blue.soundObject.External'].includes(data.getAttribute('type') ?? '')
+    )
+      throw context.at(data).error({
+        code: 'type',
+        member: '@type',
+        value: data.getAttribute('type') ?? '',
+        message: 'Unsupported External root/type.',
+        recovery: 'Supply the declared concrete SoundObject root and type.',
+      });
+    checkShape(
+      data,
+      ['type'],
+      [...BASIC_SOUND_OBJECT_CHILDREN, ...['text', 'commandLine', 'syntaxType']],
+      context,
+    );
+    const object = new External();
+    initBasicFromXML(object, data, context);
+    const text = data.getElement('text');
+    if (text) object._text = readText(text, context);
+    const commandLine = data.getElement('commandLine');
+    if (commandLine) object._commandLine = readText(commandLine, context);
+    const syntaxType = data.getElement('syntaxType');
+    if (syntaxType) object._syntaxType = readText(syntaxType, context);
+    return providedContext ? object : requireXmlValue(context.result(object), sink);
   }
 
   override deepCopy(): SoundObject {

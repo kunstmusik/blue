@@ -4,6 +4,8 @@
  */
 import { Instrument } from './instrument';
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext } from '../serialization/xml-load';
+import { checkRoot, checkShape, parseXmlBoolean } from '../utilities/xml';
 import { loadInstrumentFromXML } from './instrument-registry';
 import type { CopyMode } from '../deep-copyable';
 
@@ -40,18 +42,37 @@ export class InstrumentAssignment {
     return elem;
   }
 
-  static loadFromXML(data: Element): InstrumentAssignment {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): InstrumentAssignment {
+    checkRoot(data, 'instrumentAssignment', context);
+    checkShape(data, ['arrangementId', 'id', 'isEnabled', 'enabled'], ['instrument'], context);
+    for (const [current, legacy] of [
+      ['arrangementId', 'id'],
+      ['isEnabled', 'enabled'],
+    ])
+      if (data.hasAttribute(current) && data.hasAttribute(legacy))
+        throw context.at(data).error({
+          code: 'conflict',
+          member: `@${legacy}`,
+          message: 'Assignment attribute aliases coexist.',
+          recovery: 'Keep only the canonical assignment attribute.',
+        });
     const ia = new InstrumentAssignment();
     ia.arrangementId = data.getAttribute('arrangementId') ?? data.getAttribute('id') ?? '0';
-    ia.enabled = (data.getAttribute('isEnabled') ?? data.getAttribute('enabled')) !== 'false';
+    ia.enabled = parseXmlBoolean(
+      data.getAttribute('isEnabled') ?? data.getAttribute('enabled') ?? 'true',
+      context.at(data),
+      '@isEnabled',
+    );
 
     const instrElem = data.getElement('instrument');
-    if (instrElem) {
-      const instr = loadInstrumentFromXML(instrElem);
-      if (instr) {
-        ia.instr = instr;
-      }
-    }
+    if (!instrElem)
+      throw context.at(data).error({
+        code: 'cardinality',
+        member: 'instrument',
+        message: 'Assignment requires one resolved instrument.',
+        recovery: 'Embed the assigned instrument or load its historical project library.',
+      });
+    ia.instr = loadInstrumentFromXML(instrElem, context);
     return ia;
   }
 }

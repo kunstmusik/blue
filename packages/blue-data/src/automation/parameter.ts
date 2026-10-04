@@ -6,6 +6,9 @@
  * `Line.getValue(double)` bit-for-bit, including early returns, duplicate-time
  * selection, the descending bias, and exact positive-resolution quantization.
  */
+import { XmlLoadContext } from '../serialization/xml-load';
+import { checkRoot, checkShape, parseXmlBoolean, parseXmlNumber } from '../utilities/xml';
+import { readLineXml, readResolutionXml } from './line-xml';
 import { Element } from '../serialization/xml-reader';
 import { BlueDataObject } from '../blue-data-object';
 import type { CopyMode } from '../deep-copyable';
@@ -512,120 +515,118 @@ export class Parameter implements BlueDataObject {
     return elem;
   }
 
-  static loadFromXML(data: Element): Parameter {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): Parameter {
+    checkShape(
+      data,
+      [
+        'uniqueId',
+        'name',
+        'label',
+        'min',
+        'max',
+        'resolution',
+        'bdresolution',
+        'curve',
+        'automationEnabled',
+        'enabled',
+        'value',
+      ],
+      ['line', 'points'],
+      context,
+    );
+    checkRoot(data, 'parameter', context);
+    const at = context.at(data);
+    const fail = (member: string, message: string): never => {
+      throw at.error({
+        code: 'value',
+        member,
+        message,
+        recovery: 'Supply valid, unambiguous automation data.',
+      });
+    };
     const param = new Parameter();
     const uid = data.getAttribute('uniqueId');
-    if (uid) param._uniqueId = uid;
+    if (uid !== null) {
+      if (!uid.trim()) fail('@uniqueId', 'Parameter identity must not be empty.');
+      param._uniqueId = uid;
+    }
     param._name = data.getAttribute('name') ?? '';
     param._label = data.getAttribute('label') ?? '';
-
+    param._minimum = parseXmlNumber(data.getAttribute('min') ?? '0', at, '@min');
+    param._maximum = parseXmlNumber(data.getAttribute('max') ?? '1', at, '@max');
+    if (param._minimum > param._maximum) fail('@min', 'Parameter minimum exceeds maximum.');
+    const resolution = parseJavaDecimal(readResolutionXml(data, context));
+    if (!resolution.ok) fail('@bdresolution', resolution.message);
+    else param._resolution = resolution.value;
+    const currentEnabled = data.getAttribute('automationEnabled');
+    const oldEnabled = data.getAttribute('enabled');
+    const enabled =
+      currentEnabled === null ? null : parseXmlBoolean(currentEnabled, at, '@automationEnabled');
+    const old = oldEnabled === null ? null : parseXmlBoolean(oldEnabled, at, '@enabled');
+    if (enabled !== null && old !== null && enabled !== old)
+      fail('@enabled', 'Conflicting automation-enabled aliases.');
+    param._enabled = enabled ?? old ?? false;
     const curve = data.getAttribute('curve');
-    if (curve && Object.values(AutomationCurve).includes(curve as AutomationCurve)) {
+    if (curve !== null) {
+      if (!Object.values(AutomationCurve).includes(curve as AutomationCurve))
+        fail('@curve', 'Unsupported automation curve.');
       param._curve = curve as AutomationCurve;
     }
-
-    const min = data.getAttribute('min');
-    if (min) param._minimum = parseFloat(min);
-
-    const max = data.getAttribute('max');
-    if (max) param._maximum = parseFloat(max);
-
-    // Java load precedence: the legacy double attribute normalizes through
-    // new BigDecimal(double).setScale(5, HALF_UP).stripTrailingZeros(), then
-    // bdresolution overrides it exactly. Malformed decimals fail the load
-    // without installing a partially parsed resolution.
-    const legacyResolution = data.getAttribute('resolution');
-    if (legacyResolution) {
-      const normalized = normalizeLegacyResolution(parseFloat(legacyResolution));
-      if (normalized.ok) {
-        param._resolution = normalized.value;
-      } else {
-        throw new ParameterResolutionError(normalized.code, normalized.message);
-      }
-    }
-
-    const bdResolution = data.getAttribute('bdresolution');
-    if (bdResolution) {
-      const parsed = parseJavaDecimal(bdResolution);
-      if (!parsed.ok) {
-        throw new ParameterResolutionError(parsed.code, parsed.message);
-      }
-      param._resolution = parsed.value;
-    }
-
-    const automationEnabled = data.getAttribute('automationEnabled');
-    if (automationEnabled !== null) {
-      param._enabled = automationEnabled === 'true';
-    } else {
-      param._enabled = data.getAttribute('enabled') === 'true';
-    }
-
     const fixedValue = data.getAttribute('value');
-    if (fixedValue !== null) {
-      param._fixedValue = parseFloat(fixedValue);
-    }
-
-    // compatibility-only legacy children: read and ignored (no behavior,
-    // not saved, not copied)
-    data.getTextString('resolutionScale');
-    data.getTextString('highPrecision');
-
+    if (fixedValue !== null) param._fixedValue = parseXmlNumber(fixedValue, at, '@value');
     const lineNode = data.getElement('line');
-    if (lineNode) {
-      const lineColor = lineNode.getAttribute('color');
-      if (lineColor !== null && lineColor !== undefined) {
-        param._lineColor = parseInt(lineColor, 10);
-      }
-
-      const curveType = lineNode.getAttribute('curveType');
-      if (curveType === 'CONSTANT') {
-        param._curve = AutomationCurve.STEP;
-      } else if (curveType === 'LINEAR') {
-        param._curve = AutomationCurve.LINEAR;
-      } else if (curveType === 'EXPONENTIAL') {
-        param._curve = AutomationCurve.EXPONENTIAL;
-      }
-
-      const linePoints = lineNode.getElements('linePoint');
-      while (linePoints.hasMoreElements()) {
-        const pt = linePoints.next();
-        param._points.push({
-          time: parseFloat(pt.getAttribute('x') ?? '0'),
-          value: parseFloat(pt.getAttribute('y') ?? '0'),
-        });
-      }
-    }
-
     const pointsNode = data.getElement('points');
-    if (pointsNode) {
-      const pts = pointsNode.getElements('point');
-      while (pts.hasMoreElements()) {
-        const pt = pts.next();
-        param._points.push({
-          time: parseFloat(pt.getAttribute('time') ?? '0'),
-          value: parseFloat(pt.getAttribute('value') ?? '0'),
-        });
-      }
-    }
-
-    param._points.sort((a, b) => a.time - b.time);
-
-    // Java Parameter.loadFromXML synchronizes the parameter-owned resolution
-    // to the nested line (reference-unequal by construction), which snaps
-    // every point against the line bounds exactly as Line.setResolution does
+    if (lineNode && pointsNode) fail('points', 'Current and historical point containers coexist.');
     if (lineNode) {
-      const lineMinimum = parseFloat(lineNode.getAttribute('min') ?? '0');
-      const lineMaximum = parseFloat(lineNode.getAttribute('max') ?? '1');
-      param._points = param._points.map((point) => ({
-        ...point,
-        value: snapToResolutionJava(point.value, lineMinimum, lineMaximum, param._resolution),
+      const line = readLineXml(lineNode, context, ['curveType']);
+      const oldCurve = lineNode.getAttribute('curveType');
+      if (oldCurve !== null) {
+        const mapped = {
+          CONSTANT: AutomationCurve.STEP,
+          LINEAR: AutomationCurve.LINEAR,
+          EXPONENTIAL: AutomationCurve.EXPONENTIAL,
+        }[oldCurve];
+        if (!mapped) fail('curveType', 'Unsupported historical automation curve.');
+        else {
+          if (curve !== null && mapped !== param._curve)
+            fail('curveType', 'Conflicting curve aliases.');
+          param._curve = mapped;
+        }
+      }
+      param._lineColor = line.color;
+      param._points = line.points.map((point) => ({
+        time: point.x,
+        value: snapToResolutionJava(point.y, line.min!, line.max!, param._resolution),
       }));
     }
-
-    if (fixedValue === null && param._points.length > 0) {
-      param._fixedValue = param._points[0].value;
+    if (pointsNode) {
+      checkShape(pointsNode, [], ['point'], context, ['point']);
+      param._points = pointsNode
+        .getElements('point')
+        .toArray()
+        .map((point) => {
+          checkShape(point, ['time', 'value'], [], context);
+          const time = point.getAttribute('time');
+          const value = point.getAttribute('value');
+          if (time === null || value === null)
+            throw context.at(point).error({
+              code: 'cardinality',
+              message: 'Point requires time and value.',
+              recovery: 'Supply both finite coordinates.',
+            });
+          return {
+            time: parseXmlNumber(time, context.at(point), '@time'),
+            value: parseXmlNumber(value, context.at(point), '@value'),
+          };
+        });
     }
-
+    for (let i = 0; i < param._points.length; i++) {
+      if (i > 0 && param._points[i].time < param._points[i - 1].time)
+        fail('points', 'Automation points must retain ascending time order.');
+      if (!Number.isFinite(param._points[i].value))
+        fail('points', 'Resolution synchronization produced a nonfinite point.');
+    }
+    if (fixedValue === null && param._points.length) param._fixedValue = param._points[0].value;
     return param;
   }
 

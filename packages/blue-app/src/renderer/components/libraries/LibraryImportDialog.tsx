@@ -1,3 +1,4 @@
+import { formatXmlDiagnostics } from '../../../shared/xml-diagnostics';
 import { useState } from 'react';
 import type { ManualLibraryImportPreview } from '../../../shared/unified-library';
 import { AppSelect } from '../AppSelect';
@@ -44,10 +45,17 @@ export function LibraryImportDialog({
               <p className="font-medium">{source.sourcePath.split(/[/\\]/u).at(-1)}</p>
               {source.error ? (
                 <p role="alert" className="text-red-400">
-                  {source.error}
+                  {source.diagnostics?.length
+                    ? formatXmlDiagnostics(source.diagnostics)
+                    : source.error}
                 </p>
               ) : (
                 <p className="text-app-text-muted">
+                  {source.diagnostics?.length ? (
+                    <span className="block whitespace-pre-wrap">
+                      {formatXmlDiagnostics(source.diagnostics)}
+                    </span>
+                  ) : null}
                   {source.itemCount} items, {source.folderCount} folders, {source.unsupportedCount}{' '}
                   unsupported; {source.exactDuplicateCount} exact duplicate
                   {source.exactDuplicateCount === 1 ? '' : 's'}, {source.aliasConflictCount} alias

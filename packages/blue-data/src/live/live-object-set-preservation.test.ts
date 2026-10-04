@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { BlueData } from '../blue-data';
+import { LiveData } from '../live-data';
 import { LiveObject } from './live-object';
 import { LiveObjectBins } from './live-object-bins';
 import { LiveObjectSet } from './live-object-set';
@@ -33,7 +34,15 @@ describe('LiveObjectSet legacy preservation', () => {
     set.setLiveObjectIds(['keep-1', 'gone-missing', 'keep-2']);
 
     const xml = set.saveAsXML();
-    const roundTripped = LiveObjectSet.loadFromXML(xml, createBinsWithObjects());
+    const diagnostics: string[] = [];
+    expect(() => LiveObjectSet.loadFromXML(xml, createBinsWithObjects())).toThrow('report handler');
+    const roundTripped = LiveObjectSet.loadFromXML(
+      xml,
+      createBinsWithObjects(),
+      undefined,
+      (report) => diagnostics.push(...report.map((item) => item.code)),
+    );
+    expect(diagnostics).toEqual(['P-LIVE-UNRESOLVED-REF']);
 
     // All three IDs are retained, including the missing one.
     expect(roundTripped.getLiveObjectIds()).toEqual(['keep-1', 'gone-missing', 'keep-2']);
@@ -97,7 +106,11 @@ describe('LiveData legacy XML round-trip', () => {
         path.resolve(__dirname, '../../../../examples/features/blueLiveMidi.blue'),
         'utf8',
       );
-      const data = BlueData.loadFromString(fixtureXml);
+      expect(() => BlueData.loadFromString(fixtureXml)).toThrow(/csladspaSettings/);
+      // The complete historical example contains unsupported host settings.
+      // Exercise its supported LiveData resource without accepting the project.
+      const data = new BlueData();
+      data.setLiveData(LiveData.loadFromXML(Element.parse(fixtureXml).getElement('liveData')!));
       const liveData = data.getLiveData();
       const target = liveData.getLiveObjectBins().getLiveObject(0, 0);
 

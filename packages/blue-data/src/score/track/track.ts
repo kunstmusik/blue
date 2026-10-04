@@ -18,10 +18,22 @@ import {
   DEFAULT_LAYER_COLOR,
   isValidLayerColorInput,
   normalizeLayerColor,
-  normalizeXmlLayerColor,
 } from '../layers/layer-color';
 import { NoteProcessorChain } from '../../note-processors/note-processor-chain';
 import { TimeContext } from '../../time/time-context';
+import {
+  XmlLoadContext,
+  requireXmlValue,
+  type XmlDiagnosticSink,
+} from '../../serialization/xml-load';
+import {
+  checkRoot,
+  checkShape,
+  parseXmlBoolean,
+  parseXmlInteger,
+  readInt,
+  readText,
+} from '../../utilities/xml';
 import { Element } from '../../serialization/xml-reader';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../../serialization/obj-ref-map';
 import { getTrackPlacementForSoundObject } from '../../sound-objects/sound-object-registry';
@@ -100,8 +112,6 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
   private _automationParameters = new ParameterIdList();
   private _npc = new NoteProcessorChain();
   private _instrument: Instrument | null = null;
-  private _unknownAttributes = new Map<string, string>();
-  private _unknownChildren: Element[] = [];
 
   constructor(other?: Track | number, mode: CopyMode = 'duplication') {
     super(typeof other === 'number' ? other : 0);
@@ -123,8 +133,6 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
               other._instrument,
               this._instrument,
             );
-      this._unknownAttributes = new Map(other._unknownAttributes);
-      this._unknownChildren = other._unknownChildren.map((child) => child.clone());
       for (const item of other) {
         this.push(item instanceof AudioClip ? AudioClip.copyFrom(item) : item.deepCopy(mode));
       }
@@ -148,7 +156,6 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
       const parsed = parseCustomHeight(customHeight);
       if (parsed !== null) {
         this._customHeight = parsed;
-        this._unknownAttributes.delete('customHeight');
         return;
       }
     }
@@ -162,7 +169,6 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
     const { heightIndex, customHeight } = resolveExplicitHeight(parsed, 'track');
     this._heightIndex = heightIndex;
     this._customHeight = customHeight;
-    this._unknownAttributes.delete('customHeight');
     return true;
   }
   getBackgroundColor(): number {
@@ -181,7 +187,6 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
     const newEffective = resolveEffectiveHeight(clamped);
     if (oldEffective !== newEffective) {
       this._customHeight = undefined;
-      this._unknownAttributes.delete('customHeight');
     }
   }
   getUniqueId(): string {
@@ -204,10 +209,6 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
   }
   getAutomationParameters(): ParameterIdList {
     return this._automationParameters;
-  }
-  /** Spec 111: unknown preserved data makes conservative certification refuse. */
-  hasUnknownContent(): boolean {
-    return this._unknownAttributes.size > 0 || this._unknownChildren.length > 0;
   }
 
   getNoteProcessorChain(): NoteProcessorChain {
@@ -402,7 +403,6 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
 
   saveAsXML(objRefMap?: ObjRefSaveMap): Element {
     const root = new Element('track');
-    for (const [name, value] of this._unknownAttributes) root.setAttribute(name, value);
     root.setAttribute('name', this._name);
     root.setAttribute('muted', String(this._muted));
     root.setAttribute('solo', String(this._solo));
@@ -421,103 +421,128 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
     for (const item of this) root.addElement(item.saveAsXML(objRefMap));
     for (const id of this._automationParameters.getIds())
       root.addElement('parameterId').setText(id);
-    for (const child of this._unknownChildren) root.addElement(child.clone());
     return root;
   }
 
-  static loadFromXML(data: Element, objRefMap?: ObjRefLoadMap): Track {
+  static loadFromXML(
+    data: Element,
+    objRefMap?: ObjRefLoadMap,
+    providedContext?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): Track {
+    const context = providedContext ?? new XmlLoadContext(data);
+    checkRoot(data, 'track', context);
+    checkShape(
+      data,
+      [
+        'name',
+        'muted',
+        'solo',
+        'heightIndex',
+        'customHeight',
+        'uniqueId',
+        'automationSelectedIndex',
+      ],
+      [
+        'backgroundColor',
+        'noteProcessorChain',
+        'instrument',
+        'audioClip',
+        'soundObject',
+        'parameterId',
+      ],
+      context,
+      ['audioClip', 'soundObject', 'parameterId'],
+    );
     const track = new Track();
-    track._name = data.getAttributeValue('name') ?? '';
-    track._muted = data.getAttributeValue('muted') === 'true';
-    track._solo = data.getAttributeValue('solo') === 'true';
-    const id = data.getAttributeValue('uniqueId');
-    if (id) track._uniqueId = id;
-    const height = Number.parseInt(data.getAttributeValue('heightIndex') ?? '0', 10);
-    if (Number.isFinite(height)) track.setHeightIndex(height);
-    const rawCustomHeight = data.getAttributeValue('customHeight');
-    const parsedCustomHeight = parseCustomHeight(rawCustomHeight);
-    if (parsedCustomHeight !== null) {
-      track._customHeight = parsedCustomHeight;
+    track._name = data.getAttribute('name') ?? '';
+    const id = data.getAttribute('uniqueId');
+    if (id !== null) {
+      if (!id.trim())
+        throw context.at(data).error({
+          code: 'value',
+          member: '@uniqueId',
+          value: id,
+          message: 'Track identity must be nonempty.',
+          recovery: 'Supply a unique track identity.',
+        });
+      track._uniqueId = id;
     }
-    const selected = Number.parseInt(data.getAttributeValue('automationSelectedIndex') ?? '0', 10);
-    const knownAttributes = new Set([
-      'name',
-      'muted',
-      'solo',
-      'heightIndex',
-      'uniqueId',
-      'automationSelectedIndex',
-    ]);
-    if (parsedCustomHeight !== null) {
-      knownAttributes.add('customHeight');
+    for (const field of ['muted', 'solo'] as const) {
+      const raw = data.getAttribute(field);
+      if (raw !== null)
+        track[field === 'muted' ? '_muted' : '_solo'] = parseXmlBoolean(
+          raw,
+          context.at(data),
+          '@' + field,
+        );
     }
-    for (const name of data.getAttributeNames()) {
-      if (!knownAttributes.has(name)) {
-        track._unknownAttributes.set(name, data.getAttributeValue(name) ?? '');
-      }
-    }
-
-    const children = data.getElements();
-    while (children.hasMoreElements()) {
-      const child = children.next();
+    const height = data.getAttribute('heightIndex');
+    if (height !== null)
+      track.setHeightIndex(
+        parseXmlInteger(height, context.at(data), 0, 2147483647, '@heightIndex'),
+      );
+    const custom = data.getAttribute('customHeight');
+    if (custom !== null)
+      track._customHeight = parseXmlInteger(custom, context.at(data), 22, 660, '@customHeight');
+    for (const child of data.getElements()) {
       switch (child.getName()) {
-        case 'backgroundColor': {
-          track._backgroundColor = normalizeXmlLayerColor(child.getTextString());
+        case 'backgroundColor':
+          track._backgroundColor = readInt(child, context, -2147483648, 2147483647);
           break;
-        }
         case 'noteProcessorChain':
-          track._npc = NoteProcessorChain.loadFromXML(child);
+          track._npc = NoteProcessorChain.loadFromXML(child, context);
           break;
-        case 'instrument': {
-          if (track._instrument) {
-            console.warn(
-              `Track '${track._uniqueId}' contains multiple instruments; retaining the first`,
-            );
-            break;
-          }
-          track._instrument = loadInstrumentFromXML(child);
+        case 'instrument':
+          track._instrument = loadInstrumentFromXML(child, context);
           break;
-        }
         case 'audioClip':
-          track.push(AudioClip.loadFromXML(child));
+          track.push(AudioClip.loadFromXML(child, context));
           break;
         case 'soundObject': {
-          const soundObject = loadSoundObject(child, objRefMap);
-          if (soundObject && track.accepts(soundObject)) {
-            track.push(soundObject);
-          } else {
-            track._unknownChildren.push(child.clone());
-          }
+          const object = loadSoundObjectFromXML(child, objRefMap, context);
+          if (!track.accepts(object))
+            throw context.at(child).error({
+              code: 'type',
+              member: '@type',
+              value: child.getAttribute('type') ?? '',
+              message: 'SoundObject cannot be placed in a Track.',
+              recovery: 'Place it in a compatible layer.',
+            });
+          track.push(object);
           break;
         }
-        case 'parameterId':
-          track._automationParameters.addParameterId(child.getTextString());
+        case 'parameterId': {
+          const id = readText(child, context);
+          if (!id.trim() || track._automationParameters.getIds().includes(id))
+            throw context.at(child).error({
+              code: 'reference',
+              value: id,
+              message: 'Automation IDs must be nonempty and unique.',
+              recovery: 'Supply distinct parameter IDs.',
+            });
+          track._automationParameters.addParameterId(id);
           break;
-        default:
-          track._unknownChildren.push(child.clone());
-          break;
+        }
       }
     }
-    if (Number.isFinite(selected)) track._automationParameters.setSelectedIndex(selected);
-    return track;
+    const selected = data.getAttribute('automationSelectedIndex');
+    if (selected !== null)
+      track._automationParameters.setSelectedIndex(
+        parseXmlInteger(
+          selected,
+          context.at(data),
+          -1,
+          Number.MAX_SAFE_INTEGER,
+          '@automationSelectedIndex',
+        ),
+      );
+    return providedContext ? track : requireXmlValue(context.result(track), sink);
   }
 }
 
 function isSoundObject(value: ScoreObject): value is SoundObject {
   return typeof (value as unknown as { generateForCSD?: unknown }).generateForCSD === 'function';
-}
-
-function loadSoundObject(data: Element, objRefMap?: ObjRefLoadMap): SoundObject | null {
-  // Static registration is intentionally kept in the package entrypoint, so
-  // this file remains free of a dynamic import cycle.
-  const type = data.getAttribute('type');
-  if (!type) return null;
-  const registry = getSoundObjectLoader();
-  return registry(data, objRefMap);
-}
-
-function getSoundObjectLoader(): (data: Element, objRefMap?: ObjRefLoadMap) => SoundObject | null {
-  return loadSoundObjectFromXML;
 }
 
 function getTrackInstrumentId(compileData: CompileData, trackId: string): string | undefined {

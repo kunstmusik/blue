@@ -1,3 +1,4 @@
+import { XmlLoadContext } from '../../serialization/xml-load';
 /**
  * BSBSubChannelDropdown — subchannel selection dropdown.
  * Extends BSBObject directly (not automatable).
@@ -20,8 +21,8 @@ export class BSBSubChannelDropdown extends BSBWidget {
     unit.addReplacementValue(this.objectName, this.channelOutput);
   }
 
-  loadFromXML(data: Element): void {
-    this.loadFromXMLCommon(data);
+  loadFromXML(data: Element, context = new XmlLoadContext(data)): void {
+    this.loadFromXMLCommon(data, context);
     const co = data.getTextString('channelOutput');
     if (co) this.channelOutput = co;
   }

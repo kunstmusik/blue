@@ -303,9 +303,10 @@ describe('Migration', () => {
     <sampleRate>44100</sampleRate>
   </projectProperties>
   <tempo>
-    <bpm>120</bpm>
+    <enabled>true</enabled>
+    <line version="2" min="30" max="240"><linePoint x="0" y="120"/></line>
   </tempo>
-  <soundObject>
+  <soundObject type="blue.soundObject.PolyObject">
     <soundLayer name="Layer 1">
     </soundLayer>
   </soundObject>

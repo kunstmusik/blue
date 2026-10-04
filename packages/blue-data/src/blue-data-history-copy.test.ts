@@ -8,7 +8,7 @@ import {
   createRepresentativeBlueX7Project,
   createRepresentativePianoRollProject,
   createRepresentativeFreezeProject,
-  createRepresentativeUnknownDataProject,
+  createRepresentativePluginDataProject,
   resolveRepoRoot,
   loadHistoryFixtureFile,
   type HistoryFixtureKind,
@@ -35,7 +35,7 @@ describe('java-parity-fixtures history fixture entry points', () => {
     'blueX7',
     'pianoRoll',
     'freeze',
-    'unknownData',
+    'pluginData',
   ];
 
   it('resolves repo root and can load smoke-test.blue fixture', () => {
@@ -116,22 +116,17 @@ describe('java-parity-fixtures history fixture entry points', () => {
     expect(fso.getFrozenSoundObject()).not.toBeNull();
   });
 
-  it('validates representative unknown data fixture preservation', () => {
-    const data = createRepresentativeUnknownDataProject();
-    expect(data.getPluginDataXml().length).toBe(1);
-    expect(data.getPluginDataXml()[0].getName()).toBe('legacyPlugin');
-
+  it('validates representative named plugin fixture preservation', () => {
+    const data = createRepresentativePluginDataProject();
+    expect(data.getPluginDataXml()).toHaveLength(1);
+    expect(data.getPluginDataXml()[0].getAttribute('bdoType')).toBe(
+      'blue.clojure.project.ClojureProjectData',
+    );
     const xml = data.saveToString();
-    expect(xml).toContain('<legacyPlugin id="custom-plugin-123">');
-    expect(xml).toContain('customAuthoredAttr="testValue"');
-    expect(xml).toContain('<customElement>unknownText</customElement>');
-
-    const reloaded = BlueData.loadFromString(xml);
-    expect(reloaded.getPluginDataXml().length).toBe(1);
-    const root = reloaded.getScore()[0] as PolyObject;
-    const layer = root[0];
-    expect(layer?.getUnknownAttributes().get('customAuthoredAttr')).toBe('testValue');
-    expect(layer?.getUnknownChildren().length).toBe(1);
+    expect(BlueData.loadFromString(xml).saveToString()).toBe(xml);
+    expect(
+      data.historyCopy().getClojureProjectData()!.getLibraryEntries()[0].getDependencyCoordinates(),
+    ).toBe('original/history-fixture');
   });
 
   describe('historyCopy mode vs duplication deepCopy', () => {
@@ -464,16 +459,14 @@ describe('java-parity-fixtures history fixture entry points', () => {
   });
 });
 
-it('copies SMPTE mode and independently owns unknown TimeState XML', () => {
+it('copies supported SMPTE mode independently', () => {
   const data = BlueData.loadFromString(
-    '<blueData><score><timeState future="yes"><smpteFrameRate>59.94</smpteFrameRate><smpteDropFrame>true</smpteDropFrame><future value="opaque"/></timeState></score></blueData>',
+    '<blueData><score><timeState version="2"><smpteFrameRate>59.94</smpteFrameRate><smpteDropFrame>true</smpteDropFrame></timeState></score></blueData>',
   );
   const copy = data.historyCopy();
   data.getScore().getTimeState().setSmpteDropFrame(false);
   expect(copy.getScore().getTimeState().isSmpteDropFrame()).toBe(true);
   const exported = copy.getScore().getTimeState().saveAsXML();
-  exported.getElement('future')!.setAttribute('value', 'changed');
-  expect(
-    copy.getScore().getTimeState().saveAsXML().getElement('future')!.getAttribute('value'),
-  ).toBe('opaque');
+  exported.getElement('smpteFrameRate')!.setText('30');
+  expect(copy.getScore().getTimeState().getSmpteFrameRate()).toBe(59.94);
 });

@@ -63,12 +63,12 @@ describe('TrackerObject', () => {
   });
 
   it('should support legacy XML loading defaults for stepsPerBeat', () => {
-    const xml = `<blue.soundObject.TrackerObject>
+    const xml = `<soundObject type="blue.soundObject.TrackerObject">
       <name>Tracker</name>
       <trackList>
         <steps>64</steps>
       </trackList>
-    </blue.soundObject.TrackerObject>`;
+    </soundObject>`;
 
     const doc = Element.parse(xml);
     const obj = TrackerObject.loadFromXML(doc);
@@ -77,13 +77,13 @@ describe('TrackerObject', () => {
   });
 
   it('should load stepsPerBeat when present in XML', () => {
-    const xml = `<blue.soundObject.TrackerObject>
+    const xml = `<soundObject type="blue.soundObject.TrackerObject">
       <name>Tracker</name>
       <stepsPerBeat>2</stepsPerBeat>
       <trackList>
         <steps>64</steps>
       </trackList>
-    </blue.soundObject.TrackerObject>`;
+    </soundObject>`;
 
     const doc = Element.parse(xml);
     const obj = TrackerObject.loadFromXML(doc);

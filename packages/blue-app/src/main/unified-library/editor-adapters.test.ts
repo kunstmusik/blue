@@ -37,7 +37,7 @@ describe('Library editor adapters', () => {
 
   it('keeps unsupported payload bytes in a read-only document', () => {
     const rawXml = '<soundObject type="FutureObject">\n  <future/>\n</soundObject>';
-    expect(registry.hydrate('soundObject', rawXml, 'FutureObject', 'unsupported')).toEqual({
+    expect(registry.hydrate('soundObject', rawXml, 'FutureObject', 'unsupported')).toMatchObject({
       kind: 'unsupported',
       libraryType: 'soundObject',
       objectType: 'FutureObject',
@@ -57,11 +57,10 @@ describe('Library editor adapters', () => {
     expect(result.payloadXml).toContain('After');
   });
 
-  it('hydrates and patches BlueX7 library drafts preserving unknown XML', () => {
-    const rawXml = `<instrument type="blue.orchestra.BlueX7" enabled="true" unknownRootAttr="preserveMe">
+  it('hydrates and patches complete supported BlueX7 library drafts', () => {
+    const rawXml = `<instrument type="blue.orchestra.BlueX7" enabled="true">
   <name>FM Lead</name>
   <comment>Original</comment>
-  <customVendorData>important</customVendorData>
   <algorithmCommonData>
     <keyTranspose>24</keyTranspose>
     <algorithm>19</algorithm>
@@ -240,8 +239,36 @@ describe('Library editor adapters', () => {
     if (patched.document.kind === 'instrument' && patched.document.snapshot.type === 'blueX7') {
       expect(patched.document.snapshot.voice.common.algorithm).toBe(7);
     }
-    expect(patched.payloadXml).toContain('unknownRootAttr="preserveMe"');
-    expect(patched.payloadXml).toContain('<customVendorData>important</customVendorData>');
     expect(patched.payloadXml).toContain('<algorithm>7</algorithm>');
   });
+});
+
+it('revalidates cached supported rows recursively and returns diagnosed raw archives', () => {
+  const registry = new LibraryEditorAdapterRegistry();
+  const raw =
+    '<instrument type="blue.orchestra.GenericInstrument"><instrumentText>code</instrumentText><future>keep</future></instrument>';
+  const document = registry.hydrate('instrument', raw, 'GenericInstrument', 'supported');
+  expect(document).toMatchObject({
+    kind: 'unsupported',
+    rawXml: raw,
+    diagnostics: [expect.objectContaining({ severity: 'error', path: '/instrument/future[1]' })],
+  });
+  expect(() =>
+    registry.applyPatch('instrument', raw, {
+      kind: 'instrument',
+      patch: { type: 'updateInstrument', assignmentId: 'library-item', patch: { name: 'After' } },
+    } as never),
+  ).toThrow();
+});
+
+it('hydrates safe accepted warning candidates with plain serializable diagnostics', () => {
+  const registry = new LibraryEditorAdapterRegistry();
+  const raw =
+    '<instrument type="blue.orchestra.BlueSynthBuilder"><graphicInterface><bsbObject type="blue.orchestra.blueSynthBuilder.BSBKnob" version="2" uniqueId="dup"/><bsbObject type="blue.orchestra.blueSynthBuilder.BSBKnob" version="2" uniqueId="dup"/></graphicInterface></instrument>';
+  const document = registry.hydrate('instrument', raw, 'BlueSynthBuilder', 'supported');
+  expect(document).toMatchObject({
+    kind: 'instrument',
+    diagnostics: [expect.objectContaining({ code: 'R-BSB-IDENTITY', severity: 'warning' })],
+  });
+  expect(JSON.parse(JSON.stringify(document))).toEqual(document);
 });

@@ -12,6 +12,9 @@ import { closestSnapValueMatch, isValidSnapValueName } from '../time/snap-value'
 import type { SnapValueName } from '../time/snap-value';
 import { CompileData } from '../compile-data';
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
+import { checkShape, readText, readInt, readDouble, readBoolean, readEnum } from '../utilities/xml';
+import { BASIC_SOUND_OBJECT_CHILDREN } from './sound-object-utilities';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
 import { TimeBehavior } from './time-behavior';
@@ -43,6 +46,7 @@ export class PianoRoll extends AbstractSoundObject {
   private _primaryTimeDisplay: TimeBase = TimeBase.BBF;
   private _secondaryTimeDisplay: TimeBase = TimeBase.TIME;
   private _secondaryRulerEnabled = false;
+  private _historicalRulerInterval: number | null = null;
 
   constructor(other?: PianoRoll) {
     super();
@@ -71,6 +75,7 @@ export class PianoRoll extends AbstractSoundObject {
       this._primaryTimeDisplay = other._primaryTimeDisplay;
       this._secondaryTimeDisplay = other._secondaryTimeDisplay;
       this._secondaryRulerEnabled = other._secondaryRulerEnabled;
+      this._historicalRulerInterval = other._historicalRulerInterval;
       this._fieldDefinitions = other._fieldDefinitions.map((fd) => {
         const clone = new FieldDef();
         clone.setFieldName(fd.getFieldName());
@@ -79,6 +84,14 @@ export class PianoRoll extends AbstractSoundObject {
         clone.setMaxValue(fd.getMaxValue());
         clone.setDefaultValue(fd.getDefaultValue());
         return clone;
+      });
+      const definitions = new Map(
+        this._fieldDefinitions.map((definition) => [definition.getFieldName(), definition]),
+      );
+      this._notes = other._notes.map((note) => {
+        const copy = new PianoNote(note);
+        copy.relinkFields(definitions);
+        return copy;
       });
     }
   }
@@ -312,7 +325,6 @@ export class PianoRoll extends AbstractSoundObject {
     const elem = getBasicXML(this, 'blue.soundObject.PianoRoll');
     elem.addElement('noteTemplate').setText(this._noteTemplate);
     elem.addElement('instrumentId').setText(this._instrumentId);
-    elem.addElement('scale').setText('');
     elem.addElement(this._scale.saveAsXML().setName('scale'));
     elem.addElement('pchGenerationMethod').setText(this._pchGenerationMethod.toString());
     elem.addElement('transposition').setText(this._transposition.toString());
@@ -324,6 +336,8 @@ export class PianoRoll extends AbstractSoundObject {
     elem.addElement('primaryTimeDisplay').setText(this._primaryTimeDisplay);
     elem.addElement('secondaryTimeDisplay').setText(this._secondaryTimeDisplay);
     elem.addElement('secondaryRulerEnabled').setText(this._secondaryRulerEnabled.toString());
+    if (this._historicalRulerInterval !== null)
+      elem.addElement('timeUnit').setText(String(this._historicalRulerInterval));
 
     for (const fd of this._fieldDefinitions) {
       elem.addElement(fd.saveAsXML().setName('fieldDef'));
@@ -334,95 +348,204 @@ export class PianoRoll extends AbstractSoundObject {
     return elem;
   }
 
-  static loadFromXML(data: Element, _objRefMap?: ObjRefLoadMap): PianoRoll {
-    const pr = new PianoRoll();
-    pr._fieldDefinitions = [];
-    pr._notes = [];
+  getHistoricalRulerInterval(): number | null {
+    return this._historicalRulerInterval;
+  }
 
-    initBasicFromXML(pr, data);
-
-    const fieldTypes = new Map<string, FieldDef>();
-
-    const nodes = data.getElements();
-    while (nodes.hasMoreElements()) {
-      const node = nodes.next();
-      switch (node.getName()) {
+  static loadFromXML(
+    data: Element,
+    _objRefMap?: ObjRefLoadMap,
+    context?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): PianoRoll {
+    const ctx = context ?? new XmlLoadContext(data);
+    const type = data.getAttribute('type');
+    if (
+      data.getName() !== 'soundObject' ||
+      type === null ||
+      !['PianoRoll', 'blue.soundObject.PianoRoll'].includes(type)
+    )
+      throw ctx.at(data).error({
+        code: 'type',
+        member: '@type',
+        value: type ?? '',
+        message: 'Unsupported PianoRoll type.',
+        recovery: 'Supply a supported concrete SoundObject type.',
+      });
+    checkShape(
+      data,
+      ['type'],
+      [
+        ...BASIC_SOUND_OBJECT_CHILDREN,
+        'noteTemplate',
+        'instrumentId',
+        'scale',
+        'pchGenerationMethod',
+        'transposition',
+        'pixelSecond',
+        'noteHeight',
+        'snapEnabled',
+        'snapValueEnum',
+        'snapValue',
+        'timeDisplay',
+        'timeUnit',
+        'useGlobalRuler',
+        'primaryTimeDisplay',
+        'secondaryTimeDisplay',
+        'secondaryRulerEnabled',
+        'fieldDef',
+        'pianoNote',
+      ],
+      ctx,
+      ['fieldDef', 'pianoNote', 'scale'],
+    );
+    const roll = new PianoRoll();
+    roll._fieldDefinitions = [];
+    roll._notes = [];
+    initBasicFromXML(roll, data, ctx);
+    for (const child of data.getElements()) {
+      switch (child.getName()) {
         case 'noteTemplate':
-          pr._noteTemplate = node.getTextString();
+          roll._noteTemplate = readText(child, ctx);
           break;
         case 'instrumentId':
-          pr._instrumentId = node.getTextString();
+          roll._instrumentId = readText(child, ctx);
           break;
-        case 'scale':
-          pr._scale = Scale.loadFromXML(node);
-          break;
-        case 'fieldDef': {
-          const fd = FieldDef.loadFromXML(node);
-          fieldTypes.set(fd.getFieldName(), fd);
-          pr._fieldDefinitions.push(fd);
-          break;
-        }
-        case 'pianoNote': {
-          const pn = PianoNote.loadFromXML(node, fieldTypes);
-          // Clear note template if it matches the default
-          if (pn.getNoteTemplate() === pr._noteTemplate) {
-            pn.setNoteTemplate(null);
-          }
-          pr._notes.push(pn);
-          break;
-        }
         case 'pchGenerationMethod':
-          pr._pchGenerationMethod = parseInt(node.getTextString(), 10);
+          roll._pchGenerationMethod = readInt(child, ctx, 0, 2);
           break;
         case 'transposition':
-          pr._transposition = parseInt(node.getTextString(), 10);
+          roll._transposition = readInt(child, ctx, -2147483648, 2147483647);
           break;
         case 'pixelSecond':
-          pr._pixelSecond = parseInt(node.getTextString(), 10) || 64;
+          roll._pixelSecond = readInt(child, ctx, 1, 2147483647);
           break;
         case 'noteHeight':
-          pr._noteHeight = parseInt(node.getTextString(), 10) || 15;
+          roll._noteHeight = readInt(child, ctx, 1, 2147483647);
           break;
         case 'snapEnabled':
-          pr._snapEnabled = node.getTextString() !== 'false';
+          roll._snapEnabled = readBoolean(child, ctx);
           break;
-        case 'snapValue': {
-          const legacyValue = parseFloat(node.getTextString());
-          pr._snapValueEnum = Number.isFinite(legacyValue)
-            ? closestSnapValueMatch(legacyValue)
-            : 'BEAT';
-          break;
-        }
-        case 'snapValueEnum': {
-          const text = node.getTextString();
-          pr._snapValueEnum = isValidSnapValueName(text) ? text : 'BEAT';
-          break;
-        }
         case 'useGlobalRuler':
-          pr._useGlobalRuler = node.getTextString() === 'true';
-          break;
-        case 'primaryTimeDisplay':
-          pr._primaryTimeDisplay = parseTimeBase(node.getTextString(), TimeBase.BBF);
-          break;
-        case 'secondaryTimeDisplay':
-          pr._secondaryTimeDisplay = parseTimeBase(node.getTextString(), TimeBase.TIME);
+          roll._useGlobalRuler = readBoolean(child, ctx);
           break;
         case 'secondaryRulerEnabled':
-          pr._secondaryRulerEnabled = node.getTextString() === 'true';
+          roll._secondaryRulerEnabled = readBoolean(child, ctx);
+          break;
+        case 'primaryTimeDisplay':
+          roll._primaryTimeDisplay = readEnum(child, Object.values(TimeBase), ctx);
+          break;
+        case 'secondaryTimeDisplay':
+          roll._secondaryTimeDisplay = readEnum(child, Object.values(TimeBase), ctx);
+          break;
+        case 'timeUnit':
+          roll._historicalRulerInterval = readInt(child, ctx, 1, 2147483647);
+          ctx.at(child).diagnostic({
+            code: 'SL-H06',
+            severity: 'warning',
+            value: String(roll._historicalRulerInterval),
+            message:
+              'Historical timeUnit controlled PianoRoll ruler ticks and labels; the current editor does not apply that interval.',
+            recovery:
+              'The interval is retained and saved as timeUnit. Use a compatible editor to edit it until the current editor supports historical intervals.',
+          });
           break;
       }
     }
-
-    return pr;
+    const snap = data.getElement('snapValueEnum');
+    const oldSnap = data.getElement('snapValue');
+    let currentSnap: SnapValueName | undefined;
+    if (snap) {
+      const value = readText(snap, ctx);
+      const normalized = value === 'QUARTER' ? 'SIXTEENTH' : value;
+      if (!isValidSnapValueName(normalized))
+        throw ctx.at(snap).error({
+          code: 'value',
+          value,
+          message: 'Unsupported piano-roll snap value.',
+          recovery: 'Choose a supported snap enum.',
+        });
+      currentSnap = normalized;
+    }
+    let legacySnap: SnapValueName | undefined;
+    if (oldSnap) {
+      const value = readDouble(oldSnap, ctx);
+      if (value <= 0)
+        throw ctx.at(oldSnap).error({
+          code: 'value',
+          value: String(value),
+          message: 'Historical snap interval must be positive.',
+          recovery: 'Supply a positive snap interval.',
+        });
+      legacySnap = closestSnapValueMatch(value);
+    }
+    if (currentSnap && legacySnap && currentSnap !== legacySnap)
+      throw ctx.at(oldSnap!).error({
+        code: 'conflict',
+        message: 'Conflicting snap representations.',
+        recovery: 'Keep equivalent snap settings.',
+      });
+    roll._snapValueEnum = currentSnap ?? legacySnap ?? roll._snapValueEnum;
+    const oldDisplay = data.getElement('timeDisplay');
+    if (oldDisplay) {
+      const value = readInt(oldDisplay, ctx, 0, 1) === 0 ? TimeBase.TIME : TimeBase.BEATS;
+      if (data.getElement('primaryTimeDisplay') && value !== roll._primaryTimeDisplay)
+        throw ctx.at(oldDisplay).error({
+          code: 'conflict',
+          message: 'Conflicting ruler display representations.',
+          recovery: 'Keep equivalent primary ruler settings.',
+        });
+      roll._primaryTimeDisplay = value;
+    }
+    const scales = data.getElements('scale').toArray();
+    if (scales.length > 1) {
+      const placeholder = scales[0];
+      if (
+        scales.length !== 2 ||
+        placeholder.getAttributeNames().length ||
+        placeholder.getElements().toArray().length ||
+        placeholder.getTextString().trim() ||
+        scales[1].getElements().toArray().length === 0
+      )
+        throw ctx.at(scales[1]).error({
+          code: 'cardinality',
+          message: 'Duplicate piano-roll scales.',
+          recovery: 'Keep one populated scale.',
+        });
+      ctx.at(placeholder).diagnostic({
+        code: 'SL-H10',
+        severity: 'warning',
+        message: 'Historical empty serializer scale placeholder normalized.',
+        recovery: 'Empty serializer placeholder removed; the populated scale is preserved.',
+      });
+      roll._scale = Scale.loadFromXML(scales[1], ctx);
+    } else if (scales[0]) roll._scale = Scale.loadFromXML(scales[0], ctx);
+    const definitions = new Map<string, FieldDef>();
+    for (const child of data.getElements('fieldDef')) {
+      const definition = FieldDef.loadFromXML(child, ctx);
+      const name = definition.getFieldName();
+      if (definitions.has(name))
+        throw ctx.at(child).error({
+          code: 'cardinality',
+          member: '@name',
+          value: name,
+          message: 'Duplicate piano-roll field definition.',
+          recovery: 'Declare each field name once.',
+        });
+      definitions.set(name, definition);
+      roll._fieldDefinitions.push(definition);
+    }
+    for (const child of data.getElements('pianoNote')) {
+      const note = PianoNote.loadFromXML(child, definitions, ctx);
+      if (note.noteTemplate === roll._noteTemplate) note.noteTemplate = null;
+      roll._notes.push(note);
+    }
+    return context ? roll : requireXmlValue(ctx.result(roll), sink);
   }
 
   override deepCopy(): SoundObject {
     return new PianoRoll(this);
   }
-}
-
-function parseTimeBase(value: string, fallback: TimeBase): TimeBase {
-  return Object.values(TimeBase).includes(value as TimeBase) ? (value as TimeBase) : fallback;
 }
 
 function cloneFieldDef(fieldDef: FieldDef): FieldDef {

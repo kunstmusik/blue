@@ -1,3 +1,5 @@
+import { XmlLoadContext } from '../../serialization/xml-load';
+import { readBoolean } from '../../utilities/xml';
 /**
  * BSBXYController — 2D XY pad controller.
  * Mirrors the Java BSBXYController class.
@@ -55,9 +57,10 @@ export class BSBXYController extends BSBWidget {
     this.addCompilationReplacement(unit, yName, formatBlueNumber(this.yValue), parameters);
   }
 
-  loadFromXML(data: Element): void {
-    this.loadFromXMLCommon(data);
+  loadFromXML(data: Element, context = new XmlLoadContext(data)): void {
+    this.loadFromXMLCommon(data, context);
     const versionAttribute = data.getAttribute('version');
+    const version = versionAttribute === null ? 1 : Number(versionAttribute);
     const xv = data.getTextString('xValue');
     if (xv) this.xValue = parseFloat(xv);
     const yv = data.getTextString('yValue');
@@ -75,11 +78,11 @@ export class BSBXYController extends BSBWidget {
     const h = data.getTextString('height');
     if (h) this.height = parseInt(h, 10);
     const vde = data.getElement('valueDisplayEnabled');
-    if (vde) this.valueDisplayEnabled = vde.getTextString() === 'true';
+    if (vde) this.valueDisplayEnabled = readBoolean(vde, context);
     const rand = data.getElement('randomizable');
-    if (rand) this.randomizable = rand.getTextString() === 'true';
+    if (rand) this.randomizable = readBoolean(rand, context);
 
-    if (versionAttribute === '1') {
+    if (version === 1) {
       this.xValue = (this.xMax - this.xMin) * this.xValue + this.xMin;
       this.yValue = (this.yMax - this.yMin) * this.yValue + this.yMin;
     }

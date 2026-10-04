@@ -1,3 +1,4 @@
+import { XmlLoadContext } from '../../serialization/xml-load';
 /**
  * BSBTextField — text input field.
  * Extends BSBObject directly (not automatable).
@@ -23,8 +24,8 @@ export class BSBTextField extends BSBWidget {
     unit.addReplacementValue(this.objectName, this.textValue);
   }
 
-  loadFromXML(data: Element): void {
-    this.loadFromXMLCommon(data);
+  loadFromXML(data: Element, context = new XmlLoadContext(data)): void {
+    this.loadFromXMLCommon(data, context);
     const text = data.getTextString('value');
     if (text !== null) this.textValue = text;
     const tw = data.getTextString('textFieldWidth');

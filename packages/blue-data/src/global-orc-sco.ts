@@ -6,6 +6,8 @@
  * specific instrument or sound object.
  */
 import { Element } from './serialization/xml-reader';
+import { XmlLoadContext } from './serialization/xml-load';
+import { checkRoot, checkShape, readText } from './utilities/xml';
 
 export class GlobalOrcSco {
   private _globalOrc = '';
@@ -43,12 +45,14 @@ export class GlobalOrcSco {
     return elem;
   }
 
-  static loadFromXML(data: Element): GlobalOrcSco {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): GlobalOrcSco {
+    checkRoot(data, 'globalOrcSco', context);
+    checkShape(data, [], ['globalOrc', 'globalSco'], context);
     const gos = new GlobalOrcSco();
-    const orc = data.getTextString('globalOrc');
-    if (orc) gos._globalOrc = orc;
-    const sco = data.getTextString('globalSco');
-    if (sco) gos._globalSco = sco;
+    const orc = data.getElement('globalOrc');
+    if (orc) gos._globalOrc = readText(orc, context);
+    const sco = data.getElement('globalSco');
+    if (sco) gos._globalSco = readText(sco, context);
     return gos;
   }
 }

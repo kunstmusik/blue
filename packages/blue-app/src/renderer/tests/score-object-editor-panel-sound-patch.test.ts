@@ -19,8 +19,7 @@ const MINIMAL_BSB_XML = `<instrument type="blue.orchestra.BlueSynthBuilder" edit
       <objectName>knob1</objectName>
       <x>10</x>
       <y>12</y>
-      <width>60</width>
-      <height>60</height>
+      <knobWidth>60</knobWidth>
       <automationAllowed>true</automationAllowed>
       <label>Knob 1</label>
       <value>0.5</value>
@@ -30,7 +29,7 @@ const MINIMAL_BSB_XML = `<instrument type="blue.orchestra.BlueSynthBuilder" edit
   </graphicInterface>
   <parameterList>
     <parameter uniqueId="knob1-param" name="knob1" label="Knob 1" min="0.0" max="1.0" automationEnabled="true" value="0.5">
-      <line>
+      <line min="0" max="1" version="2">
         <linePoint x="0.0" y="0.5"/>
         <linePoint x="1.0" y="0.5"/>
       </line>
@@ -51,8 +50,7 @@ const UNNAMED_BSB_XML = `<instrument type="blue.orchestra.BlueSynthBuilder" edit
       <objectName></objectName>
       <x>10</x>
       <y>12</y>
-      <width>60</width>
-      <height>60</height>
+      <knobWidth>60</knobWidth>
       <automationAllowed>true</automationAllowed>
       <label>Knob 1</label>
       <value>0.5</value>
@@ -76,8 +74,7 @@ const UUID_STYLE_BSB_XML = `<instrument type="blue.orchestra.BlueSynthBuilder" e
       <objectName>uuidGain</objectName>
       <x>10</x>
       <y>12</y>
-      <width>60</width>
-      <height>60</height>
+      <knobWidth>60</knobWidth>
       <automationAllowed>true</automationAllowed>
       <label>UUID Gain</label>
       <value>0.5</value>
@@ -87,7 +84,7 @@ const UUID_STYLE_BSB_XML = `<instrument type="blue.orchestra.BlueSynthBuilder" e
   </graphicInterface>
   <parameterList>
     <parameter uniqueId="param-123e4567-e89b-12d3-a456-426614174000" name="uuidGain" label="UUID Gain" min="0.0" max="1.0" automationEnabled="true" value="0.5">
-      <line>
+      <line min="0" max="1" version="2">
         <linePoint x="0.0" y="0.5"/>
       </line>
     </parameter>

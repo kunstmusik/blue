@@ -1,3 +1,5 @@
+import { XmlLoadContext } from '../../serialization/xml-load';
+import { checkRoot, checkShape, parseXmlBoolean } from '../../utilities/xml';
 import { Element } from '../../serialization/xml-reader';
 import type { CopyMode } from '../../deep-copyable';
 import type { BSBGraphicInterface } from './bsb-graphic-interface';
@@ -9,6 +11,7 @@ export class PresetGroup {
   presets: Preset[] = [];
   currentPresetUniqueId = '';
   currentPresetModified = false;
+  private _childOrder: Array<Preset | PresetGroup> = [];
 
   getPresetGroupName(): string {
     return this.presetGroupName;
@@ -75,33 +78,73 @@ export class PresetGroup {
       elem.setAttribute('currentPresetUniqueId', this.currentPresetUniqueId);
     }
     elem.setAttribute('currentPresetModified', this.currentPresetModified.toString());
-    for (const preset of this.presets) {
-      elem.addElement(preset.saveAsXML());
-    }
-    for (const subGroup of this.subGroups) {
-      elem.addElement(subGroup.saveAsXML());
-    }
+    const children = [...this.presets, ...this.subGroups];
+    for (const child of [
+      ...this._childOrder.filter((item) => children.includes(item)),
+      ...children.filter((item) => !this._childOrder.includes(item)),
+    ])
+      elem.addElement(child.saveAsXML());
+
     return elem;
   }
 
-  static loadFromXML(data: Element): PresetGroup {
-    const group = new PresetGroup();
-    group.presetGroupName = data.getAttribute('name') ?? 'Presets';
-    group.currentPresetUniqueId = data.getAttribute('currentPresetUniqueId') ?? '';
-    const modified = data.getAttribute('currentPresetModified');
-    group.currentPresetModified = modified === 'true';
-
-    const presetElems = data.getElements('preset');
-    while (presetElems.hasMoreElements()) {
-      group.presets.push(Preset.loadFromXML(presetElems.next()));
-    }
-
-    const subGroupElems = data.getElements('presetGroup');
-    while (subGroupElems.hasMoreElements()) {
-      group.subGroups.push(PresetGroup.loadFromXML(subGroupElems.next()));
-    }
-
-    return group;
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): PresetGroup {
+    checkRoot(data, 'presetGroup', context);
+    const read = (node: Element): PresetGroup => {
+      checkShape(
+        node,
+        ['name', 'currentPresetUniqueId', 'currentPresetModified'],
+        ['preset', 'presetGroup'],
+        context,
+        ['preset', 'presetGroup'],
+      );
+      const group = new PresetGroup();
+      group.presetGroupName = node.getAttribute('name') ?? 'Presets';
+      group.currentPresetUniqueId = node.getAttribute('currentPresetUniqueId') ?? '';
+      const modified = node.getAttribute('currentPresetModified');
+      group.currentPresetModified =
+        modified === null
+          ? false
+          : parseXmlBoolean(modified, context.at(node), '@currentPresetModified');
+      for (const child of node.getElements()) {
+        const value =
+          child.getName() === 'preset' ? Preset.loadFromXML(child, context) : read(child);
+        if (value instanceof Preset) group.presets.push(value);
+        else group.subGroups.push(value);
+        group._childOrder.push(value);
+      }
+      return group;
+    };
+    const root = read(data);
+    const ids = new Set<string>();
+    const visit = (group: PresetGroup): void => {
+      for (const preset of group.presets) {
+        if (ids.has(preset.uniqueId))
+          throw context.at(data).error({
+            code: 'conflict',
+            member: '@uniqueId',
+            value: preset.uniqueId,
+            message: 'Duplicate preset identity.',
+            recovery: 'Use unique preset identities.',
+          });
+        ids.add(preset.uniqueId);
+      }
+      for (const child of group.subGroups) visit(child);
+    };
+    visit(root);
+    const validate = (group: PresetGroup): void => {
+      if (group.currentPresetUniqueId && !ids.has(group.currentPresetUniqueId))
+        throw context.at(data).error({
+          code: 'reference',
+          member: '@currentPresetUniqueId',
+          value: group.currentPresetUniqueId,
+          message: 'Selected preset reference does not exist.',
+          recovery: 'Select a preset in this tree or clear the reference.',
+        });
+      for (const child of group.subGroups) validate(child);
+    };
+    validate(root);
+    return root;
   }
 
   private cloneForDuplicate(
@@ -114,6 +157,13 @@ export class PresetGroup {
     copy.currentPresetModified = this.currentPresetModified;
     copy.presets = this.presets.map((preset) => preset.deepCopy(presetIdMap, mode));
     copy.subGroups = this.subGroups.map((group) => group.cloneForDuplicate(presetIdMap, mode));
+    copy._childOrder = this._childOrder
+      .map((child) =>
+        child instanceof Preset
+          ? copy.presets[this.presets.indexOf(child)]!
+          : copy.subGroups[this.subGroups.indexOf(child)]!,
+      )
+      .filter(Boolean);
     return copy;
   }
 
@@ -136,6 +186,13 @@ export class PresetGroup {
       copy.currentPresetModified = this.currentPresetModified;
       copy.presets = this.presets.map((preset) => preset.deepCopy(undefined, 'history'));
       copy.subGroups = this.subGroups.map((group) => group.deepCopy('history'));
+      copy._childOrder = this._childOrder
+        .map((child) =>
+          child instanceof Preset
+            ? copy.presets[this.presets.indexOf(child)]!
+            : copy.subGroups[this.subGroups.indexOf(child)]!,
+        )
+        .filter(Boolean);
       return copy;
     }
     const presetIdMap = new Map<string, string>();

@@ -1,13 +1,58 @@
 import { describe, expect, it } from 'vitest';
 import { BlueData } from '../blue-data';
 import { Channel } from '../mixer/channel';
+import { readProjectXml } from './xml-policy';
+import { XmlLoadError } from '../serialization/xml-load';
 
-/**
- * Spec 112 T074/T028/T031: the mixer panning setting is additive XML. New
- * scores persist an explicit attribute; legacy documents (attribute absent,
- * attribute invalid, or no <score> element at all) load disabled, stay clean,
- * and preserve unrelated unknown project XML.
- */
+describe('project XML candidate acceptance', () => {
+  const source = { kind: 'project' as const, label: 'original-synthetic.blue' };
+
+  it('accepts a current candidate with significant code whitespace', () => {
+    const original = new BlueData();
+    original.getGlobalOrcSco().setGlobalOrc('  ; original synthetic code\n\n');
+    const result = readProjectXml(original.saveToString(), source);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.getGlobalOrcSco().getGlobalOrc()).toBe('  ; original synthetic code\n\n');
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it.each([
+    ['<wrong/>', '/wrong', 'root'],
+    ['<blueData future="x"/>', '/blueData/@future', 'member'],
+    ['<blueData><future/></blueData>', '/blueData/future[1]', 'member'],
+    [
+      '<blueData><renderStartTime>2junk</renderStartTime></blueData>',
+      '/blueData/renderStartTime[1]',
+      'value',
+    ],
+    [
+      '<blueData><loopRendering>yes</loopRendering></blueData>',
+      '/blueData/loopRendering[1]',
+      'value',
+    ],
+    ['<blueData><tables/><tables/></blueData>', '/blueData/tables[2]', 'cardinality'],
+    ['<blueData version="2.3.bad"/>', '/blueData/@version', 'value'],
+    [
+      '<blueData><projectProperties><title future="x">a</title></projectProperties></blueData>',
+      '/blueData/projectProperties[1]/title[1]/@future',
+      'member',
+    ],
+    [
+      '<blueData><projectProperties><copyToMediaFileOnImport>true</copyToMediaFileOnImport><copyToMediaFolderOnImport>false</copyToMediaFolderOnImport></projectProperties></blueData>',
+      '/blueData/projectProperties[1]/copyToMediaFolderOnImport[1]',
+      'conflict',
+    ],
+  ])('rejects %s with a contextual report and no value', (xml, path, code) => {
+    const result = readProjectXml(xml, source);
+    expect(result.ok).toBe(false);
+    expect(result).not.toHaveProperty('value');
+    expect(result.diagnostics[0]).toMatchObject({ source, path, code, severity: 'error' });
+    expect(() => BlueData.loadFromString(xml)).toThrow(XmlLoadError);
+  });
+});
+
+// Missing historical settings default; malformed present settings reject.
 
 function legacyProjectXml(): string {
   return new BlueData().saveToString().replace(/ panningEnabled="true"/, '');
@@ -23,13 +68,12 @@ describe('xml-policy mixer panning compatibility (Spec 112)', () => {
     expect(data.getMixer().isPanningEnabled()).toBe(false);
   });
 
-  it('loads invalid panningEnabled attribute values as disabled', () => {
+  it('rejects invalid panningEnabled attribute values', () => {
     for (const invalid of ['yes', '1', 'enabled', '2', 'not-true']) {
       const xml = new BlueData()
         .saveToString()
         .replace(/ panningEnabled="true"/, ` panningEnabled="${invalid}"`);
-      const data = BlueData.loadFromString(xml);
-      expect(data.getMixer().isPanningEnabled()).toBe(false);
+      expect(() => BlueData.loadFromString(xml)).toThrow(XmlLoadError);
     }
   });
 
@@ -55,7 +99,7 @@ describe('xml-policy mixer panning compatibility (Spec 112)', () => {
     expect(disabled.saveToString()).not.toContain('panningEnabled="true"');
   });
 
-  it('loads a document without a <score> element with disabled panning', () => {
+  it('keeps explicit Mixer panning when the score is absent', () => {
     const data = BlueData.loadFromString(projectXmlWithoutScoreElement());
     expect(data.getMixer().isPanningEnabled()).toBe(true);
     // The Mixer setting remains authoritative even when the score element is absent.
@@ -76,7 +120,7 @@ describe('xml-policy mixer panning compatibility (Spec 112)', () => {
     expect(secondPass.getMixer().isPanningEnabled()).toBe(false);
   });
 
-  it('preserves unknown project XML around a panning-enabled score', () => {
+  it('rejects unknown plugin content around a panning-enabled score', () => {
     const data = new BlueData();
     data.getMixer().setPanningEnabled(true);
     const xmlRoot = data.saveAsXML();
@@ -85,9 +129,10 @@ describe('xml-policy mixer panning compatibility (Spec 112)', () => {
     const xml = xmlRoot.toXml();
     expect(xml).toContain('panningEnabled="true"');
 
-    const reopened = BlueData.loadFromString(xml);
-    expect(reopened.getMixer().isPanningEnabled()).toBe(true);
-    expect(reopened.saveToString()).toContain('<legacyPanningPlugin>keep-me</legacyPanningPlugin>');
+    const report = readProjectXml(xml);
+    expect(report.ok).toBe(false);
+    expect(report).not.toHaveProperty('value');
+    expect(report.diagnostics[0].path).toContain('legacyPanningPlugin');
   });
 
   it('migrates legacy score-owned panning attributes into Mixer state', () => {
@@ -120,14 +165,12 @@ describe('xml-policy mixer panning compatibility (Spec 112)', () => {
       expect(data.getMixer().isPanOffCenterBoost()).toBe(false);
     });
 
-    it('falls back to default -3 dB and unboosted when Mixer attributes are invalid', () => {
+    it('rejects invalid present Mixer attributes', () => {
       const xml = new BlueData()
         .saveToString()
         .replace(/ panLawDb="[^"]*"/, ' panLawDb="-5"')
         .replace(/ panOffCenterBoost="[^"]*"/, ' panOffCenterBoost="invalid"');
-      const data = BlueData.loadFromString(xml);
-      expect(data.getMixer().getPanLawDb()).toBe(-3);
-      expect(data.getMixer().isPanOffCenterBoost()).toBe(false);
+      expect(() => BlueData.loadFromString(xml)).toThrow(XmlLoadError);
     });
 
     it('falls back to balance and default scalars when channel stereo tags are missing', () => {
@@ -155,7 +198,7 @@ describe('xml-policy mixer panning compatibility (Spec 112)', () => {
       expect(loadedCh.getDualPanRight()).toBe(1.0);
     });
 
-    it('falls back safely when channel stereo tags contain invalid values', () => {
+    it('rejects malformed present channel stereo values', () => {
       const data = new BlueData();
       const ch = new Channel();
       ch.setName('TestChan');
@@ -168,12 +211,7 @@ describe('xml-policy mixer panning compatibility (Spec 112)', () => {
         .replace(/<dualPanLeft>.*?<\/dualPanLeft>/g, '<dualPanLeft>-0.5</dualPanLeft>')
         .replace(/<dualPanRight>.*?<\/dualPanRight>/g, '<dualPanRight>NaN</dualPanRight>');
 
-      const loaded = BlueData.loadFromString(xml);
-      const loadedCh = loaded.getMixer().getChannels()[0]!;
-      expect(loadedCh.getStereoPanMode()).toBe('balance');
-      expect(loadedCh.getPanWidth()).toBe(1.0);
-      expect(loadedCh.getDualPanLeft()).toBe(0.0);
-      expect(loadedCh.getDualPanRight()).toBe(1.0);
+      expect(() => BlueData.loadFromString(xml)).toThrow();
     });
   });
 });

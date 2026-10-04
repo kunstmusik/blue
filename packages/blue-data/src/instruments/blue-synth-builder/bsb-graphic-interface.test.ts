@@ -75,7 +75,7 @@ describe('BSBGraphicInterface', () => {
     const repairs = graphicInterface.loadFromXML(
       Element.parse(`
       <graphicInterface>
-        <bsbObject type="blue.orchestra.blueSynthBuilder.BSBGroup" version="2" groupName="Panel">
+        <bsbObject type="blue.orchestra.blueSynthBuilder.BSBGroup" groupName="Panel">
           <objectName>panel</objectName>
           <backgroundColor>0x18304866</backgroundColor>
           <borderColor>0xFF0000</borderColor>

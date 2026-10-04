@@ -1,3 +1,5 @@
+import { XmlLoadContext } from '../serialization/xml-load';
+import { validateProcessorXml } from './xml-policy';
 import { NoteProcessor } from './note-processor';
 import { NoteProcessorException } from './note-processor-exception';
 import { NoteList } from '../sound-objects/note-list';
@@ -58,14 +60,17 @@ export class MultiplyProcessor extends NoteProcessor {
     return elem;
   }
 
-  static loadFromXML(data: Element): MultiplyProcessor {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): MultiplyProcessor {
+    validateProcessorXml(data, 'MultiplyProcessor', context);
     const proc = new MultiplyProcessor();
     const pf = data.getTextString('pfield');
     if (pf !== null) proc._pfield = parseInt(pf, 10);
+    else {
+      const alias = data.getTextString('pFieldIndex');
+      if (alias !== null) proc._pfield = Number(alias);
+    }
     const v = data.getTextString('value');
     if (v !== null) proc._value = parseFloat(v);
-    const pfIdx = data.getTextString('pFieldIndex');
-    if (pfIdx !== null) proc._pfield = parseInt(pfIdx, 10);
     return proc;
   }
 }

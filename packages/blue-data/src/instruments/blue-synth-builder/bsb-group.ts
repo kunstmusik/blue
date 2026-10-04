@@ -1,3 +1,6 @@
+import { XmlLoadContext } from '../../serialization/xml-load';
+import { readBoolean } from '../../utilities/xml';
+import { getBsbWidgetFields } from './bsb-xml';
 import { Element } from '../../serialization/xml-reader';
 import { BSBWidget } from './bsb-widget';
 import { BSBCompilationUnit } from './bsb-compilation-unit';
@@ -46,18 +49,29 @@ function getRegistry(): Record<string, BSBWidgetCtor> {
   return _registry;
 }
 
-export function loadBsbWidgetFromXML(data: Element): BSBWidget | null {
+export function loadBsbWidgetFromXML(data: Element, context = new XmlLoadContext(data)): BSBWidget {
   const type = data.getAttribute('type') ?? '';
   const Ctor = getRegistry()[type];
-  if (!Ctor) return null;
+  if (!Ctor)
+    throw context.at(data).error({
+      code: 'type',
+      member: '@type',
+      value: type,
+      message: 'Unsupported widget type.',
+      recovery: 'Use a supported BSB widget.',
+    });
 
   const child = new Ctor();
   if (child instanceof BSBGroup) {
-    child.loadFromXML(data);
+    child.loadFromXML(data, context);
   } else if ('loadFromXML' in child && typeof child.loadFromXML === 'function') {
-    (child.loadFromXML as (data: Element) => void).call(child, data);
+    (child.loadFromXML as (data: Element, context: XmlLoadContext) => void).call(
+      child,
+      data,
+      context,
+    );
   } else {
-    child.loadFromXMLCommon(data);
+    child.loadFromXMLCommon(data, context);
   }
 
   return child;
@@ -116,8 +130,8 @@ export class BSBGroup extends BSBWidget {
 
   override setPresetValue(_val: string): void {}
 
-  loadFromXML(data: Element): void {
-    this.loadFromXMLCommon(data);
+  loadFromXML(data: Element, context = new XmlLoadContext(data)): void {
+    this.loadFromXMLCommon(data, context);
     this.clearChildren();
     const gnAttr = data.getAttribute('groupName');
     if (gnAttr) this.groupName = gnAttr;
@@ -130,29 +144,29 @@ export class BSBGroup extends BSBWidget {
     const ltc = data.getTextString('labelTextColor');
     if (ltc) this.labelTextColor = decodeBsbColorToCss(ltc, this.labelTextColor);
     const te = data.getElement('titleEnabled');
-    if (te) this.titleEnabled = te.getTextString() === 'true';
+    if (te) this.titleEnabled = readBoolean(te, context);
     const w = data.getTextString('width');
     if (w) this.width = parseInt(w, 10);
     const h = data.getTextString('height');
     if (h) this.height = parseInt(h, 10);
     const fontElem = data.getElement('font');
     if (fontElem) this.font = loadFontFromXML(fontElem);
-    this._loadChildren(data);
+    this._loadChildren(data, context);
   }
 
-  private _loadChildren(data: Element): void {
+  private _loadChildren(data: Element, context: XmlLoadContext): void {
     const children = data.getElements('bsbObject');
     while (children.hasMoreElements()) {
       const childElem = children.next();
-      const child = loadBsbWidgetFromXML(childElem);
+      const child = loadBsbWidgetFromXML(childElem, context);
       if (child) {
         this._children.push(child);
       }
     }
   }
 
-  override loadFromXMLCommon(data: Element): void {
-    super.loadFromXMLCommon(data);
+  override loadFromXMLCommon(data: Element, context = new XmlLoadContext(data)): void {
+    super.loadFromXMLCommon(data, context);
   }
 
   saveAsXML(): Element {
@@ -285,7 +299,8 @@ export function saveBsbWidgetAsXML(widget: BSBWidget): Element {
     addPrimitiveElement(elem, 'parameterName', widget.parameterName);
   }
 
-  for (const [key, value] of Object.entries(widget as unknown as Record<string, unknown>)) {
+  for (const key of getBsbWidgetFields(ctorName)) {
+    const value = (widget as unknown as Record<string, unknown>)[key];
     if (SKIPPED_WIDGET_FIELDS.has(key)) {
       continue;
     }

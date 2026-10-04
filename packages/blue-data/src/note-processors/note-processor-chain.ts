@@ -20,9 +20,13 @@ import { SwitchProcessor } from './switch-processor';
 import { SubListProcessor } from './sublist-processor';
 import { EqualsProcessor } from './equals-processor';
 import { PythonProcessor } from './python-processor';
-import { UnsupportedProcessor } from './unsupported-processor';
+import { XmlLoadContext } from '../serialization/xml-load';
+import { checkRoot, checkShape } from '../utilities/xml';
 
-const PROCESSOR_MAP: Record<string, { loadFromXML: (data: Element) => NoteProcessor }> = {
+const PROCESSOR_MAP: Record<
+  string,
+  { loadFromXML: (data: Element, context?: XmlLoadContext) => NoteProcessor }
+> = {
   AddProcessor,
   MultiplyProcessor,
   RandomAddProcessor,
@@ -135,13 +139,15 @@ export class NoteProcessorChain {
     return elem;
   }
 
-  static loadFromXML(data: Element): NoteProcessorChain {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): NoteProcessorChain {
+    checkRoot(data, 'noteProcessorChain', context);
+    checkShape(data, [], ['noteProcessor'], context, ['noteProcessor']);
     const chain = new NoteProcessorChain();
     const procNodes = data.getElements('noteProcessor');
     while (procNodes.hasMoreElements()) {
       const node = procNodes.next();
       const type = node.getAttribute('type') ?? '';
-      const proc = createProcessorFromXML(type, node);
+      const proc = createProcessorFromXML(type, node, context);
       if (proc) {
         chain.addProcessor(proc);
       }
@@ -154,13 +160,23 @@ export class NoteProcessorChain {
   }
 }
 
-function createProcessorFromXML(type: string, data: Element): NoteProcessor | null {
+function createProcessorFromXML(
+  type: string,
+  data: Element,
+  context: XmlLoadContext,
+): NoteProcessor {
   const shortName = normalizeProcessorType(type);
 
-  const loader = PROCESSOR_MAP[shortName];
+  const loader = Object.hasOwn(PROCESSOR_MAP, shortName) ? PROCESSOR_MAP[shortName] : undefined;
   if (loader) {
-    return loader.loadFromXML(data);
+    return loader.loadFromXML(data, context);
   }
 
-  return UnsupportedProcessor.loadFromXML(data, type);
+  throw context.at(data).error({
+    code: 'type',
+    member: '@type',
+    value: type,
+    message: 'Unsupported note processor type.',
+    recovery: 'Use a registered processor type.',
+  });
 }

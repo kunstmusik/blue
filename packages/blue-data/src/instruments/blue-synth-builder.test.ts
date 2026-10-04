@@ -45,7 +45,7 @@ describe('BlueSynthBuilder', () => {
 
     expect(instrument.getName()).toBe('Builder');
     expect(instrument.getComment()).toBe('builder comment');
-    expect(savedXml).toContain('<graphicInterface>');
+    expect(savedXml).toContain('<graphicInterface editEnabled=');
     expect(savedXml).toContain('blue.orchestra.blueSynthBuilder.BSBKnob');
     expect(savedXml).toContain('<objectName>amp</objectName>');
     expect(savedXml).toContain('<opcodeList/>');
@@ -619,7 +619,7 @@ describe('BlueSynthBuilder', () => {
           <canvasHeight>120</canvasHeight>
           <separatorType>COMMA</separatorType>
           <lines>
-            <line name="env" varName="line0" version="2" max="1.0" min="0.0" bdresolution="-1" color="-65536" rightBound="false" endPointsLinked="false">
+            <line name="env" varName="env" version="2" max="1.0" min="0.0" bdresolution="-1" color="-65536" rightBound="false" endPointsLinked="false">
               <linePoint x="0.0" y="0.25"/>
               <linePoint x="1.0" y="0.75"/>
             </line>
@@ -709,10 +709,7 @@ describe('BlueSynthBuilder', () => {
       <instrumentText>code</instrumentText>
       <graphicInterface/>
       <opcodeList>
-        <opcode name="myUDO">
-          <signature>k,k</signature>
-          <code>  xout a + b</code>
-        </opcode>
+        <udo><opcodeName>myUDO</opcodeName><style>CLASSIC</style><outTypes>k</outTypes><inTypes>k</inTypes><codeBody>  xout a + b</codeBody></udo>
       </opcodeList>
     </instrument>`;
 
@@ -730,7 +727,7 @@ describe('BlueSynthBuilder', () => {
       <instrumentText>code</instrumentText>
       <graphicInterface/>
       <opcodeList>
-        <opcode>
+        <udo>
           <opcodeName>saturate</opcodeName>
           <outTypes>a</outTypes>
           <inTypes>ak</inTypes>
@@ -738,7 +735,7 @@ describe('BlueSynthBuilder', () => {
           <codeBody>aSig, kDrive	xin
 aOut = tanh(aSig * kDrive)
 xout aOut</codeBody>
-        </opcode>
+        </udo>
       </opcodeList>
     </instrument>`;
 
@@ -835,7 +832,7 @@ xout aOut</codeBody>
       </graphicInterface>
       <parameterList>
         <parameter uniqueId="gain-param" name="gain" min="0.0" max="1.0" automationEnabled="false">
-          <line>
+          <line min="0" max="1" version="2">
             <linePoint x="0.0" y="0.5"/>
             <linePoint x="1.0" y="0.5"/>
           </line>
@@ -1012,7 +1009,7 @@ xout aOut</codeBody>
           <objectName>choice</objectName>
           <x>0</x><y>0</y>
           <selectedIndex>0</selectedIndex>
-          <fontSize>99</fontSize>
+          <fontSize>36</fontSize>
           <bsbDropdownItemList>
             <bsbDropdownItem uniqueId="item-a">
               <name>Alpha</name>

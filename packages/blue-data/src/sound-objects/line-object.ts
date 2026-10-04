@@ -7,10 +7,17 @@ import { NoteList } from './note-list';
 import { Note } from './note';
 import { TimeContext } from '../time/time-context';
 import { CompileData } from '../compile-data';
+import { XmlLoadContext } from '../serialization/xml-load';
+import { checkRoot, checkShape } from '../utilities/xml';
+import { readLineXml } from '../automation/line-xml';
 import { Element } from '../serialization/xml-reader';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
-import { initBasicFromXML, getBasicXML } from './sound-object-utilities';
+import {
+  initBasicFromXML,
+  getBasicXML,
+  BASIC_SOUND_OBJECT_CHILDREN,
+} from './sound-object-utilities';
 import { GenericInstrument } from '../instruments/generic-instrument';
 import { setScoreStart } from '../utilities/score';
 import { formatBlueNumber } from '../utilities/number-format';
@@ -75,57 +82,38 @@ export class LineObject extends AbstractSoundObject {
     return elem;
   }
 
-  static loadFromXML(data: Element, _objRefMap?: ObjRefLoadMap): LineObject {
+  static loadFromXML(
+    data: Element,
+    _objRefMap?: ObjRefLoadMap,
+    context = new XmlLoadContext(data),
+  ): LineObject {
+    checkShape(data, ['type'], [...BASIC_SOUND_OBJECT_CHILDREN, 'line'], context, ['line']);
+    checkRoot(data, 'soundObject', context);
+    const type = data.getAttribute('type');
+    if (type !== 'LineObject' && type !== 'blue.soundObject.LineObject')
+      throw context.at(data).error({
+        code: 'value',
+        member: '@type',
+        message: 'Unsupported LineObject type.',
+        recovery: 'Supply the declared SoundObject type.',
+      });
     const obj = new LineObject();
-    initBasicFromXML(obj, data);
-
-    const lineNodes = data.getElements('line');
-    let counter = 0;
-    while (lineNodes.hasMoreElements()) {
-      const node = lineNodes.next();
-      const version = parseInt(node.getAttribute('version') ?? '1', 10) || 1;
-      const min = parseFloat(node.getAttribute('min') ?? '0');
-      const max = parseFloat(node.getAttribute('max') ?? '1');
-      const range = max - min;
-      const line: LineData = {
-        varName: node.getAttribute('name') ?? node.getAttribute('varName') ?? `line${counter}`,
-        min,
-        max,
-        resolution: node.getAttribute('bdresolution') ?? node.getAttribute('resolution') ?? '-1',
-        color: parseInt(node.getAttribute('color') ?? '-8355712', 10),
-        rightBound: (node.getAttribute('rightBound') ?? 'false') === 'true',
-        endPointsLinked: (node.getAttribute('endPointsLinked') ?? 'false') === 'true',
-        points: [],
-      };
-
-      const pointNodes = node.getElements('linePoint');
-      while (pointNodes.hasMoreElements()) {
-        const pointNode = pointNodes.next();
-        const x = parseFloat(pointNode.getAttribute('x') ?? '0');
-        let y = parseFloat(pointNode.getAttribute('y') ?? '0');
-        if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
-
-        // Java parity: migrate legacy version-1 normalized Y values into min/max range.
-        if (version === 1) {
-          y = y * range + min;
-        }
-        line.points.push({ x, y });
-      }
-
-      const pointsStr = node.getTextString('points');
-      if (pointsStr && line.points.length === 0) {
-        for (const pair of pointsStr.trim().split(/\s+/)) {
-          const [x, y] = pair.split(',').map(Number);
-          if (Number.isFinite(x) && Number.isFinite(y)) {
-            line.points.push({ x, y });
-          }
-        }
-      }
-      line.points.sort((left, right) => left.x - right.x);
+    initBasicFromXML(obj, data, context);
+    const identities = new Set<string>();
+    for (const node of data.getElements('line')) {
+      const line = readLineXml(node, context);
+      if (node.getAttribute('name') === null && node.getAttribute('varName') === null)
+        line.varName = `line${obj._lines.length}`;
+      if (identities.has(line.varName))
+        throw context.at(node).error({
+          code: 'conflict',
+          member: '@name',
+          message: 'Duplicate line name.',
+          recovery: 'Use distinct line names.',
+        });
+      identities.add(line.varName);
       obj._lines.push(line);
-      counter++;
     }
-
     return obj;
   }
 

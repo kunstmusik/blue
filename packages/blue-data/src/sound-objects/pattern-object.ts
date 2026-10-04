@@ -13,6 +13,16 @@ import { TimeContext } from '../time/time-context';
 import { TimeDuration } from '../time/time-duration';
 import { CompileData } from '../compile-data';
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
+import {
+  checkShape,
+  readText,
+  readInt,
+  readBoolean,
+  readEnum,
+  parseXmlBoolean,
+} from '../utilities/xml';
+import { BASIC_SOUND_OBJECT_CHILDREN } from './sound-object-utilities';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
 import { initBasicFromXML, getBasicXML } from './sound-object-utilities';
@@ -167,9 +177,38 @@ export class PatternObject extends AbstractSoundObject {
     return elem;
   }
 
-  static loadFromXML(data: Element, _objRefMap?: ObjRefLoadMap): PatternObject {
+  static loadFromXML(
+    data: Element,
+    _objRefMap?: ObjRefLoadMap,
+    context?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): PatternObject {
+    const ctx = context ?? new XmlLoadContext(data);
+    const type = data.getAttribute('type');
+    if (
+      data.getName() !== 'soundObject' ||
+      type === null ||
+      !['PatternObject', 'blue.soundObject.PatternObject'].includes(type)
+    )
+      throw ctx.at(data).error({
+        code: 'type',
+        member: '@type',
+        value: type ?? '',
+        message: 'Unsupported PatternObject type.',
+        recovery: 'Supply a supported concrete SoundObject type.',
+      });
+    checkShape(
+      data,
+      ['type'],
+      [...BASIC_SOUND_OBJECT_CHILDREN, ...['beats', 'subDivisions', 'patterns']],
+      ctx,
+    );
     const obj = new PatternObject();
-    initBasicFromXML(obj, data);
+    const subDivisionsElement = data.getElement('subDivisions');
+    if (subDivisionsElement) readText(subDivisionsElement, ctx);
+    const beatsElement = data.getElement('beats');
+    if (beatsElement) readText(beatsElement, ctx);
+    initBasicFromXML(obj, data, ctx);
 
     const nodes = data.getElements();
     while (nodes.hasMoreElements()) {
@@ -177,17 +216,18 @@ export class PatternObject extends AbstractSoundObject {
       const nodeName = node.getName();
       switch (nodeName) {
         case 'beats':
-          obj._beats = parseInt(node.getTextString() ?? '4', 10);
+          obj._beats = readInt(node, ctx, 1, 2147483647);
           break;
         case 'subDivisions':
-          obj._subDivisions = parseInt(node.getTextString() ?? '4', 10);
+          obj._subDivisions = readInt(node, ctx, 1, 2147483647);
           break;
         case 'patterns': {
+          checkShape(node, [], ['pattern'], ctx, ['pattern']);
           const patternNodes = node.getElements();
           while (patternNodes.hasMoreElements()) {
             const pNode = patternNodes.next();
             if (pNode.getName() === 'pattern') {
-              obj._patterns.push(Pattern.loadFromXML(pNode));
+              obj._patterns.push(Pattern.loadFromXML(pNode, ctx));
             }
           }
           break;
@@ -195,7 +235,7 @@ export class PatternObject extends AbstractSoundObject {
       }
     }
 
-    return obj;
+    return context ? obj : requireXmlValue(ctx.result(obj), sink);
   }
 
   override deepCopy(): SoundObject {

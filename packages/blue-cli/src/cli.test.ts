@@ -8,7 +8,7 @@ const fsMock = vi.hoisted(() => ({
 }));
 
 const dataMock = vi.hoisted(() => ({
-  loadFromString: vi.fn(),
+  readProjectXml: vi.fn(),
   initializeJavaScriptRuntime: vi.fn(),
 }));
 
@@ -16,10 +16,9 @@ vi.mock('node:fs/promises', () => ({
   default: fsMock,
 }));
 
-vi.mock('@blue/data', () => ({
-  BlueData: {
-    loadFromString: dataMock.loadFromString,
-  },
+vi.mock('@blue/data', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@blue/data')>()),
+  readProjectXml: dataMock.readProjectXml,
   initializeJavaScriptRuntime: dataMock.initializeJavaScriptRuntime,
 }));
 
@@ -39,10 +38,11 @@ describe('resolveCompileMode', () => {
 
 describe('compileProject', () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
     fsMock.readFile.mockReset();
     fsMock.mkdir.mockReset();
     fsMock.writeFile.mockReset();
-    dataMock.loadFromString.mockReset();
+    dataMock.readProjectXml.mockReset();
     dataMock.initializeJavaScriptRuntime.mockReset();
   });
 
@@ -55,10 +55,14 @@ describe('compileProject', () => {
     fsMock.mkdir.mockResolvedValue(undefined);
     fsMock.writeFile.mockResolvedValue(undefined);
     dataMock.initializeJavaScriptRuntime.mockResolvedValue(undefined);
-    dataMock.loadFromString.mockReturnValue({
-      toDiskCSD,
-      toCSD,
-      toBlueLiveCSD,
+    dataMock.readProjectXml.mockReturnValue({
+      ok: true,
+      diagnostics: [],
+      value: {
+        toDiskCSD,
+        toCSD,
+        toBlueLiveCSD,
+      },
     });
 
     const result = await compileProject({
@@ -67,7 +71,11 @@ describe('compileProject', () => {
       mode: 'disk',
     });
 
-    expect(dataMock.loadFromString).toHaveBeenCalledWith('project xml');
+    expect(dataMock.readProjectXml).toHaveBeenCalledWith('project xml', {
+      kind: 'project',
+      label: resolve('/tmp/project.blue'),
+      nativePath: resolve('/tmp/project.blue'),
+    });
     expect(toDiskCSD).toHaveBeenCalledTimes(1);
     expect(toCSD).not.toHaveBeenCalled();
     expect(toBlueLiveCSD).not.toHaveBeenCalled();
@@ -84,10 +92,14 @@ describe('compileProject', () => {
     fsMock.mkdir.mockResolvedValue(undefined);
     fsMock.writeFile.mockResolvedValue(undefined);
     dataMock.initializeJavaScriptRuntime.mockResolvedValue(undefined);
-    dataMock.loadFromString.mockReturnValue({
-      toDiskCSD,
-      toCSD,
-      toBlueLiveCSD,
+    dataMock.readProjectXml.mockReturnValue({
+      ok: true,
+      diagnostics: [],
+      value: {
+        toDiskCSD,
+        toCSD,
+        toBlueLiveCSD,
+      },
     });
 
     await compileProject({
@@ -105,5 +117,66 @@ describe('compileProject', () => {
     expect(toCSD).toHaveBeenCalledTimes(1);
     expect(toBlueLiveCSD).toHaveBeenCalledTimes(1);
     expect(toDiskCSD).not.toHaveBeenCalled();
+  });
+
+  it('reports rejected XML before runtime initialization or output creation', async () => {
+    const write = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
+    fsMock.readFile.mockResolvedValue('<blueData><future/></blueData>');
+    dataMock.readProjectXml.mockReturnValue({
+      ok: false,
+      diagnostics: [
+        {
+          code: 'member',
+          severity: 'error',
+          source: { kind: 'project', label: 'C:\\Users\\Composer\\bad.blue' },
+          path: '/blueData/future[1]',
+          member: 'future',
+          message: 'Unexpected element future.',
+          recovery: 'Convert it in a compatible editor.',
+        },
+      ],
+    });
+    await expect(
+      compileProject({ projectPath: 'bad.blue', outputPath: 'out/project.csd', mode: 'disk' }),
+    ).rejects.toThrow('Unexpected element future');
+    expect(write).toHaveBeenCalledWith(expect.stringContaining('C:\\Users\\Composer\\bad.blue'));
+    expect(write).toHaveBeenCalledWith(expect.stringContaining('/blueData/future[1]'));
+    expect(dataMock.initializeJavaScriptRuntime).not.toHaveBeenCalled();
+    expect(fsMock.mkdir).not.toHaveBeenCalled();
+    expect(fsMock.writeFile).not.toHaveBeenCalled();
+  });
+
+  it('reports accepted warnings before runtime initialization and compilation', async () => {
+    const write = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
+    const compile = vi.fn(() => 'canonical-csd');
+    fsMock.readFile.mockResolvedValue('<blueData/>');
+    dataMock.readProjectXml.mockReturnValue({
+      ok: true,
+      value: { toDiskCSD: compile },
+      diagnostics: [
+        {
+          code: 'P-PPQ',
+          severity: 'warning',
+          source: { kind: 'project', label: 'old.blue' },
+          path: '/blueData/score[1]/timeContext[1]/ppq[1]',
+          value: '960',
+          message: 'Redundant fixed PPQ.',
+          recovery: 'Canonical save omits the redundant field.',
+        },
+      ],
+    });
+    await compileProject({ projectPath: 'old.blue', outputPath: 'out/project.csd', mode: 'disk' });
+    expect(write).toHaveBeenCalledWith(expect.stringContaining('P-PPQ'));
+    expect(write.mock.invocationCallOrder[0]).toBeLessThan(
+      dataMock.initializeJavaScriptRuntime.mock.invocationCallOrder[0],
+    );
+    expect(dataMock.initializeJavaScriptRuntime.mock.invocationCallOrder[0]).toBeLessThan(
+      compile.mock.invocationCallOrder[0],
+    );
+    expect(fsMock.writeFile).toHaveBeenCalledWith(
+      resolve('out/project.csd'),
+      'canonical-csd',
+      'utf8',
+    );
   });
 });

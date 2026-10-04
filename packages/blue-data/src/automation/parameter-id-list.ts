@@ -1,3 +1,5 @@
+import { XmlLoadContext } from '../serialization/xml-load';
+import { checkRoot, checkShape, readText, parseXmlInteger } from '../utilities/xml';
 import { Element } from '../serialization/xml-reader';
 
 export class ParameterIdList {
@@ -90,19 +92,28 @@ export class ParameterIdList {
     return elem;
   }
 
-  static loadFromXML(data: Element): ParameterIdList {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): ParameterIdList {
+    checkRoot(data, 'parameterIdList', context);
+    checkShape(data, ['selectedIndex'], ['parameterId'], context, ['parameterId']);
     const list = new ParameterIdList();
-    const ids = data.getElements('parameterId');
-    while (ids.hasMoreElements()) {
-      list._ids.push(ids.next().getTextString());
+    for (const node of data.getElements('parameterId')) {
+      const id = readText(node, context);
+      if (!id.trim() || list._ids.includes(id))
+        throw context.at(node).error({
+          code: 'conflict',
+          value: id,
+          message: 'Empty or duplicate parameter reference.',
+          recovery: 'Supply distinct nonempty identities.',
+        });
+      list._ids.push(id);
     }
-    const selAttr = data.getAttribute('selectedIndex');
-    if (selAttr !== null && selAttr !== undefined) {
-      list._selectedIndex = parseInt(selAttr, 10);
-    }
-    if (list._ids.length > 0 && list._selectedIndex < 0) {
-      list._selectedIndex = 0;
-    }
+    const selected = data.getAttribute('selectedIndex');
+    list._selectedIndex =
+      selected === null
+        ? list._ids.length
+          ? 0
+          : -1
+        : parseXmlInteger(selected, context.at(data), -1, list._ids.length - 1, '@selectedIndex');
     return list;
   }
 

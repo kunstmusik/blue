@@ -115,3 +115,44 @@ describe('legacy library envelope codec', () => {
     }
   });
 });
+
+describe('complete library acceptance and archive boundary', () => {
+  it.each([
+    '<instrumentLibrary future="x"><instrumentCategory categoryName="Root"/></instrumentLibrary>',
+    '<instrumentLibrary><instrumentCategory categoryName="Root"/><instrumentCategory categoryName="Extra"/></instrumentLibrary>',
+    '<instrumentLibrary><instrumentCategory categoryName="Root"><foreign/></instrumentCategory></instrumentLibrary>',
+    '<instrumentLibrary><instrumentCategory categoryName="Root"><effect/></instrumentCategory></instrumentLibrary>',
+    '<instrumentLibrary><instrumentCategory categoryName="Root" isRoot="false"/></instrumentLibrary>',
+    '<instrumentLibrary><instrumentCategory categoryName="Root"><instrumentCategory categoryName="Nested" isRoot="true"/></instrumentCategory></instrumentLibrary>',
+    '<instrumentLibrary><instrumentCategory/></instrumentLibrary>',
+    '<instrumentLibrary><instrumentCategory categoryName="Root">meaningful text</instrumentCategory></instrumentLibrary>',
+  ])('rejects invalid envelopes before constructing a plan: %s', (xml) => {
+    expect(() => parseLegacyLibraryDocument(xml)).toThrow();
+  });
+
+  it.each([
+    '<instrument type="blue.orchestra.GenericInstrument"><name>Known</name><notASentinel/></instrument>',
+    '<instrument type="blue.orchestra.BlueSynthBuilder"><graphicInterface><bsbObject type="blue.orchestra.blueSynthBuilder.BSBKnob"><unknownSetting/></bsbObject></graphicInterface></instrument>',
+    '<instrument type="blue.orchestra.GenericInstrument"><name>before<unexpected/>after</name></instrument>',
+  ])('archives the complete rejected leaf without rewriting it: %s', (leaf) => {
+    const source = {
+      kind: 'library' as const,
+      label: 'C:\\Users\\Composer\\original.xml',
+      nativePath: 'C:\\Users\\Composer\\original.xml',
+    };
+    const plan = parseLegacyLibraryDocument(
+      `<instrumentLibrary><instrumentCategory categoryName="Root">${leaf}</instrumentCategory></instrumentLibrary>`,
+      source,
+    );
+    const item = plan.root.children[0];
+    expect(item.kind).toBe('item');
+    if (item.kind !== 'item') return;
+    expect(item.payload.supportStatus).toBe('unsupported');
+    expect(item.payload.rawXml).toBe(leaf);
+    expect(exportLegacyLibraryDocument(plan)).toContain(leaf);
+    expect(plan.diagnostics[0]).toMatchObject({ source, severity: 'warning', code: 'L-ARCHIVE' });
+    expect(plan.diagnostics[0].path).toContain(
+      '/instrumentLibrary/instrumentCategory[1]/instrument[1]',
+    );
+  });
+});

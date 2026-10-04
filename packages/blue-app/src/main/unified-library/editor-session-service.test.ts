@@ -42,6 +42,40 @@ async function fixture() {
 }
 
 describe('main-owned library editor sessions', () => {
+  it('retains accepted compatibility warnings through successive typed draft patches', async () => {
+    const { client, nodes, sessions } = await fixture();
+    try {
+      const rawXml =
+        '<instrument type="blue.orchestra.BlueSynthBuilder"><name>Pad</name><graphicInterface><bsbObject type="blue.orchestra.blueSynthBuilder.BSBKnob" uniqueId="same" version="2"/><bsbObject type="blue.orchestra.blueSynthBuilder.BSBKnob" uniqueId="same" version="2"/></graphicInterface></instrument>';
+      await client.updateItem(nodes[0]!.id, nodes[0]!.revision, 'Pad', {
+        ...PAYLOAD,
+        objectType: 'BlueSynthBuilder',
+        payloadXml: rawXml,
+      });
+      const opened = await sessions.open({
+        scope: 'user',
+        libraryType: 'instrument',
+        nodeId: nodes[0]!.id,
+      });
+      expect(opened.document.diagnostics).toEqual(
+        expect.arrayContaining([expect.objectContaining({ code: 'R-BSB-IDENTITY' })]),
+      );
+      for (const name of ['First', 'Second']) {
+        const patched = sessions.patch(opened.sessionId, {
+          documentPatch: {
+            kind: 'instrument',
+            patch: { type: 'updateInstrument', assignmentId: 'library-item', patch: { name } },
+          },
+        });
+        expect(patched.document.diagnostics).toEqual(
+          expect.arrayContaining([expect.objectContaining({ code: 'R-BSB-IDENTITY' })]),
+        );
+      }
+    } finally {
+      await client.close();
+    }
+  });
+
   it('refreshes clean project SoundObject sessions and preserves dirty drafts as conflicts', async () => {
     const client = UnifiedLibraryRepositoryClient.openForTesting(':memory:');
     const data = new BlueData();

@@ -9,11 +9,16 @@ describe('Score track header M/S mode', () => {
     expect(new Score(score).trackLayerMuteSoloMode).toBe('audio');
   });
 
+  it('rejects unsupported persisted modes', () => {
+    expect(() =>
+      Score.loadFromXML(Element.parse('<score trackLayerMuteSoloMode="unsupported"/>')),
+    ).toThrow('Unsupported track mute/solo mode');
+  });
+
   it.each([
     { xml: '<score/>', mode: 'event' },
     { xml: '<score trackLayerMuteSoloMode="event"/>', mode: 'event' },
     { xml: '<score trackLayerMuteSoloMode="audio"/>', mode: 'audio' },
-    { xml: '<score trackLayerMuteSoloMode="unsupported"/>', mode: 'event' },
   ])('loads $xml as $mode and saves the resolved mode', ({ xml, mode }) => {
     const score = Score.loadFromXML(Element.parse(xml));
     expect(score.trackLayerMuteSoloMode).toBe(mode);

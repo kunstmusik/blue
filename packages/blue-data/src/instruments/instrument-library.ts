@@ -7,8 +7,10 @@
  */
 import { Instrument } from './instrument';
 import { InstrumentCategory } from './instrument-category';
-import { GenericInstrument } from './generic-instrument';
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext, requireXmlValue } from '../serialization/xml-load';
+import type { XmlDiagnosticSink } from '../serialization/xml-load';
+import { checkRoot, checkShape } from '../utilities/xml';
 import type { CopyMode } from '../deep-copyable';
 
 export class InstrumentLibrary {
@@ -80,24 +82,24 @@ export class InstrumentLibrary {
     return elem;
   }
 
-  static loadFromXML(data: Element): InstrumentLibrary {
+  static loadFromXML(
+    data: Element,
+    providedContext?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): InstrumentLibrary {
+    const context = providedContext ?? new XmlLoadContext(data);
+    checkRoot(data, 'instrumentLibrary', context);
+    checkShape(data, [], ['instrumentCategory'], context);
+    const category = data.getElement('instrumentCategory');
+    if (!category)
+      throw context.at(data).error({
+        code: 'cardinality',
+        message: 'Instrument library requires one root category.',
+        recovery: 'Supply the complete library envelope.',
+      });
     const lib = new InstrumentLibrary();
-
-    // Java format: <instrumentLibrary><instrumentCategory ...>...</instrumentCategory></instrumentLibrary>
-    const catElem = data.getElement('instrumentCategory');
-    if (catElem) {
-      lib._rootCategory = InstrumentCategory.loadFromXML(catElem);
-    } else {
-      // Fallback: load flat list of genericInstrument elements (legacy format)
-      const instrNodes = data.getElements('genericInstrument');
-      while (instrNodes.hasMoreElements()) {
-        const node = instrNodes.next();
-        const instr = GenericInstrument.loadFromXML(node);
-        lib._rootCategory.addInstrument(instr);
-      }
-    }
-
-    return lib;
+    lib._rootCategory = InstrumentCategory.loadFromXML(category, context);
+    return providedContext ? lib : requireXmlValue(context.result(lib), sink);
   }
 
   /**

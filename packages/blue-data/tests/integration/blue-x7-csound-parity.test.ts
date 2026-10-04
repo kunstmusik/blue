@@ -2,6 +2,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { describe, expect, it } from 'vitest';
 import { BlueData } from '../../src/blue-data';
+import { Channel } from '../../src/mixer/channel';
+import { Arrangement } from '../../src/arrangement';
+import { Element } from '../../src/serialization/xml-reader';
 import { BlueX7 } from '../../src/instruments/blue-x7';
 import { BLUE_X7_PARAMETER_DESCRIPTORS } from '../../src/instruments/blue-x7/parameter-catalog';
 
@@ -31,7 +34,19 @@ describe('BlueX7 modern CSD generation — TimewaveCanon regression', () => {
     expect(fs.existsSync(bluePath)).toBe(true);
 
     const xmlContent = fs.readFileSync(bluePath, 'utf-8');
-    const blueData = BlueData.loadFromString(xmlContent);
+    expect(() => BlueData.loadFromString(xmlContent)).toThrow(/csladspaSettings/);
+    // Keep the unsupported project rejected; test the independently supported
+    // arrangement owner from the original example in a fresh project.
+    const blueData = new BlueData();
+    blueData.setArrangement(
+      Arrangement.loadFromXML(Element.parse(xmlContent).getElement('arrangement')!),
+    );
+    blueData.getMixer().setEnabled(true);
+    for (const name of ['1', '2', '3', '4']) {
+      const channel = new Channel();
+      channel.setName(name);
+      blueData.getMixer().getChannels().push(channel);
+    }
     const arrangement = blueData.getArrangement();
 
     // Verify the arrangement has 3 BlueX7 instruments

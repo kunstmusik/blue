@@ -6,6 +6,16 @@ import { CompileData } from '../compile-data';
 import { NoteList } from './note-list';
 import { TimeContext } from '../time/time-context';
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
+import {
+  checkShape,
+  readText,
+  readInt,
+  readBoolean,
+  readEnum,
+  parseXmlBoolean,
+} from '../utilities/xml';
+import { BASIC_SOUND_OBJECT_CHILDREN } from './sound-object-utilities';
 import { ObjRefLoadMap, ObjRefSaveMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
 import { getBasicXML, initBasicFromXML } from './sound-object-utilities';
@@ -19,6 +29,7 @@ import {
 import { getJavaRuntimeClient, type JavaRuntimeError } from '../java-runtime';
 import { executeJavaScriptCode } from './javascript-object';
 import { getExternalCommandExecutor } from './external';
+import type { CopyMode } from '../deep-copyable';
 
 export type ObjectBuilderLanguageType = 'PYTHON' | 'JAVASCRIPT' | 'CLOJURE' | 'EXTERNAL';
 
@@ -51,14 +62,14 @@ export class ObjectBuilder extends AbstractSoundObject {
   private comment = '';
   private languageType: ObjectBuilderLanguageType = 'PYTHON';
 
-  constructor(other?: ObjectBuilder) {
+  constructor(other?: ObjectBuilder, mode: CopyMode = 'duplication') {
     super();
     this.setName('ObjectBuilder');
 
     if (other) {
       this.copyFrom(other);
-      this.graphicInterface = other.graphicInterface.deepCopy();
-      this.presetGroup = other.presetGroup.deepCopy();
+      this.graphicInterface = other.graphicInterface.deepCopy(mode);
+      this.presetGroup = other.presetGroup.deepCopy(mode);
       this.code = other.code;
       this.commandLine = other.commandLine;
       this.editEnabled = other.editEnabled;
@@ -264,51 +275,120 @@ export class ObjectBuilder extends AbstractSoundObject {
     return elem;
   }
 
-  static loadFromXML(data: Element, _objRefMap?: ObjRefLoadMap): ObjectBuilder {
+  static loadFromXML(
+    data: Element,
+    _objRefMap?: ObjRefLoadMap,
+    context?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): ObjectBuilder {
+    const ctx = context ?? new XmlLoadContext(data);
+    const type = data.getAttribute('type');
+    if (
+      data.getName() !== 'soundObject' ||
+      type === null ||
+      !['ObjectBuilder', 'blue.soundObject.ObjectBuilder'].includes(type)
+    )
+      throw ctx.at(data).error({
+        code: 'type',
+        member: '@type',
+        value: type ?? '',
+        message: 'Unsupported ObjectBuilder type.',
+        recovery: 'Supply a supported concrete SoundObject type.',
+      });
+    checkShape(
+      data,
+      ['type', 'editEnabled'],
+      [
+        ...BASIC_SOUND_OBJECT_CHILDREN,
+        ...[
+          'code',
+          'commandLine',
+          'graphicInterface',
+          'presetGroup',
+          'comment',
+          'languageType',
+          'isExternal',
+          'syntaxType',
+        ],
+      ],
+      ctx,
+    );
     const builder = new ObjectBuilder();
-    initBasicFromXML(builder, data);
+    const syntaxTypeElement = data.getElement('syntaxType');
+    if (syntaxTypeElement) readText(syntaxTypeElement, ctx);
+    const isExternalElement = data.getElement('isExternal');
+    if (isExternalElement) readText(isExternalElement, ctx);
+    const languageTypeElement = data.getElement('languageType');
+    if (languageTypeElement) readText(languageTypeElement, ctx);
+    const commentElement = data.getElement('comment');
+    if (commentElement) readText(commentElement, ctx);
+    const commandLineElement = data.getElement('commandLine');
+    if (commandLineElement) readText(commandLineElement, ctx);
+    const codeElement = data.getElement('code');
+    if (codeElement) readText(codeElement, ctx);
+    initBasicFromXML(builder, data, ctx);
 
     const editEnabled = data.getAttribute('editEnabled');
-    if (editEnabled !== null) {
-      builder.setEditEnabled(editEnabled === 'true');
+    if (editEnabled !== null)
+      builder.setEditEnabled(parseXmlBoolean(editEnabled, ctx, '@editEnabled'));
+    const language = data.getElement('languageType');
+    const external = data.getElement('isExternal');
+    const current = language
+      ? readEnum(language, ['PYTHON', 'JAVASCRIPT', 'CLOJURE', 'EXTERNAL'], ctx)
+      : undefined;
+    const historical = external ? (readBoolean(external, ctx) ? 'EXTERNAL' : 'PYTHON') : undefined;
+    if (current && historical && current !== historical)
+      throw ctx.at(language!).error({
+        code: 'conflict',
+        message: 'Conflicting ObjectBuilder language representations.',
+        recovery: 'Keep one equivalent language setting.',
+      });
+    builder.setLanguageType(current ?? historical ?? 'PYTHON');
+    const syntax = data.getElement('syntaxType');
+    if (syntax) {
+      const value = readText(syntax, ctx);
+      if (value !== 'Python' || builder.getLanguageType() !== 'PYTHON')
+        throw ctx.at(syntax).error({
+          code: 'value',
+          value,
+          message: 'Unsupported historical editor syntax choice.',
+          recovery: 'Convert this editor choice with a compatible historical editor.',
+        });
+      ctx.at(syntax).diagnostic({
+        code: 'SL-H02',
+        severity: 'warning',
+        value,
+        message: 'Redundant historical Python editor setting normalized.',
+        recovery: 'The canonical Python language setting preserves this editor choice.',
+      });
     }
-
-    const nodes = data.getElements();
-    while (nodes.hasMoreElements()) {
-      const node = nodes.next();
-      const nodeName = node.getName();
-      switch (nodeName) {
+    for (const child of data.getElements()) {
+      switch (child.getName()) {
         case 'code':
-          builder.setCode(node.getTextString() ?? '');
+          builder.setCode(readText(child, ctx));
           break;
         case 'commandLine':
-          builder.setCommandLine(node.getTextString() ?? '');
+          builder.setCommandLine(readText(child, ctx));
           break;
-        case 'isExternal':
-          builder.setLanguageType(node.getTextString() === 'true' ? 'EXTERNAL' : 'PYTHON');
+        case 'comment':
+          builder.setComment(readText(child, ctx));
           break;
         case 'graphicInterface': {
-          const graphicInterface = new BSBGraphicInterface();
-          graphicInterface.loadFromXML(node);
-          builder.setGraphicInterface(graphicInterface);
+          const gi = new BSBGraphicInterface();
+          gi.loadFromXML(child, ctx);
+          builder.setGraphicInterface(gi);
           break;
         }
         case 'presetGroup':
-          builder.setPresetGroup(PresetGroup.loadFromXML(node));
-          break;
-        case 'comment':
-          builder.setComment(node.getTextString() ?? '');
-          break;
-        case 'languageType':
-          builder.setLanguageType(node.getTextString() ?? 'PYTHON');
+          builder.setPresetGroup(PresetGroup.loadFromXML(child, ctx));
           break;
       }
     }
 
-    return builder;
+    return context ? builder : requireXmlValue(ctx.result(builder), sink);
   }
 
-  override deepCopy(): SoundObject {
-    return new ObjectBuilder(this);
+  override deepCopy(mode: CopyMode = 'duplication'): SoundObject {
+    return new ObjectBuilder(this, mode);
   }
 }

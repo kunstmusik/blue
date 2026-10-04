@@ -1,3 +1,4 @@
+import { formatXmlDiagnostics } from '../../../shared/xml-diagnostics';
 import { useEffect, useState } from 'react';
 import type { LibraryEditorSessionSnapshot } from '../../../shared/unified-library';
 import { useLibraryEditorStore } from '../../stores/library-editor-store';
@@ -73,6 +74,16 @@ export function LibraryItemEditorPanel({
           setConflictDialogDismissed(false);
         }}
       />
+      {session.document.diagnostics?.length ? (
+        <p role="status" className="whitespace-pre-wrap p-2 text-role-body text-app-text-muted">
+          {formatXmlDiagnostics(session.document.diagnostics)}
+        </p>
+      ) : null}
+      {error ? (
+        <p role="alert" className="whitespace-pre-wrap p-2 text-role-body">
+          {error}
+        </p>
+      ) : null}
       <LibraryControlledEditor
         session={session}
         onPatch={(documentPatch) => {

@@ -65,6 +65,9 @@ import { JavaScriptObject } from './sound-objects/javascript-object';
 import { ObjectBuilder } from './sound-objects/object-builder';
 import { PolyObject } from './sound-objects/poly-object';
 import { TrackLayerGroup } from './score/track/track-layer-group';
+import { PatternsLayerGroup } from './score/patterns/patterns-layer-group';
+import { AudioClip } from './score/audio/audio-clip';
+import { FrozenSoundObject } from './sound-objects/frozen-sound-object';
 import { PythonObject } from './sound-objects/python-object';
 import type { SoundObject } from './sound-objects/sound-object';
 import { PythonInstrument } from './instruments/python-instrument';
@@ -80,6 +83,7 @@ import { getNotes } from './utilities/score';
 import './sound-objects/register-sound-object-types';
 
 import { loadFromString, saveAsXML, saveToString } from './blue-data/xml-policy';
+import type { XmlDiagnosticSink } from './serialization/xml-load';
 export { buildStandardCSD, buildStandardCSDAsync, toBlueLiveCSD } from './blue-data/csd-policy';
 import {
   buildStandardCSD,
@@ -269,7 +273,7 @@ export class BlueData implements BlueDataObject, DeepCopyable<BlueData>, History
   }
 
   getPluginDataXml(): Element[] {
-    return this.pluginDataXml;
+    return this.pluginDataXml.map((element) => element.clone());
   }
 
   getClojureProjectData(): ClojureProjectData | null {
@@ -282,8 +286,8 @@ export class BlueData implements BlueDataObject, DeepCopyable<BlueData>, History
 
   // ─── Loading ───
 
-  static loadFromString(xmlString: string): BlueData {
-    return loadFromString(xmlString, () => new BlueData());
+  static loadFromString(xmlString: string, sink?: XmlDiagnosticSink): BlueData {
+    return loadFromString(xmlString, () => new BlueData(), sink);
   }
 
   // ─── Saving ───
@@ -403,7 +407,7 @@ export class BlueData implements BlueDataObject, DeepCopyable<BlueData>, History
     copy.score = new Score(this.score, mode);
 
     // Deep-copy Live Data (was previously aliased by reference).
-    copy.liveData = this.liveData.deepCopy() as LiveData;
+    copy.liveData = this.liveData.deepCopy(mode) as LiveData;
 
     copy.scratchData = new ScratchPadData(this.scratchData);
     copy.noteProcessorChainMap = new NoteProcessorChainMap(this.noteProcessorChainMap);
@@ -458,6 +462,17 @@ function remapInstanceReferences(
   for (const layerGroup of score) {
     if (layerGroup instanceof PolyObject) {
       remapInstanceReferencesInSoundObject(layerGroup, libraryRemap, seen);
+    } else if (layerGroup instanceof TrackLayerGroup) {
+      for (const track of layerGroup) {
+        for (const item of track) {
+          if (!(item instanceof AudioClip))
+            remapInstanceReferencesInSoundObject(item, libraryRemap, seen);
+        }
+      }
+    } else if (layerGroup instanceof PatternsLayerGroup) {
+      for (const layer of layerGroup) {
+        remapInstanceReferencesInSoundObject(layer.getSoundObject(), libraryRemap, seen);
+      }
     }
   }
 }
@@ -481,6 +496,12 @@ function remapInstanceReferencesInSoundObject(
     if (copiedReference) {
       remapInstanceReferencesInSoundObject(copiedReference, libraryRemap, seen);
     }
+    return;
+  }
+
+  if (soundObject instanceof FrozenSoundObject) {
+    const nested = soundObject.getFrozenSoundObject();
+    if (nested) remapInstanceReferencesInSoundObject(nested, libraryRemap, seen);
     return;
   }
 

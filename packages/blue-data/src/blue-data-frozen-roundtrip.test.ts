@@ -8,7 +8,16 @@ import { TimeDuration } from './time/time-duration';
 import { TimePosition } from './time/time-position';
 
 import { AudioFile } from './sound-objects/audio-file';
+import { ClojureProjectData, ClojureLibraryEntry } from './plugins/clojure-project-data';
 import { Channel } from './mixer/channel';
+
+function addSupportedPlugin(data: BlueData): void {
+  const plugin = new ClojureProjectData();
+  const entry = new ClojureLibraryEntry();
+  entry.setDependencyCoordinates('original/frozen-fixture');
+  plugin.addLibraryEntry(entry);
+  data.setClojureProjectData(plugin);
+}
 
 describe('BlueData frozen SoundObject and AudioFile persistence', () => {
   it('preserves relative artifact metadata and nested source across a project save/reopen without transient fields', () => {
@@ -27,8 +36,8 @@ describe('BlueData frozen SoundObject and AudioFile persistence', () => {
     frozen.setSubjectiveDuration(TimeDuration.beats(2));
     (data.getScore()[0] as PolyObject)[0].push(frozen);
 
+    addSupportedPlugin(data);
     const xmlRoot = data.saveAsXML();
-    xmlRoot.getElement('pluginData')?.addElement('unknownFeature').setText('keep-me');
     const xml = xmlRoot.toXml();
     expect(xml).not.toContain('artifactStatus');
     expect(xml).not.toContain('canSaveCopy');
@@ -41,7 +50,7 @@ describe('BlueData frozen SoundObject and AudioFile persistence', () => {
     expect(restored.getNumChannels()).toBe(2);
     expect(restored.getFrozenSoundObject()).toBeInstanceOf(GenericScore);
     expect(restored.getFrozenSoundObject()?.getName()).toBe('Original Score');
-    expect(reopened.saveToString()).toContain('<unknownFeature>keep-me</unknownFeature>');
+    expect(reopened.saveToString()).toContain('<coordinates>original/frozen-fixture</coordinates>');
   });
 
   it('preserves AudioFile soundFileName and csoundPostCode without saving transient metadata fields', () => {
@@ -70,7 +79,7 @@ describe('BlueData frozen SoundObject and AudioFile persistence', () => {
     expect(restored.getName()).toBe('Percussion');
   });
 
-  it('keeps mixer panning state and unknown XML untouched across save/reopen (Spec 112 T074)', () => {
+  it('keeps mixer panning state through canonical XML across save/reopen (Spec 112 T074)', () => {
     const data = new BlueData();
     expect(data.getMixer().isPanningEnabled()).toBe(true);
 
@@ -90,7 +99,7 @@ describe('BlueData frozen SoundObject and AudioFile persistence', () => {
     expect(BlueData.loadFromString(legacyResaved).saveToString()).toBe(legacyResaved);
   });
 
-  it('keeps panLawDb, panOffCenterBoost, and channel stereo settings across save/reopen with unknown XML (Spec 113 T038, T040, T044)', () => {
+  it('keeps panLawDb, panOffCenterBoost, and channel stereo settings across save/reopen with supported plugin metadata (Spec 113 T038, T040, T044)', () => {
     const data = new BlueData();
     data.getMixer().setPanLawDb(-4.5);
     data.getMixer().setPanOffCenterBoost(true);
@@ -103,8 +112,8 @@ describe('BlueData frozen SoundObject and AudioFile persistence', () => {
     ch.setDualPanRight(0.85);
     data.getMixer().getChannels().push(ch);
 
+    addSupportedPlugin(data);
     const xmlRoot = data.saveAsXML();
-    xmlRoot.getElement('pluginData')?.addElement('futurePlugin').setText('preserved');
     const xml = xmlRoot.toXml();
 
     const reopened = BlueData.loadFromString(xml);
@@ -118,7 +127,7 @@ describe('BlueData frozen SoundObject and AudioFile persistence', () => {
     expect(restoredCh.getDualPanRight()).toBe(0.85);
 
     const resavedXml = reopened.saveToString();
-    expect(resavedXml).toContain('<futurePlugin>preserved</futurePlugin>');
+    expect(resavedXml).toContain('<coordinates>original/frozen-fixture</coordinates>');
     expect(resavedXml).toContain('panLawDb="-4.5"');
     expect(resavedXml).toContain('panOffCenterBoost="true"');
     expect(resavedXml).toContain('<stereoPanMode>dualPan</stereoPanMode>');

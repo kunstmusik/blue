@@ -448,7 +448,7 @@ describe('PatternLayer with TrackerObject', () => {
     track.addElement('instrumentId').setText('4');
 
     const columns = track.addElement('columns');
-    const pitchColumn = columns.addElement('track');
+    const pitchColumn = columns.addElement('column');
     pitchColumn.addElement('name').setText('pch');
     pitchColumn.addElement('rangeMin').setText('0.0');
     pitchColumn.addElement('rangeMax').setText('0.0');
@@ -457,7 +457,7 @@ describe('PatternLayer with TrackerObject', () => {
     pitchColumn.addElement('usingRange').setText('false');
     pitchColumn.addElement('outputFrequency').setText('true');
 
-    const amplitudeColumn = columns.addElement('track');
+    const amplitudeColumn = columns.addElement('column');
     amplitudeColumn.addElement('name').setText('db');
     amplitudeColumn.addElement('rangeMin').setText('0.0');
     amplitudeColumn.addElement('rangeMax').setText('90.0');
@@ -484,6 +484,13 @@ describe('PatternLayer with TrackerObject', () => {
     tiedNote.addElement('off').setText('false');
     tiedNote.addElement('field').setAttribute('val', '6.04');
     tiedNote.addElement('field').setAttribute('val', '-12');
+
+    // The declared eight-step grid includes the remaining inactive steps.
+    for (let index = 3; index < 8; index++) {
+      const note = trackerNotes.addElement('trackerNote');
+      note.addElement('field').setAttribute('val', '');
+      note.addElement('field').setAttribute('val', '');
+    }
 
     // patternData for the layer itself
     const pd = patternLayer.addElement('patternData');
@@ -576,7 +583,7 @@ describe('PatternLayer with TrackerObject', () => {
 });
 
 describe('PatternLayer with unknown type', () => {
-  it('falls back to default GenericScore for unregistered types', () => {
+  it('rejects unregistered types', () => {
     const patternLayer = new Element('patternLayer');
     patternLayer.setAttribute('name', 'Unknown');
     const so = patternLayer.addElement('soundObject');
@@ -586,10 +593,7 @@ describe('PatternLayer with unknown type', () => {
     const pd = patternLayer.addElement('patternData');
     pd.setText('1000');
 
-    const layer = PatternLayer.loadFromXML(patternLayer);
-    // Should retain the default GenericScore instead of crashing
-    expect(layer.getSoundObject()).toBeInstanceOf(GenericScore);
-    expect(layer.getPatternData().isPatternSet(0)).toBe(true);
+    expect(() => PatternLayer.loadFromXML(patternLayer)).toThrow();
   });
 });
 
@@ -605,18 +609,14 @@ function attachSerializableSource(group: PatternsLayerGroup): void {
 }
 
 describe('PatternsLayerGroup canvas-contract round trips', () => {
-  it('retains a malformed raw step length through save and reload', () => {
+  it('rejects malformed serialized step lengths', () => {
     const group = new PatternsLayerGroup();
     group.setPatternBeatsLength(Number.NaN);
     const layer = group.newLayerAt(0);
     attachSerializableSource(group);
     layer.getPatternData().setPattern(0, true);
 
-    const reloaded = PatternsLayerGroup.loadFromXML(group.saveAsXML());
-    // NaN serializes as "NaN"; parseInt yields NaN again, preserving the
-    // malformed raw value rather than silently rewriting it.
-    expect(Number.isNaN(reloaded.getPatternBeatsLength())).toBe(true);
-    expect(reloaded[0]!.getPatternData().isPatternSet(0)).toBe(true);
+    expect(() => PatternsLayerGroup.loadFromXML(group.saveAsXML())).toThrow();
   });
 
   it('grows active cells beyond the current capacity but not inactive clears', () => {
@@ -650,7 +650,7 @@ describe('PatternsLayerGroup canvas-contract round trips', () => {
     expect(patternDataMatch![1]).toBe('0001000000000000');
   });
 
-  it('tolerates unknown elements and attributes without corrupting known data', () => {
+  it('rejects unknown group elements and attributes before publication', () => {
     const elem = new Element('patternsLayerGroup');
     elem.setAttribute('name', 'Future Group');
     elem.setAttribute('futureAttr', 'keep');
@@ -667,14 +667,7 @@ describe('PatternsLayerGroup canvas-contract round trips', () => {
     layerEl.addElement('patternData').setText('1001');
     elem.addElement('noteProcessorChain');
 
-    const group = PatternsLayerGroup.loadFromXML(elem);
-    expect(group.getName()).toBe('Future Group');
-    expect(group.getPatternBeatsLength()).toBe(5);
-    expect(group[0]!.getName()).toBe('Row');
-    expect(group[0]!.isMuted()).toBe(true);
-    expect(group[0]!.getPatternData().isPatternSet(0)).toBe(true);
-    expect(group[0]!.getPatternData().isPatternSet(3)).toBe(true);
-    expect(group[0]!.getSoundObject().getName()).toBe('Source');
+    expect(() => PatternsLayerGroup.loadFromXML(elem)).toThrow();
   });
 
   it('supports layer removal and reordering (Array species safety)', () => {

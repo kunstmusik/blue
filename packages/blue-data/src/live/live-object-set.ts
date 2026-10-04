@@ -1,4 +1,7 @@
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext, requireXmlValue } from '../serialization/xml-load';
+import type { XmlDiagnosticSink } from '../serialization/xml-load';
+import { checkRoot, checkShape, readText } from '../utilities/xml';
 import { BlueDataObject } from '../blue-data-object';
 import { LiveObject } from './live-object';
 import { LiveObjectBins } from './live-object-bins';
@@ -34,31 +37,38 @@ export class LiveObjectSet implements BlueDataObject {
     return elem;
   }
 
-  static loadFromXML(data: Element, bins: LiveObjectBins): LiveObjectSet {
+  static loadFromXML(
+    data: Element,
+    bins: LiveObjectBins,
+    context?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): LiveObjectSet {
+    const ctx = context ?? new XmlLoadContext(data);
+    checkRoot(data, 'liveObjectSet', ctx);
+    checkShape(data, ['name'], ['liveObjectRef'], ctx, ['liveObjectRef']);
     const set = new LiveObjectSet();
-    const val = data.getAttribute('name');
-    if (val) {
-      set._name = val;
+    set._name = data.getAttribute('name') ?? '';
+    for (const node of data.getElements('liveObjectRef')) {
+      const id = readText(node, ctx);
+      if (id.trim() === '')
+        throw ctx.at(node).error({
+          code: 'value',
+          value: id,
+          message: 'Live set reference must be nonempty.',
+          recovery: 'Supply a saved Live object ID.',
+        });
+      set._liveObjectIds.push(id);
+      if (!bins.getLiveObjectByUniqueId(id))
+        ctx.at(node).diagnostic({
+          code: 'P-LIVE-UNRESOLVED-REF',
+          severity: 'warning',
+          value: id,
+          message: 'Saved Live set references a missing object.',
+          recovery:
+            'The ID is retained on save; applying this set has no effect for this missing target.',
+        });
     }
-
-    // Retain all saved-set identifiers losslessly, including references to
-    // LiveObjects that no longer exist. Java Blue discarded missing IDs on
-    // load; this parity pass retains them so legacy projects round-trip
-    // without silent data loss. Resolution against existing objects happens
-    // only when the set is applied (see resolveLiveObjects).
-    const ids: string[] = [];
-    const nodes = data.getElements();
-    while (nodes.hasMoreElements()) {
-      const node = nodes.next();
-      if (node.getName() === 'liveObjectRef') {
-        const uniqueId = node.getTextString();
-        if (uniqueId) {
-          ids.push(uniqueId);
-        }
-      }
-    }
-    set._liveObjectIds = ids;
-    return set;
+    return context ? set : requireXmlValue(ctx.result(set), sink);
   }
 
   deepCopy(): BlueDataObject {

@@ -7,16 +7,17 @@
 import { TempoMap } from './tempo-map';
 import { MeterMap } from './meter-map';
 import { Element } from '../serialization/xml-reader';
-
-function parseSmpteFrameRateNumber(rateText: string | null | undefined): number | null {
-  const normalized = rateText?.trim();
-  if (!normalized) return null;
-  // Handle legacy drop-frame string values
-  if (normalized === '29.97df') return 29.97;
-  if (normalized === '30df') return 30;
-  const rate = parseFloat(normalized);
-  return Number.isNaN(rate) ? null : rate;
-}
+import { XmlLoadContext, requireXmlValue } from '../serialization/xml-load';
+import type { XmlDiagnosticSink } from '../serialization/xml-load';
+import {
+  checkRoot,
+  checkShape,
+  readDouble,
+  readInt,
+  readText,
+  parseXmlNumber,
+} from '../utilities/xml';
+import { resolveSmpteRate } from './smpte-timecode';
 
 /** Default sample rate. */
 const DEFAULT_SAMPLE_RATE = 44100;
@@ -111,43 +112,120 @@ export class TimeContext {
     return elem;
   }
 
-  static loadFromXML(data: Element): TimeContext {
+  static loadFromXML(
+    data: Element,
+    context?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): TimeContext {
+    const operation = context ?? new XmlLoadContext(data);
+    checkRoot(data, 'timeContext', operation);
+    checkShape(
+      data,
+      [],
+      ['tempoMap', 'meterMap', 'tempo', 'sampleRate', 'ppq', 'smpteFrameRate'],
+      operation,
+    );
     const ctx = new TimeContext();
-
-    // Load tempo map
-    let tempoMapElem = data.getElement('tempoMap');
-    if (!tempoMapElem) {
-      // Try nested inside meterMap
-      const meterMapElem = data.getElement('meterMap');
-      if (meterMapElem) tempoMapElem = meterMapElem.getElement('tempoMap');
+    const rate = data.getElement('sampleRate');
+    if (rate) {
+      readInt(rate, operation, 1);
+      throw operation.at(rate).error({
+        code: 'reference',
+        member: 'sampleRate',
+        value: rate.getTextString(),
+        message: 'Historical sample rate needs enclosing project reconciliation.',
+        recovery:
+          'Load the complete project to transfer or reconcile its authoritative sample rate.',
+      });
     }
-    if (tempoMapElem) {
-      ctx.tempoMap = TempoMap.loadFromXML(tempoMapElem);
+    const ppq = data.getElement('ppq');
+    if (ppq) {
+      if (readInt(ppq, operation, 1) !== 960)
+        throw operation.at(ppq).error({
+          code: 'value',
+          value: ppq.getTextString(),
+          message: 'Custom historical PPQ is unsupported.',
+          recovery: 'Convert all project tick positions using a compatible historical editor.',
+        });
+      operation.at(ppq).diagnostic({
+        code: 'P-PPQ',
+        severity: 'warning',
+        value: ppq.getTextString(),
+        message: 'Historical PPQ 960 is redundant with the fixed tick resolution.',
+        recovery: 'Canonical save safely omits this redundant field.',
+      });
     }
-
-    // Also check simple <tempo> element
-    const tempoElem = data.getElement('tempo');
-    if (tempoElem && ctx.tempoMap.getTempo() === 60) {
-      ctx.tempoMap.setTempo(parseFloat(tempoElem.getTextString() ?? '60'));
+    const meter = data.getElement('meterMap');
+    const direct = data.getElement('tempoMap');
+    const nested = meter?.getElement('tempoMap');
+    if (direct) ctx.tempoMap = TempoMap.loadFromXML(direct, operation);
+    if (nested) {
+      const nestedMap = TempoMap.loadFromXML(nested, operation);
+      if (direct && nestedMap.saveAsXML().toXml() !== ctx.tempoMap.saveAsXML().toXml())
+        throw operation.at(nested).error({
+          code: 'conflict',
+          message: 'Direct and nested tempo maps disagree.',
+          recovery: 'Keep one consistent tempo map.',
+        });
+      ctx.tempoMap = nestedMap;
     }
-
-    // Load meter map
-    const meterMapElem = data.getElement('meterMap');
-    if (meterMapElem) {
-      ctx.meterMap = MeterMap.loadFromXML(meterMapElem);
+    const tempo = data.getElement('tempo');
+    if (tempo) {
+      const value = readDouble(tempo, operation);
+      if (value <= 0)
+        throw operation.at(tempo).error({
+          code: 'value',
+          value: tempo.getTextString(),
+          message: 'Tempo must be positive.',
+          recovery: 'Supply a positive BPM value.',
+        });
+      if (direct || nested)
+        throw operation.at(tempo).error({
+          code: 'conflict',
+          message: 'Scalar tempo competes with an explicit tempo map.',
+          recovery: 'Keep one tempo representation.',
+        });
+      ctx.tempoMap.setTempo(value);
+      ctx.tempoMap.setEnabled(true);
     }
-
-    // Legacy: ignore <sampleRate> element (not stored per Java design)
-    // const sampleRateElem = data.getElement('sampleRate');
-
-    const smpteElem = data.getElement('smpteFrameRate');
-    if (smpteElem) {
-      const parsedRate = parseSmpteFrameRateNumber(smpteElem.getTextString());
-      if (parsedRate !== null) {
-        ctx.smpteFrameRate = parsedRate;
-      }
+    if (meter) {
+      if (nested) {
+        const copy = meter.clone();
+        operation.anchor(copy, meter);
+        copy.removeElement('tempoMap');
+        ctx.meterMap = MeterMap.loadFromXML(copy, operation);
+      } else ctx.meterMap = MeterMap.loadFromXML(meter, operation);
     }
-
-    return ctx;
+    const fps = data.getElement('smpteFrameRate');
+    if (fps) {
+      const token = readText(fps, operation).trim();
+      const value = parseXmlNumber(
+        token === '29.97df' ? '29.97' : token === '30df' ? '30' : token,
+        operation.at(fps),
+      );
+      if (!resolveSmpteRate(value))
+        throw operation.at(fps).error({
+          code: 'value',
+          value: token,
+          message: 'Unsupported SMPTE frame rate.',
+          recovery: 'Choose a supported SMPTE frame rate.',
+        });
+      ctx.smpteFrameRate = value;
+    }
+    let previous = -Infinity;
+    for (const [index, point] of ctx.tempoMap.getTempoPoints().entries()) {
+      const beat = point.position.toBeats(ctx);
+      if (!Number.isFinite(beat) || beat < 0 || beat <= previous)
+        throw operation
+          .at((direct ?? nested)?.getElements('tempoPoint').toArray()[index] ?? data)
+          .error({
+            code: 'conflict',
+            message: 'Tempo points must have distinct ascending resolved positions.',
+            recovery: 'Correct tempo positions using the declared meter and time context.',
+          });
+      previous = beat;
+    }
+    ctx.tempoMap.recalculateBeatPositions(ctx);
+    return context ? ctx : requireXmlValue(operation.result(ctx), sink);
   }
 }

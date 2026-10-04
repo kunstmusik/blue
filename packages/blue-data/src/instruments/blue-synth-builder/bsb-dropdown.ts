@@ -1,3 +1,6 @@
+import { generatePrefixedUuid } from '../../utilities/uuid';
+import { XmlLoadContext } from '../../serialization/xml-load';
+import { readBoolean } from '../../utilities/xml';
 /**
  * BSBDropdown — dropdown selection list widget.
  * Mirrors the Java BSBDropdown class.
@@ -81,8 +84,8 @@ export class BSBDropdown extends BSBWidget {
     unit.addReplacementValue(this.objectName, item?.value ?? '0');
   }
 
-  loadFromXML(data: Element): void {
-    this.loadFromXMLCommon(data);
+  loadFromXML(data: Element, context = new XmlLoadContext(data)): void {
+    this.loadFromXMLCommon(data, context);
     const versionAttr = data.getAttribute('version');
     const parsedVersion = versionAttr ? Number.parseInt(versionAttr, 10) : 1;
     const version = Number.isFinite(parsedVersion) ? parsedVersion : 1;
@@ -101,7 +104,7 @@ export class BSBDropdown extends BSBWidget {
       }
     }
     const rand = data.getElement('randomizable');
-    if (rand) this.randomizable = rand.getTextString() === 'true';
+    if (rand) this.randomizable = readBoolean(rand, context);
     const listElem = data.getElement('bsbDropdownItemList');
     if (listElem) {
       const items = listElem.getElements('bsbDropdownItem');
@@ -110,7 +113,7 @@ export class BSBDropdown extends BSBWidget {
         this.dropdownItems.push({
           name: itemElem.getTextString('name') ?? 'name',
           value: itemElem.getTextString('value') ?? 'value',
-          uniqueId: itemElem.getAttribute('uniqueId') ?? '',
+          uniqueId: itemElem.getAttribute('uniqueId') || generatePrefixedUuid('dropdown'),
         });
       }
     }

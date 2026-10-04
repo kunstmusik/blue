@@ -1,3 +1,5 @@
+import type { XmlDiagnostic } from '../serialization/xml-load';
+
 export const LIBRARY_TYPES = ['instrument', 'udo', 'soundObject', 'effect'] as const;
 
 export type LibraryType = (typeof LIBRARY_TYPES)[number];
@@ -75,6 +77,7 @@ export interface ClassifiedLibraryPayload {
   readonly supportStatus: LibrarySupportStatus;
   readonly supportReasonCode: string | null;
   readonly supportMessage: string | null;
+  readonly diagnostics?: readonly XmlDiagnostic[];
   readonly rawXml: string;
   readonly rawHash: string;
   readonly canonicalContentHash: string;
@@ -109,7 +112,7 @@ export interface LegacyLibraryDocumentPlan {
   readonly folderCount: number;
   readonly itemCount: number;
   readonly unsupportedCount: number;
-  readonly diagnostics: readonly string[];
+  readonly diagnostics: readonly XmlDiagnostic[];
   readonly sourceRawHash: string;
 }
 

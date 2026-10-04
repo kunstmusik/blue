@@ -1,5 +1,7 @@
 import type { BlueDataObject } from '../blue-data-object';
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext } from '../serialization/xml-load';
+import { checkRoot, checkShape, readText } from '../utilities/xml';
 
 export const CLOJURE_PROJECT_DATA_BDO_TYPE = 'blue.clojure.project.ClojureProjectData';
 
@@ -30,24 +32,14 @@ export class ClojureLibraryEntry implements BlueDataObject {
     this.version = version;
   }
 
-  static loadFromXML(data: Element): ClojureLibraryEntry {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): ClojureLibraryEntry {
+    checkRoot(data, 'clojureLibraryEntry', context);
+    checkShape(data, [], ['coordinates', 'version'], context);
     const entry = new ClojureLibraryEntry();
-    const nodes = data.getElements();
-
-    while (nodes.hasMoreElements()) {
-      const node = nodes.next();
-      const nodeText = node.getTextString();
-
-      switch (node.getName()) {
-        case 'coordinates':
-          entry.setDependencyCoordinates(nodeText);
-          break;
-        case 'version':
-          entry.setVersion(nodeText);
-          break;
-      }
-    }
-
+    const coordinates = data.getElement('coordinates');
+    const version = data.getElement('version');
+    if (coordinates) entry.setDependencyCoordinates(readText(coordinates, context));
+    if (version) entry.setVersion(readText(version, context));
     return entry;
   }
 
@@ -110,17 +102,19 @@ export class ClojureProjectData implements BlueDataObject {
     return builder;
   }
 
-  static loadFromXML(data: Element): ClojureProjectData {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): ClojureProjectData {
+    checkShape(data, ['bdoType'], ['clojureLibraryEntry'], context, ['clojureLibraryEntry']);
+    if (!isClojureProjectDataElement(data))
+      throw context.at(data).error({
+        code: 'type',
+        member: '@bdoType',
+        value: data.getAttribute('bdoType') ?? '',
+        message: 'Unsupported project plugin type.',
+        recovery: 'Use a supported Clojure project payload.',
+      });
     const projectData = new ClojureProjectData();
-    const nodes = data.getElements();
-
-    while (nodes.hasMoreElements()) {
-      const node = nodes.next();
-      if (node.getName() === 'clojureLibraryEntry') {
-        projectData.addLibraryEntry(ClojureLibraryEntry.loadFromXML(node));
-      }
-    }
-
+    for (const node of data.getElements('clojureLibraryEntry'))
+      projectData.addLibraryEntry(ClojureLibraryEntry.loadFromXML(node, context));
     return projectData;
   }
 
@@ -140,7 +134,7 @@ export class ClojureProjectData implements BlueDataObject {
   }
 }
 
-export function isClojureProjectDataElement(element: Element | null): element is Element {
+export function isClojureProjectDataElement(element: Element | null): boolean {
   return (
     element !== null &&
     element.getName() === 'blueDataObject' &&
@@ -163,9 +157,9 @@ export function replaceClojureProjectDataInPluginData(
   pluginDataXml: Element[],
   projectData: ClojureProjectData | null,
 ): Element[] {
-  const nextPluginData: Element[] = pluginDataXml.filter(
-    (element) => !isClojureProjectDataElement(element),
-  );
+  const nextPluginData: Element[] = pluginDataXml
+    .filter((element) => !isClojureProjectDataElement(element))
+    .map((element) => element.clone());
 
   if (projectData) {
     nextPluginData.push(projectData.saveAsXML());

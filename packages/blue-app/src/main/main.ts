@@ -16,6 +16,8 @@ import { randomUUID } from 'node:crypto';
 
 import {
   BlueData,
+  type XmlDiagnostic,
+  XmlLoadError,
   BlueX7,
   Effect,
   PolyObject,
@@ -147,6 +149,8 @@ import {
   type UpdateOfferChoice,
 } from './open-example-project-flow';
 import {
+  prepareProjectXml,
+  formatProjectXmlDiagnostics,
   resolveProjectSaveDecision,
   runProjectFileReplacement,
   runTransactionalSaveAs,
@@ -3012,13 +3016,17 @@ async function openExampleProject(): Promise<boolean> {
 
     loadProjectFromFile: async (filePath) => {
       try {
-        const xml = fs.readFileSync(filePath, 'utf8');
-        const project = await BlueData.loadFromString(xml);
+        const project = await readProjectFromDisk(filePath);
         return { ok: true, project };
       } catch (err) {
         return {
           ok: false,
-          message: err instanceof Error ? err.message : String(err),
+          message:
+            err instanceof XmlLoadError
+              ? formatProjectXmlDiagnostics(err.diagnostics)
+              : err instanceof Error
+                ? err.message
+                : String(err),
         };
       }
     },
@@ -3224,7 +3232,16 @@ function isCurrentProjectFilePath(filePath: string): boolean {
  */
 async function readProjectFromDisk(filePath: string): Promise<BlueData> {
   const xml = fs.readFileSync(filePath, 'utf-8');
-  return BlueData.loadFromString(xml);
+  return prepareProjectXml(xml, filePath, presentProjectXmlWarnings);
+}
+
+async function presentProjectXmlWarnings(diagnostics: readonly XmlDiagnostic[]): Promise<void> {
+  const detail = formatProjectXmlDiagnostics(diagnostics);
+  if (process.env.BLUE_VERIFY_MODE === 'packaged-project') {
+    process.stderr.write(`[WARN] ${detail}\n`);
+    return;
+  }
+  dialog.showErrorBox('Project Compatibility Warnings', detail);
 }
 
 /**
@@ -3254,7 +3271,13 @@ async function installProjectData(data: BlueData, filePath: string | null): Prom
 }
 
 async function reportProjectLoadError(filePath: string, err: unknown): Promise<void> {
-  const message = `Failed to load ${path.basename(filePath)}:\n${err instanceof Error ? err.message : String(err)}`;
+  const detail =
+    err instanceof XmlLoadError
+      ? formatProjectXmlDiagnostics(err.diagnostics)
+      : err instanceof Error
+        ? err.message
+        : String(err);
+  const message = `Failed to load ${path.basename(filePath)}:\n${detail}`;
   if (process.env.BLUE_VERIFY_MODE === 'packaged-project') {
     process.stderr.write(`[FAIL] ${message}\n`);
   } else {
@@ -3274,7 +3297,8 @@ async function openProjectFile(filePath: string): Promise<boolean> {
     const outcome = await runProjectFileReplacement<BlueData>({
       selectFile: () => filePath,
       readFile: (sourcePath) => fs.readFileSync(sourcePath, 'utf-8'),
-      parseProject: (xml) => BlueData.loadFromString(xml),
+      parseProject: (xml, sourcePath) =>
+        prepareProjectXml(xml, sourcePath, presentProjectXmlWarnings),
       isSameFile: isCurrentProjectFilePath,
       preflight: () => canReplaceProjectWhileRenderActive(),
       confirmLibraryDraft: () => confirmLibraryDraftTransition('switchProject'),
@@ -3327,7 +3351,7 @@ async function runPackagedProjectVerificationAndExit(): Promise<never> {
       if (!getCurrentData()) return false;
       try {
         fs.writeFileSync(savePath, getCurrentData().saveToString(), 'utf8');
-        await BlueData.loadFromString(fs.readFileSync(savePath, 'utf8'));
+        await readProjectFromDisk(savePath);
         return true;
       } catch {
         return false;
@@ -5298,11 +5322,18 @@ ipcRegistration.handle('import-score-object', async (): Promise<ScoreObjectImpor
   const data = getCurrentData();
   if (!data) return { ok: false, error: 'No project is loaded.' };
   const score = data.getScore();
-  return prepareScoreObjectImport(
+  const prepared = prepareScoreObjectImport(
     xml,
     score.getTimeContext(),
     String(score.getTimeState().getTimeDisplay()),
+    { kind: 'soundObject', label: result.filePaths[0], nativePath: result.filePaths[0] },
   );
+  if (prepared.ok && prepared.diagnostics?.length)
+    dialog.showErrorBox(
+      'Sound Object Compatibility Warnings',
+      formatProjectXmlDiagnostics(prepared.diagnostics),
+    );
+  return prepared;
 });
 
 ipcRegistration.handle('read-csoundrc', () => {

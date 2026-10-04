@@ -1,142 +1,103 @@
-/**
- * MarkersList — holds timeline markers.
- * Mirrors the Java MarkersList class.
- *
- * Preserves marker child elements losslessly for round-trip compatibility.
- */
+/** Ordered timeline markers. XML is a boundary representation, never owned state. */
 import { Element } from './serialization/xml-reader';
 import { BlueDataObject } from './blue-data-object';
+import { XmlLoadContext } from './serialization/xml-load';
+import { checkRoot, checkShape, parseXmlNumber, readDouble } from './utilities/xml';
 import { TimePosition } from './time/time-position';
 
+type Marker = { name: string; time: TimePosition };
+
 export class MarkersList implements BlueDataObject {
-  private _rawChildren: Element[] = [];
-
-  private static readMarkerTimePosition(elem: Element): TimePosition {
-    const timeElement = elem.getElement('timePosition') ?? elem.getElement('time');
-
-    if (timeElement) {
-      if (timeElement.getAttributeValue('type') != null) {
-        return TimePosition.loadFromXML(timeElement);
-      }
-
-      const childText = timeElement.getTextString();
-      const childValue = childText ? parseFloat(childText) : 0;
-      return TimePosition.beats(Number.isFinite(childValue) ? childValue : 0);
-    }
-
-    const legacyText = elem.getAttribute('time') ?? elem.getTextString() ?? '0';
-    const legacyValue = parseFloat(legacyText);
-    return TimePosition.beats(Number.isFinite(legacyValue) ? legacyValue : 0);
-  }
-
-  private static writeMarkerTimePosition(elem: Element, position: TimePosition): void {
-    elem.removeAttribute('time');
-    elem.removeElements('time');
-    elem.removeElements('timePosition');
-    elem.setText('');
-    elem.addElement(position.saveAsXML().setName('time'));
-  }
+  private markers: Marker[] = [];
 
   constructor(other?: MarkersList) {
-    if (other) {
-      this._rawChildren = other._rawChildren.map((e) => e.clone());
-    }
+    // TimePosition is immutable; only the mutable marker records need copying.
+    if (other) this.markers = other.markers.map((marker) => ({ ...marker }));
   }
 
   size(): number {
-    return this._rawChildren.length;
+    return this.markers.length;
+  }
+
+  private static markerXml(marker: Marker): Element {
+    const element = new Element('marker');
+    element.setAttribute('name', marker.name);
+    element.addElement(marker.time.saveAsXML().setName('time'));
+    return element;
   }
 
   getMarker(index: number): Element | undefined {
-    return this._rawChildren[index];
+    const marker = this.markers[index];
+    return marker ? MarkersList.markerXml(marker) : undefined;
   }
 
   getMarkers(): Element[] {
-    return [...this._rawChildren];
+    return this.markers.map(MarkersList.markerXml);
   }
-
   getMarkerName(index: number): string {
-    const elem = this._rawChildren[index];
-    if (!elem) return '';
-    return elem.getAttribute('name') ?? '';
+    return this.markers[index]?.name ?? '';
   }
-
   setMarkerName(index: number, name: string): void {
-    const elem = this._rawChildren[index];
-    if (elem) {
-      elem.setAttribute('name', name);
-    }
+    if (this.markers[index]) this.markers[index].name = name;
   }
-
   getMarkerTime(index: number): number {
-    const elem = this._rawChildren[index];
-    if (!elem) return 0;
-    const timeElement = elem.getElement('timePosition') ?? elem.getElement('time');
-    if (timeElement?.getAttributeValue('type') != null) {
-      const position = TimePosition.loadFromXML(timeElement);
-      return position.getValue();
-    }
-
-    const timeText =
-      timeElement?.getTextString() ?? elem.getTextString() ?? elem.getAttribute('time') ?? '0';
-    return parseFloat(timeText) || 0;
+    return this.getMarkerTimePosition(index).getValue();
   }
-
   getMarkerTimePosition(index: number): TimePosition {
-    const elem = this._rawChildren[index];
-    if (!elem) return TimePosition.beats(0);
-    return MarkersList.readMarkerTimePosition(elem);
+    return this.markers[index]?.time ?? TimePosition.beats(0);
   }
-
   setMarkerTime(index: number, time: number): void {
-    const elem = this._rawChildren[index];
-    if (elem) {
-      elem.setText(String(time));
-    }
+    this.setMarkerTimePosition(index, TimePosition.beats(time));
   }
-
-  setMarkerTimePosition(index: number, position: TimePosition): void {
-    const elem = this._rawChildren[index];
-    if (elem) {
-      MarkersList.writeMarkerTimePosition(elem, position);
-    }
+  setMarkerTimePosition(index: number, time: TimePosition): void {
+    if (this.markers[index]) this.markers[index].time = time;
   }
-
   addMarker(name: string, time: number): number {
-    const elem = new Element('marker');
-    elem.setAttribute('name', name);
-    elem.setText(String(time));
-    this._rawChildren.push(elem);
-    return this._rawChildren.length - 1;
+    return this.addMarkerPosition(name, TimePosition.beats(time));
   }
-
-  addMarkerPosition(name: string, position: TimePosition): number {
-    const elem = new Element('marker');
-    elem.setAttribute('name', name);
-    MarkersList.writeMarkerTimePosition(elem, position);
-    this._rawChildren.push(elem);
-    return this._rawChildren.length - 1;
+  addMarkerPosition(name: string, time: TimePosition): number {
+    this.markers.push({ name, time });
+    return this.markers.length - 1;
   }
-
   removeMarker(index: number): void {
-    if (index >= 0 && index < this._rawChildren.length) {
-      this._rawChildren.splice(index, 1);
-    }
+    if (index >= 0 && index < this.markers.length) this.markers.splice(index, 1);
   }
-
   saveAsXML(): Element {
-    const elem = new Element('markersList');
-    for (const child of this._rawChildren) {
-      elem.addElement(child);
-    }
-    return elem;
+    const element = new Element('markersList');
+    for (const marker of this.markers) element.addElement(MarkersList.markerXml(marker));
+    return element;
   }
 
-  static loadFromXML(data: Element): MarkersList {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): MarkersList {
+    checkRoot(data, 'markersList', context);
+    checkShape(data, [], ['marker'], context, ['marker']);
     const list = new MarkersList();
-    const children = data.getElements();
-    while (children.hasMoreElements()) {
-      list._rawChildren.push(children.next());
+    for (const marker of data.getElements('marker')) {
+      // Direct numeric text is an explicitly supported historical scalar form.
+      checkShape(marker, ['name', 'time'], ['time', 'timePosition'], context, [], true);
+      const positions: TimePosition[] = [];
+      for (const child of marker.getElements()) {
+        positions.push(
+          child.getAttribute('type') !== null
+            ? TimePosition.loadFromXML(child, context)
+            : TimePosition.beats(readDouble(child, context)),
+        );
+      }
+      const attribute = marker.getAttribute('time');
+      if (attribute !== null)
+        positions.push(TimePosition.beats(parseXmlNumber(attribute, context.at(marker), '@time')));
+      if (marker.getTextString().trim() !== '')
+        positions.push(
+          TimePosition.beats(parseXmlNumber(marker.getTextString(), context.at(marker))),
+        );
+      const time = positions[0] ?? TimePosition.beats(0);
+      if (positions.some((position) => position.saveAsXML().toXml() !== time.saveAsXML().toXml()))
+        throw context.at(marker).error({
+          code: 'conflict',
+          message: 'Marker time representations disagree.',
+          recovery: 'Keep one authoritative marker time or equal aliases.',
+        });
+      list.addMarkerPosition(marker.getAttribute('name') ?? '', time);
     }
     return list;
   }

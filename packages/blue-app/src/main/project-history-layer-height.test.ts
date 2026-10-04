@@ -101,12 +101,12 @@ describe('ProjectHistory layer height commit, undo, and redo (T015, T023, T031)'
       expect(getLayerSelectionId(redoneTrack)).toBe(selId);
     });
 
-    it('restores raw malformed customHeight attribute on undo', async () => {
+    it('restores accepted exact customHeight attribute on undo', async () => {
       const xml = `
 <blueData>
   <score>
     <polyObject name="Root Score">
-      <soundLayer name="Layer 1" heightIndex="1" customHeight="malformed-value" />
+      <soundLayer name="Layer 1" heightIndex="1" customHeight="57" />
     </polyObject>
   </score>
 </blueData>`.trim();
@@ -128,7 +128,7 @@ describe('ProjectHistory layer height commit, undo, and redo (T015, T023, T031)'
       const selId = assignLayerSelectionId(soundLayer);
       const groupId = assignLayerGroupId(polyGroup);
       const initialXml = live().saveToString();
-      expect(initialXml).toContain('customHeight="malformed-value"');
+      expect(initialXml).toContain('customHeight="57"');
 
       // Resize to preset 66px -> removes customHeight and clears raw attribute
       const commit = await history.commit(
@@ -145,13 +145,13 @@ describe('ProjectHistory layer height commit, undo, and redo (T015, T023, T031)'
 
       expect(commit.status).toBe('committed');
       if (commit.status !== 'committed') throw new Error('Expected committed');
-      expect(live().saveToString()).not.toContain('malformed-value');
+      expect(live().saveToString()).not.toContain('customHeight="57"');
 
-      // Undo -> restores exact prior XML including malformed attribute
+      // Undo -> restores exact prior XML including the accepted exact attribute
       const undo = await history.undo(context.nextUndoRequest(docId, commit.revision));
       expect(undo.status).toBe('committed');
       expect(live().saveToString()).toBe(initialXml);
-      expect(live().saveToString()).toContain('customHeight="malformed-value"');
+      expect(live().saveToString()).toContain('customHeight="57"');
     });
 
     it('preserves sound objects and stable identities through commit and undo', async () => {

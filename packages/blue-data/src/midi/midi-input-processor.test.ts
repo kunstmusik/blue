@@ -41,10 +41,10 @@ describe('MidiInputProcessor', () => {
     });
 
     it('loads velMapping', () => {
-      const xml = '<midiInputProcessor><velMapping>RAW</velMapping></midiInputProcessor>';
+      const xml = '<midiInputProcessor><velMapping>AMP</velMapping></midiInputProcessor>';
       const elem = Element.parse(xml);
       const mip = MidiInputProcessor.loadFromXML(elem);
-      expect(mip.getVelocityMapping()).toBe('RAW');
+      expect(mip.getVelocityMapping()).toBe('AMP');
     });
 
     it('loads pitchConstant', () => {
@@ -89,14 +89,14 @@ describe('MidiInputProcessor', () => {
     it('saves all fields', () => {
       const mip = new MidiInputProcessor();
       mip.setKeyMapping('MIDI');
-      mip.setVelocityMapping('RAW');
+      mip.setVelocityMapping('AMP');
       mip.setPitchConstant('gk_pitch');
       mip.setAmpConstant('gk_amp');
 
       const xml = mip.saveAsXML();
       expect(xml.getName()).toBe('midiInputProcessor');
       expect(xml.getElement('keyMapping')?.getTextString()).toBe('MIDI');
-      expect(xml.getElement('velMapping')?.getTextString()).toBe('RAW');
+      expect(xml.getElement('velMapping')?.getTextString()).toBe('AMP');
       expect(xml.getElement('pitchConstant')?.getTextString()).toBe('gk_pitch');
       expect(xml.getElement('ampConstant')?.getTextString()).toBe('gk_amp');
       expect(xml.getElement('scale')).not.toBeNull();
@@ -123,7 +123,7 @@ describe('MidiInputProcessor', () => {
     it('preserves data through save/load', () => {
       const original = new MidiInputProcessor();
       original.setKeyMapping('MIDI');
-      original.setVelocityMapping('RAW');
+      original.setVelocityMapping('AMP');
       original.setPitchConstant('gk_pitch');
       original.setAmpConstant('gk_amp');
 
@@ -131,7 +131,7 @@ describe('MidiInputProcessor', () => {
       const loaded = MidiInputProcessor.loadFromXML(xml);
 
       expect(loaded.getKeyMapping()).toBe('MIDI');
-      expect(loaded.getVelocityMapping()).toBe('RAW');
+      expect(loaded.getVelocityMapping()).toBe('AMP');
       expect(loaded.getPitchConstant()).toBe('gk_pitch');
       expect(loaded.getAmpConstant()).toBe('gk_amp');
     });
@@ -160,7 +160,7 @@ describe('MidiInputProcessor', () => {
     it('copies all fields', () => {
       const original = new MidiInputProcessor();
       original.setKeyMapping('MIDI');
-      original.setVelocityMapping('RAW');
+      original.setVelocityMapping('AMP');
       original.setPitchConstant('gk_pitch');
       const scale = new Scale();
       scale.scaleName = 'Copy Test';
@@ -168,7 +168,7 @@ describe('MidiInputProcessor', () => {
 
       const copy = original.deepCopy() as MidiInputProcessor;
       expect(copy.getKeyMapping()).toBe('MIDI');
-      expect(copy.getVelocityMapping()).toBe('RAW');
+      expect(copy.getVelocityMapping()).toBe('AMP');
       expect(copy.getPitchConstant()).toBe('gk_pitch');
       expect(copy.getScale()).not.toBeNull();
       expect(copy.getScale()!.scaleName).toBe('Copy Test');

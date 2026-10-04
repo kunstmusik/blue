@@ -4,13 +4,12 @@ import { Element } from '../serialization/xml-reader';
 import { migrateAudioLayersToTracks } from './migrate-audio-layers-to-tracks';
 
 describe('migrateAudioLayersToTracks', () => {
-  it('converts Java-style containers while preserving modeled fields and unknown siblings', () => {
+  it('converts Java-style containers while preserving modeled fields', () => {
     const root = Element.parse(`
       <blueData version="2.3.0">
         <score>
           <audioLayerGroup name="Java" uniqueId="group-java">
             <defaultHeightIndex>2</defaultHeightIndex>
-            <unknownSibling value="keep"><nestedUnknown /></unknownSibling>
             <audioLayers>
               <audioLayer name="Clip" uniqueId="track-java" muted="true" solo="false">
                 <audioClip><name>clip</name></audioClip>
@@ -32,7 +31,6 @@ describe('migrateAudioLayersToTracks', () => {
     expect(track.hasElement('audioClip')).toBe(true);
     expect(track.hasElement('parameterId')).toBe(true);
     expect(track.getElements('noteProcessorChain').size).toBe(1);
-    expect(group.hasElement('unknownSibling')).toBe(true);
 
     const migratedXml = root.toXml();
     expect(migrateAudioLayersToTracks(root)).toBe(false);
@@ -46,7 +44,6 @@ describe('migrateAudioLayersToTracks', () => {
           <trackLayerGroup uniqueId="already-used"><tracks><track uniqueId="canonical" /></tracks></trackLayerGroup>
           <audioLayerGroup>
             <audioLayer name="Direct A" uniqueId="canonical" />
-            <unknownSibling />
             <layer name="Direct B" />
           </audioLayerGroup>
         </score>
@@ -62,7 +59,6 @@ describe('migrateAudioLayersToTracks', () => {
       2,
     );
     expect(migratedTracks.every((track) => track.hasElement('noteProcessorChain'))).toBe(true);
-    expect(group.hasElement('unknownSibling')).toBe(true);
   });
 
   it('merges transitional audioLayers into an existing tracks container', () => {
@@ -72,7 +68,7 @@ describe('migrateAudioLayersToTracks', () => {
           <audioLayerGroup uniqueId="mixed-group">
             <tracks><track uniqueId="existing-track" /></tracks>
             <audioLayers>
-              <audioLayer uniqueId="legacy-track"><unknownChild /></audioLayer>
+              <audioLayer uniqueId="legacy-track"><parameterId>known</parameterId></audioLayer>
             </audioLayers>
           </audioLayerGroup>
         </score>
@@ -84,7 +80,80 @@ describe('migrateAudioLayersToTracks', () => {
     expect(group.hasElement('audioLayers')).toBe(false);
     const tracks = group.getElement('tracks')!.getElements('track').toArray();
     expect(tracks).toHaveLength(2);
-    expect(tracks[1]!.hasElement('unknownChild')).toBe(true);
+    expect(tracks[1]!.getTextString('parameterId')).toBe('known');
+  });
+
+  it('preserves and validates a supported Track processor chain while merging containers', () => {
+    const root = Element.parse(`
+      <blueData version="2.3.0">
+        <score>
+          <audioLayerGroup uniqueId="mixed-group">
+            <tracks>
+              <track uniqueId="current-track">
+                <noteProcessorChain>
+                  <noteProcessor type="blue.noteProcessor.AddProcessor">
+                    <pfield>4</pfield><value>2</value>
+                  </noteProcessor>
+                </noteProcessorChain>
+              </track>
+            </tracks>
+            <audioLayers><audioLayer uniqueId="legacy-track"/></audioLayers>
+          </audioLayerGroup>
+        </score>
+      </blueData>
+    `);
+    const originalChain = root
+      .getElement('score')!
+      .getElement('audioLayerGroup')!
+      .getElement('tracks')!
+      .getElement('track')!
+      .getElement('noteProcessorChain')!
+      .toXml();
+
+    expect(migrateAudioLayersToTracks(root)).toBe(true);
+    const normalizedGroup = root.getElement('score')!.getElement('trackLayerGroup')!;
+    const tracks = normalizedGroup.getElement('tracks')!.getElements('track').toArray();
+    expect(tracks).toHaveLength(2);
+    expect(tracks[0]!.getElement('noteProcessorChain')!.toXml()).toBe(originalChain);
+
+    const loaded = BlueData.loadFromString(root.toXml());
+    const saved = loaded.saveToString();
+    expect(saved).toContain('<noteProcessor type="blue.noteProcessor.AddProcessor">');
+    expect(BlueData.loadFromString(saved).saveToString()).toBe(saved);
+  });
+
+  it.each([
+    '<noteProcessorChain future="yes"/>',
+    '<noteProcessorChain><unknown/></noteProcessorChain>',
+    '<noteProcessorChain/><noteProcessorChain/>',
+    '<noteProcessorChain><noteProcessor type="blue.noteProcessor.AddProcessor" future="yes"><pfield>4</pfield><value>2</value></noteProcessor></noteProcessorChain>',
+  ])('rejects invalid Track processor chains before migration mutates the source: %s', (chain) => {
+    const root = Element.parse(
+      `<blueData><score><audioLayerGroup><tracks><track>${chain}</track></tracks><audioLayers><audioLayer/></audioLayers></audioLayerGroup></score></blueData>`,
+    );
+    const before = root.toXml();
+    expect(() => migrateAudioLayersToTracks(root)).toThrow();
+    expect(root.toXml()).toBe(before);
+  });
+
+  it.each([
+    '<instrument type="blue.orchestra.GenericInstrument"/>',
+    '<noteProcessorChain><noteProcessor type="unsupported"/></noteProcessorChain>',
+    '<unknownChild/>',
+  ])('rejects meaningful legacy layer data instead of removing %s', (content) => {
+    const root = Element.parse(
+      `<blueData><score><audioLayerGroup><audioLayers><audioLayer>${content}</audioLayer></audioLayers></audioLayerGroup></score></blueData>`,
+    );
+    expect(() => migrateAudioLayersToTracks(root)).toThrow();
+  });
+
+  it('does not rewrite foreign payloads with audio-layer names', () => {
+    const root = Element.parse(
+      '<blueData><pluginData><foreign><score><audioLayerGroup/></score></foreign></pluginData><score/></blueData>',
+    );
+    const before = root.toXml();
+    expect(migrateAudioLayersToTracks(root)).toBe(false);
+    expect(root.toXml()).toBe(before);
   });
 
   it('loads historical XML into Track-only runtime data and saves canonical XML', () => {

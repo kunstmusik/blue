@@ -44,8 +44,11 @@ Do not manually create worktrees beside the repository or in a tool-specific def
 - Electron main owns filesystem, process, Java-runtime, engine, and other host APIs. Keep
   renderer code on typed, serializable preload/IPC contracts.
 - `BlueData` is the canonical in-memory project owner and `.blue` XML is the canonical
-  project format. Preserve unknown project data and route project mutations through the
-  existing document bridge.
+  project format. Load expected data, migrate documented historical forms, and diagnose
+  unexpected elements/attributes/types/values under explicit serialization contracts. Reject
+  unexpected input unless a documented rule permits a warning with safe save behavior;
+  do not silently discard meaningful content or accept arbitrary XML through opaque bags.
+  Route project mutations through the existing document bridge.
 
 ## Licensing and source provenance
 
@@ -70,14 +73,34 @@ Do not manually create worktrees beside the repository or in a tool-specific def
 ## Java-first parity
 
 - Blue TypeScript must load supported Java Blue projects; Java Blue is not required to load or
-  preserve Blue TypeScript extensions. Avoid raw-value/presence shadow state for unreleased
-  TypeScript-only fields unless a feature contract calls for it.
+  preserve Blue TypeScript extensions. Supported fields need authoritative model representations;
+  raw-value/presence shadow state or retained deferred payloads require an explicit compatibility
+  contract. An unavailable runtime does not make a known serialized format unexpected.
 - For behavior mismatches, rendering failures, XML compatibility, formatting, or parity bugs,
   consult the Java implementation before changing TypeScript.
 - Primary references, when available, are `~/work/nbprojects/blue/blue-core` and
   `~/work/nbprojects/blue/blue-ui-core`.
 - Compare Java-generated artifacts such as `~/work/blue/demo2026/01.csd`; document any
   intentional TypeScript divergence and cover it with a focused test.
+- For serialization changes, research Java loader/writer history and record revisions and the
+  evidence for accepted historical forms. Check standalone disk, library, and BlueShare payloads
+  as well as projects; incidental Java tolerance is not a compatibility contract.
+
+## Serialization and migration boundaries
+
+- Cross-section or project-graph restructures belong in project migrators operating on raw XML
+  before deserialization and canonical-form validation.
+- Class-local aliases, value conversions, defaults, and resource subtree changes belong at the
+  class loading boundary or in a shared resource migration reached by all relevant entry points.
+  Instruments and effects may load independently from disk, libraries, or BlueShare; their
+  local compatibility must not require a `BlueData` load or unavailable project version.
+- Give each migration one owner, scope, ordering, and conflict rule. Canonical data must remain
+  stable when normalization is reapplied; cover composed migrations and standalone roots.
+- Diagnostics must name the source/resource, element path, offending member/value, severity,
+  and recovery behavior. Failed acceptance must leave active documents, libraries, and source
+  files unchanged. Warnings must not enable an ordinary save after meaningful data is discarded.
+- Preserve significant text/code whitespace and avoid mutable XML aliases across loader input,
+  serialization output, canonical models, copies, and history mementos.
 
 ## Project history and undo/redo
 

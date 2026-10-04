@@ -10,6 +10,16 @@ import { NoteList } from './note-list';
 import { TimeContext } from '../time/time-context';
 import { CompileData } from '../compile-data';
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
+import {
+  checkShape,
+  readText,
+  readInt,
+  readBoolean,
+  readEnum,
+  parseXmlBoolean,
+} from '../utilities/xml';
+import { BASIC_SOUND_OBJECT_CHILDREN } from './sound-object-utilities';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
 import { TimeBehavior } from './time-behavior';
@@ -176,26 +186,61 @@ export class Instance extends AbstractSoundObject {
     return elem;
   }
 
-  static loadFromXML(data: Element, objRefMap?: ObjRefLoadMap): Instance {
+  static loadFromXML(
+    data: Element,
+    objRefMap?: ObjRefLoadMap,
+    context?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): Instance {
+    const ctx = context ?? new XmlLoadContext(data);
+    const type = data.getAttribute('type');
+    if (
+      data.getName() !== 'soundObject' ||
+      type === null ||
+      !['Instance', 'blue.soundObject.Instance'].includes(type)
+    )
+      throw ctx.at(data).error({
+        code: 'type',
+        member: '@type',
+        value: type ?? '',
+        message: 'Unsupported Instance type.',
+        recovery: 'Supply a supported concrete SoundObject type.',
+      });
+    checkShape(data, ['type'], [...BASIC_SOUND_OBJECT_CHILDREN, ...['soundObjectReference']], ctx);
     const obj = new Instance();
-    initBasicFromXML(obj, data);
+    initBasicFromXML(obj, data, ctx);
 
     const refNode = data.getElement('soundObjectReference');
-    if (refNode) {
-      const id = refNode.getAttribute('soundObjectLibraryID') ?? 'null';
-      if (id === 'null' || !id) {
-        // Unresolved reference — store as library id for later resolution
-        obj._libraryId = '';
-      } else if (objRefMap && objRefMap.has(id)) {
-        obj._soundObject = objRefMap.get(id) as SoundObject;
-        obj._libraryId = id;
-      } else {
-        obj._libraryId = id;
-        // Will be resolved in second pass by caller
-      }
+    if (!refNode)
+      throw ctx.error({
+        code: 'cardinality',
+        member: 'soundObjectReference',
+        message: 'Instance requires a reference declaration.',
+        recovery: 'Supply an explicit library reference or null sentinel.',
+      });
+    checkShape(refNode, ['soundObjectLibraryID'], [], ctx);
+    const id = refNode.getAttribute('soundObjectLibraryID');
+    if (id === null || id.length === 0)
+      throw ctx.at(refNode).error({
+        code: 'value',
+        member: '@soundObjectLibraryID',
+        value: id ?? '',
+        message: 'Missing instance library reference ID.',
+        recovery: 'Supply a nonempty reference ID or null sentinel.',
+      });
+    if (id !== 'null') {
+      obj._libraryId = id;
+      if (objRefMap?.has(id)) obj._soundObject = objRefMap.get(id) as SoundObject;
+      else
+        throw ctx.at(refNode).error({
+          code: 'reference',
+          value: id,
+          message: 'Instance dependency is unresolved.',
+          recovery: 'Load this resource with an accepted library reference map before insertion.',
+        });
     }
 
-    return obj;
+    return context ? obj : requireXmlValue(ctx.result(obj), sink);
   }
 
   override deepCopy(): SoundObject {

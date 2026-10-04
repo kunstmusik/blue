@@ -474,3 +474,13 @@ describe('isCodeRepositoryNode guard', () => {
     expect(isCodeRepositoryNode(cyclic)).toBe(false);
   });
 });
+
+it('preserves ordered CDATA snippet text and rejects meaningful container CDATA', () => {
+  const result = parseCodeRepositoryXml(
+    '<customAccelerators><customAccelerator><name>Test</name><signature> a<![CDATA[ < b ]]> c\n</signature></customAccelerator></customAccelerators>',
+  );
+  expect(result.root.children?.[0].code).toBe(' a < b  c\n');
+  expect(() =>
+    parseCodeRepositoryXml('<customAccelerators><![CDATA[unexpected]]></customAccelerators>'),
+  ).toThrow();
+});

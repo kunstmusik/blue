@@ -10,6 +10,9 @@
 import { TimeBase } from './time-base';
 import { TimeContext } from './time-context';
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext } from '../serialization/xml-load';
+import { checkShape } from '../utilities/xml';
+import { readTimeNumber } from './time-xml';
 
 /** Default PPQ (pulses per quarter note). */
 const DEFAULT_PPQ = 960;
@@ -424,80 +427,73 @@ export class TimeDuration {
     return elem;
   }
 
-  static loadFromXML(data: Element): TimeDuration {
-    const type = data.getAttributeValue('type') ?? '';
-
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): TimeDuration {
+    const type = data.getAttribute('type') ?? '';
     switch (type) {
       case 'BEATS':
       case 'CSOUND_BEATS':
       case 'DurationBeats': {
-        const csoundBeats = parseFloat(
-          data.getTextString('csoundBeats') ?? data.getTextString() ?? '0',
-        );
-        return TimeDuration.beats(csoundBeats);
+        checkShape(data, ['type'], ['csoundBeats'], context);
+        return TimeDuration.beats(readTimeNumber(data, context, ['csoundBeats']));
       }
-
       case 'BBT':
       case 'DurationBBT': {
-        const bar = parseInt(data.getTextString('bars') ?? data.getTextString('bar') ?? '0', 10);
-        const beat = parseInt(data.getTextString('beats') ?? data.getTextString('beat') ?? '0', 10);
-        const ticks = parseInt(data.getTextString('ticks') ?? '0', 10);
-        return TimeDuration.bbt(bar, beat, ticks);
+        checkShape(data, ['type'], ['bars', 'bar', 'beats', 'beat', 'ticks'], context);
+        return TimeDuration.bbt(
+          readTimeNumber(data, context, ['bars', 'bar'], true, 0),
+          readTimeNumber(data, context, ['beats', 'beat'], true, 0),
+          readTimeNumber(data, context, ['ticks'], true, 0, Number.MAX_SAFE_INTEGER),
+        );
       }
-
       case 'BBST':
       case 'DurationBBST': {
-        const bar = parseInt(data.getTextString('bars') ?? data.getTextString('bar') ?? '0', 10);
-        const beat = parseInt(data.getTextString('beats') ?? data.getTextString('beat') ?? '0', 10);
-        const sixteenth = parseInt(data.getTextString('sixteenth') ?? '0', 10);
-        const ticks = parseInt(data.getTextString('ticks') ?? '0', 10);
-        return TimeDuration.bbst(bar, beat, sixteenth, ticks);
+        checkShape(data, ['type'], ['bars', 'bar', 'beats', 'beat', 'sixteenth', 'ticks'], context);
+        return TimeDuration.bbst(
+          readTimeNumber(data, context, ['bars', 'bar'], true, 0),
+          readTimeNumber(data, context, ['beats', 'beat'], true, 0),
+          readTimeNumber(data, context, ['sixteenth'], true, 0, 3),
+          readTimeNumber(data, context, ['ticks'], true, 0, Number.MAX_SAFE_INTEGER),
+        );
       }
-
       case 'BBF':
       case 'DurationBBF': {
-        const bar = parseInt(data.getTextString('bars') ?? data.getTextString('bar') ?? '0', 10);
-        const beat = parseInt(data.getTextString('beats') ?? data.getTextString('beat') ?? '0', 10);
-        const fraction = parseInt(data.getTextString('fraction') ?? '0', 10);
-        return TimeDuration.bbf(bar, beat, fraction);
+        checkShape(data, ['type'], ['bars', 'bar', 'beats', 'beat', 'fraction'], context);
+        return TimeDuration.bbf(
+          readTimeNumber(data, context, ['bars', 'bar'], true, 0),
+          readTimeNumber(data, context, ['beats', 'beat'], true, 0),
+          readTimeNumber(data, context, ['fraction'], true, 0, 99),
+        );
       }
-
       case 'TIME':
       case 'DurationTime': {
-        const hours = parseInt(data.getTextString('hours') ?? '0', 10);
-        const minutes = parseInt(data.getTextString('minutes') ?? '0', 10);
-        const seconds = parseInt(data.getTextString('seconds') ?? '0', 10);
-        const milliseconds = parseInt(data.getTextString('milliseconds') ?? '0', 10);
-        return TimeDuration.timeValue(hours, minutes, seconds, milliseconds);
+        checkShape(data, ['type'], ['hours', 'minutes', 'seconds', 'milliseconds'], context);
+        return TimeDuration.timeValue(
+          readTimeNumber(data, context, ['hours'], true, 0),
+          readTimeNumber(data, context, ['minutes'], true, 0, 59),
+          readTimeNumber(data, context, ['seconds'], true, 0, 59),
+          readTimeNumber(data, context, ['milliseconds'], true, 0, 999),
+        );
       }
-
       case 'SECONDS':
       case 'DurationSeconds': {
-        const totalSeconds = parseFloat(
-          data.getTextString('totalSeconds') ??
-            data.getTextString('seconds') ??
-            data.getTextString() ??
-            '0',
-        );
-        return TimeDuration.seconds(totalSeconds);
+        checkShape(data, ['type'], ['totalSeconds', 'seconds'], context);
+        return TimeDuration.seconds(readTimeNumber(data, context, ['totalSeconds', 'seconds']));
       }
-
       case 'FRAME':
       case 'DurationFrames': {
-        const frameCount = parseFloat(
-          data.getTextString('frameCount') ??
-            data.getTextString('frameNumber') ??
-            data.getTextString() ??
-            '0',
+        checkShape(data, ['type'], ['frameCount', 'frameNumber'], context);
+        return TimeDuration.frames(
+          readTimeNumber(data, context, ['frameCount', 'frameNumber'], true, 0),
         );
-        return TimeDuration.frames(frameCount);
       }
-
-      default: {
-        const text = data.getTextString();
-        const value = text ? parseFloat(text) : 0;
-        return TimeDuration.beats(isNaN(value) ? 0 : value);
-      }
+      default:
+        throw context.at(data).error({
+          code: 'type',
+          member: '@type',
+          value: type,
+          message: 'Unknown or missing typed time discriminator.',
+          recovery: 'Choose a supported time type and supply its required fields.',
+        });
     }
   }
 }

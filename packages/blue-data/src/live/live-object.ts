@@ -1,10 +1,19 @@
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext } from '../serialization/xml-load';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { BlueDataObject } from '../blue-data-object';
-import { readInt, writeInt, readBoolean, writeBoolean } from '../utilities/xml';
+import {
+  checkRoot,
+  checkShape,
+  readInt,
+  writeInt,
+  readBoolean,
+  writeBoolean,
+} from '../utilities/xml';
 import { loadSoundObjectFromXML } from '../sound-objects/sound-object-registry';
 import '../sound-objects/register-sound-object-types';
 import type { SoundObject } from '../sound-objects/sound-object';
+import type { CopyMode } from '../deep-copyable';
 
 function generateUniqueId(): string {
   return `${Date.now()}-${Math.floor(Math.random() * 2147483647)}`;
@@ -88,9 +97,28 @@ export class LiveObject implements BlueDataObject {
     return elem;
   }
 
-  static loadFromXML(data: Element, objRefMap?: ObjRefLoadMap): LiveObject {
+  static loadFromXML(
+    data: Element,
+    objRefMap?: ObjRefLoadMap,
+    context = new XmlLoadContext(data),
+  ): LiveObject {
+    checkRoot(data, 'liveObject', context);
+    checkShape(
+      data,
+      ['uniqueId'],
+      ['keyTrigger', 'midiTrigger', 'enabled', 'soundObject'],
+      context,
+    );
     const obj = new LiveObject();
     const uniqueId = data.getAttribute('uniqueId');
+    if (uniqueId !== null && uniqueId.trim() === '')
+      throw context.at(data).error({
+        code: 'value',
+        member: '@uniqueId',
+        value: uniqueId,
+        message: 'Live object ID must be nonempty.',
+        recovery: 'Supply a nonempty ID or omit a historical ID.',
+      });
     if (uniqueId) {
       obj._uniqueId = uniqueId;
     }
@@ -100,17 +128,16 @@ export class LiveObject implements BlueDataObject {
       const name = node.getName();
       switch (name) {
         case 'keyTrigger':
-          obj._keyTrigger = readInt(node);
+          obj._keyTrigger = readInt(node, context, -1, 2147483647);
           break;
         case 'midiTrigger':
-          obj._midiTrigger = readInt(node);
+          obj._midiTrigger = readInt(node, context, -1, 127);
           break;
         case 'enabled':
-          obj._enabled = readBoolean(node);
+          obj._enabled = readBoolean(node, context);
           break;
         case 'soundObject': {
-          const sObj = loadSoundObjectFromXML(node, objRefMap);
-          if (sObj) obj._soundObject = sObj;
+          obj._soundObject = loadSoundObjectFromXML(node, objRefMap, context);
           break;
         }
       }
@@ -118,14 +145,14 @@ export class LiveObject implements BlueDataObject {
     return obj;
   }
 
-  deepCopy(): BlueDataObject {
+  deepCopy(mode: CopyMode = 'duplication'): BlueDataObject {
     const copy = new LiveObject();
     copy._uniqueId = this._uniqueId;
     copy._keyTrigger = this._keyTrigger;
     copy._midiTrigger = this._midiTrigger;
     copy._enabled = this._enabled;
     if (this._soundObject) {
-      copy._soundObject = this._soundObject.deepCopy() as SoundObject;
+      copy._soundObject = this._soundObject.deepCopy(mode);
     }
     return copy;
   }

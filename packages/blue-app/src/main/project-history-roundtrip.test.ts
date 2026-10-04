@@ -12,6 +12,7 @@ import {
   BlueSynthBuilder,
   Channel,
   Effect,
+  FrozenSoundObject,
   GenericInstrument,
   GenericScore,
   Instance,
@@ -29,6 +30,10 @@ import {
   TimeBehavior,
   TimeDuration,
   TimePosition,
+  Sound,
+  ScoreTrack,
+  Preset,
+  PresetGroup,
 } from '@blue/data';
 import { ProjectSession } from './project-session';
 import type { ProjectSession as ProjectSessionType } from './project-session';
@@ -2862,6 +2867,201 @@ describe('Project patch round trips through real ProjectHistory (T117)', () => {
       (candidate) => candidate.parameter.getUniqueId() === parameterId,
     );
     expect(after?.parameter.getPoints()).toEqual(pointsBefore);
+  });
+
+  it('preserves nested BSB identities and library references through ProjectHistory (T047/T048)', async () => {
+    const data = new BlueData();
+    const makeSound = (prefix: string): Sound => {
+      const sound = new Sound();
+      const builder = new BlueSynthBuilder();
+      const knob = new BSBKnob();
+      knob.id = `${prefix}-widget`;
+      knob.objectName = `${prefix}-value`;
+      builder.getGraphicInterface().getRootGroup().addChild(knob);
+      builder.getParameters()[0]!.setUniqueId(`${prefix}-parameter`);
+      const preset = new Preset();
+      preset.uniqueId = `${prefix}-preset`;
+      const presets = new PresetGroup();
+      presets.presets.push(preset);
+      presets.currentPresetUniqueId = preset.getUniqueId();
+      builder.setPresetGroup(presets);
+      sound.setBlueSynthBuilder(builder);
+      return sound;
+    };
+
+    data.getSoundObjectLibrary().addObject(makeSound('library'));
+    const builderObject = new ObjectBuilder();
+    const builderKnob = new BSBKnob();
+    builderKnob.id = 'object-builder-widget';
+    builderKnob.objectName = 'object-builder-value';
+    builderObject.getGraphicInterface().getRootGroup().addChild(builderKnob);
+    const builderPreset = new Preset();
+    builderPreset.uniqueId = 'object-builder-preset';
+    const builderPresetGroup = new PresetGroup();
+    builderPresetGroup.presets.push(builderPreset);
+    builderPresetGroup.currentPresetUniqueId = builderPreset.getUniqueId();
+    builderObject.setPresetGroup(builderPresetGroup);
+    data.getSoundObjectLibrary().addObject(builderObject);
+
+    const forwardReference = new Instance();
+    const target = new GenericScore();
+    target.setName('History reference target');
+    target.setScoreText('i1 0 2 440');
+    forwardReference.setSoundObject(target);
+    data.getSoundObjectLibrary().addObject(forwardReference);
+    data.getSoundObjectLibrary().addObject(target);
+
+    const frozen = new FrozenSoundObject();
+    frozen.setNumChannels(2);
+    const frozenReference = new Instance();
+    frozenReference.setSoundObject(target);
+    frozen.setFrozenSoundObject(frozenReference);
+    data.getSoundObjectLibrary().addObject(frozen);
+
+    const trackReference = new Instance();
+    trackReference.setSoundObject(target);
+    const track = new ScoreTrack();
+    track.push(trackReference);
+    const tracks = new TrackLayerGroup();
+    tracks.push(track);
+    data.getScore().push(tracks);
+
+    const patterns = new PatternsLayerGroup();
+    const patternReferenceLayer = patterns.newLayerAt(0);
+    const patternReference = new Instance();
+    patternReference.setSoundObject(target);
+    patternReferenceLayer.setSoundObject(patternReference);
+    const patternSoundLayer = patterns.newLayerAt(1);
+    patternSoundLayer.setSoundObject(makeSound('pattern'));
+    data.getScore().push(patterns);
+    const patternGroupId = assignLayerGroupId(patterns);
+    const patternLayerId = assignPatternLayerId(patternReferenceLayer);
+
+    const liveObject = new LiveObject();
+    liveObject.setUniqueId('history-live-object');
+    liveObject.setSoundObject(makeSound('live'));
+    const liveBins = data.getLiveData().getLiveObjectBins();
+    liveBins.setLiveObject(0, 0, liveObject);
+
+    const assertGraph = (current: BlueData): void => {
+      const library = current.getSoundObjectLibrary();
+      const sound = library.getObject(0) as Sound;
+      const soundKnob = sound
+        .getBlueSynthBuilder()
+        .getGraphicInterface()
+        .getRootGroup()
+        .getChildren()[0]!;
+      expect(soundKnob.id).toBe('library-widget');
+      expect(sound.getBlueSynthBuilder().getParameters()[0]!.getUniqueId()).toBe(
+        'library-parameter',
+      );
+      expect(sound.getBlueSynthBuilder().getPresetGroup()!.presets[0]!.getUniqueId()).toBe(
+        'library-preset',
+      );
+
+      const objectBuilder = library.getObject(1) as ObjectBuilder;
+      expect(objectBuilder.getGraphicInterface().getRootGroup().getChildren()[0]?.id).toBe(
+        'object-builder-widget',
+      );
+      expect(objectBuilder.getPresetGroup().presets[0]?.getUniqueId()).toBe(
+        'object-builder-preset',
+      );
+
+      const targetCopy = library.getObject(3)!;
+      expect((library.getObject(2) as Instance).getSoundObject()).toBe(targetCopy);
+      expect(
+        (
+          (library.getObject(4) as FrozenSoundObject).getFrozenSoundObject() as Instance
+        ).getSoundObject(),
+      ).toBe(targetCopy);
+      expect(((current.getScore()[1] as TrackLayerGroup)[0]![0] as Instance).getSoundObject()).toBe(
+        targetCopy,
+      );
+
+      const copiedPatterns = current.getScore()[2] as PatternsLayerGroup;
+      expect((copiedPatterns[0]!.getSoundObject() as Instance).getSoundObject()).toBe(targetCopy);
+      const patternSound = copiedPatterns[1]!.getSoundObject() as Sound;
+      const patternKnob = patternSound
+        .getBlueSynthBuilder()
+        .getGraphicInterface()
+        .getRootGroup()
+        .getChildren()[0]!;
+      expect(patternKnob.id).toBe('pattern-widget');
+      expect(patternSound.getBlueSynthBuilder().getParameters()[0]!.getUniqueId()).toBe(
+        'pattern-parameter',
+      );
+      expect(patternSound.getBlueSynthBuilder().getPresetGroup()!.presets[0]!.getUniqueId()).toBe(
+        'pattern-preset',
+      );
+
+      const currentLive = current.getLiveData().getLiveObjectBins().getLiveObject(0, 0)!;
+      const liveSound = currentLive.getSoundObject() as Sound;
+      const liveKnob = liveSound
+        .getBlueSynthBuilder()
+        .getGraphicInterface()
+        .getRootGroup()
+        .getChildren()[0]!;
+      expect(currentLive.getUniqueId()).toBe('history-live-object');
+      expect(liveKnob.id).toBe('live-widget');
+      expect(liveSound.getBlueSynthBuilder().getParameters()[0]!.getUniqueId()).toBe(
+        'live-parameter',
+      );
+      expect(liveSound.getBlueSynthBuilder().getPresetGroup()!.presets[0]!.getUniqueId()).toBe(
+        'live-preset',
+      );
+    };
+
+    const session = new ProjectSession();
+    session.replace(data, '/tmp/history-copy-owners.blue');
+    const history = new ProjectHistory({ session, publishUpdated: () => {} });
+    const context = new MockHistoryContext('ctx-history-copy-owners');
+    const docId = session.read().documentId!;
+    const live = () => session.read().data!;
+    history.checkpointSave();
+    const originalXml = live().saveToString();
+    assertGraph(live());
+    expect(history.isDirty()).toBe(false);
+
+    const edit = await history.commit(
+      context.nextCommitRequest(docId, session.read().revision, 'Activate Pattern Cell', [
+        {
+          score: {
+            type: 'updatePatternCells',
+            groupId: patternGroupId,
+            changes: [{ layerId: patternLayerId, cellIndex: 0, active: true }],
+          },
+        },
+      ]),
+    );
+    expect(edit.status).toBe('committed');
+    if (edit.status !== 'committed') return;
+    const committedXml = live().saveToString();
+    expect(committedXml).not.toBe(originalXml);
+    expect(history.read().undoLabel).toBe('Activate Pattern Cell');
+    expect((live().getScore()[2] as PatternsLayerGroup)[0]!.getPatternData().isPatternSet(0)).toBe(
+      true,
+    );
+    expect(history.isDirty()).toBe(true);
+    assertGraph(live());
+
+    const undo = await history.undo(context.nextUndoRequest(docId, edit.revision));
+    expect(undo.status).toBe('committed');
+    expect(live().saveToString()).toBe(originalXml);
+    expect(history.read().redoLabel).toBe('Activate Pattern Cell');
+    expect((live().getScore()[2] as PatternsLayerGroup)[0]!.getPatternData().isPatternSet(0)).toBe(
+      false,
+    );
+    expect(history.isDirty()).toBe(false);
+    assertGraph(live());
+
+    const redo = await history.redo(context.nextRedoRequest(docId, session.read().revision));
+    expect(redo.status).toBe('committed');
+    expect(live().saveToString()).toBe(committedXml);
+    expect((live().getScore()[2] as PatternsLayerGroup)[0]!.getPatternData().isPatternSet(0)).toBe(
+      true,
+    );
+    expect(history.isDirty()).toBe(true);
+    assertGraph(live());
   });
 
   it('preserves BSB slider identities and values through dropdown history copies (T135)', async () => {

@@ -1,3 +1,5 @@
+import { XmlLoadContext } from '../serialization/xml-load';
+import { validateProcessorXml } from './xml-policy';
 import { NoteProcessor } from './note-processor';
 import { NoteList } from '../sound-objects/note-list';
 import { Element } from '../serialization/xml-reader';
@@ -35,7 +37,8 @@ export class Code extends NoteProcessor {
     return elem;
   }
 
-  static loadFromXML(data: Element): Code {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): Code {
+    validateProcessorXml(data, 'Code', context);
     const proc = new Code();
     const code = data.getTextString('code');
     if (code !== null) proc._code = code;

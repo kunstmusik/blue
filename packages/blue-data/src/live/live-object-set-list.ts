@@ -1,4 +1,7 @@
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext, requireXmlValue } from '../serialization/xml-load';
+import type { XmlDiagnosticSink } from '../serialization/xml-load';
+import { checkRoot, checkShape } from '../utilities/xml';
 import { BlueDataObject } from '../blue-data-object';
 import { LiveObjectSet } from './live-object-set';
 import { LiveObjectBins } from './live-object-bins';
@@ -60,16 +63,19 @@ export class LiveObjectSetList implements BlueDataObject {
     return elem;
   }
 
-  static loadFromXML(data: Element, bins: LiveObjectBins): LiveObjectSetList {
+  static loadFromXML(
+    data: Element,
+    bins: LiveObjectBins,
+    context?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): LiveObjectSetList {
+    const ctx = context ?? new XmlLoadContext(data);
+    checkRoot(data, 'liveObjectSetList', ctx);
+    checkShape(data, [], ['liveObjectSet'], ctx, ['liveObjectSet']);
     const list = new LiveObjectSetList();
-    const nodes = data.getElements();
-    while (nodes.hasMoreElements()) {
-      const node = nodes.next();
-      if (node.getName() === 'liveObjectSet') {
-        list._sets.push(LiveObjectSet.loadFromXML(node, bins));
-      }
-    }
-    return list;
+    for (const node of data.getElements('liveObjectSet'))
+      list._sets.push(LiveObjectSet.loadFromXML(node, bins, ctx));
+    return context ? list : requireXmlValue(ctx.result(list), sink);
   }
 
   deepCopy(): BlueDataObject {

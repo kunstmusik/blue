@@ -6,6 +6,8 @@
  * 6/8 time has numBeats=6, beatLength=8.
  */
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext } from '../serialization/xml-load';
+import { checkRoot, checkShape, readInt } from '../utilities/xml';
 
 export class Meter {
   readonly numBeats: number;
@@ -61,9 +63,14 @@ export class Meter {
     return elem;
   }
 
-  static loadFromXML(data: Element): Meter {
-    const numBeats = parseInt(data.getTextString('numBeats') ?? '4', 10);
-    const beatLength = parseInt(data.getTextString('beatLength') ?? '4', 10);
-    return new Meter(numBeats || 4, beatLength || 4);
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): Meter {
+    checkRoot(data, 'meter', context);
+    checkShape(data, [], ['numBeats', 'beatLength'], context);
+    const numBeats = data.getElement('numBeats');
+    const beatLength = data.getElement('beatLength');
+    return new Meter(
+      numBeats ? readInt(numBeats, context, 1) : 4,
+      beatLength ? readInt(beatLength, context, 1) : 4,
+    );
   }
 }

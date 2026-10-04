@@ -1,9 +1,12 @@
+import { XmlLoadContext } from '../../serialization/xml-load';
+import { readBoolean } from '../../utilities/xml';
 /**
  * BSBKnob — rotary control widget.
  * Mirrors the Java BSBKnob class.
  */
 import { Element } from '../../serialization/xml-reader';
 import { BSBWidget } from './bsb-widget';
+import { validateBsbFont } from './bsb-xml';
 import { formatBlueNumber } from '../../utilities/number-format';
 
 export interface BSBFont {
@@ -15,6 +18,7 @@ export interface BSBFont {
 export function loadFontFromXML(data: Element | null): BSBFont {
   const font: BSBFont = { name: 'Roboto', size: 12, style: 0 };
   if (!data) return font;
+  validateBsbFont(data);
   const name = data.getTextString('name');
   if (name) font.name = name;
   const size = data.getTextString('size');
@@ -62,23 +66,24 @@ export class BSBKnob extends BSBWidget {
     }
   }
 
-  loadFromXML(data: Element): void {
-    this.loadFromXMLCommon(data);
+  loadFromXML(data: Element, context = new XmlLoadContext(data)): void {
+    this.loadFromXMLCommon(data, context);
     const versionAttribute = data.getAttribute('version');
+    const version = versionAttribute === null ? 1 : Number(versionAttribute);
     const w = data.getTextString('knobWidth');
     if (w) this.knobWidth = parseInt(w, 10);
     const vde = data.getElement('valueDisplayEnabled');
-    if (vde) this.valueDisplayEnabled = vde.getTextString() === 'true';
+    if (vde) this.valueDisplayEnabled = readBoolean(vde, context);
     const rand = data.getElement('randomizable');
-    if (rand) this.randomizable = rand.getTextString() === 'true';
+    if (rand) this.randomizable = readBoolean(rand, context);
     const lbl = data.getTextString('label');
     if (lbl !== null) this.label = lbl;
     const le = data.getElement('labelEnabled');
-    this.labelEnabled = le ? le.getTextString() === 'true' : false;
+    this.labelEnabled = le ? readBoolean(le, context) : false;
     const fontElem = data.getElement('font');
     if (fontElem) this.labelFont = loadFontFromXML(fontElem);
 
-    if (versionAttribute === '1') {
+    if (version === 1) {
       const range = this.maximum - this.minimum;
       this.value = this.value * range + this.minimum;
     }

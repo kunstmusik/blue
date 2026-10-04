@@ -7,12 +7,19 @@
  * each PatternLayer repeats its SoundObject at active pattern positions.
  */
 import { PatternLayer } from './pattern-layer';
+import type { CopyMode } from '../../deep-copyable';
 import { LayerGroup } from '../../score/layers/layer-group';
 import { NoteProcessorChain } from '../../note-processors/note-processor-chain';
 import { NoteList } from '../../sound-objects/note-list';
 import { TimeContext } from '../../time/time-context';
 import { CompileData } from '../../compile-data';
 import { ScoreGenerationException } from '../../score/score-generation-exception';
+import {
+  XmlLoadContext,
+  requireXmlValue,
+  type XmlDiagnosticSink,
+} from '../../serialization/xml-load';
+import { checkRoot, checkShape, readInt } from '../../utilities/xml';
 import { Element } from '../../serialization/xml-reader';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../../serialization/obj-ref-map';
 import {
@@ -29,14 +36,14 @@ export class PatternsLayerGroup extends Array<PatternLayer> implements LayerGrou
   private _patternBeatsLength = 4;
   private _npc = new NoteProcessorChain();
 
-  constructor(other?: PatternsLayerGroup) {
+  constructor(other?: PatternsLayerGroup, mode: CopyMode = 'duplication') {
     super();
     if (other) {
       this._name = other._name;
       this._patternBeatsLength = other._patternBeatsLength;
       this._npc = new NoteProcessorChain(other._npc);
       for (const pl of other) {
-        this.push(pl.deepCopy());
+        this.push(pl.deepCopy(mode));
       }
     }
   }
@@ -125,7 +132,20 @@ export class PatternsLayerGroup extends Array<PatternLayer> implements LayerGrou
     return root;
   }
 
-  static loadFromXML(data: Element, objRefMap?: ObjRefLoadMap): PatternsLayerGroup {
+  static loadFromXML(
+    data: Element,
+    objRefMap?: ObjRefLoadMap,
+    providedContext?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): PatternsLayerGroup {
+    const context = providedContext ?? new XmlLoadContext(data);
+    checkRoot(data, 'patternsLayerGroup', context);
+    checkShape(
+      data,
+      ['name'],
+      ['patternBeatsLength', 'patternLayers', 'noteProcessorChain'],
+      context,
+    );
     const group = new PatternsLayerGroup();
 
     const name = data.getAttribute('name');
@@ -135,21 +155,22 @@ export class PatternsLayerGroup extends Array<PatternLayer> implements LayerGrou
     while (nodes.hasMoreElements()) {
       const node = nodes.next();
       if (node.getName() === 'patternBeatsLength') {
-        group._patternBeatsLength = parseInt(node.getTextString(), 10);
+        group._patternBeatsLength = readInt(node, context, 1);
       } else if (node.getName() === 'patternLayers') {
+        checkShape(node, [], ['patternLayer'], context, ['patternLayer']);
         const patternNodes = node.getElements();
         while (patternNodes.hasMoreElements()) {
           const patternNode = patternNodes.next();
           if (patternNode.getName() === 'patternLayer') {
-            group.push(PatternLayer.loadFromXML(patternNode, objRefMap));
+            group.push(PatternLayer.loadFromXML(patternNode, objRefMap, context));
           }
         }
       } else if (node.getName() === 'noteProcessorChain') {
-        group._npc = NoteProcessorChain.loadFromXML(node);
+        group._npc = NoteProcessorChain.loadFromXML(node, context);
       }
     }
 
-    return group;
+    return providedContext ? group : requireXmlValue(context.result(group), sink);
   }
 
   // ─── LayerGroup operations ───
@@ -185,8 +206,8 @@ export class PatternsLayerGroup extends Array<PatternLayer> implements LayerGrou
     // No-op for pattern layers
   }
 
-  deepCopy(): PatternsLayerGroup {
-    return new PatternsLayerGroup(this);
+  deepCopy(mode: CopyMode = 'duplication'): PatternsLayerGroup {
+    return new PatternsLayerGroup(this, mode);
   }
 
   /** Get the maximum pattern index across all layers. */

@@ -320,13 +320,13 @@ For the current resume state, parity investigations, and next debugging targets,
 
 ### Key Design Decisions
 
-| Decision                     | Rationale                                                                                                                                                                     |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Electron (not Tauri)**     | Blue-engine communicates via ZMQ — Node.js talks to it directly. No Rust FFI needed.                                                                                          |
-| **Universal `@blue/data`**   | Zero Node.js built-ins. Works in browser and Node for future web app.                                                                                                         |
-| **XML serialization**        | Must match Java `electric.xml` format exactly for bi-directional `.blue` compatibility.                                                                                       |
-| **Migration on load**        | XML-level upgrades (like Java) before deserialization — handles structural schema changes.                                                                                    |
-| **Host-injected JVM helper** | Electron main owns the Java helper and injects an abstract runtime contract into `@blue/data`; hosts without Java preserve project metadata and report unavailable execution. |
+| Decision                     | Rationale                                                                                                                                                                            |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Electron (not Tauri)**     | Blue-engine communicates via ZMQ — Node.js talks to it directly. No Rust FFI needed.                                                                                                 |
+| **Universal `@blue/data`**   | Zero Node.js built-ins. Works in browser and Node for future web app.                                                                                                                |
+| **XML serialization**        | Load supported Java `.blue` projects and standalone resources through explicit current/historical contracts; diagnose unexpected data. Java need not preserve TypeScript extensions. |
+| **Migration on load**        | Project structural upgrades run on XML before deserialization; class-local compatibility also works for standalone resources.                                                        |
+| **Host-injected JVM helper** | Electron main owns the Java helper and injects an abstract runtime contract into `@blue/data`; hosts without Java preserve project metadata and report unavailable execution.        |
 
 ### Data Flow
 

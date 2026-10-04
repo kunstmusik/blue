@@ -12,6 +12,8 @@ import { TimeDuration } from '../time/time-duration';
 import { TimeBehavior } from './time-behavior';
 import { NoteProcessorChain } from '../note-processors/note-processor-chain';
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext } from '../serialization/xml-load';
+import { parseXmlInteger, readDouble, readInt, readText } from '../utilities/xml';
 
 /**
  * Interface for objects that have the basic sound object properties.
@@ -41,147 +43,126 @@ export interface BasicSoundObject {
  * @param sObj The sound object to populate
  * @param data The XML element containing the sound object data
  */
-export function initBasicFromXML(sObj: BasicSoundObject, data: Element): void {
-  // ─── Name ───
-  const name = data.getTextString('name');
-  if (name) sObj.setName(name);
+export const BASIC_SOUND_OBJECT_CHILDREN = [
+  'name',
+  'startTime',
+  'startTimePosition',
+  'startTimeUnit',
+  'subjectiveDuration',
+  'subjectiveDurationTD',
+  'subjectiveDurationUnit',
+  'durationUnit',
+  'backgroundColor',
+  'timeBehavior',
+  'repeatPoint',
+  'noteProcessorChain',
+] as const;
 
-  // ─── Start Time (3 formats) ───
-  const startTimeElement = data.getElement('startTime');
-  if (startTimeElement) {
-    const typeAttr = startTimeElement.getAttributeValue('type');
-    if (typeAttr) {
-      // Format 1: New nested format with type attribute
-      sObj.setStartTime(TimePosition.loadFromXML(startTimeElement));
-    } else {
-      // Format 3: Old plain text format
-      const text = startTimeElement.getTextString();
-      if (text) {
-        sObj.setStartTime(TimePosition.beats(parseFloat(text)));
-      }
-    }
-  } else {
-    // Format 2: Legacy startTimePosition tag
-    const startPosElement = data.getElement('startTimePosition');
-    if (startPosElement) {
-      const typeAttr = startPosElement.getAttributeValue('type');
-      if (typeAttr) {
-        sObj.setStartTime(TimePosition.loadFromXML(startPosElement));
-      } else {
-        const text = startPosElement.getTextString();
-        if (text) {
-          sObj.setStartTime(TimePosition.beats(parseFloat(text)));
-        }
-      }
-    }
+/** Common local fields are checked without claiming fields owned by concrete subclasses. */
+export function initBasicFromXML(
+  sObj: BasicSoundObject,
+  data: Element,
+  context = new XmlLoadContext(data),
+): void {
+  for (const field of BASIC_SOUND_OBJECT_CHILDREN) {
+    const elements = [...data.getElements(field)];
+    if (elements.length > 1)
+      throw context.at(elements[1]).error({
+        code: 'cardinality',
+        member: field,
+        message: `Duplicate SoundObject field ${field}.`,
+        recovery: 'Keep one physical field before coalescing aliases.',
+      });
   }
+  const name = data.getElement('name');
+  if (name) sObj.setName(readText(name, context));
 
-  // ─── Subjective Duration (3 formats) ───
-  const durElement = data.getElement('subjectiveDuration');
-  if (durElement) {
-    const typeAttr = durElement.getAttributeValue('type');
-    if (typeAttr) {
-      // Format 1: New nested format
-      sObj.setSubjectiveDuration(TimeDuration.loadFromXML(durElement));
-    } else {
-      // Format 3: Old plain text
-      const text = durElement.getTextString();
-      if (text) {
-        sObj.setSubjectiveDuration(TimeDuration.beats(parseFloat(text)));
-      }
-    }
-  } else {
-    // Format 2: Legacy subjectiveDurationTD tag
-    const durTDElement = data.getElement('subjectiveDurationTD');
-    if (durTDElement) {
-      const typeAttr = durTDElement.getAttributeValue('type');
-      if (typeAttr) {
-        sObj.setSubjectiveDuration(TimeDuration.loadFromXML(durTDElement));
-      } else {
-        const text = durTDElement.getTextString();
-        if (text) {
-          sObj.setSubjectiveDuration(TimeDuration.beats(parseFloat(text)));
-        }
-      }
-    } else {
-      // Legacy: subjectiveDurationUnit (TimePosition used as duration)
-      const durUnitElement = data.getElement('subjectiveDurationUnit');
-      if (durUnitElement) {
-        const typeAttr = durUnitElement.getAttributeValue('type');
-        if (typeAttr) {
-          // Load as TimePosition, extract beat value, create Duration
-          const pos = TimePosition.loadFromXML(durUnitElement);
-          sObj.setSubjectiveDuration(TimeDuration.beats(pos.getValue()));
-        } else {
-          const text = durUnitElement.getTextString();
-          if (text) {
-            sObj.setSubjectiveDuration(TimeDuration.beats(parseFloat(text)));
-          }
-        }
-      }
-    }
-  }
+  const normalizeUnit = (element: Element): Element => {
+    const type = element.getAttribute('type');
+    const types: Record<string, string> = {
+      BeatTime: 'BEATS',
+      TimeValue: 'TIME',
+      FrameValue: 'FRAME',
+    };
+    if (type === null || !types[type])
+      throw context.at(element).error({
+        code: 'type',
+        member: '@type',
+        value: type ?? '',
+        message: 'Unsupported development-era TimeUnit representation.',
+        recovery:
+          'Convert this time form in a compatible historical editor; no default value was substituted.',
+      });
+    const copy = element.clone();
+    copy.setAttribute('type', types[type]);
+    context.anchor(copy, element);
+    return copy;
+  };
+  const position = (element: Element): TimePosition => {
+    if (element.getName() === 'startTimeUnit')
+      return TimePosition.loadFromXML(normalizeUnit(element), context);
+    if (element.getName() === 'startTime' && element.getAttribute('type') === null)
+      return TimePosition.beats(readDouble(element, context));
+    return TimePosition.loadFromXML(element, context);
+  };
+  const duration = (element: Element): TimeDuration => {
+    if (element.getName() === 'durationUnit' || element.getName() === 'subjectiveDurationUnit')
+      return TimeDuration.loadFromXML(normalizeUnit(element), context);
+    if (
+      element.getAttribute('type') === null &&
+      (element.getName() === 'subjectiveDuration' || element.getName() === 'repeatPoint')
+    )
+      return TimeDuration.beats(readDouble(element, context));
+    return TimeDuration.loadFromXML(element, context);
+  };
+  const coalesce = <T extends TimePosition | TimeDuration>(
+    fields: readonly string[],
+    load: (element: Element) => T,
+  ): T | undefined => {
+    const elements = fields.flatMap((field) => [...data.getElements(field)]);
+    const values = elements.map(load);
+    if (values.some((value) => value.saveAsXML().toXml() !== values[0].saveAsXML().toXml()))
+      throw context.at(elements[1]).error({
+        code: 'conflict',
+        message: 'SoundObject time aliases disagree.',
+        recovery: 'Keep one canonical time representation or equal aliases.',
+      });
+    return values[0];
+  };
+  const start = coalesce(['startTime', 'startTimePosition', 'startTimeUnit'], position);
+  const interval = coalesce(
+    ['subjectiveDuration', 'subjectiveDurationTD', 'subjectiveDurationUnit', 'durationUnit'],
+    duration,
+  );
+  if (start) sObj.setStartTime(start);
+  if (interval) sObj.setSubjectiveDuration(interval);
 
-  // ─── Time Behavior ───
-  // Java uses ordinals: NOT_SUPPORTED=-1, SCALE=0, REPEAT_CLASSIC=1, NONE=2, REPEAT=3
-  const tbStr = data.getTextString('timeBehavior');
-  if (tbStr) {
-    if (Object.values(TimeBehavior).includes(tbStr as TimeBehavior)) {
-      sObj.setTimeBehavior(tbStr as TimeBehavior);
-    } else {
-      // Legacy numeric format
-      const tbNum = parseInt(tbStr, 10);
-      switch (tbNum) {
-        case -1:
-          sObj.setTimeBehavior(TimeBehavior.NOT_SUPPORTED);
-          break;
-        case 0:
-          sObj.setTimeBehavior(TimeBehavior.SCALE);
-          break;
-        case 1:
-          sObj.setTimeBehavior(TimeBehavior.REPEAT_CLASSIC);
-          break;
-        case 3:
-          sObj.setTimeBehavior(TimeBehavior.REPEAT);
-          break;
-        case 2:
-          sObj.setTimeBehavior(TimeBehavior.NONE);
-          break;
-      }
-    }
+  const behavior = data.getElement('timeBehavior');
+  if (behavior) {
+    const text = readText(behavior, context);
+    const ordinals = [
+      TimeBehavior.NOT_SUPPORTED,
+      TimeBehavior.SCALE,
+      TimeBehavior.REPEAT_CLASSIC,
+      TimeBehavior.NONE,
+      TimeBehavior.REPEAT,
+    ];
+    sObj.setTimeBehavior(
+      Object.values(TimeBehavior).includes(text as TimeBehavior)
+        ? (text as TimeBehavior)
+        : ordinals[parseXmlInteger(text, context.at(behavior), -1, 3) + 1],
+    );
   }
-
-  // ─── Background Color ───
-  const colorStr = data.getTextString('backgroundColor');
-  if (colorStr) {
-    sObj.setBackgroundColor(parseInt(colorStr, 10));
+  const color = data.getElement('backgroundColor');
+  if (color) sObj.setBackgroundColor(readInt(color, context, -2147483648, 4294967295) | 0);
+  const repeat = data.getElement('repeatPoint');
+  if (repeat) {
+    if (repeat.getAttribute('type') === null && readDouble(repeat, context) === -1)
+      sObj.setRepeatPoint(null);
+    else sObj.setRepeatPoint(duration(repeat));
   }
-
-  // ─── Repeat Point ───
-  // Java: only set repeatPoint if value > 0.0; -1 means "no repeat" → null
-  const rpElement = data.getElement('repeatPoint');
-  if (rpElement) {
-    const typeAttr = rpElement.getAttributeValue('type');
-    if (typeAttr) {
-      sObj.setRepeatPoint(TimeDuration.loadFromXML(rpElement));
-    } else {
-      const text = rpElement.getTextString();
-      if (text) {
-        const rpVal = parseFloat(text);
-        if (rpVal > 0.0) {
-          sObj.setRepeatPoint(TimeDuration.beats(rpVal));
-        } else {
-          sObj.setRepeatPoint(null);
-        }
-      }
-    }
-  }
-
-  // ─── Note Processor Chain ───
-  const npcElement = data.getElement('noteProcessorChain');
-  if (npcElement) {
-    sObj.setNoteProcessorChain(NoteProcessorChain.loadFromXML(npcElement));
-  }
+  const chain = data.getElement('noteProcessorChain');
+  if (chain) sObj.setNoteProcessorChain(NoteProcessorChain.loadFromXML(chain, context));
 }
 
 function timeBehaviorToType(tb: TimeBehavior): number {
@@ -208,7 +189,7 @@ export function getBasicXML(sObj: BasicSoundObject, javaType: string): Element {
   elem.addElement(sObj.getStartTime().saveAsXML().setName('startTime'));
   elem.addElement(sObj.getSubjectiveDuration().saveAsXML().setName('subjectiveDuration'));
   elem.addElement('name').setText(sObj.getName());
-  elem.addElement('backgroundColor').setText(sObj.getBackgroundColor().toString());
+  elem.addElement('backgroundColor').setText((sObj.getBackgroundColor() | 0).toString());
 
   const tb = sObj.getTimeBehavior();
   if (tb !== TimeBehavior.NOT_SUPPORTED) {

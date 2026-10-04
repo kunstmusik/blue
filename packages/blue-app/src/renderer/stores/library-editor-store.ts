@@ -1,3 +1,4 @@
+import { formatLibraryError, formatXmlDiagnostics } from '../../shared/xml-diagnostics';
 import { create } from 'zustand';
 import type {
   LibraryEditorConflictDecision,
@@ -65,7 +66,7 @@ export const useLibraryEditorStore = create<LibraryEditorState>((set, get) => ({
     get().initialize();
     const result = await window.blueAPI.openLibraryItemEditor({ key, pinned });
     if (!result.ok) {
-      set({ error: result.error.message });
+      set({ error: formatLibraryError(result.error) });
       return null;
     }
     set((state) => ({
@@ -78,6 +79,8 @@ export const useLibraryEditorStore = create<LibraryEditorState>((set, get) => ({
       ]),
       error: null,
     }));
+    if (result.value.document.diagnostics?.length)
+      set({ error: formatXmlDiagnostics(result.value.document.diagnostics) });
     return result.value;
   },
 
@@ -95,20 +98,20 @@ export const useLibraryEditorStore = create<LibraryEditorState>((set, get) => ({
             sessions: { ...state.sessions, [sessionId]: result.value },
             error: null,
           }
-        : { loadingSessionIds, error: result.error.message };
+        : { loadingSessionIds, error: formatLibraryError(result.error) };
     });
     return result.ok ? result.value : null;
   },
 
   patch: async (sessionId, patch) => {
     const result = await window.blueAPI.patchLibraryEditorSession({ sessionId, ...patch });
-    if (!result.ok) return set({ error: result.error.message });
+    if (!result.ok) return set({ error: formatLibraryError(result.error) });
     set((state) => ({ sessions: { ...state.sessions, [sessionId]: result.value }, error: null }));
   },
 
   save: async (sessionId) => {
     const result = await window.blueAPI.saveLibraryEditorSession(sessionId);
-    if (!result.ok) return set({ error: result.error.message });
+    if (!result.ok) return set({ error: formatLibraryError(result.error) });
     set((state) => ({
       sessions: { ...state.sessions, [sessionId]: result.value.session },
       error: result.value.status === 'saved' ? null : `Library item is ${result.value.status}.`,
@@ -117,20 +120,20 @@ export const useLibraryEditorStore = create<LibraryEditorState>((set, get) => ({
 
   revert: async (sessionId) => {
     const result = await window.blueAPI.revertLibraryEditorSession(sessionId);
-    if (!result.ok) return set({ error: result.error.message });
+    if (!result.ok) return set({ error: formatLibraryError(result.error) });
     set((state) => ({ sessions: { ...state.sessions, [sessionId]: result.value }, error: null }));
   },
 
   resolveConflict: async (sessionId, decision) => {
     const result = await window.blueAPI.resolveLibraryEditorConflict(sessionId, decision);
-    if (!result.ok) return set({ error: result.error.message });
+    if (!result.ok) return set({ error: formatLibraryError(result.error) });
     set((state) => ({ sessions: { ...state.sessions, [sessionId]: result.value }, error: null }));
   },
 
   close: async (sessionId, decision) => {
     const result = await window.blueAPI.closeLibraryEditorSession(sessionId, decision);
     if (!result.ok) {
-      set({ error: result.error.message });
+      set({ error: formatLibraryError(result.error) });
       return false;
     }
     if (result.value)

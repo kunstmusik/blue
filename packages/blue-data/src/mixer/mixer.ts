@@ -5,6 +5,18 @@
 import { Channel } from './channel';
 import { ChannelList } from './channel-list';
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
+import {
+  checkRoot,
+  checkShape,
+  readText,
+  readBoolean,
+  readDouble,
+  readEnum,
+  parseXmlBoolean,
+  parseXmlNumber,
+} from '../utilities/xml';
+
 import { BlueDataObject } from '../blue-data-object';
 import type { CopyMode } from '../deep-copyable';
 import { writeBoolean, writeDouble } from '../utilities/xml';
@@ -12,7 +24,6 @@ import {
   DEFAULT_PAN_LAW_DB,
   DEFAULT_PAN_OFF_CENTER_BOOST,
   isValidPanLawDb,
-  parseFiniteNumber,
   type PanLawDb,
 } from './channel-pan';
 
@@ -273,101 +284,146 @@ export class Mixer implements BlueDataObject {
     return elem;
   }
 
-  static loadFromXML(data: Element): Mixer {
+  static loadFromXML(data: Element, context?: XmlLoadContext, sink?: XmlDiagnosticSink): Mixer {
+    const ctx = context ?? new XmlLoadContext(data);
+    checkRoot(data, 'mixer', ctx);
+    checkShape(
+      data,
+      ['panningEnabled', 'panLawDb', 'panOffCenterBoost'],
+      [
+        'enabled',
+        'enableMeters',
+        'meterProfile',
+        'channelListGroups',
+        'channelList',
+        'channels',
+        'subChannels',
+        'channel',
+        'extraRenderTime',
+      ],
+      ctx,
+      ['channelList'],
+    );
     const mixer = new Mixer();
-
-    const panningParsed = data.getAttribute('panningEnabled')?.trim().toLowerCase();
-    mixer._panningEnabled = panningParsed === 'true';
-
-    const panLaw = parseFiniteNumber(data.getAttribute('panLawDb'));
-    mixer._panLawDb = panLaw !== undefined && isValidPanLawDb(panLaw) ? panLaw : DEFAULT_PAN_LAW_DB;
-
-    const panBoostParsed = data.getAttribute('panOffCenterBoost')?.trim().toLowerCase();
-    mixer._panOffCenterBoost = panBoostParsed === 'true';
-
-    const appendChannels = (target: ChannelList, source: ChannelList) => {
-      for (const channel of source) {
-        target.push(channel);
-      }
-    };
-
-    const enabledElem = data.getElement('enabled');
-    if (enabledElem) {
-      mixer._enabled = enabledElem.getTextString() !== 'false';
+    mixer._panningEnabled = false;
+    mixer._enableMeters = DEFAULT_LEGACY_METER_ENABLED;
+    mixer._meterProfileKey = DEFAULT_LEGACY_METER_PROFILE_KEY;
+    const panning = data.getAttribute('panningEnabled');
+    if (panning !== null) mixer._panningEnabled = parseXmlBoolean(panning, ctx, '@panningEnabled');
+    const boost = data.getAttribute('panOffCenterBoost');
+    if (boost !== null)
+      mixer._panOffCenterBoost = parseXmlBoolean(boost, ctx, '@panOffCenterBoost');
+    const law = data.getAttribute('panLawDb');
+    if (law !== null) {
+      const value = parseXmlNumber(law, ctx, '@panLawDb');
+      if (!isValidPanLawDb(value))
+        throw ctx.error({
+          code: 'value',
+          member: '@panLawDb',
+          value: law,
+          message: 'Unsupported pan law.',
+          recovery: 'Choose 0, -3, -4.5, or -6.',
+        });
+      mixer._panLawDb = value;
     }
-
-    const enableMetersElem = data.getElement('enableMeters');
-    if (enableMetersElem) {
-      mixer._enableMeters = enableMetersElem.getTextString().trim().toLowerCase() === 'true';
-    } else {
-      mixer._enableMeters = DEFAULT_LEGACY_METER_ENABLED;
-    }
-
-    const meterProfileElem = data.getElement('meterProfile');
-    if (meterProfileElem) {
-      const rawKey = meterProfileElem.getTextString().trim();
-      mixer._meterProfileKey = isMeterProfileKey(rawKey)
-        ? rawKey
-        : DEFAULT_LEGACY_METER_PROFILE_KEY;
-    } else {
-      mixer._meterProfileKey = DEFAULT_LEGACY_METER_PROFILE_KEY;
-    }
-
-    const channelListGroups = data.getElement('channelListGroups');
-    if (channelListGroups) {
-      const groupedLists = channelListGroups.getElements('channelList');
-      while (groupedLists.hasMoreElements()) {
-        mixer._channelListGroups.push(ChannelList.loadFromXML(groupedLists.next()));
+    const enabled = data.getElement('enabled');
+    if (enabled) mixer._enabled = readBoolean(enabled, ctx);
+    const meters = data.getElement('enableMeters');
+    if (meters) mixer._enableMeters = readBoolean(meters, ctx);
+    const profile = data.getElement('meterProfile');
+    if (profile) mixer._meterProfileKey = readEnum(profile, METER_PROFILE_KEYS, ctx);
+    const groups = data.getElement('channelListGroups');
+    if (groups) {
+      checkShape(groups, [], ['channelList'], ctx, ['channelList']);
+      for (const group of groups.getElements('channelList')) {
+        if (group.getAttribute('list') !== null)
+          throw ctx.at(group).error({
+            code: 'member',
+            member: '@list',
+            message: 'Group channel lists do not have a mixer role.',
+            recovery: 'Remove the contextual role attribute.',
+          });
+        mixer._channelListGroups.push(ChannelList.loadFromXML(group, ctx));
       }
     }
-
-    const channelLists = data.getElements('channelList');
-    while (channelLists.hasMoreElements()) {
-      const clNode = channelLists.next();
-      const listAttr = clNode.getAttribute('list') ?? '';
-      const loaded = ChannelList.loadFromXML(clNode);
-      if (listAttr === 'subChannels' || listAttr === 'SubChannels') {
-        appendChannels(mixer._subChannels, loaded);
-      } else {
-        appendChannels(mixer._channels, loaded);
-      }
+    const roles = new Set<string>();
+    for (const child of data.getElements()) {
+      const name = child.getName();
+      if (!['channelList', 'channels', 'subChannels'].includes(name)) continue;
+      const role = name === 'channelList' ? child.getAttribute('list') : name;
+      if (role === null || !['channels', 'subChannels', 'SubChannels'].includes(role))
+        throw ctx.at(child).error({
+          code: 'value',
+          member: '@list',
+          value: role ?? '',
+          message: 'Missing or unsupported mixer channel list role.',
+          recovery: 'Choose channels or subChannels.',
+        });
+      const normalized = role === 'SubChannels' ? 'subChannels' : role;
+      if (roles.has(normalized))
+        throw ctx.at(child).error({
+          code: 'conflict',
+          value: role,
+          message: 'Competing mixer list representations.',
+          recovery: 'Keep one representation of each mixer list.',
+        });
+      roles.add(normalized);
+      const list = ChannelList.loadFromXML(child, ctx);
+      if (normalized === 'channels') mixer._channels = list;
+      else mixer._subChannels = list;
     }
-
-    if (mixer._channels.length === 0) {
-      const chNode = data.getElement('channels');
-      if (chNode) {
-        mixer._channels = ChannelList.loadFromXML(chNode);
-      }
-    }
-    if (mixer._subChannels.length === 0) {
-      const subChNode = data.getElement('subChannels');
-      if (subChNode) {
-        mixer._subChannels = ChannelList.loadFromXML(subChNode);
-      }
-    }
-
     mixer._channels.setListNameEditSupported(true);
     mixer._channels.setListName('Orchestra');
     mixer._channels.setListNameEditSupported(false);
-
     mixer._subChannels.setListNameEditSupported(true);
     mixer._subChannels.setListName('SubChannels');
     mixer._subChannels.setListNameEditSupported(false);
-
-    const channelNodes = data.getElements('channel');
-    while (channelNodes.hasMoreElements()) {
-      const chNode = channelNodes.next();
-      const ch = Channel.loadFromXML(chNode);
-      const chName = ch.getName();
-      if (chName === Mixer.MASTER_CHANNEL || chName === 'master') {
-        mixer._master = ch;
+    const master = data.getElement('channel');
+    if (master) {
+      const channel = Channel.loadFromXML(master, ctx);
+      if (channel.getName() !== Mixer.MASTER_CHANNEL)
+        throw ctx.at(master).error({
+          code: 'value',
+          member: 'name',
+          value: channel.getName(),
+          message: 'The direct mixer channel must be Master.',
+          recovery: 'Place ordinary channels in their channel list.',
+        });
+      mixer._master = channel;
+    }
+    const extra = data.getElement('extraRenderTime');
+    if (extra) mixer._extraRenderTime = readDouble(extra, ctx);
+    const targets = new Set([
+      Mixer.MASTER_CHANNEL,
+      ...mixer._subChannels.map((channel) => channel.getName()),
+    ]);
+    const channelElements = data.getElements('channel').toArray();
+    for (const list of data.getElements()) {
+      if (['channelList', 'channels', 'subChannels'].includes(list.getName()))
+        channelElements.push(...list.getElements('channel').toArray());
+      if (list.getName() === 'channelListGroups') {
+        for (const group of list.getElements('channelList'))
+          channelElements.push(...group.getElements('channel').toArray());
       }
     }
-
-    const extraTime = data.getTextString('extraRenderTime');
-    if (extraTime) mixer._extraRenderTime = parseFloat(extraTime);
-
-    return mixer;
+    for (const channel of channelElements) {
+      const sends = channel.getElements('send').toArray();
+      for (const chain of channel.getElements('effectsChain'))
+        sends.push(...chain.getElements('send').toArray());
+      for (const send of sends) {
+        const target = send.getElement('sendChannel');
+        const name = target ? readText(target, ctx) : Mixer.MASTER_CHANNEL;
+        if (!targets.has(name === 'master' ? Mixer.MASTER_CHANNEL : name))
+          throw ctx.at(target ?? send).error({
+            code: 'reference',
+            member: 'sendChannel',
+            value: name,
+            message: 'Mixer send target does not resolve to Master or a subchannel.',
+            recovery: 'Create the target subchannel or select a supported target.',
+          });
+      }
+    }
+    return context ? mixer : requireXmlValue(ctx.result(mixer), sink);
   }
 
   deepCopy(mode: CopyMode = 'duplication'): BlueDataObject {

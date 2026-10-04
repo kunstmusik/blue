@@ -14,6 +14,7 @@ import {
   TimeDuration,
   SoundObject,
   beatsToDuration,
+  XmlLoadError,
 } from '@blue/data';
 import type { ScoreObjectClipboardEntry } from '../../../../../stores/score-selection-store';
 import type { ScoreLayerGroupSnapshot, ScoreRowObjectSnapshot } from '../types';
@@ -276,6 +277,12 @@ export function createPolyObjectPasteObjectFromClipboard(args: {
   }
 
   const context = new TimeContext();
+  const serializedEntries: Array<{
+    layer: number;
+    object?: SoundObject;
+    deferred?: Element;
+    entry: ScoreObjectClipboardEntry;
+  }> = [];
   let envelopeStartBeats = Infinity;
   let envelopeEndBeats = -Infinity;
 
@@ -293,14 +300,30 @@ export function createPolyObjectPasteObjectFromClipboard(args: {
 
     let sObj: SoundObject | null = null;
     let loadedFromXml = false;
+    let parsed: Element | undefined;
+    let deferred: Element | undefined;
     if (entry.serializedXml) {
       try {
-        const parsed = Element.parse(entry.serializedXml);
+        parsed = Element.parse(entry.serializedXml);
         sObj = loadSoundObjectFromXML(parsed)?.deepCopy() ?? null;
         loadedFromXml = sObj !== null;
-      } catch {
-        sObj = null;
+      } catch (error) {
+        // Main owns the reference map. Keep dependency-bearing clipboard intent intact
+        // until that boundary can validate and resolve the complete pasted object.
+        if (
+          parsed &&
+          error instanceof XmlLoadError &&
+          error.diagnostics.every((diagnostic) => diagnostic.code === 'reference')
+        ) {
+          deferred = parsed;
+        } else {
+          return { ok: false, message: `Unable to load ${entry.objectType} from the copy buffer.` };
+        }
       }
+    }
+    if (deferred) {
+      serializedEntries.push({ layer: layerIdx, deferred, entry });
+      continue;
     }
 
     if (!sObj) {
@@ -327,13 +350,38 @@ export function createPolyObjectPasteObjectFromClipboard(args: {
     }
     sObj.setBackgroundColor(entry.backgroundColor);
     pObj[layerIdx].push(sObj);
+    serializedEntries.push({ layer: layerIdx, object: sObj, entry });
   }
 
-  pObj.normalizeSoundObjects(context);
+  for (const layer of pObj) {
+    for (const object of layer)
+      object.setStartTime(
+        TimePosition.beats(object.getStartTime().toBeats(context) - envelopeStartBeats),
+      );
+  }
   pObj.setSubjectiveDuration(
     TimeDuration.beats(Math.max(0, envelopeEndBeats - envelopeStartBeats)),
   );
   const startBeats = snapBeatValue(targetXBeats);
+  const serialized = pObj.saveAsXML();
+  const layers = serialized.getElements('soundLayer').toArray();
+  for (const layer of layers) layer.removeElements('soundObject');
+  for (const item of serializedEntries) {
+    const leaf = item.object ? item.object.saveAsXML() : item.deferred!;
+    if (item.deferred) {
+      leaf.removeElement('name');
+      leaf.addElement('name').setText(item.entry.name);
+      leaf.removeElement('startTime');
+      leaf.addElement(
+        TimePosition.beats(item.entry.startBeats - envelopeStartBeats)
+          .saveAsXML()
+          .setName('startTime'),
+      );
+      leaf.removeElement('backgroundColor');
+      leaf.addElement('backgroundColor').setText(String(item.entry.backgroundColor));
+    }
+    layers[item.layer].addElement(leaf);
+  }
 
   return {
     ok: true,
@@ -346,7 +394,7 @@ export function createPolyObjectPasteObjectFromClipboard(args: {
       backgroundColor: pObj.getBackgroundColor(),
       objectType: 'PolyObject',
       isContainer: true,
-      serializedXml: pObj.saveAsXML().toXml(),
+      serializedXml: serialized.toXml(),
     },
   };
 }

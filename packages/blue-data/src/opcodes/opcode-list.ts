@@ -4,6 +4,9 @@
  */
 import { OpcodeDefinition } from './opcode-definition';
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext, requireXmlValue } from '../serialization/xml-load';
+import type { XmlDiagnosticSink } from '../serialization/xml-load';
+import { checkRoot, checkShape } from '../utilities/xml';
 
 export class OpcodeList {
   private _opcodes: OpcodeDefinition[] = [];
@@ -127,15 +130,22 @@ export class OpcodeList {
     return elem;
   }
 
-  static loadFromXML(data: Element): OpcodeList {
+  static loadFromXML(
+    data: Element,
+    context?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): OpcodeList {
+    const ctx = context ?? new XmlLoadContext(data);
+    checkRoot(data, 'opcodeList', ctx);
+    checkShape(data, [], ['udo'], ctx, ['udo']);
     const list = new OpcodeList();
     const children = data.getElements();
     while (children.hasMoreElements()) {
       const node = children.next();
-      const udo = OpcodeDefinition.loadFromXML(node);
+      const udo = OpcodeDefinition.loadFromXML(node, ctx);
       list._opcodes.push(udo);
     }
-    return list;
+    return context ? list : requireXmlValue(ctx.result(list), sink);
   }
 
   /**

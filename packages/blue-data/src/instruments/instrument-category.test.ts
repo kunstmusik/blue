@@ -21,21 +21,13 @@ describe('InstrumentCategory legacy loading', () => {
     expect(category.getInstruments()[0]?.getName()).toBe('Scripted');
   });
 
-  it('does not coerce an unknown instrument type to GenericInstrument', () => {
-    const category = InstrumentCategory.loadFromXML(
-      Element.parse(`
-        <instrumentCategory categoryName="Root" isRoot="true">
-          <instrument type="example.UnknownInstrument"><name>Unknown</name></instrument>
-        </instrumentCategory>
-      `),
-    );
-
-    expect(category.getInstruments()).toHaveLength(1);
-    const instrument = category.getInstruments()[0]!;
-    expect(instrument.getName()).toBe('Unknown');
-    expect(instrument.saveAsXML().getAttribute('type')).toBe('example.UnknownInstrument');
-    expect(() => instrument.generateInstrument()).toThrow(
-      'Unsupported instrument type: example.UnknownInstrument',
-    );
+  it('rejects unknown instrument types instead of creating typed placeholders', () => {
+    expect(() =>
+      InstrumentCategory.loadFromXML(
+        Element.parse(
+          '<instrumentCategory categoryName="Root" isRoot="true"><instrument type="example.UnknownInstrument"><name>Unknown</name></instrument></instrumentCategory>',
+        ),
+      ),
+    ).toThrow('Unsupported or missing instrument type');
   });
 });

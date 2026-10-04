@@ -18,7 +18,7 @@ import { LineAddProcessor } from './line-add-processor';
 import { LineMultiplyProcessor } from './line-multiply-processor';
 import { TuningProcessor } from './tuning-processor';
 import { PythonProcessor } from './python-processor';
-import { UnsupportedProcessor } from './unsupported-processor';
+import { XmlLoadError } from '../serialization/xml-load';
 import { getNoteProcessorCatalog } from './note-processor-catalog';
 
 const JAVA_PREFIX = 'blue.noteProcessor.';
@@ -100,7 +100,7 @@ describe('Processor serialization parity', () => {
     expect(chain.saveAsXML().toXml()).toBe(xml.toXml());
   });
 
-  it('preserves legacy Code XML as UnsupportedProcessor', () => {
+  it('rejects Code XML inside the chain registry', () => {
     const xml = Element.parse(`
       <noteProcessorChain>
         <noteProcessor type="blue.noteProcessor.Code">
@@ -108,10 +108,7 @@ describe('Processor serialization parity', () => {
         </noteProcessor>
       </noteProcessorChain>
     `);
-    const chain = NoteProcessorChain.loadFromXML(xml);
-    expect(chain.getProcessors()).toHaveLength(1);
-    expect(chain.getProcessors()[0]).toBeInstanceOf(UnsupportedProcessor);
-    expect(chain.saveAsXML().toXml()).toBe(xml.toXml());
+    expect(() => NoteProcessorChain.loadFromXML(xml)).toThrow(XmlLoadError);
   });
 });
 

@@ -3,10 +3,17 @@ import { NoteList } from './note-list';
 import { Note } from './note';
 import { TimeContext } from '../time/time-context';
 import { CompileData } from '../compile-data';
+import { XmlLoadContext } from '../serialization/xml-load';
+import { checkRoot, checkShape, readText, parseXmlInteger } from '../utilities/xml';
+import { readLineXml } from '../automation/line-xml';
 import { Element } from '../serialization/xml-reader';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
-import { initBasicFromXML, getBasicXML } from './sound-object-utilities';
+import {
+  initBasicFromXML,
+  getBasicXML,
+  BASIC_SOUND_OBJECT_CHILDREN,
+} from './sound-object-utilities';
 import { GenericInstrument } from '../instruments/generic-instrument';
 import { setScoreStart } from '../utilities/score';
 import { formatBlueNumber } from '../utilities/number-format';
@@ -98,69 +105,58 @@ export class ZakLineObject extends AbstractSoundObject {
     return elem;
   }
 
-  static loadFromXML(data: Element, _objRefMap?: ObjRefLoadMap): ZakLineObject {
+  static loadFromXML(
+    data: Element,
+    _objRefMap?: ObjRefLoadMap,
+    context = new XmlLoadContext(data),
+  ): ZakLineObject {
+    checkShape(data, ['type'], [...BASIC_SOUND_OBJECT_CHILDREN, 'zakline', 'zakSpace'], context, [
+      'zakline',
+    ]);
+    checkRoot(data, 'soundObject', context);
+    const type = data.getAttribute('type');
+    if (type !== 'ZakLineObject' && type !== 'blue.soundObject.ZakLineObject')
+      throw context.at(data).error({
+        code: 'value',
+        member: '@type',
+        message: 'Unsupported ZakLineObject type.',
+        recovery: 'Supply the declared SoundObject type.',
+      });
     const obj = new ZakLineObject();
-    initBasicFromXML(obj, data);
-
-    const zak = data.getTextString('zakSpace');
-    if (zak !== null) {
-      const parsedZak = parseInt(zak, 10);
-      if (Number.isFinite(parsedZak)) {
-        obj._zakSpace = parsedZak;
-      }
+    initBasicFromXML(obj, data, context);
+    const identities = new Set<number>();
+    const space = data.getElement('zakSpace');
+    if (space)
+      obj._zakSpace = parseXmlInteger(readText(space, context), context.at(space), 0, 2147483647);
+    for (const node of data.getElements('zakline')) {
+      const channelText = node.getAttribute('channel');
+      if (channelText === null)
+        throw context.at(node).error({
+          code: 'cardinality',
+          member: '@channel',
+          message: 'Zak line requires a channel.',
+          recovery: 'Supply an integral channel.',
+        });
+      const channel = parseXmlInteger(channelText, context.at(node), 0, 2147483647, '@channel');
+      const line = readLineXml(node, context, ['channel']);
+      if (node.getAttribute('name') !== null || node.getAttribute('varName') !== null)
+        throw context.at(node).error({
+          code: 'member',
+          member: '@name',
+          message: 'Zak line uses channel identity rather than a name.',
+          recovery: 'Remove the unsupported name.',
+        });
+      if (identities.has(channel))
+        throw context.at(node).error({
+          code: 'conflict',
+          member: '@channel',
+          message: 'Duplicate Zak line channel.',
+          recovery: 'Use distinct channels.',
+        });
+      identities.add(channel);
+      const { varName: _name, ...values } = line;
+      obj._lines.push({ ...values, channel });
     }
-
-    const lineNodes = data.getElements();
-    while (lineNodes.hasMoreElements()) {
-      const node = lineNodes.next();
-      if (node.getName() !== 'zakline') {
-        continue;
-      }
-
-      const version = parseInt(node.getAttribute('version') ?? '1', 10) || 1;
-      const min = parseFloat(node.getAttribute('min') ?? '0');
-      const max = parseFloat(node.getAttribute('max') ?? '1');
-      const range = max - min;
-
-      const line: ZakLineData = {
-        channel: parseInt(node.getAttribute('channel') ?? '1', 10),
-        min,
-        max,
-        resolution: node.getAttribute('bdresolution') ?? node.getAttribute('resolution') ?? '-1',
-        color: parseInt(node.getAttribute('color') ?? '-8355712', 10),
-        rightBound: (node.getAttribute('rightBound') ?? 'false') === 'true',
-        endPointsLinked: (node.getAttribute('endPointsLinked') ?? 'false') === 'true',
-        points: [],
-      };
-
-      const pointNodes = node.getElements('linePoint');
-      while (pointNodes.hasMoreElements()) {
-        const pointNode = pointNodes.next();
-        const x = parseFloat(pointNode.getAttribute('x') ?? '0');
-        let y = parseFloat(pointNode.getAttribute('y') ?? '0');
-        if (!Number.isFinite(x) || !Number.isFinite(y)) {
-          continue;
-        }
-        if (version === 1) {
-          y = y * range + min;
-        }
-        line.points.push({ x, y });
-      }
-
-      const pointsStr = node.getTextString('points');
-      if (pointsStr && line.points.length === 0) {
-        for (const pair of pointsStr.trim().split(/\s+/)) {
-          const [x, y] = pair.split(',').map(Number);
-          if (Number.isFinite(x) && Number.isFinite(y)) {
-            line.points.push({ x, y });
-          }
-        }
-      }
-
-      line.points.sort((left, right) => left.x - right.x);
-      obj._lines.push(line);
-    }
-
     return obj;
   }
 

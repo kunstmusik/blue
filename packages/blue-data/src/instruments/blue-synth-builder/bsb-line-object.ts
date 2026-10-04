@@ -1,3 +1,7 @@
+import { readLineXml } from '../../automation/line-xml';
+import { isValidBsbColor } from './bsb-color';
+import { XmlLoadContext } from '../../serialization/xml-load';
+import { readBoolean } from '../../utilities/xml';
 /**
  * BSBLineObject — line/drawing element.
  * Does not contribute replacement values — visual only.
@@ -170,55 +174,30 @@ export function normalizeBsbLinePatch(lines: unknown): Line[] {
   });
 }
 
-export function parseBsbLineFromXml(lineElem: Element, fallbackName: string): Line {
-  const xmlName = lineElem.getAttribute('name')?.trim() ?? '';
-  const xmlVarName = lineElem.getAttribute('varName')?.trim() ?? '';
-  const varName = xmlName || xmlVarName || fallbackName;
-  const min = parseFloat(lineElem.getAttribute('min') ?? '0');
-  const max = parseFloat(lineElem.getAttribute('max') ?? '1');
-  const resolution =
-    lineElem.getAttribute('bdresolution') ?? lineElem.getAttribute('resolution') ?? '-1';
-  const rightBound = (lineElem.getAttribute('rightBound') ?? 'false') === 'true';
-  const endPointsLinked = (lineElem.getAttribute('endPointsLinked') ?? 'false') === 'true';
-  const color = normalizeBsbLineColor(lineElem.getAttribute('color') ?? '#808080');
-  const points: LinePoint[] = [];
-
-  const pointElems = lineElem.getElements('linePoint');
-  while (pointElems.hasMoreElements()) {
-    const pointElem = pointElems.next();
-    points.push({
-      x: parseFloat(pointElem.getAttribute('x') ?? '0'),
-      y: parseFloat(pointElem.getAttribute('y') ?? '0'),
+export function parseBsbLineFromXml(
+  lineElem: Element,
+  fallbackName: string,
+  context = new XmlLoadContext(lineElem),
+): Line {
+  const color = lineElem.getAttribute('color');
+  if (color !== null && !isValidBsbColor(color))
+    throw context.at(lineElem).error({
+      code: 'value',
+      member: '@color',
+      value: color,
+      message: 'Invalid Line color.',
+      recovery: 'Use a supported color encoding.',
     });
-  }
-
-  if (points.length === 0) {
-    const legacyPoints = lineElem.getTextString('points');
-    if (legacyPoints) {
-      for (const pointStr of legacyPoints.trim().split(/\s+/)) {
-        const [xRaw, yRaw] = pointStr.split(',');
-        const x = parseFloat(xRaw ?? '');
-        const y = parseFloat(yRaw ?? '');
-        if (Number.isFinite(x) && Number.isFinite(y)) {
-          points.push({ x, y });
-        }
-      }
-    }
-  }
-
-  if (points.length === 0) {
-    points.push({ x: 0, y: (min + max) * 0.5 }, { x: 1, y: (min + max) * 0.5 });
-  }
-
+  const candidate = lineElem.clone();
+  candidate.removeAttribute('color');
+  context.anchor(candidate, lineElem);
+  const line = readLineXml(candidate, context);
   return {
-    varName,
-    min,
-    max,
-    color,
-    resolution,
-    rightBound,
-    endPointsLinked,
-    points,
+    ...line,
+    min: line.min!,
+    max: line.max!,
+    varName: line.varName || fallbackName,
+    color: normalizeBsbLineColor(color ?? '#808080'),
   };
 }
 
@@ -342,8 +321,8 @@ export class BSBLineObject extends BSBWidget {
     }
   }
 
-  loadFromXML(data: Element): void {
-    this.loadFromXMLCommon(data);
+  loadFromXML(data: Element, context = new XmlLoadContext(data)): void {
+    this.loadFromXMLCommon(data, context);
     const cw = data.getTextString('canvasWidth');
     if (cw) this.canvasWidth = parseInt(cw, 10);
     const ch = data.getTextString('canvasHeight');
@@ -351,24 +330,24 @@ export class BSBLineObject extends BSBWidget {
     const xm = data.getTextString('xMax');
     if (xm) this.xMax = parseFloat(xm);
     const rxv = data.getElement('relativeXValues');
-    if (rxv) this.relativeXValues = rxv.getTextString() === 'true';
+    if (rxv) this.relativeXValues = readBoolean(rxv, context);
     const lz = data.getElement('leadingZero');
-    if (lz) this.leadingZero = lz.getTextString() === 'true';
+    if (lz) this.leadingZero = readBoolean(lz, context);
     const lk = data.getElement('locked');
-    if (lk) this.locked = lk.getTextString() === 'true';
+    if (lk) this.locked = readBoolean(lk, context);
     const st = data.getTextString('separatorType');
     if (st === 'NONE' || st === 'None') this.separatorType = 'None';
     if (st === 'COMMA' || st === 'Comma') this.separatorType = 'Comma';
     if (st === 'SINGLE_QUOTE' || st === 'Single Quote') this.separatorType = 'Single Quote';
     const cs = data.getElement('commaSeparated');
-    if (cs && cs.getTextString() === 'true') this.separatorType = 'Comma';
+    if (cs && readBoolean(cs, context)) this.separatorType = 'Comma';
     this.lines = [];
     const linesElem = data.getElement('lines');
     if (linesElem) {
       const lineElems = linesElem.getElements('line');
       while (lineElems.hasMoreElements()) {
         const lineElem = lineElems.next();
-        this.lines.push(parseBsbLineFromXml(lineElem, ''));
+        this.lines.push(parseBsbLineFromXml(lineElem, '', context));
       }
     }
   }

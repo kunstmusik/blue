@@ -13,6 +13,8 @@ import { LayerGroup } from './layers/layer-group';
 import { Layer } from './layers/layer';
 import type { CopyMode } from '../deep-copyable';
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
+import { checkRoot, checkShape } from '../utilities/xml';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { ScoreGenerationException } from './score-generation-exception';
 import { CompileData } from '../compile-data';
@@ -52,6 +54,7 @@ export class Score extends Array<LayerGroup<Layer>> {
         this.push(layerGroup.deepCopy(mode) as LayerGroup<Layer>);
       }
     } else if (!other) {
+      this.timeContext.setSmpteFrameRate(this.timeState.getSmpteFrameRate());
       const rootPolyObject = new PolyObject(true);
       rootPolyObject.newLayerAt(-1);
       this.push(rootPolyObject);
@@ -230,7 +233,9 @@ export class Score extends Array<LayerGroup<Layer>> {
 
   saveAsXML(objRefMap?: ObjRefSaveMap): Element {
     const elem = new Element('score');
-    elem.addElement(this.timeContext.saveAsXML().setName('timeContext'));
+    const timing = this.timeContext.saveAsXML().setName('timeContext');
+    timing.getElement('smpteFrameRate')!.setText(String(this.timeState.getSmpteFrameRate()));
+    elem.addElement(timing);
     elem.addElement(this.timeState.saveAsXML().setName('timeState'));
     elem.addElement(this.npc.saveAsXML().setName('noteProcessorChain'));
     elem.setAttribute('trackLayerMuteSoloMode', this._trackLayerMuteSoloMode);
@@ -244,10 +249,40 @@ export class Score extends Array<LayerGroup<Layer>> {
     return elem;
   }
 
-  static loadFromXML(data: Element, objRefMap?: ObjRefLoadMap): Score {
+  static loadFromXML(
+    data: Element,
+    objRefMap?: ObjRefLoadMap,
+    providedContext?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): Score {
+    const context = providedContext ?? new XmlLoadContext(data);
+    checkRoot(data, 'score', context);
+    checkShape(
+      data,
+      ['trackLayerMuteSoloMode'],
+      [
+        'timeContext',
+        'timeState',
+        'noteProcessorChain',
+        'soundObject',
+        'polyObject',
+        'trackLayerGroup',
+        'patternsLayerGroup',
+      ],
+      context,
+      ['soundObject', 'polyObject', 'trackLayerGroup', 'patternsLayerGroup'],
+    );
     const score = new Score();
     score.length = 0;
-    const parsed = data.getAttribute('trackLayerMuteSoloMode')?.trim().toLowerCase();
+    const parsed = data.getAttribute('trackLayerMuteSoloMode');
+    if (parsed !== null && !isTrackLayerMuteSoloMode(parsed))
+      throw context.at(data).error({
+        code: 'value',
+        member: '@trackLayerMuteSoloMode',
+        value: parsed,
+        message: 'Unsupported track mute/solo mode.',
+        recovery: 'Use event or audio.',
+      });
     score._trackLayerMuteSoloMode = isTrackLayerMuteSoloMode(parsed) ? parsed : 'event';
 
     const nodes = data.getElements();
@@ -258,45 +293,61 @@ export class Score extends Array<LayerGroup<Layer>> {
 
       switch (nodeName) {
         case 'timeContext':
-          score.timeContext = TimeContext.loadFromXML(node);
+          score.timeContext = TimeContext.loadFromXML(node, context);
           break;
         case 'timeState':
-          score.timeState = TimeState.loadFromXML(node);
+          score.timeState = TimeState.loadFromXML(node, context);
           break;
         case 'noteProcessorChain':
-          score.npc = NoteProcessorChain.loadFromXML(node);
+          score.npc = NoteProcessorChain.loadFromXML(node, context);
           break;
         case 'soundObject': {
           const type = node.getAttribute('type');
-          if (
-            type === 'blue.soundObject.PolyObject' ||
-            type === 'PolyObject' ||
-            node.hasElement('soundLayer')
-          ) {
-            const polyObject = PolyObject.loadFromXML(node, objRefMap);
+          if (type === 'blue.soundObject.PolyObject' || type === 'PolyObject') {
+            const polyObject = PolyObject.loadFromXML(node, objRefMap, context);
             polyObject.setTimeBehavior(TimeBehavior.NONE);
             score.push(polyObject);
-          }
+          } else
+            throw context.at(node).error({
+              code: 'type',
+              member: '@type',
+              value: type ?? '',
+              message: 'Score soundObject must be a PolyObject.',
+              recovery: 'Use a supported layer group type.',
+            });
           break;
         }
         case 'polyObject':
           {
-            const polyObject = PolyObject.loadFromXML(node, objRefMap);
+            const polyObject = PolyObject.loadFromXML(node, objRefMap, context);
             polyObject.setTimeBehavior(TimeBehavior.NONE);
             score.push(polyObject);
           }
           break;
         case 'trackLayerGroup':
-          score.push(TrackLayerGroup.loadFromXML(node, objRefMap));
+          score.push(TrackLayerGroup.loadFromXML(node, objRefMap, context));
           break;
         case 'patternsLayerGroup':
-          score.push(PatternsLayerGroup.loadFromXML(node, objRefMap));
-          break;
-        case 'scoreObjectLayerGroup':
+          score.push(PatternsLayerGroup.loadFromXML(node, objRefMap, context));
           break;
       }
     }
 
-    return score;
+    const persistedContextRate = data.getElement('timeContext')?.getElement('smpteFrameRate');
+    const persistedStateRate = data.getElement('timeState')?.getElement('smpteFrameRate');
+    if (
+      persistedContextRate &&
+      persistedStateRate &&
+      score.timeContext.getSmpteFrameRate() !== score.timeState.getSmpteFrameRate()
+    )
+      throw context.at(persistedContextRate).error({
+        code: 'conflict',
+        message: 'Persisted TimeContext and TimeState frame rates disagree.',
+        recovery: 'Choose one consistent SMPTE frame rate.',
+      });
+    if (persistedContextRate && !persistedStateRate)
+      score.timeState.setSmpteFrameRate(score.timeContext.getSmpteFrameRate());
+    score.timeContext.setSmpteFrameRate(score.timeState.getSmpteFrameRate());
+    return providedContext ? score : requireXmlValue(context.result(score), sink);
   }
 }

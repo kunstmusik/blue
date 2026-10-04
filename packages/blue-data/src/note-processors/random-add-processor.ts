@@ -1,8 +1,11 @@
+import { XmlLoadContext } from '../serialization/xml-load';
+import { validateProcessorXml, canonicalSeed } from './xml-policy';
 import { NoteProcessor } from './note-processor';
 import { NoteProcessorException } from './note-processor-exception';
 import { NoteList } from '../sound-objects/note-list';
 import { Element } from '../serialization/xml-reader';
 import { JavaRandom } from '../sound-objects/jmask-support';
+import { readBoolean } from '../utilities/xml';
 
 const JAVA_TYPE = 'blue.noteProcessor.RandomAddProcessor';
 
@@ -11,7 +14,7 @@ export class RandomAddProcessor extends NoteProcessor {
   private _min = 0.0;
   private _max = 1.0;
   private _seedUsed = false;
-  private _seed = 0;
+  private _seed = '0';
 
   constructor();
   constructor(src: RandomAddProcessor);
@@ -55,15 +58,15 @@ export class RandomAddProcessor extends NoteProcessor {
   }
 
   getSeed(): string {
-    return this._seed.toString();
+    return this._seed;
   }
-  setSeed(seed: string): void {
-    this._seed = parseInt(seed, 10);
+  setSeed(seed: string | number): void {
+    this._seed = canonicalSeed(seed);
   }
 
   override process(notes: NoteList): NoteList {
     const range = this._max - this._min;
-    const r = this._seedUsed ? new JavaRandom(this._seed) : null;
+    const r = this._seedUsed ? new JavaRandom(BigInt(this._seed)) : null;
 
     for (const note of notes) {
       let fieldVal: number;
@@ -100,7 +103,8 @@ export class RandomAddProcessor extends NoteProcessor {
     return elem;
   }
 
-  static loadFromXML(data: Element): RandomAddProcessor {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): RandomAddProcessor {
+    validateProcessorXml(data, 'RandomAddProcessor', context);
     const proc = new RandomAddProcessor();
     const pf = data.getTextString('pfield');
     if (pf !== null) proc._pfield = parseInt(pf, 10);
@@ -108,10 +112,10 @@ export class RandomAddProcessor extends NoteProcessor {
     if (mn !== null) proc._min = parseFloat(mn);
     const mx = data.getTextString('max');
     if (mx !== null) proc._max = parseFloat(mx);
-    const su = data.getTextString('seedUsed');
-    if (su !== null) proc._seedUsed = su.toLowerCase() === 'true';
+    const seedUsed = data.getElement('seedUsed');
+    if (seedUsed) proc._seedUsed = readBoolean(seedUsed, context);
     const sd = data.getTextString('seed');
-    if (sd !== null) proc._seed = parseInt(sd, 10);
+    if (sd !== null) proc._seed = canonicalSeed(sd);
     return proc;
   }
 }

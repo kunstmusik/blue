@@ -1,3 +1,5 @@
+import { XmlLoadContext } from '../serialization/xml-load';
+import { validateProcessorXml } from './xml-policy';
 import { NoteProcessor } from './note-processor';
 import { NoteList } from '../sound-objects/note-list';
 import { Element } from '../serialization/xml-reader';
@@ -40,7 +42,8 @@ export class RetrogradeProcessor extends NoteProcessor {
     return elem;
   }
 
-  static loadFromXML(_data: Element): RetrogradeProcessor {
+  static loadFromXML(_data: Element, context = new XmlLoadContext(_data)): RetrogradeProcessor {
+    validateProcessorXml(_data, 'RetrogradeProcessor', context);
     return new RetrogradeProcessor();
   }
 }

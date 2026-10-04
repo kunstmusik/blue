@@ -3,6 +3,17 @@ import { NoteList } from './note-list';
 import { TimeContext } from '../time/time-context';
 import { CompileData } from '../compile-data';
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
+import {
+  checkRoot,
+  checkShape,
+  readText,
+  readInt,
+  readBoolean,
+  readEnum,
+  parseXmlBoolean,
+} from '../utilities/xml';
+import { BASIC_SOUND_OBJECT_CHILDREN } from './sound-object-utilities';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
 import { initBasicFromXML, getBasicXML } from './sound-object-utilities';
@@ -146,9 +157,40 @@ export class ClojureObject extends AbstractSoundObject {
     return elem;
   }
 
-  static loadFromXML(data: Element, _objRefMap?: ObjRefLoadMap): ClojureObject {
+  static loadFromXML(
+    data: Element,
+    _objRefMap?: ObjRefLoadMap,
+    context?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): ClojureObject {
+    const ctx = context ?? new XmlLoadContext(data);
+    checkRoot(data, 'soundObject', ctx);
+    const type = data.getAttribute('type');
+    if (
+      type === null ||
+      ![
+        'ClojureObject',
+        'blue.soundObject.ClojureObject',
+        'blue.clojure.soundObject.ClojureObject',
+      ].includes(type)
+    )
+      throw ctx.at(data).error({
+        code: 'type',
+        member: '@type',
+        value: type ?? '',
+        message: 'Unsupported ClojureObject type.',
+        recovery: 'Supply a supported concrete SoundObject type.',
+      });
+    checkShape(
+      data,
+      ['type', 'onLoadProcessable'],
+      [...BASIC_SOUND_OBJECT_CHILDREN, ...['clojureCode']],
+      ctx,
+    );
     const obj = new ClojureObject();
-    initBasicFromXML(obj, data);
+    const clojureCodeElement = data.getElement('clojureCode');
+    if (clojureCodeElement) readText(clojureCodeElement, ctx);
+    initBasicFromXML(obj, data, ctx);
 
     const code = data.getTextString('clojureCode');
     if (code !== null) {
@@ -156,11 +198,11 @@ export class ClojureObject extends AbstractSoundObject {
     }
 
     const onLoadProcessable = data.getAttribute('onLoadProcessable');
-    if (onLoadProcessable) {
-      obj.setOnLoadProcessable(onLoadProcessable.toLowerCase() === 'true');
+    if (onLoadProcessable !== null) {
+      obj.setOnLoadProcessable(parseXmlBoolean(onLoadProcessable, ctx, '@onLoadProcessable'));
     }
 
-    return obj;
+    return context ? obj : requireXmlValue(ctx.result(obj), sink);
   }
 
   override deepCopy(): SoundObject {

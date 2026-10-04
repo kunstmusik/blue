@@ -11,7 +11,7 @@ import {
 import { createProjectLifecycle } from './project-lifecycle';
 import { ProjectSession } from './project-session';
 import { ProjectHistory } from './project-history';
-import { resolveProjectSaveDecision } from './project-replacement-flow';
+import { prepareProjectXml, resolveProjectSaveDecision } from './project-replacement-flow';
 
 describe('CSD replacement entry point', () => {
   it('runs the native chooser, mode choice, conversion, decisions, and commit in order', async () => {
@@ -397,7 +397,7 @@ describe('project lifecycle compatibility workflow', () => {
   it('preserves identity, XML, cleanup, and publications across open/new/save/save-as/revert/close', async () => {
     const sourceXml = `<blueData version="5.0.0">
       <projectProperties><title>Compatibility Project</title></projectProperties>
-      <pluginData><futurePlugin mode="unknown"><payload>keep-me</payload></futurePlugin></pluginData>
+      <pluginData><blueDataObject bdoType="blue.clojure.project.ClojureProjectData"><clojureLibraryEntry><coordinates>original/keep-me</coordinates><version>1.0.0</version></clojureLibraryEntry></blueDataObject></pluginData>
     </blueData>`;
     const events: string[] = [];
     const writes = new Map<string, string>();
@@ -462,8 +462,8 @@ describe('project lifecycle compatibility workflow', () => {
     expect(await lifecycle.save(write)).toBe(true);
 
     const savedXml = writes.get('C:\\Users\\Blue\\saved-as.blue')!;
-    expect(savedXml).toContain('<futurePlugin mode="unknown">');
-    expect(savedXml).toContain('<payload>keep-me</payload>');
+    expect(savedXml).toContain('bdoType="blue.clojure.project.ClojureProjectData"');
+    expect(savedXml).toContain('<coordinates>original/keep-me</coordinates>');
 
     const staleSessionId = session.read().sessionId;
     await lifecycle.revert(() => ({
@@ -472,7 +472,9 @@ describe('project lifecycle compatibility workflow', () => {
     }));
     expect(session.read().sessionId).toBeGreaterThan(staleSessionId);
     expect(session.read().data?.getProjectProperties().title).toBe('Compatibility Project');
-    expect(session.read().data?.saveToString()).toContain('<futurePlugin mode="unknown">');
+    expect(session.read().data?.saveToString()).toContain(
+      'bdoType="blue.clojure.project.ClojureProjectData"',
+    );
 
     await lifecycle.close();
     expect(session.read().data).toBeNull();
@@ -512,7 +514,7 @@ describe('project lifecycle compatibility workflow', () => {
   it('derives save state without serializing it into .blue XML (spec 109)', async () => {
     const sourceXml = `<blueData version="5.0.0">
       <projectProperties><title>Save State Project</title></projectProperties>
-      <pluginData><futurePlugin mode="unknown"><payload>keep-me</payload></futurePlugin></pluginData>
+      <pluginData><blueDataObject bdoType="blue.clojure.project.ClojureProjectData"><clojureLibraryEntry><coordinates>original/keep-me</coordinates><version>1.0.0</version></clojureLibraryEntry></blueDataObject></pluginData>
     </blueData>`;
     const writes: string[] = [];
     const session = new ProjectSession();
@@ -554,8 +556,8 @@ describe('project lifecycle compatibility workflow', () => {
 
     expect(writes).toHaveLength(3);
     const copiedXml = writes[0]!;
-    expect(copiedXml).toContain('<futurePlugin mode="unknown">');
-    expect(copiedXml).toContain('<payload>keep-me</payload>');
+    expect(copiedXml).toContain('bdoType="blue.clojure.project.ClojureProjectData"');
+    expect(copiedXml).toContain('<coordinates>original/keep-me</coordinates>');
     for (const xml of writes) {
       expect(xml).not.toContain('saveState');
       expect(xml).not.toContain('savedStateId');
@@ -954,4 +956,61 @@ describe('terminal decision boundary pass-through (spec 109 T029)', () => {
       expect(wiring).toContain(boundaryLine);
     }
   });
+});
+
+it('noninteractive XML rejection keeps the active session and runtimes untouched', async () => {
+  const session = new ProjectSession();
+  const active = new BlueData();
+  active.getProjectProperties().title = 'Active document';
+  session.replace(active, 'C:\\Users\\Blue\\active.blue');
+  const history = new ProjectHistory({ session });
+  history.checkpointSave();
+  session.recordMutation({ changed: true });
+  const before = session.read();
+  const beforeXml = active.saveToString();
+  const beforeHistory = history.readEntries();
+  const beforeSaveState = history.getSaveState();
+  let runtime = 'playing';
+  const events: string[] = [];
+  const lifecycle = createProjectLifecycle({
+    session,
+    history,
+    stopProjectRuntimes: () => {
+      runtime = 'stopped';
+      events.push('stop-runtime');
+    },
+    closeProjectEditors: () => {
+      events.push('close-editors');
+    },
+    clearProjectServices: () => {
+      events.push('clear-services');
+    },
+  });
+  const result = await runNonInteractiveProjectLoad({
+    filePath: '/native/rejected.blue',
+    preflight: () => true,
+    readProject: (path) =>
+      prepareProjectXml('<blueData><unknown/></blueData>', path, () => {
+        events.push('warning');
+      }),
+    installProject: async (data, filePath) => {
+      await lifecycle.replace({ data, filePath });
+      events.push('on-load');
+    },
+    reportError: (path, error) => {
+      expect(path).toBe('/native/rejected.blue');
+      expect(error).toMatchObject({
+        diagnostics: [expect.objectContaining({ severity: 'error', path: '/blueData/unknown[1]' })],
+      });
+      events.push('error');
+    },
+  });
+  expect(result).toBe(false);
+  expect(events).toEqual(['error']);
+  expect(session.read()).toEqual(before);
+  expect(session.read().data).toBe(active);
+  expect(active.saveToString()).toBe(beforeXml);
+  expect(history.readEntries()).toEqual(beforeHistory);
+  expect(history.getSaveState()).toBe(beforeSaveState);
+  expect(runtime).toBe('playing');
 });

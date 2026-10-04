@@ -8,9 +8,8 @@
  */
 import { SoundObject } from './sound-object';
 import { SoundLayer } from './sound-layer';
-import { normalizeXmlLayerColor } from '../score/layers/layer-color';
 import { LayerGroup } from '../score/layers/layer-group';
-import { SOUND_LAYER_MAX_HEIGHT_INDEX, parseCustomHeight } from '../score/layer-height-policy';
+import { SOUND_LAYER_MAX_HEIGHT_INDEX } from '../score/layer-height-policy';
 import type { CopyMode } from '../deep-copyable';
 import { NoteProcessorChain } from '../note-processors/note-processor-chain';
 import { TimeBehavior } from './time-behavior';
@@ -29,7 +28,13 @@ import {
 } from '../utilities/score';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { Layer } from '../score/layers/layer';
-import { getBasicXML, initBasicFromXML } from './sound-object-utilities';
+import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
+import { checkRoot, checkShape, parseXmlNumber, parseXmlInteger, readInt } from '../utilities/xml';
+import {
+  BASIC_SOUND_OBJECT_CHILDREN,
+  getBasicXML,
+  initBasicFromXML,
+} from './sound-object-utilities';
 import { loadSoundObjectFromXML } from './sound-object-registry';
 import { PythonObject } from './python-object';
 import { ClojureObject } from './clojure-object';
@@ -696,9 +701,6 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
 
     for (const layer of this) {
       const layerElem = new Element('soundLayer');
-      for (const [attrName, attrValue] of layer.getUnknownAttributes()) {
-        layerElem.setAttribute(attrName, attrValue);
-      }
       layerElem.setAttribute('name', layer.getName());
       layerElem.setAttribute('muted', layer.isMuted().toString());
       layerElem.setAttribute('solo', layer.isSolo().toString());
@@ -721,123 +723,129 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
         layerElem.addElement('parameterId').setText(id);
       }
 
-      for (const child of layer.getUnknownChildren()) {
-        layerElem.addElement(child.clone());
-      }
-
       elem.addElement(layerElem);
     }
 
     return elem;
   }
 
-  static loadFromXML(data: Element, _objRefMap?: ObjRefLoadMap): PolyObject {
-    const pObj = new PolyObject(false);
-
-    const startAttr = data.getAttribute('startTime');
-    if (startAttr) {
-      const nameAttr = data.getAttribute('name');
-      if (nameAttr) pObj._name = nameAttr;
-
-      const tbAttr = data.getAttribute('timeBehavior');
-      if (tbAttr && Object.values(TimeBehavior).includes(tbAttr as TimeBehavior)) {
-        pObj._timeBehavior = tbAttr as TimeBehavior;
+  static loadFromXML(
+    data: Element,
+    objRefMap?: ObjRefLoadMap,
+    providedContext?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): PolyObject {
+    const context = providedContext ?? new XmlLoadContext(data);
+    checkRoot(data, ['polyObject', 'soundObject'], context);
+    checkShape(
+      data,
+      [
+        'type',
+        'name',
+        'startTime',
+        'duration',
+        'timeBehavior',
+        'backgroundColor',
+        'defaultHeightIndex',
+      ],
+      [...BASIC_SOUND_OBJECT_CHILDREN, 'defaultHeightIndex', 'soundLayer'],
+      context,
+      ['soundLayer'],
+    );
+    const type = data.getAttribute('type');
+    if (type !== null && !['PolyObject', 'blue.soundObject.PolyObject'].includes(type))
+      throw context.at(data).error({
+        code: 'type',
+        member: '@type',
+        value: type,
+        message: 'Unsupported PolyObject type.',
+        recovery: 'Use the PolyObject type.',
+      });
+    if (type === null && data.getName() !== 'polyObject')
+      throw context.at(data).error({
+        code: 'type',
+        member: '@type',
+        message: 'Missing PolyObject type.',
+        recovery: 'Supply the PolyObject type.',
+      });
+    const object = new PolyObject(false);
+    initBasicFromXML(object, data, context);
+    const normalized = getBasicXML(object, 'blue.soundObject.PolyObject');
+    for (const field of [
+      'name',
+      'startTime',
+      'duration',
+      'timeBehavior',
+      'backgroundColor',
+      'defaultHeightIndex',
+    ]) {
+      const raw = data.getAttribute(field);
+      if (raw === null) continue;
+      let value: string | number = raw;
+      if (field === 'startTime' || field === 'duration')
+        value = parseXmlNumber(raw, context.at(data), '@' + field);
+      if (field === 'backgroundColor' || field === 'defaultHeightIndex')
+        value = parseXmlInteger(
+          raw,
+          context.at(data),
+          field === 'backgroundColor' ? -2147483648 : 0,
+          2147483647,
+          '@' + field,
+        );
+      if (field === 'timeBehavior' && !Object.values(TimeBehavior).includes(raw as TimeBehavior))
+        throw context.at(data).error({
+          code: 'value',
+          member: '@timeBehavior',
+          value: raw,
+          message: 'Unsupported time behavior.',
+          recovery: 'Use a supported behavior.',
+        });
+      const current = data.getElement(field === 'duration' ? 'subjectiveDuration' : field);
+      if (current) {
+        const equal =
+          field === 'startTime'
+            ? object.getStartTime().equals(TimePosition.beats(value as number))
+            : field === 'duration'
+              ? object.getSubjectiveDuration().equals(TimeDuration.beats(value as number))
+              : field === 'defaultHeightIndex'
+                ? readInt(current, context, 0, 2147483647) === value
+                : field === 'timeBehavior'
+                  ? object.getTimeBehavior() === value
+                  : normalized.getTextString(field) === String(value);
+        if (!equal)
+          throw context.at(current).error({
+            code: 'conflict',
+            member: field,
+            message: 'PolyObject attribute and child aliases disagree.',
+            recovery: 'Make both forms agree.',
+          });
       }
-
-      pObj._startTime = TimePosition.beats(parseFloat(startAttr));
-
-      const durAttr = data.getAttribute('duration');
-      if (durAttr) pObj._subjectiveDuration = TimeDuration.beats(parseFloat(durAttr));
-
-      const colorAttr = data.getAttribute('backgroundColor');
-      if (colorAttr) pObj._backgroundColor = parseInt(colorAttr, 10);
-
-      const dhiAttr = data.getAttribute('defaultHeightIndex');
-      if (dhiAttr) pObj._defaultHeightIndex = parseInt(dhiAttr, 10);
-    } else {
-      initBasicFromXML(pObj, data);
-
-      const dhiText = data.getTextString('defaultHeightIndex');
-      if (dhiText) pObj._defaultHeightIndex = parseInt(dhiText, 10);
-    }
-
-    const nodes = data.getElements();
-    while (nodes.hasMoreElements()) {
-      const node = nodes.next();
-      const nodeName = node.getName();
-
-      if (nodeName === 'soundLayer') {
-        const layer = new SoundLayer();
-        const layerName = node.getAttribute('name');
-        if (layerName) layer.setName(layerName);
-
-        layer.setMuted(node.getAttribute('muted') === 'true');
-        layer.setSolo(node.getAttribute('solo') === 'true');
-
-        const heightIndex = node.getAttribute('heightIndex');
-        if (heightIndex) {
-          layer.setHeightIndex(parseInt(heightIndex, 10));
-        }
-
-        const rawCustomHeight = node.getAttribute('customHeight');
-        const parsedCustomHeight = parseCustomHeight(rawCustomHeight);
-        if (parsedCustomHeight !== null) {
-          layer.setCustomHeight(parsedCustomHeight);
-        }
-        const knownAttrs = new Set([
-          'name',
-          'muted',
-          'solo',
-          'heightIndex',
-          'automationSelectedIndex',
-        ]);
-        if (parsedCustomHeight !== null) {
-          knownAttrs.add('customHeight');
-        }
-        for (const attrName of node.getAttributeNames()) {
-          if (!knownAttrs.has(attrName)) {
-            layer.setUnknownAttribute(attrName, node.getAttribute(attrName) ?? '');
-          }
-        }
-        const automationSelectedIndex = node.getAttribute('automationSelectedIndex');
-
-        const sObjNodes = node.getElements();
-        while (sObjNodes.hasMoreElements()) {
-          const sObjNode = sObjNodes.next();
-          const childName = sObjNode.getName();
-          if (childName === 'soundObject') {
-            const sObj = loadSoundObjectFromXML(sObjNode, _objRefMap);
-            if (sObj) {
-              layer.push(sObj);
-            } else {
-              // Keep unsupported sound objects opaque so loading a project does
-              // not silently delete content that this runtime cannot execute.
-              layer.addUnknownChild(sObjNode.clone());
-            }
-          } else if (childName === 'backgroundColor') {
-            layer.setBackgroundColor(normalizeXmlLayerColor(sObjNode.getTextString()));
-          } else if (childName === 'noteProcessorChain') {
-            layer.setNoteProcessorChain(NoteProcessorChain.loadFromXML(sObjNode));
-          } else if (childName === 'parameterId') {
-            layer.getAutomationParameters().addParameterId(sObjNode.getTextString());
-          } else {
-            layer.addUnknownChild(sObjNode.clone());
-          }
-        }
-        if (automationSelectedIndex) {
-          const parsed = parseInt(automationSelectedIndex, 10);
-          if (!Number.isNaN(parsed)) {
-            layer.getAutomationParameters().setSelectedIndex(parsed);
-          }
-        }
-
-        pObj.push(layer);
-      } else if (nodeName === 'noteProcessorChain') {
-        pObj._npc = NoteProcessorChain.loadFromXML(node);
+      switch (field) {
+        case 'name':
+          object._name = raw;
+          break;
+        case 'startTime':
+          object._startTime = TimePosition.beats(value as number);
+          break;
+        case 'duration':
+          object._subjectiveDuration = TimeDuration.beats(value as number);
+          break;
+        case 'timeBehavior':
+          object._timeBehavior = raw as TimeBehavior;
+          break;
+        case 'backgroundColor':
+          object._backgroundColor = value as number;
+          break;
+        case 'defaultHeightIndex':
+          object._defaultHeightIndex = value as number;
+          break;
       }
     }
-
-    return pObj;
+    const height = data.getElement('defaultHeightIndex');
+    if (height) object._defaultHeightIndex = readInt(height, context, 0, 2147483647);
+    for (const child of data.getElements('soundLayer'))
+      object.push(SoundLayer.loadFromXML(child, objRefMap, context));
+    return providedContext ? object : requireXmlValue(context.result(object), sink);
   }
 
   deepCopy(mode: CopyMode = 'duplication'): PolyObject {

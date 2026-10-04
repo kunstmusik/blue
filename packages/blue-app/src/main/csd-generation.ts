@@ -1,9 +1,6 @@
-import type {
-  AudioLayoutManifest,
-  BlueData,
-  JavaRuntimeClientContract,
-  JavaScriptSession,
-} from '@blue/data';
+import { BlueData } from '@blue/data';
+import type { AudioLayoutManifest, JavaRuntimeClientContract, JavaScriptSession } from '@blue/data';
+import { prepareProjectTuningDependencies } from './tuning-scale-dependencies';
 
 /** Generate the disk-profile CSD used by Java's "Generate CSD to Screen" action. */
 export async function generateDiskCsdForScreen(
@@ -12,9 +9,10 @@ export async function generateDiskCsdForScreen(
   javaRuntimeClient?: JavaRuntimeClientContract | null,
   layoutManifest?: AudioLayoutManifest | null,
 ): Promise<string> {
+  const compileData = data instanceof BlueData ? prepareProjectTuningDependencies(data) : data;
   return javaRuntimeClient
-    ? data.toDiskCSDAsync(javaScriptSession, javaRuntimeClient, layoutManifest)
-    : data.toDiskCSD(javaScriptSession, layoutManifest);
+    ? compileData.toDiskCSDAsync(javaScriptSession, javaRuntimeClient, layoutManifest)
+    : compileData.toDiskCSD(javaScriptSession, layoutManifest);
 }
 
 /** Generate the API-backed realtime-profile CSD used by the realtime screen action. */
@@ -24,7 +22,8 @@ export async function generateRealtimeCsdForScreen(
   javaRuntimeClient?: JavaRuntimeClientContract | null,
   layoutManifest?: AudioLayoutManifest | null,
 ): Promise<string> {
+  const compileData = data instanceof BlueData ? prepareProjectTuningDependencies(data) : data;
   return javaRuntimeClient
-    ? data.toCSDAsync(javaScriptSession, javaRuntimeClient, layoutManifest)
-    : data.toCSD(javaScriptSession, layoutManifest);
+    ? compileData.toCSDAsync(javaScriptSession, javaRuntimeClient, layoutManifest)
+    : compileData.toCSD(javaScriptSession, layoutManifest);
 }

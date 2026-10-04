@@ -3,6 +3,8 @@
  */
 import { FieldType } from './field-type';
 import { Element } from '../../serialization/xml-reader';
+import { XmlLoadContext } from '../../serialization/xml-load';
+import { checkRoot, checkShape, parseXmlNumber } from '../../utilities/xml';
 
 export class FieldDef {
   private _fieldName = 'field';
@@ -63,20 +65,52 @@ export class FieldDef {
     return elem;
   }
 
-  static loadFromXML(data: Element): FieldDef {
-    const fd = new FieldDef();
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): FieldDef {
+    checkRoot(data, 'fieldDef', context);
+    checkShape(data, ['name', 'fieldType', 'min', 'max', 'default'], [], context);
+    const definition = new FieldDef();
     const name = data.getAttribute('name');
-    if (name) fd._fieldName = name;
-    const ft = data.getAttribute('fieldType');
-    if (ft && Object.values(FieldType).includes(ft as FieldType)) {
-      fd._fieldType = ft as FieldType;
+    if (name !== null) {
+      if (!name.trim())
+        throw context.error({
+          code: 'value',
+          member: '@name',
+          value: name,
+          message: 'Field definition name must not be empty.',
+          recovery: 'Supply a nonempty field name.',
+        });
+      definition._fieldName = name;
     }
-    const min = data.getAttribute('min');
-    if (min) fd._minValue = parseFloat(min);
-    const max = data.getAttribute('max');
-    if (max) fd._maxValue = parseFloat(max);
-    const def = data.getAttribute('default');
-    if (def) fd._defaultValue = parseFloat(def);
-    return fd;
+    const type = data.getAttribute('fieldType');
+    if (type !== null) {
+      if (!Object.values(FieldType).includes(type as FieldType))
+        throw context.error({
+          code: 'value',
+          member: '@fieldType',
+          value: type,
+          message: 'Unsupported field type.',
+          recovery: 'Choose CONTINUOUS or DISCRETE.',
+        });
+      definition._fieldType = type as FieldType;
+    }
+    for (const attr of ['min', 'max', 'default'] as const) {
+      const text = data.getAttribute(attr);
+      if (text === null) continue;
+      const value = parseXmlNumber(text, context.at(data), '@' + attr);
+      if (attr === 'min') definition._minValue = value;
+      if (attr === 'max') definition._maxValue = value;
+      if (attr === 'default') definition._defaultValue = value;
+    }
+    if (
+      definition._minValue > definition._maxValue ||
+      definition._defaultValue < definition._minValue ||
+      definition._defaultValue > definition._maxValue
+    )
+      throw context.error({
+        code: 'value',
+        message: 'Field range/default is inconsistent.',
+        recovery: 'Supply an ordered range containing the default value.',
+      });
+    return definition;
   }
 }

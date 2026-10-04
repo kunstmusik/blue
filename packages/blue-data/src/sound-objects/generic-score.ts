@@ -13,10 +13,16 @@ import { NoteList } from './note-list';
 import { TimeContext } from '../time/time-context';
 import { CompileData } from '../compile-data';
 import { Element } from '../serialization/xml-reader';
-import { ObjRefSaveMap } from '../serialization/obj-ref-map';
+import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
+import { checkShape, readText } from '../utilities/xml';
+import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject, SoundObjectStatic } from './sound-object';
 import { TimeBehavior } from './time-behavior';
-import { initBasicFromXML, getBasicXML } from './sound-object-utilities';
+import {
+  initBasicFromXML,
+  getBasicXML,
+  BASIC_SOUND_OBJECT_CHILDREN,
+} from './sound-object-utilities';
 import {
   applyNoteProcessorChain,
   applyNoteProcessorChainAsync,
@@ -138,22 +144,40 @@ export class GenericScore extends AbstractSoundObject implements SoundObject {
     return elem;
   }
 
-  static loadFromXML(data: Element): GenericScore {
+  static loadFromXML(
+    data: Element,
+    _objRefMap?: ObjRefLoadMap,
+    providedContext?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): GenericScore {
+    const context = providedContext ?? new XmlLoadContext(data);
+    checkShape(data, ['type'], [...BASIC_SOUND_OBJECT_CHILDREN, 'score', 'scoreText'], context);
+    const type = data.getAttribute('type');
+    if (
+      data.getName() !== 'soundObject' ||
+      (type !== 'GenericScore' && type !== 'blue.soundObject.GenericScore')
+    )
+      throw context.at(data).error({
+        code: 'type',
+        member: '@type',
+        value: type ?? '',
+        message: 'Expected GenericScore SoundObject.',
+        recovery: 'Use the matching supported SoundObject type.',
+      });
     const sObj = new GenericScore();
-    initBasicFromXML(sObj, data);
-
-    const score = data.getTextString('score');
-    if (score !== null) {
-      sObj.setScoreText(score);
-      return sObj;
-    }
-
-    const scoreText = data.getTextString('scoreText');
-    if (scoreText !== null) {
-      sObj.setScoreText(scoreText);
-    }
-
-    return sObj;
+    initBasicFromXML(sObj, data, context);
+    const current = data.getElement('score');
+    const legacy = data.getElement('scoreText');
+    const score = current ? readText(current, context) : undefined;
+    const alias = legacy ? readText(legacy, context) : undefined;
+    if (score !== undefined && alias !== undefined && score !== alias)
+      throw context.at(legacy!).error({
+        code: 'conflict',
+        message: 'Score text aliases disagree.',
+        recovery: 'Keep one consistent score text.',
+      });
+    if (score !== undefined || alias !== undefined) sObj.setScoreText(score ?? alias!);
+    return providedContext ? sObj : requireXmlValue(context.result(sObj), sink);
   }
 
   override deepCopy(): GenericScore {

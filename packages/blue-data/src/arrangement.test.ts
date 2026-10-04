@@ -55,38 +55,16 @@ describe('Arrangement', () => {
     expect(savedXml).toContain('blue.orchestra.JavaScriptInstrument');
   });
 
-  it('preserves unknown instrument XML through save and independent copying', () => {
-    const arrangement = Arrangement.loadFromXML(
-      Element.parse(`<arrangement>
+  it('rejects unknown embedded instruments before constructing an arrangement', () => {
+    expect(() =>
+      Arrangement.loadFromXML(
+        Element.parse(`<arrangement>
       <instrumentAssignment arrangementId="custom" isEnabled="true">
-        <instrument type="vendor.orchestra.CustomInstrument" vendorVersion="7">
-          <name>Custom Lead</name><comment>Keep this instrument</comment>
-          <vendorData mode="custom"><payload>opaque &amp; data</payload></vendorData>
-        </instrument>
+        <instrument type="vendor.orchestra.CustomInstrument"><name>Custom Lead</name></instrument>
       </instrumentAssignment>
     </arrangement>`),
-    );
-    const instrument = arrangement.getInstrument(0);
-    expect(instrument?.getName()).toBe('Custom Lead');
-    const saved = arrangement
-      .saveAsXML()
-      .getElement('instrumentAssignment')!
-      .getElement('instrument')!;
-    expect(saved.getAttribute('type')).toBe('vendor.orchestra.CustomInstrument');
-    expect(saved.getAttribute('vendorVersion')).toBe('7');
-    expect(saved.getElement('vendorData')!.getAttribute('mode')).toBe('custom');
-    expect(saved.getElement('vendorData')!.getTextString('payload')).toBe('opaque & data');
-
-    const copy = instrument!.deepCopy();
-    copy.setName('Copied Lead');
-    copy.setComment('Copied comment');
-    expect(instrument!.getName()).toBe('Custom Lead');
-    expect(copy.saveAsXML().getTextString('name')).toBe('Copied Lead');
-    expect(copy.saveAsXML().getTextString('comment')).toBe('Copied comment');
-    expect(copy.saveAsXML().getElement('vendorData')!.getTextString('payload')).toBe(
-      'opaque & data',
-    );
-    expect(() => copy.generateInstrument()).toThrow('vendor.orchestra.CustomInstrument');
+      ),
+    ).toThrow('Unsupported or missing instrument type');
   });
 
   it('supports replacement and assignment updates by arrangement id', () => {

@@ -3,6 +3,9 @@
  * Mirrors the Java Send class.
  */
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
+import { checkRoot, checkShape, readText, readBoolean, readDouble } from '../utilities/xml';
+
 import { BlueDataObject } from '../blue-data-object';
 import { CopyMode } from '../deep-copyable';
 import { Parameter } from '../automation/parameter';
@@ -78,25 +81,22 @@ export class Send implements BlueDataObject {
     return elem;
   }
 
-  static loadFromXML(data: Element): Send {
+  static loadFromXML(data: Element, context?: XmlLoadContext, sink?: XmlDiagnosticSink): Send {
+    const ctx = context ?? new XmlLoadContext(data);
+    checkRoot(data, 'send', ctx);
+    checkShape(data, [], ['sendChannel', 'level', 'enabled', 'parameter'], ctx);
     const send = new Send();
-    const sendChannel = data.getTextString('sendChannel') || data.getTextString('targetChannelId');
-    if (sendChannel) send._sendChannel = sendChannel;
-    const levelStr = data.getTextString('level');
-    if (levelStr) send._level = parseFloat(levelStr);
-    const enabledStr = data.getTextString('enabled');
-    if (enabledStr) send._enabled = enabledStr === 'true';
-
-    const paramElem = data.getElement('parameter');
-    if (paramElem) {
-      send._parameter = Parameter.loadFromXML(paramElem);
-    }
-
-    if (!send._parameter.isAutomationEnabled()) {
-      send._parameter.setFixedValue(send._level);
-    }
-
-    return send;
+    const target = data.getElement('sendChannel');
+    if (target) send._sendChannel = readText(target, ctx);
+    if (send._sendChannel === 'master') send._sendChannel = Channel.MASTER;
+    const level = data.getElement('level');
+    if (level) send._level = readDouble(level, ctx);
+    const enabled = data.getElement('enabled');
+    if (enabled) send._enabled = readBoolean(enabled, ctx);
+    const parameter = data.getElement('parameter');
+    if (parameter) send._parameter = Parameter.loadFromXML(parameter, ctx);
+    if (!send._parameter.isAutomationEnabled()) send._parameter.setFixedValue(send._level);
+    return context ? send : requireXmlValue(ctx.result(send), sink);
   }
 
   deepCopy(mode: CopyMode = 'duplication'): BlueDataObject {

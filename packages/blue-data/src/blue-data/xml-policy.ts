@@ -12,6 +12,7 @@ import { Score } from '../score/score';
 import { ScratchPadData } from '../scratch-pad-data';
 import { NoteProcessorChainMap } from '../note-processors/note-processor-chain-map';
 import { MarkersList } from '../markers-list';
+import { ClojureProjectData } from '../plugins/clojure-project-data';
 import { MidiInputProcessor } from '../midi/midi-input-processor';
 import { InstrumentLibrary } from '../instruments/instrument-library';
 import {
@@ -19,17 +20,51 @@ import {
   DEFAULT_LEGACY_METER_ENABLED,
   DEFAULT_LEGACY_METER_PROFILE_KEY,
 } from '../mixer/mixer';
-import {
-  DEFAULT_PAN_LAW_DB,
-  DEFAULT_PAN_OFF_CENTER_BOOST,
-  isValidPanLawDb,
-  parseFiniteNumber,
-  type PanLawDb,
-} from '../mixer/channel-pan';
 import { OpcodeList } from '../opcodes/opcode-list';
-import { parseUDOText } from '../opcodes/udo-utilities';
+import { parseUDODeclaration } from '../opcodes/udo-utilities';
 import { TimeContext } from '../time/time-context';
-import type { BlueData } from '../blue-data';
+import { BlueData } from '../blue-data';
+import { loadXml, requireXmlValue, XmlLoadContext } from '../serialization/xml-load';
+import type { XmlSource, XmlDiagnosticSink, XmlLoadResult } from '../serialization/xml-load';
+import { checkShape, readDouble, readBoolean, readText } from '../utilities/xml';
+
+const PROJECT_CHILDREN = [
+  'projectProperties',
+  'arrangement',
+  'mixer',
+  'tables',
+  'soundObjectLibrary',
+  'globalOrcSco',
+  'opcodeList',
+  'liveData',
+  'score',
+  'scratchPadData',
+  'noteProcessorChainMap',
+  'renderStartTime',
+  'renderEndTime',
+  'markersList',
+  'loopRendering',
+  'midiInputProcessor',
+  'pluginData',
+  'instrumentLibrary',
+  'udo',
+  'soundObject',
+  'tempo',
+  'timeContext',
+] as const;
+
+const CANONICAL_PROJECT_CHILDREN = PROJECT_CHILDREN.filter(
+  (name) => name !== 'soundObject' && name !== 'tempo' && name !== 'timeContext',
+);
+
+export function readProjectXml(
+  xml: string,
+  source: XmlSource = { kind: 'project', label: 'in-memory project' },
+): XmlLoadResult<BlueData> {
+  return loadXml(xml, source, (root, context) =>
+    loadProjectRoot(root, () => new BlueData(), context),
+  );
+}
 
 /**
  * Load provenance for the Spec 111 compatibility notice: only projects whose
@@ -69,19 +104,57 @@ type BlueDataXmlState = {
   version: string;
 };
 
-export function loadFromString(xmlString: string, createBlueData: () => BlueData): BlueData {
-  const rootElement = Element.parse(xmlString);
+export function loadFromString(
+  xmlString: string,
+  createBlueData: () => BlueData,
+  sink?: XmlDiagnosticSink,
+): BlueData {
+  return requireXmlValue(
+    loadXml(xmlString, { kind: 'project', label: 'in-memory project' }, (root, context) =>
+      loadProjectRoot(root, createBlueData, context),
+    ),
+    sink,
+  );
+}
 
+function loadProjectRoot(
+  rootElement: Element,
+  createBlueData: () => BlueData,
+  context: XmlLoadContext,
+): BlueData {
   if (rootElement.getName() !== 'blueData') {
-    throw new Error(`Expected root element "blueData", got "${rootElement.getName()}"`);
+    throw context.error({
+      code: 'root',
+      member: rootElement.getName(),
+      message: `Expected root element "blueData", got "${rootElement.getName()}".`,
+      recovery: 'Open this XML through its matching resource loader.',
+    });
   }
 
+  checkShape(rootElement, ['version'], PROJECT_CHILDREN, context);
+  const version = rootElement.getAttribute('version');
+  if (version !== null && !/^\d+(?:\.\d+){0,2}(?:_beta\d*)?$/.test(version))
+    throw context.error({
+      code: 'value',
+      member: '@version',
+      value: version,
+      message: 'Invalid project version syntax.',
+      recovery: 'Supply a supported numeric project version, optionally with a beta suffix.',
+    });
+
   // Apply migrations
-  UpgradeManager.getInstance().performUpgrades(rootElement);
+  UpgradeManager.getInstance().performUpgrades(rootElement, context);
+  checkShape(rootElement, ['version'], CANONICAL_PROJECT_CHILDREN, context);
 
   const objRefMap = new ObjRefLoadMap();
   const blueData = createBlueData();
   const state = blueData as unknown as BlueDataXmlState;
+  const objectLibrary = rootElement.getElement('soundObjectLibrary');
+  if (objectLibrary)
+    state.sObjLib = SoundObjectLibrary.loadFromXML(objectLibrary, objRefMap, context);
+
+  const opcodeNode = rootElement.getElement('opcodeList');
+  const currentOpcodes = opcodeNode ? OpcodeList.loadFromXML(opcodeNode, context) : null;
 
   const versionAttr = rootElement.getAttribute('version');
   if (versionAttr) blueData.setVersion(versionAttr);
@@ -94,12 +167,6 @@ export function loadFromString(xmlString: string, createBlueData: () => BlueData
   let mixerLoaded = false;
   let scoreLoaded = false;
   let scoreModePresentAtLoad = false;
-  const mixerPanningAttributes = new Set<'panningEnabled' | 'panLawDb' | 'panOffCenterBoost'>();
-  const legacyScorePanning: {
-    panningEnabled?: boolean;
-    panLawDb?: PanLawDb;
-    panOffCenterBoost?: boolean;
-  } = {};
 
   const nodes = rootElement.getElements();
   while (nodes.hasMoreElements()) {
@@ -108,7 +175,7 @@ export function loadFromString(xmlString: string, createBlueData: () => BlueData
 
     switch (nodeName) {
       case 'projectProperties':
-        state.projectProperties = ProjectProperties.loadFromXML(node);
+        state.projectProperties = ProjectProperties.loadFromXML(node, context);
         break;
       case 'instrumentLibrary':
         // Store for deferred processing — arrangement needs it
@@ -119,85 +186,93 @@ export function loadFromString(xmlString: string, createBlueData: () => BlueData
         arrangementNode = node;
         break;
       case 'mixer':
-        state.mixer = Mixer.loadFromXML(node);
+        state.mixer = Mixer.loadFromXML(node, context);
         mixerLoaded = true;
-        for (const attribute of ['panningEnabled', 'panLawDb', 'panOffCenterBoost'] as const) {
-          if (node.getAttribute(attribute) !== null) mixerPanningAttributes.add(attribute);
-        }
+
         break;
       case 'tables':
-        state.tableSet = Tables.loadFromXML(node);
+        state.tableSet = Tables.loadFromXML(node, context);
         break;
       case 'soundObjectLibrary':
-        state.sObjLib = SoundObjectLibrary.loadFromXML(node, objRefMap);
+        // Preloaded before the remaining graph, independent of root sibling order.
         break;
       case 'globalOrcSco':
-        state.globalOrcSco = GlobalOrcSco.loadFromXML(node);
+        state.globalOrcSco = GlobalOrcSco.loadFromXML(node, context);
         break;
       case 'udo':
         // Legacy root UDO text → parse into OpcodeList
         {
-          const udoText = node.getTextString();
-          if (udoText) {
-            state.opcodeList = parseUDOText(udoText);
+          const udoText = readText(node, context);
+          {
+            const legacy = readLegacyProjectOpcodes(udoText, node, context);
+            if (currentOpcodes) {
+              if (legacy.saveAsXML().toXml() !== currentOpcodes.saveAsXML().toXml())
+                throw context.at(node).error({
+                  code: 'conflict',
+                  member: 'udo',
+                  message: 'Legacy UDO text conflicts with opcodeList.',
+                  recovery: 'Keep one equivalent UDO representation.',
+                });
+            }
+            state.opcodeList = legacy;
           }
         }
         break;
       case 'opcodeList':
-        state.opcodeList = OpcodeList.loadFromXML(node);
+        state.opcodeList = currentOpcodes!;
         break;
       case 'liveData':
-        state.liveData = LiveData.loadFromXML(node, objRefMap);
+        state.liveData = LiveData.loadFromXML(node, objRefMap, context);
         break;
       case 'score':
         scoreModePresentAtLoad = node.getAttribute('trackLayerMuteSoloMode') !== null;
-        state.score = Score.loadFromXML(node, objRefMap);
-        const legacyPanningEnabled = node.getAttribute('panningEnabled');
-        if (legacyPanningEnabled !== null) {
-          legacyScorePanning.panningEnabled = legacyPanningEnabled.trim().toLowerCase() === 'true';
-        }
-        const legacyPanLaw = parseFiniteNumber(node.getAttribute('panLawDb'));
-        if (legacyPanLaw !== undefined && isValidPanLawDb(legacyPanLaw)) {
-          legacyScorePanning.panLawDb = legacyPanLaw;
-        }
-        const legacyPanBoost = node.getAttribute('panOffCenterBoost');
-        if (legacyPanBoost !== null) {
-          legacyScorePanning.panOffCenterBoost = legacyPanBoost.trim().toLowerCase() === 'true';
-        }
+        state.score = Score.loadFromXML(node, objRefMap, context);
         scoreLoaded = true;
         break;
       case 'scratchPadData':
-        state.scratchData = ScratchPadData.loadFromXML(node);
+        state.scratchData = ScratchPadData.loadFromXML(node, context);
         break;
       case 'noteProcessorChainMap':
-        state.noteProcessorChainMap = NoteProcessorChainMap.loadFromXML(node);
+        state.noteProcessorChainMap = NoteProcessorChainMap.loadFromXML(node, context);
         break;
       case 'renderStartTime':
-        state.renderStartTime = parseFloat(node.getTextString());
+        state.renderStartTime = readDouble(node, context);
+        if (state.renderStartTime < 0)
+          throw context.at(node).error({
+            code: 'value',
+            value: node.getTextString(),
+            message: 'Render start must be nonnegative.',
+            recovery: 'Supply a nonnegative render start.',
+          });
         break;
       case 'renderEndTime':
-        state.renderEndTime = parseFloat(node.getTextString());
+        state.renderEndTime = readDouble(node, context);
+        if (state.renderEndTime < 0 && state.renderEndTime !== -1)
+          throw context.at(node).error({
+            code: 'value',
+            value: node.getTextString(),
+            message: 'Render end must be nonnegative or -1.',
+            recovery: 'Supply a valid render end.',
+          });
         break;
       case 'markersList':
-        state.markersList = MarkersList.loadFromXML(node);
+        state.markersList = MarkersList.loadFromXML(node, context);
         break;
       case 'loopRendering':
-        state.loopRendering = node.getTextString().toLowerCase() === 'true';
+        state.loopRendering = readBoolean(node, context);
         break;
       case 'midiInputProcessor':
-        state.midiInputProcessor = MidiInputProcessor.loadFromXML(node);
+        state.midiInputProcessor = MidiInputProcessor.loadFromXML(node, context);
         break;
       case 'timeContext':
         // Legacy root timeContext → migrate into score
         state.score.setTimeContext(TimeContext.loadFromXML(node));
         break;
       case 'pluginData':
-        // Preserve plugin data children opaquely
-        state.pluginDataXml = [];
-        const pluginChildren = node.getElements();
-        while (pluginChildren.hasMoreElements()) {
-          state.pluginDataXml.push(pluginChildren.next());
-        }
+        checkShape(node, [], ['blueDataObject'], context);
+        state.pluginDataXml = [...node.getElements('blueDataObject')].map((child) =>
+          ClojureProjectData.loadFromXML(child, context).saveAsXML(),
+        );
         break;
     }
   }
@@ -209,7 +284,7 @@ export function loadFromString(xmlString: string, createBlueData: () => BlueData
       state.instrumentLibrary = lib;
       state.arrangement = Arrangement.loadFromXMLWithLibrary(arrangementNode, lib);
     } else {
-      state.arrangement = Arrangement.loadFromXML(arrangementNode);
+      state.arrangement = Arrangement.loadFromXML(arrangementNode, context);
     }
   } else if (instrumentLibraryNode) {
     // Store instrumentLibrary even without arrangement
@@ -219,22 +294,9 @@ export function loadFromString(xmlString: string, createBlueData: () => BlueData
   // Post-loop: if no mixer element was present, disable mixer and apply legacy meter defaults
   if (!mixerLoaded) {
     state.mixer.setEnabled(false);
+    state.mixer.setPanningEnabled(false);
     state.mixer.setEnableMeters(DEFAULT_LEGACY_METER_ENABLED);
     state.mixer.setMeterProfileKey(DEFAULT_LEGACY_METER_PROFILE_KEY);
-  }
-
-  // Panning was originally serialized on <score>. Prefer the Mixer-owned
-  // attributes when present, while migrating each legacy value independently.
-  if (!mixerPanningAttributes.has('panningEnabled')) {
-    state.mixer.setPanningEnabled(legacyScorePanning.panningEnabled ?? false);
-  }
-  if (!mixerPanningAttributes.has('panLawDb')) {
-    state.mixer.setPanLawDb(legacyScorePanning.panLawDb ?? DEFAULT_PAN_LAW_DB);
-  }
-  if (!mixerPanningAttributes.has('panOffCenterBoost')) {
-    state.mixer.setPanOffCenterBoost(
-      legacyScorePanning.panOffCenterBoost ?? DEFAULT_PAN_OFF_CENTER_BOOST,
-    );
   }
 
   // A legacy document without a Score retains Event header behavior and disabled panning.
@@ -261,14 +323,19 @@ export function loadFromString(xmlString: string, createBlueData: () => BlueData
     .getTimeContext()
     .setSampleRate(parseInt(state.projectProperties.sampleRate, 10) || 44100);
 
+  if (state.renderEndTime !== -1 && state.renderEndTime < state.renderStartTime)
+    throw context.at(rootElement.getElement('renderEndTime') ?? rootElement).error({
+      code: 'conflict',
+      message: 'Render end precedes render start.',
+      recovery: 'Choose an ordered render range.',
+    });
   return blueData;
 }
 
 export function saveAsXML(blueData: BlueData, objRefMap?: ObjRefSaveMap): Element {
   const state = blueData as unknown as BlueDataXmlState;
-  state.version = BLUE_VERSION;
   const root = new Element('blueData');
-  root.setAttribute('version', state.version);
+  root.setAttribute('version', BLUE_VERSION);
 
   // Java-compatible root section ordering
   root.addElement(state.projectProperties.saveAsXML(objRefMap));
@@ -301,4 +368,47 @@ export function saveToString(blueData: BlueData): string {
   const objRefMap = new ObjRefSaveMap();
   const root = saveAsXML(blueData, objRefMap);
   return root.toXml();
+}
+
+/** Legacy text must form complete definitions; conversion cannot erase orphan code. */
+function readLegacyProjectOpcodes(
+  text: string,
+  source: Element,
+  context: XmlLoadContext,
+): OpcodeList {
+  const result = new OpcodeList();
+  const lines = text.match(/[^\n]*(?:\n|$)/g)?.filter((line) => line.length > 0) ?? [];
+  const reject = () =>
+    context.at(source).error({
+      code: 'value',
+      member: 'udo',
+      message: 'Legacy UDO text must contain complete opcode definitions without orphan text.',
+      recovery:
+        'Repair the definitions or move unrelated code to GlobalOrcSco; the source remains unchanged.',
+    });
+  let index = 0;
+  while (index < lines.length) {
+    if (!lines[index].trim()) {
+      index++;
+      continue;
+    }
+    let declaration = lines[index++];
+    if (!declaration.trimStart().startsWith('opcode ')) throw reject();
+    let opcode = parseUDODeclaration(declaration);
+    while (!opcode && index < lines.length && !lines[index].trimStart().startsWith('endop')) {
+      declaration += lines[index++];
+      opcode = parseUDODeclaration(declaration);
+    }
+    if (!opcode) throw reject();
+    let body = '';
+    while (index < lines.length && lines[index].trim() !== 'endop') {
+      if (/^\s*(?:opcode|endop)\b/.test(lines[index])) throw reject();
+      body += lines[index++];
+    }
+    if (index === lines.length) throw reject();
+    index++;
+    opcode.setCode(body);
+    result.addOpcode(opcode);
+  }
+  return result;
 }

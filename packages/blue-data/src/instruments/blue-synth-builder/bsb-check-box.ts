@@ -1,3 +1,5 @@
+import { XmlLoadContext } from '../../serialization/xml-load';
+import { readBoolean } from '../../utilities/xml';
 /**
  * BSBCheckBox — binary on/off control.
  * Mirrors the Java BSBCheckBox class.
@@ -37,14 +39,14 @@ export class BSBCheckBox extends BSBWidget {
     this.addCompilationReplacement(unit, this.objectName, this.selected ? '1' : '0', parameters);
   }
 
-  loadFromXML(data: Element): void {
-    this.loadFromXMLCommon(data);
+  loadFromXML(data: Element, context = new XmlLoadContext(data)): void {
+    this.loadFromXMLCommon(data, context);
     const lbl = data.getTextString('label');
     if (lbl !== null) this.label = lbl;
     const sel = data.getTextString('selected');
     this.setValue(sel === 'true' ? 1 : 0);
     const rand = data.getElement('randomizable');
-    if (rand) this.randomizable = rand.getTextString() === 'true';
+    if (rand) this.randomizable = readBoolean(rand, context);
   }
 
   randomize(): void {

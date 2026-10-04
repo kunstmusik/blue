@@ -63,8 +63,8 @@ const MINIMAL_BSB_XML = `<instrument type="blue.orchestra.BlueSynthBuilder" edit
     </bsbObject>
   </graphicInterface>
   <parameterList>
-    <parameter uniqueId="12345" name="knob1" label="Knob 1" min="0.0" max="1.0" resolution="0.001" version="2">
-      <line>
+    <parameter uniqueId="12345" name="knob1" label="Knob 1" min="0.0" max="1.0" resolution="0.001">
+      <line min="0" max="1" version="2">
         <linePoint x="0.0" y="0.5"/>
         <linePoint x="1.0" y="0.5"/>
       </line>

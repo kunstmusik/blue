@@ -5,7 +5,6 @@ import type { ScoreObjectEditorComponentProps } from '../editor-registry';
 import type { FieldSnapshot, ParameterSnapshot } from './jmask/jmask-utils';
 import { getParameters, cloneField } from './jmask/jmask-utils';
 import ParameterRow from './jmask/ParameterRow';
-import CommitNumberInput from '../../../../CommitNumberInput';
 import GeneratedScoreModal from './GeneratedScoreModal';
 import { useScoreObjectTest } from './useScoreObjectTest';
 import { HostSurfacePortal } from '../../../../host-surface/HostSurfacePortal';
@@ -80,13 +79,6 @@ export default function JMaskEditor({
   const handleSeedUsedChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       patch({ seedUsed: e.target.checked });
-    },
-    [patch],
-  );
-
-  const handleSeedCommit = useCallback(
-    (v: number) => {
-      patch({ seed: v });
     },
     [patch],
   );
@@ -166,12 +158,10 @@ export default function JMaskEditor({
           Seed
         </label>
         {payload?.seedUsed && (
-          <CommitNumberInput
-            aria-label="Random seed"
-            value={payload.seed ?? 0}
-            step={1}
+          <SeedInput
+            value={payload.seed}
+            onCommit={(seed) => patch({ seed })}
             className="w-24 rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
-            onChange={handleSeedCommit}
           />
         )}
         <button
@@ -212,5 +202,50 @@ export default function JMaskEditor({
           ))}
       </div>
     </div>
+  );
+}
+
+function SeedInput({
+  value,
+  onCommit,
+  className,
+}: {
+  value: string;
+  onCommit: (value: string) => void;
+  className: string;
+}): React.ReactElement {
+  const [draft, setDraft] = useState(value);
+  useEffect(() => setDraft(value), [value]);
+  const valid =
+    /^[+-]?\d+$/.test(draft.trim()) &&
+    BigInt(draft.trim()) >= -9223372036854775808n &&
+    BigInt(draft.trim()) <= 9223372036854775807n;
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      aria-label="Random seed"
+      aria-invalid={!valid}
+      value={draft}
+      className={className}
+      onChange={(event) => setDraft(event.target.value)}
+      onBlur={(event) => {
+        const token = event.currentTarget.value.trim();
+        if (!/^[+-]?\d+$/.test(token)) return;
+        const seed = BigInt(token);
+        if (seed < -9223372036854775808n || seed > 9223372036854775807n) return;
+        const canonical = String(seed);
+        setDraft(canonical);
+        if (canonical !== value) onCommit(canonical);
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter') event.currentTarget.blur();
+        if (event.key === 'Escape') {
+          event.currentTarget.value = value;
+          setDraft(value);
+          event.currentTarget.blur();
+        }
+      }}
+    />
   );
 }

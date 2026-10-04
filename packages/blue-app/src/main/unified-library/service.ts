@@ -55,7 +55,7 @@ import {
 import { UnifiedLibraryRepositoryClient } from './repository-client';
 import { UnifiedLibraryProjectAdapter } from './project-adapter';
 import type { RepositoryClipboardNode, RepositoryNode } from './repository';
-import { parseLegacyLibraryDocument } from '@blue/data';
+import { parseLegacyLibraryDocument, readResourceXml, XmlLoadError } from '@blue/data';
 import { UnifiedLibraryEditorSessionService } from './editor-session-service';
 import { UnifiedLibraryImportExportService } from './import-export-service';
 import { LibraryMigrationStateStore } from './migration-state-store';
@@ -90,10 +90,11 @@ function hashText(value: string): string {
   return hash.toString(16).padStart(8, '0');
 }
 
-function parseStandaloneInstrumentXml(source: string) {
+function parseStandaloneInstrumentXml(source: string, sourcePath: string) {
   const withoutDeclaration = source.replace(/^\uFEFF?\s*<\?xml[\s\S]*?\?>\s*/u, '').trim();
   const plan = parseLegacyLibraryDocument(
     `<instrumentLibrary><instrumentCategory categoryName="Instrument Library" isRoot="true">${withoutDeclaration}</instrumentCategory></instrumentLibrary>`,
+    { kind: 'instrument', label: sourcePath, nativePath: sourcePath },
   );
   const [item] = plan.root.children;
   if (plan.root.children.length !== 1 || !item || item.kind !== 'item') {
@@ -477,6 +478,11 @@ export class UnifiedLibraryService {
         };
       }
       const payload = await client.getItemPayload(node.id);
+      const report = readResourceXml(key.libraryType, payload.payloadXml, {
+        kind: 'library',
+        label: node.displayName,
+        libraryItemId: node.id,
+      });
       const fields = Object.fromEntries(
         Object.entries(payload.preview).filter(
           ([, value]) => typeof value === 'object' && value !== null && 'state' in value,
@@ -496,8 +502,12 @@ export class UnifiedLibraryService {
           libraryType: node.libraryType,
           scope: 'user',
           objectType: payload.objectType,
-          supportStatus: payload.supportStatus,
-          supportMessage: payload.supportMessage,
+          supportStatus:
+            report.ok && payload.supportStatus === 'supported' ? 'supported' : 'unsupported',
+          supportMessage: report.ok
+            ? payload.supportMessage
+            : 'This resource is archived and cannot be inserted or edited safely.',
+          diagnostics: report.diagnostics,
           fields,
           dependencies: { itemOwned: owned, unresolvedExternal: unresolved },
         },
@@ -701,14 +711,25 @@ export class UnifiedLibraryService {
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Library mutation failed.';
-      const code = /stale/i.test(message)
-        ? 'stale-revision'
-        : /name/i.test(message)
-          ? 'invalid-name'
-          : /move|descendant|type/i.test(message)
-            ? 'invalid-move'
-            : 'storage-failure';
-      return { ok: false, error: createLibraryServiceError(code, message, false) };
+      const code =
+        error instanceof XmlLoadError
+          ? 'validation-failed'
+          : /stale/i.test(message)
+            ? 'stale-revision'
+            : /name/i.test(message)
+              ? 'invalid-name'
+              : /move|descendant|type/i.test(message)
+                ? 'invalid-move'
+                : 'storage-failure';
+      return {
+        ok: false,
+        error: createLibraryServiceError(
+          code,
+          message,
+          false,
+          error instanceof XmlLoadError ? { diagnostics: error.diagnostics } : {},
+        ),
+      };
     }
   }
 
@@ -1277,7 +1298,10 @@ export class UnifiedLibraryService {
       if (parent.libraryType !== 'instrument' || parent.nodeKind === 'item') {
         throw new Error('The destination must be a folder in the Instrument Library.');
       }
-      const item = parseStandaloneInstrumentXml(await fs.promises.readFile(sourcePath, 'utf8'));
+      const item = parseStandaloneInstrumentXml(
+        await fs.promises.readFile(sourcePath, 'utf8'),
+        sourcePath,
+      );
       const node = await client.createItem({
         libraryType: 'instrument',
         parentId,
@@ -1655,16 +1679,27 @@ export class UnifiedLibraryService {
       return { ok: true, value: receipt };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Transfer failed.';
-      const code = /source|changed/i.test(message)
-        ? 'source-changed'
-        : /session/i.test(message)
-          ? 'stale-project-session'
-          : /target|destination|layer|revision/i.test(message)
-            ? 'stale-target'
-            : /dependency/i.test(message)
-              ? 'dependency-conflict'
-              : 'validation-failed';
-      return { ok: false, error: createLibraryServiceError(code, message, false) };
+      const code =
+        error instanceof XmlLoadError
+          ? 'validation-failed'
+          : /source|changed/i.test(message)
+            ? 'source-changed'
+            : /session/i.test(message)
+              ? 'stale-project-session'
+              : /target|destination|layer|revision/i.test(message)
+                ? 'stale-target'
+                : /dependency/i.test(message)
+                  ? 'dependency-conflict'
+                  : 'validation-failed';
+      return {
+        ok: false,
+        error: createLibraryServiceError(
+          code,
+          message,
+          false,
+          error instanceof XmlLoadError ? { diagnostics: error.diagnostics } : {},
+        ),
+      };
     }
   }
 
@@ -1701,14 +1736,25 @@ export class UnifiedLibraryService {
       return { ok: true, value: receipt };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Insertion failed.';
-      const code = /session/i.test(message)
-        ? 'stale-project-session'
-        : /target|destination|layer/i.test(message)
-          ? 'stale-target'
-          : /dependency/i.test(message)
-            ? 'dependency-conflict'
-            : 'validation-failed';
-      return { ok: false, error: createLibraryServiceError(code, message, false) };
+      const code =
+        error instanceof XmlLoadError
+          ? 'validation-failed'
+          : /session/i.test(message)
+            ? 'stale-project-session'
+            : /target|destination|layer/i.test(message)
+              ? 'stale-target'
+              : /dependency/i.test(message)
+                ? 'dependency-conflict'
+                : 'validation-failed';
+      return {
+        ok: false,
+        error: createLibraryServiceError(
+          code,
+          message,
+          false,
+          error instanceof XmlLoadError ? { diagnostics: error.diagnostics } : {},
+        ),
+      };
     }
   }
 
@@ -2008,6 +2054,13 @@ export class UnifiedLibraryService {
   }
 
   private failureResult<T>(error: unknown): LibraryResult<T> {
+    if (error instanceof XmlLoadError)
+      return {
+        ok: false,
+        error: createLibraryServiceError('validation-failed', error.message, false, {
+          diagnostics: error.diagnostics,
+        }),
+      };
     const message = error instanceof Error ? error.message : 'Library storage failed.';
     const notFound = /not found/i.test(message);
     return {

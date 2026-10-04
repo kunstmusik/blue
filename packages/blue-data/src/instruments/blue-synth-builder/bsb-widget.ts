@@ -5,6 +5,9 @@
  * Each widget contributes a replacement value during compilation:
  *   objectName → value (or automation variable name)
  */
+import { XmlLoadContext } from '../../serialization/xml-load';
+import { readBoolean } from '../../utilities/xml';
+import { validateBsbWidget } from './bsb-xml';
 import { Element } from '../../serialization/xml-reader';
 import { BSBCompilationUnit } from './bsb-compilation-unit';
 import { Parameter } from '../../automation/parameter';
@@ -83,7 +86,12 @@ export abstract class BSBWidget {
    * Load widget properties from XML.
    * Subclasses override to load type-specific properties.
    */
-  static loadCommonFromXML(widget: BSBWidget, data: Element): void {
+  static loadCommonFromXML(
+    widget: BSBWidget,
+    data: Element,
+    context = new XmlLoadContext(data),
+  ): void {
+    validateBsbWidget(data, widget.constructor.name, context);
     const objName = data.getTextString('objectName');
     if (objName) widget.objectName = objName;
     const id = data.getAttribute('uniqueId') ?? data.getAttribute('id') ?? data.getTextString('id');
@@ -96,7 +104,7 @@ export abstract class BSBWidget {
     if (comment) widget.comment = comment;
     const autoAllowedElem = data.getElement('automationAllowed');
     if (autoAllowedElem) {
-      widget.automationAllowed = autoAllowedElem.getTextString() === 'true';
+      widget.automationAllowed = readBoolean(autoAllowedElem, context);
     } else {
       widget.automationAllowed = false;
     }
@@ -110,8 +118,8 @@ export abstract class BSBWidget {
     if (param) widget.parameterName = param;
   }
 
-  loadFromXMLCommon(data: Element): void {
-    BSBWidget.loadCommonFromXML(this, data);
+  loadFromXMLCommon(data: Element, context = new XmlLoadContext(data)): void {
+    BSBWidget.loadCommonFromXML(this, data, context);
   }
 
   private cloneWidget(mode: CopyMode = 'duplication'): this {

@@ -1,3 +1,5 @@
+import { XmlLoadContext } from '../serialization/xml-load';
+import { checkRoot, checkShape } from '../utilities/xml';
 import { Element } from '../serialization/xml-reader';
 import { BlueDataObject } from '../blue-data-object';
 import { NoteProcessorChain } from './note-processor-chain';
@@ -44,30 +46,47 @@ export class NoteProcessorChainMap implements BlueDataObject {
     return elem;
   }
 
-  static loadFromXML(data: Element): NoteProcessorChainMap {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): NoteProcessorChainMap {
+    checkRoot(data, 'noteProcessorChainMap', context);
+    checkShape(data, [], ['npc', 'noteProcessorChain'], context, ['npc', 'noteProcessorChain']);
     const map = new NoteProcessorChainMap();
-
-    const npcNodes = data.getElements('npc');
-    while (npcNodes.hasMoreElements()) {
-      const npcNode = npcNodes.next();
-      const name = npcNode.getAttribute('name') ?? '';
-      const chainElem = npcNode.getElement('noteProcessorChain');
-      if (name && chainElem) {
-        const chain = NoteProcessorChain.loadFromXML(chainElem);
-        map.chains.set(name, chain);
+    const forms = new Map<string, Set<string>>();
+    for (const node of data.getElements()) {
+      const legacy = node.getName() === 'noteProcessorChain';
+      if (!legacy) checkShape(node, ['name'], ['noteProcessorChain'], context);
+      const name = node.getAttribute('name');
+      let chain = legacy ? node : node.getElement('noteProcessorChain');
+      if (!name?.trim() || !chain)
+        throw context.at(node).error({
+          code: 'conflict',
+          message: 'Chain map requires a nonempty name and one chain.',
+          recovery: 'Correct the named chain entry.',
+        });
+      if (legacy) {
+        chain = node.clone();
+        chain.removeAttribute('name');
+        context.anchor(chain, node);
       }
-    }
-
-    const legacyChainNodes = data.getElements('noteProcessorChain');
-    while (legacyChainNodes.hasMoreElements()) {
-      const node = legacyChainNodes.next();
-      const name = node.getAttribute('name') ?? '';
-      if (name) {
-        const chain = NoteProcessorChain.loadFromXML(node);
-        map.chains.set(name, chain);
+      const value = NoteProcessorChain.loadFromXML(chain, context);
+      const existing = map.chains.get(name);
+      if (existing) {
+        if (
+          forms.get(name)?.has(node.getName()) ||
+          existing.saveAsXML().toXml() !== value.saveAsXML().toXml()
+        )
+          throw context.at(node).error({
+            code: 'conflict',
+            member: '@name',
+            value: name,
+            message: 'Duplicate or conflicting named chain.',
+            recovery: 'Keep one unambiguous named chain.',
+          });
+      } else {
+        forms.set(name, new Set());
+        map.chains.set(name, value);
       }
+      forms.get(name)!.add(node.getName());
     }
-
     return map;
   }
 

@@ -1,12 +1,9 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { dialog, type BrowserWindow } from 'electron';
-import type {
-  AudioLayoutManifest,
-  BlueData,
-  JavaRuntimeClientContract,
-  JavaScriptSession,
-} from '@blue/data';
+import { BlueData } from '@blue/data';
+import type { AudioLayoutManifest, JavaRuntimeClientContract, JavaScriptSession } from '@blue/data';
+import { prepareProjectTuningDependencies } from './tuning-scale-dependencies';
 
 export interface SaveGeneratedCsdToDiskRequest {
   currentData: Pick<BlueData, 'toDiskCSD'> & Partial<Pick<BlueData, 'toDiskCSDAsync'>>;
@@ -47,14 +44,18 @@ export async function saveGeneratedCsdToDisk(
     filePath += '.csd';
   }
 
+  const compileData =
+    request.currentData instanceof BlueData
+      ? prepareProjectTuningDependencies(request.currentData)
+      : request.currentData;
   const csdText =
-    request.runtimeClient && request.currentData.toDiskCSDAsync
-      ? await request.currentData.toDiskCSDAsync(
+    request.runtimeClient && compileData.toDiskCSDAsync
+      ? await compileData.toDiskCSDAsync(
           request.session,
           request.runtimeClient,
           request.layoutManifest,
         )
-      : request.currentData.toDiskCSD(request.session, request.layoutManifest);
+      : compileData.toDiskCSD(request.session, request.layoutManifest);
   await writeFile(filePath, csdText, 'utf-8');
 
   return filePath;

@@ -1,3 +1,4 @@
+import { XmlLoadContext } from '../../serialization/xml-load';
 /**
  * BSBLabel — static text label.
  * Does not contribute replacement values — visual only.
@@ -20,8 +21,8 @@ export class BSBLabel extends BSBWidget {
 
   override collectReplacements(_unit: BSBCompilationUnit): void {}
 
-  loadFromXML(data: Element): void {
-    this.loadFromXMLCommon(data);
+  loadFromXML(data: Element, context = new XmlLoadContext(data)): void {
+    this.loadFromXMLCommon(data, context);
     const versionAttr = data.getAttribute('version');
     const parsedVersion = versionAttr ? Number.parseInt(versionAttr, 10) : 1;
     const version = Number.isFinite(parsedVersion) ? parsedVersion : 1;

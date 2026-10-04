@@ -62,7 +62,14 @@ describe('Note processor snapshot', () => {
         </noteProcessor>
       </noteProcessorChain>
     `);
-    const chain = NoteProcessorChain.loadFromXML(xml);
+    expect(() => NoteProcessorChain.loadFromXML(xml)).toThrow();
+    const chain = new NoteProcessorChain();
+    chain.addProcessor(
+      UnsupportedProcessor.loadFromXML(
+        xml.getElement('noteProcessor')!,
+        'blue.noteProcessor.SomeFutureProcessor',
+      ),
+    );
     const snapshot = createNoteProcessorChainSnapshot(chain);
     expect(snapshot.processors[0].supported).toBe(false);
     expect(snapshot.processors[0].deferred).toBe(false);
@@ -77,7 +84,14 @@ describe('Note processor snapshot', () => {
         </noteProcessor>
       </noteProcessorChain>
     `);
-    const chain = NoteProcessorChain.loadFromXML(xml);
+    expect(() => NoteProcessorChain.loadFromXML(xml)).toThrow();
+    const chain = new NoteProcessorChain();
+    chain.addProcessor(
+      UnsupportedProcessor.loadFromXML(
+        xml.getElement('noteProcessor')!,
+        'blue.noteProcessor.SomeFutureProcessor',
+      ),
+    );
     const snapshot = createNoteProcessorChainSnapshot(chain);
     expect(snapshot.processors[0].serializedXml).toContain('SomeFutureProcessor');
     expect(snapshot.processors[0].serializedXml).toContain('print');

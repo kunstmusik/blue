@@ -62,7 +62,7 @@ function escapeText(value: string): string {
 }
 
 function readText(node: XmlNode): string {
-  if (node.type === XmlNode.TYPE_TEXT) {
+  if (node.type === XmlNode.TYPE_TEXT || node.type === XmlNode.TYPE_CDATA) {
     return (node as unknown as { text: string }).text;
   }
   return '';
@@ -87,7 +87,10 @@ function assertOnlyAttributes(node: XmlElement, allowed: readonly string[]): voi
 
 function assertContainerTextIsWhitespace(node: XmlElement): void {
   for (const child of node.children) {
-    if (child.type === XmlNode.TYPE_TEXT && readText(child).trim().length > 0) {
+    if (
+      (child.type === XmlNode.TYPE_TEXT || child.type === XmlNode.TYPE_CDATA) &&
+      readText(child).trim().length > 0
+    ) {
       throw new CodeRepositoryXmlError(
         `Unexpected text inside <${node.name}>`,
         'invalid-legacy-xml',

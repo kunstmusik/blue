@@ -1,5 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
-import { BlueData, GenericInstrument, Channel, Effect, TrackLayerGroup } from '@blue/data';
+import {
+  BlueData,
+  GenericInstrument,
+  Channel,
+  Effect,
+  TrackLayerGroup,
+  JMask,
+  readResourceXml,
+} from '@blue/data';
 import { ProjectSession } from './project-session';
 import { ProjectHistory } from './project-history';
 import {
@@ -18,11 +26,16 @@ import {
   getMixerChannelSnapshotId,
   type ProjectDocumentPatch,
 } from '../shared/project-editor';
+import { assignExplicitScoreObjectId, getScoreObjectId } from '../shared/project-editor/identity';
 import { prepareTransaction } from './project-history-memento';
 
 describe('Project history canonical writer audit (T014)', () => {
   function setupTest(
-    options: { bytesLimit?: number; reconciliation?: ProjectRuntimeReconciliation } = {},
+    options: {
+      bytesLimit?: number;
+      reconciliation?: ProjectRuntimeReconciliation;
+      soundObject?: JMask;
+    } = {},
   ) {
     const session = new ProjectSession();
     const data = new BlueData();
@@ -43,6 +56,10 @@ describe('Project history canonical writer audit (T014)', () => {
     const trackInstr = new GenericInstrument();
     trackInstr.setName('Synth 1');
     track.setInstrument(trackInstr);
+    if (options.soundObject) {
+      track.push(options.soundObject);
+      data.getScore().length = 0;
+    }
     data.getScore().push(group);
 
     session.replace(data, '/path/to/project.blue');
@@ -58,6 +75,123 @@ describe('Project history canonical writer audit (T014)', () => {
     const context = new MockHistoryContext('ctx-audit');
     return { session, data, history, recorder, context };
   }
+
+  describe('accepted XML model edits and insertion (Spec 116)', () => {
+    it('commits exact JMask seed digits through undo/redo with stable identity and runtime reconciliation', async () => {
+      const source = new JMask();
+      source.setSeed('9223372036854775807');
+      assignExplicitScoreObjectId(source, 'accepted-jmask');
+      const reconciliation = new ProjectRuntimeReconciliation();
+      const applyOperation = vi.fn(async () => ({ status: 'applied' as const }));
+      reconciliation.registerPerformance('timeline', 7, { applyOperation });
+      const { session, history, context, recorder } = setupTest({
+        soundObject: source,
+        reconciliation,
+      });
+      history.checkpointSave();
+      const docId = session.read().documentId!;
+      const current = () => (session.read().data!.getScore()[0] as TrackLayerGroup)[0][0] as JMask;
+      const originalXml = session.read().data!.saveToString();
+      const target = {
+        selectionId: 'accepted-jmask',
+        selectedObjectType: 'JMask',
+        editorObjectType: 'JMask',
+        ownerKind: 'timeline' as const,
+        displayContext: 'timeline' as const,
+        supportsTimeBehavior: true,
+        supportsRepeatPoint: true,
+        supportsNoteProcessorChain: true,
+        location: { rootGroupIndex: 0, containerPath: [], layerIndex: 0, objectIndex: 0 },
+      };
+      const result = await history.commit(
+        context.nextCommitRequest(docId, 0, 'Set JMask Seed', [
+          {
+            score: {
+              type: 'updateTypeSpecificEditor',
+              target,
+              patch: { seed: '-9223372036854775808', seedUsed: true },
+            },
+          },
+        ]),
+      );
+      expect(result.status).toBe('committed');
+      expect(current().getSeed()).toBe('-9223372036854775808');
+      expect(getScoreObjectId(current())).toBe('accepted-jmask');
+      expect(history.read().undoLabel).toBe('Set JMask Seed');
+      expect(history.isDirty()).toBe(true);
+      const committedXml = session.read().data!.saveToString();
+      expect(result.status === 'committed' ? result.runtimeOutcomes : []).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ status: 'restart-required', generation: 7 }),
+        ]),
+      );
+      expect((await history.undo(context.nextUndoRequest(docId, 1))).status).toBe('committed');
+      expect(current().getSeed()).toBe('9223372036854775807');
+      expect(session.read().data!.saveToString()).toBe(originalXml);
+      expect(getScoreObjectId(current())).toBe('accepted-jmask');
+      expect(history.isDirty()).toBe(false);
+      expect((await history.redo(context.nextRedoRequest(docId, 2))).status).toBe('committed');
+      expect(session.read().data!.saveToString()).toBe(committedXml);
+      expect(getScoreObjectId(current())).toBe('accepted-jmask');
+      expect(history.isDirty()).toBe(true);
+      expect(applyOperation).not.toHaveBeenCalled();
+    });
+
+    it('inserts an accepted instrument through the labeled direct mutation adapter and restores assignment identity', async () => {
+      const source = new GenericInstrument();
+      source.setName('Accepted Instrument');
+      source.setText('aout = 0.25');
+      const report = readResourceXml('instrument', source.saveAsXML().toXml(), {
+        kind: 'instrument',
+        label: 'original insertion fixture',
+      });
+      expect(report.ok).toBe(true);
+      if (!report.ok || !(report.value instanceof GenericInstrument))
+        throw new Error('Expected an accepted typed instrument.');
+      const runtimeOutcomes: Array<{ status: string }> = [];
+      const reconciliation = new ProjectRuntimeReconciliation({
+        onOutcome: (outcome) => runtimeOutcomes.push(outcome),
+      });
+      const applyOperation = vi.fn(async () => ({ status: 'applied' as const }));
+      reconciliation.registerPerformance('timeline', 8, { applyOperation });
+      const { session, history, context } = setupTest({ reconciliation });
+      history.checkpointSave();
+      const docId = session.read().documentId!;
+      const originalXml = session.read().data!.saveToString();
+      const accepted = report.value;
+      const receipt = await history.commitDirectMutation({
+        label: 'Insert Instrument',
+        mutator: (candidate) => {
+          candidate.getArrangement().addInstrument(accepted.deepCopy());
+          return true;
+        },
+      });
+      expect(receipt.changed).toBe(true);
+      expect(runtimeOutcomes.at(-1)?.status).toBe('restart-required');
+      expect(history.read().undoLabel).toBe('Insert Instrument');
+      expect(history.isDirty()).toBe(true);
+      const assignmentId = session.read().data!.getArrangement().getInstrumentId(1);
+      const committedXml = session.read().data!.saveToString();
+      accepted.setText('changed outside project');
+      expect(
+        session
+          .read()
+          .data!.getArrangement()
+          .getInstrument(1)
+          ?.saveAsXML()
+          .getTextString('instrumentText'),
+      ).toBe('aout = 0.25');
+      expect((await history.undo(context.nextUndoRequest(docId, 1))).status).toBe('committed');
+      expect(session.read().data!.saveToString()).toBe(originalXml);
+      expect(history.isDirty()).toBe(false);
+      expect((await history.redo(context.nextRedoRequest(docId, 2))).status).toBe('committed');
+      expect(session.read().data!.saveToString()).toBe(committedXml);
+      expect(session.read().data!.getArrangement().getInstrumentId(1)).toBe(assignmentId);
+      expect(history.isDirty()).toBe(true);
+      expect(runtimeOutcomes.at(-1)?.status).toBe('restart-required');
+      expect(applyOperation).not.toHaveBeenCalled();
+    });
+  });
 
   describe('Preparation boundary validation', () => {
     it('rejects unexpected or unclassified patch properties at the preparation boundary', () => {

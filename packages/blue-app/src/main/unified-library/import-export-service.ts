@@ -3,12 +3,14 @@ import * as path from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 import {
   LEGACY_LIBRARY_FORMATS,
+  XmlLoadError,
   exportLegacyLibraryDocument,
   parseLegacyLibraryDocument,
   type LegacyLibraryDocumentPlan,
   type LegacyLibraryFolderPlan,
   type LegacyLibraryTreeNode,
   type LibraryType,
+  type XmlDiagnostic,
 } from '@blue/data';
 import type {
   ManualImportSourcePreview,
@@ -19,6 +21,7 @@ import { UnifiedLibraryRepositoryClient } from './repository-client';
 import { LibraryMigrationStateStore, shouldRunAutomaticMigration } from './migration-state-store';
 
 export interface AutomaticMigrationSourceSummary {
+  readonly diagnostics?: readonly XmlDiagnostic[];
   readonly libraryType: LibraryType;
   readonly sourcePath: string;
   readonly status: 'imported' | 'absent' | 'failed';
@@ -162,7 +165,11 @@ export class UnifiedLibraryImportExportService {
       const bytes = fs.readFileSync(sourcePath);
       const sourceHash = hashBytes(bytes);
       try {
-        const plan = parseLegacyLibraryDocument(bytes.toString('utf8'));
+        const plan = parseLegacyLibraryDocument(bytes.toString('utf8'), {
+          kind: 'library',
+          label: sourcePath,
+          nativePath: sourcePath,
+        });
         const conflicts = await this.analyzeManualPlan(plan, sourceHash);
         sources.push({
           plan,
@@ -171,6 +178,7 @@ export class UnifiedLibraryImportExportService {
             sourcePath,
             sourceHash,
             libraryType: plan.libraryType,
+            diagnostics: plan.diagnostics,
             folderCount: plan.folderCount,
             itemCount: plan.itemCount,
             unsupportedCount: plan.unsupportedCount,
@@ -191,6 +199,7 @@ export class UnifiedLibraryImportExportService {
             ambiguousFolderCount: 0,
             folderConflicts: [],
             error: safeMessage(error),
+            ...(error instanceof XmlLoadError ? { diagnostics: error.diagnostics } : {}),
           },
         });
       }
@@ -302,7 +311,14 @@ export class UnifiedLibraryImportExportService {
         },
         report: { previewToken },
       });
-      return { batchId, status, createdNodeCount, exactDuplicateCount, aliasCount };
+      return {
+        batchId,
+        status,
+        createdNodeCount,
+        exactDuplicateCount,
+        aliasCount,
+        diagnostics: pending.sources.flatMap((source) => source.preview.diagnostics ?? []),
+      };
     } finally {
       this.operationActive = false;
     }
@@ -469,7 +485,11 @@ export class UnifiedLibraryImportExportService {
         try {
           const bytes = fs.readFileSync(sourcePath);
           sourceHash = hashBytes(bytes);
-          const plan = parseLegacyLibraryDocument(bytes.toString('utf8'));
+          const plan = parseLegacyLibraryDocument(bytes.toString('utf8'), {
+            kind: 'library',
+            label: sourcePath,
+            nativePath: sourcePath,
+          });
           if (plan.libraryType !== descriptor.libraryType)
             throw new Error('Library type does not match the source filename');
           const result = await this.repository.importLegacyDocument({
@@ -483,6 +503,7 @@ export class UnifiedLibraryImportExportService {
             libraryType: descriptor.libraryType,
             sourcePath,
             status: 'imported',
+            diagnostics: plan.diagnostics,
             folderCount: result.folderCount,
             itemCount: result.itemCount,
             unsupportedCount: result.unsupportedCount,
@@ -508,6 +529,7 @@ export class UnifiedLibraryImportExportService {
             itemCount: 0,
             unsupportedCount: 0,
             error: message,
+            ...(error instanceof XmlLoadError ? { diagnostics: error.diagnostics } : {}),
             backupAvailable,
           });
         }
@@ -566,6 +588,7 @@ export class UnifiedLibraryImportExportService {
         resultKind: 'pipelineFailure',
         batchId: null,
         error: safeMessage(error),
+        ...(error instanceof XmlLoadError ? { diagnostics: error.diagnostics } : {}),
       });
       throw error;
     } finally {

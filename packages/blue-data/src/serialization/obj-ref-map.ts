@@ -58,24 +58,39 @@ export class ObjRefSaveMap {
 /** Load-side: string ID → Object mapping */
 export class ObjRefLoadMap {
   private _map = new Map<string, object>();
+  private _loaders = new Map<string, () => object>();
 
   /** Register an object with its reference ID. */
   register(id: string, obj: object): void {
     this._map.set(id, obj);
   }
 
-  /** Resolve a reference ID to an object. */
+  /** Register a candidate-owned resolver before constructing referenced objects. */
+  registerLoader(id: string, loader: () => object): void {
+    if (this.has(id)) throw new Error(`Duplicate object reference ID: ${id}`);
+    this._loaders.set(id, loader);
+  }
+
+  /** Resolve a reference ID to an object, including a forward candidate reference. */
   get(id: string): object | undefined {
-    return this._map.get(id);
+    const value = this._map.get(id);
+    if (value) return value;
+    const loader = this._loaders.get(id);
+    if (!loader) return undefined;
+    const object = loader();
+    this._map.set(id, object);
+    this._loaders.delete(id);
+    return object;
   }
 
   /** Check if a reference ID exists. */
   has(id: string): boolean {
-    return this._map.has(id);
+    return this._map.has(id) || this._loaders.has(id);
   }
 
   /** Clear all registered references. */
   clear(): void {
     this._map.clear();
+    this._loaders.clear();
   }
 }

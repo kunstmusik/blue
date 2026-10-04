@@ -1,3 +1,4 @@
+import { formatLibraryError, formatXmlDiagnostics } from '../../shared/xml-diagnostics';
 import { create } from 'zustand';
 import {
   LIBRARY_TYPES,
@@ -283,7 +284,10 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     LIBRARY_TYPES.forEach((type, index) => {
       const result = userResults[index];
       if (!result?.ok) {
-        errors.push(result?.error.message ?? `Unable to browse ${type} Libraries.`);
+        errors.push(
+          (result ? formatLibraryError(result.error) : undefined) ??
+            `Unable to browse ${type} Libraries.`,
+        );
         return;
       }
       userRootsByType[type] = result.value.parent;
@@ -321,7 +325,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
             delete childrenByParent[node.nodeId];
             continue;
           }
-          refreshErrors.push(result.error.message);
+          refreshErrors.push(formatLibraryError(result.error));
           continue;
         }
         const children = [...result.value.children];
@@ -380,7 +384,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     )
       return;
     if (!result.ok) {
-      set({ error: result.error.message });
+      set({ error: formatLibraryError(result.error) });
       return;
     }
     set((current) => ({
@@ -408,7 +412,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     if (expandGenerations.get(node.nodeId) !== generation || refreshAtStart !== refreshGeneration)
       return;
     if (!result.ok) {
-      set({ error: result.error.message });
+      set({ error: formatLibraryError(result.error) });
       return;
     }
     set((state) => {
@@ -480,8 +484,8 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
         expectedRevision: source.revision,
       });
       if (!preview.ok) {
-        set({ error: preview.error.message });
-        toast.error(preview.error.message);
+        set({ error: formatLibraryError(preview.error) });
+        toast.error(formatLibraryError(preview.error));
         return false;
       }
       if (preview.value.dirtyEditorSessionIds.length > 0) {
@@ -496,8 +500,8 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
       const projectRevisionAtRequest = getProjectDocumentRevision();
       const preview = await window.blueAPI.previewProjectLibraryDelete(source.key);
       if (!preview.ok) {
-        set({ error: preview.error.message });
-        toast.error(preview.error.message);
+        set({ error: formatLibraryError(preview.error) });
+        toast.error(formatLibraryError(preview.error));
         return false;
       }
       if (source.key.libraryType === 'soundObject' && preview.value.linkedInstanceCount > 0) {
@@ -530,8 +534,8 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
           return false;
         }
         if (!revalidatedPreview.ok) {
-          set({ error: revalidatedPreview.error.message });
-          toast.error(revalidatedPreview.error.message);
+          set({ error: formatLibraryError(revalidatedPreview.error) });
+          toast.error(formatLibraryError(revalidatedPreview.error));
           return false;
         }
         if (
@@ -553,8 +557,8 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
 
     const result = await window.blueAPI.cutLibraryToClipboard({ source, confirmationToken });
     if (!result.ok) {
-      set({ error: result.error.message });
-      toast.error(result.error.message);
+      set({ error: formatLibraryError(result.error) });
+      toast.error(formatLibraryError(result.error));
       return false;
     }
     for (const sessionId of result.value.closedEditorSessionIds) {
@@ -581,8 +585,8 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   captureScoreSoundObject: async (request) => {
     const result = await window.blueAPI.captureScoreSoundObjectClipboard(request);
     if (!result.ok) {
-      set({ error: result.error.message });
-      toast.error(result.error.message);
+      set({ error: formatLibraryError(result.error) });
+      toast.error(formatLibraryError(result.error));
       return false;
     }
     set({ clipboard: result.value, error: null });
@@ -592,8 +596,8 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   captureTrackInstrument: async (request) => {
     const result = await window.blueAPI.captureTrackInstrumentClipboard(request);
     if (!result.ok) {
-      set({ error: result.error.message });
-      toast.error(result.error.message);
+      set({ error: formatLibraryError(result.error) });
+      toast.error(formatLibraryError(result.error));
       return false;
     }
     set({ clipboard: result.value, error: null });
@@ -603,8 +607,8 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   captureBlueLiveSoundObject: async (request) => {
     const result = await window.blueAPI.captureBlueLiveSoundObjectClipboard(request);
     if (!result.ok) {
-      set({ error: result.error.message });
-      toast.error(result.error.message);
+      set({ error: formatLibraryError(result.error) });
+      toast.error(formatLibraryError(result.error));
       return false;
     }
     set({ clipboard: result.value, error: null });
@@ -614,11 +618,13 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   addScoreSoundObjectToProjectLibrary: async (request) => {
     const result = await window.blueAPI.addScoreSoundObjectToProjectLibrary(request);
     if (!result.ok) {
-      set({ error: result.error.message });
-      toast.error(result.error.message);
+      set({ error: formatLibraryError(result.error) });
+      toast.error(formatLibraryError(result.error));
       return false;
     }
     set({ error: null });
+    if (result.value.diagnostics?.length)
+      toast.warning(formatXmlDiagnostics(result.value.diagnostics));
     toast.success(result.value.message);
     return true;
   },
@@ -645,7 +651,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
           nodeId: destination.parentId,
         });
         if (!parentResult.ok) {
-          set({ error: parentResult.error.message });
+          set({ error: formatLibraryError(parentResult.error) });
           return false;
         }
         parent = parentResult.value.parent;
@@ -665,8 +671,8 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
         parent.nodeId,
       );
       if (!copied.ok) {
-        set({ error: copied.error.message });
-        toast.error(copied.error.message);
+        set({ error: formatLibraryError(copied.error) });
+        toast.error(formatLibraryError(copied.error));
         return false;
       }
       await get().refresh();
@@ -689,8 +695,8 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
       parent.nodeId,
     );
     if (!copied.ok) {
-      set({ error: copied.error.message });
-      toast.error(copied.error.message);
+      set({ error: formatLibraryError(copied.error) });
+      toast.error(formatLibraryError(copied.error));
       return false;
     }
     await get().refresh();
@@ -716,8 +722,8 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     }
     const result = await window.blueAPI.copyLibraryTransferToUser(source, parent.nodeId);
     if (!result.ok) {
-      set({ error: result.error.message });
-      toast.error(result.error.message);
+      set({ error: formatLibraryError(result.error) });
+      toast.error(formatLibraryError(result.error));
       return false;
     }
     set({ error: null });
@@ -779,7 +785,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     });
     if (!result.ok) {
       set({ error: null, transferPreview: null, transferSource: null });
-      toast.error(result.error.message);
+      toast.error(formatLibraryError(result.error));
       return false;
     }
     if (!result.value.canApply) {
@@ -798,7 +804,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     const applyResult = await window.blueAPI.applyLibraryTransfer(result.value.previewToken);
     if (!applyResult.ok) {
       set({ error: null, transferPreview: null, transferSource: null });
-      toast.error(applyResult.error.message);
+      toast.error(formatLibraryError(applyResult.error));
       return false;
     }
     set({ transferPreview: null, transferSource: null, error: null });
@@ -816,11 +822,13 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     }
     const result = await window.blueAPI.applyLibraryTransfer(preview.previewToken);
     if (!result.ok) {
-      set({ error: result.error.message, transferPreview: null, transferSource: null });
-      toast.error(result.error.message);
+      set({ error: formatLibraryError(result.error), transferPreview: null, transferSource: null });
+      toast.error(formatLibraryError(result.error));
       return false;
     }
     set({ transferPreview: null, transferSource: null, error: null });
+    if (result.value.diagnostics?.length)
+      toast.warning(formatXmlDiagnostics(result.value.diagnostics));
     toast.success(result.value.message);
     return true;
   },
@@ -835,7 +843,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
       expectedRevision: node.revision,
     });
     if (!result.ok) {
-      set({ error: result.error.message, deletePreview: null });
+      set({ error: formatLibraryError(result.error), deletePreview: null });
       return false;
     }
     set({ deletePreview: { ...result.value, displayName: node.displayName }, error: null });
@@ -869,7 +877,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
       confirmation: preview.confirmationToken,
     });
     if (!result.ok) {
-      set({ error: result.error.message, deletePreview: null });
+      set({ error: formatLibraryError(result.error), deletePreview: null });
       return false;
     }
     for (const sessionId of result.value.closedEditorSessionIds ?? []) {
@@ -907,7 +915,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   applyMutation: async (mutation) => {
     const result = await window.blueAPI.applyLibraryMutation(mutation);
     if (!result.ok) {
-      set({ error: result.error.message });
+      set({ error: formatLibraryError(result.error) });
       return false;
     }
     set({ error: null });
@@ -929,7 +937,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     try {
       const result = await window.blueAPI.selectLibraryImportFiles();
       if (!result) return;
-      if (!result.ok) return set({ error: result.error.message });
+      if (!result.ok) return set({ error: formatLibraryError(result.error) });
       set({ importPreview: result.value, importResult: null, error: null });
     } catch (error) {
       set({
@@ -941,7 +949,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   selectImportDirectory: async () => {
     const result = await window.blueAPI.selectLibraryImportDirectory();
     if (!result) return;
-    if (!result.ok) return set({ error: result.error.message });
+    if (!result.ok) return set({ error: formatLibraryError(result.error) });
     if (result.value.sources.length === 0) {
       set({ error: 'No recognized Java Blue library files were found in that directory.' });
       return;
@@ -956,7 +964,9 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
       previewToken: preview.previewToken,
       folderSelections,
     });
-    if (!result.ok) return set({ error: result.error.message });
+    if (!result.ok) return set({ error: formatLibraryError(result.error) });
+    if (result.value.diagnostics?.length)
+      toast.warning(formatXmlDiagnostics(result.value.diagnostics));
     set({ importPreview: null, importResult: result.value, error: null });
     await get().refresh();
   },
@@ -973,8 +983,8 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     const result = await window.blueAPI.importLibraryInstrument(parent.nodeId);
     if (!result) return false;
     if (!result.ok) {
-      set({ error: result.error.message });
-      toast.error(result.error.message);
+      set({ error: formatLibraryError(result.error) });
+      toast.error(formatLibraryError(result.error));
       return false;
     }
     set({ error: null });
@@ -996,8 +1006,8 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     const result = await window.blueAPI.exportLibraryInstrument(node.key);
     if (!result) return false;
     if (!result.ok) {
-      set({ error: result.error.message });
-      toast.error(result.error.message);
+      set({ error: formatLibraryError(result.error) });
+      toast.error(formatLibraryError(result.error));
       return false;
     }
     set({ error: null });
@@ -1009,17 +1019,17 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     const type = get().typeFilter;
     if (type === 'all') return;
     const result = await window.blueAPI.exportCurrentLibrary(type);
-    if (result && !result.ok) set({ error: result.error.message });
+    if (result && !result.ok) set({ error: formatLibraryError(result.error) });
   },
 
   exportAll: async () => {
     const result = await window.blueAPI.exportAllLibraries();
-    if (result && !result.ok) set({ error: result.error.message });
+    if (result && !result.ok) set({ error: formatLibraryError(result.error) });
   },
 
   retryRecovery: async () => {
     const result = await window.blueAPI.retryLibraryRecovery();
-    if (!result.ok) return set({ error: result.error.message });
+    if (!result.ok) return set({ error: formatLibraryError(result.error) });
     set({ snapshot: result.value, error: null });
     await get().refresh();
   },
@@ -1027,7 +1037,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   restoreBackup: async () => {
     const result = await window.blueAPI.restoreLibraryBackup();
     if (!result) return;
-    if (!result.ok) return set({ error: result.error.message });
+    if (!result.ok) return set({ error: formatLibraryError(result.error) });
     set({ snapshot: result.value, error: null });
     await get().refresh();
   },
@@ -1053,7 +1063,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     }
     if (decision.actionId !== 'create' || decision.outcome !== 'selected') return;
     const result = await window.blueAPI.createFreshLibraryDatabase();
-    if (!result.ok) return set({ error: result.error.message });
+    if (!result.ok) return set({ error: formatLibraryError(result.error) });
     set({ snapshot: result.value, error: null });
     await get().refresh();
   },

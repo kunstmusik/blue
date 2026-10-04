@@ -18,6 +18,17 @@ import { NoteList } from './note-list';
 import { NoteProcessorChain } from '../note-processors/note-processor-chain';
 import { applyNoteProcessorChain, applyNoteProcessorChainAsync } from '../utilities/score';
 import { DEFAULT_LAYER_COLOR, normalizeLayerColor } from '../score/layers/layer-color';
+import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
+import { ObjRefLoadMap } from '../serialization/obj-ref-map';
+import {
+  checkRoot,
+  checkShape,
+  parseXmlBoolean,
+  parseXmlInteger,
+  readInt,
+  readText,
+} from '../utilities/xml';
+import { loadSoundObjectFromXML } from './sound-object-registry';
 import { Element } from '../serialization/xml-reader';
 import type { CopyMode } from '../deep-copyable';
 import {
@@ -36,8 +47,6 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
   private _backgroundColor = DEFAULT_LAYER_COLOR;
   private _npc = new NoteProcessorChain();
   private _automationParameters = new ParameterIdList();
-  private _unknownAttributes = new Map<string, string>();
-  private _unknownChildren: Element[] = [];
 
   constructor(other?: SoundLayer | number, mode: CopyMode = 'duplication') {
     if (typeof other === 'number') {
@@ -56,31 +65,81 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
       this._npc = new NoteProcessorChain(other._npc);
       this._automationParameters = other._automationParameters.deepCopy();
 
-      for (const [k, v] of other._unknownAttributes) {
-        this._unknownAttributes.set(k, v);
-      }
-      this._unknownChildren = other._unknownChildren.map((c) => c.clone());
-
       for (const sObj of other) {
         this.push(sObj.deepCopy(mode));
       }
     }
   }
 
-  getUnknownAttributes(): ReadonlyMap<string, string> {
-    return this._unknownAttributes;
-  }
-
-  setUnknownAttribute(name: string, value: string): void {
-    this._unknownAttributes.set(name, value);
-  }
-
-  getUnknownChildren(): readonly Element[] {
-    return this._unknownChildren;
-  }
-
-  addUnknownChild(child: Element): void {
-    this._unknownChildren.push(child);
+  static loadFromXML(
+    data: Element,
+    objRefMap?: ObjRefLoadMap,
+    providedContext?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): SoundLayer {
+    const context = providedContext ?? new XmlLoadContext(data);
+    checkRoot(data, 'soundLayer', context);
+    checkShape(
+      data,
+      ['name', 'muted', 'solo', 'heightIndex', 'customHeight', 'automationSelectedIndex'],
+      ['backgroundColor', 'noteProcessorChain', 'soundObject', 'parameterId'],
+      context,
+      ['soundObject', 'parameterId'],
+    );
+    const layer = new SoundLayer();
+    layer._name = data.getAttribute('name') ?? '';
+    for (const field of ['muted', 'solo'] as const) {
+      const value = data.getAttribute(field);
+      if (value !== null)
+        layer[field === 'muted' ? '_muted' : '_solo'] = parseXmlBoolean(
+          value,
+          context.at(data),
+          '@' + field,
+        );
+    }
+    const height = data.getAttribute('heightIndex');
+    if (height !== null)
+      layer._heightIndex = parseXmlInteger(height, context.at(data), 0, 2147483647, '@heightIndex');
+    const custom = data.getAttribute('customHeight');
+    if (custom !== null)
+      layer._customHeight = parseXmlInteger(custom, context.at(data), 22, 660, '@customHeight');
+    for (const child of data.getElements()) {
+      switch (child.getName()) {
+        case 'backgroundColor':
+          layer._backgroundColor = readInt(child, context, -2147483648, 2147483647);
+          break;
+        case 'noteProcessorChain':
+          layer._npc = NoteProcessorChain.loadFromXML(child, context);
+          break;
+        case 'soundObject':
+          layer.push(loadSoundObjectFromXML(child, objRefMap, context));
+          break;
+        case 'parameterId': {
+          const id = readText(child, context);
+          if (!id.trim() || layer._automationParameters.getIds().includes(id))
+            throw context.at(child).error({
+              code: 'reference',
+              value: id,
+              message: 'Automation IDs must be nonempty and unique.',
+              recovery: 'Supply distinct parameter IDs.',
+            });
+          layer._automationParameters.addParameterId(id);
+          break;
+        }
+      }
+    }
+    const selected = data.getAttribute('automationSelectedIndex');
+    if (selected !== null)
+      layer._automationParameters.setSelectedIndex(
+        parseXmlInteger(
+          selected,
+          context.at(data),
+          -1,
+          Number.MAX_SAFE_INTEGER,
+          '@automationSelectedIndex',
+        ),
+      );
+    return providedContext ? layer : requireXmlValue(context.result(layer), sink);
   }
 
   // ─── Layer implementation ───
@@ -114,7 +173,6 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
       const parsed = parseCustomHeight(customHeight);
       if (parsed !== null) {
         this._customHeight = parsed;
-        this._unknownAttributes.delete('customHeight');
         return;
       }
     }
@@ -129,7 +187,6 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
     const { heightIndex, customHeight } = resolveExplicitHeight(parsed, 'soundLayer');
     this._heightIndex = heightIndex;
     this._customHeight = customHeight;
-    this._unknownAttributes.delete('customHeight');
     return true;
   }
 
@@ -159,7 +216,6 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
     const newEffective = resolveEffectiveHeight(heightIndex);
     if (oldEffective !== newEffective) {
       this._customHeight = undefined;
-      this._unknownAttributes.delete('customHeight');
     }
   }
 

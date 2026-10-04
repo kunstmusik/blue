@@ -1,3 +1,5 @@
+import { XmlLoadContext } from '../serialization/xml-load';
+import { validateProcessorXml } from './xml-policy';
 import { Element } from '../serialization/xml-reader';
 import { Note } from '../sound-objects/note';
 import type { FileSeekProvenance } from '../sound-objects/note';
@@ -147,7 +149,8 @@ export class PythonProcessor extends NoteProcessor {
     return elem;
   }
 
-  static loadFromXML(data: Element): PythonProcessor {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): PythonProcessor {
+    validateProcessorXml(data, 'PythonProcessor', context);
     const processor = new PythonProcessor();
     const code = data.getTextString('code');
     if (code !== null) {

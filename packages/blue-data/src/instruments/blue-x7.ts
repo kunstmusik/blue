@@ -1,3 +1,12 @@
+import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
+import {
+  checkShape,
+  readText,
+  readInt,
+  readBoolean,
+  parseXmlInteger,
+  parseXmlBoolean,
+} from '../utilities/xml';
 import { Element } from '../serialization/xml-reader';
 import { Instrument } from './instrument';
 import type { CopyMode } from '../deep-copyable';
@@ -513,7 +522,6 @@ function updateOrAddChildText(parent: Element, tag: string, text: string): Eleme
 export class BlueX7 extends Instrument {
   private _voice: BlueX7Voice;
   private _parameters: ParameterList;
-  private _sourceXmlTemplate?: Element;
   public operatorTableNums: number[] | null = null;
 
   constructor(other?: BlueX7, mode: CopyMode = 'duplication') {
@@ -526,9 +534,6 @@ export class BlueX7 extends Instrument {
       this._voice = cloneBlueX7Voice(other._voice);
       // A new ownership boundary regenerates all Parameter identities in duplication mode.
       this._parameters = reconcileBlueX7Parameters(this._voice, other._parameters.deepCopy(mode));
-      if (other._sourceXmlTemplate) {
-        this._sourceXmlTemplate = Element.parse(other._sourceXmlTemplate.toXml());
-      }
     } else {
       this._voice = createDefaultBlueX7Voice();
       this._parameters = createBlueX7Parameters(this._voice);
@@ -764,12 +769,7 @@ export class BlueX7 extends Instrument {
   }
 
   saveAsXML(): Element {
-    let elem: Element;
-    if (this._sourceXmlTemplate) {
-      elem = Element.parse(this._sourceXmlTemplate.toXml());
-    } else {
-      elem = new Element('instrument');
-    }
+    const elem = new Element('instrument');
 
     elem.setAttribute('type', 'blue.orchestra.BlueX7');
     elem.setAttribute('enabled', this._enabled.toString());
@@ -873,9 +873,114 @@ export class BlueX7 extends Instrument {
     return elem;
   }
 
-  static loadFromXML(data: Element): BlueX7 {
+  static loadFromXML(
+    data: Element,
+    _objRefMap?: unknown,
+    context?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): BlueX7 {
+    const ctx = context ?? new XmlLoadContext(data);
+    checkShape(
+      data,
+      ['type', 'enabled'],
+      [
+        'name',
+        'comment',
+        'algorithmCommonData',
+        'lfoData',
+        'operator',
+        'envelopePoint',
+        'csoundPostCode',
+        'parameterList',
+      ],
+      ctx,
+      ['operator', 'envelopePoint'],
+    );
+    if (data.getName() !== 'instrument' || data.getAttribute('type') !== 'blue.orchestra.BlueX7')
+      throw ctx.at(data).error({
+        code: 'type',
+        member: '@type',
+        message: 'Expected BlueX7 instrument.',
+        recovery: 'Use the matching instrument type.',
+      });
+    const requireCount = (owner: Element, child: string, count: number): void => {
+      if (owner.getElements(child).toArray().length !== count)
+        throw ctx.at(owner).error({
+          code: 'cardinality',
+          member: child,
+          message: `Expected ${count} ${child} elements.`,
+          recovery: 'Supply a complete BlueX7 voice.',
+        });
+    };
+    const numbers = (
+      owner: Element,
+      domains: Record<string, readonly [number, number]>,
+      repeated: readonly string[] = [],
+    ): void => {
+      checkShape(owner, [], [...Object.keys(domains), ...repeated], ctx, repeated);
+      for (const [field, [min, max]] of Object.entries(domains)) {
+        requireCount(owner, field, 1);
+        readInt(owner.getElement(field)!, ctx, min, max);
+      }
+    };
+    const envelope = (owner: Element): void => {
+      requireCount(owner, 'envelopePoint', 4);
+      for (const point of owner.getElements('envelopePoint')) {
+        checkShape(point, ['x', 'y'], [], ctx);
+        for (const axis of ['x', 'y'])
+          parseXmlInteger(point.getAttribute(axis) ?? '', ctx.at(point), 0, 99, `@${axis}`);
+      }
+    };
+    for (const field of ['name', 'comment', 'csoundPostCode']) {
+      const child = data.getElement(field);
+      if (child) readText(child, ctx);
+    }
+    requireCount(data, 'algorithmCommonData', 1);
+    requireCount(data, 'lfoData', 1);
+    requireCount(data, 'operator', 6);
+    const common = data.getElement('algorithmCommonData')!;
+    numbers(common, { keyTranspose: [0, 48], algorithm: [1, 32], feedback: [0, 7] }, ['operator']);
+    requireCount(common, 'operator', 6);
+    for (const flag of common.getElements('operator')) readBoolean(flag, ctx);
+    numbers(data.getElement('lfoData')!, {
+      speed: [0, 99],
+      delay: [0, 99],
+      PMD: [0, 99],
+      AMD: [0, 99],
+      wave: [0, 5],
+      sync: [0, 1],
+    });
+    for (const operator of data.getElements('operator')) {
+      numbers(
+        operator,
+        {
+          mode: [0, 1],
+          sync: [0, 1],
+          freqCoarse: [0, 31],
+          freqFine: [0, 99],
+          detune: [-7, 7],
+          breakpoint: [0, 99],
+          curveLeft: [0, 3],
+          curveRight: [0, 3],
+          depthLeft: [0, 99],
+          depthRight: [0, 99],
+          keyboardRateScaling: [0, 7],
+          outputLevel: [0, 99],
+          velocitySensitivity: [0, 7],
+          modulationAmplitude: [0, 3],
+          modulationPitch: [0, 7],
+        },
+        ['envelopePoint'],
+      );
+      envelope(operator);
+    }
+    envelope(data);
     const instr = new BlueX7();
-    instr.setEnabled(data.getAttribute('enabled') !== 'false');
+    instr.setEnabled(
+      data.getAttribute('enabled') === null
+        ? true
+        : parseXmlBoolean(data.getAttribute('enabled')!, ctx.at(data), '@enabled'),
+    );
     const name = data.getTextString('name');
     if (name != null) {
       instr.setName(name);
@@ -884,7 +989,6 @@ export class BlueX7 extends Instrument {
     if (comment != null) {
       instr.setComment(comment);
     }
-    instr._sourceXmlTemplate = Element.parse(data.toXml());
 
     const voice = instr._voice;
 
@@ -899,7 +1003,7 @@ export class BlueX7 extends Instrument {
       const opElems = commonElem.getElements('operator').toArray();
       for (let i = 0; i < 6; i++) {
         if (i < opElems.length) {
-          voice.common.operatorEnabled[i] = opElems[i].getTextString() !== 'false';
+          voice.common.operatorEnabled[i] = readBoolean(opElems[i], ctx);
         }
       }
     }
@@ -985,11 +1089,32 @@ export class BlueX7 extends Instrument {
     // receives the complete 151-Parameter projection; a persisted list keeps
     // its identities and automation content.
     const persistedElement = data.getElement('parameterList');
-    instr._parameters = persistedElement
-      ? reconcileBlueX7Parameters(voice, ParameterList.loadFromXML(persistedElement))
+    const persisted = persistedElement
+      ? ParameterList.loadFromXML(persistedElement, ctx)
+      : undefined;
+    if (persisted) {
+      for (const parameter of persisted) {
+        const descriptor = getBlueX7Descriptor(parameter.getName());
+        if (
+          !descriptor ||
+          parameter.getMinimum() !== descriptor.minimum ||
+          parameter.getMaximum() !== descriptor.maximum ||
+          parameter.getResolutionText() !== '1'
+        )
+          throw ctx.at(persistedElement!).error({
+            code: 'value',
+            member: 'parameter',
+            value: parameter.getName(),
+            message: 'BlueX7 parameter metadata does not match its catalog domain.',
+            recovery: 'Use known BlueX7 parameter names, bounds, and integer resolutions.',
+          });
+      }
+    }
+    instr._parameters = persisted
+      ? reconcileBlueX7Parameters(voice, persisted)
       : createBlueX7Parameters(voice);
 
-    return instr;
+    return context ? instr : requireXmlValue(ctx.result(instr), sink);
   }
 
   override deepCopy(mode: CopyMode = 'duplication'): BlueX7 {

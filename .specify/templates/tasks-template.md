@@ -69,9 +69,11 @@ cannot omit verification merely because the feature specification does not reque
 
 Examples of foundational tasks (adjust based on your project):
 
-- [ ] T004 Identify Java reference behavior and fixtures in [exact reference path]
+- [ ] T004 Identify Java loader/writer history, revisions, current/historical serialization contracts,
+      standalone disk/library/BlueShare roots, and fixtures in [exact reference paths]
 - [ ] T005 [P] Define canonical state ownership and typed boundary contracts in [exact file path]
-- [ ] T006 [P] Add migration, preservation, and failure-recovery scaffolding in [exact file path]
+- [ ] T006 [P] Define project/class/resource migration ownership, ordering, conflict handling,
+      unexpected/invalid-input diagnostics, and atomic failure behavior in [exact file paths]
 - [ ] T007 [P] Define `ProjectHistory` routes, semantic labels, and commit→undo→redo coverage for
       every durable project mutation in [exact file paths], or document why the feature has none
 - [ ] T008 Create shared models or utilities required by all stories in [exact file path]
@@ -189,6 +191,9 @@ Examples of foundational tasks (adjust based on your project):
 ### Within Each User Story
 
 - Constitution-required regression tests MUST accompany behavior and data changes
+- Serialization verification MUST cover expected and historical input, unexpected/invalid
+  member/value outcomes, supported retained payloads, independent output/copy ownership,
+  composed migrations, and standalone resource loading where applicable
 - New or modified durable project mutations MUST route through `ProjectHistory` and include focused
   commit→undo→redo coverage; transient previews MUST restore canonical state on cancellation
 - Bug regressions MUST fail before implementation when the harness supports it

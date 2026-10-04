@@ -12,11 +12,9 @@ describe('Layer Color Compatibility & Legacy Project Load-Save (US4)', () => {
           <title>Legacy Project</title>
           <author>Author</author>
           <commandLine></commandLine>
-          <completeCommand></completeCommand>
         </projectProperties>
         <score>
           <timeContext>
-            <timeBehavior>scale</timeBehavior>
             <tempo>120.0</tempo>
           </timeContext>
           <polyObject>

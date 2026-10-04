@@ -1,3 +1,5 @@
+import { XmlLoadContext } from '../serialization/xml-load';
+import { validateProcessorXml } from './xml-policy';
 import { NoteProcessor } from './note-processor';
 import { NoteProcessorException } from './note-processor-exception';
 import { NoteList } from '../sound-objects/note-list';
@@ -66,7 +68,8 @@ export class InversionProcessor extends NoteProcessor {
     return elem;
   }
 
-  static loadFromXML(data: Element): InversionProcessor {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): InversionProcessor {
+    validateProcessorXml(data, 'InversionProcessor', context);
     const proc = new InversionProcessor();
     const pf = data.getTextString('pfield');
     if (pf !== null) proc._pfield = parseInt(pf, 10);

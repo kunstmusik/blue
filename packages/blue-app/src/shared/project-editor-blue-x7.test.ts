@@ -260,7 +260,7 @@ describe('Project Editor - BlueX7 Contract', () => {
     expect(automated.getLineColor()).toBe(-123456);
   });
 
-  it('preserves BlueX7 voice edits and unknown XML across project save/load round-trip', () => {
+  it('rejects unknown XML and preserves supported BlueX7 voice edits across save/load', () => {
     const rawXml = `<blueData version="3.0.0">
   <arrangement>
     <instrumentAssignment arrangementId="1">
@@ -423,7 +423,13 @@ describe('Project Editor - BlueX7 Contract', () => {
   </arrangement>
 </blueData>`;
 
-    const project = BlueData.loadFromString(rawXml);
+    expect(() => BlueData.loadFromString(rawXml)).toThrow(/customAttr/);
+    expect(() => BlueData.loadFromString(rawXml.replace(' customAttr="saved"', ''))).toThrow(
+      /customTag/,
+    );
+    const project = BlueData.loadFromString(
+      rawXml.replace(' customAttr="saved"', '').replace('<customTag>preserved</customTag>', ''),
+    );
     const instr = project.getArrangement().getInstrumentById('1') as BlueX7;
     expect(instr).toBeDefined();
     expect(instr.getName()).toBe('FM Bell');
@@ -448,8 +454,8 @@ describe('Project Editor - BlueX7 Contract', () => {
 
     const savedXml = project.saveAsXML().toXml();
     expect(savedXml).toContain('<algorithm>22</algorithm>');
-    expect(savedXml).toContain('customAttr="saved"');
-    expect(savedXml).toContain('<customTag>preserved</customTag>');
+    expect(savedXml).not.toContain('customAttr=');
+    expect(savedXml).not.toContain('<customTag>');
 
     const reopened = BlueData.loadFromString(savedXml);
     const reopenedInstr = reopened.getArrangement().getInstrumentById('1') as BlueX7;

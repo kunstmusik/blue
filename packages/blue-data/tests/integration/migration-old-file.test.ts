@@ -8,14 +8,14 @@ describe('Migration: old file formats', () => {
     const oldXml = `<?xml version="1.0" encoding="UTF-8"?>
 <blueData version="2.2.5">
   <tempo>
-    <smpteFrameRate>30</smpteFrameRate>
+    <enabled>false</enabled>
   </tempo>
   <projectProperties>
     <title>Old Tempo Project</title>
     <sampleRate>44100</sampleRate>
     <ksmps>64</ksmps>
   </projectProperties>
-  <soundObject>
+  <soundObject type="blue.soundObject.PolyObject">
     <soundLayer name="Layer 1">
       <soundObject type="GenericScore">
         <name>My Score</name>

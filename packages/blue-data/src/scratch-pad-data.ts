@@ -5,6 +5,8 @@
  * Stores scratch text and word-wrap setting for the project's scratch pad.
  */
 import { Element } from './serialization/xml-reader';
+import { XmlLoadContext } from './serialization/xml-load';
+import { checkRoot, checkShape, readBoolean, readText } from './utilities/xml';
 import { BlueDataObject } from './blue-data-object';
 
 export class ScratchPadData implements BlueDataObject {
@@ -41,17 +43,19 @@ export class ScratchPadData implements BlueDataObject {
     return elem;
   }
 
-  static loadFromXML(data: Element): ScratchPadData {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): ScratchPadData {
+    checkRoot(data, 'scratchPadData', context);
+    checkShape(data, [], ['isWordWrapEnabled', 'scratchText'], context);
     const result = new ScratchPadData();
 
-    const wrapElem = data.getTextString('isWordWrapEnabled');
-    if (wrapElem !== null) {
-      result._wordWrapEnabled = wrapElem.toLowerCase() === 'true';
+    const wrapElem = data.getElement('isWordWrapEnabled');
+    if (wrapElem) {
+      result._wordWrapEnabled = readBoolean(wrapElem, context);
     }
 
-    const textElem = data.getTextString('scratchText');
-    if (textElem !== null) {
-      result._scratchText = textElem;
+    const textElem = data.getElement('scratchText');
+    if (textElem) {
+      result._scratchText = readText(textElem, context);
     }
 
     return result;

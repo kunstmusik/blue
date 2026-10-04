@@ -5,6 +5,9 @@
  * Supports both CLASSIC and MODERN Csound UDO declaration styles.
  */
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext, requireXmlValue } from '../serialization/xml-load';
+import type { XmlDiagnosticSink } from '../serialization/xml-load';
+import { checkRoot, checkShape, readText, readEnum } from '../utilities/xml';
 import { BlueDataObject } from '../blue-data-object';
 import { UDOStyle } from './udo-style';
 import {
@@ -193,20 +196,28 @@ export class OpcodeDefinition implements BlueDataObject {
     return elem;
   }
 
-  static loadFromXML(data: Element): OpcodeDefinition {
+  static loadFromXML(
+    data: Element,
+    context?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): OpcodeDefinition {
+    const ctx = context ?? new XmlLoadContext(data);
+    checkShape(
+      data,
+      [],
+      ['style', 'opcodeName', 'outTypes', 'inTypes', 'inputArguments', 'codeBody', 'comments'],
+      ctx,
+    );
+    checkRoot(data, 'udo', ctx);
     const opcode = new OpcodeDefinition();
 
     const children = data.getElements();
     while (children.hasMoreElements()) {
       const node = children.next();
-      const val = node.getTextString() ?? '';
+      const val = readText(node, ctx);
       switch (node.getName()) {
         case 'style':
-          try {
-            opcode._style = UDOStyle[val as keyof typeof UDOStyle];
-          } catch {
-            opcode._style = UDOStyle.CLASSIC;
-          }
+          opcode._style = readEnum(node, [UDOStyle.CLASSIC, UDOStyle.MODERN], ctx);
           break;
         case 'opcodeName':
           opcode._name = val;
@@ -229,6 +240,26 @@ export class OpcodeDefinition implements BlueDataObject {
       }
     }
 
+    const opposing = data.getElement(
+      opcode._style === UDOStyle.MODERN ? 'inTypes' : 'inputArguments',
+    );
+    if (opposing) {
+      const value = readText(opposing, ctx);
+      if (value.trim() !== '')
+        throw ctx.at(opposing).error({
+          code: 'conflict',
+          value,
+          message: 'UDO contains a nonempty opposing input form.',
+          recovery: 'Keep only the input form selected by the UDO style.',
+        });
+      ctx.at(opposing).diagnostic({
+        code: 'R-UDO-REDUNDANT-INPUT',
+        severity: 'warning',
+        message: 'Empty opposing UDO input form is redundant.',
+        recovery: 'Canonical save omits this empty field and retains the style-selected signature.',
+      });
+    }
+
     // Normalize after load (mirrors Java behavior)
     if (opcode._style === UDOStyle.MODERN) {
       opcode._inTypes = '';
@@ -238,7 +269,7 @@ export class OpcodeDefinition implements BlueDataObject {
       opcode._outTypes = normalizeClassicOutTypes(opcode._outTypes);
     }
 
-    return opcode;
+    return context ? opcode : requireXmlValue(ctx.result(opcode), sink);
   }
 
   deepCopy(): BlueDataObject {

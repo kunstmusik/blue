@@ -3,6 +3,8 @@
  * Default is 12TET (12-tone equal temperament).
  */
 import { Element } from '../../serialization/xml-reader';
+import { XmlLoadContext } from '../../serialization/xml-load';
+import { checkRoot, checkShape, readText, readDouble } from '../../utilities/xml';
 
 export class Scale {
   scaleName = '12TET';
@@ -71,30 +73,38 @@ export class Scale {
     return elem;
   }
 
-  static loadFromXML(data: Element): Scale {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): Scale {
+    checkRoot(data, 'scale', context);
+    checkShape(data, [], ['scaleName', 'baseFrequency', 'octave', 'ratios'], context);
     const scale = new Scale();
-    const nodes = data.getElements();
-    while (nodes.hasMoreElements()) {
-      const node = nodes.next();
-      switch (node.getName()) {
-        case 'scaleName':
-          scale.scaleName = node.getTextString();
-          break;
-        case 'baseFrequency':
-          scale.baseFrequency = parseFloat(node.getTextString());
-          break;
-        case 'octave':
-          scale.octave = parseFloat(node.getTextString());
-          break;
-        case 'ratios':
-          const ratioNodes = node.getElements('ratio');
-          const ratios: number[] = [];
-          while (ratioNodes.hasMoreElements()) {
-            ratios.push(parseFloat(ratioNodes.next().getTextString()));
-          }
-          scale.ratios = ratios;
-          break;
-      }
+    const positive = (node: Element): number => {
+      const value = readDouble(node, context);
+      if (value <= 0)
+        throw context.at(node).error({
+          code: 'value',
+          value: node.getTextString(),
+          message: 'Scale values must be positive.',
+          recovery: 'Supply a positive finite value.',
+        });
+      return value;
+    };
+    const name = data.getElement('scaleName');
+    const base = data.getElement('baseFrequency');
+    const octave = data.getElement('octave');
+    const ratios = data.getElement('ratios');
+    if (name) scale.scaleName = readText(name, context);
+    if (base) scale.baseFrequency = positive(base);
+    if (octave) scale.octave = positive(octave);
+    if (ratios) {
+      checkShape(ratios, [], ['ratio'], context, ['ratio']);
+      scale.ratios = [...ratios.getElements('ratio')].map(positive);
+      if (scale.ratios.length === 0)
+        throw context.at(ratios).error({
+          code: 'cardinality',
+          message: 'A supplied scale requires at least one ratio.',
+          recovery:
+            'Supply the complete tuning ratios or omit the scale for the documented default.',
+        });
     }
     return scale;
   }

@@ -14,6 +14,12 @@ import { beatsToDuration } from '../../time/time-unit-math';
 import { beatsToTimePosition } from '../../time/time-utilities';
 import { FadeType, fadeTypeFromString, fadeTypeToCsound } from './fade-type';
 import { Element } from '../../serialization/xml-reader';
+import { checkRoot, checkShape, parseXmlNumber, readText, readBoolean } from '../../utilities/xml';
+import {
+  XmlLoadContext,
+  requireXmlValue,
+  type XmlDiagnosticSink,
+} from '../../serialization/xml-load';
 import { ObjRefSaveMap } from '../../serialization/obj-ref-map';
 import { readInt, readDouble, writeInt, writeDouble, writeBoolean } from '../../utilities/xml';
 
@@ -245,75 +251,150 @@ export class AudioClip implements ScoreObject {
     return root;
   }
 
-  static loadFromXML(data: Element): AudioClip {
+  static loadFromXML(
+    data: Element,
+    providedContext?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): AudioClip {
+    const context = providedContext ?? new XmlLoadContext(data);
+    checkRoot(data, 'audioClip', context);
+    checkShape(
+      data,
+      [],
+      [
+        'name',
+        'audioFile',
+        'numChannels',
+        'audioDuration',
+        'fileStart',
+        'startTime',
+        'start',
+        'subjectiveDuration',
+        'duration',
+        'fadeIn',
+        'fadeInType',
+        'fadeOut',
+        'fadeOutType',
+        'looping',
+        'backgroundColor',
+      ],
+      context,
+    );
     const clip = new AudioClip();
-    const nodes = data.getElements();
-
-    while (nodes.hasMoreElements()) {
-      const node = nodes.next();
-      const text = node.getTextString();
-
+    const nonnegative = (node: Element): number => {
+      const value = readDouble(node, context);
+      if (value < 0)
+        throw context.at(node).error({
+          code: 'value',
+          value: node.getTextString(),
+          message: 'Audio durations and fades must be nonnegative.',
+          recovery: 'Supply a nonnegative value.',
+        });
+      return value;
+    };
+    const readPosition = (node: Element): TimePosition => {
+      if (node.getAttribute('type') === 'beats') {
+        checkShape(node, ['type'], [], context, [], true);
+        return TimePosition.beats(parseXmlNumber(node.getTextString(), context.at(node)));
+      }
+      return node.hasAttribute('type')
+        ? TimePosition.loadFromXML(node, context)
+        : TimePosition.beats(readDouble(node, context));
+    };
+    const readDuration = (node: Element): TimeDuration => {
+      if (node.getAttribute('type') === 'beats') {
+        checkShape(node, ['type'], [], context, [], true);
+        const value = parseXmlNumber(node.getTextString(), context.at(node));
+        if (value < 0)
+          throw context.at(node).error({
+            code: 'value',
+            value: node.getTextString(),
+            message: 'Audio duration must be nonnegative.',
+            recovery: 'Supply a nonnegative duration.',
+          });
+        return TimeDuration.beats(value);
+      }
+      return node.hasAttribute('type')
+        ? TimeDuration.loadFromXML(node, context)
+        : TimeDuration.beats(nonnegative(node));
+    };
+    for (const node of data.getElements()) {
       switch (node.getName()) {
         case 'name':
-          clip._name = text;
+          clip._name = readText(node, context);
           break;
         case 'audioFile':
-          clip._audioFile = text;
+          clip._audioFile = readText(node, context);
           break;
         case 'numChannels':
-          clip._numChannels = readInt(node);
+          clip._numChannels = readInt(node, context, 0, 2147483647);
           break;
         case 'audioDuration':
-          clip._audioDuration = readDouble(node);
+          clip._audioDuration = nonnegative(node);
           break;
         case 'fileStart':
-          clip._fileStartTime = readDouble(node);
-          break;
-        case 'startTime':
-          if (node.getAttributeValue('type') !== null) {
-            clip._startTimePosition = TimePosition.loadFromXML(node);
-          } else {
-            // Legacy: plain double (beats)
-            clip._startTimePosition = TimePosition.beats(readDouble(node));
-          }
-          break;
-        case 'start':
-          // Legacy format
-          clip._startTimePosition = TimePosition.beats(readDouble(node));
-          break;
-        case 'subjectiveDuration':
-          if (node.getAttributeValue('type') !== null) {
-            clip._durationUnit = TimeDuration.loadFromXML(node);
-          } else {
-            clip._durationUnit = TimeDuration.beats(readDouble(node));
-          }
-          break;
-        case 'duration':
-          // Legacy format
-          clip._durationUnit = TimeDuration.beats(readDouble(node));
-          break;
-        case 'backgroundColor':
-          clip._color = parseInt(data.getTextString('backgroundColor') ?? '0', 10);
+          clip._fileStartTime = nonnegative(node);
           break;
         case 'fadeIn':
-          clip._fadeIn = readDouble(node);
-          break;
-        case 'fadeInType':
-          clip._fadeInType = fadeTypeFromString(text) ?? FadeType.LINEAR;
+          clip._fadeIn = nonnegative(node);
           break;
         case 'fadeOut':
-          clip._fadeOut = readDouble(node);
+          clip._fadeOut = nonnegative(node);
           break;
-        case 'fadeOutType':
-          clip._fadeOutType = fadeTypeFromString(text) ?? FadeType.LINEAR;
+        case 'backgroundColor':
+          clip._color = readInt(node, context, -2147483648, 2147483647);
           break;
         case 'looping':
-          clip._looping = text.toLowerCase() === 'true';
+          clip._looping = readBoolean(node, context);
           break;
+        case 'fadeInType':
+        case 'fadeOutType': {
+          const token = readText(node, context);
+          // Uppercase enum identifiers were emitted by existing TypeScript fixtures.
+          const fade =
+            fadeTypeFromString(token) ??
+            (Object.keys(FadeType).includes(token)
+              ? FadeType[token as keyof typeof FadeType]
+              : undefined);
+          if (!fade)
+            throw context.at(node).error({
+              code: 'value',
+              value: token,
+              message: 'Unknown audio fade type.',
+              recovery: 'Choose a supported fade envelope.',
+            });
+          clip[node.getName() === 'fadeInType' ? '_fadeInType' : '_fadeOutType'] = fade;
+          break;
+        }
       }
     }
-
-    return clip;
+    const start = data.getElement('startTime');
+    const oldStart = data.getElement('start');
+    if (start) clip._startTimePosition = readPosition(start);
+    if (oldStart) {
+      const value = TimePosition.beats(readDouble(oldStart, context));
+      if (start && !value.equals(clip._startTimePosition))
+        throw context.at(oldStart).error({
+          code: 'conflict',
+          message: 'Audio start aliases disagree.',
+          recovery: 'Make both start forms agree.',
+        });
+      clip._startTimePosition = value;
+    }
+    const duration = data.getElement('subjectiveDuration');
+    const oldDuration = data.getElement('duration');
+    if (duration) clip._durationUnit = readDuration(duration);
+    if (oldDuration) {
+      const value = TimeDuration.beats(nonnegative(oldDuration));
+      if (duration && !value.equals(clip._durationUnit))
+        throw context.at(oldDuration).error({
+          code: 'conflict',
+          message: 'Audio duration aliases disagree.',
+          recovery: 'Make both duration forms agree.',
+        });
+      clip._durationUnit = value;
+    }
+    return providedContext ? clip : requireXmlValue(context.result(clip), sink);
   }
 
   // ─── Helpers ───

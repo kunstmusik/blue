@@ -8,6 +8,7 @@
  * Electron dialogs and lifecycle callbacks.
  */
 
+import { readProjectXml, XmlLoadError, type BlueData, type XmlDiagnostic } from '@blue/data';
 import { projectSaveStateNeedsSaving, type ProjectSaveState } from '../shared/project-history';
 
 export type ReplacementFlowOutcome =
@@ -221,3 +222,17 @@ export async function runTransactionalSaveAs(
   await dependencies.checkpointSave?.(destination);
   return true;
 }
+
+/** Prepare a complete inert candidate and surface warnings before replacement decisions. */
+export async function prepareProjectXml(
+  xml: string,
+  filePath: string,
+  presentWarnings: (diagnostics: readonly XmlDiagnostic[]) => void | Promise<void>,
+): Promise<BlueData> {
+  const report = readProjectXml(xml, { kind: 'project', label: filePath, nativePath: filePath });
+  if (!report.ok) throw new XmlLoadError(report.diagnostics);
+  if (report.diagnostics.length) await presentWarnings(report.diagnostics);
+  return report.value;
+}
+
+export { formatXmlDiagnostics as formatProjectXmlDiagnostics } from '../shared/xml-diagnostics';

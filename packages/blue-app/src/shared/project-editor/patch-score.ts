@@ -1133,25 +1133,29 @@ function applyAddScoreObjectsPatch(
   for (const entry of data.getSoundObjectLibrary().getEntries()) {
     soundObjectRefMap.register(entry.libraryId, entry.object);
   }
+  // Validate every serialized candidate before the first timeline mutation.
+  const loaded = new Map<number, SoundObject | AudioClip>();
+  try {
+    for (const [index, object] of patch.objects.entries()) {
+      if (object.serializedXml === undefined) continue;
+      const root = Element.parse(object.serializedXml);
+      const candidate =
+        root.getName() === 'audioClip'
+          ? AudioClip.loadFromXML(root)
+          : loadSoundObjectFromXML(root, soundObjectRefMap);
+      if (!candidate) return false;
+      loaded.set(index, candidate);
+    }
+  } catch {
+    return false;
+  }
   let changed = false;
 
-  for (const obj of patch.objects) {
-    let sObj: SoundObject | null = null;
-    let clip: AudioClip | null = null;
-
-    if (obj.serializedXml) {
-      try {
-        const serialized = Element.parse(obj.serializedXml);
-        if (serialized.getName() === 'audioClip') {
-          clip = AudioClip.loadFromXML(serialized);
-        } else {
-          sObj = loadSoundObjectFromXML(serialized, soundObjectRefMap)?.deepCopy() ?? null;
-        }
-      } catch {
-        sObj = null;
-        clip = null;
-      }
-    }
+  for (const [index, obj] of patch.objects.entries()) {
+    const candidate = loaded.get(index);
+    let sObj: SoundObject | null =
+      candidate && !(candidate instanceof AudioClip) ? candidate.deepCopy() : null;
+    let clip: AudioClip | null = candidate instanceof AudioClip ? candidate : null;
 
     if (!sObj && !clip && obj.sourceTarget?.location) {
       const source = resolveTimelineTarget(score, obj.sourceTarget.location);
@@ -3608,7 +3612,7 @@ export function applyScoreObjectPatch(
         const jm = sObj as JMask;
         const p = patch.patch;
         if (p.seedUsed !== undefined) jm.setSeedUsed(p.seedUsed as boolean);
-        if (p.seed !== undefined) jm.setSeed(p.seed as number);
+        if (p.seed !== undefined) jm.setSeed(p.seed as number | string);
         if (p.field !== undefined) {
           const nextFieldSnapshot = mergeJMaskSnapshotValue(
             createJMaskEditorPayload(jm).field,

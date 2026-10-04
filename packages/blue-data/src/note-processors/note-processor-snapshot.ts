@@ -148,7 +148,7 @@ export function createNoteProcessorEntrySnapshot(proc: NoteProcessor): NoteProce
     deferred: false,
     summary: buildSummary(proc, params),
     parameters: params,
-    serializedXml: '',
+    serializedXml: proc.saveAsXML().toXml(),
   };
 }
 
@@ -215,25 +215,18 @@ export function reifyProcessorFromSnapshot(
     return processor;
   }
 
-  if (!entry.supported) {
-    if (entry.serializedXml) {
-      try {
-        const elem = Element.parse(entry.serializedXml);
-        const type = elem.getAttribute('type') ?? entry.processorType;
-        return UnsupportedProcessor.loadFromXML(elem, type);
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  }
-
   const def = getNoteProcessorDefinition(entry.processorType);
-  if (!def) return null;
-
-  const proc = def.createDefault();
+  if (!def) throw new RangeError('Unsupported processor snapshot type: ' + entry.processorType);
+  let proc = def.createDefault();
+  if (entry.serializedXml) {
+    const wrapper = new Element('noteProcessorChain');
+    wrapper.addElement(Element.parse(entry.serializedXml));
+    proc = NoteProcessorChain.loadFromXML(wrapper).getProcessors()[0];
+  }
   applyParametersToProcessor(proc, entry.parameters);
-  return proc;
+  const wrapper = new Element('noteProcessorChain');
+  wrapper.addElement(proc.saveAsXML());
+  return NoteProcessorChain.loadFromXML(wrapper).getProcessors()[0];
 }
 
 export function reifyChainFromSnapshot(snapshot: NoteProcessorChainSnapshot): NoteProcessorChain {

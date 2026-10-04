@@ -161,4 +161,6 @@ The final full workspace tests, lint, data build, main/preload compilation, rend
 
 ## Deferred Follow-up
 
+- Follow-up specification: [116 — Explicit XML Compatibility and Migration Contracts](../116-xml-compatibility-contracts/spec.md), with the owner-directed explicit acceptance policy in constitution 4.0.0. This supersedes the earlier proposed blanket unknown-data preservation policy for the follow-up; Spec 115's completed implementation and acceptance evidence remain historical.
+
 - **Save-preservation audit (next spec)** — Deferred by project-owner direction on 2026-10-01. Audit project XML load/save and copy/history paths, including TimeState's opaque unknown children and attributes. Distinguish supported fields that need explicit typed modeling from unsupported extensions retained for lossless round trips; evaluate ownership, validation/reporting of unrecognized data, and mutable aliasing. Decide the preservation policy and implementation boundaries in that spec, with focused project round-trip and history coverage. The current TimeState preservation implementation remains in place; this follow-up does not waive FR-010 or claim a repository-wide preservation audit is complete.

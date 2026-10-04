@@ -37,12 +37,11 @@ describe('Mixer panningEnabled configuration and serialization (T027, T028)', ()
     expect(loaded.isPanningEnabled()).toBe(false);
   });
 
-  it('loads invalid panningEnabled values as false', () => {
+  it('rejects invalid panningEnabled values', () => {
     for (const invalid of ['1', 'yes', 'enabled', '', 'null', 'TRUE_EXTRA']) {
       const elem = new Element('mixer');
       elem.setAttribute('panningEnabled', invalid);
-      const loaded = Mixer.loadFromXML(elem);
-      expect(loaded.isPanningEnabled()).toBe(false);
+      expect(() => Mixer.loadFromXML(elem)).toThrow();
     }
   });
 
@@ -116,7 +115,7 @@ describe('Mixer panLawDb and panOffCenterBoost configuration and serialization (
     expect(loaded.isPanOffCenterBoost()).toBe(false);
   });
 
-  it('loads invalid panLawDb values with default fallback', () => {
+  it('rejects invalid panLawDb values', () => {
     for (const invalid of [
       '-1',
       '-5',
@@ -131,17 +130,15 @@ describe('Mixer panLawDb and panOffCenterBoost configuration and serialization (
     ]) {
       const elem = new Element('mixer');
       elem.setAttribute('panLawDb', invalid);
-      const loaded = Mixer.loadFromXML(elem);
-      expect(loaded.getPanLawDb()).toBe(-3);
+      expect(() => Mixer.loadFromXML(elem)).toThrow();
     }
   });
 
-  it('loads invalid panOffCenterBoost values as false', () => {
+  it('rejects invalid panOffCenterBoost values', () => {
     for (const invalid of ['1', 'yes', 'enabled', '', 'null']) {
       const elem = new Element('mixer');
       elem.setAttribute('panOffCenterBoost', invalid);
-      const loaded = Mixer.loadFromXML(elem);
-      expect(loaded.isPanOffCenterBoost()).toBe(false);
+      expect(() => Mixer.loadFromXML(elem)).toThrow();
     }
   });
 

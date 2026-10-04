@@ -2,6 +2,9 @@ import { Element } from '../serialization/xml-reader';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { BlueDataObject } from '../blue-data-object';
 import { LiveObject } from './live-object';
+import { XmlLoadContext } from '../serialization/xml-load';
+import { checkRoot, checkShape, parseXmlInteger } from '../utilities/xml';
+import type { CopyMode } from '../deep-copyable';
 
 export class LiveObjectBins implements BlueDataObject {
   private _cells: Array<Array<LiveObject | null>>;
@@ -160,53 +163,73 @@ export class LiveObjectBins implements BlueDataObject {
     return elem;
   }
 
-  static loadFromXML(data: Element, objRefMap?: ObjRefLoadMap): LiveObjectBins {
-    const columnsAttr = data.getAttribute('columns');
-    const rowsAttr = data.getAttribute('rows');
-    if (!columnsAttr || !rowsAttr) {
-      throw new Error('LiveObjectBins could not load: missing columns/rows attributes');
-    }
-    const columns = parseInt(columnsAttr, 10);
-    const rows = parseInt(rowsAttr, 10);
-
-    const grid: Array<Array<LiveObject | null>> = [];
-    for (let c = 0; c < columns; c++) {
-      const col: Array<LiveObject | null> = [];
-      for (let r = 0; r < rows; r++) {
-        col.push(null);
-      }
-      grid.push(col);
-    }
-
-    const bins = LiveObjectBins.fromGrid(grid);
-    let column = 0;
-
-    const nodes = data.getElements();
-    while (nodes.hasMoreElements()) {
-      const node = nodes.next();
-      if (node.getName() === 'bin') {
-        let row = 0;
-        const lObjNodes = node.getElements();
-        while (lObjNodes.hasMoreElements()) {
-          const lObjNode = lObjNodes.next();
-          if (lObjNode.getName() === 'liveObject' && column < columns && row < rows) {
-            bins._cells[column][row] = LiveObject.loadFromXML(lObjNode, objRefMap);
-          }
-          row++;
+  static loadFromXML(
+    data: Element,
+    objRefMap?: ObjRefLoadMap,
+    context = new XmlLoadContext(data),
+  ): LiveObjectBins {
+    checkRoot(data, 'liveObjectBins', context);
+    checkShape(data, ['columns', 'rows'], ['bin'], context, ['bin']);
+    const columns = parseXmlInteger(
+      data.getAttribute('columns') ?? '',
+      context.at(data),
+      1,
+      Number.MAX_SAFE_INTEGER,
+      '@columns',
+    );
+    const rows = parseXmlInteger(
+      data.getAttribute('rows') ?? '',
+      context.at(data),
+      1,
+      Number.MAX_SAFE_INTEGER,
+      '@rows',
+    );
+    const bins = [...data.getElements('bin')];
+    if (bins.length !== columns)
+      throw context.at(data).error({
+        code: 'cardinality',
+        message: 'Live grid column count does not match its declared dimensions.',
+        recovery: 'Supply exactly the declared number of bins.',
+      });
+    // Validate actual slots before allocating: authored dimensions never drive a padded allocation.
+    const ids = new Set<string>();
+    const grid = bins.map((bin) => {
+      checkShape(bin, [], ['null', 'liveObject'], context, ['null', 'liveObject']);
+      const slots = [...bin.getElements()];
+      if (slots.length !== rows)
+        throw context.at(bin).error({
+          code: 'cardinality',
+          message: 'Live grid row count does not match its declared dimensions.',
+          recovery: 'Supply exactly the declared number of ordered slots.',
+        });
+      return slots.map((slot) => {
+        if (slot.getName() === 'null') {
+          checkShape(slot, [], [], context);
+          return null;
         }
-        column++;
-      }
-    }
-
-    return bins;
+        const object = LiveObject.loadFromXML(slot, objRefMap, context);
+        const id = object.getUniqueId();
+        if (ids.has(id))
+          throw context.at(slot).error({
+            code: 'reference',
+            member: '@uniqueId',
+            value: id,
+            message: 'Duplicate Live object identity.',
+            recovery: 'Assign distinct Live object IDs.',
+          });
+        ids.add(id);
+        return object;
+      });
+    });
+    return LiveObjectBins.fromGrid(grid);
   }
 
-  deepCopy(): BlueDataObject {
+  deepCopy(mode: CopyMode = 'duplication'): BlueDataObject {
     const grid: Array<Array<LiveObject | null>> = [];
     for (const col of this._cells) {
       const newCol: Array<LiveObject | null> = [];
       for (const obj of col) {
-        newCol.push(obj ? (obj.deepCopy() as LiveObject) : null);
+        newCol.push(obj ? (obj.deepCopy(mode) as LiveObject) : null);
       }
       grid.push(newCol);
     }

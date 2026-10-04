@@ -1033,14 +1033,9 @@ function computeDiskPruningSet(
     if (!(group instanceof TrackLayerGroup)) {
       return NO_PRUNING;
     }
-    // Certification is project-wide: a single opaque track makes the event
-    // set non-independent, even when that track is currently audible and
-    // another candidate is muted. Never prune only the apparently simple
-    // sibling while guessing about preserved or executable content elsewhere.
-    if (group.hasUnknownContent()) return NO_PRUNING;
+    // Certification remains project-wide for supported executable content.
     for (const track of group as TrackLayerGroup & Track[]) {
       const t = track as Track;
-      if (t.hasUnknownContent()) return NO_PRUNING;
       if (t.getNoteProcessorChain().getProcessors().length > 0) return NO_PRUNING;
       if (!isAudioClipOnlyTrack(t)) return NO_PRUNING;
       if (trackInstrumentMakesPruningUnsafe(t)) return NO_PRUNING;

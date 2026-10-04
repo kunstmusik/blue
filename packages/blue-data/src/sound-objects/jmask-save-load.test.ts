@@ -680,7 +680,7 @@ describe('JMask XML save/load round-trips', () => {
 
       expect(xmlAgain).toBe(xml);
       expect(loaded.isSeedUsed()).toBe(true);
-      expect(loaded.getSeed()).toBe(42);
+      expect(loaded.getSeed()).toBe('42');
 
       const lf = loaded.getField();
       expect(lf.parameters.length).toBe(6);

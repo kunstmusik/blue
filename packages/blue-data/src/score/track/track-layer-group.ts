@@ -14,6 +14,12 @@ import { TimeContext } from '../../time/time-context';
 import { CompileData } from '../../compile-data';
 import { Element } from '../../serialization/xml-reader';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../../serialization/obj-ref-map';
+import {
+  XmlLoadContext,
+  requireXmlValue,
+  type XmlDiagnosticSink,
+} from '../../serialization/xml-load';
+import { checkRoot, checkShape, readInt } from '../../utilities/xml';
 import { writeInt } from '../../utilities/xml';
 import { LAYER_HEIGHT } from '../layers/layer';
 import {
@@ -30,10 +36,6 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
   private _name = 'Track Layer Group';
   private _uniqueId = generateUuid();
   private _defaultHeightIndex = 0;
-  private _unknownAttributes = new Map<string, string>();
-  private _unknownChildren: Element[] = [];
-  private _tracksAttributes = new Map<string, string>();
-  private _unknownTracksChildren: Element[] = [];
 
   constructor(other?: TrackLayerGroup | number, mode: CopyMode = 'duplication') {
     super(typeof other === 'number' ? other : 0);
@@ -41,10 +43,6 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
       this._name = other._name;
       this._uniqueId = other._uniqueId;
       this._defaultHeightIndex = other._defaultHeightIndex;
-      this._unknownAttributes = new Map(other._unknownAttributes);
-      this._unknownChildren = other._unknownChildren.map((child) => child.clone());
-      this._tracksAttributes = new Map(other._tracksAttributes);
-      this._unknownTracksChildren = other._unknownTracksChildren.map((child) => child.clone());
       for (const track of other) this.push(track.deepCopy(mode));
     }
   }
@@ -72,15 +70,6 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
   }
   hasSoloLayers(): boolean {
     return this.some((track) => track.isSolo());
-  }
-  /** Spec 111: unknown preserved data makes conservative certification refuse. */
-  hasUnknownContent(): boolean {
-    return (
-      this._unknownAttributes.size > 0 ||
-      this._unknownChildren.length > 0 ||
-      this._tracksAttributes.size > 0 ||
-      this._unknownTracksChildren.length > 0
-    );
   }
 
   /**
@@ -189,54 +178,58 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
 
   saveAsXML(objRefMap?: ObjRefSaveMap): Element {
     const root = new Element('trackLayerGroup');
-    for (const [name, value] of this._unknownAttributes) root.setAttribute(name, value);
     root.setAttribute('name', this._name);
     root.setAttribute('uniqueId', this._uniqueId);
     root.addElement(writeInt('defaultHeightIndex', this._defaultHeightIndex));
-    for (const child of this._unknownChildren) root.addElement(child.clone());
     const tracks = root.addElement('tracks');
-    for (const [name, value] of this._tracksAttributes) tracks.setAttribute(name, value);
     for (const track of this) tracks.addElement(track.saveAsXML(objRefMap));
-    for (const child of this._unknownTracksChildren) tracks.addElement(child.clone());
     return root;
   }
 
-  static loadFromXML(data: Element, objRefMap?: ObjRefLoadMap): TrackLayerGroup {
+  static loadFromXML(
+    data: Element,
+    objRefMap?: ObjRefLoadMap,
+    providedContext?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): TrackLayerGroup {
+    const context = providedContext ?? new XmlLoadContext(data);
+    checkRoot(data, 'trackLayerGroup', context);
+    checkShape(data, ['name', 'uniqueId'], ['defaultHeightIndex', 'tracks'], context);
     const group = new TrackLayerGroup();
-    group._name = data.getAttributeValue('name') ?? group._name;
-    group._uniqueId = data.getAttributeValue('uniqueId') ?? group._uniqueId;
-    for (const name of data.getAttributeNames()) {
-      if (name !== 'name' && name !== 'uniqueId') {
-        group._unknownAttributes.set(name, data.getAttributeValue(name) ?? '');
+    group._name = data.getAttribute('name') ?? group._name;
+    const id = data.getAttribute('uniqueId');
+    if (id !== null) {
+      if (!id.trim())
+        throw context.at(data).error({
+          code: 'value',
+          member: '@uniqueId',
+          value: id,
+          message: 'Track group identity must be nonempty.',
+          recovery: 'Supply a unique group identity.',
+        });
+      group._uniqueId = id;
+    }
+    const height = data.getElement('defaultHeightIndex');
+    if (height) group._defaultHeightIndex = readInt(height, context, 0, 2147483647);
+    const tracks = data.getElement('tracks');
+    if (tracks) {
+      checkShape(tracks, [], ['track'], context, ['track']);
+      const ids = new Set<string>();
+      for (const node of tracks.getElements('track')) {
+        const track = Track.loadFromXML(node, objRefMap, context);
+        if (ids.has(track.getUniqueId()))
+          throw context.at(node).error({
+            code: 'reference',
+            member: '@uniqueId',
+            value: track.getUniqueId(),
+            message: 'Duplicate track identity.',
+            recovery: 'Supply distinct track IDs.',
+          });
+        ids.add(track.getUniqueId());
+        group.push(track);
       }
     }
-    const nodes = data.getElements();
-    while (nodes.hasMoreElements()) {
-      const node = nodes.next();
-      if (node.getName() === 'defaultHeightIndex') {
-        const value = Number.parseInt(node.getTextString(), 10);
-        // Preserve imported values verbatim. Rendering/new layers fall back to
-        // 22px for an invalid value, but the original XML must not be rewritten
-        // until the user explicitly edits the default.
-        if (Number.isFinite(value)) group._defaultHeightIndex = value;
-      } else if (node.getName() === 'tracks') {
-        for (const name of node.getAttributeNames()) {
-          group._tracksAttributes.set(name, node.getAttributeValue(name) ?? '');
-        }
-        const tracks = node.getElements();
-        while (tracks.hasMoreElements()) {
-          const child = tracks.next();
-          if (child.getName() === 'track') {
-            group.push(Track.loadFromXML(child, objRefMap));
-          } else {
-            group._unknownTracksChildren.push(child.clone());
-          }
-        }
-      } else {
-        group._unknownChildren.push(node.clone());
-      }
-    }
-    return group;
+    return providedContext ? group : requireXmlValue(context.result(group), sink);
   }
 
   newLayerAt(index: number): Track {

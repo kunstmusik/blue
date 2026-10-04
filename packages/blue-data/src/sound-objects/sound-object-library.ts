@@ -9,6 +9,9 @@ import { SoundObject } from './sound-object';
 import { Instance } from './instance';
 import { PolyObject } from './poly-object';
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext, requireXmlValue } from '../serialization/xml-load';
+import type { XmlDiagnosticSink } from '../serialization/xml-load';
+import { checkRoot, checkShape } from '../utilities/xml';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { BlueDataObject } from '../blue-data-object';
 import type { CopyMode } from '../deep-copyable';
@@ -171,60 +174,124 @@ export class SoundObjectLibrary implements BlueDataObject {
   }
 
   private generateId(): string {
-    return `lib_${this._nextId++}`;
+    let id: string;
+    do id = `lib_${this._nextId++}`;
+    while ([...this._idMap.values()].includes(id));
+    return id;
   }
 
   // ─── XML ───
 
   saveAsXML(objRefMap?: ObjRefSaveMap): Element {
-    const elem = new Element('soundObjectLibrary');
-    for (let i = 0; i < this._objects.length; i++) {
-      const obj = this._objects[i];
-      const stableId = this._idMap.get(obj) ?? this.generateId();
-      this._idMap.set(obj, stableId);
-      if (objRefMap) objRefMap.seed(obj, stableId);
-      const sObjElem = obj.saveAsXML(objRefMap);
-      // Assign stable objRefId for cross-reference resolution
-      sObjElem.setAttribute('objRefId', stableId);
-      elem.addElement(sObjElem);
+    const map = objRefMap ?? new ObjRefSaveMap();
+    const entries = this._objects.map((object) => {
+      const id = this._idMap.get(object);
+      if (!id) throw new Error('Project library object has no stable identity.');
+      map.seed(object, id);
+      return { object, id };
+    });
+    const root = new Element('soundObjectLibrary');
+    for (const { object, id } of entries) {
+      const payload = object.saveAsXML(map);
+      payload.setAttribute('objRefId', id);
+      root.addElement(payload);
     }
-    return elem;
+    return root;
   }
 
-  static loadFromXML(data: Element, objRefMap?: ObjRefLoadMap): SoundObjectLibrary {
-    const lib = new SoundObjectLibrary();
-    let legacyIndex = 0;
-    const children = data.getElements();
-    while (children.hasMoreElements()) {
-      const node = children.next();
-      if (node.getName() === 'soundObject') {
-        const sObj = loadSoundObjectFromXML(node, objRefMap);
-        if (sObj) {
-          lib._objects.push(sObj);
-          const objRefId = node.getAttribute('objRefId');
-          if (objRefId) {
-            lib._idMap.set(sObj, objRefId);
-            if (objRefMap) {
-              objRefMap.register(objRefId, sObj);
-            }
-            const numPart = parseInt(objRefId.replace('lib_', ''), 10);
-            if (!isNaN(numPart) && numPart >= lib._nextId) {
-              lib._nextId = numPart + 1;
-            }
-          } else {
-            const stableId = lib.generateId();
-            lib._idMap.set(sObj, stableId);
-            // Legacy files (pre-objRefId): register by insertion index so
-            // Instance sound objects that store numeric IDs can still resolve.
-            if (objRefMap) {
-              objRefMap.register(String(legacyIndex), sObj);
-            }
-            legacyIndex++;
-          }
-        }
+  static loadFromXML(
+    data: Element,
+    objRefMap?: ObjRefLoadMap,
+    providedContext?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): SoundObjectLibrary {
+    const context = providedContext ?? new XmlLoadContext(data);
+    checkRoot(data, 'soundObjectLibrary', context);
+    checkShape(data, [], ['soundObject'], context, ['soundObject']);
+    const nodes = data.getElements('soundObject').toArray();
+    const ids = new Set<string>();
+    const library = new SoundObjectLibrary();
+    for (const node of nodes) {
+      const id = node.getAttribute('objRefId');
+      if (id !== null) {
+        if (!id.trim() || ids.has(id))
+          throw context.at(node).error({
+            code: 'reference',
+            member: '@objRefId',
+            value: id,
+            message: 'Project library ID is empty or duplicated.',
+            recovery: 'Supply distinct nonempty object IDs.',
+          });
+        ids.add(id);
+        const match = /^lib_(\d+)$/.exec(id);
+        const number = match ? Number(match[1]) : NaN;
+        if (Number.isSafeInteger(number) && number < Number.MAX_SAFE_INTEGER - 1)
+          library._nextId = Math.max(library._nextId, number + 1);
       }
     }
-    return lib;
+    const stableIds = nodes.map((node) => {
+      const explicit = node.getAttribute('objRefId');
+      if (explicit !== null) return explicit;
+      let generated: string;
+      do generated = library.generateId();
+      while (ids.has(generated));
+      ids.add(generated);
+      return generated;
+    });
+    const map = new ObjRefLoadMap();
+    const values: Array<SoundObject | undefined> = new Array(nodes.length);
+    const loading = new Set<number>();
+    const resolve = (index: number): SoundObject => {
+      const existing = values[index];
+      if (existing) return existing;
+      const node = nodes[index];
+      if (loading.has(index))
+        throw context.at(node).error({
+          code: 'reference',
+          member: '@objRefId',
+          value: stableIds[index],
+          message: 'Cyclic project library reference.',
+          recovery: 'Remove the cycle in a compatible editor.',
+        });
+      loading.add(index);
+      const payload = node.clone();
+      payload.removeAttribute('objRefId');
+      context.anchor(payload, node);
+      const object = loadSoundObjectFromXML(payload, map, context);
+      values[index] = object;
+      loading.delete(index);
+      return object;
+    };
+    for (let index = 0; index < nodes.length; index++)
+      map.registerLoader(stableIds[index], () => resolve(index));
+    for (let index = 0; index < nodes.length; index++) {
+      if (!nodes[index].hasAttribute('objRefId')) {
+        const historical = String(index);
+        if (map.has(historical))
+          throw context.at(nodes[index]).error({
+            code: 'reference',
+            value: historical,
+            message: 'Historical library index conflicts with an explicit ID.',
+            recovery: 'Supply explicit nonconflicting library identities.',
+          });
+        map.registerLoader(historical, () => resolve(index));
+      }
+    }
+    for (let index = 0; index < nodes.length; index++) {
+      const object = resolve(index);
+      library._objects.push(object);
+      library._idMap.set(object, stableIds[index]);
+    }
+    while (ids.has(`lib_${library._nextId}`)) library._nextId++;
+    if (!providedContext) requireXmlValue(context.result(library), sink);
+    // Publish reference identities only after every nested owner accepted.
+    if (objRefMap)
+      for (let index = 0; index < nodes.length; index++) {
+        objRefMap.register(stableIds[index], values[index]!);
+        if (!nodes[index].hasAttribute('objRefId'))
+          objRefMap.register(String(index), values[index]!);
+      }
+    return library;
   }
 
   deepCopy(mode: CopyMode = 'duplication'): BlueDataObject {

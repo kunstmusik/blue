@@ -12,6 +12,12 @@ import { ProjectUpgrader } from './upgrader';
 import { ProjectUpgrader_2_1_10 } from './upgrades/upgrade-2.1.10';
 import { ProjectUpgrader_2_3_0 } from './upgrades/upgrade-2.3.0';
 import { migrateAudioLayersToTracks } from './migrate-audio-layers-to-tracks';
+import { XmlLoadContext } from '../serialization/xml-load';
+import {
+  migrateProjectTimeContext,
+  migrateProjectReferences,
+} from './migrate-project-time-context';
+import { migrateProjectPanning } from './migrate-project-panning';
 
 export class UpgradeManager {
   private upgraders: ProjectUpgrader[] = [];
@@ -37,22 +43,33 @@ export class UpgradeManager {
    *
    * @param element The root XML element (blueData element).
    */
-  performUpgrades(element: Element): void {
-    // Track migration is structural rather than version-gated. Historical
-    // files in the wild do not always carry a version that matches their
-    // score contents, and canonical Track elements are naturally idempotent.
-    migrateAudioLayersToTracks(element);
-
+  performUpgrades(element: Element, context = new XmlLoadContext(element)): void {
     const versionAttr = element.getAttribute('version');
     const versionString = versionAttr ?? '0.0.0';
     const version = ProjectVersion.parse(versionString);
 
     for (const upgrader of this.upgraders) {
       if (version.lessThan(upgrader.version)) {
-        if (upgrader.performUpgrade(element)) {
-          console.info(`Performed upgrade for version '${upgrader.version}'`);
-        }
+        upgrader.performUpgrade(element, context);
       }
     }
+    const unmigratedRootObject = element.getElement('soundObject');
+    if (unmigratedRootObject) {
+      const competesWithScore = element.getElement('score') !== null;
+      throw context.at(unmigratedRootObject).error({
+        code: competesWithScore ? 'conflict' : 'member',
+        member: 'soundObject',
+        message: competesWithScore
+          ? 'Legacy root PolyObject competes with an existing Score.'
+          : 'Root SoundObject was not converted by the versioned project migrations.',
+        recovery: competesWithScore
+          ? 'Combine the score content in a compatible historical editor before loading.'
+          : 'Save the PolyObject inside the canonical Score structure in a compatible editor.',
+      });
+    }
+    migrateProjectTimeContext(element, context);
+    migrateAudioLayersToTracks(element, context);
+    migrateProjectPanning(element, context);
+    migrateProjectReferences(element, context);
   }
 }

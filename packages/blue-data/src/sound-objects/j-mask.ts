@@ -1,3 +1,6 @@
+import { XmlLoadContext } from '../serialization/xml-load';
+import { checkShape, readText, parseXmlBoolean } from '../utilities/xml';
+import { canonicalSeed, readSeed } from '../note-processors/xml-policy';
 /**
  * JMask — generates notes using a mask-based random pattern system.
  * Mirrors the Java JMask class.
@@ -11,7 +14,11 @@ import { CompileData } from '../compile-data';
 import { Element } from '../serialization/xml-reader';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
-import { initBasicFromXML, getBasicXML } from './sound-object-utilities';
+import {
+  initBasicFromXML,
+  getBasicXML,
+  BASIC_SOUND_OBJECT_CHILDREN,
+} from './sound-object-utilities';
 import {
   applyNoteProcessorChain,
   applyNoteProcessorChainAsync,
@@ -22,7 +29,7 @@ import { Field, JavaRandom } from './jmask-support';
 
 export class JMask extends AbstractSoundObject {
   private _seedUsed = false;
-  private _seed = 0;
+  private _seed = '0';
   private _field = new Field();
 
   constructor(other?: JMask) {
@@ -43,11 +50,11 @@ export class JMask extends AbstractSoundObject {
     this._seedUsed = val;
   }
 
-  getSeed(): number {
+  getSeed(): string {
     return this._seed;
   }
-  setSeed(val: number): void {
-    this._seed = val;
+  setSeed(val: number | string): void {
+    this._seed = canonicalSeed(val);
   }
 
   getField(): Field {
@@ -59,7 +66,7 @@ export class JMask extends AbstractSoundObject {
 
   private generateRawNotes(context: TimeContext): { notes: NoteList; duration: number } {
     const field = new Field(this._field);
-    const rnd = this._seedUsed ? new JavaRandom(this._seed) : new JavaRandom();
+    const rnd = this._seedUsed ? new JavaRandom(BigInt(this._seed)) : new JavaRandom();
     const duration = this.getSubjectiveDuration().toBeats(context);
     const notes = field.generateNotes(duration, rnd);
     return { notes, duration };
@@ -112,19 +119,43 @@ export class JMask extends AbstractSoundObject {
     return elem;
   }
 
-  static loadFromXML(data: Element, _objRefMap?: ObjRefLoadMap): JMask {
+  static loadFromXML(
+    data: Element,
+    _objRefMap?: ObjRefLoadMap,
+    context = new XmlLoadContext(data),
+  ): JMask {
+    if (
+      data.getName() !== 'soundObject' ||
+      !['JMask', 'blue.soundObject.JMask'].includes(data.getAttribute('type') ?? '')
+    )
+      throw context.at(data).error({
+        code: 'type',
+        member: '@type',
+        message: 'Unexpected JMask root/type.',
+        recovery: 'Use the declared JMask type.',
+      });
+    checkShape(
+      data,
+      ['type'],
+      [...BASIC_SOUND_OBJECT_CHILDREN, 'seed', 'seedUsed', 'field'],
+      context,
+    );
     const obj = new JMask();
-    initBasicFromXML(obj, data);
+    initBasicFromXML(obj, data, context);
 
     const seedUsed = data.getTextString('seedUsed');
-    if (seedUsed !== null) obj._seedUsed = seedUsed.toLowerCase() === 'true';
+    if (seedUsed !== null)
+      obj._seedUsed = parseXmlBoolean(
+        readText(data.getElement('seedUsed')!, context),
+        context.at(data.getElement('seedUsed')!),
+      );
 
     const seed = data.getTextString('seed');
-    if (seed !== null) obj._seed = parseInt(seed, 10);
+    if (seed !== null) obj._seed = readSeed(data.getElement('seed')!, context);
 
     const field = data.getElement('field');
     if (field !== null) {
-      obj._field = Field.loadFromXML(field);
+      obj._field = Field.loadFromXML(field, context);
     }
 
     return obj;

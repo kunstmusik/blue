@@ -24,11 +24,8 @@
     <noteProcessorChain />
     <audioLayerGroup name="Java Audio Group" uniqueId="java-group-1">
       <defaultHeightIndex>1</defaultHeightIndex>
-      <unknownGroupSibling value="preserve-me">
-        <nestedUnknown>java</nestedUnknown>
-      </unknownGroupSibling>
       <audioLayers>
-        <audioLayer name="Field Recording" uniqueId="java-track-1" muted="false" solo="true" heightIndex="2" automationSelectedIndex="0" futureTrackAttribute="preserve-track-attribute">
+        <audioLayer name="Field Recording" uniqueId="java-track-1" muted="false" solo="true" heightIndex="2" automationSelectedIndex="0">
           <audioClip>
             <name>wind</name>
             <audioFile>/fixtures/wind.wav</audioFile>
@@ -44,9 +41,7 @@
             <looping>true</looping>
           </audioClip>
           <parameterId>java-param-1</parameterId>
-          <unknownTrackSibling value="preserve-track-child" />
         </audioLayer>
-        <unknownTracksSibling value="preserve-container-child" />
       </audioLayers>
     </audioLayerGroup>
   </score>

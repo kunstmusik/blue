@@ -1,3 +1,4 @@
+import type { XmlDiagnostic } from '@blue/data';
 import type {
   EffectEditablePatch,
   EffectEditorSnapshot,
@@ -12,7 +13,7 @@ import type { LibraryType } from './unified-library';
 
 export type LibraryEditorDocumentKind = LibraryType | 'unsupported';
 
-export type LibraryEditorDocument =
+export type LibraryEditorDocument = (
   | { readonly kind: 'instrument'; readonly snapshot: InstrumentSnapshot }
   | { readonly kind: 'udo'; readonly snapshot: UdoDefinitionSnapshot }
   | { readonly kind: 'effect'; readonly snapshot: EffectEditorSnapshot }
@@ -23,7 +24,8 @@ export type LibraryEditorDocument =
       readonly objectType: string;
       readonly message: string;
       readonly rawXml: string;
-    };
+    }
+) & { readonly diagnostics?: readonly XmlDiagnostic[] };
 
 export type LibraryEditorDocumentPatch =
   | { readonly kind: 'instrument'; readonly patch: OrchestraPatch }

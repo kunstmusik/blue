@@ -25,7 +25,11 @@ function bsbWrap(innerXml: string): string {
 
 function parseAndLoad<T extends BSBWidget>(Ctor: new () => T, innerXml: string): T {
   const widget = new Ctor();
-  widget.loadFromXML(Element.parse(bsbWrap(innerXml)));
+  widget.loadFromXML(
+    Element.parse(
+      `<bsbObject type="blue.orchestra.blueSynthBuilder.${Ctor.name}"${Ctor === BSBXYController || Ctor === BSBKnob ? ' version="2"' : ''}>${innerXml}</bsbObject>`,
+    ),
+  );
   return widget;
 }
 
@@ -271,7 +275,7 @@ describe('BSB Widget XML Round-Trip', () => {
       const w = new BSBLabel();
       w.loadFromXML(
         Element.parse(`
-        <bsbObject type="placeholder" version="2">
+        <bsbObject type="blue.orchestra.blueSynthBuilder.BSBLabel" version="2">
           <objectName></objectName><x>10</x><y>20</y>
           <comment>a label</comment>
           <label>Hello World</label>
@@ -372,7 +376,7 @@ describe('BSB Widget XML Round-Trip', () => {
         <xMax>1</xMax>
         <relativeXValues>true</relativeXValues>
         <leadingZero>true</leadingZero>
-        <separatorType>Comma</separatorType>
+        <separatorType>COMMA</separatorType>
         <locked>false</locked>
         <lines>
           <line varName="line0" min="0" max="1" color="#000000">
@@ -486,7 +490,6 @@ describe('BSB Widget XML Round-Trip', () => {
         const xml = `<bsbObject type="${type}">
           <objectName>test</objectName><x>0</x><y>0</y>
           <comment>hello world</comment>
-          <minimum>0</minimum><maximum>1</maximum><value>0</value>
         </bsbObject>`;
         const w = new Ctor();
         w.loadFromXML(Element.parse(xml));

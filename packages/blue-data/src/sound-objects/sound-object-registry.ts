@@ -4,10 +4,15 @@
  * Uses self-registration to avoid circular dependencies.
  */
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
 import { ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
 
-type SoundObjectLoader = (data: Element, objRefMap?: ObjRefLoadMap) => SoundObject | null;
+type SoundObjectLoader = (
+  data: Element,
+  objRefMap?: ObjRefLoadMap,
+  context?: XmlLoadContext,
+) => SoundObject | null;
 type SoundObjectFactory = () => SoundObject;
 
 export type TrackPlacement = 'compatible' | 'incompatible';
@@ -19,6 +24,28 @@ export interface SoundObjectTypeDescriptor {
   readonly trackPlacementReason?: string;
   readonly instrumentTargetBehavior: InstrumentTargetBehavior;
 }
+
+const XML_TYPES = new Set([
+  'GenericScore',
+  'PolyObject',
+  'PythonObject',
+  'ClojureObject',
+  'JavaScriptObject',
+  'CSDSoundObject',
+  'Comment',
+  'AudioFile',
+  'Sound',
+  'External',
+  'Instance',
+  'LineObject',
+  'ZakLineObject',
+  'PatternObject',
+  'PianoRoll',
+  'JMask',
+  'TrackerObject',
+  'FrozenSoundObject',
+  'ObjectBuilder',
+]);
 
 const registry = new Map<string, SoundObjectLoader>();
 const factories = new Map<string, SoundObjectFactory>();
@@ -117,15 +144,36 @@ export function getTrackPlacementForSoundObjectType(typeName: string | null | un
 export function loadSoundObjectFromXML(
   data: Element,
   objRefMap?: ObjRefLoadMap,
-): SoundObject | null {
+  providedContext?: XmlLoadContext,
+  sink?: XmlDiagnosticSink,
+): SoundObject {
+  const context = providedContext ?? new XmlLoadContext(data);
   const rawType = data.getAttribute('type');
-  if (!rawType) return null;
-
-  const loader = registry.get(rawType) ?? registry.get(normalizeClassName(rawType));
-  if (loader) {
-    return loader(data, objRefMap);
-  }
-
-  console.warn(`Unknown SoundObject type: ${rawType}`);
-  return null;
+  // The finite built-in short aliases also accept their exact Java package spelling.
+  const type =
+    rawType === 'blue.clojure.soundObject.ClojureObject'
+      ? 'ClojureObject'
+      : rawType?.startsWith('blue.soundObject.')
+        ? rawType.slice('blue.soundObject.'.length)
+        : rawType;
+  const loader = type && XML_TYPES.has(type) ? registry.get(type) : undefined;
+  if (data.getName() !== 'soundObject' || !loader)
+    throw context.at(data).error({
+      code: 'type',
+      member: '@type',
+      value: rawType ?? '',
+      message: 'Unsupported or missing SoundObject type.',
+      recovery:
+        'Use a supported exact type or retain the original in the separate library archive.',
+    });
+  const object = loader(data, objRefMap, context);
+  if (!object)
+    throw context.at(data).error({
+      code: 'type',
+      member: '@type',
+      value: rawType!,
+      message: 'SoundObject loader did not produce a complete candidate.',
+      recovery: 'Repair this resource in a compatible editor.',
+    });
+  return providedContext ? object : requireXmlValue(context.result(object), sink);
 }

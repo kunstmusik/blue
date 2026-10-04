@@ -68,23 +68,12 @@ describe('BlueData root XML compatibility', () => {
       expect(data.getNoteProcessorChainMap().getChainNames()).toContain('chain1');
     });
 
-    it('preserves pluginData children', () => {
-      const xml = `<blueData version="5.0.0">
-        <pluginData>
-          <customPlugin name="test"/>
-        </pluginData>
-      </blueData>`;
-      const data = BlueData.loadFromString(xml);
-      const saved = data.saveAsXML();
-      const pluginDataElem = saved.getElement('pluginData');
-      expect(pluginDataElem).not.toBeNull();
-      const children = pluginDataElem!.getElements();
-      let count = 0;
-      while (children.hasMoreElements()) {
-        children.next();
-        count++;
-      }
-      expect(count).toBe(1);
+    it('rejects unmodeled plugin data before creating an accepted project', () => {
+      expect(() =>
+        BlueData.loadFromString(
+          '<blueData><pluginData><customPlugin name="test"/></pluginData></blueData>',
+        ),
+      ).toThrow('Unexpected element customPlugin');
     });
 
     it('extracts typed clojure project data from pluginData', () => {
@@ -108,23 +97,13 @@ describe('BlueData root XML compatibility', () => {
       );
     });
 
-    it('replaces typed clojure project data without dropping other plugin data', () => {
-      const xml = `<blueData version="5.0.0">
-        <pluginData>
-          <customPlugin name="test"/>
-        </pluginData>
-      </blueData>`;
-      const data = BlueData.loadFromString(xml);
+    it('replaces the single supported typed Clojure payload', () => {
+      const data = BlueData.loadFromString(
+        '<blueData><pluginData><blueDataObject bdoType="blue.clojure.project.ClojureProjectData"/></pluginData></blueData>',
+      );
       const clojureProjectData = new ClojureProjectData();
-      const saved = data.saveAsXML();
-
-      expect(saved.getElement('pluginData')?.getElements().size).toBe(1);
-
       data.setClojureProjectData(clojureProjectData);
-
-      const updated = data.saveAsXML();
-      const pluginData = updated.getElement('pluginData');
-      expect(pluginData?.getElements().size).toBe(2);
+      expect(data.saveAsXML().getElement('pluginData')?.getElements().size).toBe(1);
       expect(data.getClojureProjectData()).not.toBeNull();
     });
 
@@ -141,14 +120,12 @@ endop</udo>
       expect(data.getOpcodeList().getOpcode(0)?.getName()).toBe('testOpcode');
     });
 
-    it('loads instrumentLibrary', () => {
-      const xml = `<blueData version="5.0.0">
-        <instrumentLibrary>
-          <genericInstrument name="instr1"/>
-        </instrumentLibrary>
-      </blueData>`;
-      const data = BlueData.loadFromString(xml);
-      expect(data.getInstrumentLibrary()).not.toBeNull();
+    it('rejects an unaccounted historical instrument library', () => {
+      expect(() =>
+        BlueData.loadFromString(
+          '<blueData><instrumentLibrary><instrumentCategory categoryName="Root" isRoot="true"><instrument type="blue.orchestra.GenericInstrument"><name>Unused</name></instrument></instrumentCategory></instrumentLibrary></blueData>',
+        ),
+      ).toThrow('unaccounted instrument content');
     });
   });
 
@@ -301,29 +278,10 @@ endop</udo>
       expect(reloaded.getMidiInputProcessor().getKeyMapping()).toBe('MIDI');
     });
 
-    it('preserves unknown pluginData and legacy XML structures through round-trip', () => {
-      const xml = `<blueData version="5.0.0">
-        <projectProperties>
-          <title>Legacy XML Test</title>
-        </projectProperties>
-        <pluginData>
-          <legacyEffectManager enabled="true">
-            <effectId>echo-1</effectId>
-          </legacyEffectManager>
-          <parameterTimeManager version="1">
-            <mapping name="cutoff" time="0.5"/>
-          </parameterTimeManager>
-        </pluginData>
-      </blueData>`;
-      const data = BlueData.loadFromString(xml);
-      const saved = data.saveToString();
-      const reloaded = BlueData.loadFromString(saved);
-
-      expect(reloaded.getProjectProperties().title).toBe('Legacy XML Test');
-      expect(saved).toContain('<legacyEffectManager enabled="true">');
-      expect(saved).toContain('<effectId>echo-1</effectId>');
-      expect(saved).toContain('<parameterTimeManager version="1">');
-      expect(reloaded.saveToString()).toContain('<legacyEffectManager enabled="true">');
+    it('rejects historical plugin containers without a named supported contract', () => {
+      const xml =
+        '<blueData><pluginData><legacyEffectManager enabled="true"><effectId>echo-1</effectId></legacyEffectManager><parameterTimeManager version="1"><mapping name="cutoff" time="0.5"/></parameterTimeManager></pluginData></blueData>';
+      expect(() => BlueData.loadFromString(xml)).toThrow('Unexpected element legacyEffectManager');
     });
 
     it('round-trips legacy mixer with missing meter fields to legacy defaults while preserving unrelated fields', () => {
@@ -389,7 +347,7 @@ endop</udo>
       expect(reloaded.getMixer().getMeterProfileKey()).toBe('k14-rms-peak');
     });
 
-    it('handles unrecognized future meter profile key safely without corrupting project data', () => {
+    it('rejects an unrecognized meter profile and unknown mixer content', () => {
       const xml = `<blueData version="5.0.0">
         <projectProperties>
           <title>Future Curve Project</title>
@@ -406,17 +364,12 @@ endop</udo>
           <unknownMixerTag>survives-or-ignored</unknownMixerTag>
         </mixer>
       </blueData>`;
-      // Should not throw, should fall back safely to peak-rms-linear-plus-6
-      const data = BlueData.loadFromString(xml);
-      expect(data.getMixer().isEnableMeters()).toBe(true);
-      expect(data.getMixer().getMeterProfileKey()).toBe('peak-rms-linear-plus-6');
-      expect(data.getMixer().getChannels()[0]?.getName()).toBe('Ch1');
-      expect(data.getProjectProperties().title).toBe('Future Curve Project');
-
-      const saved = data.saveToString();
-      expect(saved).toContain('<meterProfile>peak-rms-linear-plus-6</meterProfile>');
-      const reloaded = BlueData.loadFromString(saved);
-      expect(reloaded.getMixer().getChannels()[0]?.getName()).toBe('Ch1');
+      expect(() => BlueData.loadFromString(xml)).toThrow();
+      expect(() =>
+        BlueData.loadFromString(
+          xml.replace('<unknownMixerTag>survives-or-ignored</unknownMixerTag>', ''),
+        ),
+      ).toThrow();
     });
   });
 });
@@ -427,21 +380,23 @@ describe('project SMPTE compatibility', () => {
     ['29.97', '<smpteDropFrame>true</smpteDropFrame>', 29.97, true],
     ['29.97df', '', 29.97, false],
     ['30df', '', 30, false],
-    ['bad', '', 24, false],
-  ])(
-    'loads and saves %s without losing unrelated TimeState XML',
-    (rate, mode, expectedRate, expectedMode) => {
-      const data = BlueData.loadFromString(
-        `<blueData version="5.0.0"><score><timeState version="2" future="yes"><smpteFrameRate>${rate}</smpteFrameRate>${mode}<future value="opaque"/></timeState></score></blueData>`,
-      );
-      const state = data.getScore().getTimeState();
-      expect(state.getSmpteFrameRate()).toBe(expectedRate);
-      expect(state.isSmpteDropFrame()).toBe(expectedMode);
-      const reopened = BlueData.loadFromString(data.saveToString());
-      expect(reopened.getScore().getTimeState().isSmpteDropFrame()).toBe(expectedMode);
-      const xml = reopened.getScore().getTimeState().saveAsXML();
-      expect(xml.getAttribute('future')).toBe('yes');
-      expect(xml.getElement('future')!.getAttribute('value')).toBe('opaque');
-    },
-  );
+  ])('normalizes and reopens the supported rate %s', (rate, mode, expectedRate, expectedMode) => {
+    const data = BlueData.loadFromString(
+      `<blueData><score><timeState version="2"><smpteFrameRate>${rate}</smpteFrameRate>${mode}</timeState></score></blueData>`,
+    );
+    const state = data.getScore().getTimeState();
+    expect(state.getSmpteFrameRate()).toBe(expectedRate);
+    expect(state.isSmpteDropFrame()).toBe(expectedMode);
+    const reopened = BlueData.loadFromString(data.saveToString());
+    expect(reopened.getScore().getTimeState().getSmpteFrameRate()).toBe(expectedRate);
+    expect(reopened.getScore().getTimeState().isSmpteDropFrame()).toBe(expectedMode);
+  });
+
+  it.each([
+    '<timeState future="yes"/>',
+    '<timeState><future value="opaque"/></timeState>',
+    '<timeState><smpteFrameRate>bad</smpteFrameRate></timeState>',
+  ])('rejects unmodeled or invalid persisted timing %s', (state) => {
+    expect(() => BlueData.loadFromString(`<blueData><score>${state}</score></blueData>`)).toThrow();
+  });
 });

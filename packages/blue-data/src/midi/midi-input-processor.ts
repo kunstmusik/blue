@@ -6,6 +6,8 @@
  * for MIDI input processing.
  */
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext } from '../serialization/xml-load';
+import { checkRoot, checkShape, readText, readEnum } from '../utilities/xml';
 import { BlueDataObject } from '../blue-data-object';
 import { Scale } from '../sound-objects/piano-roll/scale';
 
@@ -76,34 +78,31 @@ export class MidiInputProcessor implements BlueDataObject {
     return elem;
   }
 
-  static loadFromXML(data: Element): MidiInputProcessor {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): MidiInputProcessor {
+    checkRoot(data, 'midiInputProcessor', context);
+    checkShape(
+      data,
+      [],
+      ['keyMapping', 'velMapping', 'pitchConstant', 'ampConstant', 'scale'],
+      context,
+    );
     const mip = new MidiInputProcessor();
-
-    const keyMapping = data.getTextString('keyMapping');
-    if (keyMapping !== null) {
-      mip._keyMapping = keyMapping;
-    }
-
-    const velMapping = data.getTextString('velMapping');
-    if (velMapping !== null) {
-      mip._velMapping = velMapping;
-    }
-
-    const pitchConstant = data.getTextString('pitchConstant');
-    if (pitchConstant !== null) {
-      mip._pitchConstant = pitchConstant;
-    }
-
-    const ampConstant = data.getTextString('ampConstant');
-    if (ampConstant !== null) {
-      mip._ampConstant = ampConstant;
-    }
-
-    const scaleElem = data.getElement('scale');
-    if (scaleElem) {
-      mip._scale = Scale.loadFromXML(scaleElem);
-    }
-
+    const key = data.getElement('keyMapping');
+    const velocity = data.getElement('velMapping');
+    const pitch = data.getElement('pitchConstant');
+    const amp = data.getElement('ampConstant');
+    const scale = data.getElement('scale');
+    if (key)
+      mip._keyMapping = readEnum(
+        key,
+        ['MIDI', 'PCH', 'OCT', 'CONSTANT', 'TUNING_BLUE_PCH', 'TUNING_CPS'],
+        context,
+      );
+    if (velocity)
+      mip._velMapping = readEnum(velocity, ['MIDI', 'CONSTANT', 'AMP_0DBFS', 'AMP'], context);
+    if (pitch) mip._pitchConstant = readText(pitch, context);
+    if (amp) mip._ampConstant = readText(amp, context);
+    if (scale) mip._scale = Scale.loadFromXML(scale, context);
     return mip;
   }
 

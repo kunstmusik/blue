@@ -487,8 +487,8 @@ function dataGroup(data: BlueData): PatternsLayerGroup {
     .find((candidate) => candidate instanceof PatternsLayerGroup) as PatternsLayerGroup;
 }
 
-describe('pattern snapshot preserves unknown XML data', () => {
-  it('tolerates unknown XML data on load without corrupting known pattern content', () => {
+describe('pattern snapshot rejects unknown XML data', () => {
+  it('rejects unknown XML before constructing a pattern snapshot', () => {
     const source = `<?xml version="1.0" encoding="UTF-8"?>
 <blueData version="2.20.0">
   <score>
@@ -513,27 +513,9 @@ describe('pattern snapshot preserves unknown XML data', () => {
   </score>
 </blueData>`;
 
-    const data = BlueData.loadFromString(source);
-    const group = getPatternGroupSnapshot(data);
-    expect(group.name).toBe('Legacy Patterns');
-    expect(group.patternBeatsLength).toBe(2);
-    expect(group.layers[0]!.activeCellIndices).toEqual([0, 2]);
-    expect(group.layers[0]!.sourceObject.name).toBe('Legacy Source');
-    expect(group.layers[0]!.sourceObject.editorTarget.patternSource?.layerId).toBe(
-      group.layers[0]!.layerId,
+    expect(() => BlueData.loadFromString(source)).toThrow(/futureAttr/);
+    expect(() => BlueData.loadFromString(source.replace(' futureAttr="keep-me"', ''))).toThrow(
+      /futureElement/,
     );
-
-    // Editing through the canvas contract and re-saving keeps the known
-    // pattern content intact end to end.
-    applyProjectDocumentPatch(data, {
-      score: {
-        type: 'updatePatternCells',
-        groupId: group.groupId,
-        changes: [{ layerId: group.layers[0]!.layerId, cellIndex: 1, active: true }],
-      },
-    });
-    const reopenedGroup = getPatternGroupSnapshot(BlueData.loadFromString(data.saveToString()));
-    expect(reopenedGroup.layers[0]!.activeCellIndices).toEqual([0, 1, 2]);
-    expect(reopenedGroup.layers[0]!.sourceObject.name).toBe('Legacy Source');
   });
 });

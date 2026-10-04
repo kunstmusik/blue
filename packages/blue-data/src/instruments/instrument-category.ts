@@ -7,6 +7,9 @@
 import { Instrument } from './instrument';
 import { loadInstrumentFromXML } from './instrument-registry';
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext, requireXmlValue } from '../serialization/xml-load';
+import type { XmlDiagnosticSink } from '../serialization/xml-load';
+import { checkRoot, checkShape, parseXmlBoolean } from '../utilities/xml';
 import type { CopyMode } from '../deep-copyable';
 
 export class InstrumentCategory {
@@ -104,14 +107,48 @@ export class InstrumentCategory {
     return elem;
   }
 
-  static loadFromXML(data: Element): InstrumentCategory {
+  static loadFromXML(
+    data: Element,
+    providedContext?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): InstrumentCategory {
+    const context = providedContext ?? new XmlLoadContext(data);
+    checkRoot(data, 'instrumentCategory', context);
+    checkShape(data, ['categoryName', 'isRoot'], ['instrumentCategory', 'instrument'], context, [
+      'instrumentCategory',
+      'instrument',
+    ]);
     const cat = new InstrumentCategory();
 
     const nameAttr = data.getAttribute('categoryName');
-    if (nameAttr) cat._categoryName = nameAttr;
+    if (nameAttr === null || !nameAttr.trim())
+      throw context.at(data).error({
+        code: 'value',
+        member: '@categoryName',
+        value: nameAttr ?? '',
+        message: 'Category name is required and nonempty.',
+        recovery: 'Supply a category name.',
+      });
+    cat._categoryName = nameAttr;
 
     const rootAttr = data.getAttribute('isRoot');
-    if (rootAttr) cat._isRoot = rootAttr.toLowerCase() === 'true';
+    const parent = data.getParent();
+    const expectedRoot =
+      parent?.getName() === 'instrumentLibrary'
+        ? true
+        : parent?.getName() === 'instrumentCategory'
+          ? false
+          : undefined;
+    if (rootAttr !== null) cat._isRoot = parseXmlBoolean(rootAttr, context.at(data), '@isRoot');
+    else if (expectedRoot !== undefined) cat._isRoot = expectedRoot;
+    if (expectedRoot !== undefined && cat._isRoot !== expectedRoot)
+      throw context.at(data).error({
+        code: 'value',
+        member: '@isRoot',
+        value: rootAttr ?? '',
+        message: 'Category root flag conflicts with its structural position.',
+        recovery: 'Correct the category root flag.',
+      });
 
     const children = data.getElements();
     while (children.hasMoreElements()) {
@@ -119,14 +156,13 @@ export class InstrumentCategory {
       const nodeName = node.getName();
 
       if (nodeName === 'instrumentCategory') {
-        cat._subCategories.push(InstrumentCategory.loadFromXML(node));
-      } else if (nodeName === 'instrument' || nodeName === 'genericInstrument') {
-        const instrument = loadInstrumentFromXML(node);
-        if (instrument) cat._instruments.push(instrument);
+        cat._subCategories.push(InstrumentCategory.loadFromXML(node, context));
+      } else if (nodeName === 'instrument') {
+        cat._instruments.push(loadInstrumentFromXML(node, context));
       }
     }
 
-    return cat;
+    return providedContext ? cat : requireXmlValue(context.result(cat), sink);
   }
 
   /**

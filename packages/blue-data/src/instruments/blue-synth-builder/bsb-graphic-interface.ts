@@ -1,3 +1,16 @@
+import {
+  requireXmlValue,
+  type XmlDiagnosticSink,
+  XmlLoadContext,
+} from '../../serialization/xml-load';
+import {
+  checkRoot,
+  checkShape,
+  readBoolean,
+  readInt,
+  readEnum,
+  parseXmlBoolean,
+} from '../../utilities/xml';
 /**
  * BSBGraphicInterface — root container for the BSB widget tree.
  * Mirrors the Java BSBGraphicInterface class.
@@ -96,17 +109,46 @@ export class BSBGraphicInterface {
     this.rootGroup.collectReplacements(unit, parameters);
   }
 
-  loadFromXML(data: Element): BsbWidgetIdRepair[] {
+  loadFromXML(
+    data: Element,
+    context?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): BsbWidgetIdRepair[] {
+    const ctx = context ?? new XmlLoadContext(data);
+    const candidate = new BSBGraphicInterface();
+    const repairs = candidate.loadValidatedXml(data, ctx);
+    if (!context) requireXmlValue(ctx.result(repairs), sink);
+    this.rootGroup = candidate.rootGroup;
+    this.gridSettingsData = candidate.gridSettingsData;
+    this.gridSettingsRaw = '';
+    this.editEnabled = candidate.editEnabled;
+    return repairs;
+  }
+
+  private loadValidatedXml(data: Element, context: XmlLoadContext): BsbWidgetIdRepair[] {
+    checkRoot(data, 'graphicInterface', context);
+    checkShape(data, ['editEnabled'], ['gridSettings', 'bsbObject'], context, ['bsbObject']);
+    const roots = data.getElements('bsbObject').toArray();
+    const groups = roots.filter(
+      (elem) => elem.getAttribute('type') === 'blue.orchestra.blueSynthBuilder.BSBGroup',
+    );
+    if (groups.length > 1 || (groups.length && roots.length > 1))
+      throw context.at(data).error({
+        code: 'conflict',
+        message: 'Graphic interface has competing root representations.',
+        recovery: 'Keep one root group or the historical direct widgets.',
+      });
     this.rootGroup = new BSBGroup();
     const editEnabledAttr = data.getAttribute('editEnabled');
-    if (editEnabledAttr !== null) this.editEnabled = editEnabledAttr === 'true';
+    if (editEnabledAttr !== null)
+      this.editEnabled = parseXmlBoolean(editEnabledAttr, context.at(data), '@editEnabled');
 
-    this.loadGridSettings(data);
+    this.loadGridSettings(data, context);
 
     const bsbObjects = data.getElements('bsbObject');
     while (bsbObjects.hasMoreElements()) {
       const objElem = bsbObjects.next();
-      const widget = loadBsbWidgetFromXML(objElem);
+      const widget = loadBsbWidgetFromXML(objElem, context);
       if (widget) {
         if (widget instanceof BSBGroup) {
           this.rootGroup = widget;
@@ -116,30 +158,65 @@ export class BSBGraphicInterface {
       }
     }
 
-    return normalizeBsbWidgetIds(this.rootGroup);
+    const duplicateSources = new Map<string, Element[]>();
+    const seen = new Set<string>();
+    const collect = (nodes: Element[]): void => {
+      for (const node of nodes) {
+        const id =
+          node.getAttribute('uniqueId') ?? node.getAttribute('id') ?? node.getTextString('id');
+        if (id) {
+          if (seen.has(id)) duplicateSources.set(id, [...(duplicateSources.get(id) ?? []), node]);
+          seen.add(id);
+        }
+        collect(node.getElements('bsbObject').toArray());
+      }
+    };
+    collect(groups.length ? groups[0].getElements('bsbObject').toArray() : roots);
+    const repairs = normalizeBsbWidgetIds(this.rootGroup);
+    for (const repair of repairs) {
+      if (repair.reason !== 'duplicate') continue;
+      const node = duplicateSources.get(repair.previousId)?.shift() ?? data;
+      const legacyId = node.getElement('id');
+      const attribute = node.getAttribute('uniqueId') !== null ? '@uniqueId' : '@id';
+      context.at(legacyId ?? node).diagnostic({
+        code: 'R-BSB-IDENTITY',
+        severity: 'warning',
+        member: legacyId ? '#text' : attribute,
+        value: repair.previousId,
+        message: 'Duplicate widget identity was replaced with a unique identity.',
+        recovery: 'Save canonical widget identities; musical content is unchanged.',
+      });
+    }
+    return repairs;
   }
 
-  private loadGridSettings(data: Element): void {
+  private loadGridSettings(data: Element, context: XmlLoadContext): void {
     const gsElem = data.getElement('gridSettings');
     if (!gsElem) {
-      this.gridSettingsData = createDefaultGridSettings();
+      this.gridSettingsData = {
+        enabled: false,
+        snapEnabled: false,
+        width: 10,
+        height: 10,
+        gridStyle: 'NONE',
+      };
       this.gridSettingsRaw = '';
       return;
     }
 
-    this.gridSettingsRaw = gsElem.toXml();
-
-    const width = gsElem.getTextString('width');
-    const height = gsElem.getTextString('height');
-    const snapEnabled = gsElem.getTextString('snapGridEnabled');
-    const gridStyle = gsElem.getTextString('gridStyle');
-
+    checkShape(gsElem, [], ['width', 'height', 'gridStyle', 'snapGridEnabled'], context);
+    this.gridSettingsRaw = '';
+    const style = gsElem.getElement('gridStyle');
+    const gridStyle = style ? readEnum(style, ['NONE', 'DOT', 'LINE'], context) : 'DOT';
+    const width = gsElem.getElement('width');
+    const height = gsElem.getElement('height');
+    const snap = gsElem.getElement('snapGridEnabled');
     this.gridSettingsData = {
-      enabled: gridStyle ? gridStyle !== 'NONE' : false,
-      snapEnabled: snapEnabled === 'true',
-      width: width ? parseInt(width, 10) : 10,
-      height: height ? parseInt(height, 10) : 10,
-      gridStyle: (gridStyle as GridStyle) || 'NONE',
+      enabled: gridStyle !== 'NONE',
+      gridStyle,
+      snapEnabled: snap ? readBoolean(snap, context) : true,
+      width: width ? readInt(width, context, 1, 2147483647) : 10,
+      height: height ? readInt(height, context, 1, 2147483647) : 10,
     };
   }
 
@@ -147,16 +224,12 @@ export class BSBGraphicInterface {
     const elem = new Element('graphicInterface');
     elem.setAttribute('editEnabled', this.editEnabled.toString());
 
-    if (this.gridSettingsRaw) {
-      elem.addElement(Element.parse(this.gridSettingsRaw));
-    } else {
-      const gsElem = new Element('gridSettings');
-      gsElem.addElement('width').setText(String(this.gridSettingsData.width));
-      gsElem.addElement('height').setText(String(this.gridSettingsData.height));
-      gsElem.addElement('gridStyle').setText(this.gridSettingsData.gridStyle);
-      gsElem.addElement('snapGridEnabled').setText(this.gridSettingsData.snapEnabled.toString());
-      elem.addElement(gsElem);
-    }
+    const gsElem = new Element('gridSettings');
+    gsElem.addElement('width').setText(String(this.gridSettingsData.width));
+    gsElem.addElement('height').setText(String(this.gridSettingsData.height));
+    gsElem.addElement('gridStyle').setText(this.gridSettingsData.gridStyle);
+    gsElem.addElement('snapGridEnabled').setText(this.gridSettingsData.snapEnabled.toString());
+    elem.addElement(gsElem);
 
     elem.addElement(this.rootGroup.saveAsXML());
     return elem;

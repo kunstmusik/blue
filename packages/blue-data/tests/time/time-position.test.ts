@@ -207,8 +207,8 @@ describe('TimePosition', () => {
     expect(seconds.getElement('seconds')).toBeNull();
 
     const frames = TimePosition.frames(44100).saveAsXML();
-    expect(frames.getElement('frameCount')?.getTextString()).toBe('44100');
-    expect(frames.getElement('frameNumber')).toBeNull();
+    expect(frames.getElement('frameNumber')?.getTextString()).toBe('44100');
+    expect(frames.getElement('frameCount')).toBeNull();
   });
 
   it('testTimePositionXMLLoadsJavaAndLegacyTagNames', () => {

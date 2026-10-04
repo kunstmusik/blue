@@ -93,11 +93,10 @@ describe('Channel', () => {
       expect(loaded.getPanParameter().getFixedValue()).toBe(0.75);
     });
 
-    it('falls back to center 0.5 for invalid XML pan values', () => {
+    it('rejects invalid XML pan values', () => {
       for (const invalid of ['abc', '-1', '2.5', 'NaN', 'Infinity']) {
         const xml = `<channel><name>Test</name><pan>${invalid}</pan></channel>`;
-        const ch = Channel.loadFromXML(Element.parse(xml));
-        expect(ch.getPan()).toBe(0.5);
+        expect(() => Channel.loadFromXML(Element.parse(xml))).toThrow();
       }
     });
 
@@ -223,7 +222,7 @@ describe('Channel', () => {
         expect(ids.size).toBe(5);
       });
 
-      it('falls back safely for missing or invalid XML stereo pan fields', () => {
+      it('rejects invalid XML stereo pan fields', () => {
         const xml = `<channel>
           <name>Test</name>
           <stereoPanMode>bogus</stereoPanMode>
@@ -231,14 +230,10 @@ describe('Channel', () => {
           <dualPanLeft>-1.0</dualPanLeft>
           <dualPanRight>xyz</dualPanRight>
         </channel>`;
-        const ch = Channel.loadFromXML(Element.parse(xml));
-        expect(ch.getStereoPanMode()).toBe('balance');
-        expect(ch.getPanWidth()).toBe(1.0);
-        expect(ch.getDualPanLeft()).toBe(0.0);
-        expect(ch.getDualPanRight()).toBe(1.0);
+        expect(() => Channel.loadFromXML(Element.parse(xml))).toThrow();
       });
 
-      it('rejects trailing garbage in numeric fields with safe default fallback', () => {
+      it('rejects trailing garbage in numeric fields', () => {
         const xml = `<channel>
           <name>Test</name>
           <pan>0.5trailing</pan>
@@ -246,11 +241,7 @@ describe('Channel', () => {
           <dualPanLeft>0.2abc</dualPanLeft>
           <dualPanRight>0.9garbage</dualPanRight>
         </channel>`;
-        const ch = Channel.loadFromXML(Element.parse(xml));
-        expect(ch.getPan()).toBe(0.5);
-        expect(ch.getPanWidth()).toBe(1.0);
-        expect(ch.getDualPanLeft()).toBe(0.0);
-        expect(ch.getDualPanRight()).toBe(1.0);
+        expect(() => Channel.loadFromXML(Element.parse(xml))).toThrow();
       });
 
       it('round-trips stereo modes and dispatches known parameter tags explicitly', () => {

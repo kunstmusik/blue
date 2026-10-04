@@ -5,6 +5,16 @@
 import { EffectsChain } from './effects-chain';
 import { Send } from './send';
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
+import {
+  checkRoot,
+  checkShape,
+  readText,
+  readBoolean,
+  readDouble,
+  readEnum,
+} from '../utilities/xml';
+
 import { BlueDataObject } from '../blue-data-object';
 import { Parameter } from '../automation/parameter';
 import type { CopyMode } from '../deep-copyable';
@@ -28,7 +38,6 @@ import {
   PARAM_WIDTH,
   PARAM_DUAL_LEFT,
   PARAM_DUAL_RIGHT,
-  parseFiniteNumber,
 } from './channel-pan';
 
 let nextRuntimeIdentity = 1;
@@ -284,12 +293,11 @@ export class Channel implements BlueDataObject {
     elem.addElement(preEffects);
 
     const postEffects = this._postEffects.saveAsXML();
+    if (this._effectsChain !== this._postEffects) {
+      for (const item of this._effectsChain) postEffects.addElement(item.saveAsXML());
+    }
     postEffects.setAttribute('bin', 'post');
     elem.addElement(postEffects);
-
-    if (this._effectsChain.length > 0 && this._effectsChain !== this._postEffects) {
-      elem.addElement(this._effectsChain.saveAsXML());
-    }
 
     elem.addElement(this._levelParameter.saveAsXML());
     elem.addElement(this._panParameter.saveAsXML());
@@ -300,90 +308,150 @@ export class Channel implements BlueDataObject {
     return elem;
   }
 
-  static loadFromXML(data: Element): Channel {
+  static loadFromXML(data: Element, context?: XmlLoadContext, sink?: XmlDiagnosticSink): Channel {
+    const ctx = context ?? new XmlLoadContext(data);
+    checkRoot(data, 'channel', ctx);
+    checkShape(
+      data,
+      ['association'],
+      [
+        'name',
+        'outChannel',
+        'level',
+        'muted',
+        'solo',
+        'pan',
+        'stereoPanMode',
+        'panWidth',
+        'dualPanLeft',
+        'dualPanRight',
+        'association',
+        'effectsChain',
+        'send',
+        'parameter',
+      ],
+      ctx,
+      ['effectsChain', 'send', 'parameter'],
+    );
     const channel = new Channel();
-
-    channel._name = data.getTextString('name') ?? '';
-    channel._muted = data.getTextString('muted') === 'true';
-    channel._solo = data.getTextString('solo') === 'true';
-
-    // Out channel routing
-    const outCh = data.getTextString('outChannel');
-    if (outCh) channel._outChannel = outCh;
-
-    // Level (in dB)
-    const level = parseFiniteNumber(data.getTextString('level'));
-    if (level !== undefined) channel._level = level;
-
-    // Pan (finite in [0, 1], invalid XML falls back to center 0.5)
-    const pan = parseFiniteNumber(data.getTextString('pan'));
-    if (pan !== undefined) {
-      channel._pan = isValidPan(pan) ? pan : DEFAULT_PAN;
-    }
-
-    // Stereo mode and scalars with independent fallbacks
-    const stereoMode = data.getTextString('stereoPanMode');
-    if (stereoMode) {
-      channel._stereoPanMode = isValidStereoPanMode(stereoMode)
-        ? stereoMode
-        : DEFAULT_STEREO_PAN_MODE;
-    }
-
-    const width = parseFiniteNumber(data.getTextString('panWidth'));
-    if (width !== undefined) {
-      channel._panWidth = isValidPanWidth(width) ? width : DEFAULT_PAN_WIDTH;
-    }
-
-    const dualLeft = parseFiniteNumber(data.getTextString('dualPanLeft'));
-    if (dualLeft !== undefined) {
-      channel._dualPanLeft = isValidDualPan(dualLeft) ? dualLeft : DEFAULT_DUAL_PAN_LEFT;
-    }
-
-    const dualRight = parseFiniteNumber(data.getTextString('dualPanRight'));
-    if (dualRight !== undefined) {
-      channel._dualPanRight = isValidDualPan(dualRight) ? dualRight : DEFAULT_DUAL_PAN_RIGHT;
-    }
-
-    const assoc = data.getAttribute('association') ?? data.getTextString('association');
-    if (assoc) channel._association = assoc;
-
-    // Effects chains: <effectsChain bin='pre'> and <effectsChain bin='post'>
-    const ecNodes = data.getElements('effectsChain');
-    while (ecNodes.hasMoreElements()) {
-      const ecNode = ecNodes.next();
-      const loaded = EffectsChain.loadFromXML(ecNode);
-      const bin = ecNode.getAttribute('bin') ?? '';
-      if (bin === 'pre') {
-        channel._preEffects = loaded;
-      } else if (bin === 'post') {
-        channel._postEffects = loaded;
-      } else {
-        channel._effectsChain = loaded;
-        channel._postEffects = loaded;
+    for (const field of ['name', 'outChannel'] as const) {
+      const child = data.getElement(field);
+      if (child) {
+        const value = readText(child, ctx);
+        if (field === 'name') channel._name = value === 'master' ? Channel.MASTER : value;
+        else channel._outChannel = value === 'master' ? Channel.MASTER : value;
       }
     }
-
-    // Legacy standalone sends are treated as post-fader sends.
-    const sendNodes = data.getElements('send');
-    while (sendNodes.hasMoreElements()) {
-      channel._postEffects.push(Send.loadFromXML(sendNodes.next()));
+    for (const field of ['muted', 'solo'] as const) {
+      const child = data.getElement(field);
+      if (child) {
+        if (field === 'muted') channel._muted = readBoolean(child, ctx);
+        else channel._solo = readBoolean(child, ctx);
+      }
     }
-
-    const paramNodes = data.getElements('parameter');
-    while (paramNodes.hasMoreElements()) {
-      const paramElem = paramNodes.next();
-      const loadedParam = Parameter.loadFromXML(paramElem);
-      const name = loadedParam.getName();
-      if (name === PARAM_PAN) {
-        channel._panParameter = loadedParam;
-      } else if (name === PARAM_WIDTH) {
-        channel._panWidthParameter = loadedParam;
-      } else if (name === PARAM_DUAL_LEFT) {
-        channel._dualPanLeftParameter = loadedParam;
-      } else if (name === PARAM_DUAL_RIGHT) {
-        channel._dualPanRightParameter = loadedParam;
-      } else if (name === 'Volume') {
-        channel._levelParameter = loadedParam;
+    for (const field of ['level', 'pan', 'panWidth', 'dualPanLeft', 'dualPanRight'] as const) {
+      const child = data.getElement(field);
+      if (!child) continue;
+      const value = readDouble(child, ctx);
+      if (field !== 'level' && (value < 0 || value > 1))
+        throw ctx.at(child).error({
+          code: 'value',
+          value: String(value),
+          message: 'Panning value must be between zero and one.',
+          recovery: 'Supply a value in the supported range.',
+        });
+      switch (field) {
+        case 'level':
+          channel._level = value;
+          break;
+        case 'pan':
+          channel._pan = value;
+          break;
+        case 'panWidth':
+          channel._panWidth = value;
+          break;
+        case 'dualPanLeft':
+          channel._dualPanLeft = value;
+          break;
+        case 'dualPanRight':
+          channel._dualPanRight = value;
+          break;
+      }
+    }
+    const mode = data.getElement('stereoPanMode');
+    if (mode) channel._stereoPanMode = readEnum(mode, ['balance', 'stereoPan', 'dualPan'], ctx);
+    const association = data.getAttribute('association');
+    const associationElement = data.getElement('association');
+    const childAssociation = associationElement ? readText(associationElement, ctx) : null;
+    if (association !== null && childAssociation !== null && association !== childAssociation)
+      throw ctx.error({
+        code: 'conflict',
+        member: 'association',
+        message: 'Conflicting association representations.',
+        recovery: 'Keep one association value.',
+      });
+    const resolvedAssociation = association ?? childAssociation;
+    channel._association =
+      resolvedAssociation === null || resolvedAssociation === 'null' ? '' : resolvedAssociation;
+    const bins = new Set<string>();
+    const chains = data.getElements('effectsChain').toArray();
+    const directSends = data.getElements('send').toArray();
+    for (const chainElement of chains) {
+      const bin = chainElement.getAttribute('bin') ?? 'post';
+      if (bins.has(bin))
+        throw ctx.at(chainElement).error({
+          code: 'conflict',
+          member: '@bin',
+          message: 'Competing effect chains for the same bin.',
+          recovery: 'Keep one chain for each bin.',
+        });
+      bins.add(bin);
+      if (bin === 'post' && chainElement.getAttribute('bin') !== null && directSends.length > 0)
+        throw ctx.at(chainElement).error({
+          code: 'conflict',
+          message: 'An explicit post chain competes with legacy direct sends.',
+          recovery: 'Move the sends into one post chain.',
+        });
+      const loaded = EffectsChain.loadFromXML(chainElement, ctx);
+      if (bin === 'pre') channel._preEffects = loaded;
+      else channel._postEffects = loaded;
+    }
+    for (const send of directSends) channel._postEffects.push(Send.loadFromXML(send, ctx));
+    const parameters = new Set<string>();
+    for (const parameter of data.getElements('parameter')) {
+      const loaded = Parameter.loadFromXML(parameter, ctx);
+      const name = loaded.getName();
+      if (parameters.has(name))
+        throw ctx.at(parameter).error({
+          code: 'cardinality',
+          value: name,
+          message: 'Duplicate channel parameter.',
+          recovery: 'Keep one parameter with this name.',
+        });
+      parameters.add(name);
+      switch (name) {
+        case 'Volume':
+          channel._levelParameter = loaded;
+          break;
+        case PARAM_PAN:
+          channel._panParameter = loaded;
+          break;
+        case PARAM_WIDTH:
+          channel._panWidthParameter = loaded;
+          break;
+        case PARAM_DUAL_LEFT:
+          channel._dualPanLeftParameter = loaded;
+          break;
+        case PARAM_DUAL_RIGHT:
+          channel._dualPanRightParameter = loaded;
+          break;
+        default:
+          throw ctx.at(parameter).error({
+            code: 'value',
+            value: name,
+            message: 'Unsupported channel parameter name.',
+            recovery: 'Use a modeled channel parameter.',
+          });
       }
     }
 
@@ -403,7 +471,7 @@ export class Channel implements BlueDataObject {
       channel._dualPanRightParameter.setFixedValue(channel._dualPanRight);
     }
 
-    return channel;
+    return context ? channel : requireXmlValue(ctx.result(channel), sink);
   }
 
   deepCopy(mode: CopyMode = 'duplication'): BlueDataObject {

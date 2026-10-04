@@ -4,6 +4,9 @@
  */
 import { Instrument } from './instrument';
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext, requireXmlValue } from '../serialization/xml-load';
+import type { XmlDiagnosticSink } from '../serialization/xml-load';
+import { checkShape, readText, parseXmlBoolean } from '../utilities/xml';
 import { ObjRefSaveMap } from '../serialization/obj-ref-map';
 import { DeepCopyable } from '../deep-copyable';
 import { OpcodeList } from '../opcodes/opcode-list';
@@ -95,22 +98,50 @@ export class GenericInstrument extends Instrument implements DeepCopyable<Generi
     return elem;
   }
 
-  static loadFromXML(data: Element): GenericInstrument {
+  static loadFromXML(
+    data: Element,
+    context?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): GenericInstrument {
+    const ctx = context ?? new XmlLoadContext(data);
+    checkShape(
+      data,
+      ['type', 'enabled'],
+      ['name', 'comment', 'globalOrc', 'globalSco', 'instrumentText', 'opcodeList'],
+      ctx,
+    );
+    if (
+      data.getName() !== 'instrument' ||
+      data.getAttribute('type') !== 'blue.orchestra.GenericInstrument'
+    )
+      throw ctx.at(data).error({
+        code: 'type',
+        member: '@type',
+        value: data.getAttribute('type') ?? '',
+        message: 'Expected GenericInstrument instrument type.',
+        recovery: 'Use the matching instrument loader.',
+      });
+    const text = (field: string): string | null => {
+      const child = data.getElement(field);
+      return child ? readText(child, ctx) : null;
+    };
     const instr = new GenericInstrument();
-    const name = data.getTextString('name');
+    const name = text('name');
     if (name !== null) {
       instr.setName(name);
     }
-    instr.setComment(data.getTextString('comment') ?? '');
-    instr.setEnabled(data.getAttribute('enabled') !== 'false');
-    instr.setText(data.getTextString('instrumentText') ?? '');
-    const go = data.getTextString('globalOrc');
+    instr.setComment(text('comment') ?? '');
+    instr.setEnabled(
+      parseXmlBoolean(data.getAttribute('enabled') ?? 'true', ctx.at(data), '@enabled'),
+    );
+    instr.setText(text('instrumentText') ?? '');
+    const go = text('globalOrc');
     if (go !== null) instr._globalOrc = go;
-    const gs = data.getTextString('globalSco');
+    const gs = text('globalSco');
     if (gs !== null) instr._globalSco = gs;
     const opcodeList = data.getElement('opcodeList');
-    if (opcodeList) instr._opcodeList = OpcodeList.loadFromXML(opcodeList);
-    return instr;
+    if (opcodeList) instr._opcodeList = OpcodeList.loadFromXML(opcodeList, ctx);
+    return context ? instr : requireXmlValue(ctx.result(instr), sink);
   }
 
   deepCopy(): GenericInstrument {

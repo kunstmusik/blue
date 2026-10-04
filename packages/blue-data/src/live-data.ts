@@ -1,10 +1,21 @@
 import { Element } from './serialization/xml-reader';
+import { XmlLoadContext, requireXmlValue } from './serialization/xml-load';
+import type { XmlDiagnosticSink } from './serialization/xml-load';
 import { ObjRefSaveMap, ObjRefLoadMap } from './serialization/obj-ref-map';
 import { BlueDataObject } from './blue-data-object';
 import { LiveObjectBins } from './live/live-object-bins';
 import { LiveObjectSetList } from './live/live-object-set-list';
 import { LiveObject } from './live/live-object';
-import { readInt, writeInt, readBoolean, writeBoolean } from './utilities/xml';
+import type { CopyMode } from './deep-copyable';
+import {
+  checkRoot,
+  checkShape,
+  readText,
+  readInt,
+  writeInt,
+  readBoolean,
+  writeBoolean,
+} from './utilities/xml';
 import { loadSoundObjectFromXML } from './sound-objects/sound-object-registry';
 import './sound-objects/register-sound-object-types';
 import type { SoundObject } from './sound-objects/sound-object';
@@ -111,7 +122,33 @@ export class LiveData implements BlueDataObject {
     return retVal;
   }
 
-  static loadFromXML(data: Element, objRefMap?: ObjRefLoadMap): LiveData {
+  static loadFromXML(
+    data: Element,
+    objRefMap?: ObjRefLoadMap,
+    context?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): LiveData {
+    const ctx = context ?? new XmlLoadContext(data);
+    checkRoot(data, 'liveData', ctx);
+    checkShape(
+      data,
+      [],
+      [
+        'commandLine',
+        'commandLineEnabled',
+        'commandLineOverride',
+        'liveObjectBins',
+        'liveObjectSetList',
+        'repeat',
+        'tempo',
+        'repeatEnabled',
+        'liveCodeText',
+        'liveObject',
+        'soundObject',
+      ],
+      ctx,
+      ['liveObject', 'soundObject'],
+    );
     const liveData = new LiveData();
     const nodes = data.getElements();
 
@@ -124,50 +161,60 @@ export class LiveData implements BlueDataObject {
       const name = node.getName();
       switch (name) {
         case 'commandLine':
-          liveData.setCommandLine(node.getTextString());
+          liveData.setCommandLine(readText(node, ctx));
           break;
         case 'commandLineEnabled':
-          liveData.setCommandLineEnabled(readBoolean(node));
+          liveData.setCommandLineEnabled(readBoolean(node, ctx));
           doCommandLineUpgrade = false;
           break;
         case 'commandLineOverride':
-          liveData.setCommandLineOverride(readBoolean(node));
+          liveData.setCommandLineOverride(readBoolean(node, ctx));
           doCommandLineUpgrade = false;
           break;
         case 'soundObject': {
-          const sObj = loadSoundObjectFromXML(node, objRefMap);
-          if (sObj) {
-            const lObj = new LiveObject();
-            lObj.setSoundObject(sObj);
-            oldFormat.push(lObj);
-          }
+          const sObj = loadSoundObjectFromXML(node, objRefMap, ctx);
+          const lObj = new LiveObject();
+          lObj.setSoundObject(sObj);
+          oldFormat.push(lObj);
           break;
         }
         case 'liveObject':
-          oldFormat.push(LiveObject.loadFromXML(node, objRefMap));
+          oldFormat.push(LiveObject.loadFromXML(node, objRefMap, ctx));
           break;
         case 'liveObjectBins':
-          liveData._liveObjectBins = LiveObjectBins.loadFromXML(node, objRefMap);
+          liveData._liveObjectBins = LiveObjectBins.loadFromXML(node, objRefMap, ctx);
           break;
         case 'repeat':
-          liveData._repeat = readInt(node);
+          liveData._repeat = readInt(node, ctx, 1);
           break;
         case 'tempo':
-          liveData._tempo = readInt(node);
+          liveData._tempo = readInt(node, ctx, 1);
           break;
         case 'liveObjectSetList':
           liveObjectSetsNode = node;
           break;
         case 'repeatEnabled':
-          liveData.setRepeatEnabled(readBoolean(node));
+          liveData.setRepeatEnabled(readBoolean(node, ctx));
           break;
         case 'liveCodeText':
-          liveData.setLiveCodeText(node.getTextString());
+          liveData.setLiveCodeText(readText(node, ctx));
           break;
       }
     }
 
     if (oldFormat.length > 0) {
+      const explicitBins = data.getElement('liveObjectBins');
+      if (
+        explicitBins &&
+        [...explicitBins.getElements('bin')].some(
+          (bin) => [...bin.getElements('liveObject')].length > 0,
+        )
+      )
+        throw ctx.at(explicitBins).error({
+          code: 'conflict',
+          message: 'Legacy Live objects coexist with a populated current grid.',
+          recovery: 'Keep one authoritative Live grid.',
+        });
       const grid: Array<Array<LiveObject | null>> = [];
       const col: Array<LiveObject | null> = [];
       for (const lObj of oldFormat) {
@@ -182,17 +229,35 @@ export class LiveData implements BlueDataObject {
       liveData.setCommandLineOverride(true);
     }
 
+    const ids = new Set<string>();
+    const bins = liveData._liveObjectBins;
+    for (let c = 0; c < bins.getColumnCount(); c++) {
+      for (let r = 0; r < bins.getRowCount(); r++) {
+        const obj = bins.getLiveObject(c, r);
+        if (!obj) continue;
+        const id = obj.getUniqueId();
+        if (ids.has(id))
+          throw ctx.at(data).error({
+            code: 'reference',
+            value: id,
+            message: 'Duplicate Live object ID.',
+            recovery: 'Give every Live object a distinct ID before resolving saved sets.',
+          });
+        ids.add(id);
+      }
+    }
     if (liveObjectSetsNode) {
       liveData._liveObjectSets = LiveObjectSetList.loadFromXML(
         liveObjectSetsNode,
         liveData._liveObjectBins,
+        ctx,
       );
     }
 
-    return liveData;
+    return context ? liveData : requireXmlValue(ctx.result(liveData), sink);
   }
 
-  deepCopy(): BlueDataObject {
+  deepCopy(mode: CopyMode = 'duplication'): BlueDataObject {
     const copy = new LiveData();
     copy._commandLine = this._commandLine;
     copy._tempo = this._tempo;
@@ -201,7 +266,7 @@ export class LiveData implements BlueDataObject {
     copy._commandLineOverride = this._commandLineOverride;
     copy._repeatEnabled = this._repeatEnabled;
     copy._liveCodeText = this._liveCodeText;
-    copy._liveObjectBins = this._liveObjectBins.deepCopy() as LiveObjectBins;
+    copy._liveObjectBins = this._liveObjectBins.deepCopy(mode) as LiveObjectBins;
     copy._liveObjectSets = this._liveObjectSets.deepCopy() as LiveObjectSetList;
     return copy;
   }

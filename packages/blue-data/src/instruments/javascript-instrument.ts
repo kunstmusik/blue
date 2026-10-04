@@ -1,4 +1,7 @@
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext, requireXmlValue } from '../serialization/xml-load';
+import type { XmlDiagnosticSink } from '../serialization/xml-load';
+import { checkShape, readText, parseXmlBoolean } from '../utilities/xml';
 import { OpcodeList } from '../opcodes/opcode-list';
 import { appendUserDefinedOpcodes } from '../opcodes/udo-utilities';
 import { Instrument } from './instrument';
@@ -114,17 +117,45 @@ export class JavaScriptInstrument extends Instrument {
     return elem;
   }
 
-  static loadFromXML(data: Element): JavaScriptInstrument {
+  static loadFromXML(
+    data: Element,
+    context?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): JavaScriptInstrument {
+    const ctx = context ?? new XmlLoadContext(data);
+    checkShape(
+      data,
+      ['type', 'enabled'],
+      ['name', 'comment', 'globalOrc', 'globalSco', 'instrumentText', 'opcodeList'],
+      ctx,
+    );
+    if (
+      data.getName() !== 'instrument' ||
+      data.getAttribute('type') !== 'blue.orchestra.JavaScriptInstrument'
+    )
+      throw ctx.at(data).error({
+        code: 'type',
+        member: '@type',
+        value: data.getAttribute('type') ?? '',
+        message: 'Expected JavaScriptInstrument instrument type.',
+        recovery: 'Use the matching instrument loader.',
+      });
+    const text = (field: string): string | null => {
+      const child = data.getElement(field);
+      return child ? readText(child, ctx) : null;
+    };
     const instr = new JavaScriptInstrument();
-    instr.setEnabled(data.getAttribute('enabled') !== 'false');
-    instr.setName(data.getTextString('name') ?? '');
-    instr.setComment(data.getTextString('comment') ?? '');
-    instr.setGlobalOrc(data.getTextString('globalOrc') ?? '');
-    instr.setGlobalSco(data.getTextString('globalSco') ?? '');
-    instr.setText(data.getTextString('instrumentText') ?? '');
+    instr.setEnabled(
+      parseXmlBoolean(data.getAttribute('enabled') ?? 'true', ctx.at(data), '@enabled'),
+    );
+    instr.setName(text('name') ?? '');
+    instr.setComment(text('comment') ?? '');
+    instr.setGlobalOrc(text('globalOrc') ?? '');
+    instr.setGlobalSco(text('globalSco') ?? '');
+    instr.setText(text('instrumentText') ?? '');
     const opcodeList = data.getElement('opcodeList');
-    if (opcodeList) instr._opcodeList = OpcodeList.loadFromXML(opcodeList);
-    return instr;
+    if (opcodeList) instr._opcodeList = OpcodeList.loadFromXML(opcodeList, ctx);
+    return context ? instr : requireXmlValue(ctx.result(instr), sink);
   }
 
   deepCopy(): JavaScriptInstrument {

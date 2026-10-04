@@ -46,7 +46,7 @@ function createProjectWithInstrumentParameter(): {
     </graphicInterface>
     <parameterList>
       <parameter uniqueId="chorus-param" name="chorus_mode" min="0.0" max="1.0" automationEnabled="true">
-        <line>
+        <line version="2" min="0" max="1">
           <linePoint x="0.0" y="0.5"/>
           <linePoint x="1.0" y="0.5"/>
         </line>

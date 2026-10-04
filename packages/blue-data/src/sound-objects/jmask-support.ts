@@ -1,3 +1,11 @@
+import { XmlLoadContext } from '../serialization/xml-load';
+import {
+  checkShape,
+  readText,
+  parseXmlNumber,
+  parseXmlInteger,
+  parseXmlBoolean,
+} from '../utilities/xml';
 /**
  * JMask support model used by the JMask SoundObject.
  * Mirrors the Java blue.soundObject.jmask package closely enough for XML round-trip,
@@ -21,11 +29,6 @@ const TWO_POW_53 = 9007199254740992;
 const JAVA_MULTIPLIER = 0x5deece66dn;
 const JAVA_ADDEND = 0xbn;
 const JAVA_MASK = (1n << 48n) - 1n;
-
-function shortClassName(type: string | null | undefined): string {
-  if (!type) return '';
-  return type.split('.').pop() ?? type;
-}
 
 function roundTo(value: number, digits: number): number {
   const factor = 10 ** digits;
@@ -74,12 +77,13 @@ function remainder(value: number, mod: number): number {
 export class JavaRandom {
   private _seed = 0n;
 
-  constructor(seed: number = Date.now()) {
+  constructor(seed: number | bigint = Date.now()) {
     this.setSeed(seed);
   }
 
-  setSeed(seed: number): void {
-    this._seed = (BigInt(Math.trunc(seed)) ^ JAVA_MULTIPLIER) & JAVA_MASK;
+  setSeed(seed: number | bigint): void {
+    this._seed =
+      ((typeof seed === 'bigint' ? seed : BigInt(Math.trunc(seed))) ^ JAVA_MULTIPLIER) & JAVA_MASK;
   }
 
   private next(bits: number): number {
@@ -121,7 +125,8 @@ export class TablePoint {
     }
   }
 
-  static loadFromXML(data: Element): TablePoint {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): TablePoint {
+    validateJmaskXml(data, 'TablePoint', context);
     const point = new TablePoint();
     point.time = parseFloat(data.getAttributeValue('time') ?? '0');
     point.value = parseFloat(data.getAttributeValue('value') ?? '0.5');
@@ -474,7 +479,8 @@ export class Table {
     return retVal;
   }
 
-  static loadFromXML(data: Element): Table {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): Table {
+    validateJmaskXml(data, 'Table', context);
     const table = new Table(false);
     const nodes = data.getElements();
 
@@ -553,7 +559,8 @@ export class Mask {
     }
   }
 
-  static loadFromXML(data: Element): Mask {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): Mask {
+    validateJmaskXml(data, 'Mask', context);
     const mask = new Mask();
     const nodes = data.getElements();
 
@@ -669,7 +676,8 @@ export class Quantizer {
     this.offsetTable.getPoint(0).setValue(0.0);
   }
 
-  static loadFromXML(data: Element): Quantizer {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): Quantizer {
+    validateJmaskXml(data, 'Quantizer', context);
     const quantizer = new Quantizer();
     const nodes = data.getElements();
 
@@ -800,7 +808,8 @@ export class Accumulator {
     }
   }
 
-  static loadFromXML(data: Element): Accumulator {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): Accumulator {
+    validateJmaskXml(data, 'Accumulator', context);
     const accumulator = new Accumulator();
     const nodes = data.getElements();
 
@@ -909,7 +918,8 @@ export class Constant implements Generator, Accumulatable {
     }
   }
 
-  static loadFromXML(data: Element): Constant {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): Constant {
+    validateJmaskXml(data, 'Constant', context);
     const constant = new Constant();
     const nodes = data.getElements();
     while (nodes.hasMoreElements()) {
@@ -950,7 +960,8 @@ export class Random implements Generator, Quantizable, Accumulatable {
     }
   }
 
-  static loadFromXML(data: Element): Random {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): Random {
+    validateJmaskXml(data, 'Random', context);
     const random = new Random();
     const nodes = data.getElements();
     while (nodes.hasMoreElements()) {
@@ -1030,7 +1041,8 @@ export class Oscillator implements Generator, Maskable, Quantizable, Accumulatab
     this.freqTable.getPoint(1).setValue(1.0);
   }
 
-  static loadFromXML(data: Element): Oscillator {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): Oscillator {
+    validateJmaskXml(data, 'Oscillator', context);
     const oscillator = new Oscillator();
     const nodes = data.getElements();
     while (nodes.hasMoreElements()) {
@@ -1151,7 +1163,8 @@ export class Segment implements Generator, Quantizable, Accumulatable {
     }
   }
 
-  static loadFromXML(data: Element): Segment {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): Segment {
+    validateJmaskXml(data, 'Segment', context);
     const segment = new Segment();
     const nodes = data.getElements();
     while (nodes.hasMoreElements()) {
@@ -1200,11 +1213,14 @@ export class ItemList implements Generator, TableLike, Accumulatable {
   constructor(other?: ItemList) {
     if (other) {
       this.listType = other.listType;
+      this.index = other.index;
+      this.direction = other.direction;
       this.listItems = [...other.listItems];
     }
   }
 
-  static loadFromXML(data: Element): ItemList {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): ItemList {
+    validateJmaskXml(data, 'ItemList', context);
     const itemList = new ItemList();
     const nodes = data.getElements();
     while (nodes.hasMoreElements()) {
@@ -1336,7 +1352,8 @@ export class Uniform implements ProbabilityGenerator {
     void other;
   }
 
-  static loadFromXML(_data: Element): Uniform {
+  static loadFromXML(_data: Element, context = new XmlLoadContext(_data)): Uniform {
+    validateJmaskXml(_data, 'Uniform', context);
     return new Uniform();
   }
 
@@ -1366,7 +1383,8 @@ export class Triangle implements ProbabilityGenerator {
     void other;
   }
 
-  static loadFromXML(_data: Element): Triangle {
+  static loadFromXML(_data: Element, context = new XmlLoadContext(_data)): Triangle {
+    validateJmaskXml(_data, 'Triangle', context);
     return new Triangle();
   }
 
@@ -1403,7 +1421,8 @@ export class Linear implements ProbabilityGenerator {
     }
   }
 
-  static loadFromXML(data: Element): Linear {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): Linear {
+    validateJmaskXml(data, 'Linear', context);
     const linear = new Linear();
     const nodes = data.getElements();
     while (nodes.hasMoreElements()) {
@@ -1461,7 +1480,8 @@ export class Exponential implements ProbabilityGenerator {
     this.lambdaTable.setMin(0.0001, false);
   }
 
-  static loadFromXML(data: Element): Exponential {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): Exponential {
+    validateJmaskXml(data, 'Exponential', context);
     const exponential = new Exponential();
     const nodes = data.getElements();
     while (nodes.hasMoreElements()) {
@@ -1562,7 +1582,8 @@ export class Gaussian implements ProbabilityGenerator {
     this.muTable.getPoint(1).setValue(0.5);
   }
 
-  static loadFromXML(data: Element): Gaussian {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): Gaussian {
+    validateJmaskXml(data, 'Gaussian', context);
     const gaussian = new Gaussian();
     const nodes = data.getElements();
     while (nodes.hasMoreElements()) {
@@ -1664,7 +1685,8 @@ export class Cauchy implements ProbabilityGenerator {
     this.muTable.getPoint(1).setValue(0.5);
   }
 
-  static loadFromXML(data: Element): Cauchy {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): Cauchy {
+    validateJmaskXml(data, 'Cauchy', context);
     const cauchy = new Cauchy();
     const nodes = data.getElements();
     while (nodes.hasMoreElements()) {
@@ -1766,7 +1788,8 @@ export class Beta implements ProbabilityGenerator {
     this.bTable.getPoint(1).setValue(0.1);
   }
 
-  static loadFromXML(data: Element): Beta {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): Beta {
+    validateJmaskXml(data, 'Beta', context);
     const beta = new Beta();
     const nodes = data.getElements();
     while (nodes.hasMoreElements()) {
@@ -1874,7 +1897,8 @@ export class Weibull implements ProbabilityGenerator {
     this.tTable.getPoint(1).setValue(2.0);
   }
 
-  static loadFromXML(data: Element): Weibull {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): Weibull {
+    validateJmaskXml(data, 'Weibull', context);
     const weibull = new Weibull();
     const nodes = data.getElements();
     while (nodes.hasMoreElements()) {
@@ -1972,7 +1996,8 @@ export class Probability implements Generator, Maskable, Quantizable, Accumulata
     }
   }
 
-  static loadFromXML(data: Element): Probability {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): Probability {
+    validateJmaskXml(data, 'Probability', context);
     const probability = new Probability();
     const nodes = data.getElements();
     let generatorIndex = 0;
@@ -2116,16 +2141,19 @@ const PROBABILITY_GENERATOR_LOADERS: Record<string, (data: Element) => Probabili
   Weibull: (data) => Weibull.loadFromXML(data),
 };
 
-export function loadGeneratorFromXML(data: Element): Generator | null {
-  const type = shortClassName(data.getAttributeValue('type'));
+export function loadGeneratorFromXML(data: Element, context = new XmlLoadContext(data)): Generator {
+  const type = jmaskType(data, false, context);
   const loader = GENERATOR_LOADERS[type];
-  return loader ? loader(data) : null;
+  return loader(data);
 }
 
-export function loadProbabilityGeneratorFromXML(data: Element): ProbabilityGenerator | null {
-  const type = shortClassName(data.getAttributeValue('type'));
+export function loadProbabilityGeneratorFromXML(
+  data: Element,
+  context = new XmlLoadContext(data),
+): ProbabilityGenerator {
+  const type = jmaskType(data, true, context);
   const loader = PROBABILITY_GENERATOR_LOADERS[type];
-  return loader ? loader(data) : null;
+  return loader(data);
 }
 
 export class Parameter {
@@ -2153,12 +2181,13 @@ export class Parameter {
     return parameter;
   }
 
-  static loadFromXML(data: Element): Parameter {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): Parameter {
+    validateJmaskXml(data, 'Parameter', context);
     const parameter = new Parameter();
 
     const visible = data.getAttributeValue('visible');
     if (visible !== null) {
-      parameter.visible = visible.toLowerCase() === 'true';
+      parameter.visible = parseXmlBoolean(visible, context.at(data), '@visible');
     }
 
     const name = data.getAttributeValue('name');
@@ -2336,7 +2365,8 @@ export class Field {
     }
   }
 
-  static loadFromXML(data: Element): Field {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): Field {
+    validateJmaskXml(data, 'Field', context);
     const field = new Field(false);
     const nodes = data.getElements();
 
@@ -2643,4 +2673,244 @@ function loadJMaskSnapshotValue(value: unknown): unknown {
 
 export function loadFieldFromSnapshot(snapshot: Record<string, unknown>): Field {
   return loadFieldSnapshot(snapshot);
+}
+
+const JMASK_FIELDS: Record<string, readonly string[]> = {
+  Field: ['parameter'],
+  Parameter: ['generator', 'mask', 'quantizer', 'accumulator'],
+  Table: ['min', 'max', 'interpolationType', 'interpolation', 'points'],
+  TablePoint: [],
+  Mask: ['highTableEnabled', 'lowTableEnabled', 'low', 'high', 'mapValue', 'enabled', 'table'],
+  Quantizer: [
+    'gridSize',
+    'strength',
+    'offset',
+    'gridSizeTableEnabled',
+    'strengthTableEnabled',
+    'offsetTableEnabled',
+    'enabled',
+    'table',
+  ],
+  Accumulator: [
+    'highTableEnabled',
+    'lowTableEnabled',
+    'mode',
+    'low',
+    'high',
+    'initialValue',
+    'enabled',
+    'table',
+  ],
+  Constant: ['value'],
+  Random: ['min', 'max'],
+  Oscillator: ['oscillatorType', 'phaseInit', 'frequency', 'freqTableEnabled', 'table', 'exponent'],
+  Segment: ['table'],
+  ItemList: ['listType', 'index', 'direction', 'listItems'],
+  Probability: ['selectedIndex', 'probabilityGenerator'],
+  Uniform: [],
+  Triangle: [],
+  Linear: ['direction'],
+  Exponential: ['direction', 'lambda', 'lambdaTableEnabled', 'table'],
+  Gaussian: ['sigma', 'mu', 'sigmaTableEnabled', 'muTableEnabled', 'table'],
+  Cauchy: ['alpha', 'mu', 'alphaTableEnabled', 'muTableEnabled', 'table'],
+  Beta: ['a', 'b', 'aTableEnabled', 'bTableEnabled', 'table'],
+  Weibull: ['s', 't', 'sTableEnabled', 'tTableEnabled', 'table'],
+};
+const JMASK_TABLE_IDS: Record<string, readonly string[]> = {
+  Mask: ['highTable', 'lowTable'],
+  Accumulator: ['highTable', 'lowTable'],
+  Quantizer: ['gridSizeTable', 'strengthTable', 'offsetTable'],
+  Gaussian: ['sigmaTable', 'muTable'],
+  Cauchy: ['alphaTable', 'muTable'],
+  Beta: ['aTable', 'bTable'],
+  Weibull: ['sTable', 'tTable'],
+};
+const JMASK_GENERATORS = ['Constant', 'Random', 'Oscillator', 'Segment', 'ItemList', 'Probability'];
+const JMASK_PROBABILITY = [
+  'Uniform',
+  'Linear',
+  'Triangle',
+  'Exponential',
+  'Gaussian',
+  'Cauchy',
+  'Beta',
+  'Weibull',
+];
+function jmaskType(data: Element, probability: boolean, context: XmlLoadContext): string {
+  const type = data.getAttribute('type') ?? '';
+  const choices = probability ? JMASK_PROBABILITY : JMASK_GENERATORS;
+  const prefix = probability ? 'blue.soundObject.jmask.probability.' : 'blue.soundObject.jmask.';
+  const name = choices.find((value) => type === value || type === prefix + value);
+  if (!name)
+    throw context.at(data).error({
+      code: 'type',
+      member: '@type',
+      value: type,
+      message: 'Unsupported JMask serialized type.',
+      recovery: 'Use a declared generator type.',
+    });
+  return name;
+}
+function validateJmaskXml(data: Element, owner: string, context: XmlLoadContext): void {
+  const fail = (message: string): never => {
+    throw context.at(data).error({
+      code: 'value',
+      message,
+      recovery: 'Supply the complete supported JMask owner shape and values.',
+    });
+  };
+  const generator = JMASK_GENERATORS.includes(owner);
+  const probability = JMASK_PROBABILITY.includes(owner);
+  const root = generator
+    ? 'generator'
+    : probability
+      ? 'probabilityGenerator'
+      : owner === 'TablePoint'
+        ? 'point'
+        : owner.toLowerCase();
+  if (data.getName() !== root) fail('Unexpected JMask owner root.');
+  if ((generator || probability) && jmaskType(data, probability, context) !== owner)
+    fail('Mismatched JMask generator type.');
+  const attrs =
+    generator || probability
+      ? ['type']
+      : owner === 'Parameter'
+        ? ['visible', 'name']
+        : owner === 'Table'
+          ? ['tableId']
+          : owner === 'TablePoint'
+            ? ['time', 'value']
+            : [];
+  checkShape(
+    data,
+    attrs,
+    JMASK_FIELDS[owner],
+    context,
+    owner === 'Field'
+      ? ['parameter']
+      : owner === 'Probability'
+        ? ['probabilityGenerator']
+        : JMASK_TABLE_IDS[owner]
+          ? ['table']
+          : [],
+  );
+  const numeric = (name: string, fallback: number): number => {
+    const node = data.getElement(name);
+    return node ? parseXmlNumber(readText(node, context), context.at(node)) : fallback;
+  };
+  const integer = (name: string, fallback: number, min: number, max: number): number => {
+    const node = data.getElement(name);
+    return node ? parseXmlInteger(readText(node, context), context.at(node), min, max) : fallback;
+  };
+  if (owner === 'TablePoint') {
+    for (const name of ['time', 'value']) {
+      const text = data.getAttribute(name);
+      if (text === null) fail('Table point requires both coordinates.');
+      else parseXmlNumber(text, context.at(data), '@' + name);
+    }
+  }
+  if (owner === 'Parameter') {
+    const visible = data.getAttribute('visible');
+    if (visible !== null) parseXmlBoolean(visible, context.at(data), '@visible');
+    const node = data.getElement('generator');
+    if (!node) fail('JMask parameter requires exactly one generator.');
+    const type = jmaskType(node!, false, context);
+    if (data.getElement('mask') && !['Oscillator', 'Probability'].includes(type))
+      fail('Generator does not support a mask.');
+    if (
+      data.getElement('quantizer') &&
+      !['Random', 'Oscillator', 'Segment', 'Probability'].includes(type)
+    )
+      fail('Generator does not support a quantizer.');
+  }
+  if (owner === 'Field' && data.getElements('parameter').toArray().length < 3)
+    fail('Executable JMask requires p1, p2 and p3 definitions.');
+  if (owner === 'Table') {
+    if (numeric('min', 0) > numeric('max', 1)) fail('Table minimum exceeds maximum.');
+    integer('interpolationType', 1, 0, 2);
+  }
+  if (owner === 'Random' && numeric('min', 0) > numeric('max', 1))
+    fail('Random minimum exceeds maximum.');
+  if (['Mask', 'Accumulator'].includes(owner) && numeric('low', 0) > numeric('high', 1))
+    fail('Low bound exceeds high bound.');
+  if (owner === 'Accumulator') integer('mode', 0, 0, 3);
+  if (owner === 'Oscillator') integer('oscillatorType', 0, 0, 7);
+  if (owner === 'Linear') integer('direction', 0, 0, 1);
+  if (owner === 'Exponential') integer('direction', 0, 0, 2);
+  const positives: Record<string, readonly string[]> = {
+    Exponential: ['lambda'],
+    Gaussian: ['sigma'],
+    Cauchy: ['alpha'],
+    Beta: ['a', 'b'],
+    Weibull: ['s', 't'],
+  };
+  for (const member of positives[owner] ?? [])
+    if (numeric(member, 1) <= 0) fail(member + ' must be positive.');
+  if (
+    owner === 'Quantizer' &&
+    data.getElement('enabled') &&
+    parseXmlBoolean(
+      readText(data.getElement('enabled')!, context),
+      context.at(data.getElement('enabled')!),
+    ) &&
+    numeric('gridSize', 1) <= 0
+  )
+    fail('Quantizer grid must be positive.');
+  if (owner === 'Probability') {
+    integer('selectedIndex', 0, 0, 7);
+    const slots = data.getElements('probabilityGenerator').toArray();
+    if (
+      slots.length !== 8 ||
+      slots.some((slot, index) => jmaskType(slot, true, context) !== JMASK_PROBABILITY[index])
+    )
+      fail('Probability requires all eight declared slots in order.');
+  }
+  if (owner === 'ItemList') {
+    integer('listType', 0, 0, 3);
+    integer('direction', 0, 0, 1);
+    const list = data.getElement('listItems');
+    const count = list?.getElements('item').toArray().length ?? 0;
+    integer('index', 0, 0, Math.max(0, count - 1));
+  }
+  if (owner === 'Segment' && !data.getElement('table')) fail('Segment requires its table.');
+  const seenTables = new Set<string>();
+  for (const node of data.getElements()) {
+    const name = node.getName();
+    if (name === 'generator' || name === 'probabilityGenerator')
+      validateJmaskXml(node, jmaskType(node, name === 'probabilityGenerator', context), context);
+    else if (name === 'parameter') validateJmaskXml(node, 'Parameter', context);
+    else if (['mask', 'quantizer', 'accumulator'].includes(name))
+      validateJmaskXml(node, name[0].toUpperCase() + name.slice(1), context);
+    else if (name === 'table') {
+      const id = node.getAttribute('tableId');
+      const ids = JMASK_TABLE_IDS[owner];
+      if (ids && (!id || !ids.includes(id) || seenTables.has(id)))
+        fail('Unknown or duplicate contextual table selector.');
+      if (!ids && id !== null) fail('This owner has no contextual table selectors.');
+      if (id) seenTables.add(id);
+      validateJmaskXml(node, 'Table', context);
+    } else if (name === 'points') {
+      checkShape(node, [], ['point'], context, ['point']);
+      let previous = -Infinity;
+      for (const point of node.getElements('point')) {
+        validateJmaskXml(point, 'TablePoint', context);
+        const time = Number(point.getAttribute('time'));
+        if (time < previous)
+          throw context.at(point).error({
+            code: 'value',
+            member: '@time',
+            value: point.getAttribute('time')!,
+            message: 'Table points must retain ascending time order.',
+            recovery: 'Correct the ordered finite coordinates.',
+          });
+        previous = time;
+      }
+    } else if (name === 'listItems') {
+      checkShape(node, [], ['item'], context, ['item']);
+      for (const item of node.getElements('item'))
+        parseXmlNumber(readText(item, context), context.at(item));
+    } else if (name.endsWith('Enabled') || name === 'enabled')
+      parseXmlBoolean(readText(node, context), context.at(node));
+    else parseXmlNumber(readText(node, context), context.at(node));
+  }
 }

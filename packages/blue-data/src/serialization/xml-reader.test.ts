@@ -108,6 +108,34 @@ describe('Element', () => {
   });
 
   describe('parsing', () => {
+    it('preserves ordered text and CDATA including code whitespace', () => {
+      const elem = Element.parse('<code>  before<![CDATA[\n  a < b\n]]> after  </code>');
+      expect(elem.getTextString()).toBe('  before\n  a < b\n after  ');
+      expect(Element.parse(elem.toXml()).getTextString()).toBe('  before\n  a < b\n after  ');
+    });
+
+    it('retains significant direct text around children for shape validation', () => {
+      const elem = Element.parse('<root>before<child/>after<![CDATA[ tail ]]></root>');
+      expect(elem.getTextString()).toBe('beforeafter tail ');
+      expect(elem.getElements().size).toBe(1);
+    });
+
+    it('clones trees independently without changing scalar whitespace or empty text', () => {
+      const source = Element.parse('<root id="a"><code>  <![CDATA[x\n]]> </code></root>');
+      source.addElement('empty').setText('');
+      const copy = source.clone();
+      expect(copy.getElement('code')!.getTextString()).toBe('  x\n ');
+      expect(copy.getElement('empty')!.toXml()).toBe('<empty></empty>\n');
+      copy.setAttribute('id', 'b');
+      copy.getElement('code')!.setText('changed');
+      copy.removeElement('empty');
+      expect(source.getAttribute('id')).toBe('a');
+      expect(source.getElement('code')!.getTextString()).toBe('  x\n ');
+      expect(source.hasElement('empty')).toBe(true);
+      source.getElement('code')!.setText('source edit');
+      expect(copy.getElement('code')!.getTextString()).toBe('changed');
+    });
+
     it('parses simple XML', () => {
       const xml = '<blueData version="2.9.0"><name>Test</name></blueData>';
       const elem = Element.parse(xml);

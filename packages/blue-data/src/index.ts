@@ -1,5 +1,13 @@
 // ─── Core ───
 export { BlueData } from './blue-data';
+export { readProjectXml } from './blue-data/xml-policy';
+export { XmlLoadContext, XmlLoadError } from './serialization/xml-load';
+export type {
+  XmlSource,
+  XmlDiagnostic,
+  XmlDiagnosticSink,
+  XmlLoadResult,
+} from './serialization/xml-load';
 export type { RenderCsdResult } from './blue-data';
 export type { BlueDataObject, BlueDataObjectStatic } from './blue-data-object';
 export type { CopyMode, DeepCopyable, HistoryCopyable } from './deep-copyable';
@@ -82,7 +90,6 @@ export { Arrangement } from './arrangement';
 // ─── Instruments ───
 export { Instrument } from './instruments/instrument';
 export { GenericInstrument } from './instruments/generic-instrument';
-export { UnknownInstrument } from './instruments/unknown-instrument';
 export { loadInstrumentFromXML, registerInstrumentType } from './instruments/instrument-registry';
 export { JavaScriptInstrument } from './instruments/javascript-instrument';
 export { PythonInstrument } from './instruments/python-instrument';
@@ -658,3 +665,6 @@ export {
   smpteFrameToSeconds,
 } from './time/smpte-timecode';
 export type { SmpteFormat } from './time/smpte-timecode';
+
+export { readResourceXml } from './resource-xml-policy';
+export type { XmlResourceKind, XmlResource } from './resource-xml-policy';

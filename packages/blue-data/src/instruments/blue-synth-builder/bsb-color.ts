@@ -138,3 +138,19 @@ export function encodeCssColorToJavaInt(color: string, fallback = '-8355712'): s
     0;
   return unsigned > 0x7fffffff ? String(unsigned - 0x100000000) : String(unsigned);
 }
+
+export function isValidBsbColor(raw: string): boolean {
+  if (/^-?\d+$/.test(raw.trim())) {
+    const value = Number(raw);
+    return Number.isSafeInteger(value) && value >= -2147483648 && value <= 4294967295;
+  }
+  const css = raw.trim().match(/^rgba?\((.+)\)$/i);
+  if (css) {
+    const parts = css[1]!.split(',').map((part) => part.trim());
+    if (parts.length !== (raw.trim().toLowerCase().startsWith('rgba') ? 4 : 3)) return false;
+    if (!parts.every((part) => /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(part))) return false;
+    if (!parts.slice(0, 3).every((part) => Number(part) >= 0 && Number(part) <= 255)) return false;
+    if (parts[3] !== undefined && (Number(parts[3]) < 0 || Number(parts[3]) > 1)) return false;
+  }
+  return parseColor(raw) !== null;
+}

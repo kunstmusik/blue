@@ -16,7 +16,7 @@ import { BlueX7 } from '../../src/instruments/blue-x7';
 import { Parameter } from '../../src/automation/parameter';
 import {
   createHistoryFixtureProject,
-  createRepresentativeUnknownDataProject,
+  createRepresentativePluginDataProject,
 } from '../../src/test-support/java-parity-fixtures';
 
 function beats(value: number): TimePosition {
@@ -216,7 +216,7 @@ describe('global history roundtrip oracle (T020, US1)', () => {
       'blueX7',
       'pianoRoll',
       'freeze',
-      'unknownData',
+      'pluginData',
     ] as const;
     for (const kind of kinds) {
       const project = createHistoryFixtureProject(kind);
@@ -246,8 +246,8 @@ describe('global history roundtrip oracle (T020, US1)', () => {
     expect(restored.toDiskCSD()).toBe(csdBefore);
   });
 
-  it('preserves unknown project data verbatim across history cycles', () => {
-    const project = createRepresentativeUnknownDataProject();
+  it('preserves supported named plugin data across history cycles', () => {
+    const project = createRepresentativePluginDataProject();
     const originalXml = project.saveToString();
 
     const memento = project.historyCopy();
@@ -255,7 +255,7 @@ describe('global history roundtrip oracle (T020, US1)', () => {
 
     expect(restored.saveToString()).toBe(originalXml);
 
-    // XML reload of the restored project keeps the unknown data too.
+    // XML reload of the restored project keeps the supported plugin data too.
     const reloaded = BlueData.loadFromString(restored.saveToString());
     expect(reloaded.saveToString()).toBe(originalXml);
   });

@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  prepareProjectXml,
+  formatProjectXmlDiagnostics,
   runReplacementFlow,
   runProjectFileReplacement,
   resolveProjectSaveDecision,
@@ -1511,4 +1513,171 @@ describe('terminal decision boundary (spec 109 T029)', () => {
       'boundary-exit',
     ]);
   });
+});
+
+describe('XML report preparation before replacement', () => {
+  it('rejects an unconverted historical root PolyObject before project replacement', async () => {
+    const events: string[] = [];
+    const active = {
+      identity: 'active',
+      path: '/work/active.blue',
+      revision: 3,
+      dirty: true,
+      history: ['edit'],
+      runtime: 'playing',
+    };
+    const before = structuredClone(active);
+    const xml =
+      '<blueData version="2.3.0"><soundObject type="blue.soundObject.PolyObject"><soundLayer><soundObject type="blue.soundObject.GenericScore"><score>i1 0 2 440</score></soundObject></soundLayer></soundObject></blueData>';
+    let error: unknown;
+    try {
+      await runProjectFileReplacement({
+        selectFile: () => '/work/legacy-root.blue',
+        readFile: () => xml,
+        parseProject: (sourceText, source) =>
+          prepareProjectXml(sourceText, source, () => {
+            events.push('warnings');
+          }),
+        preflight: () => true,
+        isSameFile: () => false,
+        confirmLibraryDraft: () => {
+          events.push('library');
+          return true;
+        },
+        confirmSave: () => {
+          events.push('save');
+          return true;
+        },
+        commit: () => {
+          events.push('commit');
+          active.revision++;
+        },
+      });
+    } catch (caught) {
+      error = caught;
+    }
+    expect(error).toMatchObject({
+      diagnostics: [
+        expect.objectContaining({
+          source: {
+            kind: 'project',
+            label: '/work/legacy-root.blue',
+            nativePath: '/work/legacy-root.blue',
+          },
+          path: '/blueData/soundObject[1]',
+          severity: 'error',
+        }),
+      ],
+    });
+    expect(events).toEqual([]);
+    expect(active).toEqual(before);
+  });
+
+  it('rejects unknown XML before decisions, on-load scripts, or active-state mutation', async () => {
+    const events: string[] = [];
+    const active = {
+      identity: 'active',
+      path: 'C:\\Users\\Blue\\active.blue',
+      revision: 7,
+      dirty: true,
+      history: ['edit'],
+      runtime: 'playing',
+    };
+    const before = structuredClone(active);
+    const filePath = 'C:\\Users\\Blue\\unexpected.blue';
+    let error: unknown;
+    try {
+      await runProjectFileReplacement({
+        selectFile: () => filePath,
+        readFile: () => '<blueData><future>meaningful</future></blueData>',
+        parseProject: (xml, source) =>
+          prepareProjectXml(xml, source, () => {
+            events.push('warnings');
+          }),
+        preflight: () => true,
+        isSameFile: () => false,
+        confirmLibraryDraft: () => {
+          events.push('library');
+          return true;
+        },
+        confirmSave: () => {
+          events.push('save');
+          return true;
+        },
+        commit: () => {
+          events.push('on-load');
+          active.revision++;
+        },
+      });
+    } catch (caught) {
+      error = caught;
+    }
+    expect(error).toMatchObject({
+      diagnostics: [
+        expect.objectContaining({
+          source: { kind: 'project', label: filePath, nativePath: filePath },
+          path: '/blueData/future[1]',
+          severity: 'error',
+        }),
+      ],
+    });
+    expect(events).toEqual([]);
+    expect(active).toEqual(before);
+  });
+
+  it('awaits contextual warnings before draft/save prompts and publication', async () => {
+    const events: string[] = [];
+    await runProjectFileReplacement({
+      selectFile: () => '/native/warning.blue',
+      readFile: () =>
+        '<blueData><score><timeContext><ppq>960</ppq></timeContext></score></blueData>',
+      parseProject: (xml, source) =>
+        prepareProjectXml(xml, source, async (diagnostics) => {
+          expect(diagnostics).toEqual([
+            expect.objectContaining({
+              code: 'P-PPQ',
+              severity: 'warning',
+              source: { kind: 'project', label: source, nativePath: source },
+            }),
+          ]);
+          events.push('warnings');
+          await Promise.resolve();
+          events.push('warnings-presented');
+        }),
+      preflight: () => true,
+      isSameFile: () => false,
+      confirmLibraryDraft: () => {
+        events.push('library');
+        return true;
+      },
+      confirmSave: () => {
+        events.push('save');
+        return true;
+      },
+      commit: () => {
+        events.push('on-load');
+      },
+    });
+    expect(events).toEqual(['warnings', 'warnings-presented', 'library', 'save', 'on-load']);
+  });
+});
+
+it('formats native Windows source text and every diagnostic recovery field', () => {
+  const source = 'C:\\Users\\Blue\\project.blue';
+  const text = formatProjectXmlDiagnostics([
+    {
+      source: { kind: 'project', label: source, nativePath: source },
+      path: '/blueData/score[1]/@mode',
+      member: '@mode',
+      value: 'BAD',
+      severity: 'error',
+      code: 'value',
+      message: 'Unsupported mode.',
+      recovery: 'Choose a supported mode.',
+    },
+  ]);
+  expect(text).toContain(source);
+  expect(text).toContain('/blueData/score[1]/@mode');
+  expect(text).toContain('[error: value] @mode = "BAD"');
+  expect(text).toContain('Unsupported mode.\nChoose a supported mode.');
 });

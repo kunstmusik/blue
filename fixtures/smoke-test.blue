@@ -419,7 +419,7 @@
           </meter>
         </measureMeterPair>
       </meterMap>
-      <smpteFrameRate>30</smpteFrameRate>
+      <smpteFrameRate>24</smpteFrameRate>
     </timeContext>
     <timeState version="2">      <zoomIterations>0</zoomIterations>
       <snapEnabled>false</snapEnabled>

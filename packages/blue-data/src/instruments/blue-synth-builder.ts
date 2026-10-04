@@ -1,3 +1,5 @@
+import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
+import { checkShape, parseXmlBoolean, readText } from '../utilities/xml';
 /**
  * BlueSynthBuilder — instrument implementation with BSB widget system.
  * Mirrors the Java BlueSynthBuilder class.
@@ -260,28 +262,12 @@ function rewriteDuplicateDropdownPresetReferences(
   }
 }
 
-function hasLegacyBsbWidgetChildId(element: Element): boolean {
-  if (element.getName() === 'bsbObject' && element.getElement('id') !== null) {
-    return true;
-  }
-
-  const children = element.getElements();
-  while (children.hasMoreElements()) {
-    if (hasLegacyBsbWidgetChildId(children.next())) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
 export class BlueSynthBuilder extends Instrument {
   private _instrumentText = '';
   private _alwaysOnInstrumentText = '';
   private _globalOrc = '';
   private _globalSco = '';
   private _graphicInterface = new BSBGraphicInterface();
-  private _graphicInterfaceXML: Element | null = null;
   private _parameters = new ParameterList();
   private _opcodeList = new OpcodeList();
   private _presetGroup: PresetGroup | null = null;
@@ -301,7 +287,6 @@ export class BlueSynthBuilder extends Instrument {
       this._editEnabled = other._editEnabled;
       this._opcodeList = new OpcodeList(other._opcodeList);
       this._graphicInterface = other._graphicInterface.deepCopy(mode);
-      this._graphicInterfaceXML = null;
       this._parameters = other._parameters.deepCopy(mode);
       if (other._presetGroup) {
         this._presetGroup = other._presetGroup.deepCopy(mode);
@@ -357,7 +342,6 @@ export class BlueSynthBuilder extends Instrument {
   }
   setGraphicInterface(gi: BSBGraphicInterface): void {
     this._graphicInterface = gi;
-    this._graphicInterfaceXML = null;
     this.syncParametersFromWidgets();
   }
 
@@ -547,7 +531,6 @@ export class BlueSynthBuilder extends Instrument {
 
     const nextParameters = new ParameterList();
     const seenNames = new Set<string>();
-    let mutatedWidgetState = false;
 
     const visit = (widget: BSBWidget): void => {
       if (widget instanceof BSBGroup) {
@@ -575,7 +558,6 @@ export class BlueSynthBuilder extends Instrument {
 
       if (hasAutomatedParameter && !widget.automationAllowed) {
         widget.automationAllowed = true;
-        mutatedWidgetState = true;
       }
 
       for (const spec of specs) {
@@ -614,10 +596,6 @@ export class BlueSynthBuilder extends Instrument {
 
     visit(this._graphicInterface.getRootGroup());
     this._parameters = nextParameters;
-
-    if (mutatedWidgetState) {
-      this._graphicInterfaceXML = null;
-    }
   }
 
   private renameParametersForWidget(widget: BSBWidget, oldObjectName: string): void {
@@ -729,7 +707,6 @@ export class BlueSynthBuilder extends Instrument {
     } else {
       this._opcodeList.addOpcodeAt(index, udo);
     }
-    this._graphicInterfaceXML = null;
     return true;
   }
 
@@ -739,7 +716,6 @@ export class BlueSynthBuilder extends Instrument {
   removeUdo(index: number): boolean {
     const result = this._opcodeList.removeOpcodeAt(index);
     if (result) {
-      this._graphicInterfaceXML = null;
     }
     return result;
   }
@@ -770,7 +746,6 @@ export class BlueSynthBuilder extends Instrument {
     if (patch.code !== undefined) udo.setCode(patch.code);
     if (patch.comments !== undefined) udo.setComments(patch.comments);
 
-    this._graphicInterfaceXML = null;
     return true;
   }
 
@@ -784,7 +759,6 @@ export class BlueSynthBuilder extends Instrument {
 
     this._opcodeList.removeOpcodeAt(fromIndex);
     this._opcodeList.addOpcodeAt(toIndex, udo);
-    this._graphicInterfaceXML = null;
     return true;
   }
 
@@ -798,7 +772,6 @@ export class BlueSynthBuilder extends Instrument {
       convertToClassic(udo);
     }
 
-    this._graphicInterfaceXML = null;
     return true;
   }
 
@@ -849,7 +822,6 @@ export class BlueSynthBuilder extends Instrument {
     };
     visit(this._graphicInterface.getRootGroup().getChildren());
     this.syncParametersFromWidgets();
-    this._graphicInterfaceXML = null;
     this._presetGroup.setCurrentPresetUniqueId(presetUniqueId);
     this._presetGroup.setCurrentPresetModified(false);
     return true;
@@ -1062,7 +1034,6 @@ export class BlueSynthBuilder extends Instrument {
     }
 
     this.syncParametersFromWidgets();
-    this._graphicInterfaceXML = null;
     return true;
   }
 
@@ -1088,23 +1059,18 @@ export class BlueSynthBuilder extends Instrument {
     }
 
     this.syncParametersFromWidgets();
-    this._graphicInterfaceXML = null;
     return true;
   }
 
-  invalidateGraphicInterfaceCache(): void {
-    this._graphicInterfaceXML = null;
-  }
+  invalidateGraphicInterfaceCache(): void {}
 
   setBsbEditEnabled(enabled: boolean): void {
     this._graphicInterface.setEditEnabled(enabled);
     this._editEnabled = enabled;
-    this._graphicInterfaceXML = null;
   }
 
   setBsbGridSettings(settings: Partial<GridSettingsData>): void {
     this._graphicInterface.setGridSettings(settings);
-    this._graphicInterfaceXML = null;
   }
 
   updateWidgetValue(objectName: string, value: number): boolean {
@@ -1122,7 +1088,6 @@ export class BlueSynthBuilder extends Instrument {
     }
 
     this.syncParametersFromWidgets();
-    this._graphicInterfaceXML = null;
     return true;
   }
 
@@ -1180,11 +1145,8 @@ export class BlueSynthBuilder extends Instrument {
     elem.addElement('globalSco').setText(this._globalSco || '');
     elem.addElement('instrumentText').setText(this._instrumentText || '');
     elem.addElement('alwaysOnInstrumentText').setText(this._alwaysOnInstrumentText || '');
-    if (this._graphicInterfaceXML) {
-      elem.addElement(Element.parse(this._graphicInterfaceXML.toXml()));
-    } else {
-      elem.addElement(this._graphicInterface.saveAsXML());
-    }
+    elem.addElement(this._graphicInterface.saveAsXML());
+
     const plist = new ParameterList();
     plist.push(...this.getParameters());
     elem.addElement(plist.saveAsXML());
@@ -1195,13 +1157,68 @@ export class BlueSynthBuilder extends Instrument {
     return elem;
   }
 
-  static loadFromXML(data: Element, _objRefMap?: ObjRefLoadMap): BlueSynthBuilder {
+  static loadFromXML(
+    data: Element,
+    _objRefMap?: ObjRefLoadMap,
+    context?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): BlueSynthBuilder {
+    const ctx = context ?? new XmlLoadContext(data);
+    checkShape(
+      data,
+      ['type', 'enabled', 'editEnabled'],
+      [
+        'name',
+        'comment',
+        'globalOrc',
+        'globalSco',
+        'instrumentText',
+        'alwaysOnInstrumentText',
+        'graphicInterface',
+        'parameterList',
+        'bsbParameterList',
+        'presetGroup',
+        'opcodeList',
+      ],
+      ctx,
+    );
+    if (
+      data.getName() !== 'instrument' ||
+      data.getAttribute('type') !== 'blue.orchestra.BlueSynthBuilder'
+    )
+      throw ctx.at(data).error({
+        code: 'type',
+        member: '@type',
+        message: 'Expected BlueSynthBuilder instrument.',
+        recovery: 'Use the matching instrument type.',
+      });
+    for (const name of [
+      'name',
+      'comment',
+      'globalOrc',
+      'globalSco',
+      'instrumentText',
+      'alwaysOnInstrumentText',
+    ]) {
+      const child = data.getElement(name);
+      if (child) readText(child, ctx);
+    }
+    if (data.getElement('parameterList') && data.getElement('bsbParameterList'))
+      throw ctx.at(data).error({
+        code: 'conflict',
+        message: 'Competing parameter list aliases.',
+        recovery: 'Keep one parameter list.',
+      });
     const bsb = new BlueSynthBuilder();
 
-    bsb._enabled = data.getAttribute('enabled') !== 'false';
+    bsb._enabled =
+      data.getAttribute('enabled') === null
+        ? true
+        : parseXmlBoolean(data.getAttribute('enabled')!, ctx.at(data), '@enabled');
 
     const editEnabled = data.getAttribute('editEnabled');
-    if (editEnabled !== null) bsb._editEnabled = editEnabled === 'true';
+    if (editEnabled !== null)
+      bsb._editEnabled = parseXmlBoolean(editEnabled, ctx.at(data), '@editEnabled');
 
     const name = data.getTextString('name');
     bsb._name = name !== null ? name : '';
@@ -1224,48 +1241,36 @@ export class BlueSynthBuilder extends Instrument {
     // Load graphic interface
     const giElem = data.getElement('graphicInterface');
     if (giElem) {
-      const hasLegacyWidgetIds = hasLegacyBsbWidgetChildId(giElem);
-      const idRepairs = bsb._graphicInterface.loadFromXML(giElem);
-      bsb._graphicInterfaceXML =
-        idRepairs.length === 0 && !hasLegacyWidgetIds ? Element.parse(giElem.toXml()) : null;
+      bsb._graphicInterface.loadFromXML(giElem, ctx);
     }
 
     // Load preset group
     const presetGroupElem = data.getElement('presetGroup');
     if (presetGroupElem) {
-      bsb._presetGroup = PresetGroup.loadFromXML(presetGroupElem);
+      bsb._presetGroup = PresetGroup.loadFromXML(presetGroupElem, ctx);
     }
 
     // Load parameters
     const paramListElem = data.getElement('parameterList') ?? data.getElement('bsbParameterList');
     if (paramListElem) {
-      bsb._parameters = BlueSynthBuilder._loadParameters(paramListElem);
+      bsb._parameters = ParameterList.loadFromXML(paramListElem, ctx);
     }
 
     // Load opcode list (UDOs)
     const opcodeListElem = data.getElement('opcodeList');
     if (opcodeListElem) {
-      bsb._opcodeList = OpcodeList.loadFromXML(opcodeListElem);
+      bsb._opcodeList = OpcodeList.loadFromXML(opcodeListElem, ctx);
     }
 
+    const loadedParameters = [...bsb._parameters];
     bsb.syncParametersFromWidgets();
+    const generatedParameters = bsb._parameters.filter(
+      (parameter) => !loadedParameters.includes(parameter),
+    );
+    bsb._parameters = new ParameterList();
+    bsb._parameters.push(...loadedParameters, ...generatedParameters);
 
-    return bsb;
-  }
-
-  /**
-   * Load parameters from <parameterList> XML.
-   */
-  private static _loadParameters(data: Element): ParameterList {
-    const parameters = new ParameterList();
-    const paramElems = data.getElements('parameter');
-
-    while (paramElems.hasMoreElements()) {
-      const elem = paramElems.next();
-      parameters.push(Parameter.loadFromXML(elem));
-    }
-
-    return parameters;
+    return context ? bsb : requireXmlValue(ctx.result(bsb), sink);
   }
 
   private renderTextWithReplacements(

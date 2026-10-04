@@ -94,6 +94,17 @@ describe('FrozenSoundObject', () => {
       expect(loaded.getFrozenWaveFileName()).toBe('freeze0.wav');
       expect(loaded.getFrozenSoundObject()).toBeNull();
     });
+
+    it('accepts an omitted channel count without writing a rejected zero', () => {
+      const loaded = FrozenSoundObject.loadFromXML(
+        Element.parse('<soundObject type="blue.soundObject.FrozenSoundObject"/>'),
+      );
+
+      expect(loaded.getNumChannels()).toBe(0);
+      expect(loaded.saveAsXML().getElement('numChannels')).toBeNull();
+      const saved = loaded.saveAsXML().toXml();
+      expect(FrozenSoundObject.loadFromXML(Element.parse(saved)).saveAsXML().toXml()).toBe(saved);
+    });
   });
 
   describe('deep copy', () => {

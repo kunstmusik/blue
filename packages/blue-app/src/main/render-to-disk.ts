@@ -9,8 +9,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import {
+  BlueData,
   type AudioLayoutManifest,
-  type BlueData,
   type JavaRuntimeClientContract,
   type JavaScriptSession,
 } from '@blue/data';
@@ -28,6 +28,7 @@ import type { AudioLayoutDiagnostic } from '../shared/audio-layout';
 import { planDiskCommand } from './disk-render-command';
 import { writeTempCsdSnapshot, cleanupTempCsdSnapshots } from './render-command';
 import { audioLayoutDiagnosticFromError, preflightAudioLayout } from './audio-layout-preflight';
+import { prepareProjectTuningDependencies } from './tuning-scale-dependencies';
 
 // ─── Types ───
 
@@ -257,9 +258,10 @@ export async function generateDiskCsd(
   javaRuntimeClient?: JavaRuntimeClientContract | null,
   layoutManifest?: AudioLayoutManifest | null,
 ): Promise<string> {
+  const compileData = data instanceof BlueData ? prepareProjectTuningDependencies(data) : data;
   return javaRuntimeClient
-    ? data.toDiskCSDAsync(javaScriptSession, javaRuntimeClient, layoutManifest)
-    : data.toDiskCSD(javaScriptSession, layoutManifest);
+    ? compileData.toDiskCSDAsync(javaScriptSession, javaRuntimeClient, layoutManifest)
+    : compileData.toDiskCSD(javaScriptSession, layoutManifest);
 }
 
 // ─── Output Path Resolution ───

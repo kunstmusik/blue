@@ -375,11 +375,14 @@ export default function LiveSpaceTab(): React.ReactElement {
   useEffect(() => {
     if (triggerFeedback.status !== 'error' && triggerFeedback.status !== 'empty') return;
     const token = triggerFeedback.token;
-    const timer = setTimeout(() => {
-      // Only clear if no newer feedback arrived.
-      const current = useBlueLiveStore.getState().trigger;
-      if (current.token === token) clearTrigger();
-    }, triggerFeedback.status === 'empty' ? 2500 : 4000);
+    const timer = setTimeout(
+      () => {
+        // Only clear if no newer feedback arrived.
+        const current = useBlueLiveStore.getState().trigger;
+        if (current.token === token) clearTrigger();
+      },
+      triggerFeedback.status === 'empty' ? 2500 : 4000,
+    );
     return () => clearTimeout(timer);
   }, [triggerFeedback.status, triggerFeedback.token, clearTrigger]);
 

@@ -1171,6 +1171,7 @@ describe('executeFreezeUnfreeze parallel execution (SPEC 085)', () => {
       const frozen = new FrozenSoundObject();
       frozen.setFrozenSoundObject(nestedSource);
       frozen.setFrozenWaveFileName('freeze9.wav');
+      frozen.setNumChannels(1);
       frozen.setName('F: Nested');
       frozen.setStartTime(TimePosition.beats(5));
       frozen.setSubjectiveDuration(TimeDuration.beats(1));
@@ -1198,7 +1199,7 @@ describe('executeFreezeUnfreeze parallel execution (SPEC 085)', () => {
         },
       );
 
-      expect(operation.ok).toBe(true);
+      expect(operation).toMatchObject({ ok: true });
       expect(operation.frozenCount).toBe(2);
       expect(operation.unfrozenCount).toBe(1);
       expect(renderCalls, 'only the two freeze items render').toBe(2);

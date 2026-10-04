@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import { Command } from 'commander';
-import { BlueData, initializeJavaScriptRuntime } from '@blue/data';
+import { readProjectXml, XmlLoadError, initializeJavaScriptRuntime } from '@blue/data';
 
 export type CompileMode = 'disk' | 'realtime' | 'bluelive';
 
@@ -44,9 +44,21 @@ export async function compileProject(
   const outputPath = path.resolve(request.outputPath);
 
   const source = await fs.readFile(projectPath, 'utf8');
+  const report = readProjectXml(source, {
+    kind: 'project',
+    label: projectPath,
+    nativePath: projectPath,
+  });
+  for (const diagnostic of report.diagnostics) {
+    const value =
+      diagnostic.value === undefined ? '' : ` Value: ${JSON.stringify(diagnostic.value)}.`;
+    process.stderr.write(
+      `[${diagnostic.severity} ${diagnostic.code}] ${diagnostic.source.label}: ${diagnostic.path}: ${diagnostic.message}${value} ${diagnostic.recovery}\n`,
+    );
+  }
+  if (!report.ok) throw new XmlLoadError(report.diagnostics);
+  const project = report.value;
   await initializeJavaScriptRuntime();
-
-  const project = BlueData.loadFromString(source);
   const csd =
     request.mode === 'bluelive'
       ? project.toBlueLiveCSD().csdText
@@ -97,7 +109,8 @@ export async function main(argv: string[] = process.argv): Promise<void> {
 
 if (require.main === module) {
   void main().catch((error: unknown) => {
-    process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+    if (!(error instanceof XmlLoadError))
+      process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
     process.exitCode = 1;
   });
 }

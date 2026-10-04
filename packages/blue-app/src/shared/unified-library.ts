@@ -1,3 +1,4 @@
+import type { XmlDiagnostic } from '@blue/data';
 import type { LibraryEditorDocument, LibraryEditorDocumentPatch } from './library-editor-document';
 import { isLibraryEditorDocument, isLibraryEditorDocumentPatch } from './library-editor-document';
 import type { BsbWidgetNodeSnapshot } from './project-editor';
@@ -185,6 +186,7 @@ export interface SearchLibrariesResult {
 }
 
 export interface LibraryItemPreview {
+  readonly diagnostics?: readonly XmlDiagnostic[];
   readonly key: LibraryItemKey;
   readonly displayName: string;
   readonly libraryType: LibraryType;
@@ -531,6 +533,7 @@ export interface ConfirmedLibraryInsertionRequest {
 }
 
 export interface ProjectMutationReceipt {
+  readonly diagnostics?: readonly XmlDiagnostic[];
   readonly projectSessionId: number;
   readonly projectRevision: number;
   readonly libraryType: LibraryType;
@@ -596,6 +599,7 @@ export interface ProjectLibraryDeletePreview extends ProjectLibraryUsage {
 }
 
 export interface ManualImportSourcePreview {
+  readonly diagnostics?: readonly XmlDiagnostic[];
   readonly sourcePath: string;
   readonly sourceHash: string;
   readonly libraryType: LibraryType | null;
@@ -630,6 +634,7 @@ export interface ManualLibraryImportExecutionRequest {
 }
 
 export interface ManualLibraryImportResult {
+  readonly diagnostics?: readonly XmlDiagnostic[];
   readonly batchId: string;
   readonly status: 'completed' | 'partial' | 'failed';
   readonly createdNodeCount: number;
@@ -679,6 +684,7 @@ export type LibraryServiceErrorCode =
   | 'recovery-required';
 
 export interface LibraryServiceError {
+  readonly diagnostics?: readonly XmlDiagnostic[];
   readonly code: LibraryServiceErrorCode;
   readonly message: string;
   readonly field?: string;
@@ -1324,7 +1330,7 @@ export function createLibraryServiceError(
   code: LibraryServiceErrorCode,
   message: string,
   retryable: boolean,
-  options: Pick<LibraryServiceError, 'field' | 'detail'> = {},
+  options: Pick<LibraryServiceError, 'field' | 'detail' | 'diagnostics'> = {},
 ): LibraryServiceError {
   const boundedMessage = message.slice(0, 1000);
   return {
@@ -1333,5 +1339,6 @@ export function createLibraryServiceError(
     retryable,
     ...(options.field ? { field: options.field } : {}),
     ...(options.detail ? { detail: options.detail } : {}),
+    ...(options.diagnostics ? { diagnostics: options.diagnostics } : {}),
   };
 }

@@ -10,9 +10,12 @@ import { NoteList } from './note-list';
 import { TimeContext } from '../time/time-context';
 import { CompileData } from '../compile-data';
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
+import { checkShape, readText } from '../utilities/xml';
+import { BASIC_SOUND_OBJECT_CHILDREN } from './sound-object-utilities';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
-import { initBasicFromXML } from './sound-object-utilities';
+import { initBasicFromXML, getBasicXML } from './sound-object-utilities';
 
 export class CSDSoundObject extends AbstractSoundObject {
   private _csdText = '';
@@ -35,25 +38,37 @@ export class CSDSoundObject extends AbstractSoundObject {
   }
 
   override saveAsXML(_objRefMap?: ObjRefSaveMap): Element {
-    const elem = new Element('soundObject');
-    elem.setAttribute('type', 'CSDSoundObject');
-    elem.addElement('name').setText(this._name);
-    elem.addElement('startTime').setText(this._startTime.getValue().toString());
-    elem.addElement('subjectiveDuration').setText(this._subjectiveDuration.getValue().toString());
-    elem.addElement('timeBehavior').setText(this._timeBehavior);
-    elem.addElement('backgroundColor').setText(this._backgroundColor.toString());
+    const elem = getBasicXML(this, 'CSDSoundObject');
     elem.addElement('csdText').setText(this._csdText);
     return elem;
   }
 
-  static loadFromXML(data: Element, _objRefMap?: ObjRefLoadMap): CSDSoundObject {
-    const obj = new CSDSoundObject();
-    initBasicFromXML(obj, data);
-
-    const csd = data.getTextString('csdText');
-    if (csd !== null) obj.setCsdText(csd);
-
-    return obj;
+  static loadFromXML(
+    data: Element,
+    _objRefMap?: ObjRefLoadMap,
+    providedContext?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): CSDSoundObject {
+    const context = providedContext ?? new XmlLoadContext(data);
+    if (
+      data.getName() !== 'soundObject' ||
+      !['CSDSoundObject', 'blue.soundObject.CSDSoundObject'].includes(
+        data.getAttribute('type') ?? '',
+      )
+    )
+      throw context.at(data).error({
+        code: 'type',
+        member: '@type',
+        value: data.getAttribute('type') ?? '',
+        message: 'Unsupported CSDSoundObject root/type.',
+        recovery: 'Supply the declared concrete SoundObject root and type.',
+      });
+    checkShape(data, ['type'], [...BASIC_SOUND_OBJECT_CHILDREN, ...['csdText']], context);
+    const object = new CSDSoundObject();
+    initBasicFromXML(object, data, context);
+    const csdText = data.getElement('csdText');
+    if (csdText) object._csdText = readText(csdText, context);
+    return providedContext ? object : requireXmlValue(context.result(object), sink);
   }
 
   override deepCopy(): SoundObject {

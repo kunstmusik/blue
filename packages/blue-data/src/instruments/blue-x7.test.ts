@@ -113,65 +113,11 @@ describe('BlueX7', () => {
     );
   });
 
-  it('preserves unknown root/nested attributes and extra elements in boundary fixture', () => {
+  it('rejects unsupported root and nested XML in the historical boundary fixture', () => {
     const fixturePath = path.join(__dirname, 'blue-x7/test-fixtures/boundary-and-unknown.blue.xml');
-    const xmlText = fs.readFileSync(fixturePath, 'utf-8');
-    const elem = Element.parse(xmlText);
-    const instr = BlueX7.loadFromXML(elem);
-
-    expect(instr.getName()).toBe('Boundary and Unknown');
-    expect(instr.getVoice().common.algorithm).toBe(32);
-    expect(instr.getVoice().common.keyTranspose).toBe(48);
-    expect(instr.getVoice().common.feedback).toBe(7);
-    expect(instr.getVoice().common.operatorEnabled).toEqual([
-      true,
-      false,
-      true,
-      false,
-      true,
-      false,
-    ]);
-    expect(instr.getVoice().lfo.wave).toBe(5);
-    expect(instr.getVoice().lfo.sync).toBe(1);
-    expect(instr.getVoice().operators[0].detune).toBe(7);
-    expect(instr.getVoice().operators.map((operator) => operator.sync)).toEqual([0, 1, 0, 1, 0, 1]);
-    expect(instr.getVoice().operators.map((operator) => operator.modulationPitch)).toEqual([
-      7, 0, 3, 0, 0, 0,
-    ]);
-
-    // Modify a known field and save
-    instr.setCommonField('algorithm', 10);
-    instr.setOperatorField(0, 'outputLevel', 88);
-
-    const savedXml = instr.saveAsXML().toXml();
-    // Root unknown attributes & elements preserved
-    expect(savedXml).toContain('customRootAttr="root-123"');
-    expect(savedXml).toContain('<unknownRootNode>');
-    expect(savedXml).toContain('<child foo="bar">preserved content</child>');
-    expect(savedXml).toContain('<extraRootPoint x="10" y="20"/>');
-    // Nested unknown attributes & elements preserved
-    expect(savedXml).toContain('customAttr="common-meta"');
-    expect(savedXml).toContain('<unknownCommonData>nested common</unknownCommonData>');
-    expect(savedXml).toContain('<unknownLfoChild value="lfo-custom"/>');
-    expect(savedXml).toContain('customOpAttr="op0"');
-    expect(savedXml).toContain('customPointAttr="p0"');
-    expect(savedXml).toContain('<extraEnvelopePoint x="12" y="34"/>');
-    expect(savedXml).toContain('<unknownOperatorNode>custom op data</unknownOperatorNode>');
-    // Updated fields reflect new values
-    expect(savedXml).toContain('<algorithm>10</algorithm>');
-    expect(savedXml).toContain('<outputLevel>88</outputLevel>');
-
-    const firstSaveIds = instr.getParameters().map((parameter) => parameter.getUniqueId());
-    const reopened = BlueX7.loadFromXML(Element.parse(savedXml));
-    expect(reopened.getParameters().map((parameter) => parameter.getUniqueId())).toEqual(
-      firstSaveIds,
-    );
-    expect(reopened.getVoice().operators.map((operator) => operator.sync)).toEqual([
-      0, 1, 0, 1, 0, 1,
-    ]);
-    expect(reopened.saveAsXML().toXml()).toContain(
-      '<unknownOperatorNode>custom op data</unknownOperatorNode>',
-    );
+    expect(() =>
+      BlueX7.loadFromXML(Element.parse(fs.readFileSync(fixturePath, 'utf-8'))),
+    ).toThrow();
   });
 
   it('supports shared sync and PMS propagation across all 6 operators', () => {
@@ -187,25 +133,17 @@ describe('BlueX7', () => {
     }
   });
 
-  it('replaces entire voice while preserving metadata and unknown XML template', () => {
-    const fixturePath = path.join(__dirname, 'blue-x7/test-fixtures/boundary-and-unknown.blue.xml');
-    const elem = Element.parse(fs.readFileSync(fixturePath, 'utf-8'));
-    const instr = BlueX7.loadFromXML(elem);
-
-    const newVoice = createDefaultBlueX7Voice();
-    newVoice.common.algorithm = 7;
-    newVoice.csoundPostCode = 'customMixer aout';
-
-    instr.replaceVoice(newVoice);
-
-    expect(instr.getName()).toBe('Boundary and Unknown');
-    expect(instr.getVoice().common.algorithm).toBe(7);
-    expect(instr.getVoice().csoundPostCode).toBe('customMixer aout');
-
-    const savedXml = instr.saveAsXML().toXml();
-    expect(savedXml).toContain('customRootAttr="root-123"');
-    expect(savedXml).toContain('<unknownRootNode>');
-    expect(savedXml).toContain('<algorithm>7</algorithm>');
+  it('replaces entire voice while preserving supported metadata', () => {
+    const instr = new BlueX7();
+    instr.setName('Authored voice');
+    const replacement = createDefaultBlueX7Voice();
+    replacement.common.algorithm = 7;
+    replacement.csoundPostCode = 'customMixer aout';
+    instr.replaceVoice(replacement);
+    const reopened = BlueX7.loadFromXML(instr.saveAsXML());
+    expect(reopened.getName()).toBe('Authored voice');
+    expect(reopened.getVoice().common.algorithm).toBe(7);
+    expect(reopened.getVoice().csoundPostCode).toBe('customMixer aout');
   });
 
   it('does not allocate a live transport table', () => {
@@ -342,30 +280,12 @@ describe('BlueX7', () => {
     }
   });
 
-  it('repairs malformed and duplicate persisted metadata deterministically', () => {
+  it('rejects malformed and duplicate persisted parameter metadata', () => {
     const instr = new BlueX7();
-    const xml = instr.saveAsXML().toXml();
-    const elem = Element.parse(xml);
+    const elem = instr.saveAsXML();
     const list = elem.getElement('parameterList')!;
-    // duplicate: two parameters named common.feedback; the first wins
-    const duplicate = Element.parse(list.getElements('parameter').next().toXml());
-    list.addElement(duplicate);
-    // malformed: a parameter without a name
-    const malformed = Element.parse(list.getElements('parameter').next().toXml());
-    malformed.setAttribute('name', '');
-    list.addElement(malformed);
-
-    const loaded = BlueX7.loadFromXML(elem);
-    const params = loaded.getParameters();
-    expect(params).toHaveLength(151);
-    const feedbacks = params.filter((p) => p.getName() === 'common.feedback');
-    expect(feedbacks).toHaveLength(1);
-    expect(feedbacks[0].getUniqueId()).toBe(
-      instr
-        .getParameters()
-        .find((p) => p.getName() === 'common.feedback')!
-        .getUniqueId(),
-    );
+    list.addElement(list.getElements('parameter').next().clone());
+    expect(() => BlueX7.loadFromXML(elem)).toThrow();
   });
 
   it('regenerates all parameter identities at a new ownership boundary', () => {
@@ -522,14 +442,9 @@ describe('BlueX7', () => {
     ).toBe(0);
   });
 
-  it('preserves unknown XML content across load/save', () => {
-    const instr = new BlueX7();
-    const elem = Element.parse(instr.saveAsXML().toXml());
-    elem.addElement('legacyEditorBookmark').setText('keep-me');
-
-    const reloaded = BlueX7.loadFromXML(elem);
-    const saved = Element.parse(reloaded.saveAsXML().toXml());
-    const bookmark = saved.getElements('legacyEditorBookmark').next();
-    expect(bookmark.getTextString()).toBe('keep-me');
+  it('rejects unknown XML content before editable acceptance', () => {
+    const xml = new BlueX7().saveAsXML();
+    xml.addElement('legacyEditorBookmark').setText('meaningful');
+    expect(() => BlueX7.loadFromXML(xml)).toThrow();
   });
 });

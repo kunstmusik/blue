@@ -86,7 +86,7 @@ describe('JMask editor contract and renderer helpers', () => {
     const payload = doc.editor.payload as JMaskEditorPayload;
 
     expect(payload.seedUsed).toBe(false);
-    expect(payload.seed).toBe(0);
+    expect(payload.seed).toBe('0');
     expect(payload.field.kind).toBe('Field');
     expect((payload.field.parameters as ParameterSnapshot[]).map((p) => p.name)).toEqual([
       'Instrument ID',
@@ -119,7 +119,7 @@ describe('JMask editor contract and renderer helpers', () => {
       target,
       patch: {
         seedUsed: true,
-        seed: 77,
+        seed: '77',
         field: makeFieldSnapshot([p1, p2, p3]),
       },
     });
@@ -148,16 +148,31 @@ describe('JMask editor contract and renderer helpers', () => {
         target,
         patch: {
           seedUsed: true,
-          seed: 99,
+          seed: '99',
           field: makeFieldSnapshot([p1, p2, p3]),
         },
       },
     });
 
     expect(jmask.isSeedUsed()).toBe(true);
-    expect(jmask.getSeed()).toBe(99);
+    expect(jmask.getSeed()).toBe('99');
     const xml = jmask.saveAsXML().toXml();
     expect(xml).toContain('<generator type="blue.soundObject.jmask.ItemList">');
     expect(xml).toContain('<accumulator>');
+  });
+
+  it('renders and patches exact signed-64 seed digits', () => {
+    const { data, jmask, target } = makeJMaskDocument();
+    const seed = '9223372036854775807';
+    jmask.setSeedUsed(true);
+    jmask.setSeed(seed);
+    const doc = createScoreObjectEditorDocument(data, { target })!;
+    const html = renderToStaticMarkup(<JMaskEditor document={doc} onPatch={vi.fn()} />);
+    expect(html).toContain(`value="${seed}"`);
+    applyProjectDocumentPatch(data, {
+      score: { type: 'updateTypeSpecificEditor', target, patch: { seed: '-9223372036854775808' } },
+    });
+    expect(jmask.getSeed()).toBe('-9223372036854775808');
+    expect(jmask.saveAsXML().getTextString('seed')).toBe('-9223372036854775808');
   });
 });

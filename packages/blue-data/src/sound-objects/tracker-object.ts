@@ -12,6 +12,16 @@ import { TimeContext } from '../time/time-context';
 import { TimeDuration } from '../time/time-duration';
 import { CompileData } from '../compile-data';
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
+import {
+  checkShape,
+  readText,
+  readInt,
+  readBoolean,
+  readEnum,
+  parseXmlBoolean,
+} from '../utilities/xml';
+import { BASIC_SOUND_OBJECT_CHILDREN } from './sound-object-utilities';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
 import { initBasicFromXML, getBasicXML } from './sound-object-utilities';
@@ -127,48 +137,56 @@ export class TrackerObject extends AbstractSoundObject {
     return elem;
   }
 
-  static loadFromXML(data: Element, _objRefMap?: ObjRefLoadMap): TrackerObject {
+  static loadFromXML(
+    data: Element,
+    _objRefMap?: ObjRefLoadMap,
+    context?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): TrackerObject {
+    const ctx = context ?? new XmlLoadContext(data);
+    const type = data.getAttribute('type');
+    if (
+      data.getName() !== 'soundObject' ||
+      type === null ||
+      !['TrackerObject', 'blue.soundObject.TrackerObject'].includes(type)
+    )
+      throw ctx.at(data).error({
+        code: 'type',
+        member: '@type',
+        value: type ?? '',
+        message: 'Unsupported TrackerObject type.',
+        recovery: 'Supply a supported concrete SoundObject type.',
+      });
+    checkShape(
+      data,
+      ['type'],
+      [...BASIC_SOUND_OBJECT_CHILDREN, ...['stepsPerBeat', 'trackList', 'tracks']],
+      ctx,
+    );
     const obj = new TrackerObject();
-    initBasicFromXML(obj, data);
+    const stepsPerBeatElement = data.getElement('stepsPerBeat');
+    if (stepsPerBeatElement) readText(stepsPerBeatElement, ctx);
+    initBasicFromXML(obj, data, ctx);
 
-    // For legacy projects prior to 2.8.1, default to 1 step
-    let stepsPerBeat = 1;
-    let stepsPerBeatFound = false;
+    const steps = data.getElement('stepsPerBeat');
+    obj._stepsPerBeat = steps ? readInt(steps, ctx, 1, 2147483647) : 1;
+    const current = data.getElement('trackList');
+    const old = data.getElement('tracks');
+    const currentTracks = current ? TrackList.loadFromXML(current, ctx) : undefined;
+    const historicalTracks = old ? TrackList.loadFromXML(old, ctx) : undefined;
+    if (
+      currentTracks &&
+      historicalTracks &&
+      currentTracks.saveAsXML().toXml() !== historicalTracks.saveAsXML().toXml()
+    )
+      throw ctx.at(old!).error({
+        code: 'conflict',
+        message: 'Competing tracker list representations.',
+        recovery: 'Keep one equivalent tracker list.',
+      });
+    obj._tracks = currentTracks ?? historicalTracks ?? obj._tracks;
 
-    const nodes = data.getElements();
-    while (nodes.hasMoreElements()) {
-      const node = nodes.next();
-      const nodeName = node.getName();
-      switch (nodeName) {
-        case 'stepsPerBeat':
-          stepsPerBeat = parseInt(node.getTextString() ?? '1', 10);
-          stepsPerBeatFound = true;
-          break;
-        case 'trackList':
-          obj._tracks = TrackList.loadFromXML(node);
-          break;
-        // Legacy 'tracks' support
-        case 'tracks': {
-          const tNodes = node.getElements('track');
-          while (tNodes.hasMoreElements()) {
-            // This is old blue-electron specific string[][] format,
-            // we should probably keep it for a while but it's not Java-compatible.
-            // Java Blue doesn't have 'tracks' element at root of TrackerObject, it has 'trackList'.
-          }
-          break;
-        }
-      }
-    }
-
-    if (stepsPerBeatFound) {
-      obj._stepsPerBeat = stepsPerBeat;
-    } else {
-      // If we didn't find stepsPerBeat, we default to 1 for legacy.
-      // But the constructor already set it to 4.
-      obj._stepsPerBeat = 1;
-    }
-
-    return obj;
+    return context ? obj : requireXmlValue(ctx.result(obj), sink);
   }
 
   override deepCopy(): SoundObject {

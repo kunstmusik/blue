@@ -189,7 +189,7 @@ i1 2 1 440</scoreText>
                 <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt;</noteTemplate>
                 <instrumentId>7</instrumentId>
                 <columns/>
-                <trackerNotes/>
+                <trackerNotes><trackerNote/><trackerNote/><trackerNote/><trackerNote/></trackerNotes>
               </track>
             </trackList>
           </soundObject>

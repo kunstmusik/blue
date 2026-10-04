@@ -52,19 +52,23 @@ describe('SoundObjectRegistry', () => {
       expect(obj?.getName()).toBe('Test');
     });
 
-    it('returns null for unknown type', () => {
+    it('rejects unknown type', () => {
       const xml = '<soundObject type="UnknownType"><name>Test</name></soundObject>';
       const elem = Element.parse(xml);
-      const obj = loadSoundObjectFromXML(elem);
-      expect(obj).toBeNull();
+      expect(() => loadSoundObjectFromXML(elem)).toThrow('Unsupported or missing SoundObject type');
     });
 
-    it('returns null for missing type', () => {
+    it('rejects missing type', () => {
       const xml = '<soundObject><name>Test</name></soundObject>';
       const elem = Element.parse(xml);
-      const obj = loadSoundObjectFromXML(elem);
-      expect(obj).toBeNull();
+      expect(() => loadSoundObjectFromXML(elem)).toThrow('Unsupported or missing SoundObject type');
     });
+  });
+
+  it('does not infer support from an arbitrary Java package suffix', () => {
+    expect(() =>
+      loadSoundObjectFromXML(Element.parse('<soundObject type="foreign.GenericScore"/>')),
+    ).toThrow('Unsupported or missing SoundObject type');
   });
 
   describe('Track placement descriptors', () => {

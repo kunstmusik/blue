@@ -1,4 +1,24 @@
 <!--
+Sync Impact Report (2026-10-01)
+- Version change: 3.1.0 → 4.0.0
+- Modified principles:
+  - II. Java-Compatible Behavior and Lossless Project Data →
+    II. Java-Compatible Behavior and Explicit Serialization Contracts
+  - IV. Host-Owned External Runtimes and Engine Isolation (known runtime metadata)
+  - V. Evidence-Driven Parity and Regression Safety (acceptance and rejection evidence)
+- Added section: Migration Ownership and Historical Evidence
+- Expanded sections: XML and Serialized Resources; Java-First Parity
+- Removed rule: blanket retention of unrelated unmodeled/unknown project XML
+- Rationale: model expected data, migrate documented historical forms, and diagnose unexpected
+  input instead of silently discarding it or implicitly accepting it through opaque storage.
+- Synchronized guidance: AGENTS.md; README.md; spec, plan, and tasks templates
+- Reviewed/no change: docs/modularization.md (historical extraction behavior descriptions)
+- Implementation follow-up: specs/116-xml-compatibility-contracts; existing loaders are not
+  declared compliant merely by this amendment.
+- Follow-up TODOs: none
+-->
+
+<!--
 Sync Impact Report (2026-09-30)
 - Version change: 3.0.0 → 3.1.0
 - Modified principles: none
@@ -97,18 +117,37 @@ File access, subprocesses, Electron APIs, and presentation logic MUST remain in 
 The same data APIs MUST behave consistently in browser and Node.js hosts. This boundary keeps
 project logic reusable, bundle-safe, and independently testable.
 
-### II. Java-Compatible Behavior and Lossless Project Data
+### II. Java-Compatible Behavior and Explicit Serialization Contracts
 Java Blue is the behavioral reference for parity work, `.blue` XML, CSD generation, rendering,
-formatting, migrations, and legacy project semantics. `.blue` XML MUST remain the canonical
-project format. Blue TypeScript MUST load supported Java Blue projects and preserve their modeled
-and unrelated unmodeled data. Java Blue is not required to load or preserve Blue TypeScript
-extensions. New TypeScript-only fields SHOULD use the simplest representation that meets the
-feature contract; do not retain separate raw-value or presence state solely to round-trip an
-unreleased extension. Established byte-level fixtures MUST continue to match where exact output
-is part of the contract. Raw-XML migrations MUST run before model
-deserialization. Any intentional divergence from Java behavior MUST be named in the feature spec
-and plan, justified, and covered by deterministic validation. Data that cannot be executed by the
-current host MUST be retained without silent loss.
+formatting, migrations, and legacy project semantics. `.blue` XML MUST remain the canonical project
+format. Blue TypeScript MUST load supported Java Blue projects and independently serialized
+resources through explicit contracts for expected elements, attributes, values, and historical
+forms. Supported data MUST survive load/save, copy, and applicable history operations. Java Blue
+is not required to load or preserve Blue TypeScript extensions.
+
+Loaders MUST load and validate expected data, migrate documented historical forms, and report
+unexpected elements, attributes, types, or values with a warning or error. Unexpected input MUST
+be rejected unless a documented compatibility rule permits a warning. A warning may permit
+ordinary editing and saving only when that rule establishes that ignoring the input cannot
+change supported content or provides an explicit supported retention contract. Potentially
+meaningful discarded data MUST NOT be followed by ordinary activation, import, or saving.
+Malformed values in known fields MUST have a separately defined rejection or recovery rule;
+missing historical fields MAY use documented defaults. Java loaders' incidental tolerance of
+unknown input does not establish a supported compatibility form.
+
+Supported fields MUST have an authoritative model representation. Generic unknown-XML bags MUST
+NOT substitute for identifying supported fields or diagnosing unexpected input. A named deferred
+or extension payload MAY retain serialized data when its accepted shape, owner, validation,
+copy/save behavior, and execution limitations are explicitly specified. An unavailable runtime
+does not make otherwise supported serialized data unexpected. New TypeScript-only fields MUST
+use the simplest representation meeting the feature contract; separate raw-value or presence
+state requires an explicit compatibility need.
+
+Established byte-level fixtures MUST continue to match where exact output is part of the
+contract. Structural project migrations MUST run on raw XML before model deserialization;
+class-local compatibility MUST also work for standalone resources. Any intentional divergence
+from Java behavior MUST be named in the feature spec and plan, justified, and covered by
+deterministic validation.
 
 ### III. Canonical State Ownership and Explicit Contracts
 Every durable or runtime state domain MUST have one documented canonical owner. The Electron main
@@ -136,8 +175,9 @@ plan.
 connect directly to the audio engine. Electron main owns Java helper lifecycle, filesystem and
 process access, ZeroMQ transport, and host capability detection. Blue Engine communication MUST
 flow through the versioned `@blue/engine-client` protocol; renderer and data code MUST NOT couple
-to engine-native state. Clojure, Jython, and other host-backed project metadata MUST round-trip
-when their runtime is unavailable, and unavailable execution MUST produce a clear, recoverable
+to engine-native state. Known, supported Clojure, Jython, and other host-backed project metadata
+MUST round-trip when their runtime is unavailable. Serialized-data acceptance MUST be evaluated
+separately from runtime availability; unavailable execution MUST produce a clear, recoverable
 diagnostic without corrupting the project.
 
 ### V. Evidence-Driven Parity and Regression Safety
@@ -145,7 +185,10 @@ Behavior, serialization, rendering, runtime, and UI changes MUST include verific
 to their risk. Parity fixes MUST begin with the relevant Java source or Java-generated artifact.
 Behavioral fixes MUST add or update a focused automated regression test at the lowest practical
 boundary; bug fixes MUST reproduce the failure first when the harness supports it. Serialization
-changes MUST cover round-trip state, Java-compatible XML, and preservation of unknown data.
+changes MUST cover current and historical accepted data, canonical round trips, Java-compatible
+XML, unexpected and invalid input diagnostics, and atomic load/import failure. Supported retained
+payloads MUST have focused ownership and copy/save coverage. Changes affecting project content
+MUST cover applicable history restoration as required by Principle III.
 Runtime and IPC changes MUST cover success and failure contracts. If automation is impractical,
 the plan MUST record why and the quickstart MUST provide deterministic manual validation. A change
 is not complete until affected tests, type checks, lint, and builds pass or a scoped exception is
@@ -182,11 +225,43 @@ boundaries. New abstractions MUST solve a demonstrated need; changes MUST prefer
 design that preserves existing contracts. Package dependency direction MUST keep `@blue/data`
 independent of Electron, React, Node.js, and host runtime implementations.
 
-### XML and Project Persistence
+### XML and Serialized Resources
 XML parsing MUST use `@rgrove/parse-xml` through the repository's `Element`/`Elements` utilities.
 Callers own file I/O through APIs such as `BlueData.loadFromString(xml)` and
-`blueData.saveToString()`. New persistence locations MUST be named in the spec and plan, including
-their owner, lifetime, migration behavior, and relationship to `.blue` project data.
+`blueData.saveToString()`. The acceptance policy applies to projects, standalone instruments,
+effects, SoundObjects, UDOs, and their supported library or BlueShare payloads. Each serialized
+root and owning class MUST define its expected members, historical aliases/forms, cardinality,
+value validation, defaults, and warning/error rules. Declared maps or extension points MUST
+specify their allowed contents; they are not blanket permission for arbitrary XML.
+
+Unexpected-input diagnostics MUST identify the source/resource context, owning element path,
+offending member or value, severity, and recovery behavior. Validation MUST inspect relevant input
+before parsing or loading discards information needed to detect violations. Failed loads/imports
+MUST leave the active document, destination library, and source files unchanged. Known text/code
+content MUST retain significant whitespace. Serialization output and retained payloads MUST NOT
+expose mutable aliases into canonical model or history state.
+
+New persistence locations MUST be named in the spec and plan, including their owner, lifetime,
+migration behavior, and relationship to `.blue` project data.
+
+### Migration Ownership and Historical Evidence
+Changes spanning project sections or restructuring the project graph MUST use project migrators
+on raw XML before model deserialization and canonical-form validation. Historical aliases,
+value encodings, defaults, or subtree changes confined to a reusable class MUST be handled at
+that class's loading boundary or by a shared resource migration reached by every applicable
+loader. Standalone instrument/effect/library/BlueShare loading MUST NOT depend on first loading
+a `BlueData` project or on a project version that the resource does not carry.
+
+Every migration MUST have one documented owner and scope, defined ordering and preconditions,
+and deterministic behavior for conflicting current/historical forms. Reapplying normalization
+to canonical data MUST NOT duplicate or alter supported content. Composed project and class
+migrations MUST be validated together, including independently serialized roots where applicable.
+
+Compatibility research MUST examine relevant Java loader and writer history, project upgraders,
+standalone disk/library/BlueShare entry points, and available historical artifacts. Record source
+revisions, the evidence for accepted historical forms, and the canonical output. A historical typo
+or permissive loader branch MUST NOT become an accepted form without evidence or an explicit
+compatibility decision. Research and fixture provenance remain subject to Principle VI.
 
 ### State and Persistence Boundaries
 Project XML, app-wide program settings, library databases, renderer session state, and generated
@@ -212,8 +287,10 @@ on the supported Windows CI target.
 For behavior mismatches, rendering failures, XML compatibility, or formatting defects, work MUST
 consult the Java implementation before changing TypeScript. Primary references are
 `~/work/nbprojects/blue/blue-core` and `~/work/nbprojects/blue/blue-ui-core`; when applicable,
-compare Java-generated artifacts such as `~/work/blue/demo2026/01.csd`. TypeScript divergence is
-permitted only when intentional and documented.
+compare Java-generated artifacts such as `~/work/blue/demo2026/01.csd`. Serialization work MUST
+also consult relevant Java Git history and distinguish class-local compatibility from project
+structural migrations and standalone resource entry points. TypeScript divergence is permitted
+only when intentional and documented.
 
 ### Spec-Driven Delivery
 Material features follow `/speckit-specify` → `/speckit-clarify` as needed → `/speckit-plan` →
@@ -249,4 +326,4 @@ Code review MUST treat an unexplained MUST violation as blocking. A necessary ex
 documented in the plan's Complexity Tracking section with the rejected compliant alternative and
 MUST receive explicit project-owner approval.
 
-**Version**: 3.1.0 | **Ratified**: 2026-04-11 | **Last Amended**: 2026-09-30
+**Version**: 4.0.0 | **Ratified**: 2026-04-11 | **Last Amended**: 2026-10-01

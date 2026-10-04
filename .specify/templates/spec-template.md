@@ -106,8 +106,12 @@
   only when none of those surfaces are involved.
 -->
 
-- **Reference Behavior**: [Relevant Java Blue workflow/source/artifact, or N/A with rationale]
-- **Compatibility Requirements**: [Observable behavior and data that MUST remain compatible or preserved]
+- **Reference Behavior**: [Relevant Java Blue loader/writer history, revisions, workflow/source/artifact,
+  including standalone disk/library/BlueShare entry points where applicable, or N/A with rationale]
+- **Compatibility Requirements**: [Expected current data, supported historical forms/defaults,
+  unexpected/invalid input warning or error outcomes, and observable safe save/round-trip behavior]
+- **Migration Boundaries**: [Class-local/resource compatibility versus project structural migrators;
+  independent serialized roots, ordering, preconditions, conflict rules, and canonical output]
 - **Intentional Divergences**: [None, or each approved divergence with user-visible rationale]
 - **State Ownership**: [Canonical owner and persistence location for every affected state domain]
 - **Undo/Redo Impact**: [For each new or modified durable project mutation, require undo/redo and

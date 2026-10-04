@@ -144,3 +144,34 @@ describe('Project Editor Layer Color Preservation (US2)', () => {
     expect(duplicated.getBackgroundColor()).toBe(0x778899);
   });
 });
+
+it('rejects every malformed serialized insertion before any timeline write', () => {
+  const { data, soundLayer, polyGroupId } = createTestProjectWithLayers();
+  const original = data.saveToString();
+  const first = soundLayer[0];
+  const changed = applyProjectDocumentPatch(data, {
+    score: {
+      type: 'addScoreObjects',
+      groupId: polyGroupId,
+      objects: [
+        {
+          layerIndex: 0,
+          objectType: 'GenericScore',
+          startBeats: 0,
+          durationBeats: 1,
+          serializedXml: new GenericScore().saveAsXML().toXml(),
+        },
+        {
+          layerIndex: 0,
+          objectType: 'GenericScore',
+          startBeats: 1,
+          durationBeats: 1,
+          serializedXml: '<soundObject type="blue.soundObject.GenericScore" future="true"/>',
+        },
+      ],
+    },
+  });
+  expect(changed).toBe(false);
+  expect(data.saveToString()).toBe(original);
+  expect(soundLayer[0]).toBe(first);
+});

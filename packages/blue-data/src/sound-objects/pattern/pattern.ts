@@ -7,6 +7,8 @@
  * and muted/solo flags.
  */
 import { Element } from '../../serialization/xml-reader';
+import { XmlLoadContext } from '../../serialization/xml-load';
+import { checkRoot, checkShape, readText, readBoolean } from '../../utilities/xml';
 
 export class Pattern {
   values: boolean[];
@@ -47,7 +49,9 @@ export class Pattern {
     return elem;
   }
 
-  static loadFromXML(data: Element): Pattern {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): Pattern {
+    checkRoot(data, 'pattern', context);
+    checkShape(data, [], ['patternName', 'patternScore', 'muted', 'solo', 'values'], context);
     let name = '';
     let score = '';
     let muted = false;
@@ -60,19 +64,26 @@ export class Pattern {
       const nodeName = node.getName();
       switch (nodeName) {
         case 'patternName':
-          name = node.getTextString() ?? '';
+          name = readText(node, context);
           break;
         case 'patternScore':
-          score = node.getTextString() ?? '';
+          score = readText(node, context);
           break;
         case 'muted':
-          muted = node.getTextString() === 'true';
+          muted = readBoolean(node, context);
           break;
         case 'solo':
-          solo = node.getTextString() === 'true';
+          solo = readBoolean(node, context);
           break;
         case 'values': {
-          const valStr = node.getTextString() ?? '';
+          const valStr = readText(node, context).trim();
+          if (!/^[01]*$/.test(valStr))
+            throw context.at(node).error({
+              code: 'value',
+              value: valStr,
+              message: 'Pattern values must be a binary vector.',
+              recovery: 'Use only zero and one step values.',
+            });
           values = new Array(valStr.length).fill(false);
           for (let i = 0; i < valStr.length; i++) {
             values[i] = valStr[i] === '1';

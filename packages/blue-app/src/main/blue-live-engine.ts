@@ -12,6 +12,7 @@ import type { EngineStateSnapshot } from '@blue/engine-client';
 import { formatRenderCommandLine, writeTempCsdSnapshot } from './render-command';
 import { syncCompiledRuntimeParameterNames } from './runtime-parameter-sync';
 import { preflightAudioLayout } from './audio-layout-preflight';
+import { prepareProjectTuningDependencies } from './tuning-scale-dependencies';
 import type { AudioLayoutDiagnostic } from '../shared/audio-layout';
 import type { BlueLiveStatusSnapshot } from '../shared/blue-live-status';
 export type { BlueLiveStatusSnapshot } from '../shared/blue-live-status';
@@ -372,7 +373,8 @@ export class BlueLiveEngineSession {
       }
 
       const liveData = data.getLiveData();
-      const csd = data.toBlueLiveCSD(session, false, preflightResult.manifest);
+      const compileData = prepareProjectTuningDependencies(data);
+      const csd = compileData.toBlueLiveCSD(session, false, preflightResult.manifest);
       const runtimeParameterSync = syncCompiledRuntimeParameterNames(
         data.getArrangement(),
         data.getMixer(),

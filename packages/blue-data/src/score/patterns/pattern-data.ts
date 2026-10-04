@@ -9,6 +9,8 @@
  * one "beat" (of patternBeatsLength duration). When generating CSD, the
  * containing SoundObject is repeated at each active step position.
  */
+import { XmlLoadContext } from '../../serialization/xml-load';
+import { checkRoot, readText } from '../../utilities/xml';
 import { Element } from '../../serialization/xml-reader';
 
 const BLOCK_SIZE = 16;
@@ -102,21 +104,30 @@ export class PatternData {
     const elem = new Element('patternData');
 
     // Resize to max selected for efficiency
-    this.resizePatterns(Math.max(this._calculateMaxSelected(), 0));
+    const size =
+      (Math.floor(Math.max(this._calculateMaxSelected(), 0) / BLOCK_SIZE) + 1) * BLOCK_SIZE;
 
     // Serialize as binary string: "101001..."
     const buffer: string[] = [];
-    for (const pattern of this._patterns) {
-      buffer.push(pattern ? '1' : '0');
+    for (let index = 0; index < size; index++) {
+      buffer.push(this._patterns[index] ? '1' : '0');
     }
     elem.setText(buffer.join(''));
 
     return elem;
   }
 
-  static loadFromXML(data: Element): PatternData {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): PatternData {
+    checkRoot(data, 'patternData', context);
     const patternData = new PatternData();
-    const valStr = data.getTextString();
+    const valStr = readText(data, context);
+    if (!/^[01]*$/.test(valStr))
+      throw context.at(data).error({
+        code: 'value',
+        value: valStr,
+        message: 'Pattern data must be a binary vector.',
+        recovery: 'Supply only 0 and 1 characters.',
+      });
 
     patternData._patterns = new Array(valStr.length).fill(false);
 

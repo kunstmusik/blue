@@ -274,12 +274,11 @@ describe('SoundObjectRegistry', () => {
     expect((reloaded as PolyObject).getName()).toBe('Registry Test');
   });
 
-  it('returns null for unknown type', () => {
+  it('rejects unknown type', () => {
     const elem = new Element('soundObject');
     elem.setAttribute('type', 'UnknownType');
     elem.addElement('name').setText('Test');
 
-    const reloaded = loadSoundObjectFromXML(elem);
-    expect(reloaded).toBeNull();
+    expect(() => loadSoundObjectFromXML(elem)).toThrow();
   });
 });

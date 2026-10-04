@@ -3,6 +3,8 @@
  * Mirrors the Java MidiKeyMapping class.
  */
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext } from '../serialization/xml-load';
+import { checkRoot, checkShape, readBoolean, readInt } from '../utilities/xml';
 import { BlueDataObject } from '../blue-data-object';
 
 export class MidiKeyMapping implements BlueDataObject {
@@ -48,16 +50,26 @@ export class MidiKeyMapping implements BlueDataObject {
     return elem;
   }
 
-  static loadFromXML(data: Element): MidiKeyMapping {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): MidiKeyMapping {
+    checkRoot(data, 'midiKeyMapping', context);
+    checkShape(data, [], ['enabled', 'pFieldIndex', 'baseNote', 'range'], context);
     const mapping = new MidiKeyMapping();
-    const en = data.getTextString('enabled');
-    if (en) mapping._enabled = en.toLowerCase() === 'true';
-    const pfi = data.getTextString('pFieldIndex');
-    if (pfi) mapping._pFieldIndex = parseInt(pfi, 10);
-    const bn = data.getTextString('baseNote');
-    if (bn) mapping._baseNote = parseInt(bn, 10);
-    const r = data.getTextString('range');
-    if (r) mapping._range = parseInt(r, 10);
+    {
+      const node = data.getElement('enabled');
+      if (node) mapping._enabled = readBoolean(node, context);
+    }
+    {
+      const node = data.getElement('pFieldIndex');
+      if (node) mapping._pFieldIndex = readInt(node, context, 1);
+    }
+    {
+      const node = data.getElement('baseNote');
+      if (node) mapping._baseNote = readInt(node, context, 0, 127);
+    }
+    {
+      const node = data.getElement('range');
+      if (node) mapping._range = readInt(node, context, 1);
+    }
     return mapping;
   }
 

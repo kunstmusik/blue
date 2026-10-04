@@ -280,17 +280,15 @@ describe('disk pruning fallback matrix (Spec 111 T068)', () => {
     expect(score).toContain('"test.wav"');
   });
 
-  it('refuses pruning for unknown preserved track content', () => {
+  it('rejects unknown track content before compilation', () => {
     const { data, trackA, trackB } = createCertifiableProject();
     addClip(trackA, 0, 4);
     addClip(trackB, 0, 2);
-    data.getMixer().getChannels()[0].setMuted(true);
-    const reloaded = BlueData.loadFromString(
-      data.saveToString().replace('<track ', '<track futureExtension="enabled" '),
-    );
-    const result = buildStandardCSD(reloaded, 'disk');
-    const score = result.csdText.match(/<CsScore>([\s\S]*?)<\/CsScore>/)![1];
-    expect(score).toContain('"test.wav"');
+    const original = data.saveToString();
+    expect(() =>
+      BlueData.loadFromString(original.replace('<track ', '<track futureExtension="enabled" ')),
+    ).toThrow();
+    expect(data.saveToString()).toBe(original);
   });
 
   it('keeps a pre-fader send feeder audible through a soloed return', () => {

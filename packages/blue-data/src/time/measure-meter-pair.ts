@@ -7,6 +7,8 @@
  */
 import { Meter } from './meter';
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext } from '../serialization/xml-load';
+import { checkRoot, checkShape, readInt } from '../utilities/xml';
 
 export class MeasureMeterPair {
   readonly measure: number;
@@ -45,11 +47,24 @@ export class MeasureMeterPair {
     return elem;
   }
 
-  static loadFromXML(data: Element): MeasureMeterPair {
-    const measureText = data.getTextString('measureNumber') ?? data.getTextString('measure') ?? '1';
-    const measure = parseInt(measureText, 10);
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): MeasureMeterPair {
+    checkRoot(data, 'measureMeterPair', context);
+    checkShape(data, [], ['measureNumber', 'measure', 'meter'], context);
+    const current = data.getElement('measureNumber');
+    const legacy = data.getElement('measure');
+    const measure = current
+      ? readInt(current, context, 1)
+      : legacy
+        ? readInt(legacy, context, 1)
+        : 1;
+    if (current && legacy && readInt(legacy, context, 1) !== measure)
+      throw context.at(legacy).error({
+        code: 'conflict',
+        message: 'Conflicting measure aliases.',
+        recovery: 'Keep one measure number.',
+      });
     const meterElem = data.getElement('meter');
-    const meter = meterElem ? Meter.loadFromXML(meterElem) : new Meter();
-    return new MeasureMeterPair(measure || 1, meter);
+    const meter = meterElem ? Meter.loadFromXML(meterElem, context) : new Meter();
+    return new MeasureMeterPair(measure, meter);
   }
 }

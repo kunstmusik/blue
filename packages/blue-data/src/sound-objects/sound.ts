@@ -11,12 +11,23 @@ import { Note } from './note';
 import { TimeContext } from '../time/time-context';
 import { CompileData } from '../compile-data';
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
+import {
+  checkShape,
+  readText,
+  readInt,
+  readBoolean,
+  readEnum,
+  parseXmlBoolean,
+} from '../utilities/xml';
+import { BASIC_SOUND_OBJECT_CHILDREN } from './sound-object-utilities';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
 import { TimeBehavior } from './time-behavior';
 import { initBasicFromXML, getBasicXML } from './sound-object-utilities';
 import { BlueSynthBuilder } from '../instruments/blue-synth-builder';
 import type { ScoreGenerationOptions } from '../score/score-generation-options';
+import type { CopyMode } from '../deep-copyable';
 
 export class Sound extends AbstractSoundObject {
   private _comment = '';
@@ -47,13 +58,13 @@ export class Sound extends AbstractSoundObject {
     return legacy;
   }
 
-  constructor(other?: Sound) {
+  constructor(other?: Sound, mode: CopyMode = 'duplication') {
     super();
     this.setName('Sound');
     if (other) {
       this.copyFrom(other);
       this._comment = other._comment;
-      this._blueSynthBuilder = other._blueSynthBuilder.deepCopy() as BlueSynthBuilder;
+      this._blueSynthBuilder = other._blueSynthBuilder.deepCopy(mode);
     }
   }
 
@@ -152,13 +163,42 @@ export class Sound extends AbstractSoundObject {
     return elem;
   }
 
-  static loadFromXML(data: Element, _objRefMap?: ObjRefLoadMap): Sound {
+  static loadFromXML(
+    data: Element,
+    _objRefMap?: ObjRefLoadMap,
+    context?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): Sound {
+    const ctx = context ?? new XmlLoadContext(data);
+    const type = data.getAttribute('type');
+    if (
+      data.getName() !== 'soundObject' ||
+      type === null ||
+      !['Sound', 'blue.soundObject.Sound'].includes(type)
+    )
+      throw ctx.at(data).error({
+        code: 'type',
+        member: '@type',
+        value: type ?? '',
+        message: 'Unsupported Sound type.',
+        recovery: 'Supply a supported concrete SoundObject type.',
+      });
+    checkShape(
+      data,
+      ['type'],
+      [...BASIC_SOUND_OBJECT_CHILDREN, ...['instrument', 'instrumentText', 'comment']],
+      ctx,
+    );
     const obj = new Sound();
-    initBasicFromXML(obj, data);
+    const commentElement = data.getElement('comment');
+    if (commentElement) readText(commentElement, ctx);
+    const instrumentTextElement = data.getElement('instrumentText');
+    if (instrumentTextElement) readText(instrumentTextElement, ctx);
+    initBasicFromXML(obj, data, ctx);
 
     const instrElem = data.getElement('instrument');
     if (instrElem !== null) {
-      obj.setBlueSynthBuilder(BlueSynthBuilder.loadFromXML(instrElem));
+      obj.setBlueSynthBuilder(BlueSynthBuilder.loadFromXML(instrElem, _objRefMap, ctx));
     } else {
       const instrText = data.getTextString('instrumentText');
       if (instrText !== null) {
@@ -168,13 +208,24 @@ export class Sound extends AbstractSoundObject {
       }
     }
 
+    const oldText = data.getElement('instrumentText');
+    if (instrElem && oldText) {
+      const historical = new BlueSynthBuilder();
+      historical.setInstrumentText(readText(oldText, ctx));
+      if (historical.saveAsXML().toXml() !== obj.getBlueSynthBuilder().saveAsXML().toXml())
+        throw ctx.at(oldText).error({
+          code: 'conflict',
+          message: 'Competing Sound instrument representations.',
+          recovery: 'Keep one equivalent instrument representation.',
+        });
+    }
     const comment = data.getTextString('comment');
     if (comment !== null) obj._comment = comment;
 
-    return obj;
+    return context ? obj : requireXmlValue(ctx.result(obj), sink);
   }
 
-  override deepCopy(): SoundObject {
-    return new Sound(this);
+  override deepCopy(mode: CopyMode = 'duplication'): SoundObject {
+    return new Sound(this, mode);
   }
 }

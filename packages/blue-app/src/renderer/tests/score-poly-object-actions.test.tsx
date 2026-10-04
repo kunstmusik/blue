@@ -446,4 +446,32 @@ describe('PolyObject score context actions', () => {
     expect(pastedInstance.getLibraryId()).toBe(libraryId);
     expect(pastedInstance.getSoundObject()).toBe(definition);
   });
+  it('rejects malformed serialized clipboard content without substituting an empty object', () => {
+    const data = new BlueData();
+    const topPoly = new PolyObject(true);
+    data.getScore().length = 0;
+    data.getScore().push(topPoly);
+    topPoly.newLayerAt(-1);
+    topPoly[0].push(new GenericScore());
+    const snapshot = createProjectEditorSnapshot(data, null);
+    const group = snapshot.score.layerGroups[0]!;
+    const item = group.layers[0]!.items[0]!;
+    const result = createPolyObjectPasteObjectFromClipboard({
+      clipboard: [
+        {
+          ...item,
+          layerIndex: 0,
+          groupId: group.groupId,
+          serializedXml: '<soundObject type="GenericScore"><unexpected/></soundObject>',
+        },
+      ],
+      layerGroups: snapshot.score.layerGroups,
+      targetGroupId: group.groupId,
+      targetLayerIndex: 0,
+      targetXBeats: 8,
+      snapBeatValue: (beats) => beats,
+    });
+    expect(result.ok).toBe(false);
+    expect(topPoly[0]).toHaveLength(1);
+  });
 });

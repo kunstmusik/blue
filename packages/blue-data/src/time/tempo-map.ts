@@ -5,11 +5,13 @@
  * Supports multiple TempoPoint entries with CONSTANT or LINEAR curves.
  * When disabled, always returns 60 BPM regardless of tempo points.
  */
-import { CurveType, parseCurveType } from './curve-type';
+import { CurveType } from './curve-type';
 import { TempoPoint } from './tempo-point';
 import { Element } from '../serialization/xml-reader';
 import { TimePosition } from './time-position';
 import { TimeContext } from './time-context';
+import { XmlLoadContext } from '../serialization/xml-load';
+import { checkRoot, checkShape, readBoolean, readDouble, parseXmlNumber } from '../utilities/xml';
 
 export class TempoMap {
   private points: TempoPoint[] = [new TempoPoint(undefined, 60, CurveType.CONSTANT)];
@@ -426,43 +428,73 @@ export class TempoMap {
     return elem;
   }
 
-  static loadFromXML(data: Element): TempoMap {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): TempoMap {
+    checkRoot(data, 'tempoMap', context);
+    checkShape(data, [], ['enabled', 'visible', 'tempoPoint', 'beatTempoPair'], context, [
+      'tempoPoint',
+      'beatTempoPair',
+    ]);
     const map = new TempoMap();
-
-    const enabled = data.getTextString('enabled');
-    if (enabled !== null) map._enabled = enabled !== 'false';
-
-    const visible = data.getTextString('visible');
-    if (visible !== null) map._visible = visible === 'true';
-
-    const points = data.getElements('tempoPoint');
-    if (points.hasMoreElements()) {
-      map.points = [];
-      while (points.hasMoreElements()) {
-        const point = TempoPoint.loadFromXML(points.next());
-        map.points.push(point);
+    const enabled = data.getElement('enabled');
+    if (enabled) map._enabled = readBoolean(enabled, context);
+    const visible = data.getElement('visible');
+    if (visible) map._visible = readBoolean(visible, context);
+    const current = data.getElements('tempoPoint').toArray();
+    const legacy = data.getElements('beatTempoPair').toArray();
+    if (current.length && legacy.length)
+      throw context.at(legacy[0]).error({
+        code: 'conflict',
+        message: 'Current and historical tempo point sequences coexist.',
+        recovery: 'Choose a single tempo point sequence.',
+      });
+    if (current.length) map.points = current.map((point) => TempoPoint.loadFromXML(point, context));
+    if (legacy.length) {
+      if (!enabled) map._enabled = true;
+      map.points = legacy.map((pair) => {
+        checkShape(pair, ['beat', 'tempo'], ['beat', 'tempo'], context);
+        const values = ['beat', 'tempo'].map((field) => {
+          const attribute = pair.getAttribute(field);
+          const child = pair.getElement(field);
+          if (attribute === null && !child)
+            throw context.at(pair).error({
+              code: 'cardinality',
+              member: field,
+              message: `Missing historical ${field}.`,
+              recovery: 'Supply both beat and tempo.',
+            });
+          const attrValue =
+            attribute === null
+              ? undefined
+              : parseXmlNumber(attribute, context.at(pair), `@${field}`);
+          const childValue = child ? readDouble(child, context) : undefined;
+          if (attrValue !== undefined && childValue !== undefined && attrValue !== childValue)
+            throw context.at(child!).error({
+              code: 'conflict',
+              member: field,
+              message: `Conflicting historical ${field} forms.`,
+              recovery: 'Make attribute and child values agree.',
+            });
+          return childValue ?? attrValue!;
+        });
+        if (values[0] < 0 || values[1] <= 0)
+          throw context.at(pair).error({
+            code: 'value',
+            message: 'Tempo pairs need a nonnegative beat and positive BPM.',
+            recovery: 'Correct the historical tempo point.',
+          });
+        return new TempoPoint(values[0], values[1], CurveType.LINEAR);
+      });
+    }
+    if (map.points.every((point) => point.position.isBeatTime())) {
+      for (let i = 1; i < map.points.length; i++) {
+        if (map.points[i].position.getValue() <= map.points[i - 1].position.getValue())
+          throw context.at(current[i] ?? legacy[i] ?? data).error({
+            code: 'conflict',
+            message: 'Tempo points must have distinct ascending positions.',
+            recovery: 'Correct the tempo sequence without relying on automatic sorting.',
+          });
       }
     }
-
-    // Also check legacy beatTempoPair format (only if no tempoPoint elements were found)
-    const legacyPoints = data.getElements('beatTempoPair');
-    const hasTempoPoints =
-      map.points.length !== 1 || map.points[0].tempo !== 60 || map.points[0].beat !== 0;
-    if (legacyPoints.hasMoreElements() && !hasTempoPoints) {
-      map.points = [];
-      while (legacyPoints.hasMoreElements()) {
-        const pairElem = legacyPoints.next();
-        const beat = parseFloat(pairElem.getAttribute('beat') ?? '0');
-        const tempo = parseFloat(pairElem.getAttribute('tempo') ?? '60');
-        const point = new TempoPoint(beat, tempo, CurveType.LINEAR);
-        map.points.push(point);
-      }
-    }
-
-    if (map.points.length === 0) {
-      map.points = [new TempoPoint(undefined, 60, CurveType.CONSTANT)];
-    }
-
     map.recalculateAccumulatedTimes();
     return map;
   }

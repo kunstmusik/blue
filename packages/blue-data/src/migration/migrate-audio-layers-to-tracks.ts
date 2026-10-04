@@ -1,4 +1,7 @@
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext } from '../serialization/xml-load';
+import { checkShape } from '../utilities/xml';
+import { NoteProcessorChain } from '../note-processors/note-processor-chain';
 import { moveChildElements } from './xml-migration-utils';
 
 interface MigrationState {
@@ -16,38 +19,95 @@ interface MigrationState {
  * this conversion structural so all of those shapes become the one
  * canonical Track tree and a second load is a no-op.
  */
-export function migrateAudioLayersToTracks(root: Element): boolean {
-  const score = findFirstElement(root, 'score');
-  return score ? migrateWithinScore(score) : false;
+export function migrateAudioLayersToTracks(
+  root: Element,
+  context = new XmlLoadContext(root),
+): boolean {
+  const score = root.getName() === 'score' ? root : root.getElement('score');
+  return score ? migrateWithinScore(score, context) : false;
 }
 
-export function migrateAudioLayersToTracksInScore(score: Element): boolean {
-  return migrateWithinScore(score);
+export function migrateAudioLayersToTracksInScore(
+  score: Element,
+  context = new XmlLoadContext(score),
+): boolean {
+  return migrateWithinScore(score, context);
 }
 
-function migrateWithinScore(score: Element): boolean {
+function migrateWithinScore(score: Element, context: XmlLoadContext): boolean {
   const state = createMigrationState(score);
-  return migrateChildren(score, state);
+  return migrateChildren(score, state, context);
 }
 
-function migrateChildren(parent: Element, state: MigrationState): boolean {
+function migrateChildren(parent: Element, state: MigrationState, context: XmlLoadContext): boolean {
   let changed = false;
-  for (const child of parent.getElements().toArray()) {
+  for (const child of parent.getElements()) {
     if (child.getName() === 'audioLayerGroup') {
-      migrateGroup(child, state);
+      migrateGroup(child, state, context);
       changed = true;
-      // Unknown descendants may themselves contain an old group. Walk them
-      // after normalizing the outer group without treating the new `tracks`
-      // container as a legacy boundary.
-      changed = migrateChildren(child, state) || changed;
-      continue;
+    } else if (
+      child.getName() === 'soundLayer' ||
+      ((child.getName() === 'soundObject' || child.getName() === 'polyObject') &&
+        ['PolyObject', 'blue.soundObject.PolyObject'].includes(child.getAttribute('type') ?? ''))
+    ) {
+      changed = migrateChildren(child, state, context) || changed;
     }
-    changed = migrateChildren(child, state) || changed;
   }
   return changed;
 }
 
-function migrateGroup(group: Element, state: MigrationState): void {
+function migrateGroup(group: Element, state: MigrationState, context: XmlLoadContext): void {
+  checkShape(
+    group,
+    ['name', 'uniqueId'],
+    ['defaultHeightIndex', 'audioLayers', 'tracks', 'audioLayer', 'layer'],
+    context,
+    ['audioLayer', 'layer'],
+  );
+  const legacyLayers = group
+    .getElements()
+    .toArray()
+    .flatMap((child) =>
+      ['audioLayers', 'tracks'].includes(child.getName())
+        ? child.getElements().toArray()
+        : ['audioLayer', 'layer'].includes(child.getName())
+          ? [child]
+          : [],
+    );
+  for (const container of group.getElements()) {
+    if (['audioLayers', 'tracks'].includes(container.getName()))
+      checkShape(container, [], ['audioLayer', 'layer', 'track'], context, [
+        'audioLayer',
+        'layer',
+        'track',
+      ]);
+  }
+  for (const layer of legacyLayers) {
+    if (layer.getName() === 'track') continue;
+    checkShape(
+      layer,
+      [
+        'name',
+        'uniqueId',
+        'muted',
+        'solo',
+        'heightIndex',
+        'customHeight',
+        'automationSelectedIndex',
+      ],
+      ['backgroundColor', 'audioClip', 'parameterId', 'noteProcessorChain'],
+      context,
+      ['audioClip', 'parameterId'],
+    );
+    const processors = layer.getElement('noteProcessorChain');
+    if (processors) {
+      if (layer.getName() === 'track') validateTrackProcessorChain(layer, context);
+      else checkShape(processors, [], [], context);
+    }
+  }
+  for (const tracks of group.getElements('tracks')) {
+    for (const track of tracks.getElements('track')) validateTrackContent(track, context);
+  }
   group.setName('trackLayerGroup');
   ensureUniqueId(group, 'group', state);
 
@@ -57,7 +117,7 @@ function migrateGroup(group: Element, state: MigrationState): void {
   if (tracks !== canonicalContainer) tracks.setName('tracks');
 
   // Some transitional writers emitted both containers. Fold the legacy
-  // children into the canonical one so no clip or unknown child disappears.
+  // validated children into the canonical one so no supported clip disappears.
   if (canonicalContainer && legacyContainer) {
     moveChildElements(legacyContainer, tracks);
     group.removeElement('audioLayers');
@@ -65,7 +125,7 @@ function migrateGroup(group: Element, state: MigrationState): void {
 
   // A few historical writers emitted audioLayer children directly under the
   // group. Move those nodes into the canonical container while retaining the
-  // order of the legacy layer nodes and leaving unrelated siblings alone.
+  // order of the validated legacy layer nodes.
   const directLegacyLayers = group
     .getElements()
     .toArray()
@@ -89,13 +149,31 @@ function migrateGroup(group: Element, state: MigrationState): void {
     child.setName('track');
     ensureUniqueId(child, 'track', state);
 
-    // Audio layers never had a Track-owned instrument or Track processor
-    // chain. Replacing recognized nodes guarantees the migrated state is
-    // empty while preserving all unrelated XML siblings for later handling.
-    child.removeElements('instrument');
-    child.removeElements('noteProcessorChain');
-    child.addElement('noteProcessorChain');
+    if (!child.hasElement('noteProcessorChain')) child.addElement('noteProcessorChain');
   }
+}
+
+function validateTrackProcessorChain(track: Element, context: XmlLoadContext): void {
+  const processors = track.getElement('noteProcessorChain');
+  if (processors) NoteProcessorChain.loadFromXML(processors, context.at(processors));
+}
+
+function validateTrackContent(track: Element, context: XmlLoadContext): void {
+  checkShape(
+    track,
+    ['name', 'muted', 'solo', 'heightIndex', 'customHeight', 'uniqueId', 'automationSelectedIndex'],
+    [
+      'backgroundColor',
+      'noteProcessorChain',
+      'instrument',
+      'audioClip',
+      'soundObject',
+      'parameterId',
+    ],
+    context,
+    ['audioClip', 'soundObject', 'parameterId'],
+  );
+  validateTrackProcessorChain(track, context);
 }
 
 function createMigrationState(root: Element): MigrationState {
@@ -130,13 +208,4 @@ function ensureUniqueId(element: Element, kind: 'group' | 'track', state: Migrat
   state.usedIds.add(candidate);
   element.setAttribute('uniqueId', candidate);
   return candidate;
-}
-
-function findFirstElement(root: Element, name: string): Element | null {
-  if (root.getName() === name) return root;
-  for (const child of root.getElements()) {
-    const found = findFirstElement(child, name);
-    if (found) return found;
-  }
-  return null;
 }

@@ -7,76 +7,25 @@
  * and SMPTE frame rate.
  */
 import { TimeBase } from './time-base';
-import { SnapValueName, isValidSnapValueName } from './snap-value';
+import { SnapValueName, isValidSnapValueName, closestSnapValueMatch } from './snap-value';
 import { Element } from '../serialization/xml-reader';
-import { writeBoolean, readBoolean, writeDouble, writeInt, readInt } from '../utilities/xml';
+import {
+  writeBoolean,
+  readBoolean,
+  writeDouble,
+  writeInt,
+  readInt,
+  checkShape,
+  readText,
+  parseXmlNumber,
+  parseXmlInteger,
+  checkRoot,
+} from '../utilities/xml';
+import { XmlLoadContext } from '../serialization/xml-load';
 
 import { resolveSmpteRate, isValidSmpteFormat } from './smpte-timecode';
 
 const CURRENT_FORMAT_VERSION = 2;
-
-function parseTimeBase(text: string | null | undefined, defaultValue: TimeBase): TimeBase {
-  if (!text || text.trim().length === 0) return defaultValue;
-  const trimmed = text.trim();
-  // Try enum name first (v2 format)
-  if (Object.values(TimeBase).includes(trimmed as TimeBase)) {
-    return trimmed as TimeBase;
-  }
-  // Fall back to legacy int parsing: 0=TIME, 1=BEATS
-  const legacyValue = parseInt(trimmed, 10);
-  if (!Number.isNaN(legacyValue)) {
-    switch (legacyValue) {
-      case 0:
-        return TimeBase.TIME;
-      case 1:
-        return TimeBase.BEATS;
-      default:
-        return defaultValue;
-    }
-  }
-  return defaultValue;
-}
-
-function parseSnapValue(text: string | null | undefined): SnapValueName {
-  if (!text || text.trim().length === 0) return 'BEAT';
-  const trimmed = text.trim();
-  // Migrate removed enum constant
-  const migrated = trimmed === 'QUARTER' ? 'SIXTEENTH' : trimmed;
-  // Try enum name first (current format)
-  if (isValidSnapValueName(migrated)) return migrated;
-  // Legacy format: double value — find closest match
-  const legacyVal = parseFloat(migrated);
-  if (!Number.isNaN(legacyVal)) {
-    return closestSnapValueMatchLegacy(legacyVal);
-  }
-  return 'BEAT';
-}
-
-function closestSnapValueMatchLegacy(legacyValue: number): SnapValueName {
-  // Import-free closest match for legacy double values
-  const musicalValues: Array<[SnapValueName, number]> = [
-    ['BAR', 4.0],
-    ['HALF', 2.0],
-    ['BEAT', 1.0],
-    ['EIGHTH', 0.5],
-    ['SIXTEENTH', 0.25],
-    ['THIRTY_SECOND', 0.125],
-    ['SIXTY_FOURTH', 0.0625],
-    ['QUARTER_TRIPLET', 1.0 / 3.0],
-    ['EIGHTH_TRIPLET', 1.0 / 6.0],
-    ['SIXTEENTH_TRIPLET', 1.0 / 12.0],
-  ];
-  let best: SnapValueName = 'BEAT';
-  let bestDiff = Number.MAX_VALUE;
-  for (const [name, val] of musicalValues) {
-    const diff = Math.abs(val - legacyValue);
-    if (diff < bestDiff) {
-      bestDiff = diff;
-      best = name;
-    }
-  }
-  return best;
-}
 
 export class TimeState {
   private snapEnabled = false;
@@ -89,8 +38,6 @@ export class TimeState {
   private markersRowVisible = true;
   private smpteFrameRate = 24.0;
   private smpteDropFrame = false;
-  private unknownChildren: Element[] = [];
-  private unknownAttributes: Array<[string, string]> = [];
   private zoomIterations = 0;
 
   constructor(other?: TimeState) {
@@ -105,8 +52,6 @@ export class TimeState {
       this.markersRowVisible = other.markersRowVisible;
       this.smpteFrameRate = other.smpteFrameRate;
       this.smpteDropFrame = other.smpteDropFrame;
-      this.unknownChildren = other.unknownChildren.map((child) => child.clone());
-      this.unknownAttributes = other.unknownAttributes.map(([name, value]) => [name, value]);
       this.zoomIterations = other.zoomIterations;
     }
   }
@@ -207,7 +152,6 @@ export class TimeState {
 
   saveAsXML(): Element {
     const elem = new Element('timeState');
-    for (const [name, value] of this.unknownAttributes) elem.setAttribute(name, value);
     elem.setAttribute('version', CURRENT_FORMAT_VERSION.toString());
     elem.addElement(writeInt('zoomIterations', Math.round(this.zoomIterations)));
     elem.addElement(writeBoolean('snapEnabled', this.snapEnabled));
@@ -220,80 +164,116 @@ export class TimeState {
     elem.addElement(writeBoolean('markersRowVisible', this.markersRowVisible));
     elem.addElement(writeDouble('smpteFrameRate', this.smpteFrameRate));
     if (this.smpteDropFrame) elem.addElement(writeBoolean('smpteDropFrame', true));
-    for (const child of this.unknownChildren) elem.addElement(child.clone());
     return elem;
   }
 
-  static loadFromXML(data: Element): TimeState {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): TimeState {
+    checkRoot(data, 'timeState', context);
+    const booleanFields = [
+      'snapEnabled',
+      'secondaryRulerEnabled',
+      'tempoRowVisible',
+      'meterRowVisible',
+      'markersRowVisible',
+      'smpteDropFrame',
+    ] as const;
+    checkShape(
+      data,
+      ['version'],
+      [
+        'pixelSecond',
+        'zoomIterations',
+        'snapValue',
+        'timeDisplay',
+        'secondaryTimeDisplay',
+        'smpteFrameRate',
+        ...booleanFields,
+      ],
+      context,
+    );
+    const versionText = data.getAttribute('version');
+    const version =
+      versionText === null ? 1 : parseXmlInteger(versionText, context.at(data), 1, 4, '@version');
     const state = new TimeState();
-    const versionStr = data.getAttribute('version');
-    const version = versionStr ? parseInt(versionStr, 10) : 1;
-
-    state.unknownAttributes = data
-      .getAttributeNames()
-      .filter((name) => name !== 'version')
-      .map((name) => [name, data.getAttribute(name)!]);
-    const nodes = data.getElements();
-    while (nodes.hasMoreElements()) {
-      const node = nodes.next();
-      const name = node.getName();
-      const text = node.getTextString();
-
-      switch (name) {
-        case 'pixelSecond': {
-          const pixelSecond = parseInt(text, 10);
-          state.zoomIterations = Math.round((Math.log(pixelSecond / 100.0) / Math.log(2)) * 32.0);
-          break;
-        }
-        case 'zoomIterations':
-          state.zoomIterations = parseInt(text, 10) || 0;
-          break;
-        case 'snapEnabled':
-          state.snapEnabled = readBoolean(node);
-          break;
-        case 'snapValue':
-          state.snapValue = parseSnapValue(text);
-          break;
-        case 'timeDisplay':
-          state.timeDisplay = parseTimeBase(text, TimeBase.BEATS);
-          break;
-        case 'secondaryTimeDisplay':
-          state.secondaryTimeDisplay = parseTimeBase(text, TimeBase.TIME);
-          break;
-        case 'secondaryRulerEnabled':
-          state.secondaryRulerEnabled = readBoolean(node);
-          break;
-        case 'tempoRowVisible':
-          state.tempoRowVisible = readBoolean(node);
-          break;
-        case 'meterRowVisible':
-          state.meterRowVisible = readBoolean(node);
-          break;
-        case 'markersRowVisible':
-          state.markersRowVisible = readBoolean(node);
-          break;
-        case 'smpteFrameRate':
-          {
-            const token = text.trim();
-            const rate = Number(token === '29.97df' ? '29.97' : token === '30df' ? '30' : token);
-            state.smpteFrameRate = resolveSmpteRate(rate) ? rate : 24;
-          }
-          break;
-        case 'smpteDropFrame':
-          state.smpteDropFrame = text.trim() === 'true';
-          break;
-        default:
-          state.unknownChildren.push(node.clone());
+    for (const field of booleanFields) {
+      const node = data.getElement(field);
+      if (node) state[field] = readBoolean(node, context);
+    }
+    if (version === 1 && state.secondaryRulerEnabled)
+      throw context.at(data.getElement('secondaryRulerEnabled')!).error({
+        code: 'conflict',
+        message: 'Legacy version 1 cannot enable the secondary ruler.',
+        recovery: 'Convert the timing state in a compatible editor.',
+      });
+    const zoom = data.getElement('zoomIterations');
+    if (zoom) state.zoomIterations = readInt(zoom, context);
+    const pixels = data.getElement('pixelSecond');
+    if (pixels) {
+      const value = readInt(pixels, context, 1);
+      const converted = Math.trunc(Math.log2(value / 100) * 32);
+      if (zoom && converted !== state.zoomIterations)
+        throw context.at(pixels).error({
+          code: 'conflict',
+          message: 'Legacy zoom conflicts with zoomIterations.',
+          recovery: 'Keep one consistent zoom value.',
+        });
+      state.zoomIterations = converted;
+    }
+    for (const field of ['timeDisplay', 'secondaryTimeDisplay'] as const) {
+      const node = data.getElement(field);
+      if (!node) continue;
+      const token = readText(node, context).trim();
+      const normalized =
+        token === '0' ? 'TIME' : token === '1' || token === 'CSOUND_BEATS' ? 'BEATS' : token;
+      if (!Object.values(TimeBase).includes(normalized as TimeBase))
+        throw context.at(node).error({
+          code: 'value',
+          member: field,
+          value: token,
+          message: 'Unsupported time display.',
+          recovery: 'Use a supported TimeBase name.',
+        });
+      state[field] = normalized as TimeBase;
+    }
+    const snap = data.getElement('snapValue');
+    if (snap) {
+      const token = readText(snap, context).trim();
+      const normalized = token === 'QUARTER' ? 'SIXTEENTH' : token;
+      if (isValidSnapValueName(normalized)) state.snapValue = normalized;
+      else {
+        const value = parseXmlNumber(token, context.at(snap));
+        if (value <= 0)
+          throw context.at(snap).error({
+            code: 'value',
+            value: token,
+            message: 'Legacy snap must be positive.',
+            recovery: 'Choose a positive snap interval or a supported enum name.',
+          });
+        state.snapValue = closestSnapValueMatch(value);
       }
     }
-    if (!isValidSmpteFormat(state.smpteFrameRate, state.smpteDropFrame))
-      state.smpteDropFrame = false;
-
-    // Migrate legacy format values (version 1)
-    if (version < 2) {
-      state.secondaryRulerEnabled = false;
+    const fps = data.getElement('smpteFrameRate');
+    if (fps) {
+      const text = readText(fps, context).trim();
+      const rate = parseXmlNumber(
+        text === '29.97df' ? '29.97' : text === '30df' ? '30' : text,
+        context.at(fps),
+      );
+      if (!resolveSmpteRate(rate))
+        throw context.at(fps).error({
+          code: 'value',
+          value: text,
+          message: 'Unsupported SMPTE rate.',
+          recovery: 'Choose a supported SMPTE frame rate.',
+        });
+      state.smpteFrameRate = rate;
     }
-
+    if (!isValidSmpteFormat(state.smpteFrameRate, state.smpteDropFrame))
+      throw context.at(data.getElement('smpteDropFrame') ?? data).error({
+        code: 'conflict',
+        message: 'Drop-frame mode is incompatible with the SMPTE rate.',
+        recovery: 'Choose a supported rate/drop-frame pair.',
+      });
     return state;
   }
 }

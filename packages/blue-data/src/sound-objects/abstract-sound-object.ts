@@ -15,6 +15,7 @@ import { NoteList } from './note-list';
 import { CompileData } from '../compile-data';
 import { Element } from '../serialization/xml-reader';
 import { ObjRefSaveMap } from '../serialization/obj-ref-map';
+import type { CopyMode } from '../deep-copyable';
 
 export abstract class AbstractSoundObject implements SoundObject {
   protected _name = '';
@@ -131,5 +132,5 @@ export abstract class AbstractSoundObject implements SoundObject {
 
   abstract saveAsXML(objRefMap?: ObjRefSaveMap): Element;
 
-  abstract deepCopy(): SoundObject;
+  abstract deepCopy(mode?: CopyMode): SoundObject;
 }

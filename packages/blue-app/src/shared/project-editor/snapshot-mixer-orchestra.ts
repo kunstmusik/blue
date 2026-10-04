@@ -11,7 +11,6 @@ import {
   BSBDropdown,
   Element,
   GenericInstrument,
-  UnknownInstrument,
   Instrument,
   JavaScriptInstrument,
   Effect,
@@ -1125,10 +1124,7 @@ export function createInstrumentSnapshot(
   return {
     assignmentId,
     type: 'unknown',
-    instrumentType:
-      instrument instanceof UnknownInstrument
-        ? instrument.getTypeName()
-        : (instrument?.constructor.name ?? 'Unknown'),
+    instrumentType: instrument?.constructor.name ?? 'Unknown',
     name: instrument?.getName() ?? '',
     enabled,
     comment: instrument?.getComment() ?? '',

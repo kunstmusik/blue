@@ -1,3 +1,5 @@
+import { XmlLoadContext } from '../serialization/xml-load';
+import { validateProcessorXml } from './xml-policy';
 import { NoteProcessor } from './note-processor';
 import { NoteProcessorException } from './note-processor-exception';
 import { NoteList } from '../sound-objects/note-list';
@@ -83,7 +85,8 @@ export class RotateProcessor extends NoteProcessor {
     return elem;
   }
 
-  static loadFromXML(data: Element): RotateProcessor {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): RotateProcessor {
+    validateProcessorXml(data, 'RotateProcessor', context);
     const proc = new RotateProcessor();
     const ni = data.getTextString('noteIndex');
     if (ni !== null) proc._noteIndex = parseInt(ni, 10);

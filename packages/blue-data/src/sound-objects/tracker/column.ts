@@ -1,5 +1,14 @@
 import { Scale } from '../piano-roll/scale';
 import { Element } from '../../serialization/xml-reader';
+import { XmlLoadContext } from '../../serialization/xml-load';
+import {
+  checkRoot,
+  checkShape,
+  readText,
+  readBoolean,
+  readInt,
+  readDouble,
+} from '../../utilities/xml';
 import { ObjRefLoadMap } from '../../serialization/obj-ref-map';
 import { getBaseTen } from '../../utilities/score';
 
@@ -265,39 +274,58 @@ export class Column {
     return retVal;
   }
 
-  static loadFromXML(data: Element, _objRefMap?: ObjRefLoadMap): Column {
+  static loadFromXML(
+    data: Element,
+    _objRefMap?: ObjRefLoadMap,
+    context = new XmlLoadContext(data),
+  ): Column {
+    checkRoot(data, 'column', context);
+    checkShape(
+      data,
+      [],
+      [
+        'name',
+        'rangeMin',
+        'rangeMax',
+        'type',
+        'restrictedToInteger',
+        'usingRange',
+        'scale',
+        'outputFrequency',
+      ],
+      context,
+    );
     const retVal = new Column();
     const nodes = data.getElements();
 
     while (nodes.hasMoreElements()) {
       const node = nodes.next();
       const nodeName = node.getName();
-      const nodeVal = node.getTextString();
 
       switch (nodeName) {
         case 'scale':
-          retVal.setScale(Scale.loadFromXML(node));
+          retVal.setScale(Scale.loadFromXML(node, context));
           break;
         case 'outputFrequency':
-          retVal._outputFrequency = nodeVal === 'true';
+          retVal._outputFrequency = readBoolean(node, context);
           break;
         case 'name':
-          retVal._name = nodeVal;
+          retVal._name = readText(node, context);
           break;
         case 'rangeMin':
-          retVal._rangeMin = parseFloat(nodeVal);
+          retVal._rangeMin = readDouble(node, context);
           break;
         case 'rangeMax':
-          retVal._rangeMax = parseFloat(nodeVal);
+          retVal._rangeMax = readDouble(node, context);
           break;
         case 'type':
-          retVal._type = parseInt(nodeVal, 10);
+          retVal._type = readInt(node, context, 0, 4);
           break;
         case 'restrictedToInteger':
-          retVal._restrictedToInteger = nodeVal === 'true';
+          retVal._restrictedToInteger = readBoolean(node, context);
           break;
         case 'usingRange':
-          retVal._usingRange = nodeVal === 'true';
+          retVal._usingRange = readBoolean(node, context);
           break;
       }
     }

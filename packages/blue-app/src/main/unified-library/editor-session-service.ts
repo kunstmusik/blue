@@ -7,7 +7,7 @@ import type {
 } from '../../shared/unified-library';
 import { UnifiedLibraryRepositoryClient } from './repository-client';
 import { UnifiedLibraryProjectAdapter } from './project-adapter';
-import { Element } from '@blue/data';
+import { readResourceXml, XmlLoadError } from '@blue/data';
 import { LibraryEditorAdapterRegistry } from './editor-adapters';
 
 export type LibraryEditorSessionStatus = 'ready' | 'conflict' | 'missing';
@@ -103,6 +103,11 @@ export class UnifiedLibraryEditorSessionService {
         payloadXml,
         objectType,
         payload?.supportStatus ?? 'supported',
+        {
+          kind: 'library',
+          label: `${key.libraryType} library item`,
+          ...(key.scope === 'user' ? { libraryItemId: key.nodeId } : {}),
+        },
       ),
       draftXml: payloadXml,
       savedXml: payloadXml,
@@ -190,6 +195,11 @@ export class UnifiedLibraryEditorSessionService {
           source.payloadXml,
           source.objectType,
           'supported',
+          {
+            kind: 'library',
+            label: `${source.key.libraryType} library item`,
+            ...(source.key.scope === 'user' ? { libraryItemId: source.key.nodeId } : {}),
+          },
         ),
         draftXml: source.payloadXml,
         savedXml: source.payloadXml,
@@ -229,13 +239,29 @@ export class UnifiedLibraryEditorSessionService {
   ): LibraryEditorSessionSnapshot {
     const current = this.requireSession(sessionId);
     const applied = patch.documentPatch
-      ? this.adapters.applyPatch(current.key.libraryType, current.draftXml, patch.documentPatch)
+      ? this.adapters.applyPatch(current.key.libraryType, current.draftXml, patch.documentPatch, {
+          kind: 'library',
+          label: `${current.key.libraryType} library item`,
+          ...(current.key.scope === 'user' ? { libraryItemId: current.key.nodeId } : {}),
+        })
       : null;
     const draftXml = applied?.payloadXml ?? current.draftXml;
     const next: InternalLibraryEditorSession = {
       ...current,
       displayName: patch.displayName ?? current.displayName,
-      document: applied?.document ?? current.document,
+      document: applied
+        ? {
+            ...applied.document,
+            diagnostics: [
+              ...new Map(
+                [
+                  ...(current.document.diagnostics ?? []),
+                  ...(applied.document.diagnostics ?? []),
+                ].map((diagnostic) => [JSON.stringify(diagnostic), diagnostic]),
+              ).values(),
+            ],
+          }
+        : current.document,
       draftXml,
       dirty:
         draftXml !== current.savedXml ||
@@ -280,6 +306,7 @@ export class UnifiedLibraryEditorSessionService {
             savedSource.payloadXml,
             savedSource.objectType,
             'supported',
+            { kind: 'library', label: `${current.key.libraryType} library item` },
           ),
           dirty: false,
           status: 'ready' as const,
@@ -297,7 +324,14 @@ export class UnifiedLibraryEditorSessionService {
       }
     }
     try {
-      Element.parse(current.draftXml);
+      if (current.document.kind !== 'unsupported') {
+        const report = readResourceXml(current.key.libraryType, current.draftXml, {
+          kind: 'library',
+          label: current.displayName,
+          libraryItemId: current.key.nodeId,
+        });
+        if (!report.ok) throw new XmlLoadError(report.diagnostics);
+      }
       const node = await this.repository.getNode(current.key.nodeId);
       if (node.revision !== current.baseRevision) {
         const conflict = { ...current, status: 'conflict' as const };
@@ -382,6 +416,7 @@ export class UnifiedLibraryEditorSessionService {
           source.payloadXml,
           source.objectType,
           'supported',
+          { kind: 'library', label: `${current.key.libraryType} library item` },
         ),
         savedXml: source.payloadXml,
         dirty: false,
@@ -404,6 +439,11 @@ export class UnifiedLibraryEditorSessionService {
         payload.payloadXml,
         payload.objectType,
         payload.supportStatus,
+        {
+          kind: 'library',
+          label: `${current.key.libraryType} library item`,
+          ...(current.key.scope === 'user' ? { libraryItemId: current.key.nodeId } : {}),
+        },
       ),
       savedXml: payload.payloadXml,
       dirty: false,
@@ -449,6 +489,11 @@ export class UnifiedLibraryEditorSessionService {
             session.savedXml,
             session.objectType,
             session.document.kind === 'unsupported' ? 'unsupported' : 'supported',
+            {
+              kind: 'library',
+              label: `${session.key.libraryType} library item`,
+              ...(session.key.scope === 'user' ? { libraryItemId: session.key.nodeId } : {}),
+            },
           ),
           dirty: false,
           status: 'ready',

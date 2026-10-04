@@ -1,3 +1,5 @@
+import { XmlLoadContext } from '../../serialization/xml-load';
+import { readBoolean } from '../../utilities/xml';
 /**
  * BSBVSlider — vertical slider widget.
  * Mirrors the Java BSBVSlider class.
@@ -19,8 +21,8 @@ export class BSBVSlider extends BSBWidget {
   valueDisplayEnabled = true;
   randomizable = true;
 
-  loadFromXML(data: Element): void {
-    this.loadFromXMLCommon(data);
+  loadFromXML(data: Element, context = new XmlLoadContext(data)): void {
+    this.loadFromXMLCommon(data, context);
     const h = data.getTextString('sliderHeight');
     if (h) this.sliderHeight = parseInt(h, 10);
     const exactResolution = data.getTextString('bdresolution');
@@ -29,9 +31,9 @@ export class BSBVSlider extends BSBWidget {
     else if (legacyResolution)
       this.setResolutionText(parseLegacyBsbResolution(legacyResolution).canonicalText);
     const vde = data.getElement('valueDisplayEnabled');
-    if (vde) this.valueDisplayEnabled = vde.getTextString() === 'true';
+    if (vde) this.valueDisplayEnabled = readBoolean(vde, context);
     const rand = data.getElement('randomizable');
-    if (rand) this.randomizable = rand.getTextString() === 'true';
+    if (rand) this.randomizable = readBoolean(rand, context);
   }
 
   randomize(): void {

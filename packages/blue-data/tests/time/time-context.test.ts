@@ -144,12 +144,11 @@ describe('TimeContext Serialization', () => {
     );
   });
 
-  it('testLegacyXmlWithSampleRateIsIgnored', () => {
+  it('rejects legacy sample rate without enclosing project reconciliation', () => {
     const original = new TimeContext();
     const xml = original.saveAsXML();
     xml.addElement('sampleRate').setText('48000');
-    const loaded = TimeContext.loadFromXML(xml);
-    expect(loaded.getSampleRate()).toBe(44100);
+    expect(() => TimeContext.loadFromXML(xml)).toThrow('enclosing project reconciliation');
   });
 
   it('testTimeContextDefaultSerialization', () => {

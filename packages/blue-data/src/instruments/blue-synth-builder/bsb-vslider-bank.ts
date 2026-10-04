@@ -1,3 +1,5 @@
+import { XmlLoadContext } from '../../serialization/xml-load';
+import { readBoolean } from '../../utilities/xml';
 /**
  * BSBVSliderBank — bank of multiple vertical sliders in one widget.
  * Mirrors the Java BSBVSliderBank class.
@@ -67,8 +69,8 @@ export class BSBVSliderBank extends BSBWidget {
     }
   }
 
-  loadFromXML(data: Element): void {
-    this.loadFromXMLCommon(data);
+  loadFromXML(data: Element, context = new XmlLoadContext(data)): void {
+    this.loadFromXMLCommon(data, context);
     const h = data.getTextString('sliderHeight');
     if (h) this.sliderHeight = parseInt(h, 10);
     const g = data.getTextString('gap');
@@ -82,9 +84,9 @@ export class BSBVSliderBank extends BSBWidget {
         : this.resolutionDecimal;
     this.resolutionDecimal = loadedResolution;
     const vde = data.getElement('valueDisplayEnabled');
-    if (vde) this.valueDisplayEnabled = vde.getTextString() === 'true';
+    if (vde) this.valueDisplayEnabled = readBoolean(vde, context);
     const rand = data.getElement('randomizable');
-    if (rand) this.randomizable = rand.getTextString() === 'true';
+    if (rand) this.randomizable = readBoolean(rand, context);
 
     this.sliders = [];
     const childElems = data.getElements('bsbObject');
@@ -95,11 +97,13 @@ export class BSBVSliderBank extends BSBWidget {
       // cannot quantize it before the bank resolution is applied below.
       const rawValueText = childElem.getTextString('value');
       const slider = new BSBVSlider();
-      slider.loadFromXML(childElem);
+      slider.loadFromXML(childElem, context);
       if (rawValueText !== null && rawValueText !== '') {
         const rawValue = parseFloat(rawValueText);
         if (Number.isFinite(rawValue)) slider.value = rawValue;
       }
+      slider.minimum = this.minimum;
+      slider.maximum = this.maximum;
       slider.resolutionDecimal = loadedResolution;
       slider.value = snapToResolutionJava(
         slider.value,
@@ -111,6 +115,8 @@ export class BSBVSliderBank extends BSBWidget {
     }
     if (this.sliders.length === 0) {
       const slider = new BSBVSlider();
+      slider.minimum = this.minimum;
+      slider.maximum = this.maximum;
       slider.resolutionDecimal = loadedResolution;
       slider.value = snapToResolutionJava(
         slider.value,

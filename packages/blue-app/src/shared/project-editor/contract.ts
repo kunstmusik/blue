@@ -703,7 +703,7 @@ export type TypeSpecificScoreObjectEditorSnapshot =
 
 export interface JMaskEditorPayload extends Record<string, unknown> {
   seedUsed: boolean;
-  seed: number;
+  seed: string;
   field: Record<string, unknown>;
 }
 

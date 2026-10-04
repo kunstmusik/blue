@@ -7,6 +7,9 @@
  * During CSD generation, effects produce UDOs (blueEffectN).
  */
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
+import { checkRoot, checkShape, readText, readBoolean, readInt, readEnum } from '../utilities/xml';
+
 import { BlueDataObject } from '../blue-data-object';
 import { CopyMode } from '../deep-copyable';
 import { Parameter, AutomationCurve } from '../automation/parameter';
@@ -218,78 +221,76 @@ export class Effect implements BlueDataObject {
     return elem;
   }
 
-  static loadFromXML(data: Element): Effect {
+  static loadFromXML(data: Element, context?: XmlLoadContext, sink?: XmlDiagnosticSink): Effect {
+    const ctx = context ?? new XmlLoadContext(data);
+    checkRoot(data, 'effect', ctx);
+    checkShape(
+      data,
+      [],
+      [
+        'style',
+        'name',
+        'enabled',
+        'numIns',
+        'numOuts',
+        'code',
+        'comments',
+        'opcodeList',
+        'graphicInterface',
+        'parameterList',
+        'bsbParameterList',
+      ],
+      ctx,
+    );
     const effect = new Effect();
-    // Default to CLASSIC for legacy files without <style>
     effect._style = UDOStyle.CLASSIC;
-
-    const name = data.getTextString('name');
-    if (name) effect._name = name;
-
-    const style = data.getTextString('style');
-    if (style) {
-      try {
-        effect._style = UDOStyle[style as keyof typeof UDOStyle];
-      } catch {
-        effect._style = UDOStyle.CLASSIC;
+    for (const child of data.getElements()) {
+      switch (child.getName()) {
+        case 'style':
+          effect._style = readEnum(child, [UDOStyle.CLASSIC, UDOStyle.MODERN], ctx);
+          break;
+        case 'name':
+          effect._name = readText(child, ctx);
+          break;
+        case 'enabled':
+          effect._enabled = readBoolean(child, ctx);
+          break;
+        case 'numIns':
+          effect._numIns = readInt(child, ctx, 0, 2147483647);
+          break;
+        case 'numOuts':
+          effect._numOuts = readInt(child, ctx, 0, 2147483647);
+          break;
+        case 'code':
+          effect._code = readText(child, ctx);
+          break;
+        case 'comments':
+          effect._comments = readText(child, ctx);
+          break;
+        case 'opcodeList':
+          effect._opcodeList = OpcodeList.loadFromXML(child, ctx);
+          break;
+        case 'graphicInterface':
+          effect._graphicInterface.loadFromXML(child, ctx);
+          break;
+        case 'parameterList':
+        case 'bsbParameterList': {
+          if (data.getElement('parameterList') && data.getElement('bsbParameterList'))
+            throw ctx.at(child).error({
+              code: 'conflict',
+              message: 'Competing parameter list representations.',
+              recovery: 'Keep one supported parameter list.',
+            });
+          checkShape(child, [], ['parameter'], ctx, ['parameter']);
+          effect._parameters = child
+            .getElements('parameter')
+            .toArray()
+            .map((parameter) => Parameter.loadFromXML(parameter, ctx));
+          break;
+        }
       }
     }
-
-    const enabled = data.getTextString('enabled');
-    if (enabled !== null) effect._enabled = enabled !== 'false';
-
-    const numIns = data.getTextString('numIns');
-    if (numIns) effect._numIns = parseInt(numIns, 10);
-
-    const numOuts = data.getTextString('numOuts');
-    if (numOuts) effect._numOuts = parseInt(numOuts, 10);
-
-    const code = data.getTextString('code');
-    if (code) effect._code = code;
-
-    const comments = data.getTextString('comments');
-    if (comments) effect._comments = comments;
-
-    const opcodeListElem = data.getElement('opcodeList');
-    if (opcodeListElem) {
-      effect._opcodeList = OpcodeList.loadFromXML(opcodeListElem);
-    }
-
-    // Load graphic interface (BSB widgets for parameter knobs)
-    const giElem = data.getElement('graphicInterface');
-    if (giElem) {
-      effect._graphicInterface.loadFromXML(giElem);
-    }
-
-    // Load parameter list
-    const paramListElem = data.getElement('parameterList') || data.getElement('bsbParameterList');
-    if (paramListElem) {
-      effect._parameters = Effect._loadParameters(paramListElem);
-    }
-
-    if (!effect._opcodeList) {
-      effect._opcodeList = new OpcodeList();
-    }
-
-    if (!effect._graphicInterface) {
-      effect._graphicInterface = new BSBGraphicInterface();
-    }
-
-    return effect;
-  }
-
-  /**
-   * Load parameters from <parameterList> XML.
-   */
-  private static _loadParameters(data: Element): Parameter[] {
-    const parameters: Parameter[] = [];
-    const paramElems = data.getElements('parameter');
-
-    while (paramElems.hasMoreElements()) {
-      parameters.push(Parameter.loadFromXML(paramElems.next()));
-    }
-
-    return parameters;
+    return context ? effect : requireXmlValue(ctx.result(effect), sink);
   }
 
   deepCopy(mode: CopyMode = 'duplication'): BlueDataObject {

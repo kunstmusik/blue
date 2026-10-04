@@ -1,3 +1,5 @@
+import { XmlLoadContext } from '../serialization/xml-load';
+import { validateProcessorXml } from './xml-policy';
 import { NoteProcessor } from './note-processor';
 import { NoteProcessorException } from './note-processor-exception';
 import { NoteList } from '../sound-objects/note-list';
@@ -78,7 +80,8 @@ export class PchAddProcessor extends NoteProcessor {
     return elem;
   }
 
-  static loadFromXML(data: Element): PchAddProcessor {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): PchAddProcessor {
+    validateProcessorXml(data, 'PchAddProcessor', context);
     const proc = new PchAddProcessor();
     const pf = data.getTextString('pfield');
     if (pf !== null) proc._pfield = parseInt(pf, 10);

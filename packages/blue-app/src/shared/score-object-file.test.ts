@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   GenericScore,
+  PianoRoll,
   Instance,
   MeasureMeterPair,
   Meter,
@@ -37,18 +38,20 @@ describe('Sound Object file import/export', () => {
   it('converts imported BBF duration with the destination project context', () => {
     const result = prepareScoreObjectImport(BBF_SOUND_OBJECT_XML, contextWithMeter(3, 4), 'BBF');
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       object: {
-        serializedXml: BBF_SOUND_OBJECT_XML,
         objectType: 'GenericScore',
         name: 'Imported BBF',
-        backgroundColor: 4281558681,
+        backgroundColor: -13408615,
         durationBeats: 9,
         destinationTimeBase: 'BBF',
         isContainer: false,
       },
     });
+    if (!result.ok) throw new Error(result.error);
+    expect(result.object.serializedXml).toContain('<subjectiveDuration type="BBF">');
+    expect(result.object.serializedXml).toContain('<bars>3</bars>');
   });
 
   it('uses the project tempo and sample rate for absolute-time durations', () => {
@@ -108,4 +111,36 @@ describe('Sound Object file import/export', () => {
   it('accepts a regular SoundObject export', () => {
     expect(validateScoreObjectExport(new GenericScore().saveAsXML().toXml())).toEqual({ ok: true });
   });
+});
+
+it('returns native source and nested diagnostics before Sound Object insertion', () => {
+  const source = {
+    kind: 'soundObject' as const,
+    label: 'C:\\Users\\Blue\\bad.blueObject',
+    nativePath: 'C:\\Users\\Blue\\bad.blueObject',
+  };
+  const result = prepareScoreObjectImport(
+    '<soundObject type="blue.soundObject.GenericScore"><score future="true">i1 0 1</score></soundObject>',
+    new TimeContext(),
+    'BEATS',
+    source,
+  );
+  expect(result).toMatchObject({
+    ok: false,
+    diagnostics: [{ source, path: '/soundObject/score[1]/@future', severity: 'error' }],
+  });
+  if (result.ok) throw new Error('Expected rejection');
+  expect(result.error).toContain(source.label);
+});
+
+it('returns safe resource warnings and canonical XML for the later insertion', () => {
+  const xml = new PianoRoll().saveAsXML().toXml().replace('<scale>', '<scale/><scale>');
+  const result = prepareScoreObjectImport(xml, new TimeContext(), 'BEATS');
+  expect(result).toMatchObject({
+    ok: true,
+    diagnostics: [{ code: 'SL-H10', severity: 'warning' }],
+  });
+  if (!result.ok) throw new Error(result.error);
+  expect(result.object.serializedXml.match(/<scale>/g)).toHaveLength(1);
+  expect(result.object.serializedXml).not.toContain('<scale/>');
 });

@@ -8,6 +8,8 @@
 import { Meter } from './meter';
 import { MeasureMeterPair } from './measure-meter-pair';
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext } from '../serialization/xml-load';
+import { checkRoot, checkShape } from '../utilities/xml';
 
 /** Default PPQ (pulses per quarter note), matching Java. */
 export const DEFAULT_PPQ = 960;
@@ -294,13 +296,23 @@ export class MeterMap {
     return elem;
   }
 
-  static loadFromXML(data: Element): MeterMap {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): MeterMap {
+    checkRoot(data, 'meterMap', context);
+    checkShape(data, [], ['measureMeterPair'], context, ['measureMeterPair']);
     const map = new MeterMap();
     map.entries = [];
 
     const entries = data.getElements('measureMeterPair');
     while (entries.hasMoreElements()) {
-      const entry = MeasureMeterPair.loadFromXML(entries.next());
+      const node = entries.next();
+      const entry = MeasureMeterPair.loadFromXML(node, context);
+      const previous = map.entries[map.entries.length - 1];
+      if ((!previous && entry.measure !== 1) || (previous && entry.measure <= previous.measure))
+        throw context.at(node).error({
+          code: 'conflict',
+          message: 'Meter entries must begin at measure 1 and ascend without duplicates.',
+          recovery: 'Correct the meter sequence.',
+        });
       map.entries.push(entry);
     }
 

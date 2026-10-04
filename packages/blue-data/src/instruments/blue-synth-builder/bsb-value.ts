@@ -1,3 +1,4 @@
+import { XmlLoadContext } from '../../serialization/xml-load';
 /**
  * BSBValue — numeric display with editable value.
  * Mirrors the Java BSBValue class.
@@ -36,8 +37,8 @@ export class BSBValue extends BSBWidget {
     );
   }
 
-  loadFromXML(data: Element): void {
-    this.loadFromXMLCommon(data);
+  loadFromXML(data: Element, context = new XmlLoadContext(data)): void {
+    this.loadFromXMLCommon(data, context);
     const dv = data.getTextString('defaultValue');
     if (dv) {
       this.defaultValue = parseFloat(dv);

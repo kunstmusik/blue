@@ -5,6 +5,51 @@
  */
 import { Element } from './serialization/xml-reader';
 import { ObjRefSaveMap } from './serialization/obj-ref-map';
+import { XmlLoadContext } from './serialization/xml-load';
+import { checkRoot, checkShape, readBoolean, readText } from './utilities/xml';
+
+const STRING_FIELDS = [
+  'title',
+  'author',
+  'notes',
+  'sampleRate',
+  'ksmps',
+  'channels',
+  'zeroDbFS',
+  'diskSampleRate',
+  'diskKsmps',
+  'diskChannels',
+  'diskZeroDbFS',
+  'advancedSettings',
+  'fileName',
+  'diskAdvancedSettings',
+  'mediaFolder',
+  'commandLine',
+  'diskCommandLine',
+  'oFormat',
+  'audioOutput',
+] as const;
+const BOOLEAN_FIELDS = [
+  'useZeroDbFS',
+  'diskUseZeroDbFS',
+  'useAudioOut',
+  'useAudioIn',
+  'useMidiIn',
+  'useMidiOut',
+  'noteAmpsEnabled',
+  'outOfRangeEnabled',
+  'warningsEnabled',
+  'benchmarkEnabled',
+  'completeOverride',
+  'askOnRender',
+  'diskNoteAmpsEnabled',
+  'diskOutOfRangeEnabled',
+  'diskWarningsEnabled',
+  'diskBenchmarkEnabled',
+  'diskCompleteOverride',
+  'diskAlwaysRenderEntireProject',
+  'copyToMediaFileOnImport',
+] as const;
 
 export class ProjectProperties {
   title = '';
@@ -235,141 +280,37 @@ export class ProjectProperties {
     return elem;
   }
 
-  static loadFromXML(data: Element): ProjectProperties {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): ProjectProperties {
+    checkRoot(data, 'projectProperties', context);
+    checkShape(
+      data,
+      [],
+      [...STRING_FIELDS, ...BOOLEAN_FIELDS, 'copyToMediaFolderOnImport'],
+      context,
+    );
     const props = new ProjectProperties();
-
-    const title = data.getTextString('title');
-    if (title !== null) props.title = title;
-
-    const author = data.getTextString('author');
-    if (author !== null) props.author = author;
-
-    const notes = data.getTextString('notes');
-    if (notes !== null) props.notes = notes;
-
-    const sr = data.getTextString('sampleRate');
-    if (sr !== null) props.sampleRate = sr;
-
-    const ksmps = data.getTextString('ksmps');
-    if (ksmps !== null) props.ksmps = ksmps;
-
-    const channels = data.getTextString('channels');
-    if (channels !== null) {
-      props.channels = channels;
+    for (const field of STRING_FIELDS) {
+      const child = data.getElement(field);
+      if (child) props[field] = readText(child, context);
     }
-
-    const udb = data.getTextString('useZeroDbFS');
-    if (udb !== null) props.useZeroDbFS = udb.toLowerCase() === 'true';
-
-    const zdb = data.getTextString('zeroDbFS');
-    if (zdb !== null) props.zeroDbFS = zdb;
-
-    const diskSr = data.getTextString('diskSampleRate');
-    if (diskSr !== null) props.diskSampleRate = diskSr;
-
-    const diskKsmps = data.getTextString('diskKsmps');
-    if (diskKsmps !== null) props.diskKsmps = diskKsmps;
-
-    const diskChannels = data.getTextString('diskChannels');
-    if (diskChannels !== null) props.diskChannels = diskChannels;
-
-    const ddb = data.getTextString('diskUseZeroDbFS');
-    if (ddb !== null) props.diskUseZeroDbFS = ddb.toLowerCase() === 'true';
-
-    const dzdb = data.getTextString('diskZeroDbFS');
-    if (dzdb !== null) props.diskZeroDbFS = dzdb;
-
-    const useAudioOut = data.getTextString('useAudioOut');
-    if (useAudioOut !== null) props.useAudioOut = useAudioOut.toLowerCase() === 'true';
-
-    const useAudioIn = data.getTextString('useAudioIn');
-    if (useAudioIn !== null) props.useAudioIn = useAudioIn.toLowerCase() === 'true';
-
-    const useMidiIn = data.getTextString('useMidiIn');
-    if (useMidiIn !== null) props.useMidiIn = useMidiIn.toLowerCase() === 'true';
-
-    const useMidiOut = data.getTextString('useMidiOut');
-    if (useMidiOut !== null) props.useMidiOut = useMidiOut.toLowerCase() === 'true';
-
-    const noteAmpsEnabled = data.getTextString('noteAmpsEnabled');
-    if (noteAmpsEnabled !== null) props.noteAmpsEnabled = noteAmpsEnabled.toLowerCase() === 'true';
-
-    const outOfRangeEnabled = data.getTextString('outOfRangeEnabled');
-    if (outOfRangeEnabled !== null)
-      props.outOfRangeEnabled = outOfRangeEnabled.toLowerCase() === 'true';
-
-    const warningsEnabled = data.getTextString('warningsEnabled');
-    if (warningsEnabled !== null) props.warningsEnabled = warningsEnabled.toLowerCase() === 'true';
-
-    const benchmarkEnabled = data.getTextString('benchmarkEnabled');
-    if (benchmarkEnabled !== null)
-      props.benchmarkEnabled = benchmarkEnabled.toLowerCase() === 'true';
-
-    const adv = data.getTextString('advancedSettings');
-    if (adv !== null) props.advancedSettings = adv;
-
-    const co = data.getTextString('completeOverride');
-    if (co !== null) props.completeOverride = co.toLowerCase() === 'true';
-
-    const fileName = data.getTextString('fileName');
-    if (fileName !== null) props.fileName = fileName;
-
-    const askOnRender = data.getTextString('askOnRender');
-    if (askOnRender !== null) props.askOnRender = askOnRender.toLowerCase() === 'true';
-
-    const diskNoteAmpsEnabled = data.getTextString('diskNoteAmpsEnabled');
-    if (diskNoteAmpsEnabled !== null)
-      props.diskNoteAmpsEnabled = diskNoteAmpsEnabled.toLowerCase() === 'true';
-
-    const diskOutOfRangeEnabled = data.getTextString('diskOutOfRangeEnabled');
-    if (diskOutOfRangeEnabled !== null)
-      props.diskOutOfRangeEnabled = diskOutOfRangeEnabled.toLowerCase() === 'true';
-
-    const diskWarningsEnabled = data.getTextString('diskWarningsEnabled');
-    if (diskWarningsEnabled !== null)
-      props.diskWarningsEnabled = diskWarningsEnabled.toLowerCase() === 'true';
-
-    const diskBenchmarkEnabled = data.getTextString('diskBenchmarkEnabled');
-    if (diskBenchmarkEnabled !== null)
-      props.diskBenchmarkEnabled = diskBenchmarkEnabled.toLowerCase() === 'true';
-
-    const diskAdv = data.getTextString('diskAdvancedSettings');
-    if (diskAdv !== null) props.diskAdvancedSettings = diskAdv;
-
-    const diskCo = data.getTextString('diskCompleteOverride');
-    if (diskCo !== null) props.diskCompleteOverride = diskCo.toLowerCase() === 'true';
-
-    const diskAlwaysRenderEntireProject = data.getTextString('diskAlwaysRenderEntireProject');
-    if (diskAlwaysRenderEntireProject !== null) {
-      props.diskAlwaysRenderEntireProject = diskAlwaysRenderEntireProject.toLowerCase() === 'true';
+    for (const field of BOOLEAN_FIELDS) {
+      const child = data.getElement(field);
+      if (child) props[field] = readBoolean(child, context);
     }
-
-    const mediaFolder = data.getTextString('mediaFolder');
-    if (mediaFolder !== null) props.mediaFolder = mediaFolder;
-
-    const copyToMediaFileOnImport = data.getTextString('copyToMediaFileOnImport');
-    if (copyToMediaFileOnImport !== null) {
-      props.copyToMediaFileOnImport = copyToMediaFileOnImport.toLowerCase() === 'true';
-    } else {
-      // Legacy alias: copyToMediaFolderOnImport → copyToMediaFileOnImport
-      const legacyCopy = data.getTextString('copyToMediaFolderOnImport');
-      if (legacyCopy !== null) {
-        props.copyToMediaFileOnImport = legacyCopy.toLowerCase() === 'true';
+    const alias = data.getElement('copyToMediaFolderOnImport');
+    if (alias) {
+      const value = readBoolean(alias, context);
+      if (data.hasElement('copyToMediaFileOnImport') && value !== props.copyToMediaFileOnImport) {
+        throw context.at(alias).error({
+          code: 'conflict',
+          member: alias.getName(),
+          value: alias.getTextString(),
+          message: 'Conflicting media-copy aliases.',
+          recovery: 'Keep one consistent media-copy setting.',
+        });
       }
+      props.copyToMediaFileOnImport = value;
     }
-
-    const cmd = data.getTextString('commandLine');
-    if (cmd !== null) props.commandLine = cmd;
-
-    const diskCmd = data.getTextString('diskCommandLine');
-    if (diskCmd !== null) props.diskCommandLine = diskCmd;
-
-    const oFormat = data.getTextString('oFormat');
-    if (oFormat !== null) props.oFormat = oFormat;
-
-    const ao = data.getTextString('audioOutput');
-    if (ao !== null) props.audioOutput = ao;
-
     return props;
   }
 }

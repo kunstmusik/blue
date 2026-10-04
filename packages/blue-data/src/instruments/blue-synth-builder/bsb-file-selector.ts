@@ -1,3 +1,5 @@
+import { XmlLoadContext } from '../../serialization/xml-load';
+import { readBoolean } from '../../utilities/xml';
 /**
  * BSBFileSelector — file path selector widget.
  * Implements StringChannelProvider in Java (provides gS_blue_strN globals).
@@ -34,14 +36,14 @@ export class BSBFileSelector extends BSBWidget {
     this.syncStringChannels();
   }
 
-  loadFromXML(data: Element): void {
-    this.loadFromXMLCommon(data);
+  loadFromXML(data: Element, context = new XmlLoadContext(data)): void {
+    this.loadFromXMLCommon(data, context);
     const fn = data.getTextString('fileName');
     if (fn !== null) this.fileName = fn;
     const tw = data.getTextString('textFieldWidth');
     if (tw) this.textFieldWidth = parseInt(tw, 10);
     const scEnabled = data.getElement('stringChannelEnabled');
-    this.stringChannelEnabled = scEnabled ? scEnabled.getTextString() === 'true' : false;
+    this.stringChannelEnabled = scEnabled ? readBoolean(scEnabled, context) : false;
     this.syncStringChannels();
   }
 

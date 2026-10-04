@@ -1,3 +1,5 @@
+import { XmlLoadContext } from '../../serialization/xml-load';
+import { checkRoot, checkShape } from '../../utilities/xml';
 import { Element } from '../../serialization/xml-reader';
 import { generatePrefixedUuid } from '../../utilities/uuid';
 import type { CopyMode } from '../../deep-copyable';
@@ -122,7 +124,9 @@ export class Preset {
     return elem;
   }
 
-  static loadFromXML(data: Element): Preset {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): Preset {
+    checkRoot(data, 'preset', context);
+    checkShape(data, ['name', 'uniqueId'], ['setting'], context, ['setting']);
     const preset = new Preset();
     preset.presetName = data.getAttribute('name') ?? '';
     const uniqueId = data.getAttribute('uniqueId');
@@ -132,7 +136,16 @@ export class Preset {
     const settings = data.getElements('setting');
     while (settings.hasMoreElements()) {
       const setting = settings.next();
+      checkShape(setting, ['name'], [], context, [], true);
       const name = setting.getAttribute('name');
+      if (!name || preset._valuesMap.has(name))
+        throw context.at(setting).error({
+          code: 'value',
+          member: '@name',
+          value: name ?? '',
+          message: 'Setting requires a unique nonempty key.',
+          recovery: 'Keep one scalar setting for each key.',
+        });
       const value = setting.getTextString();
       if (name) {
         preset._valuesMap.set(name, value ?? '');

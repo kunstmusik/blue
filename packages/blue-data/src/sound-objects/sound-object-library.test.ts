@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { SoundObjectLibrary } from './sound-object-library';
+import { PianoRoll } from './piano-roll';
+import { Instance } from './instance';
 import { GenericScore } from './generic-score';
 import { Element } from '../serialization/xml-reader';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
@@ -335,4 +337,48 @@ describe('SoundObjectLibrary', () => {
       });
     });
   });
+});
+
+describe('project library graph acceptance', () => {
+  it('resolves forward references before publishing a complete library', () => {
+    const root = Element.parse(`<soundObjectLibrary>
+      <soundObject type="Instance" objRefId="lib_0"><soundObjectReference soundObjectLibraryID="lib_1"/></soundObject>
+      <soundObject type="GenericScore" objRefId="lib_1"><name>Forward target</name></soundObject>
+    </soundObjectLibrary>`);
+    const library = SoundObjectLibrary.loadFromXML(root);
+    expect((library.getObject(0) as Instance).getSoundObject()).toBe(library.getObject(1));
+    const before = library.getEntries();
+    const xml = library.saveAsXML(new ObjRefSaveMap()).toXml();
+    expect(library.getEntries()).toEqual(before);
+    expect(xml).toContain('soundObjectLibraryID="lib_1"');
+    const reopened = SoundObjectLibrary.loadFromXML(Element.parse(xml));
+    expect((reopened.getObject(0) as Instance).getSoundObject()).toBe(reopened.getObject(1));
+  });
+
+  it('allocates missing historical IDs without colliding with explicit identities', () => {
+    const library = SoundObjectLibrary.loadFromXML(
+      Element.parse(
+        '<soundObjectLibrary><soundObject type="GenericScore"/><soundObject type="GenericScore" objRefId="lib_0"/></soundObjectLibrary>',
+      ),
+    );
+    expect(new Set(library.getEntries().map((entry) => entry.libraryId)).size).toBe(2);
+  });
+});
+
+it('requires a warning sink before publishing direct library reference identities', () => {
+  const piano = new PianoRoll().saveAsXML().toXml().replace('<scale>', '<scale/><scale>');
+  const xml = Element.parse(
+    '<soundObjectLibrary>' +
+      piano.replace('<soundObject ', '<soundObject objRefId="piano" ') +
+      '</soundObjectLibrary>',
+  );
+  const map = new ObjRefLoadMap();
+  expect(() => SoundObjectLibrary.loadFromXML(xml, map)).toThrow(/warning/);
+  expect(map.has('piano')).toBe(false);
+  const codes: string[] = [];
+  const library = SoundObjectLibrary.loadFromXML(xml, map, undefined, (diagnostics) =>
+    codes.push(...diagnostics.map((item) => item.code)),
+  );
+  expect(codes).toEqual(['SL-H10']);
+  expect(map.get('piano')).toBe(library.getObject(0));
 });

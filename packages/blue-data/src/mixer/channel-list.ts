@@ -4,6 +4,9 @@
  */
 import { Channel } from './channel';
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
+import { checkRoot, checkShape } from '../utilities/xml';
+
 import { BlueDataObject } from '../blue-data-object';
 import type { CopyMode } from '../deep-copyable';
 
@@ -53,7 +56,23 @@ export class ChannelList extends Array<Channel> implements BlueDataObject {
     return elem;
   }
 
-  static loadFromXML(data: Element): ChannelList {
+  static loadFromXML(
+    data: Element,
+    context?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): ChannelList {
+    const ctx = context ?? new XmlLoadContext(data);
+    checkRoot(data, ['channelList', 'channels', 'subChannels'], ctx);
+    checkShape(data, ['association', 'listName', 'list'], ['channel'], ctx, ['channel']);
+    const role = data.getAttribute('list');
+    if (role !== null && !['channels', 'subChannels', 'SubChannels'].includes(role))
+      throw ctx.error({
+        code: 'value',
+        member: '@list',
+        value: role,
+        message: 'Unsupported channel list role.',
+        recovery: 'Choose channels or subChannels.',
+      });
     const list = new ChannelList();
 
     const association = data.getAttribute('association');
@@ -68,9 +87,9 @@ export class ChannelList extends Array<Channel> implements BlueDataObject {
 
     const channels = data.getElements('channel');
     while (channels.hasMoreElements()) {
-      list.push(Channel.loadFromXML(channels.next()));
+      list.push(Channel.loadFromXML(channels.next(), ctx));
     }
-    return list;
+    return context ? list : requireXmlValue(ctx.result(list), sink);
   }
 
   deepCopy(mode: CopyMode = 'duplication'): BlueDataObject {

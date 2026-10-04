@@ -1,4 +1,7 @@
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext, requireXmlValue } from '../serialization/xml-load';
+import type { XmlDiagnosticSink } from '../serialization/xml-load';
+import { checkShape, readText, parseXmlBoolean } from '../utilities/xml';
 import { appendUserDefinedOpcodes } from '../opcodes/udo-utilities';
 import type { Parameter } from '../automation/parameter';
 import { replaceOpcodeNames } from '../utilities/text';
@@ -130,17 +133,45 @@ export class PythonInstrument extends Instrument {
     return elem;
   }
 
-  static loadFromXML(data: Element): PythonInstrument {
+  static loadFromXML(
+    data: Element,
+    context?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): PythonInstrument {
+    const ctx = context ?? new XmlLoadContext(data);
+    checkShape(
+      data,
+      ['type', 'enabled'],
+      ['name', 'comment', 'globalOrc', 'globalSco', 'instrumentText', 'opcodeList'],
+      ctx,
+    );
+    if (
+      data.getName() !== 'instrument' ||
+      data.getAttribute('type') !== 'blue.orchestra.PythonInstrument'
+    )
+      throw ctx.at(data).error({
+        code: 'type',
+        member: '@type',
+        value: data.getAttribute('type') ?? '',
+        message: 'Expected PythonInstrument instrument type.',
+        recovery: 'Use the matching instrument loader.',
+      });
+    const text = (field: string): string | null => {
+      const child = data.getElement(field);
+      return child ? readText(child, ctx) : null;
+    };
     const instr = new PythonInstrument();
-    instr.setEnabled(data.getAttribute('enabled') !== 'false');
-    instr.setName(data.getTextString('name') ?? '');
-    instr.setComment(data.getTextString('comment') ?? '');
-    instr.setGlobalOrc(data.getTextString('globalOrc') ?? '');
-    instr.setGlobalSco(data.getTextString('globalSco') ?? '');
-    instr.setText(data.getTextString('instrumentText') ?? '');
+    instr.setEnabled(
+      parseXmlBoolean(data.getAttribute('enabled') ?? 'true', ctx.at(data), '@enabled'),
+    );
+    instr.setName(text('name') ?? '');
+    instr.setComment(text('comment') ?? '');
+    instr.setGlobalOrc(text('globalOrc') ?? '');
+    instr.setGlobalSco(text('globalSco') ?? '');
+    instr.setText(text('instrumentText') ?? '');
     const opcodeList = data.getElement('opcodeList');
-    if (opcodeList) instr._opcodeList = OpcodeList.loadFromXML(opcodeList);
-    return instr;
+    if (opcodeList) instr._opcodeList = OpcodeList.loadFromXML(opcodeList, ctx);
+    return context ? instr : requireXmlValue(ctx.result(instr), sink);
   }
 
   deepCopy(): PythonInstrument {

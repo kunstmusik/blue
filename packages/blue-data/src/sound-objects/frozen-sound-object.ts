@@ -12,6 +12,17 @@ import { Note } from './note';
 import { TimeContext } from '../time/time-context';
 import { CompileData } from '../compile-data';
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
+import {
+  checkRoot,
+  checkShape,
+  readText,
+  readInt,
+  readBoolean,
+  readEnum,
+  parseXmlBoolean,
+} from '../utilities/xml';
+import { BASIC_SOUND_OBJECT_CHILDREN } from './sound-object-utilities';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
 import { TimeBehavior } from './time-behavior';
@@ -19,6 +30,7 @@ import { initBasicFromXML, getBasicXML } from './sound-object-utilities';
 import { GenericInstrument } from '../instruments/generic-instrument';
 import { loadSoundObjectFromXML } from './sound-object-registry';
 import type { ScoreGenerationOptions } from '../score/score-generation-options';
+import type { CopyMode } from '../deep-copyable';
 
 const FSO_INSTR_NAME = 'Frozen SoundObject Player Instrument';
 const FSO_COMPILE_VAR = 'frozenSoundObject.hasBeenCompiled';
@@ -28,13 +40,13 @@ export class FrozenSoundObject extends AbstractSoundObject {
   private _frozenWaveFileName = '';
   private _numChannels = 0;
 
-  constructor(other?: FrozenSoundObject) {
+  constructor(other?: FrozenSoundObject, mode: CopyMode = 'duplication') {
     super();
     if (other) {
       this.copyFrom(other);
       this._frozenWaveFileName = other._frozenWaveFileName;
       this._numChannels = other._numChannels;
-      this._frozenSoundObject = other._frozenSoundObject?.deepCopy() ?? null;
+      this._frozenSoundObject = other._frozenSoundObject?.deepCopy(mode) ?? null;
     }
   }
 
@@ -195,7 +207,8 @@ export class FrozenSoundObject extends AbstractSoundObject {
 
   override saveAsXML(objRefMap?: ObjRefSaveMap): Element {
     const elem = getBasicXML(this, 'blue.soundObject.FrozenSoundObject');
-    elem.addElement('numChannels').setText(this._numChannels.toString());
+    if (this._numChannels !== 0)
+      elem.addElement('numChannels').setText(this._numChannels.toString());
     elem.addElement('frozenWaveFileName').setText(this._frozenWaveFileName);
 
     if (this._frozenSoundObject) {
@@ -206,25 +219,55 @@ export class FrozenSoundObject extends AbstractSoundObject {
     return elem;
   }
 
-  static loadFromXML(data: Element, objRefMap?: ObjRefLoadMap): FrozenSoundObject {
+  static loadFromXML(
+    data: Element,
+    objRefMap?: ObjRefLoadMap,
+    context?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): FrozenSoundObject {
+    const ctx = context ?? new XmlLoadContext(data);
+    checkRoot(data, 'soundObject', ctx);
+    const type = data.getAttribute('type');
+    if (
+      type === null ||
+      !['FrozenSoundObject', 'blue.soundObject.FrozenSoundObject'].includes(type)
+    )
+      throw ctx.at(data).error({
+        code: 'type',
+        member: '@type',
+        value: type ?? '',
+        message: 'Unsupported FrozenSoundObject type.',
+        recovery: 'Supply a supported concrete SoundObject type.',
+      });
+    checkShape(
+      data,
+      ['type'],
+      [...BASIC_SOUND_OBJECT_CHILDREN, ...['numChannels', 'frozenWaveFileName', 'soundObject']],
+      ctx,
+    );
     const obj = new FrozenSoundObject();
-    initBasicFromXML(obj, data);
+    const frozenWaveFileNameElement = data.getElement('frozenWaveFileName');
+    if (frozenWaveFileNameElement) readText(frozenWaveFileNameElement, ctx);
+    const numChannelsElement = data.getElement('numChannels');
+    if (numChannelsElement) readText(numChannelsElement, ctx);
+    initBasicFromXML(obj, data, ctx);
 
     const channels = data.getTextString('numChannels');
-    if (channels) obj._numChannels = parseInt(channels, 10);
+    if (channels !== null)
+      obj._numChannels = readInt(data.getElement('numChannels')!, ctx, 1, 2147483647);
 
     const frozenFile = data.getTextString('frozenWaveFileName');
     if (frozenFile !== null) obj._frozenWaveFileName = frozenFile;
 
     const nestedElement = data.getElement('soundObject');
     if (nestedElement) {
-      obj._frozenSoundObject = loadSoundObjectFromXML(nestedElement, objRefMap);
+      obj._frozenSoundObject = loadSoundObjectFromXML(nestedElement, objRefMap, ctx);
     }
 
-    return obj;
+    return context ? obj : requireXmlValue(ctx.result(obj), sink);
   }
 
-  override deepCopy(): SoundObject {
-    return new FrozenSoundObject(this);
+  override deepCopy(mode: CopyMode = 'duplication'): SoundObject {
+    return new FrozenSoundObject(this, mode);
   }
 }

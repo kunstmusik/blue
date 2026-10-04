@@ -35,7 +35,7 @@ export function createRuntimeBsbFixtureXml(): string {
     </graphicInterface>
     <bsbParameterList>
       <parameter uniqueId="p1" name="amp" label="amp" min="0" max="1" automationEnabled="true" value="0.5">
-        <line>
+        <line min="0" max="1" version="2">
           <linePoint x="0" y="0.5"/>
         </line>
       </parameter>

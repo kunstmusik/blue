@@ -2,7 +2,9 @@ import {
   Element,
   Instance,
   PolyObject,
-  loadSoundObjectFromXML,
+  readResourceXml,
+  type XmlDiagnostic,
+  type XmlSource,
   type SoundObject,
   type TimeContext,
 } from '@blue/data';
@@ -18,16 +20,22 @@ export interface ImportedScoreObject {
 }
 
 export type ScoreObjectImportResult =
-  { ok: true; object: ImportedScoreObject } | { ok: false; error: string };
+  | { ok: true; object: ImportedScoreObject; diagnostics?: readonly XmlDiagnostic[] }
+  | { ok: false; error: string; diagnostics?: readonly XmlDiagnostic[] };
 
 export type ScoreObjectExportResult =
   { status: 'saved' | 'cancelled' } | { status: 'error'; error: string };
 
 export type ScoreObjectValidationResult = { ok: true } | { ok: false; error: string };
 
-type LoadedScoreObjectResult = { ok: true; object: SoundObject } | { ok: false; error: string };
+type LoadedScoreObjectResult =
+  | { ok: true; object: SoundObject; diagnostics: readonly XmlDiagnostic[] }
+  | { ok: false; error: string; diagnostics?: readonly XmlDiagnostic[] };
 
-function loadScoreObjectXML(xml: string): LoadedScoreObjectResult {
+function loadScoreObjectXML(
+  xml: string,
+  source: XmlSource = { kind: 'soundObject', label: 'Sound Object file' },
+): LoadedScoreObjectResult {
   let root: Element;
   try {
     root = Element.parse(xml);
@@ -39,14 +47,16 @@ function loadScoreObjectXML(xml: string): LoadedScoreObjectResult {
     return { ok: false, error: 'File did not contain a Sound Object.' };
   }
 
-  try {
-    const object = loadSoundObjectFromXML(root);
-    return object
-      ? { ok: true, object }
-      : { ok: false, error: 'File contained an unsupported Sound Object type.' };
-  } catch {
-    return { ok: false, error: 'Could not load the Sound Object from XML.' };
-  }
+  const report = readResourceXml('soundObject', xml, source);
+  if (!report.ok)
+    return {
+      ok: false,
+      diagnostics: report.diagnostics,
+      error: report.diagnostics
+        .map((item) => `${item.source.label}: ${item.path}: ${item.message} ${item.recovery}`)
+        .join('\n'),
+    };
+  return { ok: true, object: report.value as SoundObject, diagnostics: report.diagnostics };
 }
 
 function containsInstance(polyObject: PolyObject): boolean {
@@ -67,8 +77,9 @@ export function prepareScoreObjectImport(
   xml: string,
   context: TimeContext,
   destinationTimeBase: string,
+  source?: XmlSource,
 ): ScoreObjectImportResult {
-  const loaded = loadScoreObjectXML(xml);
+  const loaded = loadScoreObjectXML(xml, source);
   if (!loaded.ok) return loaded;
   if (hasUnsupportedInstance(loaded.object)) {
     return {
@@ -85,8 +96,9 @@ export function prepareScoreObjectImport(
 
   return {
     ok: true,
+    ...(loaded.diagnostics.length ? { diagnostics: loaded.diagnostics } : {}),
     object: {
-      serializedXml: xml,
+      serializedXml: loaded.object.saveAsXML().toXml(),
       objectType: loaded.object.constructor.name,
       name: loaded.object.getName() || 'Imported Object',
       backgroundColor: loaded.object.getBackgroundColor(),

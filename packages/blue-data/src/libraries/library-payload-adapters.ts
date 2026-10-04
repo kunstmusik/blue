@@ -5,57 +5,9 @@ import {
   RawXmlElement,
 } from './library-types';
 
-const KNOWN_INSTRUMENT_TYPES = new Set([
-  'blue.orchestra.BlueSynthBuilder',
-  'blue.orchestra.GenericInstrument',
-  'blue.orchestra.JavaScriptInstrument',
-  'blue.orchestra.PythonInstrument',
-  'blue.orchestra.BlueX7',
-]);
-
-const KNOWN_SOUND_OBJECT_TYPES = new Set([
-  'AudioFile',
-  'ClojureObject',
-  'Comment',
-  'CSDSoundObject',
-  'External',
-  'FrozenSoundObject',
-  'GenericScore',
-  'Instance',
-  'JavaScriptObject',
-  'JMask',
-  'LineObject',
-  'ObjectBuilder',
-  'PatternObject',
-  'PianoRoll',
-  'PolyObject',
-  'PythonObject',
-  'Sound',
-  'TrackerObject',
-  'ZakLineObject',
-]);
-
-const UNSUPPORTED_NESTED_NAMES = new Set([
-  'plugin',
-  'futureField',
-  'unknownWidget',
-  'unknownSoundObject',
-]);
-
-function findFirstDescendant(node: RawXmlElement, names: readonly string[]): RawXmlElement | null {
-  for (const child of node.children) {
-    if (names.includes(child.name)) return child;
-    const nested = findFirstDescendant(child, names);
-    if (nested) return nested;
-  }
-  return null;
-}
-
-function hasUnsupportedNestedContent(node: RawXmlElement): boolean {
-  return node.children.some(
-    (child) => UNSUPPORTED_NESTED_NAMES.has(child.name) || hasUnsupportedNestedContent(child),
-  );
-}
+import { readResourceXml } from '../resource-xml-policy';
+import type { XmlDiagnostic, XmlSource } from '../serialization/xml-load';
+import { TimeBase } from '../time/time-base';
 
 export function stableTextHash(value: string): string {
   let hash = 0x811c9dc5;
@@ -73,58 +25,75 @@ function available(value: string | number | null): LibraryPreviewField<string | 
 }
 
 function extractEmbeddedName(libraryType: LibraryType, node: RawXmlElement): string | null {
-  const names = libraryType === 'udo' ? ['opcodeName'] : ['name'];
-  const element = findFirstDescendant(node, names);
-  const value = element?.text.trim() ?? '';
-  return value.length > 0 ? value : null;
+  const name = libraryType === 'udo' ? 'opcodeName' : 'name';
+  const candidates = node.children.filter((child) => child.name === name);
+  if (
+    candidates.length !== 1 ||
+    candidates[0].children.length ||
+    Object.keys(candidates[0].attributes).length
+  )
+    return null;
+  return candidates[0].text.trim() || null;
 }
 
 function determineObjectType(libraryType: LibraryType, node: RawXmlElement): string {
-  if (libraryType === 'instrument' || libraryType === 'soundObject') {
-    return node.attributes.type ?? 'unknown';
-  }
-  return libraryType === 'udo' ? 'OpcodeDefinition' : 'Effect';
-}
-
-function determineSupport(
-  libraryType: LibraryType,
-  objectType: string,
-  node: RawXmlElement,
-): { supported: boolean; reason: string | null } {
-  if (hasUnsupportedNestedContent(node)) {
-    return { supported: false, reason: 'unknown-nested-content' };
-  }
-  if (libraryType === 'instrument' && !KNOWN_INSTRUMENT_TYPES.has(objectType)) {
-    return { supported: false, reason: 'unknown-type' };
-  }
-  const normalizedObjectType = objectType.split('.').pop() ?? objectType;
-  if (libraryType === 'soundObject' && !KNOWN_SOUND_OBJECT_TYPES.has(normalizedObjectType)) {
-    return { supported: false, reason: 'unknown-type' };
-  }
-  return { supported: true, reason: null };
+  return libraryType === 'instrument' || libraryType === 'soundObject'
+    ? (node.attributes.type ?? 'unknown')
+    : libraryType === 'udo'
+      ? 'OpcodeDefinition'
+      : 'Effect';
 }
 
 export function classifyLibraryPayload(
   libraryType: LibraryType,
   node: RawXmlElement,
+  source: XmlSource = { kind: 'library', label: 'in-memory library' },
+  path = `/${node.name}`,
 ): ClassifiedLibraryPayload {
   const embeddedName = extractEmbeddedName(libraryType, node);
   const objectType = determineObjectType(libraryType, node);
-  const support = determineSupport(libraryType, objectType, node);
-  const durationElement = findFirstDescendant(node, ['subjectiveDuration', 'duration']);
-  const durationValue = durationElement ? Number(durationElement.text.trim()) : null;
+  const report = readResourceXml(libraryType, node.rawXml, source);
+  const diagnostics: readonly XmlDiagnostic[] = report.diagnostics.map((diagnostic) => ({
+    ...diagnostic,
+    path: path + diagnostic.path.slice(('/' + node.name).length),
+    ...(!report.ok
+      ? {
+          severity: 'warning' as const,
+          code: 'L-ARCHIVE',
+          message: `Archived unsupported ${libraryType}: ${diagnostic.message}`,
+          recovery: `Original XML is retained for exact export. Typed editing and project insertion are disabled. ${diagnostic.recovery}`,
+        }
+      : {}),
+  }));
+  const reason = report.ok
+    ? null
+    : report.diagnostics[0]?.code === 'type'
+      ? 'unknown-type'
+      : 'unknown-nested-content';
+  let durationValue: number | null = null;
+  if (report.ok && 'getSubjectiveDuration' in report.value) {
+    const duration = report.value.getSubjectiveDuration();
+    if (duration.getTimeBase() === TimeBase.BEATS) durationValue = duration.getValue();
+  }
+  const canonical = report.ok ? report.value.saveAsXML().toXml() : node.rawXml;
 
   return {
     embeddedName,
     objectType,
-    supportStatus: support.supported ? 'supported' : 'unsupported',
-    supportReasonCode: support.reason,
-    supportMessage: support.reason
-      ? 'This object contains content that cannot be edited safely by this version of Blue.'
+    supportStatus: report.ok ? 'supported' : 'unsupported',
+    supportReasonCode: reason,
+    supportMessage: diagnostics.length
+      ? diagnostics
+          .map(
+            (diagnostic) =>
+              `${diagnostic.source.label}: ${diagnostic.path}: ${diagnostic.message} ${diagnostic.recovery}`,
+          )
+          .join('\n')
       : null,
+    diagnostics,
     rawXml: node.rawXml,
     rawHash: stableTextHash(node.rawXml),
-    canonicalContentHash: stableTextHash(node.rawXml.replace(/>\s+</g, '><').trim()),
+    canonicalContentHash: stableTextHash(canonical),
     preview: {
       name: available(embeddedName),
       objectType: available(objectType),

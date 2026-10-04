@@ -6,6 +6,36 @@ import { UnifiedLibraryRepositoryClient } from './repository-client';
 import { UnifiedLibraryImportExportService } from './import-export-service';
 
 describe('manual import preview', () => {
+  it('presents typed historical SoundObject warnings in the library preview', async () => {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'blue-manual-ruler-'));
+    const sourcePath = path.join(directory, 'soundObjectLibrary.xml');
+    fs.writeFileSync(
+      sourcePath,
+      '<soundObjectLibrary><category categoryName="SoundObject Library"><soundObject type="blue.soundObject.PianoRoll"><name>Ruler</name><timeUnit>6</timeUnit></soundObject></category></soundObjectLibrary>',
+      'utf8',
+    );
+    const client = UnifiedLibraryRepositoryClient.openForTesting(':memory:');
+    try {
+      const service = new UnifiedLibraryImportExportService(client);
+      const preview = await service.previewManualImport([sourcePath]);
+      expect(preview.sources[0]?.diagnostics).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            code: 'SL-H06',
+            severity: 'warning',
+            source: expect.objectContaining({ kind: 'library', nativePath: sourcePath }),
+            path: expect.stringContaining('/timeUnit[1]'),
+            value: '6',
+            recovery: expect.stringContaining('retained and saved as timeUnit'),
+          }),
+        ]),
+      );
+    } finally {
+      await client.close();
+      fs.rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
   it('reports hashes, recognized type, unsupported payloads, and stale source tokens', async () => {
     const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'blue-manual-preview-'));
     const sourcePath = path.join(directory, 'soundObjectLibrary.xml');
@@ -23,6 +53,15 @@ describe('manual import preview', () => {
         itemCount: 1,
         unsupportedCount: 1,
       });
+      expect(preview.sources[0]?.diagnostics).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            severity: 'warning',
+            source: expect.objectContaining({ nativePath: sourcePath, label: sourcePath }),
+            path: expect.stringContaining('soundObject'),
+          }),
+        ]),
+      );
       expect(preview.sources[0]?.sourceHash).toMatch(/^[a-f0-9]{64}$/);
       fs.appendFileSync(sourcePath, ' ');
       await expect(service.executeManualImport(preview.previewToken)).rejects.toThrow(/changed/i);

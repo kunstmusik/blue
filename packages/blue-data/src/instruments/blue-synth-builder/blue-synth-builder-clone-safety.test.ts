@@ -102,23 +102,23 @@ function createExplicitIdBuilder(): BlueSynthBuilder {
       </bsbObject>`,
       parameterList: `<parameterList>
       <parameter uniqueId="gain-param" name="gain" label="Gain" min="0.0" max="1.0" automationEnabled="true" value="0.5">
-        <line>
+        <line min="0" max="1" version="2">
           <linePoint x="0.0" y="0.5"/>
           <linePoint x="1.0" y="0.75"/>
         </line>
       </parameter>
       <parameter uniqueId="choice-param" name="choice" label="Choice" min="0.0" max="1.0" automationEnabled="false" value="1.0">
-        <line>
+        <line min="0" max="1" version="2">
           <linePoint x="0.0" y="1.0"/>
         </line>
       </parameter>
       <parameter uniqueId="bank-0-param" name="bank_0" label="Bank 0" min="0.0" max="1.0" automationEnabled="false" value="0.2">
-        <line>
+        <line min="0" max="1" version="2">
           <linePoint x="0.0" y="0.2"/>
         </line>
       </parameter>
       <parameter uniqueId="bank-1-param" name="bank_1" label="Bank 1" min="0.0" max="1.0" automationEnabled="false" value="0.8">
-        <line>
+        <line min="0" max="1" version="2">
           <linePoint x="0.0" y="0.8"/>
         </line>
       </parameter>
@@ -196,6 +196,7 @@ describe('BlueSynthBuilder clone safety', () => {
     const builder = loadBuilder(
       buildInstrumentXml({
         graphicInterface: `
+        <bsbObject type="blue.orchestra.blueSynthBuilder.BSBGroup">
         <bsbObject type="blue.orchestra.blueSynthBuilder.BSBKnob" version="2">
           <objectName>gain</objectName>
           <x>10</x>
@@ -221,6 +222,7 @@ describe('BlueSynthBuilder clone safety', () => {
             <objectName>bank_0</objectName>
             <value>0.1</value>
           </bsbObject>
+        </bsbObject>
         </bsbObject>`,
       }),
     );
@@ -232,9 +234,11 @@ describe('BlueSynthBuilder clone safety', () => {
   });
 
   it('repairs duplicate loaded widget ids before exposing the interface for editing', () => {
-    const builder = loadBuilder(
-      buildInstrumentXml({
-        graphicInterface: `
+    const diagnostics: string[] = [];
+    const builder = BlueSynthBuilder.loadFromXML(
+      Element.parse(
+        buildInstrumentXml({
+          graphicInterface: `
         <bsbObject type="blue.orchestra.blueSynthBuilder.BSBKnob" version="2">
           <id>dup</id>
           <objectName>gain</objectName>
@@ -253,10 +257,15 @@ describe('BlueSynthBuilder clone safety', () => {
           <minimum>0</minimum>
           <maximum>1</maximum>
         </bsbObject>`,
-      }),
+        }),
+      ),
+      undefined,
+      undefined,
+      (items) => diagnostics.push(...items.map((item) => item.code)),
     );
 
     const widgets = collectBsbWidgets(builder.getGraphicInterface().getRootGroup()) as BSBKnob[];
+    expect(diagnostics).toEqual(['R-BSB-IDENTITY']);
     const ids = getWidgetIds(builder);
 
     expect(widgets[0].id).toBe('dup');
@@ -266,9 +275,11 @@ describe('BlueSynthBuilder clone safety', () => {
   });
 
   it('keeps widget-targeted edits isolated after duplicate-id repair', () => {
-    const builder = loadBuilder(
-      buildInstrumentXml({
-        graphicInterface: `
+    const diagnostics: string[] = [];
+    const builder = BlueSynthBuilder.loadFromXML(
+      Element.parse(
+        buildInstrumentXml({
+          graphicInterface: `
         <bsbObject type="blue.orchestra.blueSynthBuilder.BSBKnob" version="2">
           <id>dup</id>
           <objectName>gain</objectName>
@@ -287,7 +298,11 @@ describe('BlueSynthBuilder clone safety', () => {
           <minimum>0</minimum>
           <maximum>1</maximum>
         </bsbObject>`,
-      }),
+        }),
+      ),
+      undefined,
+      undefined,
+      (items) => diagnostics.push(...items.map((item) => item.code)),
     );
 
     const [first, second] = collectBsbWidgets(

@@ -81,18 +81,15 @@ describe('runtime instrument parity', () => {
     expect(pythonReloaded.generateGlobalOrc()).toBe('gk = 3');
     expect(pythonReloaded.generateGlobalSco()).toBe('i1 0 3');
 
-    const blueX7Xml = `<instrument type="blue.orchestra.BlueX7">
-      <name>BlueX7 Runtime</name>
-      <comment>bluex7 comment</comment>
-      <customData>
-        <nested>alpha</nested>
-      </customData>
-    </instrument>`;
-    const blueX7 = BlueX7.loadFromXML(Element.parse(blueX7Xml));
-    const blueX7Saved = blueX7.saveAsXML().toXml();
-
-    expect(blueX7Saved).toContain('<customData>');
-    expect(blueX7Saved).toContain('<nested>alpha</nested>');
+    const voice = new BlueX7();
+    voice.setName('BlueX7 Runtime');
+    voice.setComment('bluex7 comment');
+    const blueX7 = BlueX7.loadFromXML(voice.saveAsXML());
+    expect(blueX7.getName()).toBe('BlueX7 Runtime');
+    expect(blueX7.getVoice()).toEqual(voice.getVoice());
+    const unsupported = voice.saveAsXML();
+    unsupported.addElement('customData').addElement('nested').setText('alpha');
+    expect(() => BlueX7.loadFromXML(unsupported)).toThrow();
   });
 
   it('exports BlueX7 preview and SysEx entry points from package index in a host-neutral manner', () => {

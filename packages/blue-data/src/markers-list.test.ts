@@ -20,7 +20,7 @@ describe('MarkersList', () => {
       expect(list.getMarkers()).toEqual([]);
     });
 
-    it('preserves unknown child elements for lossless round-trip', () => {
+    it('normalizes legacy marker attributes into typed times', () => {
       const xml =
         '<markersList><marker name="A" time="1.5"/><marker name="B" time="3.0"/></markersList>';
       const elem = Element.parse(xml);
@@ -33,6 +33,7 @@ describe('MarkersList', () => {
         count++;
       }
       expect(count).toBe(2);
+      expect(saved.getElement('marker')!.getElement('time')!.getAttribute('type')).toBe('BEATS');
     });
 
     it('reads marker names and times from loaded XML', () => {
@@ -195,5 +196,44 @@ describe('MarkersList', () => {
       expect(marker?.getElement('time')?.getAttributeValue('type')).toBe('SECONDS');
       expect(marker?.getElement('time')?.getTextString('totalSeconds')).toBe('12');
     });
+  });
+});
+
+describe('marker acceptance and ownership', () => {
+  it.each([
+    '<markersList future="yes"/>',
+    '<markersList><future/></markersList>',
+    '<markersList><marker future="yes"/></markersList>',
+    '<markersList><marker time="1junk"/></markersList>',
+    '<markersList><marker time="1"><time>2</time></marker></markersList>',
+    '<markersList><marker><time>NaN</time></marker></markersList>',
+    '<markersList><marker><time type="UNKNOWN"/></marker></markersList>',
+    '<markersList><marker><time>1</time><time>1</time></marker></markersList>',
+  ])('rejects unexpected or ambiguous marker data %s', (xml) => {
+    expect(() => MarkersList.loadFromXML(Element.parse(xml))).toThrow();
+  });
+
+  it('coalesces equal aliases and isolates input, output, getters and copies', () => {
+    const input = Element.parse(
+      '<markersList><marker name="A" time="2"><time>2</time></marker></markersList>',
+    );
+    const list = MarkersList.loadFromXML(input);
+    input.getElement('marker')!.setAttribute('name', 'input');
+    list.getMarker(0)!.setAttribute('name', 'getter');
+    list.getMarkers()[0].setAttribute('name', 'array');
+    list.saveAsXML().getElement('marker')!.setAttribute('name', 'output');
+    const copy = list.deepCopy() as MarkersList;
+    copy.setMarkerName(0, 'copy');
+    expect(list.getMarkerName(0)).toBe('A');
+    expect(list.getMarkerTime(0)).toBe(2);
+    expect(list.saveAsXML().getElement('marker')!.getAttribute('time')).toBeNull();
+  });
+
+  it('replaces a typed marker time when setting a numeric beat time', () => {
+    const list = new MarkersList();
+    list.addMarkerPosition('A', TimePosition.seconds(4));
+    list.setMarkerTime(0, 12);
+    expect(list.getMarkerTimePosition(0).getTimeBase()).toBe('BEATS');
+    expect(MarkersList.loadFromXML(list.saveAsXML()).getMarkerTime(0)).toBe(12);
   });
 });

@@ -1,3 +1,5 @@
+import { XmlLoadContext } from '../serialization/xml-load';
+import { validateProcessorXml } from './xml-policy';
 import { NoteProcessor } from './note-processor';
 import { NoteProcessorException } from './note-processor-exception';
 import { NoteList } from '../sound-objects/note-list';
@@ -76,7 +78,8 @@ export class LineMultiplyProcessor extends NoteProcessor {
     return elem;
   }
 
-  static loadFromXML(data: Element): LineMultiplyProcessor {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): LineMultiplyProcessor {
+    validateProcessorXml(data, 'LineMultiplyProcessor', context);
     const proc = new LineMultiplyProcessor();
     const pf = data.getTextString('pfield');
     if (pf !== null) proc._pfield = parseInt(pf, 10);

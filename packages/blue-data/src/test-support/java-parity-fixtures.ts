@@ -24,7 +24,7 @@ import { PianoRoll } from '../sound-objects/piano-roll';
 import { PianoNote } from '../sound-objects/piano-roll/piano-note';
 import { FrozenSoundObject } from '../sound-objects/frozen-sound-object';
 import { buildBlueX7PopSongProject } from '../instruments/blue-x7/pop-song-fixture';
-import { Element } from '../serialization/xml-reader';
+import { ClojureProjectData, ClojureLibraryEntry } from '../plugins/clojure-project-data';
 
 export interface JavaParityManifest {
   schemaVersion: number;
@@ -370,7 +370,7 @@ export function assertManifestInvariants(
 }
 
 export type HistoryFixtureKind =
-  'score' | 'mixer' | 'instrument' | 'bsb' | 'blueX7' | 'pianoRoll' | 'freeze' | 'unknownData';
+  'score' | 'mixer' | 'instrument' | 'bsb' | 'blueX7' | 'pianoRoll' | 'freeze' | 'pluginData';
 
 export function resolveRepoRoot(): string {
   const candidates = [
@@ -390,7 +390,12 @@ export function resolveRepoRoot(): string {
 export function loadHistoryFixtureFile(relativePath: string): BlueData {
   const fullPath = path.join(resolveRepoRoot(), relativePath);
   const text = fs.readFileSync(fullPath, 'utf8');
-  return BlueData.loadFromString(text);
+  return BlueData.loadFromString(text, (diagnostics) => {
+    for (const diagnostic of diagnostics) {
+      if (diagnostic.code !== 'SL-H10' || diagnostic.severity !== 'warning')
+        throw new Error(`Unexpected fixture diagnostic: ${diagnostic.code} ${diagnostic.path}`);
+    }
+  });
 }
 
 export function createRepresentativeScoreProject(): BlueData {
@@ -537,24 +542,15 @@ export function createRepresentativeFreezeProject(): BlueData {
   return data;
 }
 
-export function createRepresentativeUnknownDataProject(): BlueData {
+export function createRepresentativePluginDataProject(): BlueData {
   const data = new BlueData();
-  data.getProjectProperties().title = 'Representative Unknown Data Project';
-
-  const pluginElement = new Element('legacyPlugin');
-  pluginElement.setAttribute('id', 'custom-plugin-123');
-  pluginElement.setText('custom-plugin-data-value');
-  data.getPluginDataXml().push(pluginElement);
-
-  const root = data.getScore()[0] as PolyObject;
-  root.setName('Root');
-  const layer = root[0];
-  layer.setName('Unknown XML Layer');
-  layer.setUnknownAttribute('customAuthoredAttr', 'testValue');
-  const unknownChild = new Element('customElement');
-  unknownChild.setText('unknownText');
-  layer.addUnknownChild(unknownChild);
-
+  data.getProjectProperties().title = 'Representative Named Plugin Data Project';
+  const plugin = new ClojureProjectData();
+  const entry = new ClojureLibraryEntry();
+  entry.setDependencyCoordinates('original/history-fixture');
+  entry.setVersion('1.0.0');
+  plugin.addLibraryEntry(entry);
+  data.setClojureProjectData(plugin);
   return data;
 }
 
@@ -574,7 +570,7 @@ export function createHistoryFixtureProject(kind: HistoryFixtureKind): BlueData 
       return createRepresentativePianoRollProject();
     case 'freeze':
       return createRepresentativeFreezeProject();
-    case 'unknownData':
-      return createRepresentativeUnknownDataProject();
+    case 'pluginData':
+      return createRepresentativePluginDataProject();
   }
 }

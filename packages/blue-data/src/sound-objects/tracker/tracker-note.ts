@@ -1,4 +1,6 @@
 import { Element } from '../../serialization/xml-reader';
+import { XmlLoadContext } from '../../serialization/xml-load';
+import { checkRoot, checkShape, readText, readBoolean } from '../../utilities/xml';
 
 export class TrackerNote {
   private _tied = false;
@@ -79,35 +81,42 @@ export class TrackerNote {
     return retVal;
   }
 
-  static loadFromXML(data: Element): TrackerNote {
-    const retVal = new TrackerNote();
-    const nodes = data.getElements();
-
-    while (nodes.hasMoreElements()) {
-      const node = nodes.next();
-      const nodeName = node.getName();
-      const nodeVal = node.getTextString();
-
-      switch (nodeName) {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): TrackerNote {
+    checkRoot(data, 'trackerNote', context);
+    checkShape(data, [], ['tied', 'off', 'field', 'pitch', 'amp', 'otherField'], context, [
+      'field',
+      'otherField',
+    ]);
+    const note = new TrackerNote();
+    for (const child of data.getElements()) {
+      switch (child.getName()) {
         case 'tied':
-          retVal._tied = nodeVal === 'true';
+          note._tied = readBoolean(child, context);
           break;
         case 'off':
-          retVal._off = nodeVal === 'true';
+          note._off = readBoolean(child, context);
           break;
         case 'pitch':
         case 'amp':
-          retVal._fields.push(nodeVal ?? '');
+          note._fields.push(readText(child, context));
           break;
         case 'field':
         case 'otherField': {
-          const atVal = node.getAttributeValue('val');
-          retVal._fields.push(atVal ?? '');
+          checkShape(child, ['val'], [], context);
+          const value = child.getAttribute('val');
+          if (value === null)
+            throw context.at(child).error({
+              code: 'value',
+              member: '@val',
+              message: 'Tracker cell value is required.',
+              recovery: 'Supply a val attribute, including empty text for an inactive cell.',
+            });
+          note._fields.push(value);
           break;
         }
       }
     }
-    return retVal;
+    return note;
   }
 
   copyValues(other: TrackerNote): void {

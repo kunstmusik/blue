@@ -9,6 +9,9 @@ import {
   GenericInstrument,
   GenericScore,
   LiveObject,
+  Element,
+  NoteProcessorChain,
+  TuningProcessor,
   OpcodeDefinition,
   PolyObject,
   Sound,
@@ -59,6 +62,51 @@ function target(
 }
 
 describe('project library transfer', () => {
+  it('rejects cached supported resources with invalid nested members before any project commit', () => {
+    const project = activeProject();
+    const adapter = new UnifiedLibraryProjectAdapter(project.provider);
+    const before = project.data.saveToString();
+    const invalid =
+      '<instrument type="blue.orchestra.GenericInstrument"><name>Bad</name><opcodeList><udo><opcodeName>x</opcodeName><future>meaningful</future></udo></opcodeList></instrument>';
+    expect(() =>
+      adapter.applyInsertion({
+        key: { scope: 'user', libraryType: 'instrument', nodeId: 'cached-supported' },
+        payloadXml: invalid,
+        target: target('instrument', project.revision),
+        mode: 'independent',
+      }),
+    ).toThrow(/future/);
+    expect(project.commit).not.toHaveBeenCalled();
+    expect(project.revision).toBe(4);
+    expect(project.data.saveToString()).toBe(before);
+  });
+
+  it('rejects unavailable tuning dependencies before committing an insertion', () => {
+    const project = activeProject();
+    const adapter = new UnifiedLibraryProjectAdapter(project.provider);
+    const value = new GenericScore();
+    const chain = new NoteProcessorChain();
+    chain.addProcessor(
+      TuningProcessor.loadFromXML(
+        Element.parse(
+          '<noteProcessor type="TuningProcessor"><scale>blue-contract-nonexistent-scale-116.scl</scale><baseFrequency>440</baseFrequency></noteProcessor>',
+        ),
+      ),
+    );
+    value.setNoteProcessorChain(chain);
+    const before = project.data.saveToString();
+    expect(() =>
+      adapter.applyInsertion({
+        key: { scope: 'user', libraryType: 'soundObject', nodeId: 'external-scale' },
+        payloadXml: value.saveAsXML().toXml(),
+        target: target('soundObject', project.revision),
+        mode: 'independent',
+      }),
+    ).toThrow(/blue-contract-nonexistent-scale-116.scl/);
+    expect(project.commit).not.toHaveBeenCalled();
+    expect(project.data.saveToString()).toBe(before);
+  });
+
   it('inserts independent Instrument and UDO copies and survives project save/reopen', async () => {
     const project = activeProject();
     const adapter = new UnifiedLibraryProjectAdapter(project.provider);

@@ -1,3 +1,5 @@
+import { XmlLoadContext } from '../serialization/xml-load';
+import { validateProcessorXml } from './xml-policy';
 import { NoteProcessor } from './note-processor';
 import { NoteProcessorException } from './note-processor-exception';
 import { NoteList } from '../sound-objects/note-list';
@@ -66,7 +68,8 @@ export class SubListProcessor extends NoteProcessor {
     return elem;
   }
 
-  static loadFromXML(data: Element): SubListProcessor {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): SubListProcessor {
+    validateProcessorXml(data, 'SubListProcessor', context);
     const proc = new SubListProcessor();
     const s = data.getTextString('start');
     if (s !== null) proc._start = parseInt(s, 10);

@@ -11,6 +11,16 @@ import { Note } from './note';
 import { TimeContext } from '../time/time-context';
 import { CompileData } from '../compile-data';
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
+import {
+  checkShape,
+  readText,
+  readInt,
+  readBoolean,
+  readEnum,
+  parseXmlBoolean,
+} from '../utilities/xml';
+import { BASIC_SOUND_OBJECT_CHILDREN } from './sound-object-utilities';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
 import { TimeBehavior } from './time-behavior';
@@ -189,9 +199,38 @@ export class AudioFile extends AbstractSoundObject {
     return elem;
   }
 
-  static loadFromXML(data: Element, _objRefMap?: ObjRefLoadMap): AudioFile {
+  static loadFromXML(
+    data: Element,
+    _objRefMap?: ObjRefLoadMap,
+    context?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): AudioFile {
+    const ctx = context ?? new XmlLoadContext(data);
+    const type = data.getAttribute('type');
+    if (
+      data.getName() !== 'soundObject' ||
+      type === null ||
+      !['AudioFile', 'blue.soundObject.AudioFile'].includes(type)
+    )
+      throw ctx.at(data).error({
+        code: 'type',
+        member: '@type',
+        value: type ?? '',
+        message: 'Unsupported AudioFile type.',
+        recovery: 'Supply a supported concrete SoundObject type.',
+      });
+    checkShape(
+      data,
+      ['type'],
+      [...BASIC_SOUND_OBJECT_CHILDREN, ...['soundFileName', 'csoundPostCode']],
+      ctx,
+    );
     const obj = new AudioFile();
-    initBasicFromXML(obj, data);
+    const csoundPostCodeElement = data.getElement('csoundPostCode');
+    if (csoundPostCodeElement) readText(csoundPostCodeElement, ctx);
+    const soundFileNameElement = data.getElement('soundFileName');
+    if (soundFileNameElement) readText(soundFileNameElement, ctx);
+    initBasicFromXML(obj, data, ctx);
 
     const sf = data.getTextString('soundFileName');
     if (sf !== null) obj._soundFileName = sf;
@@ -199,7 +238,7 @@ export class AudioFile extends AbstractSoundObject {
     const post = data.getTextString('csoundPostCode');
     if (post !== null) obj._csoundPostCode = post;
 
-    return obj;
+    return context ? obj : requireXmlValue(ctx.result(obj), sink);
   }
 
   override deepCopy(): SoundObject {

@@ -1,4 +1,6 @@
 import { Element } from './serialization/xml-reader';
+import { XmlLoadContext } from './serialization/xml-load';
+import { checkRoot, readText } from './utilities/xml';
 
 export class Tables {
   private _tables = '';
@@ -58,12 +60,12 @@ export class Tables {
     return elem;
   }
 
-  static loadFromXML(data: Element | null): Tables {
+  static loadFromXML(data: Element | null, context?: XmlLoadContext): Tables {
     const tables = new Tables();
     if (!data) return tables;
-
-    const text = data.getTextString();
-    tables.setTables(text ?? '');
+    const operation = context ?? new XmlLoadContext(data);
+    checkRoot(data, 'tables', operation);
+    tables.setTables(readText(data, operation));
 
     return tables;
   }

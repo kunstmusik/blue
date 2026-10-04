@@ -4,6 +4,14 @@ import { replaceAll } from '../../utilities/text';
 import { Column, PitchColumn, AmpColumn } from './column';
 import { TrackerNote } from './tracker-note';
 import { Element } from '../../serialization/xml-reader';
+import { XmlLoadContext } from '../../serialization/xml-load';
+import {
+  checkRoot,
+  checkShape,
+  readText,
+  parseXmlNumber,
+  parseXmlInteger,
+} from '../../utilities/xml';
 
 export class Track {
   private _name = '';
@@ -193,7 +201,14 @@ export class Track {
     return retVal;
   }
 
-  static loadFromXML(data: Element): Track {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): Track {
+    checkRoot(data, 'track', context);
+    checkShape(
+      data,
+      [],
+      ['name', 'noteTemplate', 'instrumentId', 'columns', 'trackerNotes'],
+      context,
+    );
     const retVal = new Track(false);
     const nodes = data.getElements();
 
@@ -203,30 +218,101 @@ export class Track {
 
       switch (nodeName) {
         case 'name':
-          retVal._name = node.getTextString() ?? '';
+          retVal._name = readText(node, context);
           break;
         case 'noteTemplate':
-          retVal._noteTemplate = node.getTextString() ?? '';
+          retVal._noteTemplate = readText(node, context);
           break;
         case 'instrumentId':
-          retVal._instrumentId = node.getTextString() ?? '';
+          retVal._instrumentId = readText(node, context);
           break;
         case 'columns': {
+          checkShape(node, [], ['column'], context, ['column']);
           const nodes2 = node.getElements();
           while (nodes2.hasMoreElements()) {
-            retVal.addColumn(Column.loadFromXML(nodes2.next()));
+            retVal._columns.push(Column.loadFromXML(nodes2.next(), undefined, context));
           }
           break;
         }
         case 'trackerNotes': {
+          checkShape(node, [], ['trackerNote'], context, ['trackerNote']);
           const nodes2 = node.getElements();
           while (nodes2.hasMoreElements()) {
-            retVal._trackerNotes.push(TrackerNote.loadFromXML(nodes2.next()));
+            retVal._trackerNotes.push(TrackerNote.loadFromXML(nodes2.next(), context));
           }
           break;
         }
       }
     }
+    for (const note of retVal._trackerNotes) {
+      if (note.getNumFields() !== retVal.getNumColumns())
+        throw context.error({
+          code: 'value',
+          message: 'Tracker cells differ from column definitions.',
+          recovery: 'Provide one field per declared column.',
+        });
+    }
+    const notesElement = data.getElement('trackerNotes');
+    if (notesElement)
+      for (const noteElement of notesElement.getElements('trackerNote')) {
+        let columnIndex = 0;
+        for (const cell of noteElement.getElements()) {
+          if (!['field', 'otherField', 'pitch', 'amp'].includes(cell.getName())) continue;
+          const column = retVal._columns[columnIndex++];
+          const value =
+            cell.getName() === 'field' || cell.getName() === 'otherField'
+              ? cell.getAttribute('val')!
+              : readText(cell, context);
+          const token = value.trim();
+          if (!token || column.getType() === Column.TYPE_STR) continue;
+          const at = context.at(cell);
+          if (column.getType() === Column.TYPE_MIDI) parseXmlInteger(token, at, 0, 127, '@val');
+          if (column.getType() === Column.TYPE_NUM) {
+            const number = column.isRestrictedToInteger()
+              ? parseXmlInteger(token, at)
+              : parseXmlNumber(token, at);
+            if (
+              column.isUsingRange() &&
+              (number < column.getRangeMin() || number > column.getRangeMax())
+            )
+              throw at.error({
+                code: 'value',
+                value,
+                message: 'Tracker numeric cell is outside its column range.',
+                recovery: 'Supply a value within the declared column range.',
+              });
+          }
+          if (column.getType() === Column.TYPE_PCH) {
+            if (token.split('.').length !== 2)
+              throw at.error({
+                code: 'value',
+                value,
+                message: 'Tracker pitch must use decimal pitch notation.',
+                recovery: 'Supply an octave.degree pitch.',
+              });
+            parseXmlNumber(token, at);
+          }
+          if (column.getType() === Column.TYPE_BLUE_PCH) {
+            const match = /^([+-]?\d+)\.([+-]?\d+)$/.exec(token);
+            if (!match)
+              throw at.error({
+                code: 'value',
+                value,
+                message: 'Blue pitch must contain integral octave and degree values.',
+                recovery: 'Supply an octave.degree pitch.',
+              });
+            parseXmlInteger(match[1], at, -2147483648, 2147483647);
+            parseXmlInteger(match[2], at, -2147483648, 2147483647);
+            if (match[2].length > 1 && match[2].startsWith('0'))
+              throw at.error({
+                code: 'value',
+                value,
+                message: 'Blue pitch degrees use unpadded integers.',
+                recovery: 'Remove redundant degree zero padding.',
+              });
+          }
+        }
+      }
     return retVal;
   }
 

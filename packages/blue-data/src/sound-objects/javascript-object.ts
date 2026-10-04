@@ -5,6 +5,16 @@ import { Note } from './note';
 import { TimeContext } from '../time/time-context';
 import { CompileData } from '../compile-data';
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
+import {
+  checkShape,
+  readText,
+  readInt,
+  readBoolean,
+  readEnum,
+  parseXmlBoolean,
+} from '../utilities/xml';
+import { BASIC_SOUND_OBJECT_CHILDREN } from './sound-object-utilities';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
 import { initBasicFromXML, getBasicXML } from './sound-object-utilities';
@@ -169,17 +179,44 @@ export class JavaScriptObject extends AbstractSoundObject {
     return elem;
   }
 
-  static loadFromXML(data: Element, _objRefMap?: ObjRefLoadMap): JavaScriptObject {
+  static loadFromXML(
+    data: Element,
+    _objRefMap?: ObjRefLoadMap,
+    context?: XmlLoadContext,
+    sink?: XmlDiagnosticSink,
+  ): JavaScriptObject {
+    const ctx = context ?? new XmlLoadContext(data);
+    const type = data.getAttribute('type');
+    if (
+      data.getName() !== 'soundObject' ||
+      type === null ||
+      !['JavaScriptObject', 'blue.soundObject.JavaScriptObject'].includes(type)
+    )
+      throw ctx.at(data).error({
+        code: 'type',
+        member: '@type',
+        value: type ?? '',
+        message: 'Unsupported JavaScriptObject type.',
+        recovery: 'Supply a supported concrete SoundObject type.',
+      });
+    checkShape(
+      data,
+      ['type', 'onLoadProcessable'],
+      [...BASIC_SOUND_OBJECT_CHILDREN, ...['javaScriptCode']],
+      ctx,
+    );
     const obj = new JavaScriptObject();
-    initBasicFromXML(obj, data);
+    const javaScriptCodeElement = data.getElement('javaScriptCode');
+    if (javaScriptCodeElement) readText(javaScriptCodeElement, ctx);
+    initBasicFromXML(obj, data, ctx);
 
     const code = data.getTextString('javaScriptCode');
     if (code !== null) obj.setJavaScriptCode(code);
 
     const olp = data.getAttribute('onLoadProcessable');
-    if (olp) obj.setOnLoadProcessable(olp.toLowerCase() === 'true');
+    if (olp !== null) obj.setOnLoadProcessable(parseXmlBoolean(olp, ctx, '@onLoadProcessable'));
 
-    return obj;
+    return context ? obj : requireXmlValue(ctx.result(obj), sink);
   }
 
   override deepCopy(): SoundObject {

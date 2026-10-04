@@ -17,6 +17,19 @@ const fixtureNames = [
 ];
 
 describe('Track layer migration integration', () => {
+  it('rejects unrecognized legacy audio content before graph migration', () => {
+    const source = readFileSync(resolve(fixtureDirectory, fixtureNames[0]), 'utf8');
+    expect(() =>
+      BlueData.loadFromString(
+        source.replace('<audioLayers>', '<unknownGroupSibling value="preserve-me"/><audioLayers>'),
+      ),
+    ).toThrow();
+    expect(() =>
+      BlueData.loadFromString(
+        source.replace('<audioLayer name=', '<audioLayer futureTrackAttribute="enabled" name='),
+      ),
+    ).toThrow();
+  });
   for (const fixtureName of fixtureNames) {
     it(`loads, compiles, and reopens ${fixtureName} as canonical Track XML`, () => {
       const source = readFileSync(resolve(fixtureDirectory, fixtureName), 'utf8');
@@ -39,13 +52,6 @@ describe('Track layer migration integration', () => {
       expect(canonical).not.toContain('<audioLayer ');
       expect(canonical).toContain('<trackLayerGroup');
       expect(canonical).toContain('<tracks>');
-      if (fixtureName === 'legacy-java-audio-layers.blue.xml') {
-        expect(canonical).toContain('<unknownGroupSibling value="preserve-me">');
-        expect(canonical).toContain('<nestedUnknown>java</nestedUnknown>');
-        expect(canonical).toContain('futureTrackAttribute="preserve-track-attribute"');
-        expect(canonical).toContain('<unknownTrackSibling value="preserve-track-child"/>');
-        expect(canonical).toContain('<unknownTracksSibling value="preserve-container-child"/>');
-      }
 
       const reopened = BlueData.loadFromString(canonical);
       expect(reopened.saveToString()).toBe(canonical);

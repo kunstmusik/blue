@@ -391,16 +391,14 @@ describe('Mixer', () => {
       }
     });
 
-    it('falls back safely for empty or unknown profile keys', () => {
+    it('rejects empty or unknown XML profile keys while retaining setter defaults', () => {
       // Empty profile key
       const emptyProfileXml = '<mixer><meterProfile></meterProfile></mixer>';
-      const emptyMixer = Mixer.loadFromXML(Element.parse(emptyProfileXml));
-      expect(emptyMixer.getMeterProfileKey()).toBe('peak-rms-linear-plus-6');
+      expect(() => Mixer.loadFromXML(Element.parse(emptyProfileXml))).toThrow();
 
       // Unknown profile key
       const unknownXml = createInvalidProfileMixerXml('custom-broadcast-vu');
-      const unknownMixer = Mixer.loadFromXML(Element.parse(unknownXml));
-      expect(unknownMixer.getMeterProfileKey()).toBe('peak-rms-linear-plus-6');
+      expect(() => Mixer.loadFromXML(Element.parse(unknownXml))).toThrow();
 
       // Setter fallback
       const mixer = new Mixer();
@@ -480,7 +478,7 @@ describe('Mixer', () => {
       expect(copy.getMeterProfileKey()).toBe('peak-rms-linear-plus-6');
     });
 
-    it('safely tolerates unknown mixer tags and unknown profile keys without dropping channel structures (T035)', () => {
+    it('rejects unknown mixer members and profile keys before publication', () => {
       const xml = [
         '<mixer>',
         '  <enabled>true</enabled>',
@@ -493,19 +491,7 @@ describe('Mixer', () => {
         '</mixer>',
       ].join('\n');
 
-      const loaded = Mixer.loadFromXML(Element.parse(xml));
-      // Missing enableMeters resolves to legacy default false
-      expect(loaded.isEnableMeters()).toBe(false);
-      // Unrecognized profile resolves to legacy default peak-rms-linear-plus-6
-      expect(loaded.getMeterProfileKey()).toBe('peak-rms-linear-plus-6');
-      // Modeled channels loaded intact
-      expect(loaded.getChannels()).toHaveLength(1);
-      expect(loaded.getChannels()[0]?.getName()).toBe('Audio1');
-      expect(loaded.getMaster().getName()).toBe('Master');
-
-      const savedXml = loaded.saveAsXML().toXml();
-      expect(savedXml).toContain('<enableMeters>false</enableMeters>');
-      expect(savedXml).toContain('<meterProfile>peak-rms-linear-plus-6</meterProfile>');
+      expect(() => Mixer.loadFromXML(Element.parse(xml))).toThrow();
     });
   });
 });

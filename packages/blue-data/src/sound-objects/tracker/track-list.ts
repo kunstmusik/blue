@@ -1,6 +1,8 @@
 import { Track } from './track';
 import { NoteList } from '../note-list';
 import { Element } from '../../serialization/xml-reader';
+import { XmlLoadContext } from '../../serialization/xml-load';
+import { checkRoot, checkShape, readInt } from '../../utilities/xml';
 
 export class TrackList {
   private _tracks: Track[] = [];
@@ -68,25 +70,22 @@ export class TrackList {
     return retVal;
   }
 
-  static loadFromXML(data: Element): TrackList {
-    const trackList = new TrackList();
-    const nodes = data.getElements();
-
-    const nodesArray = [];
-    while (nodes.hasMoreElements()) {
-      const node = nodes.next();
-      nodesArray.push(node);
-      if (node.getName() === 'steps') {
-        const s = node.getTextString();
-        if (s) trackList.setSteps(parseInt(s, 10));
-      }
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): TrackList {
+    checkRoot(data, ['trackList', 'tracks'], context);
+    checkShape(data, [], ['steps', 'track'], context, ['track']);
+    const list = new TrackList();
+    const steps = data.getElement('steps');
+    if (steps) list._steps = readInt(steps, context, 0, 2147483647);
+    for (const child of data.getElements('track')) {
+      const track = Track.loadFromXML(child, context);
+      if (track.getNumSteps() !== list._steps)
+        throw context.at(child).error({
+          code: 'value',
+          message: 'Tracker note count differs from declared grid steps.',
+          recovery: 'Provide exactly one tracker note per grid step.',
+        });
+      list._tracks.push(track);
     }
-
-    for (const node of nodesArray) {
-      if (node.getName() === 'track') {
-        trackList.addTrack(Track.loadFromXML(node));
-      }
-    }
-    return trackList;
+    return list;
   }
 }

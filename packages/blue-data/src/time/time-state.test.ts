@@ -15,9 +15,6 @@ describe('TimeState SMPTE persistence', () => {
   it.each([
     ['29.97df', 29.97],
     ['30df', 30],
-    ['29.97junk', 24],
-    ['NaN', 24],
-    ['27', 24],
   ])('recovers persisted %s as %s NDF', (text, rate) => {
     const state = TimeState.loadFromXML(
       Element.parse(`<timeState><smpteFrameRate>${text}</smpteFrameRate></timeState>`),
@@ -25,18 +22,29 @@ describe('TimeState SMPTE persistence', () => {
     expect(state.getSmpteFrameRate()).toBe(rate);
     expect(state.isSmpteDropFrame()).toBe(false);
   });
-  it('clones unrelated XML while keeping modeled values authoritative', () => {
-    const input = Element.parse(
-      '<timeState future="yes"><smpteFrameRate>30</smpteFrameRate><smpteDropFrame>true</smpteDropFrame><future><child value="a"/></future></timeState>',
+  it.each([
+    '<timeState future="yes"/>',
+    '<timeState><future/></timeState>',
+    '<timeState><smpteFrameRate>29.97junk</smpteFrameRate></timeState>',
+    '<timeState><smpteFrameRate>27</smpteFrameRate></timeState>',
+    '<timeState><smpteFrameRate>30</smpteFrameRate><smpteDropFrame>true</smpteDropFrame></timeState>',
+    '<timeState><snapValue>1junk</snapValue></timeState>',
+    '<timeState><timeDisplay>2</timeDisplay></timeState>',
+    '<timeState version="1"><secondaryRulerEnabled>true</secondaryRulerEnabled></timeState>',
+  ])('rejects invalid or unexpected state: %s', (xml) => {
+    expect(() => TimeState.loadFromXML(Element.parse(xml))).toThrow();
+  });
+
+  it('normalizes legacy display, snap, and truncated zoom without losing row visibility', () => {
+    const state = TimeState.loadFromXML(
+      Element.parse(
+        '<timeState version="4"><pixelSecond>110</pixelSecond><snapValue>0.25</snapValue><timeDisplay>CSOUND_BEATS</timeDisplay><tempoRowVisible>false</tempoRowVisible></timeState>',
+      ),
     );
-    const state = TimeState.loadFromXML(input);
-    const copy = new TimeState(state);
-    input.getElement('future')!.getElement('child')!.setAttribute('value', 'changed');
-    const output = copy.saveAsXML();
-    expect(output.getAttribute('future')).toBe('yes');
-    expect(output.getElement('future')!.getElement('child')!.getAttribute('value')).toBe('a');
-    expect(output.getElement('smpteDropFrame')).toBeNull();
-    output.getElement('future')!.setText('mutated');
-    expect(copy.saveAsXML().getElement('future')!.getTextString()).toBe('');
+    expect(state.getZoomIterations()).toBe(4);
+    expect(state.getSnapValue()).toBe('SIXTEENTH');
+    expect(state.getTimeDisplay()).toBe('BEATS');
+    expect(state.saveAsXML().getAttribute('version')).toBe('2');
+    expect(state.saveAsXML().getTextString('tempoRowVisible')).toBe('false');
   });
 });

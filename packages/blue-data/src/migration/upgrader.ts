@@ -7,6 +7,7 @@
  */
 import { Element } from '../serialization/xml-reader';
 import { ProjectVersion } from './project-version';
+import type { XmlLoadContext } from '../serialization/xml-load';
 
 export abstract class ProjectUpgrader {
   readonly version: ProjectVersion;
@@ -23,5 +24,5 @@ export abstract class ProjectUpgrader {
    * @param data The root XML element to modify.
    * @returns true if any modifications were made.
    */
-  abstract performUpgrade(data: Element): boolean;
+  abstract performUpgrade(data: Element, context?: XmlLoadContext): boolean;
 }

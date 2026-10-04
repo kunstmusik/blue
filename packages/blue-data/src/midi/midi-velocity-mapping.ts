@@ -3,6 +3,8 @@
  * Mirrors the Java MidiVelocityMapping class.
  */
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext } from '../serialization/xml-load';
+import { checkRoot, checkShape, readBoolean, readInt, readDouble } from '../utilities/xml';
 import { BlueDataObject } from '../blue-data-object';
 
 export class MidiVelocityMapping implements BlueDataObject {
@@ -66,20 +68,45 @@ export class MidiVelocityMapping implements BlueDataObject {
     return elem;
   }
 
-  static loadFromXML(data: Element): MidiVelocityMapping {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): MidiVelocityMapping {
+    checkRoot(data, 'midiVelocityMapping', context);
+    checkShape(
+      data,
+      [],
+      ['enabled', 'pFieldIndex', 'minVelocity', 'maxVelocity', 'minValue', 'maxValue'],
+      context,
+    );
     const mapping = new MidiVelocityMapping();
-    const en = data.getTextString('enabled');
-    if (en) mapping._enabled = en.toLowerCase() === 'true';
-    const pfi = data.getTextString('pFieldIndex');
-    if (pfi) mapping._pFieldIndex = parseInt(pfi, 10);
-    const mnV = data.getTextString('minVelocity');
-    if (mnV) mapping._minVelocity = parseInt(mnV, 10);
-    const mxV = data.getTextString('maxVelocity');
-    if (mxV) mapping._maxVelocity = parseInt(mxV, 10);
-    const mn = data.getTextString('minValue');
-    if (mn) mapping._minValue = parseFloat(mn);
-    const mx = data.getTextString('maxValue');
-    if (mx) mapping._maxValue = parseFloat(mx);
+    {
+      const node = data.getElement('enabled');
+      if (node) mapping._enabled = readBoolean(node, context);
+    }
+    {
+      const node = data.getElement('pFieldIndex');
+      if (node) mapping._pFieldIndex = readInt(node, context, 1);
+    }
+    {
+      const node = data.getElement('minVelocity');
+      if (node) mapping._minVelocity = readInt(node, context, 0, 127);
+    }
+    {
+      const node = data.getElement('maxVelocity');
+      if (node) mapping._maxVelocity = readInt(node, context, 0, 127);
+    }
+    {
+      const node = data.getElement('minValue');
+      if (node) mapping._minValue = readDouble(node, context);
+    }
+    {
+      const node = data.getElement('maxValue');
+      if (node) mapping._maxValue = readDouble(node, context);
+    }
+    if (mapping._minVelocity > mapping._maxVelocity || mapping._minValue > mapping._maxValue)
+      throw context.at(data).error({
+        code: 'conflict',
+        message: 'Velocity mapping bounds are reversed.',
+        recovery: 'Supply ordered minimum and maximum values.',
+      });
     return mapping;
   }
 

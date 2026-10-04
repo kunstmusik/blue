@@ -189,7 +189,7 @@ Tempo map is enabled at 112 BPM; mixer is enabled with one channel per track.</n
           </meter>
         </measureMeterPair>
       </meterMap>
-      <smpteFrameRate>30</smpteFrameRate>
+      <smpteFrameRate>24</smpteFrameRate>
     </timeContext>
     <timeState version="2">
       <zoomIterations>0</zoomIterations>
@@ -841,7 +841,6 @@ Tempo map is enabled at 112 BPM; mixer is enabled with one channel per track.</n
             <noteProcessorChain/>
             <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 88</noteTemplate>
             <instrumentId>1</instrumentId>
-            <scale></scale>
             <scale>
               <scaleName>12TET</scaleName>
               <baseFrequency>261.625565</baseFrequency>
@@ -1039,7 +1038,6 @@ Tempo map is enabled at 112 BPM; mixer is enabled with one channel per track.</n
             <noteProcessorChain/>
             <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 88</noteTemplate>
             <instrumentId>1</instrumentId>
-            <scale></scale>
             <scale>
               <scaleName>12TET</scaleName>
               <baseFrequency>261.625565</baseFrequency>
@@ -1381,7 +1379,6 @@ Tempo map is enabled at 112 BPM; mixer is enabled with one channel per track.</n
             <noteProcessorChain/>
             <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 88</noteTemplate>
             <instrumentId>1</instrumentId>
-            <scale></scale>
             <scale>
               <scaleName>12TET</scaleName>
               <baseFrequency>261.625565</baseFrequency>
@@ -1723,7 +1720,6 @@ Tempo map is enabled at 112 BPM; mixer is enabled with one channel per track.</n
             <noteProcessorChain/>
             <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 88</noteTemplate>
             <instrumentId>1</instrumentId>
-            <scale></scale>
             <scale>
               <scaleName>12TET</scaleName>
               <baseFrequency>261.625565</baseFrequency>
@@ -2065,7 +2061,6 @@ Tempo map is enabled at 112 BPM; mixer is enabled with one channel per track.</n
             <noteProcessorChain/>
             <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 88</noteTemplate>
             <instrumentId>1</instrumentId>
-            <scale></scale>
             <scale>
               <scaleName>12TET</scaleName>
               <baseFrequency>261.625565</baseFrequency>
@@ -2407,7 +2402,6 @@ Tempo map is enabled at 112 BPM; mixer is enabled with one channel per track.</n
             <noteProcessorChain/>
             <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 88</noteTemplate>
             <instrumentId>1</instrumentId>
-            <scale></scale>
             <scale>
               <scaleName>12TET</scaleName>
               <baseFrequency>261.625565</baseFrequency>
@@ -3200,7 +3194,6 @@ Tempo map is enabled at 112 BPM; mixer is enabled with one channel per track.</n
             <noteProcessorChain/>
             <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 104</noteTemplate>
             <instrumentId>1</instrumentId>
-            <scale></scale>
             <scale>
               <scaleName>12TET</scaleName>
               <baseFrequency>261.625565</baseFrequency>
@@ -3350,7 +3343,6 @@ Tempo map is enabled at 112 BPM; mixer is enabled with one channel per track.</n
             <noteProcessorChain/>
             <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 104</noteTemplate>
             <instrumentId>1</instrumentId>
-            <scale></scale>
             <scale>
               <scaleName>12TET</scaleName>
               <baseFrequency>261.625565</baseFrequency>
@@ -3596,7 +3588,6 @@ Tempo map is enabled at 112 BPM; mixer is enabled with one channel per track.</n
             <noteProcessorChain/>
             <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 104</noteTemplate>
             <instrumentId>1</instrumentId>
-            <scale></scale>
             <scale>
               <scaleName>12TET</scaleName>
               <baseFrequency>261.625565</baseFrequency>
@@ -3842,7 +3833,6 @@ Tempo map is enabled at 112 BPM; mixer is enabled with one channel per track.</n
             <noteProcessorChain/>
             <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 104</noteTemplate>
             <instrumentId>1</instrumentId>
-            <scale></scale>
             <scale>
               <scaleName>12TET</scaleName>
               <baseFrequency>261.625565</baseFrequency>
@@ -4088,7 +4078,6 @@ Tempo map is enabled at 112 BPM; mixer is enabled with one channel per track.</n
             <noteProcessorChain/>
             <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 104</noteTemplate>
             <instrumentId>1</instrumentId>
-            <scale></scale>
             <scale>
               <scaleName>12TET</scaleName>
               <baseFrequency>261.625565</baseFrequency>
@@ -4334,7 +4323,6 @@ Tempo map is enabled at 112 BPM; mixer is enabled with one channel per track.</n
             <noteProcessorChain/>
             <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 104</noteTemplate>
             <instrumentId>1</instrumentId>
-            <scale></scale>
             <scale>
               <scaleName>12TET</scaleName>
               <baseFrequency>261.625565</baseFrequency>

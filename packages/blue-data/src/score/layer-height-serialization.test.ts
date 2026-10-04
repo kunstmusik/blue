@@ -110,13 +110,13 @@ describe('Layer Height Serialization & Model Policy', () => {
   describe('SoundLayer XML Serialization & Fallback', () => {
     it('loads legacy SoundLayer without customHeight and preserves effective height', () => {
       const xml = `
-        <blue.soundObject.PolyObject name="test">
+        <polyObject name="test">
           <defaultHeightIndex>0</defaultHeightIndex>
           <soundLayer name="Layer 1" muted="false" solo="false" heightIndex="1">
             <backgroundColor>-1</backgroundColor>
             <noteProcessorChain/>
           </soundLayer>
-        </blue.soundObject.PolyObject>
+        </polyObject>
       `;
       const elem = Element.parse(xml);
       const poly = PolyObject.loadFromXML(elem);
@@ -135,13 +135,13 @@ describe('Layer Height Serialization & Model Policy', () => {
 
     it('preserves legacy SoundLayer heights above 660 (e.g. index 40 -> 902)', () => {
       const xml = `
-        <blue.soundObject.PolyObject name="test">
+        <polyObject name="test">
           <defaultHeightIndex>0</defaultHeightIndex>
           <soundLayer name="Layer 1" muted="false" solo="false" heightIndex="40">
             <backgroundColor>-1</backgroundColor>
             <noteProcessorChain/>
           </soundLayer>
-        </blue.soundObject.PolyObject>
+        </polyObject>
       `;
       const elem = Element.parse(xml);
       const poly = PolyObject.loadFromXML(elem);
@@ -159,13 +159,13 @@ describe('Layer Height Serialization & Model Policy', () => {
 
     it('loads customHeight="57" and serializes it accurately', () => {
       const xml = `
-        <blue.soundObject.PolyObject name="test">
+        <polyObject name="test">
           <defaultHeightIndex>0</defaultHeightIndex>
           <soundLayer name="Layer 1" muted="false" solo="false" heightIndex="2" customHeight="57">
             <backgroundColor>-1</backgroundColor>
             <noteProcessorChain/>
           </soundLayer>
-        </blue.soundObject.PolyObject>
+        </polyObject>
       `;
       const elem = Element.parse(xml);
       const poly = PolyObject.loadFromXML(elem);
@@ -180,42 +180,14 @@ describe('Layer Height Serialization & Model Policy', () => {
       expect(savedLayer.getAttribute('heightIndex')).toBe('2');
     });
 
-    it('preserves malformed customHeight as unknown attribute and clears it on explicit edit', () => {
-      const xml = `
-        <blue.soundObject.PolyObject name="test">
-          <defaultHeightIndex>0</defaultHeightIndex>
-          <soundLayer name="Layer 1" muted="false" solo="false" heightIndex="1" customHeight="57px">
-            <backgroundColor>-1</backgroundColor>
-            <noteProcessorChain/>
-          </soundLayer>
-        </blue.soundObject.PolyObject>
-      `;
-      const elem = Element.parse(xml);
-      const poly = PolyObject.loadFromXML(elem);
-      const layer = poly[0];
-      expect(layer.getCustomHeight()).toBeUndefined();
-      expect(layer.getLayerHeight()).toBe(44); // falls back to heightIndex 1 -> 44
-      expect(layer.getUnknownAttributes().get('customHeight')).toBe('57px');
-
-      // Saving without edit preserves verbatim malformed attribute
-      const saved = poly.saveAsXML();
-      const savedLayer = saved.getElement('soundLayer')!;
-      expect(savedLayer.getAttribute('customHeight')).toBe('57px');
-
-      // No-op edit (effective height 44) does NOT clear malformed attribute
-      const noOpResult = layer.setExplicitHeight(44);
-      expect(noOpResult).toBe(false);
-      expect(layer.getUnknownAttributes().get('customHeight')).toBe('57px');
-
-      // Real edit clears malformed attribute
-      const editResult = layer.setExplicitHeight(57);
-      expect(editResult).toBe(true);
-      expect(layer.getCustomHeight()).toBe(57);
-      expect(layer.getUnknownAttributes().has('customHeight')).toBe(false);
-
-      const savedAfterEdit = poly.saveAsXML();
-      const savedLayerAfterEdit = savedAfterEdit.getElement('soundLayer')!;
-      expect(savedLayerAfterEdit.getAttribute('customHeight')).toBe('57');
+    it('rejects malformed customHeight before constructing a layer', () => {
+      expect(() =>
+        PolyObject.loadFromXML(
+          Element.parse(
+            '<polyObject><soundLayer heightIndex="1" customHeight="57px"/></polyObject>',
+          ),
+        ),
+      ).toThrow();
     });
 
     it('supports boundary values 22 and 660', () => {
@@ -285,27 +257,10 @@ describe('Layer Height Serialization & Model Policy', () => {
       expect(saved.getAttribute('customHeight')).toBe('333');
     });
 
-    it('preserves malformed Track customHeight until a real edit', () => {
-      const xml = `
-        <track name="Track 1" muted="false" solo="false" heightIndex="1" customHeight="bad_value" uniqueId="test-track-1" automationSelectedIndex="0">
-          <backgroundColor>-1</backgroundColor>
-          <noteProcessorChain/>
-        </track>
-      `;
-      const elem = Element.parse(xml);
-      const track = Track.loadFromXML(elem);
-      expect(track.getCustomHeight()).toBeUndefined();
-      expect(track.getLayerHeight()).toBe(44);
-
-      // Verbatim preservation
-      const saved = track.saveAsXML();
-      expect(saved.getAttribute('customHeight')).toBe('bad_value');
-
-      // Real edit clears bad value
-      track.setExplicitHeight(57);
-      expect(track.getCustomHeight()).toBe(57);
-      const savedAfter = track.saveAsXML();
-      expect(savedAfter.getAttribute('customHeight')).toBe('57');
+    it('rejects malformed Track customHeight', () => {
+      expect(() =>
+        Track.loadFromXML(Element.parse('<track heightIndex="1" customHeight="bad_value"/>')),
+      ).toThrow();
     });
 
     it('handles Track preset 220 without customHeight', () => {
@@ -359,9 +314,7 @@ describe('Layer Height Serialization & Model Policy', () => {
 
     it('preserves an invalid imported PolyObject default while new layers fall back to 22px', () => {
       const poly = PolyObject.loadFromXML(
-        Element.parse(
-          '<blue.soundObject.PolyObject><defaultHeightIndex>99</defaultHeightIndex></blue.soundObject.PolyObject>',
-        ),
+        Element.parse('<polyObject><defaultHeightIndex>99</defaultHeightIndex></polyObject>'),
       );
 
       expect(poly.getDefaultHeightIndex()).toBe(99);

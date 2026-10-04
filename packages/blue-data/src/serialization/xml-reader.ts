@@ -133,12 +133,10 @@ export class Element {
           const childEl = Element.fromParseXmlNode(child);
           childEl._parent = el;
           el._children.push(childEl);
-        } else if (child.type === 'text') {
-          // Text node
-          const text = (child as { text?: string }).text?.trim() ?? '';
-          if (text.length > 0 && el._text === null) {
-            el._text = text;
-          }
+        } else if (child.type === 'text' || child.type === 'cdata') {
+          // Keep all direct text as evidence, including scalar code whitespace.
+          const text = (child as { text: string }).text;
+          el._text = (el._text ?? '') + text;
         }
       }
     }
@@ -151,6 +149,11 @@ export class Element {
   /** Element name (tag name). */
   getName(): string {
     return this._name;
+  }
+
+  /** Parent used to derive contextual diagnostic paths for direct loaders. */
+  getParent(): Element | null {
+    return this._parent;
   }
 
   /** Set element name (used when renaming, e.g., setName("startTime")). */
@@ -341,7 +344,7 @@ export class Element {
     }
 
     // Mixed content or only children
-    if (this._text !== null) {
+    if (this._text !== null && this._text.trim() !== '') {
       parts.push(this._escapeText(this._text));
     }
 
@@ -370,9 +373,13 @@ export class Element {
 
   /**
    * Create a deep copy of this Element tree.
-   * Uses round-trip serialization for a clean, independent copy.
+   * Copies structure directly, preserving text evidence without reparsing.
    */
   clone(): Element {
-    return Element.parse(this.toXml());
+    const copy = new Element(this._name);
+    copy._attributes = new Map(this._attributes);
+    copy._text = this._text;
+    for (const child of this._children) copy.addElement(child.clone());
+    return copy;
   }
 }

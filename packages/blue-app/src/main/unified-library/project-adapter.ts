@@ -1,7 +1,10 @@
+import { resolveTuningDependencies } from '../tuning-scale-dependencies';
 import { randomUUID } from 'node:crypto';
-import type { BlueData, Instrument, OpcodeList, SoundObject } from '@blue/data';
+import type { BlueData, Instrument, OpcodeList, SoundObject, XmlDiagnostic } from '@blue/data';
 import {
   AudioClip,
+  readResourceXml,
+  XmlLoadError,
   BlueSynthBuilder,
   Effect,
   Element,
@@ -707,19 +710,24 @@ export class UnifiedLibraryProjectAdapter {
     const current = this.getEditorSource(key);
     if (!current) return null;
     if (current.revision !== expectedRevision) throw new Error('Project editor conflict');
-    const element = Element.parse(payloadXml);
+    const report = readResourceXml(key.libraryType, payloadXml, {
+      kind: 'library',
+      label: current.displayName,
+    });
+    if (!report.ok) throw new XmlLoadError(report.diagnostics);
+    const accepted = report.value;
     let changed = false;
     if (key.locator.kind === 'instrument') {
-      const value = loadInstrumentFromXML(element);
+      const value = accepted as Instrument;
       if (!value) throw new Error('Unsupported Instrument payload');
       changed = project.data.getArrangement().replaceInstrument(key.locator.assignmentId, value);
     } else if (key.locator.kind === 'udo') {
       const locator = key.locator;
       const opcodeList = getOpcodeListForLocator(project.data, locator);
       const index = opcodeList ? findOpcodeIndex(opcodeList, locator) : -1;
-      changed = opcodeList?.replaceOpcodeAt(index, OpcodeDefinition.loadFromXML(element)) ?? false;
+      changed = opcodeList?.replaceOpcodeAt(index, accepted as OpcodeDefinition) ?? false;
     } else if (key.locator.kind === 'effect') {
-      const value = Effect.loadFromXML(element);
+      const value = accepted as Effect;
       changed = applyProjectDocumentPatch(project.data, {
         mixer: {
           type: 'updateEffect',
@@ -730,7 +738,7 @@ export class UnifiedLibraryProjectAdapter {
         },
       });
     } else {
-      const value = loadSoundObjectFromXML(element);
+      const value = accepted as SoundObject;
       if (!value) throw new Error('Unsupported SoundObject payload');
       changed = project.data
         .getSoundObjectLibrary()
@@ -745,9 +753,9 @@ export class UnifiedLibraryProjectAdapter {
         ? (project.data.getArrangement().getInstrumentById(key.locator.assignmentId)?.getName() ??
           current.displayName)
         : key.locator.kind === 'udo'
-          ? OpcodeDefinition.loadFromXML(element).getName()
+          ? (accepted as OpcodeDefinition).getName()
           : key.locator.kind === 'effect'
-            ? Effect.loadFromXML(element).getName()
+            ? (accepted as Effect).getName()
             : (project.data
                 .getSoundObjectLibrary()
                 .getObjectById(key.locator.libraryId)
@@ -819,6 +827,7 @@ export class UnifiedLibraryProjectAdapter {
         projectRevision,
         libraryType: input.key.libraryType,
         insertedIdentity,
+        diagnostics: source.diagnostics,
         message: `${source.displayName} was inserted into ${input.target.label}.`,
       }),
     ) as ProjectMutationReceipt;
@@ -1036,30 +1045,36 @@ export class UnifiedLibraryProjectAdapter {
     displayName: string;
     value: Instrument | OpcodeDefinition | Effect | SoundObject;
     libraryId?: string;
+    diagnostics?: readonly XmlDiagnostic[];
   } {
     if (input.key.scope === 'user') {
       if (!input.payloadXml) throw new Error('Library payload is unavailable');
-      const element = Element.parse(input.payloadXml);
-      switch (input.key.libraryType) {
-        case 'instrument': {
-          const value = loadInstrumentFromXML(element);
-          if (!value) throw new Error('Unsupported instrument payload');
-          return { displayName: value.getName(), value };
-        }
-        case 'udo': {
-          const value = OpcodeDefinition.loadFromXML(element);
-          return { displayName: value.getName(), value };
-        }
-        case 'effect': {
-          const value = Effect.loadFromXML(element);
-          return { displayName: value.getName(), value };
-        }
-        case 'soundObject': {
-          const value = loadSoundObjectFromXML(element);
-          if (!value) throw new Error('Unsupported SoundObject payload');
-          return { displayName: value.getName(), value };
+      const report = readResourceXml(input.key.libraryType, input.payloadXml, {
+        kind: 'library',
+        label: `${input.key.libraryType} library item ${input.key.nodeId}`,
+        libraryItemId: input.key.nodeId,
+      });
+      if (!report.ok) throw new XmlLoadError(report.diagnostics);
+      const value = report.value as Instrument | OpcodeDefinition | Effect | SoundObject;
+      if (input.key.libraryType === 'soundObject') {
+        try {
+          resolveTuningDependencies((value as SoundObject).deepCopy('history'));
+        } catch (error) {
+          throw new XmlLoadError([
+            {
+              severity: 'error',
+              code: 'external-dependency',
+              source: { kind: 'library', label: value.getName(), libraryItemId: input.key.nodeId },
+              path: '/soundObject',
+              message:
+                error instanceof Error ? error.message : 'Unable to resolve tuning dependency.',
+              recovery:
+                'Restore the referenced Scala file before inserting this resource; the active project remains unchanged.',
+            },
+          ]);
         }
       }
+      return { displayName: value.getName(), value, diagnostics: report.diagnostics };
     }
 
     if (input.key.projectSessionId !== project.sessionId) throw new Error('Stale project session');

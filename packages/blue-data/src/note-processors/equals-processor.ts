@@ -1,3 +1,5 @@
+import { XmlLoadContext } from '../serialization/xml-load';
+import { validateProcessorXml } from './xml-policy';
 import { NoteProcessor } from './note-processor';
 import { NoteProcessorException } from './note-processor-exception';
 import { NoteList } from '../sound-objects/note-list';
@@ -64,7 +66,8 @@ export class EqualsProcessor extends NoteProcessor {
     return elem;
   }
 
-  static loadFromXML(data: Element): EqualsProcessor {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): EqualsProcessor {
+    validateProcessorXml(data, 'EqualsProcessor', context);
     const proc = new EqualsProcessor();
     const pf = data.getTextString('pfield');
     if (pf !== null) proc._pfield = parseInt(pf, 10);

@@ -43,7 +43,12 @@
 - **Portable data core**: [PASS/FAIL/N/A — explain whether `@blue/data` remains free of
   Electron, Node.js built-ins, DOM-only APIs, dynamic imports, and host implementation details]
 - **Java and project compatibility**: [PASS/FAIL/N/A — identify the Java reference or
-  generated fixture, `.blue`/CSD impact, preservation requirements, and any intentional divergence]
+  generated fixture, loader/writer history and revisions, `.blue`/standalone-resource/CSD impact,
+  expected and historical member/value contracts, warning/error and safe save rules,
+  explicitly supported retained payloads, and any intentional divergence]
+- **Migration scope and ordering**: [PASS/FAIL/N/A — distinguish raw-XML project structural
+  migrators from class-local/resource compatibility; identify independent disk/library/BlueShare
+  roots, ownership, preconditions, conflict handling, canonical stability, and composition evidence]
 - **Canonical ownership and contracts**: [PASS/FAIL/N/A — name each state owner, persistence
   location, typed IPC/preload/runtime contract, and migration or recovery path]
 - **Project history and undo/redo**: [PASS/FAIL/N/A — identify every new or modified durable

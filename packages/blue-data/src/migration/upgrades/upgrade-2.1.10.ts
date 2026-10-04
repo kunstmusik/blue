@@ -6,57 +6,73 @@
 import { Element } from '../../serialization/xml-reader';
 import { ProjectUpgrader } from '../upgrader';
 import { stripSingleLineComments } from '../../utilities/text';
+import { XmlLoadContext } from '../../serialization/xml-load';
+import { ProjectProperties } from '../../project-properties';
+import { checkShape, readBoolean, readText } from '../../utilities/xml';
 
 export class ProjectUpgrader_2_1_10 extends ProjectUpgrader {
   constructor() {
     super('2.1.10');
   }
 
-  override performUpgrade(data: Element): boolean {
-    const globalOrcScoNode = data.getElement('globalOrcSco');
-    const projectPropsNode = data.getElement('projectProperties');
-
-    if (!globalOrcScoNode || !projectPropsNode) {
-      return false;
+  override performUpgrade(data: Element, context = new XmlLoadContext(data)): boolean {
+    const global = data.getElement('globalOrcSco');
+    if (!global) return false;
+    checkShape(global, [], ['globalOrc', 'globalSco'], context);
+    const code = global.getElement('globalOrc');
+    if (!code) return false;
+    const text = readText(code, context);
+    const remaining: string[] = [];
+    const assignments: string[] = [];
+    for (const line of text.split('\n')) {
+      const assignment = /^\s*0dbfs\s*=\s*(.*)$/.exec(stripSingleLineComments(line));
+      if (assignment) assignments.push(assignment[1].trim());
+      else remaining.push(line);
     }
-
-    const globalOrcNode = globalOrcScoNode.getElement('globalOrc');
-    if (!globalOrcNode) {
-      return false;
+    if (assignments.length === 0) return false;
+    if (!assignments[0] || assignments.some((value) => value !== assignments[0])) {
+      throw context.at(code).error({
+        code: 'conflict',
+        member: '0dbfs',
+        message: 'Empty or conflicting historical 0dbfs assignments.',
+        recovery: 'Keep a single nonempty 0dbfs setting.',
+      });
     }
-
-    const globalOrc = globalOrcNode.getTextString();
-    if (!globalOrc || !globalOrc.includes('0dbfs')) {
-      return false;
-    }
-
-    const buffer: string[] = [];
-    const lines = globalOrc.split('\n');
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (trimmed.startsWith('0dbfs') && trimmed.includes('=')) {
-        const stripped = stripSingleLineComments(trimmed);
-        const eqIdx = stripped.indexOf('=');
-        if (eqIdx !== -1) {
-          // Extract value and trim any trailing whitespace/semicolons
-          let value = stripped.substring(eqIdx + 1).trim();
-          // Remove inline comments that might remain
-          const commentIdx = value.indexOf(';');
-          if (commentIdx !== -1) {
-            value = value.substring(0, commentIdx).trim();
-          }
-          projectPropsNode.addElement('useZeroDbFS').setText('true');
-          projectPropsNode.addElement('zeroDbFS').setText(value);
-          projectPropsNode.addElement('diskUseZeroDbFS').setText('true');
-          projectPropsNode.addElement('diskZeroDbFS').setText(value);
-        }
-      } else {
-        buffer.push(line);
+    const props = data.getElement('projectProperties') ?? data.addElement('projectProperties');
+    ProjectProperties.loadFromXML(props, context);
+    for (const field of ['zeroDbFS', 'diskZeroDbFS']) {
+      const existing = props.getElement(field);
+      if (existing && readText(existing, context).trim() !== assignments[0]) {
+        throw context.at(existing).error({
+          code: 'conflict',
+          member: field,
+          value: existing.getTextString(),
+          message: 'Project property conflicts with historical 0dbfs.',
+          recovery: 'Make the project property and orchestra assignment agree.',
+        });
       }
     }
-
-    globalOrcNode.setText(buffer.join('\n'));
+    for (const field of ['useZeroDbFS', 'diskUseZeroDbFS']) {
+      const existing = props.getElement(field);
+      if (existing && !readBoolean(existing, context)) {
+        throw context.at(existing).error({
+          code: 'conflict',
+          member: field,
+          value: existing.getTextString(),
+          message: 'Disabled 0dbfs property conflicts with an active historical assignment.',
+          recovery: 'Resolve the enabled state in a compatible editor.',
+        });
+      }
+    }
+    for (const field of ['zeroDbFS', 'diskZeroDbFS', 'useZeroDbFS', 'diskUseZeroDbFS']) {
+      if (props.hasElement(field)) continue;
+      const generated = props.addElement(field);
+      generated.setText(
+        field.startsWith('use') || field.startsWith('diskUse') ? 'true' : assignments[0],
+      );
+      context.anchor(generated, code);
+    }
+    code.setText(remaining.join('\n'));
     return true;
   }
 }

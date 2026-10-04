@@ -397,15 +397,16 @@ describe('Instance', () => {
   });
 
   describe('library binding', () => {
-    it('stores library id when objRefMap does not have the reference', () => {
+    it('rejects unresolved library dependencies before typed acceptance', () => {
       const xml = `<soundObject type="Instance">
         <name>My Instance</name>
         <soundObjectReference soundObjectLibraryID="lib_0"/>
       </soundObject>`;
       const elem = Element.parse(xml);
-      const inst = Instance.loadFromXML(elem);
-      expect(inst.getLibraryId()).toBe('lib_0');
-      expect(inst.getSoundObject()).toBeNull();
+      expect(() => Instance.loadFromXML(elem)).toThrow(/dependency is unresolved/);
+      expect(() => Instance.loadFromXML(elem, new ObjRefLoadMap())).toThrow(
+        /dependency is unresolved/,
+      );
     });
 
     it('resolves library reference when objRefMap has the object', () => {

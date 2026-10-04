@@ -12,6 +12,8 @@ import { CompileData } from './compile-data';
 import { Parameter } from './automation/parameter';
 import { replaceAll, stripSingleLineComments } from './utilities/text';
 import { Element } from './serialization/xml-reader';
+import { XmlLoadContext } from './serialization/xml-load';
+import { checkRoot, checkShape } from './utilities/xml';
 import { Mixer } from './mixer/mixer';
 import { Channel } from './mixer/channel';
 import { Tables } from './tables';
@@ -485,13 +487,15 @@ export class Arrangement {
     return elem;
   }
 
-  static loadFromXML(data: Element): Arrangement {
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): Arrangement {
+    checkRoot(data, 'arrangement', context);
+    checkShape(data, [], ['instrumentAssignment'], context, ['instrumentAssignment']);
     const arr = new Arrangement();
     const items = data.getElements('instrumentAssignment');
 
     while (items.hasMoreElements()) {
       const elem = items.next();
-      arr.arrangement.push(InstrumentAssignment.loadFromXML(elem));
+      arr.arrangement.push(InstrumentAssignment.loadFromXML(elem, context));
     }
 
     return arr;
