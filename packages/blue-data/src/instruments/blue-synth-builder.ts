@@ -140,6 +140,7 @@ function rescaleWidgetRangeMinimum(widget: BSBWidget, newMinimum: number): void 
 
   if (widget instanceof BSBHSliderBank || widget instanceof BSBVSliderBank) {
     widget.minimum = newMinimum;
+    widget.syncSliderBounds();
     for (const slider of widget.sliders) {
       slider.setValue(
         rescaleValue(
@@ -172,6 +173,7 @@ function rescaleWidgetRangeMaximum(widget: BSBWidget, newMaximum: number): void 
 
   if (widget instanceof BSBHSliderBank || widget instanceof BSBVSliderBank) {
     widget.maximum = newMaximum;
+    widget.syncSliderBounds();
     for (const slider of widget.sliders) {
       slider.setValue(
         rescaleValue(
@@ -875,7 +877,7 @@ export class BlueSynthBuilder extends Instrument {
             if (widget.objectName) {
               const param = this._parameters.find((p) => p.getName() === widget.objectName);
               if (param) {
-                param.setFixedValue(value);
+                param.setFixedValue(widget.value);
               }
             }
           }
@@ -1054,7 +1056,7 @@ export class BlueSynthBuilder extends Instrument {
       const paramName = `${widget.objectName}_${sliderIndex}`;
       const param = this._parameters.find((candidate) => candidate.getName() === paramName);
       if (param) {
-        param.setFixedValue(clamped);
+        param.setFixedValue(widget.sliders[sliderIndex].value);
       }
     }
 

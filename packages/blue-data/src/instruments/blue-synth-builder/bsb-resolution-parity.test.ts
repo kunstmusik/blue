@@ -5,6 +5,8 @@ import { BlueSynthBuilder } from '../blue-synth-builder';
 import { BSBKnob } from './bsb-knob';
 import { BSBHSlider } from './bsb-hslider';
 import { BSBHSliderBank } from './bsb-hslider-bank';
+import { BSBVSlider } from './bsb-vslider';
+import { BSBVSliderBank } from './bsb-vslider-bank';
 import { saveBsbWidgetAsXML } from './bsb-group';
 
 function buildParameterSyncFixture(): BlueSynthBuilder {
@@ -93,6 +95,60 @@ describe('BSB exact resolution ownership', () => {
     expect(saved.getElement('bsbObject')?.getElement('bdresolution')?.getTextString()).toBe('1E-7');
   });
 
+  it('uses bank bounds for loaded horizontal and vertical slider children', () => {
+    const horizontal = new BSBHSliderBank();
+    horizontal.loadFromXML(
+      Element.parse(`<bsbObject type="blue.orchestra.blueSynthBuilder.BSBHSliderBank">
+      <minimum>-1</minimum>
+      <maximum>1</maximum>
+      <bsbObject type="blue.orchestra.blueSynthBuilder.BSBHSlider">
+        <value>-0.5</value>
+        <minimum>0</minimum>
+        <maximum>1</maximum>
+      </bsbObject>
+    </bsbObject>`),
+    );
+
+    const vertical = new BSBVSliderBank();
+    vertical.loadFromXML(
+      Element.parse(`<bsbObject type="blue.orchestra.blueSynthBuilder.BSBVSliderBank">
+      <minimum>10</minimum>
+      <maximum>20</maximum>
+      <bsbObject type="blue.orchestra.blueSynthBuilder.BSBVSlider">
+        <value>15</value>
+        <minimum>0</minimum>
+        <maximum>1</maximum>
+      </bsbObject>
+    </bsbObject>`),
+    );
+
+    expect(horizontal.sliders[0]).toMatchObject({ minimum: -1, maximum: 1, value: -0.5 });
+    expect(vertical.sliders[0]).toMatchObject({ minimum: 10, maximum: 20, value: 15 });
+  });
+
+  it('propagates edited ranges to existing horizontal and vertical bank children', () => {
+    const bsb = new BlueSynthBuilder();
+    const horizontal = new BSBHSliderBank();
+    horizontal.id = 'horizontal-bank';
+    horizontal.objectName = 'horizontal';
+    const vertical = new BSBVSliderBank();
+    vertical.id = 'vertical-bank';
+    vertical.objectName = 'vertical';
+    bsb.getGraphicInterface().getRootGroup().addChild(horizontal);
+    bsb.getGraphicInterface().getRootGroup().addChild(vertical);
+
+    expect(bsb.updateWidgetProperties(horizontal.id, { maximum: 20 })).toBe(true);
+    expect(bsb.updateWidgetProperties(horizontal.id, { minimum: 10 })).toBe(true);
+    expect(horizontal.sliders[0]).toMatchObject({ minimum: 10, maximum: 20 });
+    expect(bsb.updateSliderBankValue(horizontal.id, 0, 15)).toBe(true);
+    expect(horizontal.sliders[0]?.value).toBe(15);
+
+    expect(bsb.updateWidgetProperties(vertical.id, { minimum: -1 })).toBe(true);
+    expect(vertical.sliders[0]).toMatchObject({ minimum: -1, maximum: 1 });
+    expect(bsb.updateSliderBankValue(vertical.id, 0, -0.5)).toBe(true);
+    expect(vertical.sliders[0]?.value).toBe(-0.5);
+  });
+
   it('parameter sync creates missing parameters with the widget-derived resolution (T128)', () => {
     const bsb = buildParameterSyncFixture();
     const parameters = bsb.getParameters();
@@ -168,5 +224,46 @@ describe('BSB exact resolution ownership', () => {
         .find((candidate) => candidate.getName() === 'harmonics_0')
         ?.getResolutionText(),
     ).toBe('0.02');
+  });
+
+  it('snaps slider value on setValue for BSBHSlider and BSBVSlider', () => {
+    const hslider = new BSBHSlider();
+    hslider.minimum = 0;
+    hslider.maximum = 10;
+    hslider.setResolutionText('1');
+    hslider.setValue(4.7);
+    expect(hslider.value).toBe(5);
+
+    hslider.setValue(4.2);
+    expect(hslider.value).toBe(4);
+
+    const vslider = new BSBVSlider();
+    vslider.minimum = 0;
+    vslider.maximum = 1;
+    vslider.setResolutionText('0.25');
+    vslider.setValue(0.6);
+    expect(vslider.value).toBe(0.5);
+
+    vslider.setValue(0.75);
+    expect(vslider.value).toBe(0.75);
+  });
+
+  it('snaps slider bank child values on updateSliderBankValue and updates parameter', () => {
+    const bsb = buildParameterSyncFixture();
+    const bank = bsb
+      .getGraphicInterface()
+      .getRootGroup()
+      .getChildren()
+      .find(
+        (child): child is BSBHSliderBank =>
+          child instanceof BSBHSliderBank && child.objectName === 'harmonics',
+      )!;
+
+    // Bank resolution is 0.01 in fixture
+    expect(bsb.updateSliderBankValue(bank.id, 0, 0.4234)).toBe(true);
+    expect(bank.sliders[0]?.value).toBe(0.42);
+
+    const param = bsb.getParameters().find((p) => p.getName() === 'harmonics_0');
+    expect(param?.getFixedValue()).toBe(0.42);
   });
 });

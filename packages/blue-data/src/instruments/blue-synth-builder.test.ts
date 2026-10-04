@@ -679,6 +679,7 @@ describe('BlueSynthBuilder', () => {
           <x>0</x><y>0</y>
           <minimum>0</minimum>
           <maximum>1</maximum>
+          <bdresolution>0.01</bdresolution>
           <sliderWidth>120</sliderWidth>
           <gap>5</gap>
           <bsbObject type="blue.orchestra.blueSynthBuilder.BSBHSlider">

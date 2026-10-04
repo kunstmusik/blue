@@ -280,4 +280,110 @@ describe('BSB interface snapshot reducer', () => {
       });
     }).toThrow();
   });
+
+  it('snaps slider value updates to resolution without IEEE-754 precision artifacts', () => {
+    const inst = instrument({
+      widgetTree: {
+        ...instrument().widgetTree,
+        children: [
+          widget({
+            id: 'slider-1',
+            type: 'BSBHSlider',
+            minimum: 0,
+            maximum: 10,
+            value: 0,
+            properties: { resolution: 0.1, resolutionDecimal: '0.1' },
+          }),
+        ],
+      },
+    });
+
+    applyBsbInterfacePatchToSnapshot(inst, {
+      type: 'updateWidgetProperties',
+      widgetId: 'slider-1',
+      properties: { value: 3.299999999 },
+    });
+
+    expect(inst.widgetTree.children![0].value).toBe(3.3);
+  });
+
+  it('snaps slider bank value updates to resolution', () => {
+    const inst = instrument({
+      widgetTree: {
+        ...instrument().widgetTree,
+        children: [
+          widget({
+            id: 'bank-1',
+            type: 'BSBHSliderBank',
+            minimum: 0,
+            maximum: 1,
+            properties: {
+              numberOfSliders: 2,
+              resolution: 0.25,
+              resolutionDecimal: '0.25',
+              sliders: [{ value: 0 }, { value: 0 }],
+            },
+          }),
+        ],
+      },
+    });
+
+    applyBsbInterfacePatchToSnapshot(inst, {
+      type: 'updateSliderBankValue',
+      widgetId: 'bank-1',
+      sliderIndex: 1,
+      value: 0.73,
+    });
+
+    expect(
+      (inst.widgetTree.children![0].properties.sliders as Array<{ value: number }>)[1].value,
+    ).toBe(0.75);
+  });
+
+  it('re-snaps existing slider and bank values when resolution changes', () => {
+    const inst = instrument({
+      widgetTree: {
+        ...instrument().widgetTree,
+        children: [
+          widget({
+            id: 'slider-h',
+            type: 'BSBHSlider',
+            minimum: 0,
+            maximum: 10,
+            value: 4.3,
+            properties: { resolution: 0.1 },
+          }),
+          widget({
+            id: 'bank-v',
+            type: 'BSBVSliderBank',
+            minimum: 0,
+            maximum: 10,
+            properties: {
+              numberOfSliders: 2,
+              resolution: 0.1,
+              sliders: [{ value: 3.4 }, { value: 7.8 }],
+            },
+          }),
+        ],
+      },
+    });
+
+    // Update resolution on single slider to integer 1
+    applyBsbInterfacePatchToSnapshot(inst, {
+      type: 'updateWidgetProperties',
+      widgetId: 'slider-h',
+      properties: { resolution: 1 },
+    });
+    expect(inst.widgetTree.children![0].value).toBe(4);
+
+    // Update resolution on bank to integer 1
+    applyBsbInterfacePatchToSnapshot(inst, {
+      type: 'updateWidgetProperties',
+      widgetId: 'bank-v',
+      properties: { resolution: 1 },
+    });
+    const bankSliders = inst.widgetTree.children![1].properties.sliders as Array<{ value: number }>;
+    expect(bankSliders[0].value).toBe(3);
+    expect(bankSliders[1].value).toBe(8);
+  });
 });

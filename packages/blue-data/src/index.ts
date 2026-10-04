@@ -570,6 +570,7 @@ export { ProjectUpgrader_2_3_0 } from './migration/upgrades/upgrade-2.3.0';
 
 // ─── Utilities ───
 export { clamp } from './utilities/math-utils';
+export { formatBlueNumber, formatJavaDouble } from './utilities/number-format';
 export { replaceAll, stripSingleLineComments, stripBlockComments } from './utilities/text';
 export {
   writeInt,

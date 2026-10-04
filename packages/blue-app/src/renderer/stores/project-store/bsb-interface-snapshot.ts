@@ -2,6 +2,9 @@ import {
   collectBsbReplacementKeysFromSnapshotTree,
   createDefaultBsbWidgetSnapshot,
   ensureUniqueName,
+  getWidgetResolution,
+  getWidgetResolutionDecimal,
+  snapWidgetValueToResolution,
   type BsbInterfacePatch,
   type BsbWidgetNodeSnapshot,
   type BlueSynthBuilderInstrumentSnapshot,
@@ -60,13 +63,15 @@ export function applyBsbInterfacePatchToSnapshot(
     minimum: number,
     maximum: number,
     resolution: number,
+    resolutionDecimal?: string | null,
   ): number => {
-    if (!Number.isFinite(resolution) || resolution <= 0) {
-      return clampToRange(value, minimum, maximum);
-    }
-
-    const snapped = minimum + Math.round((value - minimum) / resolution) * resolution;
-    return clampToRange(snapped, minimum, maximum);
+    return snapWidgetValueToResolution(
+      value,
+      minimum,
+      maximum,
+      resolution > 0 ? resolution : null,
+      resolutionDecimal,
+    );
   };
 
   const rescaleValue = (
@@ -76,18 +81,22 @@ export function applyBsbInterfacePatchToSnapshot(
     newMinimum: number,
     newMaximum: number,
     resolution: number,
+    resolutionDecimal?: string | null,
   ): number => {
     if (oldMaximum === oldMinimum) {
-      return snapToResolution(newMinimum, newMinimum, newMaximum, resolution);
+      return snapToResolution(newMinimum, newMinimum, newMaximum, resolution, resolutionDecimal);
     }
 
     const normalized = (value - oldMinimum) / (oldMaximum - oldMinimum);
     const nextValue = newMinimum + normalized * (newMaximum - newMinimum);
-    return snapToResolution(nextValue, newMinimum, newMaximum, resolution);
+    return snapToResolution(nextValue, newMinimum, newMaximum, resolution, resolutionDecimal);
   };
 
   const getNodeResolution = (node: BsbWidgetNodeSnapshot): number =>
-    typeof node.properties.resolution === 'number' ? node.properties.resolution : -1;
+    getWidgetResolution(node) ?? -1;
+
+  const getNodeResolutionDecimal = (node: BsbWidgetNodeSnapshot): string | null =>
+    getWidgetResolutionDecimal(node);
 
   const rescaleNodeMinimum = (node: BsbWidgetNodeSnapshot, newMinimum: number): void => {
     const oldMinimum = node.minimum;
@@ -108,6 +117,7 @@ export function applyBsbInterfacePatchToSnapshot(
           newMinimum,
           oldMaximum,
           getNodeResolution(node),
+          getNodeResolutionDecimal(node),
         ),
       }));
       return;
@@ -122,6 +132,7 @@ export function applyBsbInterfacePatchToSnapshot(
       newMinimum,
       oldMaximum,
       getNodeResolution(node),
+      getNodeResolutionDecimal(node),
     );
     if (node.type === 'BSBValue') {
       node.properties.defaultValue = node.value;
@@ -147,6 +158,7 @@ export function applyBsbInterfacePatchToSnapshot(
           oldMinimum,
           newMaximum,
           getNodeResolution(node),
+          getNodeResolutionDecimal(node),
         ),
       }));
       return;
@@ -161,6 +173,7 @@ export function applyBsbInterfacePatchToSnapshot(
       oldMinimum,
       newMaximum,
       getNodeResolution(node),
+      getNodeResolutionDecimal(node),
     );
     if (node.type === 'BSBValue') {
       node.properties.defaultValue = node.value;
@@ -656,7 +669,17 @@ export function applyBsbInterfacePatchToSnapshot(
               node.height = value as number;
               break;
             case 'value':
-              node.value = value as number;
+              if (node.type === 'BSBHSlider' || node.type === 'BSBVSlider') {
+                node.value = snapToResolution(
+                  value as number,
+                  node.minimum,
+                  node.maximum,
+                  getNodeResolution(node),
+                  getNodeResolutionDecimal(node),
+                );
+              } else {
+                node.value = value as number;
+              }
               break;
             case 'resolution':
               // Preserve the exact decimal text in the optimistic snapshot;
@@ -669,6 +692,30 @@ export function applyBsbInterfacePatchToSnapshot(
                 }
               } else if (typeof value === 'number') {
                 node.properties.resolution = value;
+                node.properties.resolutionDecimal = String(value);
+              }
+              if (node.type === 'BSBHSlider' || node.type === 'BSBVSlider') {
+                node.value = snapToResolution(
+                  node.value,
+                  node.minimum,
+                  node.maximum,
+                  getNodeResolution(node),
+                  getNodeResolutionDecimal(node),
+                );
+              } else if (node.type === 'BSBHSliderBank' || node.type === 'BSBVSliderBank') {
+                if (Array.isArray(node.properties.sliders)) {
+                  const res = getNodeResolution(node);
+                  const resDec = getNodeResolutionDecimal(node);
+                  node.properties.sliders = (
+                    node.properties.sliders as Array<{ value?: number }>
+                  ).map((s) => ({
+                    ...s,
+                    value:
+                      typeof s.value === 'number'
+                        ? snapToResolution(s.value, node.minimum, node.maximum, res, resDec)
+                        : s.value,
+                  }));
+                }
               }
               break;
             case 'defaultValue':
@@ -806,9 +853,18 @@ export function applyBsbInterfacePatchToSnapshot(
         if (patch.sliderIndex < 0 || patch.sliderIndex >= sliders.length) {
           return false;
         }
+        const res = getNodeResolution(node);
+        const resDec = getNodeResolutionDecimal(node);
+        const snappedValue = snapToResolution(
+          patch.value,
+          node.minimum ?? 0,
+          node.maximum ?? 1,
+          res,
+          resDec,
+        );
         sliders[patch.sliderIndex] = {
           ...sliders[patch.sliderIndex],
-          value: patch.value,
+          value: snappedValue,
         };
         node.properties.sliders = sliders;
         return true;

@@ -30,10 +30,22 @@ export class BSBHSlider extends BSBWidget {
     if (exactResolution) this.setResolutionText(exactResolution);
     else if (legacyResolution)
       this.setResolutionText(parseLegacyBsbResolution(legacyResolution).canonicalText);
+    else
+      this.value = snapToResolutionJava(
+        this.value,
+        this.minimum,
+        this.maximum,
+        this.resolutionDecimal,
+      );
     const vde = data.getElement('valueDisplayEnabled');
     if (vde) this.valueDisplayEnabled = readBoolean(vde, context);
     const rand = data.getElement('randomizable');
     if (rand) this.randomizable = readBoolean(rand, context);
+  }
+
+  override setValue(val: number): void {
+    const clamped = Math.max(this.minimum, Math.min(this.maximum, val));
+    this.value = snapToResolutionJava(clamped, this.minimum, this.maximum, this.resolutionDecimal);
   }
 
   randomize(): void {

@@ -18,6 +18,9 @@ export {
   createBsbWidgetSnapshotFromWidget,
   createDefaultBsbWidgetSnapshot,
   ensureUniqueName,
+  getWidgetResolution,
+  getWidgetResolutionDecimal,
+  snapWidgetValueToResolution,
 } from './bsb-widgets';
 
 export {
