@@ -143,4 +143,4 @@ Generated from the installed production dependency graph with `pnpm licenses lis
 
 ## Electron runtime
 
-- Electron 39.8.10 (Chromium and Node.js runtime); the app package copies its upstream license files to `Resources/licenses/Electron-LICENSE` and `Resources/licenses/Electron-LICENSES.chromium.html`.
+- Electron 44.5.1 (Chromium and Node.js runtime); the app package copies its upstream license files to `Resources/licenses/Electron-LICENSE` and `Resources/licenses/Electron-LICENSES.chromium.html`.

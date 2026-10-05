@@ -29,7 +29,7 @@ Full license texts are in the root `LICENSES/` and the app's `Resources/licenses
 
 ## JavaScript dependencies
 
-The exact production npm dependency graph and declared license identifiers are recorded in [the current inventory](docs/dependency-license-inventory.md), including dependencies pulled through workspace packages. Package license files remain with their dependencies in the application. `@blue/data` uses `@rgrove/parse-xml` (ISC) and `quickjs-emscripten` plus its support packages (MIT); `@blue/engine-client` uses `zeromq` 6.8.0 (MIT AND MPL-2.0). Electron 39.8.10's Electron and Chromium license files are copied from the pinned runtime into `Resources/licenses` during packaging.
+The exact production npm dependency graph and declared license identifiers are recorded in [the current inventory](docs/dependency-license-inventory.md), including dependencies pulled through workspace packages. Package license files remain with their dependencies in the application. `@blue/data` uses `@rgrove/parse-xml` (ISC) and `quickjs-emscripten` plus its support packages (MIT); `@blue/engine-client` uses `zeromq` 6.8.0 (MIT AND MPL-2.0). Electron 44.5.1's Electron and Chromium license files are copied from the pinned runtime into `Resources/licenses` during packaging.
 
 ## Bundled example projects
 

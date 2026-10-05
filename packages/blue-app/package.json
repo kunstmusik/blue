@@ -87,7 +87,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.4",
     "@vitest/browser-playwright": "^4.1.11",
-    "electron": "39.8.10",
+    "electron": "44.5.1",
     "electron-builder": "^26.0.36",
     "jsdom": "^29.1.0",
     "playwright": "^1.60.0",

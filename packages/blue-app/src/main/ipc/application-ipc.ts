@@ -7,6 +7,8 @@ import {
 
 export const APPLICATION_IPC_CHANNELS = [
   'blue:native-confirmation:show',
+  'clipboard:read-text',
+  'clipboard:write-text',
   'settings:confirm-close',
   'settings:close-response',
   'settings:open',

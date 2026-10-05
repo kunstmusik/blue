@@ -1,7 +1,7 @@
 /**
  * Preload script — exposes safe IPC bridges to the renderer process.
  */
-import { clipboard, contextBridge, ipcRenderer, webUtils } from 'electron';
+import { contextBridge, ipcRenderer, webUtils } from 'electron';
 import { validateBlueX7SysexReadResult } from '../shared/blue-x7-sysex';
 import type {
   EffectEditorPatchRequest,
@@ -930,12 +930,9 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke('send-effect-realtime-update', update) as Promise<void>,
 
   // Clipboard
-  readClipboardText: () => Promise.resolve(clipboard.readText()),
-  writeClipboardText: (text: string) => {
-    return Promise.resolve().then(() => {
-      clipboard.writeText(text);
-    });
-  },
+  readClipboardText: () => ipcRenderer.invoke('clipboard:read-text') as Promise<string>,
+  writeClipboardText: (text: string) =>
+    ipcRenderer.invoke('clipboard:write-text', text) as Promise<void>,
 
   // Playback
   togglePlay: () => ipcRenderer.invoke('toggle-play'),

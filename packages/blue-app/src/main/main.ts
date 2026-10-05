@@ -4,6 +4,7 @@
 import {
   app,
   BrowserWindow,
+  clipboard,
   ipcMain as electronIpcMain,
   dialog,
   Menu,
@@ -5550,6 +5551,12 @@ ipcRegistration.on(SETTINGS_CLOSE_RESPONSE_CHANNEL, (_event, resolution: unknown
   if (resolution === 'allow' || resolution === 'cancel') {
     resolveSettingsWindowClose(resolution as SettingsCloseResolution);
   }
+});
+
+ipcRegistration.handle('clipboard:read-text', () => clipboard.readText());
+ipcRegistration.handle('clipboard:write-text', (_event, text: unknown) => {
+  if (typeof text !== 'string') throw new TypeError('Clipboard text must be a string');
+  return clipboard.writeText(text);
 });
 
 ipcRegistration.handle('settings:open', async () => {
