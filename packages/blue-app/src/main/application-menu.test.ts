@@ -117,6 +117,36 @@ describe('application menu template', () => {
     expect(gatedByLabel('Open Example Project...')?.enabled).not.toBe(false);
   });
 
+  it('gates Revert menu item on canRevertProject and routes click to onRevertProject', () => {
+    const handlers = createHandlers();
+    const enabledTemplate = buildApplicationMenuTemplate({
+      hasLoadedProject: true,
+      isDarwin: false,
+      recentProjects: [],
+      canRevertProject: true,
+      followPlaybackEnabled: true,
+      followPlaybackOnStartEnabled: true,
+      ...handlers,
+    });
+    const enabledFileMenu = getSubmenu(enabledTemplate.find((item) => item.label === 'File'));
+    const revertItem = enabledFileMenu.find((item) => item.label === 'Revert');
+    expect(revertItem?.enabled).toBe(true);
+    revertItem?.click?.();
+    expect(handlers.onRevertProject).toHaveBeenCalledTimes(1);
+
+    const disabledTemplate = buildApplicationMenuTemplate({
+      hasLoadedProject: true,
+      isDarwin: false,
+      recentProjects: [],
+      canRevertProject: false,
+      followPlaybackEnabled: true,
+      followPlaybackOnStartEnabled: true,
+      ...handlers,
+    });
+    const disabledFileMenu = getSubmenu(disabledTemplate.find((item) => item.label === 'File'));
+    expect(disabledFileMenu.find((item) => item.label === 'Revert')?.enabled).toBe(false);
+  });
+
   it('disables all native disk-render actions while a render/freeze operation is active', () => {
     const template = buildApplicationMenuTemplate({
       hasLoadedProject: true,

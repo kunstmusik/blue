@@ -1837,6 +1837,28 @@ async function chooseProjectSaveDecision(): Promise<ReplacementSaveChoice> {
 }
 
 /**
+ * Presents the native Revert confirmation dialog for the active project.
+ * Warns that current work will be lost; user can confirm (default) or cancel.
+ */
+async function confirmRevertProject(): Promise<boolean> {
+  if (!mainWindow || mainWindow.isDestroyed()) return false;
+  const result = await showNativeConfirmation(mainWindow, {
+    id: 'confirm-revert-project',
+    type: 'question',
+    title: 'Revert',
+    message: 'Are you sure you want to revert to the last saved version of this project?',
+    detail: 'You will lose your current work if you proceed.',
+    actions: [
+      { id: 'revert', label: 'Revert', role: 'accept' },
+      { id: 'cancel', label: 'Cancel', role: 'cancel' },
+    ],
+    defaultActionId: 'revert',
+    cancelActionId: 'cancel',
+  });
+  return result.actionId === 'revert' && result.outcome === 'selected';
+}
+
+/**
  * Resolve the save decision for a close, quit, or replacement transition
  * from the authoritative save state (spec 109). One settlement boundary is
  * held through state evaluation, the decision, and the settled save, so
@@ -1928,7 +1950,8 @@ function rebuildApplicationMenu(): void {
       canAuditionScoreObjects,
       isDarwin: process.platform === 'darwin',
       recentProjects: getRecentProjectFilesSnapshot(),
-      canRevertProject: Boolean(getCurrentFilePath()),
+      canRevertProject:
+        Boolean(getCurrentFilePath()) && projectHistory.getSaveState() === 'modified',
       followPlaybackEnabled: currentFollowPlaybackEnabled,
       followPlaybackOnStartEnabled: currentFollowPlaybackOnStartEnabled,
       canUndo: historyState.canUndo,
@@ -3445,10 +3468,14 @@ async function closeProject(): Promise<void> {
 }
 
 async function revertProject(): Promise<void> {
-  if (!getCurrentFilePath()) return;
+  if (!mainWindow) return;
   const filePath = getCurrentFilePath();
+  if (!filePath) return;
+  if (projectHistory.getSaveState() !== 'modified') return;
+  if (!(await canReplaceProjectWhileRenderActive())) return;
+
   await runTerminalProjectTransition(async () => {
-    if (!(await confirmSaveBeforeReplaceInsideBoundary())) return;
+    if (!(await confirmRevertProject())) return;
     if (!(await confirmLibraryDraftTransition('switchProject'))) return;
     await loadProjectFromDisk(filePath);
   });

@@ -932,7 +932,8 @@ describe('terminal decision boundary pass-through (spec 109 T029)', () => {
       'async function openRecentProject',
     );
     expect(revertProject).toContain('runTerminalProjectTransition');
-    expect(revertProject).toContain('confirmSaveBeforeReplaceInsideBoundary');
+    expect(revertProject).toContain('confirmRevertProject');
+    expect(revertProject).toContain("projectHistory.getSaveState() !== 'modified'");
 
     const newFile = bodyOf('async function newFile()', 'async function closeProject()');
     expect(newFile).toContain('runTerminalProjectTransition');
