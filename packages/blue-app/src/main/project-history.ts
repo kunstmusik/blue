@@ -215,6 +215,8 @@ export interface ProjectHistoryDependencies {
   readonly broadcastReleaseBoundary?: (event: ReleaseHistoryBoundaryEvent) => void | Promise<void>;
   readonly barrierTimeoutMs?: number;
   readonly reconciliation?: ProjectRuntimeReconciliation;
+  /** Returns false if a participant context is no longer active in the host environment (e.g. closed window). */
+  readonly isParticipantActive?: (contextId: string) => boolean;
 }
 
 export function scalarRecordsToInversePatches(
@@ -764,6 +766,7 @@ export class ProjectHistory {
   ) => void | Promise<void>;
   private readonly barrierTimeoutMs: number;
   private readonly reconciliation?: ProjectRuntimeReconciliation;
+  private readonly isParticipantActive?: (contextId: string) => boolean;
 
   private entries: HistoryEntry[] = [];
   private cursor = 0;
@@ -819,6 +822,7 @@ export class ProjectHistory {
     this.broadcastReleaseBoundary = dependencies.broadcastReleaseBoundary;
     this.barrierTimeoutMs = dependencies.barrierTimeoutMs ?? 5000;
     this.reconciliation = dependencies.reconciliation;
+    this.isParticipantActive = dependencies.isParticipantActive;
   }
 
   private enqueueOrderedMutation<T>(operation: () => Promise<T> | T): Promise<T> {
@@ -1178,23 +1182,28 @@ export class ProjectHistory {
 
     const current = this.session.read();
     if (participant.documentId !== current.documentId) {
-      return { ok: false, reason: 'History participant document is no longer active' };
+      const reason = 'History participant document is no longer active';
+      this.activeBarrier.resolve({ ok: false, reason });
+      return { ok: false, reason };
     }
     if (ack.lastAcknowledgedRevision > current.revision) {
-      return { ok: false, reason: 'History boundary revision is ahead of the active document' };
+      const reason = 'History boundary revision is ahead of the active document';
+      this.activeBarrier.resolve({ ok: false, reason });
+      return { ok: false, reason };
     }
     const sequenceAtBoundary = this.activeBarrier.participantSequences.get(ack.contextId) ?? 0;
     if (ack.lastAcknowledgedSequence < sequenceAtBoundary) {
-      return { ok: false, reason: 'History boundary acknowledgement sequence is stale' };
+      const reason = 'History boundary acknowledgement sequence is stale';
+      this.activeBarrier.resolve({ ok: false, reason });
+      return { ok: false, reason };
     }
     // The boundary command itself is allocated a context sequence before its
     // prefix is drained. Permit that one in-flight sequence, while still
     // rejecting acknowledgements that claim multiple unsubmitted operations.
     if (ack.lastAcknowledgedSequence > participant.lastSequence + 1) {
-      return {
-        ok: false,
-        reason: 'History boundary acknowledgement sequence is ahead of submitted work',
-      };
+      const reason = 'History boundary acknowledgement sequence is ahead of submitted work';
+      this.activeBarrier.resolve({ ok: false, reason });
+      return { ok: false, reason };
     }
 
     if (ack.outstandingPrefixCount > 0) {
@@ -1292,6 +1301,8 @@ export class ProjectHistory {
       for (const [contextId, info] of this.participants) {
         if (info.documentId !== currentDocumentId) {
           this.participants.delete(contextId);
+        } else if (this.isParticipantActive && !this.isParticipantActive(contextId)) {
+          this.participants.delete(contextId);
         }
       }
 
@@ -1309,9 +1320,10 @@ export class ProjectHistory {
 
         const timeoutHandle = setTimeout(() => {
           if (this.activeBarrier?.barrierId === barrierId) {
+            const pending = Array.from(this.activeBarrier.pendingContextIds);
             resolveBarrier({
               ok: false,
-              reason: `Settlement barrier timed out after ${this.barrierTimeoutMs}ms`,
+              reason: `Settlement barrier timed out after ${this.barrierTimeoutMs}ms (pending contexts: ${pending.join(', ')})`,
             });
           }
         }, this.barrierTimeoutMs);

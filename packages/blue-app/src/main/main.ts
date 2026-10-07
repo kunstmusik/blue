@@ -530,10 +530,29 @@ function broadcastRuntimePerformanceCleared(
   }
 }
 
+const historyParticipantSenders = new Map<string, unknown>();
+const historyAvailabilityBySender = new Map<number, FocusedHistoryAvailability>();
+const trackedHistorySenders = new WeakSet<Electron.WebContents>();
+
+function isHistorySenderActive(contextId: string): boolean {
+  const sender = historyParticipantSenders.get(contextId);
+  if (!sender || typeof sender !== 'object') return false;
+  const webContents = sender as Electron.WebContents;
+  if (typeof webContents.isDestroyed === 'function' && webContents.isDestroyed()) {
+    return false;
+  }
+  const win = BrowserWindow.fromWebContents(webContents);
+  if (win && win.isDestroyed()) {
+    return false;
+  }
+  return true;
+}
+
 const projectHistory = createProjectHistory({
   session: projectSession,
   captureSnapshot: getCurrentProjectDocument,
   reconciliation: projectRuntimeReconciliation,
+  isParticipantActive: isHistorySenderActive,
   publishUpdated: async (event) => {
     if (event.snapshot === null) {
       console.error('[project-history] Refusing to publish an event without a canonical snapshot');
@@ -593,17 +612,16 @@ function publishHistoryCheckpoint(): void {
 
 const collectedIpcHandlers = new Map<string, IpcMainInvokeHandler>();
 const collectedIpcListeners = new Map<string, IpcMainEventListener>();
-const historyParticipantSenders = new Map<string, unknown>();
-const historyAvailabilityBySender = new Map<number, FocusedHistoryAvailability>();
-const trackedHistorySenders = new WeakSet<Electron.WebContents>();
 
 function trackHistorySender(sender: Electron.WebContents): void {
   if (trackedHistorySenders.has(sender)) return;
   trackedHistorySenders.add(sender);
+  const senderId = sender.id;
   sender.once('destroyed', () => {
-    historyAvailabilityBySender.delete(sender.id);
+    historyAvailabilityBySender.delete(senderId);
     for (const [contextId, owner] of historyParticipantSenders) {
-      if (owner !== sender) continue;
+      const ownerId = (owner as { id?: number })?.id;
+      if (owner !== sender && ownerId !== senderId) continue;
       historyParticipantSenders.delete(contextId);
       projectHistory.unregisterParticipant({ contextId });
     }
@@ -700,6 +718,8 @@ function getBlueLiveTriggerController(): BlueLiveTriggerController {
   return blueLiveTriggerController;
 }
 let engineRuntimeService: EngineRuntimeService | null = null;
+// A pending quit decision must not authorize native window destruction.
+let isQuitRequestPending = false;
 let isQuitting = false;
 let shutdownPromise: Promise<void> | null = null;
 type ShutdownTrigger = 'user' | 'signal';
@@ -868,7 +888,8 @@ function dispatchOscCommand(event: OscCommandEvent): void {
     !mainWindow ||
     mainWindow.isDestroyed() ||
     mainWindow.webContents.isDestroyed() ||
-    isQuitting
+    isQuitting ||
+    isQuitRequestPending
   ) {
     return;
   }
@@ -2233,6 +2254,18 @@ function createWindow(): void {
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show();
   });
+
+  mainWindow.on('close', (event) => {
+    if (!isQuitting) {
+      event.preventDefault();
+      void requestQuit();
+    }
+  });
+
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
+
   mainWindow.webContents.on('did-start-loading', () => {
     midiImportService.clearAll();
   });
@@ -2487,13 +2520,12 @@ async function requestQuit(): Promise<void> {
     app.exit(0);
     return;
   }
-  if (isQuitting) return;
+  if (isQuitting || isQuitRequestPending) return;
 
-  isQuitting = true;
+  isQuitRequestPending = true;
 
-  let mayQuit = false;
   try {
-    mayQuit = await runTerminalProjectTransition(async () => {
+    await runTerminalProjectTransition(async () => {
       if (!(await confirmLibraryDraftTransition('quit'))) {
         return false;
       }
@@ -2515,14 +2547,11 @@ async function requestQuit(): Promise<void> {
       return true;
     });
   } catch (error) {
-    // A failed transition (e.g. settlement timeout) must abort the quit
-    // without wedging isQuitting — the app has to stay usable and quit-able.
+    // Leave the document and live participant ownership intact on failure.
+    // A retry must settle the same editors before making any save decision.
     console.error('[main] Quit transition failed:', error);
-    mayQuit = false;
-  }
-
-  if (!mayQuit) {
-    isQuitting = false;
+  } finally {
+    isQuitRequestPending = false;
   }
 }
 
@@ -6383,7 +6412,10 @@ function validateHistoryRequestSender(
     typeof event === 'object' && event !== null
       ? (event as { sender?: unknown }).sender
       : undefined;
-  if (historyParticipantSenders.get(contextId) !== sender) {
+  const currentSender = historyParticipantSenders.get(contextId);
+  const currentSenderId = (currentSender as { id?: number })?.id;
+  const senderId = (sender as { id?: number })?.id;
+  if (currentSender !== sender && (currentSenderId === undefined || currentSenderId !== senderId)) {
     return 'History request context is unknown or owned by another window';
   }
   return null;
@@ -6471,7 +6503,13 @@ ipcRegistration.handle(
     if (!validation.valid) return { ok: false, reason: validation.reason };
     const req = validation.value;
     const currentSender = historyParticipantSenders.get(req.contextId);
-    if (currentSender !== undefined && currentSender !== event.sender) {
+    const currentSenderId = (currentSender as { id?: number })?.id;
+    const eventSenderId = (event.sender as { id?: number })?.id;
+    if (
+      currentSender !== undefined &&
+      currentSender !== event.sender &&
+      (currentSenderId === undefined || currentSenderId !== eventSenderId)
+    ) {
       return { ok: false, reason: 'History participant context is owned by another window' };
     }
     const response = projectHistory.registerParticipant(req);
@@ -6489,7 +6527,13 @@ ipcRegistration.handle(
     if (!validation.valid) return { ok: false, reason: validation.reason };
     const req = validation.value;
     const currentSender = historyParticipantSenders.get(req.contextId);
-    if (currentSender !== undefined && currentSender !== event.sender) {
+    const currentSenderId = (currentSender as { id?: number })?.id;
+    const eventSenderId = (event.sender as { id?: number })?.id;
+    if (
+      currentSender !== undefined &&
+      currentSender !== event.sender &&
+      (currentSenderId === undefined || currentSenderId !== eventSenderId)
+    ) {
       return { ok: false, reason: 'History participant context is owned by another window' };
     }
     projectHistory.unregisterParticipant(req);
@@ -6505,7 +6549,12 @@ ipcRegistration.handle(
     if (!validation.valid) return { ok: false, reason: validation.reason };
     const req = validation.value;
     const currentSender = historyParticipantSenders.get(req.contextId);
-    if (currentSender !== event.sender) {
+    const currentSenderId = (currentSender as { id?: number })?.id;
+    const eventSenderId = (event.sender as { id?: number })?.id;
+    if (
+      currentSender !== event.sender &&
+      (currentSenderId === undefined || currentSenderId !== eventSenderId)
+    ) {
       return { ok: false, reason: 'Unknown or foreign history participant context' };
     }
     return projectHistory.acknowledgeBoundary(req);
@@ -7379,9 +7428,7 @@ app.on('before-quit', (event: Electron.Event) => {
 
 app.on('window-all-closed', () => {
   if (!isQuitting) {
-    requestQuit();
-  } else {
-    void doQuit();
+    void requestQuit();
   }
 });
 

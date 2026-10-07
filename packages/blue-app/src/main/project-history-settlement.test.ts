@@ -21,7 +21,7 @@ import {
 } from '../renderer/stores/project-store/project-patch-queue';
 
 describe('Project history settlement barrier (T015)', () => {
-  function setupTest(barrierTimeoutMs = 100) {
+  function setupTest(barrierTimeoutMs = 100, isParticipantActive?: (contextId: string) => boolean) {
     const session = new ProjectSession();
     const data = new BlueData();
     data.getProjectProperties().title = 'Initial Title';
@@ -41,6 +41,7 @@ describe('Project history settlement barrier (T015)', () => {
         releaseEvents.push(evt);
       },
       barrierTimeoutMs,
+      isParticipantActive,
     });
 
     const contextA = new MockHistoryContext('ctx-a');
@@ -869,6 +870,9 @@ describe('Project history settlement barrier (T015)', () => {
       expect((undoResult as { error: string }).error).toContain('outstanding prefix edits');
       expect(releaseEvents[0]!.status).toBe('aborted');
       expect(session.read().revision).toBe(1);
+      expect(history.getParticipants().map((participant) => participant.contextId)).toEqual([
+        contextA.contextId,
+      ]);
     });
 
     it('aborts the real barrier when the renderer receives an error-bearing prefix receipt', async () => {
@@ -931,6 +935,107 @@ describe('Project history settlement barrier (T015)', () => {
       expect(session.read().revision).toBe(1);
       expect(queue.isSettlementPaused()).toBe(false);
       queue.clearPending();
+    });
+
+    it('prunes inactive participants via isParticipantActive before barrier runs', async () => {
+      const activeContexts = new Set(['ctx-a']);
+      const { session, history, prepareEvents, contextA, contextB } = setupTest(100, (id) =>
+        activeContexts.has(id),
+      );
+      const docId = session.read().documentId!;
+
+      history.registerParticipant({
+        contextId: contextA.contextId,
+        documentId: docId,
+        acceptedRevision: 0,
+      });
+      history.registerParticipant({
+        contextId: contextB.contextId,
+        documentId: docId,
+        acceptedRevision: 0,
+      });
+
+      expect(history.getParticipants()).toHaveLength(2);
+
+      const barrierAction = vi.fn().mockResolvedValue('success');
+      const barrierPromise = history.runSettlementBarrier('replacement', barrierAction);
+
+      await new Promise((r) => setTimeout(r, 5));
+      expect(prepareEvents).toHaveLength(1);
+      const barrierId = prepareEvents[0]!.barrierId;
+
+      // Inactive participant contextB was pruned; only contextA fences the barrier
+      expect(history.getParticipants().map((p) => p.contextId)).toEqual([contextA.contextId]);
+
+      // Acknowledging contextA alone settles the barrier immediately
+      history.acknowledgeBoundary(contextA.acknowledgeBarrier(barrierId, 0, 0));
+      await expect(barrierPromise).resolves.toBe('success');
+      expect(barrierAction).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps a timed-out live participant and requires acknowledgement on retry', async () => {
+      const { session, history, prepareEvents, contextA } = setupTest(25);
+      const docId = session.read().documentId!;
+
+      history.registerParticipant({
+        contextId: contextA.contextId,
+        documentId: docId,
+        acceptedRevision: 0,
+      });
+
+      // Barrier times out because contextA does not acknowledge
+      await expect(
+        history.runSettlementBarrier('replacement', async () => 'quit-ran'),
+      ).rejects.toThrowError(/Settlement barrier timed out after 25ms \(pending contexts: ctx-a\)/);
+
+      expect(history.getParticipants().map((participant) => participant.contextId)).toEqual([
+        contextA.contextId,
+      ]);
+
+      const action = vi.fn().mockResolvedValue('quit-retry-ran');
+      const nextBarrier = history.runSettlementBarrier('replacement', action);
+      await vi.waitFor(() => expect(prepareEvents).toHaveLength(2), { interval: 1 });
+      expect(action).not.toHaveBeenCalled();
+      history.acknowledgeBoundary(contextA.acknowledgeBarrier(prepareEvents[1]!.barrierId, 0, 0));
+      await expect(nextBarrier).resolves.toBe('quit-retry-ran');
+      expect(action).toHaveBeenCalledTimes(1);
+    });
+
+    it('aborts barrier immediately on invalid sequence acknowledgement without hanging for timeout', async () => {
+      const { session, history, prepareEvents, contextA } = setupTest(500);
+      const docId = session.read().documentId!;
+
+      history.registerParticipant({
+        contextId: contextA.contextId,
+        documentId: docId,
+        acceptedRevision: 0,
+      });
+
+      // Submit an edit so sequence at boundary will be captured
+      await history.commit(
+        contextA.nextCommitRequest(docId, 0, 'Edit 1', [{ projectProperties: { title: 'T1' } }]),
+      );
+
+      const barrierPromise = history.runSettlementBarrier('replacement', async () => 'ran');
+      await new Promise((r) => setTimeout(r, 5));
+      expect(prepareEvents).toHaveLength(1);
+      const barrierId = prepareEvents[0]!.barrierId;
+
+      // Acknowledge with stale sequence (-1)
+      const ackResult = history.acknowledgeBoundary({
+        barrierId,
+        contextId: contextA.contextId,
+        lastAcknowledgedRevision: 1,
+        lastAcknowledgedSequence: -1,
+        outstandingPrefixCount: 0,
+      });
+      expect(ackResult.ok).toBe(false);
+      expect(ackResult.reason).toBe('History boundary acknowledgement sequence is stale');
+
+      // Barrier should fail immediately instead of waiting for 500ms timeout
+      await expect(barrierPromise).rejects.toThrowError(
+        'History boundary acknowledgement sequence is stale',
+      );
     });
   });
 
