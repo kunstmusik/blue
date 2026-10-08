@@ -963,6 +963,32 @@ export function applyBsbInterfacePatch(
   instrument: BlueSynthBuilder,
   patch: BsbInterfacePatch,
 ): boolean {
+  const gi = instrument.getGraphicInterface();
+  if (
+    'parentGroupId' in patch &&
+    patch.parentGroupId &&
+    !(gi.findWidgetById(patch.parentGroupId) instanceof BSBGroup)
+  ) {
+    throw new Error(`BSB parent group '${patch.parentGroupId}' no longer exists; edit rejected`);
+  }
+  if (
+    'widgetId' in patch &&
+    patch.type !== 'addWidget' &&
+    patch.type !== 'makeGroup' &&
+    patch.type !== 'selectWidget' &&
+    !gi.findWidgetById(patch.widgetId)
+  ) {
+    throw new Error(`BSB widget '${patch.widgetId}' no longer exists; edit rejected`);
+  }
+  const createdIds = new Set<string>();
+  const validateCreatedId = (id: unknown): void => {
+    if (typeof id !== 'string' || !id.trim() || gi.findWidgetById(id) || createdIds.has(id)) {
+      throw new Error(`Invalid or duplicate BSB creation identity '${String(id)}'; edit rejected`);
+    }
+    createdIds.add(id);
+  };
+  if ((patch.type === 'addWidget' || patch.type === 'makeGroup') && patch.widgetId !== undefined)
+    validateCreatedId(patch.widgetId);
   switch (patch.type) {
     case 'setEditEnabled':
       instrument.setBsbEditEnabled(patch.value);
@@ -987,6 +1013,7 @@ export function applyBsbInterfacePatch(
       const gi = instrument.getGraphicInterface();
       const widget = gi.createWidgetByType(patch.widgetType);
       if (!widget) return false;
+      if (patch.widgetId) widget.id = patch.widgetId;
       widget.x = patch.x;
       widget.y = patch.y;
       if (patch.parentGroupId) {
@@ -1166,6 +1193,16 @@ export function applyBsbInterfacePatch(
       return true;
     case 'makeGroup': {
       const gi = instrument.getGraphicInterface();
+      const parent = patch.parentGroupId
+        ? (gi.findWidgetById(patch.parentGroupId) as BSBGroup)
+        : gi.getRootGroup();
+      if (
+        patch.widgetIds.length === 0 ||
+        new Set(patch.widgetIds).size !== patch.widgetIds.length ||
+        patch.widgetIds.some((id) => !parent.getChildren().some((child) => child.id === id))
+      ) {
+        throw new Error('BSB grouping targets no longer exist in the active panel; edit rejected');
+      }
       const widgetsToGroup: BSBWidget[] = [];
       const collect = (parent: BSBGroup): void => {
         for (const child of parent.getChildren()) {
@@ -1188,7 +1225,7 @@ export function applyBsbInterfacePatch(
       }
 
       const group = new BSBGroup();
-      group.id = crypto.randomUUID();
+      group.id = patch.widgetId ?? crypto.randomUUID();
       group.x = minX;
       group.y = minY;
       group.groupName = 'Group';
@@ -1246,7 +1283,15 @@ export function applyBsbInterfacePatch(
       } catch {
         return false;
       }
-      if (!Array.isArray(parsed) || parsed.length === 0) return false;
+      if (!Array.isArray(parsed) || parsed.length === 0)
+        throw new Error('Invalid BSB paste data; edit rejected');
+      const validateNode = (node: BsbWidgetNodeSnapshot): void => {
+        if (!node || typeof node !== 'object' || !gi.createWidgetByType(node.type))
+          throw new Error('Invalid BSB pasted widget type; edit rejected');
+        if (patch.preserveIds) validateCreatedId(node.id);
+        node.children?.forEach(validateNode);
+      };
+      parsed.forEach(validateNode);
 
       const existingNames = new Set<string>();
       const collectNames = (group: BSBGroup): void => {
@@ -1265,7 +1310,7 @@ export function applyBsbInterfacePatch(
 
       for (const node of parsed) {
         ensureUniqueName(node, existingNames);
-        const widget = createWidgetFromSnapshot(gi, node);
+        const widget = createWidgetFromSnapshot(gi, node, patch.preserveIds);
         if (widget) parent.addChild(widget);
       }
       instrument.invalidateGraphicInterfaceCache();
@@ -1274,7 +1319,11 @@ export function applyBsbInterfacePatch(
   }
 }
 
-export function createWidgetFromSnapshot(gi: any, node: BsbWidgetNodeSnapshot): BSBWidget | null {
+export function createWidgetFromSnapshot(
+  gi: any,
+  node: BsbWidgetNodeSnapshot,
+  preserveIds = false,
+): BSBWidget | null {
   const bsbGi = gi as { createWidgetByType(t: string): BSBWidget | null };
   const widget = bsbGi.createWidgetByType(node.type);
   if (!widget) return null;
@@ -1354,12 +1403,13 @@ export function createWidgetFromSnapshot(gi: any, node: BsbWidgetNodeSnapshot): 
     widgetRecord[key] = cloneBsbSnapshotValue(val);
   }
 
+  if (preserveIds) widget.id = node.id;
   if (widget instanceof BSBGroup) {
     widget.width = node.width;
     widget.height = node.height;
     if (node.children) {
       for (const childNode of node.children) {
-        const child = createWidgetFromSnapshot(gi, childNode);
+        const child = createWidgetFromSnapshot(gi, childNode, preserveIds);
         if (child) widget.addChild(child);
       }
     }
@@ -1376,7 +1426,7 @@ export function createWidgetFromSnapshot(gi: any, node: BsbWidgetNodeSnapshot): 
 
     if (node.children && node.children.length > 0) {
       for (const childNode of node.children) {
-        const child = createWidgetFromSnapshot(gi, childNode);
+        const child = createWidgetFromSnapshot(gi, childNode, preserveIds);
         if (child) nextSliders.push(child);
       }
     }

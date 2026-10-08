@@ -66,9 +66,9 @@ export default function ObjectBuilderScoreObjectEditor({
   }, [runTest]);
 
   const handleInstrumentPatch = useCallback(
-    (instrumentPatch: InstrumentPatch) => {
+    (instrumentPatch: InstrumentPatch, metadata?: ProjectDocumentCommitMetadata) => {
       if (instrumentPatch.bsbInterface) {
-        patch({ bsbInterfacePatch: instrumentPatch.bsbInterface });
+        patch({ bsbInterfacePatch: instrumentPatch.bsbInterface }, metadata);
       }
     },
     [patch],

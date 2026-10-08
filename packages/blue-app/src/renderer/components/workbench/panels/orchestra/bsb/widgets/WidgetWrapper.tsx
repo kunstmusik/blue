@@ -1,11 +1,14 @@
+import {
+  registerHistoryEditorSettlement,
+  settleHistoryEditors,
+} from '../../../../../../lib/history-scope-router';
+import { dispatchBsbAction } from '../bsb-history';
+import type { BsbInterfacePatchHandler } from '../bsb-history';
 import React, { useRef, useEffect } from 'react';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { ChevronRight } from 'lucide-react';
-import type {
-  BsbWidgetNodeSnapshot,
-  BsbInterfacePatch,
-} from '../../../../../../../shared/project-editor';
+import type { BsbWidgetNodeSnapshot } from '../../../../../../../shared/project-editor';
 import type { BSBWidgetResizeMeta } from '../bsb-widget-meta';
 import { getWidgetDisplaySize } from './utils';
 import {
@@ -31,7 +34,7 @@ interface WidgetWrapperProps {
   gridSnapEnabled?: boolean;
   gridSnapWidth?: number;
   gridSnapHeight?: number;
-  onBsbInterfacePatch?: (patch: BsbInterfacePatch) => void;
+  onBsbInterfacePatch?: BsbInterfacePatchHandler;
   selectedWidgetIds?: Set<string>;
   getWidgetPosition?: (id: string) => { x: number; y: number } | undefined;
   onWidgetAction?: (action: string) => void;
@@ -63,6 +66,10 @@ function WidgetWrapper({
   const heightResizeProperty = resizeMeta?.heightProperty ?? 'height';
 
   type MoveDragState = {
+    gestureId: string;
+    begun: boolean;
+    latest: MouseEvent | null;
+    dispatch: BsbInterfacePatchHandler | undefined;
     originClientX: number;
     originClientY: number;
     positions: Map<string, { x: number; y: number }>;
@@ -74,64 +81,95 @@ function WidgetWrapper({
     gridSnapEnabled,
     gridSnapWidth,
     gridSnapHeight,
-    onBsbInterfacePatch,
   });
-  moveParamsRef.current = { gridSnapEnabled, gridSnapWidth, gridSnapHeight, onBsbInterfacePatch };
+  moveParamsRef.current = { gridSnapEnabled, gridSnapWidth, gridSnapHeight };
 
   const moveRafRef = useRef(0);
 
+  const wrapperRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
+    const hostDocument = wrapperRef.current?.ownerDocument;
+    const hostWindow = hostDocument?.defaultView;
+    if (!hostDocument || !hostWindow) return;
+    const applyMove = (phase: 'begin' | 'update' | 'end') => {
+      const md = moveDragRef.current;
+      if (!md?.latest) return;
+      const {
+        gridSnapEnabled: snap,
+        gridSnapWidth: gw,
+        gridSnapHeight: gh,
+      } = moveParamsRef.current;
+      let dx = md.latest.clientX - md.originClientX;
+      let dy = md.latest.clientY - md.originClientY;
+      if (snap && gw) dx = Math.round(dx / gw) * gw;
+      if (snap && gh) dy = Math.round(dy / gh) * gh;
+      const minNx = Math.min(...[...md.positions.values()].map((pos) => pos.x + dx));
+      const minNy = Math.min(...[...md.positions.values()].map((pos) => pos.y + dy));
+      if (minNx < 0) dx -= minNx;
+      if (minNy < 0) dy -= minNy;
+      const positions = [...md.positions];
+      positions.forEach(([id, startPos], index) => {
+        md.dispatch?.(
+          {
+            type: 'updateWidgetProperties',
+            widgetId: id,
+            properties: { x: startPos.x + dx, y: startPos.y + dy },
+          },
+          {
+            label: 'Move Blue Synth Builder Widgets',
+            gestureId: md.gestureId,
+            phase:
+              phase === 'begin'
+                ? index === 0
+                  ? 'begin'
+                  : 'update'
+                : phase === 'end'
+                  ? index === positions.length - 1
+                    ? 'end'
+                    : 'update'
+                  : 'update',
+          },
+        );
+      });
+      md.begun = true;
+    };
     const onMove = (e: MouseEvent) => {
       const md = moveDragRef.current;
       if (!md) return;
       hasDraggedRef.current = true;
+      md.latest = e;
       e.preventDefault();
-      cancelAnimationFrame(moveRafRef.current);
-      moveRafRef.current = requestAnimationFrame(() => {
-        const md2 = moveDragRef.current;
-        if (!md2) return;
-        const {
-          gridSnapEnabled: snap,
-          gridSnapWidth: gw,
-          gridSnapHeight: gh,
-          onBsbInterfacePatch: patch,
-        } = moveParamsRef.current;
-        let dx = e.clientX - md2.originClientX;
-        let dy = e.clientY - md2.originClientY;
-        if (snap && gw) dx = Math.round(dx / gw) * gw;
-        if (snap && gh) dy = Math.round(dy / gh) * gh;
-
-        // Clamp delta so no widget goes below 0
-        let minNx = Infinity;
-        let minNy = Infinity;
-        for (const [, startPos] of md2.positions) {
-          minNx = Math.min(minNx, startPos.x + dx);
-          minNy = Math.min(minNy, startPos.y + dy);
-        }
-        if (minNx < 0) dx -= minNx;
-        if (minNy < 0) dy -= minNy;
-
-        for (const [id, startPos] of md2.positions) {
-          const nx = startPos.x + dx;
-          const ny = startPos.y + dy;
-          patch?.({ type: 'updateWidgetProperties', widgetId: id, properties: { x: nx, y: ny } });
-        }
-      });
+      hostWindow.cancelAnimationFrame(moveRafRef.current);
+      moveRafRef.current = hostWindow.requestAnimationFrame(() =>
+        applyMove(md.begun ? 'update' : 'begin'),
+      );
     };
-    const onUp = () => {
-      cancelAnimationFrame(moveRafRef.current);
+    const settle = () => {
+      hostWindow.cancelAnimationFrame(moveRafRef.current);
+      const md = moveDragRef.current;
+      if (md?.latest) {
+        if (!md.begun) applyMove('begin');
+        applyMove('end');
+      }
       moveDragRef.current = null;
-      // Clear hasDragged after a short delay so click handler can read it
       setTimeout(() => {
         hasDraggedRef.current = false;
       }, 0);
     };
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
+    const onUp = (e: MouseEvent) => {
+      if (moveDragRef.current?.latest) moveDragRef.current.latest = e;
+      settle();
+    };
+    const unregister = registerHistoryEditorSettlement(hostDocument, settle);
+    hostWindow.addEventListener('mousemove', onMove);
+    hostWindow.addEventListener('mouseup', onUp);
+    hostWindow.addEventListener('blur', settle);
     return () => {
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-      cancelAnimationFrame(moveRafRef.current);
+      unregister();
+      hostWindow.removeEventListener('mousemove', onMove);
+      hostWindow.removeEventListener('mouseup', onUp);
+      hostWindow.removeEventListener('blur', settle);
+      settle();
     };
   }, []);
 
@@ -157,9 +195,15 @@ function WidgetWrapper({
 
   const handleRemove = () => {
     if (isSelected) {
-      for (const id of selectedWidgetIds ?? new Set()) {
-        onBsbInterfacePatch?.({ type: 'removeWidget', widgetId: id });
-      }
+      if (onBsbInterfacePatch)
+        dispatchBsbAction(
+          onBsbInterfacePatch,
+          [...(selectedWidgetIds ?? new Set<string>())].map((widgetId) => ({
+            type: 'removeWidget',
+            widgetId,
+          })),
+          'Remove Blue Synth Builder Widgets',
+        );
       onWidgetSelect(null);
     }
   };
@@ -167,6 +211,7 @@ function WidgetWrapper({
   const widgetDiv = (
     <div
       key={node.id}
+      ref={wrapperRef}
       data-widget-id={node.id}
       data-widget-type={node.type}
       className={cn(
@@ -198,7 +243,16 @@ function WidgetWrapper({
         if (positions.size === 0) {
           positions.set(node.id, { x: node.x, y: node.y });
         }
-        moveDragRef.current = { originClientX: e.clientX, originClientY: e.clientY, positions };
+        void settleHistoryEditors(e.currentTarget.ownerDocument);
+        moveDragRef.current = {
+          gestureId: crypto.randomUUID(),
+          begun: false,
+          latest: null,
+          dispatch: onBsbInterfacePatch,
+          originClientX: e.clientX,
+          originClientY: e.clientY,
+          positions,
+        };
       }}
       onDoubleClick={(e) => {
         e.stopPropagation();
@@ -447,7 +501,7 @@ interface ResizeHandleProps {
   startValue: number;
   gridSnapEnabled?: boolean;
   gridSnapSize?: number;
-  onPatch: (patch: BsbInterfacePatch) => void;
+  onPatch: BsbInterfacePatchHandler;
 }
 
 function ResizeHandle({
@@ -464,9 +518,15 @@ function ResizeHandle({
   gridSnapSize,
   onPatch,
 }: ResizeHandleProps): React.ReactElement {
-  const dragState = useRef<{ startClient: number; startVal: number; startPos: number } | null>(
-    null,
-  );
+  const dragState = useRef<{
+    gestureId: string;
+    begun: boolean;
+    latest: MouseEvent | null;
+    dispatch: BsbInterfacePatchHandler;
+    startClient: number;
+    startVal: number;
+    startPos: number;
+  } | null>(null);
   const rafRef = useRef(0);
   const paramsRef = useRef({
     nodeId,
@@ -528,68 +588,95 @@ function ResizeHandle({
     }
   })();
 
+  const handleRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
+    const hostDocument = handleRef.current?.ownerDocument;
+    const hostWindow = hostDocument?.defaultView;
+    if (!hostDocument || !hostWindow) return;
+    const applyResize = (phase: 'begin' | 'update' | 'end') => {
+      const ds = dragState.current;
+      if (!ds?.latest) return;
+      const {
+        nodeId: id,
+        minSize: ms,
+        gridSnapEnabled: snap,
+        gridSnapSize: gs,
+        propertyKey: pk,
+      } = paramsRef.current;
+      const client = isHorizontal ? ds.latest.clientX : ds.latest.clientY;
+      let delta = client - ds.startClient;
+      if (snap && gs) delta = Math.round(delta / gs) * gs;
+      const properties: Record<string, unknown> = {};
+      if (edge === 'right' || edge === 'bottom') {
+        properties[pk] = Math.max(ms, ds.startVal + delta);
+      } else {
+        delta = Math.max(-ds.startPos, Math.min(delta, ds.startVal - ms));
+        const newPos = ds.startPos + delta;
+        properties[pk] = Math.max(ms, ds.startVal - delta);
+        properties[isHorizontal ? 'x' : 'y'] = newPos;
+      }
+      ds.dispatch(
+        { type: 'updateWidgetProperties', widgetId: id, properties },
+        {
+          label: 'Resize Blue Synth Builder Widget',
+          gestureId: ds.gestureId,
+          phase,
+        },
+      );
+      ds.begun = true;
+    };
     const onMouseMove = (e: MouseEvent) => {
       const ds = dragState.current;
       if (!ds) return;
+      ds.latest = e;
       e.preventDefault();
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = requestAnimationFrame(() => {
-        const ds2 = dragState.current;
-        if (!ds2) return;
-        const {
-          nodeId: id,
-          minSize: ms,
-          gridSnapEnabled: snap,
-          gridSnapSize: gs,
-          propertyKey: pk,
-        } = paramsRef.current;
-        const client = isHorizontal ? e.clientX : e.clientY;
-        let delta = client - ds2.startClient;
-        if (snap && gs) delta = Math.round(delta / gs) * gs;
-
-        if (edge === 'right' || edge === 'bottom') {
-          const newSize = Math.max(ms, ds2.startVal + delta);
-          patchRef.current({
-            type: 'updateWidgetProperties',
-            widgetId: id,
-            properties: { [pk]: newSize },
-          });
-        } else {
-          const newSize = Math.max(ms, ds2.startVal - delta);
-          const newPos = ds2.startPos + delta;
-          if (newPos >= 0) {
-            patchRef.current({
-              type: 'updateWidgetProperties',
-              widgetId: id,
-              properties: { [pk]: newSize, [isHorizontal ? 'x' : 'y']: newPos },
-            });
-          }
-        }
-      });
+      hostWindow.cancelAnimationFrame(rafRef.current);
+      rafRef.current = hostWindow.requestAnimationFrame(() =>
+        applyResize(ds.begun ? 'update' : 'begin'),
+      );
     };
-    const onMouseUp = () => {
-      cancelAnimationFrame(rafRef.current);
+    const settle = () => {
+      hostWindow.cancelAnimationFrame(rafRef.current);
+      const ds = dragState.current;
+      if (ds?.latest) {
+        if (!ds.begun) applyResize('begin');
+        applyResize('end');
+      }
       dragState.current = null;
     };
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
+    const onMouseUp = (e: MouseEvent) => {
+      if (dragState.current?.latest) dragState.current.latest = e;
+      settle();
+    };
+    const unregister = registerHistoryEditorSettlement(hostDocument, settle);
+    hostWindow.addEventListener('mousemove', onMouseMove);
+    hostWindow.addEventListener('mouseup', onMouseUp);
+    hostWindow.addEventListener('blur', settle);
     return () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-      cancelAnimationFrame(rafRef.current);
+      unregister();
+      hostWindow.removeEventListener('mousemove', onMouseMove);
+      hostWindow.removeEventListener('mouseup', onMouseUp);
+      hostWindow.removeEventListener('blur', settle);
+      settle();
     };
   }, [edge, isHorizontal]);
 
   return (
     <div
+      ref={handleRef}
       className="bsb-resize-handle"
       data-resize-edge={edge}
       style={{ ...handleStyle, backgroundColor: 'var(--color-app-focus)' }}
       onMouseDown={(e) => {
         e.stopPropagation();
         e.preventDefault();
+        if (e.button !== 0) return;
+        void settleHistoryEditors(e.currentTarget.ownerDocument);
         dragState.current = {
+          gestureId: crypto.randomUUID(),
+          begun: false,
+          latest: null,
+          dispatch: patchRef.current,
           startClient: isHorizontal ? e.clientX : e.clientY,
           startVal: startValue,
           startPos: edge === 'left' ? (nodeX ?? 0) : edge === 'top' ? (nodeY ?? 0) : 0,

@@ -1,4 +1,6 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import type { BsbInterfacePatchHandler } from './bsb-history';
+import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { flushSync } from 'react-dom';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import type {
@@ -8,6 +10,8 @@ import type {
   GridSettingsSnapshot,
   InstrumentPatch,
 } from '../../../../../../shared/project-editor';
+import { dispatchBsbAction } from './bsb-history';
+import { settleHistoryEditors } from '../../../../../lib/history-scope-router';
 import { BSB_WIDGET_RESIZE_META } from './bsb-widget-meta';
 import {
   BSBHSliderWidget,
@@ -63,7 +67,7 @@ interface BSBInterfaceCanvasProps {
   selectedWidgetIds: Set<string>;
   editEnabled: boolean;
   onWidgetSelect: (widgetId: string | null, shiftKey?: boolean) => void;
-  onBsbInterfacePatch: (patch: BsbInterfacePatch) => void;
+  onBsbInterfacePatch: BsbInterfacePatchHandler;
   onInstrumentPatch: (patch: InstrumentPatch) => void | Promise<void>;
 }
 
@@ -160,7 +164,7 @@ function BSBInterfaceCanvas({
   onWidgetSelect,
   onBsbInterfacePatch,
 }: BSBInterfaceCanvasProps): React.ReactElement {
-  const [groupStack, setGroupStack] = useState<GroupStackEntry[]>([]);
+  const [requestedGroupStack, setGroupStack] = useState<GroupStackEntry[]>([]);
   const [marquee, setMarquee] = useState<MarqueeState | null>(null);
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
   const clipboard = useBsbClipboardStore((state) => state.clipboard);
@@ -180,7 +184,16 @@ function BSBInterfaceCanvas({
     gridSnapHeight: gridSettings?.height,
   };
 
+  const groupStack = useMemo(
+    () => resolveGroupStack(instrument.widgetTree, requestedGroupStack),
+    [instrument.widgetTree, requestedGroupStack],
+  );
   const currentChildren = resolveCurrentChildren(instrument.widgetTree, groupStack);
+  const currentChildrenRef = useRef(currentChildren);
+  currentChildrenRef.current = currentChildren;
+  useEffect(() => {
+    if (requestedGroupStack.length !== groupStack.length) setGroupStack(groupStack);
+  }, [requestedGroupStack, groupStack]);
   const canvasSize = getCanvasDisplaySize(
     currentChildren,
     viewportSize.width,
@@ -192,16 +205,18 @@ function BSBInterfaceCanvas({
 
   const removeSelectedWidgets = useCallback(() => {
     if (selectedWidgetIds.size === 0) return;
-    for (const id of selectedWidgetIds) {
-      onBsbInterfacePatch({ type: 'removeWidget', widgetId: id });
-    }
+    dispatchBsbAction(
+      onBsbInterfacePatch,
+      [...selectedWidgetIds].map((widgetId) => ({ type: 'removeWidget', widgetId })),
+      'Remove Blue Synth Builder Widgets',
+    );
     onWidgetSelect(null);
   }, [selectedWidgetIds, onBsbInterfacePatch, onWidgetSelect]);
 
   const getSelectedCurrentWidgets = useCallback(
     (): BsbWidgetNodeSnapshot[] =>
-      currentChildren.filter((child) => selectedWidgetIds.has(child.id)),
-    [currentChildren, selectedWidgetIds],
+      currentChildrenRef.current.filter((child) => selectedWidgetIds.has(child.id)),
+    [selectedWidgetIds],
   );
 
   const copySelectedWidgets = useCallback((): boolean => {
@@ -274,6 +289,9 @@ function BSBInterfaceCanvas({
 
   const handleWidgetAction = useCallback(
     (action: string) => {
+      flushSync(() => {
+        void settleHistoryEditors(canvasRef.current?.ownerDocument);
+      });
       const selIds = selectedWidgetIds;
       if (selIds.size === 0) return;
       const selected = getSelectedCurrentWidgets();
@@ -281,6 +299,8 @@ function BSBInterfaceCanvas({
       const ww = (s: BsbWidgetNodeSnapshot) => getWidgetDisplaySize(s).width;
       const wh = (s: BsbWidgetNodeSnapshot) => getWidgetDisplaySize(s).height;
 
+      const patches: BsbInterfacePatch[] = [];
+      const collectPatch = (patch: BsbInterfacePatch) => patches.push(patch);
       switch (action) {
         case 'copy': {
           copySelectedWidgets();
@@ -291,19 +311,19 @@ function BSBInterfaceCanvas({
           break;
         }
         case 'make-group': {
-          onBsbInterfacePatch({ type: 'makeGroup', widgetIds: [...selIds], parentGroupId });
+          collectPatch({ type: 'makeGroup', widgetIds: [...selIds], parentGroupId });
           break;
         }
         case 'break-group': {
           const groupId = [...selIds][0];
-          if (groupId) onBsbInterfacePatch({ type: 'breakGroup', widgetId: groupId });
+          if (groupId) collectPatch({ type: 'breakGroup', widgetId: groupId });
           break;
         }
         case 'align-left': {
           const target = Math.min(...selected.map((s) => s.x));
           for (const s of selected) {
             if (s.x !== target)
-              onBsbInterfacePatch({
+              collectPatch({
                 type: 'updateWidgetProperties',
                 widgetId: s.id,
                 properties: { x: target },
@@ -316,7 +336,7 @@ function BSBInterfaceCanvas({
           for (const s of selected) {
             const nx = target - ww(s);
             if (s.x !== nx)
-              onBsbInterfacePatch({
+              collectPatch({
                 type: 'updateWidgetProperties',
                 widgetId: s.id,
                 properties: { x: nx },
@@ -328,7 +348,7 @@ function BSBInterfaceCanvas({
           const target = Math.min(...selected.map((s) => s.y));
           for (const s of selected) {
             if (s.y !== target)
-              onBsbInterfacePatch({
+              collectPatch({
                 type: 'updateWidgetProperties',
                 widgetId: s.id,
                 properties: { y: target },
@@ -341,7 +361,7 @@ function BSBInterfaceCanvas({
           for (const s of selected) {
             const ny = target - wh(s);
             if (s.y !== ny)
-              onBsbInterfacePatch({
+              collectPatch({
                 type: 'updateWidgetProperties',
                 widgetId: s.id,
                 properties: { y: ny },
@@ -354,7 +374,7 @@ function BSBInterfaceCanvas({
           const right = Math.max(...selected.map((s) => s.x + ww(s)));
           const center = (left + right) / 2;
           for (const s of selected) {
-            onBsbInterfacePatch({
+            collectPatch({
               type: 'updateWidgetProperties',
               widgetId: s.id,
               properties: { x: Math.round(center - ww(s) / 2) },
@@ -367,7 +387,7 @@ function BSBInterfaceCanvas({
           const bottom = Math.max(...selected.map((s) => s.y + wh(s)));
           const center = (top + bottom) / 2;
           for (const s of selected) {
-            onBsbInterfacePatch({
+            collectPatch({
               type: 'updateWidgetProperties',
               widgetId: s.id,
               properties: { y: Math.round(center - wh(s) / 2) },
@@ -383,7 +403,7 @@ function BSBInterfaceCanvas({
           const spacing = (lastC - firstC) / (sorted.length - 1);
           for (let i = 1; i < sorted.length - 1; i++) {
             const target = Math.round(firstC + spacing * i - ww(sorted[i]) / 2);
-            onBsbInterfacePatch({
+            collectPatch({
               type: 'updateWidgetProperties',
               widgetId: sorted[i].id,
               properties: { x: Math.max(0, target) },
@@ -399,7 +419,7 @@ function BSBInterfaceCanvas({
           const spacing = (lastC - firstC) / (sorted.length - 1);
           for (let i = 1; i < sorted.length - 1; i++) {
             const target = Math.round(firstC + spacing * i - wh(sorted[i]) / 2);
-            onBsbInterfacePatch({
+            collectPatch({
               type: 'updateWidgetProperties',
               widgetId: sorted[i].id,
               properties: { y: Math.max(0, target) },
@@ -408,6 +428,11 @@ function BSBInterfaceCanvas({
           break;
         }
       }
+      dispatchBsbAction(
+        onBsbInterfacePatch,
+        patches,
+        `${action.startsWith('align-') ? 'Align' : action.startsWith('distribute-') ? 'Distribute' : action === 'make-group' ? 'Group' : 'Ungroup'} Blue Synth Builder Widgets`,
+      );
     },
     [
       copySelectedWidgets,
@@ -419,26 +444,26 @@ function BSBInterfaceCanvas({
     ],
   );
 
-  const getWidgetPosition = useCallback(
-    (id: string) => {
-      const find = (nodes: BsbWidgetNodeSnapshot[]): { x: number; y: number } | undefined => {
-        for (const n of nodes) {
-          if (n.id === id) return { x: n.x, y: n.y };
-          if (n.children) {
-            const found = find(n.children);
-            if (found) return found;
-          }
+  const getWidgetPosition = useCallback((id: string) => {
+    const find = (nodes: BsbWidgetNodeSnapshot[]): { x: number; y: number } | undefined => {
+      for (const n of nodes) {
+        if (n.id === id) return { x: n.x, y: n.y };
+        if (n.children) {
+          const found = find(n.children);
+          if (found) return found;
         }
-        return undefined;
-      };
-      return find(currentChildren);
-    },
-    [currentChildren],
-  );
+      }
+      return undefined;
+    };
+    return find(currentChildrenRef.current);
+  }, []);
 
   const handleCanvasKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
       if (!editEnabled || isTextEditingTarget(e.target)) return;
+      flushSync(() => {
+        void settleHistoryEditors(canvasRef.current?.ownerDocument);
+      });
 
       const commandKey = e.metaKey || e.ctrlKey;
       const key = e.key.toLowerCase();
@@ -484,17 +509,19 @@ function BSBInterfaceCanvas({
       const dx = e.key === 'ArrowLeft' ? -stepX : e.key === 'ArrowRight' ? stepX : 0;
       const dy = e.key === 'ArrowUp' ? -stepY : e.key === 'ArrowDown' ? stepY : 0;
 
+      const patches: BsbInterfacePatch[] = [];
       for (const widgetId of selectedWidgetIds) {
         const pos = getWidgetPosition(widgetId);
         if (!pos) continue;
         const nx = Math.max(0, pos.x + dx);
         const ny = Math.max(0, pos.y + dy);
-        onBsbInterfacePatch({
+        patches.push({
           type: 'updateWidgetProperties',
           widgetId,
           properties: { x: nx, y: ny },
         });
       }
+      dispatchBsbAction(onBsbInterfacePatch, patches, 'Nudge Blue Synth Builder Widgets');
     },
     [
       copySelectedWidgets,
@@ -517,6 +544,7 @@ function BSBInterfaceCanvas({
   });
 
   const enterGroup = (node: BsbWidgetNodeSnapshot) => {
+    void settleHistoryEditors(canvasRef.current?.ownerDocument);
     if (canvasRef.current) {
       const key = groupStack.map((e) => e.id).join('/');
       scrollMemory.current.set(key, {
@@ -526,7 +554,7 @@ function BSBInterfaceCanvas({
     }
     const groupName =
       typeof node.properties.groupName === 'string' ? node.properties.groupName : node.type;
-    setGroupStack((prev) => [...prev, { id: node.id, name: groupName }]);
+    setGroupStack([...groupStack, { id: node.id, name: groupName }]);
     onWidgetSelect(null);
     requestAnimationFrame(() => {
       if (canvasRef.current) {
@@ -537,6 +565,7 @@ function BSBInterfaceCanvas({
   };
 
   const navigateTo = (index: number) => {
+    void settleHistoryEditors(canvasRef.current?.ownerDocument);
     if (canvasRef.current) {
       const currentKey = groupStack.map((e) => e.id).join('/');
       scrollMemory.current.set(currentKey, {
@@ -548,7 +577,7 @@ function BSBInterfaceCanvas({
       .slice(0, index)
       .map((e) => e.id)
       .join('/');
-    setGroupStack((prev) => prev.slice(0, index));
+    setGroupStack(groupStack.slice(0, index));
     onWidgetSelect(null);
     requestAnimationFrame(() => {
       if (canvasRef.current) {
@@ -874,6 +903,27 @@ function BSBInterfaceCanvas({
 }
 
 export default React.memo(BSBInterfaceCanvas);
+
+function resolveGroupStack(
+  root: BsbWidgetNodeSnapshot,
+  stack: GroupStackEntry[],
+): GroupStackEntry[] {
+  let current = root;
+  const resolved: GroupStackEntry[] = [];
+  for (const entry of stack) {
+    const child = current.children?.find(
+      (node) => node.id === entry.id && node.type === 'BSBGroup',
+    );
+    if (!child) break;
+    resolved.push({
+      id: child.id,
+      name:
+        typeof child.properties.groupName === 'string' ? child.properties.groupName : child.type,
+    });
+    current = child;
+  }
+  return resolved;
+}
 
 function resolveCurrentChildren(
   root: BsbWidgetNodeSnapshot,

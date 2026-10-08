@@ -444,7 +444,10 @@ export function applyBsbInterfacePatchToSnapshot(
     }
 
     const node = cloneSnapshotValue(record) as BsbWidgetNodeSnapshot;
-    node.id = createPastedWidgetId();
+    node.id =
+      patch.type === 'pasteWidgets' && patch.preserveIds
+        ? (record.id as string)
+        : createPastedWidgetId();
     node.objectName = typeof node.objectName === 'string' ? node.objectName : '';
     node.x = typeof node.x === 'number' && Number.isFinite(node.x) ? node.x : 0;
     node.y = typeof node.y === 'number' && Number.isFinite(node.y) ? node.y : 0;
@@ -1029,6 +1032,7 @@ export function applyBsbInterfacePatchToSnapshot(
       if (!instrument.widgetTree) break;
       const newNode = createDefaultBsbWidgetSnapshot(patch.widgetType);
       if (!newNode) break;
+      if (patch.widgetId) newNode.id = patch.widgetId;
       newNode.x = patch.x;
       newNode.y = patch.y;
       const targetId = patch.parentGroupId;
@@ -1048,6 +1052,64 @@ export function applyBsbInterfacePatchToSnapshot(
         nextRoot.children = [...(nextRoot.children ?? []), cloneWidgetNode(newNode)];
         commitWidgetTreeMutation(instrument.widgetTree, nextRoot);
       }
+      break;
+    }
+    case 'makeGroup': {
+      if (!instrument.widgetTree) break;
+      const root = cloneSnapshotValue(instrument.widgetTree);
+      let parent = root;
+      if (patch.parentGroupId) {
+        const find = (node: BsbWidgetNodeSnapshot): BsbWidgetNodeSnapshot | undefined => {
+          if (node.id === patch.parentGroupId) return node;
+          for (const child of node.children ?? []) {
+            const found = find(child);
+            if (found) return found;
+          }
+        };
+        const found = find(root);
+        if (!found || found.type !== 'BSBGroup') break;
+        parent = found;
+      }
+      const children = (parent.children ?? []).filter((node) => patch.widgetIds.includes(node.id));
+      if (!children.length) break;
+      const group = createDefaultBsbWidgetSnapshot('BSBGroup')!;
+      group.id = patch.widgetId ?? createPastedWidgetId();
+      group.x = Math.min(...children.map((node) => node.x));
+      group.y = Math.min(...children.map((node) => node.y));
+      group.properties.groupName = 'Group';
+      group.children = children.map((node) => ({
+        ...node,
+        x: node.x - group.x + 10,
+        y: node.y - group.y + 10,
+      }));
+      parent.children = [
+        ...(parent.children ?? []).filter((node) => !patch.widgetIds.includes(node.id)),
+        group,
+      ];
+      commitWidgetTreeMutation(instrument.widgetTree, root);
+      break;
+    }
+    case 'breakGroup': {
+      if (!instrument.widgetTree) break;
+      const root = cloneSnapshotValue(instrument.widgetTree);
+      const visit = (parent: BsbWidgetNodeSnapshot): boolean => {
+        const group = parent.children?.find(
+          (node) => node.id === patch.widgetId && node.type === 'BSBGroup',
+        );
+        if (group) {
+          parent.children = [
+            ...parent.children!.filter((node) => node !== group),
+            ...(group.children ?? []).map((node) => ({
+              ...node,
+              x: node.x + group.x,
+              y: node.y + group.y,
+            })),
+          ];
+          return true;
+        }
+        return (parent.children ?? []).some(visit);
+      };
+      if (visit(root)) commitWidgetTreeMutation(instrument.widgetTree, root);
       break;
     }
     case 'pasteWidgets': {

@@ -497,6 +497,11 @@ export function applyProjectDocumentPatch(
       }
       case 'updateInstrument': {
         const instrument = arrangement.getInstrumentById(orchestraPatch.assignmentId);
+        if (orchestraPatch.patch.bsbInterface && !(instrument instanceof BlueSynthBuilder)) {
+          throw new Error(
+            `BSB instrument '${orchestraPatch.assignmentId}' no longer exists; edit rejected`,
+          );
+        }
         if (instrument) {
           changed = applyInstrumentPatch(instrument, orchestraPatch.patch) || changed;
         }

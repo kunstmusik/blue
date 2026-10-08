@@ -137,7 +137,14 @@ describe('BSB keyboard shortcut scoping', () => {
         canvas?.dispatchEvent(event);
       });
 
-      expect(onBsbInterfacePatch).toHaveBeenCalledWith({ type: 'removeWidget', widgetId: 'w1' });
+      expect(onBsbInterfacePatch).toHaveBeenCalledWith(
+        { type: 'removeWidget', widgetId: 'w1' },
+        expect.objectContaining({
+          phase: 'single',
+          label: 'Remove Blue Synth Builder Widgets',
+          gestureId: expect.any(String),
+        }),
+      );
       expect(onWidgetSelect).toHaveBeenCalledWith(null);
       expect(windowHandler).not.toHaveBeenCalled();
     } finally {

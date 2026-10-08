@@ -1769,16 +1769,16 @@ export class ProjectHistory {
             { orchestra: { type: 'structuralChange' } as never },
           ]);
 
-    // Check adjacent gesture grouping
+    // Explicit gestures close on end or another action; only implicit field edits time out.
     const now = Date.now();
     const canGroup =
       request.phase !== 'begin' &&
       request.phase !== 'single' &&
       this.activeGroup !== null &&
       this.cursor > 0 &&
-      now - this.activeGroup.lastTimestamp <= GESTURE_GROUPING_TIMEOUT_MS &&
       ((request.gestureId !== undefined && this.activeGroup.gestureId === request.gestureId) ||
         (request.fieldId !== undefined &&
+          now - this.activeGroup.lastTimestamp <= GESTURE_GROUPING_TIMEOUT_MS &&
           this.activeGroup.fieldId === request.fieldId &&
           this.activeGroup.sourceContextId === request.origin?.contextId));
 

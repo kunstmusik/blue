@@ -1,7 +1,5 @@
-import type {
-  BsbInterfacePatch,
-  BsbWidgetNodeSnapshot,
-} from '../../../../../../../shared/project-editor';
+import type { BsbInterfacePatchHandler } from '../bsb-history';
+import type { BsbWidgetNodeSnapshot } from '../../../../../../../shared/project-editor';
 import type { BSBWidgetResizeMeta } from '../bsb-widget-meta';
 
 export interface BSBWidgetComponentProps {
@@ -9,7 +7,7 @@ export interface BSBWidgetComponentProps {
   isSelected: boolean;
   editEnabled: boolean;
   onWidgetSelect: (id: string | null, shiftKey?: boolean) => void;
-  onBsbInterfacePatch?: (patch: BsbInterfacePatch) => void;
+  onBsbInterfacePatch?: BsbInterfacePatchHandler;
   resizeMeta?: BSBWidgetResizeMeta;
   gridSnapEnabled?: boolean;
   gridSnapWidth?: number;
@@ -23,5 +21,5 @@ export interface BSBWidgetPatchComponentProps extends Omit<
   BSBWidgetComponentProps,
   'onBsbInterfacePatch'
 > {
-  onBsbInterfacePatch: (patch: BsbInterfacePatch) => void;
+  onBsbInterfacePatch: BsbInterfacePatchHandler;
 }

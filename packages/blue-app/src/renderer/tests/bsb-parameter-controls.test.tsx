@@ -387,13 +387,16 @@ describe('BSB parameter controls', () => {
       slider!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
     });
 
-    expect(onInstrumentPatch).toHaveBeenCalledWith({
-      bsbInterface: {
-        type: 'updateWidgetProperties',
-        widgetId: 'production-slider',
-        properties: { value: 0.51 },
+    expect(onInstrumentPatch).toHaveBeenCalledWith(
+      {
+        bsbInterface: {
+          type: 'updateWidgetProperties',
+          widgetId: 'production-slider',
+          properties: { value: 0.51 },
+        },
       },
-    });
+      { phase: 'single', label: 'Edit Blue Synth Builder Widget' },
+    );
   });
 
   describe('resolution snapping on sliders and slider banks', () => {

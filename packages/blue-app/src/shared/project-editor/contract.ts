@@ -2856,7 +2856,14 @@ export type BsbInterfacePatch =
   | { type: 'updateSliderBankValue'; widgetId: string; sliderIndex: number; value: number }
   | { type: 'moveWidget'; widgetId: string; x: number; y: number }
   | { type: 'resizeWidget'; widgetId: string; width: number; height: number }
-  | { type: 'addWidget'; widgetType: string; x: number; y: number; parentGroupId?: string }
+  | {
+      type: 'addWidget';
+      widgetId?: string;
+      widgetType: string;
+      x: number;
+      y: number;
+      parentGroupId?: string;
+    }
   | { type: 'removeWidget'; widgetId: string }
   | { type: 'updateGridSettings'; patch: Partial<GridSettingsSnapshot> }
   | { type: 'applyPreset'; presetUniqueId: string }
@@ -2879,9 +2886,9 @@ export type BsbInterfacePatch =
   | { type: 'convertUdoStyle'; index: number; style: 'CLASSIC' | 'MODERN' }
   | { type: 'reorderUdo'; from: number; to: number }
   | { type: 'randomize' }
-  | { type: 'makeGroup'; widgetIds: string[]; parentGroupId?: string }
+  | { type: 'makeGroup'; widgetId?: string; widgetIds: string[]; parentGroupId?: string }
   | { type: 'breakGroup'; widgetId: string }
-  | { type: 'pasteWidgets'; widgetData: string; parentGroupId?: string };
+  | { type: 'pasteWidgets'; preserveIds?: boolean; widgetData: string; parentGroupId?: string };
 
 // ─── Sound Score Object Editor Types ───
 

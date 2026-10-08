@@ -1,3 +1,4 @@
+import type { ProjectDocumentCommitMetadata } from '../../../../../../shared/project-history';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { clamp, parseJavaDecimal } from '@blue/data';
 import type {
@@ -50,7 +51,7 @@ export default function SoundEditor({
     useScoreObjectTest(document.target);
 
   const handleInstrumentPatch = useCallback(
-    (patch: InstrumentPatch) => {
+    (patch: InstrumentPatch, metadata?: ProjectDocumentCommitMetadata) => {
       const scorePatch: Record<string, unknown> = {};
       if (patch.bsbInterface) {
         scorePatch.bsbInterfacePatch = patch.bsbInterface;
@@ -73,11 +74,14 @@ export default function SoundEditor({
         if (patch.globalSco !== undefined)
           (scorePatch.bsbCodePatch as Record<string, unknown>).globalSco = patch.globalSco;
       }
-      onPatch({
-        type: 'updateTypeSpecificEditor',
-        target: document.target,
-        patch: scorePatch,
-      });
+      onPatch(
+        {
+          type: 'updateTypeSpecificEditor',
+          target: document.target,
+          patch: scorePatch,
+        },
+        metadata,
+      );
     },
     [document.target, onPatch],
   );

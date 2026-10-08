@@ -1,3 +1,4 @@
+import type { ProjectDocumentCommitMetadata } from '../../../shared/project-history';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
 import type {
@@ -14,7 +15,7 @@ import {
 
 export interface EffectInterfacePanelProps {
   snapshot: EffectEditorSnapshot;
-  onPatch: (patch: EffectEditablePatch) => void;
+  onPatch: (patch: EffectEditablePatch, metadata?: ProjectDocumentCommitMetadata) => void;
   onEditorUsable?: () => void;
 }
 
@@ -54,8 +55,8 @@ export default function EffectInterfacePanel({
 }: EffectInterfacePanelProps): React.ReactElement {
   const instrument = useMemo(() => buildInterfaceInstrument(snapshot), [snapshot]);
   const handleInstrumentPatch = useCallback(
-    (patch: InstrumentPatch) => {
-      if (patch.bsbInterface) onPatch({ bsbInterface: patch.bsbInterface });
+    (patch: InstrumentPatch, metadata?: ProjectDocumentCommitMetadata) => {
+      if (patch.bsbInterface) onPatch({ bsbInterface: patch.bsbInterface }, metadata);
     },
     [onPatch],
   );

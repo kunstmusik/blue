@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import type {
   BlueSynthBuilderInstrumentSnapshot,
   BsbInterfacePatch,
@@ -9,6 +9,14 @@ import type {
 import { BSB_PROPERTY_SPLIT_SIZE_PX } from '../../../../../../shared/window-layout-settings';
 import { collectBsbReplacementKeysFromSnapshotTree } from '../../../../../../shared/project-editor';
 import { useProjectStore } from '../../../../../stores/project-store';
+import type { ProjectDocumentCommitMetadata } from '../../../../../../shared/project-history';
+import { prepareBsbWidgetCreation } from '../../../../../../shared/bsb-widget-commands';
+import { bsbInterfaceActionLabel } from '../../../../../../shared/project-editor';
+import {
+  registerHistoryEditorSettlement,
+  settleHistoryEditors,
+} from '../../../../../lib/history-scope-router';
+import type { BsbInterfacePatchHandler } from './bsb-history';
 import BSBInterfaceCanvas from './BSBInterfaceCanvas';
 import BSBPropertySheet from './BSBPropertySheet';
 import BSBGridSettingsPanel from './BSBGridSettingsPanel';
@@ -19,7 +27,10 @@ import { cn } from '../../../../../lib/cn';
 
 interface BSBInterfaceEditorProps {
   instrument: BlueSynthBuilderInstrumentSnapshot;
-  onInstrumentPatch: (patch: InstrumentPatch) => void | Promise<void>;
+  onInstrumentPatch: (
+    patch: InstrumentPatch,
+    metadata?: ProjectDocumentCommitMetadata,
+  ) => void | Promise<void>;
   showEditModeToggle?: boolean;
 }
 
@@ -32,6 +43,41 @@ function BSBInterfaceEditor({
 }: BSBInterfaceEditorProps) {
   const [selectedWidgetIds, setSelectedWidgetIds] = useState<Set<string>>(new Set());
   const [rightTab, setRightTab] = useState<RightPanelTab>('properties');
+  const editorRef = useRef<HTMLDivElement>(null);
+  const performanceGesture = useRef<{
+    id: string;
+    widgetId: string;
+    lastPatch?: BsbInterfacePatch;
+    dispatch: BSBInterfaceEditorProps['onInstrumentPatch'];
+  } | null>(null);
+  const settlePerformanceGesture = useCallback(() => {
+    const gesture = performanceGesture.current;
+    performanceGesture.current = null;
+    if (gesture?.lastPatch) {
+      void gesture.dispatch(
+        { bsbInterface: gesture.lastPatch },
+        {
+          label: bsbInterfaceActionLabel(gesture.lastPatch),
+          gestureId: gesture.id,
+          phase: 'end',
+        },
+      );
+    }
+  }, []);
+  useEffect(() => {
+    const hostDocument = editorRef.current?.ownerDocument;
+    const hostWindow = hostDocument?.defaultView;
+    if (!hostDocument || !hostWindow) return;
+    const unregister = registerHistoryEditorSettlement(hostDocument, settlePerformanceGesture);
+    hostWindow.addEventListener('mouseup', settlePerformanceGesture);
+    hostWindow.addEventListener('blur', settlePerformanceGesture);
+    return () => {
+      unregister();
+      hostWindow.removeEventListener('mouseup', settlePerformanceGesture);
+      hostWindow.removeEventListener('blur', settlePerformanceGesture);
+      settlePerformanceGesture();
+    };
+  }, [settlePerformanceGesture]);
   const renderStartTime = useProjectStore((state) => state.transport.renderStartTime);
 
   const editEnabled = instrument.editEnabled;
@@ -49,12 +95,35 @@ function BSBInterfaceEditor({
     [instrument.widgetTree, selectedWidgetIds],
   );
 
-  const dispatchBsbPatch = useCallback(
-    (patch: BsbInterfacePatch) => {
-      void onInstrumentPatch({ bsbInterface: patch });
+  const dispatchBsbPatch = useCallback<BsbInterfacePatchHandler>(
+    (patch, metadata) => {
+      const gesture = performanceGesture.current;
+      if (!metadata && gesture && 'widgetId' in patch && patch.widgetId === gesture.widgetId) {
+        metadata = { gestureId: gesture.id, phase: gesture.lastPatch ? 'update' : 'begin' };
+        gesture.lastPatch = patch;
+      } else if (!metadata || metadata.phase === 'single') {
+        void settleHistoryEditors(editorRef.current?.ownerDocument);
+      }
+      void onInstrumentPatch(
+        { bsbInterface: prepareBsbWidgetCreation(patch) },
+        {
+          label: bsbInterfaceActionLabel(patch),
+          phase: 'single',
+          ...metadata,
+        },
+      );
     },
     [onInstrumentPatch],
   );
+
+  useEffect(() => {
+    setSelectedWidgetIds((previous) => {
+      const next = new Set(
+        [...previous].filter((id) => findWidgetInTree(instrument.widgetTree, id)),
+      );
+      return next.size === previous.size ? previous : next;
+    });
+  }, [instrument.widgetTree]);
 
   const handleWidgetSelect = useCallback((id: string | null, shiftKey = false) => {
     setSelectedWidgetIds((prev) => {
@@ -107,6 +176,23 @@ function BSBInterfaceEditor({
 
   return (
     <div
+      ref={editorRef}
+      onMouseDownCapture={(event) => {
+        if (editEnabled || event.button !== 0) return;
+        const target = event.target as Element;
+        const widgetId =
+          typeof target.closest === 'function'
+            ? target.closest('[data-widget-id]')?.getAttribute('data-widget-id')
+            : null;
+        if (!widgetId || isTextEditingTarget(event.target)) return;
+        void settleHistoryEditors(event.currentTarget.ownerDocument);
+        performanceGesture.current = {
+          id: crypto.randomUUID(),
+          widgetId,
+          dispatch: onInstrumentPatch,
+        };
+      }}
+      onKeyDownCapture={settlePerformanceGesture}
       className="flex h-full min-h-0 flex-col bg-blue-bg"
       data-shortcut-scope="bsb-interface-editor"
       onKeyDown={handleEditorKeyDown}
