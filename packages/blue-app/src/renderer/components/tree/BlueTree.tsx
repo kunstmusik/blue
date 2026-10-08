@@ -6,7 +6,7 @@ import React, {
   useState,
   type ReactElement,
 } from 'react';
-import { Tree, type TreeApi, type TreeProps } from 'react-arborist';
+import { Tree, type TreeApi } from 'react-arborist';
 import type { DragDropManager } from 'dnd-core';
 import { acquireTreeDndManager } from './tree-dnd-domain';
 
@@ -20,7 +20,10 @@ import { acquireTreeDndManager } from './tree-dnd-domain';
  * backend per document no matter how many trees coexist. Callers keep the
  * ordinary Arborist props and tree ref; manager/backend wiring is owned here.
  */
-export type BlueTreeProps<T> = Omit<TreeProps<T>, 'dndManager' | 'dndBackend' | 'dndRootElement'>;
+export type BlueTreeProps<T> = Omit<
+  React.ComponentProps<typeof Tree<T>>,
+  'dndManager' | 'dndBackend' | 'dndRootElement' | 'ref'
+>;
 
 interface BoundDomain {
   document: Document;
@@ -79,9 +82,17 @@ function BlueTreeImpl<T>(
     };
   }, [bind]);
 
+  const setTreeRef = useCallback(
+    (tree: TreeApi<T> | null | undefined) => {
+      if (typeof ref === 'function') return ref(tree ?? null);
+      if (ref) ref.current = tree ?? null;
+    },
+    [ref],
+  );
+
   return (
     <div ref={hostRef} className="contents">
-      {domain ? <Tree<T> {...props} ref={ref} dndManager={domain.manager} /> : null}
+      {domain ? <Tree<T> {...props} ref={setTreeRef} dndManager={domain.manager} /> : null}
     </div>
   );
 }

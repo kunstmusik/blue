@@ -8,7 +8,7 @@ import React, {
   useState,
 } from 'react';
 import { PopoutContextMenuPortal } from '../../../../hooks/host-portals';
-import type { NodeRendererProps, NodeApi } from 'react-arborist';
+import type { NodeRendererProps, NodeApi, TreeApi } from 'react-arborist';
 import { BlueTree } from '../../../tree/BlueTree';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { ChevronRight, FolderOpen, Folder, FileAudio } from 'lucide-react';
@@ -300,7 +300,7 @@ export default function EffectLibraryTree({
   onMove,
   contextActions,
 }: EffectLibraryTreeProps): React.ReactElement {
-  const treeRef = useRef<NodeApi<LibraryTreeNode> | undefined>(undefined);
+  const treeRef = useRef<TreeApi<LibraryTreeNode> | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [treeHeight, setTreeHeight] = useState(600);
   const data = useMemo(() => [rootNode], [rootNode]);
@@ -358,7 +358,7 @@ export default function EffectLibraryTree({
 
   return (
     <div ref={containerRef} className="h-full w-full bg-black">
-      <TreeActionsContext.Provider value={contextActions}>
+      <TreeActionsContext.Provider value={contextActions ?? null}>
         <BlueTree<LibraryTreeNode>
           ref={treeRef}
           data={data}

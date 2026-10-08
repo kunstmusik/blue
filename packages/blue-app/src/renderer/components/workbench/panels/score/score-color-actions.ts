@@ -1,9 +1,8 @@
 import type {
   ProjectDocumentPatch,
   ScoreLayerGroupSnapshot,
-  ScoreRowObjectSnapshot,
   ScoreObjectEditorTargetSnapshot,
-} from '../../../../shared/project-editor';
+} from '../../../../../shared/project-editor';
 
 export type ScoreColorPatch = ProjectDocumentPatch;
 
@@ -12,7 +11,7 @@ export type ScoreColorPatch = ProjectDocumentPatch;
  * Returns null if the selection is empty or all selected items already match their layer color.
  */
 export function buildSetSelectionToLayerColorPatch(args: {
-  selection: ScoreRowObjectSnapshot[];
+  selection: Array<{ backgroundColor: number; editorTarget?: ScoreObjectEditorTargetSnapshot }>;
   layerGroups: ScoreLayerGroupSnapshot[];
 }): ScoreColorPatch | null {
   const { selection, layerGroups } = args;
@@ -103,20 +102,9 @@ export function buildApplyLayerColorToAllClipsPatch(args: {
 
   // If pattern layer with sourceObject
   if (group.groupType === 'patterns') {
-    const patternLayer = layer as any;
+    const patternLayer = group.layers[layerIndex]!;
     if (patternLayer.sourceObject && patternLayer.sourceObject.backgroundColor !== layerColor) {
-      const target: ScoreObjectEditorTargetSnapshot = {
-        selectionId: patternLayer.sourceObject.objectId,
-        selectedObjectType: patternLayer.sourceObject.objectType ?? 'GenericScore',
-        editorObjectType: patternLayer.sourceObject.objectType ?? 'GenericScore',
-        ownerKind: 'timeline',
-        displayContext: 'timeline',
-        patternSource: {
-          groupId,
-          layerId: layer.layerId,
-          sourceObjectId: patternLayer.sourceObject.objectId,
-        },
-      };
+      const target = patternLayer.sourceObject.editorTarget;
       forwardUpdates.push({ target, backgroundColor: layerColor });
     }
   } else {

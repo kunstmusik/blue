@@ -120,6 +120,7 @@ function clonePlaybackTransportAnchor(
     loopRendering: transport.loopRendering,
     tempoMap: {
       enabled: transport.tempoMap.enabled,
+      visible: transport.tempoMap.visible,
       points: transport.tempoMap.points.map((point) => ({ ...point })),
     },
     meterMap: {

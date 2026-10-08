@@ -525,7 +525,8 @@ export default function WorkbenchShell() {
         return;
       }
 
-      const bounds = shell.getBoundingClientRect();
+      const bounds = shellRef.current?.getBoundingClientRect();
+      if (!bounds) return;
       const targetEdge = getAuxiliaryEdgeDropTarget(bounds, {
         x: event.clientX,
         y: event.clientY,

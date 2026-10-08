@@ -583,7 +583,7 @@ declare global {
         import('../../shared/program-settings').UsageParityMatrixEntry[]
       >;
       syncLegacyRendererSettings: (
-        snapshot: import('../../shared/program-settings').CurrentAppSettingsSnapshot,
+        snapshot: import('../../shared/program-settings').LegacyRendererSettingsSnapshot,
       ) => Promise<import('../../shared/program-settings').ProgramSettingsSnapshot>;
       updatePlaybackPreferences: (
         patch: import('../../shared/program-settings').PlaybackPreferencePatch,

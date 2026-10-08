@@ -2,6 +2,7 @@ import type { CodeRepositoryNode } from '@blue/data';
 import type {
   CsoundDocumentMode,
   CsoundEditorDisabledItem,
+  CsoundEditorCommandItem,
   CsoundEditorInsertionItem,
   CsoundEditorMenuItem,
   CsoundEditorSubmenuItem,

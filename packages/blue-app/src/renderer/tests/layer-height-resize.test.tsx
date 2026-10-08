@@ -20,7 +20,7 @@ import {
   buildSelectionKey,
   type VisibleLayerRef,
 } from '../components/workbench/panels/score/layer-selection-utils';
-import { useProjectStore } from '../stores/project-store';
+import { useProjectStore, acceptProjectDocumentRevision } from '../stores/project-store';
 import { settleHistoryEditors } from '../lib/history-scope-router';
 
 (
@@ -244,14 +244,15 @@ describe('useLayerHeightResize Lifecycle and Gestures', () => {
     mockFlushPatches = vi.fn().mockResolvedValue(undefined);
     mockRefreshSnapshot = vi.fn().mockResolvedValue(undefined);
 
+    useProjectStore.getState().clearProject();
     useProjectStore.setState({
       loaded: true,
       sessionId: 10,
       applyProjectDocumentPatch: mockApplyPatch as any,
       flushPendingPatches: mockFlushPatches as any,
       refreshCanonicalSnapshot: mockRefreshSnapshot as any,
-      getProjectDocumentRevision: () => 1,
     });
+    acceptProjectDocumentRevision(10, 1);
   });
 
   afterEach(() => {
@@ -376,7 +377,7 @@ describe('useLayerHeightResize Lifecycle and Gestures', () => {
   it('refreshes instead of enqueueing a stale fenced command', async () => {
     const groups = makeTestLayerGroups();
     const getHook = renderHookHarness({ layerGroups: groups });
-    useProjectStore.setState({ getProjectDocumentRevision: () => 2 });
+    acceptProjectDocumentRevision(10, 2);
 
     await act(async () => {
       await getHook().commitHeightCommand({
@@ -836,9 +837,7 @@ describe('useLayerHeightResize Lifecycle and Gestures', () => {
     });
 
     // Simulate concurrent revision advance
-    useProjectStore.setState({
-      getProjectDocumentRevision: () => 999,
-    });
+    acceptProjectDocumentRevision(10, 999);
 
     await act(async () => {
       await getHook().commitResize(150);
@@ -881,7 +880,7 @@ describe('useLayerHeightResize Lifecycle and Gestures', () => {
     });
     expect(hookResult!.phase).toBe('previewing');
 
-    useProjectStore.setState({ getProjectDocumentRevision: () => 2 });
+    acceptProjectDocumentRevision(10, 2);
     revision = 2;
     await act(async () => {
       root.render(<Harness />);

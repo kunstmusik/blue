@@ -131,7 +131,9 @@ function createCloseRestoreApiStub() {
   };
 
   function addPanel(id: string, position?: { referenceGroup?: any; index?: number }) {
-    const target = position?.referenceGroup ?? group;
+    const reference = position?.referenceGroup;
+    const target =
+      typeof reference === 'string' && reference === group.id ? group : (reference ?? group);
     const panel = {
       id,
       group: target,
@@ -724,7 +726,7 @@ describe('workbench panel close/reopen restoration', () => {
       expect.objectContaining({
         id: 'ScoreTopComponent',
         position: expect.objectContaining({
-          referenceGroup: group,
+          referenceGroup: group.id,
           direction: 'within',
           index: 0,
         }),

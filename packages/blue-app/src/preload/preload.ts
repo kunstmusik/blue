@@ -141,6 +141,7 @@ import type {
   ProgramSettingsPanelId,
   PlaybackPreferencePatch,
   CurrentAppSettingsSnapshot,
+  LegacyRendererSettingsSnapshot,
   UsageParityMatrixEntry,
 } from '../shared/program-settings';
 import type { EngineProbeRequest, EngineProbeResult } from '../shared/engine-runtime';
@@ -1217,7 +1218,7 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke('program-settings:reset-panel', panel) as Promise<ProgramSettingsSnapshot>,
   getProgramSettingsUsageMatrix: () =>
     ipcRenderer.invoke('program-settings:usage-matrix') as Promise<UsageParityMatrixEntry[]>,
-  syncLegacyRendererSettings: (snapshot: CurrentAppSettingsSnapshot) =>
+  syncLegacyRendererSettings: (snapshot: LegacyRendererSettingsSnapshot) =>
     ipcRenderer.invoke(
       'program-settings:sync-legacy-renderer-settings',
       snapshot,

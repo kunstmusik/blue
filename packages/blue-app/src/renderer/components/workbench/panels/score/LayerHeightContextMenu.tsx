@@ -78,7 +78,7 @@ export const LayerHeightContextMenuSub: React.FC<LayerHeightContextMenuSubProps>
   const selectedPresets = allSelectedTrack ? TRACK_PRESET_HEIGHTS : SOUND_LAYER_PRESET_HEIGHTS;
   const selectedStatus = getLayerHeightStatus(
     selectedLayers.map((vl) => vl.layer.height || 44),
-    allSelectedTrack ? 'track' : 'soundObject',
+    allSelectedTrack ? 'track' : 'polyObject',
   );
 
   // Group calculation
@@ -89,7 +89,8 @@ export const LayerHeightContextMenuSub: React.FC<LayerHeightContextMenuSubProps>
     groupLayers.map((l) => l.height || 44),
     groupType,
   );
-  const currentDefaultIndex = targetGroup?.defaultHeightIndex ?? 0;
+  const currentDefaultIndex =
+    targetGroup && 'defaultHeightIndex' in targetGroup ? targetGroup.defaultHeightIndex : 0;
 
   const submitLayerUpdates = (
     updates: Array<{

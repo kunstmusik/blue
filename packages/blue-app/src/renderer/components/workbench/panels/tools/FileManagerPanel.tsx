@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { RotateCw } from 'lucide-react';
 import { toast } from 'sonner';
-import type { FileManagerRootSnapshot } from '../../../../../../shared/file-manager';
+import type { FileManagerRootSnapshot } from '../../../../../shared/file-manager';
 import { emitPendingAudioFile } from '../audio-player/audio-player-bus';
 import { emitPendingSoundFontFile } from './soundfont-viewer-bus';
 import { isAudioFilePlayerSourcePath } from '../audio-player/audio-player-formats';

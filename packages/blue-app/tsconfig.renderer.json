@@ -2,11 +2,13 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist/renderer",
-    "rootDir": "src/renderer",
+    "rootDir": "src",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"]
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "noEmit": true
   },
-  "include": ["src/renderer"]
+  "include": ["src/renderer"],
+  "exclude": ["src/renderer/tests", "src/renderer/browser", "**/*.test.ts", "**/*.test.tsx"]
 }

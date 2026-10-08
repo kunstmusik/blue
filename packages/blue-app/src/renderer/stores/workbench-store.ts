@@ -1058,7 +1058,7 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()((se
           component: 'default',
           title: descriptor.title,
           position: {
-            referenceGroup: originGroup,
+            referenceGroup: originGroup.id,
             direction: 'within',
             index: Number.isFinite(origin.originIndex)
               ? Math.max(0, Math.min(origin.originIndex!, originGroup.panels.length))
@@ -1081,7 +1081,7 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()((se
           component: 'default',
           title: descriptor.title,
           position: {
-            referenceGroup,
+            referenceGroup: referenceGroup.id,
             direction: origin.restoreDirection,
           },
         });

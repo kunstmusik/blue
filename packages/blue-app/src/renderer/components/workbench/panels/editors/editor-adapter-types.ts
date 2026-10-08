@@ -1,6 +1,6 @@
 import type { Completion } from '@codemirror/autocomplete';
 import type { CodeRepositoryNode } from '@blue/data';
-import type { ProjectDocumentCommitMetadata } from '../../../../shared/project-history';
+import type { ProjectDocumentCommitMetadata } from '../../../../../shared/project-history';
 
 export type SelectedEditorKind = 'codemirror';
 
@@ -121,6 +121,7 @@ export interface SelectedCodeEditorProps {
   /** Repository root for the Custom submenu; null disables it. */
   codeRepositoryRoot?: CodeRepositoryNode | null;
   /** Callback invoked when the user adds the current selection to the repository. */
+  onAddToCodeRepository?: (text: string) => void;
   /** History scope for undo/redo routing. Defaults to 'project'. */
   historyScope?: 'project' | 'draft' | 'none';
   /** Typing grouping interval in milliseconds (e.g. 500ms). Defaults to 0 (immediate). */

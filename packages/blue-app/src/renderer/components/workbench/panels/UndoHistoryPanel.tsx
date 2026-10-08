@@ -6,7 +6,10 @@ import {
 } from '../../../hooks/use-project-history';
 import { cn } from '../../../lib/cn';
 import { useProjectStore } from '../../../stores/project-store';
-import type { ProjectHistoryEntrySummary } from '../../../../shared/project-history';
+import type {
+  ProjectHistoryEntrySummary,
+  ProjectHistoryEntriesSnapshot,
+} from '../../../../shared/project-history';
 
 function formatEntryTime(timestamp: number): string {
   const date = new Date(timestamp);

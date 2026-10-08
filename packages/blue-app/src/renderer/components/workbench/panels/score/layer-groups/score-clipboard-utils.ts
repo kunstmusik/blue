@@ -27,7 +27,7 @@ export interface ScorePasteObject {
   durationBeats: number;
   startTimeBase?: string;
   durationTimeBase?: string;
-  backgroundColor: number;
+  backgroundColor?: number;
   objectType: string;
   isContainer: boolean;
   editorTarget?: ScoreObjectEditorTargetSnapshot;

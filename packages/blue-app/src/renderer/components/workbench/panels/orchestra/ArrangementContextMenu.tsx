@@ -86,7 +86,7 @@ export default function ArrangementContextMenu({
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>{children}</ContextMenu.Trigger>
       <PopoutContextMenuPortal>
-        <ContextMenu.Content className="editor-context-menu" sideOffset={4}>
+        <ContextMenu.Content className="editor-context-menu">
           <MenuItem
             onSelect={() =>
               void onOrchestraPatch({

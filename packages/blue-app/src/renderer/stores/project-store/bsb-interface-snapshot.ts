@@ -443,27 +443,32 @@ export function applyBsbInterfacePatchToSnapshot(
       return null;
     }
 
-    const node = cloneSnapshotValue(record) as BsbWidgetNodeSnapshot;
-    node.id =
-      patch.type === 'pasteWidgets' && patch.preserveIds
-        ? (record.id as string)
-        : createPastedWidgetId();
-    node.objectName = typeof node.objectName === 'string' ? node.objectName : '';
-    node.x = typeof node.x === 'number' && Number.isFinite(node.x) ? node.x : 0;
-    node.y = typeof node.y === 'number' && Number.isFinite(node.y) ? node.y : 0;
-    node.width = typeof node.width === 'number' && Number.isFinite(node.width) ? node.width : 60;
-    node.height =
-      typeof node.height === 'number' && Number.isFinite(node.height) ? node.height : 24;
-    node.value = typeof node.value === 'number' && Number.isFinite(node.value) ? node.value : 0;
-    node.minimum =
-      typeof node.minimum === 'number' && Number.isFinite(node.minimum) ? node.minimum : 0;
-    node.maximum =
-      typeof node.maximum === 'number' && Number.isFinite(node.maximum) ? node.maximum : 1;
-    node.editable = node.editable !== false;
-    node.properties =
-      node.properties && typeof node.properties === 'object' && !Array.isArray(node.properties)
-        ? cloneSnapshotValue(node.properties)
-        : {};
+    const node: BsbWidgetNodeSnapshot = {
+      ...cloneSnapshotValue(record),
+      type: record.type,
+      id:
+        patch.type === 'pasteWidgets' && patch.preserveIds && typeof record.id === 'string'
+          ? record.id
+          : createPastedWidgetId(),
+      objectName: typeof record.objectName === 'string' ? record.objectName : '',
+      x: typeof record.x === 'number' && Number.isFinite(record.x) ? record.x : 0,
+      y: typeof record.y === 'number' && Number.isFinite(record.y) ? record.y : 0,
+      width: typeof record.width === 'number' && Number.isFinite(record.width) ? record.width : 60,
+      height:
+        typeof record.height === 'number' && Number.isFinite(record.height) ? record.height : 24,
+      value: typeof record.value === 'number' && Number.isFinite(record.value) ? record.value : 0,
+      minimum:
+        typeof record.minimum === 'number' && Number.isFinite(record.minimum) ? record.minimum : 0,
+      maximum:
+        typeof record.maximum === 'number' && Number.isFinite(record.maximum) ? record.maximum : 1,
+      editable: record.editable !== false,
+      properties:
+        record.properties &&
+        typeof record.properties === 'object' &&
+        !Array.isArray(record.properties)
+          ? cloneSnapshotValue(record.properties as Record<string, unknown>)
+          : {},
+    };
 
     if (Array.isArray(record.children)) {
       node.children = record.children

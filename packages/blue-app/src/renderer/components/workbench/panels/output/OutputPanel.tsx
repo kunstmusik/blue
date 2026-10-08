@@ -181,7 +181,7 @@ export default function OutputPanel() {
         </ContextMenu.Trigger>
 
         <PopoutContextMenuPortal>
-          <ContextMenu.Content className="workbench-context-menu" sideOffset={6} align="start">
+          <ContextMenu.Content className="workbench-context-menu">
             <ContextMenu.Item
               className="workbench-context-menu__item"
               disabled={!hasSelection}

@@ -346,7 +346,7 @@ function WorkbenchTabMenu({ props }: { props: IDockviewPanelHeaderProps }) {
           source here. Panel CONTENT must instead use PopoutContextMenuPortal
           (see docs/popout-popup-conventions.md). */}
       <ContextMenu.Portal container={props.api.getWindow().document.body}>
-        <ContextMenu.Content className="workbench-context-menu" sideOffset={6} align="start">
+        <ContextMenu.Content className="workbench-context-menu">
           {commandState.commands.map((command, index) => {
             const previousKind = commandState.commands[index - 1]?.kind;
             const showSeparator = index > 0 && groupOf(previousKind) !== groupOf(command.kind);

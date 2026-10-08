@@ -135,7 +135,7 @@ function normalizeAudioBytes(bytes: unknown): ArrayBuffer | null {
   }
 
   if (ArrayBuffer.isView(bytes)) {
-    return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+    return new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength).slice().buffer;
   }
 
   if (Array.isArray(bytes)) {

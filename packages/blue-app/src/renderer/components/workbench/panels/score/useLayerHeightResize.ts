@@ -1,3 +1,4 @@
+import { updateScoreGroupLayers } from '../../../../lib/score-layer-snapshots';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
   ProjectDocumentPatch,
@@ -12,7 +13,11 @@ import {
   type LayerHeightTargetResolution,
   type VisibleLayerRef,
 } from './layer-selection-utils';
-import { getProjectDocumentId, useProjectStore } from '../../../../stores/project-store';
+import {
+  getProjectDocumentId,
+  getProjectDocumentRevision,
+  useProjectStore,
+} from '../../../../stores/project-store';
 import { registerHistoryEditorSettlement } from '../../../../lib/history-scope-router';
 
 export type LayerHeightResizePhase = 'idle' | 'previewing' | 'awaitingCommit';
@@ -135,10 +140,7 @@ export function useLayerHeightResize({
   const flushPendingPatches = useProjectStore((s) => s.flushPendingPatches);
   const refreshCanonicalSnapshot = useProjectStore((s) => s.refreshCanonicalSnapshot);
 
-  const getCurrentRevision = useCallback(
-    () => useProjectStore.getState().getProjectDocumentRevision?.() ?? projectRevision,
-    [projectRevision],
-  );
+  const getCurrentRevision = getProjectDocumentRevision;
 
   const getHostDocument = useCallback(
     (hostWindow?: Window | null): Document | null =>
@@ -676,16 +678,18 @@ export function useLayerHeightResize({
 
     return layerGroups.map((group) => {
       let groupChanged = false;
-      const nextLayers = group.layers.map((layer, index) => {
-        const projected = projectedHeights.get(`${group.groupId}:${index}`);
-        if (projected !== undefined && projected !== layer.height) {
-          groupChanged = true;
-          return { ...layer, height: projected };
-        }
-        return layer;
-      });
+      const nextGroup = updateScoreGroupLayers(group, (layers) =>
+        layers.map((layer, index) => {
+          const projected = projectedHeights.get(`${group.groupId}:${index}`);
+          if (projected !== undefined && projected !== layer.height) {
+            groupChanged = true;
+            return { ...layer, height: projected };
+          }
+          return layer;
+        }),
+      );
       if (!groupChanged) return group;
-      return { ...group, layers: nextLayers };
+      return nextGroup;
     });
   }, [layerGroups, phase, projectedHeights]);
 

@@ -262,6 +262,12 @@ pnpm --filter @blue/data test -- --coverage
 - **Tests:** Co-located `*.test.ts` files in `src/`
 - **Build output:** `packages/*/dist/` (gitignored)
 
+### Renderer typechecking
+
+Run `pnpm --filter @blue/app typecheck:renderer` to check production renderer source and its
+shared contracts in strict mode without emitting files. `build:renderer` runs this check before
+bundling. Vitest validates unit and browser test fixtures separately from this production check.
+
 ### Linting & Formatting
 
 ```bash

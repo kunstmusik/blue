@@ -2768,7 +2768,13 @@ export function applyScoreObjectPatch(
     const score = data.getScore();
     const targetGroup = findLayerGroupByGroupId(score, patch.groupId);
     if (!targetGroup) return false;
-    targetGroup.newLayerAt(patch.layerIndex + 1);
+    const layer = targetGroup.newLayerAt(patch.layerIndex + 1);
+    // Materialize renderer identities before history captures the new layer.
+    assignLayerSelectionId(layer);
+    if (layer instanceof PatternLayer) {
+      assignPatternLayerId(layer);
+      assignScoreObjectId(layer.getSoundObject(), 'sobj');
+    }
     return true;
   }
 

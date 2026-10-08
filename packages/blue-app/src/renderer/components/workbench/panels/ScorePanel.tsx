@@ -1469,7 +1469,7 @@ function SoundLayerHeader({
   onNoteProcessorChain,
   noteProcessorChain,
 }: {
-  layer: ScoreLayerSnapshot;
+  layer: ScoreLayerGroupSnapshot['layers'][number];
   groupType: ScoreLayerGroupSnapshot['groupType'];
   groupId: string;
   layerIndex: number;
@@ -2280,7 +2280,7 @@ function SoundLayerHeader({
                     );
                     const status = getLayerHeightStatus(
                       sel.map((vl) => vl.layer.height || 44),
-                      sel.every((vl) => vl.groupType === 'track') ? 'track' : 'soundObject',
+                      sel.every((vl) => vl.groupType === 'track') ? 'track' : 'polyObject',
                     );
                     return status.status !== 'mixed' ? status.value : undefined;
                   })()

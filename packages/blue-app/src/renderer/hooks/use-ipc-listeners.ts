@@ -265,8 +265,8 @@ export function useIPCListeners(): void {
     const unsubPlaybackStatus = window.blueAPI.onPlaybackStatus((status) => {
       setStatus(status);
       if (
-        status === 'stopped' ||
-        status === 'error' ||
+        status.status === 'stopped' ||
+        status.status === 'error' ||
         (typeof status === 'object' &&
           status !== null &&
           'playbackRunning' in status &&

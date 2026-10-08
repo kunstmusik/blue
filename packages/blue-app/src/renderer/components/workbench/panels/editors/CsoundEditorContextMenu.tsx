@@ -225,7 +225,7 @@ export default function CsoundEditorContextMenu({
       <ContextMenu.Trigger asChild>{children}</ContextMenu.Trigger>
 
       <PopoutContextMenuPortal>
-        <ContextMenu.Content className="editor-context-menu" sideOffset={6}>
+        <ContextMenu.Content className="editor-context-menu">
           {menuItems.map((item) =>
             renderMenuItem(
               item,

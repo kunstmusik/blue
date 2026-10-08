@@ -109,10 +109,9 @@ function getOpcodeCompletions(hostDocument?: Document): Completion[] {
         const plan = resolveOpcodeInsertionPlan(docText, from, to, metadata);
         applyOpcodeInsertion(view, plan);
       },
-      info: () =>
-        hostDocument
-          ? renderOpcodeHelpHtml(metadata, { ownerDocument: hostDocument })
-          : getOpcodeInfoText(entry),
+      info: hostDocument
+        ? () => renderOpcodeHelpHtml(metadata, { ownerDocument: hostDocument })
+        : getOpcodeInfoText(entry),
       boost: 5,
     }))
     .sort((left, right) => left.label.localeCompare(right.label));

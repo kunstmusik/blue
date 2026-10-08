@@ -163,7 +163,7 @@ const SingleSlider = React.memo(function SingleSlider({
   );
 
   const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    (e: React.SyntheticEvent<HTMLInputElement>) => {
       if (disabled) return;
       const nextVal = roundToPlaces(clamp(Number(e.currentTarget.value), min, max), 2);
       const session = dragSessionRef.current;

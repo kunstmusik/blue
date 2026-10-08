@@ -50,10 +50,15 @@ export function createDynamicCsoundCompletionSource(
       };
     };
 
-    if (completions.some(isPromiseLike)) {
-      return Promise.all(completions).then(buildResult);
+    if (
+      completions.every(
+        (completion): completion is Awaited<ReturnType<DynamicCsoundCompletionProvider>> =>
+          !isPromiseLike(completion),
+      )
+    ) {
+      return buildResult(completions);
     }
 
-    return buildResult(completions);
+    return Promise.all(completions).then(buildResult);
   };
 }

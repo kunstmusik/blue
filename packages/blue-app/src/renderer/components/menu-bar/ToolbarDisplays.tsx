@@ -406,7 +406,7 @@ function ToolbarPlayheadMenu({
       <ContextMenu.Trigger asChild>{children}</ContextMenu.Trigger>
       {portalContainer ? (
         <ContextMenu.Portal container={portalContainer}>
-          <ContextMenu.Content className="toolbar-context-menu" sideOffset={6} align="start">
+          <ContextMenu.Content className="toolbar-context-menu">
             <ToolbarFormatSubmenu
               label="Primary"
               mode={primaryMode}
@@ -446,7 +446,7 @@ function ToolbarSelectionMenu({
       <ContextMenu.Trigger asChild>{children}</ContextMenu.Trigger>
       {portalContainer ? (
         <ContextMenu.Portal container={portalContainer}>
-          <ContextMenu.Content className="toolbar-context-menu" sideOffset={6} align="start">
+          <ContextMenu.Content className="toolbar-context-menu">
             <ContextMenuCheckItem
               checked={format === 'sync'}
               onSelect={() => onFormatChange('sync')}

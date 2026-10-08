@@ -11,7 +11,7 @@ export function OversizeProposalDialog(): React.ReactElement | null {
   }
 
   const actions: InAppConfirmationAction[] = [
-    { id: 'cancel', label: 'Cancel', role: 'cancel' },
+    { id: 'cancel', label: 'Cancel', intent: 'cancel' },
     { id: 'confirm', label: 'Reset History and Apply', intent: 'destructive' },
   ];
 

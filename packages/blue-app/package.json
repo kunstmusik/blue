@@ -11,7 +11,7 @@
   "scripts": {
     "build:main": "tsc -p tsconfig.main.json",
     "build:preload": "tsc -p tsconfig.preload.json",
-    "build:renderer": "vite build",
+    "build:renderer": "pnpm typecheck:renderer && vite build",
     "manual:build": "quarto render ../../docs/manual --to html",
     "engine:build": "pnpm --filter @blue/engine-native build",
     "engine:stage": "node scripts/stage-blue-engine.mjs",
@@ -37,7 +37,8 @@
     "package:windows-x64": "pnpm manual:build && pnpm engine:stage -- --target win32-x64 && pnpm release:metadata && pnpm verify:package-inputs -- --target win32-x64 && electron-builder --win --x64 --publish never",
     "package:linux-x64": "pnpm manual:build && pnpm engine:stage -- --target linux-x64 && pnpm release:metadata && pnpm verify:package-inputs -- --target linux-x64 && electron-builder --linux --x64 --publish never",
     "verify:release-version": "node scripts/verify-release-version.mjs",
-    "release:manifest": "node ../../scripts/release-artifact-manifest.mjs generate --out release/release-manifest.json --release-dir release"
+    "release:manifest": "node ../../scripts/release-artifact-manifest.mjs generate --out release/release-manifest.json --release-dir release",
+    "typecheck:renderer": "tsc -p tsconfig.renderer.json"
   },
   "dependencies": {
     "@blue/data": "workspace:*",

@@ -7,15 +7,12 @@ import {
   decodeSingleVoice,
   getBankVoiceNames,
 } from '@blue/data';
-import type {
-  BlueX7InstrumentSnapshot,
-  InstrumentPatch,
-  OrchestraMutationProps,
-} from '../../../shared/project-editor';
+import type { BlueX7InstrumentSnapshot, InstrumentPatch } from '../../../shared/project-editor';
 import type {
   BlueX7PerformanceKind,
   BlueX7RuntimeTarget,
 } from '../../../shared/project-editor/contract';
+import type { OrchestraMutationProps } from '../workbench/panels/orchestra/types';
 import type { ProjectDocumentCommitMetadata } from '../../../shared/project-history';
 import { validateBlueX7SysexReadResult } from '../../../shared/blue-x7-sysex';
 import { useBlueX7History } from './blue-x7/use-blue-x7-history';

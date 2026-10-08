@@ -60,7 +60,7 @@ export const useLayerSelectionStore = create<LayerSelectionState>((set, get) => 
     }
 
     if (!state.anchorKey) {
-      get().selectSingle(targetKey, visibleLayers, activeScope);
+      get().selectSingle(targetKey, visibleLayers, activeScope ?? undefined);
       return;
     }
 

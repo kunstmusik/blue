@@ -9,7 +9,7 @@ import React, {
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { Check, ArrowRight } from 'lucide-react';
-import { Effect, Element } from '@blue/data';
+import { Effect, Element, type StereoPanMode } from '@blue/data';
 import type {
   EffectEditorRequest,
   EffectEditorSnapshot,
@@ -22,7 +22,6 @@ import type {
   MixerSendEntrySnapshot,
   MixerSnapshot,
   ProjectEffectRef,
-  StereoPanMode,
   UdoDefinitionSnapshot,
 } from '../../../../../shared/project-editor';
 import {

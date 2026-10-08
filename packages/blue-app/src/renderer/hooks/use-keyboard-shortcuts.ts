@@ -16,7 +16,7 @@ export function isTextEditingTarget(target: EventTarget | null): boolean {
   }
 
   return Boolean(
-    (target as ClosestElementTarget).closest(
+    (target as EventTarget & ClosestElementTarget).closest(
       [
         'input',
         'textarea',

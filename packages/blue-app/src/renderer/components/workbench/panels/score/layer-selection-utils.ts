@@ -164,9 +164,7 @@ export function deriveSelectedLayerRanges(
   };
 
   for (const ref of selectedRefs) {
-    const startsNewRange =
-      !current || current.groupId !== ref.groupId || ref.localIndex !== current.endIndex + 1;
-    if (startsNewRange) {
+    if (!current || current.groupId !== ref.groupId || ref.localIndex !== current.endIndex + 1) {
       flush();
       current = {
         groupId: ref.groupId,

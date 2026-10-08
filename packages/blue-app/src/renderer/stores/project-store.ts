@@ -1,4 +1,6 @@
+import { updateScoreGroupLayers } from '../lib/score-layer-snapshots';
 import { create } from 'zustand';
+import type { PanLawDb } from '@blue/data';
 import { toast } from 'sonner';
 import { getProjectHistoryProjection } from '../hooks/use-project-history';
 import {
@@ -83,7 +85,6 @@ import {
   type ScoreObjectEditorTargetSnapshot,
   type ScoreObjectLocationRef,
   type ScorePatch,
-  type PanLawDb,
   type SupportedNewInstrumentType,
   type TempoMapPatch,
   type ToolbarProjectTransportSnapshot,
@@ -446,6 +447,7 @@ function createDefaultPatternLayerSnapshot(
     layerId,
     name: '',
     height: 44,
+    backgroundColor: DEFAULT_LAYER_COLOR,
     muted: false,
     solo: false,
     items: [],
@@ -459,6 +461,7 @@ function createDefaultScoreLayerSnapshot(groupId: string, layerIndex: number): S
     layerId: `${groupId}-layer-${layerIndex}`,
     name: '',
     height: 44,
+    backgroundColor: DEFAULT_LAYER_COLOR,
     muted: false,
     solo: false,
     items: [],
@@ -509,6 +512,7 @@ function createAddedLayerGroupSnapshot(
         groupId,
         groupType: 'polyObject',
         name: 'SoundObject Layer Group',
+        defaultHeightIndex: 0,
         layerCount: layers.length,
         isOpenableContainer: true,
         layers,
@@ -1115,9 +1119,9 @@ function applyProjectUdoPatchToSnapshot(
 }
 
 function applyTempoMapPatchToSnapshot(
-  snap: import('../../../shared/project-editor').TempoMapSnapshot,
-  patch: import('../../../shared/project-editor').TempoMapPatch,
-): import('../../../shared/project-editor').TempoMapSnapshot {
+  snap: import('../../shared/project-editor').TempoMapSnapshot,
+  patch: import('../../shared/project-editor').TempoMapPatch,
+): import('../../shared/project-editor').TempoMapSnapshot {
   switch (patch.type) {
     case 'setTempoEnabled':
       return { ...snap, enabled: patch.enabled };
@@ -1171,9 +1175,9 @@ function applyTempoMapPatchToSnapshot(
 }
 
 function recomputeMeterStartBeats(
-  entries: import('../../../shared/project-editor').MeterSnapshot[],
-): import('../../../shared/project-editor').MeterSnapshot[] {
-  const result: import('../../../shared/project-editor').MeterSnapshot[] = [];
+  entries: import('../../shared/project-editor').MeterSnapshot[],
+): import('../../shared/project-editor').MeterSnapshot[] {
+  const result: import('../../shared/project-editor').MeterSnapshot[] = [];
   let accumulated = 0;
   for (let i = 0; i < entries.length; i++) {
     const e = entries[i];
@@ -1187,9 +1191,9 @@ function recomputeMeterStartBeats(
 }
 
 function applyMeterMapPatchToSnapshot(
-  snap: import('../../../shared/project-editor').MeterMapSnapshot,
-  patch: import('../../../shared/project-editor').MeterMapPatch,
-): import('../../../shared/project-editor').MeterMapSnapshot {
+  snap: import('../../shared/project-editor').MeterMapSnapshot,
+  patch: import('../../shared/project-editor').MeterMapPatch,
+): import('../../shared/project-editor').MeterMapSnapshot {
   switch (patch.type) {
     case 'meter-map-set-entry': {
       const existing = snap.entries.findIndex((e) => e.measure === patch.measure);
@@ -1817,8 +1821,6 @@ function applyMixerPatchToSnapshot(
             }
             return nextEntries;
           }
-          case 'moveChainEntryAcrossChains':
-            return entries;
           default:
             return entries;
         }
@@ -1958,16 +1960,18 @@ function applyMixerChannelRenameToTrackSnapshot(
       return group;
     }
 
-    const nextLayers = group.layers.map((layer, layerIndex) => {
-      if (layerIndex !== targetLayer.layerIndex || layer.name === patch.patch.name) {
-        return layer;
-      }
+    const nextLayers = updateScoreGroupLayers(group, (sourceLayers) =>
+      sourceLayers.map((layer, layerIndex) => {
+        if (layerIndex !== targetLayer.layerIndex || layer.name === patch.patch.name) {
+          return layer;
+        }
 
-      changed = true;
-      return { ...layer, name: patch.patch.name! };
-    });
+        changed = true;
+        return { ...layer, name: patch.patch.name! };
+      }),
+    );
 
-    return changed ? { ...group, layers: nextLayers } : group;
+    return changed ? nextLayers : group;
   });
 
   return changed ? { ...score, layerGroups: nextLayerGroups } : score;
@@ -2219,20 +2223,22 @@ function applyMoveScoreObjectsToSnapshot(
 
   const newGroups = score.layerGroups.map((lg, groupIndex) => {
     const groupAdditions = additionsByGroupAndLayer.get(lg.groupId);
-    const newLayers = lg.layers.map((layer, li) => {
-      const kept = layer.items.filter((item) => !movedIds.has(item.objectId));
-      const additions = groupAdditions?.get(li) ?? [];
-      return {
-        ...layer,
-        items: [
-          ...kept,
-          ...additions.map((item, idx) =>
-            updateScoreItemLocation(item, groupIndex, li, kept.length + idx),
-          ),
-        ],
-      };
-    });
-    return { ...lg, layers: newLayers };
+    const newLayers = updateScoreGroupLayers(lg, (sourceLayers) =>
+      sourceLayers.map((layer, li) => {
+        const kept = layer.items.filter((item) => !movedIds.has(item.objectId));
+        const additions = groupAdditions?.get(li) ?? [];
+        return {
+          ...layer,
+          items: [
+            ...kept,
+            ...additions.map((item, idx) =>
+              updateScoreItemLocation(item, groupIndex, li, kept.length + idx),
+            ),
+          ],
+        };
+      }),
+    );
+    return newLayers;
   });
 
   return { ...score, layerGroups: newGroups };
@@ -2383,42 +2389,48 @@ function applyScorePatchToSnapshot(
 
   if (patch.type === 'removeScoreObjects') {
     if (patch.targets.length === 0) return score;
-    const nextLayerGroups = score.layerGroups.map((lg) => ({
-      ...lg,
-      layers: lg.layers.map((layer) => ({
-        ...layer,
-        items: layer.items.filter(
-          (item) => !patch.targets.some((target) => isScoreItemMatchingTarget(item, target)),
-        ),
-      })),
-    }));
+    const nextLayerGroups = score.layerGroups.map((lg) =>
+      updateScoreGroupLayers(lg, (layers) =>
+        layers.map((layer) => ({
+          ...layer,
+          items: layer.items.filter(
+            (item) => !patch.targets.some((target) => isScoreItemMatchingTarget(item, target)),
+          ),
+        })),
+      ),
+    );
     return { ...score, layerGroups: nextLayerGroups };
   }
 
   if (patch.type === 'moveScoreObjects') {
-    return applyMoveScoreObjectsToSnapshot(score, patch.moves);
+    return applyMoveScoreObjectsToSnapshot(
+      score,
+      patch.moves.map((move) => ({
+        ...move,
+        objectId: move.target.selectionId,
+      })),
+    );
   }
 
   if (patch.type === 'addLayer') {
     const nextLayerGroups = score.layerGroups.map((lg) => {
       if (lg.groupId !== patch.groupId) return lg;
-      // Pattern rows need the full pattern snapshot shape; a generic layer
-      // snapshot would be missing the required source/cell fields before the
-      // canonical refresh arrives.
-      const newLayer: ScoreLayerSnapshot =
-        lg.groupType === 'patterns'
-          ? createDefaultPatternLayerSnapshot(lg.groupId, patch.layerIndex + 1)
-          : {
-              layerId: `layer-${Date.now()}`,
-              name: '',
-              height: 44,
-              muted: false,
-              solo: false,
-              items: [],
-            };
+      const insertIndex = patch.layerIndex + 1;
+      if (lg.groupType === 'patterns') {
+        const layers = [...lg.layers];
+        layers.splice(insertIndex, 0, createDefaultPatternLayerSnapshot(lg.groupId, insertIndex));
+        return { ...lg, layers, layerCount: layers.length };
+      }
+      const newLayer = createDefaultScoreLayerSnapshot(lg.groupId, insertIndex);
+      newLayer.layerId = `layer-${Date.now()}`;
+      if (lg.groupType === 'track') {
+        const layers = [...lg.layers];
+        layers.splice(insertIndex, 0, { ...newLayer, layerKind: 'track', instrument: null });
+        return { ...lg, layers, layerCount: layers.length };
+      }
       const layers = [...lg.layers];
-      layers.splice(patch.layerIndex + 1, 0, newLayer);
-      return { ...lg, layers, layerCount: layers.length } as ScoreLayerGroupSnapshot;
+      layers.splice(insertIndex, 0, newLayer);
+      return { ...lg, layers, layerCount: layers.length };
     });
     return { ...score, layerGroups: nextLayerGroups };
   }
@@ -2426,8 +2438,10 @@ function applyScorePatchToSnapshot(
   if (patch.type === 'removeLayer') {
     const nextLayerGroups = score.layerGroups.map((lg) => {
       if (lg.groupId !== patch.groupId) return lg;
-      const layers = lg.layers.filter((_l, i) => i !== patch.layerIndex);
-      return { ...lg, layers, layerCount: layers.length };
+      const layers = updateScoreGroupLayers(lg, (sourceLayers) =>
+        sourceLayers.filter((_l, i) => i !== patch.layerIndex),
+      );
+      return { ...layers, layerCount: layers.layers.length };
     });
     return { ...score, layerGroups: nextLayerGroups };
   }
@@ -2439,10 +2453,12 @@ function applyScorePatchToSnapshot(
       if (layerIndex < 0 || layerIndex >= lg.layers.length) return lg;
       const clampedTarget = Math.max(0, Math.min(targetIndex, lg.layers.length - 1));
       if (layerIndex === clampedTarget) return lg;
-      const layers = [...lg.layers];
-      const [moved] = layers.splice(layerIndex, 1);
-      layers.splice(clampedTarget, 0, moved!);
-      return { ...lg, layers };
+      return updateScoreGroupLayers(lg, (sourceLayers) => {
+        const layers = [...sourceLayers];
+        const [moved] = layers.splice(layerIndex, 1);
+        layers.splice(clampedTarget, 0, moved!);
+        return layers;
+      });
     });
     return { ...score, layerGroups: nextLayerGroups };
   }
@@ -2458,10 +2474,12 @@ function applyScorePatchToSnapshot(
         return lg;
       const count = endIndex - startIndex + 1;
       if (startIndex === targetIndex) return lg;
-      const layers = [...lg.layers];
-      const moved = layers.splice(startIndex, count);
-      layers.splice(targetIndex, 0, ...moved);
-      return { ...lg, layers };
+      return updateScoreGroupLayers(lg, (sourceLayers) => {
+        const layers = [...sourceLayers];
+        const moved = layers.splice(startIndex, count);
+        layers.splice(targetIndex, 0, ...moved);
+        return layers;
+      });
     });
     return { ...score, layerGroups: nextLayerGroups };
   }
@@ -2490,11 +2508,14 @@ function applyScorePatchToSnapshot(
       const groupRanges = byGroup.get(lg.groupId);
       if (!groupRanges || groupRanges.length === 0) return lg;
       const sorted = [...groupRanges].sort((a, b) => b.startIndex - a.startIndex);
-      let layers = [...lg.layers];
-      for (const r of sorted) {
-        layers.splice(r.startIndex, r.endIndex - r.startIndex + 1);
-      }
-      return { ...lg, layers, layerCount: layers.length };
+      const nextGroup = updateScoreGroupLayers(lg, (sourceLayers) => {
+        const layers = [...sourceLayers];
+        for (const r of sorted) {
+          layers.splice(r.startIndex, r.endIndex - r.startIndex + 1);
+        }
+        return layers;
+      });
+      return { ...nextGroup, layerCount: nextGroup.layers.length };
     });
 
     if (patch.deleteEmptyLayerGroups) {
@@ -2513,24 +2534,26 @@ function applyScorePatchToSnapshot(
       if (lg.groupId !== patch.groupId) return lg;
       if (patch.layerIndex < 0 || patch.layerIndex >= lg.layers.length) return lg;
 
-      const layers = lg.layers.map((layer, index) => {
-        if (index !== patch.layerIndex) return layer;
+      const layers = updateScoreGroupLayers(lg, (sourceLayers) =>
+        sourceLayers.map((layer, index) => {
+          if (index !== patch.layerIndex) return layer;
 
-        return {
-          ...layer,
-          ...(patch.patch.backgroundColor !== undefined &&
-          isValidLayerColorInput(patch.patch.backgroundColor)
-            ? { backgroundColor: normalizeLayerColor(patch.patch.backgroundColor) }
-            : {}),
-          ...(patch.patch.muted !== undefined ? { muted: patch.patch.muted } : {}),
-          ...(patch.patch.solo !== undefined ? { solo: patch.patch.solo } : {}),
-          ...(patch.patch.heightIndex !== undefined
-            ? { height: (Math.max(0, patch.patch.heightIndex) + 1) * layerUnit }
-            : {}),
-        };
-      });
+          return {
+            ...layer,
+            ...(patch.patch.backgroundColor !== undefined &&
+            isValidLayerColorInput(patch.patch.backgroundColor)
+              ? { backgroundColor: normalizeLayerColor(patch.patch.backgroundColor) }
+              : {}),
+            ...(patch.patch.muted !== undefined ? { muted: patch.patch.muted } : {}),
+            ...(patch.patch.solo !== undefined ? { solo: patch.patch.solo } : {}),
+            ...(patch.patch.heightIndex !== undefined
+              ? { height: (Math.max(0, patch.patch.heightIndex) + 1) * layerUnit }
+              : {}),
+          };
+        }),
+      );
 
-      return { ...lg, layers };
+      return layers;
     });
 
     return { ...score, layerGroups: nextLayerGroups };
@@ -2546,23 +2569,25 @@ function applyScorePatchToSnapshot(
       const hasGroupUpdate = patch.updates.some((u) => u.groupId === lg.groupId);
       if (!hasGroupUpdate) return lg;
 
-      const layers = lg.layers.map((layer, index) => {
-        const heightVal = updateMap.get(`${lg.groupId}:${index}`);
-        if (heightVal === undefined) return layer;
-        if (heightVal === 'default') {
-          const defaultIndex = lg.defaultHeightIndex ?? 0;
-          const defaultHeight =
-            lg.groupType === 'track' || lg.groupType === 'polyObject'
-              ? resolveGroupDefaultHeight(
-                  defaultIndex,
-                  lg.groupType === 'track' ? 'track' : 'soundLayer',
-                )
-              : layerUnit;
-          return { ...layer, height: defaultHeight };
-        }
-        return { ...layer, height: heightVal };
-      });
-      return { ...lg, layers };
+      const layers = updateScoreGroupLayers(lg, (sourceLayers) =>
+        sourceLayers.map((layer, index) => {
+          const heightVal = updateMap.get(`${lg.groupId}:${index}`);
+          if (heightVal === undefined) return layer;
+          if (heightVal === 'default') {
+            const defaultIndex = 'defaultHeightIndex' in lg ? lg.defaultHeightIndex : 0;
+            const defaultHeight =
+              lg.groupType === 'track' || lg.groupType === 'polyObject'
+                ? resolveGroupDefaultHeight(
+                    defaultIndex,
+                    lg.groupType === 'track' ? 'track' : 'soundLayer',
+                  )
+                : layerUnit;
+            return { ...layer, height: defaultHeight };
+          }
+          return { ...layer, height: heightVal };
+        }),
+      );
+      return layers;
     });
     return { ...score, layerGroups: nextLayerGroups };
   }
@@ -2579,10 +2604,12 @@ function applyScorePatchToSnapshot(
     const nextLayerGroups = score.layerGroups.map((lg) => {
       if (lg.groupId !== patch.groupId) return lg;
       if (patch.layerIndex < 0 || patch.layerIndex >= lg.layers.length) return lg;
-      const layers = lg.layers.map((layer, index) =>
-        index === patch.layerIndex ? { ...layer, name: patch.name } : layer,
+      const layers = updateScoreGroupLayers(lg, (sourceLayers) =>
+        sourceLayers.map((layer, index) =>
+          index === patch.layerIndex ? { ...layer, name: patch.name } : layer,
+        ),
       );
-      return { ...lg, layers };
+      return layers;
     });
     return { ...score, layerGroups: nextLayerGroups };
   }
@@ -2605,31 +2632,32 @@ function applyScorePatchToSnapshot(
   if (patch.type === 'updateTypeSpecificEditor') {
     const { target, patch: typePatch } = patch;
 
-    const nextLayerGroups = score.layerGroups.map((lg) => ({
-      ...lg,
-      layers: lg.layers.map((layer) => ({
-        ...layer,
-        items: layer.items.map((item) => {
-          if (!isScoreItemMatchingTarget(item, target)) return item;
-          if (item.barRenderer.kind === 'audioClip') {
-            return {
-              ...item,
-              barRenderer: {
-                ...item.barRenderer,
-                ...(typePatch.fadeInType !== undefined
-                  ? { fadeInType: typePatch.fadeInType as typeof item.barRenderer.fadeInType }
-                  : {}),
-                ...(typePatch.fadeOutType !== undefined
-                  ? { fadeOutType: typePatch.fadeOutType as typeof item.barRenderer.fadeOutType }
-                  : {}),
-              },
-            };
-          }
+    const nextLayerGroups = score.layerGroups.map((lg) =>
+      updateScoreGroupLayers(lg, (layers) =>
+        layers.map((layer) => ({
+          ...layer,
+          items: layer.items.map((item) => {
+            if (!isScoreItemMatchingTarget(item, target)) return item;
+            if (item.barRenderer.kind === 'audioClip') {
+              return {
+                ...item,
+                barRenderer: {
+                  ...item.barRenderer,
+                  ...(typePatch.fadeInType !== undefined
+                    ? { fadeInType: typePatch.fadeInType as typeof item.barRenderer.fadeInType }
+                    : {}),
+                  ...(typePatch.fadeOutType !== undefined
+                    ? { fadeOutType: typePatch.fadeOutType as typeof item.barRenderer.fadeOutType }
+                    : {}),
+                },
+              };
+            }
 
-          return item;
-        }),
-      })),
-    }));
+            return item;
+          }),
+        })),
+      ),
+    );
 
     return { ...score, layerGroups: nextLayerGroups };
   }
@@ -2706,30 +2734,33 @@ function applyScorePatchToSnapshot(
         return group;
       }
 
-      const layers = group.layers.map((layer, index) =>
-        index === patch.layerIndex ? { ...layer, noteProcessorChain } : layer,
+      const layers = updateScoreGroupLayers(group, (sourceLayers) =>
+        sourceLayers.map((layer, index) =>
+          index === patch.layerIndex ? { ...layer, noteProcessorChain } : layer,
+        ),
       );
-      return { ...group, layers };
+      return layers;
     });
 
     return { ...score, layerGroups: nextLayerGroups };
   }
 
   if (patch.type === 'updateSoundObjectBehavior') {
-    const nextLayerGroups = score.layerGroups.map((lg) => ({
-      ...lg,
-      layers: lg.layers.map((layer) => ({
-        ...layer,
-        items: layer.items.map((item) => {
-          if (!isScoreItemMatchingTarget(item, patch.target)) return item;
+    const nextLayerGroups = score.layerGroups.map((lg) =>
+      updateScoreGroupLayers(lg, (layers) =>
+        layers.map((layer) => ({
+          ...layer,
+          items: layer.items.map((item) => {
+            if (!isScoreItemMatchingTarget(item, patch.target)) return item;
 
-          return {
-            ...item,
-            barRenderer: applySoundObjectBehaviorToBarRenderer(item.barRenderer, patch.patch),
-          };
-        }),
-      })),
-    }));
+            return {
+              ...item,
+              barRenderer: applySoundObjectBehaviorToBarRenderer(item.barRenderer, patch.patch),
+            };
+          }),
+        })),
+      ),
+    );
 
     return { ...score, layerGroups: nextLayerGroups };
   }
@@ -2808,9 +2839,8 @@ function applyScorePatchToSnapshot(
         return { ...lg, layers };
       }
 
-      return {
-        ...lg,
-        layers: lg.layers.map((layer) => ({
+      return updateScoreGroupLayers(lg, (layers) =>
+        layers.map((layer) => ({
           ...layer,
           items: layer.items.map((item) => {
             const color = updateByObject.get(item);
@@ -2824,7 +2854,7 @@ function applyScorePatchToSnapshot(
             return item;
           }),
         })),
-      };
+      );
     });
 
     return changed ? { ...score, layerGroups: nextLayerGroups } : score;
@@ -2834,28 +2864,29 @@ function applyScorePatchToSnapshot(
 
   const { name, startTime, subjectiveDuration, backgroundColor } = patch.patch;
 
-  const nextLayerGroups = score.layerGroups.map((lg) => ({
-    ...lg,
-    layers: lg.layers.map((layer) => ({
-      ...layer,
-      items: layer.items.map((item) => {
-        if (!isScoreItemMatchingTarget(item, patch.target)) return item;
-        const next = { ...item };
-        if (name !== undefined) next.name = name;
-        if (backgroundColor !== undefined) next.backgroundColor = backgroundColor;
-        if (startTime !== undefined) {
-          next.startBeats = startTime.value;
-          next.startTimeBase = startTime.timeBase;
-        }
-        if (subjectiveDuration !== undefined) {
-          next.durationBeats = subjectiveDuration.value;
-          next.durationTimeBase = subjectiveDuration.timeBase;
-        }
-        next.barRenderer = applySharedPropertiesToBarRenderer(next.barRenderer, patch.patch);
-        return next;
-      }),
-    })),
-  }));
+  const nextLayerGroups = score.layerGroups.map((lg) =>
+    updateScoreGroupLayers(lg, (layers) =>
+      layers.map((layer) => ({
+        ...layer,
+        items: layer.items.map((item) => {
+          if (!isScoreItemMatchingTarget(item, patch.target)) return item;
+          const next = { ...item };
+          if (name !== undefined) next.name = name;
+          if (backgroundColor !== undefined) next.backgroundColor = backgroundColor;
+          if (startTime !== undefined) {
+            next.startBeats = startTime.value;
+            next.startTimeBase = startTime.timeBase;
+          }
+          if (subjectiveDuration !== undefined) {
+            next.durationBeats = subjectiveDuration.value;
+            next.durationTimeBase = subjectiveDuration.timeBase;
+          }
+          next.barRenderer = applySharedPropertiesToBarRenderer(next.barRenderer, patch.patch);
+          return next;
+        }),
+      })),
+    ),
+  );
 
   return { ...score, layerGroups: nextLayerGroups };
 }
@@ -3108,7 +3139,16 @@ function applyTrackPatchToSnapshot(
           }
         : {
             type: patch.instrument.type,
-            instrumentType: patch.instrument.instrumentType,
+            instrumentType:
+              patch.instrument.type === 'unknown'
+                ? patch.instrument.instrumentType
+                : {
+                    generic: 'GenericInstrument',
+                    blueSynthBuilder: 'BlueSynthBuilder',
+                    blueX7: 'BlueX7',
+                    python: 'PythonInstrument',
+                    javascript: 'JavaScriptInstrument',
+                  }[patch.instrument.type],
             name: patch.instrument.name,
             comment: patch.instrument.comment,
             enabled: patch.instrument.enabled,
@@ -3662,18 +3702,9 @@ function applyOrchestraPatchSnapshot(
             (candidate) => candidate !== row && candidate.assignmentId === nextAssignmentId,
           );
           if (!duplicate && row.assignmentId !== nextAssignmentId) {
-            const oldId = row.assignmentId;
             row.assignmentId = nextAssignmentId;
             if (instrument) {
               instrument.assignmentId = nextAssignmentId;
-            }
-            const channel = next.channels.find((ch) => ch.association === oldId);
-            if (channel) {
-              next.channels = next.channels.map((ch) =>
-                ch.association === oldId
-                  ? { ...ch, association: nextAssignmentId, name: nextAssignmentId }
-                  : ch,
-              );
             }
           }
         }
@@ -3728,7 +3759,7 @@ function applyOrchestraPatchSnapshot(
           objectNames: [],
           widgets: [],
           editEnabled: true,
-          gridSettings: { columns: 8, rows: 4, snap: true },
+          gridSettings: new BlueSynthBuilder().getGraphicInterface().getGridSettings(),
           widgetTree: {
             id: 'root',
             type: 'BSBRootGroup',
@@ -3880,7 +3911,7 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       const currentRevision = getProjectDocumentRevision();
       if (context?.revision !== undefined && context.revision !== currentRevision) return;
       set((state) => {
-        const map = new Map<string, ProjectRuntimeOutcome>();
+        const map = new Map<ProjectRuntimeOutcome['performanceKind'], ProjectRuntimeOutcome>();
         for (const o of state.runtimeOutcomes) {
           map.set(o.performanceKind, o);
         }
@@ -4153,6 +4184,24 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
         }
 
         if (normalizedPatch.orchestra !== undefined) {
+          const orchestraPatch = normalizedPatch.orchestra;
+          if (orchestraPatch.type === 'updateAssignment') {
+            const oldId = orchestraPatch.assignmentId;
+            const rowIndex = state.orchestra.arrangement.rows.findIndex(
+              (row) => row.assignmentId === oldId,
+            );
+            const newId = next.orchestra.arrangement.rows[rowIndex]?.assignmentId;
+            if (newId && newId !== oldId) {
+              next.mixer = {
+                ...next.mixer,
+                channels: next.mixer.channels.map((channel) =>
+                  channel.association === oldId
+                    ? { ...channel, association: newId, name: newId }
+                    : channel,
+                ),
+              };
+            }
+          }
           next.mixer = reconcileMixerSnapshotWithArrangement(next.mixer, next.orchestra);
         }
 
@@ -4193,14 +4242,13 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
     },
 
     updateOrchestra: async (orchestra, metadata) => {
-      const bsbPatch =
-        orchestra.type === 'updateInstrument' ? orchestra.patch.bsbInterface : undefined;
-      const label = bsbPatch
-        ? bsbInterfaceActionLabel(
-            bsbPatch,
-            bsbActionLabelContext(get().orchestra, orchestra.assignmentId),
-          )
-        : orchestraPatchActionLabel(orchestra);
+      const label =
+        orchestra.type === 'updateInstrument' && orchestra.patch.bsbInterface
+          ? bsbInterfaceActionLabel(
+              orchestra.patch.bsbInterface,
+              bsbActionLabelContext(get().orchestra, orchestra.assignmentId),
+            )
+          : orchestraPatchActionLabel(orchestra);
       await get().applyProjectDocumentPatch({ orchestra }, { label, ...metadata });
     },
 
@@ -4397,11 +4445,13 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       set((state) => {
         const score = state.score;
         const newGroups = score.layerGroups.map((lg) => {
-          const newLayers = lg.layers.map((layer) => ({
-            ...layer,
-            items: layer.items.filter((item) => !objectIds.has(item.objectId)),
-          }));
-          return { ...lg, layers: newLayers };
+          const newLayers = updateScoreGroupLayers(lg, (sourceLayers) =>
+            sourceLayers.map((layer) => ({
+              ...layer,
+              items: layer.items.filter((item) => !objectIds.has(item.objectId)),
+            })),
+          );
+          return newLayers;
         });
         return { score: { ...score, layerGroups: newGroups }, isDirty: true };
       });
@@ -4423,7 +4473,7 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
         durationTimeBase?: string;
         backgroundColor?: number;
         serializedXml?: string;
-        sourceTarget?: import('../../../shared/project-editor').ScoreObjectEditorTargetSnapshot;
+        sourceTarget?: import('../../shared/project-editor').ScoreObjectEditorTargetSnapshot;
       }> = [];
 
       set((state) => {
@@ -4431,67 +4481,69 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
         const groupIndex = findAddScoreObjectsTargetGroupIndex(score, objects);
         if (groupIndex < 0) return state;
         const lg = score.layerGroups[groupIndex];
-        const newLayers = lg.layers.map((layer, idx) => {
-          const layerObjects = objects.filter((o) => o.layerIndex === idx);
-          if (layerObjects.length === 0) return layer;
-          return {
-            ...layer,
-            items: [
-              ...layer.items,
-              ...layerObjects.map((o, j) => {
-                const objectId = createLocalScoreObjectId(o.objectType);
-                const objectIndex = layer.items.length + j;
-                const isSObj = o.objectType !== 'AudioClip';
-                const resolvedColor = resolveOptimisticScoreObjectColor(score, layer, o);
-                const editorTarget = {
-                  selectionId: objectId,
-                  selectedObjectType: o.objectType,
-                  editorObjectType: o.objectType,
-                  ownerKind: 'timeline' as const,
-                  displayContext: 'timeline' as const,
-                  location: {
-                    rootGroupIndex: groupIndex,
-                    containerPath: [],
-                    layerIndex: idx,
-                    objectIndex,
-                  },
-                  supportsTimeBehavior: isSObj,
-                  supportsRepeatPoint: isSObj,
-                  supportsNoteProcessorChain: isSObj,
-                };
-                patchObjects.push({
-                  selectionId: objectId,
-                  layerIndex: o.layerIndex,
-                  objectType: o.objectType,
-                  name: o.name,
-                  startBeats: o.startBeats,
-                  durationBeats: o.durationBeats,
-                  startTimeBase: o.startTimeBase,
-                  durationTimeBase: o.durationTimeBase,
-                  backgroundColor: o.backgroundColor,
-                  serializedXml: o.serializedXml,
-                  sourceTarget: o.editorTarget,
-                });
-                return {
-                  objectId,
-                  objectType: o.objectType,
-                  name: o.name,
-                  startBeats: o.startBeats,
-                  durationBeats: o.durationBeats,
-                  startTimeBase: o.startTimeBase ?? 'BEATS',
-                  durationTimeBase: o.durationTimeBase ?? 'BEATS',
-                  backgroundColor: resolvedColor,
-                  isContainer: o.isContainer,
-                  serializedXml: o.serializedXml,
-                  barRenderer: createOptimisticBarRendererSnapshot(o),
-                  editorTarget,
-                };
-              }),
-            ],
-          };
-        });
+        const newLayers = updateScoreGroupLayers(lg, (sourceLayers) =>
+          sourceLayers.map((layer, idx) => {
+            const layerObjects = objects.filter((o) => o.layerIndex === idx);
+            if (layerObjects.length === 0) return layer;
+            return {
+              ...layer,
+              items: [
+                ...layer.items,
+                ...layerObjects.map((o, j) => {
+                  const objectId = createLocalScoreObjectId(o.objectType);
+                  const objectIndex = layer.items.length + j;
+                  const isSObj = o.objectType !== 'AudioClip';
+                  const resolvedColor = resolveOptimisticScoreObjectColor(score, layer, o);
+                  const editorTarget = {
+                    selectionId: objectId,
+                    selectedObjectType: o.objectType,
+                    editorObjectType: o.objectType,
+                    ownerKind: 'timeline' as const,
+                    displayContext: 'timeline' as const,
+                    location: {
+                      rootGroupIndex: groupIndex,
+                      containerPath: [],
+                      layerIndex: idx,
+                      objectIndex,
+                    },
+                    supportsTimeBehavior: isSObj,
+                    supportsRepeatPoint: isSObj,
+                    supportsNoteProcessorChain: isSObj,
+                  };
+                  patchObjects.push({
+                    selectionId: objectId,
+                    layerIndex: o.layerIndex,
+                    objectType: o.objectType,
+                    name: o.name,
+                    startBeats: o.startBeats,
+                    durationBeats: o.durationBeats,
+                    startTimeBase: o.startTimeBase,
+                    durationTimeBase: o.durationTimeBase,
+                    backgroundColor: o.backgroundColor,
+                    serializedXml: o.serializedXml,
+                    sourceTarget: o.editorTarget,
+                  });
+                  return {
+                    objectId,
+                    objectType: o.objectType,
+                    name: o.name,
+                    startBeats: o.startBeats,
+                    durationBeats: o.durationBeats,
+                    startTimeBase: o.startTimeBase ?? 'BEATS',
+                    durationTimeBase: o.durationTimeBase ?? 'BEATS',
+                    backgroundColor: resolvedColor,
+                    isContainer: o.isContainer,
+                    serializedXml: o.serializedXml,
+                    barRenderer: createOptimisticBarRendererSnapshot(o),
+                    editorTarget,
+                  };
+                }),
+              ],
+            };
+          }),
+        );
         const newGroups = [...score.layerGroups];
-        newGroups[groupIndex] = { ...lg, layers: newLayers };
+        newGroups[groupIndex] = newLayers;
         return { score: { ...score, layerGroups: newGroups }, isDirty: true };
       });
 
@@ -4726,36 +4778,38 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
 
     setScoreObjectColor: (objectIds, color) => {
       set((state) => {
-        const newGroups = state.score.layerGroups.map((lg) => ({
-          ...lg,
-          layers: lg.layers.map((layer) => ({
-            ...layer,
-            items: layer.items.map((item) =>
-              objectIds.has(item.objectId) ? { ...item, backgroundColor: color } : item,
-            ),
-          })),
-        }));
+        const newGroups = state.score.layerGroups.map((lg) =>
+          updateScoreGroupLayers(lg, (layers) =>
+            layers.map((layer) => ({
+              ...layer,
+              items: layer.items.map((item) =>
+                objectIds.has(item.objectId) ? { ...item, backgroundColor: color } : item,
+              ),
+            })),
+          ),
+        );
         return { score: { ...state.score, layerGroups: newGroups }, isDirty: true };
       });
     },
 
     resizeScoreObjects: (resizes) => {
       set((state) => {
-        const newGroups = state.score.layerGroups.map((lg) => ({
-          ...lg,
-          layers: lg.layers.map((layer) => ({
-            ...layer,
-            items: layer.items.map((item) => {
-              const r = resizes.find((m) => m.objectId === item.objectId);
-              if (!r) return item;
-              return {
-                ...item,
-                startBeats: r.targetStartBeats,
-                durationBeats: r.targetDurationBeats,
-              };
-            }),
-          })),
-        }));
+        const newGroups = state.score.layerGroups.map((lg) =>
+          updateScoreGroupLayers(lg, (layers) =>
+            layers.map((layer) => ({
+              ...layer,
+              items: layer.items.map((item) => {
+                const r = resizes.find((m) => m.objectId === item.objectId);
+                if (!r) return item;
+                return {
+                  ...item,
+                  startBeats: r.targetStartBeats,
+                  durationBeats: r.targetDurationBeats,
+                };
+              }),
+            })),
+          ),
+        );
         return { score: { ...state.score, layerGroups: newGroups }, isDirty: true };
       });
     },

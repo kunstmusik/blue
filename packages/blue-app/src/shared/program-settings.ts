@@ -928,3 +928,15 @@ export {
   normalizeMidiInputPreferences,
 } from './midi-input';
 export type { MidiInputPreferences, MidiInputDevicePreference } from './midi-input';
+
+export type LegacyRendererSettingsSnapshot = Pick<
+  CurrentAppSettingsSnapshot,
+  | 'enginePath'
+  | 'recentFiles'
+  | 'windowBounds'
+  | 'midiInputDevice'
+  | 'midiOutputDevice'
+  | 'oscInputPort'
+  | 'oscOutputHost'
+  | 'oscOutputPort'
+>;

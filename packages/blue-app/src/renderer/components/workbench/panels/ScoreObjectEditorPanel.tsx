@@ -169,7 +169,7 @@ export default function ScoreObjectEditorPanel(): React.ReactElement {
       return applyPatchToDocument(current, {
         type: 'updateTypeSpecificEditor',
         target: current.target,
-        patch: audioClipEditorPreview,
+        patch: { ...audioClipEditorPreview },
       });
     });
   }, [audioClipEditorPreview]);

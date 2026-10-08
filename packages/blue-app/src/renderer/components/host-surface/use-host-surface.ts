@@ -284,7 +284,7 @@ export function useHostSurface(
   // Dismissal + follow listeners bind to the HOST window only; equivalent
   // input from unrelated documents never reaches them (FR-006).
   useEffect(() => {
-    if (phase === 'closed' || !hostWindow) {
+    if (phase === 'closed' || !hostWindow || !hostDocument) {
       return undefined;
     }
 

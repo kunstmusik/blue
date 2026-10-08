@@ -6,7 +6,7 @@ import {
 } from '@kunstmusik/codemirror-lang-csound/rich';
 import { toast } from 'sonner';
 import { cn } from '../../../../lib/cn';
-import type { OpenCsoundManualResult } from '../../../../shared/csound-manual';
+import type { OpenCsoundManualResult } from '../../../../../shared/csound-manual';
 import type { NormalizedOpcodeMetadata } from './editor-adapter-types';
 import { normalizeCatalogOpcode } from './csound-opcode-insertion';
 

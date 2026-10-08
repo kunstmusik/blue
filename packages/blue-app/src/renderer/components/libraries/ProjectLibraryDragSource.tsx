@@ -9,7 +9,9 @@ import {
 
 interface ProjectLibraryDragSourceProps extends React.HTMLAttributes<HTMLElement> {
   readonly node: LibraryBrowseNode | null;
-  readonly children: ReactElement<React.HTMLAttributes<HTMLElement>>;
+  readonly children: ReactElement<
+    React.HTMLAttributes<HTMLElement> & React.RefAttributes<HTMLElement>
+  >;
 }
 
 export const ProjectLibraryDragSource = forwardRef<HTMLElement, ProjectLibraryDragSourceProps>(

@@ -1,5 +1,15 @@
 import { create } from 'zustand';
-import type { AutomationPointSnapshot } from '../../shared/project-editor';
+import type { AutomationPointSnapshot, AutomationRangeRef } from '../../shared/project-editor';
+
+export interface AutomationPointSelection {
+  layerId: string;
+  parameterId: string;
+  pointIndex: number;
+}
+
+export type AutomationRangeSelection = AutomationRangeRef;
+export type MultiLinePreview = Record<string, AutomationPointSnapshot[]>;
+export type MultiLineObjectPreview = Record<string, { startBeats: number; durationBeats: number }>;
 
 interface ScoreAutomationState {
   selectedPoint: AutomationPointSelection | null;

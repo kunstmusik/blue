@@ -32,6 +32,7 @@ import {
   useProjectStore,
 } from '../stores/project-store';
 import { usePlaybackStore } from '../stores/playback-store';
+import { meterStore } from '../stores/meter-store';
 import { useUIStore } from '../stores/ui-store';
 import { useSettingsStore } from '../stores/settings-store';
 import { useLayoutSettingsStore } from '../stores/layout-settings-store';
@@ -233,6 +234,17 @@ describe('useIPCListeners', () => {
     useScoreSelectionStore.getState().clearSelection();
     globalThis.localStorage?.clear();
     vi.clearAllMocks();
+  });
+
+  it.each(['stopped', 'error'])('resets meters when playback reports %s', async (status) => {
+    const resetMeters = vi.spyOn(meterStore, 'reset');
+    await act(async () => root.render(<Harness />));
+    resetMeters.mockClear();
+    const notify = listeners.get('playback-status')!.values().next().value!;
+    act(() => notify({ status }));
+    expect(resetMeters).toHaveBeenCalledOnce();
+    expect(usePlaybackStore.getState().status).toBe(status);
+    resetMeters.mockRestore();
   });
 
   it('cleans up IPC listeners across StrictMode remounts', () => {

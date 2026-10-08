@@ -132,6 +132,8 @@ export default function SoundObjectLibraryPanel(): React.ReactElement {
   const handleConfirmDelete = async () => {
     if (!pendingDelete || !pendingDelete.node.key) return;
     const { node } = pendingDelete;
+    const key = node.key;
+    if (!key) return;
     setPendingDelete(null);
     const currentSelectedKey = useLibraryStore.getState().selectedKey;
     const currentNode = nodes.find(
@@ -154,7 +156,7 @@ export default function SoundObjectLibraryPanel(): React.ReactElement {
 
     let revalidatedPreview: Awaited<ReturnType<typeof window.blueAPI.previewProjectLibraryDelete>>;
     try {
-      revalidatedPreview = await window.blueAPI.previewProjectLibraryDelete(node.key);
+      revalidatedPreview = await window.blueAPI.previewProjectLibraryDelete(key);
     } catch {
       setError('Unable to revalidate Project SoundObject deletion.');
       return;
@@ -175,7 +177,7 @@ export default function SoundObjectLibraryPanel(): React.ReactElement {
     }
 
     const result = await window.blueAPI.deleteProjectLibraryItem(
-      node.key,
+      key,
       revalidatedPreview.value.confirmationToken,
     );
     if (!result.ok) {

@@ -286,9 +286,10 @@ export function upgradeV3ToV5(legacy: LegacyAuxiliaryLayoutStateV3): AuxiliaryLa
         break;
     }
 
-    const activePanelId = effectivePanelIds.includes(candidate.activePanelId)
-      ? candidate.activePanelId!
-      : effectivePanelIds[0];
+    const activePanelId =
+      candidate.activePanelId !== undefined && effectivePanelIds.includes(candidate.activePanelId)
+        ? candidate.activePanelId!
+        : effectivePanelIds[0];
 
     const slideoutSize =
       seedDef.defaultEdge === 'bottom'

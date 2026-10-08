@@ -390,7 +390,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     set((current) => ({
       searchResults: append
         ? [...current.searchResults, ...result.value.results]
-        : result.value.results,
+        : [...result.value.results],
       nextSearchCursor: result.value.nextCursor,
       error: null,
     }));

@@ -3,7 +3,7 @@ import type { ScoreObjectEditorComponentProps } from '../editor-registry';
 import type {
   AudioFileMetadataState,
   AudioFileMetadataSnapshot,
-} from '../../../../../shared/project-editor';
+} from '../../../../../../shared/project-editor';
 import type { ProjectDocumentCommitMetadata } from '../../../../../../shared/project-history';
 import SelectedCodeEditor from '../../editors/SelectedCodeEditor';
 import {

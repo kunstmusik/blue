@@ -8,7 +8,7 @@
  * See: specs/055-window-float-dock-parity/contracts/tab-command-contract.md
  */
 
-import type { WorkbenchPanelMode } from '../../../shared/workbench-menu';
+import type { WorkbenchPanelMode } from '../../../shared/workbench-window-contract';
 
 export type TabLocation = 'docked' | 'floating' | 'minimized' | 'slideout' | 'maximized';
 

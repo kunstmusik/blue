@@ -188,11 +188,7 @@ export default function TrackInstrumentControl({
         </div>
       </ContextMenu.Trigger>
       <PopoutContextMenuPortal>
-        <ContextMenu.Content
-          className="editor-context-menu"
-          sideOffset={4}
-          {...portalEventIsolationProps}
-        >
+        <ContextMenu.Content className="editor-context-menu" {...portalEventIsolationProps}>
           <ContextMenu.Label className="px-3 py-1 text-role-headline font-bold text-app-text-muted">
             Track Instrument
           </ContextMenu.Label>

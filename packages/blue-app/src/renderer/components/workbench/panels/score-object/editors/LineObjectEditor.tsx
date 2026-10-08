@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import type { LineData } from '@blue/data/sound-objects/line-object';
+import type { LineData } from '@blue/data';
 import type { ScoreObjectEditorComponentProps } from '../editor-registry';
 import {
   EditableLineCanvas,
