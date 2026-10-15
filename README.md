@@ -1,416 +1,184 @@
-# Blue — TypeScript Port
+# Blue 3
 
-> **Object composition environment for Csound** — ported from the NetBeans RCP Java application to a TypeScript monorepo.
+Blue is an object composition environment for [Csound](https://csound.com/).
+Arrange musical ideas on a visual timeline, design instruments, route audio
+through a mixer, and use automation and code to shape a composition. Blue
+saves projects as `.blue` XML and generates Csound documents (`.csd`) for
+playback and audio rendering.
 
-[![Status](https://img.shields.io/badge/status-alpha-orange)](https://github.com/kunstmusik/blue)
-
-Blue is a visual composition environment for [Csound](https://csound.com/) that lets you create, edit, and render complex music projects. This project ports the **data model and business logic** from the original Java/NetBeans application to TypeScript, with plans for both an Electron desktop app and a future browser-based UI.
-
----
-
-## Table of Contents
-
-- [Overview](#overview)
-- [Repository History](#repository-history)
-- [Monorepo Structure](#monorepo-structure)
-- [Prerequisites](#prerequisites)
-- [Quick Start](#quick-start)
-- [Building](#building)
-- [Releases](#releases)
-- [Testing](#testing)
-- [Development](#development)
-- [Progress](#progress)
-- [Architecture](#architecture)
-- [Contributing](#contributing)
-
----
-
-## Overview
-
-### What is Blue?
-
-Blue lets you compose music using Csound by providing a visual timeline editor where you can arrange score events, audio clips, pattern sequencers, instruments, mixers, and automation. Projects are saved as `.blue` files (XML format) that are compiled into CSD (Csound Document) files for audio rendering via the bundled Blue Engine C++ sidecar maintained in this monorepo.
-
-### Why Port?
-
-- **Modern stack:** TypeScript with full type safety, modern tooling, and a monorepo structure
-- **Universal data layer:** The `@blue/data` package works in **both browser and Node.js** — enabling a future web app alongside the Electron desktop app
-- **Backwards compatible:** Preserves and round-trips Java Blue `.blue` project data, including unsupported legacy fields
-- **Incremental migration:** Data classes, score layers, and engine integration are ported phase-by-phase
-
-## Repository History
-
-Blue 3 is the active TypeScript/Electron line. The `develop` branch is the active
-development line and `main` is the release/default branch. At the repository
-cutover, both pointed to the `v3.0.0-beta.1` commit.
-
-The original Java/NetBeans implementation remains available in the
+This repository contains the Blue 3 Electron desktop application, its
+TypeScript project model, command-line compiler, Java helper, and native
+Blue Engine. It continues the original Java/NetBeans Blue application;
+the Java source is preserved on the
 [`legacy/blue-2.x`](https://github.com/kunstmusik/blue/tree/legacy/blue-2.x)
-history. The repository transition and its exact commit anchors are documented
-in [`docs/repository-history.md`](docs/repository-history.md).
+branch.
 
----
+## Working with Blue
 
-## Monorepo Structure
+- **Compose with SoundObjects:** combine written Csound scores, piano-roll
+  notes, patterns, audio files, and generated events. Nest phrases in
+  PolyObjects and reuse material through the SoundObject Library.
+- **Build instruments and effects:** edit orchestra code, use BlueSynthBuilder
+  interfaces, and organize instruments, UDOs, and project-wide Csound text.
+- **Mix and automate:** route instruments through mixer channels and effects,
+  and automate instrument and mixer parameters.
+- **Generate and render:** create CSD files, play projects through Blue Engine,
+  render audio to disk, or use Blue Live for performance.
 
-```
-blue/
-├── packages/
-│   ├── blue-data/            # @blue/data — Universal data model (browser + Node)
-│   │   ├── src/
-│   │   │   ├── blue-data.ts           # Root project data class
-│   │   │   ├── arrangement.ts         # Instrument → CSD ID mapping
-│   │   │   ├── score/                 # Score + layer system
-│   │   │   │   ├── score.ts
-│   │   │   │   └── layers/            # Layer, LayerGroup, providers
-│   │   │   ├── sound-objects/         # SoundObject types
-│   │   │   │   ├── generic-score.ts   # Raw Csound score text
-│   │   │   │   ├── poly-object.ts     # Nested layer group
-│   │   │   │   └── note.ts            # Csound note (p-fields)
-│   │   │   ├── instruments/           # Instrument types
-│   │   │   ├── time/                  # TimePosition, TimeDuration, TempoMap
-│   │   │   ├── migration/             # Version upgraders
-│   │   │   └── serialization/         # XML parser/writer
-│   │   └── package.json
-│   │
-│   ├── blue-engine-client/   # @blue/engine-client — Node.js ZMQ client for blue-engine
-│   │   └── src/
-│   │
-│   └── blue-app/             # @blue/app — Electron application shell and playback bridge
-│       └── src/
-│
-├── native/
-│   └── blue-engine/          # @blue/engine-native — bundled C++ sidecar
-│
-├── specs/                    # Spec-kit specifications
-│   └── 001-blue-data-port/
-│       ├── spec.md           # Feature specification
-│       ├── plan.md           # Technical implementation plan
-│       ├── research.md       # Consolidated research
-│       └── tasks.md          # Task breakdown (157 tasks)
-│
-├── research/                 # Architecture & design documents
-│   ├── 001-project-analysis-and-plan.md
-│   ├── 002-data-class-dependency-graph.md
-│   └── 003-engine-protocol.md
-│
-├── package.json              # Workspace root (pnpm)
-├── pnpm-workspace.yaml
-└── tsconfig.base.json        # Shared TypeScript config
-```
+The [Blue 3 manual](docs/manual/index.qmd) covers installation, a first
+project, editors, settings, and keyboard shortcuts. After launching Blue,
+choose **File → Open Example Project…** to explore a bundled composition.
 
-### Packages
+### Downloads and runtime requirements
 
-| Package                   | Environment            | Purpose                                                                                           |
-| ------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------- |
-| **`@blue/data`**          | Browser + Node.js      | Core data model — all Blue data classes with XML serialization compatible with Java `.blue` files |
-| **`@blue/engine-client`** | Node.js only           | ZeroMQ client for the C++ blue-engine process (playback control)                                  |
-| **`@blue/engine-native`** | Native desktop targets | C++ source, pinned vcpkg build, tests, and verified artifacts                                     |
-| **`@blue/app`**           | Electron               | Desktop application shell — loads `.blue` files, generates CSD, plays via blue-engine             |
+Find published packages on the
+[Releases page](https://github.com/kunstmusik/blue/releases).
+Development builds are available as artifacts from the
+[Develop workflow](https://github.com/kunstmusik/blue/actions/workflows/develop.yml).
+The release targets are macOS arm64, Windows x64, and Linux x64, with DMG,
+Windows installer, AppImage, and Deb packages.
 
----
+Blue includes its own Blue Engine executable. Install **Csound 7** separately
+for playback and rendering. Opening, editing, and saving projects does not
+require Csound. Java-backed features, including Clojure and Jython execution,
+require a Java runtime. See the [installation guide](docs/manual/installation.qmd)
+for platform details.
 
-## Prerequisites
+## Build from source
 
-| Tool                           | Version                    | Required                                                                                           |
-| ------------------------------ | -------------------------- | -------------------------------------------------------------------------------------------------- |
-| [Node.js](https://nodejs.org/) | 22+                        | ✅                                                                                                 |
-| [pnpm](https://pnpm.io/)       | 12.8.1                     | ✅                                                                                                 |
-| Java and Maven                 | Java 17+ / Maven 3+        | For the Java helper runtime and app builds                                                         |
-| CMake and C/C++ toolchain      | CMake 3.21+                | Source builds only                                                                                 |
-| vcpkg                          | Pinned repository revision | Bootstrapped automatically on the first native build; `VCPKG_ROOT` may select an existing checkout |
-| Csound 7                       | Latest                     | Optional at startup; required for audio playback/rendering                                         |
+Run workspace commands from the repository root with pnpm.
 
-Blue Engine is built from `native/blue-engine` and bundled with installed
-applications. Do not install a separate `blue-engine` executable. Blue opens,
-edits, and saves projects without Csound; engine-backed operations report a
-recoverable diagnostic until Csound 7 is installed.
+### Prerequisites
 
-### Install pnpm
+| Tool               | Requirement                                                          |
+| ------------------ | -------------------------------------------------------------------- |
+| Node.js            | 22 or newer; CI uses Node.js 22                                      |
+| pnpm               | Use the version pinned in the root `package.json` (`packageManager`) |
+| Java and Maven     | JDK 17+ and Maven 3+ for the Java helper                             |
+| Native build tools | CMake 3.21+ and a C/C++ toolchain                                    |
+| Quarto             | Required to build the manual and application packages                |
+| Csound 7           | Required for playback, rendering, and Csound integration tests       |
+
+The native build bootstraps the repository's pinned vcpkg revision. The first
+build needs network access to download native and Java dependencies. On
+macOS, install Xcode or the Xcode Command Line Tools for the native toolchain.
+
+### Start the desktop app
 
 ```bash
-corepack enable
-corepack prepare pnpm@12.8.1 --activate
-```
-
----
-
-## Quick Start
-
-```bash
-# 1. Clone the repository
 git clone https://github.com/kunstmusik/blue.git
 cd blue
-
-# 2. Install dependencies
-pnpm install
-
-# 3. Build all packages
+pnpm install --frozen-lockfile
 pnpm build
-
-# 4. Run tests
-pnpm test
+pnpm --filter @blue/app dev
 ```
 
----
+`pnpm build` builds the workspace packages, including Blue Engine and the Java
+helper. The `dev` command launches the Electron app with development reloads
+and uses the engine built from this checkout.
 
-## Building
-
-### Build All Packages
+To build the bundled manual and launch the compiled app:
 
 ```bash
-pnpm build
+pnpm build:manual
+pnpm --filter @blue/app start
 ```
 
-This builds the native Blue Engine first, stages its verified artifact for the
-application, and then compiles the Java and TypeScript packages.
+### Package the app
 
-Run the Electron development app with:
+After building, create and verify an unsigned unpacked application:
 
 ```bash
-pnpm --filter @blue/app run dev
+pnpm --filter @blue/app rebuild:native
+pnpm --filter @blue/app package:dir
+pnpm --filter @blue/app verify:packaged-app
 ```
 
-This command builds and selects
-`native/blue-engine/dist/<platform>-<arch>/blue-engine[.exe]`; it never falls
-back to `/usr/local/bin` or `PATH`.
+Use `pnpm app:package` to produce the current platform's installer. Packaging
+builds the manual, stages Blue Engine, generates release metadata, and validates
+package inputs. See the [release guide](docs/release-guide.md) for release
+channels, platform packaging, verification, and publication procedures.
 
-### Build a Specific Package
+## Repository layout
 
-```bash
-pnpm --filter @blue/data build
-```
+| Location                                              | Purpose                                                                             |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `packages/blue-app` (`@blue/app`)                     | Electron main process, preload contracts, and React desktop UI                      |
+| `packages/blue-data` (`@blue/data`)                   | Platform-neutral project models, XML loading/saving, migrations, and CSD generation |
+| `packages/blue-engine-client` (`@blue/engine-client`) | Node.js client and versioned protocol for Blue Engine                               |
+| `packages/blue-java` (`@blue/java-runtime`)           | Java helper for project-scoped Clojure and Jython execution                         |
+| `packages/blue-cli` (`blue-cli`)                      | Command-line compilation of `.blue` projects into `.csd` files                      |
+| `native/blue-engine` (`@blue/engine-native`)          | C++ Csound sidecar, native builds, and engine tests                                 |
+| `docs/manual`                                         | Quarto source for the bundled user manual                                           |
+| `docs`                                                | Architecture conventions, release procedures, and contributor references            |
+| `examples`                                            | Example compositions and supporting resources                                       |
+| `specs`                                               | Feature specifications, plans, research, and implementation tasks                   |
+| `.specify`                                            | Spec Kit templates and project constitution                                         |
 
-### Watch Mode (Development)
+See the [data package guide](packages/blue-data/README.md),
+[CLI guide](packages/blue-cli/README.md),
+[Java runtime guide](packages/blue-java/README.md), and
+[engine guide](native/blue-engine/README.md) for component details.
 
-```bash
-pnpm --filter @blue/data build --watch
-```
+## Architecture and compatibility
 
-### TypeScript Type Checking
+`BlueData` owns the canonical in-memory project, and `.blue` XML is the
+canonical project format. The portable `@blue/data` package handles models,
+serialization, migrations, and CSD generation without Node.js, DOM, or
+Electron APIs. Electron main owns filesystem access, processes, Java, and
+engine integration; the renderer communicates through typed preload and
+IPC contracts. User-visible project edits go through the document bridge
+and project history for undo/redo.
 
-```bash
-pnpm --filter @blue/data exec tsc --noEmit
-```
+Blue Engine runs as a separate process, loads Csound at runtime, and
+communicates with the application through ZeroMQ. The application bundles
+the engine built from the same source revision.
 
----
-
-## Releases
-
-Blue ships for macOS arm64, Windows x64, and Linux x64 with a revision-matched
-Blue Engine bundled under application resources. Csound 7 remains an optional
-runtime installation for playback, and a Java runtime remains required for
-Java-backed features. Linux builds target glibc 2.35 and use the modern
-AppImage runtime, including extract-and-run operation without FUSE 2.
-
-Contributor, develop, prerelease, and stable packages are unsigned and require no production signing credentials. Tagged releases use the protected GitHub `release` Environment as the publisher boundary; under the current single-maintainer policy, no separate approval prompt is configured. Signed macOS and Windows release paths are reserved for future funded work.
-
-| Audience                             | Quick command                                                                                                                                                                                                                              |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Contributor (local unsigned package) | `pnpm --filter @blue/app package:dir && pnpm --filter @blue/app verify:packaged-app`                                                                                                                                                       |
-| PR validation                        | `.github/workflows/pr.yml` directly uploads versioned `.dmg`, `.exe`, `.AppImage`, and `.deb` Actions artifacts for macOS arm64, Windows x64, and Linux x64.                                                                               |
-| Develop build                        | Push to `develop`; `.github/workflows/develop.yml` directly uploads native packages named `blue-{os}-{cputype}-{version}-{short-sha}.{ext}` and creates no GitHub Release.                                                                 |
-| Maintainer (beta/RC/stable release)  | Set `@blue/app` to a version such as `3.0.0-beta.1`, `3.0.0-rc.1`, or `3.0.0`, then push the matching immutable tag. `.github/workflows/release.yml` publishes prereleases for hyphenated versions and stable Releases for plain versions. |
-
-The `package:*` scripts are the normal packaging entry point. Each stages the selected Blue Engine, generates `release-metadata.json`, validates the complete package inputs, and then invokes `electron-builder`. To run input validation separately after building, first run `pnpm --filter @blue/app release:metadata`, then `pnpm verify:package-inputs`.
-
-Full repository verification: `pnpm verify`. Workflow contract validation: `pnpm verify:release-workflows`. Credential test coverage: `pnpm verify:release-credentials`. Tagged-version validation: `pnpm --filter @blue/app verify:release-version -- --tag vX.Y.Z[-prerelease] --app-version X.Y.Z[-prerelease] --repository <owner/repo>`.
-
-For GitHub Environment policy, future signing readiness, and failure recovery see the [release guide](docs/release-guide.md).
-
----
-
-## Testing
-
-### Run All Tests
-
-```bash
-pnpm test
-```
-
-### Run Tests for a Specific Package
-
-```bash
-pnpm --filter @blue/data test
-```
-
-### Run Tests in Watch Mode
-
-```bash
-pnpm --filter @blue/data test -- --watch
-```
-
-### Run a Single Test File
-
-```bash
-pnpm --filter @blue/data exec vitest run src/serialization/xml-reader.test.ts
-```
-
-### Test Coverage
-
-```bash
-pnpm --filter @blue/data test -- --coverage
-```
-
----
-
-## Development
-
-### Project Structure Conventions
-
-- **Source code:** `packages/*/src/`
-- **Tests:** Co-located `*.test.ts` files in `src/`
-- **Build output:** `packages/*/dist/` (gitignored)
-
-### Renderer typechecking
-
-Run `pnpm --filter @blue/app typecheck:renderer` to check production renderer source and its
-shared contracts in strict mode without emitting files. `build:renderer` runs this check before
-bundling. Vitest validates unit and browser test fixtures separately from this production check.
-
-### Linting & Formatting
-
-```bash
-# Lint all packages
-pnpm lint
-
-# Check formatting across repository
-pnpm format:check
-
-# Format repository files
-pnpm format
-```
-
-### Import Guidelines for `@blue/data`
-
-The `@blue/data` package must remain **environment-agnostic** (works in both browser and Node.js):
-
-- ❌ No `import` of Node.js built-ins (`fs`, `path`, `child_process`, `Buffer`, etc.)
-- ❌ No DOM-specific APIs
-- ❌ No `require()`, dynamic `import()`, or inline `import("...").Type` annotations
-- ✅ Use top-level static ES imports and type imports
-- ✅ Use `Element.parse()` and `element.toXml()` for XML
-- ✅ File I/O is the caller's responsibility — `BlueData.loadFromString(xml)` and `blueData.saveToString()`
-
-### Java-First Parity
-
-For behavior, rendering, XML, or formatting differences, consult the Java implementation before
-changing TypeScript. The primary references are [blue-core](https://github.com/kunstmusik/blue/tree/legacy/blue-2.x/blue-core) and
-[blue-ui-core](https://github.com/kunstmusik/blue/tree/legacy/blue-2.x/blue-ui-core). Compare Java-generated artifacts when available and document
-every intentional divergence in the active feature spec and plan.
-
-### Adding a New Data Class
-
-1. Create the file in the appropriate `packages/blue-data/src/` subdirectory
-2. Implement `saveAsXML(): Element` and `static loadFromXML(data: Element): T`
-3. Implement `deepCopy(): T` (via `DeepCopyable<T>`)
-4. Add a round-trip test in `src/**/`_name_`.test.ts`
-5. Export from `src/index.ts`
-
----
-
-## Progress
-
-### Current Status
-
-- `@blue/data` loads and saves `.blue` projects, applies Java-style migrations, and generates CSD with BSB instruments, mixer routing, effect UDOs, string channels, and automation exports.
-- `@blue/engine-client` implements playback control plus automation/channel operations for `blue-engine`.
-- `@blue/app` can open projects, generate CSD, and play through `blue-engine`.
-- The realtime automation path uses standard Csound `chnexport`; `blue-engine` owns native Csound channels and mirrors live scalar control values into shared memory for external readers.
-
-For the current resume state, parity investigations, and next debugging targets, see [STATUS.md](STATUS.md).
-
----
-
-## Architecture
-
-### Key Design Decisions
-
-| Decision                     | Rationale                                                                                                                                                                            |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Electron (not Tauri)**     | Blue-engine communicates via ZMQ — Node.js talks to it directly. No Rust FFI needed.                                                                                                 |
-| **Universal `@blue/data`**   | Zero Node.js built-ins. Works in browser and Node for future web app.                                                                                                                |
-| **XML serialization**        | Load supported Java `.blue` projects and standalone resources through explicit current/historical contracts; diagnose unexpected data. Java need not preserve TypeScript extensions. |
-| **Migration on load**        | Project structural upgrades run on XML before deserialization; class-local compatibility also works for standalone resources.                                                        |
-| **Host-injected JVM helper** | Electron main owns the Java helper and injects an abstract runtime contract into `@blue/data`; hosts without Java preserve project metadata and report unavailable execution.        |
-
-### Data Flow
-
-```
-.blue XML file
-     │
-     ▼
-Element.parse(xml) ──→ UpgradeManager ──→ BlueData.loadFromString(xml)
-     │                                          │
-     │                                    (all data classes)
-     │                                          │
-     ▼                                          ▼
-Element.toXml() ←────────────────── BlueData.saveToString()
-
-                                        │
-                                        ▼ (toCSD())
-
-                                 <CsoundSynthesizer>
-                                 <CsOptions> -r 44100 ...
-                                 <CsInstruments>
-                                   ; orchestra code
-                                 </CsInstruments>
-                                 <CsScore>
-                                   i1 0 2 440 0.5
-                                 </CsScore>
-                                 </CsoundSynthesizer>
-                                        │
-                                        ▼ (blue-engine via ZMQ)
-
-                                   Audio Output
-```
-
-### For More Detail
-
-| Document                                                                                     | Content                                                         |
-| -------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| [`research/001-project-analysis-and-plan.md`](research/001-project-analysis-and-plan.md)     | Full architecture analysis, framework decision, Phase 1-10 plan |
-| [`research/002-data-class-dependency-graph.md`](research/002-data-class-dependency-graph.md) | All 85+ classes mapped to TS targets in 14 dependency layers    |
-| [`research/003-engine-protocol.md`](research/003-engine-protocol.md)                         | ZMQ binary protocol reference for blue-engine client            |
-| [`specs/001-blue-data-port/spec.md`](specs/001-blue-data-port/spec.md)                       | Feature specification with 6 user stories, 30 requirements      |
-| [`specs/001-blue-data-port/plan.md`](specs/001-blue-data-port/plan.md)                       | Technical implementation plan with full source tree mapping     |
-
----
+Java Blue is the behavioral reference for supported legacy projects and
+resources. Compatibility work uses explicit serialization contracts and
+documented migrations, with diagnostics for unexpected input. Java Blue is
+not required to read Blue 3 extensions. See the
+[project constitution](.specify/memory/constitution.md) for the governing
+compatibility and ownership rules, and
+[repository history](docs/repository-history.md) for the Java/TypeScript
+repository transition.
 
 ## Contributing
 
-### Spec-Driven Development
+Read [AGENTS.md](AGENTS.md), the
+[project constitution](.specify/memory/constitution.md), and
+[licensing guidance](LICENSING.md) before making changes. Features use a
+specification → plan → tasks → implementation workflow under `specs/`.
+For behavior, rendering, or serialization changes, consult the Java reference
+and add focused regression coverage. Larger module changes follow the
+[modularization guide](docs/modularization.md).
 
-This project uses [Spec Kit](https://github.com/github/spec-kit) for structured development. Features follow a spec → plan → tasks → implement workflow.
+Start validation with the affected package, then run workspace checks for
+changes that span packages or shared behavior:
 
-### How to Help
+```bash
+# Focused package tests
+pnpm --filter @blue/data test
+pnpm --filter @blue/app test
 
-1. Check [STATUS.md](STATUS.md) for the current branch state and active parity findings.
-2. Pick the next relevant spec or follow-up from `specs/` and confirm the Java reference path.
-3. Implement the change in the appropriate package.
-4. Add or update tests around the affected render/runtime path.
-5. Submit a PR.
+# Application build checks
+pnpm --filter @blue/app build:main
+pnpm --filter @blue/app typecheck:renderer
 
-### Areas That Need Help
+# Workspace checks
+pnpm test
+pnpm lint
+git diff --check
+```
 
-- **Playback parity** — remaining Java/TypeScript differences in complex projects
-- **Score/editor features** — additional SoundObject types, remaining data-model gaps, and editor/UI work
-- **Electron app UX** — project workflow, transport, diagnostics, and polish
-- **Native engine integration** — continued cross-platform runtime, packaging, and Csound compatibility work for the monorepo-owned `blue-engine`
-
----
+The [developer guide](docs/manual/developer.qmd) has additional build and
+extension guidance.
 
 ## License
 
-Blue-authored code is licensed under GNU GPL v3.0 or later by default.
-Some reusable packages use MIT, the Java helper source uses EPL-2.0, and
-third-party assets retain their own licenses. See [LICENSING.md](LICENSING.md)
-for the scope map and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for
-bundled components.
-
-The Blue desktop application is licensed under GPL-3.0-or-later. See [LICENSE](LICENSE)
-for the license text.
-
----
-
-_This project ports Blue from Java/NetBeans RCP to TypeScript. The original Java implementation is preserved in the [`legacy/blue-2.x`](https://github.com/kunstmusik/blue/tree/legacy/blue-2.x) history._
+Blue-authored code and documentation are **GPL-3.0-or-later** by default.
+Reusable packages have their own license scopes, Java helper source is
+EPL-2.0, and third-party material retains its original terms. The manual is
+licensed under GFDL 1.3. See [LICENSE](LICENSE), the
+[scope map](LICENSING.md), and [third-party notices](THIRD_PARTY_NOTICES.md)
+for the applicable terms.
