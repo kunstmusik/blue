@@ -73,7 +73,6 @@ export const useOutputStore = create<OutputWindowState>((set) => ({
       const newLines: OutputLine[] = [];
       let counter = tab.lineCounter;
       for (const line of parts) {
-        if (line.length === 0) continue;
         counter += 1;
         newLines.push({ id: counter, text: line, type });
       }

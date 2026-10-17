@@ -23,6 +23,7 @@ import {
   PythonInstrument,
   Mixer,
   type MeterProfileKey,
+  type XmlDiagnostic,
   type TrackLayerMuteSoloMode,
   type PanLawDb,
   type StereoPanMode,
@@ -3055,6 +3056,8 @@ export type ProjectLoadedPayload = ProjectSummarySnapshot &
     >
   > & {
     missingAudioAssets?: MissingAudioAssetsSession;
+    /** Transient load report; never stored in the canonical project document. */
+    compatibilityWarnings?: readonly XmlDiagnostic[];
   };
 
 // ─── BlueX7 runtime targets and results (Spec 092) ──────────────────────────

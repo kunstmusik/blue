@@ -469,6 +469,9 @@ import {
 let mainWindow: BrowserWindow | null = null;
 const exampleFactoryManifestProvider = createFactoryManifestProvider();
 const projectSession = new ProjectSession();
+// Load diagnostics belong to a candidate, not canonical project content. Only
+// announce them when that candidate is actually installed (opens may cancel).
+const projectCompatibilityWarnings = new WeakMap<BlueData, readonly XmlDiagnostic[]>();
 let timelinePerformanceGeneration = 0;
 let blueLivePerformanceGeneration = 0;
 
@@ -2769,7 +2772,9 @@ function buildAndSendProjectLoaded(data: BlueData, filePath: string | null): voi
     title: filePath ? projectProperties.title || path.basename(filePath) : 'Untitled',
     author: projectProperties.author,
     sampleRate: projectProperties.sampleRate,
+    compatibilityWarnings: projectCompatibilityWarnings.get(data),
   };
+  projectCompatibilityWarnings.delete(data);
 
   const missingSession = scanMissingAudioAssets(data, filePath);
   if (missingSession) {
@@ -3304,19 +3309,22 @@ function isCurrentProjectFilePath(filePath: string): boolean {
  */
 async function readProjectFromDisk(filePath: string): Promise<BlueData> {
   const xml = fs.readFileSync(filePath, 'utf-8');
-  return prepareProjectXml(xml, filePath, presentProjectXmlWarnings);
+  return prepareProjectForLoad(xml, filePath);
 }
 
-async function presentProjectXmlWarnings(diagnostics: readonly XmlDiagnostic[]): Promise<void> {
-  const detail = formatProjectXmlDiagnostics(diagnostics);
-  if (
-    process.env.BLUE_VERIFY_MODE === 'packaged-project' ||
-    process.env.BLUE_VERIFY_MODE === 'packaged-engine-mismatch'
-  ) {
-    process.stderr.write(`[WARN] ${detail}\n`);
-    return;
-  }
-  dialog.showErrorBox('Project Compatibility Warnings', detail);
+async function prepareProjectForLoad(xml: string, filePath: string): Promise<BlueData> {
+  let warnings: readonly XmlDiagnostic[] = [];
+  const data = await prepareProjectXml(xml, filePath, (diagnostics) => {
+    warnings = diagnostics;
+    if (
+      process.env.BLUE_VERIFY_MODE === 'packaged-project' ||
+      process.env.BLUE_VERIFY_MODE === 'packaged-engine-mismatch'
+    ) {
+      process.stderr.write(`[WARN] ${formatProjectXmlDiagnostics(diagnostics)}\n`);
+    }
+  });
+  if (warnings.length) projectCompatibilityWarnings.set(data, warnings);
+  return data;
 }
 
 /**
@@ -3375,8 +3383,7 @@ async function openProjectFile(filePath: string): Promise<boolean> {
     const outcome = await runProjectFileReplacement<BlueData>({
       selectFile: () => filePath,
       readFile: (sourcePath) => fs.readFileSync(sourcePath, 'utf-8'),
-      parseProject: (xml, sourcePath) =>
-        prepareProjectXml(xml, sourcePath, presentProjectXmlWarnings),
+      parseProject: prepareProjectForLoad,
       isSameFile: isCurrentProjectFilePath,
       preflight: () => canReplaceProjectWhileRenderActive(),
       confirmLibraryDraft: () => confirmLibraryDraftTransition('switchProject'),

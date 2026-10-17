@@ -34,6 +34,8 @@ import {
 import { usePlaybackStore } from '../stores/playback-store';
 import { meterStore } from '../stores/meter-store';
 import { useUIStore } from '../stores/ui-store';
+import { useOutputStore } from '../stores/output-store';
+import { useWorkbenchStore } from '../stores/workbench-store';
 import { useSettingsStore } from '../stores/settings-store';
 import { useLayoutSettingsStore } from '../stores/layout-settings-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
@@ -173,6 +175,7 @@ describe('useIPCListeners', () => {
   }
 
   beforeEach(() => {
+    useOutputStore.setState({ tabs: {}, tabOrder: [], activeTabId: null });
     ensureLocalStorage().clear();
     listeners.clear();
     Object.assign(window, { blueAPI });
@@ -300,6 +303,60 @@ describe('useIPCListeners', () => {
 
     expect(useProjectStore.getState().isLoading).toBe(false);
     expect(useProjectStore.getState().missingAudioSession).toEqual(session);
+  });
+
+  it('keeps warning details in Output without stealing focus and reveals them from one notice', () => {
+    useOutputStore.getState().getOrCreateTab('Csound');
+    useOutputStore.getState().appendToTab('Project Messages', 'Previous project warnings\n');
+    const openPanel = vi
+      .spyOn(useWorkbenchStore.getState(), 'openPanel')
+      .mockImplementation(() => {});
+    act(() => root.render(<Harness />));
+    const loaded = listeners.get('project-loaded')!.values().next().value!;
+    act(() =>
+      loaded({
+        sessionId: 1,
+        filePath: '/projects/legacy.blue',
+        title: 'Legacy',
+        author: '',
+        sampleRate: '44100',
+        compatibilityWarnings: [
+          {
+            code: 'P-TIME-STATE-HISTORICAL-RULER',
+            severity: 'warning',
+            source: { kind: 'project', label: '/projects/legacy.blue' },
+            path: '/blueData/score/timeState/timeUnit',
+            member: 'timeUnit',
+            value: '5',
+            message: 'Historical ruler interval.',
+            recovery: 'Preserved on save.',
+          },
+        ],
+      }),
+    );
+    expect(useProjectStore.getState().loaded).toBe(true);
+    expect(
+      useOutputStore
+        .getState()
+        .tabs['Project Messages'].lines.map((line) => line.text)
+        .join('\n'),
+    ).toContain('Preserved on save.');
+    expect(
+      useOutputStore
+        .getState()
+        .tabs['Project Messages'].lines.some((line) => line.text.includes('Previous project')),
+    ).toBe(false);
+    expect(useOutputStore.getState().activeTabId).toBe('Csound');
+    expect(openPanel).not.toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(toast.warning).toHaveBeenCalledOnce();
+    const notice = vi.mocked(toast.warning).mock.calls[0][1]!;
+    const action = notice.action as { label: string; onClick(): void };
+    expect(action.label).toBe('View messages');
+    act(() => action.onClick());
+    expect(useOutputStore.getState().activeTabId).toBe('Project Messages');
+    expect(openPanel).toHaveBeenCalledWith('OutputTopComponent');
+    openPanel.mockRestore();
   });
 
   it('clears the missing-audio session when project-loaded has no missing assets', () => {

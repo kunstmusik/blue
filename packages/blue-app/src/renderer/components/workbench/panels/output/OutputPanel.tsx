@@ -5,6 +5,7 @@ import { useOutputStore } from '../../../../stores/output-store';
 import { PopoutContextMenuPortal } from '../../../../hooks/host-portals';
 import { useHostDocument } from '../../../../hooks/use-host-document';
 import { cn } from '../../../../lib/cn';
+import { PROJECT_MESSAGES_TAB } from '../../../../../shared/xml-diagnostics';
 
 export default function OutputPanel() {
   const tabs = useOutputStore((s) => s.tabs);
@@ -63,12 +64,16 @@ export default function OutputPanel() {
     };
   }, [hostDocument]);
 
-  // Auto-scroll to bottom when new lines arrive, unless user scrolled away or has selection
+  // Stream output follows new lines; a compatibility report starts at its
+  // first message so reviewing it does not begin halfway through a warning.
   useEffect(() => {
-    if (autoScrollRef.current && !hasSelectionRef.current && scrollRef.current) {
+    if (!scrollRef.current || hasSelectionRef.current) return;
+    if (activeTabId === PROJECT_MESSAGES_TAB) {
+      scrollRef.current.scrollTop = 0;
+    } else if (autoScrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [lines.length, activeTab?.pendingText]);
+  }, [activeTab, activeTabId]);
 
   const handleScroll = useCallback(() => {
     if (!scrollRef.current) return;
@@ -166,7 +171,13 @@ export default function OutputPanel() {
               <div className="output-panel__empty">No output.</div>
             ) : (
               lines.map((line) => (
-                <div key={line.id} className="output-panel__line">
+                <div
+                  key={line.id}
+                  className={cn(
+                    'output-panel__line min-h-lh',
+                    activeTabId === PROJECT_MESSAGES_TAB && 'whitespace-pre-wrap! wrap-anywhere',
+                  )}
+                >
                   <span
                     style={{
                       color: line.type === 'stderr' ? errorColor : outputColor,

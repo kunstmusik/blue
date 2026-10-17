@@ -44,6 +44,7 @@ import type { EngineOutputPayload } from '../../shared/io-provider';
 import { formatAudioLayoutDiagnostic } from '../../shared/audio-layout';
 import type { ProgramSettingsSnapshot } from '../../shared/program-settings';
 import type { ProjectRuntimeOutcomeEvent } from '../../shared/project-history';
+import { formatProjectMessages, PROJECT_MESSAGES_TAB } from '../../shared/xml-diagnostics';
 
 export function useIPCListeners(): void {
   const setProjectInfo = useProjectStore((s) => s.setProjectInfo);
@@ -246,7 +247,25 @@ export function useIPCListeners(): void {
           })
           .catch(() => undefined);
       }
-      toast.success(`Loaded: ${info.title || 'Project'}`);
+      const warnings = info.compatibilityWarnings ?? [];
+      if (warnings.length) {
+        getOrCreateTab(PROJECT_MESSAGES_TAB);
+        resetTab(PROJECT_MESSAGES_TAB);
+        appendToTab(PROJECT_MESSAGES_TAB, formatProjectMessages(warnings));
+        toast.warning(`Loaded: ${info.title || 'Project'}`, {
+          id: 'project-load',
+          description: `${warnings.length} compatibility warning${warnings.length === 1 ? '' : 's'}. Details are in Project Messages.`,
+          action: {
+            label: 'View messages',
+            onClick: () => {
+              selectTab(PROJECT_MESSAGES_TAB);
+              useWorkbenchStore.getState().openPanel('OutputTopComponent');
+            },
+          },
+        });
+      } else {
+        toast.success(`Loaded: ${info.title || 'Project'}`, { id: 'project-load' });
+      }
     });
 
     const unsubProjectClosed = window.blueAPI.onProjectClosed(() => {

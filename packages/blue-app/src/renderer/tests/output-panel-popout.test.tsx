@@ -114,4 +114,20 @@ describe('OutputPanel popout selection actions', () => {
     });
     expect(writeClipboardText).toHaveBeenCalledWith(selectedText);
   });
+
+  it('starts compatibility reports at the top when selected', () => {
+    useOutputStore.getState().appendToTab('Project Messages', 'First warning\n\nSecond warning\n');
+    act(() =>
+      root.render(
+        <HostDocumentContext.Provider value={popoutDoc}>
+          <OutputPanel />
+        </HostDocumentContext.Provider>,
+      ),
+    );
+    const scroll = host.querySelector<HTMLElement>('.output-panel__scroll')!;
+    scroll.scrollTop = 120;
+    act(() => useOutputStore.getState().selectTab('Project Messages'));
+    expect(scroll.scrollTop).toBe(0);
+    expect(scroll.firstElementChild?.textContent).toBe('First warning');
+  });
 });

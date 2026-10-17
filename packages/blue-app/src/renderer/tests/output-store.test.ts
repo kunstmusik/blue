@@ -38,6 +38,15 @@ describe('output-store', () => {
   });
 
   describe('appendToTab', () => {
+    it('preserves paragraph spacing in reports', () => {
+      useOutputStore
+        .getState()
+        .appendToTab('Project Messages', 'First message\n\nSecond message\n');
+      expect(
+        useOutputStore.getState().tabs['Project Messages'].lines.map((line) => line.text),
+      ).toEqual(['First message', '', 'Second message']);
+    });
+
     it('splits text on newlines into separate lines', () => {
       const store = useOutputStore.getState();
       store.appendToTab('Csound', 'line1\nline2\nline3\n');
