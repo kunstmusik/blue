@@ -10,6 +10,9 @@ import {
   transpileModule,
 } from 'typescript';
 import { describe, expect, it, vi } from 'vitest';
+import { BlueData } from '@blue/data';
+import { ProjectSession } from './project-session';
+import { ProjectHistory } from './project-history';
 
 // Execute the actual main-process handlers without starting Electron or its
 // unrelated services. Keep the quit orchestration in main.ts rather than
@@ -24,6 +27,8 @@ const functionNames = new Set([
   'clearHistoryParticipantsForShutdown',
   'validateHistoryRequestSender',
   'isHistorySenderActive',
+  'isHistoryWebContentsLive',
+  'broadcastHistoryBoundary',
   'trackHistorySender',
 ]);
 const handlerNames = new Set([
@@ -49,16 +54,21 @@ const executable = transpileModule(snippets.join('\n'), {
   compilerOptions: { target: ScriptTarget.ES2022 },
 }).outputText;
 
-function setup() {
+function setup(history?: ProjectHistory) {
   const handlers = new Map<string, (event: { preventDefault(): void }) => void>();
   const sender = {
     id: 1,
     isDestroyed: vi.fn().mockReturnValue(false),
+    isCrashed: vi.fn().mockReturnValue(false),
+    mainFrame: { isDestroyed: vi.fn().mockReturnValue(false), detached: false },
+    send: vi.fn(),
+    on: vi.fn<(event: string, callback: (...args: unknown[]) => void) => void>(),
     once: vi.fn<(event: string, callback: () => void) => void>(),
   };
   const historyParticipantSenders = new Map<string, unknown>([['ctx-live', sender]]);
   const participants = new Set(['ctx-live']);
   const mainWindow = {
+    webContents: sender,
     isDestroyed: vi.fn().mockReturnValue(false),
     on: (event: string, handler: (event: { preventDefault(): void }) => void) =>
       handlers.set(event, handler),
@@ -81,7 +91,7 @@ function setup() {
     historyAvailabilityBySender: new Map(),
     trackedHistorySenders: new WeakSet(),
     rebuildApplicationMenu: vi.fn(),
-    projectHistory: {
+    projectHistory: history ?? {
       getParticipants: () => [...participants].map((contextId) => ({ contextId })),
       unregisterParticipant: ({ contextId }: { contextId: string }) =>
         participants.delete(contextId),
@@ -102,12 +112,13 @@ function setup() {
   const context = createContext(environment);
   runInContext(executable, context);
   const api = runInContext(
-    '({ requestQuit, validateHistoryRequestSender, isHistorySenderActive, trackHistorySender })',
+    '({ requestQuit, validateHistoryRequestSender, isHistorySenderActive, trackHistorySender, broadcastHistoryBoundary })',
     context,
   ) as {
     requestQuit(): Promise<void>;
     isHistorySenderActive(contextId: string): boolean;
     trackHistorySender(contents: typeof sender): void;
+    broadcastHistoryBoundary(channel: string, event: unknown): void;
     validateHistoryRequestSender(
       event: { sender: unknown },
       origin: { contextId: string },
@@ -124,6 +135,86 @@ function setup() {
 }
 
 describe('Quit protection', () => {
+  it('rejects crashed or disposed renderer frames even while their window survives', () => {
+    const { api, sender } = setup();
+    sender.isCrashed.mockReturnValue(true);
+    expect(api.isHistorySenderActive('ctx-live')).toBe(false);
+    sender.isCrashed.mockReturnValue(false);
+    sender.mainFrame.isDestroyed.mockReturnValue(true);
+    expect(api.isHistorySenderActive('ctx-live')).toBe(false);
+    sender.mainFrame.isDestroyed.mockReturnValue(false);
+    sender.mainFrame.detached = true;
+    expect(api.isHistorySenderActive('ctx-live')).toBe(false);
+  });
+
+  it.each(['render-process-gone', 'did-navigate'])(
+    'releases a pending quit on %s and tracks a recovered renderer again',
+    async (eventName) => {
+      const session = new ProjectSession();
+      session.replace(new BlueData(), null);
+      const prepared = vi.fn();
+      const history = new ProjectHistory({
+        session,
+        barrierTimeoutMs: 100,
+        broadcastPrepareBoundary: prepared,
+      });
+      const documentId = session.read().documentId!;
+      history.registerParticipant({ contextId: 'ctx-live', documentId, acceptedRevision: 0 });
+      history.registerParticipant({ contextId: 'ctx-other', documentId, acceptedRevision: 0 });
+      const { api, environment, sender } = setup(history);
+      environment.historyParticipantSenders.set('ctx-other', { id: 2 });
+      environment.runTerminalProjectTransition.mockImplementation((action) =>
+        history.runSettlementBarrier('replacement', action),
+      );
+      api.trackHistorySender(sender);
+      const pending = api.requestQuit();
+      await vi.waitFor(() => expect(prepared).toHaveBeenCalled());
+      expect(environment.doQuit).not.toHaveBeenCalled();
+      const loseRenderer = sender.on.mock.calls.find(([event]) => event === eventName)?.[1];
+      expect(loseRenderer).toBeDefined();
+      loseRenderer!({}, { reason: 'crashed', exitCode: 1 });
+      expect(environment.doQuit).not.toHaveBeenCalled();
+      expect(history.getParticipants().map(({ contextId }) => contextId)).toEqual(['ctx-other']);
+      history.acknowledgeBoundary({
+        contextId: 'ctx-other',
+        barrierId: history.getActiveBarrier()!.barrierId,
+        lastAcknowledgedRevision: 0,
+        lastAcknowledgedSequence: 0,
+        outstandingPrefixCount: 0,
+      });
+      await pending;
+      expect(environment.doQuit).toHaveBeenCalledTimes(1);
+      expect(environment.confirmSaveBeforeReplaceInsideBoundary).toHaveBeenCalledTimes(1);
+      expect(environment.historyParticipantSenders.has('ctx-live')).toBe(false);
+      expect(
+        api.validateHistoryRequestSender({ sender }, { contextId: 'ctx-live' }),
+      ).not.toBeNull();
+
+      // Reload creates a new context on the same WebContents; cleanup must
+      // remain subscribed after the first renderer loss.
+      history.registerParticipant({ contextId: 'ctx-reloaded', documentId, acceptedRevision: 0 });
+      environment.historyParticipantSenders.set('ctx-reloaded', sender);
+      api.trackHistorySender(sender);
+      loseRenderer!({}, { reason: 'killed', exitCode: 15 });
+      expect(history.getParticipants().map(({ contextId }) => contextId)).toEqual(['ctx-other']);
+      expect([...environment.historyParticipantSenders.keys()]).toEqual(['ctx-other']);
+      expect(sender.on.mock.calls.filter(([event]) => event === eventName)).toHaveLength(1);
+    },
+  );
+
+  it('skips dead frames when broadcasting boundaries and still reaches live windows', () => {
+    const { api, environment, sender } = setup();
+    const liveSender = { ...sender, send: vi.fn(), isCrashed: vi.fn().mockReturnValue(false) };
+    environment.BrowserWindow.getAllWindows = () => [
+      environment.mainWindow,
+      { ...environment.mainWindow, webContents: liveSender },
+    ];
+    sender.isCrashed.mockReturnValue(true);
+    api.broadcastHistoryBoundary('prepare', { barrierId: 'b' });
+    expect(sender.send).not.toHaveBeenCalled();
+    expect(liveSender.send).toHaveBeenCalledWith('prepare', { barrierId: 'b' });
+  });
+
   it('distinguishes live participants from destroyed contents and windows', () => {
     const { api, environment, sender } = setup();
     expect(api.isHistorySenderActive('ctx-live')).toBe(true);

@@ -446,6 +446,8 @@ import {
   type ProjectDocumentUpdatedEvent as ProjectHistoryDocumentUpdatedEvent,
   type ProjectHistoryControlResponse,
   type FocusedHistoryAvailability,
+  type PrepareHistoryBoundaryEvent,
+  type ReleaseHistoryBoundaryEvent,
   isFocusedHistoryAvailability,
   validateProjectHistoryCommitRequest,
   validateProjectHistoryUndoRequest,
@@ -534,18 +536,33 @@ const historyParticipantSenders = new Map<string, unknown>();
 const historyAvailabilityBySender = new Map<number, FocusedHistoryAvailability>();
 const trackedHistorySenders = new WeakSet<Electron.WebContents>();
 
+function isHistoryWebContentsLive(contents: Electron.WebContents): boolean {
+  if (contents.isDestroyed() || contents.isCrashed()) return false;
+  const frame = contents.mainFrame;
+  return !frame.isDestroyed() && !frame.detached;
+}
+
 function isHistorySenderActive(contextId: string): boolean {
   const sender = historyParticipantSenders.get(contextId);
   if (!sender || typeof sender !== 'object') return false;
   const webContents = sender as Electron.WebContents;
-  if (typeof webContents.isDestroyed === 'function' && webContents.isDestroyed()) {
-    return false;
-  }
+  if (!isHistoryWebContentsLive(webContents)) return false;
   const win = BrowserWindow.fromWebContents(webContents);
   if (win && win.isDestroyed()) {
     return false;
   }
   return true;
+}
+
+function broadcastHistoryBoundary(
+  channel: string,
+  event: PrepareHistoryBoundaryEvent | ReleaseHistoryBoundaryEvent,
+): void {
+  for (const win of BrowserWindow.getAllWindows()) {
+    if (!win.isDestroyed() && isHistoryWebContentsLive(win.webContents)) {
+      win.webContents.send(channel, event);
+    }
+  }
 }
 
 const projectHistory = createProjectHistory({
@@ -566,18 +583,10 @@ const projectHistory = createProjectHistory({
     updateWindowTitle();
   },
   broadcastPrepareBoundary: async (event) => {
-    for (const win of BrowserWindow.getAllWindows()) {
-      if (!win.isDestroyed()) {
-        win.webContents.send(PROJECT_HISTORY_BOUNDARY_PREPARE_CHANNEL, event);
-      }
-    }
+    broadcastHistoryBoundary(PROJECT_HISTORY_BOUNDARY_PREPARE_CHANNEL, event);
   },
   broadcastReleaseBoundary: async (event) => {
-    for (const win of BrowserWindow.getAllWindows()) {
-      if (!win.isDestroyed()) {
-        win.webContents.send(PROJECT_HISTORY_BOUNDARY_RELEASE_CHANNEL, event);
-      }
-    }
+    broadcastHistoryBoundary(PROJECT_HISTORY_BOUNDARY_RELEASE_CHANNEL, event);
   },
 });
 
@@ -617,7 +626,7 @@ function trackHistorySender(sender: Electron.WebContents): void {
   if (trackedHistorySenders.has(sender)) return;
   trackedHistorySenders.add(sender);
   const senderId = sender.id;
-  sender.once('destroyed', () => {
+  const clearParticipants = () => {
     historyAvailabilityBySender.delete(senderId);
     for (const [contextId, owner] of historyParticipantSenders) {
       const ownerId = (owner as { id?: number })?.id;
@@ -625,7 +634,17 @@ function trackHistorySender(sender: Electron.WebContents): void {
       historyParticipantSenders.delete(contextId);
       projectHistory.unregisterParticipant({ contextId });
     }
+  };
+  sender.once('destroyed', clearParticipants);
+  // A renderer can disappear while its window/WebContents survive. Remove
+  // its contexts immediately, including from an in-flight settlement barrier.
+  sender.on('render-process-gone', (_event, details) => {
+    console.error('[project-history] Renderer process gone:', senderId, details);
+    clearParticipants();
   });
+  // A committed full-page navigation replaces the JS context. In-page and
+  // cancelled navigations leave it alive and must retain edit protection.
+  sender.on('did-navigate', clearParticipants);
 }
 
 /**
