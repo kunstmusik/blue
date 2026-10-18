@@ -9,6 +9,7 @@ import {
   dialog,
   Menu,
   nativeImage,
+  safeStorage,
   shell,
 } from 'electron';
 import * as path from 'path';
@@ -413,6 +414,10 @@ import { registerUnifiedLibraryIpc } from './unified-library/ipc';
 import { UnifiedLibraryProjectAdapter } from './unified-library/project-adapter';
 import { CodeRepositoryService } from './code-repository/service';
 import { registerCodeRepositoryIpc } from './code-repository/ipc';
+import { BlueShareService } from './blueshare/service';
+import { RememberedSessionStore } from './blueshare/remembered-session';
+import { DEFAULT_BLUESHARE_ORIGIN } from './blueshare/transport';
+import { registerBlueShareIpc } from './blueshare/ipc';
 import { registerMainProcessDomainIpc } from './ipc/main-process-domain-ipc';
 import type {
   IpcMainEventListener,
@@ -700,6 +705,8 @@ let unifiedLibraryService: UnifiedLibraryService | null = null;
 let unregisterUnifiedLibraryIpc: (() => void) | null = null;
 let codeRepositoryService: CodeRepositoryService | null = null;
 let unregisterCodeRepositoryIpc: (() => void) | null = null;
+let blueShareService: BlueShareService | null = null;
+let unregisterBlueShareIpc: (() => void) | null = null;
 let unregisterDomainIpc: (() => void) | null = null;
 
 // ─── Render/Freeze operation lifecycle ───
@@ -2100,6 +2107,11 @@ function rebuildApplicationMenu(): void {
       onOpenCodeRepositoryEditor: () => {
         mainWindow?.webContents.send('native-menu-command', {
           type: 'open-code-repository-editor',
+        });
+      },
+      onOpenBlueShare: () => {
+        mainWindow?.webContents.send('native-menu-command', {
+          type: 'open-blue-share',
         });
       },
       onReinitializeJavaScriptRuntime: () => {
@@ -7272,6 +7284,39 @@ async function startUnifiedLibraryStage(): Promise<void> {
   }
 }
 
+async function rollbackBlueShareStage(): Promise<void> {
+  unregisterBlueShareIpc?.();
+  unregisterBlueShareIpc = null;
+  const service = blueShareService;
+  blueShareService = null;
+  service?.destroy();
+}
+
+async function startBlueShareStage(): Promise<void> {
+  try {
+    blueShareService = new BlueShareService({
+      rememberedSession: new RememberedSessionStore({
+        filePath: path.join(app.getPath('userData'), 'blueshare-session.enc'),
+        origin: DEFAULT_BLUESHARE_ORIGIN,
+        encryption: safeStorage,
+      }),
+      libraryService: unifiedLibraryService ?? undefined,
+    });
+    unregisterBlueShareIpc = registerBlueShareIpc({
+      ipcMain: electronIpcMain,
+      service: blueShareService,
+      getWindows: () => BrowserWindow.getAllWindows(),
+    });
+  } catch (error) {
+    try {
+      await rollbackBlueShareStage();
+    } catch (cleanupError) {
+      console.error('[startup] Failed to clean up BlueShare stage:', cleanupError);
+    }
+    throw error;
+  }
+}
+
 async function rollbackCodeRepositoryStage(): Promise<void> {
   unregisterCodeRepositoryIpc?.();
   unregisterCodeRepositoryIpc = null;
@@ -7415,6 +7460,11 @@ applicationReadyPromise.then(async () => {
       rollback: rollbackUnifiedLibraryStage,
     },
     {
+      name: 'blue share',
+      start: startBlueShareStage,
+      rollback: rollbackBlueShareStage,
+    },
+    {
       name: 'application shell',
       start: startApplicationShellStage,
       rollback: rollbackApplicationShellStage,
@@ -7443,6 +7493,8 @@ applicationReadyPromise.then(async () => {
 app.on('will-quit', () => {
   unregisterUnifiedLibraryIpc?.();
   unregisterUnifiedLibraryIpc = null;
+  unregisterBlueShareIpc?.();
+  unregisterBlueShareIpc = null;
 });
 
 app.on('before-quit', (event: Electron.Event) => {

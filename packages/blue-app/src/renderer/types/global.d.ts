@@ -655,6 +655,148 @@ declare global {
       selectBlueX7SysexFile: () => Promise<
         import('../../shared/blue-x7-sysex').BlueX7SysexReadResult
       >;
+
+      // BlueShare (SPEC 117)
+      openBlueShare: () => Promise<
+        import('../../shared/blueshare').BlueShareResult<{
+          contextId: string;
+          serviceScope: string;
+          account: import('../../shared/blueshare').AccountSessionSnapshot;
+        }>
+      >;
+      getBlueShareAccount: (
+        contextId: string,
+      ) => Promise<
+        import('../../shared/blueshare').BlueShareResult<
+          import('../../shared/blueshare').AccountSessionSnapshot
+        >
+      >;
+      signInBlueShare: (
+        contextId: string,
+        requestId: string,
+        email: string,
+        password: string,
+        rememberMe?: boolean,
+      ) => Promise<
+        import('../../shared/blueshare').BlueShareResult<
+          import('../../shared/blueshare').AccountSessionSnapshot
+        >
+      >;
+      signOutBlueShare: (
+        contextId: string,
+        requestId: string,
+      ) => Promise<
+        import('../../shared/blueshare').BlueShareResult<{
+          signedOut: boolean;
+          remoteRevocationConfirmed: boolean;
+        }>
+      >;
+      getBlueShareCategories: (
+        contextId: string,
+        requestId: string,
+        kind: import('../../shared/blueshare').ResourceKind,
+      ) => Promise<
+        import('../../shared/blueshare').BlueShareResult<
+          readonly import('../../shared/blueshare').Category[]
+        >
+      >;
+      listBlueShareResources: (
+        contextId: string,
+        requestId: string,
+        kind: import('../../shared/blueshare').ResourceKind,
+        categoryId?: number | null,
+        beforeId?: number | null,
+      ) => Promise<
+        import('../../shared/blueshare').BlueShareResult<
+          import('../../shared/blueshare').ResourcePage
+        >
+      >;
+      getBlueShareLatest: (
+        contextId: string,
+        requestId: string,
+        kind: import('../../shared/blueshare').ResourceKind,
+      ) => Promise<
+        import('../../shared/blueshare').BlueShareResult<
+          import('../../shared/blueshare').LatestResult
+        >
+      >;
+      getBlueShareResource: (
+        contextId: string,
+        requestId: string,
+        key: import('../../shared/blueshare').ResourceKey,
+      ) => Promise<
+        import('../../shared/blueshare').BlueShareResult<
+          import('../../shared/blueshare').ResourceSummary
+        >
+      >;
+      importBlueShareResource: (
+        contextId: string,
+        requestId: string,
+        key: import('../../shared/blueshare').ResourceKey,
+      ) => Promise<
+        import('../../shared/blueshare').BlueShareResult<
+          import('../../shared/unified-library').LibraryMutationReceipt
+        >
+      >;
+      prepareBlueSharePublish: (
+        contextId: string,
+        requestId: string,
+        itemKey: {
+          scope: 'user';
+          libraryType: import('../../shared/blueshare').ResourceKind;
+          nodeId: string;
+        },
+        expectedRevision: number,
+      ) => Promise<
+        import('../../shared/blueshare').BlueShareResult<
+          import('../../shared/blueshare').PublishSourceSeed
+        >
+      >;
+      resetBlueSharePublish: (
+        contextId: string,
+        requestId: string,
+      ) => Promise<import('../../shared/blueshare').BlueShareResult<{ readonly cleared: true }>>;
+      publishBlueShareResource: (
+        contextId: string,
+        requestId: string,
+        sourceToken: string,
+        categoryId: number,
+        description: string | null,
+      ) => Promise<
+        import('../../shared/blueshare').BlueShareResult<
+          import('../../shared/blueshare').ResourceSummary
+        >
+      >;
+      listBlueShareMine: (
+        contextId: string,
+        requestId: string,
+        kind: import('../../shared/blueshare').ResourceKind,
+        beforeId?: number | null,
+      ) => Promise<
+        import('../../shared/blueshare').BlueShareResult<
+          import('../../shared/blueshare').ResourcePage
+        >
+      >;
+      removeBlueShareResource: (
+        contextId: string,
+        requestId: string,
+        key: import('../../shared/blueshare').ResourceKey,
+      ) => Promise<
+        import('../../shared/blueshare').BlueShareResult<{
+          kind: import('../../shared/blueshare').ResourceKind;
+          id: number;
+          removed: boolean;
+          alreadyRemoved: boolean;
+        }>
+      >;
+      openBlueShareWebsite: (
+        contextId: string,
+        purpose: 'register' | 'recover',
+      ) => Promise<import('../../shared/blueshare').BlueShareResult<{ opened: boolean }>>;
+      closeBlueShare: (contextId: string) => Promise<void>;
+      onBlueShareAccountChanged: (
+        callback: (snapshot: import('../../shared/blueshare').AccountSessionSnapshot) => void,
+      ) => () => void;
     };
   }
 }

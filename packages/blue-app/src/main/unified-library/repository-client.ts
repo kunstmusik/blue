@@ -12,6 +12,9 @@ import {
   RepositorySearchPage,
   RepositorySnapshot,
   UnifiedLibraryRepository,
+  type RepositoryPublishSource,
+  type RepositoryImportResourceInput,
+  type RepositoryImportResourceResult,
 } from './repository';
 import type { RepositoryWorkerRequest, RepositoryWorkerResponse } from './repository-worker';
 
@@ -105,6 +108,10 @@ export class UnifiedLibraryRepositoryClient {
 
   getItemSummary(nodeId: string): Promise<RepositoryItemSummary> {
     return this.request<RepositoryItemSummary>('getItemSummary', nodeId);
+  }
+
+  capturePublishSource(nodeId: string, expectedRevision: number): Promise<RepositoryPublishSource> {
+    return this.request<RepositoryPublishSource>('capturePublishSource', nodeId, expectedRevision);
   }
 
   getClipboardSubtree(nodeId: string): Promise<RepositoryClipboardNode> {
@@ -216,6 +223,10 @@ export class UnifiedLibraryRepositoryClient {
     return this.request<RepositoryNode>('createItem', input);
   }
 
+  importResource(input: RepositoryImportResourceInput): Promise<RepositoryImportResourceResult> {
+    return this.request<RepositoryImportResourceResult>('importResource', input);
+  }
+
   renameNode(
     nodeId: string,
     expectedRevision: number,
@@ -318,6 +329,8 @@ export class UnifiedLibraryRepositoryClient {
             return this.repository.getItemPayload(String(args[0])) as T;
           case 'getItemSummary':
             return this.repository.getItemSummary(String(args[0])) as T;
+          case 'capturePublishSource':
+            return this.repository.capturePublishSource(String(args[0]), Number(args[1])) as T;
           case 'getClipboardSubtree':
             return this.repository.getClipboardSubtree(String(args[0])) as T;
           case 'createClipboardSubtree':
@@ -377,6 +390,10 @@ export class UnifiedLibraryRepositoryClient {
           case 'createItem':
             return this.repository.createItem(
               args[0] as Parameters<UnifiedLibraryRepository['createItem']>[0],
+            ) as T;
+          case 'importResource':
+            return this.repository.importResource(
+              args[0] as Parameters<UnifiedLibraryRepository['importResource']>[0],
             ) as T;
           case 'renameNode':
             return this.repository.renameNode(

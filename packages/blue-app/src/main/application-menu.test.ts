@@ -25,6 +25,7 @@ function createHandlers() {
     onOpenFTableConverter: vi.fn(),
     onOpenCsoundRCEditor: vi.fn(),
     onOpenCodeRepositoryEditor: vi.fn(),
+    onOpenBlueShare: vi.fn(),
     onReinitializeJavaScriptRuntime: vi.fn(),
     onReinitializeJythonRuntime: vi.fn(),
     onFocusPanel: vi.fn(),
@@ -452,7 +453,8 @@ describe('application menu template', () => {
     expect(handlers.onFocusPanel).toHaveBeenCalledWith('UndoHistoryTopComponent');
   });
 
-  it('keeps Blue Share visible but disabled without a placeholder handler', () => {
+  it('enables Blue Share and dispatches onOpenBlueShare on click', () => {
+    const handlers = createHandlers();
     const template = buildApplicationMenuTemplate({
       hasLoadedProject: true,
       isDarwin: false,
@@ -460,13 +462,17 @@ describe('application menu template', () => {
       canRevertProject: false,
       followPlaybackEnabled: true,
       followPlaybackOnStartEnabled: true,
-      ...createHandlers(),
+      ...handlers,
     });
     const toolsMenu = getSubmenu(template.find((item) => item.label === 'Tools'));
     const blueShare = toolsMenu.find((item) => item.label === 'Blue Share');
 
-    expect(blueShare).toMatchObject({ label: 'Blue Share', enabled: false });
-    expect(blueShare?.click).toBeUndefined();
+    expect(blueShare).toBeDefined();
+    expect(blueShare?.enabled).not.toBe(false);
+    expect(blueShare?.click).toBeDefined();
+
+    blueShare?.click?.(undefined as any, undefined as any, undefined as any);
+    expect(handlers.onOpenBlueShare).toHaveBeenCalledTimes(1);
   });
 
   it('builds the non-Darwin File menu with Settings and Quit entries', () => {

@@ -3,6 +3,8 @@ import { randomUUID } from 'node:crypto';
 import type {
   BrowseLibraryRequest,
   BrowseLibraryResult,
+  CapturePublishSourceRequest,
+  LibraryPublishSourceSnapshot,
   LibraryChangedEvent,
   LibraryBrowseNode,
   LibraryItemKey,
@@ -54,8 +56,18 @@ import {
 } from '../../shared/unified-library';
 import { UnifiedLibraryRepositoryClient } from './repository-client';
 import { UnifiedLibraryProjectAdapter } from './project-adapter';
-import type { RepositoryClipboardNode, RepositoryNode } from './repository';
-import { parseLegacyLibraryDocument, readResourceXml, XmlLoadError } from '@blue/data';
+import type {
+  RepositoryClipboardNode,
+  RepositoryNode,
+  RepositoryPublishSource,
+} from './repository';
+import {
+  classifyLibraryPayload,
+  parseLegacyLibraryDocument,
+  parseRawXmlDocument,
+  readResourceXml,
+  XmlLoadError,
+} from '@blue/data';
 import { UnifiedLibraryEditorSessionService } from './editor-session-service';
 import { UnifiedLibraryImportExportService } from './import-export-service';
 import { LibraryMigrationStateStore } from './migration-state-store';
@@ -1340,6 +1352,299 @@ export class UnifiedLibraryService {
     }
   }
 
+  async importStandaloneResource(
+    kind: LibraryType,
+    xml: string,
+    remoteId: number,
+    remoteName: string,
+  ): Promise<LibraryResult<LibraryMutationReceipt>> {
+    const client = this.getReadyClient();
+    if (!client || !this.snapshot.writable) return this.notReady();
+
+    try {
+      if (kind !== 'instrument' && kind !== 'effect' && kind !== 'soundObject') {
+        return {
+          ok: false,
+          error: createLibraryServiceError(
+            'validation-failed',
+            `Unsupported library resource kind: ${kind}`,
+            false,
+          ),
+        };
+      }
+
+      const source = {
+        kind,
+        label: `${kind}/${remoteId}/${remoteName}`,
+      };
+
+      const report = readResourceXml(kind, xml, source);
+      if (!report.ok) {
+        return {
+          ok: false,
+          error: createLibraryServiceError(
+            'validation-failed',
+            report.diagnostics
+              .map((d) => `${d.source.label}: ${d.path}: ${d.message} ${d.recovery}`)
+              .join('\n'),
+            false,
+            { diagnostics: report.diagnostics },
+          ),
+        };
+      }
+
+      const parsed = parseRawXmlDocument(xml);
+      const classified = classifyLibraryPayload(kind, parsed.root, source);
+
+      if (classified.supportStatus !== 'supported') {
+        return {
+          ok: false,
+          error: createLibraryServiceError(
+            'validation-failed',
+            classified.supportMessage ?? `Unsupported ${kind} payload.`,
+            false,
+            { diagnostics: classified.diagnostics },
+          ),
+        };
+      }
+
+      const displayName =
+        classified.embeddedName && classified.embeddedName.trim().length > 0
+          ? classified.embeddedName.trim()
+          : remoteName.trim();
+
+      const payload = {
+        embeddedName: classified.embeddedName,
+        objectType: classified.objectType,
+        supportStatus: classified.supportStatus,
+        supportReasonCode: classified.supportReasonCode,
+        supportMessage: classified.supportMessage,
+        payloadXml: xml,
+        rawHash: classified.rawHash,
+        canonicalContentHash: classified.canonicalContentHash,
+        serializerRevision: '1',
+        preview: classified.preview,
+        dependencies: classified.dependencies,
+        metadataRevision: 1,
+      };
+
+      const importResult = await client.importResource({
+        libraryType: kind,
+        displayName,
+        payload,
+      });
+
+      let contentRevision: number;
+      let browseNode: LibraryBrowseNode;
+
+      try {
+        const repoSnapshot = await this.refreshRepositorySnapshot(client);
+        contentRevision = repoSnapshot.contentRevision;
+        browseNode = await this.userNodeToBrowseNode(client, importResult.item);
+      } catch {
+        contentRevision = this.snapshot.contentRevision + 1;
+        browseNode = {
+          key: { scope: 'user', libraryType: kind, nodeId: importResult.item.id },
+          nodeId: importResult.item.id,
+          parentId: importResult.folder.id,
+          libraryType: kind,
+          scope: 'user',
+          nodeKind: 'item',
+          displayName: importResult.item.displayName,
+          breadcrumb: [
+            'User Library',
+            importResult.folder.displayName,
+            importResult.item.displayName,
+          ],
+          hasChildren: false,
+          revision: importResult.item.revision,
+          supportStatus: classified.supportStatus,
+          objectType: classified.objectType,
+        };
+      }
+
+      this.publishChanged({
+        contentRevision,
+        cause: 'import',
+        requiresFullRefresh: true,
+      });
+
+      return {
+        ok: true,
+        value: {
+          contentRevision,
+          affectedNodes: [browseNode],
+        },
+      };
+    } catch (error) {
+      return this.failureResult(error);
+    }
+  }
+
+  async capturePublishSource(
+    request: CapturePublishSourceRequest,
+  ): Promise<LibraryResult<LibraryPublishSourceSnapshot>> {
+    const client = this.client;
+    if (!client || this.snapshot.phase !== 'ready') return this.notReady();
+
+    if (request.key.scope !== 'user') {
+      return {
+        ok: false,
+        error: createLibraryServiceError(
+          'invalid-request',
+          'Only user library items can be published to BlueShare',
+          false,
+        ),
+      };
+    }
+
+    const { libraryType, nodeId } = request.key;
+    if (libraryType !== 'instrument' && libraryType !== 'soundObject' && libraryType !== 'effect') {
+      return {
+        ok: false,
+        error: createLibraryServiceError(
+          'invalid-request',
+          `Library type ${libraryType} cannot be published to BlueShare`,
+          false,
+        ),
+      };
+    }
+
+    if (!Number.isInteger(request.expectedRevision) || request.expectedRevision < 1) {
+      return {
+        ok: false,
+        error: createLibraryServiceError('invalid-request', 'Invalid expected revision', false),
+      };
+    }
+
+    let source: RepositoryPublishSource;
+    try {
+      source = await client.capturePublishSource(nodeId, request.expectedRevision);
+    } catch (error) {
+      return this.failureResult(error);
+    }
+
+    if (source.node.libraryType !== libraryType) {
+      return {
+        ok: false,
+        error: createLibraryServiceError(
+          'invalid-request',
+          `Library item kind mismatch: expected ${libraryType}, got ${source.node.libraryType}`,
+          false,
+        ),
+      };
+    }
+
+    if (source.payload.supportStatus !== 'supported') {
+      return {
+        ok: false,
+        error: createLibraryServiceError(
+          'invalid-request',
+          `Cannot publish unsupported library item: ${source.payload.supportMessage ?? 'unsupported'}`,
+          false,
+        ),
+      };
+    }
+
+    const xml = source.payload.payloadXml;
+    const xmlByteLength = new TextEncoder().encode(xml).length;
+    if (xmlByteLength > 2 * 1024 * 1024) {
+      return {
+        ok: false,
+        error: createLibraryServiceError(
+          'invalid-request',
+          'Resource XML exceeds maximum size of 2 MiB',
+          false,
+        ),
+      };
+    }
+
+    // Validate using shared semantic loader
+    let loadedResult;
+    try {
+      loadedResult = readResourceXml(libraryType, xml, {
+        kind: libraryType,
+        label: source.node.displayName,
+      });
+    } catch (err) {
+      return {
+        ok: false,
+        error: createLibraryServiceError(
+          'invalid-request',
+          err instanceof Error ? err.message : 'Invalid resource XML',
+          false,
+        ),
+      };
+    }
+
+    if (!loadedResult.ok) {
+      const firstErr = loadedResult.diagnostics.find((d) => d.severity === 'error');
+      return {
+        ok: false,
+        error: createLibraryServiceError(
+          'invalid-request',
+          firstErr?.message ?? 'Invalid resource XML',
+          false,
+          { diagnostics: loadedResult.diagnostics },
+        ),
+      };
+    }
+
+    const loadedResource = loadedResult.value;
+
+    let description = '';
+    if (
+      loadedResource &&
+      'getComment' in loadedResource &&
+      typeof (loadedResource as any).getComment === 'function'
+    ) {
+      description = (loadedResource as any).getComment() ?? '';
+    } else if (
+      loadedResource &&
+      'getComments' in loadedResource &&
+      typeof (loadedResource as any).getComments === 'function'
+    ) {
+      description = (loadedResource as any).getComments() ?? '';
+    } else if (
+      loadedResource &&
+      'getCommentText' in loadedResource &&
+      typeof (loadedResource as any).getCommentText === 'function'
+    ) {
+      description = (loadedResource as any).getCommentText() ?? '';
+    }
+
+    let blueType: string | null = null;
+    if (libraryType === 'effect') {
+      blueType = null;
+    } else {
+      const parsed = parseRawXmlDocument(xml);
+      const rootType = parsed.root.attributes['type'] ?? source.payload.objectType;
+      if (!rootType || rootType.trim().length === 0) {
+        return {
+          ok: false,
+          error: createLibraryServiceError(
+            'invalid-request',
+            `Missing required type attribute for ${libraryType}`,
+            false,
+          ),
+        };
+      }
+      blueType = rootType.trim();
+    }
+
+    return {
+      ok: true,
+      value: {
+        key: request.key,
+        revision: source.node.revision,
+        displayName: source.node.displayName,
+        blueType,
+        description,
+        xml,
+      },
+    };
+  }
+
   async exportInstrumentFile(
     key: LibraryItemKey,
     targetPath: string,
@@ -2054,13 +2359,18 @@ export class UnifiedLibraryService {
   }
 
   private failureResult<T>(error: unknown): LibraryResult<T> {
-    if (error instanceof XmlLoadError)
+    if (
+      error instanceof XmlLoadError ||
+      (error instanceof Error && (error.name === 'XmlLoadError' || 'diagnostics' in error))
+    ) {
+      const diagnostics = (error as unknown as { diagnostics?: unknown }).diagnostics;
       return {
         ok: false,
         error: createLibraryServiceError('validation-failed', error.message, false, {
-          diagnostics: error.diagnostics,
+          diagnostics: Array.isArray(diagnostics) ? diagnostics : undefined,
         }),
       };
+    }
     const message = error instanceof Error ? error.message : 'Library storage failed.';
     const notFound = /not found/i.test(message);
     return {

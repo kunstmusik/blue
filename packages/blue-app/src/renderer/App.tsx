@@ -13,6 +13,7 @@ import MissingAudioAssetsModal from './components/workbench/panels/MissingAudioA
 import FTableConverterModal from './components/workbench/panels/tools/FTableConverterModal';
 import CsoundRCEditorModal from './components/workbench/panels/tools/CsoundRCEditorModal';
 import CodeRepositoryEditorModal from './components/workbench/panels/code-repository/CodeRepositoryEditorModal';
+import BlueShareModal from './components/blueshare/BlueShareModal';
 import MidiImportDialog from './components/workbench/panels/MidiImportDialog';
 import FreezeOperationDialog from './components/workbench/panels/FreezeOperationDialog';
 import RenderToDiskDialog from './components/workbench/panels/RenderToDiskDialog';
@@ -70,6 +71,7 @@ export default function App(): React.ReactElement {
         <FTableConverterModal />
         <CsoundRCEditorModal />
         <CodeRepositoryEditorModal />
+        <BlueShareModal />
         <MidiImportDialog />
         <FreezeOperationDialog />
         <RenderToDiskDialog />

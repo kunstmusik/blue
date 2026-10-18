@@ -9,6 +9,7 @@ import { cn } from '../../lib/cn';
 
 interface LibraryContextMenuProps {
   node: LibraryBrowseNode;
+  disabled?: boolean;
   clipboard: LibraryInteractionClipboard | null;
   children: React.ReactNode;
   onCreateFolder?: (node: LibraryBrowseNode) => void;
@@ -27,6 +28,7 @@ const ITEM_CLASS = 'editor-context-menu__item';
 
 export function LibraryContextMenu({
   node,
+  disabled = false,
   clipboard,
   children,
   onCreateFolder,
@@ -40,6 +42,7 @@ export function LibraryContextMenu({
   onMoveUp,
   onMoveDown,
 }: LibraryContextMenuProps): React.ReactElement {
+  if (disabled) return <>{children}</>;
   const userOwned = node.scope === 'user';
   const canContainChildren = node.nodeKind === 'folder' || node.nodeKind === 'root';
   const hasPasteDestination =

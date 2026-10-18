@@ -62,10 +62,96 @@ Console** and **Clojure REPL** are separate panels in the same submenu. A
 Python or JavaScript console is useful for diagnosis, but the project code
 still belongs in the relevant instrument, SoundObject, or processor editor.
 
+## Blue Share
+
+**Tools → Blue Share** opens the community sharing dialog with three resource
+groups: **Instruments**, **Effects**, and **SoundObjects**. Each group provides
+three workflows via dedicated tabs: **Import**, **Export**, and **Manage**.
+
+### Browsing and Importing
+
+Public browsing and importing work anonymously without signing in:
+
+- **Categories and Latest**: Browse remote categories in the left panel or click
+  **Latest Submissions** to view the ten most recent additions of that kind.
+- **Details**: Selecting an item displays its title, author, publication date,
+  category, type, and author's description.
+- **Importing**: Clicking **Import to Library** downloads and validates the complete
+  standalone XML, saving an independent copy into your User Library under
+  `Imported Instruments`, `Imported Effects`, or `Imported SoundObjects`.
+  Imported resources survive restart and do not alter the open project or its
+  history. You can later drag or insert them into your project arrangement,
+  mixer, or score as normal.
+- **Content Limits**: Unsupported or invalid serialized content is rejected
+  atomically with explanatory diagnostics. Missing opcodes or external plugins
+  do not block library storage, but runtime dependencies must be satisfied when
+  rendering in Csound.
+
+### Exporting and Publishing
+
+Sharing your own resources requires signing in with your Blue Share account:
+
+- **Source Selection**: Choose any supported item from your local User Library.
+  The resource name, type, and embedded comments are read from your local library.
+- **Destination and Description**: Select a valid destination category and enter
+  an optional public description (up to 64 KiB). Editing the public description
+  does not mutate your local library item. Your reviewed source, category, and exact
+  description remain available after sign-out or session expiry; select the source
+  again to review it for the new session. **Reset export** clears the draft.
+- **Publishing**: Click **Publish to Blue Share** to submit. The source XML (up to
+  2 MiB) is validated before upload. Confirmed submissions appear immediately in
+  public listings and in your Manage tab.
+- **Uncertain Outcomes**: If a network timeout occurs while publishing, Blue
+  Share retains your draft and flags the outcome as uncertain. Check your
+  submissions in the Manage tab before retrying to prevent duplicate publications.
+  The recovery stays with its original resource group when you navigate elsewhere.
+  After refreshing all submissions, **Restore submitted draft for review** brings
+  back the exact submitted fields without publishing again; select the source again
+  before deciding whether to retry.
+
+### Managing Submissions
+
+The **Manage** tab lets signed-in users review and remove their submissions:
+
+- **Fetch Submissions**: Clicking **Fetch submissions** lists all resources of the active kind published by
+  your account. Use **Load more** to page through older submissions.
+- **Removal**: Selecting an owned item enables the **Remove Submission** button.
+  A confirmation dialog names the selected item and defaults focus to **Cancel**.
+  Confirming removal deletes the item from public availability on the server.
+- **Local Copy Safety**: Remote removal never deletes or modifies local copies
+  already imported into your User Library or referenced in your projects.
+- **Uncertain Removal**: If deletion confirmation times out, refresh your
+  submissions before attempting to remove again.
+
+### Accounts and Recovery
+
+- **Opening and Timeouts**: The dialog shows progress while opening and offers
+  **Retry opening** if initialization fails. Local library requests time out after
+  30 seconds. A timed-out import may still finish; check the User Library before
+  trying another import of the same resource.
+- **Session Security**: Sign-in requires your email address and password. Account
+  sessions normally last only for the running application process. Check **Stay
+  signed in on this computer** when signing in to keep the session for up to seven
+  days, including after restarting Blue. The checkbox is off by default; using Blue
+  does not extend the seven days. Blue saves only OS-protected session proof, never
+  your password, and verifies it with the server when Blue Share next opens.
+  Signing out clears saved sign-in even when offline; Blue reports if local cleanup
+  or remote revocation could not be confirmed. If protected storage is unavailable,
+  sign-in still works for the current process and Blue explains that it cannot
+  remember the session. Project files, libraries and logs never contain credentials.
+  Public browsing and importing remain available while saved sign-in is checked.
+  If a saved session cannot be verified temporarily, use **Retry verification**,
+  **Forget saved sign-in** (also available offline), or sign in again. Account
+  operations recover within 30 seconds; a timeout does not confirm that saved
+  proof was deleted or the remote session revoked. Blue shows any unconfirmed
+  cleanup so you can try again. Expired or revoked sessions require a new sign-in.
+- **Account Management**: Use the dialog's **Create an account** and **Forgot
+  password?** links to open the registration and password reset pages in your
+  external web browser.
+
 ## Historical tools
 
-**Blue Share** appears disabled in the Blue 3 Tools menu. The Blue 2
-manual's account and upload steps cannot be used here. The old **Scanned
-Synthesis Matrix Editor** and **Manage Tools** menu are also absent from
-the current Tools menu. Their original descriptions remain in the
-[Blue 2 source edition](https://github.com/kunstmusik/blue-manual/tree/7a92066a2aa8f0370026ba9527c158643c2935a1) for historical reference.
+The old **Scanned Synthesis Matrix Editor** and **Manage Tools** menu from
+Java Blue are absent from the current Tools menu. Their original descriptions
+remain in the [Blue 2 source edition](https://github.com/kunstmusik/blue-manual/tree/7a92066a2aa8f0370026ba9527c158643c2935a1)
+for historical reference.

@@ -17,6 +17,8 @@ import { MIDI_INPUT_IPC_CHANNELS, MidiInputCoordinator } from '../midi-input-coo
 import { createDefaultProgramSettings } from '../../shared/program-settings';
 import { UNIFIED_LIBRARY_IPC_CHANNELS, registerUnifiedLibraryIpc } from '../unified-library/ipc';
 import type { UnifiedLibraryService } from '../unified-library/service';
+import { BLUESHARE_IPC_CHANNELS, registerBlueShareIpc } from '../blueshare/ipc';
+import { BlueShareService } from '../blueshare/service';
 import {
   disposeWorkbenchWindowHost,
   initWorkbenchWindowHost,
@@ -132,6 +134,7 @@ function expectedProcessWideRegistrations(
       index === 1 || index === 2 ? `on:${channel}` : `handle:${channel}`,
     ),
     ...UNIFIED_LIBRARY_IPC_CHANNELS.map((channel) => `handle:${channel}`),
+    ...BLUESHARE_IPC_CHANNELS.map((channel) => `handle:${channel}`),
     ...CODE_REPOSITORY_IPC_CHANNELS.map((channel) => `handle:${channel}`),
   ];
 }
@@ -157,6 +160,13 @@ function registerProcessWideIpc(ipcMain: CapturingIpcMain): () => void {
       registerUnifiedLibraryIpc({
         ipcMain: ipcMain as unknown as IpcMain,
         service: createUnifiedLibraryService(),
+        getWindows: () => [],
+      }),
+    );
+    disposers.push(
+      registerBlueShareIpc({
+        ipcMain: ipcMain as unknown as IpcMain,
+        service: new BlueShareService(),
         getWindows: () => [],
       }),
     );
@@ -208,7 +218,7 @@ function collectedDomainHandlers(): {
 }
 
 describe('main-process IPC inventory oracle', () => {
-  it('executes the full 195-endpoint composition in startup order with exact teardown', async () => {
+  it('executes the full 211-endpoint composition in startup order with exact teardown', async () => {
     const ipcMain = new CapturingIpcMain();
     const collected = collectedDomainHandlers();
     const expected = expectedProcessWideRegistrations(collected);
@@ -216,9 +226,9 @@ describe('main-process IPC inventory oracle', () => {
 
     try {
       expect(ipcMain.registrations).toEqual(expected);
-      expect(ipcMain.registrations).toHaveLength(195);
-      expect(new Set(ipcMain.registrations).size).toBe(195);
-      expect(ipcMain.handlers.size).toBe(188);
+      expect(ipcMain.registrations).toHaveLength(211);
+      expect(new Set(ipcMain.registrations).size).toBe(211);
+      expect(ipcMain.handlers.size).toBe(204);
       expect(ipcMain.listeners.size).toBe(7);
 
       expect(ipcMain.handlers.get('open-file')?.({ sender: {} })).toEqual({
@@ -237,6 +247,7 @@ describe('main-process IPC inventory oracle', () => {
       await expect(ipcMain.handlers.get(CODE_REPOSITORY_IPC_CHANNELS[1])?.({})).resolves.toEqual({
         owner: 'code-repository',
       });
+      expect(ipcMain.handlers.get(BLUESHARE_IPC_CHANNELS[0])?.({ sender: {} })).toBeDefined();
     } finally {
       dispose();
     }
@@ -291,11 +302,12 @@ describe('main-process IPC inventory oracle', () => {
     expect(ipcMain.listeners.size).toBe(0);
   });
 
-  it('captures the current 193 inbound endpoint surface and registration modes', async () => {
+  it('captures the current 194 inbound endpoint surface and registration modes', async () => {
     const directMain = await registrations('main.ts', 'ipcMain');
     const collected = await registrations('main.ts', 'ipcRegistration');
     const unified = await registrations('unified-library/ipc.ts', 'scope');
     const code = await registrations('code-repository/ipc.ts', 'scope');
+    const blueshare = await registrations('blueshare/ipc.ts', 'scope');
     const workbench = await registrations('workbench-window-host.ts', 'scope');
     const midi = await registrations('midi-input-coordinator.ts', 'scope');
 
@@ -306,7 +318,7 @@ describe('main-process IPC inventory oracle', () => {
         (count, entry) => count + (entry.channelExpression === 'channel' ? 3 : 1),
         0,
       ) + collectedListeners.length;
-    const existing = [...unified, ...code, ...workbench, ...midi];
+    const existing = [...unified, ...code, ...blueshare, ...workbench, ...midi];
     const domainChannels = DOMAIN_CHANNELS;
 
     expect(directMain).toHaveLength(0);
@@ -318,10 +330,11 @@ describe('main-process IPC inventory oracle', () => {
     expect(new Set(domainChannels).size).toBe(130);
     expect(unified).toHaveLength(44);
     expect(code).toHaveLength(11);
+    expect(blueshare).toHaveLength(16);
     expect(workbench).toHaveLength(5);
     expect(midi).toHaveLength(5);
-    expect(existing).toHaveLength(65);
-    expect(domainChannels.length + existing.length).toBe(195);
+    expect(existing).toHaveLength(81);
+    expect(domainChannels.length + existing.length).toBe(211);
   });
 
   it('keeps registration expressions unique by mode', async () => {
@@ -329,6 +342,7 @@ describe('main-process IPC inventory oracle', () => {
       registrations('main.ts', 'ipcRegistration'),
       registrations('unified-library/ipc.ts', 'scope'),
       registrations('code-repository/ipc.ts', 'scope'),
+      registrations('blueshare/ipc.ts', 'scope'),
       registrations('workbench-window-host.ts', 'scope'),
       registrations('midi-input-coordinator.ts', 'scope'),
     ]);

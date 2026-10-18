@@ -218,6 +218,7 @@ export type NativeMenuCommand =
   | { type: 'open-ftable-converter' }
   | { type: 'open-csoundrc-editor' }
   | { type: 'open-code-repository-editor' }
+  | { type: 'open-blue-share' }
   | { type: 'open-midi-import' }
   | { type: 'toggle-follow-playback' }
   | { type: 'toggle-follow-playback-on-render-start' }

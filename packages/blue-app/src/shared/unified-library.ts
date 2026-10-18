@@ -62,6 +62,20 @@ export type LibraryItemKey =
       readonly locator: ProjectItemLocator;
     };
 
+export interface CapturePublishSourceRequest {
+  readonly key: LibraryItemKey;
+  readonly expectedRevision: number;
+}
+
+export interface LibraryPublishSourceSnapshot {
+  readonly key: LibraryItemKey;
+  readonly revision: number;
+  readonly displayName: string;
+  readonly blueType: string | null;
+  readonly description: string;
+  readonly xml: string;
+}
+
 export interface LibraryServiceOperationSnapshot {
   readonly kind: 'automaticMigration' | 'manualImport' | 'export' | 'upgrade' | 'recovery';
   readonly phase: string;

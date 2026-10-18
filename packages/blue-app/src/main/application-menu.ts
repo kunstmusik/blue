@@ -36,6 +36,7 @@ export interface ApplicationMenuTemplateOptions {
   onOpenFTableConverter: () => void;
   onOpenCsoundRCEditor: () => void;
   onOpenCodeRepositoryEditor: () => void;
+  onOpenBlueShare: () => void;
   onReinitializeJavaScriptRuntime: () => void;
   onReinitializeJythonRuntime: () => void;
   onFocusPanel: (panelId: string) => void;
@@ -299,7 +300,7 @@ function buildToolsMenuTemplate(
   return [
     { label: 'Code Repository Editor', click: () => options.onOpenCodeRepositoryEditor() },
     { label: 'Effects Library', click: () => options.onOpenEffectsLibrary() },
-    { label: 'Blue Share', enabled: false },
+    { label: 'Blue Share', click: () => options.onOpenBlueShare() },
     { label: 'FTable Converter', click: () => options.onOpenFTableConverter() },
     { label: '.csound7rc Editor', click: () => options.onOpenCsoundRCEditor() },
   ];

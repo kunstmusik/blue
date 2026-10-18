@@ -22,6 +22,9 @@ Generated from the installed production dependency graph with `pnpm licenses lis
 
 ## MIT
 
+- `@tanstack/react-query` 5.104.4 (added 2026-10-18; Tanner Linsley notice in `TanStack-Query-MIT.txt`)
+- `@tanstack/query-core` 5.104.4 (same notice)
+
 - `@babel/runtime` 7.29.7
 - `@codemirror/autocomplete` 6.20.3
 - `@codemirror/commands` 6.11.1

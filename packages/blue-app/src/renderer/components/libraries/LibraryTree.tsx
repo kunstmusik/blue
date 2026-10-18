@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '../../lib/cn';
 import type {
@@ -18,6 +18,7 @@ import {
 
 interface LibraryTreeProps {
   label: string;
+  readOnly?: boolean;
   nodes: readonly LibraryBrowseNode[];
   childrenByParent?: Readonly<Record<string, readonly LibraryBrowseNode[]>>;
   onSelect: (key: LibraryItemKey) => void;
@@ -68,6 +69,7 @@ export function validateLibraryNodeName(name: string): string | null {
  */
 export function LibraryTree({
   label,
+  readOnly = false,
   nodes,
   childrenByParent = {},
   onSelect,
@@ -91,6 +93,8 @@ export function LibraryTree({
   selectedNodeId,
   onSelectedNodeChange,
 }: LibraryTreeProps): React.ReactElement {
+  const pickerId = useId();
+  const rowPrefix = readOnly ? `library-picker-${pickerId}` : 'library-node';
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set(defaultExpandedNodeIds));
   const treeRef = useRef<HTMLDivElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
@@ -168,21 +172,25 @@ export function LibraryTree({
     });
   };
 
-  const prepareDrag = useCallback((node: LibraryBrowseNode) => {
-    if (node.supportStatus === 'unsupported' || dragDescriptors.current[node.nodeId]) return;
-    const descriptor =
-      node.scope === 'user' && node.nodeKind === 'folder'
-        ? {
-            dragSessionId: crypto.randomUUID(),
-            libraryType: node.libraryType,
-            sourceScope: 'user' as const,
-          }
-        : beginLibraryNodeDrag(node);
-    if (descriptor) {
-      dragDescriptors.current[node.nodeId] = descriptor;
-      if (node.scope === 'user') draggedUserNodes.current[descriptor.dragSessionId] = node;
-    }
-  }, []);
+  const prepareDrag = useCallback(
+    (node: LibraryBrowseNode) => {
+      if (readOnly || node.supportStatus === 'unsupported' || dragDescriptors.current[node.nodeId])
+        return;
+      const descriptor =
+        node.scope === 'user' && node.nodeKind === 'folder'
+          ? {
+              dragSessionId: crypto.randomUUID(),
+              libraryType: node.libraryType,
+              sourceScope: 'user' as const,
+            }
+          : beginLibraryNodeDrag(node);
+      if (descriptor) {
+        dragDescriptors.current[node.nodeId] = descriptor;
+        if (node.scope === 'user') draggedUserNodes.current[descriptor.dragSessionId] = node;
+      }
+    },
+    [readOnly],
+  );
 
   const activate = (index: number): void => {
     const candidate = visible[index]?.node;
@@ -219,11 +227,12 @@ export function LibraryTree({
       tabIndex={0}
       aria-activedescendant={
         visible[resolvedActiveIndex]
-          ? `library-node-${visible[resolvedActiveIndex].node.nodeId}`
+          ? `${rowPrefix}-${visible[resolvedActiveIndex].node.nodeId}`
           : undefined
       }
       className="outline-none focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus rounded-sm"
       onDragOver={(event) => {
+        if (readOnly) return;
         if (!event.dataTransfer.types.includes(BLUE_LIBRARY_DRAG_MIME)) return;
         const transferredDescriptor = readLibraryDragDescriptor(event.dataTransfer);
         const descriptor =
@@ -266,6 +275,7 @@ export function LibraryTree({
           setDropTargetId(null);
       }}
       onDrop={(event) => {
+        if (readOnly) return;
         const transferredDescriptor = readLibraryDragDescriptor(event.dataTransfer);
         const descriptor =
           transferredDescriptor?.sourceScope === 'user'
@@ -325,12 +335,13 @@ export function LibraryTree({
           activate(resolvedActiveIndex);
         } else if (event.key === 'F2') {
           const node = visible[resolvedActiveIndex]?.node;
-          if (node && node.nodeKind !== 'root' && onRename) startRename(node);
+          if (!readOnly && node && node.nodeKind !== 'root' && onRename) startRename(node);
         } else if ((event.key === 'F10' && event.shiftKey) || event.key === 'ContextMenu') {
           event.preventDefault();
+          if (readOnly) return;
           const node = visible[resolvedActiveIndex]?.node;
           if (node) {
-            const row = document.getElementById(`library-node-${node.nodeId}`);
+            const row = document.getElementById(`${rowPrefix}-${node.nodeId}`);
             const rect = row?.getBoundingClientRect();
             row?.dispatchEvent(
               new MouseEvent('contextmenu', {
@@ -359,6 +370,7 @@ export function LibraryTree({
           <LibraryContextMenu
             key={node.nodeId}
             node={node}
+            disabled={readOnly}
             clipboard={clipboard}
             onCreateFolder={onCreateFolder}
             onDuplicate={onDuplicate}
@@ -380,7 +392,7 @@ export function LibraryTree({
             }
           >
             <div
-              id={`library-node-${node.nodeId}`}
+              id={`${rowPrefix}-${node.nodeId}`}
               data-library-node-id={node.nodeId}
               role="treeitem"
               aria-level={level}
@@ -401,8 +413,9 @@ export function LibraryTree({
               onPointerDown={() => prepareDrag(node)}
               onMouseEnter={() => prepareDrag(node)}
               draggable={
-                (node.nodeKind === 'item' && node.supportStatus !== 'unsupported') ||
-                (node.scope === 'user' && node.nodeKind === 'folder')
+                !readOnly &&
+                ((node.nodeKind === 'item' && node.supportStatus !== 'unsupported') ||
+                  (node.scope === 'user' && node.nodeKind === 'folder'))
               }
               onDragStart={(event) => {
                 // This is a browser-native library drag, not a React DnD
@@ -496,7 +509,7 @@ export function LibraryTree({
                   onClick={() => activate(index)}
                   onDoubleClick={(event) => {
                     event.stopPropagation();
-                    if (onRename && node.scope === 'user' && node.nodeKind !== 'root')
+                    if (!readOnly && onRename && node.scope === 'user' && node.nodeKind !== 'root')
                       startRename(node);
                     else if (node.key) onOpen?.(node.key);
                   }}

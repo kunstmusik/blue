@@ -11,3 +11,5 @@ Blue application source is GPL-3.0-or-later; the text is `GPL-3.0-or-later.txt` 
 License texts in the installed licenses directory come from the repository's root `LICENSES/`. Package metadata and the component notices identify which terms apply to each work.
 
 `MIT.txt` in the installed licenses directory carries the Blue-authored MIT notice used by reusable Blue packages. Third-party MIT components retain their own copyright notices and license files alongside their packaged dependencies or in the installed licenses directory.
+
+- The renderer bundles `@tanstack/react-query` 5.104.4 and `@tanstack/query-core` 5.104.4, MIT, Copyright (c) 2021-present Tanner Linsley. Their copyright and permission text is preserved in installed `Resources/licenses/TanStack-Query-MIT.txt`. Published sources: https://registry.npmjs.org/@tanstack/react-query/-/react-query-5.104.4.tgz and https://registry.npmjs.org/@tanstack/query-core/-/query-core-5.104.4.tgz.

@@ -52,6 +52,49 @@ const session: LibraryEditorSessionSnapshot = {
 };
 
 describe('library editing UI', () => {
+  it('keeps read-only tree pickers free of native drag preparation and editing menus', () => {
+    const beginLibraryDrag = vi.fn();
+    (window as any).blueAPI = { beginLibraryDrag };
+    const node = {
+      nodeId: 'readonly-item',
+      parentId: null,
+      key: { scope: 'user' as const, libraryType: 'instrument' as const, nodeId: 'readonly-item' },
+      libraryType: 'instrument' as const,
+      scope: 'user' as const,
+      nodeKind: 'item' as const,
+      displayName: 'Read only',
+      breadcrumb: ['Read only'],
+      revision: 1,
+      hasChildren: false,
+    };
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    const onSelect = vi.fn();
+    act(() =>
+      root.render(
+        <>
+          <LibraryTree readOnly label="Picker" nodes={[node]} onSelect={onSelect} />
+          <LibraryTree readOnly label="Other picker" nodes={[node]} onSelect={onSelect} />
+        </>,
+      ),
+    );
+    const row = container.querySelector('[role="treeitem"]') as HTMLElement;
+    act(() => row.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true })));
+    act(() => row.dispatchEvent(new MouseEvent('mouseover', { bubbles: true })));
+    act(() => row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true })));
+    expect(row.draggable).toBe(false);
+    expect(beginLibraryDrag).not.toHaveBeenCalled();
+    expect(document.querySelector('[role="menu"]')).toBeNull();
+    act(() => row.querySelector<HTMLButtonElement>('button')?.click());
+    expect(onSelect).toHaveBeenCalledWith(node.key);
+    const rows = Array.from(container.querySelectorAll('[role="treeitem"]'));
+    expect(new Set(rows.map((item) => item.id)).size).toBe(2);
+    expect(
+      container.querySelector('[aria-label="Picker"]')?.getAttribute('aria-activedescendant'),
+    ).toBe(row.id);
+    act(() => root.unmount());
+  });
+
   it('validates names and renders accessible breadcrumbs', () => {
     expect(validateLibraryNodeName('')).toMatch(/required/i);
     expect(validateLibraryNodeName('  Pad  ')).toBeNull();

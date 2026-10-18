@@ -44,6 +44,11 @@ export interface RepositoryItemPayload extends RepositoryItemPayloadInput {
   readonly nodeId: string;
 }
 
+export interface RepositoryPublishSource {
+  readonly node: RepositoryNode;
+  readonly payload: RepositoryItemPayload;
+}
+
 export interface RepositoryClipboardNode {
   readonly libraryType: LibraryType;
   readonly nodeKind: 'folder' | 'item';
@@ -101,6 +106,30 @@ export interface RepositoryImportHistoryEntry {
   readonly sourceCount: number;
   readonly counts: Readonly<Record<string, unknown>>;
   readonly report: Readonly<Record<string, unknown>>;
+}
+
+export interface RepositoryImportResourceInput {
+  readonly libraryType: LibraryType;
+  readonly displayName: string;
+  readonly payload: RepositoryItemPayloadInput;
+}
+
+export interface RepositoryImportResourceResult {
+  readonly folder: RepositoryNode;
+  readonly item: RepositoryNode;
+}
+
+export function getImportedFolderName(libraryType: LibraryType): string {
+  switch (libraryType) {
+    case 'instrument':
+      return 'Imported Instruments';
+    case 'effect':
+      return 'Imported Effects';
+    case 'soundObject':
+      return 'Imported SoundObjects';
+    default:
+      throw new Error(`Unsupported library type for imported resource: ${libraryType}`);
+  }
 }
 
 function normalizeSearchName(value: string): string {
@@ -410,6 +439,23 @@ export class UnifiedLibraryRepository {
     };
   }
 
+  capturePublishSource(nodeId: string, expectedRevision: number): RepositoryPublishSource {
+    return this.withTransaction(() => {
+      const node = this.getNode(nodeId);
+      if (node.nodeKind !== 'item') {
+        throw new Error('Only items can be captured as publish sources');
+      }
+      if (node.revision !== expectedRevision) {
+        throw new Error(`Stale revision: expected ${expectedRevision}, got ${node.revision}`);
+      }
+      const payload = this.getItemPayload(node.id);
+      return {
+        node,
+        payload,
+      };
+    });
+  }
+
   getItemSummary(nodeId: string): RepositoryItemSummary {
     this.assertOpen();
     const row = this.database
@@ -554,6 +600,45 @@ export class UnifiedLibraryRepository {
       this.insertPayload(node.id, input.payload);
       this.incrementContentRevision();
       return node;
+    });
+  }
+
+  importResource(input: RepositoryImportResourceInput): RepositoryImportResourceResult {
+    return this.withTransaction(() => {
+      const root = this.getRoot(input.libraryType);
+      const folderName = getImportedFolderName(input.libraryType);
+      const existing = this.database
+        .prepare(
+          `SELECT * FROM library_nodes
+           WHERE parent_id = ? AND node_kind = 'folder' AND display_name = ?
+           ORDER BY sort_index ASC, id ASC
+           LIMIT 1`,
+        )
+        .get(root.id, folderName) as Record<string, unknown> | undefined;
+
+      const folder = existing
+        ? mapNode(existing)
+        : this.insertNode({
+            libraryType: input.libraryType,
+            nodeKind: 'folder',
+            parentId: root.id,
+            displayName: folderName,
+          });
+
+      const item = this.insertNode({
+        libraryType: input.libraryType,
+        nodeKind: 'item',
+        parentId: folder.id,
+        displayName: input.displayName,
+      });
+
+      this.insertPayload(item.id, input.payload);
+      this.incrementContentRevision();
+
+      return {
+        folder: { ...folder },
+        item: { ...item },
+      };
     });
   }
 

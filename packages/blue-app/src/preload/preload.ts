@@ -69,6 +69,32 @@ import {
   type SoundFontInfo,
 } from '../shared/soundfont-viewer';
 import {
+  BLUESHARE_CHANNELS,
+  isAccountSessionSnapshot,
+  isOpenDialogResult,
+  isSignOutResult,
+  isPublishSourceSeed,
+  isResetPublishResult,
+  isRemoveResourceResult,
+  isOpenWebsiteResult,
+  isLibraryMutationReceipt,
+  isCategoryList,
+  isResourcePage,
+  isLatestResult,
+  isResourceSummary,
+  isBlueShareError,
+  validateBlueShareResult,
+  type AccountSessionSnapshot,
+  type BlueShareResult,
+  type Category,
+  type LatestResult,
+  type PublishSourceSeed,
+  type ResourceKey,
+  type ResourceKind,
+  type ResourcePage,
+  type ResourceSummary,
+} from '../shared/blueshare';
+import {
   COMMIT_AUDIO_FILE_DROP_CHANNEL,
   FILE_MANAGER_GET_ROOTS_CHANNEL,
   FILE_MANAGER_LIST_DIRECTORY_CHANNEL,
@@ -1421,4 +1447,152 @@ contextBridge.exposeInMainWorld('blueAPI', {
   // BlueX7 Yamaha SysEx Import (SPEC 081)
   selectBlueX7SysexFile: async () =>
     validateBlueX7SysexReadResult(await ipcRenderer.invoke('blue-x7:import-sysex')),
+
+  // BlueShare (SPEC 117)
+  openBlueShare: async () =>
+    validateBlueShareResult(await ipcRenderer.invoke(BLUESHARE_CHANNELS.OPEN), isOpenDialogResult),
+  getBlueShareAccount: async (contextId: string) =>
+    validateBlueShareResult(
+      await ipcRenderer.invoke(BLUESHARE_CHANNELS.GET_ACCOUNT, contextId),
+      isAccountSessionSnapshot,
+    ),
+  signInBlueShare: async (
+    contextId: string,
+    requestId: string,
+    email: string,
+    password: string,
+    rememberMe?: boolean,
+  ) =>
+    validateBlueShareResult(
+      await ipcRenderer.invoke(
+        BLUESHARE_CHANNELS.SIGN_IN,
+        contextId,
+        requestId,
+        email,
+        password,
+        ...(rememberMe === undefined ? [] : [rememberMe]),
+      ),
+      isAccountSessionSnapshot,
+    ),
+  signOutBlueShare: async (contextId: string, requestId: string) =>
+    validateBlueShareResult(
+      await ipcRenderer.invoke(BLUESHARE_CHANNELS.SIGN_OUT, contextId, requestId),
+      isSignOutResult,
+    ),
+  getBlueShareCategories: async (contextId: string, requestId: string, kind: ResourceKind) =>
+    validateBlueShareResult(
+      await ipcRenderer.invoke(BLUESHARE_CHANNELS.GET_CATEGORIES, contextId, requestId, kind),
+      (v): v is readonly Category[] => isCategoryList(v, kind),
+    ),
+  listBlueShareResources: async (
+    contextId: string,
+    requestId: string,
+    kind: ResourceKind,
+    categoryId?: number | null,
+    beforeId?: number | null,
+  ) =>
+    validateBlueShareResult(
+      await ipcRenderer.invoke(
+        BLUESHARE_CHANNELS.LIST_RESOURCES,
+        contextId,
+        requestId,
+        kind,
+        categoryId ?? null,
+        beforeId ?? null,
+      ),
+      (v): v is ResourcePage => isResourcePage(v, kind, categoryId ?? null, beforeId ?? null),
+    ),
+  getBlueShareLatest: async (contextId: string, requestId: string, kind: ResourceKind) =>
+    validateBlueShareResult(
+      await ipcRenderer.invoke(BLUESHARE_CHANNELS.GET_LATEST, contextId, requestId, kind),
+      (v): v is LatestResult => isLatestResult(v, kind),
+    ),
+  getBlueShareResource: async (contextId: string, requestId: string, key: ResourceKey) =>
+    validateBlueShareResult(
+      await ipcRenderer.invoke(BLUESHARE_CHANNELS.GET_RESOURCE, contextId, requestId, key),
+      (v): v is ResourceSummary => isResourceSummary(v, key.kind) && v.id === key.id,
+    ),
+  importBlueShareResource: async (contextId: string, requestId: string, key: ResourceKey) =>
+    validateBlueShareResult(
+      await ipcRenderer.invoke(BLUESHARE_CHANNELS.IMPORT_RESOURCE, contextId, requestId, key),
+      isLibraryMutationReceipt,
+    ),
+  prepareBlueSharePublish: async (
+    contextId: string,
+    requestId: string,
+    itemKey: { scope: 'user'; libraryType: ResourceKind; nodeId: string },
+    expectedRevision: number,
+  ) =>
+    validateBlueShareResult(
+      await ipcRenderer.invoke(
+        BLUESHARE_CHANNELS.PREPARE_PUBLISH,
+        contextId,
+        requestId,
+        itemKey,
+        expectedRevision,
+      ),
+      isPublishSourceSeed,
+    ),
+  resetBlueSharePublish: async (contextId: string, requestId: string) =>
+    validateBlueShareResult(
+      await ipcRenderer.invoke(BLUESHARE_CHANNELS.RESET_PUBLISH, contextId, requestId),
+      isResetPublishResult,
+    ),
+  publishBlueShareResource: async (
+    contextId: string,
+    requestId: string,
+    sourceToken: string,
+    categoryId: number,
+    description: string | null,
+  ) =>
+    validateBlueShareResult(
+      await ipcRenderer.invoke(
+        BLUESHARE_CHANNELS.PUBLISH_RESOURCE,
+        contextId,
+        requestId,
+        sourceToken,
+        categoryId,
+        description,
+      ),
+      (v): v is ResourceSummary => isResourceSummary(v),
+    ),
+  listBlueShareMine: async (
+    contextId: string,
+    requestId: string,
+    kind: ResourceKind,
+    beforeId?: number | null,
+  ) =>
+    validateBlueShareResult(
+      await ipcRenderer.invoke(
+        BLUESHARE_CHANNELS.LIST_MINE,
+        contextId,
+        requestId,
+        kind,
+        beforeId ?? null,
+      ),
+      (v): v is ResourcePage => isResourcePage(v, kind, null, beforeId ?? null),
+    ),
+  removeBlueShareResource: async (contextId: string, requestId: string, key: ResourceKey) =>
+    validateBlueShareResult(
+      await ipcRenderer.invoke(BLUESHARE_CHANNELS.REMOVE_RESOURCE, contextId, requestId, key),
+      isRemoveResourceResult,
+    ),
+  openBlueShareWebsite: async (contextId: string, purpose: 'register' | 'recover') =>
+    validateBlueShareResult(
+      await ipcRenderer.invoke(BLUESHARE_CHANNELS.OPEN_WEBSITE, contextId, purpose),
+      isOpenWebsiteResult,
+    ),
+  closeBlueShare: (contextId: string) =>
+    ipcRenderer.invoke(BLUESHARE_CHANNELS.CLOSE, contextId) as Promise<void>,
+  onBlueShareAccountChanged: (callback: (snapshot: AccountSessionSnapshot) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, snapshot: unknown) => {
+      if (isAccountSessionSnapshot(snapshot)) {
+        callback(snapshot);
+      }
+    };
+    ipcRenderer.on(BLUESHARE_CHANNELS.ACCOUNT_CHANGED, handler);
+    return () => {
+      ipcRenderer.removeListener(BLUESHARE_CHANNELS.ACCOUNT_CHANGED, handler);
+    };
+  },
 });

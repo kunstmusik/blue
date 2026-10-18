@@ -27,6 +27,8 @@ export interface RepositoryWorkerRequest {
     | 'deleteNode'
     | 'createFolder'
     | 'createItem'
+    | 'importResource'
+    | 'capturePublishSource'
     | 'renameNode'
     | 'startImportBatch'
     | 'importLegacyDocument'
@@ -95,6 +97,9 @@ export function startUnifiedLibraryRepositoryWorker(databasePath: string): void 
           break;
         case 'getItemSummary':
           value = repository.getItemSummary(String(request.args[0]));
+          break;
+        case 'capturePublishSource':
+          value = repository.capturePublishSource(String(request.args[0]), Number(request.args[1]));
           break;
         case 'getClipboardSubtree':
           value = repository.getClipboardSubtree(String(request.args[0]));
@@ -166,6 +171,11 @@ export function startUnifiedLibraryRepositoryWorker(databasePath: string): void 
         case 'createItem':
           value = repository.createItem(
             request.args[0] as Parameters<typeof repository.createItem>[0],
+          );
+          break;
+        case 'importResource':
+          value = repository.importResource(
+            request.args[0] as Parameters<typeof repository.importResource>[0],
           );
           break;
         case 'renameNode':

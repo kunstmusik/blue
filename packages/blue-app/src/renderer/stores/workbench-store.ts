@@ -1969,6 +1969,9 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()((se
       case 'open-code-repository-editor':
         window.dispatchEvent(new CustomEvent('blue-open-code-repository-editor'));
         return;
+      case 'open-blue-share':
+        window.dispatchEvent(new CustomEvent('blue-open-blue-share'));
+        return;
       case 'open-midi-import':
         window.dispatchEvent(new CustomEvent('blue-open-midi-import'));
         return;
