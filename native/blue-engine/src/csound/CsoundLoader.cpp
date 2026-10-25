@@ -285,10 +285,12 @@ CsoundLoader::platformCandidatePaths(
         (programFilesDirectory[2] == '\\' ||
          programFilesDirectory[2] == '/');
     if (absoluteDrivePath) {
-      appendUnique(paths, programFilesDirectory +
-                              "\\Csound7_x64\\bin\\csound64.dll");
-      appendUnique(paths,
-                   programFilesDirectory + "\\Csound\\bin\\csound64.dll");
+      for (const auto *name : {"csound7_64.dll", "csound64.dll"}) {
+        for (const auto *directory : {"Csound7", "Csound7_x64", "Csound"}) {
+          appendUnique(paths, programFilesDirectory + "\\" + directory +
+                                  "\\bin\\" + name);
+        }
+      }
     }
     return paths;
   }

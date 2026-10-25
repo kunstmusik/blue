@@ -5,6 +5,7 @@
 #include <cassert>
 #include <iostream>
 #include <string>
+#include <vector>
 
 namespace {
 
@@ -73,11 +74,15 @@ int main() {
   const auto windowsCandidates =
       blue::CsoundLoader::platformCandidatePaths(
           "win32", "", "C:\\Program Files");
-  assert(!windowsCandidates.empty());
-  for (const auto &candidate : windowsCandidates) {
-    assert(candidate.rfind("C:\\Program Files\\", 0) == 0);
-    assert(candidate != "csound64.dll");
-  }
+  const std::vector<std::string> expectedWindowsCandidates = {
+      "C:\\Program Files\\Csound7\\bin\\csound7_64.dll",
+      "C:\\Program Files\\Csound7_x64\\bin\\csound7_64.dll",
+      "C:\\Program Files\\Csound\\bin\\csound7_64.dll",
+      "C:\\Program Files\\Csound7\\bin\\csound64.dll",
+      "C:\\Program Files\\Csound7_x64\\bin\\csound64.dll",
+      "C:\\Program Files\\Csound\\bin\\csound64.dll"};
+  assert(windowsCandidates == expectedWindowsCandidates);
+  assert(blue::CsoundLoader::platformCandidatePaths("win32").empty());
   assert(blue::CsoundLoader::platformCandidatePaths(
              "win32", "", ".")
              .empty());

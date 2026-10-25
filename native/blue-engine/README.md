@@ -15,6 +15,14 @@ required or searched for.
   - Windows: Install from [csound.com](https://csound.com/download.html)
   - Linux: `sudo apt install csound` or equivalent
 
+On Windows, automatic discovery tries `csound7_64.dll` in the `Csound7`,
+`Csound7_x64`, and `Csound` directories under `%ProgramFiles%`, then falls back
+to `csound64.dll` in those directories for older Csound 7 installations.
+This follows the DLL rename in [Csound PR #3472](https://github.com/csound/csound/pull/3472)
+(merge revision `458626bf1b972bcdef047f4721b364bdf210df7e`). Both names must
+provide the Csound 7 API; Csound 6 remains unsupported. `--csound-library` and
+`LIBCSOUND_PATH` continue to select one library explicitly.
+
 ## Build Dependencies
 
 - Node.js 22 and pnpm 10
