@@ -535,9 +535,14 @@ endin`;
     // Reference hashes:
     // - 82012869f2451e4968a0646b5a9d4329cc0c89cbcac277f7c2fe8238453882c6 (Csound 7 pre-Aug 31)
     // - 0a385a4cbc4ff7da579f534429d25426738e0243859827e1ff91d767467e7854 (Csound 7 Aug 31 commit 3938970e)
+    // - f968c748ffb9e21e04eb2d2064c29531ef75b85d39650bec72f3e8860bb257c1 (Csound 7 Oct 25 commit 215d8c0c)
+    // Reviewed 2026-10-25 against both earlier hashes: all have 751872 samples;
+    // the maximum sample difference from 0a385a4c is 1.95e-15 (RMS 4.16e-17).
+    // All calibration, release, routing, and envelope timing checks still pass.
     expect([
       '82012869f2451e4968a0646b5a9d4329cc0c89cbcac277f7c2fe8238453882c6',
       '0a385a4cbc4ff7da579f534429d25426738e0243859827e1ff91d767467e7854',
+      'f968c748ffb9e21e04eb2d2064c29531ef75b85d39650bec72f3e8860bb257c1',
     ]).toContain(hash);
   }, 60_000);
 });

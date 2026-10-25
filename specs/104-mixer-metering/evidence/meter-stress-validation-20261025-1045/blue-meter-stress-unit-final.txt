@@ -1,0 +1,10 @@
+$ vitest run --config vitest.config.ts src/renderer/tests/meter-stress.test.tsx
+
+ RUN  v4.1.11 /Users/stevenyi/work/blue3/packages/blue-app
+
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  10:46:06
+   Duration  4.15s (transform 1.37s, setup 0ms, import 2.10s, tests 1.38s, environment 579ms)
+

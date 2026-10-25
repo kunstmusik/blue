@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-25",
+  "scope": "Replace a flaky shared-worker JSDOM clock ratio with deterministic 64-strip interaction and paint checks. Existing real-browser performance thresholds unchanged. No production code changed.",
+  "unitSourceSha256": "7b6175a35f29295729085867d8174ca721615194825c51530f94ae9058743e92",
+  "unchangedBrowserSourceSha256": "c5363f77cf7deb02f2a7be260f6bb070d41a7feb64ce9785e7f3133c173b792c",
+  "checks": {
+    "unit": {
+      "status": "PASS: 3/3",
+      "log": "blue-meter-stress-unit-final.txt",
+      "sha256": "170af8f15f6a8539315cddbbaf4f3ac6bb2d457e023b8e0adce0a97f89f4449b"
+    },
+    "browser": {
+      "status": "PASS: 3/3; unchanged strict 20% gates",
+      "log": "blue-meter-stress-browser.txt",
+      "sha256": "db58edf07e3be985b81b690b0a6a0d2f993a7a1a43b5d0c36a707899b85d906e"
+    },
+    "lint": {
+      "status": "PASS",
+      "log": "blue-meter-stress-lint.txt",
+      "sha256": "2027f999b1fe3a701ee9af38b3efca361e66906a52410d378c7167923601571c"
+    },
+    "workspace": {
+      "status": "PASS: temporary DEVELOPER_DIR=/Library/Developer/CommandLineTools",
+      "log": "blue-meter-stress-workspace-ready.txt",
+      "sha256": "ba569a7ca46bb54f53e2904ff3f1104037655e9e7237e4d1e8c74f4783827639"
+    },
+    "initialWorkspace": {
+      "status": "BLOCKED: selected AppleClang 15 cannot read macOS 27 SDK",
+      "log": "blue-meter-stress-workspace.txt",
+      "sha256": "0d17bdf1068201b8e411aab058e8c352edafe02d64bd5d63ed7d1dff7bff84ce"
+    },
+    "initialCLTWorkspace": {
+      "status": "BLOCKED: pkg-config unavailable at that run",
+      "log": "blue-meter-stress-workspace-clt.txt",
+      "sha256": "869fa0e5f5ddf9a62be0f728907e354995b3ede4ec73819e486175009175ddda"
+    },
+    "appInitial": {
+      "status": "FAIL: unrelated SQLite runtime 5-second timeout; meter case passes",
+      "log": "blue-meter-stress-app-suite.txt",
+      "sha256": "beb4dd1a05a3a02108414a913e1b371d6fa67f6eada763bd9f35801dcf7c208c"
+    },
+    "sqliteIsolated": {
+      "status": "PASS: 1/1",
+      "log": "blue-meter-stress-sqlite-check.txt",
+      "sha256": "624cf384805261359db7d62657fd56af1b861dc6f53979588532d6651157d5a0"
+    }
+  }
+}

@@ -1,0 +1,327 @@
+$ pnpm -r run test && pnpm test:scripts
+Scope: 6 of 7 workspace projects
+native/blue-engine test$ node --test scripts/*.test.mjs && node scripts/test.mjs unit
+packages/blue-data test$ vitest run
+packages/blue-java test$ mvn -q test
+packages/blue-engine-client test$ vitest run
+native/blue-engine test: TAP version 13
+native/blue-engine test: # Subtest: wrapper accepts --csd with --baseline-csd and keeps historical args
+native/blue-engine test: ok 1 - wrapper accepts --csd with --baseline-csd and keeps historical args
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 7.532208
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: wrapper rejects ambiguous and incomplete supplied-CSD combinations
+native/blue-engine test: ok 2 - wrapper rejects ambiguous and incomplete supplied-CSD combinations
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 3.238625
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: wrapper passes paths with spaces and synthetic Windows paths through unchanged
+native/blue-engine test: ok 3 - wrapper passes paths with spaces and synthetic Windows paths through unchanged
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 2.029792
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: paired trial order is deterministic and balanced for a given seed
+native/blue-engine test: ok 4 - paired trial order is deterministic and balanced for a given seed
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.932458
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: mulberry32 draws are deterministic for a given seed
+native/blue-engine test: ok 5 - mulberry32 draws are deterministic for a given seed
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.1065
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: medianOf summarizes odd and even samples
+native/blue-engine test: ok 6 - medianOf summarizes odd and even samples
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.462958
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: comparison report has the mixer-generated-csd shape with verdicts
+native/blue-engine test: ok 7 - comparison report has the mixer-generated-csd shape with verdicts
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 7.110042
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: candidateFasterPct10 reports the 10 percent improvement verdict
+native/blue-engine test: ok 8 - candidateFasterPct10 reports the 10 percent improvement verdict
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.630042
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: baseline and candidate metadata must match with explicit field errors
+native/blue-engine test: ok 9 - baseline and candidate metadata must match with explicit field errors
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.654209
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: missing or malformed native metrics fail structurally
+native/blue-engine test: ok 10 - missing or malformed native metrics fail structurally
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.335917
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: non-finite, zero, or incomplete-window metrics fail the gate
+native/blue-engine test: ok 11 - non-finite, zero, or incomplete-window metrics fail the gate
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 1.041375
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: native CLI rejects --csd combined with --scenario
+native/blue-engine test: ok 12 - native CLI rejects --csd combined with --scenario
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 40.639667
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: native CLI rejects a missing or unreadable CSD file
+native/blue-engine test: ok 13 - native CLI rejects a missing or unreadable CSD file
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 3.565375
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: native CLI still rejects unknown arguments
+native/blue-engine test: ok 14 - native CLI still rejects unknown arguments
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 4.76275
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+packages/blue-engine-client test: (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+packages/blue-engine-client test:   - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+packages/blue-data test: (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+packages/blue-data test:   - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+packages/blue-data test:   - ESM syntax in a file loaded as CommonJS (../../scripts/vitest-package-reporters.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+packages/blue-data test: Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+packages/blue-engine-client test:   - ESM syntax in a file loaded as CommonJS (../../scripts/vitest-package-reporters.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+packages/blue-engine-client test: Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+packages/blue-data test: 
+packages/blue-data test:  RUN  v4.1.11 /Users/stevenyi/work/blue3/packages/blue-data
+packages/blue-data test: 
+packages/blue-engine-client test: 
+packages/blue-engine-client test:  RUN  v4.1.11 /Users/stevenyi/work/blue3/packages/blue-engine-client
+packages/blue-engine-client test: 
+native/blue-engine test: # Subtest: native --csd mode reports a sha256-verified mixer-generated-csd report
+native/blue-engine test: ok 15 - native --csd mode reports a sha256-verified mixer-generated-csd report
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 696.258333
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+packages/blue-engine-client test: 
+packages/blue-engine-client test:  Test Files  4 passed (4)
+packages/blue-engine-client test:       Tests  47 passed (47)
+packages/blue-engine-client test:    Start at  10:46:39
+packages/blue-engine-client test:    Duration  398ms (transform 330ms, setup 0ms, import 454ms, tests 28ms, environment 1ms)
+packages/blue-engine-client test: 
+packages/blue-engine-client test: Done
+native/blue-engine test: # Subtest: native --csd mode fails when the requested window cannot complete
+native/blue-engine test: ok 16 - native --csd mode fails when the requested window cannot complete
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 56.629083
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: native fixed-scenario invocations without --csd are unchanged
+native/blue-engine test: ok 17 - native fixed-scenario invocations without --csd are unchanged
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 33.603416
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: supplied-CSD short windows require explicit research mode
+native/blue-engine test: ok 18 - supplied-CSD short windows require explicit research mode
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.274708
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: performance thresholds are separate from valid metrics and never rounded
+native/blue-engine test: ok 19 - performance thresholds are separate from valid metrics and never rounded
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.530584
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: requested windows and minimum paired trials cannot be inferred from matching short reports
+native/blue-engine test: ok 20 - requested windows and minimum paired trials cannot be inferred from matching short reports
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.2945
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: native short acceptance windows fail before runtime setup
+native/blue-engine test: ok 21 - native short acceptance windows fail before runtime setup
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 2.889958
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: acceptance capture identities require complete revision, input and binding hashes
+native/blue-engine test: ok 22 - acceptance capture identities require complete revision, input and binding hashes
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.452
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: native CSD hash and runtime identity mismatches reject acceptance
+native/blue-engine test: ok 23 - native CSD hash and runtime identity mismatches reject acceptance
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.357458
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: native verifies effective layout rather than trusting a parsed header prefix
+native/blue-engine test: ok 24 - native verifies effective layout rather than trusting a parsed header prefix
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 51.557875
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: supplied-CSD trials reject fractional and suffixed numbers instead of truncating
+native/blue-engine test: ok 25 - supplied-CSD trials reject fractional and suffixed numbers instead of truncating
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.28125
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: keeps an incremental build configured with the current toolchain
+native/blue-engine test: ok 26 - keeps an incremental build configured with the current toolchain
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 13.142458
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: removes a build whose generated CMake system references a stale toolchain
+native/blue-engine test: ok 27 - removes a build whose generated CMake system references a stale toolchain
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 8.234875
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: selects supported target triplets deterministically
+native/blue-engine test: ok 28 - selects supported target triplets deterministically
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 1.212625
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: rejects unsupported and malformed targets
+native/blue-engine test: ok 29 - rejects unsupported and malformed targets
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.626375
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: uses an explicit bootstrapped VCPKG_ROOT
+native/blue-engine test: ok 30 - uses an explicit bootstrapped VCPKG_ROOT
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 4.762459
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Blue Engine: bootstrapping pinned vcpkg 9d7f79f56ae1a9b4704d6a7fb8237e347a974133 (first build only)
+native/blue-engine test: # Subtest: bootstraps and reuses the package-local checkout when VCPKG_ROOT is absent
+native/blue-engine test: ok 31 - bootstraps and reuses the package-local checkout when VCPKG_ROOT is absent
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 2.866333
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: rejects an explicit checkout that has not been bootstrapped
+native/blue-engine test: ok 32 - rejects an explicit checkout that has not been bootstrapped
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.836208
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: validates manifest schema and target
+native/blue-engine test: ok 33 - validates manifest schema and target
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.609709
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: rejects dirty revisions in CI
+native/blue-engine test: ok 34 - rejects dirty revisions in CI
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.144834
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: validates executable hash and permission
+native/blue-engine test: ok 35 - validates executable hash and permission
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 9.132167
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: rejects shared ZeroMQ, sodium, and Csound dependencies
+native/blue-engine test: ok 36 - rejects shared ZeroMQ, sodium, and Csound dependencies
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.19775
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: enforces platform runtime allowlists from dependency fixtures
+native/blue-engine test: ok 37 - enforces platform runtime allowlists from dependency fixtures
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 3.047875
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: validates executable architecture reports and glibc symbol floors
+native/blue-engine test: ok 38 - validates executable architecture reports and glibc symbol floors
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.388459
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: 1..38
+native/blue-engine test: # tests 38
+native/blue-engine test: # suites 0
+native/blue-engine test: # pass 38
+native/blue-engine test: # fail 0
+native/blue-engine test: # cancelled 0
+native/blue-engine test: # skipped 0
+native/blue-engine test: # todo 0
+native/blue-engine test: # duration_ms 993.106875
+native/blue-engine test: -- Running vcpkg install
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: Detecting compiler hash for triplet arm64-osx...
+packages/blue-java test: WARNING: A restricted method in java.lang.System has been called
+packages/blue-java test: WARNING: java.lang.System::load has been called by com.kenai.jffi.internal.StubLoader in an unnamed module (file:/Users/stevenyi/.m2/repository/org/python/jython-standalone/2.7.4/jython-standalone-2.7.4.jar)
+packages/blue-java test: WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+packages/blue-java test: WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+packages/blue-java test: 
+native/blue-engine test: error: while detecting compiler information:
+native/blue-engine test: The log file content at "/Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/detect_compiler/stdout-arm64-osx.log" is:
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: -- Configuring arm64-osx-rel
+native/blue-engine test: CMake Error at scripts/cmake/vcpkg_execute_required_process.cmake:127 (message):
+native/blue-engine test:     Command failed: /opt/homebrew/bin/cmake /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/scripts/detect_compiler -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/detect_compiler_arm64-osx -DVCPKG_COMPILER_CACHE_FILE=/Users/stevenyi/work/blue3/native/blue-engine/build-darwin-arm64-debug/vcpkg_installed/vcpkg/compiler-file-hash-cache.json -DCMAKE_MAKE_PROGRAM=/opt/homebrew/bin/ninja -DCMAKE_SYSTEM_NAME=Darwin -DBUILD_SHARED_LIBS=OFF -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=/Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/scripts/toolchains/osx.cmake -DVCPKG_TARGET_TRIPLET=arm64-osx -DVCPKG_SET_CHARSET_FLAG=ON -DVCPKG_PLATFORM_TOOLSET=external -DCMAKE_EXPORT_NO_PACKAGE_REGISTRY=ON -DCMAKE_FIND_PACKAGE_NO_PACKAGE_REGISTRY=ON -DCMAKE_FIND_PACKAGE_NO_SYSTEM_PACKAGE_REGISTRY=ON -DCMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP=TRUE -DCMAKE_VERBOSE_MAKEFILE=ON -DVCPKG_APPLOCAL_DEPS=OFF -DCMAKE_TOOLCHAIN_FILE=/Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION=ON -DVCPKG_CXX_FLAGS= -DVCPKG_CXX_FLAGS_RELEASE= -DVCPKG_CXX_FLAGS_DEBUG= -DVCPKG_C_FLAGS= -DVCPKG_C_FLAGS_RELEASE= -DVCPKG_C_FLAGS_DEBUG= -DVCPKG_CRT_LINKAGE=dynamic -DVCPKG_LINKER_FLAGS= -DVCPKG_LINKER_FLAGS_RELEASE= -DVCPKG_LINKER_FLAGS_DEBUG= -DVCPKG_TARGET_ARCHITECTURE=arm64 -DCMAKE_INSTALL_LIBDIR:STRING=lib -DCMAKE_INSTALL_BINDIR:STRING=bin -D_VCPKG_ROOT_DIR=/Users/stevenyi/work/blue3/native/blue-engine/.vcpkg -DZ_VCPKG_ROOT_DIR=/Users/stevenyi/work/blue3/native/blue-engine/.vcpkg -D_VCPKG_INSTALLED_DIR=/Users/stevenyi/work/blue3/native/blue-engine/build-darwin-arm64-debug/vcpkg_installed -DVCPKG_MANIFEST_INSTALL=OFF -DCMAKE_OSX_ARCHITECTURES=arm64
+native/blue-engine test:     Working Directory: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/detect_compiler/arm64-osx-rel
+native/blue-engine test:     Error code: 1
+native/blue-engine test:     See logs for more information:
+native/blue-engine test:       /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/detect_compiler/config-arm64-osx-rel-CMakeCache.txt.log
+native/blue-engine test:       /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/detect_compiler/config-arm64-osx-rel-out.log
+native/blue-engine test:       /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/detect_compiler/config-arm64-osx-rel-err.log
+native/blue-engine test: 
+native/blue-engine test: Call Stack (most recent call first):
+native/blue-engine test:   scripts/cmake/vcpkg_configure_cmake.cmake:325 (vcpkg_execute_required_process)
+native/blue-engine test:   scripts/detect_compiler/portfile.cmake:18 (vcpkg_configure_cmake)
+native/blue-engine test:   scripts/ports.cmake:206 (include)
+native/blue-engine test: 
+native/blue-engine test: 
+native/blue-engine test: error: vcpkg was unable to detect the active compiler's information. See above for the CMake failure output.
+native/blue-engine test: -- Running vcpkg install - failed
+native/blue-engine test: CMake Error at .vcpkg/scripts/buildsystems/vcpkg.cmake:984 (message):
+native/blue-engine test:   vcpkg install failed.  See logs for more information:
+native/blue-engine test:   /Users/stevenyi/work/blue3/native/blue-engine/build-darwin-arm64-debug/vcpkg-manifest-install.log
+native/blue-engine test: Call Stack (most recent call first):
+native/blue-engine test:   build-darwin-arm64-debug/CMakeFiles/4.4.4/CMakeSystem.cmake:6 (include)
+native/blue-engine test:   CMakeLists.txt:2 (project)
+native/blue-engine test: 
+native/blue-engine test: 
+native/blue-engine test: -- Configuring incomplete, errors occurred!
+native/blue-engine test: file:///Users/stevenyi/work/blue3/native/blue-engine/scripts/build.mjs:19
+native/blue-engine test:     throw new Error(
+native/blue-engine test:           ^
+native/blue-engine test: 
+native/blue-engine test: Error: BLUE_ENGINE_BUILD_FAILED: cmake exited with 1
+native/blue-engine test:     at run (file:///Users/stevenyi/work/blue3/native/blue-engine/scripts/build.mjs:19:11)
+native/blue-engine test:     at file:///Users/stevenyi/work/blue3/native/blue-engine/scripts/build.mjs:57:1
+native/blue-engine test: 
+native/blue-engine test: Node.js v22.23.1
+native/blue-engine test: Failed
+[ELIFECYCLE] Test failed. See above for more details.
+packages/blue-java test: Failed
+[ELIFECYCLE] Command failed with signal SIGKILL.
+packages/blue-data test: Failed
+[ELIFECYCLE] Command failed with signal SIGKILL.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in /Users/stevenyi/work/blue3/native/blue-
+  │ engine
+
+[ELIFECYCLE] Test failed. See above for more details.

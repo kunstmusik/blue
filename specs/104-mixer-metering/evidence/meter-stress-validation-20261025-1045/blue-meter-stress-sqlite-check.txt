@@ -1,0 +1,10 @@
+$ vitest run --config vitest.config.ts src/main/unified-library/sqlite-runtime.test.ts
+
+ RUN  v4.1.11 /Users/stevenyi/work/blue3/packages/blue-app
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  10:52:35
+   Duration  2.70s (transform 38ms, setup 0ms, import 47ms, tests 2.55s, environment 0ms)
+

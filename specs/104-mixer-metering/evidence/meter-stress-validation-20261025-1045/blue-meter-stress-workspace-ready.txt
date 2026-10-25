@@ -1,0 +1,1095 @@
+$ pnpm -r run test && pnpm test:scripts
+Scope: 6 of 7 workspace projects
+packages/blue-java test$ mvn -q test
+packages/blue-data test$ vitest run
+native/blue-engine test$ node --test scripts/*.test.mjs && node scripts/test.mjs unit
+packages/blue-engine-client test$ vitest run
+native/blue-engine test: TAP version 13
+native/blue-engine test: # Subtest: wrapper accepts --csd with --baseline-csd and keeps historical args
+native/blue-engine test: ok 1 - wrapper accepts --csd with --baseline-csd and keeps historical args
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 6.366
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: wrapper rejects ambiguous and incomplete supplied-CSD combinations
+native/blue-engine test: ok 2 - wrapper rejects ambiguous and incomplete supplied-CSD combinations
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 2.773375
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: wrapper passes paths with spaces and synthetic Windows paths through unchanged
+native/blue-engine test: ok 3 - wrapper passes paths with spaces and synthetic Windows paths through unchanged
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 2.749125
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: paired trial order is deterministic and balanced for a given seed
+native/blue-engine test: ok 4 - paired trial order is deterministic and balanced for a given seed
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.740791
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: mulberry32 draws are deterministic for a given seed
+native/blue-engine test: ok 5 - mulberry32 draws are deterministic for a given seed
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.089167
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: medianOf summarizes odd and even samples
+native/blue-engine test: ok 6 - medianOf summarizes odd and even samples
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.193833
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: comparison report has the mixer-generated-csd shape with verdicts
+native/blue-engine test: ok 7 - comparison report has the mixer-generated-csd shape with verdicts
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 6.588125
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: candidateFasterPct10 reports the 10 percent improvement verdict
+native/blue-engine test: ok 8 - candidateFasterPct10 reports the 10 percent improvement verdict
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.734708
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: baseline and candidate metadata must match with explicit field errors
+native/blue-engine test: ok 9 - baseline and candidate metadata must match with explicit field errors
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.594416
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: missing or malformed native metrics fail structurally
+native/blue-engine test: ok 10 - missing or malformed native metrics fail structurally
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.304459
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: non-finite, zero, or incomplete-window metrics fail the gate
+native/blue-engine test: ok 11 - non-finite, zero, or incomplete-window metrics fail the gate
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.35875
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: native CLI rejects --csd combined with --scenario
+native/blue-engine test: ok 12 - native CLI rejects --csd combined with --scenario
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 13.356958
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: native CLI rejects a missing or unreadable CSD file
+native/blue-engine test: ok 13 - native CLI rejects a missing or unreadable CSD file
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 3.173792
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: native CLI still rejects unknown arguments
+native/blue-engine test: ok 14 - native CLI still rejects unknown arguments
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 3.509167
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: native --csd mode reports a sha256-verified mixer-generated-csd report
+native/blue-engine test: ok 15 - native --csd mode reports a sha256-verified mixer-generated-csd report
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 139.815583
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+packages/blue-data test: (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+packages/blue-data test:   - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+packages/blue-data test:   - ESM syntax in a file loaded as CommonJS (../../scripts/vitest-package-reporters.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+packages/blue-data test: Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+packages/blue-engine-client test: (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+packages/blue-engine-client test:   - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+packages/blue-engine-client test:   - ESM syntax in a file loaded as CommonJS (../../scripts/vitest-package-reporters.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+packages/blue-engine-client test: Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+packages/blue-data test: 
+packages/blue-data test:  RUN  v4.1.11 /Users/stevenyi/work/blue3/packages/blue-data
+packages/blue-data test: 
+packages/blue-engine-client test: 
+packages/blue-engine-client test:  RUN  v4.1.11 /Users/stevenyi/work/blue3/packages/blue-engine-client
+packages/blue-engine-client test: 
+native/blue-engine test: # Subtest: native --csd mode fails when the requested window cannot complete
+native/blue-engine test: ok 16 - native --csd mode fails when the requested window cannot complete
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 44.05975
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: native fixed-scenario invocations without --csd are unchanged
+native/blue-engine test: ok 17 - native fixed-scenario invocations without --csd are unchanged
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 41.085625
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: supplied-CSD short windows require explicit research mode
+native/blue-engine test: ok 18 - supplied-CSD short windows require explicit research mode
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.27825
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: performance thresholds are separate from valid metrics and never rounded
+native/blue-engine test: ok 19 - performance thresholds are separate from valid metrics and never rounded
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.799084
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: requested windows and minimum paired trials cannot be inferred from matching short reports
+native/blue-engine test: ok 20 - requested windows and minimum paired trials cannot be inferred from matching short reports
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.163417
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: native short acceptance windows fail before runtime setup
+native/blue-engine test: ok 21 - native short acceptance windows fail before runtime setup
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 5.327875
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: acceptance capture identities require complete revision, input and binding hashes
+native/blue-engine test: ok 22 - acceptance capture identities require complete revision, input and binding hashes
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.584292
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: native CSD hash and runtime identity mismatches reject acceptance
+native/blue-engine test: ok 23 - native CSD hash and runtime identity mismatches reject acceptance
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.281583
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: native verifies effective layout rather than trusting a parsed header prefix
+native/blue-engine test: ok 24 - native verifies effective layout rather than trusting a parsed header prefix
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 90.601542
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: supplied-CSD trials reject fractional and suffixed numbers instead of truncating
+native/blue-engine test: ok 25 - supplied-CSD trials reject fractional and suffixed numbers instead of truncating
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.367458
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: keeps an incremental build configured with the current toolchain
+native/blue-engine test: ok 26 - keeps an incremental build configured with the current toolchain
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 10.856292
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: removes a build whose generated CMake system references a stale toolchain
+native/blue-engine test: ok 27 - removes a build whose generated CMake system references a stale toolchain
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 9.809417
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: selects supported target triplets deterministically
+native/blue-engine test: ok 28 - selects supported target triplets deterministically
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 1.979417
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: rejects unsupported and malformed targets
+native/blue-engine test: ok 29 - rejects unsupported and malformed targets
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.237833
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: uses an explicit bootstrapped VCPKG_ROOT
+native/blue-engine test: ok 30 - uses an explicit bootstrapped VCPKG_ROOT
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 4.531791
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Blue Engine: bootstrapping pinned vcpkg 9d7f79f56ae1a9b4704d6a7fb8237e347a974133 (first build only)
+native/blue-engine test: # Subtest: bootstraps and reuses the package-local checkout when VCPKG_ROOT is absent
+native/blue-engine test: ok 31 - bootstraps and reuses the package-local checkout when VCPKG_ROOT is absent
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 2.74925
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: rejects an explicit checkout that has not been bootstrapped
+native/blue-engine test: ok 32 - rejects an explicit checkout that has not been bootstrapped
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.770541
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: validates manifest schema and target
+native/blue-engine test: ok 33 - validates manifest schema and target
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 1.033542
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: rejects dirty revisions in CI
+native/blue-engine test: ok 34 - rejects dirty revisions in CI
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.797166
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: validates executable hash and permission
+native/blue-engine test: ok 35 - validates executable hash and permission
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 8.188291
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: rejects shared ZeroMQ, sodium, and Csound dependencies
+native/blue-engine test: ok 36 - rejects shared ZeroMQ, sodium, and Csound dependencies
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.241667
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: enforces platform runtime allowlists from dependency fixtures
+native/blue-engine test: ok 37 - enforces platform runtime allowlists from dependency fixtures
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 3.271625
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: validates executable architecture reports and glibc symbol floors
+native/blue-engine test: ok 38 - validates executable architecture reports and glibc symbol floors
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.340375
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: 1..38
+native/blue-engine test: # tests 38
+native/blue-engine test: # suites 0
+native/blue-engine test: # pass 38
+native/blue-engine test: # fail 0
+native/blue-engine test: # cancelled 0
+native/blue-engine test: # skipped 0
+native/blue-engine test: # todo 0
+native/blue-engine test: # duration_ms 514.231458
+packages/blue-engine-client test: 
+packages/blue-engine-client test:  Test Files  4 passed (4)
+packages/blue-engine-client test:       Tests  47 passed (47)
+packages/blue-engine-client test:    Start at  10:53:22
+packages/blue-engine-client test:    Duration  364ms (transform 517ms, setup 0ms, import 630ms, tests 24ms, environment 0ms)
+packages/blue-engine-client test: 
+packages/blue-engine-client test: Done
+native/blue-engine test: -- Running vcpkg install
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: Detecting compiler hash for triplet arm64-osx...
+native/blue-engine test: Compiler found: /usr/bin/c++
+native/blue-engine test: Detecting compiler hash for triplet blue-arm64-osx...
+native/blue-engine test: Compiler found: /usr/bin/c++
+native/blue-engine test: The following packages are already installed:
+native/blue-engine test:   * boost-assert:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-cmake:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-compat:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-concept-check:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-config:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-container:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-container-hash:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-core:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-describe:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-dynamic-bitset:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-headers:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-integer:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-intrusive:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-io:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-lexical-cast:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-math:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-move:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-mp11:blue-arm64-osx@1.91.0
+native/blue-engine test:     boost-multiprecision:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-predef:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-preprocessor:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-random:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-system:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-throw-exception:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-type-traits:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-uninstall:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-utility:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-variant2:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-winapi:blue-arm64-osx@1.91.0
+native/blue-engine test:   * vcpkg-boost:arm64-osx@2025-03-29
+native/blue-engine test:   * vcpkg-cmake:arm64-osx@2024-04-23
+native/blue-engine test:   * vcpkg-cmake-config:arm64-osx@2026-07-21
+native/blue-engine test: The following packages will be built and installed:
+native/blue-engine test:     zeromq:blue-arm64-osx@4.3.5#3
+native/blue-engine test: Restored 0 package(s) from /Users/stevenyi/.cache/vcpkg/archives in 780 us. Use --debug to see more details.
+native/blue-engine test: Installing 1/1 zeromq:blue-arm64-osx@4.3.5#3...
+native/blue-engine test: zeromq:blue-arm64-osx@4.3.5#3 package ABI: db65170565ca930f7decc3a3be7b1754ad4e2a8bb6e15f7c40eae6f76e175a65
+native/blue-engine test: Building zeromq:blue-arm64-osx@4.3.5#3...
+native/blue-engine test: /Users/stevenyi/work/blue3/native/blue-engine/triplets/blue-arm64-osx.cmake: info: loaded overlay triplet from here
+native/blue-engine test: -- Using cached zeromq-libzmq-v4.3.5.tar.gz
+native/blue-engine test: -- Cleaning sources at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/zeromq/src/v4.3.5-0744e81c3a.clean. Use --editable to skip cleaning for the packages you specify.
+native/blue-engine test: -- Extracting source /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/downloads/zeromq-libzmq-v4.3.5.tar.gz
+native/blue-engine test: -- Applying patch fix-arm.patch
+native/blue-engine test: -- Applying patch pkgconfig.diff
+native/blue-engine test: -- Applying patch rename-sha1.diff
+native/blue-engine test: -- Using source at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/zeromq/src/v4.3.5-0744e81c3a.clean
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+packages/blue-java test: WARNING: A restricted method in java.lang.System has been called
+packages/blue-java test: WARNING: java.lang.System::load has been called by com.kenai.jffi.internal.StubLoader in an unnamed module (file:/Users/stevenyi/.m2/repository/org/python/jython-standalone/2.7.4/jython-standalone-2.7.4.jar)
+packages/blue-java test: WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+packages/blue-java test: WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+packages/blue-java test: 
+native/blue-engine test: -- Configuring blue-arm64-osx
+packages/blue-java test: Done
+native/blue-engine test: CMake Warning at /Users/stevenyi/work/blue3/native/blue-engine/build-darwin-arm64-debug/vcpkg_installed/arm64-osx/share/vcpkg-cmake/vcpkg_cmake_configure.cmake:344 (message):
+native/blue-engine test:   The following variables are not used in CMakeLists.txt:
+native/blue-engine test: 
+native/blue-engine test:       CMAKE_POLICY_DEFAULT_CMP0057
+native/blue-engine test: 
+native/blue-engine test:   Please recheck them and remove the unnecessary options from the
+native/blue-engine test:   `vcpkg_cmake_configure` call.
+native/blue-engine test: 
+native/blue-engine test:   If these options should still be passed for whatever reason, please use the
+native/blue-engine test:   `MAYBE_UNUSED_VARIABLES` argument.
+native/blue-engine test: Call Stack (most recent call first):
+native/blue-engine test:   buildtrees/versioning_/versions/zeromq/0868a363e9184119409ac1e4c4d93077dcb8318a/portfile.cmake:33 (vcpkg_cmake_configure)
+native/blue-engine test:   scripts/ports.cmake:206 (include)
+native/blue-engine test: 
+native/blue-engine test: 
+native/blue-engine test: -- Building blue-arm64-osx-dbg
+native/blue-engine test: -- Building blue-arm64-osx-rel
+native/blue-engine test: -- Fixing pkgconfig file: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/zeromq_blue-arm64-osx/lib/pkgconfig/libzmq.pc
+native/blue-engine test: -- Fixing pkgconfig file: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/zeromq_blue-arm64-osx/debug/lib/pkgconfig/libzmq.pc
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/zeromq_blue-arm64-osx/share/zeromq/copyright
+native/blue-engine test: -- Performing post-build validation
+native/blue-engine test: Starting submission of zeromq:blue-arm64-osx@4.3.5#3 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle zeromq:blue-arm64-osx: 21 s
+native/blue-engine test: Installed contents are licensed to you by owners. Microsoft is not responsible for, nor does it grant any licenses to, third-party packages.
+native/blue-engine test: Packages installed in this vcpkg installation declare the following licenses:
+native/blue-engine test: MPL-2.0
+native/blue-engine test: The package boost-multiprecision is compatible with built-in CMake targets of FindBoost.cmake:
+native/blue-engine test: 
+native/blue-engine test:     find_package(Boost REQUIRED COMPONENTS multiprecision)
+native/blue-engine test:     target_link_libraries(main PRIVATE Boost::multiprecision)
+native/blue-engine test: 
+native/blue-engine test: or the generated cmake configs via:
+native/blue-engine test: 
+native/blue-engine test:     find_package( REQUIRED CONFIG)
+native/blue-engine test:     target_link_libraries(main PRIVATE Boost::multiprecision)
+native/blue-engine test: 
+native/blue-engine test: zeromq provides CMake targets:
+native/blue-engine test: 
+native/blue-engine test:   # this is heuristically generated, and may not be correct
+native/blue-engine test:   find_package(ZeroMQ CONFIG REQUIRED)
+native/blue-engine test:   target_link_libraries(main PRIVATE libzmq libzmq-static)
+native/blue-engine test: 
+native/blue-engine test: zeromq provides pkg-config modules:
+native/blue-engine test: 
+native/blue-engine test:   # 0MQ c++ library
+native/blue-engine test:   libzmq
+native/blue-engine test: 
+native/blue-engine test: Waiting for 1 remaining binary cache submissions...
+native/blue-engine test: Completed submission of zeromq:blue-arm64-osx@4.3.5#3 to 1 binary cache(s) in 676 ms (1/1)
+native/blue-engine test: All requested installations completed successfully in: 21 s
+native/blue-engine test: -- Running vcpkg install - done
+native/blue-engine test: -- Configuring done (25.2s)
+native/blue-engine test: -- Generating done (0.1s)
+native/blue-engine test: -- Build files have been written to: /Users/stevenyi/work/blue3/native/blue-engine/build-darwin-arm64-debug
+native/blue-engine test: [  0%] Building CXX object CMakeFiles/blue-engine.dir/src/main.cpp.o
+native/blue-engine test: [ 11%] Building CXX object CMakeFiles/blue-engine.dir/src/engine/CsoundEngine.cpp.o
+packages/blue-data test: 
+packages/blue-data test:  Test Files  222 passed | 1 skipped (223)
+packages/blue-data test:       Tests  3114 passed | 1 skipped (3115)
+packages/blue-data test:    Start at  10:53:22
+packages/blue-data test:    Duration  26.72s (transform 12.55s, setup 0ms, import 72.71s, tests 74.09s, environment 37ms)
+packages/blue-data test: 
+packages/blue-data test: Done
+packages/blue-cli test$ pnpm build && pnpm exec vitest run
+packages/blue-cli test: $ node ./scripts/build.mjs
+packages/blue-cli test: (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+packages/blue-cli test:   - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+packages/blue-cli test:   - ESM syntax in a file loaded as CommonJS (../../scripts/vitest-package-reporters.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+packages/blue-cli test: Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+packages/blue-cli test: 
+packages/blue-cli test:  RUN  v4.1.11 /Users/stevenyi/work/blue3/packages/blue-cli
+packages/blue-cli test: 
+native/blue-engine test: [ 22%] Building CXX object CMakeFiles/blue-engine.dir/src/ipc/ZmqHandler.cpp.o
+packages/blue-cli test: 
+packages/blue-cli test:  Test Files  2 passed (2)
+packages/blue-cli test:       Tests  7 passed (7)
+packages/blue-cli test:    Start at  10:53:49
+packages/blue-cli test:    Duration  1.12s (transform 863ms, setup 0ms, import 1.06s, tests 87ms, environment 0ms)
+packages/blue-cli test: 
+native/blue-engine test: [ 22%] Building CXX object CMakeFiles/blue-engine.dir/src/ipc/SharedMemory.cpp.o
+packages/blue-cli test: Done
+native/blue-engine test: [ 33%] Building CXX object CMakeFiles/blue-engine.dir/src/csound/CsoundLoader.cpp.o
+native/blue-engine test: [ 44%] Building CXX object CMakeFiles/blue-engine.dir/src/csound/CsoundRuntimeServices.cpp.o
+native/blue-engine test: [ 55%] Building CXX object CMakeFiles/blue-engine.dir/src/automation/AutomationStore.cpp.o
+native/blue-engine test: [ 55%] Building CXX object CMakeFiles/blue-engine.dir/src/automation/AutomationManager.cpp.o
+native/blue-engine test: [ 66%] Building CXX object CMakeFiles/blue-engine.dir/src/automation/JavaBigDecimal.cpp.o
+native/blue-engine test: [ 77%] Building CXX object CMakeFiles/blue-engine.dir/src/automation/ExactDecimalQuantizer.cpp.o
+native/blue-engine test: [ 77%] Building CXX object CMakeFiles/blue-engine.dir/src/protocol/Capabilities.cpp.o
+native/blue-engine test: [ 88%] Building CXX object CMakeFiles/blue-engine.dir/src/process/OwnerMonitor.cpp.o
+native/blue-engine test: [100%] Linking CXX executable blue-engine
+native/blue-engine test: [100%] Built target blue-engine
+native/blue-engine test: [  9%] Built target blue-engine
+native/blue-engine test: [  9%] Building CXX object CMakeFiles/benchmark_engine.dir/src/benchmark_main.cpp.o
+native/blue-engine test: [ 10%] Building CXX object CMakeFiles/benchmark_engine.dir/src/engine/CsoundEngine.cpp.o
+native/blue-engine test: [ 11%] Building CXX object CMakeFiles/benchmark_engine.dir/src/csound/CsoundLoader.cpp.o
+native/blue-engine test: [ 11%] Building CXX object CMakeFiles/benchmark_engine.dir/src/ipc/SharedMemory.cpp.o
+native/blue-engine test: [ 12%] Building CXX object CMakeFiles/benchmark_engine.dir/src/automation/AutomationStore.cpp.o
+native/blue-engine test: [ 13%] Building CXX object CMakeFiles/benchmark_engine.dir/src/automation/AutomationManager.cpp.o
+native/blue-engine test: [ 13%] Building CXX object CMakeFiles/benchmark_engine.dir/src/automation/JavaBigDecimal.cpp.o
+native/blue-engine test: [ 14%] Building CXX object CMakeFiles/benchmark_engine.dir/src/automation/ExactDecimalQuantizer.cpp.o
+native/blue-engine test: [ 15%] Linking CXX executable benchmark_engine
+native/blue-engine test: [ 15%] Built target benchmark_engine
+native/blue-engine test: [ 15%] Building CXX object tests/cpp/CMakeFiles/test_java_bigdecimal.dir/test_java_bigdecimal.cpp.o
+native/blue-engine test: [ 16%] Building CXX object tests/cpp/CMakeFiles/test_java_bigdecimal.dir/__/__/src/automation/JavaBigDecimal.cpp.o
+native/blue-engine test: [ 17%] Building CXX object tests/cpp/CMakeFiles/test_java_bigdecimal.dir/__/__/src/automation/ExactDecimalQuantizer.cpp.o
+native/blue-engine test: [ 17%] Linking CXX executable test_java_bigdecimal
+native/blue-engine test: [ 17%] Built target test_java_bigdecimal
+native/blue-engine test: [ 18%] Building CXX object tests/cpp/CMakeFiles/test_java_bigdecimal_parity.dir/test_java_bigdecimal_parity.cpp.o
+native/blue-engine test: [ 19%] Building CXX object tests/cpp/CMakeFiles/test_java_bigdecimal_parity.dir/java_parity_fixtures.cpp.o
+native/blue-engine test: [ 19%] Building CXX object tests/cpp/CMakeFiles/test_java_bigdecimal_parity.dir/__/__/src/automation/JavaBigDecimal.cpp.o
+native/blue-engine test: [ 20%] Building CXX object tests/cpp/CMakeFiles/test_java_bigdecimal_parity.dir/__/__/src/automation/ExactDecimalQuantizer.cpp.o
+native/blue-engine test: [ 21%] Building CXX object tests/cpp/CMakeFiles/test_java_bigdecimal_parity.dir/__/__/src/automation/AutomationStore.cpp.o
+native/blue-engine test: [ 22%] Building CXX object tests/cpp/CMakeFiles/test_java_bigdecimal_parity.dir/__/__/src/automation/AutomationManager.cpp.o
+native/blue-engine test: [ 22%] Linking CXX executable test_java_bigdecimal_parity
+native/blue-engine test: [ 22%] Built target test_java_bigdecimal_parity
+native/blue-engine test: [ 23%] Building CXX object tests/cpp/CMakeFiles/test_automation_protocol.dir/test_automation_protocol.cpp.o
+native/blue-engine test: [ 23%] Building CXX object tests/cpp/CMakeFiles/test_automation_protocol.dir/java_parity_fixtures.cpp.o
+native/blue-engine test: [ 24%] Building CXX object tests/cpp/CMakeFiles/test_automation_protocol.dir/__/__/src/ipc/ZmqHandler.cpp.o
+native/blue-engine test: [ 25%] Building CXX object tests/cpp/CMakeFiles/test_automation_protocol.dir/__/__/src/ipc/SharedMemory.cpp.o
+native/blue-engine test: [ 25%] Building CXX object tests/cpp/CMakeFiles/test_automation_protocol.dir/__/__/src/engine/CsoundEngine.cpp.o
+native/blue-engine test: [ 26%] Building CXX object tests/cpp/CMakeFiles/test_automation_protocol.dir/__/__/src/csound/CsoundLoader.cpp.o
+native/blue-engine test: [ 27%] Building CXX object tests/cpp/CMakeFiles/test_automation_protocol.dir/__/__/src/automation/AutomationStore.cpp.o
+native/blue-engine test: [ 27%] Building CXX object tests/cpp/CMakeFiles/test_automation_protocol.dir/__/__/src/automation/JavaBigDecimal.cpp.o
+native/blue-engine test: [ 28%] Building CXX object tests/cpp/CMakeFiles/test_automation_protocol.dir/__/__/src/automation/ExactDecimalQuantizer.cpp.o
+native/blue-engine test: [ 29%] Building CXX object tests/cpp/CMakeFiles/test_automation_protocol.dir/__/__/src/automation/AutomationManager.cpp.o
+native/blue-engine test: [ 29%] Building CXX object tests/cpp/CMakeFiles/test_automation_protocol.dir/__/__/src/protocol/Capabilities.cpp.o
+native/blue-engine test: [ 30%] Linking CXX executable test_automation_protocol
+native/blue-engine test: [ 30%] Built target test_automation_protocol
+native/blue-engine test: [ 30%] Building CXX object tests/cpp/CMakeFiles/test_automation_manager.dir/test_automation_manager.cpp.o
+native/blue-engine test: [ 31%] Building CXX object tests/cpp/CMakeFiles/test_automation_manager.dir/__/__/src/automation/AutomationStore.cpp.o
+native/blue-engine test: [ 32%] Building CXX object tests/cpp/CMakeFiles/test_automation_manager.dir/__/__/src/automation/JavaBigDecimal.cpp.o
+native/blue-engine test: [ 32%] Building CXX object tests/cpp/CMakeFiles/test_automation_manager.dir/__/__/src/automation/ExactDecimalQuantizer.cpp.o
+native/blue-engine test: [ 33%] Building CXX object tests/cpp/CMakeFiles/test_automation_manager.dir/__/__/src/automation/AutomationManager.cpp.o
+native/blue-engine test: [ 34%] Linking CXX executable test_automation_manager
+native/blue-engine test: [ 34%] Built target test_automation_manager
+native/blue-engine test: [ 34%] Building CXX object tests/cpp/CMakeFiles/test_csound_probe.dir/test_csound_probe.cpp.o
+native/blue-engine test: [ 35%] Building CXX object tests/cpp/CMakeFiles/test_csound_probe.dir/__/__/src/csound/CsoundLoader.cpp.o
+native/blue-engine test: [ 36%] Building CXX object tests/cpp/CMakeFiles/test_csound_probe.dir/__/__/src/protocol/Capabilities.cpp.o
+native/blue-engine test: [ 36%] Linking CXX executable test_csound_probe
+native/blue-engine test: [ 36%] Built target test_csound_probe
+native/blue-engine test: [ 36%] Building CXX object tests/cpp/CMakeFiles/test_realtime_channel_mailbox.dir/test_realtime_channel_mailbox.cpp.o
+native/blue-engine test: [ 37%] Linking CXX executable test_realtime_channel_mailbox
+native/blue-engine test: [ 37%] Built target test_realtime_channel_mailbox
+native/blue-engine test: [ 38%] Building CXX object tests/cpp/CMakeFiles/test_csound_runtime_services.dir/test_csound_runtime_services.cpp.o
+native/blue-engine test: [ 39%] Building CXX object tests/cpp/CMakeFiles/test_csound_runtime_services.dir/__/__/src/csound/CsoundRuntimeServices.cpp.o
+native/blue-engine test: [ 39%] Building CXX object tests/cpp/CMakeFiles/test_csound_runtime_services.dir/__/__/src/csound/CsoundLoader.cpp.o
+native/blue-engine test: [ 40%] Linking CXX executable test_csound_runtime_services
+native/blue-engine test: [ 40%] Built target test_csound_runtime_services
+native/blue-engine test: [ 41%] Building CXX object tests/cpp/CMakeFiles/test_engine_capabilities.dir/test_engine_capabilities.cpp.o
+native/blue-engine test: [ 42%] Building CXX object tests/cpp/CMakeFiles/test_engine_capabilities.dir/__/__/src/protocol/Capabilities.cpp.o
+native/blue-engine test: [ 42%] Building CXX object tests/cpp/CMakeFiles/test_engine_capabilities.dir/__/__/src/csound/CsoundLoader.cpp.o
+native/blue-engine test: [ 43%] Linking CXX executable test_engine_capabilities
+native/blue-engine test: [ 43%] Built target test_engine_capabilities
+native/blue-engine test: [ 44%] Building CXX object tests/cpp/CMakeFiles/test_channel_bridge.dir/test_channel_bridge.cpp.o
+native/blue-engine test: [ 44%] Building CXX object tests/cpp/CMakeFiles/test_channel_bridge.dir/__/__/src/engine/CsoundEngine.cpp.o
+native/blue-engine test: [ 45%] Building CXX object tests/cpp/CMakeFiles/test_channel_bridge.dir/__/__/src/ipc/SharedMemory.cpp.o
+native/blue-engine test: [ 46%] Building CXX object tests/cpp/CMakeFiles/test_channel_bridge.dir/__/__/src/ipc/ZmqHandler.cpp.o
+native/blue-engine test: [ 47%] Building CXX object tests/cpp/CMakeFiles/test_channel_bridge.dir/__/__/src/protocol/Capabilities.cpp.o
+native/blue-engine test: [ 47%] Building CXX object tests/cpp/CMakeFiles/test_channel_bridge.dir/__/__/src/csound/CsoundLoader.cpp.o
+native/blue-engine test: [ 48%] Building CXX object tests/cpp/CMakeFiles/test_channel_bridge.dir/__/__/src/automation/AutomationStore.cpp.o
+native/blue-engine test: [ 49%] Building CXX object tests/cpp/CMakeFiles/test_channel_bridge.dir/__/__/src/automation/JavaBigDecimal.cpp.o
+native/blue-engine test: [ 49%] Building CXX object tests/cpp/CMakeFiles/test_channel_bridge.dir/__/__/src/automation/ExactDecimalQuantizer.cpp.o
+native/blue-engine test: [ 50%] Building CXX object tests/cpp/CMakeFiles/test_channel_bridge.dir/__/__/src/automation/AutomationManager.cpp.o
+native/blue-engine test: [ 51%] Linking CXX executable test_channel_bridge
+native/blue-engine test: [ 51%] Built target test_channel_bridge
+native/blue-engine test: [ 51%] Building CXX object tests/cpp/CMakeFiles/test_csound_integration.dir/test_csound_integration.cpp.o
+native/blue-engine test: [ 52%] Building CXX object tests/cpp/CMakeFiles/test_csound_integration.dir/__/__/src/engine/CsoundEngine.cpp.o
+native/blue-engine test: [ 53%] Building CXX object tests/cpp/CMakeFiles/test_csound_integration.dir/__/__/src/ipc/SharedMemory.cpp.o
+native/blue-engine test: [ 53%] Building CXX object tests/cpp/CMakeFiles/test_csound_integration.dir/__/__/src/csound/CsoundLoader.cpp.o
+native/blue-engine test: [ 54%] Building CXX object tests/cpp/CMakeFiles/test_csound_integration.dir/__/__/src/csound/CsoundRuntimeServices.cpp.o
+native/blue-engine test: [ 55%] Building CXX object tests/cpp/CMakeFiles/test_csound_integration.dir/__/__/src/automation/AutomationStore.cpp.o
+native/blue-engine test: [ 56%] Building CXX object tests/cpp/CMakeFiles/test_csound_integration.dir/__/__/src/automation/JavaBigDecimal.cpp.o
+native/blue-engine test: [ 56%] Building CXX object tests/cpp/CMakeFiles/test_csound_integration.dir/__/__/src/automation/ExactDecimalQuantizer.cpp.o
+native/blue-engine test: [ 57%] Building CXX object tests/cpp/CMakeFiles/test_csound_integration.dir/__/__/src/automation/AutomationManager.cpp.o
+native/blue-engine test: [ 58%] Linking CXX executable test_csound_integration
+native/blue-engine test: [ 58%] Built target test_csound_integration
+native/blue-engine test: [ 59%] Building CXX object tests/cpp/CMakeFiles/test_csound_stress.dir/test_csound_stress.cpp.o
+native/blue-engine test: [ 59%] Building CXX object tests/cpp/CMakeFiles/test_csound_stress.dir/__/__/src/engine/CsoundEngine.cpp.o
+native/blue-engine test: [ 60%] Building CXX object tests/cpp/CMakeFiles/test_csound_stress.dir/__/__/src/ipc/SharedMemory.cpp.o
+native/blue-engine test: [ 61%] Building CXX object tests/cpp/CMakeFiles/test_csound_stress.dir/__/__/src/csound/CsoundLoader.cpp.o
+native/blue-engine test: [ 62%] Building CXX object tests/cpp/CMakeFiles/test_csound_stress.dir/__/__/src/automation/AutomationStore.cpp.o
+native/blue-engine test: [ 62%] Building CXX object tests/cpp/CMakeFiles/test_csound_stress.dir/__/__/src/automation/JavaBigDecimal.cpp.o
+native/blue-engine test: [ 63%] Building CXX object tests/cpp/CMakeFiles/test_csound_stress.dir/__/__/src/automation/ExactDecimalQuantizer.cpp.o
+native/blue-engine test: [ 64%] Building CXX object tests/cpp/CMakeFiles/test_csound_stress.dir/__/__/src/automation/AutomationManager.cpp.o
+native/blue-engine test: [ 64%] Linking CXX executable test_csound_stress
+native/blue-engine test: [ 64%] Built target test_csound_stress
+native/blue-engine test: [ 65%] Building CXX object tests/cpp/CMakeFiles/test_meter_sampling.dir/test_meter_sampling.cpp.o
+native/blue-engine test: [ 66%] Building CXX object tests/cpp/CMakeFiles/test_meter_sampling.dir/__/__/src/ipc/ZmqHandler.cpp.o
+native/blue-engine test: [ 66%] Building CXX object tests/cpp/CMakeFiles/test_meter_sampling.dir/__/__/src/ipc/SharedMemory.cpp.o
+native/blue-engine test: [ 67%] Building CXX object tests/cpp/CMakeFiles/test_meter_sampling.dir/__/__/src/engine/CsoundEngine.cpp.o
+native/blue-engine test: [ 68%] Building CXX object tests/cpp/CMakeFiles/test_meter_sampling.dir/__/__/src/csound/CsoundLoader.cpp.o
+native/blue-engine test: [ 68%] Building CXX object tests/cpp/CMakeFiles/test_meter_sampling.dir/__/__/src/automation/AutomationStore.cpp.o
+native/blue-engine test: [ 69%] Building CXX object tests/cpp/CMakeFiles/test_meter_sampling.dir/__/__/src/automation/JavaBigDecimal.cpp.o
+native/blue-engine test: [ 70%] Building CXX object tests/cpp/CMakeFiles/test_meter_sampling.dir/__/__/src/automation/ExactDecimalQuantizer.cpp.o
+native/blue-engine test: [ 70%] Building CXX object tests/cpp/CMakeFiles/test_meter_sampling.dir/__/__/src/automation/AutomationManager.cpp.o
+native/blue-engine test: [ 71%] Building CXX object tests/cpp/CMakeFiles/test_meter_sampling.dir/__/__/src/protocol/Capabilities.cpp.o
+native/blue-engine test: [ 72%] Linking CXX executable test_meter_sampling
+native/blue-engine test: [ 72%] Built target test_meter_sampling
+native/blue-engine test: [ 73%] Building CXX object tests/cpp/CMakeFiles/test_metering_benchmark.dir/test_metering_benchmark.cpp.o
+native/blue-engine test: [ 73%] Building CXX object tests/cpp/CMakeFiles/test_metering_benchmark.dir/__/__/src/ipc/ZmqHandler.cpp.o
+native/blue-engine test: [ 74%] Building CXX object tests/cpp/CMakeFiles/test_metering_benchmark.dir/__/__/src/ipc/SharedMemory.cpp.o
+native/blue-engine test: [ 75%] Building CXX object tests/cpp/CMakeFiles/test_metering_benchmark.dir/__/__/src/engine/CsoundEngine.cpp.o
+native/blue-engine test: [ 75%] Building CXX object tests/cpp/CMakeFiles/test_metering_benchmark.dir/__/__/src/csound/CsoundLoader.cpp.o
+native/blue-engine test: [ 76%] Building CXX object tests/cpp/CMakeFiles/test_metering_benchmark.dir/__/__/src/automation/AutomationStore.cpp.o
+native/blue-engine test: [ 77%] Building CXX object tests/cpp/CMakeFiles/test_metering_benchmark.dir/__/__/src/automation/JavaBigDecimal.cpp.o
+native/blue-engine test: [ 77%] Building CXX object tests/cpp/CMakeFiles/test_metering_benchmark.dir/__/__/src/automation/ExactDecimalQuantizer.cpp.o
+native/blue-engine test: [ 78%] Building CXX object tests/cpp/CMakeFiles/test_metering_benchmark.dir/__/__/src/automation/AutomationManager.cpp.o
+native/blue-engine test: [ 79%] Building CXX object tests/cpp/CMakeFiles/test_metering_benchmark.dir/__/__/src/protocol/Capabilities.cpp.o
+native/blue-engine test: [ 79%] Linking CXX executable test_metering_benchmark
+native/blue-engine test: [ 79%] Built target test_metering_benchmark
+native/blue-engine test: [ 80%] Building CXX object tests/cpp/CMakeFiles/test_zmq_idle_wakeup.dir/test_zmq_idle_wakeup.cpp.o
+native/blue-engine test: [ 80%] Building CXX object tests/cpp/CMakeFiles/test_zmq_idle_wakeup.dir/__/__/src/ipc/ZmqHandler.cpp.o
+native/blue-engine test: [ 81%] Building CXX object tests/cpp/CMakeFiles/test_zmq_idle_wakeup.dir/__/__/src/ipc/SharedMemory.cpp.o
+native/blue-engine test: [ 82%] Building CXX object tests/cpp/CMakeFiles/test_zmq_idle_wakeup.dir/__/__/src/engine/CsoundEngine.cpp.o
+native/blue-engine test: [ 82%] Building CXX object tests/cpp/CMakeFiles/test_zmq_idle_wakeup.dir/__/__/src/csound/CsoundLoader.cpp.o
+native/blue-engine test: [ 83%] Building CXX object tests/cpp/CMakeFiles/test_zmq_idle_wakeup.dir/__/__/src/automation/AutomationStore.cpp.o
+native/blue-engine test: [ 84%] Building CXX object tests/cpp/CMakeFiles/test_zmq_idle_wakeup.dir/__/__/src/automation/JavaBigDecimal.cpp.o
+native/blue-engine test: [ 84%] Building CXX object tests/cpp/CMakeFiles/test_zmq_idle_wakeup.dir/__/__/src/automation/ExactDecimalQuantizer.cpp.o
+native/blue-engine test: [ 85%] Building CXX object tests/cpp/CMakeFiles/test_zmq_idle_wakeup.dir/__/__/src/automation/AutomationManager.cpp.o
+native/blue-engine test: [ 86%] Building CXX object tests/cpp/CMakeFiles/test_zmq_idle_wakeup.dir/__/__/src/protocol/Capabilities.cpp.o
+native/blue-engine test: [ 87%] Linking CXX executable test_zmq_idle_wakeup
+native/blue-engine test: [ 87%] Built target test_zmq_idle_wakeup
+native/blue-engine test: [ 88%] Building CXX object tests/cpp/CMakeFiles/test_owner_monitor.dir/test_owner_monitor.cpp.o
+native/blue-engine test: [ 89%] Building CXX object tests/cpp/CMakeFiles/test_owner_monitor.dir/__/__/src/process/OwnerMonitor.cpp.o
+native/blue-engine test: [ 89%] Linking CXX executable test_owner_monitor
+native/blue-engine test: [ 89%] Built target test_owner_monitor
+native/blue-engine test: [ 90%] Building CXX object tests/cpp/CMakeFiles/test_engine_concurrency.dir/test_engine_concurrency.cpp.o
+native/blue-engine test: [ 90%] Building CXX object tests/cpp/CMakeFiles/test_engine_concurrency.dir/__/__/src/ipc/ZmqHandler.cpp.o
+native/blue-engine test: [ 91%] Building CXX object tests/cpp/CMakeFiles/test_engine_concurrency.dir/__/__/src/ipc/SharedMemory.cpp.o
+native/blue-engine test: [ 92%] Building CXX object tests/cpp/CMakeFiles/test_engine_concurrency.dir/__/__/src/engine/CsoundEngine.cpp.o
+native/blue-engine test: [ 93%] Building CXX object tests/cpp/CMakeFiles/test_engine_concurrency.dir/__/__/src/csound/CsoundLoader.cpp.o
+native/blue-engine test: [ 93%] Building CXX object tests/cpp/CMakeFiles/test_engine_concurrency.dir/__/__/src/automation/AutomationStore.cpp.o
+native/blue-engine test: [ 94%] Building CXX object tests/cpp/CMakeFiles/test_engine_concurrency.dir/__/__/src/automation/JavaBigDecimal.cpp.o
+native/blue-engine test: [ 95%] Building CXX object tests/cpp/CMakeFiles/test_engine_concurrency.dir/__/__/src/automation/ExactDecimalQuantizer.cpp.o
+native/blue-engine test: [ 95%] Building CXX object tests/cpp/CMakeFiles/test_engine_concurrency.dir/__/__/src/automation/AutomationManager.cpp.o
+native/blue-engine test: [ 96%] Building CXX object tests/cpp/CMakeFiles/test_engine_concurrency.dir/__/__/src/protocol/Capabilities.cpp.o
+native/blue-engine test: [ 97%] Linking CXX executable test_engine_concurrency
+native/blue-engine test: [ 97%] Built target test_engine_concurrency
+native/blue-engine test: [ 98%] Building CXX object tests/cpp/CMakeFiles/test_owner_monitor_integration.dir/test_owner_monitor_integration.cpp.o
+native/blue-engine test: [ 99%] Building CXX object tests/cpp/CMakeFiles/test_owner_monitor_integration.dir/__/__/src/process/OwnerMonitor.cpp.o
+native/blue-engine test: [100%] Linking CXX executable test_owner_monitor_integration
+native/blue-engine test: [100%] Built target test_owner_monitor_integration
+native/blue-engine test: Test project /Users/stevenyi/work/blue3/native/blue-engine/build-darwin-arm64-debug
+native/blue-engine test:       Start  1: blue-engine-help
+native/blue-engine test:  1/14 Test  #1: blue-engine-help .................   Passed    0.21 sec
+native/blue-engine test:       Start  2: blue-engine-invalid-option
+native/blue-engine test:  2/14 Test  #2: blue-engine-invalid-option .......   Passed    0.01 sec
+native/blue-engine test:       Start  3: JavaBigDecimalTests
+native/blue-engine test:  3/14 Test  #3: JavaBigDecimalTests ..............   Passed    0.28 sec
+native/blue-engine test:       Start  4: JavaBigDecimalParityTests
+native/blue-engine test:  4/14 Test  #4: JavaBigDecimalParityTests ........   Passed    0.52 sec
+native/blue-engine test:       Start  5: AutomationProtocolTests
+native/blue-engine test:  5/14 Test  #5: AutomationProtocolTests ..........   Passed    0.46 sec
+native/blue-engine test:       Start  6: AutomationManagerTests
+native/blue-engine test:  6/14 Test  #6: AutomationManagerTests ...........   Passed    0.10 sec
+native/blue-engine test:       Start  7: CsoundProbeTests
+native/blue-engine test:  7/14 Test  #7: CsoundProbeTests .................   Passed    0.07 sec
+native/blue-engine test:       Start  8: RealtimeChannelMailboxTests
+native/blue-engine test:  8/14 Test  #8: RealtimeChannelMailboxTests ......   Passed    0.07 sec
+native/blue-engine test:       Start  9: CsoundRuntimeServicesTests
+native/blue-engine test:  9/14 Test  #9: CsoundRuntimeServicesTests .......   Passed    0.11 sec
+native/blue-engine test:       Start 10: EngineCapabilitiesTests
+native/blue-engine test: 10/14 Test #10: EngineCapabilitiesTests ..........   Passed    0.08 sec
+native/blue-engine test:       Start 16: ZmqIdleWakeupTests
+native/blue-engine test: 11/14 Test #16: ZmqIdleWakeupTests ...............   Passed    0.17 sec
+native/blue-engine test:       Start 17: OwnerMonitorTests
+native/blue-engine test: 12/14 Test #17: OwnerMonitorTests ................   Passed    0.54 sec
+native/blue-engine test:       Start 18: EngineConcurrencyTests
+native/blue-engine test: 13/14 Test #18: EngineConcurrencyTests ...........   Passed    0.16 sec
+native/blue-engine test:       Start 19: OwnerMonitorIntegrationTests
+native/blue-engine test: 14/14 Test #19: OwnerMonitorIntegrationTests .....   Passed    0.13 sec
+native/blue-engine test: 
+native/blue-engine test: 100% tests passed out of 14
+native/blue-engine test: 
+native/blue-engine test: Total Test time (real) =   2.92 sec
+native/blue-engine test: Done
+packages/blue-app test$ vitest run --config vitest.config.ts
+packages/blue-app test: 
+packages/blue-app test:  RUN  v4.1.11 /Users/stevenyi/work/blue3/packages/blue-app
+packages/blue-app test: 
+packages/blue-app test: (node:3202) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: (node:5451) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: (node:6675) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: /bin/sh: nonexistent_command_xyz_12345: command not found
+packages/blue-app test: (node:7536) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: (node:7990) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: (node:8049) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: (node:8173) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: (node:8322) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: (node:8350) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+packages/blue-app test: (node:8357) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: (node:8438) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: (node:8444) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: (node:8533) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: (node:8589) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: (node:8594) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: (node:8592) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: (node:8638) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: (node:8734) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: (node:8783) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: (node:8826) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: (node:8840) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: (node:8846) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: (node:9091) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: (node:8855) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: (node:9267) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: (node:9193) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: (node:9266) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: (node:9334) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: (node:9389) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: (node:9439) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: (node:9520) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: (node:9519) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: (node:9565) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+packages/blue-app test: (Use `node --trace-warnings ...` to show where the warning was created)
+packages/blue-app test: 
+packages/blue-app test:  Test Files  532 passed (532)
+packages/blue-app test:       Tests  5800 passed | 3 skipped (5803)
+packages/blue-app test:    Start at  10:55:11
+packages/blue-app test:    Duration  74.68s (transform 42.56s, setup 0ms, import 315.04s, tests 291.26s, environment 142.08s)
+packages/blue-app test: 
+packages/blue-app test: Done
+$ node --test scripts/audit-renderer-theme.test.mjs scripts/audit-renderer-typography.test.mjs scripts/confirmation-dialog-lint.test.mjs scripts/parse-cli-flags.test.mjs scripts/release-metadata.test.mjs scripts/verify-package-inputs.test.mjs packages/blue-app/scripts/verify-release-version.test.mjs
+TAP version 13
+# Subtest: accepts beta and release-candidate tags with SemVer prerelease identifiers
+ok 1 - accepts beta and release-candidate tags with SemVer prerelease identifiers
+  ---
+  duration_ms: 92.561
+  type: 'test'
+  ...
+# Subtest: rejects invalid prerelease identifiers and build metadata in release tags
+    # Subtest: v3.0.0-beta.01
+    ok 1 - v3.0.0-beta.01
+      ---
+      duration_ms: 28.405166
+      type: 'test'
+      ...
+    # Subtest: v3.0.0-beta_1
+    ok 2 - v3.0.0-beta_1
+      ---
+      duration_ms: 27.233041
+      type: 'test'
+      ...
+    # Subtest: v3.0.0-beta+build
+    ok 3 - v3.0.0-beta+build
+      ---
+      duration_ms: 28.568542
+      type: 'test'
+      ...
+    1..3
+ok 2 - rejects invalid prerelease identifiers and build metadata in release tags
+  ---
+  duration_ms: 84.694875
+  type: 'test'
+  ...
+# Subtest: requires the package version to include the same prerelease suffix
+ok 3 - requires the package version to include the same prerelease suffix
+  ---
+  duration_ms: 27.63575
+  type: 'test'
+  ...
+# Subtest: parseColor handles hex, rgb, rgba, and named colors
+ok 4 - parseColor handles hex, rgb, rgba, and named colors
+  ---
+  duration_ms: 1.062959
+  type: 'test'
+  ...
+# Subtest: compositeAlpha calculates alpha composited color correctly
+ok 5 - compositeAlpha calculates alpha composited color correctly
+  ---
+  duration_ms: 0.107708
+  type: 'test'
+  ...
+# Subtest: contrastRatio calculates WCAG ratio without rounding failures upward
+ok 6 - contrastRatio calculates WCAG ratio without rounding failures upward
+  ---
+  duration_ms: 0.159833
+  type: 'test'
+  ...
+# Subtest: governed contrast pairs detect passing and failing contrast
+ok 7 - governed contrast pairs detect passing and failing contrast
+  ---
+  duration_ms: 8.09925
+  type: 'test'
+  ...
+# Subtest: fill and on-fill directionality requires dedicated on-fill token
+ok 8 - fill and on-fill directionality requires dedicated on-fill token
+  ---
+  duration_ms: 3.774542
+  type: 'test'
+  ...
+# Subtest: reports undefined theme aliases with file path and line number
+ok 9 - reports undefined theme aliases with file path and line number
+  ---
+  duration_ms: 3.165292
+  type: 'test'
+  ...
+# Subtest: reports prohibited global focus suppression in CSS
+ok 10 - reports prohibited global focus suppression in CSS
+  ---
+  duration_ms: 2.645125
+  type: 'test'
+  ...
+# Subtest: exact approved exceptions suppress findings
+ok 11 - exact approved exceptions suppress findings
+  ---
+  duration_ms: 2.938292
+  type: 'test'
+  ...
+# Subtest: reports stale exceptions when value is missing from target file
+ok 12 - reports stale exceptions when value is missing from target file
+  ---
+  duration_ms: 3.084709
+  type: 'test'
+  ...
+# Subtest: reports malformed exceptions with missing required fields or invalid kind
+ok 13 - reports malformed exceptions with missing required fields or invalid kind
+  ---
+  duration_ms: 2.925542
+  type: 'test'
+  ...
+# Subtest: failure-first detection for muted, subtle, accent, status fills, CodeMirror comments, borders, focus, and error states
+ok 14 - failure-first detection for muted, subtle, accent, status fills, CodeMirror comments, borders, focus, and error states
+  ---
+  duration_ms: 2.636417
+  type: 'test'
+  ...
+# Subtest: passes when all files use valid typography catalog and body baseline
+ok 15 - passes when all files use valid typography catalog and body baseline
+  ---
+  duration_ms: 48.662375
+  type: 'test'
+  ...
+# Subtest: requires Headline role assignments to opt into bold weight
+ok 16 - requires Headline role assignments to opt into bold weight
+  ---
+  duration_ms: 40.394791
+  type: 'test'
+  ...
+# Subtest: rejects retired legacy custom vocabulary (text-nano, text-micro, text-tiny, text-ui, text-body, text-content)
+ok 17 - rejects retired legacy custom vocabulary (text-nano, text-micro, text-tiny, text-ui, text-body, text-content)
+  ---
+  duration_ms: 39.302458
+  type: 'test'
+  ...
+# Subtest: rejects Tailwind default numeric text scale (text-xs, text-sm, text-base, text-lg, etc.) and variants
+ok 18 - rejects Tailwind default numeric text scale (text-xs, text-sm, text-base, text-lg, etc.) and variants
+  ---
+  duration_ms: 40.360667
+  type: 'test'
+  ...
+# Subtest: does not misclassify Tailwind text color or alignment utilities as font sizes
+ok 19 - does not misclassify Tailwind text color or alignment utilities as font sizes
+  ---
+  duration_ms: 41.626875
+  type: 'test'
+  ...
+# Subtest: rejects Tailwind arbitrary font size utilities
+ok 20 - rejects Tailwind arbitrary font size utilities
+  ---
+  duration_ms: 38.683292
+  type: 'test'
+  ...
+# Subtest: rejects raw CSS font-size declarations not using role variables
+ok 21 - rejects raw CSS font-size declarations not using role variables
+  ---
+  duration_ms: 38.499333
+  type: 'test'
+  ...
+# Subtest: rejects raw inline/React fontSize styles not using role variables
+ok 22 - rejects raw inline/React fontSize styles not using role variables
+  ---
+  duration_ms: 39.91125
+  type: 'test'
+  ...
+# Subtest: rejects raw SVG fontSize attributes not using role variables
+ok 23 - rejects raw SVG fontSize attributes not using role variables
+  ---
+  duration_ms: 39.545542
+  type: 'test'
+  ...
+# Subtest: rejects raw Canvas context font assignments not using resolver
+ok 24 - rejects raw Canvas context font assignments not using resolver
+  ---
+  duration_ms: 40.124292
+  type: 'test'
+  ...
+# Subtest: accepts Canvas drawing using resolveTypographyRoleFont helper
+ok 25 - accepts Canvas drawing using resolveTypographyRoleFont helper
+  ---
+  duration_ms: 39.89675
+  type: 'test'
+  ...
+# Subtest: rejects unapproved leading/line-height overrides
+ok 26 - rejects unapproved leading/line-height overrides
+  ---
+  duration_ms: 40.781667
+  type: 'test'
+  ...
+# Subtest: handles exact exceptions from docs/typography.md and detects stale exceptions
+ok 27 - handles exact exceptions from docs/typography.md and detects stale exceptions
+  ---
+  duration_ms: 39.576583
+  type: 'test'
+  ...
+# Subtest: handles non-text glyph and single-line line-height exceptions and overmatching counts
+ok 28 - handles non-text glyph and single-line line-height exceptions and overmatching counts
+  ---
+  duration_ms: 40.333166
+  type: 'test'
+  ...
+# Subtest: excludes test, browser, __mocks__, and @blue/data from audit scope
+ok 29 - excludes test, browser, __mocks__, and @blue/data from audit scope
+  ---
+  duration_ms: 38.7535
+  type: 'test'
+  ...
+# Subtest: normalizes paths to deterministic POSIX format on all platforms
+ok 30 - normalizes paths to deterministic POSIX format on all platforms
+  ---
+  duration_ms: 38.021
+  type: 'test'
+  ...
+# Subtest: rejects a dynamic or expanded token namespace
+ok 31 - rejects a dynamic or expanded token namespace
+  ---
+  duration_ms: 37.421541
+  type: 'test'
+  ...
+# Subtest: rejects multiline SVG attributes, JSX fontSize attributes, and inline lineHeight assignments
+ok 32 - rejects multiline SVG attributes, JSX fontSize attributes, and inline lineHeight assignments
+  ---
+  duration_ms: 40.613
+  type: 'test'
+  ...
+# Subtest: rejects raw CSS font shorthands, line heights, and typography custom properties
+ok 33 - rejects raw CSS font shorthands, line heights, and typography custom properties
+  ---
+  duration_ms: 38.235291
+  type: 'test'
+  ...
+# Subtest: rejects implicit small, sub, and sup elements without an explicit role
+ok 34 - rejects implicit small, sub, and sup elements without an explicit role
+  ---
+  duration_ms: 38.434833
+  type: 'test'
+  ...
+# Subtest: fails fast on malformed and duplicate exception registries
+ok 35 - fails fast on malformed and duplicate exception registries
+  ---
+  duration_ms: 59.824792
+  type: 'test'
+  ...
+# Subtest: production renderer code rejects bare, window, and globalThis browser dialogs
+ok 36 - production renderer code rejects bare, window, and globalThis browser dialogs
+  ---
+  duration_ms: 427.576292
+  type: 'test'
+  ...
+# Subtest: main-process code rejects both synchronous and asynchronous message boxes
+ok 37 - main-process code rejects both synchronous and asynchronous message boxes
+  ---
+  duration_ms: 2.4085
+  type: 'test'
+  ...
+# Subtest: tests and the native confirmation adapter are explicit lint boundaries
+ok 38 - tests and the native confirmation adapter are explicit lint boundaries
+  ---
+  duration_ms: 2.081708
+  type: 'test'
+  ...
+# Subtest: fixture directories remain outside the production audit scope
+ok 39 - fixture directories remain outside the production audit scope
+  ---
+  duration_ms: 0.263542
+  type: 'test'
+  ...
+# Subtest: parses values, booleans, repeated flags, and ignores positionals
+ok 40 - parses values, booleans, repeated flags, and ignores positionals
+  ---
+  duration_ms: 1.107459
+  type: 'test'
+  ...
+# Subtest: preserves the legacy empty-value behavior when requested
+ok 41 - preserves the legacy empty-value behavior when requested
+  ---
+  duration_ms: 0.074625
+  type: 'test'
+  ...
+# Subtest: defaults to the development channel
+ok 42 - defaults to the development channel
+  ---
+  duration_ms: 33.132583
+  type: 'test'
+  ...
+# Subtest: uses BLUE_RELEASE_CHANNEL when no channel flag is supplied
+ok 43 - uses BLUE_RELEASE_CHANNEL when no channel flag is supplied
+  ---
+  duration_ms: 27.98575
+  type: 'test'
+  ...
+# Subtest: preserves tagged prerelease versions and labels their metadata
+ok 44 - preserves tagged prerelease versions and labels their metadata
+  ---
+  duration_ms: 28.324709
+  type: 'test'
+  ...
+# Subtest: accepts exactly one revision-matched staged engine
+ok 45 - accepts exactly one revision-matched staged engine
+  ---
+  duration_ms: 3.965125
+  type: 'test'
+  ...
+# Subtest: rejects protocol, target, revision, hash, and extra-file mismatches
+    # Subtest: protocol
+    ok 1 - protocol
+      ---
+      duration_ms: 1.157208
+      type: 'test'
+      ...
+    # Subtest: target
+    ok 2 - target
+      ---
+      duration_ms: 1.124375
+      type: 'test'
+      ...
+    # Subtest: revision
+    ok 3 - revision
+      ---
+      duration_ms: 1.138792
+      type: 'test'
+      ...
+    # Subtest: hash
+    ok 4 - hash
+      ---
+      duration_ms: 2.478709
+      type: 'test'
+      ...
+    # Subtest: extra file
+    ok 5 - extra file
+      ---
+      duration_ms: 1.898833
+      type: 'test'
+      ...
+    1..5
+ok 46 - rejects protocol, target, revision, hash, and extra-file mismatches
+  ---
+  duration_ms: 8.631833
+  type: 'test'
+  ...
+# Subtest: accepts complete release metadata for the requested channel
+ok 47 - accepts complete release metadata for the requested channel
+  ---
+  duration_ms: 1.916417
+  type: 'test'
+  ...
+# Subtest: accepts complete prerelease metadata for the prerelease channel
+ok 48 - accepts complete prerelease metadata for the prerelease channel
+  ---
+  duration_ms: 1.800541
+  type: 'test'
+  ...
+# Subtest: rejects channel and full-revision mismatches in release metadata
+    # Subtest: channel mismatch
+    ok 1 - channel mismatch
+      ---
+      duration_ms: 1.677417
+      type: 'test'
+      ...
+    # Subtest: short revision
+    ok 2 - short revision
+      ---
+      duration_ms: 1.773583
+      type: 'test'
+      ...
+    1..2
+ok 49 - rejects channel and full-revision mismatches in release metadata
+  ---
+  duration_ms: 3.702084
+  type: 'test'
+  ...
+1..49
+# tests 59
+# suites 0
+# pass 59
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 906.565667

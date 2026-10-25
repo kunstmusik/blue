@@ -4,19 +4,19 @@ import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ChannelStrip from '../components/workbench/panels/mixer/ChannelStrip';
-import { MeterStore, meterStore } from '../stores/meter-store';
+import { meterStore } from '../stores/meter-store';
 import {
   createEmptyMixerSnapshot,
   type MixerChannelSnapshot,
   type MixerSnapshot,
 } from '../../shared/project-editor';
-import type { MeterBindingMapPayload, MeterFramePayload } from '../../shared/meter-types';
+import type { MeterBindingMapPayload } from '../../shared/meter-types';
 
 (
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
-describe('Mounted 64-Strip Metering Performance and Interaction Latency (SC-003, FR-013)', () => {
+describe('Mounted 64-strip metering and fader interactions (FR-013)', () => {
   let host: HTMLDivElement;
   let root: Root;
   let rafCallbacks: Array<(timestamp: number) => void> = [];
@@ -323,10 +323,11 @@ describe('Mounted 64-Strip Metering Performance and Interaction Latency (SC-003,
     expect(clearRectMock).toHaveBeenCalled();
   });
 
-  it('measures fader interaction latency on 64 strips with metering within 20% of baseline (SC-003)', () => {
+  // Real frame-rate and latency acceptance stays in mixer-metering.browser.test.tsx
+  // with its strict 20% budget. Shared-worker JSDOM wall time cannot measure it.
+  it('preserves all 64-strip fader edits while processing and painting active meter frames', () => {
     const { mixer, channels } = create64ChannelMixer();
     setupBindingMap(channels);
-
     const onPatch = vi.fn();
 
     act(() => {
@@ -349,79 +350,53 @@ describe('Mounted 64-Strip Metering Performance and Interaction Latency (SC-003,
       );
     });
 
-    const sliders = host.querySelectorAll<HTMLElement>(
-      '[role="slider"][aria-orientation="vertical"]',
-    );
-    expect(sliders.length).toBe(64);
+    const selector = '[role="slider"][aria-orientation="vertical"]';
+    const sliders = Array.from(host.querySelectorAll<HTMLElement>(selector));
+    expect(sliders).toHaveLength(64);
+    const expectedEdits = channels.map((channel) => [
+      { type: 'updateChannel', channelId: channel.id, patch: { level: 0.1 } },
+    ]);
 
-    const ITERATIONS = 10;
-
-    // --- Phase A: Non-metering baseline ---
-    // In baseline, meters are parked at silence (no audio frames streaming).
-    meterStore.reset();
-    setupBindingMap(channels);
-
-    const startBaseline = performance.now();
-    act(() => {
-      for (let iter = 0; iter < ITERATIONS; iter++) {
-        // Dispatch fader interaction on every strip
-        for (let i = 0; i < 64; i++) {
-          const slider = sliders[i];
-          slider.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+    for (const metering of [false, true]) {
+      for (let iter = 0; iter < 10; iter++) {
+        onPatch.mockClear();
+        if (metering) {
+          mockCanvasContext.clearRect.mockClear();
+          act(() => {
+            const now = 1000 + iter * 33.3;
+            meterStore.processMeterFrame(
+              {
+                sequence: iter + 1,
+                channels: channels.map((channel) => ({
+                  csdKey: channel.id,
+                  rms: [0.3, 0.3],
+                  peak: [0.5, 0.5],
+                })),
+              },
+              now,
+            );
+            const callbacks = rafCallbacks;
+            rafCallbacks = [];
+            expect(callbacks).toHaveLength(64);
+            for (const callback of callbacks) callback(now);
+          });
+          expect(mockCanvasContext.clearRect).toHaveBeenCalledTimes(64);
+          // Telemetry must not emit project edits or replace the controls.
+          expect(onPatch).not.toHaveBeenCalled();
+          const currentSliders = host.querySelectorAll(selector);
+          sliders.forEach((slider, index) => expect(currentSliders[index]).toBe(slider));
         }
-      }
-    });
-    const baselineElapsed = performance.now() - startBaseline;
 
-    // --- Phase B: Active 64-strip metering ---
-    // Feed 30 Hz audio frames and drive animation frames
-    let frameSeq = 100;
-    const startMetered = performance.now();
-    act(() => {
-      for (let iter = 0; iter < ITERATIONS; iter++) {
-        // Feed a meter frame to all 64 strips
-        meterStore.processMeterFrame({
-          sequence: ++frameSeq,
-          channels: channels.map((c, idx) => ({
-            csdKey: c.id,
-            rms: [0.3 + 0.01 * (idx % 10), 0.3],
-            peak: [0.5 + 0.01 * (idx % 10), 0.5],
-          })),
+        act(() => {
+          for (const slider of sliders) {
+            const before = onPatch.mock.calls.length;
+            slider.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+            // Each interaction reaches the production commit handler synchronously.
+            expect(onPatch).toHaveBeenCalledTimes(before + 1);
+          }
         });
-
-        // Advance animation frame callbacks for all 64 strips
-        const currentCbs = [...rafCallbacks];
-        rafCallbacks = [];
-        const now = 1000 + iter * 33.3;
-        for (const cb of currentCbs) {
-          cb(now);
-        }
-
-        // Perform identical fader interaction on every strip
-        for (let i = 0; i < 64; i++) {
-          const slider = sliders[i];
-          slider.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
-        }
+        expect(onPatch.mock.calls).toEqual(expectedEdits);
       }
-    });
-    const meteredElapsed = performance.now() - startMetered;
-
-    // Verify interactions succeeded
-    expect(onPatch).toHaveBeenCalled();
-
-    // Interaction latency difference should be small and within SC-003 bounds.
-    // In JSDOM test environments, total execution times for 640 slider interactions + 10 rAFs are ~20-80ms.
-    // When baseline is very fast (< 10ms), jitter can cause small absolute variations,
-    // so we assert either:
-    // 1) meteredElapsed <= baselineElapsed * 1.20 (within 20%) OR
-    // 2) absolute difference is less than 50ms (sub-frame headroom over 640 interactions).
-    // In shared CI runner environments under multi-tenant CPU load, provide additional headroom to prevent false failures.
-    const overheadRatio = process.env.CI ? 1.4 : 1.2;
-    const absoluteBuffer = process.env.CI ? 200 : 50;
-    const maxAllowedTime = Math.max(
-      baselineElapsed * overheadRatio,
-      baselineElapsed + absoluteBuffer,
-    );
-    expect(meteredElapsed).toBeLessThanOrEqual(maxAllowedTime);
+    }
   }, 30_000);
 });

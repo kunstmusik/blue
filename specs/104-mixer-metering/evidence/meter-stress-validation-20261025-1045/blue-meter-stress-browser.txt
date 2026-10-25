@@ -1,0 +1,10 @@
+$ vitest --config vitest.browser.config.ts --run src/renderer/browser/mixer-metering.browser.test.tsx
+
+ RUN  v4.1.11 /Users/stevenyi/work/blue3/packages/blue-app
+
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  10:45:10
+   Duration  16.12s (transform 0ms, setup 0ms, import 1.26s, tests 4.34s, environment 0ms)
+

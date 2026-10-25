@@ -127,7 +127,7 @@ pnpm --filter @blue/app build:main
 |:---|:---|:---|:---:|
 | **SC-001** | Multi-track meters track audio & fall to silence | `src/main/meter-engine.integration.test.ts` (sine wave RMS ~0.353, peak ~0.5, -6 dB fader attenuation, silence reset) | **PASS** |
 | **SC-002** | Sustained delivery ≥30 Hz, no stall >200 ms | `src/main/meter-engine.integration.test.ts` (measured delivery ~35.2 Hz, max interval ~32 ms, monotonic sequence) | **PASS** |
-| **SC-003** | UI responsive with 64 metered strips | `src/renderer/tests/meter-stress.test.tsx` (fader drag latency 0.81 ms vs 0.77 ms baseline: +5.2% < 20% budget) | **PASS** |
+| **SC-003** | UI responsive with 64 metered strips | `src/renderer/browser/mixer-metering.browser.test.tsx` (strict 20% frame-rate and interaction gates); `src/renderer/tests/meter-stress.test.tsx` (deterministic edits and paints) | **PASS** |
 | **SC-004** | Audio safety & benchmark soak | `src/main/meter-engine.integration.test.ts` (soak test 0 dropouts), `test_csound_stress` (707 restarts passed), `benchmark_engine` (0 spikes) | **PASS** |
 | **SC-005** | Disk render & CSD export byte-identity | `packages/blue-data/src/blue-data/csd-policy.test.ts` (byte-identical disk & screen CSD fixtures, 0 meter statements) | **PASS** |
 | **SC-006** | Engine capability graceful degradation | `packages/blue-engine-client/tests/engine-client.test.ts` (skips meter topic when capability absent) | **PASS** |
@@ -150,7 +150,11 @@ pnpm --filter @blue/app build:main
 - **Maximum Inter-Frame Stall**: 32.1 ms (limit < 200 ms).
 - **Sequence Integrity**: 100% strictly monotonic (`seq[i] === seq[i-1] + 1`), 0 dropped frames.
 
-#### 2. Mounted 64-Strip UI Latency Stress (`src/renderer/tests/meter-stress.test.tsx`)
+#### 2. Historical mounted 64-strip JSDOM timing (superseded)
+
+The following old diagnostic measurements are retained as history. They are
+not current performance acceptance evidence. The deterministic replacement
+and unchanged real-browser acceptance gate are described under T045 below.
 ```
  RUN  v4.1.6 packages/blue-app
  ✓ src/renderer/tests/meter-stress.test.tsx (3 tests) 908ms
@@ -292,8 +296,16 @@ suite (T047), and a strict production browser frame-rate gate (T045).
   baselineFps=59.9 meteredFps=59.9 baselineInteractionMs=21.60 meteredInteractionMs=22.20 fpsRatio=1.000
   baselineFps=59.9 meteredFps=59.9 baselineInteractionMs=24.50 meteredInteractionMs=22.50 fpsRatio=1.000
   ```
-- The earlier jsdom `meter-stress.test.tsx` timing remains a component-level
-  benchmark only (mocked rAF); the browser test above is the SC-003 gate.
+- The jsdom `meter-stress.test.tsx` suite uses deterministic assertions for
+  all 640 fader edits with idle meters and all 640 edits with 64 actively
+  painted meters: exact synchronous commit payloads/order, no telemetry-driven
+  project edits, stable slider elements, and 64 paints per frame. Shared-worker
+  JSDOM wall time is not a latency gate. The browser test above remains the
+  strict SC-003 gate, with its 20% thresholds unchanged.
+- Run the performance gate alone, without concurrent tests/builds:
+  `pnpm --filter @blue/app test:browser src/renderer/browser/mixer-metering.browser.test.tsx`.
+  The default `pnpm test` checks deterministic behavior; it does not claim a
+  real-browser performance acceptance run.
 
 ### Phase 9 native suite
 
@@ -332,3 +344,35 @@ suite (T047), and a strict production browser frame-rate gate (T045).
 - Implementation and convergence are complete; all tasks through T054 are checked.
 - Automated validation and performance evidence are recorded above.
 - Project-owner manual testing passed and the feature is accepted for closure.
+
+### 2026-10-25 — Remove shared-worker timing flakiness
+
+The default JSDOM stress test no longer compares wall-clock totals for idle
+fader dispatch against dispatch plus meter ingestion, drawing, and readout
+updates. CPU scheduling/GC can change that ratio under the full parallel
+workspace suite. Increasing timing headroom or retrying until green is not
+the fix.
+
+Its replacement checks all 640 idle and 640 actively metered keyboard edits
+for exact payloads and order, synchronous delivery, no telemetry-generated
+project edits, stable control elements, and 64 canvas paints on every driven
+frame. The existing real-Chromium test retains the strict 20% frame-rate and
+interaction limits and passes 3/3 when run alone on 2026-10-25. No production
+renderer or performance threshold changed.
+
+Validation after the fix: focused meter suite 3/3, real-browser suite 3/3,
+workspace tests, and `pnpm lint` pass. The full workspace run used the
+matching installed Command Line Tools for this command only:
+
+```sh
+DEVELOPER_DIR=/Library/Developer/CommandLineTools pnpm test
+```
+
+The initial default native build encountered a selected-compiler/SDK mismatch;
+a subsequent attempt needed pkg-config, which became available before the
+successful run. An unrelated SQLite runtime probe timed out in the first full
+app run, then passed both in isolation and in the full workspace. No timeout,
+performance limit, production source, or global Xcode selection was changed.
+Logs and source identities are retained in the
+[validation record](evidence/meter-stress-validation-20261025-1045/validation.json),
+whose log paths are relative to that record.

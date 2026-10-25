@@ -1,0 +1,1003 @@
+$ pnpm -r run test && pnpm test:scripts
+Scope: 6 of 7 workspace projects
+packages/blue-java test$ mvn -q test
+native/blue-engine test$ node --test scripts/*.test.mjs && node scripts/test.mjs unit
+packages/blue-engine-client test$ vitest run
+packages/blue-data test$ vitest run
+native/blue-engine test: TAP version 13
+native/blue-engine test: # Subtest: wrapper accepts --csd with --baseline-csd and keeps historical args
+native/blue-engine test: ok 1 - wrapper accepts --csd with --baseline-csd and keeps historical args
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 12.909208
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: wrapper rejects ambiguous and incomplete supplied-CSD combinations
+native/blue-engine test: ok 2 - wrapper rejects ambiguous and incomplete supplied-CSD combinations
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 3.407208
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: wrapper passes paths with spaces and synthetic Windows paths through unchanged
+native/blue-engine test: ok 3 - wrapper passes paths with spaces and synthetic Windows paths through unchanged
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 3.619
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: paired trial order is deterministic and balanced for a given seed
+native/blue-engine test: ok 4 - paired trial order is deterministic and balanced for a given seed
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 1.032708
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: mulberry32 draws are deterministic for a given seed
+native/blue-engine test: ok 5 - mulberry32 draws are deterministic for a given seed
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.0955
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: medianOf summarizes odd and even samples
+native/blue-engine test: ok 6 - medianOf summarizes odd and even samples
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.193
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: comparison report has the mixer-generated-csd shape with verdicts
+native/blue-engine test: ok 7 - comparison report has the mixer-generated-csd shape with verdicts
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 8.213459
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: candidateFasterPct10 reports the 10 percent improvement verdict
+native/blue-engine test: ok 8 - candidateFasterPct10 reports the 10 percent improvement verdict
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.559333
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: baseline and candidate metadata must match with explicit field errors
+native/blue-engine test: ok 9 - baseline and candidate metadata must match with explicit field errors
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 1.000917
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: missing or malformed native metrics fail structurally
+native/blue-engine test: ok 10 - missing or malformed native metrics fail structurally
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.312791
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: non-finite, zero, or incomplete-window metrics fail the gate
+native/blue-engine test: ok 11 - non-finite, zero, or incomplete-window metrics fail the gate
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.657834
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: native CLI rejects --csd combined with --scenario
+native/blue-engine test: ok 12 - native CLI rejects --csd combined with --scenario
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 18.297042
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: native CLI rejects a missing or unreadable CSD file
+native/blue-engine test: ok 13 - native CLI rejects a missing or unreadable CSD file
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 4.976792
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: native CLI still rejects unknown arguments
+native/blue-engine test: ok 14 - native CLI still rejects unknown arguments
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 4.586458
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: native --csd mode reports a sha256-verified mixer-generated-csd report
+native/blue-engine test: ok 15 - native --csd mode reports a sha256-verified mixer-generated-csd report
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 170.573875
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+packages/blue-data test: (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+packages/blue-data test:   - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+packages/blue-data test:   - ESM syntax in a file loaded as CommonJS (../../scripts/vitest-package-reporters.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+packages/blue-data test: Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+packages/blue-engine-client test: (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+packages/blue-engine-client test:   - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+packages/blue-engine-client test:   - ESM syntax in a file loaded as CommonJS (../../scripts/vitest-package-reporters.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+packages/blue-engine-client test: Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+native/blue-engine test: # Subtest: native --csd mode fails when the requested window cannot complete
+native/blue-engine test: ok 16 - native --csd mode fails when the requested window cannot complete
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 57.149583
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: native fixed-scenario invocations without --csd are unchanged
+native/blue-engine test: ok 17 - native fixed-scenario invocations without --csd are unchanged
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 42.739667
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: supplied-CSD short windows require explicit research mode
+native/blue-engine test: ok 18 - supplied-CSD short windows require explicit research mode
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.119125
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: performance thresholds are separate from valid metrics and never rounded
+native/blue-engine test: ok 19 - performance thresholds are separate from valid metrics and never rounded
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.38925
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: requested windows and minimum paired trials cannot be inferred from matching short reports
+native/blue-engine test: ok 20 - requested windows and minimum paired trials cannot be inferred from matching short reports
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.119833
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: native short acceptance windows fail before runtime setup
+native/blue-engine test: ok 21 - native short acceptance windows fail before runtime setup
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 5.226916
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: acceptance capture identities require complete revision, input and binding hashes
+native/blue-engine test: ok 22 - acceptance capture identities require complete revision, input and binding hashes
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.626333
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: native CSD hash and runtime identity mismatches reject acceptance
+native/blue-engine test: ok 23 - native CSD hash and runtime identity mismatches reject acceptance
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.271583
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+packages/blue-data test: 
+packages/blue-data test:  RUN  v4.1.11 /Users/stevenyi/work/blue3/packages/blue-data
+packages/blue-data test: 
+packages/blue-engine-client test: 
+packages/blue-engine-client test:  RUN  v4.1.11 /Users/stevenyi/work/blue3/packages/blue-engine-client
+packages/blue-engine-client test: 
+native/blue-engine test: # Subtest: native verifies effective layout rather than trusting a parsed header prefix
+native/blue-engine test: ok 24 - native verifies effective layout rather than trusting a parsed header prefix
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 31.932583
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: supplied-CSD trials reject fractional and suffixed numbers instead of truncating
+native/blue-engine test: ok 25 - supplied-CSD trials reject fractional and suffixed numbers instead of truncating
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.163209
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: keeps an incremental build configured with the current toolchain
+native/blue-engine test: ok 26 - keeps an incremental build configured with the current toolchain
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 24.874833
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: removes a build whose generated CMake system references a stale toolchain
+native/blue-engine test: ok 27 - removes a build whose generated CMake system references a stale toolchain
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 18.831167
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: selects supported target triplets deterministically
+native/blue-engine test: ok 28 - selects supported target triplets deterministically
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 2.743583
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: rejects unsupported and malformed targets
+native/blue-engine test: ok 29 - rejects unsupported and malformed targets
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 1.151583
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: uses an explicit bootstrapped VCPKG_ROOT
+native/blue-engine test: ok 30 - uses an explicit bootstrapped VCPKG_ROOT
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 6.54625
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Blue Engine: bootstrapping pinned vcpkg 9d7f79f56ae1a9b4704d6a7fb8237e347a974133 (first build only)
+native/blue-engine test: # Subtest: bootstraps and reuses the package-local checkout when VCPKG_ROOT is absent
+native/blue-engine test: ok 31 - bootstraps and reuses the package-local checkout when VCPKG_ROOT is absent
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 6.057042
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: rejects an explicit checkout that has not been bootstrapped
+native/blue-engine test: ok 32 - rejects an explicit checkout that has not been bootstrapped
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 2.629833
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: validates manifest schema and target
+native/blue-engine test: ok 33 - validates manifest schema and target
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.998417
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: rejects dirty revisions in CI
+native/blue-engine test: ok 34 - rejects dirty revisions in CI
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.14675
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: validates executable hash and permission
+native/blue-engine test: ok 35 - validates executable hash and permission
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 15.9305
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: rejects shared ZeroMQ, sodium, and Csound dependencies
+native/blue-engine test: ok 36 - rejects shared ZeroMQ, sodium, and Csound dependencies
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.201958
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: enforces platform runtime allowlists from dependency fixtures
+native/blue-engine test: ok 37 - enforces platform runtime allowlists from dependency fixtures
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 7.098542
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: # Subtest: validates executable architecture reports and glibc symbol floors
+native/blue-engine test: ok 38 - validates executable architecture reports and glibc symbol floors
+native/blue-engine test:   ---
+native/blue-engine test:   duration_ms: 0.633583
+native/blue-engine test:   type: 'test'
+native/blue-engine test:   ...
+native/blue-engine test: 1..38
+native/blue-engine test: # tests 38
+native/blue-engine test: # suites 0
+native/blue-engine test: # pass 38
+native/blue-engine test: # fail 0
+native/blue-engine test: # cancelled 0
+native/blue-engine test: # skipped 0
+native/blue-engine test: # todo 0
+native/blue-engine test: # duration_ms 483.641375
+packages/blue-engine-client test: 
+packages/blue-engine-client test:  Test Files  4 passed (4)
+packages/blue-engine-client test:       Tests  47 passed (47)
+packages/blue-engine-client test:    Start at  10:51:05
+packages/blue-engine-client test:    Duration  515ms (transform 617ms, setup 0ms, import 826ms, tests 26ms, environment 0ms)
+packages/blue-engine-client test: 
+packages/blue-engine-client test: Done
+native/blue-engine test: -- Running vcpkg install
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: Detecting compiler hash for triplet arm64-osx...
+native/blue-engine test: Compiler found: /usr/bin/c++
+native/blue-engine test: Detecting compiler hash for triplet blue-arm64-osx...
+native/blue-engine test: Compiler found: /usr/bin/c++
+native/blue-engine test: The following packages will be rebuilt:
+native/blue-engine test:   * boost-assert:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-cmake:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-compat:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-concept-check:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-config:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-container:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-container-hash:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-core:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-describe:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-dynamic-bitset:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-headers:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-integer:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-intrusive:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-io:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-lexical-cast:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-math:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-move:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-mp11:blue-arm64-osx@1.91.0
+native/blue-engine test:     boost-multiprecision:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-predef:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-preprocessor:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-random:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-system:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-throw-exception:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-type-traits:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-uninstall:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-utility:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-variant2:blue-arm64-osx@1.91.0
+native/blue-engine test:   * boost-winapi:blue-arm64-osx@1.91.0
+native/blue-engine test:   * vcpkg-boost:arm64-osx@2025-03-29
+native/blue-engine test:   * vcpkg-cmake:arm64-osx@2024-04-23
+native/blue-engine test:   * vcpkg-cmake-config:arm64-osx@2026-07-21
+native/blue-engine test:     zeromq:blue-arm64-osx@4.3.5#3
+native/blue-engine test: Additional packages (*) will be modified to complete this operation.
+native/blue-engine test: Restored 0 package(s) from /Users/stevenyi/.cache/vcpkg/archives in 5.08 ms. Use --debug to see more details.
+native/blue-engine test: Removing 1/66 zeromq:blue-arm64-osx
+native/blue-engine test: Elapsed time to handle zeromq:blue-arm64-osx: 6.95 ms
+native/blue-engine test: Removing 2/66 boost-multiprecision:blue-arm64-osx
+native/blue-engine test: Elapsed time to handle boost-multiprecision:blue-arm64-osx: 23.6 ms
+native/blue-engine test: Removing 3/66 boost-math:blue-arm64-osx
+native/blue-engine test: Elapsed time to handle boost-math:blue-arm64-osx: 125 ms
+native/blue-engine test: Removing 4/66 boost-concept-check:blue-arm64-osx
+native/blue-engine test: Elapsed time to handle boost-concept-check:blue-arm64-osx: 2.93 ms
+native/blue-engine test: Removing 5/66 boost-lexical-cast:blue-arm64-osx
+native/blue-engine test: Elapsed time to handle boost-lexical-cast:blue-arm64-osx: 3.25 ms
+native/blue-engine test: Removing 6/66 boost-container:blue-arm64-osx
+native/blue-engine test: Elapsed time to handle boost-container:blue-arm64-osx: 12.3 ms
+native/blue-engine test: Removing 7/66 boost-intrusive:blue-arm64-osx
+native/blue-engine test: Elapsed time to handle boost-intrusive:blue-arm64-osx: 13.9 ms
+native/blue-engine test: Removing 8/66 boost-move:blue-arm64-osx
+native/blue-engine test: Elapsed time to handle boost-move:blue-arm64-osx: 6.15 ms
+native/blue-engine test: Removing 9/66 boost-random:blue-arm64-osx
+native/blue-engine test: Elapsed time to handle boost-random:blue-arm64-osx: 8.15 ms
+native/blue-engine test: Removing 10/66 boost-dynamic-bitset:blue-arm64-osx
+native/blue-engine test: Elapsed time to handle boost-dynamic-bitset:blue-arm64-osx: 1.82 ms
+native/blue-engine test: Removing 11/66 boost-container-hash:blue-arm64-osx
+native/blue-engine test: Elapsed time to handle boost-container-hash:blue-arm64-osx: 2.77 ms
+native/blue-engine test: Removing 12/66 boost-describe:blue-arm64-osx
+native/blue-engine test: Elapsed time to handle boost-describe:blue-arm64-osx: 4.23 ms
+native/blue-engine test: Removing 13/66 boost-integer:blue-arm64-osx
+native/blue-engine test: Elapsed time to handle boost-integer:blue-arm64-osx: 2.26 ms
+native/blue-engine test: Removing 14/66 boost-system:blue-arm64-osx
+native/blue-engine test: Elapsed time to handle boost-system:blue-arm64-osx: 4.07 ms
+native/blue-engine test: Removing 15/66 boost-compat:blue-arm64-osx
+native/blue-engine test: Elapsed time to handle boost-compat:blue-arm64-osx: 1.99 ms
+native/blue-engine test: Removing 16/66 boost-variant2:blue-arm64-osx
+native/blue-engine test: Elapsed time to handle boost-variant2:blue-arm64-osx: 1.97 ms
+native/blue-engine test: Removing 17/66 boost-mp11:blue-arm64-osx
+native/blue-engine test: Elapsed time to handle boost-mp11:blue-arm64-osx: 3.16 ms
+native/blue-engine test: Removing 18/66 boost-winapi:blue-arm64-osx
+native/blue-engine test: Elapsed time to handle boost-winapi:blue-arm64-osx: 9.96 ms
+native/blue-engine test: Removing 19/66 boost-predef:blue-arm64-osx
+native/blue-engine test: Elapsed time to handle boost-predef:blue-arm64-osx: 15.2 ms
+native/blue-engine test: Removing 20/66 boost-utility:blue-arm64-osx
+native/blue-engine test: Elapsed time to handle boost-utility:blue-arm64-osx: 2.88 ms
+native/blue-engine test: Removing 21/66 boost-core:blue-arm64-osx
+native/blue-engine test: Elapsed time to handle boost-core:blue-arm64-osx: 7.42 ms
+native/blue-engine test: Removing 22/66 boost-io:blue-arm64-osx
+native/blue-engine test: Elapsed time to handle boost-io:blue-arm64-osx: 3.73 ms
+native/blue-engine test: Removing 23/66 boost-preprocessor:blue-arm64-osx
+native/blue-engine test: Elapsed time to handle boost-preprocessor:blue-arm64-osx: 53.9 ms
+native/blue-engine test: Removing 24/66 boost-type-traits:blue-arm64-osx
+native/blue-engine test: Elapsed time to handle boost-type-traits:blue-arm64-osx: 13 ms
+native/blue-engine test: Removing 25/66 boost-throw-exception:blue-arm64-osx
+native/blue-engine test: Elapsed time to handle boost-throw-exception:blue-arm64-osx: 1.44 ms
+native/blue-engine test: Removing 26/66 boost-assert:blue-arm64-osx
+native/blue-engine test: Elapsed time to handle boost-assert:blue-arm64-osx: 1.71 ms
+native/blue-engine test: Removing 27/66 boost-config:blue-arm64-osx
+native/blue-engine test: Elapsed time to handle boost-config:blue-arm64-osx: 18.8 ms
+native/blue-engine test: Removing 28/66 boost-headers:blue-arm64-osx
+native/blue-engine test: Elapsed time to handle boost-headers:blue-arm64-osx: 1.81 ms
+native/blue-engine test: Removing 29/66 boost-cmake:blue-arm64-osx
+native/blue-engine test: Elapsed time to handle boost-cmake:blue-arm64-osx: 1.5 ms
+native/blue-engine test: Removing 30/66 boost-uninstall:blue-arm64-osx
+native/blue-engine test: Elapsed time to handle boost-uninstall:blue-arm64-osx: 897 us
+native/blue-engine test: Removing 31/66 vcpkg-boost:arm64-osx
+native/blue-engine test: Elapsed time to handle vcpkg-boost:arm64-osx: 1.04 ms
+native/blue-engine test: Removing 32/66 vcpkg-cmake:arm64-osx
+native/blue-engine test: Elapsed time to handle vcpkg-cmake:arm64-osx: 1.01 ms
+native/blue-engine test: Removing 33/66 vcpkg-cmake-config:arm64-osx
+native/blue-engine test: Elapsed time to handle vcpkg-cmake-config:arm64-osx: 1.25 ms
+native/blue-engine test: Installing 34/66 vcpkg-cmake-config:arm64-osx@2026-07-21...
+native/blue-engine test: vcpkg-cmake-config:arm64-osx@2026-07-21 package ABI: fb0ef6bf1acb924a3e29274add2bfffaa7cee48598d4b63a8ac47bb675823ffb
+native/blue-engine test: Building vcpkg-cmake-config:arm64-osx@2026-07-21...
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/vcpkg-cmake-config_arm64-osx/share/vcpkg-cmake-config/vcpkg_cmake_config_fixup.cmake
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/vcpkg-cmake-config_arm64-osx/share/vcpkg-cmake-config/vcpkg-port-config.cmake
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/vcpkg-cmake-config_arm64-osx/share/vcpkg-cmake-config/copyright
+native/blue-engine test: -- Skipping post-build validation due to VCPKG_POLICY_EMPTY_PACKAGE
+native/blue-engine test: Starting submission of vcpkg-cmake-config:arm64-osx@2026-07-21 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle vcpkg-cmake-config:arm64-osx: 50 ms
+native/blue-engine test: Installing 35/66 vcpkg-cmake:arm64-osx@2024-04-23...
+native/blue-engine test: vcpkg-cmake:arm64-osx@2024-04-23 package ABI: 2ba48a03e4b071587ec35361af2fc0c7aa506bbb45924bc01f8480b61a359357
+native/blue-engine test: Building vcpkg-cmake:arm64-osx@2024-04-23...
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/vcpkg-cmake_arm64-osx/share/vcpkg-cmake/vcpkg_cmake_configure.cmake
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/vcpkg-cmake_arm64-osx/share/vcpkg-cmake/vcpkg_cmake_build.cmake
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/vcpkg-cmake_arm64-osx/share/vcpkg-cmake/vcpkg_cmake_install.cmake
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/vcpkg-cmake_arm64-osx/share/vcpkg-cmake/vcpkg-port-config.cmake
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/vcpkg-cmake_arm64-osx/share/vcpkg-cmake/copyright
+native/blue-engine test: -- Performing post-build validation
+native/blue-engine test: Starting submission of vcpkg-cmake:arm64-osx@2024-04-23 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle vcpkg-cmake:arm64-osx: 112 ms
+native/blue-engine test: Completed submission of vcpkg-cmake-config:arm64-osx@2026-07-21 to 1 binary cache(s) in 19.5 ms
+native/blue-engine test: Installing 36/66 vcpkg-boost:arm64-osx@2025-03-29...
+native/blue-engine test: vcpkg-boost:arm64-osx@2025-03-29 package ABI: 34c9fe1bc6583672863be14d36836da722f0cf05d2092bc1b2225551fe75e7bf
+native/blue-engine test: Building vcpkg-boost:arm64-osx@2025-03-29...
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/vcpkg-boost_arm64-osx/share/vcpkg-boost/usage.in
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/vcpkg-boost_arm64-osx/share/vcpkg-boost/boost-install.cmake
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/vcpkg-boost_arm64-osx/share/vcpkg-boost/vcpkg-port-config.cmake
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/vcpkg-boost_arm64-osx/share/vcpkg-boost/copyright
+native/blue-engine test: -- Performing post-build validation
+native/blue-engine test: Starting submission of vcpkg-boost:arm64-osx@2025-03-29 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle vcpkg-boost:arm64-osx: 66.1 ms
+native/blue-engine test: Completed submission of vcpkg-cmake:arm64-osx@2024-04-23 to 1 binary cache(s) in 18.9 ms
+native/blue-engine test: Installing 37/66 boost-uninstall:blue-arm64-osx@1.91.0...
+native/blue-engine test: boost-uninstall:blue-arm64-osx@1.91.0 package ABI: b4bd09714df12fd3f9b09a2ba6475fae87768a9d9e598199eac1c35270d81e1b
+native/blue-engine test: Building boost-uninstall:blue-arm64-osx@1.91.0...
+native/blue-engine test: /Users/stevenyi/work/blue3/native/blue-engine/triplets/blue-arm64-osx.cmake: info: loaded overlay triplet from here
+native/blue-engine test: -- 
+native/blue-engine test: Please use the following command when you need to remove all boost ports/components:
+native/blue-engine test:     "./vcpkg remove boost-uninstall:blue-arm64-osx --recurse"
+native/blue-engine test: 
+native/blue-engine test: -- Skipping post-build validation due to VCPKG_POLICY_EMPTY_PACKAGE
+native/blue-engine test: Starting submission of boost-uninstall:blue-arm64-osx@1.91.0 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle boost-uninstall:blue-arm64-osx: 57.2 ms
+native/blue-engine test: Completed submission of vcpkg-boost:arm64-osx@2025-03-29 to 1 binary cache(s) in 27.2 ms
+native/blue-engine test: Installing 38/66 boost-cmake:blue-arm64-osx@1.91.0...
+native/blue-engine test: boost-cmake:blue-arm64-osx@1.91.0 package ABI: 3b94c66ff43f666038718125ebc42a2e8904d953b3501f2c0166ace8da632176
+native/blue-engine test: Building boost-cmake:blue-arm64-osx@1.91.0...
+native/blue-engine test: /Users/stevenyi/work/blue3/native/blue-engine/triplets/blue-arm64-osx.cmake: info: loaded overlay triplet from here
+native/blue-engine test: -- Using cached boostorg-cmake-boost-1.91.0.tar.gz
+native/blue-engine test: -- Cleaning sources at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-cmake/src/ost-1.91.0-b98b86c516.clean. Use --editable to skip cleaning for the packages you specify.
+native/blue-engine test: -- Extracting source /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/downloads/boostorg-cmake-boost-1.91.0.tar.gz
+native/blue-engine test: -- Applying patch 0001-vcpkg-build.patch
+native/blue-engine test: -- Applying patch 0002-remove-prefix-and-suffix.patch
+native/blue-engine test: -- Using source at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-cmake/src/ost-1.91.0-b98b86c516.clean
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: -- Configuring blue-arm64-osx
+native/blue-engine test: -- Building blue-arm64-osx-dbg
+native/blue-engine test: -- Building blue-arm64-osx-rel
+native/blue-engine test: -- Up-to-date: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-cmake_blue-arm64-osx/share/boost/cmake-build
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-cmake_blue-arm64-osx/share/boost/cmake-build/BoostFetch.cmake
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-cmake_blue-arm64-osx/share/boost/cmake-build/BoostInstall.cmake
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-cmake_blue-arm64-osx/share/boost/cmake-build/BoostTest.cmake
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-cmake_blue-arm64-osx/share/boost/cmake-build/BoostTestJamfile.cmake
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-cmake_blue-arm64-osx/share/boost/cmake-build/BoostMessage.cmake
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-cmake_blue-arm64-osx/share/boost/cmake-build/BoostRoot.cmake
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-cmake_blue-arm64-osx/share/boost-cmake/vcpkg-port-config.cmake
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-cmake_blue-arm64-osx/share/boost-cmake/usage
+native/blue-engine test: -- Using cached boost-1.91.0-LICENSE_1_0.txt
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-cmake_blue-arm64-osx/share/boost-cmake/copyright
+native/blue-engine test: -- Performing post-build validation
+native/blue-engine test: Starting submission of boost-cmake:blue-arm64-osx@1.91.0 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle boost-cmake:blue-arm64-osx: 394 ms
+native/blue-engine test: Completed submission of boost-uninstall:blue-arm64-osx@1.91.0 to 1 binary cache(s) in 12.7 ms
+native/blue-engine test: Installing 39/66 boost-headers:blue-arm64-osx@1.91.0...
+native/blue-engine test: boost-headers:blue-arm64-osx@1.91.0 package ABI: 3a2b505e678368055e5c9cccc1d2baeb42d18f538c8e777d6dab7bc1d86ed4ff
+native/blue-engine test: Building boost-headers:blue-arm64-osx@1.91.0...
+native/blue-engine test: /Users/stevenyi/work/blue3/native/blue-engine/triplets/blue-arm64-osx.cmake: info: loaded overlay triplet from here
+native/blue-engine test: -- Using cached boostorg-headers-boost-1.91.0.tar.gz
+native/blue-engine test: -- Cleaning sources at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-headers/src/ost-1.91.0-deced4dad5.clean. Use --editable to skip cleaning for the packages you specify.
+native/blue-engine test: -- Extracting source /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/downloads/boostorg-headers-boost-1.91.0.tar.gz
+native/blue-engine test: -- Using source at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-headers/src/ost-1.91.0-deced4dad5.clean
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: -- Configuring blue-arm64-osx
+native/blue-engine test: -- Building blue-arm64-osx-rel
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-headers_blue-arm64-osx/share/boost-headers/copyright
+native/blue-engine test: -- Performing post-build validation
+native/blue-engine test: Starting submission of boost-headers:blue-arm64-osx@1.91.0 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle boost-headers:blue-arm64-osx: 781 ms
+native/blue-engine test: Completed submission of boost-cmake:blue-arm64-osx@1.91.0 to 1 binary cache(s) in 17 ms
+native/blue-engine test: Installing 40/66 boost-config:blue-arm64-osx@1.91.0...
+native/blue-engine test: boost-config:blue-arm64-osx@1.91.0 package ABI: a72d7bd8ab3bdc8ae549973bdec65626bd7ea9f0f45205080d2354205de80f03
+native/blue-engine test: Building boost-config:blue-arm64-osx@1.91.0...
+native/blue-engine test: /Users/stevenyi/work/blue3/native/blue-engine/triplets/blue-arm64-osx.cmake: info: loaded overlay triplet from here
+native/blue-engine test: -- Using cached boostorg-config-boost-1.91.0.tar.gz
+native/blue-engine test: -- Cleaning sources at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-config/src/ost-1.91.0-8c93c1936b.clean. Use --editable to skip cleaning for the packages you specify.
+native/blue-engine test: -- Extracting source /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/downloads/boostorg-config-boost-1.91.0.tar.gz
+native/blue-engine test: -- Using source at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-config/src/ost-1.91.0-8c93c1936b.clean
+packages/blue-java test: WARNING: A restricted method in java.lang.System has been called
+packages/blue-java test: WARNING: java.lang.System::load has been called by com.kenai.jffi.internal.StubLoader in an unnamed module (file:/Users/stevenyi/.m2/repository/org/python/jython-standalone/2.7.4/jython-standalone-2.7.4.jar)
+packages/blue-java test: WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+packages/blue-java test: WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+packages/blue-java test: 
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: -- Configuring blue-arm64-osx
+native/blue-engine test: -- Building blue-arm64-osx-rel
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-config_blue-arm64-osx/share/boost-config/copyright
+native/blue-engine test: -- Performing post-build validation
+native/blue-engine test: Starting submission of boost-config:blue-arm64-osx@1.91.0 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle boost-config:blue-arm64-osx: 1.3 s
+native/blue-engine test: Completed submission of boost-headers:blue-arm64-osx@1.91.0 to 1 binary cache(s) in 10.4 ms
+native/blue-engine test: Installing 41/66 boost-assert:blue-arm64-osx@1.91.0...
+native/blue-engine test: boost-assert:blue-arm64-osx@1.91.0 package ABI: 4e2c4258b6c4c4bf92e0567ef89bd67748e43b3f44bf9798a9378e63ab33f86b
+native/blue-engine test: Building boost-assert:blue-arm64-osx@1.91.0...
+native/blue-engine test: /Users/stevenyi/work/blue3/native/blue-engine/triplets/blue-arm64-osx.cmake: info: loaded overlay triplet from here
+native/blue-engine test: -- Using cached boostorg-assert-boost-1.91.0.tar.gz
+native/blue-engine test: -- Cleaning sources at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-assert/src/ost-1.91.0-cb8d01e109.clean. Use --editable to skip cleaning for the packages you specify.
+native/blue-engine test: -- Extracting source /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/downloads/boostorg-assert-boost-1.91.0.tar.gz
+native/blue-engine test: -- Using source at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-assert/src/ost-1.91.0-cb8d01e109.clean
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: -- Configuring blue-arm64-osx
+native/blue-engine test: -- Building blue-arm64-osx-rel
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-assert_blue-arm64-osx/share/boost-assert/copyright
+native/blue-engine test: -- Performing post-build validation
+native/blue-engine test: Starting submission of boost-assert:blue-arm64-osx@1.91.0 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle boost-assert:blue-arm64-osx: 824 ms
+native/blue-engine test: Completed submission of boost-config:blue-arm64-osx@1.91.0 to 1 binary cache(s) in 39.7 ms
+native/blue-engine test: Installing 42/66 boost-throw-exception:blue-arm64-osx@1.91.0...
+native/blue-engine test: boost-throw-exception:blue-arm64-osx@1.91.0 package ABI: e375026d1d2d196d74e8b5b5d4cd41d59b9a871ac44b7a58028267822ffc952b
+native/blue-engine test: Building boost-throw-exception:blue-arm64-osx@1.91.0...
+native/blue-engine test: /Users/stevenyi/work/blue3/native/blue-engine/triplets/blue-arm64-osx.cmake: info: loaded overlay triplet from here
+native/blue-engine test: -- Using cached boostorg-throw_exception-boost-1.91.0.tar.gz
+native/blue-engine test: -- Cleaning sources at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-throw-exception/src/ost-1.91.0-34cc1d0ecf.clean. Use --editable to skip cleaning for the packages you specify.
+native/blue-engine test: -- Extracting source /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/downloads/boostorg-throw_exception-boost-1.91.0.tar.gz
+native/blue-engine test: -- Using source at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-throw-exception/src/ost-1.91.0-34cc1d0ecf.clean
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: -- Configuring blue-arm64-osx
+native/blue-engine test: -- Building blue-arm64-osx-rel
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-throw-exception_blue-arm64-osx/share/boost-throw-exception/copyright
+native/blue-engine test: -- Performing post-build validation
+native/blue-engine test: Starting submission of boost-throw-exception:blue-arm64-osx@1.91.0 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle boost-throw-exception:blue-arm64-osx: 926 ms
+native/blue-engine test: Completed submission of boost-assert:blue-arm64-osx@1.91.0 to 1 binary cache(s) in 17.2 ms
+native/blue-engine test: Installing 43/66 boost-type-traits:blue-arm64-osx@1.91.0...
+native/blue-engine test: boost-type-traits:blue-arm64-osx@1.91.0 package ABI: ed541aedb1adb05fff1fa5bd8583d29ba6a799597107a5c6fce9a0207085bbbb
+native/blue-engine test: Building boost-type-traits:blue-arm64-osx@1.91.0...
+native/blue-engine test: /Users/stevenyi/work/blue3/native/blue-engine/triplets/blue-arm64-osx.cmake: info: loaded overlay triplet from here
+native/blue-engine test: -- Using cached boostorg-type_traits-boost-1.91.0.tar.gz
+native/blue-engine test: -- Cleaning sources at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-type-traits/src/ost-1.91.0-a5f6721c78.clean. Use --editable to skip cleaning for the packages you specify.
+native/blue-engine test: -- Extracting source /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/downloads/boostorg-type_traits-boost-1.91.0.tar.gz
+native/blue-engine test: -- Using source at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-type-traits/src/ost-1.91.0-a5f6721c78.clean
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: -- Configuring blue-arm64-osx
+native/blue-engine test: -- Building blue-arm64-osx-rel
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-type-traits_blue-arm64-osx/share/boost-type-traits/copyright
+native/blue-engine test: -- Performing post-build validation
+native/blue-engine test: Starting submission of boost-type-traits:blue-arm64-osx@1.91.0 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle boost-type-traits:blue-arm64-osx: 1.2 s
+native/blue-engine test: Completed submission of boost-throw-exception:blue-arm64-osx@1.91.0 to 1 binary cache(s) in 14.2 ms
+native/blue-engine test: Installing 44/66 boost-preprocessor:blue-arm64-osx@1.91.0...
+native/blue-engine test: boost-preprocessor:blue-arm64-osx@1.91.0 package ABI: 3691993774777b69a20ce80c4b2d7d134704054332257cfdd2bfc9f5f8f7dddc
+native/blue-engine test: Building boost-preprocessor:blue-arm64-osx@1.91.0...
+native/blue-engine test: /Users/stevenyi/work/blue3/native/blue-engine/triplets/blue-arm64-osx.cmake: info: loaded overlay triplet from here
+native/blue-engine test: -- Using cached boostorg-preprocessor-boost-1.91.0.tar.gz
+native/blue-engine test: -- Cleaning sources at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-preprocessor/src/ost-1.91.0-e8c38f2791.clean. Use --editable to skip cleaning for the packages you specify.
+native/blue-engine test: -- Extracting source /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/downloads/boostorg-preprocessor-boost-1.91.0.tar.gz
+native/blue-engine test: -- Using source at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-preprocessor/src/ost-1.91.0-e8c38f2791.clean
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: -- Configuring blue-arm64-osx
+native/blue-engine test: -- Building blue-arm64-osx-rel
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-preprocessor_blue-arm64-osx/share/boost-preprocessor/copyright
+native/blue-engine test: -- Performing post-build validation
+native/blue-engine test: Starting submission of boost-preprocessor:blue-arm64-osx@1.91.0 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle boost-preprocessor:blue-arm64-osx: 1.9 s
+native/blue-engine test: Completed submission of boost-type-traits:blue-arm64-osx@1.91.0 to 1 binary cache(s) in 41.4 ms
+native/blue-engine test: Installing 45/66 boost-io:blue-arm64-osx@1.91.0...
+native/blue-engine test: boost-io:blue-arm64-osx@1.91.0 package ABI: b29186dcad485b89b7c4b1ce20a8e802600c1e5f46f99f73b49e6e90898e576b
+native/blue-engine test: Building boost-io:blue-arm64-osx@1.91.0...
+native/blue-engine test: /Users/stevenyi/work/blue3/native/blue-engine/triplets/blue-arm64-osx.cmake: info: loaded overlay triplet from here
+native/blue-engine test: -- Using cached boostorg-io-boost-1.91.0.tar.gz
+native/blue-engine test: -- Cleaning sources at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-io/src/ost-1.91.0-0b7a4ccc28.clean. Use --editable to skip cleaning for the packages you specify.
+native/blue-engine test: -- Extracting source /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/downloads/boostorg-io-boost-1.91.0.tar.gz
+native/blue-engine test: -- Using source at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-io/src/ost-1.91.0-0b7a4ccc28.clean
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: -- Configuring blue-arm64-osx
+native/blue-engine test: -- Building blue-arm64-osx-rel
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-io_blue-arm64-osx/share/boost-io/copyright
+native/blue-engine test: -- Performing post-build validation
+native/blue-engine test: Starting submission of boost-io:blue-arm64-osx@1.91.0 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle boost-io:blue-arm64-osx: 893 ms
+native/blue-engine test: Completed submission of boost-preprocessor:blue-arm64-osx@1.91.0 to 1 binary cache(s) in 141 ms
+native/blue-engine test: Installing 46/66 boost-core:blue-arm64-osx@1.91.0...
+native/blue-engine test: boost-core:blue-arm64-osx@1.91.0 package ABI: bdafc10cb24f647ca20a19ce8a9fe868f572df7c650e9dbb5d6e1a3e2ac00bf7
+native/blue-engine test: Building boost-core:blue-arm64-osx@1.91.0...
+native/blue-engine test: /Users/stevenyi/work/blue3/native/blue-engine/triplets/blue-arm64-osx.cmake: info: loaded overlay triplet from here
+native/blue-engine test: -- Using cached boostorg-core-boost-1.91.0.tar.gz
+native/blue-engine test: -- Cleaning sources at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-core/src/ost-1.91.0-2ac64990bd.clean. Use --editable to skip cleaning for the packages you specify.
+native/blue-engine test: -- Extracting source /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/downloads/boostorg-core-boost-1.91.0.tar.gz
+native/blue-engine test: -- Using source at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-core/src/ost-1.91.0-2ac64990bd.clean
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: -- Configuring blue-arm64-osx
+native/blue-engine test: -- Building blue-arm64-osx-rel
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-core_blue-arm64-osx/share/boost-core/copyright
+native/blue-engine test: -- Performing post-build validation
+native/blue-engine test: Starting submission of boost-core:blue-arm64-osx@1.91.0 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle boost-core:blue-arm64-osx: 1.1 s
+native/blue-engine test: Completed submission of boost-io:blue-arm64-osx@1.91.0 to 1 binary cache(s) in 18.9 ms
+native/blue-engine test: Installing 47/66 boost-utility:blue-arm64-osx@1.91.0...
+native/blue-engine test: boost-utility:blue-arm64-osx@1.91.0 package ABI: fea0551f7c61e9e742cf4c915dbaa155a023ca546c50f3bcc39299a1d5e24153
+native/blue-engine test: Building boost-utility:blue-arm64-osx@1.91.0...
+native/blue-engine test: /Users/stevenyi/work/blue3/native/blue-engine/triplets/blue-arm64-osx.cmake: info: loaded overlay triplet from here
+native/blue-engine test: -- Using cached boostorg-utility-boost-1.91.0.tar.gz
+native/blue-engine test: -- Cleaning sources at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-utility/src/ost-1.91.0-c3b4e911df.clean. Use --editable to skip cleaning for the packages you specify.
+native/blue-engine test: -- Extracting source /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/downloads/boostorg-utility-boost-1.91.0.tar.gz
+native/blue-engine test: -- Using source at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-utility/src/ost-1.91.0-c3b4e911df.clean
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: -- Configuring blue-arm64-osx
+packages/blue-java test: Done
+native/blue-engine test: -- Building blue-arm64-osx-rel
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-utility_blue-arm64-osx/share/boost-utility/copyright
+native/blue-engine test: -- Performing post-build validation
+native/blue-engine test: Starting submission of boost-utility:blue-arm64-osx@1.91.0 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle boost-utility:blue-arm64-osx: 1.2 s
+native/blue-engine test: Completed submission of boost-core:blue-arm64-osx@1.91.0 to 1 binary cache(s) in 34.4 ms
+native/blue-engine test: Installing 48/66 boost-predef:blue-arm64-osx@1.91.0...
+native/blue-engine test: boost-predef:blue-arm64-osx@1.91.0 package ABI: bea082494f22b5dcf63e09b68eb02a32d3e2e3b7295679f11c36999cf60f5e06
+native/blue-engine test: Building boost-predef:blue-arm64-osx@1.91.0...
+native/blue-engine test: /Users/stevenyi/work/blue3/native/blue-engine/triplets/blue-arm64-osx.cmake: info: loaded overlay triplet from here
+native/blue-engine test: -- Using cached boostorg-predef-boost-1.91.0.tar.gz
+native/blue-engine test: -- Cleaning sources at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-predef/src/ost-1.91.0-1f362b7212.clean. Use --editable to skip cleaning for the packages you specify.
+native/blue-engine test: -- Extracting source /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/downloads/boostorg-predef-boost-1.91.0.tar.gz
+native/blue-engine test: -- Using source at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-predef/src/ost-1.91.0-1f362b7212.clean
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: -- Configuring blue-arm64-osx
+native/blue-engine test: -- Building blue-arm64-osx-rel
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-predef_blue-arm64-osx/share/boost-predef/copyright
+native/blue-engine test: -- Performing post-build validation
+native/blue-engine test: Starting submission of boost-predef:blue-arm64-osx@1.91.0 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle boost-predef:blue-arm64-osx: 743 ms
+native/blue-engine test: Completed submission of boost-utility:blue-arm64-osx@1.91.0 to 1 binary cache(s) in 22.3 ms
+native/blue-engine test: Installing 49/66 boost-winapi:blue-arm64-osx@1.91.0...
+native/blue-engine test: boost-winapi:blue-arm64-osx@1.91.0 package ABI: 6f71246535230621e349517ed11cd1c77e6c1ce5822c2c72cdbf6e7b757eff6d
+native/blue-engine test: Building boost-winapi:blue-arm64-osx@1.91.0...
+native/blue-engine test: /Users/stevenyi/work/blue3/native/blue-engine/triplets/blue-arm64-osx.cmake: info: loaded overlay triplet from here
+native/blue-engine test: -- Using cached boostorg-winapi-boost-1.91.0.tar.gz
+native/blue-engine test: -- Cleaning sources at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-winapi/src/ost-1.91.0-1930f2e233.clean. Use --editable to skip cleaning for the packages you specify.
+native/blue-engine test: -- Extracting source /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/downloads/boostorg-winapi-boost-1.91.0.tar.gz
+native/blue-engine test: -- Using source at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-winapi/src/ost-1.91.0-1930f2e233.clean
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: -- Configuring blue-arm64-osx
+native/blue-engine test: -- Building blue-arm64-osx-rel
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-winapi_blue-arm64-osx/share/boost-winapi/copyright
+native/blue-engine test: -- Performing post-build validation
+native/blue-engine test: Starting submission of boost-winapi:blue-arm64-osx@1.91.0 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle boost-winapi:blue-arm64-osx: 918 ms
+native/blue-engine test: Completed submission of boost-predef:blue-arm64-osx@1.91.0 to 1 binary cache(s) in 26.8 ms
+native/blue-engine test: Installing 50/66 boost-mp11:blue-arm64-osx@1.91.0...
+native/blue-engine test: boost-mp11:blue-arm64-osx@1.91.0 package ABI: d54620d31c04dffb837983da0baa04469ef764784c66d3ca5627d389b67f0890
+native/blue-engine test: Building boost-mp11:blue-arm64-osx@1.91.0...
+native/blue-engine test: /Users/stevenyi/work/blue3/native/blue-engine/triplets/blue-arm64-osx.cmake: info: loaded overlay triplet from here
+native/blue-engine test: -- Using cached boostorg-mp11-boost-1.91.0.tar.gz
+native/blue-engine test: -- Cleaning sources at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-mp11/src/ost-1.91.0-18239300bd.clean. Use --editable to skip cleaning for the packages you specify.
+native/blue-engine test: -- Extracting source /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/downloads/boostorg-mp11-boost-1.91.0.tar.gz
+native/blue-engine test: -- Using source at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-mp11/src/ost-1.91.0-18239300bd.clean
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: -- Configuring blue-arm64-osx
+native/blue-engine test: -- Building blue-arm64-osx-rel
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-mp11_blue-arm64-osx/share/boost-mp11/copyright
+native/blue-engine test: -- Performing post-build validation
+native/blue-engine test: Starting submission of boost-mp11:blue-arm64-osx@1.91.0 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle boost-mp11:blue-arm64-osx: 813 ms
+native/blue-engine test: Completed submission of boost-winapi:blue-arm64-osx@1.91.0 to 1 binary cache(s) in 22.2 ms
+native/blue-engine test: Installing 51/66 boost-variant2:blue-arm64-osx@1.91.0...
+native/blue-engine test: boost-variant2:blue-arm64-osx@1.91.0 package ABI: 66c0766a4b63f07f179ad1731f05aaa26eb58346cabe63293d3da29aed3aeef0
+native/blue-engine test: Building boost-variant2:blue-arm64-osx@1.91.0...
+native/blue-engine test: /Users/stevenyi/work/blue3/native/blue-engine/triplets/blue-arm64-osx.cmake: info: loaded overlay triplet from here
+native/blue-engine test: -- Using cached boostorg-variant2-boost-1.91.0.tar.gz
+native/blue-engine test: -- Cleaning sources at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-variant2/src/ost-1.91.0-4c2d2d39ff.clean. Use --editable to skip cleaning for the packages you specify.
+native/blue-engine test: -- Extracting source /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/downloads/boostorg-variant2-boost-1.91.0.tar.gz
+native/blue-engine test: -- Using source at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-variant2/src/ost-1.91.0-4c2d2d39ff.clean
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: -- Configuring blue-arm64-osx
+native/blue-engine test: -- Building blue-arm64-osx-rel
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-variant2_blue-arm64-osx/share/boost-variant2/copyright
+native/blue-engine test: -- Performing post-build validation
+native/blue-engine test: Starting submission of boost-variant2:blue-arm64-osx@1.91.0 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle boost-variant2:blue-arm64-osx: 696 ms
+native/blue-engine test: Completed submission of boost-mp11:blue-arm64-osx@1.91.0 to 1 binary cache(s) in 11.4 ms
+native/blue-engine test: Installing 52/66 boost-compat:blue-arm64-osx@1.91.0...
+native/blue-engine test: boost-compat:blue-arm64-osx@1.91.0 package ABI: 350f5e1b565b7dbe0ba95777f0a2c71cb872b5f26e54ac0c278b0377affc30e4
+native/blue-engine test: Building boost-compat:blue-arm64-osx@1.91.0...
+native/blue-engine test: /Users/stevenyi/work/blue3/native/blue-engine/triplets/blue-arm64-osx.cmake: info: loaded overlay triplet from here
+native/blue-engine test: -- Using cached boostorg-compat-boost-1.91.0.tar.gz
+native/blue-engine test: -- Cleaning sources at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-compat/src/ost-1.91.0-7c0d84b250.clean. Use --editable to skip cleaning for the packages you specify.
+native/blue-engine test: -- Extracting source /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/downloads/boostorg-compat-boost-1.91.0.tar.gz
+native/blue-engine test: -- Using source at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-compat/src/ost-1.91.0-7c0d84b250.clean
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: -- Configuring blue-arm64-osx
+native/blue-engine test: -- Building blue-arm64-osx-rel
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-compat_blue-arm64-osx/share/boost-compat/copyright
+native/blue-engine test: -- Performing post-build validation
+native/blue-engine test: Starting submission of boost-compat:blue-arm64-osx@1.91.0 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle boost-compat:blue-arm64-osx: 724 ms
+native/blue-engine test: Completed submission of boost-variant2:blue-arm64-osx@1.91.0 to 1 binary cache(s) in 15.7 ms
+native/blue-engine test: Installing 53/66 boost-system:blue-arm64-osx@1.91.0...
+native/blue-engine test: boost-system:blue-arm64-osx@1.91.0 package ABI: e61d2fe3f43da04fbd3004a71a52c66c0fff26fc8036f838c4b392cb329f858b
+native/blue-engine test: Building boost-system:blue-arm64-osx@1.91.0...
+native/blue-engine test: /Users/stevenyi/work/blue3/native/blue-engine/triplets/blue-arm64-osx.cmake: info: loaded overlay triplet from here
+native/blue-engine test: -- Using cached boostorg-system-boost-1.91.0.tar.gz
+native/blue-engine test: -- Cleaning sources at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-system/src/ost-1.91.0-8ae221950f.clean. Use --editable to skip cleaning for the packages you specify.
+native/blue-engine test: -- Extracting source /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/downloads/boostorg-system-boost-1.91.0.tar.gz
+native/blue-engine test: -- Using source at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-system/src/ost-1.91.0-8ae221950f.clean
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: -- Configuring blue-arm64-osx
+native/blue-engine test: -- Building blue-arm64-osx-rel
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-system_blue-arm64-osx/share/boost-system/copyright
+native/blue-engine test: -- Performing post-build validation
+native/blue-engine test: Starting submission of boost-system:blue-arm64-osx@1.91.0 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle boost-system:blue-arm64-osx: 785 ms
+native/blue-engine test: Completed submission of boost-compat:blue-arm64-osx@1.91.0 to 1 binary cache(s) in 11.3 ms
+native/blue-engine test: Installing 54/66 boost-integer:blue-arm64-osx@1.91.0...
+native/blue-engine test: boost-integer:blue-arm64-osx@1.91.0 package ABI: 87151572a02f7b7999ab7575a1a348ce84512ca92d773db4e47d8900aa02086c
+native/blue-engine test: Building boost-integer:blue-arm64-osx@1.91.0...
+native/blue-engine test: /Users/stevenyi/work/blue3/native/blue-engine/triplets/blue-arm64-osx.cmake: info: loaded overlay triplet from here
+native/blue-engine test: -- Using cached boostorg-integer-boost-1.91.0.tar.gz
+native/blue-engine test: -- Cleaning sources at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-integer/src/ost-1.91.0-650e6e380d.clean. Use --editable to skip cleaning for the packages you specify.
+native/blue-engine test: -- Extracting source /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/downloads/boostorg-integer-boost-1.91.0.tar.gz
+native/blue-engine test: -- Using source at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-integer/src/ost-1.91.0-650e6e380d.clean
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: -- Configuring blue-arm64-osx
+native/blue-engine test: -- Building blue-arm64-osx-rel
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-integer_blue-arm64-osx/share/boost-integer/copyright
+native/blue-engine test: -- Performing post-build validation
+native/blue-engine test: Starting submission of boost-integer:blue-arm64-osx@1.91.0 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle boost-integer:blue-arm64-osx: 614 ms
+native/blue-engine test: Completed submission of boost-system:blue-arm64-osx@1.91.0 to 1 binary cache(s) in 18.5 ms
+native/blue-engine test: Installing 55/66 boost-describe:blue-arm64-osx@1.91.0...
+native/blue-engine test: boost-describe:blue-arm64-osx@1.91.0 package ABI: d4f6f4f6714ef5e1418212c47dca059ccc2ce5de94ca202dc9396b3d7dee775c
+native/blue-engine test: Building boost-describe:blue-arm64-osx@1.91.0...
+native/blue-engine test: /Users/stevenyi/work/blue3/native/blue-engine/triplets/blue-arm64-osx.cmake: info: loaded overlay triplet from here
+native/blue-engine test: -- Using cached boostorg-describe-boost-1.91.0.tar.gz
+native/blue-engine test: -- Cleaning sources at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-describe/src/ost-1.91.0-67fa6d2e8c.clean. Use --editable to skip cleaning for the packages you specify.
+native/blue-engine test: -- Extracting source /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/downloads/boostorg-describe-boost-1.91.0.tar.gz
+native/blue-engine test: -- Using source at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-describe/src/ost-1.91.0-67fa6d2e8c.clean
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: -- Configuring blue-arm64-osx
+native/blue-engine test: -- Building blue-arm64-osx-rel
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-describe_blue-arm64-osx/share/boost-describe/copyright
+native/blue-engine test: -- Performing post-build validation
+native/blue-engine test: Starting submission of boost-describe:blue-arm64-osx@1.91.0 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle boost-describe:blue-arm64-osx: 590 ms
+native/blue-engine test: Completed submission of boost-integer:blue-arm64-osx@1.91.0 to 1 binary cache(s) in 14 ms
+native/blue-engine test: Installing 56/66 boost-container-hash:blue-arm64-osx@1.91.0...
+native/blue-engine test: boost-container-hash:blue-arm64-osx@1.91.0 package ABI: a06e3cb16aa4a6c8ae5e994d06b46852fc1e9e72c27713b6bd7219fa5431aed4
+native/blue-engine test: Building boost-container-hash:blue-arm64-osx@1.91.0...
+native/blue-engine test: /Users/stevenyi/work/blue3/native/blue-engine/triplets/blue-arm64-osx.cmake: info: loaded overlay triplet from here
+native/blue-engine test: -- Using cached boostorg-container_hash-boost-1.91.0.tar.gz
+native/blue-engine test: -- Cleaning sources at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-container-hash/src/ost-1.91.0-67bb2e91d5.clean. Use --editable to skip cleaning for the packages you specify.
+native/blue-engine test: -- Extracting source /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/downloads/boostorg-container_hash-boost-1.91.0.tar.gz
+native/blue-engine test: -- Using source at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-container-hash/src/ost-1.91.0-67bb2e91d5.clean
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: -- Configuring blue-arm64-osx
+native/blue-engine test: -- Building blue-arm64-osx-rel
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-container-hash_blue-arm64-osx/share/boost-container-hash/copyright
+native/blue-engine test: -- Performing post-build validation
+native/blue-engine test: Starting submission of boost-container-hash:blue-arm64-osx@1.91.0 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle boost-container-hash:blue-arm64-osx: 714 ms
+native/blue-engine test: Completed submission of boost-describe:blue-arm64-osx@1.91.0 to 1 binary cache(s) in 12.2 ms
+native/blue-engine test: Installing 57/66 boost-dynamic-bitset:blue-arm64-osx@1.91.0...
+native/blue-engine test: boost-dynamic-bitset:blue-arm64-osx@1.91.0 package ABI: 4aa439c073a4961d0c6c40b1ab333b4d770ecb58cc1fd9a3f7da240cb9549ebd
+native/blue-engine test: Building boost-dynamic-bitset:blue-arm64-osx@1.91.0...
+native/blue-engine test: /Users/stevenyi/work/blue3/native/blue-engine/triplets/blue-arm64-osx.cmake: info: loaded overlay triplet from here
+native/blue-engine test: -- Using cached boostorg-dynamic_bitset-boost-1.91.0.tar.gz
+native/blue-engine test: -- Cleaning sources at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-dynamic-bitset/src/ost-1.91.0-496e650c3f.clean. Use --editable to skip cleaning for the packages you specify.
+native/blue-engine test: -- Extracting source /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/downloads/boostorg-dynamic_bitset-boost-1.91.0.tar.gz
+native/blue-engine test: -- Using source at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-dynamic-bitset/src/ost-1.91.0-496e650c3f.clean
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: -- Configuring blue-arm64-osx
+native/blue-engine test: -- Building blue-arm64-osx-rel
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-dynamic-bitset_blue-arm64-osx/share/boost-dynamic-bitset/copyright
+native/blue-engine test: -- Performing post-build validation
+native/blue-engine test: Starting submission of boost-dynamic-bitset:blue-arm64-osx@1.91.0 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle boost-dynamic-bitset:blue-arm64-osx: 577 ms
+native/blue-engine test: Completed submission of boost-container-hash:blue-arm64-osx@1.91.0 to 1 binary cache(s) in 13.7 ms
+native/blue-engine test: Installing 58/66 boost-random:blue-arm64-osx@1.91.0...
+native/blue-engine test: boost-random:blue-arm64-osx@1.91.0 package ABI: fc017031fbb89a5f9ee4dce10f9bc195418b44dee652c0e4af8b20e3926fee54
+native/blue-engine test: Building boost-random:blue-arm64-osx@1.91.0...
+native/blue-engine test: /Users/stevenyi/work/blue3/native/blue-engine/triplets/blue-arm64-osx.cmake: info: loaded overlay triplet from here
+native/blue-engine test: -- Using cached boostorg-random-boost-1.91.0.tar.gz
+native/blue-engine test: -- Cleaning sources at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-random/src/ost-1.91.0-c19b6dd7d1.clean. Use --editable to skip cleaning for the packages you specify.
+native/blue-engine test: -- Extracting source /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/downloads/boostorg-random-boost-1.91.0.tar.gz
+native/blue-engine test: -- Using source at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-random/src/ost-1.91.0-c19b6dd7d1.clean
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: -- Configuring blue-arm64-osx
+native/blue-engine test: -- Building blue-arm64-osx-dbg
+native/blue-engine test: -- Building blue-arm64-osx-rel
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-random_blue-arm64-osx/share/boost-random/copyright
+native/blue-engine test: -- Performing post-build validation
+native/blue-engine test: Starting submission of boost-random:blue-arm64-osx@1.91.0 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle boost-random:blue-arm64-osx: 2.5 s
+native/blue-engine test: Completed submission of boost-dynamic-bitset:blue-arm64-osx@1.91.0 to 1 binary cache(s) in 47.2 ms
+native/blue-engine test: Installing 59/66 boost-move:blue-arm64-osx@1.91.0...
+native/blue-engine test: boost-move:blue-arm64-osx@1.91.0 package ABI: 247a8e31547e070859190bfe367bd4346de7c5d69d86baa95760d0474d251db4
+native/blue-engine test: Building boost-move:blue-arm64-osx@1.91.0...
+native/blue-engine test: /Users/stevenyi/work/blue3/native/blue-engine/triplets/blue-arm64-osx.cmake: info: loaded overlay triplet from here
+native/blue-engine test: -- Using cached boostorg-move-boost-1.91.0.tar.gz
+native/blue-engine test: -- Cleaning sources at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-move/src/ost-1.91.0-ffda78865d.clean. Use --editable to skip cleaning for the packages you specify.
+native/blue-engine test: -- Extracting source /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/downloads/boostorg-move-boost-1.91.0.tar.gz
+native/blue-engine test: -- Using source at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-move/src/ost-1.91.0-ffda78865d.clean
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: -- Configuring blue-arm64-osx
+packages/blue-data test: 
+packages/blue-data test:  Test Files  222 passed | 1 skipped (223)
+packages/blue-data test:       Tests  3114 passed | 1 skipped (3115)
+packages/blue-data test:    Start at  10:51:05
+packages/blue-data test:    Duration  25.64s (transform 21.02s, setup 0ms, import 87.00s, tests 70.08s, environment 51ms)
+packages/blue-data test: 
+packages/blue-data test: Done
+packages/blue-cli test$ pnpm build && pnpm exec vitest run
+packages/blue-cli test: $ node ./scripts/build.mjs
+native/blue-engine test: -- Building blue-arm64-osx-rel
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-move_blue-arm64-osx/share/boost-move/copyright
+native/blue-engine test: -- Performing post-build validation
+native/blue-engine test: Starting submission of boost-move:blue-arm64-osx@1.91.0 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle boost-move:blue-arm64-osx: 539 ms
+native/blue-engine test: Completed submission of boost-random:blue-arm64-osx@1.91.0 to 1 binary cache(s) in 49.3 ms
+native/blue-engine test: Installing 60/66 boost-intrusive:blue-arm64-osx@1.91.0...
+native/blue-engine test: boost-intrusive:blue-arm64-osx@1.91.0 package ABI: c0d3688664a5be38c3d081c0152ff5364075fb6dbbc647cf483fc16459a9a254
+native/blue-engine test: Building boost-intrusive:blue-arm64-osx@1.91.0...
+native/blue-engine test: /Users/stevenyi/work/blue3/native/blue-engine/triplets/blue-arm64-osx.cmake: info: loaded overlay triplet from here
+native/blue-engine test: -- Using cached boostorg-intrusive-boost-1.91.0.tar.gz
+native/blue-engine test: -- Cleaning sources at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-intrusive/src/ost-1.91.0-466e81d1d2.clean. Use --editable to skip cleaning for the packages you specify.
+native/blue-engine test: -- Extracting source /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/downloads/boostorg-intrusive-boost-1.91.0.tar.gz
+native/blue-engine test: -- Using source at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-intrusive/src/ost-1.91.0-466e81d1d2.clean
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: -- Configuring blue-arm64-osx
+packages/blue-cli test: (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+packages/blue-cli test:   - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+packages/blue-cli test:   - ESM syntax in a file loaded as CommonJS (../../scripts/vitest-package-reporters.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+packages/blue-cli test: Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+packages/blue-cli test: 
+packages/blue-cli test:  RUN  v4.1.11 /Users/stevenyi/work/blue3/packages/blue-cli
+packages/blue-cli test: 
+native/blue-engine test: -- Building blue-arm64-osx-rel
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-intrusive_blue-arm64-osx/share/boost-intrusive/copyright
+native/blue-engine test: -- Performing post-build validation
+native/blue-engine test: Starting submission of boost-intrusive:blue-arm64-osx@1.91.0 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle boost-intrusive:blue-arm64-osx: 657 ms
+native/blue-engine test: Completed submission of boost-move:blue-arm64-osx@1.91.0 to 1 binary cache(s) in 17.5 ms
+native/blue-engine test: Installing 61/66 boost-container:blue-arm64-osx@1.91.0...
+native/blue-engine test: boost-container:blue-arm64-osx@1.91.0 package ABI: 83170551282a561b83db21af93a69cbfaeefa8940749967ff2390fc5442208c5
+native/blue-engine test: Building boost-container:blue-arm64-osx@1.91.0...
+native/blue-engine test: /Users/stevenyi/work/blue3/native/blue-engine/triplets/blue-arm64-osx.cmake: info: loaded overlay triplet from here
+native/blue-engine test: -- Using cached boostorg-container-boost-1.91.0.tar.gz
+native/blue-engine test: -- Cleaning sources at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-container/src/ost-1.91.0-34ef7e044f.clean. Use --editable to skip cleaning for the packages you specify.
+native/blue-engine test: -- Extracting source /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/downloads/boostorg-container-boost-1.91.0.tar.gz
+native/blue-engine test: -- Applying patch posix-threads.diff
+native/blue-engine test: -- Using source at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-container/src/ost-1.91.0-34ef7e044f.clean
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: -- Configuring blue-arm64-osx
+native/blue-engine test: -- Building blue-arm64-osx-dbg
+packages/blue-cli test: 
+packages/blue-cli test:  Test Files  2 passed (2)
+packages/blue-cli test:       Tests  7 passed (7)
+packages/blue-cli test:    Start at  10:51:31
+packages/blue-cli test:    Duration  1.75s (transform 1.38s, setup 0ms, import 1.65s, tests 151ms, environment 0ms)
+packages/blue-cli test: 
+packages/blue-cli test: Done
+native/blue-engine test: -- Building blue-arm64-osx-rel
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-container_blue-arm64-osx/share/boost-container/copyright
+native/blue-engine test: -- Performing post-build validation
+native/blue-engine test: Starting submission of boost-container:blue-arm64-osx@1.91.0 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle boost-container:blue-arm64-osx: 2.2 s
+native/blue-engine test: Completed submission of boost-intrusive:blue-arm64-osx@1.91.0 to 1 binary cache(s) in 35.7 ms
+native/blue-engine test: Installing 62/66 boost-lexical-cast:blue-arm64-osx@1.91.0...
+native/blue-engine test: boost-lexical-cast:blue-arm64-osx@1.91.0 package ABI: 19dd8ee54479fc8154b7fb91e94cd2efd52c38c93c643c2c6868980730512b95
+native/blue-engine test: Building boost-lexical-cast:blue-arm64-osx@1.91.0...
+native/blue-engine test: /Users/stevenyi/work/blue3/native/blue-engine/triplets/blue-arm64-osx.cmake: info: loaded overlay triplet from here
+native/blue-engine test: -- Using cached boostorg-lexical_cast-boost-1.91.0.tar.gz
+native/blue-engine test: -- Cleaning sources at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-lexical-cast/src/ost-1.91.0-162cf2d8ef.clean. Use --editable to skip cleaning for the packages you specify.
+native/blue-engine test: -- Extracting source /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/downloads/boostorg-lexical_cast-boost-1.91.0.tar.gz
+native/blue-engine test: -- Using source at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-lexical-cast/src/ost-1.91.0-162cf2d8ef.clean
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: -- Configuring blue-arm64-osx
+native/blue-engine test: -- Building blue-arm64-osx-rel
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-lexical-cast_blue-arm64-osx/share/boost-lexical-cast/copyright
+native/blue-engine test: -- Performing post-build validation
+native/blue-engine test: Starting submission of boost-lexical-cast:blue-arm64-osx@1.91.0 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle boost-lexical-cast:blue-arm64-osx: 661 ms
+native/blue-engine test: Completed submission of boost-container:blue-arm64-osx@1.91.0 to 1 binary cache(s) in 61.2 ms
+native/blue-engine test: Installing 63/66 boost-concept-check:blue-arm64-osx@1.91.0...
+native/blue-engine test: boost-concept-check:blue-arm64-osx@1.91.0 package ABI: c1e1cf959e140e2c7a4cc3440127d4c2535b6a96f7dde67136dc536dbdb88cf9
+native/blue-engine test: Building boost-concept-check:blue-arm64-osx@1.91.0...
+native/blue-engine test: /Users/stevenyi/work/blue3/native/blue-engine/triplets/blue-arm64-osx.cmake: info: loaded overlay triplet from here
+native/blue-engine test: -- Using cached boostorg-concept_check-boost-1.91.0.tar.gz
+native/blue-engine test: -- Cleaning sources at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-concept-check/src/ost-1.91.0-372ffd4028.clean. Use --editable to skip cleaning for the packages you specify.
+native/blue-engine test: -- Extracting source /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/downloads/boostorg-concept_check-boost-1.91.0.tar.gz
+native/blue-engine test: -- Using source at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-concept-check/src/ost-1.91.0-372ffd4028.clean
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: -- Configuring blue-arm64-osx
+native/blue-engine test: -- Building blue-arm64-osx-rel
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-concept-check_blue-arm64-osx/share/boost-concept-check/copyright
+native/blue-engine test: -- Performing post-build validation
+native/blue-engine test: Starting submission of boost-concept-check:blue-arm64-osx@1.91.0 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle boost-concept-check:blue-arm64-osx: 541 ms
+native/blue-engine test: Completed submission of boost-lexical-cast:blue-arm64-osx@1.91.0 to 1 binary cache(s) in 11.4 ms
+native/blue-engine test: Installing 64/66 boost-math:blue-arm64-osx@1.91.0...
+native/blue-engine test: boost-math:blue-arm64-osx@1.91.0 package ABI: e96ca031885295244cd089d83352568683528a4a8b0c3b38c055ec0ead81e7d5
+native/blue-engine test: Building boost-math:blue-arm64-osx@1.91.0...
+native/blue-engine test: /Users/stevenyi/work/blue3/native/blue-engine/triplets/blue-arm64-osx.cmake: info: loaded overlay triplet from here
+native/blue-engine test: -- Using cached boost_math_android.patch
+native/blue-engine test: -- Using cached boostorg-math-boost-1.91.0.tar.gz
+native/blue-engine test: -- Cleaning sources at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-math/src/ost-1.91.0-385abded49.clean. Use --editable to skip cleaning for the packages you specify.
+native/blue-engine test: -- Extracting source /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/downloads/boostorg-math-boost-1.91.0.tar.gz
+native/blue-engine test: -- Applying patch build-old-libs.patch
+native/blue-engine test: -- Applying patch opt-random.diff
+native/blue-engine test: -- Applying patch /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/downloads/boost_math_android.patch
+native/blue-engine test: -- Using source at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-math/src/ost-1.91.0-385abded49.clean
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: -- Configuring blue-arm64-osx
+native/blue-engine test: -- Building blue-arm64-osx-rel
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-math_blue-arm64-osx/share/boost-math/copyright
+native/blue-engine test: -- Performing post-build validation
+native/blue-engine test: Starting submission of boost-math:blue-arm64-osx@1.91.0 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle boost-math:blue-arm64-osx: 2.4 s
+native/blue-engine test: Completed submission of boost-concept-check:blue-arm64-osx@1.91.0 to 1 binary cache(s) in 12.2 ms
+native/blue-engine test: Installing 65/66 boost-multiprecision:blue-arm64-osx@1.91.0...
+native/blue-engine test: boost-multiprecision:blue-arm64-osx@1.91.0 package ABI: a5e064894b3d7b9721b1035fda5f008b763c85e822da5b36468d90c8948e3054
+native/blue-engine test: Building boost-multiprecision:blue-arm64-osx@1.91.0...
+native/blue-engine test: /Users/stevenyi/work/blue3/native/blue-engine/triplets/blue-arm64-osx.cmake: info: loaded overlay triplet from here
+native/blue-engine test: -- Using cached boostorg-multiprecision-boost-1.91.0.tar.gz
+native/blue-engine test: -- Cleaning sources at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-multiprecision/src/ost-1.91.0-f3a44b803d.clean. Use --editable to skip cleaning for the packages you specify.
+native/blue-engine test: -- Extracting source /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/downloads/boostorg-multiprecision-boost-1.91.0.tar.gz
+native/blue-engine test: -- Applying patch optional-random.diff
+native/blue-engine test: -- Using source at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/boost-multiprecision/src/ost-1.91.0-f3a44b803d.clean
+native/blue-engine test: warning: attempting to set builtin-baseline in vcpkg.json while overriding the default-registry in vcpkg-configuration.json.
+native/blue-engine test: the default-registry from vcpkg-configuration.json will be used.
+native/blue-engine test: -- Configuring blue-arm64-osx
+native/blue-engine test: -- Building blue-arm64-osx-rel
+native/blue-engine test: -- Installing: /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/packages/boost-multiprecision_blue-arm64-osx/share/boost-multiprecision/copyright
+native/blue-engine test: -- Performing post-build validation
+native/blue-engine test: Starting submission of boost-multiprecision:blue-arm64-osx@1.91.0 to 1 binary cache(s) in the background
+native/blue-engine test: Elapsed time to handle boost-multiprecision:blue-arm64-osx: 1.4 s
+native/blue-engine test: Completed submission of boost-math:blue-arm64-osx@1.91.0 to 1 binary cache(s) in 245 ms
+native/blue-engine test: Installing 66/66 zeromq:blue-arm64-osx@4.3.5#3...
+native/blue-engine test: zeromq:blue-arm64-osx@4.3.5#3 package ABI: db65170565ca930f7decc3a3be7b1754ad4e2a8bb6e15f7c40eae6f76e175a65
+native/blue-engine test: Building zeromq:blue-arm64-osx@4.3.5#3...
+native/blue-engine test: /Users/stevenyi/work/blue3/native/blue-engine/triplets/blue-arm64-osx.cmake: info: loaded overlay triplet from here
+native/blue-engine test: -- Using cached zeromq-libzmq-v4.3.5.tar.gz
+native/blue-engine test: -- Cleaning sources at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/zeromq/src/v4.3.5-0744e81c3a.clean. Use --editable to skip cleaning for the packages you specify.
+native/blue-engine test: -- Extracting source /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/downloads/zeromq-libzmq-v4.3.5.tar.gz
+native/blue-engine test: -- Applying patch fix-arm.patch
+native/blue-engine test: -- Applying patch pkgconfig.diff
+native/blue-engine test: -- Applying patch rename-sha1.diff
+native/blue-engine test: -- Using source at /Users/stevenyi/work/blue3/native/blue-engine/.vcpkg/buildtrees/zeromq/src/v4.3.5-0744e81c3a.clean
+native/blue-engine test: CMake Error at scripts/cmake/vcpkg_find_acquire_program.cmake:201 (message):
+native/blue-engine test:   Could not find pkg-config.  Please install it via your package manager:
+native/blue-engine test: 
+native/blue-engine test:       brew install pkg-config
+native/blue-engine test: Call Stack (most recent call first):
+native/blue-engine test:   buildtrees/versioning_/versions/zeromq/0868a363e9184119409ac1e4c4d93077dcb8318a/portfile.cmake:30 (vcpkg_find_acquire_program)
+native/blue-engine test:   scripts/ports.cmake:206 (include)
+native/blue-engine test: 
+native/blue-engine test: 
+native/blue-engine test: error: building zeromq:blue-arm64-osx failed with: BUILD_FAILED
+native/blue-engine test: See https://learn.microsoft.com/vcpkg/troubleshoot/build-failures?WT.mc_id=vcpkg_inproduct_cli for more information.
+native/blue-engine test: Elapsed time to handle zeromq:blue-arm64-osx: 311 ms
+native/blue-engine test: Please ensure you're using the latest port files with `git pull` and `vcpkg update`.
+native/blue-engine test: Then check for known issues at:
+native/blue-engine test:   https://github.com/microsoft/vcpkg/issues?q=is%3Aissue+is%3Aopen+in%3Atitle+zeromq
+native/blue-engine test: You can submit a new issue at:
+native/blue-engine test:   https://github.com/microsoft/vcpkg/issues/new?title=%5Bzeromq%5D%20build%20error%20on%20blue-arm64-osx&body=Copy%20issue%20body%20from%20%2FUsers%2Fstevenyi%2Fwork%2Fblue3%2Fnative%2Fblue-engine%2Fbuild-darwin-arm64-debug%2Fvcpkg_installed%2Fvcpkg%2Fissue_body.md
+native/blue-engine test: You can also submit an issue by running (GitHub CLI must be installed):
+native/blue-engine test:   /opt/homebrew/bin/gh issue create -R microsoft/vcpkg --title "[zeromq] Build failure on blue-arm64-osx" --body-file /Users/stevenyi/work/blue3/native/blue-engine/build-darwin-arm64-debug/vcpkg_installed/vcpkg/issue_body.md
+native/blue-engine test: Completed submission of boost-multiprecision:blue-arm64-osx@1.91.0 to 1 binary cache(s) in 80.5 ms
+native/blue-engine test: -- Running vcpkg install - failed
+native/blue-engine test: CMake Error at .vcpkg/scripts/buildsystems/vcpkg.cmake:984 (message):
+native/blue-engine test:   vcpkg install failed.  See logs for more information:
+native/blue-engine test:   /Users/stevenyi/work/blue3/native/blue-engine/build-darwin-arm64-debug/vcpkg-manifest-install.log
+native/blue-engine test: Call Stack (most recent call first):
+native/blue-engine test:   build-darwin-arm64-debug/CMakeFiles/4.4.4/CMakeSystem.cmake:6 (include)
+native/blue-engine test:   CMakeLists.txt:2 (project)
+native/blue-engine test: 
+native/blue-engine test: 
+native/blue-engine test: -- Configuring incomplete, errors occurred!
+native/blue-engine test: file:///Users/stevenyi/work/blue3/native/blue-engine/scripts/build.mjs:19
+native/blue-engine test:     throw new Error(
+native/blue-engine test:           ^
+native/blue-engine test: 
+native/blue-engine test: Error: BLUE_ENGINE_BUILD_FAILED: cmake exited with 1
+native/blue-engine test:     at run (file:///Users/stevenyi/work/blue3/native/blue-engine/scripts/build.mjs:19:11)
+native/blue-engine test:     at file:///Users/stevenyi/work/blue3/native/blue-engine/scripts/build.mjs:57:1
+native/blue-engine test: 
+native/blue-engine test: Node.js v22.23.1
+native/blue-engine test: Failed
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in /Users/stevenyi/work/blue3/native/blue-
+  │ engine
+
+[ELIFECYCLE] Test failed. See above for more details.
